@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tsukimichi mock preview</title>
+<style>
+  html,body{margin:0;background:#05070D;color:#DDE3F0;font:14px/1.5 system-ui,sans-serif}
+  body{padding:24px}
+  h1{font-size:16px;font-weight:600;margin:0 0 4px}
+  p.lead{margin:0 0 16px;color:#A9B2CC;font-size:13px}
+  @media (max-width:700px){body{padding:12px}}
+</style>
+</head>
+<body>
+<h1>Tsukimichi in context: preview of the plan site's Moon &amp; icon mock</h1>
+<p class="lead">Test page for docs/plan-site/mock/mock-fragment.html. Round 3 D (default) and Round 2 D glyph sets.</p>
+<!-- BEGIN FRAGMENT (generated: inlined copy of mock-fragment.html) -->
+<!-- Tsukimichi in-context mock (plan v6, Moon & icon tab). Fragment: one style block, one .mk root, one script block.
+     Every selector is scoped under .mk. Call TsukiMock.mount(rootEl, art) after this fragment is in the page. -->
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500&display=swap");
+.mk{--s:1;--night:#0F1424;--sunk:#0B0F1C;--raised:#1E2337;--hover:#262D45;--line:#2A3149;--vline:#5C6584;--shadow:#3A4363;--umbra:#2C334A;
+  --silver:#DDE3F0;--mist:#A9B2CC;--dusk:#7C86A8;--veil:#4A5270;--vtext:#8A93B0;--moon:#F2D27A;--moonhi:#FFF0BE;--moondeep:#D6B25A;
+  --eclipse:#B25C7F;--etext:#D68AA8;--abyss:#080B16;--top:#151C33;--gilt:#A88B52;--gilthi:#D9BE82;--tide:#6F8FD0;
+  container:mk/inline-size;position:relative;display:block;width:100%;box-sizing:border-box;padding:18px;border-radius:14px;
+  background:radial-gradient(120% 80% at 50% 0%,#121830 0%,#090C17 60%,#06080F 100%);color:var(--silver);
+  font:13px/1.4 "Segoe UI","Noto Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-align:left}
+.mk *,.mk *::before,.mk *::after{box-sizing:border-box}
+.mk img{max-width:none;border:0;display:block}
+.mk h3,.mk h4,.mk p{margin:0;padding:0;font-weight:inherit;font-size:inherit;letter-spacing:normal;text-transform:none}
+.mk button{font:inherit;color:inherit;margin:0;cursor:pointer;-webkit-appearance:none;appearance:none}
+.mk svg{display:block;overflow:visible}
+.mk :focus{outline:none}
+.mk :focus-visible{outline:2px solid var(--moon);outline-offset:2px;border-radius:4px}
+
+/* ---------- Mock toolbar (page control, not part of the game) ---------- */
+.mk .mk-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px 12px;margin-bottom:16px;border-radius:10px;
+  background:rgba(21,28,51,.72);border:1px solid #232A42;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.mk .mk-grp{display:flex;align-items:center;gap:9px}
+.mk .mk-lab{font-size:12px;color:var(--mist);letter-spacing:.02em}
+.mk .mk-seg{display:inline-flex;padding:3px;gap:2px;border-radius:9px;background:#0A0E1B;border:1px solid #232A42}
+.mk .mk-seg button,.mk .mk-tog{border:0;background:transparent;color:var(--mist);font-size:12.5px;line-height:1;padding:7px 12px;border-radius:7px;transition:background .18s,color .18s}
+.mk .mk-seg button:hover,.mk .mk-tog:hover{color:var(--silver);background:rgba(255,255,255,.04)}
+.mk .mk-seg button[aria-pressed="true"]{background:linear-gradient(#2A3150,#222944);color:var(--moonhi);box-shadow:inset 0 1px 0 rgba(255,240,190,.10),0 1px 2px rgba(0,0,0,.4)}
+.mk .mk-tog{display:inline-flex;align-items:center;gap:8px;border:1px solid #232A42;background:#0A0E1B;padding:7px 12px 7px 9px}
+.mk .mk-tog .mk-knob{width:26px;height:14px;border-radius:7px;background:#2A3149;position:relative;transition:background .18s}
+.mk .mk-tog .mk-knob::after{content:"";position:absolute;left:2px;top:2px;width:10px;height:10px;border-radius:50%;background:var(--mist);transition:transform .18s,background .18s}
+.mk .mk-tog[aria-pressed="true"]{color:var(--moonhi);border-color:#3A4363}
+.mk .mk-tog[aria-pressed="true"] .mk-knob{background:#6B5A2E}
+.mk .mk-tog[aria-pressed="true"] .mk-knob::after{transform:translateX(12px);background:var(--moonhi)}
+.mk .mk-note{margin-left:auto;font-size:11.5px;color:var(--dusk)}
+
+/* ---------- Scenes ---------- */
+.mk .mk-scenes{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px}
+.mk .mk-sa,.mk .mk-sd,.mk .mk-loupe{grid-column:1/-1}
+.mk .mk-sc{display:flex;flex-direction:column}
+.mk .mk-sc .dal{flex:1;display:flex;flex-direction:column}
+.mk .mk-sc .dal .db{flex:1}
+.mk .mk-cap{display:flex;align-items:baseline;gap:10px;margin:0 0 9px 2px;font-size:12px;color:var(--mist);letter-spacing:.04em}
+.mk .mk-cap b{font-weight:600;color:var(--silver);letter-spacing:.02em;font-size:13px}
+.mk .mk-cap .mk-capr{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+/* ---------- Glyph sizing ---------- */
+.mk .gl{width:calc(var(--gs,16) * 1px * var(--s));height:calc(var(--gs,16) * 1px * var(--s));flex:none}
+.mk .gl.fx{width:calc(var(--gs) * 1px);height:calc(var(--gs) * 1px)}
+
+/* ---------- A. Main window ---------- */
+.mk .mk-stage{position:relative;border-radius:12px;overflow:hidden;padding:26px 28px 30px;isolation:isolate}
+.mk .mk-stage::before{content:"";position:absolute;inset:-30px;z-index:-2;background:var(--bg,#0B0F1C) center 30%/cover no-repeat;filter:blur(7px) saturate(.85) brightness(.42)}
+.mk .mk-stage::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(80% 70% at 50% 45%,rgba(6,8,15,0) 0%,rgba(6,8,15,.55) 100%)}
+.mk .win,.mk .todo,.mk .dal{font-family:"Noto Sans","Segoe UI",system-ui,sans-serif!important;font-weight:500}
+.mk .win{position:relative;background:var(--night);border:1px solid #2E3550;border-radius:7px;overflow:hidden;display:flex;flex-direction:column;
+  font-size:calc(13px * var(--s));box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 0 0 1px rgba(0,0,0,.6),0 24px 60px rgba(0,0,0,.6),0 6px 16px rgba(0,0,0,.35)}
+.mk .w-title{height:calc(26px * var(--s));display:flex;align-items:center;gap:calc(8px * var(--s));padding:0 calc(10px * var(--s));background:#1E2337;border-bottom:1px solid var(--line);font-size:calc(12.5px * var(--s));color:var(--silver)}
+.mk .w-title .tri{width:0;height:0;border-left:calc(4px * var(--s)) solid transparent;border-right:calc(4px * var(--s)) solid transparent;border-top:calc(6px * var(--s)) solid var(--mist)}
+.mk .w-title .wc{margin-left:auto;display:flex;gap:calc(12px * var(--s));color:var(--dusk)}
+.mk .w-tool{display:flex;align-items:center;gap:calc(8px * var(--s));padding:calc(6px * var(--s)) calc(10px * var(--s));background:var(--top);border-bottom:1px solid var(--line);min-width:0}
+.mk .pill-in{height:calc(26px * var(--s));border-radius:calc(13px * var(--s));background:var(--sunk);border:1px solid var(--line);display:flex;align-items:center;gap:calc(7px * var(--s));padding:0 calc(10px * var(--s));color:var(--dusk);white-space:nowrap;min-width:0;overflow:hidden}
+.mk .pill-in.srch{flex:0 1 calc(270px * var(--s))}
+.mk .qv{display:flex;height:calc(26px * var(--s));border-radius:calc(13px * var(--s));background:var(--sunk);border:1px solid var(--line);overflow:hidden;flex:none}
+.mk .qv span{display:flex;align-items:center;padding:0 calc(11px * var(--s));color:var(--mist);border-right:1px solid var(--line);font-size:calc(12px * var(--s));white-space:nowrap}
+.mk .qv span:last-child{border-right:0}
+.mk .qv span.on{background:rgba(221,227,240,.08);color:var(--silver)}
+.mk .tbtn{height:calc(26px * var(--s));border-radius:calc(13px * var(--s));display:flex;align-items:center;gap:calc(6px * var(--s));padding:0 calc(10px * var(--s));color:var(--mist);font-size:calc(12px * var(--s));white-space:nowrap;flex:none}
+.mk .chr{height:calc(26px * var(--s));border-radius:calc(13px * var(--s));background:var(--sunk);border:1px solid var(--line);display:flex;align-items:center;gap:calc(7px * var(--s));padding:0 calc(10px * var(--s)) 0 calc(4px * var(--s));white-space:nowrap;margin-left:auto;flex:none}
+.mk .jb{min-width:calc(18px * var(--s));height:calc(18px * var(--s));padding:0 calc(3px * var(--s));border-radius:calc(9px * var(--s));background:linear-gradient(135deg,#3B4A7A,#1E2437);border:1px solid var(--vline);display:inline-flex;align-items:center;justify-content:center;font-size:calc(8px * var(--s));font-weight:600;color:var(--silver);letter-spacing:.02em}
+.mk .pip{width:calc(6px * var(--s));height:calc(6px * var(--s));border-radius:50%;background:var(--moon)}
+.mk .w-chips{display:flex;align-items:center;gap:calc(6px * var(--s));padding:calc(5px * var(--s)) calc(10px * var(--s));border-bottom:1px solid rgba(42,49,73,.6)}
+.mk .chip{height:calc(20px * var(--s));border-radius:calc(10px * var(--s));background:var(--raised);border:1px solid var(--line);color:var(--mist);font-size:calc(11.5px * var(--s));display:inline-flex;align-items:center;gap:calc(6px * var(--s));padding:0 calc(7px * var(--s)) 0 calc(9px * var(--s))}
+.mk .chip i{font-style:normal;color:var(--dusk)}
+.mk .w-chips .cnt{margin-left:auto;color:var(--dusk);font-size:calc(11.5px * var(--s))}
+.mk .w-body{display:grid;grid-template-columns:calc(64px * var(--s)) minmax(calc(200px * var(--s)),calc(290px * var(--s))) minmax(0,1fr) minmax(calc(300px * var(--s)),calc(380px * var(--s)));min-height:0}
+
+/* Rail */
+.mk .rail{background:var(--abyss);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:calc(8px * var(--s)) 0 calc(10px * var(--s));position:relative}
+.mk .rail .crest{width:calc(44px * var(--s));height:calc(40px * var(--s));margin-bottom:calc(4px * var(--s))}
+.mk .rail .rule{width:calc(40px * var(--s));height:1px;background:linear-gradient(90deg,rgba(168,139,82,0),rgba(168,139,82,.8),rgba(168,139,82,0));margin-bottom:calc(8px * var(--s))}
+.mk .rail .thread{position:absolute;left:calc(6px * var(--s));top:calc(62px * var(--s));height:calc(5 * 54px * var(--s));width:1px;background:linear-gradient(rgba(168,139,82,.0),rgba(168,139,82,.45) 12%,rgba(168,139,82,.45) 88%,rgba(168,139,82,0))}
+.mk .st{position:relative;width:100%;height:calc(54px * var(--s));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(3px * var(--s));color:var(--dusk);font-size:calc(10px * var(--s))}
+.mk .st svg{width:calc(20px * var(--s));height:calc(20px * var(--s))}
+.mk .st.on{color:var(--silver)}
+.mk .st.on svg{color:var(--moon);filter:drop-shadow(0 0 5px rgba(242,210,122,.35))}
+.mk .st.on::before{content:"";position:absolute;left:calc(5px * var(--s));top:calc(14px * var(--s));bottom:calc(14px * var(--s));width:3px;border-radius:2px;background:linear-gradient(var(--moonhi),var(--moondeep))}
+.mk .st.on::after{content:"";position:absolute;left:calc(3.5px * var(--s));top:calc(10px * var(--s));width:calc(6px * var(--s));height:calc(6px * var(--s));border-radius:50%;background:var(--moonhi)}
+.mk .st .bd{font-weight:inherit!important;position:absolute;top:calc(5px * var(--s));right:calc(8px * var(--s));min-width:calc(16px * var(--s));height:calc(14px * var(--s));padding:0 calc(4px * var(--s));border-radius:calc(7px * var(--s));background:var(--moon);color:#1A1406;font-size:calc(9px * var(--s));display:flex;align-items:center;justify-content:center}
+.mk .rail .foot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:calc(7px * var(--s))}
+.mk .rail .foot .pc{font-size:calc(10.5px * var(--s));color:var(--mist);margin-top:calc(-2px * var(--s))}
+.mk .rb{width:calc(28px * var(--s));height:calc(28px * var(--s));border-radius:50%;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mist)}
+.mk .rb svg{width:calc(13px * var(--s));height:calc(13px * var(--s))}
+.mk .rb.on{color:var(--moon);border-color:rgba(242,210,122,.35);background:rgba(242,210,122,.10)}
+
+/* Tree */
+.mk .tree{border-right:1px solid var(--line);padding:calc(6px * var(--s));min-width:0;background:linear-gradient(180deg,rgba(21,28,51,.35),rgba(15,20,36,0) 40%)}
+.mk .tree .th{display:flex;align-items:baseline;gap:calc(6px * var(--s));padding:calc(2px * var(--s)) calc(6px * var(--s)) calc(6px * var(--s));font-size:calc(11px * var(--s));color:var(--dusk);letter-spacing:.06em;text-transform:uppercase}
+.mk .tree .th span{margin-left:auto;text-transform:none;letter-spacing:0}
+.mk .tn{height:calc(30px * var(--s));display:flex;align-items:center;gap:calc(7px * var(--s));padding:0 calc(6px * var(--s)) 0 calc(4px * var(--s));border-radius:4px;position:relative;white-space:nowrap;min-width:0}
+.mk .tn.l1{padding-left:calc(16px * var(--s))}
+.mk .tn .cv{width:calc(9px * var(--s));color:var(--dusk);font-size:calc(8px * var(--s));flex:none;text-align:center}
+.mk .tn .orb{width:calc(20px * var(--s));height:calc(20px * var(--s));flex:none}
+.mk .tn .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.mk .tn.sec .nm{color:var(--silver)}
+.mk .tn .ct{font-size:calc(10.5px * var(--s));color:var(--dusk);font-variant-numeric:tabular-nums}
+.mk .tn .rdy{font-size:calc(10px * var(--s));color:var(--moon);background:rgba(242,210,122,.14);border-radius:calc(8px * var(--s));padding:0 calc(6px * var(--s));line-height:calc(15px * var(--s))}
+.mk .tn .xp{font-size:calc(9.5px * var(--s));color:var(--mist);background:var(--sunk);border:1px solid var(--line);border-radius:calc(7px * var(--s));padding:0 calc(5px * var(--s));line-height:calc(13px * var(--s))}
+.mk .tn.sel{background:rgba(242,210,122,.10)}
+.mk .tn.sel::before{content:"";position:absolute;left:0;top:calc(5px * var(--s));bottom:calc(5px * var(--s));width:2px;border-radius:1px;background:var(--moon)}
+.mk .tree .hair{height:1px;margin:calc(6px * var(--s)) calc(6px * var(--s));background:linear-gradient(90deg,rgba(168,139,82,0),rgba(168,139,82,.5),rgba(168,139,82,0))}
+
+/* Table */
+.mk .tbl{min-width:0;display:flex;flex-direction:column}
+.mk .cols{display:grid;grid-template-columns:calc(34px * var(--s)) minmax(0,1.45fr) calc(40px * var(--s)) calc(66px * var(--s)) minmax(0,1.6fr) calc(46px * var(--s));align-items:center}
+.mk .thd{height:calc(28px * var(--s));background:var(--raised);border-bottom:1px solid var(--line);color:var(--mist);font-size:calc(11px * var(--s))}
+.mk .thd>div{padding:0 calc(6px * var(--s));white-space:nowrap;overflow:hidden}
+.mk .thd .sort{color:var(--silver)}
+.mk .grp{height:calc(26px * var(--s));display:flex;align-items:center;gap:calc(7px * var(--s));padding:calc(4px * var(--s)) calc(10px * var(--s)) 0;color:var(--mist);font-size:calc(11px * var(--s));letter-spacing:.03em}
+.mk .grp b{font-weight:inherit;color:var(--silver);letter-spacing:.01em}
+.mk .grp::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(92,101,132,.5),rgba(92,101,132,0))}
+.mk .tr{height:calc(30px * var(--s));position:relative;border-bottom:1px solid rgba(42,49,73,.45);cursor:default;font-size:calc(12.5px * var(--s))}
+.mk .tr>div{padding:0 calc(6px * var(--s));overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mk .tr>div:nth-child(3){text-overflow:clip}
+.mk .tr .g{display:flex;justify-content:center;padding-left:calc(8px * var(--s))}
+.mk .tr::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stripe,transparent)}
+.mk .tr.dash::before{background:repeating-linear-gradient(to bottom,var(--stripe) 0 3px,transparent 3px 5px)}
+.mk .tr.dot::before{background:repeating-linear-gradient(to bottom,var(--stripe) 0 1px,transparent 1px 3px)}
+.mk .tr:nth-child(even of .tr){background:rgba(74,82,112,.07)}
+.mk .tr:hover{background:var(--hover)}
+.mk .tr.sel{background:rgba(221,227,240,.06);box-shadow:inset 0 0 0 1px #5C6584}
+.mk .tr:focus-visible{outline:2px solid var(--moon);outline-offset:-2px;border-radius:2px}
+.mk .tr .nmc{color:var(--silver)}
+.mk .tr .nmc.cp{color:var(--mist)}
+.mk .lvp{display:inline-flex;align-items:center;justify-content:center;height:calc(16px * var(--s));min-width:calc(26px * var(--s));padding:0 calc(5px * var(--s));border-radius:calc(8px * var(--s));background:var(--sunk);color:var(--mist);font-size:calc(11px * var(--s));font-variant-numeric:tabular-nums}
+.mk .jc{display:inline-flex;align-items:center;gap:calc(5px * var(--s));color:var(--mist);font-size:calc(11.5px * var(--s))}
+.mk .jc .jb{font-size:calc(7px * var(--s));min-width:calc(16px * var(--s));height:calc(16px * var(--s))}
+.mk .stx{color:var(--mist)}
+.mk .stx .sw{color:var(--silver)}
+.mk .stx .why{color:var(--mist)}
+.mk .stx .why.ec{color:var(--etext)}
+.mk .xpp{color:var(--dusk);font-size:calc(11px * var(--s))}
+
+/* Detail */
+.mk .det{border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0;background:linear-gradient(180deg,#10162A,var(--night) 30%)}
+.mk .det-in{padding:calc(8px * var(--s));display:flex;flex-direction:column;gap:calc(8px * var(--s));flex:1}
+.mk .ban{position:relative;height:calc(132px * var(--s));border-radius:6px;overflow:hidden;background:#1B2240 center/cover no-repeat;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.mk .ban::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 80% at 100% 0,rgba(15,20,36,.6),rgba(15,20,36,0)),linear-gradient(180deg,rgba(15,20,36,0) 30%,rgba(15,20,36,.55) 62%,rgba(15,20,36,.96) 100%),radial-gradient(120% 90% at 0% 100%,rgba(15,20,36,.5),rgba(15,20,36,0) 60%)}
+.mk .ban .spill{position:absolute;z-index:1;top:calc(8px * var(--s));left:calc(8px * var(--s));height:calc(22px * var(--s));border-radius:calc(11px * var(--s));display:inline-flex;align-items:center;gap:calc(6px * var(--s));padding:0 calc(9px * var(--s)) 0 calc(4px * var(--s));font-size:calc(11px * var(--s));background:rgba(11,15,28,.78);box-shadow:inset 0 0 0 1px rgba(124,134,168,.45),0 2px 6px rgba(0,0,0,.35);backdrop-filter:blur(3px)}
+.mk .ban .bsrc{position:absolute;z-index:1;top:calc(10px * var(--s));right:calc(9px * var(--s));font-size:calc(10px * var(--s));color:rgba(221,227,240,.72);text-shadow:0 1px 2px rgba(0,0,0,.8)}
+.mk .ban .t{position:absolute;z-index:1;left:calc(11px * var(--s));right:calc(11px * var(--s));bottom:calc(9px * var(--s))}
+.mk .ban .t .n{font-size:calc(16px * var(--s));line-height:1.2;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.mk .ban .t .m{font-size:calc(11px * var(--s));color:var(--mist);margin-top:calc(2px * var(--s))}
+.mk .card{background:var(--raised);border:1px solid var(--line);border-radius:6px;padding:calc(8px * var(--s)) calc(10px * var(--s));box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.mk .card h4{display:flex;align-items:center;gap:calc(6px * var(--s));font-size:calc(11px * var(--s));color:var(--mist);margin-bottom:calc(6px * var(--s))}
+.mk .card h4 .r{margin-left:auto;color:var(--dusk)}
+.mk .hero{display:grid;grid-template-columns:auto 1fr;gap:calc(12px * var(--s));align-items:center}
+.mk .hero .hg{position:relative;padding:calc(4px * var(--s))}
+.mk .hero .hg.rdy::before{content:"";position:absolute;inset:calc(-6px * var(--s));border-radius:50%;background:radial-gradient(closest-side,rgba(242,210,122,.12),rgba(242,210,122,0))}
+.mk .hero .hg img{position:relative}
+.mk .hero .hl{font-size:calc(15px * var(--s));line-height:1.25}
+.mk .hero .hd{font-size:calc(12px * var(--s));color:var(--silver);margin-top:calc(2px * var(--s))}
+.mk .hero .hm{font-size:calc(11.5px * var(--s));color:var(--mist);margin-top:calc(5px * var(--s));line-height:1.4}
+.mk .req{display:flex;align-items:center;gap:calc(8px * var(--s));min-height:calc(22px * var(--s));font-size:calc(12.5px * var(--s));position:relative}
+.mk .req .mkr{width:calc(7px * var(--s));height:calc(7px * var(--s));border-radius:50%;flex:none;background:var(--moondeep)}
+.mk .req.next .mkr{background:transparent;box-shadow:inset 0 0 0 1.5px var(--moon)}
+.mk .req.next::before{content:"";position:absolute;left:calc(-10px * var(--s));top:calc(4px * var(--s));bottom:calc(4px * var(--s));width:2px;border-radius:1px;background:var(--moon)}
+.mk .req.lock .mkr{background:var(--eclipse)}
+.mk .req.unk .mkr{background:transparent;box-shadow:inset 0 0 0 1.5px var(--veil)}
+.mk .req .d{color:var(--mist);font-size:calc(11.5px * var(--s));margin-left:auto;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk .steps{display:flex;gap:3px;margin-top:calc(6px * var(--s))}
+.mk .steps i{flex:1;height:calc(5px * var(--s));border-radius:3px;background:rgba(74,82,112,.45)}
+.mk .steps i.dn{background:linear-gradient(var(--moonhi),var(--moon) 55%,var(--moondeep))}
+.mk .steps i.cur{background:rgba(242,210,122,.35);box-shadow:inset 0 0 0 1px rgba(242,210,122,.7)}
+.mk .rws{display:flex;flex-wrap:wrap;gap:calc(5px * var(--s))}
+.mk .rwc{display:inline-flex;align-items:center;gap:calc(5px * var(--s));font-size:calc(11.5px * var(--s));line-height:1.2;padding:calc(3px * var(--s)) calc(8px * var(--s));border-radius:calc(10px * var(--s));background:var(--sunk);border:1px solid var(--line);color:var(--silver)}
+.mk .rwc.uq{border-color:rgba(242,210,122,.5);color:var(--moonhi);background:linear-gradient(rgba(242,210,122,.10),rgba(242,210,122,.04))}
+.mk .rwc.uq::before{content:"";width:calc(5px * var(--s));height:calc(5px * var(--s));border-radius:50%;background:var(--moon)}
+.mk .jt{font-size:calc(11.5px * var(--s));color:var(--mist);line-height:1.45}
+.mk .card h4 .jbtn{color:var(--moon);border:1px solid rgba(242,210,122,.35);border-radius:calc(9px * var(--s));padding:0 calc(8px * var(--s));line-height:calc(17px * var(--s))}
+.mk .jb.tank{background:linear-gradient(#4A78DE,#24448F);border-color:#8EAEF2;min-width:calc(14px * var(--s));width:calc(14px * var(--s));height:calc(16px * var(--s));border-radius:calc(3px * var(--s)) calc(3px * var(--s)) calc(7px * var(--s)) calc(7px * var(--s))}
+.mk .giver{font-size:calc(12.5px * var(--s))}
+.mk .giver .z{color:var(--mist);font-size:calc(11.5px * var(--s))}
+.mk .acts{border-top:1px solid var(--line);display:flex;flex-direction:column;gap:calc(6px * var(--s));padding:calc(8px * var(--s)) calc(8px * var(--s)) calc(7px * var(--s));background:var(--night)}
+.mk .acts .pills{display:flex;flex-wrap:wrap;gap:calc(6px * var(--s))}
+.mk .apill{height:calc(28px * var(--s));border-radius:calc(14px * var(--s));display:inline-flex;align-items:center;gap:calc(6px * var(--s));padding:0 calc(12px * var(--s)) 0 calc(10px * var(--s));background:var(--raised);border:1px solid rgba(168,139,82,.55);color:var(--silver);font-size:calc(12px * var(--s));white-space:nowrap}
+.mk .apill svg{width:calc(13px * var(--s));height:calc(13px * var(--s));color:var(--mist)}
+.mk .apill.pri{background:var(--moon);border-color:var(--gilthi);color:#1A1406;box-shadow:inset 0 0 0 1px rgba(15,20,36,.9)}
+.mk .apill.pri svg{color:#1A1406}
+.mk .acts .rbs{display:flex;flex-wrap:wrap;gap:calc(5px * var(--s))}
+.mk .acts .ab{width:calc(28px * var(--s));height:calc(28px * var(--s));border-radius:50%;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mist)}
+.mk .acts .ab svg{width:calc(13px * var(--s));height:calc(13px * var(--s))}
+.mk .acts .prov{font-size:calc(10.5px * var(--s));color:var(--dusk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Status bar */
+.mk .w-stat{height:calc(26px * var(--s));display:flex;align-items:center;gap:calc(7px * var(--s));padding:0 calc(10px * var(--s));background:var(--sunk);border-top:1px solid rgba(168,139,82,.55);font-size:calc(11.5px * var(--s));color:var(--mist);white-space:nowrap;overflow:hidden}
+.mk .w-stat .dt{color:var(--veil)}
+.mk .w-stat .msq{height:calc(18px * var(--s));border-radius:calc(9px * var(--s));background:rgba(242,210,122,.10);color:var(--moon);display:inline-flex;align-items:center;gap:calc(4px * var(--s));padding:0 calc(9px * var(--s))}
+.mk .w-stat .ver{margin-left:auto;color:var(--veil)}
+
+/* ---------- B. Game scene + Todo overlay ---------- */
+.mk .game{position:relative;width:100%;aspect-ratio:16/9;min-height:480px;border-radius:10px;overflow:hidden;background:#0B0F1C center/cover no-repeat;
+  box-shadow:0 0 0 1px rgba(0,0,0,.6),0 18px 44px rgba(0,0,0,.5);isolation:isolate;transition:background-image .3s}
+.mk .game::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(130% 100% at 50% 40%,rgba(0,0,0,0) 55%,rgba(0,0,0,.35) 100%)}
+.mk .hud-et{position:absolute;z-index:2;top:10px;right:12px;display:flex;align-items:center;gap:8px;padding:3px 10px;border-radius:3px;font-size:12px;color:#F3EBD8;
+  background:linear-gradient(90deg,rgba(8,10,16,.0),rgba(8,10,16,.55) 18%,rgba(8,10,16,.55) 82%,rgba(8,10,16,0));text-shadow:0 0 2px #000,0 1px 1px #000;letter-spacing:.02em}
+.mk .hud-chat{position:absolute;z-index:1;left:12px;bottom:12px;width:min(30%,320px);border-radius:4px;background:linear-gradient(rgba(10,12,18,.42),rgba(10,12,18,.58));box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:0 0 6px;font-size:11.5px}
+.mk .hud-chat .tabs{display:flex;gap:2px;padding:0 4px;transform:translateY(-100%);position:absolute;top:0;left:0}
+.mk .hud-chat .tabs span{padding:2px 9px;border-radius:4px 4px 0 0;background:rgba(10,12,18,.5);color:#BEB6A4;font-size:11px}
+.mk .hud-chat .tabs span.on{background:rgba(10,12,18,.66);color:#F6EEDB}
+.mk .hud-chat p{padding:2px 8px 0;color:#EDE7DA;text-shadow:0 0 2px #000,0 1px 1px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk .hud-chat p.sys{color:#D9D2A6}
+.mk .hud-chat p.ls{color:#9FD39A}
+.mk .hud-bars{position:absolute;z-index:1;left:50%;transform:translateX(-50%);bottom:12px;display:flex;flex-direction:column;gap:4px}
+.mk .hud-bars .bar{display:flex;gap:3px}
+.mk .hud-bars .bar i{width:24px;height:24px;border-radius:5px;background:radial-gradient(120% 120% at 30% 25%,rgba(70,66,58,.75),rgba(16,15,14,.85));box-shadow:inset 0 0 0 1px rgba(210,190,140,.28),inset 0 -2px 3px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.6)}
+.mk .hud-bars .bar i.k{background:radial-gradient(120% 120% at 30% 25%,rgba(92,104,140,.85),rgba(22,26,40,.92))}
+.mk .hud-bars .xp{height:5px;border-radius:3px;background:rgba(10,10,14,.6);box-shadow:inset 0 0 0 1px rgba(210,190,140,.25);overflow:hidden}
+.mk .hud-bars .xp b{display:block;height:100%;width:62%;background:linear-gradient(#E9DDA8,#B79A4A)}
+.mk .todo{position:absolute;z-index:2;top:max(5%,36px);right:4%;width:max-content;max-width:calc(100% - 24px);min-width:calc(260px * var(--s));padding:calc(8px * var(--s)) calc(10px * var(--s)) calc(9px * var(--s));border-radius:calc(8px * var(--s));
+  background:rgba(15,20,36,var(--op,.85));border:1px solid rgba(42,49,73,.9);font-size:calc(13px * var(--s));
+  --ol:#0F1424;text-shadow:-1px -1px 0 var(--ol),0 -1px 0 var(--ol),1px -1px 0 var(--ol),-1px 0 0 var(--ol),1px 0 0 var(--ol),-1px 1px 0 var(--ol),0 1px 0 var(--ol),1px 1px 0 var(--ol)}
+.mk .todo .hdr{display:flex;align-items:center;gap:calc(8px * var(--s));height:calc(24px * var(--s));margin-bottom:calc(2px * var(--s))}
+.mk .todo .hdr .tt{color:var(--silver)}
+.mk .more{margin-left:auto;width:calc(22px * var(--s));height:calc(22px * var(--s));border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--mist);background:rgba(30,36,55,.0);flex:none}
+.mk .more svg{width:calc(12px * var(--s));height:calc(12px * var(--s))}
+.mk .todo .sec{display:flex;align-items:center;gap:calc(6px * var(--s));height:calc(22px * var(--s));margin-top:calc(4px * var(--s));color:var(--mist);font-size:calc(12px * var(--s))}
+.mk .todo .sec .cv{font-size:calc(8px * var(--s));width:calc(10px * var(--s));text-align:center}
+.mk .todo .sec::after{content:"";flex:1;height:1px;margin-left:calc(6px * var(--s));background:linear-gradient(90deg,rgba(168,139,82,.55),rgba(168,139,82,0))}
+.mk .todo .row{display:flex;align-items:center;gap:calc(7px * var(--s));height:calc(26px * var(--s));border-radius:4px;padding-right:0}
+.mk .todo .row:hover{background:rgba(38,45,69,.55)}
+.mk .todo .row .nm{color:var(--silver);white-space:nowrap}
+.mk .todo .row .ht{color:var(--mist);white-space:nowrap}
+.mk .todo .row .more{margin-left:auto;opacity:.75}
+.mk .todo .row .nm.run{color:var(--moon)}
+.mk .todo .mo{height:calc(22px * var(--s));display:flex;align-items:center;padding-left:calc(23px * var(--s));color:var(--mist);font-size:calc(12px * var(--s))}
+
+/* ---------- C. Dalamud plugin installer ---------- */
+.mk .dal{border-radius:6px;overflow:hidden;background:rgba(15,15,15,.96);border:1px solid #3A3A3A;box-shadow:0 0 0 1px #000,0 18px 44px rgba(0,0,0,.55);color:#FFFFFF;font-size:calc(13px * var(--s));line-height:1.35}
+.mk .dal .dt{height:calc(24px * var(--s));display:flex;align-items:center;gap:calc(7px * var(--s));padding:0 calc(8px * var(--s));background:#2B2B2B;font-size:calc(12.5px * var(--s))}
+.mk .dal .dt .tri{width:0;height:0;border-left:calc(4px * var(--s)) solid transparent;border-right:calc(4px * var(--s)) solid transparent;border-top:calc(6px * var(--s)) solid #DDD}
+.mk .dal .dt .x{margin-left:auto;color:#BBB}
+.mk .dal .db{display:grid;grid-template-columns:calc(150px * var(--s)) minmax(0,1fr);min-height:calc(340px * var(--s))}
+.mk .dal .cats{padding:calc(8px * var(--s)) calc(6px * var(--s));border-right:1px solid #2E2E2E;font-size:calc(12.5px * var(--s))}
+.mk .dal .cats div{padding:calc(4px * var(--s)) calc(8px * var(--s));border-radius:3px;color:#E6E6E6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk .dal .cats div.on{background:rgba(110,110,110,.38)}
+.mk .dal .cats .gh{color:#8F8F8F;margin-top:calc(10px * var(--s));font-size:calc(11.5px * var(--s))}
+.mk .dal .cats .gh:first-child{margin-top:0}
+.mk .dal .main{padding:calc(8px * var(--s)) calc(10px * var(--s));min-width:0}
+.mk .dal .srow{display:flex;gap:calc(8px * var(--s));margin-bottom:calc(8px * var(--s))}
+.mk .dal .inp{flex:1;height:calc(24px * var(--s));border-radius:3px;background:rgba(74,74,74,.54);display:flex;align-items:center;padding:0 calc(8px * var(--s));color:#8F8F8F;font-size:calc(12px * var(--s));white-space:nowrap;overflow:hidden;min-width:0}
+.mk .dal .cmb{height:calc(24px * var(--s));display:flex;align-items:center;gap:calc(8px * var(--s));color:#E6E6E6;font-size:calc(12px * var(--s));white-space:nowrap;flex:none}
+.mk .dal .cmb .cb{height:100%;border-radius:3px;background:rgba(74,74,74,.54);display:flex;align-items:center;gap:calc(10px * var(--s));padding-left:calc(8px * var(--s));overflow:hidden}
+.mk .dal .cmb b{width:calc(24px * var(--s));height:100%;background:#5A5A5A;display:flex;align-items:center;justify-content:center;font-weight:400}
+.mk .dal .ent{position:relative;display:grid;grid-template-columns:calc(64px * var(--s)) minmax(0,1fr);gap:calc(10px * var(--s));padding:calc(7px * var(--s)) calc(8px * var(--s));border-radius:3px;margin-bottom:calc(2px * var(--s))}
+.mk .dal .ent.hov{background:rgba(110,110,110,.30)}
+.mk .dal .ic{position:relative;width:calc(64px * var(--s));height:calc(64px * var(--s))}
+.mk .dal .ic img{width:100%;height:100%}
+.mk .dal .ph{width:100%;height:100%;border-radius:calc(4px * var(--s));background:linear-gradient(145deg,#4A4A4A,#2C2C2C);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;color:#7A7A7A}
+.mk .dal .ph svg{width:44%;height:44%}
+.mk .dal .chk{position:absolute;right:0;bottom:0;width:calc(20px * var(--s));height:calc(20px * var(--s))}
+.mk .dal .tx{min-width:0;padding-top:calc(2px * var(--s))}
+.mk .dal .tn2{display:flex;align-items:baseline;gap:calc(6px * var(--s));white-space:nowrap;overflow:hidden}
+.mk .dal .tn2 b{font-weight:inherit;font-size:calc(14.5px * var(--s))}
+.mk .dal .tn2 span{color:#9C9C9C;font-size:calc(12px * var(--s));overflow:hidden;text-overflow:ellipsis}
+.mk .dal .pl{color:#E8E8E8;margin-top:calc(3px * var(--s));font-size:calc(12.5px * var(--s));display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mk .dal .vr{color:#9C9C9C;font-size:calc(11.5px * var(--s));margin-top:calc(3px * var(--s))}
+.mk .dal .vr i{font-style:normal;color:#8FE88F}
+.mk .dal .ftr{display:flex;justify-content:flex-end;gap:calc(8px * var(--s));padding:calc(8px * var(--s)) calc(10px * var(--s));border-top:1px solid #2E2E2E}
+.mk .dal .ftr span{padding:calc(4px * var(--s)) calc(12px * var(--s));border-radius:3px;background:rgba(80,80,80,.7);font-size:calc(12px * var(--s))}
+
+/* ---------- D. Legend ---------- */
+.mk .leg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.mk .lc{background:linear-gradient(180deg,#141A2E,#0F1424);border:1px solid var(--line);border-radius:8px;padding:12px 14px 12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.mk .lc .sz{display:flex;align-items:flex-end;gap:16px;min-height:64px}
+.mk .lc .sz figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.mk .lc .sz figcaption{font-size:10px;color:var(--dusk);font-variant-numeric:tabular-nums}
+.mk .lc .ln{margin-top:10px;font-weight:600;font-size:13px}
+.mk .lc .lm{margin-top:2px;font-size:11.5px;color:var(--mist);line-height:1.4}
+
+/* ---------- Loupe ---------- */
+.mk .loupe{background:#090C17;border:1px solid #232A42;border-radius:10px;padding:14px 14px 16px;overflow-x:auto}
+.mk .loupe .lhd{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;margin-bottom:12px;font-size:12px;color:var(--mist)}
+.mk .loupe .lhd b{color:var(--silver);font-weight:600;font-size:13px}
+.mk .lcols{display:flex;flex-direction:column;gap:18px}
+.mk .lblk h4{font-size:12px;color:var(--mist);margin:0 0 8px;letter-spacing:.02em}
+.mk .lline{display:flex;flex-wrap:nowrap;width:max-content;align-items:flex-start;gap:10px;margin-bottom:10px}
+.mk .lsz{width:44px;flex:none;padding-top:6px;font-size:11.5px;color:var(--dusk);font-variant-numeric:tabular-nums}
+.mk .ltile{margin:0;display:flex;flex-direction:column;gap:5px}
+.mk .ltile figcaption{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--dusk);white-space:nowrap}
+.mk .ltile .l1x{display:block;flex:none}
+.mk .lz{position:relative;line-height:0;box-shadow:0 0 0 1px #1C2238}
+.mk .lz canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.mk .lz::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(to right,rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.07) 1px,transparent 1px);background-size:4px 4px}
+
+/* 150%: the tree pane gives way first, as the plugin's narrow tier does */
+.mk.s15 .tree{display:none}
+.mk.s15 .w-body{grid-template-columns:calc(64px * var(--s)) minmax(0,1fr) minmax(calc(260px * var(--s)),calc(330px * var(--s)))}
+/* ---------- Responsive (container) ---------- */
+@container mk (max-width: 1320px){
+  .mk .w-body{grid-template-columns:calc(64px * var(--s)) minmax(0,calc(200px * var(--s))) minmax(0,1fr) minmax(calc(280px * var(--s)),calc(330px * var(--s)))}
+  .mk .leg{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mk .qv span.x2{display:none}
+}
+@container mk (max-width: 1100px){
+  .mk .mk-scenes{grid-template-columns:minmax(0,1fr)}
+  .mk .w-body,.mk.s15 .w-body{grid-template-columns:calc(64px * var(--s)) minmax(0,1fr) minmax(calc(260px * var(--s)),calc(330px * var(--s)))}
+  .mk .tree{display:none}
+}
+@container mk (max-width: 900px){
+  .mk{padding:12px}
+  .mk .mk-stage{padding:12px 10px 14px}
+  .mk .w-body,.mk.s15 .w-body{grid-template-columns:calc(44px * var(--s)) minmax(0,1fr)}
+  .mk .det{grid-column:2;border-left:0;border-top:1px solid var(--line)}
+  .mk .rail{grid-row:1 / span 2}
+  .mk .st span.lb,.mk .rail .foot .pc{display:none}
+  .mk .st .bd{right:calc(2px * var(--s))}
+  .mk .rail .crest{width:calc(32px * var(--s))}
+  .mk .rail .rule{width:calc(28px * var(--s))}
+  .mk .cols{grid-template-columns:calc(32px * var(--s)) minmax(0,1.3fr) calc(44px * var(--s)) minmax(0,1.5fr)}
+  .mk .cols>.c-job,.mk .cols>.c-exp{display:none}
+  .mk .qv,.mk .chr .srv,.mk .w-tool .tbtn{display:none}
+  .mk .dal .db{grid-template-columns:minmax(0,1fr)}
+  .mk .dal .cats{display:none}
+  .mk .hud-chat{width:30%;font-size:10.5px}
+  .mk .game{min-height:600px}
+  .mk .hud-bars .bar i{width:20px;height:20px;border-radius:4px}
+  .mk .mk-note{margin-left:0}
+}
+@container mk (max-width: 560px){.mk .leg{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion: reduce){.mk *{transition:none!important}}
+</style>
+
+<div class="mk" id="mk">
+  <div class="mk-bar" role="toolbar" aria-label="Mock controls">
+    <div class="mk-grp" role="group" aria-label="Moon set"><span class="mk-lab">Moon set</span><div class="mk-seg" data-role="variants"></div></div>
+    <div class="mk-grp" role="group" aria-label="UI scale"><span class="mk-lab">UI scale</span>
+      <div class="mk-seg" data-role="scale"><button type="button" data-scale="1" aria-pressed="true">100%</button><button type="button" data-scale="1.5" aria-pressed="false">150%</button></div></div>
+    <button type="button" class="mk-tog" data-role="grid" aria-pressed="false"><span class="mk-knob" aria-hidden="true"></span>Show grid at 400%</button>
+    <span class="mk-note">Interactive: click or arrow through the quest rows.</span>
+  </div>
+
+  <div class="mk-scenes">
+    <section class="mk-loupe" data-role="loupe" hidden aria-label="Pixel grid at 400 percent">
+      <div class="loupe">
+        <div class="lhd"><b>Pixel grid at 400%</b><span>Each square is one screen pixel. Each tile is a row cut to the moon and its first letters, drawn at true size (shown under it at 1×) and enlarged without smoothing. This assumes the moons become textures rasterised at exact size; today MoonGlyph draws them with ImDrawList.</span></div>
+        <div class="lcols" data-role="lcols"></div>
+      </div>
+    </section>
+
+    <!-- A. Main window -->
+    <section class="mk-sa" aria-label="Main window">
+      <div class="mk-cap"><b>A · Main window</b><span>Journal tab, Pinned scope. Select a row to read its state.</span></div>
+      <div class="mk-stage" data-role="stageA">
+        <div class="win">
+          <div class="w-title"><span class="tri" aria-hidden="true"></span>Tsukimichi<span class="wc" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>
+            <svg width="10" height="10" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><path d="M3 3l10 10M13 3 3 13"/></svg></span></div>
+          <div class="w-tool">
+            <div class="pill-in srch"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><span>Search quests, rewards or ids</span></div>
+            <div class="qv"><span class="on">All</span><span>Unlocks</span><span>My level</span><span>Stalled</span><span class="x2">Story sidequests</span><span class="x2">Sprout mode</span></div>
+            <div class="tbtn"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5" cy="4" r="1.6" fill="#151C33"/><circle cx="11" cy="8" r="1.6" fill="#151C33"/><circle cx="7" cy="12" r="1.6" fill="#151C33"/></svg>Filters</div>
+            <div class="chr"><span class="jb">WHM</span><span>Michiru Tsukikage</span><span class="srv" style="color:var(--dusk)">Balmung</span><span class="pip"></span></div>
+          </div>
+          <div class="w-chips"><span class="chip">Pinned <i>✕</i></span><span class="cnt" data-role="tcount"></span></div>
+          <div class="w-body">
+            <nav class="rail" aria-label="Tabs">
+              <svg class="crest" viewBox="0 0 44 40" aria-hidden="true"><defs><radialGradient id="mk-cr-g" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#FFF6D8"/><stop offset=".6" stop-color="#E9E4D2"/><stop offset="1" stop-color="#BFC6DA"/></radialGradient></defs>
+                <circle cx="22" cy="14" r="11" fill="#F2D27A" opacity=".08"/><path d="M26.5 5.2a9 9 0 1 0 2.9 15.6A7.2 7.2 0 0 1 26.5 5.2z" fill="url(#mk-cr-g)"/>
+                <path d="M6 29h32" stroke="#A88B52" stroke-width=".8" opacity=".7"/><path d="M19 31.5h6M17.5 34h9M20 36.5h4" stroke="#E9E4D2" stroke-width="1.1" stroke-linecap="round" opacity=".55"/></svg>
+              <div class="rule"></div>
+              <div class="thread" aria-hidden="true"></div>
+              <div class="st on" title="Every quest in the game, filed as the journal files it"><span class="bd">41</span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h5.2c.9 0 1.8.5 1.8 1.4 0-.9.9-1.4 1.8-1.4H17v11h-5.2c-.9 0-1.8.5-1.8 1.2 0-.7-.9-1.2-1.8-1.2H3z"/><path d="M10 6v10.5"/></svg><span class="lb">Journal</span></div>
+              <div class="st" title="Quest rewards that exist nowhere else"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M12.6 2.6A7.6 7.6 0 1 0 17.4 13 6.1 6.1 0 0 1 12.6 2.6z"/></svg><span class="lb">Moonlit</span></div>
+              <div class="st" title="Every stored character"><svg viewBox="0 0 20 20" fill="currentColor"><circle cx="7.5" cy="6.5" r="3"/><circle cx="14" cy="7.5" r="2.4" opacity=".7"/><path d="M2 16.5c0-3.1 2.4-5 5.5-5s5.5 1.9 5.5 5z"/><path d="M13.5 16.5c0-2-.8-3.5-2.1-4.3 3.1-.7 6.6.9 6.6 4.3z" opacity=".7"/></svg><span class="lb">Characters</span></div>
+              <div class="st" title="Aether current quests"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 12c3-1 5.5-3.6 7-8 1 3.3 3.4 6 7 7.2"/><path d="M5 15.5c2.6-.6 5-1.8 6.7-4M8.5 17.5c2.2-.4 4.4-1.4 6-3.2"/></svg><span class="lb">Flight</span></div>
+              <div class="st" title="Clear my blues"><svg viewBox="0 0 20 20"><path d="M10 2.2 16.6 6v8L10 17.8 3.4 14V6z" fill="#3E6FD8" stroke="#9CC0FF" stroke-width="1"/><path d="M10 6v5.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="13.8" r="1.1" fill="#fff"/></svg><span class="lb">My blues</span></div>
+              <div class="foot">
+                <svg class="orb" data-orbit="0.65" style="width:calc(30px * var(--s));height:calc(30px * var(--s))"></svg><span class="pc">65%</span>
+                <div class="rb on" title="Todo overlay"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 4h8M6 8h8M6 12h8"/><circle cx="2.6" cy="4" r=".9" fill="currentColor"/><circle cx="2.6" cy="8" r=".9" fill="currentColor"/><circle cx="2.6" cy="12" r=".9" fill="currentColor"/></svg></div>
+                <div class="rb" title="Nearby"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a5 5 0 0 0-5 5c0 3.7 5 9 5 9s5-5.3 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg></div>
+                <div class="rb" title="Help"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6.2a2 2 0 1 1 2.8 1.8c-.6.3-.8.7-.8 1.3"/><circle cx="8" cy="12" r=".7" fill="currentColor"/></svg></div>
+                <div class="rb" title="Settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.3"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg></div>
+              </div>
+            </nav>
+            <div class="tree" data-role="tree" aria-label="Journal tree"></div>
+            <div class="tbl" role="grid" aria-label="Quests">
+              <div class="thd cols" role="row"><div role="columnheader" aria-label="State"></div><div class="sort" role="columnheader">Name ▴</div><div role="columnheader">Lv</div><div class="c-job" role="columnheader">Job</div><div role="columnheader">Status</div><div class="c-exp" role="columnheader">Exp</div></div>
+              <div data-role="rows"></div>
+            </div>
+            <aside class="det" data-role="detail" aria-live="polite"></aside>
+          </div>
+          <div class="w-stat" data-role="status"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- B. Todo overlay over the game -->
+    <section class="mk-sb" aria-label="Todo overlay in game">
+      <div class="mk-cap"><b>B · Todo overlay in game</b><span data-role="scenecap"></span>
+        <span class="mk-capr"><span class="mk-seg" data-role="scene" role="group" aria-label="Scene lighting"><button type="button" data-scene="day" aria-pressed="false">Daylight</button><button type="button" data-scene="night" aria-pressed="true">Night</button></span></span></div>
+      <div class="game" data-role="game">
+        <div class="hud-et" aria-hidden="true"><span data-role="et"></span></div>
+        <div class="todo" data-role="todo"></div>
+        <div class="hud-chat" aria-hidden="true">
+          <div class="tabs"><span class="on">General</span><span>Battle</span><span>Event</span></div>
+          <p class="sys" data-role="chat1"></p>
+          <p data-role="chat2"></p>
+          <p class="ls" data-role="chat3"></p>
+          <p data-role="chat4"></p>
+        </div>
+        <div class="hud-bars" aria-hidden="true" data-role="bars"></div>
+      </div>
+    </section>
+
+    <!-- C. Dalamud plugin installer -->
+    <section class="mk-sc" aria-label="Dalamud plugin installer">
+      <div class="mk-cap"><b>C · Dalamud plugin installer</b><span>Installed Plugins list</span></div>
+      <div class="dal">
+        <div class="dt"><span class="tri" aria-hidden="true"></span>Plugin Installer<span class="x" aria-hidden="true">✕</span></div>
+        <div class="db">
+          <div class="cats"><div class="gh">Plugins</div><div>All Plugins</div><div class="on">Installed Plugins</div><div>Updateable</div><div>Plugin Changelogs</div><div class="gh">Categories</div><div>Jobs</div><div>UI</div><div>Social</div><div>Utility</div><div>Other</div></div>
+          <div class="main">
+            <div class="srow"><div class="inp">Search for plugins...</div><div class="cmb"><span class="cb">Alphabetical<b>▾</b></span>Sort By</div></div>
+            <div data-role="installer"></div>
+          </div>
+        </div>
+        <div class="ftr"><span>Settings</span><span>Close</span></div>
+      </div>
+    </section>
+
+    <!-- D. Legend -->
+    <section class="mk-sd" aria-label="Legend">
+      <div class="mk-cap"><b>D · Eight moons, eight states</b><span>Shown at 16, 20, 32 and 64 screen pixels, whatever the UI scale.</span></div>
+      <div class="leg" data-role="legend"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var STATES = ["ready", "ready-on-another-job", "in-journal", "blocked", "done-this-cycle", "completed", "locked-out", "not-checked"];
+  var NAME = { "ready": "Ready", "ready-on-another-job": "Ready on another job", "in-journal": "In journal", "blocked": "Blocked",
+    "done-this-cycle": "Done this cycle", "completed": "Completed", "locked-out": "Locked out", "not-checked": "Not checked" };
+  // Help › Phases, as the plugin words them.
+  var MEAN = {
+    "ready": "Every requirement is met on the current job; go get it.",
+    "ready-on-another-job": "Met on another job; the detail pane names it.",
+    "in-journal": "In the journal now; the detail pane shows the step.",
+    "blocked": "A requirement is unmet; Status names it in one clause.",
+    "done-this-cycle": "A repeatable quest already turned in since its last reset: Done today for a daily, Done this week for a weekly.",
+    "completed": "Turned in on this character.",
+    "locked-out": "Locked out for good, usually by a choice made in another quest; Status names the cause.",
+    "not-checked": "Not evaluated: no snapshot, or data the plugin cannot read for this character."
+  };
+  // Theme.StateColor, with the readable text tones for Eclipse and Veil.
+  var INK = { "ready": "#F2D27A", "in-journal": "#F2D27A", "completed": "#F2D27A", "ready-on-another-job": "#DDE3F0", "done-this-cycle": "#DDE3F0",
+    "blocked": "#7C86A8", "locked-out": "#D68AA8", "not-checked": "#8A93B0" };
+  var STRIPE = { "ready": ["#F2D27A", ""], "in-journal": ["#F2D27A", ""], "completed": ["rgba(214,178,90,.55)", ""], "ready-on-another-job": ["#DDE3F0", ""],
+    "done-this-cycle": ["rgba(221,227,240,.55)", ""], "blocked": ["rgba(124,134,168,.8)", ""], "locked-out": ["#B25C7F", "dash"], "not-checked": ["#5C6584", "dot"] };
+
+  // Real quests from the repo's catalog fixture (catalog-2026.09.15): names, levels, givers, previous quests, locks,
+  // repeat intervals and the "not judged" flags (HouseRequired, AcceptConditions) are as the fixture has them.
+  // Viewed character: Michiru Tsukikage, White Mage 100, Order of the Twin Adder. Dates are the character's own.
+  var Q = [
+    { g: "Main Scenario", st: "completed", n: "The Ultimate Weapon", rw: [["Armor Identification Key", 0], ["Fantasia", 0]], lv: 50, job: "All", lab: "Completed", det: "2024-11-02", xp: "ARR", giver: "Raubahn", zone: "Northern Thanalan", art: "night", pos: "70% 30%",
+      path: "Main Scenario › Seventh Umbral Era", req: [["ok", "Level 50", "you are 100"], ["ok", "Previous quest", "done"]] },
+    { g: "Main Scenario", st: "completed", n: "Endwalker", rw: [["Argos Horn", 1], ["Wind-up Herois", 1], ["Endwalker – Footfalls Orchestrion Roll", 1]], lv: 90, job: "All", lab: "Completed", det: "2025-03-18", xp: "EW", giver: "Alphinaud", zone: "Ultima Thule", art: "night", pos: "30% 20%",
+      path: "Main Scenario › Endwalker", req: [["ok", "Level 90", "you are 100"], ["ok", "Previous quest", "done"]] },
+    { g: "Main Scenario", st: "in-journal", n: "Dawntrail", rw: [["Alpaca Whistle", 1], ["Smile Orchestrion Roll", 1]], lv: 100, job: "All", lab: "In journal", det: "step 4 of 6", steps: [4, 6], xp: "DT", giver: "Wuk Lamat", zone: "Living Memory", art: "day", pos: "55% 40%",
+      path: "Main Scenario (Dawntrail) › Dawntrail", req: [["ok", "Level 100", "you are 100"], ["ok", "Previous quest", "A Journey Never-ending"]] },
+    { g: "Main Scenario", st: "blocked", n: "Crossroads", rw: [["Heavens' Eye Materia XI", 0], ["Savage Aim Materia XI", 0]], lv: 100, job: "All", lab: "Blocked", det: "after MSQ: The Warmth of Family", xp: "DT", giver: "Wuk Lamat", zone: "Shaaloani", art: "day", pos: "40% 60%",
+      path: "Main Scenario (Dawntrail) › Post-Dawntrail", req: [["ok", "Level 100", "you are 100"], ["next", "Previous quest", "The Warmth of Family"]] },
+    { g: "Main Scenario", st: "locked-out", n: "The Company You Keep (Maelstrom)", rw: [["Standard Spectrum Dye ×3", 0]], lv: 20, job: "All", lab: "Locked out", det: "Another Grand Company (Order of the Twin Adder)", xp: "ARR", giver: "storm officer", zone: "The Waking Sands", art: "day", pos: "10% 50%",
+      path: "Main Scenario › Seventh Umbral Era", req: [["lock", "Other path", "you chose the Order of the Twin Adder"]] },
+
+    { g: "Feature Quests", st: "ready", n: "It Could Happen to You", lv: 15, job: "All", lab: "Ready", det: "Lv 15 · well-heeled youth", xp: "ARR", giver: "well-heeled youth", zone: "Ul'dah - Steps of Nald", art: "day", pos: "80% 30%",
+      path: "Sidequests › Ul'dahn Sidequests", req: [["ok", "Level 15", "you are 100"], ["ok", "Previous quest", "The Gridanian Envoy"]] },
+    { g: "Feature Quests", st: "ready", n: "Towards the Firmament", rw: [["Beet Soup ×5", 0]], lv: 60, job: "All", lab: "Ready", det: "Lv 60 · recruitment notice", xp: "HW", giver: "recruitment notice", zone: "Foundation", art: "day", pos: "20% 20%",
+      path: "Records of Unusual Endeavors › Ishgardian Restoration", req: [["ok", "Level 60", "you are 100"], ["ok", "Previous quest", "Litany of Peace"]] },
+    { g: "Feature Quests", st: "done-this-cycle", n: "Seeking Inspiration", rw: [["Singing Cluster ×18", 0]], lv: 60, job: "All", lab: "Done this week", det: "resets in 3 d", xp: "HW", giver: "Amphelice", zone: "Idyllshire", art: "night", pos: "50% 10%",
+      path: "Sidequests › Weapon Enhancement › Anima Weapons", req: [["ok", "Level 60", "you are 100"], ["next", "Weekly reset", "Tuesday 08:00 UTC"]] },
+    { g: "Feature Quests", st: "not-checked", n: "Faerie Tale", rw: [["What Angel Wakes Me Orchestrion Roll", 1]], lv: 91, job: "All", lab: "Not checked", det: "accept condition", xp: "DT", giver: "Aenc Daen", zone: "Il Mheg", art: "night", pos: "65% 70%",
+      path: "Records of Unusual Endeavors › Pilgrim's Traverse", req: [["ok", "Level 91", "you are 100"], ["ok", "Previous quest", "Pilgrimage of Light"], ["unk", "Accept condition", "the plugin cannot judge it"]] },
+    { g: "Feature Quests", st: "locked-out", n: "Heads, I Win", rw: [["Voice of no Return (Guitar) Orchestrion Roll", 1]], lv: 80, job: "All", lab: "Locked out", det: "Another choice (Tails, You Lose)", xp: "ShB", giver: "Konogg", zone: "", art: "night", pos: "85% 80%",
+      path: "Chronicles of a New Era › YoRHa: Dark Apocalypse", req: [["ok", "Previous quest", "An Academic Dispute"], ["lock", "Other path", "you did Tails, You Lose"]] },
+
+    { g: "Class & Job Quests", st: "completed", n: "Heart of the Forest", rw: [["Healer's Robe", 0], ["Cleric's Attire Coffer (IL 90)", 0], ["Benediction", 1]], lv: 50, job: "WHM", lab: "Completed", det: "2024-12-09", xp: "ARR", giver: "Raya-O-Senna", zone: "South Shroud", art: "night", pos: "60% 50%",
+      path: "Class & Job Quests › White Mage", req: [["ok", "Level 50", "you are 100"], ["ok", "Job: White Mage", "you are WHM"]] },
+    { g: "Class & Job Quests", st: "ready-on-another-job", n: "The Narwhal Beckons", lv: 90, job: "Tank", lab: "Ready on PLD", det: "", xp: "DT", giver: "Loazenikwe", zone: "Tuliyollal", art: "day", pos: "35% 40%",
+      path: "Class & Job Quests › Tank Role Quests (Dawntrail)", req: [["ok", "Level 90", "PLD is 94"], ["next", "Job: any tank", "you are WHM"]] },
+    { g: "Class & Job Quests", st: "ready-on-another-job", n: "Carpe Diem", rw: [["Hi-Cordial ×3", 0], ["Patience II", 1]], lv: 60, job: "FSH", lab: "Ready on FSH", det: "", xp: "HW", giver: "Ansaulme", zone: "Foundation", art: "night", pos: "15% 40%",
+      path: "Class & Job Quests › Fisher", req: [["ok", "Level 60", "FSH is 72"], ["next", "Job: Fisher", "you are WHM"]] },
+    { g: "Class & Job Quests", st: "blocked", n: "Sleepless in Ishgard", lv: 92, job: "Tank", lab: "Blocked", det: "after: The Narwhal Beckons", xp: "DT", giver: "Tentoawa", zone: "Foundation", art: "night", pos: "75% 60%",
+      path: "Class & Job Quests › Tank Role Quests (Dawntrail)", req: [["ok", "Level 92", "PLD is 94"], ["next", "Previous quest", "The Narwhal Beckons"]] },
+
+    { g: "Sidequests", st: "in-journal", n: "Small Business, Big Dreams", lv: 90, job: "All", lab: "In journal", det: "step 2 of 5", steps: [2, 5], xp: "EW", giver: "Mehdjina", zone: "Old Sharlayan", art: "day", pos: "90% 50%",
+      path: "Sidequests › Side Story Quests › Tataru's Grand Endeavor", req: [["ok", "Level 90", "you are 100"], ["ok", "Previous quest", "Newfound Adventure"]] },
+    { g: "Sidequests", st: "not-checked", n: "Bird in Hand", rw: [["Krakka Root", 0]], lv: 30, job: "All", lab: "Not checked", det: "house", xp: "ARR", giver: "Luquelot", zone: "Central Shroud", art: "night", pos: "45% 30%",
+      path: "Sidequests › Gridanian Sidequests", req: [["ok", "Level 30", "you are 100"], ["ok", "Previous quest", "My Feisty Little Chocobo"], ["unk", "House", "the plugin cannot judge it"]] },
+
+    { g: "Allied Society Quests", st: "done-this-cycle", n: "In the Shadow of the Moon", rw: [["Venture", 0]], lv: 46, job: "All", lab: "Done today", det: "resets in 3 h", xp: "ARR", giver: "Houu", zone: "Western La Noscea", art: "night", pos: "25% 15%",
+      path: "Allied Society Quests › Sahagin › Daily Quests", req: [["ok", "Rank with the Sahagin", "met"], ["next", "Daily reset", "15:00 UTC"]] },
+    { g: "Allied Society Quests", st: "done-this-cycle", n: "Mist Opportunities", rw: [["Sylphic Goldleaf", 0], ["Heavens' Eye Materia IV", 0]], lv: 48, job: "All", lab: "Done today", det: "resets in 3 h", xp: "ARR", giver: "Moxia", zone: "East Shroud", art: "night", pos: "5% 70%",
+      path: "Allied Society Quests › Sylph › Daily Quests", req: [["ok", "Rank with the sylphs", "met"], ["next", "Daily reset", "15:00 UTC"]] },
+    { g: "Allied Society Quests", st: "blocked", n: "Brotherhood of Ash", lv: 43, job: "All", lab: "Blocked", det: "after: Peace for Thanalan", xp: "ARR", giver: "Hamujj Gah", zone: "Southern Thanalan", art: "day", pos: "70% 85%",
+      path: "Allied Society Quests › Amalj'aa › Main Quests", req: [["ok", "Level 43", "you are 100"], ["next", "Previous quest", "Peace for Thanalan"]] }
+  ];
+
+  var TREE = [
+    ["", "All quests", "3,318 / 5,084", 0.65, "41", ""],
+    ["sec", "Main Scenario", "1,021 / 1,038", 0.98, "1", ""],
+    ["sec", "Chronicles of a New Era", "162 / 239", 0.68, "", ""],
+    ["sec", "Allied Society Quests", "401 / 732", 0.55, "6", ""],
+    ["sec", "Class & Job Quests", "711 / 1,104", 0.64, "12", ""],
+    ["sec", "Sidequests", "1,003 / 1,794", 0.56, "19", ""],
+    ["sec", "Other Quests", "20 / 177", 0.11, "3", ""],
+    ["hair"],
+    ["sec", "Unlock quests", "196 / 241", 0.81, "4", ""],
+    ["", "Removed from the game", "28 / 31", 0.9, "", ""]
+  ];
+
+  // Todo overlay sections (TodoList: Pinned, then Main scenario; Completed, Done and Locked-out pins are left out).
+  var TODO = [
+    ["Pinned", [[6, "Lv 60 · recruitment notice"], [5, "Lv 15 · well-heeled youth"], [12, "Ready on FSH"], [3, "after MSQ: The Warmth of Family"], [14, "step 2 of 5"], [8, "accept condition"]], "+3 more"],
+    ["Main scenario", [[2, "step 4 of 6"]]]
+  ];
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function sv(tag, attrs) {
+    var e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function moreIcon() {
+    var s = sv("svg", { viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true" });
+    [3, 8, 13].forEach(function (x) { s.appendChild(sv("circle", { cx: x, cy: 8, r: 1.4 })); });
+    return s;
+  }
+  function drawOrbit(svgNode, f) {
+    while (svgNode.firstChild) svgNode.removeChild(svgNode.firstChild);
+    svgNode.setAttribute("viewBox", "0 0 24 24");
+    svgNode.setAttribute("aria-hidden", "true");
+    var r = 9.5, c = 2 * Math.PI * r;
+    svgNode.appendChild(sv("circle", { cx: 12, cy: 12, r: r, fill: "none", stroke: "#2A3149", "stroke-width": 2 }));
+    svgNode.appendChild(sv("circle", { cx: 12, cy: 12, r: r, fill: "none", stroke: f >= 1 ? "#B8933F" : "#F2D27A", "stroke-width": 2,
+      "stroke-dasharray": (c * f).toFixed(2) + " " + c.toFixed(2), transform: "rotate(-90 12 12)", "stroke-linecap": "round" }));
+    var a = -Math.PI / 2 + 2 * Math.PI * f;
+    svgNode.appendChild(sv("circle", { cx: (12 + r * Math.cos(a)).toFixed(2), cy: (12 + r * Math.sin(a)).toFixed(2), r: 2.1, fill: "#FFF0BE", stroke: "#0F1424", "stroke-width": 1 }));
+    svgNode.appendChild(sv("circle", { cx: 12, cy: 12, r: 5.2, fill: "#2C334A" }));
+    svgNode.appendChild(sv("path", { d: "M12 6.8a5.2 5.2 0 0 1 0 10.4a" + (5.2 * (1 - 2 * Math.min(f, 1))).toFixed(2) + " 5.2 0 0 " + (f > 0.5 ? 1 : 0) + " 0-10.4z", fill: "#DCD6C2", opacity: ".9" }));
+  }
+
+  function mount(rootEl, art) {
+    var root = rootEl && rootEl.classList && rootEl.classList.contains("mk") ? rootEl : (rootEl && rootEl.querySelector(".mk"));
+    if (!root || !art || !art.variants || !art.variants.length) return;
+    var base = art.sceneBase != null ? art.sceneBase : "mock/";
+    var SCENE = { day: base + "scene-day.jpg", night: base + "scene-night.jpg" };
+    var st = { v: 0, s: 1, grid: false, sel: 2, scene: "night" };
+    function $(role) { return root.querySelector('[data-role="' + role + '"]'); }
+    function gurl(state) { return art.variants[st.v].glyphs[state]; }
+    function glyph(state, px, fixed) {
+      var i = el("img", "gl" + (fixed ? " fx" : ""));
+      i.style.setProperty("--gs", px);
+      i.setAttribute("data-st", state);
+      i.alt = "";
+      i.decoding = "async";
+      i.src = gurl(state);
+      return i;
+    }
+
+    // Toolbar: variants
+    var vs = $("variants");
+    art.variants.forEach(function (v, k) {
+      var b = el("button", null, v.label);
+      b.type = "button";
+      b.setAttribute("aria-pressed", k === 0 ? "true" : "false");
+      b.addEventListener("click", function () { setVariant(k); });
+      vs.appendChild(b);
+    });
+
+    // A: tree
+    var tree = $("tree");
+    var th = el("div", "th", "Journal");
+    th.appendChild(el("span", null, "5,373 quests"));
+    tree.appendChild(th);
+    TREE.forEach(function (t, k) {
+      if (t[0] === "hair") { tree.appendChild(el("div", "hair")); return; }
+      var r = el("div", "tn" + (t[0] ? " " + t[0] : "") + (k === 0 ? " sel" : ""));
+      r.appendChild(el("span", "cv", t[0] === "sec" ? "▸" : ""));
+      var o = sv("svg", { "class": "orb" }); drawOrbit(o, t[3]); r.appendChild(o);
+      r.appendChild(el("span", "nm", t[1]));
+      if (t[5]) r.appendChild(el("span", "xp", t[5]));
+      if (t[4]) r.appendChild(el("span", "rdy", t[4]));
+      r.appendChild(el("span", "ct", t[2]));
+      tree.appendChild(r);
+    });
+    root.querySelectorAll("svg[data-orbit]").forEach(function (s) { drawOrbit(s, parseFloat(s.getAttribute("data-orbit"))); });
+
+    // A: rows
+    var rowsHost = $("rows"), rowEls = [];
+    var groups = [];
+    Q.forEach(function (q) { if (groups.indexOf(q.g) < 0) groups.push(q.g); });
+    groups.forEach(function (g) {
+      var items = Q.filter(function (q) { return q.g === g; });
+      var gh = el("div", "grp");
+      gh.appendChild(el("b", null, g));
+      gh.appendChild(el("span", null, String(items.length)));
+      rowsHost.appendChild(gh);
+      items.forEach(function (q) {
+        var idx = Q.indexOf(q);
+        var r = el("div", "tr cols" + (STRIPE[q.st][1] ? " " + STRIPE[q.st][1] : ""));
+        r.style.setProperty("--stripe", STRIPE[q.st][0]);
+        r.setAttribute("role", "row");
+        r.setAttribute("aria-label", q.n + ", " + q.lab + (q.det ? ", " + q.det : ""));
+        r.tabIndex = -1;
+        var c0 = el("div", "g"); c0.appendChild(glyph(q.st, 16)); c0.title = NAME[q.st]; r.appendChild(c0);
+        r.appendChild(el("div", "nmc" + (q.st === "completed" ? " cp" : ""), q.n));
+        var c2 = el("div"); c2.appendChild(el("span", "lvp", String(q.lv))); r.appendChild(c2);
+        var c3 = el("div", "c-job"); var jc = el("span", "jc");
+        if (q.job === "All") jc.appendChild(document.createTextNode("Any"));
+        else { var jb = el("span", "jb" + (q.job === "Tank" ? " tank" : ""), q.job === "Tank" ? "" : q.job); jc.appendChild(jb); jc.appendChild(document.createTextNode(q.job === "Tank" ? "Tank" : "")); }
+        c3.appendChild(jc); r.appendChild(c3);
+        var c4 = el("div", "stx"); c4.appendChild(el("span", "sw", q.lab)); if (q.det) { c4.appendChild(document.createTextNode(" · ")); c4.appendChild(el("span", q.st === "blocked" || q.st === "locked-out" ? "why ec" : "why", q.det)); } r.appendChild(c4);
+        r.appendChild(el("div", "xpp c-exp", q.xp));
+        r.addEventListener("click", function () { select(idx, true); });
+        r.addEventListener("keydown", function (e) {
+          var pos = rowEls.indexOf(r);
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            var n = rowEls[Math.max(0, Math.min(rowEls.length - 1, pos + (e.key === "ArrowDown" ? 1 : -1)))];
+            select(+n.getAttribute("data-i"), true);
+          } else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(idx, true); }
+        });
+        r.setAttribute("data-i", idx);
+        rowEls.push(r);
+        rowsHost.appendChild(r);
+      });
+    });
+    $("tcount").textContent = Q.length + " of " + Q.length;
+
+    // A: status bar
+    var sb = $("status");
+    sb.appendChild(el("span", null, "5,373 quests · showing 19 of 19"));
+    sb.appendChild(el("span", "dt", "·")); sb.appendChild(el("span", "pip")); sb.appendChild(el("span", null, "live"));
+    sb.appendChild(el("span", "dt", "·")); sb.appendChild(el("span", "msq", "MSQ · Dawntrail ›"));
+    sb.appendChild(el("span", "ver", "v1.10.0"));
+
+    // A: detail
+    var det = $("detail");
+    function renderDetail() {
+      var q = Q[st.sel];
+      while (det.firstChild) det.removeChild(det.firstChild);
+      var inn = el("div", "det-in");
+      var ban = el("div", "ban");
+      ban.style.backgroundImage = 'url("' + SCENE[q.art] + '")';
+      ban.style.backgroundPosition = q.pos;
+      var sp = el("div", "spill"); sp.appendChild(glyph(q.st, 14)); var spt = el("span", null, q.lab); spt.style.color = INK[q.st]; sp.appendChild(spt); ban.appendChild(sp);
+      ban.appendChild(el("div", "bsrc", "Zone art"));
+      var t = el("div", "t"); t.appendChild(el("div", "n", q.n)); t.appendChild(el("div", "m", q.path + " · Lv " + q.lv)); ban.appendChild(t);
+      inn.appendChild(ban);
+
+      var hc = el("div", "card hero");
+      var hg = el("div", "hg" + (q.st === "ready" ? " rdy" : "")); hg.appendChild(glyph(q.st, 64)); hc.appendChild(hg);
+      var ht = el("div");
+      var hl = el("div", "hl", NAME[q.st]); hl.style.color = INK[q.st]; ht.appendChild(hl);
+      var sub = []; if (q.lab !== NAME[q.st]) sub.push(q.lab); if (q.det) sub.push(q.det);
+      if (sub.length) ht.appendChild(el("div", "hd", sub.join(" · ")));
+      if (q.steps) { var s = el("div", "steps"); for (var k = 1; k <= q.steps[1]; k++) s.appendChild(el("i", k < q.steps[0] ? "dn" : k === q.steps[0] ? "cur" : "")); ht.appendChild(s); }
+      hc.appendChild(ht);
+      inn.appendChild(hc);
+
+      var rc = el("div", "card");
+      var unmet = q.req.filter(function (x) { return x[0] !== "ok"; }).length;
+      var h4 = el("h4", null, "Requirements"); h4.appendChild(el("span", "r", unmet ? unmet + " of " + q.req.length + " unmet" : "All met")); rc.appendChild(h4);
+      q.req.forEach(function (x) { var rq = el("div", "req " + x[0]); rq.appendChild(el("span", "mkr")); rq.appendChild(el("span", null, x[1])); rq.appendChild(el("span", "d", x[2])); rc.appendChild(rq); });
+      inn.appendChild(rc);
+
+      var wc = el("div", "card");
+      var uq = (q.rw || []).filter(function (x) { return x[1]; }).length;
+      var h4r = el("h4", null, "Rewards"); h4r.appendChild(el("span", "r", uq ? uq + " unique" : (q.rw ? "" : "Experience and gil"))); wc.appendChild(h4r);
+      if (q.rw) { var rl = el("div", "rws"); q.rw.forEach(function (x) { var c = el("span", "rwc" + (x[1] ? " uq" : ""), x[0]); if (x[1]) c.title = "Unique: this quest is the only way to get it"; rl.appendChild(c); }); wc.appendChild(rl); }
+      else wc.appendChild(el("div", "jt", "No items: this quest rewards experience and gil only."));
+      inn.appendChild(wc);
+
+      if (q.st === "in-journal" || q.st === "completed") {
+        var jc2 = el("div", "card");
+        var jh = el("h4", null, "Journal"); jh.appendChild(el("span", "r jbtn", "Read the journal")); jc2.appendChild(jh);
+        jc2.appendChild(el("div", "jt", q.st === "completed" ? "The journal entries of this quest, as the game wrote them while you played it." : "The journal entries so far, up to the step you are on. Later entries appear as the quest goes on."));
+        inn.appendChild(jc2);
+      }
+
+      var gc = el("div", "card giver");
+      gc.appendChild(el("h4", null, "Giver"));
+      gc.appendChild(document.createTextNode(q.giver + " "));
+      if (q.zone) gc.appendChild(el("span", "z", "· " + q.zone));
+      inn.appendChild(gc);
+      det.appendChild(inn);
+
+      // DetailPane 1.10: travel pills (Lifestream and vnavmesh loaded), then round icon buttons, then provenance.
+      var acts = el("div", "acts");
+      function icon(paths, fill) {
+        var s = sv("svg", { viewBox: "0 0 16 16", fill: fill ? "currentColor" : "none", stroke: fill ? "none" : "currentColor", "stroke-width": 1.5, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" });
+        paths.forEach(function (d) {
+          if (typeof d === "string") s.appendChild(sv("path", { d: d }));
+          else s.appendChild(sv(d[0], d[1]));
+        });
+        return s;
+      }
+      var I = {
+        arrow: [["M14.2 1.8 1.8 7.3l5.6 1.3 1.3 5.6z"], 1],
+        plane: [["M14.6 1.4 1.4 7.2l3.9 1.6L12.2 3.6 6.6 9.9v4.4l2.5-3 3.2 1.9z"], 1],
+        walk: [[["circle", { cx: 9.3, cy: 2.4, r: 1.5 }], "M8.6 4.8 6.6 6.2 5.4 8.6M8.6 4.8l-.9 4.4 2.6 2.2.8 3.4M7.7 9.2 6.4 11.8 4.4 14.6M8.6 4.8l1.4 2.6 2.4 1"], 0],
+        pin: [["M5.2 1.5h5.6l-.9 1.2v3.6l2.1 2.2v1.2H8.7V14l-.7 1-.7-1V9.7H4V8.5l2.1-2.2V2.7z"], 1],
+        path: [[["circle", { cx: 3.8, cy: 3.6, r: 1.8 }], ["circle", { cx: 12.2, cy: 12.4, r: 1.8 }], "M5.6 3.6h4.2a2.4 2.4 0 0 1 0 4.8H6.2a2.4 2.4 0 0 0 0 4.8h4.2"], 0],
+        signs: [["M7.3 1h1.4v1.2h4.1l1.9 2-1.9 2H8.7v1.4H3.2l-1.9 2 1.9 2h4.1V15H8.7v-3.4H7.3V7.6h1.4V6.2H7.3z"], 1],
+        flag: [["M3 1v14h1.5V9.5H13l-2-3.2 2-3.3H4.5V1z"], 1],
+        link: [["M6.5 9.5 9.5 6.5M7 4.5 8.5 3a2.5 2.5 0 1 1 3.5 3.5L10.5 8M9 11.5 7.5 13a2.5 2.5 0 1 1-3.5-3.5L5.5 8"], 0],
+        copy: [["M5.5 5.5h8v8h-8zM10.5 5.5V3.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"], 0],
+        book: [["M8 4.2C6.6 3 4.4 2.6 1.8 3v9.6c2.6-.4 4.8 0 6.2 1.2 1.4-1.2 3.6-1.6 6.2-1.2V3C11.6 2.6 9.4 3 8 4.2zM8 4.2v9.6"], 0],
+        more: [[["circle", { cx: 3, cy: 8, r: 1.4 }], ["circle", { cx: 8, cy: 8, r: 1.4 }], ["circle", { cx: 13, cy: 8, r: 1.4 }]], 1]
+      };
+      var pills = el("div", "pills");
+      [["Go to giver", "arrow", true], ["Teleport", "plane", false], ["Walk to giver", "walk", false]].forEach(function (p) {
+        var b = el("div", "apill" + (p[2] ? " pri" : ""));
+        b.title = p[0];
+        b.appendChild(icon(I[p[1]][0], I[p[1]][1]));
+        b.appendChild(el("span", null, p[0]));
+        pills.appendChild(b);
+      });
+      acts.appendChild(pills);
+      var rb = el("div", "rbs");
+      [["Pin", "pin"], ["Show path", "path"], ["Route to this", "signs"], ["Flag on map", "flag"], ["Link in chat", "link"], ["Copy coordinates", "copy"], ["Open journal", "book"], ["More", "more"]].forEach(function (b) {
+        var a = el("div", "ab"); a.title = b[0];
+        a.appendChild(icon(I[b[1]][0], I[b[1]][1]));
+        rb.appendChild(a);
+      });
+      acts.appendChild(rb);
+      acts.appendChild(el("div", "prov", "Checked 21:14 · live"));
+      det.appendChild(acts);
+    }
+    function select(i, focus) {
+      st.sel = i;
+      rowEls.forEach(function (r) {
+        var on = +r.getAttribute("data-i") === i;
+        r.classList.toggle("sel", on);
+        r.setAttribute("aria-selected", on ? "true" : "false");
+        r.tabIndex = on ? 0 : -1;
+        if (on && focus) r.focus({ preventScroll: true });
+      });
+      renderDetail();
+    }
+
+    // B: Todo overlay
+    var todo = $("todo");
+    var hdr = el("div", "hdr"); hdr.appendChild(el("span", "tt", "☾ Tsukimichi")); var hm = el("span", "more"); hm.title = "Overlay options: lock, compact, reset position, hide"; hm.appendChild(moreIcon()); hdr.appendChild(hm); todo.appendChild(hdr);
+    TODO.forEach(function (sec) {
+      var sh = el("div", "sec"); sh.appendChild(el("span", "cv", "▾")); sh.appendChild(el("span", null, sec[0] + " (" + (sec[1].length + (sec[2] ? 3 : 0)) + ")")); todo.appendChild(sh);
+      sec[1].forEach(function (it) {
+        var q = Q[it[0]];
+        var r = el("div", "row"); r.appendChild(glyph(q.st, 16)); r.appendChild(el("span", "nm", q.n)); r.appendChild(el("span", "ht", it[1]));
+        var m = el("span", "more"); m.appendChild(moreIcon()); r.appendChild(m);
+        r.title = NAME[q.st];
+        todo.appendChild(r);
+      });
+      if (sec[2]) todo.appendChild(el("div", "mo", sec[2]));
+    });
+    var bars = $("bars");
+    for (var b = 0; b < 2; b++) { var bar = el("div", "bar"); for (var k = 0; k < 12; k++) bar.appendChild(el("i", (b === 1 && k < 6) || (b === 0 && k % 3 === 0) ? "k" : "")); bars.appendChild(bar); }
+    var xpb = el("div", "xp"); xpb.appendChild(el("b")); bars.appendChild(xpb);
+    function renderScene() {
+      var g = $("game");
+      g.style.backgroundImage = 'url("' + SCENE[st.scene] + '")';
+      g.style.backgroundPosition = "100% 100%";
+      $("todo").style.setProperty("--op", "0.85");
+      $("et").textContent = st.scene === "day" ? "ET 11:20   LT 21:14" : "ET 22:40   LT 21:14";
+      $("scenecap").textContent = st.scene === "day" ? "Tuliyollal by day, overlay at 85% opacity" : "Tuliyollal at night, overlay at 85% opacity";
+      $("chat1").textContent = "Moonfire Faire festivities are underway in Limsa Lominsa.";
+      $("chat2").textContent = "You obtain 2,880 gil.";
+      $("chat3").textContent = "[1]<Lyse Hext> anyone up for roulettes after reset?";
+      $("chat4").textContent = st.scene === "day" ? "The weather is now Fair Skies." : "The weather is now Clear Skies.";
+      $("scene").querySelectorAll("button").forEach(function (bt) { bt.setAttribute("aria-pressed", bt.getAttribute("data-scene") === st.scene ? "true" : "false"); });
+    }
+    $("scene").querySelectorAll("button").forEach(function (bt) { bt.addEventListener("click", function () { st.scene = bt.getAttribute("data-scene"); renderScene(); }); });
+
+    // C: installer
+    var ins = $("installer");
+    function phIcon() {
+      var p = el("div", "ph");
+      var s = sv("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 1.6, "stroke-linecap": "round", "aria-hidden": "true" });
+      s.appendChild(sv("path", { d: "M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4" })); p.appendChild(s); return p;
+    }
+    function checkBadge() {
+      var s = sv("svg", { "class": "chk", viewBox: "0 0 22 22", "aria-hidden": "true" });
+      s.appendChild(sv("circle", { cx: 11, cy: 11, r: 10, fill: "#0F0F0F" }));
+      s.appendChild(sv("circle", { cx: 11, cy: 11, r: 8.2, fill: "#3FAE4A", stroke: "#9BEA9F", "stroke-width": 1 }));
+      s.appendChild(sv("path", { d: "M6.8 11.3l2.8 2.8 5.6-6", fill: "none", stroke: "#FFFFFF", "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+      return s;
+    }
+    [["Placeholder Plugin", "someone", "A neighbouring entry, shown for scale and spacing.", "v2.4.1", false],
+     ["Tsukimichi", "xenofei", "Walk the moon's path: every quest, every requirement, every unique reward.", "v1.10.0", true],
+     ["Sample Utility", "another author", "A second neighbouring entry. Neutral placeholder text.", "v0.9.3", false]].forEach(function (p) {
+      var e = el("div", "ent" + (p[4] ? " hov" : ""));
+      var ic = el("div", "ic");
+      if (p[4]) { var im = el("img"); im.alt = "Tsukimichi icon"; im.setAttribute("data-icon", "1"); im.src = art.variants[st.v].icon; ic.appendChild(im); } else ic.appendChild(phIcon());
+      ic.appendChild(checkBadge());
+      e.appendChild(ic);
+      var tx = el("div", "tx");
+      var tn = el("div", "tn2"); tn.appendChild(el("b", null, p[0])); tn.appendChild(el("span", null, "by " + p[1])); tx.appendChild(tn);
+      tx.appendChild(el("div", "pl", p[2]));
+      var vr = el("div", "vr", p[3] + " · "); vr.appendChild(el("i", null, "Installed")); tx.appendChild(vr);
+      e.appendChild(tx);
+      ins.appendChild(e);
+    });
+
+    // D: legend
+    var leg = $("legend");
+    STATES.forEach(function (s) {
+      var c = el("div", "lc");
+      var sz = el("div", "sz");
+      [16, 20, 32, 64].forEach(function (px) { var f = el("figure"); f.appendChild(glyph(s, px, true)); f.appendChild(el("figcaption", null, px + " px")); sz.appendChild(f); });
+      c.appendChild(sz);
+      var ln = el("div", "ln", NAME[s]); ln.style.color = INK[s]; c.appendChild(ln);
+      c.appendChild(el("div", "lm", MEAN[s]));
+      leg.appendChild(c);
+    });
+
+    // Loupe: rows rasterised at true size into canvases, shown at 400% without smoothing.
+    var cache = {};
+    function load(url) {
+      if (!cache[url]) cache[url] = new Promise(function (res) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = function () { res(null); }; i.src = url; });
+      return cache[url];
+    }
+    var loupeToken = 0;
+    function renderLoupe() {
+      var host = $("lcols");
+      if (!st.grid) return;
+      var token = ++loupeToken;
+      var s = st.s;
+      var pick = {}; Q.forEach(function (q) { if (!pick[q.st] || q.n.length < pick[q.st].n.length) pick[q.st] = q; });
+      var selState = "in-journal";
+      var fontReady = (document.fonts && document.fonts.load) ? document.fonts.load('500 13px "Noto Sans"').catch(function () { return null; }) : Promise.resolve(null);
+      Promise.all(STATES.map(function (k) { return load(gurl(k)); }).concat([load(SCENE.day), fontReady])).then(function (imgs) {
+        imgs = imgs.slice(0, STATES.length + 1);
+        if (token !== loupeToken) return;
+        while (host.firstChild) host.removeChild(host.firstChild);
+        var day = imgs[imgs.length - 1];
+        // [heading, background kind, row height in logical px for each glyph size]
+        [["Quest table on Night: state stripe, zebra rows, one selected row", "night"], ["Todo overlay at 85% over daylight: outlined text, no stripe", "day"]].forEach(function (bgDef) {
+          var blk = el("div", "lblk");
+          blk.appendChild(el("h4", null, bgDef[0]));
+          [14, 16, 20].forEach(function (size) {
+            var line = el("div", "lline");
+            line.appendChild(el("div", "lsz", size + " px"));
+            var g = Math.round(size * s);
+            var H = Math.round((bgDef[1] === "day" ? Math.max(26, size + 10) : Math.max(30, size + 12)) * s);
+            var W = Math.round((size + 22) * s);
+            STATES.forEach(function (k, si) {
+              var q = pick[k];
+              var cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+              cv.style.width = (W * 4) + "px"; cv.style.height = (H * 4) + "px";
+              cv.setAttribute("role", "img"); cv.setAttribute("aria-label", NAME[k] + " at " + size + " px, 400 percent");
+              var x = cv.getContext("2d");
+              var tx0;
+              if (bgDef[1] === "day") {
+                if (day) {
+                  var sx = Math.round(day.naturalWidth * 0.06 + si * 37), sy = Math.round(day.naturalHeight * (0.1 + si * 0.08));
+                  x.drawImage(day, sx, sy, W, H, 0, 0, W, H);
+                } else { x.fillStyle = "#6B8FB8"; x.fillRect(0, 0, W, H); }
+                x.fillStyle = "rgba(15,20,36,0.85)"; x.fillRect(0, 0, W, H);
+                tx0 = Math.round(4 * s);
+              } else {
+                x.fillStyle = "#0F1424"; x.fillRect(0, 0, W, H);
+                if (si % 2 === 1) { x.fillStyle = "rgba(74,82,112,0.16)"; x.fillRect(0, 0, W, H); }
+                if (k === selState) {
+                  x.fillStyle = "rgba(221,227,240,0.06)"; x.fillRect(0, 0, W, H);
+                  x.strokeStyle = "#5C6584"; x.lineWidth = 1; x.strokeRect(0.5, 0.5, W - 1, H - 1);
+                }
+                var sc = STRIPE[k][0], kind = STRIPE[k][1];
+                x.fillStyle = sc;
+                for (var yy = 0; yy < H; yy++) {
+                  if (kind === "dash" && yy % 5 >= 3) continue;
+                  if (kind === "dot" && yy % 3 >= 1) continue;
+                  x.fillRect(0, yy, 3, 1);
+                }
+                tx0 = Math.round(10 * s);
+              }
+              var gi = imgs[STATES.indexOf(k)];
+              var gy = Math.round((H - g) / 2);
+              if (gi) x.drawImage(gi, tx0, gy, g, g);
+              x.font = "500 " + (13 * s) + 'px "Noto Sans","Segoe UI",sans-serif'; x.textBaseline = "middle";
+              var tx = tx0 + g + Math.round(7 * s), ty = Math.round(H / 2) + 0.5;
+              if (bgDef[1] === "day") {
+                x.fillStyle = "#0F1424";
+                [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].forEach(function (o) { x.fillText(q.n, tx + o[0], ty + o[1]); });
+              }
+              x.fillStyle = "#DDE3F0"; x.fillText(q.n, tx, ty);
+              var tile = el("figure", "ltile");
+              var wrap = el("div", "lz"); wrap.appendChild(cv); tile.appendChild(wrap);
+              var cap = el("figcaption");
+              var one = document.createElement("canvas"); one.width = W; one.height = H; one.className = "l1x";
+              one.getContext("2d").drawImage(cv, 0, 0);
+              one.setAttribute("aria-hidden", "true");
+              cap.appendChild(one);
+              cap.appendChild(el("span", null, NAME[k] + (k === selState && bgDef[1] === "night" ? " (selected)" : "")));
+              tile.appendChild(cap);
+              line.appendChild(tile);
+            });
+            blk.appendChild(line);
+          });
+          host.appendChild(blk);
+        });
+      });
+    }
+
+    function setVariant(k) {
+      st.v = k;
+      vs.querySelectorAll("button").forEach(function (b, j) { b.setAttribute("aria-pressed", j === k ? "true" : "false"); });
+      root.querySelectorAll("img[data-st]").forEach(function (i) { i.src = gurl(i.getAttribute("data-st")); });
+      root.querySelectorAll("img[data-icon]").forEach(function (i) { i.src = art.variants[k].icon; });
+      renderLoupe();
+    }
+    $("scale").querySelectorAll("button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        st.s = parseFloat(b.getAttribute("data-scale"));
+        root.style.setProperty("--s", String(st.s));
+        root.classList.toggle("s15", st.s > 1.2);
+        $("scale").querySelectorAll("button").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+        renderLoupe();
+      });
+    });
+    var gt = $("grid");
+    gt.addEventListener("click", function () {
+      st.grid = !st.grid;
+      gt.setAttribute("aria-pressed", st.grid ? "true" : "false");
+      $("loupe").hidden = !st.grid;
+      renderLoupe();
+    });
+
+    $("stageA").style.setProperty("--bg", 'url("' + SCENE.night + '")');
+    renderScene();
+    select(st.sel, false);
+    if (art.grid) gt.click();
+    if (art.scale) { var sb2 = $("scale").querySelector('[data-scale="' + art.scale + '"]'); if (sb2) sb2.click(); }
+    if (art.scene) { st.scene = art.scene; renderScene(); }
+  }
+
+  window.TsukiMock = { mount: mount };
+})();
+</script>
+
+<!-- END FRAGMENT -->
+<script>
+(function () {
+  var R3 = "../../design/moon-v6/round3/medallion-r3/";
+  var R2 = "../../design/moon-v6/round2/menphina-medallion/";
+  var S = ["ready", "ready-on-another-job", "in-journal", "blocked", "done-this-cycle", "completed", "locked-out", "not-checked"];
+  function set(dir) { var g = {}; S.forEach(function (s) { g[s] = dir + s + ".svg"; }); return g; }
+  var q = new URLSearchParams(location.search);
+  TsukiMock.mount(document.getElementById("mk"), {
+    sceneBase: "",
+    variants: [
+      { id: "r3d", label: "Round 3 D", glyphs: set(R3), icon: R3 + "plugin-icon.svg" },
+      { id: "r2d", label: "Round 2 D", glyphs: set(R2), icon: R2 + "plugin-icon.svg" }
+    ],
+    grid: q.get("grid") === "1", scale: q.get("scale"), scene: q.get("scene")
+  });
+})();
+</script>
+</body>
+</html>

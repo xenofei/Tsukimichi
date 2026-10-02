@@ -1,0 +1,13 @@
+if __name__ == "__main__":
+    OUT.mkdir(parents=True, exist_ok=True)
+    write("ready.svg", ready())
+    write("ready-on-another-job.svg", ready_other_job())
+    write("in-journal.svg", in_journal())
+    write("blocked.svg", blocked())
+    write("done-this-cycle.svg", done())
+    write("completed.svg", completed())
+    write("locked-out.svg", locked_out())
+    write("not-checked.svg", not_checked())
+    write("plugin-icon.svg", icon())
+    print("lit centroid icon", LIT_C, "road x", ROAD_IX, "bright y", BRIGHT_Y, "glyph road x", ROAD_X)
+    print("glints", len(ROAD))

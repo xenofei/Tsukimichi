@@ -1,170 +1,113 @@
 {
- "heading": "Moon & icon: round two findings",
- "intro": "<p><strong>Round two result:</strong> Menphina&#x27;s Medallion (D) led on both glyphs (6.91) and icon (7.54), and all six jurors picked its icon. Nothing reached the 8.0 ship bar, so nothing ships yet; D is the base for a short round 3 that fixes known row-size problems.</p><p><strong>Recommendation, for you to accept or redirect:</strong> Take D&#x27;s icon forward with dimmer, flatter glints moved clear of the Installed checkmark, and one quiet detail on the crescent. For the glyphs, use D&#x27;s medallion material with A&#x27;s row-size legibility: thin hairline rims on resting states, a Ready whose road glints break out of an opened bezel, the Done and Completed meanings swapped, a crescent for Ready on another job, and a single-wisp Not checked. Then rerun the same blind test and metrics.</p><p>Six jurors judged rendered images only: a stand-in for your taste, an FFXIV art director, a veteran raider, a new player, a colour-blind player and a glamour player. Each started with a blind test (unlabelled, shuffled glyphs) before seeing anything else. Scores are weighted means out of 10; the bar to ship is 8.0 with no criterion under 6. Vote or comment on each concept below; nothing is final.</p>",
+ "heading": "Moon & icon: Menphina's Medallion, round three",
+ "intro": "<p>You kept <strong>concept D</strong> and set A, B and C aside. Round three enhances D with the feedback you passed on and the panel's fixes. A realism supervisor then checked every glyph and the icon for light, shadow, reflection, colour and material before anything reached this page.</p><p><strong>What you asked for:</strong> the aetheryte crystal is gone, and all eight medals now share <strong>one gilt rim</strong>. States are told apart by what is inside the medal, not by the colour of its border. D is also richer: one light from the upper left on everything, the moon road redrawn as real ripples, and the lantern casting its own warm reflection.</p><p>Nothing is final. Vote or comment on the round-three card, and try the moons in the working mock of the plugin below.</p>",
+ "before": {
+  "name": "Round two D",
+  "icon": "designs/medallion-r2-icon.png",
+  "glyphs": "designs/medallion-r2-glyphs.png",
+  "text": "The panel's lead: 6.9 for glyphs and 7.5 for the icon. At 16 px it had rims in three colours (gilt, pewter and red), an aetheryte crystal on the island, and rows that read as radio buttons."
+ },
  "concepts": [
   {
-   "id": "aether-crystal",
-   "tag": "A",
-   "name": "Aether Crystal Moon",
-   "pitch": "Moonstone moons in a job-icon rim; the lit part is cut crystal and only Ready glows. Icon: crystal glints form the moon road under a crescent.",
-   "lead": null,
-   "icon": "designs/aether-crystal-icon.png",
-   "glyphs": "designs/aether-crystal-glyphs.png",
-   "scores": {
-    "glyph": "6.7",
-    "icon": "6.9",
-    "owner": "6.4 / 6.2",
-    "favs": "2 of 6 for glyphs"
-   },
-   "liked": [
-    "best row legibility and distinctness (weakest pair 17.6)",
-    "Ready's road breaks the circle, so it can be found by shape alone, even colour-blind",
-    "calm cool moonstone, no cheese",
-    "favourite glyph set of the veteran raider and colour-blind jurors"
+   "id": "medallion-r3",
+   "tag": "R3",
+   "name": "Menphina's Medallion, enhanced",
+   "icon": "designs/medallion-r3-icon.png",
+   "glyphs": "designs/medallion-r3-glyphs.png",
+   "pitch": "Every quest state is a minted FFXIV job-icon medal: a moon emblem on lapis enamel in one shared champagne-gilt bevel. The icon is the moon road on calm water past a stone lantern, with each light reflected directly beneath it.",
+   "metrics": [
+    [
+     "Weakest pair, 16 px",
+     "12.8",
+     "≥ 12"
+    ],
+    [
+     "Ready vs next",
+     "1.42×",
+     "≥ 1.3"
+    ],
+    [
+     "Completed vs Ready",
+     "0.71×",
+     "≤ 0.8"
+    ],
+    [
+     "Road brightness",
+     "0.86×",
+     "of the moon"
+    ]
    ],
-   "failed": [
-    "Locked out reads as a no-entry sign (all six jurors)",
-    "Completed reads as a coin or gem",
-    "Done reads as a check-circle",
-    "Not checked reads as a hamburger menu at 16 px",
-    "Ready at 16 px reads as a lollipop or magnifier; teal glow looks like a mobile-game claim button",
-    "icon road reads as stepping stones; aetheryte is a speck"
+   "changes": [
+    "Aetheryte crystal removed; the far shore is an unlit headland, so the only lights are the moon and the lantern",
+    "One shared gilt rim on all eight medals and the icon frame, lit from the upper left",
+    "Ready: the bezel opens at the bottom and the moon road spills out of it, so it reads by shape alone",
+    "Ready on another job: a violet soul crystal in a gilt setting, after the job stones",
+    "The check moved to Completed; Done this cycle has a gilt arc meaning it comes back",
+    "Locked out: a cracked Dalamud in rose-crimson, matching the plugin's Eclipse colour",
+    "Not checked: one tapered mist wisp over a hazy moon, with no ring",
+    "Icon: a 12-row moon road brightest at the moon's mirror point, a warm lantern reflection, and moon and road kept clear of the Installed check"
+   ],
+   "watch": [
+    "The weakest pair (Blocked vs Locked out, 12.8) clears the bar, but only just",
+    "Done this cycle's arc is new, so the panel needs to confirm it doesn't read as a bracket",
+    "Ready on a bright daylight ground relies on its open bezel more than on contrast"
    ]
+  }
+ ],
+ "supervisor": {
+  "verdict": "Approved",
+  "summary": "<p>The supervisor checked rendered images, never source, against one rule: realistic light, shadow, reflection, colour and material, even in stylised art.</p><ul class='prose' style='margin:0;padding-left:20px'><li><strong>Art, round one:</strong> 14 fixes. Mirror slices were moved to the mirror point. The road was re-spaced so it foreshortens. Glints became thin streaks. The lantern got its own warm reflection. The sky gradient was un-inverted. The ribbon was folded behind the medal. The check now breaks the rim.</li><li><strong>Art, round two:</strong> one fix. The lantern's light pool moved in front of its base, where the light can actually reach.</li><li><strong>Plugin mock:</strong> 16 fixes, then 2. The mock now matches the real 1.10 window: overlay content, the colour of the state words, quick views, the three-row action bar, and an ImGui look with no window shadows. The game-screen credit stays visible at every size.</li></ul><p>Full reviews: <code>docs/design/moon-v6/round3/supervisor/</code>.</p>"
+ },
+ "mockArt": {
+  "sceneBase": "mock/",
+  "variants": [
+   {
+    "id": "r3d",
+    "label": "Round 3 D",
+    "glyphs": {
+     "ready": "art/r3/ready.svg",
+     "ready-on-another-job": "art/r3/ready-on-another-job.svg",
+     "in-journal": "art/r3/in-journal.svg",
+     "blocked": "art/r3/blocked.svg",
+     "done-this-cycle": "art/r3/done-this-cycle.svg",
+     "completed": "art/r3/completed.svg",
+     "locked-out": "art/r3/locked-out.svg",
+     "not-checked": "art/r3/not-checked.svg"
+    },
+    "icon": "art/r3/plugin-icon.svg"
+   },
+   {
+    "id": "r2d",
+    "label": "Round 2 D",
+    "glyphs": {
+     "ready": "art/r2/ready.svg",
+     "ready-on-another-job": "art/r2/ready-on-another-job.svg",
+     "in-journal": "art/r2/in-journal.svg",
+     "blocked": "art/r2/blocked.svg",
+     "done-this-cycle": "art/r2/done-this-cycle.svg",
+     "completed": "art/r2/completed.svg",
+     "locked-out": "art/r2/locked-out.svg",
+     "not-checked": "art/r2/not-checked.svg"
+    },
+    "icon": "art/r2/plugin-icon.svg"
+   }
+  ]
+ },
+ "dropped": [
+  {
+   "tag": "A",
+   "name": "Aether Crystal",
+   "icon": "designs/aether-crystal-icon.png"
   },
   {
-   "id": "astrologian-orrery",
    "tag": "B",
    "name": "Astrologian's Orrery",
-   "pitch": "Each moon sits in a small Sharlayan astrolabe with engraved ticks and constellations. Icon: a round gilt medallion with Dalamud as Menphina&#x27;s small red companion.",
-   "lead": null,
-   "icon": "designs/astrologian-orrery-icon.png",
-   "glyphs": "designs/astrologian-orrery-glyphs.png",
-   "scores": {
-    "glyph": "5.8",
-    "icon": "6.1",
-    "owner": "5.4 / 5.8",
-    "favs": "None"
-   },
-   "liked": [
-    "Blocked's engraved constellation",
-    "Dalamud as a small rose moon in the icon",
-    "round icon matches the Ready glyph exactly"
-   ],
-   "failed": [
-    "24 rim ticks read as sun rays, decoration with no meaning",
-    "Ready reads as a lightbulb or user icon at 16 px, with two pills below",
-    "Not checked reads as Saturn",
-    "Completed reads as a gold coin",
-    "Locked out reads as a stray slash",
-    "icon road is a brick stack as bright as the moon; ring reads as a clock"
-   ]
+   "icon": "designs/astrologian-orrery-icon.png"
   },
   {
-   "id": "ishgard-glass",
    "tag": "C",
    "name": "Ishgard Glass",
-   "pitch": "The moon as a cathedral stained-glass roundel with gilt lead lines; Locked out in Dalamud-red glass. Icon: a glass moon over water below an Ishgard skyline.",
-   "lead": null,
-   "icon": "designs/ishgard-glass-icon.png",
-   "glyphs": "designs/ishgard-glass-glyphs.png",
-   "scores": {
-    "glyph": "5.9",
-    "icon": "6.3",
-    "owner": "5.8 / 6.2",
-    "favs": "None"
-   },
-   "liked": [
-    "most specific FFXIV idea (Ishgard stained glass)",
-    "Ishgard skyline in the icon is the best FFXIV detail of the round",
-    "Blocked is the prettiest single moon"
-   ],
-   "failed": [
-    "lead lines vanish below 48 px, leaving plain discs in game",
-    "Locked out reads as a no-entry sign",
-    "Ready reads as a lollipop or hand mirror",
-    "Not checked nearly disappears on daylight scenes",
-    "Ready on another job reads as an AI sparkle",
-    "icon moon is a gilt-framed plate (lemon slice, clock) its reflection cannot match; road is a hex pyramid"
-   ]
-  },
-  {
-   "id": "menphina-medallion",
-   "tag": "D",
-   "name": "Menphina's Medallion",
-   "pitch": "Each state is a minted job-icon medal: a moon emblem on lapis enamel in a bevelled rim, gilt for Ready and pewter for the rest. Icon: the moon road leading past a stone lantern to a crystal isle.",
-   "lead": "Panel's lead",
-   "icon": "designs/menphina-medallion-icon.png",
-   "glyphs": "designs/menphina-medallion-glyphs.png",
-   "scores": {
-    "glyph": "6.9",
-    "icon": "7.5",
-    "owner": "6.9 / 7.8",
-    "favs": "4 of 6 glyphs, 6 of 6 icon"
-   },
-   "liked": [
-    "most FFXIV-feeling family, built like job-icon medals",
-    "finest detail at large sizes",
-    "cracked red Dalamud is the only Locked out that is not a no-entry sign",
-    "Ready, a moon over the sea in a gilt medal, is the best Ready in the panel",
-    "icon reflection sits under the lit crescent in the same colour, dimmer and broken, answering the round-1 complaint",
-    "lantern and aetheryte island give the icon a sense of place"
-   ],
-   "failed": [
-    "same rim on all eight makes the row look like radio buttons at 16 px",
-    "Blocked and Completed read as a hollow and filled radio button pair",
-    "Ready on another job reads as a contrast toggle",
-    "Done reads as a check-circle; Not checked as a hamburger in a ring",
-    "Ready's only greyscale cue is its gold rim",
-    "icon glints nearly as bright as the moon and look like leaves; road touches the Installed checkmark; moon is the plainest element",
-    "over the new-colour budget"
-   ]
-  }
- ],
- "shared": [
-  {
-   "problem": "Done and Completed read backwards: a check means finished, a blank full moon means nothing (new player swapped them in every set)",
-   "fix": "Put the check on Completed; give Done this cycle a comes-back mark such as a short gilt arc along the waning half's dark edge, tested against a refresh-icon read"
-  },
-  {
-   "problem": "Completed reads as a coin or radio button",
-   "fix": "Brighter face with a pale edge band and a gilt check crossing the lower-right edge; no ring at row size"
-  },
-  {
-   "problem": "Not checked reads as a hamburger menu (two parallel bars)",
-   "fix": "One curved, tapered mist wisp at a slight angle, no ring, bright enough to survive daylight scenes"
-  },
-  {
-   "problem": "Locked out reads as a no-entry sign (diagonal band in A and C, slash in B)",
-   "fix": "Use D's cracked Dalamud, with a thicker, darker crack that works without colour"
-  },
-  {
-   "problem": "A half moon in a ring reads as a contrast toggle",
-   "fix": "Make Ready on another job a crescent with a larger crystal"
-  }
- ],
- "next": [
-  "Icon: lower the brightest glints to about 85% of the crescent's brightness",
-  "Icon: flatten and vary the glints into horizontal ripple streaks",
-  "Icon: shift moon and road slightly left, clear of the Installed checkmark",
-  "Icon: add one quiet detail to the crescent (faint earthshine or one facet line)",
-  "Glyphs: thin, darker pewter hairline rims on the seven resting states; full gilt bezel on Ready only",
-  "Ready: open the bezel at the bottom and let two road glints cross it; no glow",
-  "Swap meanings: check moves to Completed; Done this cycle gets a comes-back arc",
-  "Completed: brighter face with an edge band; drop the moon-daisy if it costs clarity",
-  "Ready on another job: crescent with a larger crystal to separate it from Blocked",
-  "Not checked: single curved wisp, no ghost ring",
-  "Locked out: keep the crack and thicken it",
-  "Fold iron and oxidised pewter into pewter to meet the colour budget",
-  "Rerun the blind test and metrics on the revised set"
- ],
- "compare": [
-  {
-   "src": "designs/icons_compare.png",
-   "cap": "All four icons at 256, 128, 64 and 32 px, under the Installed check, disabled at 40%, and on a light background."
-  },
-  {
-   "src": "designs/hero_compare.png",
-   "cap": "All eight states for each concept at 96 and 48 px."
+   "icon": "designs/ishgard-glass-icon.png"
   }
  ]
 }

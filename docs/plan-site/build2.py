@@ -97,7 +97,8 @@ data = {"title": "Quiet, steady, beautiful, and right", "date": "2026-10-02",
 
 tpl = (HERE / "template2.html").read_text(encoding="utf-8")
 blob = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
-page = tpl.replace("{{DATA}}", blob)
+mock = (REPO / "docs" / "plan-site" / "mock" / "mock-fragment.html").read_text(encoding="utf-8")
+page = tpl.replace("{{DATA}}", blob).replace("{{MOCK}}", mock)
 (HERE / "plan-v6.html").write_text(page, encoding="utf-8")
 print(len(page), "bytes;", sum(len(r["items"]) for r in releases), "items;", len(points), "points;", len(decisions), "decisions")
 for r in releases:
