@@ -38,6 +38,9 @@ public sealed class PluginPaths
 
     /// <summary>The patch each quest was added in (P8), read at catalog build.</summary>
     public string QuestPatchesFile => Path.Combine(PluginDir, QuestPatches.FileName);
+    /// <summary>The "Open on…" link table (1.8.0): Lodestone hashes, wiki titles and FFXIV Collect ids.</summary>
+    public string ExternalIdsFile => Path.Combine(PluginDir, Links.ExternalIds.FileName);
+
     public string CuratedDir => Path.Combine(PluginDir, "curated");
     public string SystemUnlocksFile => Path.Combine(CuratedDir, CuratedData.SystemUnlocksFileName);
     public string DutyUnlocksFile => Path.Combine(CuratedDir, CuratedData.DutyUnlocksFileName);

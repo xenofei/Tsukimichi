@@ -940,10 +940,11 @@ public sealed partial class DetailPane
     /// <summary>
     /// Round buttons after the primary action: Pin, Show path, Route to this, Link, Copy, Journal, Report (when
     /// attached), Flag (when Teleport leads) or Teleport (disabled, naming Lifestream, when Flag leads), Walk and Go to
-    /// giver (when shown in Settings), the aethernet hop (in the giver's city), "…" (the Questionable hand-off, when shown).
+    /// giver (when shown in Settings), the aethernet hop (in the giver's city), "…" ("Open on…" since 1.8.0, and the
+    /// Questionable hand-off when shown).
     /// </summary>
-    private int IconButtonCount => 7 + (Diagnostics is null ? 0 : 1) + (links.WalkShown ? 1 : 0) + (links.GoToShown ? 1 : 0)
-        + (hopCheck.Visible ? 1 : 0) + (ShowsQuestionableMore ? 1 : 0);
+    private int IconButtonCount => 8 + (Diagnostics is null ? 0 : 1) + (links.WalkShown ? 1 : 0) + (links.GoToShown ? 1 : 0)
+        + (hopCheck.Visible ? 1 : 0);
 
     /// <summary>Reads the travel checks once per frame, before the bar's height is planned.</summary>
     private void PrepareTravel(QuestRecord quest)
@@ -1142,7 +1143,7 @@ public sealed partial class DetailPane
         }
 
         DrawTravelButtons(quest, ref used, width);
-        DrawQuestionableMore(ref used, width, rowId);
+        DrawMoreMenu(ref used, width, quest, rowId);
     }
 
     /// <summary>

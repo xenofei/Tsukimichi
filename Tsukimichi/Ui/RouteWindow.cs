@@ -55,6 +55,7 @@ public sealed class RouteWindow : Window
     private readonly PinStore pins;
     private readonly ConfirmGate pinGate = new();
     private readonly GameLinks links;
+    private readonly DiscordCopy discordCopy = new();
     private readonly ActiveRouteService routes;
 
     private RouteTarget? target;
@@ -273,6 +274,15 @@ public sealed class RouteWindow : Window
         {
             UiMetrics.Tooltip(Strings.RouteCopyTooltip);
         }
+
+        // Copy for Discord (1.8.0): bullets, optional links (never on a masked name), parts of 2,000 characters.
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.LinksCopyDiscord).X + (ImGui.GetStyle().FramePadding.X * 2f));
+        var spoilers = session.Spoilers;
+        discordCopy.Draw("route", v.Route, addLinks => RouteMarkdown.WriteDiscord(
+            v.Route,
+            bundle.Catalog,
+            spoilers.DisplayName,
+            addLinks ? q => spoilers.IsMasked(q) ? null : links.PreferredLink(q) : null));
 
         var canPin = pins.CanPin && v.Route.Steps.Count > 0;
         var pinAll = PinAllLabel(v);

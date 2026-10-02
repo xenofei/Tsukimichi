@@ -56,6 +56,12 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>Folder exports are written to; empty uses <c>exports</c> in the plugin's config directory.</summary>
     public string ExportFolder { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Copy for Discord (1.8.0) makes each quest name a masked link to its page (Lodestone, else Garland Tools); a name
+    /// the spoiler shield masks never gets one. Off by default; the Copy for Discord buttons' right-click menu flips it.
+    /// </summary>
+    public bool DiscordCopyLinks { get; set; }
+
     /// <summary>Show the "Removed from the game" tree node (retired quests and those with no journal genre). Off by default.</summary>
     public bool ShowUnlisted { get; set; }
 

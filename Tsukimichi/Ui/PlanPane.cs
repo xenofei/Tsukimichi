@@ -41,6 +41,7 @@ public sealed class PlanPane
     private readonly SessionState session;
     private readonly PlanSource source;
     private readonly GameLinks links;
+    private readonly DiscordCopy discordCopy = new();
     private readonly Configuration settings;
     private readonly Action save;
 
@@ -222,6 +223,18 @@ public sealed class PlanPane
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             UiMetrics.Tooltip(Strings.PlanCopyTooltip);
+        }
+
+        // Copy for Discord (1.8.0): bullets instead of task boxes, optional links (never on a masked name), 2,000-character parts.
+        if (!view.IsEmpty)
+        {
+            Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.LinksCopyDiscord).X + (ImGui.GetStyle().FramePadding.X * 2f));
+            var spoilers = session.Spoilers;
+            var shown = view;
+            discordCopy.Draw("plan", shown, addLinks => PlanChecklist.WriteDiscord(
+                shown,
+                ZoneName,
+                addLinks ? e => spoilers.IsMasked(e.Quest) ? null : links.PreferredLink(e.Quest) : null));
         }
 
         // "Flag next stop" (1.6.0, C3 C): the first quest the list shows that can be started now.
@@ -601,6 +614,9 @@ public sealed class PlanPane
                 // Teleport, Walk to giver and Go to giver, visible and disabled with the reason when they cannot run.
                 ImGui.Separator();
                 TravelControls.MenuItems(links, quest, Strings.PlanTeleport);
+
+                // "Open on…" (1.8.0): the quest's page on the Lodestone, Garland Tools, the wiki or Teamcraft.
+                links.DrawOpenOnMenu(quest, session.Spoilers.IsMasked(quest), entry.Name);
             }
         }
 
@@ -776,6 +792,8 @@ public sealed class PlanPane
         {
             UiMetrics.Tooltip(Strings.PlanRouteToThisTooltip);
         }
+
+        links.DrawOpenOnMenu(quest, session.Spoilers.IsMasked(quest), entry.Name);
     }
 
     private static string UnlocksTooltip(PlanEntry entry)

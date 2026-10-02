@@ -2,7 +2,10 @@ using System.Globalization;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Tsukimichi.Core.Evaluation;
+using Tsukimichi.Core.Links;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Unique;
@@ -53,14 +56,40 @@ public sealed record QuestExportRow(
     string Expansion,
     bool Completed,
     DateTime? CompletedAt = null,
-    DateTime? CompletedAfter = null);
+    DateTime? CompletedAfter = null)
+{
+    /// <summary>The character's state of the quest, as <see cref="QuestState"/>'s name ("Ready", "Blocked"); empty when not evaluated. Added in 1.8.0.</summary>
+    public string State { get; init; } = string.Empty;
+
+    /// <summary>The level the journal prints (<see cref="QuestRecord.DisplayLevel"/>). Added in 1.8.0.</summary>
+    public byte DisplayLevel { get; init; }
+
+    /// <summary>The patch the quest was added in ("6.55"); empty when unknown. Added in 1.8.0.</summary>
+    public string Patch { get; init; } = string.Empty;
+
+    /// <summary>A main scenario quest. Added in 1.8.0.</summary>
+    public bool IsMsq { get; init; }
+
+    /// <summary>A repeatable quest (daily, weekly, allied society). Added in 1.8.0.</summary>
+    public bool Repeatable { get; init; }
+
+    /// <summary>The quest's Lodestone Eorzea Database id ("a7cbeb1c618"); empty when the link table has none. Added in 1.8.0.</summary>
+    public string LodestoneId { get; init; } = string.Empty;
+}
 
 /// <summary>
 /// One reward of a Moonlit export; <see cref="Obtained"/> null means the plugin cannot tell. <see cref="Availability"/>
 /// (added in 1.5, an additive field) is whether the reward can still be had through its quest; null when the caller
 /// did not classify it.
 /// </summary>
-public sealed record MoonlitExportRow(RewardKind Kind, uint RewardId, string RewardName, uint QuestRowId, bool? Obtained, RewardAvailability? Availability = null);
+public sealed record MoonlitExportRow(RewardKind Kind, uint RewardId, string RewardName, uint QuestRowId, bool? Obtained, RewardAvailability? Availability = null)
+{
+    /// <summary>The item that teaches or holds the reward; 0 when it comes without one. Added in 1.8.0.</summary>
+    public uint ItemId { get; init; }
+
+    /// <summary>The reward's FFXIV Collect id; null when the link table has none. Added in 1.8.0.</summary>
+    public uint? CollectId { get; init; }
+}
 
 /// <summary>
 /// Builds the P12 exports (docs/export-format.md): the completed quests of a character and its Moonlit obtained state,
@@ -79,8 +108,17 @@ public static class ExportWriter
     /// <summary>The CSV value of an obtained state the plugin cannot read.</summary>
     public const string Unknown = "unknown";
 
-    private static readonly string[] QuestColumns = ["rowId", "questId", "name", "section", "category", "genre", "expansion", "completed", "completedAt", "completedAfter"];
-    private static readonly string[] MoonlitColumns = ["kind", "rewardId", "rewardName", "questRowId", "obtained", "availability"];
+    // New columns go at the end (formatVersion stays 1): a reader that takes columns by position keeps working.
+    private static readonly string[] QuestColumnNames =
+        ["rowId", "questId", "name", "section", "category", "genre", "expansion", "completed", "completedAt", "completedAfter", "state", "displayLevel", "patch", "isMsq", "repeatable", "lodestoneId"];
+
+    private static readonly string[] MoonlitColumnNames = ["kind", "rewardId", "rewardName", "questRowId", "obtained", "availability", "itemId", "collectId"];
+
+    /// <summary>The quest CSV's columns, in order (Copy table as TSV adds <c>url</c> after them).</summary>
+    public static IReadOnlyList<string> QuestColumns => QuestColumnNames;
+
+    /// <summary>The Moonlit CSV's columns, in order (Copy table as TSV adds <c>url</c> after them).</summary>
+    public static IReadOnlyList<string> MoonlitColumns => MoonlitColumnNames;
 
     /// <summary>
     /// The header for an export of <paramref name="snapshot"/>'s character: its name only when
@@ -97,9 +135,16 @@ public static class ExportWriter
     /// <summary>
     /// One row per catalog quest the snapshot has completed, in journal order; with <paramref name="includeIncomplete"/>
     /// every catalog quest, each with its completed flag. <paramref name="expansionName"/> names an expansion id
-    /// ("Endwalker"); without it the id is written.
+    /// ("Endwalker"); without it the id is written. <paramref name="states"/> (the character's evaluations) fills
+    /// <c>state</c>, <paramref name="ids"/> (the link table) <c>lodestoneId</c>; both are left empty without them.
     /// </summary>
-    public static List<QuestExportRow> QuestRows(QuestCatalog catalog, CharacterSnapshot snapshot, Func<byte, string>? expansionName = null, bool includeIncomplete = false)
+    public static List<QuestExportRow> QuestRows(
+        QuestCatalog catalog,
+        CharacterSnapshot snapshot,
+        Func<byte, string>? expansionName = null,
+        bool includeIncomplete = false,
+        IReadOnlyDictionary<uint, QuestEvaluation>? states = null,
+        ExternalIds? ids = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -120,26 +165,47 @@ public static class ExportWriter
                 continue;
             }
 
-            var expansion = expansionName?.Invoke(quest.Expansion) is { Length: > 0 } name
-                ? name
-                : quest.Expansion.ToString(CultureInfo.InvariantCulture);
-            // A quest already complete when dates started has none (its kind is Before): nothing is guessed.
-            var date = CompletionDates.For(snapshot, quest.QuestId);
-            var dated = date is { Kind: not CompletionDateKind.Before } d ? d : (QuestCompletionDate?)null;
-            rows.Add(new QuestExportRow(
-                quest.RowId,
-                quest.QuestId,
-                quest.Name,
-                quest.Journal.SectionName,
-                quest.Journal.CategoryName,
-                quest.Journal.GenreName,
-                expansion,
-                completed,
-                dated?.Utc,
-                dated?.AfterUtc));
+            rows.Add(Row(quest, snapshot, quest.Name, expansionName, states?.GetValueOrDefault(quest.RowId), ids));
         }
 
         return rows;
+    }
+
+    /// <summary>
+    /// One quest's row: <paramref name="name"/> as given (the export writes the quest's own name, Copy table as TSV the
+    /// spoiler shield's), completed from <paramref name="snapshot"/> (from <paramref name="evaluation"/> without one),
+    /// the completion date from the snapshot, <c>state</c> from the evaluation and <c>lodestoneId</c> from the table.
+    /// </summary>
+    public static QuestExportRow Row(QuestRecord quest, CharacterSnapshot? snapshot, string name, Func<byte, string>? expansionName, QuestEvaluation? evaluation, ExternalIds? ids)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        var expansion = expansionName?.Invoke(quest.Expansion) is { Length: > 0 } expansionText
+            ? expansionText
+            : quest.Expansion.ToString(CultureInfo.InvariantCulture);
+        var completed = snapshot?.IsCompleted(quest.QuestId) ?? evaluation is { State: QuestState.Completed };
+
+        // A quest already complete when dates started has none (its kind is Before): nothing is guessed.
+        var date = snapshot is null ? null : CompletionDates.For(snapshot, quest.QuestId);
+        var dated = date is { Kind: not CompletionDateKind.Before } d ? d : (QuestCompletionDate?)null;
+        return new QuestExportRow(
+            quest.RowId,
+            quest.QuestId,
+            name ?? quest.Name,
+            quest.Journal.SectionName,
+            quest.Journal.CategoryName,
+            quest.Journal.GenreName,
+            expansion,
+            completed,
+            dated?.Utc,
+            dated?.AfterUtc)
+        {
+            State = evaluation?.State.ToString() ?? string.Empty,
+            DisplayLevel = quest.DisplayLevel,
+            Patch = quest.AddedIn,
+            IsMsq = FeaturePresets.IsMainScenario(quest),
+            Repeatable = quest.IsRepeatable,
+            LodestoneId = ids?.LodestoneId(quest.RowId) ?? string.Empty,
+        };
     }
 
     /// <summary>One row per reward of the Moonlit unique view with the caller's obtained verdict, in the view's order.</summary>
@@ -150,17 +216,34 @@ public static class ExportWriter
     /// <paramref name="availability"/> is given, each entry's availability through its quest (the <c>availability</c>
     /// field), in the view's order.
     /// </summary>
-    public static List<MoonlitExportRow> MoonlitRows(IReadOnlyList<UniqueRewardRow> view, Func<UniqueRewardEntry, RewardAvailability>? availability)
+    public static List<MoonlitExportRow> MoonlitRows(IReadOnlyList<UniqueRewardRow> view, Func<UniqueRewardEntry, RewardAvailability>? availability) =>
+        MoonlitRows(view, availability, null);
+
+    /// <summary>
+    /// As <see cref="MoonlitRows(IReadOnlyList{UniqueRewardRow}, Func{UniqueRewardEntry, RewardAvailability}?)"/>, with each
+    /// reward's FFXIV Collect id from <paramref name="ids"/> (the link table) where it names one.
+    /// </summary>
+    public static List<MoonlitExportRow> MoonlitRows(IReadOnlyList<UniqueRewardRow> view, Func<UniqueRewardEntry, RewardAvailability>? availability, ExternalIds? ids)
     {
         ArgumentNullException.ThrowIfNull(view);
         var rows = new List<MoonlitExportRow>(view.Count);
         foreach (var row in view)
         {
-            var e = row.Entry;
-            rows.Add(new MoonlitExportRow(e.Kind, e.RewardId, e.RewardName, e.QuestRowId, row.Obtained, availability?.Invoke(e)));
+            rows.Add(Row(row.Entry, row.Obtained, availability?.Invoke(row.Entry), ids));
         }
 
         return rows;
+    }
+
+    /// <summary>One reward's row: the entry's ids and English name, the caller's obtained verdict and availability, the Collect id from the table.</summary>
+    public static MoonlitExportRow Row(UniqueRewardEntry entry, bool? obtained, RewardAvailability? availability, ExternalIds? ids)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        return new MoonlitExportRow(entry.Kind, entry.RewardId, entry.RewardName, entry.QuestRowId, obtained, availability)
+        {
+            ItemId = entry.ItemId,
+            CollectId = ids?.CollectId(entry.Kind, entry.RewardId),
+        };
     }
 
     /// <summary>The quest export as JSON: header, counts, then <c>quests</c>.</summary>
@@ -206,6 +289,25 @@ public static class ExportWriter
                 if (row.CompletedAfter is { } after)
                 {
                     w.WriteString("completedAfter", IsoUtc(after));
+                }
+
+                // Added in 1.8.0; an unknown state, patch or Lodestone id is left out.
+                if (row.State.Length > 0)
+                {
+                    w.WriteString("state", row.State);
+                }
+
+                w.WriteNumber("displayLevel", row.DisplayLevel);
+                if (row.Patch.Length > 0)
+                {
+                    w.WriteString("patch", row.Patch);
+                }
+
+                w.WriteBoolean("isMsq", row.IsMsq);
+                w.WriteBoolean("repeatable", row.Repeatable);
+                if (row.LodestoneId.Length > 0)
+                {
+                    w.WriteString("lodestoneId", row.LodestoneId);
                 }
 
                 w.WriteEndObject();
@@ -260,6 +362,17 @@ public static class ExportWriter
                     w.WriteString("availability", RewardAvailabilities.ExportName(availability));
                 }
 
+                // Added in 1.8.0; a reward without an item, or one the link table has no Collect id for, leaves them out.
+                if (row.ItemId != 0)
+                {
+                    w.WriteNumber("itemId", row.ItemId);
+                }
+
+                if (row.CollectId is { } collectId)
+                {
+                    w.WriteNumber("collectId", collectId);
+                }
+
                 w.WriteEndObject();
             }
 
@@ -271,24 +384,58 @@ public static class ExportWriter
     public static string QuestsCsv(IReadOnlyList<QuestExportRow> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
-        var sb = Csv(QuestColumns);
+        var sb = Csv(QuestColumnNames);
         foreach (var row in rows)
         {
-            Line(sb,
-                Number(row.RowId),
-                Number(row.QuestId),
-                row.Name,
-                row.Section,
-                row.Category,
-                row.Genre,
-                row.Expansion,
-                row.Completed ? "true" : "false",
-                row.CompletedAt is { } at ? IsoUtc(at) : string.Empty,
-                row.CompletedAfter is { } after ? IsoUtc(after) : string.Empty);
+            Line(sb, Fields(row));
         }
 
         return sb.ToString();
     }
+
+    /// <summary>A quest row's values in <see cref="QuestColumns"/> order, as the CSV and the TSV write them.</summary>
+    public static string[] Fields(QuestExportRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return
+        [
+            Number(row.RowId),
+            Number(row.QuestId),
+            row.Name,
+            row.Section,
+            row.Category,
+            row.Genre,
+            row.Expansion,
+            Bool(row.Completed),
+            row.CompletedAt is { } at ? IsoUtc(at) : string.Empty,
+            row.CompletedAfter is { } after ? IsoUtc(after) : string.Empty,
+            row.State,
+            Number(row.DisplayLevel),
+            row.Patch,
+            Bool(row.IsMsq),
+            Bool(row.Repeatable),
+            row.LodestoneId,
+        ];
+    }
+
+    /// <summary>A reward row's values in <see cref="MoonlitColumns"/> order, as the CSV and the TSV write them.</summary>
+    public static string[] Fields(MoonlitExportRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return
+        [
+            row.Kind.ToString(),
+            Number(row.RewardId),
+            row.RewardName,
+            Number(row.QuestRowId),
+            row.Obtained switch { true => "true", false => "false", null => Unknown },
+            row.Availability is { } availability ? RewardAvailabilities.ExportName(availability) : string.Empty,
+            row.ItemId == 0 ? string.Empty : Number(row.ItemId),
+            row.CollectId is { } collectId ? Number(collectId) : string.Empty,
+        ];
+    }
+
+    private static string Bool(bool value) => value ? "true" : "false";
 
     /// <summary>ISO 8601 in UTC with a Z, as <c>exportedUtc</c> is written.</summary>
     private static string IsoUtc(DateTime time) =>
@@ -298,16 +445,10 @@ public static class ExportWriter
     public static string MoonlitCsv(IReadOnlyList<MoonlitExportRow> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
-        var sb = Csv(MoonlitColumns);
+        var sb = Csv(MoonlitColumnNames);
         foreach (var row in rows)
         {
-            Line(sb,
-                row.Kind.ToString(),
-                Number(row.RewardId),
-                row.RewardName,
-                Number(row.QuestRowId),
-                row.Obtained switch { true => "true", false => "false", null => Unknown },
-                row.Availability is { } availability ? RewardAvailabilities.ExportName(availability) : string.Empty);
+            Line(sb, Fields(row));
         }
 
         return sb.ToString();

@@ -923,6 +923,25 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
     }
 
+    /// <summary>
+    /// Copy view as TSV (1.8.0): the rewards listed now (the kind, filters and search applied), under the export's
+    /// Moonlit columns plus a link: the FFXIV Collect page (or its name search), else the item, else the quest on
+    /// Garland Tools.
+    /// </summary>
+    private void CopyViewTsv()
+    {
+        var ids = links.ExternalIds;
+        var exported = new List<Core.Export.MoonlitExportRow>(visibleCount);
+        for (var i = 0; i < visibleCount && i < visible.Length; i++)
+        {
+            var row = rows[visible[i]];
+            exported.Add(Core.Export.ExportWriter.Row(row.Entry, row.Obtained, row.Availability.Kind, ids));
+        }
+
+        ImGui.SetClipboardText(Core.Export.TableTsv.Moonlit(exported, r =>
+            Core.Links.ExternalLinks.Reward(r.Kind, r.RewardId, r.ItemId, r.QuestRowId, r.RewardName, ids)));
+    }
+
     private string copyLabel = string.Empty;
     private int copyLabelLanguage = -1;
 
@@ -1583,6 +1602,18 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         if (ImGui.MenuItem(Strings.RouteToThisReward))
         {
             ui.OpenRoute(Core.Route.RouteTarget.ForReward(row.Entry, catalog.All, row.Name));
+        }
+
+        // "Open on FFXIV Collect" and the item on Garland Tools (1.8.0); a masked quest's reward asks first.
+        links.DrawRewardLinks(row.Entry, row.Quest is { } giver && session.Spoilers.IsMasked(giver), row.Name);
+        if (ImGui.MenuItem(Strings.LinksCopyViewTsv))
+        {
+            CopyViewTsv();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.LinksCopyViewTsvTooltip);
         }
 
         // The other quests on the character's path that give the same reward: each opens in the Journal.

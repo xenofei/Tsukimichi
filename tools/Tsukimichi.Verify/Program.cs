@@ -22,6 +22,7 @@ namespace Tsukimichi.Verify;
 /// Tsukimichi.Verify summary [--out &lt;dir&gt;]       exits 1 when any row is unresolved or catalogWrong outside the allowlist
 /// Tsukimichi.Verify patches [--game, --cache, --offline, --rate, --limit N, --out] [--patches &lt;file&gt;] [--patch-corrections &lt;file&gt;] [--no-quest-documents]
 /// Tsukimichi.Verify questionable [--game, --out, --curated] [--links &lt;file&gt;] [--extract &lt;QuestData.cs&gt; --commit &lt;hash&gt;]   exits 1 on a link the catalog misses outside the allowlist
+/// Tsukimichi.Verify links [--out &lt;dir&gt;]   offline: writes Tsukimichi/Data/external_ids.json from the committed CSVs
 /// </code>
 /// </summary>
 public static class Program
@@ -66,6 +67,7 @@ public static class Program
                 "summary" => Summary(opts),
                 "patches" => await PatchesAsync(opts, cts.Token),
                 "questionable" => Questionable(opts),
+                "links" => Links(opts),
                 _ => Unknown(command),
             };
         }
@@ -91,7 +93,7 @@ public static class Program
 
     private static void Usage()
     {
-        Console.Error.WriteLine("usage: Tsukimichi.Verify <quests|rewards|summary|patches|questionable> [options]");
+        Console.Error.WriteLine("usage: Tsukimichi.Verify <quests|rewards|summary|patches|questionable|links> [options]");
         Console.Error.WriteLine("  --game <sqpack>    game sqpack directory (default: the Steam install)");
         Console.Error.WriteLine("  --cache <dir>      fetch cache (default: %LOCALAPPDATA%\\Tsukimichi.Verify\\<gameVersion>); never inside the repo");
         Console.Error.WriteLine("  --offline          never fetch; a cache miss is an unresolved row");
@@ -389,6 +391,89 @@ public static class Program
 
         log.WriteLine(open == 0 ? "questionable: gate passed" : $"questionable: gate FAILED, {open} open");
         return open == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// <c>links</c> (1.8.0, "Open on…"): the link table the plugin ships, built offline from the committed CSVs. Each
+    /// quest's Lodestone hash comes from its Lodestone rows' page URL; its wiki title from its wiki rows' page URL,
+    /// except rows whose verdict says the page was not found (unresolved, notListed); each Moonlit reward's FFXIV
+    /// Collect id from the reward rows Collect matched. Exits 1 when a quest has two different hashes or titles.
+    /// </summary>
+    private static int Links(VerifyOptions opts)
+    {
+        var log = Console.Out;
+        var questCsv = Path.Combine(opts.OutDir, "quest-verification.csv");
+        var rewardCsv = Path.Combine(opts.OutDir, "reward-verification.csv");
+        if (!File.Exists(questCsv))
+        {
+            Console.Error.WriteLine($"links: {questCsv} not found (run `quests` first)");
+            return 2;
+        }
+
+        var hashes = new Dictionary<uint, string>();
+        var titles = new Dictionary<uint, string>();
+        var conflicts = 0;
+        foreach (var row in Csv.ReadQuestRows(questCsv))
+        {
+            if (row.Source == SourceNames.Lodestone && Tsukimichi.Core.Links.ExternalLinks.TryParseLodestoneQuest(row.SourceRef, out var hash))
+            {
+                conflicts += Keep(hashes, row.RowId, hash, "Lodestone hash", log);
+            }
+            else if (row.Source == SourceNames.Wiki && row.Verdict is not (Verdict.Unresolved or Verdict.NotListed)
+                     && Tsukimichi.Core.Links.ExternalLinks.TryParseWikiPage(row.SourceRef, out var title))
+            {
+                conflicts += Keep(titles, row.RowId, title, "wiki title", log);
+            }
+        }
+
+        var quests = new Dictionary<uint, Tsukimichi.Core.Links.ExternalQuestIds>();
+        foreach (var rowId in hashes.Keys.Union(titles.Keys))
+        {
+            quests[rowId] = new Tsukimichi.Core.Links.ExternalQuestIds(hashes.GetValueOrDefault(rowId, string.Empty), titles.GetValueOrDefault(rowId, string.Empty));
+        }
+
+        var collect = new Dictionary<(RewardKind Kind, uint RewardId), uint>();
+        foreach (var row in File.Exists(rewardCsv) ? Csv.ReadRewardRows(rewardCsv) : [])
+        {
+            if (row.Source != SourceNames.Collect || row.Verdict != Verdict.Match
+                || !Tsukimichi.Core.Links.ExternalLinks.TryParseCollectEntry(row.SourceRef, out var path, out var id)
+                || !Enum.TryParse<RewardKind>(row.Kind, out var kind)
+                || Tsukimichi.Core.Links.ExternalLinks.CollectKind(path) != kind)
+            {
+                continue;
+            }
+
+            if (collect.TryGetValue((kind, row.RewardId), out var known) && known != id)
+            {
+                log.WriteLine($"  conflict: {kind} {row.RewardId} has Collect ids {known} and {id}");
+                conflicts++;
+                continue;
+            }
+
+            collect[(kind, row.RewardId)] = id;
+        }
+
+        var target = Path.Combine(opts.RepoRoot, "Tsukimichi", "Data", Tsukimichi.Core.Links.ExternalIds.FileName);
+        Csv.Atomic(target, Tsukimichi.Core.Links.ExternalIds.Serialize(quests, collect));
+        log.WriteLine($"links: {quests.Count} quests ({hashes.Count} Lodestone hashes, {titles.Count} wiki titles), {collect.Count} FFXIV Collect ids -> {target}");
+        return conflicts == 0 ? 0 : 1;
+
+        static int Keep(Dictionary<uint, string> map, uint rowId, string value, string what, TextWriter log)
+        {
+            if (map.TryGetValue(rowId, out var known))
+            {
+                if (string.Equals(known, value, StringComparison.Ordinal))
+                {
+                    return 0;
+                }
+
+                log.WriteLine($"  conflict: {rowId} has {what}s \"{known}\" and \"{value}\"; the first is kept");
+                return 1;
+            }
+
+            map[rowId] = value;
+            return 0;
+        }
     }
 
     private static int Summary(VerifyOptions opts)

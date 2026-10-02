@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/xenofei/Tsukimichi/blob/main/docs/export-format.schema.json",
+  "title": "Tsukimichi export",
+  "description": "The JSON files Tsukimichi writes from Settings › Data › Export and /tsuki export (docs/export-format.md). formatVersion is bumped only when a field changes meaning or goes away; new fields may be added at any time, so the objects allow properties this schema does not name.",
+  "type": "object",
+  "required": ["format", "formatVersion", "kind", "pluginVersion", "gameVersion", "exportedUtc", "count"],
+  "properties": {
+    "format": { "const": "tsukimichi-export" },
+    "formatVersion": { "const": 1 },
+    "kind": { "enum": ["quests", "moonlit"] },
+    "pluginVersion": { "type": "string", "description": "Tsukimichi's version, e.g. 1.8.0.0" },
+    "gameVersion": { "type": "string", "description": "The game client's version; empty when it could not be read" },
+    "exportedUtc": { "$ref": "#/$defs/utc" },
+    "character": { "type": "string", "description": "Present only when Include character name is ticked" },
+    "count": { "type": "integer", "minimum": 0 },
+    "completedCount": { "type": "integer", "minimum": 0, "description": "Quests: rows with completed true" },
+    "completionDatesSinceUtc": { "$ref": "#/$defs/utc", "description": "Quests: when completion dates started being recorded" },
+    "obtainedCount": { "type": "integer", "minimum": 0, "description": "Moonlit: rows obtained" },
+    "unknownCount": { "type": "integer", "minimum": 0, "description": "Moonlit: rows whose obtained state is unknown" },
+    "quests": { "type": "array", "items": { "$ref": "#/$defs/quest" } },
+    "rewards": { "type": "array", "items": { "$ref": "#/$defs/reward" } }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "quests" } } },
+      "then": { "required": ["completedCount", "quests"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "moonlit" } } },
+      "then": { "required": ["obtainedCount", "unknownCount", "rewards"] }
+    }
+  ],
+  "$defs": {
+    "utc": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+      "description": "UTC, ISO 8601, to the second"
+    },
+    "quest": {
+      "type": "object",
+      "required": ["rowId", "questId", "name", "section", "category", "genre", "expansion", "completed"],
+      "properties": {
+        "rowId": { "type": "integer", "minimum": 65536, "description": "Quest sheet row id" },
+        "questId": { "type": "integer", "minimum": 0, "maximum": 65535, "description": "The runtime quest id (rowId's low 16 bits)" },
+        "name": { "type": "string", "description": "The quest name in the client's language" },
+        "section": { "type": "string" },
+        "category": { "type": "string" },
+        "genre": { "type": "string" },
+        "expansion": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "completedAt": { "$ref": "#/$defs/utc", "description": "When Tsukimichi first saw the quest completed; absent when not known" },
+        "completedAfter": { "$ref": "#/$defs/utc", "description": "For a quest found completed at a login: the capture before it" },
+        "state": {
+          "enum": ["Ready", "ReadyOnOtherJob", "Accepted", "Blocked", "DoneThisCycle", "Completed", "Foreclosed", "Unknown"],
+          "description": "Added in 1.8.0. The character's state of the quest (as Tsukimichi.GetState names it); absent when the character was not evaluated. A later version may add a state: read one you do not know as Unknown"
+        },
+        "displayLevel": { "type": "integer", "minimum": 0, "description": "Added in 1.8.0. The level the journal and the Lodestone print" },
+        "patch": { "type": "string", "pattern": "^\\d+\\.\\d+$", "description": "Added in 1.8.0. The patch the quest was added in (\"2.0\", \"6.55\"); absent when unknown" },
+        "isMsq": { "type": "boolean", "description": "Added in 1.8.0. A main scenario quest" },
+        "repeatable": { "type": "boolean", "description": "Added in 1.8.0. A daily, weekly or other repeatable quest" },
+        "lodestoneId": { "type": "string", "pattern": "^[0-9a-f]+$", "description": "Added in 1.8.0. The Lodestone Eorzea Database id: https://na.finalfantasyxiv.com/lodestone/playguide/db/quest/<lodestoneId>/; absent when unknown" }
+      },
+      "additionalProperties": true
+    },
+    "reward": {
+      "type": "object",
+      "required": ["kind", "rewardId", "rewardName", "questRowId", "obtained"],
+      "properties": {
+        "kind": { "type": "string", "description": "Reward kind: Emote, Mount, Minion, Orchestrion, TripleTriadCard, Barding, Hairstyle, Ornament, DutyUnlock, SystemUnlock, Action, Title, Item, …" },
+        "rewardId": { "type": "integer", "minimum": 0, "description": "Row id in the sheet the kind refers to" },
+        "rewardName": { "type": "string", "description": "The reward's English name" },
+        "questRowId": { "type": "integer", "minimum": 65536 },
+        "obtained": { "type": ["boolean", "null"], "description": "null when Tsukimichi cannot tell" },
+        "availability": {
+          "enum": ["getNow", "eventRunning", "upcomingEvent", "eventNotRunning", "collabMayReturn", "pastEventOnStore", "goneForGood"],
+          "description": "Added in 1.5.0. Whether the reward can still be had through this quest"
+        },
+        "itemId": { "type": "integer", "minimum": 1, "description": "Added in 1.8.0. The item that teaches or holds the reward; absent for a reward without one" },
+        "collectId": { "type": "integer", "minimum": 1, "description": "Added in 1.8.0. The reward's FFXIV Collect id (https://ffxivcollect.com/<kind path>/<collectId>); absent when unknown" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

@@ -12,8 +12,9 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// The detail pane's Questionable pieces (V2-17): a line under the status saying whether Questionable's own lock check
 /// agrees with Tsukimichi ("Questionable agrees", "Questionable says: Prev quest (1)"), and, when Settings ›
-/// Integrations › "Show Questionable hand-off" is ticked and Questionable offers the gate and a working reason gate, a
-/// round "…" button at the end of the action bar whose menu holds "Add to Questionable priority". Questionable is asked
+/// Integrations › "Show Questionable hand-off" is ticked and Questionable offers the gate and a working reason gate,
+/// "Add to Questionable priority" in the menu of the round "…" button at the end of the action bar (which since 1.8.0
+/// always shows, for "Open on…"). Questionable is asked
 /// when the selection, the session version or Dalamud's plugin list changes, never per frame; nothing shows while it
 /// is not loaded.
 /// <para>
@@ -181,17 +182,13 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// The round "…" button and its menu, last on the action bar, when <see cref="ShowsQuestionableMore"/>. The menu's
-    /// one item calls Questionable's own <c>AddQuestPriority</c> gate; it is disabled, saying why, for a quest
-    /// Questionable has no path for.
+    /// The round "…" button and its menu, last on the action bar (always shown since 1.8.0): "Open on…" (the quest's
+    /// page on the Lodestone, Garland Tools, the wiki or Teamcraft; a masked quest asks first), then, when
+    /// <see cref="ShowsQuestionableMore"/>, "Add to Questionable priority", which calls Questionable's own
+    /// <c>AddQuestPriority</c> gate and is disabled, saying why, for a quest Questionable has no path for.
     /// </summary>
-    private void DrawQuestionableMore(ref float used, float width, uint rowId)
+    private void DrawMoreMenu(ref float used, float width, QuestRecord quest, uint rowId)
     {
-        if (!ShowsQuestionableMore || Questionable is not { } questionable)
-        {
-            return;
-        }
-
         NextRound(ref used, width);
         if (Chrome.IconButtonRound("##more", MoreIcon, Strings.QuestionableMoreTooltip))
         {
@@ -204,11 +201,16 @@ public sealed partial class DetailPane
             return;
         }
 
+        var spoilers = runner.Spoilers;
+        links.DrawOpenOnMenu(quest, spoilers.IsMasked(quest), spoilers.DisplayName(quest));
+
         // The menu opens after a refresh with the hand-off on, so questionableCanAdd is current.
-        if (questionableRowId != rowId)
+        if (!ShowsQuestionableMore || Questionable is not { } questionable || questionableRowId != rowId)
         {
             return;
         }
+
+        ImGui.Separator();
 
         if (ImGui.MenuItem(Strings.QuestionableAddToPriority, enabled: questionableCanAdd))
         {

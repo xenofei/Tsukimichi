@@ -36,6 +36,7 @@ dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll summary
 | `summary` | reads the committed CSVs and the allowlist; prints totals and every row that fails the gate; exits 1 when a row is `unresolved` or `catalogWrong` outside the allowlist, else 0 |
 | `patches` | P8 seed: the patch every named quest was added in, from Garland Tools; writes `Tsukimichi/Data/quest_patches.json` and `docs/data/quest-patches-report.md` |
 | `questionable` | cross-checks Questionable's hand-added prerequisite links against the catalog; exits 1 on a link it misses outside the allowlist (below) |
+| `links` | offline, no game files: writes `Tsukimichi/Data/external_ids.json` (1.8.0, "Open on…") from the committed `quest-verification.csv` (each quest's Lodestone page hash and the wiki page its facts were checked against, rows whose page was not found left out) and `reward-verification.csv` (the FFXIV Collect id of each reward Collect matched); exits 1 when a quest has two different hashes or titles. Rerun it after `quests` or `rewards` |
 
 ### questionable
 

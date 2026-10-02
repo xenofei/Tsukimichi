@@ -2,7 +2,7 @@
 
 Tsukimichi answers other Dalamud plugins over IPC: whether a quest can be picked up now, why not, where the main scenario stands, and "show me this quest". An overlay, a route planner or another quest plugin can build on its requirement evaluator instead of writing its own. The gates exist from Tsukimichi 0.9.0 and answer with API version **1**.
 
-Everything here is read-only except `Tsukimichi.OpenQuest`, which opens Tsukimichi's own window. Nothing moves the character, accepts a quest or touches the game on a caller's behalf.
+Everything here is read-only except `Tsukimichi.OpenQuest`, which opens Tsukimichi's own window, and `Tsukimichi.PinQuest` (1.8.0), which changes Tsukimichi's own pin list. Nothing moves the character, accepts a quest or touches the game on a caller's behalf.
 
 ## Quick reference
 
@@ -10,16 +10,31 @@ Everything here is read-only except `Tsukimichi.OpenQuest`, which opens Tsukimic
 |---|---|---|---|
 | `Tsukimichi.ApiVersion` | `() -> int` | `1` | 0.9.0 |
 | `Tsukimichi.IsReady` | `() -> bool` | true once the catalog is built and the logged-in character is evaluated | 0.9.0 |
+| `Tsukimichi.GetGates` | `() -> string[]` | the name of every gate and message this build registers (feature detection) | 1.8.0 |
 | `Tsukimichi.IsQuestAvailable` | `(uint questId) -> bool` | true for Ready or Ready on another job | 0.9.0 |
 | `Tsukimichi.GetState` | `(uint questId) -> string` | the state's enum name (`"Ready"`, `"Blocked"`, …) | 0.9.0 |
+| `Tsukimichi.GetStates` | `(uint[] questIds) -> string[]` | `GetState` for each id, in order | 1.8.0 |
 | `Tsukimichi.GetStateName` | `(uint questId) -> string` | the state as the window shows it (`"In journal"`, `"Done today"`, …) | 0.9.0 |
 | `Tsukimichi.GetBlockers` | `(uint questId) -> string[]` | the status line, then one line per requirement | 0.9.0 |
+| `Tsukimichi.GetFirstBlocker` | `(uint questId) -> (string kind, uint refId, int need, int have)` | the one blocker to act on first, in a stable vocabulary | 1.8.0 |
+| `Tsukimichi.GetQuestsInState` | `(string state) -> uint[]` | row ids of every quest in that state, in journal order | 1.8.0 |
+| `Tsukimichi.GetQuestsInZone` | `(uint territoryId, bool readyOnly) -> uint[]` | quests whose giver stands in the zone; with `readyOnly`, the ones that can be picked up | 1.8.0 |
 | `Tsukimichi.GetMsqPosition` | `() -> uint` | Quest row id of the next main scenario quest (inside a branch region, the first route's); 0 when the story is done | 0.9.0 |
 | `Tsukimichi.GetMsqPositions` | `() -> uint[]` | Quest row ids of every main scenario position: the next quest, or one per open route inside a branch region; empty when the story is done | 1.0.0 |
+| `Tsukimichi.GetRoute` | `(uint targetRowId) -> uint[]` | the unlock route's steps to the quest, in order, the target last | 1.8.0 |
+| `Tsukimichi.GetNextJobQuest` | `(uint classJobId) -> uint` | the next quest of a class's or job's quest line; 0 when done | 1.8.0 |
+| `Tsukimichi.GetQuestsForItem` | `(uint itemId) -> uint[]` | quests that reward the item | 1.8.0 |
+| `Tsukimichi.GetMoonlitStatus` | `(uint itemId) -> (bool unique, bool owned, string confidence)` | whether the item is a quest-only reward, whether the character has it, and how that is known | 1.8.0 |
+| `Tsukimichi.GetUnlockQuests` | `(uint contentFinderConditionId) -> uint[]` | quests that unlock the Duty Finder entry | 1.8.0 |
+| `Tsukimichi.GetAbandoned` | `() -> (uint rowId, byte step, long abandonedUnixSeconds)[]` | quests abandoned mid-way and not taken up again, newest first | 1.8.0 |
+| `Tsukimichi.GetPins` | `() -> uint[]` | the quests pinned in Tsukimichi, in the order they were pinned | 1.8.0 |
+| `Tsukimichi.PinQuest` | `(uint questId, bool pinned) -> bool` | pins or unpins a quest in Tsukimichi's own list | 1.8.0 |
 | `Tsukimichi.OpenQuest` | `(uint questId) -> bool` | true when the quest exists and the window was asked to show it | 0.9.0 |
 | `Tsukimichi.StatesChanged` | message, no arguments | sent after a poll changed the logged-in character's states | 0.9.0 |
+| `Tsukimichi.QuestStateChanged` | message `(uint rowId, string from, string to)` | one per quest whose state a live poll moved | 1.8.0 |
+| `Tsukimichi.Disposing` | message, no arguments | sent once as Tsukimichi unloads, before the gates go away | 1.8.0 |
 
-The plugin's internal name is `Tsukimichi`.
+The plugin's internal name is `Tsukimichi`. Every argument and answer is a primitive, an array of primitives or a value tuple of them, so no shared type is needed: copy [`TsukimichiIpc.cs`](TsukimichiIpc.cs), a drop-in client that wraps every gate, or use the examples below.
 
 ## Whose data, which ids
 
@@ -30,9 +45,11 @@ The plugin's internal name is `Tsukimichi`.
 - a **Quest sheet row id**, 65536 and up (`66236`), the id xivapi, Garland Tools, FFXIV Collect and Lumina's `Quest` sheet use;
 - a **runtime quest id**, 1 to 65535 (`700`), the low 16 bits of the row id, which `QuestManager`, the journal and the completion flags use.
 
-`0`, an id past the sheet and a quest Tsukimichi's catalog does not hold all read as unknown. Ids that come back (`GetMsqPosition`, `GetMsqPositions`, the ids inside requirement lines) are always row ids.
+`0`, an id past the sheet and a quest Tsukimichi's catalog does not hold all read as unknown. Ids that come back (`GetMsqPosition`, `GetMsqPositions`, the ids inside requirement lines, and every quest id the 1.8.0 gates return) are always row ids.
 
-**The spoiler shield.** Quest names inside `GetBlockers` go through the logged-in character's spoiler settings (Settings › Spoilers), exactly as Tsukimichi's own chat lines do: a main scenario quest the player has not reached prints as `Main scenario quest (Lv 83)`. Show the lines as they come and the player's choice is kept.
+**Other ids.** `territoryId` is a TerritoryType row id (`ClientState.TerritoryType`), `itemId` an Item row id (HQ ids, 1,000,000 and up, and collectable ids are folded to the base item), `contentFinderConditionId` a ContentFinderCondition row id (the Duty Finder entry), `classJobId` a ClassJob row id.
+
+**The spoiler shield.** Quest names inside `GetBlockers` go through the logged-in character's spoiler settings (Settings › Spoilers), exactly as Tsukimichi's own chat lines do: a main scenario quest the player has not reached prints as `Main scenario quest (Lv 83)`. Show the lines as they come and the player's choice is kept. The 1.8.0 gates return ids, never names; if you print a name for one of them, a masked quest is one `GetBlockers` would mask, and the polite thing is to ask Tsukimichi (`GetBlockers`' status line names it as the player wants).
 
 ## Not ready yet
 
@@ -45,6 +62,20 @@ The gates never throw on Tsukimichi's side. Until they can answer they return:
 | Unknown id | (unchanged) | false | `""` | `[]` | (unchanged) | false |
 
 `GetMsqPosition` returns 0 both when the story is complete and when there is no answer; `IsReady` tells the two apart. `GetMsqPositions` returns an empty array in every case where `GetMsqPosition` returns 0. The first evaluation after login runs on a worker and lands a moment after the character loads; `StatesChanged` is sent when it does.
+
+The 1.8.0 gates follow the same rule:
+
+| Gate | Catalog building or failed | Nobody logged in, or first evaluation running | Unknown id or argument |
+|---|---|---|---|
+| `GetGates` | the full list (it never depends on data) | the full list | — |
+| `GetStates` | one `""` per id | one `""` per id | `""` in its place; `[]` for a null array |
+| `GetQuestsInState`, `GetQuestsInZone`, `GetRoute`, `GetAbandoned` | `[]` | `[]` | `[]` (a state name `GetState` never returns, territory 0) |
+| `GetFirstBlocker` | `("", 0, 0, 0)` | `("", 0, 0, 0)` | `("", 0, 0, 0)` |
+| `GetNextJobQuest` | 0 | 0 | 0 |
+| `GetQuestsForItem`, `GetUnlockQuests` | `[]` | **answered** (data only, no character needed) | `[]` |
+| `GetMoonlitStatus` | `(false, false, "")` | `unique` answered, `owned` false, confidence `"unknown"` | `(false, false, "")` |
+| `GetPins` | `[]` | `[]` | — |
+| `PinQuest` | false | false | false |
 
 When Tsukimichi is not installed or not loaded (or is reloading), Dalamud itself throws `IpcNotReadyError` from `InvokeFunc`. Catch it and treat the plugin as absent.
 
@@ -137,14 +168,144 @@ Inside a branch region of the main scenario (from Evercold, 8.0, on: routes that
 
 A message with no arguments. Sent after the logged-in character's states changed: a poll that moved any quest's state, its ready-on job or its journal step (a quest accepted, advanced, completed or abandoned, a level-up that opened something, a daily reset), the first evaluation after login, a logout, another character logging in, and a catalog rebuild. Re-ask whatever you show when it arrives. Requirement detail alone (the current level printed inside a `Level` line) can change without it.
 
+## Gates added in 1.8.0
+
+All additive: the API version stays `1`. On an older Tsukimichi each throws `IpcNotReadyError`; call `GetGates` once (absent before 1.8.0) to see what the installed build offers.
+
+### Tsukimichi.GetGates
+
+`() -> string[]`. The name of every gate and message this build registers, in this page's order (the Quick reference above). A fresh array per call. Use it for feature detection instead of calling a gate to see whether it throws.
+
+### Tsukimichi.Disposing
+
+A message with no arguments, sent once on the framework thread when Tsukimichi unloads (disabled, updated, reloaded, or the game closing), **before** its gates are unregistered. Drop what you cached; the gates throw `IpcNotReadyError` from the next frame on. When Tsukimichi loads again it sends `StatesChanged` after its first evaluation.
+
+### Tsukimichi.GetStates
+
+`(uint[] questIds) -> string[]`. `GetState` for every id in one call, in the same order: one dictionary lookup each, so asking for a few hundred is fine. `""` where there is no answer (an unknown id, or not ready). A null or empty array returns an empty array.
+
+```
+GetStates([66236, 700, 1]) -> ["Completed", "Ready", ""]
+```
+
+### Tsukimichi.GetQuestsInState
+
+`(string state) -> uint[]`. The row ids of every quest whose state is `state`, spelled exactly as `GetState` returns it (`"Ready"`, `"ReadyOnOtherJob"`, `"Accepted"`, `"Blocked"`, `"DoneThisCycle"`, `"Completed"`, `"Foreclosed"`, `"Unknown"`; case matters), in journal order. Removed quests are included when the character's state for them is that state (a completed removed quest is `Completed`). Empty for any other string and when there is no answer.
+
+```
+GetQuestsInState("Accepted") -> [66045, 67112, 70210]   // the journal, in journal order
+```
+
+### Tsukimichi.GetQuestsInZone
+
+`(uint territoryId, bool readyOnly) -> uint[]`. The quests whose giver stands in the zone (the quest's issuer as the Quest sheet places it), in journal order; quests the game removed are left out. With `readyOnly` only those `IsQuestAvailable` answers true for (Ready, or Ready on another job); allied society dailies not offered today read Blocked and are left out. Without it, every quest of the zone whatever its state. Empty when there is no answer.
+
+### Tsukimichi.GetFirstBlocker
+
+`(uint questId) -> (string kind, uint refId, int need, int have)`. The one thing to act on first, as data rather than text: the evaluator's first unmet requirement (the one `GetBlockers`' status line names), in a vocabulary of its own that does not follow Tsukimichi's internal names. `have` is -1 when Tsukimichi could not read the value.
+
+| `kind` | Means | `refId` | `need` / `have` |
+|---|---|---|---|
+| `""` | no answer (not ready, unknown id) | 0 | 0 / 0 |
+| `none` | nothing blocks: Ready, in the journal, done, or done this cycle | 0 | 0 / 0 |
+| `level` | the job's level is too low | the ClassJob the level was read on (0: the current job) | levels (have -1: no job can take the quest) |
+| `quest` | a previous quest is not done | the quest to do next (row id) | quests needed / done (an "any of" list needs 1) |
+| `job` | needs another class or job (and for Ready on another job: the job it is open on) | ClassJob row id | 0 / 0 |
+| `jobCategory` | needs one of a category's jobs | ClassJobCategory row id | 0 / 0 |
+| `grandCompany` | needs a Grand Company | GrandCompany row id | that id / the character's (0: none) |
+| `grandCompanyRank` | needs a Grand Company rank | GrandCompany row id | GrandCompanyRank row ids |
+| `alliedSocietyRank` | needs an allied society rank | BeastTribe row id | ranks |
+| `alliedSocietyReputation` | needs allied society reputation | BeastTribe row id | reputation points |
+| `alliedSocietyAllowance` | no allied society allowances left today | 0 | 1 / allowances left |
+| `notOfferedToday` | an allied society daily its giver does not offer today | the quest's row id | 1 / 0 |
+| `duty` | a duty must be cleared | the first InstanceContent row id the quest lists | duties needed / cleared |
+| `seasonal` | its seasonal event is not running (or its chapter is not open) | Festival row id | 1 / 0 |
+| `expansion` | the account does not own the expansion | ExVersion row id | that id / the newest owned |
+| `levelCap` | above the account's level cap | 0 | the quest's level / the cap |
+| `otherPath` | on a path the character did not take (another city, class, Grand Company or choice): locked out for good | a quest that decided it, or 0 | 0 / 0 |
+| `lockedOut` | a quest that forecloses this one is done: locked out for good | that quest's row id | 0 / 0 |
+| `removed` | the game removed the quest | 0 | 0 / 0 |
+| `achievement` | needs an achievement | Achievement row id | 1 / 0 (have -1: the list is not loaded yet) |
+| `mount` | needs a mount | 0 | 1 / 0 or 1 (-1: not read) |
+| `house` | needs a house | 0 | 1 / 0 or 1 (-1: not read) |
+| `customDeliveryRank` | needs a custom delivery satisfaction rank | SatisfactionNpc row id | ranks (have -1: not read) |
+| `carrierLevel` | needs a Delivery Moogle carrier level | 0 | levels (have -1: not read) |
+| `unchecked` | a condition the game does not expose (the quest reads Not checked) | the first condition id | 0 / 0 |
+| `other` | something this vocabulary has no word for yet | 0 | 0 / 0 |
+
+The words are frozen: none is renamed or removed within API version 1. A later release may add one; treat a word you do not know as `other`.
+
+```
+GetFirstBlocker(66753) -> ("quest", 66752, 1, 0)
+GetFirstBlocker(70011) -> ("level", 0, 100, 96)
+GetFirstBlocker(66236) -> ("none", 0, 0, 0)
+```
+
+### Tsukimichi.GetRoute
+
+`(uint targetRowId) -> uint[]`. The unlock route to the quest, as Tsukimichi's route window plans it for the logged-in character: the row ids of every quest still to do, in an order that never puts a quest before what it requires (and, among quests that can come in either order, the lower level first), the target last. Done quests are left out; a quest already done returns an empty array, as does a quest no route reaches. Where an "any of" join leaves a choice, the route takes the shortest way; only the route window shows the alternatives. Planned once per quest per session change (a poll that moved a state, a level-up, another character), so asking again is cheap; a fresh array per call.
+
+### Tsukimichi.GetNextJobQuest
+
+`(uint classJobId) -> uint`. The next quest of a class's or job's quest line, as the Characters tab shows it: the first quest that is neither done nor locked out, in level then journal order (a job's line starts with its class's quests, then its unlock quest). 0 when the line is done, for a ClassJob with no quests, and when there is no answer. Its state may be anything; ask `GetState` or `GetFirstBlocker`.
+
+### Tsukimichi.GetQuestsForItem
+
+`(uint itemId) -> uint[]`. The quests that reward the item, as a sheet reward (fixed or optional) or as a Moonlit reward's item (the item that teaches a mount, a minion, an orchestrion roll…), in journal order; removed quests are left out. HQ and collectable ids are folded to the base item. Data only: it answers whenever the catalog is built, logged in or not.
+
+### Tsukimichi.GetMoonlitStatus
+
+`(uint itemId) -> (bool unique, bool owned, string confidence)`. Whether the item is a Moonlit reward (a reward only a quest gives, as the Moonlit tab lists it), whether the logged-in character has it, and how that is known:
+
+| `confidence` | Means |
+|---|---|
+| `live` | read from the game now (the character is logged in and on view in Tsukimichi, and the call came on the framework thread) |
+| `saved` | from the character's last capture (owned collectibles are saved with each capture since 1.5) |
+| `quest` | the reward comes with its quest (an action, a trait, a job, a system unlock), so the quest's completion answers |
+| `unknown` | nothing can tell (an item reward, or a capture from before 1.5); `owned` reads false |
+| `""` | the item is no Moonlit reward (`unique` false), or no answer |
+
+### Tsukimichi.GetUnlockQuests
+
+`(uint contentFinderConditionId) -> uint[]`. The quests that unlock the Duty Finder entry, the same list as Tsukimichi's hint beside the Duty Finder, in journal order; removed quests are left out. Data only: answers whenever the catalog is built.
+
+### Tsukimichi.GetAbandoned
+
+`() -> (uint rowId, byte step, long abandonedUnixSeconds)[]`. The quests the logged-in character abandoned mid-way and has not taken up again (Tsukimichi notices the journal losing a quest that was not completed), newest first: the row id, the step it was left at (0 when unknown) and when, as Unix seconds in UTC.
+
+### Tsukimichi.GetPins
+
+`() -> uint[]`. The quests pinned in Tsukimichi for the logged-in character (the todo overlay's Pinned section), in the order they were pinned. A fresh array per call. Pins change without `StatesChanged`; ask again when you draw.
+
+### Tsukimichi.PinQuest
+
+`(uint questId, bool pinned) -> bool`. Pins (`true`) or unpins (`false`) a quest for the logged-in character in Tsukimichi's own list, saved as a pin made in the window is. Only Tsukimichi's data changes: nothing in the game, no other plugin's list. Called on the framework thread it answers whether the quest now is as asked (true also when it already was); from another thread the change is queued for the next frame and true means it was accepted. False for an unknown id, nobody logged in, or before the catalog is built. Call it from a click.
+
+### Tsukimichi.QuestStateChanged
+
+A message `(uint rowId, string from, string to)`, sent on the framework thread once per quest whose state a live poll moved (accepted, completed, abandoned, opened by a level-up, reset at the daily reset), just before `StatesChanged`. `from` and `to` are `GetState` names; `""` for a quest that had no state (or has none any more). It is **not** sent for a login, the first evaluation after one, another character logging in, a logout or a catalog rebuild: those send `StatesChanged` alone, so re-read everything then. When more than 64 quests change in one poll (a daily reset, a level-up opening dozens), none are sent and `StatesChanged` alone says to re-read. It is only computed while it has a subscriber.
+
+```
+QuestStateChanged(66236, "Accepted", "Completed")
+QuestStateChanged(66237, "Blocked", "Ready")
+StatesChanged()
+```
+
+## The /tsuki ipc window
+
+`/tsuki ipc` (not listed in `/tsuki help`) opens a developer window: every gate and message with its signature, the release that added it and the subscriber count Dalamud reports for it, and a test-call box that calls a gate through Dalamud's IPC exactly as another plugin would (`66236`, `132 true`, `1 2 3`). `PinQuest` and `OpenQuest` act for real there.
+
 ## Threads
 
 - **Any thread may call.** Tsukimichi answers from a snapshot of its evaluation taken on the framework thread, made of immutable data, so a gate never reads game memory, never draws and never blocks waiting for a frame. The snapshot is refreshed on the first framework tick after a change; a call made on the framework thread (a `Framework.Update` handler, a `UiBuilder.Draw` handler) refreshes it first when it is stale, and a call from elsewhere sees at most a frame-old answer.
 - **Calls are cheap** (a dictionary lookup, plus a few string builds for `GetBlockers`). Still, cache what you draw per frame and refresh it on `StatesChanged` rather than calling every gate for every row every frame.
-- **`OpenQuest` returns at once**; the window opens on the framework thread, in the same frame when you call from it.
-- **`StatesChanged` arrives on the framework thread**, from Tsukimichi's `Framework.Update` handler. Calling the gates from inside it is fine. Keep the handler short.
+- **`OpenQuest` returns at once**; the window opens on the framework thread, in the same frame when you call from it. **`PinQuest`** acts at once on the framework thread and is queued for the next frame from anywhere else.
+- **`StatesChanged`, `QuestStateChanged` and `Disposing` arrive on the framework thread**, from Tsukimichi's `Framework.Update` handler (and its unload). Calling the gates from inside them is fine. Keep the handlers short.
+- **`GetMoonlitStatus` reads the game's own flags only on the framework thread** (confidence `live`); from elsewhere it answers from the last capture (`saved`).
 
 ## Consumer example
+
+The whole client, every gate included, is [`TsukimichiIpc.cs`](TsukimichiIpc.cs): copy it into your plugin and change its namespace. The shorter version below shows the pattern.
 
 ```csharp
 using System;
@@ -225,6 +386,44 @@ public sealed class TsukimichiIpc : IDisposable
     }
 }
 ```
+
+### With ECommons' EzIPC
+
+A plugin on [ECommons](https://github.com/NightmareXIV/ECommons) can import the gates by name. EzIPC prefixes each member with the plugin name it is given, so the members are named after the gates; `[EzIPC]` fields are filled when `EzIPC.Init` runs and throw `IpcNotReadyError` like any subscriber while Tsukimichi is absent, and `[EzIPCEvent]` methods are subscribed to the messages.
+
+```csharp
+using System;
+using ECommons.EzIpcManager;
+
+public sealed class TsukimichiEz
+{
+    [EzIPC] public readonly Func<int> ApiVersion = null!;
+    [EzIPC] public readonly Func<bool> IsReady = null!;
+    [EzIPC] public readonly Func<string[]> GetGates = null!;
+    [EzIPC] public readonly Func<uint[], string[]> GetStates = null!;
+    [EzIPC] public readonly Func<uint, (string Kind, uint RefId, int Need, int Have)> GetFirstBlocker = null!;
+    [EzIPC] public readonly Func<uint, bool, uint[]> GetQuestsInZone = null!;
+    [EzIPC] public readonly Func<uint, uint[]> GetRoute = null!;
+    [EzIPC] public readonly Func<uint, (bool Unique, bool Owned, string Confidence)> GetMoonlitStatus = null!;
+    [EzIPC] public readonly Func<uint, bool> OpenQuest = null!;
+
+    public TsukimichiEz() => EzIPC.Init(this, "Tsukimichi");
+
+    [EzIPCEvent]
+    private void QuestStateChanged(uint rowId, string from, string to)
+    {
+        // A live poll moved one quest; StatesChanged follows.
+    }
+
+    [EzIPCEvent]
+    private void Disposing()
+    {
+        // Tsukimichi is unloading: drop what you cached.
+    }
+}
+```
+
+Wrap the calls as the example above does: `try { … } catch (IpcNotReadyError) { … }`.
 
 ## Consumed IPC
 

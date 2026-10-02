@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Localization;
+using Tsukimichi.Core.Text;
 
 namespace Tsukimichi.Core.Route;
 
@@ -21,7 +22,19 @@ public static class RouteMarkdown
 {
     /// <summary>The Markdown text of <paramref name="route"/>; one line saying so for an empty route.</summary>
     /// <param name="questName">A quest's printed name (the plugin passes the spoiler shield's).</param>
-    public static string Write(UnlockRoute route, QuestCatalog catalog, Func<QuestRecord, string> questName)
+    public static string Write(UnlockRoute route, QuestCatalog catalog, Func<QuestRecord, string> questName) =>
+        Write(route, catalog, questName, discord: false, link: null);
+
+    /// <summary>
+    /// Copy for Discord (1.8.0): the same route with plain bullets in place of the numbers, each main scenario stretch
+    /// a small heading (so a part split off at 2,000 characters repeats it), and, with <paramref name="link"/>, each
+    /// quest name a masked link (<see cref="DiscordText.Link"/>). Split the result with <see cref="DiscordText.Parts"/>.
+    /// </summary>
+    /// <param name="link">The quest's page, or null to print the name alone (the plugin returns null for a quest the spoiler shield masks).</param>
+    public static string WriteDiscord(UnlockRoute route, QuestCatalog catalog, Func<QuestRecord, string> questName, Func<QuestRecord, string?>? link = null) =>
+        Write(route, catalog, questName, discord: true, link);
+
+    private static string Write(UnlockRoute route, QuestCatalog catalog, Func<QuestRecord, string> questName, bool discord, Func<QuestRecord, string?>? link)
     {
         ArgumentNullException.ThrowIfNull(route);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -55,16 +68,18 @@ public static class RouteMarkdown
             if (first || !ReferenceEquals(step.Milestone, milestone))
             {
                 milestone = step.Milestone;
-                sb.Append('\n').Append('*').Append(milestone is null
+                var heading = milestone is null
                     ? CoreText.T("Core.Route.AfterMainScenario", "After the main scenario")
-                    : string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Route.Milestone", "Main scenario: {0}"), Escape(milestone.Name))).Append("*\n");
+                    : string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Route.Milestone", "Main scenario: {0}"), Escape(milestone.Name));
+                sb.Append('\n').Append(discord ? "### " : "*").Append(heading).Append(discord ? "\n" : "*\n");
                 first = false;
             }
 
-            var name = catalog.GetByRowId(step.RowId) is { } quest ? questName(quest) : QuestId(step.RowId);
-            sb.Append((i + 1).ToString(CultureInfo.InvariantCulture)).Append(". ")
+            var stepQuest = catalog.GetByRowId(step.RowId);
+            var name = stepQuest is not null ? questName(stepQuest) : QuestId(step.RowId);
+            sb.Append(discord ? DiscordText.Bullet : (i + 1).ToString(CultureInfo.InvariantCulture) + ". ")
                 .Append(string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Route.Level", "Lv {0}"), step.DisplayLevel))
-                .Append(" · ").Append(Escape(name));
+                .Append(" · ").Append(discord ? DiscordText.Link(name, stepQuest is not null ? link?.Invoke(stepQuest) : null) : Escape(name));
             if (step.IsMainScenario)
             {
                 sb.Append(' ').Append(CoreText.T("Core.Route.MsqMark", "(MSQ)"));
@@ -87,7 +102,7 @@ public static class RouteMarkdown
                 var format = alternative.RemainingCount == 1
                     ? CoreText.T("Core.Route.OrInsteadOne", "or instead: {0} ({1} quest)")
                     : CoreText.T("Core.Route.OrInstead", "or instead: {0} ({1} quests)");
-                sb.Append("   - ").Append(string.Format(CultureInfo.CurrentCulture, format, Escape(other), alternative.RemainingCount)).Append('\n');
+                sb.Append(discord ? "  - " : "   - ").Append(string.Format(CultureInfo.CurrentCulture, format, Escape(other), alternative.RemainingCount)).Append('\n');
             }
         }
 

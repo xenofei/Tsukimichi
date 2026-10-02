@@ -50,6 +50,12 @@ One row per quest the character has completed, in journal order. With **List eve
 | `completed` | `true` when the quest's completion flag is set |
 | `completedAt` | When Tsukimichi first saw the quest completed, UTC, ISO 8601. Absent in JSON (empty in CSV) when no date is known |
 | `completedAfter` | Only for a quest found completed when the character logged in (it was done while Tsukimichi was not running): the character's previous capture, UTC. The quest was completed between `completedAfter` and `completedAt` |
+| `state` | Added in 1.8.0. The character's state of the quest as Tsukimichi judges it: `Ready`, `ReadyOnOtherJob`, `Accepted` (in the journal), `Blocked`, `DoneThisCycle`, `Completed`, `Foreclosed` (locked out) or `Unknown` (not checked), the names [`Tsukimichi.GetState`](ipc.md#tsukimichigetstate) uses. Absent in JSON (empty in CSV) when the character was not evaluated |
+| `displayLevel` | Added in 1.8.0. The level the journal and the Lodestone print |
+| `patch` | Added in 1.8.0. The patch the quest was added in (`2.0`, `6.55`, `7.5`). Absent in JSON (empty in CSV) when unknown |
+| `isMsq` | Added in 1.8.0. `true` for a main scenario quest |
+| `repeatable` | Added in 1.8.0. `true` for a daily, weekly or other repeatable quest |
+| `lodestoneId` | Added in 1.8.0. The quest's Lodestone Eorzea Database id: its page is `https://na.finalfantasyxiv.com/lodestone/playguide/db/quest/<lodestoneId>/` (the same id in every region). Absent in JSON (empty in CSV) when Tsukimichi's link table has none |
 
 Completion dates start when Tsukimichi 1.5 first captures the character (`completionDatesSinceUtc` in the JSON header). Quests already completed then get no date: nothing is guessed. The dates are kept on your computer with the character's other saved data.
 
@@ -67,6 +73,8 @@ One row per reward of the Moonlit tab's unique view (rewards you marked not uniq
 | `questRowId` | Quest sheet row id of the quest that gives it |
 | `obtained` | `true`, `false`, or unknown (`null` in JSON, `unknown` in CSV) |
 | `availability` | Whether the reward can still be had through this quest (added in 1.5.0): `getNow`, `eventRunning`, `upcomingEvent`, `eventNotRunning` (this year's edition is not running and, with no announced end, may be over or still to come), `collabMayReturn` (a collaboration event, which may return), `pastEventOnStore` (the event is over but the FFXIV Online Store sells it) or `goneForGood` |
+| `itemId` | Added in 1.8.0. The item that teaches or holds the reward (Item sheet row id). Absent in JSON (empty in CSV) for a reward that comes without one (an action, a title, a duty) |
+| `collectId` | Added in 1.8.0. The reward's FFXIV Collect id, where Tsukimichi's link table knows it: its page is `https://ffxivcollect.com/<kind>/<collectId>` (`mounts`, `minions`, `emotes`, `orchestrions`, `bardings`, `hairstyles`, `fashions`, `triad/cards`). FFXIV Collect numbers most rewards as the game does, but not all, so match by this id rather than `rewardId`. Absent in JSON (empty in CSV) when unknown |
 
 The file keeps one row per quest that gives a reward, so a reward several quests give (Guildhests from each city's quest, a relic weapon from its quest and its repeatable "another job" twin) appears once per quest. The Moonlit tab counts each such reward once and hides the quests on paths the character did not take; group by `kind` and `rewardId` to count as it does.
 
@@ -74,7 +82,9 @@ Emotes, minions, mounts, orchestrion rolls, ornaments (fashion accessories), Tri
 
 ## JSON
 
-A small header, the counts, then the rows. `formatVersion` is bumped only when a field changes meaning or goes away; new fields may be added at any time, so readers should ignore fields they do not know.
+A small header, the counts, then the rows. `formatVersion` is bumped only when a field changes meaning or goes away; new fields may be added at any time, so readers should ignore fields they do not know. The fields added in 1.8.0 (`state`, `displayLevel`, `patch`, `isMsq`, `repeatable`, `lodestoneId`; `itemId`, `collectId`) are of that kind: `formatVersion` stays `1`.
+
+A JSON Schema (draft 2020-12) of both files is published as [`export-format.schema.json`](export-format.schema.json); it allows fields it does not name, as readers should.
 
 | Header field | Meaning |
 |---|---|
@@ -97,7 +107,7 @@ Sample (quests, trimmed):
   "format": "tsukimichi-export",
   "formatVersion": 1,
   "kind": "quests",
-  "pluginVersion": "0.7.0.0",
+  "pluginVersion": "1.8.0.0",
   "gameVersion": "2026.09.15.0000.0000",
   "exportedUtc": "2026-09-29T18:30:00Z",
   "completionDatesSinceUtc": "2026-09-12T19:02:11Z",
@@ -112,7 +122,13 @@ Sample (quests, trimmed):
       "category": "Seventh Umbral Era Main Scenario Quests",
       "genre": "Seventh Umbral Era",
       "expansion": "A Realm Reborn",
-      "completed": true
+      "completed": true,
+      "state": "Completed",
+      "displayLevel": 1,
+      "patch": "2.0",
+      "isMsq": true,
+      "repeatable": false,
+      "lodestoneId": "1da75996ae6"
     },
     {
       "rowId": 65575,
@@ -123,7 +139,13 @@ Sample (quests, trimmed):
       "genre": "Gridanian Sidequests",
       "expansion": "A Realm Reborn",
       "completed": true,
-      "completedAt": "2026-09-20T21:14:05Z"
+      "completedAt": "2026-09-20T21:14:05Z",
+      "state": "Completed",
+      "displayLevel": 1,
+      "patch": "2.0",
+      "isMsq": false,
+      "repeatable": false,
+      "lodestoneId": "298088846dc"
     }
   ]
 }
@@ -136,7 +158,7 @@ Sample (Moonlit, trimmed):
   "format": "tsukimichi-export",
   "formatVersion": 1,
   "kind": "moonlit",
-  "pluginVersion": "0.7.0.0",
+  "pluginVersion": "1.8.0.0",
   "gameVersion": "2026.09.15.0000.0000",
   "exportedUtc": "2026-09-29T18:30:00Z",
   "count": 2,
@@ -149,7 +171,8 @@ Sample (Moonlit, trimmed):
       "rewardName": "Most Gentlemanly",
       "questRowId": 66038,
       "obtained": true,
-      "availability": "getNow"
+      "availability": "getNow",
+      "collectId": 114
     },
     {
       "kind": "Mount",
@@ -157,7 +180,9 @@ Sample (Moonlit, trimmed):
       "rewardName": "unicorn",
       "questRowId": 65730,
       "obtained": false,
-      "availability": "getNow"
+      "availability": "getNow",
+      "itemId": 6269,
+      "collectId": 15
     }
   ]
 }
@@ -165,19 +190,23 @@ Sample (Moonlit, trimmed):
 
 ## CSV
 
-UTF-8 with a byte order mark (so Excel reads accented names correctly), comma separated, CRLF line ends, one header row, fields quoted per RFC 4180 when they contain a comma, a quote or a line break. CSV files carry the rows only; the header fields above are JSON-only.
+UTF-8 with a byte order mark (so Excel reads accented names correctly), comma separated, CRLF line ends, one header row, fields quoted per RFC 4180 when they contain a comma, a quote or a line break. CSV files carry the rows only; the header fields above are JSON-only. Columns added in a later release go at the end, so a reader that takes columns by position keeps working.
 
 ```csv
-rowId,questId,name,section,category,genre,expansion,completed,completedAt,completedAfter
-65621,85,Close to Home,Main Scenario (A Realm Reborn through Endwalker),Seventh Umbral Era Main Scenario Quests,Seventh Umbral Era,A Realm Reborn,true,,
-65575,39,Coming to Gridania,Sidequests,Gridanian Sidequests,Gridanian Sidequests,A Realm Reborn,true,2026-09-20T21:14:05Z,
+rowId,questId,name,section,category,genre,expansion,completed,completedAt,completedAfter,state,displayLevel,patch,isMsq,repeatable,lodestoneId
+65621,85,Close to Home,Main Scenario (A Realm Reborn through Endwalker),Seventh Umbral Era Main Scenario Quests,Seventh Umbral Era,A Realm Reborn,true,,,Completed,1,2.0,true,false,1da75996ae6
+65575,39,Coming to Gridania,Sidequests,Gridanian Sidequests,Gridanian Sidequests,A Realm Reborn,true,2026-09-20T21:14:05Z,,Completed,1,2.0,false,false,298088846dc
 ```
 
 ```csv
-kind,rewardId,rewardName,questRowId,obtained,availability
-Emote,114,Most Gentlemanly,66038,true,getNow
-Mount,15,unicorn,65730,false,getNow
-Minion,21,wind-up gentleman,66038,unknown,getNow
+kind,rewardId,rewardName,questRowId,obtained,availability,itemId,collectId
+Emote,114,Most Gentlemanly,66038,true,getNow,,114
+Mount,15,unicorn,65730,false,getNow,6269,15
+Minion,21,wind-up gentleman,66038,unknown,getNow,10073,21
 ```
 
 The rows in these samples come from the game data of 2026.09.15. Quest, section, category and genre names are in the client's language; Moonlit reward names are always the shipped English ones.
+
+## Copy table as TSV
+
+Since 1.8.0, right-clicking a row of the Journal table offers **Copy table as TSV**, and a Moonlit row **Copy view as TSV**: the rows shown now (the scope, filters, search and sort applied) go to the clipboard as tab-separated text to paste into a spreadsheet. The columns are the CSV's above plus `url` (the quest's Lodestone page, else its Garland Tools page; for a reward its FFXIV Collect page, else its item, else its quest on Garland Tools). One header row, CRLF line ends, no byte order mark; a cell holding a tab, a line break or a double quote is quoted with its quotes doubled. Unlike the export, quest names are the ones the table shows, so the spoiler shield's placeholders stay in.

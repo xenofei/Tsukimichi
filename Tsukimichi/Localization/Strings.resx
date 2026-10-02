@@ -7750,4 +7750,77 @@
   <data name="ConfigShowGoToHint" xml:space="preserve">
     <value>One button that teleports, takes the aethernet and walks to the quest giver, with Stop at every step. It only moves when you press it.</value>
   </data>
+  <data name="LinksOpenOn" xml:space="preserve">
+    <value>Open on…</value>
+  </data>
+  <data name="LinksOpenOnTooltip" xml:space="preserve">
+    <value>Opens the quest's page in your browser. Tsukimichi itself never goes online.</value>
+  </data>
+  <data name="LinksLodestone" xml:space="preserve">
+    <value>Lodestone</value>
+  </data>
+  <data name="LinksGarland" xml:space="preserve">
+    <value>Garland Tools</value>
+  </data>
+  <data name="LinksWiki" xml:space="preserve">
+    <value>Console Games Wiki</value>
+  </data>
+  <data name="LinksTeamcraft" xml:space="preserve">
+    <value>Teamcraft</value>
+  </data>
+  <data name="LinksSearchTooltip" xml:space="preserve">
+    <value>Tsukimichi has no page for this quest on this site yet, so its search opens instead.</value>
+  </data>
+  <data name="LinksOpenOnCollect" xml:space="preserve">
+    <value>Open on FFXIV Collect</value>
+  </data>
+  <data name="LinksOpenItemOnGarland" xml:space="preserve">
+    <value>Open item on Garland Tools</value>
+  </data>
+  <data name="LinksCollectSearchTooltip" xml:space="preserve">
+    <value>Opens FFXIV Collect's list filtered by the reward's English name.</value>
+  </data>
+  <data name="LinksConfirmTitle" xml:space="preserve">
+    <value>Open in browser?</value>
+  </data>
+  <data name="LinksConfirmBody" xml:space="preserve">
+    <value>This page may show spoilers. Open anyway?</value>
+  </data>
+  <data name="LinksConfirmOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="LinksConfirmCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="LinksCopyDiscord" xml:space="preserve">
+    <value>Copy for Discord</value>
+  </data>
+  <data name="LinksCopyDiscordTooltip" xml:space="preserve">
+    <value>Copies plain bullets that read well in a Discord message. A long list is split into messages of up to 2,000 characters: click again for the next part. Right-click to add links.</value>
+  </data>
+  <data name="LinksCopyPartFormat" xml:space="preserve">
+    <value>Copy part {0}/{1}</value>
+    <comment>{0} = the part copied next, {1} = how many parts</comment>
+  </data>
+  <data name="LinksDiscordAddLinks" xml:space="preserve">
+    <value>Add links to quest names</value>
+  </data>
+  <data name="LinksDiscordCopied" xml:space="preserve">
+    <value>Copied for Discord</value>
+  </data>
+  <data name="LinksCopyTableTsv" xml:space="preserve">
+    <value>Copy table as TSV</value>
+  </data>
+  <data name="LinksCopyTableTsvTooltip" xml:space="preserve">
+    <value>Copies the rows the table shows now, with the export's columns and a link, to paste into a spreadsheet.</value>
+  </data>
+  <data name="LinksCopyViewTsv" xml:space="preserve">
+    <value>Copy view as TSV</value>
+  </data>
+  <data name="LinksCopyViewTsvTooltip" xml:space="preserve">
+    <value>Copies the rewards listed now, with the export's columns and a link, to paste into a spreadsheet.</value>
+  </data>
+  <data name="LinksCopyLink" xml:space="preserve">
+    <value>Copy link</value>
+  </data>
 </root>

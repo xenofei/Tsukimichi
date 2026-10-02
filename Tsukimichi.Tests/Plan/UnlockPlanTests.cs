@@ -302,6 +302,30 @@ public class UnlockPlanTests(PlanFixture fixture) : IClassFixture<PlanFixture>
     }
 
     [Fact]
+    public void The_Discord_checklist_has_plain_bullets_optional_links_and_no_link_on_a_masked_name()
+    {
+        var names = fixture.Names with
+        {
+            QuestName = q => q.RowId == BravingNewDepths ? "Main scenario quest (Lv 35)" : q.Name,
+        };
+        var plan = UnlockPlan.Build(fixture.Tags, fixture.States(PlanFixture.Fresh()), names)
+            .Filter(new PlanFilter(UnlockKinds.Mask(UnlockKind.Dungeon), MaxExpansion: 0));
+
+        string Zone(PlanZone zone) => zone.TerritoryId == WesternThanalan ? "Western Thanalan" : string.Empty;
+        var plain = PlanChecklist.WriteDiscord(plan, Zone);
+        Assert.DoesNotContain("- [ ]", plain, StringComparison.Ordinal);
+        Assert.Contains("- Hallo Halatali (Lv 20, Western Thanalan) — unlocks: Dungeon: Halatali", plain.Split('\n'));
+        Assert.Equal(plan.Count, plain.Split('\n').Count(l => l.StartsWith("- ", StringComparison.Ordinal)));
+
+        // The plugin's link function returns null for a masked quest: its line keeps the placeholder, unlinked.
+        var linked = PlanChecklist.WriteDiscord(plan, Zone, e => e.Quest.RowId == BravingNewDepths ? null : "https://example.org/q/" + e.Quest.RowId);
+        Assert.Contains("- [Hallo Halatali](<https://example.org/q/" + HalloHalatali + ">) (Lv 20, Western Thanalan)", linked, StringComparison.Ordinal);
+        Assert.Contains("- Main scenario quest (Lv 35) (Lv 35, Western Thanalan)", linked, StringComparison.Ordinal);
+        Assert.DoesNotContain("q/" + BravingNewDepths, linked, StringComparison.Ordinal);
+        Assert.All(Core.Text.DiscordText.Parts(linked), p => Assert.True(p.Length <= Core.Text.MessageSplitter.DiscordLimit));
+    }
+
+    [Fact]
     public void The_checklist_names_inherited_kinds_as_leads_to_and_caps_long_lists()
     {
         var quest = fixture.Bundle.Catalog.GetByRowId(LegacyOfAllag)!;

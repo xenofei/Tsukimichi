@@ -108,6 +108,8 @@ public sealed partial class Plugin : IDalamudPlugin
     private Game.TodoLockNotice? todoLockNotice;
     private Game.WelcomeBackSource? welcomeBack;
     private Game.IpcProvider? ipcProvider;
+    private IpcWindow? ipcWindow;
+    private LinkConfirmWindow? linkConfirmWindow;
     private TodoOverlay? todoOverlay;
     private Localization.LocService? loc;
     private RouteWindow? routeWindow;
@@ -806,6 +808,21 @@ public sealed partial class Plugin : IDalamudPlugin
             InitializeGameState();
             // ---- end game state ----
 
+            // "Open on…" (1.8.0): the shipped link table; the browser opens the pages, the plugin stays offline (decision 8).
+            var externalIds = Core.Links.ExternalIds.Load(Paths.ExternalIdsFile);
+            foreach (var warning in externalIds.Warnings)
+            {
+                Log.Warning("External links: {Warning}", warning);
+            }
+
+            gameLinks.ExternalIds = externalIds;
+            gameLinks.SiteLanguage = () => Core.Links.ExternalLinks.SiteLanguage(Session.Bundle?.Language);
+            linkConfirmWindow = new LinkConfirmWindow(gameLinks.OpenUrl);
+            windowSystem.AddWindow(linkConfirmWindow);
+            gameLinks.ConfirmLink = linkConfirmWindow.Ask;
+            DiscordCopy.Settings = Settings;
+            DiscordCopy.SaveSettings = () => Settings.Save(PluginInterface);
+
             // UI (session-dependent surfaces)
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log, CollectibleFlags!);
             moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface, gameLinks) { Writer = Writer };
@@ -1107,7 +1124,10 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.Roster = Roster;
             configWindow.QuestText = QuestText;
             // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
-            var exportService = new Game.ExportService(Session, Settings, Paths, unlockReader, () => moonlit.Catalog, diagnostics.PluginVersion, diagnostics.ClientGameVersion, Log);
+            var exportService = new Game.ExportService(Session, Settings, Paths, unlockReader, () => moonlit.Catalog, diagnostics.PluginVersion, diagnostics.ClientGameVersion, Log)
+            {
+                Ids = externalIds,
+            };
             configWindow.Export = new ExportSection(Settings, exportService, () => Settings.Save(PluginInterface), Log);
             command.Export = new ExportCommand(exportService, Settings, gameLinks).Run;
             // A filing change rebuilds the catalog off-thread; the session swaps it in on the framework thread.
@@ -1241,7 +1261,22 @@ public sealed partial class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            });
+            })
+            {
+                // 1.8.0: the reward and duty lookups the Moonlit and Duty Finder pieces use, the game's own owned
+                // answers, and the pins (Tsukimichi's own list only).
+                Rewards = () => rewardLookup.Current,
+                DutyUnlocks = () => dutyUnlocks.Current,
+                LiveOwned = entry => unlockReader.CanReadLive ? unlockReader.IsObtained(entry) : null,
+                PinsOf = queryRunner.PinsOf,
+                SetPin = queryRunner.SetPin,
+                PinsVersion = () => queryRunner.PinsVersion,
+            };
+
+            // /tsuki ipc (1.8.0, not in /tsuki help): every gate with its subscriber count and a test-call box.
+            ipcWindow = new IpcWindow(ipcProvider);
+            windowSystem.AddWindow(ipcWindow);
+            command.ToggleIpcWindow = ipcWindow.Toggle;
             // /UI
 
             // Last: nothing runs per frame before the plugin is whole.
