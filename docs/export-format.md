@@ -1,9 +1,15 @@
 # Export format
 
-Tsukimichi can write two files for spreadsheets and collection trackers (FFXIV Collect, xiv-shinies, your own sheet):
+Tsukimichi can write two files for spreadsheets, scripts and your own tools:
 
 - **Completed quests**: the quests the character has completed, one row per quest.
 - **Moonlit collection**: every quest-exclusive reward the Moonlit tab lists, with whether the character has it.
+
+No collection site can import these files as they are.
+- **FFXIV Collect's** import page takes its own format, and it **replaces** each list you send. A file that holds only quest rewards would remove every other entry you had marked.
+- **XIV Shinies** syncs through its own plugin and has no file import.
+
+Use the ids below to match rows with those sites by hand or in a spreadsheet.
 
 Each comes as **JSON** or **CSV**. Write them from Settings › Data › Export or with a chat command:
 
