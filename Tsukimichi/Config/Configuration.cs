@@ -240,16 +240,20 @@ public sealed partial class Configuration : IPluginConfiguration
     public bool SpoilerHideArtwork { get; set; } = true;
 
     /// <summary>
-    /// Per-character override of the shield, by content id: true shields that character whatever the settings above
-    /// say, false shows it everything; a character without an entry follows the settings. Dropped with the character.
+    /// Legacy (1.7 and earlier): the per-character override of the shield, by content id. Since 1.8.0 it lives in
+    /// <c>user/characters.json</c> (<see cref="Core.Storage.CharacterSettingsBook"/>), shared by every game client; this
+    /// is read once at load, moved there, and emptied (<see cref="TakeLegacyCharacterSettings"/>).
     /// </summary>
     public Dictionary<ulong, bool> SpoilerShieldByCharacter { get; set; } = [];
 
-    /// <summary>The shield for a character (null in browse mode): the settings above, with its override applied.</summary>
-    public SpoilerOptions SpoilerOptionsFor(ulong? contentId)
+    /// <summary>
+    /// The shield for a character (null in browse mode): the settings above, with the character's own override applied
+    /// (<paramref name="shield"/>: true always shields, false shows everything, null follows the settings).
+    /// </summary>
+    public SpoilerOptions SpoilerOptionsFor(ulong? contentId, bool? shield)
     {
         var ahead = Math.Clamp(SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
-        if (contentId is { } id && SpoilerShieldByCharacter.TryGetValue(id, out var shielded))
+        if (contentId is not null && shield is { } shielded)
         {
             return shielded ? new SpoilerOptions(true, ahead, true) : SpoilerOptions.Off with { Ahead = ahead };
         }
@@ -458,10 +462,10 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public bool ChatNoticePayoffGates { get; set; } = true;
 
-    /// <summary>Gate ids already announced in chat, by character content id; a gate is announced once per character, ever. Dropped with the character.</summary>
+    /// <summary>Legacy (1.7 and earlier): gate ids already announced in chat, by content id. Moved to <c>user/characters.json</c> at load (1.8.0).</summary>
     public Dictionary<ulong, HashSet<string>> PayoffGatesNoticedByCharacter { get; set; } = [];
 
-    /// <summary>Gate ids whose "why? (spoiler)" the player opened, by character content id; closed by default. Dropped with the character.</summary>
+    /// <summary>Legacy (1.7 and earlier): gate ids whose "why? (spoiler)" the player opened, by content id. Moved to <c>user/characters.json</c> at load (1.8.0).</summary>
     public Dictionary<ulong, HashSet<string>> PayoffWhyOpenByCharacter { get; set; } = [];
 
     // ---- 1.1: "Since you were away" (P7) ----
@@ -472,18 +476,38 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public int WelcomeBackDays { get; set; } = Core.Return.WelcomeBackTrigger.DefaultDays;
 
-    /// <summary>Drops a forgotten character's payoff gate state; true when there was any.</summary>
-    public bool ForgetPayoffGates(ulong contentId) =>
-        PayoffGatesNoticedByCharacter.Remove(contentId) | PayoffWhyOpenByCharacter.Remove(contentId);
+    /// <summary>
+    /// The per-character settings 1.7 kept here, as copies for the one-time move to <c>user/characters.json</c>; empty
+    /// once moved. <see cref="ClearLegacyCharacterSettings"/> empties them after the move landed.
+    /// </summary>
+    public Core.Storage.LegacyCharacterSettings TakeLegacyCharacterSettings() => new(
+        new Dictionary<ulong, bool>(SpoilerShieldByCharacter),
+        new Dictionary<ulong, HashSet<string>>(PayoffGatesNoticedByCharacter),
+        new Dictionary<ulong, HashSet<string>>(PayoffWhyOpenByCharacter));
 
-    /// <summary>Drops every character's payoff gate state ("Delete all data"); true when there was any.</summary>
-    public bool ClearPayoffGates()
+    /// <summary>Empties the legacy per-character settings once they are in <c>user/characters.json</c>; true when there was any.</summary>
+    public bool ClearLegacyCharacterSettings()
     {
-        var any = PayoffGatesNoticedByCharacter.Count > 0 || PayoffWhyOpenByCharacter.Count > 0;
+        var any = SpoilerShieldByCharacter.Count > 0 || PayoffGatesNoticedByCharacter.Count > 0 || PayoffWhyOpenByCharacter.Count > 0;
+        SpoilerShieldByCharacter.Clear();
         PayoffGatesNoticedByCharacter.Clear();
         PayoffWhyOpenByCharacter.Clear();
         return any;
     }
+
+    // ---- 1.8.0: alts (R7 B, E, H) ----
+    /// <summary>The Characters list groups the characters not logged in by data center when they span more than one. On by default.</summary>
+    public bool CharacterListByDataCenter { get; set; } = true;
+
+    /// <summary>Hidden characters show (dimmed) in the Characters list and the character switcher, so they can be shown again. Off by default.</summary>
+    public bool ShowHiddenCharacters { get; set; }
+
+    public const int MinForgetDays = 7;
+    public const int MaxForgetDays = 3650;
+    public const int DefaultForgetDays = 180;
+
+    /// <summary>Settings › Data "Forget characters not seen in N days": N, clamped to 7–3650 on load. 180 by default.</summary>
+    public int ForgetNotSeenDays { get; set; } = DefaultForgetDays;
 
     // ---- 1.1: journal text (P9) ----
     /// <summary>
@@ -552,6 +576,7 @@ public sealed partial class Configuration : IPluginConfiguration
         config.PayoffWhyOpenByCharacter ??= [];
         config.ExportFolder ??= string.Empty;
         config.WelcomeBackDays = Math.Clamp(config.WelcomeBackDays, 0, Core.Return.WelcomeBackTrigger.MaxDays);
+        config.ForgetNotSeenDays = Math.Clamp(config.ForgetNotSeenDays, MinForgetDays, MaxForgetDays);
         if (!Enum.IsDefined(config.ExportFormat))
         {
             config.ExportFormat = ExportFormat.Json;

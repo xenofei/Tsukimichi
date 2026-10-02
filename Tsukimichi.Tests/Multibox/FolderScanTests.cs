@@ -92,6 +92,55 @@ public sealed class FolderScanTests : IDisposable
     }
 
     [Fact]
+    public void A_snapshot_a_newer_plugin_wrote_is_reported_as_a_problem_until_it_reads_again()
+    {
+        var other = new JsonSnapshotStore(tmp.Path);
+        other.Save(Snapshot(1, 0));
+        var mine = new JsonSnapshotStore(tmp.Path);
+        var first = FolderScan.Run(Dir, new Dictionary<ulong, FileStamp>(), mine, None);
+        Assert.Empty(first.Problems!);
+
+        var path = Path.Combine(Dir, "1.json");
+        var node = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+        node["schemaVersion"] = CharacterSnapshot.CurrentSchemaVersion + 1;
+        File.WriteAllText(path, node.ToJsonString());
+        var newer = FolderScan.Run(Dir, first.Stamps, mine, None);
+
+        Assert.Equal(SharedLoad.Newer, newer.Problems![1]);
+        Assert.Empty(newer.Changed);
+
+        other.Save(Snapshot(1, 9));
+        var readable = FolderScan.Run(Dir, newer.Stamps, mine, None);
+        Assert.Empty(readable.Problems!);
+        Assert.Single(readable.Changed);
+    }
+
+    [Fact]
+    public void Sidecars_written_after_the_snapshot_are_reported_on_the_next_scan()
+    {
+        var other = new JsonSnapshotStore(tmp.Path);
+        other.Save(Snapshot(1, 0));
+        other.Save(Snapshot(2, 0));
+        var mine = new JsonSnapshotStore(tmp.Path);
+        var first = FolderScan.Run(Dir, new Dictionary<ulong, FileStamp>(), mine, None);
+        Assert.Empty(first.SidecarsChanged!);
+
+        // The owner wrote the snapshot (seen by the first scan) and only then its sidecars.
+        File.WriteAllText(Path.Combine(Dir, "1.accepted.json"), "{ \"65536\": \"2026-09-30T20:00:00Z\" }");
+        var second = FolderScan.Run(Dir, first.Stamps, mine, None, first.SidecarStamps);
+        Assert.Equal([1UL], second.SidecarsChanged!);
+        Assert.Empty(second.Changed);
+
+        var quiet = FolderScan.Run(Dir, second.Stamps, mine, None, second.SidecarStamps);
+        Assert.Empty(quiet.SidecarsChanged!);
+
+        File.WriteAllText(Path.Combine(Dir, "2.abandoned.json"), "{}");
+        File.Delete(Path.Combine(Dir, "1.accepted.json"));
+        var third = FolderScan.Run(Dir, quiet.Stamps, mine, None, quiet.SidecarStamps);
+        Assert.Equal([1UL, 2UL], third.SidecarsChanged!.Order());
+    }
+
+    [Fact]
     public void A_missing_folder_scans_as_empty()
     {
         var scan = FolderScan.Run(Dir, new Dictionary<ulong, FileStamp>(), new JsonSnapshotStore(tmp.Path), None);

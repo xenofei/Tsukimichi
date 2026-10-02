@@ -99,8 +99,14 @@ public sealed class SnapshotService : IDisposable
     /// </summary>
     public Func<ulong, bool>? MayWrite { get; set; }
 
-    /// <summary><see cref="MayWrite"/> for one character; true when no gate is set.</summary>
-    public bool CanWrite(ulong contentId) => MayWrite?.Invoke(contentId) ?? true;
+    /// <summary>
+    /// "Don't track this character" (1.8.0, R7 E): false for a character the player chose not to track, so nothing of it
+    /// is written (its existing file stays until Forget). Set by the plugin from <c>user/characters.json</c>; null tracks all.
+    /// </summary>
+    public Func<ulong, bool>? IsTracked { get; set; }
+
+    /// <summary><see cref="MayWrite"/> and <see cref="IsTracked"/> for one character; true when neither gate is set.</summary>
+    public bool CanWrite(ulong contentId) => (MayWrite?.Invoke(contentId) ?? true) && (IsTracked?.Invoke(contentId) ?? true);
 
     /// <summary>
     /// Loads a stored character. A snapshot another game client saved and the multibox service already read on its

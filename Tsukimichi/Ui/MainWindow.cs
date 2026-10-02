@@ -1420,7 +1420,16 @@ public sealed class MainWindow : Window, IDisposable
                 session.ViewCharacter(id);
             }
 
-            if (session.IsLiveElsewhere(id) && ImGui.IsItemHovered())
+            if (!ImGui.IsItemHovered())
+            {
+                continue;
+            }
+
+            if (session.NotUpdating.TryGetValue(id, out var problem))
+            {
+                UiMetrics.Tooltip(CharactersPane.NotUpdatingText(problem));
+            }
+            else if (session.IsLiveElsewhere(id))
             {
                 UiMetrics.Tooltip(Strings.MultiboxLiveElsewhereTooltip);
             }
@@ -1441,20 +1450,39 @@ public sealed class MainWindow : Window, IDisposable
         return session.ViewedContentId is { } viewed && session.IsLiveElsewhere(viewed) ? Mark.ElsewherePip : Mark.SnapshotPip;
     }
 
+    /// <summary>
+    /// The switcher's entries (1.8.0, R7 B, E): the alt lists' one stable order (live here, live elsewhere, then by name
+    /// and world), hidden characters left out unless Settings › Data shows them, each badged as the Characters list does.
+    /// </summary>
     private void RebuildCharacterLabels(SessionState session)
     {
         characterLabels.Clear();
         var now = DateTime.UtcNow;
-        foreach (var summary in session.Characters)
+        foreach (var entry in Core.Characters.CharacterList.Visible(plugin.Roster.All, plugin.Settings.ShowHiddenCharacters))
         {
-            var name = string.Format(CultureInfo.CurrentCulture, Strings.CharacterNameFormat, summary.Name, links.WorldName(summary.World));
-            var label = summary.ContentId == session.LiveContentId
+            var name = string.Format(CultureInfo.CurrentCulture, Strings.CharacterNameFormat, entry.Name, entry.WorldName);
+            var label = entry.LiveHere
                 ? Strings.LiveMarker + name
-                : session.IsLiveElsewhere(summary.ContentId)
+                : entry.LiveElsewhere
                     ? Strings.MultiboxMarker + name + " · " + Strings.MultiboxLiveElsewhere
-                    : string.Format(CultureInfo.CurrentCulture, Strings.CharacterEntryFormat, summary.Name, links.WorldName(summary.World), UiFormat.Age(summary.TakenUtc, now));
+                    : string.Format(CultureInfo.CurrentCulture, Strings.CharacterEntryFormat, entry.Name, entry.WorldName, UiFormat.Age(entry.TakenUtc, now));
+            if (session.NotUpdating.ContainsKey(entry.ContentId))
+            {
+                label += " · " + Strings.AltsNotUpdatingBadge;
+            }
+
+            if (!entry.Tracked)
+            {
+                label += " · " + Strings.AltsUntrackedBadge;
+            }
+
+            if (entry.Hidden)
+            {
+                label += " · " + Strings.AltsHiddenBadge;
+            }
+
             // The content id keeps the ImGui id unique when two snapshots share a name and world.
-            characterLabels.Add((summary.ContentId, label + "##" + summary.ContentId.ToString(CultureInfo.InvariantCulture)));
+            characterLabels.Add((entry.ContentId, label + "##" + entry.ContentId.ToString(CultureInfo.InvariantCulture)));
         }
     }
 

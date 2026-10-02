@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Multibox;
@@ -42,6 +43,61 @@ public sealed partial class SessionState
         }
 
         liveElsewhere = live;
+        Bump();
+    }
+
+    private static readonly IReadOnlyDictionary<ulong, SharedLoad> NoProblems = new Dictionary<ulong, SharedLoad>();
+
+    private IReadOnlyDictionary<ulong, SharedLoad> notUpdating = NoProblems;
+
+    /// <summary>
+    /// Characters whose file another game client saved and this client cannot read (1.8.0, R7 G): <see cref="SharedLoad.Newer"/>
+    /// when a newer Tsukimichi wrote it, <see cref="SharedLoad.Invalid"/> when it does not parse. What is shown for them
+    /// is their last readable save, and it does not update until the file reads again; the lists say so.
+    /// </summary>
+    public IReadOnlyDictionary<ulong, SharedLoad> NotUpdating => notUpdating;
+
+    /// <summary>The multibox worker's latest set of unreadable files; bumps only when it changed.</summary>
+    internal void SetNotUpdating(IReadOnlyDictionary<ulong, SharedLoad> problems)
+    {
+        ArgumentNullException.ThrowIfNull(problems);
+        if (problems.Count == notUpdating.Count && problems.All(p => notUpdating.TryGetValue(p.Key, out var was) && was == p.Value))
+        {
+            return;
+        }
+
+        notUpdating = problems;
+        Bump();
+    }
+
+    /// <summary>
+    /// Another game client deleted characters' files (a Forget there, 1.8.0, R7 G): when the stored character on view is
+    /// one of them, the window follows the live character again rather than showing a character that no longer exists.
+    /// </summary>
+    internal void FollowLiveIfRemoved(IReadOnlyList<ulong> removed)
+    {
+        ArgumentNullException.ThrowIfNull(removed);
+        if (!followLive && viewedContentId is { } viewed && viewed != LiveContentId && removed.Contains(viewed))
+        {
+            FollowLive();
+        }
+    }
+
+    /// <summary>
+    /// The accepted-time and abandoned sidecars of the stored character on view changed on disk without its snapshot
+    /// (the owning client writes them just after it, 1.8.0, R7 F5): they replace what is shown, unless the view moved on.
+    /// </summary>
+    internal void ApplyStoredSidecars(ulong contentId, IReadOnlyDictionary<ushort, DateTime> acceptedSince, IReadOnlyDictionary<ushort, AbandonedEntry> abandoned)
+    {
+        ArgumentNullException.ThrowIfNull(acceptedSince);
+        ArgumentNullException.ThrowIfNull(abandoned);
+        if (IsLive || followLive || ViewedContentId != contentId)
+        {
+            return;
+        }
+
+        AcceptedSince = acceptedSince;
+        Abandoned = abandoned;
         Bump();
     }
 

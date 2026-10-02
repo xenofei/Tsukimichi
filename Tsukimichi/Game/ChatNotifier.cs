@@ -253,13 +253,16 @@ public sealed partial class ChatNotifier : IDisposable
     /// <summary>The payoff gates for the one-time "Before you continue" line (P5); set by the plugin. Null prints none.</summary>
     public PayoffGateSource? PayoffGates { get; set; }
 
-    /// <summary>Persists the configuration after a gate was announced (the once-per-character record); set by the plugin.</summary>
-    public Action? SaveSettings { get; set; }
+    /// <summary>
+    /// Where the announced gates are kept, per character (<c>user/characters.json</c>, 1.8.0), so another game client's
+    /// save never brings an announced gate back; set by the plugin. Null prints no gate line.
+    /// </summary>
+    public Core.Storage.CharacterSettingsBook? CharacterSettings { get; set; }
 
     /// <summary>
     /// "Before you continue: Finish the Eden raid series first. Next: [quest]" the first time a payoff gate speaks for
     /// the logged-in character (its milestone Ready or in the journal, its content not done), once per gate per
-    /// character ever: the announced ids are kept in <see cref="Configuration.PayoffGatesNoticedByCharacter"/>. The line
+    /// character ever: the announced ids are kept in <see cref="CharacterSettings"/>. The line
     /// is the curated instruction only, never the reason; the link is the first content quest left. Nothing is marked
     /// while <see cref="Configuration.ChatNoticePayoffGates"/> or <see cref="Configuration.ShowPayoffGates"/> is off, so
     /// turning it on later still announces a gate that is speaking then.
@@ -269,6 +272,7 @@ public sealed partial class ChatNotifier : IDisposable
         if (!config.ShowPayoffGates
             || !config.ChatNoticePayoffGates
             || PayoffGates is not { } source
+            || CharacterSettings is not { } book
             || session.LiveContentId is not { } contentId
             || session.Bundle is not { } bundle)
         {
@@ -281,19 +285,20 @@ public sealed partial class ChatNotifier : IDisposable
             return;
         }
 
-        if (!config.PayoffGatesNoticedByCharacter.TryGetValue(contentId, out var noticed) || noticed is null)
-        {
-            noticed = new HashSet<string>(StringComparer.Ordinal);
-            config.PayoffGatesNoticedByCharacter[contentId] = noticed;
-        }
-
+        var noticed = new HashSet<string>(book.Noticed(contentId), StringComparer.Ordinal);
         var fresh = Core.Payoff.PayoffGates.TakeNotices(active, noticed);
         if (fresh.Count == 0)
         {
             return;
         }
 
-        SaveSettings?.Invoke();
+        var marks = new List<Core.Storage.CharacterSettingChange>(fresh.Count);
+        foreach (var gate in fresh)
+        {
+            marks.Add(Core.Storage.CharacterSettingChange.Noticed(contentId, gate.Gate.Id));
+        }
+
+        book.Edit(marks);
         foreach (var gate in fresh)
         {
             QuestRecord? next = null;

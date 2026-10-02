@@ -312,6 +312,15 @@ public sealed partial class Plugin : IDalamudPlugin
     /// <summary>Multibox sharing with other game clients (D11); null until the game state is initialized.</summary>
     internal Game.MultiboxService? Multibox { get; private set; }
 
+    /// <summary>
+    /// Per-character settings every game client shares (1.8.0, R7 D): <c>user/characters.json</c>, saved through a locked
+    /// merge like the pins (spoiler overrides, "Before you continue" notices, hidden, not tracked, Compare target).
+    /// </summary>
+    internal Core.Storage.CharacterSettingsBook CharacterBook { get; private set; } = null!;
+
+    /// <summary>Every character in the alt lists' one stable order (1.8.0, R7 B); built with the game state.</summary>
+    internal Game.CharacterRoster Roster { get; private set; } = null!;
+
     /// <summary>The journal text reader and its opt-in search index (P9); null until the constructor creates it.</summary>
     internal Game.QuestTextService? QuestText { get; private set; }
 
@@ -386,12 +395,18 @@ public sealed partial class Plugin : IDalamudPlugin
         };
         Snapshots = new Game.SnapshotService(store, ClientState, Framework, Log, reader);
         Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated, Log);
+        // Per-character settings (1.8.0): user/characters.json, shared by every game client; 1.7 kept them in Settings.
+        CharacterBook = new Core.Storage.CharacterSettingsBook(Paths.CharacterSettingsFile, Writer, WarnCharacterSettings);
+        CharacterBook.Load();
+        MigrateCharacterSettings();
+        CharacterBook.Changed += OnCharacterSettingsChanged;
+        Roster = new Game.CharacterRoster(Session, CharacterBook, DataManager, Log);
+        // "Don't track this character": nothing of it is written while it is logged in.
+        Snapshots.IsTracked = CharacterBook.IsTracked;
         // Spoiler shield (T19): Settings > Spoilers with the viewed character's override.
-        Session.SpoilerOptionsFor = Settings.SpoilerOptionsFor;
-        Session.CharacterForgotten += ForgetSpoilerOverride;
-        Session.DataDeleted += ClearSpoilerOverrides;
-        Session.CharacterForgotten += ForgetPayoffGates;
-        Session.DataDeleted += ClearPayoffGates;
+        Session.SpoilerOptionsFor = id => Settings.SpoilerOptionsFor(id, id is { } contentId ? CharacterBook.SpoilerShield(contentId) : null);
+        Session.CharacterForgotten += ForgetCharacterSettings;
+        Session.DataDeleted += ClearCharacterSettings;
         if (Settings.ViewedContentId is { } viewed && !Session.ViewCharacter(viewed))
         {
             Settings.ViewedContentId = null;
@@ -492,49 +507,59 @@ public sealed partial class Plugin : IDalamudPlugin
     }
 
     /// <summary>
-    /// A forgotten character takes its spoiler override with it. The session bumped before this ran (or, for the live
-    /// character, not at all), so the masks are refreshed to drop the override now rather than at the next change.
+    /// The one-time move of the per-character settings 1.7 kept in Settings (spoiler overrides, notices, open
+    /// disclosures) into <c>user/characters.json</c> (1.8.0). They read from the file at once; Settings is emptied once
+    /// the file holds them, and a failed save leaves them there for the next load. Running in two clients at once, or
+    /// again after an older client saved Settings back, never overrides what the file says.
     /// </summary>
-    private void ForgetSpoilerOverride(ulong contentId)
+    private void MigrateCharacterSettings()
     {
-        if (Settings.SpoilerShieldByCharacter.Remove(contentId))
+        var legacy = Settings.TakeLegacyCharacterSettings();
+        if (legacy.IsEmpty)
         {
-            Settings.Save(PluginInterface);
-            Session.RefreshSpoilers();
+            return;
+        }
+
+        CharacterBook.MigrateLegacy(legacy, saved =>
+        {
+            if (saved && Settings.ClearLegacyCharacterSettings())
+            {
+                Settings.Save(PluginInterface);
+                Log.Information("Per-character settings moved to user/characters.json");
+            }
+        });
+    }
+
+    private void WarnCharacterSettings(string message, Exception? ex)
+    {
+        if (ex is null)
+        {
+            Log.Warning("{Message}", message);
+        }
+        else
+        {
+            Log.Warning(ex, "{Message}", message);
         }
     }
+
+    /// <summary>The character settings changed (here or in another client): a spoiler override change rebuilds every mask.</summary>
+    private void OnCharacterSettingsChanged(bool spoilers)
+    {
+        if (spoilers)
+        {
+            Session?.RefreshSpoilers();
+        }
+    }
+
+    /// <summary>A forgotten character takes its own settings with it (spoiler override, notices, hidden, not tracked, Compare).</summary>
+    private void ForgetCharacterSettings(ulong contentId) => CharacterBook.Edit(Core.Storage.CharacterSettingChange.Forget(contentId));
 
     /// <summary>
-    /// "Delete all data" drops every per-character spoiler override. <see cref="Game.SessionState.DeleteAllData"/>
-    /// raises this before it follows the live character, and that bump is the refresh: every listener rebuilds with
-    /// the overrides already gone.
+    /// "Delete all data" drops every character's settings except those of characters live in another game client.
+    /// <see cref="Game.SessionState.DeleteAllData"/> raises this before it follows the live character, and that bump is
+    /// the refresh: every listener rebuilds with the overrides already gone.
     /// </summary>
-    private void ClearSpoilerOverrides()
-    {
-        if (Settings.SpoilerShieldByCharacter.Count > 0)
-        {
-            Settings.SpoilerShieldByCharacter.Clear();
-            Settings.Save(PluginInterface);
-        }
-    }
-
-    /// <summary>A forgotten character takes its "Before you continue" notices and open "why?" disclosures with it (P5).</summary>
-    private void ForgetPayoffGates(ulong contentId)
-    {
-        if (Settings.ForgetPayoffGates(contentId))
-        {
-            Settings.Save(PluginInterface);
-        }
-    }
-
-    /// <summary>"Delete all data" drops every character's "Before you continue" notices and disclosures (P5).</summary>
-    private void ClearPayoffGates()
-    {
-        if (Settings.ClearPayoffGates())
-        {
-            Settings.Save(PluginInterface);
-        }
-    }
+    private void ClearCharacterSettings() => CharacterBook.Reset(Session.IsLiveElsewhere);
 
     /// <summary>
     /// Multibox (D11), framework thread: <c>user/pins.json</c> or <c>user/overrides.json</c> changed on disk. Each owner
@@ -544,6 +569,7 @@ public sealed partial class Plugin : IDalamudPlugin
     {
         queryRunner?.ReloadPinsFromDisk();
         moonlitPane?.MergeOverridesFromDisk();
+        CharacterBook?.ReloadFromDisk();
     }
 
     /// <summary>Framework thread, every tick: the outcomes of saves the background writer finished.</summary>
@@ -597,14 +623,19 @@ public sealed partial class Plugin : IDalamudPlugin
             if (Session is not null)
             {
                 Session.Changed -= PersistViewedCharacter;
-                Session.CharacterForgotten -= ForgetSpoilerOverride;
-                Session.DataDeleted -= ClearSpoilerOverrides;
-                Session.CharacterForgotten -= ForgetPayoffGates;
-                Session.DataDeleted -= ClearPayoffGates;
+                Session.CharacterForgotten -= ForgetCharacterSettings;
+                Session.DataDeleted -= ClearCharacterSettings;
+            }
+
+            if (CharacterBook is not null)
+            {
+                CharacterBook.Changed -= OnCharacterSettingsChanged;
             }
         });
         Unwind("reset watch", () => Framework.Update -= WatchResets);
         Unwind("state poller", () => Poller?.Dispose());
+        // Character settings edits still queued go on the writer with the rest.
+        Unwind("character settings", () => CharacterBook?.Save(final: true));
         // The last saves (the poller's, the pins the query runner queued) land before the heartbeat goes.
         Unwind("save writer", () =>
         {
@@ -913,7 +944,7 @@ public sealed partial class Plugin : IDalamudPlugin
             windowSystem.AddWindow(discoveryWindow);
             dtrEntry = new Game.DtrEntry(DtrBar, discoveryWindow, discoverySettings, gate, Log);
             command.ToggleNearbyWindow = discoveryWindow.Toggle;
-            charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager, TextureProvider);
+            charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, Roster, Settings, () => Settings.Save(PluginInterface), DataManager, TextureProvider);
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             charactersPane.UniqueRewards = () => moonlit.Catalog;
             charactersPane.Pins = queryRunner;
@@ -993,16 +1024,17 @@ public sealed partial class Plugin : IDalamudPlugin
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
             // "Before you continue" (P5): the dashboard and the Tonight card lines, and the once-per-character chat line.
             var payoffGates = new Game.PayoffGateSource(Session, Log);
-            var payoffLines = new PayoffGateLines(payoffGates, Session, Settings, () => Settings.Save(PluginInterface));
+            var payoffLines = new PayoffGateLines(payoffGates, Session, Settings, CharacterBook);
             charactersPane.PayoffLines = payoffLines;
             mainWindow.AttachPayoffLines(payoffLines);
             chatNotifier.PayoffGates = payoffGates;
-            chatNotifier.SaveSettings = () => Settings.Save(PluginInterface);
+            chatNotifier.CharacterSettings = CharacterBook;
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
             configWindow.Language = loc;
             configWindow.RunNextTick = action => _ = Framework.RunOnTick(action);
             configWindow.Overrides = moonlitPane;
+            configWindow.Roster = Roster;
             configWindow.QuestText = QuestText;
             // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
             var exportService = new Game.ExportService(Session, Settings, Paths, unlockReader, () => moonlit.Catalog, diagnostics.PluginVersion, diagnostics.ClientGameVersion, Log);

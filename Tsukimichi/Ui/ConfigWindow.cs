@@ -1081,7 +1081,7 @@ public sealed partial class ConfigWindow : Window
             // The slider applies whenever the viewed character's effective options hide names: the global setting, or
             // that character's override (Always shield hides them even with the global setting off). Mirrors
             // Configuration.SpoilerOptionsFor without building the options record each frame.
-            var effectiveHide = session.ViewedContentId is { } viewedId && settings.SpoilerShieldByCharacter.TryGetValue(viewedId, out var shielded)
+            var effectiveHide = session.ViewedContentId is { } viewedId && Roster?.Settings.SpoilerShield(viewedId) is { } shielded
                 ? shielded
                 : hideNames;
             using (ImRaii.PushIndent())
@@ -1159,7 +1159,7 @@ public sealed partial class ConfigWindow : Window
     /// <summary>The viewed character's own shield: follow the settings, always shield, or show everything.</summary>
     private void DrawSpoilerOverride()
     {
-        if (session.ViewedContentId is not { } contentId)
+        if (session.ViewedContentId is not { } contentId || Roster?.Settings is not { } characters)
         {
             Chrome.Hint(Strings.SpoilerCharacterNone);
             return;
@@ -1176,7 +1176,7 @@ public sealed partial class ConfigWindow : Window
         ImGui.TextUnformatted(spoilerLabel);
         HintOnHover(Strings.SpoilerCharacterHelp);
 
-        var current = settings.SpoilerShieldByCharacter.TryGetValue(contentId, out var shielded) ? (shielded ? 1 : 2) : 0;
+        var current = characters.SpoilerShield(contentId) is { } shielded ? (shielded ? 1 : 2) : 0;
         using var indent = ImRaii.PushIndent();
         var choice = current;
         if (ImGui.RadioButton(Strings.SpoilerCharacterDefault, current == 0))
@@ -1201,16 +1201,8 @@ public sealed partial class ConfigWindow : Window
             return;
         }
 
-        if (choice == 0)
-        {
-            settings.SpoilerShieldByCharacter.Remove(contentId);
-        }
-        else
-        {
-            settings.SpoilerShieldByCharacter[contentId] = choice == 1;
-        }
-
-        SpoilersChanged();
+        // Saved to user/characters.json, shared by every game client; the masks rebuild when it lands (Plugin).
+        characters.Edit(Core.Storage.CharacterSettingChange.Spoiler(contentId, choice == 0 ? null : choice == 1));
     }
 
     /// <summary>Saves a spoiler setting and makes every surface re-read the mask.</summary>

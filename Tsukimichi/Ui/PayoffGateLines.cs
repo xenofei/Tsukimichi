@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Payoff;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
@@ -16,7 +17,7 @@ namespace Tsukimichi.Ui;
 /// while the gate's milestone is Ready or in the journal and its content is not done (<see cref="PayoffGates"/>). The
 /// line is the curated instruction and nothing else, so it names the optional content and never the payoff or a main
 /// scenario quest past the character's position. Under it a closed "why? (spoiler)" button reveals the reason on click;
-/// the open state is per gate and per character, remembered in the configuration, so the reason stays hidden for an
+/// the open state is per gate and per character, remembered in <c>user/characters.json</c>, so the reason stays hidden for an
 /// alt that has not asked. Hover the line for the progress; click it to select the first content quest left.
 /// </summary>
 public sealed class PayoffGateLines
@@ -24,7 +25,7 @@ public sealed class PayoffGateLines
     private readonly PayoffGateSource source;
     private readonly SessionState session;
     private readonly Configuration config;
-    private readonly Action save;
+    private readonly CharacterSettingsBook characters;
 
     /// <summary>Open disclosures of a character without a content id (never persisted).</summary>
     private readonly HashSet<string> transientOpen = new(StringComparer.Ordinal);
@@ -34,12 +35,12 @@ public sealed class PayoffGateLines
     private string[] lines = [];
     private string[] tooltips = [];
 
-    public PayoffGateLines(PayoffGateSource source, SessionState session, Configuration config, Action save)
+    public PayoffGateLines(PayoffGateSource source, SessionState session, Configuration config, CharacterSettingsBook characters)
     {
         this.source = source ?? throw new ArgumentNullException(nameof(source));
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.config = config ?? throw new ArgumentNullException(nameof(config));
-        this.save = save ?? throw new ArgumentNullException(nameof(save));
+        this.characters = characters ?? throw new ArgumentNullException(nameof(characters));
     }
 
     /// <summary>Whether any gate speaks for the viewed character now; never while Settings › Spoilers hides the notes.</summary>
@@ -142,7 +143,7 @@ public sealed class PayoffGateLines
 
     private bool IsOpen(string gateId) =>
         session.ViewedContentId is { } contentId
-            ? config.PayoffWhyOpenByCharacter.TryGetValue(contentId, out var open) && open is not null && open.Contains(gateId)
+            ? characters.IsWhyOpen(contentId, gateId)
             : transientOpen.Contains(gateId);
 
     private void SetOpen(string gateId, bool open)
@@ -161,21 +162,6 @@ public sealed class PayoffGateLines
             return;
         }
 
-        if (!config.PayoffWhyOpenByCharacter.TryGetValue(contentId, out var set) || set is null)
-        {
-            set = new HashSet<string>(StringComparer.Ordinal);
-            config.PayoffWhyOpenByCharacter[contentId] = set;
-        }
-
-        var changed = open ? set.Add(gateId) : set.Remove(gateId);
-        if (set.Count == 0)
-        {
-            config.PayoffWhyOpenByCharacter.Remove(contentId);
-        }
-
-        if (changed)
-        {
-            save();
-        }
+        characters.Edit(CharacterSettingChange.Why(contentId, gateId, open));
     }
 }
