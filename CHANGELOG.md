@@ -4,6 +4,24 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-10-01
+
+### Fixed
+- Quests that need another quest finished first no longer show as Ready too early. The game lists some of these extra requirements separately, and Tsukimichi now checks them. Examples are The Killing Art, which needs the main scenario quest "Over the Wall", and the final quests of the Studium, the Dawntrail allied societies and the role quests: 47 quests in all. They now read Blocked and name the quest you still need, and "Route to this" includes it.
+- On the day you rank up with an allied society, Tsukimichi no longer treats you as maxed out with them. Your real rank is shown and higher-rank society quests no longer read Ready. Characters saved on a rank-up day are corrected when they're next loaded.
+- Allied society crafter and gatherer quests (Namazu, Dwarves, Loporrits, Yok Huy) no longer list their crystals, Cordials and society currencies as "Artifact gear" in the reward tooltip and the reward filter. They show as ordinary item rewards.
+- "Pin all" on a route keeps the steps in route order in the Todo overlay. The overlay lists your first 8 pinned quests, with a "+N more" line that opens all your pins in the main window.
+- Wotsit finds the quest you're looking for. Wotsit shows only each plugin's first 26 matches, so early quests used to crowd out later ones and Moonlit rewards. Entries now match on their name only. Quests in your journal or ready to take come first, then Moonlit rewards, then the rest, with completed and locked-out quests last. The order follows your progress within about 10 seconds.
+- If you run Questionable in Japanese or Chinese, quests blocked only by your level no longer show a false "Questionable says…" disagreement. Questionable's answers also refresh after it reloads its quest paths, so a quest checked while the paths were still downloading no longer reads as having no Questionable path.
+- Game icons no longer break a window if a game patch removes one; a placeholder takes its place. Large icons, such as the one in the reward tooltip, are sharp instead of blurry.
+- Long tooltips, such as the hints in Settings and the seasonal history note, wrap onto several lines instead of running off the screen. In an item's quest hint, a status too long to sit beside the quest name moves to its own line.
+- Expansion names on the Path chart use the same capitals as other headings, so they no longer print with stray letters on some system languages, such as Turkish.
+- An error in one part of Tsukimichi (chat notices, the Todo overlay, Nearby quests) no longer leaves the others out of date. Every part still updates, and the error is logged once instead of on every change.
+- Settings no longer says "Catalog unavailable" after a catalog rebuild that worked. If a rebuild fails, for example after Retry or a Journal filing change, the previous catalog stays in use, and the main window and Settings › About say so with a Retry button.
+- If Delete all data or Forget character can't fully clear something, Tsukimichi says so and points to /xllog instead of reporting plain success.
+- Unloading or updating the plugin no longer leaves menu entries or game hooks behind when one part fails to shut down. The final save gets its full time before the game closes.
+- The export guide no longer claims FFXIV Collect or XIV Shinies can import Tsukimichi's files. FFXIV Collect's import replaces whole lists, so importing a quest-rewards file there would erase your other entries.
+
 ## [1.4.1] - 2026-10-01
 
 ### Fixed
