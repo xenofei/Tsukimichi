@@ -1,0 +1,629 @@
+{
+ "themes": [
+  "Owner first: every one of the 9 points from 2026-10-02 is planned in 1.11.0, except the moon and icon art, which gets its own release (1.12.0) because the design team's production plan is large.",
+  "Nothing moves under the player's eye. Filters, scope, notices, hand-off status lines and undo prompts move into fixed slots or floating toasts, never into the layout flow. This applies to the main window, Moonlit, the detail pane, the Todo overlay and the panels beside game windows.",
+  "Safety you can see. One rule set: hold Ctrl or Shift and click for single changes that can be undone, hold to confirm for bulk or irreversible ones, and a floating Undo toast after every data change. Enter never confirms a guarded action.",
+  "Motion is one family. A token table (hover 120/180 ms, select 150 ms, reveal 140 ms, travel 220 ms), opacity-only changes for content being read, nothing idle or looping, and everything off under Reduce motion. The owner sees why nothing animated if Windows' 'Show animations' is off.",
+  "Sumi to Kinpaku. Flat light in a sumi well, gold used only as a line or a seal, one mark per state, and the same shapes in High contrast. The procedural renderer is kept and roughly halved. A new plugin icon is exported crisp for Dalamud's mipmap-free sampler.",
+  "Automation the community accepts: solo and NPC content only, stop before real players, a clear reason and next step when a run stops, one Stop for everything, and session limits. It always needs an explicit click.",
+  "Right answers before more features: the game confirms availability, gates Tsukimichi never saw (mount sets, deep-dungeon floors, Bozja, tools) stop reading Ready, New Game+ cannot wipe saved progress, and allied society allowances are counted correctly.",
+  "Plain words, not tallies. Show what to do next and what is left, never '831 steps · 830 done'. Totals move into tooltips.",
+  "Patch 8.0 / API 16 lands in January 2027. The Lumina.Excel move and SeString port start on a branch well before then."
+ ],
+ "ownerItems": [
+  {
+   "item": "1. '#' before the icons in the Journal",
+   "plan": "U1 in 1.11.0. Root cause confirmed by 4 developers (dev 1, 12, 15, 16). TreePane.cs:401 passes \"##\" as the label to the 3-argument TreeNodeEx, and ImGui draws it as text on every leaf row (All quests, genres, folded sections, Unlock quests). Fix: id-only or empty label, plus transparent Text on every row. A source-scan lint test (ImGuiLintTests) fails if TreeNodeEx(..., \"##\") ever comes back. Also, as part of the calmer tree: section names are no longer faked bold by drawing them twice, and the duplicate count in the JOURNAL header is dropped."
+  },
+  {
+   "item": "2. Tasteful UI/UX animations that fit the theme",
+   "plan": "U8 in 1.11.0 lays the foundation and the interaction motion: motion tokens, hover and selection settle for the tree, table, rail and pills, a fade on tree expand, content-swap veils (opacity only), tooltip and popup fade-in, Settings motion, and a Motion status line explaining that Reduce motion follows Windows' 'Show animations'. That is the likely reason the owner saw almost nothing move. 1.12.0 adds the Moon Road moments (M1): station travel, a waxing moon plus road glint on completion, and a one-shot halo pulse when a quest becomes Ready. It also adds the in-game panel motion kit (M2: no more two-frame blink, sticky side, moonrise) and a calmer Todo overlay (M3). Nothing loops while idle, and everything respects Reduce motion and scrolling."
+  },
+  {
+   "item": "3. Main content must stay static when filters are applied",
+   "plan": "U2, U3 and U4 in 1.11.0. U2: the chip row and the six banners leave the layout flow. Scope moves into the table title with an ×. Filters go in a fixed one-line chip lane with a '+N' popover. Notices become a floating notice dock (one-time prompts close themselves; prompts that need action stay). The filter panel becomes a drawer over the tree. The Setup, What's new and Welcome back cards move to the no-selection slot. A ChromeBands test locks band heights so they cannot depend on filter or notice state. U3: the selected row keeps its screen position when the rows change. U4: the same rule applied to the detail-pane hand-off status lines (moved to the status bar), Moonlit's toolbar (one line plus a reserved status strip) and the Todo overlay (Questionable status as a header chip, anchored corner)."
+  },
+  {
+   "item": "4. Flight expansion icons too small",
+   "plan": "U6 in 1.11.0. Expansion icons go from about 16 px (capped at one text line) to Icon(32), never under 28 px. That also loads the game's sharper HiRes texture. They are centred on the heading, the ring column is widened to fit, and zone rows are full height and centred on the bead ring. The banner icon becomes Icon(44) on a dark backing disc. The numbers move into a unit-tested FlightGeometry class in Core."
+  },
+  {
+   "item": "5. Settings too compacted, words meld together; redesign for looks, plain language and spacing",
+   "plan": "U7 in 1.11.0. One shared SettingRow: label, a one-line hint in the Caption role underneath, the control in its own right column, 10 px row padding, a hairline between rows, and blocks shown as cards. Today's 10 lopsided sections become 9 balanced pages: General, Journal, Overlay & routes, Alerts, Spoilers, In game, Automation, Characters & data, Advanced. Copy rules: labels at most 32 characters, hints one sentence of at most 90, detail behind (i), and a glossary (Flair becomes Decoration, Glyph palette becomes Moon colours). The 14 longest hints are rewritten, and a test guards label and hint length. Moon toggle switches and segmented pickers replace radio sentences. The index gets icons and a footer, and search shows breadcrumbs. Cuts: the language picker is hidden (l10n frozen), About is folded into the index footer and Advanced › Diagnostics, Routes merges into Overlay & routes, and the duplicate scale controls leave the filter panel."
+  },
+  {
+   "item": "6. Greatly improved Dalamud plugin icon",
+   "plan": "G4 in 1.12.0. The design team's Sumi to Kinpaku icon: value-graded sky, a flat torinoko crescent, a gilt rim, and a broken, asymmetric gold road of six rows instead of a centred pyramid. It is checked against the installed-checkmark corner and at 40% alpha. The master is assets/icon.svg. Exported at 128 px (an exact 2:1 for Dalamud's 64 px slot, which has no mipmaps, per dev 8) plus a 512 px master. Also: a preview contact sheet, a CI validator for size and limits, IconUrl pinned to the release tag so the listing changes only with the release, and the misleading packaging comment fixed. Original geometry only, no Square Enix art."
+  },
+  {
+   "item": "7. Moon graphics look like cheese",
+   "plan": "G1, G2, G3 and G5 in 1.12.0, following the design team's chosen Direction C with its A and B refinements. Every state is a flat shape in a sumi well. Gold appears only as Ready's ring or In journal's seal and is never a fill. The craters, gradient mesh, glow stack and notch are deleted. Done this cycle becomes a waning half with a check on the ink. Completed is cool silver (#A3ACC2). The VeilLine keyline keeps every disc visible on Night. High contrast uses the same geometry with swapped tokens. Tests check that no mark sits on the light, that the In journal ink gap is at least 1 px from r 5 to 64, and the contrast ladder. GlyphDebugWindow gets the contact sheet with a greyscale toggle. G6 also removes the walls of identical veiled-moon stand-ins in Moonlit by giving each reward kind its own game art, read from the install."
+  },
+  {
+   "item": "8. 'Steps taken / done' is weird",
+   "plan": "U5 in 1.11.0. The '831 steps · 830 done' header is replaced: empty when the quest is the next one or done (the state pill already says so), otherwise '3 quests before this one' plus a 'Next: <quest> · Ready' link that opens it. The chain line loses its tally. It shows the chain name, a 'Next in chain' or 'Still open earlier' link (never pointing at the quest it is on) and a slim moon-gold bar. Raw totals live only in tooltips. 'Moons walked' and similar wording becomes plain words. The same rule reaches the in-game panels ('Step 16 of 47' goes away, M2/1.12) and the Run strip (no N of M counters)."
+  },
+  {
+   "item": "9. No Ctrl/Shift safety on 'Mark as unique'",
+   "plan": "S1 in 1.11.0, Must. The existing gate is bypassed because Enter in the note field confirms (VerdictPrompt.cs:92/99), confirmed by 5 developers. New ArmedButton and ArmedMenuItem: dimmed with a visible 'hold Shift' cue until Ctrl or Shift is held, then they light gold over 120 ms. An unarmed click only gives a small nudge and the hint. Enter is removed from the commit path. The same applies to 'Not unique (hide)' in Moonlit. A pure ModifierGuard in Core is unit-tested. S2 widens this into one safety table: Restore verdict, Run with AutoDuty and Don't track are armed; Questionable Replace, Companion Apply, Forget character and the last Delete-all step are hold-to-confirm. A floating Undo toast (with 'Add note' for verdicts) follows every data change."
+  }
+ ],
+ "releases": [
+  {
+   "version": "1.11.0",
+   "theme": "Quiet, steady and safe: the owner's UI points and the safety rules, plus shipped-bug fixes that block automation",
+   "items": [
+    {
+     "id": "U1",
+     "title": "Remove the stray '#' from Journal rows, with a lint guard",
+     "what": "TreePane.DrawNode: call ImGui.TreeNodeEx(node.Id, flags) (id-only) or pass an empty label, and push transparent ImGuiCol.Text on every row, not only expandable ones. Delete HiddenLabel. Add Tsukimichi.Tests/Ui/ImGuiLintTests.cs (StringsVocabularyTests pattern) that fails on TreeNodeEx(..., \"##\"). Polish in the same pass: drop the double-drawn faux bold on section names (use tone instead) and the duplicate All-quests count in the JOURNAL header.",
+     "why": "Owner item 1. A meaningless glyph on every leaf row breaks the aesthetic and reads as if it meant something.",
+     "effort": "S",
+     "evidence": "dev 1, 12, 15, 16 (TreePane.cs:48-49, 398-401; ImGui TreeNodeBehavior draws the label when a separate id is passed)"
+    },
+    {
+     "id": "U2",
+     "title": "Fixed window frame: scope in the title, a one-line chip lane, notices as toasts, filter drawer",
+     "what": "Remove DrawChipRow and DrawBanners from MainWindow.DrawContent, so the order is toolbar, body, status bar, overlays. On the Journal tab only: a fixed title band (scope name with an × to clear) and a one-line chip lane of fixed height (Chrome.ChipHeightPx) that never wraps, with a '+N' popover listing the rest. A NoticeDock draws a floating card in the bottom right of the body: rebuild failure stays (Retry); freshness stays until dismissed; the pin prompt goes after 15 s; the context bar goes after 8 s; one notice at a time with a 1/3 pager; hover pauses. Browse and stale states move into the status bar's mode text. The filter panel becomes a drawer over the tree (pin toggle to keep it docked). Setup, What's new and Welcome back cards draw only in the no-selection slot; when a quest is selected they become one-line notices. The toolbar stays one row: Quick views collapses to a dropdown below the reflow width. Add a pure Core/Ui/ChromeBands helper whose inputs exclude filters, scope and notices, with tests that the body's top Y is the same with 0, 1 or 5 notices and any chip count. Update UiRects so the tour still finds its targets.",
+     "why": "Owner item 3. Today up to six variable-height lines push all four panes down. Even the tree node just clicked jumps away from the cursor, and a double-click can land on a different row.",
+     "effort": "L",
+     "evidence": "dev 3, 12, 16, 17 (MainWindow.cs:676-680, 1552-1716; TreePane.cs:765-774); research 27 (WCAG 3.2.2 layout-shift guidance)"
+    },
+    {
+     "id": "U3",
+     "title": "Keep the selected row in place when the rows change",
+     "what": "TablePane keeps an anchor (row id plus viewport offset of the selection, or the first visible row). When QueryRunner replaces the row array, set the scroll directly (no one-frame flash) so the anchor keeps its screen Y. If the anchor was filtered out, use the nearest surviving neighbour. A scope change scrolls to the selection at 0.4. A reveal pulse helps the eye find the row. When the selected quest is filtered out, the chip lane shows 'Selected quest hidden · Show'.",
+     "why": "Owner item 3: 'lose track of what they were looking at'. A fixed frame alone doesn't help if the list jumps inside it.",
+     "effort": "S",
+     "evidence": "dev 3 (TablePane.cs:296-305, 478-488; QueryRunner.cs:714)"
+    },
+    {
+     "id": "U4",
+     "title": "The static rule everywhere else: detail-pane hand-off status, Moonlit header, Todo overlay",
+     "what": "(a) Remove the 0-3 hand-off status lines and the 5 s hand-in note from the detail pane. A Core CompanionActivity model feeds one ellipsised gold segment in the fixed status bar (travel > Questionable > AutoDuty > Artisan) with a small Stop. (b) Moonlit: a one-line toolbar (search, a Filters button with a count badge and a roomy popover, Copy missing, the table/gallery toggle) and a reserved one-line status strip for Undo, Copied, Owned as of and missed. Changes crossfade by alpha only. (c) Todo overlay: the Questionable status becomes a chip in the header instead of an inserted line. A pivot keeps the anchored corner fixed. The text column only grows during a session (shrinks after 3 s idle, never while hovered).",
+     "why": "Owner item 3. Starting or stopping a hand-off, copying in Moonlit, or Questionable starting moves the content being read.",
+     "effort": "M",
+     "evidence": "dev 20 (DetailPane.Actions.cs:334-336, 497-498), dev 18 (MoonlitPane.cs:494-613), dev 13 (TodoOverlay.cs:277), dev 10"
+    },
+    {
+     "id": "U5",
+     "title": "Path and chain captions: what to do next, not tallies",
+     "what": "PathChart.Load: no caption when the target is next or done, '1 quest before this one' or '{0:N0} quests before this one' otherwise, with the totals in a hover tooltip. Add a 'Next: <quest> · <state>' link row when an earlier quest is the one to do (NextStepRowId from firstUndone). The chain line shows the chain name, 'Next in chain: X' or 'Still open earlier: X', and a slim moon-gold bar. Drop the halo and the 'N of M done' text (totals go in the bar's tooltip). Fix the self-referencing 'next' (NextRowId == selected). Plain-word rewrites of 'moons walked', 'steps' and 'target'. Pure helpers (ChainCatalog.Position) are tested in Core.",
+     "why": "Owner item 8. '831 steps · 830 done' counts the whole MSQ back to ARR. Its only useful fact (one quest left: this one) is hidden, and the chain 'next:' can point at the open quest itself.",
+     "effort": "M",
+     "evidence": "dev 6, 12, 19 (PathChart.cs:131-186; DetailPane.cs:830-901, 1386-1412)"
+    },
+    {
+     "id": "U6",
+     "title": "Flight: expansion icons twice as large, centred, with a matching column",
+     "what": "UiMetrics.ExpansionMarkSize = max(Icon(32), 28). Centre the icon on the heading (rowH = max(icon, heading) + 4 px) with group spacing. Column width = max(mark, halo box), with the bead rings centred in it. Zone rows are full height (bead box) and vertically centred, with the gold edge at max(2, Px(3)). Banner icon Icon(44) on a 55% Deep backing disc, plus an Icon(28) in the header below Full flair. Hover tooltip with the expansion's zone and current counts. A Core FlightGeometry class with tests.",
+     "why": "Owner item 4. Icons are capped at one text line (about 16 px), smaller than the zone beads below them, and load the blurry 32 px texture.",
+     "effort": "S",
+     "evidence": "dev 4, 12, 16 (FlightPane.cs:145, 156-166, 627)"
+    },
+    {
+     "id": "U7",
+     "title": "Settings rebuilt: one row component, 9 balanced pages, plain words, real spacing",
+     "what": "ConfigWindow.Layout gets Toggle, Segmented, Slider, Choice and Action helpers wrapping Row(). Label in the Body role. Hint below in the Caption role, at most 2 lines. A 200 px control column (it drops below the label under 440 px). 10 px row padding, a hairline divider, cards for blocks, 20x16 body padding, a page intro line. Sub-settings are indented with a guide line and shown dimmed, not hidden, with the reason in words. Sections: General, Journal, Overlay & routes, Alerts, Spoilers, In game, Automation (one card per companion plugin), Characters & data (with a Danger zone card), Advanced (Diagnostics collapsed). Copy rules and the glossary, with rewrites of the 14 longest hints. A test caps labels at 40 and hints at 110 characters. Chrome.Controls adds MoonToggle and Segmented (sliding underline), styled sliders and a 'Saved' check. Index: 172 px, icons, a sliding Moon bar, a footer with the version and 'Help & tour'. Search: full width, breadcrumbs, highlighted matches. Opens at 760x700. Cuts: language picker hidden, About section, Routes merged, keyboard legend, scale controls removed from the filter panel. A lint test bans bare Checkbox/SliderInt in ConfigWindow*.cs.",
+     "why": "Owner item 5. 93 rows, hints at body size only one shade dimmer, no row spacing, hints averaging 140 characters (the longest is 529), and three different hint styles.",
+     "effort": "L",
+     "evidence": "dev 5, 12, 16, 17, 20, 13 (ConfigWindow.Layout.cs:445-483; Chrome.Text.cs:258-278; Theme.cs:364, 424)"
+    },
+    {
+     "id": "U8",
+     "title": "Motion foundation and interaction motion",
+     "what": "Named tokens in MotionMath: hover in 120/out 180 ms, select 150 ms, chevron 140 ms, reveal and content veil 140 ms, toast out 240 ms, travel 220 ms, waxing 600 ms. Exits run at 0.7×, ease-out for entrances, a new EaseInOutCubic for travel. New helpers LerpAsym, Changed(key, signature) and Fade; merge the FadeVertices copies. Tree and table hover and selection settle on one language. Tree children fade in on expand (no height animation). The ActionPill crossfades when its label or tone changes. A pane veil on tab, quest and filter changes (opacity only). Tooltip and popup fade-in (90-100 ms, no flicker within one item). Settings motion from U7. Make the tiers explicit in FlairRules: interaction motion at every Flair, Moon Road moments at Full. Rewrite the Reduce motion hint and add a 'Motion: on / off (following Windows)' status line. GlyphDebugWindow gets motion counters and a ×5 slow-motion toggle. Budget: under 0.05 ms per frame, zero allocations per frame. Tests in MotionMathTests.",
+     "why": "Owner item 2. The motion engine is sound, but coverage is tiny, and Windows' 'Show animations' switch may be turning everything off without the owner knowing.",
+     "effort": "M",
+     "evidence": "dev 2, 12, 16 (Motion.cs; MotionMath.SelectRate unused; Configuration.cs:652-656)"
+    },
+    {
+     "id": "S1",
+     "title": "Mark as unique and Not unique: armed by Ctrl or Shift, Enter no longer confirms",
+     "what": "Chrome.ArmedButton and ArmedMenuItem: armed while io.KeyCtrl or io.KeyShift is held. Unarmed they are dimmed with a key-cap cue and the label suffix 'hold Shift'; a click gives a 150 ms nudge and the hint. Armed they fill gold over 120 ms. An armed click saves the verdict at once and shows the Undo toast with 'Add note' (the owner can choose to keep the note popup instead, see decisions). Delete the Enter path (VerdictPrompt.cs:99 'entered'). Press-and-hold 600 ms remains for controller users. Applies at DetailPane.cs:808 and MoonlitPane.cs:1687. A pure ModifierGuard in Core with tests: armed on press, release before click, latched Shift, Enter does not count.",
+     "why": "Owner item 9, asked twice. Today it is effectively click, then Enter.",
+     "effort": "S",
+     "evidence": "dev 7, 12, 15, 16, 18 (VerdictPrompt.cs:80-99; DetailPane.cs:806-816)"
+    },
+    {
+     "id": "S2",
+     "title": "One safety table across the UI, plus a floating Undo toast",
+     "what": "Core SafetyTier (Armed, Hold, None) with one documented mapping. Armed: verdict actions, Restore shipped verdict (3 places), Run with AutoDuty (with an optional 'ask first' setting, default on), Don't track this character. Hold (Chrome.HoldButton on the modal's confirm button): Questionable Replace, Companion Apply, Forget character, Forget N characters, the last Delete-all step. ConfirmGate accepts Ctrl or Shift. UndoToast.cs: one floating slot, bottom centre over the content, 8 s, hover pauses, Undo plus an optional action. It replaces VerdictPrompt.DrawUndo and the Pin all Undo line. New undos for Restore and Restore all (snapshot), Unpin (same index), Hide and Don't track. Tooltip suffixes are generated from one helper. Stop buttons always stay one click.",
+     "why": "Owner item 9 and the standing 'safety on destructive clicks' taste. Today safety is uneven: several irreversible actions are plain buttons in modals.",
+     "effort": "M",
+     "evidence": "dev 7, 14, 18 (Chrome.cs:811-835; ConfirmGate.cs:57-70; CharactersPane.cs:381-384)"
+    },
+    {
+     "id": "S3",
+     "title": "Fix the AutoDuty duty index (hidden since 1.6) and build it off the frame",
+     "what": "Plugin.cs:1012 passes DataManager.Language.ToLumina() to DutyRunSheets.Build. Remove the Language.None default so it can't be omitted. Build on Task.Run at catalog load (next to WarmEntrances) and publish with Volatile.Write. Add a test that Build without a language cannot happen.",
+     "why": "The Duties section and Run with AutoDuty have never appeared in game, and the main-scenario catch-up counts duties without the index. The failed build also causes a roughly 350 ms freeze. Several 1.13 automation items depend on it.",
+     "effort": "S",
+     "evidence": "dev 9 (dalamud.log 09:23:27 / 12:08:50; Plugin.cs:1008-1019; DutyRunSheets.cs:25, 47)"
+    },
+    {
+     "id": "S4",
+     "title": "Recognise WigglyQuest and the do-nothing 'Questionable' stub",
+     "what": "QuestionableIpc.ScanPlugins matches InternalName 'Questionable' or 'WigglyQuest'. 'Present' is decided by gate presence (HasFunction on IsRunning). A loaded 'Questionable' at 99.0.0.0 with no gates is treated as the converter stub, with the message 'Questionable moved to WigglyQuest…'. Add a CompanionCatalog row for WigglyQuest, and CompanionSetupService reads WigglyQuest.json when that plugin is the one loaded.",
+     "why": "Fork users are either not detected or see 'Questionable loaded' while nothing works.",
+     "effort": "S",
+     "evidence": "research 12 (WigglyMuffin pluginmaster 2026-09-11; QuestionableConverter README; QuestionableIpc.cs:40)"
+    },
+    {
+     "id": "S5",
+     "title": "Fix the Moonlit 'Copy view as TSV' crash when grouped",
+     "what": "Skip negative heading entries in CopyViewTsv (MoonlitPane.cs:980-983) or iterate the picked list. Add a Core test that grouped visible lists never pass a negative index to the exporter.",
+     "why": "A real crash with 'Group by expansion' on.",
+     "effort": "S",
+     "evidence": "dev 18"
+    },
+    {
+     "id": "S6",
+     "title": "Unblock the 1.11.0 version bump: the verification allowlist expiry",
+     "what": "All 18 remaining verification-allowlist rows expire at 1.11.0, so CI fails on the bump. Resolve the rows that can be settled from data. Extend the rest with a new 'until' (recommended 1.14.0) and a note pointing at C1's in-game confirmation.",
+     "why": "Without it, the release process (version bump, tag, release) breaks on this very release.",
+     "effort": "S",
+     "evidence": "dev 11 (docs/data/verification-allowlist.json)"
+    }
+   ]
+  },
+  {
+   "version": "1.12.0",
+   "theme": "Sumi to Kinpaku: new moons, new icon, and the Moon Road moments",
+   "items": [
+    {
+     "id": "G1",
+     "title": "Moon glyph renderer rewritten to the Sumi to Kinpaku geometry",
+     "what": "Keep MoonGlyph vector and procedural with ImDrawList primitives. Draw order: halo underlay, halo, sumi disc (NightSunken), keyline (VeilLine, k = max(1, 0.068r)), lit shape, mark. Per-state geometry exactly as the production plan describes. Ready: a Kinpaku ring at 1.295r with an underlay and a 1 px gap. Ready on another job: a hollow half with a pre-mixed #3A3F4D wash. In journal: a gibbous plus a diamond with at least 1 px of ink gap. Done this cycle: a waning half plus a round-capped check on the ink. Completed: a #A3ACC2 disc, with wisps only at r ≥ 16 and not at Plain. Blocked: a Mist ring. Locked out: a Rose ring plus a bar. Not checked: five dashes with no body. Delete Shade, GradientRings, MoonDetail (craters, maria), HighlightArc, the Glow stack, the notch and the seal dot. Size tiers: r 5 minimum (Moonlit pips clamp up), wisps from 16, and a halo clamp in tight hosts such as TabStrip and rail pips. The SVG masters live in docs/design/glyphs/v3 with render_preview.py.",
+     "why": "Owner item 7. The current gradient, craters and yellow fill read as cheese. Direction C won on every score that matters, and the four focus-group participants all chose it.",
+     "effort": "M",
+     "evidence": "Design team result and production plan (scratchpad/dirFinal sheet.png, zoom.png, rows.png); dev 8, 12"
+    },
+    {
+     "id": "G2",
+     "title": "Glyph tokens, High contrast as a token swap, Flair rules, tests",
+     "what": "Five new tokens in GlyphPalette: Torinoko #F5ECD2, Kinpaku #E0B860, Geppaku #D4DAE6, CompletedLit #A3ACC2, GlyphRose #C2707A. Moon #F2D27A stays for text and chrome. Rework the GlyphSilhouette and GlyphMark enums. MarkOnLit is false for every state, and a test asserts it. HC uses the same silhouettes with a style table (DrawContrast merges into the main path), and every stroke minimum rises by 0.5 px. Flair: Full adds wisps, a one-shot 400 ms 'becomes Ready' halo pulse and a hero seat ring. Quiet adds wisps only. Plain is flat. The overlay and game panels keep their underlays at every level. Update the palette and contrast-ladder tests. Add a geometry test for the In journal gap from r 5 to 64. The Help legend leads with plain words. The changelog notes that Done this cycle is now a half moon with a check.",
+     "why": "Meaning must never depend on colour or decoration level. HC currently has different drawings, which doubles the maintenance.",
+     "effort": "S",
+     "evidence": "Design team production plan sections 3-5"
+    },
+    {
+     "id": "G3",
+     "title": "Glyph contact sheet and A/B in GlyphDebugWindow",
+     "what": "All eight states at r 5, 6, 8, 12, 16 and 32 over Night, Abyss, NightRaised and a bright swatch, with greyscale and deuteranopia toggles and an A/B (old vs new) switch for the approval round. Add an Icon tab that renders the plugin icon at 32/40/64/128 on light and dark backgrounds.",
+     "why": "Lets the owner approve the redesign and the in-game checks (100% and 150% scale, Limsa daylight, Thavnair) in one place in seconds.",
+     "effort": "S",
+     "evidence": "Design plan section 6 and 8(e); dev 12, 15"
+    },
+    {
+     "id": "G4",
+     "title": "New plugin icon, crisp export and release-pinned URLs",
+     "what": "assets/icon.svg (the design team's composition: torinoko crescent, gilt rim, a road of six asymmetric rows, everything clear of the installed-checkmark corner). Export assets/icon.png at 128x128 (an exact 2:1 to Dalamud's 64 px slot; Dalamud uses no mipmaps) and keep a 512 master. Write a preview sheet that simulates mip-free bilinear sampling at 64/96/128, the overlay badges and 40% disabled. A CI step validates squareness, the 64-512 bounds and that the csproj and pluginmaster URLs match. make_pluginmaster.py rewrites IconUrl to the tagged raw URL. Fix the csproj:52 comment about images/ being in the zip.",
+     "why": "Owner item 6. Today's 2026-09-27 Pillow icon shrinks badly at 64 px, the road vanishes under the checkmark, and its flat yellow crescent is the cheese moon.",
+     "effort": "S",
+     "evidence": "Design team icon spec; dev 8 (TextureManager MipLevels=1; PluginInstallerWindow.cs:2308-2363)"
+    },
+    {
+     "id": "G5",
+     "title": "Rail and gauge restyle in the same material",
+     "what": "TabStrip DrawHalo and DrawFilling, MainWindow and Orbit completion gauges: the track in Kinpaku at 35% and the complete cap in Torinoko, so gauges and glyphs share one material. State glyphs inside pips use the clamp rule.",
+     "why": "Keeps the new moons from clashing with leftover gradient gold elsewhere.",
+     "effort": "S",
+     "evidence": "Design plan section 6; dev 8 (one source for the brand mark)"
+    },
+    {
+     "id": "G6",
+     "title": "Moonlit: every reward gets its own game art, at a readable size",
+     "what": "MoonlitIconResolver resolves kind-specific art before the item icon. Triple Triad card face, CharaMakeCustomize icon for hairstyles, Emote icon, OrchestrionCategory icon, BuddyEquip, Ornament, the achievement icon for titles, and the MainCommand kind icon for system unlocks, instead of the veiled-moon stand-in. Moonlit row icons go to Icon(24). The Collection-by-character grid gets a 20 px icon. Everything is read from the player's install at runtime.",
+     "why": "Owner item 7: walls of identical veiled moons and one shared orchestrion icon (79 rows), 199 titles and 133 system unlocks with no icon at all.",
+     "effort": "M",
+     "evidence": "dev 18 (MoonlitPane.cs:2506-2552; unique_quests.json kind counts)"
+    },
+    {
+     "id": "M1",
+     "title": "Moon Road moments: station travel, waxing on completion, road glint",
+     "what": "At Full: on a tab change the gold bead travels to the new station (220 ms, EaseInOutCubic). When a visible quest completes live (CompletionDates within 3 s, played once, a pre-sized HashSet): the moon waxes to full over 600 ms, a single 24 px MoonHigh glint runs along the tree road, the table stripe flashes once, and a soft gold ring expands about 4 px. At Quiet and Plain: a single row wash. Never on login or character switch, never in combat, nothing under Reduce motion. Luminance is capped for photosensitive players.",
+     "why": "Owner item 2 ('fits with the theme'). Completion is currently just a halo slide. Players ask for a quiet sense of ceremony.",
+     "effort": "M",
+     "evidence": "dev 2, 12, 13; research 27 (SE 531603, photosensitivity)"
+    },
+    {
+     "id": "M2",
+     "title": "Panels beside game windows: no blink, sticky side, moonrise, fewer repeats",
+     "what": "GamePanelShell and HoverHint: drop the AlwaysAutoResize alpha-0 settle. Ease the window size instead. Appear with a 4 px rise and fade over 160 ms, with a 150 ms grace and crossfade when the model changes (no strobing while arrowing through the Duty Finder or Journal). BesidePlacement gets a preferredSide. Declutter: hide items the verdict already names, use 'Hildibrand · next: X' instead of 'Step N of M', one label 'Open in Tsukimichi', and right-aligned icon actions that show at full strength on hover.",
+     "why": "Owner items 2, 3 and 8 in the game itself. Every quest or line change makes these panels blink for two frames, and they repeat the step counts the owner dislikes.",
+     "effort": "M",
+     "evidence": "dev 13 (GamePanelShell.cs:69-136; DutyFinderHint 200 ms poll)"
+    },
+    {
+     "id": "M3",
+     "title": "Calmer Todo overlay: context hiding, lower opacity, completion beat",
+     "what": "Optional 'Hide in combat', 'Hide while talking to NPCs' and 'Hide in group pose'. Lower the minimum opacity from 0.6 to 0 (text is outlined). 'Fade until hovered'. Hiding and showing use an alpha ease. A completed row ghosts out (the moon fills, one ring, then fades out with no collapse animation), and new rows fade in. Row '…' buttons fade in only while the overlay is hovered or focused. A separate overlay text scale (0.8-2.2) for low-vision players. The overlay fades in when it opens.",
+     "why": "Owner item 2 and the static-layout taste on the most-seen surface. Community asks for overlays that stay out of the way in fights and dialogue.",
+     "effort": "M",
+     "evidence": "dev 13; research 27 (SE 531899, 515416, 528226; r/ffxivdiscussion 1secwzu); research 21 (large print)"
+    }
+   ]
+  },
+  {
+   "version": "1.13.0",
+   "theme": "Runs you can trust: supervised hand-offs, one Stop, clear recovery, solo-only by default",
+   "items": [
+    {
+     "id": "A1",
+     "title": "One Stop for everything, and macro-able commands",
+     "what": "/tsuki stop (alias pause) calls RunService.StopAll. Order: TravelService.Stop (including a pending pathfind), Lifestream.Abort, Questionable.Stop (honouring command-after-stop), AutoDuty.Stop only for runs Tsukimichi started (and it asks first inside a duty), then Artisan stop. /tsuki go|walk|flag with next|msq|pin [n]|selected|<quest name>, routed through the same button logic so disabled reasons print in chat. Running the same command again stops. Help › Commands shows a macro example.",
+     "why": "Safety, and the most-requested accessibility gap: players with hand strain, one-handed or controller-only want one hotbar slot. Stream Deck and MMO-mouse users too.",
+     "effort": "S",
+     "evidence": "dev 10; research 21 (r/ffxiv 1aetuhf, 1dba1we, 1tdabk7); research 29 (Dalamud PR #2947)"
+    },
+    {
+     "id": "A2",
+     "title": "'Why it stopped' card with one-click fixes and Copy report",
+     "what": "A 1 Hz framework-tick watcher runs while a Tsukimichi-started hand-off exists, independent of window drawing. It keeps the last GetCurrentStepData. When IsRunning goes false without Tsukimichi's Stop, a pure Core RunStopClassifier maps the cause using InteractionType, conditions, travel outcome and (if approved) '[QST v' chat lines: missing sequence, no aetheryte, no vnav path, solo duty failed, your turn, knocked out, craft or gather needed. The card appears in the status-bar activity slot and the overlay, with Flag objective, Go to giver, Try again, Run with AutoDuty or Craft as applicable, and Copy report (version, quest, sequence, job, level, combat module). A local per-quest stall count shows on route and send lists.",
+     "why": "The biggest Questionable pain (discussion #20, 71 comments): runs stop and nobody knows why or what to do.",
+     "effort": "M",
+     "evidence": "research 12 (Questionable discussion #20; issues #887, #494, #454); dev 10 (stop-cause inference)"
+    },
+    {
+     "id": "A3",
+     "title": "Keep automation out of other players' runs",
+     "what": "The 'Add and start' confirmation shows a duty summary of what is sent (Duty Support / Trust / 'would need the Duty Finder'). A new setting, on by default and tied to the existing AutoDuty regular-DF setting: 'Stop Questionable before a duty with other players'. During a run, if the next step is a duty with no Support or Trust, Tsukimichi stops Questionable before the queue and explains in one line. Mark those steps on Routes and in the Todo overlay. Optionally trim sends to stop before the first such step ('Sent 14 of 22, stops before Castrum Meridianum').",
+     "why": "This is where the community draws the line ('as long as it's with trusts and not real people'), and it is what gets players reported. Today the guard covers only Tsukimichi's own AutoDuty button.",
+     "effort": "M",
+     "evidence": "research 30 (r/ffxivdiscussion 1fscur3; Questionable#38; SE 508128); research 3 (1wf3rnt, AutoDuty#556)"
+    },
+    {
+     "id": "A4",
+     "title": "Stop after this quest, after N quests, or at a time",
+     "what": "The running Stop pill becomes a split button: Stop now, After this quest, After N quests, At a time. Tsukimichi watches GetCurrentQuestId and its own completion capture, then calls Stop. The status slot shows the condition ('Stops after Close to Home'). An optional 2-hour reminder (a reminder, not a stop). A one-line run receipt when the run ends ('Questionable ran 1 h 12 m: 14 quests'). No anti-detection framing.",
+     "why": "Requested in Questionable#118, which is still not reachable over IPC. Long unbroken loops are what players see as disrespectful and risky.",
+     "effort": "S",
+     "evidence": "research 12, 30, 3 (Questionable#118; 1fscur3)"
+    },
+    {
+     "id": "A5",
+     "title": "'Needs you' alerts while a hand-off runs",
+     "what": "Only while a Tsukimichi-started hand-off runs: death, a stop without the player pressing Stop, travel stuck, no step progress for N minutes, a duty pop, an incoming tell or party invite. Response: one chat line, an optional sound, a taskbar flash, and Stop all. On death or stuck, Tsukimichi stops its own hand-offs. Stopping Questionable is opt-in. It never answers tells. Settings › Alerts › While automation runs.",
+     "why": "A character visibly failing in public is what gets reported, and staying at the keyboard is what heavy users say keeps it fine.",
+     "effort": "M",
+     "evidence": "research 30 (SE 508128; 1m283np; 1iq4s43); research 3 (1c4531j, Questionable#118)"
+    },
+    {
+     "id": "A6",
+     "title": "Questionable: 'Just this quest' and 'Do this next'",
+     "what": "Subscribe to StartSingleQuest and InsertQuestPriority, looked up with HasFunction per call. The Start Questionable pill becomes a split: Start here (current behaviour), Just this quest (does it and stops), Do this next (inserted at the front). Same confirmations. Document both in docs/ipc.md.",
+     "why": "Start from the detail pane currently leaves the quest on the list and continues in automatic mode. Players want control back afterwards.",
+     "effort": "S",
+     "evidence": "dev 20; research 29 (PunishXIV/Questionable QuestionableIpc.cs; Questionable#5)"
+    },
+    {
+     "id": "A7",
+     "title": "Craft with Artisan turns into Stop",
+     "what": "ArtisanIpc gets SetEnduranceStatus(false) as Stop, and remembers that Tsukimichi started the run. While it is Tsukimichi's run, the Craft pill becomes a labelled Stop. The run feeds the activity slot ('Artisan: crafting Maple Lumber').",
+     "why": "Matches every other hand-off since 1.10. Today the button just goes dead.",
+     "effort": "S",
+     "evidence": "dev 20 (Artisan IPC.cs:41-52, 157-160)"
+    },
+    {
+     "id": "A8",
+     "title": "Travel recovery: reload mesh and retry, walk to the aetheryte, land where you can talk",
+     "what": "(a) On Stuck, WalkStoppedShort or PathNotReady: 'Reload navmesh and retry' (Nav.Reload, wait IsReady, restart the same plan) and 'Copy travel report'. A small curated known-bad-spots note (Yanxia, Idyllshire). (b) Before an aethernet hop, if GetActiveAetheryte is 0, walk to the nearest network node first (a new ToAetheryte step). Retry a hop that never started once. (c) Before a fly walk, query PointOnFloor or NearestPointReachable near the giver as the goal, then close the last yalms on foot without ever dismounting.",
+     "why": "'Reload vnav' is the fix vnavmesh's own developers prescribe. Hops fail outside aetheryte range. Hovering over the NPC is the top arrival complaint.",
+     "effort": "M",
+     "evidence": "research 13 (ffxiv_navmesh #117, #61; Lifestream #93, #165, #163; Questionable #402, #494)"
+    },
+    {
+     "id": "A9",
+     "title": "Travel preflight in Setup: movement mode, first-person camera, conflicts",
+     "what": "Add CompanionSetupCatalog game entries: Legacy movement (IGameConfig MoveMode), a first-person camera warning when Walk starts, vnavmesh movement paused by another plugin (Path.GetMovementAllowed), and a known-conflict row for WrongWarpFinder when it is loaded.",
+     "why": "Players lose hours to characters running the wrong way and Lifestream doing nothing. The Setup list already exists.",
+     "effort": "S",
+     "evidence": "research 13 (ffxiv_navmesh #87; Lifestream #167, #150)"
+    },
+    {
+     "id": "A10",
+     "title": "Automation level switch and a calm 'About automation' card",
+     "what": "Settings › Automation › 'Automation buttons': Tracker only / Travel / Travel and walking / Full hand-offs. Buttons below the chosen level are hidden. It maps onto the existing toggles as advanced overrides, and existing users keep their current state. It is offered once in onboarding. A short factual Help card, linked from the first-start confirmations: what Tsukimichi does itself, the User Agreement and Yoshida's 2025-08-28 framing, what players report gets accounts actioned, and etiquette (solo content, stay at the keyboard). It must never imply automation is 'safe'. Add 'Local only: no network code' to the README and the pluginmaster description.",
+     "why": "Many players are wary of automation. Always-visible disabled AutoDuty and Questionable buttons can read as a nudge. Local-only trust is a differentiator after the 'stalker plugin' scandals.",
+     "effort": "S",
+     "evidence": "research 30 (1ujpl8y, 1s3e5mb; Lodestone weekly notices); research 3 (1nvbf1s, 1uk9woj); dev 17 (presets)"
+    },
+    {
+     "id": "A11",
+     "title": "No first-open freezes: warm indexes, one travel snapshot per frame, smarter companion refresh",
+     "what": "An IndexWarmer builds the FlightIndex, PlanSource DutyIndex, DutyRunIndex and AetheryteIndex on catalog publish (Task.Run, volatile publish). Draw shows loading until they land. A TravelFrame cache per (quest, frame) means CheckGoTo stops recomputing CheckTeleport and CheckHop, and interiors are never resolved synchronously from draw. CompanionSetupService stats each file once, bumps Version only on a real change, uses a FileSystemWatcher plus a 30 s backstop, and moves to a framework tick. A debug-gated DrawTrace logs sections over 30 ms. Recap draws only the chapters on screen.",
+     "why": "Four unexplained 140-155 ms hitches today, a stall every 5 s whenever travel buttons are visible, and frame budget is needed for the 1.11/1.12 motion.",
+     "effort": "M",
+     "evidence": "dev 9 (dalamud.log HITCH lines; CompanionSetupService.cs:211-260; GameLinks.Travel.cs)"
+    }
+   ]
+  },
+  {
+   "version": "1.14.0",
+   "theme": "Right answers: gates the game confirms, progress that survives New Game+, and the walls players hit",
+   "items": [
+    {
+     "id": "C1",
+     "title": "The game confirms it: read 'available quest' markers and offers",
+     "what": "OfferObserver (framework thread, behind HookGate) walks Map.UnacceptedQuestMarkers each poll and records the JournalAccept offers QuestOfferHint resolves. Results go into a per-character OfferObservations sidecar. A Not checked quest the game offered reads Ready ('offered by the game on <date>'). A quest Tsukimichi says is Blocked but the game offered is logged as a disagreement (/tsuki why, the report block). Missing markers never change a state; they feed an 'Unconfirmed Ready' list. A small owner verify window lists the allowlist rows with which characters can answer each, plus Go to giver.",
+     "why": "Turns Not checked (Eureka, Doman, unclear conditions) into real answers and settles the allowlist rows extended in S6, without waiting for curated data.",
+     "effort": "M",
+     "evidence": "dev 11 (FFXIVClientStructs Map.UnacceptedQuestMarkers; QuestOfferHint.cs)"
+    },
+    {
+     "id": "C2",
+     "title": "Close the silent-Ready holes: mount sets, mount/house conditions, unknown accept conditions",
+     "what": "A 'mounts' gate in game_gates.json for the five mount-collection quests (Firebird, Kamuy, Landerwaffe, apocryphal Bahamut, Wings of Legacy), judged with IUnlockState.IsMountUnlocked, with every id checked against the Mount sheet in tests. Keep Quest.MountRequired as a row id with a per-quest answer. HasHouse comes from HousingManager. Unknown accept conditions go down the existing Checked:null path, and C1 observations or curated 'benign' verdicts can clear them.",
+     "why": "Twelve quests read a confident Ready on an unchecked gate, and three mount quests read Ready and 'Get now' from level 1.",
+     "effort": "M",
+     "evidence": "dev 11 (RequirementEvaluator.cs:241-268; CatalogMapper.cs:248-330)"
+    },
+    {
+     "id": "C3",
+     "title": "Gates from the wiki's free text: deep-dungeon floors, relic tools, Bozja rank, Occult Record",
+     "what": "An optional 'duties' list in extra_prerequisites entries, merged into InstanceContentRequired: PotD 41-50 for 68667/70199/70941, HoH 21-30 for 68668, PotD 91-100 for 67924. Skysteel and Splendorous tool possession through the 'held' gate. Bozja Resistance Rank and Occult Record as Not checked gates with the requirement stated. Each needs two sources. The verifier parses the CGW requirements field and System lines into a 'gates' fact, initially limited to these classes.",
+     "why": "A group of quests probably reads Ready too early, and deep-dungeon unlocks are a common Reddit confusion.",
+     "effort": "M",
+     "evidence": "research 20 (CGW harvest of 7,067 infoboxes; r/ffxiv 1uzk0jw, 1hw41ar, 1d2nb52)"
+    },
+    {
+     "id": "C4",
+     "title": "New Game+ session mode: a replay never wipes saved progress",
+     "what": "Detect NG+ (QuestRedoHud agent, or a held-back loss whose lost ids all belong to QuestRedo rows). While active: don't commit the loss, don't rotate .prev.json, keep the real snapshot for Moonlit, My blues, Compare and export, suppress notices and 'Opened' lines for re-completions, and show 'New Game+: <chapter> · <quest>' in Tonight, the status bar and the overlay. NewGamePlusQuests returns chapters, so the Replayable badge can say 'Shadowbringers - Part 2 · quest 87 of 112'.",
+     "why": "The plausibility guard accepts a lasting loss after minutes, so entering NG+ probably overwrites the main character's saved progress. This needs owner confirmation in game.",
+     "effort": "M",
+     "evidence": "dev 11; research 15 (StatePoller.cs:531; feature-plan-v5.md:298; forum 418578)"
+    },
+    {
+     "id": "C5",
+     "title": "Allied societies: stuck allowances and rank-up days",
+     "what": "Flag an allied daily accepted before the last reset ('0 allowances until you turn in X'), with Flag/Teleport. Fix GameResets.AsOf so stored alts holding one project 0, not 12. After an in-game check, fix the 'Ranked up today' tooltip (the game opens 3 bonus dailies that day), and add 'Rank-up ready, keep 3 allowances' and 'rank-up tomorrow' hints.",
+     "why": "Reddit calls the carried-over daily 'a very common problem', and the tooltip likely contradicts the game.",
+     "effort": "S",
+     "evidence": "research 9 (r/ffxiv 1ewaja6; CGW reputation; forum 523608)"
+    },
+    {
+     "id": "C6",
+     "title": "Quest rewards you can get back: Recompense Officer and Calamity Salvager",
+     "what": "DataGen extends IsReacquisitionMenu to GilShops whose rows carry a quest or achievement requirement. This adds about 110 seasonal and collab glamour rows to Moonlit (with their availability labels) and yields an item-to-quest map with buy-back prices. Runtime states: 'Done, not learned' for rolls, minions, cards and emote books, and 'Done, not owned' for glamour, telling the player where the item is (Allagan Tools) or 'Reclaim at the Calamity Salvager / Recompense Officer, N gil' with Teleport/Flag, or 'Not reclaimable'. A one-line 'Re-buyable · 100 gil' in the item hover hint and context menu. Never claim a re-buy the data doesn't show.",
+     "why": "The same gap appears in four research reports: 'I did the quest but the roll is gone', seasonal glamour missing from Moonlit, and players checking whether a piece is safe to discard.",
+     "effort": "M",
+     "evidence": "research 4 (1mn5px9, SE 497773), 10 (UniqueRewardGenerator.cs:82; forum 499588), 24 (1rgttgb, goatcorp/suggestions #648), 25 (1mn5px9)"
+    },
+    {
+     "id": "C7",
+     "title": "How you'll clear it: duty badges and the item-level wall",
+     "what": "One badge per duty wherever duties appear (detail Duties, My blues, routes, the Duty Finder hint, catch-up): Solo with NPCs (Support/Trust), Group of N (with the roulette name), High-end, and Story-required or Optional. Add ContentFinderCondition.ItemLevelRequired to DataGen. Read the equipped average item level (main hand counted twice without an off-hand) and store it in the snapshot. The catch-up and Tonight say 'Ahead: 3 story duties need other players' and 'i690 needed · you're i677 (DRG) · WAR gearset i692'. The blocker line says 'needs i690 (you: i677)'.",
+     "why": "The item-level wall is the most-reported surprise in patch MSQ, and 'can I do this with NPCs?' is the most common sprout panic.",
+     "effort": "M",
+     "evidence": "research 1 (r/ffxiv 1imgiwj, 1gwc9nr), 6 (1ueeyah), 7 (1scmohc, SE 517580), 2 (1tejt9c), 18, 20"
+    },
+    {
+     "id": "C8",
+     "title": "EXP to the right job: Hand in on, Quest Sync 'My level', bridging the level gap",
+     "what": "Core QuestExp.ForJob (0 at the cap, clamped Quest Sync formula). The detail pane says 'Hand in on SGE Lv 84: 1.24M · your BLM is capped, 0'. A Todo row (and an optional chat line, off by default) appears when an In journal quest reaches its turn-in step on a capped job. An explicit 'Switch gearset' button uses RaptureGearsetModule. Fix QuestQuery.cs:754 so 'My level' overlaps the Quest Sync range. Show '% of a level' from ParamGrow. Read the current job's EXP and store it in the snapshot. The Tonight level-gate line shows 'Needs 1.8M EXP · 9 Ready quests here cover 74%', with Pin all and Send to Questionable.",
+     "why": "Wasted EXP on capped jobs is the most-repeated levelling mistake (one player lost about 8M on aether currents, and it is a strong Japanese 経験値もったいない habit). Synced side quests currently drop out of 'My level' for the jobs they suit best.",
+     "effort": "M",
+     "evidence": "research 23 (forum 402076, reddit 1duajkl), 19 (Yahoo q11322405436), 1 (1qddyn5, Questionable#5), 7, 29"
+    },
+    {
+     "id": "C9",
+     "title": "Journal slots: 'Journal 27/30' and Make room",
+     "what": "Read the accepted count (MSQ excluded, as the game does). Show it in the status bar and optionally the Todo overlay from 25, amber at 27, red at 30. Ready quests read 'Ready · journal full' when the journal is full. A 'Make room' popover groups In journal quests by what finishing takes (talk or deliver, solo duty, needs a group, item) and marks safe-to-drop ones, noting that Tsukimichi's Abandoned ledger keeps the step. Tsukimichi never abandons anything.",
+     "why": "The 30-quest cap came up in three research reports, and players skip givers because they fear a full journal.",
+     "effort": "S",
+     "evidence": "research 14 (forum 303807, 525357), 15 (520850, 502929), 18 (Bluesky aggronaut, britasin)"
+    },
+    {
+     "id": "C10",
+     "title": "Seasonal events: ending-soon warnings and dated reruns",
+     "what": "festivals.json collab entries carry dated runs. 'Set end date…' for a running event with no known end (labelled 'you entered'). An ending-soon warning N days ahead (default 3) plus a last-day line, only when the end is known: '1 quest in your journal, 4 rewards you don't have'. Event quests already in the journal sort first in Todo and Tonight. Notices stay off until the player turns them on.",
+     "why": "Forgetting until too late, and accepted event quests vanishing when the event ends, are the most common seasonal loss. Nocturne (ends Oct 13) and the Trove show no end date today.",
+     "effort": "S",
+     "evidence": "research 10 (forum 519254; Bluesky crosspollytaupe, makkoryn); research 4 (1bci6m5)"
+    }
+   ]
+  },
+  {
+   "version": "1.15.0",
+   "theme": "What next, for every character, and ready for Evercold",
+   "items": [
+    {
+     "id": "P1",
+     "title": "'Up next' at the top of Tonight, and a way back to Tonight",
+     "what": "One recommendation: the followed route's next stop, else the next MSQ if Ready, else the first Ready pin, else the top Next stop, else the level gate. Shown as a raised card with a large moon, the name, a one-line reason, the primary travel pill (shared TravelControls.Primary) and a 'Details' link. It crossfades when the pick changes. A moon 'Tonight' button on the detail header, Esc, or re-clicking the selected row clears the selection, and the panes swap with a fade.",
+     "why": "No screen answers 'what now' in one line, and once a row is clicked Tonight never comes back.",
+     "effort": "M",
+     "evidence": "dev 19 (TonightCard.cs; MainWindow.cs:553-575, 1818-1825)"
+    },
+    {
+     "id": "P2",
+     "title": "Go to the current step for quests in the journal",
+     "what": "GameData maps Quest.TodoParams[].ToDoLocation by sequence. For In journal quests, Flag, Teleport (Lifestream) and Go to giver aim at the current step's location (nearest unfinished one), with a giver/step toggle. Supported by /tsuki go and the Todo right-click menu. The objective name follows the spoiler shield and never names a later step.",
+     "why": "The most repeated travel request on the goatcorp board. Today travel always goes back to the giver.",
+     "effort": "M",
+     "evidence": "research 11 (goatcorp/suggestions #419, #974; QuestTextReader.cs:121)"
+    },
+    {
+     "id": "P3",
+     "title": "Roster board and 'your other characters' line",
+     "what": "A third Characters view, 'All characters': a fixed-header sortable table with name and world, job and level, MSQ position and next quest, allowances left (after C5), deliveries, Moonlit %, last seen and a 'saved before this patch' badge. The view-model lives in Core (RosterBoard) with tests. A fixed-height line under the detail hero: per-character moons plus 'Ready on Kiri, Yuna · Done on 2', with the account table on hover. Nicknames, roles, a star and custom order in the shared character settings file.",
+     "why": "Players with 8-24+ alts track them by memory. Today it takes one long dashboard per character, and the who-has-it table sits at the very bottom.",
+     "effort": "M",
+     "evidence": "dev 14; research 5 (r/ffxiv 1wu8n8j, 253 comments)"
+    },
+    {
+     "id": "P4",
+     "title": "My blues: 'Do first' triage and 'Not for me / Later'",
+     "what": "A priority tier per unlock quest from existing data: 1 Story needs it, 2 Opens normal content, 3 System, 4 High-end, 5 Another job or society. Add a Do first sort, tier chips, and the tier word on Nearby and Todo rows. A per-character set-aside list (Never or Later, merged across clients like pins), with Undo, which counts, Nearby, the DTR entry, the overlay and notices skip ('42 left · 6 set aside'). A Set-aside filter brings them back. Setting aside a whole chain asks first.",
+     "why": "'It's hard to tell which blues are useful' has been asked since 2021. Players want counts that can reach zero (goatcorp #693, #415).",
+     "effort": "M",
+     "evidence": "research 7 (1wiwrew, SE 444735), 2 (SE 529749; QuestAWAY #14), 11 (goatcorp #693, #415, #286)"
+    },
+    {
+     "id": "P5",
+     "title": "Named side-story questlines, and 'Caught up' for ongoing series",
+     "what": "chains.json gains a questIds/startQuest form. Add the community's named lines (Tataru's Grand Endeavor, Tales from the Shadows, Void, Cornservant, Chronicles of Light, Delivery Moogle, Scholasticate, Restoration, Cosmic Exploration and Occult Crescent main lines), with a connectedness test. Curated names override 'Story: <first quest>'. An 'ongoing' flag: 'Caught up · continues in a later patch', and one new-chapter line on the first login of a patch. Fix the Hildibrand expansion note.",
+     "why": "Players search by community name. 'Is Hildibrand bugged or not out yet?' is the most common series confusion.",
+     "effort": "M",
+     "evidence": "research 17 (1oiva8z, CGW Side Story Questlines), 26 (1ui4f34, 1o1gfej), 2"
+    },
+    {
+     "id": "P6",
+     "title": "Triple Triad opponents and their quest gates",
+     "what": "Read the TripleTriad sheet (PreviousQuest[3] with join, ENpc, Level, reward cards, times) and the beaten flag (UIState.IsTripleTriadNpcBeaten). A 'Triple Triad' group with Plays you / Locked by <quest with state and blocker> / Beaten, N cards left / Done. Filters, giver buttons, and a RouteTargetKind.TriadNpc (honouring Any/All) for Route and Send to Questionable. The detail pane shows 'Unlocks Triple Triad opponent X'. Kept out of Moonlit's unique-reward totals.",
+     "why": "106 of 134 Triad NPCs are quest-gated and the game never says which quest. It appeared in five research reports, and automation users asked for exactly this route.",
+     "effort": "M",
+     "evidence": "research 25 (FFXIV Collect API; ATTG #4; 1ecjxno), 4, 11 (Saucy#60), 16 (ffxiv-collect #118)"
+    },
+    {
+     "id": "P7",
+     "title": "Zones board: where's left, across every zone",
+     "what": "An 'Everywhere' toggle in Nearby. Per zone, grouped by expansion: Ready, blues left, side stories left, Moonlit rewards, current quests left, level span, 'new since patch X'. Sort by Ready, level fit or story order. Actions: Teleport, Go to nearest Ready giver, Show in Journal, Send zone to Questionable. Nearby also gets kind chips and a sort picker.",
+     "why": "Players find missed quests by teleporting to each zone in turn. Map clearers want 'have I done everything here?'.",
+     "effort": "M",
+     "evidence": "research 14 (forum 469463, 531389, 517954), 17 (1wu4mm0, 1ezzugf)"
+    },
+    {
+     "id": "P8",
+     "title": "/tsuki msq and /tsuki next chat lines",
+     "what": "/tsuki msq prints a spoiler-shielded line: 'Main scenario 90% · this expansion 41 left · to the latest story 143 quests, Lv 90–100, 18 duties · next: [link]'. /tsuki next prints one glyph-free sentence with NPC, zone, coordinates and distance, readable by TTS plugins. Optionally, opt-in 'Say guidance in chat' mirroring.",
+     "why": "Players get this from PandorasBox /pmsq or websites today. Text-to-speech and low-vision players cannot read ImGui windows.",
+     "effort": "S",
+     "evidence": "research 28 (r/ffxiv 1hhl8sr), 21 (1jz39xq, TextToTalk #5), 11 (Simple Tweaks #912)"
+    },
+    {
+     "id": "P9",
+     "title": "API 16 and Evercold readiness (branch work, merged when Dalamud announces v16)",
+     "what": "Bundle Lumina.Excel as a PackageReference pinned to DataGen's version, so DataGen and runtime read one schema. Rework LoadCheck. A Game/Compat layer (ChatText to ReadOnlySeString, ContextMenuEvents, DtrClick, HoveredItemId uint, GameLanguage), so the port is about 5 file edits. Derive expansion tables from ExVersion, with a test for a 7th expansion. A readiness checklist: level-scaled areas, order-free MSQ via GetMsqPositions in Route/Tonight/catch-up, weekly Adventurer Activity as data-driven cadence, and Evercold's native auto-path treated like the existing takeover check. Re-check after Fan Fest (Oct 31-Nov 1).",
+     "why": "On 2026-10-02 the API 16 branch dropped Lumina.Excel.dll (28 files use it). API 16 ships with 8.0 in January 2027, the day players most need a quest tracker.",
+     "effort": "L",
+     "evidence": "research 29 (dalamud-docs v16.md; Dalamud PRs #2945/#2948/#2971/#3000; api16 job log); dev 16 (compat layer)"
+    }
+   ]
+  }
+ ],
+ "notDoing": [
+  "Full 'Questing Run' state machine with saved, resumable sessions and segmented hand-offs (dev 10, L). The 1.13 pieces (one Stop, stop-cause card, group-duty guard, stop-after, alerts) deliver most of the value with far less risk. Revisit after they have been played with.",
+  "Native quest graph ('The Web', research 28, L). It is large, Quest Map already does it, and the detail pane's Path chart plus Route cover the core need. Keep 'Open in Quest Map'.",
+  "/tsuki selftest runner, travel flight recorder, repro bundles and the UI gallery as separate tools (dev 15). The owner's release rule says no smoke-test pages. Only the GlyphDebugWindow contact sheet, the motion counters and slow-motion toggle (U8, G3) are kept, because the owner needs them to approve the redesign.",
+  "Friend share codes and 'compare with a friend's export' (research 3, 14, 18, 28). This would be the first time Tsukimichi reads someone else's data, and it is not a top player-value gap compared with the items planned. Deferred, pending an owner decision.",
+  "Stream mode and widening the spoiler shield to zones, givers and duties (research 22, M/L). The audience is niche next to the owner items and correctness work. Deferred to after 1.15.",
+  "Opt-in Lodestone date fetch for seasonal events (research 10). The plugin has no network code, and 'Local only' is promoted as a trust feature in A10. Player-entered dates (C10) cover the gap.",
+  "Casting Return or any non-Lifestream teleport (research 13). The owner rule is teleport through Lifestream only.",
+  "Relic material shopping lists (research 8, 16). RelicTracker already does them. Tsukimichi stays on the quest-state side.",
+  "Glamour Dresser tidy-up panel and duty or vendor glamour tracking (research 24). Dungeon Drip and CollectionGuard cover it. Tsukimichi stays quest-reward only (C6).",
+  "Moogle Treasure Trove planner and non-quest collectibles in Moonlit totals (research 10, 25). They dilute Moonlit's 'only a quest gives this' meaning. Triad NPCs (P6) stay outside the totals too.",
+  "Discard-warning game hook (research 8). It is a new hook for little gain. The item hint 'Re-buyable / not re-buyable' line (C6) covers it.",
+  "Cutscene and voice flags with a 'Safe while queued' filter (research 3, L). Wait for the 8.0 data, since script formats may change.",
+  "Building on Evercold's native auto-path now (research 3, 14, 29). There is nothing to integrate until 8.0. P9 only prepares the takeover check.",
+  "Expansion-themed 'skies', a Pocket single-pane mode, and Shift-for-details tooltips (research 27). These are decoration and taste experiments that compete with the owner's static, calm direction. Not now.",
+  "Experience presets (Simple / Completionist / Automation) beyond the automation level switch (dev 17). A10 covers the automation axis; the broader presets add a lot of settings coupling.",
+  "Growing Tsukimichi's own IPC (dev 20). It has 25 gates and no known consumer, and outreach is not allowed. Freeze it as is.",
+  "MainWindow and CharactersPane view-model refactor and a plugin-side test project as a separate internal release (dev 16). Do it opportunistically inside the items that touch those files (P3 RosterBoard, U5 path model, P9 compat) instead.",
+  "Installer screenshot carousel (dev 8) until the owner decides about game icons in captures. Shipping images with Square Enix icons in the repo is close to the 'no SE art' rule.",
+  "Map markers for priority givers via AgentMap (research 28). It adds a new hook surface, and QuestAWAY-style clutter control is better served by P4 set-aside.",
+  "Wiki-free-text 'gates' verifier across all ~1,000 rows (research 20). Only the gate classes found (floor, rank, tool, record) are classified in C3."
+ ],
+ "decisionsForOwner": [
+  {
+   "question": "Windows 'Show animations' drives Tsukimichi's Reduce motion today. If it is off on your PC, you saw almost no animation. Should Tsukimichi keep following Windows?",
+   "options": "Keep following Windows, with a visible status line / Default motion on and ignore Windows",
+   "recommendation": "Keep following Windows, which respects motion-sensitive players. U8 adds a 'Motion: off (following Windows)' line with a one-click override, so you can turn it on for Tsukimichi alone."
+  },
+  {
+   "question": "Mark as unique: should an armed Ctrl/Shift click save at once, or open the note popup?",
+   "options": "Save at once + Undo toast with 'Add note' / Keep the popup, gated by the key, Enter no longer confirms",
+   "recommendation": "Save at once with Undo and 'Add note'. Either Ctrl or Shift arms it, and press-and-hold stays as the controller fallback. Settings gets a 'Safety key' (Either/Shift/Ctrl) with no Off option."
+  },
+  {
+   "question": "Where do active filters live once the chip row is gone?",
+   "options": "Fixed one-line lane at the top of the Journal list with a '+N' popover / A single summary chip / Only a count badge on the Filters button",
+   "recommendation": "The fixed one-line lane on the Journal tab only, with the scope moved into the table title with an ×. Nothing ever changes height, and every filter stays visible and clearable."
+  },
+  {
+   "question": "One-time prompts (Pinned… show on screen?, What's new): close by themselves or stay?",
+   "options": "Auto-close after ~15 s (hover pauses) / Stay until dismissed",
+   "recommendation": "Auto-close one-time prompts after about 15 s. Notices that need action (rebuild failed, data freshness) stay until you act."
+  },
+  {
+   "question": "Path header and chain line: how much, if any, counting?",
+   "options": "Nothing when it's the next quest + 'N quests before this one' + 'Next: X' link / 'Up next' label / Remove the caption entirely; Chain: name + next link + bar, or 'Quest 17 of 47 in X'",
+   "recommendation": "Show nothing when the quest is the next one or done. Otherwise '3 quests before this one' plus a 'Next: <quest>' link. The chain line shows the name, the next link and a slim bar, with all totals only in tooltips. That gives the fewest numbers, in line with your feedback."
+  },
+  {
+   "question": "Approve the Sumi to Kinpaku glyph changes: (a) glyph gold becomes Kinpaku #E0B860, (b) Done this cycle becomes a half moon with a check, (c) Completed wisps at hero size, (d) the fallback for Ready on another job if it reads as a 'D' in game.",
+   "options": "Approve all / Approve with changes",
+   "recommendation": "Approve all four. Keep B's split arcs (in Geppaku, not brass) only as the fallback if the hollow half still reads as a 'D' at 100% and 150% scale in Limsa daylight or Thavnair."
+  },
+  {
+   "question": "Plugin icon export size",
+   "options": "128 px (exact 2:1 to Dalamud's 64 px slot) + 512 master / 512 + 64 as the design plan says / 256 if you play above 2.0 global scale",
+   "recommendation": "128 px as assets/icon.png with a 512 master, unless your Dalamud global scale is above 2.0. Dalamud samples without mipmaps, so 128 gives the cleanest result at 1.0-2.0."
+  },
+  {
+   "question": "Settings redesign details: moon toggle switches instead of checkboxes, open at 760x700, scale controls only in Settings, hide the language picker while localization is frozen?",
+   "options": "Yes to all / Keep checkboxes with new spacing / Keep scale controls in the filter panel too",
+   "recommendation": "Yes to all. The toggles and segmented pickers make the page scan at a glance. Removing the duplicate scale controls also shortens the filter area (item 3)."
+  },
+  {
+   "question": "Questionable heading into a duty with no Duty Support or Trust: stop or warn?",
+   "options": "Stop by default (setting, on) / Warn only",
+   "recommendation": "Stop by default and explain in one line. It matches the existing 'no other player joins an automated run' default and the community's clear line."
+  },
+  {
+   "question": "Is a 'Switch gearset' button (the game's own RaptureGearsetModule, only on click) within your automation rule?",
+   "options": "Allowed behind an explicit button / Only name the job",
+   "recommendation": "Allow it behind an explicit button, disabled in combat or duties. Four research reports ask for it, for wasted EXP and for Ready-on-another-job quests."
+  },
+  {
+   "question": "The 18 verification-allowlist rows expire at 1.11.0 and will fail CI on the bump. Extend or settle them now?",
+   "options": "Extend 'until' to 1.14.0 and settle them with the C1 offer observer and alts / Settle all before 1.11.0 using alts",
+   "recommendation": "Resolve what data allows and extend the rest to 1.14.0. C1 then lets the game confirm them on your own characters."
+  },
+  {
+   "question": "New Game+: have you entered, suspended or left an NG+ chapter since installing? Did the Characters tab or My blues suddenly show hundreds of quests as not done?",
+   "options": "Yes (C4 becomes an urgent bug fix, pull into 1.13) / No or untested (keep C4 in 1.14)",
+   "recommendation": "Run one quick check on an alt. If progress dropped, move C4 forward as a patch release."
+  },
+  {
+   "question": "API 16: bundle Lumina.Excel or move to Dalamud.Excel.Sheets?",
+   "options": "Bundle Lumina.Excel (same schema as DataGen; we own updates) / Port 28 files to Dalamud.Excel.Sheets",
+   "recommendation": "Bundle Lumina.Excel, so DataGen, the catalog and the runtime can never read different schemas."
+  },
+  {
+   "question": "May Tsukimichi read Questionable's own chat lines ('[QST v…') to explain why a run stopped? It is local only, but a new kind of read.",
+   "options": "Yes, listed under 'What it hooks' / No, infer from step data and conditions only",
+   "recommendation": "Yes. It is the difference between 'it stopped' and 'its path has no step 1, reload data in Questionable'. List it in the README."
+  },
+  {
+   "question": "'Log in as this character' through Lifestream's ChangeCharacter IPC, from the roster board?",
+   "options": "Allowed behind a hold confirm / Never log characters in or out",
+   "recommendation": "Defer to after 1.15. If you want it, allow it behind a hold confirm, disabled while any hand-off runs."
+  },
+  {
+   "question": "Todo overlay during combat and NPC dialogue",
+   "options": "Options off by default / 'Hide in combat' on by default / Fade to 35% in combat",
+   "recommendation": "Ship the hiding options off by default, but offer them in the Overlay page with a preview. Opacity can go down to 0 now that the text is outlined."
+  }
+ ],
+ "topCommunityInsights": [
+  "The automation line is solo versus other players. Players tolerate automation 'as long as it's with trusts and not real people'. Bot complaints are almost all about the Duty Finder, and Questionable has been seen queueing into the regular DF when Duty Support existed. Sources: r/ffxivdiscussion 1fscur3 (lpm1y9r, lplankv), PunishXIV/Questionable#38, SE forum 508128, research 30 and 3.",
+  "Runs that stop without a reason are Questionable's number-one pain. Discussion #20 has 71 comments on 'Path for quest X does not contain sequence N', and maintainers keep asking for quest id, sequence, job and the 'Stuck?' output. Source: Questionable discussion #20 and issues #887, #494, #454 (research 12).",
+  "The WigglyMuffin fork renamed itself 'WigglyQuest' and ships a do-nothing stub under the old 'Questionable' name at 99.0.0.0, so detection by internal name is now wrong. Source: WigglyMuffin/DalamudPlugins pluginmaster (2026-09-11), QuestionableConverter README (research 12).",
+  "Wasted EXP on a capped job is the most-repeated levelling mistake (one player lost about 8M EXP on aether-current quests), and Japanese players routinely switch jobs before turn-in (経験値もったいない). Sources: SE forum 402076, r/ffxiv 1duajkl, Yahoo知恵袋 q11322405436, X @kupoquee (research 23, 19).",
+  "The item-level wall in patch MSQ ('you have to be 690') is the most-reported surprise, and returners don't know which catch-up duties need a real party. Sources: r/ffxiv 1imgiwj, 1gwc9nr, r/ffxivdiscussion 1ueeyah, SE forum 517580 (research 1, 6, 7).",
+  "106 of 134 Triple Triad NPCs are locked behind a quest the game never names. Collectors get stuck at 122/123 on Triple Team, and Triad automation users asked for a route plus a Questionable hand-off. Sources: FFXIV Collect NPC API, XeldarAlz/FFXIV-AutoTripleTriadGrind#4, r/ffxiv 1ecjxno, SE 441407 (research 25, 4, 11, 16).",
+  "Players finish a quest, lose the roll, minion or glamour, and don't know whether it can be re-bought. About 110 seasonal and collab glamour pieces are also missing from Moonlit, because Recompense Officer menus are treated as normal shops. Sources: r/ffxiv 1mn5px9, 1rgttgb, SE 497773, 499588, UniqueRewardGenerator.cs:82 (research 4, 10, 24, 25).",
+  "The 30-quest journal cap makes players skip givers. They want a slots counter and to know which quests are safe to drop. Sources: SE forum 303807, 520850, 525357, Bluesky aggronaut 2024-06-19 (research 14, 15, 18).",
+  "A carried-over allied daily silently sets allowances to 0 ('a very common problem'), and Tsukimichi's rank-up tooltip likely contradicts the game's 3 bonus dailies. Sources: r/ffxiv 1ewaja6, CGW Reputation, forum 523608 (research 9).",
+  "Wiki free-text gates (deep-dungeon floors, Bozja Resistance Rank, Skysteel tools, Occult Record) mean several quests probably read Ready too early. Sources: CGW harvest of 7,067 infoboxes (2026-10-02), r/ffxiv 1uzk0jw, 1d2nb52 (research 20).",
+  "Entering New Game+ likely makes the plausibility guard accept a 'loss' of completed quests, overwriting the main character's saved progress. Players also want to know which NG+ part replays a quest. Sources: StatePoller.cs:531, forum 497299, 522074, 418578 (research 15, dev 11).",
+  "Players want to travel to the current step of a quest already in the journal, not back to the giver. Sources: goatcorp/suggestions #419, #974 (research 11).",
+  "Accessibility players need macro-able one-press commands ('take me to my next quest') and chat lines that TTS plugins can speak. Sources: r/ffxiv 1aetuhf, 1dba1we, 1tdabk7, TextToTalk #5 (research 21).",
+  "Patch 8.0 timing: on 2026-10-02 Dalamud's API 16 branch dropped Lumina.Excel.dll (Tsukimichi uses it in 28 files). API 16 releases with Evercold in January 2027, which also brings native quest auto-pathing, an order-free MSQ and level-scaled areas. Sources: dalamud-docs v16.md, Dalamud PRs #2945/#2948/#2971/#3000, CGW Evercold, r/ffxiv 1v6fau4 (research 29, 3, 14).",
+  "Local-only is a trust differentiator. Plugin reputation in 2025-2026 is dominated by privacy scandals (PlayerScope, Memoria, 'Stalker'), and custom repos are '100% trust based'. Sources: r/ffxivdiscussion 1nvbf1s, 1uk9woj, 1hvv7k5 (research 3).",
+  "Multibox users following the standard AutoRetainer/Aethertek guides give each client its own --roamingPath, which Tsukimichi's shared-folder multibox view can't see. Sources: AutoRetainer#62 (pinned guide), Aethertek 2026 guide (research 5)."
+ ]
+}
