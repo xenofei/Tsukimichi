@@ -1183,6 +1183,14 @@ public sealed partial class Plugin : IDalamudPlugin
                     Save();
                 },
                 Recommended: true),
+            new("##setupOpened", static () => Strings.Setup.OpenedLabel, static () => Strings.Setup.OpenedValue,
+                () => Settings.ChatNoticeOpened,
+                on =>
+                {
+                    Settings.ChatNoticeOpened = on;
+                    Save();
+                },
+                Recommended: true),
             new("##setupServerBar", static () => Strings.Setup.ServerBarLabel, static () => Strings.Setup.ServerBarValue,
                 () => nearby.Settings.ShowDtrEntry,
                 on =>

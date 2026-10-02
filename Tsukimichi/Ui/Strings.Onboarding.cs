@@ -58,6 +58,8 @@ public static partial class Strings
         public static string ItemHintsValue => Loc.Get("Setup.ItemHintsValue");
         public static string DutyFinderLabel => Loc.Get("Setup.DutyFinderLabel");
         public static string DutyFinderValue => Loc.Get("Setup.DutyFinderValue");
+        public static string OpenedLabel => Loc.Get("Setup.OpenedLabel");
+        public static string OpenedValue => Loc.Get("Setup.OpenedValue");
         public static string Companions => Loc.Get("Setup.Companions");
         public static string CompanionsButton => Loc.Get("Setup.CompanionsButton");
         public static string CompanionsTooltip => Loc.Get("Setup.CompanionsTooltip");

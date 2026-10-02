@@ -3490,6 +3490,12 @@
   <data name="Setup.DutyFinderValue" xml:space="preserve">
     <value>Select a padlocked duty and a panel beside the Duty Finder names the quest that unlocks it.</value>
   </data>
+  <data name="Setup.OpenedLabel" xml:space="preserve">
+    <value>"Opened" line after a turn-in</value>
+  </data>
+  <data name="Setup.OpenedValue" xml:space="preserve">
+    <value>One chat line counting what a turn-in made available ("Opened: 2 unlock quests, 8 side quests"), with Show; it never names a quest.</value>
+  </data>
   <data name="Setup.Companions" xml:space="preserve">
     <value>Other plugins can take over travel, duties and crafting for you: Lifestream, vnavmesh, Questionable and more.</value>
   </data>
@@ -3503,7 +3509,7 @@
     <value>Recommended</value>
   </data>
   <data name="Setup.RecommendedTooltip" xml:space="preserve">
-    <value>Turns on the chat notice, the server info bar count, item hints and the Duty Finder hint. The overlay stays your choice.</value>
+    <value>Turns on the chat notice, the Opened line, the server info bar count, item hints and the Duty Finder hint. The overlay stays your choice.</value>
   </data>
   <data name="Setup.Done" xml:space="preserve">
     <value>Done</value>
@@ -3550,6 +3556,15 @@
   <data name="Help.PlayCardTitles.8" xml:space="preserve">
     <value>Go to giver</value>
   </data>
+  <data name="Help.PlayCardTitles.9" xml:space="preserve">
+    <value>Panels beside the game's windows</value>
+  </data>
+  <data name="Help.PlayCardTitles.10" xml:space="preserve">
+    <value>Chat lines you can click</value>
+  </data>
+  <data name="Help.PlayCardTitles.11" xml:space="preserve">
+    <value>Nameplate marks and quest banners</value>
+  </data>
   <data name="Help.PlayCardBodies.0" xml:space="preserve">
     <value>A small panel that stays on screen: your pins, Event quests running now, unlocks you can start here, the next main scenario quest and job quests, an expansion pinned from My blues and a route you follow. Turn it on with the list button at the foot of the tabs, /tsuki todo or Settings › Todo overlay. Locked makes it click-through.</value>
   </data>
@@ -3576,6 +3591,15 @@
   </data>
   <data name="Help.PlayCardBodies.8" xml:space="preserve">
     <value>Teleport, the aethernet hop and Walk to giver (Lifestream and vnavmesh) take you to a quest's giver, or Go to giver does all three in one click, with Stop at every step. Nothing moves your character unless you press a button.</value>
+  </data>
+  <data name="Help.PlayCardBodies.9" xml:space="preserve">
+    <value>Small panels sit beside the game's own windows: "Worth it?" beside a quest offer (what it unlocks, its Moonlit rewards, its chain step), "What this opened" beside the reward window after a turn-in, and a companion beside the Journal for the selected quest. They never accept, decline or complete anything. Settings › Integrations turns each off.</value>
+  </data>
+  <data name="Help.PlayCardBodies.10" xml:space="preserve">
+    <value>After a turn-in, one chat line counts what it opened ("Opened: 2 unlock quests, 8 side quests") with Show to list them, never naming a quest. Tsukimichi's chat lines end each quest with [Open] [Pin] [Route], and Chat 2 gets "Open in Tsukimichi" on quest and item links. Settings › Notices and Integrations turn them off.</value>
+  </data>
+  <data name="Help.PlayCardBodies.11" xml:space="preserve">
+    <value>Off by default: a short line under a quest giver's name ("☾ Pinned", "☾ Moonlit reward", "☾ Ready on WHM"), and the game's quest banner when a turn-in gives a Moonlit reward or unlocks a duty. Turn them on in Settings › Integrations and Settings › Notices.</value>
   </data>
   <data name="Help.PlayTip" xml:space="preserve">
     <value>None of these change the game: they read what the game shows you and draw beside it. After a game patch the parts drawn beside the game's own windows pause until they are tested (Known quirks).</value>

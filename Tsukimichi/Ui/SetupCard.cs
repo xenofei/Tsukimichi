@@ -26,7 +26,8 @@ public sealed record SetupToggle(string Id, Func<string> Label, Func<string> Val
 /// "Set up your road" (feature plan v5, 1.7.0, decision 7; onboarding proposal 2): a card at the top of the detail
 /// column, shown once on a fresh install after the tour offer is answered (and after the tour, when taken), with the
 /// switches that matter while playing, each with a one-line value: the Todo overlay, the chat notice for new quests,
-/// the Nearby count in the server info bar, item hints and the Duty Finder hint; then a line pointing at the companion
+/// the "Opened" line after a turn-in, the Nearby count in the server info bar, item hints and the Duty Finder hint;
+/// then a line pointing at the companion
 /// plugins. Every switch applies at once. Recommended turns on everything but the overlay, which stays off until the
 /// player turns it on. It never shows by itself again (<see cref="Configuration.SetupCardSeen"/>); Help › Quick start
 /// opens it again (<see cref="Show"/>).

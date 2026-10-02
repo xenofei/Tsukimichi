@@ -263,7 +263,8 @@ public sealed class HelpWindow : Window
 
     /// <summary>
     /// "While you play" (1.7.0): the overlay and Nearby first (each with a button), then item hints, the NPC menu, the
-    /// Duty Finder hint, abandoned quests, routes, following a route and travel to a giver.
+    /// Duty Finder hint, abandoned quests, routes, following a route, travel to a giver, the panels beside the game's
+    /// windows, the clickable chat lines, and nameplate marks with quest banners.
     /// </summary>
     private static readonly Localization.LocCache<CardItem[]> playCardsCache = new(static () =>
         Cards(
@@ -277,7 +278,10 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Undo,
         FontAwesomeIcon.Route,
         FontAwesomeIcon.MapSigns,
-        FontAwesomeIcon.Walking));
+        FontAwesomeIcon.Walking,
+        FontAwesomeIcon.WindowRestore,
+        FontAwesomeIcon.CommentDots,
+        FontAwesomeIcon.IdBadge));
 
     private static CardItem[] PrivacyCards => privacyCardsCache.Value;
 
