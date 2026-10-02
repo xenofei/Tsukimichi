@@ -1,11 +1,13 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
+using Tsukimichi.LoadCheck;
 using Tsukimichi.Localization;
 
 // The load check (see the project file): every UI type's static constructor, then, in every language, the value of
 // every static LocText, LocArray and LocCache<T> field in Tsukimichi.Ui. Any throw is a plugin that would not load, or
-// would fail on first draw, in that language. Exit code 0 when all pass, 1 otherwise.
+// would fail on first draw, in that language. Then every Lumina type and member GameData and the plugin reference,
+// found in Dalamud's Lumina (LuminaCheck). Exit code 0 when all pass, 1 otherwise.
 const string UiNamespace = "Tsukimichi.Ui";
 string[] languages = [Loc.English, Loc.German, Loc.French, Loc.Japanese, Loc.PseudoLanguage];
 
@@ -117,6 +119,15 @@ int Run()
         failures.Add($"the scan found only {ui.Length} types and {fields.Length} localized fields in {UiNamespace}; update the load check");
     }
 
+    // Patch-day safety: GameData compiles against the Lumina NuGet packages but runs against Dalamud's copies; every
+    // Lumina type and member it (and the plugin) uses must exist in those, or the catalog build throws in the game.
+    var pluginDir = Path.GetDirectoryName(plugin.Location)!;
+    var luminaMembers = LuminaCheck.Run(dalamud!, [Path.Combine(pluginDir, "Tsukimichi.GameData.dll"), plugin.Location], failures);
+    if (luminaMembers < 20)
+    {
+        failures.Add($"lumina: the scan found only {luminaMembers} member references into Lumina; update the load check");
+    }
+
     if (failures.Count > 0)
     {
         Console.Error.WriteLine($"Load check FAILED ({failures.Count}):");
@@ -128,7 +139,7 @@ int Run()
         return 1;
     }
 
-    Console.WriteLine($"Load check passed: {ui.Length} types' static constructors, {fields.Length} localized fields in {languages.Length} languages.");
+    Console.WriteLine($"Load check passed: {ui.Length} types' static constructors, {fields.Length} localized fields in {languages.Length} languages, {luminaMembers} Lumina member references.");
     return 0;
 }
 
