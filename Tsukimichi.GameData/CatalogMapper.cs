@@ -120,6 +120,7 @@ public static class CatalogMapper
         {
             NewGamePlus = newGamePlus,
             AchievementLadders = ladders,
+            ExpTable = ReadOptional(() => ReadExpTable(excel), Core.Rewards.QuestExpTable.Empty, "quest EXP table", log),
         };
     }
 
@@ -135,6 +136,25 @@ public static class CatalogMapper
             log?.Invoke($"The {what} could not be read ({ex.GetType().Name}: {ex.Message}); that feature is hidden");
             return fallback;
         }
+    }
+
+    /// <summary>
+    /// <c>ParamGrow</c>'s <c>QuestExpModifier</c> and <c>ScaledQuestXP</c> by level (the row id), for the quest EXP
+    /// formula; empty when the sheet cannot be read, which leaves every quest's EXP unknown rather than wrong.
+    /// </summary>
+    public static Core.Rewards.QuestExpTable ReadExpTable(ExcelModule excel)
+    {
+        ArgumentNullException.ThrowIfNull(excel);
+        var rows = new List<(int, uint, uint)>();
+        foreach (var row in excel.GetSheet<ParamGrow>())
+        {
+            if (row.RowId <= byte.MaxValue)
+            {
+                rows.Add(((int)row.RowId, row.QuestExpModifier, row.ScaledQuestXP));
+            }
+        }
+
+        return Core.Rewards.QuestExpTable.From(rows);
     }
 
     /// <summary>Sheet join byte to <see cref="JoinKind"/>: 2 means any, everything else (1, or 0 when unused) means all.</summary>

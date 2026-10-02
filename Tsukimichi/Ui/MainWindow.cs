@@ -173,6 +173,7 @@ public sealed class MainWindow : Window, IDisposable
         tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll, OnFiltersChanged)
         {
             Catalog = () => plugin.Session?.Bundle?.Catalog,
+            ShowExp = () => plugin.Settings?.JournalShowExpColumn == true,
         };
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tonightCard = new TonightCard(ui, runner, OnFiltersChanged);
@@ -264,6 +265,12 @@ public sealed class MainWindow : Window, IDisposable
     public void AttachPayoffLines(PayoffGateLines lines)
     {
         tonightCard.PayoffLines = lines ?? throw new ArgumentNullException(nameof(lines));
+    }
+
+    /// <summary>The 1.9.0 planning lines: the Tonight card shows the level gate and the catch-up under its main scenario row.</summary>
+    public void AttachPlanning(PlanningSource planning)
+    {
+        tonightCard.Planning = planning ?? throw new ArgumentNullException(nameof(planning));
     }
 
     /// <summary>"Next stops" (1.6.0): the Tonight card lists the first stops with Teleport.</summary>

@@ -136,6 +136,35 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void The_exp_column_hides_first_and_takes_no_room_while_it_is_off()
+    {
+        // 1.9.0 (R6 G): measured, it is the first column to step aside; unmeasured (Settings leaves it off) or hidden
+        // from the header menu, it takes no room and the rest of the plan is the one without it.
+        var withExp = English with { Exp = 90f };
+        var specs = Specs(withExp);
+        Assert.Equal(6, specs[Col(QuestColumn.Exp)].Priority);
+        Assert.Equal(90f + English.CellOverhead, specs[Col(QuestColumn.Exp)].Min);
+        Assert.Equal(0f, Specs(English)[Col(QuestColumn.Exp)].Min);
+
+        var all = Need(QuestColumn.Glyph, QuestColumn.Name, QuestColumn.Level, QuestColumn.Job, QuestColumn.Status, QuestColumn.Expansion, QuestColumn.Rewards);
+        var wide = Plan(all + specs[Col(QuestColumn.Exp)].Min, withExp);
+        Assert.True(wide.Visible[Col(QuestColumn.Exp)]);
+        Assert.True(wide.Visible[Col(QuestColumn.Rewards)]);
+
+        var narrower = Plan(all + specs[Col(QuestColumn.Exp)].Min - 1f, withExp);
+        Assert.False(narrower.Visible[Col(QuestColumn.Exp)]);
+        Assert.True(narrower.Visible[Col(QuestColumn.Rewards)]);
+        Assert.Equal(0f, narrower.Widths[Col(QuestColumn.Exp)]);
+
+        var hidden = new bool[N];
+        hidden[Col(QuestColumn.Exp)] = true;
+        var off = Plan(all, withExp, hidden);
+        Assert.False(off.Visible[Col(QuestColumn.Exp)]);
+        Assert.True(off.Visible[Col(QuestColumn.Rewards)]);
+        Assert.Equal(Plan(all).Widths, off.Widths);
+    }
+
+    [Fact]
     public void Columns_step_aside_rewards_expansion_job_icon_job_level_and_never_status()
     {
         var all = Need(QuestColumn.Glyph, QuestColumn.Name, QuestColumn.Level, QuestColumn.Job, QuestColumn.Status, QuestColumn.Expansion, QuestColumn.Rewards);
@@ -252,7 +281,7 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
     {
         var (plan, visible, widths) = Plan(340f);
         Assert.True(plan.TwoLine);
-        Assert.Equal(new[] { true, true, false, false, false, false, false }, visible);
+        Assert.Equal(new[] { true, true, false, false, false, false, false, false }, visible);
         Assert.Equal(English.Glyph + English.CellOverhead, widths[Col(QuestColumn.Glyph)], 3);
         Assert.Equal(340f, widths.Sum(), 3);
     }

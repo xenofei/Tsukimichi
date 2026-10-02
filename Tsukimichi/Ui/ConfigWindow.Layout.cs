@@ -70,6 +70,7 @@ public sealed partial class ConfigWindow
         new(SettingsSection.Display, DrawJournal),
         new(SettingsSection.Display, DrawJournalText),
         new(SettingsSection.Display, DrawCollectorSettings),
+        new(SettingsSection.Display, DrawPlanning),
         new(SettingsSection.TodoOverlay, DrawTodoOverlay),
         new(SettingsSection.Routes, DrawRoutes),
         new(SettingsSection.Notices, DrawNotices),

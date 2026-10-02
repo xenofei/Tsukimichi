@@ -3719,6 +3719,183 @@
   <data name="PayoffConfigNoticeHint" xml:space="preserve">
     <value>"Before you continue: Finish the Eden raid series first.", once per character, when the main scenario reaches the point where it matters. It never says why; the Characters tab and the Tonight card keep the line, with the reason behind "why? (spoiler)".</value>
   </data>
+  <data name="PlanningExpFormat" xml:space="preserve">
+    <value>{0} EXP</value>
+    <comment>{0} = the EXP, formatted ("12,345").</comment>
+  </data>
+  <data name="PlanningExpRangeFormat" xml:space="preserve">
+    <value>{0}–{1} EXP</value>
+    <comment>{0} = the EXP at the quest's level, {1} = at its Quest Sync cap.</comment>
+  </data>
+  <data name="PlanningGilFormat" xml:space="preserve">
+    <value>{0} gil</value>
+    <comment>{0} = the gil, formatted ("1,200").</comment>
+  </data>
+  <data name="PlanningExpTooltip" xml:space="preserve">
+    <value>The quest's base EXP, before any EXP bonus (the armoury bonus, food, a road to level buff).</value>
+  </data>
+  <data name="PlanningExpRangeTooltipFormat" xml:space="preserve">
+    <value>Quest Sync: the EXP follows the level of the job you do it on, from level {0} to level {1}. Base EXP, before any EXP bonus.</value>
+    <comment>{0} = the quest's level, {1} = its Quest Sync cap.</comment>
+  </data>
+  <data name="PlanningExpVariesTooltip" xml:space="preserve">
+    <value>The EXP of allied society and seasonal event quests follows rules the game's quest formula does not cover, so it is not shown.</value>
+  </data>
+  <data name="PlanningExpRangeShortFormat" xml:space="preserve">
+    <value>{0}–{1}</value>
+    <comment>{0} = the first value, {1} = the second.</comment>
+  </data>
+  <data name="ColumnExp" xml:space="preserve">
+    <value>EXP</value>
+  </data>
+  <data name="ColumnExpTooltip" xml:space="preserve">
+    <value>Each quest's base EXP, from the game's own formula; a range for a Quest Sync quest. Blank when the quest gives none, and for allied society and seasonal event quests, whose EXP the formula does not cover.</value>
+  </data>
+  <data name="PlanningQuestsOne" xml:space="preserve">
+    <value>1 quest</value>
+  </data>
+  <data name="PlanningQuestsFormat" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>{0} = how many quests.</comment>
+  </data>
+  <data name="PlanningUnlocksOne" xml:space="preserve">
+    <value>1 unlock quest</value>
+  </data>
+  <data name="PlanningUnlocksFormat" xml:space="preserve">
+    <value>{0} unlock quests</value>
+    <comment>{0} = how many unlock quests.</comment>
+  </data>
+  <data name="PlanningMsq" xml:space="preserve">
+    <value>MSQ</value>
+    <comment>The main scenario, short, as the counts name it.</comment>
+  </data>
+  <data name="PlanningCountDetailFormat" xml:space="preserve">
+    <value>{0} ({1})</value>
+    <comment>{0} = what was counted, {1} = what is among it ("7 quests (2 unlock quests, MSQ)").</comment>
+  </data>
+  <data name="PlanningDutiesNone" xml:space="preserve">
+    <value>no duties</value>
+  </data>
+  <data name="PlanningDutiesOne" xml:space="preserve">
+    <value>1 duty</value>
+  </data>
+  <data name="PlanningDutiesFormat" xml:space="preserve">
+    <value>{0} duties</value>
+    <comment>{0} = how many duties.</comment>
+  </data>
+  <data name="PlanningLevelHeading" xml:space="preserve">
+    <value>Levelling opens</value>
+  </data>
+  <data name="PlanningLevelRowFormat" xml:space="preserve">
+    <value>{0}→{1} opens {2}</value>
+    <comment>{0} = the level now, {1} = the level needed, {2} = what it opens ("7 quests (2 unlock quests, MSQ)").</comment>
+  </data>
+  <data name="PlanningLevelOpensFormat" xml:space="preserve">
+    <value>Levelling {0} {1}→{2} opens {3}</value>
+    <comment>{0} = the job's abbreviation, {1} = its level now, {2} = the level needed, {3} = what it opens.</comment>
+  </data>
+  <data name="PlanningLevelStepFormat" xml:space="preserve">
+    <value>Level {0}: {1}</value>
+    <comment>{0} = the level, {1} = what it opens.</comment>
+  </data>
+  <data name="PlanningLevelMoreFormat" xml:space="preserve">
+    <value>and {0} more</value>
+    <comment>{0} = how many more quest names the tooltip leaves out.</comment>
+  </data>
+  <data name="PlanningLevelRowTooltip" xml:space="preserve">
+    <value>Quests held back by this job's level alone. Click to show the first of them.</value>
+  </data>
+  <data name="PlanningTonightLevelFormat" xml:space="preserve">
+    <value>The next MSQ quest needs level {0}: levelling {1} {2}→{0} opens {3}</value>
+    <comment>{0} = the level the next main scenario quest needs, {1} = the job's abbreviation, {2} = its level now, {3} = what levelling opens.</comment>
+  </data>
+  <data name="PlanningCatchUpHeading" xml:space="preserve">
+    <value>Story catch-up</value>
+  </data>
+  <data name="PlanningCatchUpFormat" xml:space="preserve">
+    <value>To reach the latest story: {0}, Lv {1}–{2}, {3}</value>
+    <comment>{0} = the quests ("143 quests"), {1} = the lowest level, {2} = the highest, {3} = the duties ("6 duties").</comment>
+  </data>
+  <data name="PlanningCatchUpOneLevelFormat" xml:space="preserve">
+    <value>To reach the latest story: {0}, Lv {1}, {2}</value>
+    <comment>{0} = the quests, {1} = their one level, {2} = the duties.</comment>
+  </data>
+  <data name="PlanningCatchUpExpansionFormat" xml:space="preserve">
+    <value>{0}: {1}, Lv {2}–{3}, {4}</value>
+    <comment>{0} = the expansion, {1} = the quests, {2} = the lowest level, {3} = the highest, {4} = the duties.</comment>
+  </data>
+  <data name="PlanningCatchUpExpansionOneLevelFormat" xml:space="preserve">
+    <value>{0}: {1}, Lv {2}, {3}</value>
+    <comment>{0} = the expansion, {1} = the quests, {2} = their one level, {3} = the duties.</comment>
+  </data>
+  <data name="PlanningCatchUpDone" xml:space="preserve">
+    <value>You have reached the latest story.</value>
+  </data>
+  <data name="PlanningCatchUpTooltip" xml:space="preserve">
+    <value>Main scenario quests left on your path, per expansion, with the duties they ask you to have cleared that you have not. Counts only.</value>
+  </data>
+  <data name="PlanningBoardHeading" xml:space="preserve">
+    <value>Allied society board</value>
+  </data>
+  <data name="PlanningBoardAllowancesFormat" xml:space="preserve">
+    <value>{0} allowances left today · daily reset: {1}</value>
+    <comment>{0} = allowances left today, {1} = "resets in 3 h".</comment>
+  </data>
+  <data name="PlanningBoardColumnSociety" xml:space="preserve">
+    <value>Society</value>
+  </data>
+  <data name="PlanningBoardColumnRank" xml:space="preserve">
+    <value>Rank</value>
+  </data>
+  <data name="PlanningBoardColumnToday" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="PlanningBoardColumnWhere" xml:space="preserve">
+    <value>Where</value>
+  </data>
+  <data name="PlanningBoardRankFormat" xml:space="preserve">
+    <value>{0} {1}/{2}</value>
+    <comment>{0} = the rank's name, {1} = the reputation, {2} = the rank's maximum.</comment>
+  </data>
+  <data name="PlanningBoardRankFullFormat" xml:space="preserve">
+    <value>{0}, reputation full</value>
+    <comment>{0} = the rank's name.</comment>
+  </data>
+  <data name="PlanningBoardRankedUpToday" xml:space="preserve">
+    <value>Ranked up today: the society's quests return after the daily reset.</value>
+  </data>
+  <data name="PlanningBoardTodayFormat" xml:space="preserve">
+    <value>{0} of {1} done</value>
+    <comment>{0} = dailies done today, {1} = dailies offered today.</comment>
+  </data>
+  <data name="PlanningBoardTodayUnknownFormat" xml:space="preserve">
+    <value>{0} done, offer unknown until you visit the givers</value>
+    <comment>{0} = dailies done today.</comment>
+  </data>
+  <data name="PlanningBoardTodayUnknownTooltip" xml:space="preserve">
+    <value>The game works out a society's daily offer only for the givers it has loaded. Visit the givers today on the logged-in character and the board fills in.</value>
+  </data>
+  <data name="PlanningBoardTeleport" xml:space="preserve">
+    <value>Teleport</value>
+  </data>
+  <data name="PlanningBoardNone" xml:space="preserve">
+    <value>No allied society unlocked yet.</value>
+  </data>
+  <data name="PlanningConfigHeading" xml:space="preserve">
+    <value>Planning</value>
+  </data>
+  <data name="PlanningConfigExpColumn" xml:space="preserve">
+    <value>EXP column in the Journal</value>
+  </data>
+  <data name="PlanningConfigExpColumnHint" xml:space="preserve">
+    <value>Adds each quest's base EXP as a column of the Journal table. The detail pane shows the EXP and gil either way.</value>
+  </data>
+  <data name="PlanningConfigBoard" xml:space="preserve">
+    <value>Allied society board on the Characters dashboard</value>
+  </data>
+  <data name="PlanningConfigBoardHint" xml:space="preserve">
+    <value>Each unlocked allied society's rank and reputation, today's dailies, the allowances left, Teleport to its giver and the time to the daily reset.</value>
+  </data>
   <data name="PlanTab" xml:space="preserve">
     <value>My blues</value>
   </data>

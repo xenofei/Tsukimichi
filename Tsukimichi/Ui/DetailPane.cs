@@ -250,7 +250,10 @@ public sealed partial class DetailPane
 
         Gap();
         BeginSection("##rewards", Strings.Rewards, RewardsIcon, model.RewardsCaption, Theme.Surface.TextTertiary);
-        DrawRewards(cardRight);
+        if (!DrawExpAndGil(quest) || model.Rewards.Count > 0)
+        {
+            DrawRewards(cardRight);
+        }
         EndSection();
         DrawHandInSection(session, quest);
 
