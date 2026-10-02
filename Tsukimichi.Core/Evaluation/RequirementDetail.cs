@@ -65,6 +65,11 @@ public static class RequirementDetail
             TribeRankRequirement t => met
                 ? names.TribeRank(t.ActualRank)
                 : F("Core.Req.NeedsTribeRank", "needs {0}, you are {1}", names.TribeRank(t.RequiredRank), names.TribeRank(t.ActualRank)),
+            TribeReputationRequirement { MaxedRank: not 0, NotChecked: true } t =>
+                F("Core.Req.NeedsMaxedReputationNotChecked", "needs {0} reputation maxed, not checked", names.TribeRank(t.MaxedRank)),
+            TribeReputationRequirement { MaxedRank: not 0 } t => met
+                ? F("Core.Req.MaxedReputation", "{0} reputation maxed", names.TribeRank(t.MaxedRank))
+                : F("Core.Req.RankReputation", "{0} {1:N0}/{2:N0} reputation", names.TribeRank(t.MaxedRank), t.ActualValue, t.RequiredValue),
             TribeReputationRequirement t => met
                 ? F("Core.Req.Reputation", "{0} reputation", t.ActualValue)
                 : F("Core.Req.NeedsReputation", "needs {0} reputation, you have {1}", t.RequiredValue, t.ActualValue),

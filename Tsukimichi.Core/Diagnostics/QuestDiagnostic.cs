@@ -191,6 +191,7 @@ public static class QuestDiagnostic
             AchievementRequirement { Loaded: false } => NotChecked,
             CustomDeliveryRankRequirement { ActualRank: null } => NotChecked,
             CarrierLevelRequirement { ActualLevel: null } => NotChecked,
+            TribeReputationRequirement { NotChecked: true } => NotChecked,
             _ => result.Met ? Met : Unmet,
         };
     }
@@ -298,6 +299,15 @@ public static class QuestDiagnostic
 
             case TribeRankRequirement t:
                 sb.Append(TribeName(names, t.Tribe)).Append(' ').Append(names.TribeRank(t.ActualRank)).Append(CompareActualFirst(result.Met)).Append(names.TribeRank(t.RequiredRank));
+                break;
+
+            case TribeReputationRequirement { NotChecked: true } t:
+                sb.Append(TribeName(names, t.Tribe)).Append(' ').Append(names.TribeRank(t.MaxedRank)).Append(" maxed, not checked");
+                break;
+
+            case TribeReputationRequirement { MaxedRank: not 0 } t:
+                sb.Append(TribeName(names, t.Tribe)).Append(' ').Append(names.TribeRank(t.MaxedRank)).Append(' ').Append(t.ActualValue.ToString(CultureInfo.InvariantCulture))
+                    .Append(CompareActualFirst(result.Met)).Append(t.RequiredValue.ToString(CultureInfo.InvariantCulture)).Append(" (maxed)");
                 break;
 
             case TribeReputationRequirement t:
@@ -472,7 +482,8 @@ public static class QuestDiagnostic
         if (Has(kinds, RequirementKind.TribeDailyOffer))
         {
             sb.Append(", offer ");
-            if (inputs.Context.TodaysDailyOffer is { } offer)
+            if (inputs.Context.TodaysDailyOffer is { } offer
+                && (inputs.Context.DailyOfferTribes is not { } known || known.Contains(quest.BeastTribe)))
             {
                 AppendIds(sb, offer);
             }

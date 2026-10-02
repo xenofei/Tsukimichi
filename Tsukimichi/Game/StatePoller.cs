@@ -82,6 +82,9 @@ public sealed class StatePoller : IDisposable
     /// <summary>The capture the newest flush in flight writes; a final flush does not queue the same one again.</summary>
     private CharacterSnapshot? queuedSnapshot;
 
+    // The daily offer the committed evaluations were resolved with; a different one re-resolves everything.
+    private DailyOffer? lastOffer;
+
     /// <param name="writer">The background queue every snapshot and sidecar save goes through; the framework thread never writes a file.</param>
     public StatePoller(
         IFramework framework,
@@ -107,6 +110,12 @@ public sealed class StatePoller : IDisposable
         session.DataDeleted += OnDataDeleted;
         framework.Update += OnUpdate;
     }
+
+    /// <summary>
+    /// Today's allied society offer for the live character (decision 5); null leaves every daily's offer unknown,
+    /// which holds none back. Set once by the plugin.
+    /// </summary>
+    public DailyOfferReader? DailyOffers { get; set; }
 
     /// <summary>
     /// Hands the last capture (if it changed since the last save) and the accepted-time and abandoned sidecars (if
@@ -299,6 +308,8 @@ public sealed class StatePoller : IDisposable
                 Flush(final: true);
                 memory.Reset();
                 readiness.Reset();
+                DailyOffers?.Clear();
+                lastOffer = null;
                 Notify(session.ClearLive);
             }
 
@@ -403,9 +414,12 @@ public sealed class StatePoller : IDisposable
         var captureStarted = Stopwatch.GetTimestamp();
         var snapshot = reader.Capture(catalog, bundle.Jobs, memory.Last?.CompletedBits);
         var captureMs = Stopwatch.GetElapsedTime(captureStarted).TotalMilliseconds;
-        // The allied-society daily offer is not readable from the client (see GameStateReader), so the live context
-        // is the base context: an in-progress daily is Accepted through the journal, a turned-in one is done this cycle.
-        var context = session.BaseContext;
+        // Today's allied society offer, as far as the game's own calculation could be read (DailyOfferReader): an
+        // unknown society's dailies are not held back. A change of the offer re-resolves everything below.
+        var offer = DailyOffers?.Read(catalog, snapshot, now) ?? DailyOffer.None;
+        var offerChanged = !offer.SameAs(lastOffer);
+        lastOffer = offer;
+        var context = session.BaseContext.WithDailyOffer(offer);
 
         var last = memory.Last;
         if (last is null || memory.States is null || last.ContentId != snapshot.ContentId)
@@ -433,7 +447,7 @@ public sealed class StatePoller : IDisposable
         // Completion dates (decision 9) ride along with the capture: carried over, and stamped for quests just completed.
         snapshot = CompletionDates.Carry(last, snapshot);
         var diff = SnapshotDiff.Compute(last, snapshot);
-        if (diff.IsEmpty)
+        if (diff.IsEmpty && !offerChanged)
         {
             return null;
         }
@@ -451,6 +465,7 @@ public sealed class StatePoller : IDisposable
         // A level change touches every level-gated quest, which the reverse index cannot enumerate by job; level-ups
         // are rare and a full resolve costs milliseconds, so resolve everything rather than pass jobs as levels.
         var full = diff.OtherChanged
+            || offerChanged
             || diff.ChangedJobs.Count > 0
             || diff.ChangedQuestIds.Count > FullResolveThreshold;
         var resolved = full

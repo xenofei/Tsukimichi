@@ -13,7 +13,7 @@ namespace Tsukimichi.Core.Runtime;
 /// <param name="ChangedFestivals">Festival ids that started, ended or changed phase; ascending.</param>
 /// <param name="OtherChanged">
 /// Any other evaluation input changed (Grand Company or ranks, tribe standing, allowances, cleared duties, current job,
-/// achievements, entitlement caps, custom delivery ranks, carrier level, content id). These touch quests the reverse
+/// achievements, entitlement caps, custom delivery ranks, carrier level, repeat flags, content id). These touch quests the reverse
 /// index cannot enumerate, so the caller resolves everything.
 /// </param>
 /// <param name="CollectiblesChanged">
@@ -92,7 +92,8 @@ public sealed record SnapshotDiff(
         || old.MaxExpansion != @new.MaxExpansion
         || old.LevelCap != @new.LevelCap
         || old.CarrierLevel != @new.CarrierLevel
-        || !SameEntries(old.SatisfactionRanks, @new.SatisfactionRanks);
+        || !SameEntries(old.SatisfactionRanks, @new.SatisfactionRanks)
+        || !SameSequence(old.RepeatFlags, @new.RepeatFlags);
 
     /// <summary>Running festivals by id with their phase, −1 when the capture holds none; the first entry of a repeated id wins.</summary>
     private static Dictionary<ushort, int> FestivalPhases(CharacterSnapshot s)

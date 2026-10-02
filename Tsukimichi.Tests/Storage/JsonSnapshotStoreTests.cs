@@ -114,6 +114,26 @@ public sealed class JsonSnapshotStoreTests : IDisposable
     }
 
     [Fact]
+    public void Repeat_flags_round_trip_and_are_omitted_while_empty()
+    {
+        var store = new JsonSnapshotStore(tmp.Path);
+        var snapshot = FullSnapshot() with { RepeatFlags = [3, 12] };
+        var file = tmp.File(Path.Combine("characters", snapshot.ContentId + ".json"));
+
+        store.Save(snapshot);
+        var loaded = store.Load(snapshot.ContentId);
+
+        Assert.NotNull(loaded);
+        Assert.Equal([3, 12], loaded.RepeatFlags);
+        Assert.Equal([3, 12], JsonNode.Parse(File.ReadAllText(file))!["repeatFlags"]!.AsArray().Select(n => (int)n!));
+
+        // Additive at schema v1: an empty list is not written, and a file without it reads as no flag set.
+        store.Save(FullSnapshot());
+        Assert.Null(JsonNode.Parse(File.ReadAllText(file))!["repeatFlags"]);
+        Assert.Empty(store.Load(snapshot.ContentId)!.RepeatFlags);
+    }
+
+    [Fact]
     public void Load_returns_null_for_unknown_character_without_warning()
     {
         var store = new JsonSnapshotStore(tmp.Path);

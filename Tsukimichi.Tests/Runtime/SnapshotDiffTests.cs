@@ -261,6 +261,7 @@ public sealed class SnapshotDiffTests
         s => s with { MaxExpansion = 2 },
         s => s with { LevelCap = 60 },
         s => s with { ContentId = 99 },
+        s => s with { RepeatFlags = [12] },
     };
 
     [Theory]

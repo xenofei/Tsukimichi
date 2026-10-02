@@ -87,8 +87,22 @@ public sealed record GrandCompanyRankRequirement(byte GrandCompany, byte Require
 /// <summary>Allied society rank; names via <see cref="TribeRanks"/>.</summary>
 public sealed record TribeRankRequirement(byte Tribe, byte RequiredRank, byte ActualRank) : Requirement(RequirementKind.TribeRank);
 
-/// <summary>Allied society reputation points within the current rank.</summary>
-public sealed record TribeReputationRequirement(byte Tribe, ushort RequiredValue, ushort ActualValue) : Requirement(RequirementKind.TribeReputation);
+/// <summary>
+/// Allied society reputation points within the current rank. A story quest that needs its rank's reputation maxed
+/// (<see cref="QuestRecord.BeastReputationMaxed"/>, the rank-up quests among them) carries the rank in
+/// <see cref="MaxedRank"/> and the rank's maximum as <paramref name="RequiredValue"/>.
+/// </summary>
+public sealed record TribeReputationRequirement(byte Tribe, ushort RequiredValue, ushort ActualValue) : Requirement(RequirementKind.TribeReputation)
+{
+    /// <summary>The rank whose reputation must be maxed ("Trusted 300/720 reputation"); 0 for a plain reputation value.</summary>
+    public byte MaxedRank { get; init; }
+
+    /// <summary>
+    /// The maximum of <see cref="MaxedRank"/> is not known (no sheet value for that rank): the requirement is listed,
+    /// not judged, so it never blocks.
+    /// </summary>
+    public bool NotChecked { get; init; }
+}
 
 /// <summary>Daily allied society allowances left.</summary>
 public sealed record TribeAllowanceRequirement(byte Allowance) : Requirement(RequirementKind.TribeAllowance);
@@ -150,7 +164,18 @@ public static class TribeRanks
     private static readonly string[] Names =
         ["None", "Neutral", "Recognized", "Friendly", "Trusted", "Respected", "Honored", "Sworn", "Allied"];
 
+    /// <summary>
+    /// <c>BeastReputationRank.RequiredReputation</c> by rank: the reputation that maxes each rank, the same for every
+    /// allied society, A Realm Reborn's included (Neutral 150, Recognized 360, Friendly 510, Trusted 720, Respected 990,
+    /// Honored 1320, Sworn 1730). A [GameDataFact] test pins it to the sheet; the plugin passes the sheet's own values
+    /// (<see cref="EvalContext.TribeRankReputation"/>).
+    /// </summary>
+    private static readonly ushort[] MaxReputations = [0, 150, 360, 510, 720, 990, 1320, 1730, 0];
+
     public static string Name(byte rank) => rank < Names.Length ? Names[rank] : $"rank {rank}";
+
+    /// <summary>The reputation that maxes <paramref name="rank"/>; 0 for None and for the last rank (nothing to max); null for a rank the table does not know.</summary>
+    public static ushort? MaxReputation(byte rank) => rank < MaxReputations.Length ? MaxReputations[rank] : null;
 }
 
 /// <summary>Grand Company names by GrandCompany row id.</summary>

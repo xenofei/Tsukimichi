@@ -409,8 +409,19 @@ public static partial class Strings
     /// </summary>
     public static string StateTooltip(QuestState state) => StateNames.Tooltip(state, 0, Theme.Glyphs.HighContrast);
 
-    /// <summary>The state moon tooltip for a quest: a done repeatable says "Done today" or "Done this week" by its reset.</summary>
-    public static string StateTooltip(QuestState state, QuestRecord? quest) => StateNames.Tooltip(state, quest, Theme.Glyphs.HighContrast);
+    /// <summary>
+    /// The state moon tooltip for a quest: a done repeatable says "Done today" or "Done this week" by its reset, and
+    /// on a second line when that reset comes ("resets in 3 h"; the daily at 15:00 UTC, the weekly on Tuesday at
+    /// 08:00 UTC). Only a done repeatable's tooltip is composed per call; every other one is precomposed.
+    /// </summary>
+    public static string StateTooltip(QuestState state, QuestRecord? quest)
+    {
+        var tooltip = StateNames.Tooltip(state, quest, Theme.Glyphs.HighContrast);
+        return state == QuestState.DoneThisCycle && quest is not null
+            && Core.Runtime.GameResets.ResetsIn(quest.RepeatInterval, System.DateTime.UtcNow) is { } resets
+            ? tooltip + "\n" + resets
+            : tooltip;
+    }
 
     /// <summary>
     /// The reason clause on its own, for the second line of a moon's tooltip: the decisive blocker from

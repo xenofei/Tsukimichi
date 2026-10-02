@@ -4861,6 +4861,14 @@
     <value>Reputation: {0} more with the {1}</value>
     <comment>Core: BlockerText.cs.</comment>
   </data>
+  <data name="Core.Blocker.MaxedReputationWith" xml:space="preserve">
+    <value>Reputation: {0} {1:N0}/{2:N0} with the {3}</value>
+    <comment>Core: BlockerText.cs. {0} rank name, {1} reputation now, {2} the rank's maximum, {3} the allied society.</comment>
+  </data>
+  <data name="Core.Blocker.MaxedReputation" xml:space="preserve">
+    <value>Reputation: {0} {1:N0}/{2:N0}</value>
+    <comment>Core: BlockerText.cs. {0} rank name, {1} reputation now, {2} the rank's maximum.</comment>
+  </data>
   <data name="Core.Blocker.Reputation" xml:space="preserve">
     <value>Reputation: {0} more</value>
     <comment>Core: BlockerText.cs.</comment>
@@ -5004,6 +5012,18 @@
   <data name="Core.Req.NeedsReputation" xml:space="preserve">
     <value>needs {0} reputation, you have {1}</value>
     <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.MaxedReputation" xml:space="preserve">
+    <value>{0} reputation maxed</value>
+    <comment>Core: RequirementDetail.cs. {0} is an allied society rank ("Trusted"); a rank-up quest needs that rank's reputation maxed.</comment>
+  </data>
+  <data name="Core.Req.RankReputation" xml:space="preserve">
+    <value>{0} {1:N0}/{2:N0} reputation</value>
+    <comment>Core: RequirementDetail.cs. {0} rank name, {1} reputation now, {2} the rank's maximum: "Trusted 300/720 reputation".</comment>
+  </data>
+  <data name="Core.Req.NeedsMaxedReputationNotChecked" xml:space="preserve">
+    <value>needs {0} reputation maxed, not checked</value>
+    <comment>Core: RequirementDetail.cs. {0} rank name.</comment>
   </data>
   <data name="Core.Req.AllowancesLeft" xml:space="preserve">
     <value>{0} allowances left</value>
@@ -5197,6 +5217,10 @@
     <value>{0} more reputation</value>
     <comment>Core: NotYetText.cs.</comment>
   </data>
+  <data name="Core.NotYet.MaxedReputation" xml:space="preserve">
+    <value>{0} reputation maxed ({1:N0}/{2:N0})</value>
+    <comment>Core: NotYetText.cs. {0} rank name, {1} reputation now, {2} the rank's maximum.</comment>
+  </data>
   <data name="Core.NotYet.Allowance" xml:space="preserve">
     <value>an allowance (none left today)</value>
     <comment>Core: NotYetText.cs.</comment>
@@ -5304,6 +5328,26 @@
   <data name="Core.Gap.Arrow" xml:space="preserve">
     <value>{0} → {1}</value>
     <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.Gap.RankReputation" xml:space="preserve">
+    <value>{0} {1:N0}/{2:N0} reputation</value>
+    <comment>Core: NotYetText.cs. The gap meter label of a rank-up quest: "Trusted 300/720 reputation".</comment>
+  </data>
+  <data name="Core.Reset.InMinutes" xml:space="preserve">
+    <value>resets in {0} min</value>
+    <comment>Core: GameResets.cs. Second line of a "Done today" tooltip.</comment>
+  </data>
+  <data name="Core.Reset.InHours" xml:space="preserve">
+    <value>resets in {0} h</value>
+    <comment>Core: GameResets.cs. Second line of a "Done today" or "Done this week" tooltip.</comment>
+  </data>
+  <data name="Core.Reset.InDays" xml:space="preserve">
+    <value>resets in {0} d</value>
+    <comment>Core: GameResets.cs. Second line of a "Done this week" tooltip; {0} days.</comment>
+  </data>
+  <data name="Core.Reset.InDaysHours" xml:space="preserve">
+    <value>resets in {0} d {1} h</value>
+    <comment>Core: GameResets.cs. Second line of a "Done this week" tooltip; {0} days, {1} hours.</comment>
   </data>
   <data name="Core.Filter.HideCompleted" xml:space="preserve">
     <value>Hide completed</value>

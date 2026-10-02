@@ -41,6 +41,7 @@ public sealed partial class SessionState
     private readonly ListenerIsolation listeners;
 
     private EvalContext baseContext = EvalContext.Default;
+    private DateTime nextReset = DateTime.MinValue;
     private CharacterSnapshot? liveSnapshot;
     private IReadOnlyDictionary<uint, QuestEvaluation> liveStates = NoStates;
     private EvalContext liveContext = EvalContext.Default;
@@ -551,9 +552,48 @@ public sealed partial class SessionState
     /// </summary>
     public ServerFestivals ServerFestivals => ServerFestivals.For(ViewedSnapshot, liveSnapshot, Curated.Festivals, DateTime.UtcNow);
 
-    /// <summary>The context a stored character is resolved with: the base context and the festivals running on the server now.</summary>
+    /// <summary>
+    /// The context a stored character is resolved with: the base context, the festivals running on the server now,
+    /// and the clock that reads its dailies and weeklies from before the last reset as cleared (<see cref="GameResets.AsOf"/>).
+    /// </summary>
     private EvalContext StoredContext(CharacterSnapshot snapshot, EvalContext? context = null) =>
-        (context ?? baseContext) with { ServerFestivals = ServerFestivals.For(snapshot, liveSnapshot, Curated.Festivals, DateTime.UtcNow) };
+        StoredContext(ServerFestivals.For(snapshot, liveSnapshot, Curated.Festivals, DateTime.UtcNow), context);
+
+    private EvalContext StoredContext(ServerFestivals server, EvalContext? context = null) =>
+        (context ?? baseContext) with { ServerFestivals = server, CycleClock = StoredCycleClock };
+
+    /// <summary>The clock a stored character's cycle data is read against (<see cref="EvalContext.CycleClock"/>).</summary>
+    internal static readonly Func<DateTime> StoredCycleClock = static () => DateTime.UtcNow;
+
+    /// <summary>
+    /// Framework thread, every frame, one compare: once the daily (15:00 UTC) or weekly (Tuesday 08:00 UTC) reset
+    /// passes, a stored character on view is resolved again, its dailies and weeklies done before the reset now open,
+    /// and the session bumps so every surface (the "resets in" tooltips, the Characters comparison) catches up. The
+    /// live character needs nothing here: the game clears its data and the poller's next capture shows it.
+    /// </summary>
+    internal void WatchResets(DateTime nowUtc)
+    {
+        if (nowUtc < nextReset)
+        {
+            return;
+        }
+
+        var first = nextReset == DateTime.MinValue;
+        var daily = GameResets.NextDaily(nowUtc);
+        var weekly = GameResets.NextWeekly(nowUtc);
+        nextReset = daily < weekly ? daily : weekly;
+        if (first)
+        {
+            return;
+        }
+
+        if (!IsLive && ViewedSnapshot is { } viewed && Bundle is { } bundle)
+        {
+            States = StateResolver.ResolveAll(bundle.Catalog, viewed, Context);
+        }
+
+        Bump();
+    }
 
     /// <summary>
     /// A stored character on view is resolved again when the server's running festivals changed under it (a login, a
@@ -572,7 +612,7 @@ public sealed partial class SessionState
             return;
         }
 
-        Context = baseContext with { ServerFestivals = server };
+        Context = StoredContext(server);
         States = StateResolver.ResolveAll(bundle.Catalog, viewed, Context);
     }
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
 
@@ -18,6 +19,8 @@ public static class RequirementEvaluator
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(s);
+        ArgumentNullException.ThrowIfNull(ctx);
+        s = StateResolver.AsOfCycle(s, catalog, ctx);
         return EvaluateForJob(q, s, catalog, ctx, job, PathIndex.For(catalog).Resolve(s));
     }
 
@@ -136,6 +139,10 @@ public static class RequirementEvaluator
                     met,
                     met ? $"{standing.Value} reputation" : $"needs {q.BeastValue} reputation, you have {standing.Value}"));
             }
+            else if (q.BeastReputationMaxed && q.BeastRank > 0 && MaxedReputation(q, standing, ctx) is { } maxed)
+            {
+                results.Add(maxed);
+            }
 
             if (q.IsRepeatable)
             {
@@ -145,8 +152,9 @@ public static class RequirementEvaluator
                     hasAllowance,
                     hasAllowance ? $"{s.TribeAllowance} allowances left" : "no allowances left today"));
 
-                // An unknown offer (null) is not a blocker: nothing is listed, so the daily resolves on its other gates.
-                if (ctx.TodaysDailyOffer is { } todaysOffer)
+                // An unknown offer (null, or one that does not speak for this society) is not a blocker: nothing is
+                // listed, so the daily resolves on its other gates.
+                if (ctx.TodaysDailyOffer is { } todaysOffer && (ctx.DailyOfferTribes is not { } known || known.Contains(q.BeastTribe)))
                 {
                     var offered = todaysOffer.Contains(q.QuestId);
                     results.Add(new(new TribeDailyOfferRequirement(q.QuestId, offered), offered, offered ? "offered today" : "not offered today"));
@@ -265,6 +273,36 @@ public static class RequirementEvaluator
         }
 
         return results;
+    }
+
+    /// <summary>
+    /// "Trusted reputation maxed": a story quest whose sheet asks for its rank's reputation maxed (the rank-up quests).
+    /// Met once the reputation reaches the rank's maximum, or once the character is past that rank (the quest's own
+    /// rank-up, or a society the game ranked up some other way). A rank whose maximum the context does not know is
+    /// listed as not checked and never blocks; a rank with nothing to max (0) lists nothing.
+    /// </summary>
+    private static RequirementResult? MaxedReputation(QuestRecord q, TribeStanding standing, EvalContext ctx)
+    {
+        var rankName = ctx.TribeRankName(q.BeastRank);
+        if (ctx.TribeRankReputation(q.BeastRank) is not { } required)
+        {
+            return new(
+                new TribeReputationRequirement(q.BeastTribe, 0, standing.Value) { MaxedRank = q.BeastRank, NotChecked = true },
+                true,
+                $"needs {rankName} reputation maxed, not checked");
+        }
+
+        if (required == 0)
+        {
+            return null;
+        }
+
+        var met = standing.Rank > q.BeastRank || (standing.Rank == q.BeastRank && standing.Value >= required);
+        var actual = standing.Rank > q.BeastRank ? required : standing.Rank == q.BeastRank ? Math.Min(standing.Value, required) : (ushort)0;
+        return new(
+            new TribeReputationRequirement(q.BeastTribe, required, (ushort)actual) { MaxedRank = q.BeastRank },
+            met,
+            met ? $"{rankName} reputation maxed" : string.Create(CultureInfo.InvariantCulture, $"{rankName} {actual:N0}/{required:N0} reputation"));
     }
 
     /// <summary>Unsynced level of a job; zero when the snapshot has none for it.</summary>

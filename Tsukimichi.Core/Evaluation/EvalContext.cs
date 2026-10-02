@@ -27,9 +27,32 @@ public sealed record EvalContext
     /// <summary>
     /// Quest ids the allied societies offer today, when a source for it exists. Null means the offer is unknown and
     /// no daily is held back for it: the client never stores the day's offer (its 12-slot daily array holds the
-    /// dailies already accepted), so the plugin leaves this null and only a future offer source sets it.
+    /// dailies already accepted). The plugin fills it for the logged-in character from the game's own offer
+    /// calculation (<see cref="Runtime.DailyOfferBook"/>), for the societies whose quest givers it could read
+    /// (<see cref="DailyOfferTribes"/>).
     /// </summary>
     public IReadOnlySet<ushort>? TodaysDailyOffer { get; init; }
+
+    /// <summary>
+    /// The allied societies (BeastTribe ids) <see cref="TodaysDailyOffer"/> speaks for: a daily of another society is
+    /// not held back, since its offer is unknown. Null means the offer covers every society.
+    /// </summary>
+    public IReadOnlySet<byte>? DailyOfferTribes { get; init; }
+
+    /// <summary>
+    /// The reputation that maxes an allied society rank (<c>BeastReputationRank.RequiredReputation</c>), for the story
+    /// quests that need it (<see cref="QuestRecord.BeastReputationMaxed"/>); null for a rank it does not know, which
+    /// lists the requirement as not checked. Defaults to <see cref="TribeRanks.MaxReputation"/>.
+    /// </summary>
+    public Func<byte, ushort?> TribeRankReputation { get; init; } = TribeRanks.MaxReputation;
+
+    /// <summary>
+    /// Set when the snapshot is a stored one rather than the live capture: its daily and weekly cycle data (the
+    /// dailies done, the repeat flags, the allowances, the ranked-up-today mark) that predates the last reset by this
+    /// clock reads as cleared (<see cref="Runtime.GameResets.AsOf"/>). Null takes the snapshot as it is, which is
+    /// right for the live character: the game clears its own data at the reset and the next capture shows it.
+    /// </summary>
+    public Func<DateTime>? CycleClock { get; init; }
 
     /// <summary>
     /// Whether an inactive festival already ran for this character. Composed with the default heuristic (any quest of
@@ -87,6 +110,15 @@ public sealed record EvalContext
 
     /// <summary>Custom delivery client name by SatisfactionNpc row id for requirement details ("M'naago"); empty leaves the client out of the clause.</summary>
     public Func<byte, string> SatisfactionNpcName { get; init; } = static _ => string.Empty;
+
+    /// <summary>
+    /// This context with today's allied society offer: <see cref="TodaysDailyOffer"/> and <see cref="DailyOfferTribes"/>
+    /// from <paramref name="offer"/>, both null (unknown, nothing held back) when it knows no society.
+    /// </summary>
+    public EvalContext WithDailyOffer(Runtime.DailyOffer? offer) =>
+        offer is null || offer.IsEmpty
+            ? this with { TodaysDailyOffer = null, DailyOfferTribes = null }
+            : this with { TodaysDailyOffer = offer.Quests, DailyOfferTribes = offer.Tribes };
 
     /// <summary>
     /// A context whose <see cref="FestivalIsPast"/> answers true for a festival whose curated end lies before

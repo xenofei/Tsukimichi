@@ -15,6 +15,7 @@ public static class StateResolver
         ArgumentNullException.ThrowIfNull(c);
         ArgumentNullException.ThrowIfNull(ctx);
 
+        s = AsOfCycle(s, c, ctx);
         return ResolveCore(q, s, c, ctx, id => FestivalIsPast(id, s, c, ctx), PathIndex.For(c).Resolve(s));
     }
 
@@ -25,6 +26,7 @@ public static class StateResolver
         ArgumentNullException.ThrowIfNull(s);
         ArgumentNullException.ThrowIfNull(ctx);
 
+        s = AsOfCycle(s, c, ctx);
         var festivalIsPast = MemoizedFestivalIsPast(s, c, ctx);
         var paths = PathIndex.For(c).Resolve(s);
         var results = new Dictionary<uint, QuestEvaluation>(c.Count);
@@ -67,6 +69,7 @@ public static class StateResolver
         ArgumentNullException.ThrowIfNull(ctx);
 
         var changedRows = changedRowIds as IReadOnlyCollection<uint> ?? changedRowIds.ToList();
+        s = AsOfCycle(s, c, ctx);
         var paths = PathIndex.For(c);
         foreach (var rowId in changedRows)
         {
@@ -182,7 +185,7 @@ public static class StateResolver
         }
 
         if (q.IsRepeatable && evaluation.State != QuestState.Completed && !evaluation.LeavesTotals
-            && (s.IsCompleted(q.QuestId) || s.DailyDone.ContainsKey(q.QuestId)))
+            && (s.IsCompleted(q.QuestId) || s.IsDoneThisCycle(q)))
         {
             evaluation = evaluation with { RepeatableDoneBefore = true };
         }
@@ -245,10 +248,12 @@ public static class StateResolver
             }
         }
 
-        // 5. Repeatable already done this cycle: only the client's cycle data (the allied society daily slots) says so.
-        //    The completion bit of a repeatable that resets stays set after the first time, so it means "done before",
-        //    not "done today" (ResolveCore records it as RepeatableDoneBefore).
-        if (q.IsRepeatable && s.DailyDone.ContainsKey(q.QuestId))
+        // 5. Repeatable already done this cycle: only the client's cycle data says so, the allied society daily slots
+        //    or the repeat flag the quest carries (QuestRecord.RepeatFlag: Gift of Joy, One Man's Relic, the Komra
+        //    weeklies, which share one flag and so read done together). The completion bit of a repeatable that
+        //    resets stays set after the first time, so it means "done before", not "done today" (ResolveCore records
+        //    it as RepeatableDoneBefore).
+        if (q.IsRepeatable && s.IsDoneThisCycle(q))
         {
             return new(QuestState.DoneThisCycle, requirements, null, null, null);
         }
@@ -410,6 +415,14 @@ public static class StateResolver
 
         return s.JobLevels.Keys;
     }
+
+    /// <summary>
+    /// The snapshot as it stands now when the context says it is a stored one (<see cref="EvalContext.CycleClock"/>):
+    /// cycle data from before the last reset reads as cleared (<see cref="Runtime.GameResets.AsOf"/>). The same
+    /// instance otherwise, and whenever nothing predates a reset.
+    /// </summary>
+    internal static CharacterSnapshot AsOfCycle(CharacterSnapshot s, QuestCatalog c, EvalContext ctx) =>
+        ctx.CycleClock is { } clock ? Runtime.GameResets.AsOf(s, c, clock()) : s;
 
     private static RequirementResult? FirstOfKind(IReadOnlyList<RequirementResult> results, RequirementKind kind)
     {
