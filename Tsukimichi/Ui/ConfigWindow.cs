@@ -208,6 +208,8 @@ public sealed partial class ConfigWindow : Window
         ImGui.Spacing();
         DrawIntegrations();
         ImGui.Spacing();
+        DrawHandInIntegrations();
+        ImGui.Spacing();
         DrawHelp();
         ImGui.Spacing();
         DrawData();

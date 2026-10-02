@@ -203,6 +203,17 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.QuestionableHandoff = handoff ?? throw new ArgumentNullException(nameof(handoff));
     }
 
+    /// <summary>
+    /// The detail pane's Hand in section (1.6.0): live item counts, and the Artisan and GatherBuddy hand-offs. Until this
+    /// is called the section lists the items without counts and its buttons name the plugins as missing.
+    /// </summary>
+    public void AttachHandIns(HandInStock stock, ArtisanIpc artisan, GatherBuddyCommands gatherBuddy)
+    {
+        detailPane.Stock = stock ?? throw new ArgumentNullException(nameof(stock));
+        detailPane.Artisan = artisan ?? throw new ArgumentNullException(nameof(artisan));
+        detailPane.GatherBuddy = gatherBuddy ?? throw new ArgumentNullException(nameof(gatherBuddy));
+    }
+
     /// <summary>The detail pane's hero banners (V4); without it a quest shows its own banner or its category art.</summary>
     public void AttachBanners(BannerIndexSource<Core.Unique.DutyUnlockIndex> banners)
     {

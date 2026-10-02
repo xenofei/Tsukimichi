@@ -177,6 +177,14 @@ public sealed record QuestRecord
     public string AddedIn { get; init; } = string.Empty;
 
     public IReadOnlyList<RewardRef> Rewards { get; init; } = [];
+
+    /// <summary>
+    /// The items the quest asks the player to hand over, in the order the detail pane lists them (supply rows first,
+    /// then the script's own); empty for most quests. Display only: no requirement reads it (feature plan v5,
+    /// "Hand-in items").
+    /// </summary>
+    public IReadOnlyList<HandInItem> HandInItems { get; init; } = [];
+
     public uint ExpFactor { get; init; }
     public uint Gil { get; init; }
 

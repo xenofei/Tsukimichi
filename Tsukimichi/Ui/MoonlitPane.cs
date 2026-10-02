@@ -2291,7 +2291,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             Obtained = state.Obtained;
             (ObtainedGlyph, ObtainedText) = state.Obtained switch
             {
-                true => (Mark.Check, Strings.MoonlitObtainedYes),
+                // Only Allagan Tools answers yes for a relic or special weapon (1.6.0), so the line says where it came from.
+                true => (Mark.Check, Game.RewardUnlockReader.OwnedPerAllagan(Entry) ? Strings.HandInOwnedPerAllagan : Strings.MoonlitObtainedYes),
                 false => (Mark.Cross, Strings.MoonlitObtainedNo),
                 null => (Mark.Unknown, Strings.MoonlitObtainedUnknown),
             };

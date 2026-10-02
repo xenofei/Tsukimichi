@@ -602,6 +602,148 @@
     <value>Tsukimichi: quest rewards ({0})</value>
     <comment>{0} = number of quests; the entry opens a submenu with one line per quest.</comment>
   </data>
+  <data name="HandInSection" xml:space="preserve">
+    <value>Hand in</value>
+  </data>
+  <data name="HandInMasked" xml:space="preserve">
+    <value>The items this quest asks for stay hidden while its name is hidden.</value>
+  </data>
+  <data name="HandInCaptionFormat" xml:space="preserve">
+    <value>{0} of {1} in hand</value>
+    <comment>{0} = items the character holds enough of, {1} = items the quest asks for.</comment>
+  </data>
+  <data name="HandInAmountFormat" xml:space="preserve">
+    <value>×{0}</value>
+    <comment>{0} = how many the quest asks for.</comment>
+  </data>
+  <data name="HandInHq" xml:space="preserve">
+    <value>HQ</value>
+  </data>
+  <data name="HandInHaveFormat" xml:space="preserve">
+    <value>You have {0}</value>
+    <comment>{0} = how many the logged-in character holds (bags, armoury, saddlebag).</comment>
+  </data>
+  <data name="HandInHaveWithRetainersFormat" xml:space="preserve">
+    <value>You have {0} · {1} on retainers</value>
+    <comment>{0} = held by the character, {1} = held by its retainers (Allagan Tools).</comment>
+  </data>
+  <data name="HandInRetainersOnlyFormat" xml:space="preserve">
+    <value>{0} on retainers</value>
+    <comment>{0} = held by the retainers (Allagan Tools) while the game read is paused.</comment>
+  </data>
+  <data name="HandInCountUnknown" xml:space="preserve">
+    <value>Count not readable right now</value>
+  </data>
+  <data name="HandInCountsLiveOnly" xml:space="preserve">
+    <value>Counts are for the character you are logged in as.</value>
+  </data>
+  <data name="HandInCountsUnavailable" xml:space="preserve">
+    <value>Item counts are not available.</value>
+  </data>
+  <data name="HandInAmountUnknownNote" xml:space="preserve">
+    <value>The game data does not say how many of some items, or whether they must be high quality; one is assumed.</value>
+  </data>
+  <data name="HandInCraftTooltipFormat" xml:space="preserve">
+    <value>Craft {0} × {1} with Artisan</value>
+    <comment>{0} = amount, {1} = item name.</comment>
+  </data>
+  <data name="HandInNeedsArtisan" xml:space="preserve">
+    <value>Needs Artisan: install and enable it to craft this from here.</value>
+  </data>
+  <data name="HandInArtisanBusy" xml:space="preserve">
+    <value>Artisan is busy with another craft or list.</value>
+  </data>
+  <data name="HandInNoRecipe" xml:space="preserve">
+    <value>No recipe makes this item.</value>
+  </data>
+  <data name="HandInSentToArtisanFormat" xml:space="preserve">
+    <value>Sent {0} to Artisan.</value>
+    <comment>{0} = item name.</comment>
+  </data>
+  <data name="HandInArtisanFailed" xml:space="preserve">
+    <value>Artisan did not take the craft.</value>
+  </data>
+  <data name="HandInGatherTooltipFormat" xml:space="preserve">
+    <value>Gather with GatherBuddy: runs {0}</value>
+    <comment>{0} = the chat command that will run ("/gather Maple Log").</comment>
+  </data>
+  <data name="HandInNeedsGatherBuddy" xml:space="preserve">
+    <value>Needs GatherBuddy or GatherBuddy Reborn: install and enable one to gather this from here.</value>
+  </data>
+  <data name="HandInSentToGatherBuddyFormat" xml:space="preserve">
+    <value>Asked GatherBuddy for {0}.</value>
+    <comment>{0} = item name.</comment>
+  </data>
+  <data name="HandInGatherBuddyFailed" xml:space="preserve">
+    <value>GatherBuddy did not take the command.</value>
+  </data>
+  <data name="HandInCopyTooltip" xml:space="preserve">
+    <value>Copy missing items</value>
+  </data>
+  <data name="HandInCopyLinkThis" xml:space="preserve">
+    <value>Teamcraft link for this quest</value>
+  </data>
+  <data name="HandInCopyListThis" xml:space="preserve">
+    <value>Item list for this quest (Artisan, Teamcraft)</value>
+  </data>
+  <data name="HandInCopyLinkPinned" xml:space="preserve">
+    <value>Teamcraft link for all pinned quests</value>
+  </data>
+  <data name="HandInCopyListPinned" xml:space="preserve">
+    <value>Item list for all pinned quests (Artisan, Teamcraft)</value>
+  </data>
+  <data name="HandInCopyLinkTooltip" xml:space="preserve">
+    <value>Copies a ffxivteamcraft.com import link for what you still need. Nothing is sent; open it in your browser.</value>
+  </data>
+  <data name="HandInCopyListTooltip" xml:space="preserve">
+    <value>Copies one "3x Item" line per item you still need, for Artisan's or Teamcraft's import.</value>
+  </data>
+  <data name="HandInNothingMissing" xml:space="preserve">
+    <value>Nothing missing: you hold enough of every item.</value>
+  </data>
+  <data name="HandInCopied" xml:space="preserve">
+    <value>Copied to the clipboard.</value>
+  </data>
+  <data name="HandInOwnedPerAllagan" xml:space="preserve">
+    <value>Owned (per Allagan Tools)</value>
+  </data>
+  <data name="ItemsNeededForFormat" xml:space="preserve">
+    <value>Needed for: {0}</value>
+    <comment>{0} = quest name.</comment>
+  </data>
+  <data name="ItemsMenuNeededFormat" xml:space="preserve">
+    <value>Tsukimichi: needed for {0}</value>
+    <comment>{0} = quest name.</comment>
+  </data>
+  <data name="ItemsMenuNeededManyFormat" xml:space="preserve">
+    <value>Tsukimichi: needed for quests ({0})</value>
+    <comment>{0} = number of quests; the entry opens a submenu with one line per quest.</comment>
+  </data>
+  <data name="ConfigSectionHandIn" xml:space="preserve">
+    <value>Integrations: hand-in items</value>
+  </data>
+  <data name="ConfigHandInAllagan" xml:space="preserve">
+    <value>Count with Allagan Tools</value>
+  </data>
+  <data name="ConfigHandInAllaganHint" xml:space="preserve">
+    <value>When Allagan Tools is loaded, the Hand in section also counts what your retainers hold, and Moonlit marks relic and special weapons you hold anywhere as owned.</value>
+  </data>
+  <data name="ConfigItemNeededFor" xml:space="preserve">
+    <value>Say which open quests need an item</value>
+  </data>
+  <data name="ConfigItemNeededForHint" xml:space="preserve">
+    <value>The item hint and the item menu name the quests in your journal, or ready to take, that ask for the item.</value>
+  </data>
+  <data name="ConfigHandInPluginsFormat" xml:space="preserve">
+    <value>Allagan Tools: {0} · Artisan: {1} · GatherBuddy: {2}</value>
+    <comment>{0}, {1}, {2} = ConfigHandInLoaded or ConfigHandInNotLoaded.</comment>
+  </data>
+  <data name="ConfigHandInLoaded" xml:space="preserve">
+    <value>loaded</value>
+  </data>
+  <data name="ConfigHandInNotLoaded" xml:space="preserve">
+    <value>not loaded</value>
+  </data>
   <data name="NpcMenuFormat" xml:space="preserve">
     <value>Tsukimichi: quests here ({0})</value>
     <comment>{0} = number of quests the targeted NPC hands out (removed quests excluded); clicking opens the Journal on them.</comment>
