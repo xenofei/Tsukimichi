@@ -467,6 +467,7 @@ public sealed partial class CharactersPane
         DrawRecent(d);
         Gap();
         DrawJobs(ui, d);
+        DrawPlanning(ui, d);
         ImGui.Spacing();
         DrawGrandCompanyAndTribes(d);
         Gap(ruled: true);

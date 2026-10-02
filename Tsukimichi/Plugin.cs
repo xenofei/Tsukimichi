@@ -1118,6 +1118,11 @@ public sealed partial class Plugin : IDalamudPlugin
             var payoffLines = new PayoffGateLines(payoffGates, Session, Settings, CharacterBook);
             charactersPane.PayoffLines = payoffLines;
             mainWindow.AttachPayoffLines(payoffLines);
+            // Planning extras (1.9.0): the level advisor, the main scenario catch-up and the allied society board.
+            var catchUpDuties = PlanningSource.DutySource(() => Session.Curated, () => moonlit.Catalog, () => dutyRuns.Value);
+            var planning = new PlanningSource(Session, gameLinks, catchUpDuties);
+            charactersPane.Planning = planning;
+            mainWindow.AttachPlanning(planning);
             chatNotifier.PayoffGates = payoffGates;
             chatNotifier.CharacterSettings = CharacterBook;
 
@@ -1250,7 +1255,7 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // "Since you were away" (P7): the stored captures are kept from before this login's first save; the card
             // sits above the detail pane (after What's new) and the Characters dashboard opens it for any character.
-            welcomeBack = new Game.WelcomeBackSource(Session, Snapshots, ClientState, Settings, Log);
+            welcomeBack = new Game.WelcomeBackSource(Session, Snapshots, ClientState, Settings, Log) { CatchUpDuties = catchUpDuties };
             mainWindow.AttachWelcomeBack(welcomeBack, Session);
             Game.WelcomeBackSource welcomeBackSource = welcomeBack;
             charactersPane.OpenWelcomeBack = welcomeBackSource.Open;

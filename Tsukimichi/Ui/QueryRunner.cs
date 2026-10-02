@@ -84,6 +84,9 @@ public sealed class QueryRunner : IDisposable
     // String caches for the table body.
     private readonly string?[] levelText = new string?[256];
     private readonly string?[] expansionText = new string?[256];
+
+    // The Journal's EXP column text per quest (1.9.0, R6 G), cleared with the catalog and the language.
+    private readonly Dictionary<uint, string> expText = [];
     private readonly Dictionary<uint, JobLabel> jobShort = [];
 
     // The language the expansion and job caches were filled in (Loc.Version); a switch empties them.
@@ -398,6 +401,7 @@ public sealed class QueryRunner : IDisposable
         {
             bundle = current;
             jobShort.Clear();
+            expText.Clear();
         }
 
         // Journal text (P9): loads or builds the search index once it is wanted and the catalog exists.
@@ -439,6 +443,30 @@ public sealed class QueryRunner : IDisposable
     /// <summary>Level as text, cached per value.</summary>
     public string LevelText(byte level) =>
         levelText[level] ??= level.ToString(CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// The quest's base EXP for the Journal's EXP column ("12,345", a Quest Sync range "54,000–57,240"); empty when it
+    /// gives none or the formula does not cover it (<see cref="Core.Rewards.QuestExp"/>). Cached per quest.
+    /// </summary>
+    public string ExpText(QuestRecord quest)
+    {
+        EnsureTextLanguage();
+        if (expText.TryGetValue(quest.RowId, out var cached))
+        {
+            return cached;
+        }
+
+        var exp = bundle is null ? Core.Rewards.ExpReward.Unknown : Core.Rewards.QuestExp.For(quest, bundle.ExpTable);
+        var culture = CultureInfo.CurrentCulture;
+        var text = exp.Kind switch
+        {
+            Core.Rewards.ExpKind.Fixed => exp.Min.ToString("N0", culture),
+            Core.Rewards.ExpKind.Range => string.Format(culture, Strings.PlanningExpRangeShortFormat, exp.Min.ToString("N0", culture), exp.Max.ToString("N0", culture)),
+            _ => string.Empty,
+        };
+        expText[quest.RowId] = text;
+        return text;
+    }
 
     /// <summary>Short expansion label, cached per value.</summary>
     public string ExpansionShort(byte expansion)
@@ -486,6 +514,7 @@ public sealed class QueryRunner : IDisposable
 
         textLanguage = Localization.Loc.Version;
         System.Array.Clear(expansionText);
+        expText.Clear();
         jobShort.Clear();
     }
 

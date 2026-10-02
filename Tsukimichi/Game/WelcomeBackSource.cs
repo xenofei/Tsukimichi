@@ -51,6 +51,9 @@ public sealed class WelcomeBackSource : IDisposable
     private (Task<WelcomeBackSummary> Task, ulong For, bool Automatic)? pending;
     private bool disposed;
 
+    /// <summary>The duties the main scenario quests unlock, for the catch-up line (1.9.0, R6 F); null counts the required ones only.</summary>
+    public Func<Core.Query.CatchUpDutySource?>? CatchUpDuties { get; set; }
+
     public WelcomeBackSource(SessionState session, SnapshotService snapshots, IClientState clientState, Configuration settings, IPluginLog log)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
@@ -279,6 +282,7 @@ public sealed class WelcomeBackSource : IDisposable
             FeatureQuestIds = session.FeatureQuestIds,
             Festivals = live ? ServerFestivals.Of(current) : session.ServerFestivals,
             CuratedFestivals = session.Curated.Festivals,
+            CatchUpDuties = CatchUpDuties?.Invoke(),
         };
 
         View = new WelcomeBackView(contentId, current.Name, null, false);

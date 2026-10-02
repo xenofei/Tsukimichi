@@ -642,6 +642,12 @@ public sealed class WelcomeBackCard
             msqNext = now.Next;
         }
 
+        // What is left to reach the latest story (1.9.0, R6 F): counts only, no names.
+        if (summary.CatchUp is { IsComplete: false } catchUp)
+        {
+            msqNow.Add(PlanningSource.CatchUpText(catchUp));
+        }
+
         var done = summary.MsqDoneSince;
         if (done > 0)
         {

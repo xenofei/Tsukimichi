@@ -96,6 +96,9 @@ public sealed record WelcomeBackInput(QuestCatalog Catalog, CharacterSnapshot Cu
 
     /// <summary>The curated festival names and announced ends.</summary>
     public IReadOnlyDictionary<ushort, FestivalInfo> CuratedFestivals { get; init; } = NoFestivals;
+
+    /// <summary>The duties the main scenario quests unlock, for the catch-up's duty count; null counts the required ones only.</summary>
+    public CatchUpDutySource? CatchUpDuties { get; init; }
 }
 
 /// <summary>The "Since you were away" summary (feature plan v3 P7). See <see cref="WelcomeBack.Compute"/>.</summary>
@@ -123,6 +126,9 @@ public sealed record WelcomeBackSummary
 
     /// <summary>The main scenario position now, route by route inside a branch region.</summary>
     public MsqPosition? MsqNow { get; init; }
+
+    /// <summary>What is left of the main scenario now, per expansion (<see cref="MsqCatchUp"/>); null without main scenario quests.</summary>
+    public MsqCatchUpSummary? CatchUp { get; init; }
 
     /// <summary>The quests added after <see cref="SincePatch"/>, one entry per series, newest first; empty when nothing is new or there is nothing to measure from.</summary>
     public IReadOnlyList<NewQuestsInSeries> NewQuests { get; init; } = [];
@@ -199,6 +205,7 @@ public static class WelcomeBack
             Midway = Midway(catalog, previous, input.Current),
             MsqThen = previousStates is null ? null : graph.Position(previousStates),
             MsqNow = graph.Position(input.CurrentStates),
+            CatchUp = MsqCatchUp.Compute(catalog, input.CurrentStates, input.Current, input.CatchUpDuties),
             NewQuests = NewSince(catalog, since, source == SincePatchSource.Answer, input.FeatureQuestIds),
             Events = SeasonalNow.Running(catalog, input.Festivals, input.CurrentStates, input.CuratedFestivals, input.NowUtc),
             JobChanges = previous is null ? [] : JobChanges(previous, input.Current),

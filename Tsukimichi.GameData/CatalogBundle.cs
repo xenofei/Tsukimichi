@@ -14,6 +14,12 @@ namespace Tsukimichi.GameData;
 /// <param name="Language">Lumina language name the strings were read in, e.g. "English".</param>
 public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJobCategoryLookup Jobs, string Language)
 {
+    /// <summary>
+    /// The <c>ParamGrow</c> rows the quest EXP formula reads (<see cref="Core.Rewards.QuestExp"/>), read at catalog build;
+    /// empty for a bundle from the frozen fixture, where every quest's EXP is then unknown.
+    /// </summary>
+    public Core.Rewards.QuestExpTable ExpTable { get; init; } = Core.Rewards.QuestExpTable.Empty;
+
     /// <summary>The name lookups <see cref="BlockerText"/> prints with, over this bundle's catalog and sheet names; the callers memoize one per bundle.</summary>
     public BlockerNames BlockerNames() => new()
     {

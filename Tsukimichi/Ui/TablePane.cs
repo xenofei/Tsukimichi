@@ -107,6 +107,9 @@ public sealed class TablePane : IDisposable
     /// <summary>The catalog the Moon Road title names the tree node from (R3 #6); null names only the virtual nodes.</summary>
     public Func<QuestCatalog?>? Catalog { get; set; }
 
+    /// <summary>Settings › Display › Planning: whether the EXP column (1.9.0, R6 G) is offered; null or false keeps it off.</summary>
+    public Func<bool>? ShowExp { get; set; }
+
     /// <summary>The brass line under the Moon Road header (proposal §7.3: Gilt at 0.5; opaque under high contrast).</summary>
     private const float HeaderRuleAlpha = 0.5f;
 
@@ -152,6 +155,9 @@ public sealed class TablePane : IDisposable
     /// <summary>The widest level a pill is sized for when the Level column is first laid out.</summary>
     private const string WidestLevel = "100";
 
+    /// <summary>The widest EXP the column is sized for: a Quest Sync range at Dawntrail's levels.</summary>
+    private const string WidestExp = "888,888–888,888";
+
     /// <summary>Header label per <see cref="Column"/>; the glyph column keeps its name for the hide/show menu but shows none.</summary>
     private static string[] HeaderLabels => headerLabelsText.Value;
 
@@ -164,6 +170,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnStatus,
         Strings.ColumnExpansion,
         Strings.ColumnRewards,
+        Strings.ColumnExp,
     ]);
 
     /// <summary>Header tooltip per <see cref="Column"/>, in column order.</summary>
@@ -178,6 +185,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnStatusTooltip,
         Strings.ColumnExpansionTooltip,
         Strings.ColumnRewardsTooltip,
+        Strings.ColumnExpTooltip,
     ]);
 
     private readonly UiState ui;
@@ -381,7 +389,10 @@ public sealed class TablePane : IDisposable
         // cell padding either side of a column's content width, and the border between columns.
         var overhead = style.CellPadding.X * 2f + 1f;
         var available = ImGui.GetWindowWidth() - (ImGui.GetScrollMaxY() > 0f ? style.ScrollbarSize : 0f);
-        var widths = new QuestTableWidths(glyphColumn, levelColumn, jobIconColumn, jobColumn, StateWordWidth(), expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f));
+        // The EXP column (off by default): as wide as a Quest Sync range or its header; no room at all while Settings leaves it off.
+        var showExp = ShowExp?.Invoke() == true;
+        var expColumn = showExp ? MathF.Max(ImGui.CalcTextSize(WidestExp).X, HeaderFloor(Strings.ColumnExp, sortable: false)) : 0f;
+        var widths = new QuestTableWidths(glyphColumn, levelColumn, jobIconColumn, jobColumn, StateWordWidth(), expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f), expColumn);
         var sortedWasHidden = SortColumnAutoHidden();
         PlanColumns(available, in widths);
 
@@ -396,6 +407,7 @@ public sealed class TablePane : IDisposable
         ImGui.TableSetupColumn(Strings.ColumnStatus, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Status), PlannedContent(Column.Status, TableGeometry.StatusColumnMin(widths) - overhead, overhead));
         ImGui.TableSetupColumn(Strings.ColumnExpansion, fixedFlags | Planned(Column.Expansion), expansionColumn);
         ImGui.TableSetupColumn(Strings.ColumnRewards, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Rewards), rewardsColumn);
+        ImGui.TableSetupColumn(Strings.ColumnExp, fixedFlags | ImGuiTableColumnFlags.NoSort | (showExp ? Planned(Column.Exp) : ImGuiTableColumnFlags.Disabled), expColumn);
         ImGui.TableSetupScrollFreeze(0, 1);
 
         // The persisted sort is written straight into the column state on the table's first frame: ImGui's own saved
@@ -967,6 +979,14 @@ public sealed class TablePane : IDisposable
         if (ImGui.TableNextColumn())
         {
             DrawRewardIcons(quest, in layout);
+        }
+
+        if (ImGui.TableNextColumn())
+        {
+            CenterText(in layout);
+            ImGui.PushStyleColor(ImGuiCol.Text, s.TextSecondary);
+            ImGui.TextUnformatted(runner.ExpText(quest));
+            ImGui.PopStyleColor();
         }
 
         ImGui.PopID();

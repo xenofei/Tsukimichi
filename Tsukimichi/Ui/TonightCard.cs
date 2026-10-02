@@ -85,6 +85,7 @@ public sealed partial class TonightCard
         {
             DrawReady();
             DrawMsq(bundle);
+            DrawPlanning();
             DrawPayoffGates();
             DrawStops();
             if (events is not null)
