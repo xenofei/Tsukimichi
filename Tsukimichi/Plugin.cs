@@ -176,9 +176,10 @@ public sealed partial class Plugin : IDalamudPlugin
         catalogRebuild = build;
         CatalogBundle bundle;
         Core.Ui.NodeIconMap icons;
+        Game.PreparedCatalog? prepared;
         try
         {
-            (bundle, icons) = await build.ConfigureAwait(false);
+            (bundle, icons, prepared) = await build.ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
@@ -195,26 +196,54 @@ public sealed partial class Plugin : IDalamudPlugin
 
         // Only the build's own failure is "Catalog unavailable" here: a failure while the session takes the catalog is
         // handled by PublishCatalog, which knows the previous catalog is still the one in use.
-        await PublishOnFrameworkThreadAsync(generation, bundle, null, icons).ConfigureAwait(false);
+        await PublishOnFrameworkThreadAsync(generation, bundle, null, icons, prepared).ConfigureAwait(false);
     }
 
-    /// <summary>A rebuild's off-thread part: the bundle, then its node icons. Starts on the caller's thread.</summary>
-    private async Task<(CatalogBundle Bundle, Core.Ui.NodeIconMap Icons)> BuildBundleWithIconsAsync(Core.Model.JournalFiling filing, CancellationToken token)
+    /// <summary>
+    /// A rebuild's off-thread part: the bundle, its node icons, then what the session derives from it
+    /// (<see cref="PrepareCatalog"/>). Starts on the caller's thread.
+    /// </summary>
+    private async Task<(CatalogBundle Bundle, Core.Ui.NodeIconMap Icons, Game.PreparedCatalog? Prepared)> BuildBundleWithIconsAsync(Core.Model.JournalFiling filing, CancellationToken token)
     {
         var loader = new LuminaCatalogLoader(DataManager, Log, curated, questPatches);
         var bundle = await loader.BuildBundleAsync(DataManager.Language, filing, token).ConfigureAwait(false);
-        return (bundle, ResolveNodeIcons(bundle));
+        var icons = ResolveNodeIcons(bundle);
+        token.ThrowIfCancellationRequested();
+        return (bundle, icons, PrepareCatalog(bundle));
+    }
+
+    /// <summary>
+    /// Off the framework thread, for a finished build: the session's derived indexes and the stored character on view
+    /// resolved against it (<see cref="Game.SessionState.PrepareCatalog"/>), so the frame it lands on only swaps them
+    /// in. A failure is logged and leaves the derivation to that frame, which reports it as it always did.
+    /// </summary>
+    private Game.PreparedCatalog? PrepareCatalog(CatalogBundle bundle)
+    {
+        if (Session is not { } session || gameStateDisposed)
+        {
+            return null;
+        }
+
+        try
+        {
+            return session.PrepareCatalog(bundle);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Catalog indexes could not be built off the framework thread; they are built when the catalog lands");
+            return null;
+        }
     }
 
     /// <summary>
     /// Runs <see cref="PublishCatalog"/> on the framework thread. Failing to get there (the framework going away at
     /// unload) is logged rather than thrown: nobody awaits a rebuild's outcome but the retry button.
     /// </summary>
-    private async Task PublishOnFrameworkThreadAsync(int generation, CatalogBundle? bundle, string? error, Core.Ui.NodeIconMap? icons = null)
+    private async Task PublishOnFrameworkThreadAsync(int generation, CatalogBundle? bundle, string? error, Core.Ui.NodeIconMap? icons = null, Game.PreparedCatalog? prepared = null)
     {
         try
         {
-            await Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, error, icons)).ConfigureAwait(false);
+            await Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, error, icons, prepared)).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -244,7 +273,7 @@ public sealed partial class Plugin : IDalamudPlugin
     /// started since (a filing flip or retry during this one): then this result is stale and is dropped, and the
     /// newer build's result is the one the session gets.
     /// </summary>
-    private void PublishCatalog(int generation, CatalogBundle? bundle, string? error, Core.Ui.NodeIconMap? nodeIcons = null)
+    private void PublishCatalog(int generation, CatalogBundle? bundle, string? error, Core.Ui.NodeIconMap? nodeIcons = null, Game.PreparedCatalog? prepared = null)
     {
         if (gameStateDisposed)
         {
@@ -263,9 +292,10 @@ public sealed partial class Plugin : IDalamudPlugin
             return;
         }
 
+        var started = Stopwatch.GetTimestamp();
         try
         {
-            Session.SetCatalog(bundle, nodeIcons);
+            Session.SetCatalog(bundle, nodeIcons, prepared);
         }
         catch (Exception ex)
         {
@@ -274,6 +304,22 @@ public sealed partial class Plugin : IDalamudPlugin
             Log.Error(ex, "Catalog built but the session could not take it; the previous catalog stays in use");
             Session.SetCatalogError(ex.GetBaseException().Message);
             return;
+        }
+
+        // The landing frame's own cost (the session's listeners included), against what the worker did before it.
+        var landedMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+        if (prepared is not null)
+        {
+            Log.Information(
+                "Catalog handed to the session in {LandedMs:F1} ms on the framework thread; derived indexes built in {PrepareMs:F0} ms on a worker ({Indexes}), the stored character on view {View}",
+                landedMs,
+                prepared.PrepareMs,
+                prepared.Indexes.Describe(),
+                prepared.View is null ? "none" : "resolved there too");
+        }
+        else
+        {
+            Log.Information("Catalog handed to the session in {LandedMs:F1} ms on the framework thread (indexes built there)", landedMs);
         }
 
         // Start the hero banner index now rather than on the first selection, which would otherwise show its
@@ -416,9 +462,6 @@ public sealed partial class Plugin : IDalamudPlugin
         Session.Changed += PersistViewedCharacter;
 
         Session.Writer = Writer;
-        Framework.Update += DrainWriter;
-        // A stored character on view reads its dailies and weeklies cleared once the reset passes (one compare a frame).
-        Framework.Update += WatchResets;
         Poller = new Game.StatePoller(Framework, ClientState, Log, reader, Snapshots, Session, Settings, Writer)
         {
             PrintNotice = line => ChatGui.Print(line, Ui.Strings.ChatTag),
@@ -443,7 +486,8 @@ public sealed partial class Plugin : IDalamudPlugin
                 var error = t.IsFaulted ? t.Exception?.GetBaseException().Message ?? "unknown error" : null;
                 var bundle = t.IsFaulted ? null : t.Result;
                 var icons = bundle is null ? null : ResolveNodeIcons(bundle);
-                _ = PublishOnFrameworkThreadAsync(generation, bundle, error, icons);
+                var prepared = bundle is null ? null : PrepareCatalog(bundle);
+                _ = PublishOnFrameworkThreadAsync(generation, bundle, error, icons, prepared);
             },
             CancellationToken.None,
             TaskContinuationOptions.ExecuteSynchronously,
@@ -585,8 +629,21 @@ public sealed partial class Plugin : IDalamudPlugin
         }
     }
 
-    private void WatchResets(IFramework _)
+    /// <summary>
+    /// Framework thread, every tick: a stored character resolved on a worker is taken in, and one on view reads its
+    /// dailies and weeklies cleared once the reset passes (one compare a frame).
+    /// </summary>
+    private void SessionTick(IFramework _)
     {
+        try
+        {
+            Session?.TakePendingView();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Showing the character resolved in the background failed");
+        }
+
         try
         {
             Session?.WatchResets(DateTime.UtcNow);
@@ -595,6 +652,19 @@ public sealed partial class Plugin : IDalamudPlugin
         {
             Log.Warning(ex, "Re-reading the stored character after the reset failed");
         }
+    }
+
+    /// <summary>
+    /// The constructor's last step (R4 F9): the per-frame work starts only once every window, listener and gate is in
+    /// place. The poller's first update would otherwise read the game before the hook gate guarded those reads, and
+    /// publish to a session half of whose listeners had not joined.
+    /// </summary>
+    private void StartFrameworkUpdates()
+    {
+        Framework.Update += DrainWriter;
+        Framework.Update += SessionTick;
+        Multibox?.Start();
+        Poller.Start();
     }
 
     private void PersistViewedCharacter()
@@ -632,7 +702,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 CharacterBook.Changed -= OnCharacterSettingsChanged;
             }
         });
-        Unwind("reset watch", () => Framework.Update -= WatchResets);
+        Unwind("session tick", () => Framework.Update -= SessionTick);
         Unwind("state poller", () => Poller?.Dispose());
         // Character settings edits still queued go on the writer with the rest.
         Unwind("character settings", () => CharacterBook?.Save(final: true));
@@ -1067,7 +1137,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            }, ClientState, Condition, Paths, PluginInterface, Log);
+            }, ClientState, Condition, queryRunner, PluginInterface);
             todoOverlay.Plan = planSource;
             todoOverlay.Questionable = questionableActions;
             todoOverlay.ShowPins = mainWindow.ShowPinned;
@@ -1173,6 +1243,9 @@ public sealed partial class Plugin : IDalamudPlugin
                 MoonlitPane.Reveal(ui, quest);
             });
             // /UI
+
+            // Last: nothing runs per frame before the plugin is whole.
+            StartFrameworkUpdates();
         }
         catch (Exception ex)
         {

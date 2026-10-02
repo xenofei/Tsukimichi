@@ -147,7 +147,7 @@ public sealed partial class CharactersPane
     private void RefreshGrid(CatalogBundle bundle)
     {
         var rewards = RewardsCatalog();
-        var key = new GridKey(session.Version, itemsRoster, gridMode, gridKind, gridMissingOnAny, gridNotDoneOnAny, gridSearch, bundle, rewards, gridResolved, itemsMinute);
+        var key = new GridKey(session.RosterVersion, itemsRoster, gridMode, gridKind, gridMissingOnAny, gridNotDoneOnAny, gridSearch, bundle, rewards, gridResolved, itemsMinute);
         if (key == gridKey)
         {
             return;

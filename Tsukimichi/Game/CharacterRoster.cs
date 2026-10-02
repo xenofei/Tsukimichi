@@ -12,8 +12,9 @@ namespace Tsukimichi.Game;
 /// Every character the alt lists show, in their one stable order (1.8.0, R7 B, E, H; <see cref="CharacterList"/>): the
 /// stored snapshots plus the character logged in here even when it has no file (not tracked, or not saved yet), with
 /// its world and data center names, whether it is live here or in another client, hidden or not tracked. Rebuilt on
-/// the framework thread when the session or the character settings change; reading <see cref="All"/> costs two
-/// compares otherwise. The character switcher, the Characters pane, the collection grid and Settings › Data read it.
+/// the framework thread when the stored list or the viewed character (<see cref="SessionState.RosterVersion"/>, which
+/// moves with <see cref="SessionState.CharactersChanged"/>) or the character settings change; reading <see cref="All"/>
+/// costs two compares otherwise. Another client's save never moves a row: the order does not read the capture time. The character switcher, the Characters pane, the collection grid and Settings › Data read it.
 /// </summary>
 public sealed class CharacterRoster
 {
@@ -83,12 +84,12 @@ public sealed class CharacterRoster
 
     private void Refresh()
     {
-        if (sessionVersion == session.Version && settingsVersion == settings.Version)
+        if (sessionVersion == session.RosterVersion && settingsVersion == settings.Version)
         {
             return;
         }
 
-        sessionVersion = session.Version;
+        sessionVersion = session.RosterVersion;
         settingsVersion = settings.Version;
         var stored = session.Characters;
         var entries = new List<CharacterEntry>(stored.Count + 1);

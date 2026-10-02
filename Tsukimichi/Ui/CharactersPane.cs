@@ -1464,6 +1464,7 @@ public sealed partial class CharactersPane
 
                 snapshotCache.Remove(forgetTarget);
                 compareStates.Remove(forgetTarget);
+                compareResolving.Remove(forgetTarget);
                 accountVersion = -1;
                 ui.MarkQueryDirty();
                 log.Information("Forgot character {ContentId}", forgetTarget);
@@ -1530,6 +1531,12 @@ public sealed partial class CharactersPane
         if (c.OtherUnreadable)
         {
             ImGui.TextDisabled(Strings.DiffOtherUnreadable);
+            return;
+        }
+
+        if (c.Comparing)
+        {
+            ImGui.TextDisabled(Strings.DiffComparing);
             return;
         }
 
@@ -1753,7 +1760,7 @@ public sealed partial class CharactersPane
             return null;
         }
 
-        var key = new CompareKey(session.Version, viewedId, other.ContentId, other.TakenUtc);
+        var key = new CompareKey(session.RosterVersion, viewedId, other.ContentId, other.TakenUtc);
         if (compare is { } current && key == compareKey && ReferenceEquals(current.Bundle, d.Bundle) && ReferenceEquals(current.Rewards, RewardsCatalog()))
         {
             return current;
@@ -1783,6 +1790,11 @@ public sealed partial class CharactersPane
         if (otherStates is null)
         {
             return new Compare(bundle, RewardsCatalog(), other.ContentId, other.Label, candidates.ToArray(), true, string.Empty, string.Empty, viewedHeader, otherHeader, [], DiffList.Empty, DiffList.Empty);
+        }
+
+        if (ReferenceEquals(otherStates, ComparingStates))
+        {
+            return new Compare(bundle, RewardsCatalog(), other.ContentId, other.Label, candidates.ToArray(), false, string.Empty, string.Empty, viewedHeader, otherHeader, [], DiffList.Empty, DiffList.Empty, Comparing: true);
         }
 
         var rewards = RewardsCatalog();
@@ -1931,21 +1943,20 @@ public sealed partial class CharactersPane
             return previous;
         }
 
-        // The first comparison with this character (or a new catalog): nothing to show meanwhile, so it resolves now.
-        IReadOnlyDictionary<uint, QuestEvaluation>? states = null;
-        try
+        // The first comparison with this character (or a new catalog): nothing to show meanwhile, but the resolve still
+        // runs on a worker (15-40 ms was a hitch on the click) and the comparison reads "Comparing…" until it lands.
+        if (!compareResolving.TryGetValue(item.ContentId, out var first) || first.Taken != item.TakenUtc || !ReferenceEquals(first.Bundle, bundle)
+            || !(live is null ? first.Live is null : live.SameAs(first.Live)))
         {
-            states = StateResolver.ResolveAll(bundle.Catalog, snapshot, ContextFor(snapshot));
-        }
-        catch (Exception ex)
-        {
-            log.Warning(ex, "Character {ContentId} could not be evaluated for the comparison", item.ContentId);
+            var context = ContextFor(snapshot);
+            compareResolving[item.ContentId] = (item.TakenUtc, bundle, live, Task.Run(() => (IReadOnlyDictionary<uint, QuestEvaluation>)StateResolver.ResolveAll(bundle.Catalog, snapshot, context)));
         }
 
-        compareResolving.Remove(item.ContentId);
-        compareStates[item.ContentId] = (item.TakenUtc, bundle, live, states);
-        return states;
+        return ComparingStates;
     }
+
+    /// <summary>What <see cref="StatesFor"/> returns while a character's first comparison resolves on a worker.</summary>
+    private static readonly IReadOnlyDictionary<uint, QuestEvaluation> ComparingStates = new Dictionary<uint, QuestEvaluation>();
 
     /// <summary>
     /// Takes the comparison evaluations that finished on a worker (<see cref="StatesFor"/>); true when one replaced what
@@ -1975,12 +1986,9 @@ public sealed partial class CharactersPane
         var taken = false;
         foreach (var id in done)
         {
+            // A character forgotten meanwhile took its resolve with it (the Forget button removes both).
             var running = compareResolving[id];
             compareResolving.Remove(id);
-            if (!compareStates.ContainsKey(id))
-            {
-                continue;
-            }
 
             IReadOnlyDictionary<uint, QuestEvaluation>? states = null;
             if (running.Task.IsCompletedSuccessfully)
@@ -2046,11 +2054,11 @@ public sealed partial class CharactersPane
             return;
         }
 
-        if (accountRowId != rowId || accountVersion != session.Version)
+        if (accountRowId != rowId || accountVersion != session.RosterVersion)
         {
             accountCache.Clear();
             accountRowId = rowId;
-            accountVersion = session.Version;
+            accountVersion = session.RosterVersion;
         }
 
         Chrome.FitText(session.Spoilers.DisplayName(quest), ImGui.GetColorU32(ImGuiCol.Text));
@@ -2268,12 +2276,12 @@ public sealed partial class CharactersPane
     {
         var minute = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute;
         var rosterVersion = roster.Version;
-        if (itemsVersion == session.Version && itemsRoster == rosterVersion && itemsMinute == minute)
+        if (itemsVersion == session.RosterVersion && itemsRoster == rosterVersion && itemsMinute == minute)
         {
             return;
         }
 
-        itemsVersion = session.Version;
+        itemsVersion = session.RosterVersion;
         itemsRoster = rosterVersion;
         itemsMinute = minute;
         itemEntries = CharacterList.Visible(roster.All, includeHidden: false);
@@ -2317,7 +2325,7 @@ public sealed partial class CharactersPane
     /// </summary>
     private void RefreshList()
     {
-        var key = new ListKey(session.Version, roster.Version, DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute, settings.ShowHiddenCharacters, settings.CharacterListByDataCenter, listSearch);
+        var key = new ListKey(session.RosterVersion, roster.Version, DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute, settings.ShowHiddenCharacters, settings.CharacterListByDataCenter, listSearch);
         if (key == listKey)
         {
             return;
@@ -3068,7 +3076,8 @@ public sealed partial class CharactersPane
         string OtherHeader,
         DiffSectionRow[] Sections,
         DiffList OnlyViewed,
-        DiffList OnlyOther);
+        DiffList OnlyOther,
+        bool Comparing = false);
 
     private sealed record Dashboard(
         CharacterSnapshot Snapshot,

@@ -311,6 +311,9 @@
   <data name="DiffOtherUnreadable" xml:space="preserve">
     <value>That character's snapshot could not be read.</value>
   </data>
+  <data name="DiffComparing" xml:space="preserve">
+    <value>Comparing…</value>
+  </data>
   <data name="DiffComboTooltip" xml:space="preserve">
     <value>Which stored character the viewed one is compared with; the most recently captured one is chosen at first</value>
   </data>

@@ -32,7 +32,11 @@ public sealed partial class SessionState
     /// <summary>True when the character is logged in on another game client: shown "live in another client", never forgotten or written here.</summary>
     public bool IsLiveElsewhere(ulong contentId) => liveElsewhere.ContainsKey(contentId);
 
-    /// <summary>The multibox worker's latest view of the other clients; bumps only when what the player sees changes.</summary>
+    /// <summary>
+    /// The multibox worker's latest view of the other clients; bumps only when what the player sees changes: the
+    /// lists' badges (<see cref="CharactersVersion"/>) whenever the set moved, and <see cref="Version"/> only when the
+    /// viewed character's own status did (its banner, pip and Forget button).
+    /// </summary>
     internal void SetLiveElsewhere(IReadOnlyDictionary<ulong, Heartbeat> live)
     {
         ArgumentNullException.ThrowIfNull(live);
@@ -42,8 +46,14 @@ public sealed partial class SessionState
             return;
         }
 
+        var viewedWasElsewhere = ViewedContentId is { } before && liveElsewhere.ContainsKey(before);
         liveElsewhere = live;
-        Bump();
+        if (ViewedContentId is { } viewed && viewedWasElsewhere != live.ContainsKey(viewed))
+        {
+            Bump();
+        }
+
+        BumpCharacters();
     }
 
     private static readonly IReadOnlyDictionary<ulong, SharedLoad> NoProblems = new Dictionary<ulong, SharedLoad>();
@@ -57,7 +67,10 @@ public sealed partial class SessionState
     /// </summary>
     public IReadOnlyDictionary<ulong, SharedLoad> NotUpdating => notUpdating;
 
-    /// <summary>The multibox worker's latest set of unreadable files; bumps only when it changed.</summary>
+    /// <summary>
+    /// The multibox worker's latest set of unreadable files; when it changed, the lists' badges rebuild
+    /// (<see cref="CharactersVersion"/>), and the dashboard only when the viewed character's own status moved.
+    /// </summary>
     internal void SetNotUpdating(IReadOnlyDictionary<ulong, SharedLoad> problems)
     {
         ArgumentNullException.ThrowIfNull(problems);
@@ -66,8 +79,14 @@ public sealed partial class SessionState
             return;
         }
 
+        var viewedBefore = ViewedContentId is { } before && notUpdating.ContainsKey(before);
         notUpdating = problems;
-        Bump();
+        if (ViewedContentId is { } viewed && viewedBefore != problems.ContainsKey(viewed))
+        {
+            Bump();
+        }
+
+        BumpCharacters();
     }
 
     /// <summary>

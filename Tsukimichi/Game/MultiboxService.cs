@@ -102,6 +102,11 @@ public sealed class MultiboxService : IDisposable
     private Task<StoredRefresh>? refresh;
     private Task<SidecarRefresh>? sidecarRefresh;
     private bool disposed;
+    private bool updating;
+
+    // The live capture PublishLive last looked at (null before any): the same one again, every frame between polls,
+    // changes nothing.
+    private CharacterSnapshot? publishedSnapshot;
 
     public MultiboxService(IFramework framework, IPluginLog log, SessionState session, SnapshotService snapshots, PluginPaths paths)
     {
@@ -116,9 +121,23 @@ public sealed class MultiboxService : IDisposable
         snapshots.MayWrite = MayWrite;
         snapshots.LiveElsewhere = session.IsLiveElsewhere;
         session.DataDeleted += OnDataDeleted;
-        framework.Update += OnUpdate;
         StartWatchers();
         loop = Task.Run(() => RunAsync(lifetime.Token));
+    }
+
+    /// <summary>
+    /// Starts handing the loop's results to the session on the framework thread. The plugin calls it last in its
+    /// constructor, once every listener of the session is in place; the loop itself reads the folder from the start.
+    /// </summary>
+    public void Start()
+    {
+        if (disposed || updating)
+        {
+            return;
+        }
+
+        updating = true;
+        framework.Update += OnUpdate;
     }
 
     /// <summary>
@@ -212,10 +231,19 @@ public sealed class MultiboxService : IDisposable
         }
     }
 
-    /// <summary>Tells the loop which character is logged in here; the loop writes its heartbeat.</summary>
+    /// <summary>
+    /// Tells the loop which character is logged in here; the loop writes its heartbeat. Runs every frame but only
+    /// does (and allocates) anything when the poller published another capture.
+    /// </summary>
     private void PublishLive()
     {
         var snapshot = session.LiveSnapshot;
+        if (ReferenceEquals(snapshot, publishedSnapshot))
+        {
+            return;
+        }
+
+        publishedSnapshot = snapshot;
         var current = snapshot is null ? null : new LiveInfo(snapshot.ContentId, snapshot.Name, snapshot.World);
         var previous = Volatile.Read(ref live);
         if (current != previous)
