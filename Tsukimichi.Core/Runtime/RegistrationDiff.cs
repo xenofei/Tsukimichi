@@ -64,4 +64,24 @@ public static class RegistrationDiff
 
         return order.Count;
     }
+
+    /// <summary>
+    /// A batch was abandoned at <paramref name="from"/>: the positions of <paramref name="pending"/> from there on may
+    /// still hold an old registration (old text, perhaps a name the spoiler shield now masks) while the caller's list
+    /// already holds the new one. Marks each as not registered (<paramref name="sequence"/> 0) so the next
+    /// <see cref="KeptPrefix"/> replaces it, whatever its old text was; the caller keeps its handle, so the old
+    /// registration is still removed before the new one.
+    /// </summary>
+    public static void Abandon(IReadOnlyList<int> pending, int from, long[] sequence)
+    {
+        ArgumentNullException.ThrowIfNull(pending);
+        ArgumentNullException.ThrowIfNull(sequence);
+        for (var i = Math.Max(0, from); i < pending.Count; i++)
+        {
+            if (pending[i] < sequence.Length)
+            {
+                sequence[pending[i]] = 0;
+            }
+        }
+    }
 }

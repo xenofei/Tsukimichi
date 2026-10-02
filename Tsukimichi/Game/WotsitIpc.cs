@@ -466,8 +466,9 @@ public sealed class WotsitIpc : IDisposable
     /// A position that still holds a guid (a spoiler update) is first unregistered with <c>FA.UnregisterOne</c>. A
     /// register call that throws ends the tick and is retried from that entry next tick; once the cursor gives up on
     /// an entry, the batch is dropped with the entries registered so far kept (a partial list beats none) until the
-    /// catalog or Wotsit itself changes. An <c>FA.UnregisterOne</c> that throws turns partial updates off and queues a
-    /// full rebuild.
+    /// catalog or Wotsit itself changes; the positions it did not reach are marked not registered
+    /// (<see cref="RegistrationDiff.Abandon"/>), so the next replacement redoes them. An <c>FA.UnregisterOne</c> that
+    /// throws turns partial updates off and queues a full rebuild.
     /// </summary>
     private void RegisterBatch()
     {
@@ -529,6 +530,9 @@ public sealed class WotsitIpc : IDisposable
                 if (cursor.Fail())
                 {
                     log.Warning(ex, "Wotsit FA.RegisterWithSearch failed {Attempts} times at entry {Index} of {Count}; giving up on the rest", cursor.Attempts, cursor.Index, cursor.Count);
+                    // The rest may still hold their old text (a name the shield now masks) while entries holds the
+                    // new: the next replacement must not take them for unchanged.
+                    RegistrationDiff.Abandon(pending, cursor.Index, sequence);
                     pending = null;
                     cursor = null;
                 }

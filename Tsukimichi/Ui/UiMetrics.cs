@@ -141,7 +141,10 @@ public static class UiMetrics
     /// inside the tooltip after its font and font scale are set; <c>TextUnformatted</c> and <c>TextDisabled</c> honour it
     /// as <c>TextWrapped</c> does, and a line shorter than the wrap width draws exactly as before.
     /// </summary>
-    public static ImRaii.TextWrapDisposable TooltipWrap() => ImRaii.TextWrapPos(ImGui.GetCursorPosX() + (ImGui.GetFontSize() * TooltipWrapEm));
+    public static ImRaii.TextWrapDisposable TooltipWrap() => ImRaii.TextWrapPos(ImGui.GetCursorPosX() + TooltipWrapWidth);
+
+    /// <summary><see cref="TooltipWrapEm"/> in pixels at the current font and font scale: how far <see cref="TooltipWrap"/> lets a line run.</summary>
+    public static float TooltipWrapWidth => ImGui.GetFontSize() * TooltipWrapEm;
 
     /// <summary>
     /// A plain text tooltip, Night styled and drawn with the UI scale (SetTooltip can be neither). It is always in the

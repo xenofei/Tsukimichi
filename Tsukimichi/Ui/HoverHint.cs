@@ -234,21 +234,42 @@ public sealed class HoverHint
     {
         UiMetrics.ApplyFontScale();
         // A long quest name or blocker wraps like any tooltip instead of stretching the hint across the screen.
+        var wrapRight = ImGui.GetCursorPosX() + UiMetrics.TooltipWrapWidth;
         using var wrap = UiMetrics.TooltipWrap();
         var lineHeight = ImGui.GetTextLineHeight();
         var glyph = UiMetrics.InlineGlyphSize(lineHeight);
-        var indent = glyph + ImGui.GetStyle().ItemSpacing.X;
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var indent = glyph + spacing;
 
         ImGui.TextDisabled(Strings.ItemsHintTitle);
         foreach (var line in lines)
         {
             MoonGlyph.DrawInline(line.State, glyph);
             ImGui.SameLine();
+            var questRight = ImGui.GetCursorPosX() + ImGui.CalcTextSize(line.QuestText).X;
             ImGui.TextUnformatted(line.QuestText);
-            ImGui.SameLine();
+
+            // The status follows the name while both fit the wrap width; otherwise (a long name, a long blocker, or a
+            // name that wrapped) it takes its own line under the name, where it wraps across the whole width instead
+            // of down the narrow column the name leaves.
+            var beside = questRight + spacing + ImGui.CalcTextSize(line.StatusText).X <= wrapRight;
+            if (beside)
+            {
+                ImGui.SameLine();
+            }
+            else
+            {
+                ImGui.Indent(indent);
+            }
+
             using (Theme.PushText(line.Done ? Theme.Moon : Theme.Dusk))
             {
                 ImGui.TextUnformatted(line.StatusText);
+            }
+
+            if (!beside)
+            {
+                ImGui.Unindent(indent);
             }
 
             if (line.HasObtained)

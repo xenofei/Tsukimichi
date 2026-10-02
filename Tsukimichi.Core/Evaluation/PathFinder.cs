@@ -84,7 +84,9 @@ public static class PathFinder
                 continue;
             }
 
-            var prereqs = c.PrerequisitesOf(quest).QuestIds;
+            // An accept condition the join needs whatever branch is taken is no alternative.
+            var prerequisites = c.PrerequisitesOf(quest);
+            var prereqs = prerequisites.QuestIds.Where(id => !prerequisites.IsRequired(id)).ToArray();
             var catalogued = 0;
             foreach (var id in prereqs.Distinct())
             {
@@ -159,13 +161,14 @@ public static class PathFinder
             var quest = catalog.ByRowId[rowId];
             var steps = new List<(uint RowId, int Depth)>();
             var seen = new HashSet<uint>();
-            var prereqs = catalog.PrerequisitesOf(quest).QuestIds.Where(catalog.ByRowId.ContainsKey);
+            var prerequisites = catalog.PrerequisitesOf(quest);
+            var prereqs = prerequisites.QuestIds.Where(catalog.ByRowId.ContainsKey);
 
             if (quest.PreviousQuests.Join == JoinKind.Any)
             {
                 List<(uint RowId, int Depth)>? best = null;
                 var bestCost = int.MaxValue;
-                var ordered = prereqs.OrderBy(id => id).ToList();
+                var ordered = prereqs.Where(id => !prerequisites.IsRequired(id)).OrderBy(id => id).ToList();
                 if (ordered.Exists(id => !IsOtherPath(id)))
                 {
                     // Another city's or class's line is never the way there while the character's own is open.
@@ -191,6 +194,12 @@ public static class PathFinder
                 if (best is not null)
                 {
                     Append(steps, seen, best);
+                }
+
+                // The accept conditions the join needs beside the branch (QuestCatalog.PrerequisitesOf).
+                foreach (var required in prereqs.Where(prerequisites.IsRequired))
+                {
+                    Append(steps, seen, SubPath(required));
                 }
             }
             else
