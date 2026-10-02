@@ -59,16 +59,16 @@ public sealed class AtomicFileTests : IDisposable
     }
 
     [Fact]
-    public async Task Write_waits_out_a_read_in_another_client_instead_of_failing()
+    public void Write_waits_out_a_read_in_another_client_instead_of_failing()
     {
         var path = tmp.File("file.json");
         AtomicFile.Write(path, "first");
 
         // Windows refuses to replace an open file; the reader lets go after 50 ms and the write's retry gets through.
-        var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-        var release = Task.Delay(50).ContinueWith(_ => reader.Dispose(), TaskScheduler.Default);
-        AtomicFile.Write(path, "second");
-        await release;
+        using (HeldFile.ReleasedAfter(path, TimeSpan.FromMilliseconds(50)))
+        {
+            AtomicFile.Write(path, "second");
+        }
 
         Assert.Equal("second", AtomicFile.Read(path));
     }

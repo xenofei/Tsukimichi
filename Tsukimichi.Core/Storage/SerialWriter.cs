@@ -137,19 +137,21 @@ public sealed class SerialWriter : IDisposable
     }
 
     /// <summary>Stops queueing (later work runs inline) and waits up to the drain wait for what is queued to land.</summary>
-    public void Dispose()
+    public void Dispose() => Close(drainWait);
+
+    /// <summary>
+    /// <see cref="Dispose"/> with the wait given by the caller (the plugin's unload shares one deadline among its
+    /// waits): stops queueing and waits up to <paramref name="wait"/> for what is queued to land. False when the wait
+    /// ran out first; the queued work still runs, on the thread pool.
+    /// </summary>
+    public bool Close(TimeSpan wait)
     {
         lock (gate)
         {
-            if (closed)
-            {
-                return;
-            }
-
             closed = true;
         }
 
-        WaitIdle(drainWait);
+        return WaitIdle(wait < TimeSpan.Zero ? TimeSpan.Zero : wait);
     }
 
     private void Run<T>(Func<T> work, Action<T?, Exception?>? done)

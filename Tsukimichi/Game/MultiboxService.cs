@@ -121,7 +121,14 @@ public sealed class MultiboxService : IDisposable
     /// <summary>Raised on the framework thread when <c>user/pins.json</c> or <c>user/overrides.json</c> changed on disk (another client's save, or this one's).</summary>
     public event Action? UserFilesChanged;
 
-    public void Dispose()
+    public void Dispose() => Dispose(DisposeWait);
+
+    /// <summary>
+    /// Stops the service, waiting for the loop at most <paramref name="wait"/> and never longer than its own
+    /// <see cref="DisposeWait"/>: the plugin's unload shares one deadline among its waits. A loop still running
+    /// afterwards stops on its own.
+    /// </summary>
+    public void Dispose(TimeSpan wait)
     {
         if (disposed)
         {
@@ -140,10 +147,11 @@ public sealed class MultiboxService : IDisposable
         lifetime.Cancel();
         StopWatchers(final: true);
 
+        var budget = wait < TimeSpan.Zero ? TimeSpan.Zero : wait < DisposeWait ? wait : DisposeWait;
         var stopped = false;
         try
         {
-            stopped = loop.Wait(DisposeWait);
+            stopped = loop.Wait(budget);
         }
         catch (AggregateException)
         {
@@ -158,7 +166,7 @@ public sealed class MultiboxService : IDisposable
         else
         {
             // A late loop (a slow disk) still holds the token: it finishes its tick, deletes its heartbeat and exits.
-            log.Warning("Multibox loop did not stop within {Seconds} s; it stops on its own", DisposeWait.TotalSeconds);
+            log.Warning("Multibox loop did not stop within {Seconds} s; it stops on its own", budget.TotalSeconds);
             loop.ContinueWith(_ => lifetime.Dispose(), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
         }
     }

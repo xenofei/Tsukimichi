@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Interface.Windowing;
@@ -34,6 +35,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static ISeStringEvaluator SeStringEvaluator { get; private set; } = null!;
     // /UI
 
+    /// <summary>The longest unload waits in all: the last saves, the multibox loop and the catalog builds share it.</summary>
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
 
     /// <summary>
@@ -126,21 +128,44 @@ public sealed class Plugin : IDalamudPlugin
         var loader = new LuminaCatalogLoader(DataManager, Log, curated, questPatches);
         // Read on the caller's (framework) thread, before the first await.
         var filing = Settings.JournalFiling;
+        CatalogBundle bundle;
+        Core.Ui.NodeIconMap icons;
         try
         {
-            var bundle = await loader.BuildBundleAsync(DataManager.Language, filing, token).ConfigureAwait(false);
-            var icons = ResolveNodeIcons(bundle);
-            await Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, null, icons)).ConfigureAwait(false);
+            bundle = await loader.BuildBundleAsync(DataManager.Language, filing, token).ConfigureAwait(false);
+            icons = ResolveNodeIcons(bundle);
         }
         catch (OperationCanceledException)
         {
             Log.Debug("Catalog build {Generation} cancelled", generation);
+            return;
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Catalog unavailable");
             var message = ex.GetBaseException().Message;
-            await Framework.RunOnFrameworkThread(() => PublishCatalog(generation, null, message)).ConfigureAwait(false);
+            await PublishOnFrameworkThreadAsync(generation, null, message).ConfigureAwait(false);
+            return;
+        }
+
+        // Only the build's own failure is "Catalog unavailable" here: a failure while the session takes the catalog is
+        // handled by PublishCatalog, which knows the previous catalog is still the one in use.
+        await PublishOnFrameworkThreadAsync(generation, bundle, null, icons).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Runs <see cref="PublishCatalog"/> on the framework thread. Failing to get there (the framework going away at
+    /// unload) is logged rather than thrown: nobody awaits a rebuild's outcome but the retry button.
+    /// </summary>
+    private async Task PublishOnFrameworkThreadAsync(int generation, CatalogBundle? bundle, string? error, Core.Ui.NodeIconMap? icons = null)
+    {
+        try
+        {
+            await Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, error, icons)).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Catalog build {Generation} finished but could not be handed to the session", generation);
         }
     }
 
@@ -179,17 +204,34 @@ public sealed class Plugin : IDalamudPlugin
             return;
         }
 
-        if (bundle is not null)
-        {
-            Session.SetCatalog(bundle, nodeIcons);
-
-            // Start the hero banner index now rather than on the first selection, which would otherwise show its
-            // category art for a frame or two while the index builds.
-            banners?.Poll();
-        }
-        else
+        if (bundle is null)
         {
             Session.SetCatalogError(error ?? "unknown error");
+            return;
+        }
+
+        try
+        {
+            Session.SetCatalog(bundle, nodeIcons);
+        }
+        catch (Exception ex)
+        {
+            // SetCatalog derives everything before it swaps anything in, so the previous catalog (if any) is still
+            // whole and in use: the new one is the one unavailable.
+            Log.Error(ex, "Catalog built but the session could not take it; the previous catalog stays in use");
+            Session.SetCatalogError(ex.GetBaseException().Message);
+            return;
+        }
+
+        // Start the hero banner index now rather than on the first selection, which would otherwise show its
+        // category art for a frame or two while the index builds.
+        try
+        {
+            banners?.Poll();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Hero banner index could not start; it is tried again on the next selection");
         }
     }
     // /UI
@@ -303,8 +345,7 @@ public sealed class Plugin : IDalamudPlugin
                 var error = t.IsFaulted ? t.Exception?.GetBaseException().Message ?? "unknown error" : null;
                 var bundle = t.IsFaulted ? null : t.Result;
                 var icons = bundle is null ? null : ResolveNodeIcons(bundle);
-                Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, error, icons))
-                    .ContinueWith(static r => _ = r.Exception, TaskContinuationOptions.OnlyOnFaulted);
+                _ = PublishOnFrameworkThreadAsync(generation, bundle, error, icons);
             },
             CancellationToken.None,
             TaskContinuationOptions.ExecuteSynchronously,
@@ -447,31 +488,46 @@ public sealed class Plugin : IDalamudPlugin
         Settings.Save(PluginInterface);
     }
 
-    /// <summary>Poller first (unsubscribe, final save), then the snapshot service; the catalog build is cancelled by the caller.</summary>
-    private void DisposeGameState()
+    /// <summary>
+    /// Poller first (unsubscribe, final save), then the snapshot service; the catalog build is cancelled by the caller.
+    /// Each step is isolated like the rest of <see cref="TearDown"/>; the writer's drain and the multibox loop wait
+    /// only for what is left of the unload's one <see cref="DisposeWait"/> (<paramref name="remaining"/>).
+    /// </summary>
+    private void DisposeGameState(Func<TimeSpan> remaining)
     {
         gameStateDisposed = true;
-        if (Session is not null)
+        Unwind("session listeners", () =>
         {
-            Session.Changed -= PersistViewedCharacter;
-            Session.CharacterForgotten -= ForgetSpoilerOverride;
-            Session.DataDeleted -= ClearSpoilerOverrides;
-            Session.CharacterForgotten -= ForgetPayoffGates;
-            Session.DataDeleted -= ClearPayoffGates;
-        }
-
-        Poller?.Dispose();
+            if (Session is not null)
+            {
+                Session.Changed -= PersistViewedCharacter;
+                Session.CharacterForgotten -= ForgetSpoilerOverride;
+                Session.DataDeleted -= ClearSpoilerOverrides;
+                Session.CharacterForgotten -= ForgetPayoffGates;
+                Session.DataDeleted -= ClearPayoffGates;
+            }
+        });
+        Unwind("state poller", () => Poller?.Dispose());
         // The last saves (the poller's, the pins the query runner queued) land before the heartbeat goes.
-        Framework.Update -= DrainWriter;
-        Writer.Dispose();
-        // After the poller's last save: the heartbeat goes once nothing more is written for the character.
-        if (Multibox is not null)
+        Unwind("save writer", () =>
         {
-            Multibox.UserFilesChanged -= OnUserFilesChanged;
-            Multibox.Dispose();
-        }
-
-        Snapshots?.Dispose();
+            Framework.Update -= DrainWriter;
+            var wait = remaining();
+            if (!Writer.Close(wait))
+            {
+                Log.Warning("Saves still queued after {Seconds:0.#} s; they finish in the background", wait.TotalSeconds);
+            }
+        });
+        // After the poller's last save: the heartbeat goes once nothing more is written for the character.
+        Unwind("multibox", () =>
+        {
+            if (Multibox is not null)
+            {
+                Multibox.UserFilesChanged -= OnUserFilesChanged;
+                Multibox.Dispose(remaining());
+            }
+        });
+        Unwind("snapshot service", () => Snapshots?.Dispose());
     }
     // ---- end game state ----
 
@@ -797,81 +853,40 @@ public sealed class Plugin : IDalamudPlugin
         catch (Exception ex)
         {
             Log.Error(ex, "Tsukimichi failed to load; unwinding partial setup");
-            AbortLoad();
+            TearDown();
             throw;
         }
     }
 
     public void Dispose()
     {
-        // Other plugins stop reaching in first, before anything they could reach is torn down.
-        ipcProvider?.Dispose();
-        Localization.Loc.Changed -= OnTextChanged;
-        loc?.Dispose();
-        // UI
-        command.Dispose();
-        if (configWindow is not null)
-        {
-            PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
-        }
-
-        if (tutorial is TutorialOverlay overlay)
-        {
-            PluginInterface.UiBuilder.Draw -= overlay.CheckFirstRun;
-            Framework.Update -= overlay.ConsumeKeys;
-        }
-
-        if (hoverHint is not null)
-        {
-            PluginInterface.UiBuilder.Draw -= hoverHint.Draw;
-        }
-
-        if (dutyFinderPanel is not null)
-        {
-            PluginInterface.UiBuilder.Draw -= dutyFinderPanel.Draw;
-        }
-
-        itemHooks?.Dispose();
-        npcHooks?.Dispose();
-        dutyFinderHint?.Dispose();
-        hookGateNotice?.Dispose();
-        todoLockNotice?.Dispose();
-        welcomeBack?.Dispose();
-        PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
-        Framework.Update -= mainWindow.ConsumeEscape;
-        PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
-        PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
-        windowSystem.RemoveAllWindows();
-        Ui.Typography.Dispose();
-        todoOverlay?.Dispose();
-        dtrEntry?.Dispose();
-        discoveryWindow?.Dispose();
-        mainWindow.Dispose();
-        wotsit?.Dispose();
-        questionable?.Dispose();
-        moonlitPane?.Dispose();
-        chatNotifier?.Dispose();
-        queryRunner.Dispose();
-        QuestText?.Dispose();
-        lifestream.Dispose();
-        // /UI
-
-        // ---- Game state dispose ----
-        DisposeGameState();
-        // ---- end game state dispose ----
-        StopCatalogBuild();
+        TearDown();
         Log.Information("Tsukimichi unloaded");
     }
 
-    /// <summary>Best-effort teardown after a failed constructor; every step is isolated so one failure cannot hide another.</summary>
-    private void AbortLoad()
+    /// <summary>
+    /// Unload, and the best-effort unwind after a failed constructor: every step is isolated, so one failure can neither
+    /// hide another nor leave a later hook (context menus, addon listeners, Framework.Update, IPC) subscribed into an
+    /// unloaded assembly. The waits at the end (the writer's last saves, the multibox loop, the catalog builds) share
+    /// one <see cref="DisposeWait"/> rather than taking one each.
+    /// </summary>
+    private void TearDown()
     {
+        var unloading = Stopwatch.StartNew();
+        TimeSpan Remaining()
+        {
+            var left = DisposeWait - unloading.Elapsed;
+            return left > TimeSpan.Zero ? left : TimeSpan.Zero;
+        }
+
+        // Other plugins stop reaching in first, before anything they could reach is torn down.
         Unwind("tsukimichi ipc", () => ipcProvider?.Dispose());
         Unwind("localization", () =>
         {
             Localization.Loc.Changed -= OnTextChanged;
             loc?.Dispose();
         });
+        Unwind("command", () => command?.Dispose());
         Unwind("draw hook", () =>
         {
             if (configWindow is not null)
@@ -903,16 +918,15 @@ public sealed class Plugin : IDalamudPlugin
 
             PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
-            windowSystem.RemoveAllWindows();
-            Ui.Typography.Dispose();
         });
+        Unwind("windows", windowSystem.RemoveAllWindows);
+        Unwind("fonts", Ui.Typography.Dispose);
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());
         Unwind("duty finder hint", () => dutyFinderHint?.Dispose());
         Unwind("hook gate notice", () => hookGateNotice?.Dispose());
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());
         Unwind("since you were away", () => welcomeBack?.Dispose());
-        Unwind("command", () => command?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
         Unwind("nearby window", () => discoveryWindow?.Dispose());
@@ -924,8 +938,9 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("journal text", () => QuestText?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());
-        Unwind("game state", DisposeGameState);
-        Unwind("catalog build", StopCatalogBuild);
+        // Each of its steps is isolated on its own.
+        DisposeGameState(Remaining);
+        Unwind("catalog build", () => StopCatalogBuild(Remaining()));
     }
 
     private static void Unwind(string what, Action step)
@@ -940,8 +955,11 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
-    /// <summary>Cancels the catalog build in flight, waits briefly for the builds to stop and releases the token source.</summary>
-    private void StopCatalogBuild()
+    /// <summary>
+    /// Cancels the catalog build in flight, waits up to <paramref name="wait"/> (what is left of the unload's
+    /// <see cref="DisposeWait"/>) for the builds to stop and releases the token source.
+    /// </summary>
+    private void StopCatalogBuild(TimeSpan wait)
     {
         CancellationTokenSource cts;
         lock (catalogBuildLock)
@@ -953,9 +971,9 @@ public sealed class Plugin : IDalamudPlugin
         try
         {
             var builds = catalogRebuild is { } rebuild ? new Task[] { CatalogTask, rebuild } : [CatalogTask];
-            if (!Task.WaitAll(builds, DisposeWait))
+            if (!Task.WaitAll(builds, wait))
             {
-                Log.Warning("Catalog build did not stop within {Seconds} s", DisposeWait.TotalSeconds);
+                Log.Warning("Catalog build did not stop within {Seconds:0.#} s", wait.TotalSeconds);
             }
         }
         catch (AggregateException)

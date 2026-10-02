@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
 
 namespace Tsukimichi.Game;
@@ -30,6 +31,9 @@ public sealed class SnapshotService : IDisposable
     private readonly CancellationTokenSource lifetime = new();
     private readonly List<SnapshotSummary> characters = [];
 
+    /// <summary>Raises <see cref="CharactersChanged"/> and <see cref="LoggingOut"/> one listener at a time.</summary>
+    private readonly ListenerIsolation listeners;
+
     /// <summary>Snapshots other game clients saved, as the multibox worker read them (D11); framework thread only.</summary>
     private readonly Dictionary<ulong, CharacterSnapshot> external = [];
 
@@ -47,6 +51,8 @@ public sealed class SnapshotService : IDisposable
         this.framework = framework ?? throw new ArgumentNullException(nameof(framework));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         this.reader = reader;
+        listeners = new ListenerIsolation((listener, ex, held) =>
+            log.Warning(ex, "Snapshot listener {Listener} failed ({Held} more failures since the last report); the other listeners still ran", listener, held));
 
         try
         {
@@ -149,7 +155,7 @@ public sealed class SnapshotService : IDisposable
         characters.RemoveAll(c => c.ContentId == snapshot.ContentId);
         characters.Add(Summarize(snapshot));
         SortCharacters();
-        CharactersChanged?.Invoke();
+        listeners.Raise(CharactersChanged);
     }
 
     public void Delete(ulong contentId)
@@ -158,7 +164,7 @@ public sealed class SnapshotService : IDisposable
         external.Remove(contentId);
         if (characters.RemoveAll(c => c.ContentId == contentId) > 0)
         {
-            CharactersChanged?.Invoke();
+            listeners.Raise(CharactersChanged);
         }
     }
 
@@ -180,7 +186,7 @@ public sealed class SnapshotService : IDisposable
             characters.Remove(summary);
         }
 
-        CharactersChanged?.Invoke();
+        listeners.Raise(CharactersChanged);
     }
 
     /// <summary>
@@ -234,7 +240,7 @@ public sealed class SnapshotService : IDisposable
         if (listChanged)
         {
             SortCharacters();
-            CharactersChanged?.Invoke();
+            listeners.Raise(CharactersChanged);
         }
 
         return taken;
@@ -317,14 +323,8 @@ public sealed class SnapshotService : IDisposable
         awaitingCharacter = false;
         if (CharacterReady)
         {
-            try
-            {
-                LoggingOut?.Invoke();
-            }
-            catch (Exception ex)
-            {
-                log.Warning(ex, "Logout capture failed");
-            }
+            // A failing capture is logged by the listener isolation; logout goes on either way.
+            listeners.Raise(LoggingOut);
         }
 
         CharacterReady = false;
