@@ -1,0 +1,7 @@
+# C7 Automation ecosystem — summary
+AutoDuty (erdelf/AutoDuty active): ContentHasPath(uint territory)->bool [read-only], Run(territory, loops, bareMode), IsStopped/IsNavigating/IsLooping/Stop, config gates.
+TextAdvance: EnqueueMoveAndInteract(MoveData{Position,DataID,NoInteract,Mount,Fly}), EnqueueMoveTo2D/3DPoint, IsBusy, Stop, settings getters.
+YesAlready: enable/pause gates. SND: consumer only via compiled wrappers (Questionable/AutoDuty/Lifestream/TextAdvance have one; Tsukimichi not). BossMod.HasModuleByDataId. Artisan CraftItem(recipeId,n), IsBusy, GetLists, StartListById. GatherBuddy Reborn: Identify(string)->itemId; no add-to-list; chat /gather <item> flags node+teleports (both GB versions).
+Proposals: A "Gather with GatherBuddy" via /gather for gatherer quest items (Should,M; needs RITEM data; low perception risk); B "Craft with Artisan" CraftItem (Could,M; medium perception); C AutoDuty read-only "has path" + optional Run (Could,S-M; HIGHEST perception risk; contradicts README); D Walk to giver via TextAdvance NoInteract=true (Could,S; vnavmesh direct is the alternative); E SND wrapper PR upstream (Could,S, outside repo); F TextAdvance/YesAlready/BossMod Won't.
+Order: A, then AutoDuty read-only indicator, then decide B/D/E.
+Qs: README "never automates" vs opt-in hand-offs; ban-risk tier acceptable (read-only / flag+teleport / solo automation / visible automation); RITEM extraction worth it; AutoDuty scope (Duty Support/Trust only?); SND PR under owner's name.
