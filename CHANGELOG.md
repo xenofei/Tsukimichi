@@ -4,6 +4,37 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-01
+
+### Added
+- Moonlit, the Characters tab and the export show what your other characters own (mounts, minions, emotes, orchestrion rolls, cards, bardings, hairstyles, duties and more), as of their last capture. This includes characters logged in on another game client. A newly learned mount, minion or other collectible is marked as owned right away.
+- Quest completion dates. A completed quest shows "Done 12 Sep 2026" in the details, and the quest export includes `completedAt`. Recording starts with your first login on 1.5: quests completed earlier show "Done before …", and nothing is guessed. The dates live in their own file next to your save, so an older plugin version can't erase them.
+- Every Moonlit reward has an availability label: Get now, Event running (with its end date), Upcoming event, Event not running, Collab — may return, Past event — on the Online Store, or Gone for good. The export has a matching `availability` field.
+- Moonlit Expansion and State filters (Ready now, In journal, Blocked, Done) and a "Group by expansion" option.
+- "Copy missing" in Moonlit copies the rewards you don't have as a Discord-ready list, spoiler-safe. Long lists copy in parts of up to 2,000 characters ("Copy part 1/3"), and the button keeps its place while the game updates.
+- After a game update, the main window says "Game updated: N quests are newer than Tsukimichi's data; rewards and patch info for them may be missing until an update." Dismiss it once per game version, or press "Show them". Filters › Added in › "New since data" lists those quests.
+- Tsukimichi no longer saves a reading in which the game suddenly reports far fewer completed quests or an emptied journal, at login or while you play. It keeps your saved progress, tries again, and says so once in chat. If the game keeps reporting the same thing for a few minutes, Tsukimichi accepts it and says so, after backing up the earlier save. Seasonal and repeatable quests resetting on their own schedule are not affected.
+- Each character keeps two backups of its save (`<id>.prev.json` and `<id>.prev2.json`), refreshed at most once a day and never with a save that lost progress. docs/restore-backup.md explains how to restore one. Forgetting a character or deleting all data removes them.
+- The Done today / Done this week tooltip says when the quest resets ("resets in 3 h").
+
+### Changed
+- Moonlit counts each reward once. A reward several quests give (Guildhests, Retainers, Hunts, Grand Company enrollment, class unlocks) is one row, and the other quests are listed under "Also from". Rewards whose quests are all on a path you didn't take (another city, starting class or Grand Company) are hidden.
+- "Artifact gear" is now Relic & special weapons, and each relic, Manderville, Skysteel, Splendorous or Phantom quest counts once ("1 of 18", the items listed on hover), its repeatable "another job" quest included.
+- Moonlit rewards you can no longer get (a past event, a removed quest) leave the totals unless you tick "Count rewards that are gone for good", and a line says how many time-limited rewards you missed. Only rewards known not to be yours count as missed.
+- Hunt bill tiers, the later Dawntrail sightseeing entries, the Summoner and Scholar egi glamours, and variant dungeons and the Sil'dih survey record now count as separate system unlocks. Every soul crystal is listed under Items.
+- In-game features (item tooltip panel, item and NPC menus, server info bar, Duty Finder hint) now pause only when a new game patch arrives, not on every hotfix. "Enable game hooks on this untested version" covers that patch's hotfixes too.
+- Settings › About compares game versions properly and, on a newer game, says how many quests are newer than the data. Requirement details name expansions from the game's own data.
+
+### Fixed
+- About forty quests no longer show as Ready before the game will offer them. This covers job, role, crafter, gatherer and allied society quests that also need a main scenario quest (The Princess and Her Knight now waits for A Fitting Payment), and quests like The Hero's Journey and Shadow Walk with Me that showed Ready as soon as you reached their level. "What's blocking" and routes name the missing quest.
+- Allied society rank-up quests (such as "I Heard You Like Tanks") no longer read Ready before your reputation for that rank is maxed. They show how far you are, e.g. "Trusted 300/720 reputation".
+- Allied society dailies the quest givers aren't offering today read Blocked "Not offered today", and no longer count in Nearby, Ready lists or other plugins' availability checks. This applies to the societies whose quest givers Tsukimichi has seen that day; the others behave as before.
+- Repeatables the game tracks with a repeat flag (the Gift of Joy dailies, One Man's Relic, Seeking Inspiration, A Ruined Opportunity, the Komra weeklies and others) read Done today / Done this week after you turn them in.
+- Your other characters no longer show yesterday's dailies or last week's weeklies as done, or stale allowances, after the daily (15:00 UTC) or weekly (Tuesday 08:00 UTC) reset. This includes the character left on screen after you log out.
+- Bardings and hairstyles in Moonlit no longer always read unknown, and Moonlit no longer says "Obtained states need the live character" for your alts.
+- Moonlit totals can reach 100%: path alternatives, duplicate rows and missed time-limited rewards no longer count against you.
+- The Pride of Labyrinthos no longer counts as unlocking Margrat's deliveries; A Request of One's Own does.
+
 ## [1.4.2] - 2026-10-01
 
 ### Fixed
