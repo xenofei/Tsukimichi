@@ -37,6 +37,9 @@ public sealed partial class SessionState
     private readonly IPluginLog? log;
     private readonly RecentEventsTracker recentEvents = new(MaxRecentEvents);
 
+    /// <summary>Raises <see cref="Changed"/>, <see cref="DataDeleted"/> and <see cref="CharacterForgotten"/> one listener at a time.</summary>
+    private readonly ListenerIsolation listeners;
+
     private EvalContext baseContext = EvalContext.Default;
     private CharacterSnapshot? liveSnapshot;
     private IReadOnlyDictionary<uint, QuestEvaluation> liveStates = NoStates;
@@ -59,6 +62,8 @@ public sealed partial class SessionState
         this.snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
         this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
         this.log = log;
+        listeners = new ListenerIsolation((listener, ex, held) =>
+            log?.Warning(ex, "Session listener {Listener} failed ({Held} more failures since the last report); the other listeners still ran", listener, held));
         UniqueRewards = uniqueRewards ?? throw new ArgumentNullException(nameof(uniqueRewards));
         Curated = curated ?? throw new ArgumentNullException(nameof(curated));
         StoreResells = StoreResells.Build(UniqueRewards.Entries);
@@ -281,6 +286,10 @@ public sealed partial class SessionState
         AveragePollMs = PollCount == 1 ? milliseconds : AveragePollMs + (milliseconds - AveragePollMs) * PollAverageWeight;
     }
 
+    /// <summary>
+    /// Raised after every <see cref="Version"/> bump. Each listener runs even when an earlier one throws; a failure is
+    /// logged (once a minute per listener) and does not reach the code that changed the session.
+    /// </summary>
     public event Action? Changed;
 
     /// <summary>Raised after <see cref="DeleteAllData"/> removed the stored files, so in-memory copies (pins, overrides) can drop them.</summary>
@@ -343,7 +352,7 @@ public sealed partial class SessionState
             FollowLive();
         }
 
-        CharacterForgotten?.Invoke(contentId);
+        listeners.Raise(CharacterForgotten, contentId);
     }
 
     /// <summary>
@@ -372,45 +381,45 @@ public sealed partial class SessionState
         recentEvents.Clear();
         // Listeners drop their in-memory copies (pins, overrides, spoiler overrides) first, so the bump in FollowLive
         // is the last one: whatever rebuilds on it, the spoiler masks included, sees the data already gone.
-        DataDeleted?.Invoke();
+        listeners.Raise(DataDeleted);
         FollowLive();
     }
 
     /// <summary>Story sidequests and the chain catalog for a new bundle; a failure leaves both empty rather than failing the load.</summary>
-    private void BuildChains(CatalogBundle bundle)
+    private (StorySidequests Stories, ChainCatalog Chains) BuildChains(CatalogBundle bundle, IReadOnlySet<uint> featureQuestIds)
     {
         try
         {
-            Stories = StorySidequests.Build(bundle.Catalog, FeatureQuestIds, Curated, UniqueRewards.Entries);
-            Chains = ChainCatalog.Build(bundle.Catalog, Curated, Stories);
-            foreach (var warning in Chains.Warnings)
+            var stories = StorySidequests.Build(bundle.Catalog, featureQuestIds, Curated, UniqueRewards.Entries);
+            var chains = ChainCatalog.Build(bundle.Catalog, Curated, stories);
+            foreach (var warning in chains.Warnings)
             {
                 log?.Warning("Chains: {Warning}", warning);
             }
+
+            return (stories, chains);
         }
         catch (Exception ex)
         {
-            Stories = StorySidequests.Empty;
-            Chains = ChainCatalog.Empty;
             log?.Warning(ex, "Story sidequests or chains could not be built");
+            return (StorySidequests.Empty, ChainCatalog.Empty);
         }
     }
 
+    /// <summary>
+    /// Swaps a finished build in. Everything derived from it is computed before anything is assigned, so a throw here
+    /// leaves the previous catalog whole (the caller then reports the new one as unavailable) rather than a session
+    /// holding the new bundle beside the old indexes.
+    /// </summary>
     internal void SetCatalog(CatalogBundle bundle, Core.Ui.NodeIconMap? nodeIcons = null)
     {
         ArgumentNullException.ThrowIfNull(bundle);
-        Bundle = bundle;
-        NodeIcons = nodeIcons ?? Core.Ui.NodeIconMap.Empty;
-        CatalogError = null;
-        CatalogLoading = false;
-        Index = ReversePrereqIndex.Build(bundle.Catalog);
-        FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
-        BuildChains(bundle);
+        var index = ReversePrereqIndex.Build(bundle.Catalog);
+        var featureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
+        var (stories, chains) = BuildChains(bundle, featureQuestIds);
         // Every blocker, status line, todo row and diagnostic names quests through the viewed character's shield.
-        Names = bundle.BlockerNames() with { QuestName = quest => Spoilers.DisplayName(quest) };
-        // Chat, item menus and hints speak for the logged-in character, whichever one the window shows.
-        LiveNames = Names with { QuestName = quest => LiveSpoilers.DisplayName(quest) };
-        baseContext = EvalContextBuilder.Build(
+        var names = bundle.BlockerNames() with { QuestName = quest => Spoilers.DisplayName(quest) };
+        var context = EvalContextBuilder.Build(
             Curated.Festivals,
             bundle.Jobs,
             static () => DateTime.UtcNow,
@@ -422,17 +431,33 @@ public sealed partial class SessionState
         // against this one they would read "Locked out · removed from the game" on rows no longer retired, or Ready
         // on retired ones, until the poller's next pass. The poller sees the new bundle on its next poll and starts
         // a first pass; until it commits, the live character reads Not checked.
-        liveStates = NoStates;
+        var viewedContext = Context;
+        var viewedStates = States;
         if (ViewedSnapshot is { } viewed && !IsLive)
         {
-            Context = StoredContext(viewed);
-            States = StateResolver.ResolveAll(bundle.Catalog, viewed, Context);
+            viewedContext = StoredContext(viewed, context);
+            viewedStates = StateResolver.ResolveAll(bundle.Catalog, viewed, viewedContext);
         }
         else if (IsLive)
         {
-            States = NoStates;
+            viewedStates = NoStates;
         }
 
+        Bundle = bundle;
+        NodeIcons = nodeIcons ?? Core.Ui.NodeIconMap.Empty;
+        CatalogError = null;
+        CatalogLoading = false;
+        Index = index;
+        FeatureQuestIds = featureQuestIds;
+        Stories = stories;
+        Chains = chains;
+        Names = names;
+        // Chat, item menus and hints speak for the logged-in character, whichever one the window shows.
+        LiveNames = names with { QuestName = quest => LiveSpoilers.DisplayName(quest) };
+        baseContext = context;
+        liveStates = NoStates;
+        Context = viewedContext;
+        States = viewedStates;
         Bump();
     }
 
@@ -519,8 +544,8 @@ public sealed partial class SessionState
     public ServerFestivals ServerFestivals => ServerFestivals.For(ViewedSnapshot, liveSnapshot, Curated.Festivals, DateTime.UtcNow);
 
     /// <summary>The context a stored character is resolved with: the base context and the festivals running on the server now.</summary>
-    private EvalContext StoredContext(CharacterSnapshot snapshot) =>
-        baseContext with { ServerFestivals = ServerFestivals.For(snapshot, liveSnapshot, Curated.Festivals, DateTime.UtcNow) };
+    private EvalContext StoredContext(CharacterSnapshot snapshot, EvalContext? context = null) =>
+        (context ?? baseContext) with { ServerFestivals = ServerFestivals.For(snapshot, liveSnapshot, Curated.Festivals, DateTime.UtcNow) };
 
     /// <summary>
     /// A stored character on view is resolved again when the server's running festivals changed under it (a login, a
@@ -598,7 +623,7 @@ public sealed partial class SessionState
     private void Bump()
     {
         Version++;
-        Changed?.Invoke();
+        listeners.Raise(Changed);
     }
 
     /// <summary>

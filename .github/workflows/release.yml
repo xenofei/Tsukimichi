@@ -152,6 +152,11 @@ jobs:
         # the plugin project's build is what packs latest.zip.
         run: dotnet build Tsukimichi.sln -c Release -warnaserror
 
+      - name: Load check (every UI language, Dalamud's Lumina)
+        # The same check as ci.yml, against the Dalamud this release is built with: the plugin loads outside the game
+        # in every UI language, and every Lumina member GameData uses exists in Dalamud's Lumina.
+        run: dotnet run --project tools/Tsukimichi.LoadCheck -c Release --no-build
+
       - name: Test
         # The timing tests (Category=Perf) have developer-machine budgets; see ci.yml.
         run: dotnet test Tsukimichi.Tests -c Release --no-build --filter "Category!=Perf"

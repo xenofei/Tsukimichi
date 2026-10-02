@@ -4,7 +4,10 @@
     Load check (CI): loads the built plugin outside the game and, in every UI language, reads each localized label the
     UI keeps in a static field (LocText, LocArray, LocCache<T>) and runs every UI type's static constructor. A throw
     there stops the plugin loading in the game (the 1.1 Help window's card list without its icons), which the unit
-    tests, referencing Core and GameData only, cannot see. Exits non-zero on any failure. Never shipped.
+    tests, referencing Core and GameData only, cannot see. It then finds every Lumina and Lumina.Excel type and member
+    that GameData (compiled against the NuGet packages) and the plugin reference in Dalamud's own copies of those
+    assemblies (LuminaCheck.cs): a column Dalamud's newer schema renamed would otherwise throw MissingMethodException
+    in the game while CI stays green. Exits non-zero on any failure. Never shipped.
 
     Windows-only like the plugin (net10.0-windows, x64). Dalamud's assemblies are not copied: they are compiled against
     and resolved at run time from the same folder Dalamud.NET.Sdk builds the plugin against (DALAMUD_HOME, else

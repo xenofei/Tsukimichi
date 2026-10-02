@@ -260,17 +260,18 @@ public sealed class JournalTextIndexTests
     }
 
     [Fact]
-    public async Task A_build_waits_out_another_client_reading_the_index()
+    public void A_build_waits_out_another_client_reading_the_index()
     {
         using var dir = new TempDir();
         var index = Sample();
         JournalIndexStore.Save(dir.Path, index);
         var path = JournalIndexStore.PathFor(dir.Path, index.GameVersion, index.Language);
 
-        var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-        var release = Task.Delay(50).ContinueWith(_ => reader.Dispose(), TaskScheduler.Default);
-        JournalIndexStore.Save(dir.Path, index);
-        await release;
+        // The reader lets go after 50 ms, on its own thread so a busy thread pool cannot hold it past the retries.
+        using (HeldFile.ReleasedAfter(path, TimeSpan.FromMilliseconds(50)))
+        {
+            JournalIndexStore.Save(dir.Path, index);
+        }
 
         Assert.NotNull(JournalIndexStore.Load(dir.Path, index.GameVersion, index.Language));
     }
