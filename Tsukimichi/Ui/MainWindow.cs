@@ -17,6 +17,7 @@ using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -66,6 +67,12 @@ public sealed class MainWindow : Window, IDisposable
     private WelcomeBackCard? welcomeBack;
 
     private Task? retryTask;
+
+    // The "rebuild failed" banner line, rebuilt when the error or the UI language changes.
+    private string? rebuildFailure;
+    private string? rebuildFailureError;
+    private int rebuildFailureLanguage = -1;
+
     private bool initialized;
     private DateTime? settingsDirtyAtUtc;
     private SortSpec persistedSort = SortSpec.Default;
@@ -686,6 +693,41 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
+    /// <summary>
+    /// A rebuild (a retry or a filing change) that failed while an older catalog stays in use: the window keeps showing
+    /// that catalog, so one line in the banner area says the rebuild failed, with Retry. Gone once a build lands
+    /// (<see cref="SessionState.SetCatalog"/> clears the error).
+    /// </summary>
+    private void DrawRebuildFailure(SessionState session)
+    {
+        if (session.CatalogError is not { } error)
+        {
+            rebuildFailure = null;
+            return;
+        }
+
+        if (rebuildFailure is null || error != rebuildFailureError || rebuildFailureLanguage != Loc.Version)
+        {
+            rebuildFailureError = error;
+            rebuildFailureLanguage = Loc.Version;
+            rebuildFailure = string.Format(CultureInfo.CurrentCulture, Strings.CatalogRebuildFailedFormat, error);
+        }
+
+        // Retry first, so a long error cut at the window's edge never takes the button with it.
+        if (ImGui.SmallButton(Strings.Retry + "##rebuildRetry"))
+        {
+            retryTask = retryCatalog();
+        }
+
+        ImGui.SameLine();
+        using var eclipse = Theme.PushText(Theme.Eclipse);
+        ImGui.TextUnformatted(rebuildFailure);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(rebuildFailure);
+        }
+    }
+
     private void RefreshToolbarStrings(SessionState session)
     {
         if (toolbarVersion == session.Version)
@@ -1213,6 +1255,7 @@ public sealed class MainWindow : Window, IDisposable
 
     private void DrawBanners(SessionState session)
     {
+        DrawRebuildFailure(session);
         if (session.ViewedSnapshot is null)
         {
             using var dusk = Theme.PushText(Theme.Surface.TextTertiary);

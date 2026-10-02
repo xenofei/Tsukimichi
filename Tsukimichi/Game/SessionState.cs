@@ -327,16 +327,18 @@ public sealed partial class SessionState
 
     /// <summary>
     /// Deletes a stored snapshot. The live character stays in memory and is written again on its next change; forgetting
-    /// it only makes sense after logging out.
+    /// it only makes sense after logging out. Returns how many <see cref="CharacterForgotten"/> listeners failed (each
+    /// is logged): a failed one may still hold the character's pins or overrides in memory and write them back, so the
+    /// caller says so rather than reporting a clean forget. 0 also when nothing was forgotten (live in another client).
     /// </summary>
-    public void ForgetCharacter(ulong contentId)
+    public int ForgetCharacter(ulong contentId)
     {
         // Multibox (D11): a character live in another game client belongs to that client, which would write it again
         // within seconds; the Characters pane disables Forget for it, and this guards any other caller.
         if (IsLiveElsewhere(contentId))
         {
             log?.Warning("Character {ContentId} is live in another game client; it was not forgotten", contentId);
-            return;
+            return 0;
         }
 
         snapshots.Delete(contentId);
@@ -352,7 +354,7 @@ public sealed partial class SessionState
             FollowLive();
         }
 
-        listeners.Raise(CharacterForgotten, contentId);
+        return listeners.Raise(CharacterForgotten, contentId);
     }
 
     /// <summary>
@@ -360,8 +362,10 @@ public sealed partial class SessionState
     /// Multibox (D11): the snapshot, sidecars and heartbeat of a character live in another game client stay (that
     /// client owns them), and so do its pins; every other heartbeat this client may delete goes (<see cref="DeleteHeartbeats"/>).
     /// Pins and overrides are rewritten under the cross-client lock rather than deleted (<see cref="ResetUserFiles"/>).
+    /// Returns how many <see cref="DataDeleted"/> listeners failed (each is logged): the files are gone, but a failed
+    /// listener may still hold its in-memory copy and write it back, so the caller says so rather than reporting success.
     /// </summary>
-    public void DeleteAllData()
+    public int DeleteAllData()
     {
         snapshots.DeleteAll(IsLiveElsewhere);
         foreach (var sidecar in CharacterSidecars.FindAll(paths.CharactersDir))
@@ -381,8 +385,9 @@ public sealed partial class SessionState
         recentEvents.Clear();
         // Listeners drop their in-memory copies (pins, overrides, spoiler overrides) first, so the bump in FollowLive
         // is the last one: whatever rebuilds on it, the spoiler masks included, sees the data already gone.
-        listeners.Raise(DataDeleted);
+        var failed = listeners.Raise(DataDeleted);
         FollowLive();
+        return failed;
     }
 
     /// <summary>Story sidequests and the chain catalog for a new bundle; a failure leaves both empty rather than failing the load.</summary>

@@ -482,6 +482,12 @@ public sealed class QuestTextService : IDisposable
         }
     }
 
+    /// <summary>
+    /// The longest <see cref="Dispose"/> waits for a cancelled index load or build: it checks its token between quests,
+    /// so it normally stops well within this. The plugin's unload counts it in its worst case (Plugin.DisposeWait).
+    /// </summary>
+    internal static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(2);
+
     public void Dispose()
     {
         clientState.Login -= ClearViews;
@@ -495,7 +501,10 @@ public sealed class QuestTextService : IDisposable
 
         try
         {
-            task?.Wait(TimeSpan.FromSeconds(2));
+            if (task is not null && !task.Wait(DisposeWait))
+            {
+                log.Warning("Journal index did not stop within {Seconds:0.#} s; it stops on its own", DisposeWait.TotalSeconds);
+            }
         }
         catch (AggregateException)
         {
