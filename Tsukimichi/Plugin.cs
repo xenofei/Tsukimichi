@@ -1004,6 +1004,9 @@ public sealed class Plugin : IDalamudPlugin
             configWindow.HookGate = gate;
             configWindow.Companions = companions;
             configWindow.Questionable = questionableIpc;
+            configWindow.Nearby = discoveryWindow;
+            var settingsWindow = configWindow;
+            discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations);
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;

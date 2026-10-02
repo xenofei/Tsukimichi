@@ -6,7 +6,8 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// Settings › Integrations › Questionable (feature plan v5, 1.6.0, decision 1): whether Questionable is loaded with the
-/// plugins it needs to run (vnavmesh, TextAdvance, Lifestream), "Allow Tsukimichi to start Questionable" (on by
+/// plugins it needs to run (vnavmesh, TextAdvance, Lifestream), "Show Questionable hand-off" (the detail pane's "Add to
+/// Questionable priority"), "Allow Tsukimichi to start Questionable" (on by
 /// default) and "Ask before starting Questionable" (on until the player ticks "Don't ask again" in the confirmation).
 /// Send to Questionable itself needs no setting: it is a button the player presses, disabled without Questionable.
 /// </summary>
@@ -17,9 +18,8 @@ public sealed partial class ConfigWindow
 
     private void DrawQuestionableSettings()
     {
-        ImGui.Spacing();
-        ImGui.TextDisabled(Strings.ConfigQuestionableSection);
-        if (Questionable is { } questionable)
+        Header(Strings.ConfigQuestionableSection);
+        if (Questionable is { } questionable && Row(Strings.ConfigQuestionableSection, null, "questionable loaded status vnavmesh textadvance lifestream"))
         {
             var required = string.Join(", ", QuestionableIpc.RequiredPlugins);
             string line;
@@ -39,31 +39,47 @@ public sealed partial class ConfigWindow
             Chrome.Hint(line);
         }
 
-        var allowStart = settings.QuestionableAllowStart;
-        if (ImGui.Checkbox(Strings.ConfigQuestionableAllowStart, ref allowStart))
+        // Read per use by the detail pane, so no callback is needed.
+        if (Row(Strings.ConfigQuestionableHandoff, Strings.ConfigQuestionableHandoffHint, "questionable priority list add"))
         {
-            settings.QuestionableAllowStart = allowStart;
-            Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigQuestionableAllowStartHint);
-        }
-
-        using (Dalamud.Interface.Utility.Raii.ImRaii.Disabled(!settings.QuestionableAllowStart))
-        {
-            var confirm = settings.QuestionableConfirmStart;
-            if (ImGui.Checkbox(Strings.ConfigQuestionableConfirmStart, ref confirm))
+            var handoff = settings.QuestionableHandoff;
+            if (ImGui.Checkbox(Strings.ConfigQuestionableHandoff, ref handoff))
             {
-                settings.QuestionableConfirmStart = confirm;
+                settings.QuestionableHandoff = handoff;
                 Save();
             }
+
+            HintOnHover(Strings.ConfigQuestionableHandoffHint);
         }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        if (Row(Strings.ConfigQuestionableAllowStart, Strings.ConfigQuestionableAllowStartHint, "questionable start automation"))
         {
-            UiMetrics.Tooltip(Strings.ConfigQuestionableConfirmStartHint);
+            var allowStart = settings.QuestionableAllowStart;
+            if (ImGui.Checkbox(Strings.ConfigQuestionableAllowStart, ref allowStart))
+            {
+                settings.QuestionableAllowStart = allowStart;
+                Save();
+            }
+
+            HintOnHover(Strings.ConfigQuestionableAllowStartHint);
+        }
+
+        if (Row(Strings.ConfigQuestionableConfirmStart, Strings.ConfigQuestionableConfirmStartHint, "questionable start confirm ask"))
+        {
+            using (Dalamud.Interface.Utility.Raii.ImRaii.Disabled(!settings.QuestionableAllowStart))
+            {
+                var confirm = settings.QuestionableConfirmStart;
+                if (ImGui.Checkbox(Strings.ConfigQuestionableConfirmStart, ref confirm))
+                {
+                    settings.QuestionableConfirmStart = confirm;
+                    Save();
+                }
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.ConfigQuestionableConfirmStartHint);
+            }
         }
     }
 }

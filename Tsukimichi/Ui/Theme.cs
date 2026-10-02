@@ -402,7 +402,7 @@ public static class Theme
     /// every popup, combo and tooltip begun inside the window inherits it. <c>PopupBg</c> is therefore pushed as well,
     /// so they read as Night as a whole rather than half-Night by accident; <see cref="PushTooltip"/> (every
     /// <see cref="UiMetrics.Tooltip(string)"/>) and <see cref="PushPopup"/> restyle them explicitly on top, which is
-    /// also what windows without this push (the Todo overlay's menus, Nearby, Settings) get. The title bar and
+    /// also what windows without this push (the Todo overlay's menus) get. The title bar and
     /// Dalamud's own title-bar buttons take <c>TitleBg*</c> from here. With <see cref="FollowingDalamud"/> nothing is
     /// pushed: the host style already is the palette.
     /// </summary>

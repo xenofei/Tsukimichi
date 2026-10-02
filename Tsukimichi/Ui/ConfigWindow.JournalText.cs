@@ -5,7 +5,7 @@ using Tsukimichi.Game;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Journal text (P9): "Search journal text of completed quests", off by default. Ticking it has the journal
+/// Settings › Display › Journal text (P9): "Search journal text of completed quests", off by default. Ticking it has the journal
 /// text service load or build its word index in the background; the line under the box says where that stands
 /// (building with a percentage, ready with the index's size, or why it failed). Unticking drops the index from memory
 /// and the search box goes back to names, rewards and ids.
@@ -23,6 +23,11 @@ public sealed partial class ConfigWindow
         }
 
         Header(Strings.JournalTextSettingsSection);
+        if (!Row(Strings.JournalTextSearchSetting, Strings.JournalTextSearchHint, "journal text search words index"))
+        {
+            return;
+        }
+
         var search = settings.JournalTextSearch;
         if (ImGui.Checkbox(Strings.JournalTextSearchSetting, ref search))
         {

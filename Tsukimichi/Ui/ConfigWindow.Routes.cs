@@ -12,6 +12,11 @@ public sealed partial class ConfigWindow
     private void DrawRoutes()
     {
         Header(Strings.ConfigSectionRoutes);
+        if (!Row(Strings.TodoConfigRouteFlagAdvance, Strings.TodoConfigRouteFlagAdvanceHint, "route map flag next stop"))
+        {
+            return;
+        }
+
         var advance = settings.RouteFlagAdvance;
         if (ImGui.Checkbox(Strings.TodoConfigRouteFlagAdvance, ref advance))
         {
@@ -28,28 +33,34 @@ public sealed partial class ConfigWindow
     /// <summary>The overlay's route sections; drawn inside the overlay's block, disabled with it.</summary>
     private void DrawTodoRouteToggles()
     {
-        var route = settings.TodoShowRoute;
-        if (ImGui.Checkbox(Strings.TodoConfigShowRoute, ref route))
+        if (Row(Strings.TodoConfigShowRoute, Strings.TodoConfigShowRouteHint, "overlay section route followed"))
         {
-            settings.TodoShowRoute = route;
-            Save();
+            var route = settings.TodoShowRoute;
+            if (ImGui.Checkbox(Strings.TodoConfigShowRoute, ref route))
+            {
+                settings.TodoShowRoute = route;
+                Save();
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.TodoConfigShowRouteHint);
+            }
         }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        if (Row(Strings.TodoConfigShowNextStops, Strings.TodoConfigShowNextStopsHint, "overlay section next stops aetheryte"))
         {
-            UiMetrics.Tooltip(Strings.TodoConfigShowRouteHint);
-        }
+            var stops = settings.TodoShowNextStops;
+            if (ImGui.Checkbox(Strings.TodoConfigShowNextStops, ref stops))
+            {
+                settings.TodoShowNextStops = stops;
+                Save();
+            }
 
-        var stops = settings.TodoShowNextStops;
-        if (ImGui.Checkbox(Strings.TodoConfigShowNextStops, ref stops))
-        {
-            settings.TodoShowNextStops = stops;
-            Save();
-        }
-
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(Strings.TodoConfigShowNextStopsHint);
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.TodoConfigShowNextStopsHint);
+            }
         }
     }
 }

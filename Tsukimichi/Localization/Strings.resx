@@ -431,7 +431,7 @@
     <comment>Tooltip on the "Also in your journal here" caption.</comment>
   </data>
   <data name="DiscoverySettingsTooltip" xml:space="preserve">
-    <value>Nearby quests settings</value>
+    <value>Nearby settings (opens Settings › Integrations)</value>
   </data>
   <data name="DiscoveryShowDtrLabel" xml:space="preserve">
     <value>Show a count in the server info bar</value>
@@ -751,7 +751,7 @@
     <comment>{0} = number of quests; the entry opens a submenu with one line per quest.</comment>
   </data>
   <data name="ConfigSectionHandIn" xml:space="preserve">
-    <value>Integrations: hand-in items</value>
+    <value>Hand-in items</value>
   </data>
   <data name="ConfigHandInAllagan" xml:space="preserve">
     <value>Count with Allagan Tools</value>
@@ -2147,6 +2147,66 @@
   <data name="ConfigSectionDisplay" xml:space="preserve">
     <value>Display</value>
   </data>
+  <data name="ConfigSectionAdvanced" xml:space="preserve">
+    <value>Advanced</value>
+    <comment>Settings section: polling, journal filing and the game hooks override.</comment>
+  </data>
+  <data name="ConfigSectionTravel" xml:space="preserve">
+    <value>Travel</value>
+    <comment>Settings › Integrations block heading: Walk to giver and Go to giver.</comment>
+  </data>
+  <data name="ConfigSectionAutoDuty" xml:space="preserve">
+    <value>AutoDuty</value>
+    <comment>Settings › Integrations block heading; the plugin's own name.</comment>
+  </data>
+  <data name="ConfigSectionWotsit" xml:space="preserve">
+    <value>Wotsit</value>
+    <comment>Settings › Integrations block heading; the plugin's own name.</comment>
+  </data>
+  <data name="ConfigSectionNearby" xml:space="preserve">
+    <value>Nearby and server info bar</value>
+    <comment>Settings › Integrations block heading: the settings Nearby quests' cog used to hold.</comment>
+  </data>
+  <data name="ConfigSectionGameWindows" xml:space="preserve">
+    <value>Game windows and menus</value>
+    <comment>Settings › Integrations block heading: the NPC menu entry and the Duty Finder hint.</comment>
+  </data>
+  <data name="ConfigSectionHooks" xml:space="preserve">
+    <value>Game hooks</value>
+    <comment>Settings › Advanced block heading: the untested-version override.</comment>
+  </data>
+  <data name="DiscoveryShowDtrHint" xml:space="preserve">
+    <value>A "☾ N" entry with the count of quests you can start in this zone. Hover it for the first five names; click it to open Nearby quests.</value>
+    <comment>Settings › Integrations › Nearby and server info bar: tooltip on "Show a count in the server info bar".</comment>
+  </data>
+  <data name="SettingsSearchHint" xml:space="preserve">
+    <value>Search settings</value>
+    <comment>Hint inside the Settings window's search box.</comment>
+  </data>
+  <data name="SettingsSearchTooltip" xml:space="preserve">
+    <value>Finds settings by their names and descriptions, across every section. Choosing a section clears the search.</value>
+    <comment>Tooltip on the Settings search box.</comment>
+  </data>
+  <data name="SettingsHelpAndTour" xml:space="preserve">
+    <value>Help &amp; tour</value>
+    <comment>Button at the top of Settings that opens the help window.</comment>
+  </data>
+  <data name="SettingsHelpAndTourTooltip" xml:space="preserve">
+    <value>Opens the guide: the quick start, every topic, and the tour of the main window.</value>
+    <comment>Tooltip on Help &amp; tour.</comment>
+  </data>
+  <data name="SettingsNoMatchHeading" xml:space="preserve">
+    <value>No setting matches</value>
+    <comment>Settings search empty state heading.</comment>
+  </data>
+  <data name="SettingsNoMatchBody" xml:space="preserve">
+    <value>Try a shorter or different word, or clear the search to browse the sections.</value>
+    <comment>Settings search empty state body.</comment>
+  </data>
+  <data name="SettingsClearSearch" xml:space="preserve">
+    <value>Clear search</value>
+    <comment>Settings search empty state button.</comment>
+  </data>
   <data name="ConfigUiScale" xml:space="preserve">
     <value>Window scale</value>
   </data>
@@ -2592,7 +2652,7 @@
     <value>The last line says where the state came from: "Checked just now · live" for the character you are logged in as, "From Michiru's snapshot, 2 d ago" for a stored one, or "Log in to check this quest" before the first login.</value>
   </data>
   <data name="Help.QuestCardBodies.5" xml:space="preserve">
-    <value>For a quest you have completed, the Journal card at the bottom of the pane reads its journal entries as the game wrote them, from the game's own files, with its objectives: Read the journal opens it and Copy entry copies one entry. For a quest in your journal it shows the entries up to the step you are on, never further, and nothing for a quest you have not taken. On the character you are logged in as the text reads as the game showed it to you; on a stored character, words that depend on who reads them show both versions (he/she). Settings › Journal text › "Search journal text of completed quests" (off by default) lets the search box find quests by the words of their journal entries, among the quests the character shown has completed only. The first time, the plugin reads every quest's text in the background (a few seconds) and keeps a word index, not the text, in its config folder; it is rebuilt after a game patch.</value>
+    <value>For a quest you have completed, the Journal card at the bottom of the pane reads its journal entries as the game wrote them, from the game's own files, with its objectives: Read the journal opens it and Copy entry copies one entry. For a quest in your journal it shows the entries up to the step you are on, never further, and nothing for a quest you have not taken. On the character you are logged in as the text reads as the game showed it to you; on a stored character, words that depend on who reads them show both versions (he/she). Settings › Display › Journal text › "Search journal text of completed quests" (off by default) lets the search box find quests by the words of their journal entries, among the quests the character shown has completed only. The first time, the plugin reads every quest's text in the background (a few seconds) and keeps a word index, not the text, in its config folder; it is rebuilt after a game patch.</value>
   </data>
   <data name="Help.QuestTip" xml:space="preserve">
     <value>With no quest selected, the pane shows Tonight: how many quests you can pick up now (Show them filters the table to them), the next main scenario quest and what blocks it, the events running now and your pinned quests that are ready. A table row's right-click menu has pin, map flag, journal, copy name, show path and chat link too.</value>
@@ -2715,10 +2775,10 @@
     <value>Quest currents come from quests, five per zone in most expansions, and completing the quest attunes them. Field currents are touched in the world; the tab counts them but never locates them. Use the Aether Compass, a General Action under Actions &amp; Traits, to point at the nearest one.</value>
   </data>
   <data name="Help.FlightCardBodies.2" xml:space="preserve">
-    <value>/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level and job. A click on the name shows it in the Journal, a double-click flags the giver on the map, and right-click or … opens Flag, Teleport and Link in chat. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.</value>
+    <value>/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level and job. A click on the name shows it in the Journal, a double-click flags the giver on the map, and right-click or … opens Flag, Teleport and Link in chat. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog opens its settings in Settings › Integrations.</value>
   </data>
   <data name="Help.FlightCardBodies.3" xml:space="preserve">
-    <value>☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.</value>
+    <value>☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and Settings › Integrations › Nearby and server info bar can turn it off entirely.</value>
   </data>
   <data name="Help.FlightCardBodies.4" xml:space="preserve">
     <value>/tsuki zone prints chat links for the quests you can start in the current zone, by level, up to ten. /tsuki which prints every quest the targeted NPC hands out with its state. Both need an evaluated character; the Nearby quests window keeps the same list on screen.</value>
@@ -2841,7 +2901,7 @@
     <value>Repeatables count once</value>
   </data>
   <data name="Help.CountsCardBodies.0" xml:space="preserve">
-    <value>Quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite, a few deleted sidequests) sit under the Removed from the game node, off by default, and never count toward any total; a completed one still shows Completed when the node or Include removed reveals it, and its detail pane says which patch removed it where that is known. Quests the game's journal hides but still hands out (So You Want to Be a Gladiator, Leves of Kugane, Sights of the North, the Eureka entry quests, hidden steps of YoRHa and the Resistance Weapons) are filed under the genre their links point at, so a class's quests start with its intro and a zone's sidequests include its leve unlock; the detail pane says which rule filed them. The class intros (So You Want to Be a Gladiator and the other A Realm Reborn classes) are listed but never counted: the class you started as hands you "Way of the …" directly and never offers its intro, so counting it would keep that class one short for good; the job intros (A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual. Settings › Display › Journal filing › Legacy puts every one of them back in the single bucket releases before 0.6.1 showed.</value>
+    <value>Quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite, a few deleted sidequests) sit under the Removed from the game node, off by default, and never count toward any total; a completed one still shows Completed when the node or Include removed reveals it, and its detail pane says which patch removed it where that is known. Quests the game's journal hides but still hands out (So You Want to Be a Gladiator, Leves of Kugane, Sights of the North, the Eureka entry quests, hidden steps of YoRHa and the Resistance Weapons) are filed under the genre their links point at, so a class's quests start with its intro and a zone's sidequests include its leve unlock; the detail pane says which rule filed them. The class intros (So You Want to Be a Gladiator and the other A Realm Reborn classes) are listed but never counted: the class you started as hands you "Way of the …" directly and never offers its intro, so counting it would keep that class one short for good; the job intros (A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual. Settings › Advanced › Journal filing › Legacy puts every one of them back in the single bucket releases before 0.6.1 showed.</value>
   </data>
   <data name="Help.CountsCardBodies.1" xml:space="preserve">
     <value>A seasonal quest of an event that is not running shows Blocked with "seasonal event not active", and is left out of its genre's total the way a locked-out quest is, so the halo can close without it; it counts again while the event runs. An event whose end date is known and past locks its quests out for good.</value>
@@ -2895,7 +2955,7 @@
     <value>Some past seasonal rewards (minions, emotes, mounts, bardings, orchestrion rolls, ornaments) are sold again on the Online Store, which the game files cannot know. Moonlit says so on the rows the curated list covers; if you find one it does not, open a data correction issue with the store page as evidence.</value>
   </data>
   <data name="Help.QuirkCardBodies.5" xml:space="preserve">
-    <value>The item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint sit beside the game's own interface, which a patch can move. Each Tsukimichi release records the game version they were tested on; on a newer game patch (a new patch date) they pause until an update is tested there, and a chat line at login and a notice in Settings › Integrations say so. Hotfixes keep the patch date and do not pause them. The Journal, Moonlit, Characters, Nearby, the Todo overlay and every /tsuki command work as usual. To use the hooks anyway, tick Settings › Integrations › "Enable game hooks on this untested version"; it covers the patch you are on now and its hotfixes, so the next patch pauses them again. If one then draws in the wrong place, untick it and it stops at once.</value>
+    <value>The item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint sit beside the game's own interface, which a patch can move. Each Tsukimichi release records the game version they were tested on; on a newer game patch (a new patch date) they pause until an update is tested there, and a chat line at login and a notice in Settings › Integrations say so. Hotfixes keep the patch date and do not pause them. The Journal, Moonlit, Characters, Nearby, the Todo overlay and every /tsuki command work as usual. To use the hooks anyway, tick Settings › Advanced › "Enable game hooks on this untested version"; it covers the patch you are on now and its hotfixes, so the next patch pauses them again. If one then draws in the wrong place, untick it and it stops at once.</value>
   </data>
   <data name="Help.QuirkCardBodies.6" xml:space="preserve">
     <value>Select a padlocked duty in the Duty Finder or Raid Finder and a small panel beside the window names the quest that unlocks it, with its moon, what it is waiting for, and buttons to reveal it here or flag its giver. It follows the duty you select, not the one under the mouse, and speaks for the character you are logged in on. It knows the unlocks the game data links, a curated list (the A Realm Reborn and Dawntrail launch dungeons, the Crystal Tower and Shadow of Mhach alliance raids, the Heavensward optional dungeons and more) and Moonlit's duty unlocks; for any other padlocked duty it stays silent rather than guess. If the panel names the wrong quest, or a padlocked duty you know the quest for shows nothing, open a data correction issue with the duty's name. Turn it off in Settings › Integrations › "Duty Finder unlock hint".</value>

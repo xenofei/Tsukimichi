@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Config;
@@ -99,7 +98,7 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
             hint = exports.Folder;
         }
 
-        ImGui.SetNextItemWidth(260f * ImGuiHelpers.GlobalScale);
+        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(260f)));
         if (ImGui.InputTextWithHint(FolderLabel.Value, hint, ref folder, FolderMaxLength))
         {
             settings.ExportFolder = folder;

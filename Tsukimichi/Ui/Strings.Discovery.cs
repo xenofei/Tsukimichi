@@ -43,7 +43,6 @@ static partial class Strings
     public static string DiscoveryAcceptedToggleTooltip => Loc.Get("DiscoveryAcceptedToggleTooltip");
 
     // Settings popup (cog at the top right).
-    public const string DiscoverySettingsPopup = "##nearbySettings";
     public static string DiscoverySettingsTooltip => Loc.Get("DiscoverySettingsTooltip");
     public static string DiscoveryShowDtrLabel => Loc.Get("DiscoveryShowDtrLabel");
     public static string DiscoveryDtrShowWhenEmptyLabel => Loc.Get("DiscoveryDtrShowWhenEmptyLabel");

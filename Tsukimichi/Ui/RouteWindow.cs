@@ -91,8 +91,12 @@ public sealed class RouteWindow : Window
         this.showQuest = showQuest ?? throw new ArgumentNullException(nameof(showQuest));
         Size = new Vector2(600f, 620f);
         SizeCondition = ImGuiCond.FirstUseEver;
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(380f, 260f) };
+        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) };
     }
+
+    /// <summary>Logical minimum size of the window, scaled by the UI scale each frame.</summary>
+    private const float MinWidthLogical = 380f;
+    private const float MinHeightLogical = 260f;
 
     /// <summary>The host name of this window's Questionable confirmations.</summary>
     private const string QuestionableHost = "route";
@@ -127,6 +131,12 @@ public sealed class RouteWindow : Window
 
     public override void PreDraw()
     {
+        // The window is its own top level, so its minimum follows the UI scale like Nearby's.
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.FontScale,
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+        };
         nightChrome = Theme.PushNightWindow();
     }
 
