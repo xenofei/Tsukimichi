@@ -4,6 +4,66 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-01
+
+### Added
+- **"Worth it?" beside quest offers.** When an NPC offers a quest, a small panel beside the offer window says what it's worth to you:
+  - what it unlocks;
+  - its Moonlit rewards, and whether you have them;
+  - its step in a chain, and the patch it came in;
+  - whether it's repeatable or seasonal.
+
+  It follows your spoiler settings and never accepts or declines for you. Open in Tsukimichi and Pin are one click away.
+- **"What this opened" beside quest completions.** When you turn in a quest, a panel beside the reward window lists the quests it makes ready, what it unlocks and the next quest of its chain, each with Flag giver and Pin.
+- **Journal companion.** While the game's Journal is open, a panel beside it gives Tsukimichi's verdict on the selected quest (chain step, what it unlocks next, Moonlit rewards), with Open in Tsukimichi and Route to this.
+- Each panel can be turned off under Settings › Integrations › Quest panels beside game windows. Like the other in-game hooks, they pause on an untested game patch.
+- **Clickable chat actions.** Tsukimichi's chat lines (notices, /tsuki search, zone, which and why) end with [Open] [Pin] [Route]:
+  - Open shows the quest in Tsukimichi.
+  - Pin pins it for the character you're playing.
+  - Route opens its unlock route.
+
+  They work in the game's chat and in Chat 2.
+- **"Opened by that."** After a turn-in, one chat line says what it made available, e.g. "Opened: 2 unlock quests, 8 side quests (3 with a story) · [Show]".
+  - Show lists those quests in the Journal.
+  - Turn-ins a few seconds apart share one line, and no quest names are printed.
+- **Chat 2.** Right-click a quest link, or an item link that is a Moonlit reward or needed for an open quest, and Chat 2's Integrations menu offers "Open in Tsukimichi" with the quest's state.
+- **Item links in the game's chat** now get the "Tsukimichi: quest reward" and "needed for" menu entries, like items in your inventory.
+- **Nameplate marks** (optional, off by default). Quest givers can show "☾ Pinned", "☾ Moonlit reward" or "☾ Ready on WHM" under their name. The marks follow your pins as you change them.
+- **Quest toasts** (optional, off by default). The game's quest banner for a Moonlit reward or an unlocked duty.
+- **Set up your road.** On a fresh install, after the tour offer, a card lists what Tsukimichi can do while you play, each with one line on what it gives you:
+  - the Todo overlay;
+  - the chat notice for new quests, and the "Opened" line;
+  - the Nearby count in the server info bar;
+  - item hints and the Duty Finder hint.
+
+  Recommended turns them all on except the overlay, which stays your choice. Help › Quick start opens the card again.
+- **Overlay and Nearby buttons** at the foot of the tabs, beside Help and Settings. Your first pin while the overlay is off asks once whether to show it on screen.
+- **Help: While you play.** One page for everything that works while you play, with buttons that turn the overlay on and open Nearby:
+  - the Todo overlay, Nearby and the server info bar;
+  - item hints, an NPC's "quests here" and the Duty Finder hint;
+  - abandoned quests, routes, following a route and Go to giver;
+  - the panels beside the game's windows, and the clickable chat lines.
+- **Help: What Tsukimichi reads and keeps.**
+  - Your own characters only, and which files it keeps on your PC.
+  - No network code, and links open only when you click.
+  - How to forget a character or delete everything.
+- **New commands.** /tsuki tour, /tsuki journal, moonlit, characters, flight and blues open a tab, and /tsuki route [quest name] opens a quest's unlock route. A search that finds nothing suggests a command when the word was close: "Did you mean /tsuki nearby?"
+- **A reminder of what was restored.** When Tsukimichi opens on a stored character or with two or more filters on, one line says so, with Follow me and Clear.
+
+### Changed
+- **Settings has a section index and a search box.** The index becomes tabs when the window is narrow. The search finds any setting by its name or description, across every section.
+- **Settings sections are reordered:** Display, Todo overlay, Routes, Notices, Spoilers, Keyboard, Integrations, Data, Advanced, About. Polling, Journal filing and "Enable game hooks on this untested version" moved to Advanced.
+- **The Nearby quests settings moved to Settings › Integrations.** These are the server info bar count, keeping it visible at zero, and other-job quests. The cog in Nearby opens them there.
+- Settings uses the Night look and Moon Road headings, with a "Help & tour" button at the top.
+- Settings and Help now follow Settings › Display › Window scale. The window-scale slider applies when you let go instead of resizing while you drag.
+- **The tour shows a real quest.** Its Read chapter selects one, so the requirements, path and giver it points at are real. Your selection comes back afterwards.
+- **What's new collects every version you skipped,** newest first, as short highlights with More for the full text.
+- Moonlit and My blues show the same "nothing matches" panel as the Journal, with Reset filters.
+- Without a character the banner now reads "Log in and Tsukimichi reads your journal…".
+- Known quirks gained two entries: HaselTweaks revealing hidden duty names, and Simple Tweaks' different scenario percentage. The Duty Finder hint moved to While you play.
+- /tsuki glyphs is no longer listed in help; the README lists /tsuki report and the new commands.
+- On a short window the rail drops its progress gauge before the crest; the Journal tab's moon shows the same progress.
+
 ## [1.6.0] - 2026-10-01
 
 ### Added
