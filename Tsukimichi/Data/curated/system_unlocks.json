@@ -269,13 +269,13 @@
     "note": "Let the Clan Hunt Begin; unlocks Clan Centurio hunts."
   },
   "67656": {
-    "label": "Hunts (Heavensward)",
+    "label": "Hunts (Heavensward) · 2-star bills",
     "kind": "system",
     "note": "Better Bill Hunting; the wiki quest page lists the second-level clan mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Better_Bill_Hunting"
   },
   "67657": {
-    "label": "Hunts (Heavensward)",
+    "label": "Hunts (Heavensward) · 3-star bills",
     "kind": "system",
     "note": "Top Marks; the wiki quest page lists the third-level clan mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Top_Marks"
@@ -291,7 +291,7 @@
     "note": "An Unexpected Proposal; first quest of the HW Anima chain."
   },
   "67896": {
-    "label": "Egi glamours",
+    "label": "Egi glamours (Summoner)",
     "kind": "system",
     "note": "An Egi by Any Other Name; the wiki quest page lists egi glamours under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_Egi_by_Any_Other_Name"
@@ -335,13 +335,13 @@
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/One-star_Veteran_Clan_Hunt"
   },
   "68473": {
-    "label": "Hunts (Stormblood)",
+    "label": "Hunts (Stormblood) · 2-star bills",
     "kind": "system",
     "note": "Two-star Veteran Clan Hunt; the wiki quest page lists the two-star veteran clan mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Two-star_Veteran_Clan_Hunt"
   },
   "68474": {
-    "label": "Hunts (Stormblood)",
+    "label": "Hunts (Stormblood) · 3-star bills",
     "kind": "system",
     "note": "Three-star Veteran Clan Hunt; the wiki quest page lists the three-star veteran clan mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Three-star_Veteran_Clan_Hunt"
@@ -428,13 +428,13 @@
     "note": "Nuts to You; unlocks Clan Nutsy hunts."
   },
   "69134": {
-    "label": "Hunts (Shadowbringers)",
+    "label": "Hunts (Shadowbringers) · two-nut bills",
     "kind": "system",
     "note": "Two Nuts Too Nutty; the wiki quest page lists the two-nut clan mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Two_Nuts_Too_Nutty"
   },
   "69135": {
-    "label": "Hunts (Shadowbringers)",
+    "label": "Hunts (Shadowbringers) · three-nut bills",
     "kind": "system",
     "note": "How Do You Like Three Nuts; the wiki quest page lists the three-nut clan mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/How_Do_You_Like_Three_Nuts"
@@ -557,13 +557,13 @@
     "note": "The Hunt for Specimens; unlocks Endwalker hunt bills."
   },
   "69713": {
-    "label": "Hunts (Endwalker)",
+    "label": "Hunts (Endwalker) · associate bills",
     "kind": "system",
     "note": "That Specimen Came from the Moon; the wiki quest page lists the associate guildship mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/That_Specimen_Came_from_the_Moon"
   },
   "69714": {
-    "label": "Hunts (Endwalker)",
+    "label": "Hunts (Endwalker) · senior bills",
     "kind": "system",
     "note": "A Hunt for the Ages; the wiki quest page lists the senior guildship mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Hunt_for_the_Ages"
@@ -603,12 +603,13 @@
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Seeing_the_Cieldalaes"
   },
   "70182": {
-    "label": "Variant and Criterion dungeons",
+    "label": "Variant dungeons · Sil'dih survey record",
     "kind": "system",
-    "note": "A Key to the Past; unlocks variant dungeons (Sil'dih Subterrane) and criterion."
+    "note": "A Key to the Past; the wiki quest page lists the Sil'dih Survey Record under unlocks. The Sil'dihn Subterrane itself is its duty unlock (duty_unlocks.json); An Odd Job before it opens variant dungeons.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Key_to_the_Past"
   },
   "70187": {
-    "label": "Variant and Criterion dungeons",
+    "label": "Variant dungeons",
     "kind": "system",
     "note": "An Odd Job; the wiki quest page lists variant dungeons under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_Odd_Job"
@@ -629,7 +630,7 @@
     "note": "That's So Anden; SatisfactionNpc 9 QuestRequired."
   },
   "70300": {
-    "label": "Egi glamours",
+    "label": "Egi glamours (Scholar)",
     "kind": "system",
     "note": "A Faerie Tale Come True; the wiki quest page lists egi glamours under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Faerie_Tale_Come_True"
@@ -638,12 +639,6 @@
     "label": "Custom deliveries: Margrat",
     "kind": "system",
     "note": "A Request of One's Own; SatisfactionNpc 10 QuestRequired."
-  },
-  "70352": {
-    "label": "Custom deliveries: Margrat",
-    "kind": "system",
-    "note": "The Pride of Labyrinthos; the wiki quest page lists Margrat's custom deliveries under unlocks.",
-    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Pride_of_Labyrinthos"
   },
   "70502": {
     "label": "Custom deliveries: Wachumeqimeqi",
@@ -664,9 +659,9 @@
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Sights_of_the_West"
   },
   "70543": {
-    "label": "Sightseeing Log (Dawntrail)",
+    "label": "Sightseeing Log (Dawntrail) · entries 29-45",
     "kind": "system",
-    "note": "Sights of the West and Beyond; the wiki quest page lists the later Dawntrail sightseeing log entries under unlocks.",
+    "note": "Sights of the West and Beyond; the wiki quest page lists Dawntrail sightseeing log entries 29-45 under unlocks (Sights of the West opens the earlier ones).",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Sights_of_the_West_and_Beyond"
   },
   "70544": {
@@ -682,13 +677,13 @@
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_New_Dawn,_a_New_Hunt"
   },
   "70546": {
-    "label": "Hunts (Dawntrail)",
+    "label": "Hunts (Dawntrail) · intermediate bills",
     "kind": "system",
     "note": "Why We Hunt; the wiki quest page lists the intermediate Dawn mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Why_We_Hunt"
   },
   "70547": {
-    "label": "Hunts (Dawntrail)",
+    "label": "Hunts (Dawntrail) · advanced bills",
     "kind": "system",
     "note": "Hunting the Hunter; the wiki quest page lists the advanced Dawn mark bills under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Hunting_the_Hunter"
