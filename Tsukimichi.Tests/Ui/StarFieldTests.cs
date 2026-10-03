@@ -262,6 +262,34 @@ public class StarFieldTests
         Assert.Equal(expected, StarField.CountFor(width, height));
     }
 
+    [Theory]
+    [InlineData(48, 1f, 48)]
+    [InlineData(48, 0.5f, 24)]
+    [InlineData(13, 0.5f, 7)]
+    [InlineData(6, 0.5f, 4)]
+    [InlineData(3, 0.5f, 3)]
+    [InlineData(10, 0f, 4)]
+    [InlineData(10, 2f, 10)]
+    [InlineData(10, float.NaN, 10)]
+    [InlineData(0, 0.5f, 0)]
+    [InlineData(-3, 0.5f, 0)]
+    public void A_palette_thins_its_sky_to_a_share_of_the_stars_never_under_four(int count, float density, int expected)
+    {
+        // spec-1.17 decision 6: Kugane Lacquer's sky is half as dense (the mock keeps at least 4 a sky).
+        Assert.Equal(expected, StarField.Thinned(count, density));
+    }
+
+    [Fact]
+    public void A_thinned_sky_is_the_same_sky_with_fewer_stars()
+    {
+        // The share shown is a prefix of the field, so no star moves or changes when the palette thins the sky.
+        var field = new SkyField(0x4B55, StarField.MaxStars);
+        var full = field.For(324f, 600f).ToArray();
+        var thinned = full.AsSpan(0, StarField.Thinned(full.Length, 0.5f)).ToArray();
+        Assert.Equal(full.Length / 2, thinned.Length);
+        Assert.Equal(full.Take(thinned.Length), thinned);
+    }
+
     [Fact]
     public void A_path_gets_one_band_per_expansion_header_seeded_by_its_row_count()
     {

@@ -253,10 +253,14 @@ public sealed class AppearanceTests
         Assert.Equal(PaletteId.IshgardSnow, resolved.Palette);
         Assert.Equal(FrameKitId.Came, resolved.Frames);
 
+        // 1.17 (T16) offers Dawn and Kugane Lacquer.
+        Assert.Equal(PaletteId.Dawn, AppearanceResolver.Resolve(new AppearanceConfig { Palette = "dawn" }).Palette);
+        Assert.Equal(PaletteId.KuganeLacquer, AppearanceResolver.Resolve(new AppearanceConfig { Palette = "kugane-lacquer" }).Palette);
+
         resolved = AppearanceResolver.Resolve(new AppearanceConfig
         {
             Theme = "astrologian-orrery",
-            Palette = "dawn",
+            Palette = "sunset",
             Frames = "pewter",
             Glyphs = new Dictionary<string, string> { ["ready"] = "sumi-to-kinpaku" },
         });
@@ -265,7 +269,7 @@ public sealed class AppearanceTests
         Assert.Equal(PaletteId.Night, resolved.Palette);
         Assert.Equal(FrameKitId.Brass, resolved.Frames);
         Assert.Equal(GlyphSetId.Medallion, resolved.SetFor(QuestState.Ready));
-        Assert.Equal(["theme: astrologian-orrery", "ready: sumi-to-kinpaku", "palette: dawn", "frames: pewter"], resolved.Unknown);
+        Assert.Equal(["theme: astrologian-orrery", "ready: sumi-to-kinpaku", "palette: sunset", "frames: pewter"], resolved.Unknown);
     }
 
     [Fact]

@@ -577,9 +577,10 @@ public sealed partial class ConfigWindow
         {
             if (state == QuestState.Ready && Theme.ShowGlow)
             {
-                if (Theme.Washes)
+                if (Theme.ReadyHaloWash)
                 {
-                    // A light palette: the Ready wash the table draws (spec-1.16 §A4.1), not a glow.
+                    // A light palette: the Ready wash the table draws (spec-1.16 §A4.1), not a glow; Dawn and Kugane
+                    // Lacquer: their Ready halo, the same way (spec-1.17 §E4.1).
                     TablePane.ReadyWash(dl, center, radius);
                 }
                 else
