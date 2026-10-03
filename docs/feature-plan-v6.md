@@ -108,7 +108,9 @@ Points 2 and 5.
 
 | Id | Item | Effort |
 |---|---|---|
-| U7 | The Settings rebuild: row design, 9 pages, plain words, spacing, toggles and segmented pickers, migration, tour targets updated | L |
+| U7 | The Settings rebuild: row design, 9 pages, plain words, spacing, toggles and segmented pickers, migration, tour targets updated. **Your 2026-10-03 notes:** the window scale applies **live** while you change it (no apply or reopen), and a new **Text size** setting scales Tsukimichi's fonts on their own. | L |
+| U9 | **Resizable Journal columns** (your request): drag any column edge to set its width (Name, Lv, Job, Status, Expansion, Rewards, EXP, Unlocks). Widths are saved; "Reset column widths" is in the header's right-click menu. Default widths are measured so no icon or word is cut off at any UI or text size, and a column you sized keeps its width. | M |
+| U10 | **Full, Quiet and Plain look clearly different** (your request: "they barely look any different"). A design pass defines three distinct looks with a mock, checked by the realism supervisor:<br>• **Full:** the whole Moon Road;<br>• **Quiet:** calm and flat, ornament reduced to rules;<br>• **Plain:** dense and utilitarian, classic glyphs.<br>Then they're implemented, with a live preview in Settings. | M |
 | U8 | Interaction motion everywhere: tree, table, rail, pills, tooltips, popups, Settings | M |
 | M1 | Moon Road moments: station travel, a road glint on completion, a halo pulse when a quest becomes Ready. One-shot only, never looping. | M |
 | M2 | Panels beside game windows rise in, never blink, stick to one side, and don't strobe while you arrow through lists | M |
