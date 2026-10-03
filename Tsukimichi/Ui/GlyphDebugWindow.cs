@@ -17,7 +17,7 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Developer window for the glyphs, opened with <c>/tsukimichi glyphs</c> (feature plan v6 G3: the owner checks it in
 /// game before the new medals merge). Sizes are device pixels, not logical sizes, because the row tier, the atlas tiers
-/// and the gauges' gates are pixel rules. Four tabs:
+/// and the gauges' gates are pixel rules. Five tabs:
 /// <list type="bullet">
 /// <item><b>A/B sheet</b>: every state from 5 to 32 px, the 1.11 moons (A, <see cref="LegacyMoonGlyph"/>) beside the 1.12
 /// medals (B, <see cref="MedalGlyph"/>), then a quest-list mock at 16 and 20 px rows with each medal's badge content at
@@ -26,6 +26,8 @@ namespace Tsukimichi.Ui;
 /// each role.</item>
 /// <item><b>Gauges</b>: the halo gauge, the filling moon and the orbit ring, A beside B (G5).</item>
 /// <item><b>Icon</b>: the plugin icon at the installer's sizes on Night, Dalamud grey and white.</item>
+/// <item><b>Themes</b> (1.17): two looks side by side, how alike every pair of their moons is, and Ready's lead
+/// (<c>GlyphDebugWindow.Themes.cs</c>).</item>
 /// </list>
 /// The "Simulate" combo re-colours the whole window through a colour-vision simulation (greyscale, deuteranopia,
 /// protanopia, tritanopia: <see cref="ColorVisionSimulation"/>, Machado 2009 in linear sRGB; greyscale is WCAG relative
@@ -34,7 +36,7 @@ namespace Tsukimichi.Ui;
 /// moment after the mode is picked). The game's job icons stay as they are. <see cref="Theme"/> and the renderers stay
 /// untouched.
 /// </summary>
-public sealed class GlyphDebugWindow : Window, IDisposable
+public sealed partial class GlyphDebugWindow : Window, IDisposable
 {
     private static readonly string[] SimulationNames = Array.ConvertAll(ColorVisionSimulation.All, ColorVisionSimulation.Name);
 
@@ -132,6 +134,7 @@ public sealed class GlyphDebugWindow : Window, IDisposable
         Tab("Hero", DrawHero);
         Tab("Gauges", DrawGauges);
         Tab("Icon", DrawIcon);
+        Tab("Themes", DrawThemes);
     }
 
     public void Dispose()
