@@ -4,6 +4,17 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.12.2] - 2026-10-03
+
+### Changed
+- **Unlocks never repeats what the quest's Rewards already show.** If a job, duty, emote, mount, minion or aether current is in the Rewards, it isn't listed again in the Unlocks column, the quest pane's Unlocks section, tooltips, the Todo overlay, Moonlit, the game-window panels or chat.
+- **Unlocks now holds what a quest opens access to:** areas, aetherytes, duties, features, jobs and flying. Actions, emotes and collectables appear only when they aren't rewards. Next quests stay in the Path card instead of being listed twice.
+- **Job and duty rewards show their icons** in the Rewards column and tiles.
+
+### Fixed
+- Unlocks no longer lists the same thing twice: two "Collect" actions, a title listed twice, a zone next to its own world map, or the Blue Mage feature next to the Blue Mage job.
+- Moonlit's "Also opens" and the game-window panels no longer repeat the quest's own Moonlit rewards.
+
 ## [1.12.1] - 2026-10-03
 
 ### Changed
