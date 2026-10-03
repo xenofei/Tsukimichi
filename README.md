@@ -60,6 +60,7 @@ Updates arrive through the plugin installer like any other plugin.
 | `/tsuki report [quest name]` | copy a diagnostic block for the selected or named quest to the clipboard, ready to paste into a GitHub issue |
 | `/tsuki export [quests\|moonlit] [json\|csv]` | write your completed quests, your Moonlit collection, or both to the exports folder (see [docs/export-format.md](docs/export-format.md)) |
 | `/tsuki stop` | stop every walk, flight, travel chain and hand-off Tsukimichi started (a Questionable run, and the AutoDuty and Artisan runs it began) and say in chat what stopped; put it in a macro for one key |
+| `/tsuki look <code>` | open Settings › Themes with a share code pasted (`TM1-…`, from Share on that page): it lists what the code would change, and nothing changes until you choose Apply, with Undo after |
 | `/tsuki config` or `/tsuki settings` | open Settings |
 | `/tsuki help` | open the help window |
 

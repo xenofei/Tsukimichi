@@ -21,9 +21,12 @@ namespace Tsukimichi.Ui;
 /// appearance (<see cref="GlyphSeam.PushAppearance"/>) or the saved one, crossfading over
 /// <see cref="MotionTokens.Swap"/> (at once under Reduce motion).</item>
 /// <item><b>Colours</b>: the palette tiles (Follow Dalamud is one), High contrast, and Frames.</item>
+/// <item><b>Share</b> (1.17): the look's share code with Copy, and a paste field that previews a code before Apply
+/// (<c>ConfigWindow.Themes.Share.cs</c>).</item>
 /// <item><b>Reset appearance</b>: one click with Undo (<see cref="GuardedAction.ResetAppearance"/>).</item>
 /// </list>
-/// Hover previews, click applies at once, Undo follows (<see cref="UndoToast"/>); there is no Apply button. Moon style,
+/// Hover previews, click applies at once, Undo follows (<see cref="UndoToast"/>); only a pasted share code waits for an
+/// Apply, after its preview. Moon style,
 /// Moon colours and Follow Dalamud colours moved here from General › Look: the cards, High contrast and the palette tiles,
 /// with their search words.
 /// </summary>
