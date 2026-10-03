@@ -105,8 +105,24 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>Sprint at the start of a walk where mounts are not allowed (towns).</summary>
     public bool TravelSprintInTowns { get; set; } = true;
 
-    /// <summary>The travel settings as <see cref="Core.Travel.TravelOptions"/> for a new plan.</summary>
-    public Core.Travel.TravelOptions TravelOptions() => new(Math.Max(0, TravelMountDistance), TravelFly, TravelSprintInTowns);
+    // The last TravelOptions() handed out; a private field, so the configuration file never holds it.
+    private Core.Travel.TravelOptions? travelOptions;
+
+    /// <summary>
+    /// The travel settings as <see cref="Core.Travel.TravelOptions"/> for a new plan. Asked every frame while travel
+    /// buttons show, so it hands out one instance, made again only when a travel setting changed.
+    /// </summary>
+    public Core.Travel.TravelOptions TravelOptions()
+    {
+        var mount = Math.Max(0, TravelMountDistance);
+        if (travelOptions is not { } options || options.MountDistance != mount || options.Fly != TravelFly || options.SprintInTowns != TravelSprintInTowns)
+        {
+            options = travelOptions = new(mount, TravelFly, TravelSprintInTowns);
+        }
+
+        return options;
+    }
+
     /// <summary>
     /// 1.6.0 (decision 1): "Run with AutoDuty" may queue a duty that has neither Duty Support nor Trust in the regular
     /// Duty Finder, with other players. Off by default: such a duty's button stays disabled and says why.

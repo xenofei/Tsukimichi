@@ -45,7 +45,8 @@ public sealed record CompanionStatus(CompanionDefinition Definition, CompanionSt
 /// <summary>
 /// Turns Dalamud's installed plugin list into a <see cref="CompanionStatus"/> per companion. Pure, so the rules are
 /// tested without Dalamud: among the builds installed under any of a companion's internal names (matched ignoring
-/// case), a loaded one wins over one that is not, an earlier variant over a later one. A loaded build below its
+/// case; a do-nothing placeholder, <see cref="CompanionVariant.PlaceholderFrom"/>, counts as not installed), a loaded
+/// one wins over one that is not, an earlier variant over a later one. A loaded build below its
 /// variant's minimum is <see cref="CompanionState.Outdated"/>, else <see cref="CompanionState.Loaded"/>. A build that is
 /// not loaded is <see cref="CompanionState.Outdated"/> when Dalamud flags it as built for an older API or it is below
 /// the minimum (enabling it would not help), else <see cref="CompanionState.Disabled"/>.
@@ -62,7 +63,7 @@ public static class CompanionResolver
         {
             foreach (var plugin in installed)
             {
-                if (!string.Equals(plugin.InternalName, variant.InternalName, StringComparison.OrdinalIgnoreCase))
+                if (!variant.Recognises(plugin.InternalName, plugin.Version))
                 {
                     continue;
                 }
@@ -111,6 +112,13 @@ public static class CompanionResolver
         }
 
         return Normalize(version) < Normalize(minimum);
+    }
+
+    /// <summary>The version is known and at or above <paramref name="floor"/> (unset parts read as zero).</summary>
+    public static bool IsAtLeast(Version? version, Version floor)
+    {
+        ArgumentNullException.ThrowIfNull(floor);
+        return version is not null && Normalize(version) >= Normalize(floor);
     }
 
     // Version compares an unset build or revision (-1) as lower than 0; a manifest's "1.7.2" means 1.7.2.0.

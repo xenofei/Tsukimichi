@@ -47,10 +47,23 @@ public enum CompanionPlugin
 /// test can hold <paramref name="MinimumVersion"/> to the same scheme: Allagan Tools' changelog says 15.0.12 where Dalamud
 /// reports 1.15.0.12, and a minimum written the changelog's way turned every build away.
 /// </param>
-public sealed record CompanionVariant(string InternalName, string DisplayName, Version? MinimumVersion, string? RepositoryUrl, Version KnownBuild)
+/// <param name="PlaceholderFrom">
+/// A do-nothing build that installs under this internal name, at this version or above, is read as not installed: the
+/// WigglyMuffin repository's "Questionable (moved to WigglyQuest)" at 99.0.0.0 only points its users to WigglyQuest.
+/// Null when the name has no such build.
+/// </param>
+public sealed record CompanionVariant(string InternalName, string DisplayName, Version? MinimumVersion, string? RepositoryUrl, Version KnownBuild, Version? PlaceholderFrom = null)
 {
     /// <summary>The plugin is in Dalamud's official repository: no custom repository needed.</summary>
     public bool IsOfficial => RepositoryUrl is null;
+
+    /// <summary>
+    /// The installed plugin is this build: its internal name matches (ignoring case) and it is not the do-nothing
+    /// placeholder (<see cref="PlaceholderFrom"/>).
+    /// </summary>
+    public bool Recognises(string internalName, Version? version) =>
+        string.Equals(internalName, InternalName, StringComparison.OrdinalIgnoreCase)
+        && !(PlaceholderFrom is { } placeholder && CompanionResolver.IsAtLeast(version, placeholder));
 }
 
 /// <summary>A companion plugin: its builds in order of preference, whether Settings lists it, and who needs it.</summary>
@@ -90,7 +103,7 @@ public sealed record CompanionDefinition(
 /// Version numbering, as Dalamud reports it (each variant's <see cref="CompanionVariant.KnownBuild"/>): AutoDuty
 /// <c>0.0.0.N</c> (its release tag; the csproj says 0.0.0.0); Allagan Tools <c>1.15.0.N</c> (its changelog and tags
 /// drop the leading 1); Quest Map <c>&lt;API&gt;.&lt;patch&gt;.N.0</c> since API 14 (15.755.2.0; 1.x before);
-/// Questionable <c>15.756.3.N</c>; Lifestream, TextAdvance, vnavmesh, Artisan, GatherBuddy, Chat 2 and Wrath Combo plain
+/// Questionable <c>15.756.3.N</c> (its WigglyMuffin fork, WigglyQuest, <c>7.5.N.0</c>); Lifestream, TextAdvance, vnavmesh, Artisan, GatherBuddy, Chat 2 and Wrath Combo plain
 /// <c>a.b.c.d</c> from their csproj or tag; Boss Mod, Boss Mod Reborn, GatherBuddy Reborn and Rotation Solver Reborn
 /// <c>7.5.6.N</c> from their tags.
 /// </para>
@@ -102,6 +115,14 @@ public static class CompanionCatalog
     public const string PuniShVeyn = "https://puni.sh/api/repository/veyn";
     public const string NightmareXiv = "https://github.com/NightmareXIV/MyDalamudPlugins/raw/main/pluginmaster.json";
     public const string CombatReborn = "https://raw.githubusercontent.com/FFXIV-CombatReborn/CombatRebornRepo/main/pluginmaster.json";
+    public const string WigglyMuffin = "https://github.com/WigglyMuffin/DalamudPlugins/raw/main/pluginmaster.json";
+
+    /// <summary>
+    /// The WigglyMuffin fork of Questionable moved to the internal name <c>WigglyQuest</c> (its repository's plugin list,
+    /// 2026-09-11, WigglyQuest 7.5.27) and left "Questionable (moved to WigglyQuest)" under the old name at 99.0.0.0, a
+    /// build that does no questing and registers no gates. Real Questionable builds are numbered 15.x.
+    /// </summary>
+    public static readonly Version QuestionablePlaceholder = new(99, 0, 0, 0);
 
     /// <summary>
     /// AutoDuty 0.0.0.336 (2026-09-13) is the first build with both <c>AutoDuty.PushConfigOverrides</c> (added
@@ -123,7 +144,12 @@ public static class CompanionCatalog
     [
         new(CompanionPlugin.Lifestream, [new("Lifestream", "Lifestream", null, NightmareXiv, new(2, 5, 4, 23))]),
         new(CompanionPlugin.Vnavmesh, [new("vnavmesh", "vnavmesh", null, PuniShVeyn, new(1, 2, 3, 14))]),
-        new(CompanionPlugin.Questionable, [new("Questionable", "Questionable", null, PuniShMain, new(15, 756, 3, 26))]),
+        new(
+            CompanionPlugin.Questionable,
+            [
+                new("Questionable", "Questionable", null, PuniShMain, new(15, 756, 3, 26), QuestionablePlaceholder),
+                new("WigglyQuest", "WigglyQuest", null, WigglyMuffin, new(7, 5, 27, 0)),
+            ]),
         new(CompanionPlugin.TextAdvance, [new("TextAdvance", "TextAdvance", null, NightmareXiv, new(3, 3, 0, 1))], NeededBy: [CompanionPlugin.Questionable]),
         new(CompanionPlugin.AutoDuty, [new("AutoDuty", "AutoDuty", AutoDutyMinimum, PuniShErdelf, new(0, 0, 0, 375))]),
         new(

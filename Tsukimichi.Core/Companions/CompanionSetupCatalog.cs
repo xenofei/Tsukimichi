@@ -198,9 +198,42 @@ public static class CompanionSetupCatalog
 
     private const string LifestreamFile = "Lifestream/DefaultConfig.json";
 
+    private static readonly char[] PathSeparators = ['/', '\\'];
+
     /// <summary>One plugin's recommended settings, in catalog order.</summary>
     public static IReadOnlyList<SetupRequirement> For(CompanionPlugin plugin) => All.Where(r => r.Plugin == plugin).ToList();
 
     /// <summary>One requirement by id; null when none has it.</summary>
     public static SetupRequirement? Get(string id) => All.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.Ordinal));
+
+    /// <summary>
+    /// Whether a change to <paramref name="relativePath"/>, under Dalamud's <c>pluginConfigs</c> folder, may change what
+    /// the Setup list reads: a companion's own file (<c>Questionable.json</c>, <c>WigglyQuest.json</c>) or anything in
+    /// its folder (<c>Lifestream/DefaultConfig.json</c>, <c>AutoDuty/AutoDutyConfigV2.json</c>). The plugins read
+    /// through their IPC save there too, so their changes count. Tsukimichi's own saves and other plugins' do not.
+    /// </summary>
+    public static bool Concerns(string relativePath)
+    {
+        ArgumentNullException.ThrowIfNull(relativePath);
+        var path = relativePath.TrimStart('/', '\\');
+        var slash = path.IndexOfAny(PathSeparators);
+        var first = slash >= 0 ? path[..slash] : path.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ? path[..^5] : string.Empty;
+        if (first.Length == 0)
+        {
+            return false;
+        }
+
+        foreach (var definition in CompanionCatalog.All)
+        {
+            foreach (var variant in definition.Variants)
+            {
+                if (string.Equals(first, variant.InternalName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

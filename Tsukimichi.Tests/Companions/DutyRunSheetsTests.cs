@@ -15,6 +15,8 @@ public sealed class DutyRunFixture : IDisposable
 
     public DutyRunIndex Index => built.Value.Index;
 
+    public LuminaGameData Game => built.Value.Game;
+
     public void Dispose()
     {
         if (built.IsValueCreated)
@@ -91,5 +93,24 @@ public sealed class DutyRunSheetsTests(DutyRunFixture fixture, ITestOutputHelper
     {
         Assert.True(fixture.Index.Count > 500, $"only {fixture.Index.Count} duties");
         Assert.All(new uint[] { 1, 2, 4, 15, 16 }, cfc => Assert.Equal(DutyRunInfo.Dungeons, fixture.Index.ByCondition(cfc)!.ContentTypeId));
+    }
+
+    /// <summary>
+    /// The 1.6 to 1.10 bug: the plugin called <c>Build(DataManager.Excel)</c>, the language defaulted to None, Lumina
+    /// refused the ContentFinderCondition sheet and the Duties section stayed hidden in game, while these tests passed
+    /// English. The language now has no default, so leaving it out does not compile.
+    /// </summary>
+    [Fact]
+    public void The_language_cannot_be_left_out()
+    {
+        var language = typeof(DutyRunSheets).GetMethod(nameof(DutyRunSheets.Build))!.GetParameters().Single(static p => p.ParameterType == typeof(Language));
+        Assert.False(language.HasDefaultValue, "Build's language must be passed: ContentFinderCondition exists only per language");
+    }
+
+    [GameDataFact]
+    public void No_language_is_refused_before_any_sheet_is_read()
+    {
+        var refused = Assert.Throws<ArgumentException>(() => DutyRunSheets.Build(fixture.Game.Excel, Language.None));
+        Assert.Equal("language", refused.ParamName);
     }
 }

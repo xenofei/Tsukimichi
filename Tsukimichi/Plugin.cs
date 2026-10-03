@@ -1001,22 +1001,22 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // AutoDuty and Quest Map (decision 1): the detail pane's Duties section ("Run with AutoDuty", Duty Support or
             // Trust unless Settings allows the Duty Finder) and "Open in Quest Map"; /tsuki why points at the latter. The
-            // duty index is read from the sheets once, on first use.
+            // duty index is read from the sheets once, in the client's language, on a worker started now: the draw only
+            // reads it, and the Duties section stays hidden for the moment it builds.
             var autoDuty = new Game.AutoDutyIpc(PluginInterface, companions, Log);
             companionSetup.UseGates(Core.Companions.CompanionPlugin.AutoDuty, new Game.AutoDutySettingGates(PluginInterface, autoDuty, Log));
             var questMap = new Game.QuestMapIpc(PluginInterface, companions, Log);
-            var dutyRuns = new Lazy<Core.Companions.DutyRunIndex?>(() =>
-            {
-                try
+            var dutyLanguage = Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language);
+            var dutyRuns = new Core.Runtime.WarmedValue<Core.Companions.DutyRunIndex>(
+                () =>
                 {
-                    return DutyRunSheets.Build(DataManager.Excel);
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(ex, "Duty index unavailable; the Duties section is hidden");
-                    return null;
-                }
-            });
+                    var started = Stopwatch.GetTimestamp();
+                    var index = DutyRunSheets.Build(DataManager.Excel, dutyLanguage);
+                    Log.Debug("Duty index: {Count} duties read in {Ms:F0} ms on a worker", index.Count, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+                    return index;
+                },
+                ex => Log.Warning(ex, "Duty index unavailable; the Duties section is hidden"));
+            _ = dutyRuns.Start();
             mainWindow.AttachCompanions(
                 companions,
                 autoDuty,
