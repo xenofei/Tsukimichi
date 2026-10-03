@@ -97,6 +97,34 @@ public sealed class QuestBriefBuilder
         return false;
     }
 
+    /// <summary>Whether a Moonlit line of the panel already names it (a duty unlock, a job): the unlock lines leave it out.</summary>
+    private static bool InMoonlit(List<MoonlitBriefLine> lines, string name)
+    {
+        foreach (var line in lines)
+        {
+            if (Core.Unlocks.UnlockRewards.SameName(line.Name, name))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Whether one of the quest's Moonlit rewards is the index row's thing (<see cref="Core.Unlocks.UnlockRewards"/>).</summary>
+    private static bool InMoonlit(IReadOnlyList<UniqueRewardEntry> uniques, Core.Unlocks.UnlockEntry entry)
+    {
+        foreach (var unique in uniques)
+        {
+            if (Core.Unlocks.UnlockRewards.Same(unique, entry))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static string PlanDutiesKey(string name)
     {
         var trimmed = name.Trim();
@@ -150,7 +178,8 @@ public sealed class QuestBriefBuilder
             // The reader answers for the viewed character; while another one is viewed it would speak for the wrong
             // character, so the panel says it cannot tell (as the item hint does).
             var forLive = session.IsLive;
-            foreach (var entry in moonlit().ForQuest(quest.RowId))
+            var uniques = moonlit().ForQuest(quest.RowId);
+            foreach (var entry in uniques)
             {
                 var owned = forLive ? unlocks.IsObtained(entry) : null;
                 var name = RewardNames.Display(entry, quest, bundle.Language);
@@ -163,9 +192,15 @@ public sealed class QuestBriefBuilder
                 }));
             }
 
+            // A Moonlit line already names what it shows, so the unlock lines never repeat it.
             opens = QuestVerdict.Unlocks(quest, tags().For(quest.RowId));
             foreach (var unlock in opens)
             {
+                if (InMoonlit(moonlitLines, unlock.Name))
+                {
+                    continue;
+                }
+
                 unlockLabels.Add(unlock.Label);
             }
 
@@ -176,7 +211,7 @@ public sealed class QuestBriefBuilder
                 var added = 0;
                 foreach (var entry in index.For(quest.RowId))
                 {
-                    if (entry.Group > Core.Unlocks.UnlockGroup.Feature || added >= MaxIndexLabels || NamedAlready(opens, entry.Name))
+                    if (entry.Group > Core.Unlocks.UnlockGroup.Feature || added >= MaxIndexLabels || NamedAlready(opens, entry.Name) || InMoonlit(uniques, entry) || InMoonlit(moonlitLines, entry.Name))
                     {
                         continue;
                     }

@@ -230,10 +230,31 @@ public sealed class QuestUnlocks
 - **Layout:** the icon is `UiMetrics.Icon(24)` on the sunken tile used by reward tiles. The name is in the body text. The right caption is TextTertiary: the kind word plus one fact (region, level, territory, "1 current").
 - **Owned check:** a ✓ in Moon colour only when the game *confirms* it: duty unlocked, aetheryte attuned, emote or mount owned, through `CollectibleReader` / `RewardUnlockReader`. Otherwise nothing is drawn. There is no "not unlocked" mark, so the pane stays calm.
 - **Caps:** at most 6 rows per group, then a "+N more" text button that opens a popover with the rest. The section's height never changes on hover or as icons load; the stand-in tile holds the place.
-- **Not repeated:**
-  - in the pane, *Actions & emotes* and *Items & collectables* list only entries that are **not** already a Rewards tile (traits, `Action.UnlockLink` extra actions, collectables found only through the reward data). These groups are then often empty, and an empty group is never drawn;
-  - *Next quests* shows at most 3 names (state moon + name, spoiler-aware) and "+N in Path", which scrolls to the Path card (the existing `ui.ScrollToPath`). The Path card keeps the full list.
-- **When it shows:** the section is left out only when a quest opens nothing at all. A quest whose only unlocks are next quests gets a one-line section.
+- **Not repeated** (owner request after 1.12.1: "If the reward is already listed, then don't show the unlock"; see 3.2.1):
+  - no group lists anything the quest's Rewards already show. These groups are then often empty, and an empty group is never drawn;
+  - next quests are not drawn here: the Path card's "Unlocks next" comb lists the same quests with the same moons and the same click, so rows here were a full duplicate.
+- **When it shows:** the section is left out when nothing is left to draw, so a quest whose only unlocks are its rewards or next quests has no Unlocks section (and an empty Unlocks cell in the table).
+
+### 3.2.1 What belongs in Unlocks, and what stays in Rewards
+
+**What the Rewards surfaces draw** (checked in the code after 1.12.1):
+
+| Surface | Draws | Source | Identified by |
+|---|---|---|---|
+| Journal table, Rewards column | The first 4 rewards that have an icon | `QuestRecord.Rewards` | `RewardRef` kind, id, item id |
+| Detail pane, Rewards tiles | Every reward; a gold ring when the unique-reward data names it | `QuestRecord.Rewards` (+ `UniqueRewardCatalog` for the ring only) | the same; the ring matches kind + id or item id |
+| Moonlit | One row per unique reward | `UniqueRewardCatalog` (shipped + curated + the user's verdicts) | `UniqueRewardEntry` kind, reward id, item id, name |
+| Game panels (offer/result) | A Moonlit line per unique reward | `UniqueRewardCatalog` | the same |
+
+`QuestRecord.Rewards` holds items and optional items (a mount's whistle, a minion, a roll, a card, a hairstyle, a barding, an emote's book), currency, the emote, the action, general actions, the instance (`InstanceContentUnlock`, now with its duty-kind icon), the class or job (now with its job icon) and the named `OtherReward` (Aether Current, Aether Compass, Wondrous Tails, Spearfishing, the soul crystals).
+
+**The rule** (`Core/Unlocks/UnlockRewards.cs`, applied once per catalog in `QuestUnlocks.Build`): an unlock row is *the same thing* as a reward when they name the same item; or the same sheet row of the same kind (emote, action, general action, class/job); or the reward is the aether current (`QuestRewardOther` 2) and the row is flying a current opens; or, failing ids, they carry the same name (case, a leading "the" and a floor set aside) and the row is a duty, feature, job, action, emote or collectable. Areas, aetherytes and next quests never match. Such a row is marked `UnlockEntry.InRewards`; `QuestUnlocks.For` and `UnlockView.Visible` leave it out, so every surface agrees: the Unlocks column, the detail pane, the row tooltip, the Todo hint, Path's station tooltips, Moonlit's "Also opens", the game panels, `/tsuki` search output and the "Unlocked:" chat line. `QuestUnlocks.IncludingRewards` keeps every row for the reverse lookup and the tests. Moonlit's "Also opens" and the panels' unlock lines also leave out what the quest's own Moonlit rows or lines name.
+
+**Unlocks holds** what the quest opens access to: areas and world-map regions, aetherytes and aethernet shards, duties, features and systems, jobs and classes, flying, and actions, emotes and collectables found only through the sheets or the reward data. **Rewards holds** anything the quest hands over as a reward: items and collectables, emotes, actions, general actions, the instance it opens, the class or job, the aether current and the named other rewards. Next quests live in Path.
+
+**Inside Unlocks**, two rows of one kind with one name are one row ("Collect" for two actions, a title listed twice), a zone and the world map of its name are the zone's row ("The Tempest", "Mare Lamentorum", "Solution Nine"), and a curated feature named like a duty or job of the quest is that duty or job ("Blue Mage").
+
+**Measured** over the installed game (`UnlockRewardDuplicateTests`): 600 quests drew at least one unlock that repeated a reward in 1.12.1 (163 named-feature rows, 160 actions, 150 aether currents, 79 rolls, 64 minions, 56 emotes, 38 mounts, 25 jobs, 45 duties, and more); 0 do now, and no quest shows one unlock twice. The AutoDuty Duties section keeps its duty rows: it is the automation surface (a Run pill), only drawn with AutoDuty loaded.
 
 **Clicks** (every row is a focusable item, accessibility A6):
 
@@ -264,7 +285,7 @@ The pane follows the same rules as the rest of the plugin (`SpoilerMask`):
 | Surface | Change | Item |
 |---|---|---|
 | **Game panels** (Worth it?, Journal companion) | `QuestVerdict` reads `QuestUnlocks`: "Unlocks Kugane", "Opens The Sirensong Sea", for every quest, not only feature quests | K4 |
-| **Journal table and tree** | Hovering the Name cell for 0.5 s shows a tooltip: "Opens Kugane (area) · The Sirensong Sea (dungeon) · Eastern Bow (emote)", at most 4 and then "+N". No glyph is added to rows. There is an optional **Opens** column (hidden by default) with up to 3 kind icons, like the Rewards column. | K4 |
+| **Journal table and tree** | Hovering the Name cell for 0.5 s shows a tooltip: "Opens Kugane (area) · The Sirensong Sea (dungeon) · Eastern Bow (emote)", at most 4 and then "+N". No glyph is added to rows. There is an **Unlocks** column (on by default since 1.12.1) with up to 3 kind icons, like the Rewards column; it never repeats a Rewards icon (3.2.1). | K4 |
 | **Todo overlay** | "Unlocks you can start here" rows add the headline after the name ("· Opens Retainers"). One line, no icons, quiet (M3). | K4 |
 | **Path chart** | Next-step stations' tooltips add the step's headline unlock. The chain line can say "Next in chain opens Kugane". | K4 |
 | **Route window** | "Route to unlock" is generalised from duties (`DutyFinderPanel`) to any target: right-click an unlock row, or use the search result "Route to the quest that unlocks Kugane". It is built on `QuestUnlocks.UnlockedBy` + the existing `UnlockRoute`. | K3 |

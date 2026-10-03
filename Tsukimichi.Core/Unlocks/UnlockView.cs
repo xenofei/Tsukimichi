@@ -12,13 +12,16 @@ namespace Tsukimichi.Core.Unlocks;
 /// scenario quest (Lv 83)".</item>
 /// <item>Sprout mode leaves out rows past the character's reach (<see cref="SpoilerMask.ReachExpansion"/>): a warp on
 /// a side quest that names a later expansion's city.</item>
+/// <item>A row the quest's Rewards already show (<see cref="UnlockEntry.InRewards"/>) is never shown:
+/// <see cref="QuestUnlocks.For"/> leaves it out, and so does <see cref="Visible"/> for a list that still holds it.</item>
 /// </list>
 /// </summary>
 public static class UnlockView
 {
     /// <summary>
     /// The rows to show: none when <paramref name="masked"/>, else those at or below <paramref name="reach"/>
-    /// (<see cref="byte.MaxValue"/> outside Sprout mode), in their order. The list itself when nothing is left out.
+    /// (<see cref="byte.MaxValue"/> outside Sprout mode) that the quest's Rewards do not already show, in their order.
+    /// The list itself when nothing is left out.
     /// </summary>
     public static IReadOnlyList<UnlockEntry> Visible(IReadOnlyList<UnlockEntry> entries, bool masked, byte reach = byte.MaxValue)
     {
@@ -28,15 +31,10 @@ public static class UnlockView
             return [];
         }
 
-        if (reach == byte.MaxValue)
-        {
-            return entries;
-        }
-
         var all = true;
         foreach (var entry in entries)
         {
-            if (!InReach(entry, reach))
+            if (!Shows(entry, reach))
             {
                 all = false;
                 break;
@@ -51,13 +49,23 @@ public static class UnlockView
         var shown = new List<UnlockEntry>(entries.Count);
         foreach (var entry in entries)
         {
-            if (InReach(entry, reach))
+            if (Shows(entry, reach))
             {
                 shown.Add(entry);
             }
         }
 
         return shown;
+    }
+
+    /// <summary>
+    /// Whether a surface draws the row: not one the quest's Rewards already show, and within Sprout mode's
+    /// <paramref name="reach"/> (<see cref="byte.MaxValue"/>: every expansion).
+    /// </summary>
+    public static bool Shows(UnlockEntry entry, byte reach = byte.MaxValue)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        return !entry.InRewards && InReach(entry, reach);
     }
 
     /// <summary>Whether Sprout mode's <paramref name="reach"/> shows the row (<see cref="byte.MaxValue"/>: every row).</summary>

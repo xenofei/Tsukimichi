@@ -73,9 +73,12 @@ public sealed class UnlockLinkReaderTests(UnlockIndexFixture fixture, ITestOutpu
     {
         var entries = Index.For(ConfederateConsternation);
         Dump(ConfederateConsternation);
-        var emote = Assert.Single(entries, e => e.Target == UnlockTarget.Emote && e.TargetId == EasternBow);
+
+        // The Eastern Bow is one of its Rewards (Quest.EmoteReward): a Rewards tile, never an unlock row.
+        var emote = Assert.Single(Index.IncludingRewards(ConfederateConsternation), e => e.Target == UnlockTarget.Emote && e.TargetId == EasternBow);
         Assert.Equal("Eastern Bow", emote.Name, ignoreCase: true);
         Assert.True(emote.InRewards);
+        Assert.DoesNotContain(entries, e => e.Target == UnlockTarget.Emote);
         var onokoro = Assert.Single(entries, e => e.Target == UnlockTarget.Aetheryte && e.TargetId == Onokoro);
         Assert.Equal("Onokoro", onokoro.Name);
         Assert.True(onokoro.IsLikely);
@@ -164,7 +167,7 @@ public sealed class UnlockLinkReaderTests(UnlockIndexFixture fixture, ITestOutpu
     private void Dump(uint rowId)
     {
         output.WriteLine($"## {rowId} {fixture.Catalog.GetByRowId(rowId)?.Name}");
-        foreach (var entry in Index.For(rowId))
+        foreach (var entry in Index.IncludingRewards(rowId))
         {
             output.WriteLine($"   {entry.Group,-11} {entry.Target,-14} {entry.TargetId,7} {entry.Name} [{entry.Source}{(entry.InRewards ? ", reward" : string.Empty)}] icon {entry.Icon} · {entry.Caption}");
         }

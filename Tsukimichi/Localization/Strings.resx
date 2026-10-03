@@ -774,10 +774,6 @@
     <value>+{0} more</value>
     <comment>{0} = rows past the group's cap.</comment>
   </data>
-  <data name="UnlocksMoreInPathFormat" xml:space="preserve">
-    <value>+{0} in Path</value>
-    <comment>{0} = next quests past the three shown.</comment>
-  </data>
   <data name="UnlocksLikely" xml:space="preserve">
     <value>Likely: you first reach it here</value>
   </data>
@@ -790,9 +786,6 @@
   <data name="UnlocksOwned" xml:space="preserve">
     <value>You have it</value>
   </data>
-  <data name="UnlocksClickShowQuest" xml:space="preserve">
-    <value>Click to show this quest</value>
-  </data>
   <data name="UnlocksClickTeleport" xml:space="preserve">
     <value>Click to teleport here through Lifestream</value>
   </data>
@@ -804,9 +797,6 @@
   </data>
   <data name="UnlocksRightClickDuty" xml:space="preserve">
     <value>Right-click to open it in the Duty Finder</value>
-  </data>
-  <data name="UnlocksMenuShowQuest" xml:space="preserve">
-    <value>Show quest</value>
   </data>
   <data name="UnlocksMenuTeleportFormat" xml:space="preserve">
     <value>Teleport to {0}</value>

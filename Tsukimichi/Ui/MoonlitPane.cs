@@ -293,12 +293,17 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// </summary>
     public Func<byte>? UnlockReach { get; set; }
 
-    // "Also opens: …" per quest, composed once per index revision and reach.
+    // "Also opens: …" per quest, composed once per index revision, reach and Moonlit catalog.
     private readonly Dictionary<uint, string> alsoOpens = [];
     private int alsoOpensRevision = -1;
     private byte alsoOpensReach = byte.MaxValue;
+    private UniqueRewardCatalog? alsoOpensCatalog;
 
-    /// <summary>"Also opens: Kugane · The Sirensong Sea" for a quest the shield does not mask; empty otherwise.</summary>
+    /// <summary>
+    /// "Also opens: Kugane · The Sirensong Sea" for a quest the shield does not mask; empty otherwise. What the quest's
+    /// own Moonlit rows already show (its duty unlock, its aether current: <see cref="Core.Unlocks.UnlockRewards"/>) is
+    /// left out, as is what its Rewards show (the index never holds that).
+    /// </summary>
     private string AlsoOpensText(QuestRecord quest)
     {
         if (Unlocks is not { } unlocks || session.Spoilers.IsMasked(quest))
@@ -307,16 +312,28 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         var reach = UnlockReach?.Invoke() ?? byte.MaxValue;
-        if (alsoOpensRevision != unlocks.Revision || alsoOpensReach != reach)
+        var moonlit = Catalog;
+        if (alsoOpensRevision != unlocks.Revision || alsoOpensReach != reach || !ReferenceEquals(alsoOpensCatalog, moonlit))
         {
             alsoOpensRevision = unlocks.Revision;
             alsoOpensReach = reach;
+            alsoOpensCatalog = moonlit;
             alsoOpens.Clear();
         }
 
         if (!alsoOpens.TryGetValue(quest.RowId, out var text))
         {
-            var places = unlocks.Places(quest.RowId, reach);
+            var uniques = moonlit.ForQuest(quest.RowId);
+            var entries = new List<Core.Unlocks.UnlockEntry>();
+            foreach (var entry in Core.Unlocks.UnlockView.Visible(unlocks.For(quest.RowId), masked: false, reach))
+            {
+                if (!uniques.Any(unique => Core.Unlocks.UnlockRewards.Same(unique, entry)))
+                {
+                    entries.Add(entry);
+                }
+            }
+
+            var places = Core.Unlocks.UnlockText.Places(entries);
             text = places.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.MoonlitAlsoOpensFormat, places) : string.Empty;
             alsoOpens[quest.RowId] = text;
         }
