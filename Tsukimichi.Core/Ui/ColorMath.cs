@@ -122,6 +122,13 @@ public readonly record struct SurfaceColors(
     /// <summary>Minimum contrast of <see cref="TextSecondary"/> on <see cref="Window"/> (WCAG AA for text).</summary>
     public const float TextMinContrast = 4.5f;
 
+    /// <summary>
+    /// The lighter gilt that text in the gilt is drawn in (plan v7: Full's Section headings, the sorted column header):
+    /// the medallion's GiltLight <c>#E6CF98</c>, pushed towards <see cref="Text"/> until it reads as text on the
+    /// window (<see cref="TextMinContrast"/>). On Night it is the hex itself (about 9.5 : 1 on Raised).
+    /// </summary>
+    public Vector4 OrnamentLight => ColorMath.EnsureContrast(GlyphTokens.Medallion.GiltHigh, Text, Window, TextMinContrast);
+
     /// <summary>Minimum contrast of <see cref="StrongLine"/> on <see cref="Window"/> (WCAG 1.4.11 for UI components).</summary>
     public const float LineMinContrast = 3f;
 
