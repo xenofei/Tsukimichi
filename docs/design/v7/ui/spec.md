@@ -2,6 +2,203 @@
 
 This answers owner points 1, 2, 3, 5, 6 and 8 in `docs/research/plan-v7/owner-points.md`, using the two screenshots there. It builds on the Decoration v13 looks (`docs/design/flair-v13/spec.md`): Full is the Moon Road, Quiet is still water, and Plain is the ledger. Everything not named here is unchanged from 1.13.
 
+## Revision 3: the owner's notes after approval
+
+The owner approved plan 7 and this direction, and left four notes. This section answers them. Where it differs from the sections below, this section wins.
+
+### R3.1 Rail labels stay inside their plates
+
+**Owner:** "The characters font looks like it's escaping the highlighted region."
+
+**Why it happened:** in a 64 px rail, the plate inset 5 px leaves about 48 px of label room. "Characters" at 0.78x body (12.5 px) is about 64 px wide. Nothing stopped it, because v7 had dropped 1.13's ellipsis and put no fit rule in its place.
+
+**Geometry:**
+
+| | Full | Quiet | Plain |
+|---|---|---|---|
+| Rail width | **70** (was 64) | **66** (was 60) | 44, compact, no labels |
+| Plate inset, left and right | **3** (was 5) | 3 | full bleed |
+| Label pad inside the plate | 2 | 2 | n/a |
+| Label room | **60** | **56** | n/a |
+
+**Label size:** clamp(0.75 x body, **10, 12**) px. The cap at 12 means a large Text size enlarges the quest text, not the rail captions. At UI scale 150 %, the rail, plate and label all scale together, so the fit is the same.
+
+**The fit rule**, run per label (cached per language, Text size and UI scale, so nothing is measured per frame). It never uses an ellipsis and never lets text leave the plate.
+1. Measure the label at its size. If it fits the room, draw it.
+2. Otherwise track it at **−0.02 em** (`TrackedTextAt`).
+3. Otherwise shrink it to fit, **never under 10 px**.
+4. Otherwise wrap it to **two lines at a space** (the station is tall enough).
+5. Otherwise (one long word) draw the station **icon-only**, with the label as the first line of its tooltip, as 1.13's cut path does.
+
+**Measured** in game units (Noto Sans Medium, the live table on the `#rail` board):
+
+| Level | Text size | "Characters" | Result |
+|---|---|---|---|
+| Full | 80 % | 10.0 px, 51.7 wide, room 60 | fits |
+| Full | 100 % and 150 % | 12.0 px, 62.0 wide, room 60 | track −0.02 em (59.8 wide) |
+| Quiet | 80 % | 10.0 px, 51.7 wide, room 56 | fits |
+| Quiet | 100 % and 150 % | 12.0 px, 62.0 wide, room 56 | track, then 11.2 px |
+
+Every other English label fits untracked at every size. Localization is frozen, but the rule already covers longer translations (steps 3–5).
+
+**Code:**
+- `ScaleMetrics.RailLogical` 64 → 70; Quiet's rail 60 → 66.
+- `LayoutBudgets.RailLabelFraction` .78 → .75, plus the 10–12 px clamp.
+- `TabStrip.DrawStation`: the plate inset becomes 3, and `Chrome.EllipsisTextAt` is replaced by a `RailLabel.Fit` that returns {scale, tracking, lines, iconOnly}. It is a pure function in Core, so it can be unit tested.
+
+**Test:** every built-in label in English at 80–150 % Text size and 100–150 % UI scale ends at a width ≤ room, or is icon-only.
+
+### R3.2 The Journal badge counts what is new, not everything
+
+**Owner:** for players with 99+ quests, "it looks odd when it shows up as a smaller icon, as that number will never go down."
+
+**Today:** the badge is `TreeCounts.OverallReady` (TabStrip.cs 403–411, from MainWindow.cs 1490). That is every quest Ready on the current job. For most players that is hundreds of sidequests, so it sits at "99+" forever. `Chrome.Badge` also draws its text at 0.72x and widens to a pill for three characters, which is the smaller-looking icon the owner saw.
+
+**Options weighed:**
+
+| Option | Verdict |
+|---|---|
+| Compact numbers ("1.2k") | Still never goes down. Rejected. |
+| A dot, with the total in the tooltip | Calm, but the dot never clears either. |
+| Only story and unlock quests that are Ready | Small, falls as you play, and meaningful. A good second choice. |
+| **Newly ready since you last looked** | Small, clears when seen, and falls as you accept quests. **Recommended.** |
+
+**Default: "Newly ready".** A quest is *new* when it becomes available (Ready, or Ready on another job) and the player has not yet seen it.
+- **What counts:**
+  - A level-up, a finished prerequisite, a new patch or a reset can make quests new.
+  - Switching jobs never does: Ready on another job and Ready are both available.
+- **When a quest stops being new:**
+  - when the player selects it;
+  - when the player clicks the badge, which opens the Journal with a removable **"Newly ready"** chip filter listing them; they are marked seen when that list is closed or replaced;
+  - when it stops being available (accepted, completed, locked out).
+- **Storage:** per character, a persisted set of seen-available quest ids.
+  - On the first v7 run it is **seeded with everything available now**, so a returning player starts at 0, not at 300.
+  - Ids that stop being available are pruned, so the set stays the size of the Ready list.
+- **When it is computed:** when the snapshot or the state changes (`TreeCounts` recompute), never per frame.
+
+**Look:** one fixed size that never shrinks.
+- 16 px tall, minimum 16 px wide, text 10 px semibold.
+- Moon fill with Night text, at full strength even when the station is idle; only the icon dims.
+- 1–2 digits. "99+" is kept for safety but is not expected.
+- **No badge when nothing is new.** Plain shows a gold digit with no fill.
+
+**Tooltip:** "Every quest in the game, filed as the journal files it", then "3 newly ready since you last looked · 214 ready to accept now", then "Click to show the new ones".
+
+**Setting** (Settings › Display › Rail › Journal badge):
+- **Newly ready** (default)
+- Ready story and unlock quests (MSQ, feature, job and unlock quests that are Ready)
+- Every Ready quest (1.13)
+- Nothing
+
+**New strings:**
+- {0} newly ready since you last looked
+- Click to show the new ones
+- Newly ready
+- Journal badge
+- Ready story and unlock quests
+- Every Ready quest
+- Nothing
+
+**Render:** the bottom row of `rail-states.png` shows 1.13's shrunken "99+", v7 with 3 new, 12 new after a level-up, nothing new, Plain, the tooltip and the setting.
+
+### R3.3 The moving night sky (extends §3)
+
+This applies at Full only, with Reduce motion off, and only while the main window is **focused**. When the window loses focus the sky's clock stops, so there is no catch-up jump when it returns.
+
+| Motion | Spec |
+|---|---|
+| **Drift** | The whole field moves as one sky: no per-layer speeds, because a real sky turns rigidly. It moves **6 px a minute** right to left (0.1 px/s), so a star crosses the 292 px tree sky in about 49 minutes. You notice it over minutes, never second to second. The constellation and the optional band drift with it. |
+| **Wrap** | Each sky rect draws from a seeded tile as wide as the rect, and positions wrap modulo the tile width. Stars fade over **10 px** at the rect's left and right edges, so nothing pops in or out. |
+| **Subpixel** | While drifting, far stars are drawn as anti-aliased discs r .6 instead of 1 x 1 rects, so they glide instead of stepping a pixel every 10 s. |
+| **Twinkle** | As §3.3: periods of 7–13 s, the cross fixed. It pauses with the drift. |
+| **Faint meteor** | A rare ambient one, at a random interval of **3–6 minutes** of focused time. It peaks at **.45** (the completion meteor peaks at .80), takes the same 0.7 s path in the largest sky rect, and is skipped if a completion meteor played in the last 30 s. |
+| **Never under text** | Unchanged: everything is clipped to the text-free sky rects (§3). Drift only moves stars within them. |
+
+**Cost.** The stars are a static `Star[]` per sky rect, built once and rebuilt only on resize or language change. Per frame there is one offset (`driftClock x speed mod tileWidth`), then a loop of about 200 positions and `AddCircleFilled`/`AddRectFilled` calls. There are **no allocations per frame**. The drift clock is a double that advances by `io.DeltaTime` only while the window is focused, at Full, with the setting on.
+
+**Settings** (Settings › Display › Motion, Full only):
+- **"Moving night sky"**: on by default.
+- "Shooting star on completion": on by default (from Revision 2).
+
+Reduce motion turns both off, and the sky is then still.
+
+**Code:**
+- `MotionTokens.SkyDriftPxPerMinute = 6f`, `SkyEdgeFadeLogical = 10f`, and `AmbientMeteorMinSeconds = 180` / `AmbientMeteorMaxSeconds = 360`.
+- `StarField.Position(in Star, tileWidth, offset)`.
+- The draw sites are the same four as §3.
+
+**Demo:** `mock.html#sky` is the Full window with the drift running at real speed. "Sky speed: x30" previews it; the animation pauses when the page loses focus; the faint meteor fires every 3–6 minutes (6–12 s at x30).
+
+### R3.4 Completed moon: consistent, more realistic craters
+
+**Owner:** "part of the craters is blurry but part are well defined. Needs to have consistency, and maybe a bit more realism."
+
+The owner calls the dark seas craters too. So the fix covers every feature on the face, not only the three rim-lit craters. `make_completed.py` regenerates both sources.
+
+**One edge rule for every feature:** the softness (blur) is **0.1 x the feature's radius**, clamped to **0.45–1.0** medal units.
+
+| Feature | Softness |
+|---|---|
+| Seas (radius about 12) | **1.0** (was 1.9: the haze next to crisp craters) |
+| Their hearts | **1.0** (was 1.2) |
+| Every crater part, and the young crater | **0.45** |
+
+Nothing is smeared and nothing is razor-sharp.
+
+**Seas:**
+- They are drawn as **one union at a single opacity**: every ellipse is opaque inside a group at .46. Overlaps no longer stack into darker spots, so the seas read as continuous basalt, not a spotted pattern.
+- The round-5 ellipses grow x1.2, except Crisium, which really is an isolated sea.
+- Nine lobes join the near-side chain: Procellarum, Imbrium, Serenitatis and Tranquillitatis, down to Nubium and Nectaris.
+- The hearts are larger and fainter (.18–.22, was .24–.34), so they read as depth, not as separate ovals.
+
+**Highlands:** the southern highlands get a soft albedo lift, `#EEF1F8` at .10 with blur 2.4, as on the real Moon. The craters sit in the highlands, off every sea.
+
+**Craters (96 and 128 px tiers only):** one recipe, scaled by radius r, lit from the upper left, built from **filled crescents** (a circle minus an offset circle), not stroked arcs, so every edge has the same profile.
+
+| Part | Shape | Ink |
+|---|---|---|
+| Raised rim | Lit on its upper-left outer slope: the ring r to 1.22r, minus the same ring offset 0.18r down-right | `#F4F2EA` at **.42** |
+| Floor | A half-step darker than the highland around it | `#5E6E97` at .30 |
+| Inner shadow | The upper-left inner wall, which faces away from the light: the bowl minus the bowl offset 0.30r down-right | `#2E3858` at **.75** |
+| Inner light | The lower-right inner wall, which faces the light: the bowl minus the bowl offset **0.30r** up-left (as wide as the shadow, so the pair reads at 128 px) | `#F4F2EA` at **.65** |
+
+There are three craters, with r **4.8, 3.9 and 3.4** (x1.4 in the supervisor's round on Revision 3). The 3.9 crater moved to (42, 80.5), so its larger rim stays off Procellarum. The young bright crater (r 1.3 at .55, halo .05) uses the same 0.45 edge and stays at every tier.
+
+**Tiers:** `completed-v7.svg` (craters) is for 96 and 128 and their 2x. `completed-v7-small.svg` (no craters) is for 48, 64 and the row tier. Both share the new seas, hearts, highlands and glow.
+
+**Measured craters**, rendered on `#0F1424` and diffed in luminance against the crater-less source:
+
+| Crater radius | At 128 px | At 96 px |
+|---|---|---|
+| 4.8 | 11 x 11 px: dark 56 px (to −101 L), lit 30 px (to +38) | 8 x 7 px: dark 32, lit 11 |
+| 3.9 | 9 x 8 px: dark 38, lit 16 (to +40) | 6 x 6 px: dark 19, lit 10 |
+| 3.4 | 8 x 7 px: dark 32, lit 6 (to +19) | 5 x 5 px: dark 17, lit 3 |
+
+So each crater is a light-and-dark pair 8–11 px across at 128 px, and 5–8 px at 96 px (at least 3 px). The smallest crater's lit wall is the faintest of the three, but it still reads.
+
+**Salience at the crater tiers**, against Ready's badge medal at the same size: Completed is **0.741x at 128 px** and **0.745x at 96 px** (at most 0.75). The craters change it by under 0.4 % (4218 against 4233 without them), because the face's seas and glow dominate.
+
+**Measured** on `completed-v7-small.svg` with `metrics.py` (row tier, greyscale):
+- Completed is **0.719x Ready at 16 px** and **0.718x at 20 px**, against 0.72 shipped.
+- Completed is in no weak pair: the weakest pairs are still Blk-Lock 12.0 and Lock-NotC 12.3.
+
+**Render:** `completed-moon/compare.png` is screenshotted at 1840 px wide, so nothing clips. It shows 16–128 px from each tier's source, both sources at 256 px, and 18 and 20 px enlarged 6x.
+
+**Ship:** as in §4, plus `MedalArt.FullMaria` takes the union opacity (.46), the x1.2 radii and the nine lobes for the vector fallback.
+
+### Files changed in Revision 3
+
+- `spec.md`: this section, plus the inline values in §6.
+- `mock-src/v7.js`, `v7.css` and `shell.html`, and the rebuilt `mock.html`:
+  - the rail at 70 and 66 px, the plate inset 3, the label fit pass and the live label table;
+  - the new-ready badge;
+  - the moving sky (`.drift`, with a focus pause, x30 preview and the faint meteor);
+  - the `#sky` view.
+- `completed-moon/make_completed.py`, `completed-v7.svg`, `completed-v7-small.svg`, `compare.html` and `compare.png`.
+- Re-rendered at the new rail width: `rail-states.png` (with the label and badge rows), `before-after.png`, `filter-drawer.png` and `stars.png`.
+
+---
+
 **Revision 2** applies the supervisor's and the critic's reviews (`supervisor-review.md`, `critic.md`):
 1. The Completed moon's three craters are drawn only in the 96 and 128 px tiers, and the young crater's halo is halved (§4).
 2. The drawer's sideways shadow becomes an unoffset contact shadow (§2.2).
@@ -16,7 +213,7 @@ This answers owner points 1, 2, 3, 5, 6 and 8 in `docs/research/plan-v7/owner-po
 
 | File | What it is |
 |---|---|
-| `mock.html` | The flair-v13 mock with the v7 layer on top. The v13 CSS is carried over verbatim, and every v7 rule is scoped under `.mk.v7`. Views:<br>• `#full`, `#quiet`, `#plain` show the window.<br>• Add `/before` for 1.13, `/open` for the drawer, or `/open-adv` for the drawer with Advanced open.<br>• `#drawer`, `#rail`, `#stars` and `#ba` are the boards behind the renders.<br>• "Complete a quest" plays the meteor at Full.<br>The station plates, the Filters button and the Advanced header can be clicked. |
+| `mock.html` | The flair-v13 mock with the v7 layer on top. The v13 CSS is carried over verbatim, and every v7 rule is scoped under `.mk.v7`. Views:<br>• `#full`, `#quiet`, `#plain` show the window.<br>• Add `/before` for 1.13, `/open` for the drawer, or `/open-adv` for the drawer with Advanced open.<br>• `#drawer`, `#rail`, `#stars` and `#ba` are the boards behind the renders.<br>• `#sky` is the Full window with the moving sky (Revision 3); "Sky speed" toggles x1 and x30.<br>• "Complete a quest" plays the meteor at Full.<br>The station plates, the Filters button and the Advanced header can be clicked. |
 | `mock-src/` | The sources for `mock.html`: `v7.css`, `v7.js` and `shell.html`. `python build.py` rebuilds the mock from them and the v13 file. Edit these, not `mock.html`. |
 | `before-after.png` | Full in 1.13 and v7, the whole window, then the quest-pane headings and the Journal header at 1:1, then the Quiet and Plain headings |
 | `filter-drawer.png` | 1.13 as shipped, then Full, Quiet and Plain, each with Advanced collapsed and expanded, at 1:1, with the Full spec table |
@@ -319,12 +516,12 @@ These follow Text size like every role. In code: `TablePane.HeaderRole` and `Dra
 
 **New:** the bead moves to the rail's left edge, and each station gets a plate.
 
-| | Full (rail 64) | Quiet (rail 60) | Plain (compact rail 44) |
+| | Full (rail **70**, Revision 3) | Quiet (rail **66**) | Plain (compact rail 44) |
 |---|---|---|---|
 | Station height | **Shares the rail**: clamp((rail − crest − foot − sky reserve) / 5, 54, 84). The sky reserve is 96, room for stars. The mock draws 72. | the same rule, clamp 50–76, reserve 32 (mock 66) | clamp 40–52, no reserve (mock 46) |
 | Icon | **30 px** (`StationIconLogical` 22 → 30). The Journal orbit and the art icons are drawn at that box. | **28 px** | **20 px** (was 16) |
-| Label | **0.78x body** (`RailLabelFraction` .7 → .78), gap 5 | 0.78x | none (compact) |
-| Plate | Inset 5 px on each side and 3 px top and bottom, radius 10.<br>• Hover: `Hover` `#262D45` at .55 x hover.<br>• Hover also draws a **1 px darker bottom edge** (Abyss at .38), so the 2 px rise has a cause.<br>• Selected: Moon at .07 only (a flat fill; ImGui's multicolour rect has no rounding). **No border, no hairline.** | Hover: `#1C2338`. Selected: Text .06 with a 1 px `#3A4260` border. | Full-bleed, no radius. Hover: `#1D2230`. Selected: the Plain band `#1A1F2C` and a 2 px Text bar on the left edge. |
+| Label | **clamp(0.75 x body, 10, 12) px** with the fit rule of R3.1, gap 5 | the same | none (compact) |
+| Plate | Inset **3** px on each side (Revision 3) and 3 px top and bottom, radius 10.<br>• Hover: `Hover` `#262D45` at .55 x hover.<br>• Hover also draws a **1 px darker bottom edge** (Abyss at .38), so the 2 px rise has a cause.<br>• Selected: Moon at .07 only (a flat fill; ImGui's multicolour rect has no rounding). **No border, no hairline.** | Hover: `#1C2338`. Selected: Text .06 with a 1 px `#3A4260` border. | Full-bleed, no radius. Hover: `#1D2230`. Selected: the Plain band `#1A1F2C` and a 2 px Text bar on the left edge. |
 | Selected marks | **Three:** the plate, the gold icon ink (Moon) and the bead. **No glow**: `GlowRadiusLogical` and the glow draw go, so Ready and the primary pill keep the only warm halos. | The plate, gold icon ink and the dot | The band and the bar; icon ink Text |
 | Bead | 7 px MoonHigh disc with a 1.5 px Night rim and a glow at .7, on the left edge (centre x = rail left + 4.5), at the icon's centre line | 5 px Moon dot, no glow | none |
 
@@ -339,7 +536,7 @@ These follow Text size like every role. In code: `TablePane.HeaderRole` and `Dra
 | Travel | The bead runs the left edge from the old station's centre to the new one over `Travel` 0.22 s, ease-in-out cubic (`Motion.Pulse(StationKey, Travel)`, as today), and lands as the plate finishes | The dot, the same | none |
 | Reduce motion | Everything lands at once | same | same |
 
-The Journal badge stays at the icon's top right, clamped inside the station as today.
+The Journal badge stays at the icon's top right, clamped inside the station as today. From Revision 3 it counts newly ready quests (R3.2).
 
 ---
 

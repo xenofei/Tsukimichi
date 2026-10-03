@@ -13,6 +13,12 @@
 # Each sprite is drawn at every tier (48, 64, 96 and 128 px at 1x), so the plugin never shrinks a sprite by more than
 # 1.5x (image textures have one mip level). Sprites sit 2 px apart (4 px at 2x) so bilinear sampling never bleeds a
 # neighbour in. Chrome headless draws the sheet on a transparent background, as gen_atlas.py does for the ornaments.
+#
+# Completed takes its source per tier (feature plan v7 V1; docs/design/v7/ui/spec.md, section 4 and Revision 3 R3.4):
+# the 96 and 128 px tiers (and so their 2x) draw completed-v7.svg, with the three rim-lit craters, and the 48 and 64 px
+# tiers draw completed-v7-small.svg, the same face without them (at those sizes a crater is a few dark pixels, a hole).
+# Both are read from docs/design/v7/ui/completed-moon/ rather than copied over medallion-r5/completed.svg, because
+# make_completed.py derives them from that round-5 master. Every other sprite's cells are unchanged to the byte.
 # Usage: python docs/design/moon-v6/round5/gen_atlas.py
 import json
 import os
@@ -23,6 +29,7 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
 MEDALS = os.path.join(HERE, "medallion-r5")
+COMPLETED_V7 = os.path.join(REPO, "docs", "design", "v7", "ui", "completed-moon")
 DEST = os.path.join(REPO, "Tsukimichi", "assets", "ui")
 sys.path.insert(0, os.path.join(REPO, "docs", "design", "moon-road", "banners"))
 sys.path.insert(0, os.path.join(MEDALS, "_src"))
@@ -37,13 +44,22 @@ TIERS = [48, 64, 96, 128]
 # palette; GlyphTokens.Medallion.HandHex holds the same value.
 HAND = ("#66708E", "#2C324C")
 
-# sprite key -> source: a file in medallion-r5/ or a role seat for Ready on another job. Order is MedalSprite's.
+# Completed's source per tier (plan v7 V1): the craters only where their rims read.
+COMPLETED_BY_TIER = {
+    48: os.path.join(COMPLETED_V7, "completed-v7-small.svg"),
+    64: os.path.join(COMPLETED_V7, "completed-v7-small.svg"),
+    96: os.path.join(COMPLETED_V7, "completed-v7.svg"),
+    128: os.path.join(COMPLETED_V7, "completed-v7.svg"),
+}
+
+# sprite key -> source: a file in medallion-r5/, a role seat for Ready on another job, or {tier: path} for a sprite
+# whose source differs by tier. Order is MedalSprite's.
 SPRITES = [
     ("ready", "ready.svg"),
     ("in-journal", "in-journal.svg"),
     ("blocked", "blocked.svg"),
     ("done-this-cycle", "done-this-cycle.svg"),
-    ("completed", "completed.svg"),
+    ("completed", COMPLETED_BY_TIER),
     ("locked-out", "locked-out.svg"),
     ("not-checked", "not-checked.svg"),
     ("other-job-tank", ("tank",)),
@@ -105,11 +121,20 @@ def inner(svg_text, prefix):
     return view, body
 
 
+def bodies_by_tier(spec, prefix):
+    """{tier: (viewBox, body)} for one sprite: the same body at every tier, or each tier's own for a per-tier source."""
+    if isinstance(spec, dict):
+        assert sorted(spec) == TIERS, f"per-tier source needs exactly the tiers {TIERS}"
+        return {cell: inner(open(path, encoding="utf-8").read(), prefix) for cell, path in spec.items()}
+    one = inner(source(spec), prefix)
+    return {cell: one for cell in TIERS}
+
+
 def sheet(scale, rects, bodies):
     parts = []
     for i, (name, _) in enumerate(SPRITES):
-        view, body = bodies[name]
         for t, cell in enumerate(TIERS):
+            view, body = bodies[name][cell]
             x, y, w, h = rects[name][cell]
             # Each copy gets its own id prefix: a filter or clip shared across nested <svg>s would resolve to the first.
             body_t = re.sub(r'(id="|url\(#|href="#)m{0}_'.format(i), lambda k: f"{k.group(1)}m{i}t{t}_", body)
@@ -120,7 +145,7 @@ def sheet(scale, rects, bodies):
 
 def main():
     rects = layout()
-    bodies = {name: inner(source(spec), f"m{i}_") for i, (name, spec) in enumerate(SPRITES)}
+    bodies = {name: bodies_by_tier(spec, f"m{i}_") for i, (name, spec) in enumerate(SPRITES)}
     os.makedirs(DEST, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         for scale, suffix in ((1, ""), (2, "@2x")):

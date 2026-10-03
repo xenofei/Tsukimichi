@@ -148,4 +148,23 @@ public class HeadingLayoutTests
         Assert.InRange(headings.Count, 1, HeadingCase.MaxCached);
         Assert.Equal(0, new HeadingCase().Count);
     }
+
+    [Theory]
+    [InlineData(Flair.Full, 30f, 10f)]
+    [InlineData(Flair.Quiet, 26f, 8f)]
+    [InlineData(Flair.Plain, 22f, 2f)]
+    [InlineData((Flair)99, 30f, 10f)]
+    public void Section_rows_follow_the_level(Flair flair, float row, float gap)
+    {
+        Assert.Equal((row, gap), HeadingLayout.SectionRow(flair));
+    }
+
+    [Fact]
+    public void A_section_row_grows_for_a_taller_title_and_scales()
+    {
+        Assert.Equal(30f, HeadingLayout.SectionRowHeight(Flair.Full, 1f, 24f));
+        Assert.Equal(39f, HeadingLayout.SectionRowHeight(Flair.Full, 1f, 38.6f));
+        Assert.Equal(35f, HeadingLayout.SectionRowHeight(Flair.Quiet, 1.35f, 20f));
+        Assert.Equal(22f, HeadingLayout.SectionRowHeight(Flair.Plain, float.NaN, float.NaN));
+    }
 }

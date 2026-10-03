@@ -235,7 +235,7 @@ public sealed partial class DetailPane
         var path = HeroPath();
         float titleLine;
         float titleWidth;
-        using (Typography.Title(model.DisplayName))
+        using (Typography.HeroTitle(model.DisplayName))
         {
             titleLine = ImGui.GetTextLineHeight();
             titleWidth = ImGui.CalcTextSize(model.DisplayName).X;
@@ -254,7 +254,7 @@ public sealed partial class DetailPane
             var pathY = MathF.Round(max.Y - pad2 - pathLine);
             var titleY = MathF.Round(pathY - UiMetrics.Px(2f) - titleLine);
             bool cut;
-            using (Typography.Title(model.DisplayName))
+            using (Typography.HeroTitle(model.DisplayName))
             {
                 cut = Chrome.OutlinedEllipsisAt(dl, new Vector2(artLeft, titleY), artRoom, model.DisplayName, Theme.WithAlpha(TitleOnArt, titleIn), titleWidth);
             }
@@ -283,7 +283,7 @@ public sealed partial class DetailPane
             var room = MathF.Max(1f, bodyRight - textLeft);
             ImGui.SetCursorScreenPos(new Vector2(textLeft, textTop));
             ImGui.BeginGroup();
-            using (Typography.Title(model.DisplayName))
+            using (Typography.HeroTitle(model.DisplayName))
             {
                 TextFlow.Wrapped(model.DisplayName, room, Theme.WithAlpha(Theme.Surface.Text, titleIn));
             }
@@ -313,14 +313,16 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// Quiet's hero, the plate: the name (display role) and its path in the tertiary tone, a hairline, then the 52 px
+    /// Quiet's hero, the plate: the name (Quiet's title face, 1.40×) and its path in the tertiary tone, a hairline, then the 52 px
     /// medal beside the state in its ink, the reason and the job note.
     /// </summary>
     private void DrawPlateHero(QuestRecord quest)
     {
         var dl = ImGui.GetWindowDrawList();
         var room = RoomTo(bodyRight);
-        using (Typography.Display())
+
+        // At 1.40× the body (plan v7 §1), so the name stays above the Lead-face section headings under it.
+        using (Typography.QuietTitle())
         {
             TextFlow.Wrapped(model.DisplayName, room, Theme.U32(Theme.Surface.Text));
         }
@@ -373,7 +375,13 @@ public sealed partial class DetailPane
     {
         var dl = ImGui.GetWindowDrawList();
         var room = RoomTo(bodyRight);
-        TextFlow.Wrapped(model.DisplayName, room, Theme.U32(Theme.Surface.Text));
+
+        // The name in the Lead face (1.15×, plan v7 §1), a step over the body-size section bands under it.
+        using (Typography.Lead())
+        {
+            TextFlow.Wrapped(model.DisplayName, room, Theme.U32(Theme.Surface.Text));
+        }
+
         using (Typography.Caption())
         {
             SegmentFlow(model.JournalSegments, JournalSeparator, room, Theme.Surface.TextTertiary);
@@ -688,9 +696,9 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// Opens one of the pane's sections as a card at the Decoration level (docs/design/flair-v13 §1, "Card frame"): gilt
-    /// brass with corner marks and a gilt eyebrow heading (cased for the language) at Full, a tonal plane with the
-    /// heading in the body font at Quiet, a heading row with a line under it at Plain; the caption sits on the heading's
-    /// right. Close it with <see cref="EndSection"/>. A <paramref name="captionTooltip"/> shows while the heading line is
+    /// brass with corner marks at Full, a tonal plane at Quiet, none at Plain, each under a heading in the Section role
+    /// (docs/design/v7/ui/spec.md §1: tracked gilt capitals at Full, the Lead face at Quiet, a band at Plain); the
+    /// caption, in the secondary tone, sits on the heading's right. Close it with <see cref="EndSection"/>. A <paramref name="captionTooltip"/> shows while the heading line is
     /// hovered (the totals behind a caption that says what is left, feature plan v6 U5). The icon is left out: the cards
     /// name themselves.
     /// </summary>
@@ -699,7 +707,7 @@ public sealed partial class DetailPane
         _ = icon;
         var top = ImGui.GetCursorScreenPos();
         var right = top.X + ImGui.GetContentRegionAvail().X;
-        Chrome.BeginCard(id, Theme.MoonRoadArt ? SectionHeading.Label(title) : title, null, eyebrow: true);
+        Chrome.BeginCard(id, title, null, eyebrow: true);
         CardCaption(caption, right, captionColor);
         if (captionTooltip.Length > 0 && ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(top, new Vector2(right, ImGui.GetCursorScreenPos().Y)))
         {

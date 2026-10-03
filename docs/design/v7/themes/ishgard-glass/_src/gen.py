@@ -19,6 +19,7 @@ import numpy as np
 OUT = pathlib.Path(__file__).resolve().parent.parent
 JOBDIR = OUT.parents[3] / "design" / "moon-v6" / "round5" / "medallion-r5" / "_src" / "jobs"
 ROW = False
+MID = False    # the mid tier (32-64 px): the hero art minus details that fall to a pixel there (Completed only)
 
 # ---------------- palette tokens ----------------
 KEY = "#080B16"                                     # keyline, shadow
@@ -32,7 +33,7 @@ NIGHT_SKY_T, NIGHT_SKY_H, NIGHT_SEA_H, NIGHT_SEA_B = "#22346E", "#3E5A9E", "#335
 DUSK_T, DUSK_B = "#1C2A5A", "#121B40"               # resting night glass
 ASH_HI, ASH_LO = "#46528A", "#252E55"               # earthlit (ashen) moon glass
 AMBER_HI, AMBER, AMBER_MID, AMBER_LO = "#FBE3A0", "#E9BE68", "#C4913F", "#86591E"   # silver-stain amber
-RUBY_HI, RUBY, RUBY_LO, RUBY_EDGE = "#E46E7E", "#CA4C60", "#7E2236", "#F7B6BE"     # Dalamud glass
+RUBY_HI, RUBY, RUBY_LO, RUBY_EDGE = "#EA7A89", "#CC4E62", "#7A2034", "#F7B6BE"     # Dalamud glass
 VOID = "#06070C"                                    # night behind an empty light
 CLOUD_HI, CLOUD, CLOUD_LOW, CLOUD_DEEP = "#BEC5DD", "#9199BC", "#646D93", "#2C3355"  # smoky streaky glass
 TIDE_HI, TIDE, TIDE_DEEP = "#B4C5EE", "#7E9BDC", "#45609E"                         # ribbon silk
@@ -771,7 +772,7 @@ def blocked():
     dd, cs = came.render(); D += dd; G += cs          # the moon is leaded before the clouds are set over it
     glow = f'<path d="{d}" transform="{tr}" fill="{MOON_MID}"/>'
     dd, hs = halation(p, glow, .2); D += dd; G += hs
-    for n, cl, light in (("a", BACK_CLOUD, (97.0, 38.0, 21.0)), ("b", FRONT_CLOUD, (72.0, 44.0, 40.0))):
+    for n, cl, light in (("a", BACK_CLOUD, (97.0, 38.0, 21.0)), ("b", FRONT_CLOUD, (72.0, 44.0, 48.0))):
         cc = Came(p + n)
         dd, gg = cloud_glass(p, n, *cl, cc, light); D += dd; G += gg
         dd, cs = cc.render(); D += dd; G += cs
@@ -871,13 +872,6 @@ def check_over(p):
     return D, S
 
 
-# the maria as one piece of glass (points in fractions of r about the moon's centre, joined by a smooth closed
-# Catmull-Rom curve): Oceanus Procellarum running off the west limb, the round top of Imbrium, Serenitatis,
-# Tranquillitatis' eastern shore, Fecunditatis, then the bays of Nectaris and Nubium along the southern edge
-MARIA_PTS = [(-1.02, -.3), (-.62, -.6), (-.12, -.6), (.14, -.44), (.4, -.32), (.46, -.04), (.62, .14), (.58, .38),
-             (.4, .48), (.24, .3), (.06, .14), (-.14, .22), (-.24, .46), (-.46, .56), (-.74, .5), (-1.02, .22)]
-
-
 def catmull(points, n=8):
     out = []
     m = len(points)
@@ -891,32 +885,74 @@ def catmull(points, n=8):
     return out
 
 
-TIES = [((-.36, -.6), (-.3, -1.02)), ((-.46, .54), (-.44, 1.02))]   # two short leads from the maria to the north and south limb
+
+
+# The moon's face as a glazier would cut it (owner, round 3; supervisor round 3): the maria in their real connectivity,
+# as three leaded pieces, never as scattered islands. Points in fractions of r about the moon's centre, joined by a
+# smooth closed curve (Catmull-Rom); the west piece runs off the limb and is clipped by it.
+MARE_DEEP, MARE_PALE = "#8E9ABD", "#A6B1CD"     # with MARE between them: three related mare glasses
+WEST = [(-.88, -.5), (-.6, -.68), (-.3, -.7), (-.1, -.56), (-.08, -.38), (-.2, -.22), (-.32, -.06), (-.34, .18),
+        (-.28, .42), (-.4, .62), (-.64, .64), (-.88, .46), (-1.08, .1), (-1.08, -.28)]      # Imbrium + Procellarum
+EAST = [(.06, -.5), (.2, -.56), (.33, -.44), (.37, -.24), (.5, -.12), (.57, .08), (.67, .2), (.67, .44), (.53, .55),
+        (.41, .43), (.3, .47), (.16, .45), (.12, .29), (.18, .14), (.1, .02), (.03, -.14), (.04, -.34)]  # Serenitatis to Nectaris
+CRISIUM = (.72, -.24, .1, .13)
+# tone shifts inside the pieces: (piece, divider polyline, tone above or below it)
+WEST_DIV = [(-1.1, -.26), (-.7, -.2), (-.4, -.26), (-.1, -.3)]       # Imbrium (deep) over Procellarum (pale)
+EAST_DIV = [[(-.05, -.2), (.25, -.24), (.6, -.14)],                  # Serenitatis (mid) over Tranquillitatis (deep)
+            [(.05, .22), (.4, .2), (.75, .16)]]                       # Tranquillitatis over Fecunditatis + Nectaris (pale)
+TYCHO = (-.1, .68, .105)                                              # r about 3.4: one bright crater, hero only
 
 
 def completed():
-    """The full moon cut as a glazier would (supervisor G2, and the coordinator's round-2 note): the lead runs along the
-    maria's own outlines, so the mare glass is one lobed piece (Procellarum, Imbrium, Serenitatis, Tranquillitatis,
-    Fecunditatis, Nubium) in flat #9AA6C6, and the highlands are flat #C8D2E8. Two short ties from the maria to the north
-    and south limb split the highlands, as a glazier needs to hold a lobed piece: four lights in all, with no arcs from
-    rim to rim, so no ball, pie or phase can be read. Hero adds grisaille hatching on the mare glass at .15."""
+    """The full moon in leaded glass. Highland glass #C8D2E8, flat. The maria in their real connectivity, as three
+    leaded pieces: the west (Imbrium joined to Oceanus Procellarum), the east chain (Serenitatis, Tranquillitatis,
+    Fecunditatis, Nectaris) and Crisium alone by the east limb. Inside the two big pieces the glass shifts tone across a
+    lead (three related mare glasses), so they read as seas, not islands. Tycho is one bright roundel, hero only.
+    The row tier shows only the two big pieces, one tone each, with no lead and no Crisium or crater."""
     p = "igc-"
     D, S = [opening(p)], []
     came = Came(p)
     cx, cy, r = 60.0, 60.0, 32.0
     dd, G = night_field(p, came, spokes=(-150, -105, -60, -15, 30, 75, 120, 165), cx=cx, cy=cy); D += dd
-    mare_d = poly([(cx + u * r, cy + v * r) for u, v in catmull(MARIA_PTS)])
-    circ = f'<path d="{mare_d}"/>'
+    P = lambda pts: [(cx + u * r, cy + v * r) for u, v in pts]
     D.append(f'<clipPath id="{p}fc"><circle cx="{f(cx)}" cy="{f(cy)}" r="{f(r)}"/></clipPath>')
-    D.append(f'<clipPath id="{p}mc">{circ}</clipPath>')
     G.append(f'<circle cx="{f(cx)}" cy="{f(cy)}" r="{f(r)}" fill="{HIGHLAND}"/>')
-    G.append(f'<g clip-path="url(#{p}fc)"><path d="{mare_d}" fill="{MARE}"/></g>')
-    came.add(mare_d, W2() or None, clip=f"{p}fc")
-    if not ROW:
+    west, east = poly(P(catmull(WEST, 6))), poly(P(catmull(EAST, 6)))
+    D.append(f'<clipPath id="{p}wc"><path d="{west}"/></clipPath><clipPath id="{p}ec"><path d="{east}"/></clipPath>')
+    if ROW:
+        G.append(f'<g clip-path="url(#{p}fc)"><path d="{west}" fill="{MARE_PALE}"/><path d="{east}" fill="{MARE_DEEP}"/></g>')
+    else:
+        # west: Procellarum's pale glass, with Imbrium's deeper glass above the dividing lead
+        wd = P(WEST_DIV)
+        above = poly(wd + [(cx + 1.2 * r, cy - 1.2 * r), (cx - 1.2 * r, cy - 1.2 * r)])
+        G.append(f'<g clip-path="url(#{p}fc)"><path d="{west}" fill="{MARE_PALE}"/>'
+                 f'<g clip-path="url(#{p}wc)"><path d="{above}" fill="{MARE_DEEP}"/></g></g>')
+        # east: Serenitatis (mid) / Tranquillitatis (deep) / Fecunditatis and Nectaris (pale)
+        d1, d2 = P(EAST_DIV[0]), P(EAST_DIV[1])
+        top = poly(d1 + [(cx + 1.2 * r, cy - 1.2 * r), (cx - 1.2 * r, cy - 1.2 * r)])
+        bot = poly(d2 + [(cx + 1.2 * r, cy + 1.2 * r), (cx - 1.2 * r, cy + 1.2 * r)])
+        G.append(f'<g clip-path="url(#{p}fc)"><path d="{east}" fill="{MARE_DEEP}"/>'
+                 f'<g clip-path="url(#{p}ec)"><path d="{top}" fill="{MARE}"/><path d="{bot}" fill="{MARE_PALE}"/></g></g>')
+        u, v, a, b = CRISIUM
+        cr = f'<ellipse cx="{f(cx + u * r)}" cy="{f(cy + v * r)}" rx="{f(a * r)}" ry="{f(b * r)}"/>'
+        G.append(cr.replace("/>", f' fill="{MARE}"/>'))
+        D.append(f'<clipPath id="{p}mc"><path d="{west}"/><path d="{east}"/>{cr}</clipPath>')
         hatch = "".join(f"M{f(cx - r + i * 2.4)} {f(cy - r)}l{f(-r * .9)} {f(2 * r)}" for i in range(int(2 * r / 2.4) + 16))
         G.append(f'<g clip-path="url(#{p}fc)"><g clip-path="url(#{p}mc)"><path d="{hatch}" stroke="{GRIS}" stroke-opacity=".15" stroke-width=".35"/></g></g>')
-    for (u0, v0), (u1, v1) in TIES:
-        came.add(f"M{f(cx + u0 * r)} {f(cy + v0 * r)}L{f(cx + u1 * r)} {f(cy + v1 * r)}", W2() or None, clip=f"{p}fc")
+        came.add(west, W2(), clip=f"{p}fc")
+        came.add(east, W2(), clip=f"{p}fc")
+        came.add(poly(wd, close=False), W2(), clip=f"{p}wc")
+        came.add(poly(d1, close=False), W2(), clip=f"{p}ec")
+        came.add(poly(d2, close=False), W2(), clip=f"{p}ec")
+        if not MID:
+            # from 96 px only: Crisium's own lead and Tycho (at 32-64 px they fall to about a pixel and read as specks;
+            # there Crisium is only a tone, with no lead, and Tycho is left out)
+            came.add(f"M{f(cx + (u + a) * r)} {f(cy + v * r)}A{f(a * r)} {f(b * r)} 0 1 1 {f(cx + (u - a) * r)} {f(cy + v * r)}"
+                     f"A{f(a * r)} {f(b * r)} 0 1 1 {f(cx + (u + a) * r)} {f(cy + v * r)}Z", W2())
+            tx, ty, tr = cx + TYCHO[0] * r, cy + TYCHO[1] * r, TYCHO[2] * r
+            G.append(f'<circle cx="{f(tx)}" cy="{f(ty)}" r="{f(tr)}" fill="{MOON_HI}"/>'
+                     f'<circle cx="{f(tx)}" cy="{f(ty)}" r="{f(tr * .38)}" fill="none" stroke="{MOON_LOW}" stroke-opacity=".5" stroke-width=".45"/>')
+            came.add(circle_d(tx, ty, tr), .8)
     came.add(circle_d(cx, cy, r), W1())
     dd, cs = came.render(); D += dd
     S.append(f'<g clip-path="url(#{p}op)">{"".join(G)}{"".join(cs)}</g>')
@@ -935,28 +971,35 @@ def ray_hit(ix, iy, ang, cx=64.0, cy=64.0, R=37.0):
 
 
 def locked_out():
-    """Dalamud in red glass, broken: the impact point up and left of centre, the glass split along cracks that bend, the
-    pieces sagged out of plane, one shard falling. The hole is the inner part of one light, gone, so the night shows
-    through INSIDE the ring of shards (a hole, never a missing slice); the outer strip of that light still hangs in its
-    lead. Glass edges catch the key light where they face it."""
+    """Dalamud in red glass, cracked (owner, round 3: no hole): the impact point up and left of centre, the glass split
+    along cracks that bend, every shard still held in its lead at the limb, the night showing only through the crack
+    gaps. What makes it Ishgard's: one pane has sagged in its lead (pushed further out of plane and turned), and one
+    pane is a darker, strained ruby. Glass edges catch the key light where they face it."""
     p = "igl-"
     D, S = [opening(p)], []
     came = Came(p)
     dd, G = night_field(p, came, spokes=(-140, -80, -20, 40, 100, 160), tint=.04); D += dd
     cx, cy, R = 64.0, 64.0, 37.5
-    ix, iy = 59.0, 57.0
-    angs = [-122.0, -64.0, -14.0, 31.0, 84.0, 141.0, 197.0]
-    # shard 5 (lower left) is the one falling; the shards beside the hole barely moved, so no dark finger opens
-    # beside it
-    disp = [1.8, 1.3, 2.0, 2.4, 1.3, 1.0, 1.8]
-    turn = [-1.5, 1.0, -1.0, 2.0, -1.0, 0.0, 1.5]
+    ix, iy = 52.0, 50.0                          # the impact, well up and left of centre (off every axis)
+    # three through-cracks, all oblique (at least 25 degrees from vertical and horizontal), split the ruby into three
+    # panes; the hero tier adds hairline cracks that did not run through. Nothing crosses the centre on an axis.
+    angs = [-62.0, 35.0, 128.0]
+    HAIRLINES = [(-155.0, 1.4), (-108.0, -1.6), (-16.0, 1.2), (78.0, -1.2)]
+    # pane 0 (right) has sagged in its lead, further out and turned; pane 1 (below) is a darker, strained ruby
+    disp = [3.6, 2.2, 4.0]
+    turn = [3.5, -1.0, 1.0]
     FALLING = None
-    # the three cracks that bound the hole (2, 3, 4) run straight from the impact point, as real fractures do
-    jog = [1.8, 0.0, 0.0, 0.0, 0.0, -2.0, 1.6]
-    gone = (2, 3)                                # the inner parts of these two lights have fallen out
-    HOLE_R = 0.70                                # the cross breaks lie at about 0.66 of the moon's radius
+    jog = [2.0, -2.2, 1.8]                       # each crack bends twice, so none is ruled
+    gone = ()                                    # no pane has fallen out (owner, round 3)
+    DARK = 1
+    STRAINED_ROW = "#B04456"                     # row tier: one step under the ruby body, not the hero's deep step
+    HOLE_R = 0.70
     n = len(angs)
-    D.append(lin_grad(p, "rd", cx - R, cy - R, cx + R, cy + R, [(0, RUBY_HI), (.55, RUBY), (1, RUBY_LO)]))
+    # flashed ruby is thinnest (palest) at the top of the sheet and densest at the foot
+    # (the row tier keeps the density step small, so at 20-28 px the ruby reads as one body split by cracks, never as a
+    # lit half over a dark one, which would echo Done's half moon)
+    D.append(lin_grad(p, "rd", cx - R * .3, cy - R, cx + R * .3, cy + R,
+                      [(0, RUBY_HI), (.5, RUBY), (1, RUBY_LO)] if not ROW else [(0, RUBY_HI), (.6, RUBY), (1, "#B04456")]))
     D.append(f'<clipPath id="{p}dc"><circle cx="{f(cx)}" cy="{f(cy)}" r="{f(R)}"/></clipPath>')
     cracks = []
     for a, j in zip(angs, jog):
@@ -999,7 +1042,8 @@ def locked_out():
         else:
             pts = [(ix, iy), c0[1], c0[2]] + arc + [c1[2], c1[1]]
             mid = math.radians((a0 + a1) / 2)
-            tx, ty, rot_ = disp[i] * math.cos(mid), disp[i] * math.sin(mid), turn[i]
+            k = 2.2 if ROW else 1.4          # the row tier opens the cracks wider, so they survive at 16-20 px
+            tx, ty, rot_ = k * disp[i] * math.cos(mid), k * disp[i] * math.sin(mid), turn[i]
         gx = sum(x for x, _ in pts) / len(pts); gy = sum(y for _, y in pts) / len(pts)
         if i == FALLING:
             # the falling shard hinges down from near the impact point and drops: its outer end swings out past the
@@ -1011,11 +1055,23 @@ def locked_out():
         D.append(f'<clipPath id="{sid}"><path d="{poly(pts)}"/></clipPath>')
         g = [f'<g clip-path="url(#{sid})"><g clip-path="url(#{p}dc)"><circle cx="{f(cx)}" cy="{f(cy)}" r="{f(R)}" fill="url(#{p}rd)"/>']
         if not ROW:
-            hl = "M68 44L74.5 38.5L81 33M45 74L40 80.5L35.5 86M83 70L89 67.5L96 63.5M47 50L41.5 46L35 44.5"
+            hl = ""
+            for ha, hj in HAIRLINES:
+                if not (a0 <= ha <= a1 or a0 <= ha + 360 <= a1):
+                    continue
+                he = ray_hit(ix, iy, ha, cx, cy, R - 4)
+                hux, huy = math.cos(math.radians(ha)), math.sin(math.radians(ha))
+                hL = math.hypot(he[0] - ix, he[1] - iy)
+                h1 = (ix + hux * hL * .4 - hj * huy, iy + huy * hL * .4 + hj * hux)
+                h2 = (ix + hux * hL * .72 + hj * .6 * huy, iy + huy * hL * .72 - hj * .6 * hux)
+                hl += poly([(ix + hux * 3, iy + huy * 3), h1, h2, he], close=False)
             g.append(f'<path d="{hl}" fill="none" stroke="{RUBY_EDGE}" stroke-opacity=".45" stroke-width=".5" transform="translate(.45 .55)"/>'
                      f'<path d="{hl}" fill="none" stroke="{VOID}" stroke-opacity=".7" stroke-width=".55"/>')
             g.append(f'<path d="M{f(cx - R)} {f(cy + 8)}C{f(cx - 10)} {f(cy - 4)} {f(cx + 8)} {f(cy + 18)} {f(cx + R)} {f(cy + 2)}" fill="none" stroke="{RUBY_LO}" stroke-opacity=".22" stroke-width="9" filter="url(#{p}sk)"/>')
             g.append(f'<circle cx="{f(cx)}" cy="{f(cy)}" r="{f(R)}" fill="{"#FFFFFF" if i % 2 else "#000000"}" fill-opacity="{f(.06 + .03 * (i % 3))}"/>')
+        if i == DARK:
+            g.append(f'<circle cx="{f(cx)}" cy="{f(cy)}" r="{f(R)}" fill="{RUBY_LO}" fill-opacity=".85"/>' if not ROW
+                     else f'<circle cx="{f(cx)}" cy="{f(cy)}" r="{f(R)}" fill="{STRAINED_ROW}"/>')
         area = sum(pts[k][0] * pts[(k + 1) % len(pts)][1] - pts[(k + 1) % len(pts)][0] * pts[k][1] for k in range(len(pts)))
         sgn = 1 if area > 0 else -1
         for k in range(len(pts)):
@@ -1037,21 +1093,6 @@ def locked_out():
         tr = f'translate({f(tx)} {f(ty)}) rotate({f(rot_)} {f(gx)} {f(gy)})'
         body.append(f'<g transform="{tr}">{"".join(g)}</g>')
     G.append(f'<g filter="url(#{p}fs)">{"".join(body)}</g>')
-    # the falling shard: the inner piece of light 3, out of the hole and dropping in front of the window, turned as it
-    # falls. It is a loose piece of glass seen against the window, so it is lit only by what is behind it (its body is
-    # the ruby, a step lighter: turned toward the window's light) and its broken edges catch the key light where they face it.
-    # a broken-off piece is never a neat triangle: a long irregular splinter (nowhere under 4 units across), turned
-    # as it tumbles, below the hole and just past Dalamud's rim, fully inside the window
-    local = [(-14.0, 2.0), (-3.5, -6.0), (13.0, -4.8), (9.5, 2.0), (-1.5, 5.6)]
-    ang = math.radians(-20)
-    tgx, tgy = 72.0, 103.0
-    fp = [(tgx + x * math.cos(ang) - y * math.sin(ang), tgy + x * math.sin(ang) + y * math.cos(ang)) for x, y in local]
-    ftr = ""
-    fd = poly(fp)
-    G.append(f'<g><path d="{fd}" fill="url(#{p}rd)"/><path d="{fd}" fill="#FFFFFF" fill-opacity=".1"/>'
-             + ('' if ROW else f'<path d="{fd}" fill="none" stroke="{RUBY_EDGE}" stroke-opacity=".7" stroke-width="1.1" stroke-linejoin="round" transform="translate(-.3 -.4)"/>'
-                f'<path d="{fd}" fill="none" stroke="{KEY}" stroke-opacity=".55" stroke-width=".9" stroke-linejoin="round" transform="translate(.4 .5)"/>')
-             + '</g>')
     dd, cs = came.render(); D += dd
     S.append(f'<g clip-path="url(#{p}op)">{"".join(G)}{"".join(cs)}</g>')
     return face("Locked out", "locked-out", (D, S))
@@ -1178,6 +1219,9 @@ def write_kit():
 
 if __name__ == "__main__":
     write_tier("")
+    MID = True
+    write_tier("_mid")
+    MID = False
     ROW = True
     write_tier("_row")
     ROW = False

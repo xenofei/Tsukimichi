@@ -462,9 +462,9 @@ public sealed class TablePane : IDisposable
         {
             var width = ImGui.CalcTextSize(label).X;
             var text = HeaderText(label, moonRoad);
-            using (HeaderRole(text, moonRoad))
+            using (var role = HeaderRole(text, moonRoad))
             {
-                width = MathF.Max(width, ImGui.CalcTextSize(text).X);
+                width = MathF.Max(width, Chrome.TrackedTextWidth(text, Typography.HeaderTracking(in role)));
             }
 
             return width + (sortable ? sortArrow : 0f);
@@ -1097,9 +1097,10 @@ public sealed class TablePane : IDisposable
 
     /// <summary>
     /// What TableHeadersRow does, one header at a time, so each can carry a tooltip. Labels are in the secondary tone;
-    /// the sorted column's label and its arrow are in the primary text colour (a sort is not a call to action, so never
-    /// gold). Plain draws them in the caption role on the raised fill; Moon Road (<paramref name="moonRoad"/>, R3 #6) in
-    /// the Eyebrow role, upper-cased in English, on a clear header. <paramref name="nameNote"/>, when given, is a second
+    /// the sorted column's label and its arrow are in the primary text colour, the lighter gilt at Full (a sort is not
+    /// a call to action, so never Moon gold). Quiet and Plain draw them at the body size (Plain on the raised band);
+    /// Moon Road (R3 #6, plan v7 §5) in the Header role, upper-cased in English and tracked, on a clear header. The row
+    /// is at least <see cref="ScaleMetrics.TableHeaderMin"/> tall. <paramref name="nameNote"/>, when given, is a second
     /// line in the Name header's tooltip. Returns the header row's bottom on screen (where the rows' view starts; the
     /// header is frozen, so it stays there however the rows scroll), or <see cref="float.MinValue"/> with no header drawn.
     /// </summary>
@@ -1108,7 +1109,22 @@ public sealed class TablePane : IDisposable
         var s = Theme.Surface;
         var moonRoad = style == TableHeaderStyle.MoonRoad;
         var bottom = float.MinValue;
-        ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
+
+        // The row is at least the level's header height (plan v7 §5: 30 / 28 / 22), with the labels in its middle: the
+        // header row's own cell padding takes up the difference, so ImGui's top-aligned header cells centre them.
+        float line;
+        var nameLabel = HeaderText(HeaderLabels[(int)Column.Name], moonRoad);
+        using (HeaderRole(nameLabel, moonRoad))
+        {
+            line = ImGui.GetTextLineHeight();
+        }
+
+        var cellPadding = ImGui.GetStyle().CellPadding;
+        var (rowHeight, rowPadY) = ScaleMetrics.TableHeaderRow(UiMetrics.Px(ScaleMetrics.TableHeaderMin(Theme.Flair)), line, cellPadding.Y);
+        ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(cellPadding.X, rowPadY));
+        ImGui.TableNextRow(ImGuiTableRowFlags.Headers, rowHeight);
+        ImGui.PopStyleVar();
+        var arrow = MathF.Floor((ImGui.GetFontSize() * 0.65f) + ImGui.GetStyle().FramePadding.X);
         var lastShown = -1;
         for (var i = 0; i < HeaderTooltips.Length; i++)
         {
@@ -1128,19 +1144,25 @@ public sealed class TablePane : IDisposable
             var label = HeaderText(HeaderLabels[i], moonRoad);
             ImGui.PushID(i);
 
-            // The sorted column's label in the primary tone (at Full the gilt); the rest secondary, tertiary at Quiet.
-            var ink = i == sortedColumn
-                ? moonRoad ? s.OrnamentHigh : s.Text
-                : style == TableHeaderStyle.Eyebrow || moonRoad ? s.TextTertiary : s.TextSecondary;
+            // The sorted column's label in the primary tone (at Full the lighter gilt); the rest in the secondary tone.
+            var ink = i == sortedColumn ? moonRoad ? s.OrnamentLight : s.Text : s.TextSecondary;
+
+            // ImGui's header (its hover, click to sort and sort arrow, in the label's ink) with no label of its own; the
+            // label is drawn over it in the header's role, tracked at Full, ending in an ellipsis before the arrow.
+            var labelPos = ImGui.GetCursorScreenPos();
             ImGui.PushStyleColor(ImGuiCol.Text, ink);
+            ImGui.TableHeader("##header");
+            ImGui.PopStyleColor();
+            var labelRight = ImGui.GetItemRectMax().X - (i == sortedColumn ? arrow : cellPadding.X);
             float labelWidth;
-            using (HeaderRole(label, moonRoad))
+            using (var role = HeaderRole(label, moonRoad))
             {
-                labelWidth = ImGui.CalcTextSize(label).X;
-                ImGui.TableHeader(label);
+                var tracking = Typography.HeaderTracking(in role);
+                labelWidth = Chrome.TrackedTextWidth(label, tracking);
+                var y = labelPos.Y + MathF.Round((line - ImGui.GetTextLineHeight()) * 0.5f);
+                Chrome.TrackedTextAt(ImGui.GetWindowDrawList(), new Vector2(labelPos.X, y), MathF.Max(0f, labelRight - labelPos.X), label, Theme.U32(ink), tracking);
             }
 
-            ImGui.PopStyleColor();
             ImGui.PopID();
             bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
             if (style == TableHeaderStyle.Raised && i != lastShown)
@@ -1173,12 +1195,11 @@ public sealed class TablePane : IDisposable
     private static string HeaderText(string label, bool moonRoad) => moonRoad ? SectionHeading.Label(label) : label;
 
     /// <summary>
-    /// The header labels' role: the Eyebrow in Moon Road where headings are capitals (the caption role in sentence-case
-    /// languages, as <see cref="SectionHeading"/> does), else the caption role (ui-revamp §4.2: 0.85× the body, never
-    /// under 12 px).
+    /// The header labels' role (plan v7 §5): in Moon Road the Header role (TrumpGothic at 1.55× the body, tracked; the
+    /// body size where the game face cannot draw the label), else the body size: never smaller than the rows' text.
     /// </summary>
     private static Typography.Scope HeaderRole(string text, bool moonRoad) =>
-        moonRoad && SectionHeading.Capitals ? Typography.Eyebrow(text) : Typography.Caption();
+        moonRoad ? Typography.Header(text) : default;
 
     /// <summary>
     /// The title line over the table (R3 #6, proposal §7.3): the node's parent as a breadcrumb in the caption role and
@@ -2177,9 +2198,13 @@ public sealed class TablePane : IDisposable
         }
     }
 
-    /// <summary>Whether the Opens column shows <paramref name="entry"/>: Sprout mode leaves out rows past the character's reach, and no row repeats a reward, as in the detail pane (UnlockView.Visible).</summary>
+    /// <summary>
+    /// Whether the Opens column shows <paramref name="entry"/>: Sprout mode leaves out rows past the character's reach,
+    /// and no row repeats a reward, as in the detail pane (UnlockView.Visible). A row without an icon counts too and
+    /// draws the veiled moon, as its detail row does, so the two agree (UI-Q Q11).
+    /// </summary>
     private static bool ShowsOpens(Core.Unlocks.UnlockEntry entry, byte reach) =>
-        entry.Target != Core.Unlocks.UnlockTarget.NextQuest && entry.Icon != 0 && Core.Unlocks.UnlockView.Shows(entry, reach);
+        entry.Target != Core.Unlocks.UnlockTarget.NextQuest && Core.Unlocks.UnlockView.Shows(entry, reach);
 
     /// <summary>
     /// The Rewards column: up to four icons of what the quest hands over to keep. In a column the player made narrower

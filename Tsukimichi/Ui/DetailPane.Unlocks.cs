@@ -111,7 +111,7 @@ public sealed partial class DetailPane
         }
 
         Gap();
-        BeginSection("##unlocks", Strings.UnlocksSection, UnlocksIcon, unlocksMasked ? string.Empty : unlocksCaption, Theme.Surface.TextTertiary);
+        BeginSection("##unlocks", Strings.UnlocksSection, UnlocksIcon, unlocksMasked ? string.Empty : unlocksCaption, Theme.Surface.TextSecondary);
         if (unlocksMasked)
         {
             TextFlow.Wrapped(Strings.UnlocksMasked, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
@@ -478,8 +478,18 @@ public sealed partial class DetailPane
             return;
         }
 
+        // Each name after the icon its row would wear, a line high, so the list reads like the rows above it.
+        var side = ImGui.GetTextLineHeight();
         foreach (var row in group.More)
         {
+            var min = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(side));
+            if (row.Icon == 0 || !GameIcon.DrawAt(ImGui.GetWindowDrawList(), textures, row.Icon, min, min + new Vector2(side), UiMetrics.Px(2f)))
+            {
+                MoonGlyph.DrawVeiled(ImGui.GetWindowDrawList(), min + new Vector2(side * 0.5f), side * 0.32f, 0.6f);
+            }
+
+            ImGui.SameLine();
             ImGui.TextUnformatted(row.Name);
             ImGui.SameLine();
             ImGui.TextDisabled(row.Caption);

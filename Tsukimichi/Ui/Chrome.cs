@@ -91,8 +91,9 @@ public static partial class Chrome
     /// <param name="id">Pushed as an id scope for the card's content.</param>
     /// <param name="accent">The callout rule's colour; default is VeilLine (neutral). Ignored by the other kinds.</param>
     /// <param name="eyebrow">
-    /// The title in the Eyebrow role (TrumpGothic, moon-road proposal §4) rather than the caption role, with the icon at
-    /// caption size centred on it; the caption role still stands in while game heading fonts are off.
+    /// The title as a Section heading at the Decoration level (plan v7 §1: TrumpGothic, tracked and cased for the
+    /// language at Full, the Lead face at Quiet, a band at Plain; never smaller than the body) rather than the caption
+    /// role, with the icon at caption size centred on it. Pass the title in its own case.
     /// </param>
     public static void BeginCard(string id, string? title = null, string? icon = null, CardKind kind = CardKind.Raised, Vector4? accent = null, bool eyebrow = false)
     {
@@ -142,25 +143,9 @@ public static partial class Chrome
             return;
         }
 
-        if (eyebrow && cardKind == CardKind.Raised && FlairRules.Card(Theme.Flair) != CardFrame.BrassCorners)
-        {
-            // Quiet and Plain: the heading in the body font, sentence case; at Plain a 1 px line under the heading row.
-            ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.Text);
-            ImGui.TextUnformatted(title);
-            ImGui.PopStyleColor();
-            if (FlairRules.Card(Theme.Flair) == CardFrame.None)
-            {
-                // Between the heading and the content (the item spacing), so the title stays the last item for a caption.
-                var y = ImGui.GetItemRectMax().Y + MathF.Max(1f, MathF.Floor(ImGui.GetStyle().ItemSpacing.Y * 0.5f));
-                ImGui.GetWindowDrawList().AddRectFilled(new Vector2(cardStart.X, MathF.Floor(y)), new Vector2(cardStart.X + cardWidth, MathF.Floor(y) + 1f), Theme.U32(Theme.RuleColor));
-            }
-
-            return;
-        }
-
         if (eyebrow)
         {
-            EyebrowTitle(title, icon);
+            SectionTitle(title, icon);
             return;
         }
 
@@ -181,35 +166,83 @@ public static partial class Chrome
     }
 
     /// <summary>
-    /// A card title in the Eyebrow role: the icon at caption size in the secondary tone, centred on the title's line,
-    /// then the title in the primary tone. The title's item is the last, so a caption placed from its rect lines up.
-    /// When the eyebrow falls back to the caption role both are one size and this draws as the caption title does.
+    /// A card title in the Section role at the card's Decoration level (docs/design/v7/ui/spec.md §1), on a heading row
+    /// of the level's height (<see cref="HeadingLayout.SectionRow"/>) with the title centred on it:
+    /// <list type="bullet">
+    /// <item>Full: TrumpGothic at 1.80× the body (tapering at large Text sizes), capitals in English, tracked +0.08 em,
+    /// in the lighter gilt over a 1 px Abyss shadow; where the game face cannot draw it (game fonts off, a script it
+    /// lacks), the Lead face in sentence case, still gilt.</item>
+    /// <item>Quiet: the Lead face (the body face at 1.15×) in the primary tone.</item>
+    /// <item>Plain: the body size in the primary tone on a full-bleed band with a 1 px line under it.</item>
+    /// </list>
+    /// The optional icon sits at caption size in the secondary tone before it. The heading row is the last item (as
+    /// wide as the title), so a caption placed from its rect centres on the row; the content starts the level's gap
+    /// under it. A cut title names itself on hover.
     /// </summary>
-    private static void EyebrowTitle(string title, string? icon)
+    private static void SectionTitle(string title, string? icon)
     {
-        var y = ImGui.GetCursorPosY();
-        float line;
-        using (Typography.Eyebrow(title))
+        var level = FlairRules.Card(Theme.Flair) switch
         {
-            line = ImGui.GetTextLineHeight();
+            CardFrame.BrassCorners => Flair.Full,
+            CardFrame.Tonal => Flair.Quiet,
+            _ => Flair.Plain,
+        };
+        var dl = ImGui.GetWindowDrawList();
+        var start = ImGui.GetCursorScreenPos();
+        var room = RoomX();
+        var upper = SectionHeading.Label(title);
+        using var role = level switch
+        {
+            Flair.Full => Typography.Section(upper),
+            Flair.Quiet => Typography.Lead(),
+            _ => default,
+        };
+
+        var gameFace = role.GameFace;
+        var text = gameFace ? upper : title;
+        var tracking = gameFace ? Typography.SectionTracking(in role) : 0f;
+        var line = ImGui.GetTextLineHeight();
+        var width = TrackedTextWidth(text, tracking);
+        var row = HeadingLayout.SectionRowHeight(level, UiMetrics.Scale, line);
+
+        if (level == Flair.Plain)
+        {
+            // The ledger's band, full bleed (a little past the content either side), with its line under it.
+            var bleed = UiMetrics.Px(4f);
+            var left = cardStart.X - bleed;
+            var right = cardStart.X + cardWidth + bleed;
+            dl.AddRectFilled(new Vector2(left, start.Y), new Vector2(right, start.Y + row), Theme.U32(Theme.Tones.Band));
+            dl.AddRectFilled(new Vector2(left, start.Y + row), new Vector2(right, start.Y + row + 1f), Theme.U32(Theme.Tones.Rule));
         }
 
+        var x = start.X;
         if (icon is not null)
         {
             using var caption = Typography.Caption();
-            ImGui.SetCursorPosY(y + MathF.Max(0f, (line - ImGui.GetTextLineHeight()) * 0.5f));
+            var iconLine = ImGui.GetTextLineHeight();
+            ImGui.SetCursorScreenPos(new Vector2(x, start.Y + MathF.Round((row - iconLine) * 0.5f)));
             ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.TextSecondary);
             Typography.Icon(icon);
             ImGui.PopStyleColor();
-            ImGui.SameLine(0f, UiMetrics.Px(6f));
-            ImGui.SetCursorPosY(y);
+            x = ImGui.GetItemRectMax().X + UiMetrics.Px(6f);
         }
 
-        // Full's card headings are gilt (spec §1, "Headings font": GiltHigh eyebrows); elsewhere the primary tone.
-        using var role = Typography.Eyebrow(title);
-        ImGui.PushStyleColor(ImGuiCol.Text, Theme.MoonRoadArt ? Theme.Surface.OrnamentHigh : Theme.Surface.Text);
-        ImGui.TextUnformatted(title);
-        ImGui.PopStyleColor();
+        var full = level == Flair.Full;
+        var ink = Theme.U32(full ? Theme.Surface.OrnamentLight : Theme.Surface.Text);
+        var shadow = full ? Theme.WithAlpha(Theme.Abyss, 0.55f) : 0u;
+        var textRoom = MathF.Max(1f, start.X + room - x);
+        var cut = TrackedTextAt(dl, new Vector2(x, start.Y + MathF.Round((row - line) * 0.5f)), textRoom, text, ink, tracking, shadow);
+
+        ImGui.SetCursorScreenPos(start);
+        ImGui.Dummy(new Vector2(MathF.Max(1f, x - start.X + MathF.Min(width, textRoom)), row));
+        if (cut && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(title);
+        }
+
+        // The content starts the level's gap under the row (under Plain's line), whatever ImGui's item spacing is.
+        var gap = UiMetrics.Px(HeadingLayout.SectionRow(level).Gap) + (level == Flair.Plain ? 1f : 0f);
+        ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + row + gap));
     }
 
     /// <summary>

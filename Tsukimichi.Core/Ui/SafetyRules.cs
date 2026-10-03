@@ -63,6 +63,9 @@ public enum GuardedAction
 
     /// <summary>The last step of Delete all data.</summary>
     DeleteAllData,
+
+    /// <summary>Reset in the filter drawer (plan v7 UI-2): clears every filter and the search.</summary>
+    ResetFilters,
 }
 
 /// <summary>
@@ -106,6 +109,7 @@ public static class SafetyRules
         GuardedAction.EditVerdictNote => SafetyTier.None,
         GuardedAction.HideCharacter => SafetyTier.None,
         GuardedAction.Unpin => SafetyTier.None,
+        GuardedAction.ResetFilters => SafetyTier.None,
         GuardedAction.RestoreAllVerdicts => SafetyTier.Hold,
         GuardedAction.PinAll => SafetyTier.Hold,
         GuardedAction.QuestionableReplace => SafetyTier.Hold,

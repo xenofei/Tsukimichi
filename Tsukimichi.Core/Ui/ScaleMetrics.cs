@@ -285,6 +285,31 @@ public static class ScaleMetrics
         return MathF.Max(target, TreeRowHeight(line, glyphRadius, scale));
     }
 
+    /// <summary>
+    /// The least height of the quest table's header row in logical pixels at a Decoration level (docs/design/v7/ui/spec.md
+    /// §5): Full 30, Quiet 28, Plain's band 22. The row is taller when its label's line and the cell padding need more.
+    /// Unknown values read as Full.
+    /// </summary>
+    public static float TableHeaderMin(Flair flair) => (Enum.IsDefined(flair) ? flair : Flair.Full) switch
+    {
+        Flair.Plain => 22f,
+        Flair.Quiet => 28f,
+        _ => 30f,
+    };
+
+    /// <summary>
+    /// The header row's height and the cell padding above and below its label, so the label sits in the middle of the
+    /// row: at least <paramref name="minHeight"/>, else the label's <paramref name="lineHeight"/> with
+    /// <paramref name="cellPaddingY"/> either side.
+    /// </summary>
+    public static (float Height, float PaddingY) TableHeaderRow(float minHeight, float lineHeight, float cellPaddingY)
+    {
+        var line = float.IsFinite(lineHeight) ? MathF.Max(0f, lineHeight) : 0f;
+        var pad = float.IsFinite(cellPaddingY) ? MathF.Max(0f, cellPaddingY) : 0f;
+        var height = MathF.Max(float.IsFinite(minHeight) ? minHeight : 0f, line + (2f * pad));
+        return (height, MathF.Max(pad, MathF.Floor((height - line) * 0.5f)));
+    }
+
     /// <summary>Smallest quest table row in pixels whatever the scales: rows are contiguous click targets (WCAG 2.5.8, accessibility B4).</summary>
     public const float TableRowMinPx = 24f;
 

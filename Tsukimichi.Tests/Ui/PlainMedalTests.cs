@@ -14,9 +14,6 @@ namespace Tsukimichi.Tests.Ui;
 public class PlainMedalTests
 {
     private const int Px = 12;
-    private const int Samples = 4;
-
-    private static readonly Vector3 Ground = Rgb(MedalTokens.PlainGround);
 
     [Fact]
     public void Ready_reads_first_and_completed_recedes_at_12_px()
@@ -156,78 +153,7 @@ public class PlainMedalTests
     // ------------------------------------------------------------------ the round-5 metric
 
     /// <summary>The mean |L − background| (0–255 greyscale) of <paramref name="state"/>'s Plain glyph at 12 px on Plain's pane.</summary>
-    private static float Salience(QuestState state)
-    {
-        var mesh = MedalArt.Medal(state, MedalTokens.Plain, Px);
-        var k = Px / 128f;
-        var background = Luma(Ground);
-        var total = 0f;
-        for (var y = 0; y < Px; y++)
-        {
-            for (var x = 0; x < Px; x++)
-            {
-                var pixel = Vector3.Zero;
-                for (var sy = 0; sy < Samples; sy++)
-                {
-                    for (var sx = 0; sx < Samples; sx++)
-                    {
-                        var p = new Vector2(x + ((sx + 0.5f) / Samples), y + ((sy + 0.5f) / Samples));
-                        pixel += Shade(mesh, k, p);
-                    }
-                }
-
-                total += MathF.Abs(Luma(pixel / (Samples * Samples)) - background);
-            }
-        }
-
-        return total / (Px * Px);
-    }
-
-    /// <summary>The colour at <paramref name="p"/> (device px) with every triangle composited over the ground in draw order.</summary>
-    private static Vector3 Shade(MedalMesh mesh, float k, Vector2 p)
-    {
-        var color = Ground;
-        foreach (var part in mesh.Parts)
-        {
-            if (Px < part.MinSizePx)
-            {
-                continue;
-            }
-
-            for (var t = 0; t + 2 < part.Indices.Length; t += 3)
-            {
-                var (a, b, c) = (part.Indices[t], part.Indices[t + 1], part.Indices[t + 2]);
-                var p0 = (part.Positions[a] * k) + part.Offsets[a];
-                var p1 = (part.Positions[b] * k) + part.Offsets[b];
-                var p2 = (part.Positions[c] * k) + part.Offsets[c];
-                var area = ((p1.X - p0.X) * (p2.Y - p0.Y)) - ((p2.X - p0.X) * (p1.Y - p0.Y));
-                if (MathF.Abs(area) < 1e-9f)
-                {
-                    continue;
-                }
-
-                var w0 = (((p1.X - p.X) * (p2.Y - p.Y)) - ((p2.X - p.X) * (p1.Y - p.Y))) / area;
-                var w1 = (((p2.X - p.X) * (p0.Y - p.Y)) - ((p0.X - p.X) * (p2.Y - p.Y))) / area;
-                var w2 = 1f - w0 - w1;
-                if (w0 < -1e-6f || w1 < -1e-6f || w2 < -1e-6f)
-                {
-                    continue;
-                }
-
-                var v = (w0 * Unpack(part.Colors[a])) + (w1 * Unpack(part.Colors[b])) + (w2 * Unpack(part.Colors[c]));
-                var alpha = Math.Clamp(v.W, 0f, 1f);
-                color = Vector3.Lerp(color, new Vector3(v.X, v.Y, v.Z), alpha);
-            }
-        }
-
-        return color;
-    }
-
-    private static Vector4 Unpack(uint c) => new((c & 0xFF) / 255f, ((c >> 8) & 0xFF) / 255f, ((c >> 16) & 0xFF) / 255f, (c >> 24) / 255f);
-
-    private static Vector3 Rgb(Vector4 c) => new(c.X, c.Y, c.Z);
-
-    private static float Luma(Vector3 c) => 255f * ((0.299f * c.X) + (0.587f * c.Y) + (0.114f * c.Z));
+    private static float Salience(QuestState state) => MedalRaster.Salience(state, MedalTokens.Plain, Px, MedalTokens.PlainGround);
 
     private static Vector2 Centroid(IReadOnlyList<Vector2> loop)
     {
