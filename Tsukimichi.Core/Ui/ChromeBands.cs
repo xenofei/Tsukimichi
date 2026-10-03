@@ -88,6 +88,18 @@ public static class ChromeBands
     /// </summary>
     public static float StatusBarHeight(float lineHeight, float itemSpacingY) => lineHeight + (3f * itemSpacingY);
 
+    /// <summary>
+    /// The status bar's height at a Decoration level's style (docs/design/flair-v13 §1, "Status bar": 30, 26 and 20 px
+    /// at the default sizes): the line with three spacings at Full, two at Quiet and one at Plain. Like every band it
+    /// follows a setting and the type sizes alone, never the content.
+    /// </summary>
+    public static float StatusBarHeight(float lineHeight, float itemSpacingY, StatusBarStyle style) => style switch
+    {
+        StatusBarStyle.Text => lineHeight + itemSpacingY,
+        StatusBarStyle.Quiet => lineHeight + (2f * itemSpacingY),
+        _ => StatusBarHeight(lineHeight, itemSpacingY),
+    };
+
     /// <summary>The frame's bands at <paramref name="m"/>.</summary>
     public static ChromeBandLayout Layout(in ChromeMetrics m)
     {

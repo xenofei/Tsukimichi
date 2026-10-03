@@ -1587,6 +1587,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("windows", windowSystem.RemoveAllWindows);
         Unwind("settings window", () => configWindow?.Dispose());
         Unwind("fonts", Ui.Typography.Dispose);
+        Unwind("banner grades", Ui.BannerGrading.Dispose);
         Unwind("in the game", DisposeInGame);
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());

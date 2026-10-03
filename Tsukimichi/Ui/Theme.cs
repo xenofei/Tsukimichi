@@ -197,17 +197,78 @@ public static class Theme
     /// <summary>Whether the pane gradient draws this frame (Full only).</summary>
     public static bool ShowPaneGradient => FlairRules.PaneGradient(Flair);
 
-    /// <summary>Whether section rules and moon-road dividers draw this frame (Full and Quiet).</summary>
-    public static bool ShowRules => FlairRules.Rules(Flair);
+    /// <summary>
+    /// How rules and dividers draw this frame (<see cref="FlairRules.Rule"/>): the Moon Road's brass at Full, a flat
+    /// hairline at Quiet, the palette's line at Plain.
+    /// </summary>
+    public static RuleStyle RuleStyle => FlairRules.Rule(Flair);
+
+    /// <summary>
+    /// Whether the panes are laid out in headed sections with a rule under each heading (Full and Quiet), rather than the
+    /// plain lines of the ledger (Plain). The rule itself follows <see cref="RuleStyle"/>.
+    /// </summary>
+    public static bool Sectioned => RuleStyle != RuleStyle.Line;
+
+    /// <summary>Whether the Moon Road's brass art draws this frame: sigils, fading brass rules, roads, moon-road dividers (Full).</summary>
+    public static bool MoonRoadArt => RuleStyle == RuleStyle.MoonRoad;
 
     /// <summary>Whether corner marks draw this frame (Full only).</summary>
     public static bool ShowCornerMarks => FlairRules.CornerMarks(Flair);
 
-    /// <summary>Whether glows and star fields draw this frame (Full only).</summary>
+    /// <summary>Whether glows draw this frame (Full only).</summary>
     public static bool ShowGlow => FlairRules.Glow(Flair);
+
+    /// <summary>Whether the faint star field draws in empty sky this frame (Full only).</summary>
+    public static bool ShowStars => FlairRules.StarField(Flair);
 
     /// <summary>Whether the Moon Road's own motion plays this frame (Full, and Reduce motion off).</summary>
     public static bool FlairMotion => FlairRules.Motion(Flair, UiMetrics.ReduceMotion);
+
+    /// <summary>Whether hover fades, gauge fills and the reveal pulse play this frame (Full and Quiet, Reduce motion off).</summary>
+    public static bool UiMotion => FlairRules.UiMotion(Flair, UiMetrics.ReduceMotion);
+
+    /// <summary>The medals' finish this frame (<see cref="FlairRules.Medal"/>): gilt, light rim, plain, or the Classic moons.</summary>
+    public static MedalFinish MedalFinish => FlairRules.Medal(Flair, MoonStyle);
+
+    /// <summary>The detail pane's hero this frame (<see cref="FlairRules.Hero"/>).</summary>
+    public static HeroStyle HeroStyle => FlairRules.Hero(Flair);
+
+    /// <summary>The quest table's header this frame (<see cref="FlairRules.TableHeader"/>).</summary>
+    public static TableHeaderStyle TableHeader => FlairRules.TableHeader(Flair);
+
+    /// <summary>The level's spacing tokens this frame (<see cref="FlairRules.Spacing"/>), logical px.</summary>
+    public static FlairSpacing Spacing => FlairRules.Spacing(Flair);
+
+    /// <summary>The level's surfaces this frame (<see cref="FlairTones.For"/>): Quiet's tonal panes, Plain's ledger bands.</summary>
+    public static FlairTones Tones { get; private set; } = FlairTones.For(Flair.Full, SurfaceColors.Night);
+
+    /// <summary>
+    /// A structure line's colour this frame: Quiet's hairline or Plain's line, and under the high-contrast palette the
+    /// strong line, so a boundary never rests on tone alone.
+    /// </summary>
+    public static Vector4 RuleColor => Glyphs.HighContrast ? Surface.StrongLine : Tones.Rule;
+
+    /// <summary>
+    /// Draws as Decoration <paramref name="flair"/> until the returned scope is disposed, then restores the frame's level:
+    /// the live preview in Settings. The high-contrast cap still applies. A struct; <c>using</c> allocates nothing.
+    /// </summary>
+    public static FlairScope PushFlair(Flair flair)
+    {
+        var previous = Flair;
+        Flair = FlairRules.Effective(flair, Glyphs.HighContrast);
+        Tones = FlairTones.For(Flair, Surface);
+        return new FlairScope(previous);
+    }
+
+    /// <summary>Restores the level that was in effect before <see cref="PushFlair"/>. Dispose exactly once.</summary>
+    public readonly struct FlairScope(Flair previous) : IDisposable
+    {
+        public void Dispose()
+        {
+            Flair = previous;
+            Tones = FlairTones.For(previous, Surface);
+        }
+    }
 
     /// <summary>
     /// An ornament's alpha as drawn this frame: <paramref name="designed"/> (the proposal's 0.55–0.8), or 1 under the
@@ -280,6 +341,7 @@ public static class Theme
 
         Flair = FlairRules.Effective(flair, Glyphs.HighContrast);
         FlairSetting = FlairRules.Effective(flair, highContrast: false);
+        Tones = FlairTones.For(Flair, s);
         DeepU32 = Pack(s.Deep);
         TopU32 = Pack(s.Top);
         OrnamentU32 = Pack(s.Ornament);
@@ -478,26 +540,70 @@ public static class Theme
     }
 
     /// <summary>
-    /// A tooltip in the active palette (ui-revamp §3 "Tooltip"): fill at 0.96, a hairline border, primary text, the
-    /// secondary tone for <c>TextDisabled</c> lines, rounding 6 and padding 10 × 8. Push before <c>BeginTooltip</c>
+    /// A tooltip in the active palette and Decoration level (ui-revamp §3 "Tooltip", docs/design/flair-v13 §1
+    /// "Tooltips"): primary text and the secondary tone for <c>TextDisabled</c> lines, in one of three frames. Full: the
+    /// raised tone at 0.97, radius 4, padding 12 × 10, and the cards' brass frame with corner marks at the top left and
+    /// bottom right (<see cref="TooltipScope"/> draws it once the tooltip has ended). Quiet: flat, a 1 px neutral border,
+    /// radius 6. Plain: a plain box, radius 2, padding 7 × 5. Push before <c>BeginTooltip</c>
     /// (<see cref="UiMetrics.Tooltip(string)"/> does), dispose after it ends. The tooltip fades in
     /// (<see cref="PopupFade"/>), once per item rather than on every frame the pointer moves within it.
     /// </summary>
-    public static StyleScope PushTooltip()
+    public static TooltipScope PushTooltip()
     {
         PopupFade.NoteTooltip();
         var s = Surface;
+        var style = FlairRules.Tooltip(Flair);
+        var (fill, border, rounding, padding) = style switch
+        {
+            TooltipStyle.Brass => (s.Raised with { W = 0.97f }, Transparent, 4f, new Vector2(12f, 10f)),
+            TooltipStyle.Plain => (Tones.HeaderBand with { W = 0.98f }, Glyphs.HighContrast ? s.StrongLine : Tones.HeaderLine, 2f, new Vector2(7f, 5f)),
+            _ => (Vector4.Lerp(s.Window, s.Raised, 0.6f) with { W = 0.97f }, Glyphs.HighContrast ? s.StrongLine : s.Line, 6f, new Vector2(10f, 8f)),
+        };
+
         var count = 0;
-        Push(ImGuiCol.PopupBg, s.Window with { W = 0.96f }, ref count);
-        Push(ImGuiCol.Border, s.Line, ref count);
+        Push(ImGuiCol.PopupBg, fill, ref count);
+        Push(ImGuiCol.Border, border, ref count);
         Push(ImGuiCol.Text, s.Text, ref count);
         Push(ImGuiCol.TextDisabled, s.TextSecondary, ref count);
         Push(ImGuiCol.Separator, s.Line, ref count);
-        ImGui.PushStyleVar(ImGuiStyleVar.PopupRounding, UiMetrics.Px(6f));
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupRounding, UiMetrics.Px(rounding));
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1f);
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(UiMetrics.Px(10f), UiMetrics.Px(8f)));
-        return new StyleScope(count, 3);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(UiMetrics.Px(padding.X), UiMetrics.Px(padding.Y)));
+        return new TooltipScope(count, 3, style == TooltipStyle.Brass ? UiMetrics.Px(rounding) : -1f);
     }
+
+    /// <summary>
+    /// The scope <see cref="PushTooltip"/> returns: pops its style, and at Full, once the tooltip window has ended, lays
+    /// the brass frame over its edge (on the foreground, where nothing else draws): the cards' lit brass with corner
+    /// marks at the top left and bottom right. A struct; <c>using</c> allocates nothing. Dispose exactly once, after the
+    /// tooltip.
+    /// </summary>
+    public readonly struct TooltipScope(int colors, int vars, float brassRounding) : IDisposable
+    {
+        public void Dispose()
+        {
+            new StyleScope(colors, vars).Dispose();
+            if (brassRounding < 0f)
+            {
+                return;
+            }
+
+            var window = ImGuiP.FindWindowByName(TooltipWindowName);
+            if (window.IsNull || !window.Active)
+            {
+                return;
+            }
+
+            var min = window.Pos;
+            var max = min + window.Size;
+            var dl = ImGui.GetForegroundDrawList();
+            Ornament.BrassBorder(dl, min, max, brassRounding, UiMetrics.Hairline);
+            Ornament.CornerMarks(dl, min, max, MathF.Round(UiMetrics.Px(7f)), twoOnly: true);
+        }
+    }
+
+    /// <summary>ImGui's name for the first tooltip window of a frame (imgui.cpp, BeginTooltipEx: "##Tooltip_%02d").</summary>
+    private const string TooltipWindowName = "##Tooltip_00";
 
     /// <summary>
     /// A popup or context menu in the active palette: the tooltip's surface plus menu-item, frame, button and check

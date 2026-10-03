@@ -1108,7 +1108,7 @@ public sealed class PathChart
             case VKind.Band:
             {
                 // Moon Road (Flair Full and Quiet): the band's star in the brass highlight, its rule in brass.
-                FourPointStar(dl, node, UiMetrics.Icon(4f), UiMetrics.Icon(1.6f), Theme.ShowRules ? Theme.OrnamentHighU32 : Theme.U32(s.TextTertiary), filled: true);
+                FourPointStar(dl, node, UiMetrics.Icon(4f), UiMetrics.Icon(1.6f), Theme.MoonRoadArt ? Theme.OrnamentHighU32 : Theme.U32(s.TextTertiary), filled: true);
                 var label = rowLabels[row.Core];
                 dl.AddText(font, captionSize, new Vector2(origin.X + labelX, captionY), Theme.U32(s.TextSecondary), label);
                 FadingRule(dl, origin.X + labelX + (ImGui.CalcTextSize(label).X * CaptionScale) + Px(8f), origin.X + width - Px(4f), node.Y);
@@ -1498,7 +1498,7 @@ public sealed class PathChart
             return;
         }
 
-        if (Theme.ShowRules)
+        if (Theme.Sectioned)
         {
             Ornament.Rule(dl, new Vector2(x0, y), x1 - x0, thickness: UiMetrics.Hairline);
             return;
@@ -1516,7 +1516,7 @@ public sealed class PathChart
     /// </summary>
     private static Vector4 NameColor(QuestState state) => state switch
     {
-        QuestState.Completed => Theme.ShowRules && !Theme.Surface.Light ? Theme.MoonDim : Theme.Surface.TextSecondary,
+        QuestState.Completed => Theme.Sectioned && !Theme.Surface.Light ? Theme.MoonDim : Theme.Surface.TextSecondary,
         QuestState.Foreclosed => Theme.EclipseText,
         QuestState.Unknown => Theme.VeilText,
         _ => Theme.Surface.Text,

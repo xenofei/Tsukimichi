@@ -43,6 +43,9 @@ public sealed class TabStrip
 {
     private static readonly NavTab[] Tabs = [NavTab.Journal, NavTab.Moonlit, NavTab.Characters, NavTab.Flight, NavTab.Plan];
 
+    /// <summary>Full's star field in the rail's empty sky: seeded once, so it never shimmers.</summary>
+    private static readonly Core.Ui.Star[] RailStars = Core.Ui.StarField.Generate(7, 9);
+
     private static string[] Labels => labelsText.Value;
 
     private static readonly Localization.LocArray labelsText = new(static () =>
@@ -157,7 +160,7 @@ public sealed class TabStrip
         var place = LayoutBudgets.PlaceRail(avail.Y, UiMetrics.Scale, Tabs.Length, Compact, UiMetrics.MinTarget);
         var dl = ImGui.GetWindowDrawList();
         var centerX = MathF.Round(origin.X + width * 0.5f);
-        var moonRoad = Theme.ShowRules;
+        var moonRoad = Theme.MoonRoadArt;
 
         MeasureLabels();
         RefreshGauge(overall);
@@ -175,11 +178,20 @@ public sealed class TabStrip
             litTab = ui.Tab;
         }
 
-        if (moonRoad)
         {
-            // The deepest surface under the rail (Abyss, or the host's window darkened), at the window's opacity.
+            // The rail's own surface at the window's opacity (docs/design/flair-v13 §1): the deepest one under the Moon
+            // Road (Abyss at 0.9, or the host's window darkened), Quiet's rail tone, Plain's Deep.
             var windowMin = ImGui.GetWindowPos();
-            dl.AddRectFilled(windowMin, windowMin + ImGui.GetWindowSize(), Theme.WithAlpha(Theme.Surface.Deep, Theme.WindowAlpha));
+            var windowMax = windowMin + ImGui.GetWindowSize();
+            var tone = moonRoad ? Theme.Surface.Deep : Theme.Tones.Rail;
+            dl.AddRectFilled(windowMin, windowMax, Theme.WithAlpha(tone, Theme.WindowAlpha * (moonRoad ? 0.9f : 1f)));
+            if (Theme.ShowStars)
+            {
+                // Full: a faint seeded star field in the rail's empty sky, between the last station and the foot.
+                var skyTop = origin.Y + place.StationsTop + (place.Station * Tabs.Length) + UiMetrics.Px(6f);
+                var skyFoot = origin.Y + place.FootTop - UiMetrics.Px(6f);
+                Ornament.Stars(dl, new Vector2(windowMin.X, skyTop), new Vector2(windowMax.X, skyFoot), RailStars);
+            }
         }
 
         if (place.Crest > 0f)

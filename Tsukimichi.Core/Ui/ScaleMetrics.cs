@@ -208,6 +208,52 @@ public static class ScaleMetrics
     /// <summary>Quest table row height in Dalamud-scaled pixels for each density (T12): Dense 24, Comfortable 32.</summary>
     public static float TableRowTarget(RowDensity density) => density == RowDensity.Dense ? 24f : 32f;
 
+    /// <summary>
+    /// Quest table row height in Dalamud-scaled pixels at a Decoration level (docs/design/flair-v13 §1, "Row height and
+    /// density"): Full 34 Comfortable and 28 Dense, Quiet 30 and 24, Plain 24 at either density (the
+    /// <see cref="TableRowMinPx"/> floor, so the WCAG 2.5.8 target still holds). Unknown values read as Full and
+    /// Comfortable.
+    /// </summary>
+    public static float TableRowTarget(Flair flair, RowDensity density)
+    {
+        var dense = density == RowDensity.Dense;
+        return (Enum.IsDefined(flair) ? flair : Flair.Full) switch
+        {
+            Flair.Plain => TableRowMinPx,
+            Flair.Quiet => dense ? 24f : 30f,
+            _ => dense ? 28f : 34f,
+        };
+    }
+
+    /// <summary>
+    /// A Journal tree row's height in Dalamud-scaled pixels at a Decoration level: Full 34, Quiet 30, Plain 24 (Plain
+    /// draws no gauge, so the A4 halo-box floor does not apply to it).
+    /// </summary>
+    public static float TreeRowTarget(Flair flair) => (Enum.IsDefined(flair) ? flair : Flair.Full) switch
+    {
+        Flair.Plain => TableRowMinPx,
+        Flair.Quiet => 30f,
+        _ => 34f,
+    };
+
+    /// <summary>
+    /// A tree row's height at <paramref name="flair"/>: the level's target at the host's global scale, never less than
+    /// the line with a little air, and, where a gauge draws (Full and Quiet), never less than
+    /// <see cref="TreeRowHeight(float, float, float)"/> (the halo box plus its padding, the 30 px floor).
+    /// </summary>
+    public static float TreeRowHeight(Flair flair, float lineHeight, float glyphRadius, float layoutScale, float globalScale)
+    {
+        var line = float.IsFinite(lineHeight) ? MathF.Max(0f, lineHeight) : 0f;
+        var scale = float.IsFinite(layoutScale) && layoutScale > 0f ? layoutScale : 1f;
+        var target = TreeRowTarget(flair) * SafeGlobalScale(globalScale);
+        if (FlairRules.Gauge(Enum.IsDefined(flair) ? flair : Flair.Full) == TreeGauge.None)
+        {
+            return MathF.Max(MathF.Max(TableRowMinPx, target), line + (4f * scale));
+        }
+
+        return MathF.Max(target, TreeRowHeight(line, glyphRadius, scale));
+    }
+
     /// <summary>Smallest quest table row in pixels whatever the scales: rows are contiguous click targets (WCAG 2.5.8, accessibility B4).</summary>
     public const float TableRowMinPx = 24f;
 
@@ -217,9 +263,20 @@ public static class ScaleMetrics
     /// still fit, and never a row under <see cref="TableRowMinPx"/> (a global scale under 1). Unknown density values
     /// read as Comfortable.
     /// </summary>
-    public static float TableRowContent(RowDensity density, float globalScale, float minContent, float cellPaddingY)
+    public static float TableRowContent(RowDensity density, float globalScale, float minContent, float cellPaddingY) =>
+        RowContent(TableRowTarget(Enum.IsDefined(density) ? density : RowDensity.Comfortable), globalScale, minContent, cellPaddingY);
+
+    /// <summary>
+    /// <see cref="TableRowContent(RowDensity, float, float, float)"/> at a Decoration level's row height
+    /// (<see cref="TableRowTarget(Flair, RowDensity)"/>): never under what the row's content needs, never a row under
+    /// <see cref="TableRowMinPx"/>.
+    /// </summary>
+    public static float TableRowContent(Flair flair, RowDensity density, float globalScale, float minContent, float cellPaddingY) =>
+        RowContent(TableRowTarget(flair, Enum.IsDefined(density) ? density : RowDensity.Comfortable), globalScale, minContent, cellPaddingY);
+
+    private static float RowContent(float rowTarget, float globalScale, float minContent, float cellPaddingY)
     {
-        var target = MathF.Max(TableRowMinPx, TableRowTarget(Enum.IsDefined(density) ? density : RowDensity.Comfortable) * SafeGlobalScale(globalScale));
+        var target = MathF.Max(TableRowMinPx, rowTarget * SafeGlobalScale(globalScale));
         var padding = float.IsFinite(cellPaddingY) ? MathF.Max(0f, cellPaddingY) : 0f;
         var floor = float.IsFinite(minContent) ? MathF.Max(0f, minContent) : 0f;
         return MathF.Max(floor, target - 2f * padding);

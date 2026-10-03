@@ -25,7 +25,7 @@ namespace Tsukimichi.Ui;
 /// <para>
 /// Its colours follow <see cref="Theme.Surface"/>: the window, text and lines of the palette in use (Night, the
 /// Dalamud-mapped one, or the high-contrast one, which also draws the panel opaque with a strong border), and a
-/// brass rule under the caption only while the Flair setting draws rules (<see cref="Theme.ShowRules"/>).
+/// rule under the caption only while the Decoration level draws sections (<see cref="Theme.Sectioned"/>).
 /// Allocation-free per frame: the content callback is a cached delegate and every string comes built.
 /// </para>
 /// </summary>
@@ -219,7 +219,7 @@ public sealed class GamePanelShell
     /// </summary>
     public static void Caption(string text)
     {
-        if (!Theme.ShowRules)
+        if (!Theme.Sectioned)
         {
             ImGui.TextDisabled(text);
             return;
@@ -227,11 +227,15 @@ public sealed class GamePanelShell
 
         var start = ImGui.GetCursorScreenPos();
         var line = ImGui.GetTextLineHeight();
-        var sigil = MathF.Round(MathF.Min(UiMetrics.Px(HeadingLayout.SigilLogical), line * HeadingLayout.SigilLineShare));
-        ImGui.Dummy(new Vector2(sigil, line));
         var dl = ImGui.GetWindowDrawList();
-        Ornament.Sigil(dl, new Vector2(start.X + (sigil * 0.5f), MathF.Round(start.Y + (line * 0.5f))), sigil);
-        ImGui.SameLine(0f, UiMetrics.Px(HeadingLayout.SigilGapLogical));
+        if (Theme.MoonRoadArt)
+        {
+            var sigil = MathF.Round(MathF.Min(UiMetrics.Px(HeadingLayout.SigilLogical), line * HeadingLayout.SigilLineShare));
+            ImGui.Dummy(new Vector2(sigil, line));
+            Ornament.Sigil(dl, new Vector2(start.X + (sigil * 0.5f), MathF.Round(start.Y + (line * 0.5f))), sigil);
+            ImGui.SameLine(0f, UiMetrics.Px(HeadingLayout.SigilGapLogical));
+        }
+
         ImGui.TextDisabled(text);
 
         var pos = ImGui.GetCursorScreenPos();

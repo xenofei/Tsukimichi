@@ -128,8 +128,7 @@ public sealed partial class ConfigWindow
                 Save();
             }
 
-            SettingBelow();
-            DrawFlairPreviews();
+            DrawFlairPreview(settings.Flair);
             EndSetting();
         }
 
@@ -248,145 +247,258 @@ public sealed partial class ConfigWindow
     }
 
     /// <summary>
-    /// Live previews of the three Decoration levels (proposal §7.9), side by side when three cells of
-    /// <see cref="PreviewCellLogical"/> fit and stacked otherwise: each a section heading and a small journal row drawn
-    /// exactly as that level draws them. Under the high-contrast palette Full previews as Quiet, as it draws. The level in
-    /// use is outlined; a click on a preview chooses it. The game's heading fonts are not built at Plain, so while Plain
-    /// is chosen a note under the previews says the Full and Quiet ones show the usual font until another is chosen.
+    /// The live preview beside the Decoration picker (docs/design/flair-v13): a small sample of the chosen look, drawn by
+    /// the same code the main window draws with (<see cref="Theme.PushFlair"/>), so it changes on the frame the picker
+    /// does. Under the picker, right-aligned in the control column (under the label on a narrow page), in a box of one
+    /// fixed size at every level, so choosing another look never moves the page: a quest table (its header, three rows
+    /// at the level's height with their medals, a Ready row and the selected row as the level draws them) beside a card,
+    /// over the level's pane tones. The look's one line follows, and while game fonts are on at another level, that
+    /// only Full uses them. Under the high-contrast palette Full previews as Quiet, as it draws.
     /// </summary>
-    private void DrawFlairPreviews()
+    private void DrawFlairPreview(Flair level)
     {
-        var room = ImGui.GetContentRegionAvail().X;
-        var gap = UiMetrics.Px(10f);
-        var side = room >= (3f * UiMetrics.Px(PreviewCellLogical)) + (2f * gap);
-        var cell = side ? MathF.Floor((room - (2f * gap)) / 3f) : MathF.Min(room, UiMetrics.Px(260f));
-        var origin = ImGui.GetCursorScreenPos();
-        var contentRight = origin.X + room;
-        var bottom = origin.Y;
+        var top = ImGui.GetItemRectMax().Y + UiMetrics.Px(8f);
+        var right = row.Right;
+        var width = MathF.Min(MathF.Max(ControlWidth, UiMetrics.Px(PreviewWidthLogical)), right - row.Left);
+        var height = UiMetrics.Px(PreviewHeightLogical);
+        // Right-aligned under the picker, and never over the label or its hint.
+        var min = new Vector2(MathF.Round(right - width), MathF.Round(MathF.Max(top, row.LabelBottom + UiMetrics.Px(8f))));
+        var max = min + new Vector2(width, height);
         var dl = ImGui.GetWindowDrawList();
-        var pad = UiMetrics.Px(6f);
-        var levels = PreviewLevels;
-        for (var i = 0; i < levels.Length; i++)
+        dl.PushClipRect(min, max, true);
+        using (Theme.PushFlair(level))
         {
-            var level = levels[i];
-            var flair = FlairRules.Effective(level, Theme.Glyphs.HighContrast);
-            var min = side ? new Vector2(origin.X + (i * (cell + gap)), origin.Y) : new Vector2(origin.X, bottom);
-            ImGui.PushID(i);
-            dl.ChannelsSplit(2);
-            dl.ChannelsSetCurrent(1);
-            ImGui.SetCursorScreenPos(min + new Vector2(pad));
-            ImGui.BeginGroup();
-            using (Typography.Caption())
-            {
-                ImGui.TextDisabled(level switch
-                {
-                    Flair.Full => Strings.ConfigFlairFull,
-                    Flair.Quiet => Strings.ConfigFlairQuiet,
-                    _ => Strings.ConfigFlairPlain,
-                });
-            }
-
-            SectionHeading.Draw(Strings.CharactersSectionCompletion, null, contentRight - (min.X + cell - pad), true, flair);
-            PreviewRow(dl, flair, cell - (2f * pad));
-            ImGui.EndGroup();
-            var max = new Vector2(min.X + cell, ImGui.GetItemRectMax().Y + pad);
-
-            // Behind the content: the pane gradient at Full, the outline of the level in use.
-            dl.ChannelsSetCurrent(0);
-            dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Window), UiMetrics.Px(4f));
-            if (FlairRules.PaneGradient(flair))
-            {
-                Ornament.PaneGradient(dl, min, max);
-            }
-
-            var chosen = settings.Flair == level;
-            dl.AddRect(min, max, chosen ? Theme.U32(Theme.Surface.Text) : Theme.U32(Theme.Surface.Line), UiMetrics.Px(4f), ImDrawFlags.None, chosen ? MathF.Max(1.5f, UiMetrics.Px(1.5f)) : UiMetrics.Hairline);
-            dl.ChannelsMerge();
-
-            ImGui.SetCursorScreenPos(min);
-            if (ImGui.InvisibleButton("##flairPreview", max - min) && !chosen)
-            {
-                settings.Flair = level;
-                Save();
-            }
-
-            HintOnHover(Strings.ConfigFlairHint);
-            ImGui.PopID();
-            bottom = side ? MathF.Max(bottom, max.Y) : max.Y + gap;
+            DrawPreviewSample(dl, min, max);
         }
 
-        ImGui.SetCursorScreenPos(new Vector2(origin.X, bottom + (side ? gap : 0f)));
-        ImGui.Dummy(Vector2.Zero);
-        if (settings.Flair == Flair.Plain && settings.GameHeadingFonts)
+        dl.PopClipRect();
+        dl.AddRect(min, max, Theme.U32(Theme.Surface.Line), UiMetrics.Px(4f), ImDrawFlags.None, UiMetrics.Hairline);
+        ImGui.SetCursorScreenPos(min);
+        ImGui.Dummy(new Vector2(width, height));
+        HintOnHover(Strings.ConfigFlairHint);
+
+        // The look in one line, then the game-font note while it applies.
+        var note = FlairRules.Effective(level, Theme.Glyphs.HighContrast) switch
         {
-            using (Typography.Caption())
-            using (Theme.PushText(Theme.Surface.TextSecondary))
+            Flair.Full => Strings.ConfigFlairFullNote,
+            Flair.Quiet => Strings.ConfigFlairQuietNote,
+            _ => Strings.ConfigFlairPlainNote,
+        };
+        using (Typography.Caption())
+        using (Theme.PushText(Theme.Surface.TextSecondary))
+        {
+            ImGui.SetCursorScreenPos(new Vector2(min.X, ImGui.GetCursorScreenPos().Y));
+            ImGui.PushTextWrapPos(min.X - ImGui.GetWindowPos().X + width);
+            ImGui.TextUnformatted(note);
+            if (level != Flair.Full && settings.GameHeadingFonts)
             {
-                ImGui.TextWrapped(Strings.ConfigFlairPreviewPlainNote);
+                ImGui.TextUnformatted(Strings.ConfigFlairPreviewPlainNote);
             }
+
+            ImGui.PopTextWrapPos();
         }
     }
 
-    /// <summary>The least width of a Decoration preview cell side by side.</summary>
-    private const float PreviewCellLogical = 140f;
+    /// <summary>The preview's size, logical px: the header and three Full rows (the tallest), with a little air.</summary>
+    private const float PreviewWidthLogical = 330f;
 
-    private static readonly Flair[] PreviewLevels = [Flair.Full, Flair.Quiet, Flair.Plain];
+    private const float PreviewHeightLogical = 150f;
 
-    /// <summary>A small journal row drawn as <paramref name="flair"/> draws it: an orbit, the name, the count and the road, or the filling moon at Plain.</summary>
-    private static void PreviewRow(ImDrawListPtr dl, Flair flair, float width)
+    /// <summary>The sample's three rows: a Ready quest, the selected quest in the journal, a completed one.</summary>
+    private static readonly QuestState[] PreviewStates = [QuestState.Ready, QuestState.Accepted, QuestState.Completed];
+
+    /// <summary>Full's star field in the preview's sky: seeded once, so it never shimmers.</summary>
+    private static readonly Star[] PreviewStars = StarField.Generate(53, 6);
+
+    /// <summary>
+    /// The sample itself, at the level pushed: the panes' tones (or the sky and its stars), the table's header and rows,
+    /// and a card. Draw-list only; nothing allocates (the strings are the language's own, the headings cased once).
+    /// </summary>
+    private static void DrawPreviewSample(ImDrawListPtr dl, Vector2 min, Vector2 max)
     {
-        const float Fraction = 0.65f;
-        var line = ImGui.GetTextLineHeight();
-        var box = MathF.Round(MathF.Max(line, UiMetrics.Icon(22f)));
-        var road = MathF.Max(1f, UiMetrics.Px(2f));
-        var min = ImGui.GetCursorScreenPos();
-        ImGui.Dummy(new Vector2(MathF.Max(1f, width), box + (2f * road)));
-        var art = FlairRules.Rules(flair);
-        var textures = Plugin.TextureProvider;
-        if (art && textures is not null)
-        {
-            Orbit.Draw(dl, textures, min, box, NodeIcon.Of(OrnamentGlyph.AllQuests), Fraction, highContrast: Theme.Glyphs.HighContrast);
-        }
-        else
-        {
-            MoonGlyph.DrawHalo(dl, min + new Vector2(box * 0.5f), box * 0.5f, Fraction);
-        }
-
         var s = Theme.Surface;
-        var textX = min.X + box + UiMetrics.Px(6f);
-        var textY = min.Y + MathF.Max(0f, (box - line) * 0.5f);
-        const string Count = "65%";
-        float countWidth;
-        if (art)
+        var tones = Theme.Tones;
+        var flair = Theme.Flair;
+        var pad = UiMetrics.Px(8f);
+        var split = MathF.Round(min.X + ((max.X - min.X) * 0.6f));
+
+        // The panes: the sky over water at Full, two tones at Quiet (the table and the lighter detail), flat at Plain.
+        dl.AddRectFilled(min, max, Theme.U32(Theme.ShowPaneGradient ? s.Window : tones.Table));
+        if (Theme.ShowPaneGradient)
         {
-            using var numeral = Typography.Numeral(Count);
-            countWidth = ImGui.CalcTextSize(Count).X;
-            dl.AddText(new Vector2(min.X + width - countWidth, textY), Theme.U32(s.TextSecondary), Count);
+            Ornament.SkyOverWater(dl, min, max);
         }
         else
         {
-            countWidth = ImGui.CalcTextSize(Count).X;
-            dl.AddText(new Vector2(min.X + width - countWidth, textY), Theme.U32(s.TextSecondary), Count);
+            dl.AddRectFilled(new Vector2(split, min.Y), max, Theme.U32(tones.Detail));
         }
 
-        Chrome.EllipsisTextAt(dl, new Vector2(textX, textY), MathF.Max(0f, min.X + width - countWidth - UiMetrics.Px(6f) - textX), Strings.CharactersAllQuests, Theme.U32(s.Text));
-        if (!art)
+        if (Theme.RuleStyle != RuleStyle.MoonRoad)
         {
-            return;
+            dl.AddRectFilled(new Vector2(split, min.Y), new Vector2(split + 1f, max.Y), Theme.U32(Theme.RuleColor));
         }
 
-        // The road under the row: the walked part gold, the rest the track (solid colours under high contrast).
-        var y = min.Y + box + road;
-        var walked = textX + ((min.X + width - textX) * Fraction);
-        var highContrast = Theme.Glyphs.HighContrast;
-        dl.AddRectFilled(new Vector2(textX, y), new Vector2(min.X + width, y + road), highContrast ? Theme.VeilLineU32 : Theme.NightLineU32);
-        if (highContrast)
+        // The table's header.
+        var x0 = min.X + (flair == Flair.Plain ? UiMetrics.Px(4f) : pad);
+        var x1 = split - UiMetrics.Px(4f);
+        var line = ImGui.GetTextLineHeight();
+        var header = MathF.Round(MathF.Max(line, UiMetrics.Px(flair == Flair.Plain ? 20f : 24f)));
+        var y = min.Y + (flair == Flair.Plain ? 0f : UiMetrics.Px(4f));
+        DrawPreviewHeader(dl, new Vector2(x0, y), new Vector2(x1, y + header));
+        y += header + UiMetrics.Px(flair == Flair.Plain ? 0f : 2f);
+
+        // Three rows at the level's height.
+        var rowHeight = MathF.Round(ScaleMetrics.TableRowTarget(flair, RowDensity.Comfortable) * UiMetrics.Scale);
+        var content = rowHeight - UiMetrics.Px(4f);
+        var radius = TableGeometry.GlyphRadius(content, UiMetrics.TableGlyphRadius);
+        for (var i = 0; i < PreviewStates.Length; i++)
         {
-            dl.AddRectFilled(new Vector2(textX, y), new Vector2(walked, y + road), Theme.MoonU32);
+            var rowMin = new Vector2(x0, y);
+            var rowMax = new Vector2(x1, y + rowHeight);
+            DrawPreviewRow(dl, rowMin, rowMax, PreviewStates[i], i, radius);
+            y += rowHeight;
+        }
+
+        if (Theme.ShowStars)
+        {
+            Ornament.Stars(dl, new Vector2(split + pad, min.Y + UiMetrics.Px(2f)), new Vector2(max.X - pad, min.Y + UiMetrics.Px(26f)), PreviewStars);
+        }
+
+        // A card on the detail side, as the level frames it.
+        var cardMin = new Vector2(split + pad, min.Y + UiMetrics.Px(flair == Flair.Plain ? 6f : 30f));
+        var cardMax = new Vector2(max.X - pad, cardMin.Y + (line * 2f) + UiMetrics.Px(flair == Flair.Plain ? 8f : 24f));
+        Chrome.CardSurface(dl, cardMin, cardMax);
+        var inset = flair == Flair.Plain ? Vector2.Zero : new Vector2(UiMetrics.Px(Theme.Spacing.CardPad.X), UiMetrics.Px(Theme.Spacing.CardPad.Y));
+        var textMin = cardMin + inset;
+        var room = MathF.Max(1f, cardMax.X - inset.X - textMin.X);
+        var heading = Theme.MoonRoadArt ? SectionHeading.Label(Strings.ConfigFlairPreviewCard) : Strings.ConfigFlairPreviewCard;
+        using (Theme.MoonRoadArt ? Typography.Eyebrow(heading) : default)
+        {
+            Chrome.EllipsisTextAt(dl, textMin, room, heading, Theme.U32(Theme.MoonRoadArt ? s.OrnamentHigh : s.Text));
+            textMin.Y += ImGui.GetTextLineHeight() + UiMetrics.Px(3f);
+        }
+
+        if (flair == Flair.Plain)
+        {
+            dl.AddRectFilled(new Vector2(cardMin.X, textMin.Y - UiMetrics.Px(2f)), new Vector2(cardMax.X, textMin.Y - UiMetrics.Px(1f)), Theme.U32(Theme.RuleColor));
+        }
+
+        var dot = UiMetrics.Px(3f);
+        dl.AddCircleFilled(new Vector2(textMin.X + dot, textMin.Y + (line * 0.5f)), dot, Theme.MoonDeepU32, 12);
+        Chrome.EllipsisTextAt(dl, new Vector2(textMin.X + (dot * 2f) + UiMetrics.Px(6f), textMin.Y), MathF.Max(1f, room - (dot * 2f) - UiMetrics.Px(6f)), Strings.ConfigFlairPreviewCardLine, Theme.U32(s.Text));
+    }
+
+    /// <summary>The sample table's header: Full's tracked caps over a brass rule, Quiet's caption over a hairline, Plain's band with its dividers.</summary>
+    private static void DrawPreviewHeader(ImDrawListPtr dl, Vector2 min, Vector2 max)
+    {
+        var s = Theme.Surface;
+        var style = Theme.TableHeader;
+        var moonRoad = style == TableHeaderStyle.MoonRoad;
+        var statusX = MathF.Round(min.X + ((max.X - min.X) * 0.58f));
+        if (style == TableHeaderStyle.Raised)
+        {
+            dl.AddRectFilled(min, max, Theme.U32(Theme.Tones.HeaderBand));
+            dl.AddRectFilled(new Vector2(statusX - UiMetrics.Px(5f), min.Y), new Vector2(statusX - UiMetrics.Px(5f) + 1f, max.Y), Theme.U32(Theme.Tones.HeaderLine));
+        }
+
+        var name = moonRoad ? SectionHeading.Label(Strings.ColumnName) : Strings.ColumnName;
+        var status = moonRoad ? SectionHeading.Label(Strings.ColumnStatus) : Strings.ColumnStatus;
+        using (moonRoad ? Typography.Eyebrow(name) : Typography.Caption())
+        {
+            var textY = MathF.Round((min.Y + max.Y - ImGui.GetTextLineHeight()) * 0.5f);
+            var lead = UiMetrics.Px(26f);
+            dl.AddText(new Vector2(min.X + lead, textY), Theme.U32(moonRoad ? s.OrnamentHigh : s.Text), name);
+            dl.AddText(new Vector2(statusX, textY), Theme.U32(moonRoad || style == TableHeaderStyle.Eyebrow ? s.TextTertiary : s.TextSecondary), status);
+        }
+
+        switch (style)
+        {
+            case TableHeaderStyle.MoonRoad when !Theme.Glyphs.HighContrast:
+            {
+                // The brass rule, brightest at 18 % across.
+                var at = min.X + ((max.X - min.X) * 0.18f);
+                var edge = Theme.WithAlpha(s.Ornament, 0f);
+                var peak = Theme.WithAlpha(s.OrnamentHigh, 0.8f);
+                var tail = Theme.WithAlpha(s.Ornament, 0.4f);
+                dl.AddRectFilledMultiColor(new Vector2(min.X, max.Y - 1f), new Vector2(at, max.Y), edge, peak, peak, edge);
+                dl.AddRectFilledMultiColor(new Vector2(at, max.Y - 1f), new Vector2(max.X, max.Y), peak, tail, tail, peak);
+                break;
+            }
+
+            default:
+                dl.AddRectFilled(new Vector2(min.X, max.Y - 1f), max, Theme.U32(style == TableHeaderStyle.Raised ? Theme.Tones.HeaderLine : Theme.RuleColor));
+                break;
+        }
+    }
+
+    /// <summary>One sample row: its stripe, zebra and selection as the level draws them, the medal, the name and the state word.</summary>
+    private static void DrawPreviewRow(ImDrawListPtr dl, Vector2 min, Vector2 max, QuestState state, int index, float radius)
+    {
+        var s = Theme.Surface;
+        var flair = Theme.Flair;
+        var selected = state == QuestState.Accepted;
+        if (flair == Flair.Plain && index % 2 == 1)
+        {
+            dl.AddRectFilled(min, max, Theme.WithAlpha(s.Text, 0.03f));
+        }
+
+        if (selected)
+        {
+            switch (flair)
+            {
+                case Flair.Full:
+                    dl.AddRectFilledMultiColor(min, max, Theme.WithAlpha(Theme.Moon, 0.13f), Theme.WithAlpha(Theme.Moon, 0.02f), Theme.WithAlpha(Theme.Moon, 0.02f), Theme.WithAlpha(Theme.Moon, 0.13f));
+                    dl.AddRectFilled(min, new Vector2(max.X, min.Y + 1f), Theme.WithAlpha(s.OrnamentHigh, 0.35f));
+                    dl.AddRectFilled(new Vector2(min.X, max.Y - 1f), max, Theme.WithAlpha(s.OrnamentHigh, 0.35f));
+                    break;
+                case Flair.Quiet:
+                    dl.AddRectFilled(min, max, Theme.WithAlpha(s.Text, 0.06f));
+                    dl.AddRect(min, max, Theme.U32(Theme.Glyphs.HighContrast ? s.Text : Theme.Veil), 0f, ImDrawFlags.None, 1f);
+                    break;
+                default:
+                    dl.AddRectFilled(min, max, Theme.WithAlpha(s.Text, 0.09f));
+                    break;
+            }
         }
         else
         {
-            dl.AddRectFilledMultiColor(new Vector2(textX, y), new Vector2(walked, y + road), Theme.MoonDeepU32, Theme.MoonU32, Theme.MoonU32, Theme.MoonDeepU32);
+            dl.AddRectFilled(new Vector2(min.X, max.Y - 1f), max, Theme.U32(flair == Flair.Full ? s.Line with { W = 0.35f } : Theme.Tones.Rule with { W = 0.6f }));
+        }
+
+        // The state stripe at the left edge (3 px at Full, 2 elsewhere), in the state's colour.
+        var stripe = MathF.Max(2f, MathF.Round(UiMetrics.Px(flair == Flair.Full ? 3f : 2f)));
+        dl.AddRectFilled(min, new Vector2(min.X + stripe, max.Y), Theme.WithAlpha(Theme.StateColor(state), state == QuestState.Completed ? 0.55f : 1f));
+
+        var center = new Vector2(MathF.Round(min.X + UiMetrics.Px(14f)), MathF.Round((min.Y + max.Y) * 0.5f));
+        if (Theme.MoonRoadArt && !Theme.ClassicMoons)
+        {
+            if (state == QuestState.Ready && Theme.ShowGlow)
+            {
+                dl.AddCircleFilled(center, radius + UiMetrics.Px(4f), Theme.WithAlpha(Theme.Moon, 0.10f), 32);
+                dl.AddCircleFilled(center, radius + UiMetrics.Px(2f), Theme.WithAlpha(Theme.Moon, 0.16f), 32);
+            }
+
+            dl.AddCircleFilled(center + new Vector2(0f, UiMetrics.Px(1.5f)), radius, Theme.WithAlpha(Theme.Abyss, 0.55f), 24);
+        }
+
+        MoonGlyph.Draw(dl, center, radius, state);
+
+        var line = ImGui.GetTextLineHeight();
+        var textY = MathF.Round((min.Y + max.Y - line) * 0.5f);
+        var nameX = center.X + UiMetrics.Px(14f);
+        var statusX = MathF.Round(min.X + ((max.X - min.X) * 0.58f));
+        var name = state switch
+        {
+            QuestState.Ready => Strings.ConfigFlairPreviewReady,
+            QuestState.Accepted => Strings.ConfigFlairPreviewJournal,
+            _ => Strings.ConfigFlairPreviewDone,
+        };
+        Chrome.EllipsisTextAt(dl, new Vector2(nameX, textY), MathF.Max(1f, statusX - nameX - UiMetrics.Px(6f)), name, Theme.U32(state == QuestState.Completed ? s.TextSecondary : s.Text));
+        Chrome.EllipsisTextAt(dl, new Vector2(statusX, textY), MathF.Max(1f, max.X - statusX), Strings.StateName(state), Theme.U32(state == QuestState.Completed ? Theme.MoonDim : Theme.StateColor(state)));
+
+        if (state == QuestState.Ready && FlairRules.ReadyRoad(flair))
+        {
+            Ornament.Rule(dl, new Vector2(nameX, max.Y - 1f), (max.X - nameX) * 0.7f, 0.55f, 1f, Theme.Moon);
         }
     }
 

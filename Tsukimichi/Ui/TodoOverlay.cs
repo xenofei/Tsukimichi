@@ -513,7 +513,7 @@ public sealed class TodoOverlay : Window, IDisposable
             text = ImGui.CalcTextSize(Strings.TodoHeader).X;
 
             // A Moon Road caption also holds its sigil (the rule takes only what is left).
-            var caption = ImGui.GetFontSize() + (Theme.ShowRules ? UiMetrics.Px(HeadingLayout.SigilLogical + HeadingLayout.SigilGapLogical) : 0f);
+            var caption = ImGui.GetFontSize() + (Theme.MoonRoadArt ? UiMetrics.Px(HeadingLayout.SigilLogical + HeadingLayout.SigilGapLogical) : 0f);
             foreach (var section in sections)
             {
                 text = MathF.Max(text, ImGui.CalcTextSize(section.HeaderText).X + caption);

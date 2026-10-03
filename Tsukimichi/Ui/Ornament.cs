@@ -11,8 +11,10 @@ namespace Tsukimichi.Ui;
 /// sigil star and the pane gradient (sky over water). Colours come from the frame's palette: brass
 /// (<see cref="SurfaceColors.Ornament"/>, Gilt on Night) for lines, GiltHigh for points, NightTop for the gradient, and
 /// the high-contrast palette's own versions (opaque VeilLine lines, no gradient) when it is on. Brass is decoration only:
-/// never text, never a fill over 4 px, never the only carrier of meaning. Callers check <see cref="Theme.Flair"/>
-/// (<see cref="Theme.ShowRules"/>, <see cref="Theme.ShowPaneGradient"/>) before drawing. Every method is allocation-free.
+/// never text, never a fill over 4 px, never the only carrier of meaning. The rule and the divider follow the level's
+/// <see cref="Theme.RuleStyle"/> themselves (brass at Full, a flat hairline at Quiet, the line at Plain); the brass-only
+/// art (sigils, the frame, the star field, the gradient) is for callers that checked <see cref="Theme.MoonRoadArt"/>,
+/// <see cref="Theme.ShowStars"/> or <see cref="Theme.ShowPaneGradient"/>. Every method is allocation-free.
 /// </summary>
 public static class Ornament
 {
@@ -38,10 +40,18 @@ public static class Ornament
             return;
         }
 
-        var c = color ?? Theme.Surface.Ornament;
         var top = MathF.Floor(start.Y);
         var min = new Vector2(start.X, top);
         var max = new Vector2(start.X + width, top + MathF.Max(1f, thickness));
+
+        // Quiet and Plain: a flat structure line, full width, no fade (the brass is the Moon Road's alone).
+        if (Theme.RuleStyle != RuleStyle.MoonRoad && color is null)
+        {
+            dl.AddRectFilled(min, max, Theme.U32(Theme.RuleColor));
+            return;
+        }
+
+        var c = color ?? Theme.Surface.Ornament;
         if (Theme.Glyphs.HighContrast)
         {
             dl.AddRectFilled(min, max, Theme.WithAlpha(c, 1f));
@@ -62,6 +72,14 @@ public static class Ornament
     {
         if (!(width > 0f) || !(height > 0f))
         {
+            return;
+        }
+
+        // Quiet and Plain: the structure line across the width, no phases.
+        if (Theme.RuleStyle != RuleStyle.MoonRoad)
+        {
+            var at = MathF.Floor(center.Y);
+            dl.AddRectFilled(new Vector2(center.X - (width * 0.5f), at), new Vector2(center.X + (width * 0.5f), at + 1f), Theme.U32(Theme.RuleColor));
             return;
         }
 
@@ -130,5 +148,219 @@ public static class Ornament
         var to = Theme.WithAlpha(top, 0f);
         var split = min.Y + (max.Y - min.Y) * Math.Clamp(fade, 0f, 1f);
         dl.AddRectFilledMultiColor(min, new Vector2(max.X, split), from, from, to, to);
+    }
+
+    /// <summary>The Full sky's zenith on Night (docs/design/flair-v13 §1): the top brightened toward indigo.</summary>
+    public static readonly Vector4 Zenith = Core.Ui.ColorMath.FromHex(0x1B2552);
+
+    /// <summary>How far down the Full sky falls to Night (46 %), and where the water's lift begins (70 %).</summary>
+    public const float SkyFade = 0.46f;
+
+    public const float WaterFrom = 0.70f;
+
+    /// <summary>The water lift's alpha at the pane's foot (the top colour at 0.35).</summary>
+    public const float WaterAlpha = 0.35f;
+
+    /// <summary>
+    /// Full's sky over water (docs/design/flair-v13 §1, "Pane background"), deeper than the 1.4 gradient: the zenith
+    /// (indigo on Night, the palette's top colour otherwise) at the top, falling to the pane's own tone by
+    /// <see cref="SkyFade"/>, then flat, then a faint lift of the top colour over the last 30 % (the water). Drawn as an
+    /// overlay at <paramref name="alpha"/> (the window's opacity), before the pane's content.
+    /// </summary>
+    public static void SkyOverWater(ImDrawListPtr dl, Vector2 min, Vector2 max, float alpha = 1f)
+    {
+        if (!(max.X > min.X) || !(max.Y > min.Y) || !(alpha > 0f))
+        {
+            return;
+        }
+
+        var s = Theme.Surface;
+        var zenith = Theme.FollowingDalamud ? s.Top : Zenith;
+        var height = max.Y - min.Y;
+        var from = Theme.WithAlpha(zenith, alpha);
+        var clear = Theme.WithAlpha(zenith, 0f);
+        dl.AddRectFilledMultiColor(min, new Vector2(max.X, min.Y + (height * SkyFade)), from, from, clear, clear);
+
+        var waterTop = min.Y + (height * WaterFrom);
+        var lift = Theme.WithAlpha(s.Top, WaterAlpha * alpha);
+        var none = Theme.WithAlpha(s.Top, 0f);
+        dl.AddRectFilledMultiColor(new Vector2(min.X, waterTop), max, none, none, lift, lift);
+    }
+
+    // ------------------------------------------------------------------ the star field (Full)
+
+    /// <summary>A star's alpha by magnitude (spec §1, "Star field"): faint 1 × 1 at 0.16, small r 1 at 0.26, bright r 1.5 and a 7 px cross at 0.36.</summary>
+    private const float FaintAlpha = 0.16f;
+    private const float SmallAlpha = 0.26f;
+    private const float BrightAlpha = 0.36f;
+
+    /// <summary>The cool white most stars are; about one in six is warm (MoonHigh).</summary>
+    private static readonly Vector4 StarCool = Core.Ui.ColorMath.FromHex(0xDDE6FF);
+
+    /// <summary>
+    /// The seeded star field in <paramref name="min"/>..<paramref name="max"/> (empty sky only: the caller passes a band
+    /// with nothing on it), from <paramref name="stars"/> in the band's unit square (<see cref="StarField.Generate"/>), so
+    /// it never shimmers frame to frame. Stars under <paramref name="avoidMin"/>..<paramref name="avoidMax"/> are skipped
+    /// (a title, a label). Allocation-free.
+    /// </summary>
+    public static void Stars(ImDrawListPtr dl, Vector2 min, Vector2 max, Star[] stars, Vector2 avoidMin = default, Vector2 avoidMax = default)
+    {
+        if (!(max.X - min.X > 4f) || !(max.Y - min.Y > 4f))
+        {
+            return;
+        }
+
+        var size = max - min;
+        var avoid = avoidMax.X > avoidMin.X && avoidMax.Y > avoidMin.Y;
+        var unit = MathF.Max(1f, UiMetrics.Px(1f));
+        for (var i = 0; i < stars.Length; i++)
+        {
+            var star = stars[i];
+            var p = new Vector2(MathF.Round(min.X + (star.U * size.X)), MathF.Round(min.Y + (star.V * size.Y)));
+            if (avoid && p.X >= avoidMin.X - 4f && p.X <= avoidMax.X + 4f && p.Y >= avoidMin.Y - 4f && p.Y <= avoidMax.Y + 4f)
+            {
+                continue;
+            }
+
+            var warm = (i * 7919 % 6) == 0;
+            var tone = warm ? Theme.MoonHigh : StarCool;
+            switch (star.Magnitude)
+            {
+                case StarMagnitude.Faint:
+                    dl.AddRectFilled(p, p + new Vector2(unit), Theme.WithAlpha(tone, FaintAlpha));
+                    break;
+                case StarMagnitude.Small:
+                    dl.AddCircleFilled(p, unit, Theme.WithAlpha(tone, SmallAlpha), 8);
+                    break;
+                default:
+                    var arm = 3.5f * unit;
+                    var ink = Theme.WithAlpha(tone, BrightAlpha);
+                    dl.AddLine(p - new Vector2(arm, 0f), p + new Vector2(arm, 0f), ink, MathF.Max(0.7f, 0.7f * unit));
+                    dl.AddLine(p - new Vector2(0f, arm), p + new Vector2(0f, arm), ink, MathF.Max(0.7f, 0.7f * unit));
+                    dl.AddCircleFilled(p, 1.5f * unit, Theme.WithAlpha(tone, BrightAlpha * 1.4f), 10);
+                    break;
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ gilt brass (Full's cards and tooltips)
+
+    /// <summary>The brass's four stops, lit from the upper left (spec §1, "Card frame"): highlight, body, shadow, reflected, deep.</summary>
+    public static readonly Vector4 BrassHigh = Core.Ui.ColorMath.FromHex(0xE2C78C);
+    public static readonly Vector4 BrassShadow = Core.Ui.ColorMath.FromHex(0x6E5732);
+    public static readonly Vector4 BrassReflected = Core.Ui.ColorMath.FromHex(0x9C8049);
+    public static readonly Vector4 BrassDeep = Core.Ui.ColorMath.FromHex(0x5A4729);
+
+    /// <summary>The corner marks: the top two lit (GiltHigh, brighter), the bottom two a darker brass.</summary>
+    public static readonly Vector4 CornerLit = Core.Ui.ColorMath.FromHex(0xF0D9A0);
+    public static readonly Vector4 CornerShaded = Core.Ui.ColorMath.FromHex(0xB79755);
+
+    /// <summary>
+    /// The brass's colour at <paramref name="t"/> along its light (0 at the upper left, 1 at the lower right), a 160°
+    /// gradient: highlight, Gilt at 28 %, shadow at 55 %, the reflected lift at 78 %, deep at the end.
+    /// </summary>
+    public static Vector4 Brass(float t)
+    {
+        t = Math.Clamp(t, 0f, 1f);
+        return t switch
+        {
+            < 0.28f => Vector4.Lerp(BrassHigh, Theme.Gilt, t / 0.28f),
+            < 0.55f => Vector4.Lerp(Theme.Gilt, BrassShadow, (t - 0.28f) / 0.27f),
+            < 0.78f => Vector4.Lerp(BrassShadow, BrassReflected, (t - 0.55f) / 0.23f),
+            _ => Vector4.Lerp(BrassReflected, BrassDeep, (t - 0.78f) / 0.22f),
+        };
+    }
+
+    /// <summary>
+    /// A gilt brass border round <paramref name="min"/>..<paramref name="max"/>: one rounded outline, each vertex coloured
+    /// by where it sits along the light (a 160° gradient), so the top and left edges are lit and the bottom and right
+    /// shaded and the brass reads as a metal edge, not a stroke. Its anti-aliased fringe keeps its own fade. Under the
+    /// high-contrast palette (which never reaches Full, but a caller may draw one) it is the opaque ornament line.
+    /// </summary>
+    public static void BrassBorder(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding, float thickness)
+    {
+        if (!(max.X > min.X) || !(max.Y > min.Y))
+        {
+            return;
+        }
+
+        if (Theme.Glyphs.HighContrast)
+        {
+            dl.AddRect(min, max, Theme.WithAlpha(Theme.Surface.Ornament, 1f), rounding, ImDrawFlags.None, thickness);
+            return;
+        }
+
+        var first = dl.VtxBuffer.Size;
+        dl.AddRect(min, max, 0xFFFFFFFFu, rounding, ImDrawFlags.None, thickness);
+        var vertices = dl.VtxBuffer;
+        var size = max - min;
+
+        // 160°: mostly down the card, a little to the right.
+        var dir = new Vector2(0.342f, 0.940f);
+        var span = MathF.Max(1f, MathF.Abs(size.X * dir.X) + MathF.Abs(size.Y * dir.Y));
+        for (var i = first; i < vertices.Size; i++)
+        {
+            var vertex = vertices[i];
+            var t = Vector2.Dot(vertex.Pos - min, dir) / span;
+            var c = Brass(t);
+            c.W = (vertex.Col >> 24) / 255f;
+            vertex.Col = Theme.U32(c);
+            vertices[i] = vertex;
+        }
+    }
+
+    /// <summary>
+    /// The corner marks of a brass frame: an L of <paramref name="size"/> px at each corner (or only the top-left and
+    /// bottom-right with <paramref name="twoOnly"/>, the tooltip's), 1.5 px thick, overlapping the frame by a pixel so
+    /// the mark and the frame read as one casting; the top marks lit, the bottom ones a darker brass, each with a faint
+    /// warm glow.
+    /// </summary>
+    public static void CornerMarks(ImDrawListPtr dl, Vector2 min, Vector2 max, float size, bool twoOnly = false)
+    {
+        if (!(max.X - min.X > 2f * size) || !(max.Y - min.Y > 2f * size))
+        {
+            return;
+        }
+
+        var w = MathF.Max(1.5f, UiMetrics.Px(1.5f));
+
+        // The mark's centre line sits half a pixel outside the frame line, so its 1.5 px cover the frame's pixel.
+        var o = 0.25f * w;
+        var a = min - new Vector2(o);
+        var b = max + new Vector2(o);
+        Mark(dl, a, new Vector2(1f, 0f), new Vector2(0f, 1f), size, w, CornerLit);
+        if (!twoOnly)
+        {
+            Mark(dl, new Vector2(b.X, a.Y), new Vector2(-1f, 0f), new Vector2(0f, 1f), size, w, CornerLit);
+            Mark(dl, new Vector2(a.X, b.Y), new Vector2(1f, 0f), new Vector2(0f, -1f), size, w, CornerShaded);
+        }
+
+        Mark(dl, b, new Vector2(-1f, 0f), new Vector2(0f, -1f), size, w, CornerShaded);
+    }
+
+    private static void Mark(ImDrawListPtr dl, Vector2 corner, Vector2 along, Vector2 down, float size, float width, Vector4 tone)
+    {
+        var glow = Theme.WithAlpha(Theme.Moon, 0.12f);
+        dl.AddLine(corner + (along * size), corner, glow, width * 2.6f);
+        dl.AddLine(corner, corner + (down * size), glow, width * 2.6f);
+        var ink = Theme.U32(tone);
+        dl.AddLine(corner + (along * size), corner - (along * (width * 0.5f)), ink, width);
+        dl.AddLine(corner - (down * (width * 0.5f)), corner + (down * size), ink, width);
+    }
+
+    /// <summary>
+    /// A soft shadow under a raised surface, falling straight down (the moon is the one light, upper left, far off):
+    /// <paramref name="offset"/> px down, spread over <paramref name="blur"/> px, darkest at <paramref name="alpha"/>.
+    /// Drawn before the surface, in a few rounded layers.
+    /// </summary>
+    public static void DropShadow(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding, float offset, float blur, float alpha)
+    {
+        const int Layers = 4;
+        var down = new Vector2(0f, offset);
+        for (var i = Layers; i >= 1; i--)
+        {
+            var grow = blur * i / Layers;
+            dl.AddRectFilled(min + down - new Vector2(grow * 0.5f), max + down + new Vector2(grow * 0.5f), Theme.WithAlpha(Vector4.UnitW, alpha / Layers), rounding + grow);
+        }
     }
 }

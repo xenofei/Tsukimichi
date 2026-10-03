@@ -12,7 +12,8 @@ namespace Tsukimichi.Ui;
 /// Eyebrow role (TrumpGothic, upper-cased in English; the Caption role in sentence case in other languages,
 /// <see cref="HeadingCase"/>) in the secondary text tone, a brass rule fading out to the right, and an optional caption
 /// on the far right. Its metrics and fitting are <see cref="HeadingLayout"/>'s. No box: the rule is the structure.
-/// Drawn at Flair Full and Quiet; under Plain the heading is the disabled-tone line it was before 1.4. The high-contrast
+/// Drawn so at Decoration Full; at Quiet the heading is in the body font in sentence case, with no sigil, over a flat
+/// hairline (docs/design/flair-v13 §1, "Headings font"); under Plain it is the disabled-tone line it was before 1.4. The high-contrast
 /// palette draws the rule opaque (<see cref="Ornament.Rule"/>). One item as wide as the room it was given, so a caller
 /// can put a button after it on the same line. Nothing allocates on the frames after a heading's first.
 /// </summary>
@@ -46,13 +47,13 @@ public static class SectionHeading
     public static (float Height, float MidY) Measure(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        if (!FlairRules.Rules(Theme.Flair))
+        if (Theme.RuleStyle == RuleStyle.Line)
         {
             var line = ImGui.GetTextLineHeight();
             return (line, line * 0.5f);
         }
 
-        var capitals = Capitals;
+        var capitals = Capitals && Theme.MoonRoadArt;
         var label = Case.For(text, capitals);
         float titleLine;
         using (TitleRole(label, capitals))
@@ -74,7 +75,8 @@ public static class SectionHeading
     public static HeadingDrawn DrawLine(string text, string? caption, uint captionColor, float reserve, bool sigil, Flair flair, CaptionOverflow captionOverflow, bool numeral = false)
     {
         ArgumentNullException.ThrowIfNull(text);
-        if (!FlairRules.Rules(flair))
+        var style = FlairRules.Rule(flair);
+        if (style == RuleStyle.Line)
         {
             ImGui.TextDisabled(text);
             if (caption is { Length: > 0 })
@@ -89,8 +91,10 @@ public static class SectionHeading
         var start = ImGui.GetCursorScreenPos();
         var room = MathF.Max(0f, ImGui.GetContentRegionAvail().X - MathF.Max(0f, reserve));
         var dl = ImGui.GetWindowDrawList();
-        var capitals = Capitals;
+        var moonRoad = style == RuleStyle.MoonRoad;
+        var capitals = Capitals && moonRoad;
         var label = Case.For(text, capitals);
+        sigil &= moonRoad;
 
         // Measured every frame, in the face each scope actually draws (a heading font still building falls back).
         var captionWidth = 0f;
@@ -119,7 +123,8 @@ public static class SectionHeading
 
         using (TitleRole(label, capitals))
         {
-            Chrome.EllipsisTextAt(dl, new Vector2(g.TitleX, MathF.Round(midY - (titleLine * 0.5f))), g.TitleRoom, label, Theme.U32(Theme.Surface.TextSecondary), titleWidth);
+            var ink = moonRoad ? Theme.Surface.TextSecondary : Theme.Surface.Text;
+            Chrome.EllipsisTextAt(dl, new Vector2(g.TitleX, MathF.Round(midY - (titleLine * 0.5f))), g.TitleRoom, label, Theme.U32(ink), titleWidth);
         }
 
         if (g.HasRule)
@@ -170,17 +175,18 @@ public static class SectionHeading
     {
         ArgumentNullException.ThrowIfNull(text);
         cut = false;
-        if (!Theme.ShowRules || !(width > 0f))
+        if (!Theme.Sectioned || !(width > 0f))
         {
             return false;
         }
 
-        var capitals = eyebrow && Capitals;
+        var moonRoad = Theme.MoonRoadArt;
+        var capitals = eyebrow && Capitals && moonRoad;
         var label = capitals ? Case.For(text, true) : text;
-        using var role = eyebrow ? TitleRole(label, capitals) : default;
+        using var role = eyebrow && moonRoad ? TitleRole(label, capitals) : default;
         var line = ImGui.GetTextLineHeight();
         var labelWidth = ImGui.CalcTextSize(label).X;
-        var g = HeadingLayout.Compute(min.X, width, UiMetrics.Scale, line, labelWidth, 0f, 0f, sigil: true, CaptionOverflow.Tooltip);
+        var g = HeadingLayout.Compute(min.X, width, UiMetrics.Scale, line, labelWidth, 0f, 0f, sigil: moonRoad, CaptionOverflow.Tooltip);
         var midY = MathF.Round(min.Y + (height * 0.5f));
         if (g.SigilSize > 0f)
         {
@@ -211,8 +217,12 @@ public static class SectionHeading
         return Chrome.EllipsisText(text, width, color ?? Theme.U32(Theme.Surface.Text));
     }
 
-    /// <summary>The heading's role: the Eyebrow in capitals, the Caption in sentence case.</summary>
-    private static Typography.Scope TitleRole(string label, bool capitals) => capitals ? Typography.Eyebrow(label) : Typography.Caption();
+    /// <summary>
+    /// The heading's role: the Eyebrow in capitals, the Caption in sentence case; at Quiet the body font (no role), as
+    /// the level draws every heading.
+    /// </summary>
+    private static Typography.Scope TitleRole(string label, bool capitals) =>
+        capitals ? Typography.Eyebrow(label) : Theme.MoonRoadArt ? Typography.Caption() : default;
 }
 
 /// <summary>Where <see cref="SectionHeading.DrawLine"/> put its caption: <see cref="CaptionShown"/> false when it is not on the line.</summary>
