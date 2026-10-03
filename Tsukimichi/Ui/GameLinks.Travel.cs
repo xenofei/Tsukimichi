@@ -213,11 +213,27 @@ public sealed partial class GameLinks
     /// <summary>Settings › Integrations › Show Go to giver; shown when unset.</summary>
     public Func<bool>? ShowGoTo { get; set; }
 
-    /// <summary>Teleportable aetherytes by territory and aethernet shards by city, read from the sheets on first use; empty when the read fails.</summary>
+    /// <summary>
+    /// The aetheryte index warmed at load (feature plan v6 A11); null reads the sheets on first use, as before. Set by
+    /// the plugin before anything travels.
+    /// </summary>
+    public Core.Runtime.WarmedValue<AetheryteIndex>? AetheryteWarmup { get; set; }
+
+    /// <summary>
+    /// Teleportable aetherytes by territory and aethernet shards by city: the index warmed at load (a first use while
+    /// it still builds waits for that build instead of starting another), else read from the sheets on first use; empty
+    /// when the read fails.
+    /// </summary>
     public AetheryteIndex Aetherytes
     {
         get
         {
+            if (aetherytes is null && AetheryteWarmup is { } warmup)
+            {
+                // Null when the warm-up failed (logged there): empty, as a failed read always was.
+                aetherytes = warmup.Wait() ?? AetheryteIndex.Empty;
+            }
+
             if (aetherytes is null)
             {
                 try

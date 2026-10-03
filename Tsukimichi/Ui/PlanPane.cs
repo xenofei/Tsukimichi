@@ -221,7 +221,8 @@ public sealed class PlanPane
         using var id = ImRaii.PushId("planMain");
         Refresh(ui);
 
-        if (session.Bundle is null)
+        // The plan's tags are built off the frame once the catalog lands (feature plan v6 A11).
+        if (session.Bundle is null || !source.IsReady)
         {
             ImGui.TextDisabled(Strings.PlanLoading);
             return;

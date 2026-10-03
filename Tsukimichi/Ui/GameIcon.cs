@@ -46,6 +46,38 @@ internal static class GameIcon
     }
 
     /// <summary>
+    /// As <see cref="Draw(ITextureProvider, uint, float)"/>; with <paramref name="hiRes"/> the high-resolution texture
+    /// at any size (Moonlit's reward art, feature plan v6 G6), so a 24 px icon is scaled down from 80 px, never up.
+    /// </summary>
+    public static bool Draw(ITextureProvider textures, uint iconId, float size, bool hiRes)
+    {
+        if (!hiRes)
+        {
+            return Draw(textures, iconId, size);
+        }
+
+        ArgumentNullException.ThrowIfNull(textures);
+        var min = ImGui.GetCursorScreenPos();
+        var max = min + new Vector2(size, size);
+        ImGui.Dummy(new Vector2(size, size));
+        var dl = ImGui.GetWindowDrawList();
+        if (iconId != 0 && textures.TryGetFromGameIcon(new GameIconLookup(iconId, false, true), out var texture))
+        {
+            if (texture.TryGetWrap(out var wrap, out _))
+            {
+                dl.AddImage(wrap.Handle, min, max);
+                return true;
+            }
+
+            DrawStandIn(dl, min, max, size, 0f, missing: false);
+            return false;
+        }
+
+        DrawStandIn(dl, min, max, size, 0f, missing: true);
+        return false;
+    }
+
+    /// <summary>
     /// The icon on <paramref name="dl"/> in <paramref name="min"/>..<paramref name="max"/> (no item), rounded by
     /// <paramref name="rounding"/>, or the sunken stand-in while it loads or when the game has none. Returns whether the
     /// icon itself was drawn.

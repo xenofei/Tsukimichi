@@ -12,15 +12,16 @@ namespace Tsukimichi;
 
 /// <summary>
 /// What every quest opens (feature plan v6 K1): the <see cref="QuestUnlocksSource"/> every surface reads. The sheet
-/// links (<see cref="UnlockLinkReader"/>) and the duty kinds are read once, on the first build's worker, in the client's
-/// language; the index is rebuilt off the frame for each new catalog, from the shipped unique-reward data with the
-/// curated overlay and without the user's verdicts (as the plan's tags read it).
+/// links (<see cref="UnlockLinkReader"/>) are read once, on the first build's worker, in the client's language; the duty
+/// kinds and the aetheryte index are the ones warmed at load (<see cref="Game.IndexWarmer"/>), waited for there. The
+/// index is rebuilt off the frame for each new catalog, from the shipped unique-reward data with the curated overlay
+/// and without the user's verdicts (as the plan's tags read it).
 /// </summary>
 public sealed partial class Plugin
 {
     private QuestUnlocksSource? questUnlocks;
 
-    private QuestUnlocksSource BuildQuestUnlocksSource()
+    private QuestUnlocksSource BuildQuestUnlocksSource(Game.IndexWarmer warmer)
     {
         var session = Session;
         var data = DataManager;
@@ -32,7 +33,7 @@ public sealed partial class Plugin
             {
                 try
                 {
-                    return UnlockLinkReader.Read(data.Excel, data.Language.ToLumina(), log: message => log.Warning(message));
+                    return UnlockLinkReader.Read(data.Excel, data.Language.ToLumina(), warmer.Aetherytes.Wait(), log: message => log.Warning(message));
                 }
                 catch (Exception ex)
                 {
@@ -41,27 +42,15 @@ public sealed partial class Plugin
                 }
             },
             LazyThreadSafetyMode.ExecutionAndPublication);
-        var duties = new Lazy<PlanDuties>(
-            () =>
-            {
-                try
-                {
-                    return DutyIndex.Build(data.Excel, data.Language.ToLumina());
-                }
-                catch (Exception ex)
-                {
-                    log.Warning(ex, "The duty kinds could not be read for what quests open; every duty files under Other duty");
-                    return PlanDuties.Empty;
-                }
-            },
-            LazyThreadSafetyMode.ExecutionAndPublication);
         return new QuestUnlocksSource(
             () => session.Bundle?.Catalog,
             catalog =>
             {
                 var started = System.Diagnostics.Stopwatch.GetTimestamp();
+                // On the build's worker: waiting for a warm-up still under way never holds up a frame.
+                var duties = warmer.Duties.Wait() ?? PlanDuties.Empty;
                 var rewards = UniqueRewardCatalog.Build(session.UniqueRewards, new Dictionary<uint, UniqueOverride>(), session.Curated);
-                var index = QuestUnlocks.Build(catalog, rewards, duties.Value, links.Value, session.Curated);
+                var index = QuestUnlocks.Build(catalog, rewards, duties, links.Value, session.Curated);
                 log.Debug("Quest unlocks: {Count} quests in {Elapsed:0} ms", index.Count, System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds);
                 return index;
             },

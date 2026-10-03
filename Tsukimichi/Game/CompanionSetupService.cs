@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Companions;
@@ -14,13 +15,17 @@ namespace Tsukimichi.Game;
 /// gate of its IPC (<see cref="ICompanionSettingGates"/>); it is set only through that plugin's own IPC setter, and only
 /// the settings the Setup list names.
 /// <para>
-/// Reads are lazy and happen on change: a caller asking for <see cref="Setups"/> re-reads after a companion's file in
-/// <c>pluginConfigs</c> changed (a watcher on the folder, <see cref="CompanionSetupCatalog.Concerns"/>), after Dalamud's
+/// Reads are lazy and happen on change, on the framework tick (<see cref="Tick"/>), never in a draw: a caller asking
+/// for <see cref="Setups"/> gets the last read at once and marks the settings as wanted; the tick then reads them again
+/// when one is due. A read is due after a companion's file in <c>pluginConfigs</c> changed (a watcher on the folder,
+/// <see cref="CompanionSetupCatalog.Concerns"/>) and then stayed quiet for <see cref="SettleMs"/> (a plugin that saves
+/// several times in a row, or through a temporary file, costs one read and is never read half-written), after Dalamud's
 /// plugin list changed or an apply, and otherwise at most every <see cref="RefreshMs"/> as a backstop for the settings
-/// read through IPC (every <see cref="UnwatchedRefreshMs"/> when the folder cannot be watched). Each file is checked
-/// once per read and parsed again only when its write time moved, and <see cref="Version"/> moves only when something
-/// read differently, so the reasons composed from it are not built again. A per-frame caller (a hand-off button's
-/// disabled reason) costs a field read between reads. Framework thread only, apart from the watcher's flag.
+/// read through IPC (every <see cref="UnwatchedRefreshMs"/> when the folder cannot be watched). Nothing is read while
+/// nobody asks. Only the very first ask reads at once, so it never answers with nothing. Each file is checked once per
+/// read and parsed again only when its write time moved, and <see cref="Version"/> moves only when something read
+/// differently, so the reasons composed from it are not built again. A per-frame caller (a hand-off button's disabled
+/// reason) costs a field read. Framework thread only, apart from the watcher's flag.
 /// </para>
 /// </summary>
 public sealed class CompanionSetupService : IDisposable
@@ -30,6 +35,9 @@ public sealed class CompanionSetupService : IDisposable
 
     /// <summary>How long a read is reused when the folder cannot be watched (1.10 and earlier: always).</summary>
     public const long UnwatchedRefreshMs = 5_000;
+
+    /// <summary>How long a companion's file must stay unchanged before it is read again after the watcher saw it change.</summary>
+    public const long SettleMs = 300;
 
     /// <summary>Questionable's "Run command after stop" in <see cref="CompanionSetupCatalog"/>.</summary>
     private const string CommandAfterStopId = "questionable.command-after-stop";
@@ -58,6 +66,12 @@ public sealed class CompanionSetupService : IDisposable
     // Raised by the folder watcher, which runs on a worker thread; consumed on the next read.
     private volatile bool stale = true;
 
+    // When the watcher last saw a companion's file change (Environment.TickCount64); written on its thread.
+    private long changedAt;
+
+    // Someone read the settings since the last read: the tick reads again only for them.
+    private bool asked;
+
     public CompanionSetupService(IDalamudPluginInterface pluginInterface, CompanionPlugins companions, IPluginLog log)
     {
         ArgumentNullException.ThrowIfNull(pluginInterface);
@@ -79,22 +93,25 @@ public sealed class CompanionSetupService : IDisposable
     /// <summary>Moves whenever the settings were read again, so a cached answer (a composed reason) knows to ask again.</summary>
     public int Version { get; private set; }
 
-    /// <summary><see cref="Version"/> after re-reading the settings when a file changed or they are older than <see cref="RefreshMs"/>.</summary>
+    /// <summary>
+    /// <see cref="Version"/> of the last read, and a request for a new one: the next <see cref="Tick"/> reads again when
+    /// a file changed or the read is older than <see cref="RefreshMs"/>.
+    /// </summary>
     public int FreshVersion
     {
         get
         {
-            Refresh();
+            Ask();
             return Version;
         }
     }
 
-    /// <summary>Every companion's setup, in <see cref="CompanionCatalog.All"/> order.</summary>
+    /// <summary>Every companion's setup, in <see cref="CompanionCatalog.All"/> order, as last read.</summary>
     public IReadOnlyList<PluginSetup> Setups
     {
         get
         {
-            Refresh();
+            Ask();
             return setups;
         }
     }
@@ -104,8 +121,35 @@ public sealed class CompanionSetupService : IDisposable
     {
         get
         {
-            Refresh();
+            Ask();
             return summary;
+        }
+    }
+
+    /// <summary>How long the last read took, in milliseconds (the 13 IPC getters and the companions' files).</summary>
+    public double LastReadMs { get; private set; }
+
+    /// <summary>How many reads were made since the plugin loaded.</summary>
+    public int Reads { get; private set; }
+
+    /// <summary>
+    /// Framework tick: reads the settings again when someone asked for them since the last read and a read is due (a
+    /// file changed and settled, the plugin list changed, <see cref="Invalidate"/>, or the backstop interval passed).
+    /// </summary>
+    public void Tick()
+    {
+        var due = SetupReadSchedule.IsDue(
+            asked,
+            readGeneration != companions.Generation,
+            stale,
+            Environment.TickCount64,
+            Interlocked.Read(ref changedAt),
+            readAt,
+            watcher is null ? UnwatchedRefreshMs : RefreshMs,
+            SettleMs);
+        if (due)
+        {
+            Refresh();
         }
     }
 
@@ -172,8 +216,13 @@ public sealed class CompanionSetupService : IDisposable
     /// <summary>The plugin has setter gates and they may be used now (AutoDuty refuses while it runs).</summary>
     public bool CanApplyNow(CompanionPlugin plugin) => gates.TryGetValue(plugin, out var pluginGates) && pluginGates.CanSetNow;
 
-    /// <summary>Reads everything again on the next ask (the Setup list's Refresh, or after an apply).</summary>
-    public void Invalidate() => stale = true;
+    /// <summary>Reads everything again on the next tick (the Setup list's Refresh, or after an apply), without waiting for a file to settle.</summary>
+    public void Invalidate()
+    {
+        Interlocked.Exchange(ref changedAt, 0);
+        stale = true;
+        asked = true;
+    }
 
     /// <summary>
     /// Sets the settings of <paramref name="plugin"/> the player confirmed (<paramref name="confirmed"/>, the ids the
@@ -187,8 +236,8 @@ public sealed class CompanionSetupService : IDisposable
         var applied = 0;
         var failed = 0;
 
-        // Read again: something may have changed while the confirmation was open.
-        stale = true;
+        // Read again, now: something may have changed while the confirmation was open.
+        Refresh();
         var settable = For(plugin).ApplicableOf(confirmed);
         if (!gates.TryGetValue(plugin, out var pluginGates))
         {
@@ -209,7 +258,7 @@ public sealed class CompanionSetupService : IDisposable
             }
         }
 
-        stale = true;
+        Invalidate();
         return (applied, failed);
     }
 
@@ -235,17 +284,25 @@ public sealed class CompanionSetupService : IDisposable
         files.Clear();
     }
 
-    private void Refresh()
+    /// <summary>A reader wants the settings: the very first ask reads at once, any later one waits for the tick.</summary>
+    private void Ask()
     {
-        var now = Environment.TickCount64;
-        var all = companions.All;
-        var interval = watcher is null ? UnwatchedRefreshMs : RefreshMs;
-        if (!stale && readGeneration == companions.Generation && now - readAt < interval)
+        if (Reads == 0)
         {
+            Refresh();
             return;
         }
 
+        asked = true;
+    }
+
+    private void Refresh()
+    {
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
+        var now = Environment.TickCount64;
+        var all = companions.All;
         stale = false;
+        asked = false;
         readAt = now;
         readGeneration = companions.Generation;
         checkedThisRead.Clear();
@@ -259,15 +316,18 @@ public sealed class CompanionSetupService : IDisposable
         // The command after stop sits beside a setting, not in one: read it again after every read, changed or not.
         commandVersion = -1;
         var read = CompanionSetupEvaluator.ApplyCoverage(result);
-        if (Version > 0 && CompanionSetupEvaluator.Same(setups, read))
+        Reads++;
+        var changed = Version == 0 || !CompanionSetupEvaluator.Same(setups, read);
+        if (changed)
         {
-            // Nothing read differently: keep the version, so the reasons and notes composed from it stay.
-            return;
+            setups = read;
+            summary = CompanionSetupEvaluator.Summarize(setups);
+            Version++;
         }
 
-        setups = read;
-        summary = CompanionSetupEvaluator.Summarize(setups);
-        Version++;
+        // Otherwise nothing read differently: the version stays, so the reasons and notes composed from it stay.
+        LastReadMs = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+        log.Debug("Companion settings read {Reads} in {Ms:F1} ms on the framework tick ({Changed})", Reads, LastReadMs, changed ? "changed" : "unchanged");
     }
 
     /// <summary>
@@ -304,12 +364,13 @@ public sealed class CompanionSetupService : IDisposable
         }
     }
 
-    // The watcher's events arrive on a worker thread: they only raise the flag the next read consumes.
+    // The watcher's events arrive on a worker thread: they only stamp the change and raise the flag the tick consumes
+    // once the file has been quiet for SettleMs.
     private void OnFileEvent(object sender, FileSystemEventArgs e)
     {
         if (e.Name is { } name && CompanionSetupCatalog.Concerns(name))
         {
-            stale = true;
+            MarkChanged();
         }
     }
 
@@ -318,12 +379,18 @@ public sealed class CompanionSetupService : IDisposable
         // Plugins that save through a temporary file land their settings with a rename.
         if ((e.Name is { } name && CompanionSetupCatalog.Concerns(name)) || (e.OldName is { } old && CompanionSetupCatalog.Concerns(old)))
         {
-            stale = true;
+            MarkChanged();
         }
     }
 
     // Too many changes at once (the buffer overflowed) or the folder went away: read again rather than miss one.
-    private void OnWatchError(object sender, ErrorEventArgs e) => stale = true;
+    private void OnWatchError(object sender, ErrorEventArgs e) => MarkChanged();
+
+    private void MarkChanged()
+    {
+        Interlocked.Exchange(ref changedAt, Environment.TickCount64);
+        stale = true;
+    }
 
     private SetupReading Read(CompanionStatus status, SetupRequirement requirement)
     {

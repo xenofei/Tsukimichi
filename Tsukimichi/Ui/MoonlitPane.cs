@@ -131,6 +131,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private Row[] rows = [];
     private int rowsBuild = -1;
     private CatalogBundle? rowsBundle;
+
+    /// <summary>The art index revision (<see cref="MoonlitIconResolver.Revision"/>) the rows were built with.</summary>
+    private int rowsArt = -1;
     private int rowsSpoilers;
 
     private int obtainedVersion = -1;
@@ -658,7 +661,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         // Group headings are rows of the same height as a reward's, so the clipper's even spacing holds.
-        var rowHeight = MathF.Max(line, UiMetrics.RowIconSize) + (ImGui.GetStyle().CellPadding.Y * 2f);
+        var rowHeight = MathF.Max(line, RewardIconSize) + (ImGui.GetStyle().CellPadding.Y * 2f);
         moreFocusedNext = -1;
         clipper.Begin(visibleCount);
         while (clipper.Step())
@@ -740,7 +743,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     {
         var padding = ImGui.GetStyle().CellPadding.X * 2f;
         var nameMin = UiMetrics.Px(LayoutBudgets.RowNameMinLogical);
-        var rewardMin = UiMetrics.RowIconSize + ImGui.GetStyle().ItemSpacing.X + nameMin + MoreSize(line);
+        var rewardMin = RewardIconSize + ImGui.GetStyle().ItemSpacing.X + nameMin + MoreSize(line);
         Span<ColumnSpec> specs = stackalloc ColumnSpec[ColumnCount];
         PaneFit.MoonlitColumns(
             glyphColumn + padding,
@@ -784,8 +787,29 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     private static readonly int[] PlannedColumns = [KindColumn, ConfidenceColumn, AvailabilityColumn];
 
+    /// <summary>
+    /// A reward's icon in the table, in logical pixels (feature plan v6 G6): readable at a glance, where a quest row's
+    /// icon is 14. Drawn from the game's high-resolution texture; the row's height follows it.
+    /// </summary>
+    private const float RewardIconLogical = 24f;
+
+    /// <summary>A reward's icon side in the table, in pixels.</summary>
+    private static float RewardIconSize => UiMetrics.Icon(RewardIconLogical);
+
+    /// <summary>How far a line of text sits down a row, so it is centred on the reward's icon.</summary>
+    private static float TextDrop(float line) => MathF.Max(0f, MathF.Floor((RewardIconSize - line) * 0.5f));
+
+    /// <summary>Moves the cursor down by <paramref name="drop"/> at the start of a cell.</summary>
+    private static void DropInCell(float drop)
+    {
+        if (drop > 0f)
+        {
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + drop);
+        }
+    }
+
     /// <summary>The "…" button's side in a row.</summary>
-    private static float MoreSize(float line) => MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));
+    private static float MoreSize(float line) => MathF.Min(UiMetrics.MinTarget, MathF.Max(line, RewardIconSize));
 
     /// <summary>The row's context menu, opened by a right-click, the Menu key or Shift+F10, or the "…" button.</summary>
     private const string RowMenuId = "ctx";
@@ -1535,14 +1559,20 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             var art = MathF.Round(icon * 6f / 64f);
             if (row.Reward is not null)
             {
-                if (GameIcon.TryGetWrap(textures, row.Icon, icon - (2f * art), out var wrap))
+                // A mount's or minion's guide picture where the game has one, else the reward's own icon; the sunken
+                // ground holds the place while either loads.
+                var inner = icon - (2f * art);
+                if ((row.Picture != 0 && GameIcon.TryGetWrap(textures, row.Picture, inner, out var wrap))
+                    || GameIcon.TryGetWrap(textures, row.Icon, inner, out wrap))
                 {
                     dl.AddImageRounded(wrap.Handle, iconMin + new Vector2(art), iconMax - new Vector2(art), Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding * 0.5f);
                 }
             }
             else
             {
-                MoonGlyph.DrawVeiled(dl, (iconMin + iconMax) * 0.5f, icon * 0.28f, NoIconAlpha);
+                // No art of its own: the kind's icon, faded, at half the tile.
+                var kindInset = new Vector2(MathF.Round(icon * 0.25f));
+                Orbit.DrawIcon(dl, textures, row.KindIcon, iconMin + kindInset, iconMax - kindInset, NoIconAlpha, rounding * 0.5f);
             }
 
             if (obtained)
@@ -1674,8 +1704,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         using var id = ImRaii.PushId(row.Index);
         ImGui.TableNextRow();
 
+        // The reward's icon sets the row's height; every cell's text and glyph is centred on it.
+        var drop = TextDrop(line);
+
         // Obtained.
         ImGui.TableNextColumn();
+        DropInCell(drop);
         Marks.DrawInline(row.ObtainedGlyph, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
@@ -1687,8 +1721,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ImGui.TableNextColumn();
         var cellMin = ImGui.GetCursorScreenPos();
         var cellWidth = ImGui.GetContentRegionAvail().X;
-        DrawIcon(row, UiMetrics.RowIconSize);
+        DrawIcon(row, RewardIconSize);
         ImGui.SameLine();
+        DropInCell(drop);
         using (Theme.PushText(Theme.Dusk, row.Hidden))
         {
             // The highlight follows the global selection, as in the Flight pane, so a quest picked from the detail
@@ -1749,14 +1784,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         // The "…" button at the reward cell's right end while the mouse is over the cell or the name (or the button)
         // has keyboard focus: a left click, Enter or Space opens the same menu (accessibility A6).
         var size = MoreSize(line);
-        var cellMax = new Vector2(cellMin.X + cellWidth, cellMin.Y + size);
+        var cellMax = new Vector2(cellMin.X + cellWidth, cellMin.Y + MathF.Max(size, RewardIconSize));
         if (nameFocused || moreFocusedRow == row.Index || (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(cellMin, cellMax)))
         {
             // No cursor restore afterwards: TableNextColumn follows at once, and a set position folded into the
             // cell's CursorMaxPos would make the row taller while the button shows. In a narrow cell the button
-            // stays right of the reward's icon rather than cover it (feature plan v4 L6).
-            var moreX = MathF.Max(cellMin.X + UiMetrics.RowIconSize + ImGui.GetStyle().ItemSpacing.X, cellMax.X - size);
-            Keyboard.MoreButton("##more", RowMenuId, new Vector2(moreX, cellMin.Y), size);
+            // stays right of the reward's icon rather than cover it (feature plan v4 L6). Centred on the icon.
+            var moreX = MathF.Max(cellMin.X + RewardIconSize + ImGui.GetStyle().ItemSpacing.X, cellMax.X - size);
+            var moreY = cellMin.Y + MathF.Max(0f, MathF.Floor((RewardIconSize - size) * 0.5f));
+            Keyboard.MoreButton("##more", RowMenuId, new Vector2(moreX, moreY), size);
             if (ImGui.IsItemFocused())
             {
                 moreFocusedNext = row.Index;
@@ -1765,10 +1801,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         // Kind.
         ImGui.TableNextColumn();
+        DropInCell(drop);
         ImGui.TextUnformatted(row.KindName);
 
         // Quest: click reveals it in the Journal.
         ImGui.TableNextColumn();
+        DropInCell(drop);
         if (row.Quest is { } quest)
         {
             using (Theme.PushText(Theme.Dusk, row.Hidden))
@@ -1802,6 +1840,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         // Quest state for the viewed character.
         ImGui.TableNextColumn();
+        DropInCell(drop);
         var state = session.States.TryGetValue(row.Entry.QuestRowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
         MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
@@ -1811,6 +1850,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         // Confidence badge: what it means, with the source under it.
         ImGui.TableNextColumn();
+        DropInCell(drop);
         using (Theme.PushText(row.ConfidenceColor))
         {
             ImGui.TextUnformatted(row.ConfidenceLabel);
@@ -1823,6 +1863,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         // Availability: can the reward still be had, and how (feature plan v5, decision 4). Past and gone in Dusk.
         ImGui.TableNextColumn();
+        DropInCell(drop);
         using (Theme.PushText(Theme.Dusk, row.Availability.Kind is RewardAvailability.GoneForGood or RewardAvailability.PastEventOnStore))
         {
             ImGui.TextUnformatted(row.AvailabilityText);
@@ -1835,14 +1876,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     }
 
     /// <summary>
-    /// The reward's icon with the blown-up reward tooltip on hover (the source line under it), or, for a kind without
-    /// sheet art, a faded veiled moon that says so: the Obtained column already shows whether the reward is owned.
+    /// The reward's own game art (the high-resolution texture, a sunken square while it loads) with the blown-up reward
+    /// tooltip on hover (the source line under it), or, for a reward without art of its own, its kind's icon, faded so
+    /// it reads as a stand-in: the Obtained column already shows whether the reward is owned.
     /// </summary>
     private void DrawIcon(Row row, float size)
     {
         if (row.Reward is { } reward)
         {
-            GameIcon.Draw(textures, row.Icon, size);
+            GameIcon.Draw(textures, row.Icon, size, hiRes: true);
             if (ImGui.IsItemHovered())
             {
                 RewardTooltip.Draw(reward, links, textures, row.SourceText);
@@ -1850,7 +1892,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
         else
         {
-            MoonGlyph.DrawVeiledInline(size, NoIconAlpha);
+            var min = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(size, size));
+            DrawKindStandIn(ImGui.GetWindowDrawList(), row, min, min + new Vector2(size, size));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(Strings.MoonlitNoIconTooltip);
@@ -1858,7 +1902,17 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
     }
 
-    /// <summary>Alpha of the veiled stand-in where an icon would go: present but clearly not a state.</summary>
+    /// <summary>A reward without art of its own: its kind's icon (the game's menu icon, else the kind's glyph), faded, on the sunken ground.</summary>
+    private void DrawKindStandIn(ImDrawListPtr dl, Row row, Vector2 min, Vector2 max)
+    {
+        var side = max.X - min.X;
+        var rounding = MathF.Round(side * 0.125f);
+        dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Sunken), rounding);
+        var inset = new Vector2(MathF.Round(side * 0.14f));
+        Orbit.DrawIcon(dl, textures, row.KindIcon, min + inset, max - inset, NoIconAlpha, rounding * 0.5f);
+    }
+
+    /// <summary>Alpha of the kind's icon standing in where a reward's own art would go: present but clearly not the reward.</summary>
     private const float NoIconAlpha = 0.6f;
 
     private void DrawContextMenu(UiState ui, Row row)
@@ -1942,7 +1996,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     {
         EnsureCatalog();
         // The quest names are baked into the rows, so a spoiler mask that hides other names rebuilds them (T19).
-        if (rowsBuild != catalogBuild || !ReferenceEquals(rowsBundle, session.Bundle) || rowsSpoilers != session.Spoilers.Fingerprint || rowsLanguage != Localization.Loc.Version)
+        // The rewards' game art lands a moment after load (G6): the rows are built again with it then.
+        if (rowsBuild != catalogBuild || !ReferenceEquals(rowsBundle, session.Bundle) || rowsSpoilers != session.Spoilers.Fingerprint || rowsLanguage != Localization.Loc.Version
+            || rowsArt != Icons.Revision)
         {
             BuildRows();
         }
@@ -1965,9 +2021,42 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             return;
         }
 
-        catalog = UniqueRewardCatalog.Build(session.UniqueRewards, overrides, session.Curated);
+        // The catalog warmed at load serves when no verdict changed since it started (A11): nothing builds on the frame.
+        if (warmCatalog is { IsCompletedSuccessfully: true } warmed && warmCatalogVersion == overridesVersion)
+        {
+            catalog = warmed.Result;
+        }
+        else
+        {
+            catalog = UniqueRewardCatalog.Build(session.UniqueRewards, overrides, session.Curated);
+        }
+
+        warmCatalog = null;
         catalogDirty = false;
         catalogBuild++;
+    }
+
+    // The merged catalog built on a worker at load (WarmCatalog), and the verdicts' version it was built from.
+    private System.Threading.Tasks.Task<UniqueRewardCatalog>? warmCatalog;
+    private int warmCatalogVersion = -1;
+
+    /// <summary>
+    /// Builds the merged catalog on a worker now (feature plan v6 A11), from a copy of the verdicts, so the first reader
+    /// (the Duty Finder hint's index, the Rewards column, Moonlit's first open) takes it ready instead of building it on
+    /// the frame. A verdict changed meanwhile makes the reader build afresh as before.
+    /// </summary>
+    public void WarmCatalog()
+    {
+        if (!catalogDirty || warmCatalog is not null)
+        {
+            return;
+        }
+
+        var unique = session.UniqueRewards;
+        var curated = session.Curated;
+        var verdicts = new Dictionary<uint, UniqueOverride>(overrides);
+        warmCatalogVersion = overridesVersion;
+        warmCatalog = System.Threading.Tasks.Task.Run(() => UniqueRewardCatalog.Build(unique, verdicts, curated));
     }
 
     /// <summary>The UI language the rows' labels were composed in.</summary>
@@ -1979,7 +2068,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// </summary>
     private void BuildRows()
     {
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
+        // Only the art landed: the tiles already shown keep their place and do not fade in again.
+        var artOnly = rowsBuild == catalogBuild && ReferenceEquals(rowsBundle, session.Bundle) && rowsLanguage == Localization.Loc.Version && rowsArt != Icons.Revision;
         rowsLanguage = Localization.Loc.Version;
+        rowsArt = Icons.Revision;
         var bundle = session.Bundle;
         var spoilers = session.Spoilers;
         var hidden = catalog.Hidden;
@@ -1987,21 +2080,21 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var grouped = groups.All;
         var built = new Row[grouped.Count + hidden.Count];
         QuestRecord? QuestOf(uint rowId) => bundle?.Catalog.GetByRowId(rowId);
+        Row Make(int i, MoonlitGroup? group, UniqueRewardEntry entry, bool hiddenRow)
+        {
+            var art = new RowArt(Icons.Resolve(QuestOf(entry.QuestRowId), entry), Icons.Picture(entry), Icons.KindIcon(entry.Kind));
+            return new Row(i, group, entry, QuestOf, art, hiddenRow, spoilers, bundle?.Language);
+        }
+
         for (var i = 0; i < grouped.Count; i++)
         {
-            var group = grouped[i];
-            var entry = group.Primary;
-            var quest = QuestOf(entry.QuestRowId);
-            built[i] = new Row(i, group, entry, QuestOf, Icons.Resolve(quest, entry), hidden: false, spoilers, bundle?.Language);
+            built[i] = Make(i, grouped[i], grouped[i].Primary, hiddenRow: false);
         }
 
         // Rows hidden by a "not unique" verdict follow the view so the Yours filter can list them for Restore.
         for (var j = 0; j < hidden.Count; j++)
         {
-            var i = grouped.Count + j;
-            var entry = hidden[j];
-            var quest = QuestOf(entry.QuestRowId);
-            built[i] = new Row(i, null, entry, QuestOf, Icons.Resolve(quest, entry), hidden: true, spoilers, bundle?.Language);
+            built[grouped.Count + j] = Make(grouped.Count + j, null, hidden[j], hiddenRow: true);
         }
 
         // The expansions the rows' quests belong to, for the Expansion filter.
@@ -2050,13 +2143,21 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             ? new Dictionary<ushort, Core.Seasonal.EditionWindow>()
             : Core.Seasonal.SeasonalNow.EditionWindows(bundle.Catalog, session.Curated.Festivals, editionYears);
         groupStates = new MoonlitGroupState[grouped.Count];
-        tileSeen = new bool[built.Length];
+        if (!artOnly || tileSeen.Length != built.Length)
+        {
+            tileSeen = new bool[built.Length];
+        }
+
         rows = built;
         rowsBuild = catalogBuild;
         rowsBundle = bundle;
         rowsSpoilers = spoilers.Fingerprint;
         obtainedVersion = -1;
+        log.Debug("Moonlit rows: {Count} built in {Ms:F1} ms ({Art})", built.Length, System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds, rowsArt == 0 ? "art still loading" : "with game art");
     }
+
+    /// <summary>A row's art: its icon (0 for none), its gallery picture (0 for none) and its kind's icon, worn when it has no icon.</summary>
+    private readonly record struct RowArt(uint Icon, uint Picture, NodeIcon Fallback);
 
     /// <summary>
     /// Per row: the obtained state, the quest it shows, whether it is on the character's path and its availability
@@ -2431,11 +2532,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         /// <param name="questOf">A quest of the catalog by row id; null when the catalog lacks it.</param>
         /// <param name="spoilers">The viewed character's shield: a masked quest's name is its placeholder here too.</param>
         /// <param name="catalogLanguage">The catalog's language: a non-English client prints the sheet's reward name (<see cref="RewardNames"/>).</param>
-        public Row(int index, MoonlitGroup? group, UniqueRewardEntry entry, Func<uint, QuestRecord?> questOf, uint icon, bool hidden, SpoilerMask spoilers, string? catalogLanguage)
+        /// <param name="art">The reward's icon, gallery picture and kind icon (<see cref="MoonlitIconResolver"/>).</param>
+        public Row(int index, MoonlitGroup? group, UniqueRewardEntry entry, Func<uint, QuestRecord?> questOf, RowArt art, bool hidden, SpoilerMask spoilers, string? catalogLanguage)
         {
             Index = index;
             Group = group;
+            var icon = art.Icon;
             Icon = icon;
+            Picture = art.Picture;
+            KindIcon = art.Fallback;
             Hidden = hidden;
             IReadOnlyList<uint> ids = group is null ? [entry.QuestRowId] : group.Quests;
             quests = new QuestRecord?[ids.Count];
@@ -2509,8 +2614,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         /// <summary>
         /// The reward the icon tooltip describes: the quest's own reward entry (same item, else same kind and id; what
-        /// <see cref="MoonlitIconResolver.FromQuestRewards"/> matched), or one made from the catalog entry when the
-        /// icon came from the sheets instead.
+        /// <see cref="MoonlitIconResolver.FromQuestRewards"/> matches), wearing the row's art when the reward has art of
+        /// its own (a mount rather than its whistle), or one made from the catalog entry when the quest does not list it.
         /// </summary>
         private static RewardRef RewardFor(QuestRecord? quest, UniqueRewardEntry entry, uint icon, string name)
         {
@@ -2518,17 +2623,17 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             {
                 foreach (var reward in quest.Rewards)
                 {
-                    if (entry.ItemId != 0 && reward.ItemId == entry.ItemId && reward.Icon == icon)
+                    if (entry.ItemId != 0 && reward.ItemId == entry.ItemId)
                     {
-                        return reward;
+                        return reward.Icon == icon ? reward : reward with { Icon = icon };
                     }
                 }
 
                 foreach (var reward in quest.Rewards)
                 {
-                    if (entry.RewardId != 0 && reward.Kind == entry.Kind && reward.Id == entry.RewardId && reward.Icon == icon)
+                    if (entry.RewardId != 0 && reward.Kind == entry.Kind && reward.Id == entry.RewardId)
                     {
-                        return reward;
+                        return reward.Icon == icon ? reward : reward with { Icon = icon };
                     }
                 }
             }
@@ -2562,7 +2667,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         /// <summary>The expansion of the quest the row shows (0 when unknown): what the Expansion filter and the grouping read.</summary>
         public byte Expansion => Quest?.Expansion ?? 0;
 
+        /// <summary>The reward's own icon; 0 when it has none (<see cref="KindIcon"/> is worn instead).</summary>
         public uint Icon { get; }
+
+        /// <summary>The reward's large picture for a gallery tile (a mount's or minion's guide art); 0 when it has none.</summary>
+        public uint Picture { get; }
+
+        /// <summary>The reward kind's icon, worn by a reward without art of its own.</summary>
+        public NodeIcon KindIcon { get; }
+
         public bool Hidden { get; }
         public string Name { get; }
         public string KindName { get; }
@@ -2586,7 +2699,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         /// <summary>Found outside the quest (store or drop): what "Hide rewards found elsewhere" leaves out.</summary>
         public bool FoundElsewhere => StoreResell || DropsInDuty;
 
-        /// <summary>What the icon's tooltip describes; null when the row has no icon (the veiled stand-in is drawn instead).</summary>
+        /// <summary>What the icon's tooltip describes; null when the row has no icon (its kind's icon stands in, faded).</summary>
         public RewardRef? Reward { get; }
 
         public bool? Obtained { get; private set; }
@@ -2682,76 +2795,72 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 }
 
 /// <summary>
-/// Icon for a unique-reward entry. The quest's own reward list is tried first (same item, else same kind and id);
-/// otherwise the kind decides: duty unlocks and instances show their ContentFinderCondition's content-type icon,
-/// jobs the 062100-series job icon, aether currents the attunement crystal (060033), traits, achievements and blue
-/// mage spells their sheet icon. Titles and system unlocks have no sheet icon and keep the veiled moon (0).
-/// Sheet lookups are memoized per (kind, id); a sheet failure logs once and reads as no icon.
+/// Game art for a unique-reward entry (feature plan v6 G6), from the <see cref="RewardArtIndex"/> read off the frame at
+/// load (<see cref="Art"/>). A collectible's own art comes first, so a mount, minion, emote, orchestrion roll, Triple
+/// Triad card, barding, fashion accessory or hairstyle shows itself rather than the generic icon of the item that
+/// unlocks it. Then the quest's own reward list (same item, else same kind and id); then the kind's sheet icon: duty
+/// unlocks and instances their content type's, jobs the 062100-series job icon, aether currents the attunement crystal,
+/// traits, achievements, actions, blue mage spells and other rewards their own, items theirs, titles the icon of the
+/// achievement that awards them, and system unlocks the icon of the game menu they belong to. 0 when none is known;
+/// the row then wears its kind's icon (<see cref="KindIcon"/>). Until the index lands only the quest's reward list
+/// answers; <see cref="Revision"/> moves when it does, so the rows are built again. Reads no sheet itself apart from
+/// the menu icons of <see cref="KindIcon"/> (memoized per kind).
 /// </summary>
 public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
 {
     /// <summary>The aether current attunement crystal in the 060000 icon set (verified against the shipped textures).</summary>
-    public const uint AetherCurrentIcon = 60033;
+    public const uint AetherCurrentIcon = RewardArtIndex.AetherCurrentIcon;
 
     /// <summary>First job icon in the 062000 set: 062101 Gladiator … 062142 Pictomancer, offset by ClassJob row id.</summary>
-    public const uint ClassJobIconBase = 62100;
+    public const uint ClassJobIconBase = RewardArtIndex.ClassJobIconBase;
 
-    /// <summary><c>ContentFinderCondition.ContentLinkType</c> value whose <c>Content</c> is an InstanceContent row.</summary>
-    private const byte InstanceContentLink = 1;
-
-    private readonly Dictionary<(RewardKind Kind, uint Id), uint> memo = [];
     private readonly Dictionary<RewardKind, NodeIcon> kindIcons = [];
-    private Dictionary<uint, uint>? contentTypeIconByCondition;
-    private Dictionary<uint, uint>? conditionByInstance;
+    private RewardArtIndex? kindIconsIndex;
     private bool warned;
+
+    /// <summary>The art index once it has landed; null while it is read (and when unset). Set by the plugin.</summary>
+    public Func<RewardArtIndex?>? Art { get; set; }
+
+    /// <summary>0 until the art index has landed, then 1: what the rows were built with.</summary>
+    public int Revision => Art?.Invoke() is null ? 0 : 1;
+
+    /// <summary>Whether <paramref name="kind"/> has art of its own that beats the icon of the item unlocking it.</summary>
+    public static bool HasOwnArt(RewardKind kind) => kind is RewardKind.Mount or RewardKind.Minion or RewardKind.Emote
+        or RewardKind.Orchestrion or RewardKind.TripleTriadCard or RewardKind.Barding or RewardKind.Ornament or RewardKind.Hairstyle;
 
     /// <summary>Icon id for the entry, or 0 when none is known.</summary>
     public uint Resolve(QuestRecord? quest, UniqueRewardEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
+        var index = Art?.Invoke();
+        if (index is not null && HasOwnArt(entry.Kind) && index.Icon(entry.Kind, entry.RewardId) is not 0 and var own)
+        {
+            return own;
+        }
+
         var fromQuest = FromQuestRewards(quest, entry);
-        if (fromQuest != 0)
+        if (fromQuest != 0 || index is null)
         {
             return fromQuest;
         }
 
-        if (entry.RewardId == 0)
+        if (entry.Kind == RewardKind.SystemUnlock)
         {
-            return 0;
+            return index.MenuIcon(MoonlitKindIcons.SystemUnlockCommand(entry.RewardName));
         }
 
-        var key = (entry.Kind, entry.RewardId);
-        if (memo.TryGetValue(key, out var cached))
-        {
-            return cached;
-        }
+        var (kind, id) = RewardArtIndex.KeyOf(entry);
+        return id == 0 ? 0u : index.Icon(kind, id);
+    }
 
-        var icon = 0u;
-        try
-        {
-            icon = entry.Kind switch
-            {
-                RewardKind.DutyUnlock => ConditionIcon(entry.RewardId),
-                RewardKind.Instance => ConditionForInstance(entry.RewardId) is { } condition ? ConditionIcon(condition) : 0u,
-                RewardKind.ClassJob => data.GetExcelSheet<ClassJob>()?.GetRowOrDefault(entry.RewardId) is not null ? ClassJobIconBase + entry.RewardId : 0u,
-                RewardKind.AetherCurrent => AetherCurrentIcon,
-                RewardKind.Trait => Positive(data.GetExcelSheet<Trait>()?.GetRowOrDefault(entry.RewardId)?.Icon),
-                RewardKind.Achievement => data.GetExcelSheet<Achievement>()?.GetRowOrDefault(entry.RewardId)?.Icon ?? 0u,
-                RewardKind.BlueMageSpell => data.GetExcelSheet<AozAction>()?.GetRowOrDefault(entry.RewardId)?.Action.ValueNullable?.Icon ?? 0u,
-                // An item the quest's reward list does not carry as an item (the A Realm Reborn soul crystals come
-                // through QuestRewardOther): the item's own icon.
-                RewardKind.Item or RewardKind.OptionalItem or RewardKind.ArtifactGear when entry.ItemId != 0 =>
-                    data.GetExcelSheet<Item>()?.GetRowOrDefault(entry.ItemId)?.Icon ?? 0u,
-                _ => 0u,
-            };
-        }
-        catch (Exception ex)
-        {
-            WarnOnce(ex, entry.Kind);
-        }
-
-        memo[key] = icon;
-        return icon;
+    /// <summary>
+    /// The reward's large picture for the gallery (a mount's or minion's 384 px guide art), or 0 when it has none or
+    /// the index has not landed.
+    /// </summary>
+    public uint Picture(UniqueRewardEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        return Art?.Invoke() is { } index ? index.Art(entry.Kind, entry.RewardId) : 0u;
     }
 
     /// <summary>
@@ -2766,6 +2875,14 @@ public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
             return NodeIcon.Of(MoonlitKindIcons.Glyph(null));
         }
 
+        // The art index carries the menu icons: once it lands they are read from it, not from the sheet.
+        var index = Art?.Invoke();
+        if (!ReferenceEquals(kindIconsIndex, index))
+        {
+            kindIconsIndex = index;
+            kindIcons.Clear();
+        }
+
         if (kindIcons.TryGetValue(k, out var known))
         {
             return known;
@@ -2777,9 +2894,11 @@ public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
         {
             try
             {
-                if (data.GetExcelSheet<MainCommand>()?.GetRowOrDefault(row) is { } command && command.Icon > 0)
+                var menu = index is not null ? index.MenuIcon(row)
+                    : data.GetExcelSheet<MainCommand>()?.GetRowOrDefault(row) is { Icon: > 0 } command ? (uint)command.Icon : 0u;
+                if (menu != 0)
                 {
-                    icon = NodeIcon.Game((uint)command.Icon);
+                    icon = NodeIcon.Game(menu);
                 }
             }
             catch (Exception ex)
@@ -2826,60 +2945,6 @@ public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
         return 0;
     }
 
-    /// <summary>Sheet icon columns typed as int: negative or missing reads as no icon.</summary>
-    private static uint Positive(int? icon) => icon is > 0 ? (uint)icon.Value : 0u;
-
-    private uint ConditionIcon(uint conditionId)
-    {
-        EnsureConditions();
-        return contentTypeIconByCondition!.GetValueOrDefault(conditionId);
-    }
-
-    private uint? ConditionForInstance(uint instanceContentId)
-    {
-        EnsureConditions();
-        return conditionByInstance!.TryGetValue(instanceContentId, out var condition) ? condition : null;
-    }
-
-    /// <summary>ContentFinderCondition read once: its ContentType icon per row, and the row per InstanceContent it links.</summary>
-    private void EnsureConditions()
-    {
-        if (contentTypeIconByCondition is not null)
-        {
-            return;
-        }
-
-        var icons = new Dictionary<uint, uint>();
-        var byInstance = new Dictionary<uint, uint>();
-        try
-        {
-            var sheet = data.GetExcelSheet<ContentFinderCondition>();
-            if (sheet is not null)
-            {
-                foreach (var row in sheet)
-                {
-                    var icon = row.ContentType.ValueNullable?.Icon ?? 0u;
-                    if (icon != 0)
-                    {
-                        icons[row.RowId] = icon;
-                    }
-
-                    if (row.ContentLinkType == InstanceContentLink && row.Content.RowId != 0)
-                    {
-                        byInstance.TryAdd(row.Content.RowId, row.RowId);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            WarnOnce(ex, RewardKind.DutyUnlock);
-        }
-
-        contentTypeIconByCondition = icons;
-        conditionByInstance = byInstance;
-    }
-
     private void WarnOnce(Exception ex, RewardKind kind)
     {
         if (warned)
@@ -2889,6 +2954,6 @@ public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
         }
 
         warned = true;
-        log.Warning(ex, "Icon lookup for {Kind} failed; the veiled moon stands in", kind);
+        log.Warning(ex, "Icon lookup for {Kind} failed; the kind's glyph stands in", kind);
     }
 }

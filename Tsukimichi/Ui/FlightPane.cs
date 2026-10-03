@@ -29,8 +29,9 @@ namespace Tsukimichi.Ui;
 /// sections. Plain keeps the look before 1.4.
 /// </para>
 /// <para>
-/// The <see cref="FlightIndex"/> is built on the first draw through the factory the plugin hands in (a handful of
-/// small sheets). Zone and row models are built once per catalog; attunement and quest counts, and every count string,
+/// The <see cref="FlightIndex"/> (a handful of small sheets) is built on a worker when the plugin loads
+/// (<see cref="Game.IndexWarmer"/>): the pane reads it through the function the plugin hands in, null while it builds,
+/// and says it is reading the zones meanwhile, so its first open never builds it. Zone and row models are built once per catalog; attunement and quest counts, and every count string,
 /// refresh when <see cref="SessionState.Version"/> changes and, because attuning a current changes nothing in the
 /// snapshot, also when the tab becomes visible, when the territory changes and every
 /// <see cref="LiveAttunementRefreshMs"/> while a live character is viewed (the memoized attunements are dropped through
@@ -55,7 +56,7 @@ public sealed class FlightPane
     private readonly ITextureProvider textures;
     private readonly IPluginLog log;
     private readonly Func<uint> currentTerritory;
-    private readonly Func<FlightIndex> buildIndex;
+    private readonly Func<FlightIndex?> readIndex;
 
     private FlightIndex? index;
     private ZoneItem[] zones = [];
@@ -82,7 +83,7 @@ public sealed class FlightPane
         ITextureProvider textures,
         IPluginLog log,
         Func<uint> currentTerritory,
-        Func<FlightIndex> buildIndex)
+        Func<FlightIndex?> readIndex)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.unlocks = unlocks ?? throw new ArgumentNullException(nameof(unlocks));
@@ -90,29 +91,34 @@ public sealed class FlightPane
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         this.currentTerritory = currentTerritory ?? throw new ArgumentNullException(nameof(currentTerritory));
-        this.buildIndex = buildIndex ?? throw new ArgumentNullException(nameof(buildIndex));
+        this.readIndex = readIndex ?? throw new ArgumentNullException(nameof(readIndex));
     }
 
-    /// <summary>The zone index, built on first use; <see cref="FlightIndex.Empty"/> when the sheets could not be read.</summary>
-    public FlightIndex Index
-    {
-        get
-        {
-            if (index is null)
-            {
-                try
-                {
-                    index = buildIndex();
-                }
-                catch (Exception ex)
-                {
-                    log.Warning(ex, "Flight index could not be built; the Flight view is empty");
-                    index = FlightIndex.Empty;
-                }
-            }
+    /// <summary>
+    /// The zone index once it has landed (it is warmed at load, feature plan v6 A11); <see cref="FlightIndex.Empty"/>
+    /// when the sheets could not be read. Read only after <see cref="IndexReady"/>.
+    /// </summary>
+    public FlightIndex Index => index ?? FlightIndex.Empty;
 
-            return index;
+    /// <summary>Whether the zone index has landed; the pane says it is reading the zones until then.</summary>
+    private bool IndexReady()
+    {
+        if (index is not null)
+        {
+            return true;
         }
+
+        try
+        {
+            index = readIndex();
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Flight index could not be built; the Flight view is empty");
+            index = FlightIndex.Empty;
+        }
+
+        return index is not null;
     }
 
     /// <summary>Left column: flying zones under expansion headers, the current zone marked and selected on the first draw.</summary>
@@ -120,6 +126,12 @@ public sealed class FlightPane
     {
         ArgumentNullException.ThrowIfNull(ui);
         using var id = ImRaii.PushId("flightLeft");
+        if (!IndexReady())
+        {
+            ImGui.TextDisabled(Strings.FlightLoading);
+            return;
+        }
+
         Refresh(ui);
 
         var start = ImGui.GetCursorScreenPos();
@@ -203,6 +215,12 @@ public sealed class FlightPane
     {
         ArgumentNullException.ThrowIfNull(ui);
         using var id = ImRaii.PushId("flightMain");
+        if (!IndexReady())
+        {
+            ImGui.TextDisabled(Strings.FlightLoading);
+            return;
+        }
+
         Refresh(ui);
 
         if (zones.Length == 0)

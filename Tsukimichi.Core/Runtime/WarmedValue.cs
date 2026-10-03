@@ -29,6 +29,38 @@ public sealed class WarmedValue<T>
     /// <summary>The built value; null before <see cref="Start"/>, while it builds, and after a failed build.</summary>
     public T? Value => Volatile.Read(ref value);
 
+    /// <summary>Whether the build has finished (with a value, or failed); false before <see cref="Start"/> and while it builds.</summary>
+    public bool IsDone => Volatile.Read(ref task) is { IsCompleted: true };
+
+    /// <summary>How long the build took, in milliseconds; 0 before it finished.</summary>
+    public double BuildMs { get; private set; }
+
+    /// <summary>
+    /// The value, starting the build if nobody has and waiting for it to land: for a caller that cannot answer without
+    /// it (a worker, or a click). Never builds twice: a build already under way is waited for, not repeated. Null when
+    /// the build failed.
+    /// </summary>
+    public T? Wait()
+    {
+        if (Value is { } ready)
+        {
+            return ready;
+        }
+
+        Start();
+
+        // Another thread may have won the start and not yet stored its task.
+        Task? running;
+        var spin = default(SpinWait);
+        while ((running = Volatile.Read(ref task)) is null)
+        {
+            spin.SpinOnce();
+        }
+
+        running.Wait();
+        return Value;
+    }
+
     /// <summary>
     /// Starts the build on the thread pool; later calls return the same task without building again. The task always
     /// completes successfully: a failure goes to the callback.
@@ -42,12 +74,16 @@ public sealed class WarmedValue<T>
 
         var run = Task.Run(() =>
         {
+            var started = System.Diagnostics.Stopwatch.GetTimestamp();
             try
             {
-                Volatile.Write(ref value, build());
+                var built = build();
+                BuildMs = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+                Volatile.Write(ref value, built);
             }
             catch (Exception ex)
             {
+                BuildMs = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
                 failed?.Invoke(ex);
             }
         });
