@@ -269,7 +269,7 @@ public static class MedalGlyph
     };
 
     /// <summary>The job's icon in the badge seat (the icon slot, <see cref="MedalArt.JobIconSlot"/> units square on the badge centre).</summary>
-    private static void DrawJobInSeat(ImDrawListPtr dl, Vector2 min, float size, byte job, uint tint)
+    internal static void DrawJobInSeat(ImDrawListPtr dl, Vector2 min, float size, byte job, uint tint)
     {
         if (job == 0)
         {

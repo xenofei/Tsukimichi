@@ -6,6 +6,7 @@ using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Ui.Themes;
 using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
@@ -142,10 +143,11 @@ public sealed partial class ConfigWindow
 
         DrawSkyLook();
 
-        var moonStyle = Enum.IsDefined(settings.MoonStyle) ? (int)settings.MoonStyle : 0;
+        // 1.16: these three edit the appearance (feature plan v7 T1) until Settings › Themes (T9) replaces them.
+        var moonStyle = (int)Themes.GlyphSeam.Appearance.MoonStyle;
         if (Choice(Strings.ConfigMoonStyle, Strings.ConfigMoonStyleHint, ref moonStyle, MoonStyleOptions.Value, "medallion classic moon medal glyph style compare"))
         {
-            settings.MoonStyle = (MoonStyle)moonStyle;
+            AppearanceEdits.SetMoonStyle(settings.Appearance, (MoonStyle)moonStyle);
             Save();
         }
 
@@ -158,10 +160,10 @@ public sealed partial class ConfigWindow
 
         DrawGlyphPalette();
 
-        var followDalamud = settings.FollowDalamudColours;
+        var followDalamud = Themes.GlyphSeam.Appearance.FollowDalamud;
         if (Toggle(Strings.ConfigFollowDalamudColours, Strings.ConfigFollowDalamudColoursHint, ref followDalamud, "colors colours theme style night palette"))
         {
-            settings.FollowDalamudColours = followDalamud;
+            AppearanceEdits.SetFollowDalamud(settings.Appearance, followDalamud);
             Save();
         }
 
@@ -637,10 +639,10 @@ public sealed partial class ConfigWindow
             return;
         }
 
-        var palette = settings.GlyphPalette == GlyphPaletteKind.HighContrast ? 1 : 0;
+        var palette = settings.Appearance.HighContrast ? 1 : 0;
         if (Chrome.Segmented("##palette", ref palette, PaletteOptions.Value, ControlWidth))
         {
-            settings.GlyphPalette = palette == 1 ? GlyphPaletteKind.HighContrast : GlyphPaletteKind.Standard;
+            AppearanceEdits.SetHighContrast(settings.Appearance, palette == 1);
             Save();
         }
 

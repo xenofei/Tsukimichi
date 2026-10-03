@@ -95,26 +95,7 @@ public static class MedalLayout
     /// The texture and tier to draw a medal <paramref name="sizePx"/> device px across: the smallest 1x tier at or above
     /// it, else the smallest 2x tier (twice a 1x tier) at or above it, else the largest 2x tier.
     /// </summary>
-    public static (int Tier, bool TwoX) Pick(float sizePx)
-    {
-        foreach (var cell in Tiers)
-        {
-            if (cell >= sizePx)
-            {
-                return (cell, false);
-            }
-        }
-
-        foreach (var cell in Tiers)
-        {
-            if (cell * 2 >= sizePx)
-            {
-                return (cell, true);
-            }
-        }
-
-        return (Tiers[^1], true);
-    }
+    public static (int Tier, bool TwoX) Pick(float sizePx) => Themes.ThemeAtlasRules.PickTier(Tiers, sizePx);
 
     /// <summary>The sprite for a quest state; Ready on another job takes its role's seat (<see cref="OtherJob"/>).</summary>
     public static MedalSprite For(QuestState state, JobSeat seat = JobSeat.Hand) => state switch

@@ -187,9 +187,11 @@ public static class Theme
 
     /// <summary>
     /// Settings › Display › Look › Moon style this frame (feature plan v6 G3): whether <see cref="MoonGlyph"/>, the orbit
-    /// rings and the quest table draw the 1.12 medals and gauges or the 1.11 moons (<see cref="LegacyMoonGlyph"/>).
+    /// rings and the quest table draw the 1.12 medals and gauges or the 1.11 moons (<see cref="LegacyMoonGlyph"/>). Since
+    /// 1.16.0 it is the appearance in effect (<see cref="Themes.GlyphSeam.Appearance"/>): Classic for the Classic theme,
+    /// Medallion for every other, so a pushed preview switches it too.
     /// </summary>
-    public static MoonStyle MoonStyle { get; private set; } = MoonStyle.Medallion;
+    public static MoonStyle MoonStyle => Themes.GlyphSeam.Appearance.MoonStyle;
 
     /// <summary>Whether the 1.11 moons draw this frame (<see cref="MoonStyle.Classic"/>).</summary>
     public static bool ClassicMoons => MoonStyle == MoonStyle.Classic;
@@ -311,11 +313,10 @@ public static class Theme
     /// <paramref name="glyphPalette"/> is resolved against the resulting window colour (<see cref="Glyphs"/>), so the
     /// high-contrast glyphs switch to their light variant on a light Dalamud theme. Under high contrast the Moon Road
     /// roles take that palette's versions and <paramref name="flair"/> is capped at Quiet (<see cref="Flair"/>).
-    /// <paramref name="moonStyle"/> picks the glyph renderer (<see cref="MoonStyle"/>). Allocates nothing.
+    /// The glyph renderer follows the appearance (<see cref="Themes.GlyphSeam.Refresh"/>, called first). Allocates nothing.
     /// </summary>
-    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard, Flair flair = Flair.Full, MoonStyle moonStyle = MoonStyle.Medallion)
+    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard, Flair flair = Flair.Full)
     {
-        MoonStyle = MoonStyleRules.Effective(moonStyle);
         var colors = ImGui.GetStyle().Colors;
         var windowBg = colors[(int)ImGuiCol.WindowBg];
         hostWindowAlpha = float.IsFinite(windowBg.W) ? Math.Clamp(windowBg.W, 0f, 1f) : 1f;

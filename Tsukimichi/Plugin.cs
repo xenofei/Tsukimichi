@@ -566,7 +566,9 @@ public sealed partial class Plugin : IDalamudPlugin
         {
             Ui.UiMetrics.Update(settings);
             Ui.Typography.Update(Core.Ui.FlairRules.GameHeadingFonts(settings.Flair, settings.GameHeadingFonts));
-            Ui.Theme.Refresh(settings.FollowDalamudColours, settings.GlyphPalette, settings.Flair, settings.MoonStyle);
+            // The appearance first (theme, moons per state, palette, frames, high contrast), then the palette it names.
+            var appearance = Ui.Themes.GlyphSeam.Refresh(settings.Appearance);
+            Ui.Theme.Refresh(appearance.FollowDalamud, appearance.GlyphPalette, settings.Flair);
             Ui.Motion.BeginFrame();
             Ui.PopupFade.BeginFrame();
             if (Session is { } session)
