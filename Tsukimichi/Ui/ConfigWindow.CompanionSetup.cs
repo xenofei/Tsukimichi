@@ -5,6 +5,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Companions;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
@@ -249,12 +250,19 @@ public sealed partial class ConfigWindow
         applyPopupPending = true;
     }
 
+    private readonly ConfirmGate applyGate = new();
+
+    private static string ApplyConfirmLabel => applyConfirmLabelText.Value;
+
+    private static readonly Localization.LocText applyConfirmLabelText = new(static () => Strings.CompanionSetupApplyConfirm + Chrome.HoldIdSuffix);
+
     /// <summary>The confirmation, opened outside the table so its id does not depend on the row.</summary>
     private void DrawCompanionApplyConfirm(CompanionPlugins companions)
     {
         if (applyPopupPending)
         {
             applyPopupPending = false;
+            applyGate.Cancel();
             ImGui.OpenPopup(Strings.CompanionSetupApplyPopup);
         }
 
@@ -274,7 +282,15 @@ public sealed partial class ConfigWindow
         }
 
         ImGui.Spacing();
-        if (ImGui.Button(Strings.CompanionSetupApplyConfirm) && applyPlugin is { } plugin && CompanionSetup is { } setup)
+
+        // Apply rewrites another plugin's settings, which Tsukimichi cannot undo: press and hold (feature plan v6 S2).
+        var confirmed = Chrome.HoldButton(ApplyConfirmLabel, applyGate);
+        if (ImGui.IsItemHovered())
+        {
+            Safety.Tooltip(Strings.CompanionSetupApplyConfirmTooltip, GuardedAction.CompanionApply);
+        }
+
+        if (confirmed && applyPlugin is { } plugin && CompanionSetup is { } setup)
         {
             var (applied, failed) = setup.Apply(plugin, applyIds);
             applyResult = string.Format(CultureInfo.CurrentCulture, Strings.CompanionSetupAppliedFormat, companions.Status(plugin).DisplayName, applied, applied + failed);

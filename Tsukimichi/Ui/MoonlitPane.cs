@@ -26,8 +26,8 @@ namespace Tsukimichi.Ui;
 /// Moonlit treasures (spec §7): quests whose rewards exist nowhere else. <see cref="DrawLeft"/> lists reward kinds with
 /// obtained/total and a filling moon; <see cref="DrawMain"/> is the toolbar plus the reward table. The pane owns the
 /// user's unique/not-unique overrides (<c>user/overrides.json</c>) and the merged <see cref="UniqueRewardCatalog"/>,
-/// which the detail pane and the settings window reach through <see cref="IUniqueOverrides"/>. "Not unique (hide)…"
-/// in a row's context menu goes through the same <see cref="VerdictPrompt"/> as the detail pane's "Mark as unique…";
+/// which the detail pane and the settings window reach through <see cref="IUniqueOverrides"/>. "Not unique (hide)"
+/// in a row's context menu goes through the same <see cref="VerdictPrompt"/> as the detail pane's "Mark as unique";
 /// quests hidden that way stay in the row array as struck-through rows the Yours confidence filter lists, so their
 /// context menu can restore them.
 /// <para>
@@ -271,6 +271,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     void IUniqueOverrides.Set(uint rowId, bool unique, string? note) => SetOverride(rowId, unique, note);
 
+    void IUniqueOverrides.PutBack(IReadOnlyCollection<KeyValuePair<uint, UniqueOverride>> verdicts) => PutBackOverrides(verdicts);
+
     /// <summary>Icon lookup for reward entries (quest reward list first, then per-kind sheet fallbacks); shared with Wotsit.</summary>
     public MoonlitIconResolver Icons { get; }
 
@@ -282,6 +284,24 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     {
         overrides[rowId] = new UniqueOverride(unique, string.IsNullOrWhiteSpace(note) ? null : note.Trim(), DateTime.UtcNow);
         overridesTouched.Add(rowId);
+        SaveOverrides();
+    }
+
+    /// <summary>Puts verdicts back as they were, dates included (the Undo of a restore or a note edit), in one save.</summary>
+    public void PutBackOverrides(IReadOnlyCollection<KeyValuePair<uint, UniqueOverride>> verdicts)
+    {
+        ArgumentNullException.ThrowIfNull(verdicts);
+        if (verdicts.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var (rowId, stored) in verdicts)
+        {
+            overrides[rowId] = stored;
+            overridesTouched.Add(rowId);
+        }
+
         SaveOverrides();
     }
 
@@ -579,14 +599,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
-        if (verdict.UndoShowing)
-        {
-            Chrome.SameLineOrWrap(verdict.UndoWidth());
-            verdict.DrawUndo(this);
-        }
-
-        // The verdict popup is begun here, in the centre column's scope, because the context menu that requests it
-        // lives inside the table's inner window and closes before the popup could be shown from there.
+        // The note popup ("Add note" on the floating Undo) is begun here, in the centre column's scope, because the
+        // context menu a verdict is given from lives inside the table's inner window and closes before a popup could be
+        // shown from there.
         verdict.Draw(this);
 
         // Rewards on the character's path that can no longer be had and are not theirs: said once, under the toolbar.
@@ -1676,18 +1691,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
+        // Armed items (feature plan v6 S1): they act only while Ctrl or Shift is held, then the floating Undo follows.
         ImGui.Separator();
         if (overrides.ContainsKey(rowId))
         {
-            if (ImGui.MenuItem(Strings.MoonlitRestoreOverride))
-            {
-                ClearOverride(rowId);
-            }
+            verdict.DrawRestoreMenuItem(this, rowId);
         }
-        else if (ImGui.MenuItem(Strings.MoonlitMarkNotUnique))
+        else
         {
-            // Only requested here; the popup itself is begun in DrawMain once this menu has closed.
-            verdict.Open(rowId, false, row.QuestName);
+            verdict.DrawNotUniqueMenuItem(this, rowId, row.QuestName);
         }
     }
 

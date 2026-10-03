@@ -84,9 +84,6 @@ static partial class Strings
 
     public static string RoutePinnedOne => Loc.Get("RoutePinnedOne");
     public static string RouteAllPinnedAlready => Loc.Get("RouteAllPinnedAlready");
-    public const string RouteUndoSeparator = " · ";
-    public static string RouteUndo => Loc.Get("RouteUndo");
-    public static string RouteUndoTooltip => Loc.Get("RouteUndoTooltip");
 
     // ---- Entry points ----
     public static string RouteToThisTooltip => Loc.Get("RouteToThisTooltip");

@@ -77,6 +77,7 @@ public sealed partial class ConfigWindow
         new(SettingsSection.Notices, DrawChatActions),
         new(SettingsSection.Spoilers, DrawSpoilers),
         new(SettingsSection.Keyboard, DrawKeyboard),
+        new(SettingsSection.Keyboard, DrawSafety),
         new(SettingsSection.Integrations, DrawCompanionPlugins, anchor: SettingsAnchor.CompanionPlugins),
         new(SettingsSection.Integrations, DrawQuestionableSettings),
         new(SettingsSection.Integrations, DrawHandInIntegrations),

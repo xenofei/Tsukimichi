@@ -58,6 +58,7 @@ public static class UiMetrics
         GlobalScale = ScaleMetrics.SafeGlobalScale(global);
         Density = settings.Density;
         ReduceMotion = settings.ReduceMotion;
+        Safety.Update(settings);
     }
 
     /// <summary>Applies the font scale to the current window (see the class remarks for where that is right).</summary>

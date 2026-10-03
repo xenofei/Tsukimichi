@@ -11,6 +11,7 @@ using Tsukimichi.Localization;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
@@ -34,6 +35,10 @@ public sealed partial class ConfigWindow : Window
     private static string RestoreAllLabel => restoreAllLabelText.Value;
 
     private static readonly Localization.LocText restoreAllLabelText = new(static () => Strings.ConfigVerdictRestoreAll + Chrome.HoldIdSuffix);
+
+    private static string DeleteConfirmLabel => deleteConfirmLabelText.Value;
+
+    private static readonly Localization.LocText deleteConfirmLabelText = new(static () => Strings.ConfigDeleteConfirm + Chrome.HoldIdSuffix);
 
     private static readonly LocText UnpinPlanLabel = new(static () => Strings.Unpin + "##todoPlanUnpin");
 
@@ -81,6 +86,8 @@ public sealed partial class ConfigWindow : Window
 
     // "Your Moonlit verdicts": one row per override, rebuilt when the overrides or the quest catalog change.
     private readonly ConfirmGate restoreAllGate = new();
+    private readonly ClickGuard verdictRestoreGuard = new();
+    private readonly ConfirmGate deleteAllGate = new();
     private VerdictRow[] verdictRows = [];
     private int verdictVersion = -1;
     private CatalogBundle? verdictBundle;
@@ -567,6 +574,61 @@ public sealed partial class ConfigWindow : Window
         }
 
         HintOnHover(Strings.ConfigFlairHint);
+    }
+
+    /// <summary>
+    /// Settings › Keyboard › Safety (feature plan v6 S2): how actions that change data are confirmed, said once in
+    /// plain words, then the press-and-hold length (saved when the slider is let go) and, for hand strain, two clicks
+    /// in place of a held key or button (saved at once). There is no "off": the owner asked for the safety.
+    /// </summary>
+    private void DrawSafety()
+    {
+        Header(Strings.ConfigSafetyHeading);
+        if (Row(Strings.ConfigSafetyRules, Strings.ConfigSafetyRulesHint, "safety confirm undo shift ctrl control hold"))
+        {
+            using (ImRaii.TextWrapPos(0f))
+            {
+                ImGui.TextUnformatted(Strings.ConfigSafetyRules);
+                using (Theme.PushText(Theme.Surface.TextSecondary))
+                {
+                    ImGui.TextWrapped(Strings.ConfigSafetyRulesHint);
+                }
+            }
+        }
+
+        if (Row(Strings.ConfigSafetyHold, Strings.ConfigSafetyHoldHint, "safety hold press length seconds duration delete forget"))
+        {
+            var hold = settings.SafetyHoldSecondsClamped;
+            ImGui.SetNextItemWidth(SliderWidth());
+            using (ImRaii.Disabled(settings.SafetyTwoClick))
+            using (ImRaii.PushId(Strings.ConfigSafetyHold))
+            {
+                if (ImGui.SliderFloat("##slider", ref hold, SafetyRules.MinHoldSeconds, SafetyRules.MaxHoldSeconds, "%.1f s", ImGuiSliderFlags.AlwaysClamp))
+                {
+                    settings.SafetyHoldSeconds = SafetyRules.ClampHoldSeconds(hold);
+                }
+            }
+
+            if (ImGui.IsItemDeactivatedAfterEdit())
+            {
+                Save();
+            }
+
+            Chrome.TrailingLabel(Strings.ConfigSafetyHold);
+            Chrome.Hint(settings.SafetyTwoClick ? Strings.ConfigSafetyHoldOffHint : Strings.ConfigSafetyHoldHint);
+        }
+
+        if (Row(Strings.ConfigSafetyTwoClick, Strings.ConfigSafetyTwoClickHint, "safety two clicks double hand strain accessibility"))
+        {
+            var twoClick = settings.SafetyTwoClick;
+            if (ImGui.Checkbox(Strings.ConfigSafetyTwoClick, ref twoClick))
+            {
+                settings.SafetyTwoClick = twoClick;
+                Save();
+            }
+
+            HintOnHover(Strings.ConfigSafetyTwoClickHint);
+        }
     }
 
     /// <summary>
@@ -1659,9 +1721,10 @@ public sealed partial class ConfigWindow : Window
     }
 
     /// <summary>
-    /// "Your Moonlit verdicts (N)": quest, verdict, note and date per stored override with a Restore button each, and
-    /// Restore all behind the same hold-to-confirm gate the verdict popups use. Restoring goes through the Moonlit
-    /// pane, so its catalog rebuilds exactly as after a verdict.
+    /// "Your Moonlit verdicts (N)": quest, verdict, note and date per stored override with a Restore button each (armed:
+    /// Ctrl or Shift and click), and Restore all behind the hold-to-confirm gate (feature plan v6 S2). Both put up the
+    /// floating Undo, which puts the verdicts back as they were. Restoring goes through the Moonlit pane, so its catalog
+    /// rebuilds exactly as after a verdict.
     /// </summary>
     private void DrawVerdicts()
     {
@@ -1681,8 +1744,7 @@ public sealed partial class ConfigWindow : Window
 
         // Restore always shows: the note hides first, then the date, and the quest and the note end in an ellipsis
         // (feature plan v4 L6).
-        var style = ImGui.GetStyle();
-        var restoreWidth = ImGui.CalcTextSize(Strings.ConfigVerdictRestore).X + (style.FramePadding.X * 2f);
+        var restoreWidth = Chrome.ArmedButtonWidth(Strings.ConfigVerdictRestore);
         var verdictWidth = MathF.Max(ImGui.CalcTextSize(Strings.ConfigVerdictUnique).X, ImGui.CalcTextSize(Strings.ConfigVerdictNotUnique).X);
         Span<ColumnSpec> specs = stackalloc ColumnSpec[5];
         PaneFit.VerdictColumns(UiMetrics.Px(LayoutBudgets.RowNameMinLogical), verdictWidth, ImGui.CalcTextSize("0000-00-00").X, restoreWidth, specs);
@@ -1733,15 +1795,10 @@ public sealed partial class ConfigWindow : Window
                         continue;
                     }
 
-                    if (ImGui.SmallButton(Strings.ConfigVerdictRestore))
+                    // The row cache refreshes next frame from the bumped version; the array is not touched here.
+                    if (Chrome.ArmedButton(Strings.ConfigVerdictRestore, verdictRestoreGuard, GuardedAction.RestoreVerdict, Strings.ConfigVerdictRestoreTooltip, row.RowId))
                     {
-                        // The row cache refreshes next frame from the bumped version; the array is not touched here.
-                        overrides.Clear(row.RowId);
-                    }
-
-                    if (ImGui.IsItemHovered())
-                    {
-                        UiMetrics.Tooltip(Strings.ConfigVerdictRestoreTooltip);
+                        VerdictPrompt.Restore(overrides, row.RowId);
                     }
                 }
             }
@@ -1749,15 +1806,17 @@ public sealed partial class ConfigWindow : Window
 
         if (Chrome.HoldButton(RestoreAllLabel, restoreAllGate))
         {
+            // Every verdict as it was, dates included, so Undo puts them all back.
+            var before = new List<KeyValuePair<uint, UniqueOverride>>(overrides.All);
             overrides.ClearAll();
-            toast = Strings.ConfigVerdictsRestored;
-            toastFailed = false;
-            toastUntilUtc = DateTime.UtcNow + ToastDuration;
+            UndoToast.Show(
+                string.Format(CultureInfo.CurrentCulture, Strings.UndoToastVerdictsRestoredFormat, before.Count),
+                () => overrides.PutBack(before));
         }
 
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.ConfigVerdictRestoreAllTooltip);
+            Safety.Tooltip(Strings.ConfigVerdictRestoreAllTooltip, GuardedAction.RestoreAllVerdicts);
         }
     }
 
@@ -1824,6 +1883,7 @@ public sealed partial class ConfigWindow : Window
         if (openSecondConfirm)
         {
             openSecondConfirm = false;
+            deleteAllGate.Cancel();
             ImGui.OpenPopup(Strings.ConfigDeleteStep2Popup);
         }
 
@@ -1839,7 +1899,14 @@ public sealed partial class ConfigWindow : Window
         ImGui.Spacing();
         using (Theme.PushDestructiveButton())
         {
-            if (ImGui.Button(Strings.ConfigDeleteConfirm))
+            // The last step is press and hold (feature plan v6 S2): a double-click through the two modals deletes nothing.
+            var confirmed = Chrome.HoldButton(DeleteConfirmLabel, deleteAllGate);
+            if (ImGui.IsItemHovered())
+            {
+                Safety.Tooltip(Strings.ConfigDeleteConfirmTooltip, GuardedAction.DeleteAllData);
+            }
+
+            if (confirmed)
             {
                 // A listener that failed may still hold pins or overrides in memory and save them again: say so.
                 var failed = session.DeleteAllData();

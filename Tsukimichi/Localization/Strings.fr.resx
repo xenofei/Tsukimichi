@@ -1383,9 +1383,6 @@
   <data name="ConfigVerdictRestoreAllTooltip" xml:space="preserve">
     <value>Oublier tous les verdicts. Maintenez Maj et cliquez, ou gardez le bouton enfoncé.</value>
   </data>
-  <data name="ConfigVerdictsRestored" xml:space="preserve">
-    <value>Tous les verdicts ont été rétablis ; les données de récompenses fournies s'appliquent à nouveau.</value>
-  </data>
   <data name="ConfigSectionAbout" xml:space="preserve">
     <value>À propos</value>
   </data>
@@ -2489,12 +2486,6 @@
   </data>
   <data name="RouteAllPinnedAlready" xml:space="preserve">
     <value>Chaque quête de l'itinéraire est déjà épinglée.</value>
-  </data>
-  <data name="RouteUndo" xml:space="preserve">
-    <value>Annuler</value>
-  </data>
-  <data name="RouteUndoTooltip" xml:space="preserve">
-    <value>Désépingler les quêtes que « Tout épingler » vient d'ajouter</value>
   </data>
   <data name="RouteToThisTooltip" xml:space="preserve">
     <value>Itinéraire vers celle-ci : chaque quête encore à faire avant elle, dans l'ordre, avec les paliers de niveau</value>
@@ -3651,23 +3642,8 @@
   <data name="MarkUniqueNoteHint" xml:space="preserve">
     <value>Note : quelle récompense est unique</value>
   </data>
-  <data name="MarkUniqueConfirm" xml:space="preserve">
-    <value>Marquer comme unique</value>
-  </data>
   <data name="MarkNotUniqueNoteHint" xml:space="preserve">
     <value>Note : pourquoi elle n'est pas unique (facultatif)</value>
-  </data>
-  <data name="MarkNotUniqueConfirm" xml:space="preserve">
-    <value>Masquer comme non unique</value>
-  </data>
-  <data name="VerdictQuestionUniqueFormat" xml:space="preserve">
-    <value>Ajouter {0} aux trésors Moonlit ?</value>
-  </data>
-  <data name="VerdictQuestionHideFormat" xml:space="preserve">
-    <value>Masquer {0} des trésors Moonlit ?</value>
-  </data>
-  <data name="VerdictConfirmTooltip" xml:space="preserve">
-    <value>Maintenez Maj et cliquez, ou gardez le bouton enfoncé</value>
   </data>
   <data name="VerdictHoldCountdownFormat" xml:space="preserve">
     <value>Maintenez… ({0:0.0} s)</value>
@@ -3677,12 +3653,6 @@
   </data>
   <data name="VerdictUndoMarkedNotUnique" xml:space="preserve">
     <value>Masquée comme non unique</value>
-  </data>
-  <data name="VerdictUndo" xml:space="preserve">
-    <value>Annuler</value>
-  </data>
-  <data name="VerdictUndoTooltip" xml:space="preserve">
-    <value>Oublier à nouveau ce verdict</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Annuler</value>

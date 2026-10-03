@@ -27,4 +27,10 @@ public interface IUniqueOverrides
 
     /// <summary>Marks a quest unique (a note names the reward) or not unique (hidden from Moonlit).</summary>
     void Set(uint rowId, bool unique, string? note);
+
+    /// <summary>
+    /// Puts verdicts back exactly as they were, dates included, in one save: the Undo of a verdict, Restore, Restore
+    /// all and a note edit (feature plan v6 S2).
+    /// </summary>
+    void PutBack(IReadOnlyCollection<KeyValuePair<uint, UniqueOverride>> verdicts);
 }

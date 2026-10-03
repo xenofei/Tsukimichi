@@ -457,7 +457,6 @@ static partial class Strings
     public static string ConfigVerdictRestoreTooltip => Loc.Get("ConfigVerdictRestoreTooltip");
     public static string ConfigVerdictRestoreAll => Loc.Get("ConfigVerdictRestoreAll");
     public static string ConfigVerdictRestoreAllTooltip => Loc.Get("ConfigVerdictRestoreAllTooltip");
-    public static string ConfigVerdictsRestored => Loc.Get("ConfigVerdictsRestored");
     public static string ConfigSectionAbout => Loc.Get("ConfigSectionAbout");
     /// <summary>{0} = plugin version.</summary>
     public static string ConfigPluginVersionFormat => Loc.Get("ConfigPluginVersionFormat");
