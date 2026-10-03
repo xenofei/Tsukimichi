@@ -1,0 +1,394 @@
+/* Page controls (not part of the game) */
+.pbar{gap:12px}
+.pbar .seg button{padding:7px 11px}
+.shoot{border:1px solid #2E3550;background:rgba(10,14,27,.85);color:#A9B2CC;font:inherit;font-size:12px;border-radius:9px;padding:7px 11px;cursor:pointer}
+.shoot:hover{color:#FFF0BE;border-color:rgba(242,210,122,.4)}
+.pbar .pn{max-width:420px;line-height:1.35;text-align:right}
+.mk .w-body{position:relative}
+.mk .chip.set{border-color:rgba(242,210,122,.38);color:var(--silver)}
+.mk.plain .chip.set{border-color:#3A4050}
+.mk .tbtn.act{color:var(--silver)}
+.mk.full .tbtn.act{color:var(--moonhi)}
+.mk .tbtn .fbg{min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--moon);color:#1A1406;font-size:10px;display:inline-flex;align-items:center;justify-content:center;margin-left:2px}
+.mk.quiet .tbtn .fbg,.mk.plain .tbtn .fbg{background:#3A4260;color:var(--silver)}
+
+/* ======================================================================================================
+   1. Quest-pane section headings (Requirements, Rewards, Unlocks, Moonlit, Path): the Section role.
+   Full: game display face (TrumpGothic; Barlow Condensed stands in), 1.80x body, tracked +0.08 em, GiltLight.
+   Quiet: the body face (Noto Sans Medium; there is no bold in the atlas) at 1.15x body, Text.
+   Plain: the body face at 1.0x, Text (was Disabled), on a 22 px raised band.
+   ====================================================================================================== */
+.mk.full.v7 .card h4{margin:0 0 10px;font:500 18px/1 "Barlow Condensed","Noto Sans",sans-serif;letter-spacing:.08em;color:#E6CF98;text-shadow:0 1px 0 rgba(0,0,0,.55)}
+.mk.full.v7 .card h4 .r{font:500 11.5px/1 "Noto Sans",sans-serif;letter-spacing:0;color:var(--mist);text-shadow:none}
+.mk.full.v7 .card h4 .r.ec{color:var(--etext)}
+.mk.quiet.v7 .card h4{margin:0 0 8px;font:500 15px/1.2 "Noto Sans",sans-serif;color:var(--silver)}
+.mk.quiet.v7 .card h4 .r{font-size:11.5px;color:var(--mist)}
+.mk.quiet.v7 .card h4 .r.ec,.mk.plain.v7 .ps span.ec{color:var(--etext)}
+.mk.plain.v7 .ps{height:22px;align-items:center;margin:6px -8px 2px;padding:0 8px;background:var(--p-band);font:500 12.5px/1 "Noto Sans",sans-serif;color:var(--silver);border-bottom:1px solid var(--p-line)}
+.mk.plain .ps span.ec{color:var(--etext)}
+/* 1.13 Plain drew these headings in the disabled tone (ImGui.TextDisabled) */
+.mk.plain:not(.v7) .ps{color:var(--dusk);font-weight:500}
+
+/* Quest pane content for the owner's quest (Blue Collar Work) */
+.mk .req .ico{width:14px;flex:none;display:flex;justify-content:center}
+.mk .req .ico svg{width:11px;height:11px}
+.mk .req.nx .lab{color:var(--moon)}
+.mk.full .req.nx::before{content:"";position:absolute;left:-14px;top:4px;bottom:4px;width:2px;border-radius:1px;background:var(--moon);box-shadow:0 0 5px rgba(242,210,122,.6)}
+.mk.quiet .req.nx::before{content:"";position:absolute;left:-11px;top:4px;bottom:4px;width:2px;background:var(--moon)}
+.mk .req .d.ec{color:var(--etext)}
+.mk .lvbar{display:flex;align-items:center;gap:8px;margin:0 0 4px 22px;font-size:10.5px;color:var(--dusk)}
+.mk .lvbar i{flex:none;width:120px;height:4px;border-radius:2px;background:rgba(74,82,112,.5);position:relative;overflow:hidden;margin-left:auto}
+.mk .lvbar i::before{content:"";position:absolute;left:0;top:0;bottom:0;width:10%;background:var(--eclipse)}
+.mk .rwline{font-size:12.5px;color:var(--silver)}
+.mk .unl .sub{font-size:11px;color:var(--mist);margin-bottom:6px}
+.mk .unl .it{display:flex;align-items:center;gap:12px}
+.mk .unl .it .ai{width:44px;height:44px;border-radius:6px;flex:none;position:relative;overflow:hidden;
+  background:radial-gradient(70% 60% at 60% 30%,#E8E4F2 0,#9AA2C8 18%,rgba(70,40,90,0) 40%),linear-gradient(160deg,#5A2235,#B23A3A 45%,#3A1420);box-shadow:0 0 0 1px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.12)}
+.mk .unl .it .ai::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 40%)}
+.mk .unl .it b{display:block;font-weight:500;font-size:12.5px;color:var(--silver)}
+.mk .unl .it span{font-size:11.5px;color:#7FA3E6}
+.mk .mlt{font-size:12px;color:var(--dusk)}
+.mk.plain .unl .it .ai{width:32px;height:32px;border-radius:3px}
+/* The Path card (PathChart): a band per expansion, the thread, nodes; stars only in the band's empty sky */
+.mk .path{position:relative;margin:0 -4px}
+.mk .path .sky{position:absolute;left:0;top:0;width:100%;height:100%}
+.mk .pband{position:relative;z-index:1;display:flex;align-items:center;gap:8px;height:22px;padding-left:24px;font:600 11.5px/1 "Barlow Condensed",sans-serif;letter-spacing:.16em;color:var(--mist);text-transform:uppercase}
+.mk .pband::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(168,139,82,.5),rgba(168,139,82,0))}
+.mk .pband .sg{width:9px;height:9px;position:absolute;left:12px}
+.mk .prow{position:relative;z-index:1;display:flex;align-items:center;gap:10px;height:30px;padding-left:6px;font-size:12.5px;white-space:nowrap}
+.mk .prow .nd{width:24px;height:24px;flex:none;display:flex;align-items:center;justify-content:center;position:relative}
+.mk .prow .nd img{width:20px;height:20px}
+.mk .prow.cur{background:linear-gradient(90deg,rgba(221,227,240,.08),rgba(221,227,240,.02));border-radius:4px}
+.mk .prow.cur .nd img{width:26px;height:26px}
+.mk .prow.cur .nd::before{content:"";position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(217,190,130,.75)}
+.mk .prow.cur b{font-weight:600}
+.mk .prow .x{color:var(--etext);font-size:12px}
+.mk .prow .dn{color:var(--dusk);font-size:11.5px}
+.mk .prow .bd3{width:8px;height:20px;border-radius:4px;background:#1C2237;box-shadow:inset 0 0 0 1px #3A4260;margin:0 8px;position:relative}
+.mk .prow .bd3::before{content:"";position:absolute;left:3px;top:4px;width:2px;height:12px;background:repeating-linear-gradient(#C9A65C 0 2px,transparent 2px 5px)}
+.mk .pnext{position:relative;z-index:1;height:20px;padding-left:40px;font:600 11px/20px "Barlow Condensed",sans-serif;letter-spacing:.14em;color:var(--dusk);text-transform:uppercase}
+.mk .path .thr{position:absolute;z-index:0;left:17.5px;top:24px;bottom:12px;width:1px;background:linear-gradient(rgba(168,139,82,.0),rgba(168,139,82,.45) 10%,rgba(168,139,82,.45) 90%,rgba(168,139,82,0))}
+.mk.quiet .pband,.mk.plain .pband{font:600 11.5px/1 "Noto Sans",sans-serif;letter-spacing:0;text-transform:none}
+.mk.quiet .pband::after,.mk.plain .pband::after{background:var(--line)}
+.mk.quiet .path .thr,.mk.plain .path .thr{background:var(--line)}
+.mk.quiet .pnext,.mk.plain .pnext{font:500 11px/20px "Noto Sans",sans-serif;letter-spacing:0;text-transform:none}
+.mk.quiet .prow.cur .nd::before{box-shadow:0 0 0 1px #8A93B0}
+.mk.plain .prow{height:22px;font-size:12px}
+.mk.plain .prow .nd{width:14px;height:14px}
+.mk.plain .prow .nd::before{display:none}
+.mk.plain .prow.cur{background:rgba(221,227,240,.09);border-radius:0}
+/* the detail pane scrolled (as the owner's screenshot is), with ImGui's scrollbar */
+.mk .det-sc{position:relative;display:flex;flex-direction:column;gap:var(--gap)}
+.mk .vsb{position:absolute;z-index:3;right:2px;width:6px;border-radius:3px;background:rgba(124,134,168,.38)}
+.mk.plain .vsb{border-radius:0;width:5px}
+
+/* ======================================================================================================
+   5. Journal column headers, a step larger by default.
+   Full: Eyebrow at 1.62x body (was 1.45x), TextSecondary (was Tertiary), header 30 px (was 26).
+   Quiet: the body size (was Caption 0.85x), TextSecondary, 28 px. Plain: the body size on a 22 px band (was 20).
+   ====================================================================================================== */
+.mk.full.v7 .thd{height:30px;font:500 13.5px/1 "Barlow Condensed",sans-serif;letter-spacing:.12em;color:var(--mist)}
+.mk.full.v7 .thd .sort{color:#E6CF98}
+.mk.quiet.v7 .thd{height:28px;font-size:12.5px;color:var(--mist)}
+.mk.plain.v7 .thd{height:22px;font-size:12px;color:var(--mist)}
+
+/* ======================================================================================================
+   6. The rail. No thread, no lit bar: a station plate, a larger icon, the label at 0.78x, and a moon bead that travels.
+   ====================================================================================================== */
+.mk .r7 .sts{width:100%;display:flex;flex-direction:column;position:relative}
+.mk .st7{position:relative;width:100%;height:var(--sth);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer}
+.mk .st7 .pl{position:absolute;left:5px;right:5px;top:3px;bottom:3px;border-radius:10px;opacity:0;transition:opacity .18s cubic-bezier(.215,.61,.355,1)}
+.mk .st7 .gl{position:absolute;left:50%;top:calc(50% - 8px);width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;opacity:0;background:radial-gradient(closest-side,rgba(242,210,122,.16),rgba(242,210,122,.05) 60%,rgba(242,210,122,0));transition:opacity .15s}
+.mk .st7 .ic{position:relative;width:var(--ici);height:var(--ici);color:var(--dusk);opacity:.72;transition:transform .18s cubic-bezier(.215,.61,.355,1),opacity .18s,color .15s}
+.mk .st7 .ic svg,.mk .st7 .ic .orb{width:100%;height:100%;display:block}
+.mk .st7 .lb{position:relative;font-size:11px;line-height:1;color:var(--mist);transition:color .18s;white-space:nowrap}
+.mk .st7 .bd{position:absolute;top:-5px;right:-11px;min-width:17px;height:15px;padding:0 4px;border-radius:8px;background:var(--moon);color:#1A1406;font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1.5px #0B0F1C}
+.mk .st7:hover .ic,.mk .st7.hov .ic{transform:translateY(-2px);opacity:.95;transition-duration:.12s}
+.mk .st7:hover .pl,.mk .st7.hov .pl{opacity:.55;transition-duration:.12s}
+.mk .st7:hover .lb,.mk .st7.hov .lb{color:var(--silver)}
+.mk .st7.half .ic{transform:translateY(-1.3px);opacity:.88}
+.mk .st7.half .pl{opacity:.36}
+.mk .st7.on .ic{opacity:1;transform:none}
+.mk .st7.on .lb{color:var(--silver)}
+.mk .r7 .bead{position:absolute;z-index:3;left:1px;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;transition:top .22s cubic-bezier(.645,.045,.355,1)}
+/* Full */
+.mk.full .r7{--sth:72px;--ici:30px}
+.mk.full .st7 .pl{background:#262D45}
+.mk.full .st7.on .pl{opacity:1;background:linear-gradient(180deg,rgba(242,210,122,.11),rgba(242,210,122,.03));box-shadow:inset 0 0 0 1px rgba(217,190,130,.26),inset 0 1px 0 rgba(255,240,190,.10)}
+.mk.full .st7.on .gl{opacity:1}
+.mk.full .st7.on .ic{color:var(--moon);filter:drop-shadow(0 0 6px rgba(242,210,122,.42))}
+.mk.full .r7 .bead{background:radial-gradient(circle at 40% 35%,#FFFDF2,#FFF0BE 55%,#E9CF86);box-shadow:0 0 0 1.5px #080B16,0 0 7px rgba(255,240,190,.7)}
+/* Quiet: flat plate, the bead without its glow */
+.mk.quiet .r7{--sth:66px;--ici:28px}
+.mk.quiet .st7 .pl{background:#1C2338}
+.mk.quiet .st7.on .pl{opacity:1;background:rgba(221,227,240,.06);box-shadow:inset 0 0 0 1px #3A4260}
+.mk.quiet .st7.on .ic{color:var(--moon)}
+.mk.quiet .st7:hover .ic,.mk.quiet .st7.hov .ic{transform:translateY(-1px)}
+.mk.quiet .st7.half .ic{transform:translateY(-.6px)}
+.mk.quiet .r7 .bead{left:1.5px;width:5px;height:5px;margin-top:-2.5px;background:var(--moon)}
+/* Plain: compact icons only, a flat band and a 2 px bar, nothing moves */
+.mk.plain .r7{--sth:46px;--ici:20px}
+.mk.plain .st7 .lb,.mk.plain .st7 .gl,.mk.plain .r7 .bead{display:none}
+.mk.plain .st7 .pl{left:0;right:0;top:0;bottom:0;border-radius:0;background:#1D2230}
+.mk.plain .st7.on .pl{opacity:1;background:var(--p-band)}
+.mk.plain .st7.on::before{content:"";position:absolute;z-index:2;left:0;top:0;bottom:0;width:2px;background:var(--silver)}
+.mk.plain .st7.on .ic{color:var(--silver)}
+.mk.plain .st7 .ic{opacity:.8}
+.mk.plain .st7:hover .ic,.mk.plain .st7.hov .ic{transform:none}
+.mk.plain .st7 .bd{top:-4px;right:-9px;min-width:0;height:auto;padding:0;background:transparent;color:var(--mist);font-size:9px;box-shadow:none}
+
+/* ======================================================================================================
+   3. The sky (Full only): shooting star on a completion
+   ====================================================================================================== */
+@keyframes mk-shoot{0%{transform:translate(0,0);opacity:0}8%{opacity:1}100%{transform:translate(64px,34px);opacity:0}}
+.mk .shooting{position:absolute;z-index:2;pointer-events:none;opacity:0;width:46px;height:2px;transform-origin:100% 50%}
+.mk .shooting i{position:absolute;inset:0;transform:rotate(28deg);transform-origin:100% 50%;background:linear-gradient(90deg,rgba(255,240,190,0),rgba(255,240,190,.45));border-radius:1px}
+.mk .shooting i::after{content:"";position:absolute;right:-1px;top:-1px;width:4px;height:4px;border-radius:50%;background:rgba(255,248,226,.8);box-shadow:0 0 5px rgba(255,240,190,.6)}
+.mk .shooting.go{animation:mk-shoot .7s cubic-bezier(.215,.61,.355,1) both}
+
+/* ======================================================================================================
+   2. The filter drawer. Over the tree column exactly (no overlap onto the list), sized to its content, a clean edge.
+   ====================================================================================================== */
+.mk .tree .lay{transition:opacity .16s}
+.mk.v7.dopen .tree .lay{opacity:0}
+.mk .drw{position:absolute;z-index:30;left:var(--railw);top:0;width:calc(var(--treew) + 1px);max-height:100%;display:flex;flex-direction:column;animation:mk-fade .16s both}
+@keyframes mk-fade{from{opacity:0}to{opacity:1}}
+.mk .drw .dh{flex:none;display:flex;align-items:center;gap:9px}
+.mk .drw .dic{flex:none;display:flex;align-items:center;justify-content:center}
+.mk .drw .dic svg{width:13px;height:13px}
+.mk .drw .dct{display:inline-flex;align-items:center;white-space:nowrap}
+.mk .drw .dsp{flex:1}
+.mk .drw .dib{flex:none;display:flex;align-items:center;justify-content:center;color:var(--mist)}
+.mk .drw .dib svg{width:11px;height:11px}
+.mk .drw .dsc{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+.mk .drw .dsec h5{margin:0;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.mk .drw .dsec h5 .cv{display:inline-block;transition:transform .14s;font-size:9px;color:var(--dusk);width:10px}
+.mk .drw .dsec.open h5 .cv{transform:rotate(90deg)}
+.mk .drw .dsec h5 .pc{margin-left:auto;font:500 11px/1 "Noto Sans",sans-serif;letter-spacing:0;text-transform:none;padding:3px 8px;border-radius:9px}
+.mk .drw .trow{display:flex;align-items:center;gap:10px}
+.mk .drw .trow .tl{flex:1;min-width:0}
+.mk .drw .trow .tl>span{display:block;color:var(--silver)}
+.mk .drw .trow .tl>em{display:block;font-style:normal;color:var(--dusk);margin-top:1px}
+.mk .drw .trow .tl>em u{text-decoration:none;color:var(--mist)}
+.mk .drw .trow.dis .tl,.mk .drw .trow.dis .tg{opacity:.45}
+.mk .drw .tg{position:relative;flex:none;width:36px;height:20px;border-radius:10px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line)}
+.mk .drw .tg::after{content:"";position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:var(--mist);transition:left .15s}
+.mk .drw .tg.on{background:#635940;box-shadow:inset 0 0 0 1px var(--moon)}
+.mk .drw .tg.on::after{left:19px;background:radial-gradient(circle 5.7px at calc(50% - 3.9px) calc(50% - 2.5px),#635940 97%,rgba(99,89,64,0) 100%),#FFF0BE}
+.mk .drw .stp{flex:none;display:flex;align-items:center;height:28px;border-radius:14px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line)}
+.mk .drw .stp i{width:22px;height:22px;margin:3px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;color:var(--mist);background:#1E2337;font-size:13px;line-height:1}
+.mk .drw .stp span{min-width:54px;text-align:center;font-size:12.5px;color:var(--silver);font-variant-numeric:tabular-nums}
+.mk .drw .sum .sr{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.mk .drw .sum .sr .k{flex:1;color:var(--mist)}
+.mk .drw .sum .sr .v{color:var(--silver);overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.mk .drw .sum .sr .v.set{color:var(--moonhi)}
+.mk .drw .sum .sr .v.set::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--moon);margin:0 6px 1px 0;vertical-align:middle}
+.mk .drw .sum .sr .ch{color:var(--veil);font-size:12px}
+.mk .drw .gp{margin-top:12px}
+.mk .drw .gp .gh{display:flex;align-items:baseline;gap:8px;margin:0 0 7px;font-size:12px;color:var(--silver);font-weight:500}
+.mk .drw .gp .gh span{margin-left:auto;font-weight:500;font-size:11px;color:var(--dusk)}
+.mk .drw .gp .gh span.set{color:var(--moonhi)}
+.mk .drw .sch{display:flex;flex-wrap:wrap;gap:5px}
+.mk .drw .sc{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px 0 5px;border-radius:13px;font-size:11.5px;white-space:nowrap;border:1px solid var(--line);background:var(--sunk);color:var(--mist)}
+.mk .drw .sc img,.mk .drw .sc svg{width:16px;height:16px;flex:none}
+.mk .drw .sc.on{color:var(--silver);background:linear-gradient(#262D47,#1E2439);border-color:rgba(124,134,168,.55)}
+.mk .drw .sc.off{border-style:dashed;color:var(--dusk)}
+.mk .drw .sc.off img,.mk .drw .sc.off svg{opacity:.38;filter:grayscale(.6)}
+.mk .drw .sgm{display:flex;height:26px;border-radius:13px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.mk .drw .sgm span{flex:1;display:flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--mist);border-right:1px solid var(--line);white-space:nowrap}
+.mk .drw .sgm span:last-child{border-right:0}
+.mk .drw .sgm span.on{background:rgba(221,227,240,.10);color:var(--silver)}
+.mk .drw .dd{display:flex;align-items:center;height:28px;border-radius:14px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);padding:0 12px;font-size:12.5px;color:var(--silver)}
+.mk .drw .dd i{margin-left:auto;font-style:normal;color:var(--dusk);font-size:10px}
+.mk .drw .rng{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dusk)}
+.mk .drw .rng .f{flex:1;height:28px;border-radius:14px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center;color:var(--silver);font-size:12.5px;font-variant-numeric:tabular-nums}
+.mk .drw .rtr{position:relative;height:4px;border-radius:2px;background:rgba(74,82,112,.45);margin:9px 6px 2px}
+.mk .drw .rtr i{position:absolute;top:0;bottom:0;border-radius:2px}
+.mk .drw .rwr{display:flex;align-items:center;gap:10px;height:30px;font-size:12.5px;color:var(--silver)}
+.mk .drw .rwr .k{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk .drw .rwr .sgm{flex:none;width:126px;height:22px;border-radius:11px}
+.mk .drw .rwr .sgm span{font-size:11px}
+.mk .drw .more{font-size:11.5px;color:var(--mist);margin-top:4px}
+.mk .drw .dft{flex:none;display:flex;align-items:center;gap:8px;white-space:nowrap;position:relative}
+.mk .drw .dft .sh{color:var(--mist)}
+.mk .drw .dft .sh b{color:var(--silver);font-weight:600;font-variant-numeric:tabular-nums}
+.mk .drw .rst{margin-left:auto;display:inline-flex;align-items:center;gap:6px;color:var(--mist);cursor:pointer}
+.mk .drw .rst svg{width:12px;height:12px}
+.mk .drw .rst:hover{color:var(--silver)}
+.mk .drw .rst.off{color:var(--veil)}
+.mk .drw .sbar{position:absolute;right:3px;width:5px;border-radius:3px;background:rgba(124,134,168,.42)}
+
+/* Full: a gilt sheet, lit from the upper left, with a brass edge on the two sides that face the list */
+.mk.full .drw{border:solid transparent;border-width:0 1px 1px 0;border-radius:0 0 6px 0;
+  background:linear-gradient(180deg,rgba(33,39,66,.995),rgba(23,28,47,.995)) padding-box,linear-gradient(172deg,#E2C78C 0%,#A88B52 26%,#6E5732 64%,#5A4729 100%) border-box;
+  box-shadow:0 14px 30px rgba(0,0,0,.55),8px 0 18px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,240,190,.06)}
+.mk.full .drw .cmk{position:absolute;right:-1.5px;bottom:-1.5px;width:9px;height:9px;border:0 solid #B79755;border-right-width:1.5px;border-bottom-width:1.5px;border-radius:0 0 5px 0}
+.mk.full .drw .dh{height:52px;padding:0 10px 0 13px}
+.mk.full .drw .dic{width:28px;height:28px;border-radius:50%;color:var(--moonhi);background:radial-gradient(circle at 38% 32%,#2D3560,#141A31 75%);box-shadow:inset 0 0 0 1px rgba(217,190,130,.6),0 1px 3px rgba(0,0,0,.55)}
+.mk.full .drw .dh b{font:400 19px/1 Marcellus,Georgia,serif;letter-spacing:.02em;color:#F4F1E8;text-shadow:0 1px 0 rgba(0,0,0,.5)}
+.mk.full .drw .dct{height:19px;padding:0 8px;border-radius:10px;font-size:11px;background:linear-gradient(rgba(242,210,122,.18),rgba(242,210,122,.08));border:1px solid rgba(242,210,122,.45);color:var(--moonhi)}
+.mk.full .drw .dib{width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#252B45,#1C2138);border:1px solid var(--line)}
+.mk.full .drw .dib.on{color:var(--moon);border-color:rgba(242,210,122,.5);background:rgba(242,210,122,.10)}
+.mk.full .drw>.mrd{margin:0 12px}
+.mk.full .drw .dsc{padding:2px 14px 10px}
+.mk.full .drw .dsec{margin-top:12px}
+.mk.full .drw .dsec h5{height:30px;font:500 18px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#E6CF98;text-shadow:0 1px 0 rgba(0,0,0,.55)}
+.mk.full .drw .dsec h5::after{content:"";flex:1;height:1px;order:2;background:linear-gradient(90deg,rgba(217,190,130,.6),rgba(168,139,82,0))}
+.mk.full .drw .dsec h5 .pc{order:3;background:rgba(242,210,122,.12);border:1px solid rgba(242,210,122,.35);color:var(--moonhi)}
+.mk.full .drw .dsec h5 .cv{order:0;color:#D9BE82}
+.mk.full .drw .trow{min-height:36px;padding:3px 0}
+.mk.full .drw .trow .tl>span{font-size:13px}
+.mk.full .drw .trow .tl>em{font-size:11px}
+.mk.full .drw .sum{margin-top:4px}
+.mk.full .drw .sum .sr{height:30px;padding:0 8px;margin:0 -8px;border-radius:6px;font-size:12.5px;border-bottom:1px solid rgba(42,49,73,.45)}
+.mk.full .drw .sum .sr:last-child{border-bottom:0}
+.mk.full .drw .sum .sr:hover,.mk.full .drw .sum .sr.hov{background:rgba(38,45,69,.65)}
+.mk.full .drw .dft{height:48px;padding:0 10px 0 14px;font-size:12px}
+.mk.full .drw .dft::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,rgba(168,139,82,.15),rgba(217,190,130,.7) 50%,rgba(168,139,82,.15))}
+.mk.full .drw .rst{height:28px;padding:0 11px;border-radius:14px;font-size:12px}
+.mk.full .drw .rst:hover,.mk.full .drw .rst.hov{background:rgba(38,45,69,.8)}
+
+/* Quiet: a flat sheet one tone up, a neutral hairline edge, a separation shadow only */
+.mk.quiet .drw{background:#1A2135;border-right:1px solid #2E3650;border-bottom:1px solid #2E3650;border-radius:0 0 6px 0;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+.mk.quiet .drw .dh{height:46px;padding:0 8px 0 12px}
+.mk.quiet .drw .dic{width:16px;color:var(--mist)}
+.mk.quiet .drw .dh b{font:500 15px/1 "Noto Sans",sans-serif;color:var(--silver)}
+.mk.quiet .drw .dct{height:18px;padding:0 7px;border-radius:9px;font-size:11px;background:#262D42;color:var(--silver)}
+.mk.quiet .drw .dib{width:26px;height:26px;border-radius:50%;border:1px solid #2E3650}
+.mk.quiet .drw .dib.on{color:var(--silver);background:rgba(221,227,240,.08)}
+.mk.quiet .drw>.hr{height:1px;background:#262D42;margin:0}
+.mk.quiet .drw .dsc{padding:2px 12px 8px}
+.mk.quiet .drw .dsec{margin-top:10px}
+.mk.quiet .drw .dsec h5{height:28px;font:500 15px/1 "Noto Sans",sans-serif;color:var(--silver)}
+.mk.quiet .drw .dsec h5 .pc{background:#262D42;color:var(--silver)}
+.mk.quiet .drw .trow{min-height:34px;padding:2px 0}
+.mk.quiet .drw .trow .tl>span{font-size:12.5px}
+.mk.quiet .drw .trow .tl>em{font-size:11px}
+.mk.quiet .drw .tg.on{background:#4A4F5C;box-shadow:inset 0 0 0 1px rgba(221,227,240,.55)}
+.mk.quiet .drw .tg.on::after{background:radial-gradient(circle 5.7px at calc(50% - 3.9px) calc(50% - 2.5px),#4A4F5C 97%,rgba(74,79,92,0) 100%),#DDE3F0}
+.mk.quiet .drw .sum .sr{height:28px;padding:0 6px;margin:0 -6px;border-radius:5px;font-size:12.5px}
+.mk.quiet .drw .sum .sr:hover,.mk.quiet .drw .sum .sr.hov{background:#222A40}
+.mk.quiet .drw .sum .sr .v.set{color:var(--silver)}
+.mk.quiet .drw .sum .sr .v.set::before{background:var(--silver)}
+.mk.quiet .drw .gp .gh span.set{color:var(--silver)}
+.mk.quiet .drw .sc.on{background:#262D42;border-color:#3A4260}
+.mk.quiet .drw .dft{height:42px;padding:0 8px 0 12px;font-size:12px;border-top:1px solid #262D42}
+.mk.quiet .drw .rst{height:26px;padding:0 10px;border-radius:13px;font-size:12px}
+.mk.quiet .drw .rst:hover,.mk.quiet .drw .rst.hov{background:#222A40}
+
+/* Plain: a ledger sheet. Bands, 24 px rows, checkboxes, no light at all */
+.mk.plain .drw{background:#151A25;border-right:1px solid #303648;border-bottom:1px solid #303648;font-size:12px}
+.mk.plain .drw .dh{height:26px;padding:0 3px 0 8px;gap:6px;background:var(--p-band);border-bottom:1px solid var(--p-line)}
+.mk.plain .drw .dic{display:none}
+.mk.plain .drw .dh b{font:500 12.5px/1 "Noto Sans",sans-serif;color:var(--silver)}
+.mk.plain .drw .dct{font-size:11px;color:var(--mist)}
+.mk.plain .drw .dib{width:20px;height:20px;border-radius:3px;border:1px solid var(--p-line)}
+.mk.plain .drw .dib.on{color:var(--silver);background:#202634}
+.mk.plain .drw .dsc{padding:0 8px 4px}
+.mk.plain .drw .dsec h5{height:20px;margin:0 -8px 2px;padding:0 8px;background:var(--p-band);border-bottom:1px solid var(--p-line);border-top:1px solid var(--p-line);font:500 12px/1 "Noto Sans",sans-serif;color:var(--silver)}
+.mk.plain .drw .dsec:first-child h5{border-top:0}
+.mk.plain .drw .dsec h5 .pc{padding:0;color:var(--mist)}
+.mk.plain .drw .dsec h5 .cv{color:var(--mist)}
+.mk.plain .drw .trow{min-height:24px;gap:6px}
+.mk.plain .drw .trow.tgl{flex-direction:row-reverse;justify-content:flex-end}
+.mk.plain .drw .trow .tl>span{display:inline;font-size:12px}
+.mk.plain .drw .trow .tl>em{display:inline;margin-left:6px;font-size:11px}
+.mk.plain .drw .tg{width:14px;height:14px;border-radius:2px;background:#202634;box-shadow:inset 0 0 0 1px #3A4050}
+.mk.plain .drw .tg::after{display:none}
+.mk.plain .drw .tg.on{background:#202634;box-shadow:inset 0 0 0 1px #4A5270}
+.mk.plain .drw .tg.on::before{content:"";position:absolute;left:4.5px;top:1.5px;width:3.5px;height:7.5px;border:solid var(--silver);border-width:0 1.6px 1.6px 0;transform:rotate(42deg)}
+.mk.plain .drw .stp{height:20px;border-radius:2px}
+.mk.plain .drw .stp i{width:18px;height:16px;margin:2px;border-radius:2px;background:#202634}
+.mk.plain .drw .stp span{min-width:46px;font-size:12px}
+.mk.plain .drw .sum .sr{height:22px;padding:0 4px;margin:0 -4px;font-size:12px}
+.mk.plain .drw .sum .sr:nth-child(even){background:rgba(255,255,255,.022)}
+.mk.plain .drw .sum .sr .v.set{color:var(--silver)}
+.mk.plain .drw .sum .sr .v.set::before{display:none}
+.mk.plain .drw .sum .sr .v.set::after{content:" *";color:var(--moon)}
+.mk.plain .drw .gp{margin-top:6px}
+.mk.plain .drw .gp .gh{margin-bottom:4px;font-size:11.5px;color:var(--mist)}
+.mk.plain .drw .sc{height:20px;border-radius:2px;padding:0 6px 0 3px;font-size:11.5px;gap:4px}
+.mk.plain .drw .sc img,.mk.plain .drw .sc svg{width:12px;height:12px}
+.mk.plain .drw .sc.on{background:#202634;border-color:#3A4050}
+.mk.plain .drw .sgm,.mk.plain .drw .dd,.mk.plain .drw .rng .f{height:20px;border-radius:2px;font-size:11.5px}
+.mk.plain .drw .rwr{height:22px;font-size:12px}
+.mk.plain .drw .rwr .sgm{height:18px;border-radius:2px;width:112px}
+.mk.plain .drw .rtr{display:none}
+.mk.plain .drw .dft{height:24px;padding:0 6px 0 8px;font-size:11.5px;background:#0D1018;border-top:1px solid var(--p-line)}
+.mk.plain .drw .rst{font-size:11.5px;text-decoration:underline;text-decoration-color:var(--veil);text-underline-offset:2px}
+.mk.plain .drw .rst svg{display:none}
+
+/* 1.13 as shipped (owner-filter-menu.png): a full-height grey panel 300 px wide, ImGui defaults, the tree's header and
+   counts painting through it. Reproduced for the before panels only. */
+.mk .drw13{position:absolute;z-index:30;left:var(--railw);top:0;bottom:0;width:300px;background:#1E2437;border-right:1px solid #2A3149;box-shadow:10px 0 10px -6px rgba(0,0,0,.22);padding:6px 8px;font:500 12.5px/1.2 "Noto Sans",sans-serif;color:#C9CFDF}
+.mk .drw13 .h{display:flex;align-items:center;height:22px;color:#A0A9C2;font-size:12.5px}
+.mk .drw13 .h .ib{margin-left:auto;display:flex;gap:12px;color:#A0A9C2}
+.mk .drw13 .h .ib svg{width:12px;height:12px}
+.mk .drw13 .dis{color:#7C86A8;margin:4px 0 4px}
+.mk .drw13 .ln{display:flex;align-items:center;gap:6px;height:24px}
+.mk .drw13 .sl{width:94px;height:20px;background:#0B0F1C;border-radius:3px;display:flex;align-items:center;justify-content:center;position:relative;font-size:12px}
+.mk .drw13 .sl::before{content:"";position:absolute;left:3px;top:3px;width:10px;height:14px;border-radius:2px;background:#5C6584}
+.mk .drw13 .cb{width:19px;height:19px;border-radius:3px;background:#0B0F1C;flex:none;position:relative}
+.mk .drw13 .cb.on::before{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+.mk .drw13 .sb{padding:2px 5px;background:transparent;color:#C9CFDF;font-size:12px}
+.mk .drw13 .sep{height:1px;background:#2A3149;margin:4px 0}
+.mk .drw13 .adv{display:flex;align-items:center;gap:8px;height:22px;background:#2A3149;border-radius:3px;padding-left:6px;margin-top:2px}
+.mk .drw13 .adv::before{content:"";border-left:7px solid #C9CFDF;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;margin-right:4px}
+.mk.b13open .tree .lay{z-index:auto}
+.mk.b13open .tree .th{position:relative;z-index:31}
+.mk.b13open .tree .tn .ct{position:relative;z-index:31;clip-path:inset(0 0 0 78%)}
+.mk.b13open .tree .tn.sel::before{z-index:31}
+
+/* ======================================================================================================
+   Boards (the renders): rail states, the drawer set, the sky, before / after
+   ====================================================================================================== */
+.board{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.board h2{margin:0;font:400 18px/1.2 Marcellus,Georgia,serif;color:#F4F1E8;letter-spacing:.01em}
+.board h2 small{font:500 12px/1.3 "Noto Sans",sans-serif;color:#7C86A8;margin-left:10px;letter-spacing:0}
+.board .row{display:flex;gap:16px;align-items:flex-start}
+.board figure{margin:0;display:flex;flex-direction:column;gap:7px}
+.board figcaption{font-size:12px;color:#A9B2CC;line-height:1.35;max-width:100%}
+.board figcaption b{color:#FFF0BE;font-weight:600}
+.board figcaption i{font-style:normal;color:#7C86A8}
+.crop{position:relative;overflow:hidden;border-radius:7px;box-shadow:0 0 0 1px #232A42,0 14px 30px rgba(0,0,0,.5);flex:none}
+.crop>.mk{position:absolute;left:0;top:0}
+.crop>.mk .win{border-radius:0}
+.spec{background:rgba(10,14,27,.82);border:1px solid #232A42;border-radius:8px;padding:10px 12px;font-size:12px;color:#A9B2CC;line-height:1.45}
+.spec b{color:#DDE3F0;font-weight:600}
+.spec table{border-collapse:collapse;width:100%}
+.spec td,.spec th{padding:3px 8px 3px 0;text-align:left;vertical-align:top;border-bottom:1px solid #1A2033}
+.spec th{color:#D9BE82;font:600 11.5px/1.2 "Barlow Condensed",sans-serif;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.tile{position:relative;overflow:hidden;border-radius:7px;box-shadow:0 0 0 1px #232A42}
+.tile .lbl{position:absolute;left:10px;top:8px;z-index:3;font-size:11px;color:#A9B2CC;text-shadow:0 1px 2px #000}
+.tile .lbl b{color:#FFF0BE;font-weight:600}
+
+/* 1.13's Full rail as the code draws it (the v13 mock drew the thread at the edge): segments between the stations */
+.mk.full:not(.v7) .rail .thread,.mk.full:not(.v7) .st.on::before,.mk.full:not(.v7) .st.on::after{display:none}
+.mk .th13{position:absolute;left:calc(50% - .5px);width:1px;background:rgba(168,139,82,.55)}
+.mk .lit13{position:absolute;left:calc(50% - 1px);width:2px;border-radius:1px;background:linear-gradient(#FFF0BE,#D6B25A);box-shadow:0 0 5px rgba(242,210,122,.45)}
+.mk .bead13{position:absolute;left:calc(50% - 3px);width:6px;height:6px;border-radius:50%;background:#FFF0BE;box-shadow:0 0 0 1.5px #0B0F1C}
+
+/* ======================================================================================================
+   Review round 1 (supervisor-review.md, critic.md)
+   ====================================================================================================== */
+/* Heading hierarchy: the quest title stays the largest text in the pane (caps at least 1.2x the Section caps) */
+.mk.full.v7 .ban .t .n{font-size:23px}
+.mk.quiet.v7 .qh .n{font-size:18.5px}
+.mk.plain.v7 .ph .n{font-size:15px}
+/* Column headers at 1.55x, +0.08 em: never larger than the group headers */
+.mk.full.v7 .thd{font-size:12.5px;letter-spacing:.08em}
+/* Drawer at Full: no icon disc, neutral pills, the Advanced rule in OrnamentLight, set values in Text with a MoonHigh dot,
+   and an unoffset contact shadow on the list side instead of the sideways one */
+.mk.full .drw{box-shadow:0 14px 30px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,240,190,.06)}
+.mk.full .drw::after{content:"";position:absolute;top:0;bottom:6px;right:-15px;width:14px;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.30),rgba(0,0,0,0))}
+.mk.full .drw .dic{width:16px;height:auto;border-radius:0;background:none;box-shadow:none;color:var(--moonhi)}
+.mk.full .drw .dct,.mk.full .drw .dsec h5 .pc{background:#262D42;border:0;color:var(--silver)}
+.mk.full .drw .dsec h5::after{background:linear-gradient(90deg,rgba(230,207,152,.55),rgba(230,207,152,0))}
+.mk.full .drw .sum .sr .v.set,.mk.full .drw .gp .gh span.set{color:var(--silver)}
+.mk.full .drw .sum .sr .v.set::before{background:var(--moonhi)}
+/* Rail at Full: the selected station keeps the plate, the gold icon and the bead; no glow, hairline or border.
+   A hovered plate gets a 1 px darker bottom edge, so the 2 px rise has a cause. */
+.mk.full .st7 .pl{box-shadow:inset 0 -1px 0 rgba(0,0,0,.38)}
+.mk.full .st7.on .pl{background:rgba(242,210,122,.07);box-shadow:none}
+.mk.full .st7.on .gl{opacity:0}
+.mk.full .st7.on .ic{filter:none}

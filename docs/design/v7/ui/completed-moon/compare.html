@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Completed Moon v7</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&family=Marcellus&family=Barlow+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F1424;--ink:#DDE3F0;--mist:#A9B2CC;--dusk:#7C86A8;--gilt:#D9BE82}
+html,body{margin:0;background:#070A13;color:var(--ink);font:13px/1.45 "Noto Sans",system-ui,sans-serif}
+.wrap{padding:22px 26px}
+h1{font:400 22px/1.2 Marcellus,Georgia,serif;margin:0 0 4px;color:#F4F1E8}
+.sub{color:var(--mist);margin:0 0 18px;max-width:1100px}
+.grid{display:grid;grid-template-columns:130px repeat(7,auto) 1fr;align-items:end;gap:0 30px;background:var(--bg);border:1px solid #2A3149;border-radius:8px;padding:18px 22px 14px}
+.grid .h{font:600 12px/1 "Barlow Condensed",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--gilt);padding-bottom:10px;align-self:end}
+.grid .lab{align-self:center;color:var(--mist);font-size:12.5px}
+.grid .lab b{display:block;color:var(--ink);font-weight:600}
+.grid img{display:block}
+.cell{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0}
+.cell span{font-size:10.5px;color:var(--dusk)}
+.zoom{display:flex;gap:26px;margin-top:20px;align-items:flex-start}
+.zoom figure{margin:0;background:var(--bg);border:1px solid #2A3149;border-radius:8px;padding:14px 16px 10px}
+.zoom figcaption{font-size:12px;color:var(--mist);margin-top:8px}
+.zoom figcaption b{color:var(--ink)}
+.px img{image-rendering:pixelated}
+.rows{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.rowset{background:var(--bg);border:1px solid #2A3149;border-radius:8px;padding:8px 0}
+.rowset .t{font:600 12px/1 "Barlow Condensed",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--gilt);padding:6px 14px 8px}
+.r{display:grid;grid-template-columns:34px 1fr 150px;align-items:center;height:34px;border-bottom:1px solid rgba(42,49,73,.35);padding:0 10px 0 8px;font-size:13px}
+.r .g{display:flex;justify-content:center}
+.r .g img{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+.r .s{color:var(--mist)}
+.r.rdy .g img{filter:drop-shadow(0 0 4px rgba(242,210,122,.45)) drop-shadow(0 1px 1px rgba(0,0,0,.5))}
+.r .s b{color:#F2D27A;font-weight:500}
+.r .cp{color:var(--mist)}
+.note{margin-top:16px;color:var(--mist);font-size:12px;max-width:1200px}
+.note b{color:var(--ink)}
+</style></head><body><div class="wrap">
+<h1>Completed moon, plan v7</h1>
+<p class="sub">Shipped round-5 medal (top) against the v7 variant (bottom). Changes are on the moon face only: deeper basalt maria with darker hearts, a cool moonlight glow in the well, and one young bright crater (halo halved). Three small rim-lit craters are drawn only in the 96 and 128 px atlas tiers, where their rims span 2 px or more; the 48 and 64 px tiers (and the row tier) use a crater-less source. The brass rim, the well and the gilt check are unchanged. Shown on the Full table tone <code>#0F1424</code>, at the true pixel sizes the plugin draws.</p>
+<div class="grid" id="g"></div>
+<div class="zoom" id="z"></div>
+<div class="rows" id="rows"></div>
+<p class="note" id="note"></p>
+</div>
+<script>
+var A = "../../../moon-v6/round5/medallion-r5/", OLD = A + "completed.svg", NEW = "completed-v7.svg", SMALL = "completed-v7-small.svg", READY = A + "_row/ready.svg";
+var sizes = [16, 20, 32, 48, 64, 96, 128], g = document.getElementById("g");
+function src7(s) { return s >= 96 ? NEW : SMALL; } // the atlas tier a size is drawn from: 96 and 128 carry the craters
+var h = '<div class="h"></div>' + sizes.map(function (s) { return '<div class="h">' + s + ' px</div>'; }).join("") + '<div></div>';
+[["Shipped", "round 5", function () { return OLD; }], ["v7", "maria and glow at every tier; rim-lit craters from 96 px", src7]].forEach(function (r) {
+  h += '<div class="lab"><b>' + r[0] + '</b>' + r[1] + '</div>' + sizes.map(function (s) { return '<div class="cell"><img src="' + r[2](s) + '" width="' + s + '" height="' + s + '"><span>' + (r[0] === "v7" ? (s >= 96 ? "craters" : "no craters") : "") + '</span></div>'; }).join("") + '<div></div>';
+});
+g.innerHTML = h;
+document.getElementById("z").innerHTML =
+  '<figure><img src="' + OLD + '" width="256" height="256"><figcaption><b>Shipped</b>, 256 px</figcaption></figure>' +
+  '<figure><img src="' + NEW + '" width="256" height="256"><figcaption><b>v7, 96/128 tier source</b>, 256 px</figcaption></figure>' +
+  '<figure><img src="' + SMALL + '" width="256" height="256"><figcaption><b>v7, 48/64 tier source</b> (no craters), 256 px</figcaption></figure>' +
+  '<figure class="px"><div style="display:flex;gap:10px"><canvas id="c0" width="18" height="18" style="width:108px;height:108px;image-rendering:pixelated"></canvas><canvas id="c1" width="18" height="18" style="width:108px;height:108px;image-rendering:pixelated"></canvas><canvas id="c2" width="20" height="20" style="width:120px;height:120px;image-rendering:pixelated"></canvas><canvas id="c3" width="20" height="20" style="width:120px;height:120px;image-rendering:pixelated"></canvas></div><figcaption><b>18 and 20 px</b>, shown 6x (nearest neighbour): shipped, v7, shipped, v7</figcaption></figure>';
+[[0, OLD, 18], [1, SMALL, 18], [2, OLD, 20], [3, SMALL, 20]].forEach(function (c) {
+  var im = new Image(); im.onload = function () { var cv = document.getElementById("c" + c[0]), x = cv.getContext("2d"); x.fillStyle = "#0F1424"; x.fillRect(0, 0, c[2], c[2]); x.drawImage(im, 0, 0, c[2], c[2]); }; im.src = c[1];
+});
+function rows(src, title) {
+  var R = [["ready", "It Could Happen to You", "<b>Ready</b> · Lv 15"], ["completed", "Heavensward", "Completed · 2025-01-04"], ["completed", "Stormblood", "Completed · 2025-01-29"], ["ready", "Towards the Firmament", "<b>Ready</b> · Lv 60"], ["completed", "Litany of Peace", "Completed · 2025-04-02"]];
+  return '<div class="rowset"><div class="t">' + title + '</div>' + R.map(function (q) {
+    var s = q[0] === "ready" ? READY : src;
+    return '<div class="r' + (q[0] === "ready" ? " rdy" : "") + '"><div class="g"><img src="' + s + '" width="18" height="18"></div><div class="' + (q[0] === "ready" ? "" : "cp") + '">' + q[1] + '</div><div class="s">' + q[2] + '</div></div>';
+  }).join("") + '</div>';
+}
+document.getElementById("rows").innerHTML = rows(OLD, "In the table, shipped (18 px)") + rows(SMALL, "In the table, v7 (18 px)");
+</script></body></html>

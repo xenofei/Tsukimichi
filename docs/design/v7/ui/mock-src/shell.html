@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan v7 UI Mock</title>
+<!-- Tsukimichi plan v7, UI points 1, 2, 3, 5, 6 and 8: section headings, the filter drawer, the star field, the Completed
+     moon, the Journal column headers and the left rail. Extends docs/design/flair-v13/mock.html: its CSS is carried over
+     verbatim (paths re-rooted) and every v7 change is a rule scoped under .mk.v7, so "1.13" is the same markup without
+     the class. Views: #full #quiet #plain (append /before for 1.13, /open or /open-adv for the drawer), #drawer, #rail,
+     #stars, #ba. Medals are the shipped Menphina's Medallion SVGs; Completed in v7 is completed-moon/completed-v7.svg.
+     Built by a small script from the v13 file; edit the v7 layer, not the copied v13 block. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&family=Marcellus&family=Barlow+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* ===================== flair-v13 mock CSS, verbatim ===================== */
+/*V13CSS*/
+/* ===================== plan v7 layer ===================== */
+/*V7CSS*/
+</style>
+</head>
+<body>
+<div class="pg">
+  <div class="pbar">
+    <span class="pt"><b>Tsukimichi plan v7</b> · UI</span>
+    <div class="seg" id="seg" role="group" aria-label="View">
+      <button type="button" data-v="full">Full</button><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="plain">Plain</button><button type="button" data-v="drawer">Filter drawer</button><button type="button" data-v="rail">Rail</button><button type="button" data-v="stars">Stars</button><button type="button" data-v="ba">Before / after</button>
+    </div>
+    <div class="seg" id="ver" role="group" aria-label="Version">
+      <button type="button" data-w="before">1.13</button><button type="button" data-w="">v7</button><button type="button" data-w="open">v7 + Filters</button><button type="button" data-w="open-adv">+ Advanced</button>
+    </div>
+    <button type="button" class="shoot" id="shoot" title="Plays the completion moment: one shooting star (Full, Reduce motion off)">Complete a quest</button>
+    <span class="pn" id="pn"></span>
+  </div>
+  <div class="host" id="host"></div>
+</div>
+<script>
+/*V7JS*/
+</script>
+</body>
+</html>

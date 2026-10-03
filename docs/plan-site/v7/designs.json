@@ -1,0 +1,241 @@
+{
+ "heading": "Designs for plan 7",
+ "intro": "<p>Everything you can see before it's built: the UI polish from your ten points, and three moon themes you could switch between or mix. Every design went through the realism supervisor (light, shadow, reflection, colour) and a design critic, and was fixed until approved. <strong>Nothing here is in the plugin yet.</strong></p><p><a class=\"golink\" href=\"ui-mock.html#full\" target=\"_blank\" rel=\"noopener\">Open the live mock ↗</a> A working copy of the Journal window with the plan 7 layer. Switch Full, Quiet and Plain, open the filter drawer, hover the rail, and press “Complete a quest” for the meteor. <strong>Try the moon themes there too:</strong> pick Ishgard Glass, Aether Crystal or Orrery, or choose <em>Mix…</em> to set a moon for each state. Pick “1.13” to compare with today.</p>",
+ "groups": [
+  {
+   "key": "ui",
+   "title": "UI polish",
+   "wide": true,
+   "note": "Your points 1, 2, 3, 5, 6 and 8. Every image is a 1:1 crop of the mock at Full, Quiet and Plain, next to 1.13 as shipped.",
+   "items": [
+    {
+     "id": "ui-headings",
+     "tag": "UI-1 · UI-3",
+     "name": "Bigger headings and column headers",
+     "for": [
+      "Point 1",
+      "Point 6"
+     ],
+     "img": "designs/ui-before-after.png",
+     "alt": "Full in 1.13 and in v7: the whole window, then the quest-pane headings and Journal header at 1:1",
+     "pitch": "Requirements, Rewards, Unlocks, Moonlit and Path become a real Section heading at 1.80× body (tapering to 1.60× at 150% scale), in the game font with a brass rule. The Journal's column headers grow to 1.55× with brighter ink and a taller header row, never larger than the group headers.",
+     "changes": [
+      "Section role 1.80× body (was the caption size); the hero title stays the largest",
+      "Column headers 1.55×, +0.08 em tracking, Secondary ink, header row 30 px at Full",
+      "Quiet and Plain get the same steps in their own style",
+      "Follows Text size like every other role"
+     ],
+     "verdict": "Supervisor: approved"
+    },
+    {
+     "id": "ui-drawer",
+     "tag": "UI-2",
+     "name": "The filter drawer, redesigned",
+     "for": [
+      "Point 2"
+     ],
+     "img": "designs/ui-filter-drawer.png",
+     "alt": "The filter drawer: 1.13 as shipped, then Full, Quiet and Plain, Advanced collapsed and expanded",
+     "pitch": "Same place, same fade, same pin. It now fits the tree column exactly and sizes to its content, so there's no empty grey and nothing from the tree shows at the edges. A real header (“Filters”, a count of what's on, pin and close), sections in the heading style, moon toggles, and seven summary lines when Advanced is closed so you can see every setting at a glance.",
+     "changes": [
+      "Exactly the tree column's width; the tree fades out underneath, so no text bleeds through",
+      "Sized to content, capped at the window; the footer stays when it scrolls",
+      "Title in the Title role with a “3 on” pill",
+      "Reset is a quiet text action with an 8-second Undo",
+      "Full: raised sheet with a brass edge; Quiet: flat and silver; Plain: ledger bands"
+     ],
+     "verdict": "Supervisor: approved"
+    },
+    {
+     "id": "ui-rail",
+     "tag": "UI-4",
+     "name": "A fuller rail with better motion",
+     "for": [
+      "Point 8"
+     ],
+     "img": "designs/ui-rail.png",
+     "alt": "The 1.13 rail and the v7 rail at each look, every station state at 2×, and the motion table",
+     "pitch": "Icons go from 22 to 30 px, and the stations share the rail's height so it fills the bar. The brass thread between icons is gone. Hovering lifts the icon 2 px over a soft plate. Selecting one fades its plate in while a bead glides down the left edge to it.",
+     "changes": [
+      "Icons 30 px (Full), 28 (Quiet), 20 (Plain)",
+      "Stations grow to share the rail, with room left for stars",
+      "No coloured lines between icons",
+      "Hover 0.12 s rise; select 0.15 s; the bead travels in 0.22 s; Reduce motion lands at once",
+      "Labels never move; only their colour changes"
+     ],
+     "verdict": "Supervisor: approved"
+    },
+    {
+     "id": "ui-stars",
+     "tag": "UI-6",
+     "name": "Better stars",
+     "for": [
+      "Point 3"
+     ],
+     "img": "designs/ui-stars.png",
+     "alt": "The 1.13 sky and the v7 sky: three depths, four temperatures, the twinkle curve, the constellations and the meteor",
+     "pitch": "Stars at three depths, in four real star temperatures, each twinkling on its own slow curve. A constellation for each region (the Chocobo for A Realm Reborn, the Tower for Ishgard…) hides in the empty sky. Finishing a quest sends one meteor across. Stars only ever sit in empty sky, never under text.",
+     "changes": [
+      "Far, mid and near stars, the near ones with a 5 px cross",
+      "Blue-white to amber temperatures",
+      "Six region constellations",
+      "A completion meteor, off with Reduce motion",
+      "Optional Milky Way, off by default"
+     ],
+     "watch": [
+      "Your call: turn the Milky Way on by default?",
+      "Your call: is the Chocobo right for A Realm Reborn?"
+     ],
+     "verdict": "Supervisor: approved"
+    },
+    {
+     "id": "ui-completed",
+     "tag": "V1",
+     "name": "Completed moon: darker seas, soft glow",
+     "for": [
+      "Point 5"
+     ],
+     "img": "designs/ui-completed.png",
+     "alt": "The shipped and v7 Completed medals at 16, 20, 32, 64 and 128 px, enlarged, and in table rows",
+     "pitch": "The maria are a darker basalt with deeper hearts, and a faint cool glow sits around the moon. The craters you asked to darken show at 96 and 128 px, where they read as craters. Below that they would speckle, so small sizes keep the darker seas without them.",
+     "changes": [
+      "Maria in basalt #56658C at 1.6× the opacity",
+      "Darker hearts in Imbrium, Serenitatis and Procellarum",
+      "Cool glow on every size",
+      "Craters at 96/128 px only, per the supervisor",
+      "Still 0.73× Ready, so it stays the quieter state"
+     ],
+     "verdict": "Supervisor: approved"
+    }
+   ]
+  },
+  {
+   "key": "themes",
+   "title": "Moon themes",
+   "note": "Your point 7. Three earlier concepts, rebuilt and improved, to sit beside Menphina's Medallion. Every theme uses the same shapes and meanings, so you can switch the whole look or <strong>mix and match</strong>: one theme's moon for each state, any theme's frames, and any colour palette. <a href=\"ui-mock.html#full\" target=\"_blank\" rel=\"noopener\">Try them in the live mock ↗</a>",
+   "items": [
+    {
+     "id": "theme-glass",
+     "tag": "T6",
+     "name": "Ishgard Glass",
+     "img": "designs/ishgard-glass-sheet.png",
+     "alt": "Ishgard Glass: the eight states at 16 to 96 px, on daylight, and in greyscale",
+     "pitch": "Every moon is a stained-glass window in lead and stone, lit from behind like the Foundation's cathedral. Ready shows the Ishgard skyline on a moonlit shore; Blocked is glass cloud; Completed is the moon's face in four leaded panes; Locked out is a broken window. The critic ranked it first: “the most FFXIV of the set.”",
+     "metrics": [
+      [
+       "Weakest pair, 16 px",
+       "12.6",
+       "≥ 12"
+      ],
+      [
+       "Ready vs next",
+       "1.38×",
+       "≥ 1.3"
+      ],
+      [
+       "Completed vs Ready",
+       "0.73×",
+       "≤ 0.8"
+      ]
+     ],
+     "changes": [
+      "Backlit glass; only lead, stone and gilt catch front light",
+      "Skyline on Ready at hero size; at night on In journal",
+      "Flat two-tone glass clouds for Blocked",
+      "Faces split from frames, so they mix with any theme"
+     ],
+     "more": [
+      {
+       "src": "designs/ishgard-glass-mix.png",
+       "cap": "Mix proof: Glass moons in Medallion's frames and the reverse."
+      }
+     ],
+     "verdict": "Supervisor: approved"
+    },
+    {
+     "id": "theme-crystal",
+     "tag": "T7",
+     "name": "Aether Crystal",
+     "img": "designs/aether-crystal-sheet.png",
+     "alt": "Aether Crystal: the eight states at 16 to 96 px, on daylight, and in greyscale",
+     "pitch": "The moon as cut moonstone in a silver 16-sided setting: facets catch the light, and aether glows through the stone. Blocked hides behind a faceted frost bank; Completed has a two-facet gilt check.",
+     "metrics": [
+      [
+       "Weakest pair, 16 px",
+       "14.4",
+       "≥ 12"
+      ],
+      [
+       "Ready vs next",
+       "1.35×",
+       "≥ 1.3"
+      ],
+      [
+       "Completed vs Ready",
+       "0.74×",
+       "≤ 0.8"
+      ]
+     ],
+     "changes": [
+      "Low-chroma moonstone silver frames",
+      "A 7-facet cut at row size, so small icons stay clean",
+      "Ready keeps the shared gilt so it always leads",
+      "Faces split from frames"
+     ],
+     "more": [
+      {
+       "src": "designs/aether-crystal-mix.png",
+       "cap": "Mix proof: Crystal moons in Silver and Brass frames, Medallion moons in the Silver frame, and the kit."
+      }
+     ],
+     "verdict": "Supervisor: approved"
+    },
+    {
+     "id": "theme-orrery",
+     "tag": "T14",
+     "name": "Astrologian's Orrery",
+     "img": "designs/astrologian-orrery-sheet.png",
+     "alt": "Astrologian's Orrery: the eight states at 16 to 96 px, on daylight, and in greyscale",
+     "pitch": "Remade so it's more than Medallion with stars: engraved silver moons in a brass astrolabe, with star charts on the dark sides. Ready is a dawn sighting with a limb scale, Done a graduated arc, and Dalamud glows rose.",
+     "metrics": [
+      [
+       "Weakest pair, 16 px",
+       "14.9",
+       "≥ 12"
+      ],
+      [
+       "Ready vs next",
+       "1.35×",
+       "≥ 1.3"
+      ],
+      [
+       "Completed vs Ready",
+       "0.74×",
+       "≤ 0.8"
+      ]
+     ],
+     "changes": [
+      "Engraved hatching at large sizes only, smooth below",
+      "Patinated brass cloud over a true new moon for Blocked",
+      "A graduated scale for Done",
+      "Faces split from frames"
+     ],
+     "more": [
+      {
+       "src": "designs/astrologian-orrery-mix.png",
+       "cap": "Mix proof: Orrery moons in Brass frames and Medallion moons in Astrolabe frames."
+      },
+      {
+       "src": "designs/astrologian-orrery-kit.png",
+       "cap": "The Astrolabe frame kit: four tiers at Full and Quiet, the badge rings and the glyphs."
+      }
+     ],
+     "verdict": "Supervisor: approved"
+    }
+   ]
+  }
+ ],
+ "supervisor": {
+  "summary": "<p>The supervisor checks rendered images, never source, against one rule: light, shadow, reflection, colour and material must be believable, even in stylised art. A critic judged taste and identity.</p><ul class=\"prose\" style=\"margin:0;padding-left:20px\"><li><strong>UI:</strong> two rounds. The Completed moon's craters show only at 96 and 128 px, so small sizes never look like cheese. The drawer's shadows share one light. The rail lost its glow. The stars got a shorter near-star cross and a brighter meteor head.</li><li><strong>Astrologian's Orrery:</strong> remade for its own identity, then two rounds. The engraved hatching is kept to large sizes, and Blocked's edge matches Medallion.</li><li><strong>Aether Crystal:</strong> two rounds. The frost bank no longer outshines the moon, and the setting is now low-chroma silver.</li><li><strong>Ishgard Glass:</strong> two rounds. Backlit flat glass with front-lit lead, and Locked out's hole rebuilt as broken panes.</li><li>Every theme passes the legibility checks at 16 px in greyscale: the weakest pair is at least 12, Ready leads by at least 1.3×, and Completed is at most 0.8× Ready.</li></ul>"
+ }
+}
