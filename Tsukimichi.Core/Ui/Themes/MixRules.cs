@@ -150,7 +150,7 @@ public static class MixRules
 
     /// <summary>
     /// The sets a state's list offers, in the registry's order: offered, mixable (never Classic) and measured against
-    /// every other set (spec-1.17 §A1: the Orrery joins once its cross-set numbers exist; Sumi is not offered yet).
+    /// every other set (spec-1.17 §A1: a set joins once its cross-set numbers exist, as the Orrery and Sumi to Kinpaku have).
     /// </summary>
     public static IReadOnlyList<GlyphSetInfo> Choices => OfferedChoices;
 

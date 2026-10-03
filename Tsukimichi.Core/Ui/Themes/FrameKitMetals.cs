@@ -23,8 +23,14 @@ public static class FrameKitMetals
     public static readonly KitMetal Astrolabe = KitMetal.FromRamp(0xEAD3A0, 0xB8924E, 0x7C6034, 0x4E3B1E);
 
     /// <summary>
-    /// Whether <paramref name="kit"/> has a metal of its own (Brass, Silver, Came and Astrolabe; Kirikane's arrives with
-    /// Sumi to Kinpaku). Settings › Themes offers the Frames choice once two offered kits do.
+    /// Cut gold leaf (Sumi to Kinpaku's kit): its concept's leaf ramp, #F4DA92 → #DEB862 → #A98843 → #6E5426. The kit's
+    /// metal is its leaf, not its ro-iro lacquer, which is near black and would vanish as a rule or an arc on a dark pane.
+    /// </summary>
+    public static readonly KitMetal Kirikane = KitMetal.FromRamp(0xF4DA92, 0xDEB862, 0xA98843, 0x6E5426);
+
+    /// <summary>
+    /// Whether <paramref name="kit"/> has a metal of its own (every kit: Brass, Silver, Came, Astrolabe and Kirikane).
+    /// Settings › Themes offers the Frames choice once two offered kits do.
     /// </summary>
     public static bool HasOwnMetal(FrameKitId kit) => kit == FrameKitId.Brass || Of(kit) is not null;
 
@@ -34,8 +40,26 @@ public static class FrameKitMetals
         FrameKitId.Silver => Silver,
         FrameKitId.Came => Came,
         FrameKitId.Astrolabe => Astrolabe,
+        FrameKitId.Kirikane => Kirikane,
         _ => null,
     };
+
+    /// <summary>
+    /// Whether <paramref name="kit"/> ships its Decoration ornament as sprites (<c>ornaments.png</c>, ATLAS-CONTRACT §8):
+    /// Kirikane's crest sigil, lozenge and kamon corner. The other kits recolour the palette's drawn ornament.
+    /// </summary>
+    public static bool HasOrnamentSprites(FrameKitId kit) => kit == FrameKitId.Kirikane;
+
+    /// <summary>
+    /// Whether <paramref name="palette"/> draws <paramref name="kit"/>'s ornament sprites: a kit that has them, on a dark,
+    /// standard-contrast palette (the sprites are gold leaf, measured on the dark windows; a light palette keeps its own
+    /// ornament, designed for 3 : 1 on snow, and high contrast its strong line), as the metal recolours.
+    /// </summary>
+    public static bool DrawsOrnamentSprites(UiPalette palette, FrameKitId kit)
+    {
+        ArgumentNullException.ThrowIfNull(palette);
+        return Recolours(palette) && HasOrnamentSprites(kit);
+    }
 
     /// <summary>The ornament ramp <paramref name="palette"/> draws with <paramref name="kit"/>'s frames.</summary>
     public static BrassTokens Ornament(UiPalette palette, FrameKitId kit)

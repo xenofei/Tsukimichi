@@ -2,6 +2,8 @@ using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Ui.Themes;
+using Tsukimichi.Ui.Themes;
 
 namespace Tsukimichi.Ui;
 
@@ -118,6 +120,18 @@ public static class Ornament
         if (!(size > 0f))
         {
             return;
+        }
+
+        // A kit with ornament sprites (Kirikane) draws its own sigil by the size rule: the crest from 13 px, the small crest
+        // at 10–12 px, the lozenge below. A caller's own colour (Orbit's spark) keeps the star.
+        if (color is null && Theme.KitOrnaments)
+        {
+            var (sprite, cell) = KitOrnaments.Sigil(size, UiMetrics.Scale);
+            var min = new Vector2(MathF.Round(center.X - (cell * 0.5f)), MathF.Round(center.Y - (cell * 0.5f)));
+            if (ThemeAtlasCache.TryDrawOrnament(dl, Theme.FrameKit, sprite, cell, min, min + new Vector2(cell), false, false, 0xFFFFFFFFu))
+            {
+                return;
+            }
         }
 
         var c = color ?? Theme.OrnamentHighU32;
@@ -277,6 +291,14 @@ public static class Ornament
             return;
         }
 
+        if (Theme.KitOrnaments
+            && KitCorner(dl, min, FrameCorner.TopLeft, size)
+            && KitCorner(dl, max, FrameCorner.BottomRight, size)
+            && (twoOnly || (KitCorner(dl, new Vector2(max.X, min.Y), FrameCorner.TopRight, size) && KitCorner(dl, new Vector2(min.X, max.Y), FrameCorner.BottomLeft, size))))
+        {
+            return;
+        }
+
         var w = MathF.Max(1.5f, UiMetrics.Px(1.5f));
 
         // The mark's centre line sits half a pixel outside the frame line, so its 1.5 px cover the frame's pixel.
@@ -291,6 +313,20 @@ public static class Ornament
         }
 
         Mark(dl, b, new Vector2(-1f, 0f), new Vector2(0f, -1f), size, w, CornerShaded);
+    }
+
+    /// <summary>
+    /// The frame kit's own corner mark (Kirikane's kamon corner) with its L's outer corner on <paramref name="at"/>, arms
+    /// about <paramref name="arm"/> px (<see cref="KitOrnaments.CornerBox"/>), mirrored into <paramref name="corner"/>.
+    /// False while the kit's ornaments load; callers check <see cref="Theme.KitOrnaments"/> first.
+    /// </summary>
+    internal static bool KitCorner(ImDrawListPtr dl, Vector2 at, FrameCorner corner, float arm, uint tint = 0xFFFFFFFFu)
+    {
+        var right = corner is FrameCorner.TopRight or FrameCorner.BottomRight;
+        var bottom = corner is FrameCorner.BottomLeft or FrameCorner.BottomRight;
+        var (x, y, side) = KitOrnaments.CornerBox(at.X, at.Y, right, bottom, arm);
+        var min = new Vector2(x, y);
+        return ThemeAtlasCache.TryDrawOrnament(dl, Theme.FrameKit, KitOrnament.Corner, side, min, min + new Vector2(side), right, bottom, tint);
     }
 
     private static void Mark(ImDrawListPtr dl, Vector2 corner, Vector2 along, Vector2 down, float size, float width, Vector4 tone)

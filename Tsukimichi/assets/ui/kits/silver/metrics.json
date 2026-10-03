@@ -472,6 +472,128 @@
       "flags": [
         {"kind": "pair", "a": "blocked", "b": "locked-out", "d": 10.92, "mode": "machado-prot", "ground": "ishgard-snow", "tier": "row", "level": "close"}
       ]
+    },
+    "sumi-to-kinpaku": {
+      "own": false,
+      "pass": false,
+      "warnings": ["hero-96-128: G2 Ready lead"],
+      "gates": [
+        {"gate": "G1 weakest pair 16 px grey", "tier": "hero-48-64", "value": 14.52, "bar": 12.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G2 Ready lead", "tier": "hero-48-64", "value": 1.31, "bar": 1.3, "detail": "Rdy 67 / Jrn 51", "pass": true},
+        {"gate": "G2 Completed recedes", "tier": "hero-48-64", "value": 0.76, "bar": 0.8, "detail": "Comp 50 / Rdy 67", "pass": true},
+        {"gate": "G2 every state visible", "tier": "hero-48-64", "value": 37.11, "bar": 15.0, "detail": "Blk", "pass": true},
+        {"gate": "G1 weakest pair 16 px deut", "tier": "hero-48-64", "value": 15.49, "bar": 12.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-deut on night", "tier": "hero-48-64", "value": 15.61, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-prot on night", "tier": "hero-48-64", "value": 13.19, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-trit on night", "tier": "hero-48-64", "value": 14.53, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1 weakest pair 20 px grey", "tier": "hero-48-64", "value": 25.0, "bar": 16.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1 weakest pair 20 px deut", "tier": "hero-48-64", "value": 26.64, "bar": 16.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-deut on ishgard-snow", "tier": "hero-48-64", "value": 15.61, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-prot on ishgard-snow", "tier": "hero-48-64", "value": 13.14, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-trit on ishgard-snow", "tier": "hero-48-64", "value": 14.5, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-deut on daylight", "tier": "hero-48-64", "value": 15.59, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-prot on daylight", "tier": "hero-48-64", "value": 13.13, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-trit on daylight", "tier": "hero-48-64", "value": 14.51, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1 weakest pair 16 px grey", "tier": "hero-96-128", "value": 13.78, "bar": 12.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G2 Ready lead", "tier": "hero-96-128", "value": 1.27, "bar": 1.3, "detail": "Rdy 64 / Jrn 51", "pass": false},
+        {"gate": "G2 Completed recedes", "tier": "hero-96-128", "value": 0.77, "bar": 0.8, "detail": "Comp 50 / Rdy 64", "pass": true},
+        {"gate": "G2 every state visible", "tier": "hero-96-128", "value": 37.41, "bar": 15.0, "detail": "Blk", "pass": true},
+        {"gate": "G1 weakest pair 16 px deut", "tier": "hero-96-128", "value": 14.6, "bar": 12.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-deut on night", "tier": "hero-96-128", "value": 14.71, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-prot on night", "tier": "hero-96-128", "value": 12.48, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-trit on night", "tier": "hero-96-128", "value": 13.76, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1 weakest pair 20 px grey", "tier": "hero-96-128", "value": 24.2, "bar": 16.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1 weakest pair 20 px deut", "tier": "hero-96-128", "value": 25.77, "bar": 16.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-deut on ishgard-snow", "tier": "hero-96-128", "value": 14.69, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-prot on ishgard-snow", "tier": "hero-96-128", "value": 12.39, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-trit on ishgard-snow", "tier": "hero-96-128", "value": 13.71, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-deut on daylight", "tier": "hero-96-128", "value": 14.65, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-prot on daylight", "tier": "hero-96-128", "value": 12.36, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-trit on daylight", "tier": "hero-96-128", "value": 13.7, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1 weakest pair 16 px grey", "tier": "row", "value": 14.76, "bar": 12.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G2 Ready lead", "tier": "row", "value": 1.43, "bar": 1.3, "detail": "Rdy 70 / Jrn 49", "pass": true},
+        {"gate": "G2 Completed recedes", "tier": "row", "value": 0.69, "bar": 0.8, "detail": "Comp 49 / Rdy 70", "pass": true},
+        {"gate": "G2 every state visible", "tier": "row", "value": 36.41, "bar": 15.0, "detail": "RoJ", "pass": true},
+        {"gate": "G1 weakest pair 16 px deut", "tier": "row", "value": 15.19, "bar": 12.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-deut on night", "tier": "row", "value": 15.27, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-prot on night", "tier": "row", "value": 15.56, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-trit on night", "tier": "row", "value": 14.75, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G1 weakest pair 20 px grey", "tier": "row", "value": 24.42, "bar": 16.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G1 weakest pair 20 px deut", "tier": "row", "value": 25.74, "bar": 16.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-deut on ishgard-snow", "tier": "row", "value": 15.04, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-prot on ishgard-snow", "tier": "row", "value": 15.59, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-trit on ishgard-snow", "tier": "row", "value": 14.52, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-deut on daylight", "tier": "row", "value": 15.13, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-prot on daylight", "tier": "row", "value": 15.52, "bar": 11.0, "detail": "Done-Lock", "pass": true},
+        {"gate": "G1c weakest pair 16 px machado-trit on daylight", "tier": "row", "value": 14.56, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+        {"gate": "G2L Ready lead 16 px (chroma) on Ishgard Snow", "tier": "row", "value": 1.93, "bar": 1.3, "detail": "wash 0.75 within 3 px: Rdy 26 / Lock 13", "pass": true},
+        {"gate": "G2L lightness floor 16 px on Ishgard Snow", "tier": "row", "value": 0.81, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 112 / RoJ 138", "pass": true},
+        {"gate": "G2L Not checked under Ready 16 px (chroma) on Ishgard Snow", "tier": "row", "value": 0.15, "bar": 1.0, "detail": "NotC 4 / Rdy 26", "pass": true},
+        {"gate": "G2L Ready lead 20 px (chroma) on Ishgard Snow", "tier": "row", "value": 1.62, "bar": 1.3, "detail": "wash 0.75 within 3 px: Rdy 35 / Lock 21", "pass": true},
+        {"gate": "G2L lightness floor 20 px on Ishgard Snow", "tier": "row", "value": 0.78, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 169 / RoJ 218", "pass": true},
+        {"gate": "G2L Not checked under Ready 20 px (chroma) on Ishgard Snow", "tier": "row", "value": 0.17, "bar": 1.0, "detail": "NotC 6 / Rdy 35", "pass": true}
+      ],
+      "tiers": [
+        {
+          "name": "hero-48-64",
+          "atlasTiers": [48, 64],
+          "summary": [
+            {"ground": "night", "px": 16, "mode": "grey", "weakest": "done-this-cycle|locked-out", "d": 14.52, "readyLead": 1.31, "completedOfReady": 0.76},
+            {"ground": "night", "px": 16, "mode": "deut", "weakest": "done-this-cycle|locked-out", "d": 15.49, "readyLead": 1.32, "completedOfReady": 0.76},
+            {"ground": "night", "px": 16, "mode": "machado-deut", "weakest": "done-this-cycle|locked-out", "d": 15.61, "readyLead": 1.32, "completedOfReady": 0.76},
+            {"ground": "night", "px": 16, "mode": "machado-prot", "weakest": "done-this-cycle|locked-out", "d": 13.19, "readyLead": 1.29, "completedOfReady": 0.75},
+            {"ground": "night", "px": 16, "mode": "machado-trit", "weakest": "done-this-cycle|locked-out", "d": 14.53, "readyLead": 1.3, "completedOfReady": 0.75},
+            {"ground": "night", "px": 20, "mode": "grey", "weakest": "done-this-cycle|locked-out", "d": 25.0, "readyLead": 1.29, "completedOfReady": 0.78},
+            {"ground": "night", "px": 20, "mode": "deut", "weakest": "done-this-cycle|locked-out", "d": 26.64, "readyLead": 1.29, "completedOfReady": 0.78},
+            {"ground": "ishgard-snow", "px": 16, "mode": "machado-deut", "weakest": "done-this-cycle|locked-out", "d": 15.61, "readyLead": 0.72, "completedOfReady": 1.15},
+            {"ground": "ishgard-snow", "px": 16, "mode": "machado-prot", "weakest": "done-this-cycle|locked-out", "d": 13.14, "readyLead": 0.72, "completedOfReady": 1.16},
+            {"ground": "ishgard-snow", "px": 16, "mode": "machado-trit", "weakest": "done-this-cycle|locked-out", "d": 14.5, "readyLead": 0.72, "completedOfReady": 1.16},
+            {"ground": "daylight", "px": 16, "mode": "machado-deut", "weakest": "done-this-cycle|locked-out", "d": 15.59, "readyLead": 0.71, "completedOfReady": 1.16},
+            {"ground": "daylight", "px": 16, "mode": "machado-prot", "weakest": "done-this-cycle|locked-out", "d": 13.13, "readyLead": 0.7, "completedOfReady": 1.18},
+            {"ground": "daylight", "px": 16, "mode": "machado-trit", "weakest": "done-this-cycle|locked-out", "d": 14.51, "readyLead": 0.7, "completedOfReady": 1.17}
+          ]
+        },
+        {
+          "name": "hero-96-128",
+          "atlasTiers": [96, 128],
+          "summary": [
+            {"ground": "night", "px": 16, "mode": "grey", "weakest": "done-this-cycle|locked-out", "d": 13.78, "readyLead": 1.27, "completedOfReady": 0.77},
+            {"ground": "night", "px": 16, "mode": "deut", "weakest": "done-this-cycle|locked-out", "d": 14.6, "readyLead": 1.28, "completedOfReady": 0.77},
+            {"ground": "night", "px": 16, "mode": "machado-deut", "weakest": "done-this-cycle|locked-out", "d": 14.71, "readyLead": 1.29, "completedOfReady": 0.77},
+            {"ground": "night", "px": 16, "mode": "machado-prot", "weakest": "done-this-cycle|locked-out", "d": 12.48, "readyLead": 1.25, "completedOfReady": 0.76},
+            {"ground": "night", "px": 16, "mode": "machado-trit", "weakest": "done-this-cycle|locked-out", "d": 13.76, "readyLead": 1.27, "completedOfReady": 0.77},
+            {"ground": "night", "px": 20, "mode": "grey", "weakest": "done-this-cycle|locked-out", "d": 24.2, "readyLead": 1.28, "completedOfReady": 0.78},
+            {"ground": "night", "px": 20, "mode": "deut", "weakest": "done-this-cycle|locked-out", "d": 25.77, "readyLead": 1.28, "completedOfReady": 0.78},
+            {"ground": "ishgard-snow", "px": 16, "mode": "machado-deut", "weakest": "done-this-cycle|locked-out", "d": 14.69, "readyLead": 0.74, "completedOfReady": 1.14},
+            {"ground": "ishgard-snow", "px": 16, "mode": "machado-prot", "weakest": "done-this-cycle|locked-out", "d": 12.39, "readyLead": 0.74, "completedOfReady": 1.15},
+            {"ground": "ishgard-snow", "px": 16, "mode": "machado-trit", "weakest": "done-this-cycle|locked-out", "d": 13.71, "readyLead": 0.74, "completedOfReady": 1.15},
+            {"ground": "daylight", "px": 16, "mode": "machado-deut", "weakest": "done-this-cycle|locked-out", "d": 14.65, "readyLead": 0.72, "completedOfReady": 1.15},
+            {"ground": "daylight", "px": 16, "mode": "machado-prot", "weakest": "done-this-cycle|locked-out", "d": 12.36, "readyLead": 0.72, "completedOfReady": 1.16},
+            {"ground": "daylight", "px": 16, "mode": "machado-trit", "weakest": "done-this-cycle|locked-out", "d": 13.7, "readyLead": 0.72, "completedOfReady": 1.16}
+          ]
+        },
+        {
+          "name": "row",
+          "atlasTiers": [],
+          "summary": [
+            {"ground": "night", "px": 16, "mode": "grey", "weakest": "blocked|locked-out", "d": 14.76, "readyLead": 1.43, "completedOfReady": 0.69},
+            {"ground": "night", "px": 16, "mode": "deut", "weakest": "blocked|locked-out", "d": 15.19, "readyLead": 1.44, "completedOfReady": 0.7},
+            {"ground": "night", "px": 16, "mode": "machado-deut", "weakest": "blocked|locked-out", "d": 15.27, "readyLead": 1.44, "completedOfReady": 0.7},
+            {"ground": "night", "px": 16, "mode": "machado-prot", "weakest": "done-this-cycle|locked-out", "d": 15.56, "readyLead": 1.4, "completedOfReady": 0.69},
+            {"ground": "night", "px": 16, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 14.75, "readyLead": 1.42, "completedOfReady": 0.69},
+            {"ground": "night", "px": 20, "mode": "grey", "weakest": "blocked|locked-out", "d": 24.42, "readyLead": 1.4, "completedOfReady": 0.71},
+            {"ground": "night", "px": 20, "mode": "deut", "weakest": "blocked|locked-out", "d": 25.74, "readyLead": 1.4, "completedOfReady": 0.71},
+            {"ground": "ishgard-snow", "px": 16, "mode": "machado-deut", "weakest": "blocked|locked-out", "d": 15.04, "readyLead": 0.7, "completedOfReady": 1.25},
+            {"ground": "ishgard-snow", "px": 16, "mode": "machado-prot", "weakest": "done-this-cycle|locked-out", "d": 15.59, "readyLead": 0.7, "completedOfReady": 1.25},
+            {"ground": "ishgard-snow", "px": 16, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 14.52, "readyLead": 0.7, "completedOfReady": 1.25},
+            {"ground": "daylight", "px": 16, "mode": "machado-deut", "weakest": "blocked|locked-out", "d": 15.13, "readyLead": 0.68, "completedOfReady": 1.26},
+            {"ground": "daylight", "px": 16, "mode": "machado-prot", "weakest": "done-this-cycle|locked-out", "d": 15.52, "readyLead": 0.67, "completedOfReady": 1.28},
+            {"ground": "daylight", "px": 16, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 14.56, "readyLead": 0.68, "completedOfReady": 1.27}
+          ]
+        }
+      ],
+      "lightMeasure": "chroma",
+      "flags": []
     }
   }
 }

@@ -153,6 +153,9 @@ def load_manifest(key):
     assert m["key"] == key, f"{key}.json names itself {m['key']}"
     assert list(m["sprites"]) == SPRITES, f"{key}: sprites must be exactly {SPRITES}, in that order"
     assert sorted(int(t) for t in m["tiers"]) == TIERS, f"{key}: tiers must be {TIERS}"
+    if m.get("plain"):
+        assert m.get("row", {}).get("atlas"), f"{key}: a Plain finish ships in the row strip, so the set needs one"
+        assert sorted(m["plain"]["sprites"]) == sorted(STATES), f"{key}: plain must have exactly the states {STATES}"
     return m
 
 
@@ -295,39 +298,65 @@ def hero_json(rects):
 
 # ================================================================ the row strip
 
-def row_layout():
-    """state -> {size: (x, y, w, h)}: one shelf per state, sizes 12..31 left to right, 2 px apart."""
+def row_finishes(m):
+    """The row strip's finishes (ATLAS-CONTRACT section 3): 'full', and 'plain' for a set with a flat finish of its own
+    for Decoration Plain (its manifest's 'plain' masters, one per state for every size)."""
+    return ["full", "plain"] if m.get("plain") else ["full"]
+
+
+def row_layout(finishes=("full",)):
+    """{finish: {state: {size: (x, y, w, h)}}}: one shelf per state and finish (every state's full shelf first), sizes
+    12..31 left to right, 2 px apart."""
     width = PAD + sum(s + PAD for s in ROW_SIZES)
     rects = {}
-    for i, state in enumerate(STATES):
-        y = PAD + i * (ROW_SIZES[-1] + PAD)
-        x = PAD
-        rects[state] = {}
-        for s in ROW_SIZES:
-            rects[state][s] = (x, y, s, s)
-            x += s + PAD
-    return rects, (width, PAD + len(STATES) * (ROW_SIZES[-1] + PAD))
+    for f, finish in enumerate(finishes):
+        rects[finish] = {}
+        for i, state in enumerate(STATES):
+            y = PAD + (f * len(STATES) + i) * (ROW_SIZES[-1] + PAD)
+            x = PAD
+            rects[finish][state] = {}
+            for s in ROW_SIZES:
+                rects[finish][state][s] = (x, y, s, s)
+                x += s + PAD
+    return rects, (width, PAD + len(finishes) * len(STATES) * (ROW_SIZES[-1] + PAD))
 
 
 def row_sheet(size, rects, bodies):
+    """`bodies` is {finish: {state: (viewBox, body)}}, each body's ids prefixed 'r<n>_' with n its shelf."""
     parts = []
-    for i, state in enumerate(STATES):
-        view, body = bodies[state]
-        for s in ROW_SIZES:
-            x, y, w, h = rects[state][s]
-            body_s = re.sub(r'(id="|url\(#|href="#)r{0}_'.format(i), lambda k: f"{k.group(1)}r{i}s{s}_", body)
-            parts.append(f'<svg x="{x}" y="{y}" width="{w}" height="{h}" viewBox="{view}" overflow="hidden">{body_s}</svg>')
+    for f, (finish, by_state) in enumerate(rects.items()):
+        for i, state in enumerate(STATES):
+            n = f * len(STATES) + i
+            view, body = bodies[finish][state]
+            for s in ROW_SIZES:
+                x, y, w, h = by_state[state][s]
+                body_s = re.sub(r'(id="|url\(#|href="#)r{0}_'.format(n), lambda k: f"{k.group(1)}r{n}s{s}_", body)
+                parts.append(f'<svg x="{x}" y="{y}" width="{w}" height="{h}" viewBox="{view}" overflow="hidden">{body_s}</svg>')
     w, h = size
     return f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">{"".join(parts)}</svg>'
 
 
 def row_json(rects, size):
+    """The plain form (states straight under 'sprites') for a strip with the full finish alone, as every set without a
+    flat finish ships; the nested form (finishes first) otherwise (ATLAS-CONTRACT section 3)."""
+    def cells(by_state):
+        return {state: {str(s): list(r) for s, r in by_size.items()} for state, by_size in by_state.items()}
+    if list(rects) == ["full"]:
+        return {
+            "size": list(size),
+            "sizes": ROW_SIZES,
+            "note": "Row-tier faces, framed, without badges: each state rendered at every whole device pixel size; "
+                    "rectangles are [x, y, w, h] in device pixels. 1x only (the sizes are device pixels already).",
+            "sprites": cells(rects["full"]),
+        }
     return {
         "size": list(size),
         "sizes": ROW_SIZES,
-        "note": "Row-tier faces, framed, without badges: each state rendered at every whole device pixel size; "
-                "rectangles are [x, y, w, h] in device pixels. 1x only (the sizes are device pixels already).",
-        "sprites": {state: {str(s): list(r) for s, r in by_size.items()} for state, by_size in rects.items()},
+        "finishes": list(rects),
+        "note": "Row-tier faces without badges, keyed by finish: 'full' framed as designed, 'plain' the flat finish "
+                "Decoration Plain draws (no frame, the state's own 1 px rim). Each state rendered at every whole device "
+                "pixel size; rectangles are [x, y, w, h] in device pixels. 1x only (the sizes are device pixels already).",
+        "sprites": {finish: cells(by_state) for finish, by_state in rects.items()},
     }
 
 
@@ -389,9 +418,13 @@ def build_atlases(m, dest_atlas, dest_set, tmp):
 
     row = m.get("row")
     if row and row.get("atlas"):
-        rrects, rsize = row_layout()
-        rbodies = {state: body_of([layer_text(m, row["sprites"][state], row["dir"])], f"r{i}_")
-                   for i, state in enumerate(STATES)}
+        finishes = row_finishes(m)
+        rrects, rsize = row_layout(finishes)
+        rbodies = {}
+        for f, finish in enumerate(finishes):
+            src = row if finish == "full" else m["plain"]
+            rbodies[finish] = {state: body_of([layer_text(m, src["sprites"][state], src["dir"])], f"r{f * len(STATES) + i}_")
+                               for i, state in enumerate(STATES)}
         os.makedirs(dest_set, exist_ok=True)
         im = render_svg(row_sheet(rsize, rrects, rbodies), tmp, f"{m['key']}-row", *rsize)
         write_png(im, os.path.join(dest_set, "row.png"))
@@ -661,6 +694,86 @@ def build_frames(k, dest, tmp):
     return write_parts("frames", dest, hero, row, boxes, tmp, k["key"], note)
 
 
+# The Decoration ornament a kit may ship as sprites (theme-system §3.3; Kirikane, 1.17 T15): its sigil by the size rule
+# (the crest from 13 px, the small crest at 10-12 px only, the lozenge below 10 px, where a crest turns to a blob) and
+# its corner mark. Each is rendered at every whole device pixel of its range, as the row strips are; above the range the
+# largest cell is scaled. Kits without them recolour the palette's drawn ornament (FrameKitMetals).
+ORNAMENTS = ["sigil", "sigil-small", "lozenge", "corner"]
+ORNAMENT_RULE = {"sigil": (13, None), "sigil-small": (10, 12), "lozenge": (None, 9), "corner": (15, None)}
+# The grounds the sprites are drawn on: the dark palettes' windows (a light palette and high contrast keep the palette's
+# own ornament, designed for 3 : 1 on snow). The bar is the ornament's (spec-1.17 OrnamentLight, 3 : 1 graphic).
+ORNAMENT_GROUNDS = {"night": NIGHT, **DARK_GROUNDS}
+ORNAMENT_CONTRAST = 3.0
+
+
+def ornament_layout(k):
+    """{sprite: {px: (x, y, px, px)}}: one shelf per sprite in ORNAMENTS order, its sizes left to right, PAD apart."""
+    rects, y, width = {}, PAD, 0
+    for name in ORNAMENTS:
+        lo, hi = k["ornaments"][name]["sizes"]
+        x = PAD
+        rects[name] = {}
+        for s in range(lo, hi + 1):
+            rects[name][s] = (x, y, s, s)
+            x += s + PAD
+        width = max(width, x)
+        y += hi + PAD
+    return rects, (width, y)
+
+
+def contrast(a, b):
+    def rel(c):
+        l = lin(c)
+        return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2]
+    hi, lo = sorted((rel(a), rel(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def build_ornaments(k, dest, tmp):
+    """A kit's ornament strip (ornaments.png, ornaments.json) and its gates: the size rule, fit, and the leaf's contrast
+    on every dark window (its opaque pixels' mean colour, at the largest sigil). None for a kit without ornaments."""
+    if not k.get("ornaments"):
+        return None
+    assert sorted(k["ornaments"]) == sorted(ORNAMENTS), f"kit {k['key']}: ornaments must be exactly {ORNAMENTS}"
+    rects, size = ornament_layout(k)
+    parts = []
+    for i, name in enumerate(ORNAMENTS):
+        view, body = inner(read_text(path_of(k, k["ornaments"][name]["file"])), f"o{i}_")
+        for s, (x, y, w, h) in rects[name].items():
+            body_s = re.sub(r'(id="|url\(#|href="#)o{0}_'.format(i), lambda g: f"{g.group(1)}o{i}s{s}_", body)
+            parts.append(f'<svg x="{x}" y="{y}" width="{w}" height="{h}" viewBox="{view}" overflow="hidden">{body_s}</svg>')
+    w, h = size
+    im = render_svg(f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">{"".join(parts)}</svg>',
+                    tmp, f"{k['key']}-ornaments", w, h)
+    os.makedirs(dest, exist_ok=True)
+    write_png(im, os.path.join(dest, "ornaments.png"))
+    write_json({
+        "size": [w, h],
+        "note": f"The {k['name']} kit's Decoration ornaments: 'sigil' from 13 px, 'sigil-small' at 10-12 px only, "
+                "'lozenge' below 10 px (2 px times the UI scale), and 'corner', the top-left corner mark (mirror it for the "
+                "others). Each rendered at every whole device pixel of its range; rectangles are [x, y, w, h] in device "
+                "pixels, 1x only.",
+        "sprites": {name: {str(s): list(r) for s, r in by.items()} for name, by in rects.items()},
+    }, os.path.join(dest, "ornaments.json"))
+
+    gates = []
+    for name, (lo, hi) in ORNAMENT_RULE.items():
+        a, b = k["ornaments"][name]["sizes"]
+        ok = (lo is None or a >= lo) and (hi is None or b <= hi)
+        gates.append({"gate": f"Ornament size rule: {name}", "tier": "ornaments", "value": f"{a}-{b}", "bar": f"{lo or ''}-{hi or ''}",
+                      "detail": "sigil from 13 px, sigil-small 10-12 px, lozenge below 10 px, corner from 15 px", "pass": ok})
+    gates += [dict(g, tier="ornaments") for g in fit_check({"ornaments": im}, [("ornaments", 1, rects)])]
+    big = max(rects["sigil"])
+    x, y, s, _ = rects["sigil"][big]
+    px = np.asarray(im, dtype=float)[y:y + s, x:x + s] / 255
+    ink = px[..., :3][px[..., 3] >= 0.9].mean(axis=0)
+    for ground, hexc in ORNAMENT_GROUNDS.items():
+        c = contrast(ink, hex_rgb(hexc))
+        gates.append({"gate": f"Ornament contrast on {ground}", "tier": "ornaments", "value": round(float(c), 2), "bar": ORNAMENT_CONTRAST,
+                      "detail": f"leaf #{''.join(f'{round(v * 255):02X}' for v in ink)} on {hexc}", "pass": bool(c >= ORNAMENT_CONTRAST)})
+    return {"ornaments": im, "rects": rects, "gates": gates}
+
+
 def combo_sources(m, k, tier):
     """{state: [svg]} for set `m`'s faces in kit `k` as the plugin composes them, at a hero tier (badges in; Ready on
     another job once per role seat with its job's icon) or at the row tier ('row', no badges)."""
@@ -857,7 +970,8 @@ def metric_sources(m, tier):
 
 
 def tier_groups(m):
-    """The hero tiers grouped by identical sources (each group is measured once), then the row tier."""
+    """The hero tiers grouped by identical sources (each group is measured once), then the row tier, then the Plain
+    finish where the set has one (its flat masters, held to the same per-set gates)."""
     groups = []
     for tier in TIERS:
         src = metric_sources(m, tier)
@@ -872,6 +986,10 @@ def tier_groups(m):
         g["name"] = "hero-" + "-".join(str(t) for t in g["tiers"])
     groups.append({"name": "row", "tiers": [], "sources": metric_sources(m, None),
                    "digest": None})
+    if m.get("plain"):
+        plain = m["plain"]
+        groups.append({"name": "plain", "tiers": [], "digest": None,
+                       "sources": {s: [layer_text(m, plain["sprites"][s], plain["dir"])] for s in STATES}})
     return groups
 
 
@@ -1205,14 +1323,17 @@ def gate_rows(m, groups):
     return rows
 
 
-def fit_rows(atlas):
+def fit_rows(m, atlas):
     """Fit (section 7.1): nothing bleeds outside the cells (alpha 0 in every gap, so bilinear sampling never pulls a
     neighbour in), and no sprite is cut by its cell (no fully opaque pixel on a cell's outermost ring). Section 7.1's
     "1 px inside" cannot hold for the shared silhouette (r 63.2 in the 128 box, 0.3 px from the edge at 48 px, and
-    In journal's ribbon overhangs it), Medallion's shipped atlas included; this is the check that does hold."""
+    In journal's ribbon overhangs it), Medallion's shipped atlas included; this is the check that does hold. The row
+    strip's cells are checked in every finish it ships (a Plain shelf included)."""
     sets = [("medals", 1, hero_layout()), ("medals@2x", 2, hero_layout())]
     if "row" in atlas:
-        sets.append(("row", 1, row_layout()[0]))
+        by_finish = row_layout(row_finishes(m))[0]
+        sets.append(("row", 1, {(state if finish == "full" else f"{finish} {state}"): cells
+                                for finish, by_state in by_finish.items() for state, cells in by_state.items()}))
     return fit_check(atlas, sets)
 
 
@@ -1475,7 +1596,7 @@ def metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver, pngs, dark
     }
 
 
-def kit_metrics_json(k, combos, own, fit, chrome_ver, pngs):
+def kit_metrics_json(k, combos, own, fit, chrome_ver, pngs, ornaments=None):
     """A kit's record: every set's faces framed in it, held to the per-set gates (G1, G1c and G2 per tier group, G2L on
     the row tier), with the weakest pair and Ready's lead per group for reviewers; the fit of its own atlases; and the
     SHA-256 of each PNG it ships. A set in its own kit is what the set ships (its composites), so it must pass; any
@@ -1504,9 +1625,14 @@ def kit_metrics_json(k, combos, own, fit, chrome_ver, pngs):
         "chrome": chrome_ver,
         "bars": BARS,
         "pngs": pngs,
-        "pass": all(f["pass"] for f in faces.values() if f["own"]) and all(r["pass"] for r in fit),
+        "pass": (all(f["pass"] for f in faces.values() if f["own"]) and all(r["pass"] for r in fit)
+                 and all(g["pass"] for g in (ornaments or {}).get("gates", []))),
         "fit": fit,
         "faces": faces,
+        **({"ornaments": {"note": "The kit's Decoration ornament sprites (ornaments.png): the size rule, the strip's fit, "
+                                  "and the leaf's contrast on each dark palette's window (a light palette and high "
+                                  "contrast draw the palette's own ornament).",
+                          "gates": ornaments["gates"]}} if ornaments else {}),
     }
 
 
@@ -1546,7 +1672,7 @@ def contact_sheet(m, atlas, groups, path):
             y += tier + 8
         y += 24
         if "row" in atlas:
-            rrects, _ = row_layout()
+            rrects = row_layout(row_finishes(m))[0]["full"]
             for i, state in enumerate(STATES):
                 xx = x0 + 12
                 for s in ROW_SIZES:
@@ -1668,7 +1794,7 @@ def report_text(results, kit_results, mix_sal, cross):
     lines = []
     for key, r in kit_results.items():
         lines.append(f"== {key} kit: {'PASS' if r['pass'] else 'FAIL'}")
-        for g in r["fit"]:
+        for g in r["fit"] + r.get("ornaments", {}).get("gates", []):
             lines.append(f"  {'ok  ' if g['pass'] else 'FAIL'} {g['tier']:<14} {g['gate']:<32} {g['value']:>7} (bar {g['bar']}) {g['detail']}")
         for set_key, f in r["faces"].items():
             failing = [g for g in f["gates"] if not g["pass"]]
@@ -1755,7 +1881,7 @@ def build(manifests, kits, selected, root, out_dir, sheets=True):
     and every set's faces in every kit, so each metrics.json carries the whole cross-set table and each kit's carries
     every set. Returns {set: metrics}, {kit: metrics}, the mixed-salience rows and the table."""
     chrome_ver = chrome_version()
-    results, kit_results, atlases, faces, frames, groups_by = {}, {}, {}, {}, {}, {}
+    results, kit_results, atlases, faces, frames, groups_by, ornaments = {}, {}, {}, {}, {}, {}, {}
     with tempfile.TemporaryDirectory() as tmp:
         for m in manifests:
             if m["key"] in selected:
@@ -1769,6 +1895,7 @@ def build(manifests, kits, selected, root, out_dir, sheets=True):
         combos = {}
         for k in kits:
             frames[k["key"]] = build_frames(k, kit_dest(k, root), tmp)
+            ornaments[k["key"]] = build_ornaments(k, kit_dest(k, root), tmp)
             for m in manifests:
                 if m["kit"] == k["key"]:
                     # A set in its own kit draws its composites (the plugin's fast path), so those are what is measured.
@@ -1795,7 +1922,7 @@ def build(manifests, kits, selected, root, out_dir, sheets=True):
             light_gates, light = light_measures(groups)
             gates = (gate_rows(m, groups) + light_gates + dark_gate_rows(dark[m["key"]], halos)
                      + dark_mix_gate_rows(m["key"], dark_mixes)
-                     + fit_rows(atlases[m["key"]]) + fit_parts(faces[m["key"]], "faces"))
+                     + fit_rows(m, atlases[m["key"]]) + fit_parts(faces[m["key"]], "faces"))
             data = metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver, png_hashes(m, root),
                                 dark[m["key"]], halos, dark_mixes, neutral_salience(neutral[m["key"]]))
             _, dest_set = destinations(m, root)
@@ -1805,7 +1932,8 @@ def build(manifests, kits, selected, root, out_dir, sheets=True):
         for k in kits:
             data = kit_metrics_json(k, {m["key"]: combos[(m["key"], k["key"])] for m in manifests},
                                     {m["key"] for m in manifests if m["kit"] == k["key"]},
-                                    fit_parts(frames[k["key"]], "frames"), chrome_ver, kit_png_hashes(k, root))
+                                    fit_parts(frames[k["key"]], "frames"), chrome_ver, kit_png_hashes(k, root),
+                                    ornaments[k["key"]])
             write_json(data, os.path.join(kit_dest(k, root), "metrics.json"), compact=True)
             kit_results[k["key"]] = data
         write_text(checks_cs(kit_results), os.path.join(root, CHECKS_CS))
@@ -1839,7 +1967,10 @@ def outputs(m):
 
 def kit_outputs(k):
     dest = kit_dest(k, "")
-    return [os.path.join(dest, n.format(stem="frames")) for n in PART_FILES] + [os.path.join(dest, "metrics.json")]
+    files = [os.path.join(dest, n.format(stem="frames")) for n in PART_FILES]
+    if k.get("ornaments"):
+        files += [os.path.join(dest, n) for n in ("ornaments.png", "ornaments.json")]
+    return files + [os.path.join(dest, "metrics.json")]
 
 
 def hashes(files, root):

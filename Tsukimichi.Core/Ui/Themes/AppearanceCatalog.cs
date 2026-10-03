@@ -4,7 +4,9 @@ namespace Tsukimichi.Core.Ui.Themes;
 /// A glyph set (theme-system §3.2): its stable key (the configuration's word for it, and its atlas folder under
 /// <c>assets/ui/themes/</c>), how it draws, the kit and palette it was designed with, whether it can be mixed with other
 /// sets state by state (Classic cannot: it predates the shared state grammar), whether it has a flat finish of its own for
-/// Decoration Plain, and whether this build offers it (a set still in its design round is registered but not offered).
+/// Decoration Plain (Medallion's and Classic's are drawn; an atlas set's is its row strip's <c>plain</c> finish, and a set
+/// without one shows Medallion's Plain ladder, theme-system §3.5), and whether this build offers it (a set still in its
+/// design round is registered but not offered).
 /// </summary>
 /// <param name="Name">The set's proper name in English, for logs and tests; the Settings page takes its label from Strings.</param>
 public sealed record GlyphSetInfo(
@@ -35,10 +37,10 @@ public static class GlyphSets
 {
     public static readonly GlyphSetInfo Medallion = new(GlyphSetId.Medallion, "medallion", "Menphina's Medallion", GlyphRenderKind.Procedural, FrameKitId.Brass, PaletteId.Night, Mixable: true, HasPlainFinish: true, Offered: true);
     public static readonly GlyphSetInfo Classic = new(GlyphSetId.Classic, "classic", "Classic", GlyphRenderKind.Procedural, FrameKitId.Brass, PaletteId.Night, Mixable: false, HasPlainFinish: true, Offered: true);
-    public static readonly GlyphSetInfo AetherCrystal = new(GlyphSetId.AetherCrystal, "aether-crystal", "Aether Crystal", GlyphRenderKind.Atlas, FrameKitId.Silver, PaletteId.Night, Mixable: true, HasPlainFinish: true, Offered: true);
-    public static readonly GlyphSetInfo IshgardGlass = new(GlyphSetId.IshgardGlass, "ishgard-glass", "Ishgard Glass", GlyphRenderKind.Atlas, FrameKitId.Came, PaletteId.IshgardSnow, Mixable: true, HasPlainFinish: true, Offered: true);
-    public static readonly GlyphSetInfo Orrery = new(GlyphSetId.Orrery, "astrologian-orrery", "Astrologian's Orrery", GlyphRenderKind.Atlas, FrameKitId.Astrolabe, PaletteId.Dawn, Mixable: true, HasPlainFinish: true, Offered: true);
-    public static readonly GlyphSetInfo Sumi = new(GlyphSetId.Sumi, "sumi-to-kinpaku", "Sumi to Kinpaku", GlyphRenderKind.Atlas, FrameKitId.Kirikane, PaletteId.KuganeLacquer, Mixable: true, HasPlainFinish: true, Offered: false);
+    public static readonly GlyphSetInfo AetherCrystal = new(GlyphSetId.AetherCrystal, "aether-crystal", "Aether Crystal", GlyphRenderKind.Atlas, FrameKitId.Silver, PaletteId.Night, Mixable: true, HasPlainFinish: false, Offered: true);
+    public static readonly GlyphSetInfo IshgardGlass = new(GlyphSetId.IshgardGlass, "ishgard-glass", "Ishgard Glass", GlyphRenderKind.Atlas, FrameKitId.Came, PaletteId.IshgardSnow, Mixable: true, HasPlainFinish: false, Offered: true);
+    public static readonly GlyphSetInfo Orrery = new(GlyphSetId.Orrery, "astrologian-orrery", "Astrologian's Orrery", GlyphRenderKind.Atlas, FrameKitId.Astrolabe, PaletteId.Dawn, Mixable: true, HasPlainFinish: false, Offered: true);
+    public static readonly GlyphSetInfo Sumi = new(GlyphSetId.Sumi, "sumi-to-kinpaku", "Sumi to Kinpaku", GlyphRenderKind.Atlas, FrameKitId.Kirikane, PaletteId.KuganeLacquer, Mixable: true, HasPlainFinish: true, Offered: true);
 
     /// <summary>Every registered set, offered or not.</summary>
     public static readonly IReadOnlyList<GlyphSetInfo> All = [Medallion, Classic, AetherCrystal, IshgardGlass, Orrery, Sumi];
@@ -57,7 +59,7 @@ public static class FrameKits
     public static readonly FrameKitInfo Silver = new(FrameKitId.Silver, "silver", "Silver", Offered: true);
     public static readonly FrameKitInfo Came = new(FrameKitId.Came, "came", "Lead came", Offered: true);
     public static readonly FrameKitInfo Astrolabe = new(FrameKitId.Astrolabe, "astrolabe", "Astrolabe", Offered: true);
-    public static readonly FrameKitInfo Kirikane = new(FrameKitId.Kirikane, "kirikane", "Kirikane", Offered: false);
+    public static readonly FrameKitInfo Kirikane = new(FrameKitId.Kirikane, "kirikane", "Kirikane", Offered: true);
 
     public static readonly IReadOnlyList<FrameKitInfo> All = [Brass, Silver, Came, Astrolabe, Kirikane];
 
@@ -96,13 +98,13 @@ public static class ThemePresets
     public static readonly ThemePreset AetherCrystal = new(ThemeId.AetherCrystal, "aether-crystal", "Aether Crystal", GlyphSetId.AetherCrystal, FrameKitId.Silver, PaletteId.Night, Legacy: false, Offered: true);
     public static readonly ThemePreset IshgardGlass = new(ThemeId.IshgardGlass, "ishgard-glass", "Ishgard Glass", GlyphSetId.IshgardGlass, FrameKitId.Came, PaletteId.IshgardSnow, Legacy: false, Offered: true);
     public static readonly ThemePreset Orrery = new(ThemeId.Orrery, "astrologian-orrery", "Astrologian's Orrery", GlyphSetId.Orrery, FrameKitId.Astrolabe, PaletteId.Dawn, Legacy: false, Offered: true);
-    public static readonly ThemePreset Sumi = new(ThemeId.Sumi, "sumi-to-kinpaku", "Sumi to Kinpaku", GlyphSetId.Sumi, FrameKitId.Kirikane, PaletteId.KuganeLacquer, Legacy: false, Offered: false);
+    public static readonly ThemePreset Sumi = new(ThemeId.Sumi, "sumi-to-kinpaku", "Sumi to Kinpaku", GlyphSetId.Sumi, FrameKitId.Kirikane, PaletteId.KuganeLacquer, Legacy: false, Offered: true);
     public static readonly ThemePreset Classic = new(ThemeId.Classic, "classic", "Classic", GlyphSetId.Classic, FrameKitId.Brass, PaletteId.Night, Legacy: true, Offered: true);
 
     /// <summary>
     /// Every registered theme, in the Themes page's order: Menphina's Medallion, Ishgard Glass, Aether Crystal (the
-    /// approved Themes design puts Glass second; the critic ranked it first), Astrologian's Orrery (1.17), Sumi to Kinpaku
-    /// (still in its design round, not offered), and Classic last, as Legacy.
+    /// approved Themes design puts Glass second; the critic ranked it first), Astrologian's Orrery and Sumi to Kinpaku
+    /// (1.17), and Classic last, as Legacy.
     /// </summary>
     public static readonly IReadOnlyList<ThemePreset> All = [Medallion, IshgardGlass, AetherCrystal, Orrery, Sumi, Classic];
 

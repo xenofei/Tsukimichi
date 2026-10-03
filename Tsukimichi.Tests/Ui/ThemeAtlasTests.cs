@@ -12,7 +12,7 @@ namespace Tsukimichi.Tests.Ui;
 /// </summary>
 public sealed class ThemeAtlasTests
 {
-    private static readonly string[] Shipped = ["ishgard-glass", "aether-crystal", "astrologian-orrery"];
+    private static readonly string[] Shipped = ["ishgard-glass", "aether-crystal", "astrologian-orrery", "sumi-to-kinpaku"];
     private static readonly string[] Measured = ["medallion", .. Shipped];
 
     /// <summary>Sets that ship their own atlases under <c>assets/ui/themes/&lt;set&gt;/</c>.</summary>
@@ -119,19 +119,28 @@ public sealed class ThemeAtlasTests
         Assert.Equal((width, height), OrnamentLayoutTests.PngSize(Path.Combine(ThemesDir(), set, "row.png")));
         Assert.Equal(Enumerable.Range(12, 20), root.GetProperty("sizes").EnumerateArray().Select(static s => s.GetInt32()));
 
+        // ATLAS-CONTRACT §3: the plain form (the full finish alone) or, for a set with a flat finish of its own for
+        // Decoration Plain, the nested form keyed by finish; a set has the 'plain' finish exactly when the catalog says so.
         var sprites = root.GetProperty("sprites");
-        Assert.Equal(States.Order(StringComparer.Ordinal), sprites.EnumerateObject().Select(static p => p.Name).Order(StringComparer.Ordinal));
+        var nested = sprites.TryGetProperty("full", out _);
+        var finishes = nested ? sprites.EnumerateObject().Select(static p => (p.Name, p.Value)).ToArray() : [("full", sprites)];
+        Assert.True(Core.Ui.Themes.GlyphSets.TryGet(set, out var info));
+        Assert.Equal(info.HasPlainFinish ? ["full", "plain"] : ["full"], finishes.Select(static f => f.Name));
         var rects = new List<AtlasRect>();
-        foreach (var state in States)
+        foreach (var (finish, states) in finishes)
         {
-            for (var size = 12; size <= 31; size++)
+            Assert.Equal(States.Order(StringComparer.Ordinal), states.EnumerateObject().Select(static p => p.Name).Order(StringComparer.Ordinal));
+            foreach (var state in States)
             {
-                var r = sprites.GetProperty(state).GetProperty(size.ToString(CultureInfo.InvariantCulture));
-                var rect = new AtlasRect(r[0].GetInt32(), r[1].GetInt32(), r[2].GetInt32(), r[3].GetInt32());
-                Assert.Equal(size, rect.Width);
-                Assert.Equal(size, rect.Height);
-                Assert.True(rect.X >= 1 && rect.Y >= 1 && rect.X + rect.Width <= width - 1 && rect.Y + rect.Height <= height - 1, $"{state} {size}: {rect}");
-                rects.Add(rect);
+                for (var size = 12; size <= 31; size++)
+                {
+                    var r = states.GetProperty(state).GetProperty(size.ToString(CultureInfo.InvariantCulture));
+                    var rect = new AtlasRect(r[0].GetInt32(), r[1].GetInt32(), r[2].GetInt32(), r[3].GetInt32());
+                    Assert.Equal(size, rect.Width);
+                    Assert.Equal(size, rect.Height);
+                    Assert.True(rect.X >= 1 && rect.Y >= 1 && rect.X + rect.Width <= width - 1 && rect.Y + rect.Height <= height - 1, $"{finish} {state} {size}: {rect}");
+                    rects.Add(rect);
+                }
             }
         }
 
@@ -337,7 +346,7 @@ public sealed class ThemeAtlasTests
 
     // ------------------------------------------------------------------ the frames axis (1.17 T11)
 
-    private static readonly string[] Kits = ["astrolabe", "brass", "came", "silver"];
+    private static readonly string[] Kits = ["astrolabe", "brass", "came", "kirikane", "silver"];
 
     /// <summary>Every frame kit the build writes.</summary>
     public static readonly TheoryData<string> ShippedKits = new(Kits);
@@ -350,6 +359,7 @@ public sealed class ThemeAtlasTests
         ["aether-crystal"] = "silver",
         ["ishgard-glass"] = "came",
         ["astrologian-orrery"] = "astrolabe",
+        ["sumi-to-kinpaku"] = "kirikane",
     };
 
     [Fact]
@@ -449,11 +459,39 @@ public sealed class ThemeAtlasTests
         using var json = Json(KitsDir(), kit, "metrics.json");
         var pngs = json.RootElement.GetProperty("pngs").EnumerateObject().ToDictionary(static p => p.Name, static p => p.Value.GetString());
         var dir = $"Tsukimichi/assets/ui/kits/{kit}";
-        Assert.Equal(new[] { $"{dir}/frames-row.png", $"{dir}/frames.png", $"{dir}/frames@2x.png" }, pngs.Keys.Order(StringComparer.Ordinal));
+        string[] expected = Core.Ui.Themes.FrameKits.TryGet(kit, out var info) && Core.Ui.Themes.FrameKitMetals.HasOrnamentSprites(info.Id)
+            ? [$"{dir}/frames-row.png", $"{dir}/frames.png", $"{dir}/frames@2x.png", $"{dir}/ornaments.png"]
+            : [$"{dir}/frames-row.png", $"{dir}/frames.png", $"{dir}/frames@2x.png"];
+        Assert.Equal(expected, pngs.Keys.Order(StringComparer.Ordinal));
         foreach (var (path, sha) in pngs)
         {
             var bytes = File.ReadAllBytes(Path.Combine(OrnamentLayoutTests.RepoRoot(), path));
             Assert.True(string.Equals(sha, Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)), StringComparison.Ordinal), $"{path} is not the PNG metrics.json was measured from");
+        }
+    }
+
+    [Fact]
+    public void Kirikanes_ornament_strip_follows_the_size_rule_and_passes_its_gates()
+    {
+        // The Sumi to Kinpaku concept's size rule: the crest from 13 px, the small crest at 10-12 px only, the lozenge below
+        // 10 px (2 px times the UI scale), and the corner mark only where its leaf bar is a whole device pixel.
+        var folder = Path.Combine(KitsDir(), "kirikane");
+        Assert.True(Core.Ui.Themes.KitOrnamentLayout.TryParse(File.ReadAllText(Path.Combine(folder, "ornaments.json")), out var layout, out var error), error);
+        Assert.Equal((layout!.Width, layout.Height), OrnamentLayoutTests.PngSize(Path.Combine(folder, "ornaments.png")));
+        var (sigilMin, _) = layout.Range(Core.Ui.Themes.KitOrnament.Sigil);
+        Assert.Equal(Core.Ui.Themes.KitOrnaments.SigilMinPx, sigilMin);
+        Assert.Equal((Core.Ui.Themes.KitOrnaments.SmallSigilMinPx, Core.Ui.Themes.KitOrnaments.SigilMinPx - 1), layout.Range(Core.Ui.Themes.KitOrnament.SigilSmall));
+        Assert.True(layout.Range(Core.Ui.Themes.KitOrnament.Lozenge).Max < Core.Ui.Themes.KitOrnaments.SmallSigilMinPx);
+        Assert.Equal(2, layout.Range(Core.Ui.Themes.KitOrnament.Lozenge).Min);
+        Assert.Equal(Core.Ui.Themes.KitOrnaments.CornerMinPx, layout.Range(Core.Ui.Themes.KitOrnament.Corner).Min);
+
+        using var json = Json(folder, "metrics.json");
+        var gates = json.RootElement.GetProperty("ornaments").GetProperty("gates").EnumerateArray().ToArray();
+        Assert.Contains(gates, static g => g.GetProperty("gate").GetString() == "Ornament contrast on kugane-lacquer");
+        Assert.All(gates, static g => Assert.True(g.GetProperty("pass").GetBoolean(), g.ToString()));
+        foreach (var g in gates.Where(static g => g.GetProperty("gate").GetString()!.StartsWith("Ornament contrast", StringComparison.Ordinal)))
+        {
+            Assert.True(g.GetProperty("value").GetDouble() >= 3.0, g.ToString());
         }
     }
 

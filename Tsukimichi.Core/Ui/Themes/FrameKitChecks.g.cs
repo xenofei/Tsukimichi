@@ -12,6 +12,7 @@ public static partial class FrameKitChecks
     [
         new(FrameKitId.Brass, GlyphSetId.IshgardGlass, KitFlagKind.Pair, QuestState.Foreclosed, QuestState.Unknown, 9.91f, Hard: true, ColourVision: true),
         new(FrameKitId.Came, GlyphSetId.Medallion, KitFlagKind.Pair, QuestState.Blocked, QuestState.Foreclosed, 10.82f, Hard: false, ColourVision: true),
+        new(FrameKitId.Kirikane, GlyphSetId.Medallion, KitFlagKind.Pair, QuestState.Blocked, QuestState.Foreclosed, 10.88f, Hard: false, ColourVision: true),
         new(FrameKitId.Silver, GlyphSetId.Orrery, KitFlagKind.ReadyLead, QuestState.Ready, QuestState.Completed, 1.23f, Hard: false, ColourVision: false),
         new(FrameKitId.Silver, GlyphSetId.Orrery, KitFlagKind.CompletedRecedes, QuestState.Completed, QuestState.Ready, 0.81f, Hard: false, ColourVision: false),
         new(FrameKitId.Silver, GlyphSetId.Medallion, KitFlagKind.Pair, QuestState.Blocked, QuestState.Foreclosed, 10.92f, Hard: false, ColourVision: true),

@@ -70,6 +70,23 @@ public static class OrnamentAtlas
     {
         var rect = OrnamentLayout.Sprite(OrnamentSprite.CornerMark);
         var size = max - min;
+
+        // A kit with its own corner mark (Kirikane's kamon corner) puts its L's outer corner on the box's outer corner, in
+        // its own leaf (the tint's alpha only).
+        if (Theme.KitOrnaments)
+        {
+            var at = corner switch
+            {
+                FrameCorner.TopLeft => min,
+                FrameCorner.TopRight => new Vector2(max.X, min.Y),
+                FrameCorner.BottomRight => max,
+                _ => new Vector2(min.X, max.Y),
+            };
+            if (Ornament.KitCorner(dl, at, corner, size.X, (tint & 0xFF000000u) | 0x00FFFFFFu))
+            {
+                return;
+            }
+        }
         if (TryGetWrap(size.X > rect.Width * TwoXThreshold, out var wrap))
         {
             var (u0, v0) = rect.Uv0;

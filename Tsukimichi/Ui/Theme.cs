@@ -193,6 +193,13 @@ public static class Theme
     public static FrameKitId FrameKit { get; private set; } = FrameKitId.Brass;
 
     /// <summary>
+    /// Whether the Decoration ornament's sigil and corner marks are the frame kit's own sprites this frame (Kirikane's crest
+    /// and kamon corner, on a dark standard-contrast palette: <see cref="FrameKitMetals.DrawsOrnamentSprites"/>); otherwise
+    /// the drawn star and L, in <see cref="Brass"/>.
+    /// </summary>
+    public static bool KitOrnaments { get; private set; }
+
+    /// <summary>
     /// Makes <paramref name="kit"/>'s metal the ornament's and the gauges' (feature plan v7 T11): set by the renderer seam
     /// with the appearance in effect, so a pushed appearance (the Themes page's preview) draws its own. Re-resolves the two
     /// only when the kit changes; allocates nothing.
@@ -212,6 +219,7 @@ public static class Theme
     {
         Brass = FrameKitMetals.Ornament(palette, FrameKit);
         Gauges = FrameKitMetals.Gauges(palette, FrameKit);
+        KitOrnaments = FrameKitMetals.DrawsOrnamentSprites(palette, FrameKit);
     }
 
     // ---- The chrome inks (UiPalette.Inks), resolved once per palette change. Night values in brackets.

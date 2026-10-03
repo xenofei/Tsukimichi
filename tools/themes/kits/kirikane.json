@@ -1,7 +1,7 @@
 {
   "key": "kirikane",
   "name": "Kirikane",
-  "note": "Sumi to Kinpaku's kit (kit/): ro-iro lacquer frames with a crest line of cut gold leaf, the shared gilt on act-now, the row tier's frames (kit/_row/), and the badge ring, seat and glyph in gen.py badge()'s order. The Hand seat is the tank seat in Medallion's Hand enamel. Kept beside the set (not in tools/themes/kits/) until the set is offered.",
+  "note": "Sumi to Kinpaku's kit (kit/): ro-iro lacquer frames with a crest line of cut gold leaf, the shared gilt on act-now, the row tier's frames (kit/_row/), and the badge ring, seat and glyph in gen.py badge()'s order. The Hand seat is the tank seat in Medallion's Hand enamel. The Decoration ornaments (kit/ornaments/) ship as a whole-pixel strip, each sprite at the sizes the size rule gives it: the crest sigil from 13 px, the small sigil at 10-12 px only, the 2 px lozenge (times the UI scale) below 10 px, and the kamon corner mark from 15 px (so its leaf bar is at least a device pixel).",
   "root": "docs/design/v7/themes/sumi-to-kinpaku",
   "dest": "Tsukimichi/assets/ui/kits/kirikane",
   "frames": {
@@ -60,5 +60,11 @@
         }
       ]
     }
+  },
+  "ornaments": {
+    "sigil": {"file": "kit/ornaments/sigil.svg", "sizes": [13, 32]},
+    "sigil-small": {"file": "kit/ornaments/sigil-small.svg", "sizes": [10, 12]},
+    "lozenge": {"file": "kit/ornaments/lozenge.svg", "sizes": [2, 6]},
+    "corner": {"file": "kit/ornaments/corner.svg", "sizes": [15, 32]}
   }
 }

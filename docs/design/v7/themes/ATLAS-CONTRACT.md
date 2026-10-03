@@ -1,4 +1,4 @@
-# The per-set atlas contract (1.16.0 T4 ⇄ T5; faces and frames 1.17.0 T11)
+# The per-set atlas contract (1.16.0 T4 ⇄ T5; faces and frames 1.17.0 T11; Plain strip and kit ornaments 1.17.0 T15)
 
 What `tools/themes/build_themes.py` (T4) writes for a glyph set, and what the plugin's atlas runtime (T5,
 `Tsukimichi/Ui/Themes/ThemeAtlasCache.cs`, layouts parsed by `Tsukimichi.Core/Ui/Themes/ThemeAtlasLayout.cs`) reads.
@@ -17,7 +17,7 @@ Tsukimichi/assets/ui/themes/<set-key>/
   medals.json       required   the layout (schema §2: the same as Tsukimichi/assets/ui/medals.json)
   row.png           required*  whole-pixel row strips (schema §3); 1x only
   row.json          required*
-  plain.png         optional   the flat (Decoration Plain) finish at hero tiers, schema §2
+  plain.png         optional   the flat (Decoration Plain) finish at hero tiers, schema §2 (no set ships one; §2)
   plain@2x.png      optional
   plain.json        optional
   faces.png         required†  the set's unframed faces at the hero tiers (§7), 1x
@@ -30,13 +30,14 @@ Tsukimichi/assets/ui/themes/<set-key>/
 Tsukimichi/assets/ui/kits/<kit-key>/          (1.17 T11)
   frames.png, frames@2x.png, frames.json      the kit's frames and badges at the hero tiers (§7)
   frames-row.png, frames-row.json             its frames at every whole device pixel from 12 to 31
+  ornaments.png, ornaments.json               optional (Kirikane, 1.17 T15): its Decoration ornament sprites (§8)
   metrics.json                                every set's faces gated in this kit (§5); not packaged
 ```
 
 † For every mixable set that ships, Menphina's Medallion included (its faces are cut from gen5.py by
 `tools/themes/sources.py`; its own medals stay embedded and procedural).
 
-\* Every set that ships (Ishgard Glass and Aether Crystal in 1.16, Astrologian's Orrery in 1.17) has `row.*`; without them the set would show
+\* Every set that ships (Ishgard Glass and Aether Crystal in 1.16, Astrologian's Orrery and Sumi to Kinpaku in 1.17) has `row.*`; without them the set would show
 Medallion's medals at row sizes (§4), so `ThemeAtlasRuntimeTests` requires them for the shipped sets. Medallion has no
 row strip (its row tier stays procedural); `themes/medallion/` holds its faces (§7) and the build's `metrics.json`.
 
@@ -53,7 +54,7 @@ holds its output to the gates, and `Tsukimichi.Tests/Ui/Themes/ThemeAtlasRuntime
   | 3 | `aether-crystal` | Aether Crystal | atlas (this contract) |
   | 4 | `ishgard-glass` | Ishgard Glass | atlas (this contract) |
   | 5 | `astrologian-orrery` | Astrologian's Orrery | atlas (this contract; ships in 1.17) |
-  | 6 | `sumi-to-kinpaku` | Sumi to Kinpaku | atlas (1.17) |
+  | 6 | `sumi-to-kinpaku` | Sumi to Kinpaku | atlas (this contract; ships in 1.17, with a Plain row finish) |
 
 - Every `.png` and `.json` under `Tsukimichi/assets/ui/themes/` and `Tsukimichi/assets/ui/kits/` but `metrics.json` is
   packaged as a content file (the csproj globs both folders) and loaded from disk with `ITextureProvider.GetFromFile`, so new sets never grow the DLL. Nothing
@@ -105,7 +106,9 @@ Byte-for-byte the schema of today's `Tsukimichi/assets/ui/medals.json`:
   `other-job-*` cells. So the badge geometry is fixed for every set: centre (95, 95), keyline 24, seat 19.9, job slot
   35.5, in the 128-unit box (`MedalArt.BadgeCenter`, `MedalArt.JobIconSlot`). The face must keep that disc clear.
 - `plain.*` (optional) is the flat finish at hero tiers: no material, a 1 px state rim, as Medallion's Plain ladder.
-  Without it, Decoration Plain draws Medallion's Plain ladder for this set at hero sizes.
+  Without it, Decoration Plain draws Medallion's Plain ladder for this set at hero sizes. **No set ships one:** a second
+  782 × 574 atlas beside `medals` and a two-finish row strip breaks the 4 MB per-set budget (§6), so a set's own flat
+  finish lives in its row strip (§3) and from 32 px Medallion's Plain ladder stands in, as it has no badge either.
 - Extra sprite keys are allowed and ignored. Unknown top-level keys are ignored.
 
 ## 3. Row strips: `row.json`
@@ -137,6 +140,12 @@ What the build writes (the plain form, one finish: Full):
   the same PNG: `"sprites": { "full": { <states> }, "plain": { <states> }, "quiet": { <states> } }`, with an optional
   `"finishes": ["full", "plain"]` list for readers. `full` is then required; without `plain`, Plain draws Medallion's
   Plain ladder; without `quiet`, Quiet draws `full`. The runtime tells the forms apart by a `full` key under `sprites`.
+- **The build writes the nested form for a set with a flat finish** (its manifest's `plain` masters; Sumi to Kinpaku's
+  `_plain/`, 1.17 T15): every state's `full` shelf, then every state's `plain` shelf, in one `row.png`. A set without
+  one keeps the plain form, byte for byte. `GlyphSetInfo.HasPlainFinish` says which sets have one (Medallion's and
+  Classic's are drawn; among the atlas sets only Sumi's), and `ThemeAtlasTests` holds the strip to it. The Plain cells
+  carry no frame and no badge: the flat face with the state's own 1 px rim (Medallion's Plain rim inks), so the two
+  Plain finishes line up in a mix. The build gates them as a tier group of their own (`plain`: G1, G1c, G2, G2D).
 
 ## 4. How the runtime uses them (for the art's sake)
 
@@ -145,7 +154,7 @@ What the build writes (the plain form, one finish: Full):
 | S | Full / Quiet | Plain |
 |---|---|---|
 | ≥ 32 (hero) | `medals` at the smallest tier ≥ S (1x, then 2x above 128); never shrunk more than 1.5× | `plain` if present, else Medallion's Plain ladder |
-| 12–31 (row) | `row` `full` (or `quiet`) cell of exactly S | `row` `plain` cell of exactly S, else Medallion's Plain ladder |
+| 12–31 (row) | `row` `full` (or `quiet`) cell of exactly S | `row` `plain` cell of exactly S (Sumi to Kinpaku), else Medallion's Plain ladder |
 | < 12 | the 12 px row cell, shrunk | as above |
 
 - Loading is lazy per set (`ThemeAtlasCache`): only sets the current appearance uses are requested; `row` loads first,
@@ -171,8 +180,12 @@ in one appearance, so each path has its own budget.
 - Per set, the `@2x` textures of each path: **≤ 12 MB** of RGBA.
 - Per set, PNG files on disk: **≤ 2.5 MB** as designed, **≤ 1.5 MB** of faces. Per kit: **≤ 1.5 MB**, and its 1x
   textures **≤ 4 MB**.
-- Every reachable appearance (every shipped set, each by its larger path, Medallion included, plus the largest kit,
-  1x): **≤ 12 MB** of RGBA in total.
+- Every reachable appearance: **≤ 12 MB** of RGBA at 1x in total. The resolver composes every set whose own kit is not
+  the appearance's (`ResolvedAppearance.Composes`), so in kit K only the set whose own kit is K draws as designed and
+  every other set draws from its faces. The worst case is therefore, maximised over the kits K: the K set as designed
+  (Medallion's is its embedded atlas) + every other shipped set's `faces` and `faces-row` + K's `frames`, `frames-row`
+  and `ornaments` (every set in the column at once). With Sumi to Kinpaku (1.17) the worst is in Kirikane, about
+  11.0 MB. Until 1.17 this counted every set at its larger path, a look nothing draws (owner's ruling, 1.17 T15).
 
 ## 7. Faces and frames: the frames axis (1.17 T11)
 
@@ -231,3 +244,36 @@ under 1.25, Completed over 0.8 of Ready. The build compiles them into `Tsukimich
 (`--check` covers it), since `metrics.json` is not packaged. The cross-set table frames every face in the neutral kit,
 Brass, whose four urgency tiers are one bezel, so the frame cancels and the faces decide; it is recorded worst-of-modes
 (`cross.sets`) and per vision mode (`cross.modes`).
+
+## 8. Kit ornaments: `ornaments.json` (1.17 T15)
+
+A frame kit may ship its Decoration ornament as sprites (theme-system §3.3: "sigil sprite, corner marks"). Kirikane does;
+the other kits recolour the palette's drawn ornament (`FrameKitMetals`). One 1x PNG of whole-device-pixel cells, each a
+real render at that size:
+
+```json
+{
+  "size": [W, H],
+  "note": "free text",
+  "sprites": {
+    "sigil": { "13": [x, y, 13, 13], ..., "32": [...] },
+    "sigil-small": { "10": [...], "11": [...], "12": [...] },
+    "lozenge": { "2": [...], ..., "6": [...] },
+    "corner": { "15": [...], ..., "32": [...] }
+  }
+}
+```
+
+- All four sprites are required, each at a contiguous range of sizes; cells are square, ≥ 1 px inside the image and
+  ≥ 2 px apart (§2). Parsed by `Tsukimichi.Core/Ui/Themes/KitOrnaments.cs` (`KitOrnamentLayout`).
+- **The sigil's size rule** (`KitOrnaments.Sigil`; the Sumi to Kinpaku concept, Round 2 tidy-up 3): `sigil` from 13 px;
+  `sigil-small` at 10–12 px only; below 10 px never a crest but `lozenge`, 2 px times the UI scale. A size above a
+  sprite's range draws its largest cell scaled.
+- **`corner`** is the top-left mark; the plugin mirrors it into the other corners by UVs. Its L's outer corner sits on
+  the frame's corner, its arms about the drawn Brass L's length, and it never draws under 15 px, so its leaf bar (2.2 of
+  32 units) is a whole device pixel (`KitOrnaments.CornerBox`).
+- Drawn on a dark standard-contrast palette only (`FrameKitMetals.DrawsOrnamentSprites`): the sprites are gold leaf. A
+  light palette keeps its own ornament, designed for 3 : 1 on snow, and high contrast its strong line. Callers draw the
+  palette's star and L while the strip loads (`ThemeAtlasCache.TryDrawOrnament`).
+- **Gates** (the kit's `metrics.json`, `ornaments.gates`): the size rule, fit (no bleed, not cut), and the leaf's contrast
+  on Night's, Dawn's and Kugane Lacquer's windows (≥ 3 : 1, the ornament's bar). The kit's PNG budget (§6) includes it.

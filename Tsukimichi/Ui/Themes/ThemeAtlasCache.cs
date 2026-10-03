@@ -20,10 +20,10 @@ namespace Tsukimichi.Ui.Themes;
 /// docs/design/v7/themes/ATLAS-CONTRACT.md), generalising <see cref="MedalAtlas"/> to atlases loaded from disk:
 /// <list type="bullet">
 /// <item>Only what the appearance draws loads. A set's or kit's layouts (<c>medals.json</c>, <c>plain.json</c>,
-/// <c>row.json</c>, <c>faces*.json</c>, <c>frames*.json</c>) are read and checked off the UI thread the first time it is
+/// <c>row.json</c>, <c>faces*.json</c>, <c>frames*.json</c>, <c>ornaments.json</c>) are read and checked off the UI thread the first time it is
 /// wanted or drawn; a malformed or missing file just leaves that part out (logged once).</item>
-/// <item>A row strip (a set's <c>row</c>, a composed set's <c>faces-row</c>, a kit's <c>frames-row</c>) is requested as
-/// soon as the appearance draws it; a hero atlas on its first hero draw; a 2x atlas only above the largest 1x tier (while
+/// <item>A row strip (a set's <c>row</c>, a composed set's <c>faces-row</c>, a kit's <c>frames-row</c>) and the ornament
+/// kit's <c>ornaments</c> are requested as soon as the appearance draws them; a hero atlas on its first hero draw; a 2x atlas only above the largest 1x tier (while
 /// it loads, the 1x atlas's largest tier stands in).</item>
 /// <item>A requested part is rented (<see cref="ISharedImmediateTexture.RentAsync"/>), so Dalamud's shared cache cannot let
 /// it go while the plugin holds it: a set's medals never drop back to a stand-in after a spell off-screen.</item>
@@ -41,7 +41,7 @@ internal static class ThemeAtlasCache
     /// <summary>Frames a released texture is kept before it is disposed, so no draw list still holds it.</summary>
     private const int RetireFrames = 1;
 
-    private const int PartCount = (int)AtlasPart.Frames2x + 1;
+    private const int PartCount = (int)AtlasPart.Ornaments + 1;
 
     private static readonly AtlasResidency Residency = new();
     private static readonly Entry?[] Sets = new Entry?[Slots];
@@ -99,6 +99,12 @@ internal static class ThemeAtlasCache
             if (Residency.IsWanted(kit) && EnsureKit(kit) is { Layouts.FramesRow: not null } entry && Residency.ShouldPreload(kit, AtlasPart.FramesRow))
             {
                 Texture(entry, AtlasPart.FramesRow, now);
+            }
+
+            if (FrameKitMetals.HasOrnamentSprites(kit) && Residency.WantsOrnaments(kit) && EnsureKit(kit) is { Layouts.Ornaments: not null } ornamentKit
+                && Residency.ShouldPreload(kit, AtlasPart.Ornaments))
+            {
+                Texture(ornamentKit, AtlasPart.Ornaments, now);
             }
 
             ReleaseIdle(Kits[(int)kit & (Slots - 1)], now);
@@ -243,6 +249,25 @@ internal static class ThemeAtlasCache
             hero = true;
         }
 
+        return true;
+    }
+
+    /// <summary>
+    /// Draws <paramref name="kit"/>'s ornament <paramref name="sprite"/> (its whole-pixel cell of <paramref name="cell"/> px,
+    /// clamped to the strip's range) into <paramref name="min"/>..<paramref name="max"/>, mirrored by
+    /// <paramref name="flipX"/> and <paramref name="flipY"/> (a corner mark's other corners), tinted. False, with nothing
+    /// drawn, while the strip loads or when the kit ships none; the caller draws the palette's ornament instead.
+    /// </summary>
+    public static bool TryDrawOrnament(ImDrawListPtr dl, FrameKitId kit, KitOrnament sprite, int cell, Vector2 min, Vector2 max, bool flipX, bool flipY, uint tint)
+    {
+        if (!FrameKitMetals.HasOrnamentSprites(kit) || EnsureKit(kit) is not { Layouts.Ornaments: { } layout } entry
+            || Texture(entry, AtlasPart.Ornaments, Now) is not { } wrap || !layout.TryRect(sprite, cell, out var rect))
+        {
+            return false;
+        }
+
+        var (u0, v0, u1, v1) = layout.Uv(rect);
+        dl.AddImage(wrap.Handle, min, max, new Vector2(flipX ? u1 : u0, flipY ? v1 : v0), new Vector2(flipX ? u0 : u1, flipY ? v0 : v1), tint);
         return true;
     }
 
@@ -502,7 +527,8 @@ internal static class ThemeAtlasCache
         PartAtlasLayout? Faces,
         PartAtlasLayout? FacesRow,
         PartAtlasLayout? Frames,
-        PartAtlasLayout? FramesRow);
+        PartAtlasLayout? FramesRow,
+        KitOrnamentLayout? Ornaments = null);
 
     /// <summary>A glyph set's atlases (<paramref name="set"/>) or a frame kit's (<paramref name="kit"/>).</summary>
     private sealed class Entry(string directory, GlyphSetId? set, FrameKitId? kit)
@@ -539,6 +565,7 @@ internal static class ThemeAtlasCache
                 AtlasPart.FramesRow when l?.FramesRow is not null => "frames-row.png",
                 AtlasPart.Frames when l?.Frames is not null => "frames.png",
                 AtlasPart.Frames2x when l?.Frames is not null => "frames@2x.png",
+                AtlasPart.Ornaments when l?.Ornaments is not null => "ornaments.png",
                 _ => null,
             };
         }
@@ -576,7 +603,15 @@ internal static class ThemeAtlasCache
             try
             {
                 read = kit is not null
-                    ? new Layouts(null, null, null, null, null, ReadParts("frames.json", PartAtlasKind.Frames), ReadParts("frames-row.json", PartAtlasKind.Frames))
+                    ? new Layouts(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        ReadParts("frames.json", PartAtlasKind.Frames),
+                        ReadParts("frames-row.json", PartAtlasKind.Frames),
+                        FrameKitMetals.HasOrnamentSprites(kit.Value) ? ReadOrnaments("ornaments.json") : null)
                     : new Layouts(
                         ReadHero("medals.json"),
                         ReadHero("plain.json"),
@@ -648,6 +683,23 @@ internal static class ThemeAtlasCache
             }
 
             if (PartAtlasLayout.TryParse(text, kind, out var layout, out var error))
+            {
+                return layout;
+            }
+
+            WarnOnce($"{file} is not a valid layout ({error})");
+            return null;
+        }
+
+        private KitOrnamentLayout? ReadOrnaments(string file)
+        {
+            var text = Read(file);
+            if (text is null)
+            {
+                return null;
+            }
+
+            if (KitOrnamentLayout.TryParse(text, out var layout, out var error))
             {
                 return layout;
             }

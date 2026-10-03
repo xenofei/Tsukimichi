@@ -257,19 +257,29 @@ public sealed class AppearanceTests
         Assert.Equal(PaletteId.Dawn, AppearanceResolver.Resolve(new AppearanceConfig { Palette = "dawn" }).Palette);
         Assert.Equal(PaletteId.KuganeLacquer, AppearanceResolver.Resolve(new AppearanceConfig { Palette = "kugane-lacquer" }).Palette);
 
+        // Every registered set, kit and palette is offered from 1.17 (T15), so keys a newer build might write stand in for
+        // the unoffered ones.
         resolved = AppearanceResolver.Resolve(new AppearanceConfig
         {
-            Theme = "sumi-to-kinpaku",
+            Theme = "kintsugi",
             Palette = "sunset",
             Frames = "pewter",
-            Glyphs = new Dictionary<string, string> { ["ready"] = "sumi-to-kinpaku" },
+            Glyphs = new Dictionary<string, string> { ["ready"] = "kintsugi" },
         });
 
         Assert.Equal(ThemeId.Medallion, resolved.Theme.Id);
         Assert.Equal(PaletteId.Night, resolved.Palette);
         Assert.Equal(FrameKitId.Brass, resolved.Frames);
         Assert.Equal(GlyphSetId.Medallion, resolved.SetFor(QuestState.Ready));
-        Assert.Equal(["theme: sumi-to-kinpaku", "ready: sumi-to-kinpaku", "palette: sunset", "frames: pewter"], resolved.Unknown);
+        Assert.Equal(["theme: kintsugi", "ready: kintsugi", "palette: sunset", "frames: pewter"], resolved.Unknown);
+
+        // Sumi to Kinpaku and its Kirikane kit are offered from 1.17 (T15), on Kugane Lacquer.
+        resolved = AppearanceResolver.Resolve(new AppearanceConfig { Theme = "sumi-to-kinpaku", Glyphs = new Dictionary<string, string> { ["ready"] = "sumi-to-kinpaku" } });
+        Assert.Equal(ThemeId.Sumi, resolved.Theme.Id);
+        Assert.Equal(FrameKitId.Kirikane, resolved.Frames);
+        Assert.Equal(PaletteId.KuganeLacquer, resolved.Palette);
+        Assert.Equal(GlyphSetId.Sumi, resolved.SetFor(QuestState.Ready));
+        Assert.Empty(resolved.Unknown);
 
         // The Orrery and its Astrolabe kit are offered from 1.17.
         resolved = AppearanceResolver.Resolve(new AppearanceConfig { Theme = "astrologian-orrery", Glyphs = new Dictionary<string, string> { ["ready"] = "medallion" } });

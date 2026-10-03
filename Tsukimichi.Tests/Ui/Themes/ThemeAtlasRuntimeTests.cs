@@ -333,14 +333,14 @@ public sealed class ThemeAtlasRuntimeTests
     // ------------------------------------------------------------------ shipped sets
 
     [Fact]
-    public void Every_theme_folder_is_a_registered_atlas_set_that_meets_the_contract_and_its_budgets()
+    public void Every_theme_folder_meets_the_contract_and_its_budgets_and_the_worst_reachable_appearance_fits_12_MB()
     {
         var dir = ThemesDir();
         var folders = Directory.Exists(dir) ? Directory.GetDirectories(dir) : [];
 
-        // A reachable appearance draws each set it uses either as designed (medals, plain, row) or composed in another
-        // kit (faces, faces-row), never both, plus at most one kit's frames; Medallion as designed is its embedded atlas.
-        long worstCase1x = 0;
+        // Each set's 1x bytes on its two paths (Medallion as designed is its embedded atlas), and each kit's 1x frames and
+        // ornaments, for the reachable worst case below.
+        var sets = new List<SetBytes>();
         foreach (var folder in folders)
         {
             var key = Path.GetFileName(folder);
@@ -358,7 +358,7 @@ public sealed class ThemeAtlasRuntimeTests
                 // Medallion's folder holds its faces for the frames axis and the build's metrics: its own atlas stays
                 // embedded at assets/ui/.
                 Assert.Equal(["faces-row.png", "faces.png", "faces@2x.png"], Directory.GetFiles(folder, "*.png").Select(Path.GetFileName).Order(StringComparer.Ordinal));
-                worstCase1x += Math.Max((long)MedalLayout.Width * MedalLayout.Height * 4, faces1x);
+                sets.Add(new SetBytes(set.Id, set.DefaultFrames, (long)MedalLayout.Width * MedalLayout.Height * 4, faces1x));
                 continue;
             }
 
@@ -391,10 +391,10 @@ public sealed class ThemeAtlasRuntimeTests
             Assert.True(bytes2x <= 12L * 1024 * 1024, $"{key}: {bytes2x} bytes of 2x textures (budget 12 MB)");
             var onDisk = Directory.GetFiles(folder, "*.png").Where(static f => !Path.GetFileName(f).StartsWith("faces", StringComparison.Ordinal)).Sum(static f => new FileInfo(f).Length);
             Assert.True(onDisk <= 2_621_440, $"{key}: {onDisk} bytes of PNG as designed (budget 2.5 MB)");
-            worstCase1x += Math.Max(bytes1x, faces1x);
+            sets.Add(new SetBytes(set.Id, set.DefaultFrames, bytes1x, faces1x));
         }
 
-        long kit1x = 0;
+        var kits = new Dictionary<FrameKitId, long>();
         foreach (var folder in Directory.GetDirectories(KitsDir()))
         {
             var key = Path.GetFileName(folder);
@@ -404,11 +404,73 @@ public sealed class ThemeAtlasRuntimeTests
             Assert.True(frames2x <= 12L * 1024 * 1024, $"{key}: {frames2x} bytes of 2x frames textures (budget 12 MB)");
             var onDisk = Directory.GetFiles(folder, "*.png").Sum(static f => new FileInfo(f).Length);
             Assert.True(onDisk <= 1_572_864, $"{key}: {onDisk} bytes of PNG (budget 1.5 MB)");
-            kit1x = Math.Max(kit1x, frames1x);
+            var ornaments1x = 0L;
+            var ornamentsPath = Path.Combine(folder, "ornaments.json");
+            if (File.Exists(ornamentsPath))
+            {
+                Assert.True(KitOrnamentLayout.TryParse(File.ReadAllText(ornamentsPath), out var ornaments, out var error), $"{key} ornaments: {error}");
+                Assert.Equal((ornaments!.Width, ornaments.Height), OrnamentLayoutTests.PngSize(Path.Combine(folder, "ornaments.png")));
+                ornaments1x = ornaments.Bytes;
+            }
+
+            kits[kit.Id] = frames1x + ornaments1x;
         }
 
-        worstCase1x += kit1x;
-        Assert.True(worstCase1x <= 12L * 1024 * 1024, $"every set at once, in the largest kit, is {worstCase1x} bytes at 1x (budget 12 MB)");
+        var (worst, inKit) = WorstReachable1x(sets, kits);
+        Assert.True(worst <= ReachableBudget1x, $"the worst reachable appearance (in {inKit}) is {worst} bytes at 1x (budget 12 MB)");
+    }
+
+    /// <summary>The 1x RGBA every reachable appearance may hold at once (ATLAS-CONTRACT §6).</summary>
+    private const long ReachableBudget1x = 12L * 1024 * 1024;
+
+    /// <summary>A set's 1x bytes as designed (medals, plain, row) and composed (faces, faces-row), and its own kit.</summary>
+    private readonly record struct SetBytes(GlyphSetId Set, FrameKitId OwnKit, long Designed, long Faces);
+
+    /// <summary>
+    /// The most 1x RGBA a reachable appearance holds, and the kit it is in (ATLAS-CONTRACT §6). The resolver composes every
+    /// set whose own kit is not the appearance's (<see cref="ResolvedAppearance.Composes"/>), so in kit K only the sets
+    /// whose own kit is K draw as designed (one per kit today) and every other set draws from its faces; K's frames and
+    /// ornaments are the only kit parts loaded. The worst case is every set in the column at once, taken over every kit.
+    /// </summary>
+    private static (long Bytes, FrameKitId Kit) WorstReachable1x(IReadOnlyList<SetBytes> sets, IReadOnlyDictionary<FrameKitId, long> kits)
+    {
+        var worst = (Bytes: 0L, Kit: FrameKitId.Brass);
+        foreach (var (kit, kitBytes) in kits)
+        {
+            var total = kitBytes + sets.Sum(s => s.OwnKit == kit ? s.Designed : s.Faces);
+            if (total > worst.Bytes)
+            {
+                worst = (total, kit);
+            }
+        }
+
+        return worst;
+    }
+
+    [Fact]
+    public void The_reachable_budget_still_fails_when_one_real_look_would_go_over_12_MB()
+    {
+        const long mb = 1024 * 1024;
+        var kits = new Dictionary<FrameKitId, long> { [FrameKitId.Brass] = 2 * mb, [FrameKitId.Silver] = 2 * mb };
+        SetBytes[] fits =
+        [
+            new(GlyphSetId.Medallion, FrameKitId.Brass, 3 * mb, 2 * mb),
+            new(GlyphSetId.AetherCrystal, FrameKitId.Silver, 3 * mb, 2 * mb),
+            new(GlyphSetId.IshgardGlass, FrameKitId.Came, 3 * mb, 2 * mb),
+        ];
+
+        // In Brass: Medallion as designed (3), the others' faces (2 + 2) and Brass's frames (2) are 9 MB. Counting every
+        // set at its larger path (3 + 3 + 3 + 2) would be 11, a look nothing draws.
+        Assert.Equal((9 * mb, FrameKitId.Brass), WorstReachable1x(fits, kits));
+
+        // One set's faces growing by 4 MB makes every look that composes it 13 MB: the check catches it.
+        SetBytes[] over = [fits[0], fits[1], fits[2] with { Faces = 6 * mb }];
+        Assert.Equal((13 * mb, FrameKitId.Brass), WorstReachable1x(over, kits));
+        Assert.True(WorstReachable1x(over, kits).Bytes > ReachableBudget1x);
+
+        // So does a set as designed in its own kit going over, or a kit's frames and ornaments.
+        Assert.True(WorstReachable1x([fits[0] with { Designed = 7 * mb }, fits[1], fits[2]], kits).Bytes > ReachableBudget1x);
+        Assert.True(WorstReachable1x(fits, new Dictionary<FrameKitId, long> { [FrameKitId.Came] = 6 * mb }).Bytes > ReachableBudget1x);
     }
 
     [Fact]
@@ -449,6 +511,7 @@ public sealed class ThemeAtlasRuntimeTests
     [InlineData("ishgard-glass")]
     [InlineData("aether-crystal")]
     [InlineData("astrologian-orrery")]
+    [InlineData("sumi-to-kinpaku")]
     public void The_shipped_revived_sets_are_drawable_from_hero_to_row(string key)
     {
         var folder = Path.Combine(ThemesDir(), key);
@@ -467,6 +530,62 @@ public sealed class ThemeAtlasRuntimeTests
                 Assert.Equal(Math.Clamp((int)px, 12, 31), pick.Cell);
             }
         }
+    }
+
+    [Fact]
+    public void Sumi_draws_its_own_flat_finish_at_Plain_below_32_px_and_every_other_set_Medallions()
+    {
+        // theme-system §3.5: a set's own flat finish where it has one (HasPlainFinish: Sumi to Kinpaku's row strip carries
+        // a 'plain' finish), otherwise Medallion's Plain ladder stands in. No set ships a hero 'plain' atlas (one would
+        // break the 4 MB per-set budget beside medals and the row strip), so from 32 px Medallion's Plain stands in for all.
+        foreach (var set in GlyphSets.All.Where(static s => s.Offered && s.Kind == GlyphRenderKind.Atlas))
+        {
+            var folder = Path.Combine(ThemesDir(), set.Key);
+            Assert.True(RowStripLayout.TryParse(File.ReadAllText(Path.Combine(folder, "row.json")), out var row, out var error), error);
+            Assert.True(HeroAtlasLayout.TryParse(File.ReadAllText(Path.Combine(folder, "medals.json")), out var medals, out error), error);
+            Assert.False(File.Exists(Path.Combine(folder, "plain.json")), set.Key);
+            Assert.Equal(set.HasPlainFinish, row!.Has(RowFinish.Plain));
+            for (var px = 8f; px <= 300f; px += 1f)
+            {
+                var pick = ThemeAtlasRules.Pick(px, MedalFinish.Plain, medals, null, row);
+                if (px < MedalLayout.RowTierMaxPx && set.HasPlainFinish)
+                {
+                    Assert.Equal((AtlasSource.Row, RowFinish.Plain, Math.Clamp((int)px, 12, 31)), (pick.Source, pick.Finish, pick.Cell));
+                    Assert.True(row.TryRect(QuestState.Ready, RowFinish.Plain, pick.Cell, out var plain) && row.TryRect(QuestState.Ready, RowFinish.Full, pick.Cell, out var full) && plain != full);
+                }
+                else
+                {
+                    Assert.Equal(AtlasSource.StandIn, pick.Source);
+                }
+            }
+        }
+
+        Assert.True(GlyphSets.Sumi.HasPlainFinish);
+    }
+
+    [Fact]
+    public void The_ornament_kits_strip_is_kept_while_its_metal_is_the_ornaments()
+    {
+        var residency = new AtlasResidency();
+        residency.Retain(AppearanceResolver.Resolve(new AppearanceConfig { Theme = "sumi-to-kinpaku" }));
+        Assert.True(residency.WantsOrnaments(FrameKitId.Kirikane));
+        Assert.False(residency.WantsOrnaments(FrameKitId.Brass));
+        Assert.True(residency.ShouldPreload(FrameKitId.Kirikane, AtlasPart.Ornaments));
+
+        // Sumi in its own kit composes nothing, so the kit's frames are not wanted; its ornaments are.
+        Assert.False(residency.IsWanted(FrameKitId.Kirikane));
+        residency.Touch(FrameKitId.Kirikane, AtlasPart.Ornaments, 0);
+        Assert.False(residency.ShouldPreload(FrameKitId.Kirikane, AtlasPart.Ornaments));
+        var later = AtlasResidency.IdleSeconds + 1;
+        Assert.False(residency.ShouldRelease(FrameKitId.Kirikane, AtlasPart.Ornaments, later));
+
+        // Another kit's frames (or high contrast, which draws the palette's ornament) let the strip go once idle.
+        residency.Retain(AppearanceResolver.Resolve(new AppearanceConfig { Theme = "sumi-to-kinpaku", HighContrast = true }));
+        Assert.False(residency.WantsOrnaments(FrameKitId.Kirikane));
+        Assert.True(residency.ShouldRelease(FrameKitId.Kirikane, AtlasPart.Ornaments, later));
+        residency.Retain(AppearanceResolver.Resolve(new AppearanceConfig { Theme = "sumi-to-kinpaku", Frames = "brass" }));
+        Assert.False(residency.WantsOrnaments(FrameKitId.Kirikane));
+        Assert.True(residency.WantsOrnaments(FrameKitId.Brass));
     }
 
     [Fact]

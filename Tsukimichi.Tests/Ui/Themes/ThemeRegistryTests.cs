@@ -105,14 +105,20 @@ public sealed class ThemeRegistryTests
     }
 
     [Fact]
-    public void The_1_17_offer_adds_the_Orrery_and_the_Astrolabe_kit()
+    public void The_1_17_offer_adds_the_Orrery_and_Sumi_to_Kinpaku_with_their_kits()
     {
         Assert.Equal(
-            [GlyphSetId.Medallion, GlyphSetId.Classic, GlyphSetId.AetherCrystal, GlyphSetId.IshgardGlass, GlyphSetId.Orrery],
+            [GlyphSetId.Medallion, GlyphSetId.Classic, GlyphSetId.AetherCrystal, GlyphSetId.IshgardGlass, GlyphSetId.Orrery, GlyphSetId.Sumi],
             GlyphSets.All.Where(static s => s.Offered).Select(static s => s.Id));
         Assert.Equal(
-            [FrameKitId.Brass, FrameKitId.Silver, FrameKitId.Came, FrameKitId.Astrolabe],
+            [FrameKitId.Brass, FrameKitId.Silver, FrameKitId.Came, FrameKitId.Astrolabe, FrameKitId.Kirikane],
             FrameKits.All.Where(static k => k.Offered).Select(static k => k.Id));
+
+        // A flat finish of its own for Decoration Plain: Medallion's and Classic's drawn ones, and Sumi to Kinpaku's row
+        // strip; the other atlas sets show Medallion's Plain ladder (theme-system §3.5).
+        Assert.Equal(
+            [GlyphSetId.Medallion, GlyphSetId.Classic, GlyphSetId.Sumi],
+            GlyphSets.All.Where(static s => s.HasPlainFinish).Select(static s => s.Id));
         // 1.17 (T16) offers Dawn and Kugane Lacquer beside them.
         Assert.Equal(
             [PaletteId.Night, PaletteId.IshgardSnow, PaletteId.Dawn, PaletteId.KuganeLacquer, PaletteId.FollowDalamud],

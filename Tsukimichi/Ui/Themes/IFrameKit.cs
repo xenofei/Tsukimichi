@@ -25,7 +25,7 @@ internal interface IFrameKit
 }
 
 /// <summary>
-/// A metal kit (Brass, Silver, Lead came, Astrolabe): the Moon Road's gauges (<see cref="MedalGauge"/>) and the row badge
+/// A metal kit (Brass, Silver, Lead came, Astrolabe, Kirikane): the Moon Road's gauges (<see cref="MedalGauge"/>) and the row badge
 /// content (<see cref="MedalArt.RowGlyph"/>) drawn in the kit's metal. The metal itself is in <see cref="Theme.Gauges"/>
 /// and <see cref="Theme.Brass"/>, which the seam sets from the kit (<see cref="Theme.UseFrameKit"/>;
 /// <see cref="FrameKitMetals"/>), so Brass draws exactly as shipped. The row badges at text height stay one drawing for
@@ -63,12 +63,12 @@ internal sealed class ClassicFrameKit : IFrameKit
 internal static class FrameKitRenderers
 {
     private static readonly MetalFrameKit[] Kits =
-        [new(FrameKitId.Brass), new(FrameKitId.Silver), new(FrameKitId.Came), new(FrameKitId.Astrolabe)];
+        [new(FrameKitId.Brass), new(FrameKitId.Silver), new(FrameKitId.Came), new(FrameKitId.Astrolabe), new(FrameKitId.Kirikane)];
 
     /// <summary>The Brass kit, the default.</summary>
     public static IFrameKit Brass => Kits[0];
 
-    /// <summary>The kit that draws <paramref name="id"/>: its own metal, or Brass for a kit without one yet (Kirikane).</summary>
+    /// <summary>The kit that draws <paramref name="id"/>: its own metal, or Brass for an id this build does not know.</summary>
     public static IFrameKit For(FrameKitId id)
     {
         foreach (var kit in Kits)

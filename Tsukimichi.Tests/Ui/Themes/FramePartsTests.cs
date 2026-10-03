@@ -210,13 +210,16 @@ public sealed class FramePartsTests
         {
             Assert.Equal(palette.Brass, FrameKitMetals.Ornament(palette, FrameKitId.Brass));
             Assert.Equal(palette.Gauges, FrameKitMetals.Gauges(palette, FrameKitId.Brass));
-            Assert.Equal(palette.Brass, FrameKitMetals.Ornament(palette, FrameKitId.Kirikane));
         }
 
-        // spec-1.17 §B1: each kit's resting ramp, highlight → body → shadow → deep.
+        // spec-1.17 §B1: each kit's resting ramp, highlight → body → shadow → deep; Kirikane's is its gold leaf (the
+        // Sumi to Kinpaku concept's palette), not its near-black lacquer.
         AssertRamp(FrameKitMetals.Silver, 0xE2E8F4, 0xA9B5D0, 0x7B8AAF, 0x5E6E97);
         AssertRamp(FrameKitMetals.Came, 0xB8C0D0, 0x8C95B0, 0x5A6278, 0x323950);
         AssertRamp(FrameKitMetals.Astrolabe, 0xEAD3A0, 0xB8924E, 0x7C6034, 0x4E3B1E);
+        AssertRamp(FrameKitMetals.Kirikane, 0xF4DA92, 0xDEB862, 0xA98843, 0x6E5426);
+        Assert.Equal(FrameKitMetals.Kirikane.Ornament, FrameKitMetals.Ornament(UiPalettes.Night, FrameKitId.Kirikane));
+        Assert.Equal(UiPalettes.IshgardSnow.Brass, FrameKitMetals.Ornament(UiPalettes.IshgardSnow, FrameKitId.Kirikane));
 
         // On Night a kit's metal replaces the ornament and the gauge arc, and nothing else of the gauge.
         var night = UiPalettes.Night;
@@ -239,7 +242,7 @@ public sealed class FramePartsTests
         // Theme-system §7.2 "Frame kit tests": ornament ink at least 3 : 1 on each palette window it recolours; the arc
         // at least 3 : 1 on the window too, as Night's gilt is.
         var windows = new[] { UiPalettes.Night.Surface.Window, ColorMath.FromHex(0x1A1526), ColorMath.FromHex(0x16100F) };
-        foreach (var metal in new[] { FrameKitMetals.Silver, FrameKitMetals.Came, FrameKitMetals.Astrolabe })
+        foreach (var metal in new[] { FrameKitMetals.Silver, FrameKitMetals.Came, FrameKitMetals.Astrolabe, FrameKitMetals.Kirikane })
         {
             foreach (var window in windows)
             {
@@ -248,6 +251,18 @@ public sealed class FramePartsTests
                 Assert.True(ColorMath.Contrast(metal.ArcBase, window) >= 3.0, $"{metal.ArcBase} on {window}");
             }
         }
+    }
+
+    [Fact]
+    public void Only_Kirikane_draws_ornament_sprites_and_only_on_a_dark_standard_palette()
+    {
+        Assert.All(FrameKits.All, static k => Assert.Equal(k.Id == FrameKitId.Kirikane, FrameKitMetals.HasOrnamentSprites(k.Id)));
+        Assert.True(FrameKitMetals.DrawsOrnamentSprites(UiPalettes.Night, FrameKitId.Kirikane));
+        Assert.False(FrameKitMetals.DrawsOrnamentSprites(UiPalettes.Night, FrameKitId.Brass));
+
+        // The sprites are gold leaf, measured on the dark windows: a light palette keeps its own ornament, high contrast its line.
+        Assert.False(FrameKitMetals.DrawsOrnamentSprites(UiPalettes.IshgardSnow, FrameKitId.Kirikane));
+        Assert.False(FrameKitMetals.DrawsOrnamentSprites(UiPalettes.Night.HighContrast, FrameKitId.Kirikane));
     }
 
     [Fact]
