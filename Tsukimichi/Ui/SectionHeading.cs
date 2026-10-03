@@ -132,9 +132,10 @@ public static class SectionHeading
             captionLine = ImGui.GetTextLineHeight();
         }
 
-        float titleLine;
-        float titleWidth;
-        var tracking = 0f;
+        // One scope measures and draws the title, so both are in the face it resolved to: a second scope for the
+        // sentence-case fallback could find the game face covering it and draw what the Lead face measured.
+        HeadingGeometry g;
+        float midY;
         using (var role = section ? SectionRole(label, moonRoad) : TitleRole(label, capitals))
         {
             if (section && !role.GameFace)
@@ -143,20 +144,16 @@ public static class SectionHeading
                 label = text;
             }
 
-            tracking = section ? Typography.SectionTracking(in role) : 0f;
-            titleLine = ImGui.GetTextLineHeight();
-            titleWidth = Chrome.TrackedTextWidth(label, tracking);
-        }
+            var tracking = section ? Typography.SectionTracking(in role) : 0f;
+            var titleLine = ImGui.GetTextLineHeight();
+            var titleWidth = Chrome.TrackedTextWidth(label, tracking);
+            g = HeadingLayout.Compute(start.X, room, UiMetrics.Scale, titleLine, titleWidth, captionWidth, captionLine, sigil, captionOverflow);
+            midY = start.Y + g.MidY;
+            if (g.SigilSize > 0f)
+            {
+                Ornament.Sigil(dl, new Vector2(g.SigilCenterX, midY), g.SigilSize);
+            }
 
-        var g = HeadingLayout.Compute(start.X, room, UiMetrics.Scale, titleLine, titleWidth, captionWidth, captionLine, sigil, captionOverflow);
-        var midY = start.Y + g.MidY;
-        if (g.SigilSize > 0f)
-        {
-            Ornament.Sigil(dl, new Vector2(g.SigilCenterX, midY), g.SigilSize);
-        }
-
-        using (section ? SectionRole(label, moonRoad) : TitleRole(label, capitals))
-        {
             var at = new Vector2(g.TitleX, MathF.Round(midY - (titleLine * 0.5f)));
             if (section)
             {

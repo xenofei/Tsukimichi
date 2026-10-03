@@ -186,6 +186,24 @@ public class NightSkyTests
     }
 
     [Fact]
+    public void A_latched_meteor_starts_where_its_sky_says_and_moves_only_with_its_pane()
+    {
+        var travel = new Vector2(64, 34);
+        var canvas = new Vector2(10, 40);
+        var start = SkyRects.MeteorStart(canvas, new Vector2(10, 100), new Vector2(110, 200));
+
+        // Unmoved, it is the head MeteorHead gives for the sky it started in; the latched start depends on nothing else,
+        // so a sky that resizes mid-flight cannot move it.
+        var head = SkyRects.MeteorHeadFrom(canvas, start, travel, 0.5f);
+        Assert.Equal(SkyRects.MeteorHead(new Vector2(10, 100), new Vector2(110, 200), travel, 0.5f), head);
+        Assert.Equal(new Vector2(30, 120) - canvas, start);
+
+        // The pane moving carries it by as much.
+        var moved = SkyRects.MeteorHeadFrom(canvas + new Vector2(30, -5), start, travel, 0.5f);
+        Assert.Equal(head + new Vector2(30, -5), moved);
+    }
+
+    [Fact]
     public void The_constellation_goes_to_the_tree_first_then_a_path_band_that_holds_the_box()
     {
         var box = Constellations.ClearBoxLogical;

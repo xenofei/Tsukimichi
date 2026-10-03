@@ -137,7 +137,7 @@ public static partial class Chrome
     /// the spacing so far: no rounding builds up). A text that does not fit <paramref name="width"/> tracked is drawn
     /// untracked, ending in an ellipsis when it must. With a <paramref name="shadow"/> colour (not 0) it is drawn 1 px
     /// lower in that colour first, so thin strokes hold on a busy surface. Returns whether the text was cut. Headings
-    /// only: it measures each prefix, which is fine for a dozen glyphs a heading has.
+    /// only: each prefix is measured once per text, font and size and then kept (<see cref="PrefixWidths"/>).
     /// </summary>
     public static bool TrackedTextAt(ImDrawListPtr dl, Vector2 pos, float width, ReadOnlySpan<char> text, uint color, float tracking, uint shadow = 0)
     {
@@ -169,6 +169,7 @@ public static partial class Chrome
 
     private static void DrawTracked(ImDrawListPtr dl, Vector2 pos, ReadOnlySpan<char> text, uint color, float tracking)
     {
+        var prefix = PrefixWidths(text);
         for (var i = 0; i < text.Length; i++)
         {
             if (text[i] == ' ')
@@ -176,10 +177,62 @@ public static partial class Chrome
                 continue;
             }
 
-            var x = i == 0 ? 0f : ImGui.CalcTextSize(text[..i]).X + (tracking * i);
+            var x = prefix[i] + (tracking * i);
             dl.AddText(new Vector2(MathF.Round(pos.X + x), pos.Y), color, text.Slice(i, 1));
         }
     }
+
+    /// <summary>A heading's measured prefixes in one font at one size (<see cref="PrefixWidths"/>).</summary>
+    private sealed class TrackedRun
+    {
+        public string Text = string.Empty;
+        public nint Font;
+        public float Size;
+        public float[] Prefix = [];
+    }
+
+    /// <summary>The tracked headings measured lately, reused round-robin: more than a frame draws, so a frame finds each.</summary>
+    private static readonly TrackedRun?[] TrackedRuns = new TrackedRun?[64];
+    private static int trackedNext;
+
+    /// <summary>
+    /// The width of each prefix of <paramref name="text"/> (element i: its first i glyphs) in the current font and size,
+    /// measured once per text, font and size and then kept (<see cref="TrackedRuns"/>), so a tracked heading costs no
+    /// measuring on the frames after its first: measuring every prefix every frame is quadratic in its length.
+    /// </summary>
+    private static float[] PrefixWidths(ReadOnlySpan<char> text)
+    {
+        var font = CurrentFontId();
+        var size = ImGui.GetFontSize();
+        foreach (var run in TrackedRuns)
+        {
+            if (run is null)
+            {
+                break;
+            }
+
+            if (run.Font == font && run.Size == size && text.SequenceEqual(run.Text))
+            {
+                return run.Prefix;
+            }
+        }
+
+        var prefix = new float[text.Length];
+        for (var i = 1; i < text.Length; i++)
+        {
+            prefix[i] = ImGui.CalcTextSize(text[..i]).X;
+        }
+
+        var slot = TrackedRuns[trackedNext] ??= new TrackedRun();
+        slot.Text = text.ToString();
+        slot.Font = font;
+        slot.Size = size;
+        slot.Prefix = prefix;
+        trackedNext = (trackedNext + 1) % TrackedRuns.Length;
+        return prefix;
+    }
+
+    private static unsafe nint CurrentFontId() => (nint)ImGui.GetFont().Handle;
 
     /// <summary>Whether <paramref name="text"/> is drawn tracked: a spacing to add, and no surrogate pair to split.</summary>
     private static bool Trackable(ReadOnlySpan<char> text, float tracking)

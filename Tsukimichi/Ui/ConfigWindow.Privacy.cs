@@ -26,6 +26,12 @@ public sealed partial class ConfigWindow
     private Task<string>? fingerprint;
     private double fingerprintCopiedUntil;
 
+    // The Copy button's two labels and the hash's line, composed once (per language) instead of every frame.
+    private readonly Localization.LocCache<string> copyFingerprintLabel = new(static () => Strings.ConfigPrivacyCopy + "##copyFingerprint");
+    private readonly Localization.LocCache<string> copiedFingerprintLabel = new(static () => Strings.ConfigPrivacyCopied + "##copyFingerprint");
+    private string? fingerprintNote;
+    private int fingerprintNoteLanguage = -1;
+
     /// <summary>Settings › Advanced › Privacy &amp; trust: the statement's summary, a link to all of it, and this build's fingerprint.</summary>
     private void DrawPrivacy()
     {
@@ -64,7 +70,7 @@ public sealed partial class ConfigWindow
         var copied = ImGui.GetTime() < fingerprintCopiedUntil;
         using (ImRaii.Disabled(hash is null))
         {
-            if (ImGui.Button((copied ? Strings.ConfigPrivacyCopied : Strings.ConfigPrivacyCopy) + "##copyFingerprint", new Vector2(width, 0f)) && hash is not null)
+            if (ImGui.Button(copied ? copiedFingerprintLabel.Value : copyFingerprintLabel.Value, new Vector2(width, 0f)) && hash is not null)
             {
                 ImGui.SetClipboardText(hash);
                 fingerprintCopiedUntil = ImGui.GetTime() + FingerprintCopiedSeconds;
@@ -74,12 +80,11 @@ public sealed partial class ConfigWindow
         SettingNote(pluginVersionLine.Value);
         if (hash is not null)
         {
-            SettingNote(string.Format(CultureInfo.InvariantCulture, Strings.ConfigPrivacyHashFormat, hash), Theme.Surface.Text);
+            SettingNote(FingerprintNote(task), Theme.Surface.Text);
         }
         else if (task.IsFaulted)
         {
-            var reason = task.Exception?.GetBaseException().Message ?? string.Empty;
-            SettingNote(string.Format(CultureInfo.CurrentCulture, Strings.ConfigPrivacyHashFailedFormat, reason), Theme.EclipseText);
+            SettingNote(FingerprintNote(task), Theme.EclipseText);
         }
         else
         {
@@ -87,6 +92,23 @@ public sealed partial class ConfigWindow
         }
 
         EndSetting();
+    }
+
+    /// <summary>
+    /// The line under the fingerprint once <paramref name="task"/> is done: the hash, or why it could not be read.
+    /// Composed once per language rather than every frame the block shows.
+    /// </summary>
+    private string FingerprintNote(Task<string> task)
+    {
+        if (fingerprintNote is null || fingerprintNoteLanguage != Localization.Loc.Version)
+        {
+            fingerprintNoteLanguage = Localization.Loc.Version;
+            fingerprintNote = task.IsCompletedSuccessfully
+                ? string.Format(CultureInfo.InvariantCulture, Strings.ConfigPrivacyHashFormat, task.Result)
+                : string.Format(CultureInfo.CurrentCulture, Strings.ConfigPrivacyHashFailedFormat, task.Exception?.GetBaseException().Message ?? string.Empty);
+        }
+
+        return fingerprintNote;
     }
 
     /// <summary>Reads the loaded plugin file and hashes it on the thread pool; the path is taken here, on the draw thread.</summary>

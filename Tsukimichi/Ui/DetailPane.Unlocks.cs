@@ -484,9 +484,15 @@ public sealed partial class DetailPane
         {
             var min = ImGui.GetCursorScreenPos();
             ImGui.Dummy(new Vector2(side));
-            if (row.Icon == 0 || !GameIcon.DrawAt(ImGui.GetWindowDrawList(), textures, row.Icon, min, min + new Vector2(side), UiMetrics.Px(2f)))
+            // An icon the game lacks or is still loading gets GameIcon's own stand-in (with its veiled moon when
+            // missing); only a row with no icon at all takes the moon here, so the moon is never drawn twice.
+            if (row.Icon == 0)
             {
                 MoonGlyph.DrawVeiled(ImGui.GetWindowDrawList(), min + new Vector2(side * 0.5f), side * 0.32f, 0.6f);
+            }
+            else
+            {
+                GameIcon.DrawAt(ImGui.GetWindowDrawList(), textures, row.Icon, min, min + new Vector2(side), UiMetrics.Px(2f));
             }
 
             ImGui.SameLine();

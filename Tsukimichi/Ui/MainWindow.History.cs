@@ -62,7 +62,10 @@ public sealed partial class MainWindow
     /// </summary>
     private void HandleHistoryInput()
     {
-        if (!plugin.Settings.ShortcutHistory)
+        // An open popup (a "…" menu, a verdict prompt) keeps them, as it keeps Esc: switching quests under a menu would
+        // leave it acting on another quest. So does a widget being used (a slider an arrow key would also move).
+        if (!plugin.Settings.ShortcutHistory || popupDepthAtEnd > 0 || ImGui.IsAnyItemActive()
+            || ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel))
         {
             return;
         }
@@ -86,6 +89,17 @@ public sealed partial class MainWindow
         {
             return;
         }
+
+        if (!Keyboard.AltHeld(ImGuiKey.LeftArrow) && !Keyboard.AltHeld(ImGuiKey.RightArrow))
+        {
+            return;
+        }
+
+        // The keys are Back and Forward's alone: with Dalamud's keyboard navigation on, the arrow would also move the
+        // focus ring (and its repeats keep moving it), and releasing Alt would then put the focus on the title bar's
+        // buttons, where the next Enter could close the window.
+        ImGuiP.NavMoveRequestCancel();
+        ImGui.GetCurrentContext().NavWindowingToggleLayer = false;
 
         if (Keyboard.AltPressed(ImGuiKey.LeftArrow))
         {
