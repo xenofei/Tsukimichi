@@ -73,7 +73,7 @@ Points 1, 4, 6 and 9, plus correctness guards.
 | S2 | One safety table across the UI and a floating Undo toast. Hold length is adjustable, with a two-click alternative. | M |
 | A1 | `/tsuki stop`: one Stop for every hand-off, for macros and one-press use | S |
 | A12 | **Command aliases** (owner request): `/ts` and `/moon` open Tsukimichi, plus your own aliases in Settings. An alias another plugin already owns is skipped with a one-line notice. | S |
-| G4 | The new plugin icon, after your approval, exported crisp at 128 and 512 | S |
+| G4 | The new plugin icon (Menphina's Medallion, round 5: the moon and road centred, more FFXIV detail on the far shore), exported crisp at 128 and 512. It ships once round 5 passes the supervisor. | S |
 | G2a | The new glyph colour tokens (Kinpaku gold #E0B860, Torinoko ivory, cool silver), so new 1.11 UI isn't built in the old gold | S |
 | S3 | **Fix:** the AutoDuty duty index has been hidden since 1.6, because it was built without a language. Build it off the frame. | S |
 | S4 | **Fix:** the Questionable fork renamed itself WigglyQuest and left a do-nothing "Questionable" stub at 99.0.0.0. Recognise both. | S |
@@ -93,11 +93,14 @@ Points 3, 7 and 8.
 | U3 | The selected row keeps its screen position when rows change | S |
 | U4 | **The same rule elsewhere:**<br>• hand-off status in the status bar;<br>• a one-line Moonlit toolbar;<br>• Questionable status in the Todo overlay header;<br>• My blues, Nearby, Characters and Flight audited. | M |
 | U5 | Path and chain captions say what to do next, with tallies in tooltips; the string audit across the plugin | M |
-| G1 | The moon renderer rewritten to Sumi to Kinpaku: still vector, drawn with ImGui primitives, about half the code | M |
+| G1 | The moon renderer for Menphina's Medallion:<br>• medals at row size are drawn as vector shapes with ImGui;<br>• hero sizes use a pre-rendered texture atlas, for the detail you asked for;<br>• the **badge system**: an open padlock on Ready, the job icon on Ready on another job, a journal on In journal and a closed padlock on Blocked. The job icon is read from the game, so every job works. Below 32 px the badge content is drawn beside the medal.<br>• Completed uses the gold check. | L |
 | G2 | The rest of the glyph tokens; High contrast as a token swap; tests (no mark on the lit side, the ink gap, the contrast ladder) | S |
 | G3 | An A/B contact sheet in the glyph debug window (all states at 5 to 32 px, greyscale and colour-blind toggles), plus an icon tab. **You check this in game before G1 merges.** | S |
 | G5 | Rail and completion gauges restyled in the same material | S |
 | U8a | Motion tokens and the Motion status line with an override. The first visible moment: the moon waxes when you complete a quest you can see. | S |
+| K1 | **What a quest unlocks, one index** (your request). It's built once in Core from game data plus the curated lists, and tested against the wiki's MSQ "Unlocks" rows. It covers:<br>• areas and map regions;<br>• aetherytes;<br>• duties (dungeons, trials, raids);<br>• features and systems, jobs, flying, actions and emotes, collectables;<br>• next quests.<br>Spec: `docs/research/plan-v6/unlocks-spec.md`. | M |
+| K2 | **An "Unlocks" section in the quest pane**, grouped icon rows like the wiki's column: Areas · Aetherytes · Duties · Features · Actions & emotes · Items · Next quests (at most 3, "+N in Path").<br>• A ✓ only when the game confirms it.<br>• "Likely: you first reach it here" on areas and aetherytes inferred from the first visit.<br>• Click selects the quest, teleports through Lifestream, opens the map, or opens a duty in the Duty Finder (never queues).<br>• Follows the spoiler shield. | M |
+| K4 | **The same answer elsewhere:** row tooltips, the game-window panels, the Todo overlay hint, Path, Moonlit and the `/tsuki` chat lines. An optional "Opens" column in the Journal table, hidden by default. | S |
 
 ### 1.13.0 · Settings, motion and Moonlit art
 
@@ -142,6 +145,8 @@ Automation, built on what the community accepts: solo and NPC content only.
 | C8 | **EXP to the right job:** "Hand in on SGE Lv 84", with a warning on capped jobs and an explicit Switch gearset button (your call) | M |
 | C9 | **Journal slots:** "Journal 27/30" in the status bar and a Make room helper | S |
 | C10 | **Seasonal events:** ending-soon warnings and dated reruns | S |
+| K3 | **Find by unlock:** search "Onokoro" or "Sirensong Sea" to find the quest that opens it, an Unlocks filter (Area / Aetheryte / Duty / Feature), and Route to unlock any target | M |
+| K5 | **Unlock data completeness:** fill the curated gaps (the 20 aetherytes the first-visit rule misses), an audit test for new feature codes each patch, more unlocks read straight from game data | M |
 
 ### 1.16.0 · What next, for every character
 
@@ -183,6 +188,7 @@ Dalamud's API 16 ships with Patch 8.0 in January 2027 and removes Lumina.Excel, 
 | A separate refactor release | Refactors happen inside the items that touch those files |
 | An installer screenshot carousel | Waiting on your call about game icons appearing in screenshots |
 | Map markers for priority givers | Waiting on your call |
+| Shops a quest opens (K6) | Shop names in the data are generic, and expansion finales open about 36 shops each. Revisit after 1.15. |
 
 ## What the community said
 
@@ -204,8 +210,8 @@ These are the strongest signals, with sources in `community.md`.
 
 | # | Question | My recommendation |
 |---|---|---|
-| 1 | **Choose the moon direction** from the round-2 concepts | Round 3 Menphina's Medallion; then an in-game A/B check before it merges |
-| 2 | **Choose the icon** from the round-2 concepts | Round 3 Menphina's Medallion icon (moon road to the lantern); exported at 128 px plus a 512 master |
+| 1 | **Choose the moon direction** (answered: Menphina's Medallion, now in round 5 polish) | Round 3 Menphina's Medallion; then an in-game A/B check before it merges |
+| 2 | **Choose the icon** (answered: Menphina's Medallion icon, round 5 polish) | Round 3 Menphina's Medallion icon (moon road to the lantern); exported at 128 px plus a 512 master |
 | 3 | Animations follow Windows' "Show animations". Keep that, or animate regardless? | Keep it, with a Motion line in Settings and an override for Tsukimichi alone |
 | 4 | Mark as unique with a key held: save at once with Undo and "Add note", or still open the note popup? | Save at once, with Undo and "Add note". Either Ctrl or Shift arms it. |
 | 5 | Where do active filters live? | A fixed one-line lane, with the scope in the table title |
@@ -224,10 +230,11 @@ These are the strongest signals, with sources in `community.md`.
 
 | # | Answer | What changes |
 |---|---|---|
-| 1, 2 | Agree, but "concept still needs more work" | Round 4 of Menphina's Medallion from your eight design notes and a tester's ideas (`docs/design/moon-v6/round4/brief.md`). |
+| 1, 2 | Agree; round 4 "looks great" | Round 5 polish (`docs/design/moon-v6/round5/brief.md`):<br>• job icons centred in their badge;<br>• the icon recentred, with more FFXIV detail;<br>• Blocked more obscured and darker, as the supervisor and a critic decide;<br>• lock badges on Ready (open) and Blocked (closed), and a journal badge on In journal;<br>• gold check only, since the green check meant the same thing. |
 | 3–7, 10, 12, 15 | Agree | As recommended. |
 | 8 | Agree; "give the user customizable settings" | A setting: Stop (default), Warn only, or Do nothing, when Questionable heads into a duty with no Duty Support or Trust. |
 | 9 | Agree; "only if it directly relates to quests needing a specific gearset/job" | Switch gearset appears only when the quest needs a specific job, never as a general EXP helper. |
 | 11, 13 | Agree; you multibox a bard with 8 alts | Read every open client's characters read-only (including separate roaming folders), so all your alts' quests show without logging each one in. Stays in 1.16. |
 | 14 | No New Game+ planned | C4a, a cheap guard, stays in 1.11. The full C4 mode stays in 1.15, not urgent. |
 | Votes | Build it on every item; Not sure on S4 | S4 stays as a small detection fix: without it, Tsukimichi can't see the renamed Questionable fork. Say if you'd rather drop it. |
+| Unlocks (K1–K5) | New request: "deeper context on what quests unlock" | Added: K1, K2 and K4 in 1.12, K3 and K5 in 1.15. Defaults, which you can change:<br>• a duty's context menu may open the Duty Finder on it (never queue);<br>• show "likely" first-visit areas and aetherytes, marked as such;<br>• next quests appear, at most 3;<br>• shops are later;<br>• the Opens column is hidden by default. |
