@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **signed off on 2026-10-03 and executing.** 1.14.0 is released; 1.15.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 and 1.15.0 are released; 1.16.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -83,7 +83,7 @@ Points 1, 2, 3, 5, 6, 8 and part of 9, plus two small features.
 | N1 | **Back and forward** through quests you've jumped between: buttons, mouse back and forward, and Alt+arrows | S |
 | N2 | **Trust you can check:** build hashes on each release, and a plain statement of what the plugin reads and that it uses no network (or exactly what the portrait pack fetches, if you choose a download) | S |
 
-### 1.15.0 · Faces and icons
+### 1.15.0 · Faces and icons (released 2026-10-03)
 
 Point 4 and the rest of point 9.
 
@@ -303,3 +303,32 @@ Your notes, and what happens with each:
   - A Pup quest shows one "PvP · Duty" row.
   - Judgement calls to look at: Aesthetician, the striking dummies, Doman Enclave, and Cosmic Exploration and Ishgardian Restoration.
 - **Completed moon:** the craters read as hollows at 96 px and up, and smaller medals have the darker seas without craters.
+
+### 1.15.0 (released 2026-10-03)
+
+- **Giver portraits:**
+  - The Giver card at Full, Quiet and Plain for Alphinaud (Trust bust), Y'shtola (battle face), Tataru (card) and Zhloe or M'naago (delivery). Check the crop, the brass keyline, the lip shadow, and that the fade plays only when the giver changes.
+  - Delivery portraits never show the green emblem script.
+  - Hover shows a larger portrait with its source line.
+  - At Plain there is one plate, in the summary's Giver line.
+- **Era and spoilers:**
+  - Alphinaud, Y'shtola and Thancred show era-appropriate faces across expansions.
+  - G'raha Tia's Crystal Tower quests show initials, not the Exarch.
+  - A spoiler-masked quest shows no face and no society emblem.
+  - The Journal's Giver column shows "Hidden giver" for masked rows.
+- **Fallbacks:** silhouettes on generic givers, emblems on allied-society quests, initials (two letters on the card, one in small avatars), and the moon disc at 18 px.
+- **Avatars:**
+  - Next stops, the Route window (rows are a little taller) and the Todo overlay.
+  - The Journal Giver column is off after the update; turn it on from the header menu.
+  - Scrolling with it on stays smooth.
+- **Buttons:**
+  - Game icons on every travel and route button, Plain included.
+  - Labels shorten, then become icon-only with a tooltip, never cut off.
+  - The book icon on "Read the journal".
+  - The Route window title icon survives a reload.
+- **Icons:**
+  - Requirement lines.
+  - Characters: Grand Company insignia at 1.5×, societies, and collections.
+  - Plan chips at narrow widths.
+  - Duty emblems (the Great Hunt, the Windward Wilds) drawn whole.
+- **Setting:** Settings › Look › Giver portraits Off brings back the text-only layout.
