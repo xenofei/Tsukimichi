@@ -1,14 +1,14 @@
 {
   "set": "ishgard-glass",
   "name": "Ishgard Glass",
-  "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. Distinctness and salience are round 5's metrics.py units (summed blurred luminance difference) in a 40 px cell. Gates run on the Night window in greyscale and deuteranopia (16 and 20 px), and on every ground under Machado protanopia, deuteranopia and tritanopia (16 px); 'survey' records the rest. 'light' is the row tier's salience on Ishgard Snow with Ready over its warm wash, per measure: 'weighted' sums sqrt((dL/3)^2 + da^2 + db^2) and 'chroma' sqrt(da^2 + db^2) in OKLab, 'luma' is round 5's greyscale salience; G2L gates the default wash at 16 and 20 px, and 'measure' names the lead measure that passed. 'readyWash' is the wash the plugin draws for this set.",
+  "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. Distinctness and salience are round 5's metrics.py units (summed blurred luminance difference) in a 40 px cell. Gates run on the Night window in greyscale and deuteranopia (16 and 20 px), and on every ground under Machado protanopia, deuteranopia and tritanopia (16 px); 'survey' records the rest. 'light' is the row tier's salience on Ishgard Snow with Ready over its warm wash, per measure: 'weighted' sums sqrt((dL/3)^2 + da^2 + db^2) and 'chroma' sqrt(da^2 + db^2) in OKLab, 'luma' is round 5's greyscale salience (its lead leaves Not checked out); G2L gates the default wash at 16 and 20 px, and 'measure' names the lead measure that passed. 'readyWash' is the wash the plugin draws for this set.",
   "chrome": "154.0.8037.97",
   "grounds": {"night": "#0F1424", "ishgard-snow": "#EEF1F6", "daylight": "#E9E4D6"},
   "bars": {"weakest16": 12.0, "weakest20": 16.0, "readyLead": 1.3, "completedOfReady": 0.8, "salienceMin": 15.0, "cvdWeakest16": 11.0, "lightReadyLead": 1.3, "lightLumaFloor": 0.7, "mixClose": 12.0, "mixHard": 10.0, "mixReadyLead": 1.25},
   "gateModes": ["grey", "deut"],
   "cvdModes": ["machado-prot", "machado-deut", "machado-trit"],
   "readyWash": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
-  "pass": false,
+  "pass": true,
   "gates": [
     {"gate": "G1 weakest pair 16 px grey", "tier": "hero-48-64", "value": 12.52, "bar": 12.0, "detail": "RoJ-Jrn", "pass": true},
     {"gate": "G2 Ready lead", "tier": "hero-48-64", "value": 1.4, "bar": 1.3, "detail": "Rdy 77 / Comp 55", "pass": true},
@@ -59,9 +59,11 @@
     {"gate": "G1c weakest pair 16 px machado-prot on daylight", "tier": "row", "value": 11.55, "bar": 11.0, "detail": "RoJ-Done", "pass": true},
     {"gate": "G1c weakest pair 16 px machado-trit on daylight", "tier": "row", "value": 11.9, "bar": 11.0, "detail": "RoJ-Done", "pass": true},
     {"gate": "G2L Ready lead 16 px (chroma) on Ishgard Snow", "tier": "row", "value": 2.09, "bar": 1.3, "detail": "wash 0.75 within 3 px: Rdy 27 / Lock 13", "pass": true},
-    {"gate": "G2L lightness floor 16 px on Ishgard Snow", "tier": "row", "value": 0.69, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 84 / NotC 122", "pass": false},
+    {"gate": "G2L lightness floor 16 px on Ishgard Snow", "tier": "row", "value": 0.74, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 84 / RoJ 114", "pass": true},
+    {"gate": "G2L Not checked under Ready 16 px (chroma) on Ishgard Snow", "tier": "row", "value": 0.31, "bar": 1.0, "detail": "NotC 8 / Rdy 27", "pass": true},
     {"gate": "G2L Ready lead 20 px (chroma) on Ishgard Snow", "tier": "row", "value": 1.85, "bar": 1.3, "detail": "wash 0.75 within 3 px: Rdy 37 / Lock 20", "pass": true},
-    {"gate": "G2L lightness floor 20 px on Ishgard Snow", "tier": "row", "value": 0.67, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 129 / NotC 192", "pass": false},
+    {"gate": "G2L lightness floor 20 px on Ishgard Snow", "tier": "row", "value": 0.71, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 129 / RoJ 181", "pass": true},
+    {"gate": "G2L Not checked under Ready 20 px (chroma) on Ishgard Snow", "tier": "row", "value": 0.35, "bar": 1.0, "detail": "NotC 13 / Rdy 37", "pass": true},
     {"gate": "Fit medals: no bleed", "tier": "hero", "value": 0, "bar": 0, "detail": "max alpha outside every cell", "pass": true},
     {"gate": "Fit medals: not cut", "tier": "hero", "value": 179, "bar": 254, "detail": "max alpha on a cell edge: ready at 48", "pass": true},
     {"gate": "Fit medals@2x: no bleed", "tier": "hero", "value": 0, "bar": 0, "detail": "max alpha outside every cell", "pass": true},
@@ -445,8 +447,8 @@
           },
           "luma": {
             "salience": {"ready": 70.95, "ready-on-another-job": 114.28, "in-journal": 104.73, "blocked": 110.9, "done-this-cycle": 110.61, "completed": 100.64, "locked-out": 111.88, "not-checked": 122.09},
-            "readyLead": 0.58,
-            "next": "not-checked"
+            "readyLead": 0.62,
+            "next": "ready-on-another-job"
           }
         },
         "20": {
@@ -462,8 +464,8 @@
           },
           "luma": {
             "salience": {"ready": 112.28, "ready-on-another-job": 181.07, "in-journal": 165.45, "blocked": 174.2, "done-this-cycle": 174.72, "completed": 159.34, "locked-out": 176.56, "not-checked": 192.4},
-            "readyLead": 0.58,
-            "next": "not-checked"
+            "readyLead": 0.62,
+            "next": "ready-on-another-job"
           }
         }
       },
@@ -481,8 +483,8 @@
           },
           "luma": {
             "salience": {"ready": 84.2, "ready-on-another-job": 114.28, "in-journal": 104.73, "blocked": 110.9, "done-this-cycle": 110.61, "completed": 100.64, "locked-out": 111.88, "not-checked": 122.09},
-            "readyLead": 0.69,
-            "next": "not-checked"
+            "readyLead": 0.74,
+            "next": "ready-on-another-job"
           }
         },
         "20": {
@@ -498,8 +500,8 @@
           },
           "luma": {
             "salience": {"ready": 128.81, "ready-on-another-job": 181.07, "in-journal": 165.45, "blocked": 174.2, "done-this-cycle": 174.72, "completed": 159.34, "locked-out": 176.56, "not-checked": 192.4},
-            "readyLead": 0.67,
-            "next": "not-checked"
+            "readyLead": 0.71,
+            "next": "ready-on-another-job"
           }
         }
       },
@@ -517,8 +519,8 @@
           },
           "luma": {
             "salience": {"ready": 93.7, "ready-on-another-job": 114.28, "in-journal": 104.73, "blocked": 110.9, "done-this-cycle": 110.61, "completed": 100.64, "locked-out": 111.88, "not-checked": 122.09},
-            "readyLead": 0.77,
-            "next": "not-checked"
+            "readyLead": 0.82,
+            "next": "ready-on-another-job"
           }
         },
         "20": {
@@ -534,8 +536,8 @@
           },
           "luma": {
             "salience": {"ready": 140.26, "ready-on-another-job": 181.07, "in-journal": 165.45, "blocked": 174.2, "done-this-cycle": 174.72, "completed": 159.34, "locked-out": 176.56, "not-checked": 192.4},
-            "readyLead": 0.73,
-            "next": "not-checked"
+            "readyLead": 0.77,
+            "next": "ready-on-another-job"
           }
         }
       }

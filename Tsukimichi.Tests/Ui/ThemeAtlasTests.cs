@@ -235,13 +235,16 @@ public sealed class ThemeAtlasTests
         var wash = root.GetProperty("readyWash");
         Assert.Equal(ReadyWash, (wash.GetProperty("color").GetString(), wash.GetProperty("alpha").GetDouble(), wash.GetProperty("radiusPx").GetInt32()));
 
-        // Each recorded lead is Ready's salience over the loudest other state's (judged at two decimals).
+        // Each recorded lead is Ready's salience over the loudest other state's (judged at two decimals); the luminance
+        // lead leaves Not checked out, which the chroma check below holds under Ready instead.
         var variants = light.GetProperty("variants");
+        double Salience(string px, string measure, string state) =>
+            variants.GetProperty("default").GetProperty(px).GetProperty(measure).GetProperty("salience").GetProperty(state).GetDouble();
         double Lead(string variant, string px, string measure)
         {
             var v = variants.GetProperty(variant).GetProperty(px).GetProperty(measure);
             var sal = States.ToDictionary(static s => s, s => v.GetProperty("salience").GetProperty(s).GetDouble());
-            var next = sal.Where(static kv => kv.Key != "ready").Max(static kv => kv.Value);
+            var next = sal.Where(kv => kv.Key != "ready" && !(measure == "luma" && kv.Key == "not-checked")).Max(static kv => kv.Value);
             var lead = v.GetProperty("readyLead").GetDouble();
             Assert.Equal(Math.Round(sal["ready"] / next, 2), lead, 0.011);
             return lead;
@@ -259,14 +262,18 @@ public sealed class ThemeAtlasTests
         }
 
         // G2L: Ready leads by 1.3 under the weighted measure at both sizes, or failing that under chroma only, and the
-        // record names the measure that passed; Ready's plain luminance salience stays at least .70 of the next state's.
+        // record names the measure that passed; Ready's plain luminance salience stays at least .70 of the next state's
+        // (Not checked left out); and Not checked stays under Ready on chroma.
         var passed = LightLeadMeasures.FirstOrDefault(m => Lead("default", "16", m) >= LightReadyLead && Lead("default", "20", m) >= LightReadyLead);
         Assert.True(passed is not null, $"{set}: Ready leads the next state on Ishgard Snow by under {LightReadyLead}x under every measure");
         Assert.Equal(passed, light.GetProperty("measure").GetString());
         foreach (var px in new[] { "16", "20" })
         {
             var floor = Lead("default", px, "luma");
-            Assert.True(floor >= LightLumaFloor, $"{set} {px} px: Ready's luminance salience is only {floor}x the next state's on Ishgard Snow");
+            Assert.True(floor >= LightLumaFloor, $"{set} {px} px: Ready's luminance salience is only {floor}x the next state's (Not checked aside) on Ishgard Snow");
+            var notChecked = Salience(px, "chroma", "not-checked");
+            var ready = Salience(px, "chroma", "ready");
+            Assert.True(notChecked < ready, $"{set} {px} px: Not checked ({notChecked}) is not under Ready ({ready}) on chroma on Ishgard Snow");
         }
     }
 

@@ -39,7 +39,9 @@ On the Night window, for every hero tier group and the row tier, at 16 px in a 4
 - **G1c (colour vision):** on every ground (Night, Ishgard Snow, daylight), the weakest pair at 16 px is at least 11 under Machado protanopia, deuteranopia and tritanopia (the realism supervisor's bar for 1.16.0; Medallion's row tier sits at 11.1 under protanopia).
 - **G2L (Ready on a light palette):** on Ishgard Snow (`#EEF1F6`), for the row tier at 16 and 20 px, with Ready over its warm wash (below):
   - Ready is at least 1.3× the next state under the **weighted** OKLab difference, `sqrt((ΔL/3)² + Δa² + Δb²)`. If a set misses that at either size, it must reach 1.3 under **chroma** only, `sqrt(Δa² + Δb²)`. `light.measure` records which measure passed.
-  - **Lightness floor:** Ready's plain luminance salience (round 5's greyscale salience) is at least 0.70× the next state's.
+  - **Lightness floor:** Ready's plain luminance salience (round 5's greyscale salience) is at least 0.70× the next state's, leaving Not checked out of "next state". Its dark face outweighs Ready's light one in plain luminance, so the `luma` leads are recorded that way.
+  - **Not checked under Ready:** Not checked's chroma salience is below Ready's.
+  - Not checked still counts in every distinctness and colour-vision gate.
 - **Fit:** nothing outside the cells, and no sprite cut by its cell.
 
 Distinctness and salience are judged at one decimal, as round 5 judged them, and ratios at two. Everything else (other grounds and sizes) is recorded under `survey` for reviewers.

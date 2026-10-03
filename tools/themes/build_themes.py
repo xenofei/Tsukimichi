@@ -535,16 +535,22 @@ def light_salience(g, wash, size):
     return sal
 
 
-def light_lead(sal):
-    nxt_state, nxt = max(((s, v) for s, v in sal.items() if s != "ready"), key=lambda kv: kv[1])
+# The lightness floor's "next state" leaves Not checked out (the supervisor's second ruling): its dark face outweighs
+# Ready's light one in plain luminance, so it is held to stay under Ready on chroma instead (G2L Not checked).
+LUMA_FLOOR_EXCLUDES = ("not-checked",)
+
+
+def light_lead(sal, exclude=()):
+    nxt_state, nxt = max(((s, v) for s, v in sal.items() if s != "ready" and s not in exclude), key=lambda kv: kv[1])
     return sal["ready"] / nxt, nxt_state, nxt
 
 
 def light_measures(groups):
     """G2L, the realism supervisor's ruling (spec-1.16 A4.1), on the row tier at 16 and 20 px with the default wash:
     Ready leads the next state by 1.3 under the weighted measure at both sizes, or failing that under chroma only (the
-    record names the measure that passed), and Ready's plain luminance salience is at least .70 of the next state's.
-    No wash and the old fallback are recorded for reviewers. Returns (gate rows, the record for metrics.json)."""
+    record names the measure that passed); Ready's plain luminance salience is at least .70 of the next state's, Not
+    checked left out ('luma' leads are recorded that way); and Not checked stays under Ready on chroma. No wash and the
+    old fallback are recorded for reviewers. Returns (gate rows, the record for metrics.json)."""
     row = next(g for g in groups if g["name"] == "row")
     variants = {}
     for name, wash in [("none", None), *WASHES.items()]:
@@ -552,7 +558,7 @@ def light_measures(groups):
         for size in SIZES:
             entry = {}
             for measure, sal in light_salience(row, wash, size).items():
-                lead, nxt_state, _ = light_lead(sal)
+                lead, nxt_state, _ = light_lead(sal, LUMA_FLOOR_EXCLUDES if measure == "luma" else ())
                 entry[measure] = {"salience": {s: r1(v) for s, v in sal.items()}, "readyLead": r1(lead), "next": nxt_state}
             variants[name][str(size)] = entry
 
@@ -571,6 +577,11 @@ def light_measures(groups):
                           "detail": f"wash {wash['alpha']:.2f} within {wash['radiusPx']} px: Rdy {v['salience']['ready']:.0f} / "
                                     f"{SHORT[nxt]} {v['salience'][nxt]:.0f}",
                           "pass": v["readyLead"] >= bar})
+        sal = used[str(size)]["chroma"]["salience"]
+        gates.append({"gate": f"G2L Not checked under Ready {size} px (chroma) on Ishgard Snow", "tier": "row",
+                      "value": r1(sal["not-checked"] / sal["ready"]), "bar": 1.0,
+                      "detail": f"NotC {sal['not-checked']:.0f} / Rdy {sal['ready']:.0f}",
+                      "pass": sal["not-checked"] < sal["ready"]})
     record = {"ground": LIGHT_GROUND, "window": GROUNDS[LIGHT_GROUND], "tier": "row", "gatePx": SIZES,
               "measure": measure, "use": LIGHT_WASH, "washes": WASHES, "variants": variants}
     return gates, record
@@ -753,8 +764,8 @@ def metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver):
                 "protanopia, deuteranopia and tritanopia (16 px); 'survey' records the rest. 'light' is the row "
                 "tier's salience on Ishgard Snow with Ready over its warm wash, per measure: 'weighted' sums "
                 "sqrt((dL/3)^2 + da^2 + db^2) and 'chroma' sqrt(da^2 + db^2) in OKLab, 'luma' is round 5's greyscale "
-                "salience; G2L gates the default wash at 16 and 20 px, and 'measure' names the lead measure that "
-                "passed. 'readyWash' is the wash the plugin draws for this set.",
+                "salience (its lead leaves Not checked out); G2L gates the default wash at 16 and 20 px, and "
+                "'measure' names the lead measure that passed. 'readyWash' is the wash the plugin draws for this set.",
         "chrome": chrome_ver,
         "grounds": GROUNDS,
         "bars": BARS,
