@@ -25,6 +25,26 @@ public readonly record struct PortraitCrop(float U0, float V0, float U1, float V
     /// <summary>The window's aspect (width over height) on a <paramref name="textureWidth"/> × <paramref name="textureHeight"/> texture.</summary>
     public float Aspect(float textureWidth, float textureHeight) =>
         textureHeight > 0f && V1 > V0 ? (U1 - U0) * textureWidth / ((V1 - V0) * textureHeight) : 1f;
+
+    /// <summary>
+    /// A square box as the design spec and the curated file write it: <paramref name="x"/>, <paramref name="y"/> and
+    /// <paramref name="side"/> in px of <paramref name="source"/>'s hr texture (<see cref="PortraitSources.TextureSize"/>).
+    /// Invalid (outside the texture, or an unknown family) when the box does not fit.
+    /// </summary>
+    public static PortraitCrop FromBox(PortraitSource source, float x, float y, float side)
+    {
+        var (width, height) = PortraitSources.TextureSize(source);
+        return width == 0 || !(side > 0f)
+            ? default
+            : new PortraitCrop(x / width, y / height, (x + side) / width, (y + side) / height);
+    }
+
+    /// <summary>The box in hr px of <paramref name="source"/>'s texture: (x, y, side), the side taken across.</summary>
+    public (float X, float Y, float Side) ToBox(PortraitSource source)
+    {
+        var (width, height) = PortraitSources.TextureSize(source);
+        return (U0 * width, V0 * height, (U1 - U0) * width);
+    }
 }
 
 /// <summary>
@@ -35,38 +55,33 @@ public readonly record struct PortraitCrop(float U0, float V0, float U1, float V
 public readonly record struct PortraitLandmarks(float EyeU, float EyeV, float ChinV);
 
 /// <summary>
-/// One crop per portrait family, tunable without code: <see cref="DefaultFaces"/> holds where a typical face of each
-/// family sits (measured on the game art with the DataGen contact sheet), <see cref="Defaults"/> the crops the framing
-/// rule makes of them, and the curated file's <c>crops</c> object replaces any of them
-/// (<see cref="PortraitCuration.Crops"/>). A single icon can carry its own crop on top (<see cref="PortraitCuration.IconCrops"/>).
+/// One crop per portrait family, tunable without code: <see cref="Defaults"/> holds the family boxes, and the curated
+/// file's <c>crops</c> object replaces any of them (<see cref="PortraitCuration.Crops"/>). A single icon carries its own
+/// box on top (<see cref="PortraitCuration.IconCrops"/>), which for the top givers is the normal case: compositions vary
+/// within a family.
 /// </summary>
 public sealed class PortraitCrops
 {
     /// <summary>
-    /// A typical face of each family, the median of samples measured on the 2026.09.15 client:
+    /// The family default boxes of the 1.15 design spec (<c>docs/design/v7/ui/spec-1.15.md</c> A2.2), square, in hr
+    /// source px (x, y, side), each meeting the framing rule for a typical face of its family:
     /// <list type="bullet">
-    /// <item>Trust bust (188 × 480): Thancred, Y'shtola, Wuk Lamat, Sphene, G'raha Tia (the bust's head sits in the top
-    /// third, the shoulders below);</item>
-    /// <item>Triple Triad card (208 × 256): Tataru, Momodi, Cid (cards vary most; the curated file crops the off-centre ones);</item>
-    /// <item>battle-talk face (640 × 512): Y'shtola, Alphinaud, Alisaie, Tataru, Cid, Wuk Lamat, Erenville (the head on
-    /// the left of the brass slash);</item>
-    /// <item>delivery portrait (400 × 480): M'naago, Kurenai, Kai-Shirr, Ameliance (the face inside the client emblem's
-    /// lettered ring, which the tight crop leaves outside the circle);</item>
-    /// <item>Trust strip (640 × 180): the face at the strip's right end.</item>
+    /// <item>Trust bust (188 × 480): 6, 86, 140;</item>
+    /// <item>battle-talk face (640 × 512): 164, 154, 172;</item>
+    /// <item>Triple Triad card (208 × 256): 28, 20, 135;</item>
+    /// <item>delivery portrait (400 × 480): 104, 154, 158, drawn through its keep mask (<see cref="PortraitMask"/>);</item>
+    /// <item>Trust strip (640 × 180, not in the spec): the face at the strip's right end, measured with the DataGen
+    /// contact sheet and framed by the rule.</item>
     /// </list>
     /// </summary>
-    public static readonly IReadOnlyDictionary<PortraitSource, PortraitLandmarks> DefaultFaces = new Dictionary<PortraitSource, PortraitLandmarks>
+    public static readonly IReadOnlyDictionary<PortraitSource, PortraitCrop> Defaults = new Dictionary<PortraitSource, PortraitCrop>
     {
-        [PortraitSource.TrustBust] = new(0.5f, 0.26f, 0.37f),
-        [PortraitSource.TripleTriadCard] = new(0.48f, 0.4f, 0.52f),
-        [PortraitSource.BattleTalk] = new(0.42f, 0.44f, 0.55f),
-        [PortraitSource.Delivery] = new(0.5f, 0.42f, 0.535f),
-        [PortraitSource.TrustStrip] = new(0.78f, 0.46f, 0.8f),
+        [PortraitSource.TrustBust] = PortraitCrop.FromBox(PortraitSource.TrustBust, 6, 86, 140),
+        [PortraitSource.BattleTalk] = PortraitCrop.FromBox(PortraitSource.BattleTalk, 164, 154, 172),
+        [PortraitSource.TripleTriadCard] = PortraitCrop.FromBox(PortraitSource.TripleTriadCard, 28, 20, 135),
+        [PortraitSource.Delivery] = PortraitCrop.FromBox(PortraitSource.Delivery, 104, 154, 158),
+        [PortraitSource.TrustStrip] = PortraitFraming.CropFor(PortraitSource.TrustStrip, new PortraitLandmarks(0.78f, 0.46f, 0.8f)),
     };
-
-    /// <summary>The family crops: <see cref="DefaultFaces"/> framed by the rule.</summary>
-    public static readonly IReadOnlyDictionary<PortraitSource, PortraitCrop> Defaults =
-        DefaultFaces.ToDictionary(kv => kv.Key, kv => PortraitFraming.CropFor(kv.Key, kv.Value));
 
     /// <summary>The defaults with nothing replaced.</summary>
     public static readonly PortraitCrops Default = new(null, null);

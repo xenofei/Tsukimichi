@@ -69,10 +69,19 @@ public readonly record struct PortraitFallback(PortraitFallbackKind Kind, uint S
 /// <summary>
 /// A giver's portrait for one quest: the icon to load, its family (for the "Portrait: …" source line), the face window
 /// to draw, the era the face belongs to (the spoiler shield hides a face from a later expansion than the character has
-/// reached), and the fallback. <see cref="HasArt"/> is false when the giver has no portrait; the fallback is always set.
-/// A struct over strings held by the index, so asking for one every frame allocates nothing.
+/// reached), the keep mask a delivery portrait is drawn through, and the fallback. <see cref="HasArt"/> is false when
+/// the giver has no portrait; the fallback is always set. A struct over objects held by the index, so asking for one
+/// every frame allocates nothing.
+/// <para>
+/// Drawing it: load <see cref="Icon"/> (its hr texture), grade it by <see cref="Source"/>'s family (spec A3), and when
+/// <see cref="Mask"/> is set multiply the texture's alpha by the mask in that same pass, after checking
+/// <see cref="PortraitMask.Matches"/> on the texture file; draw <see cref="Crop"/> of the graded copy. Until the copy
+/// lands, or when the mask does not match the art, or the quest is masked by the spoiler shield, draw the fallback.
+/// </para>
 /// </summary>
-public readonly record struct PortraitRef(uint GiverId, uint Icon, PortraitSource Source, PortraitCrop Crop, byte Era, PortraitFallback Fallback)
+/// <param name="Mask">The keep mask for a delivery portrait (always set when <see cref="Source"/> is
+/// <see cref="PortraitSource.Delivery"/>: the index never offers one without it); null for every other family.</param>
+public readonly record struct PortraitRef(uint GiverId, uint Icon, PortraitSource Source, PortraitCrop Crop, byte Era, PortraitFallback Fallback, PortraitMask? Mask = null)
 {
     /// <summary>Whether there is a portrait to draw (else draw <see cref="Fallback"/>).</summary>
     public bool HasArt => Source != PortraitSource.None && Icon != 0;
@@ -101,12 +110,14 @@ public sealed class PortraitIndex
     private readonly FrozenDictionary<uint, Giver> givers;
     private readonly FrozenDictionary<uint, PortraitQuest> quests;
     private readonly FrozenDictionary<byte, uint> tribeIcons;
+    private readonly IReadOnlyDictionary<uint, PortraitMask> masks;
 
-    private PortraitIndex(FrozenDictionary<uint, Giver> givers, FrozenDictionary<uint, PortraitQuest> quests, FrozenDictionary<byte, uint> tribeIcons, PortraitCrops crops)
+    private PortraitIndex(FrozenDictionary<uint, Giver> givers, FrozenDictionary<uint, PortraitQuest> quests, FrozenDictionary<byte, uint> tribeIcons, PortraitCrops crops, IReadOnlyDictionary<uint, PortraitMask> masks)
     {
         this.givers = givers;
         this.quests = quests;
         this.tribeIcons = tribeIcons;
+        this.masks = masks;
         Crops = crops;
         GiversWithArt = givers.Values.Count(g => g.Variants.Length > 0);
     }
@@ -156,7 +167,7 @@ public sealed class PortraitIndex
         }
 
         var variant = Pick(giver.Variants, era);
-        return new PortraitRef(giverId, variant.Icon, variant.Source, Crops.For(variant.Source, variant.Icon), variant.Era, fallback);
+        return new PortraitRef(giverId, variant.Icon, variant.Source, Crops.For(variant.Source, variant.Icon), variant.Era, fallback, masks.GetValueOrDefault(variant.Icon));
     }
 
     /// <summary>Every portrait the giver can wear, best family first and oldest first within one; empty when none.</summary>
@@ -230,7 +241,8 @@ public sealed class PortraitIndex
             curation.Aliases.TryGetValue(normalized, out var alias) ? PortraitNames.Normalize(alias.Name) : normalized;
 
         var faces = new List<PortraitFace>(inputs.Faces.Count + curation.Faces.Count);
-        faces.AddRange(inputs.Faces.Where(f => f.Icon != 0 && f.Source != PortraitSource.None));
+        // A delivery portrait without its keep mask would show the emblem script: it is not offered at all.
+        faces.AddRange(inputs.Faces.Where(f => f.Icon != 0 && f.Source != PortraitSource.None && (f.Source != PortraitSource.Delivery || curation.Masks.ContainsKey(f.Icon))));
         faces.AddRange(curation.Faces.Select(kv => new PortraitFace(kv.Key, kv.Value.Source, kv.Value.Name, kv.Value.Era)));
 
         var byName = new Dictionary<string, List<PortraitFace>>(StringComparer.Ordinal);
@@ -301,7 +313,7 @@ public sealed class PortraitIndex
         }
 
         var tribes = inputs.TribeIcons.Where(kv => kv.Key != 0 && kv.Value != 0).ToFrozenDictionary(kv => kv.Key, kv => kv.Value);
-        return new PortraitIndex(built.ToFrozenDictionary(), questMap.ToFrozenDictionary(), tribes, curation.CropTable());
+        return new PortraitIndex(built.ToFrozenDictionary(), questMap.ToFrozenDictionary(), tribes, curation.CropTable(), curation.Masks);
     }
 
     private static PortraitVariant[] Match(
@@ -334,8 +346,7 @@ public sealed class PortraitIndex
         {
             foreach (var source in PortraitSources.Priority)
             {
-                if (found.Any(f => f.Source == source)
-                    || !byFirstWord.TryGetValue((source, aliased), out var fullNames)
+                if (!byFirstWord.TryGetValue((source, aliased), out var fullNames)
                     || fullNames.Count != 1)
                 {
                     continue;

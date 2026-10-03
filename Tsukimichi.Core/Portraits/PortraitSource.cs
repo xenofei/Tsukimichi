@@ -11,8 +11,8 @@ public enum PortraitSource : byte
     None = 0,
 
     /// <summary>
-    /// A Duty Support or Trust member's tall bust (<c>DawnQuestMember.BigImageOld</c>, 188 × 480 at normal
-    /// resolution): a full-colour official render that crops to a clean face.
+    /// A Duty Support or Trust member's tall bust (<c>DawnQuestMember.BigImageOld</c>, 188 × 480 at hr; every size here is
+    /// the <c>_hr1</c> texture's): a full-colour official render that crops to a clean face.
     /// </summary>
     TrustBust = 1,
 
@@ -65,8 +65,8 @@ public static class PortraitSources
     };
 
     /// <summary>
-    /// A family's texture size at normal resolution (the <c>_hr1</c> twin is twice each side): what turns a face's
-    /// landmarks into a square crop (<see cref="PortraitFraming.CropFor"/>). (0, 0) for <see cref="PortraitSource.None"/>.
+    /// A family's texture size at hr (the <c>_hr1</c> texture; the 1x one is half each side), the px the design spec and
+    /// the curated boxes are measured in. Crops are texture coordinates, so they fit both. (0, 0) for <see cref="PortraitSource.None"/>.
     /// </summary>
     public static (int Width, int Height) TextureSize(PortraitSource source) => source switch
     {

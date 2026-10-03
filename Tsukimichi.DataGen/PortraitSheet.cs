@@ -1,6 +1,4 @@
-using System.Buffers.Binary;
 using System.Globalization;
-using System.IO.Compression;
 using System.Text;
 using Lumina.Data.Files;
 using Tsukimichi.Core.Portraits;
@@ -10,15 +8,41 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.DataGen;
 
 /// <summary>
-/// The giver portrait contact sheet (feature plan v7 F3): every face the portrait index gives a giver, cropped as the
-/// plugin crops it, with the framing guides of <see cref="PortraitFraming"/> drawn over each (crown, eye line and chin
-/// bands, the circle), one page per family. Beside the pages, <c>portraits.md</c> lists each cell (icon, family, crop,
-/// givers) and the coverage. A curator reads the sheet to name faces and to record per-icon crops in
-/// <c>curated/giver_portraits.json</c>. The pages hold game art: they are for review, never committed or shipped.
+/// The giver portrait contact sheet (feature plan v7 F3; 1.15 design spec A2.3): every face the portrait index gives a
+/// giver, cropped as the plugin crops it, so curation checks every crop at a glance.
+/// <list type="bullet">
+/// <item><c>&lt;Family&gt;-&lt;n&gt;.png</c>: each crop at 120 px on the night plate, ungraded, delivery portraits through
+/// their keep mask, with the guide bands of <see cref="PortraitFraming"/> (crown 8–12 % blue, eye line 42–46 % gold with
+/// a line at 44 %, chin 78–84 % red with a line at 81 %, two ticks at the foot 55 % of the diameter apart) and the
+/// circle; labelled with the icon id, the giver, the box (hr px) and the quests it is picked for, and flagged CLAMPED
+/// (the box meets the texture's edge) or KEY n (script-colour pixels left inside the circle).</item>
+/// <item><c>Delivery-keyed.png</c>: every masked delivery portrait at 128 px three ways: source, keyed, keyed and graded
+/// (the colour family's night grade, spec A3), for signing off a mask before it ships.</item>
+/// <item><c>&lt;Family&gt;-&lt;n&gt;-source.png</c>: each whole texture with a grid every 0.1 in texture coordinates and the
+/// crop's box, for measuring a per-icon box.</item>
+/// <item><c>portraits.md</c>: every cell's icon, box, flags, quests and givers.</item>
+/// </list>
+/// The pages hold game art: they are for review, never committed or shipped.
 /// </summary>
 internal static class PortraitSheet
 {
-    private const int Cell = 192;
+    private const int Crop = 120;
+    private const int CellWidth = 136;
+    private const int CellHeight = 166;
+    private const int Review = 128;
+
+    private static readonly (byte R, byte G, byte B) Label = (226, 222, 210);
+    private static readonly (byte R, byte G, byte B) Dim = (150, 156, 176);
+    private static readonly (byte R, byte G, byte B) Warn = (255, 120, 100);
+    private static readonly (byte R, byte G, byte B) Brass = (230, 207, 152);
+
+    /// <summary>The colour family's night grade (spec A3): rows R, G, B as r, g, b and an offset, in sRGB 0–1.</summary>
+    private static readonly double[,] ColourGrade =
+    {
+        { .6162, .1372, .0138, .0147 },
+        { .0413, .7224, .0140, .0196 },
+        { .0435, .1462, .6279, .0353 },
+    };
 
     /// <param name="only">Icons to draw alone and larger (four to a row), worn or not, for measuring a face; null draws
     /// every face a giver wears.</param>
@@ -35,8 +59,9 @@ internal static class PortraitSheet
             Console.WriteLine($"  curated: {warning}");
         }
 
+        var curation = curated.GiverPortraits;
         var inputs = GiverPortraitSources.Read(data.Excel, icon => data.FileExists(RewardArtIndex.IconPath(icon)), line => Console.WriteLine($"  {line}"));
-        var index = PortraitIndex.Build(inputs, curated.GiverPortraits);
+        var index = PortraitIndex.Build(inputs, curation);
 
         // Every face a giver wears, with the givers wearing it.
         var cells = new SortedDictionary<(int Rank, uint Icon), (PortraitSource Source, SortedSet<string> Givers)>();
@@ -78,10 +103,20 @@ internal static class PortraitSheet
             }
         }
 
+        var masks = new Dictionary<uint, bool[]>();
+        foreach (var (icon, mask) in curation.Masks)
+        {
+            if (PortraitMaskFile.TryRead(mask.File, out _, out _, out var keep))
+            {
+                masks[icon] = keep;
+            }
+        }
+
         var md = new StringBuilder();
         md.AppendLine("# Giver portrait contact sheet");
         md.AppendLine();
-        md.AppendLine(CultureInfo.InvariantCulture, $"Written by `Tsukimichi.DataGen --portrait-sheet`. {cells.Count} faces worn by {index.GiversWithArt} of {index.GiverCount} giver ids, {picked.Values.Sum()} quests with a portrait. `<family>-<n>.png` shows each crop as the plugin draws it, with the framing guides: the crown band (8–12 %), the eye-line band (42–46 %), the chin band (78–84 %) and the circle. `<family>-<n>-source.png` shows the whole texture with a grid every 0.1 in texture coordinates (the 0.5 lines brighter) and the crop's box, for measuring a per-icon crop. Cells run left to right, top to bottom, {columns} to a row.");
+        md.AppendLine(CultureInfo.InvariantCulture, $"Written by `Tsukimichi.DataGen --portrait-sheet`. {cells.Count} faces, worn by {index.GiversWithArt} of {index.GiverCount} giver ids; {picked.Values.Sum()} quests show a portrait. Boxes are (x, y, side) in hr px. Flags: CLAMPED, the box meets the texture's edge; KEY n, n script-colour pixels left inside the circle of a keyed delivery portrait.");
+        var flagged = 0;
 
         foreach (var family in cells.GroupBy(c => c.Value.Source))
         {
@@ -92,21 +127,48 @@ internal static class PortraitSheet
                 var file = $"{prefix}{family.Key}-{page + 1}.png";
                 var sourceFile = $"{prefix}{family.Key}-{page + 1}-source.png";
                 var rows = (slice.Count + columns - 1) / columns;
-                var canvas = new Canvas(columns * Cell, rows * Cell);
-                var sources = new Canvas(columns * sourceCell, rows * sourceCell);
+                var canvas = new SheetCanvas(columns * CellWidth, rows * CellHeight);
+                var sources = new SheetCanvas(columns * sourceCell, rows * sourceCell);
                 md.AppendLine();
                 md.AppendLine(CultureInfo.InvariantCulture, $"## {file}");
                 md.AppendLine();
-                md.AppendLine("| Cell | Icon | Crop | Quests | Givers |");
-                md.AppendLine("|---:|---:|---|---:|---|");
+                md.AppendLine("| Cell | Icon | Box | Flags | Quests | Givers |");
+                md.AppendLine("|---:|---:|---|---|---:|---|");
                 for (var n = 0; n < slice.Count; n++)
                 {
                     var ((_, icon), (source, givers)) = (slice[n].Key, slice[n].Value);
                     var crop = index.Crops.For(source, icon);
                     var texture = Load(data, icon);
-                    canvas.DrawCrop(texture, crop, (n % columns) * Cell, (n / columns) * Cell, Cell);
-                    sources.DrawSource(texture, crop, (n % columns) * sourceCell, (n / columns) * sourceCell, sourceCell);
-                    md.AppendLine(CultureInfo.InvariantCulture, $"| {n + 1} | {icon:D6} | {crop.U0:0.###}, {crop.V0:0.###} → {crop.U1:0.###}, {crop.V1:0.###} | {picked.GetValueOrDefault(icon)} | {string.Join(", ", givers)} |");
+                    var mask = masks.GetValueOrDefault(icon);
+                    int left = (n % columns) * CellWidth, top = (n / columns) * CellHeight;
+                    var keyLeft = DrawCrop(canvas, texture, crop, mask, left + 8, top + 6, Crop, grade: false, guides: true);
+                    var (x, y, side) = crop.ToBox(source);
+                    var flags = new List<string>();
+                    if (mask is not null)
+                    {
+                        flags.Add("KEYED");
+                    }
+
+                    if (crop.U0 <= 0.002f || crop.V0 <= 0.002f || crop.U1 >= 0.998f || crop.V1 >= 0.998f)
+                    {
+                        flags.Add("CLAMPED");
+                    }
+
+                    if (keyLeft > 0)
+                    {
+                        flags.Add($"KEY {keyLeft}");
+                    }
+
+                    flagged += flags.Any(f => f != "KEYED") ? 1 : 0;
+                    var quests = picked.GetValueOrDefault(icon);
+                    var name = givers.Count == 0 ? "(no giver)" : givers.Count == 1 ? givers.First() : $"{givers.First()} +{givers.Count - 1}";
+                    canvas.Text(left + 8, top + Crop + 10, $"{icon:D6} Q{quests}", Label);
+                    canvas.Text(left + 8, top + Crop + 19, name, Label, Crop);
+                    canvas.Text(left + 8, top + Crop + 28, string.Create(CultureInfo.InvariantCulture, $"{x:0},{y:0},{side:0}"), Dim, Crop);
+                    var flagText = string.Join(' ', flags.Where(f => f != "KEYED"));
+                    canvas.Text(left + 8, top + Crop + 37, flags.Contains("KEYED") ? ("SCRIPT KEYED " + flagText).Trim() : flagText, flagText.Length > 0 ? Warn : Dim, Crop);
+                    DrawSource(sources, texture, crop, (n % columns) * sourceCell, (n / columns) * sourceCell, sourceCell);
+                    md.AppendLine(CultureInfo.InvariantCulture, $"| {n + 1} | {icon:D6} | {x:0}, {y:0}, {side:0} | {string.Join(", ", flags)} | {quests} | {string.Join(", ", givers)} |");
                 }
 
                 canvas.Save(Path.Combine(outDir, file));
@@ -115,206 +177,163 @@ internal static class PortraitSheet
             }
         }
 
+        // The keyed delivery portraits three ways, for signing a mask off.
+        var keyed = curation.Masks.Keys.Where(masks.ContainsKey).Where(i => only is null || only.Contains(i)).Order().ToList();
+        if (keyed.Count > 0)
+        {
+            var review = new SheetCanvas((3 * (Review + 8)) + 8, keyed.Count * (Review + 24));
+            md.AppendLine();
+            md.AppendLine(CultureInfo.InvariantCulture, $"## {prefix}Delivery-keyed.png");
+            md.AppendLine();
+            md.AppendLine("Each row: source, keyed, keyed and graded, at 128 px.");
+            for (var row = 0; row < keyed.Count; row++)
+            {
+                var icon = keyed[row];
+                var texture = Load(data, icon);
+                var crop = index.Crops.For(PortraitSource.Delivery, icon);
+                var top = (row * (Review + 24)) + 4;
+                DrawCrop(review, texture, crop, null, 8, top, Review, grade: false, guides: false);
+                DrawCrop(review, texture, crop, masks[icon], 8 + Review + 8, top, Review, grade: false, guides: false);
+                DrawCrop(review, texture, crop, masks[icon], 8 + (2 * (Review + 8)), top, Review, grade: true, guides: false);
+                review.Text(8, top + Review + 6, $"{icon:D6} SOURCE / KEYED / KEYED + GRADED", Label);
+            }
+
+            review.Save(Path.Combine(outDir, $"{prefix}Delivery-keyed.png"));
+            Console.WriteLine($"wrote:   {Path.Combine(outDir, $"{prefix}Delivery-keyed.png")} ({keyed.Count} portraits)");
+        }
+
         var mdFile = Path.Combine(outDir, prefix + "portraits.md");
         File.WriteAllText(mdFile, md.ToString());
-        Console.WriteLine($"wrote:   {mdFile}");
+        Console.WriteLine($"wrote:   {mdFile} ({flagged} cells flagged)");
         return 0;
     }
 
-    private static TexFile? Load(Lumina.GameData data, uint icon)
+    private static TexFile? Load(Lumina.GameData data, uint icon) =>
+        data.GetFile<TexFile>(PortraitMasks.HrPath(icon)) ?? data.GetFile<TexFile>(RewardArtIndex.IconPath(icon));
+
+    /// <summary>
+    /// Draws <paramref name="crop"/> of the texture into a <paramref name="size"/> square on the night plate, through
+    /// <paramref name="keep"/> when given (a hr-sized mask), graded when asked, with the guides when asked. Returns how
+    /// many plate pixels inside the circle show script colour after keying (0 without a mask).
+    /// </summary>
+    private static int DrawCrop(SheetCanvas canvas, TexFile? texture, PortraitCrop crop, bool[]? keep, int left, int top, int size, bool grade, bool guides)
     {
-        var path = RewardArtIndex.IconPath(icon);
-        return data.GetFile<TexFile>(path.Replace(".tex", "_hr1.tex", StringComparison.Ordinal)) ?? data.GetFile<TexFile>(path);
-    }
-
-    /// <summary>An RGBA canvas with just what the sheet draws: a cropped texture, guide lines, a circle; saved as PNG.</summary>
-    private sealed class Canvas(int width, int height)
-    {
-        private readonly byte[] pixels = Fill(width, height);
-
-        public void DrawCrop(TexFile? texture, PortraitCrop crop, int left, int top, int size)
+        canvas.Fill(left, top, size, size, SheetCanvas.Night);
+        var scriptLeft = 0;
+        var radius = size / 2.0;
+        if (texture is not null)
         {
-            const int Pad = 4;
-            var box = size - (2 * Pad);
-            if (texture is not null)
-            {
-                var source = texture.ImageData;
-                int w = texture.Header.Width, h = texture.Header.Height;
-                for (var y = 0; y < box; y++)
-                {
-                    for (var x = 0; x < box; x++)
-                    {
-                        var sx = Math.Clamp((int)((crop.U0 + ((crop.U1 - crop.U0) * (x + 0.5f) / box)) * w), 0, w - 1);
-                        var sy = Math.Clamp((int)((crop.V0 + ((crop.V1 - crop.V0) * (y + 0.5f) / box)) * h), 0, h - 1);
-                        var si = ((sy * w) + sx) * 4;
-                        var a = source[si + 3];
-                        Blend(left + Pad + x, top + Pad + y, source[si + 2], source[si + 1], source[si], a);
-                    }
-                }
-            }
-
-            // Guides: crown, eye line and chin bands (both edges), then the circle.
-            foreach (var (from, to, r, g, b) in new[]
-                     {
-                         (PortraitFraming.CrownMin, PortraitFraming.CrownMax, (byte)90, (byte)170, (byte)255),
-                         (PortraitFraming.EyeLineMin, PortraitFraming.EyeLineMax, (byte)255, (byte)80, (byte)80),
-                         (PortraitFraming.ChinMin, PortraitFraming.ChinMax, (byte)90, (byte)220, (byte)120),
-                     })
-            {
-                foreach (var at in new[] { from, to })
-                {
-                    var y = top + Pad + (int)(at * box);
-                    for (var x = 0; x < box; x++)
-                    {
-                        Blend(left + Pad + x, y, r, g, b, 200);
-                    }
-                }
-            }
-
-            var centre = Pad + (box / 2f);
-            for (var step = 0; step < 720; step++)
-            {
-                var angle = step * Math.PI / 360;
-                Blend(left + (int)(centre + (Math.Cos(angle) * box / 2)), top + (int)(centre + (Math.Sin(angle) * box / 2)), 230, 200, 120, 255);
-            }
-        }
-
-        /// <summary>The whole texture fitted into the cell, a 0.1 grid in texture coordinates, and the crop's box.</summary>
-        public void DrawSource(TexFile? texture, PortraitCrop crop, int left, int top, int size)
-        {
-            if (texture is null)
-            {
-                return;
-            }
-
-            const int Pad = 4;
             var source = texture.ImageData;
             int w = texture.Header.Width, h = texture.Header.Height;
-            var scale = (size - (2 * Pad)) / (float)Math.Max(w, h);
-            int dw = (int)(w * scale), dh = (int)(h * scale);
-            int ox = left + Pad + ((size - (2 * Pad) - dw) / 2), oy = top + Pad + ((size - (2 * Pad) - dh) / 2);
-            for (var y = 0; y < dh; y++)
+            var maskMatches = keep is not null && keep.Length == w * h;
+            for (var y = 0; y < size; y++)
             {
-                for (var x = 0; x < dw; x++)
+                for (var x = 0; x < size; x++)
                 {
-                    var si = ((Math.Min(h - 1, (int)(y / scale)) * w) + Math.Min(w - 1, (int)(x / scale))) * 4;
-                    Blend(ox + x, oy + y, source[si + 2], source[si + 1], source[si], source[si + 3]);
+                    var sx = Math.Clamp((int)((crop.U0 + ((crop.U1 - crop.U0) * (x + 0.5) / size)) * w), 0, w - 1);
+                    var sy = Math.Clamp((int)((crop.V0 + ((crop.V1 - crop.V0) * (y + 0.5) / size)) * h), 0, h - 1);
+                    var p = (sy * w) + sx;
+                    var si = p * 4;
+                    double b = source[si], g = source[si + 1], r = source[si + 2], a = source[si + 3] / 255.0;
+                    if (maskMatches && !keep![p])
+                    {
+                        a = 0;
+                    }
+
+                    var inside = Math.Pow(x + 0.5 - radius, 2) + Math.Pow(y + 0.5 - radius, 2) <= radius * radius;
+                    if (maskMatches && inside && a > 40 / 255.0 && DeliveryKey.IsScript(source[si], source[si + 1], source[si + 2], source[si + 3]))
+                    {
+                        scriptLeft++;
+                    }
+
+                    if (grade)
+                    {
+                        (r, g, b) = Grade(r, g, b);
+                    }
+
+                    canvas.Blend(left + x, top + y, r, g, b, a);
+                    if (!inside)
+                    {
+                        // Outside the circle the plugin draws nothing: dim it so the circle reads.
+                        canvas.Blend(left + x, top + y, 22, 24, 34, 0.6);
+                    }
                 }
             }
+        }
 
-            for (var tick = 0; tick <= 10; tick++)
+        if (guides)
+        {
+            Band(canvas, left, top, size, PortraitFraming.CrownMin, PortraitFraming.CrownMax, (90, 140, 255), 0.22, null);
+            Band(canvas, left, top, size, PortraitFraming.EyeLineMin, PortraitFraming.EyeLineMax, (230, 190, 90), 0.30, PortraitFraming.EyeLine);
+            Band(canvas, left, top, size, PortraitFraming.ChinMin, PortraitFraming.ChinMax, (230, 80, 80), 0.26, PortraitFraming.Chin);
+
+            // The face's width: two ticks at the foot, 55 % of the diameter apart.
+            foreach (var tick in new[] { 0.5 - (PortraitFraming.FaceShare / 2), 0.5 + (PortraitFraming.FaceShare / 2) })
             {
-                var alpha = (byte)(tick == 5 ? 220 : 90);
-                var gx = ox + (int)(tick / 10f * (dw - 1));
-                var gy = oy + (int)(tick / 10f * (dh - 1));
-                for (var y = 0; y < dh; y++)
+                var tx = left + (int)Math.Round(tick * size);
+                for (var y = top + size - 6; y < top + size; y++)
                 {
-                    Blend(gx, oy + y, 120, 200, 255, alpha);
-                }
-
-                for (var x = 0; x < dw; x++)
-                {
-                    Blend(ox + x, gy, 120, 200, 255, alpha);
-                }
-            }
-
-            int x0 = ox + (int)(crop.U0 * dw), x1 = ox + (int)(crop.U1 * dw), y0 = oy + (int)(crop.V0 * dh), y1 = oy + (int)(crop.V1 * dh);
-            for (var x = x0; x <= x1; x++)
-            {
-                Blend(x, y0, 255, 220, 60, 255);
-                Blend(x, y1, 255, 220, 60, 255);
-            }
-
-            for (var y = y0; y <= y1; y++)
-            {
-                Blend(x0, y, 255, 220, 60, 255);
-                Blend(x1, y, 255, 220, 60, 255);
-            }
-        }
-
-        public void Save(string path)
-        {
-            using var file = File.Create(path);
-            file.Write([137, 80, 78, 71, 13, 10, 26, 10]);
-            var header = new byte[13];
-            BinaryPrimitives.WriteInt32BigEndian(header, width);
-            BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(4), height);
-            header[8] = 8;
-            header[9] = 6;
-            Chunk(file, "IHDR", header);
-            using var raw = new MemoryStream();
-            for (var y = 0; y < height; y++)
-            {
-                raw.WriteByte(0);
-                raw.Write(pixels, y * width * 4, width * 4);
-            }
-
-            using var packed = new MemoryStream();
-            using (var z = new ZLibStream(packed, CompressionLevel.Optimal, leaveOpen: true))
-            {
-                raw.Position = 0;
-                raw.CopyTo(z);
-            }
-
-            Chunk(file, "IDAT", packed.ToArray());
-            Chunk(file, "IEND", []);
-        }
-
-        private void Blend(int x, int y, byte r, byte g, byte b, byte a)
-        {
-            if (x < 0 || y < 0 || x >= width || y >= height)
-            {
-                return;
-            }
-
-            var i = ((y * width) + x) * 4;
-            pixels[i] = (byte)(((r * a) + (pixels[i] * (255 - a))) / 255);
-            pixels[i + 1] = (byte)(((g * a) + (pixels[i + 1] * (255 - a))) / 255);
-            pixels[i + 2] = (byte)(((b * a) + (pixels[i + 2] * (255 - a))) / 255);
-        }
-
-        private static byte[] Fill(int width, int height)
-        {
-            var pixels = new byte[width * height * 4];
-            for (var i = 0; i < pixels.Length; i += 4)
-            {
-                // The night plate the Giver card sits on.
-                pixels[i] = 34;
-                pixels[i + 1] = 36;
-                pixels[i + 2] = 52;
-                pixels[i + 3] = 255;
-            }
-
-            return pixels;
-        }
-
-        private static void Chunk(Stream stream, string type, byte[] data)
-        {
-            Span<byte> length = stackalloc byte[4];
-            BinaryPrimitives.WriteInt32BigEndian(length, data.Length);
-            stream.Write(length);
-            var body = new byte[4 + data.Length];
-            Encoding.ASCII.GetBytes(type, body);
-            data.CopyTo(body, 4);
-            stream.Write(body);
-            Span<byte> crc = stackalloc byte[4];
-            BinaryPrimitives.WriteUInt32BigEndian(crc, Crc32(body));
-            stream.Write(crc);
-        }
-
-        private static uint Crc32(byte[] bytes)
-        {
-            var crc = 0xFFFFFFFFu;
-            foreach (var b in bytes)
-            {
-                crc ^= b;
-                for (var k = 0; k < 8; k++)
-                {
-                    crc = (crc & 1) != 0 ? 0xEDB88320u ^ (crc >> 1) : crc >> 1;
+                    canvas.Blend(tx, y, 230, 190, 90, 0.9);
                 }
             }
-
-            return crc ^ 0xFFFFFFFFu;
         }
+
+        canvas.Circle(left + size / 2, top + size / 2, radius - 0.5, Brass, 0.85);
+        return scriptLeft;
+    }
+
+    private static void Band(SheetCanvas canvas, int left, int top, int size, float from, float to, (byte R, byte G, byte B) colour, double alpha, float? line)
+    {
+        var y0 = top + (int)Math.Round(from * size);
+        var y1 = top + (int)Math.Round(to * size);
+        canvas.Fill(left, y0, size, Math.Max(1, y1 - y0), colour, alpha);
+        if (line is { } at)
+        {
+            canvas.Fill(left, top + (int)Math.Round(at * size), size, 1, colour, 0.9);
+        }
+    }
+
+    private static (double R, double G, double B) Grade(double r, double g, double b)
+    {
+        double rr = r / 255, gg = g / 255, bb = b / 255;
+        double Row(int i) => Math.Clamp((ColourGrade[i, 0] * rr) + (ColourGrade[i, 1] * gg) + (ColourGrade[i, 2] * bb) + ColourGrade[i, 3], 0, 1) * 255;
+        return (Row(0), Row(1), Row(2));
+    }
+
+    /// <summary>The whole texture fitted into the cell, a 0.1 grid in texture coordinates, and the crop's box.</summary>
+    private static void DrawSource(SheetCanvas canvas, TexFile? texture, PortraitCrop crop, int left, int top, int size)
+    {
+        if (texture is null)
+        {
+            return;
+        }
+
+        const int Pad = 4;
+        var source = texture.ImageData;
+        int w = texture.Header.Width, h = texture.Header.Height;
+        var scale = (size - (2 * Pad)) / (float)Math.Max(w, h);
+        int dw = (int)(w * scale), dh = (int)(h * scale);
+        int ox = left + Pad + ((size - (2 * Pad) - dw) / 2), oy = top + Pad + ((size - (2 * Pad) - dh) / 2);
+        for (var y = 0; y < dh; y++)
+        {
+            for (var x = 0; x < dw; x++)
+            {
+                var si = ((Math.Min(h - 1, (int)(y / scale)) * w) + Math.Min(w - 1, (int)(x / scale))) * 4;
+                canvas.Blend(ox + x, oy + y, source[si + 2], source[si + 1], source[si], source[si + 3] / 255.0);
+            }
+        }
+
+        for (var tick = 0; tick <= 10; tick++)
+        {
+            var alpha = tick == 5 ? 0.86 : 0.35;
+            canvas.Fill(ox + (int)(tick / 10f * (dw - 1)), oy, 1, dh, (120, 200, 255), alpha);
+            canvas.Fill(ox, oy + (int)(tick / 10f * (dh - 1)), dw, 1, (120, 200, 255), alpha);
+        }
+
+        int x0 = ox + (int)(crop.U0 * dw), x1 = ox + (int)(crop.U1 * dw), y0 = oy + (int)(crop.V0 * dh), y1 = oy + (int)(crop.V1 * dh);
+        canvas.Fill(x0, y0, x1 - x0 + 1, 1, (255, 220, 60));
+        canvas.Fill(x0, y1, x1 - x0 + 1, 1, (255, 220, 60));
+        canvas.Fill(x0, y0, 1, y1 - y0 + 1, (255, 220, 60));
+        canvas.Fill(x1, y0, 1, y1 - y0 + 1, (255, 220, 60));
     }
 }

@@ -27,6 +27,12 @@ public sealed record CuratedPortraitBlock(uint GiverId, string NormalizedName, I
 public sealed record CuratedPortraitPin(uint Icon, PortraitSource Source, string Note);
 
 /// <summary>
+/// The face seed of a custom delivery portrait (1.15 design spec A2.4): the hr px inside the client's face from which
+/// DataGen floods the figure before it keys out the emblem script around it.
+/// </summary>
+public sealed record CuratedDeliveryKey(int SeedX, int SeedY, string Note);
+
+/// <summary>
 /// The curated overlay for giver portraits, <c>curated/giver_portraits.json</c> (feature plan v7 F3): crops per family
 /// and per icon, names for faces the game leaves unnamed, aliases between a source's spelling and the givers', wrong
 /// matches blocked, and pins. Every entry carries a note; an entry that is malformed is skipped with a warning.
@@ -34,14 +40,20 @@ public sealed record CuratedPortraitPin(uint Icon, PortraitSource Source, string
 /// {
 ///   "schema": 1,
 ///   "note": "...",
-///   "crops": { "BattleTalk": { "eyes": [ 0.42, 0.44 ], "chin": 0.55 }, "Delivery": [ u0, v0, u1, v1 ] },   (a typical face the rule frames, or a box; replaces the family default)
-///   "iconCrops": { "72659": { "eyes": [ 0.5, 0.42 ], "chin": 0.5, "note": "..." }, "87019": { "crop": [ .. ], "note": "..." } },  (eyes and chin measured on the texture: the framing rule makes the crop)
+///   "crops": { "BattleTalk": { "box": [ 164, 154, 172 ] } },                                       (replaces the family default)
+///   "iconCrops": { "87019": { "box": [ 70, 62, 75 ], "note": "..." }, "72659": { "eyes": [ 0.5, 0.564 ], "chin": 0.68, "note": "..." } },
 ///   "faces": { "73270": { "name": "Sphene", "source": "BattleTalk", "era": 5, "note": "..." } },   (source defaults to BattleTalk, era optional)
 ///   "aliases": { "PAPARIMO": { "name": "Papalymo", "note": "..." } },
 ///   "blocks": { "Clive": { "icons": [ 87371 ], "note": "..." }, "1012345": { "note": "..." } },  (by giver name or ENpcResident id; no icons = every portrait)
-///   "pins": { "1001234": { "icon": 73034, "source": "BattleTalk", "note": "..." } }               (by ENpcResident id)
+///   "pins": { "1001234": { "icon": 73034, "source": "BattleTalk", "note": "..." } },              (by ENpcResident id)
+///   "deliveryKeys": { "61661": { "seed": [ 190, 225 ], "note": "..." } }                            (the face seed DataGen keys the emblem script from)
 /// }
 /// </code>
+/// A crop is written three ways: <c>"box": [x, y, side]</c> in px of the family's hr texture, as the design spec writes
+/// boxes; <c>"eyes": [u, v]</c> and <c>"chin": v</c> measured on the texture, which the framing rule turns into a box
+/// (<see cref="PortraitFraming"/>); or <c>"crop": [u0, v0, u1, v1]</c> in texture coordinates. The keep masks DataGen
+/// writes from the delivery keys sit beside the file, in <c>portrait_masks/</c> with their manifest
+/// <c>masks.json</c> (<see cref="Masks"/>).
 /// </summary>
 public sealed record PortraitCuration
 {
@@ -63,17 +75,34 @@ public sealed record PortraitCuration
     /// <summary>Pins by ENpcResident id.</summary>
     public IReadOnlyDictionary<uint, CuratedPortraitPin> Pins { get; init; } = new Dictionary<uint, CuratedPortraitPin>();
 
+    /// <summary>The face seed (hr px) DataGen keys each delivery portrait's emblem script from, by icon id.</summary>
+    public IReadOnlyDictionary<uint, CuratedDeliveryKey> DeliveryKeys { get; init; } = new Dictionary<uint, CuratedDeliveryKey>();
+
+    /// <summary>
+    /// The shipped keep masks by icon id, from <c>portrait_masks/masks.json</c> beside the file; only masks whose file
+    /// exists are listed. A delivery portrait without one is never drawn (its emblem script would show).
+    /// </summary>
+    public IReadOnlyDictionary<uint, PortraitMask> Masks { get; init; } = new Dictionary<uint, PortraitMask>();
+
+    /// <summary>The folder beside <see cref="CuratedData.GiverPortraitsFileName"/> that holds the keep masks.</summary>
+    public const string MaskFolder = "portrait_masks";
+
+    /// <summary>The masks' manifest in <see cref="MaskFolder"/>.</summary>
+    public const string MaskManifestFileName = "masks.json";
+
     /// <summary>The family crops with this file's replacements and icon crops applied.</summary>
     public PortraitCrops CropTable() => new(Crops, IconCrops);
 
     /// <summary>
-    /// Reads the file at <paramref name="path"/>. A missing file is <see cref="Empty"/> without a warning; one that does
-    /// not parse as strict JSON, or whose root is not an object, is <see cref="Empty"/> with one warning.
+    /// Reads the file at <paramref name="path"/> and the mask manifest beside it. A missing file is <see cref="Empty"/>
+    /// (with the masks) without a warning; one that does not parse as strict JSON, or whose root is not an object, is
+    /// <see cref="Empty"/> with one warning.
     /// </summary>
     public static PortraitCuration Load(string path, List<string> warnings)
     {
         ArgumentNullException.ThrowIfNull(warnings);
         var fileName = Path.GetFileName(path);
+        var masks = LoadMasks(Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, MaskFolder), warnings);
         var text = AtomicFile.Read(path, out var ioError);
         if (text is null)
         {
@@ -82,7 +111,7 @@ public sealed record PortraitCuration
                 warnings.Add($"{fileName} could not be read: {ioError}");
             }
 
-            return Empty;
+            return Empty with { Masks = masks };
         }
 
         JsonObject root;
@@ -91,7 +120,7 @@ public sealed record PortraitCuration
             if (JsonNode.Parse(text, documentOptions: CuratedData.StrictOptions) is not JsonObject obj)
             {
                 warnings.Add($"{fileName}: root is not a JSON object; file ignored.");
-                return Empty;
+                return Empty with { Masks = masks };
             }
 
             root = obj;
@@ -99,7 +128,7 @@ public sealed record PortraitCuration
         catch (JsonException ex)
         {
             warnings.Add($"{fileName} could not be parsed: {ex.Message}");
-            return Empty;
+            return Empty with { Masks = masks };
         }
 
         var crops = new Dictionary<PortraitSource, PortraitCrop>();
@@ -111,10 +140,9 @@ public sealed record PortraitCuration
                 return;
             }
 
-            // A box ([u0, v0, u1, v1]) or a typical face ({ "eyes": [u, v], "chin": v }) the rule frames.
-            if (!TryReadCrop(node, out var crop) && (node is not JsonObject face || !TryReadLandmarks(face, source, out crop)))
+            if (node is not JsonObject obj || !TryReadAnyCrop(obj, source, out var crop))
             {
-                warn("value must be [u0, v0, u1, v1] within 0–1 with u0 < u1 and v0 < v1, or { \"eyes\": [u, v], \"chin\": v }");
+                warn(CropFormats);
                 return;
             }
 
@@ -136,18 +164,9 @@ public sealed record PortraitCuration
                 return;
             }
 
-            PortraitCrop crop;
-            if (obj.TryGetPropertyValue("crop", out var cropNode))
+            if (!TryReadAnyCrop(obj, PortraitSources.FamilyOfIcon(icon), out var crop))
             {
-                if (!TryReadCrop(cropNode, out crop))
-                {
-                    warn("crop must be [u0, v0, u1, v1] within 0–1 with u0 < u1 and v0 < v1");
-                    return;
-                }
-            }
-            else if (!TryReadLandmarks(obj, PortraitSources.FamilyOfIcon(icon), out crop))
-            {
-                warn("needs \"eyes\": [u, v] and \"chin\": v (texture coordinates, chin below the eyes) of an icon of a known family, or \"crop\": [u0, v0, u1, v1]");
+                warn(CropFormats + " (the icon must be of a known family)");
                 return;
             }
 
@@ -335,6 +354,31 @@ public sealed record PortraitCuration
             pins[giverId] = new CuratedPortraitPin(icon, source, note);
         });
 
+        var deliveryKeys = new Dictionary<uint, CuratedDeliveryKey>();
+        ForEach(root, "deliveryKeys", fileName, warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint icon) || PortraitSources.FamilyOfIcon(icon) != PortraitSource.Delivery)
+            {
+                warn("key is not a delivery portrait's icon id");
+                return;
+            }
+
+            var (width, height) = PortraitSources.TextureSize(PortraitSource.Delivery);
+            if (node is not JsonObject obj || !obj.TryGetPropertyValue("seed", out var seedNode) || !TryReadNumbers(seedNode, 2, out var seed)
+                || seed[0] < 0 || seed[1] < 0 || seed[0] >= width || seed[1] >= height || seed[0] != MathF.Floor(seed[0]) || seed[1] != MathF.Floor(seed[1]))
+            {
+                warn($"seed must be [x, y]: whole hr px inside the {width} × {height} texture");
+                return;
+            }
+
+            if (!HasNote(obj, warn, out var note))
+            {
+                return;
+            }
+
+            deliveryKeys[icon] = new CuratedDeliveryKey((int)seed[0], (int)seed[1], note);
+        });
+
         return new PortraitCuration
         {
             Crops = crops,
@@ -343,7 +387,80 @@ public sealed record PortraitCuration
             Aliases = aliases,
             Blocks = blocks,
             Pins = pins,
+            DeliveryKeys = deliveryKeys,
+            Masks = masks,
         };
+    }
+
+    /// <summary>
+    /// <c>portrait_masks/masks.json</c>: <c>{ "schema": 1, "entries": { "61661": { "file": "061661.png", "texture":
+    /// "ui/icon/061000/061661_hr1.tex", "sha256": "…", "width": 400, "height": 480 } } }</c>, written by
+    /// <c>Tsukimichi.DataGen --portrait-masks</c>. An entry whose file is missing or malformed is skipped with a warning.
+    /// </summary>
+    public static IReadOnlyDictionary<uint, PortraitMask> LoadMasks(string folder, List<string> warnings)
+    {
+        ArgumentNullException.ThrowIfNull(warnings);
+        var masks = new Dictionary<uint, PortraitMask>();
+        var path = Path.Combine(folder, MaskManifestFileName);
+        var text = AtomicFile.Read(path, out var ioError);
+        if (text is null)
+        {
+            if (ioError is not null)
+            {
+                warnings.Add($"{MaskFolder}/{MaskManifestFileName} could not be read: {ioError}");
+            }
+
+            return masks;
+        }
+
+        JsonObject root;
+        try
+        {
+            if (JsonNode.Parse(text, documentOptions: CuratedData.StrictOptions) is not JsonObject obj)
+            {
+                warnings.Add($"{MaskFolder}/{MaskManifestFileName}: root is not a JSON object; file ignored.");
+                return masks;
+            }
+
+            root = obj;
+        }
+        catch (JsonException ex)
+        {
+            warnings.Add($"{MaskFolder}/{MaskManifestFileName} could not be parsed: {ex.Message}");
+            return masks;
+        }
+
+        ForEach(root, "entries", $"{MaskFolder}/{MaskManifestFileName}", warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint icon) || icon == 0 || node is not JsonObject obj)
+            {
+                warn("key is not an icon id, or the value is not an object");
+                return;
+            }
+
+            var file = StorageJson.ReadString(obj, "file")?.Trim();
+            var texture = StorageJson.ReadString(obj, "texture")?.Trim();
+            var hash = StorageJson.ReadString(obj, "sha256")?.Trim();
+            if (string.IsNullOrEmpty(file) || file.Contains('/') || file.Contains('\\') || string.IsNullOrEmpty(texture)
+                || hash is not { Length: 64 } || !hash.All(char.IsAsciiHexDigitLower)
+                || !obj.TryGetPropertyValue("width", out var w) || !StorageJson.TryReadId(w, out var width) || width == 0
+                || !obj.TryGetPropertyValue("height", out var h) || !StorageJson.TryReadId(h, out var height) || height == 0)
+            {
+                warn("needs file (a name in the folder), texture, sha256 (64 lower-case hex digits), width and height");
+                return;
+            }
+
+            var full = Path.Combine(folder, file);
+            if (!File.Exists(full))
+            {
+                warn($"{file} is missing");
+                return;
+            }
+
+            masks[icon] = new PortraitMask(icon, full, texture, hash, (int)width, (int)height);
+        });
+
+        return masks;
     }
 
     /// <summary>The newest expansion an era may name (Dawntrail is 5; Evercold, when it ships, is 6).</summary>
@@ -387,6 +504,32 @@ public sealed record PortraitCuration
         }
 
         return true;
+    }
+
+    private const string CropFormats =
+        "needs \"box\": [x, y, side] in hr px inside the texture, \"eyes\": [u, v] with \"chin\": v below them, or \"crop\": [u0, v0, u1, v1] within 0–1";
+
+    /// <summary>A crop in any of the three forms (<c>box</c>, <c>eyes</c> + <c>chin</c>, <c>crop</c>), for an icon of <paramref name="source"/>.</summary>
+    private static bool TryReadAnyCrop(JsonObject obj, PortraitSource source, out PortraitCrop crop)
+    {
+        crop = default;
+        if (obj.TryGetPropertyValue("box", out var boxNode))
+        {
+            if (source == PortraitSource.None || !TryReadNumbers(boxNode, 3, out var box))
+            {
+                return false;
+            }
+
+            crop = PortraitCrop.FromBox(source, box[0], box[1], box[2]);
+            return crop.IsValid;
+        }
+
+        if (obj.TryGetPropertyValue("crop", out var cropNode))
+        {
+            return TryReadCrop(cropNode, out crop);
+        }
+
+        return TryReadLandmarks(obj, source, out crop);
     }
 
     private static bool TryReadCrop(JsonNode? node, out PortraitCrop crop)

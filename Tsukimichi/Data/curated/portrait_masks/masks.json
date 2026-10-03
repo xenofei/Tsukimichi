@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "note": "Written by `Tsukimichi.DataGen --portrait-masks` (tools/regen.ps1); do not edit by hand. One 1-bit keep mask per custom delivery portrait at the hr texture's size (white = keep): the client emblem's lettered ring keyed out, figure first, from the face seed in giver_portraits.json (design spec 1.15 A2.4). sha256 is the hash of the texture file the mask was keyed from; when the game's file no longer matches, the plugin shows the fallback for that portrait until this is rerun.",
+  "entries": {
+    "61661": {
+      "file": "061661.png",
+      "texture": "ui/icon/061000/061661_hr1.tex",
+      "sha256": "b54f4978b136562e719d389643d9cb5c391381b687444bf625ce6c3ef6ea1b23",
+      "width": 400,
+      "height": 480,
+      "removed": 7069
+    },
+    "61662": {
+      "file": "061662.png",
+      "texture": "ui/icon/061000/061662_hr1.tex",
+      "sha256": "a75694ab6205569b302f7373da206771d5aa38f40d39988eb055d99d44d0ab07",
+      "width": 400,
+      "height": 480,
+      "removed": 4498
+    },
+    "61663": {
+      "file": "061663.png",
+      "texture": "ui/icon/061000/061663_hr1.tex",
+      "sha256": "f770f678a9dcffeac13e315752c5bbc50ab4cef9500adec2f12f5b94bd9a930d",
+      "width": 400,
+      "height": 480,
+      "removed": 5682
+    },
+    "61669": {
+      "file": "061669.png",
+      "texture": "ui/icon/061000/061669_hr1.tex",
+      "sha256": "ef1fc64acbaff5dcdb42ddeb74116dbea8b68fe380822410e0b976504c09d7d4",
+      "width": 400,
+      "height": 480,
+      "removed": 5737
+    },
+    "61670": {
+      "file": "061670.png",
+      "texture": "ui/icon/061000/061670_hr1.tex",
+      "sha256": "38986c96c9a49a50dbad6dd05602e4d07a78795fb951f934768f0d80245ebec9",
+      "width": 400,
+      "height": 480,
+      "removed": 6629
+    }
+  }
+}
