@@ -117,7 +117,7 @@ Entries: **2629** across **1301** quests. Problems found: **0**.
 
 ## 2. Icon checks
 
-Reward icons the Moonlit pane will draw: **838** distinct ids over 1264 entries.
+Reward icons the Moonlit pane will draw: **847** distinct ids over 1289 entries.
 Missing `ui/icon/{folder}/{id}.tex`: **0**; missing `_hr1` variant: **0**.
 
 Entries with no drawable icon (no catalog reward matches by item id or by kind and id), per kind:
@@ -129,7 +129,7 @@ Entries with no drawable icon (no catalog reward matches by item id or by kind a
 | Emote | 56 | 0 |
 | Action | 250 | 90 |
 | GeneralAction | 12 | 0 |
-| ClassJob | 48 | 48 |
+| ClassJob | 48 | 23 |
 | Other | 6 | 0 |
 | ArtifactGear | 607 | 0 |
 | Mount | 38 | 0 |
@@ -230,9 +230,209 @@ Banner dimensions for well-known quests (the journal banner is a wide image, 376
 
 Ye Olde Faux Hollows: skipped (unsure of the expected entry).
 
-## Semantic spot checks
+## 4. Semantic spot checks (xivapi v2)
 
-Skipped (`--no-xivapi`).
+Sample: **64** entries (seed 20260927, up to 3 per kind then filled at random), **197** checks, **0** failed. xivapi version `541c0c12e07da325`, 21 requests, 0 request errors.
+
+| Quest | Kind | Reward id | Item id | Check | Expected (local) | Actual (xivapi) | Result |
+|---|---|---:|---:|---|---|---|---|
+| 65602 Accept No Imitations | Item | 2429 | 2429 | Quest name | Accept No Imitations | Accept No Imitations | pass |
+| 65602 Accept No Imitations | Item | 2429 | 2429 | Item.Name | Pinga | Pinga | pass |
+| 65637 So You Want to Be a Rogue | ClassJob | 29 | 0 | Quest name | So You Want to Be a Rogue | So You Want to Be a Rogue | pass |
+| 65637 So You Want to Be a Rogue | ClassJob | 29 | 0 | ClassJob.Name | Rogue | rogue | pass |
+| 65717 So You Want to Be an Archer | ClassJob | 5 | 0 | Quest name | So You Want to Be an Archer | So You Want to Be an Archer | pass |
+| 65717 So You Want to Be an Archer | ClassJob | 5 | 0 | ClassJob.Name | Archer | archer | pass |
+| 65719 So You Want to Be a Thaumaturge | ClassJob | 7 | 0 | Quest name | So You Want to Be a Thaumaturge | So You Want to Be a Thaumaturge | pass |
+| 65719 So You Want to Be a Thaumaturge | ClassJob | 7 | 0 | ClassJob.Name | Thaumaturge | thaumaturge | pass |
+| 65968 A Legend for a Legend | Title | 187 | 0 | Quest name | A Legend for a Legend | A Legend for a Legend | pass |
+| 65968 A Legend for a Legend | Title | 187 | 0 | Title.Masculine | Tamer of Steeds | Tamer of Steeds | pass |
+| 65968 A Legend for a Legend | Title | 187 | 0 | Achievement 1063.Title | 187 | 187 | pass |
+| 65968 A Legend for a Legend | Title | 187 | 0 | Achievement 1063 links quest | 65968 | linked | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | Quest name | Triple Triad Trial | Triple Triad Trial | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | TripleTriadCard.Name | Dodo | Dodo | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | Item exists | item 9772 | Dodo Card | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | ItemAction type | 3357 | 3357 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | ItemAction.Data[0] = rewardId | 1 | 1 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | Quest name | Triple Triad Trial | Triple Triad Trial | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | TripleTriadCard.Name | Sabotender | Sabotender | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | Item exists | item 9774 | Sabotender Card | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | ItemAction type | 3357 | 3357 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | ItemAction.Data[0] = rewardId | 3 | 3 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | Quest name | Triple Triad Trial | Triple Triad Trial | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | TripleTriadCard.Name | Bomb | Bomb | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | Item exists | item 9777 | Bomb Card | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | ItemAction type | 3357 | 3357 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | ItemAction.Data[0] = rewardId | 6 | 6 | pass |
+| 65973 Triple Triad Trial | SystemUnlock | 0 | 0 | Quest name | Triple Triad Trial | Triple Triad Trial | pass |
+| 65973 Triple Triad Trial | SystemUnlock | 0 | 0 | Curated label non-empty | non-empty | Triple Triad | pass |
+| 66038 Her Last Vow | Emote | 114 | 0 | Quest name | Her Last Vow | Her Last Vow | pass |
+| 66038 Her Last Vow | Emote | 114 | 0 | Emote.Name | Most Gentlemanly | Most Gentlemanly | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | Quest name | Now That We've Found Love | Now That We've Found Love | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | BuddyEquip.Name | Paramour Barding | Paramour Barding | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | Item exists | item 10082 | Paramour Barding | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | ItemAction type | 1013 | 1013 | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | ItemAction.Data[0] = rewardId | 30 | 30 | pass |
+| 66235 Color Your World | GeneralAction | 15 | 0 | Quest name | Color Your World | Color Your World | pass |
+| 66235 Color Your World | GeneralAction | 15 | 0 | GeneralAction.Name | Dye | Dye | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Quest name | My Little Chocobo (Maelstrom) | My Little Chocobo (Maelstrom) | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Mount.Singular | Company Chocobo | company chocobo | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Item exists | item 6001 | Chocobo Whistle | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | ItemAction type | 1322 | 1322 | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | ItemAction.Data[0] = rewardId | 1 | 1 | pass |
+| 66592 Honor Lost | Trait | 209 | 0 | Quest name | Honor Lost | Honor Lost | pass |
+| 66592 Honor Lost | Trait | 209 | 0 | Trait.Name | Oath Mastery | Oath Mastery | pass |
+| 66629 Shadowing the Summoner | Action | 3578 | 0 | Quest name | Shadowing the Summoner | Shadowing the Summoner | pass |
+| 66629 Shadowing the Summoner | Action | 3578 | 0 | Action.Name | Painflare | Painflare | pass |
+| 66639 Topaz Teachings | Trait | 466 | 0 | Quest name | Topaz Teachings | Topaz Teachings | pass |
+| 66639 Topaz Teachings | Trait | 466 | 0 | Trait.Name | Enhanced Aethercharge | Enhanced Aethercharge | pass |
+| 66663 A Relic Reborn (Omnilex) | DutyUnlock | 74 | 0 | Quest name | A Relic Reborn (Omnilex) | A Relic Reborn (Omnilex) | pass |
+| 66663 A Relic Reborn (Omnilex) | DutyUnlock | 74 | 0 | ContentFinderCondition.Name | A Relic Reborn: the Chimera | A Relic Reborn: the Chimera | pass |
+| 66711 The Price of Principles | OptionalItem | 4523 | 4523 | Quest name | The Price of Principles | The Price of Principles | pass |
+| 66711 The Price of Principles | OptionalItem | 4523 | 4523 | Item.Name | Darklight Band of Fending | Darklight Band of Fending | pass |
+| 66725 Hail to the King, Kupo | OptionalItem | 4176 | 4176 | Quest name | Hail to the King, Kupo | Hail to the King, Kupo | pass |
+| 66725 Hail to the King, Kupo | OptionalItem | 4176 | 4176 | Item.Name | Darklight Bracelet of Aiming | Darklight Bracelet of Aiming | pass |
+| 66747 Treasures and Tribulations | GeneralAction | 20 | 0 | Quest name | Treasures and Tribulations | Treasures and Tribulations | pass |
+| 66747 Treasures and Tribulations | GeneralAction | 20 | 0 | GeneralAction.Name | Dig | Dig | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | Quest name | Hard-boiled | Hard-boiled | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | BuddyEquip.Name | Egg Barding | Egg Barding | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | Item exists | item 7550 | Egg Harness | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | ItemAction type | 1013 | 1013 | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | ItemAction.Data[0] = rewardId | 24 | 24 | pass |
+| 66996 Brave New Companions | Title | 174 | 0 | Quest name | Brave New Companions | Brave New Companions | pass |
+| 66996 Brave New Companions | Title | 174 | 0 | Title.Masculine | Defender of Eorzea | Defender of Eorzea | pass |
+| 66996 Brave New Companions | Title | 174 | 0 | Achievement 1001.Title | 174 | 174 | pass |
+| 66996 Brave New Companions | Title | 174 | 0 | Achievement 1001 links quest | 66996 | linked | pass |
+| 67133 Divine Intervention | Other | 5 | 0 | Quest name | Divine Intervention | Divine Intervention | pass |
+| 67133 Divine Intervention | Other | 5 | 0 | QuestRewardOther.Name | Aether Compass | Aether Compass | pass |
+| 67631 Inscrutable Tastes | Other | 3 | 0 | Quest name | Inscrutable Tastes | Inscrutable Tastes | pass |
+| 67631 Inscrutable Tastes | Other | 3 | 0 | QuestRewardOther.Name | Collectable Action | Collectable Action | pass |
+| 67641 A Flare for the Dramatic | Action | 3582 | 0 | Quest name | A Flare for the Dramatic | A Flare for the Dramatic | pass |
+| 67641 A Flare for the Dramatic | Action | 3582 | 0 | Action.Name | Deathflare | Deathflare | pass |
+| 67644 A Song of Steam and Steel | DutyUnlock | 116 | 0 | Quest name | A Song of Steam and Steel | A Song of Steam and Steel | pass |
+| 67644 A Song of Steam and Steel | DutyUnlock | 116 | 0 | ContentFinderCondition.Name | Alexander - The Fist of the Father (Savage) | Alexander - The Fist of the Father (Savage) | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | Quest name | Joining the Circus | Joining the Circus | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | Companion.Singular | Pumpkin Butler | Pumpkin Butler | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | Item exists | item 13113 | Pumpkin Butler | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | ItemAction type | 853 | 853 | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | ItemAction.Data[0] = rewardId | 159 | 159 | pass |
+| 67928 Keeping Up with the Aliapohs | Other | 7 | 0 | Quest name | Keeping Up with the Aliapohs | Keeping Up with the Aliapohs | pass |
+| 67928 Keeping Up with the Aliapohs | Other | 7 | 0 | QuestRewardOther.Name | Wondrous Tails | Wondrous Tails | pass |
+| 67940 Best Friends Forever | ArtifactGear | 16054 | 16054 | Quest name | Best Friends Forever |  Best Friends Forever | pass |
+| 67940 Best Friends Forever | ArtifactGear | 16054 | 16054 | Item.Name | Terpander Lux | Terpander Lux | pass |
+| 68131 Eastern Apprentice | Trait | 140 | 0 | Quest name | Eastern Apprentice | Eastern Apprentice | pass |
+| 68131 Eastern Apprentice | Trait | 140 | 0 | Trait.Name | Quality Assurance | Quality Assurance | pass |
+| 68191 Saint Sayer | AetherCurrent | 2818144 | 0 | Quest name | Saint Sayer | Saint Sayer | pass |
+| 68191 Saint Sayer | AetherCurrent | 2818144 | 0 | Zone is a real AetherCurrentCompFlgSet territory | The Peaks | found | pass |
+| 68191 Saint Sayer | AetherCurrent | 2818144 | 0 | AetherCurrent.Quest (as listed) | 68191 | 68191 | pass |
+| 68445 The Mongrel and the Knight | Action | 7418 | 0 | Quest name | The Mongrel and the Knight | The Mongrel and the Knight | pass |
+| 68445 The Mongrel and the Knight | Action | 7418 | 0 | Action.Name | Flamethrower | Flamethrower | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | Quest name | Starlight Stakeout | Starlight Stakeout | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | Mount.Singular | Starlight bear | Starlight bear | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | Item exists | item 21050 | Starlight Bear Horn | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | ItemAction type | 1322 | 1322 | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | ItemAction.Data[0] = rewardId | 99 | 99 | pass |
+| 68553 If I Had a Glamour | GeneralAction | 22 | 0 | Quest name | If I Had a Glamour | If I Had a Glamour | pass |
+| 68553 If I Had a Glamour | GeneralAction | 22 | 0 | GeneralAction.Name | Cast Glamour | Cast Glamour | pass |
+| 68684 The Call | Emote | 190 | 0 | Quest name | The Call | The Call | pass |
+| 68684 The Call | Emote | 190 | 0 | Emote.Name | Endure | Endure | pass |
+| 68730 Blue Collar Work | BlueMageSpell | 13 | 0 | Quest name | Blue Collar Work | Blue Collar Work | pass |
+| 68730 Blue Collar Work | BlueMageSpell | 13 | 0 | AozAction.Action.Name | Blood Drain | Blood Drain | pass |
+| 68734 The Real Folk Blues | BlueMageSpell | 22 | 0 | Quest name | The Real Folk Blues | The Real Folk Blues | pass |
+| 68734 The Real Folk Blues | BlueMageSpell | 22 | 0 | AozAction.Action.Name | Glower | Glower | pass |
+| 68841 The Oracle of Light | Item | 26743 | 26743 | Quest name | The Oracle of Light | The Oracle of Light | pass |
+| 68841 The Oracle of Light | Item | 26743 | 26743 | Item.Name | Crystarium Greaves | Crystarium Greaves | pass |
+| 69129 Debate and Discourse | AetherCurrent | 2818296 | 0 | Quest name | Debate and Discourse |  Debate and Discourse | pass |
+| 69129 Debate and Discourse | AetherCurrent | 2818296 | 0 | Zone is a real AetherCurrentCompFlgSet territory | The Tempest | found | pass |
+| 69129 Debate and Discourse | AetherCurrent | 2818296 | 0 | AetherCurrent.Quest (as listed) | 69129 | 69129 | pass |
+| 69135 How Do You Like Three Nuts | SystemUnlock | 0 | 0 | Quest name | How Do You Like Three Nuts | How Do You Like Three Nuts | pass |
+| 69135 How Do You Like Three Nuts | SystemUnlock | 0 | 0 | Curated label non-empty | non-empty | Hunts (Shadowbringers) · three-nut bills | pass |
+| 69137 Yet Another Striking Opportunity | SystemUnlock | 0 | 0 | Quest name | Yet Another Striking Opportunity | Yet Another Striking Opportunity | pass |
+| 69137 Yet Another Striking Opportunity | SystemUnlock | 0 | 0 | Curated label non-empty | non-empty | The Lawns | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | Quest name | On the Threshold | On the Threshold | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | Orchestrion.Name | Significance (Nothing) | Significance (Nothing) | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | Item exists | item 28894 | Significance (Nothing) Orchestrion Roll | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | ItemAction type | 25183 | 25183 | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | Item.AdditionalData = rewardId | 350 | 350 | pass |
+| 69413 It's Possibly a Primal | OptionalItem | 4178 | 4178 | Quest name | It's Possibly a Primal | It's Possibly a Primal | pass |
+| 69413 It's Possibly a Primal | OptionalItem | 4178 | 4178 | Item.Name | Darklight Bracelet of Fending | Darklight Bracelet of Fending | pass |
+| 69510 Glass from the Past | Achievement | 2647 | 0 | Quest name | Glass from the Past | Glass from the Past | pass |
+| 69510 Glass from the Past | Achievement | 2647 | 0 | Achievement.Name | Magnificent Seven | Magnificent Seven | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | Quest name | Brave New World | Brave New World | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | Orchestrion.Name | Faltering Prayer (Dawn Breeze) | Faltering Prayer (Dawn Breeze) | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | Item exists | item 33912 | Faltering Prayer (Dawn Breeze) Orchestrion Roll | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | ItemAction type | 25183 | 25183 | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | Item.AdditionalData = rewardId | 474 | 474 | pass |
+| 69576 A New Path of Resistance | ArtifactGear | 32671 | 32671 | Quest name | A New Path of Resistance |  A New Path of Resistance | pass |
+| 69576 A New Path of Resistance | ArtifactGear | 32671 | 32671 | Item.Name | Augmented Law's Order Labrys | Augmented Law's Order Labrys | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | Quest name | Rising Calm | Rising Calm | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | Ornament.Singular | Red Moon Parasol | Red Moon Parasol | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | Item exists | item 33711 | Red Moon Parasol | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | ItemAction type | 20086 | 20086 | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | ItemAction.Data[0] = rewardId | 16 | 16 | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | Quest name | Endwalker | Endwalker | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | Mount.Singular | Argos | Argos | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | Item exists | item 36002 | Argos Horn | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | ItemAction type | 1322 | 1322 | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | ItemAction.Data[0] = rewardId | 263 | 263 | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | Quest name | A Feast to Remember | A Feast to Remember | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | CharaMakeCustomize unlock link exists locally | 239 | found | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | Item.Name | Modern Cosmetics - Clowning Around | Modern Cosmetics - Clowning Around | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | ItemAction type | 2633 | 2633 | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | ItemAction.Data[0] = rewardId | 239 | 239 | pass |
+| 70286 Growing Light | Title | 712 | 0 | Quest name | Growing Light | Growing Light | pass |
+| 70286 Growing Light | Title | 712 | 0 | Title.Masculine | Growing Light | Growing Light | pass |
+| 70286 Growing Light | Title | 712 | 0 | Achievement 3413.Title | 712 | 712 | pass |
+| 70286 Growing Light | Title | 712 | 0 | Achievement 3413 links quest | 70286 | linked | pass |
+| 70306 La Vie Mowen | Achievement | 3304 | 0 | Quest name | La Vie Mowen | La Vie Mowen | pass |
+| 70306 La Vie Mowen | Achievement | 3304 | 0 | Achievement.Name | A Stroke of Brilliance | A Stroke of Brilliance | pass |
+| 70312 No Butts About It | BlueMageSpell | 108 | 0 | Quest name | No Butts About It | No Butts About It | pass |
+| 70312 No Butts About It | BlueMageSpell | 108 | 0 | AozAction.Action.Name | Rehydration | Rehydration | pass |
+| 70342 Resonating with Perfection | ArtifactGear | 40940 | 40940 | Quest name | Resonating with Perfection |  Resonating with Perfection | pass |
+| 70342 Resonating with Perfection | ArtifactGear | 40940 | 40940 | Item.Name | Mandervillous Cane | Mandervillous Cane | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | Quest name | More Precious than Gil | More Precious than Gil | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | BuddyEquip.Name | Wayfarer's Barding | Wayfarer's Barding | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | Item exists | item 41470 | Wayfarer's Barding | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | ItemAction type | 1013 | 1013 | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | ItemAction.Data[0] = rewardId | 95 | 95 | pass |
+| 70480 Unto the Summit | AetherCurrent | 2818459 | 0 | Quest name | Unto the Summit | Unto the Summit | pass |
+| 70480 Unto the Summit | AetherCurrent | 2818459 | 0 | Zone is a real AetherCurrentCompFlgSet territory | Heritage Found | found | pass |
+| 70480 Unto the Summit | AetherCurrent | 2818459 | 0 | AetherCurrent.Quest (as listed) | 70480 | 70480 | pass |
+| 70540 How the West Was Sung | DutyUnlock | 1017 | 0 | Quest name | How the West Was Sung | How the West Was Sung | pass |
+| 70540 How the West Was Sung | DutyUnlock | 1017 | 0 | ContentFinderCondition.Name | the Minstrel's Ballad: Sphene's Burden | the Minstrel's Ballad: Sphene's Burden | pass |
+| 70552 We Who Are About to Set Sail Salute You | Achievement | 3569 | 0 | Quest name | We Who Are About to Set Sail Salute You | We Who Are About to Set Sail Salute You | pass |
+| 70552 We Who Are About to Set Sail Salute You | Achievement | 3569 | 0 | Achievement.Name | For Eleven's Sake | For Eleven's Sake | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | Quest name | Eggceeding Expectations | Eggceeding Expectations | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | Ornament.Singular | Archon Egg Parasol | Archon Egg Parasol | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | Item exists | item 44997 | Archon Egg Parasol | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | ItemAction type | 20086 | 20086 | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | ItemAction.Data[0] = rewardId | 43 | 43 | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | Quest name | A Present from the Present | A Present from the Present | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | Companion.Singular | wind-up Themis | wind-up Themis | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | Item exists | item 44493 | Wind-up Themis | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | ItemAction type | 853 | 853 | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | ItemAction.Data[0] = rewardId | 538 | 538 | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | Quest name | The Promise of Tomorrow | The Promise of Tomorrow | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | Orchestrion.Name | The Promise of Tomorrow | The Promise of Tomorrow | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | Item exists | item 46148 | The Promise of Tomorrow Orchestrion Roll | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | ItemAction type | 25183 | 25183 | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | Item.AdditionalData = rewardId | 769 | 769 | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | Quest name | You Otter Be There | You Otter Be There | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | Ornament.Singular | Senor Otter Pack | Senor Otter Pack | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | Item exists | item 50825 | Senor Otter Pack | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | ItemAction type | 20086 | 20086 | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | ItemAction.Data[0] = rewardId | 52 | 52 | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | Quest name | What Can Eye Do for You | What Can Eye Do for You | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | Emote.Name | Cheer Light: Blue | Cheer Light: Blue | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | Item exists | item 50462 | Ballroom Etiquette - Improper Praise (Cheer Light: Blue) | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | ItemAction type | 2633 | 2633 | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | ItemAction.Data[0] = Emote.UnlockLink | 592 | 592 | pass |
+| 71014 Windborne | Item | 52430 | 52430 | Quest name | Windborne | Windborne | pass |
+| 71014 Windborne | Item | 52430 | 52430 | Item.Name | Successor's Fingerless Gloves | Successor's Fingerless Gloves | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | Quest name | Clotted Crime | Clotted Crime | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | Companion.Singular | Oglop | oglop | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | Item exists | item 46784 | Oglop | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | ItemAction type | 853 | 853 | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | ItemAction.Data[0] = rewardId | 559 | 559 | pass |
 
 ## 5. Exclusivity of Item entries
 
