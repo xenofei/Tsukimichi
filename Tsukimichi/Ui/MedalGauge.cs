@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Ui;
 using M = Tsukimichi.Core.Ui.GlyphTokens.Medallion;
-using X = Tsukimichi.Core.Ui.GlyphTokens.MedallionDetail;
 
 namespace Tsukimichi.Ui;
 
@@ -14,41 +13,43 @@ namespace Tsukimichi.Ui;
 /// and the orbit ring of the rail and the Journal (<see cref="Orbit"/>) as a lapis-enamel groove between Abyss keylines
 /// with a gilt arc lit from the upper left, as the medal's bezel is (two slopes meeting at a crest), and the filling
 /// moon as moonstone over its dark side. Geometry is unchanged (<see cref="GaugeGeometry"/>); only the material is new.
-/// The high-contrast palette keeps its flat 1.11 gauges. Allocation-free.
+/// Every colour is the palette's (<see cref="Theme.Gauges"/>): the medal's material on Night, a light palette's own gilt
+/// and lead (spec-1.16 §A6), so a gauge reads as a UI graphic on snow. The high-contrast palette keeps its flat 1.11
+/// gauges. Allocation-free.
 /// </summary>
 internal static class MedalGauge
 {
-    /// <summary>The groove's enamel: the lit lapis's deep sea, distinct from Night and from the gilt arc.</summary>
-    public static readonly uint GrooveU32 = Theme.U32(M.LapisSeaBottom);
+    /// <summary>The groove's enamel: on Night the lit lapis's deep sea, distinct from Night and from the gilt arc.</summary>
+    public static uint GrooveU32 => Theme.U32(Theme.Gauges.Groove);
 
     /// <summary>The keyline round grooves and moons.</summary>
-    public static readonly uint KeylineU32 = Theme.U32(M.Keyline);
+    public static uint KeylineU32 => Theme.U32(Theme.Gauges.Keyline);
 
     /// <summary>The arc's base (its anti-aliased edge) and the round caps' fallback.</summary>
-    public static readonly uint GiltU32 = Theme.U32(M.Gilt);
+    public static uint GiltU32 => Theme.U32(Theme.Gauges.ArcBase);
 
     /// <summary>A finished gauge that steps back (the Journal tree): the gilt's shaded side.</summary>
-    public static readonly uint GiltDimU32 = Theme.U32(M.GiltShade);
+    public static uint GiltDimU32 => Theme.U32(Theme.Gauges.ArcDim);
 
-    /// <summary>The complete gauge's soft glow rings.</summary>
-    public static readonly uint GlowOuterU32 = Theme.WithAlpha(M.GiltHigh, 0.10f);
-    public static readonly uint GlowInnerU32 = Theme.WithAlpha(M.GiltHigh, 0.16f);
+    /// <summary>The complete gauge's soft glow rings (none on a light palette, which never glows).</summary>
+    public static uint GlowOuterU32 => Theme.Gauges.Glows ? Theme.WithAlpha(M.GiltHigh, 0.10f) : 0u;
+    public static uint GlowInnerU32 => Theme.Gauges.Glows ? Theme.WithAlpha(M.GiltHigh, 0.16f) : 0u;
 
     /// <summary>The moon bead at the arc's head, and the full-moon pip.</summary>
-    public static readonly uint PearlU32 = Theme.U32(M.MoonstoneSpecular);
+    public static uint PearlU32 => Theme.U32(Theme.Gauges.Knob);
 
-    private static readonly uint DarkSideU32 = Theme.U32(X.DarkSide);
-    private static readonly uint MoonstoneU32 = Theme.U32(M.MoonstoneHigh);
-    private static readonly uint MoonstoneDimU32 = Theme.U32(M.MoonstoneMid);
+    /// <summary>The ring round the bead.</summary>
+    public static uint PearlRimU32 => Theme.U32(Theme.Gauges.KnobRim);
+
+    private static uint DarkSideU32 => Theme.U32(Theme.Gauges.DarkSide);
+    private static uint MoonstoneU32 => Theme.U32(Theme.Gauges.MoonLit);
+    private static uint MoonstoneDimU32 => Theme.U32(Theme.Gauges.MoonDim);
 
     /// <summary>The bezel's slopes across a gauge's box (gen5 <c>bezel</c>, as fractions of the half-size from the centre).</summary>
-    private static readonly (float, Vector4)[] OuterSlope = [(0f, M.GiltHigh), (0.42f, M.GiltMid), (0.78f, M.GiltShade), (1f, M.GiltDeep)];
-    private static readonly (float, Vector4)[] InnerSlope = [(0f, M.GiltDeep), (0.55f, M.GiltShade), (1f, M.Gilt)];
+    private static (float, Vector4)[] OuterSlope => Theme.Gauges.OuterSlope;
+    private static (float, Vector4)[] InnerSlope => Theme.Gauges.InnerSlope;
     private static readonly Vector2 SlopeFrom = new(-50f / 64f, -54f / 64f);
     private static readonly Vector2 SlopeTo = new(50f / 64f, 54f / 64f);
-
-    /// <summary>Moonstone's lit ramp for the filling moon: glint at the highlight, lit face, body.</summary>
-    private static readonly Vector4[] MoonRamp = [M.MoonstoneSpecular, M.MoonstoneHigh, M.Moonstone];
 
     private static readonly List<Vector2> Scratch = new(128);
     private static readonly List<Vector2> Overlay = new(128);
@@ -86,7 +87,7 @@ internal static class MedalGauge
             var depth = MathF.Cos((a0 + a1) * 0.5f - facing);
             dl.PathClear();
             dl.PathArcTo(center, radius, a0, a1, steps);
-            dl.PathStroke(Theme.WithAlpha(M.Keyline, WallShadowAlpha * depth * depth), ImDrawFlags.None, 1f);
+            dl.PathStroke(Theme.WithAlpha(Theme.Gauges.Keyline, WallShadowAlpha * depth * depth), ImDrawFlags.None, 1f);
         }
     }
 
@@ -275,7 +276,9 @@ internal static class MedalGauge
     private static uint Ramp(float t)
     {
         t = Math.Clamp(t, 0f, 1f);
-        var c = t <= 0.42f ? Vector4.Lerp(MoonRamp[0], MoonRamp[1], t / 0.42f) : Vector4.Lerp(MoonRamp[1], MoonRamp[2], (t - 0.42f) / 0.58f);
+        // Moonstone's lit ramp: glint at the highlight, lit face, body.
+        var g = Theme.Gauges;
+        var c = t <= 0.42f ? Vector4.Lerp(g.MoonGlint, g.MoonLit, t / 0.42f) : Vector4.Lerp(g.MoonLit, g.MoonBody, (t - 0.42f) / 0.58f);
         return Theme.WithAlpha(c, 1f);
     }
 

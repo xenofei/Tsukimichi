@@ -35,7 +35,7 @@ public readonly record struct ColorMatrix(
 /// <list type="number">
 /// <item>desaturate toward Rec. 709 luma by <c>d</c>;</item>
 /// <item>multiply by the night tint <see cref="NightTintHex"/> at strength <c>m</c>;</item>
-/// <item>scale by <see cref="Scale"/>;</item>
+/// <item>scale by <see cref="Scale"/> (<see cref="LightScale"/> without the multiply);</item>
 /// <item>lift the blacks by Night <see cref="NightHex"/> × <see cref="Lift"/>.</item>
 /// </list>
 /// The grade is colour normalisation, not ornament, so it applies at every Decoration level (the supervisor's ruling,
@@ -53,6 +53,12 @@ public static class PortraitGrade
 
     /// <summary>The overall scale after the multiply.</summary>
     public const float Scale = 0.94f;
+
+    /// <summary>
+    /// The overall scale on a light palette, which skips the multiply (docs/design/v7/ui/spec-1.16.md §A7: .97, so a face
+    /// on snow keeps nearly its own lightness).
+    /// </summary>
+    public const float LightScale = 0.97f;
 
     /// <summary>How much of Night is added to every pixel.</summary>
     public const float Lift = 0.25f;
@@ -104,7 +110,7 @@ public static class PortraitGrade
                 1 => row with { Y = row.Y + keep },
                 _ => row with { Z = row.Z + keep },
             };
-            return row * factor * Scale;
+            return row * factor * (nightMultiply ? Scale : LightScale);
         }
 
         var r = Row(0, tint.X);

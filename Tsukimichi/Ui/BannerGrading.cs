@@ -34,7 +34,11 @@ public static class BannerGrading
     /// Which banner a texture shows: its source kind, and the icon id, the game path or the bundled art that names it.
     /// Built by <see cref="KeyFor"/>; a record struct, so it compares by value and allocates nothing.
     /// </summary>
-    public readonly record struct Key(BannerSource Source, uint IconId, string? GamePath, BannerArt Art);
+    public readonly record struct Key(BannerSource Source, uint IconId, string? GamePath, BannerArt Art)
+    {
+        /// <summary>Whether the copy is daylight-graded (a light palette) rather than night-graded, so a palette switch regrades.</summary>
+        public bool Daylight { get; init; }
+    }
 
     private sealed class Entry
     {
@@ -68,15 +72,12 @@ public static class BannerGrading
     /// <paramref name="min"/>..<paramref name="max"/>, night-graded: the graded copy once it is ready, the source
     /// multiplied by the default tint until then.
     /// </summary>
-    public static void DrawImage(ImDrawListPtr dl, IDalamudTextureWrap source, in Key key, Vector2 min, Vector2 max, float rounding)
+    public static void DrawImage(ImDrawListPtr dl, IDalamudTextureWrap source, in Key banner, Vector2 min, Vector2 max, float rounding)
     {
-        if (!Theme.Scene.NightGrade)
-        {
-            // A light palette's daylight: the art as painted (the scrim to the window still applies in DrawOver).
-            Chrome.ImageCoverAt(dl, source.Handle, min, max, new Vector2(source.Width, source.Height), rounding);
-            return;
-        }
-
+        // A light palette takes the daylight grade (spec-1.16 §A5: no multiply, 20 % desaturation, brightness 1.04), in
+        // its own copy; until it lands the art draws as painted.
+        var daylight = !Theme.Scene.NightGrade;
+        var key = banner with { Daylight = daylight };
         var frame = ImGui.GetFrameCount();
         var drawWidth = (int)MathF.Ceiling(max.X - min.X);
         Entry? entry;
@@ -87,7 +88,7 @@ public static class BannerGrading
             {
                 entry = new Entry();
                 Entries[key] = entry;
-                Start(entry, source, drawWidth);
+                Start(entry, source, drawWidth, daylight);
                 Evict(frame);
             }
             else if (entry.Next is { } next)
@@ -99,7 +100,7 @@ public static class BannerGrading
             }
             else if (entry.Work is { IsCompleted: true } && !entry.Failed && BannerGrade.Regrade(entry.Width, drawWidth, source.Width))
             {
-                Start(entry, source, drawWidth);
+                Start(entry, source, drawWidth, daylight);
             }
 
             entry.UsedFrame = frame;
@@ -111,13 +112,20 @@ public static class BannerGrading
             return;
         }
 
+        if (daylight)
+        {
+            Chrome.ImageCoverAt(dl, source.Handle, min, max, new Vector2(source.Width, source.Height), rounding);
+            return;
+        }
+
         Chrome.ImageCoverAt(dl, source.Handle, min, max, new Vector2(source.Width, source.Height), Theme.U32(BannerGrade.Tint(entry.Strength)), rounding);
     }
 
     /// <summary>
     /// The passes over the art, in order (spec §1.2): the scrim to Night (0 at the top, 0.25 at 45 %, 0.85 at the foot),
     /// the MoonHigh wash from the upper-left corner, and the faint moon road of six dashes along the bottom-right edge,
-    /// widening toward the viewer. Under the high-contrast palette (never Full, but a caller may ask) only the scrim.
+    /// widening toward the viewer. Under the high-contrast palette (never Full, but a caller may ask) only the scrim. On a
+    /// light palette the daylight grade's scrim to its window (0, .22 at 40 %, .92 at the foot) and nothing else.
     /// </summary>
     public static void DrawOver(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding)
     {
@@ -128,7 +136,7 @@ public static class BannerGrading
         }
 
         var night = Theme.Surface.Window;
-        var stops = BannerGrade.ScrimStops;
+        var stops = Theme.Scene.NightGrade ? BannerGrade.ScrimStops : BannerGrade.DaylightScrimStops;
         for (var i = 1; i < stops.Length; i++)
         {
             var (a0, v0) = stops[i - 1];
@@ -195,8 +203,12 @@ public static class BannerGrading
         }
     }
 
-    /// <summary>Reads <paramref name="source"/> back at about <paramref name="drawWidth"/> (<see cref="BannerGrade.CopyWidth"/>), keeping its aspect, and grades it. Under <see cref="Gate"/>.</summary>
-    private static void Start(Entry entry, IDalamudTextureWrap source, int drawWidth)
+    /// <summary>
+    /// Reads <paramref name="source"/> back at about <paramref name="drawWidth"/> (<see cref="BannerGrade.CopyWidth"/>),
+    /// keeping its aspect, and grades it: the night grade, or with <paramref name="daylight"/> the daylight grade
+    /// (<see cref="BannerGrade.DaylightInPlace"/>). Under <see cref="Gate"/>.
+    /// </summary>
+    private static void Start(Entry entry, IDalamudTextureWrap source, int drawWidth, bool daylight)
     {
         if (Plugin.TextureReadback is not { } readback || Plugin.TextureProvider is not { } textures)
         {
@@ -214,12 +226,20 @@ public static class BannerGrading
                 var args = new TextureModificationArgs { DxgiFormat = BgraFormat, NewWidth = width, NewHeight = height };
                 var (spec, raw) = await readback.GetRawImageAsync(source, args, leaveWrapOpen: true);
                 var bgra = spec.DxgiFormat == BgraFormat;
-                var histogram = new int[BannerGrade.HistogramBins];
-                var mean = BannerGrade.MeanRgb(raw, spec.Width, spec.Height, spec.Pitch, bgra, step: 2, lumaHistogram: histogram);
-                var strength = BannerGrade.Strength(mean, BannerGrade.LumaPercentile(histogram, BannerGrade.PeakFraction));
-                entry.Strength = strength;
-                BannerGrade.GradeInPlace(raw, spec.Width, spec.Height, spec.Pitch, bgra, strength);
-                var wrap = await textures.CreateFromRawAsync(spec, raw, "Tsukimichi banner (night grade)");
+                if (daylight)
+                {
+                    BannerGrade.DaylightInPlace(raw, spec.Width, spec.Height, spec.Pitch, bgra);
+                }
+                else
+                {
+                    var histogram = new int[BannerGrade.HistogramBins];
+                    var mean = BannerGrade.MeanRgb(raw, spec.Width, spec.Height, spec.Pitch, bgra, step: 2, lumaHistogram: histogram);
+                    var strength = BannerGrade.Strength(mean, BannerGrade.LumaPercentile(histogram, BannerGrade.PeakFraction));
+                    entry.Strength = strength;
+                    BannerGrade.GradeInPlace(raw, spec.Width, spec.Height, spec.Pitch, bgra, strength);
+                }
+
+                var wrap = await textures.CreateFromRawAsync(spec, raw, daylight ? "Tsukimichi banner (daylight grade)" : "Tsukimichi banner (night grade)");
                 lock (Gate)
                 {
                     if (disposed)

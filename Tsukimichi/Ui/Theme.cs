@@ -124,8 +124,11 @@ public static class Theme
     /// <summary>#24345C – the bottom stop of the drawn night sky and Flight's water. Surface only (1.5 : 1 on Night).</summary>
     public static readonly Vector4 TideDeep = Rgb(GlyphTokens.TideDeepHex);
 
-    /// <summary>Alternate table row tint for zebra striping: the palette's disabled tone (Veil on Night) at low alpha.</summary>
-    public static Vector4 ZebraRow => Surface.TextDisabled with { W = 0.16f };
+    /// <summary>
+    /// Alternate table row tint for zebra striping: the palette's own (<see cref="UiPalette.Zebra"/>, Snow's navy at .03),
+    /// else its disabled tone (Veil on Night) at low alpha.
+    /// </summary>
+    public static Vector4 ZebraRow => Palette.Zebra ?? Surface.TextDisabled with { W = 0.16f };
 
     public static readonly uint NightU32 = Pack(Night);
     public static readonly uint MoonU32 = Pack(Moon);
@@ -278,8 +281,20 @@ public static class Theme
     /// </summary>
     public static uint Glow(float alpha) => WithAlpha(Scene.WashInsteadOfGlow ? Scene.GlowWash : Gold, alpha * Scene.GlowStrength);
 
-    /// <summary>The 1 px lit edge inside the top of a raised surface at <paramref name="alpha"/>, packed (MoonHigh on Night, white on a light palette).</summary>
-    public static uint TopHighlight(float alpha) => WithAlpha(Scene.TopHighlight, alpha);
+    /// <summary>
+    /// The 1 px lit edge inside the top of a raised surface at its designed <paramref name="alpha"/>, packed: MoonHigh on
+    /// Night; on a light palette white at the scene's own alpha (<see cref="SceneTokens.TopHighlightAlpha"/>), near opaque.
+    /// </summary>
+    public static uint TopHighlight(float alpha) => WithAlpha(Scene.TopHighlight, Scene.TopHighlightAlpha > 0f ? Scene.TopHighlightAlpha : alpha);
+
+    /// <summary>
+    /// Whether a light palette lays warm washes where Night glows (<see cref="SceneTokens.WashInsteadOfGlow"/>; spec-1.16
+    /// §A4): the Ready row's medal wash, the hero halo, the selected rows. Nothing else glows there.
+    /// </summary>
+    public static bool Washes => Scene.WashInsteadOfGlow;
+
+    /// <summary>The palette's gauge inks this frame (<see cref="UiPalette.Gauges"/>): the medal's material on Night, their own on a light palette.</summary>
+    public static GaugeInks Gauges { get; private set; } = UiPalettes.Night.Gauges;
 
     /// <summary>A highlight sheen or glint at its designed <paramref name="alpha"/>, packed: <see cref="GoldHigh"/> at that alpha times <see cref="SceneTokens.GlowStrength"/>.</summary>
     public static uint Sheen(float alpha) => WithAlpha(GoldHigh, alpha * Scene.GlowStrength);
@@ -513,6 +528,7 @@ public static class Theme
         ToggleKnob = inks.ToggleKnob;
         OrnamentLight = palette.OrnamentLight;
         Plate = palette.Plate;
+        Gauges = palette.Gauges;
         GaugeArc = inks.GaugeArc;
         GaugeDone = inks.GaugeDone;
         DeepU32 = Pack(s.Deep);

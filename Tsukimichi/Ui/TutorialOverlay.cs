@@ -855,7 +855,7 @@ public sealed class TutorialOverlay : ITutorial
             var center = new Vector2(min.X + radius + UiMetrics.Px(2f), min.Y + rowHeight * 0.5f);
             MoonGlyph.Draw(dl, center, radius, state);
             var textPos = new Vector2(center.X + radius + UiMetrics.Px(8f), min.Y + (rowHeight - line) * 0.5f);
-            dl.AddText(textPos, Theme.StateColorU32(state), StateNames.Name(state));
+            dl.AddText(textPos, Theme.U32(Theme.StateText(state)), StateNames.Name(state));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(StateNames.Tooltip(state));

@@ -57,6 +57,12 @@ public sealed record UiPalette
     /// <summary>The giver portrait plate: its well, keylines, fallback ink and outer line.</summary>
     public required PlateTokens Plate { get; init; }
 
+    /// <summary>The gauges' inks: the medal's material on Night, their own gilt and lead on a light palette (spec-1.16 §A6).</summary>
+    public required GaugeInks Gauges { get; init; }
+
+    /// <summary>The table's alternate row tint; null draws the disabled tone at .16 (Night's 1.15 zebra).</summary>
+    public Vector4? Zebra { get; init; }
+
     /// <summary>Full's lit pills (the raised gradient and the gold pill material); null where none is designed (flat pills, as under Follow Dalamud).</summary>
     public PillSurfaces? Pills { get; init; }
 
@@ -202,5 +208,46 @@ public sealed record UiPalette
         {
             yield return ("Ornament on Window", s.Ornament, s.Window);
         }
+
+        foreach (var pair in GaugePairs())
+        {
+            yield return pair;
+        }
+    }
+
+    /// <summary>
+    /// The gauges' pairs that must reach 3 : 1 as UI graphics (WCAG 1.4.11; spec-1.16 §A8): the flat gauges' arc and the
+    /// tree ring on the window and the zenith, and on a light palette, whose gauges have their own ink, every colour of
+    /// the arc on the window, the groove and the zenith, the keylines on the window, and the moon's lit face on its dark
+    /// side. Night's medal gauges are the medal's own material (glyph art, keyed by Abyss keylines), held to the medal
+    /// gates instead.
+    /// </summary>
+    public IEnumerable<(string Role, Vector4 Ink, Vector4 Ground)> GaugePairs()
+    {
+        var s = Surface;
+        var g = Gauges;
+        var zenith = ColorMath.Opaque(Scene.Zenith);
+        yield return ("Flat gauge arc on Window", g.Arc, s.Window);
+        yield return ("Flat gauge arc on Zenith", g.Arc, zenith);
+        yield return ("Tree ring arc on Window", Inks.GaugeArc, s.Window);
+        yield return ("Tree ring (done) on Window", Inks.GaugeDone, s.Window);
+        if (!IsLight)
+        {
+            yield break;
+        }
+
+        foreach (var arc in g.ArcColors())
+        {
+            var hex = $"#{ColorMath.ToHex(arc):X6}";
+            yield return ($"Gauge arc {hex} on Window", arc, s.Window);
+            yield return ($"Gauge arc {hex} on Groove", arc, g.Groove);
+            yield return ($"Gauge arc {hex} on Zenith", arc, zenith);
+        }
+
+        yield return ("Gauge keyline on Window", g.Keyline, s.Window);
+        yield return ("Gauge track on Window", g.Track, s.Window);
+        yield return ("Gauge knob on its rim", g.Knob, g.KnobRim);
+        yield return ("Filling moon on its dark side", g.MoonLit, g.DarkSide);
+        yield return ("Moon dark side on Window", g.DarkSide, s.Window);
     }
 }

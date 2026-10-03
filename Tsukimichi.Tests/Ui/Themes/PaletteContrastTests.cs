@@ -63,6 +63,29 @@ public sealed class PaletteContrastTests
     }
 
     [Fact]
+    public void Every_palette_and_form_has_a_row()
+    {
+        // spec-1.16 §A8: one row per palette and form, four in 1.16.
+        Assert.Equal(["night", "night", "ishgard-snow", "ishgard-snow"], Palettes().Select(static r => (string)r[0]));
+    }
+
+    [Fact]
+    public void Snow_meets_the_spec_figures()
+    {
+        // spec-1.16 §A8, Snow column, worst surface: tertiary 4.8 on Hover, Locked out 5.7 on Hover, the strong line 3.3,
+        // the gold stripe 3.0 on Hover, and the gauge arc's highlight end (the supervisor's #8A6A1C) 3.3 on the groove.
+        var p = UiPalettes.IshgardSnow;
+        var s = p.Surface;
+        Assert.InRange(ColorMath.Contrast(s.TextTertiary, s.Hover), 4.75f, 4.9f);
+        Assert.InRange(ColorMath.Contrast(p.States.Text(Core.Model.QuestState.Foreclosed), s.Hover), 5.6f, 5.8f);
+        Assert.InRange(ColorMath.Contrast(s.StrongLine, s.Window), 3.25f, 3.35f);
+        Assert.InRange(ColorMath.Contrast(p.States.Stripe(Core.Model.QuestState.Ready), s.Hover), 3.0f, 3.1f);
+        Assert.InRange(ColorMath.Contrast(p.Gauges.OuterSlope[0].Color, p.Gauges.Groove), 3.3f, 3.4f);
+        Assert.InRange(ColorMath.Contrast(p.Gauges.OuterSlope[0].Color, p.Scene.Zenith), 3.7f, 3.8f);
+        Assert.Contains(p.LinePairs(), static pair => pair.Role.StartsWith("Gauge arc #8A6A1C on Groove", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void The_pair_lists_cover_every_surface_and_state()
     {
         var roles = UiPalettes.Night.TextPairs().Select(p => p.Role).ToList();

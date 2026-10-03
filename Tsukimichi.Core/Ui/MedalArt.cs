@@ -321,7 +321,7 @@ public static class MedalArt
 
         if (t.IsLightRim)
         {
-            LightRimFrame(b);
+            LightRimFrame(b, t);
             return;
         }
 
@@ -356,12 +356,12 @@ public static class MedalArt
     /// edge out to a 1 px silver hairline, so the medal face reads as laid on the pane. One device pixel wide in a row
     /// mesh; in the hero mesh (any size, the atlas's stand-in) the width it has at about 50 px.
     /// </summary>
-    private static void LightRimFrame(MeshBuilder b)
+    private static void LightRimFrame(MeshBuilder b, MedalTokens t)
     {
         var w = b.Coverage ? 1f / b.PixelsPerUnit : LightRimHeroWidth;
         var r = MedalTokens.LightRimRadius;
-        b.Annulus(Center, RimInner - 0.8f, r - (w * 0.5f), MeshBuilder.Solid(MedalTokens.LightRimGap), segments: 72);
-        b.Annulus(Center, r - (w * 0.5f), r + (w * 0.5f), MeshBuilder.Solid(MedalTokens.LightRimInk, MedalTokens.LightRimAlpha), segments: 72);
+        b.Annulus(Center, RimInner - 0.8f, r - (w * 0.5f), MeshBuilder.Solid(t.RimGap), segments: 72);
+        b.Annulus(Center, r - (w * 0.5f), r + (w * 0.5f), MeshBuilder.Solid(t.RimInk, t.RimAlpha), segments: 72);
     }
 
     /// <summary>The light rim's width in the hero mesh, in medal units (1.25 px at a 52 px medal).</summary>
@@ -1368,8 +1368,8 @@ public static class MedalArt
         {
             // Quiet: the badge on a pane-coloured gap, its ring a silver hairline (the medal's own rim, smaller).
             const float w = LightRimHeroWidth * 0.8f;
-            b.Disc(c, MedalTokens.LightRimBadgeGap, MeshBuilder.Solid(MedalTokens.LightRimGap), segments: 40, rings: 1);
-            b.Annulus(c, MedalTokens.LightRimBadgeRadius - (w * 0.5f), MedalTokens.LightRimBadgeRadius + (w * 0.5f), MeshBuilder.Solid(MedalTokens.LightRimInk, MedalTokens.LightRimAlpha), segments: 48);
+            b.Disc(c, MedalTokens.LightRimBadgeGap, MeshBuilder.Solid(t.RimGap), segments: 40, rings: 1);
+            b.Annulus(c, MedalTokens.LightRimBadgeRadius - (w * 0.5f), MedalTokens.LightRimBadgeRadius + (w * 0.5f), MeshBuilder.Solid(t.RimInk, t.RimAlpha), segments: 48);
         }
         else
         {

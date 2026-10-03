@@ -13,10 +13,11 @@ namespace Tsukimichi.Core.Ui;
 /// </summary>
 public sealed class MedalTokens
 {
-    private MedalTokens(GlyphPalette palette, MedalFinish finish = MedalFinish.Gilt)
+    private MedalTokens(GlyphPalette palette, MedalFinish finish = MedalFinish.Gilt, bool onLight = false)
     {
         Palette = palette;
         Finish = finish;
+        OnLight = onLight;
     }
 
     /// <summary>The medallion as designed.</summary>
@@ -36,6 +37,13 @@ public sealed class MedalTokens
     public static readonly MedalTokens LightRim = new(GlyphPalette.Standard, MedalFinish.LightRim);
 
     /// <summary>
+    /// Quiet's light rim on a light palette (docs/design/v7/ui/spec-1.16.md §A6): the same medal face, its hairline
+    /// <see cref="LightRimInkOnLight"/> (#7A859C) at .8 on a snow gap, since Night's #C3CBDF would vanish on snow. The face
+    /// itself is never recoloured.
+    /// </summary>
+    public static readonly MedalTokens LightRimOnLight = new(GlyphPalette.Standard, MedalFinish.LightRim, onLight: true);
+
+    /// <summary>
     /// Decoration Plain (spec §1.1): flat like high contrast but on the standard palette, with a brightness ladder of
     /// its own (<see cref="PlainDisc"/>, <see cref="PlainEmblem"/>, <see cref="PlainRim"/>): Ready reads first and
     /// Completed recedes. <see cref="MedalArt.Medal"/> builds it as a row-tier glyph. It is not a contrast ladder; the
@@ -51,14 +59,27 @@ public sealed class MedalTokens
     /// The tokens for the glyph palette and a Decoration level's medal finish: the high-contrast palette always wins
     /// (its ladder is for low vision); otherwise Quiet's light rim, Plain's own ladder, or the medallion as designed.
     /// </summary>
-    public static MedalTokens For(GlyphPalette palette, MedalFinish finish) => palette.HighContrast
+    /// <remarks>On a light palette (<paramref name="onLight"/>) Quiet's light rim takes its light-ground hairline and gap.</remarks>
+    public static MedalTokens For(GlyphPalette palette, MedalFinish finish, bool onLight = false) => palette.HighContrast
         ? For(palette)
         : finish switch
         {
-            MedalFinish.LightRim => LightRim,
+            MedalFinish.LightRim => onLight ? LightRimOnLight : LightRim,
             MedalFinish.Plain => Plain,
             _ => Standard,
         };
+
+    /// <summary>Whether these tokens are drawn on a light palette's window (Quiet's light rim then takes its light ink and gap).</summary>
+    public bool OnLight { get; }
+
+    /// <summary>The light rim's hairline ink in these tokens: <see cref="LightRimInk"/>, or <see cref="LightRimInkOnLight"/> on a light palette.</summary>
+    public Vector4 RimInk => OnLight ? LightRimInkOnLight : LightRimInk;
+
+    /// <summary>The light rim's alpha in these tokens.</summary>
+    public float RimAlpha => OnLight ? LightRimAlphaOnLight : LightRimAlpha;
+
+    /// <summary>The gap under the light rim in these tokens: Quiet's darkest Night tone, or the snow window.</summary>
+    public Vector4 RimGap => OnLight ? LightRimGapOnLight : LightRimGap;
 
     /// <summary>The glyph palette these tokens swap in.</summary>
     public GlyphPalette Palette { get; }
@@ -93,6 +114,15 @@ public sealed class MedalTokens
 
     /// <summary>The pane-coloured gap between the well and the hairline (Quiet's darkest tone, so the medal reads as laid on top).</summary>
     public static readonly Vector4 LightRimGap = ColorMath.FromHex(0x0E1322);
+
+    /// <summary>The light rim's hairline on a light palette: #7A859C (spec-1.16 §A6), drawn at <see cref="LightRimAlphaOnLight"/>.</summary>
+    public static readonly Vector4 LightRimInkOnLight = ColorMath.FromHex(0x7A859C);
+
+    /// <summary>The light rim's alpha on a light palette (.8).</summary>
+    public const float LightRimAlphaOnLight = 0.8f;
+
+    /// <summary>The gap under the light rim on a light palette: the snow window (#EEF1F6).</summary>
+    public static readonly Vector4 LightRimGapOnLight = ColorMath.FromHex(0xEEF1F6);
 
     /// <summary>The light rim's radius in the 128-unit box.</summary>
     public const float LightRimRadius = 55.6f;

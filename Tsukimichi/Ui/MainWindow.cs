@@ -936,7 +936,7 @@ public sealed partial class MainWindow : Window, IDisposable
 
     private void DrawCatalogError(SessionState session)
     {
-        using (Theme.PushText(Theme.Danger))
+        using (Theme.PushText(Theme.DangerText))
         {
             ImGui.TextUnformatted(Strings.CatalogUnavailable);
         }

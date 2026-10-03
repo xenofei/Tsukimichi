@@ -882,7 +882,7 @@ public sealed class HelpWindow : Window
         ImGui.SameLine(0f, 8f * scale);
         using (ImRaii.Group())
         {
-            using (Theme.PushText(Theme.StateColor(phase.State)))
+            using (Theme.PushText(Theme.StateText(phase.State)))
             {
                 ImGui.TextUnformatted(Strings.StateName(phase.State));
             }
@@ -982,7 +982,7 @@ public sealed class HelpWindow : Window
 
             ImGui.SameLine();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((height - line) * 0.5f));
-            using (Theme.PushText(Theme.StateColor(phase.State)))
+            using (Theme.PushText(Theme.StateText(phase.State)))
             {
                 ImGui.TextUnformatted(Strings.StateName(phase.State));
             }

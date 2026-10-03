@@ -147,8 +147,10 @@ public sealed class UiPaletteTests
         Hex(0xFFF0BE, c.Moonlight, "Moonlight");
         Hex(0xF4F1E8, c.BannerTitle, "BannerTitle");
         Assert.True(c.StarField);
-        Assert.False(c.MorningStar);
         Assert.True(c.NightGrade);
+        Assert.Equal(0f, c.TopHighlightAlpha);
+        Hex(0xF2D27A, c.Washes.ReadyBadge with { W = 1f }, "Ready badge");
+        Assert.Equal(0.16f, c.Washes.ReadyBadge.W);
         Hex(0xDCE5FF, c.Stars.Cool, "Cool star");
         Hex(0xF4F2EA, c.Stars.MoonWhite, "Moon-white star");
         Hex(0xFFE2A8, c.Stars.Gold, "Gold star");
@@ -210,20 +212,33 @@ public sealed class UiPaletteTests
     // ---- The high-contrast form.
 
     [Fact]
-    public void Night_high_contrast_is_the_1_15_form()
+    public void Night_high_contrast_is_the_spec_form()
     {
+        // spec-1.16 §A3 and palettes.json "night-hc": no sky, the strong line (and the opaque ornament) #7C86A8,
+        // secondary #C3CBDF, tertiary #A0A9C4, Cool #86A1D7, the Not checked word #97A0BA; the rest is Night's.
         var hc = Night.HighContrast;
         Assert.True(hc.IsHighContrast);
         Assert.Same(hc, Night.HighContrast);
         Assert.Same(hc, hc.HighContrast);
-        Assert.Equal(SurfaceColors.Night.ForHighContrast(), hc.Surface);
+        var s = hc.Surface;
+        Hex(0x7C86A8, s.StrongLine, "StrongLine");
+        Hex(0x7C86A8, s.Ornament, "Ornament");
+        Hex(0xC3CBDF, s.TextSecondary, "TextSecondary");
+        Hex(0xA0A9C4, s.TextTertiary, "TextTertiary");
+        Hex(0x86A1D7, s.Cool, "Cool");
+        Hex(0x0F1424, s.Top, "Top (no sky)");
+        Hex(0xDDE3F0, s.Text, "Text");
+        Hex(0x97A0BA, hc.States.Text(QuestState.Unknown), "Not checked word");
+        Hex(0x97A0BA, hc.Inks.UnknownText, "UnknownText");
+        Hex(0xD68AA8, hc.States.Text(QuestState.Foreclosed), "Locked out word");
+        Hex(0xA9B2CC, hc.States.Text(QuestState.Blocked), "Blocked word");
         Assert.Equal(Night.Accent, hc.Accent);
-        Assert.Equal(Night.States.Text(QuestState.Foreclosed), hc.States.Text(QuestState.Foreclosed));
         Assert.Null(hc.QuietTones);
         Assert.Null(hc.PlainTones);
         Assert.Null(hc.DrawerTones);
-        Assert.Equal(FlairTones.For(Flair.Quiet, SurfaceColors.Night.ForHighContrast()), FlairTones.For(Flair.Quiet, hc));
+        Assert.Equal(FlairTones.Mixed(Flair.Quiet, hc.Surface), FlairTones.For(Flair.Quiet, hc));
         Assert.Equal(hc.Surface.Window, hc.Scene.Zenith);
+        Assert.Null(hc.Scene.SkyStops);
         Assert.Equal(Night.Scene.StatusTop, hc.Scene.StatusTop);
     }
 
@@ -255,8 +270,11 @@ public sealed class UiPaletteTests
         Assert.True(UiPalettes.IsRegistered(PaletteId.Night));
         Assert.Contains(Night, UiPalettes.All);
 
-        // Not designed yet (T8, 1.17): Night until they are; Follow Dalamud is built from the host instead.
-        Assert.Same(Night, UiPalettes.Get(PaletteId.IshgardSnow));
+        // Ishgard Snow is registered (T8); Dawn and Kugane Lacquer are Night until 1.17; Follow Dalamud is built from the host instead.
+        Assert.Same(UiPalettes.IshgardSnow, UiPalettes.Get(PaletteId.IshgardSnow));
+        Assert.True(UiPalettes.IsRegistered(PaletteId.IshgardSnow));
+        Assert.Equal([PaletteId.Night, PaletteId.IshgardSnow], UiPalettes.All.Select(static p => p.Id));
+        Assert.Same(Night, UiPalettes.Get(PaletteId.Dawn));
         Assert.Same(Night, UiPalettes.Get(PaletteId.FollowDalamud));
         Assert.Same(Night, UiPalettes.Get((PaletteId)99));
         foreach (var palette in UiPalettes.All)

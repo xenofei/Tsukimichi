@@ -36,7 +36,7 @@ public sealed class ThemeRegistryTests
     public void Theme_ids_and_keys_are_pinned()
     {
         Assert.Equal(
-            [(1, "medallion"), (3, "aether-crystal"), (4, "ishgard-glass"), (5, "astrologian-orrery"), (6, "sumi-to-kinpaku"), (2, "classic")],
+            [(1, "medallion"), (4, "ishgard-glass"), (3, "aether-crystal"), (5, "astrologian-orrery"), (6, "sumi-to-kinpaku"), (2, "classic")],
             ThemePresets.All.Select(static t => ((int)t.Id, t.Key)).ToArray());
     }
 

@@ -2315,7 +2315,7 @@ public sealed partial class CharactersPane
                 }
 
                 ImGui.SameLine();
-                using (Theme.PushText(Theme.StateColor(evaluation.State)))
+                using (Theme.PushText(Theme.StateText(evaluation.State)))
                 {
                     ImGui.TextUnformatted(Strings.StateName(evaluation.State, quest));
                 }

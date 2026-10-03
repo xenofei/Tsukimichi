@@ -103,6 +103,63 @@ public static partial class Chrome
         return true;
     }
 
+    /// <summary>
+    /// Text over banner art, cut with an ellipsis past <paramref name="width"/> (pass the shortest rung of a ladder to
+    /// never cut). On a dark palette <see cref="OutlinedEllipsisAt"/>. On a light palette (spec-1.16 §A5) the navy ink
+    /// stands on a 10 px white bloom with a white 1 px shadow under it, as the mock's text-shadow
+    /// (0 1px 0 white .8, 0 0 10px white .7), so it reads over bright art without an outline. <paramref name="alpha"/>
+    /// fades the bloom and shadow with the text. Returns whether the text was cut.
+    /// </summary>
+    public static bool ArtTextAt(ImDrawListPtr dl, Vector2 pos, float width, string text, Vector4 color, float textWidth, float alpha = 1f)
+    {
+        if (!Theme.IsLight)
+        {
+            return OutlinedEllipsisAt(dl, pos, width, text, Theme.U32(color), textWidth);
+        }
+
+        if (text.Length == 0)
+        {
+            return false;
+        }
+
+        var drawn = MathF.Min(MathF.Max(0f, textWidth), MathF.Max(0f, width));
+        var line = ImGui.GetTextLineHeight();
+        ArtBloom(dl, pos, new Vector2(drawn, line), alpha);
+        var white = Vector4.One;
+        EllipsisTextAt(dl, pos + new Vector2(0f, UiMetrics.Hairline), width, text, Theme.WithAlpha(white, ArtShadowAlpha * alpha), textWidth);
+        return EllipsisTextAt(dl, pos, width, text, Theme.U32(color), textWidth);
+    }
+
+    /// <summary>The white 1 px shadow under text on art on a light palette.</summary>
+    private const float ArtShadowAlpha = 0.8f;
+
+    /// <summary>The white bloom behind text on art on a light palette: its reach (logical px), its alpha, and its layers.</summary>
+    private const float ArtBloomLogical = 10f;
+
+    private const float ArtBloomAlpha = 0.7f;
+
+    private const int ArtBloomLayers = 5;
+
+    /// <summary>
+    /// A soft white bloom round the text box <paramref name="pos"/>..+<paramref name="size"/>: rounded layers growing to
+    /// <see cref="ArtBloomLogical"/>, densest over the text and fading out at the edge (a 10 px blur's footprint).
+    /// </summary>
+    private static void ArtBloom(ImDrawListPtr dl, Vector2 pos, Vector2 size, float alpha)
+    {
+        if (!(size.X > 0f) || !(alpha > 0f))
+        {
+            return;
+        }
+
+        var reach = UiMetrics.Px(ArtBloomLogical);
+        var layer = Theme.WithAlpha(Vector4.One, ArtBloomAlpha * alpha / ArtBloomLayers * 1.6f);
+        for (var k = ArtBloomLayers; k >= 1; k--)
+        {
+            var grow = reach * k / ArtBloomLayers;
+            dl.AddRectFilled(pos - new Vector2(grow), pos + size + new Vector2(grow), layer, (size.Y * 0.5f) + grow);
+        }
+    }
+
     /// <summary><paramref name="text"/> in <paramref name="color"/> as one item, without allocating a colour scope.</summary>
     private static void ColoredText(ReadOnlySpan<char> text, uint color)
     {

@@ -29,6 +29,12 @@ public static partial class Chrome
 
     private static Vector4 QuietKeyline => Theme.Plate.QuietKeyline;
 
+    /// <summary>
+    /// A plate line's alpha: the palette's own when its role carries one (Snow's white outer line at .9, its Quiet hairline
+    /// at .8; spec-1.16 §A6–A7), else the design's <paramref name="designed"/> alpha (Night's).
+    /// </summary>
+    private static float PlateAlpha(Vector4 role, float designed) => role.W < 1f ? role.W : designed;
+
     private static Vector4 InitialsInk => Theme.Plate.Initials;
 
     /// <summary>
@@ -101,11 +107,11 @@ public static partial class Chrome
         switch (flair)
         {
             case Flair.Full when !Theme.Glyphs.HighContrast:
-                dl.AddCircle(center, PortraitPlate.OuterRingRadius * unit, Theme.WithAlpha(Theme.Plate.OuterRing, PortraitPlate.OuterRingAlpha), 0, hairline);
+                dl.AddCircle(center, PortraitPlate.OuterRingRadius * unit, Theme.WithAlpha(Theme.Plate.OuterRing, PlateAlpha(Theme.Plate.OuterRing, PortraitPlate.OuterRingAlpha)), 0, hairline);
                 BrassRing(dl, min, size, PortraitPlate.KeylineRadius * unit, hairline);
                 break;
             case Flair.Full or Flair.Quiet:
-                dl.AddCircle(center, PortraitPlate.KeylineRadius * unit, Theme.WithAlpha(QuietKeyline, PortraitPlate.QuietKeylineAlpha), 0, hairline);
+                dl.AddCircle(center, PortraitPlate.KeylineRadius * unit, Theme.WithAlpha(QuietKeyline, PlateAlpha(QuietKeyline, PortraitPlate.QuietKeylineAlpha)), 0, hairline);
                 break;
             default:
                 dl.AddCircle(center, PortraitPlate.KeylineRadius * unit, Theme.U32(PlainKeyline), 0, hairline);
