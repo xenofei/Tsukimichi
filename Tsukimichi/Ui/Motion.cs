@@ -34,6 +34,9 @@ public static class Motion
     /// <summary>Whether motion plays this frame: Reduce motion off and the user not scrolling.</summary>
     public static bool Enabled => !UiMetrics.ReduceMotion && !scrolling;
 
+    /// <summary>Whether the user is scrolling or scrolled a moment ago (the wheel, a scrollbar, a watched window's scroll), Reduce motion or not.</summary>
+    public static bool Scrolling => scrolling;
+
     /// <summary>
     /// Once per frame, after <see cref="UiMetrics.Update"/> and before any window draws: notes whether the user is
     /// scrolling (the mouse wheel, a scrollbar held, or a watched window's scroll moved or about to jump; motion pauses

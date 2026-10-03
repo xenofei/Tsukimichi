@@ -338,7 +338,7 @@ public sealed class TablePane : IDisposable
         // The selected row keeps its place on screen when the rows change (feature plan v6 U3). The scroll is written
         // into the table's window before it begins, so the frame the new rows show is already in place (ImGui's own
         // SetScrollY lands a frame late, which would flash the old offset); it is set again inside to stick.
-        var jump = AnchorScroll(rows, selectedIndex, scopeChanged);
+        var jump = AnchorScroll(rows, selectedIndex, scopeChanged, PlayerScrolling());
         if (jump is { } jumpY && tableWindowId != 0 && ImGuiP.FindWindowByID(tableWindowId) is { IsNull: false } tableWindow)
         {
             tableWindow.Scroll.Y = jumpY;
@@ -460,7 +460,7 @@ public sealed class TablePane : IDisposable
         }
 
         // While the plan hides the sorted column (its header and arrow are gone), the Name header's tooltip names the sort.
-        DrawHeaders(SortedColumn(ui.Sort), SortColumnAutoHidden() ? HiddenSortNote() : null, moonRoad);
+        var headerBottom = DrawHeaders(SortedColumn(ui.Sort), SortColumnAutoHidden() ? HiddenSortNote() : null, moonRoad);
 
         // The player's own hidden columns, read after the layout: a column the plan did not hide is shown unless the
         // player hid it from the header menu (the plan's hides never touch that flag).
@@ -544,8 +544,10 @@ public sealed class TablePane : IDisposable
         moreFocusedRow = moreFocusedNext;
 
         // The anchor for the next change of rows: the selected row while it is on screen, else the first row on screen.
+        // The rows' view starts under the frozen header, which the clip rectangle includes.
         var rowsView = ImGuiP.GetCurrentWindow().InnerClipRect;
-        var view = MathF.Max(rowHeight, rowsView.Max.Y - rowsView.Min.Y);
+        var rowsTop = MathF.Max(rowsView.Min.Y, headerBottom);
+        var view = ScrollAnchor.RowsView(rowsView.Min.Y, rowsView.Max.Y, headerBottom, rowHeight);
         anchorRows = rows;
         anchorRowHeight = rowHeight;
         anchorView = view;
@@ -553,7 +555,7 @@ public sealed class TablePane : IDisposable
         if (!SelectedRowRect.IsEmpty)
         {
             // Only what is on screen counts for the floating layers (a row half scrolled under the header).
-            var clip = new ScreenRect(rowsView.Min, rowsView.Max);
+            var clip = new ScreenRect(new Vector2(rowsView.Min.X, rowsTop), rowsView.Max);
             SelectedRowRect = ScreenRect.Intersect(SelectedRowRect, clip) is { IsEmpty: false } seen ? seen : default;
         }
     }
@@ -602,7 +604,27 @@ public sealed class TablePane : IDisposable
     /// any other change keeps the anchored row where it was on screen (the selected row's neighbour when it was
     /// filtered out), and the selected row, moved in the list but kept in place, gets the reveal pulse.
     /// </summary>
-    private float? AnchorScroll(QuestRow[] rows, int selectedIndex, bool scopeChanged)
+    /// <summary>
+    /// Whether the player is scrolling the list this frame: the wheel turns, the table's scrollbar is held, a wheel or
+    /// keyboard scroll is about to land (<c>ScrollTarget</c>), or <see cref="Motion"/> still counts a recent scroll.
+    /// </summary>
+    private bool PlayerScrolling()
+    {
+        if (ImGui.GetIO().MouseWheel != 0f || Motion.Scrolling)
+        {
+            return true;
+        }
+
+        if (tableWindowId == 0 || ImGuiP.FindWindowByID(tableWindowId) is not { IsNull: false } window)
+        {
+            return false;
+        }
+
+        var active = ImGuiP.GetActiveID();
+        return window.ScrollTarget.Y < float.MaxValue || (active != 0 && active == ImGuiP.GetWindowScrollbarID(window, ImGuiAxis.Y));
+    }
+
+    private float? AnchorScroll(QuestRow[] rows, int selectedIndex, bool scopeChanged, bool playerScrolling)
     {
         if (anchorRows is not { } old || ReferenceEquals(rows, old) || !(anchorRowHeight > 0f))
         {
@@ -621,7 +643,10 @@ public sealed class TablePane : IDisposable
             return selectedIndex >= 0 ? ScrollAnchor.Reveal(selectedIndex, rows.Length, anchorRowHeight, anchorView) : 0f;
         }
 
-        if (!hasAnchor)
+        // The player is scrolling the list (the wheel, the scrollbar, a scroll landing): their scroll wins, and the rows
+        // that changed under it are not pulled back to where the anchor sat. A reveal or a new scope above still jumps,
+        // as both are the player's own asks.
+        if (!hasAnchor || playerScrolling)
         {
             return null;
         }
@@ -745,11 +770,13 @@ public sealed class TablePane : IDisposable
     /// the sorted column's label and its arrow are in the primary text colour (a sort is not a call to action, so never
     /// gold). Plain draws them in the caption role on the raised fill; Moon Road (<paramref name="moonRoad"/>, R3 #6) in
     /// the Eyebrow role, upper-cased in English, on a clear header. <paramref name="nameNote"/>, when given, is a second
-    /// line in the Name header's tooltip.
+    /// line in the Name header's tooltip. Returns the header row's bottom on screen (where the rows' view starts; the
+    /// header is frozen, so it stays there however the rows scroll), or <see cref="float.MinValue"/> with no header drawn.
     /// </summary>
-    private static void DrawHeaders(int sortedColumn, string? nameNote, bool moonRoad)
+    private static float DrawHeaders(int sortedColumn, string? nameNote, bool moonRoad)
     {
         var s = Theme.Surface;
+        var bottom = float.MinValue;
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         for (var i = 0; i < HeaderTooltips.Length; i++)
         {
@@ -768,11 +795,14 @@ public sealed class TablePane : IDisposable
 
             ImGui.PopStyleColor();
             ImGui.PopID();
+            bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(HeaderTooltips[i], i == (int)Column.Name ? nameNote : null);
             }
         }
+
+        return bottom;
     }
 
     /// <summary>A header label as drawn: cased like a section heading in Moon Road (<see cref="SectionHeading.Label"/>, cached), else as is.</summary>
@@ -1527,7 +1557,7 @@ public sealed class TablePane : IDisposable
         ImGui.TextDisabled(runner.LevelText(quest.DisplayLevel));
 
         // What it opens (feature plan v6 K4), never for a quest the shield masks.
-        if (runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) && unlocks.OpensLine(quest.RowId) is { Length: > 0 } opens)
+        if (runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) && unlocks.OpensLine(quest.RowId, runner.UnlockReach) is { Length: > 0 } opens)
         {
             ImGui.TextWrapped(opens);
         }
@@ -1542,13 +1572,15 @@ public sealed class TablePane : IDisposable
         }
 
         var entries = unlocks.For(quest.RowId);
+        var reach = runner.UnlockReach;
         var drawn = 0;
         var iconSize = UiMetrics.RowIconSize;
         var iconOffset = MathF.Max(0f, (layout.RowContent - iconSize) * 0.5f);
         for (var i = 0; i < entries.Count && drawn < MaxOpensIcons; i++)
         {
             var entry = entries[i];
-            if (entry.Target == Core.Unlocks.UnlockTarget.NextQuest || entry.Icon == 0)
+            // Sprout mode leaves out rows past the character's reach, as the detail pane does (UnlockView.Visible).
+            if (entry.Target == Core.Unlocks.UnlockTarget.NextQuest || entry.Icon == 0 || !Core.Unlocks.UnlockView.InReach(entry, reach))
             {
                 continue;
             }

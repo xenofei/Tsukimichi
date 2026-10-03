@@ -36,7 +36,7 @@ public static class UnlockView
         var all = true;
         foreach (var entry in entries)
         {
-            if (entry.Expansion > reach)
+            if (!InReach(entry, reach))
             {
                 all = false;
                 break;
@@ -51,13 +51,20 @@ public static class UnlockView
         var shown = new List<UnlockEntry>(entries.Count);
         foreach (var entry in entries)
         {
-            if (entry.Expansion <= reach)
+            if (InReach(entry, reach))
             {
                 shown.Add(entry);
             }
         }
 
         return shown;
+    }
+
+    /// <summary>Whether Sprout mode's <paramref name="reach"/> shows the row (<see cref="byte.MaxValue"/>: every row).</summary>
+    public static bool InReach(UnlockEntry entry, byte reach)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        return entry.Expansion <= reach;
     }
 
     /// <summary>A row's name as printed: a next quest's through the shield, any other row's as it is.</summary>
@@ -69,17 +76,5 @@ public static class UnlockView
         return entry.Target == UnlockTarget.NextQuest && catalog.GetByRowId(entry.TargetId) is { } quest
             ? spoilers.DisplayName(quest)
             : entry.Name;
-    }
-
-    /// <summary>
-    /// The one-line summary a surface prints for a quest ("Kugane (area) · The Sirensong Sea (dungeon)"): empty when
-    /// the shield masks the quest or it opens nothing but next quests.
-    /// </summary>
-    public static string Summary(QuestUnlocksSource source, QuestRecord quest, SpoilerMask spoilers)
-    {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(quest);
-        ArgumentNullException.ThrowIfNull(spoilers);
-        return spoilers.IsMasked(quest) ? string.Empty : source.Summary(quest.RowId);
     }
 }

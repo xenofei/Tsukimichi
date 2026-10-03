@@ -182,6 +182,13 @@ public sealed class QueryRunner : IDisposable
     /// </summary>
     public Core.Unlocks.QuestUnlocksSource? Unlocks { get; set; }
 
+    /// <summary>
+    /// The newest expansion whose unlocks a surface may name: the character's reach in Sprout mode
+    /// (<see cref="SpoilerMask.ReachExpansion"/>), else <see cref="byte.MaxValue"/> (every row). Every one-line form of
+    /// <see cref="Unlocks"/> takes it, so the tooltips, the Opens column and chat agree with the detail pane.
+    /// </summary>
+    public byte UnlockReach => ui.Filters.Preset == Preset.Sprout ? Spoilers.ReachExpansion : byte.MaxValue;
+
     /// <summary>Story sidequests of the catalog (<see cref="SessionState.Stories"/>); the table's book badge reads it.</summary>
     public StorySidequests Stories => plugin.Session?.Stories ?? StorySidequests.Empty;
 

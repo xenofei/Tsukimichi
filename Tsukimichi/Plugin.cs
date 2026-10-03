@@ -662,7 +662,8 @@ public sealed partial class Plugin : IDalamudPlugin
 
     /// <summary>
     /// Framework thread, every tick: a stored character resolved on a worker is taken in, and one on view reads its
-    /// dailies and weeklies cleared once the reset passes (one compare a frame).
+    /// dailies and weeklies cleared once the reset passes (one compare a frame), and the unlock index is polled so its
+    /// build starts when the catalog loads.
     /// </summary>
     private void SessionTick(IFramework _)
     {
@@ -682,6 +683,17 @@ public sealed partial class Plugin : IDalamudPlugin
         catch (Exception ex)
         {
             Log.Warning(ex, "Re-reading the stored character after the reset failed");
+        }
+
+        try
+        {
+            // The unlock index starts building as soon as a catalog loads and is collected here, so the first chat
+            // "Unlocked:" line and the first Unlocks section read a built index, not the empty one a lazy start gives.
+            questUnlocks?.Poll();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Collecting what quests open failed");
         }
     }
 
@@ -978,6 +990,7 @@ public sealed partial class Plugin : IDalamudPlugin
             questUnlocks = BuildQuestUnlocksSource();
             queryRunner.Unlocks = questUnlocks;
             moonlit.Unlocks = questUnlocks;
+            moonlit.UnlockReach = () => queryRunner.UnlockReach;
             gameLinks.GameCallsAllowed = () => gate.HooksAllowed;
             mainWindow.AttachUnlocks(entry => unlockReader.IsObtained(entry), moonlit.Icons.Resolve);
             // Hero banners (V4): every quest's banner through the fallback chain, resolved off the frame once per catalog

@@ -25,6 +25,34 @@ public class ScrollAnchorTests
         rows.Select((r, i) => (r.Quest.RowId, i)).ToDictionary(p => p.RowId, p => p.i);
 
     [Fact]
+    public void A_list_scrolled_to_its_end_stays_there_when_a_row_changes()
+    {
+        // The table's clip rectangle is 330 px tall and its frozen header takes the top 30: the rows see 300.
+        const float clipTop = 100f;
+        const float header = 30f;
+        var view = ScrollAnchor.RowsView(clipTop, clipTop + View + header, clipTop + header, RowHeight);
+        Assert.Equal(View, view);
+
+        // Scrolled to the very end, the selection on the last row; a live update changes it but not the count.
+        var rows = Range(1000, 100);
+        var bottom = (rows.Length * RowHeight) - View;
+        Assert.True(ScrollAnchor.TryCapture(rows, selectedIndex: 99, bottom, RowHeight, view, out var anchor));
+        var updated = Range(1000, 100);
+        var y = ScrollAnchor.Restore(in anchor, rows, Index(updated), updated.Length, RowHeight, view, out _);
+
+        // It stays at the end; a view that counted the header would clamp one row short and the list would jump.
+        Assert.Equal(bottom, y);
+        Assert.NotEqual(bottom, ScrollAnchor.Restore(in anchor, rows, Index(updated), updated.Length, RowHeight, View + header, out _));
+    }
+
+    [Fact]
+    public void The_rows_view_is_never_less_than_a_row()
+    {
+        Assert.Equal(RowHeight, ScrollAnchor.RowsView(0f, 20f, 15f, RowHeight));
+        Assert.Equal(200f, ScrollAnchor.RowsView(0f, 200f, float.MinValue, RowHeight));
+    }
+
+    [Fact]
     public void The_selected_row_on_screen_is_the_anchor()
     {
         var rows = Range(1000, 100);

@@ -895,8 +895,11 @@ public sealed class TodoOverlay : Window, IDisposable
         | (settings.TodoShowSeasonal ? 16 : 0) | (settings.TodoShowPlan ? 32 : 0) | ((settings.TodoPlanExpansion + 1) << 6)
         | (settings.TodoShowRoute ? 1 << 20 : 0) | (settings.TodoShowNextStops ? 1 << 21 : 0);
 
-    /// <summary>The followed route's and Next stops' revisions (each read through its source, which rebuilds first when due).</summary>
-    private (int Route, int Stops) SourceRevisions()
+    /// <summary>
+    /// The followed route's, Next stops' and the unlock index's revisions (each read through its source, which rebuilds
+    /// first when due), so a nearby unlock quest's "Opens …" hint follows the index once it is built.
+    /// </summary>
+    private (int Route, int Stops, int Unlocks) SourceRevisions()
     {
         var route = 0;
         if (settings.TodoShowRoute && ActiveRoutes is { } routes)
@@ -912,10 +915,11 @@ public sealed class TodoOverlay : Window, IDisposable
             stops = source.Revision;
         }
 
-        return (route, stops);
+        var unlocks = settings.TodoShowNearbyFeature && pins.Unlocks is { } index ? index.Revision : 0;
+        return (route, stops, unlocks);
     }
 
-    private (int Route, int Stops) builtSources = (-1, -1);
+    private (int Route, int Stops, int Unlocks) builtSources = (-1, -1, -1);
 
     /// <summary>Once per frame: rebuilds when any input moved, the viewed character's pins included.</summary>
     private void Refresh()

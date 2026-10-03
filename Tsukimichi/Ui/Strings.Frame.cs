@@ -21,6 +21,10 @@ public static partial class Strings
     public static string DockPreviousTooltip => Loc.Get("DockPreviousTooltip");
     public static string DockNextTooltip => Loc.Get("DockNextTooltip");
     public static string DockCloseTooltip => Loc.Get("DockCloseTooltip");
+    public static string DockFoldTooltip => Loc.Get("DockFoldTooltip");
+    public static string DockUnfoldTooltip => Loc.Get("DockUnfoldTooltip");
+    public static string DockChipRebuildFailed => Loc.Get("DockChipRebuildFailed");
+    public static string DockChipFreshness => Loc.Get("DockChipFreshness");
 
     // Filter drawer
     public static string FilterDrawerPinTooltip => Loc.Get("FilterDrawerPinTooltip");

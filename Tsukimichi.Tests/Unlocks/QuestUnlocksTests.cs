@@ -240,6 +240,61 @@ public class QuestUnlocksTests
         current = null;
         Assert.Same(QuestUnlocks.Empty, source.Current);
     }
+
+    [Fact]
+    public void Polling_builds_the_index_before_anyone_reads_it()
+    {
+        // The framework tick polls every frame, so the first chat line or panel that reads the index finds it built.
+        var catalog = Quests();
+        var builds = 0;
+        var source = new QuestUnlocksSource(
+            () => catalog,
+            c =>
+            {
+                builds++;
+                return QuestUnlocks.Build(c, Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea")), Duties, Links());
+            },
+            start: work => Task.FromResult(work()));
+
+        source.Poll();
+
+        Assert.Equal(1, builds);
+        Assert.Equal(1, source.Revision);
+        Assert.True(source.IsCurrent);
+        Assert.NotEmpty(source.For(Opener));
+    }
+
+    [Fact]
+    public void The_one_line_forms_leave_out_rows_past_sprout_modes_reach()
+    {
+        var catalog = Quests();
+        var source = new QuestUnlocksSource(
+            () => catalog,
+            c => QuestUnlocks.Build(c, Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea")), Duties, Links()),
+            start: work => Task.FromResult(work()));
+
+        // Kugane, Onokoro and the Sirensong Sea are Stormblood's (expansion 2): a character who reached Heavensward sees none.
+        Assert.Contains("Kugane", source.Places(Opener), StringComparison.Ordinal);
+        Assert.Contains("Kugane", source.OpensLine(Opener, reach: 2), StringComparison.Ordinal);
+        Assert.Empty(source.Places(Opener, reach: 1));
+        Assert.Empty(source.OpensLine(Opener, reach: 1));
+        Assert.Empty(source.Names(Opener, reach: 1));
+        Assert.Empty(source.Summary(Opener, reach: 1));
+
+        // Each reach is memoized on its own: the full line is still there after the filtered one.
+        Assert.Same(source.Places(Opener), source.Places(Opener, byte.MaxValue));
+        Assert.Contains("Kugane", source.Places(Opener), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_row_is_in_reach_up_to_its_expansion()
+    {
+        var kugane = new UnlockEntry(UnlockTarget.Zone, Kugane, "Kugane", 7, UnlockSource.Sheet, 2);
+
+        Assert.False(UnlockView.InReach(kugane, 1));
+        Assert.True(UnlockView.InReach(kugane, 2));
+        Assert.True(UnlockView.InReach(kugane, byte.MaxValue));
+    }
 }
 
 /// <summary>The spoiler shield over the unlocks (unlocks spec §3.3), on the frozen catalog with a character that has done nothing.</summary>

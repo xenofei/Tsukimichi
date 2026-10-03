@@ -9416,6 +9416,18 @@
   <data name="DockCloseTooltip" xml:space="preserve">
     <value>Close this notice</value>
   </data>
+  <data name="DockFoldTooltip" xml:space="preserve">
+    <value>Fold this notice down to a small chip until it is dealt with</value>
+  </data>
+  <data name="DockUnfoldTooltip" xml:space="preserve">
+    <value>Click to show the whole notice</value>
+  </data>
+  <data name="DockChipRebuildFailed" xml:space="preserve">
+    <value>Rebuild failed</value>
+  </data>
+  <data name="DockChipFreshness" xml:space="preserve">
+    <value>Game updated</value>
+  </data>
   <data name="FilterDrawerPinTooltip" xml:space="preserve">
     <value>Keep the filters open: a click elsewhere no longer closes them</value>
   </data>

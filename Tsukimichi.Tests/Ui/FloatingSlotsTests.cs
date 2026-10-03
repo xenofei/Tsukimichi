@@ -36,6 +36,34 @@ public class FloatingSlotsTests
     }
 
     [Fact]
+    public void The_dock_and_the_toast_sit_above_the_detail_panes_action_bar()
+    {
+        // The detail column's sticky action bar: its right 450 px, its bottom 120 px, down to the body's bottom.
+        var bar = new ScreenRect(new Vector2(650f, 530f), new Vector2(1100f, 650f));
+        var sizes = new Vector2[Enum.GetValues<FloatingLayer>().Length];
+        var wanted = new bool[sizes.Length];
+        var placed = new ScreenRect[sizes.Length];
+        sizes[(int)FloatingLayer.Undo] = Toast;
+        sizes[(int)FloatingLayer.Dock] = Dock;
+        wanted[(int)FloatingLayer.Undo] = true;
+        wanted[(int)FloatingLayer.Dock] = true;
+
+        FloatingSlots.PlaceAll(sizes, wanted, in Body, default, in bar, Margin, placed);
+
+        var dock = placed[(int)FloatingLayer.Dock];
+        var undo = placed[(int)FloatingLayer.Undo];
+        Assert.True(dock.Max.Y <= bar.Min.Y, $"dock {dock} covers the bar {bar}");
+        Assert.True(undo.Max.Y <= bar.Min.Y, $"toast {undo} covers the bar {bar}");
+        Assert.Equal(Body.Max.X - Margin, dock.Max.X);
+        Assert.False(dock.Min.Y < undo.Max.Y && undo.Min.Y < dock.Max.Y && dock.Min.X < undo.Max.X && undo.Min.X < dock.Max.X);
+
+        // Without a bar (no quest selected) the dock is back on the bottom edge.
+        wanted[(int)FloatingLayer.Undo] = false;
+        FloatingSlots.PlaceAll(sizes, wanted, in Body, default, default, Margin, placed);
+        Assert.Equal(Body.Max.Y - Margin, placed[(int)FloatingLayer.Dock].Max.Y);
+    }
+
+    [Fact]
     public void No_layer_covers_the_status_bar()
     {
         foreach (var layer in Enum.GetValues<FloatingLayer>())

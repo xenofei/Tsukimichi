@@ -287,9 +287,16 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// </summary>
     public Core.Unlocks.QuestUnlocksSource? Unlocks { get; set; }
 
-    // "Also opens: …" per quest, composed once per index revision.
+    /// <summary>
+    /// Sprout mode's reach (<see cref="QueryRunner.UnlockReach"/>): rows past it stay out of "Also opens"; null names
+    /// every row.
+    /// </summary>
+    public Func<byte>? UnlockReach { get; set; }
+
+    // "Also opens: …" per quest, composed once per index revision and reach.
     private readonly Dictionary<uint, string> alsoOpens = [];
     private int alsoOpensRevision = -1;
+    private byte alsoOpensReach = byte.MaxValue;
 
     /// <summary>"Also opens: Kugane · The Sirensong Sea" for a quest the shield does not mask; empty otherwise.</summary>
     private string AlsoOpensText(QuestRecord quest)
@@ -299,15 +306,17 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             return string.Empty;
         }
 
-        if (alsoOpensRevision != unlocks.Revision)
+        var reach = UnlockReach?.Invoke() ?? byte.MaxValue;
+        if (alsoOpensRevision != unlocks.Revision || alsoOpensReach != reach)
         {
             alsoOpensRevision = unlocks.Revision;
+            alsoOpensReach = reach;
             alsoOpens.Clear();
         }
 
         if (!alsoOpens.TryGetValue(quest.RowId, out var text))
         {
-            var places = unlocks.Places(quest.RowId);
+            var places = unlocks.Places(quest.RowId, reach);
             text = places.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.MoonlitAlsoOpensFormat, places) : string.Empty;
             alsoOpens[quest.RowId] = text;
         }

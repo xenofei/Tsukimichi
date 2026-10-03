@@ -29,19 +29,26 @@ public enum NoticeKind
 /// The notice dock's queue (feature plan v6 U2, decision 6): which notices are due, the one on screen (one at a time,
 /// with a pager), and the clock of one-time prompts. A one-time prompt closes by itself after
 /// <see cref="OneTimeSeconds"/> on screen, and the pointer resting on the dock stops its clock; a notice that needs the
-/// player to act (<see cref="Stays"/>) stays until its cause goes. A closed prompt stays closed for the session. Only
+/// player to act (<see cref="Stays"/>) stays until its cause goes, and the player may fold it down to a chip
+/// (<see cref="SetCollapsed"/>) meanwhile. A closed prompt stays closed for the session. Only
 /// the notice on screen uses time, so one waiting behind the pager is still there when the player pages to it. Fed with
-/// a steady clock (ImGui's time); free of ImGui so it is tested.
+/// a steady clock (ImGui's time), and only the time the dock is drawn counts: a step is capped at
+/// <see cref="MaxStepSeconds"/> and <see cref="Suspend"/> forgets the last tick, so a window closed for minutes does not
+/// close a prompt the moment it reopens. Free of ImGui so it is tested.
 /// </summary>
 public sealed class NoticeQueue
 {
     /// <summary>How long a one-time prompt stays on screen, not counting the time the pointer rests on it.</summary>
     public const double OneTimeSeconds = 15.0;
 
+    /// <summary>The most one tick takes off a prompt's clock: a frame hitch or a gap between draws counts as one frame.</summary>
+    public const double MaxStepSeconds = 0.1;
+
     private static readonly int KindCount = Enum.GetValues<NoticeKind>().Length;
 
     private readonly bool[] due = new bool[KindCount];
     private readonly bool[] closed = new bool[KindCount];
+    private readonly bool[] collapsed = new bool[KindCount];
     private readonly double[] remaining = new double[KindCount];
     private int current = -1;
     private double lastTick = double.NaN;
@@ -93,6 +100,15 @@ public sealed class NoticeQueue
     /// <summary>Whether <paramref name="kind"/> was closed (by the player or its clock) this session.</summary>
     public bool Closed(NoticeKind kind) => closed[(int)kind];
 
+    /// <summary>Whether the player folded <paramref name="kind"/> down to its chip; only a notice that stays folds.</summary>
+    public bool Collapsed(NoticeKind kind) => collapsed[(int)kind];
+
+    /// <summary>
+    /// Folds a notice that stays (<see cref="Stays"/>) down to a small chip, or opens it again. It stays folded while its
+    /// cause holds; once the cause goes, a new one shows in full. A one-time prompt does not fold (it closes instead).
+    /// </summary>
+    public void SetCollapsed(NoticeKind kind, bool fold) => collapsed[(int)kind] = fold && Stays(kind);
+
     /// <summary>
     /// Says whether <paramref name="kind"/> is due now (its cause holds). A newly due notice that outranks the one on
     /// screen takes its place; one that ranks lower waits behind the pager. A notice whose cause went is dropped.
@@ -106,6 +122,11 @@ public sealed class NoticeQueue
         }
 
         due[i] = isDue;
+        if (!isDue)
+        {
+            collapsed[i] = false;
+        }
+
         if (isDue)
         {
             remaining[i] = OneTimeSeconds;
@@ -152,7 +173,7 @@ public sealed class NoticeQueue
     /// </summary>
     public bool Tick(double now, bool paused)
     {
-        var step = double.IsFinite(lastTick) ? now - lastTick : 0.0;
+        var step = double.IsFinite(lastTick) ? Math.Min(now - lastTick, MaxStepSeconds) : 0.0;
         lastTick = now;
         if (Current is not { } kind)
         {
@@ -170,6 +191,12 @@ public sealed class NoticeQueue
 
         return Current is not null;
     }
+
+    /// <summary>
+    /// The dock is not drawn (the window closed, or nothing is waiting): the next <see cref="Tick"/> starts the clock
+    /// afresh instead of counting the time in between.
+    /// </summary>
+    public void Suspend() => lastTick = double.NaN;
 
     private bool Showable(int i) => due[i] && !closed[i];
 

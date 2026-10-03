@@ -40,28 +40,21 @@ public static class FloatingLayers
 
     /// <summary>
     /// The main window, once per frame after its status bar: <paramref name="body"/> is the area the layers float in
-    /// (its bottom at the status bar's top) and <paramref name="selectedRow"/> the selected row on screen (empty when
-    /// none shows). Places every layer that asked this frame.
+    /// (its bottom at the status bar's top), <paramref name="selectedRow"/> the selected row on screen (empty when
+    /// none shows) and <paramref name="keepAbove"/> a bar the layers sit above (the detail pane's sticky action bar;
+    /// empty when none shows). Places every layer that asked this frame.
     /// </summary>
-    public static void Frame(in ScreenRect body, in ScreenRect selectedRow)
+    public static void Frame(in ScreenRect body, in ScreenRect selectedRow, in ScreenRect keepAbove = default)
     {
         var frame = ImGui.GetFrameCount();
         owner = OwnerWindowId();
         placedFrame = frame;
-        var margin = UiMetrics.Px(MarginLogical);
-        Span<ScreenRect> taken = stackalloc ScreenRect[LayerCount];
-        var count = 0;
         for (var i = 0; i < LayerCount; i++)
         {
             HasPlace[i] = WantedFrame[i] == frame && Sizes[i].X > 0f && Sizes[i].Y > 0f;
-            if (!HasPlace[i])
-            {
-                continue;
-            }
-
-            Placed[i] = FloatingSlots.Place((FloatingLayer)i, Sizes[i], in body, in selectedRow, taken[..count], margin);
-            taken[count++] = Placed[i];
         }
+
+        FloatingSlots.PlaceAll(Sizes, HasPlace, in body, in selectedRow, in keepAbove, UiMetrics.Px(MarginLogical), Placed);
     }
 
     /// <summary>
