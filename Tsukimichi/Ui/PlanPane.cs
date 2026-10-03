@@ -42,6 +42,7 @@ public sealed class PlanPane
     private readonly PlanSource source;
     private readonly GameLinks links;
     private readonly DiscordCopy discordCopy = new();
+    private readonly TextFade copiedFade = new();
     private readonly Configuration settings;
     private readonly Action save;
 
@@ -135,7 +136,9 @@ public sealed class PlanPane
             }
         }
 
-        if (kinds != UnlockKinds.AllMask && FlowChip("##allKinds", Strings.PlanAllKinds, false, Strings.PlanAllKindsTooltip, ref first))
+        // Always there (1.12.0, U4), held while no kind narrows the list: a chip that came and went with the choice
+        // could open or close a row of chips and move the expansions below.
+        if (FlowChip("##allKinds", Strings.PlanAllKinds, kinds == UnlockKinds.AllMask, Strings.PlanAllKindsTooltip, ref first))
         {
             kinds = UnlockKinds.AllMask;
         }
@@ -240,8 +243,8 @@ public sealed class PlanPane
         // Copy for Discord (1.8.0): bullets instead of task boxes, optional links (never on a masked name), 2,000-character parts.
         if (!view.IsEmpty)
         {
-            Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.LinksCopyDiscord).X + (ImGui.GetStyle().FramePadding.X * 2f));
-            discordCopy.Draw("plan", view, (Pane: this, View: view), static (s, addLinks) => s.Pane.PlanDiscordText(s.View, addLinks));
+            Chrome.SameLineOrWrap(DiscordCopy.ButtonWidth());
+            discordCopy.Draw("plan", view, (Pane: this, View: view), static (s, addLinks) => s.Pane.PlanDiscordText(s.View, addLinks), note: false);
         }
 
         // "Flag next stop" (1.6.0, C3 C): the first quest the list shows that can be started now.
@@ -260,12 +263,20 @@ public sealed class PlanPane
             UiMetrics.Tooltip(next is not null ? Strings.PlanFlagNextStopTooltip : Strings.PlanFlagNextStopUnavailable);
         }
 
+        // One slot for "Showing 12 of 40" and either copy's "Copied" (1.12.0, U4), measured for the widest of them so
+        // the toolbar wraps the same way whichever shows; the confirmation fades in where the count was.
         var justCopied = ImGui.GetTime() - copiedAt < CopiedSeconds;
-        Chrome.SameLineOrWrap(ImGui.CalcTextSize(justCopied ? copied : showing).X);
-        if (justCopied)
+        var confirmation = justCopied ? copied : discordCopy.JustCopied ? Strings.LinksDiscordCopied : null;
+        var slot = MathF.Max(ImGui.CalcTextSize(showing).X, MathF.Max(ImGui.CalcTextSize(copied).X, ImGui.CalcTextSize(Strings.LinksDiscordCopied).X));
+        Chrome.SameLineOrWrap(slot);
+        var alpha = copiedFade.Alpha(confirmation);
+        if (confirmation is not null)
         {
-            using var confirmation = Theme.PushText(Theme.Surface.Text);
-            ImGui.TextUnformatted(copied);
+            var ink = Theme.Surface.Text;
+            using (ImRaii.PushColor(ImGuiCol.Text, Theme.WithAlpha(ink, ink.W * alpha)))
+            {
+                ImGui.TextUnformatted(confirmation);
+            }
         }
         else
         {

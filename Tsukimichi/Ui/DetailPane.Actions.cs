@@ -15,9 +15,10 @@ namespace Tsukimichi.Ui;
 /// has"): labelled pills of one weight, in this order: Flag on map (leading only while Lifestream is not loaded, as
 /// the primary action did before), Go to giver, Teleport, Walk to giver, then, when they concern the quest, Start
 /// Questionable and Run with AutoDuty. The first travel pill that can start now wears the accent
-/// (<see cref="PillTone.Primary"/>). While a hand-off runs its pill turns into a labelled Stop (Eclipse), and a live
-/// line under the row says what it does ("Going to giver · Teleporting…", Questionable's step). A pill that cannot
-/// start stays on the row, dimmed but labelled, its reason in the tooltip.
+/// (<see cref="PillTone.Primary"/>). While a hand-off runs its pill turns into a labelled Stop (Eclipse); what it does
+/// ("Going to giver · Teleporting…", Questionable's step) is said in the status bar (DetailPane.Activity.cs), never in
+/// a line that would push the pane down. A pill that cannot start stays on the row, dimmed but labelled, its reason in
+/// the tooltip.
 /// <para>
 /// The row is fitted to the pane by <see cref="ActionPillFit"/>: full labels, then short ones from the least
 /// important pill, then icon-only pills (the label moves into the tooltip), then whole pills overflow into the "…"
@@ -75,26 +76,7 @@ public sealed partial class DetailPane
     private DutyRow? autoDutyRow;
     private AutoDutyChoice autoDutyChoice;
 
-    // The live lines under the row, as read this frame; the travel line is composed once per step.
-    private string? travelStatusLine;
-    private string? questionableStatusLine;
-    private string? autoDutyStatusLine;
-    private GoToGiverStep travelLineStep = GoToGiverStep.Idle;
-    private int travelLineLanguage = -1;
-    private string travelLine = string.Empty;
-
-    /// <summary>
-    /// HOOK for richer travel status (mounting, flying, "step 2 of 4"): when set and it answers, its text replaces the
-    /// line built from <see cref="TravelService.JourneyStep"/> under the row while a trip runs. Read once per frame
-    /// while travelling, so it should return a cached string. Unset until the travel work wires it.
-    /// </summary>
-    public Func<string?>? TravelStatusText { get; set; }
-
-    /// <summary>How many live lines show under the row this frame.</summary>
-    private int StatusLineCount =>
-        (travelStatusLine is null ? 0 : 1) + (questionableStatusLine is null ? 0 : 1) + (autoDutyStatusLine is null ? 0 : 1);
-
-    /// <summary>Reads every pill's state and the live lines for the quest shown, once per frame, before the bar's height is planned.</summary>
+    /// <summary>Reads every pill's state for the quest shown, once per frame, before the bar's height is planned.</summary>
     private void PrepareActions(SessionState session, QuestRecord quest)
     {
         actionCount = 0;
@@ -153,7 +135,6 @@ public sealed partial class DetailPane
 
         PrepareQuestionableAction(quest);
         PrepareAutoDutyAction(session, quest);
-        PrepareStatusLines();
     }
 
     private void AddAction(ActionKind kind, string icon, string label, string shortLabel, PillTone tone, bool enabled, bool stop = false, bool waits = false)
@@ -255,40 +236,6 @@ public sealed partial class DetailPane
         AddAction(ActionKind.AutoDuty, AutoDutyIcon, Strings.AutoDutyRun, Strings.ActionAutoDutyShort, PillTone.Normal, autoDutyChoice.CanRun);
     }
 
-    /// <summary>The live lines under the row: the trip, Questionable's status and AutoDuty's.</summary>
-    private void PrepareStatusLines()
-    {
-        travelStatusLine = null;
-        if (links.IsTraveling)
-        {
-            travelStatusLine = TravelStatusText?.Invoke() ?? TravelLine(links.Travel?.JourneyStep ?? GoToGiverStep.Walking);
-        }
-
-        // Polled at most once a second inside Questionable's IPC; null while it does not run.
-        questionableStatusLine = QuestionableActions?.PollStatusText();
-        autoDutyStatusLine = AutoDuty is { Available: true, IsStopped: false } ? Strings.AutoDutyRunning : null;
-    }
-
-    /// <summary>"Going to giver · Teleporting…", composed once per step and language.</summary>
-    private string TravelLine(GoToGiverStep step)
-    {
-        if (step != travelLineStep || travelLineLanguage != Localization.Loc.Version || travelLine.Length == 0)
-        {
-            travelLineStep = step;
-            travelLineLanguage = Localization.Loc.Version;
-            var text = step switch
-            {
-                GoToGiverStep.Teleporting => Strings.ActionTravelStepTeleporting,
-                GoToGiverStep.Hopping => Strings.ActionTravelStepHopping,
-                GoToGiverStep.PreparingPath => Strings.ActionTravelStepPreparing,
-                _ => Strings.ActionTravelStepWalking,
-            };
-            travelLine = string.Format(CultureInfo.CurrentCulture, Strings.ActionTravelStatusFormat, text);
-        }
-
-        return travelLine;
-    }
-
     /// <summary>Fits the row to <paramref name="width"/>: each pill's form, and how many stay on it (the rest go into "…").</summary>
     private void LayoutActions(float width)
     {
@@ -302,7 +249,7 @@ public sealed partial class DetailPane
 
     private static float ActionGap => UiMetrics.Px(ActionPillFit.GapLogical);
 
-    /// <summary>The row of pills, then the live lines under it.</summary>
+    /// <summary>The row of pills.</summary>
     private void DrawActionRow(QuestRecord quest, uint rowId)
     {
         for (var i = 0; i < actionVisible; i++)
@@ -329,25 +276,6 @@ public sealed partial class DetailPane
             {
                 ActionTooltip(i, quest, named: form != PillForm.Full);
             }
-        }
-
-        DrawStatusLine(travelStatusLine);
-        DrawStatusLine(questionableStatusLine);
-        DrawStatusLine(autoDutyStatusLine);
-    }
-
-    /// <summary>One live line in the accent, a caption, ellipsised with the whole text on hover.</summary>
-    private static void DrawStatusLine(string? line)
-    {
-        if (line is null)
-        {
-            return;
-        }
-
-        using var caption = Typography.Caption();
-        if (Chrome.EllipsisText(line, ImGui.GetContentRegionAvail().X, Theme.AccentU32) && ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(line);
         }
     }
 
@@ -443,7 +371,7 @@ public sealed partial class DetailPane
         {
             if (!autoDuty.Stop())
             {
-                ShowCompanionNote(quest.RowId, Strings.AutoDutyUnreachable);
+                ShowCompanionNote(Strings.AutoDutyUnreachable);
             }
 
             return;
@@ -493,7 +421,6 @@ public sealed partial class DetailPane
         ? string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyRunTooltipFormat, Strings.AutoDutyModeName(autoDutyChoice.Mode))
         : Companions is { } companions ? AutoDutyBlockerText(autoDutyChoice.Blocker, companions) : Strings.AutoDutyUnreachable;
 
-    /// <summary>The height of the pill row and the live lines under it, each line with its item spacing.</summary>
-    private float ActionRowHeight(float spacing) =>
-        (actionCount > 0 ? Chrome.ActionPillHeight + spacing : 0f) + (StatusLineCount * (Typography.CaptionSize + spacing));
+    /// <summary>The height of the pill row with its item spacing.</summary>
+    private float ActionRowHeight(float spacing) => actionCount > 0 ? Chrome.ActionPillHeight + spacing : 0f;
 }

@@ -26,7 +26,6 @@ namespace Tsukimichi.Ui;
 public sealed partial class DetailPane
 {
     private const string QuestionableMenuId = "##detailMoreMenu";
-    private const double QuestionableNoteSeconds = 5.0;
 
     private static readonly string MoreIcon = FontAwesomeIcon.EllipsisH.ToIconString();
 
@@ -40,11 +39,6 @@ public sealed partial class DetailPane
     private bool questionableSupportsPriority;
     private bool questionableCanAdd;
     private string? questionableWiderLine;
-
-    // "Added to Questionable's priority list" in place of the line for a few seconds after the hand-off.
-    private string? questionableNote;
-    private double questionableNoteUntil;
-    private uint questionableNoteRowId;
 
     /// <summary>Questionable's IPC; null until the plugin attaches it, which hides the line and the hand-off.</summary>
     public QuestionableIpc? Questionable { get; set; }
@@ -130,17 +124,10 @@ public sealed partial class DetailPane
         }
     }
 
-    /// <summary>The line under the status: agreement in the secondary tone, a difference in the body tone; the hand-off note for a few seconds after it.</summary>
+    /// <summary>The line under the status: agreement in the secondary tone, a difference in the body tone. "Added to Questionable's priority list" goes to the status bar.</summary>
     private void DrawQuestionableLine(SessionState session, QuestRecord quest)
     {
         RefreshQuestionable(session, quest);
-        if (questionableNote is { } note && questionableNoteRowId == quest.RowId && ImGui.GetTime() < questionableNoteUntil)
-        {
-            using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-            TextFlow.Wrapped(note, RoomTo(bodyRight));
-            return;
-        }
-
         if (questionableLine is { } line)
         {
             using (Theme.PushText(questionableDisagrees ? Theme.Surface.Text : Theme.Surface.TextSecondary))
@@ -222,9 +209,7 @@ public sealed partial class DetailPane
         if (ImGui.MenuItem(Strings.QuestionableAddToPriority, enabled: questionableCanAdd))
         {
             var added = questionable.AddToPriority(rowId);
-            questionableNote = added ? Strings.QuestionableAdded : Strings.QuestionableAddFailed;
-            questionableNoteUntil = ImGui.GetTime() + QuestionableNoteSeconds;
-            questionableNoteRowId = rowId;
+            ShowCompanionNote(added ? Strings.QuestionableAdded : Strings.QuestionableAddFailed);
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))

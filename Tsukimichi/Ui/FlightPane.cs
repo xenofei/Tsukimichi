@@ -260,17 +260,32 @@ public sealed class FlightPane
         }
 
         ImGui.SameLine();
-        var textHeight = ImGui.GetTextLineHeight();
-        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (box - textHeight) * 0.5f));
+        var line = ImGui.GetTextLineHeight();
+        var spacing = ImGui.GetStyle().ItemSpacing;
+
+        // The header is a band of fixed height (feature plan v6, U4): the moon's box, or two lines of text, whichever
+        // is taller, so "Complete" arriving during play, or a count growing a digit, never moves the table below. The
+        // text is centred in the band on the lines it needs now.
+        var band = MathF.Max(box, (2f * line) + spacing.Y);
+        var room = Chrome.RoomX();
+        var oneLine = ImGui.CalcTextSize(header).X + (zone.Complete ? spacing.X + ImGui.CalcTextSize(Strings.FlightHeaderComplete).X : 0f) <= room;
+        var textBlock = oneLine ? line : (2f * line) + spacing.Y;
+        ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, pos.Y + MathF.Max(0f, (band - textBlock) * 0.5f)));
+
         // The zone and its counts wrap between words beside the moon; "Complete" follows on the line when it fits and
         // starts its own otherwise (UI audit §3).
-        TextFlow.Wrapped(header, Chrome.RoomX());
+        TextFlow.Wrapped(header, room);
         if (zone.Complete)
         {
             Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.FlightHeaderComplete).X);
             using var moon = Theme.PushText(Theme.AccentDim);
             ImGui.TextUnformatted(Strings.FlightHeaderComplete);
         }
+
+        // Only a pane too narrow for two lines grows the band.
+        var below = MathF.Max(pos.Y + band, ImGui.GetItemRectMax().Y);
+        ImGui.SetCursorScreenPos(new Vector2(pos.X, below));
+        ImGui.Dummy(Vector2.Zero);
     }
 
     // The quest table's columns, in display order (feature plan v4 L6): the state moon hides first, the actions and

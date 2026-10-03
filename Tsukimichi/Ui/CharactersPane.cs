@@ -475,9 +475,8 @@ public sealed partial class CharactersPane
             UiMetrics.Tooltip(Strings.MultiboxLiveElsewhereTooltip);
         }
 
-        DrawStatusNotices(snapshot.ContentId);
-
         DrawWelcomeBackButton(snapshot);
+        DrawStatusNotices(snapshot.ContentId);
         TextFlow.Wrapped(d.CountsLine);
         DrawMsqLine(ui, d);
 
@@ -2316,8 +2315,20 @@ public sealed partial class CharactersPane
         }
     }
 
+    /// <summary>
+    /// Where a finished action's note goes (Exported, Forgot, Copied): the main window's status bar (feature plan v6,
+    /// U4), so it never takes a line of the dashboard. Without it the note shows inline, as before 1.12.
+    /// </summary>
+    public Action<string>? ShowNote { get; set; }
+
     private void ShowToast(string text)
     {
+        if (ShowNote is { } note)
+        {
+            note(text);
+            return;
+        }
+
         toast = text;
         toastUntilUtc = DateTime.UtcNow + ToastDuration;
     }

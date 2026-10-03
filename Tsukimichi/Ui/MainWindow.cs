@@ -28,7 +28,7 @@ namespace Tsukimichi.Ui;
 /// Reads <see cref="Plugin.Session"/>, <see cref="Plugin.Settings"/> and <see cref="Plugin.Paths"/> lazily because the
 /// window is constructed before the game-state block initializes them.
 /// </summary>
-public sealed class MainWindow : Window, IDisposable
+public sealed partial class MainWindow : Window, IDisposable
 {
     public const int MaxChatMatches = 5;
 
@@ -247,6 +247,7 @@ public sealed class MainWindow : Window, IDisposable
     {
         moonlitPane = moonlit ?? throw new ArgumentNullException(nameof(moonlit));
         charactersPane = characters ?? throw new ArgumentNullException(nameof(characters));
+        characters.ShowNote = ShowStatusNote;
     }
 
     /// <summary>Attaches the Flight pane (aether current quests per zone); the Flight tab shows a placeholder until then.</summary>
@@ -2045,7 +2046,7 @@ public sealed class MainWindow : Window, IDisposable
             }
         }
 
-        DrawQuestionableStatus(dl, ref x, textY, gap, separatorWidth, versionX, origin.X);
+        DrawCompanionActivity(dl, ref x, textY, gap, separatorWidth, versionX, origin.X);
 
         // One item spanning the bar so the layout advances past it.
         ImGui.SetCursorScreenPos(origin);
@@ -2060,45 +2061,6 @@ public sealed class MainWindow : Window, IDisposable
 
     /// <summary>The host name of this window's Questionable confirmations.</summary>
     internal const string QuestionableHost = "main";
-
-    /// <summary>
-    /// Questionable's live status (feature plan v5, 1.6.0) after the MSQ pill, in the room the bar has left:
-    /// "Questionable: running · &lt;quest&gt; · step 3 of 7" in gold, ending in an ellipsis, and a small Stop. Polled at
-    /// most once a second, and only while this window draws; nothing shows while Questionable does not run.
-    /// </summary>
-    private void DrawQuestionableStatus(ImDrawListPtr dl, ref float x, float textY, float gap, float separatorWidth, float versionX, float left)
-    {
-        if (questionableActions?.PollStatusText() is not { } text)
-        {
-            return;
-        }
-
-        var stopWidth = ImGui.CalcTextSize(Strings.QuestionableStopShort).X + (ImGui.GetStyle().FramePadding.X * 2f);
-        var textWidth = ImGui.CalcTextSize(text).X;
-        var start = x > left ? x + separatorWidth : x;
-        var room = MathF.Min(textWidth, versionX - gap - start - gap - stopWidth);
-        if (room < UiMetrics.Px(48f))
-        {
-            return;
-        }
-
-        x = x > left ? StatusSeparatorAt(dl, x, textY, gap) : x;
-        ImGui.SetCursorScreenPos(new Vector2(x, textY));
-        Chrome.EllipsisText(text, room, Theme.AccentU32, textWidth);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(textWidth > room ? text : Strings.QuestionableStatusTooltip, textWidth > room ? Strings.QuestionableStatusTooltip : null);
-        }
-
-        x += room + gap;
-        ImGui.SetCursorScreenPos(new Vector2(x, textY));
-        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 0f)))
-        {
-            questionableActions.DrawStopSmallButton(QuestionableHost, "##questionableStop");
-        }
-
-        x = ImGui.GetItemRectMax().X;
-    }
 
     /// <summary>The status bar's segment separator, a Veil "·" with a gap either side.</summary>
     private const string StatusSeparator = "·";
