@@ -108,7 +108,9 @@ public static class Orbit
                 return false;
             }
 
-            dl.AddImageRounded(wrap.Handle, iconMin, iconMax, Vector2.Zero, Vector2.One, tint, round);
+            // A non-square icon (a duty's emblem) whole and centred.
+            var (fitMin, fitMax) = GameIcon.Fit(wrap, iconMin, iconMax);
+            dl.AddImageRounded(wrap.Handle, fitMin, fitMax, Vector2.Zero, Vector2.One, tint, round);
         }
         else if (!OrnamentAtlas.IsReady || !OrnamentAtlas.Draw(dl, icon.Glyph, iconMin, iconMax, tint))
         {
@@ -256,7 +258,8 @@ public static class Orbit
             }
             else if (texture.TryGetWrap(out var wrap, out _))
             {
-                dl.AddImageRounded(wrap.Handle, min, max, Vector2.Zero, Vector2.One, tint, rounding);
+                var (fitMin, fitMax) = GameIcon.Fit(wrap, min, max);
+                dl.AddImageRounded(wrap.Handle, fitMin, fitMax, Vector2.Zero, Vector2.One, tint, rounding);
             }
             else
             {

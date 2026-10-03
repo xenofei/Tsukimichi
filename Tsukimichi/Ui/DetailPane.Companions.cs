@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
@@ -14,7 +15,7 @@ namespace Tsukimichi.Ui;
 /// The detail pane's companion plugin pieces (feature plan v5, decision 1).
 /// <para>
 /// <b>Duties</b>, a section after the Path for a quest that requires or unlocks a duty (<see cref="QuestDuties"/>): each
-/// duty's name and how it relates to the quest, "AutoDuty has a path" when AutoDuty says so (read only), and "Run with
+/// duty's icon (<see cref="Core.Unlocks.DutyArt"/>'s chain) on a small well, its name and how it relates to the quest, "AutoDuty has a path" when AutoDuty says so (read only), and "Run with
 /// AutoDuty", which hands the duty to AutoDuty for one clear in Duty Support, else Trust, else (with Settings ›
 /// Integrations › "Allow AutoDuty to queue in the regular Duty Finder") the Duty Finder. The button is always shown;
 /// disabled, its tooltip says why (<see cref="AutoDutyPlan.Choose"/>: AutoDuty or what it needs is missing, a stored
@@ -125,17 +126,7 @@ public sealed partial class DetailPane
         {
             var row = dutyRows[i];
             anyPath |= row.HasPath == true;
-            if (Chrome.EllipsisText(row.Duty.Duty.Name, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(row.Duty.Duty.Name);
-            }
-
-            TextFlow.Wrapped(row.Caption, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
-            if (row.HasPath == true && ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.AutoDutyHasPathTooltip);
-            }
-
+            DrawDutyIdentity(row);
             var choice = AutoDutyPlan.Choose(row.Duty.Duty, inputsBase with { HasPath = row.HasPath, Unlocked = row.Unlocked });
 
             // The same pill as the action bar's Run with AutoDuty (1.10); the icon alone when the card is narrower than its label.
@@ -171,6 +162,45 @@ public sealed partial class DetailPane
         }
 
         EndSection();
+    }
+
+    /// <summary>
+    /// The duty's icon on a well two lines high (as an Unlocks row wears it: the game icon, or the veiled moon while none
+    /// is known), its name over the caption beside it; the cursor ends under both, at the row's left edge.
+    /// </summary>
+    private void DrawDutyIdentity(DutyRow row)
+    {
+        var dl = ImGui.GetWindowDrawList();
+        var start = ImGui.GetCursorScreenPos();
+        var well = MathF.Round(2f * ImGui.GetTextLineHeight());
+        var wellMax = start + new Vector2(well);
+        var rounding = UiMetrics.Px(4f);
+        dl.AddRectFilled(start, wellMax, Theme.U32(Theme.Surface.Sunken), rounding);
+        dl.AddRect(start, wellMax, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        var inset = new Vector2(UiMetrics.Px(3f));
+        var icon = row.Duty.Duty.Icon;
+        if (icon == 0 || !GameIcon.DrawAt(dl, textures, icon, start + inset, wellMax - inset, UiMetrics.Px(3f)))
+        {
+            MoonGlyph.DrawVeiled(dl, (start + wellMax) * 0.5f, well * 0.32f, 0.6f);
+        }
+
+        var textX = wellMax.X + UiMetrics.Px(8f);
+        ImGui.SetCursorScreenPos(new Vector2(textX, start.Y));
+        if (Chrome.EllipsisText(row.Duty.Duty.Name, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(row.Duty.Duty.Name);
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(textX, ImGui.GetCursorScreenPos().Y));
+        TextFlow.Wrapped(row.Caption, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
+        if (row.HasPath == true && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.AutoDutyHasPathTooltip);
+        }
+
+        // Under the taller of the well and the text, at the row's left edge.
+        var bottom = MathF.Max(ImGui.GetItemRectMax().Y, wellMax.Y);
+        ImGui.SetCursorScreenPos(new Vector2(start.X, bottom + ImGui.GetStyle().ItemSpacing.Y));
     }
 
     /// <summary>

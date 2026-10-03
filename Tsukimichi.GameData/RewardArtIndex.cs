@@ -19,7 +19,7 @@ namespace Tsukimichi.GameData;
 /// <c>OrchestrionCategory.Icon</c>); Triple Triad cards their card icon (<see cref="CardIconBase"/> + card id);
 /// bardings <c>BuddyEquip</c> (body, else head, else legs); fashion accessories <c>Ornament.Icon</c>; hairstyles the
 /// first <c>CharaMakeCustomize</c> row unlocked by the reward;</item>
-/// <item>duties their content type's icon, jobs the 062100-series job icon, aether currents the attunement crystal,
+/// <item>duties the icon of <see cref="DutyArt"/>'s chain (<see cref="DutyArtReader"/>), jobs the 062100-series job icon, aether currents the attunement crystal,
 /// traits, achievements, actions, general actions, blue mage spells and other rewards their sheet icon, items and
 /// titles (the achievement named in the entry's source) theirs;</item>
 /// <item>the MainCommand menu icons, which the kinds list wears (<see cref="MoonlitKindIcons.MainCommandRow"/>);</item>
@@ -277,9 +277,11 @@ public sealed class RewardArtIndex
                 return;
             }
 
+            // DutyArt's chain: the duty's emblem, else its category's tile, and on to the Duty Finder menu icon.
+            var shared = DutyArtReader.Shared.Read(excel, language);
             foreach (var row in excel.GetSheet<ContentFinderCondition>(language))
             {
-                var icon = row.ContentType.ValueNullable?.Icon ?? 0u;
+                var icon = DutyArtReader.Icon(in row, in shared);
                 if (icon == 0)
                 {
                     continue;

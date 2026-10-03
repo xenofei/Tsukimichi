@@ -3,6 +3,7 @@ using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Unlocks;
 
 namespace Tsukimichi.GameData;
 
@@ -15,12 +16,6 @@ public static class CatalogMapper
 {
     /// <summary>Rows mapped between cancellation checks.</summary>
     public const int CancellationBatch = 256;
-
-    /// <summary><c>InstanceContentType</c> of a PvP instance (Crystalline Conflict, A Pup No Longer's solo instance).</summary>
-    private const uint PvpInstanceContentType = 5;
-
-    /// <summary><c>ContentType</c> row of PvP, whose name and Duty Finder tile a nameless PvP instance takes.</summary>
-    private const uint PvpContentType = 6;
 
     /// <summary>Quest sheet SortKey occupies the low 16 bits of <see cref="JournalRef.SortKey"/>; the genre rank sits above it.</summary>
     private const int SortKeyGenreShift = 16;
@@ -53,7 +48,7 @@ public static class CatalogMapper
             excel.GetSheet<Item>(language),
             excel.GetSubrowSheet<QuestClassJobReward>(language),
             excel.GetSheet<BeastRankBonus>(language),
-            excel.GetSheet<ContentType>(language),
+            DutyArtReader.Shared.Read(excel, language),
             excel.GetSheet<QuestAcceptAdditionCondition>(language),
             excel.GetSubrowSheet<QuestClassJobSupply>(language),
             QuestHandIns.Sources.Build(excel, language));
@@ -464,25 +459,15 @@ public static class CatalogMapper
 
         if (quest.InstanceContentUnlock.RowId != 0 && quest.InstanceContentUnlock.ValueNullable is { } instance)
         {
-            // The tile wears the duty's kind icon (dungeon, trial, raid), as the Unlocks rows do; ContentFinderCondition's
-            // own Icon is 0 on the duties a quest opens.
+            // The tile and name the Unlocks rows give the duty (DutyArt): its emblem or its kind's tile (dungeon, trial,
+            // raid); a nameless duty is named for its territory, and A Pup No Longer's solo PvP instance, with neither
+            // name nor territory, is PvP and wears PvP's tile.
             var condition = instance.ContentFinderCondition.RowId != 0 ? instance.ContentFinderCondition.ValueNullable : null;
-            var icon = condition is not { } c ? 0u : c.Icon != 0 ? c.Icon : c.ContentType.ValueNullable?.Icon ?? 0u;
-            var instanceName = condition?.Name.ExtractText() ?? string.Empty;
-            if (instanceName.Length == 0 && condition?.TerritoryType.ValueNullable?.PlaceName.ValueNullable is { } place)
-            {
-                // A nameless duty is named for its territory.
-                instanceName = place.Name.ExtractText();
-            }
-
-            if (instanceName.Length == 0 && instance.InstanceContentType.RowId == PvpInstanceContentType
-                && sheets.ContentTypes.GetRowOrDefault(PvpContentType) is { } pvp)
-            {
-                // A Pup No Longer's solo PvP instance has neither name nor territory: it is PvP, and wears PvP's tile.
-                instanceName = pvp.Name.ExtractText();
-                icon = icon != 0 ? icon : pvp.Icon;
-            }
-
+            var pvpInstance = instance.InstanceContentType.RowId == DutyArt.PvpInstanceContentType;
+            var sources = condition is { } c ? DutyArtReader.Sources(in c) with { IsPvpInstance = pvpInstance } : new DutyArtSources(0, 0, 0, 0, pvpInstance);
+            var icon = DutyArt.Icon(sources, sheets.DutyArt.PvpIcon, sheets.DutyArt.DutyFinderIcon);
+            var place = condition is { TerritoryType.RowId: > 0 } t ? t.TerritoryType.ValueNullable?.PlaceName.ValueNullable?.Name.ExtractText() : null;
+            var instanceName = DutyArt.Name(condition?.Name.ExtractText(), place, pvpInstance, sheets.DutyArt.PvpName);
             rewards.Add(new RewardRef(
                 RewardKind.Instance,
                 instance.RowId,
@@ -590,7 +575,7 @@ public static class CatalogMapper
             Names(excel.GetSheet<BeastReputationRank>(language), static (in BeastReputationRank r) => r.Name),
             infos,
             Names(excel.GetSheet<ClassJobCategory>(language), static (in ClassJobCategory r) => r.Name),
-            DutyNames(excel.GetSheet<ContentFinderCondition>(language)),
+            DutyNames(excel.GetSheet<ContentFinderCondition>(language), DutyArtReader.Shared.Read(excel, language)),
             SatisfactionNpcNames(excel.GetSheet<SatisfactionNpc>(language)));
     }
 
@@ -619,31 +604,45 @@ public static class CatalogMapper
     }
 
     /// <summary><c>ContentFinderCondition.ContentLinkType</c> value whose <c>Content</c> is an InstanceContent row.</summary>
-    private const byte InstanceContentLink = 1;
+    private const byte InstanceContentLink = DutyArtReader.InstanceContentLink;
 
     /// <summary>
     /// Duty names keyed by InstanceContent row id, from the Duty Finder entry that links the instance: what
-    /// <see cref="QuestRecord.InstanceContentRequired"/> refers to. The first named entry per instance wins.
+    /// <see cref="QuestRecord.InstanceContentRequired"/> refers to. The first entry with a name of its own wins; an
+    /// instance only nameless entries link is named as <see cref="DutyArt.Name"/> names it (its territory, else PvP's).
     /// </summary>
-    private static Dictionary<uint, string> DutyNames(ExcelSheet<ContentFinderCondition> sheet)
+    private static Dictionary<uint, string> DutyNames(ExcelSheet<ContentFinderCondition> sheet, DutyArtReader.Shared shared)
     {
         var result = new Dictionary<uint, string>();
+        var fallback = new Dictionary<uint, string>();
         foreach (var row in sheet)
         {
-            if (row.ContentLinkType != InstanceContentLink || row.Content.RowId == 0 || result.ContainsKey(row.Content.RowId))
+            var instance = row.Content.RowId;
+            if (row.ContentLinkType != InstanceContentLink || instance == 0 || result.ContainsKey(instance))
             {
                 continue;
             }
 
-            var text = row.Name.ExtractText();
-            if (text.Length != 0)
+            var own = row.Name.ExtractText();
+            if (own.Length != 0)
             {
-                // The sheet writes "the Vault"; a line opens with the name, so its first letter is raised.
-                result[row.Content.RowId] = char.IsLower(text[0]) ? char.ToUpperInvariant(text[0]) + text[1..] : text;
+                result[instance] = Raised(own);
+            }
+            else if (!fallback.ContainsKey(instance) && DutyArtReader.Name(in row, in shared) is { Length: > 0 } named)
+            {
+                fallback[instance] = Raised(named);
             }
         }
 
+        foreach (var (instance, name) in fallback)
+        {
+            result.TryAdd(instance, name);
+        }
+
         return result;
+
+        // The sheet writes "the Vault"; a line opens with the name, so its first letter is raised.
+        static string Raised(string text) => char.IsLower(text[0]) ? char.ToUpperInvariant(text[0]) + text[1..] : text;
     }
 
     private delegate Lumina.Text.ReadOnly.ReadOnlySeString NameOf<T>(in T row);
@@ -702,7 +701,7 @@ public static class CatalogMapper
         ExcelSheet<Item> Items,
         SubrowExcelSheet<QuestClassJobReward> ClassJobRewards,
         ExcelSheet<BeastRankBonus> BeastRankBonus,
-        ExcelSheet<ContentType> ContentTypes,
+        DutyArtReader.Shared DutyArt,
         ExcelSheet<QuestAcceptAdditionCondition> AcceptConditions,
         SubrowExcelSheet<QuestClassJobSupply> Supply,
         QuestHandIns.Sources HandIns);
