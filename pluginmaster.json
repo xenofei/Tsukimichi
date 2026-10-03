@@ -3,7 +3,7 @@
     "Author": "Michiru Tsukikage",
     "Name": "Tsukimichi",
     "InternalName": "Tsukimichi",
-    "AssemblyVersion": "1.12.4.0",
+    "AssemblyVersion": "1.13.0.0",
     "Description": "A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.\nMoonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/xenofei/Tsukimichi",
@@ -21,13 +21,13 @@
     "IconUrl": "https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon-medallion.png",
     "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.4/latest.zip",
-    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.4/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.4/latest.zip",
-    "LastUpdate": 1791006956,
+    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.13.0/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.13.0/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.13.0/latest.zip",
+    "LastUpdate": 1791013971,
     "DownloadCount": 0,
     "IsHide": false,
     "IsTestingExclusive": false,
-    "Changelog": "Fixed\n- The plugin installer shows the new Menphina's Medallion icon. Dalamud had kept the old picture because its address never changed; the icon now has a new address. If you still see the old one, restart the game once."
+    "Changelog": "Added\n- **Text size** (Settings › General): makes Tsukimichi's text larger or smaller, from 80% to 150%, separately from the window scale. It applies live, and layouts are measured with the font you choose.\n- **Resizable Journal columns.** Drag any column's edge to resize it. Widths are saved, and \"Reset column widths\" is in the header's right-click menu.\n- **Three Decoration looks that are clearly different:**\n  - **Full:** the moonlit Moon Road, with a night sky, gilt brass cards, a night-graded quest banner with a hero medal, glows and Moon Road moments.\n  - **Quiet:** calm and flat, with tonal panes, hairlines and lighter medals.\n  - **Plain:** a dense ledger, with zebra rows, flat glyphs, an icon-only rail and no motion.\n\n  Settings shows all three side by side, so you can see the choice before you click.\n- **Moon Road moments** (Full): the rail bead travels between tabs, a glint runs along the road when you finish a quest, and a soft halo marks a quest that becomes Ready. Each plays once and never under Reduce motion.\n- **Todo overlay:**\n  - optional hiding in combat, while talking to NPCs or in group pose (off by default);\n  - opacity down to 0, and a nearly invisible overlay lets clicks through except over its rows;\n  - a short completion beat when you finish a quest.\n- **Moonlit rewards show their own game art** at a readable size: mounts, minions, emotes, cards, hairstyles, bardings, titles and more.\n\nChanged\n- **Settings is rebuilt into nine roomy pages:** General, Journal, Overlay & routes, Alerts, Spoilers, In game, Automation, Characters & data and Advanced. Every setting has a plain one-line description, and toggles and segmented pickers replace checkboxes. Flair is now \"Decoration\", and the glyph palette is \"Moon colours\".\n- **The window scale changes every Tsukimichi window live** as you drag it. Scale controls live only in Settings › General, and version info is at the foot of Settings.\n- **Gentle motion:** lists, tabs, buttons, tooltips and menus now move gently. Hover glides, selections settle and menus fade in.\n- **Panels beside game windows rise in** instead of blinking, keep to one side, and stay up while you arrow through lists.\n\nFixed\n- Journal columns fit their content at every UI and text size, so job labels, expansion pills and icons are no longer cut off.\n- Opening Flight, Plan or Moonlit for the first time no longer freezes the game.\n- `/tsuki stop` and the hand-off buttons read Questionable's settings fresh before deciding, so a just-enabled \"command after stop\" is respected.\n- Settings changes made just before quitting are saved."
   }
 ]
