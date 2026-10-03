@@ -4,6 +4,12 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.12.3] - 2026-10-03
+
+### Changed
+- **Rewards and Unlocks split cleanly.** Rewards shows only what you receive and keep: items, gear, currencies, mounts, minions, emotes, hairstyles, orchestrion rolls, Triple Triad cards, titles and soul crystals. Unlocks shows the access and abilities you gain: areas, aetherytes, duties, flying (aether currents), features, jobs and actions. Nothing appears in both.
+- **Rewards and Unlocks look like a pair in the quest pane:** the same tile size and spacing, Rewards first, and a section with nothing in it is hidden. Action rows show their own icons, and titles moved into Rewards.
+
 ## [1.12.2] - 2026-10-03
 
 ### Changed
