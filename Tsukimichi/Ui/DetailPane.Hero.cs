@@ -167,7 +167,7 @@ public sealed partial class DetailPane
         var center = new Vector2(centerX, max.Y + ((1f - moonIn) * UiMetrics.Px(MoonriseLogical)));
         var firstVertex = dl.VtxBuffer.Size;
         dl.AddCircleFilled(center, radius + ring, Theme.DeepU32);
-        MoonGlyph.Draw(dl, center, radius, model.State);
+        MoonWax.Draw(dl, center, radius, model.State, quest.RowId);
         if (moonIn < 1f)
         {
             FadeVertices(dl, firstVertex, moonIn);
@@ -420,20 +420,29 @@ public sealed partial class DetailPane
     /// <summary>
     /// Opens one of the pane's sections: an open section (<see cref="OpenSection"/>: the shared heading line with its
     /// sigil, <paramref name="title"/> cased for the language, the Gilt rule and the caption) at Flair Full and Quiet,
-    /// the 1.3 card with its title and caption at Plain. Close it with <see cref="EndSection"/>.
+    /// the 1.3 card with its title and caption at Plain. Close it with <see cref="EndSection"/>. A
+    /// <paramref name="captionTooltip"/> shows while the heading line is hovered (the totals behind a caption that says
+    /// what is left, feature plan v6 U5).
     /// </summary>
-    private void BeginSection(string id, string title, string icon, string caption = "", Vector4 captionColor = default)
+    private void BeginSection(string id, string title, string icon, string caption = "", Vector4 captionColor = default, string captionTooltip = "")
     {
-        var right = ImGui.GetCursorScreenPos().X + ImGui.GetContentRegionAvail().X;
+        var top = ImGui.GetCursorScreenPos();
+        var right = top.X + ImGui.GetContentRegionAvail().X;
         sectionOpen = Theme.ShowRules;
         if (sectionOpen)
         {
             OpenSection.Begin(id, title, caption, Theme.U32(captionColor));
-            return;
+        }
+        else
+        {
+            Chrome.BeginCard(id, title, icon, eyebrow: true);
+            CardCaption(caption, right, captionColor);
         }
 
-        Chrome.BeginCard(id, title, icon, eyebrow: true);
-        CardCaption(caption, right, captionColor);
+        if (captionTooltip.Length > 0 && ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(top, new Vector2(right, ImGui.GetCursorScreenPos().Y)))
+        {
+            UiMetrics.Tooltip(captionTooltip);
+        }
     }
 
     /// <summary>Closes the section <see cref="BeginSection"/> opened.</summary>

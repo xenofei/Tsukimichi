@@ -63,7 +63,7 @@ public class QuestVerdictTests
     {
         var step = new ChainStep(3, 7, B);
 
-        Assert.Equal("Step 3 of 7 in Hildibrand", QuestVerdict.Line(Quest(A), false, NoUnlocks, NoMoonlit, step, "Hildibrand"));
+        Assert.Equal("Part of Hildibrand · 4 more after this", QuestVerdict.Line(Quest(A), false, NoUnlocks, NoMoonlit, step, "Hildibrand"));
         Assert.Equal("Seasonal event quest", QuestVerdict.Line(Quest(A) with { Festival = 4, IsRepeatable = true }, false, NoUnlocks, NoMoonlit, null, string.Empty));
         Assert.Equal("Repeatable quest", QuestVerdict.Line(Quest(A) with { IsRepeatable = true }, false, NoUnlocks, NoMoonlit, null, string.Empty));
         Assert.Equal("No unlock or unique reward", QuestVerdict.Line(Quest(A), false, NoUnlocks, NoMoonlit, null, string.Empty));
@@ -75,6 +75,15 @@ public class QuestVerdictTests
         PlanUnlock[] unlocks = [new(UnlockKind.Trial, "Aglaia")];
 
         Assert.Equal(QuestVerdict.Masked, QuestVerdict.Line(Quest(A), true, unlocks, NoMoonlit, null, string.Empty));
+    }
+
+    [Fact]
+    public void A_chain_place_says_what_is_left_after_the_quest_never_step_N_of_M()
+    {
+        Assert.Equal("Part of Hildibrand · 1 more after this", QuestVerdict.ChainPlace(new ChainStep(6, 7, B), "Hildibrand"));
+        Assert.Equal("The last quest of Hildibrand", QuestVerdict.ChainPlace(new ChainStep(7, 7, null), "Hildibrand"));
+        Assert.Equal("Part of a chain · 4 more after this", QuestVerdict.ChainPlace(new ChainStep(3, 7, B), string.Empty));
+        Assert.Equal("The last quest of a chain", QuestVerdict.ChainPlace(new ChainStep(7, 7, null), string.Empty));
     }
 
     [Fact]

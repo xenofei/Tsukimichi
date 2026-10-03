@@ -21,7 +21,7 @@ static partial class Strings
 
     public static string PayoffWhyTooltip => Loc.Get("PayoffWhyTooltip");
 
-    /// <summary>{0} = content quests done, {1} = content quests in all.</summary>
+    /// <summary>{0} = content quests left to do, {1} = content quests in all.</summary>
     public static string PayoffProgressFormat => Loc.Get("PayoffProgressFormat");
 
     // ---- Chat ----

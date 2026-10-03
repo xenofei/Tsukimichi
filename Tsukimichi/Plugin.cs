@@ -554,7 +554,8 @@ public sealed partial class Plugin : IDalamudPlugin
     /// <summary>Remembers an explicit character choice across sessions; following the live character stores null.</summary>
     /// <summary>
     /// Once per frame, before the window system draws: the scale factors every window reads, the palette (Night or the
-    /// user's Dalamud colours, read while nothing is pushed yet), the motion clock (scroll pause, key pruning) and the
+    /// user's Dalamud colours, read while nothing is pushed yet), the motion clock (scroll pause, key pruning, the waxing
+    /// moons of quests just completed) and the
     /// first clicks of armed menu items whose menu closed.
     /// </summary>
     private void UpdateUiMetrics()
@@ -565,6 +566,11 @@ public sealed partial class Plugin : IDalamudPlugin
             Ui.Typography.Update(Core.Ui.FlairRules.GameHeadingFonts(settings.Flair, settings.GameHeadingFonts));
             Ui.Theme.Refresh(settings.FollowDalamudColours, settings.GlyphPalette, settings.Flair);
             Ui.Motion.BeginFrame();
+            if (Session is { } session)
+            {
+                Ui.Motion.NoteCompletions(session.LiveContentId, session.RecentEvents, session.IsLive);
+            }
+
             Ui.Chrome.BeginFrame();
         }
     }

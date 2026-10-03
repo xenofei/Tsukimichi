@@ -19,7 +19,7 @@ public readonly record struct MoonlitReward(string Name, bool? Owned);
 /// The one-line answer the "Worth it?" and Journal panels open with (1.7.0), and the pieces it is made from. What a
 /// player weighs when a quest is offered, in this order: what it opens (a duty, a job, a system: "Unlocks Aglaia"),
 /// a Moonlit reward they lack ("Moonlit: Wind-up Sun"), the same reward when they already have it, its place in a
-/// chain ("Step 3 of 7 in Hildibrand"), then whether it is a repeatable or a seasonal quest; and when none applies,
+/// chain ("Part of Hildibrand · 4 more after this"), then whether it is a repeatable or a seasonal quest; and when none applies,
 /// that it carries nothing unique. A quest the spoiler shield masks says nothing beyond its placeholder. Pure; the
 /// phrases come through <see cref="CoreText"/>.
 /// </summary>
@@ -173,9 +173,7 @@ public static class QuestVerdict
 
         if (step is { } s && s.Total > 1)
         {
-            return chainName.Length > 0
-                ? Format(CoreText.T("Core.Verdict.ChainStep", "Step {0} of {1} in {2}"), s.Position, s.Total, chainName)
-                : Format(CoreText.T("Core.Verdict.ChainStepUnnamed", "Step {0} of {1} of a chain"), s.Position, s.Total);
+            return ChainPlace(s, chainName);
         }
 
         if (quest.Festival != 0)
@@ -189,6 +187,27 @@ public static class QuestVerdict
         }
 
         return CoreText.T("Core.Verdict.Nothing", "No unlock or unique reward");
+    }
+
+    /// <summary>
+    /// Where a quest sits in its chain, as what is left after it (feature plan v6 U5, never "Step 3 of 7"): "Part of
+    /// Hildibrand · 4 more after this", or "The last quest of Hildibrand". <paramref name="chainName"/> is the chain's
+    /// name through the spoiler shield; empty says "a chain".
+    /// </summary>
+    public static string ChainPlace(ChainStep step, string chainName)
+    {
+        ArgumentNullException.ThrowIfNull(chainName);
+        var after = Math.Max(0, step.Total - step.Position);
+        if (chainName.Length == 0)
+        {
+            return after == 0
+                ? CoreText.T("Core.Verdict.ChainLastUnnamed", "The last quest of a chain")
+                : Format(CoreText.T("Core.Verdict.ChainMoreUnnamed", "Part of a chain · {0} more after this"), after);
+        }
+
+        return after == 0
+            ? Format(CoreText.T("Core.Verdict.ChainLast", "The last quest of {0}"), chainName)
+            : Format(CoreText.T("Core.Verdict.ChainMore", "Part of {0} · {1} more after this"), chainName, after);
     }
 
     private static string Format(string format, params object[] args) => string.Format(CultureInfo.CurrentCulture, format, args);

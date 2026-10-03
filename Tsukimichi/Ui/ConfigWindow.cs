@@ -418,7 +418,58 @@ public sealed partial class ConfigWindow : Window
             }
 
             HintOnHover(Strings.ConfigReduceMotionHint);
+            DrawMotionStatus();
         }
+    }
+
+    /// <summary>How often the Motion line re-reads Windows' "Show animations" switch while Settings is drawn.</summary>
+    private const double OsMotionRereadSeconds = 2.0;
+
+    private double osMotionReadAt = double.NegativeInfinity;
+    private bool? osAnimationsOff;
+
+    /// <summary>
+    /// The Motion line under Reduce motion (feature plan v6 decision 3): whether Tsukimichi animates and why, with a
+    /// one-click override for Tsukimichi alone when Windows' "Show animations" switch is what turned it off, and the way
+    /// back to following Windows once overridden. The switch is re-read every <see cref="OsMotionRereadSeconds"/> while
+    /// Settings is open; until the player chooses, Reduce motion follows it live, as a load would.
+    /// </summary>
+    private void DrawMotionStatus()
+    {
+        var now = ImGui.GetTime();
+        if (now - osMotionReadAt >= OsMotionRereadSeconds || now < osMotionReadAt)
+        {
+            osMotionReadAt = now;
+            osAnimationsOff = OsMotion.AnimationsOff();
+            if (!settings.ReduceMotionChosen && osAnimationsOff is { } off)
+            {
+                settings.ReduceMotion = off;
+            }
+        }
+
+        var status = MotionStatus.Of(settings.ReduceMotion, settings.ReduceMotionChosen, osAnimationsOff);
+        using (Theme.PushText(status.On ? Theme.Surface.TextSecondary : Theme.Surface.TextTertiary))
+        {
+            ImGui.TextWrapped(status.Text);
+        }
+
+        if (status.Fix == MotionFix.None || !ImGui.SmallButton(status.FixLabel + "##motionFix"))
+        {
+            return;
+        }
+
+        if (status.Fix == MotionFix.AnimateAnyway)
+        {
+            settings.ReduceMotion = false;
+            settings.ReduceMotionChosen = true;
+        }
+        else
+        {
+            settings.ReduceMotionChosen = false;
+            settings.ReduceMotion = OsMotion.AnimationsOff() ?? false;
+        }
+
+        Save();
     }
 
     /// <summary>

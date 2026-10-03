@@ -81,47 +81,11 @@
   <data name="DetailSpecialBadgeTooltip" xml:space="preserve">
     <value>Spéciale</value>
   </data>
-  <data name="DetailChainFormat" xml:space="preserve">
-    <value>Chaîne : {0} · {1} sur {2} faites</value>
-  </data>
-  <data name="DetailStoryFormat" xml:space="preserve">
-    <value>{0} · {1} sur {2} faites</value>
-  </data>
-  <data name="DetailChainNext" xml:space="preserve">
-    <value>· suivante :</value>
-  </data>
-  <data name="DetailChainComplete" xml:space="preserve">
-    <value>· terminée</value>
-  </data>
-  <data name="DetailChainNextTooltip" xml:space="preserve">
-    <value>Sélectionner la quête suivante de cette chaîne</value>
-  </data>
-  <data name="DetailChainHaloTooltipFormat" xml:space="preserve">
-    <value>{0} quêtes sur {1} faites</value>
-  </data>
-  <data name="PathCaptionFormat" xml:space="preserve">
-    <value>{0} étapes · {1} faites</value>
-  </data>
-  <data name="PathCaptionOne" xml:space="preserve">
-    <value>1 étape</value>
-  </data>
-  <data name="PathMoonsWalkedFormat" xml:space="preserve">
-    <value>{0} lunes parcourues</value>
-  </data>
   <data name="PathAlternativeFormat" xml:space="preserve">
     <value>ou via {0}</value>
   </data>
-  <data name="PathAlternativeStepsFormat" xml:space="preserve">
-    <value> · {0} étapes</value>
-  </data>
-  <data name="PathAlternativeOneStep" xml:space="preserve">
-    <value> · 1 étape</value>
-  </data>
   <data name="PathAlternativeDone" xml:space="preserve">
     <value> · faite</value>
-  </data>
-  <data name="PathAlternativeTooltipFormat" xml:space="preserve">
-    <value>Une autre entrée · encore {0} étapes. Cliquez pour voir son chemin.</value>
   </data>
   <data name="PathAlternativeTooltipDone" xml:space="preserve">
     <value>Une autre entrée, déjà parcourue. Cliquez pour voir son chemin.</value>
@@ -143,9 +107,6 @@
   </data>
   <data name="PathUnlocksHeaderNone" xml:space="preserve">
     <value>DÉBLOQUE ENSUITE · rien</value>
-  </data>
-  <data name="PathJumpToTarget" xml:space="preserve">
-    <value>cible</value>
   </data>
   <data name="PathJumpToTargetTooltip" xml:space="preserve">
     <value>Revenir à cette quête</value>
@@ -540,9 +501,6 @@
   <data name="JobsColumnLevel" xml:space="preserve">
     <value>Niveau</value>
   </data>
-  <data name="JobsColumnDone" xml:space="preserve">
-    <value>Faites</value>
-  </data>
   <data name="JobsColumnNext" xml:space="preserve">
     <value>Suivante</value>
   </data>
@@ -876,9 +834,6 @@
   <data name="FlightZoneTooltipUnknownFormat" xml:space="preserve">
     <value>{0} courants · {1} courants de quête sur {2} faits · l'harmonisation nécessite le personnage connecté</value>
   </data>
-  <data name="FlightHeaderFormat" xml:space="preserve">
-    <value>Vol : {0} · {1} courants sur {2} harmonisés</value>
-  </data>
   <data name="FlightHeaderUnknownFormat" xml:space="preserve">
     <value>Vol : {0} · {1} courants</value>
   </data>
@@ -923,9 +878,6 @@
   </data>
   <data name="FlightTeleport" xml:space="preserve">
     <value>Téléportation</value>
-  </data>
-  <data name="FlightFieldFormat" xml:space="preserve">
-    <value>Courants de terrain : {0} sur {1} harmonisés · utilisez la Boussole éthérée (une action générale) pour trouver les autres</value>
   </data>
   <data name="FlightFieldAllFormat" xml:space="preserve">
     <value>Courants de terrain : les {0} sont harmonisés</value>
@@ -1422,9 +1374,6 @@
   <data name="ConfigReduceMotion" xml:space="preserve">
     <value>Réduire les animations</value>
   </data>
-  <data name="ConfigReduceMotionHint" xml:space="preserve">
-    <value>Aucun fondu ni pulsation au survol, et les boutons à maintenir affichent un compte à rebours en texte au lieu de remplir un arc. Tant que vous ne le changez pas ici, ce réglage suit l'option Windows « Afficher les animations ».</value>
-  </data>
   <data name="ConfigFollowDalamudColours" xml:space="preserve">
     <value>Suivre les couleurs de Dalamud</value>
   </data>
@@ -1787,9 +1736,6 @@
   </data>
   <data name="Help.QuestCardBodies.0" xml:space="preserve">
     <value>La première carte sous l'image de la quête : chaque condition avec ✓ ou ✗. Celle qui vous bloque porte une barre et une étiquette dorées ; survolez un ✗ pour voir l'écart exact, comme le rang ou le niveau qu'il vous manque. Une « Note : » sous la liste explique les quelques quêtes que le jeu propose malgré tout.</value>
-  </data>
-  <data name="Help.QuestCardBodies.1" xml:space="preserve">
-    <value>La chaîne des prérequis sous forme de carte du ciel : une lune par quête sur un fil doré là où vous êtes passé et en pointillés ailleurs, une bande par extension. Les tronçons terminés se replient en une perle (« 12 lunes parcourues ») ; cliquez dessus pour les ouvrir. Quand une quête accepte l'une ou l'autre de deux quêtes précédentes, l'autre entrée est une lune creuse à côté du fil ; cliquez dessus pour voir son propre chemin. Cette quête est la grande lune au halo ; quand elle sort de la vue, la pastille « cible » la ramène. Cliquez sur n'importe quelle étape pour l'examiner.</value>
   </data>
   <data name="Help.QuestCardBodies.2" xml:space="preserve">
     <value>Sous cette quête, le fil se ramifie vers ce qu'elle ouvre une fois rendue. Cliquez sur une entrée pour y aller.</value>
@@ -2198,9 +2144,6 @@
   </data>
   <data name="PayoffWhyTooltip" xml:space="preserve">
     <value>Affiche pourquoi c'est important. Cela nomme ce que l'histoire à venir en fait : un spoiler.</value>
-  </data>
-  <data name="PayoffProgressFormat" xml:space="preserve">
-    <value>Contenu optionnel qui modifie une scène de l'histoire à venir. {0} sur {1} faits. Cliquez pour sélectionner le premier restant.</value>
   </data>
   <data name="PayoffChatFormat" xml:space="preserve">
     <value>Avant de continuer : {0} Ensuite : {1}</value>
@@ -3033,9 +2976,6 @@
   <data name="WelcomeBackMsqTitle" xml:space="preserve">
     <value>Scénario principal</value>
   </data>
-  <data name="WelcomeBackMsqAtFormat" xml:space="preserve">
-    <value>{0} · suivante : {1} ({2:N0} sur {3:N0})</value>
-  </data>
   <data name="WelcomeBackMsqComplete" xml:space="preserve">
     <value>terminé</value>
   </data>
@@ -3293,9 +3233,6 @@
   </data>
   <data name="PresetStorySidequestsTooltip" xml:space="preserve">
     <value>Quêtes annexes illustrées dans le journal, celles qui racontent une petite histoire, zone par zone ; chaque récit annexe dans l'ordre où vous le jouez</value>
-  </data>
-  <data name="StoryBadgeFormat" xml:space="preserve">
-    <value>Partie d'un récit annexe : {0} ({1} sur {2})</value>
   </data>
   <data name="StoryBadgeLone" xml:space="preserve">
     <value>Un récit annexe en une seule quête : elle porte une illustration de journal</value>
@@ -3605,9 +3542,6 @@
   </data>
   <data name="Path" xml:space="preserve">
     <value>Chemin</value>
-  </data>
-  <data name="FoldedRunExpandTooltip" xml:space="preserve">
-    <value>Afficher les étapes terminées</value>
   </data>
   <data name="FoldedRunCollapseTooltip" xml:space="preserve">
     <value>Replier les étapes terminées</value>
@@ -4401,12 +4335,6 @@
   <data name="Core.Req.NeedsCarrierLevel" xml:space="preserve">
     <value>nécessite le niveau de facteur {0}, vous êtes niveau {1}</value>
   </data>
-  <data name="Core.Req.DutiesDoneOneNeeded" xml:space="preserve">
-    <value>{0} missions sur {1} terminées, une seule nécessaire</value>
-  </data>
-  <data name="Core.Req.DutiesDone" xml:space="preserve">
-    <value>{0} missions sur {1} terminées</value>
-  </data>
   <data name="Core.Req.AcceptConditionOne" xml:space="preserve">
     <value>1 condition d'acceptation non vérifiée</value>
   </data>
@@ -4442,12 +4370,6 @@
   </data>
   <data name="Core.Req.NeedsQuest" xml:space="preserve">
     <value>nécessite {0}</value>
-  </data>
-  <data name="Core.Req.PrerequisitesDoneOneNeeded" xml:space="preserve">
-    <value>{0} prérequis sur {1} faits, un seul nécessaire</value>
-  </data>
-  <data name="Core.Req.PrerequisitesDone" xml:space="preserve">
-    <value>{0} prérequis sur {1} faits</value>
   </data>
   <data name="Core.Req.NeedsSatisfactionWithNotChecked" xml:space="preserve">
     <value>nécessite le rang de satisfaction {0} avec {1}, non vérifié</value>

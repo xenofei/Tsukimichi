@@ -688,7 +688,7 @@ public sealed class WelcomeBackCard
         var expansion = bundle.Names.Expansion(next.Expansion) is { Length: > 0 } named ? named : Expansions.Name(next.Expansion);
         return position.IsBranched
             ? string.Format(CultureInfo.CurrentCulture, Strings.WelcomeBackMsqRoutesFormat, expansion, MsqText.Spelled(position, name))
-            : string.Format(CultureInfo.CurrentCulture, Strings.WelcomeBackMsqAtFormat, expansion, name(next), position.Done, position.Total);
+            : string.Format(CultureInfo.CurrentCulture, Strings.WelcomeBackMsqAtFormat, expansion, name(next), Core.Ui.LeftText.Count(position.Done, position.Total));
     }
 
     private void BuildNew(WelcomeBackSummary summary)

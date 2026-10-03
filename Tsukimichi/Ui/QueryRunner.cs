@@ -204,7 +204,10 @@ public sealed class QueryRunner : IDisposable
         storyBadgeRowId = rowId;
         storyBadgeVersion = session.Version;
         storyBadgeBundle = bundle;
-        storyBadgeText = string.Format(CultureInfo.CurrentCulture, Strings.StoryBadgeFormat, title, ChainCatalog.IndexOf(chain, rowId) + 1, chain.RowIds.Count);
+        var after = chain.RowIds.Count - (ChainCatalog.IndexOf(chain, rowId) + 1);
+        storyBadgeText = after > 0
+            ? string.Format(CultureInfo.CurrentCulture, Strings.StoryBadgeFormat, title, after)
+            : string.Format(CultureInfo.CurrentCulture, Strings.StoryBadgeLastFormat, title);
         return storyBadgeText;
     }
 

@@ -86,9 +86,7 @@ public static class RequirementDetail
                 { } actual when met => F("Core.Req.CarrierLevel", "carrier level {0}", actual),
                 { } actual => F("Core.Req.NeedsCarrierLevel", "needs carrier level {0}, you are level {1}", c.RequiredLevel, actual),
             },
-            DutyCompletionRequirement d => d.Join == JoinKind.Any
-                ? F("Core.Req.DutiesDoneOneNeeded", "{0} of {1} duties completed, one needed", d.DoneCount, d.InstanceIds.Length)
-                : F("Core.Req.DutiesDone", "{0} of {1} duties completed", d.DoneCount, d.InstanceIds.Length),
+            DutyCompletionRequirement d => Duties(d),
             SeasonalRequirement s => Seasonal(s),
             AcceptConditionRequirement a => a.ConditionIds.Length == 1
                 ? T("Core.Req.AcceptConditionOne", "1 accept condition not checked")
@@ -143,9 +141,34 @@ public static class RequirementDetail
             return met ? F("Core.Req.QuestDone", "{0} done", name) : F("Core.Req.NeedsQuest", "needs {0}", name);
         }
 
-        return p.Join == JoinKind.Any
-            ? F("Core.Req.PrerequisitesDoneOneNeeded", "{0} of {1} prerequisites done, one needed", p.DoneCount, p.QuestIds.Length)
-            : F("Core.Req.PrerequisitesDone", "{0} of {1} prerequisites done", p.DoneCount, p.QuestIds.Length);
+        // What is left, not a tally (feature plan v6 U5); the same words as RequirementEvaluator.LeftDetail.
+        var left = p.QuestIds.Length - p.DoneCount;
+        if (p.Join == JoinKind.Any)
+        {
+            return p.DoneCount > 0
+                ? F("Core.Req.PrerequisitesOneDone", "one of {0} prerequisites done", p.QuestIds.Length)
+                : F("Core.Req.PrerequisitesOneNeeded", "needs one of {0} prerequisites", p.QuestIds.Length);
+        }
+
+        return left <= 0 ? F("Core.Req.PrerequisitesAllDone", "all {0} prerequisites done", p.QuestIds.Length)
+            : left == 1 ? T("Core.Req.PrerequisiteLeft", "1 prerequisite left")
+            : F("Core.Req.PrerequisitesLeft", "{0} prerequisites left", left);
+    }
+
+    /// <summary>What is left of a duty requirement; the same words as RequirementEvaluator.LeftDetail.</summary>
+    private static string Duties(DutyCompletionRequirement d)
+    {
+        var left = d.InstanceIds.Length - d.DoneCount;
+        if (d.Join == JoinKind.Any)
+        {
+            return d.DoneCount > 0
+                ? F("Core.Req.DutiesOneDone", "one of {0} duties completed", d.InstanceIds.Length)
+                : F("Core.Req.DutiesOneNeeded", "needs one of {0} duties", d.InstanceIds.Length);
+        }
+
+        return left <= 0 ? F("Core.Req.DutiesAllDone", "all {0} duties completed", d.InstanceIds.Length)
+            : left == 1 ? T("Core.Req.DutyLeft", "1 duty left")
+            : F("Core.Req.DutiesLeft", "{0} duties left", left);
     }
 
     private static string CustomDelivery(CustomDeliveryRankRequirement c, bool met, BlockerNames names)

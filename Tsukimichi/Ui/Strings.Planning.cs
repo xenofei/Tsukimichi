@@ -116,9 +116,6 @@ static partial class Strings
 
     public static string PlanningBoardRankedUpToday => Loc.Get("PlanningBoardRankedUpToday");
 
-    /// <summary>{0} = dailies done today, {1} = dailies offered today.</summary>
-    public static string PlanningBoardTodayFormat => Loc.Get("PlanningBoardTodayFormat");
-
     /// <summary>{0} = dailies done today.</summary>
     public static string PlanningBoardTodayUnknownFormat => Loc.Get("PlanningBoardTodayUnknownFormat");
 

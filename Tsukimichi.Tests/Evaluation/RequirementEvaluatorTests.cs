@@ -192,7 +192,7 @@ public class RequirementEvaluatorTests
         var r = Only(Eval(quest, Snapshot(A, C)), RequirementKind.PreviousQuests);
 
         Assert.False(r.Met);
-        Assert.Equal("2 of 3 prerequisites done", r.Detail);
+        Assert.Equal("1 prerequisite left", r.Detail);
         var req = Assert.IsType<PreviousQuestsRequirement>(r.Req);
         Assert.Equal((JoinKind.All, 2), (req.Join, req.DoneCount));
 
@@ -206,11 +206,11 @@ public class RequirementEvaluatorTests
 
         var unmet = Only(Eval(quest, Snapshot()), RequirementKind.PreviousQuests);
         Assert.False(unmet.Met);
-        Assert.Equal("0 of 3 prerequisites done, one needed", unmet.Detail);
+        Assert.Equal("needs one of 3 prerequisites", unmet.Detail);
 
         var met = Only(Eval(quest, Snapshot(B)), RequirementKind.PreviousQuests);
         Assert.True(met.Met);
-        Assert.Equal("1 of 3 prerequisites done, one needed", met.Detail);
+        Assert.Equal("one of 3 prerequisites done", met.Detail);
     }
 
     [Fact]
@@ -354,7 +354,7 @@ public class RequirementEvaluatorTests
 
         var r = Only(Eval(quest, Snapshot() with { UnlockedInstances = [7] }), RequirementKind.DutyCompletion);
         Assert.False(r.Met);
-        Assert.Equal("1 of 2 duties completed", r.Detail);
+        Assert.Equal("1 duty left", r.Detail);
 
         var any = quest with { InstanceJoin = JoinKind.Any };
         Assert.True(Only(Eval(any, Snapshot() with { UnlockedInstances = [7] }), RequirementKind.DutyCompletion).Met);

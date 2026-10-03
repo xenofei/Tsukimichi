@@ -982,7 +982,7 @@ public sealed class TablePane : IDisposable
             dl.AddCircleFilled(cell + new Vector2(UiMetrics.Px(3f), centerY - cell.Y), UiMetrics.Px(2.5f), Theme.MoonU32);
         }
 
-        MoonGlyph.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), layout.GlyphRadius, state);
+        MoonWax.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), layout.GlyphRadius, state, quest.RowId);
 
         // Name column carries the row-wide selectable and the context menu. Its Header colours are transparent so it
         // paints neither hover nor selection over the fills above (keyboard focus still gets ImGui's nav frame). The

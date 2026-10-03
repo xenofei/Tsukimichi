@@ -22,7 +22,7 @@ static partial class Strings
     /// <summary>{0} = the chain's name.</summary>
     public static string RecapChainHeadingFormat => Loc.Get("RecapChainHeadingFormat");
 
-    /// <summary>{0} = quests done in the chain, {1} = quests in the chain.</summary>
+    /// <summary>{0} = quests done in the chain, which the recap reads.</summary>
     public static string RecapChainIntroFormat => Loc.Get("RecapChainIntroFormat");
 
     public static string RecapNoCharacter => Loc.Get("RecapNoCharacter");
@@ -75,7 +75,7 @@ static partial class Strings
 
     public static string LaddersColumnAchievement => Loc.Get("LaddersColumnAchievement");
 
-    /// <summary>{0} = the achievement, {1} = quests done, {2} = quests it needs, {3} = earned or not.</summary>
+    /// <summary>{0} = the achievement, {1} = what is left ("3 left", "all done"), {2} = earned or not.</summary>
     public static string LadderLineFormat => Loc.Get("LadderLineFormat");
 
     /// <summary>{0} = the achievement, {1} = quests it needs.</summary>

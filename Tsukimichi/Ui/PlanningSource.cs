@@ -411,8 +411,9 @@ public sealed class PlanningSource
             var rank = row.AtLastRank || row.RankMax is null ? rankName
                 : row.Maxed ? string.Format(CultureInfo.CurrentCulture, Strings.PlanningBoardRankFullFormat, rankName)
                 : string.Format(CultureInfo.CurrentCulture, Strings.PlanningBoardRankFormat, rankName, row.Reputation, row.RankMax);
+            // What is left today ("1 left", "all done"), the tally on hover (feature plan v6 U5).
             var today = row.OfferedToday is { } offered
-                ? string.Format(CultureInfo.CurrentCulture, Strings.PlanningBoardTodayFormat, row.DoneToday, offered)
+                ? Core.Ui.LeftText.LeftOrDone(row.DoneToday, offered)
                 : string.Format(CultureInfo.CurrentCulture, Strings.PlanningBoardTodayUnknownFormat, row.DoneToday);
             var zone = row.Giver?.Issuer is { } issuer && links?.Map(issuer.MapId) is { } map ? map.PlaceName : string.Empty;
             lines[i] = new BoardLine(
@@ -421,7 +422,7 @@ public sealed class PlanningSource
                 rank,
                 row.RankedUpToday ? Strings.PlanningBoardRankedUpToday : string.Empty,
                 today,
-                row.OfferedToday is null ? Strings.PlanningBoardTodayUnknownTooltip : string.Empty,
+                row.OfferedToday is { } shown ? Core.Ui.LeftText.Tally(row.DoneToday, shown) : Strings.PlanningBoardTodayUnknownTooltip,
                 zone);
         }
 

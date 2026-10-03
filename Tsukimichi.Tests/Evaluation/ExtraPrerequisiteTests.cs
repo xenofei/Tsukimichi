@@ -53,7 +53,7 @@ public class ExtraPrerequisiteTests
 
         var previous = Only(RequirementEvaluator.Evaluate(target, Snapshot(A), catalog, EvalContext.Default), RequirementKind.PreviousQuests);
         Assert.False(previous.Met);
-        Assert.Equal("1 of 2 prerequisites done", previous.Detail);
+        Assert.Equal("1 prerequisite left", previous.Detail);
         Assert.Equal([A], Assert.IsType<PreviousQuestsRequirement>(previous.Req).DoneIds!);
 
         var blocked = StateResolver.Resolve(target, Snapshot(A), catalog, EvalContext.Default);

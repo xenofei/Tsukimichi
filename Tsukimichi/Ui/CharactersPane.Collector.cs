@@ -6,6 +6,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
@@ -31,7 +32,7 @@ public sealed partial class CharactersPane
     /// <summary>The game's achievement flag for the viewed character (<c>RewardUnlockReader.AchievementEarned</c>); null lets the quests decide.</summary>
     public Func<uint, bool?>? AchievementEarned { get; set; }
 
-    private sealed record AchievementRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText, bool Ready, string Tooltip, IReadOnlyList<uint> RowIds);
+    private sealed record AchievementRow(string Name, float Fraction, string Count, string Left, QuestRecord? Next, string NextText, bool Ready, string Tooltip, IReadOnlyList<uint> RowIds);
 
     private (int Version, ulong? Viewed, CatalogBundle? Bundle, long Tick, int Language) laddersKey = (-1, null, null, -1, -1);
     private AchievementRow[] ladderRows = [];
@@ -63,10 +64,10 @@ public sealed partial class CharactersPane
 
         if (LaddersDoneWidth.Stale(ladderRows))
         {
-            var done = FixedWidth.Fit(0f, Strings.JobsColumnDone);
+            var done = FixedWidth.Fit(0f, Strings.JobsColumnLeft);
             foreach (var row in ladderRows)
             {
-                done = FixedWidth.Fit(done, row.Count);
+                done = FixedWidth.Fit(done, row.Left);
             }
 
             LaddersDoneWidth.Store(ladderRows, done);
@@ -75,7 +76,7 @@ public sealed partial class CharactersPane
         var line = ImGui.GetTextLineHeight();
         ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
         ImGui.TableSetupColumn(Strings.LaddersColumnAchievement, ImGuiTableColumnFlags.WidthStretch, 2f);
-        ImGui.TableSetupColumn(Strings.JobsColumnDone, ImGuiTableColumnFlags.WidthFixed, LaddersDoneWidth.Value);
+        ImGui.TableSetupColumn(Strings.JobsColumnLeft, ImGuiTableColumnFlags.WidthFixed, LaddersDoneWidth.Value);
         ImGui.TableSetupColumn(Strings.JobsColumnNext, ImGuiTableColumnFlags.WidthStretch, 3f);
 
         for (var i = 0; i < ladderRows.Length; i++)
@@ -99,7 +100,7 @@ public sealed partial class CharactersPane
 
             DrawRowMenu(ui, row.RowIds);
             ImGui.TableNextColumn();
-            ImGui.TextUnformatted(row.Count);
+            LeftCell(row.Left, row.Count);
             ImGui.TableNextColumn();
             DrawNextQuest(ui, row.Next, row.NextText, row.Ready);
         }
@@ -144,6 +145,7 @@ public sealed partial class CharactersPane
                 ladder.Name,
                 progress.Fraction,
                 string.Format(CultureInfo.CurrentCulture, Strings.JobsChainCountFormat, progress.Done, progress.Total),
+                LeftText.Left(progress.Done, progress.Total),
                 next,
                 next is null
                     ? progress.Earned ? Strings.LadderEarned : Strings.JobsChainComplete

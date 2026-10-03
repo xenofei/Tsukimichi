@@ -47,7 +47,7 @@ public sealed class FlightPane
     private const uint BeadTag = 0x4245_4144;
 
     /// <summary>The widest count the zone list reserves room for.</summary>
-    private const string CountSample = "99/99";
+    private const string CountSample = "99 left";
 
     private readonly SessionState session;
     private readonly RewardUnlockReader unlocks;
@@ -680,12 +680,12 @@ public sealed class FlightPane
             nameCut = Chrome.EllipsisTextAt(dl, new Vector2(x, titleY), room, zone.Name, Theme.U32(s.Text));
         }
 
-        // "Quest currents 3/5 · Field currents 2/4": the labels in the body font, the counts in the Numeral role.
+        // "Quest currents 2 left · Field currents all done": the labels in the body font, the counts in the Numeral role.
         var at = new Vector2(x, countsY);
         var right = max.X - pad;
         var labelInk = Theme.U32(s.TextSecondary);
         var numberInk = Theme.U32(s.Text);
-        at.X = CountPart(dl, at, right, Strings.FlightQuestCurrents, zone.CountText, labelInk, numberInk);
+        at.X = CountPart(dl, at, right, Strings.FlightQuestCurrents, zone.BannerCountText, labelInk, numberInk);
         if (zone.FieldCountText.Length > 0 && at.X < right)
         {
             var dot = Strings.StateReasonSeparator;
@@ -780,12 +780,14 @@ public sealed class FlightPane
             headerVersion = session.Version;
             header = zone.AllUnknown
                 ? string.Format(CultureInfo.CurrentCulture, Strings.FlightHeaderUnknownFormat, zone.Name, zone.Zone.TotalCurrents)
-                : string.Format(CultureInfo.CurrentCulture, Strings.FlightHeaderFormat, zone.Name, zone.Attuned, zone.Zone.TotalCurrents);
+                : zone.Attuned >= zone.Zone.TotalCurrents ? string.Format(CultureInfo.CurrentCulture, Strings.FlightHeaderAllFormat, zone.Name, zone.Zone.TotalCurrents)
+                : zone.Zone.TotalCurrents - zone.Attuned == 1 ? string.Format(CultureInfo.CurrentCulture, Strings.FlightHeaderOneFormat, zone.Name)
+                : string.Format(CultureInfo.CurrentCulture, Strings.FlightHeaderFormat, zone.Name, zone.Zone.TotalCurrents - zone.Attuned);
             var field = zone.Zone.FieldCurrentCount;
             fieldLine = field == 0 ? Strings.FlightFieldNone
                 : zone.AllUnknown ? string.Format(CultureInfo.CurrentCulture, Strings.FlightFieldUnknownFormat, field)
                 : zone.FieldAttuned == field ? string.Format(CultureInfo.CurrentCulture, Strings.FlightFieldAllFormat, field)
-                : string.Format(CultureInfo.CurrentCulture, Strings.FlightFieldFormat, zone.FieldAttuned, field);
+                : string.Format(CultureInfo.CurrentCulture, Strings.FlightFieldFormat, field - zone.FieldAttuned);
         }
     }
 
@@ -992,7 +994,8 @@ public sealed class FlightPane
             Rows = rows;
             Label = zone.Name;
             HereLabel = Strings.FlightCurrentZoneMarker + zone.Name;
-            CountText = string.Format(CultureInfo.InvariantCulture, Strings.FlightZoneCountFormat, 0, rows.Length);
+            CountText = LeftText.Left(0, rows.Length);
+            BannerCountText = LeftText.LeftOrDone(0, rows.Length);
             TooltipText = string.Empty;
             BeadKey = Motion.Key(BeadTag, zone.TerritoryId);
         }
@@ -1006,7 +1009,7 @@ public sealed class FlightPane
         /// <summary>The lit beads before the last rise, where the lighting sequence starts.</summary>
         public int LitFrom { get; private set; }
 
-        /// <summary>The field currents' count for the banner ("2/4"); empty when the zone has none or none is readable.</summary>
+        /// <summary>The field currents left, for the banner ("2 left", "all done"); empty when the zone has none or none is readable.</summary>
         public string FieldCountText { get; private set; } = string.Empty;
 
         /// <summary>Whose counts these are and how they were read; the default before the first read.</summary>
@@ -1018,7 +1021,13 @@ public sealed class FlightPane
         public string Name => Zone.Name;
         public string Label { get; }
         public string HereLabel { get; }
+
+        /// <summary>The zone list's count: quest currents left ("2 left"), empty once none is (the moon says so).</summary>
         public string CountText { get; private set; }
+
+        /// <summary>The banner's count: quest currents left ("2 left"), or "all done".</summary>
+        public string BannerCountText { get; private set; }
+
         public string TooltipText { get; private set; }
 
         /// <summary>Attuned currents (quest and field) over every current in the zone; unknown counts as not attuned.</summary>
@@ -1054,9 +1063,10 @@ public sealed class FlightPane
             Fraction = total > 0 ? (float)attuned / total : 0f;
             AllUnknown = total > 0 && unknown == total;
             Complete = total > 0 && attuned == total;
-            CountText = string.Format(CultureInfo.InvariantCulture, Strings.FlightZoneCountFormat, questsDone, Rows.Length);
+            CountText = LeftText.Left(questsDone, Rows.Length);
+            BannerCountText = LeftText.LeftOrDone(questsDone, Rows.Length);
             var field = Zone.FieldCurrentCount;
-            FieldCountText = field == 0 || AllUnknown ? string.Empty : string.Format(CultureInfo.InvariantCulture, Strings.FlightZoneCountFormat, fieldAttuned, field);
+            FieldCountText = field == 0 || AllUnknown ? string.Empty : LeftText.LeftOrDone(fieldAttuned, field);
             TooltipText = AllUnknown
                 ? string.Format(CultureInfo.CurrentCulture, Strings.FlightZoneTooltipUnknownFormat, total, questsDone, Rows.Length)
                 : string.Format(CultureInfo.CurrentCulture, Strings.FlightZoneTooltipFormat, attuned, total, questsDone, Rows.Length);

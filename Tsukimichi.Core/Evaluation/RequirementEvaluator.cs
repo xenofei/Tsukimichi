@@ -194,13 +194,7 @@ public static class RequirementEvaluator
             var ids = q.InstanceContentRequired;
             var done = ids.Count(s.UnlockedInstances.Contains);
             var met = q.InstanceJoin == JoinKind.Any ? done >= 1 : done == ids.Length;
-            var detail = $"{done} of {ids.Length} duties completed";
-            if (q.InstanceJoin == JoinKind.Any)
-            {
-                detail += ", one needed";
-            }
-
-            results.Add(new(new DutyCompletionRequirement(ids, q.InstanceJoin, done), met, detail));
+            results.Add(new(new DutyCompletionRequirement(ids, q.InstanceJoin, done), met, LeftDetail(done, ids.Length, q.InstanceJoin, "duty", "duties", "completed")));
         }
 
         if (q.Festival != 0)
@@ -348,6 +342,22 @@ public static class RequirementEvaluator
         return false;
     }
 
+    /// <summary>
+    /// What is left of a several-of requirement (feature plan v6 U5, never "2 of 3 done"): "2 prerequisites left", "1
+    /// duty left", "all 3 prerequisites done"; for an Any join "needs one of 3 prerequisites" or "one of 3 duties
+    /// completed". The English RequirementDetail renders for the same requirement.
+    /// </summary>
+    private static string LeftDetail(int done, int count, JoinKind join, string one, string many, string doneWord)
+    {
+        if (join == JoinKind.Any)
+        {
+            return done > 0 ? $"one of {count} {many} {doneWord}" : $"needs one of {count} {many}";
+        }
+
+        var left = count - done;
+        return left <= 0 ? $"all {count} {many} {doneWord}" : left == 1 ? $"1 {one} left" : $"{left} {many} left";
+    }
+
     /// <summary>One previous-quests requirement over <paramref name="ids"/>; nothing when there are none.</summary>
     private static void AddPrevious(List<RequirementResult> results, uint[] ids, JoinKind join, CharacterSnapshot s, QuestCatalog catalog)
     {
@@ -367,11 +377,7 @@ public static class RequirementEvaluator
         }
         else
         {
-            detail = $"{done} of {ids.Length} prerequisites done";
-            if (join == JoinKind.Any)
-            {
-                detail += ", one needed";
-            }
+            detail = LeftDetail(done, ids.Length, join, "prerequisite", "prerequisites", "done");
         }
 
         results.Add(new(new PreviousQuestsRequirement(ids, join, done, doneIds), met, detail));

@@ -14,7 +14,8 @@ static partial class Strings
     public static string JobsNone => Loc.Get("JobsNone");
     public static string JobsColumnJob => Loc.Get("JobsColumnJob");
     public static string JobsColumnLevel => Loc.Get("JobsColumnLevel");
-    public static string JobsColumnDone => Loc.Get("JobsColumnDone");
+    /// <summary>The column of how many quests are still to do ("3 left").</summary>
+    public static string JobsColumnLeft => Loc.Get("JobsColumnLeft");
     public static string JobsColumnNext => Loc.Get("JobsColumnNext");
     /// <summary>{0} = quest name, {1} = its level; the quest can be taken now.</summary>
     public static string JobsNextReadyFormat => Loc.Get("JobsNextReadyFormat");

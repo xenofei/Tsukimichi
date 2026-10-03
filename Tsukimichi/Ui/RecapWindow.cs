@@ -306,7 +306,7 @@ public sealed class RecapWindow : Window
         pending.AddRange(StoryRecap.Chain(chain, bundle.Catalog, Done));
         var name = ChainCatalog.DisplayName(chain, id => shield.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
         heading = string.Format(CultureInfo.CurrentCulture, Strings.RecapChainHeadingFormat, name);
-        intro = string.Format(CultureInfo.CurrentCulture, Strings.RecapChainIntroFormat, pending.Count, chain.RowIds.Count);
+        intro = string.Format(CultureInfo.CurrentCulture, Strings.RecapChainIntroFormat, pending.Count);
     }
 
     /// <summary>Reads the next few quests' journals into chapters.</summary>

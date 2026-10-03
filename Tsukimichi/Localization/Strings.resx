@@ -111,58 +111,37 @@
   <data name="DetailBannerCategory" xml:space="preserve">
     <value>Tsukimichi art</value>
   </data>
-  <data name="DetailChainFormat" xml:space="preserve">
-    <value>Chain: {0} · {1} of {2} done</value>
-    <comment>{0} = chain name, {1} = quests done, {2} = quests in the chain.</comment>
-  </data>
-  <data name="DetailStoryFormat" xml:space="preserve">
-    <value>{0} · {1} of {2} done</value>
-    <comment>A side story: {0} = the story's name ("Story: …"), {1} = quests done, {2} = quests in it.</comment>
-  </data>
-  <data name="DetailChainNext" xml:space="preserve">
-    <value>· next:</value>
-  </data>
-  <data name="DetailChainComplete" xml:space="preserve">
-    <value>· complete</value>
-  </data>
   <data name="DetailChainNextTooltip" xml:space="preserve">
-    <value>Select the next quest in this chain</value>
+    <value>Open this quest</value>
   </data>
-  <data name="DetailChainHaloTooltipFormat" xml:space="preserve">
-    <value>{0} of {1} quests done</value>
-    <comment>The chain halo's tooltip: {0} = quests done, {1} = quests in the chain.</comment>
+  <data name="PathNextLabel" xml:space="preserve">
+    <value>Next:</value>
+    <comment>Before the earlier quest to do first, under the Path header: "Next: &lt;quest&gt; · Ready".</comment>
   </data>
   <data name="DetailJumpTooltipFormat" xml:space="preserve">
     <value>Go to {0}</value>
     <comment>A jump button beside a requirement you do not meet: {0} = the quest that clears it.</comment>
   </data>
-  <data name="PathCaptionFormat" xml:space="preserve">
-    <value>{0} steps · {1} done</value>
-    <comment>{0} = steps on the path, {1} = steps done.</comment>
-  </data>
-  <data name="PathCaptionOne" xml:space="preserve">
-    <value>1 step</value>
-  </data>
   <data name="PathMoonsWalkedFormat" xml:space="preserve">
-    <value>{0} moons walked</value>
-    <comment>{0} = completed steps folded into one bead.</comment>
+    <value>{0} quests done</value>
+    <comment>{0} = completed quests folded into one bead.</comment>
   </data>
   <data name="PathAlternativeFormat" xml:space="preserve">
     <value>or via {0}</value>
     <comment>{0} = the other quest that leads here.</comment>
   </data>
   <data name="PathAlternativeStepsFormat" xml:space="preserve">
-    <value> · {0} steps</value>
+    <value> · {0} to go</value>
     <comment>{0} = quests still to do on the alternative's own path.</comment>
   </data>
   <data name="PathAlternativeOneStep" xml:space="preserve">
-    <value> · 1 step</value>
+    <value> · 1 to go</value>
   </data>
   <data name="PathAlternativeDone" xml:space="preserve">
     <value> · done</value>
   </data>
   <data name="PathAlternativeTooltipFormat" xml:space="preserve">
-    <value>Another way in · {0} steps to go. Click to see its path.</value>
+    <value>Another way in · {0} quests to go. Click to see its path.</value>
     <comment>{0} = quests still to do on the alternative's own path.</comment>
   </data>
   <data name="PathAlternativeTooltipDone" xml:space="preserve">
@@ -189,7 +168,7 @@
     <value>UNLOCKS NEXT · none</value>
   </data>
   <data name="PathJumpToTarget" xml:space="preserve">
-    <value>target</value>
+    <value>this quest</value>
   </data>
   <data name="PathJumpToTargetTooltip" xml:space="preserve">
     <value>Scroll back to this quest</value>
@@ -526,10 +505,6 @@
   <data name="GamePanelUnlocksHeading" xml:space="preserve">
     <value>Unlocks:</value>
   </data>
-  <data name="GamePanelChainFormat" xml:space="preserve">
-    <value>Step {0} of {1} · {2}</value>
-    <comment>{0} the quest's step, {1} the chain's steps, {2} the chain's name.</comment>
-  </data>
   <data name="GamePanelChainNext" xml:space="preserve">
     <value>Next:</value>
     <comment>Opens the line naming the next quest of the chain.</comment>
@@ -649,12 +624,20 @@
     <value>Moonlit: {0} (you have it)</value>
     <comment>Core: QuestVerdict.cs. {0} a Moonlit reward the character already has.</comment>
   </data>
-  <data name="Core.Verdict.ChainStep" xml:space="preserve">
-    <value>Step {0} of {1} in {2}</value>
-    <comment>Core: QuestVerdict.cs. {0} the step, {1} the chain's steps, {2} the chain's name.</comment>
+  <data name="Core.Verdict.ChainMore" xml:space="preserve">
+    <value>Part of {0} · {1} more after this</value>
+    <comment>Core: QuestVerdict.cs. {0} the chain's name, {1} the quests after this one.</comment>
   </data>
-  <data name="Core.Verdict.ChainStepUnnamed" xml:space="preserve">
-    <value>Step {0} of {1} of a chain</value>
+  <data name="Core.Verdict.ChainLast" xml:space="preserve">
+    <value>The last quest of {0}</value>
+    <comment>Core: QuestVerdict.cs. {0} the chain's name.</comment>
+  </data>
+  <data name="Core.Verdict.ChainMoreUnnamed" xml:space="preserve">
+    <value>Part of a chain · {0} more after this</value>
+    <comment>Core: QuestVerdict.cs. {0} the quests after this one.</comment>
+  </data>
+  <data name="Core.Verdict.ChainLastUnnamed" xml:space="preserve">
+    <value>The last quest of a chain</value>
     <comment>Core: QuestVerdict.cs.</comment>
   </data>
   <data name="Core.Verdict.Seasonal" xml:space="preserve">
@@ -1139,8 +1122,9 @@
   <data name="JobsColumnLevel" xml:space="preserve">
     <value>Level</value>
   </data>
-  <data name="JobsColumnDone" xml:space="preserve">
-    <value>Done</value>
+  <data name="JobsColumnLeft" xml:space="preserve">
+    <value>Left</value>
+    <comment>Column of how many quests are still to do ("3 left").</comment>
   </data>
   <data name="JobsColumnNext" xml:space="preserve">
     <value>Next</value>
@@ -1654,8 +1638,16 @@
     <comment>{0} = total currents, {1} = quest currents whose quest is complete, {2} = quest currents.</comment>
   </data>
   <data name="FlightHeaderFormat" xml:space="preserve">
-    <value>Flight in {0}: {1} of {2} currents attuned</value>
-    <comment>{0} = zone, {1} = attuned, {2} = total currents.</comment>
+    <value>Flight in {0}: {1} more currents to attune</value>
+    <comment>{0} = zone, {1} = currents still to attune (two or more).</comment>
+  </data>
+  <data name="FlightHeaderOneFormat" xml:space="preserve">
+    <value>Flight in {0}: 1 more current to attune</value>
+    <comment>{0} = zone.</comment>
+  </data>
+  <data name="FlightHeaderAllFormat" xml:space="preserve">
+    <value>Flight in {0}: all {1} currents attuned</value>
+    <comment>{0} = zone, {1} = currents in the zone.</comment>
   </data>
   <data name="FlightHeaderUnknownFormat" xml:space="preserve">
     <value>Flight in {0}: {1} currents</value>
@@ -1705,8 +1697,8 @@
     <value>Teleport</value>
   </data>
   <data name="FlightFieldFormat" xml:space="preserve">
-    <value>Field currents: {0} of {1} attuned · use the Aether Compass (a General Action) to find the rest</value>
-    <comment>{0} = attuned field currents, {1} = field currents in the zone.</comment>
+    <value>Field currents: {0} left · use the Aether Compass (a General Action) to find them</value>
+    <comment>{0} = field currents still to attune.</comment>
   </data>
   <data name="FlightFieldAllFormat" xml:space="preserve">
     <value>Field currents: all {0} attuned</value>
@@ -3112,7 +3104,7 @@
     <value>Reduce motion</value>
   </data>
   <data name="ConfigReduceMotionHint" xml:space="preserve">
-    <value>No hover fades or pulses anywhere, and hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' "Show animations" setting.</value>
+    <value>No hover fades, pulses or waxing moons anywhere, and hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' "Show animations" setting.</value>
   </data>
   <data name="ConfigCompactRail" xml:space="preserve">
     <value>Compact rail</value>
@@ -3529,7 +3521,7 @@
     <value>The first card under the quest's picture: every requirement with ✓ or ✗. The one that blocks you has a gold bar and a gold label; hover a ✗ for the exact gap, such as the rank or level you still need. A "Note:" under the list explains the few quests the game offers anyway.</value>
   </data>
   <data name="Help.QuestCardBodies.1" xml:space="preserve">
-    <value>The prerequisite chain as a star chart: a moon per quest on a thread that is gold where you have walked and dashed where you have not, one band per expansion. Finished stretches fold into a bead ("12 moons walked"); click it to open them. Where a quest accepts either of two previous quests, the other way in is a hollow moon beside the thread; click it to see its own path. This quest is the large moon with the halo; when it is scrolled out of view, the "target" pill brings it back. Click any step to inspect it.</value>
+    <value>The prerequisite chain as a star chart: a moon per quest on a thread that is gold where you have walked and dashed where you have not, one band per expansion. The header says how many quests still stand before this one, and "Next" names the one to do first. Finished stretches fold into a bead ("12 quests done"); click it to open them. Where a quest accepts either of two previous quests, the other way in is a hollow moon beside the thread; click it to see its own path. This quest is the large moon with the halo; when it is scrolled out of view, the "this quest" pill brings it back. Click any step to inspect it.</value>
   </data>
   <data name="Help.QuestCardBodies.2" xml:space="preserve">
     <value>Under this quest the thread branches into what it opens once turned in. Click an entry to jump to it.</value>
@@ -4259,8 +4251,8 @@
     <value>Shows why this matters. It names what the story ahead does with it: a spoiler.</value>
   </data>
   <data name="PayoffProgressFormat" xml:space="preserve">
-    <value>Optional content that changes a scene in the story ahead. {0} of {1} done. Click to select the first one left.</value>
-    <comment>{0} = content quests done, {1} = content quests in all.</comment>
+    <value>Optional content that changes a scene in the story ahead: {0} of {1} left to do. Click to select the first one.</value>
+    <comment>{0} = content quests left to do, {1} = content quests in all.</comment>
   </data>
   <data name="PayoffChatFormat" xml:space="preserve">
     <value>Before you continue: {0} Next: {1}</value>
@@ -4422,10 +4414,6 @@
   </data>
   <data name="PlanningBoardRankedUpToday" xml:space="preserve">
     <value>Ranked up today: the society's quests return after the daily reset.</value>
-  </data>
-  <data name="PlanningBoardTodayFormat" xml:space="preserve">
-    <value>{0} of {1} done</value>
-    <comment>{0} = dailies done today, {1} = dailies offered today.</comment>
   </data>
   <data name="PlanningBoardTodayUnknownFormat" xml:space="preserve">
     <value>{0} done, offer unknown until you visit the givers</value>
@@ -5511,8 +5499,8 @@
     <value>Main scenario</value>
   </data>
   <data name="WelcomeBackMsqAtFormat" xml:space="preserve">
-    <value>{0} · next: {1} ({2:N0} of {3:N0})</value>
-    <comment>{0} = expansion, {1} = next quest (through the shield), {2} = done, {3} = total.</comment>
+    <value>{0} · next: {1} ({2:N0} to go)</value>
+    <comment>{0} = expansion, {1} = next quest (through the shield), {2} = main scenario quests left, the next one included.</comment>
   </data>
   <data name="WelcomeBackMsqComplete" xml:space="preserve">
     <value>complete</value>
@@ -6053,7 +6041,12 @@
     <value>Sidequests with journal artwork, the ones that tell a small story, zone by zone; each side story in the order you play it</value>
   </data>
   <data name="StoryBadgeFormat" xml:space="preserve">
-    <value>Part of a side story: {0} ({1} of {2})</value>
+    <value>Part of a side story: {0} · {1} more after this</value>
+    <comment>{0} = the side story's title, {1} = quests after this one.</comment>
+  </data>
+  <data name="StoryBadgeLastFormat" xml:space="preserve">
+    <value>The last quest of the side story {0}</value>
+    <comment>{0} = the side story's title.</comment>
   </data>
   <data name="StoryBadgeLone" xml:space="preserve">
     <value>A side story in one quest: it carries journal artwork</value>
@@ -6378,7 +6371,7 @@
     <value>Path</value>
   </data>
   <data name="FoldedRunExpandTooltip" xml:space="preserve">
-    <value>Show the completed steps</value>
+    <value>Show these quests</value>
   </data>
   <data name="FoldedRunCollapseTooltip" xml:space="preserve">
     <value>Fold the completed steps away</value>
@@ -7518,13 +7511,25 @@
     <value>needs carrier level {0}, you are level {1}</value>
     <comment>Core: RequirementDetail.cs.</comment>
   </data>
-  <data name="Core.Req.DutiesDoneOneNeeded" xml:space="preserve">
-    <value>{0} of {1} duties completed, one needed</value>
+  <data name="Core.Req.DutiesOneDone" xml:space="preserve">
+    <value>one of {0} duties completed</value>
+    <comment>Core: RequirementDetail.cs. {0} = duties, any one of which is enough.</comment>
+  </data>
+  <data name="Core.Req.DutiesOneNeeded" xml:space="preserve">
+    <value>needs one of {0} duties</value>
+    <comment>Core: RequirementDetail.cs. {0} = duties, any one of which is enough.</comment>
+  </data>
+  <data name="Core.Req.DutiesAllDone" xml:space="preserve">
+    <value>all {0} duties completed</value>
+    <comment>Core: RequirementDetail.cs. {0} = duties.</comment>
+  </data>
+  <data name="Core.Req.DutyLeft" xml:space="preserve">
+    <value>1 duty left</value>
     <comment>Core: RequirementDetail.cs.</comment>
   </data>
-  <data name="Core.Req.DutiesDone" xml:space="preserve">
-    <value>{0} of {1} duties completed</value>
-    <comment>Core: RequirementDetail.cs.</comment>
+  <data name="Core.Req.DutiesLeft" xml:space="preserve">
+    <value>{0} duties left</value>
+    <comment>Core: RequirementDetail.cs. {0} = duties still to complete.</comment>
   </data>
   <data name="Core.Req.AcceptConditionOne" xml:space="preserve">
     <value>1 accept condition not checked</value>
@@ -7578,13 +7583,25 @@
     <value>needs {0}</value>
     <comment>Core: RequirementDetail.cs.</comment>
   </data>
-  <data name="Core.Req.PrerequisitesDoneOneNeeded" xml:space="preserve">
-    <value>{0} of {1} prerequisites done, one needed</value>
+  <data name="Core.Req.PrerequisitesOneDone" xml:space="preserve">
+    <value>one of {0} prerequisites done</value>
+    <comment>Core: RequirementDetail.cs. {0} = prerequisites, any one of which is enough.</comment>
+  </data>
+  <data name="Core.Req.PrerequisitesOneNeeded" xml:space="preserve">
+    <value>needs one of {0} prerequisites</value>
+    <comment>Core: RequirementDetail.cs. {0} = prerequisites, any one of which is enough.</comment>
+  </data>
+  <data name="Core.Req.PrerequisitesAllDone" xml:space="preserve">
+    <value>all {0} prerequisites done</value>
+    <comment>Core: RequirementDetail.cs. {0} = prerequisites.</comment>
+  </data>
+  <data name="Core.Req.PrerequisiteLeft" xml:space="preserve">
+    <value>1 prerequisite left</value>
     <comment>Core: RequirementDetail.cs.</comment>
   </data>
-  <data name="Core.Req.PrerequisitesDone" xml:space="preserve">
-    <value>{0} of {1} prerequisites done</value>
-    <comment>Core: RequirementDetail.cs.</comment>
+  <data name="Core.Req.PrerequisitesLeft" xml:space="preserve">
+    <value>{0} prerequisites left</value>
+    <comment>Core: RequirementDetail.cs. {0} = prerequisites still to do.</comment>
   </data>
   <data name="Core.Req.NeedsSatisfactionWithNotChecked" xml:space="preserve">
     <value>needs satisfaction rank {0} with {1}, not checked</value>
@@ -7941,6 +7958,86 @@
   <data name="Core.Path.ChoiceDetail" xml:space="preserve">
     <value>Only one of these can be done · you did {0}</value>
     <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.QuestsBeforeOne" xml:space="preserve">
+    <value>1 quest before this one</value>
+    <comment>Core: PathHeading.cs. The Path header when one earlier quest is still to do.</comment>
+  </data>
+  <data name="Core.Path.QuestsBefore" xml:space="preserve">
+    <value>{0:N0} quests before this one</value>
+    <comment>Core: PathHeading.cs. {0} = earlier quests still to do.</comment>
+  </data>
+  <data name="Core.Path.EarlierDone" xml:space="preserve">
+    <value>{0:N0} of {1:N0} earlier quests done</value>
+    <comment>Core: PathHeading.cs. The Path header's hover: {0} = earlier quests done, {1} = earlier quests.</comment>
+  </data>
+  <data name="Core.Chain.Next" xml:space="preserve">
+    <value>Next in chain:</value>
+    <comment>Core: ChainLine.cs. Before the next quest of the chain after the one shown.</comment>
+  </data>
+  <data name="Core.Chain.EarlierOpen" xml:space="preserve">
+    <value>Still open earlier:</value>
+    <comment>Core: ChainLine.cs. Before a skipped quest of the chain that comes before the one shown.</comment>
+  </data>
+  <data name="Core.Chain.Last" xml:space="preserve">
+    <value>Last quest in this chain</value>
+    <comment>Core: ChainLine.cs. The quest shown is the only one of its chain left.</comment>
+  </data>
+  <data name="Core.Chain.Complete" xml:space="preserve">
+    <value>Chain complete</value>
+    <comment>Core: ChainLine.cs.</comment>
+  </data>
+  <data name="Core.Chain.AllDone" xml:space="preserve">
+    <value>All {0:N0} quests done</value>
+    <comment>Core: ChainLine.cs. The chain bar's hover: {0} = quests in the chain.</comment>
+  </data>
+  <data name="Core.Chain.Tally" xml:space="preserve">
+    <value>{0:N0} of {1:N0} quests done</value>
+    <comment>Core: ChainLine.cs. The chain bar's hover: {0} = quests done, {1} = quests in the chain.</comment>
+  </data>
+  <data name="Core.Left.Count" xml:space="preserve">
+    <value>{0:N0} left</value>
+    <comment>Core: LeftText.cs. {0} = how many are still to do.</comment>
+  </data>
+  <data name="Core.Left.AllDone" xml:space="preserve">
+    <value>all done</value>
+    <comment>Core: LeftText.cs. Nothing is left to do.</comment>
+  </data>
+  <data name="Core.Left.Tally" xml:space="preserve">
+    <value>{0:N0} of {1:N0} done</value>
+    <comment>Core: LeftText.cs. A tooltip's tally: {0} = done, {1} = in all.</comment>
+  </data>
+  <data name="Core.Motion.OffWindows" xml:space="preserve">
+    <value>Motion is off, because Windows' "Show animations" is off.</value>
+    <comment>Core: MotionStatus.cs. Settings › Look, under Reduce motion.</comment>
+  </data>
+  <data name="Core.Motion.OnWindows" xml:space="preserve">
+    <value>Motion is on, following Windows' "Show animations".</value>
+    <comment>Core: MotionStatus.cs. Settings › Look, under Reduce motion.</comment>
+  </data>
+  <data name="Core.Motion.Off" xml:space="preserve">
+    <value>Motion is off.</value>
+    <comment>Core: MotionStatus.cs. Settings › Look, under Reduce motion.</comment>
+  </data>
+  <data name="Core.Motion.On" xml:space="preserve">
+    <value>Motion is on.</value>
+    <comment>Core: MotionStatus.cs. Settings › Look, under Reduce motion.</comment>
+  </data>
+  <data name="Core.Motion.OffChosen" xml:space="preserve">
+    <value>Motion is off: Reduce motion is on.</value>
+    <comment>Core: MotionStatus.cs. Settings › Look, under Reduce motion.</comment>
+  </data>
+  <data name="Core.Motion.OnOverride" xml:space="preserve">
+    <value>Motion is on for Tsukimichi, though Windows' "Show animations" is off.</value>
+    <comment>Core: MotionStatus.cs. Settings › Look, under Reduce motion.</comment>
+  </data>
+  <data name="Core.Motion.AnimateAnyway" xml:space="preserve">
+    <value>Animate Tsukimichi anyway</value>
+    <comment>Core: MotionStatus.cs. Settings › Look, under Reduce motion. A button: motion on for Tsukimichi alone.</comment>
+  </data>
+  <data name="Core.Motion.FollowWindows" xml:space="preserve">
+    <value>Follow Windows again</value>
+    <comment>Core: MotionStatus.cs. Settings › Look, under Reduce motion. A button: Reduce motion follows Windows' setting again.</comment>
   </data>
   <data name="Core.Path.TallyItem" xml:space="preserve">
     <value>{0} {1}</value>
@@ -8645,8 +8742,8 @@
     <comment>{0} = the chain's name</comment>
   </data>
   <data name="RecapChainIntroFormat" xml:space="preserve">
-    <value>The journal of the {0} quests you completed of {1} in this story, in story order.</value>
-    <comment>{0} = quests done in the chain, {1} = quests in the chain</comment>
+    <value>The journal of the {0} quests you completed in this story, in story order.</value>
+    <comment>{0} = quests done in the chain, which the recap reads.</comment>
   </data>
   <data name="RecapNoCharacter" xml:space="preserve">
     <value>Log in or view a character to read the story so far.</value>
@@ -8720,8 +8817,8 @@
     <value>Achievement</value>
   </data>
   <data name="LadderLineFormat" xml:space="preserve">
-    <value>Achievement: {0} · {1} of {2} quests · {3}</value>
-    <comment>{0} = the achievement, {1} = quests done, {2} = quests it needs, {3} = earned or not</comment>
+    <value>Achievement: {0} · {1} · {2}</value>
+    <comment>{0} = the achievement, {1} = what is left ("3 left", "all done"), {2} = earned or not.</comment>
   </data>
   <data name="LadderNeedsFormat" xml:space="preserve">
     <value>Achievement: {0} · needs {1} quests</value>
