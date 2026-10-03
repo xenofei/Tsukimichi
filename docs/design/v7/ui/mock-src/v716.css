@@ -1,0 +1,303 @@
+
+/* ======================================================================================================
+   1.16 "Themes": Ishgard Snow (spec-1.16.md §A). The same markup; only the palette moves.
+   ====================================================================================================== */
+.mk.snow{--night:#EEF1F6;--sunk:#E1E6EE;--raised:#F9FAFC;--hover:#DCE3ED;--line:#CAD2DF;--vline:#7A859C;--umbra:#C8D1E0;
+  --silver:#1A2136;--mist:#434D6A;--dusk:#56607C;--veil:#8A93AA;--vtext:#56607C;--etext:#962A6A;--eclipse:#962A6A;
+  --abyss:#D9DFE9;--top:#F8FAFD;--gilt:#7C8498;--gilthi:#3F4862;--giltlo:#4A5268;--acc:#755308;--q-card:#F3F5F9;color:#1A2136}
+.mk.snow .win{background:#EEF1F6;border-color:#B8C0D0;box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(26,33,54,.10),0 24px 60px rgba(0,0,0,.45),0 6px 16px rgba(0,0,0,.25)}
+/* frame (host title bar stays Dalamud's), toolbar and chips */
+.mk.snow .w-title{background:#DCE2EC;border-bottom-color:#C3CBDA;color:#1A2136}
+.mk.snow .w-title .tri{border-top-color:#434D6A}
+.mk.snow .w-tool{background:#F3F5F9;border-bottom-color:#CAD2DF}
+.mk.snow .pill-in,.mk.snow .qv,.mk.snow .chr{background:#FFFFFF;border-color:#CAD2DF}
+.mk.snow .qv span{border-right-color:#CAD2DF}
+.mk.snow .qv span.on{background:#E3E8F0}
+.mk.snow .chip{background:#FFFFFF;border-color:#CAD2DF}
+.mk.snow .chip.set{border-color:#AC8324}
+.mk.snow .tbtn .fbg{background:#F2D27A;color:#2A1E05}
+.mk.snow .w-chips{border-bottom-color:#D3DAE5}
+.mk.snow .pip{background:#AC8324}
+.mk.snow .jb{background:linear-gradient(135deg,#5878B8,#34508E);border-color:#2C3E6E;color:#fff}
+.mk.snow .lvp{background:#E3E8F0;color:#434D6A}
+/* status words in the palette's state inks */
+.mk.snow .stx .sw{color:#1A2136}
+.mk.snow .tr.rdy .stx .sw,.mk.snow .st-comp,.mk.snow .hl.st-comp{color:#755308}
+.mk.snow .stx .why.ec{color:#962A6A}
+.mk.snow .xpp{color:#56607C}
+/* stripes: gold #AC8324 (3.1:1), Completed faded, Locked out #962A6A */
+.mk.snow .tr[style*="F2D27A"]{--stripe:#A07B25!important}
+.mk.snow .tr[style*="214,178,90"]{--stripe:#C8B07A!important}
+.mk.snow .tr[style*="DDE3F0"],.mk.snow .tr[style*="221,227,240"]{--stripe:#59627A!important}
+.mk.snow .tr[style*="124,134,168"],.mk.snow .tr[style*="5C6584"]{--stripe:#8A93AA!important}
+.mk.snow .tr[style*="B25C7F"]{--stripe:#962A6A!important}
+/* --- Full on Snow: the dawn sky, came (lead) metal, cool shadows, warm washes instead of glows --- */
+.mk.full.snow .win{border-color:#9AA2B4;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 0 0 1px rgba(26,33,54,.12),0 24px 60px rgba(0,0,0,.45)}
+.mk.full.snow .w-body{background:linear-gradient(180deg,#D3DEF0 0%,#DCE5F3 14%,#E7ECF4 30%,#EFEAEC 42%,#EEF1F6 56%,#F1F3F7 80%,#F4F6F9 100%)}
+.mk.full.snow .rail{background:linear-gradient(180deg,rgba(217,223,233,.92),rgba(222,228,237,.86));border-right-color:rgba(124,132,152,.35)}
+.mk.full.snow .rail .rule{background:linear-gradient(90deg,rgba(124,132,152,0),rgba(89,98,122,.8),rgba(124,132,152,0))}
+.mk.full.snow .st7 .pl{background:#CFD7E4;box-shadow:inset 0 -1px 0 rgba(26,33,54,.14)}
+.mk.full.snow .st7.on .pl{background:rgba(172,131,36,.12);box-shadow:none}
+.mk.full.snow .st7.on .ic{color:#9A7418}
+.mk.full.snow .r7 .bead{background:radial-gradient(circle at 40% 35%,#FFF6D8,#F2D27A 60%,#C9A04A);box-shadow:0 0 0 1.5px #F9FAFC,0 1px 2px rgba(26,33,54,.3)}
+.mk.full.snow .tree{border-right-color:rgba(124,132,152,.35)}
+.mk.full.snow .th .r,.mk.full.snow .grp::after{background:linear-gradient(90deg,rgba(89,98,122,.6),rgba(124,132,152,0))}
+.mk.full.snow .tn .road{background:linear-gradient(90deg,rgba(124,132,152,.32),rgba(124,132,152,0) 85%)}
+.mk.full.snow .tn.sel{background:linear-gradient(90deg,rgba(172,131,36,.14),rgba(172,131,36,.03))}
+.mk.full.snow .tn.sel::before{background:#AC8324;box-shadow:none}
+.mk.full.snow .tn .rdy{color:#755308;background:rgba(242,210,122,.38)}
+.mk.full.snow .mrd i{background:linear-gradient(90deg,rgba(124,132,152,0),rgba(89,98,122,.7))}
+.mk.full.snow .mrd i+b+i{background:linear-gradient(90deg,rgba(89,98,122,.7),rgba(124,132,152,0))}
+.mk.full.snow .mrd b{background:linear-gradient(135deg,#FFFFFF,#9AA2B6 55%,#59627A);box-shadow:0 1px 1px rgba(26,33,54,.2)}
+.mk.full.snow .ttl b{color:#1A2136;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.mk.full.snow .ttl span{color:#3F4862}
+.mk.full.snow .thd{color:#434D6A}
+.mk.full.snow .thd .sort{color:#755308}
+.mk.full.snow .thd::after{background:linear-gradient(90deg,rgba(124,132,152,0),rgba(89,98,122,.75) 18%,rgba(124,132,152,.5) 70%,rgba(124,132,152,0))}
+.mk.full.snow .grp b{color:#3F4862}
+.mk.full.snow .tr{border-bottom-color:rgba(122,133,156,.22)}
+.mk.full.snow .tr:nth-child(even of .tr){background:rgba(26,33,54,.022)}
+.mk.full.snow .tr.sel{background:linear-gradient(90deg,rgba(242,210,122,.30),rgba(242,210,122,.10) 60%,rgba(242,210,122,.05));box-shadow:inset 0 1px 0 rgba(172,131,36,.45),inset 0 -1px 0 rgba(172,131,36,.45)}
+.mk.full.snow .tr.hov{background:#DCE3ED}
+.mk.full.snow .tr.rdy::after{background-image:linear-gradient(90deg,rgba(172,131,36,.55),rgba(172,131,36,0));box-shadow:none;animation:none}
+.mk.full.snow .tr .g img{filter:drop-shadow(0 1px 1px rgba(26,33,54,.30))}
+.mk.full.snow .tr.rdy .g img{filter:drop-shadow(0 0 3px rgba(242,210,122,.75)) drop-shadow(0 1px 1px rgba(26,33,54,.3))}
+.mk.full.snow .det{border-left-color:rgba(124,132,152,.35);background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,.45))}
+/* cards: raised snow, the came (lead) edge lit upper left, a white top highlight, cool soft shadow */
+.mk.full.snow .card{background:linear-gradient(180deg,rgba(252,253,254,.96),rgba(246,248,251,.96)) padding-box,linear-gradient(160deg,#B8C0D0 0%,#7C8498 30%,#5A6278 60%,#7C8498 80%,#4A5268 100%) border-box;box-shadow:inset 0 1px 0 #FFFFFF,0 2px 8px rgba(26,33,54,.10),0 1px 2px rgba(26,33,54,.08)}
+.mk.full.snow .card .cm{border-color:#59627A;filter:none}
+.mk.full.snow .card .cm.c,.mk.full.snow .card .cm.d{border-color:#4A5268}
+.mk.full.snow .card h4{color:#3F4862;text-shadow:0 1px 0 #FFFFFF}
+.mk.full.snow .card h4 .r{color:#434D6A}
+.mk.full.snow .req .mkr{background:#AC8324}
+.mk.full.snow .acts{border-top-color:rgba(124,132,152,.45);background:linear-gradient(180deg,rgba(243,245,249,.96),rgba(234,238,244,.98))}
+.mk.full.snow .apill{background:linear-gradient(180deg,#FFFFFF,#EEF1F6);border-color:#9AA2B6;color:#1A2136;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(26,33,54,.10)}
+.mk.full.snow .apill svg{color:#434D6A}
+.mk.full.snow .apill.pri{background:linear-gradient(180deg,#F8DE96,#EBC66C 50%,#D6AE52);border-color:#A88437;color:#2A1E05;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 1px 3px rgba(122,90,20,.30)}
+.mk.full.snow .apill.pri svg{color:#2A1E05}
+.mk.full.snow .ab{background:linear-gradient(180deg,#FFFFFF,#EEF1F6);border-color:#CAD2DF;color:#434D6A}
+.mk.full.snow .w-stat{background:linear-gradient(180deg,#E6EBF2,#DDE3EC);color:#434D6A}
+.mk.full.snow .w-stat::before{background:linear-gradient(90deg,rgba(124,132,152,.2),rgba(89,98,122,.8) 50%,rgba(124,132,152,.2))}
+.mk.full.snow .w-stat .msq{background:rgba(242,210,122,.28);border-color:#C9A65C;color:#755308}
+.mk.full.snow .w-stat .pip{box-shadow:none}
+.mk.full.snow .w-stat .dt,.mk.full.snow .w-stat .ver{color:#8A93AA}
+/* the banner, daylight-graded: no night multiply, 20 % desaturation, a scrim to snow; navy title */
+.mk.full.snow .ban{background:#DCE3EE;box-shadow:0 0 0 1px #7C8498,0 4px 12px rgba(26,33,54,.18)}
+.mk.full.snow .snowban .art{filter:saturate(.8) brightness(1.04)}
+.mk.full.snow .snowban .scrim{background:linear-gradient(180deg,rgba(238,241,246,0) 0%,rgba(238,241,246,.22) 40%,rgba(238,241,246,.92) 100%)}
+.mk.full.snow .ban .t .n{color:#1A2136;text-shadow:0 1px 0 rgba(255,255,255,.8),0 0 10px rgba(255,255,255,.7)}
+.mk.full.snow .ban .t .m{color:#434D6A;text-shadow:0 1px 0 rgba(255,255,255,.8),0 0 10px rgba(255,255,255,.7);overflow:hidden}
+.mk.full.snow .ban .hm img{filter:drop-shadow(0 3px 5px rgba(26,33,54,.35))}
+.mk.full.snow .hero .hd{color:#434D6A}
+.mk.full.snow .rwline,.mk.snow .giver{color:#1A2136}
+/* Quiet on Snow: designed tones (research §8.2) */
+.mk.quiet.snow{--q-tone:#EEF1F6;--q-card:#FAFBFD;--q-rule:#D3DAE5}
+.mk.quiet.snow .win,.mk.quiet.snow .w-body{background:#EEF1F6}
+.mk.quiet.snow .rail{background:#E3E8F0}
+.mk.quiet.snow .tree{background:#E8ECF2}
+.mk.quiet.snow .det,.mk.quiet.snow .acts{background:#F3F5F9}
+.mk.quiet.snow .card{background:#FAFBFD;box-shadow:0 0 0 1px #E1E6EE}
+.mk.quiet.snow .st7 .pl{background:#D7DEE8}
+.mk.quiet.snow .st7.on .pl{background:rgba(26,33,54,.05);box-shadow:inset 0 0 0 1px #9AA4B8}
+.mk.quiet.snow .st7.on .ic{color:#9A7418}
+.mk.quiet.snow .r7 .bead{background:#AC8324}
+.mk.quiet.snow .tn.sel{background:rgba(26,33,54,.06)}
+.mk.quiet.snow .tr.sel{background:rgba(26,33,54,.05)}
+.mk.quiet.snow .tr.sel::after{border-color:#9AA4B8}
+.mk.quiet.snow .tr.hov{background:#E3E8F0}
+.mk.quiet.snow .apill{background:#FAFBFD;border-color:#C3CBDA;color:#1A2136}
+.mk.quiet.snow .apill.pri{background:#F2D27A;border-color:#C9A65C;color:#2A1E05}
+.mk.quiet.snow .ab{border-color:#C3CBDA;color:#434D6A}
+.mk.quiet.snow .w-stat{background:#EEF1F6}
+.mk.quiet.snow .w-stat .msq{color:#755308}
+.mk.quiet.snow .thd .sort{color:#1A2136}
+/* Plain on Snow */
+.mk.plain.snow{--p-line:#D3DAE5;--p-band:#E3E8F0}
+.mk.plain.snow .win,.mk.plain.snow .w-body{background:#EEF1F6}
+.mk.plain.snow .w-tool,.mk.plain.snow .acts{background:#E8ECF2}
+.mk.plain.snow .rail,.mk.plain.snow .w-stat{background:#E1E6EE}
+.mk.plain.snow .thd{background:#E3E8F0;border-bottom-color:#C3CBDA}
+.mk.plain.snow .thd>div{border-right-color:#C3CBDA}
+.mk.plain.snow .tr:nth-child(even of .tr),.mk.plain.snow .tn:nth-child(even){background:rgba(26,33,54,.03)}
+.mk.plain.snow .tr.sel{background:rgba(26,33,54,.07)}
+.mk.plain.snow .tr.hov{background:#E3E8F0}
+.mk.plain.snow .apill{background:#F9FAFC;border-color:#C3CBDA;color:#1A2136}
+.mk.plain.snow .apill.pri{color:#755308;border-color:#C9A65C}
+.mk.plain.snow .ab{border-color:#D3DAE5;color:#434D6A}
+.mk.plain.snow .rl .u{color:#755308}
+.mk.plain.snow .st7 .pl{background:#D7DEE8}
+.mk.plain.snow .st7.on .pl{background:#D3DAE5}
+.mk.plain.snow .st7.on::before{background:#1A2136}
+.mk.plain.snow .st7.on .ic{color:#1A2136}
+.mk.plain.snow .w-stat .msq{color:#1A2136}
+/* the filter drawer on Snow */
+.mk.full.snow .drw{background:linear-gradient(180deg,rgba(252,253,254,.995),rgba(244,246,250,.995)) padding-box,linear-gradient(172deg,#B8C0D0 0%,#7C8498 26%,#5A6278 64%,#4A5268 100%) border-box;box-shadow:0 14px 30px rgba(26,33,54,.16),inset 0 1px 0 #fff}
+.mk.full.snow .drw::after{background:linear-gradient(90deg,rgba(26,33,54,.10),rgba(26,33,54,0))}
+.mk.full.snow .drw .cmk{border-color:#4A5268}
+.mk.full.snow .drw .dh b{color:#1A2136;text-shadow:none}
+.mk.full.snow .drw .dic{color:#755308}
+.mk.full.snow .drw .dct,.mk.full.snow .drw .dsec h5 .pc,.mk.quiet.snow .drw .dct,.mk.quiet.snow .drw .dsec h5 .pc{background:#E3E8F0;color:#1A2136}
+.mk.full.snow .drw .dib{background:linear-gradient(180deg,#FFFFFF,#EEF1F6);border-color:#CAD2DF}
+.mk.full.snow .drw .dsec h5{color:#3F4862;text-shadow:0 1px 0 #fff}
+.mk.full.snow .drw .dsec h5::after{background:linear-gradient(90deg,rgba(89,98,122,.55),rgba(89,98,122,0))}
+.mk.full.snow .drw .dsec h5 .cv{color:#59627A}
+.mk.snow .drw .tg{background:#E1E6EE;box-shadow:inset 0 0 0 1px #B8C0D0}
+.mk.snow .drw .tg::after{background:#8A93AA}
+.mk.snow .drw .tg.on{background:#EDD48C;box-shadow:inset 0 0 0 1px #AC8324}
+.mk.snow .drw .tg.on::after{background:radial-gradient(circle 5.7px at calc(50% - 3.9px) calc(50% - 2.5px),#EDD48C 97%,rgba(237,212,140,0) 100%),#755308}
+.mk.snow .drw .stp,.mk.snow .drw .sgm,.mk.snow .drw .dd,.mk.snow .drw .rng .f{background:#FFFFFF;box-shadow:inset 0 0 0 1px #CAD2DF}
+.mk.snow .drw .stp i{background:#E3E8F0;color:#434D6A}
+.mk.snow .drw .sum .sr{border-bottom-color:rgba(122,133,156,.22)}
+.mk.snow .drw .sum .sr:hover,.mk.snow .drw .sum .sr.hov{background:#E3E8F0}
+.mk.snow .drw .sum .sr .v.set::before{background:#AC8324}
+.mk.snow .drw .sc{background:#FFFFFF;border-color:#CAD2DF}
+.mk.snow .drw .sc.on{background:#E8ECF2;border-color:#9AA4B8}
+.mk.snow .drw .sgm span{border-right-color:#CAD2DF}
+.mk.snow .drw .sgm span.on{background:#E3E8F0}
+.mk.full.snow .drw .dft::before{background:linear-gradient(90deg,rgba(124,132,152,.15),rgba(89,98,122,.7) 50%,rgba(124,132,152,.15))}
+.mk.full.snow .drw .rst:hover,.mk.full.snow .drw .rst.hov{background:#E3E8F0}
+.mk.quiet.snow .drw{background:#F7F8FB;border-color:#C3CBDA;box-shadow:0 8px 20px rgba(26,33,54,.14)}
+.mk.quiet.snow .drw>.hr{background:#D3DAE5}
+.mk.quiet.snow .drw .tg.on{background:#D3DAE5;box-shadow:inset 0 0 0 1px #59627A}
+.mk.quiet.snow .drw .tg.on::after{background:radial-gradient(circle 5.7px at calc(50% - 3.9px) calc(50% - 2.5px),#D3DAE5 97%,rgba(211,218,229,0) 100%),#1A2136}
+.mk.plain.snow .drw{background:#F3F5F9;border-color:#C3CBDA}
+.mk.plain.snow .drw .tg{background:#FFFFFF;box-shadow:inset 0 0 0 1px #9AA4B8}
+.mk.plain.snow .drw .tg.on{background:#FFFFFF}
+.mk.plain.snow .drw .tg.on::before{border-color:#1A2136}
+.mk.plain.snow .drw .dft{background:#E1E6EE}
+/* the giver card's plate on Snow (§A5) */
+.mk.snow .gv .gt b{color:#1A2136}
+.mk.snow .gv .gt span{color:#434D6A}
+.mk.snow .kv dd .pp{width:18px;height:18px}
+
+/* ---------- palette sheet ---------- */
+.b16 .pc16{width:410px;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px #232A42;background:var(--w)}
+.b16 .pc16 .pch{padding:10px 12px 6px;display:flex;align-items:baseline;gap:10px}
+.b16 .pc16 .pch b{font:400 17px/1.2 Marcellus,Georgia,serif;color:var(--t)}
+.b16 .pc16 .pch span{font-size:11.5px;color:var(--t2)}
+.b16 .pc16 .sw{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:4px 12px 10px}
+.b16 .pc16 .sw div{display:flex;flex-direction:column;gap:4px}
+.b16 .pc16 .sw i{height:26px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(128,128,128,.35)}
+.b16 .pc16 .sw span{font-size:10px;color:var(--t2);line-height:1.25}
+.b16 .pc16 .sw code{font-size:9.5px;color:var(--t3)}
+.b16 .pc16 .pan{position:relative;padding:14px 12px 12px;height:196px}
+.b16 .pc16 .pan .sky{position:absolute;inset:0}
+.b16 .pc16 .pcard{position:relative;background:var(--r);border-radius:5px;padding:10px 12px;box-shadow:0 0 0 1px var(--ln),0 2px 8px rgba(0,0,0,.25)}
+.b16 .pc16.lt .pcard{box-shadow:0 0 0 1px var(--ln),inset 0 1px 0 #fff,0 2px 8px rgba(26,33,54,.10)}
+.b16 .pc16 .pcard h5{margin:0 0 6px;font:500 16px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.b16 .pc16 .tl{font-size:12px;line-height:1.65}
+.b16 .pc16 .mr{display:flex;align-items:center;gap:6px;margin-top:8px}
+.b16 .gp16{margin-left:auto;height:26px;border-radius:13px;padding:0 12px;display:inline-flex;align-items:center;font-size:11.5px;background:linear-gradient(180deg,#FFE6A3,#F2D27A 45%,#D9B65F);color:#1A1406;border:1px solid #F6DFA0}
+.b16 .gp16.lt{background:linear-gradient(180deg,#F8DE96,#EBC66C 50%,#D6AE52);border-color:#A88437;color:#2A1E05}
+.b16 .pp16{display:flex;flex-direction:column;gap:10px}
+.b16 .pp16>div{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:8px}
+.b16 .pp16 .ppn{background:#0F1424;box-shadow:0 0 0 1px #232A42}
+.b16 .pp16 .pps{background:#EEF1F6;box-shadow:0 0 0 1px #C3CBDA}
+.b16 .pp16 span{font-size:11px;color:#7C86A8}
+.b16 .pp16 .pps span{color:#434D6A}
+.b16 #ct16 table td{font-size:11.5px;white-space:nowrap}
+.b16 #ct16 code{font-size:10.5px}
+
+/* ---------- Settings › Themes ---------- */
+.mk.set16{width:900px;height:1540px}
+.mk.set16 .win{height:100%}
+.mk.set16 .sbody{flex:1;min-height:0;display:grid;grid-template-columns:180px 1fr}
+.mk.set16 .snav{background:linear-gradient(180deg,#0E1329,#0A0E1C);border-right:1px solid rgba(168,139,82,.28);padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.mk.set16 .ssearch{display:flex;align-items:center;gap:7px;height:28px;border-radius:14px;background:var(--sunk);border:1px solid var(--line);padding:0 10px;color:var(--dusk);font-size:12px;margin-bottom:10px}
+.mk.set16 .sn{height:32px;display:flex;align-items:center;padding:0 12px;border-radius:6px;color:var(--mist);font-size:13px}
+.mk.set16 .sn.on{background:rgba(242,210,122,.08);color:var(--silver);box-shadow:inset 2px 0 0 var(--moon)}
+.mk.set16 .spage{overflow:hidden;padding:20px 28px 28px;background:linear-gradient(180deg,#141B36,#0F1424 30%)}
+.mk.set16 .sh16 h3{margin:0;font:400 22px/1.2 Marcellus,Georgia,serif;color:#F4F1E8}
+.mk.set16 .sh16 p{margin:4px 0 0;font-size:12.5px;color:var(--mist)}
+.mk.set16 section{margin-top:22px}
+.mk.set16 section h4{margin:0 0 12px;display:flex;align-items:center;gap:10px;font:500 18px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#E6CF98}
+.mk.set16 section h4::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(217,190,130,.6),rgba(168,139,82,0))}
+.mk.set16 .nb{font:600 10.5px/1 "Noto Sans",sans-serif;letter-spacing:0;color:var(--silver);background:#262D42;border-radius:8px;padding:3px 7px}
+.mk.set16 .tgrid{display:grid;grid-template-columns:repeat(3,206px);gap:14px}
+.mk.set16 .tc{border-radius:8px;overflow:hidden;background:#171C30;box-shadow:0 0 0 1px #2E3550,0 3px 10px rgba(0,0,0,.35);transition:box-shadow .15s}
+.mk.set16 .tc.on{box-shadow:0 0 0 2px #D9BE82,0 0 0 3px rgba(8,11,22,.8),0 3px 10px rgba(0,0,0,.35)}
+.mk.set16 .tc.hov{box-shadow:0 0 0 1px #7C86A8,0 3px 10px rgba(0,0,0,.35)}
+.mk.set16 .tc.later{opacity:.92}
+.mk.set16 .tcp{padding:12px 10px 10px}
+.mk.set16 .f8{display:grid;grid-template-columns:repeat(4,28px);gap:10px 18px;justify-content:center}
+.mk.set16 .f8 img,.mk.set16 .f8 svg{display:block;width:28px;height:28px}
+.mk.set16 .f8 .ph{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#3A2A28,#1E1614);box-shadow:inset 0 0 0 1.5px #C9A65C}
+.mk.set16 .tcr{margin-top:12px;height:26px;border-radius:4px;display:flex;align-items:center;gap:7px;padding:0 8px;font-size:11px;white-space:nowrap}
+.mk.set16 .tcr .m{display:flex}
+.mk.set16 .tcr b{margin-left:auto;font-weight:600}
+.mk.set16 .tcb{padding:9px 12px 11px}
+.mk.set16 .tn16{display:flex;align-items:baseline;gap:8px}
+.mk.set16 .tn16 b{font:400 14.5px/1.2 Marcellus,Georgia,serif;color:#F4F1E8}
+.mk.set16 .tn16 .lg{font-size:10px;color:var(--mist);background:#262D42;border-radius:7px;padding:1px 6px}
+.mk.set16 .pw .use{margin-left:auto;font-size:11px;color:#F2D27A;line-height:8px}
+.mk.set16 .ts{font-size:11px;color:var(--dusk);margin-top:2px}
+.mk.set16 .pw{display:flex;gap:4px;margin-top:8px}
+.mk.set16 .pw i{width:22px;height:8px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.mk.set16 .pv16{border:1px solid;border-radius:8px;overflow:hidden;width:660px;height:268px}
+.mk.set16 .pvh{display:flex;align-items:baseline;gap:8px;padding:9px 14px;font-size:12px;border-bottom:1px solid rgba(128,128,128,.25)}
+.mk.set16 .pvh span{margin-left:auto;font-size:11px;opacity:.85}
+.mk.set16 .pvb{display:grid;grid-template-columns:1fr 200px;gap:14px;padding:10px 14px}
+.mk.set16 .r16{display:flex;align-items:center;gap:9px;height:34px;border-bottom:1px solid;font-size:12.5px}
+.mk.set16 .r16 em{margin-left:auto;font-style:normal;font-size:12px}
+.mk.set16 .r16 em i{font-style:normal}
+.mk.set16 .pvc{border:1px solid;border-radius:6px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;font-size:12px}
+.mk.set16 .pvc h5{margin:0;font:500 17px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.mk.set16 .srow{display:flex;align-items:center;gap:20px;min-height:52px;padding:8px 0;border-bottom:1px solid rgba(42,49,73,.5)}
+.mk.set16 .sl{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.mk.set16 .sl b{font-weight:500;font-size:13px;color:var(--silver)}
+.mk.set16 .sl span{font-size:11.5px;color:var(--dusk)}
+.mk.set16 .pks{display:flex;gap:10px}
+.mk.set16 .pk{display:flex;flex-direction:column;gap:5px;align-items:center;font-size:11px;color:var(--mist)}
+.mk.set16 .pk i{font-style:normal;font-size:10px;color:var(--dusk)}
+.mk.set16 .pkm{position:relative;width:76px;height:48px;border-radius:5px;box-shadow:0 0 0 1px #2E3550;overflow:hidden}
+.mk.set16 .pk.on .pkm{box-shadow:0 0 0 2px #D9BE82}
+.mk.set16 .pk.on{color:var(--silver)}
+.mk.set16 .pkm i{position:absolute;left:8px;height:6px;width:46%;border-radius:2px;top:18px}
+.mk.set16 .pkm i+i{top:28px}
+.mk.set16 .pkm b{position:absolute;right:8px;top:8px;width:8px;height:8px;border-radius:50%}
+.mk.set16 .pkm em{position:absolute;left:8px;top:8px;width:30%;height:4px;border-radius:2px;opacity:.8}
+.mk.set16 .tg16{position:relative;width:36px;height:20px;border-radius:10px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);flex:none}
+.mk.set16 .tg16::after{content:"";position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:var(--mist)}
+.mk.set16 .sg16{display:flex;height:28px;border-radius:14px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.mk.set16 .sg16 span{display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--mist);border-right:1px solid var(--line)}
+.mk.set16 .sg16 span:last-child{border-right:0}
+.mk.set16 .sg16 span.on{background:rgba(221,227,240,.10);color:var(--silver)}
+.mk.set16 .qa{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:14px;color:var(--mist);font-size:12px}
+.mk.set16 .qa svg{width:12px;height:12px}
+.mk.set16 .qa.rs{border:1px solid #2E3550}
+.mk.set16 .rst{border-bottom:0}
+.mk.set16 .new17 h4{color:#E6CF98}
+.mk.set16 .mixt{display:flex;flex-direction:column}
+.mk.set16 .mx{display:grid;grid-template-columns:170px 40px 170px 1fr;align-items:center;height:42px;border-bottom:1px solid rgba(42,49,73,.45);font-size:12.5px}
+.mk.set16 .mx .mn{color:var(--silver)}
+.mk.set16 .dd16{display:flex;align-items:center;height:28px;border-radius:14px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);padding:0 12px;font-size:12px;color:var(--silver);width:156px}
+.mk.set16 .dd16 i{margin-left:auto;font-style:normal;font-size:9px;color:var(--dusk)}
+.mk.set16 .mx .nt{font-size:11.5px;color:#C9A866;padding-left:12px}
+.mk.set16 .mx .nt::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#C9A866;margin-right:6px;vertical-align:middle}
+.mk.set16 .mixs{display:flex;align-items:center;gap:10px;height:40px;font-size:12px;color:var(--mist)}
+.mk.set16 .mixs span:first-child{flex:1}
+.mk.set16 .shr{display:flex;align-items:center;gap:8px}
+.mk.set16 .shr code{font-size:12px;color:var(--silver);background:var(--sunk);border-radius:4px;padding:5px 8px}
+.mk.set16 .pin16{height:28px;border-radius:14px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);padding:0 12px;display:flex;align-items:center;font-size:12px;color:var(--dusk);width:150px}
+.mk.set16 .win{position:relative}
+.toast16{position:absolute;right:24px;bottom:18px;width:260px;height:38px;border-radius:8px;display:flex;align-items:center;gap:10px;padding:0 14px;background:linear-gradient(180deg,rgba(26,31,52,.97),rgba(17,21,38,.97));border:1px solid #6E5732;font-size:12.5px;color:#DDE3F0;box-shadow:0 10px 26px rgba(0,0,0,.6)}
+.toast16 .u{margin-left:auto;color:#F2D27A}
+/* the crest on snow: the moon in lead with a white catch-light; its rules in lead */
+.mk.snow .crest path:first-of-type{fill:#7C8498}
+.mk.snow .crest circle{fill:#AC8324;opacity:.10}
+.mk.snow .crest path{stroke:#7C8498}
+.pbar .seg button{padding:7px 9px;font-size:12px}
+.pbar{overflow:hidden}
+.pbar .seg button,.pbar .shoot{white-space:nowrap}
+.pbar .pt{white-space:nowrap}
+.pbar .pn{display:none}
+.mk.snow .crest{filter:none}
+.mk.snow .rail .crest path[fill^="url"]{fill:#8E97AC}
+.mk.plain.snow .lvp{background:transparent}
+.mk.snow .drw .gp .gh span.set{color:#755308}
+.mk.plain.snow .drw .sum .sr .v.set::after{color:#AC8324}
+.mk.snow .drw .sum .sr .v.set{color:#1A2136}
+.mk.full.snow .tbtn.act{color:#755308}
+.mk.snow .rail .crest path[fill^="url"]{fill:#59627A}
+.b16 .pp16{width:470px}
+.b16 figure:has(.pp16) figcaption{width:470px}
