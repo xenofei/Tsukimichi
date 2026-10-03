@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "Gates the game checks before it offers a quest: a relic weapon at some stage equipped or held, Eureka story and elemental level, Doman Enclave reconstruction progress. A gate Tsukimichi cannot read is listed as not checked, so the quest reads Not checked where it would otherwise read Ready (never Blocked by the gate itself). A gear gate lists its weapons under \"equipped\" (worn) or \"held\" (equipped, in the Armoury Chest or in the inventory): \"items\" are groups of Item row ids, any one group passing when every item of it is there (a paladin's sword and shield form one group), derived from the sheet rows in \"sources\" as the game-data tests check, with \"shield\" saying how a paladin's shield counts; it is judged from the gear the plugin captures, and reads not checked for a character captured without it. \"after\" names the quests before which the gate cannot be passed at all; the catalog adds them to the quest's prerequisites, with \"afterTextKey\" the text row of an after quest that says what it opens. \"gameTextKey\" is the gated quest's own text row stating the gate, when the game states one. The text is never committed. Keys are Quest sheet row ids, sorted ascending.",
+  "note": "Gates the game checks before it offers a quest: a relic weapon at some stage equipped or held, a collection of mounts owned, Eureka story and elemental level, Doman Enclave reconstruction progress. A gate Tsukimichi cannot read is listed as not checked, so the quest reads Not checked where it would otherwise read Ready (never Blocked by the gate itself). A gear gate lists its weapons under \"equipped\" (worn) or \"held\" (equipped, in the Armoury Chest or in the inventory): \"items\" are groups of Item row ids, any one group passing when every item of it is there (a paladin's sword and shield form one group), derived from the sheet rows in \"sources\" as the game-data tests check, with \"shield\" saying how a paladin's shield counts; it is judged from the gear the plugin captures, and reads not checked for a character captured without it. A mount-collection gate lists under \"mounts\" the Mount row ids that must all be owned (\"all\"), derived from the reward mount in \"sources\" (Mount#105: the mounts in the hundred of the Firebird's UIPriority with a ones digit) as the game-data tests check; it is judged from the owned mounts the plugin captures. \"after\" names the quests before which the gate cannot be passed at all; the catalog adds them to the quest's prerequisites, with \"afterTextKey\" the text row of an after quest that says what it opens. \"gameTextKey\" is the gated quest's own text row stating the gate, when the game states one. The text is never committed. Keys are Quest sheet row ids, sorted ascending.",
   "entries": {
     "65742": {
       "gate": "a relic weapon novus equipped",
@@ -66,6 +66,12 @@
       "gameTextKey": "TEXT_JOBREL004_01464_SYSTEM_000_000",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Zodiac_Weapons",
       "note": "Star Light, Star Bright, level 50, Zodiac Weapons: offered only to a character wearing a relic weapon animus (its own text; script IsRelicWeapon025Equipped); a paladin wears both sword and shield. The items are RelicItem row 3. It read Ready as soon as Celestial Radiance was done."
+    },
+    "67086": {
+      "gate": "all seven Heavensward Lanner mounts",
+      "mounts": { "sources": ["Mount#105"], "all": [75, 76, 77, 78, 90, 98, 104] },
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Fiery_Wings,_Fiery_Hearts",
+      "note": "Fiery Wings, Fiery Hearts, the Firebird quest: offered only once the character owns the seven Lanners of the Heavensward extreme trials (white, rose, round, warring, dark, Sophic and Demonic). Its script calls CheckMountAcquire. The sheet gives it level 1 and no previous quest, so it read Ready and Moonlit's Get now for anyone with Heavensward. The mounts are the Firebird's collection in the Mount sheet (UIPriority 30100 to 30109); the later Wondrous Lanner (30110) is not one of them."
     },
     "67749": {
       "gate": "an animated anima weapon equipped",
@@ -158,6 +164,12 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Lighting_the_Way",
       "note": "Lighting the Way, level 70, Doman Reconstruction Quests: Kozakura offers it when the enclave's reconstruction reaches its last stage (the wiki files it after the Tauyaku stage; finishing it completes the rebuilding), which Tsukimichi cannot read, and donations open only with It Takes an Enclave (68677), the link Questionable also adds. The sheet gives it no previous quest, so it read Ready."
     },
+    "68736": {
+      "gate": "all seven Stormblood Kamuy mounts",
+      "mounts": { "sources": ["Mount#181"], "all": [115, 116, 133, 144, 158, 172, 182] },
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Lone_Wolf_No_More",
+      "note": "A Lone Wolf No More, the Kamuy of the Nine Tails quest: offered only once the character owns the seven Kamuy of the Stormblood extreme trials. Its script calls CheckMountAcquire. The sheet gives it level 1 and no previous quest, so it read Ready from level 1. The mounts are the collection of Kamuy of the Nine Tails in the Mount sheet (UIPriority 30200 to 30209); the later Venturous Kamuy (30210) is not one of them."
+    },
     "69506": {
       "gate": "a resistance weapon in your possession",
       "held": { "sources": ["QuestClassJobReward#17"], "items": [[30228, 30245], [30229], [30230], [30231], [30232], [30233], [30234], [30235], [30236], [30237], [30238], [30239], [30240], [30241], [30242], [30243], [30244]] },
@@ -185,6 +197,12 @@
       "gameTextKey": "TEXT_LUCKSA253_04040_SYSTEM_800_009",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Resistance_Weapons",
       "note": "A New Path of Resistance, level 80, Resistance Weapons: offered only while the Law's Order weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 21. It read Ready as soon as The Resistance Remembers was done."
+    },
+    "69593": {
+      "gate": "all seven Shadowbringers Gwiber mounts",
+      "mounts": { "sources": ["Mount#245"], "all": [189, 192, 205, 217, 226, 238, 249] },
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Dragon_Made",
+      "note": "The Dragon Made, the Landerwaffe quest: offered only once the character owns the seven Gwibers of the Shadowbringers extreme trials. Its script calls CheckMountAcquire. The sheet gives it level 1 and no previous quest, so it read Ready from level 1. The mounts are the Landerwaffe's collection in the Mount sheet (UIPriority 30300 to 30309)."
     },
     "69637": {
       "gate": "an augmented Law's Order weapon in your possession",
@@ -221,6 +239,12 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Manderville_Weapons",
       "note": "In Need of Adjustment, level 90, Manderville Weapons: the repeat of A Spirited Reforging for a further job, offered only while that job's amazing Manderville weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 28."
     },
+    "70331": {
+      "gate": "all seven Endwalker Lynx mounts",
+      "mounts": { "sources": ["Mount#328"], "all": [261, 262, 293, 306, 315, 325, 332] },
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Wings_of_Hope",
+      "note": "Wings of Hope, the apocryphal Bahamut quest: offered only once the character owns the seven Lynxes of the Endwalker extreme trials. Its script calls CheckMountAcquire. The sheet checks only its previous quest, so it read Ready as soon as that was done. The mounts are apocryphal Bahamut's collection in the Mount sheet (UIPriority 30400 to 30409)."
+    },
     "70342": {
       "gate": "a majestic Manderville weapon in your possession",
       "held": { "sources": ["QuestClassJobReward#31"], "items": [[39920, 39939], [39921], [39922], [39923], [39924], [39925], [39926], [39927], [39928], [39929], [39930], [39931], [39932], [39933], [39934], [39935], [39936], [39937], [39938]] },
@@ -248,6 +272,12 @@
       "gameTextKey": "TEXT_KINGKW203_05456_SYSTEM_000_011",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Phantom_Weapons",
       "note": "A Phantom Reborn, level 100, Phantom Weapons: offered only while the umbrae weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 37. It read Ready as soon as In Pursuit of Perfection was done."
+    },
+    "71005": {
+      "gate": "all seven Dawntrail Wings mounts",
+      "mounts": { "sources": ["Mount#420"], "all": [345, 346, 363, 389, 407, 422, 444] },
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Wing_Spirit_Cometh",
+      "note": "The Wing Spirit Cometh, the wings of legacy quest: offered only once the character owns the seven Wings of the Dawntrail extreme trials. Its script calls CheckMountAcquire. The sheet checks only its previous quest, so it read Ready as soon as that was done. The mounts are the collection of the wings of legacy in the Mount sheet (UIPriority 30500 to 30509)."
     },
     "71040": {
       "gate": "an obscurum phantom weapon in your possession",

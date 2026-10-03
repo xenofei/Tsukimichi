@@ -2533,8 +2533,8 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 68145,A Taxing Request,lodestone;wiki,notModeled,prereqs,20,0
 68146,Mounting Expectations,lodestone;wiki,notModeled,prereqs,20,0
 68147,The Value of Life,lodestone;wiki,notModeled,prereqs,20,0
-68148,And We Shall Call It Pyros,lodestone;wiki,unresolved,prereqs,10,1
-68149,And We Shall Call It Hydatos,lodestone;wiki,unresolved,prereqs,10,1
+68148,And We Shall Call It Pyros,lodestone;wiki,notModeled,listed,10,0
+68149,And We Shall Call It Hydatos,lodestone;wiki,notModeled,listed,10,0
 68150,The Trouble with Taxidermy,lodestone;wiki,notModeled,prereqs,20,0
 68151,True to Life,lodestone;wiki,notModeled,prereqs,20,0
 68152,The Client Is King,lodestone;wiki,notModeled,prereqs,20,0
@@ -3072,7 +3072,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 68686,The Black Heart Beneath,lodestone;wiki,notModeled,prereqs,20,0
 68687,"Good Swords, Good Dogs",lodestone;wiki,notModeled,prereqs,20,0
 68688,The Fire-bird Down Below,lodestone;wiki,notModeled,dutyUnlock,21,0
-68689,Lighting the Way,lodestone;wiki,unresolved,prereqs,20,1
+68689,Lighting the Way,lodestone;wiki,notModeled,prereqs,20,0
 68690,"In the Beginning, There Was Chaos",lodestone;wiki,notModeled,dutyUnlock,21,0
 68691,And Like Fire Was His Mane,lodestone;wiki,notModeled,dutyUnlock,21,0
 68692,"In the End, There Is Omega",lodestone;wiki,notModeled,dutyUnlock,21,0

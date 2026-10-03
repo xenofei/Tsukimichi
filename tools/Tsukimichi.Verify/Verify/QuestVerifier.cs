@@ -1333,6 +1333,14 @@ internal sealed partial class QuestVerifier(
 
         if (unknown.Count > 0)
         {
+            // A name that is no quest, on a quest whose curated game gate the plugin lists as not checked (a Doman
+            // reconstruction stage, Eureka progress): the source names that gate, which is modeled, just not readable.
+            if (game.Catalog.GameGateOf(quest.RowId) is { Items: null, Mounts: null } gate)
+            {
+                reason = $"source names {string.Join("; ", unknown)}, no quest: the game gate curated/game_gates.json lists as not checked ({gate.Gate})";
+                return Consistency.NotModeled;
+            }
+
             reason = "source names quests not in the catalog: " + string.Join("; ", unknown);
             return Consistency.Disagree;
         }

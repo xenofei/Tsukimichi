@@ -189,7 +189,7 @@ public class BlockerTextTests
     [Fact]
     public void Mount_house_expansion_and_level_cap_have_a_phrase()
     {
-        Assert.Equal("Mount", For(Quest(Target) with { MountRequired = true }, Snapshot(), ctx: new EvalContext { HasMount = false }));
+        Assert.Equal("Mount", For(Quest(Target) with { MountRequired = 1 }, Snapshot() with { Collectibles = new Dictionary<string, CollectibleSet> { ["Mount"] = new() { Missing = [1] } } }));
         Assert.Equal("House", For(Quest(Target) with { HouseRequired = true }, Snapshot(), ctx: new EvalContext { HasHouse = false }));
         Assert.Equal("Expansion: Stormblood", For(Quest(Target) with { Expansion = 2 }, Snapshot() with { MaxExpansion = 1 }));
         Assert.Equal("Lv 60, above your cap", For(Quest(Target) with { Level = 60 }, Snapshot() with { LevelCap = 50 }));

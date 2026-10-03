@@ -116,6 +116,11 @@ public sealed class GameGatesFileTests : IDisposable
     [InlineData("\"65897\"", """{ "gate": "g", "afterTextKey": "TEXT_A", "evidence": "https://e.org", "note": "n" }""", "afterTextKey must be the TEXT_ key")]
     [InlineData("\"65897\"", """{ "gate": "g", "after": [65742], "afterTextKey": "SYSTEM_1", "evidence": "https://e.org", "note": "n" }""", "afterTextKey must be the TEXT_ key")]
     [InlineData("\"65897\"", """{ "gate": "g", "gameTextKey": "SYSTEM_1", "evidence": "https://e.org", "note": "n" }""", "gameTextKey must be a TEXT_ key")]
+    [InlineData("\"67086\"", """{ "gate": "g", "mounts": { "sources": ["Item#105"], "all": [75] }, "evidence": "https://e.org", "note": "n" }""", "mounts must be")]
+    [InlineData("\"67086\"", """{ "gate": "g", "mounts": { "sources": ["Mount#105"], "all": [] }, "evidence": "https://e.org", "note": "n" }""", "mounts must be")]
+    [InlineData("\"67086\"", """{ "gate": "g", "mounts": { "sources": ["Mount#105"], "all": [75, 75] }, "evidence": "https://e.org", "note": "n" }""", "mounts must be")]
+    [InlineData("\"67086\"", """{ "gate": "g", "mounts": { "all": [75] }, "evidence": "https://e.org", "note": "n" }""", "mounts must be")]
+    [InlineData("\"67086\"", """{ "gate": "g", "held": { "sources": ["RelicItem#5"], "items": [[1]] }, "mounts": { "sources": ["Mount#105"], "all": [75] }, "evidence": "https://e.org", "note": "n" }""", "either weapons or mounts")]
     [InlineData("\"65897\"", """{ "gate": "g", "evidence": "https://e.org" }""", "note is missing")]
     [InlineData("\"65897\"", """{ "gate": "g", "note": "n" }""", "evidence is missing")]
     [InlineData("\"65897\"", """{ "gate": "g", "evidence": "http://e.org", "note": "n" }""", "is not an https URL")]
@@ -127,6 +132,28 @@ public sealed class GameGatesFileTests : IDisposable
         var warning = Assert.Single(data.Warnings);
         Assert.StartsWith(CuratedData.GameGatesFileName + ": entry " + key, warning, StringComparison.Ordinal);
         Assert.Contains(reason, warning, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Mount_gates_parse_their_mounts_sorted_and_pass_them_to_the_catalog()
+    {
+        var data = Load(
+            """
+            {
+              "schema": 1,
+              "entries": {
+                "67086": { "gate": "all seven Heavensward Lanner mounts", "mounts": { "sources": ["Mount#105"], "all": [104, 75, 90] }, "evidence": "https://e.org/a", "note": "n" }
+              }
+            }
+            """);
+
+        Assert.Empty(data.Warnings);
+        var gate = data.GameGates[67086];
+        Assert.Null(gate.Items);
+        Assert.Equal(["Mount#105"], gate.Mounts!.Sources);
+        Assert.Equal([75u, 90u, 104u], gate.Mounts.All);
+        Assert.Equal([75u, 90u, 104u], data.GameGateIds[67086].Mounts!);
+        Assert.Null(data.GameGateIds[67086].Items);
     }
 
     [Fact]

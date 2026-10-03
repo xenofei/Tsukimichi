@@ -226,7 +226,7 @@ GetQuestsInState("Accepted") -> [66045, 67112, 70210]   // the journal, in journ
 | `lockedOut` | a quest that forecloses this one is done: locked out for good | that quest's row id | 0 / 0 |
 | `removed` | the game removed the quest | 0 | 0 / 0 |
 | `achievement` | needs an achievement | Achievement row id | 1 / 0 (have -1: the list is not loaded yet) |
-| `mount` | needs a mount | 0 | 1 / 0 or 1 (-1: not read) |
+| `mount` | needs a mount, or every mount of a collection (the seven Lanners before the Firebird) | the Mount row id still missing, else the first one needed | 1 / 0 or 1 (-1: not read) |
 | `house` | needs a house | 0 | 1 / 0 or 1 (-1: not read) |
 | `customDeliveryRank` | needs a custom delivery satisfaction rank | SatisfactionNpc row id | ranks (have -1: not read) |
 | `carrierLevel` | needs a Delivery Moogle carrier level | 0 | levels (have -1: not read) |

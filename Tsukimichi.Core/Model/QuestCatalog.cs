@@ -77,6 +77,13 @@ public sealed class QuestCatalog
             .Order()
             .ToArray();
         GateItemFingerprint = GateItemCapture.Fingerprint(GateItemWatch);
+        MountWatch = knownGates.Values
+            .Where(g => g.Mounts is not null)
+            .SelectMany(g => g.Mounts!)
+            .Concat(all.Where(q => q.MountRequired != 0).Select(q => q.MountRequired))
+            .Distinct()
+            .Order()
+            .ToArray();
 
         // Curated ids that name no quest of this catalog (a test catalog, a row the game dropped) are left out here.
         var known = new Dictionary<uint, uint[]>();
@@ -248,6 +255,13 @@ public sealed class QuestCatalog
     public uint GateItemFingerprint { get; }
 
     /// <summary>
+    /// Every mount a quest of this catalog needs owned, ascending and distinct: the sheet's
+    /// <see cref="QuestRecord.MountRequired"/> and the mounts of the mount-collection gates (<see cref="QuestGate.Mounts"/>).
+    /// A capture reads whether the character owns each, with the collectibles (<see cref="CharacterSnapshot.Collectibles"/>).
+    /// </summary>
+    public uint[] MountWatch { get; }
+
+    /// <summary>
     /// The accept conditions <see cref="PrerequisitesOf"/> cannot use, values that are no quest of this catalog: the
     /// evaluator lists them as not checked. Empty for most quests.
     /// </summary>
@@ -358,7 +372,11 @@ public sealed class QuestCatalog
 /// <param name="After">Quests before which the gate cannot be passed (the step that makes the weapon possible);
 /// <see cref="QuestCatalog.PrerequisitesOf"/> adds them. May be empty.</param>
 /// <param name="Items">The weapons that pass the gate, when the gate is one of gear; null for any other gate.</param>
-public sealed record QuestGate(string Gate, uint[] After, GateItems? Items = null);
+/// <param name="Mounts">
+/// The mounts that must all be owned, when the gate is a mount collection (the seven Lanners before the Firebird);
+/// judged from the owned mounts a capture reads (<see cref="QuestCatalog.MountWatch"/>). Null for any other gate.
+/// </param>
+public sealed record QuestGate(string Gate, uint[] After, GateItems? Items = null, uint[]? Mounts = null);
 
 /// <summary>Where a gate's weapons must be (<see cref="GateItems.Hold"/>).</summary>
 public enum GateHold

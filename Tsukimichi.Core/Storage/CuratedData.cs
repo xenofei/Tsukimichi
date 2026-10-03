@@ -99,7 +99,20 @@ public sealed record ExtraPrerequisite(IReadOnlyList<uint> Requires, IReadOnlyLi
 /// <param name="GameTextKey">The gated quest's own text row that states the gate, when the game states it (<c>TEXT_JOBREL015_00361_SYSTEM_000_000</c>); the text is never committed.</param>
 /// <param name="AfterTextKey">The text row of an <paramref name="After"/> quest that says what it opens (the soulglazing, Eureka Pagos); required with <paramref name="After"/>.</param>
 /// <param name="Items">For a gear gate (a relic weapon at a stage equipped, or held), the weapons that pass it, which make the gate one Tsukimichi can judge from the captured gear; null for any other gate.</param>
-public sealed record GameGate(string Gate, IReadOnlyList<uint> After, string? GameTextKey, string? AfterTextKey, string Evidence, string Note, GateItemSet? Items = null);
+/// <param name="Mounts">For a mount-collection gate (the seven Lanners before the Firebird), the mounts that must all be owned, judged from the owned mounts a capture reads; null for any other gate.</param>
+public sealed record GameGate(string Gate, IReadOnlyList<uint> After, string? GameTextKey, string? AfterTextKey, string Evidence, string Note, GateItemSet? Items = null, GateMountSet? Mounts = null);
+
+/// <summary>
+/// A mount-collection gate's mounts in <c>game_gates.json</c> (<c>"mounts"</c>, 1.11.0): every one must be owned, and
+/// where they were derived from, which the game-data tests derive again and compare.
+/// </summary>
+/// <param name="Sources">
+/// The sheet rows the mounts come from, as <c>Sheet#row</c>: <c>Mount#105</c> is the collection the reward mount 105
+/// (the Firebird) crowns, the mounts whose <c>UIPriority</c> sits in its hundred with a ones digit (30100 to 30109 for
+/// the Firebird's 30150), so a later addition to the family (the Wondrous Lanner, 30110) is not one of the set.
+/// </param>
+/// <param name="All">Mount row ids, each needed. Ascending, distinct, never empty.</param>
+public sealed record GateMountSet(IReadOnlyList<string> Sources, uint[] All);
 
 /// <summary>
 /// A gear gate's weapons in <c>game_gates.json</c> (<c>"equipped"</c> or <c>"held"</c>): the groups that pass it and
@@ -152,7 +165,7 @@ public sealed record PayoffGate(
 /// retired_quests.json  { "schema": 1, "entries": { "66033": { "note": "...", "evidence": "https://...", "patch": "6.3" } } }   (patch optional)
 /// quirks.json          { "schema": 1, "entries": { "66971": { "note": "...", "evidence": "https://..." } } }
 /// extra_prerequisites.json { "schema": 1, "entries": { "68782": { "requires": [ 68850 ], "sources": [ "gameText", "questionable", "wiki" ], "gameTextKey": "TEXT_...", "evidence": "https://...", "note": "..." } } }   (gameTextKey only with gameText)
-/// game_gates.json      { "schema": 1, "entries": { "65897": { "gate": "a relic weapon nexus equipped", "after": [ 65742 ], "gameTextKey": "TEXT_...", "afterTextKey": "TEXT_...", "evidence": "https://...", "note": "..." } } }   (after, gameTextKey optional; afterTextKey with after; a gear gate adds "equipped" or "held": { "sources": [ "RelicItem#5" ], "shield": "both", "items": [ [ 8649, 8658 ], ... ] })
+/// game_gates.json      { "schema": 1, "entries": { "65897": { "gate": "a relic weapon nexus equipped", "after": [ 65742 ], "gameTextKey": "TEXT_...", "afterTextKey": "TEXT_...", "evidence": "https://...", "note": "..." } } }   (after, gameTextKey optional; afterTextKey with after; a gear gate adds "equipped" or "held": { "sources": [ "RelicItem#5" ], "shield": "both", "items": [ [ 8649, 8658 ], ... ] }; a mount-collection gate adds "mounts": { "sources": [ "Mount#105" ], "all": [ 75, 76, ... ] })
 /// payoff_gates.json    { "schema": 1, "review": "...", "entries": { "eden": { "milestone": 70286, "before": "Eden" or [ 69515 ], "instruction": "...", "why": "...", "evidence": [ "https://..." ], "note": "..." } } }
 /// path_choices.json    { "schema": 1, "cities": { "65575": { "label": "Gridania", "note": "..." } },
 ///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
@@ -300,7 +313,7 @@ public sealed class CuratedData
     /// <summary><see cref="GameGates"/> as the catalog builders take them (<c>QuestCatalog.Build</c>).</summary>
     public IReadOnlyDictionary<uint, QuestGate> GameGateIds => GameGates.ToDictionary(
         kv => kv.Key,
-        kv => new QuestGate(kv.Value.Gate, kv.Value.After.ToArray(), kv.Value.Items is { } items ? new GateItems(items.Hold, items.Groups) : null));
+        kv => new QuestGate(kv.Value.Gate, kv.Value.After.ToArray(), kv.Value.Items is { } items ? new GateItems(items.Hold, items.Groups) : null, kv.Value.Mounts?.All));
 
     /// <summary>
     /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
@@ -658,8 +671,9 @@ public sealed class CuratedData
     /// game_gates.json: entries keyed by quest row id, each with <c>gate</c> (what the game wants, non-empty), optional
     /// <c>after</c> (quest row ids, none the key itself, no repeats) with <c>afterTextKey</c> (a <c>TEXT_</c> key,
     /// required with and only with <c>after</c>), an optional <c>gameTextKey</c> (a <c>TEXT_</c> key), for a gear gate
-    /// either <c>equipped</c> or <c>held</c> (<see cref="ReadGateItems"/>), an https <c>evidence</c> URL and a
-    /// <c>note</c>. An entry missing any of them, or with a malformed one, is skipped with a warning.
+    /// either <c>equipped</c> or <c>held</c> (<see cref="ReadGateItems"/>), for a mount-collection gate <c>mounts</c>
+    /// (<see cref="ReadGateMounts"/>), an https <c>evidence</c> URL and a <c>note</c>. An entry missing any of them, or
+    /// with a malformed one, is skipped with a warning.
     /// </summary>
     private static Dictionary<uint, GameGate> LoadGameGates(string path, List<string> warnings)
     {
@@ -741,6 +755,24 @@ public sealed class CuratedData
                 items = read;
             }
 
+            GateMountSet? mounts = null;
+            if (obj["mounts"] is { } mountsNode)
+            {
+                if (items is not null)
+                {
+                    warn("a gate lists either weapons or mounts, not both");
+                    return;
+                }
+
+                if (ReadGateMounts(mountsNode) is not { } read)
+                {
+                    warn("mounts must be { \"sources\": [\"Mount#row\"], \"all\": [mount ids] } with no id twice");
+                    return;
+                }
+
+                mounts = read;
+            }
+
             if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
             {
                 return;
@@ -752,10 +784,46 @@ public sealed class CuratedData
                 return;
             }
 
-            entries[rowId] = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note, items);
+            entries[rowId] = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note, items, mounts);
         });
 
         return entries;
+    }
+
+    /// <summary>
+    /// A mount-collection gate's <c>"mounts"</c> object: a non-empty <c>sources</c> array of <c>Mount#row</c> strings and
+    /// a non-empty <c>all</c> array of mount row ids, none twice; the ids sorted. Null when anything is off.
+    /// </summary>
+    private static GateMountSet? ReadGateMounts(JsonNode node)
+    {
+        if (node is not JsonObject obj || obj["sources"] is not JsonArray sourcesArray || sourcesArray.Count == 0 || obj["all"] is not JsonArray allArray || allArray.Count == 0)
+        {
+            return null;
+        }
+
+        var sources = new List<string>();
+        foreach (var element in sourcesArray)
+        {
+            var source = element is JsonValue v && v.TryGetValue(out string? s) ? s.Trim() : null;
+            if (source is null || !source.StartsWith("Mount#", StringComparison.Ordinal)
+                || !uint.TryParse(source.AsSpan("Mount#".Length), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var row) || row == 0)
+            {
+                return null;
+            }
+
+            sources.Add(source);
+        }
+
+        var ids = new HashSet<uint>();
+        foreach (var element in allArray)
+        {
+            if (!StorageJson.TryReadId(element, out var id) || id == 0 || !ids.Add(id))
+            {
+                return null;
+            }
+        }
+
+        return new GateMountSet(sources, [.. ids.Order()]);
     }
 
     /// <summary>The shield words a <see cref="GateItemSet.Shield"/> may hold.</summary>

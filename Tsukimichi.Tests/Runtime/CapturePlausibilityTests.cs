@@ -277,4 +277,79 @@ public sealed class CapturePlausibilityTests
 
         Assert.Equal(PlausibilityVerdict.LostCompletions, CapturePlausibility.Check(last, now, Catalog).Verdict);
     }
+
+    /// <summary>The first 200 one-off quests stand for the New Game+ chapters (main scenario, job quests).</summary>
+    private static readonly HashSet<uint> Replayable = [.. OneOff.Take(200)];
+
+    [Fact]
+    public void A_small_loss_of_replayable_quests_is_a_New_Game_plus_replay()
+    {
+        // Three quests of a chapter read as not completed: under every threshold, so it used to be saved at once.
+        var last = With(OneOff.Take(300));
+        var now = With(OneOff.Take(300).Skip(3));
+
+        Assert.True(CapturePlausibility.Check(last, now, Catalog).Plausible);
+
+        var result = CapturePlausibility.Check(last, now, Catalog, Replayable);
+        Assert.Equal(PlausibilityVerdict.NewGamePlusReplay, result.Verdict);
+        Assert.Equal(3, result.Lost);
+        Assert.Contains("New Game+", result.LogNote, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_whole_replayed_chapter_is_a_New_Game_plus_replay_not_a_lost_reading()
+    {
+        var last = With(OneOff);
+        var now = With(OneOff.Skip(150));
+
+        Assert.Equal(PlausibilityVerdict.LostCompletions, CapturePlausibility.Check(last, now, Catalog).Verdict);
+        Assert.Equal(PlausibilityVerdict.NewGamePlusReplay, CapturePlausibility.Check(last, now, Catalog, Replayable).Verdict);
+    }
+
+    [Fact]
+    public void A_New_Game_plus_replay_is_never_taken_in()
+    {
+        var t0 = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
+        var last = With(OneOff);
+        var replay = With(OneOff.Skip(32));
+        var result = CapturePlausibility.Check(last, replay, Catalog, Replayable);
+        var held = new HeldBackCaptures();
+
+        for (var minute = 0; minute < 60; minute++)
+        {
+            Assert.False(held.Observe(last, replay, result, t0.AddMinutes(minute)));
+        }
+
+        Assert.False(held.Accepted);
+    }
+
+    [Fact]
+    public void A_loss_beyond_the_replayable_quests_keeps_the_usual_rules()
+    {
+        // One quest no New Game+ chapter lists is among the lost: not a replay, so the thresholds decide as before.
+        var last = With(OneOff.Take(300));
+        var mixed = With(OneOff.Take(300).Where((_, i) => i is not (0 or 1 or 2 or 250)));
+        Assert.True(CapturePlausibility.Check(last, mixed, Catalog, Replayable).Plausible);
+
+        var big = With(OneOff.Skip(100).Take(100));
+        Assert.Equal(PlausibilityVerdict.LostCompletions, CapturePlausibility.Check(With(OneOff), big, Catalog, Replayable).Verdict);
+    }
+
+    [Fact]
+    public void Seasonal_bits_clearing_beside_a_replay_do_not_hide_it()
+    {
+        // A festival's quests reset while a chapter is replayed: they are left out of the counts, so the replay shows.
+        var last = With([.. OneOff.Take(300), .. Seasonal.Take(20)]);
+        var now = With(OneOff.Take(300).Skip(5));
+
+        Assert.Equal(PlausibilityVerdict.NewGamePlusReplay, CapturePlausibility.Check(last, now, Catalog, Replayable).Verdict);
+    }
+
+    [Fact]
+    public void Ordinary_progress_stays_plausible_with_the_replayable_quests_known()
+    {
+        var last = With(OneOff.Take(300));
+        Assert.True(CapturePlausibility.Check(last, With(OneOff.Take(301)), Catalog, Replayable).Plausible);
+        Assert.True(CapturePlausibility.Check(last, last, Catalog, Replayable).Plausible);
+    }
 }

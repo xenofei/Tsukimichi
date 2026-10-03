@@ -115,7 +115,14 @@ public sealed record QuestRecord
     /// </summary>
     public byte CarrierLevel { get; init; }
 
-    public bool MountRequired { get; init; }
+    /// <summary>
+    /// <c>Quest.MountRequired</c>: the Mount row the character must own before the game offers the quest (the company
+    /// chocobo for My Feisty Little Chocobo); 0 when none. Judged from the owned mounts a capture reads
+    /// (<see cref="QuestCatalog.MountWatch"/>).
+    /// </summary>
+    public uint MountRequired { get; init; }
+
+    /// <summary><c>Quest.IsHouseRequired</c>: the quest needs a house. Tsukimichi does not read housing, so it is listed as not checked.</summary>
     public bool HouseRequired { get; init; }
     public uint[] AcceptConditions { get; init; } = [];
 

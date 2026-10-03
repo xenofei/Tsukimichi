@@ -93,11 +93,17 @@ public sealed record EvalContext
     /// </summary>
     public Func<byte, byte>? JobRole { get; init; }
 
-    /// <summary>Whether the character owns a mount; null means not checked.</summary>
-    public bool? HasMount { get; init; }
-
-    /// <summary>Whether the character owns a house; null means not checked.</summary>
+    /// <summary>
+    /// Whether the character owns a house; null means not checked, which keeps a quest that needs one from reading
+    /// Ready. Tsukimichi does not read housing, so the plugin leaves it null.
+    /// </summary>
     public bool? HasHouse { get; init; }
+
+    /// <summary>
+    /// Mount name by Mount row id for the mount details ("requires the company chocobo"); the plugin supplies the names
+    /// of the mounts quests need (<see cref="QuestCatalog.MountWatch"/>). Empty prints "mount 1".
+    /// </summary>
+    public Func<uint, string> MountName { get; init; } = static _ => string.Empty;
 
     /// <summary>Allied society rank name for requirement details; defaults to <see cref="TribeRanks.Name"/>. The plugin supplies sheet names for other languages.</summary>
     public Func<byte, string> TribeRankName { get; init; } = TribeRanks.Name;

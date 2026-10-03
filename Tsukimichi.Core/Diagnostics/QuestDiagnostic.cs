@@ -411,7 +411,12 @@ public static class QuestDiagnostic
                 break;
 
             case MountRequirement m:
-                sb.Append("has mount ").Append(YesNo(m.HasMount));
+                // Mount ids only: the diagnostic block stays language-neutral.
+                sb.Append("has mount ").Append(YesNo(m.HasMount)).Append(", mounts [").Append(string.Join(", ", m.Mounts)).Append(']');
+                if (m.Missing.Length > 0)
+                {
+                    sb.Append(", missing [").Append(string.Join(", ", m.Missing)).Append(']');
+                }
                 break;
 
             case HouseRequirement h:
@@ -531,7 +536,8 @@ public static class QuestDiagnostic
 
         if (Has(kinds, RequirementKind.Mount))
         {
-            sb.Append(", mount ").Append(YesNo(inputs.Context.HasMount));
+            var mount = inputs.Evaluation?.Requirements.Select(r => r.Req).OfType<MountRequirement>().FirstOrDefault();
+            sb.Append(", mount ").Append(YesNo(mount?.HasMount));
         }
 
         if (Has(kinds, RequirementKind.House))

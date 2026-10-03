@@ -77,6 +77,11 @@ public sealed class GameStateReader
     private int collectiblesAge;
     private bool collectiblesMeasured;
 
+    // CollectibleTargets with the catalog's mounts added (TargetsFor), and the list and catalog it was built from.
+    private IReadOnlyList<CollectibleTarget> mountTargets = [];
+    private IReadOnlyList<CollectibleTarget>? mountTargetsBase;
+    private QuestCatalog? mountTargetsCatalog;
+
     /// <summary>Where a gear gate's weapons can be: worn, the Armoury Chest's weapon pages, the four bags (<see cref="ReadGateItems"/>).</summary>
     private static readonly InventoryType[] GateItemContainers =
     [
@@ -373,7 +378,7 @@ public sealed class GameStateReader
             CompletedAchievements = completedAchievements,
             CurrentJob = ps->CurrentClassJobId,
             // A quest turned in is when most collectibles arrive, so a changed completion mask reads them again too.
-            Collectibles = ReadCollectibles(contentId, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
+            Collectibles = ReadCollectibles(contentId, catalog, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
             GateItems = ReadGateItems(ids),
         };
 
@@ -398,10 +403,10 @@ public sealed class GameStateReader
     /// target list, or <see cref="CollectibleRefreshCaptures"/> captures since the last read. Otherwise the last read is
     /// reused as is. The first read is timed once in the log.
     /// </summary>
-    private IReadOnlyDictionary<string, CollectibleSet> ReadCollectibles(ulong contentId, bool completedChanged)
+    private IReadOnlyDictionary<string, CollectibleSet> ReadCollectibles(ulong contentId, QuestCatalog catalog, bool completedChanged)
     {
         var flags = CollectibleFlags;
-        var targets = CollectibleTargets;
+        var targets = TargetsFor(catalog);
         if (flags is null || targets.Count == 0)
         {
             return collectibles = NoCollectibles;
@@ -437,6 +442,29 @@ public sealed class GameStateReader
 
         collectiblesContentId = contentId;
         return collectibles;
+    }
+
+    /// <summary>
+    /// <see cref="CollectibleTargets"/> with the mounts the catalog's quests need owned (<see cref="QuestCatalog.MountWatch"/>,
+    /// 1.11.0), built once per target list and catalog, so the reuse check in <see cref="ReadCollectibles"/> still
+    /// compares one instance.
+    /// </summary>
+    private IReadOnlyList<CollectibleTarget> TargetsFor(QuestCatalog catalog)
+    {
+        var targets = CollectibleTargets;
+        if (targets.Count == 0)
+        {
+            return targets;
+        }
+
+        if (!ReferenceEquals(targets, mountTargetsBase) || !ReferenceEquals(catalog, mountTargetsCatalog))
+        {
+            mountTargetsBase = targets;
+            mountTargetsCatalog = catalog;
+            mountTargets = Collectibles.WithMounts(targets, catalog.MountWatch);
+        }
+
+        return mountTargets;
     }
 
     /// <summary>

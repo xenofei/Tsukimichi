@@ -533,7 +533,7 @@ public sealed class StatePoller : IDisposable
         // A loss that keeps reading the same for a few minutes is real and is taken in after all, when it is committed:
         // until then the watch stays accepted (HeldBackCaptures.Accepted), so a deferred pass dropped at logout, or one
         // that faulted, leaves the next capture of the same loss (the logout's own included) accepted at once.
-        var plausibility = CapturePlausibility.Check(last, snapshot, catalog);
+        var plausibility = CapturePlausibility.Check(last, snapshot, catalog, bundle.NewGamePlus);
         PlausibilityResult? accepted = null;
         if (!plausibility.Plausible)
         {
@@ -716,7 +716,7 @@ public sealed class StatePoller : IDisposable
                 stored = snapshots.ReadStored(snapshot.ContentId).Value;
             }
 
-            var plausibility = CapturePlausibility.Check(stored, snapshot, catalog);
+            var plausibility = CapturePlausibility.Check(stored, snapshot, catalog, bundle.NewGamePlus);
             return new FirstPassResult(dated, stored, plausibility, states, acceptedSince, abandoned, warnings, resolveMs);
         });
 

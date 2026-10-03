@@ -123,7 +123,23 @@ public static class CatalogMapper
             ExpTable = ReadOptional(() => ReadExpTable(excel), Core.Rewards.QuestExpTable.Empty, "quest EXP table", log),
             GateItemNames = GateItemNames(catalog, context.Items),
             GateItemJobCategories = GateItemJobCategories(catalog, context.Items),
+            MountNames = ReadOptional(() => MountNames(catalog, excel.GetSheet<Mount>(language)), new Dictionary<uint, string>(), "mount names", log),
         };
+    }
+
+    /// <summary>The names of the mounts the catalog's quests need owned (<see cref="QuestCatalog.MountWatch"/>), as the sheet writes them.</summary>
+    private static Dictionary<uint, string> MountNames(QuestCatalog catalog, ExcelSheet<Mount> mounts)
+    {
+        var names = new Dictionary<uint, string>(catalog.MountWatch.Length);
+        foreach (var id in catalog.MountWatch)
+        {
+            if (mounts.GetRowOrDefault(id) is { } mount && mount.Singular.ExtractText() is { Length: > 0 } name)
+            {
+                names[id] = name;
+            }
+        }
+
+        return names;
     }
 
     /// <summary>The names of the weapons the catalog's gear gates list (<see cref="QuestCatalog.GateItemWatch"/>).</summary>
@@ -245,7 +261,7 @@ public static class CatalogMapper
             SatisfactionLevel = quest.SatisfactionLevel,
             CarrierLevel = ToByte(quest.DeliveryQuest.RowId),
 
-            MountRequired = quest.MountRequired.RowId != 0,
+            MountRequired = quest.MountRequired.RowId,
             HouseRequired = quest.IsHouseRequired,
             AcceptConditions = MapAcceptConditions(quest.RowId, sheets.AcceptConditions),
 

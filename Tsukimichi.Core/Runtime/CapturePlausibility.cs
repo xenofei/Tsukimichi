@@ -17,6 +17,12 @@ public enum PlausibilityVerdict
 
     /// <summary>A journal of several quests emptied at once, none of them completed.</summary>
     EmptiedJournal,
+
+    /// <summary>
+    /// Completed quests read as not completed, every one of them a quest New Game+ replays (1.11.0, C4a): a chapter
+    /// being replayed rather than a real loss, so it is never taken in, however long it reads the same.
+    /// </summary>
+    NewGamePlusReplay,
 }
 
 /// <summary>
@@ -36,6 +42,7 @@ public readonly record struct PlausibilityResult(PlausibilityVerdict Verdict, in
         PlausibilityVerdict.EmptyCapture => "the game reported no completed quest and an empty journal",
         PlausibilityVerdict.LostCompletions => string.Create(CultureInfo.InvariantCulture, $"the game reported {Lost} of {Completed} completed quests as not completed"),
         PlausibilityVerdict.EmptiedJournal => string.Create(CultureInfo.InvariantCulture, $"the journal of {JournalBefore} quests emptied with {JournalLeft} of them not completed"),
+        PlausibilityVerdict.NewGamePlusReplay => string.Create(CultureInfo.InvariantCulture, $"the game reported {Lost} of {Completed} completed quests as not completed, all of them quests New Game+ replays"),
         _ => null,
     };
 }
@@ -55,6 +62,12 @@ public readonly record struct PlausibilityResult(PlausibilityVerdict Verdict, in
 /// the counts, the journal's too (the game takes a festival's quests out of the journal when it ends). What is left
 /// only ever grows in play, so even a modest loss is suspicious; the thresholds still allow a handful, and a small
 /// character is judged by the share rather than the absolute count.
+/// </para>
+/// <para>
+/// New Game+ (1.11.0, C4a): replaying a chapter clears the completion bits of its quests while the replay lasts. A
+/// loss made only of quests some New Game+ chapter lists, however small, is a replay and never the character's real
+/// progress (<see cref="PlausibilityVerdict.NewGamePlusReplay"/>): it is never saved over the progress on file, and
+/// <see cref="HeldBackCaptures"/> never takes it in.
 /// </para>
 /// Pure; the framework thread calls it once per changed capture, a worker once per first pass.
 /// </summary>
@@ -77,7 +90,11 @@ public static class CapturePlausibility
     /// different character, or no previous capture, is always plausible (a first capture with nothing to compare is
     /// left to the login guard, <see cref="LoginReadiness"/>).
     /// </summary>
-    public static PlausibilityResult Check(CharacterSnapshot? last, CharacterSnapshot capture, QuestCatalog catalog)
+    /// <param name="replayable">
+    /// Quest row ids some New Game+ chapter lists (<c>CatalogBundle.NewGamePlus</c>); null or empty when not read, which
+    /// leaves a replay to the other rules.
+    /// </param>
+    public static PlausibilityResult Check(CharacterSnapshot? last, CharacterSnapshot capture, QuestCatalog catalog, IReadOnlySet<uint>? replayable = null)
     {
         ArgumentNullException.ThrowIfNull(capture);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -86,7 +103,7 @@ public static class CapturePlausibility
             return default;
         }
 
-        var (lost, completed) = CountLost(last.CompletedBits, capture.CompletedBits, catalog);
+        var (lost, completed, lostReplayable) = CountLost(last.CompletedBits, capture.CompletedBits, catalog, replayable);
         var journalBefore = CountJournal(last, catalog);
         var journalLeft = capture.Accepted.Count == 0 ? CountLeftUncompleted(last, capture, catalog) : 0;
 
@@ -94,6 +111,10 @@ public static class CapturePlausibility
         if (LoginReadiness.LooksEmpty(capture) && !LoginReadiness.LooksEmpty(last))
         {
             verdict = PlausibilityVerdict.EmptyCapture;
+        }
+        else if (lost > 0 && lostReplayable == lost)
+        {
+            verdict = PlausibilityVerdict.NewGamePlusReplay;
         }
         else if (lost > MaxLost || (lost >= MinLostForShare && lost > completed * MaxLostShare))
         {
@@ -122,10 +143,11 @@ public static class CapturePlausibility
     }
 
     /// <summary>
-    /// The comparable completion bits set before and cleared now, and those set before. The usual capture clears no
-    /// bit at all and returns (0, 0) after one pass over the bytes, without a catalog lookup.
+    /// The comparable completion bits set before and cleared now, those set before, and how many of the cleared ones
+    /// are quests New Game+ replays. The usual capture clears no bit at all and returns (0, 0, 0) after one pass over
+    /// the bytes, without a catalog lookup.
     /// </summary>
-    private static (int Lost, int Completed) CountLost(byte[] before, byte[] now, QuestCatalog catalog)
+    private static (int Lost, int Completed, int LostReplayable) CountLost(byte[] before, byte[] now, QuestCatalog catalog, IReadOnlySet<uint>? replayable)
     {
         var anyCleared = false;
         for (var i = 0; i < before.Length && !anyCleared; i++)
@@ -135,11 +157,12 @@ public static class CapturePlausibility
 
         if (!anyCleared)
         {
-            return (0, 0);
+            return (0, 0, 0);
         }
 
         var lost = 0;
         var completed = 0;
+        var lostReplayable = 0;
         for (var i = 0; i < before.Length; i++)
         {
             int was = before[i];
@@ -166,11 +189,15 @@ public static class CapturePlausibility
                 if ((still & (1 << bit)) == 0)
                 {
                     lost++;
+                    if (replayable is { Count: > 0 } && catalog.TryGetByQuestId(questId, out var quest) && replayable.Contains(quest.RowId))
+                    {
+                        lostReplayable++;
+                    }
                 }
             }
         }
 
-        return (lost, completed);
+        return (lost, completed, lostReplayable);
     }
 
     /// <summary>Quests in the journal that only the player removes (seasonal, repeatable and unnamed ones aside).</summary>

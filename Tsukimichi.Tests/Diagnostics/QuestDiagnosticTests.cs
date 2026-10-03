@@ -51,7 +51,7 @@ public class QuestDiagnosticTests
         InstanceJoin = JoinKind.Any,
         Festival = Starlight,
         AcceptConditions = [12, 34],
-        MountRequired = true,
+        MountRequired = 1,
         HouseRequired = true,
         SatisfactionNpc = Mnaago,
         SatisfactionLevel = 4,
@@ -91,7 +91,6 @@ public class QuestDiagnosticTests
         ClassJobs = new Jobs((DisciplesOfTheHand, [Conjurer])),
         IsAchievementGated = id => id == Target,
         TodaysDailyOffer = new HashSet<ushort> { offeredQuestId },
-        HasMount = null,
         HasHouse = false,
     };
 
@@ -145,7 +144,7 @@ public class QuestDiagnosticTests
         Assert.Contains("  - DutyCompletion: met (1 of 2 cleared, one needed: 7 The Vault, 8)", requirementLines);
         Assert.Contains("  - Seasonal: unmet (festival 1 not active)", requirementLines);
         Assert.Contains("  - AcceptCondition: not checked (conditions 12, 34; listed, not judged)", requirementLines);
-        Assert.Contains("  - Mount: not checked (has mount unknown)", requirementLines);
+        Assert.Contains("  - Mount: not checked (has mount unknown, mounts [1])", requirementLines);
         Assert.Contains("  - House: unmet (has house no)", requirementLines);
         Assert.Contains("  - Achievement: not checked (achievements not loaded, quest 65700)", requirementLines);
         Assert.Contains("  - GameGate: not checked (game gate \"a relic weapon nexus equipped\"; listed, not judged)", requirementLines);
