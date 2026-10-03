@@ -4,6 +4,29 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- **Mix moons by state** (Settings › Themes):
+  - Pick each state's moon from any theme.
+  - A plain note says when two moons look alike in a list, or when Ready stops being the loudest, and each option warns before you pick it.
+  - "Fix it" suggests one change that clears the warnings and never undoes the moon you just picked; Undo follows.
+  - Reset mix is press-and-hold, with Undo.
+- **Frames are a choice:** Brass, Silver, Lead came, Astrolabe or Kirikane rims and badges, for any theme or mix.
+  - Gauges and card ornament take the same metal, and moons mixed in from another theme wear your column's frames.
+  - The Frames setting says in plain words when a metal makes two moons hard to tell apart.
+- **New themes:**
+  - **Astrologian's Orrery:** moons seen through a Sharlayan astrolabe.
+  - **Sumi to Kinpaku:** tsukimi crests in black lacquer, shell-white and cut gold leaf, with its own Kirikane frames, gold-leaf heading crests and card corners, and its own flat moons at Decoration Plain.
+- **New palettes:** Dawn (plum night with a rose horizon) and Kugane Lacquer (black lacquer at dusk, with a hazier, warmer sky).
+  - Each has a high-contrast form.
+  - On both, Ready quests get a soft gold halo.
+- **Share your look:**
+  - Settings › Themes › Share shows your look as a short code (TM1-…) with a Copy button.
+  - Paste a code to see everything it would change, with sample moons, before you choose Apply; Undo follows.
+  - A code from a newer Tsukimichi still works: what this version doesn't have is named and left out.
+  - A mistyped code changes nothing, and a shared look never changes your High contrast setting.
+- **`/tsuki look <code>`** opens the Themes page with that code previewed.
+- **Themes tab in the glyph window** (`/tsukimichi glyphs`): compare two looks side by side, see how alike every pair of moons is under each kind of colour vision, and check Ready's lead.
+
 ## [1.16.0] - 2026-10-03
 
 ### Added
