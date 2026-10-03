@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Dalamud.Game.Command;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Text;
@@ -15,18 +17,29 @@ namespace Tsukimichi.Commands;
 /// starts the tour; <c>zone</c> and <c>which</c> print discovery lists; <c>why [quest name]</c> prints what blocks a
 /// quest; <c>route [quest name]</c> opens its unlock route; <c>recap [quest name]</c> opens the story recap; <c>nearby</c> toggles the Nearby quests window; <c>todo</c>
 /// toggles the todo overlay; <c>report [quest name]</c> copies a quest's diagnostic block; <c>export [quests|moonlit]
-/// [json|csv]</c> writes the export files; <c>settings</c> (or <c>config</c>) and <c>help</c> open those windows;
-/// <c>glyphs</c> opens the glyph sheet and <c>ipc</c> the IPC developer window (neither listed to players); a bare
-/// command toggles the main window.
+/// [json|csv]</c> writes the export files; <c>stop</c> stops every hand-off Tsukimichi started (<see cref="StopCommand"/>);
+/// <c>settings</c> (or <c>config</c>) and <c>help</c> open those windows; <c>glyphs</c> opens the glyph sheet and
+/// <c>ipc</c> the IPC developer window (neither listed to players); a bare command toggles the main window.
+/// <para>
+/// Aliases (1.11.0, A12): <c>/ts</c>, <c>/moon</c> and the player's own from Settings answer exactly as <c>/tsuki</c>
+/// does, subcommands included (<see cref="CommandAliases"/>). <c>/tsuki</c> stays the primary command. An alias that
+/// Dalamud, the game or another plugin already answers to is skipped and named in Settings, never taken over;
+/// <see cref="ApplyAliases"/> registers and unregisters them at runtime and never throws.
+/// </para>
 /// </summary>
 public sealed class TsukimichiCommand : IDisposable
 {
-    public const string Name = "/tsukimichi";
+    public const string Name = CommandAliases.FullName;
 
-    /// <summary>Short alias with the same handler; hidden from the help list so the command appears once.</summary>
-    public const string Alias = "/tsuki";
+    /// <summary>The primary short command, with the same handler; hidden from the help list so the command appears once.</summary>
+    public const string Alias = CommandAliases.Primary;
 
     private readonly ICommandManager commands;
+    private readonly Func<string, bool>? isGameCommand;
+    private readonly IPluginLog? log;
+
+    // The aliases registered now, each with its own CommandInfo so a language switch can update its help text.
+    private readonly Dictionary<string, CommandInfo> aliases = new(StringComparer.Ordinal);
     private readonly Action toggleMainWindow;
     private readonly Action toggleGlyphWindow;
     private readonly Func<string, int> search;
@@ -98,6 +111,21 @@ public sealed class TsukimichiCommand : IDisposable
     /// </summary>
     public Action<string>? Recap { get; set; }
 
+    /// <summary>Invoked for <c>/tsukimichi stop</c>: stops every hand-off and prints one line. Says "Nothing to stop." until wired.</summary>
+    public Action? Stop { get; set; }
+
+    /// <summary>The aliases registered now: the built-in ones, then the player's, in order.</summary>
+    public IReadOnlyList<string> ActiveAliases { get; private set; } = [];
+
+    /// <summary>Wanted aliases that Dalamud, the game or another plugin already answers to, so they were skipped.</summary>
+    public IReadOnlyList<string> SkippedAliases { get; private set; } = [];
+
+    /// <summary>Words of the Settings field that are not an alias (no slash, a space or another character), as typed.</summary>
+    public IReadOnlyList<string> InvalidAliases { get; private set; } = [];
+
+    /// <summary>Bumped whenever the aliases change, so Settings rebuilds its lines only then.</summary>
+    public int AliasesVersion { get; private set; }
+
     /// <param name="commands">Dalamud command manager.</param>
     /// <param name="toggleMainWindow">Invoked for <c>/tsukimichi</c> with no arguments.</param>
     /// <param name="toggleGlyphWindow">Invoked for <c>/tsukimichi glyphs</c>.</param>
@@ -105,12 +133,24 @@ public sealed class TsukimichiCommand : IDisposable
     /// Invoked with the search text for <c>/tsukimichi search &lt;text&gt;</c> and <c>/tsukimichi &lt;text&gt;</c>;
     /// returns how many quests matched (negative when it could not search).
     /// </param>
-    public TsukimichiCommand(ICommandManager commands, Action toggleMainWindow, Action toggleGlyphWindow, Func<string, int> search)
+    /// <param name="userAliases">The Settings field of extra aliases (<see cref="CommandAliases.Parse"/>).</param>
+    /// <param name="isGameCommand">True for a chat command of the game's own, which an alias never shadows; null checks Dalamud's commands only.</param>
+    /// <param name="log">The plugin log, for aliases that could not be registered; null logs nothing.</param>
+    public TsukimichiCommand(
+        ICommandManager commands,
+        Action toggleMainWindow,
+        Action toggleGlyphWindow,
+        Func<string, int> search,
+        string? userAliases = null,
+        Func<string, bool>? isGameCommand = null,
+        IPluginLog? log = null)
     {
         this.commands = commands;
         this.toggleMainWindow = toggleMainWindow;
         this.toggleGlyphWindow = toggleGlyphWindow;
         this.search = search;
+        this.isGameCommand = isGameCommand;
+        this.log = log;
 
         mainInfo = new CommandInfo(OnCommand)
         {
@@ -124,21 +164,134 @@ public sealed class TsukimichiCommand : IDisposable
         };
         commands.AddHandler(Name, mainInfo);
         commands.AddHandler(Alias, aliasInfo);
+        ApplyAliases(userAliases);
         Localization.Loc.Changed += OnLanguageChanged;
     }
 
     public void Dispose()
     {
         Localization.Loc.Changed -= OnLanguageChanged;
+        foreach (var alias in aliases.Keys)
+        {
+            RemoveAlias(alias);
+        }
+
+        aliases.Clear();
         commands.RemoveHandler(Alias);
         commands.RemoveHandler(Name);
+    }
+
+    /// <summary>
+    /// Registers <c>/ts</c>, <c>/moon</c> and the valid aliases of <paramref name="userAliases"/>, and unregisters those
+    /// no longer wanted. An alias Dalamud, the game or another plugin answers to, or one Dalamud refuses, is skipped and
+    /// listed in <see cref="SkippedAliases"/>. Never throws.
+    /// </summary>
+    public void ApplyAliases(string? userAliases)
+    {
+        try
+        {
+            InvalidAliases = CommandAliases.Parse(userAliases).Invalid;
+            var plan = CommandAliases.Plan(aliases.Keys, CommandAliases.Wanted(userAliases), TakenElsewhere);
+            foreach (var alias in plan.Remove)
+            {
+                RemoveAlias(alias);
+                aliases.Remove(alias);
+            }
+
+            var skipped = new List<string>(plan.Skipped);
+            foreach (var alias in plan.Add)
+            {
+                var info = new CommandInfo(OnCommand)
+                {
+                    HelpMessage = Strings.CommandAliasHelp,
+                    ShowInHelp = false,
+                };
+                if (TryAdd(alias, info))
+                {
+                    aliases[alias] = info;
+                }
+                else
+                {
+                    skipped.Add(alias);
+                }
+            }
+
+            foreach (var alias in skipped)
+            {
+                log?.Information("Command alias {Alias} skipped: Dalamud, the game or another plugin already uses it", alias);
+            }
+
+            // In the order the player sees them: the built-in ones first, then the Settings field's.
+            var wanted = CommandAliases.Wanted(userAliases);
+            ActiveAliases = [.. wanted.Where(aliases.ContainsKey)];
+            SkippedAliases = [.. wanted.Where(skipped.Contains)];
+        }
+        catch (Exception ex)
+        {
+            log?.Warning(ex, "Command aliases could not be applied");
+        }
+
+        AliasesVersion++;
+        mainInfo.HelpMessage = HelpText();
+    }
+
+    /// <summary>True when something other than Tsukimichi answers to <paramref name="alias"/>; an error reads as taken, so nothing is ever taken over.</summary>
+    private bool TakenElsewhere(string alias)
+    {
+        try
+        {
+            return commands.Commands.Keys.Any(key => string.Equals(key, alias, StringComparison.OrdinalIgnoreCase))
+                || isGameCommand?.Invoke(alias) == true;
+        }
+        catch (Exception ex)
+        {
+            log?.Warning(ex, "Could not check whether {Alias} is taken; skipped", alias);
+            return true;
+        }
+    }
+
+    private bool TryAdd(string alias, CommandInfo info)
+    {
+        try
+        {
+            return commands.AddHandler(alias, info);
+        }
+        catch (Exception ex)
+        {
+            log?.Warning(ex, "Command alias {Alias} could not be registered", alias);
+            return false;
+        }
+    }
+
+    private void RemoveAlias(string alias)
+    {
+        try
+        {
+            commands.RemoveHandler(alias);
+        }
+        catch (Exception ex)
+        {
+            log?.Warning(ex, "Command alias {Alias} could not be unregistered", alias);
+        }
+    }
+
+    /// <summary>The primary command's help: what it does, then every other name it answers to.</summary>
+    private string HelpText()
+    {
+        var names = new List<string>(ActiveAliases.Count + 1) { Alias };
+        names.AddRange(ActiveAliases);
+        return Strings.CommandHelp + " " + string.Format(CultureInfo.CurrentCulture, Strings.CommandAlsoFormat, string.Join(Strings.CommandListSeparator, names));
     }
 
     /// <summary>Dalamud reads the help text from the registered <see cref="CommandInfo"/>, so /xlhelp follows a language switch.</summary>
     private void OnLanguageChanged()
     {
-        mainInfo.HelpMessage = Strings.CommandHelp;
+        mainInfo.HelpMessage = HelpText();
         aliasInfo.HelpMessage = Strings.CommandAliasHelp;
+        foreach (var info in aliases.Values)
+        {
+            info.HelpMessage = Strings.CommandAliasHelp;
+        }
     }
 
     private void OnCommand(string command, string arguments)
@@ -227,6 +380,18 @@ public sealed class TsukimichiCommand : IDisposable
 
             case Subcommand.Recap:
                 RunOrSearch(Recap, rest, args);
+                break;
+
+            case Subcommand.Stop:
+                if (Stop is { } stop)
+                {
+                    stop();
+                }
+                else
+                {
+                    Print?.Invoke(Strings.StopNothing);
+                }
+
                 break;
 
             case Subcommand.Todo:

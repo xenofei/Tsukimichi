@@ -1971,16 +1971,16 @@
   <data name="Help.CommandKeys.14" xml:space="preserve">
     <value>/tsuki export [quests|moonlit] [json|csv]</value>
   </data>
-  <data name="Help.CommandKeys.15" xml:space="preserve">
+  <data name="Help.CommandKeys.16" xml:space="preserve">
     <value>Ctrl+F</value>
   </data>
-  <data name="Help.CommandKeys.16" xml:space="preserve">
+  <data name="Help.CommandKeys.17" xml:space="preserve">
     <value>Esc</value>
   </data>
-  <data name="Help.CommandKeys.17" xml:space="preserve">
+  <data name="Help.CommandKeys.18" xml:space="preserve">
     <value>メニューキー、Shift+F10、…</value>
   </data>
-  <data name="Help.CommandKeys.18" xml:space="preserve">
+  <data name="Help.CommandKeys.19" xml:space="preserve">
     <value>Ctrl+1～5、F、Enter、P</value>
   </data>
   <data name="Help.CommandMeanings.0" xml:space="preserve">
@@ -2016,16 +2016,16 @@
   <data name="Help.CommandMeanings.14" xml:space="preserve">
     <value>表示中のキャラクターの完了済みクエスト、月明かりのコレクション、またはその両方を、JSONまたはCSV（指定がなければ設定の形式）でexportsフォルダーに書き出し、保存先を表示します。docs/export-format.md を参照してください。コンテンツID、アカウント、ワールドは含まれず、名前は設定 › データ › エクスポート › 「キャラクター名を含める」にチェックがある場合のみ含まれます</value>
   </data>
-  <data name="Help.CommandMeanings.15" xml:space="preserve">
+  <data name="Help.CommandMeanings.16" xml:space="preserve">
     <value>ウィンドウにフォーカスがある間、検索欄にカーソルを移動します</value>
   </data>
-  <data name="Help.CommandMeanings.16" xml:space="preserve">
+  <data name="Help.CommandMeanings.17" xml:space="preserve">
     <value>開いているメニューまたはフィルターパネルを閉じます。どちらも開いていなければウィンドウを閉じます</value>
   </data>
-  <data name="Help.CommandMeanings.17" xml:space="preserve">
+  <data name="Help.CommandMeanings.18" xml:space="preserve">
     <value>クエスト一覧と月明かりの一覧で、フォーカス中の行のメニューを開きます。右クリックで開くものと同じメニューです。行の右端の…ボタン（マウスを合わせるかフォーカスすると表示）を左クリックしても開きます</value>
   </data>
-  <data name="Help.CommandMeanings.18" xml:space="preserve">
+  <data name="Help.CommandMeanings.19" xml:space="preserve">
     <value>設定 › キーボードで有効にしない限りオフ: タブの切り替え、選択中のクエストの依頼人にフラグ、ジャーナルで表示、ピン留め。これらのキーはゲームにも伝わります。初期設定ではCtrl+1～5はホットバー2です</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">

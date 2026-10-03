@@ -47,7 +47,7 @@ Updates arrive through the plugin installer like any other plugin.
 | Command | What it does |
 |---|---|
 | `/tsukimichi` | open or close the main window |
-| `/tsuki` | the same, shorter; every subcommand works with either |
+| `/tsuki`, `/ts`, `/moon` | the same, shorter; every subcommand works with any of them, and with your own aliases from Settings › Keyboard (one another plugin already uses is skipped) |
 | `/tsuki search <text>` | search and print matching quests to chat as links (`/tsuki <text>` does the same, and suggests a command when the word was a near miss: "Did you mean /tsuki nearby?") |
 | `/tsuki journal`, `moonlit`, `characters`, `flight`, `blues` | open the main window on that tab (`blues` is My blues) |
 | `/tsuki tour` | start the guided tour of the window |
@@ -59,6 +59,7 @@ Updates arrive through the plugin installer like any other plugin.
 | `/tsuki todo` | show or hide the Todo overlay |
 | `/tsuki report [quest name]` | copy a diagnostic block for the selected or named quest to the clipboard, ready to paste into a GitHub issue |
 | `/tsuki export [quests\|moonlit] [json\|csv]` | write your completed quests, your Moonlit collection, or both to the exports folder (see [docs/export-format.md](docs/export-format.md)) |
+| `/tsuki stop` | stop every walk, flight, travel chain and hand-off Tsukimichi started (a Questionable run, and the AutoDuty and Artisan runs it began) and say in chat what stopped; put it in a macro for one key |
 | `/tsuki config` or `/tsuki settings` | open Settings |
 | `/tsuki help` | open the help window |
 

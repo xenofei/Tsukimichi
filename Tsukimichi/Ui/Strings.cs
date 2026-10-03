@@ -377,6 +377,32 @@ public static partial class Strings
     // Command help
     public static string CommandHelp => Loc.Get("CommandHelp");
     public static string CommandAliasHelp => Loc.Get("CommandAliasHelp");
+    /// <summary>{0} = /tsuki and every alias, joined by <see cref="CommandListSeparator"/>.</summary>
+    public static string CommandAlsoFormat => Loc.Get("CommandAlsoFormat");
+    public const string CommandListSeparator = ", ";
+
+    // /tsuki stop (1.11.0, A1): one chat line
+    public static string StopNothing => Loc.Get("StopNothing");
+    /// <summary>{0} = what stopped, joined by <see cref="CommandListSeparator"/>.</summary>
+    public static string StopDoneFormat => Loc.Get("StopDoneFormat");
+    /// <summary>{0} = what could not be asked to stop, joined by <see cref="CommandListSeparator"/>.</summary>
+    public static string StopFailedFormat => Loc.Get("StopFailedFormat");
+    /// <summary>{0} = the command Questionable runs after a stop, {1} = seconds to confirm.</summary>
+    public static string StopAskQuestionableFormat => Loc.Get("StopAskQuestionableFormat");
+    /// <summary>{0} = seconds to confirm.</summary>
+    public static string StopAskAutoDutyFormat => Loc.Get("StopAskAutoDutyFormat");
+    public static string StopFailedAll => Loc.Get("StopFailedAll");
+
+    // Settings › Keyboard › Chat commands (1.11.0, A12)
+    public static string ConfigCommandAliasesHeading => Loc.Get("ConfigCommandAliasesHeading");
+    public static string ConfigCommandAliases => Loc.Get("ConfigCommandAliases");
+    public static string ConfigCommandAliasesHint => Loc.Get("ConfigCommandAliasesHint");
+    /// <summary>{0} = every alias in use, joined by <see cref="CommandListSeparator"/>.</summary>
+    public static string ConfigCommandAliasesActiveFormat => Loc.Get("ConfigCommandAliasesActiveFormat");
+    /// <summary>{0} = the aliases skipped, joined by <see cref="CommandListSeparator"/>.</summary>
+    public static string ConfigCommandAliasesSkippedFormat => Loc.Get("ConfigCommandAliasesSkippedFormat");
+    /// <summary>{0} = the words that are not an alias, joined by <see cref="CommandListSeparator"/>.</summary>
+    public static string ConfigCommandAliasesInvalidFormat => Loc.Get("ConfigCommandAliasesInvalidFormat");
 
     // Time
     public static string JustNow => Loc.Get("JustNow");

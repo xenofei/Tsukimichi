@@ -301,6 +301,9 @@ public sealed class TravelService : ITravelPorts, IDisposable
 
     public bool InCombat => condition[ConditionFlag.InCombat];
 
+    /// <summary>True while the character is bound by a duty (a dungeon, trial or raid, solo duties included).</summary>
+    public bool InDuty => condition[ConditionFlag.BoundByDuty] || condition[ConditionFlag.BoundByDuty56] || condition[ConditionFlag.BoundByDuty95];
+
     /// <summary>True while the character casts (a teleport among others); a teleport or a walk would cut it or be refused.</summary>
     public bool Casting => condition[ConditionFlag.Casting] || condition[ConditionFlag.Casting87];
 
@@ -342,7 +345,7 @@ public sealed class TravelService : ITravelPorts, IDisposable
             return Strings.TravelReasonCutscene;
         }
 
-        if (condition[ConditionFlag.BoundByDuty] || condition[ConditionFlag.BoundByDuty56] || condition[ConditionFlag.BoundByDuty95])
+        if (InDuty)
         {
             return Strings.TravelReasonDuty;
         }
@@ -409,10 +412,14 @@ public sealed class TravelService : ITravelPorts, IDisposable
     }
 
     /// <summary>
-    /// The one Stop: cancels the walk or chain this service runs. A walk another plugin (Questionable, AutoDuty, vnavmesh's
-    /// own window) started is left alone; it is that plugin's to stop.
+    /// The one Stop: cancels the walk or chain this service runs, a walk whose path is still being found included
+    /// (<see cref="StopWalk"/>). A walk another plugin (Questionable, AutoDuty, vnavmesh's own window) started is left
+    /// alone; it is that plugin's to stop. True when a run was under way.
     /// </summary>
-    public void Stop() => journey.Cancel();
+    public bool Stop() => journey.Cancel() is not null;
+
+    /// <summary>True when the run under way (or the last one) is a lone Walk to giver, not a Go to giver chain.</summary>
+    public bool JourneyIsWalkOnly => journeyIsWalkOnly;
 
     private void Report(GoToGiverOutcome? outcome)
     {

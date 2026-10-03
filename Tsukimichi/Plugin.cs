@@ -73,6 +73,7 @@ public sealed partial class Plugin : IDalamudPlugin
     private readonly WindowSystem windowSystem = new("Tsukimichi");
     private readonly GlyphDebugWindow glyphDebugWindow;
     private readonly TsukimichiCommand command;
+    private StopCommand? stopCommand;
     private readonly UiState ui;
     private readonly GameLinks gameLinks;
     private readonly Game.LifestreamIpc lifestream;
@@ -833,7 +834,17 @@ public sealed partial class Plugin : IDalamudPlugin
             PluginInterface.UiBuilder.Draw += windowSystem.Draw;
             PluginInterface.UiBuilder.OpenMainUi += mainWindow.Toggle;
 
-            command = new TsukimichiCommand(CommandManager, toggleMainWindow: mainWindow.Toggle, toggleGlyphWindow: glyphDebugWindow.Toggle, search: mainWindow.SearchAndPrint);
+            // /tsukimichi and /tsuki, plus /ts, /moon and the player's own aliases (1.11.0, A12); an alias Dalamud, the
+            // game or another plugin already answers to is skipped and named in Settings › Keyboard.
+            var gameCommands = new Game.GameTextCommands(DataManager, Log);
+            command = new TsukimichiCommand(
+                CommandManager,
+                toggleMainWindow: mainWindow.Toggle,
+                toggleGlyphWindow: glyphDebugWindow.Toggle,
+                search: mainWindow.SearchAndPrint,
+                userAliases: Settings.CommandAliases,
+                isGameCommand: gameCommands.Contains,
+                log: Log);
             // /UI
             // ---- Game state (T3.2/T3.3) ----
             InitializeGameState();
@@ -1038,6 +1049,10 @@ public sealed partial class Plugin : IDalamudPlugin
             questionableActions.Traveling = () => travel.JourneyActive;
             // Questionable runs its "command after stop" (default /li auto) on any stop asked over IPC: Stop says so.
             questionableActions.CommandAfterStop = companionSetup.QuestionableCommandAfterStop;
+            // /tsuki stop (1.11.0, A1): one Stop for every hand-off, for a macro or a single key, through each Stop
+            // button's own call; one chat line says what stopped.
+            stopCommand = new StopCommand(Framework, travel, lifestream, autoDuty, artisan, questionableActions, () => questionableIpc.PollStatus().Running, gameLinks.PrintText, Log);
+            command.Stop = stopCommand.Run;
             mainWindow.AttachDiagnostics(diagnostics);
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
@@ -1197,6 +1212,7 @@ public sealed partial class Plugin : IDalamudPlugin
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
+            configWindow.Command = command;
 
             // Todo overlay (V2-13): follows Settings.TodoOverlayEnabled; /tsuki todo and the settings window flip it.
             todoOverlay = new TodoOverlay(Settings, Session, gameLinks, quest =>
@@ -1436,6 +1452,7 @@ public sealed partial class Plugin : IDalamudPlugin
             loc?.Dispose();
         });
         Unwind("command", () => command?.Dispose());
+        Unwind("stop command", () => stopCommand?.Dispose());
         Unwind("draw hook", () =>
         {
             if (configWindow is not null)

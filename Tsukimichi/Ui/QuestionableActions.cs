@@ -151,6 +151,19 @@ public sealed class QuestionableActions
     public void Stop(string host) => RequestStop(host);
 
     /// <summary>
+    /// For <c>/tsuki stop</c> (1.11.0): the command Questionable runs after a stop, while the player asked to be asked
+    /// first (the same rule as Stop's confirmation), for the chat line's question; null when a stop needs no question.
+    /// </summary>
+    public string? StopQuestionCommand() =>
+        settings.QuestionableConfirmStopCommand && CommandAfterStop?.Invoke() is { } command ? CommandText(command) : null;
+
+    /// <summary>
+    /// Stops Questionable with no chat line and no question, for <c>/tsuki stop</c>, which asks in chat and names what it
+    /// stopped in one line. False when Questionable could not be asked or refused.
+    /// </summary>
+    public bool StopQuietly() => ipc.Stop();
+
+    /// <summary>
     /// The Stop tooltip: what Stop does, and, while Questionable's "Run command after stop" is on, the command it then
     /// runs. Composed on hover only.
     /// </summary>

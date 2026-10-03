@@ -1971,16 +1971,16 @@
   <data name="Help.CommandKeys.14" xml:space="preserve">
     <value>/tsuki export [quests|moonlit] [json|csv]</value>
   </data>
-  <data name="Help.CommandKeys.15" xml:space="preserve">
+  <data name="Help.CommandKeys.16" xml:space="preserve">
     <value>Strg+F</value>
   </data>
-  <data name="Help.CommandKeys.16" xml:space="preserve">
+  <data name="Help.CommandKeys.17" xml:space="preserve">
     <value>Esc</value>
   </data>
-  <data name="Help.CommandKeys.17" xml:space="preserve">
+  <data name="Help.CommandKeys.18" xml:space="preserve">
     <value>Menütaste, Umschalt+F10, …</value>
   </data>
-  <data name="Help.CommandKeys.18" xml:space="preserve">
+  <data name="Help.CommandKeys.19" xml:space="preserve">
     <value>Strg+1 bis 5, F, Eingabe, P</value>
   </data>
   <data name="Help.CommandMeanings.0" xml:space="preserve">
@@ -2016,16 +2016,16 @@
   <data name="Help.CommandMeanings.14" xml:space="preserve">
     <value>die abgeschlossenen Aufträge des angezeigten Charakters, seine Mondlicht-Sammlung oder beides als JSON oder CSV in den Ordner „exports“ schreiben (im Format der Einstellungen, wenn keines genannt ist) und ausgeben, wohin; siehe docs/export-format.md. Keine Content-ID, kein Account, keine Welt, und der Name nur, wenn Einstellungen › Daten › Export › „Charakternamen einschließen“ angehakt ist</value>
   </data>
-  <data name="Help.CommandMeanings.15" xml:space="preserve">
+  <data name="Help.CommandMeanings.16" xml:space="preserve">
     <value>den Cursor in die Suche setzen, solange das Fenster den Fokus hat</value>
   </data>
-  <data name="Help.CommandMeanings.16" xml:space="preserve">
+  <data name="Help.CommandMeanings.17" xml:space="preserve">
     <value>das offene Menü oder den Filterbereich schließen; ist keins offen, das Fenster schließen</value>
   </data>
-  <data name="Help.CommandMeanings.17" xml:space="preserve">
+  <data name="Help.CommandMeanings.18" xml:space="preserve">
     <value>das Menü der fokussierten Zeile in der Auftragstabelle und der Mondlicht-Liste öffnen, dasselbe Menü wie per Rechtsklick; die Schaltfläche … am rechten Ende einer Zeile (beim Überfahren oder Fokus sichtbar) öffnet es mit Linksklick</value>
   </data>
-  <data name="Help.CommandMeanings.18" xml:space="preserve">
+  <data name="Help.CommandMeanings.19" xml:space="preserve">
     <value>aus, bis unter Einstellungen › Tastatur eingeschaltet: Tabs wechseln, den Auftraggeber des gewählten Auftrags markieren, ihn im Tagebuch zeigen, ihn anheften. Das Spiel sieht diese Tasten ebenfalls: Strg+1 bis 5 sind standardmäßig Leiste 2</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">
