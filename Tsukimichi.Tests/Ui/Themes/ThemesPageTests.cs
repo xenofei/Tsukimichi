@@ -19,8 +19,9 @@ public sealed class ThemesPageTests
     [Fact]
     public void The_cards_are_the_offered_themes_with_Classic_last_and_the_1_17_ones_hidden()
     {
+        // The approved Themes design's order: Medallion, Ishgard Glass second, Aether Crystal, Classic.
         Assert.Equal(
-            [ThemeId.Medallion, ThemeId.AetherCrystal, ThemeId.IshgardGlass, ThemeId.Classic],
+            [ThemeId.Medallion, ThemeId.IshgardGlass, ThemeId.AetherCrystal, ThemeId.Classic],
             ThemesPage.Themes.Select(static t => t.Id));
         Assert.True(ThemesPage.Themes[^1].Legacy);
         Assert.DoesNotContain(ThemesPage.Themes, static t => t.Id is ThemeId.Orrery or ThemeId.Sumi);

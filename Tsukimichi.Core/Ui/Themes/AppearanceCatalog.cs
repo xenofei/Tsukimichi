@@ -98,8 +98,11 @@ public static class ThemePresets
     public static readonly ThemePreset Sumi = new(ThemeId.Sumi, "sumi-to-kinpaku", "Sumi to Kinpaku", GlyphSetId.Sumi, FrameKitId.Kirikane, PaletteId.KuganeLacquer, Legacy: false, Offered: false);
     public static readonly ThemePreset Classic = new(ThemeId.Classic, "classic", "Classic", GlyphSetId.Classic, FrameKitId.Brass, PaletteId.Night, Legacy: true, Offered: true);
 
-    /// <summary>Every registered theme, in the Themes page's order (Classic last, as Legacy).</summary>
-    public static readonly IReadOnlyList<ThemePreset> All = [Medallion, AetherCrystal, IshgardGlass, Orrery, Sumi, Classic];
+    /// <summary>
+    /// Every registered theme, in the Themes page's order: Menphina's Medallion, Ishgard Glass, Aether Crystal (the
+    /// approved Themes design puts Glass second; the critic ranked it first), the 1.17 themes, and Classic last, as Legacy.
+    /// </summary>
+    public static readonly IReadOnlyList<ThemePreset> All = [Medallion, IshgardGlass, AetherCrystal, Orrery, Sumi, Classic];
 
     /// <summary>The default theme.</summary>
     public static ThemePreset Default => Medallion;
