@@ -200,6 +200,19 @@ Dalamud's API 16 ships with Patch 8.0 in January 2027 and removes Lumina.Excel, 
 10. **Path card:** "3 quests before this one" with a Next link, or nothing when the quest is next. Counts say what's left.
 11. **Motion:** completing a visible quest waxes its moon once. Settings › Look shows the Motion line.
 
+### 1.13.0 (released 2026-10-03)
+
+1. **Text size:** Settings › General › Text size at 130% and 150%. All windows, tooltips and panels grow together (not double), and nothing clips.
+2. **Live scale:** drag the window scale. Every Tsukimichi window follows as you drag.
+3. **Columns:** drag Journal column edges, then reopen; widths are kept. Header right-click › Reset column widths. Nothing is cut off at 100/150/200%.
+4. **Decoration:** switch Full / Quiet / Plain. The three are obviously different, the Settings preview shows all three, and the tree and table keep their place when you switch. At Full, the quest banner is moonlit, with no daylight glare.
+5. **Settings:** the nine pages read spaciously, every setting you had before is still there, and toggles replace checkboxes.
+6. **Motion:** hover, selection and menus glide gently. At Full: the tab bead travels, a road glint on completion, a Ready halo. Turn on Reduce motion and nothing moves.
+7. **Todo overlay:** opacity at 0 lets clicks through except on its rows. Try hide in combat, NPC talk and group pose.
+8. **Moonlit:** each reward shows its own art in the table and gallery.
+9. **First opens:** Flight, Plan and Moonlit open without a hitch.
+10. **Installer icon:** shows the new Medallion icon (restart the game once if it doesn't).
+
 ## Not doing, for now
 
 | Idea | Why not |

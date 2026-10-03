@@ -4,6 +4,36 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-10-03
+
+### Added
+- **Text size** (Settings › General): makes Tsukimichi's text larger or smaller, from 80% to 150%, separately from the window scale. It applies live, and layouts are measured with the font you choose.
+- **Resizable Journal columns.** Drag any column's edge to resize it. Widths are saved, and "Reset column widths" is in the header's right-click menu.
+- **Three Decoration looks that are clearly different:**
+  - **Full:** the moonlit Moon Road, with a night sky, gilt brass cards, a night-graded quest banner with a hero medal, glows and Moon Road moments.
+  - **Quiet:** calm and flat, with tonal panes, hairlines and lighter medals.
+  - **Plain:** a dense ledger, with zebra rows, flat glyphs, an icon-only rail and no motion.
+
+  Settings shows all three side by side, so you can see the choice before you click.
+- **Moon Road moments** (Full): the rail bead travels between tabs, a glint runs along the road when you finish a quest, and a soft halo marks a quest that becomes Ready. Each plays once and never under Reduce motion.
+- **Todo overlay:**
+  - optional hiding in combat, while talking to NPCs or in group pose (off by default);
+  - opacity down to 0, and a nearly invisible overlay lets clicks through except over its rows;
+  - a short completion beat when you finish a quest.
+- **Moonlit rewards show their own game art** at a readable size: mounts, minions, emotes, cards, hairstyles, bardings, titles and more.
+
+### Changed
+- **Settings is rebuilt into nine roomy pages:** General, Journal, Overlay & routes, Alerts, Spoilers, In game, Automation, Characters & data and Advanced. Every setting has a plain one-line description, and toggles and segmented pickers replace checkboxes. Flair is now "Decoration", and the glyph palette is "Moon colours".
+- **The window scale changes every Tsukimichi window live** as you drag it. Scale controls live only in Settings › General, and version info is at the foot of Settings.
+- **Gentle motion:** lists, tabs, buttons, tooltips and menus now move gently. Hover glides, selections settle and menus fade in.
+- **Panels beside game windows rise in** instead of blinking, keep to one side, and stay up while you arrow through lists.
+
+### Fixed
+- Journal columns fit their content at every UI and text size, so job labels, expansion pills and icons are no longer cut off.
+- Opening Flight, Plan or Moonlit for the first time no longer freezes the game.
+- `/tsuki stop` and the hand-off buttons read Questionable's settings fresh before deciding, so a just-enabled "command after stop" is respected.
+- Settings changes made just before quitting are saved.
+
 ## [1.12.4] - 2026-10-03
 
 ### Fixed
