@@ -176,6 +176,12 @@ public sealed class QueryRunner : IDisposable
     /// </summary>
     public SpoilerMask Spoilers => plugin.Session?.Spoilers ?? SpoilerMask.None;
 
+    /// <summary>
+    /// What every quest opens (feature plan v6 K1), built once per catalog off the frame; null until the plugin attaches
+    /// it, which leaves the Unlocks section, the tooltip line and the Opens column out.
+    /// </summary>
+    public Core.Unlocks.QuestUnlocksSource? Unlocks { get; set; }
+
     /// <summary>Story sidequests of the catalog (<see cref="SessionState.Stories"/>); the table's book badge reads it.</summary>
     public StorySidequests Stories => plugin.Session?.Stories ?? StorySidequests.Empty;
 

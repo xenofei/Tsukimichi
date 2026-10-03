@@ -8,6 +8,14 @@ namespace Tsukimichi.Core.Storage;
 /// <summary>A quest that unlocks a system feature, from <c>curated/system_unlocks.json</c>.</summary>
 public sealed record SystemUnlock(string Label, string Kind, string? Note);
 
+/// <summary>
+/// The quest (or quests, one per path) that opens an aetheryte the first-visit rule cannot place, from
+/// <c>curated/aetheryte_unlocks.json</c> (feature plan v6 K1): it replaces whatever the rule inferred for that aetheryte.
+/// </summary>
+/// <param name="Name">The aetheryte's name, for the file's reader (rows print the game's name).</param>
+/// <param name="Quests">Quest row ids that open it; several for one reached on different paths.</param>
+public sealed record AetheryteUnlock(string Name, IReadOnlyList<uint> Quests, string Note, string Evidence);
+
 /// <summary>A quest that unlocks duties, from <c>curated/duty_unlocks.json</c>.</summary>
 public sealed record DutyUnlock(IReadOnlyList<uint> ContentFinderConditionIds, string? Note);
 
@@ -170,7 +178,8 @@ public sealed record PayoffGate(
 /// path_choices.json    { "schema": 1, "cities": { "65575": { "label": "Gridania", "note": "..." } },
 ///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
 ///                        "grandCompanies": { "66216": { "grandCompany": 2, "note": "..." } } }   (classes keyed by ClassJob row id)
-/// VERSION.json         { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
+/// aetheryte_unlocks.json { "schema": 1, "entries": { "75": { "name": "Idyllshire", "quests": [ 67116 ], "evidence": "https://...", "note": "..." } } }   (keyed by Aetheryte row id)
+/// VERSION.json        { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
 /// </code>
 /// Every file must be strict JSON (no comments, no trailing commas), as the curated README requires.
 /// </summary>
@@ -190,6 +199,7 @@ public sealed class CuratedData
     public const string PathChoicesFileName = "path_choices.json";
     public const string ExtraPrerequisitesFileName = "extra_prerequisites.json";
     public const string GameGatesFileName = "game_gates.json";
+    public const string AetheryteUnlocksFileName = "aetheryte_unlocks.json";
 
     /// <summary>The sources an <see cref="ExtraPrerequisitesFileName"/> entry may cite; each entry needs two of them.</summary>
     public static readonly IReadOnlyList<string> ExtraPrerequisiteSources = [GameTextSource, QuestionableSource, WikiSource];
@@ -310,6 +320,12 @@ public sealed class CuratedData
     /// <summary>Gates the game checks that Tsukimichi cannot read, by quest row id; ids not checked against the catalog here.</summary>
     public IReadOnlyDictionary<uint, GameGate> GameGates { get; private init; } = new Dictionary<uint, GameGate>();
 
+    /// <summary>
+    /// Aetherytes the first-visit rule cannot place, by Aetheryte row id, with the quests that open them
+    /// (<see cref="AetheryteUnlock"/>); ids not checked against the sheets here.
+    /// </summary>
+    public IReadOnlyDictionary<uint, AetheryteUnlock> AetheryteUnlocks { get; private init; } = new Dictionary<uint, AetheryteUnlock>();
+
     /// <summary><see cref="GameGates"/> as the catalog builders take them (<c>QuestCatalog.Build</c>).</summary>
     public IReadOnlyDictionary<uint, QuestGate> GameGateIds => GameGates.ToDictionary(
         kv => kv.Key,
@@ -329,7 +345,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates };
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -655,6 +671,7 @@ public sealed class CuratedData
         var pathChoices = LoadPathChoices(Path.Combine(dir, PathChoicesFileName), warnings);
         var extraPrerequisites = LoadExtraPrerequisites(Path.Combine(dir, ExtraPrerequisitesFileName), warnings);
         var gameGates = LoadGameGates(Path.Combine(dir, GameGatesFileName), warnings);
+        var aetheryteUnlocks = LoadAetheryteUnlocks(Path.Combine(dir, AetheryteUnlocksFileName), warnings);
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
@@ -664,7 +681,72 @@ public sealed class CuratedData
             PathChoices = pathChoices,
             ExtraPrerequisites = extraPrerequisites,
             GameGates = gameGates,
+            AetheryteUnlocks = aetheryteUnlocks,
         };
+    }
+
+    /// <summary>
+    /// aetheryte_unlocks.json: entries keyed by Aetheryte row id, each with a <c>name</c>, a non-empty <c>quests</c>
+    /// array of quest row ids without repeats, an https <c>evidence</c> URL and a <c>note</c>. An entry missing any of
+    /// them, or with a malformed one, is skipped with a warning.
+    /// </summary>
+    private static Dictionary<uint, AetheryteUnlock> LoadAetheryteUnlocks(string path, List<string> warnings)
+    {
+        var entries = new Dictionary<uint, AetheryteUnlock>();
+        ForEachEntry(path, warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint aetheryteId) || aetheryteId == 0)
+            {
+                warn("key is not an Aetheryte row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            var name = StorageJson.ReadString(obj, "name")?.Trim();
+            if (string.IsNullOrEmpty(name))
+            {
+                warn("name is missing");
+                return;
+            }
+
+            if (!obj.TryGetPropertyValue("quests", out var questsNode) || questsNode is not JsonArray array || array.Count == 0)
+            {
+                warn("quests must be a non-empty array of quest row ids");
+                return;
+            }
+
+            var quests = new List<uint>(array.Count);
+            foreach (var element in array)
+            {
+                if (!StorageJson.TryReadId(element, out var rowId) || rowId == 0 || quests.Contains(rowId))
+                {
+                    warn($"quest '{element}' is not a quest row id, or repeats");
+                    return;
+                }
+
+                quests.Add(rowId);
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            if (!evidence.StartsWith("https://", StringComparison.Ordinal))
+            {
+                warn("evidence is not an https URL");
+                return;
+            }
+
+            entries[aetheryteId] = new AetheryteUnlock(name, quests, note, evidence);
+        });
+
+        return entries;
     }
 
     /// <summary>

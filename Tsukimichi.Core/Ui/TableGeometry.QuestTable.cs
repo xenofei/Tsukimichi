@@ -26,6 +26,9 @@ public enum QuestColumn
 
     /// <summary>The quest's base EXP (1.9.0, R6 G): off unless Settings › Display › Planning turns it on.</summary>
     Exp,
+
+    /// <summary>What the quest opens, up to three kind icons (feature plan v6 K4): off unless Settings › Display › Planning turns it on.</summary>
+    Opens,
 }
 
 /// <summary>
@@ -41,7 +44,8 @@ public enum QuestColumn
 /// <param name="CellOverhead">What the table adds to each column's content (the cell padding either side and the border).</param>
 /// <param name="Scale">Pixels per logical pixel, for the logical budgets (name minimum, status pad, hysteresis).</param>
 /// <param name="Exp">The EXP column; 0 when it is not measured, which gives it no room at all.</param>
-public readonly record struct QuestTableWidths(float Glyph, float Level, float JobIcon, float Job, float StateWord, float Expansion, float Rewards, float CellOverhead, float Scale = 1f, float Exp = 0f);
+/// <param name="Opens">The Opens column; 0 when it is not measured, which gives it no room at all.</param>
+public readonly record struct QuestTableWidths(float Glyph, float Level, float JobIcon, float Job, float StateWord, float Expansion, float Rewards, float CellOverhead, float Scale = 1f, float Exp = 0f, float Opens = 0f);
 
 /// <summary>What <see cref="TableGeometry.PlanQuestTable"/> decided for a frame, beyond the columns.</summary>
 /// <param name="TwoLine">The rows are two-line: the name and the level, then the status under the name.</param>
@@ -56,13 +60,13 @@ public readonly record struct QuestTablePlan(bool TwoLine, bool JobIconOnly);
 public static partial class TableGeometry
 {
     /// <summary>How many columns the quest table has (<see cref="QuestColumn"/>).</summary>
-    public const int QuestColumnCount = 8;
+    public const int QuestColumnCount = 9;
 
     /// <summary>
     /// The quest table's column specs, in <see cref="QuestColumn"/> order: the glyph, the name and the status never
     /// hide (priority 0); the name stretches with three shares and at least <see cref="LayoutBudgets.TableNameMinLogical"/>,
     /// the status with two shares and at least the widest state word plus <see cref="LayoutBudgets.TableStatusPadLogical"/>;
-    /// then Level (2), Job with its label (3), Expansion (4), Rewards (5) and EXP (6), which hides first. A column the
+    /// then Level (2), Job with its label (3), Expansion (4), Rewards (5), EXP (6) and Opens (7), which hides first. A column the
     /// player hid from the table's menu (or the EXP column while Settings leaves it off) takes no room, as does an EXP
     /// column without a measured width. Every width is a column's content width plus
     /// <see cref="QuestTableWidths.CellOverhead"/>.
@@ -88,6 +92,7 @@ public static partial class TableGeometry
         specs[(int)QuestColumn.Expansion] = FixedSpec(4, widths.Expansion, pad);
         specs[(int)QuestColumn.Rewards] = FixedSpec(5, widths.Rewards, pad);
         specs[(int)QuestColumn.Exp] = NonNegative(widths.Exp) > 0f ? FixedSpec(6, widths.Exp, pad) : new(0, 0f, 0f);
+        specs[(int)QuestColumn.Opens] = NonNegative(widths.Opens) > 0f ? FixedSpec(7, widths.Opens, pad) : new(0, 0f, 0f);
         for (var i = (int)QuestColumn.Level; i < QuestColumnCount && i < playerHidden.Length; i++)
         {
             if (playerHidden[i])

@@ -129,6 +129,12 @@ public sealed class PathChart
     }
 
     /// <summary>
+    /// What a next quest opens, for its station's tooltip ("Opens Kugane"; feature plan v6 K4): the places it names,
+    /// empty for none. Never asked for a quest the shield masks. Null leaves the tooltips as they were.
+    /// </summary>
+    public Func<uint, string>? OpensOf { get; set; }
+
+    /// <summary>
     /// The card header's caption: "3 quests before this one", or empty when the quest is the next one to do or done
     /// (<see cref="PathHeading"/>; owner point 8 retired "831 steps · 830 done").
     /// </summary>
@@ -316,7 +322,13 @@ public sealed class PathChart
                 }
 
                 var state = session.States.TryGetValue(dependentId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-                unlocks.Add(new Unlock(dependentId, name, state, Detail(bundle, dependent)));
+                var detail = Detail(bundle, dependent);
+                if (OpensOf is { } opensOf && !session.Spoilers.IsMasked(dependent) && opensOf(dependentId) is { Length: > 0 } places)
+                {
+                    detail += Core.Evaluation.BlockerText.Separator + Core.Unlocks.UnlockText.Opens(places);
+                }
+
+                unlocks.Add(new Unlock(dependentId, name, state, detail));
             }
         }
 

@@ -26,6 +26,21 @@ public sealed partial class ConfigWindow
             }
         }
 
+        if (Row(Strings.PlanningConfigOpensColumn, Strings.PlanningConfigOpensColumnHint, "opens unlocks column journal table area duty aetheryte"))
+        {
+            var opens = settings.JournalShowOpensColumn;
+            if (ImGui.Checkbox(Strings.PlanningConfigOpensColumn, ref opens))
+            {
+                settings.JournalShowOpensColumn = opens;
+                Save();
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.PlanningConfigOpensColumnHint);
+            }
+        }
+
         if (Row(Strings.PlanningConfigBoard, Strings.PlanningConfigBoardHint, "allied society beast tribe daily board reset allowances"))
         {
             var board = settings.ShowAlliedSocietyBoard;

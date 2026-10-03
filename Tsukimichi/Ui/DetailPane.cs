@@ -176,7 +176,7 @@ public sealed partial class DetailPane
         this.links = links ?? throw new ArgumentNullException(nameof(links));
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
         this.log = log;
-        chart = new PathChart(RevealRow);
+        chart = new PathChart(RevealRow) { OpensOf = id => runner.Unlocks?.Places(id) ?? string.Empty };
     }
 
     /// <summary>The user's unique-reward verdicts; null until the plugin attaches them, which hides the Moonlit card.</summary>
@@ -266,6 +266,7 @@ public sealed partial class DetailPane
             DrawRewards(cardRight);
         }
         EndSection();
+        DrawUnlocksSection(session, quest);
         DrawHandInSection(session, quest);
 
         if (Overrides is { } overrides)

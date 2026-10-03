@@ -75,6 +75,34 @@ public sealed class QuestBriefBuilder
 
     public SessionState Session => session;
 
+    /// <summary>How many of the unlock index's rows the panel adds after the plan's tags.</summary>
+    private const int MaxIndexLabels = 4;
+
+    /// <summary>
+    /// What every quest opens (feature plan v6 K4): its areas, aetherytes, duties and features join the unlock lines, and
+    /// its headline ("Unlocks Kugane") the verdict when the plan's tags name nothing more specific. Null leaves both out.
+    /// </summary>
+    public Func<Core.Unlocks.QuestUnlocks?>? QuestUnlocks { get; set; }
+
+    private static bool NamedAlready(IReadOnlyList<PlanUnlock> opens, string name)
+    {
+        foreach (var unlock in opens)
+        {
+            if (string.Equals(PlanDutiesKey(unlock.Name), PlanDutiesKey(name), StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string PlanDutiesKey(string name)
+    {
+        var trimmed = name.Trim();
+        return (trimmed.StartsWith("the ", StringComparison.OrdinalIgnoreCase) ? trimmed[4..] : trimmed).ToLowerInvariant();
+    }
+
     /// <summary>The logged-in character's evaluations; the viewed character's while nobody is logged in.</summary>
     public IReadOnlyDictionary<uint, QuestEvaluation> States => session.LiveStates.Count > 0 ? session.LiveStates : session.States;
 
@@ -116,6 +144,7 @@ public sealed class QuestBriefBuilder
         var unlockLabels = new List<string>();
         verdictRewards.Clear();
         IReadOnlyList<PlanUnlock> opens = [];
+        string? opensHeadline = null;
         if (!masked)
         {
             // The reader answers for the viewed character; while another one is viewed it would speak for the wrong
@@ -139,6 +168,28 @@ public sealed class QuestBriefBuilder
             {
                 unlockLabels.Add(unlock.Label);
             }
+
+            // Every quest's areas, aetherytes, duties and features from the unlock index (feature plan v6 K4), after
+            // the plan's tags and without repeating what they name.
+            if (QuestUnlocks?.Invoke() is { } index)
+            {
+                var added = 0;
+                foreach (var entry in index.For(quest.RowId))
+                {
+                    if (entry.Group > Core.Unlocks.UnlockGroup.Feature || added >= MaxIndexLabels || NamedAlready(opens, entry.Name))
+                    {
+                        continue;
+                    }
+
+                    unlockLabels.Add(Core.Unlocks.UnlockTargets.Name(entry.Target) + ": " + entry.Name);
+                    added++;
+                }
+
+                if (index.Headline(quest.RowId) is { Group: <= Core.Unlocks.UnlockGroup.Feature } headline)
+                {
+                    opensHeadline = headline.Name;
+                }
+            }
         }
 
         var chainLine = string.Empty;
@@ -153,7 +204,7 @@ public sealed class QuestBriefBuilder
             next = found.NextRowId is { } nextId ? bundle.Catalog.GetByRowId(nextId) : null;
         }
 
-        var verdict = QuestVerdict.Line(quest, masked, opens, verdictRewards, step, chainName);
+        var verdict = QuestVerdict.Line(quest, masked, opens, verdictRewards, step, chainName, opensHeadline);
         return new QuestBrief(
             quest,
             state,

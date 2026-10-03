@@ -165,6 +165,25 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void The_opens_column_hides_before_exp_and_takes_no_room_while_it_is_off()
+    {
+        // Feature plan v6 K4: off by default (unmeasured, no room); measured, it steps aside before the EXP column.
+        var both = English with { Exp = 90f, Opens = 50f };
+        var specs = Specs(both);
+        Assert.Equal(7, specs[Col(QuestColumn.Opens)].Priority);
+        Assert.Equal(0f, Specs(English)[Col(QuestColumn.Opens)].Min);
+
+        var all = Need(QuestColumn.Glyph, QuestColumn.Name, QuestColumn.Level, QuestColumn.Job, QuestColumn.Status, QuestColumn.Expansion, QuestColumn.Rewards)
+            + specs[Col(QuestColumn.Exp)].Min;
+        var wide = Plan(all + specs[Col(QuestColumn.Opens)].Min, both);
+        Assert.True(wide.Visible[Col(QuestColumn.Opens)]);
+
+        var narrower = Plan(all + specs[Col(QuestColumn.Opens)].Min - 1f, both);
+        Assert.False(narrower.Visible[Col(QuestColumn.Opens)]);
+        Assert.True(narrower.Visible[Col(QuestColumn.Exp)]);
+    }
+
+    [Fact]
     public void Columns_step_aside_rewards_expansion_job_icon_job_level_and_never_status()
     {
         var all = Need(QuestColumn.Glyph, QuestColumn.Name, QuestColumn.Level, QuestColumn.Job, QuestColumn.Status, QuestColumn.Expansion, QuestColumn.Rewards);
@@ -281,7 +300,7 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
     {
         var (plan, visible, widths) = Plan(340f);
         Assert.True(plan.TwoLine);
-        Assert.Equal(new[] { true, true, false, false, false, false, false, false }, visible);
+        Assert.Equal(new[] { true, true, false, false, false, false, false, false, false }, visible);
         Assert.Equal(English.Glyph + English.CellOverhead, widths[Col(QuestColumn.Glyph)], 3);
         Assert.Equal(340f, widths.Sum(), 3);
     }

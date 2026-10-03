@@ -282,6 +282,42 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     public MoonlitIconResolver Icons { get; }
 
     /// <summary>
+    /// What every quest opens (feature plan v6 K4), for the quest tooltip's "Also opens: …" line; null until the plugin
+    /// attaches it, which leaves the line out.
+    /// </summary>
+    public Core.Unlocks.QuestUnlocksSource? Unlocks { get; set; }
+
+    // "Also opens: …" per quest, composed once per index revision.
+    private readonly Dictionary<uint, string> alsoOpens = [];
+    private int alsoOpensRevision = -1;
+
+    /// <summary>"Also opens: Kugane · The Sirensong Sea" for a quest the shield does not mask; empty otherwise.</summary>
+    private string AlsoOpensText(QuestRecord quest)
+    {
+        if (Unlocks is not { } unlocks || session.Spoilers.IsMasked(quest))
+        {
+            return string.Empty;
+        }
+
+        if (alsoOpensRevision != unlocks.Revision)
+        {
+            alsoOpensRevision = unlocks.Revision;
+            alsoOpens.Clear();
+        }
+
+        if (!alsoOpens.TryGetValue(quest.RowId, out var text))
+        {
+            var places = unlocks.Places(quest.RowId);
+            text = places.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.MoonlitAlsoOpensFormat, places) : string.Empty;
+            alsoOpens[quest.RowId] = text;
+        }
+
+        return text;
+    }
+
+    private static string AlsoFromAndOpens(string alsoFrom, string opens) => alsoFrom + "\n" + opens;
+
+    /// <summary>
     /// Marks a quest unique (a note names the reward) or not unique (hidden from the Moonlit view), saves
     /// <c>user/overrides.json</c> and schedules a catalog rebuild. Intended for the detail pane's "Mark quest unique".
     /// </summary>
@@ -1724,8 +1760,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
             if (ImGui.IsItemHovered())
             {
-                // Other quests that give the same reward ("Also from …"), under the action.
-                UiMetrics.Tooltip(Strings.MoonlitShowInJournal, row.AlsoFromText.Length > 0 ? row.AlsoFromText : null);
+                // Other quests that give the same reward ("Also from …"), then what else the quest opens (feature plan
+                // v6 K4), under the action.
+                var opens = AlsoOpensText(quest);
+                var detail = row.AlsoFromText.Length > 0
+                    ? (opens.Length > 0 ? AlsoFromAndOpens(row.AlsoFromText, opens) : row.AlsoFromText)
+                    : opens;
+                UiMetrics.Tooltip(Strings.MoonlitShowInJournal, detail.Length > 0 ? detail : null);
             }
         }
         else
