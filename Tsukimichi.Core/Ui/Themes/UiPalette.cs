@@ -130,7 +130,7 @@ public sealed record UiPalette
 
     /// <summary>
     /// The generic high-contrast form (theme-system §8.3, spec-1.16 §A3): the surface's high-contrast roles (no sky
-    /// gradient, the strong line as an opaque ornament, Cool at 7 : 1), no sky stops, the designed Quiet, Plain and drawer
+    /// gradient, the strong line as an opaque ornament, Cool at 7 : 1), no sky stops nor rail edge, the designed Quiet, Plain and drawer
     /// tones dropped so they are mixed from that surface, and with <paramref name="pushInks"/> the accent, the danger and
     /// Unknown text and every state word pushed towards the text colour until they reach 7 : 1 on the window, and the
     /// stripes to 3 : 1.
@@ -138,7 +138,7 @@ public sealed record UiPalette
     public UiPalette ToHighContrast(bool pushInks)
     {
         var surface = Surface.ForHighContrast();
-        var scene = Scene with { Zenith = surface.Window, SkyStops = null };
+        var scene = Scene with { Zenith = surface.Window, SkyStops = null, RailEdge = null };
         var form = this with
         {
             Key = Key + "-hc",

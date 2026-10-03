@@ -292,11 +292,13 @@ public sealed class UiPaletteTests
         Assert.True(UiPalettes.IsRegistered(PaletteId.Night));
         Assert.Contains(Night, UiPalettes.All);
 
-        // Ishgard Snow is registered (T8); Dawn and Kugane Lacquer are Night until 1.17; Follow Dalamud is built from the host instead.
+        // Ishgard Snow is registered (T8), Dawn and Kugane Lacquer (T16); Follow Dalamud is built from the host instead.
         Assert.Same(UiPalettes.IshgardSnow, UiPalettes.Get(PaletteId.IshgardSnow));
         Assert.True(UiPalettes.IsRegistered(PaletteId.IshgardSnow));
-        Assert.Equal([PaletteId.Night, PaletteId.IshgardSnow], UiPalettes.All.Select(static p => p.Id));
-        Assert.Same(Night, UiPalettes.Get(PaletteId.Dawn));
+        Assert.Equal([PaletteId.Night, PaletteId.IshgardSnow, PaletteId.Dawn, PaletteId.KuganeLacquer], UiPalettes.All.Select(static p => p.Id));
+        Assert.Same(UiPalettes.Dawn, UiPalettes.Get(PaletteId.Dawn));
+        Assert.Same(UiPalettes.KuganeLacquer, UiPalettes.Get(PaletteId.KuganeLacquer));
+        Assert.False(UiPalettes.IsRegistered(PaletteId.FollowDalamud));
         Assert.Same(Night, UiPalettes.Get(PaletteId.FollowDalamud));
         Assert.Same(Night, UiPalettes.Get((PaletteId)99));
         foreach (var palette in UiPalettes.All)

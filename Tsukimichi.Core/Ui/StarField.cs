@@ -152,6 +152,25 @@ public static class StarField
         return Math.Clamp((int)MathF.Round(area / AreaPerStar), min, max);
     }
 
+    /// <summary>The fewest stars a thinned sky keeps (<see cref="Thinned"/>), so a small sky is never left bare.</summary>
+    public const int MinThinned = 4;
+
+    /// <summary>
+    /// How many of a field's <paramref name="count"/> stars show under a palette's star <paramref name="density"/>
+    /// (Themes.StarInks.Density; spec-1.17 §E, Kugane Lacquer's half-dense sky): the first share of them, never fewer
+    /// than <see cref="MinThinned"/> (nor more than there are). A density of 1 or more, or not a number, shows them all.
+    /// A field's first stars are a shorter field's whole sky, so a thinner sky is the same sky, never a reshuffle.
+    /// </summary>
+    public static int Thinned(int count, float density)
+    {
+        if (count <= 0 || !(density < 1f))
+        {
+            return Math.Max(0, count);
+        }
+
+        return Math.Min(count, Math.Max(MinThinned, (int)MathF.Round(count * MathF.Max(0f, density), MidpointRounding.AwayFromZero)));
+    }
+
     /// <summary>
     /// <paramref name="count"/> stars from <paramref name="seed"/>: the same seed always yields the same stars, and a
     /// longer field starts with every star of a shorter one. U covers the whole width (the field wraps as it drifts); V

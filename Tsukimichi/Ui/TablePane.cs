@@ -1507,9 +1507,10 @@ public sealed class TablePane : IDisposable
             // Full: the medal sits on a 1.5 px shadow falling straight down, and a Ready medal glows (4 px, gold).
             if (state == QuestState.Ready && Theme.ShowGlow)
             {
-                if (Theme.Washes)
+                if (Theme.ReadyHaloWash)
                 {
                     // A light palette: the Ready-only warm wash within 3 px of the medal (spec-1.16 §A4.1), never light.
+                    // Dawn and Kugane Lacquer: the palette's gated Ready halo in the same footprint (spec-1.17 §E4.1).
                     ReadyWash(dl, glyphCenter, layout.GlyphRadius);
                 }
                 else
@@ -1864,7 +1865,8 @@ public sealed class TablePane : IDisposable
     /// A light palette's Ready-only warm wash behind a row medal (spec-1.16 §A4.1; the supervisor's final ruling): the
     /// palette's <see cref="Core.Ui.Themes.WashTokens.ReadyHalo"/> (#F2D27A at .75) within its reach (3 px) of the
     /// medal's edge, at full strength over the inner half and half strength over the outer half (a 3 px blur's footprint).
-    /// Drawn before the medal, which is never recoloured.
+    /// Dawn's and Kugane Lacquer's Ready halo is drawn the same way (#F2D27A at .45; spec-1.17 §E4.1). Drawn before the
+    /// medal, which is never recoloured.
     /// </summary>
     internal static void ReadyWash(ImDrawListPtr dl, Vector2 center, float radius)
     {

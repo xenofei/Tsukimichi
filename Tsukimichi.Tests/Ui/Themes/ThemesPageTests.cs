@@ -33,8 +33,13 @@ public sealed class ThemesPageTests
         Assert.Equal([PaletteId.Night, PaletteId.FollowDalamud], ThemesPage.Palettes(OnlyNight).Select(static p => p.Id));
         Assert.Equal([PaletteId.Night, PaletteId.IshgardSnow, PaletteId.FollowDalamud], ThemesPage.Palettes(NightAndSnow).Select(static p => p.Id));
 
-        // Dawn and Kugane Lacquer are 1.17: registered or not, they are not offered.
-        Assert.Equal([PaletteId.Night, PaletteId.IshgardSnow, PaletteId.FollowDalamud], ThemesPage.Palettes(static _ => true).Select(static p => p.Id));
+        // 1.17 (T16): Dawn and Kugane Lacquer join the row once registered, after Ishgard Snow (spec-1.16 §B6's order).
+        Assert.Equal(
+            [PaletteId.Night, PaletteId.IshgardSnow, PaletteId.Dawn, PaletteId.KuganeLacquer, PaletteId.FollowDalamud],
+            ThemesPage.Palettes(static _ => true).Select(static p => p.Id));
+        Assert.Equal(
+            [PaletteId.Night, PaletteId.IshgardSnow, PaletteId.Dawn, PaletteId.KuganeLacquer, PaletteId.FollowDalamud],
+            ThemesPage.Palettes(UiPalettes.IsRegistered).Select(static p => p.Id));
     }
 
     [Fact]
