@@ -547,6 +547,13 @@ public sealed class QueryRunner : IDisposable
     public string JobShort(QuestRecord quest) => Job(quest).Short;
 
     /// <summary>
+    /// The job <paramref name="rowId"/> is ready on when it is Ready on another job (its medal's badge, feature plan v6
+    /// G1); 0 otherwise or when there is no answer.
+    /// </summary>
+    public byte ReadyOnJob(uint rowId) =>
+        plugin.Session?.States is { } states && states.TryGetValue(rowId, out var evaluation) && evaluation?.ReadyOnJob is { } job ? job : (byte)0;
+
+    /// <summary>
     /// <see cref="JobShort"/> with the game icon of a quest limited to one job (0 otherwise) and a hover name: the
     /// job's name, or the category's for a group (empty for everyone). Cached per category id.
     /// </summary>

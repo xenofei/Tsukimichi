@@ -167,7 +167,7 @@ public sealed partial class DetailPane
         var center = new Vector2(centerX, max.Y + ((1f - moonIn) * UiMetrics.Px(MoonriseLogical)));
         var firstVertex = dl.VtxBuffer.Size;
         dl.AddCircleFilled(center, radius + ring, Theme.DeepU32);
-        MoonGlyph.Draw(dl, center, radius, model.State);
+        MoonGlyph.Draw(dl, center, radius, model.State, model.ReadyOnJob);
         if (moonIn < 1f)
         {
             FadeVertices(dl, firstVertex, moonIn);
