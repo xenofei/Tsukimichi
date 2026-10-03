@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-10-03
+
 ### Added
 - **Themes** (new Settings › Themes page). Pick from Menphina's Medallion, **Ishgard Glass** (stained glass in lead and stone), **Aether Crystal** (cut moonstone in a silver setting) or Classic.
   - Each card shows the theme's moons; hover a card to preview it, click to use it, and Undo follows.
@@ -23,6 +25,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Fixed
 - Locked out, Not checked and Blocked status words, and the catalog error message, are easier to read.
+- With Follow Dalamud colours on a light Dalamud style, the danger button's text, the tree's progress ring and the state stripes are readable.
 
 ## [1.15.0] - 2026-10-03
 
