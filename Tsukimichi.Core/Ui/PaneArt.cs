@@ -157,6 +157,69 @@ public static class PaneGrid
 }
 
 /// <summary>
+/// Flight's expansion marks (feature plan v6 U6): the game's expansion emblem in the zone list at 32 logical pixels,
+/// never under 28 physical ones so it always loads the game's hi-res texture (the plugin's native-texture limit is 24 px),
+/// centred on its heading in a ring column wide enough for it and for the zone rows' bead rings; and at 44 in the zone
+/// banner. Sizes are physical pixels; <c>iconScale</c> is the plugin's icon scale (Dalamud's global scale included).
+/// </summary>
+public static class FlightGeometry
+{
+    /// <summary>The zone list's expansion mark.</summary>
+    public const float MarkLogical = 32f;
+
+    /// <summary>The smallest a mark is ever drawn: above the 24 px the game's low-res icon texture is used for.</summary>
+    public const float MarkMinPx = 28f;
+
+    /// <summary>The zone banner's expansion mark.</summary>
+    public const float BannerMarkLogical = 44f;
+
+    /// <summary>The space above every expansion group but the first.</summary>
+    public const float GroupGapLogical = 10f;
+
+    /// <summary>The zone list's mark at <paramref name="iconScale"/>: 32 logical pixels, never under 28 physical.</summary>
+    public static float MarkSize(float iconScale) => MathF.Max(MarkLogical * Positive(iconScale), MarkMinPx);
+
+    /// <summary>The banner's mark at <paramref name="iconScale"/>: 44 logical pixels, never under 28 physical.</summary>
+    public static float BannerMarkSize(float iconScale) => MathF.Max(BannerMarkLogical * Positive(iconScale), MarkMinPx);
+
+    /// <summary>The ring column: as wide as the mark and the zone rows' bead box, whichever is wider.</summary>
+    public static float ColumnWidth(float markSize, float beadBox) => MathF.Max(Finite(markSize), Finite(beadBox));
+
+    /// <summary>Where an item <paramref name="size"/> wide starts to sit centred in <paramref name="room"/>: whole pixels, never before 0.</summary>
+    public static float Centred(float room, float size) => MathF.Max(0f, MathF.Floor((Finite(room) - Finite(size)) * 0.5f));
+
+    /// <summary>
+    /// An expansion's heading row: the mark (<paramref name="markSize"/> square) and the heading line
+    /// (<paramref name="headingHeight"/> tall, its title centred <paramref name="headingMidY"/> from its top) placed so
+    /// the mark's centre sits on the title's centre, after <paramref name="gapAbove"/>. Offsets are from the row's top.
+    /// </summary>
+    public static FlightHeadingRow HeadingRow(float markSize, float headingHeight, float headingMidY, float gapAbove)
+    {
+        markSize = Finite(markSize);
+        headingHeight = Finite(headingHeight);
+        headingMidY = Math.Clamp(Finite(headingMidY), 0f, headingHeight);
+        gapAbove = Finite(gapAbove);
+
+        // Whichever centre sits lower moves the other one down to meet it.
+        var markHalf = markSize * 0.5f;
+        var markTop = MathF.Round(MathF.Max(0f, headingMidY - markHalf));
+        var headingTop = MathF.Round(MathF.Max(0f, markHalf - headingMidY));
+        var height = MathF.Max(markTop + markSize, headingTop + headingHeight);
+        return new FlightHeadingRow(gapAbove + markTop, gapAbove + headingTop, gapAbove + height);
+    }
+
+    private static float Positive(float value) => float.IsFinite(value) && value > 0f ? value : 1f;
+
+    private static float Finite(float value) => float.IsFinite(value) ? MathF.Max(0f, value) : 0f;
+}
+
+/// <summary>An expansion heading row laid out by <see cref="FlightGeometry.HeadingRow"/>.</summary>
+/// <param name="MarkTop">The mark's top, from the row's top.</param>
+/// <param name="HeadingTop">The heading line's top, from the row's top.</param>
+/// <param name="Height">The row's height: the gap above and the taller of the two.</param>
+public readonly record struct FlightHeadingRow(float MarkTop, float HeadingTop, float Height);
+
+/// <summary>
 /// The Moonlit kinds list's identity icons (proposal §7.5): the game's own menu icons (<c>MainCommand.Icon</c>) for the
 /// kinds the game has a menu for (Mount Guide, Minion Guide, Emotes, Orchestrion List, Fashion Accessories and so on),
 /// else an original glyph from the ornament atlas. The table is the MainCommand row, not the icon: the icon is read from
