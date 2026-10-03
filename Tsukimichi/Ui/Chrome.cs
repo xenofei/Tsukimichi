@@ -43,7 +43,6 @@ public static partial class Chrome
     private const float CalloutRule = 3f;
     private const float PillPadX = 7f;
     private const float PillPadY = 2f;
-    private const float ChipHeight = 22f;
     private const float ChipPadX = 9f;
     private const float ChipGlyph = 8f;
     private const float SegmentPadX = Core.Ui.LayoutBudgets.SegmentPadLogical;
@@ -440,6 +439,36 @@ public static partial class Chrome
         return clicked;
     }
 
+    /// <summary>
+    /// A chip that does something other than clear (the chip lane's "+N" and "Selected quest hidden · Show"): the same
+    /// pill as <see cref="Chip"/> without the ×, its label in the accent tone when <paramref name="accent"/>. Returns true
+    /// on click; hang the tooltip on it afterwards.
+    /// </summary>
+    public static bool ActionChip(string id, string label, bool accent = false)
+    {
+        var height = ChipHeightPx();
+        var labelSize = ImGui.CalcTextSize(label);
+        var size = new Vector2(ActionChipWidth(label), height);
+        var pos = ImGui.GetCursorScreenPos();
+
+        var clicked = ImGui.InvisibleButton(id, size);
+        var hovered = ImGui.IsItemHovered();
+        var hover = Motion.Lerp(ImGuiP.GetItemID(), hovered ? 1f : 0f);
+
+        var s = Theme.Surface;
+        var dl = ImGui.GetWindowDrawList();
+        var rounding = height * 0.5f;
+        dl.AddRectFilled(pos, pos + size, Theme.U32(Vector4.Lerp(s.Raised, s.Hover, hover)), rounding);
+        dl.AddRect(pos, pos + size, Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        var ink = accent ? Theme.AccentU32 : Theme.U32(hovered ? s.Text : s.TextSecondary);
+        dl.AddText(pos + ((size - labelSize) * 0.5f), ink, label);
+        FocusRing(rounding);
+        return clicked;
+    }
+
+    /// <summary>The width an <see cref="ActionChip"/> with this label takes at the current font.</summary>
+    public static float ActionChipWidth(string label) => (2f * UiMetrics.Px(ChipPadX)) + ImGui.CalcTextSize(label).X;
+
     /// <summary>The width a <see cref="Chip"/> with this label takes at the current font, for callers that flow chips onto lines.</summary>
     public static float ChipWidth(string label)
     {
@@ -449,7 +478,7 @@ public static partial class Chrome
 
     /// <summary>The height a <see cref="Chip"/> takes at the current font, for callers that flow chips onto lines.</summary>
     public static float ChipHeightPx() =>
-        MathF.Max(MathF.Max(UiMetrics.Px(ChipHeight), ImGui.GetTextLineHeight() + UiMetrics.Px(4f)), UiMetrics.MinTarget);
+        ChromeBands.ChipHeight(UiMetrics.Scale, ImGui.GetTextLineHeight(), UiMetrics.MinTarget);
 
     /// <summary>
     /// A count badge centred on <paramref name="center"/> (draw list only): a circle, or a pill once the number is wide.

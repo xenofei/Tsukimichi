@@ -285,6 +285,24 @@ public sealed class TablePane : IDisposable
             revealUntil = ImGui.GetTime() + RevealWaitSeconds;
         }
 
+        SelectedRowRect = default;
+        var rows = runner.Rows;
+        var scopeChanged = false;
+        if (!ReferenceEquals(rows, indexedRows))
+        {
+            // A new result set (filter, search, scope, sort or a live update): index it once, and note whether the tree
+            // scope moved since the last one (the rows of a new scope arrive the frame after the click that set it).
+            IndexRows(rows);
+            scopeChanged = ui.Scope != rowsScope;
+            rowsScope = ui.Scope;
+        }
+
+        var selectedIndex = ui.SelectedRowId is { } selectedId && rowIndex.TryGetValue(selectedId, out var listed) ? listed : -1;
+
+        // The fixed band (feature plan v6 U2): the title and the chip lane, at every flair and even over an empty
+        // result, so the list's top edge never moves.
+        DrawJournalHeader(rows.Length, selectedIndex);
+
         if (runner.Empty is { } empty)
         {
             hoveredRow = null;
@@ -292,7 +310,6 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        var rows = runner.Rows;
         if (!ReferenceEquals(rows, hoverRows))
         {
             hoverRows = rows;
@@ -304,35 +321,20 @@ public sealed class TablePane : IDisposable
             }
         }
 
-        // Moon Road (R3 #6): the node's name in the Title role with its count, over a clear header in the Eyebrow role
-        // with a brass rule under it. Plain keeps the raised header of 1.3.
+        // Moon Road (R3 #6): a clear header in the Eyebrow role with a brass rule under it. Plain keeps the raised header
+        // of 1.3. The quick views' captions are in the chip lane now.
         var moonRoad = FlairRules.MoonRoadTable(Theme.Flair);
-        if (moonRoad)
-        {
-            DrawTitle(rows.Length);
-        }
-
-        if (runner.SproutCaption is { } caption)
-        {
-            // Sprout mode (T19): how much of the game is in reach, instead of the whole catalog.
-            ImGui.TextDisabled(caption);
-        }
-
-        if (runner.NewThisPatchCaption is { } newCaption)
-        {
-            // The Unlocks quick view's first group (P8): named here, closed by a rule under its last row.
-            ImGui.TextDisabled(newCaption);
-        }
-
         newGroupEnd = runner.NewThisPatch > 0 && runner.NewThisPatch < rows.Length ? rows[runner.NewThisPatch - 1].Quest.RowId : null;
-
-        // The free-trial view (1.9.0): what lies beyond the trial is listed last, under a rule, and named here.
-        if (runner.BeyondTrialCaption is { } trialCaption)
-        {
-            ImGui.TextDisabled(trialCaption);
-        }
-
         trialGroupEnd = runner.BeyondTrial > 0 && runner.BeyondTrial < rows.Length ? rows[rows.Length - runner.BeyondTrial - 1].Quest.RowId : null;
+
+        // The selected row keeps its place on screen when the rows change (feature plan v6 U3). The scroll is written
+        // into the table's window before it begins, so the frame the new rows show is already in place (ImGui's own
+        // SetScrollY lands a frame late, which would flash the old offset); it is set again inside to stick.
+        var jump = AnchorScroll(rows, selectedIndex, scopeChanged);
+        if (jump is { } jumpY && tableWindowId != 0 && ImGuiP.FindWindowByID(tableWindowId) is { IsNull: false } tableWindow)
+        {
+            tableWindow.Scroll.Y = jumpY;
+        }
 
         // SortTristate lets the header cycle back to "no sort" (journal order) and stops ImGui from picking the first
         // sortable column (the glyph) as an implicit default on the first frame.
@@ -358,6 +360,12 @@ public sealed class TablePane : IDisposable
         // ScrollY gives the table its own inner window, so this is the table's rectangle; that window sits inside the
         // centre column (own font scale 1), so it scales itself before anything is measured.
         ui.RecordWindow(UiRects.Table);
+        tableWindowId = ImGuiP.GetCurrentWindow().ID;
+        if (jump is { } stickY)
+        {
+            ImGui.SetScrollY(stickY);
+        }
+
         UiMetrics.ApplyFontScale();
         var style = ImGui.GetStyle();
         var lineHeight = ImGui.GetTextLineHeight();
@@ -485,7 +493,7 @@ public sealed class TablePane : IDisposable
         lastRowHeight = rowHeight;
 
         ApplySortSpecs();
-        ScrollToExternalSelection(rows, rowHeight);
+        ScrollToExternalSelection(rows.Length, rowHeight);
 
         if (!clipperCreated)
         {
@@ -519,6 +527,116 @@ public sealed class TablePane : IDisposable
         clipper.End();
         hoveredRow = hoveredNext;
         moreFocusedRow = moreFocusedNext;
+
+        // The anchor for the next change of rows: the selected row while it is on screen, else the first row on screen.
+        var rowsView = ImGuiP.GetCurrentWindow().InnerClipRect;
+        var view = MathF.Max(rowHeight, rowsView.Max.Y - rowsView.Min.Y);
+        anchorRows = rows;
+        anchorRowHeight = rowHeight;
+        anchorView = view;
+        hasAnchor = ScrollAnchor.TryCapture(rows, selectedIndex, ImGui.GetScrollY(), rowHeight, view, out anchor);
+        if (!SelectedRowRect.IsEmpty)
+        {
+            // Only what is on screen counts for the floating layers (a row half scrolled under the header).
+            var clip = new ScreenRect(rowsView.Min, rowsView.Max);
+            SelectedRowRect = ScreenRect.Intersect(SelectedRowRect, clip) is { IsEmpty: false } seen ? seen : default;
+        }
+    }
+
+    /// <summary>
+    /// The selected row's rectangle on screen this frame (empty when it is not on screen, or another tab shows): the
+    /// floating layers keep clear of it (<see cref="FloatingLayers"/>).
+    /// </summary>
+    public ScreenRect SelectedRowRect { get; private set; }
+
+    /// <summary>The chip lane's owner (feature plan v6 U2); the band keeps its height without it.</summary>
+    public FilterPanel? Lane { get; set; }
+
+    // The row index of the current result set (row id → index), rebuilt only when the runner hands out new rows, so the
+    // selection's place is a lookup rather than a scan every frame.
+    private readonly System.Collections.Generic.Dictionary<uint, int> rowIndex = [];
+    private QuestRow[]? indexedRows;
+    private QuestScope rowsScope = QuestScope.None;
+
+    // The scroll anchor (feature plan v6 U3): the rows it was taken from, the row and where it sat, the row height and
+    // the rows' view height it was measured at, and the table's window, whose scroll a change of rows sets directly.
+    private QuestRow[]? anchorRows;
+    private RowAnchor anchor;
+    private bool hasAnchor;
+    private float anchorRowHeight;
+    private float anchorView;
+    private uint tableWindowId;
+
+    // A selection made elsewhere that the rows did not list yet (a reveal whose query lands a frame later).
+    private uint? pendingReveal;
+
+    private void IndexRows(QuestRow[] rows)
+    {
+        indexedRows = rows;
+        rowIndex.Clear();
+        rowIndex.EnsureCapacity(rows.Length);
+        for (var i = 0; i < rows.Length; i++)
+        {
+            rowIndex.TryAdd(rows[i].Quest.RowId, i);
+        }
+    }
+
+    /// <summary>
+    /// The scroll for a frame whose rows changed (feature plan v6 U3), or null to leave it: a selection made elsewhere
+    /// that just became listed goes 40 % down the view; a new tree scope shows its selection there too, else its top;
+    /// any other change keeps the anchored row where it was on screen (the selected row's neighbour when it was
+    /// filtered out), and the selected row, moved in the list but kept in place, gets the reveal pulse.
+    /// </summary>
+    private float? AnchorScroll(QuestRow[] rows, int selectedIndex, bool scopeChanged)
+    {
+        if (anchorRows is not { } old || ReferenceEquals(rows, old) || !(anchorRowHeight > 0f))
+        {
+            return null;
+        }
+
+        if (pendingReveal is { } pending && pending == ui.SelectedRowId && selectedIndex >= 0)
+        {
+            pendingReveal = null;
+            lastSelection = pending;
+            return ScrollAnchor.Reveal(selectedIndex, rows.Length, anchorRowHeight, anchorView);
+        }
+
+        if (scopeChanged)
+        {
+            return selectedIndex >= 0 ? ScrollAnchor.Reveal(selectedIndex, rows.Length, anchorRowHeight, anchorView) : 0f;
+        }
+
+        if (!hasAnchor)
+        {
+            return null;
+        }
+
+        var y = ScrollAnchor.Restore(in anchor, old, rowIndex, rows.Length, anchorRowHeight, anchorView, out var landed);
+        if (anchor.Selected && landed >= 0 && landed != anchor.Index)
+        {
+            Motion.Trigger(Motion.Key(RevealTag, anchor.RowId));
+        }
+
+        return y;
+    }
+
+    /// <summary>
+    /// The Journal's fixed band over the list (feature plan v6 U2): the title line (the scope's name with an × to clear
+    /// it, and the count) and the one-line chip lane, which names a selected quest the list does not show (U3).
+    /// </summary>
+    private void DrawJournalHeader(int shown, int selectedIndex)
+    {
+        DrawTitle(shown);
+        var hidden = selectedIndex < 0 && ui.SelectedRowId is { } id ? Catalog?.Invoke()?.GetByRowId(id) : null;
+        var caption = runner.SproutCaption ?? runner.NewThisPatchCaption ?? runner.BeyondTrialCaption;
+        if (Lane is { } lane)
+        {
+            lane.DrawLane(Chrome.ChipHeightPx(), hidden, caption);
+        }
+        else
+        {
+            ImGui.Dummy(new Vector2(1f, Chrome.ChipHeightPx()));
+        }
     }
 
     /// <summary>
@@ -671,13 +789,13 @@ public sealed class TablePane : IDisposable
             titleWidth = ImGui.CalcTextSize(titleName).X;
         }
 
-        var crumbLine = 0f;
+        // The caption line is measured whether or not a breadcrumb shows, so the band's height is the same for every scope.
+        float crumbLine;
         var crumbWidth = 0f;
-        if (titleCrumb.Length > 0)
+        using (Typography.Caption())
         {
-            using var caption = Typography.Caption();
             crumbLine = ImGui.GetTextLineHeight();
-            crumbWidth = ImGui.CalcTextSize(titleCrumb).X;
+            crumbWidth = titleCrumb.Length > 0 ? ImGui.CalcTextSize(titleCrumb).X : 0f;
         }
 
         float countLine;
@@ -688,16 +806,19 @@ public sealed class TablePane : IDisposable
             countWidth = ImGui.CalcTextSize(countText).X;
         }
 
+        // A scope other than All quests ends its name with an × that clears it (feature plan v6 U2: the scope is no chip).
+        var height = MathF.Max(titleLine, MathF.Max(countLine, crumbLine));
+        var scoped = ui.Scope != QuestScope.None;
+        var clearSide = scoped ? height : 0f;
         var crumbGap = UiMetrics.Px(TitleCrumbGap);
         Span<float> parts = stackalloc float[2];
         Span<bool> partShown = stackalloc bool[2];
         parts[0] = countWidth + UiMetrics.Px(TitleCountGap);
         parts[1] = crumbWidth > 0f ? crumbWidth + crumbGap : 0f;
-        var fit = RowFit.Fit(room, titleWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), parts, partShown);
+        var fit = RowFit.Fit(MathF.Max(1f, room - clearSide), titleWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), parts, partShown);
         var countVisible = partShown[0];
         var crumbVisible = partShown[1] && crumbWidth > 0f;
 
-        var height = MathF.Max(titleLine, MathF.Max(countLine, crumbLine));
         var midY = start.Y + (height * 0.5f);
         var x = start.X;
         if (crumbVisible)
@@ -720,8 +841,14 @@ public sealed class TablePane : IDisposable
             dl.AddText(new Vector2(countX, MathF.Round(midY - (countLine * 0.5f))), Theme.U32(Theme.Surface.TextSecondary), countText);
         }
 
+        if (scoped)
+        {
+            DrawScopeClear(new Vector2(x + MathF.Min(titleWidth, fit.NameRoom), start.Y), clearSide);
+        }
+
+        ImGui.SetCursorScreenPos(start);
         ImGui.Dummy(new Vector2(room, height));
-        if (!ImGui.IsItemHovered())
+        if (!ImGui.IsItemHovered() || (scoped && ImGui.IsMouseHoveringRect(clearMin, clearMin + new Vector2(clearSide))))
         {
             return;
         }
@@ -733,6 +860,45 @@ public sealed class TablePane : IDisposable
         else if (cut || !countVisible || (!crumbVisible && titleCrumb.Length > 0))
         {
             UiMetrics.Tooltip(titlePath, countVisible ? null : countText);
+        }
+    }
+
+    // Where the title's scope × was drawn this frame, so the title's own tooltip leaves it alone.
+    private Vector2 clearMin;
+
+    /// <summary>
+    /// The × after the scope's name in the title (feature plan v6 U2): a square of <paramref name="side"/> at
+    /// <paramref name="min"/> that sets the scope back to All quests, as the scope chip of 1.10 did.
+    /// </summary>
+    private void DrawScopeClear(Vector2 min, float side)
+    {
+        clearMin = min + new Vector2(UiMetrics.Px(2f), 0f);
+        ImGui.SetCursorScreenPos(clearMin);
+        if (ImGui.InvisibleButton("##titleScopeClear", new Vector2(side)))
+        {
+            // The scope is not a filter and is not persisted; the query re-runs on the dirty mark alone.
+            ui.Scope = QuestScope.None;
+            ui.MarkQueryDirty();
+        }
+
+        var hovered = ImGui.IsItemHovered();
+        var s = Theme.Surface;
+        var center = clearMin + new Vector2(side * 0.5f);
+        var half = UiMetrics.Px(4f);
+        var dl = ImGui.GetWindowDrawList();
+        if (hovered)
+        {
+            dl.AddCircleFilled(center, side * 0.42f, Theme.U32(s.Hover));
+        }
+
+        var cross = Theme.U32(hovered ? s.Text : s.TextTertiary);
+        var thickness = MathF.Max(1f, UiMetrics.Px(1.5f));
+        dl.AddLine(center - new Vector2(half), center + new Vector2(half), cross, thickness);
+        dl.AddLine(center + new Vector2(-half, half), center + new Vector2(half, -half), cross, thickness);
+        Chrome.FocusRing(side * 0.5f);
+        if (hovered)
+        {
+            UiMetrics.Tooltip(ui.Scope.Kind == ScopeKind.VirtualIssuer ? Strings.ChipIssuerTooltip : Strings.ScopeChipTooltip);
         }
     }
 
@@ -844,6 +1010,11 @@ public sealed class TablePane : IDisposable
 
         var rowMin = new Vector2(ImGui.GetItemRectMin().X, nameCellMin.Y - layout.PadY);
         var rowMax = new Vector2(ImGui.GetItemRectMax().X, rowMin.Y + layout.RowHeight);
+        if (selected)
+        {
+            SelectedRowRect = new ScreenRect(rowMin, rowMax);
+        }
+
         if (rowHovered)
         {
             hoveredNext = quest.RowId;
@@ -1548,8 +1719,11 @@ public sealed class TablePane : IDisposable
         }
     }
 
-    /// <summary>When another pane changed the selection, scroll the table so the row is visible.</summary>
-    private void ScrollToExternalSelection(QuestRow[] rows, float rowHeight)
+    /// <summary>
+    /// When another pane changed the selection, scroll the table so the row is 40 % down the view. A row the list does
+    /// not hold yet (a reveal's query lands a frame later) is scrolled to when the new rows arrive (<see cref="AnchorScroll"/>).
+    /// </summary>
+    private void ScrollToExternalSelection(int count, float rowHeight)
     {
         if (ui.SelectedRowId == lastSelection)
         {
@@ -1557,18 +1731,19 @@ public sealed class TablePane : IDisposable
         }
 
         lastSelection = ui.SelectedRowId;
+        pendingReveal = null;
         if (lastSelection is not { } rowId)
         {
             return;
         }
 
-        for (var i = 0; i < rows.Length; i++)
+        if (rowIndex.TryGetValue(rowId, out var index))
         {
-            if (rows[i].Quest.RowId == rowId)
-            {
-                ImGui.SetScrollY(MathF.Max(0f, i * rowHeight - ImGui.GetContentRegionAvail().Y * 0.4f));
-                return;
-            }
+            ImGui.SetScrollY(ScrollAnchor.Reveal(index, count, rowHeight, ImGui.GetContentRegionAvail().Y));
+        }
+        else
+        {
+            pendingReveal = rowId;
         }
     }
 

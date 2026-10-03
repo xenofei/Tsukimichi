@@ -28,7 +28,7 @@ namespace Tsukimichi.Ui;
 /// Reads <see cref="Plugin.Session"/>, <see cref="Plugin.Settings"/> and <see cref="Plugin.Paths"/> lazily because the
 /// window is constructed before the game-state block initializes them.
 /// </summary>
-public sealed class MainWindow : Window, IDisposable
+public sealed partial class MainWindow : Window, IDisposable
 {
     public const int MaxChatMatches = 5;
 
@@ -115,7 +115,6 @@ public sealed class MainWindow : Window, IDisposable
     private string characterWorld = string.Empty;
     private uint characterJobIcon;
     private string characterTooltip = Strings.CharacterChipTooltip;
-    private string staleBanner = string.Empty;
     private string syncTooltip = Strings.NoCharacter;
     private readonly List<(ulong Id, string Label)> characterLabels = [];
 
@@ -176,6 +175,7 @@ public sealed class MainWindow : Window, IDisposable
             ShowExp = () => plugin.Settings?.JournalShowExpColumn == true,
         };
         detailPane = new DetailPane(ui, runner, links, textures, log);
+        tablePane.Lane = filterPanel;
         tonightCard = new TonightCard(ui, runner, OnFiltersChanged);
         runner.QuestPinned += OnQuestPinned;
 
@@ -207,6 +207,8 @@ public sealed class MainWindow : Window, IDisposable
     {
         EnsureInitialized();
         setupCard?.Show();
+        // The card lives in the no-selection slot of the detail column (feature plan v6 U2).
+        ui.SelectedRowId = null;
         IsOpen = true;
         BringToFront();
     }
@@ -673,11 +675,13 @@ public sealed class MainWindow : Window, IDisposable
             setupCard?.CheckDue(tutorial?.Active == true);
         }
         RefreshToolbarStrings(session);
+
+        // The fixed frame (feature plan v6 U2): toolbar, body, status bar, and nothing between them, so the panes never
+        // move under the player (ChromeBands). What used to push them down floats over the body instead.
         DrawToolbar(session);
-        DrawChipRow(session);
-        DrawBanners(session);
         DrawBody(session, bundle);
         DrawStatusBar(session, bundle);
+        DrawFloating(session, bundle);
         questionableActions?.DrawModals(QuestionableHost);
 
         // The table writes ui.Sort from ImGui's header state; persist it through the same debounce as the filters.
@@ -896,104 +900,6 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
-    /// <summary>
-    /// "Game updated: N quests are newer than Tsukimichi's data…" (feature plan v5, 1.5.0 "Trust"): shown while the
-    /// client is newer than the shipped data and the catalog holds quests <c>quest_patches.json</c> does not list,
-    /// until dismissed for this client version (<see cref="Config.Configuration.DataFreshnessDismissedFor"/>; the next
-    /// game update brings it back). "Show them" sets the Added in filter to New since data. Buttons first, as on the
-    /// rebuild line, so a narrow window never cuts them off.
-    /// </summary>
-    private void DrawFreshnessStrip()
-    {
-        if (freshness is null || plugin.Settings is not { } settings)
-        {
-            return;
-        }
-
-        var report = freshness.Current;
-        if (!Core.Diagnostics.DataFreshness.StripVisible(report, settings.DataFreshnessDismissedFor))
-        {
-            return;
-        }
-
-        if (freshnessLineCount != report.NewQuests || freshnessLineLanguage != Loc.Version)
-        {
-            freshnessLineCount = report.NewQuests;
-            freshnessLineLanguage = Loc.Version;
-            freshnessLine = Strings.FreshnessStrip(report.NewQuests);
-        }
-
-        if (ImGui.SmallButton(Strings.FreshnessShowNew + "##freshnessShow"))
-        {
-            ui.Scope = QuestScope.None;
-            ui.Filters.AddedIn = FilterSet.NewSinceData;
-            OnFiltersChanged();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.FreshnessShowNewTooltip);
-        }
-
-        ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.FreshnessDismiss + "##freshnessDismiss"))
-        {
-            settings.DataFreshnessDismissedFor = Core.Diagnostics.DataFreshness.DismissKey(report);
-            try
-            {
-                settings.Save(pluginInterface);
-            }
-            catch (Exception ex)
-            {
-                log.Warning(ex, "Settings could not be saved");
-            }
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.FreshnessDismissTooltip);
-        }
-
-        ImGui.SameLine();
-        using var gilt = Theme.PushText(Theme.Gilt);
-        ImGui.TextWrapped(freshnessLine);
-    }
-
-    /// <summary>
-    /// A rebuild (a retry or a filing change) that failed while an older catalog stays in use: the window keeps showing
-    /// that catalog, so one line in the banner area says the rebuild failed, with Retry. Gone once a build lands
-    /// (<see cref="SessionState.SetCatalog"/> clears the error).
-    /// </summary>
-    private void DrawRebuildFailure(SessionState session)
-    {
-        if (session.CatalogError is not { } error)
-        {
-            rebuildFailure = null;
-            return;
-        }
-
-        if (rebuildFailure is null || error != rebuildFailureError || rebuildFailureLanguage != Loc.Version)
-        {
-            rebuildFailureError = error;
-            rebuildFailureLanguage = Loc.Version;
-            rebuildFailure = string.Format(CultureInfo.CurrentCulture, Strings.CatalogRebuildFailedFormat, error);
-        }
-
-        // Retry first, so a long error cut at the window's edge never takes the button with it.
-        if (ImGui.SmallButton(Strings.Retry + "##rebuildRetry"))
-        {
-            retryTask = retryCatalog();
-        }
-
-        ImGui.SameLine();
-        using var eclipse = Theme.PushText(Theme.Eclipse);
-        ImGui.TextUnformatted(rebuildFailure);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(rebuildFailure);
-        }
-    }
-
     private void RefreshToolbarStrings(SessionState session)
     {
         if (toolbarVersion == session.Version)
@@ -1008,8 +914,8 @@ public sealed class MainWindow : Window, IDisposable
             characterName = Strings.NoCharacter;
             characterWorld = string.Empty;
             characterJobIcon = 0;
-            staleBanner = string.Empty;
-            syncTooltip = Strings.NoCharacter;
+            // Browse mode (feature plan v6 U2): the status bar says it, and its pip explains it on hover.
+            syncTooltip = Strings.BrowseModeNotice;
             characterTooltip = Strings.CharacterChipTooltip;
             return;
         }
@@ -1019,25 +925,24 @@ public sealed class MainWindow : Window, IDisposable
         characterJobIcon = snapshot.CurrentJob == 0 ? 0u : MoonlitIconResolver.ClassJobIconBase + snapshot.CurrentJob;
         if (session.IsLive)
         {
-            staleBanner = string.Empty;
             syncTooltip = session.PollerHealthy ? Strings.SyncLive : Strings.SyncPollerPaused;
         }
         else if (session.IsLiveElsewhere(snapshot.ContentId))
         {
             // Multibox (D11): logged in on another game client; what shows is that client's latest save.
+            // The line that was a banner over the panes until 1.12 (feature plan v6 U2) now opens the pip's tooltip.
             var time = UiFormat.Time(snapshot.TakenUtc);
-            staleBanner = string.Format(CultureInfo.CurrentCulture, Strings.MultiboxBannerFormat, snapshot.Name, links.WorldName(snapshot.World), time);
+            var banner = string.Format(CultureInfo.CurrentCulture, Strings.MultiboxBannerFormat, snapshot.Name, links.WorldName(snapshot.World), time);
             // 1.8.0 (R7 G): "updates each time that client saves" is not true of a file this client cannot read.
             var status = session.NotUpdating.TryGetValue(snapshot.ContentId, out var problem)
                 ? CharactersPane.NotUpdatingText(problem)
                 : Strings.MultiboxLiveElsewhereTooltip;
-            syncTooltip = status + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.SyncSnapshotFormat, time);
+            syncTooltip = banner + "\n" + status + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.SyncSnapshotFormat, time);
         }
         else
         {
             var time = UiFormat.Time(snapshot.TakenUtc);
-            staleBanner = string.Format(CultureInfo.CurrentCulture, Strings.StaleBannerFormat, snapshot.Name, links.WorldName(snapshot.World), time);
-            syncTooltip = string.Format(CultureInfo.CurrentCulture, Strings.SyncSnapshotFormat, time);
+            syncTooltip = string.Format(CultureInfo.CurrentCulture, Strings.StaleBannerFormat, snapshot.Name, links.WorldName(snapshot.World), time) + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.SyncSnapshotFormat, time);
         }
 
         characterTooltip = syncTooltip + "\n" + Strings.CharacterChipTooltip;
@@ -1045,16 +950,6 @@ public sealed class MainWindow : Window, IDisposable
 
     // ------------------------------------------------------------------ toolbar (T14, ui-revamp §2.1)
 
-    /// <summary>Logical height of one toolbar row.</summary>
-    private const float ToolbarRowLogical = 36f;
-
-    /// <summary>Below this much available width (pixels) the toolbar always takes two rows (accessibility B6).</summary>
-    private const float ToolbarReflowPx = 1000f;
-
-    private const float ToolbarGapLogical = 8f;
-    private const float SearchLogical = 280f;
-    private const float SearchMinLogical = 160f;
-    private const float CharacterMinLogical = 120f;
     private const string CharacterPopupId = "##characterMenu";
 
     private static readonly string SearchIcon = FontAwesomeIcon.Search.ToIconString();
@@ -1062,12 +957,27 @@ public sealed class MainWindow : Window, IDisposable
     private static readonly string ChevronIcon = FontAwesomeIcon.ChevronDown.ToIconString();
 
     /// <summary>
+    /// The window frame's bands this frame (<see cref="ChromeBands"/>), from the window's width and the sizes of type and
+    /// controls only: nothing the player filters, selects or is told can change a band's height.
+    /// </summary>
+    private ChromeBandLayout Bands(float availableWidth) =>
+        ChromeBands.Layout(new ChromeMetrics(
+            availableWidth,
+            UiMetrics.Scale,
+            ImGui.GetTextLineHeight(),
+            ImGui.GetStyle().ItemSpacing.Y,
+            UiMetrics.MinTarget,
+            FilterPanel.QuickViewsWidth(),
+            FiltersButtonWidth()));
+
+    /// <summary>
     /// The toolbar (T14): a NightRaised strip, 36 px a row, flush with the title bar and edge to edge, with a hairline
     /// under it. Left to right: the search pill, the Quick views segmented control, the Filters button with its badge
     /// and the character chip; Help and Settings are at the rail's foot (feature plan v4 L7). Below 1000 px of
     /// available width, or whenever one row cannot hold everything, it reflows to two rows (search and quick views /
-    /// filters and character) instead of hiding anything; a row that still cannot fit shrinks the search pill and the
-    /// character chip to their floors, and the quick views take a row of their own as the last resort.
+    /// filters and character) instead of hiding anything, and the quick views take a row of their own as the last
+    /// resort. The rows come from the width alone (<see cref="ChromeBands"/>): the character chip has a fixed slot in
+    /// that decision, so logging in as another character never reflows the toolbar.
     /// </summary>
     private void DrawToolbar(SessionState session)
     {
@@ -1079,38 +989,19 @@ public sealed class MainWindow : Window, IDisposable
         var style = ImGui.GetStyle();
         var origin = ImGui.GetCursorScreenPos();
         var avail = MathF.Max(1f, ImGui.GetContentRegionAvail().X);
-        var rowHeight = MathF.Max(UiMetrics.Px(ToolbarRowLogical), UiMetrics.MinTarget + UiMetrics.Px(6f));
+        var bands = Bands(avail);
+        var rowHeight = bands.ToolbarRow;
         var control = UiMetrics.MinTarget;
-        var gap = UiMetrics.Px(ToolbarGapLogical);
-
-        var searchWidth = UiMetrics.Px(SearchLogical);
+        var gap = UiMetrics.Px(ChromeBands.ToolbarGapLogical);
+        var searchWidth = bands.SearchWidth;
         var quickWidth = FilterPanel.QuickViewsWidth();
         var filtersWidth = FiltersButtonWidth();
-        var characterWidth = CharacterChipWidth();
-        var oneRow = searchWidth + quickWidth + filtersWidth + characterWidth + 3f * gap;
-
-        // Row layout: row 0 holds the search (and the quick views when they fit beside it); the last row holds the
-        // filters and the character chip.
-        var twoRows = avail < ToolbarReflowPx || oneRow > avail;
-        var quickOwnRow = false;
-        if (twoRows)
-        {
-            var searchMin = UiMetrics.Px(SearchMinLogical);
-            searchWidth = MathF.Min(searchWidth, avail - gap - quickWidth);
-            if (searchWidth < searchMin)
-            {
-                quickOwnRow = true;
-                searchWidth = MathF.Min(UiMetrics.Px(SearchLogical), avail);
-            }
-
-            characterWidth = MathF.Max(MathF.Min(characterWidth, avail - filtersWidth - gap), UiMetrics.Px(CharacterMinLogical));
-        }
-
-        var rows = twoRows ? (quickOwnRow ? 3 : 2) : 1;
+        var twoRows = bands.ToolbarRows > 1;
+        var quickOwnRow = bands.QuickViewsOwnRow;
 
         // The strip starts at the top of the content (the window padding above the cursor belongs to it).
         var top = origin.Y - style.WindowPadding.Y;
-        var stripHeight = rows * rowHeight;
+        var stripHeight = bands.Toolbar;
         PaintToolbarStrip(top, stripHeight);
 
         float RowY(int row) => top + row * rowHeight + (rowHeight - control) * 0.5f;
@@ -1128,8 +1019,8 @@ public sealed class MainWindow : Window, IDisposable
         filterPanel.DrawQuickViews(session.ViewedSnapshot is not null);
         x += quickWidth + gap;
 
-        // Last row (or the same row): filters, character, then the buttons right-aligned.
-        var lastRow = rows - 1;
+        // Last row (or the same row): filters, then the character chip in the room left (its name is clipped in it).
+        var lastRow = bands.ToolbarRows - 1;
         if (twoRows)
         {
             x = origin.X;
@@ -1137,6 +1028,10 @@ public sealed class MainWindow : Window, IDisposable
 
         DrawFiltersButton(new Vector2(x, RowY(lastRow)), filtersWidth, control);
         x += filtersWidth + gap;
+        var characterRoom = origin.X + avail - x;
+        var characterWidth = twoRows
+            ? MathF.Max(MathF.Min(CharacterChipWidth(), characterRoom), UiMetrics.Px(ChromeBands.CharacterMinLogical))
+            : MathF.Max(1f, MathF.Min(CharacterChipWidth(), characterRoom));
         DrawCharacterChip(session, new Vector2(x, RowY(lastRow)), characterWidth, control);
 
         // The whole strip, then one item spanning it so the layout continues underneath.
@@ -1546,169 +1441,6 @@ public sealed class MainWindow : Window, IDisposable
     }
 
     /// <summary>
-    /// The chip row under the toolbar (ui-revamp §2.1), drawn only while the scope or a filter narrows the table:
-    /// the scope first, then one chip per engaged filter (<see cref="FilterPanel.DrawChips"/>).
-    /// </summary>
-    private void DrawChipRow(SessionState session)
-    {
-        if (!filterPanel.HasChips())
-        {
-            ui.Rects.Remove(UiRects.Chips);
-            return;
-        }
-
-        filterPanel.DrawChips(session.Bundle);
-    }
-
-    private void DrawBanners(SessionState session)
-    {
-        DrawRebuildFailure(session);
-        DrawFreshnessStrip();
-        DrawContextBar(session);
-        DrawPinPrompt();
-        if (session.ViewedSnapshot is null)
-        {
-            using var dusk = Theme.PushText(Theme.Surface.TextTertiary);
-            ImGui.TextWrapped(Strings.BrowseModeNotice);
-        }
-        else if (staleBanner.Length > 0)
-        {
-            using var dusk = Theme.PushText(Theme.Surface.TextTertiary);
-            ImGui.TextUnformatted(staleBanner);
-        }
-    }
-
-    private static readonly string DismissIcon = FontAwesomeIcon.Times.ToIconString();
-
-    /// <summary>Whether the window shows a stored character the player chose, while another may be the one logged in.</summary>
-    private static bool ViewingStored(SessionState session) =>
-        !session.IsFollowingLive && session.ViewedSnapshot is not null && !session.IsLive;
-
-    /// <summary>
-    /// The context bar (1.7.0, onboarding finding F8): on the first open of a session that restored a stored character
-    /// (not the live one) or two or more filters, one line says so ("Viewing Alt · 3 filters on") with Follow me (while
-    /// a character is logged in), Clear and a × that hides it until the next load. It goes by itself once neither holds.
-    /// </summary>
-    private void DrawContextBar(SessionState session)
-    {
-        var filters = FilterBadge.Count(ui.Filters);
-        var stored = ViewingStored(session);
-        if (!contextChecked)
-        {
-            contextChecked = true;
-            contextVisible = stored || filters >= 2;
-        }
-
-        if (!contextVisible)
-        {
-            return;
-        }
-
-        if (!stored && filters == 0)
-        {
-            contextVisible = false;
-            return;
-        }
-
-        var name = stored ? session.ViewedSnapshot!.Name : string.Empty;
-        if (contextKey != (name, filters, Loc.Version))
-        {
-            contextKey = (name, filters, Loc.Version);
-            var viewing = stored ? string.Format(CultureInfo.CurrentCulture, Strings.ContextViewingFormat, name) : string.Empty;
-            var filtersOn = filters > 0 ? Strings.ContextFilters(filters) : string.Empty;
-            contextLine = viewing.Length > 0 && filtersOn.Length > 0 ? viewing + Strings.ContextSeparator + filtersOn : viewing + filtersOn;
-        }
-
-        using (Theme.PushText(Theme.Surface.TextSecondary))
-        {
-            ImGui.TextUnformatted(contextLine);
-        }
-
-        if (stored && session.LiveContentId is not null)
-        {
-            ImGui.SameLine();
-            if (ImGui.SmallButton(Strings.ContextFollowMe + "##contextFollow"))
-            {
-                session.ViewedContentId = null;
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.ContextFollowMeTooltip);
-            }
-        }
-
-        if (filters > 0)
-        {
-            ImGui.SameLine();
-            if (ImGui.SmallButton(Strings.ContextClear + "##contextClear"))
-            {
-                filterPanel.ResetAll();
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.ContextClearTooltip);
-            }
-        }
-
-        ImGui.SameLine();
-        ImGui.PushFont(UiBuilder.IconFont);
-        var dismiss = ImGui.SmallButton(DismissIcon + "##contextDismiss");
-        ImGui.PopFont();
-        if (dismiss)
-        {
-            contextVisible = false;
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ContextDismissTooltip);
-        }
-    }
-
-    /// <summary>
-    /// "Pinned. Show your pins on screen while you play? [Turn on overlay] [Not now]" (1.7.0, onboarding proposal 3):
-    /// after the first pin while the Todo overlay is off, once ever; it goes when the overlay is turned on anywhere.
-    /// </summary>
-    private void DrawPinPrompt()
-    {
-        if (!pinPromptVisible || toggleOverlay is not { } toggle)
-        {
-            return;
-        }
-
-        if (overlayOn?.Invoke() == true)
-        {
-            pinPromptVisible = false;
-            return;
-        }
-
-        using (Theme.PushText(Theme.Surface.Text))
-        {
-            ImGui.TextUnformatted(Strings.PinOverlayPrompt);
-        }
-
-        ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.PinOverlayTurnOn + "##pinPromptOn"))
-        {
-            toggle();
-            pinPromptVisible = false;
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.PinOverlayTurnOnTooltip);
-        }
-
-        ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.PinOverlayNotNow + "##pinPromptNo"))
-        {
-            pinPromptVisible = false;
-        }
-    }
-
-    /// <summary>
     /// The body (feature plan v4 L1): rail · tree · centre · detail side by side, their widths from
     /// <see cref="PaneSplit"/> (floors that hold, widths in logical units, a double-click to reset). Each pane is a child
     /// window of its width placed on one line; the detail column is a group so the What's new and Since you were away
@@ -1717,13 +1449,16 @@ public sealed class MainWindow : Window, IDisposable
     private void DrawBody(SessionState session, CatalogBundle bundle)
     {
         var style = ImGui.GetStyle();
-        var statusHeight = ImGui.GetTextLineHeightWithSpacing() + style.ItemSpacing.Y * 2f;
+        var statusHeight = ChromeBands.StatusBarHeight(ImGui.GetTextLineHeight(), style.ItemSpacing.Y);
         var height = MathF.Max(UiMetrics.MinBodyHeight, ImGui.GetContentRegionAvail().Y - statusHeight);
         var total = ImGui.GetContentRegionAvail().X;
         var settings = plugin.Settings;
+        bodyMin = ImGui.GetCursorScreenPos();
+        bodyHeight = height;
 
-        // The strip is the Journal tree's alone for now: the other tabs' lists (and the filter panel) keep their width.
-        var stripAllowed = ui.Tab == NavTab.Journal && !ui.FilterPanelOpen;
+        // The strip is the Journal tree's alone for now: the other tabs' lists keep their width. The filter panel is a
+        // drawer over the tree (feature plan v6 U2), so it no longer takes the column.
+        var stripAllowed = ui.Tab == NavTab.Journal;
 
         // The rail keeps its own width (it follows the UI scale every frame): 64 logical px with labels, or the 44 px
         // compact rail on a narrow window or by setting (feature plan v4 L7).
@@ -1799,31 +1534,52 @@ public sealed class MainWindow : Window, IDisposable
 
         using var backdrop = Theme.PushPaneBackdrop(gradient);
         using var detailColumn = ImRaii.Group();
+
+        // A selected quest's details always start at the top of the column (feature plan v6 U2): the Setup, What's new
+        // and Since you were away cards live in the no-selection slot, above the Tonight card, and while a quest is
+        // selected the dock says one is waiting (DrawFloating).
+        if (ui.SelectedRowId is not null)
+        {
+            detailPane.Draw(session, bundle, new Vector2(0f, height));
+            return;
+        }
+
         var detailHeight = height;
-        // "Set up your road" first: it shows by itself only on a fresh install (where What's new never does), and
-        // otherwise only when Help asked for it.
-        if (setupCard is { Visible: true } setup && tutorial?.Active != true)
+        switch (DueCard())
         {
-            detailHeight -= setup.Draw(height);
-        }
-        else if (whatsNew is { Visible: true } card)
-        {
-            detailHeight -= card.Draw(height);
-        }
-        else if (welcomeBack is { Visible: true } back)
-        {
-            detailHeight -= back.Draw(height, bundle);
+            case NoticeKind.Setup:
+                detailHeight -= setupCard!.Draw(height);
+                break;
+            case NoticeKind.WhatsNew:
+                detailHeight -= whatsNew!.Draw(height);
+                break;
+            case NoticeKind.WelcomeBack:
+                detailHeight -= welcomeBack!.Draw(height, bundle);
+                break;
         }
 
         // Nothing selected: the Tonight card answers "what now" in the detail column (game UX panel finding 1).
-        if (ui.SelectedRowId is null)
+        tonightCard.Draw(session, bundle, new Vector2(0f, detailHeight));
+    }
+
+    /// <summary>
+    /// The detail-column card that is due, if any, in their order: "Set up your road" first (it shows by itself only on
+    /// a fresh install, where What's new never does, and otherwise only when Help asked for it, and never during the
+    /// tour), then What's new, then Since you were away.
+    /// </summary>
+    private NoticeKind? DueCard()
+    {
+        if (setupCard is { Visible: true } && tutorial?.Active != true)
         {
-            tonightCard.Draw(session, bundle, new Vector2(0f, detailHeight));
+            return NoticeKind.Setup;
         }
-        else
+
+        if (whatsNew is { Visible: true })
         {
-            detailPane.Draw(session, bundle, new Vector2(0f, detailHeight));
+            return NoticeKind.WhatsNew;
         }
+
+        return welcomeBack is { Visible: true } ? NoticeKind.WelcomeBack : null;
     }
 
     /// <summary>
@@ -1833,6 +1589,8 @@ public sealed class MainWindow : Window, IDisposable
     private void DrawNavigation(SessionState session, CatalogBundle bundle, in PaneWidths widths, float height)
     {
         PaneGradientAtCursor(widths.Tree, height);
+        leftMin = ImGui.GetCursorScreenPos();
+        leftWidth = MathF.Max(1f, widths.Tree);
         using var left = ImRaii.Child("##left", new Vector2(MathF.Max(1f, widths.Tree), height));
         if (!left)
         {
@@ -1841,8 +1599,7 @@ public sealed class MainWindow : Window, IDisposable
 
         if (widths.TreeStrip)
         {
-            // Dragged shut: the Journal tree as a strip of icons (only ever on the Journal tab without the filter panel).
-            ui.Rects.Remove(UiRects.FilterPanel);
+            // Dragged shut: the Journal tree as a strip of icons (only ever on the Journal tab).
             treePane.DrawStrip(bundle, runner, plugin.Settings.ShowUnlisted);
             return;
         }
@@ -1871,15 +1628,7 @@ public sealed class MainWindow : Window, IDisposable
         switch (tab)
         {
             case NavTab.Journal:
-                if (ui.FilterPanelOpen)
-                {
-                    filterPanel.Draw(bundle, session.ViewedSnapshot, plugin.Settings);
-                }
-                else
-                {
-                    ui.Rects.Remove(UiRects.FilterPanel);
-                }
-
+                // The filter panel is a drawer over the tree (DrawFloating), so the tree never moves.
                 treePane.Draw(bundle, runner, plugin.Settings.ShowUnlisted);
                 break;
 
@@ -2019,6 +1768,11 @@ public sealed class MainWindow : Window, IDisposable
             }
 
             x = StatusText(x + pipSize + UiMetrics.Px(2f), textY, statusMode, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+            if (ImGui.IsItemHovered())
+            {
+                // Browse mode and a stored character's snapshot are said here, not in a banner over the panes (U2).
+                UiMetrics.Tooltip(syncTooltip);
+            }
         }
 
         if (msqWidth > 0f && msqRoom > 2f * pillPad && x + separatorWidth + msqRoom <= versionX + 0.5f)
@@ -2054,8 +1808,8 @@ public sealed class MainWindow : Window, IDisposable
         var windowX = ImGui.GetWindowPos().X;
         ui.RecordRect(UiRects.StatusBar, new Vector2(windowX + ImGui.GetWindowContentRegionMin().X, barMin.Y), new Vector2(windowX + ImGui.GetWindowContentRegionMax().X, origin.Y + rowHeight));
 
-        // The floating Undo stays above the bar.
-        UndoToast.KeepAbove(barMin.Y);
+        // The floating layers keep above the bar (FloatingLayers, DrawFloating).
+        statusTop = barMin.Y;
     }
 
     /// <summary>The host name of this window's Questionable confirmations.</summary>
