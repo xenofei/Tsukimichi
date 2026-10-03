@@ -173,6 +173,12 @@ public sealed partial class TreePane
     private const uint GaugeTag = 0x5452_4547;   // "TREG"
     private const uint RevealTag = 0x5452_4552;  // "TRER"
 
+    // 1.13 (feature plan v6 U8, M1): the hover and selection washes, the children's fade on expand, the road glint.
+    private const uint HoverTag = 0x5452_4548;   // "TREH"
+    private const uint SelectTag = 0x5452_4553;  // "TRES"
+    private const uint ExpandTag = 0x5452_4558;  // "TREX"
+    private const uint GlintTag = 0x5452_474C;   // "TRGL"
+
     private readonly UiState ui;
     private readonly ITextureProvider textures;
     private readonly Func<NodeIconMap> nodeIcons;
@@ -390,16 +396,24 @@ public sealed partial class TreePane
         var expandable = !node.Leaf && !sproutFolded;
         var arrowColor = ImGui.GetColorU32(ImGuiCol.Text);
         bool open;
+        // The row's washes are painted by the overlay, eased (U8: hover in 120 ms and out 180 ms, selection settling over
+        // 150 ms), so the item's own header colours are transparent, as the table's are.
         using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, rowPadY)))
-        using (ImRaii.PushColor(ImGuiCol.Header, SelectedWash)
-                     .Push(ImGuiCol.HeaderHovered, selected ? SelectedHoverWash : HoverWash)
-                     .Push(ImGuiCol.HeaderActive, selected ? SelectedHoverWash : ActiveWash)
+        using (ImRaii.PushColor(ImGuiCol.Header, Vector4.Zero)
+                     .Push(ImGuiCol.HeaderHovered, Vector4.Zero)
+                     .Push(ImGuiCol.HeaderActive, Vector4.Zero)
                      .Push(ImGuiCol.Text, Vector4.Zero))
         {
             open = ImGui.TreeNodeEx(node.Id, flags);
         }
 
         var itemId = ImGuiP.GetItemID();
+        if (open && expandable && ImGui.IsItemToggledOpen())
+        {
+            // The children appear in place and fade in (no height animation: nothing below them slides).
+            Motion.Trigger(Motion.Key(ExpandTag, itemId));
+        }
+
         if (revealing && selected)
         {
             ImGui.SetScrollHereY(0.5f);
@@ -443,9 +457,17 @@ public sealed partial class TreePane
 
         if (open && !node.Leaf && !sproutFolded)
         {
+            var dl = ImGui.GetWindowDrawList();
+            var firstVertex = dl.VtxBuffer.Size;
             foreach (var child in node.Children)
             {
                 DrawNode(child, section: false);
+            }
+
+            var reveal = Motion.Pulse(Motion.Key(ExpandTag, itemId), MotionTokens.Reveal);
+            if (reveal >= 0f)
+            {
+                Chrome.FadeVertices(dl, firstVertex, MotionMath.EaseOutCubic(reveal));
             }
 
             ImGui.TreePop();
@@ -479,10 +501,21 @@ public sealed partial class TreePane
         var complete = node.Complete;
         Measure(node);
 
-        // The selected row's one gold element: a 2 px Moon rule on the left edge.
-        if (selected)
+        // The row's wash (U8): hover glides in and out, a new selection settles in, a held row shows at once.
+        var lit = Motion.Hover(Motion.Key(HoverTag, itemId), ImGui.IsItemHovered());
+        var settled = Motion.Select(Motion.Key(SelectTag, itemId), selected);
+        var wash = ImGui.IsItemActive()
+            ? selected ? SelectedHoverWash : ActiveWash
+            : Vector4.Lerp(HoverWash with { W = HoverWash.W * lit }, Vector4.Lerp(SelectedWash, SelectedHoverWash, lit), settled);
+        if (wash.W > 0.002f)
         {
-            dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, MathF.Round(UiMetrics.Px(2f))), max.Y), Theme.MoonU32);
+            dl.AddRectFilled(min, max, Theme.U32(wash));
+        }
+
+        // The selected row's one gold element: a 2 px Moon rule on the left edge, settling in with the wash.
+        if (settled > 0.004f)
+        {
+            dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, MathF.Round(UiMetrics.Px(2f))), max.Y), Theme.WithAlpha(Theme.Moon, settled));
         }
 
         // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding).
@@ -593,7 +626,16 @@ public sealed partial class TreePane
         DrawNodeGlyph(dl, node, haloCenter, radius, shown, readyDot);
         if (road)
         {
-            DrawRoad(dl, namePos.X, max.X - UiMetrics.Px(RoadEndLogical), max.Y - UiMetrics.Px(RoadLiftLogical), shown, selected);
+            var roadEnd = max.X - UiMetrics.Px(RoadEndLogical);
+            var roadY = max.Y - UiMetrics.Px(RoadLiftLogical);
+            DrawRoad(dl, namePos.X, roadEnd, roadY, shown, selected);
+
+            // The road glint (M1, Full flair): once along the road when a quest under the node was just completed.
+            var glint = Motion.Changed(Motion.Key(GlintTag, itemId), (uint)node.Count.Done, MotionTokens.Glint, Theme.FlairMotion && Motion.CompletedRecently);
+            if (glint >= 0f)
+            {
+                DrawGlint(dl, namePos.X, roadEnd, roadY, glint);
+            }
         }
 
         if (selected)

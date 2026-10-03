@@ -480,10 +480,12 @@ public static class Theme
     /// <summary>
     /// A tooltip in the active palette (ui-revamp §3 "Tooltip"): fill at 0.96, a hairline border, primary text, the
     /// secondary tone for <c>TextDisabled</c> lines, rounding 6 and padding 10 × 8. Push before <c>BeginTooltip</c>
-    /// (<see cref="UiMetrics.Tooltip(string)"/> does), dispose after it ends.
+    /// (<see cref="UiMetrics.Tooltip(string)"/> does), dispose after it ends. The tooltip fades in
+    /// (<see cref="PopupFade"/>), once per item rather than on every frame the pointer moves within it.
     /// </summary>
     public static StyleScope PushTooltip()
     {
+        PopupFade.NoteTooltip();
         var s = Surface;
         var count = 0;
         Push(ImGuiCol.PopupBg, s.Window with { W = 0.96f }, ref count);

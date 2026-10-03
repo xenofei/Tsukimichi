@@ -59,10 +59,18 @@ namespace Tsukimichi.Ui;
 /// 1.12.0 (feature plan v6, U4: the panel never moves under the player): the Questionable status no longer adds a line
 /// under the title, and the text column only grows during a session; it gives back room only after
 /// <see cref="ShrinkAfterSeconds"/> without a change, and never while the pointer is on the panel.
+///
+/// 1.13.0 (feature plan v6 M3, a calmer overlay): it fades in when it opens; it can step aside in combat, while talking
+/// to NPCs or in group pose (<see cref="Configuration.TodoHiding"/>, each off by default), fading out and back over
+/// <see cref="MotionTokens.Rise"/> and taking no clicks meanwhile; its opacity goes down to 0 (the text is outlined); a
+/// finished quest's row stays a moment as a ghost (its moon fills, one soft halo, then it fades out where it stood);
+/// new rows fade in; and the rows' "…" buttons show only while the pointer or the keyboard is on the panel. Nothing
+/// moves under Reduce motion, and no beat plays in combat.
 /// </summary>
 public sealed class TodoOverlay : Window, IDisposable
 {
-    public const float MinOpacity = 0.6f;
+    /// <summary>The lowest background opacity: none at all (1.13.0); every text is outlined, so it still reads.</summary>
+    public const float MinOpacity = 0f;
     public const float MaxOpacity = 1f;
 
     /// <summary>Logical minimum width of the panel.</summary>
@@ -97,7 +105,8 @@ public sealed class TodoOverlay : Window, IDisposable
     private static readonly string OpenGlyph = Chrome.Icon(FontAwesomeIcon.CaretDown);
 
     /// <param name="Name">The quest's name as the spoiler shield prints it.</param>
-    private readonly record struct Row(QuestRecord Quest, string Name, QuestState State, string Hint, string Tooltip);
+    /// <param name="Ghost">A row whose quest was just completed, kept for the completion beat (<see cref="TodoBeat"/>): drawn, not clickable.</param>
+    private readonly record struct Row(QuestRecord Quest, string Name, QuestState State, string Hint, string Tooltip, bool Ghost = false);
 
     /// <summary>
     /// <paramref name="HeaderText"/> is the caption; <paramref name="ToggleTooltip"/> says a click folds it;
@@ -145,6 +154,18 @@ public sealed class TodoOverlay : Window, IDisposable
     // A clicked row whose reveal waits out the double-click window (ImGui time of the click); see DrawRow.
     private QuestRecord? pendingReveal;
     private double pendingRevealTime;
+
+    // 1.13.0 (M3): the panel's own fade (it opens, or steps aside), the frame it last asked to be drawn, whether it is
+    // stepping aside now, the rows' "…" buttons' fade, and per quest when its ghost row's beat or its new row's fade-in
+    // started (ImGui time), with the character the rows were built for.
+    private float shown;
+    private int shownFrame = -10;
+    private bool steppingAside;
+    private float moreShown;
+    private readonly Dictionary<uint, double> ghostSince = [];
+    private readonly Dictionary<uint, double> arrivedAt = [];
+    private readonly List<(int Index, uint RowId)> ghostScratch = [];
+    private ulong? builtCharacter;
 
     /// <summary>The host name of this window's Questionable confirmations.</summary>
     private const string QuestionableHost = "todo";
@@ -231,16 +252,48 @@ public sealed class TodoOverlay : Window, IDisposable
         IsOpen = settings.TodoOverlayEnabled;
     }
 
-    /// <summary>Not drawn while logged out, bound by a duty or watching a cutscene.</summary>
-    public override bool DrawConditions() =>
-        clientState.IsLoggedIn
-        && !condition[ConditionFlag.BoundByDuty]
-        && !condition[ConditionFlag.WatchingCutscene]
-        && !condition[ConditionFlag.OccupiedInCutSceneEvent];
+    /// <summary>
+    /// Not drawn while logged out, bound by a duty or watching a cutscene. Otherwise it fades in when it opens and, with
+    /// a hiding option on, fades out while the player is in combat, talking to an NPC or in group pose (M3), and is not
+    /// drawn once faded out.
+    /// </summary>
+    public override bool DrawConditions()
+    {
+        if (!clientState.IsLoggedIn
+            || condition[ConditionFlag.BoundByDuty]
+            || condition[ConditionFlag.WatchingCutscene]
+            || condition[ConditionFlag.OccupiedInCutSceneEvent])
+        {
+            shown = 0f;
+            return false;
+        }
+
+        // Not asked for last frame (just opened, or back from a duty): it fades in from nothing.
+        var frame = ImGui.GetFrameCount();
+        if (frame - shownFrame > 1)
+        {
+            shown = 0f;
+        }
+
+        shownFrame = frame;
+        steppingAside = settings.TodoHiding().Hides(new TodoContext(
+            condition[ConditionFlag.InCombat],
+            condition[ConditionFlag.OccupiedInQuestEvent] || condition[ConditionFlag.OccupiedInEvent],
+            clientState.IsGPosing));
+        var target = steppingAside ? 0f : 1f;
+        shown = Motion.WorldEnabled ? MotionMath.Approach(shown, target, MotionTokens.RateFor(MotionTokens.Rise), ImGui.GetIO().DeltaTime) : target;
+        return shown > 0f || target > 0f;
+    }
 
     public override void PreDraw()
     {
         Flags = settings.TodoOverlayLocked ? LockedFlags : BaseFlags;
+        if (steppingAside)
+        {
+            // Stepping aside: the game behind takes every click while the panel fades out.
+            Flags |= ImGuiWindowFlags.NoInputs;
+        }
+
         // The overlay's own opacity setting; the Night chrome keeps this alpha (it never touches BgAlpha).
         BgAlpha = ClampOpacity(settings.TodoOverlayOpacity);
         var compactWidth = CompactWidthLogical * UiMetrics.FontScale;
@@ -278,6 +331,12 @@ public sealed class TodoOverlay : Window, IDisposable
         finally
         {
             ImGui.SetWindowFontScale(1f);
+
+            // The panel's fade (opening, stepping aside): every vertex of its window, frame, outlines and moons alike.
+            if (shown < 1f)
+            {
+                Chrome.FadeVertices(ImGui.GetWindowDrawList(), 0, MotionMath.EaseOutCubic(shown));
+            }
         }
     }
 
@@ -286,6 +345,12 @@ public sealed class TodoOverlay : Window, IDisposable
         FireDueReveal();
         var compact = settings.TodoOverlayCompact;
         var layout = Measure(compact);
+
+        // The rows' "…" buttons show only while the pointer or the keyboard is on the panel (M3), fading in and out.
+        var reaching = ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows | ImGuiHoveredFlags.AllowWhenBlockedByPopup) || ImGui.IsWindowFocused(ImGuiFocusedFlags.ChildWindows);
+        moreShown = Motion.WorldEnabled
+            ? MotionMath.ApproachAsym(moreShown, reaching ? 1f : 0f, MotionMath.HoverRate, MotionMath.HoverOutRate, ImGui.GetIO().DeltaTime)
+            : reaching ? 1f : 0f;
         DrawHeader(layout);
         if (!catalogReady)
         {
@@ -337,7 +402,15 @@ public sealed class TodoOverlay : Window, IDisposable
 
             for (var i = 0; i < section.Rows.Length; i++)
             {
-                DrawRow(section.Rows[i], i, layout, compact);
+                var row = section.Rows[i];
+                if (row.Ghost)
+                {
+                    DrawGhostRow(row, i, layout);
+                }
+                else
+                {
+                    DrawRow(row, i, layout, compact);
+                }
             }
 
             if (section.MoreText is { } moreText)
@@ -731,6 +804,7 @@ public sealed class TodoOverlay : Window, IDisposable
         using var id = ImRaii.PushId(index);
         var style = ImGui.GetStyle();
         var start = ImGui.GetCursorScreenPos();
+        var rowStart = ImGui.GetWindowDrawList().VtxBuffer.Size;
         var line = ImGui.GetTextLineHeight();
         var textY = start.Y + (layout.RowHeight - line) * 0.5f;
 
@@ -791,7 +865,22 @@ public sealed class TodoOverlay : Window, IDisposable
         if (!settings.TodoOverlayLocked)
         {
             ImGui.SetCursorScreenPos(new Vector2(textX + layout.TextWidth + style.ItemSpacing.X, start.Y + (layout.RowHeight - UiMetrics.MinTarget) * 0.5f));
+            var buttonStart = dl.VtxBuffer.Size;
             openMenu |= Chrome.IconButtonRound("##more", MoreGlyph, Strings.TodoRowMoreTooltip);
+            if (moreShown < 1f)
+            {
+                Chrome.FadeVertices(dl, buttonStart, moreShown);
+            }
+        }
+
+        // A row that just arrived fades in where it stands (M3).
+        if (arrivedAt.Count > 0 && arrivedAt.TryGetValue(row.Quest.RowId, out var arrived))
+        {
+            var progress = (float)((ImGui.GetTime() - arrived) / MotionTokens.Reveal);
+            if (progress < 1f && Motion.WorldEnabled)
+            {
+                Chrome.FadeVertices(dl, rowStart, MotionMath.EaseOutCubic(progress));
+            }
         }
 
         if (openMenu)
@@ -801,6 +890,45 @@ public sealed class TodoOverlay : Window, IDisposable
 
         DrawRowMenu(row);
         // Close the row with an item at its bottom edge, so the next one starts one item spacing below it.
+        ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + layout.RowHeight));
+        ImGui.Dummy(Vector2.Zero);
+    }
+
+    /// <summary>
+    /// A finished quest's ghost row (the completion beat, M3): its moon fills from the half moon to full, one soft halo
+    /// swells round it, then the row fades out where it stands (<see cref="TodoBeat.Look"/>). Not clickable; once the beat
+    /// is over the rows are rebuilt without it, with no collapse animation.
+    /// </summary>
+    private void DrawGhostRow(Row row, int index, in RowLayout layout)
+    {
+        using var id = ImRaii.PushId(index);
+        var start = ImGui.GetCursorScreenPos();
+        var dl = ImGui.GetWindowDrawList();
+        var rowStart = dl.VtxBuffer.Size;
+        var progress = ghostSince.TryGetValue(row.Quest.RowId, out var since) ? (float)((ImGui.GetTime() - since) / MotionTokens.Beat) : 1f;
+        if (progress >= 1f)
+        {
+            // Over: the next frame drops the row.
+            dirty = true;
+        }
+
+        var (lit, halo, alpha) = TodoBeat.Look(progress);
+        var center = new Vector2(start.X + (layout.Glyph * 0.5f), start.Y + (layout.RowHeight * 0.5f));
+        var radius = layout.Glyph * MoonGlyph.InlineRadiusFraction;
+        MoonGlyph.DrawFilling(dl, center, radius, lit);
+        if (halo >= 0f)
+        {
+            MoonWax.DrawHalo(dl, center, radius, halo);
+        }
+
+        var line = ImGui.GetTextLineHeight();
+        var textX = start.X + layout.Glyph + ImGui.GetStyle().ItemSpacing.X;
+        var textMin = new Vector2(textX, start.Y + ((layout.RowHeight - line) * 0.5f));
+        dl.PushClipRect(new Vector2(textX, start.Y), new Vector2(textX + layout.TextWidth, start.Y + layout.RowHeight), true);
+        Chrome.OutlinedEllipsisAt(dl, textMin, layout.TextWidth, row.Name, Theme.U32(Theme.Surface.TextSecondary));
+        dl.PopClipRect();
+        Chrome.FadeVertices(dl, rowStart, alpha);
+
         ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + layout.RowHeight));
         ImGui.Dummy(Vector2.Zero);
     }
@@ -957,6 +1085,7 @@ public sealed class TodoOverlay : Window, IDisposable
         if (bundle is null || session.ViewedSnapshot is not { } snapshot)
         {
             sections = [];
+            builtCharacter = null;
             return;
         }
 
@@ -1006,6 +1135,7 @@ public sealed class TodoOverlay : Window, IDisposable
         if (model.Sections.Count == 0)
         {
             sections = [];
+            builtCharacter = session.ViewedContentId;
             return;
         }
 
@@ -1047,7 +1177,93 @@ public sealed class TodoOverlay : Window, IDisposable
             views[i] = new SectionView(section.Section, headerText, toggle, [.. section.Notes], rows.ToArray(), more);
         }
 
+        // The completion beat and the new rows' fade-in (M3) play for the live character as it plays, never on a
+        // character switch, under Reduce motion or in combat.
+        var sameCharacter = builtCharacter == session.ViewedContentId;
+        builtCharacter = session.ViewedContentId;
+        if (sameCharacter && session.IsLive && Motion.WorldEnabled && !condition[ConditionFlag.InCombat])
+        {
+            Settle(views, ImGui.GetTime());
+        }
+        else
+        {
+            ghostSince.Clear();
+            arrivedAt.Clear();
+        }
+
         sections = views;
+    }
+
+    /// <summary>
+    /// Compares the new rows with the ones on screen, section by section: a row that left because its quest is now
+    /// completed comes back as a ghost where it stood until its beat is over (<see cref="TodoBeat.Ghosts"/>), and a row
+    /// that was not there before starts its fade-in. Beats and fade-ins that are over are forgotten.
+    /// </summary>
+    private void Settle(SectionView[] views, double now)
+    {
+        Forget(ghostSince, now, MotionTokens.Beat);
+        Forget(arrivedAt, now, MotionTokens.Reveal);
+        var states = session.States;
+        var completedRecently = Motion.CompletedRecently;
+        for (var v = 0; v < views.Length; v++)
+        {
+            var view = views[v];
+            if (Array.Find(sections, old => old.Section == view.Section) is not { } before)
+            {
+                continue;
+            }
+
+            // A ghost whose beat is over stands for no quest (0), so it is never brought back.
+            var oldIds = new uint[before.Rows.Length];
+            for (var i = 0; i < oldIds.Length; i++)
+            {
+                var old = before.Rows[i];
+                oldIds[i] = old.Ghost && !ghostSince.ContainsKey(old.Quest.RowId) ? 0u : old.Quest.RowId;
+            }
+
+            var newIds = new uint[view.Rows.Length];
+            for (var i = 0; i < newIds.Length; i++)
+            {
+                newIds[i] = view.Rows[i].Quest.RowId;
+                if (Array.IndexOf(oldIds, newIds[i]) < 0)
+                {
+                    arrivedAt[newIds[i]] = now;
+                }
+            }
+
+            ghostScratch.Clear();
+            // Only a quest the live character just completed gets a beat (not one unpinned after it was done long ago).
+            var found = TodoBeat.Ghosts(oldIds, newIds, id => id != 0 && (ghostSince.ContainsKey(id) || (completedRecently && states.GetValueOrDefault(id)?.State == QuestState.Completed)), ghostScratch);
+            if (found == 0)
+            {
+                continue;
+            }
+
+            var rows = new List<Row>(view.Rows);
+            foreach (var (index, rowId) in ghostScratch)
+            {
+                if (!ghostSince.ContainsKey(rowId))
+                {
+                    ghostSince[rowId] = now;
+                }
+
+                rows.Insert(Math.Min(index, rows.Count), before.Rows[index] with { Ghost = true });
+            }
+
+            views[v] = view with { Rows = rows.ToArray() };
+        }
+    }
+
+    /// <summary>Drops the entries of <paramref name="started"/> whose one-shot of <paramref name="seconds"/> is over.</summary>
+    private static void Forget(Dictionary<uint, double> started, double now, float seconds)
+    {
+        foreach (var (id, at) in started)
+        {
+            if (now - at >= seconds)
+            {
+                started.Remove(id);
+            }
+        }
     }
 
     /// <summary>

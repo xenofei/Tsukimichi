@@ -52,8 +52,8 @@ public sealed class DutyFinderPanel
         var current = hint.Current();
         if (current is null || !hint.TryGetWindowRect(out var target))
         {
-            model = null;
-            shell.Reset();
+            // The last duty's panel lingers a moment (feature plan v6 M2), so arrowing past an unlocked duty keeps it up.
+            shell.Linger(drawContent);
             return;
         }
 

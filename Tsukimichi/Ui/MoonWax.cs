@@ -28,4 +28,23 @@ public static class MoonWax
 
         MoonGlyph.DrawFilling(dl, center, radius, lit);
     }
+
+    /// <summary>
+    /// The halo moment (feature plan v6 M1) at <paramref name="progress"/> (0..1 over <see cref="Core.Ui.MotionTokens.Halo"/>):
+    /// one soft Moon ring that swells <see cref="Core.Ui.MotionTokens.HaloLogical"/> px past the moon's rim while it fades
+    /// out, once, when the quest becomes Ready or is completed. Nothing is drawn outside 0..1. Never brighter than
+    /// <see cref="Core.Ui.MotionTokens.MomentPeak"/>.
+    /// </summary>
+    public static void DrawHalo(ImDrawListPtr dl, Vector2 center, float radius, float progress)
+    {
+        var alpha = Core.Ui.MotionTokens.MomentAlpha(progress);
+        if (alpha <= 0f)
+        {
+            return;
+        }
+
+        var grow = UiMetrics.Px(Core.Ui.MotionTokens.HaloLogical) * Core.Ui.MotionMath.EaseOutCubic(progress);
+        var thickness = System.MathF.Max(1.5f, UiMetrics.Px(1.5f));
+        dl.AddCircle(center, radius + grow, Theme.WithAlpha(Theme.Moon, alpha), 32, thickness);
+    }
 }

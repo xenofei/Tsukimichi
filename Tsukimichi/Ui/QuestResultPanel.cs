@@ -35,12 +35,15 @@ public sealed class QuestResultPanel
     /// <summary><c>UiBuilder.Draw</c> handler.</summary>
     public void Draw()
     {
-        current = hint.Current();
-        if (current is null || !hint.TryGetWindowRect(out var target))
+        var next = hint.Current();
+        if (next is null || !hint.TryGetWindowRect(out var target))
         {
-            shell.Reset();
+            // The last quest's panel lingers a moment (feature plan v6 M2): stepping through the list keeps it up.
+            shell.Linger(drawContent);
             return;
         }
+
+        current = next;
 
         var lines = 3 + current.Opened.Count + current.Brief.Unlocks.Count + (current.ChainNext is null ? 0 : 2) + (current.MoreText.Length > 0 ? 1 : 0);
         shell.Draw(in target, current.Brief.Quest.RowId, lines, drawContent);

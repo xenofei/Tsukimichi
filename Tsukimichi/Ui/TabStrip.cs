@@ -25,7 +25,8 @@ namespace Tsukimichi.Ui;
 /// (with a soft glow behind its icon under Full). The Journal station and the foot gauge are orbits round a filling
 /// moon; Moonlit and Flight use the kit's glyphs and My blues the game's blue unlock-quest marker (FontAwesome stands
 /// in while a texture loads, and for Characters). Under Full flair with motion on, the orbits fill when first shown
-/// and the active station's bar lights over half a second after a tab change. Plain flair keeps the 1.3 rail.
+/// and after a tab change the bead travels along the thread to the new station before its bar lights (1.13, feature plan
+/// v6 M1). Station and crest hover glide in and out (U8). Plain flair keeps the 1.3 rail.
 /// </para>
 /// <para>
 /// Each station is a real item (an <see cref="ImGui.InvisibleButton(string, Vector2)"/> with the focus ring), so
@@ -72,6 +73,9 @@ public sealed class TabStrip
     /// <summary>The active station lighting up after a tab change.</summary>
     private static readonly ulong StationKey = Motion.Key(0x5241_494C, 2);
 
+    /// <summary>The crest's and the stations' hover glow (by station index; the crest after them).</summary>
+    private const uint HoverTag = 0x5241_4948; // "RAIH"
+
     /// <summary>The Moon Road rail's sizes: the lit bar on the thread, the gap between the thread and an icon or label, the crest rule.</summary>
     private const float LitBarLogical = 22f;
     private const float ThreadGapLogical = 3f;
@@ -103,6 +107,14 @@ public sealed class TabStrip
 
     /// <summary>The tab the lit bar last lit for; a change starts the light-up.</summary>
     private NavTab? litTab;
+
+    /// <summary>The station the bead travels from after a tab change (feature plan v6 M1), or -1.</summary>
+    private int travelFrom = -1;
+
+    // This frame's station geometry, for the bead's travel between two stations.
+    private float stationsTop;
+    private float stationHeight;
+    private float stationsThreadTop;
 
     public TabStrip(UiState ui)
     {
@@ -150,11 +162,13 @@ public sealed class TabStrip
         MeasureLabels();
         RefreshGauge(overall);
 
-        // The station's light-up (Full flair, motion on): restarted whenever the active tab changes.
+        // Station travel (Full flair, motion on; feature plan v6 M1): on a tab change the bead travels along the thread
+        // from the old station to the new one, then the new station's bar and glow light.
         if (litTab != ui.Tab)
         {
-            if (litTab is not null && Theme.FlairMotion)
+            if (litTab is { } previous && Theme.FlairMotion)
             {
+                travelFrom = Array.IndexOf(Tabs, previous);
                 Motion.Trigger(StationKey);
             }
 
@@ -177,6 +191,9 @@ public sealed class TabStrip
         var first = y;
         // The thread starts under the crest (in the middle of the gap its rule sits in), or at the stations' top.
         var threadTop = place.Crest > 0f ? origin.Y + place.CrestTop + place.Crest + (UiMetrics.Px(LayoutBudgets.RailGapLogical) * 0.5f) : first;
+        stationsTop = first;
+        stationHeight = place.Station;
+        stationsThreadTop = threadTop;
         if (moonRoad)
         {
             DrawThread(dl, centerX, threadTop, first, place.Station);
@@ -216,16 +233,17 @@ public sealed class TabStrip
         }
 
         var hovered = ImGui.IsItemHovered();
+        var glow = Motion.Hover(Motion.Key(HoverTag, (uint)Tabs.Length), hovered);
         var c = min + new Vector2(size * 0.5f);
         var drawn = false;
         if (moonRoad)
         {
-            if (hovered && Theme.ShowGlow)
+            if (glow > 0.004f && Theme.ShowGlow)
             {
-                dl.AddCircleFilled(c, size * 0.5f, Theme.WithAlpha(Theme.Moon, 0.08f), 32);
+                dl.AddCircleFilled(c, size * 0.5f, Theme.WithAlpha(Theme.Moon, 0.08f * glow), 32);
             }
 
-            drawn = OrnamentAtlas.Draw(dl, OrnamentSprite.Crest, min, min + new Vector2(size), Theme.WithAlpha(Vector4.One, hovered ? 1f : 0.92f));
+            drawn = OrnamentAtlas.Draw(dl, OrnamentSprite.Crest, min, min + new Vector2(size), Theme.WithAlpha(Vector4.One, 0.92f + (0.08f * glow)));
 
             // The crest rule: a brass hairline fading out to both sides, in the gap under the crest.
             var ruleY = MathF.Floor(min.Y + size + UiMetrics.Px(LayoutBudgets.RailGapLogical) * 0.5f);
@@ -239,7 +257,7 @@ public sealed class TabStrip
 
         if (!drawn)
         {
-            DrawCrestStandIn(dl, c, size, hovered);
+            DrawCrestStandIn(dl, c, size, glow);
         }
 
         Chrome.FocusRing(size * 0.5f);
@@ -249,14 +267,14 @@ public sealed class TabStrip
         }
     }
 
-    private static void DrawCrestStandIn(ImDrawListPtr dl, Vector2 c, float size, bool hovered)
+    private static void DrawCrestStandIn(ImDrawListPtr dl, Vector2 c, float size, float hover)
     {
         var line = MathF.Max(1f, size / 32f);
-        dl.AddCircle(c, size * 0.4625f, Theme.WithAlpha(Theme.MoonDeep, hovered ? 0.95f : 0.75f), 32, line);
+        dl.AddCircle(c, size * 0.4625f, Theme.WithAlpha(Theme.MoonDeep, 0.75f + (0.2f * hover)), 32, line);
 
         // The moon, with a halo that brightens on hover.
         var moon = c - new Vector2(0f, size * 0.125f);
-        dl.AddCircleFilled(moon, size * 0.30f, Theme.WithAlpha(Theme.Moon, hovered ? 0.16f : 0.10f), 24);
+        dl.AddCircleFilled(moon, size * 0.30f, Theme.WithAlpha(Theme.Moon, 0.10f + (0.06f * hover)), 24);
         dl.AddCircleFilled(moon, size * 0.205f, Theme.MoonU32, 24);
 
         // The horizon, then the road of light: four gold strokes narrowing and fading toward the viewer.
@@ -324,13 +342,15 @@ public sealed class TabStrip
         }
 
         var hovered = ImGui.IsItemHovered();
+        // Hover glides in and out (U8): the wash, the icon and the label ink follow one eased value.
+        var hover = Motion.Hover(Motion.Key(HoverTag, (uint)i), hovered);
         var s = Theme.Surface;
         var max = min + new Vector2(width, height);
         var inset = UiMetrics.Px(3f);
         var rounding = UiMetrics.Px(5f);
         var fillMin = new Vector2(min.X + inset, min.Y + 1f);
         var fillMax = new Vector2(max.X - inset, max.Y - 1f);
-        var (iconCenter, iconTop, contentBottom) = StationLayout(min, width, height);
+        var (iconCenter, iconTop, _) = StationLayout(min, width, height);
         var iconSize = UiMetrics.Px(LayoutBudgets.StationIconLogical);
 
         if (active && !moonRoad)
@@ -339,18 +359,16 @@ public sealed class TabStrip
             var bar = MathF.Max(2f, MathF.Round(UiMetrics.Px(2f)));
             dl.AddRectFilled(new Vector2(min.X, min.Y + UiMetrics.Px(8f)), new Vector2(min.X + bar, max.Y - UiMetrics.Px(8f)), Theme.MoonU32, bar * 0.5f);
         }
-        else if (hovered)
+        else if (hover > 0.004f)
         {
-            dl.AddRectFilled(fillMin, fillMax, Theme.WithAlpha(s.Hover, 0.6f), rounding);
+            dl.AddRectFilled(fillMin, fillMax, Theme.WithAlpha(s.Hover, 0.6f * hover), rounding);
         }
 
         if (active)
         {
             if (moonRoad)
             {
-                // The thread's segment above this station: from the crest, or from under the station above.
-                var segmentTop = i == 0 ? threadTop : contentBottom - height + UiMetrics.Px(ThreadGapLogical);
-                DrawLit(dl, iconCenter, iconTop, segmentTop);
+                DrawLit(dl, iconCenter, i);
             }
             else
             {
@@ -381,9 +399,9 @@ public sealed class TabStrip
                 Chrome.Badge(dl, new Vector2(badgeX, badgeY), ready, actionable: true);
             }
         }
-        else if (!moonRoad || !DrawArtIcon(dl, tab, iconCenter, iconSize, active ? 1f : hovered ? HoverIconAlpha : IdleIconAlpha))
+        else if (!moonRoad || !DrawArtIcon(dl, tab, iconCenter, iconSize, active ? 1f : IdleIconAlpha + ((HoverIconAlpha - IdleIconAlpha) * hover)))
         {
-            var ink = active ? Theme.AccentU32 : Theme.U32(hovered ? s.TextSecondary : s.TextTertiary);
+            var ink = active ? Theme.AccentU32 : Theme.U32(Vector4.Lerp(s.TextTertiary, s.TextSecondary, hover));
             DrawIcon(dl, iconCenter, tab == NavTab.Moonlit ? GemIcon : tab == NavTab.Characters ? UsersIcon : tab == NavTab.Flight ? PlaneIcon : PlanIcon, ink);
         }
 
@@ -395,7 +413,7 @@ public sealed class TabStrip
             var labelWidth = labelWidths[i];
             var shown = MathF.Min(labelWidth, room);
             var labelPos = new Vector2(MathF.Round(min.X + (width - shown) * 0.5f), MathF.Round(iconTop + iconSize + UiMetrics.Px(LayoutBudgets.StationGapLogical)));
-            cut = Chrome.EllipsisTextAt(dl, labelPos, room, Labels[i], Theme.U32(active || hovered ? s.Text : s.TextSecondary), labelWidth);
+            cut = Chrome.EllipsisTextAt(dl, labelPos, room, Labels[i], Theme.U32(active ? s.Text : Vector4.Lerp(s.TextSecondary, s.Text, hover)), labelWidth);
             ImGui.SetWindowFontScale(1f);
         }
 
@@ -415,41 +433,74 @@ public sealed class TabStrip
     }
 
     /// <summary>
-    /// The active station lit on the thread: a 2 px gold bar (MoonHigh → MoonDeep) ending just above the icon, a moon bead
-    /// at its head, and under Full flair a soft glow behind the icon. After a tab change under Full flair it grows from a
-    /// fifth of its length and fades in over <see cref="MotionMath.StationLightSeconds"/>; otherwise it is simply lit.
+    /// Where station <paramref name="i"/>'s lit bar runs on the thread this frame: its bottom (just above the icon) and its
+    /// top (where the bead sits), within the thread's segment above the station (from the crest, or from under the
+    /// station above).
     /// </summary>
-    private static void DrawLit(ImDrawListPtr dl, Vector2 iconCenter, float iconTop, float segmentTop)
+    private (float Bottom, float Top) LitSpan(int i)
     {
-        var progress = Theme.FlairMotion ? Motion.Pulse(StationKey, MotionMath.StationLightSeconds) : -1f;
-        var light = progress < 0f ? 1f : MotionMath.EaseOutCubic(progress);
-        if (Theme.ShowGlow)
+        var (_, iconTop, contentBottom) = StationLayout(new Vector2(0f, stationsTop + (i * stationHeight)), 0f, stationHeight);
+        var segmentTop = i == 0 ? stationsThreadTop : contentBottom - stationHeight + UiMetrics.Px(ThreadGapLogical);
+        var bottom = MathF.Round(iconTop - UiMetrics.Px(ThreadGapLogical));
+        var length = MathF.Min(UiMetrics.Px(LitBarLogical), MathF.Max(0f, bottom - segmentTop));
+        return (bottom, MathF.Round(bottom - length));
+    }
+
+    /// <summary>
+    /// The active station lit on the thread: a 2 px gold bar (MoonHigh → MoonDeep) ending just above the icon, a moon bead
+    /// at its head, and under Full flair a soft glow behind the icon. After a tab change under Full flair the bead first
+    /// travels along the thread from the old station's place to the new one (<see cref="MotionTokens.Travel"/>, ease in
+    /// and out), and the bar and glow light over the last part of the trip; otherwise it is simply lit.
+    /// </summary>
+    private void DrawLit(ImDrawListPtr dl, Vector2 iconCenter, int station)
+    {
+        var progress = Theme.FlairMotion ? Motion.Pulse(StationKey, MotionTokens.Travel) : -1f;
+        var travelling = progress >= 0f && travelFrom >= 0 && travelFrom < Tabs.Length && travelFrom != station;
+        if (progress < 0f)
+        {
+            travelFrom = -1;
+        }
+
+        // The bar and glow light over the trip's last 40 %; without a trip they are simply lit.
+        var light = travelling ? MotionMath.EaseOutCubic((progress - 0.6f) / 0.4f) : progress < 0f ? 1f : MotionMath.EaseOutCubic(progress);
+        if (Theme.ShowGlow && light > 0f)
         {
             dl.AddCircleFilled(iconCenter, UiMetrics.Px(GlowRadiusLogical), Theme.WithAlpha(Theme.Moon, 0.06f * light), 24);
         }
 
-        var bottom = MathF.Round(iconTop - UiMetrics.Px(ThreadGapLogical));
-        var room = bottom - segmentTop;
-        var length = MathF.Min(UiMetrics.Px(LitBarLogical), MathF.Max(0f, room)) * (0.2f + (0.8f * light));
-        if (length < 1f)
+        var (bottom, top) = LitSpan(station);
+        var bar = MathF.Max(2f, MathF.Round(UiMetrics.Px(2f)));
+        var left = MathF.Round(iconCenter.X - ((bar - 1f) * 0.5f));
+        if (bottom - top >= 1f && light > 0f)
+        {
+            var length = (bottom - top) * (travelling ? 1f : 0.2f + (0.8f * light));
+            var barTop = MathF.Round(bottom - length);
+            dl.AddRectFilledMultiColor(
+                new Vector2(left, barTop),
+                new Vector2(left + bar, bottom),
+                Theme.WithAlpha(Theme.MoonHigh, light),
+                Theme.WithAlpha(Theme.MoonHigh, light),
+                Theme.WithAlpha(Theme.MoonDeep, light),
+                Theme.WithAlpha(Theme.MoonDeep, light));
+            top = travelling ? top : barTop;
+        }
+        else if (!travelling && bottom - top < 1f)
         {
             return;
         }
 
-        var bar = MathF.Max(2f, MathF.Round(UiMetrics.Px(2f)));
-        var left = MathF.Round(iconCenter.X - ((bar - 1f) * 0.5f));
-        var top = MathF.Round(bottom - length);
-        dl.AddRectFilledMultiColor(
-            new Vector2(left, top),
-            new Vector2(left + bar, bottom),
-            Theme.WithAlpha(Theme.MoonHigh, light),
-            Theme.WithAlpha(Theme.MoonHigh, light),
-            Theme.WithAlpha(Theme.MoonDeep, light),
-            Theme.WithAlpha(Theme.MoonDeep, light));
+        // The bead: at the bar's head, or on its way there along the thread from the station left behind.
+        var beadY = top;
+        var beadAlpha = travelling ? 1f : light;
+        if (travelling)
+        {
+            var (_, fromTop) = LitSpan(travelFrom);
+            beadY = MathF.Round(fromTop + ((top - fromTop) * MotionMath.EaseInOutCubic(progress)));
+        }
 
-        var bead = new Vector2(left + (bar * 0.5f), top);
-        dl.AddCircleFilled(bead, UiMetrics.Px(Orbit.BeadRimLogical), Theme.WithAlpha(Theme.Night, light));
-        dl.AddCircleFilled(bead, UiMetrics.Px(Orbit.BeadLogical), Theme.WithAlpha(Theme.MoonHigh, light));
+        var bead = new Vector2(left + (bar * 0.5f), beadY);
+        dl.AddCircleFilled(bead, UiMetrics.Px(Orbit.BeadRimLogical), Theme.WithAlpha(Theme.Night, beadAlpha));
+        dl.AddCircleFilled(bead, UiMetrics.Px(Orbit.BeadLogical), Theme.WithAlpha(Theme.MoonHigh, beadAlpha));
     }
 
     /// <summary>

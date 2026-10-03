@@ -568,9 +568,11 @@ public sealed partial class Plugin : IDalamudPlugin
             Ui.Typography.Update(Core.Ui.FlairRules.GameHeadingFonts(settings.Flair, settings.GameHeadingFonts));
             Ui.Theme.Refresh(settings.FollowDalamudColours, settings.GlyphPalette, settings.Flair, settings.MoonStyle);
             Ui.Motion.BeginFrame();
+            Ui.PopupFade.BeginFrame();
             if (Session is { } session)
             {
-                Ui.Motion.NoteCompletions(session.LiveContentId, session.RecentEvents, session.IsLive);
+                // No moment plays in combat (feature plan v6 M1): the completions are noted and let go.
+                Ui.Motion.NoteCompletions(session.LiveContentId, session.RecentEvents, session.IsLive, Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]);
             }
 
             Ui.Chrome.BeginFrame();
@@ -1281,6 +1283,8 @@ public sealed partial class Plugin : IDalamudPlugin
             this.tutorial = tutorial;
             tutorial.WatchedWindow = mainWindow;
             PluginInterface.UiBuilder.Draw += tutorial.CheckFirstRun;
+            // Last of the draw handlers: the tooltips and popups Tsukimichi opened this frame fade in (feature plan v6 U8).
+            PluginInterface.UiBuilder.Draw += Ui.PopupFade.EndFrame;
             // Enter, Backspace and Esc are kept from the game while the tour card has the keyboard (the arrows never are).
             tutorial.KeyState = KeyState;
             Framework.Update += tutorial.ConsumeKeys;
@@ -1523,6 +1527,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 PluginInterface.UiBuilder.Draw -= dutyFinderPanel.Draw;
             }
 
+            PluginInterface.UiBuilder.Draw -= Ui.PopupFade.EndFrame;
             PluginInterface.UiBuilder.Draw -= Ui.UndoToast.Draw;
             PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;

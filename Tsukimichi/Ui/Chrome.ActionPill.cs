@@ -27,6 +27,10 @@ public static partial class Chrome
     /// <summary>A brass edge drawn on a disabled pill keeps this much of the enabled one's alpha.</summary>
     private const float DisabledEdgeShare = 0.45f;
 
+    // 1.13 (feature plan v6 U8): a pill's hover glides in and out, and a new label or tone (Walk becoming Stop) fades in.
+    private const uint PillHoverTag = 0x5049_4C48; // "PILH"
+    private const uint PillSwapTag = 0x5049_4C53;  // "PILS"
+
     /// <summary>The height of an <see cref="ActionPill"/>: one <see cref="UiMetrics.MinTarget"/>.</summary>
     public static float ActionPillHeight => UiMetrics.MinTarget;
 
@@ -57,7 +61,8 @@ public static partial class Chrome
     /// <see cref="PillTone.Primary"/> one filled with the accent; Quiet the brass edge alone, the primary in accent ink;
     /// Plain the standard button fill, still labelled, the primary keeping the accent wash it had in 1.3. Under the
     /// high-contrast palette the edge is a solid line. A disabled pill stays labelled and dimmed and still shows its
-    /// tooltip; <see cref="PillTone.Danger"/> (Stop) is Eclipse. Nothing animates. A real, focusable item with the
+    /// tooltip; <see cref="PillTone.Danger"/> (Stop) is Eclipse. Hover eases in and out (a press shows at once), and a
+    /// new label, icon or tone fades its ink in over <see cref="MotionTokens.Reveal"/>. A real, focusable item with the
     /// focus ring; a null <paramref name="tooltip"/> leaves the hover text to the caller (check
     /// <c>IsItemHovered(AllowWhenDisabled)</c> after the call). Returns true when clicked while enabled.
     /// </summary>
@@ -78,7 +83,26 @@ public static partial class Chrome
 
         var max = min + new Vector2(width, height);
         var rounding = height * 0.5f;
+        var itemId = ImGuiP.GetItemID();
+        var hover = Motion.Hover(Motion.Key(PillHoverTag, itemId), hovered);
         var (fill, edge, ink) = PillColors(tone, enabled, hovered, held);
+        if (!held && hover > 0f && hover < 1f)
+        {
+            // Between rest and hover: the two looks blended by the eased hover.
+            var (restFill, restEdge, restInk) = PillColors(tone, enabled, false, false);
+            var (hoverFill, hoverEdge, hoverInk) = PillColors(tone, enabled, true, false);
+            fill = LerpColor(restFill, hoverFill, hover);
+            edge = LerpColor(restEdge, hoverEdge, hover);
+            ink = LerpColor(restInk, hoverInk, hover);
+        }
+
+        var signature = (uint)tone ^ ((uint)icon.GetHashCode() * 31u) ^ (uint)(label?.GetHashCode() ?? 0);
+        var swap = Motion.Changed(Motion.Key(PillSwapTag, itemId), signature, MotionTokens.Reveal);
+        if (swap >= 0f)
+        {
+            ink = ScaleAlpha(ink, MotionMath.EaseOutCubic(swap));
+        }
+
         var dl = ImGui.GetWindowDrawList();
         dl.AddRectFilled(min, max, fill, rounding);
         if (edge != 0)
@@ -163,6 +187,30 @@ public static partial class Chrome
             }
         }
     }
+
+    /// <summary>Two packed colours (IM_COL32) blended channel by channel; <paramref name="t"/> 0 is <paramref name="from"/>.</summary>
+    private static uint LerpColor(uint from, uint to, float t)
+    {
+        if (from == to)
+        {
+            return from;
+        }
+
+        var result = 0u;
+        for (var shift = 0; shift < 32; shift += 8)
+        {
+            var a = (from >> shift) & 0xFFu;
+            var b = (to >> shift) & 0xFFu;
+            var c = (uint)Math.Clamp((int)MathF.Round(a + ((b - (float)a) * t)), 0, 255);
+            result |= c << shift;
+        }
+
+        return result;
+    }
+
+    /// <summary>A packed colour with its alpha scaled by <paramref name="scale"/>.</summary>
+    private static uint ScaleAlpha(uint color, float scale) =>
+        (color & 0x00FFFFFFu) | ((uint)MathF.Round((color >> 24) * Math.Clamp(scale, 0f, 1f)) << 24);
 
     private static uint RaisedFill(SurfaceColors s, bool hovered, bool held) =>
         held ? Theme.WithAlpha(s.Text, 0.18f) : hovered ? Theme.WithAlpha(s.Hover, 1f) : Theme.U32(s.Raised);

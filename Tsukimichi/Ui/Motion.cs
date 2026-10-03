@@ -23,16 +23,34 @@ public static class Motion
     /// <summary>The waxing moon's key tag ("WAX"), with the quest's row id in the low half.</summary>
     private const uint WaxTag = 0x0057_4158;
 
+    /// <summary>The Ready halo's key tag ("RDY"), with the quest's row id in the low half.</summary>
+    private const uint ReadyTag = 0x0052_4459;
+
     private static readonly MotionStore Store = new();
     private static readonly ScrollWatch Watched = new();
     private static readonly CompletionCues Cues = new();
     private static readonly System.Collections.Generic.List<uint> JustCompleted = new(8);
+    private static readonly System.Collections.Generic.List<uint> JustReady = new(8);
     private static double lastPrune;
+    private static double lastCompletion = double.NegativeInfinity;
     private static double scrollQuietUntil;
     private static bool scrolling;
 
     /// <summary>Whether motion plays this frame: Reduce motion off and the user not scrolling.</summary>
     public static bool Enabled => !UiMetrics.ReduceMotion && !scrolling;
+
+    /// <summary>
+    /// Whether motion plays on a surface over the game world (the Todo overlay, the panels beside game windows):
+    /// Reduce motion alone. The mouse wheel there zooms the camera, so it must not cancel a fade the way a scroll does
+    /// in a list.
+    /// </summary>
+    public static bool WorldEnabled => !UiMetrics.ReduceMotion;
+
+    /// <summary>
+    /// Whether the live character completed a quest in the last <see cref="MotionTokens.CompletionWindow"/> seconds
+    /// while it was on screen (and out of combat): a count that grew now may start a road glint.
+    /// </summary>
+    public static bool CompletedRecently => ImGui.GetTime() - lastCompletion < MotionTokens.CompletionWindow;
 
     /// <summary>Whether the user is scrolling or scrolled a moment ago (the wheel, a scrollbar, a watched window's scroll), Reduce motion or not.</summary>
     public static bool Scrolling => scrolling;
@@ -125,6 +143,27 @@ public static class Motion
     public static float Lerp(ulong key, float target, float rate = MotionMath.HoverRate) =>
         Store.Lerp(key, target, rate, ImGui.GetTime(), ImGui.GetIO().DeltaTime, Enabled);
 
+    /// <summary>
+    /// A hover wash under <paramref name="key"/>: in over <see cref="MotionTokens.HoverIn"/>, out over the slower
+    /// <see cref="MotionTokens.HoverOut"/>, so a pass down a list leaves a soft trail. A new key starts at its target.
+    /// </summary>
+    public static float Hover(ulong key, bool hovered) => LerpAsym(key, hovered ? 1f : 0f, MotionMath.HoverRate, MotionMath.HoverOutRate);
+
+    /// <summary>A selection settling under <paramref name="key"/> over <see cref="MotionTokens.Select"/>; a new key starts at its target.</summary>
+    public static float Select(ulong key, bool selected) => Lerp(key, selected ? 1f : 0f, MotionMath.SelectRate);
+
+    /// <summary><see cref="Lerp"/> at <paramref name="rateUp"/> while the value rises and <paramref name="rateDown"/> while it falls.</summary>
+    public static float LerpAsym(ulong key, float target, float rateUp, float rateDown) =>
+        Store.LerpAsym(key, target, rateUp, rateDown, ImGui.GetTime(), ImGui.GetIO().DeltaTime, Enabled);
+
+    /// <summary>
+    /// Progress 0..1 of the one-shot under <paramref name="key"/> that plays for <paramref name="seconds"/> after
+    /// <paramref name="signature"/> changes (a label, a count), or -1. Nothing plays the first time a key is seen, with
+    /// motion off, or when <paramref name="start"/> is false at the change.
+    /// </summary>
+    public static float Changed(ulong key, uint signature, float seconds, bool start = true) =>
+        Store.Changed(key, signature, seconds, ImGui.GetTime(), Enabled, start);
+
     /// <summary>Starts (or restarts) the pulse under <paramref name="key"/> now; nothing happens with motion off.</summary>
     public static void Trigger(ulong key) => Store.Trigger(key, ImGui.GetTime(), Enabled);
 
@@ -187,20 +226,29 @@ public static class Motion
 
     /// <summary>
     /// Once per frame after <see cref="BeginFrame"/>: starts the waxing moon (<see cref="Wax"/>) of every quest the live
-    /// character completed since the last frame, while that character is the one on screen (<paramref name="shown"/>).
-    /// Nothing plays under Reduce motion or while scrolling, and the first look at a character replays nothing.
+    /// character completed since the last frame, and the Ready halo (<see cref="ReadyHalo"/>) of every quest that just
+    /// became Ready, while that character is the one on screen (<paramref name="shown"/>). Nothing plays under Reduce
+    /// motion, while scrolling, or in combat (<paramref name="inCombat"/>: the events are noted and let go), and the
+    /// first look at a character replays nothing.
     /// </summary>
-    public static void NoteCompletions(ulong? liveCharacter, System.Collections.Generic.IReadOnlyList<Core.Runtime.QuestEvent> recentEvents, bool shown)
+    public static void NoteCompletions(ulong? liveCharacter, System.Collections.Generic.IReadOnlyList<Core.Runtime.QuestEvent> recentEvents, bool shown, bool inCombat = false)
     {
         JustCompleted.Clear();
-        if (Cues.Take(liveCharacter, recentEvents, shown, JustCompleted) == 0)
+        JustReady.Clear();
+        var completed = Cues.Take(liveCharacter, recentEvents, shown && !inCombat, JustCompleted, JustReady);
+        if (completed > 0 && !UiMetrics.ReduceMotion)
         {
-            return;
+            lastCompletion = ImGui.GetTime();
         }
 
         foreach (var rowId in JustCompleted)
         {
             Trigger(Key(WaxTag, rowId));
+        }
+
+        foreach (var rowId in JustReady)
+        {
+            Trigger(Key(ReadyTag, rowId));
         }
     }
 
@@ -210,6 +258,16 @@ public static class Motion
     /// The glyph drawer reads it (<see cref="MoonWax"/>); a row that is not drawn simply lets it run out unseen.
     /// </summary>
     public static float Wax(uint rowId) => MotionTokens.WaxFraction(Pulse(Key(WaxTag, rowId), MotionTokens.Wax));
+
+    /// <summary>
+    /// The completion moment of quest <paramref name="rowId"/>: progress 0..1 over <see cref="MotionTokens.Wax"/> while
+    /// it plays (the same one-shot as the waxing moon), or -1. The table's stripe flash and halo, and the row wash at
+    /// Quiet and Plain, read it.
+    /// </summary>
+    public static float Completion(uint rowId) => Pulse(Key(WaxTag, rowId), MotionTokens.Wax);
+
+    /// <summary>The Ready halo of quest <paramref name="rowId"/>: progress 0..1 over <see cref="MotionTokens.Halo"/> after it became Ready, or -1.</summary>
+    public static float ReadyHalo(uint rowId) => Pulse(Key(ReadyTag, rowId), MotionTokens.Halo);
 
     /// <summary>Forgets every key (plugin unload).</summary>
     public static void Reset() => Store.Clear();
