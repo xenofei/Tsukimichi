@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **signed off on 2026-10-03 and executing.** 1.14.0 and 1.15.0 are released; 1.16.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.16.0 are released; 1.17.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -97,7 +97,7 @@ Point 4 and the rest of point 9.
 | UI-5d | Icons in Characters (roles, Grand Companies, tribes, collections), table job groups and Plan | M |
 | UI-5e | Icon-and-label action buttons on every travel and route button; icons on the Route header, the in-game panels and requirements | M–L |
 
-### 1.16.0 · Themes
+### 1.16.0 · Themes (released 2026-10-03)
 
 Point 7, part 1: the system and the first two revived sets.
 
@@ -332,3 +332,30 @@ Your notes, and what happens with each:
   - Plan chips at narrow widths.
   - Duty emblems (the Great Hunt, the Windward Wilds) drawn whole.
 - **Setting:** Settings › Look › Giver portraits Off brings back the text-only layout.
+
+### 1.16.0 (released 2026-10-03)
+
+- **Settings › Themes:**
+  - Themes is second in the list, and searching "moon" or "high contrast" lands there.
+  - Cards are in the order Medallion, Ishgard Glass, Aether Crystal, Classic. Check them at 100% and 150% text, and at a narrow window.
+  - Hovering a card previews it with no layout movement; moving between cards doesn't flicker.
+  - Clicking applies the theme, and Undo restores it, palette included.
+  - The Frames row is disabled and says why.
+  - Reset appearance works, with Undo.
+- **Ishgard Glass and Aether Crystal:**
+  - Medals at row size, 48–64 px and 96–128 px. Glass's Completed has no Crisium lead or Tycho below 96 px.
+  - An off-job Ready shows the job on the right seat.
+  - The medals don't flash back to Medallion after time off-screen.
+  - No texture leaks after a plugin reload.
+- **Ishgard Snow:**
+  - A still dawn sky with no stars, at Full, Quiet and Plain.
+  - Gold gauges, and lead frames.
+  - Ready rows carry a warm wash, a gold word and a gold stripe.
+  - The banner is daylight-graded; the title and location line read over bright art.
+  - Portraits are natural, with no night tint.
+- **High contrast:** Night and Snow, with no sky and strong lines.
+- **Night:** looks as before, except captions and lines are a touch brighter.
+- **Follow Dalamud on a light Dalamud style:** readable text, gilt tree ring, and a readable danger button.
+- **Classic on Snow:** no navy dots, and Ready is a warm wash.
+- **Banner location line:** one line, with no level (the level chip shows it).
+- **Upgrading:** an existing 1.15 config keeps its look. Moon style, Moon colours and Follow Dalamud carry over.
