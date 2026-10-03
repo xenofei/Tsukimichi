@@ -10,6 +10,9 @@
     rail: "The rail: 1.13 against v7 at each level, and every station state with its timing.",
     stars: "The Full sky: three depths, four temperatures, a slow twinkle, the region constellations, the completion meteor and an optional band.",
     ba: "1.13 against v7 at Full, with the quest pane's headings and the column headers at true size.",
+    giver: "1.15: giver portraits from the game's own art, night-graded, on the medal plate; avatars in Next stops, Route and the Journal.",
+    fallbacks: "1.15: the 16 race silhouettes, the moon disc, society emblems and initials, on the same plate.",
+    buttons: "1.15: icon-and-label buttons with the game's own icons, per level, and how they shrink.",
     sky: "Revision 3: the moving night sky at Full. 6 px a minute, paused while the window is unfocused; a rare faint meteor. Use x30 to see it move."
   };
   var NAME = { "ready": "Ready", "ready-on-another-job": "Ready on another job", "in-journal": "In journal", "blocked": "Blocked",
@@ -730,6 +733,9 @@
     else if (v === "rail") host.innerHTML = boardRail();
     else if (v === "stars") host.innerHTML = boardStars();
     else if (v === "ba") host.innerHTML = boardBA();
+    else if (v === "giver") host.innerHTML = boardGiver();
+    else if (v === "fallbacks") host.innerHTML = boardFallbacks();
+    else if (v === "buttons") host.innerHTML = boardButtons();
     else if (v === "sky") host.innerHTML = win("full", { v7: true, h: 790 });
     else host.innerHTML = win(v, { v7: w !== "before", drawer: w === "open" ? "c" : w === "open-adv" ? "e" : null, h: 790 });
     // Expanded drawers on the boards open scrolled to the Advanced section (as after a click on its summary).
