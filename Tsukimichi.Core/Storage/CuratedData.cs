@@ -179,6 +179,7 @@ public sealed record PayoffGate(
 ///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
 ///                        "grandCompanies": { "66216": { "grandCompany": 2, "note": "..." } } }   (classes keyed by ClassJob row id)
 /// aetheryte_unlocks.json { "schema": 1, "entries": { "75": { "name": "Idyllshire", "quests": [ 67116 ], "evidence": "https://...", "note": "..." } } }   (keyed by Aetheryte row id)
+/// giver_portraits.json { "schema": 1, "crops": { .. }, "iconCrops": { .. }, "faces": { .. }, "aliases": { .. }, "blocks": { .. }, "pins": { .. } }   (see <see cref="Portraits.PortraitCuration"/>)
 /// VERSION.json        { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
 /// </code>
 /// Every file must be strict JSON (no comments, no trailing commas), as the curated README requires.
@@ -200,6 +201,7 @@ public sealed class CuratedData
     public const string ExtraPrerequisitesFileName = "extra_prerequisites.json";
     public const string GameGatesFileName = "game_gates.json";
     public const string AetheryteUnlocksFileName = "aetheryte_unlocks.json";
+    public const string GiverPortraitsFileName = "giver_portraits.json";
 
     /// <summary>The sources an <see cref="ExtraPrerequisitesFileName"/> entry may cite; each entry needs two of them.</summary>
     public static readonly IReadOnlyList<string> ExtraPrerequisiteSources = [GameTextSource, QuestionableSource, WikiSource];
@@ -326,6 +328,12 @@ public sealed class CuratedData
     /// </summary>
     public IReadOnlyDictionary<uint, AetheryteUnlock> AetheryteUnlocks { get; private init; } = new Dictionary<uint, AetheryteUnlock>();
 
+    /// <summary>
+    /// The giver portrait overlay (feature plan v7 F3): crops, names for unnamed faces, aliases, blocked matches and
+    /// pins, which <c>GiverPortraitSources</c> applies when it builds the <see cref="Portraits.PortraitIndex"/>.
+    /// </summary>
+    public Portraits.PortraitCuration GiverPortraits { get; private init; } = Portraits.PortraitCuration.Empty;
+
     /// <summary><see cref="GameGates"/> as the catalog builders take them (<c>QuestCatalog.Build</c>).</summary>
     public IReadOnlyDictionary<uint, QuestGate> GameGateIds => GameGates.ToDictionary(
         kv => kv.Key,
@@ -345,7 +353,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks };
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks, GiverPortraits = GiverPortraits };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -672,6 +680,7 @@ public sealed class CuratedData
         var extraPrerequisites = LoadExtraPrerequisites(Path.Combine(dir, ExtraPrerequisitesFileName), warnings);
         var gameGates = LoadGameGates(Path.Combine(dir, GameGatesFileName), warnings);
         var aetheryteUnlocks = LoadAetheryteUnlocks(Path.Combine(dir, AetheryteUnlocksFileName), warnings);
+        var giverPortraits = Portraits.PortraitCuration.Load(Path.Combine(dir, GiverPortraitsFileName), warnings);
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
@@ -682,6 +691,7 @@ public sealed class CuratedData
             ExtraPrerequisites = extraPrerequisites,
             GameGates = gameGates,
             AetheryteUnlocks = aetheryteUnlocks,
+            GiverPortraits = giverPortraits,
         };
     }
 
