@@ -343,4 +343,78 @@ public class GlyphPaletteTests
         Assert.Equal(StateNames.Tooltip(QuestState.Ready, 0), StateNames.Tooltip(QuestState.Ready, 0, highContrast: false));
         Assert.Equal("Done today · dim gibbous, check", StateNames.Tooltip(QuestState.DoneThisCycle, StateNames.DailyInterval, highContrast: true));
     }
+
+    // ---- 1.11.0 G2a: the Menphina's Medallion tokens ----
+
+    private static readonly Dictionary<string, uint> MedallionHexes = typeof(GlyphTokens.Medallion)
+        .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+        .Where(f => f.IsLiteral && f.FieldType == typeof(uint))
+        .ToDictionary(f => f.Name, f => (uint)f.GetRawConstantValue()!);
+
+    /// <summary>The hex colours in the palette table of the round 5 concept ("Light, palette and sources").</summary>
+    private static HashSet<uint> ConceptPaletteHexes()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (dir is not null && !File.Exists(Path.Combine(dir, "Tsukimichi.sln")))
+        {
+            dir = Path.GetDirectoryName(dir);
+        }
+
+        Assert.NotNull(dir);
+        var text = File.ReadAllText(Path.Combine(dir, "docs", "design", "moon-v6", "round5", "medallion-r5", "concept.md"));
+        var start = text.IndexOf("**Palette**", StringComparison.Ordinal);
+        var end = text.IndexOf("**Web sources.**", start, StringComparison.Ordinal);
+        Assert.True(start >= 0 && end > start, "the concept's palette table");
+        return System.Text.RegularExpressions.Regex.Matches(text[start..end], "#([0-9A-Fa-f]{6})")
+            .Select(m => Convert.ToUInt32(m.Groups[1].Value, 16))
+            .ToHashSet();
+    }
+
+    [Fact]
+    public void Every_medallion_colour_of_the_concept_has_a_token_and_no_token_is_invented()
+    {
+        var concept = ConceptPaletteHexes();
+        var tokens = MedallionHexes.Values.ToHashSet();
+
+        Assert.Equal(47, MedallionHexes.Count);
+        Assert.Empty(concept.Except(tokens));
+        Assert.Empty(tokens.Except(concept));
+    }
+
+    [Fact]
+    public void Medallion_tokens_and_their_colours_agree()
+    {
+        foreach (var field in typeof(GlyphTokens.Medallion).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+                     .Where(f => f.FieldType == typeof(Vector4)))
+        {
+            Assert.True(MedallionHexes.TryGetValue(field.Name + "Hex", out var hex), $"{field.Name} has a hex token");
+            Assert.Equal(ColorMath.FromHex(hex), (Vector4)field.GetValue(null)!);
+        }
+
+        Assert.Equal(GlyphTokens.AbyssHex, GlyphTokens.Medallion.KeylineHex);
+        Assert.Equal(GlyphTokens.TideHex, GlyphTokens.Medallion.RibbonHex);
+    }
+
+    [Fact]
+    public void Medallion_ramps_run_from_light_to_dark()
+    {
+        Vector4[][] ramps =
+        [
+            [GlyphTokens.Medallion.GiltSpecular, GlyphTokens.Medallion.GiltHigh, GlyphTokens.Medallion.Gilt, GlyphTokens.Medallion.GiltMid, GlyphTokens.Medallion.GiltShade, GlyphTokens.Medallion.GiltDeep, GlyphTokens.Medallion.GiltDark],
+            [GlyphTokens.Medallion.MoonstoneSpecular, GlyphTokens.Medallion.MoonstoneHigh, GlyphTokens.Medallion.Moonstone, GlyphTokens.Medallion.MoonstoneMid, GlyphTokens.Medallion.MoonstoneDeep],
+            [GlyphTokens.Medallion.CloudHigh, GlyphTokens.Medallion.Cloud, GlyphTokens.Medallion.CloudShade, GlyphTokens.Medallion.CloudDeep],
+            [GlyphTokens.Medallion.JadeSpecular, GlyphTokens.Medallion.JadeHigh, GlyphTokens.Medallion.Jade, GlyphTokens.Medallion.JadeDeep],
+            [GlyphTokens.Medallion.RibbonHigh, GlyphTokens.Medallion.Ribbon, GlyphTokens.Medallion.RibbonDeep],
+            [GlyphTokens.Medallion.Dalamud, GlyphTokens.Medallion.DalamudShade, GlyphTokens.Medallion.DalamudDeep],
+            [GlyphTokens.Medallion.Enamel, GlyphTokens.Medallion.EnamelDeep],
+        ];
+
+        foreach (var ramp in ramps)
+        {
+            for (var i = 1; i < ramp.Length; i++)
+            {
+                Assert.True(ColorMath.Luminance(ramp[i - 1]) > ColorMath.Luminance(ramp[i]), $"step {i} of a ramp starting {ramp[0]}");
+            }
+        }
+    }
 }

@@ -9,11 +9,16 @@ namespace Tsukimichi.Core.Ui;
 /// the gate stays latched until the press ends, so one long press fires once. <see cref="Progress"/> drives the hold
 /// arc (or the countdown text), <see cref="Confirmed"/> is true for the single update that fired. In two-click mode
 /// (hand strain) the button feeds its clicks to <see cref="ClickTwice"/> instead, which follows the
-/// <see cref="ClickGuard"/> rules with the chord still confirming at once.
+/// <see cref="ClickGuard"/> rules with the chord still confirming at once. Only time held counts: the frame the press
+/// begins adds nothing (its frame time passed before the press), and no frame adds more than
+/// <see cref="MaxFrameSeconds"/>, so a hitch or a low frame rate can make the hold slower but never shorter.
 /// </summary>
 public sealed class ConfirmGate
 {
     public const float DefaultHoldSeconds = 0.6f;
+
+    /// <summary>The most one frame adds to a hold (a 20 fps frame): a long frame cannot finish the hold early.</summary>
+    public const float MaxFrameSeconds = 0.05f;
 
     private readonly ClickGuard clicks = new();
     private bool latched;
@@ -64,7 +69,10 @@ public sealed class ConfirmGate
     /// </summary>
     /// <param name="chordHeld">Ctrl or Shift is down.</param>
     /// <param name="pressed">The button is active (mouse or nav key held on it).</param>
-    /// <param name="deltaSeconds">Frame time; negative or non-finite values count as zero.</param>
+    /// <param name="deltaSeconds">
+    /// Frame time; negative or non-finite values count as zero, longer ones as <see cref="MaxFrameSeconds"/>, and the
+    /// frame the press begins counts as zero.
+    /// </param>
     public bool Update(bool chordHeld, bool pressed, float deltaSeconds)
     {
         Confirmed = false;
@@ -79,6 +87,7 @@ public sealed class ConfirmGate
             return false;
         }
 
+        var began = !wasPressed;
         wasPressed = true;
         if (latched)
         {
@@ -91,9 +100,10 @@ public sealed class ConfirmGate
             return true;
         }
 
-        if (float.IsFinite(deltaSeconds) && deltaSeconds > 0f)
+        // The frame the press begins: its frame time passed before the button went down, so none of it was held.
+        if (!began && float.IsFinite(deltaSeconds) && deltaSeconds > 0f)
         {
-            Elapsed += deltaSeconds;
+            Elapsed += MathF.Min(deltaSeconds, MaxFrameSeconds);
         }
 
         if (Elapsed >= HoldSeconds)

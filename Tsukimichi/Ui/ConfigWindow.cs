@@ -187,6 +187,7 @@ public sealed partial class ConfigWindow : Window
     public override void OnClose()
     {
         ApplyUiScaleDraft();
+        ApplyAliasDraft();
         if (pollDirty || scaleDirty || todoDirty || spoilerAheadDirty)
         {
             pollDirty = false;
@@ -238,6 +239,7 @@ public sealed partial class ConfigWindow : Window
         pollDirty = false;
         scaleDirty = false;
         uiScaleDraft = null;
+        aliasDraft = null;
     }
 
     // The window scale while its slider is held: applied (and saved) when it is let go, so the windows, this one

@@ -257,6 +257,222 @@ public static class GlyphTokens
     public static readonly Vector4 HighContrastInkGold = ColorMath.FromHex(HighContrastInkGoldHex);
     public static readonly Vector4 HighContrastInkNavy = ColorMath.FromHex(HighContrastInkNavyHex);
     public static readonly Vector4 HighContrastPaper = ColorMath.FromHex(HighContrastPaperHex);
+
+    /// <summary>
+    /// The "Menphina's Medallion" palette (glyph design v6, round 5; the palette table in
+    /// docs/design/moon-v6/round5/medallion-r5/concept.md, "Light, palette and sources"), as 0xRRGGBB. New UI from 1.11
+    /// on draws with these instead of the old gold (<see cref="MoonHex"/> and its stops). The glyphs themselves still
+    /// draw with the tokens above until they are redrawn in the medallion style (G1, 1.12).
+    /// </summary>
+    public static class Medallion
+    {
+        /// <summary>#080B16 – the keyline and cast shadows (the same Abyss as <see cref="GlyphTokens.AbyssHex"/>).</summary>
+        public const uint KeylineHex = AbyssHex;
+
+        // Gilt, lightest to darkest: rims, the badge ring, the check, the arrow, the frame.
+
+        /// <summary>#FFF4D6 – the gilt's specular glint on upper-left edges.</summary>
+        public const uint GiltSpecularHex = 0xFFF4D6;
+
+        /// <summary>#E6CF98 – the gilt's lit face.</summary>
+        public const uint GiltHighHex = 0xE6CF98;
+
+        /// <summary>#D9BE82 – the gilt's body.</summary>
+        public const uint GiltHex = 0xD9BE82;
+
+        /// <summary>#9A7E4A – the gilt turning from the light.</summary>
+        public const uint GiltMidHex = 0x9A7E4A;
+
+        /// <summary>#7C6236 – the gilt's shaded side.</summary>
+        public const uint GiltShadeHex = 0x7C6236;
+
+        /// <summary>#5C4724 – the gilt's lower-right edges.</summary>
+        public const uint GiltDeepHex = 0x5C4724;
+
+        /// <summary>#33260F – the gilt's darkest crease.</summary>
+        public const uint GiltDarkHex = 0x33260F;
+
+        // Lit lapis (Ready): the sky runs top to horizon, the sea horizon to bottom.
+
+        /// <summary>#6090DE – Ready's sky at the top.</summary>
+        public const uint LapisSkyTopHex = 0x6090DE;
+
+        /// <summary>#8AB2F3 – Ready's sky at the horizon.</summary>
+        public const uint LapisSkyHorizonHex = 0x8AB2F3;
+
+        /// <summary>#5480C8 – Ready's sea at the horizon.</summary>
+        public const uint LapisSeaHorizonHex = 0x5480C8;
+
+        /// <summary>#30529A – Ready's sea at the bottom.</summary>
+        public const uint LapisSeaBottomHex = 0x30529A;
+
+        /// <summary>#EDCB94 – Ready's twilight afterglow on the horizon (OKLCH C .081), the one warm note in its scene.</summary>
+        public const uint AfterglowHex = 0xEDCB94;
+
+        // The night scene (In journal), the same way round.
+
+        /// <summary>#1B2856 – In journal's sky at the top.</summary>
+        public const uint NightSkyTopHex = 0x1B2856;
+
+        /// <summary>#2A3D72 – In journal's sky at the horizon.</summary>
+        public const uint NightSkyHorizonHex = 0x2A3D72;
+
+        /// <summary>#22346A – In journal's sea at the horizon.</summary>
+        public const uint NightSeaHorizonHex = 0x22346A;
+
+        /// <summary>#111A3C – In journal's sea at the bottom.</summary>
+        public const uint NightSeaBottomHex = 0x111A3C;
+
+        /// <summary>#1D2B5A – the resting enamel, lit end.</summary>
+        public const uint EnamelHex = 0x1D2B5A;
+
+        /// <summary>#131C40 – the resting enamel, deep end.</summary>
+        public const uint EnamelDeepHex = 0x131C40;
+
+        // Moonstone, lightest to darkest: the cool moon.
+
+        /// <summary>#F4F2EA – moonstone's glint.</summary>
+        public const uint MoonstoneSpecularHex = 0xF4F2EA;
+
+        /// <summary>#E2E8F4 – moonstone's lit face.</summary>
+        public const uint MoonstoneHighHex = 0xE2E8F4;
+
+        /// <summary>#C3CEE4 – moonstone's body.</summary>
+        public const uint MoonstoneHex = 0xC3CEE4;
+
+        /// <summary>#95A5C8 – moonstone mid.</summary>
+        public const uint MoonstoneMidHex = 0x95A5C8;
+
+        /// <summary>#5E6E97 – moonstone low.</summary>
+        public const uint MoonstoneDeepHex = 0x5E6E97;
+
+        // Cloud (the Mist family), lightest to darkest.
+
+        /// <summary>#BAC3DB – a cloud's lit top.</summary>
+        public const uint CloudHighHex = 0xBAC3DB;
+
+        /// <summary>#6F7BA2 – a cloud's body.</summary>
+        public const uint CloudHex = 0x6F7BA2;
+
+        /// <summary>#46507A – a cloud's shaded side.</summary>
+        public const uint CloudShadeHex = 0x46507A;
+
+        /// <summary>#262E4E – a cloud's underside.</summary>
+        public const uint CloudDeepHex = 0x262E4E;
+
+        // The ribbon (the In journal bookmark), in Tide silk.
+
+        /// <summary>#6F8FD0 – the ribbon (the same Tide as <see cref="GlyphTokens.TideHex"/>).</summary>
+        public const uint RibbonHex = TideHex;
+
+        /// <summary>#A9BEEA – the ribbon's lit fold.</summary>
+        public const uint RibbonHighHex = 0xA9BEEA;
+
+        /// <summary>#3F5A98 – the ribbon's shaded fold.</summary>
+        public const uint RibbonDeepHex = 0x3F5A98;
+
+        // Dalamud, the red moon.
+
+        /// <summary>#DA6470 – Dalamud's lit face.</summary>
+        public const uint DalamudHex = 0xDA6470;
+
+        /// <summary>#C24A58 – Dalamud's body.</summary>
+        public const uint DalamudShadeHex = 0xC24A58;
+
+        /// <summary>#7A2838 – Dalamud's dark limb.</summary>
+        public const uint DalamudDeepHex = 0x7A2838;
+
+        /// <summary>#F4AAB2 – the glowing edge of Dalamud's cracks.</summary>
+        public const uint DalamudCrackHex = 0xF4AAB2;
+
+        /// <summary>#0B0408 – Dalamud's empty socket.</summary>
+        public const uint DalamudSocketHex = 0x0B0408;
+
+        // Jade, the green check, lightest to darkest.
+
+        /// <summary>#E4F6DC – jade's glint.</summary>
+        public const uint JadeSpecularHex = 0xE4F6DC;
+
+        /// <summary>#A9DCA2 – jade's lit face.</summary>
+        public const uint JadeHighHex = 0xA9DCA2;
+
+        /// <summary>#6FAE79 – jade's body.</summary>
+        public const uint JadeHex = 0x6FAE79;
+
+        /// <summary>#3F7A50 – jade's shaded side.</summary>
+        public const uint JadeDeepHex = 0x3F7A50;
+
+        // The role seats behind a job icon (Ready on another job): each role's seat and its shade.
+
+        /// <summary>#5878C2 – the tank seat.</summary>
+        public const uint TankHex = 0x5878C2;
+
+        /// <summary>#2C417E – the tank seat's shade.</summary>
+        public const uint TankDeepHex = 0x2C417E;
+
+        /// <summary>#5C9A68 – the healer seat.</summary>
+        public const uint HealerHex = 0x5C9A68;
+
+        /// <summary>#2B5A38 – the healer seat's shade.</summary>
+        public const uint HealerDeepHex = 0x2B5A38;
+
+        /// <summary>#B25A64 – the DPS seat.</summary>
+        public const uint DpsHex = 0xB25A64;
+
+        /// <summary>#5E2632 – the DPS seat's shade.</summary>
+        public const uint DpsDeepHex = 0x5E2632;
+
+        /// <summary>#E0B860 – the lantern lights on the far shore.</summary>
+        public const uint LanternHex = 0xE0B860;
+
+        public static readonly Vector4 Keyline = ColorMath.FromHex(KeylineHex);
+        public static readonly Vector4 GiltSpecular = ColorMath.FromHex(GiltSpecularHex);
+        public static readonly Vector4 GiltHigh = ColorMath.FromHex(GiltHighHex);
+        public static readonly Vector4 Gilt = ColorMath.FromHex(GiltHex);
+        public static readonly Vector4 GiltMid = ColorMath.FromHex(GiltMidHex);
+        public static readonly Vector4 GiltShade = ColorMath.FromHex(GiltShadeHex);
+        public static readonly Vector4 GiltDeep = ColorMath.FromHex(GiltDeepHex);
+        public static readonly Vector4 GiltDark = ColorMath.FromHex(GiltDarkHex);
+        public static readonly Vector4 LapisSkyTop = ColorMath.FromHex(LapisSkyTopHex);
+        public static readonly Vector4 LapisSkyHorizon = ColorMath.FromHex(LapisSkyHorizonHex);
+        public static readonly Vector4 LapisSeaHorizon = ColorMath.FromHex(LapisSeaHorizonHex);
+        public static readonly Vector4 LapisSeaBottom = ColorMath.FromHex(LapisSeaBottomHex);
+        public static readonly Vector4 Afterglow = ColorMath.FromHex(AfterglowHex);
+        public static readonly Vector4 NightSkyTop = ColorMath.FromHex(NightSkyTopHex);
+        public static readonly Vector4 NightSkyHorizon = ColorMath.FromHex(NightSkyHorizonHex);
+        public static readonly Vector4 NightSeaHorizon = ColorMath.FromHex(NightSeaHorizonHex);
+        public static readonly Vector4 NightSeaBottom = ColorMath.FromHex(NightSeaBottomHex);
+        public static readonly Vector4 Enamel = ColorMath.FromHex(EnamelHex);
+        public static readonly Vector4 EnamelDeep = ColorMath.FromHex(EnamelDeepHex);
+        public static readonly Vector4 MoonstoneSpecular = ColorMath.FromHex(MoonstoneSpecularHex);
+        public static readonly Vector4 MoonstoneHigh = ColorMath.FromHex(MoonstoneHighHex);
+        public static readonly Vector4 Moonstone = ColorMath.FromHex(MoonstoneHex);
+        public static readonly Vector4 MoonstoneMid = ColorMath.FromHex(MoonstoneMidHex);
+        public static readonly Vector4 MoonstoneDeep = ColorMath.FromHex(MoonstoneDeepHex);
+        public static readonly Vector4 CloudHigh = ColorMath.FromHex(CloudHighHex);
+        public static readonly Vector4 Cloud = ColorMath.FromHex(CloudHex);
+        public static readonly Vector4 CloudShade = ColorMath.FromHex(CloudShadeHex);
+        public static readonly Vector4 CloudDeep = ColorMath.FromHex(CloudDeepHex);
+        public static readonly Vector4 Ribbon = ColorMath.FromHex(RibbonHex);
+        public static readonly Vector4 RibbonHigh = ColorMath.FromHex(RibbonHighHex);
+        public static readonly Vector4 RibbonDeep = ColorMath.FromHex(RibbonDeepHex);
+        public static readonly Vector4 Dalamud = ColorMath.FromHex(DalamudHex);
+        public static readonly Vector4 DalamudShade = ColorMath.FromHex(DalamudShadeHex);
+        public static readonly Vector4 DalamudDeep = ColorMath.FromHex(DalamudDeepHex);
+        public static readonly Vector4 DalamudCrack = ColorMath.FromHex(DalamudCrackHex);
+        public static readonly Vector4 DalamudSocket = ColorMath.FromHex(DalamudSocketHex);
+        public static readonly Vector4 JadeSpecular = ColorMath.FromHex(JadeSpecularHex);
+        public static readonly Vector4 JadeHigh = ColorMath.FromHex(JadeHighHex);
+        public static readonly Vector4 Jade = ColorMath.FromHex(JadeHex);
+        public static readonly Vector4 JadeDeep = ColorMath.FromHex(JadeDeepHex);
+        public static readonly Vector4 Tank = ColorMath.FromHex(TankHex);
+        public static readonly Vector4 TankDeep = ColorMath.FromHex(TankDeepHex);
+        public static readonly Vector4 Healer = ColorMath.FromHex(HealerHex);
+        public static readonly Vector4 HealerDeep = ColorMath.FromHex(HealerDeepHex);
+        public static readonly Vector4 Dps = ColorMath.FromHex(DpsHex);
+        public static readonly Vector4 DpsDeep = ColorMath.FromHex(DpsDeepHex);
+        public static readonly Vector4 Lantern = ColorMath.FromHex(LanternHex);
+    }
 }
 
 /// <summary>
