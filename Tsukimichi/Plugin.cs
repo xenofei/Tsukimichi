@@ -1419,6 +1419,7 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.ShowHelp = helpWindow.Show;
             configWindow.StartTutorial = helpActions.StartTutorial;
             glyphDebugWindow.StartTutorial = helpActions.StartTutorial;
+            glyphDebugWindow.CurrentLook = () => Settings.Appearance;
 
             command.ToggleHelpWindow = helpWindow.Toggle;
 

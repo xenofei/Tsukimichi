@@ -912,9 +912,7 @@ public static partial class Chrome
         var chord = io.KeyShift || io.KeyCtrl;
 
         // A fixed width keeps the row still when the countdown or "Click again" replaces the label.
-        var padding = ImGui.GetStyle().FramePadding;
-        var longest = MathF.Max(ImGui.CalcTextSize(Countdown[^1], true, -1f).X, ImGui.CalcTextSize(ClickAgainHoldLabel, true, -1f).X);
-        var width = MathF.Max(ImGui.CalcTextSize(label, true, -1f).X, longest) + padding.X * 2f;
+        var width = HoldButtonWidth(label);
         if (safety.TwoClick)
         {
             var now = ImGui.GetTime();
@@ -939,6 +937,13 @@ public static partial class Chrome
         }
 
         return confirmed;
+    }
+
+    /// <summary>The width <see cref="HoldButton"/> takes for <paramref name="label"/> (its countdown and "Click again" fit in it), so a caller can right-align it.</summary>
+    public static float HoldButtonWidth(string label)
+    {
+        var longest = MathF.Max(ImGui.CalcTextSize(Countdown[^1], true, -1f).X, ImGui.CalcTextSize(ClickAgainHoldLabel, true, -1f).X);
+        return MathF.Max(ImGui.CalcTextSize(label, true, -1f).X, longest) + (ImGui.GetStyle().FramePadding.X * 2f);
     }
 
     /// <summary>"Click again" with the hold id, so the label swap keeps the button's id.</summary>

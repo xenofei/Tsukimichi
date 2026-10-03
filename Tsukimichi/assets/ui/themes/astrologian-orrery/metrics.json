@@ -811,7 +811,12 @@
       {"ready": "ishgard-glass", "others": "astrologian-orrery", "tier": "hero", "lead": 1.19, "next": "completed", "completedOfReady": 0.84},
       {"ready": "medallion", "others": "astrologian-orrery", "tier": "row", "lead": 1.38, "next": "completed", "completedOfReady": 0.72},
       {"ready": "medallion", "others": "astrologian-orrery", "tier": "hero", "lead": 1.35, "next": "completed", "completedOfReady": 0.74}
-    ]
+    ],
+    "neutralSalienceNote": "'neutralSalience' is this set's salience per state, its faces in the neutral kit, at 16 px in greyscale on Night, for the row tier and the 48 px hero tier's sources: a mix's Ready lead and Completed's share are read from it whichever sets the column draws from (spec-1.17 section A3; MixTable.g.cs).",
+    "neutralSalience": {
+      "row": {"ready": 80.03, "ready-on-another-job": 37.69, "in-journal": 52.39, "blocked": 33.6, "done-this-cycle": 41.84, "completed": 61.41, "locked-out": 44.38, "not-checked": 37.96},
+      "hero": {"ready": 77.34, "ready-on-another-job": 42.38, "in-journal": 54.58, "blocked": 34.94, "done-this-cycle": 40.98, "completed": 60.92, "locked-out": 43.68, "not-checked": 37.47}
+    }
   },
   "dark": {
     "note": "G2D (the realism supervisor's 1.17 ruling): greyscale salience on the dark palettes' windows (docs/design/v7/ui/1.17/palettes17.json) per tier group at 16 and 20 px, Ready over its halo (none, the shipped 'default' .45, or 'raised' .60). 'halo' is the least halo each palette must draw (the same for every set); the gate uses it. 'mix' is Ready from one set against the rest from another (neutral kit), held to mixReadyLead.",

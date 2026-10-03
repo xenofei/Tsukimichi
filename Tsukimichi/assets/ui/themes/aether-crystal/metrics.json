@@ -651,7 +651,12 @@
       {"ready": "ishgard-glass", "others": "aether-crystal", "tier": "hero", "lead": 1.26, "next": "completed", "completedOfReady": 0.79},
       {"ready": "medallion", "others": "aether-crystal", "tier": "row", "lead": 1.41, "next": "completed", "completedOfReady": 0.71},
       {"ready": "medallion", "others": "aether-crystal", "tier": "hero", "lead": 1.43, "next": "completed", "completedOfReady": 0.7}
-    ]
+    ],
+    "neutralSalienceNote": "'neutralSalience' is this set's salience per state, its faces in the neutral kit, at 16 px in greyscale on Night, for the row tier and the 48 px hero tier's sources: a mix's Ready lead and Completed's share are read from it whichever sets the column draws from (spec-1.17 section A3; MixTable.g.cs).",
+    "neutralSalience": {
+      "row": {"ready": 83.05, "ready-on-another-job": 33.88, "in-journal": 47.63, "blocked": 34.53, "done-this-cycle": 37.53, "completed": 60.02, "locked-out": 45.71, "not-checked": 33.7},
+      "hero": {"ready": 79.02, "ready-on-another-job": 37.3, "in-journal": 49.49, "blocked": 35.33, "done-this-cycle": 35.06, "completed": 57.3, "locked-out": 42.24, "not-checked": 32.44}
+    }
   },
   "dark": {
     "note": "G2D (the realism supervisor's 1.17 ruling): greyscale salience on the dark palettes' windows (docs/design/v7/ui/1.17/palettes17.json) per tier group at 16 and 20 px, Ready over its halo (none, the shipped 'default' .45, or 'raised' .60). 'halo' is the least halo each palette must draw (the same for every set); the gate uses it. 'mix' is Ready from one set against the rest from another (neutral kit), held to mixReadyLead.",

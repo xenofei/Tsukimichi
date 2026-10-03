@@ -89,12 +89,7 @@ public sealed partial class ConfigWindow
     /// <summary>The look's code, selectable, and Copy.</summary>
     private void DrawShareCodeRow(AppearanceConfig saved)
     {
-        if (shareCodeOf is null || !shareCodeOf.SameAs(saved))
-        {
-            shareCode = ShareCode.Encode(saved);
-            shareCodeOf = saved.Clone();
-        }
-
+        RefreshShareCode(saved);
         var padX = ImGui.GetStyle().FramePadding.X * 2f;
         var codeWidth = ImGui.CalcTextSize("TM1-WWWW-WWWW-WWW").X + padX;
         var copyWidth = MathF.Max(ImGui.CalcTextSize(Strings.ThemesShareCopy).X, ImGui.CalcTextSize(Strings.ThemesShareCopied).X) + padX;
@@ -118,6 +113,18 @@ public sealed partial class ConfigWindow
         }
 
         EndSetting();
+    }
+
+    /// <summary>The saved look's share code (also Reset mix's tooltip), encoded again only when the look changes.</summary>
+    private string RefreshShareCode(AppearanceConfig saved)
+    {
+        if (shareCodeOf is null || !shareCodeOf.SameAs(saved))
+        {
+            shareCode = ShareCode.Encode(saved);
+            shareCodeOf = saved.Clone();
+        }
+
+        return shareCode;
     }
 
     /// <summary>The paste field, its status line, and the preview card while a pasted code would change the look.</summary>

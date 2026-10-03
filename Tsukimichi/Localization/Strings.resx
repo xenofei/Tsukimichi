@@ -10508,4 +10508,232 @@
     <value>Look applied</value>
     <comment>Undo toast after a share code's look is applied.</comment>
   </data>
+  <data name="ThemesHeadingMix" xml:space="preserve">
+    <value>Mix moons by state</value>
+    <comment>Settings › Themes: the heading over the per-state mix (spec-1.17 §A2).</comment>
+  </data>
+  <data name="ThemesMix" xml:space="preserve">
+    <value>Moons by state</value>
+    <comment>Settings › Themes › Mix: the row's name for search.</comment>
+  </data>
+  <data name="ThemesMixHint" xml:space="preserve">
+    <value>Pick each state's moon from any set. The frames stay one kit (Frames above), so the column keeps one metal.</value>
+    <comment>Settings › Themes › Mix: the line under the heading.</comment>
+  </data>
+  <data name="ThemesMixFromTheme" xml:space="preserve">
+    <value>From theme</value>
+    <comment>A state's list: the moon follows the theme (its set is named beside it).</comment>
+  </data>
+  <data name="ThemesMixHighContrast" xml:space="preserve">
+    <value>High contrast uses one set of moons; your mix returns when it is off.</value>
+    <comment>Settings › Themes › Mix while High contrast is on.</comment>
+  </data>
+  <data name="ThemesMixClassic" xml:space="preserve">
+    <value>Classic is whole theme only; pick another theme to mix moons.</value>
+    <comment>Settings › Themes › Mix while the Classic theme is in use.</comment>
+  </data>
+  <data name="ThemesMixNoteCloseFormat" xml:space="preserve">
+    <value>close to {0} in a list</value>
+    <comment>A row's note, and a list option's: {0} = the other state.</comment>
+  </data>
+  <data name="ThemesMixNoteHardFormat" xml:space="preserve">
+    <value>hard to tell apart from {0}</value>
+    <comment>A row's note, and a list option's: {0} = the other state.</comment>
+  </data>
+  <data name="ThemesMixNoteQuieterLargeFormat" xml:space="preserve">
+    <value>quieter than {0} at large sizes</value>
+    <comment>Ready's row note: {0} = the loudest other state.</comment>
+  </data>
+  <data name="ThemesMixNoteQuieterRowFormat" xml:space="preserve">
+    <value>quieter than {0} in a list</value>
+    <comment>Ready's row note: {0} = the loudest other state.</comment>
+  </data>
+  <data name="ThemesMixNoteLoudLarge" xml:space="preserve">
+    <value>almost as loud as Ready at large sizes</value>
+    <comment>Completed's row note.</comment>
+  </data>
+  <data name="ThemesMixNoteLoudRow" xml:space="preserve">
+    <value>almost as loud as Ready in a list</value>
+    <comment>Completed's row note.</comment>
+  </data>
+  <data name="ThemesMixOptionLeadLarge" xml:space="preserve">
+    <value>Ready would stop leading at large sizes</value>
+    <comment>A list option that would cost Ready its lead.</comment>
+  </data>
+  <data name="ThemesMixOptionLeadRow" xml:space="preserve">
+    <value>Ready would stop leading in a list</value>
+    <comment>A list option that would cost Ready its lead.</comment>
+  </data>
+  <data name="ThemesMixOptionLoudLarge" xml:space="preserve">
+    <value>Completed would draw the eye at large sizes</value>
+    <comment>A list option that would make Completed too loud.</comment>
+  </data>
+  <data name="ThemesMixOptionLoudRow" xml:space="preserve">
+    <value>Completed would draw the eye in a list</value>
+    <comment>A list option that would make Completed too loud.</comment>
+  </data>
+  <data name="ThemesMixOkFormat" xml:space="preserve">
+    <value>Every moon reads apart, and Ready leads ({0}).</value>
+    <comment>The mix's status line: {0} = Ready's lead (1.35×).</comment>
+  </data>
+  <data name="ThemesMixOneSetFormat" xml:space="preserve">
+    <value>Every moon comes from {0}, which passed its own checks.</value>
+    <comment>The mix's status line with nothing mixed: {0} = the set.</comment>
+  </data>
+  <data name="ThemesMixUnmeasuredFormat" xml:space="preserve">
+    <value>{0} has no measurements yet, so this mix can't be checked.</value>
+    <comment>The mix's status line: {0} = a set without numbers.</comment>
+  </data>
+  <data name="ThemesMixHardFormat" xml:space="preserve">
+    <value>{0} ({1}) and {2} ({3}) are hard to tell apart in a list.</value>
+    <comment>The mix's warning: {0} and {2} = states, {1} and {3} = their sets.</comment>
+  </data>
+  <data name="ThemesMixCloseFormat" xml:space="preserve">
+    <value>{0} ({1}) and {2} ({3}) look alike in a list.</value>
+    <comment>The mix's warning: {0} and {2} = states, {1} and {3} = their sets.</comment>
+  </data>
+  <data name="ThemesMixLeadLarge" xml:space="preserve">
+    <value>Ready is no longer the loudest moon at large sizes.</value>
+    <comment>The mix's warning.</comment>
+  </data>
+  <data name="ThemesMixLeadRow" xml:space="preserve">
+    <value>Ready is no longer the loudest moon in a list.</value>
+    <comment>The mix's warning.</comment>
+  </data>
+  <data name="ThemesMixCompletedLarge" xml:space="preserve">
+    <value>Completed draws nearly as much eye as Ready at large sizes.</value>
+    <comment>The mix's warning.</comment>
+  </data>
+  <data name="ThemesMixCompletedRow" xml:space="preserve">
+    <value>Completed draws nearly as much eye as Ready in a list.</value>
+    <comment>The mix's warning.</comment>
+  </data>
+  <data name="ThemesMixMoreFormat" xml:space="preserve">
+    <value>{0} ({1} more under Details)</value>
+    <comment>{0} = the first warning; {1} = how many more.</comment>
+  </data>
+  <data name="ThemesMixDetails" xml:space="preserve">
+    <value>Details</value>
+    <comment>The mix's status line: opens the warning's numbers.</comment>
+  </data>
+  <data name="ThemesMixFix" xml:space="preserve">
+    <value>Fix it</value>
+    <comment>The mix's status line: proposes one change.</comment>
+  </data>
+  <data name="ThemesMixReset" xml:space="preserve">
+    <value>Reset mix</value>
+    <comment>The mix's status line: every state from the theme again (hold).</comment>
+  </data>
+  <data name="ThemesMixResetTooltipFormat" xml:space="preserve">
+    <value>Every state's moon comes from the theme again. To get this mix back later, keep its code: {0}</value>
+    <comment>Reset mix's tooltip: {0} = the mix's share code.</comment>
+  </data>
+  <data name="ThemesMixResetNothing" xml:space="preserve">
+    <value>Nothing is mixed.</value>
+    <comment>Reset mix's reason while every state follows the theme.</comment>
+  </data>
+  <data name="ThemesMixModeGrey" xml:space="preserve">
+    <value>greyscale</value>
+    <comment>A vision mode, inside a sentence.</comment>
+  </data>
+  <data name="ThemesMixModeDeut" xml:space="preserve">
+    <value>deuteranopia</value>
+    <comment>A vision mode, inside a sentence (Viénot's simulation).</comment>
+  </data>
+  <data name="ThemesMixModeMachadoDeut" xml:space="preserve">
+    <value>deuteranopia (Machado)</value>
+    <comment>A vision mode, inside a sentence.</comment>
+  </data>
+  <data name="ThemesMixModeMachadoProt" xml:space="preserve">
+    <value>protanopia</value>
+    <comment>A vision mode, inside a sentence.</comment>
+  </data>
+  <data name="ThemesMixModeMachadoTrit" xml:space="preserve">
+    <value>tritanopia</value>
+    <comment>A vision mode, inside a sentence.</comment>
+  </data>
+  <data name="ThemesMixDetailPairFormat" xml:space="preserve">
+    <value>{0} ({1}) beside {2} ({3}) measures {4} for {5}; it should be {6} or more, and under 10 the two are hard to tell apart.</value>
+    <comment>Details: {0}, {2} = states; {1}, {3} = sets; {4} = the value; {5} = the vision mode; {6} = the bar.</comment>
+  </data>
+  <data name="ThemesMixTierLarge" xml:space="preserve">
+    <value>At 48 px and up</value>
+    <comment>Details: where Ready's lead is judged; starts a sentence.</comment>
+  </data>
+  <data name="ThemesMixTierRow" xml:space="preserve">
+    <value>In rows</value>
+    <comment>Details: where Ready's lead is judged; starts a sentence.</comment>
+  </data>
+  <data name="ThemesMixDetailLeadFormat" xml:space="preserve">
+    <value>{0}, {1}'s Ready leads the column by {2} (it should lead by 1.25× or more).</value>
+    <comment>Details: {0} = At 48 px and up / In rows; {1} = the set; {2} = the lead (1.23×).</comment>
+  </data>
+  <data name="ThemesMixDetailCompletedFormat" xml:space="preserve">
+    <value>{0}, {1}'s Completed is {2} Ready (it should stay at 0.80× or less).</value>
+    <comment>Details: {0} = At 48 px and up / In rows; {1} = the set; {2} = its share (0.82×).</comment>
+  </data>
+  <data name="ThemesMixDetailStillLeadsFormat" xml:space="preserve">
+    <value>{0} it still leads ({1}).</value>
+    <comment>Details: {0} = At 48 px and up / In rows; {1} = the lead.</comment>
+  </data>
+  <data name="ThemesMixRatioFormat" xml:space="preserve">
+    <value>{0:0.00}×</value>
+    <comment>A ratio such as Ready's lead: {0} = the number.</comment>
+  </data>
+  <data name="ThemesMixFixTitle" xml:space="preserve">
+    <value>Fix it suggests one change</value>
+    <comment>Fix it's proposal: its title.</comment>
+  </data>
+  <data name="ThemesMixFixUseFormat" xml:space="preserve">
+    <value>Use {0} for {1}</value>
+    <comment>Fix it's proposal: {0} = a set; {1} = a state.</comment>
+  </data>
+  <data name="ThemesMixFixUseTooFormat" xml:space="preserve">
+    <value>Use {0} for {1} too</value>
+    <comment>Fix it's proposal when the set already draws another state: {0} = a set; {1} = a state.</comment>
+  </data>
+  <data name="ThemesMixFixThemeOwnFormat" xml:space="preserve">
+    <value>Use the theme's own {0}</value>
+    <comment>Fix it's fallback: {0} = a state.</comment>
+  </data>
+  <data name="ThemesMixFixLeadFormat" xml:space="preserve">
+    <value>Ready leads again: {0} at large sizes, {1} in rows.</value>
+    <comment>Fix it's proposal: {0}, {1} = Ready's lead after the change.</comment>
+  </data>
+  <data name="ThemesMixFixApart" xml:space="preserve">
+    <value>Every moon reads apart again.</value>
+    <comment>Fix it's proposal when it clears a pair.</comment>
+  </data>
+  <data name="ThemesMixFixPartial" xml:space="preserve">
+    <value>This clears some of the warnings, not all.</value>
+    <comment>Fix it's fallback.</comment>
+  </data>
+  <data name="ThemesMixFixKeepFormat" xml:space="preserve">
+    <value>Your {0} pick stays.</value>
+    <comment>Fix it's proposal: {0} = the state the player just picked.</comment>
+  </data>
+  <data name="ThemesMixFixNotNow" xml:space="preserve">
+    <value>Not now</value>
+    <comment>Fix it's proposal: close it.</comment>
+  </data>
+  <data name="ThemesMixFixUse" xml:space="preserve">
+    <value>Use it</value>
+    <comment>Fix it's proposal: apply it (Undo follows).</comment>
+  </data>
+  <data name="ThemesMixFixNoneKeepFormat" xml:space="preserve">
+    <value>No single change clears this without undoing your {0} pick. Try another set for it, or Reset mix.</value>
+    <comment>Fix it's tooltip when it has nothing to propose: {0} = the state the player just picked.</comment>
+  </data>
+  <data name="ThemesMixFixNone" xml:space="preserve">
+    <value>No single change clears this. Reset mix starts over.</value>
+    <comment>Fix it's tooltip when it has nothing to propose.</comment>
+  </data>
+  <data name="UndoToastMixPickFormat" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>Undo toast after a state's pick: {0} = the state; {1} = the set, or From theme.</comment>
+  </data>
+  <data name="UndoToastMixReset" xml:space="preserve">
+    <value>Mix reset</value>
+    <comment>Undo toast after Reset mix.</comment>
+  </data>
 </root>
