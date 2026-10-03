@@ -557,7 +557,7 @@ public sealed partial class Plugin : IDalamudPlugin
     /// <summary>
     /// Once per frame, before the window system draws: the scale factors every window reads, the palette (Night or the
     /// user's Dalamud colours, read while nothing is pushed yet), the motion clock (scroll pause, key pruning, the waxing
-    /// moons of quests just completed) and the
+    /// moons of quests just completed), the Full sky's clock and meteors, and the
     /// first clicks of armed menu items whose menu closed.
     /// </summary>
     private void UpdateUiMetrics()
@@ -574,6 +574,8 @@ public sealed partial class Plugin : IDalamudPlugin
                 // No moment plays in combat (feature plan v6 M1): the completions are noted and let go.
                 Ui.Motion.NoteCompletions(session.LiveContentId, session.RecentEvents, session.IsLive, Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]);
             }
+
+            Ui.NightSky.BeginFrame(settings);
 
             Ui.Chrome.BeginFrame();
         }

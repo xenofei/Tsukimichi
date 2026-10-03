@@ -13,8 +13,8 @@ namespace Tsukimichi.Ui;
 /// the high-contrast palette's own versions (opaque VeilLine lines, no gradient) when it is on. Brass is decoration only:
 /// never text, never a fill over 4 px, never the only carrier of meaning. The rule and the divider follow the level's
 /// <see cref="Theme.RuleStyle"/> themselves (brass at Full, a flat hairline at Quiet, the line at Plain); the brass-only
-/// art (sigils, the frame, the star field, the gradient) is for callers that checked <see cref="Theme.MoonRoadArt"/>,
-/// <see cref="Theme.ShowStars"/> or <see cref="Theme.ShowPaneGradient"/>. Every method is allocation-free.
+/// art (sigils, the frame, the gradient) is for callers that checked <see cref="Theme.MoonRoadArt"/> or
+/// <see cref="Theme.ShowPaneGradient"/>; the star field is <see cref="NightSky"/>'s. Every method is allocation-free.
 /// </summary>
 public static class Ornament
 {
@@ -185,62 +185,6 @@ public static class Ornament
         var lift = Theme.WithAlpha(s.Top, WaterAlpha * alpha);
         var none = Theme.WithAlpha(s.Top, 0f);
         dl.AddRectFilledMultiColor(new Vector2(min.X, waterTop), max, none, none, lift, lift);
-    }
-
-    // ------------------------------------------------------------------ the star field (Full)
-
-    /// <summary>A star's alpha by magnitude (spec §1, "Star field"): faint 1 × 1 at 0.16, small r 1 at 0.26, bright r 1.5 and a 7 px cross at 0.36.</summary>
-    private const float FaintAlpha = 0.16f;
-    private const float SmallAlpha = 0.26f;
-    private const float BrightAlpha = 0.36f;
-
-    /// <summary>The cool white most stars are; about one in six is warm (MoonHigh).</summary>
-    private static readonly Vector4 StarCool = Core.Ui.ColorMath.FromHex(0xDDE6FF);
-
-    /// <summary>
-    /// The seeded star field in <paramref name="min"/>..<paramref name="max"/> (empty sky only: the caller passes a band
-    /// with nothing on it), from <paramref name="stars"/> in the band's unit square (<see cref="StarField.Generate"/>), so
-    /// it never shimmers frame to frame. Stars under <paramref name="avoidMin"/>..<paramref name="avoidMax"/> are skipped
-    /// (a title, a label). Allocation-free.
-    /// </summary>
-    public static void Stars(ImDrawListPtr dl, Vector2 min, Vector2 max, Star[] stars, Vector2 avoidMin = default, Vector2 avoidMax = default)
-    {
-        if (!(max.X - min.X > 4f) || !(max.Y - min.Y > 4f))
-        {
-            return;
-        }
-
-        var size = max - min;
-        var avoid = avoidMax.X > avoidMin.X && avoidMax.Y > avoidMin.Y;
-        var unit = MathF.Max(1f, UiMetrics.Px(1f));
-        for (var i = 0; i < stars.Length; i++)
-        {
-            var star = stars[i];
-            var p = new Vector2(MathF.Round(min.X + (star.U * size.X)), MathF.Round(min.Y + (star.V * size.Y)));
-            if (avoid && p.X >= avoidMin.X - 4f && p.X <= avoidMax.X + 4f && p.Y >= avoidMin.Y - 4f && p.Y <= avoidMax.Y + 4f)
-            {
-                continue;
-            }
-
-            var warm = (i * 7919 % 6) == 0;
-            var tone = warm ? Theme.MoonHigh : StarCool;
-            switch (star.Magnitude)
-            {
-                case StarMagnitude.Faint:
-                    dl.AddRectFilled(p, p + new Vector2(unit), Theme.WithAlpha(tone, FaintAlpha));
-                    break;
-                case StarMagnitude.Small:
-                    dl.AddCircleFilled(p, unit, Theme.WithAlpha(tone, SmallAlpha), 8);
-                    break;
-                default:
-                    var arm = 3.5f * unit;
-                    var ink = Theme.WithAlpha(tone, BrightAlpha);
-                    dl.AddLine(p - new Vector2(arm, 0f), p + new Vector2(arm, 0f), ink, MathF.Max(0.7f, 0.7f * unit));
-                    dl.AddLine(p - new Vector2(0f, arm), p + new Vector2(0f, arm), ink, MathF.Max(0.7f, 0.7f * unit));
-                    dl.AddCircleFilled(p, 1.5f * unit, Theme.WithAlpha(tone, BrightAlpha * 1.4f), 10);
-                    break;
-            }
-        }
     }
 
     // ------------------------------------------------------------------ gilt brass (Full's cards and tooltips)

@@ -16,7 +16,7 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// The detail pane's Path card body: the star chart of docs/design/path-section-proposal.md §4. One thread down a
 /// gutter with the chain's moons on it, expansion sky bands behind (alternating faint tint, a horizon line, a
-/// pre-seeded star field, a four-point star sigil and the band's name with a fading rule), the thread gold where the
+/// pre-seeded star field at Full in each band's empty right side, through <see cref="NightSky"/>, a four-point star sigil and the band's name with a fading rule), the thread gold where the
 /// step above is done and dashed silver where it is not, completed stretches as capsule beads that open into compact
 /// rows, Any-join alternatives as hollow ghost nodes whose curve merges into the join (a click re-roots the chart on
 /// that branch), the target as the one large moon under a three-layer halo and a thin ring on a spotlight row, and
@@ -25,7 +25,7 @@ namespace Tsukimichi.Ui;
 /// while it scrolls.
 ///
 /// Everything with text or a seed is built in <see cref="Load"/> (when the pane's model refreshes); the pixel layout
-/// and the star positions are rebuilt only when a bead opens or closes or a scale or width changes. A frame draws
+/// and each band's sky are rebuilt only when a bead opens or closes or a scale or width changes. A frame draws
 /// only the rows in view, formats nothing and allocates nothing. Nothing moves on its own: the "Show path" pulse on
 /// the target's ring is a <see cref="Motion"/> pulse, off under Reduce motion.
 /// </summary>
@@ -69,12 +69,8 @@ public sealed class PathChart
         public int Join;        // Alternative: the join's row
     }
 
-    private readonly struct StarPx(float x, float y, StarMagnitude magnitude)
-    {
-        public readonly float X = x;
-        public readonly float Y = y;
-        public readonly StarMagnitude Magnitude = magnitude;
-    }
+    /// <summary>A band's empty sky (content coordinates): its right side past every label, under its header, and its stars.</summary>
+    private readonly record struct BandSky(int Band, Vector2 Min, Vector2 Max, Star[] Stars);
 
     private readonly Action<uint> select;
 
@@ -102,7 +98,7 @@ public sealed class PathChart
 
     // ---- layout (pixels) ----
     private readonly List<VRow> layout = new(64);
-    private readonly List<StarPx> stars = new(128);
+    private readonly List<BandSky> skies = new(8);
     private readonly List<(float Y0, float Y1)> bandSpans = new(8);
     private int[] coreToRow = [];
     private bool layoutDirty = true;
@@ -549,10 +545,13 @@ public sealed class PathChart
         }
     }
 
-    /// <summary>Maps each band's unit stars into its pixel span, leaving out any that would sit on a node, the thread or a name.</summary>
+    /// <summary>
+    /// Each band's empty sky (docs/design/v7/ui/spec.md §3): the band's right side past its labels, below its header,
+    /// with a seeded field sized to it. Built with the layout, so a frame only draws.
+    /// </summary>
     private void BuildStars(float width)
     {
-        stars.Clear();
+        skies.Clear();
         bandSpans.Clear();
         if (rows.Count == 0)
         {
@@ -560,26 +559,64 @@ public sealed class PathChart
         }
 
         var inset = Px(2f);
-        var fontSize = ImGui.GetFontSize();
-        foreach (var band in bands)
+        for (var b = 0; b < bands.Count; b++)
         {
+            var band = bands[b];
             var first = coreToRow[band.FirstRow];
             var end = band.FirstRow + band.RowCount;
             var y0 = layout[first].Y;
             var y1 = end < rows.Count ? layout[coreToRow[end]].Y : pathEnd;
             var lastRow = end < rows.Count ? coreToRow[end] : FirstTailRow();
             bandSpans.Add((y0, y1));
-            foreach (var star in band.Stars)
-            {
-                var x = inset + (star.U * (width - (2f * inset)));
-                var y = y0 + (star.V * (y1 - y0));
-                if (MathF.Abs(x - threadX) < Px(6f) || Excluded(x, y, first, lastRow, fontSize))
-                {
-                    continue;
-                }
 
-                stars.Add(new StarPx(MathF.Round(x), MathF.Round(y), star.Magnitude));
+            var top = layout[first].Kind == VKind.Band ? layout[first].Y + layout[first].H : y0;
+            var left = threadX + Px(12f);
+            for (var i = first; i < lastRow; i++)
+            {
+                left = MathF.Max(left, TextRight(layout[i], width) + Px(12f));
             }
+
+            var right = width - inset;
+            if (right - left < Px(24f) || y1 - top < Px(16f))
+            {
+                continue;
+            }
+
+            var scale = MathF.Max(0.01f, UiMetrics.Scale);
+            var count = StarField.CountFor((right - left) / scale, (y1 - top) / scale, 3, StarField.MaxStars);
+            skies.Add(new BandSky(b, new Vector2(left, top), new Vector2(right, y1), StarField.Generate(band.Seed, count)));
+        }
+    }
+
+    /// <summary>Where a row's text (and the marks that follow it) ends, in content coordinates: the sky starts past it.</summary>
+    private float TextRight(VRow row, float width)
+    {
+        var small = CaptionScale;
+        var room = MathF.Max(1f, width - labelX - Px(4f));
+        switch (row.Kind)
+        {
+            case VKind.Step:
+            case VKind.RunStep:
+                return labelX + MathF.Min(ImGui.CalcTextSize(stepNames[row.Item]).X, room);
+            case VKind.Target:
+                return labelX + MathF.Min(ImGui.CalcTextSize(stepNames[row.Item]).X + UiMetrics.RequirementMarkSize + Px(6f), room);
+            case VKind.Bead:
+                return labelX + (ImGui.CalcTextSize(rowLabels[row.Core]).X * small) + Px(10f);
+            case VKind.Alternative:
+            {
+                var text = ImGui.CalcTextSize(AlternativeBefore.Value).X + ImGui.CalcTextSize(rowLabels[row.Core]).X
+                    + ImGui.CalcTextSize(AlternativeAfter.Value).X + ImGui.CalcTextSize(rowSuffixes[row.Core]).X;
+                return ghostLabelX + (text * small);
+            }
+
+            case VKind.MoreAlternatives:
+                return ghostLabelX + (ImGui.CalcTextSize(rowLabels[row.Core]).X * small);
+            case VKind.Caption:
+                return labelX + (ImGui.CalcTextSize(this.caption ?? string.Empty).X * small);
+            case VKind.Band:
+                return labelX + (ImGui.CalcTextSize(rowLabels[row.Core]).X * small);
+            default:
+                return threadX + RadiusFor(row.Kind);
         }
     }
 
@@ -594,35 +631,6 @@ public sealed class PathChart
         }
 
         return layout.Count;
-    }
-
-    private bool Excluded(float x, float y, int first, int end, float fontSize)
-    {
-        var near = Px(12f);
-        var labelBand = Px(6f) + (fontSize * 0.5f);
-        for (var i = first; i < end; i++)
-        {
-            var row = layout[i];
-            var nodeX = row.Kind == VKind.Alternative ? ghostX : threadX;
-            if (row.Kind is not (VKind.Caption or VKind.MoreAlternatives) && Vector2.DistanceSquared(new Vector2(x, y), new Vector2(nodeX, row.NodeY)) < near * near)
-            {
-                return true;
-            }
-
-            if (MathF.Abs(y - row.NodeY) > labelBand)
-            {
-                continue;
-            }
-
-            // Names (full size) keep a clear box; captions may have stars behind them (§4.3).
-            var name = row.Kind is VKind.Step or VKind.Target or VKind.RunStep ? stepNames[row.Item] : null;
-            if (name is not null && x >= labelX - Px(2f) && x <= labelX + ImGui.CalcTextSize(name).X + Px(4f))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // ------------------------------------------------------------------ drawing
@@ -887,37 +895,27 @@ public sealed class PathChart
             dl.AddRectFilled(min, new Vector2(max.X, min.Y + UiMetrics.Hairline), Theme.WithAlpha(s.Text, 0.05f));
         }
 
-        var faint = Theme.WithAlpha(s.Text, 0.14f);
-        var small = Theme.WithAlpha(s.Text, 0.22f);
-        var bright = Theme.WithAlpha(s.Text, 0.32f);
-        var sparkle = Theme.WithAlpha(s.Text, 0.12f);
-        var arm = Px(2.5f);
-        foreach (var star in stars)
+        if (!Theme.ShowStars)
         {
-            if (star.Y < top || star.Y > bottom)
+            return;
+        }
+
+        // Full: each band's empty sky through the one sky renderer, as seen through the chart's view (a band scrolled
+        // half out offers only its visible part to the meteor and the constellation; its stars stay put on the band).
+        var viewTop = ImGui.GetWindowPos().Y;
+        var viewBottom = viewTop + ImGui.GetWindowSize().Y;
+        foreach (var sky in skies)
+        {
+            if (sky.Max.Y < top || sky.Min.Y > bottom)
             {
                 continue;
             }
 
-            var p = origin + new Vector2(star.X, star.Y);
-            switch (star.Magnitude)
-            {
-                case StarMagnitude.Faint:
-                    dl.AddRectFilled(p, p + Vector2.One, faint);
-                    break;
-                case StarMagnitude.Small:
-                    dl.AddCircleFilled(p, MathF.Max(1f, Px(1f)), small, 6);
-                    break;
-                default:
-                    dl.AddCircleFilled(p, MathF.Max(1.5f, Px(1.5f)), bright, 8);
-                    if (!layoutDense)
-                    {
-                        dl.AddLine(p - new Vector2(arm, 0f), p + new Vector2(arm, 0f), sparkle, 1f);
-                        dl.AddLine(p - new Vector2(0f, arm), p + new Vector2(0f, arm), sparkle, 1f);
-                    }
-
-                    break;
-            }
+            var canvasMin = origin + sky.Min;
+            var canvasMax = origin + sky.Max;
+            var shownMin = new Vector2(canvasMin.X, MathF.Max(canvasMin.Y, viewTop));
+            var shownMax = new Vector2(canvasMax.X, MathF.Min(canvasMax.Y, viewBottom));
+            NightSky.Field(dl, SkySite.Path, sky.Band, sky.Stars, canvasMin, canvasMax, shownMin, shownMax);
         }
     }
 
