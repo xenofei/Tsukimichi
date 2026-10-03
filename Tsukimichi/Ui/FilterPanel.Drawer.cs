@@ -169,17 +169,25 @@ public sealed partial class FilterPanel
     // ------------------------------------------------------------------ section heads
 
     /// <summary>
-    /// A section head (Show · Quick views · Advanced) on its own row: the label in the Section heading role (GiltLight
-    /// with a 1 px shadow at Full, the text tone at Quiet, a band at Plain), a rule fading to the right (OrnamentLight at
-    /// Full, the hairline at Quiet), and a neutral <paramref name="pill"/> at the end. With <paramref name="chevron"/>
-    /// the whole row is a button with a chevron that turns as it opens; returns true on its click.
+    /// A section head (Show · Quick views · Advanced) on its own row, in the Section heading role as the detail pane's
+    /// cards draw it (plan v7 UI-1): at Full the game face tracked +0.08 em in capitals, in OrnamentLight with a 1 px
+    /// Abyss shadow (falling back to the Lead size); at Quiet the Lead size in the text tone; at Plain the body on the
+    /// ledger's band with its line. Then a rule fading to the right (OrnamentLight at Full, the hairline at Quiet) and a
+    /// neutral <paramref name="pill"/> at the end. With <paramref name="chevron"/> the whole row is a button with a
+    /// chevron that turns as it opens; returns true on its click.
     /// </summary>
     private bool SectionHead(string text, string? pill, bool first = false, bool chevron = false, bool open = false)
     {
         var s = Theme.Surface;
         var dl = ImGui.GetWindowDrawList();
         sheetY += first ? 0f : UiMetrics.Px(metrics.SectionGap);
-        var height = MathF.Max(UiMetrics.Px(metrics.SectionHead), ImGui.GetTextLineHeight() + UiMetrics.Px(4f));
+        var upper = SectionHeading.Label(text);
+        using var role = SectionRole(upper);
+        var label = role.GameFace ? upper : text;
+        var tracking = Typography.SectionTracking(in role);
+        var line = ImGui.GetTextLineHeight();
+        var labelWidth = Chrome.TrackedTextWidth(label, tracking);
+        var height = HeadingLayout.SectionRowHeight(flair, UiMetrics.Scale, line);
         var min = new Vector2(sheetLeft, sheetY);
         var max = new Vector2(sheetRight, sheetY + height);
         var mid = MathF.Round(sheetY + (height * 0.5f));
@@ -196,9 +204,12 @@ public sealed partial class FilterPanel
 
         if (flair == Flair.Plain)
         {
-            // The ledger's band, full bleed across the sheet.
+            // The ledger's band, full bleed across the sheet, with its line under it.
             var windowPos = ImGui.GetWindowPos();
-            dl.AddRectFilled(new Vector2(windowPos.X, min.Y), new Vector2(windowPos.X + ImGui.GetWindowWidth(), max.Y), Ink(tones.HeaderBand));
+            var left = windowPos.X;
+            var right = windowPos.X + ImGui.GetWindowWidth();
+            dl.AddRectFilled(new Vector2(left, min.Y), new Vector2(right, max.Y), Ink(hovered ? Vector4.Lerp(tones.HeaderBand, s.Text, 0.04f) : tones.HeaderBand));
+            dl.AddRectFilled(new Vector2(left, max.Y), new Vector2(right, max.Y + 1f), Ink(Theme.Tones.Rule));
         }
         else if (hovered)
         {
@@ -215,25 +226,10 @@ public sealed partial class FilterPanel
             x += size + UiMetrics.Px(7f);
         }
 
-        var label = flair == Flair.Full ? SectionHeading.Label(text) : text;
-        float labelWidth;
-        float labelLine;
         var pillWidth = pill is null ? 0f : PillWidth(pill);
         var ruleEnd = sheetRight - (pill is null ? 0f : pillWidth + UiMetrics.Px(8f));
-        using (SectionRole(label))
-        {
-            labelWidth = ImGui.CalcTextSize(label).X;
-            labelLine = ImGui.GetTextLineHeight();
-            var at = new Vector2(x, MathF.Round(mid - (labelLine * 0.5f)));
-            var room = MathF.Max(1f, ruleEnd - x);
-            if (flair == Flair.Full)
-            {
-                // A 1 px shadow in Abyss under the light gilt, so thin strokes hold on the sheet's gradient.
-                Chrome.EllipsisTextAt(dl, at + new Vector2(0f, 1f), room, label, Ink(s.Deep, 0.55f), labelWidth);
-            }
-
-            Chrome.EllipsisTextAt(dl, at, room, label, Ink(tones.Heading), labelWidth);
-        }
+        var shadow = flair == Flair.Full ? Ink(Theme.Abyss, 0.55f) : 0u;
+        Chrome.TrackedTextAt(dl, new Vector2(x, MathF.Round(mid - (line * 0.5f))), MathF.Max(1f, ruleEnd - x), label, Ink(tones.Heading), tracking, shadow);
 
         var ruleStart = x + labelWidth + UiMetrics.Px(10f);
         if (flair != Flair.Plain && ruleEnd - ruleStart > UiMetrics.Px(8f))
@@ -246,16 +242,20 @@ public sealed partial class FilterPanel
             DrawPill(dl, new Vector2(sheetRight - pillWidth, mid), pill);
         }
 
-        sheetY += height + UiMetrics.Px(metrics.HeadGap);
+        sheetY += height + UiMetrics.Px(HeadingLayout.SectionRow(flair).Gap) + (flair == Flair.Plain ? 1f : 0f);
         return clicked;
     }
 
     /// <summary>
-    /// The Section heading role this level draws section heads in: the game's display face in capitals at Full (the
-    /// Eyebrow handle, falling back to the caption face), the body face at Quiet and Plain.
+    /// The Section heading role at this level (plan v7 UI-1): the game face at Full (<see cref="Typography.Section"/>,
+    /// falling back to the Lead size), the Lead size at Quiet, the body at Plain.
     /// </summary>
-    private static Typography.Scope SectionRole(string label) =>
-        Theme.MoonRoadArt && SectionHeading.Capitals ? Typography.Eyebrow(label) : default;
+    private Typography.Scope SectionRole(string upper) => flair switch
+    {
+        Flair.Full => Typography.Section(upper),
+        Flair.Quiet => Typography.Lead(),
+        _ => default,
+    };
 
     /// <summary>A rule from <paramref name="start"/>: fading to nothing to the right, or flat; it follows the drawer's fade.</summary>
     private static void FadeRule(ImDrawListPtr dl, Vector2 start, float width, Vector4 color, float alpha, bool fade)

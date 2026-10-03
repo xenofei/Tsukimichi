@@ -10,13 +10,13 @@ namespace Tsukimichi.Tests.Ui;
 public class DrawerTonesTests
 {
     [Fact]
-    public void Full_is_a_gradient_sheet_lit_from_the_top_with_giltlight_heads()
+    public void Full_is_a_gradient_sheet_lit_from_the_top_with_ornamentlight_heads()
     {
         var t = DrawerTones.For(Flair.Full, SurfaceColors.Night);
         Assert.Equal(ColorMath.FromHex(DrawerTones.FullTopHex), t.SheetTop);
         Assert.Equal(ColorMath.FromHex(DrawerTones.FullFootHex), t.SheetFoot);
         Assert.True(FlairTones.Lightness(t.SheetTop) > FlairTones.Lightness(t.SheetFoot));
-        Assert.Equal(ColorMath.FromHex(DrawerTones.GiltLightHex), t.Heading);
+        Assert.Equal(SurfaceColors.Night.OrnamentLight, t.Heading);
     }
 
     [Fact]

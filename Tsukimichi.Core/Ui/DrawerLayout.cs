@@ -80,9 +80,9 @@ public static class DrawerLayout
     /// </summary>
     public static DrawerMetrics MetricsFor(Flair flair) => flair switch
     {
-        Flair.Full => new DrawerMetrics(Header: 52f, Divider: 12f, Footer: 48f, PadX: 14f, SectionGap: 12f, SectionHead: 30f, HeadGap: 4f, ToggleRow: 36f, SmallRow: 30f, SummaryLine: 30f, Button: 26f, Field: 28f, Chip: 26f, Segment: 26f, KindSegment: 22f, Rounding: 6f),
-        Flair.Quiet => new DrawerMetrics(Header: 46f, Divider: 0f, Footer: 42f, PadX: 12f, SectionGap: 10f, SectionHead: 26f, HeadGap: 4f, ToggleRow: 34f, SmallRow: 30f, SummaryLine: 30f, Button: 26f, Field: 28f, Chip: 26f, Segment: 26f, KindSegment: 22f, Rounding: 6f),
-        _ => new DrawerMetrics(Header: 26f, Divider: 0f, Footer: 24f, PadX: 8f, SectionGap: 4f, SectionHead: 20f, HeadGap: 2f, ToggleRow: 24f, SmallRow: 24f, SummaryLine: 22f, Button: 20f, Field: 20f, Chip: 22f, Segment: 22f, KindSegment: 20f, Rounding: 0f),
+        Flair.Full => new DrawerMetrics(Header: 52f, Divider: 12f, Footer: 48f, PadX: 14f, SectionGap: 12f, ToggleRow: 36f, SmallRow: 30f, SummaryLine: 30f, Button: 26f, Field: 28f, Chip: 26f, Segment: 26f, KindSegment: 22f, Rounding: 6f),
+        Flair.Quiet => new DrawerMetrics(Header: 46f, Divider: 0f, Footer: 42f, PadX: 12f, SectionGap: 10f, ToggleRow: 34f, SmallRow: 30f, SummaryLine: 30f, Button: 26f, Field: 28f, Chip: 26f, Segment: 26f, KindSegment: 22f, Rounding: 6f),
+        _ => new DrawerMetrics(Header: 26f, Divider: 0f, Footer: 24f, PadX: 8f, SectionGap: 4f, ToggleRow: 24f, SmallRow: 24f, SummaryLine: 22f, Button: 20f, Field: 20f, Chip: 22f, Segment: 22f, KindSegment: 20f, Rounding: 0f),
     };
 
     /// <summary>The tree's opacity under a drawer at <paramref name="drawerFade"/>: it fades out as the drawer fades in.</summary>
@@ -105,9 +105,7 @@ public readonly record struct DrawerHeights(float Sheet, float Body, bool Scroll
 /// <param name="Divider">The moon-road divider's band under the header (Full only).</param>
 /// <param name="Footer">The footer: "Showing N of M" and Reset.</param>
 /// <param name="PadX">The sheet's side padding.</param>
-/// <param name="SectionGap">The space above a section head.</param>
-/// <param name="SectionHead">A section head's row (Show, Quick views, Advanced).</param>
-/// <param name="HeadGap">The space between a section head and its first row.</param>
+/// <param name="SectionGap">The space above a section head (its row and gap are the Section heading role's, <see cref="HeadingLayout.SectionRow"/>).</param>
 /// <param name="ToggleRow">A Show row: label, caption and toggle.</param>
 /// <param name="SmallRow">A More toggle's row and a reward kind's row.</param>
 /// <param name="SummaryLine">One of Advanced's seven summary lines.</param>
@@ -123,8 +121,6 @@ public readonly record struct DrawerMetrics(
     float Footer,
     float PadX,
     float SectionGap,
-    float SectionHead,
-    float HeadGap,
     float ToggleRow,
     float SmallRow,
     float SummaryLine,

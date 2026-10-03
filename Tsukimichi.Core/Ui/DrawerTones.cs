@@ -16,7 +16,7 @@ namespace Tsukimichi.Core.Ui;
 /// <param name="HeaderBand">The header's band (Plain); the sheet itself elsewhere.</param>
 /// <param name="FooterBand">The footer's band (Plain); the sheet itself elsewhere.</param>
 /// <param name="Hover">A row's or the Reset action's hover wash (drawn at <see cref="HoverAlpha"/>).</param>
-/// <param name="Heading">The section heads' ink: GiltLight at Full, the text tone elsewhere.</param>
+/// <param name="Heading">The section heads' ink: OrnamentLight (GiltLight) at Full, the text tone elsewhere.</param>
 public readonly record struct DrawerTones(
     Vector4 SheetTop,
     Vector4 SheetFoot,
@@ -50,9 +50,6 @@ public readonly record struct DrawerTones(
     /// <summary>The hover wash on Night (NightHover), drawn at <see cref="HoverAlpha"/>.</summary>
     public const uint HoverHex = 0x262D45;
 
-    /// <summary>GiltLight, the Section role's ink at Full (9.5 : 1 on Raised).</summary>
-    public const uint GiltLightHex = 0xE6CF98;
-
     /// <summary>How strong the hover wash is drawn.</summary>
     public const float HoverAlpha = 0.8f;
 
@@ -70,8 +67,7 @@ public readonly record struct DrawerTones(
             {
                 var top = night ? ColorMath.FromHex(FullTopHex) : ColorMath.Mix(s.Raised, s.Text, 0.02f);
                 var foot = night ? ColorMath.FromHex(FullFootHex) : ColorMath.Mix(s.Raised, down, s.Light ? 0.03f : 0.25f);
-                var ink = night ? ColorMath.FromHex(GiltLightHex) : ColorMath.Mix(s.OrnamentHigh, s.Text, 0.3f);
-                return new DrawerTones(top, foot, s.Line, pill, top, foot, hover, ink);
+                return new DrawerTones(top, foot, s.Line, pill, top, foot, hover, s.OrnamentLight);
             }
 
             case Flair.Quiet:
