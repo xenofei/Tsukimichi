@@ -4,6 +4,26 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- **Themes** (new Settings › Themes page). Pick from Menphina's Medallion, **Ishgard Glass** (stained glass in lead and stone), **Aether Crystal** (cut moonstone in a silver setting) or Classic.
+  - Each card shows the theme's moons; hover a card to preview it, click to use it, and Undo follows.
+  - Theme moon art loads only for the themes you use.
+- **Ishgard Snow,** a new light palette:
+  - navy ink, deep-gold "act now" words and lead frames;
+  - a still dawn sky with no stars;
+  - banners in a soft daylight grade, and portraits in their natural colour.
+- **High contrast** has designed forms for both Night and Ishgard Snow, with every text colour at 7:1 or better.
+- **Reset appearance** returns to Menphina's Medallion on Night in one click, with Undo.
+
+### Changed
+- **Moon style, Moon colours and Follow Dalamud colours** moved from General › Look to Settings › Themes; search still finds them. Your settings carry over unchanged, and older versions still read them.
+- **Every colour in the windows now comes from the chosen palette.** "Follow Dalamud colours" applies to every text colour, the tutorial card included, so light Dalamud styles stay readable throughout.
+- **Night's faint captions and divider lines** are a touch brighter, so they read on cards and on hover.
+- **The banner's location line always fits on one line.** It drops the "Main Scenario (…) ›" prefix first, and never cuts words off.
+
+### Fixed
+- Locked out, Not checked and Blocked status words, and the catalog error message, are easier to read.
+
 ## [1.15.0] - 2026-10-03
 
 ### Added
