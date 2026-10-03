@@ -76,6 +76,9 @@ public sealed record UnlockLinks
     /// <summary>The icon a zone or world-map row wears (the game's Map menu icon); 0 for the stand-in.</summary>
     public uint AreaIcon { get; init; }
 
+    /// <summary>The icons a feature row wears (<see cref="FeatureArt"/>); <see cref="FeatureIcons.Empty"/> leaves the stand-in.</summary>
+    public FeatureIcons FeatureIcons { get; init; } = FeatureIcons.Empty;
+
     /// <summary>The icon a teleportable aetheryte row wears (the map's aetheryte marker).</summary>
     public uint AetheryteIcon { get; init; } = DefaultAetheryteIcon;
 

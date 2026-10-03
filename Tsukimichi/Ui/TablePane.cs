@@ -2175,9 +2175,13 @@ public sealed class TablePane : IDisposable
         }
     }
 
-    /// <summary>Whether the Opens column shows <paramref name="entry"/>: Sprout mode leaves out rows past the character's reach, and no row repeats a reward, as in the detail pane (UnlockView.Visible).</summary>
+    /// <summary>
+    /// Whether the Opens column shows <paramref name="entry"/>: Sprout mode leaves out rows past the character's reach,
+    /// and no row repeats a reward, as in the detail pane (UnlockView.Visible). A row without an icon counts too and
+    /// draws the veiled moon, as its detail row does, so the two agree (UI-Q Q11).
+    /// </summary>
     private static bool ShowsOpens(Core.Unlocks.UnlockEntry entry, byte reach) =>
-        entry.Target != Core.Unlocks.UnlockTarget.NextQuest && entry.Icon != 0 && Core.Unlocks.UnlockView.Shows(entry, reach);
+        entry.Target != Core.Unlocks.UnlockTarget.NextQuest && Core.Unlocks.UnlockView.Shows(entry, reach);
 
     /// <summary>
     /// The Rewards column: up to four icons of what the quest hands over to keep. In a column the player made narrower

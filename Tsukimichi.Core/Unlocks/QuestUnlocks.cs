@@ -508,7 +508,9 @@ public sealed class QuestUnlocks
             var note = curated is not null && curated.SystemUnlocks.TryGetValue(quest.RowId, out var system) && string.Equals(system.Label, label, StringComparison.Ordinal)
                 ? system.Note
                 : null;
-            RowsOf(quest.RowId).Add(new UnlockEntry(target, 0, label, target == UnlockTarget.Flying ? AetherCurrentIcon : icon, source, quest.Expansion, Note: note)
+            // The reward's own icon, else the Duty Finder tile or menu that stands for the feature (FeatureArt).
+            var art = target == UnlockTarget.Flying ? AetherCurrentIcon : icon != 0 ? icon : links.FeatureIcons.For(label);
+            RowsOf(quest.RowId).Add(new UnlockEntry(target, 0, label, art, source, quest.Expansion, Note: note)
             {
                 InRewards = inRewards,
             });

@@ -651,7 +651,7 @@ public sealed partial class DetailPane
             TextFlow.Wrapped(stored.Unique ? Strings.MarkedUniqueByYou : Strings.MarkedNotUniqueByYou, RoomTo(cardRight), Theme.U32(stored.Unique ? Theme.Surface.Text : Theme.Surface.TextSecondary));
             if (stored.Note is { Length: > 0 } note)
             {
-                TextFlow.Wrapped(note, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
+                TextFlow.Wrapped(note, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
             }
 
             SameLineOrWrap(Chrome.ArmedButtonWidth(Strings.RestoreOverride), cardRight);
@@ -659,11 +659,11 @@ public sealed partial class DetailPane
         }
         else if (model.HasUniqueEntries)
         {
-            TextFlow.Wrapped(Strings.ListedInMoonlit, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
+            TextFlow.Wrapped(Strings.ListedInMoonlit, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
         }
         else
         {
-            TextFlow.Wrapped(Strings.NotListedInMoonlit, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
+            TextFlow.Wrapped(Strings.NotListedInMoonlit, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
             SameLineOrWrap(Chrome.ArmedButtonWidth(Strings.MarkUnique), cardRight);
             verdict.DrawMarkUniqueButton(overrides, rowId, model.DisplayName);
         }
@@ -1281,7 +1281,8 @@ public sealed partial class DetailPane
         var unique = 0;
         foreach (var reward in quest.Rewards)
         {
-            if (!RewardSplit.IsReward(reward))
+            // A slot the sheets name nothing for (an item row without a name) is no tile: it drew a blank one.
+            if (!RewardSplit.IsReward(reward) || reward.Name.Length == 0)
             {
                 continue;
             }
@@ -1310,7 +1311,10 @@ public sealed partial class DetailPane
                 var icon = extra.Icon;
                 if (icon == 0 && UnlockIcon is { } resolve)
                 {
-                    icon = resolve(quest, new UniqueRewardEntry(quest.RowId, kind, extra.TargetId, extra.ItemId, extra.Name, Confidence.Static, string.Empty));
+                    // The shipped entry, whose source names a title's achievement (and so its icon), else one built here.
+                    var asEntry = ShippedEntry(entries, kind, extra.TargetId, extra.ItemId)
+                        ?? new UniqueRewardEntry(quest.RowId, kind, extra.TargetId, extra.ItemId, extra.Name, Confidence.Static, string.Empty);
+                    icon = resolve(quest, asEntry);
                 }
 
                 var isUnique = IsUniqueReward(entries, kind, extra.TargetId, extra.ItemId);
@@ -1323,22 +1327,26 @@ public sealed partial class DetailPane
     }
 
     /// <summary>Whether a shipped unique-reward entry of the quest names the reward: same kind, and same row or same item.</summary>
-    private static bool IsUniqueReward(List<UniqueRewardEntry>? entries, RewardKind kind, uint id, uint itemId)
+    private static bool IsUniqueReward(List<UniqueRewardEntry>? entries, RewardKind kind, uint id, uint itemId) =>
+        ShippedEntry(entries, kind, id, itemId) is not null;
+
+    /// <summary>The shipped unique-reward entry of the quest that names the reward (same kind, and same row or same item); null when none.</summary>
+    private static UniqueRewardEntry? ShippedEntry(List<UniqueRewardEntry>? entries, RewardKind kind, uint id, uint itemId)
     {
         if (entries is null)
         {
-            return false;
+            return null;
         }
 
         foreach (var entry in entries)
         {
             if (entry.Kind == kind && (entry.RewardId == id || (entry.ItemId != 0 && entry.ItemId == itemId)))
             {
-                return true;
+                return entry;
             }
         }
 
-        return false;
+        return null;
     }
 
     /// <summary>

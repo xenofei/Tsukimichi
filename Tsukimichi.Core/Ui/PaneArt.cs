@@ -243,64 +243,6 @@ public static class MoonlitKindIcons
     public const uint MainCommandBlueMagicSpellbook = 81;
     public const uint MainCommandFashionAccessories = 89;
 
-    // The menus a system unlock's label points at (SystemUnlockCommand).
-    public const uint MainCommandJournal = 4;
-    public const uint MainCommandHuntingLog = 8;
-    public const uint MainCommandCraftingLog = 9;
-    public const uint MainCommandFishingLog = 29;
-    public const uint MainCommandHousing = 44;
-    public const uint MainCommandPvpProfile = 56;
-    public const uint MainCommandSightseeingLog = 64;
-    public const uint MainCommandCurrency = 66;
-    public const uint MainCommandDutyRecorder = 76;
-    public const uint MainCommandTrust = 82;
-    public const uint MainCommandNewGamePlus = 88;
-    public const uint MainCommandDutySupport = 91;
-    public const uint MainCommandVariantDungeonFinder = 94;
-
-    /// <summary>
-    /// A system unlock's label (the English label of <c>curated/system_unlocks.json</c>, which every client language
-    /// shares) and the menu that stands for it, first match wins: words matched anywhere in the label, ignoring case.
-    /// A more specific word comes before a wider one ("Egi glamours" before "Glamour").
-    /// </summary>
-    private static readonly (string Word, uint Row)[] SystemUnlockWords =
-    [
-        ("Sightseeing Log", MainCommandSightseeingLog),
-        ("Variant dungeon", MainCommandVariantDungeonFinder),
-        ("Duty Recorder", MainCommandDutyRecorder),
-        ("Duty Support", MainCommandDutySupport),
-        ("Trust", MainCommandTrust),
-        ("New Game+", MainCommandNewGamePlus),
-        ("Gold Saucer", MainCommandGoldSaucer),
-        ("Triple Triad", MainCommandGoldSaucer),
-        ("Cactpot", MainCommandGoldSaucer),
-        ("Chocobo racing", MainCommandGoldSaucer),
-        ("Fashion Report", MainCommandGoldSaucer),
-        ("Verminion", MainCommandGoldSaucer),
-        ("Chocobo companion", MainCommandCompanion),
-        ("PvP", MainCommandPvpProfile),
-        ("Hunts", MainCommandHuntingLog),
-        ("Master recipes", MainCommandCraftingLog),
-        ("fishing", MainCommandFishingLog),
-        ("Housing", MainCommandHousing),
-        ("Flying", MainCommandAetherCurrents),
-        ("Scrip exchange", MainCommandCurrency),
-        ("Levequests", MainCommandJournal),
-        ("Egi glamours", MainCommandActionsAndTraits),
-        ("Desynthesis", MainCommandActionsAndTraits),
-        ("Materia", MainCommandActionsAndTraits),
-        ("Performance", MainCommandActionsAndTraits),
-        ("Glamour", MainCommandArmouryChest),
-        ("Relic", MainCommandArmouryChest),
-        ("Guildhests", MainCommandDutyFinder),
-        ("Palace of the Dead", MainCommandDutyFinder),
-        ("Heaven-on-High", MainCommandDutyFinder),
-        ("Eureka", MainCommandDutyFinder),
-        ("Delubrum", MainCommandDutyFinder),
-        ("Occult Crescent", MainCommandDutyFinder),
-        ("Bozja", MainCommandDutyFinder),
-    ];
-
     /// <summary>The MainCommand row whose icon stands for <paramref name="kind"/>; 0 when the game has no menu for it.</summary>
     public static uint MainCommandRow(RewardKind kind) => kind switch
     {
@@ -320,38 +262,6 @@ public static class MoonlitKindIcons
         RewardKind.Achievement or RewardKind.Title => MainCommandAchievements,
         _ => 0,
     };
-
-    /// <summary>
-    /// The MainCommand row whose icon stands for a system unlock (Moonlit art, feature plan v6 G6): the Gold Saucer for
-    /// Triple Triad, the Sightseeing Log for its entries, the Duty Finder for deep dungeons and so on; 0 when no menu
-    /// fits, and the kind's glyph stands in.
-    /// </summary>
-    public static uint SystemUnlockCommand(string? label)
-    {
-        if (string.IsNullOrWhiteSpace(label))
-        {
-            return 0;
-        }
-
-        foreach (var (word, row) in SystemUnlockWords)
-        {
-            if (label.Contains(word, StringComparison.OrdinalIgnoreCase))
-            {
-                return row;
-            }
-        }
-
-        return 0;
-    }
-
-    /// <summary>Every MainCommand row <see cref="SystemUnlockCommand"/> can answer, for the sheet test.</summary>
-    public static IEnumerable<uint> SystemUnlockCommands()
-    {
-        foreach (var (_, row) in SystemUnlockWords)
-        {
-            yield return row;
-        }
-    }
 
     /// <summary>The atlas glyph for a kind without a menu icon (or while the sheet cannot be read): the feature-unlock glyph for system unlocks, else Other.</summary>
     public static OrnamentGlyph Glyph(RewardKind? kind) => kind switch

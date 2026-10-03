@@ -2846,7 +2846,7 @@ public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
 
         if (entry.Kind == RewardKind.SystemUnlock)
         {
-            return index.MenuIcon(MoonlitKindIcons.SystemUnlockCommand(entry.RewardName));
+            return index.FeatureIcon(entry.RewardName);
         }
 
         var (kind, id) = RewardArtIndex.KeyOf(entry);

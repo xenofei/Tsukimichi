@@ -20,6 +20,7 @@ namespace Tsukimichi.GameData;
 /// <c>Level</c> row in a town or field zone, with the coordinates;</item>
 /// <item>every duty's icon (its content type's), level and expansion;</item>
 /// <item>the icons of the actions, traits, general actions and blue magic a quest can teach;</item>
+/// <item>the icons of the feature rows (<see cref="FeatureIconReader"/>);</item>
 /// <item>the aetherytes (from <see cref="AetheryteIndex"/>, placed by their map markers) and the gates' names.</item>
 /// </list>
 /// Standalone (takes an <see cref="ExcelModule"/>) so tests read it against game data without Dalamud.
@@ -128,6 +129,9 @@ public static class UnlockLinkReader
 
         var areaIcon = Part("Map menu icon", () => excel.GetSheet<MainCommand>(language).GetRowOrDefault(MapMainCommand) is { Icon: > 0 } command ? (uint)command.Icon : 0u, 0u, log);
 
+        // The feature rows' icons: the Duty Finder tile, menu or item that stands for each (FeatureArt).
+        var featureIcons = FeatureIconReader.Read(excel, language, log);
+
         return new UnlockLinks
         {
             Zones = [.. zones.Values.OrderBy(static z => z.TerritoryId)],
@@ -139,6 +143,7 @@ public static class UnlockLinkReader
             Duties = duties,
             ActionIcons = actionIcons,
             AreaIcon = areaIcon,
+            FeatureIcons = featureIcons,
         };
     }
 
