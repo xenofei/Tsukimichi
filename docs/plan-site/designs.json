@@ -1,66 +1,83 @@
 {
- "heading": "Moon & icon: Menphina's Medallion, round three",
- "intro": "<p>You kept <strong>concept D</strong> and set A, B and C aside. Round three enhances D with the feedback you passed on and the panel's fixes. A realism supervisor then checked every glyph and the icon for light, shadow, reflection, colour and material before anything reached this page.</p><p><strong>What you asked for:</strong> the aetheryte crystal is gone, and all eight medals now share <strong>one gilt rim</strong>. States are told apart by what is inside the medal, not by the colour of its border. D is also richer: one light from the upper left on everything, the moon road redrawn as real ripples, and the lantern casting its own warm reflection.</p><p>Nothing is final. Vote or comment on the round-three card, and try the moons in the working mock of the plugin below.</p>",
+ "heading": "Moon & icon: Menphina's Medallion, round four",
+ "intro": "<p>Round four answers your eight notes on round three and takes the tester's best ideas. The realism supervisor checked it again before it reached this page.</p><p><strong>What changed from your notes:</strong> Ready has a complete rim. Ready on another job shows the real job icon as a badge; in the plugin it is read from the game, so it works for every job. Blocked is clouds over the moon. Done this cycle has a repeat arrow. Completed is a full, bright, detailed moon with a check, in gold or green; you choose. Locked out is a shattered moon with thin cracks. Not checked is a question mark. The moon and the water have more detail. From the tester: In journal is the Ready moon with the bookmark.</p><p>Nothing is final. Vote or comment on the round-four card, and switch between rounds in the plugin mock below.</p>",
  "before": {
-  "name": "Round two D",
-  "icon": "designs/medallion-r2-icon.png",
-  "glyphs": "designs/medallion-r2-glyphs.png",
-  "text": "The panel's lead: 6.9 for glyphs and 7.5 for the icon. At 16 px it had rims in three colours (gilt, pewter and red), an aetheryte crystal on the island, and rows that read as radio buttons."
+  "name": "Round three",
+  "icon": "designs/medallion-r3-icon.png",
+  "glyphs": "designs/medallion-r3-glyphs.png",
+  "text": "Supervisor-approved, but you said it still needed work: Ready's rim was open, the crystal didn't read as a job, Blocked, Done and Not checked didn't make sense, the crack was too thick, and the moon and water needed more detail.",
+  "tag": "R3"
  },
  "concepts": [
   {
-   "id": "medallion-r3",
-   "tag": "R3",
-   "name": "Menphina's Medallion, enhanced",
-   "icon": "designs/medallion-r3-icon.png",
-   "glyphs": "designs/medallion-r3-glyphs.png",
-   "pitch": "Every quest state is a minted FFXIV job-icon medal: a moon emblem on lapis enamel in one shared champagne-gilt bevel. The icon is the moon road on calm water past a stone lantern, with each light reflected directly beneath it.",
+   "id": "medallion-r4",
+   "tag": "R4",
+   "name": "Menphina's Medallion, round four",
+   "icon": "designs/medallion-r4-icon.png",
+   "glyphs": "designs/medallion-r4-glyphs.png",
+   "pitch": "Every quest state is a minted job-icon medal in one shared gilt rim, now each with a meaning you can read: a moon road for Ready, clouds for Blocked, a repeat arrow for Done this cycle, a shattered moon for Locked out, and a question mark for Not checked.",
    "metrics": [
     [
      "Weakest pair, 16 px",
-     "12.8",
+     "12.3",
      "≥ 12"
     ],
     [
      "Ready vs next",
-     "1.42×",
+     "1.37×",
      "≥ 1.3"
     ],
     [
      "Completed vs Ready",
-     "0.71×",
+     "0.73×",
      "≤ 0.8"
     ],
     [
      "Road brightness",
-     "0.86×",
+     "0.89×",
      "of the moon"
     ]
    ],
    "changes": [
-    "Aetheryte crystal removed; the far shore is an unlit headland, so the only lights are the moon and the lantern",
-    "One shared gilt rim on all eight medals and the icon frame, lit from the upper left",
-    "Ready: the bezel opens at the bottom and the moon road spills out of it, so it reads by shape alone",
-    "Ready on another job: a violet soul crystal in a gilt setting, after the job stones",
-    "The check moved to Completed; Done this cycle has a gilt arc meaning it comes back",
-    "Locked out: a cracked Dalamud in rose-crimson, matching the plugin's Eclipse colour",
-    "Not checked: one tapered mist wisp over a hazy moon, with no ring",
-    "Icon: a 12-row moon road brightest at the moon's mirror point, a warm lantern reflection, and moon and road kept clear of the Installed check"
+    "Ready: complete rim; still the loudest, through a brighter moon, the road inside the medal and a warm afterglow",
+    "Ready on another job: the real job icon as a badge (Paladin shown; Bard and White Mage below). At row size the job icon sits beside the medal",
+    "In journal: the Ready moon, quieter, with the bookmark (the tester's idea)",
+    "Blocked: clouds drifting across the moon, casting soft shadow from the same light",
+    "Done this cycle: a gilt repeat arrow spiralling around the moon",
+    "Completed: a full, bright, detailed moon with a check, in gold or green",
+    "Locked out: Dalamud's red moon shattered with thin fractures and a falling shard",
+    "Not checked: a question mark in moon silver",
+    "Moon and water: smooth tonal detail on the moon, softer, more natural ripples"
    ],
    "watch": [
-    "The weakest pair (Blocked vs Locked out, 12.8) clears the bar, but only just",
-    "Done this cycle's arc is new, so the panel needs to confirm it doesn't read as a bracket",
-    "Ready on a bright daylight ground relies on its open bezel more than on contrast"
+    "Not checked reads as a question mark in a ring until about 48 px",
+    "The weakest pair (Locked out vs Not checked, 12.3) clears the bar only just",
+    "The job badge needs its row-size fallback (the job icon beside the medal)"
    ]
   }
  ],
  "supervisor": {
   "verdict": "Approved",
-  "summary": "<p>The supervisor checked rendered images, never source, against one rule: realistic light, shadow, reflection, colour and material, even in stylised art.</p><ul class='prose' style='margin:0;padding-left:20px'><li><strong>Art, round one:</strong> 14 fixes. Mirror slices were moved to the mirror point. The road was re-spaced so it foreshortens. Glints became thin streaks. The lantern got its own warm reflection. The sky gradient was un-inverted. The ribbon was folded behind the medal. The check now breaks the rim.</li><li><strong>Art, round two:</strong> one fix. The lantern's light pool moved in front of its base, where the light can actually reach.</li><li><strong>Plugin mock:</strong> 16 fixes, then 2. The mock now matches the real 1.10 window: overlay content, the colour of the state words, quick views, the three-row action bar, and an ImGui look with no window shadows. The game-screen credit stays visible at every size.</li></ul><p>Full reviews: <code>docs/design/moon-v6/round3/supervisor/</code>.</p>"
+  "summary": "<p>The supervisor checked rendered images, never source, against one rule: realistic light, shadow, reflection, colour and material, even in stylised art.</p><ul class='prose' style='margin:0;padding-left:20px'><li><strong>Art, round one:</strong> 14 fixes. Mirror slices were moved to the mirror point. The road was re-spaced so it foreshortens. Glints became thin streaks. The lantern got its own warm reflection. The sky gradient was un-inverted. The ribbon was folded behind the medal. The check now breaks the rim.</li><li><strong>Art, round two:</strong> one fix. The lantern's light pool moved in front of its base, where the light can actually reach.</li><li><strong>Plugin mock:</strong> 16 fixes, then 2. The mock now matches the real 1.10 window: overlay content, the colour of the state words, quick views, the three-row action bar, and an ImGui look with no window shadows. The game-screen credit stays visible at every size.</li></ul><ul class='prose' style='margin:0;padding-left:20px'><li><strong>Round four:</strong> 3 fixes. A green fringe on blurred shadows (a colour-space setting), ripples that looked like glossy pills, and In journal's crescent tip ending exactly on the bookmark's edge. Then approved.</li></ul><p>Full reviews: <code>docs/design/moon-v6/round3/supervisor/</code> and <code>docs/design/moon-v6/round4/supervisor/</code>.</p>"
  },
  "mockArt": {
   "sceneBase": "mock/",
   "variants": [
+   {
+    "id": "r4d",
+    "label": "Round 4 D",
+    "glyphs": {
+     "ready": "art/r4/ready.svg",
+     "ready-on-another-job": "art/r4/ready-on-another-job.svg",
+     "in-journal": "art/r4/in-journal.svg",
+     "blocked": "art/r4/blocked.svg",
+     "done-this-cycle": "art/r4/done-this-cycle.svg",
+     "completed": "art/r4/completed.svg",
+     "locked-out": "art/r4/locked-out.svg",
+     "not-checked": "art/r4/not-checked.svg"
+    },
+    "icon": "art/r4/plugin-icon.svg"
+   },
    {
     "id": "r3d",
     "label": "Round 3 D",
@@ -94,6 +111,41 @@
   ]
  },
  "archive": [
+  {
+   "round": "Round three",
+   "note": "Concept D alone, enhanced from your first notes and approved by the realism supervisor. You said it still needed more work.",
+   "items": [
+    {
+     "id": "r3-medallion",
+     "tag": "R3",
+     "name": "Menphina's Medallion, round three",
+     "verdict": "Needs more work (you)",
+     "icon": "designs/medallion-r3-icon.png",
+     "glyphs": "designs/medallion-r3-glyphs.png",
+     "pitch": "Every quest state is a minted FFXIV job-icon medal: a moon emblem on lapis enamel in one shared champagne-gilt bevel. The icon is the moon road on calm water past a stone lantern, with each light reflected directly beneath it.",
+     "scores": [
+      [
+       "Weakest pair",
+       "12.8"
+      ],
+      [
+       "Ready vs next",
+       "1.42×"
+      ]
+     ],
+     "liked": [
+      "One shared gilt rim on all medals; aetheryte crystal removed",
+      "Approved by the realism supervisor"
+     ],
+     "failed": [
+      "Ready's open rim wasn't a complete trim",
+      "The crystal didn't read as a job",
+      "Blocked, Done this cycle and Not checked didn't make sense",
+      "Locked out's crack was too thick; the moon and water needed more detail"
+     ]
+    }
+   ]
+  },
   {
    "round": "Round two",
    "note": "Four concepts scored by a six-juror panel from rendered images, after a blind test. You kept D, which became round three, and set A, B and C aside.",
@@ -341,6 +393,12 @@
      ]
     }
    ]
+  }
+ ],
+ "extras": [
+  {
+   "src": "designs/medallion-r4-variants.png",
+   "cap": "Ready on another job with three real job badges, both Completed checks, and the row-size fallback with the job icon beside the medal."
   }
  ]
 }

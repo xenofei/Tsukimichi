@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v6: quiet, steady, beautiful, and right
 
-Status: **proposed on 2026-10-02, waiting for the owner's approval.** Nothing here is built.
+Status: **proposed on 2026-10-02. The owner agreed to all 15 decisions on the plan site the same day; the moons and icon (decisions 1 and 2) are still in design, now in round 4.** Nothing here is built.
 
 ## Sources
 
@@ -72,6 +72,7 @@ Points 1, 4, 6 and 9, plus correctness guards.
 | S1 | Mark as unique and Not unique need Ctrl or Shift held; Enter no longer confirms; Undo with "Add note" | S |
 | S2 | One safety table across the UI and a floating Undo toast. Hold length is adjustable, with a two-click alternative. | M |
 | A1 | `/tsuki stop`: one Stop for every hand-off, for macros and one-press use | S |
+| A12 | **Command aliases** (owner request): `/ts` and `/moon` open Tsukimichi, plus your own aliases in Settings. An alias another plugin already owns is skipped with a one-line notice. | S |
 | G4 | The new plugin icon, after your approval, exported crisp at 128 and 512 | S |
 | G2a | The new glyph colour tokens (Kinpaku gold #E0B860, Torinoko ivory, cool silver), so new 1.11 UI isn't built in the old gold | S |
 | S3 | **Fix:** the AutoDuty duty index has been hidden since 1.6, because it was built without a language. Build it off the frame. | S |
@@ -126,7 +127,7 @@ Automation, built on what the community accepts: solo and NPC content only.
 | A7 | Craft with Artisan becomes Stop while running | S |
 | A8 | Travel recovery: reload the navmesh and retry; walk to an aetheryte before a hop; land where you can talk | M |
 | A9 | A travel preflight in Setup (movement mode, first-person camera, conflicts) | S |
-| A10 | An automation level switch (Tracker only, Travel, Travel and walking, Full hand-offs) and an "About automation" card | S |
+| A10 | An automation level switch (Tracker only, Travel, Travel and walking, Full hand-offs) and an "About automation" card. The owner encourages full automation through official and third-party plugins, so Full hand-offs is a first-class setting, not a hidden one. | S |
 
 ### 1.15.0 · Right answers
 
@@ -149,11 +150,11 @@ Automation, built on what the community accepts: solo and NPC content only.
 | P1 | "Up next" at the top of Tonight: one recommendation with its reason and the travel button | M |
 | P2 | Go to the current step of a quest already in your journal, not back to its giver | M |
 | P3 | A roster board of all characters: MSQ position, allowances, Moonlit %, last seen | M |
-| P4 | My blues: "Do first" triage, plus Not for me / Later | M |
+| P4 | My blues: "Do first" triage, plus Not for me / Later. **How it decides:** each blue quest gets a tier from data Tsukimichi already has: 1 the main story needs it later (e.g. Crystal Tower, Hard primals); 2 it opens normal content you queue for (dungeons, trials, raids, deep dungeons, flying); 3 a useful system (retainers, materia, glamour); 4 high-end, can wait; 5 another job or allied society, start when you want it. Within a tier, nearer and lower-level quests come first. | M |
 | P5 | Named side-story questlines (Tataru's Grand Endeavor, Tales from the Shadows, Restoration and more), and "Caught up" for ongoing series | M |
 | P6 | Triple Triad opponents and the quests that unlock them (106 of 134 NPCs are behind a quest the game never names) | M |
 | P7 | A zones board: what's left, across every zone | M |
-| P8 | `/tsuki msq` and `/tsuki next`: chat lines text-to-speech plugins can read | S |
+| P8 | `/tsuki msq` and `/tsuki next`: chat lines text-to-speech plugins can read (they also work through the A12 aliases) | S |
 
 ### Parallel track · API 16 and Patch 8.0 "Evercold" (P9)
 
@@ -218,3 +219,15 @@ These are the strongest signals, with sources in `community.md`.
 | 13 | Read characters from other XIVLauncher roaming folders, for multiboxers using separate folders? | Yes, read-only, in 1.16 if you want it |
 | 14 | Have you entered New Game+ since installing, and did progress drop? | If yes, C4 moves into 1.11 as an urgent fix |
 | 15 | Release order as above: 1.11 quick wins, 1.12 steady window and moons, 1.13 Settings and motion, then automation, correctness and what-next | As written |
+
+### Your answers (plan site, 2026-10-02)
+
+| # | Answer | What changes |
+|---|---|---|
+| 1, 2 | Agree, but "concept still needs more work" | Round 4 of Menphina's Medallion from your eight design notes and a tester's ideas (`docs/design/moon-v6/round4/brief.md`). |
+| 3–7, 10, 12, 15 | Agree | As recommended. |
+| 8 | Agree; "give the user customizable settings" | A setting: Stop (default), Warn only, or Do nothing, when Questionable heads into a duty with no Duty Support or Trust. |
+| 9 | Agree; "only if it directly relates to quests needing a specific gearset/job" | Switch gearset appears only when the quest needs a specific job, never as a general EXP helper. |
+| 11, 13 | Agree; you multibox a bard with 8 alts | Read every open client's characters read-only (including separate roaming folders), so all your alts' quests show without logging each one in. Stays in 1.16. |
+| 14 | No New Game+ planned | C4a, a cheap guard, stays in 1.11. The full C4 mode stays in 1.15, not urgent. |
+| Votes | Build it on every item; Not sure on S4 | S4 stays as a small detection fix: without it, Tsukimichi can't see the renamed Questionable fork. Say if you'd rather drop it. |

@@ -76,7 +76,7 @@ for r in table(section("Your nine points")):
                    "plan": inline(r[2]), "rel": r[3]})
 
 decisions = [{"id": f"D{r[0]}", "n": r[0], "q": inline(r[1]), "title": plain(r[1]), "rec": inline(r[2])}
-             for r in table(section("Decisions for you"))]
+             for r in table(section("Decisions for you").split("### Your answers")[0])]
 notdoing = [{"idea": inline(r[0]), "why": inline(r[1])} for r in table(section("Not doing, for now"))]
 insights = [inline(b) for b in bullets(section("What the community said"))]
 rules_block = section("Standing rules")

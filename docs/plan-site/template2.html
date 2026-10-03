@@ -657,7 +657,7 @@ function renderDesigns(){
   if (!c) return intro;
   const id = "X-"+c.id, sup = D.supervisor || {};
   const before = D.before ? `<article class="concept was"><div class="art"><div class="ic"><img src="${esc(D.before.icon)}" alt="Round two icon"></div><div class="s-gl"><img src="${esc(D.before.glyphs)}" alt="Round two glyphs" loading="lazy"></div></div>
-      <div class="s-cb"><div class="ttl"><span class="iid">R2</span><h3>${esc(D.before.name)}</h3></div><p>${D.before.text}</p></div></article>` : "";
+      <div class="s-cb"><div class="ttl"><span class="iid">${esc(D.before.tag || "R2")}</span><h3>${esc(D.before.name)}</h3></div><p>${D.before.text}</p></div></article>` : "";
   const now = `<article class="concept" tabindex="0" data-item="${id}" aria-current="${UI.sel===id}">
       <div class="art"><div class="ic"><img src="${esc(c.icon)}" alt="${esc(c.name)} plugin icon"></div><div class="s-gl"><img src="${esc(c.glyphs)}" alt="${esc(c.name)}: the eight states at 64, 20 and 16 px" loading="lazy"></div></div>
       <div class="s-cb"><div class="ttl"><span class="iid">${esc(c.tag)}</span><h3>${esc(c.name)}</h3>${sup.verdict ? `<span class="lead">Supervisor: ${esc(sup.verdict)}</span>` : ""}</div>
@@ -678,7 +678,8 @@ function renderDesigns(){
           <div class="lf"><div class="ok"><h6>Liked</h6><ul>${(x.liked||[]).map(t => `<li>${esc(t)}</li>`).join("")}</ul></div><div class="bad"><h6>Why it didn't go forward</h6><ul>${(x.failed||[]).map(t => `<li>${esc(t)}</li>`).join("")}</ul></div></div>
           <div class="s-foot" style="display:flex;gap:12px;align-items:center;font-size:12.5px;color:var(--ink-3)">${myChip(xid,"design")}${tallyBar(xid,"design")}${ccount(xid)}</div></div>
       </article>`; }).join("")}</div></div>`).join("")}</section>` : "";
-  return intro + `<div class="dz two">${before}${now}</div>` + supCard + mock + archive;
+  const extras = D.extras ? `<div class="compare" style="grid-template-columns:minmax(0,1fr)">${D.extras.map(f => `<figure><img src="${esc(f.src)}" alt="${esc(f.cap)}" loading="lazy" style="max-width:1000px;margin:auto"><figcaption>${esc(f.cap)}</figcaption></figure>`).join("")}</div>` : "";
+  return intro + `<div class="dz two">${before}${now}</div>` + extras + supCard + mock + archive;
 }
 function renderFeedback(){
   const rows = ORDER.feature.map(id => { const t = T.t[id]||{}; return { id, it:ITEMS.get(id), want:t.want||0, unsure:t.unsure||0, skip:t.skip||0, c:T.n[id]||0 }; })
