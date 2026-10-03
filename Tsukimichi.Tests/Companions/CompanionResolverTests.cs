@@ -12,6 +12,7 @@ public class CompanionResolverTests
     private static readonly CompanionDefinition AutoDuty = CompanionCatalog.Get(CompanionPlugin.AutoDuty);
     private static readonly CompanionDefinition GatherBuddy = CompanionCatalog.Get(CompanionPlugin.GatherBuddy);
     private static readonly CompanionDefinition Lifestream = CompanionCatalog.Get(CompanionPlugin.Lifestream);
+    private static readonly CompanionDefinition Questionable = CompanionCatalog.Get(CompanionPlugin.Questionable);
 
     private static CompanionStatus Resolve(CompanionDefinition definition, params InstalledPlugin[] installed) =>
         CompanionResolver.Resolve(definition, installed);
@@ -139,6 +140,42 @@ public class CompanionResolverTests
             new InstalledPlugin("GatherBuddyReborn", new Version(7, 5), true),
             new InstalledPlugin("GatherBuddy", new Version(3, 8), true));
         Assert.Equal("GatherBuddy", status.DisplayName);
+    }
+
+    [Fact]
+    public void WigglyQuest_is_Questionable()
+    {
+        var status = Resolve(Questionable, new InstalledPlugin("WigglyQuest", new Version(7, 5, 27, 0), true));
+        Assert.Equal(CompanionState.Loaded, status.State);
+        Assert.Equal("WigglyQuest", status.Variant.InternalName);
+        Assert.Equal(CompanionCatalog.WigglyMuffin, status.Variant.RepositoryUrl);
+    }
+
+    [Fact]
+    public void The_moved_to_WigglyQuest_placeholder_is_not_Questionable()
+    {
+        // WigglyMuffin's "Questionable (moved to WigglyQuest)": the old internal name, 99.0.0.0, no gates.
+        var placeholder = new InstalledPlugin("Questionable", CompanionCatalog.QuestionablePlaceholder, true);
+        Assert.Equal(CompanionState.Missing, Resolve(Questionable, placeholder).State);
+        Assert.Equal(CompanionState.Missing, Resolve(Questionable, placeholder with { Version = new Version(99, 1) }).State);
+
+        // Beside it, WigglyQuest is the one found.
+        var status = Resolve(Questionable, placeholder, new InstalledPlugin("WigglyQuest", new Version(7, 5, 27, 0), true));
+        Assert.Equal(CompanionState.Loaded, status.State);
+        Assert.Equal("WigglyQuest", status.Variant.InternalName);
+    }
+
+    [Fact]
+    public void Upstream_Questionable_is_still_Questionable_and_preferred_over_the_fork()
+    {
+        Assert.Equal(CompanionState.Loaded, Resolve(Questionable, new InstalledPlugin("Questionable", new Version(15, 756, 3, 26), true)).State);
+        Assert.Equal(CompanionState.Loaded, Resolve(Questionable, new InstalledPlugin("Questionable", new Version(0, 0, 0, 0), true)).State);
+        var both = Resolve(
+            Questionable,
+            new InstalledPlugin("WigglyQuest", new Version(7, 5, 27, 0), true),
+            new InstalledPlugin("Questionable", new Version(15, 756, 3, 26), true));
+        Assert.Equal("Questionable", both.Variant.InternalName);
+        Assert.Equal(CompanionCatalog.PuniShMain, both.Variant.RepositoryUrl);
     }
 
     [Fact]

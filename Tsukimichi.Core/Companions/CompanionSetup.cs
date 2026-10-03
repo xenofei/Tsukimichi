@@ -336,4 +336,42 @@ public static class CompanionSetupEvaluator
 
         return null;
     }
+
+    /// <summary>
+    /// Two reads say the same: the same builds in the same states, and every setting with the same check, value and
+    /// coverage. A read again that changed nothing then keeps its version, so the reasons and notes composed from it
+    /// are not built again.
+    /// </summary>
+    public static bool Same(IReadOnlyList<PluginSetup> before, IReadOnlyList<PluginSetup> after)
+    {
+        ArgumentNullException.ThrowIfNull(before);
+        ArgumentNullException.ThrowIfNull(after);
+        if (before.Count != after.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < before.Count; i++)
+        {
+            var a = before[i];
+            var b = after[i];
+            if (a.State != b.State || a.Status != b.Status || a.Results.Count != b.Results.Count)
+            {
+                return false;
+            }
+
+            for (var j = 0; j < a.Results.Count; j++)
+            {
+                var x = a.Results[j];
+                var y = b.Results[j];
+                if (!ReferenceEquals(x.Requirement, y.Requirement) || x.Check != y.Check || x.Covered != y.Covered
+                    || !string.Equals(x.Value, y.Value, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }

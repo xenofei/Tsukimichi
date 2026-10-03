@@ -14,15 +14,22 @@ namespace Tsukimichi.Game;
 /// gate of its IPC (<see cref="ICompanionSettingGates"/>); it is set only through that plugin's own IPC setter, and only
 /// the settings the Setup list names.
 /// <para>
-/// Reads are lazy: a caller asking for <see cref="Setups"/> re-reads at most every <see cref="RefreshMs"/> (or at once
-/// after Dalamud's plugin list changed, or an apply); a file is parsed again only when its write time moved. So a
-/// per-frame caller (a hand-off button's disabled reason) costs a field read between refreshes. Framework thread only.
+/// Reads are lazy and happen on change: a caller asking for <see cref="Setups"/> re-reads after a companion's file in
+/// <c>pluginConfigs</c> changed (a watcher on the folder, <see cref="CompanionSetupCatalog.Concerns"/>), after Dalamud's
+/// plugin list changed or an apply, and otherwise at most every <see cref="RefreshMs"/> as a backstop for the settings
+/// read through IPC (every <see cref="UnwatchedRefreshMs"/> when the folder cannot be watched). Each file is checked
+/// once per read and parsed again only when its write time moved, and <see cref="Version"/> moves only when something
+/// read differently, so the reasons composed from it are not built again. A per-frame caller (a hand-off button's
+/// disabled reason) costs a field read between reads. Framework thread only, apart from the watcher's flag.
 /// </para>
 /// </summary>
 public sealed class CompanionSetupService : IDisposable
 {
-    /// <summary>How long a read is reused.</summary>
-    public const long RefreshMs = 5_000;
+    /// <summary>How long a read is reused while the folder is watched: the backstop for the settings read through IPC.</summary>
+    public const long RefreshMs = 30_000;
+
+    /// <summary>How long a read is reused when the folder cannot be watched (1.10 and earlier: always).</summary>
+    public const long UnwatchedRefreshMs = 5_000;
 
     /// <summary>Questionable's "Run command after stop" in <see cref="CompanionSetupCatalog"/>.</summary>
     private const string CommandAfterStopId = "questionable.command-after-stop";
@@ -37,13 +44,19 @@ public sealed class CompanionSetupService : IDisposable
     private readonly Dictionary<string, CachedFile> files = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> warned = new(StringComparer.Ordinal);
 
+    // The files checked in the read under way (null: not there), so a file several settings live in is stat'ed once.
+    private readonly Dictionary<string, CachedFile?> checkedThisRead = new(StringComparer.OrdinalIgnoreCase);
+    private readonly FileSystemWatcher? watcher;
+
     private IReadOnlyList<PluginSetup> setups = [];
     private CompanionSetupSummary summary = new([], [], 0);
     private long readAt;
     private int readGeneration = -1;
-    private bool stale = true;
     private int commandVersion = -1;
     private string? commandAfterStop;
+
+    // Raised by the folder watcher, which runs on a worker thread; consumed on the next read.
+    private volatile bool stale = true;
 
     public CompanionSetupService(IDalamudPluginInterface pluginInterface, CompanionPlugins companions, IPluginLog log)
     {
@@ -59,12 +72,14 @@ public sealed class CompanionSetupService : IDisposable
         {
             log.Warning(ex, "Plugin configuration folder unavailable; companion settings read as unknown");
         }
+
+        watcher = Watch(configDirectory);
     }
 
     /// <summary>Moves whenever the settings were read again, so a cached answer (a composed reason) knows to ask again.</summary>
     public int Version { get; private set; }
 
-    /// <summary><see cref="Version"/> after re-reading the settings when they are older than <see cref="RefreshMs"/>.</summary>
+    /// <summary><see cref="Version"/> after re-reading the settings when a file changed or they are older than <see cref="RefreshMs"/>.</summary>
     public int FreshVersion
     {
         get
@@ -112,7 +127,7 @@ public sealed class CompanionSetupService : IDisposable
     /// The command Questionable runs after it stops (its "Run command after stop", default <c>/li auto</c>), read from
     /// its file: null while that setting is off, unknown or Questionable is not loaded; empty when it is on but the
     /// command cannot be read. Questionable runs it on any stop asked over IPC (it exempts only its own window's stop
-    /// and Esc), so Tsukimichi's Stop says so. Read again with the settings (<see cref="RefreshMs"/>).
+    /// and Esc), so Tsukimichi's Stop says so. Read again whenever the settings are.
     /// </summary>
     public string? QuestionableCommandAfterStop()
     {
@@ -198,9 +213,20 @@ public sealed class CompanionSetupService : IDisposable
         return (applied, failed);
     }
 
-    /// <summary>Releases the parsed configuration files.</summary>
+    /// <summary>Stops watching the folder and releases the parsed configuration files.</summary>
     public void Dispose()
     {
+        if (watcher is not null)
+        {
+            watcher.EnableRaisingEvents = false;
+            watcher.Changed -= OnFileEvent;
+            watcher.Created -= OnFileEvent;
+            watcher.Deleted -= OnFileEvent;
+            watcher.Renamed -= OnFileRenamed;
+            watcher.Error -= OnWatchError;
+            watcher.Dispose();
+        }
+
         foreach (var file in files.Values)
         {
             file.Document?.Dispose();
@@ -213,7 +239,8 @@ public sealed class CompanionSetupService : IDisposable
     {
         var now = Environment.TickCount64;
         var all = companions.All;
-        if (!stale && readGeneration == companions.Generation && now - readAt < RefreshMs)
+        var interval = watcher is null ? UnwatchedRefreshMs : RefreshMs;
+        if (!stale && readGeneration == companions.Generation && now - readAt < interval)
         {
             return;
         }
@@ -221,6 +248,7 @@ public sealed class CompanionSetupService : IDisposable
         stale = false;
         readAt = now;
         readGeneration = companions.Generation;
+        checkedThisRead.Clear();
         var result = new PluginSetup[all.Count];
         for (var i = 0; i < all.Count; i++)
         {
@@ -228,10 +256,74 @@ public sealed class CompanionSetupService : IDisposable
             result[i] = CompanionSetupEvaluator.Evaluate(status, CompanionSetupCatalog.For(status.Plugin), requirement => Read(status, requirement));
         }
 
-        setups = CompanionSetupEvaluator.ApplyCoverage(result);
+        // The command after stop sits beside a setting, not in one: read it again after every read, changed or not.
+        commandVersion = -1;
+        var read = CompanionSetupEvaluator.ApplyCoverage(result);
+        if (Version > 0 && CompanionSetupEvaluator.Same(setups, read))
+        {
+            // Nothing read differently: keep the version, so the reasons and notes composed from it stay.
+            return;
+        }
+
+        setups = read;
         summary = CompanionSetupEvaluator.Summarize(setups);
         Version++;
     }
+
+    /// <summary>
+    /// Watches <c>pluginConfigs</c> (its subfolders too: Lifestream and AutoDuty keep theirs in one) for the companions'
+    /// files; null when it cannot, and the reads then fall back to <see cref="UnwatchedRefreshMs"/>.
+    /// </summary>
+    private FileSystemWatcher? Watch(string? directory)
+    {
+        if (directory is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var folder = new FileSystemWatcher(directory)
+            {
+                IncludeSubdirectories = true,
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.CreationTime,
+                InternalBufferSize = 64 * 1024,
+            };
+            folder.Changed += OnFileEvent;
+            folder.Created += OnFileEvent;
+            folder.Deleted += OnFileEvent;
+            folder.Renamed += OnFileRenamed;
+            folder.Error += OnWatchError;
+            folder.EnableRaisingEvents = true;
+            return folder;
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Plugin configuration folder cannot be watched; companion settings are read again every {Seconds} s", UnwatchedRefreshMs / 1000);
+            return null;
+        }
+    }
+
+    // The watcher's events arrive on a worker thread: they only raise the flag the next read consumes.
+    private void OnFileEvent(object sender, FileSystemEventArgs e)
+    {
+        if (e.Name is { } name && CompanionSetupCatalog.Concerns(name))
+        {
+            stale = true;
+        }
+    }
+
+    private void OnFileRenamed(object sender, RenamedEventArgs e)
+    {
+        // Plugins that save through a temporary file land their settings with a rename.
+        if ((e.Name is { } name && CompanionSetupCatalog.Concerns(name)) || (e.OldName is { } old && CompanionSetupCatalog.Concerns(old)))
+        {
+            stale = true;
+        }
+    }
+
+    // Too many changes at once (the buffer overflowed) or the folder went away: read again rather than miss one.
+    private void OnWatchError(object sender, ErrorEventArgs e) => stale = true;
 
     private SetupReading Read(CompanionStatus status, SetupRequirement requirement)
     {
@@ -254,6 +346,14 @@ public sealed class CompanionSetupService : IDisposable
         }
 
         var full = Path.Combine(configDirectory, relative);
+        if (checkedThisRead.TryGetValue(full, out var seen))
+        {
+            // Checked already in this read (another setting of the same file): no second stat.
+            return seen is null ? SetupReading.Missing
+                : seen.Document is { } parsed ? CompanionConfigJson.Read(parsed.RootElement, path)
+                : SetupReading.Unread;
+        }
+
         try
         {
             var info = new FileInfo(full);
@@ -265,6 +365,7 @@ public sealed class CompanionSetupService : IDisposable
                     gone.Document?.Dispose();
                 }
 
+                checkedThisRead[full] = null;
                 return SetupReading.Missing;
             }
 
@@ -282,6 +383,7 @@ public sealed class CompanionSetupService : IDisposable
                 files[full] = cached;
             }
 
+            checkedThisRead[full] = cached;
             return cached.Document is { } document ? CompanionConfigJson.Read(document.RootElement, path) : SetupReading.Unread;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)

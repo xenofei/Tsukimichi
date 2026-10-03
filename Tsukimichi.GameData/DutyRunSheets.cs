@@ -22,9 +22,18 @@ public static class DutyRunSheets
     /// <summary>Shadowbringers' ExVersion row: Trust's first expansion.</summary>
     public const uint TrustFirstExVersion = 3;
 
-    public static DutyRunIndex Build(ExcelModule excel, Language language = Language.None)
+    /// <summary>
+    /// Reads the index in <paramref name="language"/>, the client's. ContentFinderCondition exists only per language, so
+    /// there is no default: 1.6 to 1.10 built it with <see cref="Language.None"/>, Lumina refused, and the Duties
+    /// section stayed hidden in game. <see cref="Language.None"/> is refused here, before any sheet is read.
+    /// </summary>
+    public static DutyRunIndex Build(ExcelModule excel, Language language)
     {
         ArgumentNullException.ThrowIfNull(excel);
+        if (language == Language.None)
+        {
+            throw new ArgumentException("The duty index is read per language: pass the client's.", nameof(language));
+        }
 
         // DawnContentParticipable: one page per DawnContent row, one subrow per party choice.
         var choices = new Dictionary<uint, int>();

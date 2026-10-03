@@ -36,7 +36,7 @@ public sealed class PlanningSource
     private readonly GameLinks? links;
     private readonly Func<CatchUpDutySource?>? duties;
 
-    private (int Version, CatalogBundle? Bundle, int Language, ulong? Viewed) builtKey = (-1, null, -1, null);
+    private (int Version, CatalogBundle? Bundle, int Language, ulong? Viewed, CatchUpDutySource? Duties) builtKey = (-1, null, -1, null, null);
     private long boardMinute = -1;
 
     private MsqCatchUpSummary? catchUp;
@@ -224,7 +224,9 @@ public sealed class PlanningSource
     private void Refresh()
     {
         var bundle = session.Bundle;
-        var key = (session.Version, bundle, Localization.Loc.Version, session.ViewedContentId);
+        // The duty source moves once, when the duty index lands from its worker: the catch-up then counts duties.
+        var dutySource = duties?.Invoke();
+        var key = (session.Version, bundle, Localization.Loc.Version, session.ViewedContentId, dutySource);
         var minute = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute;
         if (key == builtKey)
         {
@@ -250,7 +252,7 @@ public sealed class PlanningSource
             return;
         }
 
-        BuildCatchUp(bundle, snapshot);
+        BuildCatchUp(bundle, snapshot, dutySource);
         BuildAdvice(bundle, snapshot);
 
         // Another character, catalog or language: the lines are built again even when the numbers match.
@@ -258,9 +260,9 @@ public sealed class PlanningSource
         RefreshBoard(bundle, minute);
     }
 
-    private void BuildCatchUp(CatalogBundle bundle, CharacterSnapshot snapshot)
+    private void BuildCatchUp(CatalogBundle bundle, CharacterSnapshot snapshot, CatchUpDutySource? dutySource)
     {
-        catchUp = MsqCatchUp.Compute(bundle.Catalog, session.States, snapshot, duties?.Invoke());
+        catchUp = MsqCatchUp.Compute(bundle.Catalog, session.States, snapshot, dutySource);
         if (catchUp is not { } summary)
         {
             return;

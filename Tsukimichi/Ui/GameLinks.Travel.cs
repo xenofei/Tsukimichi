@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.InteropServices;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Utility;
 using Lumina.Data.Files;
 using Lumina.Excel.Sheets;
@@ -162,8 +164,10 @@ public readonly record struct HopCheck(HopBlock Block, AetheryteInfo? Shard, boo
 /// walk and fly where flying is unlocked (Settings › Integrations › Travel). A giver inside an interior no teleport
 /// reaches (the Waking Sands, Fortemps Manor, a story area like Zero's Domain) is travelled to by its way in
 /// (<see cref="EntranceIndex"/>): the aetheryte nearest that door, a walk to it, and a note to go in. The checks are
-/// cheap enough to run per frame for the visible rows (a handful of aetherytes per zone, cached attunement and doors);
-/// the tooltips are composed only on hover.
+/// cheap enough to run per frame for the visible rows (a handful of aetherytes per zone, cached attunement and doors),
+/// and each is worked out once per frame and quest (<see cref="TravelMemo"/>): the detail pane, its pills and their
+/// tooltips ask for the same ones several times a frame, and Go to giver builds on Teleport's and the hop's. A click
+/// that starts or stops travel works them out afresh. The tooltips are composed only on hover.
 /// </summary>
 public sealed partial class GameLinks
 {
@@ -171,6 +175,10 @@ public sealed partial class GameLinks
 
     private readonly TravelClickGuard clickGuard = new();
     private readonly Dictionary<uint, uint> regions = [];
+
+    // This frame's travel checks by quest row; emptied when the frame moves on, or by a click that starts or stops travel.
+    private readonly Dictionary<uint, TravelMemo> travelMemo = [];
+    private int travelMemoFrame = -1;
     private AetheryteIndex? aetherytes;
     private EntranceIndex? entrances;
     private System.Threading.CancellationTokenSource? warmCancel;
@@ -342,6 +350,7 @@ public sealed partial class GameLinks
         }
 
         Travel?.Stop();
+        ForgetTravelFrame();
     }
 
     /// <summary>
@@ -422,7 +431,44 @@ public sealed partial class GameLinks
     /// <summary>True while a click is still part of the double click that just started travel; it is ignored.</summary>
     private bool ClickHeld => clickGuard.Holding(Environment.TickCount64);
 
-    private void MarkStarted() => clickGuard.Started(Environment.TickCount64);
+    private void MarkStarted()
+    {
+        clickGuard.Started(Environment.TickCount64);
+        ForgetTravelFrame();
+    }
+
+    /// <summary>
+    /// The quest's entry in this frame's checks, read or written in place. Emptied when the ImGui frame moved on, so a
+    /// check is never older than the frame that asks; not held across another check, which may add an entry.
+    /// </summary>
+    private ref TravelMemo Memo(QuestRecord quest)
+    {
+        var frame = ImGui.GetFrameCount();
+        if (frame != travelMemoFrame)
+        {
+            travelMemoFrame = frame;
+            travelMemo.Clear();
+        }
+
+        return ref CollectionsMarshal.GetValueRefOrAddDefault(travelMemo, quest.RowId, out _);
+    }
+
+    /// <summary>Works every check out afresh on the next ask: a click is about to act on them, or just changed what they say.</summary>
+    private void ForgetTravelFrame()
+    {
+        travelMemoFrame = -1;
+    }
+
+    /// <summary>One quest's travel checks in one frame; a null field is not worked out yet.</summary>
+    private struct TravelMemo
+    {
+        public TravelGoal? Goal;
+        public bool GoalKnown;
+        public TeleportCheck? Teleport;
+        public HopCheck? Hop;
+        public WalkCheck? Walk;
+        public GoToCheck? GoTo;
+    }
 
     private Func<uint, bool> IsAttuned => isAttuned ??= id => Travel?.IsAttuned(id) ?? true;
 
@@ -434,8 +480,22 @@ public sealed partial class GameLinks
     /// Where travel aims for the quest's giver from where the player stands: the giver, or, while the player is outside
     /// an interior the giver stands in, its way in. Null without a giver place.
     /// </summary>
-    public TravelGoal? GoalFor(QuestRecord quest) =>
-        quest.Issuer is { TerritoryId: > 0 } issuer ? GiverTravel.Goal(issuer, Entrances, Travel?.Territory ?? 0) : null;
+    public TravelGoal? GoalFor(QuestRecord quest)
+    {
+        if (quest.Issuer is not { TerritoryId: > 0 } issuer)
+        {
+            return null;
+        }
+
+        ref var memo = ref Memo(quest);
+        if (!memo.GoalKnown)
+        {
+            memo.Goal = GiverTravel.Goal(issuer, Entrances, Travel?.Territory ?? 0);
+            memo.GoalKnown = true;
+        }
+
+        return memo.Goal;
+    }
 
     /// <summary>The giver's display name, or "the giver" when the sheet has none.</summary>
     private static string GiverName(QuestRecord quest) =>
@@ -492,14 +552,25 @@ public sealed partial class GameLinks
     /// <summary>What Teleport would do for the quest's giver now, or why it cannot.</summary>
     public TeleportCheck CheckTeleport(QuestRecord quest)
     {
-        if (quest.Issuer is not { TerritoryId: > 0 } issuer)
+        if (Memo(quest).Teleport is { } known)
+        {
+            return known;
+        }
+
+        var check = WorkOutTeleport(quest);
+        Memo(quest).Teleport = check;
+        return check;
+    }
+
+    private TeleportCheck WorkOutTeleport(QuestRecord quest)
+    {
+        if (quest.Issuer is not { TerritoryId: > 0 } issuer || GoalFor(quest) is not { } goal)
         {
             return new TeleportCheck(TeleportBlock.NoGiverPlace, null, TravelSpecial.None, false);
         }
 
         var special = TravelSpecials.Classify(issuer.TerritoryId);
         var index = Aetherytes;
-        var goal = GiverTravel.Goal(issuer, Entrances, Travel?.Territory ?? 0);
         var arrival = GiverTravel.Arrival(index, issuer.TerritoryId, goal, IsAttuned);
         var target = arrival.Target is { } node ? index.Find(node.RowId) : null;
         var skipped = arrival.Substituted && arrival.Nearest is { } nearest ? index.Find(nearest.RowId) : null;
@@ -542,6 +613,7 @@ public sealed partial class GameLinks
     /// </summary>
     public bool TeleportToGiver(QuestRecord quest)
     {
+        ForgetTravelFrame();
         var check = CheckTeleport(quest);
         if (!check.Ready || Lifestream is not { } lifestream || ClickHeld)
         {
@@ -684,14 +756,25 @@ public sealed partial class GameLinks
     /// </summary>
     public HopCheck CheckHop(QuestRecord quest)
     {
-        if (Travel is not { Position: { } at } travel || quest.Issuer is not { TerritoryId: > 0 } issuer)
+        if (Memo(quest).Hop is { } known)
+        {
+            return known;
+        }
+
+        var check = WorkOutHop(quest);
+        Memo(quest).Hop = check;
+        return check;
+    }
+
+    private HopCheck WorkOutHop(QuestRecord quest)
+    {
+        if (Travel is not { Position: { } at } travel || quest.Issuer is not { TerritoryId: > 0 } issuer || GoalFor(quest) is not { } goal)
         {
             return default;
         }
 
         var index = Aetherytes;
         var firmament = TravelSpecials.Classify(issuer.TerritoryId) == TravelSpecial.Firmament;
-        var goal = GiverTravel.Goal(issuer, Entrances, travel.Territory);
         if (!firmament && !goal.Placed)
         {
             return default;
@@ -771,6 +854,7 @@ public sealed partial class GameLinks
     /// <summary>Takes the aethernet toward the quest's giver through Lifestream. False when nothing was started.</summary>
     public bool AethernetToGiver(QuestRecord quest)
     {
+        ForgetTravelFrame();
         var check = CheckHop(quest);
         if (!check.Ready || Lifestream is not { } lifestream || ClickHeld)
         {
@@ -812,6 +896,18 @@ public sealed partial class GameLinks
     /// plugin (whose walk it never stops).
     /// </summary>
     public WalkCheck CheckWalk(QuestRecord quest)
+    {
+        if (Memo(quest).Walk is { } known)
+        {
+            return known;
+        }
+
+        var check = WorkOutWalk(quest);
+        Memo(quest).Walk = check;
+        return check;
+    }
+
+    private WalkCheck WorkOutWalk(QuestRecord quest)
     {
         if (Travel is not { } travel || !travel.Vnavmesh.Available)
         {
@@ -856,6 +952,7 @@ public sealed partial class GameLinks
     /// </summary>
     public bool WalkToGiver(QuestRecord quest)
     {
+        ForgetTravelFrame();
         if (ClickHeld || !CheckWalk(quest).Ready || Travel is not { } travel || GoalFor(quest) is not { } goal)
         {
             return false;
@@ -977,6 +1074,18 @@ public sealed partial class GameLinks
     /// </summary>
     public GoToCheck CheckGoTo(QuestRecord quest)
     {
+        if (Memo(quest).GoTo is { } known)
+        {
+            return known;
+        }
+
+        var check = WorkOutGoTo(quest);
+        Memo(quest).GoTo = check;
+        return check;
+    }
+
+    private GoToCheck WorkOutGoTo(QuestRecord quest)
+    {
         if (Travel is not { } travel || !travel.Vnavmesh.Available)
         {
             return new GoToCheck(GoToBlock.NoVnavmesh, null, false);
@@ -1087,6 +1196,7 @@ public sealed partial class GameLinks
     /// </summary>
     public bool GoToGiver(QuestRecord quest)
     {
+        ForgetTravelFrame();
         if (ClickHeld || CheckGoTo(quest) is not { Ready: true, Plan: { } plan } || Travel is not { } travel || GoalFor(quest) is not { } goal)
         {
             return false;

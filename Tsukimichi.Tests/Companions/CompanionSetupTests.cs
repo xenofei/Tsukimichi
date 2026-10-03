@@ -75,6 +75,59 @@ public class CompanionSetupTests
     }
 
     [Fact]
+    public void WigglyQuest_settings_are_read_from_its_own_file_with_Questionables_rules()
+    {
+        // The fork copies Questionable's settings into pluginConfigs/WigglyQuest.json on its first start.
+        var fork = Loaded(CompanionPlugin.Questionable, "WigglyQuest");
+        Assert.True(fork.IsLoaded);
+        Assert.Equal("WigglyQuest", fork.Variant.InternalName);
+        Assert.True(Combat.AppliesTo(fork));
+        string? file = null;
+        var setup = CompanionSetupEvaluator.Evaluate(fork, CompanionSetupCatalog.For(CompanionPlugin.Questionable), requirement =>
+        {
+            file = requirement.File ?? fork.Variant.InternalName + ".json";
+            return CompanionConfigJson.Read(QuestionableJson, requirement.Path!);
+        });
+        Assert.Equal("WigglyQuest.json", file);
+        Assert.Equal(PluginSetupState.NeedsSetup, setup.State);
+    }
+
+    [Theory]
+    [InlineData("Questionable.json", true)]
+    [InlineData("WigglyQuest.json", true)]
+    [InlineData("questionable.JSON", true)]
+    [InlineData("Lifestream\\DefaultConfig.json", true)]
+    [InlineData("Lifestream/DefaultConfig.json", true)]
+    [InlineData("AutoDuty\\AutoDutyConfigV2.json", true)]
+    [InlineData("TextAdvance.json", true)]
+    [InlineData("vnavmesh.json", true)]
+    [InlineData("Tsukimichi.json", false)]
+    [InlineData("Tsukimichi\\characters\\1.json", false)]
+    [InlineData("Questionable.json.tmp", false)]
+    [InlineData("QuestionableX.json", false)]
+    [InlineData("Lifestream", false)]
+    [InlineData("", false)]
+    public void Only_a_companions_own_files_mark_the_settings_for_reading_again(string relativePath, bool concerns)
+    {
+        Assert.Equal(concerns, CompanionSetupCatalog.Concerns(relativePath));
+    }
+
+    [Fact]
+    public void A_read_that_changed_nothing_is_the_same_and_a_changed_value_is_not()
+    {
+        var status = Loaded(CompanionPlugin.Questionable);
+        var requirements = CompanionSetupCatalog.For(CompanionPlugin.Questionable);
+        IReadOnlyList<PluginSetup> Read(string json) =>
+            CompanionSetupEvaluator.ApplyCoverage([CompanionSetupEvaluator.Evaluate(status, requirements, r => CompanionConfigJson.Read(json, r.Path!))]);
+
+        var first = Read(QuestionableJson);
+        Assert.True(CompanionSetupEvaluator.Same(first, Read(QuestionableJson)));
+        Assert.False(CompanionSetupEvaluator.Same(first, Read(QuestionableJson.Replace("\"CombatModule\": 0", "\"CombatModule\": 1", StringComparison.Ordinal))));
+        Assert.False(CompanionSetupEvaluator.Same(first, CompanionSetupEvaluator.ApplyCoverage([CompanionSetupEvaluator.Evaluate(Missing(CompanionPlugin.Questionable), requirements, static _ => SetupReading.Unread)])));
+        Assert.False(CompanionSetupEvaluator.Same(first, []));
+    }
+
+    [Fact]
     public void A_plugin_that_is_not_loaded_is_not_checked()
     {
         var setup = CompanionSetupEvaluator.Evaluate(Missing(CompanionPlugin.Questionable), CompanionSetupCatalog.For(CompanionPlugin.Questionable), static _ => SetupReading.Of("0"));

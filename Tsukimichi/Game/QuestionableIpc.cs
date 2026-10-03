@@ -4,6 +4,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Ipc;
 using Tsukimichi.Core.Model;
 
@@ -34,10 +35,19 @@ namespace Tsukimichi.Game;
 /// (<see cref="Generation"/>): an answer given before its paths arrived says "no path" for every quest. Every call is
 /// wrapped: a gate that is not registered or throws reads as no answer, and the first failure is logged once.
 /// </para>
+/// <para>
+/// Since 2026-09-11 the WigglyMuffin fork installs as <c>WigglyQuest</c> and leaves a do-nothing "Questionable" at
+/// 99.0.0.0 under the old name. Either internal name counts as Questionable loaded, the placeholder does not
+/// (<see cref="CompanionCatalog.QuestionablePlaceholder"/>), and with both real builds loaded the gates answer for
+/// whichever registered them; the fork's public mirror still registers them under <c>Questionable.*</c>.
+/// </para>
 /// </summary>
 public sealed partial class QuestionableIpc : IDisposable
 {
     public const string PluginInternalName = "Questionable";
+
+    /// <summary>The WigglyMuffin fork's internal name since 2026-09-11; it still registers the <c>Questionable.*</c> gates.</summary>
+    public const string ForkInternalName = "WigglyQuest";
     public const string IsQuestLockedGate = "Questionable.IsQuestLocked";
     public const string IsQuestLockedReasonGate = "Questionable.IsQuestLockedReason";
     public const string AddQuestPriorityGate = "Questionable.AddQuestPriority";
@@ -361,7 +371,7 @@ public sealed partial class QuestionableIpc : IDisposable
                 }
 
                 present.Add(plugin.InternalName);
-                if (string.Equals(plugin.InternalName, PluginInternalName, StringComparison.OrdinalIgnoreCase))
+                if (!found && IsQuestionable(plugin.InternalName, plugin.Version))
                 {
                     found = true;
                 }
@@ -385,6 +395,24 @@ public sealed partial class QuestionableIpc : IDisposable
 
         missingRequired = missing;
         return found;
+    }
+
+    /// <summary>
+    /// A loaded build of Questionable: upstream (<see cref="PluginInternalName"/>) or the WigglyMuffin fork
+    /// (<see cref="ForkInternalName"/>), and not the fork's do-nothing placeholder left under the old name
+    /// (<see cref="CompanionCatalog.QuestionablePlaceholder"/>), which registers no gates.
+    /// </summary>
+    private static bool IsQuestionable(string internalName, Version? version)
+    {
+        foreach (var variant in CompanionCatalog.Get(CompanionPlugin.Questionable).Variants)
+        {
+            if (variant.Recognises(internalName, version))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void WarnOnce(Exception ex, string message)

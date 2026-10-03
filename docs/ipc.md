@@ -440,7 +440,7 @@ Minimum versions are written the way Dalamud reports the plugin's version (its a
 |---|---|---|---|---|
 | Lifestream | `Lifestream` | — | `https://github.com/NightmareXIV/MyDalamudPlugins/raw/main/pluginmaster.json` | 2.5.4.23 (release tag) |
 | vnavmesh | `vnavmesh` | — | `https://puni.sh/api/repository/veyn` | 1.2.3.14 (csproj) |
-| Questionable | `Questionable` | — | `https://love.puni.sh/ment.json` | 15.756.3.26 (release tag) |
+| Questionable / WigglyQuest | `Questionable`, `WigglyQuest` (a `Questionable` at 99.0.0.0 or above is the fork's do-nothing placeholder and reads as not installed) | — | `https://love.puni.sh/ment.json` / `https://github.com/WigglyMuffin/DalamudPlugins/raw/main/pluginmaster.json` | 15.756.3.26 (release tag) / 7.5.27.0 |
 | TextAdvance (needed by Questionable) | `TextAdvance` | — | `https://github.com/NightmareXIV/MyDalamudPlugins/raw/main/pluginmaster.json` | 3.3.0.1 (csproj) |
 | AutoDuty | `AutoDuty` | 0.0.0.336 | `https://puni.sh/api/repository/erdelf` | 0.0.0.375 (release tag; the csproj says 0.0.0.0) |
 | Boss Mod / Boss Mod Reborn (needed by AutoDuty and Questionable) | `BossMod`, `BossModReborn` | — | `https://puni.sh/api/repository/veyn` / Combat Reborn | 7.5.6.9 / 7.5.6.27 (tags) |
@@ -542,7 +542,9 @@ Within a group, entries keep the journal order. The groups follow the logged-in 
 
 When an entry changes group, Tsukimichi re-registers the entries that must move. It checks at most once every 10 seconds, and only when the states changed. It keeps the longest prefix Wotsit already holds in the right order and replaces everything after it, one entry at a time.
 
-### Questionable (internal name `Questionable`, since 1.0.0)
+### Questionable (internal name `Questionable`, since 1.0.0; also `WigglyQuest`, since 1.11.0)
+
+Since 2026-09-11 the WigglyMuffin fork installs under the internal name `WigglyQuest` and leaves "Questionable (moved to WigglyQuest)" at 99.0.0.0 under the old name, a placeholder that does no questing. Either name counts as Questionable loaded; the placeholder does not. The fork's public mirror still registers its gates as `Questionable.*`, and its settings are read from `pluginConfigs/WigglyQuest.json`.
 
 Read from Questionable's provider class, `Questionable/External/QuestionableIpc.cs`, at [github.com/PunishXIV/Questionable](https://github.com/PunishXIV/Questionable) commit `0bd61efe8a6806a7a8010741c0c46b7dea153709` (branch `new-main`, 2026-09-30). The WigglyMuffin fork ([github.com/WigglyMuffin/Questionable](https://github.com/WigglyMuffin/Questionable), commit `4f2909b7bc9e6ec65e63c4b71f4fb7f523688b46`, 2026-09-24) registers fewer gates; the last column says which.
 
