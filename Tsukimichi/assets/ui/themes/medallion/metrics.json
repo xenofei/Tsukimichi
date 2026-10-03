@@ -8,6 +8,7 @@
   "gateModes": ["grey", "deut"],
   "cvdModes": ["machado-prot", "machado-deut", "machado-trit"],
   "readyWash": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
+  "pngs": {"Tsukimichi/assets/ui/medals.png": "c56542a8f146fc44de954ef72dc573f1efb65d66e7ced6fa1068c595429d58a5", "Tsukimichi/assets/ui/medals@2x.png": "c5436ed7ab07758d80496948d04bdef896146c81bf7a568e8606432375260b0d"},
   "pass": true,
   "gates": [
     {"gate": "G1 weakest pair 16 px grey", "tier": "hero-48-64", "value": 12.26, "bar": 12.0, "detail": "Lock-NotC", "pass": true},

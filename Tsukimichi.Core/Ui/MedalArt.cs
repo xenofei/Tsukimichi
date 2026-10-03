@@ -170,6 +170,37 @@ public static class MedalArt
     public static MedalMesh RowGlyph(MedalBadge badge, MedalTokens tokens) =>
         RowGlyphs.GetOrAdd((badge, tokens), static key => BuildRowGlyph(key.Item1, key.Item2));
 
+    /// <summary>
+    /// Drops every mesh built for <paramref name="tokens"/> (tokens a palette no longer uses: <see cref="MedalTokens.For(GlyphPalette, MedalFinish, bool, Vector4)"/>
+    /// lets an old host pane's go). A later draw with them builds afresh.
+    /// </summary>
+    public static void Forget(MedalTokens tokens)
+    {
+        foreach (var key in Medals.Keys)
+        {
+            if (ReferenceEquals(key.Item2, tokens))
+            {
+                Medals.TryRemove(key, out _);
+            }
+        }
+
+        foreach (var key in Badges.Keys)
+        {
+            if (ReferenceEquals(key.Item3, tokens))
+            {
+                Badges.TryRemove(key, out _);
+            }
+        }
+
+        foreach (var key in RowGlyphs.Keys)
+        {
+            if (ReferenceEquals(key.Item2, tokens))
+            {
+                RowGlyphs.TryRemove(key, out _);
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ geometry the tests read
 
     /// <summary>The lit region of a crescent or half moon as one outline (terminator then limb), in medal units.</summary>

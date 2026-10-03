@@ -114,6 +114,59 @@ public sealed class AppearanceTests
         Assert.NotSame(config.Glyphs, config.Clone().Glyphs);
     }
 
+    [Fact]
+    public void Fields_a_newer_build_saved_survive_a_save_here()
+    {
+        // A newer build's appearance, as the settings file holds it (with the serializer's $type metadata), carrying a
+        // field and an object this build does not know.
+        const string newer = """
+            {"$type":"Tsukimichi.Core.Ui.Themes.AppearanceConfig, Tsukimichi.Core","Version":1,"Theme":"aether-crystal",
+             "Glyphs":{"$type":"System.Collections.Generic.Dictionary`2[[System.String],[System.String]], System.Private.CoreLib","ready":"ishgard-glass"},
+             "Palette":"night","Frames":null,"HighContrast":false,
+             "Accent":"#ffcc00","Motion":{"Sky":"still","Speed":0.5,"Since":"2026-10-01T12:00:00Z"}}
+            """;
+        var config = AppearanceJson.Read(newer);
+        Assert.NotNull(config);
+        Assert.Equal("aether-crystal", config.Theme);
+        Assert.Equal(new Dictionary<string, string> { ["ready"] = "ishgard-glass" }, config.Glyphs);
+        Assert.Equal(["Accent", "Motion"], config.Unknown!.Keys.Order(StringComparer.Ordinal));
+
+        // An edit here, a copy (the Undo snapshot and the preview), then the save: the unknown fields go back verbatim.
+        AppearanceMigration.Sanitize(config);
+        var edited = config.Clone();
+        edited.HighContrast = true;
+        Assert.False(edited.SameAs(config));
+        using var saved = JsonDocument.Parse(AppearanceJson.Write(edited));
+        var root = saved.RootElement;
+        Assert.True(root.GetProperty("HighContrast").GetBoolean());
+        Assert.Equal("#ffcc00", root.GetProperty("Accent").GetString());
+        Assert.Equal("""{"Sky":"still","Speed":0.5,"Since":"2026-10-01T12:00:00Z"}""", root.GetProperty("Motion").GetRawText());
+        Assert.False(root.TryGetProperty("$type", out _));
+        Assert.False(root.TryGetProperty("Unknown", out _));
+
+        // And it reads back the same.
+        var back = AppearanceJson.Read(root.GetRawText());
+        Assert.True(edited.SameAs(back));
+        Assert.Equal(["Accent", "Motion"], back!.Unknown!.Keys.Order(StringComparer.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("null")]
+    [InlineData("{ not json")]
+    [InlineData("""{"Theme": 42}""")]
+    public void An_appearance_this_build_cannot_read_is_null_and_migrates(string json) => Assert.Null(AppearanceJson.Read(json));
+
+    [Fact]
+    public void An_appearance_without_unknown_fields_saves_none()
+    {
+        var config = AppearanceJson.Read("""{"version":"1","theme":"medallion","highContrast":true}""");
+        Assert.NotNull(config);
+        Assert.True(config.HighContrast);
+        Assert.Null(config.Unknown);
+        Assert.Equal(1, config.Version);
+    }
+
     // ------------------------------------------------------------------ resolution
 
     [Fact]

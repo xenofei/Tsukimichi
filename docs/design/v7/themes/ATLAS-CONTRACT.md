@@ -22,7 +22,7 @@ Tsukimichi/assets/ui/themes/<set-key>/
   plain.json        optional
   faces.*           reserved   unframed faces for the frames axis (1.17 T11); schema §2, 8 sprites
   frames.*          reserved   a frame kit's frames and badges (1.17 T11); schema §2
-  metrics.json      optional   the build's gate numbers (§5); not read by the 1.16 runtime
+  metrics.json      optional   the build's gate numbers (§5); not read by the runtime, not packaged
 ```
 
 \* Every set that ships (Ishgard Glass and Aether Crystal in 1.16) has `row.*`; without them the set would show

@@ -61,6 +61,13 @@ public sealed record UiPalette
     /// <summary>The gauges' inks: the medal's material on Night, their own gilt and lead on a light palette (spec-1.16 §A6).</summary>
     public required GaugeInks Gauges { get; init; }
 
+    /// <summary>
+    /// The pane colour under Quiet's light medal rim (<see cref="MedalTokens.RimGap"/>): the gap between the medal's well
+    /// and its hairline, so the medal reads as laid on the pane. Night's darkest Quiet tone #0E1322; on a light palette the
+    /// pane the rows sit on (Ishgard Snow's #EEF1F6, a light host's own window).
+    /// </summary>
+    public required Vector4 MedalRimGap { get; init; }
+
     /// <summary>The table's alternate row tint; null draws the disabled tone at .16 (Night's 1.15 zebra).</summary>
     public Vector4? Zebra { get; init; }
 

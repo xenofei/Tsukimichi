@@ -1,3 +1,6 @@
+using System.Runtime.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Ui.Themes;
@@ -9,6 +12,11 @@ namespace Tsukimichi.Core.Ui.Themes;
 /// key this build does not know (one a newer build wrote) is kept as written and resolves to the theme's own choice
 /// (<see cref="AppearanceResolver"/>). Null means "from the theme". <see cref="AppearanceMigration"/> builds the first one
 /// from the settings it replaces (Moon style, Moon colours, Follow Dalamud colours) and writes those back for a downgrade.
+///
+/// <para>Fields this build does not know (a newer build's) are kept in <see cref="Unknown"/> and written back as they
+/// were, so saving here never drops them (<see cref="AppearanceJson"/>). A field may be added freely; before changing an
+/// existing field's shape (its type or meaning), bump <see cref="CurrentVersion"/> and save it under a new property name,
+/// so an older build keeps reading the old one and carries the new one through untouched.</para>
 /// </summary>
 public sealed class AppearanceConfig
 {
@@ -38,7 +46,15 @@ public sealed class AppearanceConfig
     /// </summary>
     public bool HighContrast { get; set; }
 
-    /// <summary>A deep copy (the Undo snapshot and the live preview's scratch copy).</summary>
+    /// <summary>
+    /// The fields a newer build saved that this one does not know, by name, kept as written and saved back unchanged
+    /// (<see cref="AppearanceJson"/>); null when there are none. Never edited here.
+    /// </summary>
+    [JsonExtensionData]
+    [IgnoreDataMember]
+    public Dictionary<string, JsonElement>? Unknown { get; set; }
+
+    /// <summary>A deep copy (the Undo snapshot and the live preview's scratch copy), the unknown fields with it.</summary>
     public AppearanceConfig Clone() => new()
     {
         Version = Version,
@@ -47,9 +63,13 @@ public sealed class AppearanceConfig
         Palette = Palette,
         Frames = Frames,
         HighContrast = HighContrast,
+        Unknown = Unknown is null ? null : new Dictionary<string, JsonElement>(Unknown, StringComparer.Ordinal),
     };
 
-    /// <summary>Whether <paramref name="other"/> saves the same appearance (field by field; the mix order does not matter).</summary>
+    /// <summary>
+    /// Whether <paramref name="other"/> saves the same appearance (field by field; the mix order does not matter). The
+    /// <see cref="Unknown"/> fields are carried, not compared: nothing in this build changes them.
+    /// </summary>
     public bool SameAs(AppearanceConfig? other)
     {
         if (other is null)
@@ -91,6 +111,71 @@ public sealed class AppearanceConfig
         }
 
         return true;
+    }
+}
+
+/// <summary>
+/// The appearance's saved JSON (the "Appearance" object in the plugin's settings file): read leniently and written back
+/// with the fields this build does not know (<see cref="AppearanceConfig.Unknown"/>), so a newer build's settings
+/// survive a save here. The plugin's settings serializer hands the object to these two and nothing else touches it.
+/// </summary>
+public static class AppearanceJson
+{
+    private static readonly JsonSerializerOptions Options = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+    };
+
+    /// <summary>
+    /// The appearance in <paramref name="json"/> (one JSON object); null when it is not one, or a known field has a
+    /// shape this build cannot read (the caller then migrates from the 1.15 settings, as for a missing appearance).
+    /// Serializer metadata (<c>$type</c> and the like, which the settings file may carry) is dropped.
+    /// </summary>
+    public static AppearanceConfig? Read(string json)
+    {
+        AppearanceConfig? config;
+        try
+        {
+            config = JsonSerializer.Deserialize<AppearanceConfig>(json, Options);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        if (config is null)
+        {
+            return null;
+        }
+
+        config.Glyphs = WithoutMetadata(config.Glyphs);
+        config.Unknown = WithoutMetadata(config.Unknown);
+        return config;
+    }
+
+    /// <summary>The appearance as one JSON object, its unknown fields after the known ones.</summary>
+    public static string Write(AppearanceConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        return JsonSerializer.Serialize(config, Options);
+    }
+
+    private static Dictionary<string, T>? WithoutMetadata<T>(Dictionary<string, T>? map)
+    {
+        if (map is null)
+        {
+            return null;
+        }
+
+        foreach (var key in map.Keys.Where(static k => k.StartsWith('$')).ToArray())
+        {
+            map.Remove(key);
+        }
+
+        return map.Count == 0 ? null : map;
     }
 }
 

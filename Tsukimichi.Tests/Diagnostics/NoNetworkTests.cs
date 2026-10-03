@@ -244,7 +244,7 @@ public class NoNetworkTests
     }
 
     /// <summary>The plugin's built Tsukimichi.dll for the configuration the tests run in, the newest; null when not built.</summary>
-    private static string? PluginAssembly()
+    internal static string? PluginAssembly()
     {
         var bin = Path.Combine(ResxFiles.RepositoryRoot(), "Tsukimichi", "bin");
         if (!Directory.Exists(bin))

@@ -8,6 +8,7 @@
   "gateModes": ["grey", "deut"],
   "cvdModes": ["machado-prot", "machado-deut", "machado-trit"],
   "readyWash": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
+  "pngs": {"Tsukimichi/assets/ui/themes/aether-crystal/medals.png": "025e694e894f8d8689cae4a8377ebd4f8ec53e82f5e56df586bb7f94d3c10e5b", "Tsukimichi/assets/ui/themes/aether-crystal/medals@2x.png": "c3aae2dbd4d4ba0047459e07c5e8b2988144b338ad18150a61f0fd59b55f292c", "Tsukimichi/assets/ui/themes/aether-crystal/row.png": "92dcf7b6fc0328142dfb86dc1490f964093fee7b604771ddb973ebc4e1a47305"},
   "pass": true,
   "gates": [
     {"gate": "G1 weakest pair 16 px grey", "tier": "hero-48-64-96-128", "value": 14.34, "bar": 12.0, "detail": "RoJ-Done", "pass": true},

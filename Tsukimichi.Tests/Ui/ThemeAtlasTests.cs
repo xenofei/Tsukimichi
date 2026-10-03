@@ -149,6 +149,26 @@ public sealed class ThemeAtlasTests
         }
     }
 
+    [Theory]
+    [MemberData(nameof(MeasuredSets))]
+    public void The_shipped_pngs_are_the_ones_the_metrics_were_measured_from(string set)
+    {
+        // metrics.json records the SHA-256 of every PNG the build wrote with these numbers; a PNG re-exported or edited
+        // by hand without a rebuild would ship atlases the gates never measured.
+        using var json = Json(ThemesDir(), set, "metrics.json");
+        var pngs = json.RootElement.GetProperty("pngs").EnumerateObject().ToDictionary(static p => p.Name, static p => p.Value.GetString());
+        var atlas = set == "medallion" ? "Tsukimichi/assets/ui" : $"Tsukimichi/assets/ui/themes/{set}";
+        string[] expected = set == "medallion"
+            ? [$"{atlas}/medals.png", $"{atlas}/medals@2x.png"]
+            : [$"{atlas}/medals.png", $"{atlas}/medals@2x.png", $"{atlas}/row.png"];
+        Assert.Equal(expected.Order(StringComparer.Ordinal), pngs.Keys.Order(StringComparer.Ordinal));
+        foreach (var (path, sha) in pngs)
+        {
+            var bytes = File.ReadAllBytes(Path.Combine(OrnamentLayoutTests.RepoRoot(), path));
+            Assert.True(string.Equals(sha, Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)), StringComparison.Ordinal), $"{path} is not the PNG metrics.json was measured from; rebuild with tools/themes/build_themes.py");
+        }
+    }
+
     // ------------------------------------------------------------------ the per-set gates (§7.1)
 
     [Theory]

@@ -143,6 +143,7 @@ public static class UiPalettes
         QuietTones = FlairTones.NightQuiet,
         PlainTones = FlairTones.NightPlain,
         DrawerTones = Ui.DrawerTones.NightSet,
+        MedalRimGap = MedalTokens.LightRimGap,
         HighContrastBuilder = NightHighContrast,
     };
 
@@ -425,6 +426,7 @@ public static class UiPalettes
         QuietTones = SnowQuiet,
         PlainTones = SnowPlain,
         DrawerTones = SnowDrawer,
+        MedalRimGap = SnowQuiet.Table,
         HighContrastBuilder = SnowHighContrast,
     };
 
@@ -566,6 +568,9 @@ public static class UiPalettes
             Brass = NightBrass,
             Plate = NightPlate,
             Gauges = s.Light ? LightGauges : NightGauges with { Track = s.StrongLine with { W = 0.55f } },
+
+            // A light host's medals sit on its own window, as Snow's sit on snow; a dark host keeps Night's gap.
+            MedalRimGap = s.Light ? FlairTones.Mixed(Flair.Quiet, s).Table : MedalTokens.LightRimGap,
 
             // As 1.15: the high-contrast surface roles alone; the accent already reads at 4.5 : 1 on the host.
             HighContrastBuilder = static p => p.ToHighContrast(pushInks: false),

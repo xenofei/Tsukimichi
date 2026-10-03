@@ -13,11 +13,12 @@ namespace Tsukimichi.Core.Ui;
 /// </summary>
 public sealed class MedalTokens
 {
-    private MedalTokens(GlyphPalette palette, MedalFinish finish = MedalFinish.Gilt, bool onLight = false)
+    private MedalTokens(GlyphPalette palette, MedalFinish finish = MedalFinish.Gilt, bool onLight = false, Vector4? rimGap = null)
     {
         Palette = palette;
         Finish = finish;
         OnLight = onLight;
+        this.rimGap = rimGap;
     }
 
     /// <summary>The medallion as designed.</summary>
@@ -39,7 +40,7 @@ public sealed class MedalTokens
     /// <summary>
     /// Quiet's light rim on a light palette (docs/design/v7/ui/spec-1.16.md §A6): the same medal face, its hairline
     /// <see cref="LightRimInkOnLight"/> (#7A859C) at .8 on a snow gap, since Night's #C3CBDF would vanish on snow. The face
-    /// itself is never recoloured.
+    /// itself is never recoloured. Another light pane takes its own gap (<see cref="For(GlyphPalette, MedalFinish, bool, Vector4)"/>).
     /// </summary>
     public static readonly MedalTokens LightRimOnLight = new(GlyphPalette.Standard, MedalFinish.LightRim, onLight: true);
 
@@ -69,6 +70,52 @@ public sealed class MedalTokens
             _ => Standard,
         };
 
+    /// <summary>
+    /// The tokens for the glyph palette, the Decoration level's finish and the palette in effect: as
+    /// <see cref="For(GlyphPalette, MedalFinish, bool)"/>, with Quiet's light rim laid on <paramref name="rimGap"/>, the
+    /// palette's pane (<see cref="Themes.UiPalette.MedalRimGap"/>). Night's and Ishgard Snow's gaps are the static tokens;
+    /// any other pane (a Follow Dalamud host's) gets tokens of its own, of which a few are kept: an older one is let go
+    /// with its meshes (<see cref="MedalArt.Forget"/>), so a host style being edited never grows the mesh cache.
+    /// </summary>
+    public static MedalTokens For(GlyphPalette palette, MedalFinish finish, bool onLight, Vector4 rimGap)
+    {
+        var tokens = For(palette, finish, onLight);
+        return !tokens.IsLightRim || tokens.RimGap == rimGap ? tokens : LightRimOn(onLight, rimGap);
+    }
+
+    private const int GapSlots = 4;
+    private static readonly MedalTokens?[] GapTokens = new MedalTokens?[GapSlots];
+    private static readonly Lock GapLock = new();
+    private static int nextGapSlot;
+
+    private static MedalTokens LightRimOn(bool onLight, Vector4 gap)
+    {
+        MedalTokens made;
+        MedalTokens? dropped;
+        lock (GapLock)
+        {
+            foreach (var kept in GapTokens)
+            {
+                if (kept is not null && kept.OnLight == onLight && kept.RimGap == gap)
+                {
+                    return kept;
+                }
+            }
+
+            made = new MedalTokens(GlyphPalette.Standard, MedalFinish.LightRim, onLight, gap);
+            dropped = GapTokens[nextGapSlot];
+            GapTokens[nextGapSlot] = made;
+            nextGapSlot = (nextGapSlot + 1) % GapSlots;
+        }
+
+        if (dropped is not null)
+        {
+            MedalArt.Forget(dropped);
+        }
+
+        return made;
+    }
+
     /// <summary>Whether these tokens are drawn on a light palette's window (Quiet's light rim then takes its light ink and gap).</summary>
     public bool OnLight { get; }
 
@@ -78,8 +125,10 @@ public sealed class MedalTokens
     /// <summary>The light rim's alpha in these tokens.</summary>
     public float RimAlpha => OnLight ? LightRimAlphaOnLight : LightRimAlpha;
 
-    /// <summary>The gap under the light rim in these tokens: Quiet's darkest Night tone, or the snow window.</summary>
-    public Vector4 RimGap => OnLight ? LightRimGapOnLight : LightRimGap;
+    /// <summary>The gap under the light rim in these tokens: the palette's pane; Quiet's darkest Night tone, or the snow window.</summary>
+    public Vector4 RimGap => rimGap ?? (OnLight ? LightRimGapOnLight : LightRimGap);
+
+    private readonly Vector4? rimGap;
 
     /// <summary>The glyph palette these tokens swap in.</summary>
     public GlyphPalette Palette { get; }
@@ -121,8 +170,11 @@ public sealed class MedalTokens
     /// <summary>The light rim's alpha on a light palette (.8).</summary>
     public const float LightRimAlphaOnLight = 0.8f;
 
-    /// <summary>The gap under the light rim on a light palette: the snow window (#EEF1F6).</summary>
-    public static readonly Vector4 LightRimGapOnLight = ColorMath.FromHex(0xEEF1F6);
+    /// <summary>
+    /// The gap under <see cref="LightRimOnLight"/>: Ishgard Snow's window (<see cref="Themes.UiPalettes.SnowWindowHex"/>),
+    /// its <see cref="Themes.UiPalette.MedalRimGap"/>. Another light palette's pane takes tokens of its own.
+    /// </summary>
+    public static readonly Vector4 LightRimGapOnLight = ColorMath.FromHex(Themes.UiPalettes.SnowWindowHex);
 
     /// <summary>The light rim's radius in the 128-unit box.</summary>
     public const float LightRimRadius = 55.6f;
