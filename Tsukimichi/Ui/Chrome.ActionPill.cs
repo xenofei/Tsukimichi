@@ -131,13 +131,6 @@ public static partial class Chrome
     private static float LabelledPillWidth(in PillIcon icon, float labelWidth, PillLayout size) =>
         ActionPillFit.LabelledWidth(MetricsOf(size), PillIconWidth(icon, PillIconPx(size)), labelWidth, UiMetrics.Scale);
 
-    /// <summary>The dark ink on Full's lit gold pill and Quiet's flat gold one.</summary>
-    private static readonly Vector4 GoldInk = Core.Ui.ColorMath.FromHex(0x1A1406);
-
-    /// <summary>Full's primary pill: a lit gold gradient, top to bottom, and its edge.</summary>
-    private static readonly Vector4 GoldTop = Core.Ui.ColorMath.FromHex(0xFFE6A3);
-    private static readonly Vector4 GoldFoot = Core.Ui.ColorMath.FromHex(0xD9B65F);
-    private static readonly Vector4 GoldEdge = Core.Ui.ColorMath.FromHex(0xF6DFA0);
 
 
     /// <summary>
@@ -214,10 +207,8 @@ public static partial class Chrome
         }
 
         var dl = ImGui.GetWindowDrawList();
-        // Full's lit pills need the palette's designed raised gradient (none under Follow Dalamud: flat pills).
-        var lit = Theme.Palette.Pills;
-        var full = Theme.Flair == Flair.Full && lit is not null;
-        if (full && enabled && tone is PillTone.Primary or PillTone.Normal or PillTone.Quiet)
+        // Full's lit pills need the palette's designed pill surfaces (none under Follow Dalamud: flat pills).
+        if (Theme.Flair == Flair.Full && Theme.Palette.Pills is { } lit && enabled && tone is PillTone.Primary or PillTone.Normal or PillTone.Quiet)
         {
             // Full: lit, raised surfaces. The primary is the one filled gold surface, with its own bloom and highlight.
             var primary = tone == PillTone.Primary;
@@ -231,8 +222,8 @@ public static partial class Chrome
             }
 
             var lift = held ? 0.92f : hovered ? 1.06f : 1f;
-            var top = primary ? GoldTop : lit!.Value.RaisedTop;
-            var foot = primary ? GoldFoot : lit!.Value.RaisedFoot;
+            var top = primary ? lit.GoldTop : lit.RaisedTop;
+            var foot = primary ? lit.GoldFoot : lit.RaisedFoot;
             top = new Vector4(MathF.Min(1f, top.X * lift), MathF.Min(1f, top.Y * lift), MathF.Min(1f, top.Z * lift), 1f);
             foot = new Vector4(MathF.Min(1f, foot.X * lift), MathF.Min(1f, foot.Y * lift), MathF.Min(1f, foot.Z * lift), 1f);
             var first = dl.VtxBuffer.Size;
@@ -365,15 +356,15 @@ public static partial class Chrome
             return (Theme.WithAlpha(s.Raised, 0.6f * s.Raised.W), dimEdge, Theme.U32(s.TextDisabled));
         }
 
-        if (tone == PillTone.Primary && Theme.Palette.Pills is not null && !highContrast)
+        if (tone == PillTone.Primary && Theme.Palette.Pills is { } pills && !highContrast)
         {
             switch (flair)
             {
                 case Flair.Full:
-                    return (Theme.GoldU32, Theme.U32(GoldEdge), Theme.U32(GoldInk));
+                    return (Theme.GoldU32, Theme.U32(pills.GoldEdge), Theme.U32(pills.GoldInk));
                 case Flair.Quiet:
                     var gold = held ? Theme.GoldDeep : hovered ? Vector4.Lerp(Theme.Gold, Theme.GoldHigh, 0.4f) : Theme.Gold;
-                    return (Theme.U32(gold), Theme.U32(gold), Theme.U32(GoldInk));
+                    return (Theme.U32(gold), Theme.U32(gold), Theme.U32(pills.GoldInk));
             }
         }
 

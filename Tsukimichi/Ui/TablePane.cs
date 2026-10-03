@@ -1177,7 +1177,7 @@ public sealed class TablePane : IDisposable
             ImGui.PushID(i);
 
             // The sorted column's label in the primary tone (at Full the lighter gilt); the rest in the secondary tone.
-            var ink = i == sortedColumn ? moonRoad ? s.OrnamentLight : s.Text : s.TextSecondary;
+            var ink = i == sortedColumn ? moonRoad ? Theme.OrnamentLight : s.Text : s.TextSecondary;
 
             // ImGui's header (its hover, click to sort and sort arrow, in the label's ink) with no label of its own; the
             // label is drawn over it in the header's role, tracked at Full, ending in an ellipsis before the arrow.
@@ -1841,7 +1841,7 @@ public sealed class TablePane : IDisposable
         ImGuiP.TablePushBackgroundChannel();
         var thickness = MathF.Max(1f, UiMetrics.Hairline * 2f);
         var y = rowMax.Y - thickness * 0.5f;
-        ImGui.GetWindowDrawList().AddLine(new Vector2(rowMin.X, y), new Vector2(rowMax.X, y), Theme.WithAlpha(Theme.Gold, 0.55f), thickness);
+        ImGui.GetWindowDrawList().AddLine(new Vector2(rowMin.X, y), new Vector2(rowMax.X, y), Theme.WithAlpha(Theme.GoldLine, 0.55f), thickness);
         ImGuiP.TablePopBackgroundChannel();
     }
 
@@ -1860,7 +1860,7 @@ public sealed class TablePane : IDisposable
     {
         var y = rowMax.Y - hairline;
         var end = nameX + ((rowMax.X - nameX) * 0.7f);
-        Ornament.Rule(dl, new Vector2(nameX, y), end - nameX, ReadyRoadAlpha, hairline, Theme.Gold);
+        Ornament.Rule(dl, new Vector2(nameX, y), end - nameX, ReadyRoadAlpha, hairline, Theme.GoldLine);
         if (Theme.ShowGlow)
         {
             var glow = Theme.Glow(0.12f);
@@ -2000,14 +2000,8 @@ public sealed class TablePane : IDisposable
     /// not the colour, carries the state. The high-contrast glyph palette uses its own rungs instead
     /// (<see cref="GlyphPalette.Stripe"/>: the state's identity colour, 3 : 1 or better on the host window).
     /// </summary>
-    internal static uint StripeColor(QuestState state) => Theme.Glyphs.HighContrast ? Theme.U32(Theme.Glyphs.Stripe(state)) : state switch
-    {
-        QuestState.Ready or QuestState.Accepted => Theme.GoldU32,
-        QuestState.Completed => Theme.GoldDimU32,
-        QuestState.ReadyOnOtherJob or QuestState.DoneThisCycle => Theme.U32(Theme.Surface.Text),
-        QuestState.Foreclosed => Theme.DangerU32,
-        _ => Theme.UnknownTextU32,
-    };
+    internal static uint StripeColor(QuestState state) =>
+        Theme.U32(Theme.Glyphs.HighContrast ? Theme.Glyphs.Stripe(state) : Theme.Palette.States.Stripe(state));
 
     /// <summary>
     /// A level or expansion pill (ui-revamp §2.4): the palette's sunken fill with the text in <paramref name="ink"/>,

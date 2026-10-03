@@ -52,8 +52,8 @@ public sealed partial class DetailPane
 
     private const float LedgerGlyphLogical = 5.9f;
 
-    /// <summary>The title drawn on the art: a warm near-white over the night grade.</summary>
-    private static readonly Vector4 TitleOnArt = Core.Ui.ColorMath.FromHex(0xF4F1E8);
+    /// <summary>The title drawn on the art: a warm near-white over the night grade (the palette's scene; navy ink on a light one).</summary>
+    private static Vector4 TitleOnArt => Theme.Scene.BannerTitle;
 
     // The moonrise: the row it last started for and when.
     private uint riseRowId = uint.MaxValue;

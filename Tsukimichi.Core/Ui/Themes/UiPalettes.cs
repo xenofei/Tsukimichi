@@ -18,15 +18,22 @@ public static class UiPalettes
     /// <summary>Night's scene (the Full sky, stars, Abyss shadows, the night grades). Initialised before <see cref="Night"/>.</summary>
     public static readonly SceneTokens NightScene = new(
         Zenith: ColorMath.FromHex(SceneTokens.ZenithHex),
+        SkyStops: null,
         StatusTop: ColorMath.FromHex(SceneTokens.StatusTopHex),
         StatusFoot: ColorMath.FromHex(SceneTokens.StatusFootHex),
         Shadow: GlyphTokens.Abyss,
+        ShadowInk: new Vector4(0f, 0f, 0f, 1f),
         ShadowStrength: 1f,
         GlowStrength: 1f,
+        WashInsteadOfGlow: false,
+        GlowWash: GlyphTokens.Moon,
+        TopHighlight: GlyphTokens.MoonHigh,
         TextHalo: GlyphTokens.Abyss,
         Scrim: GlyphTokens.Night,
         Moonlight: GlyphTokens.MoonHigh,
+        BannerTitle: ColorMath.FromHex(SceneTokens.BannerTitleHex),
         StarField: true,
+        MorningStar: false,
         NightGrade: true,
         Stars: new StarInks(
             ColorMath.FromHex(StarInks.CoolHex),
@@ -42,13 +49,16 @@ public static class UiPalettes
         GoldHigh: GlyphTokens.MoonHigh,
         GoldDeep: GlyphTokens.MoonDeep,
         GoldDim: GlyphTokens.MoonDim,
+        GoldLine: GlyphTokens.Moon,
         OnGold: GlyphTokens.Night,
         Danger: GlyphTokens.Eclipse,
         DangerText: GlyphTokens.EclipseText,
         OnDanger: GlyphTokens.Silver,
         UnknownText: GlyphTokens.VeilText,
         GaugeArc: ColorMath.FromHex(PaletteInks.GaugeArcHex),
-        GaugeDone: ColorMath.FromHex(PaletteInks.GaugeDoneHex));
+        GaugeDone: ColorMath.FromHex(PaletteInks.GaugeDoneHex),
+        ToggleOn: GlyphTokens.Moon,
+        ToggleKnob: GlyphTokens.MoonHigh);
 
     /// <summary>Night's brass.</summary>
     public static readonly BrassTokens NightBrass = new(
@@ -59,6 +69,29 @@ public static class UiPalettes
         ColorMath.FromHex(BrassTokens.DeepHex),
         ColorMath.FromHex(BrassTokens.CornerLitHex),
         ColorMath.FromHex(BrassTokens.CornerShadedHex));
+
+    /// <summary>Night's portrait plate (1.15 spec A4).</summary>
+    public static readonly PlateTokens NightPlate = new(
+        WellTop: GlyphTokens.Medallion.Enamel,
+        WellFoot: GlyphTokens.Medallion.EnamelDeep,
+        PlainWell: ColorMath.FromHex(PlateTokens.PlainWellHex),
+        PlainKeyline: ColorMath.FromHex(PlateTokens.PlainKeylineHex),
+        QuietKeyline: ColorMath.FromHex(PlateTokens.QuietKeylineHex),
+        Initials: ColorMath.FromHex(PortraitPlate.InitialsHex),
+        OuterRing: GlyphTokens.Abyss,
+        KeylineLit: GlyphTokens.Medallion.GiltHigh,
+        KeylineMid: GlyphTokens.Medallion.GiltMid,
+        KeylineLow: GlyphTokens.Medallion.GiltShade,
+        KeylineDark: GlyphTokens.Medallion.GiltDeep);
+
+    /// <summary>Night's lit pills: the raised gradient and the gold pill material.</summary>
+    public static readonly PillSurfaces NightPills = new(
+        ColorMath.FromHex(PillSurfaces.RaisedTopHex),
+        ColorMath.FromHex(PillSurfaces.RaisedFootHex),
+        ColorMath.FromHex(PillSurfaces.GoldTopHex),
+        ColorMath.FromHex(PillSurfaces.GoldFootHex),
+        ColorMath.FromHex(PillSurfaces.GoldEdgeHex),
+        ColorMath.FromHex(PillSurfaces.GoldInkHex));
 
     /// <summary>
     /// Night (ui-revamp §4.3, the Moon Road, flair-v13): the default palette, and the colours every release up to 1.15
@@ -71,11 +104,13 @@ public static class UiPalettes
         Surface = SurfaceColors.Night,
         Accent = GlyphTokens.Moon,
         AccentDim = GlyphTokens.MoonDim,
+        OrnamentLight = SurfaceColors.Night.OrnamentLight,
         Inks = NightInks,
-        States = StateInks.From(GlyphTokens.Moon, GlyphTokens.Moon, GlyphTokens.Silver, GlyphTokens.Dusk, GlyphTokens.Eclipse, GlyphTokens.EclipseText, GlyphTokens.Veil, GlyphTokens.VeilText),
+        States = StateInks.Compose(GlyphTokens.Moon, GlyphTokens.MoonDim, GlyphTokens.Moon, GlyphTokens.Silver, GlyphTokens.Dusk, GlyphTokens.Mist, GlyphTokens.Eclipse, GlyphTokens.EclipseText, GlyphTokens.Veil, GlyphTokens.VeilText),
         Scene = NightScene,
         Brass = NightBrass,
-        Pills = new PillSurfaces(ColorMath.FromHex(PillSurfaces.RaisedTopHex), ColorMath.FromHex(PillSurfaces.RaisedFootHex)),
+        Plate = NightPlate,
+        Pills = NightPills,
         QuietTones = FlairTones.NightQuiet,
         PlainTones = FlairTones.NightPlain,
         DrawerTones = Ui.DrawerTones.NightSet,
@@ -135,10 +170,12 @@ public static class UiPalettes
             Surface = s,
             Accent = accent,
             AccentDim = Read(GlyphTokens.MoonDim),
+            OrnamentLight = s.OrnamentLight,
             Inks = inks,
-            States = StateInks.From(GlyphTokens.Moon, accent, s.Text, s.TextTertiary, GlyphTokens.Eclipse, inks.DangerText, s.TextDisabled, inks.UnknownText),
+            States = StateInks.Compose(GlyphTokens.Moon, GlyphTokens.MoonDim, accent, s.Text, s.TextTertiary, s.TextSecondary, GlyphTokens.Eclipse, inks.DangerText, s.TextDisabled, inks.UnknownText),
             Scene = SceneTokens.Derived(s),
             Brass = NightBrass,
+            Plate = NightPlate,
 
             // As 1.15: the high-contrast surface roles alone; the accent already reads at 4.5 : 1 on the host.
             HighContrastBuilder = static p => p.ToHighContrast(pushInks: false),

@@ -228,7 +228,7 @@ public static partial class Chrome
         }
 
         var full = level == Flair.Full;
-        var ink = Theme.U32(full ? Theme.Surface.OrnamentLight : Theme.Surface.Text);
+        var ink = Theme.U32(full ? Theme.OrnamentLight : Theme.Surface.Text);
         var shadow = full ? Theme.DropShadow(0.55f) : 0u;
         var textRoom = MathF.Max(1f, start.X + room - x);
         var cut = TrackedTextAt(dl, new Vector2(x, start.Y + MathF.Round((row - line) * 0.5f)), textRoom, text, ink, tracking, shadow);
@@ -310,7 +310,7 @@ public static partial class Chrome
                 var foot = Vector4.Lerp(s.Raised, s.Window, 0.35f) with { W = 0.86f };
                 dl.AddRectFilledMultiColor(min, max, Theme.U32(top), Theme.U32(top), Theme.U32(foot), Theme.U32(foot));
                 var line = UiMetrics.Hairline;
-                dl.AddRectFilled(new Vector2(min.X + rounding, min.Y + line), new Vector2(max.X - rounding, min.Y + (2f * line)), Theme.Sheen(0.07f));
+                dl.AddRectFilled(new Vector2(min.X + rounding, min.Y + line), new Vector2(max.X - rounding, min.Y + (2f * line)), Theme.TopHighlight(0.07f));
                 Ornament.BrassBorder(dl, min, max, rounding, line);
                 Ornament.CornerMarks(dl, min, max, MathF.Round(UiMetrics.Px(CardCornerLogical)));
                 break;

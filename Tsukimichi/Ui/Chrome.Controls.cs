@@ -54,7 +54,7 @@ public static partial class Chrome
         var radius = size.Y * 0.5f;
 
         // The track: sunken when off, a gold wash when on; the border goes gold with it.
-        var accent = silver ? s.Text : Theme.Gold;
+        var accent = silver ? s.Text : Theme.ToggleOn;
         var off = Theme.WithAlphaVector(s.Sunken, alpha);
         var on = Theme.WithAlphaVector(Vector4.Lerp(s.Sunken, accent, silver ? 0.30f : 0.38f), alpha);
         dl.AddRectFilled(min, max, Theme.U32(Vector4.Lerp(off, on, t)), radius);
@@ -72,7 +72,7 @@ public static partial class Chrome
         var left = min.X + radius;
         var right = max.X - radius;
         var center = new Vector2(left + ((right - left) * t), min.Y + radius);
-        var knobInk = Vector4.Lerp(s.TextSecondary, silver ? s.Text : Theme.GoldHigh, t);
+        var knobInk = Vector4.Lerp(s.TextSecondary, silver ? s.Text : Theme.ToggleKnob, t);
         dl.AddCircleFilled(center, knob, Theme.WithAlpha(knobInk, alpha), 24);
         if (t > 0.01f)
         {

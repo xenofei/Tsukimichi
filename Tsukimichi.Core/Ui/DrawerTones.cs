@@ -64,12 +64,12 @@ public readonly record struct DrawerTones(
     /// (Night's hexes), otherwise mixed from its surface. Allocates nothing.
     /// </summary>
     public static DrawerTones For(Flair flair, Themes.UiPalette palette) =>
-        palette.DrawerTones is { } designed ? designed.For(flair) : Build(flair, palette.Surface, night: false);
+        palette.DrawerTones is { } designed ? designed.For(flair) : Build(flair, palette.Surface, night: false, palette.OrnamentLight);
 
     /// <summary>The drawer's tones for <paramref name="flair"/> on <paramref name="surface"/>: Night's hexes on the Night surface, else mixed.</summary>
-    public static DrawerTones For(Flair flair, in SurfaceColors surface) => Build(flair, surface, surface == SurfaceColors.Night);
+    public static DrawerTones For(Flair flair, in SurfaceColors surface) => Build(flair, surface, surface == SurfaceColors.Night, surface.OrnamentLight);
 
-    private static DrawerTones Build(Flair flair, in SurfaceColors surface, bool night)
+    private static DrawerTones Build(Flair flair, in SurfaceColors surface, bool night, Vector4 heading)
     {
         var s = surface;
         var down = s.Light ? s.Text : new Vector4(0f, 0f, 0f, 1f);
@@ -81,7 +81,7 @@ public readonly record struct DrawerTones(
             {
                 var top = night ? ColorMath.FromHex(FullTopHex) : ColorMath.Mix(s.Raised, s.Text, 0.02f);
                 var foot = night ? ColorMath.FromHex(FullFootHex) : ColorMath.Mix(s.Raised, down, s.Light ? 0.03f : 0.25f);
-                return new DrawerTones(top, foot, s.Line, pill, top, foot, hover, s.OrnamentLight);
+                return new DrawerTones(top, foot, s.Line, pill, top, foot, hover, heading);
             }
 
             case Flair.Quiet:

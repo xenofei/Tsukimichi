@@ -296,7 +296,7 @@ public static class Ornament
         for (var i = Layers; i >= 1; i--)
         {
             var grow = blur * i / Layers;
-            dl.AddRectFilled(min + down - new Vector2(grow * 0.5f), max + down + new Vector2(grow * 0.5f), Theme.WithAlpha(Vector4.UnitW, alpha / Layers), rounding + grow);
+            dl.AddRectFilled(min + down - new Vector2(grow * 0.5f), max + down + new Vector2(grow * 0.5f), Theme.CastShadow(alpha / Layers), rounding + grow);
         }
     }
 }

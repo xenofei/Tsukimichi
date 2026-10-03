@@ -209,6 +209,23 @@ public static class Theme
     /// <summary><see cref="GoldDim"/> packed.</summary>
     public static uint GoldDimU32 { get; private set; } = MoonDimU32;
 
+    /// <summary>Gold as a hairline: the Ready road, the selected row's rules, the drawer's set mark (Moon).</summary>
+    public static Vector4 GoldLine { get; private set; } = Moon;
+
+    /// <summary>The gold an "on" toggle's track is mixed toward (Moon), and its crescent knob (MoonHigh).</summary>
+    public static Vector4 ToggleOn { get; private set; } = Moon;
+
+    public static Vector4 ToggleKnob { get; private set; } = MoonHigh;
+
+    /// <summary>
+    /// Text in the ornament: Full's Section headings, the sorted column header, the drawer's heads (the medallion's
+    /// GiltLight on Night; <see cref="UiPalette.OrnamentLight"/>).
+    /// </summary>
+    public static Vector4 OrnamentLight { get; private set; } = UiPalettes.Night.OrnamentLight;
+
+    /// <summary>The giver portrait plate's well, keylines and fallback ink this frame.</summary>
+    public static PlateTokens Plate { get; private set; } = UiPalettes.Night.Plate;
+
     /// <summary>Text and marks on a gold fill (Night).</summary>
     public static Vector4 OnGold { get; private set; } = Night;
 
@@ -248,8 +265,21 @@ public static class Theme
     /// </summary>
     public static uint DropShadow(float alpha) => WithAlpha(Scene.Shadow, alpha * Scene.ShadowStrength);
 
-    /// <summary>A gold glow or bloom at its designed <paramref name="alpha"/>, packed: <see cref="Gold"/> at that alpha times <see cref="SceneTokens.GlowStrength"/>.</summary>
-    public static uint Glow(float alpha) => WithAlpha(Gold, alpha * Scene.GlowStrength);
+    /// <summary>
+    /// A soft cast shadow (cards, the drawer) at its designed <paramref name="alpha"/>, packed: the scene's ShadowInk
+    /// (black on Night, navy on a light palette) at that alpha times <see cref="SceneTokens.ShadowStrength"/>.
+    /// </summary>
+    public static uint CastShadow(float alpha) => WithAlpha(Scene.ShadowInk, alpha * Scene.ShadowStrength);
+
+    /// <summary>
+    /// A gold glow or bloom at its designed <paramref name="alpha"/>, packed: <see cref="Gold"/> at that alpha times
+    /// <see cref="SceneTokens.GlowStrength"/>; on a light palette that washes instead of glowing
+    /// (<see cref="SceneTokens.WashInsteadOfGlow"/>), the scene's warm wash colour.
+    /// </summary>
+    public static uint Glow(float alpha) => WithAlpha(Scene.WashInsteadOfGlow ? Scene.GlowWash : Gold, alpha * Scene.GlowStrength);
+
+    /// <summary>The 1 px lit edge inside the top of a raised surface at <paramref name="alpha"/>, packed (MoonHigh on Night, white on a light palette).</summary>
+    public static uint TopHighlight(float alpha) => WithAlpha(Scene.TopHighlight, alpha);
 
     /// <summary>A highlight sheen or glint at its designed <paramref name="alpha"/>, packed: <see cref="GoldHigh"/> at that alpha times <see cref="SceneTokens.GlowStrength"/>.</summary>
     public static uint Sheen(float alpha) => WithAlpha(GoldHigh, alpha * Scene.GlowStrength);
@@ -476,6 +506,11 @@ public static class Theme
         OnDanger = inks.OnDanger;
         UnknownText = inks.UnknownText;
         UnknownTextU32 = Pack(UnknownText);
+        GoldLine = inks.GoldLine;
+        ToggleOn = inks.ToggleOn;
+        ToggleKnob = inks.ToggleKnob;
+        OrnamentLight = palette.OrnamentLight;
+        Plate = palette.Plate;
         GaugeArc = inks.GaugeArc;
         GaugeDone = inks.GaugeDone;
         DeepU32 = Pack(s.Deep);

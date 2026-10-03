@@ -732,7 +732,7 @@ public sealed partial class FilterPanel
 
         if (star > 0f)
         {
-            dl.AddText(new Vector2(valueRight - star + UiMetrics.Px(2f), textY), Ink(Theme.Accent), PlainSetMark);
+            dl.AddText(new Vector2(valueRight - star + UiMetrics.Px(2f), textY), Ink(Theme.GoldLine), PlainSetMark);
         }
         else if (dot > 0f)
         {
