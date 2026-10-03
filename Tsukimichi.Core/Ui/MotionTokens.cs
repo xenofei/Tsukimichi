@@ -66,6 +66,13 @@ public static class MotionTokens
     /// <summary>Every interaction token, for tests and the glyph window.</summary>
     public static ReadOnlySpan<float> Interaction => [HoverIn, HoverOut, Select, Chevron, Reveal, Veil, Popup, Travel, Rise, Swap, Linger, Leave];
 
+    /// <summary>
+    /// An "art" token (1.15 design spec A7): a giver's face fading in on the Giver card's plate when the selection's giver
+    /// changes, ease-out cubic. Longer than the interaction tier because a face is content arriving, not an interaction
+    /// answering; not a gold moment, so <see cref="MomentPeak"/> does not apply. None at Plain or under Reduce motion.
+    /// </summary>
+    public const float ArtFade = 0.3f;
+
     /// <summary>How far a panel rises as it appears, in logical px: a hint of movement, never a slide.</summary>
     public const float RiseLogical = 4f;
 

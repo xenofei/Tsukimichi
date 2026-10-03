@@ -444,15 +444,35 @@ public sealed partial class DetailPane
         dl.AddText(new Vector2(left, textY), label, Strings.Giver);
         var giver = model.GiverName ?? Strings.NoGiver;
         var giverWidth = ImGui.CalcTextSize(giver).X;
-        cut = Chrome.EllipsisTextAt(dl, new Vector2(valueX, textY), valueRoom, giver, Theme.U32(model.GiverName is null ? Theme.Surface.TextDisabled : Theme.Surface.Text), giverWidth);
-        if (model.PlaceLine is { } place && valueX + giverWidth + gap < bodyRight)
+
+        // The giver's 18 px portrait plate inline before the name (1.15, spec A5), when there is a giver.
+        var nameX = valueX;
+        var plateMin = Vector2.Zero;
+        var plate = 0f;
+        var portrait = PortraitRequest.None;
+        if (model.GiverName is not null && GiverPortraits.Enabled)
         {
-            var placeX = valueX + giverWidth + gap;
+            plate = MathF.Round(UiMetrics.Px(PortraitPlate.PlainSize));
+            plateMin = new Vector2(valueX, y + MathF.Round((rowHeight - plate) * 0.5f));
+            portrait = GiverPortraits.For(quest, lastSpoilers ?? Core.Query.SpoilerMask.None);
+            Chrome.Portrait(dl, plateMin, plate, portrait);
+            nameX += plate + UiMetrics.Px(PortraitPlate.PlainGap);
+        }
+
+        var nameRoom = MathF.Max(1f, bodyRight - nameX);
+        cut = Chrome.EllipsisTextAt(dl, new Vector2(nameX, textY), nameRoom, giver, Theme.U32(model.GiverName is null ? Theme.Surface.TextDisabled : Theme.Surface.Text), giverWidth);
+        if (model.PlaceLine is { } place && nameX + giverWidth + gap < bodyRight)
+        {
+            var placeX = nameX + giverWidth + gap;
             cut |= Chrome.EllipsisTextAt(dl, new Vector2(placeX, textY), MathF.Max(1f, bodyRight - placeX), place, secondary, ImGui.CalcTextSize(place).X);
         }
 
         ImGui.Dummy(new Vector2(room, rowHeight));
-        if (cut && ImGui.IsItemHovered())
+        if (plate > 0f && ImGui.IsItemHovered() && ImGui.IsMouseHoveringRect(plateMin, plateMin + new Vector2(plate)))
+        {
+            Chrome.PortraitTooltip(portrait, giver, model.PlaceLine);
+        }
+        else if (cut && ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(giver, model.PlaceLine);
         }

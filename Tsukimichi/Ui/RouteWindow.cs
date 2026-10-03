@@ -470,6 +470,11 @@ public sealed class RouteWindow : Window
         using var spacing = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 0f));
         var line = ImGui.GetTextLineHeight();
         var rowHeight = MathF.Round(MathF.Max(line + UiMetrics.Px(6f), UiMetrics.InlineGlyphSize(line) + UiMetrics.Px(2f)));
+        if (GiverPortraits.Enabled)
+        {
+            // Every step's giver as a 24 px avatar (1.15, F5): the rows stand a little taller, all alike.
+            rowHeight = MathF.Max(rowHeight, MathF.Round(UiMetrics.Px(PortraitPlate.AvatarSize + 4f)));
+        }
         var lines = v.Lines;
         var first = Math.Clamp((int)(ImGui.GetScrollY() / rowHeight), 0, lines.Length);
         var visible = (int)MathF.Ceiling(ImGui.GetWindowHeight() / rowHeight) + 1;
@@ -679,8 +684,15 @@ public sealed class RouteWindow : Window
             showQuest(quest);
         }
 
-        var nameCut = DrawStepText(dl, l, min, textEnd, textY, rowHeight, line, questionableMark);
-        if (hovered)
+        // The step's giver as an avatar between the level and the name (1.15, F5); its hover shows the portrait.
+        var avatar = stepQuest is not null && GiverPortraits.Enabled ? MathF.Round(UiMetrics.Px(PortraitPlate.AvatarSize)) : 0f;
+        var request = avatar > 0f ? GiverPortraits.For(stepQuest!, session.Spoilers) : PortraitRequest.None;
+        var nameCut = DrawStepText(dl, l, min, textEnd, textY, rowHeight, line, questionableMark, avatar, request, out var avatarMin);
+        if (hovered && avatar > 0f && ImGui.IsMouseHoveringRect(avatarMin, avatarMin + new Vector2(avatar)))
+        {
+            Chrome.PortraitTooltip(request, stepQuest!.Issuer?.Name ?? string.Empty, GiverPortraits.Place(stepQuest));
+        }
+        else if (hovered)
         {
             // A step's tooltip already opens with its whole name; an alternative cut short gets its name first.
             var hint = Strings.RouteStepTooltipHint + "\n" + Strings.RouteStepMenuHint;
@@ -697,12 +709,14 @@ public sealed class RouteWindow : Window
 
     /// <summary>
     /// A step's or an alternative's text, from <paramref name="min"/> to <paramref name="textEnd"/> (R3 #5): the number,
-    /// moon and level, then the name, which ends in an ellipsis rather than being cut mid-letter, then its marks
-    /// (dropped, least important first, before the name falls under its minimum) and the detail in what is left.
+    /// moon and level, the giver's avatar when <paramref name="avatar"/> is over 0 (its top-left in
+    /// <paramref name="avatarMin"/>), then the name, which ends in an ellipsis rather than being cut mid-letter, then its
+    /// marks (dropped, least important first, before the name falls under its minimum) and the detail in what is left.
     /// Returns whether the name was cut.
     /// </summary>
-    private static bool DrawStepText(ImDrawListPtr dl, Line l, Vector2 min, float textEnd, float textY, float rowHeight, float line, string questionableMark)
+    private static bool DrawStepText(ImDrawListPtr dl, Line l, Vector2 min, float textEnd, float textY, float rowHeight, float line, string questionableMark, float avatar, in PortraitRequest request, out Vector2 avatarMin)
     {
+        avatarMin = new Vector2(float.MaxValue);
         if (l.Kind == LineKind.Alternative)
         {
             var indent = UiMetrics.Px(IndentLogical * 2f);
@@ -725,6 +739,12 @@ public sealed class RouteWindow : Window
 
             dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextSecondary), l.Level);
             x += ImGui.CalcTextSize(LevelSample.Value).X + UiMetrics.Px(6f);
+            if (avatar > 0f && x + avatar < textEnd)
+            {
+                avatarMin = new Vector2(x, min.Y + MathF.Round((rowHeight - avatar) * 0.5f));
+                Chrome.Portrait(dl, avatarMin, avatar, request);
+                x += avatar + UiMetrics.Px(PortraitPlate.AvatarGap);
+            }
 
             var gap = UiMetrics.Px(8f);
             var markWidth = l.Mark.Length > 0 ? ImGui.CalcTextSize(l.Mark).X : 0f;

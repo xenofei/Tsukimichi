@@ -934,6 +934,15 @@ public sealed partial class Plugin : IDalamudPlugin
             gameLinks.AetheryteWarmup = warmer.Aetherytes;
             queryRunner.IconSheets = () => warmer.PaneIcons.Value;
 
+            // Giver portraits (1.15, F2/F5): the index is warmed with the others; every plate shows its fallback until it lands.
+            Ui.GiverPortraits.Index = () => warmer.Portraits.Value;
+            Ui.GiverPortraits.Mode = () => Settings.GiverPortraits;
+            Ui.GiverPortraits.PlaceOf = quest => quest.Issuer is { } issuer && gameLinks.Map(issuer.MapId) is { } map
+                ? map.Region.Length > 0 && map.Region != map.PlaceName
+                    ? string.Format(System.Globalization.CultureInfo.CurrentCulture, Ui.Strings.JournalPathFormat, map.Region, map.PlaceName)
+                    : map.PlaceName
+                : null;
+
             // "Open on…" (1.8.0): the shipped link table; the browser opens the pages, the plugin stays offline (decision 8).
             var externalIds = Core.Links.ExternalIds.Load(Paths.ExternalIdsFile);
             foreach (var warning in externalIds.Warnings)
@@ -1600,6 +1609,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("settings window", () => configWindow?.Dispose());
         Unwind("fonts", Ui.Typography.Dispose);
         Unwind("banner grades", Ui.BannerGrading.Dispose);
+        Unwind("portrait grades", Ui.PortraitGrading.Dispose);
         Unwind("in the game", DisposeInGame);
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());

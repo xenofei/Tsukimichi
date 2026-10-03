@@ -29,6 +29,12 @@ public enum QuestColumn
 
     /// <summary>What the quest unlocks, up to three kind icons (feature plan v6 K4): on by default (Settings › Display › Planning).</summary>
     Opens,
+
+    /// <summary>
+    /// The giver's 20 px portrait avatar and name (1.15 design spec A5, F5): off by default, shown from the table's
+    /// header menu; it hides first when the table is narrow.
+    /// </summary>
+    Giver,
 }
 
 /// <summary>
@@ -46,7 +52,8 @@ public enum QuestColumn
 /// <param name="Exp">The EXP column; 0 when it is not measured, which gives it no room at all.</param>
 /// <param name="Opens">The Opens column; 0 when it is not measured, which gives it no room at all.</param>
 /// <param name="Icon">A row icon's side (the job, reward and unlock icons): the least a column of icons can be sized to; 0 when not measured.</param>
-public readonly record struct QuestTableWidths(float Glyph, float Level, float JobIcon, float Job, float StateWord, float Expansion, float Rewards, float CellOverhead, float Scale = 1f, float Exp = 0f, float Opens = 0f, float Icon = 0f);
+/// <param name="Giver">The Giver column (the avatar, its gap and the name's room); 0 when it is not measured, which gives it no room at all.</param>
+public readonly record struct QuestTableWidths(float Glyph, float Level, float JobIcon, float Job, float StateWord, float Expansion, float Rewards, float CellOverhead, float Scale = 1f, float Exp = 0f, float Opens = 0f, float Icon = 0f, float Giver = 0f);
 
 /// <summary>What <see cref="TableGeometry.PlanQuestTable"/> decided for a frame, beyond the columns.</summary>
 /// <param name="TwoLine">The rows are two-line: the name and the level, then the status under the name.</param>
@@ -61,14 +68,14 @@ public readonly record struct QuestTablePlan(bool TwoLine, bool JobIconOnly);
 public static partial class TableGeometry
 {
     /// <summary>How many columns the quest table has (<see cref="QuestColumn"/>).</summary>
-    public const int QuestColumnCount = 9;
+    public const int QuestColumnCount = 10;
 
     /// <summary>
     /// The quest table's column specs, in <see cref="QuestColumn"/> order: the glyph, the name and the status never
     /// hide (priority 0); the name stretches with three shares and at least <see cref="LayoutBudgets.TableNameMinLogical"/>,
     /// the status with two shares and at least the widest state word plus <see cref="LayoutBudgets.TableStatusPadLogical"/>;
-    /// then Level (2), Job with its label (3), Unlocks (4, the owner wants it in view), Expansion (5), Rewards (6) and EXP (7),
-    /// which hides first. A column the
+    /// then Level (2), Job with its label (3), Unlocks (4, the owner wants it in view), Expansion (5), Rewards (6), EXP (7)
+    /// and Giver (8, 1.15), which hides first. A column the
     /// player hid from the table's menu (or the EXP column while Settings leaves it off) takes no room, as does an EXP
     /// column without a measured width. Every width is a column's content width plus
     /// <see cref="QuestTableWidths.CellOverhead"/>.
@@ -108,6 +115,7 @@ public static partial class TableGeometry
         specs[(int)QuestColumn.Rewards] = FixedSpec(6, widths.Rewards, pad);
         specs[(int)QuestColumn.Exp] = NonNegative(widths.Exp) > 0f ? FixedSpec(7, widths.Exp, pad) : new(0, 0f, 0f);
         specs[(int)QuestColumn.Opens] = NonNegative(widths.Opens) > 0f ? FixedSpec(4, widths.Opens, pad) : new(0, 0f, 0f);
+        specs[(int)QuestColumn.Giver] = NonNegative(widths.Giver) > 0f ? FixedSpec(8, widths.Giver, pad) : new(0, 0f, 0f);
         for (var i = (int)QuestColumn.Level; i < QuestColumnCount; i++)
         {
             // A column with no room at all (EXP or Unlocks while Settings leaves it off) stays without room.
@@ -296,6 +304,7 @@ public static partial class TableGeometry
             QuestColumn.Rewards => NonNegative(widths.Rewards),
             QuestColumn.Exp => NonNegative(widths.Exp),
             QuestColumn.Opens => NonNegative(widths.Opens),
+            QuestColumn.Giver => NonNegative(widths.Giver),
             _ => 0f,
         };
 
@@ -303,7 +312,7 @@ public static partial class TableGeometry
         {
             QuestColumn.Glyph or QuestColumn.Name => 0f,
             QuestColumn.Status => NonNegative(widths.StateWord),
-            QuestColumn.Job or QuestColumn.Rewards or QuestColumn.Opens => auto > 0f ? MathF.Min(icon, auto) : icon,
+            QuestColumn.Job or QuestColumn.Rewards or QuestColumn.Opens or QuestColumn.Giver => auto > 0f ? MathF.Min(icon, auto) : icon,
             _ => auto > 0f ? MathF.Min(floor, auto) : floor,
         };
     }

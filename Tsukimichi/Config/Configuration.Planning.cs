@@ -24,6 +24,13 @@ public sealed partial class Configuration
     /// </summary>
     public bool? UnlocksColumnDefaultApplied { get; set; }
 
+    /// <summary>
+    /// Set once the Journal table has hidden its Giver column (1.15, F5) the first time it drew it: the column is off by
+    /// default and shown from the table's header menu, and ImGui's saved table settings from before 1.15 would otherwise
+    /// show a column they never knew. After that the player's own choice, kept by ImGui, stands.
+    /// </summary>
+    public bool JournalGiverColumnDefaulted { get; set; }
+
     /// <summary>The allied society board on the Characters dashboard. On by default.</summary>
     public bool ShowAlliedSocietyBoard { get; set; } = true;
 

@@ -815,6 +815,16 @@ public sealed partial class DetailPane
         }
     }
 
+    // The Giver card's face fade (1.15, spec A7): the giver and icon it last faded in for, and when it could first be drawn.
+    private ulong giverFaceKey = ulong.MaxValue;
+    private double giverFaceSince = -1d;
+
+    /// <summary>
+    /// The Giver card (1.15, spec A5): at Full and Quiet the portrait plate (72 or 64 px) on the left, its slot always
+    /// held so nothing moves when a texture lands, and the name and the place centred on it; at Plain an 18 px plate
+    /// inline before the name. With Giver portraits off, the name and the place as before. Hovering the plate shows the
+    /// 128 px portrait with where it comes from.
+    /// </summary>
     private void DrawGiver()
     {
         if (model.GiverName is not { } giver)
@@ -823,13 +833,102 @@ public sealed partial class DetailPane
             return;
         }
 
-        // The giver's name ends in an ellipsis when it is too long for the card, with the whole name on hover (L5).
-        if (Chrome.EllipsisText(giver, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
+        var place = model.PlaceLine ?? Strings.DetailNoGiverPlace;
+        if (!GiverPortraits.Enabled || model.Quest is not { } quest)
+        {
+            // The giver's name ends in an ellipsis when it is too long for the card, with the whole name on hover (L5).
+            if (Chrome.EllipsisText(giver, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(giver);
+            }
+
+            TextFlow.Wrapped(place, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
+            return;
+        }
+
+        var request = GiverPortraits.For(quest, lastSpoilers ?? Core.Query.SpoilerMask.None);
+        var flair = Theme.Flair;
+        var plate = MathF.Round(UiMetrics.Px(PortraitPlate.CardSize(flair)));
+        var gap = UiMetrics.Px(PortraitPlate.CardGap(flair));
+        var dl = ImGui.GetWindowDrawList();
+        var start = ImGui.GetCursorScreenPos();
+        var line = ImGui.GetTextLineHeight();
+        if (flair == Flair.Plain)
+        {
+            // Plain: the plate inline before the name, then the place under it; no fade.
+            var row = MathF.Max(line, plate);
+            ImGui.Dummy(new Vector2(plate, row));
+            var plateMin = new Vector2(start.X, start.Y + MathF.Round((row - plate) * 0.5f));
+            Chrome.Portrait(dl, plateMin, plate, request);
+            if (ImGui.IsItemHovered())
+            {
+                Chrome.PortraitTooltip(request, giver, model.PlaceLine);
+            }
+
+            ImGui.SameLine(0f, gap);
+            ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, start.Y + MathF.Floor((row - line) * 0.5f)));
+            if (Chrome.EllipsisText(giver, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(giver);
+            }
+
+            TextFlow.Wrapped(place, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
+            return;
+        }
+
+        // Full and Quiet: the plate holds its slot; the name and the place are centred on it.
+        var x = start.X + plate + gap;
+        var room = MathF.Max(1f, cardRight - x);
+        var spacing = ImGui.GetStyle().ItemSpacing.Y;
+        var block = line + spacing + TextFlow.Height(place, room);
+        var height = MathF.Max(plate, block);
+        ImGui.Dummy(new Vector2(plate, height));
+        var after = ImGui.GetCursorScreenPos();
+        var top = new Vector2(start.X, start.Y + MathF.Round((height - plate) * 0.5f));
+        var drawn = Chrome.Portrait(dl, top, plate, request, GiverFaceAlpha(request));
+        if (drawn && giverFaceSince < 0d)
+        {
+            // The fade starts when the face can first be drawn, so a texture that lands late still fades in.
+            giverFaceSince = ImGui.GetTime();
+        }
+
+        if (ImGui.IsItemHovered() && ImGui.IsMouseHoveringRect(top, top + new Vector2(plate)))
+        {
+            Chrome.PortraitTooltip(request, giver, model.PlaceLine);
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(x, start.Y + MathF.Floor(MathF.Max(0f, height - block) * 0.5f)));
+        if (Chrome.EllipsisText(giver, room, Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(giver);
         }
 
-        TextFlow.Wrapped(model.PlaceLine ?? Strings.DetailNoGiverPlace, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
+        ImGui.SetCursorScreenPos(new Vector2(x, ImGui.GetCursorScreenPos().Y));
+        TextFlow.Wrapped(place, room, Theme.U32(Theme.Surface.TextSecondary));
+
+        // Back under the taller of the plate and the text, where the plate's item left the cursor.
+        ImGui.SetCursorScreenPos(new Vector2(after.X, MathF.Max(after.Y, ImGui.GetCursorScreenPos().Y)));
+    }
+
+    /// <summary>
+    /// The Giver card face's opacity this frame (spec A7): it fades in over <see cref="MotionTokens.ArtFade"/>, ease-out,
+    /// when the giver (or the face) changes; at once under Reduce motion or at Plain.
+    /// </summary>
+    private float GiverFaceAlpha(in PortraitRequest request)
+    {
+        if (UiMetrics.ReduceMotion || Theme.Flair == Flair.Plain)
+        {
+            return 1f;
+        }
+
+        var key = ((ulong)request.Portrait.GiverId << 32) | (request.FaceAllowed ? request.Portrait.Icon : 0u);
+        if (key != giverFaceKey)
+        {
+            giverFaceKey = key;
+            giverFaceSince = -1d;
+        }
+
+        return giverFaceSince < 0d ? 0f : PortraitPlate.FadeAlpha(ImGui.GetTime() - giverFaceSince);
     }
 
     // ------------------------------------------------------------------ action bar

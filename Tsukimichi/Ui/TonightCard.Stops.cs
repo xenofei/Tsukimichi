@@ -76,8 +76,20 @@ public sealed partial class TonightCard
             var first = stop.Quests[0].Quest;
             using var id = ImRaii.PushId(StopRowIdBase + i);
             var teleportWidth = Chrome.ActionPillWidth(ActionIcons.TeleportIcon, Strings.TonightStopTeleport, PillLayout.Row);
+
+            // The first quest's giver as a 24 px avatar before the stop (1.15, spec A5), so you know who to walk up to.
+            var rowTop = ImGui.GetCursorScreenPos();
+            var row = 0f;
+            if (GiverPortraits.Enabled)
+            {
+                var avatar = MathF.Round(UiMetrics.Px(PortraitPlate.AvatarSize));
+                row = MathF.Max(avatar, Chrome.PillHeight(PillLayout.Row));
+                StopAvatar(first, avatar, row);
+                ImGui.SameLine(0f, UiMetrics.Px(PortraitPlate.AvatarGap));
+            }
+
             var room = MathF.Max(1f, Chrome.RoomX() - teleportWidth - ImGui.GetStyle().ItemSpacing.X);
-            if (Chrome.EllipsisSelectable(text, false, room, out var cut))
+            if (Chrome.EllipsisSelectable(text, false, room, out var cut, height: row))
             {
                 ui.Reveal(first);
             }
@@ -88,6 +100,12 @@ public sealed partial class TonightCard
             }
 
             ImGui.SameLine();
+            if (row > 0f)
+            {
+                // The pill on the row's middle, beside the avatar's taller line.
+                ImGui.SetCursorScreenPos(new System.Numerics.Vector2(ImGui.GetCursorScreenPos().X, rowTop.Y + MathF.Floor((row - Chrome.PillHeight(PillLayout.Row)) * 0.5f)));
+            }
+
             var canTeleport = links.CanTeleport(first);
             if (Chrome.ActionPill("##stopTeleport", ActionIcons.TeleportIcon, Strings.TonightStopTeleport, PillTone.Normal, canTeleport, size: PillLayout.Row))
             {
@@ -99,6 +117,22 @@ public sealed partial class TonightCard
                 // The same text as every Teleport: the aetheryte, its gil cost, "already here", or why it cannot.
                 UiMetrics.Tooltip(links.TeleportTooltip(first));
             }
+        }
+    }
+
+    /// <summary>
+    /// A stop's giver avatar (1.15, F5): the plate <paramref name="avatar"/> px across, centred on a row
+    /// <paramref name="row"/> tall, as an item whose hover shows the 128 px portrait.
+    /// </summary>
+    private void StopAvatar(Core.Model.QuestRecord quest, float avatar, float row)
+    {
+        var top = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new System.Numerics.Vector2(avatar, row));
+        var request = GiverPortraits.For(quest, runner.Spoilers);
+        Chrome.Portrait(ImGui.GetWindowDrawList(), new System.Numerics.Vector2(top.X, top.Y + MathF.Round((row - avatar) * 0.5f)), avatar, request);
+        if (ImGui.IsItemHovered())
+        {
+            Chrome.PortraitTooltip(request, quest.Issuer?.Name ?? string.Empty, GiverPortraits.Place(quest));
         }
     }
 }

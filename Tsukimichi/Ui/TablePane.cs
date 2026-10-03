@@ -121,6 +121,15 @@ public sealed class TablePane : IDisposable
     /// <summary>Settings › Display › Planning: whether the Opens column (feature plan v6 K4) is offered; null or false keeps it off.</summary>
     public Func<bool>? ShowOpens { get; set; }
 
+    /// <summary>
+    /// Whether the Giver column (1.15, F5) has been hidden once for this configuration: it is off by default, and ImGui's
+    /// saved table settings from before it existed would show it. Null or true leaves ImGui's own state alone.
+    /// </summary>
+    public Func<bool>? GiverColumnDefaulted { get; set; }
+
+    /// <summary>Called once the table has hidden the Giver column the first time, so the configuration records it.</summary>
+    public Action? MarkGiverColumnDefaulted { get; set; }
+
     /// <summary>How many kind icons the Opens column shows per quest.</summary>
     private const int MaxOpensIcons = 3;
 
@@ -206,6 +215,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnRewards,
         Strings.ColumnExp,
         Strings.ColumnOpens,
+        Strings.ColumnGiver,
     ]);
 
     /// <summary>Header tooltip per <see cref="Column"/>, in column order.</summary>
@@ -222,6 +232,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnRewardsTooltip,
         Strings.ColumnExpTooltip,
         Strings.ColumnOpensTooltip,
+        Strings.ColumnGiverTooltip,
     ]);
 
     private readonly UiState ui;
@@ -336,6 +347,10 @@ public sealed class TablePane : IDisposable
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         this.resetFilters = resetFilters ?? throw new ArgumentNullException(nameof(resetFilters));
         this.filtersChanged = filtersChanged ?? throw new ArgumentNullException(nameof(filtersChanged));
+
+        // The Giver column is off by default (1.15): planned as hidden until the table has said otherwise, so its first
+        // frame never lays it out only to hide it.
+        playerHidden[(int)Column.Giver] = true;
 
         try
         {
@@ -501,9 +516,15 @@ public sealed class TablePane : IDisposable
         var opensColumn = showOpens
             ? MathF.Ceiling(MathF.Max(UiMetrics.RowIconSize * MaxOpensIcons + UiMetrics.Px(2f) * (MaxOpensIcons - 1), HeaderFloor(Strings.ColumnOpens, sortable: false)))
             : 0f;
+        // The Giver column (1.15, F5; off by default, shown from the header menu): the 20 px avatar, its gap and room for
+        // a name, or its header; no room at all while Giver portraits are off.
+        var showGiver = GiverPortraits.Enabled;
+        var giverColumn = showGiver
+            ? MathF.Ceiling(MathF.Max(GiverAvatarSide(rowContent) + UiMetrics.Px(PortraitPlate.ColumnGap + PortraitPlate.ColumnNameLogical), HeaderFloor(Strings.ColumnGiver, sortable: false)))
+            : 0f;
         // Status is at least its header too, like every fixed column: the automatic width each "size to fit" returns to.
         var statusWord = MathF.Ceiling(MathF.Max(StateWordWidth(), HeaderFloor(Strings.ColumnStatus, sortable: false)));
-        var widths = new QuestTableWidths(MathF.Ceiling(glyphColumn), levelColumn, jobIconColumn, jobColumn, statusWord, expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f), expColumn, opensColumn, MathF.Max(UiMetrics.RowIconSize, jobIcon));
+        var widths = new QuestTableWidths(MathF.Ceiling(glyphColumn), levelColumn, jobIconColumn, jobColumn, statusWord, expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f), expColumn, opensColumn, MathF.Max(UiMetrics.RowIconSize, jobIcon), giverColumn);
         autoContent[(int)Column.Level] = levelColumn;
         autoContent[(int)Column.Job] = jobColumn;
         autoContent[(int)Column.Status] = TableGeometry.StatusColumnMin(widths) - overhead;
@@ -511,6 +532,7 @@ public sealed class TablePane : IDisposable
         autoContent[(int)Column.Rewards] = rewardsColumn;
         autoContent[(int)Column.Exp] = expColumn;
         autoContent[(int)Column.Opens] = opensColumn;
+        autoContent[(int)Column.Giver] = giverColumn;
 
         // A drag on a column's edge last frame becomes the player's width before the plan (feature plan v6 U9).
         var tableState = ImGuiP.GetCurrentTable();
@@ -532,6 +554,14 @@ public sealed class TablePane : IDisposable
         ImGui.TableSetupColumn(Strings.ColumnRewards, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Rewards), PlannedContent(Column.Rewards, rewardsColumn, overhead));
         ImGui.TableSetupColumn(Strings.ColumnExp, fixedFlags | ImGuiTableColumnFlags.NoSort | (showExp ? Planned(Column.Exp) : ImGuiTableColumnFlags.Disabled), MathF.Max(1f, PlannedContent(Column.Exp, expColumn, overhead)));
         ImGui.TableSetupColumn(Strings.ColumnOpens, fixedFlags | ImGuiTableColumnFlags.NoSort | (showOpens ? Planned(Column.Opens) : ImGuiTableColumnFlags.Disabled), MathF.Max(1f, PlannedContent(Column.Opens, opensColumn, overhead)));
+        ImGui.TableSetupColumn(Strings.ColumnGiver, fixedFlags | ImGuiTableColumnFlags.NoSort | ImGuiTableColumnFlags.DefaultHide | (showGiver ? Planned(Column.Giver) : ImGuiTableColumnFlags.Disabled), MathF.Max(1f, PlannedContent(Column.Giver, giverColumn, overhead)));
+        if (showGiver && GiverColumnDefaulted?.Invoke() == false)
+        {
+            // Off by default (spec-1.15 A8): ImGui applies DefaultHide only to a table it has no saved settings for, so a
+            // table saved before 1.15 is told once; from then on the header menu's choice, which ImGui keeps, stands.
+            ImGui.TableSetColumnEnabled((int)Column.Giver, false);
+            MarkGiverColumnDefaulted?.Invoke();
+        }
         ImGui.TableSetupScrollFreeze(0, 1);
         WriteColumnWidths(tableState, overhead);
 
@@ -1691,7 +1721,57 @@ public sealed class TablePane : IDisposable
             DrawOpensIcons(quest, in layout);
         }
 
+        if (ImGui.TableNextColumn())
+        {
+            DrawGiverCell(quest, rowHovered, in layout);
+        }
+
         ImGui.PopID();
+    }
+
+    /// <summary>The Giver column's avatar side: 20 px (spec-1.15 A5), never taller than the row's content.</summary>
+    private static float GiverAvatarSide(float rowContent) => MathF.Round(MathF.Min(UiMetrics.Px(PortraitPlate.ColumnSize), rowContent));
+
+    /// <summary>
+    /// The Giver cell (1.15, F5): the giver's 20 px plate, then the name, ellipsised in the cell. Hovering the plate shows
+    /// the 128 px portrait; a cut name shows whole on hover.
+    /// </summary>
+    private void DrawGiverCell(QuestRecord quest, bool rowHovered, in RowLayout layout)
+    {
+        var cell = ImGui.GetCursorScreenPos();
+        var room = ImGui.GetContentRegionAvail().X;
+        var avatar = GiverAvatarSide(layout.RowContent);
+        if (quest.Issuer is not { } issuer || !(room > avatar))
+        {
+            return;
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        var plateMin = new Vector2(cell.X, cell.Y + MathF.Round((layout.RowContent - avatar) * 0.5f));
+        var request = GiverPortraits.For(quest, runner.Spoilers);
+        Chrome.Portrait(dl, plateMin, avatar, request);
+        var x = cell.X + avatar + UiMetrics.Px(PortraitPlate.ColumnGap);
+        var nameRoom = cell.X + room - x;
+        var cut = false;
+        if (nameRoom > 1f && issuer.Name.Length > 0)
+        {
+            var y = cell.Y + MathF.Round((layout.RowContent - layout.LineHeight) * 0.5f);
+            cut = EllipsisAt(dl, new Vector2(x, y), nameRoom, issuer.Name, Theme.U32(Theme.Surface.TextSecondary), ImGui.CalcTextSize(issuer.Name).X);
+        }
+
+        if (!rowHovered || !ImGui.IsWindowHovered())
+        {
+            return;
+        }
+
+        if (ImGui.IsMouseHoveringRect(plateMin, plateMin + new Vector2(avatar)))
+        {
+            Chrome.PortraitTooltip(request, issuer.Name, GiverPortraits.Place(quest));
+        }
+        else if (cut && ImGui.IsMouseHoveringRect(new Vector2(x, cell.Y), new Vector2(cell.X + room, cell.Y + layout.RowContent)))
+        {
+            UiMetrics.Tooltip(issuer.Name);
+        }
     }
 
     /// <summary>

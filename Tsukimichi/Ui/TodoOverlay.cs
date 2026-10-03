@@ -109,7 +109,8 @@ public sealed class TodoOverlay : Window, IDisposable
 
     /// <param name="Name">The quest's name as the spoiler shield prints it.</param>
     /// <param name="Ghost">A row whose quest was just completed, kept for the completion beat (<see cref="TodoBeat"/>): drawn, not clickable.</param>
-    private readonly record struct Row(QuestRecord Quest, string Name, QuestState State, string Hint, string Tooltip, bool Ghost = false);
+    /// <param name="Avatar">A Next stops row: its first quest's giver shows as a 24 px avatar before the name (1.15, F5).</param>
+    private readonly record struct Row(QuestRecord Quest, string Name, QuestState State, string Hint, string Tooltip, bool Ghost = false, bool Avatar = false);
 
     /// <summary>
     /// <paramref name="HeaderText"/> is the caption; <paramref name="ToggleTooltip"/> says a click folds it;
@@ -561,7 +562,7 @@ public sealed class TodoOverlay : Window, IDisposable
 
                 foreach (var row in section.Rows)
                 {
-                    var width = ImGui.CalcTextSize(row.Name).X;
+                    var width = ImGui.CalcTextSize(row.Name).X + AvatarRoom(row, rowHeight);
                     if (row.Hint.Length > 0)
                     {
                         width += spacing + ImGui.CalcTextSize(row.Hint).X;
@@ -834,6 +835,13 @@ public sealed class TodoOverlay : Window, IDisposable
         Questionable?.DrawSubmenu(QuestionableHost, Strings.QuestionableSendPins, pinned, static pins => pins);
     }
 
+    /// <summary>The room a row's giver avatar and its gap take before the name (Next stops rows, 1.15); 0 for the others or with portraits off.</summary>
+    private static float AvatarRoom(in Row row, float rowHeight) =>
+        row.Avatar && GiverPortraits.Enabled ? AvatarSide(rowHeight) + UiMetrics.Px(PortraitPlate.AvatarGap) : 0f;
+
+    /// <summary>The avatar's side: 24 px (spec-1.15 A5), never taller than the row.</summary>
+    private static float AvatarSide(float rowHeight) => MathF.Round(MathF.Min(UiMetrics.Px(PortraitPlate.AvatarSize), rowHeight));
+
     private void DrawRow(Row row, int index, in RowLayout layout, bool compact)
     {
         using var id = ImRaii.PushId(index);
@@ -877,21 +885,36 @@ public sealed class TodoOverlay : Window, IDisposable
         var textMax = new Vector2(textX + layout.TextWidth, start.Y + layout.RowHeight);
         dl.PushClipRect(new Vector2(textX, start.Y), textMax, true);
 
+        // A Next stops row opens with its first quest's giver (1.15, F5), so you know who to walk up to.
+        var avatarRoom = AvatarRoom(row, layout.RowHeight);
+        var avatar = avatarRoom > 0f ? AvatarSide(layout.RowHeight) : 0f;
+        var avatarMin = new Vector2(textX, start.Y + MathF.Round((layout.RowHeight - avatar) * 0.5f));
+        var portrait = avatar > 0f ? GiverPortraits.For(row.Quest, session.Spoilers) : PortraitRequest.None;
+        if (avatar > 0f)
+        {
+            Chrome.Portrait(dl, avatarMin, avatar, portrait);
+        }
+
         // The name ends in an ellipsis in the text column (Compact's fixed width, a panel narrowed by hand) rather than
         // being cut mid-letter, and the hint takes what the name leaves (R3 #5); a cut name heads the tooltip.
+        var nameX = textX + avatarRoom;
         var nameWidth = ImGui.CalcTextSize(row.Name).X;
-        var fit = LineFit.Fit(layout.TextWidth, nameWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), [], [], style.ItemSpacing.X, UiMetrics.Px(24f));
+        var fit = LineFit.Fit(MathF.Max(1f, layout.TextWidth - avatarRoom), nameWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), [], [], style.ItemSpacing.X, UiMetrics.Px(24f));
         // Gold while Questionable works on this quest (1.6.0).
         var nameInk = Questionable?.RunningRowId == row.Quest.RowId ? Theme.AccentU32 : Theme.U32(Theme.Surface.Text);
-        Chrome.OutlinedEllipsisAt(dl, new Vector2(textX, textY), fit.NameRoom, row.Name, nameInk, nameWidth);
+        Chrome.OutlinedEllipsisAt(dl, new Vector2(nameX, textY), fit.NameRoom, row.Name, nameInk, nameWidth);
         if (!compact && row.Hint.Length > 0 && fit.TailRoom > 0f)
         {
-            var hintX = textX + fit.NameDrawn + style.ItemSpacing.X;
+            var hintX = nameX + fit.NameDrawn + style.ItemSpacing.X;
             Chrome.OutlinedEllipsisAt(dl, new Vector2(hintX, textY), fit.TailRoom, row.Hint, Theme.U32(Theme.Surface.TextSecondary));
         }
 
         dl.PopClipRect();
-        if (hovered)
+        if (hovered && avatar > 0f && ImGui.IsMouseHoveringRect(avatarMin, avatarMin + new Vector2(avatar)))
+        {
+            Chrome.PortraitTooltip(portrait, row.Quest.Issuer?.Name ?? string.Empty, GiverPortraits.Place(row.Quest));
+        }
+        else if (hovered)
         {
             UiMetrics.Tooltip(fit.NameCut ? row.Name : row.Tooltip, fit.NameCut ? row.Tooltip : null);
         }
@@ -1202,7 +1225,7 @@ public sealed class TodoOverlay : Window, IDisposable
                     : hint.Length > 0
                         ? Strings.StateName(row.State, quest) + Strings.StateReasonSeparator + hint + "\n" + Strings.TodoRowClickHint
                         : Strings.StateName(row.State, quest) + "\n" + Strings.TodoRowClickHint;
-                rows.Add(new Row(quest, row.Name, row.State, hint, tooltip));
+                rows.Add(new Row(quest, row.Name, row.State, hint, tooltip, Avatar: row.Kind == TodoRowKind.Stop));
             }
 
             // A capped section counts every row it holds in its caption ("Pinned (60)") and names the rest on one line.
