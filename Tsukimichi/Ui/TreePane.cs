@@ -306,16 +306,17 @@ public sealed partial class TreePane
             var top = MathF.Max(skyTop, windowMin.Y);
             if (windowMax.Y - top > UiMetrics.Px(40f))
             {
-                var canvasMin = new Vector2(start.X, windowMin.Y);
-                var canvasMax = new Vector2(start.X + width, windowMax.Y);
-                var size = (canvasMax - canvasMin) / UiMetrics.Scale;
-                NightSky.Field(ImGui.GetWindowDrawList(), SkySite.Tree, 0, TreeStars.For(size.X, size.Y), canvasMin, canvasMax, new Vector2(start.X + UiMetrics.Px(8f), top), new Vector2(start.X + width - UiMetrics.Px(8f), windowMax.Y - UiMetrics.Px(8f)));
+                var size = (windowMax - windowMin) / UiMetrics.Scale;
+                NightSky.Field(ImGui.GetWindowDrawList(), SkySite.Tree, 0, TreeStars.For(size.X, size.Y), windowMin, windowMax, new Vector2(start.X + UiMetrics.Px(8f), top), new Vector2(start.X + width - UiMetrics.Px(8f), windowMax.Y - UiMetrics.Px(8f)));
             }
         }
     }
 
-    /// <summary>Full's star field over the tree pane, shown in the sky under its last node: seeded once, so it never reshuffles.</summary>
-    private static readonly SkyField TreeStars = new(31, 240);
+    /// <summary>
+    /// Full's star field over the tree's column, shown in the sky under its last node (or under the open filter drawer's
+    /// sheet): seeded once, so it never reshuffles.
+    /// </summary>
+    internal static readonly SkyField TreeStars = new(31, 240);
 
     /// <summary>Whether Sprout mode folds <paramref name="node"/>: every quest under it lies beyond the reach.</summary>
     private static bool IsSproutFolded(Node node, byte reach) =>

@@ -9759,7 +9759,7 @@
     <comment>Settings, Look: toggle for the slow drift of the Full sky's stars (feature plan v7 UI-6).</comment>
   </data>
   <data name="Settings.MovingNightSkyHint" xml:space="preserve">
-    <value>At Full, the stars drift slowly across the empty sky while this window has focus, with a rare faint shooting star.</value>
+    <value>At Full, the stars drift slowly across the sky while this window has focus, with a rare faint shooting star.</value>
     <comment>Hint under Moving night sky.</comment>
   </data>
   <data name="Settings.CompletionMeteor" xml:space="preserve">

@@ -684,6 +684,21 @@ public sealed partial class MainWindow
 
         ImGui.EndChild();
         ui.RecordRect(UiRects.FilterPanel, rect.Min, rect.Max);
+
+        // Full: once the sheet is opaque (the tree is no longer drawn), the column's sky shows below it with the tree's
+        // own stars where they always are, never under the sheet (plan v7 UI-6, spec §3).
+        if (Theme.ShowStars && DrawerLayout.TreeHidden(DrawerLayout.Fade(drawerOpenedAt, now, FadeSeconds, UiMetrics.ReduceMotion)))
+        {
+            var columnMin = leftMin;
+            var columnMax = leftMin + new Vector2(leftWidth, bodyHeight);
+            var skyMin = new Vector2(columnMin.X + UiMetrics.Px(8f), rect.Max.Y + UiMetrics.Px(16f));
+            var skyMax = new Vector2(columnMax.X - UiMetrics.Px(8f), columnMax.Y - UiMetrics.Px(8f));
+            if (skyMax.Y - skyMin.Y > UiMetrics.Px(40f))
+            {
+                var size = (columnMax - columnMin) / UiMetrics.Scale;
+                NightSky.Field(ImGui.GetWindowDrawList(), Core.Ui.SkySite.Tree, 0, TreePane.TreeStars.For(size.X, size.Y), columnMin, columnMax, skyMin, skyMax);
+            }
+        }
     }
 
     /// <summary>
