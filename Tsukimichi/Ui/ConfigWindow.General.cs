@@ -247,43 +247,94 @@ public sealed partial class ConfigWindow
     }
 
     /// <summary>
-    /// The live preview beside the Decoration picker (docs/design/flair-v13): a small sample of the chosen look, drawn by
-    /// the same code the main window draws with (<see cref="Theme.PushFlair"/>), so it changes on the frame the picker
-    /// does. Under the picker, right-aligned in the control column (under the label on a narrow page), in a box of one
-    /// fixed size at every level, so choosing another look never moves the page: a quest table (its header, three rows
-    /// at the level's height with their medals, a Ready row and the selected row as the level draws them) beside a card,
-    /// over the level's pane tones. The look's one line follows, and while game fonts are on at another level, that
-    /// only Full uses them. Under the high-contrast palette Full previews as Quiet, as it draws.
+    /// The live preview under the Decoration picker (docs/design/flair-v13 §2): a 3-up miniature of the three looks, Full,
+    /// Quiet and Plain side by side in the picker's order, each drawn by the same code the main window draws with
+    /// (<see cref="Theme.PushFlair"/>), so the choice is visible before it is made. The chosen look is ringed in the
+    /// accent and its name is in the text tone; the others' names are quieter. Each miniature is a quest table (its
+    /// header and three rows at the level's height with their medals, a Ready row and the selected row as the level draws
+    /// them) over a card, on the level's pane tones. A miniature can be clicked to choose its look, and names it on
+    /// hover. Right-aligned in the control column (under the label on a narrow page), at one fixed size, so choosing
+    /// another look never moves the page. The chosen look's one line follows, and while game fonts are on at another
+    /// level, that only Full uses them. Under the high-contrast palette Full previews as Quiet, as it draws.
     /// </summary>
     private void DrawFlairPreview(Flair level)
     {
         var top = ImGui.GetItemRectMax().Y + UiMetrics.Px(8f);
         var right = row.Right;
         var width = MathF.Min(MathF.Max(ControlWidth, UiMetrics.Px(PreviewWidthLogical)), right - row.Left);
+        var gap = UiMetrics.Px(8f);
+        var tileWidth = MathF.Floor(MathF.Max(1f, (width - (gap * 2f)) / 3f));
         var height = UiMetrics.Px(PreviewHeightLogical);
-        // Right-aligned under the picker, and never over the label or its hint.
-        var min = new Vector2(MathF.Round(right - width), MathF.Round(MathF.Max(top, row.LabelBottom + UiMetrics.Px(8f))));
-        var max = min + new Vector2(width, height);
-        var dl = ImGui.GetWindowDrawList();
-        dl.PushClipRect(min, max, true);
-        using (Theme.PushFlair(level))
+        float captionLine;
+        using (Typography.Caption())
         {
-            DrawPreviewSample(dl, min, max);
+            captionLine = ImGui.GetTextLineHeight();
         }
 
-        dl.PopClipRect();
-        dl.AddRect(min, max, Theme.U32(Theme.Surface.Line), UiMetrics.Px(4f), ImDrawFlags.None, UiMetrics.Hairline);
-        ImGui.SetCursorScreenPos(min);
-        ImGui.Dummy(new Vector2(width, height));
-        HintOnHover(Strings.ConfigFlairHint);
+        var captionGap = UiMetrics.Px(4f);
+
+        // Right-aligned under the picker, and never over the label or its hint.
+        var min = new Vector2(MathF.Round(right - width), MathF.Round(MathF.Max(top, row.LabelBottom + UiMetrics.Px(8f))));
+        var dl = ImGui.GetWindowDrawList();
+        var s = Theme.Surface;
+        var options = FlairOptions.Value;
+        for (var i = 0; i < PreviewLooks.Length; i++)
+        {
+            var look = PreviewLooks[i];
+            var chosen = look == level;
+            var tileMin = new Vector2(min.X + (i * (tileWidth + gap)), min.Y);
+            var tileMax = tileMin + new Vector2(tileWidth, height);
+            dl.PushClipRect(tileMin, tileMax, true);
+            using (Theme.PushFlair(look))
+            {
+                DrawPreviewSample(dl, tileMin, tileMax);
+            }
+
+            dl.PopClipRect();
+
+            ImGui.SetCursorScreenPos(tileMin);
+            ImGui.PushID(i);
+            var clicked = ImGui.InvisibleButton("##flairLook", new Vector2(tileWidth, height + captionGap + captionLine));
+            ImGui.PopID();
+            var hovered = ImGui.IsItemHovered();
+
+            // The chosen look ringed in the accent; the others a hairline, a little stronger under the pointer.
+            var rounding = UiMetrics.Px(4f);
+            if (chosen)
+            {
+                var ring = MathF.Max(2f, MathF.Round(UiMetrics.Px(2f)));
+                dl.AddRect(tileMin - new Vector2(ring * 0.5f), tileMax + new Vector2(ring * 0.5f), Theme.Glyphs.HighContrast ? Theme.U32(s.Text) : Theme.AccentU32, rounding, ImDrawFlags.None, ring);
+            }
+            else
+            {
+                dl.AddRect(tileMin, tileMax, Theme.U32(hovered ? s.TextTertiary : s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+            }
+
+            using (Typography.Caption())
+            {
+                var name = i < options.Length ? options[i] : string.Empty;
+                var nameWidth = MathF.Min(ImGui.CalcTextSize(name).X, tileWidth);
+                var at = new Vector2(MathF.Round(tileMin.X + ((tileWidth - nameWidth) * 0.5f)), tileMax.Y + captionGap);
+                Chrome.EllipsisTextAt(dl, at, tileWidth, name, Theme.U32(chosen ? s.Text : s.TextTertiary));
+            }
+
+            if (hovered)
+            {
+                UiMetrics.Tooltip(LookNote(look));
+            }
+
+            if (clicked && !chosen)
+            {
+                settings.Flair = look;
+                Save();
+            }
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(min.X, min.Y + height + captionGap + captionLine + UiMetrics.Px(4f)));
+        ImGui.Dummy(new Vector2(width, 1f));
 
         // The look in one line, then the game-font note while it applies.
-        var note = FlairRules.Effective(level, Theme.Glyphs.HighContrast) switch
-        {
-            Flair.Full => Strings.ConfigFlairFullNote,
-            Flair.Quiet => Strings.ConfigFlairQuietNote,
-            _ => Strings.ConfigFlairPlainNote,
-        };
+        var note = LookNote(level);
         using (Typography.Caption())
         using (Theme.PushText(Theme.Surface.TextSecondary))
         {
@@ -299,10 +350,24 @@ public sealed partial class ConfigWindow
         }
     }
 
-    /// <summary>The preview's size, logical px: the header and three Full rows (the tallest), with a little air.</summary>
-    private const float PreviewWidthLogical = 330f;
+    /// <summary>The look's one line, as drawn (under the high-contrast palette Full draws as Quiet).</summary>
+    private static string LookNote(Flair look) => FlairRules.Effective(look, Theme.Glyphs.HighContrast) switch
+    {
+        Flair.Full => Strings.ConfigFlairFullNote,
+        Flair.Quiet => Strings.ConfigFlairQuietNote,
+        _ => Strings.ConfigFlairPlainNote,
+    };
 
-    private const float PreviewHeightLogical = 150f;
+    /// <summary>The three miniatures, in the picker's order.</summary>
+    private static readonly Flair[] PreviewLooks = [Flair.Full, Flair.Quiet, Flair.Plain];
+
+    /// <summary>
+    /// The preview's size, logical px: three miniatures of about 130 each with their gaps, each as tall as the header,
+    /// three Full rows (the tallest) and a card under them, with a little air.
+    /// </summary>
+    private const float PreviewWidthLogical = 420f;
+
+    private const float PreviewHeightLogical = 212f;
 
     /// <summary>The sample's three rows: a Ready quest, the selected quest in the journal, a completed one.</summary>
     private static readonly QuestState[] PreviewStates = [QuestState.Ready, QuestState.Accepted, QuestState.Completed];
@@ -311,8 +376,9 @@ public sealed partial class ConfigWindow
     private static readonly Star[] PreviewStars = StarField.Generate(53, 6);
 
     /// <summary>
-    /// The sample itself, at the level pushed: the panes' tones (or the sky and its stars), the table's header and rows,
-    /// and a card. Draw-list only; nothing allocates (the strings are the language's own, the headings cased once).
+    /// One miniature, at the level pushed: the panes' tones (or the sky and its stars), the table's header and rows on
+    /// top, and a card on the detail tone under them. Draw-list only; nothing allocates (the strings are the language's
+    /// own, the headings cased once).
     /// </summary>
     private static void DrawPreviewSample(ImDrawListPtr dl, Vector2 min, Vector2 max)
     {
@@ -320,7 +386,15 @@ public sealed partial class ConfigWindow
         var tones = Theme.Tones;
         var flair = Theme.Flair;
         var pad = UiMetrics.Px(8f);
-        var split = MathF.Round(min.X + ((max.X - min.X) * 0.6f));
+
+        // Where the table ends and the detail begins: under the header and three rows at the level's height.
+        var x0 = min.X + (flair == Flair.Plain ? UiMetrics.Px(4f) : pad);
+        var x1 = max.X - UiMetrics.Px(4f);
+        var line = ImGui.GetTextLineHeight();
+        var header = MathF.Round(MathF.Max(line, UiMetrics.Px(flair == Flair.Plain ? 20f : 24f)));
+        var rowHeight = MathF.Round(ScaleMetrics.TableRowTarget(flair, RowDensity.Comfortable) * UiMetrics.Scale);
+        var y = min.Y + (flair == Flair.Plain ? 0f : UiMetrics.Px(4f));
+        var split = MathF.Round(y + header + UiMetrics.Px(flair == Flair.Plain ? 0f : 2f) + (rowHeight * PreviewStates.Length) + UiMetrics.Px(4f));
 
         // The panes: the sky over water at Full, two tones at Quiet (the table and the lighter detail), flat at Plain.
         dl.AddRectFilled(min, max, Theme.U32(Theme.ShowPaneGradient ? s.Window : tones.Table));
@@ -330,25 +404,19 @@ public sealed partial class ConfigWindow
         }
         else
         {
-            dl.AddRectFilled(new Vector2(split, min.Y), max, Theme.U32(tones.Detail));
+            dl.AddRectFilled(new Vector2(min.X, split), max, Theme.U32(tones.Detail));
         }
 
         if (Theme.RuleStyle != RuleStyle.MoonRoad)
         {
-            dl.AddRectFilled(new Vector2(split, min.Y), new Vector2(split + 1f, max.Y), Theme.U32(Theme.RuleColor));
+            dl.AddRectFilled(new Vector2(min.X, split), new Vector2(max.X, split + 1f), Theme.U32(Theme.RuleColor));
         }
 
         // The table's header.
-        var x0 = min.X + (flair == Flair.Plain ? UiMetrics.Px(4f) : pad);
-        var x1 = split - UiMetrics.Px(4f);
-        var line = ImGui.GetTextLineHeight();
-        var header = MathF.Round(MathF.Max(line, UiMetrics.Px(flair == Flair.Plain ? 20f : 24f)));
-        var y = min.Y + (flair == Flair.Plain ? 0f : UiMetrics.Px(4f));
         DrawPreviewHeader(dl, new Vector2(x0, y), new Vector2(x1, y + header));
         y += header + UiMetrics.Px(flair == Flair.Plain ? 0f : 2f);
 
         // Three rows at the level's height.
-        var rowHeight = MathF.Round(ScaleMetrics.TableRowTarget(flair, RowDensity.Comfortable) * UiMetrics.Scale);
         var content = rowHeight - UiMetrics.Px(4f);
         var radius = TableGeometry.GlyphRadius(content, UiMetrics.TableGlyphRadius);
         for (var i = 0; i < PreviewStates.Length; i++)
@@ -359,13 +427,14 @@ public sealed partial class ConfigWindow
             y += rowHeight;
         }
 
+        // A card on the detail side, as the level frames it, with Full's stars in the sky over it.
+        var cardTop = split + UiMetrics.Px(flair == Flair.Plain ? 6f : 12f);
         if (Theme.ShowStars)
         {
-            Ornament.Stars(dl, new Vector2(split + pad, min.Y + UiMetrics.Px(2f)), new Vector2(max.X - pad, min.Y + UiMetrics.Px(26f)), PreviewStars);
+            Ornament.Stars(dl, new Vector2(min.X + pad, split + UiMetrics.Px(1f)), new Vector2(max.X - pad, cardTop - UiMetrics.Px(1f)), PreviewStars);
         }
 
-        // A card on the detail side, as the level frames it.
-        var cardMin = new Vector2(split + pad, min.Y + UiMetrics.Px(flair == Flair.Plain ? 6f : 30f));
+        var cardMin = new Vector2(min.X + pad, cardTop);
         var cardMax = new Vector2(max.X - pad, cardMin.Y + (line * 2f) + UiMetrics.Px(flair == Flair.Plain ? 8f : 24f));
         Chrome.CardSurface(dl, cardMin, cardMax);
         var inset = flair == Flair.Plain ? Vector2.Zero : new Vector2(UiMetrics.Px(Theme.Spacing.CardPad.X), UiMetrics.Px(Theme.Spacing.CardPad.Y));
@@ -388,27 +457,23 @@ public sealed partial class ConfigWindow
         Chrome.EllipsisTextAt(dl, new Vector2(textMin.X + (dot * 2f) + UiMetrics.Px(6f), textMin.Y), MathF.Max(1f, room - (dot * 2f) - UiMetrics.Px(6f)), Strings.ConfigFlairPreviewCardLine, Theme.U32(s.Text));
     }
 
-    /// <summary>The sample table's header: Full's tracked caps over a brass rule, Quiet's caption over a hairline, Plain's band with its dividers.</summary>
+    /// <summary>The sample table's header: Full's tracked caps over a brass rule, Quiet's caption over a hairline, Plain's band.</summary>
     private static void DrawPreviewHeader(ImDrawListPtr dl, Vector2 min, Vector2 max)
     {
         var s = Theme.Surface;
         var style = Theme.TableHeader;
         var moonRoad = style == TableHeaderStyle.MoonRoad;
-        var statusX = MathF.Round(min.X + ((max.X - min.X) * 0.58f));
         if (style == TableHeaderStyle.Raised)
         {
             dl.AddRectFilled(min, max, Theme.U32(Theme.Tones.HeaderBand));
-            dl.AddRectFilled(new Vector2(statusX - UiMetrics.Px(5f), min.Y), new Vector2(statusX - UiMetrics.Px(5f) + 1f, max.Y), Theme.U32(Theme.Tones.HeaderLine));
         }
 
         var name = moonRoad ? SectionHeading.Label(Strings.ColumnName) : Strings.ColumnName;
-        var status = moonRoad ? SectionHeading.Label(Strings.ColumnStatus) : Strings.ColumnStatus;
         using (moonRoad ? Typography.Eyebrow(name) : Typography.Caption())
         {
             var textY = MathF.Round((min.Y + max.Y - ImGui.GetTextLineHeight()) * 0.5f);
             var lead = UiMetrics.Px(26f);
-            dl.AddText(new Vector2(min.X + lead, textY), Theme.U32(moonRoad ? s.OrnamentHigh : s.Text), name);
-            dl.AddText(new Vector2(statusX, textY), Theme.U32(moonRoad || style == TableHeaderStyle.Eyebrow ? s.TextTertiary : s.TextSecondary), status);
+            Chrome.EllipsisTextAt(dl, new Vector2(min.X + lead, textY), MathF.Max(1f, max.X - min.X - lead), name, Theme.U32(moonRoad ? s.OrnamentHigh : s.Text));
         }
 
         switch (style)
@@ -431,7 +496,7 @@ public sealed partial class ConfigWindow
         }
     }
 
-    /// <summary>One sample row: its stripe, zebra and selection as the level draws them, the medal, the name and the state word.</summary>
+    /// <summary>One sample row: its stripe, zebra and selection as the level draws them, the medal and the name.</summary>
     private static void DrawPreviewRow(ImDrawListPtr dl, Vector2 min, Vector2 max, QuestState state, int index, float radius)
     {
         var s = Theme.Surface;
@@ -486,15 +551,13 @@ public sealed partial class ConfigWindow
         var line = ImGui.GetTextLineHeight();
         var textY = MathF.Round((min.Y + max.Y - line) * 0.5f);
         var nameX = center.X + UiMetrics.Px(14f);
-        var statusX = MathF.Round(min.X + ((max.X - min.X) * 0.58f));
         var name = state switch
         {
             QuestState.Ready => Strings.ConfigFlairPreviewReady,
             QuestState.Accepted => Strings.ConfigFlairPreviewJournal,
             _ => Strings.ConfigFlairPreviewDone,
         };
-        Chrome.EllipsisTextAt(dl, new Vector2(nameX, textY), MathF.Max(1f, statusX - nameX - UiMetrics.Px(6f)), name, Theme.U32(state == QuestState.Completed ? s.TextSecondary : s.Text));
-        Chrome.EllipsisTextAt(dl, new Vector2(statusX, textY), MathF.Max(1f, max.X - statusX), Strings.StateName(state), Theme.U32(state == QuestState.Completed ? Theme.MoonDim : Theme.StateColor(state)));
+        Chrome.EllipsisTextAt(dl, new Vector2(nameX, textY), MathF.Max(1f, max.X - nameX - UiMetrics.Px(4f)), name, Theme.U32(state == QuestState.Completed ? s.TextSecondary : s.Text));
 
         if (state == QuestState.Ready && FlairRules.ReadyRoad(flair))
         {

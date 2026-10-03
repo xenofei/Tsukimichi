@@ -813,8 +813,7 @@ public sealed partial class CharactersPane
     /// <summary>A section ring's tooltip: the section's name, then the filling moon's count and percent.</summary>
     private static void SectionTooltip(SectionRow row)
     {
-        using var tooltipStyle = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         UiMetrics.ApplyFontScale();
         using var wrap = UiMetrics.TooltipWrap();
         ImGui.TextUnformatted(row.Name);
@@ -1363,8 +1362,7 @@ public sealed partial class CharactersPane
     /// <summary>Job icon tooltip: the job's name, then "Level N" under it; a role row has no level and shows the name alone.</summary>
     private static void JobTooltip(string name, string level)
     {
-        using var tooltipStyle = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         UiMetrics.ApplyFontScale();
         using var wrap = UiMetrics.TooltipWrap();
         ImGui.TextUnformatted(name);
@@ -1379,8 +1377,7 @@ public sealed partial class CharactersPane
     /// <summary>Filling moon tooltip: what the moon shows, then the row's done/total (and percent where the row has one).</summary>
     private static void FillingMoonTooltip(string count, string? percent = null)
     {
-        using var tooltipStyle = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         UiMetrics.ApplyFontScale();
         using var wrap = UiMetrics.TooltipWrap();
         ImGui.TextUnformatted(Strings.FillingMoonTooltip);

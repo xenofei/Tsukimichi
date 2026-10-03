@@ -12,52 +12,90 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Full's banner night grade (docs/design/flair-v13/spec.md §1.2, <see cref="BannerGrade"/>) for the textures the
 /// banner chain hands out. The first time a banner is drawn its texture is read back once in the background
-/// (<see cref="Plugin.TextureReadback"/>, scaled down to the size it is drawn at), its mean colour measured, the multiply
-/// strength chosen from it, and the multiply and the 35 % desaturation applied to that copy; the scrim, the wash and the
-/// moon road are drawn over it as quads (<see cref="DrawOver"/>). Until the copy is ready the art draws with the
-/// multiply alone, as a tint at the default strength, so a daylight banner never shows ungraded. The art the game and
-/// the plugin ship is never graded itself. A few copies are kept; the oldest unused one is let go.
+/// (<see cref="Plugin.TextureReadback"/>, scaled down to the size it is drawn at), its mean colour and 99.5th-percentile
+/// lightness measured in one pass, the multiply strength chosen from them, and the multiply and the desaturation applied
+/// to that copy; the scrim, the wash and the moon road are drawn over it as quads (<see cref="DrawOver"/>). Until the
+/// copy is ready the art draws with the multiply alone, as a tint at the default strength, so a daylight banner never
+/// shows ungraded. When the banner comes to be drawn much wider than its copy (<see cref="BannerGrade.Regrade"/>) it is
+/// graded again at the new width, the old copy drawn until the new one lands. Copies are kept by the banner they show
+/// (<see cref="Key"/>: the game icon, the zone image's path or the bundled art), never by the texture's address, which
+/// the GPU may hand to another banner once the first is let go. The art the game and the plugin ship is never graded
+/// itself. A few copies are kept; the oldest unused one is let go.
 /// </summary>
 public static class BannerGrading
 {
-    /// <summary>How wide a graded copy is at most, in pixels: the banner is never drawn wider than this.</summary>
-    private const int MaxWidth = 640;
-
     /// <summary>How many graded copies are kept.</summary>
     private const int Capacity = 6;
+
+    /// <summary>Frames a replaced or evicted copy is kept after it was last drawn, so a draw list never holds a freed texture.</summary>
+    private const int RetireFrames = 2;
+
+    /// <summary>
+    /// Which banner a texture shows: its source kind, and the icon id, the game path or the bundled art that names it.
+    /// Built by <see cref="KeyFor"/>; a record struct, so it compares by value and allocates nothing.
+    /// </summary>
+    public readonly record struct Key(BannerSource Source, uint IconId, string? GamePath, BannerArt Art);
 
     private sealed class Entry
     {
         public Task? Work;
         public IDalamudTextureWrap? Graded;
+        public IDalamudTextureWrap? Next;
+        public int Width;
         public float Strength = BannerGrade.DefaultStrength;
         public int UsedFrame;
         public bool Failed;
     }
 
-    private static readonly Dictionary<(nint Handle, int Width, int Height), Entry> Entries = [];
+    private static readonly Dictionary<Key, Entry> Entries = [];
+    private static readonly List<(IDalamudTextureWrap Wrap, int Frame)> Retired = [];
     private static readonly object Gate = new();
     private static bool disposed;
 
     /// <summary>
-    /// Draws <paramref name="source"/> cover-cropped into <paramref name="min"/>..<paramref name="max"/>, night-graded:
-    /// the graded copy once it is ready, the source multiplied by the default tint until then.
+    /// The identity of the banner <see cref="BannerArtwork.TryGetWrap"/> drew for <paramref name="choice"/>, given the
+    /// source it reports as <paramref name="shown"/> (the bundled art when a game texture failed and it stood in).
     /// </summary>
-    public static void DrawImage(ImDrawListPtr dl, IDalamudTextureWrap source, Vector2 min, Vector2 max, float rounding)
+    public static Key KeyFor(in BannerChoice choice, BannerSource shown) => shown switch
     {
-        var key = ((nint)source.Handle.Handle, source.Width, source.Height);
+        BannerSource.Own or BannerSource.Sibling or BannerSource.Duty => new Key(BannerSource.Own, choice.IconId, null, default),
+        BannerSource.Zone => new Key(BannerSource.Zone, 0, choice.GamePath, default),
+        _ => new Key(BannerSource.Category, 0, null, choice.Art),
+    };
+
+    /// <summary>
+    /// Draws <paramref name="source"/>, the banner named by <paramref name="key"/>, cover-cropped into
+    /// <paramref name="min"/>..<paramref name="max"/>, night-graded: the graded copy once it is ready, the source
+    /// multiplied by the default tint until then.
+    /// </summary>
+    public static void DrawImage(ImDrawListPtr dl, IDalamudTextureWrap source, in Key key, Vector2 min, Vector2 max, float rounding)
+    {
+        var frame = ImGui.GetFrameCount();
+        var drawWidth = (int)MathF.Ceiling(max.X - min.X);
         Entry? entry;
         lock (Gate)
         {
+            FlushRetired(frame);
             if (!Entries.TryGetValue(key, out entry))
             {
                 entry = new Entry();
                 Entries[key] = entry;
-                Start(entry, source, (int)MathF.Ceiling(max.X - min.X), (int)MathF.Ceiling(max.Y - min.Y));
-                Evict(ImGui.GetFrameCount());
+                Start(entry, source, drawWidth);
+                Evict(frame);
+            }
+            else if (entry.Next is { } next)
+            {
+                // A wider copy landed: swap it in on the draw thread, and let the old one go once no frame draws it.
+                Retire(entry.Graded, frame);
+                entry.Graded = next;
+                entry.Next = null;
+            }
+            else if (entry.Work is { IsCompleted: true } && !entry.Failed && BannerGrade.Regrade(entry.Width, drawWidth, source.Width))
+            {
+                Start(entry, source, drawWidth);
             }
 
-            entry.UsedFrame = ImGui.GetFrameCount();
+            entry.UsedFrame = frame;
         }
 
         if (entry.Graded is { } graded)
@@ -136,13 +174,22 @@ public static class BannerGrading
             {
                 entry.Graded?.Dispose();
                 entry.Graded = null;
+                entry.Next?.Dispose();
+                entry.Next = null;
             }
 
             Entries.Clear();
+            foreach (var (wrap, _) in Retired)
+            {
+                wrap.Dispose();
+            }
+
+            Retired.Clear();
         }
     }
 
-    private static void Start(Entry entry, IDalamudTextureWrap source, int drawWidth, int drawHeight)
+    /// <summary>Reads <paramref name="source"/> back at about <paramref name="drawWidth"/> (<see cref="BannerGrade.CopyWidth"/>), keeping its aspect, and grades it. Under <see cref="Gate"/>.</summary>
+    private static void Start(Entry entry, IDalamudTextureWrap source, int drawWidth)
     {
         if (Plugin.TextureReadback is not { } readback || Plugin.TextureProvider is not { } textures)
         {
@@ -150,9 +197,9 @@ public static class BannerGrading
             return;
         }
 
-        // Read back at about the size it is drawn (never wider than MaxWidth), keeping the art's aspect.
-        var width = Math.Clamp(Math.Max(drawWidth, 64), 64, Math.Min(MaxWidth, Math.Max(64, source.Width)));
+        var width = BannerGrade.CopyWidth(drawWidth, source.Width);
         var height = Math.Max(16, (int)MathF.Round(width * (float)source.Height / Math.Max(1, source.Width)));
+        entry.Width = width;
         entry.Work = Task.Run(async () =>
         {
             try
@@ -160,8 +207,9 @@ public static class BannerGrading
                 var args = new TextureModificationArgs { DxgiFormat = BgraFormat, NewWidth = width, NewHeight = height };
                 var (spec, raw) = await readback.GetRawImageAsync(source, args, leaveWrapOpen: true);
                 var bgra = spec.DxgiFormat == BgraFormat;
-                var mean = BannerGrade.MeanRgb(raw, spec.Width, spec.Height, spec.Pitch, bgra, step: 2);
-                var strength = BannerGrade.Strength(mean);
+                var histogram = new int[BannerGrade.HistogramBins];
+                var mean = BannerGrade.MeanRgb(raw, spec.Width, spec.Height, spec.Pitch, bgra, step: 2, lumaHistogram: histogram);
+                var strength = BannerGrade.Strength(mean, BannerGrade.LumaPercentile(histogram, BannerGrade.PeakFraction));
                 entry.Strength = strength;
                 BannerGrade.GradeInPlace(raw, spec.Width, spec.Height, spec.Pitch, bgra, strength);
                 var wrap = await textures.CreateFromRawAsync(spec, raw, "Tsukimichi banner (night grade)");
@@ -173,7 +221,16 @@ public static class BannerGrading
                         return;
                     }
 
-                    entry.Graded = wrap;
+                    // The first copy shows at once; a wider one waits for the draw thread to swap it in.
+                    if (entry.Graded is null)
+                    {
+                        entry.Graded = wrap;
+                    }
+                    else
+                    {
+                        entry.Next?.Dispose();
+                        entry.Next = wrap;
+                    }
                 }
             }
             catch (Exception ex)
@@ -192,11 +249,11 @@ public static class BannerGrading
     {
         while (Entries.Count > Capacity)
         {
-            (nint, int, int)? oldest = null;
+            Key? oldest = null;
             var oldestFrame = int.MaxValue;
             foreach (var (key, entry) in Entries)
             {
-                if (entry.UsedFrame < oldestFrame && frame - entry.UsedFrame > 2 && entry.Work is not { IsCompleted: false })
+                if (entry.UsedFrame < oldestFrame && frame - entry.UsedFrame > RetireFrames && entry.Work is not { IsCompleted: false })
                 {
                     oldest = key;
                     oldestFrame = entry.UsedFrame;
@@ -208,8 +265,32 @@ public static class BannerGrading
                 return;
             }
 
-            Entries[victim].Graded?.Dispose();
+            var gone = Entries[victim];
+            gone.Graded?.Dispose();
+            gone.Next?.Dispose();
             Entries.Remove(victim);
+        }
+    }
+
+    /// <summary>Keeps a replaced copy until no frame's draw list can still hold it. Under <see cref="Gate"/>.</summary>
+    private static void Retire(IDalamudTextureWrap? wrap, int frame)
+    {
+        if (wrap is not null)
+        {
+            Retired.Add((wrap, frame));
+        }
+    }
+
+    /// <summary>Lets the replaced copies go once <see cref="RetireFrames"/> have passed. Under <see cref="Gate"/>.</summary>
+    private static void FlushRetired(int frame)
+    {
+        for (var i = Retired.Count - 1; i >= 0; i--)
+        {
+            if (frame - Retired[i].Frame > RetireFrames)
+            {
+                Retired[i].Wrap.Dispose();
+                Retired.RemoveAt(i);
+            }
         }
     }
 

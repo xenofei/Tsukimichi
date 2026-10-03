@@ -2069,8 +2069,7 @@ public sealed class TablePane : IDisposable
     /// </summary>
     private void DrawNameTooltip(QuestRecord quest, QuestState state)
     {
-        using var tooltipStyle = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         UiMetrics.ApplyFontScale();
         var width = UiMetrics.BannerTooltipWidth;
         var spoilers = runner.Spoilers;
@@ -2160,8 +2159,7 @@ public sealed class TablePane : IDisposable
 
         if (fit < count && DrawMoreCount(count - fit, cell, fit > 0 ? ImGui.GetItemRectMax().X + gap : cell.X, in layout))
         {
-            using var tooltipStyle = Theme.PushTooltip();
-            using var tooltip = ImRaii.Tooltip();
+            using var tooltip = Theme.Tooltip();
             ImGui.PushFont(UiBuilder.DefaultFont);
             UiMetrics.ApplyFontScale();
             var skipped = 0;
@@ -2233,8 +2231,7 @@ public sealed class TablePane : IDisposable
 
         if (fit < count && DrawMoreCount(count - fit, cell, fit > 0 ? ImGui.GetItemRectMax().X + gap : cell.X, in layout))
         {
-            using var tooltipStyle = Theme.PushTooltip();
-            using var tooltip = ImRaii.Tooltip();
+            using var tooltip = Theme.Tooltip();
             ImGui.PushFont(UiBuilder.DefaultFont);
             UiMetrics.ApplyFontScale();
             var skipped = 0;

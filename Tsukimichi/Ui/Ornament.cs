@@ -312,8 +312,8 @@ public static class Ornament
     /// <summary>
     /// The corner marks of a brass frame: an L of <paramref name="size"/> px at each corner (or only the top-left and
     /// bottom-right with <paramref name="twoOnly"/>, the tooltip's), 1.5 px thick, overlapping the frame by a pixel so
-    /// the mark and the frame read as one casting; the top marks lit, the bottom ones a darker brass, each with a faint
-    /// warm glow.
+    /// the mark and the frame read as one casting; the top marks lit, the bottom ones a darker brass. No glow: brass
+    /// catches the light, it does not give it.
     /// </summary>
     public static void CornerMarks(ImDrawListPtr dl, Vector2 min, Vector2 max, float size, bool twoOnly = false)
     {
@@ -340,9 +340,6 @@ public static class Ornament
 
     private static void Mark(ImDrawListPtr dl, Vector2 corner, Vector2 along, Vector2 down, float size, float width, Vector4 tone)
     {
-        var glow = Theme.WithAlpha(Theme.Moon, 0.12f);
-        dl.AddLine(corner + (along * size), corner, glow, width * 2.6f);
-        dl.AddLine(corner, corner + (down * size), glow, width * 2.6f);
         var ink = Theme.U32(tone);
         dl.AddLine(corner + (along * size), corner - (along * (width * 0.5f)), ink, width);
         dl.AddLine(corner - (down * (width * 0.5f)), corner + (down * size), ink, width);

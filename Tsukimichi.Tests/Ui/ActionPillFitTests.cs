@@ -126,4 +126,13 @@ public class ActionPillFitTests
         Assert.Equal(38f, ActionPillFit.IconOnlyWidth(26f), 3);
         Assert.Equal(0f, ActionPillFit.IconOnlyWidth(float.NaN));
     }
+
+    [Fact]
+    public void A_text_only_pill_is_the_label_between_its_pads()
+    {
+        // Plain's buttons: no icon and no gap, so neither is counted (nor clamped away into an off-centre label).
+        Assert.Equal(12f + 14f + 60f, ActionPillFit.TextOnlyWidth(60f, 1f), 3);
+        Assert.Equal(((12f + 14f) * 2f) + 120f, ActionPillFit.TextOnlyWidth(120f, 2f), 3);
+        Assert.Equal(12f + 14f, ActionPillFit.TextOnlyWidth(float.NaN, float.NaN), 3);
+    }
 }

@@ -187,8 +187,7 @@ public static class UiMetrics
     /// </summary>
     public static void Tooltip(string text)
     {
-        using var tooltipStyle = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         using var body = Typography.Body();
         ApplyFontScale();
         using (TooltipWrap())
@@ -200,8 +199,7 @@ public static class UiMetrics
     /// <summary>A two-line tooltip: <paramref name="text"/>, then <paramref name="detail"/> in the disabled tone when it is not empty; both wrap.</summary>
     public static void Tooltip(string text, string? detail)
     {
-        using var tooltipStyle = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         using var body = Typography.Body();
         ApplyFontScale();
         using (TooltipWrap())

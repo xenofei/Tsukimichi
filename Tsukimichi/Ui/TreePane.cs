@@ -213,6 +213,9 @@ public sealed partial class TreePane
     private float rowPadY;
     private float glyphRadius;
 
+    /// <summary>The row height last frame, so a change of it rescales the scroll offset.</summary>
+    private float lastRowHeight;
+
     /// <param name="ui">The shared UI state.</param>
     /// <param name="textures">The texture provider the orbits read the game icons through.</param>
     /// <param name="nodeIcons">The current catalog's node icons (<see cref="Game.SessionState.NodeIcons"/>), resolved once per catalog.</param>
@@ -242,6 +245,16 @@ public sealed partial class TreePane
         lineHeight = ImGui.GetTextLineHeight();
         glyphRadius = UiMetrics.TreeGlyphRadius(lineHeight);
         rowPadY = MathF.Max(ImGui.GetStyle().FramePadding.Y, (UiMetrics.TreeRowHeight(lineHeight) - lineHeight) * 0.5f);
+
+        // Rows that change height (the Decoration level, the density, the UI scale) keep the same rows in view rather
+        // than the pixel offset, which would land elsewhere in the tree (as the quest table does).
+        var rowHeight = lineHeight + (rowPadY * 2f);
+        if (lastRowHeight > 0f && rowHeight != lastRowHeight && ImGui.GetScrollY() is var scrollY and > 0f)
+        {
+            ImGui.SetScrollY(scrollY / lastRowHeight * rowHeight);
+        }
+
+        lastRowHeight = rowHeight;
 
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
@@ -544,13 +557,15 @@ public sealed partial class TreePane
         }
 
         // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding). Plain draws
-        // no gauge, so the name starts there; a right-aligned percentage column takes its place (flair v13 §1).
+        // no gauge, so the name starts there; a right-aligned percentage column takes its place (flair v13 §1), never on
+        // the tally row, which counts rather than measures.
         var labelX = indentX + ImGui.GetFontSize() + style.FramePadding.X * 2f;
         var gauge = FlairRules.Gauge(Theme.Flair);
         var haloCenter = new Vector2(labelX + radius, rowCenterY);
         var namePos = new Vector2(gauge == TreeGauge.None ? labelX : labelX + radius * 2f + pad, textY);
         var right = max.X - pad;
-        if (gauge == TreeGauge.None && node.PercentText.Length > 0)
+        var percentColumn = gauge == TreeGauge.None && !node.CountIsTally && node.PercentText.Length > 0;
+        if (percentColumn)
         {
             var column = ImGui.CalcTextSize(PercentColumnSample).X;
             var percentWidth = node.PercentWidth;
@@ -558,12 +573,13 @@ public sealed partial class TreePane
             right -= column + pad;
         }
 
-        // The tier sets each part's form: the count as "done / total", as a percentage (none once complete), or gone.
+        // The tier sets each part's form: the count as "done / total", as a percentage (none once complete, nor where
+        // Plain's percentage column already says it), or gone.
         var (countText, countWidth) = tier switch
         {
             TreeTier.Full or TreeTier.Trim => (node.CountText, node.CountWidth),
             TreeTier.Compact when node.CountIsTally => (node.CountText, node.CountWidth),
-            TreeTier.Compact when !complete => (node.PercentText, node.PercentWidth),
+            TreeTier.Compact when !complete && !percentColumn => (node.PercentText, node.PercentWidth),
             _ => (string.Empty, 0f),
         };
 
@@ -784,8 +800,7 @@ public sealed partial class TreePane
                 var progress = node.HoverText.Length > 0 ? node.HoverText : node.ProgressText;
                 if (row.ReadyDot)
                 {
-                    using var readyStyle = Theme.PushTooltip();
-                    using var readyTip = ImRaii.Tooltip();
+                    using var readyTip = Theme.Tooltip();
                     UiMetrics.ApplyFontScale();
                     using var readyWrap = UiMetrics.TooltipWrap();
                     ImGui.TextUnformatted(Strings.FillingMoonTooltip);
@@ -812,8 +827,7 @@ public sealed partial class TreePane
             return;
         }
 
-        using var tooltipStyle = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         UiMetrics.ApplyFontScale();
         using var wrap = UiMetrics.TooltipWrap();
         var box = 2f * MathF.Max(16f, UiMetrics.Icon(11f));

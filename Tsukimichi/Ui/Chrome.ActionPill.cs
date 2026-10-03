@@ -40,8 +40,11 @@ public static partial class Chrome
     /// <summary>Plain draws its action buttons as text only (no icon), so their widths leave the icon and its gap out.</summary>
     private static bool TextOnlyPills => Theme.Flair == Flair.Plain;
 
-    /// <summary>The icon's share of a labelled pill's width: its width, or at Plain minus the gap so neither is counted.</summary>
-    private static float LabelIconWidth(string icon) => TextOnlyPills ? -UiMetrics.Px(ActionPillFit.IconGapLogical) : IconWidth(icon);
+    /// <summary>A labelled pill's width with a label <paramref name="labelWidth"/> wide: the icon, the gap and the label, or at Plain the label alone.</summary>
+    private static float LabelledPillWidth(string icon, float labelWidth) =>
+        TextOnlyPills
+            ? ActionPillFit.TextOnlyWidth(labelWidth, UiMetrics.Scale)
+            : ActionPillFit.LabelledWidth(IconWidth(icon), labelWidth, UiMetrics.Scale);
 
     /// <summary>The dark ink on Full's lit gold pill and Quiet's flat gold one.</summary>
     private static readonly Vector4 GoldInk = Core.Ui.ColorMath.FromHex(0x1A1406);
@@ -61,11 +64,10 @@ public static partial class Chrome
     /// </summary>
     public static PillWidths ActionPillWidths(string icon, string label, string shortLabel)
     {
-        var iconWidth = LabelIconWidth(icon);
-        var full = ActionPillFit.LabelledWidth(iconWidth, ImGui.CalcTextSize(label).X, UiMetrics.Scale);
+        var full = LabelledPillWidth(icon, ImGui.CalcTextSize(label).X);
         var brief = ReferenceEquals(label, shortLabel) || string.Equals(label, shortLabel, StringComparison.Ordinal)
             ? full
-            : ActionPillFit.LabelledWidth(iconWidth, ImGui.CalcTextSize(shortLabel).X, UiMetrics.Scale);
+            : LabelledPillWidth(icon, ImGui.CalcTextSize(shortLabel).X);
         return new PillWidths(full, MathF.Min(full, brief), ActionPillFit.IconOnlyWidth(ActionPillHeight));
     }
 
@@ -73,7 +75,7 @@ public static partial class Chrome
     public static float ActionPillWidth(string icon, string? label) =>
         label is null
             ? ActionPillFit.IconOnlyWidth(ActionPillHeight)
-            : ActionPillFit.LabelledWidth(LabelIconWidth(icon), ImGui.CalcTextSize(label).X, UiMetrics.Scale);
+            : LabelledPillWidth(icon, ImGui.CalcTextSize(label).X);
 
     /// <summary>
     /// A labelled action pill (1.10, the detail pane's travel and automation row, the Hand in and Duties hand-offs):
@@ -95,7 +97,9 @@ public static partial class Chrome
         var textOnly = label is not null && TextOnlyPills;
         var width = label is null
             ? ActionPillFit.IconOnlyWidth(height)
-            : ActionPillFit.LabelledWidth(textOnly ? -UiMetrics.Px(ActionPillFit.IconGapLogical) : iconSize.X, labelSize.X, UiMetrics.Scale);
+            : textOnly
+                ? ActionPillFit.TextOnlyWidth(labelSize.X, UiMetrics.Scale)
+                : ActionPillFit.LabelledWidth(iconSize.X, labelSize.X, UiMetrics.Scale);
         var min = ImGui.GetCursorScreenPos();
         ImGui.BeginDisabled(!enabled);
         var clicked = ImGui.InvisibleButton(id, new Vector2(width, height));
@@ -180,7 +184,8 @@ public static partial class Chrome
 
         if (label is not null)
         {
-            var labelX = textOnly ? iconX : iconX + iconSize.X + UiMetrics.Px(ActionPillFit.IconGapLogical);
+            // Plain's text-only button centres its label; the others set it after the icon and the gap.
+            var labelX = textOnly ? min.X + ((width - labelSize.X) * 0.5f) : iconX + iconSize.X + UiMetrics.Px(ActionPillFit.IconGapLogical);
             dl.AddText(new Vector2(MathF.Round(labelX), MathF.Round(min.Y + ((height - labelSize.Y) * 0.5f))), ink, label);
         }
 

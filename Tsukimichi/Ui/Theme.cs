@@ -475,7 +475,7 @@ public static class Theme
     ///
     /// Popups and tooltips, decided explicitly: a colour pushed before Begin is still on the stack while Draw runs, so
     /// every popup, combo and tooltip begun inside the window inherits it. <c>PopupBg</c> is therefore pushed as well,
-    /// so they read as Night as a whole rather than half-Night by accident; <see cref="PushTooltip"/> (every
+    /// so they read as Night as a whole rather than half-Night by accident; <see cref="Tooltip"/> (every
     /// <see cref="UiMetrics.Tooltip(string)"/>) and <see cref="PushPopup"/> restyle them explicitly on top, which is
     /// also what windows without this push (the Todo overlay's menus) get. The title bar and
     /// Dalamud's own title-bar buttons take <c>TitleBg*</c> from here. With <see cref="FollowingDalamud"/> nothing is
@@ -543,12 +543,12 @@ public static class Theme
     /// A tooltip in the active palette and Decoration level (ui-revamp §3 "Tooltip", docs/design/flair-v13 §1
     /// "Tooltips"): primary text and the secondary tone for <c>TextDisabled</c> lines, in one of three frames. Full: the
     /// raised tone at 0.97, radius 4, padding 12 × 10, and the cards' brass frame with corner marks at the top left and
-    /// bottom right (<see cref="TooltipScope"/> draws it once the tooltip has ended). Quiet: flat, a 1 px neutral border,
-    /// radius 6. Plain: a plain box, radius 2, padding 7 × 5. Push before <c>BeginTooltip</c>
-    /// (<see cref="UiMetrics.Tooltip(string)"/> does), dispose after it ends. The tooltip fades in
+    /// bottom right (<see cref="TooltipScope"/> draws it just before the tooltip ends). Quiet: flat, a 1 px neutral
+    /// border, radius 6. Plain: a plain box, radius 2, padding 7 × 5. Begins the tooltip itself; its contents follow, and
+    /// disposing the scope ends it (<see cref="UiMetrics.Tooltip(string)"/> does all three). The tooltip fades in
     /// (<see cref="PopupFade"/>), once per item rather than on every frame the pointer moves within it.
     /// </summary>
-    public static TooltipScope PushTooltip()
+    public static TooltipScope Tooltip()
     {
         PopupFade.NoteTooltip();
         var s = Surface;
@@ -569,41 +569,48 @@ public static class Theme
         ImGui.PushStyleVar(ImGuiStyleVar.PopupRounding, UiMetrics.Px(rounding));
         ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1f);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(UiMetrics.Px(padding.X), UiMetrics.Px(padding.Y)));
+        ImGui.BeginTooltip();
         return new TooltipScope(count, 3, style == TooltipStyle.Brass ? UiMetrics.Px(rounding) : -1f);
     }
 
     /// <summary>
-    /// The scope <see cref="PushTooltip"/> returns: pops its style, and at Full, once the tooltip window has ended, lays
-    /// the brass frame over its edge (on the foreground, where nothing else draws): the cards' lit brass with corner
-    /// marks at the top left and bottom right. A struct; <c>using</c> allocates nothing. Dispose exactly once, after the
-    /// tooltip.
+    /// The scope <see cref="Tooltip"/> returns. On dispose, at Full, it lays the brass frame over the tooltip's edge
+    /// (the cards' lit brass with corner marks at the top left and bottom right) into the tooltip's own draw list, so
+    /// the frame fades in with the tooltip (<see cref="PopupFade"/>); not while the window is hidden or still sizing
+    /// itself to its contents, when its rectangle is not yet the one shown. Then it ends the tooltip and pops the style.
+    /// A struct; <c>using</c> allocates nothing. Dispose exactly once.
     /// </summary>
     public readonly struct TooltipScope(int colors, int vars, float brassRounding) : IDisposable
     {
         public void Dispose()
         {
+            if (brassRounding >= 0f)
+            {
+                DrawBrass();
+            }
+
+            ImGui.EndTooltip();
             new StyleScope(colors, vars).Dispose();
-            if (brassRounding < 0f)
+        }
+
+        private void DrawBrass()
+        {
+            var window = ImGuiP.GetCurrentWindow();
+            if (window.IsNull || window.Hidden || window.HiddenFramesCannotSkipItems > 0 || window.AutoFitFramesX > 0 || window.AutoFitFramesY > 0)
             {
                 return;
             }
 
-            var window = ImGuiP.FindWindowByName(TooltipWindowName);
-            if (window.IsNull || !window.Active)
-            {
-                return;
-            }
-
+            // The frame straddles the window's edge, past its clip rectangle: draw with the whole screen as the clip.
             var min = window.Pos;
             var max = min + window.Size;
-            var dl = ImGui.GetForegroundDrawList();
+            var dl = ImGui.GetWindowDrawList();
+            dl.PushClipRectFullScreen();
             Ornament.BrassBorder(dl, min, max, brassRounding, UiMetrics.Hairline);
             Ornament.CornerMarks(dl, min, max, MathF.Round(UiMetrics.Px(7f)), twoOnly: true);
+            dl.PopClipRect();
         }
     }
-
-    /// <summary>ImGui's name for the first tooltip window of a frame (imgui.cpp, BeginTooltipEx: "##Tooltip_%02d").</summary>
-    private const string TooltipWindowName = "##Tooltip_00";
 
     /// <summary>
     /// A popup or context menu in the active palette: the tooltip's surface plus menu-item, frame, button and check
