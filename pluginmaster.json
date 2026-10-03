@@ -3,7 +3,7 @@
     "Author": "Michiru Tsukikage",
     "Name": "Tsukimichi",
     "InternalName": "Tsukimichi",
-    "AssemblyVersion": "1.12.3.0",
+    "AssemblyVersion": "1.12.4.0",
     "Description": "A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.\nMoonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/xenofei/Tsukimichi",
@@ -21,13 +21,13 @@
     "IconUrl": "https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon-medallion.png",
     "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.3/latest.zip",
-    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.3/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.3/latest.zip",
-    "LastUpdate": 1791006249,
+    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.4/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.4/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.4/latest.zip",
+    "LastUpdate": 1791006956,
     "DownloadCount": 0,
     "IsHide": false,
     "IsTestingExclusive": false,
-    "Changelog": "Changed\n- **Rewards and Unlocks split cleanly.** Rewards shows only what you receive and keep: items, gear, currencies, mounts, minions, emotes, hairstyles, orchestrion rolls, Triple Triad cards, titles and soul crystals. Unlocks shows the access and abilities you gain: areas, aetherytes, duties, flying (aether currents), features, jobs and actions. Nothing appears in both.\n- **Rewards and Unlocks look like a pair in the quest pane:** the same tile size and spacing, Rewards first, and a section with nothing in it is hidden. Action rows show their own icons, and titles moved into Rewards."
+    "Changelog": "Fixed\n- The plugin installer shows the new Menphina's Medallion icon. Dalamud had kept the old picture because its address never changed; the icon now has a new address. If you still see the old one, restart the game once."
   }
 ]
