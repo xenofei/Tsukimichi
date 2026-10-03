@@ -732,6 +732,8 @@ public sealed partial class MainWindow : Window, IDisposable
         var spoilers = plugin.Session.Spoilers;
         // Chat results mirror the table: removed quests only when the Include removed filter is on.
         var showUnlisted = ui.Filters.IncludeUnlisted;
+        // Sprout mode leaves out what lies past the character's reach, as the table does.
+        var reach = runner.UnlockReach;
         var count = 0;
         foreach (var quest in bundle.Catalog.All)
         {
@@ -743,7 +745,7 @@ public sealed partial class MainWindow : Window, IDisposable
             if (count < MaxChatMatches)
             {
                 // What it opens after the link (feature plan v6 K4), never for a quest the shield masks.
-                var opens = runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) ? Core.Unlocks.UnlockText.Opens(unlocks.Places(quest.RowId)) : string.Empty;
+                var opens = runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) ? Core.Unlocks.UnlockText.Opens(unlocks.Places(quest.RowId, reach)) : string.Empty;
                 links.PrintQuestLink(quest, opens.Length > 0 ? opens : null);
             }
 
@@ -775,10 +777,14 @@ public sealed partial class MainWindow : Window, IDisposable
         BringToFront();
     }
 
-    /// <summary>Closing inside the save debounce must not lose the pending filters, sort or display settings.</summary>
+    /// <summary>
+    /// Closing inside the save debounce must not lose the pending filters, sort or display settings. The notice dock's
+    /// clock stops, so a prompt still has its time left when the window opens again.
+    /// </summary>
     public override void OnClose()
     {
         FlushSettings(DateTime.UtcNow, force: true);
+        notices.Suspend();
         SyncTourState();
     }
 

@@ -19,12 +19,42 @@ public enum FloatingLayer
 /// The one slot manager for everything that floats over the main window's body (feature plan v6 U2): the notice dock,
 /// the Undo toast and hints. Each has a home along the body's bottom edge (the Undo toast centred, the dock to the
 /// right, a hint to the left), and the rules are the same for all of them: never cover the status bar (the body's
-/// bottom is its top), never cover the selected row, and never cover each other. A layer that would collide stacks
-/// above the ones already placed; one that would cover the selected row moves to the top edge instead, or beside the
-/// row when the body is too short for either. Pure geometry, so the rules are tested.
+/// bottom is its top), never cover the detail pane's sticky action bar, never cover the selected row, and never cover
+/// each other. A layer that would collide stacks above the ones already placed (and above the action bar); one that
+/// would cover the selected row moves to the top edge instead, or beside the row when the body is too short for either.
+/// Pure geometry, so the rules are tested.
 /// </summary>
 public static class FloatingSlots
 {
+    /// <summary>
+    /// Places every layer that shows this frame, in <see cref="FloatingLayer"/> order: <paramref name="wanted"/>[i] says
+    /// whether layer i shows and <paramref name="sizes"/>[i] how big it is; its place goes to <paramref name="placed"/>[i].
+    /// <paramref name="keepAbove"/> is a bar along the bottom the layers sit above (the detail pane's action bar; empty
+    /// when none shows), <paramref name="keepClear"/> the selected row. Allocation-free.
+    /// </summary>
+    public static void PlaceAll(ReadOnlySpan<Vector2> sizes, ReadOnlySpan<bool> wanted, in ScreenRect area, in ScreenRect keepClear, in ScreenRect keepAbove, float margin, Span<ScreenRect> placed)
+    {
+        var layers = Math.Min(Math.Min(sizes.Length, wanted.Length), placed.Length);
+        Span<ScreenRect> taken = stackalloc ScreenRect[layers + 1];
+        var count = 0;
+        if (!keepAbove.IsEmpty)
+        {
+            // Taken before any layer, so a layer at the bottom edge stacks above it as it would above another layer.
+            taken[count++] = keepAbove;
+        }
+
+        for (var i = 0; i < layers; i++)
+        {
+            if (!wanted[i])
+            {
+                continue;
+            }
+
+            placed[i] = Place((FloatingLayer)i, sizes[i], in area, in keepClear, taken[..count], margin);
+            taken[count++] = placed[i];
+        }
+    }
+
     /// <summary>
     /// Places <paramref name="layer"/>, <paramref name="size"/> big, inside <paramref name="area"/> (the body, its
     /// bottom at the status bar's top) with <paramref name="margin"/> from its edges, clear of

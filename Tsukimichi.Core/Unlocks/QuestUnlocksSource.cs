@@ -8,7 +8,8 @@ namespace Tsukimichi.Core.Unlocks;
 /// once per catalog off the calling thread (it reads a few sheets and walks the main scenario); until it is ready the
 /// index of the previous catalog serves (a row id names the same quest in both), or <see cref="QuestUnlocks.Empty"/>. A
 /// build that throws is reported once and not retried until the catalog changes. Poll it from one thread (the framework
-/// thread). The one-line forms (<see cref="Summary"/>, <see cref="Names"/>) are memoized per quest until the index or the
+/// thread), every frame: a reader that waited for the first draw to start the build would get an empty index. The
+/// one-line forms (<see cref="Summary"/>, <see cref="Names"/>) are memoized per quest and reach until the index or the
 /// language changes, so a tooltip drawn every frame allocates once.
 /// </summary>
 public sealed class QuestUnlocksSource
@@ -17,10 +18,10 @@ public sealed class QuestUnlocksSource
     private readonly Func<QuestCatalog, QuestUnlocks> build;
     private readonly Func<Func<QuestUnlocks>, Task<QuestUnlocks>> start;
     private readonly Action<Exception>? onError;
-    private readonly Dictionary<uint, string> summaries = [];
-    private readonly Dictionary<uint, string> names = [];
-    private readonly Dictionary<uint, string> opensLines = [];
-    private readonly Dictionary<uint, string> places = [];
+    private readonly Dictionary<(uint RowId, byte Reach), string> summaries = [];
+    private readonly Dictionary<(uint RowId, byte Reach), string> names = [];
+    private readonly Dictionary<(uint RowId, byte Reach), string> opensLines = [];
+    private readonly Dictionary<(uint RowId, byte Reach), string> places = [];
 
     private QuestUnlocks current = QuestUnlocks.Empty;
     private Task<QuestUnlocks>? pending;
@@ -66,19 +67,22 @@ public sealed class QuestUnlocksSource
     /// <summary>What the quest opens (<see cref="QuestUnlocks.For"/>).</summary>
     public IReadOnlyList<UnlockEntry> For(uint rowId) => Current.For(rowId);
 
-    /// <summary><see cref="UnlockText.Summary"/> of the quest, memoized; empty when it opens nothing but next quests.</summary>
-    public string Summary(uint rowId) => Memo(summaries, rowId, static e => UnlockText.Summary(e));
+    // Each one-line form reads only the rows within reach (UnlockView.Visible): Sprout mode passes the character's
+    // reach, so a later expansion's city stays out of every tooltip and column, not only the detail pane.
 
-    /// <summary><see cref="UnlockText.Names"/> of the quest, memoized; empty when it opens nothing but next quests.</summary>
-    public string Names(uint rowId) => Memo(names, rowId, static e => UnlockText.Names(e));
+    /// <summary><see cref="UnlockText.Summary"/> of the quest's rows within <paramref name="reach"/>, memoized; empty when it opens nothing but next quests.</summary>
+    public string Summary(uint rowId, byte reach = byte.MaxValue) => Memo(summaries, rowId, reach, static e => UnlockText.Summary(e));
 
-    /// <summary><see cref="UnlockText.OpensLine"/> of the quest, memoized: "Opens Kugane (area) · …"; empty when none.</summary>
-    public string OpensLine(uint rowId) => Memo(opensLines, rowId, static e => UnlockText.OpensLine(e));
+    /// <summary><see cref="UnlockText.Names"/> of the quest's rows within <paramref name="reach"/>, memoized; empty when it opens nothing but next quests.</summary>
+    public string Names(uint rowId, byte reach = byte.MaxValue) => Memo(names, rowId, reach, static e => UnlockText.Names(e));
 
-    /// <summary><see cref="UnlockText.Places"/> of the quest, memoized: areas, aetherytes, duties and features only.</summary>
-    public string Places(uint rowId) => Memo(places, rowId, static e => UnlockText.Places(e));
+    /// <summary><see cref="UnlockText.OpensLine"/> of the quest's rows within <paramref name="reach"/>, memoized: "Opens Kugane (area) · …"; empty when none.</summary>
+    public string OpensLine(uint rowId, byte reach = byte.MaxValue) => Memo(opensLines, rowId, reach, static e => UnlockText.OpensLine(e));
 
-    private string Memo(Dictionary<uint, string> cache, uint rowId, Func<IReadOnlyList<UnlockEntry>, string> compose)
+    /// <summary><see cref="UnlockText.Places"/> of the quest's rows within <paramref name="reach"/>, memoized: areas, aetherytes, duties and features only.</summary>
+    public string Places(uint rowId, byte reach = byte.MaxValue) => Memo(places, rowId, reach, static e => UnlockText.Places(e));
+
+    private string Memo(Dictionary<(uint RowId, byte Reach), string> cache, uint rowId, byte reach, Func<IReadOnlyList<UnlockEntry>, string> compose)
     {
         var index = Current;
         if (textVersion != CoreText.Version)
@@ -87,13 +91,13 @@ public sealed class QuestUnlocksSource
             ClearText();
         }
 
-        if (cache.TryGetValue(rowId, out var known))
+        if (cache.TryGetValue((rowId, reach), out var known))
         {
             return known;
         }
 
-        var text = compose(index.For(rowId));
-        cache[rowId] = text;
+        var text = compose(UnlockView.Visible(index.For(rowId), masked: false, reach));
+        cache[(rowId, reach)] = text;
         return text;
     }
 

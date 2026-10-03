@@ -4,10 +4,24 @@ namespace Tsukimichi.Tests.Ui;
 
 /// <summary>
 /// The notice dock's queue (feature plan v6 U2, decision 6): one notice at a time with a pager; one-time prompts close
-/// themselves after about 15 s on screen, paused while hovered; prompts that need action stay.
+/// themselves after about 15 s on screen, paused while hovered; prompts that need action stay. The clock counts only the
+/// frames the dock is drawn, a step at most <see cref="NoticeQueue.MaxStepSeconds"/>.
 /// </summary>
 public class NoticeQueueTests
 {
+    private const double Frame = 1.0 / 60.0;
+
+    /// <summary>Ticks once a frame from <paramref name="from"/> up to <paramref name="to"/>; the last tick's answer.</summary>
+    private static bool Run(NoticeQueue queue, double from, double to, bool paused = false)
+    {
+        for (var now = from; now < to; now += Frame)
+        {
+            queue.Tick(now, paused);
+        }
+
+        return queue.Tick(to, paused);
+    }
+
     [Fact]
     public void An_empty_queue_shows_nothing()
     {
@@ -23,10 +37,9 @@ public class NoticeQueueTests
     {
         var queue = new NoticeQueue();
         queue.Set(NoticeKind.PinPrompt, true);
-        queue.Tick(0.0, paused: false);
 
-        Assert.True(queue.Tick(NoticeQueue.OneTimeSeconds - 0.5, paused: false));
-        Assert.False(queue.Tick(NoticeQueue.OneTimeSeconds + 0.5, paused: false));
+        Assert.True(Run(queue, 0.0, NoticeQueue.OneTimeSeconds - 0.5));
+        Assert.False(Run(queue, NoticeQueue.OneTimeSeconds - 0.5, NoticeQueue.OneTimeSeconds + 0.5));
         Assert.Null(queue.Current);
         Assert.True(queue.Closed(NoticeKind.PinPrompt));
     }
@@ -36,16 +49,41 @@ public class NoticeQueueTests
     {
         var queue = new NoticeQueue();
         queue.Set(NoticeKind.Context, true);
-        queue.Tick(0.0, paused: false);
-        queue.Tick(10.0, paused: false);
+        Run(queue, 0.0, 10.0);
 
         // The pointer rests on the dock for a long while: no time is used.
-        Assert.True(queue.Tick(100.0, paused: true));
-        Assert.Equal(NoticeQueue.OneTimeSeconds - 10.0, queue.Remaining, 6);
+        Assert.True(Run(queue, 10.0, 100.0, paused: true));
+        Assert.Equal(NoticeQueue.OneTimeSeconds - 10.0, queue.Remaining, 3);
 
         // Then the rest of its time without the pointer ends it.
-        Assert.True(queue.Tick(104.0, paused: false));
-        Assert.False(queue.Tick(106.0, paused: false));
+        Assert.True(Run(queue, 100.0, 104.0));
+        Assert.False(Run(queue, 104.0, 106.0));
+    }
+
+    [Fact]
+    public void A_long_gap_between_ticks_does_not_use_up_a_prompt()
+    {
+        var queue = new NoticeQueue();
+        queue.Set(NoticeKind.PinPrompt, true);
+        Run(queue, 0.0, 5.0);
+
+        // The game hitches, or the dock goes undrawn for minutes: the gap counts as one capped step.
+        Assert.True(queue.Tick(600.0, paused: false));
+        Assert.Equal(NoticeQueue.OneTimeSeconds - 5.0 - NoticeQueue.MaxStepSeconds, queue.Remaining, 3);
+    }
+
+    [Fact]
+    public void A_suspended_clock_starts_afresh_when_the_window_reopens()
+    {
+        var queue = new NoticeQueue();
+        queue.Set(NoticeKind.Context, true);
+        Run(queue, 0.0, 5.0);
+
+        // The window closes for ten minutes, then opens again: the prompt still has all its time left.
+        queue.Suspend();
+        Assert.True(queue.Tick(605.0, paused: false));
+        Assert.Equal(NoticeQueue.OneTimeSeconds - 5.0, queue.Remaining, 3);
+        Assert.Equal(NoticeKind.Context, queue.Current);
     }
 
     [Theory]
@@ -58,13 +96,36 @@ public class NoticeQueueTests
         queue.Tick(0.0, paused: false);
 
         Assert.True(NoticeQueue.Stays(kind));
-        Assert.True(queue.Tick(10_000.0, paused: false));
+        Assert.True(Run(queue, 0.0, 60.0));
         Assert.Equal(kind, queue.Current);
         Assert.True(double.IsPositiveInfinity(queue.Remaining));
 
         // It goes when its cause does.
         queue.Set(kind, false);
         Assert.Null(queue.Current);
+    }
+
+    [Fact]
+    public void A_notice_that_stays_folds_to_a_chip_until_its_cause_goes()
+    {
+        var queue = new NoticeQueue();
+        queue.Set(NoticeKind.RebuildFailed, true);
+        queue.SetCollapsed(NoticeKind.RebuildFailed, true);
+
+        // Folded, it is still the notice on screen and still stays.
+        Assert.True(queue.Collapsed(NoticeKind.RebuildFailed));
+        Assert.Equal(NoticeKind.RebuildFailed, queue.Current);
+        Assert.True(Run(queue, 0.0, 60.0));
+
+        // Once the rebuild works the notice goes; a new failure shows in full.
+        queue.Set(NoticeKind.RebuildFailed, false);
+        queue.Set(NoticeKind.RebuildFailed, true);
+        Assert.False(queue.Collapsed(NoticeKind.RebuildFailed));
+
+        // A one-time prompt does not fold.
+        queue.Set(NoticeKind.PinPrompt, true);
+        queue.SetCollapsed(NoticeKind.PinPrompt, true);
+        Assert.False(queue.Collapsed(NoticeKind.PinPrompt));
     }
 
     [Fact]
@@ -111,10 +172,15 @@ public class NoticeQueueTests
         var queue = new NoticeQueue();
         queue.Set(NoticeKind.Context, true);
         queue.Set(NoticeKind.PinPrompt, true);
-        queue.Tick(0.0, paused: false);
-        queue.Tick(NoticeQueue.OneTimeSeconds + 1.0, paused: false);
 
-        // The context line ran out; the pin prompt waited behind it and now has its full time.
+        // Tick until the context line runs out; the pin prompt waited behind it and now has its full time.
+        var now = 0.0;
+        while (queue.Current == NoticeKind.Context && now < NoticeQueue.OneTimeSeconds + 1.0)
+        {
+            queue.Tick(now, paused: false);
+            now += Frame;
+        }
+
         Assert.Equal(NoticeKind.PinPrompt, queue.Current);
         Assert.Equal(NoticeQueue.OneTimeSeconds, queue.Remaining, 6);
     }

@@ -39,12 +39,18 @@ public static class UnlockLinkReader
     /// <summary><c>MainCommand</c> row of the Map menu, whose icon an area row wears.</summary>
     public const uint MapMainCommand = 16;
 
-    /// <summary>Reads the links; a sheet that fails to read leaves its part empty rather than failing the rest.</summary>
-    public static UnlockLinks Read(ExcelModule excel, Language language = Language.None, AetheryteIndex? aetherytes = null)
+    /// <summary>
+    /// Reads the links; a sheet that fails to read leaves its part empty rather than failing the rest (each part is read
+    /// on its own, and a failure is told to <paramref name="log"/>).
+    /// </summary>
+    /// <param name="excel">Excel module to read from.</param>
+    /// <param name="language">Language for every name.</param>
+    /// <param name="aetherytes">The aetheryte index, when the caller has one; read here otherwise.</param>
+    /// <param name="log">Told one line about a part that could not be read.</param>
+    public static UnlockLinks Read(ExcelModule excel, Language language = Language.None, AetheryteIndex? aetherytes = null, Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(excel);
-        var territories = excel.GetSheet<TerritoryType>(language);
-        var levels = excel.GetSheet<Level>(language);
+        var territories = Part<ExcelSheet<TerritoryType>?>("TerritoryType sheet", () => excel.GetSheet<TerritoryType>(language), null, log);
 
         // Zones: town and field zones with a name, then the warps' destinations.
         var zones = new Dictionary<uint, UnlockZone>();
@@ -55,7 +61,7 @@ public static class UnlockLinkReader
                 return known;
             }
 
-            if (territories.GetRowOrDefault(territoryId) is not { } row)
+            if (territories?.GetRowOrDefault(territoryId) is not { } row)
             {
                 return null;
             }
@@ -78,16 +84,74 @@ public static class UnlockLinkReader
             return zone;
         }
 
-        var areaTerritories = new HashSet<uint>();
-        foreach (var row in territories)
+        var areaTerritories = Part("town and field zones", () =>
         {
-            if (row.TerritoryIntendedUse.RowId is TownUse or FieldUse && row.Map.RowId != 0 && ZoneOf(row.RowId) is not null)
+            var areas = new HashSet<uint>();
+            if (territories is not null)
             {
-                areaTerritories.Add(row.RowId);
+                foreach (var row in territories)
+                {
+                    if (row.TerritoryIntendedUse.RowId is TownUse or FieldUse && row.Map.RowId != 0 && ZoneOf(row.RowId) is not null)
+                    {
+                        areas.Add(row.RowId);
+                    }
+                }
             }
-        }
+
+            return areas;
+        }, [], log);
 
         // Quest-gated warps to an area.
+        var warps = Part("quest-gated warps", () => ReadWarps(excel, language, ZoneOf), [], log);
+
+        // World-map regions.
+        var regions = Part("world-map regions", () => ReadRegions(excel, language), [], log);
+
+        // Aetherytes: every teleportable one and shard the index placed, then the gates' rows.
+        var aetheryteRows = Part("aetherytes", () => ReadAetherytes(excel, language, aetherytes), [], log);
+        var (gateRows, gates) = Part("aethernet gates", () => ReadGates(excel, language, aetheryteRows, ZoneOf), ([], []), log);
+        foreach (var (id, row) in gateRows)
+        {
+            aetheryteRows[id] = row;
+        }
+
+        // Where each quest's objectives lead, in town and field zones.
+        var touches = Part("quest objectives' places", () => ReadTouches(excel, language, areaTerritories), [], log);
+
+        // Duties: their content type's icon, their level and expansion.
+        var duties = Part("duties", () => ReadDuties(excel, language), [], log);
+
+        var areaIcon = Part("Map menu icon", () => excel.GetSheet<MainCommand>(language).GetRowOrDefault(MapMainCommand) is { Icon: > 0 } command ? (uint)command.Icon : 0u, 0u, log);
+
+        return new UnlockLinks
+        {
+            Zones = [.. zones.Values.OrderBy(static z => z.TerritoryId)],
+            Aetherytes = [.. aetheryteRows.Values],
+            Warps = warps,
+            MapRegions = regions,
+            GatedAethernet = gates,
+            Touches = touches,
+            Duties = duties,
+            AreaIcon = areaIcon,
+        };
+    }
+
+    /// <summary>Reads one part; a failure is logged and gives <paramref name="fallback"/>, so the other parts still read.</summary>
+    private static T Part<T>(string what, Func<T> read, T fallback, Action<string>? log)
+    {
+        try
+        {
+            return read();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            log?.Invoke($"The {what} could not be read for what quests open ({ex.GetType().Name}: {ex.Message}); that part is left out");
+            return fallback;
+        }
+    }
+
+    private static List<UnlockWarp> ReadWarps(ExcelModule excel, Language language, Func<uint, UnlockZone?> zoneOf)
+    {
         var warps = new List<UnlockWarp>();
         foreach (var warp in excel.GetSheet<Warp>(language))
         {
@@ -96,7 +160,7 @@ public static class UnlockLinkReader
                 continue;
             }
 
-            if (!AreaUses.Contains(destination.TerritoryIntendedUse.RowId) || ZoneOf(destination.RowId) is null)
+            if (!AreaUses.Contains(destination.TerritoryIntendedUse.RowId) || zoneOf(destination.RowId) is null)
             {
                 continue;
             }
@@ -110,7 +174,11 @@ public static class UnlockLinkReader
             }
         }
 
-        // World-map regions.
+        return warps;
+    }
+
+    private static List<UnlockMapRegion> ReadRegions(ExcelModule excel, Language language)
+    {
         var regions = new List<UnlockMapRegion>();
         var seenRegions = new HashSet<(uint Quest, uint Place)>();
         void AddRegion(uint quest, uint placeNameId, string name, byte expansion)
@@ -138,7 +206,11 @@ public static class UnlockLinkReader
             }
         }
 
-        // Aetherytes: every teleportable one and shard the index placed, then the gates' rows.
+        return regions;
+    }
+
+    private static Dictionary<uint, UnlockAetheryte> ReadAetherytes(ExcelModule excel, Language language, AetheryteIndex? aetherytes)
+    {
         var index = aetherytes ?? AetheryteIndex.Build(excel, language);
         var aetheryteRows = new Dictionary<uint, UnlockAetheryte>();
         foreach (var info in index.All)
@@ -151,6 +223,13 @@ public static class UnlockLinkReader
             aetheryteRows.TryAdd(info.RowId, new UnlockAetheryte(info.RowId, info.TerritoryId, info.Name, info.X, info.Z, IsAetheryte: false));
         }
 
+        return aetheryteRows;
+    }
+
+    /// <summary>The gates a quest opens, and a row for each gate the aetheryte index has none for.</summary>
+    private static (Dictionary<uint, UnlockAetheryte> Rows, List<UnlockGatedAethernet> Gates) ReadGates(ExcelModule excel, Language language, Dictionary<uint, UnlockAetheryte> aetheryteRows, Func<uint, UnlockZone?> zoneOf)
+    {
+        var gateRows = new Dictionary<uint, UnlockAetheryte>();
         var gates = new List<UnlockGatedAethernet>();
         foreach (var row in excel.GetSheet<Aetheryte>(language))
         {
@@ -159,7 +238,7 @@ public static class UnlockLinkReader
                 continue;
             }
 
-            if (!aetheryteRows.ContainsKey(row.RowId))
+            if (!aetheryteRows.ContainsKey(row.RowId) && !gateRows.ContainsKey(row.RowId))
             {
                 var name = row.AethernetName.ValueNullable?.Name.ExtractText() ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(name))
@@ -172,14 +251,19 @@ public static class UnlockLinkReader
                     continue;
                 }
 
-                aetheryteRows[row.RowId] = new UnlockAetheryte(row.RowId, row.Territory.RowId, name, 0f, 0f, row.IsAetheryte);
-                ZoneOf(row.Territory.RowId);
+                gateRows[row.RowId] = new UnlockAetheryte(row.RowId, row.Territory.RowId, name, 0f, 0f, row.IsAetheryte);
+                zoneOf(row.Territory.RowId);
             }
 
             gates.Add(new UnlockGatedAethernet(row.RequiredQuest.RowId, row.RowId));
         }
 
-        // Where each quest's objectives lead, in town and field zones.
+        return (gateRows, gates);
+    }
+
+    private static List<UnlockTouch> ReadTouches(ExcelModule excel, Language language, HashSet<uint> areaTerritories)
+    {
+        var levels = excel.GetSheet<Level>(language);
         var touches = new List<UnlockTouch>();
         var seenTouches = new HashSet<(uint Territory, float X, float Z)>();
         foreach (var quest in excel.GetSheet<Quest>(language))
@@ -214,7 +298,11 @@ public static class UnlockLinkReader
             }
         }
 
-        // Duties: their content type's icon, their level and expansion.
+        return touches;
+    }
+
+    private static List<UnlockDuty> ReadDuties(ExcelModule excel, Language language)
+    {
         var duties = new List<UnlockDuty>();
         foreach (var row in excel.GetSheet<ContentFinderCondition>(language))
         {
@@ -227,22 +315,6 @@ public static class UnlockLinkReader
             duties.Add(new UnlockDuty(row.RowId, icon, row.ClassJobLevelRequired, (byte)(row.TerritoryType.ValueNullable?.ExVersion.RowId ?? 0)));
         }
 
-        var areaIcon = 0u;
-        if (excel.GetSheet<MainCommand>(language).GetRowOrDefault(MapMainCommand) is { Icon: > 0 } command)
-        {
-            areaIcon = (uint)command.Icon;
-        }
-
-        return new UnlockLinks
-        {
-            Zones = [.. zones.Values.OrderBy(static z => z.TerritoryId)],
-            Aetherytes = [.. aetheryteRows.Values],
-            Warps = warps,
-            MapRegions = regions,
-            GatedAethernet = gates,
-            Touches = touches,
-            Duties = duties,
-            AreaIcon = areaIcon,
-        };
+        return duties;
     }
 }

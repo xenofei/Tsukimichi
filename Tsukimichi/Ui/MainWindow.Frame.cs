@@ -23,6 +23,9 @@ public sealed partial class MainWindow
     private const float DockWidthLogical = 360f;
     private const float DockPadLogical = 12f;
 
+    /// <summary>A folded notice's chip padding, logical.</summary>
+    private const float DockChipPadLogical = 4f;
+
     /// <summary>The drawer's least width, logical: it covers the tree, and more when the tree is narrower.</summary>
     private const float DrawerWidthLogical = 300f;
 
@@ -35,6 +38,8 @@ public sealed partial class MainWindow
     private static readonly string PrevIcon = FontAwesomeIcon.AngleLeft.ToIconString();
     private static readonly string NextIcon = FontAwesomeIcon.AngleRight.ToIconString();
     private static readonly string PinIcon = FontAwesomeIcon.Thumbtack.ToIconString();
+    private static readonly string FoldIcon = FontAwesomeIcon.AngleDown.ToIconString();
+    private static readonly string UnfoldIcon = FontAwesomeIcon.AngleUp.ToIconString();
 
     private readonly NoticeQueue notices = new();
 
@@ -76,7 +81,8 @@ public sealed partial class MainWindow
         }
 
         UndoToast.WantSlot();
-        FloatingLayers.Frame(in body, ui.Tab == NavTab.Journal ? tablePane.SelectedRowRect : default);
+        // The detail pane's sticky action bar is kept clear too: the dock and the Undo toast sit above it.
+        FloatingLayers.Frame(in body, ui.Tab == NavTab.Journal ? tablePane.SelectedRowRect : default, ui.SelectedRowId is not null ? detailPane.ActionBarRect : default);
 
         DrawDrawer(session, bundle, right);
         DrawDock(session);
@@ -122,7 +128,10 @@ public sealed partial class MainWindow
         notices.Set(NoticeKind.WelcomeBack, card == NoticeKind.WelcomeBack);
     }
 
-    /// <summary>The dock's size for <paramref name="kind"/>: its text wrapped at a fixed width, then one row of buttons.</summary>
+    /// <summary>
+    /// The dock's size for <paramref name="kind"/>: its text wrapped at a fixed width, then one row of buttons; a folded
+    /// notice (<see cref="NoticeQueue.Collapsed"/>) is one short row, its chip.
+    /// </summary>
     private Vector2 MeasureDock(NoticeKind kind, float bodyWidth)
     {
         var margin = UiMetrics.Px(10f);
@@ -130,6 +139,13 @@ public sealed partial class MainWindow
         if (width < UiMetrics.Px(120f))
         {
             return Vector2.Zero;
+        }
+
+        if (notices.Collapsed(kind))
+        {
+            var chipPad = UiMetrics.Px(DockChipPadLogical);
+            var chipWidth = (2f * chipPad) + ChipLabelWidth(kind) + ImGui.GetStyle().ItemSpacing.X + DockEndWidth(kind);
+            return new Vector2(MathF.Ceiling(MathF.Min(width, chipWidth)), MathF.Ceiling((2f * chipPad) + ImGui.GetFrameHeight()));
         }
 
         var pad = UiMetrics.Px(DockPadLogical);
@@ -218,10 +234,18 @@ public sealed partial class MainWindow
     private void DrawDock(SessionState session)
     {
         var now = ImGui.GetTime();
-        if (notices.Current is not { } kind || !FloatingLayers.TryGet(FloatingLayer.Dock, FloatingLayers.OwnerWindowId(), out var place))
+        if (notices.Current is not { } kind)
         {
             dockShown = null;
-            notices.Tick(now, paused: false);
+            notices.Suspend();
+            return;
+        }
+
+        if (!FloatingLayers.TryGet(FloatingLayer.Dock, FloatingLayers.OwnerWindowId(), out var place))
+        {
+            // No room for the dock this frame: the prompt is not on screen, so its clock stands still.
+            dockShown = null;
+            notices.Tick(now, paused: true);
             return;
         }
 
@@ -232,7 +256,8 @@ public sealed partial class MainWindow
         }
 
         var fade = UiMetrics.ReduceMotion ? 1f : Math.Clamp((float)((now - dockShownAt) / FadeSeconds), 0f, 1f);
-        var pad = UiMetrics.Px(DockPadLogical);
+        var folded = notices.Collapsed(kind);
+        var pad = UiMetrics.Px(folded ? DockChipPadLogical : DockPadLogical);
         var s = Theme.Surface;
         var hovered = false;
         ImGui.SetCursorScreenPos(place.Min);
@@ -247,22 +272,85 @@ public sealed partial class MainWindow
             if (dock)
             {
                 hovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows | ImGuiHoveredFlags.AllowWhenBlockedByActiveItem);
-                DrawNotice(session, kind);
+                if (folded)
+                {
+                    DrawNoticeChip(kind);
+                }
+                else
+                {
+                    DrawNotice(session, kind);
+                }
             }
         }
 
         notices.Tick(now, hovered);
     }
 
+    private static Vector4 NoticeTone(NoticeKind kind) => kind switch
+    {
+        NoticeKind.RebuildFailed => Theme.Eclipse,
+        NoticeKind.Freshness => Theme.Gilt,
+        _ => Theme.Surface.Text,
+    };
+
+    /// <summary>A folded notice's short name ("Rebuild failed", "Game updated").</summary>
+    private static string ChipLabel(NoticeKind kind) => kind == NoticeKind.RebuildFailed ? Strings.DockChipRebuildFailed : Strings.DockChipFreshness;
+
+    /// <summary>The chip's own width: the unfold arrow, a gap and the short name.</summary>
+    private static float ChipLabelWidth(NoticeKind kind)
+    {
+        ImGui.PushFont(UiBuilder.IconFont);
+        var icon = ImGui.CalcTextSize(UnfoldIcon).X;
+        ImGui.PopFont();
+        var style = ImGui.GetStyle();
+        return (2f * style.FramePadding.X) + icon + style.ItemInnerSpacing.X + ImGui.CalcTextSize(ChipLabel(kind)).X;
+    }
+
+    /// <summary>
+    /// A folded notice that stays: one small chip in its tone, a click opens it again; the pager still reaches the
+    /// others.
+    /// </summary>
+    private void DrawNoticeChip(NoticeKind kind)
+    {
+        var height = ImGui.GetFrameHeight();
+        var width = ChipLabelWidth(kind);
+        var clicked = ImGui.InvisibleButton("##dockUnfold", new Vector2(width, height));
+        var hovered = ImGui.IsItemHovered();
+        var min = ImGui.GetItemRectMin();
+        var dl = ImGui.GetWindowDrawList();
+        var s = Theme.Surface;
+        if (hovered)
+        {
+            dl.AddRectFilled(min, min + new Vector2(width, height), Theme.U32(s.Hover), height * 0.5f);
+        }
+
+        var style = ImGui.GetStyle();
+        var color = Theme.U32(NoticeTone(kind));
+        ImGui.PushFont(UiBuilder.IconFont);
+        var iconSize = ImGui.CalcTextSize(UnfoldIcon);
+        dl.AddText(min + new Vector2(style.FramePadding.X, (height - iconSize.Y) * 0.5f), color, UnfoldIcon);
+        ImGui.PopFont();
+        var label = ChipLabel(kind);
+        var textY = (height - ImGui.GetTextLineHeight()) * 0.5f;
+        dl.AddText(min + new Vector2(style.FramePadding.X + iconSize.X + style.ItemInnerSpacing.X, textY), color, label);
+        Chrome.FocusRing(height * 0.5f);
+        if (hovered)
+        {
+            UiMetrics.Tooltip(NoticeText(kind) + "\n\n" + Strings.DockUnfoldTooltip);
+        }
+
+        if (clicked)
+        {
+            notices.SetCollapsed(kind, false);
+        }
+
+        DrawDockEnd(kind);
+    }
+
     /// <summary>One notice: its line, wrapped, then its buttons, and the pager and × at the right end.</summary>
     private void DrawNotice(SessionState session, NoticeKind kind)
     {
-        var tone = kind switch
-        {
-            NoticeKind.RebuildFailed => Theme.Eclipse,
-            NoticeKind.Freshness => Theme.Gilt,
-            _ => Theme.Surface.Text,
-        };
+        var tone = NoticeTone(kind);
         using (Theme.PushText(tone))
         {
             ImGui.TextWrapped(NoticeText(kind));
@@ -405,29 +493,47 @@ public sealed partial class MainWindow
         }
     }
 
+    private static bool Closable(NoticeKind kind) => kind is NoticeKind.Context or NoticeKind.Setup or NoticeKind.WhatsNew or NoticeKind.WelcomeBack;
+
+    /// <summary>The pager's "1/3", rebuilt when the place or the count changes.</summary>
+    private string PagerText()
+    {
+        if (pagerKey != (notices.Position, notices.Count))
+        {
+            pagerKey = (notices.Position, notices.Count);
+            pagerText = string.Format(CultureInfo.InvariantCulture, DockPagerFormat, notices.Position, notices.Count);
+        }
+
+        return pagerText;
+    }
+
+    /// <summary>The width <see cref="DrawDockEnd"/> takes for <paramref name="kind"/>; 0 when it draws nothing.</summary>
+    private float DockEndWidth(NoticeKind kind)
+    {
+        var count = notices.Count;
+        // The one square button at the end: × on a prompt, the fold arrow on an open notice that stays.
+        var square = Closable(kind) || (NoticeQueue.Stays(kind) && !notices.Collapsed(kind));
+        var side = ImGui.GetFrameHeight();
+        var gap = ImGui.GetStyle().ItemSpacing.X;
+        return (square ? side : 0f) + (count > 1 ? (2f * side) + ImGui.CalcTextSize(PagerText()).X + (2f * gap) + (square ? gap : 0f) : 0f);
+    }
+
     /// <summary>
-    /// The right end of the button row: the pager when more than one notice waits, and the × on a notice the player may
-    /// close (a notice that needs action closes through its own buttons).
+    /// The right end of the button row: the pager when more than one notice waits, the × on a notice the player may
+    /// close, and on a notice that stays (it closes through its own buttons) the arrow that folds it to its chip.
     /// </summary>
     private void DrawDockEnd(NoticeKind kind)
     {
         var count = notices.Count;
-        var closable = kind is NoticeKind.Context or NoticeKind.Setup or NoticeKind.WhatsNew or NoticeKind.WelcomeBack;
-        if (count < 2 && !closable)
+        var closable = Closable(kind);
+        var foldable = NoticeQueue.Stays(kind) && !notices.Collapsed(kind);
+        if (count < 2 && !closable && !foldable)
         {
             return;
         }
 
-        if (pagerKey != (notices.Position, count))
-        {
-            pagerKey = (notices.Position, count);
-            pagerText = string.Format(CultureInfo.InvariantCulture, DockPagerFormat, notices.Position, count);
-        }
-
-        var style = ImGui.GetStyle();
         var side = ImGui.GetFrameHeight();
-        var gap = style.ItemSpacing.X;
-        var width = (closable ? side : 0f) + (count > 1 ? (2f * side) + ImGui.CalcTextSize(pagerText).X + (2f * gap) + (closable ? gap : 0f) : 0f);
+        var width = DockEndWidth(kind);
         ImGui.SameLine(MathF.Max(0f, ImGui.GetWindowContentRegionMax().X - width));
         if (count > 1)
         {
@@ -438,17 +544,22 @@ public sealed partial class MainWindow
 
             ImGui.SameLine();
             ImGui.AlignTextToFramePadding();
-            ImGui.TextDisabled(pagerText);
+            ImGui.TextDisabled(PagerText());
             ImGui.SameLine();
             if (IconButton(NextIcon, "##dockNext", side, Strings.DockNextTooltip))
             {
                 notices.Step(1);
             }
 
-            if (closable)
+            if (closable || foldable)
             {
                 ImGui.SameLine();
             }
+        }
+
+        if (foldable && IconButton(FoldIcon, "##dockFold", side, Strings.DockFoldTooltip))
+        {
+            notices.SetCollapsed(kind, true);
         }
 
         if (closable && IconButton(DismissIcon, "##dockClose", side, Strings.DockCloseTooltip))

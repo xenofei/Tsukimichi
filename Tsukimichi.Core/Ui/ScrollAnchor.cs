@@ -97,6 +97,14 @@ public static class ScrollAnchor
     public static float Reveal(int index, int count, float rowHeight, float viewHeight) =>
         Clamp((index * rowHeight) - (viewHeight * RevealFraction), count, rowHeight, viewHeight);
 
+    /// <summary>
+    /// The rows' view height: the table's clip rectangle (<paramref name="clipTop"/> to <paramref name="clipBottom"/>)
+    /// less the frozen header above <paramref name="rowsTop"/>, at least one row. The header scrolls with nothing, so a
+    /// view that counted it would clamp a list scrolled to its end one header short, and the rows would jump.
+    /// </summary>
+    public static float RowsView(float clipTop, float clipBottom, float rowsTop, float rowHeight) =>
+        MathF.Max(rowHeight, clipBottom - MathF.Max(clipTop, rowsTop));
+
     /// <summary><paramref name="scrollY"/> kept between the top and the last row's bottom at the view's bottom.</summary>
     public static float Clamp(float scrollY, int count, float rowHeight, float viewHeight)
     {

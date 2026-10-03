@@ -25,8 +25,36 @@ public sealed partial class Plugin
         var session = Session;
         var data = DataManager;
         var log = Log;
-        var links = new Lazy<UnlockLinks>(() => UnlockLinkReader.Read(data.Excel, data.Language.ToLumina()), LazyThreadSafetyMode.ExecutionAndPublication);
-        var duties = new Lazy<PlanDuties>(() => DutyIndex.Build(data.Excel, data.Language.ToLumina()), LazyThreadSafetyMode.ExecutionAndPublication);
+        // A sheet that cannot be read leaves only its part out: the reader logs and skips a failed part, and a factory
+        // that still throws gives the empty value, so the index builds without it instead of caching the exception.
+        var links = new Lazy<UnlockLinks>(
+            () =>
+            {
+                try
+                {
+                    return UnlockLinkReader.Read(data.Excel, data.Language.ToLumina(), log: message => log.Warning(message));
+                }
+                catch (Exception ex)
+                {
+                    log.Warning(ex, "The sheet links of what quests open could not be read; areas, aetherytes and duty icons are left out");
+                    return UnlockLinks.Empty;
+                }
+            },
+            LazyThreadSafetyMode.ExecutionAndPublication);
+        var duties = new Lazy<PlanDuties>(
+            () =>
+            {
+                try
+                {
+                    return DutyIndex.Build(data.Excel, data.Language.ToLumina());
+                }
+                catch (Exception ex)
+                {
+                    log.Warning(ex, "The duty kinds could not be read for what quests open; every duty files under Other duty");
+                    return PlanDuties.Empty;
+                }
+            },
+            LazyThreadSafetyMode.ExecutionAndPublication);
         return new QuestUnlocksSource(
             () => session.Bundle?.Catalog,
             catalog =>

@@ -73,6 +73,10 @@ public sealed partial class DetailPane
         public uint RowId;
         public int Version;
         public CatalogBundle? Bundle;
+
+        /// <summary>The unlock index's revision and Sprout mode's reach the Path stations' "Opens …" lines were built with.</summary>
+        public int UnlocksRevision = -1;
+        public byte UnlocksReach;
         public QuestRecord? Quest;
         public QuestEvaluation? Evaluation;
         public QuestState State;
@@ -179,7 +183,7 @@ public sealed partial class DetailPane
         this.links = links ?? throw new ArgumentNullException(nameof(links));
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
         this.log = log;
-        chart = new PathChart(RevealRow) { OpensOf = id => runner.Unlocks?.Places(id) ?? string.Empty };
+        chart = new PathChart(RevealRow) { OpensOf = id => runner.Unlocks?.Places(id, runner.UnlockReach) ?? string.Empty };
     }
 
     /// <summary>The user's unique-reward verdicts; null until the plugin attaches them, which hides the Moonlit card.</summary>
@@ -235,9 +239,24 @@ public sealed partial class DetailPane
             }
         }
 
+        var barTop = ImGui.GetCursorScreenPos().Y;
         DrawActionBar(quest, rowId);
         DrawProvenance(session);
+
+        // The bar runs to the pane's bottom edge; the floating layers sit above it.
+        var paneMin = ImGui.GetWindowPos();
+        actionBarRect = new ScreenRect(new Vector2(paneMin.X, barTop), paneMin + ImGui.GetWindowSize());
+        actionBarFrame = ImGui.GetFrameCount();
     }
+
+    private ScreenRect actionBarRect;
+    private int actionBarFrame = -1;
+
+    /// <summary>
+    /// The sticky action bar's rectangle on screen this frame (empty when the pane did not draw one): the floating
+    /// layers keep above it (<see cref="FloatingLayers"/>), so the dock never covers Pin, Route or the travel pills.
+    /// </summary>
+    public ScreenRect ActionBarRect => actionBarFrame == ImGui.GetFrameCount() ? actionBarRect : default;
 
     private void DrawBody(SessionState session, QuestRecord quest, uint rowId, float detailHeight)
     {
@@ -1257,7 +1276,12 @@ public sealed partial class DetailPane
     private void Refresh(SessionState session, CatalogBundle bundle, uint rowId)
     {
         var pinned = runner.IsPinned(rowId);
-        if (model.RowId == rowId && model.Version == session.Version && ReferenceEquals(model.Bundle, bundle) && pinnedShown == pinned)
+        // The index is built off the frame, so its revision moves after the catalog has; the Path stations' tooltips
+        // read it (and Sprout mode's reach) once per build.
+        var unlocksRevision = runner.Unlocks?.Revision ?? 0;
+        var unlocksReach = runner.UnlockReach;
+        if (model.RowId == rowId && model.Version == session.Version && ReferenceEquals(model.Bundle, bundle) && pinnedShown == pinned
+            && model.UnlocksRevision == unlocksRevision && model.UnlocksReach == unlocksReach)
         {
             return;
         }
@@ -1266,6 +1290,8 @@ public sealed partial class DetailPane
         model.RowId = rowId;
         model.Version = session.Version;
         model.Bundle = bundle;
+        model.UnlocksRevision = unlocksRevision;
+        model.UnlocksReach = unlocksReach;
         model.Pinned = pinned;
         model.Requirements.Clear();
         model.Rewards.Clear();
