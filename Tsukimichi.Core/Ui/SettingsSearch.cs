@@ -56,6 +56,9 @@ public enum SettingsAnchor
 
     /// <summary>Settings › In game › Nearby and server info bar.</summary>
     Nearby,
+
+    /// <summary>Settings › Themes › Share (<c>/tsuki look &lt;code&gt;</c> opens it with the code pasted).</summary>
+    ThemeShare,
 }
 
 /// <summary>The order of the Settings window's section index and of the search results, and the remembered page.</summary>

@@ -18,6 +18,7 @@ namespace Tsukimichi.Commands;
 /// quest; <c>route [quest name]</c> opens its unlock route; <c>recap [quest name]</c> opens the story recap; <c>nearby</c> toggles the Nearby quests window; <c>todo</c>
 /// toggles the todo overlay; <c>report [quest name]</c> copies a quest's diagnostic block; <c>export [quests|moonlit]
 /// [json|csv]</c> writes the export files; <c>stop</c> stops every hand-off Tsukimichi started (<see cref="StopCommand"/>);
+/// <c>look &lt;code&gt;</c> opens Settings › Themes with a share code pasted and previewed, never applying it;
 /// <c>settings</c> (or <c>config</c>) and <c>help</c> open those windows; <c>glyphs</c> opens the glyph sheet and
 /// <c>ipc</c> the IPC developer window (neither listed to players); a bare command toggles the main window.
 /// <para>
@@ -113,6 +114,12 @@ public sealed class TsukimichiCommand : IDisposable
 
     /// <summary>Invoked for <c>/tsukimichi stop</c>: stops every hand-off and prints one line. Says "Nothing to stop." until wired.</summary>
     public Action? Stop { get; set; }
+
+    /// <summary>
+    /// Invoked for <c>/tsukimichi look &lt;code&gt;</c> with the rest of the line (empty opens the Share section): opens
+    /// Settings › Themes with the code pasted and its preview showing. It never applies the look. Falls back to Settings.
+    /// </summary>
+    public Action<string>? Look { get; set; }
 
     /// <summary>The aliases registered now: the built-in ones, then the player's, in order.</summary>
     public IReadOnlyList<string> ActiveAliases { get; private set; } = [];
@@ -390,6 +397,18 @@ public sealed class TsukimichiCommand : IDisposable
                 else
                 {
                     Print?.Invoke(Strings.StopNothing);
+                }
+
+                break;
+
+            case Subcommand.Look:
+                if (Look is { } look)
+                {
+                    look(rest);
+                }
+                else
+                {
+                    Run(ToggleConfigWindow);
                 }
 
                 break;

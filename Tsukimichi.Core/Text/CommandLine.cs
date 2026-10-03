@@ -55,6 +55,12 @@ public enum Subcommand
     /// single key.
     /// </summary>
     Stop,
+
+    /// <summary>
+    /// <c>look &lt;code&gt;</c> (1.17, plan v7 T12): opens Settings › Themes with the share code pasted and previewed. It
+    /// never applies the look on its own.
+    /// </summary>
+    Look,
 }
 
 /// <summary>A parsed <c>/tsukimichi</c> line.</summary>
@@ -100,6 +106,7 @@ public static class CommandLine
         ("flight", Subcommand.Flight, true),
         ("blues", Subcommand.Blues, true),
         ("stop", Subcommand.Stop, true),
+        ("look", Subcommand.Look, true),
     ];
 
     /// <summary>The subcommand words players are shown (and offered by <see cref="DidYouMean"/>), in help order; <c>glyphs</c> and <c>ipc</c> are not.</summary>

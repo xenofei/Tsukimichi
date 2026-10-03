@@ -141,4 +141,86 @@ public static partial class Strings
     public static string UndoToastHighContrastOff => Loc.Get("UndoToastHighContrastOff");
 
     public static string UndoToastAppearanceReset => Loc.Get("UndoToastAppearanceReset");
+
+    // ---- Share codes (1.17, plan v7 T12; spec-1.17 §C) ----
+    public static string ThemesHeadingShare => Loc.Get("ThemesHeadingShare");
+
+    public static string ThemesShareCode => Loc.Get("ThemesShareCode");
+
+    public static string ThemesShareCodeHint => Loc.Get("ThemesShareCodeHint");
+
+    public static string ThemesShareCopy => Loc.Get("ThemesShareCopy");
+
+    public static string ThemesShareCopied => Loc.Get("ThemesShareCopied");
+
+    /// <summary>{0} = the share code; the quiet note after Copy.</summary>
+    public static string ThemesShareCopiedFormat => Loc.Get("ThemesShareCopiedFormat");
+
+    public static string ThemesSharePaste => Loc.Get("ThemesSharePaste");
+
+    public static string ThemesSharePasteHint => Loc.Get("ThemesSharePasteHint");
+
+    public static string ThemesSharePastePlaceholder => Loc.Get("ThemesSharePastePlaceholder");
+
+    public static string ThemesShareWouldChange => Loc.Get("ThemesShareWouldChange");
+
+    public static string ThemesShareSameLook => Loc.Get("ThemesShareSameLook");
+
+    /// <summary>{0} = Theme, Palette, Frames or High contrast; {1} = what it is now; {2} = what the code makes it.</summary>
+    public static string ThemesShareChangeFormat => Loc.Get("ThemesShareChangeFormat");
+
+    public static string ThemesShareTheme => Loc.Get("ThemesShareTheme");
+
+    public static string ThemesSharePalette => Loc.Get("ThemesSharePalette");
+
+    public static string ThemesShareFrames => Loc.Get("ThemesShareFrames");
+
+    public static string ThemesShareHighContrast => Loc.Get("ThemesShareHighContrast");
+
+    public static string ThemesShareOn => Loc.Get("ThemesShareOn");
+
+    public static string ThemesShareOff => Loc.Get("ThemesShareOff");
+
+    /// <summary>{0} = a state (Ready); {1} = the set its moon comes from.</summary>
+    public static string ThemesSharePickFormat => Loc.Get("ThemesSharePickFormat");
+
+    /// <summary>{0} = a state (Ready) whose moon follows the theme again.</summary>
+    public static string ThemesSharePickFromThemeFormat => Loc.Get("ThemesSharePickFromThemeFormat");
+
+    /// <summary>{0} = what was left out (Ready: a set this version doesn't have).</summary>
+    public static string ThemesShareLeftOutOneFormat => Loc.Get("ThemesShareLeftOutOneFormat");
+
+    /// <summary>{0} = how many; {1} = what was left out, separated by semicolons.</summary>
+    public static string ThemesShareLeftOutManyFormat => Loc.Get("ThemesShareLeftOutManyFormat");
+
+    /// <summary>{0} = Theme, Palette, Frames or a state; {1} = what the code names.</summary>
+    public static string ThemesShareLeftOutItemFormat => Loc.Get("ThemesShareLeftOutItemFormat");
+
+    public static string ThemesShareListSeparator => Loc.Get("ThemesShareListSeparator");
+
+    public static string ThemesShareUnknownTheme => Loc.Get("ThemesShareUnknownTheme");
+
+    public static string ThemesShareUnknownPalette => Loc.Get("ThemesShareUnknownPalette");
+
+    public static string ThemesShareUnknownFrames => Loc.Get("ThemesShareUnknownFrames");
+
+    public static string ThemesShareUnknownSet => Loc.Get("ThemesShareUnknownSet");
+
+    /// <summary>{0} = a theme, palette, frames or set this version lists but does not offer yet.</summary>
+    public static string ThemesShareNotOfferedFormat => Loc.Get("ThemesShareNotOfferedFormat");
+
+    /// <summary>{0} = a set that cannot be mixed state by state (Classic).</summary>
+    public static string ThemesShareWholeThemeFormat => Loc.Get("ThemesShareWholeThemeFormat");
+
+    public static string ThemesShareCancel => Loc.Get("ThemesShareCancel");
+
+    public static string ThemesShareApply => Loc.Get("ThemesShareApply");
+
+    public static string ThemesShareApplyRest => Loc.Get("ThemesShareApplyRest");
+
+    public static string ThemesShareMistyped => Loc.Get("ThemesShareMistyped");
+
+    public static string ThemesShareNewer => Loc.Get("ThemesShareNewer");
+
+    public static string UndoToastLookApplied => Loc.Get("UndoToastLookApplied");
 }

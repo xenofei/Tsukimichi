@@ -129,6 +129,7 @@ public sealed partial class ConfigWindow
         new(SettingsSection.Themes, DrawThemeCards, ThemeCardsKeywords),
         new(SettingsSection.Themes, DrawThemePreview),
         new(SettingsSection.Themes, DrawThemeColours, ThemeColoursKeywords),
+        new(SettingsSection.Themes, DrawThemeShare, ThemeShareKeywords, SettingsAnchor.ThemeShare),
         new(SettingsSection.Themes, DrawThemeReset),
         new(SettingsSection.Journal, DrawJournalTable),
         new(SettingsSection.Journal, DrawJournal),

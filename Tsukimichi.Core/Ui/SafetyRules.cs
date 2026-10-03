@@ -69,6 +69,9 @@ public enum GuardedAction
 
     /// <summary>Reset appearance (Settings › Themes, plan v7 T9): back to Menphina's Medallion on Night, high contrast off.</summary>
     ResetAppearance,
+
+    /// <summary>Apply on a pasted share code's preview (Settings › Themes › Share, plan v7 T12): the code's look replaces the saved one.</summary>
+    ApplyShareCode,
 }
 
 /// <summary>
@@ -114,6 +117,7 @@ public static class SafetyRules
         GuardedAction.Unpin => SafetyTier.None,
         GuardedAction.ResetFilters => SafetyTier.None,
         GuardedAction.ResetAppearance => SafetyTier.None,
+        GuardedAction.ApplyShareCode => SafetyTier.None,
         GuardedAction.RestoreAllVerdicts => SafetyTier.Hold,
         GuardedAction.PinAll => SafetyTier.Hold,
         GuardedAction.QuestionableReplace => SafetyTier.Hold,
