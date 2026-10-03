@@ -1383,9 +1383,6 @@
   <data name="ConfigVerdictRestoreAllTooltip" xml:space="preserve">
     <value>Alle Einstufungen vergessen. Umschalt halten und klicken, oder gedrückt halten.</value>
   </data>
-  <data name="ConfigVerdictsRestored" xml:space="preserve">
-    <value>Alle Einstufungen wiederhergestellt; die mitgelieferten Belohnungsdaten gelten wieder.</value>
-  </data>
   <data name="ConfigSectionAbout" xml:space="preserve">
     <value>Über</value>
   </data>
@@ -2489,12 +2486,6 @@
   </data>
   <data name="RouteAllPinnedAlready" xml:space="preserve">
     <value>Jeder Auftrag der Route ist schon angeheftet.</value>
-  </data>
-  <data name="RouteUndo" xml:space="preserve">
-    <value>Rückgängig</value>
-  </data>
-  <data name="RouteUndoTooltip" xml:space="preserve">
-    <value>Die Aufträge lösen, die „Alle anheften“ gerade hinzugefügt hat</value>
   </data>
   <data name="RouteToThisTooltip" xml:space="preserve">
     <value>Route hierher: jeder Auftrag, der davor noch zu tun ist, der Reihe nach, mit Stufenschwellen</value>
@@ -3651,23 +3642,8 @@
   <data name="MarkUniqueNoteHint" xml:space="preserve">
     <value>Notiz: welche Belohnung einzigartig ist</value>
   </data>
-  <data name="MarkUniqueConfirm" xml:space="preserve">
-    <value>Als einzigartig markieren</value>
-  </data>
   <data name="MarkNotUniqueNoteHint" xml:space="preserve">
     <value>Notiz: warum sie nicht einzigartig ist (optional)</value>
-  </data>
-  <data name="MarkNotUniqueConfirm" xml:space="preserve">
-    <value>Als nicht einzigartig ausblenden</value>
-  </data>
-  <data name="VerdictQuestionUniqueFormat" xml:space="preserve">
-    <value>{0} zu den Mondlicht-Schätzen hinzufügen?</value>
-  </data>
-  <data name="VerdictQuestionHideFormat" xml:space="preserve">
-    <value>{0} aus den Mondlicht-Schätzen ausblenden?</value>
-  </data>
-  <data name="VerdictConfirmTooltip" xml:space="preserve">
-    <value>Umschalt halten und klicken, oder gedrückt halten</value>
   </data>
   <data name="VerdictHoldCountdownFormat" xml:space="preserve">
     <value>Halten … ({0:0.0} s)</value>
@@ -3677,12 +3653,6 @@
   </data>
   <data name="VerdictUndoMarkedNotUnique" xml:space="preserve">
     <value>Als nicht einzigartig ausgeblendet</value>
-  </data>
-  <data name="VerdictUndo" xml:space="preserve">
-    <value>Rückgängig</value>
-  </data>
-  <data name="VerdictUndoTooltip" xml:space="preserve">
-    <value>Diese Einstufung wieder vergessen</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Abbrechen</value>

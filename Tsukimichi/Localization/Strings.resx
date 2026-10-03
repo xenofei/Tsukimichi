@@ -1379,7 +1379,7 @@
     <value>Show in Journal</value>
   </data>
   <data name="MoonlitMarkNotUnique" xml:space="preserve">
-    <value>Not unique (hide)…</value>
+    <value>Not unique (hide)</value>
   </data>
   <data name="MoonlitRestoreOverride" xml:space="preserve">
     <value>Restore shipped verdict</value>
@@ -2986,10 +2986,7 @@
     <value>Restore all</value>
   </data>
   <data name="ConfigVerdictRestoreAllTooltip" xml:space="preserve">
-    <value>Forget every verdict. Hold Shift and click, or press and hold.</value>
-  </data>
-  <data name="ConfigVerdictsRestored" xml:space="preserve">
-    <value>All verdicts restored; the shipped reward data applies again.</value>
+    <value>Forget every verdict; the shipped reward data applies again</value>
   </data>
   <data name="ConfigSectionAbout" xml:space="preserve">
     <value>About</value>
@@ -3563,7 +3560,7 @@
     <value>Overrides</value>
   </data>
   <data name="Help.OverridesBody" xml:space="preserve">
-    <value>Not unique (hide) in a row's context menu removes a quest from Moonlit; Mark as unique in the detail pane adds one, with a note naming the reward. Both ask first: press and hold the confirm button until its arc closes, or hold Shift and click. Enter in the note field confirms too. An Undo line stays for eight seconds.</value>
+    <value>Not unique (hide) in a row's context menu removes a quest from Moonlit; Mark as unique in the detail pane adds one. Both act only while Shift or Ctrl is held (or on two clicks, if you chose that under Settings › Keyboard › Safety) and save at once. A floating Undo stays for eight seconds, with Add note to name the reward.</value>
   </data>
   <data name="Help.RestoreTitle" xml:space="preserve">
     <value>Restore</value>
@@ -3620,7 +3617,7 @@
     <value>While a seasonal event runs, Seasonal events lists its quests with their moon, state and giver, and the Todo overlay shows the ones you can start or have in your journal under Event quests running now. At login, chat says "Moonfire Faire is running: 2 quests ready" once per event (Settings › Notices). An end date appears ("ends Aug 28 (Lodestone)") only when the Lodestone announced it; otherwise it says running now, never a guess. Completed seasonal quests by year keeps your history; the year is the one the Lodestone gave the event, or counted from the nearest announced one.</value>
   </data>
   <data name="Help.CharacterCardBodies.7" xml:space="preserve">
-    <value>Every quest a character still needs for one thing, in order: the signpost button under a quest (Route to this), Route to this reward in a Moonlit row's menu, and Route to unlock… beside Job quests (or a right-click on a class under Jobs) for a job such as Blue Mage. Each quest comes after the ones it needs, lower levels first where there is a choice; a level gate marks where to level up, main scenario milestones split the list, and where a quest takes either of two earlier quests the shorter way is used and the other is shown with its count. Viewing a stored alt gives that alt's route. Copy route copies it as a Markdown list without your name; Pin all (hold, or Shift and click) pins every step for the Todo overlay, with an Undo.</value>
+    <value>Every quest a character still needs for one thing, in order: the signpost button under a quest (Route to this), Route to this reward in a Moonlit row's menu, and Route to unlock… beside Job quests (or a right-click on a class under Jobs) for a job such as Blue Mage. Each quest comes after the ones it needs, lower levels first where there is a choice; a level gate marks where to level up, main scenario milestones split the list, and where a quest takes either of two earlier quests the shorter way is used and the other is shown with its count. Viewing a stored alt gives that alt's route. Copy route copies it as a Markdown list without your name; Pin all (hold, or Shift or Ctrl and click) pins every step for the Todo overlay, with an Undo.</value>
   </data>
   <data name="Help.CharacterCardBodies.8" xml:space="preserve">
     <value>After a break of 14 days or more (Settings › Notices), a card above the detail pane says what you had in your journal and where each quest stands now, the main scenario then and now, what the game added since by patch series (Show in Journal sets the Added in filter), the events running now and the levels that moved. It waits until every character was away that long, so an idle alt stays quiet, and opens once per session. With no earlier capture it asks when you last played; Since you were away… beside the capture line opens it any time, and Don't show again quiets it for that character.</value>
@@ -4740,7 +4737,7 @@
     <comment>{0} = number of quests; the label ends with Chrome.HoldIdSuffix where it is used.</comment>
   </data>
   <data name="RoutePinAllTooltip" xml:space="preserve">
-    <value>Hold to pin every quest on the route, in order (Shift+click pins at once). They join this character's pins and the Todo overlay.</value>
+    <value>Pin every quest on the route, in order. They join this character's pins and the Todo overlay.</value>
   </data>
   <data name="RoutePinAllUnavailable" xml:space="preserve">
     <value>Pins belong to a character; pick one to pin for.</value>
@@ -4754,12 +4751,6 @@
   </data>
   <data name="RouteAllPinnedAlready" xml:space="preserve">
     <value>Every quest on the route is already pinned.</value>
-  </data>
-  <data name="RouteUndo" xml:space="preserve">
-    <value>Undo</value>
-  </data>
-  <data name="RouteUndoTooltip" xml:space="preserve">
-    <value>Unpin the quests Pin all just added</value>
   </data>
   <data name="RouteToThisTooltip" xml:space="preserve">
     <value>Route to this: every quest still to do before it, in order, with level gates</value>
@@ -6394,7 +6385,7 @@
     <value>Not listed in Moonlit treasures.</value>
   </data>
   <data name="MarkUnique" xml:space="preserve">
-    <value>Mark as unique…</value>
+    <value>Mark as unique</value>
   </data>
   <data name="MarkUniqueTooltip" xml:space="preserve">
     <value>Add this quest to Moonlit treasures as a unique reward you vouch for</value>
@@ -6402,25 +6393,8 @@
   <data name="MarkUniqueNoteHint" xml:space="preserve">
     <value>Note: which reward is unique</value>
   </data>
-  <data name="MarkUniqueConfirm" xml:space="preserve">
-    <value>Mark as unique</value>
-  </data>
   <data name="MarkNotUniqueNoteHint" xml:space="preserve">
     <value>Note: why it is not unique (optional)</value>
-  </data>
-  <data name="MarkNotUniqueConfirm" xml:space="preserve">
-    <value>Hide as not unique</value>
-  </data>
-  <data name="VerdictQuestionUniqueFormat" xml:space="preserve">
-    <value>Add {0} to Moonlit treasures?</value>
-    <comment>{0} = quest name.</comment>
-  </data>
-  <data name="VerdictQuestionHideFormat" xml:space="preserve">
-    <value>Hide {0} from Moonlit treasures?</value>
-    <comment>{0} = quest name.</comment>
-  </data>
-  <data name="VerdictConfirmTooltip" xml:space="preserve">
-    <value>Hold Shift and click, or press and hold</value>
   </data>
   <data name="VerdictHoldCountdownFormat" xml:space="preserve">
     <value>Hold… ({0:0.0} s)</value>
@@ -6431,12 +6405,6 @@
   </data>
   <data name="VerdictUndoMarkedNotUnique" xml:space="preserve">
     <value>Hidden as not unique</value>
-  </data>
-  <data name="VerdictUndo" xml:space="preserve">
-    <value>Undo</value>
-  </data>
-  <data name="VerdictUndoTooltip" xml:space="preserve">
-    <value>Forget that verdict again</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
@@ -8998,5 +8966,121 @@
   <data name="TravelTheGiver" xml:space="preserve">
     <value>the giver</value>
     <comment>Stands for a quest giver whose name is unknown, inside a sentence.</comment>
+  </data>
+  <data name="SafetyArmedSuffix" xml:space="preserve">
+    <value>Hold Shift or Ctrl and click. You can undo it.</value>
+  </data>
+  <data name="SafetyArmedTwoClickSuffix" xml:space="preserve">
+    <value>Click twice, or hold Shift or Ctrl and click. You can undo it.</value>
+  </data>
+  <data name="SafetyHoldSuffix" xml:space="preserve">
+    <value>Press and hold, or hold Shift or Ctrl and click. This can't be undone.</value>
+  </data>
+  <data name="SafetyHoldTwoClickSuffix" xml:space="preserve">
+    <value>Click twice, or hold Shift or Ctrl and click. This can't be undone.</value>
+  </data>
+  <data name="SafetyHoldUndoSuffix" xml:space="preserve">
+    <value>Press and hold, or hold Shift or Ctrl and click. You can undo it.</value>
+  </data>
+  <data name="SafetyHoldTwoClickUndoSuffix" xml:space="preserve">
+    <value>Click twice, or hold Shift or Ctrl and click. You can undo it.</value>
+  </data>
+  <data name="SafetyNoneSuffix" xml:space="preserve">
+    <value>You can undo it.</value>
+  </data>
+  <data name="SafetyClickAgain" xml:space="preserve">
+    <value>Click again</value>
+    <comment>Two-click mode: a guarded button after its first click.</comment>
+  </data>
+  <data name="SafetyKeyHint" xml:space="preserve">
+    <value>Hold Shift or Ctrl, then click</value>
+  </data>
+  <data name="UndoToastUndo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="UndoToastUndoTooltip" xml:space="preserve">
+    <value>Put it back as it was</value>
+  </data>
+  <data name="UndoToastAddNote" xml:space="preserve">
+    <value>Add note</value>
+  </data>
+  <data name="UndoToastVerdictRestored" xml:space="preserve">
+    <value>Verdict restored</value>
+  </data>
+  <data name="UndoToastVerdictsRestoredFormat" xml:space="preserve">
+    <value>Verdicts restored: {0}</value>
+    <comment>{0} = how many verdicts Restore all took back.</comment>
+  </data>
+  <data name="UndoToastNoteSaved" xml:space="preserve">
+    <value>Note saved</value>
+  </data>
+  <data name="UndoToastUnpinnedFormat" xml:space="preserve">
+    <value>Unpinned {0}</value>
+    <comment>{0} = quest name.</comment>
+  </data>
+  <data name="UndoToastHiddenFormat" xml:space="preserve">
+    <value>{0} hidden</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="UndoToastShownFormat" xml:space="preserve">
+    <value>{0} shown again</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="UndoToastNotTrackedFormat" xml:space="preserve">
+    <value>No longer tracking {0}</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="UndoToastTrackedFormat" xml:space="preserve">
+    <value>Tracking {0} again</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="VerdictNoteQuestionFormat" xml:space="preserve">
+    <value>Note for {0}</value>
+    <comment>{0} = quest name.</comment>
+  </data>
+  <data name="VerdictNoteSave" xml:space="preserve">
+    <value>Save note</value>
+  </data>
+  <data name="MoonlitMarkNotUniqueTooltip" xml:space="preserve">
+    <value>Hide this reward from Moonlit treasures</value>
+  </data>
+  <data name="QuestionableReplaceConfirmTooltip" xml:space="preserve">
+    <value>Empties Questionable's priority list and puts these quests in it</value>
+  </data>
+  <data name="CompanionSetupApplyConfirmTooltip" xml:space="preserve">
+    <value>Changes that plugin's settings as listed above</value>
+  </data>
+  <data name="CharactersForgetConfirmTooltip" xml:space="preserve">
+    <value>Deletes this character's saved data</value>
+  </data>
+  <data name="AltsForgetBulkConfirmTooltip" xml:space="preserve">
+    <value>Deletes the saved data of the characters listed above</value>
+  </data>
+  <data name="ConfigDeleteConfirmTooltip" xml:space="preserve">
+    <value>Deletes everything Tsukimichi saved</value>
+  </data>
+  <data name="ConfigSafetyHeading" xml:space="preserve">
+    <value>Safety</value>
+  </data>
+  <data name="ConfigSafetyRules" xml:space="preserve">
+    <value>Changes to your data ask for a key or a hold</value>
+  </data>
+  <data name="ConfigSafetyRulesHint" xml:space="preserve">
+    <value>Verdicts and Don't track need Shift or Ctrl held, then offer Undo. Forget, Delete all, Replace and Apply need a hold.</value>
+  </data>
+  <data name="ConfigSafetyHold" xml:space="preserve">
+    <value>Press-and-hold length</value>
+  </data>
+  <data name="ConfigSafetyHoldHint" xml:space="preserve">
+    <value>How long to hold the button for changes that can't be undone.</value>
+  </data>
+  <data name="ConfigSafetyHoldOffHint" xml:space="preserve">
+    <value>Not used while two clicks confirm.</value>
+  </data>
+  <data name="ConfigSafetyTwoClick" xml:space="preserve">
+    <value>Click twice instead of holding</value>
+  </data>
+  <data name="ConfigSafetyTwoClickHint" xml:space="preserve">
+    <value>For hand strain: a second click confirms, in place of a held key or a held button.</value>
   </data>
 </root>

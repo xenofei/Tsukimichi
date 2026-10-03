@@ -610,7 +610,7 @@ public sealed class MainWindow : Window, IDisposable
         }
         else if (settings.ShortcutPin && Keyboard.LetterPressed(ImGuiKey.P) && runner.CanPin)
         {
-            runner.TogglePin(rowId);
+            runner.TogglePinWithUndo(quest);
         }
     }
 
@@ -2053,6 +2053,9 @@ public sealed class MainWindow : Window, IDisposable
 
         var windowX = ImGui.GetWindowPos().X;
         ui.RecordRect(UiRects.StatusBar, new Vector2(windowX + ImGui.GetWindowContentRegionMin().X, barMin.Y), new Vector2(windowX + ImGui.GetWindowContentRegionMax().X, origin.Y + rowHeight));
+
+        // The floating Undo stays above the bar.
+        UndoToast.KeepAbove(barMin.Y);
     }
 
     /// <summary>The host name of this window's Questionable confirmations.</summary>

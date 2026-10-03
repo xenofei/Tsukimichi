@@ -286,6 +286,56 @@ public sealed class QueryRunner : IDisposable
         return true;
     }
 
+    /// <summary>
+    /// <see cref="TogglePin"/> from a click in the UI (feature plan v6 S2): an unpin shows the floating Undo
+    /// ("Unpinned {quest} · Undo"), which puts the quest back where it was in the list, for the character it was
+    /// unpinned for. Call inside the window the click was in.
+    /// </summary>
+    public bool TogglePinWithUndo(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        var rowId = quest.RowId;
+        var owner = PinOwner;
+        var index = owner is null ? -1 : IndexOf(PinnedInOrder, rowId);
+        if (!TogglePin(rowId))
+        {
+            return false;
+        }
+
+        if (index >= 0 && owner is { } contentId)
+        {
+            UndoToast.Show(
+                string.Format(CultureInfo.CurrentCulture, Strings.UndoToastUnpinnedFormat, Spoilers.DisplayName(quest)),
+                () => RestorePin(contentId, rowId, index));
+        }
+
+        return true;
+    }
+
+    /// <summary>Pins <paramref name="rowId"/> again for <paramref name="contentId"/> at <paramref name="index"/> in its list (Undo of an unpin).</summary>
+    private void RestorePin(ulong contentId, uint rowId, int index)
+    {
+        if (!SetPin(contentId, rowId, pin: true) || pinsFile is null || !pinsFile.TryGetValue(contentId, out var list) || !list.Remove(rowId))
+        {
+            return;
+        }
+
+        list.Insert(Math.Clamp(index, 0, list.Count), rowId);
+    }
+
+    private static int IndexOf(IReadOnlyList<uint> list, uint rowId)
+    {
+        for (var i = 0; i < list.Count; i++)
+        {
+            if (list[i] == rowId)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     /// <summary>Raised on the draw thread when <see cref="TogglePin"/> pins a quest (not on unpin), with its row id.</summary>
     public event Action<uint>? QuestPinned;
 

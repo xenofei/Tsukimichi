@@ -55,7 +55,7 @@ public static partial class Chrome
     private static readonly Dictionary<FontAwesomeIcon, string> IconStrings = [];
     private static readonly string[] CountStrings = BuildCounts();
 
-    // Countdown labels under Reduce motion, index = tenths of a second left (1..6 for the default hold).
+    // Countdown labels under Reduce motion, index = tenths of a second left (1..20, the longest hold Settings offers).
     private static string[] Countdown => countdownText.Value;
 
     private static readonly Tsukimichi.Localization.LocArray countdownText = new(BuildCountdown);
@@ -804,28 +804,46 @@ public static partial class Chrome
     // ------------------------------------------------------------------ hold to confirm
 
     /// <summary>
-    /// A button guarded by a <see cref="ConfirmGate"/> (T7, accessibility §2.4): Shift and a click confirm at once;
-    /// otherwise the button must be held for the gate's duration while a Moon arc, stroked along the outline, closes
-    /// clockwise from the top centre over a line-tone track. Under Reduce motion the arc gives way to a countdown in the
-    /// label ("Hold… (0.4 s)"). <paramref name="label"/> must end in <see cref="HoldIdSuffix"/> so the countdown can
-    /// replace it without changing the id. Returns true on the frame the action is confirmed; the button stays the last
-    /// item so the caller can hang a tooltip on it.
+    /// A button guarded by a <see cref="ConfirmGate"/> (T7, accessibility §2.4; the Hold tier of the safety table,
+    /// <see cref="SafetyRules"/>): Ctrl or Shift and a click confirm at once; otherwise the button must be held for the
+    /// hold length chosen in Settings while a Moon arc, stroked along the outline, closes clockwise from the top centre
+    /// over a line-tone track. Under Reduce motion the arc gives way to a countdown in the label ("Hold… (0.4 s)"). In
+    /// two-click mode (hand strain) the first click turns the label to "Click again" and a second click confirms.
+    /// <paramref name="label"/> must end in <see cref="HoldIdSuffix"/> so the countdown can replace it without changing
+    /// the id. Returns true on the frame the action is confirmed; the button stays the last item so the caller can hang
+    /// a tooltip on it (<see cref="Safety.Tooltip"/>).
     /// </summary>
     public static bool HoldButton(string label, ConfirmGate gate)
     {
         ArgumentNullException.ThrowIfNull(gate);
         var io = ImGui.GetIO();
         var reduceMotion = UiMetrics.ReduceMotion;
+        var safety = Safety.Settings;
+        gate.SetHoldSeconds(safety.HoldSeconds);
+        var chord = io.KeyShift || io.KeyCtrl;
 
-        // A fixed width keeps the row still when the countdown text replaces the label.
+        // A fixed width keeps the row still when the countdown or "Click again" replaces the label.
         var padding = ImGui.GetStyle().FramePadding;
-        var longest = Countdown[^1];
-        var width = MathF.Max(ImGui.CalcTextSize(label, true, -1f).X, ImGui.CalcTextSize(longest, true, -1f).X) + padding.X * 2f;
+        var longest = MathF.Max(ImGui.CalcTextSize(Countdown[^1], true, -1f).X, ImGui.CalcTextSize(ClickAgainHoldLabel, true, -1f).X);
+        var width = MathF.Max(ImGui.CalcTextSize(label, true, -1f).X, longest) + padding.X * 2f;
+        if (safety.TwoClick)
+        {
+            var now = ImGui.GetTime();
+            var awaiting = gate.AwaitingSecond(now);
+            var clicked = ImGui.Button(awaiting ? ClickAgainHoldLabel : label, new Vector2(width, 0f));
+            if (awaiting)
+            {
+                DrawHoldArc(ImGui.GetWindowDrawList(), ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGui.GetStyle().FrameRounding, 0.5f);
+            }
+
+            return clicked && gate.ClickTwice(chord, now);
+        }
+
         var text = reduceMotion && gate.Holding ? Countdown[Math.Clamp(gate.RemainingTenths, 1, Countdown.Length - 1)] : label;
         ImGui.Button(text, new Vector2(width, 0f));
         var active = ImGui.IsItemActive();
 
-        var confirmed = gate.Update(io.KeyShift, active, io.DeltaTime);
+        var confirmed = gate.Update(chord, active, io.DeltaTime);
         if (!reduceMotion && gate.Holding)
         {
             DrawHoldArc(ImGui.GetWindowDrawList(), ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGui.GetStyle().FrameRounding, gate.Progress);
@@ -833,6 +851,11 @@ public static partial class Chrome
 
         return confirmed;
     }
+
+    /// <summary>"Click again" with the hold id, so the label swap keeps the button's id.</summary>
+    private static string ClickAgainHoldLabel => clickAgainHoldText.Value;
+
+    private static readonly Tsukimichi.Localization.LocText clickAgainHoldText = new(static () => Strings.SafetyClickAgain + HoldIdSuffix);
 
     /// <summary>
     /// The hold track (the full outline) and the Moon arc over the first <paramref name="fraction"/> of it, walked
@@ -928,8 +951,8 @@ public static partial class Chrome
 
     private static string[] BuildCountdown()
     {
-        var gate = new ConfirmGate();
-        var labels = new string[gate.HoldTenths + 1];
+        // Every hold Settings offers, up to the longest, has its labels.
+        var labels = new string[SafetyRules.MaxHoldTenths + 1];
         labels[0] = string.Empty;
         for (var i = 1; i < labels.Length; i++)
         {

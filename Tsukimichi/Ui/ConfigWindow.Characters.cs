@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Characters;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
@@ -182,6 +183,7 @@ public sealed partial class ConfigWindow
                 {
                     forgetPicked = [.. forgetCandidates];
                     forgetQuestionText = string.Format(CultureInfo.CurrentCulture, Strings.AltsForgetBulkQuestionFormat, forgetPicked.Count);
+                    forgetBulkGate.Cancel();
                     ImGui.OpenPopup(Strings.AltsForgetBulkPopup);
                 }
             }
@@ -203,7 +205,13 @@ public sealed partial class ConfigWindow
         }
     }
 
-    /// <summary>The confirmation: the question, the characters it picked (name, world, age), Forget them and Cancel.</summary>
+    private readonly ConfirmGate forgetBulkGate = new();
+
+    private static string ForgetBulkConfirmLabel => forgetBulkConfirmLabelText.Value;
+
+    private static readonly Localization.LocText forgetBulkConfirmLabelText = new(static () => Strings.AltsForgetBulkConfirm + Chrome.HoldIdSuffix);
+
+    /// <summary>The confirmation: the question, the characters it picked (name, world, age), Forget them (press and hold) and Cancel.</summary>
     private void DrawForgetBulkConfirm()
     {
         using var modal = ImRaii.PopupModal(Strings.AltsForgetBulkPopup, ImGuiWindowFlags.AlwaysAutoResize);
@@ -225,7 +233,14 @@ public sealed partial class ConfigWindow
         ImGui.Spacing();
         using (Theme.PushDestructiveButton())
         {
-            if (ImGui.Button(Strings.AltsForgetBulkConfirm))
+            // Forgetting cannot be undone: press and hold (feature plan v6 S2).
+            var confirmed = Chrome.HoldButton(ForgetBulkConfirmLabel, forgetBulkGate);
+            if (ImGui.IsItemHovered())
+            {
+                Safety.Tooltip(Strings.AltsForgetBulkConfirmTooltip, GuardedAction.ForgetCharacters);
+            }
+
+            if (confirmed)
             {
                 ForgetPicked();
                 ImGui.CloseCurrentPopup();

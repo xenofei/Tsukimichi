@@ -1,61 +1,128 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The confirm popup both Moonlit verdicts go through ("Mark as unique…" in the detail pane, "Not unique (hide)…" in a
-/// Moonlit row's context menu) and the "Marked unique · Undo" line shown for eight seconds after either. The popup is
-/// begun by <see cref="Draw"/> in the owning pane's ID scope, so <see cref="Open"/> may be called from inside a
-/// context menu: it only records the request, and the next <see cref="Draw"/> opens the popup (the pattern the
-/// settings window uses for its second delete confirm). The note field takes focus when the popup appears and Enter
-/// confirms; the confirm button is a <see cref="Chrome.HoldButton"/> (Shift and click, or hold 600 ms); Escape cancels.
+/// The Moonlit verdict actions both panes share (feature plan v6 S1, owner point 9): "Mark as unique" in the detail
+/// pane, "Not unique (hide)" in a Moonlit row's menu, and "Restore shipped verdict" in both. Each is an armed item of the
+/// safety table (<see cref="SafetyRules"/>): it acts only while Ctrl or Shift is held (or on two clicks, if the user
+/// chose that), saves at once and puts up the floating Undo (<see cref="UndoToast"/>); a verdict's toast also offers
+/// "Add note", which opens the small note popup. The popup is begun by <see cref="Draw"/> in the owning pane's ID scope,
+/// so <see cref="OpenNote"/> may be called from anywhere (the toast, a menu): it only records the request, and the next
+/// <see cref="Draw"/> opens it. The note field takes focus, Enter never saves (only the Save button does), and Escape
+/// cancels.
 /// </summary>
 internal sealed class VerdictPrompt(string popupId)
 {
     private const int NoteLength = 120;
-    private const double UndoSeconds = 8.0;
-
-    private static string ConfirmUniqueLabel => confirmUniqueLabelText.Value;
-
-    private static readonly Localization.LocText confirmUniqueLabelText = new(static () => Strings.MarkUniqueConfirm + Chrome.HoldIdSuffix);
-    private static string ConfirmHideLabel => confirmHideLabelText.Value;
-
-    private static readonly Localization.LocText confirmHideLabelText = new(static () => Strings.MarkNotUniqueConfirm + Chrome.HoldIdSuffix);
 
     private readonly string popupId = popupId ?? throw new ArgumentNullException(nameof(popupId));
-    private readonly ConfirmGate gate = new();
+    private readonly ClickGuard verdictGuard = new();
+    private readonly ClickGuard restoreGuard = new();
 
     private string noteBuffer = string.Empty;
-    private uint rowId;
-    private bool unique;
+    private uint noteRowId;
+    private bool noteUnique;
     private string question = string.Empty;
     private bool pendingOpen;
 
-    private uint undoRowId;
-    private bool undoUnique;
-    private double undoUntil = -1.0;
-
-    /// <summary>Asks for the popup on the next <see cref="Draw"/>. Safe from inside a menu.</summary>
-    /// <param name="unique">True to vouch for the quest, false to hide it as not unique.</param>
-    public void Open(uint rowId, bool unique, string questName)
+    /// <summary>"Mark as unique": the armed button of the detail pane. <paramref name="questName"/> is the shown (spoiler-safe) name.</summary>
+    public void DrawMarkUniqueButton(IUniqueOverrides overrides, uint rowId, string questName)
     {
-        this.rowId = rowId;
-        this.unique = unique;
-        question = unique
-            ? string.Format(CultureInfo.CurrentCulture, Strings.VerdictQuestionUniqueFormat, questName)
-            : string.Format(CultureInfo.CurrentCulture, Strings.VerdictQuestionHideFormat, questName);
+        ArgumentNullException.ThrowIfNull(overrides);
+        if (Chrome.ArmedButton(Strings.MarkUnique, verdictGuard, GuardedAction.MarkUnique, Strings.MarkUniqueTooltip, rowId))
+        {
+            Give(overrides, rowId, unique: true, questName);
+        }
+    }
+
+    /// <summary>"Not unique (hide)": the armed item of a Moonlit row's context menu.</summary>
+    public void DrawNotUniqueMenuItem(IUniqueOverrides overrides, uint rowId, string questName)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        if (Chrome.ArmedMenuItem(Strings.MoonlitMarkNotUnique, verdictGuard, GuardedAction.MarkNotUnique, Strings.MoonlitMarkNotUniqueTooltip, rowId))
+        {
+            Give(overrides, rowId, unique: false, questName);
+        }
+    }
+
+    /// <summary>"Restore shipped verdict" as an armed button (the detail pane, Settings' verdict list).</summary>
+    public void DrawRestoreButton(IUniqueOverrides overrides, uint rowId, string label, string tooltip)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        if (Chrome.ArmedButton(label, restoreGuard, GuardedAction.RestoreVerdict, tooltip, rowId))
+        {
+            Restore(overrides, rowId);
+        }
+    }
+
+    /// <summary>"Restore shipped verdict" as an armed item of a Moonlit row's context menu.</summary>
+    public void DrawRestoreMenuItem(IUniqueOverrides overrides, uint rowId)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        if (Chrome.ArmedMenuItem(Strings.MoonlitRestoreOverride, restoreGuard, GuardedAction.RestoreVerdict, Strings.RestoreOverrideTooltip, rowId))
+        {
+            Restore(overrides, rowId);
+        }
+    }
+
+    /// <summary>Stores the verdict at once, with no note, and puts up "Marked unique · Undo · Add note".</summary>
+    private void Give(IUniqueOverrides overrides, uint rowId, bool unique, string questName)
+    {
+        var before = overrides.Get(rowId);
+        overrides.Set(rowId, unique, null);
+        UndoToast.Show(
+            unique ? Strings.VerdictUndoMarkedUnique : Strings.VerdictUndoMarkedNotUnique,
+            () => PutBack(overrides, rowId, before),
+            Strings.UndoToastAddNote,
+            () => OpenNote(rowId, unique, questName));
+    }
+
+    /// <summary>Clears the user's verdict (the shipped data applies again) and puts up "Verdict restored · Undo".</summary>
+    public static void Restore(IUniqueOverrides overrides, uint rowId)
+    {
+        ArgumentNullException.ThrowIfNull(overrides);
+        if (overrides.Get(rowId) is not { } before)
+        {
+            return;
+        }
+
+        overrides.Clear(rowId);
+        UndoToast.Show(Strings.UndoToastVerdictRestored, () => PutBack(overrides, rowId, before));
+    }
+
+    /// <summary>The verdict as it was: the earlier one back, or none.</summary>
+    private static void PutBack(IUniqueOverrides overrides, uint rowId, UniqueOverride? before)
+    {
+        if (before is null)
+        {
+            overrides.Clear(rowId);
+        }
+        else
+        {
+            overrides.PutBack([KeyValuePair.Create(rowId, before)]);
+        }
+    }
+
+    /// <summary>Asks for the note popup on the next <see cref="Draw"/>. Safe from inside a menu or the Undo toast.</summary>
+    public void OpenNote(uint rowId, bool unique, string questName)
+    {
+        noteRowId = rowId;
+        noteUnique = unique;
+        question = string.Format(CultureInfo.CurrentCulture, Strings.VerdictNoteQuestionFormat, questName);
         noteBuffer = string.Empty;
-        gate.Cancel();
         pendingOpen = true;
     }
 
     /// <summary>
-    /// Opens a requested popup and draws it while it is open. Call every frame from the pane's own scope (not from a
-    /// menu or a table's inner window). Returns true on the frame a verdict was stored.
+    /// Opens a requested note popup and draws it while it is open. Call every frame from the pane's own scope (not from
+    /// a menu or a table's inner window). Returns true on the frame a note was saved.
     /// </summary>
     public bool Draw(IUniqueOverrides overrides)
     {
@@ -63,6 +130,7 @@ internal sealed class VerdictPrompt(string popupId)
         if (pendingOpen)
         {
             pendingOpen = false;
+            noteBuffer = overrides.Get(noteRowId)?.Note ?? string.Empty;
             ImGui.OpenPopup(popupId);
         }
 
@@ -80,85 +148,37 @@ internal sealed class VerdictPrompt(string popupId)
             ImGui.SetKeyboardFocusHere();
         }
 
+        // Enter in the field never saves (owner point 9): the field reports no Enter, only the Save button saves.
         ImGui.SetNextItemWidth(UiMetrics.Px(240f));
-        var entered = ImGui.InputTextWithHint(
+        ImGui.InputTextWithHint(
             "##verdictNote",
-            unique ? Strings.MarkUniqueNoteHint : Strings.MarkNotUniqueNoteHint,
+            noteUnique ? Strings.MarkUniqueNoteHint : Strings.MarkNotUniqueNoteHint,
             ref noteBuffer,
-            NoteLength,
-            ImGuiInputTextFlags.EnterReturnsTrue);
+            NoteLength);
 
-        var confirmed = Chrome.HoldButton(unique ? ConfirmUniqueLabel : ConfirmHideLabel, gate);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.VerdictConfirmTooltip);
-        }
-
+        var saved = ImGui.Button(Strings.VerdictNoteSave);
         ImGui.SameLine();
         var cancelled = ImGui.Button(Strings.Cancel) || (ImGui.IsWindowFocused() && ImGui.IsKeyPressed(ImGuiKey.Escape, false));
-        if (confirmed || entered)
+        if (saved)
         {
-            overrides.Set(rowId, unique, noteBuffer);
-            undoRowId = rowId;
-            undoUnique = unique;
-            undoUntil = ImGui.GetTime() + UndoSeconds;
-            gate.Cancel();
             ImGui.CloseCurrentPopup();
+            if (overrides.Get(noteRowId) is not { } before)
+            {
+                // The verdict was undone (here or in another game client) while the popup was open: nothing to note.
+                return false;
+            }
+
+            overrides.Set(noteRowId, before.Unique, noteBuffer);
+            var rowId = noteRowId;
+            UndoToast.Show(Strings.UndoToastNoteSaved, () => PutBack(overrides, rowId, before));
             return true;
         }
 
         if (cancelled)
         {
-            gate.Cancel();
             ImGui.CloseCurrentPopup();
         }
 
         return false;
     }
-
-    /// <summary>The width <see cref="DrawUndo"/>'s line takes now, so a toolbar can wrap it whole.</summary>
-    public float UndoWidth() =>
-        ImGui.CalcTextSize(undoUnique ? Strings.VerdictUndoMarkedUnique : Strings.VerdictUndoMarkedNotUnique).X
-        + ImGui.CalcTextSize(Strings.VerdictUndoSeparator).X
-        + ImGui.CalcTextSize(Strings.VerdictUndo).X + (ImGui.GetStyle().FramePadding.X * 2f);
-
-    /// <summary>"Marked unique · Undo" (or "Hidden as not unique · Undo") for eight seconds after a verdict; nothing otherwise. With <paramref name="forRowId"/> the line shows only while that quest is the one the verdict was given for.</summary>
-    public void DrawUndo(IUniqueOverrides overrides, uint? forRowId = null)
-    {
-        ArgumentNullException.ThrowIfNull(overrides);
-        if (undoUntil < 0.0 || (forRowId is { } only && only != undoRowId))
-        {
-            return;
-        }
-
-        if (ImGui.GetTime() >= undoUntil)
-        {
-            undoUntil = -1.0;
-            return;
-        }
-
-        ImGui.AlignTextToFramePadding();
-        using (Theme.PushText(Theme.Moon))
-        {
-            ImGui.TextUnformatted(undoUnique ? Strings.VerdictUndoMarkedUnique : Strings.VerdictUndoMarkedNotUnique);
-        }
-
-        ImGui.SameLine(0f, 0f);
-        ImGui.TextDisabled(Strings.VerdictUndoSeparator);
-        ImGui.SameLine(0f, 0f);
-        if (ImGui.SmallButton(Strings.VerdictUndo))
-        {
-            overrides.Clear(undoRowId);
-            undoUntil = -1.0;
-            return;
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.VerdictUndoTooltip);
-        }
-    }
-
-    /// <summary>Whether the undo line is currently showing (the pane may want to keep space for it).</summary>
-    public bool UndoShowing => undoUntil >= 0.0 && ImGui.GetTime() < undoUntil;
 }

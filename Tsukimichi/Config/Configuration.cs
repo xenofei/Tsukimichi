@@ -392,6 +392,22 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public bool ReduceMotion { get; set; }
 
+    // ---- 1.11.0: the safety table (feature plan v6 S2) ----
+    /// <summary>
+    /// How long a press-and-hold button (Delete all, Forget, Replace Questionable's list, Apply) must be held; 0.3–2.0 s,
+    /// default 0.6 s. Clamped by <see cref="SafetyHoldSecondsClamped"/> when read.
+    /// </summary>
+    public float SafetyHoldSeconds { get; set; } = SafetyRules.DefaultHoldSeconds;
+
+    /// <summary>
+    /// For hand strain: two clicks confirm in place of a held Ctrl or Shift key and in place of a held button.
+    /// </summary>
+    public bool SafetyTwoClick { get; set; }
+
+    /// <summary><see cref="SafetyHoldSeconds"/> within the range Settings offers.</summary>
+    [Newtonsoft.Json.JsonIgnore]
+    public float SafetyHoldSecondsClamped => SafetyRules.ClampHoldSeconds(SafetyHoldSeconds);
+
     // ---- 0.7.0: motion default and density ----
     /// <summary>
     /// Whether the user set <see cref="ReduceMotion"/> in Settings. Every config saved since 0.5.1 carries

@@ -832,6 +832,9 @@ public sealed partial class Plugin : IDalamudPlugin
             Ui.Typography.Initialize(PluginInterface.UiBuilder.FontAtlas, Log);
             PluginInterface.UiBuilder.Draw += UpdateUiMetrics;
             PluginInterface.UiBuilder.Draw += windowSystem.Draw;
+
+            // The floating Undo (feature plan v6 S2) draws after every window, over the one it belongs to.
+            PluginInterface.UiBuilder.Draw += Ui.UndoToast.Draw;
             PluginInterface.UiBuilder.OpenMainUi += mainWindow.Toggle;
 
             // /tsukimichi and /tsuki, plus /ts, /moon and the player's own aliases (1.11.0, A12); an alias Dalamud, the
@@ -1482,6 +1485,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 PluginInterface.UiBuilder.Draw -= dutyFinderPanel.Draw;
             }
 
+            PluginInterface.UiBuilder.Draw -= Ui.UndoToast.Draw;
             PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
         });

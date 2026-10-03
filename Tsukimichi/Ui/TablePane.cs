@@ -1367,7 +1367,7 @@ public sealed class TablePane : IDisposable
     {
         if (ImGui.MenuItem(runner.IsPinned(quest.RowId) ? Strings.Unpin : Strings.Pin, enabled: runner.CanPin))
         {
-            runner.TogglePin(quest.RowId);
+            runner.TogglePinWithUndo(quest);
         }
 
         if (ImGui.MenuItem(Strings.FlagOnMap, enabled: links.CanFlagMap(quest)))

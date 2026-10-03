@@ -161,4 +161,114 @@ public class ConfirmGateTests
         Assert.Equal(12, gate.HoldTenths);
         Assert.Equal(12, gate.RemainingTenths);
     }
+
+    // ---- 1.11.0: the safety table (feature plan v6 S2) ----
+
+    [Fact]
+    public void The_hold_length_follows_settings_within_its_range()
+    {
+        var gate = new ConfirmGate();
+
+        gate.SetHoldSeconds(1.5f);
+        Assert.Equal(1.5f, gate.HoldSeconds, 4);
+        Assert.InRange(Hold(gate, 200), 89, 91); // 90 frames of 1/60 s
+
+        gate.Update(chordHeld: false, pressed: false, Frame);
+        gate.SetHoldSeconds(0.01f);
+        Assert.Equal(SafetyRules.MinHoldSeconds, gate.HoldSeconds, 4);
+
+        gate.SetHoldSeconds(60f);
+        Assert.Equal(SafetyRules.MaxHoldSeconds, gate.HoldSeconds, 4);
+        Assert.Equal(SafetyRules.MaxHoldTenths, gate.HoldTenths);
+    }
+
+    [Fact]
+    public void Changing_the_hold_length_starts_a_press_over()
+    {
+        var gate = new ConfirmGate();
+        Hold(gate, 30);
+        Assert.True(gate.Holding);
+
+        gate.SetHoldSeconds(1f);
+
+        Assert.False(gate.Holding);
+        Assert.Equal(0f, gate.Progress);
+    }
+
+    [Fact]
+    public void Setting_the_same_hold_length_leaves_a_press_alone()
+    {
+        var gate = new ConfirmGate();
+        Hold(gate, 30);
+
+        gate.SetHoldSeconds(ConfirmGate.DefaultHoldSeconds);
+
+        Assert.True(gate.Holding);
+    }
+
+    [Fact]
+    public void Ctrl_works_as_the_chord_like_shift()
+    {
+        // The chord argument is "Ctrl or Shift": the caller passes either key.
+        var gate = new ConfirmGate();
+        var ctrlHeld = true;
+        Assert.True(gate.Update(chordHeld: ctrlHeld, pressed: true, Frame));
+    }
+
+    [Fact]
+    public void A_press_let_go_early_is_reported_as_abandoned_once()
+    {
+        var gate = new ConfirmGate();
+        Hold(gate, 10);
+
+        Assert.False(gate.Update(chordHeld: false, pressed: false, Frame));
+        Assert.True(gate.Abandoned);
+        gate.Update(chordHeld: false, pressed: false, Frame);
+        Assert.False(gate.Abandoned, "only on the frame of the release");
+    }
+
+    [Fact]
+    public void A_confirmed_press_is_not_abandoned()
+    {
+        var gate = new ConfirmGate();
+        gate.Update(chordHeld: true, pressed: true, Frame);
+
+        gate.Update(chordHeld: false, pressed: false, Frame);
+
+        Assert.False(gate.Abandoned);
+    }
+
+    [Fact]
+    public void Two_click_mode_confirms_on_the_second_click()
+    {
+        var gate = new ConfirmGate();
+
+        Assert.False(gate.ClickTwice(chordHeld: false, now: 1.0));
+        Assert.True(gate.AwaitingSecond(1.5));
+        Assert.True(gate.ClickTwice(chordHeld: false, now: 2.0));
+        Assert.True(gate.Confirmed);
+        Assert.False(gate.AwaitingSecond(2.1));
+    }
+
+    [Fact]
+    public void Two_click_mode_ignores_a_double_click_and_takes_the_chord()
+    {
+        var gate = new ConfirmGate();
+
+        Assert.False(gate.ClickTwice(chordHeld: false, now: 1.0));
+        Assert.False(gate.ClickTwice(chordHeld: false, now: 1.05));
+        Assert.True(gate.ClickTwice(chordHeld: true, now: 1.06), "Ctrl or Shift still confirms at once");
+    }
+
+    [Fact]
+    public void Cancel_forgets_a_first_click()
+    {
+        var gate = new ConfirmGate();
+        gate.ClickTwice(chordHeld: false, now: 1.0);
+
+        gate.Cancel();
+
+        Assert.False(gate.AwaitingSecond(1.5));
+        Assert.False(gate.ClickTwice(chordHeld: false, now: 2.0));
+    }
 }

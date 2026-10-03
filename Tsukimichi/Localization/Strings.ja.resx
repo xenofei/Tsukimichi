@@ -1383,9 +1383,6 @@
   <data name="ConfigVerdictRestoreAllTooltip" xml:space="preserve">
     <value>すべての判定を破棄します。Shiftを押しながらクリックするか、長押ししてください。</value>
   </data>
-  <data name="ConfigVerdictsRestored" xml:space="preserve">
-    <value>すべての判定を元に戻しました。同梱の報酬データが再び適用されます。</value>
-  </data>
   <data name="ConfigSectionAbout" xml:space="preserve">
     <value>情報</value>
   </data>
@@ -2489,12 +2486,6 @@
   </data>
   <data name="RouteAllPinnedAlready" xml:space="preserve">
     <value>ルート上のすべてのクエストは既にピン留めされています。</value>
-  </data>
-  <data name="RouteUndo" xml:space="preserve">
-    <value>取り消し</value>
-  </data>
-  <data name="RouteUndoTooltip" xml:space="preserve">
-    <value>「すべてピン留め」で追加したクエストのピン留めを解除します</value>
   </data>
   <data name="RouteToThisTooltip" xml:space="preserve">
     <value>ここへのルート: その前にまだ必要なすべてのクエストを、レベルの壁とともに順番に表示</value>
@@ -3651,23 +3642,8 @@
   <data name="MarkUniqueNoteHint" xml:space="preserve">
     <value>メモ: どの報酬がユニークか</value>
   </data>
-  <data name="MarkUniqueConfirm" xml:space="preserve">
-    <value>ユニークとして登録</value>
-  </data>
   <data name="MarkNotUniqueNoteHint" xml:space="preserve">
     <value>メモ: ユニークではない理由（任意）</value>
-  </data>
-  <data name="MarkNotUniqueConfirm" xml:space="preserve">
-    <value>ユニークではないとして非表示</value>
-  </data>
-  <data name="VerdictQuestionUniqueFormat" xml:space="preserve">
-    <value>{0}を月明かりの宝物に追加しますか？</value>
-  </data>
-  <data name="VerdictQuestionHideFormat" xml:space="preserve">
-    <value>{0}を月明かりの宝物から非表示にしますか？</value>
-  </data>
-  <data name="VerdictConfirmTooltip" xml:space="preserve">
-    <value>Shiftを押しながらクリックするか、長押ししてください</value>
   </data>
   <data name="VerdictHoldCountdownFormat" xml:space="preserve">
     <value>長押し…（{0:0.0}秒）</value>
@@ -3677,12 +3653,6 @@
   </data>
   <data name="VerdictUndoMarkedNotUnique" xml:space="preserve">
     <value>ユニークではないとして非表示にしました</value>
-  </data>
-  <data name="VerdictUndo" xml:space="preserve">
-    <value>取り消し</value>
-  </data>
-  <data name="VerdictUndoTooltip" xml:space="preserve">
-    <value>その判定を再び破棄します</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>キャンセル</value>

@@ -22,7 +22,7 @@ namespace Tsukimichi.Ui;
 /// the viewed character's states, so a stored alt gets its own route; it is rebuilt when the session changes, so
 /// quests drop off as they are completed. "Copy route" puts a Markdown list on the clipboard (names through the
 /// spoiler shield, no character); "Pin all" is a hold-to-confirm button that pins every step through
-/// <see cref="RoutePins.PinAll"/>, followed by an Undo line. Opened by <see cref="UiState.OpenRoute"/> from the detail
+/// <see cref="RoutePins.PinAll"/>, followed by the floating Undo. Opened by <see cref="UiState.OpenRoute"/> from the detail
 /// pane's action bar, a Moonlit row's menu, the Characters job rows, My blues, the Duty Finder panel and the todo
 /// overlay's pins. Every string is composed when the route is rebuilt, and the list draws only its visible lines, so
 /// a thousand-quest route costs nothing per frame.
@@ -70,6 +70,7 @@ public sealed class RouteWindow : Window
 
     // What the last Pin all added and for whom; dropped with its note when the viewed character changes.
     private RoutePinBatch undo = RoutePinBatch.Empty;
+    private int undoToast;
     private string note = string.Empty;
     private double noteUntil = -1.0;
 
@@ -112,7 +113,7 @@ public sealed class RouteWindow : Window
         target = routeTarget ?? throw new ArgumentNullException(nameof(routeTarget));
         builtVersion = -1;
         pinGate.Cancel();
-        undo = RoutePinBatch.Empty;
+        DropUndo();
         noteUntil = -1.0;
         Questionable?.Ipc.MarkListStale();
         IsOpen = true;
@@ -261,14 +262,13 @@ public sealed class RouteWindow : Window
         runner.SyncPins();
         if (undo.Added.Count > 0 && !RoutePins.CanUndo(undo, pins))
         {
-            undo = RoutePinBatch.Empty;
-            noteUntil = -1.0;
+            DropUndo();
         }
 
         if (ImGui.Button(Strings.RouteCopy))
         {
             ImGui.SetClipboardText(RouteMarkdown.Write(v.Route, bundle.Catalog, session.Spoilers.DisplayName));
-            Note(Strings.RouteCopied, RoutePinBatch.Empty);
+            Note(Strings.RouteCopied);
         }
 
         if (ImGui.IsItemHovered())
@@ -288,7 +288,14 @@ public sealed class RouteWindow : Window
         ImGui.EndDisabled();
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(pins.CanPin ? Strings.RoutePinAllTooltip : Strings.RoutePinAllUnavailable);
+            if (pins.CanPin)
+            {
+                Safety.Tooltip(Strings.RoutePinAllTooltip, GuardedAction.PinAll);
+            }
+            else
+            {
+                UiMetrics.Tooltip(Strings.RoutePinAllUnavailable);
+            }
         }
 
         if (Questionable is { } questionable)
@@ -301,11 +308,19 @@ public sealed class RouteWindow : Window
         {
             var added = RoutePins.PinAll(v.Route, pins);
             var count = added.Added.Count;
-            Note(
-                count == 0 ? Strings.RouteAllPinnedAlready
-                : count == 1 ? Strings.RoutePinnedOne
-                : string.Format(CultureInfo.CurrentCulture, Strings.RoutePinnedFormat, count),
-                added);
+            if (count == 0)
+            {
+                Note(Strings.RouteAllPinnedAlready);
+            }
+            else
+            {
+                // The floating Undo (feature plan v6 S2) takes back exactly what this Pin all added.
+                undo = added;
+                noteUntil = -1.0;
+                undoToast = UndoToast.Show(
+                    count == 1 ? Strings.RoutePinnedOne : string.Format(CultureInfo.CurrentCulture, Strings.RoutePinnedFormat, count),
+                    UndoPinAll);
+            }
         }
 
         if (noteUntil < 0.0 || ImGui.GetTime() >= noteUntil)
@@ -314,33 +329,31 @@ public sealed class RouteWindow : Window
             return;
         }
 
-        // The note and its Undo go on the line when they fit, else under the buttons, never off the window's edge.
-        var undoWidth = undo.Added.Count == 0 ? 0f : ImGui.CalcTextSize(Strings.RouteUndoSeparator).X + SmallButtonWidth(Strings.RouteUndo);
-        Chrome.SameLineOrWrap(ImGui.CalcTextSize(note).X + undoWidth);
+        // The note goes on the line when it fits, else under the buttons, never off the window's edge.
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(note).X);
         ImGui.AlignTextToFramePadding();
         using (Theme.PushText(Theme.Surface.Text))
         {
             ImGui.TextUnformatted(note);
         }
+    }
 
-        if (undo.Added.Count == 0)
-        {
-            return;
-        }
-
-        ImGui.SameLine(0f, 0f);
-        ImGui.TextDisabled(Strings.RouteUndoSeparator);
-        ImGui.SameLine(0f, 0f);
-        if (ImGui.SmallButton(Strings.RouteUndo))
+    /// <summary>The Undo of the last Pin all: unpins what it added, if those pins are still the viewed character's.</summary>
+    private void UndoPinAll()
+    {
+        if (undo.Added.Count > 0 && RoutePins.CanUndo(undo, pins))
         {
             RoutePins.Undo(undo, pins);
-            undo = RoutePinBatch.Empty;
-            noteUntil = -1.0;
         }
-        else if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.RouteUndoTooltip);
-        }
+
+        undo = RoutePinBatch.Empty;
+    }
+
+    /// <summary>Forgets the last Pin all and takes its Undo down (another route, another character).</summary>
+    private void DropUndo()
+    {
+        undo = RoutePinBatch.Empty;
+        UndoToast.Dismiss(undoToast);
     }
 
     /// <summary>
@@ -404,10 +417,9 @@ public sealed class RouteWindow : Window
         }
     }
 
-    private void Note(string text, RoutePinBatch added)
+    private void Note(string text)
     {
         note = text;
-        undo = added;
         noteUntil = ImGui.GetTime() + NoteSeconds;
     }
 

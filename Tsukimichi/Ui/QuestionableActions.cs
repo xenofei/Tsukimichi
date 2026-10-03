@@ -9,6 +9,7 @@ using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Ipc;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
@@ -55,6 +56,13 @@ public sealed class QuestionableActions
     private PendingKind pending;
     private string pendingHost = string.Empty;
     private bool pendingOpen;
+
+    // Replace empties Questionable's own list, which cannot be undone: its confirm is press and hold (feature plan v6 S2).
+    private readonly ConfirmGate replaceGate = new();
+
+    private static string ReplaceConfirmLabel => replaceConfirmLabelText.Value;
+
+    private static readonly Localization.LocText replaceConfirmLabelText = new(static () => Strings.QuestionableReplaceConfirm + Chrome.HoldIdSuffix);
     private QuestionableSendPlan pendingPlan = QuestionableSendPlan.Empty;
     private uint pendingStartOnly;
     private string pendingQuestion = string.Empty;
@@ -365,6 +373,7 @@ public sealed class QuestionableActions
         if (pendingOpen)
         {
             pendingOpen = false;
+            replaceGate.Cancel();
             ImGui.OpenPopup(popupId);
         }
 
@@ -400,7 +409,18 @@ public sealed class QuestionableActions
         bool confirmed;
         using (Theme.PushDestructiveButton(pending == PendingKind.Replace))
         {
-            confirmed = ImGui.Button(confirmLabel);
+            if (pending == PendingKind.Replace)
+            {
+                confirmed = Chrome.HoldButton(ReplaceConfirmLabel, replaceGate);
+                if (ImGui.IsItemHovered())
+                {
+                    Safety.Tooltip(Strings.QuestionableReplaceConfirmTooltip, GuardedAction.QuestionableReplace);
+                }
+            }
+            else
+            {
+                confirmed = ImGui.Button(confirmLabel);
+            }
         }
 
         ImGui.SameLine();

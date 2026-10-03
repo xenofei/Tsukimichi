@@ -1,18 +1,23 @@
 namespace Tsukimichi.Core.Ui;
 
 /// <summary>
-/// The guard on a destructive button, fed once per frame with what the UI sees: whether the chord key (Shift) is
-/// down, whether the button is being pressed, and the frame time. Two ways through: the chord plus a press confirms
-/// at once; without the chord the press must last <see cref="HoldSeconds"/> (600 ms by default), and releasing
-/// earlier cancels and resets. After a confirmation the gate stays latched until the press ends, so one long press
-/// fires once. <see cref="Progress"/> drives the hold arc (or the countdown text), <see cref="Confirmed"/> is true
-/// for the single update that fired.
+/// The guard on a <see cref="SafetyTier.Hold"/> button (bulk or irreversible changes), fed once per frame with what
+/// the UI sees: whether the chord (Ctrl or Shift) is down, whether the button is being pressed, and the frame time.
+/// Two ways through: the chord plus a press confirms at once; without the chord the press must last
+/// <see cref="HoldSeconds"/> (600 ms by default, adjustable in Settings through <see cref="SetHoldSeconds"/>), and
+/// releasing earlier cancels and resets (<see cref="Abandoned"/> says so for that one update). After a confirmation
+/// the gate stays latched until the press ends, so one long press fires once. <see cref="Progress"/> drives the hold
+/// arc (or the countdown text), <see cref="Confirmed"/> is true for the single update that fired. In two-click mode
+/// (hand strain) the button feeds its clicks to <see cref="ClickTwice"/> instead, which follows the
+/// <see cref="ClickGuard"/> rules with the chord still confirming at once.
 /// </summary>
 public sealed class ConfirmGate
 {
     public const float DefaultHoldSeconds = 0.6f;
 
+    private readonly ClickGuard clicks = new();
     private bool latched;
+    private bool wasPressed;
 
     public ConfirmGate(float holdSeconds = DefaultHoldSeconds)
     {
@@ -25,7 +30,7 @@ public sealed class ConfirmGate
     }
 
     /// <summary>How long the button must be held without the chord.</summary>
-    public float HoldSeconds { get; }
+    public float HoldSeconds { get; private set; }
 
     /// <summary>Seconds the current press has lasted; 0 when idle.</summary>
     public float Elapsed { get; private set; }
@@ -38,6 +43,9 @@ public sealed class ConfirmGate
 
     /// <summary>True on the update that confirmed, false on every other.</summary>
     public bool Confirmed { get; private set; }
+
+    /// <summary>True on the update where a press ended before the hold was done (the hint may say to hold longer).</summary>
+    public bool Abandoned { get; private set; }
 
     /// <summary>True while a press is accumulating towards the hold (not idle, not yet fired).</summary>
     public bool Holding => !latched && Elapsed > 0f;
@@ -54,20 +62,24 @@ public sealed class ConfirmGate
     /// <summary>
     /// Advances the gate one frame. Returns true on the frame the action is confirmed.
     /// </summary>
-    /// <param name="chordHeld">The Shift key is down.</param>
+    /// <param name="chordHeld">Ctrl or Shift is down.</param>
     /// <param name="pressed">The button is active (mouse or nav key held on it).</param>
     /// <param name="deltaSeconds">Frame time; negative or non-finite values count as zero.</param>
     public bool Update(bool chordHeld, bool pressed, float deltaSeconds)
     {
         Confirmed = false;
+        Abandoned = false;
         if (!pressed)
         {
             // Release: a finished press unlatches, an unfinished one is cancelled. Either way the next press starts from zero.
+            Abandoned = wasPressed && !latched;
+            wasPressed = false;
             Elapsed = 0f;
             latched = false;
             return false;
         }
 
+        wasPressed = true;
         if (latched)
         {
             return false;
@@ -93,12 +105,44 @@ public sealed class ConfirmGate
         return false;
     }
 
-    /// <summary>Drops any press in progress (the popup closed, Escape was pressed) without confirming.</summary>
+    /// <summary>
+    /// Changes the hold length (Settings › Keyboard › Safety); a press in progress starts over. Values outside the
+    /// range Settings offers are clamped (<see cref="SafetyRules.ClampHoldSeconds"/>).
+    /// </summary>
+    public void SetHoldSeconds(float seconds)
+    {
+        var clamped = SafetyRules.ClampHoldSeconds(seconds);
+        if (clamped == HoldSeconds)
+        {
+            return;
+        }
+
+        HoldSeconds = clamped;
+        Cancel();
+    }
+
+    /// <summary>
+    /// Two-click mode: a click on the button. The chord confirms at once; otherwise the first click arms the gate and a
+    /// second one confirms (<see cref="ClickGuard"/>'s timing). Returns true when the action should happen now.
+    /// </summary>
+    public bool ClickTwice(bool chordHeld, double now)
+    {
+        Confirmed = clicks.Click(chordHeld, twoClick: true, now);
+        return Confirmed;
+    }
+
+    /// <summary>Two-click mode: the first click landed and the second is awaited.</summary>
+    public bool AwaitingSecond(double now) => clicks.AwaitingSecond(now);
+
+    /// <summary>Drops any press in progress, and any first click (the popup closed, Escape was pressed), without confirming.</summary>
     public void Cancel()
     {
         Elapsed = 0f;
         latched = false;
+        wasPressed = false;
         Confirmed = false;
+        Abandoned = false;
+        clicks.Cancel();
     }
 
     private void Fire()

@@ -178,6 +178,14 @@ public sealed partial class CharactersPane
     private DateTime toastUntilUtc;
     private string forgetQuestion = string.Empty;
     private string forgetName = string.Empty;
+
+    // The safety table (feature plan v6 S2): Don't track is armed, Forget is press and hold.
+    private readonly ClickGuard trackGuard = new();
+    private readonly ConfirmGate forgetGate = new();
+
+    private static string ForgetConfirmLabel => forgetConfirmLabelText.Value;
+
+    private static readonly LocText forgetConfirmLabelText = new(static () => Strings.CharactersForgetConfirm + Chrome.HoldIdSuffix);
     private ulong forgetTarget;
 
     /// <param name="loadSnapshot">Loads a stored character by content id (e.g. <c>SnapshotService.Load</c>); null when unreadable.</param>
@@ -360,7 +368,7 @@ public sealed partial class CharactersPane
         var book = roster.Settings;
         if (ImGui.MenuItem(item.Hidden ? Strings.AltsMenuShow : Strings.AltsMenuHide))
         {
-            book.Edit(CharacterSettingChange.Hide(item.ContentId, !item.Hidden));
+            SetHidden(book, item.ContentId, item.Name, !item.Hidden);
         }
 
         if (ImGui.IsItemHovered())
@@ -368,15 +376,42 @@ public sealed partial class CharactersPane
             UiMetrics.Tooltip(Strings.AltsHideTooltip);
         }
 
-        if (ImGui.MenuItem(item.Tracked ? Strings.AltsMenuDontTrack : Strings.AltsMenuTrack))
+        // Don't track is armed (feature plan v6 S2): a whole session's progress could silently go unsaved. Tracking
+        // again is one plain click.
+        if (!item.Tracked)
         {
-            book.Edit(CharacterSettingChange.Track(item.ContentId, !item.Tracked));
-        }
+            if (ImGui.MenuItem(Strings.AltsMenuTrack))
+            {
+                SetTracked(book, item.ContentId, item.Name, tracked: true);
+            }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.AltsDontTrackTooltip);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.AltsDontTrackTooltip);
+            }
         }
+        else if (Chrome.ArmedMenuItem(Strings.AltsMenuDontTrack, trackGuard, GuardedAction.DontTrackCharacter, Strings.AltsDontTrackTooltip, item.ContentId))
+        {
+            SetTracked(book, item.ContentId, item.Name, tracked: false);
+        }
+    }
+
+    /// <summary>Hides or shows a character in the lists, with the floating Undo.</summary>
+    private static void SetHidden(CharacterSettingsBook book, ulong contentId, string name, bool hidden)
+    {
+        book.Edit(CharacterSettingChange.Hide(contentId, hidden));
+        UndoToast.Show(
+            string.Format(CultureInfo.CurrentCulture, hidden ? Strings.UndoToastHiddenFormat : Strings.UndoToastShownFormat, name),
+            () => book.Edit(CharacterSettingChange.Hide(contentId, !hidden)));
+    }
+
+    /// <summary>Tracks or stops tracking a character, with the floating Undo.</summary>
+    private static void SetTracked(CharacterSettingsBook book, ulong contentId, string name, bool tracked)
+    {
+        book.Edit(CharacterSettingChange.Track(contentId, tracked));
+        UndoToast.Show(
+            string.Format(CultureInfo.CurrentCulture, tracked ? Strings.UndoToastTrackedFormat : Strings.UndoToastNotTrackedFormat, name),
+            () => book.Edit(CharacterSettingChange.Track(contentId, !tracked)));
     }
 
     private void View(UiState ui, ulong contentId)
@@ -1414,6 +1449,7 @@ public sealed partial class CharactersPane
                 forgetTarget = snapshot.ContentId;
                 forgetName = snapshot.Name;
                 forgetQuestion = string.Format(CultureInfo.CurrentCulture, Strings.CharactersForgetQuestionFormat, snapshot.Name);
+                forgetGate.Cancel();
                 ImGui.OpenPopup(Strings.CharactersForgetPopup);
             }
         }
@@ -1428,7 +1464,7 @@ public sealed partial class CharactersPane
         var hidden = book.IsHidden(snapshot.ContentId);
         if (ImGui.Checkbox(Strings.AltsMenuHide, ref hidden))
         {
-            book.Edit(CharacterSettingChange.Hide(snapshot.ContentId, hidden));
+            SetHidden(book, snapshot.ContentId, snapshot.Name, hidden);
         }
 
         if (ImGui.IsItemHovered())
@@ -1436,16 +1472,12 @@ public sealed partial class CharactersPane
             UiMetrics.Tooltip(Strings.AltsHideTooltip);
         }
 
+        // Turning "Don't track" on is armed (Ctrl or Shift and click); turning it off is one plain click.
         Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.AltsMenuDontTrack).X + ImGui.GetFrameHeight() + (ImGui.GetStyle().ItemInnerSpacing.X * 2f));
         var untracked = !book.IsTracked(snapshot.ContentId);
-        if (ImGui.Checkbox(Strings.AltsMenuDontTrack, ref untracked))
+        if (Chrome.ArmedCheckbox(Strings.AltsMenuDontTrack, ref untracked, guardedValue: true, trackGuard, GuardedAction.DontTrackCharacter, Strings.AltsDontTrackTooltip, snapshot.ContentId))
         {
-            book.Edit(CharacterSettingChange.Track(snapshot.ContentId, !untracked));
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.AltsDontTrackTooltip);
+            SetTracked(book, snapshot.ContentId, snapshot.Name, tracked: !untracked);
         }
     }
 
@@ -1464,7 +1496,14 @@ public sealed partial class CharactersPane
         ImGui.Spacing();
         using (Theme.PushDestructiveButton())
         {
-            if (ImGui.Button(Strings.CharactersForgetConfirm))
+            // Forgetting cannot be undone: press and hold (feature plan v6 S2).
+            var confirmed = Chrome.HoldButton(ForgetConfirmLabel, forgetGate);
+            if (ImGui.IsItemHovered())
+            {
+                Safety.Tooltip(Strings.CharactersForgetConfirmTooltip, GuardedAction.ForgetCharacter);
+            }
+
+            if (confirmed)
             {
                 if (session.IsLiveElsewhere(forgetTarget))
                 {

@@ -771,9 +771,9 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// The user's Moonlit verdict: restore an override, or vouch for a quest the shipped data does not list. "Mark as
-    /// unique…" opens the shared <see cref="VerdictPrompt"/> (Shift and click, or hold, to confirm) and an Undo line
-    /// follows for eight seconds.
+    /// The user's Moonlit verdict: restore an override, or vouch for a quest the shipped data does not list. Both are
+    /// armed buttons of the shared <see cref="VerdictPrompt"/> (Ctrl or Shift and click; feature plan v6 S1): the
+    /// change is saved at once and the floating Undo follows, with "Add note" after a verdict.
     /// </summary>
     private void DrawUnique(IUniqueOverrides overrides, uint rowId)
     {
@@ -786,16 +786,8 @@ public sealed partial class DetailPane
                 TextFlow.Wrapped(note, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
             }
 
-            SameLineOrWrap(SmallButtonWidth(Strings.RestoreOverride), cardRight);
-            if (ImGui.SmallButton(Strings.RestoreOverride))
-            {
-                overrides.Clear(rowId);
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.RestoreOverrideTooltip);
-            }
+            SameLineOrWrap(Chrome.ArmedButtonWidth(Strings.RestoreOverride), cardRight);
+            verdict.DrawRestoreButton(overrides, rowId, Strings.RestoreOverride, Strings.RestoreOverrideTooltip);
         }
         else if (model.HasUniqueEntries)
         {
@@ -804,21 +796,12 @@ public sealed partial class DetailPane
         else
         {
             TextFlow.Wrapped(Strings.NotListedInMoonlit, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
-            SameLineOrWrap(SmallButtonWidth(Strings.MarkUnique), cardRight);
-            if (ImGui.SmallButton(Strings.MarkUnique))
-            {
-                verdict.Open(rowId, true, model.DisplayName);
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.MarkUniqueTooltip);
-            }
+            SameLineOrWrap(Chrome.ArmedButtonWidth(Strings.MarkUnique), cardRight);
+            verdict.DrawMarkUniqueButton(overrides, rowId, model.DisplayName);
         }
 
-        // Begun on every path so a popup opened for one quest is not orphaned when the selection moves on.
+        // Begun on every path so a note popup opened for one quest is not orphaned when the selection moves on.
         verdict.Draw(overrides);
-        verdict.DrawUndo(overrides, rowId);
     }
 
     /// <summary>
@@ -1042,7 +1025,7 @@ public sealed partial class DetailPane
         var canPin = runner.CanPin;
         if (Chrome.IconButtonRound("##pin", PinIcon, !canPin ? Strings.ActionPinUnavailable : pinned ? Strings.ActionUnpinTooltip : Strings.ActionPinTooltip, pinned, canPin))
         {
-            runner.TogglePin(rowId);
+            runner.TogglePinWithUndo(quest);
         }
 
         NextRound(ref used, width);
