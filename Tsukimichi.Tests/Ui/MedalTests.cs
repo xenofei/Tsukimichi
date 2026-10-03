@@ -351,6 +351,32 @@ public sealed class MedalTests
     }
 
     [Fact]
+    public void Luminance_weighs_the_channels_and_ignores_alpha()
+    {
+        Assert.Equal(0f, MedalMesh.Luminance(0xFF000000u));
+        Assert.Equal(255f, MedalMesh.Luminance(0x00FFFFFFu), 3);
+        Assert.Equal(255f * 0.2126f, MedalMesh.Luminance(0x000000FFu), 3);
+        Assert.Equal(255f * 0.7152f, MedalMesh.Luminance(0x8000FF00u), 3);
+        Assert.Equal(255f * 0.0722f, MedalMesh.Luminance(0x00FF0000u), 3);
+    }
+
+    [Fact]
+    public void Brightest_is_the_brightest_vertex_of_any_part_and_stays_put()
+    {
+        var mesh = new MedalMesh([
+            new MeshPart([Vector2.Zero], [Vector2.Zero], [0xFF202020u], [0], 0f),
+            new MeshPart([Vector2.Zero, Vector2.One], [Vector2.Zero, Vector2.Zero], [0x10808080u, 0xFF404040u], [0, 1], 40f),
+        ]);
+        Assert.Equal(MedalMesh.Luminance(0x10808080u), mesh.Brightest, 3);
+        Assert.Equal(mesh.Brightest, mesh.Brightest);
+        Assert.Equal(0f, new MedalMesh([]).Brightest);
+
+        var glyph = MedalArt.RowGlyph(MedalBadge.Journal, MedalTokens.Standard);
+        var expected = glyph.Parts.SelectMany(static p => p.Colors).Max(MedalMesh.Luminance);
+        Assert.Equal(expected, glyph.Brightest, 3);
+    }
+
+    [Fact]
     public void Ear_clipping_covers_a_concave_outline_exactly()
     {
         // An L shape, clockwise and anticlockwise: the triangles' area is the outline's.

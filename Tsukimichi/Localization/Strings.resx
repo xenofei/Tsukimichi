@@ -10084,4 +10084,8 @@
     <value>Who gives the quest, with their portrait. Hover a portrait for a larger one.</value>
     <comment>Journal table: the Giver column header's tooltip.</comment>
   </data>
+  <data name="Portrait.GiverHidden" xml:space="preserve">
+    <value>Hidden giver</value>
+    <comment>Journal table's Giver column: shown instead of the giver's name for a quest the spoiler shield hides.</comment>
+  </data>
 </root>

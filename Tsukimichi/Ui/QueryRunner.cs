@@ -576,10 +576,17 @@ public sealed class QueryRunner : IDisposable
     public Func<Core.Ui.IPaneIconSheets?>? IconSheets { get; set; }
 
     /// <summary>
+    /// Whether <see cref="IconSheets"/> has settled: its warm finished, with the icons or without them (a failed read).
+    /// Once it has, a group's label is cached even without its icon, so it is not worked out again every frame. Set by
+    /// the plugin; unset, the label waits for the icons.
+    /// </summary>
+    public Func<bool>? IconSheetsSettled { get; set; }
+
+    /// <summary>
     /// <see cref="JobShort"/> with a game icon (a quest limited to one job its job's; a group of jobs the Disciples of
     /// the Hand's or the Land's tile, or the Class &amp; Job emblem for a mix, UI-5d; none for everyone) and a hover
     /// name: the job's name, or the category's for a group (empty for everyone). Cached per category id; a group's
-    /// label is not cached until its icon could be read.
+    /// label is not cached until its icon could be read, or the icons' warm has settled without them.
     /// </summary>
     public JobLabel Job(QuestRecord quest)
     {
@@ -595,9 +602,11 @@ public sealed class QueryRunner : IDisposable
             return cached;
         }
 
+        // Settled is read before the sheets: a warm that finished has stored its value, so the read below sees it.
+        var settled = IconSheetsSettled?.Invoke() == true;
         var sheets = IconSheets?.Invoke();
         var label = ComputeJob(b, category, sheets);
-        if (sheets is not null || label.IconId != 0 || label.Name.Length == 0)
+        if (sheets is not null || settled || label.IconId != 0 || label.Name.Length == 0)
         {
             jobShort[category] = label;
         }

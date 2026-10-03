@@ -1734,7 +1734,9 @@ public sealed class TablePane : IDisposable
 
     /// <summary>
     /// The Giver cell (1.15, F5): the giver's 20 px plate, then the name, ellipsised in the cell. Hovering the plate shows
-    /// the 128 px portrait; a cut name shows whole on hover.
+    /// the 128 px portrait; a cut name shows whole on hover. For a quest the spoiler shield masks, the giver is masked the
+    /// way the quest's name is: a column of future givers would tell the story ahead, so the cell shows the moon disc and
+    /// "Hidden giver", with no portrait tooltip.
     /// </summary>
     private void DrawGiverCell(QuestRecord quest, bool rowHovered, in RowLayout layout)
     {
@@ -1748,15 +1750,17 @@ public sealed class TablePane : IDisposable
 
         var dl = ImGui.GetWindowDrawList();
         var plateMin = new Vector2(cell.X, cell.Y + MathF.Round((layout.RowContent - avatar) * 0.5f));
-        var request = GiverPortraits.For(quest, runner.Spoilers);
+        var masked = runner.Spoilers.IsMasked(quest);
+        var request = masked ? PortraitRequest.None : GiverPortraits.For(quest, runner.Spoilers);
+        var name = masked ? Strings.GiverHidden : issuer.Name;
         Chrome.Portrait(dl, plateMin, avatar, request);
         var x = cell.X + avatar + UiMetrics.Px(PortraitPlate.ColumnGap);
         var nameRoom = cell.X + room - x;
         var cut = false;
-        if (nameRoom > 1f && issuer.Name.Length > 0)
+        if (nameRoom > 1f && name.Length > 0)
         {
             var y = cell.Y + MathF.Round((layout.RowContent - layout.LineHeight) * 0.5f);
-            cut = EllipsisAt(dl, new Vector2(x, y), nameRoom, issuer.Name, Theme.U32(Theme.Surface.TextSecondary), ImGui.CalcTextSize(issuer.Name).X);
+            cut = EllipsisAt(dl, new Vector2(x, y), nameRoom, name, Theme.U32(Theme.Surface.TextSecondary), ImGui.CalcTextSize(name).X);
         }
 
         if (!rowHovered || !ImGui.IsWindowHovered())
@@ -1764,13 +1768,13 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        if (ImGui.IsMouseHoveringRect(plateMin, plateMin + new Vector2(avatar)))
+        if (!masked && ImGui.IsMouseHoveringRect(plateMin, plateMin + new Vector2(avatar)))
         {
             Chrome.PortraitTooltip(request, issuer.Name, GiverPortraits.Place(quest));
         }
         else if (cut && ImGui.IsMouseHoveringRect(new Vector2(x, cell.Y), new Vector2(cell.X + room, cell.Y + layout.RowContent)))
         {
-            UiMetrics.Tooltip(issuer.Name);
+            UiMetrics.Tooltip(name);
         }
     }
 
