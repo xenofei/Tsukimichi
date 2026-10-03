@@ -64,30 +64,62 @@ public readonly record struct FlairTones(
     /// <summary>Plain on Night: the 1 px line.</summary>
     public const uint PlainLineHex = 0x262B38;
 
+    /// <summary>Quiet's designed tones on Night (the hexes above): the Night palette's <see cref="Themes.UiPalette.QuietTones"/>.</summary>
+    public static readonly FlairTones NightQuiet = new(
+        ColorMath.FromHex(QuietRailHex),
+        ColorMath.FromHex(QuietTreeHex),
+        ColorMath.FromHex(QuietTableHex),
+        ColorMath.FromHex(QuietDetailHex),
+        ColorMath.FromHex(QuietCardHex),
+        ColorMath.FromHex(QuietRuleHex),
+        ColorMath.FromHex(QuietCardHex),
+        ColorMath.FromHex(QuietCardHex),
+        ColorMath.FromHex(QuietRuleHex),
+        ColorMath.FromHex(QuietTableHex));
+
+    /// <summary>Plain's designed tones on Night: the ledger's flat tone and bands, the rail and status bar on Abyss.</summary>
+    public static readonly FlairTones NightPlain = new(
+        GlyphTokens.Abyss,
+        ColorMath.FromHex(PlainWindowHex),
+        ColorMath.FromHex(PlainWindowHex),
+        ColorMath.FromHex(PlainWindowHex),
+        ColorMath.FromHex(PlainWindowHex),
+        ColorMath.FromHex(PlainLineHex),
+        ColorMath.FromHex(PlainBandHex),
+        ColorMath.FromHex(PlainHeaderBandHex),
+        ColorMath.FromHex(PlainHeaderLineHex),
+        GlyphTokens.Abyss);
+
+    /// <summary>
+    /// The tones <paramref name="flair"/> paints with in <paramref name="palette"/>: its designed Quiet or Plain tones
+    /// when it has them (Night's hexes), otherwise the same roles mixed from its surface
+    /// (<see cref="For(Flair, in SurfaceColors)"/>). Allocates nothing.
+    /// </summary>
+    public static FlairTones For(Flair flair, Themes.UiPalette palette) => flair switch
+    {
+        Flair.Quiet when palette.QuietTones is { } quiet => quiet,
+        Flair.Plain when palette.PlainTones is { } plain => plain,
+        _ => Mixed(flair, palette.Surface),
+    };
+
     /// <summary>
     /// The tones <paramref name="flair"/> paints with on <paramref name="surface"/>. The design's hexes when the surface
     /// is the Night palette itself; otherwise the same roles mixed from it (a dark host's tree a step darker than its
     /// window and its detail pane a step lighter; a light host's the other way round, never past its own text).
     /// </summary>
-    public static FlairTones For(Flair flair, in SurfaceColors surface)
+    public static FlairTones For(Flair flair, in SurfaceColors surface) => flair switch
+    {
+        Flair.Quiet when surface == SurfaceColors.Night => NightQuiet,
+        Flair.Plain when surface == SurfaceColors.Night => NightPlain,
+        _ => Mixed(flair, surface),
+    };
+
+    /// <summary>The tones <paramref name="flair"/> mixes from <paramref name="surface"/> where nothing is designed (Full is always this).</summary>
+    public static FlairTones Mixed(Flair flair, in SurfaceColors surface)
     {
         var s = surface;
-        var night = s == SurfaceColors.Night;
         switch (flair)
         {
-            case Flair.Quiet when night:
-                return new FlairTones(
-                    ColorMath.FromHex(QuietRailHex),
-                    ColorMath.FromHex(QuietTreeHex),
-                    ColorMath.FromHex(QuietTableHex),
-                    ColorMath.FromHex(QuietDetailHex),
-                    ColorMath.FromHex(QuietCardHex),
-                    ColorMath.FromHex(QuietRuleHex),
-                    ColorMath.FromHex(QuietCardHex),
-                    ColorMath.FromHex(QuietCardHex),
-                    ColorMath.FromHex(QuietRuleHex),
-                    ColorMath.FromHex(QuietTableHex));
-
             case Flair.Quiet:
             {
                 var down = s.Light ? s.Text : new Vector4(0f, 0f, 0f, 1f);
@@ -106,19 +138,6 @@ public readonly record struct FlairTones(
                     s.Line,
                     s.Window);
             }
-
-            case Flair.Plain when night:
-                return new FlairTones(
-                    s.Deep,
-                    ColorMath.FromHex(PlainWindowHex),
-                    ColorMath.FromHex(PlainWindowHex),
-                    ColorMath.FromHex(PlainWindowHex),
-                    ColorMath.FromHex(PlainWindowHex),
-                    ColorMath.FromHex(PlainLineHex),
-                    ColorMath.FromHex(PlainBandHex),
-                    ColorMath.FromHex(PlainHeaderBandHex),
-                    ColorMath.FromHex(PlainHeaderLineHex),
-                    s.Deep);
 
             case Flair.Plain:
             {
