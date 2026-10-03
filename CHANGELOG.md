@@ -4,6 +4,47 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- **Back and forward through quests.** Use the new ‹ › buttons at the left of the toolbar, mouse buttons 4 and 5 over the window, or Alt+← and Alt+→. Hover a button to see which quest it goes to. The keys can be turned off in Settings › Advanced › Keyboard.
+- **A moving night sky** (Full):
+  - stars at three depths in warm and cool colours, with a slow twinkle;
+  - a very slow drift while the window has focus, with a rare faint shooting star;
+  - a constellation for the selected quest's region, shown in empty sky;
+  - a shooting star when you complete a quest.
+  
+  "Moving night sky" and "Shooting star on completion" are in Settings › Look. A "Milky Way in the sky" setting is also there, off by default.
+- **Trust you can check.**
+  - Each release lists the SHA-256 of `latest.zip` and of the `Tsukimichi.dll` inside it.
+  - Settings › Advanced › Privacy & trust shows the hash of the plugin you're running, with a Copy button, so you can compare.
+  - A plain statement of what Tsukimichi reads, keeps and sends is in Settings, Help and `docs/privacy.md`. It sends nothing; it has no network code.
+- **Journal badge setting** (Settings › Main window): Newly ready, Ready story and unlock quests, Every Ready quest (the old count), or Nothing.
+
+### Changed
+- **Quest-pane section names** (Requirements, Rewards, Unlocks, Moonlit, Path and the rest) are much larger and easier to read, in a brighter gold with a little letter spacing. With "Game fonts for headings" off they no longer shrink below the body text. The quest title grows with them so it still leads. Quiet and Plain get larger headings too.
+- **The Journal's column headers** are a size larger and brighter, on a slightly taller header row.
+- **The filter drawer is redesigned.**
+  - It covers exactly the Journal tree and is only as tall as its content, so there's no empty grey block and no tree text shows at its edges or over its title.
+  - A readable **Filters** header shows how many filters are on.
+  - The sections are Show, Quick views and Advanced, with moon toggles and a Stalled after stepper.
+  - With Advanced closed, seven summary lines show what each group is set to; click one to jump to it.
+  - Reset sits at the foot next to "Showing N of M", and is always followed by "Filters reset · Undo".
+- **The rail.**
+  - Tab icons are larger and fill the bar, and the coloured lines between them are gone.
+  - Hovering lifts an icon onto a soft plate. The selected tab gets a plate, a gold icon and a moon bead that glides to it.
+  - Labels always fit inside their highlight.
+- **The Journal badge** counts quests that became ready since you last looked, at one steady size, and disappears when there's nothing new. Click it to see them.
+- **The Completed moon** has darker basalt seas and a soft, cool moonlight glow inside its well. At 96 px and up it shows three rim-lit craters; smaller medals leave them out, so they never read as specks.
+- **Game icons everywhere they help:**
+  - feature unlocks (PvP, Retainers, Hunts, the Gold Saucer, Island Sanctuary, Eureka, Bozja and more) show their game icon instead of a placeholder moon, in the quest details, the Opens column and Moonlit;
+  - title rewards show their achievement's icon;
+  - EXP and gil show the game's own icons.
+
+### Fixed
+- "A Pup No Longer" lists the PvP it opens, with the PvP icon.
+- Empty reward slots no longer appear.
+- The Opens column counts every unlock the quest details list.
+- The Moonlit card's text is easier to read.
+
 ## [1.13.0] - 2026-10-03
 
 ### Added
