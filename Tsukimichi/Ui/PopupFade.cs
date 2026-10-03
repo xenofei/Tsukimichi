@@ -6,7 +6,7 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Tooltips, popups and menus ease in over <see cref="MotionTokens.Popup"/> instead of popping (feature plan v6 U8).
 /// <para>
-/// A tooltip's fade starts when the item it belongs to changes (the hovered ImGui id when <see cref="Theme.PushTooltip"/>
+/// A tooltip's fade starts when the item it belongs to changes (the hovered ImGui id when <see cref="Theme.Tooltip"/>
 /// runs) or when no tooltip showed the frame before, and never restarts while the pointer moves within one item, so a
 /// tooltip does not flicker as the mouse travels over its row. A popup's starts when it opens. They leave at once, as
 /// ImGui closes them.
@@ -15,7 +15,8 @@ namespace Tsukimichi.Ui;
 /// The fade is applied after every Tsukimichi window drew (<see cref="EndFrame"/>, the plugin's last draw handler), to
 /// the whole tooltip or popup window's draw list: its frame, its text and the art drawn by hand (moons, icons), which a
 /// style alpha would not reach. Only windows Tsukimichi began this frame are touched (their begin order lies between
-/// <see cref="BeginFrame"/> and <see cref="EndFrame"/>), never another plugin's. Off under Reduce motion. Allocation-free.
+/// <see cref="BeginFrame"/> and <see cref="EndFrame"/>), never another plugin's. Off under Reduce motion and whenever
+/// <see cref="Motion.Enabled"/> is off (Decoration Plain, a scroll in progress). Allocation-free.
 /// </para>
 /// </summary>
 public static class PopupFade
@@ -33,7 +34,7 @@ public static class PopupFade
     public static void BeginFrame() => windowsAtStart = ImGui.GetCurrentContext().WindowsActiveCount;
 
     /// <summary>
-    /// A tooltip is about to begin (<see cref="Theme.PushTooltip"/> calls this): its fade restarts when it belongs to
+    /// A tooltip is about to begin (<see cref="Theme.Tooltip"/> calls this): its fade restarts when it belongs to
     /// another item than the last frame's tooltip, or when none showed last frame.
     /// </summary>
     public static void NoteTooltip()
@@ -63,7 +64,8 @@ public static class PopupFade
     /// <summary>The plugin's last draw handler: fades the tooltip and the newest popup Tsukimichi opened, while their fade runs.</summary>
     public static unsafe void EndFrame()
     {
-        if (UiMetrics.ReduceMotion)
+        // Off under Reduce motion, and wherever the interface does not animate (Plain draws every state at once).
+        if (UiMetrics.ReduceMotion || !Motion.Enabled)
         {
             return;
         }

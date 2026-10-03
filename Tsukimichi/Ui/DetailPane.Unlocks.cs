@@ -321,8 +321,7 @@ public sealed partial class DetailPane
     /// <summary>The row's tooltip: the name, the caption, how sure, the check and the click.</summary>
     private void UnlockTooltip(UnlockRowView row)
     {
-        using var style = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         UiMetrics.ApplyFontScale();
         using (UiMetrics.TooltipWrap())
         {

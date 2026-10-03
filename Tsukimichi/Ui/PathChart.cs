@@ -696,8 +696,7 @@ public sealed class PathChart
     /// <summary>A row's tooltip with the full name first, for a name the row cut short: the name, the state, the detail.</summary>
     private static void NameTooltip(string name, string state, string detail)
     {
-        using var style = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         using var body = Typography.Body();
         UiMetrics.ApplyFontScale();
         using (UiMetrics.TooltipWrap())

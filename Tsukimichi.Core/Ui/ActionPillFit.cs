@@ -70,6 +70,16 @@ public static class ActionPillFit
         return ((PadStartLogical + IconGapLogical + PadEndLogical) * s) + Positive(iconWidth) + Positive(labelWidth);
     }
 
+    /// <summary>
+    /// A text-only pill's width (Plain's buttons): the label between the two pads, with no icon and no gap, so the label
+    /// can sit centred in it.
+    /// </summary>
+    public static float TextOnlyWidth(float labelWidth, float scale)
+    {
+        var s = float.IsFinite(scale) && scale > 0f ? scale : 1f;
+        return ((PadStartLogical + PadEndLogical) * s) + Positive(labelWidth);
+    }
+
     /// <summary>An icon-only pill's width for a pill <paramref name="height"/> tall.</summary>
     public static float IconOnlyWidth(float height) => MathF.Round(Positive(height) * IconOnlyAspect);
 

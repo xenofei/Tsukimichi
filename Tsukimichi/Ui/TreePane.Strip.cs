@@ -107,8 +107,7 @@ public sealed partial class TreePane
     /// <summary>A strip row's hover: the node's full name, its progress (with the other-path tally), and its Ready count.</summary>
     private static void DrawStripTooltip(Node node)
     {
-        using var tooltipStyle = Theme.PushTooltip();
-        using var tooltip = ImRaii.Tooltip();
+        using var tooltip = Theme.Tooltip();
         UiMetrics.ApplyFontScale();
         using var wrap = UiMetrics.TooltipWrap();
         ImGui.TextUnformatted(node.FullName);

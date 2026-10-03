@@ -159,7 +159,7 @@ public sealed partial class DetailPane
         {
             if (FlairRules.BannerGrade(Theme.Flair) && !highContrast)
             {
-                BannerGrading.DrawImage(dl, wrap, min, max, rounding);
+                BannerGrading.DrawImage(dl, wrap, BannerGrading.KeyFor(in choice, drawn), min, max, rounding);
             }
             else
             {
@@ -366,7 +366,7 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// Plain's hero, the ledger: the name and its path, then a key-value list, State (a 12 px flat glyph, the state in
-    /// its ink and the reason), Level (the header line) and Giver (the name and the place), each value ending in an
+    /// its ink and the reason, with the job or other-path note under it), Level (the header line) and Giver (the name and the place), each value ending in an
     /// ellipsis that names it whole on hover.
     /// </summary>
     private void DrawLedgerHero(QuestRecord quest)
@@ -409,6 +409,14 @@ public sealed partial class DetailPane
         if (ImGui.IsItemHovered())
         {
             UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
+        }
+
+        // The job and other-path note ("Ready on WHM", the other company's path) under the state, in the value column,
+        // as the plate shows it; the "Not yet" callout carries it instead when there is one.
+        if (model.Callout is null && model.StateNote is { } note)
+        {
+            ImGui.SetCursorScreenPos(new Vector2(valueX, ImGui.GetCursorScreenPos().Y));
+            TextFlow.Wrapped(note, valueRoom, Theme.U32(Theme.Surface.TextDisabled));
         }
 
         // Level: the header line (expansion · level · job).
