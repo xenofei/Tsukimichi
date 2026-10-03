@@ -5342,7 +5342,7 @@
     <value>Hide in group pose</value>
   </data>
   <data name="TodoConfigHideGroupPoseHint" xml:space="preserve">
-    <value>Keeps the overlay out of your screenshots.</value>
+    <value>Only matters if Dalamud is set to show plugins in group pose.</value>
   </data>
   <data name="TodoConfigSectionsLabel" xml:space="preserve">
     <value>Sections</value>
@@ -9586,7 +9586,7 @@
     <comment>Shown in place of a hint while the Todo overlay is off.</comment>
   </data>
   <data name="TodoConfigOpacityHint" xml:space="preserve">
-    <value>How solid the panel behind the overlay's rows is.</value>
+    <value>How solid the panel is. Under 10%, only its rows take clicks; use Lock in place for full click-through.</value>
     <comment>Hint under Background opacity.</comment>
   </data>
   <data name="TodoConfigShowPinsHint" xml:space="preserve">

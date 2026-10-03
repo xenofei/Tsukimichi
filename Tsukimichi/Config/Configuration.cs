@@ -514,6 +514,13 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public Localization.PluginLanguage PluginLanguage { get; set; } = Localization.PluginLanguage.FollowDalamud;
 
+    /// <summary>
+    /// Set once 1.13.0 has put <see cref="PluginLanguage"/> back on following Dalamud: the picker is hidden while
+    /// localization is frozen (feature plan v6 decision 7), so a choice made before could no longer be undone. Null on a
+    /// configuration from before.
+    /// </summary>
+    public bool? LanguageFreezeApplied { get; set; }
+
     /// <summary>The todo overlay's Compact mode: moon and name only, one line per row, no hints. Off by default.</summary>
     public bool TodoOverlayCompact { get; set; }
 
@@ -706,9 +713,12 @@ public sealed partial class Configuration : IPluginConfiguration
 
         config.MoonStyle = MoonStyleRules.Effective(config.MoonStyle);
 
-        if (!Enum.IsDefined(config.PluginLanguage))
+        // 1.13.0: the language picker is hidden while localization is frozen, so a language chosen before (English, or
+        // the pseudo layout check) would stick with no way back; it follows Dalamud again, once. An unknown value does too.
+        if (config.LanguageFreezeApplied != true || !Enum.IsDefined(config.PluginLanguage))
         {
             config.PluginLanguage = Localization.PluginLanguage.FollowDalamud;
+            config.LanguageFreezeApplied = true;
         }
 
         // Before 0.7.0 ReduceMotion defaulted to false and had no Chosen flag, so a saved true was the user's choice;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
@@ -40,7 +41,9 @@ namespace Tsukimichi.Ui;
 /// (<see cref="Configuration.TodoOverlayCompact"/>) keeps the moon and the name on one line at a fixed width.
 ///
 /// Locked (<see cref="Configuration.TodoOverlayLocked"/>) is click-through: NoMove, NoResize and NoInputs, so the game
-/// behind gets every click; the lock is set from the title's menu (or its "…") and cleared from Settings. The window is
+/// behind gets every click; the lock is set from the title's menu (or its "…") and cleared from Settings. Unlocked and
+/// nearly invisible (opacity under <see cref="TodoClickThrough.NearlyInvisibleOpacity"/>), it lets clicks through too,
+/// except over its rows, captions and title line, or while a modifier key is held (<see cref="TodoClickThrough"/>). The window is
 /// not drawn while logged out, in a duty or in a cutscene. Rows are rebuilt on <see cref="SessionState.Changed"/>,
 /// <see cref="IClientState.TerritoryChanged"/>, when a section toggle flips and when the viewed character's pins change
 /// (<see cref="QueryRunner.PinsVersion"/>: a pin here, or another client's save merged in; the draw thread reads no
@@ -166,6 +169,11 @@ public sealed class TodoOverlay : Window, IDisposable
     private readonly Dictionary<uint, double> arrivedAt = [];
     private readonly List<(int Index, uint RowId)> ghostScratch = [];
     private ulong? builtCharacter;
+
+    // Where the panel takes the pointer, recorded as it draws (the title line, section captions, rows with their "…",
+    // the "+N more" lines and the route buttons): PreDraw reads the last frame's to let a nearly invisible panel pass
+    // every other click through (TodoClickThrough).
+    private readonly List<ScreenRect> targets = [];
 
     /// <summary>The host name of this window's Questionable confirmations.</summary>
     private const string QuestionableHost = "todo";
@@ -293,6 +301,11 @@ public sealed class TodoOverlay : Window, IDisposable
             // Stepping aside: the game behind takes every click while the panel fades out.
             Flags |= ImGuiWindowFlags.NoInputs;
         }
+        else if (!settings.TodoOverlayLocked && PassesClicks())
+        {
+            // Nearly invisible: the game behind takes the clicks the panel's rows and captions do not.
+            Flags |= ImGuiWindowFlags.NoInputs;
+        }
 
         // The overlay's own opacity setting; the Night chrome keeps this alpha (it never touches BgAlpha).
         BgAlpha = ClampOpacity(settings.TodoOverlayOpacity);
@@ -318,6 +331,22 @@ public sealed class TodoOverlay : Window, IDisposable
         nightChrome = default;
     }
 
+    /// <summary>
+    /// Whether the unlocked panel lets the pointer through this frame (<see cref="TodoClickThrough"/>): it is nearly
+    /// invisible, the pointer is on none of last frame's targets and no modifier key is held.
+    /// </summary>
+    private bool PassesClicks()
+    {
+        var io = ImGui.GetIO();
+        return TodoClickThrough.PassesClicks(
+            ClampOpacity(settings.TodoOverlayOpacity),
+            TodoClickThrough.Hits(CollectionsMarshal.AsSpan(targets), io.MousePos),
+            io.KeyCtrl || io.KeyShift || io.KeyAlt);
+    }
+
+    /// <summary>Records the last item as a place the panel takes the pointer.</summary>
+    private void NoteTarget() => targets.Add(new ScreenRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax()));
+
     public override void Draw()
     {
         // The panel is its own top-level window, so it scales itself (the glyphs already followed the icon scale;
@@ -342,6 +371,7 @@ public sealed class TodoOverlay : Window, IDisposable
 
     private void DrawContent()
     {
+        targets.Clear();
         FireDueReveal();
         var compact = settings.TodoOverlayCompact;
         var layout = Measure(compact);
@@ -442,6 +472,8 @@ public sealed class TodoOverlay : Window, IDisposable
             }
         }
 
+        NoteTarget();
+
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             UiMetrics.Tooltip(canFlag ? Strings.RouteFlagNextStopTooltip : Strings.RouteFlagNextStopUnavailable);
@@ -453,6 +485,8 @@ public sealed class TodoOverlay : Window, IDisposable
             routes.Stop();
             dirty = true;
         }
+
+        NoteTarget();
 
         if (ImGui.IsItemHovered())
         {
@@ -472,6 +506,7 @@ public sealed class TodoOverlay : Window, IDisposable
         var line = ImGui.GetTextLineHeight();
         ImGui.SetCursorScreenPos(new Vector2(textX, start.Y));
         var clicked = ImGui.InvisibleButton("##moreLine", new Vector2(layout.TextWidth, line));
+        NoteTarget();
         var hovered = ImGui.IsItemHovered();
         Chrome.FocusRing();
         if (clicked)
@@ -578,6 +613,7 @@ public sealed class TodoOverlay : Window, IDisposable
     private void DrawHeader(in RowLayout layout)
     {
         var start = ImGui.GetCursorScreenPos();
+        targets.Add(new ScreenRect(start, start + new Vector2(layout.RowWidth, layout.RowHeight)));
         var textY = start.Y + (layout.RowHeight - ImGui.GetTextLineHeight()) * 0.5f;
         ImGui.SetCursorScreenPos(new Vector2(start.X, textY));
         Chrome.OutlinedText(Strings.TodoHeader, Theme.Surface.Text);
@@ -721,6 +757,8 @@ public sealed class TodoOverlay : Window, IDisposable
             folded[(int)section.Section] = open;
         }
 
+        NoteTarget();
+
         var hovered = ImGui.IsItemHovered();
         // The pins' caption has one menu (1.6.0): a route through every pin, and Send pins to Questionable.
         var pinsMenu = section.Section == TodoSection.Pinned && (OpenRoute is not null || Questionable is not null);
@@ -807,6 +845,7 @@ public sealed class TodoOverlay : Window, IDisposable
         var rowStart = ImGui.GetWindowDrawList().VtxBuffer.Size;
         var line = ImGui.GetTextLineHeight();
         var textY = start.Y + (layout.RowHeight - line) * 0.5f;
+        targets.Add(new ScreenRect(start, start + new Vector2(layout.RowWidth, layout.RowHeight)));
 
         ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + (layout.RowHeight - layout.Glyph) * 0.5f));
         MoonGlyph.DrawInline(row.State, layout.Glyph);

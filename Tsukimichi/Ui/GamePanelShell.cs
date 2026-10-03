@@ -138,6 +138,11 @@ public sealed class GamePanelShell
         ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
         using var style = PushPanelStyle(measuring: false);
 
+        // Drawn from UiBuilder.Draw, outside the window system's push, so the body font at the text size is pushed here
+        // once, before Begin, for every panel in this frame (the 1.7 panels and the Duty Finder hint alike, as the item
+        // hover hint's handler does): the window's own font scale then adds the UI scale alone (UiMetrics.FontScale).
+        using var body = Typography.Body();
+
         // Drawn from a raw UiBuilder.Draw handler, so nothing rebalances a Begin left open: End runs whatever Begin
         // returned and whatever the content throws, and the style scope pops after it.
         var visible = ImGui.Begin(windowId, PanelFlags);

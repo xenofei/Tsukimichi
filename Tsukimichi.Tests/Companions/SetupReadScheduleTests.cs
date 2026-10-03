@@ -41,4 +41,27 @@ public class SetupReadScheduleTests
         Assert.False(SetupReadSchedule.IsDue(wanted: true, listMoved: false, stale: false, ReadAt + Interval - 1, 0, ReadAt, Interval, Settle));
         Assert.True(SetupReadSchedule.IsDue(wanted: true, listMoved: false, stale: false, ReadAt + Interval, 0, ReadAt, Interval, Settle));
     }
+
+    [Fact]
+    public void A_decision_reads_a_changed_file_at_once_without_the_settle()
+    {
+        // The file changed 1 ms ago: the tick would wait out the settle, a stop deciding on its confirmation does not.
+        var changedAt = ReadAt + 5_000;
+        Assert.False(SetupReadSchedule.IsDue(wanted: true, listMoved: false, stale: true, changedAt + 1, changedAt, ReadAt, Interval, Settle));
+        Assert.True(SetupReadSchedule.IsDueForDecision(neverRead: false, listMoved: false, stale: true, changedAt + 1, ReadAt, Interval));
+    }
+
+    [Fact]
+    public void A_decision_reads_again_after_a_plugin_list_change_or_before_any_read()
+    {
+        Assert.True(SetupReadSchedule.IsDueForDecision(neverRead: false, listMoved: true, stale: false, ReadAt + 1, ReadAt, Interval));
+        Assert.True(SetupReadSchedule.IsDueForDecision(neverRead: true, listMoved: false, stale: false, ReadAt + 1, ReadAt, Interval));
+    }
+
+    [Fact]
+    public void A_decision_keeps_a_read_that_is_fresh_and_unchanged()
+    {
+        Assert.False(SetupReadSchedule.IsDueForDecision(neverRead: false, listMoved: false, stale: false, ReadAt + Interval - 1, ReadAt, Interval));
+        Assert.True(SetupReadSchedule.IsDueForDecision(neverRead: false, listMoved: false, stale: false, ReadAt + Interval, ReadAt, Interval));
+    }
 }

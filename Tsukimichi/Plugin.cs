@@ -602,11 +602,8 @@ public sealed partial class Plugin : IDalamudPlugin
         hoverHint?.Draw();
     }
 
-    private void DrawDutyFinderPanel()
-    {
-        using var body = Ui.Typography.Body();
-        dutyFinderPanel?.Draw();
-    }
+    // The panel's frame (GamePanelShell) pushes the body font at the text size itself, as the 1.7 panels' does.
+    private void DrawDutyFinderPanel() => dutyFinderPanel?.Draw();
 
     /// <summary>
     /// The one-time move of the per-character settings 1.7 kept in Settings (spoiler overrides, notices, open
@@ -1143,6 +1140,7 @@ public sealed partial class Plugin : IDalamudPlugin
             questionableActions.Traveling = () => travel.JourneyActive;
             // Questionable runs its "command after stop" (default /li auto) on any stop asked over IPC: Stop says so.
             questionableActions.CommandAfterStop = companionSetup.QuestionableCommandAfterStop;
+            questionableActions.CommandAfterStopNow = companionSetup.QuestionableCommandAfterStopNow;
             // /tsuki stop (1.11.0, A1): one Stop for every hand-off, for a macro or a single key, through each Stop
             // button's own call; one chat line says what stopped.
             stopCommand = new StopCommand(Framework, travel, lifestream, autoDuty, artisan, questionableActions, () => questionableIpc.PollStatus().Running, gameLinks.PrintText, Log);

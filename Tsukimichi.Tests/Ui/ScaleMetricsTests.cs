@@ -351,4 +351,35 @@ public class ScaleMetricsTests
         Assert.Equal(ScaleMetrics.TreeGlyphMinRadius, ScaleMetrics.TreeGlyphRadius(float.NaN, 1.25f));
         Assert.Equal(ScaleMetrics.TreeRowMinHeight, ScaleMetrics.TreeRowHeight(float.NaN, 12f, float.NaN) - 0f, 1);
     }
+
+    [Fact]
+    public void A_size_given_from_a_position_fits_a_large_screen_unchanged()
+    {
+        var size = ScaleMetrics.FitFromPosition(new Vector2(880f, 720f), 1f, new Vector2(100f, 100f), Vector2.Zero, new Vector2(2560f, 1400f));
+
+        Assert.Equal(new Vector2(880f, 720f), size);
+    }
+
+    [Fact]
+    public void A_size_given_from_a_position_stops_at_the_work_area_counting_the_global_scale()
+    {
+        // 1280 × 720 work area at global scale 1.25, window at (400, 100): 880 px of room across, 620 down, in scaled units.
+        var size = ScaleMetrics.FitFromPosition(new Vector2(880f, 720f), 1.25f, new Vector2(400f, 100f), Vector2.Zero, new Vector2(1280f, 720f));
+
+        Assert.Equal(880f / 1.25f, size.X, 3);
+        Assert.Equal(620f / 1.25f, size.Y, 3);
+    }
+
+    [Fact]
+    public void A_window_off_the_work_area_counts_from_its_edge_and_bad_input_keeps_the_size()
+    {
+        var offLeft = ScaleMetrics.FitFromPosition(new Vector2(880f, 720f), 1f, new Vector2(-200f, 40f), new Vector2(0f, 40f), new Vector2(800f, 600f));
+        Assert.Equal(new Vector2(800f, 600f), offLeft);
+
+        var past = ScaleMetrics.FitFromPosition(new Vector2(880f, 720f), 1f, new Vector2(5000f, 5000f), Vector2.Zero, new Vector2(800f, 600f));
+        Assert.Equal(Vector2.Zero, past);
+
+        var unknown = ScaleMetrics.FitFromPosition(new Vector2(880f, 720f), 1f, Vector2.Zero, Vector2.Zero, new Vector2(float.NaN, 0f));
+        Assert.Equal(new Vector2(880f, 720f), unknown);
+    }
 }

@@ -15,8 +15,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Every pixel size the main window's panes use, derived once per frame from Dalamud's global scale and the user's
 /// UI and icon scales (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>, arithmetic in
-/// <see cref="ScaleMetrics"/>). <see cref="Update"/> runs once per frame before the window system draws (and again
-/// at the top of <c>MainWindow.Draw</c>); the values default to plain global scale before that.
+/// <see cref="ScaleMetrics"/>). <see cref="Update"/> runs once per frame before the window system draws; the values
+/// default to plain global scale before that.
 ///
 /// Font scale: ImGui multiplies a window's own font scale by its parent's, so <see cref="ApplyFontScale"/> belongs
 /// only in windows whose parent is not already scaled: the main window itself, tooltips (no parent), popups opened
@@ -25,6 +25,10 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public static class UiMetrics
 {
+    // The UI scale, the text size and whether the body font is built at it: Update sets the scales, Typography.Update
+    // the font state, and Update leaves that alone so the text size is never counted twice.
+    private static readonly FontScaleState FontState = new();
+
     /// <summary>Pixels per logical unit for layout (widths, paddings): global scale × UI scale.</summary>
     public static float Scale { get; private set; } = 1f;
 
@@ -33,13 +37,13 @@ public static class UiMetrics
     /// while the text-size font is still being built (<see cref="Typography.Body"/> pushes the default font then). The
     /// text drawn is the UI scale × the text size either way; only how much of it is a built font differs.
     /// </summary>
-    public static float FontScale { get; private set; } = 1f;
+    public static float FontScale => FontState.WindowFontScale;
 
     /// <summary>The user's UI scale alone (clamped): the window scale for layouts and minimum window sizes.</summary>
-    public static float UiScale { get; private set; } = 1f;
+    public static float UiScale => FontState.UiScale;
 
     /// <summary>The user's text size alone (clamped and stepped, Settings › General › Text size).</summary>
-    public static float TextScale { get; private set; } = 1f;
+    public static float TextScale => FontState.TextScale;
 
     /// <summary>Pixels per logical unit for moons, icons and banners: <see cref="Scale"/> × icon scale.</summary>
     public static float IconScale { get; private set; } = 1f;
@@ -61,9 +65,7 @@ public static class UiMetrics
     {
         ArgumentNullException.ThrowIfNull(settings);
         var global = ImGuiHelpers.GlobalScale;
-        UiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
-        TextScale = ScaleMetrics.ClampTextScale(settings.TextScale);
-        FontScale = UiScale * TextScale;
+        FontState.SetScales(settings.UiScale, settings.TextScale);
         Scale = ScaleMetrics.LayoutFactor(global, settings.UiScale);
         IconScale = ScaleMetrics.IconFactor(global, settings.UiScale, settings.IconScale);
         IconFactor = ScaleMetrics.ClampIconScale(settings.IconScale);
@@ -77,7 +79,7 @@ public static class UiMetrics
     /// Called by <see cref="Typography.Update"/> once per frame: whether the fonts pushed this frame are already built at
     /// the text size, in which case the windows scale them by the UI scale alone.
     /// </summary>
-    internal static void SetTextFontBuilt(bool built) => FontScale = built ? UiScale : UiScale * TextScale;
+    internal static void SetTextFontBuilt(bool built) => FontState.SetTextFontBuilt(built);
 
     /// <summary>Applies the font scale to the current window (see the class remarks for where that is right).</summary>
     public static void ApplyFontScale() => ImGui.SetWindowFontScale(FontScale);

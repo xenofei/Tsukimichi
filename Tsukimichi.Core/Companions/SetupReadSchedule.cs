@@ -37,4 +37,19 @@ public static class SetupReadSchedule
 
         return now - readAt >= intervalMs;
     }
+
+    /// <summary>
+    /// Whether a decision about to act on the settings (a stop that may need its confirmation, a hand-off) must read
+    /// them again first, at once: when they were never read, the plugin list changed, a companion's file changed or the
+    /// settings were invalidated (without waiting for the file to settle: the decision cannot wait, and a file caught
+    /// mid-write is read again when its writer's next change is seen), or the last read is older than the backstop.
+    /// </summary>
+    /// <param name="neverRead">Nothing has been read yet.</param>
+    /// <param name="listMoved">Dalamud's plugin list changed since the last read.</param>
+    /// <param name="stale">A companion's file changed (or the settings were invalidated) since the last read.</param>
+    /// <param name="now">Now.</param>
+    /// <param name="readAt">When the settings were last read.</param>
+    /// <param name="intervalMs">The backstop interval.</param>
+    public static bool IsDueForDecision(bool neverRead, bool listMoved, bool stale, long now, long readAt, long intervalMs) =>
+        neverRead || listMoved || stale || now - readAt >= intervalMs;
 }

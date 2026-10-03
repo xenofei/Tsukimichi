@@ -74,7 +74,8 @@ public sealed partial class ConfigWindow : Window, IDisposable
 
     /// <summary>
     /// The UI language service (V2-19). The language picker is hidden while localization is frozen (feature plan v6
-    /// decision 7): Tsukimichi follows the saved choice, Dalamud's language by default. Null in no build.
+    /// decision 7): Tsukimichi follows Dalamud's language, and a choice saved before is put back on that once at load
+    /// (<see cref="Configuration.LanguageFreezeApplied"/>). Null in no build.
     /// </summary>
     public LocService? Language { get; set; }
 

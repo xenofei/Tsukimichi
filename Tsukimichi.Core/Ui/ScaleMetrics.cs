@@ -76,6 +76,18 @@ public static class ScaleMetrics
     public static float TextFontPx(float basePx, float textScale) =>
         float.IsFinite(basePx) && basePx > 0f ? MathF.Round(basePx * ClampTextScale(textScale)) : 0f;
 
+    /// <summary>
+    /// The font scale a Tsukimichi window sets on itself (<c>SetWindowFontScale</c>) over the body font pushed around it:
+    /// the UI scale alone while that font is built at the text size, the UI scale × the text size while the default font
+    /// stands in. Either way the text is drawn at the UI scale × the text size, the text size counted once
+    /// (<see cref="PushedFontFactor"/> × this).
+    /// </summary>
+    public static float WindowFontScale(float uiScale, float textScale, bool textFontBuilt) =>
+        ClampUiScale(uiScale) * (textFontBuilt ? 1f : ClampTextScale(textScale));
+
+    /// <summary>How much larger than Dalamud's default font the pushed body font is: the text size once built, 1 until then.</summary>
+    public static float PushedFontFactor(float textScale, bool textFontBuilt) => textFontBuilt ? ClampTextScale(textScale) : 1f;
+
     /// <summary>The icon scale within its bounds; a non-finite value becomes the default.</summary>
     public static float ClampIconScale(float value) => Clamp(value, MinIconScale, MaxIconScale, DefaultIconScale);
 
@@ -173,6 +185,25 @@ public static class ScaleMetrics
         return new Vector2(
             roomX > 0f ? MathF.Min(size.X, roomX) : size.X,
             roomY > 0f ? MathF.Min(size.Y, roomY) : size.Y);
+    }
+
+    /// <summary>
+    /// <paramref name="sizeLogical"/> (Dalamud-scaled units, which Dalamud multiplies by <paramref name="globalScale"/>)
+    /// never reaching past the work area's right or bottom edge from <paramref name="windowPos"/> (pixels), so a window
+    /// given a size from where it stands stays whole on a small screen. A window left of or above the work area counts
+    /// from its edge. A work area that is not known (non-finite or non-positive) leaves the size as it is.
+    /// </summary>
+    public static Vector2 FitFromPosition(Vector2 sizeLogical, float globalScale, Vector2 windowPos, Vector2 workPos, Vector2 workSize)
+    {
+        if (!float.IsFinite(workSize.X) || !float.IsFinite(workSize.Y) || workSize.X <= 0f || workSize.Y <= 0f
+            || !float.IsFinite(workPos.X) || !float.IsFinite(workPos.Y) || !float.IsFinite(windowPos.X) || !float.IsFinite(windowPos.Y))
+        {
+            return sizeLogical;
+        }
+
+        var global = SafeGlobalScale(globalScale);
+        var room = Vector2.Max(workPos + workSize - Vector2.Max(windowPos, workPos), Vector2.Zero) / global;
+        return Vector2.Min(sizeLogical, room);
     }
 
     /// <summary>Smallest halo half-size in the Journal tree: a 24 px box (accessibility A4), whatever the icon scale.</summary>
