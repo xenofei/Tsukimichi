@@ -250,7 +250,7 @@ public sealed class CompanionSetupService : IDisposable
             if (requirement.SetterKey is { } key && requirement.ApplyValue is { } value && requirement.Path is { } readKey && pluginGates.Set(key, value, readKey))
             {
                 applied++;
-                log.Information("Set {Plugin} setting {Key} to {Value} (Settings › Integrations › Apply recommended settings)", plugin, key, value);
+                log.Information("Set {Plugin} setting {Key} to {Value} (Settings › Automation › Apply recommended settings)", plugin, key, value);
             }
             else
             {

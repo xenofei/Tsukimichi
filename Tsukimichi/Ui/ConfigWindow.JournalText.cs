@@ -5,9 +5,9 @@ using Tsukimichi.Game;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Display › Journal text (P9): "Search journal text of completed quests", off by default. Ticking it has the journal
-/// text service load or build its word index in the background; the line under the box says where that stands
-/// (building with a percentage, ready with the index's size, or why it failed). Unticking drops the index from memory
+/// Settings › Journal › Search (P9): "Search quest text", off by default. Turning it on has the journal
+/// text service load or build its word index in the background; the line under the row says where that stands
+/// (building with a percentage, ready with the index's size, or why it failed). Turning it off drops the index from memory
 /// and the search box goes back to names, rewards and ids.
 /// </summary>
 public sealed partial class ConfigWindow
@@ -23,24 +23,30 @@ public sealed partial class ConfigWindow
         }
 
         Header(Strings.JournalTextSettingsSection);
-        if (!Row(Strings.JournalTextSearchSetting, Strings.JournalTextSearchHint, "journal text search words index"))
+        if (!ToggleSetting(Strings.JournalTextSearchSetting, Strings.JournalTextSearchHint, "journal text search words index completed"))
         {
             return;
         }
 
         var search = settings.JournalTextSearch;
-        if (ImGui.Checkbox(Strings.JournalTextSearchSetting, ref search))
+        if (RowToggle(ref search))
         {
             settings.JournalTextSearch = search;
             Save();
             service.SetEnabled(search);
         }
 
-        Chrome.Hint(Strings.JournalTextSearchHint);
-        if (!settings.JournalTextSearch)
+        if (settings.JournalTextSearch)
         {
-            return;
+            DrawJournalTextStatus(service);
         }
+
+        EndSetting();
+    }
+
+    /// <summary>Under the row while the search is on: where the word index stands (building with a bar, ready with its size, or why it failed).</summary>
+    private void DrawJournalTextStatus(QuestTextService service)
+    {
 
         // The main window's query runner starts the build too; this starts it while only Settings is open.
         service.Update(session.Bundle?.Catalog);
@@ -57,11 +63,12 @@ public sealed partial class ConfigWindow
 
         if (service.Status == JournalIndexStatus.Building)
         {
+            SettingBelow();
             ImGui.ProgressBar(service.Progress, new System.Numerics.Vector2(-1f, 0f), line);
         }
         else if (line is not null)
         {
-            ImGui.TextWrapped(line);
+            SettingNote(line, service.Status == JournalIndexStatus.Failed ? Theme.EclipseText : null);
         }
     }
 

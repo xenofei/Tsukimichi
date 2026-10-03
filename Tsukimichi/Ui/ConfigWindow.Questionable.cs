@@ -1,15 +1,14 @@
 using System.Globalization;
-using Dalamud.Bindings.ImGui;
 using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Integrations › Questionable (feature plan v5, 1.6.0, decision 1): whether Questionable is loaded with the
-/// plugins it needs to run (vnavmesh, TextAdvance, Lifestream), "Show Questionable hand-off" (the detail pane's "Add to
-/// Questionable priority"), "Allow Tsukimichi to start Questionable" (on by
-/// default) and "Ask before starting Questionable" (on until the player ticks "Don't ask again" in the confirmation).
-/// Send to Questionable itself needs no setting: it is a button the player presses, disabled without Questionable.
+/// Settings › Automation › Questionable (feature plan v5, 1.6.0, decision 1): whether Questionable is loaded with the
+/// plugins it needs to run (vnavmesh, TextAdvance, Lifestream), "Add to priority list" (the detail pane's "Add to
+/// Questionable priority"), "Allow starting Questionable" (on by default) and, under it, "Ask before starting" (on
+/// until the player ticks "Don't ask again" in the confirmation). Send to Questionable itself needs no setting: it is a
+/// button the player presses, disabled without Questionable. "Confirm Stop" lives in Advanced.
 /// </summary>
 public sealed partial class ConfigWindow
 {
@@ -19,7 +18,7 @@ public sealed partial class ConfigWindow
     private void DrawQuestionableSettings()
     {
         Header(Strings.ConfigQuestionableSection);
-        if (Questionable is { } questionable && Row(Strings.ConfigQuestionableSection, null, "questionable loaded status vnavmesh textadvance lifestream"))
+        if (Questionable is { } questionable)
         {
             var required = string.Join(", ", QuestionableIpc.RequiredPlugins);
             string line;
@@ -36,62 +35,41 @@ public sealed partial class ConfigWindow
                 line = string.Format(CultureInfo.CurrentCulture, Strings.ConfigQuestionableStatusReadyFormat, required);
             }
 
-            Chrome.Hint(line);
+            Note(Strings.SettingsQuestionableStatus, line, "questionable loaded status vnavmesh textadvance lifestream");
         }
 
         // Read per use by the detail pane, so no callback is needed.
-        if (Row(Strings.ConfigQuestionableHandoff, Strings.ConfigQuestionableHandoffHint, "questionable priority list add"))
+        var handoff = settings.QuestionableHandoff;
+        if (Toggle(Strings.ConfigQuestionableHandoff, Strings.ConfigQuestionableHandoffHint, ref handoff, "questionable priority list add hand-off"))
         {
-            var handoff = settings.QuestionableHandoff;
-            if (ImGui.Checkbox(Strings.ConfigQuestionableHandoff, ref handoff))
-            {
-                settings.QuestionableHandoff = handoff;
-                Save();
-            }
-
-            HintOnHover(Strings.ConfigQuestionableHandoffHint);
+            settings.QuestionableHandoff = handoff;
+            Save();
         }
 
-        if (Row(Strings.ConfigQuestionableAllowStart, Strings.ConfigQuestionableAllowStartHint, "questionable start automation"))
+        var allowStart = settings.QuestionableAllowStart;
+        if (Toggle(Strings.ConfigQuestionableAllowStart, Strings.ConfigQuestionableAllowStartHint, ref allowStart, "questionable start automation"))
         {
-            var allowStart = settings.QuestionableAllowStart;
-            if (ImGui.Checkbox(Strings.ConfigQuestionableAllowStart, ref allowStart))
-            {
-                settings.QuestionableAllowStart = allowStart;
-                Save();
-            }
-
-            HintOnHover(Strings.ConfigQuestionableAllowStartHint);
+            settings.QuestionableAllowStart = allowStart;
+            Save();
         }
 
-        if (Row(Strings.ConfigQuestionableConfirmStart, Strings.ConfigQuestionableConfirmStartHint, "questionable start confirm ask"))
+        var confirm = settings.QuestionableConfirmStart;
+        if (Toggle(Strings.ConfigQuestionableConfirmStart, Strings.ConfigQuestionableConfirmStartHint, ref confirm, "questionable start confirm ask", settings.QuestionableAllowStart, sub: true, reason: Strings.SettingsQuestionableStartOffReason))
         {
-            using (Dalamud.Interface.Utility.Raii.ImRaii.Disabled(!settings.QuestionableAllowStart))
-            {
-                var confirm = settings.QuestionableConfirmStart;
-                if (ImGui.Checkbox(Strings.ConfigQuestionableConfirmStart, ref confirm))
-                {
-                    settings.QuestionableConfirmStart = confirm;
-                    Save();
-                }
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(Strings.ConfigQuestionableConfirmStartHint);
-            }
+            settings.QuestionableConfirmStart = confirm;
+            Save();
         }
+    }
 
-        if (Row(Strings.ConfigQuestionableConfirmStopCommand, Strings.ConfigQuestionableConfirmStopCommandHint, "questionable stop confirm ask command after lifestream"))
+    /// <summary>Settings › Advanced › Questionable: ask before Stop when Questionable runs a command after being stopped.</summary>
+    private void DrawQuestionableStopConfirm()
+    {
+        Header(Strings.ConfigQuestionableSection);
+        var confirm = settings.QuestionableConfirmStopCommand;
+        if (Toggle(Strings.ConfigQuestionableConfirmStopCommand, Strings.ConfigQuestionableConfirmStopCommandHint, ref confirm, "questionable stop confirm ask command after lifestream"))
         {
-            var confirm = settings.QuestionableConfirmStopCommand;
-            if (ImGui.Checkbox(Strings.ConfigQuestionableConfirmStopCommand, ref confirm))
-            {
-                settings.QuestionableConfirmStopCommand = confirm;
-                Save();
-            }
-
-            HintOnHover(Strings.ConfigQuestionableConfirmStopCommandHint);
+            settings.QuestionableConfirmStopCommand = confirm;
+            Save();
         }
     }
 }

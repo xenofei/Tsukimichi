@@ -7,7 +7,7 @@ using Tsukimichi.Commands;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Keyboard › Chat commands (1.11.0, A12): extra names for <c>/tsuki</c>, typed as one line and applied when
+/// Settings › Advanced › Chat commands (1.11.0, A12): extra names for <c>/tsuki</c>, typed as one line and applied when
 /// the field is left, so a half-typed alias is never registered. Under it, which names Tsukimichi answers to, and one
 /// line each for words that are not an alias and for aliases something else already uses.
 /// </summary>
@@ -37,13 +37,13 @@ public sealed partial class ConfigWindow
         }
 
         Header(Strings.ConfigCommandAliasesHeading);
-        if (!Row(Strings.ConfigCommandAliases, Strings.ConfigCommandAliasesHint, "alias aliases command commands slash chat macro /ts /moon"))
+        if (!Setting(Strings.ConfigCommandAliases, Strings.ConfigCommandAliasesHint, "alias aliases command commands slash chat macro /ts /moon"))
         {
             return;
         }
 
         var text = aliasDraft ?? settings.CommandAliases ?? string.Empty;
-        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(260f)));
+        ImGui.SetNextItemWidth(ControlWidth);
         if (ImGui.InputTextWithHint("##commandAliases", "/quests /tm", ref text, CommandAliasesMaxLength))
         {
             aliasDraft = text;
@@ -54,27 +54,19 @@ public sealed partial class ConfigWindow
             ApplyAliasDraft();
         }
 
-        HintOnHover(Strings.ConfigCommandAliasesHint);
-        Chrome.TrailingLabel(Strings.ConfigCommandAliases);
-
         RefreshAliasLines(command);
-        using (ImRaii.TextWrapPos(0f))
+        SettingNote(aliasActiveLine);
+        if (aliasInvalidLine is not null)
         {
-            Chrome.Hint(aliasActiveLine);
-            if (aliasInvalidLine is not null || aliasSkippedLine is not null)
-            {
-                using var eclipse = Theme.PushText(Theme.Eclipse);
-                if (aliasInvalidLine is not null)
-                {
-                    ImGui.TextWrapped(aliasInvalidLine);
-                }
-
-                if (aliasSkippedLine is not null)
-                {
-                    ImGui.TextWrapped(aliasSkippedLine);
-                }
-            }
+            SettingNote(aliasInvalidLine, Theme.EclipseText);
         }
+
+        if (aliasSkippedLine is not null)
+        {
+            SettingNote(aliasSkippedLine, Theme.EclipseText);
+        }
+
+        EndSetting();
     }
 
     /// <summary>

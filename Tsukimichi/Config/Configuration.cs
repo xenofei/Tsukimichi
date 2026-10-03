@@ -351,6 +351,19 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public float IconScale { get; set; } = ScaleMetrics.DefaultIconScale;
 
+    /// <summary>
+    /// Size of Tsukimichi's text on its own, on top of <see cref="UiScale"/> (1.13.0, feature plan v6 U7): 0.8–1.5 in
+    /// steps of 0.1, default 1. The fonts are built at that size, so text stays sharp. Clamped and stepped by
+    /// <see cref="ScaleMetrics.ClampTextScale"/> when read.
+    /// </summary>
+    public float TextScale { get; set; } = ScaleMetrics.DefaultTextScale;
+
+    /// <summary>
+    /// The Settings page open last, by name (<see cref="SettingsSections.Name"/>), so Settings opens where it was left
+    /// across sessions. Names from before 1.13 open the page their settings moved to (<see cref="SettingsSections.Parse"/>).
+    /// </summary>
+    public string SettingsPage { get; set; } = string.Empty;
+
     // ---- 0.6.0: what's new ----
     /// <summary>
     /// The plugin version whose "What's new" card was seen (or recorded silently on a fresh install); empty until the
@@ -655,6 +668,8 @@ public sealed partial class Configuration : IPluginConfiguration
         config.PayoffWhyOpenByCharacter ??= [];
         config.ExportFolder ??= string.Empty;
         config.CommandAliases ??= string.Empty;
+        config.SettingsPage ??= string.Empty;
+        config.TextScale = ScaleMetrics.ClampTextScale(config.TextScale);
         config.WelcomeBackDays = Math.Clamp(config.WelcomeBackDays, 0, Core.Return.WelcomeBackTrigger.MaxDays);
         config.ForgetNotSeenDays = Math.Clamp(config.ForgetNotSeenDays, MinForgetDays, MaxForgetDays);
         if (!Enum.IsDefined(config.ExportFormat))

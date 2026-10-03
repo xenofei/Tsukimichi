@@ -87,7 +87,7 @@ public sealed class RecapWindow : Window
         WindowName = Strings.RecapWindowTitle;
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.FontScale,
+            MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.UiScale,
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
         };
         nightChrome = Theme.PushNightWindow();

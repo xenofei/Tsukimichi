@@ -580,6 +580,35 @@ public sealed partial class Plugin : IDalamudPlugin
     }
 
     /// <summary>
+    /// Every Tsukimichi window, drawn in the body font at the text size (Settings › General › Text size, feature plan
+    /// v6 U7): one push around the window system, so each window, its popups and its tooltips read the same font on the
+    /// frame the setting changes. The handlers below do the same for what draws outside the window system.
+    /// </summary>
+    private void DrawWindows()
+    {
+        using var body = Ui.Typography.Body();
+        windowSystem.Draw();
+    }
+
+    private void DrawUndoToast()
+    {
+        using var body = Ui.Typography.Body();
+        Ui.UndoToast.Draw();
+    }
+
+    private void DrawHoverHint()
+    {
+        using var body = Ui.Typography.Body();
+        hoverHint?.Draw();
+    }
+
+    private void DrawDutyFinderPanel()
+    {
+        using var body = Ui.Typography.Body();
+        dutyFinderPanel?.Draw();
+    }
+
+    /// <summary>
     /// The one-time move of the per-character settings 1.7 kept in Settings (spoiler overrides, notices, open
     /// disclosures) into <c>user/characters.json</c> (1.8.0). They read from the file at once; Settings is emptied once
     /// the file holds them, and a failed save leaves them there for the next load. Running in two clients at once, or
@@ -876,10 +905,10 @@ public sealed partial class Plugin : IDalamudPlugin
             // this frame's scale factors.
             Ui.Typography.Initialize(PluginInterface.UiBuilder.FontAtlas, Log);
             PluginInterface.UiBuilder.Draw += UpdateUiMetrics;
-            PluginInterface.UiBuilder.Draw += windowSystem.Draw;
+            PluginInterface.UiBuilder.Draw += DrawWindows;
 
             // The floating Undo (feature plan v6 S2) draws after every window, over the one it belongs to.
-            PluginInterface.UiBuilder.Draw += Ui.UndoToast.Draw;
+            PluginInterface.UiBuilder.Draw += DrawUndoToast;
             PluginInterface.UiBuilder.OpenMainUi += mainWindow.Toggle;
 
             // /tsukimichi and /tsuki, plus /ts, /moon and the player's own aliases (1.11.0, A12); an alias Dalamud, the
@@ -988,7 +1017,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 HandIns = handIns,
                 NeededForEnabled = () => Settings.ItemNeededForEnabled,
             };
-            PluginInterface.UiBuilder.Draw += hoverHint.Draw;
+            PluginInterface.UiBuilder.Draw += DrawHoverHint;
             itemHooks = new Game.ItemHooks(ContextMenu, rewardLookup, quest =>
             {
                 mainWindow.IsOpen = true;
@@ -1048,7 +1077,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
             });
-            PluginInterface.UiBuilder.Draw += dutyFinderPanel.Draw;
+            PluginInterface.UiBuilder.Draw += DrawDutyFinderPanel;
             var why = new WhyCommand(Session, ui, gameLinks);
             command.Why = why.Run;
 
@@ -1272,7 +1301,7 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.Questionable = questionableIpc;
             configWindow.Nearby = discoveryWindow;
             var settingsWindow = configWindow;
-            discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations, Core.Ui.SettingsAnchor.Nearby);
+            discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.InGame, Core.Ui.SettingsAnchor.Nearby);
             InitializeInGame(gate, rewardLookup, handIns, moonlit);
             InitializeCollector(unlockReader);
             windowSystem.AddWindow(configWindow);
@@ -1373,7 +1402,7 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // "Set up your road" (1.7.0, decision 7): once on a fresh install, after the tour offer; Help reopens it.
             // Each switch applies at once and tells the service that follows it, as Settings does.
-            mainWindow.AttachSetup(new SetupCard(Settings, PluginInterface, Log, BuildSetupToggles(overlay, nearbyWindow), () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations, Core.Ui.SettingsAnchor.CompanionPlugins)));
+            mainWindow.AttachSetup(new SetupCard(Settings, PluginInterface, Log, BuildSetupToggles(overlay, nearbyWindow), () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Automation, Core.Ui.SettingsAnchor.CompanionPlugins)));
 
             // "Since you were away" (P7): the stored captures are kept from before this login's first save; the card
             // sits above the detail pane (after What's new) and the Characters dashboard opens it for any character.
@@ -1542,20 +1571,21 @@ public sealed partial class Plugin : IDalamudPlugin
 
             if (hoverHint is not null)
             {
-                PluginInterface.UiBuilder.Draw -= hoverHint.Draw;
+                PluginInterface.UiBuilder.Draw -= DrawHoverHint;
             }
 
             if (dutyFinderPanel is not null)
             {
-                PluginInterface.UiBuilder.Draw -= dutyFinderPanel.Draw;
+                PluginInterface.UiBuilder.Draw -= DrawDutyFinderPanel;
             }
 
             PluginInterface.UiBuilder.Draw -= Ui.PopupFade.EndFrame;
-            PluginInterface.UiBuilder.Draw -= Ui.UndoToast.Draw;
-            PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+            PluginInterface.UiBuilder.Draw -= DrawUndoToast;
+            PluginInterface.UiBuilder.Draw -= DrawWindows;
             PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
         });
         Unwind("windows", windowSystem.RemoveAllWindows);
+        Unwind("settings window", () => configWindow?.Dispose());
         Unwind("fonts", Ui.Typography.Dispose);
         Unwind("in the game", DisposeInGame);
         Unwind("item hooks", () => itemHooks?.Dispose());

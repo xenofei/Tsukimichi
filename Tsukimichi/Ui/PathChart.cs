@@ -698,7 +698,7 @@ public sealed class PathChart
     {
         using var style = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
-        ImGui.PushFont(Dalamud.Interface.UiBuilder.DefaultFont);
+        using var body = Typography.Body();
         UiMetrics.ApplyFontScale();
         using (UiMetrics.TooltipWrap())
         {
@@ -709,8 +709,6 @@ public sealed class PathChart
                 ImGui.TextDisabled(detail);
             }
         }
-
-        ImGui.PopFont();
     }
 
     private float DrawChild(float view)

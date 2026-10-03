@@ -296,10 +296,10 @@ public sealed class TodoOverlay : Window, IDisposable
 
         // The overlay's own opacity setting; the Night chrome keeps this alpha (it never touches BgAlpha).
         BgAlpha = ClampOpacity(settings.TodoOverlayOpacity);
-        var compactWidth = CompactWidthLogical * UiMetrics.FontScale;
+        var compactWidth = CompactWidthLogical * UiMetrics.UiScale;
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(settings.TodoOverlayCompact ? compactWidth : MinWidthLogical * UiMetrics.FontScale, 0f),
+            MinimumSize = new Vector2(settings.TodoOverlayCompact ? compactWidth : MinWidthLogical * UiMetrics.UiScale, 0f),
             MaximumSize = new Vector2(settings.TodoOverlayCompact ? compactWidth : float.MaxValue, float.MaxValue),
         };
         if (resetPosition)

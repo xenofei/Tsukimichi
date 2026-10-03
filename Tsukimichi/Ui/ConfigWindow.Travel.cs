@@ -6,76 +6,68 @@ using Dalamud.Interface.Utility.Raii;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Integrations › Travel, getting there faster (travel review, 1.10): "Mount for walks longer than N yalms"
-/// (40 by default, 0 never mounts), which mount (Mount Roulette or one the character owns), "Fly where flying is
-/// unlocked" and "Sprint in towns". They apply to Walk to giver and Go to giver, which only move on a click; drawn
-/// under the Travel block's Show Walk and Show Go to giver rows.
+/// Settings › Automation › Travel (1.6.0; getting there faster, 1.10): the Walk and Go to giver buttons, "Mount for
+/// walks over N yalms" (40 by default, Off never mounts), which mount (Mount Roulette or one the character owns), "Fly
+/// where unlocked" and "Sprint in towns". They apply to Walk to giver and Go to giver, which only move on a click; the
+/// panes read them per draw through GameLinks, so no callback is needed.
 /// </summary>
 public sealed partial class ConfigWindow
 {
     /// <summary>The longest mount distance the slider offers, in yalms.</summary>
     private const int MaxMountDistance = 200;
 
-    private bool mountDistanceDirty;
-
     /// <summary>The mounts the character owns (Mount sheet row and name, sorted by name), for the mount choice; empty when unknown.</summary>
     public Func<IReadOnlyList<(uint Id, string Name)>>? OwnedMounts { get; set; }
 
-    private void DrawTravelMovement()
+    private void DrawTravelSettings()
     {
-        if (Row(Strings.ConfigTravelMountDistance, Strings.ConfigTravelMountDistanceHint, "travel mount ride distance yalms walk vnavmesh"))
+        Header(Strings.ConfigSectionTravel);
+        var showWalk = settings.ShowWalkToGiver;
+        if (Toggle(Strings.ConfigShowWalk, Strings.ConfigShowWalkHint, ref showWalk, "travel vnavmesh walk move button"))
+        {
+            settings.ShowWalkToGiver = showWalk;
+            Save();
+        }
+
+        var showGoTo = settings.ShowGoToGiver;
+        if (Toggle(Strings.ConfigShowGoTo, Strings.ConfigShowGoToHint, ref showGoTo, "travel teleport lifestream aethernet vnavmesh go to giver button"))
+        {
+            settings.ShowGoToGiver = showGoTo;
+            Save();
+        }
+
+        if (Setting(Strings.ConfigTravelMountDistance, Strings.ConfigTravelMountDistanceHint, "travel mount ride distance yalms walk vnavmesh"))
         {
             var distance = Math.Clamp(settings.TravelMountDistance, 0, MaxMountDistance);
-            ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(160f)));
-            if (ImGui.SliderInt("##travelMountDistance", ref distance, 0, MaxMountDistance, Strings.ConfigTravelMountDistanceFormat, ImGuiSliderFlags.AlwaysClamp))
+            ImGui.SetNextItemWidth(ControlWidth);
+            if (ImGui.SliderInt("##travelMountDistance", ref distance, 0, MaxMountDistance, distance == 0 ? Strings.WelcomeBackConfigOff : Strings.ConfigTravelMountDistanceFormat, ImGuiSliderFlags.AlwaysClamp))
             {
                 settings.TravelMountDistance = distance;
-                mountDistanceDirty = true;
+                SaveSoon();
             }
 
-            if (mountDistanceDirty && ImGui.IsItemDeactivatedAfterEdit())
-            {
-                mountDistanceDirty = false;
-                Save();
-            }
-
-            HintOnHover(Strings.ConfigTravelMountDistanceHint);
-            Chrome.TrailingLabel(Strings.ConfigTravelMountDistance);
+            EndSetting();
         }
 
-        if (Row(Strings.ConfigTravelMount, Strings.ConfigTravelMountHint, "travel mount roulette favourite favorite"))
+        var mounting = settings.TravelMountDistance > 0;
+        if (Setting(Strings.ConfigTravelMount, Strings.ConfigTravelMountHint, "travel mount roulette favourite favorite", enabled: mounting, sub: true, reason: Strings.SettingsMountOffReason))
         {
-            using (SubSetting(settings.TravelMountDistance > 0))
-            {
-                DrawMountChoice();
-            }
+            DrawMountChoice();
+            EndSetting();
         }
 
-        if (Row(Strings.ConfigTravelFly, Strings.ConfigTravelFlyHint, "travel fly flying aether currents mount"))
+        var fly = settings.TravelFly;
+        if (Toggle(Strings.ConfigTravelFly, Strings.ConfigTravelFlyHint, ref fly, "travel fly flying aether currents mount", mounting, sub: true, reason: Strings.SettingsMountOffReason))
         {
-            using (SubSetting(settings.TravelMountDistance > 0))
-            {
-                var fly = settings.TravelFly;
-                if (ImGui.Checkbox(Strings.ConfigTravelFly, ref fly))
-                {
-                    settings.TravelFly = fly;
-                    Save();
-                }
-
-                HintOnHover(Strings.ConfigTravelFlyHint);
-            }
+            settings.TravelFly = fly;
+            Save();
         }
 
-        if (Row(Strings.ConfigTravelSprint, Strings.ConfigTravelSprintHint, "travel sprint town city walk"))
+        var sprint = settings.TravelSprintInTowns;
+        if (Toggle(Strings.ConfigTravelSprint, Strings.ConfigTravelSprintHint, ref sprint, "travel sprint town city walk"))
         {
-            var sprint = settings.TravelSprintInTowns;
-            if (ImGui.Checkbox(Strings.ConfigTravelSprint, ref sprint))
-            {
-                settings.TravelSprintInTowns = sprint;
-                Save();
-            }
-
-            HintOnHover(Strings.ConfigTravelSprintHint);
+            settings.TravelSprintInTowns = sprint;
+            Save();
         }
     }
 
@@ -93,29 +85,26 @@ public sealed partial class ConfigWindow
             }
         }
 
-        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(220f)));
-        using (var combo = ImRaii.Combo("##travelMount", current))
+        ImGui.SetNextItemWidth(ControlWidth);
+        using var combo = ImRaii.Combo("##travelMount", current);
+        if (!combo)
         {
-            if (combo)
-            {
-                if (ImGui.Selectable(Strings.ConfigTravelMountRoulette, settings.TravelMountId == 0))
-                {
-                    settings.TravelMountId = 0;
-                    Save();
-                }
-
-                foreach (var (id, name) in mounts)
-                {
-                    if (ImGui.Selectable(name + "##mount" + id, settings.TravelMountId == id))
-                    {
-                        settings.TravelMountId = id;
-                        Save();
-                    }
-                }
-            }
+            return;
         }
 
-        HintOnHover(Strings.ConfigTravelMountHint);
-        Chrome.TrailingLabel(Strings.ConfigTravelMount);
+        if (ImGui.Selectable(Strings.ConfigTravelMountRoulette, settings.TravelMountId == 0))
+        {
+            settings.TravelMountId = 0;
+            Save();
+        }
+
+        foreach (var (id, name) in mounts)
+        {
+            if (ImGui.Selectable(name + "##mount" + id, settings.TravelMountId == id))
+            {
+                settings.TravelMountId = id;
+                Save();
+            }
+        }
     }
 }

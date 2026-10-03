@@ -12,7 +12,7 @@ using Tsukimichi.Game;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Data › Characters (1.8.0, R7 B, E, H): group the Characters list by data center, show hidden characters
+/// Settings › Characters &amp; data › Characters (1.8.0, R7 B, E, H): group the Characters list by data center, show hidden characters
 /// in the lists, the characters hidden or not tracked with Show and Track buttons, and "Forget characters not seen in
 /// N days" behind a confirmation that names them. A character live here or in another game client is never forgotten,
 /// and one that logs in, or is saved, while the question is open is kept and counted in the result.
@@ -47,42 +47,37 @@ public sealed partial class ConfigWindow
         Header(Strings.AltsSettingsHeading);
         RefreshCharacters(roster);
 
-        if (Row(Strings.AltsSettingsByDataCenter, Strings.AltsSettingsByDataCenterHint, "data center dc group world alts list"))
+        var byCenter = settings.CharacterListByDataCenter;
+        if (Toggle(Strings.AltsSettingsByDataCenter, Strings.AltsSettingsByDataCenterHint, ref byCenter, "data center dc group world alts list"))
         {
-            var byCenter = settings.CharacterListByDataCenter;
-            if (ImGui.Checkbox(Strings.AltsSettingsByDataCenter, ref byCenter))
-            {
-                settings.CharacterListByDataCenter = byCenter;
-                Save();
-            }
-
-            HintOnHover(Strings.AltsSettingsByDataCenterHint);
+            settings.CharacterListByDataCenter = byCenter;
+            Save();
         }
 
-        if (Row(Strings.AltsSettingsShowHidden, Strings.AltsSettingsShowHiddenHint, "hidden characters alts switcher list"))
+        var showHidden = settings.ShowHiddenCharacters;
+        if (Toggle(Strings.AltsSettingsShowHidden, Strings.AltsSettingsShowHiddenHint, ref showHidden, "hidden characters alts switcher list"))
         {
-            var showHidden = settings.ShowHiddenCharacters;
-            if (ImGui.Checkbox(Strings.AltsSettingsShowHidden, ref showHidden))
-            {
-                settings.ShowHiddenCharacters = showHidden;
-                Save();
-            }
-
-            HintOnHover(Strings.AltsSettingsShowHiddenHint);
+            settings.ShowHiddenCharacters = showHidden;
+            Save();
         }
 
-        if (Row(Strings.AltsSettingsHiddenFormat, Strings.AltsSettingsHiddenHint, "hidden untracked not tracked don't track characters alts"))
+        if (Setting(Strings.AltsSettingsHiddenFormat, Strings.AltsSettingsHiddenHint, "hidden untracked not tracked don't track characters alts", 0f, shown: setAsideHeader))
         {
-            ImGui.Spacing();
-            ImGui.TextUnformatted(setAsideHeader);
-            HintOnHover(Strings.AltsSettingsHiddenHint);
+            SettingBelow();
             DrawSetAside(roster.Settings);
+            EndSetting();
         }
 
-        if (Row(Strings.AltsSettingsForget, Strings.AltsSettingsForgetHint, "forget delete old characters alts prune days not seen"))
+        if (Setting(Strings.AltsSettingsForget, Strings.AltsSettingsForgetHint, "forget delete old characters alts prune days not seen"))
         {
-            ImGui.Spacing();
             DrawForgetNotSeen();
+            EndSetting();
+        }
+
+        if (openForgetBulk)
+        {
+            openForgetBulk = false;
+            ImGui.OpenPopup(Strings.AltsForgetBulkPopup);
         }
 
         DrawForgetBulkConfirm();
@@ -152,28 +147,25 @@ public sealed partial class ConfigWindow
         }
     }
 
-    /// <summary>"Forget characters not seen in [N] days", the button with how many that picks, and the result line.</summary>
+    /// <summary>"Forget characters not seen in [N] days" in the control column, then the button with how many that picks and the result line under the row.</summary>
     private void DrawForgetNotSeen()
     {
-        ImGui.AlignTextToFramePadding();
-        ImGui.TextUnformatted(Strings.AltsSettingsForget);
-        HintOnHover(Strings.AltsSettingsForgetHint);
-        ImGui.SameLine();
         var days = settings.ForgetNotSeenDays;
-        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(110f)));
-        if (ImGui.InputInt("##forgetDays", ref days, 1, 30))
+        ImGui.SetNextItemWidth(ControlWidth);
+        if (ImGui.DragInt("##forgetDays", ref days, 1f, Configuration.MinForgetDays, Configuration.MaxForgetDays, Strings.WelcomeBackConfigDaysFormat, ImGuiSliderFlags.AlwaysClamp))
         {
             settings.ForgetNotSeenDays = Math.Clamp(days, Configuration.MinForgetDays, Configuration.MaxForgetDays);
-            Save();
+            SaveSoon();
         }
 
-        ImGui.SameLine();
-        ImGui.TextUnformatted(Strings.AltsSettingsForgetDays);
-        Chrome.Hint(Strings.AltsSettingsForgetHint);
-
+        SettingBelow();
         if (forgetCandidates.Count == 0)
         {
-            Chrome.Hint(Strings.AltsSettingsForgetNone);
+            using (Typography.Caption())
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextWrapped(Strings.AltsSettingsForgetNone);
+            }
         }
         else
         {
@@ -184,7 +176,9 @@ public sealed partial class ConfigWindow
                     forgetPicked = [.. forgetCandidates];
                     forgetQuestionText = string.Format(CultureInfo.CurrentCulture, Strings.AltsForgetBulkQuestionFormat, forgetPicked.Count);
                     forgetBulkGate.Cancel();
-                    ImGui.OpenPopup(Strings.AltsForgetBulkPopup);
+
+                    // Opened outside the row, where the confirmation is drawn, so the two share one id.
+                    openForgetBulk = true;
                 }
             }
         }
@@ -204,6 +198,8 @@ public sealed partial class ConfigWindow
             }
         }
     }
+
+    private bool openForgetBulk;
 
     private readonly ConfirmGate forgetBulkGate = new();
 

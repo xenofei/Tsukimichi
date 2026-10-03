@@ -1,89 +1,111 @@
 using System;
-using Dalamud.Bindings.ImGui;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The 1.7.0 "In the game" settings (feature plan v5), two blocks: Settings › Notices › Chat actions (the clickable
-/// "[Open] [Pin] [Route]", the "Opened:" line, quest toasts), read per use; and Settings › Integrations › Chat 2 and
-/// nameplates ("Open in Tsukimichi" in Chat 2's menu, nameplate marks), which subscribe and unsubscribe, so their
-/// changes go through <see cref="ChatTwoToggled"/> and <see cref="NamePlateMarksToggled"/>.
+/// The 1.7.0 "In the game" settings (feature plan v5), placed by the 1.13.0 rebuild (v6 U7): Settings › Alerts › Chat
+/// extras (the clickable "[Open] [Pin] [Route]", the "Opened:" line, quest toasts), read per use; and Settings › In
+/// game › Menus and tooltips (the NPC menu entry, item hints and the item menu, the quests that need an item, Chat 2's
+/// menu and nameplate marks). The ones that subscribe and unsubscribe go through their callbacks.
 /// </summary>
 public sealed partial class ConfigWindow
 {
-    /// <summary>Settings › Integrations › Chat 2 changed; the plugin registers or unregisters with Chat 2.</summary>
+    /// <summary>Settings › In game › Chat 2 changed; the plugin registers or unregisters with Chat 2.</summary>
     public Action<bool>? ChatTwoToggled { get; set; }
 
-    /// <summary>Settings › Integrations › nameplate marks changed; the plugin subscribes or unsubscribes the nameplate hook.</summary>
+    /// <summary>Settings › In game › nameplate marks changed; the plugin subscribes or unsubscribes the nameplate hook.</summary>
     public Action<bool>? NamePlateMarksToggled { get; set; }
 
     private void DrawChatActions()
     {
         Header(Strings.ConfigSectionChatActions);
-        if (Row(Strings.ConfigChatLinkActions, Strings.ConfigChatLinkActionsHint, "chat links open pin route click"))
+        var actions = settings.ChatLinkActions;
+        if (Toggle(Strings.ConfigChatLinkActions, Strings.ConfigChatLinkActionsHint, ref actions, "chat links open pin route click"))
         {
-            var actions = settings.ChatLinkActions;
-            if (ImGui.Checkbox(Strings.ConfigChatLinkActions, ref actions))
-            {
-                settings.ChatLinkActions = actions;
-                Save();
-            }
-
-            HintOnHover(Strings.ConfigChatLinkActionsHint);
+            settings.ChatLinkActions = actions;
+            Save();
         }
 
-        if (Row(Strings.ConfigChatNoticeOpened, Strings.ConfigChatNoticeOpenedHint, "chat notice opened completed turn-in unlocked available"))
+        var opened = settings.ChatNoticeOpened;
+        if (Toggle(Strings.ConfigChatNoticeOpened, Strings.ConfigChatNoticeOpenedHint, ref opened, "chat notice opened completed turn-in unlocked available"))
         {
-            var opened = settings.ChatNoticeOpened;
-            if (ImGui.Checkbox(Strings.ConfigChatNoticeOpened, ref opened))
-            {
-                settings.ChatNoticeOpened = opened;
-                Save();
-            }
-
-            HintOnHover(Strings.ConfigChatNoticeOpenedHint);
+            settings.ChatNoticeOpened = opened;
+            Save();
         }
 
-        if (Row(Strings.ConfigQuestToasts, Strings.ConfigQuestToastsHint, "toast banner moonlit reward duty unlocked"))
+        var toasts = settings.QuestToasts;
+        if (Toggle(Strings.ConfigQuestToasts, Strings.ConfigQuestToastsHint, ref toasts, "toast banner moonlit reward duty unlocked"))
         {
-            var toasts = settings.QuestToasts;
-            if (ImGui.Checkbox(Strings.ConfigQuestToasts, ref toasts))
-            {
-                settings.QuestToasts = toasts;
-                Save();
-            }
-
-            HintOnHover(Strings.ConfigQuestToastsHint);
+            settings.QuestToasts = toasts;
+            Save();
         }
     }
 
-    private void DrawChatTwoAndNamePlates()
+    /// <summary>
+    /// Settings › In game › Menus and tooltips: the NPC menu entry, the item hint, the item menu entry, the quests that
+    /// need an item, Chat 2's menu and nameplate marks.
+    /// </summary>
+    private void DrawMenusAndTooltips()
     {
-        Header(Strings.ConfigSectionChatTwoNamePlates);
-        if (Row(Strings.ConfigChatTwo, Strings.ConfigChatTwoHint, "chat 2 chattwo context menu integrations quest item link"))
+        Header(Strings.ConfigSectionGameWindows);
+        var npcMenu = settings.NpcContextMenuEnabled;
+        if (Toggle(Strings.ConfigNpcContextMenu, Strings.ConfigNpcContextMenuHint, ref npcMenu, "npc target menu quest giver right-click"))
         {
-            var chatTwo = settings.ChatTwoIntegration;
-            if (ImGui.Checkbox(Strings.ConfigChatTwo, ref chatTwo))
-            {
-                settings.ChatTwoIntegration = chatTwo;
-                Save();
-                ChatTwoToggled?.Invoke(chatTwo);
-            }
-
-            HintOnHover(Strings.ConfigChatTwoHint);
+            settings.NpcContextMenuEnabled = npcMenu;
+            Save();
+            NpcContextMenuToggled?.Invoke(npcMenu);
         }
 
-        if (Row(Strings.ConfigNamePlateMarks, Strings.ConfigNamePlateMarksHint, "nameplate name plate title npc giver marks moonlit pinned"))
+        var hints = settings.ItemHintsEnabled;
+        if (Toggle(Strings.ConfigItemHints, Strings.ConfigItemHintsHint, ref hints, "item tooltip reward hover hint"))
         {
-            var namePlates = settings.NamePlateMarks;
-            if (ImGui.Checkbox(Strings.ConfigNamePlateMarks, ref namePlates))
-            {
-                settings.NamePlateMarks = namePlates;
-                Save();
-                NamePlateMarksToggled?.Invoke(namePlates);
-            }
+            settings.ItemHintsEnabled = hints;
+            Save();
+            ItemHintsToggled?.Invoke(hints);
+        }
 
-            HintOnHover(Strings.ConfigNamePlateMarksHint);
+        var contextMenu = settings.ItemContextMenuEnabled;
+        if (Toggle(Strings.ConfigItemContextMenu, Strings.ConfigItemContextMenuHint, ref contextMenu, "item right-click menu reward"))
+        {
+            settings.ItemContextMenuEnabled = contextMenu;
+            Save();
+            ItemContextMenuToggled?.Invoke(contextMenu);
+        }
+
+        var neededFor = settings.ItemNeededForEnabled;
+        if (Toggle(Strings.ConfigItemNeededFor, Strings.ConfigItemNeededForHint, ref neededFor, "hand-in items needed quest item hint menu"))
+        {
+            settings.ItemNeededForEnabled = neededFor;
+            Save();
+        }
+
+        var chatTwo = settings.ChatTwoIntegration;
+        if (Toggle(Strings.ConfigChatTwo, Strings.ConfigChatTwoHint, ref chatTwo, "chat 2 chattwo context menu integrations quest item link"))
+        {
+            settings.ChatTwoIntegration = chatTwo;
+            Save();
+            ChatTwoToggled?.Invoke(chatTwo);
+        }
+
+        var namePlates = settings.NamePlateMarks;
+        if (Toggle(Strings.ConfigNamePlateMarks, Strings.ConfigNamePlateMarksHint, ref namePlates, "nameplate name plate title npc giver marks moonlit pinned"))
+        {
+            settings.NamePlateMarks = namePlates;
+            Save();
+            NamePlateMarksToggled?.Invoke(namePlates);
+        }
+    }
+
+    /// <summary>Settings › In game › Wotsit: register quests and rewards as Wotsit search entries.</summary>
+    private void DrawWotsit()
+    {
+        Header(Strings.ConfigSectionWotsit);
+        var wotsit = settings.WotsitIntegration;
+        if (Toggle(Strings.ConfigWotsitIntegration, Strings.ConfigWotsitIntegrationHint, ref wotsit, "wotsit search launcher"))
+        {
+            settings.WotsitIntegration = wotsit;
+            Save();
+            WotsitToggled?.Invoke(wotsit);
         }
     }
 }

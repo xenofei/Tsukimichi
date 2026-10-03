@@ -30,8 +30,51 @@ public static class ScaleMetrics
     public const float MinIconScale = 0.8f;
     public const float MaxIconScale = 2.0f;
 
+    /// <summary>
+    /// Default text size (feature plan v6 U7, the owner's 2026-10-03 note): Tsukimichi's fonts at the size the window
+    /// scale gives them. Text size multiplies the font alone, so text can grow without the layout around it.
+    /// </summary>
+    public const float DefaultTextScale = 1f;
+    public const float MinTextScale = 0.8f;
+    public const float MaxTextScale = 1.5f;
+
+    /// <summary>The text size moves in steps of 10%, so each step is one font build rather than one per pixel dragged.</summary>
+    public const float TextScaleStep = 0.1f;
+
+    private const float StepsPerUnit = 10f;
+
     /// <summary>The UI scale within its bounds; a non-finite value (a corrupt config) becomes the default.</summary>
     public static float ClampUiScale(float value) => Clamp(value, MinUiScale, MaxUiScale, DefaultUiScale);
+
+    /// <summary>
+    /// The text size within 80–150% and on its 10% step (the nearest one; a half step rounds up); a non-finite value
+    /// becomes the default 100%.
+    /// </summary>
+    public static float ClampTextScale(float value)
+    {
+        if (!float.IsFinite(value))
+        {
+            return DefaultTextScale;
+        }
+
+        // Counted in whole steps (a hair added so 1.15, stored as 1.1499999, still rounds up as written).
+        var steps = MathF.Round((Math.Clamp(value, MinTextScale, MaxTextScale) * StepsPerUnit) + 1e-4f, MidpointRounding.AwayFromZero);
+        return Math.Clamp(steps / StepsPerUnit, MinTextScale, MaxTextScale);
+    }
+
+    /// <summary>The text size as a whole percentage (80–150), what Settings shows and steps through.</summary>
+    public static int TextScalePercent(float value) => (int)MathF.Round(ClampTextScale(value) * 100f);
+
+    /// <summary>A percentage from Settings back to a text size, clamped and stepped like <see cref="ClampTextScale"/>.</summary>
+    public static float TextScaleFromPercent(int percent) => ClampTextScale(percent / 100f);
+
+    /// <summary>
+    /// The pixel size of a font built for <paramref name="textScale"/> from a body size of <paramref name="basePx"/>
+    /// (Dalamud's font at global scale 1), rounded to a whole pixel so two nearby values share one build; 0 when the
+    /// base is unknown.
+    /// </summary>
+    public static float TextFontPx(float basePx, float textScale) =>
+        float.IsFinite(basePx) && basePx > 0f ? MathF.Round(basePx * ClampTextScale(textScale)) : 0f;
 
     /// <summary>The icon scale within its bounds; a non-finite value becomes the default.</summary>
     public static float ClampIconScale(float value) => Clamp(value, MinIconScale, MaxIconScale, DefaultIconScale);
