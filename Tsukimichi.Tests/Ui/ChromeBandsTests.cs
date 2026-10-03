@@ -111,6 +111,32 @@ public class ChromeBandsTests
     }
 
     [Fact]
+    public void Back_and_forward_have_their_room_on_the_row_they_lead()
+    {
+        // Feature plan v7 N1: two round buttons before the search on one row, before the Filters button on the last row
+        // of a reflowed toolbar, beside a character chip no narrower than its floor.
+        foreach (var scale in Scales)
+        {
+            for (var width = 300f; width <= 4000f; width += 10f)
+            {
+                var m = Metrics(width, scale);
+                var bands = ChromeBands.Layout(m);
+                var gap = ChromeBands.ToolbarGapLogical * scale;
+                var history = ChromeBands.HistoryWidth(scale, m.MinTarget);
+                Assert.Equal((2f * m.MinTarget) + (ChromeBands.HistoryGapLogical * scale), history, 3);
+                if (bands.ToolbarRows == 1)
+                {
+                    var row = history + bands.SearchWidth + m.QuickViewsWidth + m.FiltersWidth + (ChromeBands.CharacterSlotLogical * scale) + (4f * gap);
+                    Assert.True(row <= width + 0.01f, $"one row of {row} px in {width} px (scale {scale})");
+                }
+            }
+        }
+
+        // The usual window keeps one row with them.
+        Assert.Equal(1, ChromeBands.Layout(Metrics(1280f)).ToolbarRows);
+    }
+
+    [Fact]
     public void The_lane_is_one_chip_tall_at_every_scale()
     {
         foreach (var scale in Scales)

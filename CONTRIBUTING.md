@@ -169,7 +169,7 @@ Every allowlist entry carries an `until` release, and `VerificationAllowlistTest
 
 ## Releases
 
-A release is a tag `vX.Y.Z` whose version equals the csproj `<Version>`, whose csproj carries a non-empty `<TsukimichiTestedGameVersion>` no older than the `gameVersion` of `Tsukimichi/Data/unique_quests.json` (see Patch day below), and has a `## [X.Y.Z]` section in [CHANGELOG.md](CHANGELOG.md). GitHub Actions builds `latest.zip` from the tagged commit, attaches it to the GitHub Release and regenerates `pluginmaster.json` on `main` ([release workflow](.github/workflows/release.yml)). Nothing is built or uploaded from a developer machine.
+A release is a tag `vX.Y.Z` whose version equals the csproj `<Version>`, whose csproj carries a non-empty `<TsukimichiTestedGameVersion>` no older than the `gameVersion` of `Tsukimichi/Data/unique_quests.json` (see Patch day below), and has a `## [X.Y.Z]` section in [CHANGELOG.md](CHANGELOG.md). GitHub Actions builds `latest.zip` from the tagged commit, attaches it to the GitHub Release with `SHA256SUMS.txt` (the SHA-256 of `latest.zip` and of the `Tsukimichi.dll` inside it, also written at the top of the release notes) and regenerates `pluginmaster.json` on `main` ([release workflow](.github/workflows/release.yml)). Nothing is built or uploaded from a developer machine. Players compare the DLL's hash with the one Settings › Advanced › Privacy & trust shows ([docs/privacy.md](docs/privacy.md)); a change that adds any network access must update that statement first, and `NoNetworkTests` fails until it does.
 
 ## Patch day
 
