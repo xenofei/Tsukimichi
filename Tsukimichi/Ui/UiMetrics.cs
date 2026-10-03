@@ -99,8 +99,11 @@ public static class UiMetrics
     /// </summary>
     public static float TreeGlyphRadius(float lineHeight) => ScaleMetrics.TreeGlyphRadius(lineHeight, IconFactor);
 
-    /// <summary>Height of a Journal tree row: the halo box plus 6 logical px, at least 30 px and one text line (T11).</summary>
-    public static float TreeRowHeight(float lineHeight) => ScaleMetrics.TreeRowHeight(lineHeight, TreeGlyphRadius(lineHeight), Scale);
+    /// <summary>
+    /// Height of a Journal tree row at the Decoration level (T11, flair v13): Full 34, Quiet 30 (both at least the halo
+    /// box plus 6 logical px and one text line), Plain 24 with no gauge.
+    /// </summary>
+    public static float TreeRowHeight(float lineHeight) => ScaleMetrics.TreeRowHeight(Theme.Flair, lineHeight, TreeGlyphRadius(lineHeight), Scale, GlobalScale);
 
     /// <summary>A halo's inline box where the row has room for it: the inline glyph square, never under 24 px so the core shows.</summary>
     public static float HaloBoxSize(float lineHeight) => MathF.Max(InlineGlyphSize(lineHeight), 2f * GaugeGeometry.CoreMinRadius);
@@ -140,11 +143,18 @@ public static class UiMetrics
     public static float RowContentHeight(float lineHeight) => MathF.Max(lineHeight, MathF.Max(RowIconSize, RowGlyphRadius * 2.4f));
 
     /// <summary>
-    /// Content height of a quest table row under the current <see cref="Density"/>: 24 or 32 px at Dalamud's scale less
-    /// the cell padding, never less than <see cref="RowContentHeight"/> (T12).
+    /// The least radius of a quest-table medal at the Decoration level (<see cref="FlairRules.RowGlyphFloorLogical"/>):
+    /// the row tier is 18 px at Full, 16 at Quiet and 12 at Plain at scale 1.
+    /// </summary>
+    public static float TableGlyphRadius => Icon(FlairRules.RowGlyphFloorLogical(Theme.Flair));
+
+    /// <summary>
+    /// Content height of a quest table row under the current <see cref="Density"/> and Decoration level (T12, flair
+    /// v13): Full 34 / 28, Quiet 30 / 24, Plain 24 px at Dalamud's scale less the cell padding, never less than what the
+    /// line, the row's icons and the level's medal need.
     /// </summary>
     public static float TableRowContentHeight(float lineHeight, float cellPaddingY) =>
-        ScaleMetrics.TableRowContent(Density, GlobalScale, RowContentHeight(lineHeight), cellPaddingY);
+        ScaleMetrics.TableRowContent(Theme.Flair, Density, GlobalScale, MathF.Max(lineHeight, MathF.Max(RowIconSize, TableGlyphRadius * 2.4f)), cellPaddingY);
 
     // Layout.
     public static float CharacterComboWidth => Px(240f);

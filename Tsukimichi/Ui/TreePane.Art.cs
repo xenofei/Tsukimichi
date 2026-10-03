@@ -6,11 +6,12 @@ using Tsukimichi.Core.Ui;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The Moon Road art of the Journal tree (design v4 §5, §7.2, feature plan v4 V2), drawn under Full and Quiet flair
-/// (<see cref="Theme.ShowRules"/>): the header line ("✦ JOURNAL" and a fading brass rule), the moon-road dividers between the story, side and virtual blocks, and the road under each row, a
-/// 2 px track whose gold walked part is the node's completion. Plain flair keeps the 1.3 tree (the mini bar and the
-/// section rules). Everything is draw-list work over plain <c>Dummy</c> items, so keyboard navigation, the tiers and the
-/// tour rects are untouched.
+/// The art of the Journal tree (design v4 §5, §7.2, feature plan v4 V2; docs/design/flair-v13): at Full the header
+/// line ("✦ JOURNAL" and a fading brass rule), the moon-road dividers between the story, side and virtual blocks, and
+/// the road under each row, a 2 px track whose gold walked part is the node's completion; at Quiet the header in the
+/// body font over a hairline and hairlines between the blocks; at Plain the header as a raised band and 1 px lines.
+/// Everything is draw-list work over plain <c>Dummy</c> items, so keyboard navigation, the tiers and the tour rects are
+/// untouched.
 /// </summary>
 public sealed partial class TreePane
 {
@@ -44,6 +45,19 @@ public sealed partial class TreePane
     {
         var origin = ImGui.GetCursorScreenPos();
         var pad = UiMetrics.Px(HeaderPadLogical);
+        if (Theme.RuleStyle == RuleStyle.Line)
+        {
+            // Plain: the header as a raised band, "Journal" in the primary tone, then a 1 px line.
+            var line = ImGui.GetTextLineHeight();
+            var band = MathF.Max(line, UiMetrics.Px(20f));
+            var dl = ImGui.GetWindowDrawList();
+            dl.AddRectFilled(origin, origin + new Vector2(width, band), Theme.U32(Theme.Tones.Band));
+            dl.AddRectFilled(new Vector2(origin.X, origin.Y + band - 1f), new Vector2(origin.X + width, origin.Y + band), Theme.U32(Theme.RuleColor));
+            dl.AddText(new Vector2(origin.X + pad, origin.Y + ((band - line) * 0.5f)), Theme.U32(Theme.Surface.Text), Strings.TabJournal);
+            ImGui.Dummy(new Vector2(MathF.Max(1f, width), band + UiMetrics.Px(2f)));
+            return;
+        }
+
         ImGui.SetCursorScreenPos(new Vector2(origin.X + pad, origin.Y));
         SectionHeading.DrawLine(Strings.TabJournal, null, Theme.U32(Theme.Surface.TextSecondary), pad, sigil: true, Theme.Flair, CaptionOverflow.Tooltip);
         ImGui.SetCursorScreenPos(new Vector2(origin.X, ImGui.GetCursorScreenPos().Y));
@@ -85,8 +99,14 @@ public sealed partial class TreePane
             return;
         }
 
+        // The moon-road divider at Full; a hairline with a little air at Quiet; a 1 px line at Plain.
         var origin = ImGui.GetCursorScreenPos();
-        var height = MathF.Round(UiMetrics.Px(DividerLogical));
+        var height = MathF.Round(UiMetrics.Px(Theme.RuleStyle switch
+        {
+            RuleStyle.MoonRoad => DividerLogical,
+            RuleStyle.Hairline => 13f,
+            _ => 5f,
+        }));
         ImGui.Dummy(new Vector2(MathF.Max(1f, width), height));
         if (!ImGui.IsItemVisible())
         {

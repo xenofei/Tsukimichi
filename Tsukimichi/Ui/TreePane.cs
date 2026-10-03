@@ -158,6 +158,9 @@ public sealed partial class TreePane
     private static readonly Vector4 ActiveWash = Theme.WithAlphaVector(Theme.Silver, 0.09f);
     private static readonly uint ReadyBadgeFill = Theme.WithAlpha(Theme.Moon, 0.16f);
 
+    /// <summary>The widest percentage, which Plain's percentage column is sized for.</summary>
+    private const string PercentColumnSample = "100%";
+
     /// <summary>Logical sizes: the mini bar (44 × 3, 12 before the count) and the pill paddings.</summary>
     private const float BarWidthLogical = 44f;
     private const float BarHeightLogical = 3f;
@@ -248,12 +251,10 @@ public sealed partial class TreePane
         // Rows touch: the washes of neighbouring rows meet, and each row is exactly its own height.
         using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 0f)))
         {
-            // The Moon Road header and the dividers between the story, side and virtual blocks (Full and Quiet flair).
-            var ornaments = Theme.ShowRules;
-            if (ornaments)
-            {
-                DrawHeader(width);
-            }
+            // The header and the dividers between the story, side and virtual blocks, at the level's rule style: the
+            // Moon Road's brass at Full, hairlines at Quiet, the ledger's band and lines at Plain.
+            const bool ornaments = true;
+            DrawHeader(width);
 
             var block = JournalBlock.All;
             DrawNode(allNode, section: true);
@@ -280,7 +281,22 @@ public sealed partial class TreePane
 
         revealing = false;
         ui.RecordSpan(UiRects.Tree, start, width);
+
+        if (Theme.ShowStars)
+        {
+            // Full: a faint star field in the empty sky under the last node, kept off the pane's edges.
+            var skyTop = ImGui.GetCursorScreenPos().Y + UiMetrics.Px(16f);
+            var windowMax = ImGui.GetWindowPos() + ImGui.GetWindowSize();
+            var top = MathF.Max(skyTop, ImGui.GetWindowPos().Y);
+            if (windowMax.Y - top > UiMetrics.Px(40f))
+            {
+                Ornament.Stars(ImGui.GetWindowDrawList(), new Vector2(start.X + UiMetrics.Px(8f), top), new Vector2(start.X + width - UiMetrics.Px(8f), windowMax.Y - UiMetrics.Px(8f)), TreeStars);
+            }
+        }
     }
+
+    /// <summary>Full's star field under the tree: seeded once, so it never shimmers.</summary>
+    private static readonly Star[] TreeStars = StarField.Generate(31, 14);
 
     /// <summary>Whether Sprout mode folds <paramref name="node"/>: every quest under it lies beyond the reach.</summary>
     private static bool IsSproutFolded(Node node, byte reach) =>
@@ -512,17 +528,35 @@ public sealed partial class TreePane
             dl.AddRectFilled(min, max, Theme.U32(wash));
         }
 
-        // The selected row's one gold element: a 2 px Moon rule on the left edge, settling in with the wash.
+        // The selected row's one marked element: a 2 px rule on the left edge, settling in with the wash: Moon (with a soft
+        // glow at Full), Silver in Plain's ledger, where gold is for states alone.
         if (settled > 0.004f)
         {
-            dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, MathF.Round(UiMetrics.Px(2f))), max.Y), Theme.WithAlpha(Theme.Moon, settled));
+            var bar = MathF.Max(2f, MathF.Round(UiMetrics.Px(2f)));
+            var plain = Theme.Flair == Flair.Plain;
+            if (Theme.ShowGlow)
+            {
+                dl.AddRectFilled(min, new Vector2(min.X + (3f * bar), max.Y), Theme.WithAlpha(Theme.Moon, 0.10f * settled));
+                dl.AddRectFilledMultiColor(min, new Vector2(min.X + ((max.X - min.X) * 0.7f), max.Y), Theme.WithAlpha(Theme.Moon, 0.08f * settled), Theme.WithAlpha(Theme.Moon, 0f), Theme.WithAlpha(Theme.Moon, 0f), Theme.WithAlpha(Theme.Moon, 0.08f * settled));
+            }
+
+            dl.AddRectFilled(min, new Vector2(min.X + bar, max.Y), Theme.WithAlpha(plain ? Theme.Surface.Text : Theme.Moon, settled));
         }
 
-        // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding).
+        // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding). Plain draws
+        // no gauge, so the name starts there; a right-aligned percentage column takes its place (flair v13 §1).
         var labelX = indentX + ImGui.GetFontSize() + style.FramePadding.X * 2f;
+        var gauge = FlairRules.Gauge(Theme.Flair);
         var haloCenter = new Vector2(labelX + radius, rowCenterY);
-        var namePos = new Vector2(labelX + radius * 2f + pad, textY);
+        var namePos = new Vector2(gauge == TreeGauge.None ? labelX : labelX + radius * 2f + pad, textY);
         var right = max.X - pad;
+        if (gauge == TreeGauge.None && node.PercentText.Length > 0)
+        {
+            var column = ImGui.CalcTextSize(PercentColumnSample).X;
+            var percentWidth = node.PercentWidth;
+            dl.AddText(new Vector2(right - percentWidth, textY), Theme.MistU32, node.PercentText);
+            right -= column + pad;
+        }
 
         // The tier sets each part's form: the count as "done / total", as a percentage (none once complete), or gone.
         var (countText, countWidth) = tier switch
@@ -536,15 +570,16 @@ public sealed partial class TreePane
         var barWidth = UiMetrics.Px(BarWidthLogical);
         var barGap = UiMetrics.Px(BarGapLogical);
         var pillText = node.PillText;
-        // Under Full and Quiet flair the road under the row carries the length encoding, so the mini bar takes no room.
-        var road = Theme.ShowRules && !node.CountIsTally;
+        // At Full the road under the row carries the length encoding; Quiet's ring and Plain's percentage say it too, so
+        // the mini bar takes no room at any level (flair v13 §1, "Tree gauges").
+        var road = Theme.MoonRoadArt && !node.CountIsTally;
         // Where the pill does not show the label carries the expansion suffix whole, and the fit makes room for it.
         var widths = new TreeRowWidths(
             node.NameWidth,
             node.SuffixWidth,
             countWidth > 0f ? countWidth + pad : 0f,
             node.Ready > 0 && tier != TreeTier.Slim ? node.ReadyWidth + pad : 0f,
-            !road && tier <= TreeTier.Trim && !node.CountIsTally ? barWidth + barGap : 0f,
+            0f,
             tier == TreeTier.Full && pillText.Length > 0 ? node.PillWidth + pad : 0f);
         var fit = TreeRowFit.Fit(right - namePos.X, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), in widths);
         var showCount = fit.Count;
@@ -611,7 +646,11 @@ public sealed partial class TreePane
             var badgeHeight = MathF.Min(max.Y - min.Y - 4f, lineHeight + 2f);
             var badgeMin = new Vector2(pillX, rowCenterY - badgeHeight * 0.5f);
             var badgeMax = new Vector2(pillX + node.ReadyWidth, rowCenterY + badgeHeight * 0.5f);
-            dl.AddRectFilled(badgeMin, badgeMax, ReadyBadgeFill, badgeHeight * 0.5f);
+            if (gauge != TreeGauge.None)
+            {
+                // Plain's Ready count is a bare gold number.
+                dl.AddRectFilled(badgeMin, badgeMax, ReadyBadgeFill, badgeHeight * 0.5f);
+            }
             dl.AddText(new Vector2(pillX + UiMetrics.Px(PillPadLogical), textY), Theme.MoonU32, node.ReadyText);
             if (ImGui.IsMouseHoveringRect(badgeMin, badgeMax, false))
             {
@@ -621,9 +660,12 @@ public sealed partial class TreePane
 
         // The glyph, with the Ready mark when the pill could not show. The fill moves only when the count changes (a
         // quest completed, another character viewed) or, under Full flair, when the orbit first shows; never on its own.
-        var readyDot = node.Ready > 0 && !showReady;
+        var readyDot = node.Ready > 0 && !showReady && gauge != TreeGauge.None;
         var shown = NodeFill(Motion.Key(GaugeTag, itemId), node.Count.Fraction);
-        DrawNodeGlyph(dl, node, haloCenter, radius, shown, readyDot);
+        if (gauge != TreeGauge.None)
+        {
+            DrawNodeGlyph(dl, node, haloCenter, radius, shown, readyDot);
+        }
         if (road)
         {
             var roadEnd = max.X - UiMetrics.Px(RoadEndLogical);
@@ -644,9 +686,9 @@ public sealed partial class TreePane
             Motion.DrawRevealPulse(dl, Motion.Key(RevealTag, itemId), new Vector2(indentX, min.Y + 1f), new Vector2(max.X - pad, max.Y - 1f), UiMetrics.Px(4f));
         }
 
-        // Section rows read as chapters: a 1 px VeilLine rule under the row, indented past the arrow (Plain flair, and
-        // the Other paths row, which has no road; the road takes its place otherwise).
-        if (section && !road)
+        // Section rows read as chapters at Full: the road, or a 1 px rule under the row where there is none (the Other
+        // paths row). Quiet and Plain keep their rows unruled, the blocks parted by hairlines.
+        if (section && !road && Theme.MoonRoadArt)
         {
             var y = max.Y - 0.5f;
             dl.AddLine(new Vector2(labelX, y), new Vector2(max.X - pad, y), Theme.VeilLineU32, 1f);
@@ -659,7 +701,7 @@ public sealed partial class TreePane
         }
 
         var haloHalf = new Vector2(radius);
-        if (ImGui.IsMouseHoveringRect(haloCenter - haloHalf, haloCenter + haloHalf, false))
+        if (gauge != TreeGauge.None && ImGui.IsMouseHoveringRect(haloCenter - haloHalf, haloCenter + haloHalf, false))
         {
             return Hover.Halo;
         }

@@ -54,7 +54,7 @@ public static class MedalGlyph
         }
 
         var (min, size) = Box(center, radius);
-        var tokens = MedalTokens.For(Theme.Glyphs);
+        var tokens = Tokens;
         var hero = size >= MedalLayout.RowTierMaxPx;
         var tint = Theme.WithAlpha(Vector4.One, alpha);
 
@@ -73,7 +73,7 @@ public static class MedalGlyph
         }
 
         DrawMesh(dl, MedalArt.Medal(state, tokens, size), min, size, alpha);
-        if (!hero)
+        if (!hero || tokens.IsPlain)
         {
             return;
         }
@@ -212,11 +212,28 @@ public static class MedalGlyph
         return (new Vector2(MathF.Round(center.X - size * 0.5f), MathF.Round(center.Y - size * 0.5f)), size);
     }
 
+    /// <summary>
+    /// The tokens a medal draws with this frame: the glyph palette's, then the Decoration level's finish
+    /// (<see cref="Theme.MedalFinish"/>): the medallion as designed at Full, Quiet's light rim, Plain's flat ladder. The
+    /// high-contrast palette keeps its own tokens at every level.
+    /// </summary>
+    public static MedalTokens Tokens => MedalTokens.For(Theme.Glyphs, Theme.MedalFinish);
+
+    /// <summary>
+    /// Whether a row's badge content draws beside its medal (<see cref="DrawRowBadge"/>): at Full and Quiet; Plain's
+    /// flat glyphs stand alone.
+    /// </summary>
+    public static bool RowBadges => !Tokens.IsPlain;
+
+    /// <summary>
+    /// The atlas at hero sizes for the medallion as designed (Full); Quiet's light rim and Plain's flat ladder are
+    /// vector meshes at every size (the atlas carries the gilt rim they replace), as is high contrast.
+    /// </summary>
     private static bool UseAtlas(MedalTokens tokens, bool hero) => Renderer switch
     {
         MedalRenderer.Vector => false,
         MedalRenderer.Atlas => !tokens.Flat,
-        _ => hero && !tokens.Flat && Theme.Flair != Flair.Plain,
+        _ => hero && !tokens.Flat && tokens.Finish == MedalFinish.Gilt,
     };
 
     /// <summary>The job's icon in the badge seat (the icon slot, <see cref="MedalArt.JobIconSlot"/> units square on the badge centre).</summary>

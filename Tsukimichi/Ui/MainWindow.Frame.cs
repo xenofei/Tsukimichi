@@ -262,7 +262,7 @@ public sealed partial class MainWindow
         var hovered = false;
         ImGui.SetCursorScreenPos(place.Min);
         using (ImRaii.PushColor(ImGuiCol.ChildBg, s.Raised with { W = 1f })
-                   .Push(ImGuiCol.Border, Theme.ShowRules ? s.Ornament with { W = Theme.OrnamentAlpha(0.55f) } : s.Line))
+                   .Push(ImGuiCol.Border, Theme.MoonRoadArt ? s.Ornament with { W = Theme.OrnamentAlpha(0.55f) } : s.Line))
         using (ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(pad))
                    .Push(ImGuiStyleVar.ChildRounding, UiMetrics.Px(6f))
                    .Push(ImGuiStyleVar.ChildBorderSize, 1f)
@@ -720,7 +720,7 @@ public sealed partial class MainWindow
         var dark = Theme.WithAlpha(System.Numerics.Vector4.UnitW, 0.22f * fade);
         var clear = Theme.WithAlpha(System.Numerics.Vector4.UnitW, 0f);
         dl.AddRectFilledMultiColor(new Vector2(rect.Max.X, rect.Min.Y), new Vector2(rect.Max.X + shadow, rect.Max.Y), dark, clear, clear, dark);
-        if (Theme.ShowRules)
+        if (Theme.MoonRoadArt)
         {
             var line = UiMetrics.Hairline;
             dl.AddLine(new Vector2(rect.Max.X - (line * 0.5f), rect.Min.Y), new Vector2(rect.Max.X - (line * 0.5f), rect.Max.Y), Theme.WithAlpha(Theme.Surface.Ornament, Theme.OrnamentAlpha(0.6f) * fade), line);

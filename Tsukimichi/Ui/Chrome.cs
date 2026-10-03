@@ -142,6 +142,22 @@ public static partial class Chrome
             return;
         }
 
+        if (eyebrow && cardKind == CardKind.Raised && FlairRules.Card(Theme.Flair) != CardFrame.BrassCorners)
+        {
+            // Quiet and Plain: the heading in the body font, sentence case; at Plain a 1 px line under the heading row.
+            ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.Text);
+            ImGui.TextUnformatted(title);
+            ImGui.PopStyleColor();
+            if (FlairRules.Card(Theme.Flair) == CardFrame.None)
+            {
+                // Between the heading and the content (the item spacing), so the title stays the last item for a caption.
+                var y = ImGui.GetItemRectMax().Y + MathF.Max(1f, MathF.Floor(ImGui.GetStyle().ItemSpacing.Y * 0.5f));
+                ImGui.GetWindowDrawList().AddRectFilled(new Vector2(cardStart.X, MathF.Floor(y)), new Vector2(cardStart.X + cardWidth, MathF.Floor(y) + 1f), Theme.U32(Theme.RuleColor));
+            }
+
+            return;
+        }
+
         if (eyebrow)
         {
             EyebrowTitle(title, icon);
@@ -189,8 +205,9 @@ public static partial class Chrome
             ImGui.SetCursorPosY(y);
         }
 
+        // Full's card headings are gilt (spec §1, "Headings font": GiltHigh eyebrows); elsewhere the primary tone.
         using var role = Typography.Eyebrow(title);
-        ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.Text);
+        ImGui.PushStyleColor(ImGuiCol.Text, Theme.MoonRoadArt ? Theme.Surface.OrnamentHigh : Theme.Surface.Text);
         ImGui.TextUnformatted(title);
         ImGui.PopStyleColor();
     }
@@ -225,11 +242,10 @@ public static partial class Chrome
                 break;
             case CardKind.Sunken:
                 dl.AddRectFilled(cardStart, max, Theme.U32(s.Sunken), rounding);
-                CardBorder(dl, cardStart, max, rounding);
+                dl.AddRect(cardStart, max, Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
                 break;
             default:
-                dl.AddRectFilled(cardStart, max, Theme.U32(s.Raised), rounding);
-                CardBorder(dl, cardStart, max, rounding);
+                CardSurface(dl, cardStart, max);
                 break;
         }
 
@@ -240,39 +256,73 @@ public static partial class Chrome
     }
 
     /// <summary>
-    /// A card's border at the frame's flair (R3 #8, <see cref="FlairRules.Card"/>): the palette's hairline under Plain;
-    /// otherwise brass (<see cref="SurfaceColors.Ornament"/> at <see cref="CardBrassAlpha"/>, opaque VeilLine under the
-    /// high-contrast palette) and, at Full, a corner mark in each corner of the first framed card of each window this
-    /// frame: corner marks frame one moment per pane, never every box (proposal P4), so a stack of cards reads as one
-    /// brass-cornered card and its brass-edged neighbours. Allocation-free.
+    /// A raised card's surface at the frame's Decoration level (docs/design/flair-v13 §1, "Card frame",
+    /// <see cref="FlairRules.Card"/>): at Full gilt brass, a soft shadow falling straight down (0 3 10 at 0.38), a fill of
+    /// the raised tone at 0.82 darkening a little toward the foot, a MoonHigh highlight along the top edge only, the brass
+    /// border lit from the upper left and a corner mark at each corner overlapping it; at Quiet a borderless plane a tone
+    /// lighter than the pane (with a VeilLine border under the high-contrast palette, since tone alone is not a boundary);
+    /// at Plain nothing (the heading row's line is the structure). Allocation-free.
+    /// </summary>
+    public static void CardSurface(ImDrawListPtr dl, Vector2 min, Vector2 max)
+    {
+        var s = Theme.Surface;
+        var spacing = Theme.Spacing;
+        var rounding = UiMetrics.Px(spacing.CardRounding);
+        switch (FlairRules.Card(Theme.Flair))
+        {
+            case CardFrame.BrassCorners:
+            {
+                Ornament.DropShadow(dl, min, max, rounding, UiMetrics.Px(3f), UiMetrics.Px(10f), 0.38f);
+                var top = s.Raised with { W = 0.82f };
+                var foot = Vector4.Lerp(s.Raised, s.Window, 0.35f) with { W = 0.86f };
+                dl.AddRectFilledMultiColor(min, max, Theme.U32(top), Theme.U32(top), Theme.U32(foot), Theme.U32(foot));
+                var line = UiMetrics.Hairline;
+                dl.AddRectFilled(new Vector2(min.X + rounding, min.Y + line), new Vector2(max.X - rounding, min.Y + (2f * line)), Theme.WithAlpha(Theme.MoonHigh, 0.07f));
+                Ornament.BrassBorder(dl, min, max, rounding, line);
+                Ornament.CornerMarks(dl, min, max, MathF.Round(UiMetrics.Px(CardCornerLogical)));
+                break;
+            }
+
+            case CardFrame.Tonal:
+                dl.AddRectFilled(min, max, Theme.U32(Theme.Tones.Card), rounding);
+                if (FlairRules.CardBorder(Theme.Flair, Theme.Glyphs.HighContrast))
+                {
+                    dl.AddRect(min, max, Theme.U32(s.StrongLine), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+                }
+
+                break;
+        }
+    }
+
+    /// <summary>
+    /// A card's border alone at the frame's level, for surfaces painted elsewhere (a bordered child drawn as a card):
+    /// the brass and its corner marks at Full, the VeilLine border of a high-contrast tonal card, else nothing.
     /// </summary>
     public static void CardBorder(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding)
     {
-        var frame = FlairRules.Card(Theme.Flair);
-        if (frame == CardFrame.Hairline)
+        switch (FlairRules.Card(Theme.Flair))
         {
-            dl.AddRect(min, max, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
-            return;
-        }
-
-        dl.AddRect(min, max, BrassU32(), rounding, ImDrawFlags.None, UiMetrics.Hairline);
-        if (frame == CardFrame.BrassCorners && ClaimCorners())
-        {
-            CardCorners(dl, min, max);
+            case CardFrame.BrassCorners:
+                Ornament.BrassBorder(dl, min, max, rounding, UiMetrics.Hairline);
+                Ornament.CornerMarks(dl, min, max, MathF.Round(UiMetrics.Px(CardCornerLogical)));
+                break;
+            case CardFrame.Tonal when FlairRules.CardBorder(Theme.Flair, Theme.Glyphs.HighContrast):
+                dl.AddRect(min, max, Theme.U32(Theme.Surface.StrongLine), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+                break;
         }
     }
 
     /// <summary>
     /// The card frame for a bordered child window drawn as a card (What's new, Since you were away, Set up your road):
-    /// call first thing inside the child and dispose the result when its content ends. Under Plain it draws nothing and
-    /// the child keeps its own border; otherwise it paints <see cref="CardBorder"/> around the whole child, outside its
-    /// clip rect, under the content, and the cards inside it keep to brass edges. Push <see cref="CardChildBorder"/> as
-    /// the child's border colour so the two do not double up: the returned scope gives the content the palette's border
-    /// colour back (frames, popups) until it is disposed.
+    /// call first thing inside the child and dispose the result when its content ends. At Full it paints the brass
+    /// frame around the whole child, outside its clip rect, under the content; at Quiet and Plain the child keeps its own
+    /// border (<see cref="CardChildBorder"/>). Push <see cref="CardChildBorder"/> as the child's border colour so the two
+    /// do not double up: the returned scope gives the content the palette's border colour back (frames, popups) until it
+    /// is disposed.
     /// </summary>
     public static Theme.StyleScope CardFrameInWindow()
     {
-        if (FlairRules.Card(Theme.Flair) == CardFrame.Hairline)
+        if (FlairRules.Card(Theme.Flair) != CardFrame.BrassCorners)
         {
             return default;
         }
@@ -280,7 +330,7 @@ public static partial class Chrome
         var min = ImGui.GetWindowPos();
         var max = min + ImGui.GetWindowSize();
         var dl = ImGui.GetWindowDrawList();
-        dl.PushClipRect(min, max, false);
+        dl.PushClipRect(min - new Vector2(UiMetrics.Px(3f)), max + new Vector2(UiMetrics.Px(3f)), false);
         CardBorder(dl, min, max, ImGui.GetStyle().ChildRounding);
         dl.PopClipRect();
         ImGui.PushStyleColor(ImGuiCol.Border, Theme.Surface.Line);
@@ -289,68 +339,25 @@ public static partial class Chrome
 
     /// <summary>
     /// The border colour for a child window framed by <see cref="CardFrameInWindow"/>: clear while the brass frame
-    /// draws, else the palette's line (what <see cref="Theme.PushNightPanel"/> pushes).
+    /// draws (Full), else the palette's line (what <see cref="Theme.PushNightPanel"/> pushes).
     /// </summary>
-    public static Vector4 CardChildBorder => FlairRules.Card(Theme.Flair) == CardFrame.Hairline ? Theme.Surface.Line : Vector4.Zero;
+    public static Vector4 CardChildBorder => FlairRules.Card(Theme.Flair) == CardFrame.BrassCorners ? Vector4.Zero : Theme.Surface.Line;
 
-    /// <summary>The brass of a card's border (Gilt at 0.55 on Night), before the high-contrast palette makes it opaque.</summary>
+    /// <summary>The brass of an action pill's border (Gilt at 0.55 on Night), before the high-contrast palette makes it opaque.</summary>
     public const float CardBrassAlpha = 0.55f;
 
-    private const float CardCornerLogical = 9f;
-    private const float CardCornerInsetLogical = 2f;
-
-    // The windows whose one corner-marked card is drawn this frame (a few per frame; more simply go without).
-    private static readonly uint[] CornerWindows = new uint[16];
-    private static int cornerCount;
-    private static int cornerFrame = -1;
-
-    /// <summary>Whether the current window may still draw a corner-marked card this frame; records that it did.</summary>
-    private static bool ClaimCorners()
-    {
-        var frame = ImGui.GetFrameCount();
-        if (frame != cornerFrame)
-        {
-            cornerFrame = frame;
-            cornerCount = 0;
-        }
-
-        var window = ImGuiP.GetCurrentWindow().ID;
-        for (var i = 0; i < cornerCount; i++)
-        {
-            if (CornerWindows[i] == window)
-            {
-                return false;
-            }
-        }
-
-        if (cornerCount == CornerWindows.Length)
-        {
-            return false;
-        }
-
-        CornerWindows[cornerCount++] = window;
-        return true;
-    }
-
-    private static uint BrassU32() => Theme.WithAlpha(Theme.Surface.Ornament, Theme.OrnamentAlpha(CardBrassAlpha));
-
-    private static void CardCorners(ImDrawListPtr dl, Vector2 min, Vector2 max)
-    {
-        var size = MathF.Round(UiMetrics.Px(CardCornerLogical));
-        var inset = MathF.Round(UiMetrics.Px(CardCornerInsetLogical));
-
-        // Room for four marks and a gap between them, or none: a card shorter than that stays a plain brass box.
-        if (max.X - min.X < (size + inset) * 2f + size || max.Y - min.Y < (size + inset) * 2f)
-        {
-            return;
-        }
-
-        // The atlas mark is brass already, so it is drawn untinted; its line fallback takes the border's brass.
-        OrnamentAtlas.Corners(dl, min, max, size, inset, OrnamentAtlas.IsReady ? Theme.WithAlpha(Vector4.One, 0.9f) : Theme.OrnamentU32);
-    }
+    /// <summary>A card's corner mark, logical px (the 8 px L of the design).</summary>
+    private const float CardCornerLogical = 8f;
 
     private static Vector2 Inset()
     {
+        if (cardKind == CardKind.Raised)
+        {
+            // The level's card padding: 14 × 11 at Full, 11 × 9 at Quiet; at Plain there is no card, only a little air.
+            var pad = Theme.Spacing.CardPad;
+            return pad.X > 0f ? new Vector2(UiMetrics.Px(pad.X), UiMetrics.Px(pad.Y)) : new Vector2(0f, UiMetrics.Px(3f));
+        }
+
         var x = UiMetrics.Px(CardPadX) + (cardKind == CardKind.Callout ? UiMetrics.Px(CalloutRule) : 0f);
         var y = UiMetrics.Px(cardKind == CardKind.Callout ? CardPadY * 0.9f : CardPadY);
         return new Vector2(x, y);
@@ -535,12 +542,13 @@ public static partial class Chrome
     }
 
     /// <summary>
-    /// <see cref="Hairline"/> in the Moon Road style (R3 #9, #10): at Flair Full and Quiet a brass rule fading out to
-    /// the right (<see cref="Ornament.Rule"/>, solid under high contrast), under Plain the hairline. One item, as tall.
+    /// <see cref="Hairline"/> at the level's rule style (R3 #9, #10; flair v13): at Full a brass rule fading out to the
+    /// right (<see cref="Ornament.Rule"/>, solid under high contrast), at Quiet a flat hairline, under Plain the line.
+    /// One item, as tall.
     /// </summary>
     public static void Rule(float width = 0f, float alpha = Ornament.RuleAlpha)
     {
-        if (!Theme.ShowRules)
+        if (Theme.RuleStyle == RuleStyle.Line)
         {
             Hairline(width: width);
             return;
@@ -617,10 +625,14 @@ public static partial class Chrome
     }
 
     /// <summary>The cover-cropped image painted into a rectangle without an item.</summary>
-    public static void ImageCoverAt(ImDrawListPtr dl, ImTextureID texture, Vector2 min, Vector2 max, Vector2 textureSize, float rounding = 0f, float focusX = 0.5f, float focusY = 0.5f)
+    public static void ImageCoverAt(ImDrawListPtr dl, ImTextureID texture, Vector2 min, Vector2 max, Vector2 textureSize, float rounding = 0f, float focusX = 0.5f, float focusY = 0.5f) =>
+        ImageCoverAt(dl, texture, min, max, textureSize, 0xFFFFFFFFu, rounding, focusX, focusY);
+
+    /// <summary>The cover-cropped image multiplied by <paramref name="tint"/> (a draw-time grade, packed IM_COL32).</summary>
+    public static void ImageCoverAt(ImDrawListPtr dl, ImTextureID texture, Vector2 min, Vector2 max, Vector2 textureSize, uint tint, float rounding, float focusX = 0.5f, float focusY = 0.5f)
     {
         var (uv0, uv1) = Core.Ui.ImageCover.Uv(max.X - min.X, max.Y - min.Y, textureSize.X, textureSize.Y, focusX, focusY);
-        dl.AddImageRounded(texture, min, max, uv0, uv1, 0xFFFFFFFFu, rounding);
+        dl.AddImageRounded(texture, min, max, uv0, uv1, tint, rounding);
     }
 
     // ------------------------------------------------------------------ controls

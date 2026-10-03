@@ -155,7 +155,7 @@ public static class MedalArt
         var px = sizePx > 0f && sizePx < MedalLayout.RowTierMaxPx
             ? Math.Clamp((int)MathF.Round(sizePx), RowMinPx, (int)MedalLayout.RowTierMaxPx - 1)
             : 0;
-        return Medals.GetOrAdd((state, tokens, px), static key => BuildMedal(key.Item1, key.Item2, key.Item3));
+        return Medals.GetOrAdd((state, tokens, px), static key => key.Item2.IsPlain ? BuildPlain(key.Item1, key.Item3) : BuildMedal(key.Item1, key.Item2, key.Item3));
     }
 
     /// <summary>The badge at hero size: its shadow, keyline, ring and seat, and the lock or book (a job's icon is the plugin's).</summary>
@@ -319,6 +319,12 @@ public static class MedalArt
             return;
         }
 
+        if (t.IsLightRim)
+        {
+            LightRimFrame(b);
+            return;
+        }
+
         b.Annulus(Center, RimInner - 0.9f, KeylineRadius, MeshBuilder.Solid(M.Keyline, 0.92f), segments: 64);
         var from = new Vector2(14f, 10f);
         var to = new Vector2(114f, 118f);
@@ -344,6 +350,22 @@ public static class MedalArt
             b.Annulus(Center, RimCrest - w / 2f, RimCrest + w / 2f, MeshBuilder.Solid(M.Keyline, 0.92f), segments: 72);
         }
     }
+
+    /// <summary>
+    /// Quiet's rim (<see cref="MedalTokens.LightRim"/>): the gilt bezel gives way to a pane-coloured gap from the well's
+    /// edge out to a 1 px silver hairline, so the medal face reads as laid on the pane. One device pixel wide in a row
+    /// mesh; in the hero mesh (any size, the atlas's stand-in) the width it has at about 50 px.
+    /// </summary>
+    private static void LightRimFrame(MeshBuilder b)
+    {
+        var w = b.Coverage ? 1f / b.PixelsPerUnit : LightRimHeroWidth;
+        var r = MedalTokens.LightRimRadius;
+        b.Annulus(Center, RimInner - 0.8f, r - (w * 0.5f), MeshBuilder.Solid(MedalTokens.LightRimGap), segments: 72);
+        b.Annulus(Center, r - (w * 0.5f), r + (w * 0.5f), MeshBuilder.Solid(MedalTokens.LightRimInk, MedalTokens.LightRimAlpha), segments: 72);
+    }
+
+    /// <summary>The light rim's width in the hero mesh, in medal units (1.25 px at a 52 px medal).</summary>
+    private const float LightRimHeroWidth = 3f;
 
     /// <summary>A crescent-shaped band along a circle from <paramref name="from"/> to <paramref name="to"/> degrees, width 0 → w → 0 (gen5 <c>taper_arc</c>).</summary>
     private static void TaperArc(MeshBuilder b, Vector2 c, float rm, float from, float to, float w, Paint paint, int n = 16)
@@ -1093,6 +1115,157 @@ public static class MedalArt
         b.Transform(Matrix3x2.Identity);
     }
 
+    // ------------------------------------------------------------------ Plain (docs/design/flair-v13 §1.1)
+
+    /// <summary>A Plain glyph's disc, its 1 px rim's radius, and one device pixel at the 12 px it is designed for, in medal units.</summary>
+    public const float PlainDiscRadius = 55.2f;
+
+    public const float PlainRimRadius = 56.8f;
+
+    public const float PlainPixel = 128f / 12f;
+
+    /// <summary>
+    /// Where a Plain crescent sits: the shipped crescent (<see cref="SceneMoonTerminator"/>, <see cref="SceneMoonTilt"/>,
+    /// lit on the right with its limb toward the lower right) scaled up for 12 px. Ready's is the largest.
+    /// </summary>
+    public static readonly Vector2 PlainMoon = new(60f, 58.4f);
+
+    public const float PlainReadyMoonRadius = 43.2f;
+
+    public const float PlainMoonRadius = 36.8f;
+
+    /// <summary>Completed's full moon and Done's waning half, centred.</summary>
+    public const float PlainCompletedMoonRadius = 29.6f;
+
+    public const float PlainDoneMoonRadius = 27.2f;
+
+    /// <summary>Done's gilt "comes back" arc on the dark right side: centre and radius.</summary>
+    public static readonly Vector2 PlainDoneArcCenter = new(68.8f, 64f);
+
+    public const float PlainDoneArcRadius = 44f;
+
+    /// <summary>Completed's check (1.5 px), In journal's Tide ribbon notch, and Locked out's two longest cracks (1 px).</summary>
+    public static readonly Vector2[] PlainCheck = [new(48f, 64.8f), new(59.2f, 76f), new(80.8f, 52f)];
+
+    public static readonly Vector2[] PlainRibbon = [new(27.2f, 25.6f), new(44f, 25.6f), new(44f, 59.2f), new(35.6f, 52.4f), new(27.2f, 59.2f)];
+
+    public static readonly Vector2[] PlainCrackA = [new(48.8f, 47.2f), new(68.8f, 56.8f), new(81.6f, 52.8f), new(110.4f, 74.4f)];
+
+    public static readonly Vector2[] PlainCrackB = [new(48.8f, 47.2f), new(55.2f, 68.8f), new(47.2f, 85.6f), new(59.2f, 116f)];
+
+    /// <summary>Blocked's cloud: the top of its billows, left to right (the band fills the disc below it).</summary>
+    private static readonly Vector2[] PlainCloudTop =
+    [
+        new(12.8f, 76.8f), new(18.4f, 66.4f), new(27.2f, 60f), new(36.8f, 60f), new(43.2f, 52.8f), new(52.8f, 48.8f),
+        new(62.4f, 48.8f), new(69.6f, 52f), new(80f, 50.4f), new(90.4f, 55.2f), new(97.6f, 62.4f), new(99.2f, 69.6f),
+        new(116.8f, 76.8f),
+    ];
+
+    /// <summary>
+    /// A Plain glyph (<see cref="MedalTokens.Plain"/>): a flat disc in the state's ladder ink, a 1 px rim in the state's
+    /// colour at 0.6, and its emblem from the shipped geometry. The crescents are <see cref="PhaseOutline"/> of the
+    /// shipped crescent (lit on the right, waxing: ready); Done is a waning half lit on the left with its gilt arc on the
+    /// dark right; Locked out a Dalamud-red disc with two fine fractures meeting at the upper left; Not checked the
+    /// high-contrast "?" in Mist with its moon dot. One pixel is a device pixel in a row mesh, 1/12 of the box otherwise.
+    /// </summary>
+    private static MedalMesh BuildPlain(QuestState state, int rowPx)
+    {
+        var b = rowPx > 0 ? new MeshBuilder(RowDetail, rowPx) : new MeshBuilder();
+        var px = b.Coverage ? 1f / b.PixelsPerUnit : PlainPixel;
+        var emblem = MeshBuilder.Solid(MedalTokens.PlainEmblem(state));
+        b.Disc(Center, PlainDiscRadius, MeshBuilder.Solid(MedalTokens.PlainDisc(state)), segments: 40, rings: 1);
+        b.Annulus(Center, PlainRimRadius - (px * 0.5f), PlainRimRadius + (px * 0.5f), MeshBuilder.Solid(MedalTokens.PlainRim(state), MedalTokens.PlainRimAlpha), segments: 48);
+        switch (state)
+        {
+            case QuestState.Ready:
+                b.Polygon(PhaseOutline(PlainMoon, PlainReadyMoonRadius, SceneMoonTerminator, SceneMoonTilt, rows: b.Segments(24)), emblem);
+                break;
+
+            case QuestState.ReadyOnOtherJob:
+                b.Polygon(PhaseOutline(PlainMoon, PlainMoonRadius, SceneMoonTerminator, SceneMoonTilt, rows: b.Segments(24)), emblem);
+                break;
+
+            case QuestState.Accepted:
+                b.Polygon(PhaseOutline(PlainMoon, PlainMoonRadius, SceneMoonTerminator, SceneMoonTilt, rows: b.Segments(24)), emblem);
+                b.Polygon(PlainRibbon, MeshBuilder.Solid(GlyphTokens.Tide));
+                break;
+
+            case QuestState.Completed:
+                b.Disc(Center, PlainCompletedMoonRadius, emblem, segments: 32, rings: 1);
+                b.Polygon(MeshBuilder.Stroke(PlainCheck, 1.5f * px), MeshBuilder.Solid(MedalTokens.PlainGilt));
+                break;
+
+            case QuestState.DoneThisCycle:
+                b.Polygon(PhaseOutline(Center, PlainDoneMoonRadius, 0f, 0f, litLeft: true, rows: b.Segments(24)), emblem);
+                b.Polygon(MeshBuilder.Stroke([.. MeshBuilder.Arc(PlainDoneArcCenter, PlainDoneArcRadius, -90f, 90f, b.Segments(24))], px), MeshBuilder.Solid(MedalTokens.PlainGilt));
+                break;
+
+            case QuestState.Blocked:
+                PlainCloud(b, emblem);
+                break;
+
+            case QuestState.Foreclosed:
+                b.Polygon(MeshBuilder.Stroke(PlainCrackA, px), emblem);
+                b.Polygon(MeshBuilder.Stroke(PlainCrackB, px), emblem);
+                break;
+
+            default:
+                var (mark, dot) = QuestionMark();
+                b.Polygon(mark, emblem);
+                b.Disc(dot.Center, dot.Radius, emblem, segments: 24, rings: 1);
+                break;
+        }
+
+        return b.Build();
+    }
+
+    /// <summary>Blocked's cloud band: the disc below the billows' top, so the band never runs past the disc.</summary>
+    private static void PlainCloud(MeshBuilder b, Paint paint)
+    {
+        var top = new List<Vector2>();
+        var bottom = new List<Vector2>();
+        var x0 = PlainCloudTop[0].X;
+        var x1 = PlainCloudTop[^1].X;
+        var n = b.Segments(32);
+        for (var i = 0; i <= n; i++)
+        {
+            var x = x0 + ((x1 - x0) * i / n);
+            var dx = x - Center.X;
+            var half = MathF.Sqrt(MathF.Max(0f, (PlainDiscRadius * PlainDiscRadius) - (dx * dx)));
+            var y = MathF.Max(CloudTopAt(x), Center.Y - half);
+            var low = Center.Y + half;
+            if (y >= low)
+            {
+                continue;
+            }
+
+            top.Add(new Vector2(x, y));
+            bottom.Add(new Vector2(x, low));
+        }
+
+        if (top.Count >= 2)
+        {
+            b.Strip(top, bottom, paint);
+        }
+    }
+
+    /// <summary>The cloud's top at <paramref name="x"/>, linear between the billow points.</summary>
+    private static float CloudTopAt(float x)
+    {
+        var points = PlainCloudTop;
+        for (var i = 1; i < points.Length; i++)
+        {
+            if (x <= points[i].X)
+            {
+                var a = points[i - 1];
+                var c = points[i];
+                return a.Y + ((c.Y - a.Y) * (x - a.X) / MathF.Max(1e-4f, c.X - a.X));
+            }
+        }
+
+        return points[^1].Y;
+    }
+
     // ------------------------------------------------------------------ badges
 
     private static MedalMesh BuildBadge(MedalBadge badge, JobSeat seat, MedalTokens t)
@@ -1108,6 +1281,13 @@ public static class MedalArt
         {
             b.Disc(c, BadgeKeyline, MeshBuilder.Solid(t.Ground), segments: 40, rings: 1);
             b.Band(c, [BadgeSeat, BadgeOuter], [MeshBuilder.Solid(t.Rim)], segments: 40);
+        }
+        else if (t.IsLightRim)
+        {
+            // Quiet: the badge on a pane-coloured gap, its ring a silver hairline (the medal's own rim, smaller).
+            const float w = LightRimHeroWidth * 0.8f;
+            b.Disc(c, MedalTokens.LightRimBadgeGap, MeshBuilder.Solid(MedalTokens.LightRimGap), segments: 40, rings: 1);
+            b.Annulus(c, MedalTokens.LightRimBadgeRadius - (w * 0.5f), MedalTokens.LightRimBadgeRadius + (w * 0.5f), MeshBuilder.Solid(MedalTokens.LightRimInk, MedalTokens.LightRimAlpha), segments: 48);
         }
         else
         {

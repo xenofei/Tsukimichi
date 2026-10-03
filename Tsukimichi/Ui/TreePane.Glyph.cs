@@ -22,6 +22,18 @@ public sealed partial class TreePane
     /// </summary>
     private void DrawNodeGlyph(ImDrawListPtr dl, Node node, Vector2 center, float radius, float fraction, bool readyDot)
     {
+        if (FlairRules.Gauge(Theme.Flair) == TreeGauge.Ring && !Theme.ClassicMoons)
+        {
+            // Quiet: the ring's 2 px arc alone, no knob and no core, 18 px in the 24 px box.
+            Ring(dl, center, radius * 0.75f, fraction, node.Complete);
+            if (readyDot)
+            {
+                DrawReadyDot(dl, center, radius * 0.75f);
+            }
+
+            return;
+        }
+
         if (Theme.Flair != Flair.Plain && !node.Icon.IsEmpty)
         {
             var box = 2f * radius;
@@ -37,6 +49,32 @@ public sealed partial class TreePane
         {
             DrawReadyDot(dl, center, radius);
         }
+    }
+
+    /// <summary>The Quiet ring's track (NightLine) and its arc (a muted gold, deeper once complete).</summary>
+    private static readonly Vector4 RingTrack = Core.Ui.ColorMath.FromHex(0x2A3149);
+    private static readonly Vector4 RingArc = Core.Ui.ColorMath.FromHex(0xCDB57A);
+    private static readonly Vector4 RingDone = Core.Ui.ColorMath.FromHex(0xB8933F);
+
+    /// <summary>
+    /// Quiet's gauge (docs/design/flair-v13 §1, "Tree gauges"): a 2 px track and its arc from twelve o'clock, clockwise,
+    /// to <paramref name="fraction"/>; under the high-contrast palette the track is VeilLine and the arc Moon.
+    /// </summary>
+    private static void Ring(ImDrawListPtr dl, Vector2 center, float radius, float fraction, bool complete)
+    {
+        var thickness = MathF.Max(1.5f, UiMetrics.Px(2f));
+        var highContrast = Theme.Glyphs.HighContrast;
+        dl.AddCircle(center, radius, highContrast ? Theme.VeilLineU32 : Theme.U32(RingTrack), 40, thickness);
+        var f = Math.Clamp(float.IsFinite(fraction) ? fraction : 0f, 0f, 1f);
+        if (f <= 0f)
+        {
+            return;
+        }
+
+        var start = -MathF.PI * 0.5f;
+        dl.PathClear();
+        dl.PathArcTo(center, radius, start, start + (MathF.Tau * f), Math.Max(6, (int)MathF.Ceiling(40 * f)));
+        dl.PathStroke(highContrast ? Theme.MoonU32 : Theme.U32(complete ? RingDone : RingArc), ImDrawFlags.None, thickness);
     }
 
     /// <summary>The Ready dot on the halo: a Moon disc on the ring at its upper right, ringed in Night so it reads over the arc.</summary>

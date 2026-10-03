@@ -458,7 +458,7 @@ public sealed partial class CharactersPane
 
         // (a) Header. The lines wrap between words and the world and the button move to the next line rather than
         // run past the edge (feature plan v4 L6). At Full and Quiet flair the name and world sit in a framed block.
-        if (Theme.ShowRules)
+        if (Theme.Sectioned)
         {
             DrawFramedHeader(d);
         }
@@ -543,7 +543,7 @@ public sealed partial class CharactersPane
     private static void Gap(bool ruled = false)
     {
         ImGui.Spacing();
-        if (Theme.ShowRules && !ruled)
+        if (Theme.Sectioned && !ruled)
         {
             ImGui.Spacing();
         }
@@ -665,7 +665,7 @@ public sealed partial class CharactersPane
             return;
         }
 
-        if (Theme.ShowRules)
+        if (Theme.Sectioned)
         {
             DrawSectionGrid(d);
             ImGui.Spacing();
@@ -834,13 +834,13 @@ public sealed partial class CharactersPane
     {
         var routeButton = ImGui.CalcTextSize(Strings.RouteToUnlockMenu).X + (ImGui.GetStyle().FramePadding.X * 2f);
         var reserve = routeButton + ImGui.GetStyle().ItemSpacing.X;
-        if (Theme.ShowRules && ImGui.GetContentRegionAvail().X - reserve >= UiMetrics.Px(HeadingLeastLogical))
+        if (Theme.Sectioned && ImGui.GetContentRegionAvail().X - reserve >= UiMetrics.Px(HeadingLeastLogical))
         {
             // The open-section heading leaves room for the button at the end of its line.
             SectionHeading.Draw(Strings.JobsSection, reserve: reserve);
             ImGui.SameLine();
         }
-        else if (Theme.ShowRules)
+        else if (Theme.Sectioned)
         {
             // Too narrow to share the line (the heading would be a bare "…"): the heading whole, the button under it.
             SectionHeading.Draw(Strings.JobsSection);

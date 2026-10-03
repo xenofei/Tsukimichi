@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
@@ -8,42 +9,59 @@ using Tsukimichi.Core.Unique;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The Moon Road hero and open sections (feature plan V4, proposal §7.4.1 and §7.4.2), drawn at Flair Full and Quiet.
+/// The detail pane's hero at each Decoration level (docs/design/flair-v13/spec.md §1, "Banners") and its sections.
 /// <para>
-/// <b>Banner.</b> Every quest has one, through the fallback chain resolved once per catalog
+/// <b>Full, the banner.</b> Every quest has one, through the fallback chain resolved once per catalog
 /// (<see cref="BannerIndexSource{TKey}"/>): its own journal banner, a related quest's, the duty it unlocks, the zone
 /// where it starts, then the bundled category art. Game art is read from the player's install at runtime; when the
-/// spoiler shield withholds it the category art stands in, which spoils nothing. At full width the banner keeps the
-/// journal banner's shape (376 × 120, at most 128 px tall); below 320 px it is 2.6 : 1. A drawn night sky holds its
-/// place while a texture loads. The frame is four corner marks and an Abyss keyline at Full, a brass hairline at Quiet.
-/// A bottom scrim (Night 0 → 0.94 from 35 % down) and a side scrim (Abyss 0.55 → 0 over the left 60 %) keep anything
-/// over it legible; under the high-contrast palette both give way to a solid band. The banner's tooltip names its
-/// source.
+/// spoiler shield withholds it the category art stands in, which spoils nothing. It is 156 px tall at most, with a 1 px
+/// brass keyline and a soft shadow, and night-graded as it is drawn (<see cref="BannerGrading"/>: a multiply toward
+/// indigo, a desaturation, a scrim to Night, a moonlight wash and a faint moon road), so a daylight zone sits in the
+/// moonlit window. A drawn night sky holds its place while a texture loads. The banner's tooltip names its source.
+/// The hero medal (80 px) rises over its bottom-left edge, fading in over 1.1 s on a new selection (never under Reduce
+/// motion), with a gold halo only for Ready and Ready on another job; the title is on the art in the Title role.
 /// </para>
 /// <para>
-/// <b>Moon and title.</b> The state moon sits on the banner's bottom edge in an Abyss cut-out, at the left (r 22, 16 at
-/// D2) or centred (r 14 below 320 px); on a new selection it rises 6 px while fading in (0.35 s, the title 80 ms later),
-/// at Flair Full only and never under Reduce motion. The title (Title role) and the meta chips follow beside it, or
-/// under it when narrow; the state line under the hero spells the state out.
+/// <b>Quiet, the plate.</b> The name and its path over a hairline, then a 52 px light-rim medal beside the state in its
+/// ink and the reason. <b>Plain, the ledger.</b> The name and its path, then State, Level and Giver as a key-value list
+/// with a 12 px flat glyph; no banner and no medal plate.
+/// </para>
+/// <para>
+/// <b>Sections</b> are cards (<see cref="Chrome.BeginCard(string, string?, string?, CardKind, Vector4?, bool)"/>): gilt
+/// brass at Full, tonal planes at Quiet, heading rows with a line under them at Plain.
 /// </para>
 /// Nothing here allocates per frame: strings are composed when the selection changes, headings cased once per string
 /// (<see cref="SectionHeading.Label"/>).
 /// </summary>
 public sealed partial class DetailPane
 {
-    private const float HeroBannerMaxLogical = 128f;
-    private const float WideAspect = 120f / 376f;
+    private const float HeroBannerMaxLogical = 156f;
+    private const float WideAspect = 156f / 380f;
     private const float NarrowAspect = 1f / 2.6f;
-    private const double MoonriseSeconds = 0.35;
+    private const double MoonriseSeconds = 1.1;
     private const double TitleDelaySeconds = 0.08;
-    private const float MoonriseLogical = 6f;
+    private const float MoonriseLogical = 8f;
+
+    /// <summary>The hero medal's keyline radius at Full (an 80 px medal), and the plate's at Quiet (52 px), logical px.</summary>
+    private const float HeroMedalLogical = 39.5f;
+
+    private const float PlateMedalLogical = 25.7f;
+
+    /// <summary>The ledger's label column and its 12 px glyph's radius at Plain, logical px.</summary>
+    private const float LedgerLabelLogical = 78f;
+
+    private const float LedgerGlyphLogical = 5.9f;
+
+    /// <summary>The title drawn on the art: a warm near-white over the night grade.</summary>
+    private static readonly Vector4 TitleOnArt = Core.Ui.ColorMath.FromHex(0xF4F1E8);
 
     // The moonrise: the row it last started for and when.
     private uint riseRowId = uint.MaxValue;
     private double riseStart;
 
-    // Whether the section being drawn is an open section (else a card).
-    private bool sectionOpen;
+    // The hero's path line ("Main Scenario › Dawntrail"), joined when the journal segments change.
+    private string[]? heroPathFrom;
+    private string heroPath = string.Empty;
 
     /// <summary>Every quest's hero banner; null until the plugin attaches it, when a quest shows its own banner or its category art.</summary>
     public BannerIndexSource<DutyUnlockIndex>? Banners { get; set; }
@@ -104,7 +122,19 @@ public sealed partial class DetailPane
 
     // ------------------------------------------------------------------ hero
 
-    /// <summary>The Moon Road hero: framed banner, rising moon, title and chips (see the type's summary).</summary>
+    /// <summary>The journal path on one line ("Main Scenario › Dawntrail"), joined once per selection.</summary>
+    private string HeroPath()
+    {
+        if (!ReferenceEquals(heroPathFrom, model.JournalSegments))
+        {
+            heroPathFrom = model.JournalSegments;
+            heroPath = string.Join(JournalSeparator, model.JournalSegments);
+        }
+
+        return heroPath;
+    }
+
+    /// <summary>Full's hero: the night-graded banner, the medal rising over its edge, the title on the art (see the type's summary).</summary>
     private void DrawMoonRoadHero(QuestRecord quest)
     {
         var dl = ImGui.GetWindowDrawList();
@@ -113,15 +143,29 @@ public sealed partial class DetailPane
         var stacked = DetailTiers.Stacks(tier);
         var height = MathF.Max(UiMetrics.Px(40f), MathF.Min(UiMetrics.Px(HeroBannerMaxLogical), width * (stacked ? NarrowAspect : WideAspect)));
         var max = min + new Vector2(width, height);
-        var rounding = UiMetrics.Px(6f);
+        var rounding = UiMetrics.Px(5f);
+        var highContrast = Theme.Glyphs.HighContrast;
 
-        // The banner, or the drawn sky while it loads, on the Abyss letterbox.
+        // The banner on its shadow (0 6 18), graded at draw time, or the drawn sky while it loads, on the Abyss letterbox.
+        if (!highContrast)
+        {
+            Ornament.DropShadow(dl, min, max, rounding, UiMetrics.Px(6f), UiMetrics.Px(18f), 0.45f);
+        }
+
         dl.AddRectFilled(min, max, Theme.DeepU32, rounding);
         var choice = CurrentBanner(quest);
         var shown = BannerSource.None;
         if (BannerArtwork.TryGetWrap(textures, in choice, out var wrap, out var drawn) && wrap.Width > 0 && wrap.Height > 0)
         {
-            Chrome.ImageCoverAt(dl, wrap.Handle, min, max, new Vector2(wrap.Width, wrap.Height), rounding);
+            if (FlairRules.BannerGrade(Theme.Flair) && !highContrast)
+            {
+                BannerGrading.DrawImage(dl, wrap, min, max, rounding);
+            }
+            else
+            {
+                Chrome.ImageCoverAt(dl, wrap.Handle, min, max, new Vector2(wrap.Width, wrap.Height), rounding);
+            }
+
             shown = drawn;
         }
         else
@@ -130,16 +174,7 @@ public sealed partial class DetailPane
         }
 
         HeroScrims(dl, min, max, rounding);
-        if (Theme.ShowCornerMarks)
-        {
-            dl.AddRect(min, max, Theme.DeepU32, rounding, ImDrawFlags.None, UiMetrics.Hairline);
-            OrnamentAtlas.Corners(dl, min, max, UiMetrics.Px(12f), UiMetrics.Px(4f));
-        }
-        else
-        {
-            dl.AddRect(min, max, Theme.WithAlpha(Theme.Surface.Ornament, Theme.OrnamentAlpha(0.6f)), rounding, ImDrawFlags.None, UiMetrics.Hairline);
-        }
-
+        dl.AddRect(min, max, Theme.WithAlpha(Theme.Surface.OrnamentHigh, Theme.OrnamentAlpha(0.42f)), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         ImGui.Dummy(new Vector2(width, height));
 
         // The special badge, top right on the banner.
@@ -159,22 +194,31 @@ public sealed partial class DetailPane
             }
         }
 
-        // The rising moon: on the bottom edge in an Abyss cut-out, left of the title or centred above it.
-        var radius = MathF.Min(stacked ? UiMetrics.Icon(14f) : tier == DetailTier.Medium ? UiMetrics.Icon(16f) : UiMetrics.Icon(22f), width * 0.12f);
-        var ring = UiMetrics.Px(4f);
+        // The hero medal: over the banner's bottom-left edge (three quarters of it on the art), or centred when narrow.
+        var radius = MathF.Max(UiMetrics.Px(14f), MathF.Min(UiMetrics.Px(stacked ? 26f : HeroMedalLogical), MathF.Min(width * 0.11f, height * 0.36f)));
         var (moonIn, titleIn) = Moonrise(quest.RowId);
-        var centerX = stacked ? min.X + (width * 0.5f) : min.X + UiMetrics.Px(16f) + ring + radius;
-        var center = new Vector2(centerX, max.Y + ((1f - moonIn) * UiMetrics.Px(MoonriseLogical)));
+        var centerX = stacked ? min.X + (width * 0.5f) : min.X + UiMetrics.Px(12f) + radius;
+        var center = new Vector2(centerX, max.Y - (radius * 0.25f) + ((1f - moonIn) * UiMetrics.Px(MoonriseLogical)));
         var firstVertex = dl.VtxBuffer.Size;
-        dl.AddCircleFilled(center, radius + ring, Theme.DeepU32);
+        if (FlairRules.HeroHalo(Theme.Flair, model.State))
+        {
+            // The halo is light: only on what the player can take now, gold, soft (glow is never on the blocked or done).
+            HeroHalo(dl, center, radius);
+        }
+
+        if (!highContrast)
+        {
+            dl.AddCircleFilled(center + new Vector2(0f, UiMetrics.Px(4f)), radius + UiMetrics.Px(1f), Theme.WithAlpha(Theme.Abyss, 0.45f), 40);
+        }
+
         MoonWax.Draw(dl, center, radius, model.State, quest.RowId, model.ReadyOnJob);
         if (moonIn < 1f)
         {
             FadeVertices(dl, firstVertex, moonIn);
         }
 
-        var box = radius + ring;
-        ImGui.SetCursorScreenPos(new Vector2(centerX - box, max.Y - box));
+        var box = radius;
+        ImGui.SetCursorScreenPos(new Vector2(centerX - box, center.Y - box));
         ImGui.InvisibleButton("##heroMoon", new Vector2(box * 2f, box * 2f));
         Chrome.FocusRing(box);
         if (ImGui.IsItemHovered())
@@ -184,25 +228,220 @@ public sealed partial class DetailPane
 
         BannerTooltip(min, max, shown);
 
-        // The title (Title role) and the chips: beside the moon, or under it at full width when narrow.
-        var textLeft = stacked ? min.X : centerX + box + UiMetrics.Px(8f);
-        var textTop = stacked ? max.Y + box + UiMetrics.Px(4f) : max.Y + UiMetrics.Px(6f);
-        var room = MathF.Max(1f, bodyRight - textLeft);
-        ImGui.SetCursorScreenPos(new Vector2(textLeft, textTop));
-        ImGui.BeginGroup();
+        // The title (Title role) and the path on the art, beside the medal, while they fit there; else under the banner.
+        var pad2 = UiMetrics.Px(12f);
+        var artLeft = stacked ? min.X + pad2 : centerX + radius + pad2;
+        var artRoom = max.X - pad2 - artLeft;
+        var path = HeroPath();
+        float titleLine;
+        float titleWidth;
         using (Typography.Title(model.DisplayName))
         {
-            TextFlow.Wrapped(model.DisplayName, room, Theme.WithAlpha(Theme.Surface.Text, titleIn));
+            titleLine = ImGui.GetTextLineHeight();
+            titleWidth = ImGui.CalcTextSize(model.DisplayName).X;
+        }
+
+        float pathLine;
+        using (Typography.Caption())
+        {
+            pathLine = ImGui.GetTextLineHeight();
+        }
+
+        var onArt = !stacked && artRoom > UiMetrics.Px(80f) && titleLine + pathLine + UiMetrics.Px(16f) <= height;
+        var bottom = center.Y + radius;
+        if (onArt)
+        {
+            var pathY = MathF.Round(max.Y - pad2 - pathLine);
+            var titleY = MathF.Round(pathY - UiMetrics.Px(2f) - titleLine);
+            bool cut;
+            using (Typography.Title(model.DisplayName))
+            {
+                cut = Chrome.OutlinedEllipsisAt(dl, new Vector2(artLeft, titleY), artRoom, model.DisplayName, Theme.WithAlpha(TitleOnArt, titleIn), titleWidth);
+            }
+
+            using (Typography.Caption())
+            {
+                Chrome.OutlinedEllipsisAt(dl, new Vector2(artLeft, pathY), artRoom, path, Theme.WithAlpha(Theme.Surface.TextSecondary, titleIn), ImGui.CalcTextSize(path).X);
+            }
+
+            if (cut && ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(new Vector2(artLeft, titleY), new Vector2(artLeft + artRoom, titleY + titleLine)))
+            {
+                UiMetrics.Tooltip(model.DisplayName);
+            }
+
+            // The chips beside the medal, under the banner.
+            ImGui.SetCursorScreenPos(new Vector2(artLeft, max.Y + UiMetrics.Px(6f)));
+            ImGui.BeginGroup();
+            DrawChips(model.HeaderSegments, MathF.Max(1f, bodyRight - artLeft));
+            ImGui.EndGroup();
+            bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
+        }
+        else
+        {
+            var textLeft = stacked ? min.X : centerX + radius + UiMetrics.Px(8f);
+            var textTop = stacked ? center.Y + radius + UiMetrics.Px(4f) : max.Y + UiMetrics.Px(6f);
+            var room = MathF.Max(1f, bodyRight - textLeft);
+            ImGui.SetCursorScreenPos(new Vector2(textLeft, textTop));
+            ImGui.BeginGroup();
+            using (Typography.Title(model.DisplayName))
+            {
+                TextFlow.Wrapped(model.DisplayName, room, Theme.WithAlpha(Theme.Surface.Text, titleIn));
+            }
+
+            SegmentFlow(model.JournalSegments, JournalSeparator, room, Theme.Surface.TextDisabled);
+            ImGui.Dummy(new Vector2(1f, UiMetrics.Px(2f)));
+            DrawChips(model.HeaderSegments, room);
+            ImGui.EndGroup();
+            bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
+        }
+
+        // The hero as one block: at least down to the medal's foot.
+        ImGui.SetCursorScreenPos(min);
+        ImGui.Dummy(new Vector2(width, bottom - min.Y + UiMetrics.Px(4f)));
+    }
+
+    /// <summary>The hero medal's halo (Ready and Ready on another job only): Moon at 0.30 at the medal's edge, fading out 14 px beyond.</summary>
+    private static void HeroHalo(ImDrawListPtr dl, Vector2 center, float radius)
+    {
+        const int Rings = 7;
+        var reach = UiMetrics.Px(14f);
+        for (var i = Rings; i >= 1; i--)
+        {
+            var t = i / (float)Rings;
+            dl.AddCircleFilled(center, radius + (reach * t), Theme.WithAlpha(Theme.Moon, 0.30f * (1f - t) * 0.55f + 0.02f), 48);
+        }
+    }
+
+    /// <summary>
+    /// Quiet's hero, the plate: the name (display role) and its path in the tertiary tone, a hairline, then the 52 px
+    /// medal beside the state in its ink, the reason and the job note.
+    /// </summary>
+    private void DrawPlateHero(QuestRecord quest)
+    {
+        var dl = ImGui.GetWindowDrawList();
+        var room = RoomTo(bodyRight);
+        using (Typography.Display())
+        {
+            TextFlow.Wrapped(model.DisplayName, room, Theme.U32(Theme.Surface.Text));
+        }
+
+        SegmentFlow(model.JournalSegments, JournalSeparator, room, Theme.Surface.TextTertiary);
+        SegmentFlow(model.HeaderSegments, BlockerText.Separator, room, Theme.Surface.TextTertiary);
+        ImGui.Dummy(new Vector2(1f, UiMetrics.Px(2f)));
+        Chrome.Rule(room);
+        ImGui.Dummy(new Vector2(1f, UiMetrics.Px(2f)));
+
+        var radius = UiMetrics.Px(PlateMedalLogical);
+        var side = MathF.Round(radius * 2.05f);
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(side, side));
+        MoonWax.Draw(dl, pos + new Vector2(side * 0.5f), radius, model.State, quest.RowId, model.ReadyOnJob);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
+        }
+
+        ImGui.SameLine(0f, UiMetrics.Px(12f));
+        var textLeft = ImGui.GetCursorScreenPos().X;
+        var textRoom = MathF.Max(1f, bodyRight - textLeft);
+        ImGui.BeginGroup();
+        TextFlow.Wrapped(model.StateName, textRoom, Theme.U32(StateTextColor(model.State)));
+        if (model.Callout is null && model.StatusReason.Length > 0)
+        {
+            TextFlow.Wrapped(model.StatusReason, textRoom, Theme.U32(Theme.Surface.TextSecondary));
+        }
+
+        if (model.Callout is null && model.StateNote is { } note)
+        {
+            TextFlow.Wrapped(note, textRoom, Theme.U32(Theme.Surface.TextDisabled));
+        }
+
+        ImGui.EndGroup();
+
+        // The plate is as tall as the medal at least, so the line under it never rides up.
+        var bottom = MathF.Max(ImGui.GetItemRectMax().Y, pos.Y + side);
+        ImGui.SetCursorScreenPos(new Vector2(pos.X, bottom));
+        ImGui.Dummy(new Vector2(1f, UiMetrics.Px(2f)));
+    }
+
+    /// <summary>
+    /// Plain's hero, the ledger: the name and its path, then a key-value list, State (a 12 px flat glyph, the state in
+    /// its ink and the reason), Level (the header line) and Giver (the name and the place), each value ending in an
+    /// ellipsis that names it whole on hover.
+    /// </summary>
+    private void DrawLedgerHero(QuestRecord quest)
+    {
+        var dl = ImGui.GetWindowDrawList();
+        var room = RoomTo(bodyRight);
+        TextFlow.Wrapped(model.DisplayName, room, Theme.U32(Theme.Surface.Text));
+        using (Typography.Caption())
+        {
+            SegmentFlow(model.JournalSegments, JournalSeparator, room, Theme.Surface.TextTertiary);
         }
 
         ImGui.Dummy(new Vector2(1f, UiMetrics.Px(2f)));
-        DrawChips(model.HeaderSegments, room);
-        ImGui.EndGroup();
+        var line = ImGui.GetTextLineHeight();
+        var rowHeight = MathF.Max(line, UiMetrics.Px(20f));
+        var left = ImGui.GetCursorScreenPos().X;
+        var valueX = left + UiMetrics.Px(LedgerLabelLogical);
+        var valueRoom = MathF.Max(1f, bodyRight - valueX);
+        var gap = UiMetrics.Px(6f);
+        var label = Theme.U32(Theme.Surface.TextTertiary);
+        var secondary = Theme.U32(Theme.Surface.TextSecondary);
 
-        // The hero as one block: at least down to the moon's foot.
-        var bottom = MathF.Max(ImGui.GetItemRectMax().Y, max.Y + box);
-        ImGui.SetCursorScreenPos(min);
-        ImGui.Dummy(new Vector2(width, bottom - min.Y + UiMetrics.Px(2f)));
+        // State: the glyph, the state in its ink, then the reason.
+        var y = ImGui.GetCursorScreenPos().Y;
+        var textY = y + ((rowHeight - line) * 0.5f);
+        dl.AddText(new Vector2(left, textY), label, Strings.LedgerState);
+        var glyphRadius = UiMetrics.Px(LedgerGlyphLogical);
+        var glyphCenter = new Vector2(valueX + glyphRadius, y + (rowHeight * 0.5f));
+        MoonWax.Draw(dl, glyphCenter, glyphRadius, model.State, quest.RowId, model.ReadyOnJob);
+        var x = glyphCenter.X + glyphRadius + gap;
+        var stateWidth = ImGui.CalcTextSize(model.StateName).X;
+        var cut = Chrome.EllipsisTextAt(dl, new Vector2(x, textY), MathF.Max(1f, bodyRight - x), model.StateName, Theme.U32(StateTextColor(model.State)), stateWidth);
+        x += stateWidth;
+        if (model.Callout is null && model.StatusTail.Length > 0 && x < bodyRight)
+        {
+            cut |= Chrome.EllipsisTextAt(dl, new Vector2(x, textY), MathF.Max(1f, bodyRight - x), model.StatusTail, secondary, ImGui.CalcTextSize(model.StatusTail).X);
+        }
+
+        ImGui.Dummy(new Vector2(room, rowHeight));
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
+        }
+
+        // Level: the header line (expansion · level · job).
+        y = ImGui.GetCursorScreenPos().Y;
+        textY = y + ((rowHeight - line) * 0.5f);
+        dl.AddText(new Vector2(left, textY), label, Strings.LedgerLevel);
+        cut = Chrome.EllipsisTextAt(dl, new Vector2(valueX, textY), valueRoom, model.HeaderLine, Theme.U32(Theme.Surface.Text), ImGui.CalcTextSize(model.HeaderLine).X);
+        ImGui.Dummy(new Vector2(room, rowHeight));
+        if (cut && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(model.HeaderLine);
+        }
+
+        // Giver: the name, then the place in the secondary tone.
+        y = ImGui.GetCursorScreenPos().Y;
+        textY = y + ((rowHeight - line) * 0.5f);
+        dl.AddText(new Vector2(left, textY), label, Strings.Giver);
+        var giver = model.GiverName ?? Strings.NoGiver;
+        var giverWidth = ImGui.CalcTextSize(giver).X;
+        cut = Chrome.EllipsisTextAt(dl, new Vector2(valueX, textY), valueRoom, giver, Theme.U32(model.GiverName is null ? Theme.Surface.TextDisabled : Theme.Surface.Text), giverWidth);
+        if (model.PlaceLine is { } place && valueX + giverWidth + gap < bodyRight)
+        {
+            var placeX = valueX + giverWidth + gap;
+            cut |= Chrome.EllipsisTextAt(dl, new Vector2(placeX, textY), MathF.Max(1f, bodyRight - placeX), place, secondary, ImGui.CalcTextSize(place).X);
+        }
+
+        ImGui.Dummy(new Vector2(room, rowHeight));
+        if (cut && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(giver, model.PlaceLine);
+        }
+
+        ImGui.Dummy(new Vector2(1f, UiMetrics.Px(2f)));
     }
 
     /// <summary>
@@ -276,8 +515,9 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// The hero's scrims: the bottom one (Night 0 → 0.94 from 35 % of the height) and the side one (Abyss 0.55 → 0 over the
-    /// left 60 %). Under the high-contrast palette a solid band (0.97) behind the moon replaces both (proposal §10.2).
+    /// The passes over the banner: the night grade's scrim to Night, its moonlight wash and its moon road
+    /// (<see cref="BannerGrading.DrawOver"/>), and a soft side scrim (Abyss 0.4 → 0 over the left half) so the title on
+    /// the art reads. Under the high-contrast palette a solid band (0.97) under the title replaces them (proposal §10.2).
     /// </summary>
     private static void HeroScrims(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding)
     {
@@ -285,12 +525,12 @@ public sealed partial class DetailPane
         var height = max.Y - min.Y;
         if (Theme.Glyphs.HighContrast)
         {
-            dl.AddRectFilled(new Vector2(min.X, max.Y - (height * 0.3f)), max, Theme.WithAlpha(s.Window, 0.97f), rounding, ImDrawFlags.RoundCornersBottom);
+            dl.AddRectFilled(new Vector2(min.X, max.Y - (height * 0.45f)), max, Theme.WithAlpha(s.Window, 0.97f), rounding, ImDrawFlags.RoundCornersBottom);
             return;
         }
 
-        GradientRect(dl, new Vector2(min.X, min.Y + (height * 0.35f)), max, rounding, ImDrawFlags.RoundCornersBottom, s.Window with { W = 0f }, s.Window with { W = 0.94f }, vertical: true);
-        GradientRect(dl, min, new Vector2(min.X + ((max.X - min.X) * 0.6f), max.Y), rounding, ImDrawFlags.RoundCornersLeft, s.Deep with { W = 0.55f }, s.Deep with { W = 0f }, vertical: false);
+        BannerGrading.DrawOver(dl, min, max, rounding);
+        GradientRect(dl, min, new Vector2(min.X + ((max.X - min.X) * 0.5f), max.Y), rounding, ImDrawFlags.RoundCornersLeft, s.Deep with { W = 0.4f }, s.Deep with { W = 0f }, vertical: false);
     }
 
     /// <summary>
@@ -383,6 +623,27 @@ public sealed partial class DetailPane
     {
         var room = RoomTo(bodyRight);
         ImGui.Dummy(new Vector2(1f, UiMetrics.Px(2f)));
+        if (Theme.MoonRoadArt)
+        {
+            // Full: the state in the Title role (Jupiter) in its ink, the reason on the line under it.
+            using (Typography.Title(model.StateName))
+            {
+                TextFlow.Wrapped(model.StateName, room, Theme.U32(StateTextColor(model.State)));
+            }
+
+            if (model.StatusReason.Length > 0)
+            {
+                TextFlow.Wrapped(model.StatusReason, RoomTo(bodyRight), Theme.U32(Theme.Surface.Text));
+            }
+
+            if (model.StateNote is { } stateNote)
+            {
+                TextFlow.Wrapped(stateNote, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextDisabled));
+            }
+
+            return;
+        }
+
         TextFlow.Wrapped(model.StateName, room, Theme.U32(StateTextColor(model.State)));
         if (model.StatusTail.Length > 0)
         {
@@ -418,27 +679,20 @@ public sealed partial class DetailPane
     // ------------------------------------------------------------------ sections
 
     /// <summary>
-    /// Opens one of the pane's sections: an open section (<see cref="OpenSection"/>: the shared heading line with its
-    /// sigil, <paramref name="title"/> cased for the language, the Gilt rule and the caption) at Flair Full and Quiet,
-    /// the 1.3 card with its title and caption at Plain. Close it with <see cref="EndSection"/>. A
-    /// <paramref name="captionTooltip"/> shows while the heading line is hovered (the totals behind a caption that says
-    /// what is left, feature plan v6 U5).
+    /// Opens one of the pane's sections as a card at the Decoration level (docs/design/flair-v13 §1, "Card frame"): gilt
+    /// brass with corner marks and a gilt eyebrow heading (cased for the language) at Full, a tonal plane with the
+    /// heading in the body font at Quiet, a heading row with a line under it at Plain; the caption sits on the heading's
+    /// right. Close it with <see cref="EndSection"/>. A <paramref name="captionTooltip"/> shows while the heading line is
+    /// hovered (the totals behind a caption that says what is left, feature plan v6 U5). The icon is left out: the cards
+    /// name themselves.
     /// </summary>
     private void BeginSection(string id, string title, string icon, string caption = "", Vector4 captionColor = default, string captionTooltip = "")
     {
+        _ = icon;
         var top = ImGui.GetCursorScreenPos();
         var right = top.X + ImGui.GetContentRegionAvail().X;
-        sectionOpen = Theme.ShowRules;
-        if (sectionOpen)
-        {
-            OpenSection.Begin(id, title, caption, Theme.U32(captionColor));
-        }
-        else
-        {
-            Chrome.BeginCard(id, title, icon, eyebrow: true);
-            CardCaption(caption, right, captionColor);
-        }
-
+        Chrome.BeginCard(id, Theme.MoonRoadArt ? SectionHeading.Label(title) : title, null, eyebrow: true);
+        CardCaption(caption, right, captionColor);
         if (captionTooltip.Length > 0 && ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(top, new Vector2(right, ImGui.GetCursorScreenPos().Y)))
         {
             UiMetrics.Tooltip(captionTooltip);
@@ -446,14 +700,5 @@ public sealed partial class DetailPane
     }
 
     /// <summary>Closes the section <see cref="BeginSection"/> opened.</summary>
-    private void EndSection()
-    {
-        if (sectionOpen)
-        {
-            OpenSection.End();
-            return;
-        }
-
-        Chrome.EndCard();
-    }
+    private static void EndSection() => Chrome.EndCard();
 }

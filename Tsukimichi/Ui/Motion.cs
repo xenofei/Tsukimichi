@@ -36,8 +36,11 @@ public static class Motion
     private static double scrollQuietUntil;
     private static bool scrolling;
 
-    /// <summary>Whether motion plays this frame: Reduce motion off and the user not scrolling.</summary>
-    public static bool Enabled => !UiMetrics.ReduceMotion && !scrolling;
+    /// <summary>
+    /// Whether motion plays this frame: Reduce motion off, the Decoration level animating its interface (Full and Quiet;
+    /// Plain draws every state at once, <see cref="Theme.UiMotion"/>) and the user not scrolling.
+    /// </summary>
+    public static bool Enabled => Theme.UiMotion && !scrolling;
 
     /// <summary>
     /// Whether motion plays on a surface over the game world (the Todo overlay, the panels beside game windows):

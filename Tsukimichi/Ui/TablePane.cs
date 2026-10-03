@@ -130,6 +130,14 @@ public sealed class TablePane : IDisposable
     /// <summary>The road under a Ready row (proposal §7.3), brass fading out to the right; faint, so the gold moon keeps the signal.</summary>
     private const float ReadyRoadAlpha = 0.4f;
 
+    /// <summary>Full's star field in the title band: seeded once, so it never shimmers.</summary>
+    private static readonly Star[] TitleStars = StarField.Generate(97, 7);
+
+    /// <summary>The Ready road's glint at Full: one run every 9 s, taking the last 18 % of the cycle.</summary>
+    private const double GlintCycleSeconds = 9.0;
+
+    private const float GlintShare = 0.18f;
+
     /// <summary>Logical gaps on the title line: before the count, and after the breadcrumb.</summary>
     private const float TitleCountGap = 12f;
     private const float TitleCrumbGap = 6f;
@@ -386,9 +394,11 @@ public sealed class TablePane : IDisposable
             }
         }
 
-        // Moon Road (R3 #6): a clear header in the Eyebrow role with a brass rule under it. Plain keeps the raised header
-        // of 1.3. The quick views' captions are in the chip lane now.
-        var moonRoad = FlairRules.MoonRoadTable(Theme.Flair);
+        // The header at the Decoration level (docs/design/flair-v13 §1, "Table header"): Full's Moon Road (tracked caps
+        // over a brass rule), Quiet's body type over a hairline, Plain's raised band with column dividers. The quick
+        // views' captions are in the chip lane now.
+        var headerStyle = Theme.TableHeader;
+        var moonRoad = headerStyle == TableHeaderStyle.MoonRoad;
         newGroupEnd = runner.NewThisPatch > 0 && runner.NewThisPatch < rows.Length ? rows[runner.NewThisPatch - 1].Quest.RowId : null;
         trialGroupEnd = runner.BeyondTrial > 0 && runner.BeyondTrial < rows.Length ? rows[rows.Length - runner.BeyondTrial - 1].Quest.RowId : null;
 
@@ -408,13 +418,15 @@ public sealed class TablePane : IDisposable
 
         // The header's fill is painted when its row ends, which is when the clipper begins, so the push spans the table.
         // The line under the header is the table's strong border, read when the table begins: in Moon Road it is brass.
-        ImGui.PushStyleColor(ImGuiCol.TableHeaderBg, moonRoad ? Vector4.Zero : Theme.Surface.Raised);
-        if (moonRoad)
+        ImGui.PushStyleColor(ImGuiCol.TableHeaderBg, headerStyle == TableHeaderStyle.Raised ? Theme.Tones.HeaderBand : Vector4.Zero);
+        ImGui.PushStyleColor(ImGuiCol.TableBorderStrong, headerStyle switch
         {
-            ImGui.PushStyleColor(ImGuiCol.TableBorderStrong, Theme.Surface.Ornament with { W = Theme.OrnamentAlpha(HeaderRuleAlpha) });
-        }
+            TableHeaderStyle.MoonRoad => Theme.Surface.Ornament with { W = Theme.OrnamentAlpha(HeaderRuleAlpha) },
+            TableHeaderStyle.Raised => Theme.Glyphs.HighContrast ? Theme.Surface.StrongLine : Theme.Tones.HeaderLine,
+            _ => Theme.RuleColor,
+        });
 
-        using var headerBg = new Theme.StyleScope(moonRoad ? 2 : 1, 0);
+        using var headerBg = new Theme.StyleScope(2, 0);
         using var table = ImRaii.Table(TableId, ColumnCount, flags, ImGui.GetContentRegionAvail());
         if (!table)
         {
@@ -436,8 +448,9 @@ public sealed class TablePane : IDisposable
         var lineHeight = ImGui.GetTextLineHeight();
         var padY = style.CellPadding.Y;
         var rowContent = UiMetrics.TableRowContentHeight(lineHeight, padY);
-        // The moon, and with it the Glyph column, follows the one-line row height (r 9 Comfortable, r 6.4 Dense at scale 1).
-        var glyphRadius = TableGeometry.GlyphRadius(rowContent, UiMetrics.RowGlyphRadius);
+        // The medal, and with it the Glyph column, follows the one-line row height and the level's row tier (18 px at
+        // Full, 16 at Quiet, 12 at Plain at scale 1).
+        var glyphRadius = TableGeometry.GlyphRadius(rowContent, UiMetrics.TableGlyphRadius);
         var glyphBox = glyphRadius * TableGeometry.GlyphBoxPerRadius;
         // Beside the row-size medal, its badge's content at text height (the row fallback, feature plan v6 G1).
         var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + RowBadgeSide(lineHeight, rowContent) + UiMetrics.Px(2f);
@@ -539,7 +552,7 @@ public sealed class TablePane : IDisposable
         var headerMenuDrawn = !tableState.IsNull && tableState.IsContextPopupOpen;
 
         // While the plan hides the sorted column (its header and arrow are gone), the Name header's tooltip names the sort.
-        var headerBottom = DrawHeaders(SortedColumn(ui.Sort), SortColumnAutoHidden() ? HiddenSortNote() : null, moonRoad);
+        var headerBottom = DrawHeaders(SortedColumn(ui.Sort), SortColumnAutoHidden() ? HiddenSortNote() : null, headerStyle);
         if (headerMenuDrawn)
         {
             DrawHeaderMenuExtras(tableState);
@@ -604,9 +617,10 @@ public sealed class TablePane : IDisposable
         // Dense keeps the zebra so long lists stay easy to track across columns; Comfortable trades it for a faint
         // separator under each row (ui-revamp §2.4), which with the hover fill keeps the eye on the row. Raw pushes in a
         // struct scope: nothing allocates per frame.
-        var dense = UiMetrics.Density == RowDensity.Dense;
+        // Plain's ledger is always zebra-striped, with a faint line under each row as well.
+        var dense = FlairRules.Zebra(Theme.Flair, UiMetrics.Density);
         ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f));
-        ImGui.PushStyleColor(ImGuiCol.TableRowBgAlt, dense ? Theme.ZebraRow : Vector4.Zero);
+        ImGui.PushStyleColor(ImGuiCol.TableRowBgAlt, !dense ? Vector4.Zero : Theme.Flair == Flair.Plain ? Theme.Surface.Text with { W = 0.03f } : Theme.ZebraRow);
         using var rowStyle = new Theme.StyleScope(1, 1);
         var layout = new RowLayout(lineHeight, content, rowHeight, padY, glyphBox, glyphRadius, dense, plan.TwoLine, statusLine, lineGap, FlairRules.ReadyRoad(Theme.Flair));
         var liftRow = hoveredRow;
@@ -772,7 +786,7 @@ public sealed class TablePane : IDisposable
     /// Classic moon style (<see cref="Theme.ClassicMoons"/>), whose 1.11 moons have no badges.
     /// </summary>
     private static float RowBadgeSide(float lineHeight, float rowContent) =>
-        Theme.ClassicMoons ? 0f : MathF.Round(MathF.Min(lineHeight, rowContent));
+        Theme.ClassicMoons || !MedalGlyph.RowBadges ? 0f : MathF.Round(MathF.Min(lineHeight, rowContent));
 
     private readonly record struct RowLayout(float LineHeight, float RowContent, float RowHeight, float PadY, float GlyphBox, float GlyphRadius, bool Dense, bool TwoLine, float StatusLine, float LineGap, bool ReadyRoad)
     {
@@ -1089,11 +1103,21 @@ public sealed class TablePane : IDisposable
     /// line in the Name header's tooltip. Returns the header row's bottom on screen (where the rows' view starts; the
     /// header is frozen, so it stays there however the rows scroll), or <see cref="float.MinValue"/> with no header drawn.
     /// </summary>
-    private static float DrawHeaders(int sortedColumn, string? nameNote, bool moonRoad)
+    private static float DrawHeaders(int sortedColumn, string? nameNote, TableHeaderStyle style)
     {
         var s = Theme.Surface;
+        var moonRoad = style == TableHeaderStyle.MoonRoad;
         var bottom = float.MinValue;
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
+        var lastShown = -1;
+        for (var i = 0; i < HeaderTooltips.Length; i++)
+        {
+            if (IsColumnEnabled((Column)i))
+            {
+                lastShown = i;
+            }
+        }
+
         for (var i = 0; i < HeaderTooltips.Length; i++)
         {
             if (!ImGui.TableSetColumnIndex(i))
@@ -1103,7 +1127,12 @@ public sealed class TablePane : IDisposable
 
             var label = HeaderText(HeaderLabels[i], moonRoad);
             ImGui.PushID(i);
-            ImGui.PushStyleColor(ImGuiCol.Text, i == sortedColumn ? s.Text : s.TextSecondary);
+
+            // The sorted column's label in the primary tone (at Full the gilt); the rest secondary, tertiary at Quiet.
+            var ink = i == sortedColumn
+                ? moonRoad ? s.OrnamentHigh : s.Text
+                : style == TableHeaderStyle.Eyebrow || moonRoad ? s.TextTertiary : s.TextSecondary;
+            ImGui.PushStyleColor(ImGuiCol.Text, ink);
             float labelWidth;
             using (HeaderRole(label, moonRoad))
             {
@@ -1114,6 +1143,13 @@ public sealed class TablePane : IDisposable
             ImGui.PopStyleColor();
             ImGui.PopID();
             bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
+            if (style == TableHeaderStyle.Raised && i != lastShown)
+            {
+                // Plain: a 1 px divider at the cell's right edge, in the header band only.
+                var cellMax = ImGui.GetItemRectMax();
+                var x = MathF.Floor(cellMax.X) - 1f;
+                ImGui.GetWindowDrawList().AddRectFilled(new Vector2(x, ImGui.GetItemRectMin().Y), new Vector2(x + 1f, cellMax.Y), Theme.U32(Theme.Glyphs.HighContrast ? s.StrongLine : Theme.Tones.HeaderLine));
+            }
             if (ImGui.IsItemHovered())
             {
                 // A column the player made narrower than its label ends the label in an ellipsis (ImGui's header does);
@@ -1157,9 +1193,12 @@ public sealed class TablePane : IDisposable
         var room = MathF.Max(1f, ImGui.GetContentRegionAvail().X);
         var dl = ImGui.GetWindowDrawList();
 
+        // The title in the Title role at Full and Quiet (Jupiter at Full; the display role in the body font at Quiet), in
+        // the body font at Plain, where the chip lane already says the scope (docs/design/flair-v13 §1, "Table header").
+        var plainTitle = Theme.Flair == Flair.Plain;
         float titleLine;
         float titleWidth;
-        using (Typography.Title(titleName))
+        using (plainTitle ? default : Typography.Title(titleName))
         {
             titleLine = ImGui.GetTextLineHeight();
             titleWidth = ImGui.CalcTextSize(titleName).X;
@@ -1205,16 +1244,26 @@ public sealed class TablePane : IDisposable
         }
 
         bool cut;
-        using (Typography.Title(titleName))
+        using (plainTitle ? default : Typography.Title(titleName))
         {
             cut = Chrome.EllipsisTextAt(dl, new Vector2(x, MathF.Round(midY - (titleLine * 0.5f))), fit.NameRoom, titleName, Theme.U32(Theme.Surface.Text), titleWidth);
         }
 
+        // Full: the count in gilt; Quiet and Plain the tertiary tone.
         var countX = start.X + room - countWidth;
         if (countVisible)
         {
             using var numeral = Typography.Numeral(countText);
-            dl.AddText(new Vector2(countX, MathF.Round(midY - (countLine * 0.5f))), Theme.U32(Theme.Surface.TextSecondary), countText);
+            var countInk = Theme.MoonRoadArt ? Theme.Surface.OrnamentHigh : Theme.Flair == Flair.Full ? Theme.Surface.TextSecondary : Theme.Surface.TextTertiary;
+            dl.AddText(new Vector2(countX, MathF.Round(midY - (countLine * 0.5f))), Theme.U32(countInk), countText);
+        }
+
+        if (Theme.ShowStars)
+        {
+            // Full: a few faint stars in the title band's empty sky, between the title and the count, never on either.
+            var skyLeft = x + MathF.Min(titleWidth, fit.NameRoom) + clearSide + UiMetrics.Px(16f);
+            var skyRight = (countVisible ? countX : start.X + room) - UiMetrics.Px(16f);
+            Ornament.Stars(dl, new Vector2(skyLeft, start.Y), new Vector2(skyRight, start.Y + height - UiMetrics.Px(2f)), TitleStars);
         }
 
         if (scoped)
@@ -1335,7 +1384,14 @@ public sealed class TablePane : IDisposable
         var settled = Motion.Select(Motion.Key(SelectTag, quest.RowId), selected);
         if (settled > 0.004f)
         {
-            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, Theme.WithAlpha(s.Text, SelectionWashAlpha * settled));
+            // Full: a warm wash (drawn as a gradient in the row's chrome); Quiet a neutral 0.06 wash; Plain 0.09.
+            var wash = Theme.Flair switch
+            {
+                Flair.Full => Theme.WithAlpha(Theme.Moon, 0.035f * settled),
+                Flair.Quiet => Theme.WithAlpha(s.Text, 0.06f * settled),
+                _ => Theme.WithAlpha(s.Text, 0.09f * settled),
+            };
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, wash);
         }
         else if (questionableRow == quest.RowId)
         {
@@ -1372,6 +1428,19 @@ public sealed class TablePane : IDisposable
 
         var readyOn = state == QuestState.ReadyOnOtherJob ? runner.ReadyOnJob(quest.RowId) : (byte)0;
         var glyphCenter = new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY);
+        if (Theme.MoonRoadArt && !Theme.ClassicMoons)
+        {
+            // Full: the medal sits on a 1.5 px shadow falling straight down, and a Ready medal glows (4 px, gold).
+            if (state == QuestState.Ready && Theme.ShowGlow)
+            {
+                var reach = UiMetrics.Px(4f);
+                dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + reach, Theme.WithAlpha(Theme.Moon, 0.10f), 32);
+                dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + (reach * 0.5f), Theme.WithAlpha(Theme.Moon, 0.16f), 32);
+            }
+
+            dl.AddCircleFilled(glyphCenter + new Vector2(0f, UiMetrics.Px(1.5f)), layout.GlyphRadius, Theme.WithAlpha(Theme.Abyss, 0.55f), 24);
+        }
+
         MoonWax.Draw(dl, glyphCenter, layout.GlyphRadius, state, quest.RowId, readyOn);
         if (moonRoadMoment && moment >= 0f)
         {
@@ -1648,8 +1717,58 @@ public sealed class TablePane : IDisposable
         ImGuiP.TablePopBackgroundChannel();
     }
 
-    /// <summary>Width of the state stripe in pixels: the glyph palette's (3 logical, 4 in high contrast), never under 2.</summary>
-    internal static float StripeThickness() => MathF.Max(2f, MathF.Round(UiMetrics.Px(Theme.Glyphs.StripeWidth)));
+    /// <summary>
+    /// Width of the state stripe in pixels: the glyph palette's at Full and under high contrast (3 logical, 4 in high
+    /// contrast), 2 at Quiet and Plain (an accessibility carrier, A3, so never gone); never under 2.
+    /// </summary>
+    internal static float StripeThickness() =>
+        MathF.Max(2f, MathF.Round(UiMetrics.Px(Theme.Flair == Flair.Full || Theme.Glyphs.HighContrast ? Theme.Glyphs.StripeWidth : 2f)));
+
+    /// <summary>
+    /// The road under a Ready row at Full (R3 #6, proposal §7.3): a gold line along its bottom from the name, fading out
+    /// by 70 %, with a faint glow; and under the Moon Road's motion, a glint that runs along it once every 9 s.
+    /// </summary>
+    private static void DrawReadyRoad(ImDrawListPtr dl, float nameX, Vector2 rowMax, float hairline)
+    {
+        var y = rowMax.Y - hairline;
+        var end = nameX + ((rowMax.X - nameX) * 0.7f);
+        Ornament.Rule(dl, new Vector2(nameX, y), end - nameX, ReadyRoadAlpha, hairline, Theme.Moon);
+        if (Theme.ShowGlow)
+        {
+            var glow = Theme.WithAlpha(Theme.Moon, 0.12f);
+            var none = Theme.WithAlpha(Theme.Moon, 0f);
+            dl.AddRectFilledMultiColor(new Vector2(nameX, y - UiMetrics.Px(2f)), new Vector2(end, y), none, none, glow, glow);
+        }
+
+        if (!Theme.FlairMotion)
+        {
+            return;
+        }
+
+        // The glint: a MoonHigh gleam a fifth of the road wide, crossing it in the last 18 % of each cycle.
+        var phase = (float)(ImGui.GetTime() % GlintCycleSeconds / GlintCycleSeconds);
+        if (phase < 1f - GlintShare)
+        {
+            return;
+        }
+
+        var t = (phase - (1f - GlintShare)) / GlintShare;
+        var span = end - nameX;
+        var width = span * 0.2f;
+        var center = nameX - width + ((span + (2f * width)) * MotionMath.EaseOutCubic(t));
+        var left = MathF.Max(nameX, center - (width * 0.5f));
+        var right = MathF.Min(end, center + (width * 0.5f));
+        if (right <= left)
+        {
+            return;
+        }
+
+        var bright = Theme.WithAlpha(Theme.MoonHigh, 0.9f * (1f - t));
+        var clear = Theme.WithAlpha(Theme.MoonHigh, 0f);
+        var mid = (left + right) * 0.5f;
+        dl.AddRectFilledMultiColor(new Vector2(left, y), new Vector2(mid, y + hairline), clear, bright, bright, clear);
+        dl.AddRectFilledMultiColor(new Vector2(mid, y), new Vector2(right, y + hairline), bright, clear, clear, bright);
+    }
 
     /// <summary>
     /// The row's lines, on the table's background channel so they span every column under the text: the separator
@@ -1664,27 +1783,53 @@ public sealed class TablePane : IDisposable
         ImGuiP.TablePushBackgroundChannel();
         var dl = ImGui.GetWindowDrawList();
         var hairline = UiMetrics.Hairline;
-        if (!layout.Dense)
+        var flair = Theme.Flair;
+        if (!layout.Dense || flair == Flair.Plain)
         {
             var y = rowMax.Y - hairline * 0.5f;
-            dl.AddLine(new Vector2(rowMin.X, y), new Vector2(rowMax.X, y), Theme.WithAlpha(s.Line, SeparatorAlpha * s.Line.W), hairline);
+            var line = flair == Flair.Full ? s.Line with { W = 0.35f * s.Line.W } : flair == Flair.Quiet ? Theme.Tones.Rule with { W = 0.55f } : Theme.Tones.Rule with { W = 0.6f };
+            dl.AddLine(new Vector2(rowMin.X, y), new Vector2(rowMax.X, y), Theme.U32(line), hairline);
         }
 
         if (layout.ReadyRoad && state == QuestState.Ready)
         {
-            Ornament.Rule(dl, new Vector2(nameX, rowMax.Y - hairline), rowMax.X - nameX, ReadyRoadAlpha, hairline);
+            DrawReadyRoad(dl, nameX, rowMax, hairline);
         }
 
-        if (lifted)
+        if (lifted && flair == Flair.Full)
         {
             Chrome.Lift(dl, rowMin, rowMax);
         }
 
         if (settled > 0.004f)
         {
-            // The ring settles in with the wash: it fades in while drawing in from 2 px inside the row to 1 px.
-            var inset = new Vector2(hairline * 0.5f + UiMetrics.Px(2f - settled));
-            dl.AddRect(rowMin + inset, rowMax - inset, Theme.WithAlpha(s.Text, SelectionRingAlpha * settled), UiMetrics.Px(SelectionRounding), ImDrawFlags.None, hairline);
+            switch (flair)
+            {
+                case Flair.Full when !Theme.Glyphs.HighContrast:
+                {
+                    // Full: a warm wash from the left (Moon 0.13 → 0.02) between brass hairlines top and bottom.
+                    var warm = Theme.WithAlpha(Theme.Moon, 0.10f * settled);
+                    var cool = Theme.WithAlpha(Theme.Moon, 0f);
+                    dl.AddRectFilledMultiColor(rowMin, new Vector2(rowMin.X + ((rowMax.X - rowMin.X) * 0.6f), rowMax.Y), warm, cool, cool, warm);
+                    var brass = Theme.WithAlpha(Theme.Surface.OrnamentHigh, 0.35f * settled);
+                    dl.AddRectFilled(rowMin, new Vector2(rowMax.X, rowMin.Y + hairline), brass);
+                    dl.AddRectFilled(new Vector2(rowMin.X, rowMax.Y - hairline), rowMax, brass);
+                    break;
+                }
+
+                case Flair.Plain:
+                    // Plain: the wash alone.
+                    break;
+
+                default:
+                {
+                    // Quiet (and high contrast): a 1 px outline settling in from 2 px inside the row.
+                    var inset = new Vector2(hairline * 0.5f + UiMetrics.Px(2f - settled));
+                    var ring = flair == Flair.Quiet && !Theme.Glyphs.HighContrast ? Theme.WithAlpha(Theme.Veil, settled) : Theme.WithAlpha(s.Text, SelectionRingAlpha * settled);
+                    dl.AddRect(rowMin + inset, rowMax - inset, ring, flair == Flair.Quiet ? 0f : UiMetrics.Px(SelectionRounding), ImDrawFlags.None, hairline);
+                    break;
+                }
+            }
         }
 
         DrawStripe(dl, rowMin.X, rowMin.Y, rowMax.Y - rowMin.Y, state);

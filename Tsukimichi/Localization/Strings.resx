@@ -3310,7 +3310,7 @@
     <value>Plain</value>
   </data>
   <data name="ConfigFlairHint" xml:space="preserve">
-    <value>How much moonlit ornament the windows show. Click a preview to choose.</value>
+    <value>How the windows look: the whole Moon Road, calm and flat, or a plain ledger.</value>
   </data>
   <data name="ConfigMoonStyle" xml:space="preserve">
     <value>Moon style</value>
@@ -3331,7 +3331,7 @@
     <value>Headings, titles and numbers in the game's own fonts.</value>
   </data>
   <data name="ConfigFlairPreviewPlainNote" xml:space="preserve">
-    <value>With Plain decoration these previews use the usual font. Full and Quiet show the game's heading fonts.</value>
+    <value>Only Full draws headings in the game's fonts.</value>
   </data>
   <data name="ConfigFollowDalamudColours" xml:space="preserve">
     <value>Dalamud colours</value>
@@ -9736,5 +9736,45 @@
   <data name="Settings.HideButton" xml:space="preserve">
     <value>Hide</value>
     <comment>Settings: a row button that folds it again.</comment>
+  </data>
+  <data name="LedgerState" xml:space="preserve">
+    <value>State</value>
+    <comment>Plain decoration, the detail pane's key-value list: the quest's state.</comment>
+  </data>
+  <data name="LedgerLevel" xml:space="preserve">
+    <value>Level</value>
+    <comment>Plain decoration, the detail pane's key-value list: expansion, level and job.</comment>
+  </data>
+  <data name="ConfigFlairFullNote" xml:space="preserve">
+    <value>The whole Moon Road: night sky, brass, banners, game fonts and motion.</value>
+    <comment>Settings, Decoration: what Full draws.</comment>
+  </data>
+  <data name="ConfigFlairQuietNote" xml:space="preserve">
+    <value>Calm and flat: one tone, thin rules, no art or glow.</value>
+    <comment>Settings, Decoration: what Quiet draws.</comment>
+  </data>
+  <data name="ConfigFlairPlainNote" xml:space="preserve">
+    <value>Information only: dense rows, small flat medals, no decoration.</value>
+    <comment>Settings, Decoration: what Plain draws.</comment>
+  </data>
+  <data name="ConfigFlairPreviewReady" xml:space="preserve">
+    <value>It Could Happen to You</value>
+    <comment>Settings, Decoration preview: a sample quest that is Ready.</comment>
+  </data>
+  <data name="ConfigFlairPreviewJournal" xml:space="preserve">
+    <value>Dawntrail</value>
+    <comment>Settings, Decoration preview: a sample quest in the journal.</comment>
+  </data>
+  <data name="ConfigFlairPreviewDone" xml:space="preserve">
+    <value>Heavensward</value>
+    <comment>Settings, Decoration preview: a sample completed quest.</comment>
+  </data>
+  <data name="ConfigFlairPreviewCard" xml:space="preserve">
+    <value>Requirements</value>
+    <comment>Settings, Decoration preview: a sample card heading.</comment>
+  </data>
+  <data name="ConfigFlairPreviewCardLine" xml:space="preserve">
+    <value>Level 100</value>
+    <comment>Settings, Decoration preview: a sample line in the card.</comment>
   </data>
 </root>

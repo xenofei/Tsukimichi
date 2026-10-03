@@ -31,8 +31,29 @@ public static partial class Chrome
     private const uint PillHoverTag = 0x5049_4C48; // "PILH"
     private const uint PillSwapTag = 0x5049_4C53;  // "PILS"
 
-    /// <summary>The height of an <see cref="ActionPill"/>: one <see cref="UiMetrics.MinTarget"/>.</summary>
-    public static float ActionPillHeight => UiMetrics.MinTarget;
+    /// <summary>
+    /// The height of an <see cref="ActionPill"/> at the Decoration level (docs/design/flair-v13 §1, "Spacing tokens"):
+    /// 30 logical px at Full, 28 at Quiet, a 22 px button at Plain; never under the 24 px minimum target.
+    /// </summary>
+    public static float ActionPillHeight => MathF.Max(UiMetrics.Px(Theme.Spacing.PillHeight), 24f);
+
+    /// <summary>Plain draws its action buttons as text only (no icon), so their widths leave the icon and its gap out.</summary>
+    private static bool TextOnlyPills => Theme.Flair == Flair.Plain;
+
+    /// <summary>The icon's share of a labelled pill's width: its width, or at Plain minus the gap so neither is counted.</summary>
+    private static float LabelIconWidth(string icon) => TextOnlyPills ? -UiMetrics.Px(ActionPillFit.IconGapLogical) : IconWidth(icon);
+
+    /// <summary>The dark ink on Full's lit gold pill and Quiet's flat gold one.</summary>
+    private static readonly Vector4 GoldInk = Core.Ui.ColorMath.FromHex(0x1A1406);
+
+    /// <summary>Full's primary pill: a lit gold gradient, top to bottom, and its edge.</summary>
+    private static readonly Vector4 GoldTop = Core.Ui.ColorMath.FromHex(0xFFE6A3);
+    private static readonly Vector4 GoldFoot = Core.Ui.ColorMath.FromHex(0xD9B65F);
+    private static readonly Vector4 GoldEdge = Core.Ui.ColorMath.FromHex(0xF6DFA0);
+
+    /// <summary>Full's other pills: a raised gradient, top to bottom.</summary>
+    private static readonly Vector4 RaisedTop = Core.Ui.ColorMath.FromHex(0x252B45);
+    private static readonly Vector4 RaisedFoot = Core.Ui.ColorMath.FromHex(0x1C2138);
 
     /// <summary>
     /// The widths an <see cref="ActionPill"/> takes with <paramref name="label"/>, with <paramref name="shortLabel"/>
@@ -40,7 +61,7 @@ public static partial class Chrome
     /// </summary>
     public static PillWidths ActionPillWidths(string icon, string label, string shortLabel)
     {
-        var iconWidth = IconWidth(icon);
+        var iconWidth = LabelIconWidth(icon);
         var full = ActionPillFit.LabelledWidth(iconWidth, ImGui.CalcTextSize(label).X, UiMetrics.Scale);
         var brief = ReferenceEquals(label, shortLabel) || string.Equals(label, shortLabel, StringComparison.Ordinal)
             ? full
@@ -52,7 +73,7 @@ public static partial class Chrome
     public static float ActionPillWidth(string icon, string? label) =>
         label is null
             ? ActionPillFit.IconOnlyWidth(ActionPillHeight)
-            : ActionPillFit.LabelledWidth(IconWidth(icon), ImGui.CalcTextSize(label).X, UiMetrics.Scale);
+            : ActionPillFit.LabelledWidth(LabelIconWidth(icon), ImGui.CalcTextSize(label).X, UiMetrics.Scale);
 
     /// <summary>
     /// A labelled action pill (1.10, the detail pane's travel and automation row, the Hand in and Duties hand-offs):
@@ -71,9 +92,10 @@ public static partial class Chrome
         var height = ActionPillHeight;
         var iconSize = IconSize(icon);
         var labelSize = label is null ? Vector2.Zero : ImGui.CalcTextSize(label);
+        var textOnly = label is not null && TextOnlyPills;
         var width = label is null
             ? ActionPillFit.IconOnlyWidth(height)
-            : ActionPillFit.LabelledWidth(iconSize.X, labelSize.X, UiMetrics.Scale);
+            : ActionPillFit.LabelledWidth(textOnly ? -UiMetrics.Px(ActionPillFit.IconGapLogical) : iconSize.X, labelSize.X, UiMetrics.Scale);
         var min = ImGui.GetCursorScreenPos();
         ImGui.BeginDisabled(!enabled);
         var clicked = ImGui.InvisibleButton(id, new Vector2(width, height));
@@ -82,7 +104,7 @@ public static partial class Chrome
         var held = enabled && ImGui.IsItemActive();
 
         var max = min + new Vector2(width, height);
-        var rounding = height * 0.5f;
+        var rounding = Theme.Flair == Flair.Plain ? UiMetrics.Px(Theme.Spacing.CardRounding) : height * 0.5f;
         var itemId = ImGuiP.GetItemID();
         var hover = Motion.Hover(Motion.Key(PillHoverTag, itemId), hovered);
         var (fill, edge, ink) = PillColors(tone, enabled, hovered, held);
@@ -104,20 +126,61 @@ public static partial class Chrome
         }
 
         var dl = ImGui.GetWindowDrawList();
-        dl.AddRectFilled(min, max, fill, rounding);
+        var full = Theme.Flair == Flair.Full && !Theme.FollowingDalamud;
+        if (full && enabled && tone is PillTone.Primary or PillTone.Normal or PillTone.Quiet)
+        {
+            // Full: lit, raised surfaces. The primary is the one filled gold surface, with its own bloom and highlight.
+            var primary = tone == PillTone.Primary;
+            if (primary && Theme.ShowGlow)
+            {
+                for (var i = 3; i >= 1; i--)
+                {
+                    var grow = UiMetrics.Px(14f) * i / 3f;
+                    dl.AddRectFilled(min - new Vector2(grow * 0.5f), max + new Vector2(grow * 0.5f), Theme.WithAlpha(Theme.Moon, 0.10f * (held ? 1.3f : hovered ? 1.15f : 1f)), rounding + (grow * 0.5f));
+                }
+            }
+
+            var lift = held ? 0.92f : hovered ? 1.06f : 1f;
+            var top = primary ? GoldTop : RaisedTop;
+            var foot = primary ? GoldFoot : RaisedFoot;
+            top = new Vector4(MathF.Min(1f, top.X * lift), MathF.Min(1f, top.Y * lift), MathF.Min(1f, top.Z * lift), 1f);
+            foot = new Vector4(MathF.Min(1f, foot.X * lift), MathF.Min(1f, foot.Y * lift), MathF.Min(1f, foot.Z * lift), 1f);
+            var first = dl.VtxBuffer.Size;
+            dl.AddRectFilled(min, max, 0xFFFFFFFFu, rounding);
+            var vertices = dl.VtxBuffer;
+            for (var i = first; i < vertices.Size; i++)
+            {
+                var vertex = vertices[i];
+                var c = Vector4.Lerp(top, foot, Math.Clamp((vertex.Pos.Y - min.Y) / height, 0f, 1f));
+                c.W = (vertex.Col >> 24) / 255f;
+                vertex.Col = Theme.U32(c);
+                vertices[i] = vertex;
+            }
+
+            dl.AddLine(new Vector2(min.X + rounding, min.Y + 1f), new Vector2(max.X - rounding, min.Y + 1f), Theme.WithAlpha(primary ? Vector4.One : Theme.MoonHigh, primary ? 0.45f : 0.06f), 1f);
+        }
+        else
+        {
+            dl.AddRectFilled(min, max, fill, rounding);
+        }
+
         if (edge != 0)
         {
             var thickness = Theme.Glyphs.HighContrast ? MathF.Max(1.5f, UiMetrics.Px(1.5f)) : UiMetrics.Hairline;
             dl.AddRect(min, max, edge, rounding, ImDrawFlags.None, thickness);
         }
 
-        ImGui.PushFont(UiBuilder.IconFont);
         var iconX = label is null ? min.X + ((width - iconSize.X) * 0.5f) : min.X + UiMetrics.Px(ActionPillFit.PadStartLogical);
-        dl.AddText(new Vector2(MathF.Round(iconX), MathF.Round(min.Y + ((height - iconSize.Y) * 0.5f))), ink, icon);
-        ImGui.PopFont();
+        if (!textOnly)
+        {
+            ImGui.PushFont(UiBuilder.IconFont);
+            dl.AddText(new Vector2(MathF.Round(iconX), MathF.Round(min.Y + ((height - iconSize.Y) * 0.5f))), ink, icon);
+            ImGui.PopFont();
+        }
+
         if (label is not null)
         {
-            var labelX = iconX + iconSize.X + UiMetrics.Px(ActionPillFit.IconGapLogical);
+            var labelX = textOnly ? iconX : iconX + iconSize.X + UiMetrics.Px(ActionPillFit.IconGapLogical);
             dl.AddText(new Vector2(MathF.Round(labelX), MathF.Round(min.Y + ((height - labelSize.Y) * 0.5f))), ink, label);
         }
 
@@ -130,23 +193,57 @@ public static partial class Chrome
         return clicked && enabled;
     }
 
-    /// <summary>The fill, edge (0 for none) and ink of a pill at the frame's Flair level and palette.</summary>
+    /// <summary>
+    /// The fill, edge (0 for none) and ink of a pill at the frame's Decoration level and palette (docs/design/flair-v13
+    /// §1, "Action pills"): Full raised pills with brass edges, the primary lit gold with dark ink (drawn as a gradient
+    /// by <see cref="ActionPill"/>); Quiet flat pills with a neutral edge, the primary flat gold; Plain rectangular
+    /// buttons, text only, the primary set apart by gold text.
+    /// </summary>
     private static (uint Fill, uint Edge, uint Ink) PillColors(PillTone tone, bool enabled, bool hovered, bool held)
     {
         var s = Theme.Surface;
         var flair = Theme.Flair;
         var highContrast = Theme.Glyphs.HighContrast;
         var plain = flair == Flair.Plain;
+        var quiet = flair == Flair.Quiet;
         var brass = Theme.WithAlpha(s.Ornament, Theme.OrnamentAlpha(CardBrassAlpha));
+        var neutral = highContrast ? Theme.U32(s.StrongLine with { W = 1f }) : Theme.U32(plain ? Theme.Tones.HeaderLine : s.Line);
         var wash = held ? 0.28f : hovered ? 0.22f : 0.16f;
 
         if (!enabled)
         {
             // Dimmed, never hidden: the label stays readable in the disabled tone.
             var dimEdge = highContrast ? Theme.U32(s.TextDisabled)
-                : plain ? 0u
+                : plain || quiet ? neutral
                 : Theme.WithAlpha(s.Ornament, CardBrassAlpha * DisabledEdgeShare);
             return (Theme.WithAlpha(s.Raised, 0.6f * s.Raised.W), dimEdge, Theme.U32(s.TextDisabled));
+        }
+
+        if (tone == PillTone.Primary && !Theme.FollowingDalamud && !highContrast)
+        {
+            switch (flair)
+            {
+                case Flair.Full:
+                    return (Theme.MoonU32, Theme.U32(GoldEdge), Theme.U32(GoldInk));
+                case Flair.Quiet:
+                    var gold = held ? Theme.MoonDeep : hovered ? Vector4.Lerp(Theme.Moon, Theme.MoonHigh, 0.4f) : Theme.Moon;
+                    return (Theme.U32(gold), Theme.U32(gold), Theme.U32(GoldInk));
+            }
+        }
+
+        if (plain && tone is PillTone.Primary or PillTone.Normal or PillTone.Quiet)
+        {
+            var fill = ImGui.GetColorU32(held ? ImGuiCol.ButtonActive : hovered ? ImGuiCol.ButtonHovered : ImGuiCol.Button);
+            var ink = tone == PillTone.Primary ? Theme.AccentU32 : tone == PillTone.Quiet && !hovered ? Theme.U32(s.TextSecondary) : Theme.U32(s.Text);
+            var edge = tone == PillTone.Primary && !highContrast ? Theme.WithAlpha(Theme.Accent, 0.3f) : neutral;
+            return (fill, edge, ink);
+        }
+
+        if (quiet && tone is PillTone.Normal or PillTone.Quiet)
+        {
+            var ink = tone == PillTone.Quiet && !hovered ? Theme.U32(s.TextSecondary) : Theme.U32(s.Text);
+            var fill = held ? Theme.WithAlpha(s.Text, 0.18f) : hovered ? Theme.WithAlpha(s.Hover, 1f) : Theme.U32(Theme.Tones.Card);
+            return (fill, neutral, ink);
         }
 
         switch (tone)

@@ -146,7 +146,7 @@ public sealed class FlightPane
         // Every A Realm Reborn field zone answers the one A Realm Reborn entry.
         var here = Index.ZoneFor(currentTerritory());
         var line = ImGui.GetTextLineHeight();
-        var art = Theme.ShowRules;
+        var art = Theme.Sectioned;
         var countWidth = CountWidth(art);
 
         // The ring column holds the zone rows' bead rings and, at Full and Quiet, the expansion marks (U6: 32 px, hi-res,

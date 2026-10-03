@@ -43,7 +43,6 @@ public sealed partial class DetailPane
     public const int MaxUnlocks = 8;
 
     private const int PathScrollFrames = 2;
-    private const float HeroMaxHeight = 96f;
     private const float MarkScale = 0.72f;
 
     // Section icons, converted once (ToIconString allocates).
@@ -264,13 +263,13 @@ public sealed partial class DetailPane
         var width = ImGui.GetContentRegionAvail().X;
         bodyRight = ImGui.GetCursorScreenPos().X + width;
 
-        // Flair Full and Quiet: open sections, their content running to the body's edge; Plain: the 1.3 cards.
-        var open = Theme.ShowRules;
-        cardRight = open ? bodyRight : bodyRight - UiMetrics.Px(10f);
+        // The sections are cards at Full (gilt brass) and Quiet (tonal planes), and heading rows on the pane at Plain
+        // (docs/design/flair-v13 §1, "Card frame"): content wraps at the card's inner edge, or the body's at Plain.
+        cardRight = bodyRight - UiMetrics.Px(Theme.Spacing.CardPad.X);
         DrawHero(quest);
         DrawNotYet(quest);
         DrawUnderHero(session, rowId);
-        if (open)
+        if (Theme.HeroStyle == HeroStyle.Banner)
         {
             MoonRoadDivider();
         }
@@ -319,8 +318,8 @@ public sealed partial class DetailPane
         DrawPathNext();
         DrawChain();
 
-        // The chart ends at the card's inner edge, or a gutter short of the body's (the minimap draws in the gutter).
-        var chartRight = open ? bodyRight - pad : cardRight;
+        // The chart ends at the card's inner edge, or a gutter short of the body's at Plain (the minimap draws in the gutter).
+        var chartRight = Theme.Flair == Flair.Plain ? bodyRight - pad : cardRight;
         chart.Draw(MathF.Max(1f, chartRight - ImGui.GetCursorScreenPos().X), 0.4f * detailHeight, pad);
         DrawQuestMapButton(rowId);
         EndSection();
@@ -337,7 +336,9 @@ public sealed partial class DetailPane
         Gap();
     }
 
-    private static void Gap() => ImGui.Dummy(new Vector2(0f, UiMetrics.Px(2f)));
+    /// <summary>The air between two sections: the level's gap (12 at Full, 8 at Quiet, 4 at Plain) less ImGui's own spacing.</summary>
+    private static void Gap() =>
+        ImGui.Dummy(new Vector2(0f, MathF.Max(0f, UiMetrics.Px(Theme.Spacing.Gap) - (2f * ImGui.GetStyle().ItemSpacing.Y))));
 
     /// <summary>The side of a Rewards tile and of an Unlocks row's icon well, so the two sections read as a pair.</summary>
     private static float PairTile => MathF.Max(UiMetrics.Px(40f), UiMetrics.Icon(34f) + UiMetrics.Px(8f));
@@ -362,7 +363,7 @@ public sealed partial class DetailPane
         using var role = Typography.Caption();
         var size = ImGui.GetFontSize();
         var width = ImGui.CalcTextSize(caption).X;
-        var right = cardRight - UiMetrics.Px(10f);
+        var right = cardRight - UiMetrics.Px(Theme.Spacing.CardPad.X);
         var x = right - width;
         if (x >= titleMax.X + UiMetrics.Px(8f))
         {
@@ -376,110 +377,25 @@ public sealed partial class DetailPane
     // ------------------------------------------------------------------ hero
 
     /// <summary>
-    /// The hero. At Flair Full and Quiet the Moon Road hero (DetailPane.Hero.cs): every quest's banner from the fallback
-    /// chain in its frame, the state moon rising on its edge, the title and the chips under it. At Plain the 1.3 hero:
-    /// the banner (from the same chain) with the state pill and the name on it, or the Night card while it loads.
+    /// The hero at the Decoration level (docs/design/flair-v13 §1, "Banners"; DetailPane.Hero.cs): at Full the
+    /// night-graded banner from the fallback chain with the medal rising over its edge and the title on the art; at
+    /// Quiet a title block over a hairline, then a 52 px medal plate; at Plain the name and path, then a key-value list
+    /// (State, Level, Giver) with a 12 px glyph and no banner.
     /// </summary>
     private void DrawHero(QuestRecord quest)
     {
-        if (Theme.ShowRules)
+        switch (Theme.HeroStyle)
         {
-            DrawMoonRoadHero(quest);
-            return;
+            case HeroStyle.Banner:
+                DrawMoonRoadHero(quest);
+                break;
+            case HeroStyle.Plate:
+                DrawPlateHero(quest);
+                break;
+            default:
+                DrawLedgerHero(quest);
+                break;
         }
-
-        if (!DrawBanner(quest))
-        {
-            DrawHeaderCard(quest);
-        }
-    }
-
-    /// <summary>
-    /// The journal banner at the column's width and at most 96 px tall, cover-cropped, a scrim from 30 % of its height
-    /// to the bottom, the state pill top left (clamped, with an ellipsis), the special badge top right, and the name
-    /// bottom left while it fits under the pill, else under the banner; the caption line follows under the banner as
-    /// whole segments that wrap (L5): the 1.3 hero, with the banner from the fallback chain (<see cref="CurrentBanner"/>)
-    /// so every quest has one. False while it is not loaded yet.
-    /// </summary>
-    private bool DrawBanner(QuestRecord quest)
-    {
-        var choice = CurrentBanner(quest);
-        if (!BannerArtwork.TryGetWrap(textures, in choice, out var wrap, out var shown) || wrap.Width <= 0 || wrap.Height <= 0)
-        {
-            return false;
-        }
-
-        var dl = ImGui.GetWindowDrawList();
-        var width = ImGui.GetContentRegionAvail().X;
-        var height = MathF.Min(UiMetrics.Px(HeroMaxHeight), width * wrap.Height / wrap.Width);
-        var min = ImGui.GetCursorScreenPos();
-        var max = min + new Vector2(width, height);
-        var rounding = UiMetrics.Px(6f);
-        Chrome.ImageCover(wrap.Handle, new Vector2(width, height), new Vector2(wrap.Width, wrap.Height), rounding);
-        var after = ImGui.GetCursorScreenPos();
-        Chrome.Scrim(dl, new Vector2(min.X, min.Y + (height * 0.3f)), max, 0f, 0.92f);
-
-        var pad = UiMetrics.Px(8f);
-        var badgeSize = MathF.Min(UiMetrics.BannerBadgeSize, UiMetrics.Px(22f));
-
-        // State pill top left, clamped to the room the special badge leaves; its item carries the state tooltip.
-        var pillMin = min + new Vector2(pad, pad);
-        var pillRoom = width - (pad * 2f) - (quest.IconSpecial != 0 ? badgeSize + pad : 0f);
-        var pillSize = StatePill(dl, pillMin, pillRoom);
-        ImGui.SetCursorScreenPos(pillMin);
-        ImGui.InvisibleButton("##heroState", pillSize);
-        Chrome.FocusRing(pillSize.Y * 0.5f);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
-        }
-
-        if (quest.IconSpecial != 0)
-        {
-            var badgeMin = new Vector2(max.X - pad - badgeSize, min.Y + pad);
-            if (DrawSpecialBadge(dl, quest, badgeMin, badgeSize))
-            {
-                ImGui.SetCursorScreenPos(badgeMin);
-                ImGui.InvisibleButton("##heroBadge", new Vector2(badgeSize, badgeSize));
-                if (ImGui.IsItemHovered())
-                {
-                    UiMetrics.Tooltip(BadgeTooltip(quest));
-                }
-            }
-        }
-
-        // The name (display role) on the banner's foot while it fits under the pill; a longer one goes under the
-        // banner, so it never grows upward over the pill (L5).
-        var nameWidth = MathF.Max(UiMetrics.Px(40f), width - (pad * 2f));
-        var nameOnBanner = false;
-        using (Typography.Display())
-        {
-            var nameHeight = TextFlow.Height(model.DisplayName, nameWidth);
-            if (nameHeight <= height - pillSize.Y - (pad * 3f))
-            {
-                ImGui.SetCursorScreenPos(new Vector2(min.X + pad, max.Y - pad - nameHeight));
-                TextFlow.Wrapped(model.DisplayName, nameWidth, Theme.U32(Theme.Surface.Text));
-                nameOnBanner = true;
-            }
-        }
-
-        ImGui.SetCursorScreenPos(after);
-        if (!nameOnBanner)
-        {
-            using var display = Typography.Display();
-            TextFlow.Wrapped(model.DisplayName, width, Theme.U32(Theme.Surface.Text));
-        }
-
-        // The 1.3 banner had no tooltip; only a banner the shield swapped for the category art says why, as 1.3's Night
-        // card did.
-        if (ArtworkWithheld(quest))
-        {
-            BannerTooltip(min, max, shown);
-        }
-
-        // The caption line under the banner, its segments whole and wrapping.
-        SegmentFlow(model.HeaderSegments, BlockerText.Separator, width, Theme.Surface.TextSecondary);
-        return true;
     }
 
     private BlockerNames BlockerNamesOf() => lastNames ?? BlockerNames.Default;
@@ -491,38 +407,6 @@ public sealed partial class DetailPane
     // The spoiler shield and the catalog as of the last refresh, for the hero banner's shield (a donor's own state).
     private Core.Query.SpoilerMask? lastSpoilers;
     private QuestCatalog? lastCatalog;
-
-    /// <summary>
-    /// The state pill (ui-revamp §2.5): the state colour at 18 % over a dark base, a 1 px border at 70 %, a 12 px moon and
-    /// the state's name in its text tone. At most <paramref name="maxWidth"/> wide: a longer name ends in an ellipsis
-    /// (the pill's tooltip names the state in full). Returns its size.
-    /// </summary>
-    private Vector2 StatePill(ImDrawListPtr dl, Vector2 min, float maxWidth)
-    {
-        using var caption = Typography.Caption();
-        var captionSize = ImGui.GetFontSize();
-        var moon = UiMetrics.Icon(6f);
-        var height = MathF.Max(UiMetrics.Px(20f), MathF.Max(captionSize + UiMetrics.Px(6f), (moon * 2f) + UiMetrics.Px(6f)));
-        var textWidth = ImGui.CalcTextSize(model.StateName).X;
-        var chrome = UiMetrics.Px(5f) + (moon * 2f) + UiMetrics.Px(6f) + UiMetrics.Px(8f);
-        var size = new Vector2(MathF.Min(chrome + textWidth, MathF.Max(height, maxWidth)), height);
-        var max = min + size;
-        var tone = Theme.StateColor(model.State);
-        var rounding = height * 0.5f;
-        dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Night, 0.6f), rounding);
-        dl.AddRectFilled(min, max, Theme.WithAlpha(tone, 0.18f), rounding);
-        dl.AddRect(min, max, Theme.WithAlpha(tone, 0.7f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
-        var center = new Vector2(min.X + UiMetrics.Px(5f) + moon, min.Y + (height * 0.5f));
-        MoonGlyph.Draw(dl, center, moon, model.State, model.ReadyOnJob);
-        var textRoom = size.X - chrome;
-        if (textRoom > 0f)
-        {
-            var textPos = new Vector2(center.X + moon + UiMetrics.Px(6f), min.Y + ((height - captionSize) * 0.5f));
-            Chrome.EllipsisTextAt(dl, textPos, textRoom, model.StateName, Theme.U32(StateTextColor(model.State)), textWidth);
-        }
-
-        return size;
-    }
 
     /// <summary>A state's text tone for pills and captions: the state colour, with Locked out, Not checked and Blocked in their readable text tones.</summary>
     private static Vector4 StateTextColor(QuestState state) => state switch
@@ -552,67 +436,6 @@ public sealed partial class DetailPane
     private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? Strings.DetailSeasonalBadgeTooltip : Strings.DetailSpecialBadgeTooltip;
 
     /// <summary>
-    /// The Night card with the state moon, the name and the caption line, for quests without a banner, and for quests
-    /// whose banner the spoiler shield hides (the card then says the artwork appears once the quest is in the journal).
-    /// </summary>
-    private void DrawHeaderCard(QuestRecord quest)
-    {
-        var dl = ImGui.GetWindowDrawList();
-        Chrome.BeginCard("##headerCard");
-
-        // Below 320 the moon (28 px) sits above the title, which then takes the card's whole width (L5).
-        var stacked = DetailTiers.Stacks(tier);
-        var radius = stacked ? UiMetrics.Icon(14f) : UiMetrics.Icon(20f);
-        var box = stacked ? radius * 2f : radius * 2.3f;
-        var pos = ImGui.GetCursorScreenPos();
-        ImGui.Dummy(new Vector2(box, box));
-        MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State, model.ReadyOnJob);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
-        }
-
-        if (quest.IconSpecial != 0)
-        {
-            ImGui.SameLine();
-            var size = MathF.Min(UiMetrics.BannerBadgeSize, UiMetrics.Px(22f));
-            var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
-            ImGui.Dummy(new Vector2(size, box));
-            if (DrawSpecialBadge(dl, quest, badgeMin, size) && ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(BadgeTooltip(quest));
-            }
-        }
-
-        if (!stacked)
-        {
-            ImGui.SameLine();
-        }
-
-        // The name wraps between words at the card's inner edge; the caption line's segments wrap whole.
-        using (ImRaii.Group())
-        {
-            var room = RoomTo(cardRight);
-            using (Typography.Display())
-            {
-                TextFlow.Wrapped(model.DisplayName, room, Theme.U32(Theme.Surface.Text));
-            }
-
-            SegmentFlow(model.HeaderSegments, BlockerText.Separator, room, Theme.Surface.TextSecondary);
-            if (ArtworkWithheld(quest))
-            {
-                TextFlow.Wrapped(Strings.ArtworkHidden, room, Theme.U32(Theme.Surface.TextSecondary));
-            }
-
-            var pillPos = ImGui.GetCursorScreenPos();
-            var pillSize = StatePill(dl, pillPos, room);
-            ImGui.Dummy(pillSize);
-        }
-
-        Chrome.EndCard();
-    }
-
-    /// <summary>
     /// Under the hero: the name-reveal line when the shield masks it, what the pill cannot say (the blocker, the step,
     /// the job that can take it), the journal path and the filing line.
     /// </summary>
@@ -633,23 +456,19 @@ public sealed partial class DetailPane
             }
         }
 
-        // The "Not yet" callout already says why a quest cannot be taken (L8); the status line is for the rest. With
-        // the Moon Road hero there is no state pill: the line spells the state out beside the rising moon.
-        if (model.Callout is null && Theme.ShowRules)
+        // The "Not yet" callout already says why a quest cannot be taken (L8); the status line is for the rest. The
+        // banner hero spells the state out under the rising medal; the plate and the ledger say it themselves.
+        if (model.Callout is null && Theme.HeroStyle == HeroStyle.Banner)
         {
             DrawStateLine();
         }
-        else if (model.Callout is null && (model.StatusReason.Length > 0 || model.StateNote is not null))
+
+        // The journal path wraps on its "›", never inside a name (L5); the plate and the ledger carry it in their title block.
+        if (Theme.HeroStyle == HeroStyle.Banner)
         {
-            TextFlow.Wrapped(model.StatusReason.Length > 0 ? model.StatusReason : model.StateNote!, RoomTo(bodyRight), Theme.U32(StateTextColor(model.State)));
-            if (model.StatusReason.Length > 0 && model.StateNote is { } note)
-            {
-                TextFlow.Wrapped(note, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextDisabled));
-            }
+            SegmentFlow(model.JournalSegments, JournalSeparator, RoomTo(bodyRight), Theme.Surface.TextDisabled);
         }
 
-        // The journal path wraps on its "›", never inside a name (L5).
-        SegmentFlow(model.JournalSegments, JournalSeparator, RoomTo(bodyRight), Theme.Surface.TextDisabled);
         if (model.FilingLine is { } filing)
         {
             TextFlow.Wrapped(filing, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextSecondary));
@@ -742,7 +561,7 @@ public sealed partial class DetailPane
         var iconSize = tile - UiMetrics.Px(8f);
         var gap = PairGap;
         var markSize = ImGui.GetFontSize() * MarkScale;
-        var obtained = Theme.ShowRules && model.State is QuestState.Completed or QuestState.DoneThisCycle;
+        var obtained = Theme.MoonRoadArt && model.State is QuestState.Completed or QuestState.DoneThisCycle;
         var rowStart = ImGui.GetCursorScreenPos();
         var x = rowStart.X;
         var y = rowStart.Y;

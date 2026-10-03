@@ -884,7 +884,7 @@ public sealed partial class MainWindow : Window, IDisposable
     private static void DrawLoading()
     {
         var reduce = UiMetrics.ReduceMotion;
-        if (!Theme.ShowRules)
+        if (!Theme.Sectioned)
         {
             ImGui.TextUnformatted(Strings.LoadingCatalog);
             ImGui.SameLine(0f, 0f);
@@ -1075,15 +1075,9 @@ public sealed partial class MainWindow : Window, IDisposable
         dl.PushClipRect(windowPos, windowMax, false);
         dl.AddRectFilled(min, max, Theme.U32(s.Raised));
         var line = UiMetrics.Hairline;
-        if (Theme.ShowRules)
-        {
-            // Moon Road (R3 #10): a brass rule fading out across the window (solid under high contrast).
-            Ornament.Rule(dl, new Vector2(min.X, max.Y - line), max.X - min.X, thickness: line);
-        }
-        else
-        {
-            dl.AddLine(new Vector2(min.X, max.Y - line * 0.5f), new Vector2(max.X, max.Y - line * 0.5f), Theme.U32(s.Line), line);
-        }
+        // Moon Road (R3 #10): a brass rule fading out across the window (solid under high contrast); Quiet's hairline,
+        // Plain's line (Ornament.Rule follows the level).
+        Ornament.Rule(dl, new Vector2(min.X, max.Y - line), max.X - min.X, thickness: line);
 
         dl.PopClipRect();
     }
@@ -1470,7 +1464,7 @@ public sealed partial class MainWindow : Window, IDisposable
     private void DrawBody(SessionState session, CatalogBundle bundle)
     {
         var style = ImGui.GetStyle();
-        var statusHeight = ChromeBands.StatusBarHeight(ImGui.GetTextLineHeight(), style.ItemSpacing.Y);
+        var statusHeight = ChromeBands.StatusBarHeight(ImGui.GetTextLineHeight(), style.ItemSpacing.Y, FlairRules.StatusBar(Theme.Flair));
         var height = MathF.Max(UiMetrics.MinBodyHeight, ImGui.GetContentRegionAvail().Y - statusHeight);
         var total = ImGui.GetContentRegionAvail().X;
         var settings = plugin.Settings;
@@ -1483,7 +1477,8 @@ public sealed partial class MainWindow : Window, IDisposable
 
         // The rail keeps its own width (it follows the UI scale every frame): 64 logical px with labels, or the 44 px
         // compact rail on a narrow window or by setting (feature plan v4 L7).
-        tabStrip.UpdateMode(ImGui.GetWindowSize().X / ImGuiHelpers.GlobalScale, UiMetrics.UiScale, settings.CompactRail);
+        // Plain's rail is always the compact one: icons only, no crest or labels (docs/design/flair-v13 §1).
+        tabStrip.UpdateMode(ImGui.GetWindowSize().X / ImGuiHelpers.GlobalScale, UiMetrics.UiScale, settings.CompactRail || FlairRules.CompactRail(Theme.Flair));
         var widths = PaneSplit.Solve(settings, total, tabStrip.RailWidth, stripAllowed);
 
         // A rail taller than a short window scrolls with the wheel, without a scrollbar eating its width.
@@ -1506,7 +1501,7 @@ public sealed partial class MainWindow : Window, IDisposable
         var changed = paneSplit.Handle(PaneSide.Tree, settings, in widths, height, total, stripAllowed);
 
         ImGui.SameLine(0f, 0f);
-        PaneGradientAtCursor(widths.Centre, height);
+        PaneBackdropAtCursor(widths.Centre, height, Theme.Tones.Table);
         // 0 would mean "fill the rest" to ImGui: a pane squeezed to nothing stays 1 px wide instead of covering the detail pane.
         using (var center = ImRaii.Child("##center", new Vector2(MathF.Max(1f, widths.Centre), height)))
         {
@@ -1540,20 +1535,23 @@ public sealed partial class MainWindow : Window, IDisposable
             settingsDirtyAtUtc ??= DateTime.UtcNow;
         }
 
-        // The detail column runs to the window's edge: its children take the content region's width. With the pane
-        // gradient its Night backdrop is painted here, under the gradient, and the panels inside leave their own clear.
+        // The detail column runs to the window's edge: its children take the content region's width. Its backdrop is
+        // painted here at every level (the sky at Full, the detail tone at Quiet, the ledger's flat tone at Plain), and
+        // the panels inside leave their own clear.
         ImGui.SameLine(0f, 0f);
-        var gradient = Theme.ShowPaneGradient;
-        if (gradient)
         {
             var min = ImGui.GetCursorScreenPos();
             var max = min + new Vector2(ImGui.GetContentRegionAvail().X, height);
             var dl = ImGui.GetWindowDrawList();
-            dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Window), style.ChildRounding);
-            Ornament.PaneGradient(dl, min, max);
+            var gradient = Theme.ShowPaneGradient;
+            dl.AddRectFilled(min, max, Theme.U32(gradient ? Theme.Surface.Window : Theme.Tones.Detail), style.ChildRounding);
+            if (gradient)
+            {
+                Ornament.SkyOverWater(dl, min, max);
+            }
         }
 
-        using var backdrop = Theme.PushPaneBackdrop(gradient);
+        using var backdrop = Theme.PushPaneBackdrop();
         using var detailColumn = ImRaii.Group();
 
         // A selected quest's details always start at the top of the column (feature plan v6 U2): the Setup, What's new
@@ -1609,7 +1607,7 @@ public sealed partial class MainWindow : Window, IDisposable
     /// </summary>
     private void DrawNavigation(SessionState session, CatalogBundle bundle, in PaneWidths widths, float height)
     {
-        PaneGradientAtCursor(widths.Tree, height);
+        PaneBackdropAtCursor(widths.Tree, height, Theme.Tones.Tree);
         leftMin = ImGui.GetCursorScreenPos();
         leftWidth = MathF.Max(1f, widths.Tree);
         using var left = ImRaii.Child("##left", new Vector2(MathF.Max(1f, widths.Tree), height));
@@ -1629,18 +1627,28 @@ public sealed partial class MainWindow : Window, IDisposable
     }
 
     /// <summary>
-    /// The pane gradient (moon-road proposal §5, sky over water) behind a column about to be drawn at the cursor, on the
-    /// window's draw list under the column's clear child background, at the user's window opacity. Full flair only.
+    /// A column's backdrop about to be drawn at the cursor, on the window's draw list under the column's clear child
+    /// background, at the user's window opacity (docs/design/flair-v13 §1, "Pane background"): at Full the sky over
+    /// water (<see cref="Ornament.SkyOverWater"/>) over the window; at Quiet the column's own tone (<paramref name="tone"/>,
+    /// the panes told apart by tone, not lines); at Plain the ledger's one flat tone.
     /// </summary>
-    private static void PaneGradientAtCursor(float width, float height)
+    private static void PaneBackdropAtCursor(float width, float height, Vector4 tone)
     {
-        if (!Theme.ShowPaneGradient || !(width > 1f))
+        if (!(width > 1f))
         {
             return;
         }
 
         var min = ImGui.GetCursorScreenPos();
-        Ornament.PaneGradient(ImGui.GetWindowDrawList(), min, min + new Vector2(width, height), alpha: Theme.WindowAlpha);
+        var max = min + new Vector2(width, height);
+        var dl = ImGui.GetWindowDrawList();
+        if (Theme.ShowPaneGradient)
+        {
+            Ornament.SkyOverWater(dl, min, max, alpha: Theme.WindowAlpha);
+            return;
+        }
+
+        dl.AddRectFilled(min, max, Theme.WithAlpha(tone, Theme.WindowAlpha));
     }
 
     /// <summary>Left-column body of the active navigation tab.</summary>
@@ -1709,31 +1717,39 @@ public sealed partial class MainWindow : Window, IDisposable
 
         RefreshMsq(session, bundle);
 
-        // The whole bar is in the caption role (ui-revamp §4.2): 0.85× the body, never under 12 px.
+        // The bar at the Decoration level (docs/design/flair-v13 §1, "Status bar"): at Full a Deep gradient under a brass
+        // rule brightest at the centre, the overall gauge with its percentage, the MSQ pill with its medal and the live
+        // pip's glow; at Quiet a hairline, the ring and the MSQ as gold text; at Plain a 1 px line and text only. Its
+        // height is the level's (ChromeBands.StatusBarHeight), the rule riding in the spacing over it.
+        var barStyle = FlairRules.StatusBar(Theme.Flair);
+        var bodyLine = ImGui.GetTextLineHeight();
+        var spacingY = ImGui.GetStyle().ItemSpacing.Y;
         using var caption = Typography.Caption();
         var barMin = ImGui.GetCursorScreenPos();
-        if (Theme.ShowRules)
-        {
-            // Moon Road (R3 #10): the separator over the bar is a brass rule, as wide as the separator was.
-            var rule = new Vector2(ImGui.GetWindowPos().X, barMin.Y);
-            var thickness = UiMetrics.Hairline;
-            ImGui.Dummy(new Vector2(ImGui.GetContentRegionAvail().X, thickness));
-            Ornament.Rule(ImGui.GetWindowDrawList(), rule, ImGui.GetWindowSize().X, thickness: thickness);
-        }
-        else
-        {
-            ImGui.Separator();
-        }
-
         var dl = ImGui.GetWindowDrawList();
+        var windowPos = ImGui.GetWindowPos();
+        var windowWidth = ImGui.GetWindowSize().X;
+        var regionBottom = barMin.Y + MathF.Max(bodyLine, ChromeBands.StatusBarHeight(bodyLine, spacingY, barStyle) - spacingY);
+        var ruleY = MathF.Floor(barMin.Y - (spacingY * 0.5f));
+        dl.PushClipRect(new Vector2(windowPos.X, ruleY), windowPos + ImGui.GetWindowSize(), false);
+        DrawStatusGround(dl, new Vector2(windowPos.X, ruleY), new Vector2(windowPos.X + windowWidth, windowPos.Y + ImGui.GetWindowSize().Y), barStyle);
+        dl.PopClipRect();
+
         var line = ImGui.GetTextLineHeight();
         var rowHeight = line;
-        var origin = ImGui.GetCursorScreenPos();
+        var origin = new Vector2(barMin.X, MathF.Round(barMin.Y + MathF.Max(0f, (regionBottom - barMin.Y - line) * 0.5f)));
         var right = origin.X + ImGui.GetContentRegionAvail().X;
         var textY = origin.Y + (rowHeight - line) * 0.5f;
-        var gap = UiMetrics.Px(6f);
-        var separatorWidth = ImGui.CalcTextSize(StatusSeparator).X + 2f * gap;
+        var gap = UiMetrics.Px(barStyle == StatusBarStyle.Text ? 5f : 6f);
+        var separator = barStyle == StatusBarStyle.Text ? StatusBar : StatusSeparator;
+        var separatorWidth = ImGui.CalcTextSize(separator).X + 2f * gap;
         var x = origin.X;
+
+        // The overall gauge with its percentage (Full and Quiet), or the percentage alone (Plain), before the counts.
+        if (runner.Counts is { } counts && counts.Overall.Total > 0)
+        {
+            x = DrawStatusGauge(dl, x, textY, line, counts.Overall.Fraction, barStyle, separator, gap);
+        }
 
         // Version, right-aligned in Dusk; it carries the data stamp on hover.
         var versionWidth = ImGui.CalcTextSize(versionText).X;
@@ -1780,7 +1796,15 @@ public sealed partial class MainWindow : Window, IDisposable
         if (x + separatorWidth + modeWidth <= versionX)
         {
             // Static pip (accessibility B5: nothing here moves) and the live / snapshot words.
-            x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap) : x;
+            x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap, separator) : x;
+            if (Theme.ShowGlow && session.IsLive)
+            {
+                // Full: the live pip glows (warm light, low).
+                var pip = new Vector2(x + (pipSize * 0.5f), textY + (pipSize * 0.5f));
+                dl.AddCircleFilled(pip, pipSize * 0.42f, Theme.WithAlpha(Theme.Moon, 0.14f), 16);
+                dl.AddCircleFilled(pip, pipSize * 0.30f, Theme.WithAlpha(Theme.Moon, 0.16f), 16);
+            }
+
             ImGui.SetCursorScreenPos(new Vector2(x, textY));
             Marks.DrawInline(PipFor(session), pipSize);
             if (ImGui.IsItemHovered())
@@ -1798,12 +1822,38 @@ public sealed partial class MainWindow : Window, IDisposable
 
         if (msqWidth > 0f && msqRoom > 2f * pillPad && x + separatorWidth + msqRoom <= versionX + 0.5f)
         {
-            x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap) : x;
+            x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap, separator) : x;
             var pillMin = new Vector2(x, textY - UiMetrics.Px(1f));
             var pillMax = new Vector2(x + msqRoom, textY + line + UiMetrics.Px(1f));
-            dl.AddRectFilled(pillMin, pillMax, MsqPillFill, (pillMax.Y - pillMin.Y) * 0.5f);
-            ImGui.SetCursorScreenPos(new Vector2(x + pillPad, textY));
-            Chrome.EllipsisText(msqStatus, msqRoom - 2f * pillPad, Theme.AccentU32, msqTextWidth);
+            var msqInk = Theme.AccentU32;
+            var textLeft = x + pillPad;
+            switch (barStyle)
+            {
+                case StatusBarStyle.MoonRoad:
+                {
+                    // Full: the gold-tinted pill with a gold edge and the MSQ quest's medal at its start.
+                    var r = (pillMax.Y - pillMin.Y) * 0.5f;
+                    dl.AddRectFilledMultiColor(pillMin, pillMax, MsqPillTop, MsqPillTop, MsqPillFill, MsqPillFill);
+                    dl.AddRect(pillMin, pillMax, Theme.WithAlpha(Theme.Moon, 0.35f), r, ImDrawFlags.None, UiMetrics.Hairline);
+                    if (msq is { } position && msqRoom > (2f * pillPad) + line)
+                    {
+                        var medal = MathF.Round(line * 0.42f);
+                        MoonGlyph.Draw(dl, new Vector2(pillMin.X + r, (pillMin.Y + pillMax.Y) * 0.5f), medal, position.State);
+                        textLeft = pillMin.X + (2f * r) + UiMetrics.Px(2f);
+                    }
+
+                    break;
+                }
+
+                case StatusBarStyle.Text:
+                    // Plain: grey text, the MSQ in the primary tone.
+                    msqInk = Theme.U32(Theme.Surface.Text);
+                    textLeft = x;
+                    break;
+            }
+
+            ImGui.SetCursorScreenPos(new Vector2(textLeft, textY));
+            Chrome.EllipsisText(msqStatus, MathF.Max(1f, pillMax.X - pillPad - textLeft), msqInk, msqTextWidth);
             // Only while this window is the one under the mouse: another window (Settings, the Todo overlay, a popup)
             // covering the bar gets neither the tooltip nor the hand.
             if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(pillMin, pillMax))
@@ -1840,10 +1890,93 @@ public sealed partial class MainWindow : Window, IDisposable
     private const string StatusSeparator = "·";
 
     /// <summary>Draws a separator at <paramref name="x"/> and returns where the next segment starts.</summary>
-    private static float StatusSeparatorAt(ImDrawListPtr dl, float x, float y, float gap)
+    private static float StatusSeparatorAt(ImDrawListPtr dl, float x, float y, float gap, string separator = StatusSeparator)
     {
-        dl.AddText(new Vector2(x + gap, y), Theme.U32(Theme.Surface.TextDisabled), StatusSeparator);
-        return x + gap + ImGui.CalcTextSize(StatusSeparator).X + gap;
+        dl.AddText(new Vector2(x + gap, y), Theme.U32(Theme.Surface.TextDisabled), separator);
+        return x + gap + ImGui.CalcTextSize(separator).X + gap;
+    }
+
+    /// <summary>Plain's status bar separator, a Veil bar.</summary>
+    private const string StatusBar = "|";
+
+    /// <summary>The MSQ pill's lit top at Full (the gold tint at 0.16 over 0.08 at its foot).</summary>
+    private static readonly uint MsqPillTop = Theme.WithAlpha(Theme.Moon, 0.16f);
+
+    /// <summary>The status bar's ground at Full: the Deep gradient's two stops.</summary>
+    private static readonly System.Numerics.Vector4 StatusDeepTop = Core.Ui.ColorMath.FromHex(0x0E1329);
+    private static readonly System.Numerics.Vector4 StatusDeepFoot = Core.Ui.ColorMath.FromHex(0x0A0E1C);
+
+    /// <summary>
+    /// The status bar's ground from <paramref name="min"/> (its rule) to the window's foot: at Full the Deep gradient
+    /// and a brass rule brightest at the centre (solid under high contrast); at Quiet the window tone and its hairline;
+    /// at Plain Deep and the 1 px line. At the window's opacity.
+    /// </summary>
+    private static void DrawStatusGround(ImDrawListPtr dl, Vector2 min, Vector2 max, StatusBarStyle style)
+    {
+        var alpha = Theme.WindowAlpha;
+        var thickness = UiMetrics.Hairline;
+        var ruleMax = new Vector2(max.X, min.Y + thickness);
+        switch (style)
+        {
+            case StatusBarStyle.MoonRoad:
+            {
+                var top = Theme.FollowingDalamud ? Theme.Surface.Deep : StatusDeepTop;
+                var foot = Theme.FollowingDalamud ? Theme.Surface.Deep : StatusDeepFoot;
+                dl.AddRectFilledMultiColor(min, max, Theme.WithAlpha(top, alpha), Theme.WithAlpha(top, alpha), Theme.WithAlpha(foot, alpha), Theme.WithAlpha(foot, alpha));
+                if (Theme.Glyphs.HighContrast)
+                {
+                    dl.AddRectFilled(min, ruleMax, Theme.WithAlpha(Theme.Surface.Ornament, 1f));
+                    return;
+                }
+
+                var mid = (min.X + max.X) * 0.5f;
+                var edge = Theme.WithAlpha(Theme.Surface.Ornament, 0.2f);
+                var peak = Theme.WithAlpha(Theme.Surface.OrnamentHigh, Theme.OrnamentAlpha(0.85f));
+                dl.AddRectFilledMultiColor(min, new Vector2(mid, ruleMax.Y), edge, peak, peak, edge);
+                dl.AddRectFilledMultiColor(new Vector2(mid, min.Y), ruleMax, peak, edge, edge, peak);
+                break;
+            }
+
+            default:
+                dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Tones.Status, alpha));
+                dl.AddRectFilled(min, ruleMax, Theme.U32(Theme.RuleColor));
+                break;
+        }
+    }
+
+    /// <summary>
+    /// The overall gauge in the status bar: at Full and Quiet a small ring with the percentage beside it, at Plain the
+    /// percentage alone; then the separator. Returns where the next segment starts.
+    /// </summary>
+    private static float DrawStatusGauge(ImDrawListPtr dl, float x, float y, float line, float fraction, StatusBarStyle style, string separator, float gap)
+    {
+        var percent = PercentText(fraction);
+        if (style != StatusBarStyle.Text)
+        {
+            var radius = MathF.Min(UiMetrics.StatusHaloRadius, line * 0.5f);
+            MoonGlyph.DrawHalo(dl, new Vector2(x + radius, y + (line * 0.5f)), radius, fraction);
+            x += (2f * radius) + UiMetrics.Px(5f);
+        }
+
+        dl.AddText(new Vector2(x, y), Theme.U32(Theme.Surface.TextSecondary), percent);
+        x += ImGui.CalcTextSize(percent).X;
+        return StatusSeparatorAt(dl, x, y, gap, separator);
+    }
+
+    // The status bar's percentage, rebuilt only when the whole percent changes.
+    private static int percentShown = -1;
+    private static string percentText = string.Empty;
+
+    private static string PercentText(float fraction)
+    {
+        var percent = (int)MathF.Floor(Math.Clamp(fraction, 0f, 1f) * 100f);
+        if (percent != percentShown)
+        {
+            percentShown = percent;
+            percentText = percent.ToString(CultureInfo.CurrentCulture) + "%";
+        }
+
+        return percentText;
     }
 
     /// <summary>One status text as an item (so it can carry a tooltip) at a fixed position; returns its right edge.</summary>

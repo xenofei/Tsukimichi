@@ -147,7 +147,7 @@ public sealed class PlanPane
         ImGui.Spacing();
 
         // Moon Road headings (R3 #9): the heading's own brass rule replaces the hairline that separated the list under Plain.
-        if (!Theme.ShowRules)
+        if (!Theme.Sectioned)
         {
             Chrome.Hairline();
         }

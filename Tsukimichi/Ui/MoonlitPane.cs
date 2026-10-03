@@ -513,7 +513,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         // The count column is as wide as the widest count; in a pane too narrow for it beside a few letters of the
         // name it gives way to the name's tooltip rather than be crushed (feature plan v4 L6). At Full and Quiet the
         // counts are in the Numeral role and each kind wears its icon in an orbit.
-        var art = Theme.ShowRules;
+        var art = Theme.Sectioned;
         float countWidth;
         if (art)
         {
@@ -1362,7 +1362,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     private void DrawTitle(UiState ui)
     {
-        var art = Theme.ShowRules;
+        var art = Theme.Sectioned;
         var start = ImGui.GetCursorScreenPos();
         var room = ImGui.GetContentRegionAvail().X;
         if (art)

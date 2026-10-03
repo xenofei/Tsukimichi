@@ -230,7 +230,7 @@ public sealed class RouteWindow : Window
     /// </summary>
     private static void DrawHeader(View v)
     {
-        var moonRoad = Theme.ShowRules;
+        var moonRoad = Theme.Sectioned;
         var y = ImGui.GetCursorPosY();
         float titleLine;
         using (moonRoad ? Typography.Title(v.Title) : default)
