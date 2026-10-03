@@ -90,7 +90,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
             CuratedData.FestivalsFileName, CuratedData.ChainsFileName, CuratedData.OnlineStoreFileName, CuratedData.OtherSourcesFileName,
             CuratedData.RefileOverridesFileName, CuratedData.RetiredQuestsFileName, CuratedData.QuirksFileName, CuratedData.PayoffGatesFileName,
             CuratedData.PathChoicesFileName, CuratedData.ExtraPrerequisitesFileName, CuratedData.GameGatesFileName, CuratedData.VersionFileName,
-            CuratedData.AetheryteUnlocksFileName,
+            CuratedData.AetheryteUnlocksFileName, CuratedData.GiverPortraitsFileName,
         };
         Assert.Equal(known.OrderBy(n => n, StringComparer.Ordinal), files.Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal));
         Assert.Empty(Curated().Warnings);
@@ -587,5 +587,55 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
             Assert.Equal(keys.Order(), keys);
             Assert.All(root[section]!.AsObject(), kv => Assert.False(string.IsNullOrWhiteSpace((string?)kv.Value!["note"]), $"{section} {kv.Key} has no note"));
         }
+    }
+
+    [Fact]
+    public void Giver_portraits_load_whole_with_notes_sorted_keys_and_a_mask_per_delivery_key()
+    {
+        var curation = Curated().GiverPortraits;
+
+        // Every entry the raw file holds made it through the loader (a skipped one is a warning, caught above too).
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.GiverPortraitsFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        Assert.Equal(1, (int)root["schema"]!);
+        Assert.False(string.IsNullOrWhiteSpace((string?)root["note"]));
+        int Count(string section) => root[section] is JsonObject obj ? obj.Count : 0;
+        Assert.Equal(Count("iconCrops"), curation.IconCrops.Count);
+        Assert.Equal(Count("faces"), curation.Faces.Count);
+        Assert.Equal(Count("aliases"), curation.Aliases.Count);
+        Assert.Equal(Count("blocks"), curation.Blocks.Count);
+        Assert.Equal(Count("pins"), curation.Pins.Count);
+        Assert.Equal(Count("deliveryKeys"), curation.DeliveryKeys.Count);
+
+        // Icon-keyed sections ascend, and every icon belongs to a portrait family.
+        foreach (var section in new[] { "iconCrops", "faces", "deliveryKeys" })
+        {
+            var keys = root[section]!.AsObject().Select(kv => uint.Parse(kv.Key, CultureInfo.InvariantCulture)).ToList();
+            Assert.Equal(keys.Order(), keys);
+            Assert.All(keys, icon => Assert.NotEqual(Core.Portraits.PortraitSource.None, Core.Portraits.PortraitSources.FamilyOfIcon(icon)));
+        }
+
+        // A named face is of the family its icon belongs to.
+        Assert.All(curation.Faces, kv => Assert.Equal(Core.Portraits.PortraitSources.FamilyOfIcon(kv.Key), kv.Value.Source));
+
+        // Every crop shows a square of its texture.
+        foreach (var (icon, crop) in curation.IconCrops)
+        {
+            var (width, height) = Core.Portraits.PortraitSources.TextureSize(Core.Portraits.PortraitSources.FamilyOfIcon(icon));
+            Assert.True(crop.IsValid, $"iconCrops {icon}");
+            Assert.Equal((crop.U1 - crop.U0) * width, (crop.V1 - crop.V0) * height, 1);
+        }
+
+        // The masks DataGen wrote are exactly the seeded delivery portraits, each at its declared size.
+        Assert.Equal(curation.DeliveryKeys.Keys.Order(), curation.Masks.Keys.Order());
+        foreach (var mask in curation.Masks.Values)
+        {
+            Assert.True(Core.Portraits.PortraitMaskFile.TryRead(mask.File, out var width, out var height, out var keep), mask.File);
+            Assert.Equal((mask.Width, mask.Height), (width, height));
+            Assert.Contains(false, keep);
+            Assert.True(new FileInfo(mask.File).Length < 2048, $"{mask.File} is larger than a 1-bit mask should be");
+        }
+
+        var maskFiles = Directory.GetFiles(Path.Combine(CuratedDir, Core.Portraits.PortraitCuration.MaskFolder), "*.png").Select(Path.GetFileName).Order();
+        Assert.Equal(curation.Masks.Values.Select(m => Path.GetFileName(m.File)).Order(), maskFiles);
     }
 }

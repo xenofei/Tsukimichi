@@ -13,6 +13,8 @@ namespace Tsukimichi.DataGen;
 ///        Tsukimichi.DataGen --verify --game "<sqpack path>" [--data <unique_quests.json>] [--report <verification-report.md>] [--no-xivapi] [--sample N] [--seed N]
 ///        Tsukimichi.DataGen --dump-catalog <file.json.gz or directory> --game "<sqpack path>"
 ///        Tsukimichi.DataGen --patches <quest_patches.json> --game "<sqpack path>" [--patch <x.y>]
+///        Tsukimichi.DataGen --portrait-masks <curated dir> --game "<sqpack path>"
+///        Tsukimichi.DataGen --portrait-sheet <out dir> --game "<sqpack path>" [--curated <dir>] [--icons <id,id,...>]
 /// </summary>
 public static class Program
 {
@@ -27,6 +29,10 @@ public static class Program
             return DumpCatalog(args);
         if (args.Contains("--patches"))
             return StampPatches(args);
+        if (args.Contains("--portrait-sheet") || args.Contains("--portraits-sheet"))
+            return WritePortraitSheet(args);
+        if (args.Contains("--portrait-masks"))
+            return WritePortraitMasks(args);
 
         string? game = null;
         string? output = null;
@@ -423,5 +429,113 @@ public static class Program
         Console.WriteLine("       freezes the mapped catalog (the sheet's own journal filing) for the tests (Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz).");
         Console.WriteLine("       Tsukimichi.DataGen --patches <quest_patches.json> --game <sqpack path> [--patch <x.y>]");
         Console.WriteLine("       stamps every quest id the file does not list yet with --patch (required when there is one); offline.");
+        Console.WriteLine("       Tsukimichi.DataGen --portrait-sheet <out dir> --game <sqpack path> [--curated <curated dir>] [--icons <id,id,...>]");
+        Console.WriteLine("       writes the giver portrait contact sheet (every face as cropped, with the framing guides) and portraits.md; game art, never commit it.");
+        Console.WriteLine("       Tsukimichi.DataGen --portrait-masks <curated dir> --game <sqpack path>");
+        Console.WriteLine("       keys the delivery portraits' emblem script and writes the keep masks to <curated dir>/portrait_masks (shipped).");
+    }
+
+    /// <summary>
+    /// <c>--portrait-sheet &lt;dir&gt;</c>: the giver portrait contact sheet for the curation pass (<see cref="PortraitSheet"/>).
+    /// </summary>
+    private static int WritePortraitSheet(string[] args)
+    {
+        string? game = null;
+        string? target = null;
+        var curated = Path.Combine("Tsukimichi", "Data", "curated");
+        List<uint>? icons = null;
+        for (var i = 0; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--game" when i + 1 < args.Length:
+                    game = args[++i];
+                    break;
+                case "--portrait-sheet" or "--portraits-sheet" when i + 1 < args.Length:
+                    target = args[++i];
+                    break;
+                case "--curated" when i + 1 < args.Length:
+                    curated = args[++i];
+                    break;
+                case "--icons" when i + 1 < args.Length:
+                    icons = [];
+                    foreach (var part in args[++i].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    {
+                        if (!uint.TryParse(part, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var icon))
+                        {
+                            Console.Error.WriteLine($"--icons: '{part}' is not an icon id.");
+                            return 2;
+                        }
+
+                        icons.Add(icon);
+                    }
+
+                    break;
+                case "--help" or "-h":
+                    PrintUsage();
+                    return 0;
+                default:
+                    Console.Error.WriteLine($"Unknown or incomplete argument: {args[i]}");
+                    PrintUsage();
+                    return 2;
+            }
+        }
+
+        if (game is null || !Directory.Exists(game) || target is null)
+        {
+            Console.Error.WriteLine("--portrait-sheet needs an output directory and --game pointing at an existing sqpack directory.");
+            PrintUsage();
+            return 2;
+        }
+
+        using var data = new Lumina.GameData(game, new Lumina.LuminaOptions
+        {
+            DefaultExcelLanguage = Lumina.Data.Language.English,
+            PanicOnSheetChecksumMismatch = false,
+        });
+        return PortraitSheet.Write(data, target, curated, icons);
+    }
+
+    /// <summary>
+    /// <c>--portrait-masks &lt;curated dir&gt;</c>: the delivery portraits' keep masks into <c>&lt;curated dir&gt;/portrait_masks</c>
+    /// (<see cref="PortraitMasks"/>).
+    /// </summary>
+    private static int WritePortraitMasks(string[] args)
+    {
+        string? game = null;
+        string? curated = null;
+        for (var i = 0; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--game" when i + 1 < args.Length:
+                    game = args[++i];
+                    break;
+                case "--portrait-masks" when i + 1 < args.Length:
+                    curated = args[++i];
+                    break;
+                case "--help" or "-h":
+                    PrintUsage();
+                    return 0;
+                default:
+                    Console.Error.WriteLine($"Unknown or incomplete argument: {args[i]}");
+                    PrintUsage();
+                    return 2;
+            }
+        }
+
+        if (game is null || !Directory.Exists(game) || curated is null || !Directory.Exists(curated))
+        {
+            Console.Error.WriteLine("--portrait-masks needs the curated directory and --game pointing at an existing sqpack directory.");
+            PrintUsage();
+            return 2;
+        }
+
+        using var data = new Lumina.GameData(game, new Lumina.LuminaOptions
+        {
+            DefaultExcelLanguage = Lumina.Data.Language.English,
+            PanicOnSheetChecksumMismatch = false,
+        });
+        return PortraitMasks.Write(data, curated);
     }
 }

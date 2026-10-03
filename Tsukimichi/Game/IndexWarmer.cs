@@ -6,6 +6,7 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Plan;
+using Tsukimichi.Core.Portraits;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Unique;
@@ -25,7 +26,8 @@ namespace Tsukimichi.Game;
 /// <item><see cref="DutyRuns"/>: the duties AutoDuty can run (the Duties section, the catch-up);</item>
 /// <item><see cref="RewardArt"/>: every Moonlit reward's own game art (G6);</item>
 /// <item><see cref="PaneIcons"/>: the role, society, Grand Company, achievement and Duty Finder icons of the Characters,
-/// Journal table and Plan panes (UI-5d).</item>
+/// Journal table and Plan panes (UI-5d);</item>
+/// <item><see cref="Portraits"/>: every quest giver's portrait from the game's own art, with the curated overlay (F1, F3).</item>
 /// </list>
 /// When the last one lands, one log line gives each build's time: the cost the first open of each pane paid before.
 /// </summary>
@@ -70,6 +72,13 @@ public sealed class IndexWarmer
         PaneIcons = new WarmedValue<PaneIconSheets>(
             () => PaneIconSheets.Build(data.Excel, message => log.Warning("{Message}", message)),
             ex => log.Warning(ex, "Pane icons could not be read; the Characters, Journal and Plan rows keep their stand-ins"));
+        Portraits = new WarmedValue<PortraitIndex>(
+            () => GiverPortraitSources.Build(
+                data.Excel,
+                session.Curated.GiverPortraits,
+                icon => data.FileExists(RewardArtIndex.IconPath(icon)),
+                message => log.Warning("{Message}", message)),
+            ex => log.Warning(ex, "Giver portraits could not be read; every giver shows its fallback"));
     }
 
     public WarmedValue<FlightIndex> Flight { get; }
@@ -84,17 +93,20 @@ public sealed class IndexWarmer
 
     public WarmedValue<PaneIconSheets> PaneIcons { get; }
 
+    /// <summary>Quest givers' portraits: <see cref="PortraitIndex.For(Core.Model.QuestRecord)"/> answers per quest.</summary>
+    public WarmedValue<PortraitIndex> Portraits { get; }
+
     /// <summary>Whether every index has landed (or failed).</summary>
-    public bool IsDone => Flight.IsDone && Duties.IsDone && Aetherytes.IsDone && DutyRuns.IsDone && RewardArt.IsDone && PaneIcons.IsDone;
+    public bool IsDone => Flight.IsDone && Duties.IsDone && Aetherytes.IsDone && DutyRuns.IsDone && RewardArt.IsDone && PaneIcons.IsDone && Portraits.IsDone;
 
     /// <summary>Starts every build on the thread pool, once; the returned task ends when all have landed and logged.</summary>
     public Task Start()
     {
         var started = Stopwatch.GetTimestamp();
-        var all = Task.WhenAll(Flight.Start(), Duties.Start(), Aetherytes.Start(), DutyRuns.Start(), RewardArt.Start(), PaneIcons.Start());
+        var all = Task.WhenAll(Flight.Start(), Duties.Start(), Aetherytes.Start(), DutyRuns.Start(), RewardArt.Start(), PaneIcons.Start(), Portraits.Start());
         return all.ContinueWith(
             _ => log.Information(
-                "Indexes warmed off the frame in {Total:F0} ms: flight {Flight:F0} ms, duty kinds {Duties:F0} ms, aetherytes {Aetherytes:F0} ms, AutoDuty duties {DutyRuns:F0} ms, reward art {Art:F0} ms ({ArtCount} icons, {Pictures} pictures), pane icons {PaneIcons:F0} ms; the first open of a pane builds none of them",
+                "Indexes warmed off the frame in {Total:F0} ms: flight {Flight:F0} ms, duty kinds {Duties:F0} ms, aetherytes {Aetherytes:F0} ms, AutoDuty duties {DutyRuns:F0} ms, reward art {Art:F0} ms ({ArtCount} icons, {Pictures} pictures), pane icons {PaneIcons:F0} ms, giver portraits {Portraits:F0} ms ({Givers} givers with art); the first open of a pane builds none of them",
                 Stopwatch.GetElapsedTime(started).TotalMilliseconds,
                 Flight.BuildMs,
                 Duties.BuildMs,
@@ -103,7 +115,9 @@ public sealed class IndexWarmer
                 RewardArt.BuildMs,
                 RewardArt.Value?.Count ?? 0,
                 RewardArt.Value?.ArtCount ?? 0,
-                PaneIcons.BuildMs),
+                PaneIcons.BuildMs,
+                Portraits.BuildMs,
+                Portraits.Value?.GiversWithArt ?? 0),
             TaskScheduler.Default);
     }
 }

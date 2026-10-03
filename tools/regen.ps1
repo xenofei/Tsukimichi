@@ -7,6 +7,10 @@
       1. dotnet build of the solution (Release).
       2. Tsukimichi.DataGen generate: Tsukimichi/Data/unique_quests.json, the derived
          Tsukimichi/Data/curated/feature_quests.json and the reports under docs/data.
+      2b. Tsukimichi.DataGen --portrait-masks: the custom delivery portraits' keep masks, Tsukimichi/Data/curated/
+         portrait_masks/<icon>.png and masks.json (design spec 1.15 A2.4), keyed from the face seeds in
+         giver_portraits.json and tied to each texture's hash, so a patch that changes the art shows the fallback until
+         this runs again. Review new masks on `Tsukimichi.DataGen --portrait-sheet <dir>` (Delivery-keyed.png).
       3. Tsukimichi.DataGen --patches: Tsukimichi/Data/quest_patches.json gains every quest id it does not list yet,
          stamped with -Patch (the patch this game version ships). Offline; the file was seeded once from Garland Tools
          by `Tsukimichi.Verify patches`. New ids without -Patch fail the script, so they never ship as unknown.
@@ -80,6 +84,10 @@ $datagen = @("run", "--project", "Tsukimichi.DataGen", "-c", "Release", "--no-bu
 Step "generate $dataFile and $curatedDir/feature_quests.json"
 & dotnet @datagen --game $GamePath --out $dataFile --curated $curatedDir
 if ($LASTEXITCODE -ne 0) { throw "generation failed (sanity checks)" }
+
+Step "key the delivery portraits into $curatedDir/portrait_masks"
+& dotnet @datagen --portrait-masks $curatedDir --game $GamePath
+if ($LASTEXITCODE -ne 0) { throw "portrait masks: a key touched a figure or a seed found no face; check deliveryKeys in giver_portraits.json" }
 
 Step "stamp new quest ids in $patchesFile"
 $patchArgs = @("--patches", $patchesFile, "--game", $GamePath)
