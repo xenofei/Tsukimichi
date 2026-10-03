@@ -10,14 +10,17 @@ namespace Tsukimichi.Core.Ui;
 /// </summary>
 public static class MotionMath
 {
-    /// <summary>Rate for hover fills (about 120 ms to settle).</summary>
-    public const float HoverRate = 18f;
+    /// <summary>Rate for hover fills: <see cref="MotionTokens.HoverIn"/> (120 ms to 90 %).</summary>
+    public const float HoverRate = MotionTokens.Ln10 / MotionTokens.HoverIn;
 
-    /// <summary>Rate for selection rings (about 150 ms).</summary>
-    public const float SelectRate = 12f;
+    /// <summary>Rate for a hover wash fading out: <see cref="MotionTokens.HoverOut"/> (180 ms to 90 %).</summary>
+    public const float HoverOutRate = MotionTokens.Ln10 / MotionTokens.HoverOut;
 
-    /// <summary>Rate for chevrons and similar rotations (about 140 ms).</summary>
-    public const float ChevronRate = 10f;
+    /// <summary>Rate for selection rings: <see cref="MotionTokens.Select"/> (150 ms to 90 %).</summary>
+    public const float SelectRate = MotionTokens.Ln10 / MotionTokens.Select;
+
+    /// <summary>Rate for chevrons and similar rotations: <see cref="MotionTokens.Chevron"/> (140 ms to 90 %).</summary>
+    public const float ChevronRate = MotionTokens.Ln10 / MotionTokens.Chevron;
 
     /// <summary>Rate for a halo gauge's fill moving to a new fraction (about 500 ms, ease-out; accessibility B5).</summary>
     public const float GaugeRate = 6f;

@@ -151,7 +151,11 @@ public static partial class Strings
     public static string PresetStorySidequestsTooltip => Loc.Get("PresetStorySidequestsTooltip");
 
     // The book badge on a story sidequest's table row. {0} = the side story (its first quest's name), {1} = place, {2} = length.
+    /// <summary>{0} = the side story's title, {1} = quests after this one.</summary>
     public static string StoryBadgeFormat => Loc.Get("StoryBadgeFormat");
+
+    /// <summary>{0} = the side story's title; the quest is its last.</summary>
+    public static string StoryBadgeLastFormat => Loc.Get("StoryBadgeLastFormat");
     public static string StoryBadgeLone => Loc.Get("StoryBadgeLone");
     public static string StalledDaysFormat => Loc.Get("StalledDaysFormat");
     public static string StalledDaysLabel => Loc.Get("StalledDaysLabel");

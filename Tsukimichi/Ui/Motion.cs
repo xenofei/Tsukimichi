@@ -20,8 +20,13 @@ public static class Motion
     /// <summary>How often stale keys are pruned.</summary>
     private const double PruneEverySeconds = 0.5;
 
+    /// <summary>The waxing moon's key tag ("WAX"), with the quest's row id in the low half.</summary>
+    private const uint WaxTag = 0x0057_4158;
+
     private static readonly MotionStore Store = new();
     private static readonly ScrollWatch Watched = new();
+    private static readonly CompletionCues Cues = new();
+    private static readonly System.Collections.Generic.List<uint> JustCompleted = new(8);
     private static double lastPrune;
     private static double scrollQuietUntil;
     private static bool scrolling;
@@ -176,6 +181,32 @@ public static class Motion
         var pad = new System.Numerics.Vector2(outset);
         dl.AddRect(min - pad, max + pad, Theme.WithAlpha(Theme.Moon, 0.7f * (1f - grow)), rounding + outset, ImDrawFlags.None, System.MathF.Max(1.5f, UiMetrics.Px(2f)));
     }
+
+    /// <summary>
+    /// Once per frame after <see cref="BeginFrame"/>: starts the waxing moon (<see cref="Wax"/>) of every quest the live
+    /// character completed since the last frame, while that character is the one on screen (<paramref name="shown"/>).
+    /// Nothing plays under Reduce motion or while scrolling, and the first look at a character replays nothing.
+    /// </summary>
+    public static void NoteCompletions(ulong? liveCharacter, System.Collections.Generic.IReadOnlyList<Core.Runtime.QuestEvent> recentEvents, bool shown)
+    {
+        JustCompleted.Clear();
+        if (Cues.Take(liveCharacter, recentEvents, shown, JustCompleted) == 0)
+        {
+            return;
+        }
+
+        foreach (var rowId in JustCompleted)
+        {
+            Trigger(Key(WaxTag, rowId));
+        }
+    }
+
+    /// <summary>
+    /// The waxing moon of quest <paramref name="rowId"/>: its lit fraction (from the half moon to full over
+    /// <see cref="MotionTokens.Wax"/>, eased out) while the one-shot plays after a completion, or -1 when none is playing.
+    /// The glyph drawer reads it (<see cref="MoonWax"/>); a row that is not drawn simply lets it run out unseen.
+    /// </summary>
+    public static float Wax(uint rowId) => MotionTokens.WaxFraction(Pulse(Key(WaxTag, rowId), MotionTokens.Wax));
 
     /// <summary>Forgets every key (plugin unload).</summary>
     public static void Reset() => Store.Clear();

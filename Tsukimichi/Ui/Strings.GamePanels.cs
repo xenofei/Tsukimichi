@@ -38,9 +38,6 @@ static partial class Strings
 
     public static string GamePanelUnlocksHeading => Loc.Get("GamePanelUnlocksHeading");
 
-    /// <summary>{0} the quest's step, {1} the chain's steps, {2} the chain's name.</summary>
-    public static string GamePanelChainFormat => Loc.Get("GamePanelChainFormat");
-
     public static string GamePanelChainNext => Loc.Get("GamePanelChainNext");
 
     /// <summary>{0} the patch the quest was added in.</summary>

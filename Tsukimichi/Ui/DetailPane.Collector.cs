@@ -7,6 +7,7 @@ using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -178,8 +179,8 @@ public sealed partial class DetailPane
         }
 
         var earned = progress.Earned ? Strings.LadderEarned : Strings.LadderNotEarned;
-        var text = string.Format(CultureInfo.CurrentCulture, Strings.LadderLineFormat, ladder.Name, progress.Done, progress.Total, earned);
-        var tooltip = progress.FromGame ? Strings.LadderTooltipFromGame : Strings.LadderTooltip;
+        var text = string.Format(CultureInfo.CurrentCulture, Strings.LadderLineFormat, ladder.Name, LeftText.LeftOrDone(progress.Done, progress.Total), earned);
+        var tooltip = LeftText.Tally(progress.Done, progress.Total) + "\n" + (progress.FromGame ? Strings.LadderTooltipFromGame : Strings.LadderTooltip);
         return new LadderLine(text, progress.Fraction, tooltip, remaining);
     }
 }

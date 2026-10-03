@@ -193,16 +193,18 @@ static partial class Strings
     public static string FlightOfflineHint => Loc.Get("FlightOfflineHint");
     public const string FlightCurrentZoneMarker = "● ";
     public static string FlightCurrentZoneTooltip => Loc.Get("FlightCurrentZoneTooltip");
-    /// <summary>{0} = quest currents done, {1} = quest currents in the zone.</summary>
-    public const string FlightZoneCountFormat = "{0}/{1}";
     /// <summary>{0} = expansion name; the entry that covers all of an expansion's field zones (A Realm Reborn).</summary>
     public static string FlightAllZonesFormat => Loc.Get("FlightAllZonesFormat");
     /// <summary>{0} = attuned, {1} = total currents, {2} = quest currents attuned, {3} = quest currents.</summary>
     public static string FlightZoneTooltipFormat => Loc.Get("FlightZoneTooltipFormat");
     /// <summary>{0} = total currents, {1} = quest currents whose quest is complete, {2} = quest currents.</summary>
     public static string FlightZoneTooltipUnknownFormat => Loc.Get("FlightZoneTooltipUnknownFormat");
-    /// <summary>{0} = zone, {1} = attuned, {2} = total currents.</summary>
+    /// <summary>{0} = zone, {1} = currents still to attune (two or more).</summary>
     public static string FlightHeaderFormat => Loc.Get("FlightHeaderFormat");
+    /// <summary>{0} = zone; one current is still to attune.</summary>
+    public static string FlightHeaderOneFormat => Loc.Get("FlightHeaderOneFormat");
+    /// <summary>{0} = zone, {1} = total currents, all attuned.</summary>
+    public static string FlightHeaderAllFormat => Loc.Get("FlightHeaderAllFormat");
     /// <summary>{0} = zone, {1} = total currents.</summary>
     public static string FlightHeaderUnknownFormat => Loc.Get("FlightHeaderUnknownFormat");
     public static string FlightHeaderComplete => Loc.Get("FlightHeaderComplete");
@@ -221,7 +223,7 @@ static partial class Strings
     public static string FlightFlag => Loc.Get("FlightFlag");
     public static string FlightFlagTooltip => Loc.Get("FlightFlagTooltip");
     public static string FlightTeleport => Loc.Get("FlightTeleport");
-    /// <summary>{0} = attuned field currents, {1} = field currents in the zone.</summary>
+    /// <summary>{0} = field currents still to attune.</summary>
     public static string FlightFieldFormat => Loc.Get("FlightFieldFormat");
     /// <summary>{0} = field currents in the zone.</summary>
     public static string FlightFieldAllFormat => Loc.Get("FlightFieldAllFormat");

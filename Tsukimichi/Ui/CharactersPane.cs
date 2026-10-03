@@ -872,11 +872,11 @@ public sealed partial class CharactersPane
         if (JobQuestsLevelWidth.Stale(d.JobQuests))
         {
             var level = FixedWidth.Fit(0f, Strings.JobsColumnLevel);
-            var done = FixedWidth.Fit(0f, Strings.JobsColumnDone);
+            var done = FixedWidth.Fit(0f, Strings.JobsColumnLeft);
             foreach (var row in d.JobQuests)
             {
                 level = FixedWidth.Fit(level, row.Level);
-                done = FixedWidth.Fit(done, row.Count);
+                done = FixedWidth.Fit(done, row.Left);
             }
 
             JobQuestsLevelWidth.Store(d.JobQuests, level);
@@ -887,7 +887,7 @@ public sealed partial class CharactersPane
         ImGui.TableSetupColumn(Strings.JobsColumnJob, ImGuiTableColumnFlags.WidthStretch, 2f);
         ImGui.TableSetupColumn(Strings.JobsColumnLevel, ImGuiTableColumnFlags.WidthFixed, JobQuestsLevelWidth.Value);
         ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
-        ImGui.TableSetupColumn(Strings.JobsColumnDone, ImGuiTableColumnFlags.WidthFixed, JobQuestsDoneWidth.Value);
+        ImGui.TableSetupColumn(Strings.JobsColumnLeft, ImGuiTableColumnFlags.WidthFixed, JobQuestsDoneWidth.Value);
         ImGui.TableSetupColumn(Strings.JobsColumnNext, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableHeadersRow();
 
@@ -912,14 +912,27 @@ public sealed partial class CharactersPane
             }
 
             ImGui.TableNextColumn();
-            ImGui.TextUnformatted(row.Count);
+            LeftCell(row.Left, row.Count);
             ImGui.TableNextColumn();
             DrawNextQuest(ui, row.Next, row.NextText, row.Ready);
         }
     }
 
     /// <summary>
-    /// Story chains (V2-09 on the dashboard): every curated chain with a filling moon, N of M and the next quest;
+    /// A ladder's or chain's "Left" cell (feature plan v6 U5): how many quests are still to do, empty once none is; the
+    /// tally ("4/7") on hover, as on the moon beside it.
+    /// </summary>
+    private static void LeftCell(string left, string tally)
+    {
+        ImGui.TextUnformatted(left);
+        if (left.Length > 0 && ImGui.IsItemHovered())
+        {
+            FillingMoonTooltip(tally);
+        }
+    }
+
+    /// <summary>
+    /// Story chains (V2-09 on the dashboard): every curated chain with a filling moon, how many are left and the next quest;
     /// chains with nothing done yet fold under "Not started (N)" so the list stays short.
     /// </summary>
     private void DrawChains(UiState ui, Dashboard d)
@@ -959,10 +972,10 @@ public sealed partial class CharactersPane
 
         if (doneWidth.Stale(rows))
         {
-            var done = FixedWidth.Fit(0f, Strings.JobsColumnDone);
+            var done = FixedWidth.Fit(0f, Strings.JobsColumnLeft);
             foreach (var row in rows)
             {
-                done = FixedWidth.Fit(done, row.Count);
+                done = FixedWidth.Fit(done, row.Left);
             }
 
             doneWidth.Store(rows, done);
@@ -971,7 +984,7 @@ public sealed partial class CharactersPane
         var line = ImGui.GetTextLineHeight();
         ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
         ImGui.TableSetupColumn(Strings.JobsColumnChain, ImGuiTableColumnFlags.WidthStretch, 2f);
-        ImGui.TableSetupColumn(Strings.JobsColumnDone, ImGuiTableColumnFlags.WidthFixed, doneWidth.Value);
+        ImGui.TableSetupColumn(Strings.JobsColumnLeft, ImGuiTableColumnFlags.WidthFixed, doneWidth.Value);
         ImGui.TableSetupColumn(Strings.JobsColumnNext, ImGuiTableColumnFlags.WidthStretch, 3f);
 
         for (var i = 0; i < rows.Length; i++)
@@ -990,7 +1003,7 @@ public sealed partial class CharactersPane
             Chrome.FitText(row.Name, ImGui.GetColorU32(ImGuiCol.Text));
             DrawRowMenu(ui, row.RowIds, row.RecapQuest);
             ImGui.TableNextColumn();
-            ImGui.TextUnformatted(row.Count);
+            LeftCell(row.Left, row.Count);
             ImGui.TableNextColumn();
             DrawNextQuest(ui, row.Next, row.NextText, ready: true);
         }
@@ -2631,7 +2644,7 @@ public sealed partial class CharactersPane
                 : string.Format(CultureInfo.CurrentCulture, Strings.JobsNextLaterFormat, session.Spoilers.DisplayName(next), next.DisplayLevel);
         }
 
-        return new LadderRow(iconId, name, level, isRole, progress.Fraction, count, next, text, progress.IsReadyNow, rowIds);
+        return new LadderRow(iconId, name, level, isRole, progress.Fraction, count, LeftText.Left(progress.Done, progress.Total), next, text, progress.IsReadyNow, rowIds);
     }
 
     /// <summary>Curated chains in file order, split into those with at least one quest done and those not started.</summary>
@@ -2671,6 +2684,7 @@ public sealed partial class CharactersPane
                 chain.Name,
                 progress.Fraction,
                 string.Format(CultureInfo.CurrentCulture, Strings.JobsChainCountFormat, progress.Done, progress.Total),
+                LeftText.Left(progress.Done, progress.Total),
                 next,
                 next is null ? Strings.JobsChainComplete : string.Format(CultureInfo.CurrentCulture, Strings.JobsChainNextFormat, session.Spoilers.DisplayName(next)),
                 chain.RowIds)
@@ -3140,9 +3154,13 @@ public sealed partial class CharactersPane
     private sealed record JobRow(JobGroup Group, uint JobId, uint IconId, string Name, string Abbreviation, string Level, short LevelValue);
 
     /// <summary>A job's (or a role's) ladder: icon and level are empty for role rows; <paramref name="Next"/> is null once finished.</summary>
-    private sealed record LadderRow(uint IconId, string Name, string Level, bool IsRole, float Fraction, string Count, QuestRecord? Next, string NextText, bool Ready, IReadOnlyList<uint> RowIds);
+    /// <param name="Count">The tally ("4/7"), shown on hover only.</param>
+    /// <param name="Left">How many are still to do ("3 left"), empty once none is.</param>
+    private sealed record LadderRow(uint IconId, string Name, string Level, bool IsRole, float Fraction, string Count, string Left, QuestRecord? Next, string NextText, bool Ready, IReadOnlyList<uint> RowIds);
 
-    private sealed record ChainRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText, IReadOnlyList<uint> RowIds)
+    /// <param name="Count">The tally ("4 of 7"), shown on hover only.</param>
+    /// <param name="Left">How many are still to do ("3 left"), empty once none is.</param>
+    private sealed record ChainRow(string Name, float Fraction, string Count, string Left, QuestRecord? Next, string NextText, IReadOnlyList<uint> RowIds)
     {
         /// <summary>A quest naming the chain for "Read the story so far" in the row's menu; 0 while nothing of it is done.</summary>
         public uint RecapQuest { get; init; }

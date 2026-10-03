@@ -52,28 +52,18 @@ static partial class Strings
     public static string DetailBannerZone => Loc.Get("DetailBannerZone");
     public static string DetailBannerCategory => Loc.Get("DetailBannerCategory");
 
-    // ---- Chain line at the top of the Path card ----
-    /// <summary>{0} = chain name, {1} = quests done, {2} = quests in the chain.</summary>
-    public static string DetailChainFormat => Loc.Get("DetailChainFormat");
-
-    /// <summary>A side story: {0} = the story's name ("Story: …"), {1} = quests done, {2} = quests in it.</summary>
-    public static string DetailStoryFormat => Loc.Get("DetailStoryFormat");
-    public static string DetailChainNext => Loc.Get("DetailChainNext");
-    public static string DetailChainComplete => Loc.Get("DetailChainComplete");
+    // ---- Links on the Path card (the chain line's words are Core's: ChainLine) ----
+    /// <summary>The tooltip of a quest link on the Path card ("Next:" and the chain line).</summary>
     public static string DetailChainNextTooltip => Loc.Get("DetailChainNextTooltip");
 
-    /// <summary>The chain halo's tooltip: {0} = quests done, {1} = quests in the chain.</summary>
-    public static string DetailChainHaloTooltipFormat => Loc.Get("DetailChainHaloTooltipFormat");
+    /// <summary>Before the earlier quest to do first, under the Path header: "Next: quest · Ready".</summary>
+    public static string PathNextLabel => Loc.Get("PathNextLabel");
 
     // ---- Requirements you do not meet (L8) ----
     /// <summary>A jump button's tooltip: {0} = the quest that clears the requirement.</summary>
     public static string DetailJumpTooltipFormat => Loc.Get("DetailJumpTooltipFormat");
 
-    // ---- Path (star chart) ----
-    /// <summary>{0} = steps on the path, {1} = steps done.</summary>
-    public static string PathCaptionFormat => Loc.Get("PathCaptionFormat");
-    public static string PathCaptionOne => Loc.Get("PathCaptionOne");
-
+    // ---- Path (star chart; the header caption is Core's: PathHeading) ----
     /// <summary>{0} = completed steps folded into one bead.</summary>
     public static string PathMoonsWalkedFormat => Loc.Get("PathMoonsWalkedFormat");
     /// <summary>{0} = the other quest that leads here.</summary>

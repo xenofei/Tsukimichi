@@ -81,47 +81,11 @@
   <data name="DetailSpecialBadgeTooltip" xml:space="preserve">
     <value>Besonderer Auftrag</value>
   </data>
-  <data name="DetailChainFormat" xml:space="preserve">
-    <value>Kette: {0} · {1} von {2} erledigt</value>
-  </data>
-  <data name="DetailStoryFormat" xml:space="preserve">
-    <value>{0} · {1} von {2} erledigt</value>
-  </data>
-  <data name="DetailChainNext" xml:space="preserve">
-    <value>· als Nächstes:</value>
-  </data>
-  <data name="DetailChainComplete" xml:space="preserve">
-    <value>· vollständig</value>
-  </data>
-  <data name="DetailChainNextTooltip" xml:space="preserve">
-    <value>Den nächsten Auftrag dieser Kette auswählen</value>
-  </data>
-  <data name="DetailChainHaloTooltipFormat" xml:space="preserve">
-    <value>{0} von {1} Aufträgen erledigt</value>
-  </data>
-  <data name="PathCaptionFormat" xml:space="preserve">
-    <value>{0} Schritte · {1} erledigt</value>
-  </data>
-  <data name="PathCaptionOne" xml:space="preserve">
-    <value>1 Schritt</value>
-  </data>
-  <data name="PathMoonsWalkedFormat" xml:space="preserve">
-    <value>{0} Monde gegangen</value>
-  </data>
   <data name="PathAlternativeFormat" xml:space="preserve">
     <value>oder über {0}</value>
   </data>
-  <data name="PathAlternativeStepsFormat" xml:space="preserve">
-    <value> · {0} Schritte</value>
-  </data>
-  <data name="PathAlternativeOneStep" xml:space="preserve">
-    <value> · 1 Schritt</value>
-  </data>
   <data name="PathAlternativeDone" xml:space="preserve">
     <value> · erledigt</value>
-  </data>
-  <data name="PathAlternativeTooltipFormat" xml:space="preserve">
-    <value>Ein anderer Weg hinein · noch {0} Schritte. Klicken, um seinen Pfad zu sehen.</value>
   </data>
   <data name="PathAlternativeTooltipDone" xml:space="preserve">
     <value>Ein anderer Weg hinein, schon gegangen. Klicken, um seinen Pfad zu sehen.</value>
@@ -143,9 +107,6 @@
   </data>
   <data name="PathUnlocksHeaderNone" xml:space="preserve">
     <value>ÖFFNET ALS NÄCHSTES · nichts</value>
-  </data>
-  <data name="PathJumpToTarget" xml:space="preserve">
-    <value>Ziel</value>
   </data>
   <data name="PathJumpToTargetTooltip" xml:space="preserve">
     <value>Zurück zu diesem Auftrag scrollen</value>
@@ -540,9 +501,6 @@
   <data name="JobsColumnLevel" xml:space="preserve">
     <value>Stufe</value>
   </data>
-  <data name="JobsColumnDone" xml:space="preserve">
-    <value>Erledigt</value>
-  </data>
   <data name="JobsColumnNext" xml:space="preserve">
     <value>Nächster</value>
   </data>
@@ -876,9 +834,6 @@
   <data name="FlightZoneTooltipUnknownFormat" xml:space="preserve">
     <value>{0} Strömungen · {1} von {2} Auftragsströmungen erledigt · Einstimmung braucht den angemeldeten Charakter</value>
   </data>
-  <data name="FlightHeaderFormat" xml:space="preserve">
-    <value>Fliegen in {0}: {1} von {2} Strömungen eingestimmt</value>
-  </data>
   <data name="FlightHeaderUnknownFormat" xml:space="preserve">
     <value>Fliegen in {0}: {1} Strömungen</value>
   </data>
@@ -923,9 +878,6 @@
   </data>
   <data name="FlightTeleport" xml:space="preserve">
     <value>Teleport</value>
-  </data>
-  <data name="FlightFieldFormat" xml:space="preserve">
-    <value>Feldströmungen: {0} von {1} eingestimmt · nutze den Ätherkompass (eine allgemeine Aktion), um den Rest zu finden</value>
   </data>
   <data name="FlightFieldAllFormat" xml:space="preserve">
     <value>Feldströmungen: alle {0} eingestimmt</value>
@@ -1422,9 +1374,6 @@
   <data name="ConfigReduceMotion" xml:space="preserve">
     <value>Bewegung reduzieren</value>
   </data>
-  <data name="ConfigReduceMotionHint" xml:space="preserve">
-    <value>Nirgends Überblendungen oder Pulsieren beim Überfahren, und Halten-zum-Bestätigen-Schaltflächen zählen im Text herunter, statt einen Bogen zu füllen. Bis du es hier änderst, folgt es der Windows-Einstellung „Animationen anzeigen“.</value>
-  </data>
   <data name="ConfigFollowDalamudColours" xml:space="preserve">
     <value>Dalamud-Farben übernehmen</value>
   </data>
@@ -1787,9 +1736,6 @@
   </data>
   <data name="Help.QuestCardBodies.0" xml:space="preserve">
     <value>Die erste Karte unter dem Bild des Auftrags: jede Voraussetzung mit ✓ oder ✗. Die, die dich blockiert, hat einen goldenen Balken und eine goldene Beschriftung; fahre über ein ✗ für die genaue Lücke, etwa den Rang oder die Stufe, die dir noch fehlt. Eine „Hinweis:“-Zeile unter der Liste erklärt die wenigen Aufträge, die das Spiel trotzdem anbietet.</value>
-  </data>
-  <data name="Help.QuestCardBodies.1" xml:space="preserve">
-    <value>Die Kette der Voraussetzungen als Sternkarte: ein Mond pro Auftrag an einem Faden, der golden ist, wo du gegangen bist, und gestrichelt, wo nicht, ein Band pro Erweiterung. Erledigte Strecken falten sich zu einer Perle („12 Monde gegangen“); klicke sie an, um sie zu öffnen. Nimmt ein Auftrag einen von zwei vorherigen an, ist der andere Weg hinein ein hohler Mond neben dem Faden; klicke ihn an, um seinen eigenen Pfad zu sehen. Dieser Auftrag ist der große Mond mit dem Halo; ist er aus dem Blick gescrollt, holt ihn die Pille „Ziel“ zurück. Klicke einen beliebigen Schritt an, um ihn anzusehen.</value>
   </data>
   <data name="Help.QuestCardBodies.2" xml:space="preserve">
     <value>Unter diesem Auftrag verzweigt sich der Faden in das, was er nach der Abgabe öffnet. Klicke einen Eintrag an, um dorthin zu springen.</value>
@@ -2198,9 +2144,6 @@
   </data>
   <data name="PayoffWhyTooltip" xml:space="preserve">
     <value>Zeigt, warum das wichtig ist. Es nennt, was die kommende Geschichte daraus macht: ein Spoiler.</value>
-  </data>
-  <data name="PayoffProgressFormat" xml:space="preserve">
-    <value>Optionaler Inhalt, der eine Szene in der kommenden Geschichte verändert. {0} von {1} erledigt. Klicken, um den ersten offenen auszuwählen.</value>
   </data>
   <data name="PayoffChatFormat" xml:space="preserve">
     <value>Bevor du weiterspielst: {0} Als Nächstes: {1}</value>
@@ -3033,9 +2976,6 @@
   <data name="WelcomeBackMsqTitle" xml:space="preserve">
     <value>Hauptszenario</value>
   </data>
-  <data name="WelcomeBackMsqAtFormat" xml:space="preserve">
-    <value>{0} · als Nächstes: {1} ({2:N0} von {3:N0})</value>
-  </data>
   <data name="WelcomeBackMsqComplete" xml:space="preserve">
     <value>abgeschlossen</value>
   </data>
@@ -3293,9 +3233,6 @@
   </data>
   <data name="PresetStorySidequestsTooltip" xml:space="preserve">
     <value>Nebenaufgaben mit Tagebuch-Artwork, also jene, die eine kleine Geschichte erzählen, Gebiet für Gebiet; jede Nebengeschichte in Spielreihenfolge</value>
-  </data>
-  <data name="StoryBadgeFormat" xml:space="preserve">
-    <value>Teil einer Nebengeschichte: {0} ({1} von {2})</value>
   </data>
   <data name="StoryBadgeLone" xml:space="preserve">
     <value>Eine Nebengeschichte aus einem Auftrag: Er hat Tagebuch-Artwork</value>
@@ -3605,9 +3542,6 @@
   </data>
   <data name="Path" xml:space="preserve">
     <value>Pfad</value>
-  </data>
-  <data name="FoldedRunExpandTooltip" xml:space="preserve">
-    <value>Die erledigten Schritte zeigen</value>
   </data>
   <data name="FoldedRunCollapseTooltip" xml:space="preserve">
     <value>Die erledigten Schritte einklappen</value>
@@ -4401,12 +4335,6 @@
   <data name="Core.Req.NeedsCarrierLevel" xml:space="preserve">
     <value>braucht Zustellerstufe {0}, du hast Stufe {1}</value>
   </data>
-  <data name="Core.Req.DutiesDoneOneNeeded" xml:space="preserve">
-    <value>{0} von {1} Inhalten abgeschlossen, einer nötig</value>
-  </data>
-  <data name="Core.Req.DutiesDone" xml:space="preserve">
-    <value>{0} von {1} Inhalten abgeschlossen</value>
-  </data>
   <data name="Core.Req.AcceptConditionOne" xml:space="preserve">
     <value>1 Annahmebedingung ungeprüft</value>
   </data>
@@ -4442,12 +4370,6 @@
   </data>
   <data name="Core.Req.NeedsQuest" xml:space="preserve">
     <value>braucht {0}</value>
-  </data>
-  <data name="Core.Req.PrerequisitesDoneOneNeeded" xml:space="preserve">
-    <value>{0} von {1} Voraussetzungen erledigt, eine nötig</value>
-  </data>
-  <data name="Core.Req.PrerequisitesDone" xml:space="preserve">
-    <value>{0} von {1} Voraussetzungen erledigt</value>
   </data>
   <data name="Core.Req.NeedsSatisfactionWithNotChecked" xml:space="preserve">
     <value>braucht Zufriedenheitsrang {0} bei {1}, ungeprüft</value>

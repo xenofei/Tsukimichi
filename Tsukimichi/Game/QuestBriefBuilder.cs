@@ -26,7 +26,7 @@ namespace Tsukimichi.Game;
 /// <param name="Verdict"><see cref="QuestVerdict.Line"/>; empty when <paramref name="Masked"/>.</param>
 /// <param name="Moonlit">Its Moonlit rewards; empty when masked.</param>
 /// <param name="Unlocks">"Dungeon: Aglaia", one per unlock; empty when masked.</param>
-/// <param name="ChainLine">"Step 3 of 7 · Hildibrand", or empty outside a chain.</param>
+/// <param name="ChainLine">"Part of Hildibrand · 4 more after this", or empty outside a chain.</param>
 /// <param name="ChainNext">The chain's step after this one; null for the last step or outside a chain.</param>
 /// <param name="ChainNextName">Its name through the spoiler shield; empty without one.</param>
 /// <param name="FactsLine">"Added in 7.5 · Repeatable · Seasonal event", or empty.</param>
@@ -149,7 +149,7 @@ public sealed class QuestBriefBuilder
         {
             step = found;
             chainName = ChainCatalog.DisplayName(chain, id => spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
-            chainLine = string.Format(CultureInfo.CurrentCulture, Strings.GamePanelChainFormat, found.Position, found.Total, chainName);
+            chainLine = QuestVerdict.ChainPlace(found, chainName);
             next = found.NextRowId is { } nextId ? bundle.Catalog.GetByRowId(nextId) : null;
         }
 

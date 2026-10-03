@@ -56,7 +56,7 @@ public class AcceptConditionTests
         var results = RequirementEvaluator.Evaluate(target, Snapshot(A), catalog, EvalContext.Default);
         var previous = Only(results, RequirementKind.PreviousQuests);
         Assert.False(previous.Met);
-        Assert.Equal("1 of 2 prerequisites done", previous.Detail);
+        Assert.Equal("1 prerequisite left", previous.Detail);
         var req = Assert.IsType<PreviousQuestsRequirement>(previous.Req);
         Assert.Equal([A, B], req.QuestIds);
         Assert.Equal([A], req.DoneIds!);
@@ -99,7 +99,7 @@ public class AcceptConditionTests
         Assert.Same(target.PreviousQuests, catalog.PrerequisitesOf(target));
         var r = Only(RequirementEvaluator.Evaluate(target, Snapshot(B), catalog, EvalContext.Default), RequirementKind.PreviousQuests);
         Assert.True(r.Met);
-        Assert.Equal("1 of 3 prerequisites done, one needed", r.Detail);
+        Assert.Equal("one of 3 prerequisites done", r.Detail);
     }
 
     [Fact]

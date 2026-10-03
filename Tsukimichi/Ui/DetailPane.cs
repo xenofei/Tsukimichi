@@ -114,13 +114,23 @@ public sealed partial class DetailPane
 
         /// <summary>"Note: …" from <c>curated/quirks.json</c>, drawn under the requirements; null for a quest without one.</summary>
         public string? QuirkNote;
+        /// <summary>The chain's name on the Path card's chain line; null for a quest outside every chain.</summary>
         public string? ChainText;
 
-        /// <summary>The chain halo's tooltip ("3 of 7 quests done"), composed with <see cref="ChainText"/>.</summary>
-        public string ChainHaloTooltip = string.Empty;
+        /// <summary>"Next in chain:", "Still open earlier:", "Last quest in this chain" or "Chain complete" (<see cref="ChainLine.Label"/>).</summary>
+        public string ChainLabel = string.Empty;
+
+        /// <summary>The chain bar's tooltip, the totals ("16 of 47 quests done").</summary>
+        public string ChainTooltip = string.Empty;
+        public ChainNextKind ChainKind;
+
+        /// <summary>The quest the chain line links to, through the spoiler shield; null when it links to none.</summary>
         public string? ChainNextName;
         public uint ChainNextRowId;
         public float ChainFraction;
+
+        /// <summary>The chain's first quest: the bar's motion key, so it eases on a completion but not on a move to another chain.</summary>
+        public uint ChainKeyId;
         public bool HasSnapshot;
         public bool Pinned;
         public bool HasUniqueEntries;
@@ -274,7 +284,8 @@ public sealed partial class DetailPane
         }
 
         var pad = UiMetrics.Px(10f);
-        BeginSection("##path", Strings.Path, PathIcon, chart.HeaderCaption, Theme.Surface.TextTertiary);
+        BeginSection("##path", Strings.Path, PathIcon, chart.HeaderCaption, Theme.Surface.TextTertiary, chart.HeaderTooltip);
+        DrawPathNext();
         DrawChain();
 
         // The chart ends at the card's inner edge, or a gutter short of the body's (the minimap draws in the gutter).
@@ -805,10 +816,36 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// "Chain: name · N of M done · next: quest" with a filling halo at its left, at the top of the Path card (the only
-    /// place the chain is shown); the next quest's name selects it. The chain text wraps between words beside the halo,
-    /// and "next: quest" follows on the same line while it fits, else on its own line under the text, the name ending
-    /// in an ellipsis when even that is too narrow (L5). Nothing is drawn for a quest outside every chain.
+    /// "Next: quest · Ready" under the Path header (feature plan v6 U5), when an earlier quest on the path is the one to
+    /// do: the name selects it. Nothing when the quest shown is the next one or done, or when the chain line already
+    /// links the same quest, so a quest is never named twice.
+    /// </summary>
+    private void DrawPathNext()
+    {
+        if (chart.NextStepRowId is not { } rowId || (model.ChainNextName is not null && model.ChainNextRowId == rowId))
+        {
+            return;
+        }
+
+        ImGui.TextDisabled(Strings.PathNextLabel);
+        ImGui.SameLine();
+        var tail = Strings.StateReasonSeparator + chart.NextStepState;
+        var tailWidth = ImGui.CalcTextSize(tail).X;
+        var nameRight = MathF.Max(ImGui.GetCursorScreenPos().X + UiMetrics.Px(24f), cardRight - tailWidth);
+        DrawQuestLink("##pathNext", chart.NextStepName, rowId, nameRight);
+        if (ImGui.GetItemRectMax().X + tailWidth <= cardRight)
+        {
+            ImGui.SameLine(0f, 0f);
+            using var tone = Theme.PushText(Theme.Surface.TextTertiary);
+            ImGui.TextUnformatted(tail);
+        }
+    }
+
+    /// <summary>
+    /// The chain line at the top of the Path card (feature plan v6 U5): the chain's name, then what to do next in it
+    /// ("Next in chain: quest", "Still open earlier: quest", or a plain "Last quest in this chain" / "Chain complete"),
+    /// on the same line while it fits and on the next otherwise, over a slim moon-gold bar whose hover gives the totals.
+    /// Nothing is drawn for a quest outside every chain.
     /// </summary>
     private void DrawChain()
     {
@@ -817,56 +854,87 @@ public sealed partial class DetailPane
             return;
         }
 
-        var lineHeight = ImGui.GetTextLineHeight();
-        var size = UiMetrics.HaloBoxSize(lineHeight);
-        MoonGlyph.DrawHaloInline(model.ChainFraction, size, onCard: true);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(model.ChainHaloTooltip);
-        }
-
-        // The glyph box is taller than a text line; centre the text's first line on it.
-        ImGui.SameLine();
-        var textLeft = ImGui.GetCursorScreenPos().X;
-        var room = RoomTo(cardRight);
-        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((size - lineHeight) * 0.5f));
-        TextFlow.Wrapped(text, room, Theme.U32(Theme.Surface.TextSecondary));
-        var oneLine = ImGui.GetItemRectSize().Y <= lineHeight + 0.5f;
+        var left = ImGui.GetCursorScreenPos().X;
+        TextFlow.Wrapped(text, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
+        var oneLine = ImGui.GetItemRectSize().Y <= ImGui.GetTextLineHeight() + 0.5f;
         var textEnd = ImGui.GetItemRectMax().X;
 
         var spacing = ImGui.GetStyle().ItemSpacing.X;
-        var tail = model.ChainNextName is { } next
-            ? ImGui.CalcTextSize(Strings.DetailChainNext).X + spacing + MathF.Min(ImGui.CalcTextSize(next).X, UiMetrics.Px(80f))
-            : ImGui.CalcTextSize(Strings.DetailChainComplete).X;
-        if (oneLine && textEnd + spacing + tail <= cardRight)
+        var labelWidth = ImGui.CalcTextSize(model.ChainLabel).X;
+        var tail = model.ChainNextName is { } next ? labelWidth + spacing + MathF.Min(ImGui.CalcTextSize(next).X, UiMetrics.Px(80f)) : labelWidth;
+        if (oneLine && textEnd + (spacing * 2f) + tail <= cardRight)
         {
-            ImGui.SameLine();
-        }
-        else
-        {
-            ImGui.SetCursorScreenPos(new Vector2(textLeft, ImGui.GetCursorScreenPos().Y));
+            ImGui.SameLine(0f, spacing * 2f);
         }
 
         if (model.ChainNextName is not { } nextName)
         {
-            using var done = Theme.PushText(Theme.AccentDim);
-            ImGui.TextUnformatted(Strings.DetailChainComplete);
-            return;
+            using var tone = Theme.PushText(model.ChainKind == ChainNextKind.Complete ? Theme.AccentDim : Theme.Surface.TextTertiary);
+            ImGui.TextUnformatted(model.ChainLabel);
+        }
+        else
+        {
+            ImGui.TextDisabled(model.ChainLabel);
+            ImGui.SameLine();
+            DrawQuestLink("##chainNext", nextName, model.ChainNextRowId, cardRight);
         }
 
-        ImGui.TextDisabled(Strings.DetailChainNext);
-        ImGui.SameLine();
-        var nameWidth = ImGui.CalcTextSize(nextName).X;
-        var nameRoom = MathF.Max(UiMetrics.Px(24f), MathF.Min(nameWidth, RoomTo(cardRight)));
+        DrawChainBar(left);
+    }
+
+    /// <summary>The chain bar's motion key tag ("CHBR"), with the chain's first quest in the low half.</summary>
+    private const uint ChainBarTag = 0x4348_4252;
+
+    /// <summary>
+    /// The chain's slim bar under its line: a sunken track with a hairline rim, filled in moon gold (the accent once the
+    /// chain is complete), the fill easing to a new fraction like the dashboard gauges (at once under Reduce motion).
+    /// Its hover gives the totals.
+    /// </summary>
+    private void DrawChainBar(float left)
+    {
+        var height = MathF.Max(2f, UiMetrics.Px(3f));
+        var hit = MathF.Max(height, UiMetrics.Px(8f));
+        var width = MathF.Max(1f, cardRight - left);
+        ImGui.SetCursorScreenPos(new Vector2(left, ImGui.GetCursorScreenPos().Y));
+        var top = ImGui.GetCursorScreenPos();
+        ImGui.InvisibleButton("##chainBar", new Vector2(width, hit));
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(model.ChainTooltip);
+        }
+
+        var min = new Vector2(left, top.Y + ((hit - height) * 0.5f));
+        var max = min + new Vector2(width, height);
+        var rounding = height * 0.5f;
+        var dl = ImGui.GetWindowDrawList();
+        dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Sunken), rounding);
+        dl.AddRect(min, max, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        var fraction = Motion.Gauge(Motion.Key(ChainBarTag, model.ChainKeyId), model.ChainFraction);
+        if (fraction > 0f)
+        {
+            var fill = model.ChainKind == ChainNextKind.Complete ? Theme.U32(Theme.AccentDim) : Theme.MoonU32;
+            dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(height, width * fraction), max.Y), fill, rounding);
+        }
+    }
+
+    /// <summary>
+    /// A quest name as a moon-gold link ending by <paramref name="right"/> (ellipsised there, the whole name on hover)
+    /// that selects the quest (<see cref="RevealRow"/>), with a focus ring and a hand cursor.
+    /// </summary>
+    private void DrawQuestLink(string id, string name, uint rowId, float right)
+    {
+        var lineHeight = ImGui.GetTextLineHeight();
+        var nameWidth = ImGui.CalcTextSize(name).X;
+        var nameRoom = MathF.Max(UiMetrics.Px(24f), MathF.Min(nameWidth, RoomTo(right)));
         var min = ImGui.GetCursorScreenPos();
-        var clicked = ImGui.InvisibleButton("##chainNext", new Vector2(nameRoom, lineHeight));
+        var clicked = ImGui.InvisibleButton(id, new Vector2(nameRoom, lineHeight));
         var hovered = ImGui.IsItemHovered();
         var ink = hovered ? Theme.Surface.Text : Theme.Moon;
-        var cut = Chrome.EllipsisTextAt(ImGui.GetWindowDrawList(), min, nameRoom, nextName, Theme.U32(ink), nameWidth);
+        var cut = Chrome.EllipsisTextAt(ImGui.GetWindowDrawList(), min, nameRoom, name, Theme.U32(ink), nameWidth);
         Chrome.FocusRing(UiMetrics.Px(3f));
         if (clicked)
         {
-            RevealRow(model.ChainNextRowId);
+            RevealRow(rowId);
         }
 
         if (hovered)
@@ -874,7 +942,7 @@ public sealed partial class DetailPane
             ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
             if (cut)
             {
-                UiMetrics.Tooltip(nextName, Strings.DetailChainNextTooltip);
+                UiMetrics.Tooltip(name, Strings.DetailChainNextTooltip);
             }
             else
             {
@@ -1201,6 +1269,8 @@ public sealed partial class DetailPane
         model.QuirkNote = null;
         model.ChainText = null;
         model.ChainNextName = null;
+        model.ChainLabel = string.Empty;
+        model.ChainTooltip = string.Empty;
         model.GiverName = null;
         model.PlaceLine = null;
         model.CoordinateText = null;
@@ -1366,28 +1436,25 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// The chain line for a quest that belongs to one: a curated or genre chain ("Chain: Hildibrand · 12 of 57 done")
-    /// or a side story ("Story: &lt;first quest&gt; · 3 of 7 done"), from the session's chain catalog.
+    /// The chain line for a quest that belongs to one, a curated or genre chain ("Hildibrand") or a side story ("Story:
+    /// &lt;first quest&gt;"), from the session's chain catalog: its name, what to do next in it seen from this quest
+    /// (<see cref="ChainLine"/>), the bar's fill and the totals for the bar's hover.
     /// </summary>
     private void BuildChain(SessionState session, CatalogBundle bundle, uint rowId)
     {
-        if (session.Chains.ForQuest(rowId) is not { } chain)
+        if (session.Chains.ForQuest(rowId) is not { } chain || ChainLine.For(chain, rowId, session.States) is not { } line)
         {
+            // Outside every chain, or nothing in it counts for this character: no line at all.
             return;
         }
 
-        var progress = ChainCatalog.Progress(chain, session.States);
-        if (progress.IsEmpty)
-        {
-            // Nothing in the chain counts for this character: no "0 of 0 done" line.
-            return;
-        }
-
-        model.ChainFraction = progress.Fraction;
-        var name = ChainCatalog.DisplayName(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
-        model.ChainText = string.Format(CultureInfo.CurrentCulture, chain.IsStory ? Strings.DetailStoryFormat : Strings.DetailChainFormat, name, progress.Done, progress.Total);
-        model.ChainHaloTooltip = string.Format(CultureInfo.CurrentCulture, Strings.DetailChainHaloTooltipFormat, progress.Done, progress.Total);
-        if (progress.NextRowId is { } next)
+        model.ChainText = ChainCatalog.DisplayName(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
+        model.ChainKind = line.Kind;
+        model.ChainLabel = line.Label;
+        model.ChainTooltip = line.Tooltip;
+        model.ChainFraction = line.Fraction;
+        model.ChainKeyId = chain.RowIds.Count > 0 ? chain.RowIds[0] : 0;
+        if (line.LinkRowId is { } next)
         {
             model.ChainNextRowId = next;
             model.ChainNextName = session.Spoilers.DisplayName(bundle.Catalog, next, next.ToString(CultureInfo.InvariantCulture));

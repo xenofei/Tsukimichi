@@ -76,7 +76,7 @@ static partial class Strings
     // ---- Main scenario section ----
     public static string WelcomeBackMsqTitle => Loc.Get("WelcomeBackMsqTitle");
 
-    /// <summary>{0} = expansion, {1} = next quest (through the shield), {2} = done, {3} = total.</summary>
+    /// <summary>{0} = expansion, {1} = next quest (through the shield), {2} = main scenario quests left, the next one included.</summary>
     public static string WelcomeBackMsqAtFormat => Loc.Get("WelcomeBackMsqAtFormat");
 
     /// <summary>{0} = expansion, {1} = the routes ("route A 3 of 9 · route B not started").</summary>

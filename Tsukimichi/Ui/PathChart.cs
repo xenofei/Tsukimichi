@@ -128,8 +128,23 @@ public sealed class PathChart
         this.select = select ?? throw new ArgumentNullException(nameof(select));
     }
 
-    /// <summary>"N steps · M done" (or "1 step") for the card header.</summary>
+    /// <summary>
+    /// The card header's caption: "3 quests before this one", or empty when the quest is the next one to do or done
+    /// (<see cref="PathHeading"/>; owner point 8 retired "831 steps · 830 done").
+    /// </summary>
     public string HeaderCaption { get; private set; } = string.Empty;
+
+    /// <summary>The caption's hover: the totals ("828 of 831 earlier quests done"); empty with no caption.</summary>
+    public string HeaderTooltip { get; private set; } = string.Empty;
+
+    /// <summary>The earlier quest to do first, which the header offers as "Next: quest · state"; null when none.</summary>
+    public uint? NextStepRowId { get; private set; }
+
+    /// <summary><see cref="NextStepRowId"/>'s name through the spoiler shield.</summary>
+    public string NextStepName { get; private set; } = string.Empty;
+
+    /// <summary><see cref="NextStepRowId"/>'s state name ("Ready", "In journal", "Blocked").</summary>
+    public string NextStepState { get; private set; } = string.Empty;
 
     /// <summary>The path's steps, first to target (for tests of intent and the pane's own use).</summary>
     public int StepCount => path.Count;
@@ -163,27 +178,26 @@ public sealed class PathChart
 
         stepNames = new string[path.Count];
         stepDetails = new string[path.Count];
-        var done = 0;
         var firstUndone = -1;
         for (var i = 0; i < path.Count; i++)
         {
             var step = catalog.GetByRowId(path[i].RowId);
             stepNames[i] = step is null ? path[i].RowId.ToString(CultureInfo.InvariantCulture) : spoilers.DisplayName(step);
             stepDetails[i] = step is null ? string.Empty : Detail(bundle, step);
-            if (path[i].Done)
-            {
-                done++;
-            }
-            else if (firstUndone < 0)
+            if (!path[i].Done && firstUndone < 0)
             {
                 firstUndone = i;
             }
         }
 
         walkedFraction = path.Count == 0 ? 0f : (firstUndone < 0 ? path.Count : firstUndone) / (float)path.Count;
-        HeaderCaption = path.Count <= 1
-            ? Strings.PathCaptionOne
-            : string.Format(CultureInfo.CurrentCulture, Strings.PathCaptionFormat, path.Count, done);
+        var statesKnown = session.ViewedSnapshot is not null && states.Count > 0;
+        var heading = PathHeading.For(path, statesKnown);
+        HeaderCaption = heading.Caption;
+        HeaderTooltip = heading.Tooltip;
+        NextStepRowId = heading.HasNext ? path[heading.NextIndex].RowId : null;
+        NextStepName = heading.HasNext ? stepNames[heading.NextIndex] : string.Empty;
+        NextStepState = heading.HasNext ? Strings.StateName(path[heading.NextIndex].State, catalog.GetByRowId(path[heading.NextIndex].RowId)) : string.Empty;
 
         rowLabels = new string[rows.Count];
         rowSuffixes = new string[rows.Count];
@@ -225,7 +239,6 @@ public sealed class PathChart
 
         LoadUnlocks(session, bundle, quest, maxUnlocks);
 
-        var statesKnown = session.ViewedSnapshot is not null && states.Count > 0;
         captionVeiled = !statesKnown;
         caption = !statesKnown ? Strings.PathNotCheckedCaption
             : path.Count > 1 ? null
