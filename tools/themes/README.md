@@ -36,9 +36,12 @@ Contact sheets, the cross-set heatmaps and `report.txt` go to `--out`, never int
 On the Night window, for every hero tier group and the row tier, at 16 px in a 40 px cell (round 5's `metrics.py`):
 - **G1:** the weakest pair of states is at least 12 at 16 px and 16 at 20 px, in greyscale and in (Vienot) deuteranopia. Ready on another job counts its worst job.
 - **G2:** Ready is at least 1.3× the next state's salience; Completed is at most 0.8× Ready; every state but Not checked is at least 15.
+- **G1c (colour vision):** on every ground (Night, Ishgard Snow, daylight), the weakest pair at 16 px is at least 11 under Machado protanopia, deuteranopia and tritanopia (the realism supervisor's bar for 1.16.0; Medallion's row tier sits at 11.1 under protanopia).
 - **Fit:** nothing outside the cells, and no sprite cut by its cell.
 
-Distinctness and salience are judged at one decimal, as round 5 judged them. Machado deuteranopia, protanopia and tritanopia, and the Ishgard Snow and daylight grounds, are recorded under `survey` for reviewers: Medallion's shipped row tier itself sits at 11.1 under protanopia, so they are not gates yet. On a light ground, salience measures difference from the window, so dark states outshine Ready by definition; that is why the Ready-lead gate runs on Night only.
+Distinctness and salience are judged at one decimal, as round 5 judged them. Everything else (other grounds and sizes) is recorded under `survey` for reviewers.
+
+**Light-palette Ready salience (`light`, G2L).** On Ishgard Snow a Ready row's glow becomes a warm wash (`#F2D27A` at .75 within 3 px, spec-1.16 §A4). The build draws each row-tier state on black and white mattes, recovers its colour and alpha, lays Ready over the wash, and sums each cell's OKLab difference from the window (lightness and chroma). It records the result with no wash, the default wash and the supervisor's fallback (.90 within 4 px) at 16 and 20 px. `readyWash` is the wash the plugin must draw: the default unless only the fallback lets Ready lead by 1.3. G2L is **recorded, not enforced** (`LIGHT_GATE_ENFORCED`, mirrored in `ThemeAtlasTests`). The sum is mostly lightness, so on a light page every dark-faced state outweighs Ready's light face, and no set reaches 1.3 under either wash.
 
 ## Cross-set table (§5.2)
 

@@ -16,7 +16,9 @@
 # Metrics are round 5's metrics.py, generalised: each state at 16 and 20 px in a 40 px cell on a palette window,
 # blurred (0.6) greyscale luminance; distinctness is the summed difference of a pair, salience the summed difference
 # from the window. Vision modes: greyscale, Vienot deuteranopia (round 5's), and Machado 2009 deuteranopia,
-# protanopia and tritanopia (Core's ColorVisionSimulation), each then taken to greyscale.
+# protanopia and tritanopia (Core's ColorVisionSimulation), each then taken to greyscale. Machado's three are gated at
+# 16 px on every ground (weakest pair at least 11). On Ishgard Snow, Ready's salience is measured in OKLab (colour,
+# not just luminance) with Ready over the palette's warm wash, from each state drawn on black and white mattes.
 #
 # Usage:
 #   python tools/themes/build_themes.py                 build every set, run the gates, write sheets to the temp folder
@@ -63,9 +65,25 @@ NIGHT = "#0F1424"
 # Informational grounds (section 8.2's windows, and render_sheet.py's daylight swatch). The gates run on Night.
 GROUNDS = {"night": NIGHT, "ishgard-snow": "#EEF1F6", "daylight": "#E9E4D6"}
 BARS = {"weakest16": 12.0, "weakest20": 16.0, "readyLead": 1.3, "completedOfReady": 0.8, "salienceMin": 15.0,
+        "cvdWeakest16": 11.0, "lightReadyLead": 1.3,
         "mixClose": 12.0, "mixHard": 10.0, "mixReadyLead": 1.25}
 GATE_MODES = ["grey", "deut"]        # the round 5 gate: greyscale and Vienot deuteranopia
 ALL_MODES = ["grey", "deut", "machado-deut", "machado-prot", "machado-trit"]
+# The colour-vision gate (the realism supervisor's ruling for 1.16.0): Machado 2009 protanopia, deuteranopia and
+# tritanopia, weakest pair at 16 px, on every ground (theme-system.md section 7.1: Night, the paired palette, daylight).
+CVD_MODES = ["machado-prot", "machado-deut", "machado-trit"]
+# Light-palette Ready salience: on Ishgard Snow a Ready row's glow becomes a warm wash (spec-1.16.md A4). The default
+# wash is the spec's; the fallback is the supervisor's, taken only when a set's Ready fails to lead under the default.
+LIGHT_GROUND = "ishgard-snow"
+WASHES = {"default": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
+          "fallback": {"color": "#F2D27A", "alpha": 0.90, "radiusPx": 4}}
+# Measured and recorded, not yet failing the build: summed OKLab difference is mostly lightness, so on a light page every
+# dark-faced state outweighs Ready's light face, and no set reaches the 1.3 lead under either wash (best 0.92). Awaiting
+# the realism supervisor's ruling on the measure; turning this on makes G2L a gate here and in metrics.json's "gates".
+LIGHT_GATE_ENFORCED = False
+# Black and white mattes (not grounds): each state drawn on both recovers its colour and alpha, so the build can lay
+# it over the wash exactly as the plugin will.
+MATTES = {"matte-black": "#000000", "matte-white": "#FFFFFF"}
 
 
 # ================================================================ manifests and sources
@@ -349,7 +367,7 @@ def metric_strip(svgs, rows, tmp, name):
             f"align-items:center;justify-content:center'><img src='data:image/svg+xml;base64,{u}' width={size} height={size}></div>"
             for i, u in enumerate(uris))
         html.append(f"<div style='position:absolute;left:0;top:{r * CELL}px;width:{n * CELL}px;height:{CELL}px;"
-                    f"background:{GROUNDS[ground]}'>{imgs}</div>")
+                    f"background:{GROUNDS.get(ground) or MATTES[ground]}'>{imgs}</div>")
     page = os.path.join(tmp, f"{name}.html")
     with open(page, "w", encoding="utf-8") as fh:
         fh.write(f"<html><body style='margin:0;background:{NIGHT}'>{''.join(html)}</body></html>")
@@ -424,7 +442,7 @@ def r1(v):
 def measure_set(m, tmp):
     """Renders and measures every tier group of one set on every ground. Returns the groups with their cells."""
     groups = tier_groups(m)
-    rows = [(g, s) for g in GROUNDS for s in SIZES]
+    rows = [(g, s) for g in [*GROUNDS, *MATTES] for s in SIZES]
     for g in groups:
         flat = [svg for s in STATES for svg in g["sources"][s]]
         g["strip"] = metric_strip(flat, rows, tmp, f"metrics-{m['key']}-{g['name']}")
@@ -438,18 +456,128 @@ def measure_set(m, tmp):
     return groups
 
 
+# ---------------------------------------------------------------- light-palette Ready salience (OKLab, with the wash)
+
+OKLAB_M1 = np.array([[0.4122214708, 0.5363325363, 0.0514459929], [0.2119034982, 0.6806995451, 0.1073969566],
+                     [0.0883024619, 0.2817188376, 0.6299787005]])
+OKLAB_M2 = np.array([[0.2104542553, 0.7936177850, -0.0040720468], [1.9779984951, -2.4285922050, 0.4505937099],
+                     [0.0259040371, 0.7827717662, -0.8086757660]])
+
+
+def hex_rgb(h):
+    return np.array([int(h[i:i + 2], 16) for i in (1, 3, 5)], dtype=float) / 255
+
+
+def oklab(rgb):
+    return np.cbrt(lin(np.clip(rgb, 0, 1)) @ OKLAB_M1.T) @ OKLAB_M2.T
+
+
+def unmatte(black, white):
+    """A cell drawn on black and on white -> (premultiplied colour, alpha): on black C = P, on white C = P + (1 - a)."""
+    alpha = np.clip(1 - (white - black).mean(axis=-1), 0, 1)
+    return black, alpha
+
+
+def wash_cover(alpha, radius):
+    """The wash's coverage: everything within `radius` px of the medal (alpha at least .5), with a 1 px soft edge."""
+    ys, xs = np.nonzero(alpha >= 0.5)
+    if not len(ys):
+        return np.zeros_like(alpha)
+    gy, gx = np.mgrid[0:alpha.shape[0], 0:alpha.shape[1]]
+    dist = np.sqrt((gy[..., None] - ys) ** 2 + (gx[..., None] - xs) ** 2).min(axis=-1)
+    return np.clip(radius + 0.5 - dist, 0, 1)
+
+
+def light_salience(g, wash, size):
+    """Each state's salience on the light window: the summed OKLab difference (lightness and chroma) of its cell from
+    the window, Ready drawn over the wash (None: no wash). Blending is in sRGB values, as Chrome and ImGui blend.
+    Ready on another job counts its loudest job, as on Night."""
+    window = hex_rgb(GROUNDS[LIGHT_GROUND])
+    window_lab = oklab(window)
+    black = cells_for(g["strip"], g["sources"], "matte-black", size)
+    white = cells_for(g["strip"], g["sources"], "matte-white", size)
+    plain = cells_for(g["strip"], g["sources"], LIGHT_GROUND, size)
+    sal = {}
+    for s in STATES:
+        vals = []
+        for b, w, p in zip(black[s], white[s], plain[s]):
+            pre, a = unmatte(b, w)
+            ground = np.broadcast_to(window, b.shape)
+            # The unmatte must reproduce Chrome's own render on the window, or the wash composite below means nothing.
+            # Three 8-bit renders leave a few levels of rounding on the odd edge pixel (4.3 at worst, 0.06 on average).
+            err = np.abs(pre + (1 - a)[..., None] * ground - p)
+            assert err.max() <= 6 / 255 and err.mean() <= 0.25 / 255, \
+                f"{g['name']} {s} {size} px: unmatte is off by {err.max() * 255:.1f}/255 (mean {err.mean() * 255:.2f})"
+            if s == "ready" and wash:
+                cover = (wash_cover(a, wash["radiusPx"]) * wash["alpha"])[..., None]
+                ground = ground * (1 - cover) + hex_rgb(wash["color"]) * cover
+            c = pre + (1 - a)[..., None] * ground
+            vals.append(float(np.linalg.norm(oklab(c) - window_lab, axis=-1).sum()))
+        sal[s] = max(vals)
+    return sal
+
+
+def light_lead(sal):
+    nxt_state, nxt = max(((s, v) for s, v in sal.items() if s != "ready"), key=lambda kv: kv[1])
+    return sal["ready"] / nxt, nxt_state, nxt
+
+
+def light_measures(groups):
+    """The row tier's light-palette salience with no wash, the default wash and the fallback, at 16 and 20 px; the
+    gate runs at 16 px. Returns (gate rows, the record for metrics.json)."""
+    row = next(g for g in groups if g["name"] == "row")
+    variants = {}
+    for name, wash in [("none", None), *WASHES.items()]:
+        variants[name] = {}
+        for size in SIZES:
+            sal = light_salience(row, wash, size)
+            lead, nxt_state, _ = light_lead(sal)
+            variants[name][str(size)] = {"salience": {s: r1(v) for s, v in sal.items()}, "readyLead": r1(lead),
+                                         "next": nxt_state}
+
+    def passes(name):
+        return variants[name]["16"]["readyLead"] >= BARS["lightReadyLead"]
+
+    use = "default" if passes("default") or not passes("fallback") else "fallback"
+    v = variants[use]["16"]
+    wash = WASHES[use]
+    nxt = v["next"]
+    gate = {"gate": "G2L Ready lead on Ishgard Snow", "tier": "row", "value": v["readyLead"], "bar": BARS["lightReadyLead"],
+            "detail": f"{use} wash {wash['alpha']:.2f} within {wash['radiusPx']} px: Rdy {v['salience']['ready']:.0f} / "
+                      f"{SHORT[nxt]} {v['salience'][nxt]:.0f}",
+            "pass": v["readyLead"] >= BARS["lightReadyLead"]}
+    record = {"ground": LIGHT_GROUND, "window": GROUNDS[LIGHT_GROUND], "tier": "row", "gatePx": 16,
+              "enforced": LIGHT_GATE_ENFORCED, "gate": gate, "washes": WASHES, "use": use, "variants": variants}
+    return ([gate] if LIGHT_GATE_ENFORCED else []), record
+
+
 def at_bar(v):
     """Distinctness and salience are judged at one decimal, the precision round 5 set its bars at (its shipped row
     tier holds Blocked vs Locked out at 12.0, which is 11.96 unrounded). Ratios are judged at two decimals."""
     return round(float(v), 1)
 
 
+def is_gated(meas):
+    return (meas["ground"] == "night" and meas["mode"] in GATE_MODES) or is_cvd_gate(meas)
+
+
+def is_cvd_gate(meas):
+    return meas["px"] == 16 and meas["mode"] in CVD_MODES
+
+
 def gate_rows(m, groups):
-    """Section 7.1's per-set gates, on Night: G1 (weakest pair at 16 and 20 px, greyscale and deuteranopia) and G2
-    (Ready's lead, Completed's recession, every state but Not checked visible), per tier group."""
+    """Section 7.1's per-set gates, per tier group: G1 on Night (weakest pair at 16 and 20 px, greyscale and Vienot
+    deuteranopia), G1c on every ground (weakest pair at 16 px under Machado protanopia, deuteranopia and tritanopia),
+    and G2 on Night (Ready's lead, Completed's recession, every state but Not checked visible)."""
     rows = []
     for g in groups:
         for meas in g["measures"]:
+            if is_cvd_gate(meas):
+                (a, b), v = min(meas["pairs"].items(), key=lambda kv: kv[1])
+                rows.append({"gate": f"G1c weakest pair 16 px {meas['mode']} on {meas['ground']}", "tier": g["name"],
+                             "value": r1(v), "bar": BARS["cvdWeakest16"], "detail": f"{SHORT[a]}-{SHORT[b]}",
+                             "pass": at_bar(v) >= BARS["cvdWeakest16"]})
+                continue
             if meas["ground"] != "night" or meas["mode"] not in GATE_MODES:
                 continue
             (a, b), v = min(meas["pairs"].items(), key=lambda kv: kv[1])
@@ -569,14 +697,15 @@ def summary(x):
             "readyLead": r1(sal["ready"] / nxt), "completedOfReady": r1(sal["completed"] / sal["ready"])}
 
 
-def metrics_json(m, groups, gates, cross, mix_sal, chrome_ver):
+def metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver):
     """The committed record: the full pair and salience tables behind the gates (Night, greyscale and Vienot
-    deuteranopia, 16 and 20 px), a one-line summary for every other ground and vision mode, and this set's half of the
+    deuteranopia, 16 and 20 px; every ground, Machado's three, 16 px), a one-line summary for every other ground,
+    mode and size, the light-palette salience and the Ready wash the plugin must draw, and this set's half of the
     cross-set table."""
     tiers = []
     for g in groups:
-        gate_measures = [x for x in g["measures"] if x["ground"] == "night" and x["mode"] in GATE_MODES]
-        survey = [summary(x) for x in g["measures"] if not (x["ground"] == "night" and x["mode"] in GATE_MODES)]
+        gate_measures = [x for x in g["measures"] if is_gated(x)]
+        survey = [summary(x) for x in g["measures"] if not is_gated(x)]
         tiers.append({
             "name": g["name"],
             "atlasTiers": g["tiers"],
@@ -595,14 +724,20 @@ def metrics_json(m, groups, gates, cross, mix_sal, chrome_ver):
         "name": m["name"],
         "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. Distinctness and salience are "
                 "round 5's metrics.py units (summed blurred luminance difference) in a 40 px cell. Gates run on the "
-                "Night window in greyscale and deuteranopia; 'survey' records the other grounds and vision modes.",
+                "Night window in greyscale and deuteranopia (16 and 20 px), and on every ground under Machado "
+                "protanopia, deuteranopia and tritanopia (16 px); 'survey' records the rest. 'light' is the row "
+                "tier's salience on Ishgard Snow in OKLab units (summed colour difference from the window, chroma "
+                "included), Ready over its warm wash; 'readyWash' is the wash the plugin draws for this set.",
         "chrome": chrome_ver,
         "grounds": GROUNDS,
         "bars": BARS,
         "gateModes": GATE_MODES,
+        "cvdModes": CVD_MODES,
+        "readyWash": light["washes"][light["use"]],
         "pass": all(r["pass"] for r in gates),
         "gates": gates,
         "tiers": tiers,
+        "light": light,
         "cross": {"note": "Pairs are 'this set's state|the other set's state', each pair of different states, worst "
                           "over every vision mode, on Night, for the row tier and the 48 px hero tier's sources, at "
                           "16 and 20 px. Each set is framed in its own kit (the sprites it ships). Under mixClose "
@@ -717,6 +852,15 @@ def report_text(results, mix_sal, cross):
         lines.append(f"== {key}: {'PASS' if r['pass'] else 'FAIL'}")
         for g in r["gates"]:
             lines.append(f"  {'ok  ' if g['pass'] else 'FAIL'} {g['tier']:<14} {g['gate']:<32} {g['value']:>7} (bar {g['bar']}) {g['detail']}")
+        light = r["light"]
+        lg = light["gate"]
+        lines.append(f"  light salience, row tier on {light['ground']} (OKLab), wash used: {light['use']}; G2L "
+                     f"{'ok' if lg['pass'] else 'FAIL'} {lg['value']} (bar {lg['bar']}), "
+                     f"{'enforced' if light['enforced'] else 'recorded, not enforced'}")
+        for name, by_size in light["variants"].items():
+            for size, v in by_size.items():
+                sal = "  ".join(f"{SHORT[s]} {v['salience'][s]:.0f}" for s in STATES)
+                lines.append(f"    {name:<8} {size} px  lead {v['readyLead']:<5} (next {SHORT[v['next']]})  {sal}")
         lines.append("")
     lines.append("== cross-set pairs under the mix bars (16 px, worst vision mode)")
     seen = False
@@ -766,8 +910,9 @@ def build(manifests, selected, root, out_dir, sheets=True):
         mix_sal = cross_salience(measured)
         for m in (m for m in manifests if m["key"] in selected):
             groups = groups_by[m["key"]]
-            gates = gate_rows(m, groups) + fit_rows(atlases[m["key"]])
-            data = metrics_json(m, groups, gates, cross, mix_sal, chrome_ver)
+            light_gates, light = light_measures(groups)
+            gates = gate_rows(m, groups) + light_gates + fit_rows(atlases[m["key"]])
+            data = metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver)
             _, dest_set = destinations(m, root)
             os.makedirs(dest_set, exist_ok=True)
             write_json(data, os.path.join(dest_set, "metrics.json"), compact=True)

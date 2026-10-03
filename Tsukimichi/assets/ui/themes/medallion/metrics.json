@@ -1,11 +1,13 @@
 {
   "set": "medallion",
   "name": "Menphina's Medallion",
-  "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. Distinctness and salience are round 5's metrics.py units (summed blurred luminance difference) in a 40 px cell. Gates run on the Night window in greyscale and deuteranopia; 'survey' records the other grounds and vision modes.",
+  "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. Distinctness and salience are round 5's metrics.py units (summed blurred luminance difference) in a 40 px cell. Gates run on the Night window in greyscale and deuteranopia (16 and 20 px), and on every ground under Machado protanopia, deuteranopia and tritanopia (16 px); 'survey' records the rest. 'light' is the row tier's salience on Ishgard Snow in OKLab units (summed colour difference from the window, chroma included), Ready over its warm wash; 'readyWash' is the wash the plugin draws for this set.",
   "chrome": "154.0.8037.97",
   "grounds": {"night": "#0F1424", "ishgard-snow": "#EEF1F6", "daylight": "#E9E4D6"},
-  "bars": {"weakest16": 12.0, "weakest20": 16.0, "readyLead": 1.3, "completedOfReady": 0.8, "salienceMin": 15.0, "mixClose": 12.0, "mixHard": 10.0, "mixReadyLead": 1.25},
+  "bars": {"weakest16": 12.0, "weakest20": 16.0, "readyLead": 1.3, "completedOfReady": 0.8, "salienceMin": 15.0, "cvdWeakest16": 11.0, "lightReadyLead": 1.3, "mixClose": 12.0, "mixHard": 10.0, "mixReadyLead": 1.25},
   "gateModes": ["grey", "deut"],
+  "cvdModes": ["machado-prot", "machado-deut", "machado-trit"],
+  "readyWash": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
   "pass": true,
   "gates": [
     {"gate": "G1 weakest pair 16 px grey", "tier": "hero-48-64", "value": 12.26, "bar": 12.0, "detail": "Lock-NotC", "pass": true},
@@ -13,22 +15,49 @@
     {"gate": "G2 Completed recedes", "tier": "hero-48-64", "value": 0.73, "bar": 0.8, "detail": "Comp 60 / Rdy 82", "pass": true},
     {"gate": "G2 every state visible", "tier": "hero-48-64", "value": 39.84, "bar": 15.0, "detail": "Lock", "pass": true},
     {"gate": "G1 weakest pair 16 px deut", "tier": "hero-48-64", "value": 12.42, "bar": 12.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-deut on night", "tier": "hero-48-64", "value": 12.6, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-prot on night", "tier": "hero-48-64", "value": 12.07, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-trit on night", "tier": "hero-48-64", "value": 12.12, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
     {"gate": "G1 weakest pair 20 px grey", "tier": "hero-48-64", "value": 22.17, "bar": 16.0, "detail": "Blk-Lock", "pass": true},
     {"gate": "G1 weakest pair 20 px deut", "tier": "hero-48-64", "value": 23.2, "bar": 16.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-deut on ishgard-snow", "tier": "hero-48-64", "value": 12.58, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-prot on ishgard-snow", "tier": "hero-48-64", "value": 12.08, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-trit on ishgard-snow", "tier": "hero-48-64", "value": 12.08, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-deut on daylight", "tier": "hero-48-64", "value": 12.56, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-prot on daylight", "tier": "hero-48-64", "value": 12.05, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-trit on daylight", "tier": "hero-48-64", "value": 12.1, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
     {"gate": "G1 weakest pair 16 px grey", "tier": "hero-96-128", "value": 12.26, "bar": 12.0, "detail": "Lock-NotC", "pass": true},
     {"gate": "G2 Ready lead", "tier": "hero-96-128", "value": 1.37, "bar": 1.3, "detail": "Rdy 82 / Comp 60", "pass": true},
     {"gate": "G2 Completed recedes", "tier": "hero-96-128", "value": 0.73, "bar": 0.8, "detail": "Comp 60 / Rdy 82", "pass": true},
     {"gate": "G2 every state visible", "tier": "hero-96-128", "value": 39.84, "bar": 15.0, "detail": "Lock", "pass": true},
     {"gate": "G1 weakest pair 16 px deut", "tier": "hero-96-128", "value": 12.42, "bar": 12.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-deut on night", "tier": "hero-96-128", "value": 12.6, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-prot on night", "tier": "hero-96-128", "value": 12.07, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-trit on night", "tier": "hero-96-128", "value": 12.12, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
     {"gate": "G1 weakest pair 20 px grey", "tier": "hero-96-128", "value": 22.17, "bar": 16.0, "detail": "Blk-Lock", "pass": true},
     {"gate": "G1 weakest pair 20 px deut", "tier": "hero-96-128", "value": 23.2, "bar": 16.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-deut on ishgard-snow", "tier": "hero-96-128", "value": 12.58, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-prot on ishgard-snow", "tier": "hero-96-128", "value": 12.08, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-trit on ishgard-snow", "tier": "hero-96-128", "value": 12.08, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-deut on daylight", "tier": "hero-96-128", "value": 12.56, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-prot on daylight", "tier": "hero-96-128", "value": 12.05, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-trit on daylight", "tier": "hero-96-128", "value": 12.1, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
     {"gate": "G1 weakest pair 16 px grey", "tier": "row", "value": 11.96, "bar": 12.0, "detail": "Blk-Lock", "pass": true},
     {"gate": "G2 Ready lead", "tier": "row", "value": 1.39, "bar": 1.3, "detail": "Rdy 85 / Comp 61", "pass": true},
     {"gate": "G2 Completed recedes", "tier": "row", "value": 0.72, "bar": 0.8, "detail": "Comp 61 / Rdy 85", "pass": true},
     {"gate": "G2 every state visible", "tier": "row", "value": 38.42, "bar": 15.0, "detail": "RoJ", "pass": true},
     {"gate": "G1 weakest pair 16 px deut", "tier": "row", "value": 12.45, "bar": 12.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-deut on night", "tier": "row", "value": 12.63, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-prot on night", "tier": "row", "value": 11.1, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-trit on night", "tier": "row", "value": 11.74, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
     {"gate": "G1 weakest pair 20 px grey", "tier": "row", "value": 19.73, "bar": 16.0, "detail": "Blk-Lock", "pass": true},
     {"gate": "G1 weakest pair 20 px deut", "tier": "row", "value": 21.31, "bar": 16.0, "detail": "Blk-Lock", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-deut on ishgard-snow", "tier": "row", "value": 12.59, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-prot on ishgard-snow", "tier": "row", "value": 11.07, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-trit on ishgard-snow", "tier": "row", "value": 11.73, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-deut on daylight", "tier": "row", "value": 12.56, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-prot on daylight", "tier": "row", "value": 11.06, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+    {"gate": "G1c weakest pair 16 px machado-trit on daylight", "tier": "row", "value": 11.68, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
     {"gate": "Fit medals: no bleed", "tier": "hero", "value": 0, "bar": 0, "detail": "max alpha outside every cell", "pass": true},
     {"gate": "Fit medals: not cut", "tier": "hero", "value": 171, "bar": 254, "detail": "max alpha on a cell edge: in-journal at 48", "pass": true},
     {"gate": "Fit medals@2x: no bleed", "tier": "hero", "value": 0, "bar": 0, "detail": "max alpha outside every cell", "pass": true},
@@ -55,6 +84,27 @@
         },
         {
           "ground": "night",
+          "px": 16,
+          "mode": "machado-deut",
+          "pairs": {"ready|ready-on-another-job": 39.03, "ready|in-journal": 28.98, "ready|blocked": 41.07, "ready|done-this-cycle": 38.18, "ready|completed": 24.8, "ready|locked-out": 39.77, "ready|not-checked": 42.27, "ready-on-another-job|in-journal": 13.5, "ready-on-another-job|blocked": 14.46, "ready-on-another-job|done-this-cycle": 16.66, "ready-on-another-job|completed": 25.2, "ready-on-another-job|locked-out": 18.76, "ready-on-another-job|not-checked": 17.19, "in-journal|blocked": 19.96, "in-journal|done-this-cycle": 20.69, "in-journal|completed": 19.87, "in-journal|locked-out": 18.26, "in-journal|not-checked": 22.25, "blocked|done-this-cycle": 15.37, "blocked|completed": 26.38, "blocked|locked-out": 13.95, "blocked|not-checked": 16.16, "done-this-cycle|completed": 21.28, "done-this-cycle|locked-out": 16.52, "done-this-cycle|not-checked": 18.87, "completed|locked-out": 19.73, "completed|not-checked": 24.06, "locked-out|not-checked": 12.6},
+          "salience": {"ready": 81.6, "ready-on-another-job": 43.39, "in-journal": 54.54, "blocked": 40.56, "done-this-cycle": 43.87, "completed": 60.69, "locked-out": 42.4, "not-checked": 39.74}
+        },
+        {
+          "ground": "night",
+          "px": 16,
+          "mode": "machado-prot",
+          "pairs": {"ready|ready-on-another-job": 40.56, "ready|in-journal": 29.87, "ready|blocked": 42.71, "ready|done-this-cycle": 40.45, "ready|completed": 26.25, "ready|locked-out": 47.49, "ready|not-checked": 43.71, "ready-on-another-job|in-journal": 14.06, "ready-on-another-job|blocked": 13.61, "ready-on-another-job|done-this-cycle": 15.39, "ready-on-another-job|completed": 24.53, "ready-on-another-job|locked-out": 16.06, "ready-on-another-job|not-checked": 16.18, "in-journal|blocked": 20.39, "in-journal|done-this-cycle": 20.83, "in-journal|completed": 19.3, "in-journal|locked-out": 20.55, "in-journal|not-checked": 22.46, "blocked|done-this-cycle": 14.94, "blocked|completed": 25.73, "blocked|locked-out": 12.38, "blocked|not-checked": 15.81, "done-this-cycle|completed": 20.95, "done-this-cycle|locked-out": 14.9, "done-this-cycle|not-checked": 18.09, "completed|locked-out": 24.57, "completed|not-checked": 23.21, "locked-out|not-checked": 12.07},
+          "salience": {"ready": 82.69, "ready-on-another-job": 42.92, "in-journal": 54.77, "blocked": 40.02, "done-this-cycle": 42.58, "completed": 59.47, "locked-out": 35.53, "not-checked": 39.29}
+        },
+        {
+          "ground": "night",
+          "px": 16,
+          "mode": "machado-trit",
+          "pairs": {"ready|ready-on-another-job": 39.68, "ready|in-journal": 29.43, "ready|blocked": 41.9, "ready|done-this-cycle": 39.31, "ready|completed": 25.57, "ready|locked-out": 42.96, "ready|not-checked": 42.92, "ready-on-another-job|in-journal": 13.79, "ready-on-another-job|blocked": 13.96, "ready-on-another-job|done-this-cycle": 15.92, "ready-on-another-job|completed": 24.69, "ready-on-another-job|locked-out": 17.43, "ready-on-another-job|not-checked": 16.58, "in-journal|blocked": 20.16, "in-journal|done-this-cycle": 20.75, "in-journal|completed": 19.55, "in-journal|locked-out": 18.79, "in-journal|not-checked": 22.28, "blocked|done-this-cycle": 15.05, "blocked|completed": 25.93, "blocked|locked-out": 12.79, "blocked|not-checked": 15.86, "done-this-cycle|completed": 20.98, "done-this-cycle|locked-out": 15.56, "done-this-cycle|not-checked": 18.34, "completed|locked-out": 21.51, "completed|not-checked": 23.47, "locked-out|not-checked": 12.12},
+          "salience": {"ready": 82.23, "ready-on-another-job": 43.25, "in-journal": 54.79, "blocked": 40.42, "done-this-cycle": 43.34, "completed": 60.09, "locked-out": 39.67, "not-checked": 39.74}
+        },
+        {
+          "ground": "night",
           "px": 20,
           "mode": "grey",
           "pairs": {"ready|ready-on-another-job": 65.69, "ready|in-journal": 47.71, "ready|blocked": 65.85, "ready|done-this-cycle": 62.96, "ready|completed": 42.28, "ready|locked-out": 66.67, "ready|not-checked": 68.54, "ready-on-another-job|in-journal": 24.0, "ready-on-another-job|blocked": 24.68, "ready-on-another-job|done-this-cycle": 27.22, "ready-on-another-job|completed": 42.47, "ready-on-another-job|locked-out": 30.16, "ready-on-another-job|not-checked": 29.45, "in-journal|blocked": 33.36, "in-journal|done-this-cycle": 34.55, "in-journal|completed": 35.22, "in-journal|locked-out": 31.16, "in-journal|not-checked": 39.24, "blocked|done-this-cycle": 26.07, "blocked|completed": 43.08, "blocked|locked-out": 22.17, "blocked|not-checked": 28.59, "done-this-cycle|completed": 36.47, "done-this-cycle|locked-out": 26.39, "done-this-cycle|not-checked": 31.74, "completed|locked-out": 33.98, "completed|not-checked": 40.6, "locked-out|not-checked": 22.36},
@@ -66,20 +116,56 @@
           "mode": "deut",
           "pairs": {"ready|ready-on-another-job": 64.89, "ready|in-journal": 47.11, "ready|blocked": 65.1, "ready|done-this-cycle": 62.09, "ready|completed": 41.86, "ready|locked-out": 63.14, "ready|not-checked": 67.89, "ready-on-another-job|in-journal": 23.81, "ready-on-another-job|blocked": 25.0, "ready-on-another-job|done-this-cycle": 27.5, "ready-on-another-job|completed": 42.54, "ready-on-another-job|locked-out": 31.65, "ready-on-another-job|not-checked": 29.73, "in-journal|blocked": 33.23, "in-journal|done-this-cycle": 34.65, "in-journal|completed": 35.4, "in-journal|locked-out": 31.29, "in-journal|not-checked": 39.15, "blocked|done-this-cycle": 26.27, "blocked|completed": 43.26, "blocked|locked-out": 23.65, "blocked|not-checked": 28.67, "done-this-cycle|completed": 36.54, "done-this-cycle|locked-out": 27.48, "done-this-cycle|not-checked": 31.91, "completed|locked-out": 31.57, "completed|not-checked": 40.73, "locked-out|not-checked": 23.2},
           "salience": {"ready": 127.78, "ready-on-another-job": 64.75, "in-journal": 84.22, "blocked": 62.87, "done-this-cycle": 68.03, "completed": 95.82, "locked-out": 66.79, "not-checked": 62.35}
+        },
+        {
+          "ground": "ishgard-snow",
+          "px": 16,
+          "mode": "machado-deut",
+          "pairs": {"ready|ready-on-another-job": 38.7, "ready|in-journal": 29.64, "ready|blocked": 40.67, "ready|done-this-cycle": 40.07, "ready|completed": 27.13, "ready|locked-out": 41.7, "ready|not-checked": 44.25, "ready-on-another-job|in-journal": 13.76, "ready-on-another-job|blocked": 14.47, "ready-on-another-job|done-this-cycle": 19.02, "ready-on-another-job|completed": 27.56, "ready-on-another-job|locked-out": 21.01, "ready-on-another-job|not-checked": 19.39, "in-journal|blocked": 20.2, "in-journal|done-this-cycle": 23.2, "in-journal|completed": 22.81, "in-journal|locked-out": 20.85, "in-journal|not-checked": 24.86, "blocked|done-this-cycle": 18.35, "blocked|completed": 29.55, "blocked|locked-out": 16.86, "blocked|not-checked": 19.08, "done-this-cycle|completed": 21.51, "done-this-cycle|locked-out": 16.58, "done-this-cycle|not-checked": 18.94, "completed|locked-out": 19.87, "completed|not-checked": 24.23, "locked-out|not-checked": 12.58},
+          "salience": {"ready": 90.51, "ready-on-another-job": 129.42, "in-journal": 119.09, "blocked": 131.19, "done-this-cycle": 123.75, "completed": 107.9, "locked-out": 125.26, "not-checked": 127.87}
+        },
+        {
+          "ground": "ishgard-snow",
+          "px": 16,
+          "mode": "machado-prot",
+          "pairs": {"ready|ready-on-another-job": 40.26, "ready|in-journal": 30.34, "ready|blocked": 42.33, "ready|done-this-cycle": 42.3, "ready|completed": 28.52, "ready|locked-out": 49.31, "ready|not-checked": 45.54, "ready-on-another-job|in-journal": 14.11, "ready-on-another-job|blocked": 13.64, "ready-on-another-job|done-this-cycle": 18.02, "ready-on-another-job|completed": 26.89, "ready-on-another-job|locked-out": 18.69, "ready-on-another-job|not-checked": 18.77, "in-journal|blocked": 20.49, "in-journal|done-this-cycle": 23.17, "in-journal|completed": 21.94, "in-journal|locked-out": 22.84, "in-journal|not-checked": 24.78, "blocked|done-this-cycle": 17.82, "blocked|completed": 28.87, "blocked|locked-out": 15.3, "blocked|not-checked": 18.71, "done-this-cycle|completed": 21.13, "done-this-cycle|locked-out": 14.84, "done-this-cycle|not-checked": 18.05, "completed|locked-out": 24.76, "completed|not-checked": 23.39, "locked-out|not-checked": 12.08},
+          "salience": {"ready": 88.66, "ready-on-another-job": 130.11, "in-journal": 118.1, "blocked": 130.97, "done-this-cycle": 124.29, "completed": 108.37, "locked-out": 131.45, "not-checked": 127.57}
+        },
+        {
+          "ground": "ishgard-snow",
+          "px": 16,
+          "mode": "machado-trit",
+          "pairs": {"ready|ready-on-another-job": 39.35, "ready|in-journal": 29.94, "ready|blocked": 41.45, "ready|done-this-cycle": 41.14, "ready|completed": 27.85, "ready|locked-out": 44.79, "ready|not-checked": 44.76, "ready-on-another-job|in-journal": 13.98, "ready-on-another-job|blocked": 13.98, "ready-on-another-job|done-this-cycle": 18.36, "ready-on-another-job|completed": 27.05, "ready-on-another-job|locked-out": 19.73, "ready-on-another-job|not-checked": 18.96, "in-journal|blocked": 20.26, "in-journal|done-this-cycle": 23.2, "in-journal|completed": 22.24, "in-journal|locked-out": 21.22, "in-journal|not-checked": 24.71, "blocked|done-this-cycle": 17.94, "blocked|completed": 29.08, "blocked|locked-out": 15.72, "blocked|not-checked": 18.77, "done-this-cycle|completed": 21.25, "done-this-cycle|locked-out": 15.61, "done-this-cycle|not-checked": 18.33, "completed|locked-out": 21.65, "completed|not-checked": 23.61, "locked-out|not-checked": 12.08},
+          "salience": {"ready": 89.38, "ready-on-another-job": 129.38, "in-journal": 118.34, "blocked": 130.83, "done-this-cycle": 123.79, "completed": 108.0, "locked-out": 127.53, "not-checked": 127.38}
+        },
+        {
+          "ground": "daylight",
+          "px": 16,
+          "mode": "machado-deut",
+          "pairs": {"ready|ready-on-another-job": 38.67, "ready|in-journal": 29.56, "ready|blocked": 40.73, "ready|done-this-cycle": 39.91, "ready|completed": 26.88, "ready|locked-out": 41.56, "ready|not-checked": 44.06, "ready-on-another-job|in-journal": 13.74, "ready-on-another-job|blocked": 14.43, "ready-on-another-job|done-this-cycle": 18.82, "ready-on-another-job|completed": 27.35, "ready-on-another-job|locked-out": 20.8, "ready-on-another-job|not-checked": 19.18, "in-journal|blocked": 20.23, "in-journal|done-this-cycle": 23.08, "in-journal|completed": 22.5, "in-journal|locked-out": 20.7, "in-journal|not-checked": 24.69, "blocked|done-this-cycle": 18.12, "blocked|completed": 29.3, "blocked|locked-out": 16.64, "blocked|not-checked": 18.85, "done-this-cycle|completed": 21.5, "done-this-cycle|locked-out": 16.58, "done-this-cycle|not-checked": 18.92, "completed|locked-out": 19.89, "completed|not-checked": 24.2, "locked-out|not-checked": 12.56},
+          "salience": {"ready": 81.36, "ready-on-another-job": 120.22, "in-journal": 109.76, "blocked": 121.99, "done-this-cycle": 114.75, "completed": 98.87, "locked-out": 116.27, "not-checked": 118.93}
+        },
+        {
+          "ground": "daylight",
+          "px": 16,
+          "mode": "machado-prot",
+          "pairs": {"ready|ready-on-another-job": 40.25, "ready|in-journal": 30.28, "ready|blocked": 42.35, "ready|done-this-cycle": 42.0, "ready|completed": 28.26, "ready|locked-out": 49.01, "ready|not-checked": 45.27, "ready-on-another-job|in-journal": 14.1, "ready-on-another-job|blocked": 13.63, "ready-on-another-job|done-this-cycle": 17.82, "ready-on-another-job|completed": 26.65, "ready-on-another-job|locked-out": 18.46, "ready-on-another-job|not-checked": 18.55, "in-journal|blocked": 20.46, "in-journal|done-this-cycle": 22.9, "in-journal|completed": 21.68, "in-journal|locked-out": 22.56, "in-journal|not-checked": 24.54, "blocked|done-this-cycle": 17.62, "blocked|completed": 28.56, "blocked|locked-out": 15.06, "blocked|not-checked": 18.46, "done-this-cycle|completed": 21.07, "done-this-cycle|locked-out": 14.82, "done-this-cycle|not-checked": 18.04, "completed|locked-out": 24.7, "completed|not-checked": 23.32, "locked-out|not-checked": 12.05},
+          "salience": {"ready": 77.94, "ready-on-another-job": 119.21, "in-journal": 107.03, "blocked": 120.06, "done-this-cycle": 113.61, "completed": 97.66, "locked-out": 120.78, "not-checked": 116.98}
+        },
+        {
+          "ground": "daylight",
+          "px": 16,
+          "mode": "machado-trit",
+          "pairs": {"ready|ready-on-another-job": 39.29, "ready|in-journal": 29.82, "ready|blocked": 41.53, "ready|done-this-cycle": 40.87, "ready|completed": 27.55, "ready|locked-out": 44.53, "ready|not-checked": 44.51, "ready-on-another-job|in-journal": 13.87, "ready-on-another-job|blocked": 13.97, "ready-on-another-job|done-this-cycle": 18.16, "ready-on-another-job|completed": 26.8, "ready-on-another-job|locked-out": 19.54, "ready-on-another-job|not-checked": 18.75, "in-journal|blocked": 20.29, "in-journal|done-this-cycle": 22.96, "in-journal|completed": 21.96, "in-journal|locked-out": 20.97, "in-journal|not-checked": 24.47, "blocked|done-this-cycle": 17.71, "blocked|completed": 28.82, "blocked|locked-out": 15.45, "blocked|not-checked": 18.56, "done-this-cycle|completed": 21.15, "done-this-cycle|locked-out": 15.58, "done-this-cycle|not-checked": 18.36, "completed|locked-out": 21.58, "completed|not-checked": 23.55, "locked-out|not-checked": 12.1},
+          "salience": {"ready": 79.39, "ready-on-another-job": 119.27, "in-journal": 108.09, "blocked": 120.73, "done-this-cycle": 113.9, "completed": 98.08, "locked-out": 117.65, "not-checked": 117.57}
         }
       ],
       "survey": [
-        {"ground": "night", "px": 16, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 12.6, "readyLead": 1.34, "completedOfReady": 0.74},
-        {"ground": "night", "px": 16, "mode": "machado-prot", "weakest": "locked-out|not-checked", "d": 12.07, "readyLead": 1.39, "completedOfReady": 0.72},
-        {"ground": "night", "px": 16, "mode": "machado-trit", "weakest": "locked-out|not-checked", "d": 12.12, "readyLead": 1.37, "completedOfReady": 0.73},
         {"ground": "night", "px": 20, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 23.47, "readyLead": 1.33, "completedOfReady": 0.75},
         {"ground": "night", "px": 20, "mode": "machado-prot", "weakest": "blocked|locked-out", "d": 20.89, "readyLead": 1.37, "completedOfReady": 0.73},
         {"ground": "night", "px": 20, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 21.94, "readyLead": 1.35, "completedOfReady": 0.74},
         {"ground": "ishgard-snow", "px": 16, "mode": "grey", "weakest": "locked-out|not-checked", "d": 12.29, "readyLead": 0.68, "completedOfReady": 1.2},
         {"ground": "ishgard-snow", "px": 16, "mode": "deut", "weakest": "locked-out|not-checked", "d": 12.38, "readyLead": 0.69, "completedOfReady": 1.2},
-        {"ground": "ishgard-snow", "px": 16, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 12.58, "readyLead": 0.69, "completedOfReady": 1.19},
-        {"ground": "ishgard-snow", "px": 16, "mode": "machado-prot", "weakest": "locked-out|not-checked", "d": 12.08, "readyLead": 0.67, "completedOfReady": 1.22},
-        {"ground": "ishgard-snow", "px": 16, "mode": "machado-trit", "weakest": "locked-out|not-checked", "d": 12.08, "readyLead": 0.68, "completedOfReady": 1.21},
         {"ground": "ishgard-snow", "px": 20, "mode": "grey", "weakest": "locked-out|not-checked", "d": 22.28, "readyLead": 0.67, "completedOfReady": 1.2},
         {"ground": "ishgard-snow", "px": 20, "mode": "deut", "weakest": "locked-out|not-checked", "d": 23.19, "readyLead": 0.68, "completedOfReady": 1.2},
         {"ground": "ishgard-snow", "px": 20, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 23.43, "readyLead": 0.68, "completedOfReady": 1.19},
@@ -87,9 +173,6 @@
         {"ground": "ishgard-snow", "px": 20, "mode": "machado-trit", "weakest": "locked-out|not-checked", "d": 22.05, "readyLead": 0.67, "completedOfReady": 1.21},
         {"ground": "daylight", "px": 16, "mode": "grey", "weakest": "locked-out|not-checked", "d": 12.25, "readyLead": 0.66, "completedOfReady": 1.23},
         {"ground": "daylight", "px": 16, "mode": "deut", "weakest": "locked-out|not-checked", "d": 12.42, "readyLead": 0.66, "completedOfReady": 1.22},
-        {"ground": "daylight", "px": 16, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 12.56, "readyLead": 0.67, "completedOfReady": 1.22},
-        {"ground": "daylight", "px": 16, "mode": "machado-prot", "weakest": "locked-out|not-checked", "d": 12.05, "readyLead": 0.65, "completedOfReady": 1.25},
-        {"ground": "daylight", "px": 16, "mode": "machado-trit", "weakest": "locked-out|not-checked", "d": 12.1, "readyLead": 0.66, "completedOfReady": 1.24},
         {"ground": "daylight", "px": 20, "mode": "grey", "weakest": "locked-out|not-checked", "d": 22.32, "readyLead": 0.65, "completedOfReady": 1.23},
         {"ground": "daylight", "px": 20, "mode": "deut", "weakest": "locked-out|not-checked", "d": 23.18, "readyLead": 0.66, "completedOfReady": 1.22},
         {"ground": "daylight", "px": 20, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 23.44, "readyLead": 0.66, "completedOfReady": 1.21},
@@ -117,6 +200,27 @@
         },
         {
           "ground": "night",
+          "px": 16,
+          "mode": "machado-deut",
+          "pairs": {"ready|ready-on-another-job": 39.03, "ready|in-journal": 28.98, "ready|blocked": 41.07, "ready|done-this-cycle": 38.18, "ready|completed": 24.9, "ready|locked-out": 39.77, "ready|not-checked": 42.27, "ready-on-another-job|in-journal": 13.5, "ready-on-another-job|blocked": 14.46, "ready-on-another-job|done-this-cycle": 16.66, "ready-on-another-job|completed": 25.13, "ready-on-another-job|locked-out": 18.76, "ready-on-another-job|not-checked": 17.19, "in-journal|blocked": 19.96, "in-journal|done-this-cycle": 20.69, "in-journal|completed": 19.83, "in-journal|locked-out": 18.26, "in-journal|not-checked": 22.25, "blocked|done-this-cycle": 15.37, "blocked|completed": 26.22, "blocked|locked-out": 13.95, "blocked|not-checked": 16.16, "done-this-cycle|completed": 21.14, "done-this-cycle|locked-out": 16.52, "done-this-cycle|not-checked": 18.87, "completed|locked-out": 19.58, "completed|not-checked": 23.98, "locked-out|not-checked": 12.6},
+          "salience": {"ready": 81.6, "ready-on-another-job": 43.39, "in-journal": 54.54, "blocked": 40.56, "done-this-cycle": 43.87, "completed": 60.53, "locked-out": 42.4, "not-checked": 39.74}
+        },
+        {
+          "ground": "night",
+          "px": 16,
+          "mode": "machado-prot",
+          "pairs": {"ready|ready-on-another-job": 40.56, "ready|in-journal": 29.87, "ready|blocked": 42.71, "ready|done-this-cycle": 40.45, "ready|completed": 26.38, "ready|locked-out": 47.49, "ready|not-checked": 43.71, "ready-on-another-job|in-journal": 14.06, "ready-on-another-job|blocked": 13.61, "ready-on-another-job|done-this-cycle": 15.39, "ready-on-another-job|completed": 24.46, "ready-on-another-job|locked-out": 16.06, "ready-on-another-job|not-checked": 16.18, "in-journal|blocked": 20.39, "in-journal|done-this-cycle": 20.83, "in-journal|completed": 19.27, "in-journal|locked-out": 20.55, "in-journal|not-checked": 22.46, "blocked|done-this-cycle": 14.94, "blocked|completed": 25.58, "blocked|locked-out": 12.38, "blocked|not-checked": 15.81, "done-this-cycle|completed": 20.8, "done-this-cycle|locked-out": 14.9, "done-this-cycle|not-checked": 18.09, "completed|locked-out": 24.41, "completed|not-checked": 23.13, "locked-out|not-checked": 12.07},
+          "salience": {"ready": 82.69, "ready-on-another-job": 42.92, "in-journal": 54.77, "blocked": 40.02, "done-this-cycle": 42.58, "completed": 59.31, "locked-out": 35.53, "not-checked": 39.29}
+        },
+        {
+          "ground": "night",
+          "px": 16,
+          "mode": "machado-trit",
+          "pairs": {"ready|ready-on-another-job": 39.68, "ready|in-journal": 29.43, "ready|blocked": 41.9, "ready|done-this-cycle": 39.31, "ready|completed": 25.68, "ready|locked-out": 42.96, "ready|not-checked": 42.92, "ready-on-another-job|in-journal": 13.79, "ready-on-another-job|blocked": 13.96, "ready-on-another-job|done-this-cycle": 15.92, "ready-on-another-job|completed": 24.62, "ready-on-another-job|locked-out": 17.43, "ready-on-another-job|not-checked": 16.58, "in-journal|blocked": 20.16, "in-journal|done-this-cycle": 20.75, "in-journal|completed": 19.53, "in-journal|locked-out": 18.79, "in-journal|not-checked": 22.28, "blocked|done-this-cycle": 15.05, "blocked|completed": 25.77, "blocked|locked-out": 12.79, "blocked|not-checked": 15.86, "done-this-cycle|completed": 20.83, "done-this-cycle|locked-out": 15.56, "done-this-cycle|not-checked": 18.34, "completed|locked-out": 21.35, "completed|not-checked": 23.38, "locked-out|not-checked": 12.12},
+          "salience": {"ready": 82.23, "ready-on-another-job": 43.25, "in-journal": 54.79, "blocked": 40.42, "done-this-cycle": 43.34, "completed": 59.93, "locked-out": 39.67, "not-checked": 39.74}
+        },
+        {
+          "ground": "night",
           "px": 20,
           "mode": "grey",
           "pairs": {"ready|ready-on-another-job": 65.69, "ready|in-journal": 47.71, "ready|blocked": 65.85, "ready|done-this-cycle": 62.96, "ready|completed": 42.41, "ready|locked-out": 66.67, "ready|not-checked": 68.54, "ready-on-another-job|in-journal": 24.0, "ready-on-another-job|blocked": 24.68, "ready-on-another-job|done-this-cycle": 27.22, "ready-on-another-job|completed": 42.3, "ready-on-another-job|locked-out": 30.16, "ready-on-another-job|not-checked": 29.45, "in-journal|blocked": 33.36, "in-journal|done-this-cycle": 34.55, "in-journal|completed": 35.05, "in-journal|locked-out": 31.16, "in-journal|not-checked": 39.24, "blocked|done-this-cycle": 26.07, "blocked|completed": 42.8, "blocked|locked-out": 22.17, "blocked|not-checked": 28.59, "done-this-cycle|completed": 36.18, "done-this-cycle|locked-out": 26.39, "done-this-cycle|not-checked": 31.74, "completed|locked-out": 33.69, "completed|not-checked": 40.41, "locked-out|not-checked": 22.36},
@@ -128,20 +232,56 @@
           "mode": "deut",
           "pairs": {"ready|ready-on-another-job": 64.89, "ready|in-journal": 47.11, "ready|blocked": 65.1, "ready|done-this-cycle": 62.09, "ready|completed": 41.96, "ready|locked-out": 63.14, "ready|not-checked": 67.89, "ready-on-another-job|in-journal": 23.81, "ready-on-another-job|blocked": 25.0, "ready-on-another-job|done-this-cycle": 27.5, "ready-on-another-job|completed": 42.38, "ready-on-another-job|locked-out": 31.65, "ready-on-another-job|not-checked": 29.73, "in-journal|blocked": 33.23, "in-journal|done-this-cycle": 34.65, "in-journal|completed": 35.24, "in-journal|locked-out": 31.29, "in-journal|not-checked": 39.15, "blocked|done-this-cycle": 26.27, "blocked|completed": 43.0, "blocked|locked-out": 23.65, "blocked|not-checked": 28.67, "done-this-cycle|completed": 36.26, "done-this-cycle|locked-out": 27.48, "done-this-cycle|not-checked": 31.91, "completed|locked-out": 31.29, "completed|not-checked": 40.53, "locked-out|not-checked": 23.2},
           "salience": {"ready": 127.78, "ready-on-another-job": 64.75, "in-journal": 84.22, "blocked": 62.87, "done-this-cycle": 68.03, "completed": 95.49, "locked-out": 66.79, "not-checked": 62.35}
+        },
+        {
+          "ground": "ishgard-snow",
+          "px": 16,
+          "mode": "machado-deut",
+          "pairs": {"ready|ready-on-another-job": 38.7, "ready|in-journal": 29.64, "ready|blocked": 40.67, "ready|done-this-cycle": 40.07, "ready|completed": 27.23, "ready|locked-out": 41.7, "ready|not-checked": 44.25, "ready-on-another-job|in-journal": 13.76, "ready-on-another-job|blocked": 14.47, "ready-on-another-job|done-this-cycle": 19.02, "ready-on-another-job|completed": 27.49, "ready-on-another-job|locked-out": 21.01, "ready-on-another-job|not-checked": 19.39, "in-journal|blocked": 20.2, "in-journal|done-this-cycle": 23.2, "in-journal|completed": 22.78, "in-journal|locked-out": 20.85, "in-journal|not-checked": 24.86, "blocked|done-this-cycle": 18.35, "blocked|completed": 29.39, "blocked|locked-out": 16.86, "blocked|not-checked": 19.08, "done-this-cycle|completed": 21.36, "done-this-cycle|locked-out": 16.58, "done-this-cycle|not-checked": 18.94, "completed|locked-out": 19.72, "completed|not-checked": 24.15, "locked-out|not-checked": 12.58},
+          "salience": {"ready": 90.51, "ready-on-another-job": 129.42, "in-journal": 119.09, "blocked": 131.19, "done-this-cycle": 123.75, "completed": 108.06, "locked-out": 125.26, "not-checked": 127.87}
+        },
+        {
+          "ground": "ishgard-snow",
+          "px": 16,
+          "mode": "machado-prot",
+          "pairs": {"ready|ready-on-another-job": 40.26, "ready|in-journal": 30.34, "ready|blocked": 42.33, "ready|done-this-cycle": 42.3, "ready|completed": 28.62, "ready|locked-out": 49.31, "ready|not-checked": 45.54, "ready-on-another-job|in-journal": 14.11, "ready-on-another-job|blocked": 13.64, "ready-on-another-job|done-this-cycle": 18.02, "ready-on-another-job|completed": 26.83, "ready-on-another-job|locked-out": 18.69, "ready-on-another-job|not-checked": 18.77, "in-journal|blocked": 20.49, "in-journal|done-this-cycle": 23.17, "in-journal|completed": 21.92, "in-journal|locked-out": 22.84, "in-journal|not-checked": 24.78, "blocked|done-this-cycle": 17.82, "blocked|completed": 28.73, "blocked|locked-out": 15.3, "blocked|not-checked": 18.71, "done-this-cycle|completed": 21.0, "done-this-cycle|locked-out": 14.84, "done-this-cycle|not-checked": 18.05, "completed|locked-out": 24.63, "completed|not-checked": 23.31, "locked-out|not-checked": 12.08},
+          "salience": {"ready": 88.66, "ready-on-another-job": 130.11, "in-journal": 118.1, "blocked": 130.97, "done-this-cycle": 124.29, "completed": 108.53, "locked-out": 131.45, "not-checked": 127.57}
+        },
+        {
+          "ground": "ishgard-snow",
+          "px": 16,
+          "mode": "machado-trit",
+          "pairs": {"ready|ready-on-another-job": 39.35, "ready|in-journal": 29.94, "ready|blocked": 41.45, "ready|done-this-cycle": 41.14, "ready|completed": 27.95, "ready|locked-out": 44.79, "ready|not-checked": 44.76, "ready-on-another-job|in-journal": 13.98, "ready-on-another-job|blocked": 13.98, "ready-on-another-job|done-this-cycle": 18.36, "ready-on-another-job|completed": 26.98, "ready-on-another-job|locked-out": 19.73, "ready-on-another-job|not-checked": 18.96, "in-journal|blocked": 20.26, "in-journal|done-this-cycle": 23.2, "in-journal|completed": 22.23, "in-journal|locked-out": 21.22, "in-journal|not-checked": 24.71, "blocked|done-this-cycle": 17.94, "blocked|completed": 28.93, "blocked|locked-out": 15.72, "blocked|not-checked": 18.77, "done-this-cycle|completed": 21.11, "done-this-cycle|locked-out": 15.61, "done-this-cycle|not-checked": 18.33, "completed|locked-out": 21.5, "completed|not-checked": 23.53, "locked-out|not-checked": 12.08},
+          "salience": {"ready": 89.38, "ready-on-another-job": 129.38, "in-journal": 118.34, "blocked": 130.83, "done-this-cycle": 123.79, "completed": 108.16, "locked-out": 127.53, "not-checked": 127.38}
+        },
+        {
+          "ground": "daylight",
+          "px": 16,
+          "mode": "machado-deut",
+          "pairs": {"ready|ready-on-another-job": 38.67, "ready|in-journal": 29.56, "ready|blocked": 40.73, "ready|done-this-cycle": 39.91, "ready|completed": 26.99, "ready|locked-out": 41.56, "ready|not-checked": 44.06, "ready-on-another-job|in-journal": 13.74, "ready-on-another-job|blocked": 14.43, "ready-on-another-job|done-this-cycle": 18.82, "ready-on-another-job|completed": 27.27, "ready-on-another-job|locked-out": 20.8, "ready-on-another-job|not-checked": 19.18, "in-journal|blocked": 20.23, "in-journal|done-this-cycle": 23.08, "in-journal|completed": 22.47, "in-journal|locked-out": 20.7, "in-journal|not-checked": 24.69, "blocked|done-this-cycle": 18.12, "blocked|completed": 29.14, "blocked|locked-out": 16.64, "blocked|not-checked": 18.85, "done-this-cycle|completed": 21.34, "done-this-cycle|locked-out": 16.58, "done-this-cycle|not-checked": 18.92, "completed|locked-out": 19.73, "completed|not-checked": 24.12, "locked-out|not-checked": 12.56},
+          "salience": {"ready": 81.36, "ready-on-another-job": 120.22, "in-journal": 109.76, "blocked": 121.99, "done-this-cycle": 114.75, "completed": 99.03, "locked-out": 116.27, "not-checked": 118.93}
+        },
+        {
+          "ground": "daylight",
+          "px": 16,
+          "mode": "machado-prot",
+          "pairs": {"ready|ready-on-another-job": 40.25, "ready|in-journal": 30.28, "ready|blocked": 42.35, "ready|done-this-cycle": 42.0, "ready|completed": 28.36, "ready|locked-out": 49.01, "ready|not-checked": 45.27, "ready-on-another-job|in-journal": 14.1, "ready-on-another-job|blocked": 13.63, "ready-on-another-job|done-this-cycle": 17.82, "ready-on-another-job|completed": 26.59, "ready-on-another-job|locked-out": 18.46, "ready-on-another-job|not-checked": 18.55, "in-journal|blocked": 20.46, "in-journal|done-this-cycle": 22.9, "in-journal|completed": 21.66, "in-journal|locked-out": 22.56, "in-journal|not-checked": 24.54, "blocked|done-this-cycle": 17.62, "blocked|completed": 28.43, "blocked|locked-out": 15.06, "blocked|not-checked": 18.46, "done-this-cycle|completed": 20.94, "done-this-cycle|locked-out": 14.82, "done-this-cycle|not-checked": 18.04, "completed|locked-out": 24.56, "completed|not-checked": 23.24, "locked-out|not-checked": 12.05},
+          "salience": {"ready": 77.94, "ready-on-another-job": 119.21, "in-journal": 107.03, "blocked": 120.06, "done-this-cycle": 113.61, "completed": 97.81, "locked-out": 120.78, "not-checked": 116.98}
+        },
+        {
+          "ground": "daylight",
+          "px": 16,
+          "mode": "machado-trit",
+          "pairs": {"ready|ready-on-another-job": 39.29, "ready|in-journal": 29.82, "ready|blocked": 41.53, "ready|done-this-cycle": 40.87, "ready|completed": 27.65, "ready|locked-out": 44.53, "ready|not-checked": 44.51, "ready-on-another-job|in-journal": 13.87, "ready-on-another-job|blocked": 13.97, "ready-on-another-job|done-this-cycle": 18.16, "ready-on-another-job|completed": 26.73, "ready-on-another-job|locked-out": 19.54, "ready-on-another-job|not-checked": 18.75, "in-journal|blocked": 20.29, "in-journal|done-this-cycle": 22.96, "in-journal|completed": 21.94, "in-journal|locked-out": 20.97, "in-journal|not-checked": 24.47, "blocked|done-this-cycle": 17.71, "blocked|completed": 28.67, "blocked|locked-out": 15.45, "blocked|not-checked": 18.56, "done-this-cycle|completed": 21.0, "done-this-cycle|locked-out": 15.58, "done-this-cycle|not-checked": 18.36, "completed|locked-out": 21.44, "completed|not-checked": 23.47, "locked-out|not-checked": 12.1},
+          "salience": {"ready": 79.39, "ready-on-another-job": 119.27, "in-journal": 108.09, "blocked": 120.73, "done-this-cycle": 113.9, "completed": 98.24, "locked-out": 117.65, "not-checked": 117.57}
         }
       ],
       "survey": [
-        {"ground": "night", "px": 16, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 12.6, "readyLead": 1.35, "completedOfReady": 0.74},
-        {"ground": "night", "px": 16, "mode": "machado-prot", "weakest": "locked-out|not-checked", "d": 12.07, "readyLead": 1.39, "completedOfReady": 0.72},
-        {"ground": "night", "px": 16, "mode": "machado-trit", "weakest": "locked-out|not-checked", "d": 12.12, "readyLead": 1.37, "completedOfReady": 0.73},
         {"ground": "night", "px": 20, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 23.47, "readyLead": 1.33, "completedOfReady": 0.75},
         {"ground": "night", "px": 20, "mode": "machado-prot", "weakest": "blocked|locked-out", "d": 20.89, "readyLead": 1.38, "completedOfReady": 0.73},
         {"ground": "night", "px": 20, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 21.94, "readyLead": 1.36, "completedOfReady": 0.74},
         {"ground": "ishgard-snow", "px": 16, "mode": "grey", "weakest": "locked-out|not-checked", "d": 12.29, "readyLead": 0.68, "completedOfReady": 1.21},
         {"ground": "ishgard-snow", "px": 16, "mode": "deut", "weakest": "locked-out|not-checked", "d": 12.38, "readyLead": 0.69, "completedOfReady": 1.2},
-        {"ground": "ishgard-snow", "px": 16, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 12.58, "readyLead": 0.69, "completedOfReady": 1.19},
-        {"ground": "ishgard-snow", "px": 16, "mode": "machado-prot", "weakest": "locked-out|not-checked", "d": 12.08, "readyLead": 0.67, "completedOfReady": 1.22},
-        {"ground": "ishgard-snow", "px": 16, "mode": "machado-trit", "weakest": "locked-out|not-checked", "d": 12.08, "readyLead": 0.68, "completedOfReady": 1.21},
         {"ground": "ishgard-snow", "px": 20, "mode": "grey", "weakest": "locked-out|not-checked", "d": 22.28, "readyLead": 0.67, "completedOfReady": 1.21},
         {"ground": "ishgard-snow", "px": 20, "mode": "deut", "weakest": "locked-out|not-checked", "d": 23.19, "readyLead": 0.68, "completedOfReady": 1.2},
         {"ground": "ishgard-snow", "px": 20, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 23.43, "readyLead": 0.68, "completedOfReady": 1.19},
@@ -149,9 +289,6 @@
         {"ground": "ishgard-snow", "px": 20, "mode": "machado-trit", "weakest": "locked-out|not-checked", "d": 22.05, "readyLead": 0.67, "completedOfReady": 1.21},
         {"ground": "daylight", "px": 16, "mode": "grey", "weakest": "locked-out|not-checked", "d": 12.25, "readyLead": 0.66, "completedOfReady": 1.23},
         {"ground": "daylight", "px": 16, "mode": "deut", "weakest": "locked-out|not-checked", "d": 12.42, "readyLead": 0.66, "completedOfReady": 1.22},
-        {"ground": "daylight", "px": 16, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 12.56, "readyLead": 0.67, "completedOfReady": 1.22},
-        {"ground": "daylight", "px": 16, "mode": "machado-prot", "weakest": "locked-out|not-checked", "d": 12.05, "readyLead": 0.65, "completedOfReady": 1.26},
-        {"ground": "daylight", "px": 16, "mode": "machado-trit", "weakest": "locked-out|not-checked", "d": 12.1, "readyLead": 0.66, "completedOfReady": 1.24},
         {"ground": "daylight", "px": 20, "mode": "grey", "weakest": "locked-out|not-checked", "d": 22.32, "readyLead": 0.65, "completedOfReady": 1.23},
         {"ground": "daylight", "px": 20, "mode": "deut", "weakest": "locked-out|not-checked", "d": 23.18, "readyLead": 0.66, "completedOfReady": 1.22},
         {"ground": "daylight", "px": 20, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 23.44, "readyLead": 0.66, "completedOfReady": 1.21},
@@ -179,6 +316,27 @@
         },
         {
           "ground": "night",
+          "px": 16,
+          "mode": "machado-deut",
+          "pairs": {"ready|ready-on-another-job": 45.71, "ready|in-journal": 33.42, "ready|blocked": 45.58, "ready|done-this-cycle": 40.46, "ready|completed": 25.44, "ready|locked-out": 41.97, "ready|not-checked": 44.74, "ready-on-another-job|in-journal": 15.04, "ready-on-another-job|blocked": 12.84, "ready-on-another-job|done-this-cycle": 14.32, "ready-on-another-job|completed": 25.55, "ready-on-another-job|locked-out": 18.2, "ready-on-another-job|not-checked": 14.13, "in-journal|blocked": 19.09, "in-journal|done-this-cycle": 17.89, "in-journal|completed": 20.69, "in-journal|locked-out": 16.15, "in-journal|not-checked": 19.37, "blocked|done-this-cycle": 13.33, "blocked|completed": 28.05, "blocked|locked-out": 13.03, "blocked|not-checked": 13.91, "done-this-cycle|completed": 21.87, "done-this-cycle|locked-out": 16.52, "done-this-cycle|not-checked": 18.9, "completed|locked-out": 21.19, "completed|not-checked": 25.26, "locked-out|not-checked": 12.63},
+          "salience": {"ready": 84.3, "ready-on-another-job": 38.6, "in-journal": 51.93, "blocked": 38.69, "done-this-cycle": 43.87, "completed": 61.4, "locked-out": 42.4, "not-checked": 39.71}
+        },
+        {
+          "ground": "night",
+          "px": 16,
+          "mode": "machado-prot",
+          "pairs": {"ready|ready-on-another-job": 47.7, "ready|in-journal": 34.64, "ready|blocked": 47.55, "ready|done-this-cycle": 43.16, "ready|completed": 27.4, "ready|locked-out": 50.32, "ready|not-checked": 46.58, "ready-on-another-job|in-journal": 15.91, "ready-on-another-job|blocked": 12.61, "ready-on-another-job|done-this-cycle": 13.63, "ready-on-another-job|completed": 24.82, "ready-on-another-job|locked-out": 15.08, "ready-on-another-job|not-checked": 13.83, "in-journal|blocked": 19.82, "in-journal|done-this-cycle": 18.24, "in-journal|completed": 20.2, "in-journal|locked-out": 18.15, "in-journal|not-checked": 19.93, "blocked|done-this-cycle": 12.92, "blocked|completed": 27.32, "blocked|locked-out": 11.1, "blocked|not-checked": 13.67, "done-this-cycle|completed": 21.48, "done-this-cycle|locked-out": 14.9, "done-this-cycle|not-checked": 18.13, "completed|locked-out": 25.86, "completed|not-checked": 24.41, "locked-out|not-checked": 12.11},
+          "salience": {"ready": 85.72, "ready-on-another-job": 38.13, "in-journal": 52.45, "blocked": 38.21, "done-this-cycle": 42.58, "completed": 60.18, "locked-out": 35.53, "not-checked": 39.26}
+        },
+        {
+          "ground": "night",
+          "px": 16,
+          "mode": "machado-trit",
+          "pairs": {"ready|ready-on-another-job": 46.56, "ready|in-journal": 33.98, "ready|blocked": 46.49, "ready|done-this-cycle": 41.78, "ready|completed": 26.42, "ready|locked-out": 45.51, "ready|not-checked": 45.55, "ready-on-another-job|in-journal": 15.48, "ready-on-another-job|blocked": 12.6, "ready-on-another-job|done-this-cycle": 13.87, "ready-on-another-job|completed": 25.0, "ready-on-another-job|locked-out": 16.64, "ready-on-another-job|not-checked": 13.83, "in-journal|blocked": 19.46, "in-journal|done-this-cycle": 18.09, "in-journal|completed": 20.37, "in-journal|locked-out": 16.52, "in-journal|not-checked": 19.6, "blocked|done-this-cycle": 13.06, "blocked|completed": 27.57, "blocked|locked-out": 11.74, "blocked|not-checked": 13.71, "done-this-cycle|completed": 21.56, "done-this-cycle|locked-out": 15.56, "done-this-cycle|not-checked": 18.36, "completed|locked-out": 22.76, "completed|not-checked": 24.72, "locked-out|not-checked": 12.14},
+          "salience": {"ready": 85.12, "ready-on-another-job": 38.61, "in-journal": 52.39, "blocked": 38.63, "done-this-cycle": 43.34, "completed": 60.85, "locked-out": 39.67, "not-checked": 39.7}
+        },
+        {
+          "ground": "night",
           "px": 20,
           "mode": "grey",
           "pairs": {"ready|ready-on-another-job": 76.44, "ready|in-journal": 54.65, "ready|blocked": 73.08, "ready|done-this-cycle": 67.39, "ready|completed": 43.61, "ready|locked-out": 71.18, "ready|not-checked": 73.11, "ready-on-another-job|in-journal": 26.51, "ready-on-another-job|blocked": 22.19, "ready-on-another-job|done-this-cycle": 23.67, "ready-on-another-job|completed": 43.18, "ready-on-another-job|locked-out": 29.05, "ready-on-another-job|not-checked": 24.69, "in-journal|blocked": 31.75, "in-journal|done-this-cycle": 30.49, "in-journal|completed": 36.95, "in-journal|locked-out": 27.81, "in-journal|not-checked": 35.17, "blocked|done-this-cycle": 22.07, "blocked|completed": 45.49, "blocked|locked-out": 19.73, "blocked|not-checked": 24.34, "done-this-cycle|completed": 36.99, "done-this-cycle|locked-out": 26.39, "done-this-cycle|not-checked": 31.74, "completed|locked-out": 36.79, "completed|not-checked": 42.28, "locked-out|not-checked": 22.36},
@@ -190,20 +348,56 @@
           "mode": "deut",
           "pairs": {"ready|ready-on-another-job": 75.39, "ready|in-journal": 53.9, "ready|blocked": 72.19, "ready|done-this-cycle": 66.33, "ready|completed": 42.99, "ready|locked-out": 67.18, "ready|not-checked": 72.27, "ready-on-another-job|in-journal": 26.17, "ready-on-another-job|blocked": 22.18, "ready-on-another-job|done-this-cycle": 23.82, "ready-on-another-job|completed": 43.21, "ready-on-another-job|locked-out": 30.73, "ready-on-another-job|not-checked": 24.74, "in-journal|blocked": 31.54, "in-journal|done-this-cycle": 30.53, "in-journal|completed": 37.03, "in-journal|locked-out": 28.05, "in-journal|not-checked": 35.01, "blocked|done-this-cycle": 22.23, "blocked|completed": 45.59, "blocked|locked-out": 21.31, "blocked|not-checked": 24.38, "done-this-cycle|completed": 37.11, "done-this-cycle|locked-out": 27.48, "done-this-cycle|not-checked": 31.91, "completed|locked-out": 34.53, "completed|not-checked": 42.41, "locked-out|not-checked": 23.2},
           "salience": {"ready": 133.98, "ready-on-another-job": 58.49, "in-journal": 81.68, "blocked": 61.87, "done-this-cycle": 67.99, "completed": 96.85, "locked-out": 66.82, "not-checked": 62.39}
+        },
+        {
+          "ground": "ishgard-snow",
+          "px": 16,
+          "mode": "machado-deut",
+          "pairs": {"ready|ready-on-another-job": 45.2, "ready|in-journal": 34.04, "ready|blocked": 45.02, "ready|done-this-cycle": 39.82, "ready|completed": 25.35, "ready|locked-out": 41.39, "ready|not-checked": 44.19, "ready-on-another-job|in-journal": 15.21, "ready-on-another-job|blocked": 12.8, "ready-on-another-job|done-this-cycle": 14.47, "ready-on-another-job|completed": 25.8, "ready-on-another-job|locked-out": 18.2, "ready-on-another-job|not-checked": 14.06, "in-journal|blocked": 19.27, "in-journal|done-this-cycle": 17.98, "in-journal|completed": 21.13, "in-journal|locked-out": 16.27, "in-journal|not-checked": 19.51, "blocked|done-this-cycle": 13.35, "blocked|completed": 28.28, "blocked|locked-out": 12.99, "blocked|not-checked": 13.9, "done-this-cycle|completed": 22.09, "done-this-cycle|locked-out": 16.58, "done-this-cycle|not-checked": 18.95, "completed|locked-out": 21.36, "completed|not-checked": 25.47, "locked-out|not-checked": 12.59},
+          "salience": {"ready": 83.84, "ready-on-another-job": 129.07, "in-journal": 117.71, "blocked": 128.92, "done-this-cycle": 123.75, "completed": 107.18, "locked-out": 125.26, "not-checked": 127.87}
+        },
+        {
+          "ground": "ishgard-snow",
+          "px": 16,
+          "mode": "machado-prot",
+          "pairs": {"ready|ready-on-another-job": 47.25, "ready|in-journal": 35.07, "ready|blocked": 46.97, "ready|done-this-cycle": 42.64, "ready|completed": 27.29, "ready|locked-out": 49.77, "ready|not-checked": 45.97, "ready-on-another-job|in-journal": 15.84, "ready-on-another-job|blocked": 12.63, "ready-on-another-job|done-this-cycle": 13.61, "ready-on-another-job|completed": 25.06, "ready-on-another-job|locked-out": 15.08, "ready-on-another-job|not-checked": 13.77, "in-journal|blocked": 19.76, "in-journal|done-this-cycle": 18.22, "in-journal|completed": 20.33, "in-journal|locked-out": 18.04, "in-journal|not-checked": 19.78, "blocked|done-this-cycle": 12.85, "blocked|completed": 27.54, "blocked|locked-out": 11.07, "blocked|not-checked": 13.65, "done-this-cycle|completed": 21.71, "done-this-cycle|locked-out": 14.84, "done-this-cycle|not-checked": 18.06, "completed|locked-out": 26.05, "completed|not-checked": 24.64, "locked-out|not-checked": 12.09},
+          "salience": {"ready": 81.66, "ready-on-another-job": 128.79, "in-journal": 116.43, "blocked": 128.64, "done-this-cycle": 124.29, "completed": 107.64, "locked-out": 131.45, "not-checked": 127.57}
+        },
+        {
+          "ground": "ishgard-snow",
+          "px": 16,
+          "mode": "machado-trit",
+          "pairs": {"ready|ready-on-another-job": 46.07, "ready|in-journal": 34.46, "ready|blocked": 45.88, "ready|done-this-cycle": 41.2, "ready|completed": 26.27, "ready|locked-out": 44.89, "ready|not-checked": 44.91, "ready-on-another-job|in-journal": 15.53, "ready-on-another-job|blocked": 12.58, "ready-on-another-job|done-this-cycle": 13.92, "ready-on-another-job|completed": 25.26, "ready-on-another-job|locked-out": 16.65, "ready-on-another-job|not-checked": 13.77, "in-journal|blocked": 19.46, "in-journal|done-this-cycle": 18.17, "in-journal|completed": 20.58, "in-journal|locked-out": 16.52, "in-journal|not-checked": 19.6, "blocked|done-this-cycle": 13.02, "blocked|completed": 27.76, "blocked|locked-out": 11.73, "blocked|not-checked": 13.69, "done-this-cycle|completed": 21.82, "done-this-cycle|locked-out": 15.61, "done-this-cycle|not-checked": 18.35, "completed|locked-out": 23.0, "completed|not-checked": 24.91, "locked-out|not-checked": 12.09},
+          "salience": {"ready": 82.52, "ready-on-another-job": 128.56, "in-journal": 116.75, "blocked": 128.48, "done-this-cycle": 123.79, "completed": 107.24, "locked-out": 127.53, "not-checked": 127.39}
+        },
+        {
+          "ground": "daylight",
+          "px": 16,
+          "mode": "machado-deut",
+          "pairs": {"ready|ready-on-another-job": 45.23, "ready|in-journal": 33.98, "ready|blocked": 45.07, "ready|done-this-cycle": 39.91, "ready|completed": 25.38, "ready|locked-out": 41.47, "ready|not-checked": 44.22, "ready-on-another-job|in-journal": 15.19, "ready-on-another-job|blocked": 12.78, "ready-on-another-job|done-this-cycle": 14.45, "ready-on-another-job|completed": 25.78, "ready-on-another-job|locked-out": 18.16, "ready-on-another-job|not-checked": 14.04, "in-journal|blocked": 19.25, "in-journal|done-this-cycle": 18.0, "in-journal|completed": 21.1, "in-journal|locked-out": 16.3, "in-journal|not-checked": 19.48, "blocked|done-this-cycle": 13.34, "blocked|completed": 28.29, "blocked|locked-out": 12.97, "blocked|not-checked": 13.89, "done-this-cycle|completed": 22.09, "done-this-cycle|locked-out": 16.58, "done-this-cycle|not-checked": 18.92, "completed|locked-out": 21.35, "completed|not-checked": 25.47, "locked-out|not-checked": 12.56},
+          "salience": {"ready": 74.9, "ready-on-another-job": 120.08, "in-journal": 108.6, "blocked": 119.94, "done-this-cycle": 114.75, "completed": 98.15, "locked-out": 116.27, "not-checked": 118.94}
+        },
+        {
+          "ground": "daylight",
+          "px": 16,
+          "mode": "machado-prot",
+          "pairs": {"ready|ready-on-another-job": 47.16, "ready|in-journal": 34.97, "ready|blocked": 46.98, "ready|done-this-cycle": 42.54, "ready|completed": 27.18, "ready|locked-out": 49.67, "ready|not-checked": 45.96, "ready-on-another-job|in-journal": 15.8, "ready-on-another-job|blocked": 12.64, "ready-on-another-job|done-this-cycle": 13.64, "ready-on-another-job|completed": 25.03, "ready-on-another-job|locked-out": 15.06, "ready-on-another-job|not-checked": 13.82, "in-journal|blocked": 19.76, "in-journal|done-this-cycle": 18.17, "in-journal|completed": 20.24, "in-journal|locked-out": 17.97, "in-journal|not-checked": 19.81, "blocked|done-this-cycle": 12.88, "blocked|completed": 27.43, "blocked|locked-out": 11.06, "blocked|not-checked": 13.6, "done-this-cycle|completed": 21.67, "done-this-cycle|locked-out": 14.82, "done-this-cycle|not-checked": 18.1, "completed|locked-out": 25.99, "completed|not-checked": 24.55, "locked-out|not-checked": 12.11},
+          "salience": {"ready": 71.18, "ready-on-another-job": 118.15, "in-journal": 105.63, "blocked": 117.99, "done-this-cycle": 113.61, "completed": 96.93, "locked-out": 120.78, "not-checked": 117.0}
+        },
+        {
+          "ground": "daylight",
+          "px": 16,
+          "mode": "machado-trit",
+          "pairs": {"ready|ready-on-another-job": 46.09, "ready|in-journal": 34.36, "ready|blocked": 45.96, "ready|done-this-cycle": 41.2, "ready|completed": 26.28, "ready|locked-out": 44.94, "ready|not-checked": 44.98, "ready-on-another-job|in-journal": 15.47, "ready-on-another-job|blocked": 12.57, "ready-on-another-job|done-this-cycle": 13.94, "ready-on-another-job|completed": 25.18, "ready-on-another-job|locked-out": 16.67, "ready-on-another-job|not-checked": 13.8, "in-journal|blocked": 19.41, "in-journal|done-this-cycle": 18.11, "in-journal|completed": 20.51, "in-journal|locked-out": 16.49, "in-journal|not-checked": 19.59, "blocked|done-this-cycle": 13.0, "blocked|completed": 27.71, "blocked|locked-out": 11.68, "blocked|not-checked": 13.69, "done-this-cycle|completed": 21.74, "done-this-cycle|locked-out": 15.58, "done-this-cycle|not-checked": 18.38, "completed|locked-out": 22.89, "completed|not-checked": 24.85, "locked-out|not-checked": 12.12},
+          "salience": {"ready": 72.77, "ready-on-another-job": 118.69, "in-journal": 106.74, "blocked": 118.62, "done-this-cycle": 113.9, "completed": 97.32, "locked-out": 117.65, "not-checked": 117.59}
         }
       ],
       "survey": [
-        {"ground": "night", "px": 16, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 12.63, "readyLead": 1.37, "completedOfReady": 0.73},
-        {"ground": "night", "px": 16, "mode": "machado-prot", "weakest": "blocked|locked-out", "d": 11.1, "readyLead": 1.42, "completedOfReady": 0.7},
-        {"ground": "night", "px": 16, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 11.74, "readyLead": 1.4, "completedOfReady": 0.71},
         {"ground": "night", "px": 20, "mode": "machado-deut", "weakest": "blocked|locked-out", "d": 21.8, "readyLead": 1.38, "completedOfReady": 0.73},
         {"ground": "night", "px": 20, "mode": "machado-prot", "weakest": "blocked|locked-out", "d": 17.97, "readyLead": 1.43, "completedOfReady": 0.7},
         {"ground": "night", "px": 20, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 19.37, "readyLead": 1.4, "completedOfReady": 0.71},
         {"ground": "ishgard-snow", "px": 16, "mode": "grey", "weakest": "blocked|locked-out", "d": 11.96, "readyLead": 0.64, "completedOfReady": 1.29},
         {"ground": "ishgard-snow", "px": 16, "mode": "deut", "weakest": "locked-out|not-checked", "d": 12.38, "readyLead": 0.65, "completedOfReady": 1.28},
-        {"ground": "ishgard-snow", "px": 16, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 12.59, "readyLead": 0.65, "completedOfReady": 1.28},
-        {"ground": "ishgard-snow", "px": 16, "mode": "machado-prot", "weakest": "blocked|locked-out", "d": 11.07, "readyLead": 0.62, "completedOfReady": 1.32},
-        {"ground": "ishgard-snow", "px": 16, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 11.73, "readyLead": 0.64, "completedOfReady": 1.3},
         {"ground": "ishgard-snow", "px": 20, "mode": "grey", "weakest": "blocked|locked-out", "d": 19.64, "readyLead": 0.62, "completedOfReady": 1.31},
         {"ground": "ishgard-snow", "px": 20, "mode": "deut", "weakest": "blocked|locked-out", "d": 21.33, "readyLead": 0.63, "completedOfReady": 1.3},
         {"ground": "ishgard-snow", "px": 20, "mode": "machado-deut", "weakest": "blocked|locked-out", "d": 21.75, "readyLead": 0.63, "completedOfReady": 1.29},
@@ -211,9 +405,6 @@
         {"ground": "ishgard-snow", "px": 20, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 19.38, "readyLead": 0.62, "completedOfReady": 1.32},
         {"ground": "daylight", "px": 16, "mode": "grey", "weakest": "blocked|locked-out", "d": 11.95, "readyLead": 0.62, "completedOfReady": 1.33},
         {"ground": "daylight", "px": 16, "mode": "deut", "weakest": "locked-out|not-checked", "d": 12.44, "readyLead": 0.62, "completedOfReady": 1.32},
-        {"ground": "daylight", "px": 16, "mode": "machado-deut", "weakest": "locked-out|not-checked", "d": 12.56, "readyLead": 0.62, "completedOfReady": 1.31},
-        {"ground": "daylight", "px": 16, "mode": "machado-prot", "weakest": "blocked|locked-out", "d": 11.06, "readyLead": 0.59, "completedOfReady": 1.36},
-        {"ground": "daylight", "px": 16, "mode": "machado-trit", "weakest": "blocked|locked-out", "d": 11.68, "readyLead": 0.61, "completedOfReady": 1.34},
         {"ground": "daylight", "px": 20, "mode": "grey", "weakest": "blocked|locked-out", "d": 19.65, "readyLead": 0.59, "completedOfReady": 1.35},
         {"ground": "daylight", "px": 20, "mode": "deut", "weakest": "blocked|locked-out", "d": 21.31, "readyLead": 0.6, "completedOfReady": 1.34},
         {"ground": "daylight", "px": 20, "mode": "machado-deut", "weakest": "blocked|locked-out", "d": 21.76, "readyLead": 0.6, "completedOfReady": 1.33},
@@ -222,6 +413,57 @@
       ]
     }
   ],
+  "light": {
+    "ground": "ishgard-snow",
+    "window": "#EEF1F6",
+    "tier": "row",
+    "gatePx": 16,
+    "enforced": false,
+    "gate": {"gate": "G2L Ready lead on Ishgard Snow", "tier": "row", "value": 0.8, "bar": 1.3, "detail": "default wash 0.75 within 3 px: Rdy 87 / RoJ 109", "pass": false},
+    "washes": {
+      "default": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
+      "fallback": {"color": "#F2D27A", "alpha": 0.9, "radiusPx": 4}
+    },
+    "use": "default",
+    "variants": {
+      "none": {
+        "16": {
+          "salience": {"ready": 69.07, "ready-on-another-job": 109.22, "in-journal": 97.96, "blocked": 108.53, "done-this-cycle": 104.66, "completed": 89.88, "locked-out": 107.29, "not-checked": 107.93},
+          "readyLead": 0.63,
+          "next": "ready-on-another-job"
+        },
+        "20": {
+          "salience": {"ready": 103.31, "ready-on-another-job": 169.3, "in-journal": 150.03, "blocked": 165.12, "done-this-cycle": 160.77, "completed": 136.46, "locked-out": 163.75, "not-checked": 165.45},
+          "readyLead": 0.61,
+          "next": "ready-on-another-job"
+        }
+      },
+      "default": {
+        "16": {
+          "salience": {"ready": 87.04, "ready-on-another-job": 109.22, "in-journal": 97.96, "blocked": 108.53, "done-this-cycle": 104.66, "completed": 89.88, "locked-out": 107.29, "not-checked": 107.93},
+          "readyLead": 0.8,
+          "next": "ready-on-another-job"
+        },
+        "20": {
+          "salience": {"ready": 123.65, "ready-on-another-job": 169.3, "in-journal": 150.03, "blocked": 165.12, "done-this-cycle": 160.77, "completed": 136.46, "locked-out": 163.75, "not-checked": 165.45},
+          "readyLead": 0.73,
+          "next": "ready-on-another-job"
+        }
+      },
+      "fallback": {
+        "16": {
+          "salience": {"ready": 100.08, "ready-on-another-job": 109.22, "in-journal": 97.96, "blocked": 108.53, "done-this-cycle": 104.66, "completed": 89.88, "locked-out": 107.29, "not-checked": 107.93},
+          "readyLead": 0.92,
+          "next": "ready-on-another-job"
+        },
+        "20": {
+          "salience": {"ready": 138.75, "ready-on-another-job": 169.3, "in-journal": 150.03, "blocked": 165.12, "done-this-cycle": 160.77, "completed": 136.46, "locked-out": 163.75, "not-checked": 165.45},
+          "readyLead": 0.82,
+          "next": "ready-on-another-job"
+        }
+      }
+    }
+  },
   "cross": {
     "note": "Pairs are 'this set's state|the other set's state', each pair of different states, worst over every vision mode, on Night, for the row tier and the 48 px hero tier's sources, at 16 and 20 px. Each set is framed in its own kit (the sprites it ships). Under mixClose reads 'close', under mixHard 'hard to tell apart' (section 5.2).",
     "sets": {

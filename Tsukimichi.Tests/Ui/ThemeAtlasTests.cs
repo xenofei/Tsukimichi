@@ -30,6 +30,26 @@ public sealed class ThemeAtlasTests
     private const double ReadyLead = 1.3;
     private const double CompletedOfReady = 0.8;
     private const double SalienceMin = 15.0;
+    private const double CvdWeakest16 = 11.0;
+    private const double LightReadyLead = 1.3;
+
+    /// <summary>
+    /// Whether G2L (Ready's lead on Ishgard Snow) fails the build; mirrors <c>LIGHT_GATE_ENFORCED</c> in
+    /// <c>build_themes.py</c>. Off pending the realism supervisor: summed OKLab difference is mostly lightness, so no
+    /// set's light Ready face reaches 1.3 against the dark-faced states under either wash.
+    /// </summary>
+    private static readonly bool LightGateEnforced = false;
+
+    /// <summary>Machado 2009 protanopia, deuteranopia and tritanopia: gated at 16 px on every ground (§7.1).</summary>
+    private static readonly string[] CvdModes = ["machado-prot", "machado-deut", "machado-trit"];
+    private static readonly string[] Grounds = ["night", "ishgard-snow", "daylight"];
+
+    /// <summary>Snow's Ready wash (spec-1.16 §A4) and the realism supervisor's fallback: (alpha, radius in px).</summary>
+    private static readonly Dictionary<string, (double Alpha, int Radius)> Washes = new()
+    {
+        ["default"] = (0.75, 3),
+        ["fallback"] = (0.90, 4),
+    };
 
     private static string ThemesDir() => Path.Combine(OrnamentLayoutTests.AssetsDir(), "themes");
 
@@ -178,6 +198,67 @@ public sealed class ThemeAtlasTests
 
         Assert.True(root.GetProperty("pass").GetBoolean(), $"{set}: the build recorded a failing gate");
         Assert.All(root.GetProperty("gates").EnumerateArray(), static g => Assert.True(g.GetProperty("pass").GetBoolean(), g.ToString()));
+    }
+
+    [Theory]
+    [MemberData(nameof(MeasuredSets))]
+    public void Metrics_pass_the_colour_vision_gates(string set)
+    {
+        using var json = Json(ThemesDir(), set, "metrics.json");
+        foreach (var tier in json.RootElement.GetProperty("tiers").EnumerateArray())
+        {
+            var name = $"{set} {tier.GetProperty("name").GetString()}";
+            var measures = tier.GetProperty("measures").EnumerateArray().ToArray();
+            foreach (var ground in Grounds)
+            {
+                foreach (var mode in CvdModes)
+                {
+                    var measure = measures.Single(x => x.GetProperty("ground").GetString() == ground && x.GetProperty("px").GetInt32() == 16 && x.GetProperty("mode").GetString() == mode);
+                    var pairs = measure.GetProperty("pairs").EnumerateObject().ToArray();
+                    Assert.Equal(PairCount, pairs.Length);
+                    var weakest = pairs.MinBy(static p => p.Value.GetDouble());
+                    Assert.True(Math.Round(weakest.Value.GetDouble(), 1) >= CvdWeakest16, $"{name} 16 px {mode} on {ground}: {weakest.Name} {weakest.Value} under {CvdWeakest16}");
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(MeasuredSets))]
+    public void Metrics_record_the_light_palette_Ready_salience_and_the_wash_to_draw(string set)
+    {
+        using var json = Json(ThemesDir(), set, "metrics.json");
+        var root = json.RootElement;
+        var light = root.GetProperty("light");
+        Assert.Equal("ishgard-snow", light.GetProperty("ground").GetString());
+        Assert.Equal("#EEF1F6", light.GetProperty("window").GetString());
+
+        var variants = light.GetProperty("variants");
+        double Lead(string variant) => variants.GetProperty(variant).GetProperty("16").GetProperty("readyLead").GetDouble();
+        foreach (var variant in new[] { "none", "default", "fallback" })
+        {
+            foreach (var px in new[] { "16", "20" })
+            {
+                var v = variants.GetProperty(variant).GetProperty(px);
+                var sal = States.ToDictionary(static s => s, s => v.GetProperty("salience").GetProperty(s).GetDouble());
+                var next = sal.Where(static kv => kv.Key != "ready").Max(static kv => kv.Value);
+                Assert.Equal(Math.Round(sal["ready"] / next, 2), v.GetProperty("readyLead").GetDouble(), 0.011);
+            }
+        }
+
+        // The plugin draws the default wash unless only the fallback lets Ready lead.
+        var use = light.GetProperty("use").GetString()!;
+        var expected = Lead("default") < LightReadyLead && Lead("fallback") >= LightReadyLead ? "fallback" : "default";
+        Assert.Equal(expected, use);
+        var wash = root.GetProperty("readyWash");
+        Assert.Equal("#F2D27A", wash.GetProperty("color").GetString());
+        Assert.Equal(Washes[use], (wash.GetProperty("alpha").GetDouble(), wash.GetProperty("radiusPx").GetInt32()));
+
+        Assert.Equal(LightGateEnforced, light.GetProperty("enforced").GetBoolean());
+        if (LightGateEnforced)
+        {
+            Assert.True(Lead(use) >= LightReadyLead, $"{set}: Ready leads the next state on Ishgard Snow by only {Lead(use)}x with the {use} wash");
+        }
     }
 
     [Theory]
