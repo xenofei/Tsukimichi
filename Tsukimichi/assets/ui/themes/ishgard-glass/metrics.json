@@ -1,14 +1,14 @@
 {
   "set": "ishgard-glass",
   "name": "Ishgard Glass",
-  "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. Distinctness and salience are round 5's metrics.py units (summed blurred luminance difference) in a 40 px cell. Gates run on the Night window in greyscale and deuteranopia (16 and 20 px), and on every ground under Machado protanopia, deuteranopia and tritanopia (16 px); 'survey' records the rest. 'light' is the row tier's salience on Ishgard Snow in OKLab units (summed colour difference from the window, chroma included), Ready over its warm wash; 'readyWash' is the wash the plugin draws for this set.",
+  "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. Distinctness and salience are round 5's metrics.py units (summed blurred luminance difference) in a 40 px cell. Gates run on the Night window in greyscale and deuteranopia (16 and 20 px), and on every ground under Machado protanopia, deuteranopia and tritanopia (16 px); 'survey' records the rest. 'light' is the row tier's salience on Ishgard Snow with Ready over its warm wash, per measure: 'weighted' sums sqrt((dL/3)^2 + da^2 + db^2) and 'chroma' sqrt(da^2 + db^2) in OKLab, 'luma' is round 5's greyscale salience; G2L gates the default wash at 16 and 20 px, and 'measure' names the lead measure that passed. 'readyWash' is the wash the plugin draws for this set.",
   "chrome": "154.0.8037.97",
   "grounds": {"night": "#0F1424", "ishgard-snow": "#EEF1F6", "daylight": "#E9E4D6"},
-  "bars": {"weakest16": 12.0, "weakest20": 16.0, "readyLead": 1.3, "completedOfReady": 0.8, "salienceMin": 15.0, "cvdWeakest16": 11.0, "lightReadyLead": 1.3, "mixClose": 12.0, "mixHard": 10.0, "mixReadyLead": 1.25},
+  "bars": {"weakest16": 12.0, "weakest20": 16.0, "readyLead": 1.3, "completedOfReady": 0.8, "salienceMin": 15.0, "cvdWeakest16": 11.0, "lightReadyLead": 1.3, "lightLumaFloor": 0.7, "mixClose": 12.0, "mixHard": 10.0, "mixReadyLead": 1.25},
   "gateModes": ["grey", "deut"],
   "cvdModes": ["machado-prot", "machado-deut", "machado-trit"],
   "readyWash": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
-  "pass": true,
+  "pass": false,
   "gates": [
     {"gate": "G1 weakest pair 16 px grey", "tier": "hero-48-64", "value": 12.52, "bar": 12.0, "detail": "RoJ-Jrn", "pass": true},
     {"gate": "G2 Ready lead", "tier": "hero-48-64", "value": 1.4, "bar": 1.3, "detail": "Rdy 77 / Comp 55", "pass": true},
@@ -58,6 +58,10 @@
     {"gate": "G1c weakest pair 16 px machado-deut on daylight", "tier": "row", "value": 12.42, "bar": 11.0, "detail": "RoJ-Done", "pass": true},
     {"gate": "G1c weakest pair 16 px machado-prot on daylight", "tier": "row", "value": 11.55, "bar": 11.0, "detail": "RoJ-Done", "pass": true},
     {"gate": "G1c weakest pair 16 px machado-trit on daylight", "tier": "row", "value": 11.9, "bar": 11.0, "detail": "RoJ-Done", "pass": true},
+    {"gate": "G2L Ready lead 16 px (chroma) on Ishgard Snow", "tier": "row", "value": 2.09, "bar": 1.3, "detail": "wash 0.75 within 3 px: Rdy 27 / Lock 13", "pass": true},
+    {"gate": "G2L lightness floor 16 px on Ishgard Snow", "tier": "row", "value": 0.69, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 84 / NotC 122", "pass": false},
+    {"gate": "G2L Ready lead 20 px (chroma) on Ishgard Snow", "tier": "row", "value": 1.85, "bar": 1.3, "detail": "wash 0.75 within 3 px: Rdy 37 / Lock 20", "pass": true},
+    {"gate": "G2L lightness floor 20 px on Ishgard Snow", "tier": "row", "value": 0.67, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 129 / NotC 192", "pass": false},
     {"gate": "Fit medals: no bleed", "tier": "hero", "value": 0, "bar": 0, "detail": "max alpha outside every cell", "pass": true},
     {"gate": "Fit medals: not cut", "tier": "hero", "value": 179, "bar": 254, "detail": "max alpha on a cell edge: ready at 48", "pass": true},
     {"gate": "Fit medals@2x: no bleed", "tier": "hero", "value": 0, "bar": 0, "detail": "max alpha outside every cell", "pass": true},
@@ -419,49 +423,120 @@
     "ground": "ishgard-snow",
     "window": "#EEF1F6",
     "tier": "row",
-    "gatePx": 16,
-    "enforced": false,
-    "gate": {"gate": "G2L Ready lead on Ishgard Snow", "tier": "row", "value": 0.73, "bar": 1.3, "detail": "default wash 0.75 within 3 px: Rdy 75 / NotC 103", "pass": false},
+    "gatePx": [16, 20],
+    "measure": "chroma",
+    "use": "default",
     "washes": {
       "default": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
       "fallback": {"color": "#F2D27A", "alpha": 0.9, "radiusPx": 4}
     },
-    "use": "default",
     "variants": {
       "none": {
         "16": {
-          "salience": {"ready": 58.11, "ready-on-another-job": 96.06, "in-journal": 86.9, "blocked": 92.58, "done-this-cycle": 92.73, "completed": 83.74, "locked-out": 93.98, "not-checked": 102.72},
-          "readyLead": 0.57,
-          "next": "not-checked"
+          "weighted": {
+            "salience": {"ready": 22.67, "ready-on-another-job": 33.08, "in-journal": 31.24, "blocked": 31.97, "done-this-cycle": 32.18, "completed": 29.05, "locked-out": 34.95, "not-checked": 35.21},
+            "readyLead": 0.64,
+            "next": "not-checked"
+          },
+          "chroma": {
+            "salience": {"ready": 11.79, "ready-on-another-job": 8.39, "in-journal": 11.51, "blocked": 8.43, "done-this-cycle": 8.15, "completed": 7.24, "locked-out": 12.74, "not-checked": 8.28},
+            "readyLead": 0.93,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 70.95, "ready-on-another-job": 114.28, "in-journal": 104.73, "blocked": 110.9, "done-this-cycle": 110.61, "completed": 100.64, "locked-out": 111.88, "not-checked": 122.09},
+            "readyLead": 0.58,
+            "next": "not-checked"
+          }
         },
         "20": {
-          "salience": {"ready": 92.25, "ready-on-another-job": 152.3, "in-journal": 137.38, "blocked": 145.38, "done-this-cycle": 146.72, "completed": 133.08, "locked-out": 148.51, "not-checked": 162.1},
-          "readyLead": 0.57,
-          "next": "not-checked"
+          "weighted": {
+            "salience": {"ready": 36.09, "ready-on-another-job": 52.43, "in-journal": 49.35, "blocked": 50.25, "done-this-cycle": 51.06, "completed": 46.31, "locked-out": 55.32, "not-checked": 55.55},
+            "readyLead": 0.65,
+            "next": "not-checked"
+          },
+          "chroma": {
+            "salience": {"ready": 18.27, "ready-on-another-job": 13.11, "in-journal": 17.86, "blocked": 13.23, "done-this-cycle": 13.19, "completed": 11.54, "locked-out": 19.89, "not-checked": 12.93},
+            "readyLead": 0.92,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 112.28, "ready-on-another-job": 181.07, "in-journal": 165.45, "blocked": 174.2, "done-this-cycle": 174.72, "completed": 159.34, "locked-out": 176.56, "not-checked": 192.4},
+            "readyLead": 0.58,
+            "next": "not-checked"
+          }
         }
       },
       "default": {
         "16": {
-          "salience": {"ready": 75.38, "ready-on-another-job": 96.06, "in-journal": 86.9, "blocked": 92.58, "done-this-cycle": 92.73, "completed": 83.74, "locked-out": 93.98, "not-checked": 102.72},
-          "readyLead": 0.73,
-          "next": "not-checked"
+          "weighted": {
+            "salience": {"ready": 37.21, "ready-on-another-job": 33.08, "in-journal": 31.24, "blocked": 31.97, "done-this-cycle": 32.18, "completed": 29.05, "locked-out": 34.95, "not-checked": 35.21},
+            "readyLead": 1.06,
+            "next": "not-checked"
+          },
+          "chroma": {
+            "salience": {"ready": 26.65, "ready-on-another-job": 8.39, "in-journal": 11.51, "blocked": 8.43, "done-this-cycle": 8.15, "completed": 7.24, "locked-out": 12.74, "not-checked": 8.28},
+            "readyLead": 2.09,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 84.2, "ready-on-another-job": 114.28, "in-journal": 104.73, "blocked": 110.9, "done-this-cycle": 110.61, "completed": 100.64, "locked-out": 111.88, "not-checked": 122.09},
+            "readyLead": 0.69,
+            "next": "not-checked"
+          }
         },
         "20": {
-          "salience": {"ready": 113.54, "ready-on-another-job": 152.3, "in-journal": 137.38, "blocked": 145.38, "done-this-cycle": 146.72, "completed": 133.08, "locked-out": 148.51, "not-checked": 162.1},
-          "readyLead": 0.7,
-          "next": "not-checked"
+          "weighted": {
+            "salience": {"ready": 53.86, "ready-on-another-job": 52.43, "in-journal": 49.35, "blocked": 50.25, "done-this-cycle": 51.06, "completed": 46.31, "locked-out": 55.32, "not-checked": 55.55},
+            "readyLead": 0.97,
+            "next": "not-checked"
+          },
+          "chroma": {
+            "salience": {"ready": 36.85, "ready-on-another-job": 13.11, "in-journal": 17.86, "blocked": 13.23, "done-this-cycle": 13.19, "completed": 11.54, "locked-out": 19.89, "not-checked": 12.93},
+            "readyLead": 1.85,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 128.81, "ready-on-another-job": 181.07, "in-journal": 165.45, "blocked": 174.2, "done-this-cycle": 174.72, "completed": 159.34, "locked-out": 176.56, "not-checked": 192.4},
+            "readyLead": 0.67,
+            "next": "not-checked"
+          }
         }
       },
       "fallback": {
         "16": {
-          "salience": {"ready": 88.09, "ready-on-another-job": 96.06, "in-journal": 86.9, "blocked": 92.58, "done-this-cycle": 92.73, "completed": 83.74, "locked-out": 93.98, "not-checked": 102.72},
-          "readyLead": 0.86,
-          "next": "not-checked"
+          "weighted": {
+            "salience": {"ready": 47.92, "ready-on-another-job": 33.08, "in-journal": 31.24, "blocked": 31.97, "done-this-cycle": 32.18, "completed": 29.05, "locked-out": 34.95, "not-checked": 35.21},
+            "readyLead": 1.36,
+            "next": "not-checked"
+          },
+          "chroma": {
+            "salience": {"ready": 37.14, "ready-on-another-job": 8.39, "in-journal": 11.51, "blocked": 8.43, "done-this-cycle": 8.15, "completed": 7.24, "locked-out": 12.74, "not-checked": 8.28},
+            "readyLead": 2.92,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 93.7, "ready-on-another-job": 114.28, "in-journal": 104.73, "blocked": 110.9, "done-this-cycle": 110.61, "completed": 100.64, "locked-out": 111.88, "not-checked": 122.09},
+            "readyLead": 0.77,
+            "next": "not-checked"
+          }
         },
         "20": {
-          "salience": {"ready": 128.83, "ready-on-another-job": 152.3, "in-journal": 137.38, "blocked": 145.38, "done-this-cycle": 146.72, "completed": 133.08, "locked-out": 148.51, "not-checked": 162.1},
-          "readyLead": 0.79,
-          "next": "not-checked"
+          "weighted": {
+            "salience": {"ready": 66.74, "ready-on-another-job": 52.43, "in-journal": 49.35, "blocked": 50.25, "done-this-cycle": 51.06, "completed": 46.31, "locked-out": 55.32, "not-checked": 55.55},
+            "readyLead": 1.2,
+            "next": "not-checked"
+          },
+          "chroma": {
+            "salience": {"ready": 49.52, "ready-on-another-job": 13.11, "in-journal": 17.86, "blocked": 13.23, "done-this-cycle": 13.19, "completed": 11.54, "locked-out": 19.89, "not-checked": 12.93},
+            "readyLead": 2.49,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 140.26, "ready-on-another-job": 181.07, "in-journal": 165.45, "blocked": 174.2, "done-this-cycle": 174.72, "completed": 159.34, "locked-out": 176.56, "not-checked": 192.4},
+            "readyLead": 0.73,
+            "next": "not-checked"
+          }
         }
       }
     }

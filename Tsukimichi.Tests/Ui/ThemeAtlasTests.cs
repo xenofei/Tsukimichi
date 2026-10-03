@@ -32,24 +32,20 @@ public sealed class ThemeAtlasTests
     private const double SalienceMin = 15.0;
     private const double CvdWeakest16 = 11.0;
     private const double LightReadyLead = 1.3;
-
-    /// <summary>
-    /// Whether G2L (Ready's lead on Ishgard Snow) fails the build; mirrors <c>LIGHT_GATE_ENFORCED</c> in
-    /// <c>build_themes.py</c>. Off pending the realism supervisor: summed OKLab difference is mostly lightness, so no
-    /// set's light Ready face reaches 1.3 against the dark-faced states under either wash.
-    /// </summary>
-    private static readonly bool LightGateEnforced = false;
+    private const double LightLumaFloor = 0.70;
 
     /// <summary>Machado 2009 protanopia, deuteranopia and tritanopia: gated at 16 px on every ground (§7.1).</summary>
     private static readonly string[] CvdModes = ["machado-prot", "machado-deut", "machado-trit"];
     private static readonly string[] Grounds = ["night", "ishgard-snow", "daylight"];
 
-    /// <summary>Snow's Ready wash (spec-1.16 §A4) and the realism supervisor's fallback: (alpha, radius in px).</summary>
-    private static readonly Dictionary<string, (double Alpha, int Radius)> Washes = new()
-    {
-        ["default"] = (0.75, 3),
-        ["fallback"] = (0.90, 4),
-    };
+    /// <summary>
+    /// G2L's lead measures in the realism supervisor's order (spec-1.16 §A4.1): OKLab difference with lightness
+    /// down-weighted, then chroma only, each needing Ready ≥ 1.3× the next state at 16 and 20 px.
+    /// </summary>
+    private static readonly string[] LightLeadMeasures = ["weighted", "chroma"];
+
+    /// <summary>Snow's Ready wash, the one every set ships (spec-1.16 §A4.1): colour, alpha, radius in px.</summary>
+    private static readonly (string Color, double Alpha, int Radius) ReadyWash = ("#F2D27A", 0.75, 3);
 
     private static string ThemesDir() => Path.Combine(OrnamentLayoutTests.AssetsDir(), "themes");
 
@@ -225,39 +221,52 @@ public sealed class ThemeAtlasTests
 
     [Theory]
     [MemberData(nameof(MeasuredSets))]
-    public void Metrics_record_the_light_palette_Ready_salience_and_the_wash_to_draw(string set)
+    public void Metrics_pass_the_light_palette_Ready_gates_with_the_shipped_wash(string set)
     {
         using var json = Json(ThemesDir(), set, "metrics.json");
         var root = json.RootElement;
         var light = root.GetProperty("light");
         Assert.Equal("ishgard-snow", light.GetProperty("ground").GetString());
         Assert.Equal("#EEF1F6", light.GetProperty("window").GetString());
+        Assert.Equal("row", light.GetProperty("tier").GetString());
 
+        // Every set ships the .75 / 3 px wash; the old .90 / 4 px fallback is only recorded.
+        Assert.Equal("default", light.GetProperty("use").GetString());
+        var wash = root.GetProperty("readyWash");
+        Assert.Equal(ReadyWash, (wash.GetProperty("color").GetString(), wash.GetProperty("alpha").GetDouble(), wash.GetProperty("radiusPx").GetInt32()));
+
+        // Each recorded lead is Ready's salience over the loudest other state's (judged at two decimals).
         var variants = light.GetProperty("variants");
-        double Lead(string variant) => variants.GetProperty(variant).GetProperty("16").GetProperty("readyLead").GetDouble();
+        double Lead(string variant, string px, string measure)
+        {
+            var v = variants.GetProperty(variant).GetProperty(px).GetProperty(measure);
+            var sal = States.ToDictionary(static s => s, s => v.GetProperty("salience").GetProperty(s).GetDouble());
+            var next = sal.Where(static kv => kv.Key != "ready").Max(static kv => kv.Value);
+            var lead = v.GetProperty("readyLead").GetDouble();
+            Assert.Equal(Math.Round(sal["ready"] / next, 2), lead, 0.011);
+            return lead;
+        }
+
         foreach (var variant in new[] { "none", "default", "fallback" })
         {
             foreach (var px in new[] { "16", "20" })
             {
-                var v = variants.GetProperty(variant).GetProperty(px);
-                var sal = States.ToDictionary(static s => s, s => v.GetProperty("salience").GetProperty(s).GetDouble());
-                var next = sal.Where(static kv => kv.Key != "ready").Max(static kv => kv.Value);
-                Assert.Equal(Math.Round(sal["ready"] / next, 2), v.GetProperty("readyLead").GetDouble(), 0.011);
+                foreach (var measure in LightLeadMeasures.Append("luma"))
+                {
+                    Lead(variant, px, measure);
+                }
             }
         }
 
-        // The plugin draws the default wash unless only the fallback lets Ready lead.
-        var use = light.GetProperty("use").GetString()!;
-        var expected = Lead("default") < LightReadyLead && Lead("fallback") >= LightReadyLead ? "fallback" : "default";
-        Assert.Equal(expected, use);
-        var wash = root.GetProperty("readyWash");
-        Assert.Equal("#F2D27A", wash.GetProperty("color").GetString());
-        Assert.Equal(Washes[use], (wash.GetProperty("alpha").GetDouble(), wash.GetProperty("radiusPx").GetInt32()));
-
-        Assert.Equal(LightGateEnforced, light.GetProperty("enforced").GetBoolean());
-        if (LightGateEnforced)
+        // G2L: Ready leads by 1.3 under the weighted measure at both sizes, or failing that under chroma only, and the
+        // record names the measure that passed; Ready's plain luminance salience stays at least .70 of the next state's.
+        var passed = LightLeadMeasures.FirstOrDefault(m => Lead("default", "16", m) >= LightReadyLead && Lead("default", "20", m) >= LightReadyLead);
+        Assert.True(passed is not null, $"{set}: Ready leads the next state on Ishgard Snow by under {LightReadyLead}x under every measure");
+        Assert.Equal(passed, light.GetProperty("measure").GetString());
+        foreach (var px in new[] { "16", "20" })
         {
-            Assert.True(Lead(use) >= LightReadyLead, $"{set}: Ready leads the next state on Ishgard Snow by only {Lead(use)}x with the {use} wash");
+            var floor = Lead("default", px, "luma");
+            Assert.True(floor >= LightLumaFloor, $"{set} {px} px: Ready's luminance salience is only {floor}x the next state's on Ishgard Snow");
         }
     }
 
