@@ -20,7 +20,8 @@ public enum PlausibilityVerdict
 
     /// <summary>
     /// Completed quests read as not completed, every one of them a quest New Game+ replays (1.11.0, C4a): a chapter
-    /// being replayed rather than a real loss, so it is never taken in, however long it reads the same.
+    /// being replayed rather than a real loss. The capture is not held back: <see cref="CapturePlausibility.Judge"/>
+    /// keeps those quests' completion from the last capture and judges the rest of it as usual.
     /// </summary>
     NewGamePlusReplay,
 }
@@ -66,8 +67,10 @@ public readonly record struct PlausibilityResult(PlausibilityVerdict Verdict, in
 /// <para>
 /// New Game+ (1.11.0, C4a): replaying a chapter clears the completion bits of its quests while the replay lasts. A
 /// loss made only of quests some New Game+ chapter lists, however small, is a replay and never the character's real
-/// progress (<see cref="PlausibilityVerdict.NewGamePlusReplay"/>): it is never saved over the progress on file, and
-/// <see cref="HeldBackCaptures"/> never takes it in.
+/// progress (<see cref="PlausibilityVerdict.NewGamePlusReplay"/>). Holding such a capture back would freeze tracking
+/// for the whole replay (days of play, a login mid-chapter included), so <see cref="Judge"/> puts the replayed
+/// quests' completion back from the last capture (<see cref="KeepReplayed"/>) and the rest of the capture (levels, new
+/// quests, collectibles) is judged, committed and saved as usual: the progress on file never loses those quests.
 /// </para>
 /// Pure; the framework thread calls it once per changed capture, a worker once per first pass.
 /// </summary>
@@ -130,6 +133,76 @@ public static class CapturePlausibility
         }
 
         return new PlausibilityResult(verdict, lost, completed, journalBefore, journalLeft);
+    }
+
+    /// <summary>
+    /// <see cref="Check"/>, with a New Game+ replay settled (1.11.0, C4a): for a
+    /// <see cref="PlausibilityVerdict.NewGamePlusReplay"/>, the capture with the replayed quests' completion kept from
+    /// <paramref name="last"/> (<see cref="KeepReplayed"/>) and the verdict on that; otherwise the capture as it is and
+    /// its verdict. The caller goes on with the capture returned.
+    /// </summary>
+    public static (CharacterSnapshot Capture, PlausibilityResult Result) Judge(CharacterSnapshot? last, CharacterSnapshot capture, QuestCatalog catalog, IReadOnlySet<uint>? replayable)
+    {
+        var result = Check(last, capture, catalog, replayable);
+        if (result.Verdict != PlausibilityVerdict.NewGamePlusReplay)
+        {
+            return (capture, result);
+        }
+
+        var kept = KeepReplayed(last!, capture, catalog, replayable!);
+        return (kept, Check(last, kept, catalog, replayable));
+    }
+
+    /// <summary>
+    /// <paramref name="capture"/> with the completion bits set in <paramref name="last"/> and clear now set again for the
+    /// quests some New Game+ chapter lists (<paramref name="replayable"/>): a replayed chapter reads as the progress the
+    /// character has. Any other bit is left as the capture read it. Returns <paramref name="capture"/> when no such bit
+    /// cleared; a mask that comes out the same as the last one is the last one's array, so the diff's fast path holds.
+    /// </summary>
+    public static CharacterSnapshot KeepReplayed(CharacterSnapshot last, CharacterSnapshot capture, QuestCatalog catalog, IReadOnlySet<uint> replayable)
+    {
+        ArgumentNullException.ThrowIfNull(last);
+        ArgumentNullException.ThrowIfNull(capture);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(replayable);
+
+        var before = last.CompletedBits;
+        var now = capture.CompletedBits;
+        byte[]? kept = null;
+        for (var i = 0; i < before.Length; i++)
+        {
+            var cleared = before[i] & ~(i < now.Length ? now[i] : 0);
+            if (cleared == 0)
+            {
+                continue;
+            }
+
+            for (var bit = 0; bit < 8; bit++)
+            {
+                var questId = (ushort)((i << 3) | bit);
+                if ((cleared & (1 << bit)) == 0
+                    || !catalog.TryGetByQuestId(questId, out var quest)
+                    || !replayable.Contains(quest.RowId))
+                {
+                    continue;
+                }
+
+                if (kept is null)
+                {
+                    kept = new byte[Math.Max(before.Length, now.Length)];
+                    now.CopyTo(kept, 0);
+                }
+
+                kept[i] |= (byte)(1 << bit);
+            }
+        }
+
+        if (kept is null)
+        {
+            return capture;
+        }
+
+        return capture with { CompletedBits = kept.AsSpan().SequenceEqual(before) ? before : kept };
     }
 
     /// <summary>

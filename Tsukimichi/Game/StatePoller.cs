@@ -32,7 +32,7 @@ namespace Tsukimichi.Game;
 /// still happens here (ClientStructs reads stay on the framework thread), but the catalog-wide resolve and the
 /// sidecar read run on a worker over an immutable snapshot, and the result is committed and published on the
 /// framework thread when it lands. Later polls diff incrementally, except when a change touches quests the reverse
-/// index cannot enumerate (a job or level change, a duty clear, an allowance, today's offer: <see cref="FullPass"/>):
+/// index cannot enumerate (a job or level change, a duty clear, an allowance, today's offer, a new mount: <see cref="FullPass"/>):
 /// that capture's full resolve and its events run on a worker the same way, and are committed on the frame they land
 /// unless the catalog, the character or the committed capture moved meanwhile, in which case the next poll captures
 /// and diffs again. Until a pass lands the session keeps the previous evaluations and no other capture is taken, so
@@ -533,7 +533,24 @@ public sealed class StatePoller : IDisposable
         // A loss that keeps reading the same for a few minutes is real and is taken in after all, when it is committed:
         // until then the watch stays accepted (HeldBackCaptures.Accepted), so a deferred pass dropped at logout, or one
         // that faulted, leaves the next capture of the same loss (the logout's own included) accepted at once.
-        var plausibility = CapturePlausibility.Check(last, snapshot, catalog, bundle.NewGamePlus);
+        // A New Game+ replay (1.11.0, C4a) is not held back: the replayed quests keep their completion from the last
+        // capture and the rest of the capture is judged and committed as usual, so a chapter never freezes tracking.
+        var (judged, plausibility) = CapturePlausibility.Judge(last, snapshot, catalog, bundle.NewGamePlus);
+        if (!ReferenceEquals(judged, snapshot))
+        {
+            snapshot = judged;
+            diff = SnapshotDiff.Compute(last, snapshot);
+            if (diff.IsEmpty && !offerChanged)
+            {
+                if (heldBack.Count > 0)
+                {
+                    heldBack.Reset();
+                }
+
+                return null;
+            }
+        }
+
         PlausibilityResult? accepted = null;
         if (!plausibility.Plausible)
         {
@@ -550,7 +567,7 @@ public sealed class StatePoller : IDisposable
         }
 
         // A level change touches every level-gated quest, which the reverse index cannot enumerate by job, and a job
-        // change, a duty clear or a new offer touch quests it cannot enumerate at all: everything is resolved, on a
+        // change, a duty clear, a new offer or a new mount touch quests it cannot enumerate at all: everything is resolved, on a
         // worker (14-17 ms over the whole catalog was a dropped frame on every gearset change).
         var full = FullPass.Needed(diff, offerChanged);
         if (full && deferFull)
@@ -688,8 +705,14 @@ public sealed class StatePoller : IDisposable
         var seed = handoff is { } h && h.ContentId == snapshot.ContentId ? h : null;
         var task = Task.Run(() =>
         {
+            // The capture is judged against the stored snapshot as a later one is against the last (the plausibility
+            // guard); a stored file that cannot be read is not judged against. A login mid-chapter of New Game+
+            // (1.11.0, C4a) keeps the replayed quests' completion from the stored snapshot and goes live with the rest.
+            var stored = seed ?? snapshots.ReadStored(snapshot.ContentId).Value;
+            var (capture, plausibility) = CapturePlausibility.Judge(stored, snapshot, catalog, bundle.NewGamePlus);
+
             var started = Stopwatch.GetTimestamp();
-            var states = StateResolver.ResolveAll(catalog, snapshot, context);
+            var states = StateResolver.ResolveAll(catalog, capture, context);
             var resolveMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
 
             // Accepted times survive across sessions in the sidecar; quests that entered the journal while the
@@ -701,22 +724,11 @@ public sealed class StatePoller : IDisposable
             // Completion dates continue from the dates file; quests completed while the plugin was not watching are
             // dated "between the stored capture and now" (decision 9). A dates file that exists but cannot be read
             // right now throws here: starting over would save an empty record over it, so the pass fails and is
-            // retried on the usual backoff. The capture is judged against the stored snapshot as a later one is
-            // against the last (the plausibility guard); a stored file that cannot be read is not judged against.
-            CharacterSnapshot dated;
-            CharacterSnapshot? stored;
-            if (seed is not null)
-            {
-                dated = CompletionDates.Resume(seed, snapshot);
-                stored = seed;
-            }
-            else
-            {
-                dated = CompletionDates.BeginFrom(snapshots.ReadStoredDates(snapshot.ContentId), snapshot, warnings);
-                stored = snapshots.ReadStored(snapshot.ContentId).Value;
-            }
+            // retried on the usual backoff.
+            var dated = seed is not null
+                ? CompletionDates.Resume(seed, capture)
+                : CompletionDates.BeginFrom(snapshots.ReadStoredDates(snapshot.ContentId), capture, warnings);
 
-            var plausibility = CapturePlausibility.Check(stored, snapshot, catalog, bundle.NewGamePlus);
             return new FirstPassResult(dated, stored, plausibility, states, acceptedSince, abandoned, warnings, resolveMs);
         });
 

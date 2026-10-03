@@ -9,8 +9,10 @@ namespace Tsukimichi.Core.Runtime;
 /// A bad read comes back right within seconds; a real loss reads the same every time. So a held-back capture is taken
 /// in once the same loss (the same completed quests read as not completed, the same journal quests gone, against the
 /// same last capture) has been read for <see cref="AcceptAfter"/> over at least <see cref="MinCaptures"/> captures. A
-/// capture that reads as an empty character, or as a New Game+ replay (<see cref="PlausibilityVerdict.NewGamePlusReplay"/>),
-/// is never taken in. An accepted loss stays accepted until the caller commits
+/// capture that reads as an empty character is never taken in, nor is a New Game+ replay
+/// (<see cref="PlausibilityVerdict.NewGamePlusReplay"/>), which is never held back either: the caller settles it with
+/// <see cref="CapturePlausibility.Judge"/>, keeping the replayed quests' completion, before it gets here. An accepted
+/// loss stays accepted until the caller commits
 /// it (<see cref="Reset"/>): a commit that never happens (a deferred pass dropped at logout, or one that faulted) leaves
 /// the next capture of the same loss taken in at once, rather than held back for another few minutes. Not thread-safe:
 /// the framework thread owns it.

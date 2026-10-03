@@ -43,6 +43,42 @@ public sealed class FullPassTests
     }
 
     [Fact]
+    public void The_last_mount_of_a_collection_re_resolves_the_gated_quest()
+    {
+        // 1.11.0, C2: owning the seventh Lanner opens the Firebird quest. Before, a capture where only the mounts moved
+        // set only CollectiblesChanged, nothing re-resolved, and the quest kept reading Blocked.
+        uint[] lanners = [75, 76, 77, 78, 90, 98, 104];
+        var firebird = Fixture.Quest(67086);
+        var catalog = QuestCatalog.Build([firebird], null, new Dictionary<uint, QuestGate> { [firebird.RowId] = new("all seven Heavensward Lanner mounts", [], null, lanners) });
+        var old = Owning(Fixture.Snapshot(), "Mount", lanners[..6], [104]);
+        var owned = Owning(Fixture.Snapshot(), "Mount", lanners, []);
+        var previous = StateResolver.ResolveAll(catalog, old, EvalContext.Default);
+        Assert.Equal(QuestState.Blocked, previous[firebird.RowId].State);
+
+        var diff = SnapshotDiff.Compute(old, owned);
+        Assert.True(diff.MountsChanged);
+        Assert.False(diff.OtherChanged);
+        Assert.True(FullPass.Needed(diff, offerChanged: false));
+
+        var result = FullPass.Run(catalog, old, owned, diff, EvalContext.Default, previous, Now);
+        Assert.Equal(QuestState.Ready, result.States[firebird.RowId].State);
+    }
+
+    [Fact]
+    public void A_new_minion_alone_needs_no_full_pass()
+    {
+        var old = Owning(Fixture.Snapshot(), "Minion", [1], [2]);
+        var diff = SnapshotDiff.Compute(old, Owning(Fixture.Snapshot(), "Minion", [1, 2], []));
+
+        Assert.True(diff.CollectiblesChanged);
+        Assert.False(diff.MountsChanged);
+        Assert.False(FullPass.Needed(diff, offerChanged: false));
+    }
+
+    private static CharacterSnapshot Owning(CharacterSnapshot snapshot, string kind, uint[] owned, uint[] missing) =>
+        snapshot with { Collectibles = new Dictionary<string, CollectibleSet> { [kind] = new() { Owned = owned, Missing = missing } } };
+
+    [Fact]
     public void Many_changed_quests_need_a_full_pass()
     {
         var diff = new SnapshotDiff([.. Enumerable.Range(1, 3).Select(i => (ushort)i)], [], [], false);

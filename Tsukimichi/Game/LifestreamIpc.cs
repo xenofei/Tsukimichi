@@ -262,21 +262,29 @@ public sealed class LifestreamIpc : IDisposable
         }
     }
 
-    /// <summary>Stops Lifestream's running task, if any.</summary>
-    public void Abort()
+    /// <summary>
+    /// Stops Lifestream's running task, if any. False when Lifestream is absent, lacks the gate or the call threw: the
+    /// hand-off claim is then kept, so another <c>/tsuki stop</c> can try again; it is released only on success.
+    /// </summary>
+    public bool Abort()
     {
         if (!Available || abort is null || gates.IsMissing(AbortGate))
         {
-            return;
+            return false;
         }
 
-        Invoke(abort, AbortGate, static gate =>
+        var sent = Invoke(abort, AbortGate, static gate =>
         {
             gate.InvokeAction();
             return true;
         }, false);
         busyCheckedAt = null;
-        claim.Release();
+        if (sent)
+        {
+            claim.Release();
+        }
+
+        return sent;
     }
 
     /// <summary>
