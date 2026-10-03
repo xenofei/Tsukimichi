@@ -9,16 +9,15 @@ public class SettingsSearchTests
     {
         SettingsSection[] expected =
         [
-            SettingsSection.Display,
+            SettingsSection.General,
+            SettingsSection.Journal,
             SettingsSection.TodoOverlay,
-            SettingsSection.Routes,
-            SettingsSection.Notices,
+            SettingsSection.Alerts,
             SettingsSection.Spoilers,
-            SettingsSection.Keyboard,
-            SettingsSection.Integrations,
-            SettingsSection.Data,
+            SettingsSection.InGame,
+            SettingsSection.Automation,
+            SettingsSection.Characters,
             SettingsSection.Advanced,
-            SettingsSection.About,
         ];
 
         Assert.Equal(expected, SettingsSections.Order);
@@ -89,7 +88,7 @@ public class SettingsSearchTests
     {
         var filter = new SettingsFilter();
         filter.BeginFrame();
-        filter.BeginSection(SettingsSection.Display, "Display");
+        filter.BeginSection(SettingsSection.General, "Display");
         filter.BeginBlock();
         Assert.False(filter.Active);
         Assert.True(filter.Heading("Look"), "a heading draws at once on a section's page");
@@ -107,7 +106,7 @@ public class SettingsSearchTests
     {
         var filter = new SettingsFilter();
         filter.BeginFrame();
-        filter.BeginSection(SettingsSection.Display, "Display");
+        filter.BeginSection(SettingsSection.General, "Display");
         filter.BeginBlock();
         Assert.True(filter.Heading("Display"));
         Assert.Null(filter.TakeBlockHeading());
@@ -121,7 +120,7 @@ public class SettingsSearchTests
         Assert.False(filter.SetText("lock"), "the same words are no change");
         filter.BeginFrame();
 
-        filter.BeginSection(SettingsSection.Display, "Display");
+        filter.BeginSection(SettingsSection.General, "Display");
         filter.BeginBlock();
         Assert.False(filter.Heading("Look"), "no match yet: the heading waits");
         Assert.False(filter.Row("Flair", "Full, Quiet or Plain"));
@@ -146,7 +145,7 @@ public class SettingsSearchTests
 
         Assert.Equal(2, filter.VisibleThisFrame);
         filter.EndFrame();
-        Assert.Equal(0, filter.Shown(SettingsSection.Display));
+        Assert.Equal(0, filter.Shown(SettingsSection.General));
         Assert.Equal(2, filter.Shown(SettingsSection.TodoOverlay));
         Assert.Equal(2, filter.ShownTotal);
     }
@@ -165,7 +164,7 @@ public class SettingsSearchTests
         Assert.True(filter.Row("Hide main scenario names ahead"));
         Assert.True(filter.Row("Hide artwork"));
 
-        filter.BeginSection(SettingsSection.Keyboard, "Keyboard");
+        filter.BeginSection(SettingsSection.Advanced, "Keyboard");
         filter.BeginBlock();
         Assert.False(filter.BlockWhole);
         Assert.False(filter.Row("Ctrl+1 to 5 switch tabs"));
@@ -177,7 +176,7 @@ public class SettingsSearchTests
         var filter = new SettingsFilter();
         filter.SetText("questionable");
         filter.BeginFrame();
-        filter.BeginSection(SettingsSection.Integrations, "Integrations");
+        filter.BeginSection(SettingsSection.InGame, "Integrations");
 
         filter.BeginBlock();
         Assert.True(filter.Heading("Questionable"), "the heading matched: the block shows whole, heading first");
@@ -220,13 +219,13 @@ public class SettingsSearchTests
     {
         var filter = new SettingsFilter();
         filter.BeginFrame();
-        filter.BeginSection(SettingsSection.About, "About");
+        filter.BeginSection(SettingsSection.Advanced, "About");
         filter.BeginBlock();
         Assert.True(filter.DrawsBlock(false), "without a query every block draws");
 
         filter.SetText("catalog");
         filter.BeginFrame();
-        filter.BeginSection(SettingsSection.About, "About");
+        filter.BeginSection(SettingsSection.Advanced, "About");
         filter.BeginBlock();
         bool? rowAware = null;
         Assert.True(filter.DrawsBlock(rowAware));
@@ -245,7 +244,7 @@ public class SettingsSearchTests
         var filter = new SettingsFilter();
         filter.SetText("nothing here");
         filter.BeginFrame();
-        filter.BeginSection(SettingsSection.Integrations, "Integrations");
+        filter.BeginSection(SettingsSection.InGame, "Integrations");
         filter.BeginBlock();
         Assert.True(filter.DrawsBlock(true));
         Assert.True(filter.LearnRowAware(true), "a draw that registered nothing (a plugin went away) does not forget");
@@ -258,18 +257,18 @@ public class SettingsSearchTests
         var filter = new SettingsFilter();
         filter.SetText("a");
         filter.BeginFrame();
-        filter.BeginSection(SettingsSection.Data, "Data");
+        filter.BeginSection(SettingsSection.Characters, "Data");
         filter.BeginBlock();
         filter.Row("a");
         filter.Row("a");
         filter.EndFrame();
-        Assert.Equal(2, filter.Shown(SettingsSection.Data));
+        Assert.Equal(2, filter.Shown(SettingsSection.Characters));
 
         filter.BeginFrame();
         Assert.Equal(0, filter.VisibleThisFrame);
-        Assert.Equal(2, filter.Shown(SettingsSection.Data));
+        Assert.Equal(2, filter.Shown(SettingsSection.Characters));
         filter.EndFrame();
-        Assert.Equal(0, filter.Shown(SettingsSection.Data));
+        Assert.Equal(0, filter.Shown(SettingsSection.Characters));
         Assert.Equal(0, filter.ShownTotal);
     }
 
@@ -282,8 +281,56 @@ public class SettingsSearchTests
         Assert.True(filter.SetText(string.Empty));
         Assert.False(filter.Active);
         filter.BeginFrame();
-        filter.BeginSection(SettingsSection.About, "About");
+        filter.BeginSection(SettingsSection.Advanced, "About");
         filter.BeginBlock();
         Assert.True(filter.Row("Plugin version"));
+    }
+
+    [Theory]
+    [InlineData("General", SettingsSection.General)]
+    [InlineData("Journal", SettingsSection.Journal)]
+    [InlineData("Overlay", SettingsSection.TodoOverlay)]
+    [InlineData("Alerts", SettingsSection.Alerts)]
+    [InlineData("Spoilers", SettingsSection.Spoilers)]
+    [InlineData("InGame", SettingsSection.InGame)]
+    [InlineData("Automation", SettingsSection.Automation)]
+    [InlineData("Characters", SettingsSection.Characters)]
+    [InlineData("Advanced", SettingsSection.Advanced)]
+    [InlineData("Display", SettingsSection.General)]
+    [InlineData("About", SettingsSection.General)]
+    [InlineData("TodoOverlay", SettingsSection.TodoOverlay)]
+    [InlineData("Routes", SettingsSection.TodoOverlay)]
+    [InlineData("Notices", SettingsSection.Alerts)]
+    [InlineData("Integrations", SettingsSection.InGame)]
+    [InlineData("Data", SettingsSection.Characters)]
+    [InlineData("Keyboard", SettingsSection.Advanced)]
+    [InlineData(" journal ", SettingsSection.Journal)]
+    [InlineData("", SettingsSection.General)]
+    [InlineData(null, SettingsSection.General)]
+    [InlineData("Nonsense", SettingsSection.General)]
+    public void A_remembered_page_name_opens_its_page_old_names_included(string? name, SettingsSection expected)
+    {
+        Assert.Equal(expected, SettingsSections.Parse(name));
+    }
+
+    [Fact]
+    public void Every_page_round_trips_through_its_name()
+    {
+        foreach (var section in SettingsSections.Order)
+        {
+            Assert.Equal(section, SettingsSections.Parse(SettingsSections.Name(section)));
+        }
+    }
+
+    [Theory]
+    [InlineData("Window scale", "Spacing and text in every window.", true)]
+    [InlineData("", null, false)]
+    [InlineData("1234567890123456789012345678901234567890", null, true)]
+    [InlineData("12345678901234567890123456789012345678901", null, false)]
+    public void The_copy_rules_cap_labels_at_40_and_hints_at_110(string label, string? hint, bool fits)
+    {
+        Assert.Equal(fits, SettingsCopy.Fits(label, hint));
+        Assert.True(SettingsCopy.Fits("Label", new string('a', SettingsCopy.MaxHint)));
+        Assert.False(SettingsCopy.Fits("Label", new string('a', SettingsCopy.MaxHint + 1)));
     }
 }

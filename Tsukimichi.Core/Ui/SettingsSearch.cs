@@ -3,21 +3,39 @@ using System.Globalization;
 namespace Tsukimichi.Core.Ui;
 
 /// <summary>
-/// The Settings window's sections (feature plan v5, 1.7.0 "Settings"; R1 proposal 5, R3 proposal 7), in the order
-/// the section index lists them: <see cref="SettingsSections.Order"/>. The values are not persisted.
+/// The Settings window's nine pages (feature plan v6 U7), in the order the section index lists them:
+/// <see cref="SettingsSections.Order"/>. The page last open is remembered by name
+/// (<see cref="SettingsSections.Name"/>, <see cref="SettingsSections.Parse"/>), never by number, so reordering or
+/// renaming a page never opens the wrong one.
 /// </summary>
 public enum SettingsSection
 {
-    Display,
+    /// <summary>Size, text size, look, motion, the main window's tabs and the tour.</summary>
+    General,
+
+    /// <summary>The quest table's rows and columns, the tree, quest-text search, the story recap and the free trial.</summary>
+    Journal,
+
+    /// <summary>The Todo overlay, what it shows, and the followed route's map flag ("Overlay &amp; routes").</summary>
     TodoOverlay,
-    Routes,
-    Notices,
+
+    /// <summary>Chat lines, chat links and toasts, and the welcome-back card.</summary>
+    Alerts,
+
+    /// <summary>The spoiler shield.</summary>
     Spoilers,
-    Keyboard,
-    Integrations,
-    Data,
+
+    /// <summary>Panels beside the game's windows, menus, tooltips, nameplates, the server info bar and Wotsit.</summary>
+    InGame,
+
+    /// <summary>Companion plugins, travel, Questionable, AutoDuty and Allagan Tools.</summary>
+    Automation,
+
+    /// <summary>Characters, the dashboard, Moonlit verdicts, export and the danger zone ("Characters &amp; data").</summary>
+    Characters,
+
+    /// <summary>Keyboard, chat commands, safety, refresh rate, hidden quest filing, the patch override and diagnostics.</summary>
     Advanced,
-    About,
 }
 
 /// <summary>
@@ -30,33 +48,31 @@ public enum SettingsAnchor
     /// <summary>The top of the section's page.</summary>
     None,
 
-    /// <summary>Settings › Integrations › Companion plugins.</summary>
+    /// <summary>Settings › Automation › Companion plugins.</summary>
     CompanionPlugins,
 
-    /// <summary>Settings › Integrations › Nearby quests.</summary>
+    /// <summary>Settings › In game › Nearby and server info bar.</summary>
     Nearby,
 }
 
-/// <summary>The order of the Settings window's section index and of the search results.</summary>
+/// <summary>The order of the Settings window's section index and of the search results, and the remembered page.</summary>
 public static class SettingsSections
 {
     /// <summary>
-    /// Display (with Look and Flair) first, the overlay and the road next, the notices and the shields, the keyboard,
-    /// the other plugins, then the player's data, the rarely touched Advanced (polling, journal filing, the hook gate
-    /// override) and About last.
+    /// What a player changes most first (size and look), then each surface in the order it is met (the Journal, the
+    /// overlay, chat, spoilers, the game's own windows), the other plugins, the player's data and Advanced last.
     /// </summary>
     public static IReadOnlyList<SettingsSection> Order { get; } =
     [
-        SettingsSection.Display,
+        SettingsSection.General,
+        SettingsSection.Journal,
         SettingsSection.TodoOverlay,
-        SettingsSection.Routes,
-        SettingsSection.Notices,
+        SettingsSection.Alerts,
         SettingsSection.Spoilers,
-        SettingsSection.Keyboard,
-        SettingsSection.Integrations,
-        SettingsSection.Data,
+        SettingsSection.InGame,
+        SettingsSection.Automation,
+        SettingsSection.Characters,
         SettingsSection.Advanced,
-        SettingsSection.About,
     ];
 
     /// <summary>The number of sections.</summary>
@@ -75,6 +91,60 @@ public static class SettingsSections
 
         return -1;
     }
+
+    /// <summary>The name a page is remembered by in the configuration.</summary>
+    public static string Name(SettingsSection section) => section switch
+    {
+        SettingsSection.Journal => "Journal",
+        SettingsSection.TodoOverlay => "Overlay",
+        SettingsSection.Alerts => "Alerts",
+        SettingsSection.Spoilers => "Spoilers",
+        SettingsSection.InGame => "InGame",
+        SettingsSection.Automation => "Automation",
+        SettingsSection.Characters => "Characters",
+        SettingsSection.Advanced => "Advanced",
+        _ => "General",
+    };
+
+    /// <summary>
+    /// The page a remembered name opens, the names of the ten sections before 1.13 included (U7 migration): Display
+    /// and About open General, Todo overlay and Routes open Overlay &amp; routes, Notices opens Alerts, Integrations
+    /// opens In game, Data opens Characters &amp; data and Keyboard opens Advanced, where those settings now live. An
+    /// empty or unknown name opens General. Letter case is ignored.
+    /// </summary>
+    public static SettingsSection Parse(string? name) => name?.Trim().ToUpperInvariant() switch
+    {
+        "JOURNAL" => SettingsSection.Journal,
+        "OVERLAY" or "TODOOVERLAY" or "ROUTES" => SettingsSection.TodoOverlay,
+        "ALERTS" or "NOTICES" => SettingsSection.Alerts,
+        "SPOILERS" => SettingsSection.Spoilers,
+        "INGAME" or "INTEGRATIONS" => SettingsSection.InGame,
+        "AUTOMATION" => SettingsSection.Automation,
+        "CHARACTERS" or "DATA" => SettingsSection.Characters,
+        "ADVANCED" or "KEYBOARD" => SettingsSection.Advanced,
+        _ => SettingsSection.General,
+    };
+}
+
+/// <summary>
+/// The copy rules of the Settings rows (feature plan v6 U7): a label names the setting in at most
+/// <see cref="MaxLabel"/> characters, and the hint under it says what the player will see in at most
+/// <see cref="MaxHint"/> (two lines at the narrowest page). A test holds every row to them.
+/// </summary>
+public static class SettingsCopy
+{
+    /// <summary>The longest a setting's label may be, in characters.</summary>
+    public const int MaxLabel = 40;
+
+    /// <summary>The longest a setting's hint may be, in characters.</summary>
+    public const int MaxHint = 110;
+
+    /// <summary>The lines a hint is written to fill at the page's usual width; a narrow page or a large text size wraps it further rather than cutting it.</summary>
+    public const int HintLines = 2;
+
+    /// <summary>Whether <paramref name="label"/> and <paramref name="hint"/> keep the rules (a null hint does).</summary>
+    public static bool Fits(string label, string? hint) =>
+        label is { Length: > 0 and <= MaxLabel } && (hint is null || hint.Length <= MaxHint);
 }
 
 /// <summary>
@@ -174,7 +244,7 @@ public sealed class SettingsFilter
     public SettingsQuery Query => query;
 
     /// <summary>The section <see cref="BeginSection"/> named last.</summary>
-    public SettingsSection Section { get; private set; } = SettingsSection.Display;
+    public SettingsSection Section { get; private set; } = SettingsSection.General;
 
     /// <summary>True when the current block shows whole: its section's title, its heading or its keywords matched.</summary>
     public bool BlockWhole { get; private set; }

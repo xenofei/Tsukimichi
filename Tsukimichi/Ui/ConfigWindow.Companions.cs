@@ -9,7 +9,7 @@ using Tsukimichi.Game;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Integrations › Companion plugins (feature plan v5, decision 1): one row per plugin Tsukimichi works with,
+/// Settings › Automation › Companion plugins (feature plan v5, decision 1): one row per plugin Tsukimichi works with,
 /// its state as a glyph (loaded, turned off, outdated, not installed; the word, the installed version and the minimum
 /// in the tooltip), its name, what it unlocks in Tsukimichi (with "Needed by …" for TextAdvance, Boss Mod and the
 /// rotation plugins, and the companion setup expander, <see cref="DrawCompanionSetup"/>) and a "Copy repo URL" button for a custom repository
@@ -40,16 +40,12 @@ public sealed partial class ConfigWindow
         }
 
         Header(Strings.CompanionsHeading);
-        if (!Row(Strings.CompanionsHeading, Strings.CompanionsIntro, CompanionKeywords))
+        if (!Setting(Strings.SettingsCompanionsLabel, Strings.CompanionsIntro, CompanionKeywords, 0f))
         {
             return;
         }
 
-        using (Theme.PushText(Theme.Surface.TextSecondary))
-        {
-            ImGui.TextWrapped(Strings.CompanionsIntro);
-        }
-
+        SettingBelow();
         DrawCompanionSetupSummary(companions);
 
         var flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.PadOuterX;
@@ -80,37 +76,32 @@ public sealed partial class ConfigWindow
             ImGui.TextUnformatted(copied);
         }
 
+        using (Typography.Caption())
         using (Theme.PushText(Theme.Surface.TextSecondary))
         {
             ImGui.TextWrapped(Strings.CompanionAddRepoHowTo);
         }
 
         DrawCompanionApplyConfirm(companions);
+        EndSetting();
     }
 
     /// <summary>Every plugin the table lists, for the search box (the names are the plugins' own, never translated).</summary>
     private const string CompanionKeywords = "plugins installed missing outdated repository url setup settings recommended automation Questionable AutoDuty Artisan GatherBuddy vnavmesh Lifestream TextAdvance Boss Mod Wrath Combo Rotation Solver Allagan Tools Quest Map Chat 2";
 
     /// <summary>
-    /// Settings › Integrations › AutoDuty: whether "Run with AutoDuty" may use the regular Duty Finder when a duty has no
+    /// Settings › Automation › AutoDuty: whether "Run with AutoDuty" may use the regular Duty Finder when a duty has no
     /// Duty Support or Trust. Read per press by the detail pane, so no callback is needed.
     /// </summary>
     private void DrawAutoDutySettings()
     {
         Header(Strings.ConfigSectionAutoDuty);
-        if (!Row(Strings.CompanionAutoDutyAllowDutyFinder, Strings.CompanionAutoDutyAllowDutyFinderHint, "autoduty duty support trust duty finder dungeon"))
-        {
-            return;
-        }
-
         var allowDutyFinder = settings.AutoDutyAllowDutyFinder;
-        if (ImGui.Checkbox(Strings.CompanionAutoDutyAllowDutyFinder, ref allowDutyFinder))
+        if (Toggle(Strings.CompanionAutoDutyAllowDutyFinder, Strings.CompanionAutoDutyAllowDutyFinderHint, ref allowDutyFinder, "autoduty duty support trust duty finder dungeon queue"))
         {
             settings.AutoDutyAllowDutyFinder = allowDutyFinder;
             Save();
         }
-
-        HintOnHover(Strings.CompanionAutoDutyAllowDutyFinderHint);
     }
 
     private void DrawCompanionRow(int index, CompanionStatus status, IReadOnlyList<CompanionStatus> all)

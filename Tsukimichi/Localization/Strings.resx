@@ -51,10 +51,10 @@
     <comment>{0} = the quest link; " (step 3 of 5)" follows the line.</comment>
   </data>
   <data name="AbandonedConfigNotice" xml:space="preserve">
-    <value>Chat line when you abandon a quest</value>
+    <value>Abandoned quests</value>
   </data>
   <data name="AbandonedConfigNoticeHint" xml:space="preserve">
-    <value>"Abandoned: [quest] (step 3 of 5)", once per quest per session, so a mis-click is noticed. The Characters tab lists every abandoned quest either way.</value>
+    <value>A chat line when you abandon a quest, so a mis-click is noticed.</value>
   </data>
   <data name="DetailRequirementsUnmetFormat" xml:space="preserve">
     <value>{0} of {1} unmet</value>
@@ -413,16 +413,16 @@
     <comment>Tooltip on the "Also in your journal here" caption.</comment>
   </data>
   <data name="DiscoverySettingsTooltip" xml:space="preserve">
-    <value>Nearby settings (opens Settings › Integrations)</value>
+    <value>Nearby settings (opens Settings › In game)</value>
   </data>
   <data name="DiscoveryShowDtrLabel" xml:space="preserve">
-    <value>Show a count in the server info bar</value>
+    <value>Count in the server info bar</value>
   </data>
   <data name="DiscoveryDtrShowWhenEmptyLabel" xml:space="preserve">
-    <value>Keep the entry visible when there is nothing to start</value>
+    <value>Show at zero</value>
   </data>
   <data name="DiscoveryIncludeOtherJobLabel" xml:space="preserve">
-    <value>Include quests ready on another job</value>
+    <value>Quests ready on another job</value>
   </data>
   <data name="DiscoveryDtrTooltipHeaderFormat" xml:space="preserve">
     <value>{0} quests Ready to start in {1}</value>
@@ -467,10 +467,10 @@
     <comment>Folded quest count: {0} is how many more quests also unlock the duty.</comment>
   </data>
   <data name="DutyHintSetting" xml:space="preserve">
-    <value>Duty Finder unlock hint</value>
+    <value>Unlock hint in Duty Finder</value>
   </data>
   <data name="DutyHintSettingHint" xml:space="preserve">
-    <value>When you select a padlocked duty in the Duty Finder or Raid Finder, a small panel beside the window names the quest that unlocks it, its state and what it is waiting for, with buttons to reveal it in Tsukimichi or flag its giver. Nothing shows for a duty you have unlocked, or one no known quest unlocks. It reads the selected duty only; it never queues or opens one.</value>
+    <value>Names the quest that unlocks a locked duty. It never queues.</value>
   </data>
   <data name="GamePanelOfferCaption" xml:space="preserve">
     <value>Worth it?</value>
@@ -587,26 +587,26 @@
     <comment>{0} how many more quests the completion opens.</comment>
   </data>
   <data name="GamePanelSettingsHeading" xml:space="preserve">
-    <value>Quest panels beside game windows</value>
+    <value>Panels beside game windows</value>
     <comment>Settings › Integrations block heading: the quest offer, quest complete and Journal panels (1.7.0).</comment>
   </data>
   <data name="GamePanelSettingOffer" xml:space="preserve">
-    <value>"Worth it?" panel beside quest offers</value>
+    <value>Panel on quest offers</value>
   </data>
   <data name="GamePanelSettingOfferHint" xml:space="preserve">
-    <value>When an NPC offers you a quest, a small panel beside the offer window says what it is worth to you: what it unlocks, its Moonlit rewards and whether you have them, its step in a chain, the patch it came in and whether it is repeatable or seasonal. It follows your spoiler settings and never accepts or declines the quest for you.</value>
+    <value>What a quest unlocks and rewards, before you accept. It never accepts for you.</value>
   </data>
   <data name="GamePanelSettingResult" xml:space="preserve">
-    <value>"What this opened" panel beside quest completions</value>
+    <value>Panel on quest completion</value>
   </data>
   <data name="GamePanelSettingResultHint" xml:space="preserve">
-    <value>When you turn in a quest, a small panel beside the reward window lists the quests its completion makes ready, what it unlocks and the next quest of its chain, with buttons to flag a giver or pin a quest. It never completes the quest for you.</value>
+    <value>What a turn-in opened and the next quest of its chain.</value>
   </data>
   <data name="GamePanelSettingJournal" xml:space="preserve">
-    <value>Companion panel beside the Journal</value>
+    <value>Panel beside the Journal</value>
   </data>
   <data name="GamePanelSettingJournalHint" xml:space="preserve">
-    <value>While the game's Journal is open, a small panel beside it shows Tsukimichi's verdict on the selected quest: its chain step, what it unlocks next and its Moonlit rewards, with Open in Tsukimichi and Route to this.</value>
+    <value>Tsukimichi's view of the quest selected in the game's Journal.</value>
   </data>
   <data name="Core.Verdict.Unlocks" xml:space="preserve">
     <value>Unlocks {0}</value>
@@ -665,22 +665,22 @@
     <value>Export Moonlit collection</value>
   </data>
   <data name="ExportFormatLabel" xml:space="preserve">
-    <value>Format:</value>
+    <value>Export format</value>
   </data>
   <data name="ExportIncludeName" xml:space="preserve">
     <value>Include character name</value>
   </data>
   <data name="ExportIncludeNameHint" xml:space="preserve">
-    <value>Off by default. When on, the character's name goes in the JSON header and in the file name. Content id, account and world are never written.</value>
+    <value>The name goes in the file and its file name. Account and world never do.</value>
   </data>
   <data name="ExportIncludeIncomplete" xml:space="preserve">
-    <value>List every quest with a completed flag</value>
+    <value>List every quest</value>
   </data>
   <data name="ExportIncludeIncompleteHint" xml:space="preserve">
-    <value>Off: only completed quests. On: every quest the journal knows, each marked completed true or false. Files use real quest names: the spoiler shield does not apply to them, so this lists main scenario quests you have not reached.</value>
+    <value>Every quest, marked completed or not. Real names: the spoiler shield does not apply.</value>
   </data>
   <data name="ExportFolderLabel" xml:space="preserve">
-    <value>Output folder</value>
+    <value>Export folder</value>
   </data>
   <data name="ExportFolderDefault" xml:space="preserve">
     <value>Default</value>
@@ -722,13 +722,13 @@
     <comment>The one chat line (once per load) and the Settings notice while the hooks are paused.</comment>
   </data>
   <data name="HooksEnableUntested" xml:space="preserve">
-    <value>Enable game hooks on this untested version</value>
+    <value>Run game panels on an untested patch</value>
   </data>
   <data name="HooksEnableUntestedHint" xml:space="preserve">
-    <value>After a game patch (a new patch date; hotfixes do not count) the item tooltip panel, the item and NPC menu entries, the server info bar entry, the Duty Finder unlock hint and the panels beside the quest offer, quest complete and Journal windows pause until a Tsukimichi update has been tested on the new patch. Tick this to run them anyway on the patch you are on now, its hotfixes included; the next patch pauses them again. If one draws in the wrong place or misbehaves, untick it. The quest journal is not affected either way.</value>
+    <value>Turn on if they look right after a patch. The next patch turns it off again.</value>
   </data>
   <data name="HooksRunningUntested" xml:space="preserve">
-    <value>Game hooks are running on an untested game version.</value>
+    <value>The game panels are running on an untested patch.</value>
     <comment>Shown under the setting while it keeps the hooks running on an untested version.</comment>
   </data>
   <data name="ItemsQuestRewardFormat" xml:space="preserve">
@@ -830,13 +830,13 @@
     <value>Unlocks</value>
   </data>
   <data name="ColumnOpensTooltip" xml:space="preserve">
-    <value>Areas, duties, flying, features, jobs and actions this opens. Settings › Display › Planning turns this column on or off.</value>
+    <value>Areas, duties, flying, features, jobs and actions this opens. Settings › Journal › Table turns this column on or off.</value>
   </data>
   <data name="PlanningConfigOpensColumn" xml:space="preserve">
-    <value>Unlocks column in the Journal</value>
+    <value>Unlocks column</value>
   </data>
   <data name="PlanningConfigOpensColumnHint" xml:space="preserve">
-    <value>Up to three icons per quest for what it unlocks: areas, aetherytes, duties, features and more. The quest's tooltip and the detail pane say it either way.</value>
+    <value>Up to three icons for what a quest unlocks: areas, aetherytes, duties and more.</value>
   </data>
   <data name="UnlocksChatFormat" xml:space="preserve">
     <value>Unlocked: {0}</value>
@@ -1101,19 +1101,19 @@
     <comment>{0} = number of quests; the entry opens a submenu with one line per quest.</comment>
   </data>
   <data name="ConfigSectionHandIn" xml:space="preserve">
-    <value>Hand-in items</value>
+    <value>Allagan Tools</value>
   </data>
   <data name="ConfigHandInAllagan" xml:space="preserve">
     <value>Count with Allagan Tools</value>
   </data>
   <data name="ConfigHandInAllaganHint" xml:space="preserve">
-    <value>When Allagan Tools is loaded, the Hand in section also counts what your retainers hold, and Moonlit marks relic and special weapons you hold anywhere as owned.</value>
+    <value>Counts what your retainers hold, and relic weapons you own anywhere.</value>
   </data>
   <data name="ConfigItemNeededFor" xml:space="preserve">
-    <value>Say which open quests need an item</value>
+    <value>Name quests that need an item</value>
   </data>
   <data name="ConfigItemNeededForHint" xml:space="preserve">
-    <value>The item hint and the item menu name the quests in your journal, or ready to take, that ask for the item.</value>
+    <value>The item hint and menu also name open quests that ask for the item.</value>
   </data>
   <data name="NpcMenuFormat" xml:space="preserve">
     <value>Tsukimichi: quests here ({0})</value>
@@ -1206,7 +1206,7 @@
     <comment>Nameplate title under a quest giver. Short.</comment>
   </data>
   <data name="ConfigSectionChatActions" xml:space="preserve">
-    <value>Chat actions</value>
+    <value>Chat extras</value>
     <comment>Settings › Notices: heading of the chat actions block.</comment>
   </data>
   <data name="ConfigSectionChatTwoNamePlates" xml:space="preserve">
@@ -1214,39 +1214,39 @@
     <comment>Settings › Integrations: heading of the Chat 2 and nameplate marks block.</comment>
   </data>
   <data name="ConfigChatLinkActions" xml:space="preserve">
-    <value>Clickable [Open] [Pin] [Route] on Tsukimichi's chat lines</value>
+    <value>Clickable [Open] [Pin] [Route]</value>
     <comment>Settings checkbox.</comment>
   </data>
   <data name="ConfigChatLinkActionsHint" xml:space="preserve">
-    <value>Notices and /tsuki search, zone, which and why end each quest line with three links: open the quest here, pin it for the character you are playing, or open its unlock route. They work in the game's chat and in Chat 2.</value>
+    <value>Links at the end of each quest line Tsukimichi prints in chat.</value>
   </data>
   <data name="ConfigChatNoticeOpened" xml:space="preserve">
-    <value>Say what a completed quest opened</value>
+    <value>What a turn-in opened</value>
     <comment>Settings checkbox.</comment>
   </data>
   <data name="ConfigChatNoticeOpenedHint" xml:space="preserve">
-    <value>After a turn-in, one chat line counts the quests it made available ("Opened: 2 unlock quests, 8 side quests"), with Show to list them. Turn-ins a few seconds apart share one line; nothing is printed when nothing opened. Quest names are never printed, so it is spoiler-safe.</value>
+    <value>One spoiler-safe line counting the quests a turn-in made available.</value>
   </data>
   <data name="ConfigChatTwo" xml:space="preserve">
-    <value>"Open in Tsukimichi" in Chat 2's menu</value>
+    <value>Chat 2 menu entry</value>
     <comment>Settings checkbox.</comment>
   </data>
   <data name="ConfigChatTwoHint" xml:space="preserve">
-    <value>Right-click a quest link, or an item link that is a Moonlit reward or that an open quest needs, and Chat 2's Integrations submenu offers to open the quest here. Does nothing without Chat 2.</value>
+    <value>Open in Tsukimichi on quest and item links in Chat 2's menu.</value>
   </data>
   <data name="ConfigNamePlateMarks" xml:space="preserve">
-    <value>Mark quest givers on their nameplates</value>
+    <value>Nameplate marks</value>
     <comment>Settings checkbox.</comment>
   </data>
   <data name="ConfigNamePlateMarksHint" xml:space="preserve">
-    <value>A short line under a quest giver's name: "☾ Pinned", "☾ Moonlit reward" or "☾ Ready on WHM", for quests you can take. Replaces the NPC's own title while shown. Player nameplates are never touched.</value>
+    <value>A short line under a quest giver's name, such as Pinned or Moonlit reward.</value>
   </data>
   <data name="ConfigQuestToasts" xml:space="preserve">
-    <value>Quest toast for a Moonlit reward or an unlocked duty</value>
+    <value>Reward and duty toasts</value>
     <comment>Settings checkbox.</comment>
   </data>
   <data name="ConfigQuestToastsHint" xml:space="preserve">
-    <value>The game's quest banner, "Moonlit reward: …" or "Duty unlocked: …", when a quest you complete gives one.</value>
+    <value>The game's quest banner when a quest gives a Moonlit reward or unlocks a duty.</value>
   </data>
   <data name="Core.Opened.MsqOne" xml:space="preserve">
     <value>{0} main scenario quest</value>
@@ -1381,7 +1381,7 @@
     <comment>{0} = level reached, {1} = job name, {2} = the quest link; the level was reached but no blocker could be named.</comment>
   </data>
   <data name="JobsConfigNudge" xml:space="preserve">
-    <value>Chat notice when a job or role quest becomes available after a level-up</value>
+    <value>Job quests after a level-up</value>
   </data>
   <data name="JournalTextCard" xml:space="preserve">
     <value>Journal</value>
@@ -1423,13 +1423,13 @@
     <value>Shown for a stored character: where the text depends on who reads it, both versions are shown (he/she).</value>
   </data>
   <data name="JournalTextSettingsSection" xml:space="preserve">
-    <value>Journal text</value>
+    <value>Search</value>
   </data>
   <data name="JournalTextSearchSetting" xml:space="preserve">
-    <value>Search journal text of completed quests</value>
+    <value>Search quest text</value>
   </data>
   <data name="JournalTextSearchHint" xml:space="preserve">
-    <value>The search box also finds quests by the words of their journal entries, among the quests the character shown has completed; never a quest it has not played. The first time, the plugin reads every quest's text from the game files in the background (a few seconds) and keeps a word index, not the text, in its config folder; it is rebuilt after a game patch.</value>
+    <value>Find completed quests by words in their journal entry. The index builds once.</value>
   </data>
   <data name="JournalTextStatusWaiting" xml:space="preserve">
     <value>Waiting for the quest catalog…</value>
@@ -1460,34 +1460,34 @@
     <value>Keyboard</value>
   </data>
   <data name="ConfigKeyboardAlwaysOn" xml:space="preserve">
-    <value>Always on while this window has focus: Ctrl+F puts the caret in the search; Esc closes the open menu or the filter panel, then the window; the Menu key or Shift+F10 opens the focused row's menu.</value>
+    <value>Ctrl+F searches, Esc closes a menu then the window, Shift+F10 opens a row's menu.</value>
   </data>
   <data name="ConfigKeyboardGameSeesKeys" xml:space="preserve">
-    <value>The game sees these keys too: Ctrl+1 to Ctrl+5 are hotbar 2 in the default keybinds, and many players bind single letters. Turn one on only if the game does nothing with it.</value>
+    <value>Ctrl+1 to Ctrl+5 are hotbar 2 by default. Turn a key on only if the game ignores it.</value>
   </data>
   <data name="ConfigShortcutTabs" xml:space="preserve">
     <value>Ctrl+1 to Ctrl+5 switch tabs</value>
   </data>
   <data name="ConfigShortcutTabsHint" xml:space="preserve">
-    <value>Journal, Moonlit, Characters, Flight, My blues, while this window has focus</value>
+    <value>Journal, Moonlit, Characters, Flight and My blues.</value>
   </data>
   <data name="ConfigShortcutFlag" xml:space="preserve">
-    <value>F flags the selected quest's giver on the map</value>
+    <value>F flags the quest giver on the map</value>
   </data>
   <data name="ConfigShortcutFlagHint" xml:space="preserve">
-    <value>The same as the detail pane's Flag on map</value>
+    <value>The same as the detail pane's Flag on map.</value>
   </data>
   <data name="ConfigShortcutReveal" xml:space="preserve">
-    <value>Enter shows the selected quest in the Journal</value>
+    <value>Enter shows the quest in the Journal</value>
   </data>
   <data name="ConfigShortcutRevealHint" xml:space="preserve">
-    <value>On the Moonlit, Characters, Flight and My blues tabs: switches to the Journal with the quest's category open in the tree and its row selected</value>
+    <value>From the other tabs, opens the quest's row in the Journal.</value>
   </data>
   <data name="ConfigShortcutPin" xml:space="preserve">
-    <value>P pins or unpins the selected quest</value>
+    <value>P pins or unpins the quest</value>
   </data>
   <data name="ConfigShortcutPinHint" xml:space="preserve">
-    <value>The same as the detail pane's Pin</value>
+    <value>The same as the detail pane's Pin.</value>
   </data>
   <data name="MoonlitAllKinds" xml:space="preserve">
     <value>All</value>
@@ -2230,7 +2230,7 @@
     <value>Other</value>
   </data>
   <data name="ConfigSectionPolling" xml:space="preserve">
-    <value>Polling</value>
+    <value>Refresh</value>
   </data>
   <data name="ConfigWindowTitle" xml:space="preserve">
     <value>Tsukimichi Settings###TsukimichiConfig</value>
@@ -2241,16 +2241,16 @@
     <comment>Stands in for an error with no message.</comment>
   </data>
   <data name="ConfigPollInterval" xml:space="preserve">
-    <value>Poll interval</value>
+    <value>Refresh rate</value>
   </data>
   <data name="ConfigPollIntervalHint" xml:space="preserve">
-    <value>How often the live character is re-read. Lower is more responsive; 1 s is plenty.</value>
+    <value>How often your character is re-read. 1 s is plenty.</value>
   </data>
   <data name="ConfigSectionNotices" xml:space="preserve">
-    <value>Notices</value>
+    <value>Chat lines</value>
   </data>
   <data name="ConfigChatNotice" xml:space="preserve">
-    <value>Chat notice for newly available quests</value>
+    <value>Newly available quests</value>
   </data>
   <data name="ConfigIncludeMsq" xml:space="preserve">
     <value>Include main scenario</value>
@@ -2259,34 +2259,34 @@
     <value>Journal</value>
   </data>
   <data name="ConfigShowUnlisted" xml:space="preserve">
-    <value>Show removed quests</value>
+    <value>Removed quests</value>
   </data>
   <data name="ConfigShowUnlistedHint" xml:space="preserve">
-    <value>Adds the Removed from the game node to the tree: quests the game deleted in later patches. They never count toward a total; a completed one still shows Completed.</value>
+    <value>A Removed from the game node for quests later patches deleted. They never count.</value>
   </data>
   <data name="ConfigJournalFiling" xml:space="preserve">
-    <value>Journal filing</value>
+    <value>Hidden quest filing</value>
   </data>
   <data name="ConfigJournalFilingRefiled" xml:space="preserve">
-    <value>Refiled</value>
+    <value>Sorted</value>
   </data>
   <data name="ConfigJournalFilingLegacy" xml:space="preserve">
     <value>Legacy</value>
   </data>
   <data name="ConfigJournalFilingHint" xml:space="preserve">
-    <value>Refiled puts the hidden quests the game never lists (class intros, Leves of…, Sights of…, Eureka entry, hidden chain steps) under the genre their links point at, and keeps removed quests out of every total. Legacy shows them as releases before 0.6.1 did, all in one bucket. Changing this rebuilds the catalog.</value>
+    <value>Class intros and hidden chain steps: under their genre, or in one bucket. Rebuilds the list.</value>
   </data>
   <data name="ConfigSectionIntegrations" xml:space="preserve">
     <value>Integrations</value>
   </data>
   <data name="ConfigWotsitIntegration" xml:space="preserve">
-    <value>Register quests and rewards with Wotsit</value>
+    <value>Quests in Wotsit search</value>
   </data>
   <data name="ConfigWotsitIntegrationHint" xml:space="preserve">
-    <value>Every quest and Moonlit reward becomes a Wotsit search entry that reveals it in the Journal. Needs Wotsit installed.</value>
+    <value>Every quest and Moonlit reward becomes a Wotsit entry. Needs Wotsit.</value>
   </data>
   <data name="CompanionMissingReasonFormat" xml:space="preserve">
-    <value>Needs {0} — see Settings › Integrations</value>
+    <value>Needs {0} — see Settings › Automation</value>
     <comment>Disabled-button tooltip when a companion plugin is not installed. {0} = the plugin's name, or two names joined by CompanionEitherFormat.</comment>
   </data>
   <data name="CompanionDisabledReasonFormat" xml:space="preserve">
@@ -2310,7 +2310,7 @@
     <comment>Settings › Integrations: heading of the companion plugin table.</comment>
   </data>
   <data name="CompanionsIntro" xml:space="preserve">
-    <value>Tsukimichi automates only when you press a button that hands the work to one of these plugins. Each is optional: without it, its buttons stay visible and say what they need.</value>
+    <value>Buttons hand work to these plugins only when you press them. Each is optional.</value>
     <comment>Settings › Integrations: the line under Companion plugins (decision 1's promise).</comment>
   </data>
   <data name="CompanionsColumnPlugin" xml:space="preserve">
@@ -2374,11 +2374,11 @@
     <comment>Plain-text instructions under the companion plugin table.</comment>
   </data>
   <data name="CompanionAutoDutyAllowDutyFinder" xml:space="preserve">
-    <value>Allow AutoDuty to queue in the regular Duty Finder</value>
+    <value>Regular Duty Finder</value>
     <comment>Settings › Integrations checkbox, off by default.</comment>
   </data>
   <data name="CompanionAutoDutyAllowDutyFinderHint" xml:space="preserve">
-    <value>Off: Run with AutoDuty uses Duty Support or Trust only, so no other player joins an automated run, and a duty without them stays disabled. On: such duties queue in the regular Duty Finder.</value>
+    <value>Duties with no Duty Support or Trust may queue with other players.</value>
     <comment>Tooltip of the AutoDuty Duty Finder checkbox.</comment>
   </data>
   <data name="CompanionUnlocks.Lifestream" xml:space="preserve">
@@ -2438,15 +2438,15 @@
     <comment>Two plugin names joined ("AutoDuty and Questionable").</comment>
   </data>
   <data name="CompanionSetupBlockedFormat" xml:space="preserve">
-    <value>{0} needs {1} — see Settings › Integrations</value>
+    <value>{0} needs {1} — see Settings › Automation</value>
     <comment>Disabled hand-off button whose plugin is loaded but a setting blocks it. {0} = the plugin handed the work ("Questionable"), {1} = what it needs ("TextAdvance's quest accept on").</comment>
   </data>
   <data name="CompanionSetupNoteOneFormat" xml:space="preserve">
-    <value>{0}: one recommended setting is set otherwise — see Settings › Integrations</value>
+    <value>{0}: one recommended setting is set otherwise — see Settings › Automation</value>
     <comment>Note under an enabled hand-off button's tooltip. {0} = the plugin.</comment>
   </data>
   <data name="CompanionSetupNoteFormat" xml:space="preserve">
-    <value>{0}: {1} recommended settings are set otherwise — see Settings › Integrations</value>
+    <value>{0}: {1} recommended settings are set otherwise — see Settings › Automation</value>
     <comment>Note under an enabled hand-off button's tooltip. {0} = the plugin, {1} = how many (2 or more).</comment>
   </data>
   <data name="CompanionSetupReady" xml:space="preserve">
@@ -3014,7 +3014,7 @@
     <comment>A queue AutoDuty runs in, inside a sentence.</comment>
   </data>
   <data name="AutoDutyNeedsFormat" xml:space="preserve">
-    <value>AutoDuty needs {0} — see Settings › Integrations</value>
+    <value>AutoDuty needs {0} — see Settings › Automation</value>
     <comment>Disabled Run tooltip. {0} = a plugin AutoDuty needs (vnavmesh, Boss Mod or Boss Mod Reborn).</comment>
   </data>
   <data name="AutoDutyNotLive" xml:space="preserve">
@@ -3034,7 +3034,7 @@
     <comment>Disabled Run tooltip.</comment>
   </data>
   <data name="AutoDutyNeedsDutyFinder" xml:space="preserve">
-    <value>No Duty Support or Trust for this duty. Allow the regular Duty Finder in Settings › Integrations to run it.</value>
+    <value>No Duty Support or Trust for this duty. Turn on Regular Duty Finder in Settings › Automation to run it.</value>
     <comment>Disabled Run tooltip.</comment>
   </data>
   <data name="AutoDutyNoQueue" xml:space="preserve">
@@ -3082,7 +3082,7 @@
     <comment>/tsuki why: last line while Quest Map cannot be used. {0} = the reason (Needs Quest Map — see Settings › Integrations).</comment>
   </data>
   <data name="Help.CompanionsTip" xml:space="preserve">
-    <value>Settings › Integrations › Companion plugins shows which you have, what each unlocks, and copies each repository URL.</value>
+    <value>Settings › Automation › Companion plugins shows which you have, what each unlocks, and copies each repository URL.</value>
     <comment>Help › Companion plugins: tip with an Open settings button.</comment>
   </data>
   <data name="Help.CompanionsRepoTitle" xml:space="preserve">
@@ -3090,10 +3090,10 @@
     <comment>Help › Companion plugins: card title over CompanionAddRepoHowTo.</comment>
   </data>
   <data name="ConfigNpcContextMenu" xml:space="preserve">
-    <value>NPC context menu</value>
+    <value>NPC menu entry</value>
   </data>
   <data name="ConfigNpcContextMenuHint" xml:space="preserve">
-    <value>Target a quest-giving NPC and open the target bar's menu: "Tsukimichi: quests here (N)" opens the Journal on that NPC's quests, each with what blocks it. Nothing about the NPC is stored.</value>
+    <value>Adds Quests here to a quest giver's target menu.</value>
   </data>
   <data name="WhyNoSelection" xml:space="preserve">
     <value>Select a quest first, or name one: /tsuki why &lt;quest name&gt;</value>
@@ -3103,10 +3103,10 @@
     <comment>Between "talk to &lt;giver&gt;" and the giver's map link on a Ready line.</comment>
   </data>
   <data name="ConfigSectionData" xml:space="preserve">
-    <value>Data</value>
+    <value>Your data</value>
   </data>
   <data name="ConfigDataRetention" xml:space="preserve">
-    <value>Tsukimichi keeps one snapshot per character (with when each quest entered the journal and the quests you abandoned), your pins and your unique-reward overrides in its config directory. Forget a single character from the Characters tab.</value>
+    <value>A snapshot per character, your pins and your verdicts, in the plugin's config folder.</value>
   </data>
   <data name="ConfigDeleteAll" xml:space="preserve">
     <value>Delete all Tsukimichi data</value>
@@ -3115,7 +3115,7 @@
     <value>Delete all data###TsukimichiDeleteAll1</value>
   </data>
   <data name="ConfigDeleteStep1Text" xml:space="preserve">
-    <value>Every stored character snapshot, all pins and all overrides will be removed. Settings stay.</value>
+    <value>Every character snapshot, all pins and all verdicts are removed. Your settings stay.</value>
   </data>
   <data name="ConfigDeleteContinue" xml:space="preserve">
     <value>Continue</value>
@@ -3193,14 +3193,14 @@
     <value>The game version the reward data was generated from, how many entries and when, and the curated overlay's revision. The same stamp is in every diagnostic block.</value>
   </data>
   <data name="ConfigCatalogFormat" xml:space="preserve">
-    <value>Catalog: {0} quests, {1}</value>
+    <value>Quest list: {0} quests, {1}</value>
     <comment>{0} = quests in the catalog, {1} = the game language its names are read in.</comment>
   </data>
   <data name="ConfigCatalogLoading" xml:space="preserve">
-    <value>Catalog: loading</value>
+    <value>Quest list: loading</value>
   </data>
   <data name="ConfigCatalogUnavailableFormat" xml:space="preserve">
-    <value>Catalog unavailable: {0}</value>
+    <value>Quest list unavailable: {0}</value>
     <comment>{0} = the error.</comment>
   </data>
   <data name="ConfigSectionDisplay" xml:space="preserve">
@@ -3227,15 +3227,15 @@
     <comment>Settings › Integrations block heading: the settings Nearby quests' cog used to hold.</comment>
   </data>
   <data name="ConfigSectionGameWindows" xml:space="preserve">
-    <value>Game windows and menus</value>
+    <value>Menus and tooltips</value>
     <comment>Settings › Integrations block heading: the NPC menu entry and the Duty Finder hint.</comment>
   </data>
   <data name="ConfigSectionHooks" xml:space="preserve">
-    <value>Game hooks</value>
+    <value>After a game patch</value>
     <comment>Settings › Advanced block heading: the untested-version override.</comment>
   </data>
   <data name="DiscoveryShowDtrHint" xml:space="preserve">
-    <value>A "☾ N" entry with the count of quests you can start in this zone. Hover it for the first five names; click it to open Nearby quests.</value>
+    <value>Quests you can start in this zone. Click it to open Nearby quests.</value>
     <comment>Settings › Integrations › Nearby and server info bar: tooltip on "Show a count in the server info bar".</comment>
   </data>
   <data name="SettingsSearchHint" xml:space="preserve">
@@ -3270,31 +3270,31 @@
     <value>Window scale</value>
   </data>
   <data name="ConfigUiScaleHint" xml:space="preserve">
-    <value>Text and spacing in Tsukimichi's windows, on top of Dalamud's global scale.</value>
+    <value>Spacing and text in every Tsukimichi window. It changes as you drag.</value>
   </data>
   <data name="ConfigIconScale" xml:space="preserve">
-    <value>Icon scale</value>
+    <value>Icon size</value>
   </data>
   <data name="ConfigIconScaleHint" xml:space="preserve">
-    <value>Moon glyphs, reward icons and toolbar buttons.</value>
+    <value>Moons, reward icons and toolbar buttons.</value>
   </data>
   <data name="ConfigReduceMotion" xml:space="preserve">
     <value>Reduce motion</value>
   </data>
   <data name="ConfigReduceMotionHint" xml:space="preserve">
-    <value>No hover fades, pulses or waxing moons anywhere, and hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' "Show animations" setting.</value>
+    <value>No fades, pulses or waxing moons. Hold buttons count down in text.</value>
   </data>
   <data name="ConfigCompactRail" xml:space="preserve">
-    <value>Compact rail</value>
+    <value>Compact tabs</value>
   </data>
   <data name="ConfigCompactRailHint" xml:space="preserve">
-    <value>Show the tabs on the left as icons only, with their names on hover. On a window narrower than about 1,040 pixels they are always shown this way.</value>
+    <value>Show the main window's tabs as icons only. Narrow windows always do.</value>
   </data>
   <data name="ConfigLook" xml:space="preserve">
     <value>Look</value>
   </data>
   <data name="ConfigFlair" xml:space="preserve">
-    <value>Flair</value>
+    <value>Decoration</value>
   </data>
   <data name="ConfigFlairFull" xml:space="preserve">
     <value>Full</value>
@@ -3306,37 +3306,37 @@
     <value>Plain</value>
   </data>
   <data name="ConfigFlairHint" xml:space="preserve">
-    <value>How much decoration the windows show. Full: a soft night-sky shading at the top of each pane, brass lines and dividers, framed corners and small animations. Quiet: the brass lines and dividers only. Plain: the look before 1.4. With the high-contrast glyph palette, Full looks like Quiet.</value>
+    <value>How much moonlit ornament the windows show. Click a preview to choose.</value>
   </data>
   <data name="ConfigMoonStyle" xml:space="preserve">
     <value>Moon style</value>
   </data>
   <data name="ConfigMoonStyleMedallion" xml:space="preserve">
-    <value>Medallion (new)</value>
+    <value>Medallion</value>
   </data>
   <data name="ConfigMoonStyleClassic" xml:space="preserve">
     <value>Classic</value>
   </data>
   <data name="ConfigMoonStyleHint" xml:space="preserve">
-    <value>Compare both in the glyph debug window; Classic is the 1.11 look.</value>
+    <value>Medallion is the new look. Classic is the look of 1.11.</value>
   </data>
   <data name="ConfigGameHeadingFonts" xml:space="preserve">
     <value>Game fonts for headings</value>
   </data>
   <data name="ConfigGameHeadingFontsHint" xml:space="preserve">
-    <value>Draw section headings, titles and numbers in the game's own display fonts. A heading the game fonts can't show, such as one in Japanese, uses the usual font. Off, or with Flair set to Plain, every heading uses the usual font.</value>
+    <value>Headings, titles and numbers in the game's own fonts.</value>
   </data>
   <data name="ConfigFlairPreviewPlainNote" xml:space="preserve">
-    <value>With Flair set to Plain, these previews use the usual font. The game's heading fonts show in them once you choose Full or Quiet.</value>
+    <value>With Plain decoration these previews use the usual font. Full and Quiet show the game's heading fonts.</value>
   </data>
   <data name="ConfigFollowDalamudColours" xml:space="preserve">
-    <value>Follow Dalamud colours</value>
+    <value>Dalamud colours</value>
   </data>
   <data name="ConfigFollowDalamudColoursHint" xml:space="preserve">
-    <value>Draw Tsukimichi's windows in your Dalamud theme's colours instead of the Night palette. The layout, the moons and the gold stay the same.</value>
+    <value>Draw the windows in your Dalamud theme's colours instead of the Night palette.</value>
   </data>
   <data name="ConfigGlyphPalette" xml:space="preserve">
-    <value>Glyph palette</value>
+    <value>Moon colours</value>
   </data>
   <data name="ConfigGlyphPaletteStandard" xml:space="preserve">
     <value>Standard</value>
@@ -3345,10 +3345,10 @@
     <value>High contrast</value>
   </data>
   <data name="ConfigGlyphPaletteHint" xml:space="preserve">
-    <value>High contrast draws the moons in flat colours on a brightness ladder, with thicker rims and a mark inside each one: a bold bar for Ready, a hollow bar for Ready on another job, a large seal for In journal, a check for Done, a solid disc for Completed, a thick rim for Blocked, a thick diagonal bar for Locked out and dashes for Not checked. Every state then reads in greyscale and with colour blindness; the table stripes, halos and check marks follow it, on the Night palette and on your Dalamud colours alike.</value>
+    <value>High contrast gives every moon a mark, so each state reads without colour.</value>
   </data>
   <data name="ConfigDensity" xml:space="preserve">
-    <value>Table rows</value>
+    <value>Row height</value>
   </data>
   <data name="ConfigDensityComfortable" xml:space="preserve">
     <value>Comfortable</value>
@@ -3357,7 +3357,7 @@
     <value>Dense</value>
   </data>
   <data name="ConfigDensityHint" xml:space="preserve">
-    <value>Height of the quest table's rows; the Journal tree keeps its size.</value>
+    <value>Height of the quest table's rows. The tree keeps its size.</value>
   </data>
   <data name="ConfigLanguage" xml:space="preserve">
     <value>Plugin language</value>
@@ -3388,7 +3388,7 @@
     <comment>Shown when a translation's satellite assembly is missing.</comment>
   </data>
   <data name="ConfigSectionHelp" xml:space="preserve">
-    <value>Help</value>
+    <value>Tour</value>
   </data>
   <data name="ConfigShowHelp" xml:space="preserve">
     <value>Show help</value>
@@ -3397,24 +3397,24 @@
     <value>Start the tour</value>
   </data>
   <data name="ConfigOfferTutorial" xml:space="preserve">
-    <value>Offer the tour on first run</value>
+    <value>Offer the tour</value>
   </data>
   <data name="ConfigOfferTutorialHint" xml:space="preserve">
-    <value>Shows the tour's welcome card the next time the main window opens.</value>
+    <value>Show the tour's welcome card the next time the main window opens.</value>
   </data>
   <data name="ConfigPollTimingNone" xml:space="preserve">
-    <value>No polls yet</value>
+    <value>No refreshes yet</value>
   </data>
   <data name="ConfigPollTimingFormat" xml:space="preserve">
-    <value>Last poll: {0:0.00} ms · average {1:0.00} ms · {2:N0} polls</value>
+    <value>Last refresh: {0:0.00} ms · average {1:0.00} ms · {2:N0} refreshes</value>
     <comment>{0} = last ms, {1} = average ms, {2} = poll count.</comment>
   </data>
   <data name="ConfigPollCostFormat" xml:space="preserve">
-    <value>Each poll costs about {0:0.0} ms; 1 s is the default and is safe.</value>
+    <value>Each refresh costs about {0:0.0} ms; 1 s is the default and is safe.</value>
     <comment>{0} = average ms.</comment>
   </data>
   <data name="ConfigPollCostUnknown" xml:space="preserve">
-    <value>Each poll costs a few milliseconds; 1 s is the default and is safe.</value>
+    <value>Each refresh costs a few milliseconds; 1 s is the default and is safe.</value>
   </data>
   <data name="WhatsNew.TitleFormat" xml:space="preserve">
     <value>What's new in {0}</value>
@@ -3587,7 +3587,7 @@
     <value>Select any row to read its requirements, path and giver in the detail pane. Right-click a row for pin, map flag and journal.</value>
   </data>
   <data name="Help.QuickStartSettingsTip" xml:space="preserve">
-    <value>Text too small? Settings has a Display section with a window scale and an icon scale.</value>
+    <value>Text too small? Settings › General has the window scale, a text size and an icon size.</value>
   </data>
   <data name="Help.PhaseCompletedMeaning" xml:space="preserve">
     <value>Turned in on this character.</value>
@@ -3630,7 +3630,7 @@
     <comment>{0} = state name; a "Shown by" chip in Help › The moon phases.</comment>
   </data>
   <data name="Help.HighContrastLegendNote" xml:space="preserve">
-    <value>Showing the high-contrast glyphs (Settings › Display › Glyph palette): each moon carries a mark as well as its shape, and states with the same shape differ clearly in brightness.</value>
+    <value>Showing the high-contrast glyphs (Settings › General › Moon colours): each moon carries a mark as well as its shape, and states with the same shape differ clearly in brightness.</value>
   </data>
   <data name="Help.StripeTitle" xml:space="preserve">
     <value>The table's state stripe</value>
@@ -3723,7 +3723,7 @@
     <value>The last line says where the state came from: "Checked just now · live" for the character you are logged in as, "From Michiru's snapshot, 2 d ago" for a stored one, or "Log in to check this quest" before the first login.</value>
   </data>
   <data name="Help.QuestCardBodies.5" xml:space="preserve">
-    <value>For a quest you have completed, the Journal card at the bottom of the pane reads its journal entries as the game wrote them, from the game's own files, with its objectives: Read the journal opens it and Copy entry copies one entry. For a quest in your journal it shows the entries up to the step you are on, never further, and nothing for a quest you have not taken. On the character you are logged in as the text reads as the game showed it to you; on a stored character, words that depend on who reads them show both versions (he/she). Settings › Display › Journal text › "Search journal text of completed quests" (off by default) lets the search box find quests by the words of their journal entries, among the quests the character shown has completed only. The first time, the plugin reads every quest's text in the background (a few seconds) and keeps a word index, not the text, in its config folder; it is rebuilt after a game patch.</value>
+    <value>For a quest you have completed, the Journal card at the bottom of the pane reads its journal entries as the game wrote them, from the game's own files, with its objectives: Read the journal opens it and Copy entry copies one entry. For a quest in your journal it shows the entries up to the step you are on, never further, and nothing for a quest you have not taken. On the character you are logged in as the text reads as the game showed it to you; on a stored character, words that depend on who reads them show both versions (he/she). Settings › Journal › Search › "Search quest text" (off by default) lets the search box find quests by the words of their journal entries, among the quests the character shown has completed only. The first time, the plugin reads every quest's text in the background (a few seconds) and keeps a word index, not the text, in its config folder; it is rebuilt after a game patch.</value>
   </data>
   <data name="Help.QuestTip" xml:space="preserve">
     <value>With no quest selected, the pane shows Tonight: how many quests you can pick up now (Show them filters the table to them), the next main scenario quest and what blocks it, the events running now and your pinned quests that are ready. A table row's right-click menu has pin, map flag, journal, copy name, show path and chat link too.</value>
@@ -3762,13 +3762,13 @@
     <value>Overrides</value>
   </data>
   <data name="Help.OverridesBody" xml:space="preserve">
-    <value>Not unique (hide) in a row's context menu removes a quest from Moonlit; Mark as unique in the detail pane adds one. Both act only while Shift or Ctrl is held (or on two clicks, if you chose that under Settings › Keyboard › Safety) and save at once. A floating Undo stays for eight seconds, with Add note to name the reward.</value>
+    <value>Not unique (hide) in a row's context menu removes a quest from Moonlit; Mark as unique in the detail pane adds one. Both act only while Shift or Ctrl is held (or on two clicks, if you chose that under Settings › Advanced › Safety) and save at once. A floating Undo stays for eight seconds, with Add note to name the reward.</value>
   </data>
   <data name="Help.RestoreTitle" xml:space="preserve">
     <value>Restore</value>
   </data>
   <data name="Help.RestoreBody" xml:space="preserve">
-    <value>Restore shipped verdict, in the row's context menu or the detail pane, undoes either. Hidden quests stay listed under the Yours confidence filter, struck through, so they can be restored; Settings › Data lists every verdict with Restore and Restore all. Overrides live in user/overrides.json and survive updates.</value>
+    <value>Restore shipped verdict, in the row's context menu or the detail pane, undoes either. Hidden quests stay listed under the Yours confidence filter, struck through, so they can be restored; Settings › Characters &amp; data lists every verdict with Restore and Restore all. Overrides live in user/overrides.json and survive updates.</value>
   </data>
   <data name="Help.CharacterCardTitles.0" xml:space="preserve">
     <value>Snapshot</value>
@@ -3810,19 +3810,19 @@
     <value>At the bottom: every character's state for the quest selected in the Journal, without switching characters.</value>
   </data>
   <data name="Help.CharacterCardBodies.4" xml:space="preserve">
-    <value>Export JSON writes the snapshot to the exports folder in the config directory. For a spreadsheet or a collection tracker, Settings › Data › Export (or /tsuki export) writes the completed quests or the Moonlit collection as JSON or CSV, without your name unless you tick Include character name; nothing is ever uploaded. Forget deletes a stored character. Settings can delete everything.</value>
+    <value>Export JSON writes the snapshot to the exports folder in the config directory. For a spreadsheet or a collection tracker, Settings › Characters &amp; data › Export (or /tsuki export) writes the completed quests or the Moonlit collection as JSON or CSV, without your name unless you tick Include character name; nothing is ever uploaded. Forget deletes a stored character. Settings can delete everything.</value>
   </data>
   <data name="Help.CharacterCardBodies.5" xml:space="preserve">
-    <value>A quest that leaves your journal without being completed is listed under Abandoned (N) with the step it had reached and when ("step 3 of 5 · 2 days ago"), with Flag, Teleport and Reveal to go and take it up again; Show in Journal turns on the Abandoned filter. Chat says "Abandoned: [quest] (step 3 of 5)" the moment it happens (Settings › Notices). Taking the quest up again or completing it clears the row.</value>
+    <value>A quest that leaves your journal without being completed is listed under Abandoned (N) with the step it had reached and when ("step 3 of 5 · 2 days ago"), with Flag, Teleport and Reveal to go and take it up again; Show in Journal turns on the Abandoned filter. Chat says "Abandoned: [quest] (step 3 of 5)" the moment it happens (Settings › Alerts). Taking the quest up again or completing it clears the row.</value>
   </data>
   <data name="Help.CharacterCardBodies.6" xml:space="preserve">
-    <value>While a seasonal event runs, Seasonal events lists its quests with their moon, state and giver, and the Todo overlay shows the ones you can start or have in your journal under Event quests running now. At login, chat says "Moonfire Faire is running: 2 quests ready" once per event (Settings › Notices). An end date appears ("ends Aug 28 (Lodestone)") only when the Lodestone announced it; otherwise it says running now, never a guess. Completed seasonal quests by year keeps your history; the year is the one the Lodestone gave the event, or counted from the nearest announced one.</value>
+    <value>While a seasonal event runs, Seasonal events lists its quests with their moon, state and giver, and the Todo overlay shows the ones you can start or have in your journal under Event quests running now. At login, chat says "Moonfire Faire is running: 2 quests ready" once per event (Settings › Alerts). An end date appears ("ends Aug 28 (Lodestone)") only when the Lodestone announced it; otherwise it says running now, never a guess. Completed seasonal quests by year keeps your history; the year is the one the Lodestone gave the event, or counted from the nearest announced one.</value>
   </data>
   <data name="Help.CharacterCardBodies.7" xml:space="preserve">
     <value>Every quest a character still needs for one thing, in order: the signpost button under a quest (Route to this), Route to this reward in a Moonlit row's menu, and Route to unlock… beside Job quests (or a right-click on a class under Jobs) for a job such as Blue Mage. Each quest comes after the ones it needs, lower levels first where there is a choice; a level gate marks where to level up, main scenario milestones split the list, and where a quest takes either of two earlier quests the shorter way is used and the other is shown with its count. Viewing a stored alt gives that alt's route. Copy route copies it as a Markdown list without your name; Pin all (hold, or Shift or Ctrl and click) pins every step for the Todo overlay, with an Undo.</value>
   </data>
   <data name="Help.CharacterCardBodies.8" xml:space="preserve">
-    <value>After a break of 14 days or more (Settings › Notices), a card above the detail pane says what you had in your journal and where each quest stands now, the main scenario then and now, what the game added since by patch series (Show in Journal sets the Added in filter), the events running now and the levels that moved. It waits until every character was away that long, so an idle alt stays quiet, and opens once per session. With no earlier capture it asks when you last played; Since you were away… beside the capture line opens it any time, and Don't show again quiets it for that character.</value>
+    <value>After a break of 14 days or more (Settings › Alerts), a card above the detail pane says what you had in your journal and where each quest stands now, the main scenario then and now, what the game added since by patch series (Show in Journal sets the Added in filter), the events running now and the levels that moved. It waits until every character was away that long, so an idle alt stays quiet, and opens once per session. With no earlier capture it asks when you last played; Since you were away… beside the capture line opens it any time, and Don't show again quiets it for that character.</value>
   </data>
   <data name="Help.FlightCardTitles.0" xml:space="preserve">
     <value>Flight tab</value>
@@ -3846,10 +3846,10 @@
     <value>Quest currents come from quests, five per zone in most expansions, and completing the quest attunes them. Field currents are touched in the world; the tab counts them but never locates them. Use the Aether Compass, a General Action under Actions &amp; Traits, to point at the nearest one.</value>
   </data>
   <data name="Help.FlightCardBodies.2" xml:space="preserve">
-    <value>/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level and job. A click on the name shows it in the Journal, a double-click flags the giver on the map, and right-click or … opens Flag, Teleport and Link in chat. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog opens its settings in Settings › Integrations.</value>
+    <value>/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level and job. A click on the name shows it in the Journal, a double-click flags the giver on the map, and right-click or … opens Flag, Teleport and Link in chat. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog opens its settings in Settings › In game.</value>
   </data>
   <data name="Help.FlightCardBodies.3" xml:space="preserve">
-    <value>☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and Settings › Integrations › Nearby and server info bar can turn it off entirely.</value>
+    <value>☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and Settings › In game › Nearby and server info bar can turn it off entirely.</value>
   </data>
   <data name="Help.FlightCardBodies.4" xml:space="preserve">
     <value>/tsuki zone prints chat links for the quests you can start in the current zone, by level, up to ten. /tsuki which prints every quest the targeted NPC hands out with its state. Both need an evaluated character; the Nearby quests window keeps the same list on screen.</value>
@@ -3918,7 +3918,7 @@
     <value>open or close the window</value>
   </data>
   <data name="Help.CommandMeanings.1" xml:space="preserve">
-    <value>the same, shorter; every subcommand works with any of them, and with your own aliases from Settings › Keyboard</value>
+    <value>the same, shorter; every subcommand works with any of them, and with your own aliases from Settings › Advanced › Keyboard</value>
   </data>
   <data name="Help.CommandMeanings.2" xml:space="preserve">
     <value>search and print matching quests to chat as links; /tsukimichi &lt;text&gt; does the same, and suggests a command when the word was a near miss (Did you mean /tsuki nearby?)</value>
@@ -3957,7 +3957,7 @@
     <value>copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same</value>
   </data>
   <data name="Help.CommandMeanings.14" xml:space="preserve">
-    <value>write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked</value>
+    <value>write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Characters &amp; data › Export › Include character name is on</value>
   </data>
   <data name="Help.CommandMeanings.15" xml:space="preserve">
     <value>stop every walk, flight, travel chain and hand-off Tsukimichi started (a Questionable run, and the AutoDuty and Artisan runs it began) and say in chat what stopped; put it in a macro for one key. Questionable with a command after stop, and AutoDuty inside a duty, ask first: type it again to confirm</value>
@@ -3972,7 +3972,7 @@
     <value>open the focused row's menu in the quest table and the Moonlit list, the same menu a right-click opens; the … button at a row's right end (shown on hover or focus) opens it with a left click</value>
   </data>
   <data name="Help.CommandMeanings.19" xml:space="preserve">
-    <value>off unless turned on in Settings › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 5 are hotbar 2 by default</value>
+    <value>off unless turned on in Settings › Advanced › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 5 are hotbar 2 by default</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">
     <value>Removed and hidden quests</value>
@@ -3990,7 +3990,7 @@
     <value>Repeatables count once</value>
   </data>
   <data name="Help.CountsCardBodies.0" xml:space="preserve">
-    <value>Quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite, a few deleted sidequests) sit under the Removed from the game node, off by default, and never count toward any total; a completed one still shows Completed when the node or Include removed reveals it, and its detail pane says which patch removed it where that is known. Quests the game's journal hides but still hands out (So You Want to Be a Gladiator, Leves of Kugane, Sights of the North, the Eureka entry quests, hidden steps of YoRHa and the Resistance Weapons) are filed under the genre their links point at, so a class's quests start with its intro and a zone's sidequests include its leve unlock; the detail pane says which rule filed them. The class intros (So You Want to Be a Gladiator and the other A Realm Reborn classes) are listed but never counted: the class you started as hands you "Way of the …" directly and never offers its intro, so counting it would keep that class one short for good; the job intros (A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual. Settings › Advanced › Journal filing › Legacy puts every one of them back in the single bucket releases before 0.6.1 showed.</value>
+    <value>Quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite, a few deleted sidequests) sit under the Removed from the game node, off by default, and never count toward any total; a completed one still shows Completed when the node or Include removed reveals it, and its detail pane says which patch removed it where that is known. Quests the game's journal hides but still hands out (So You Want to Be a Gladiator, Leves of Kugane, Sights of the North, the Eureka entry quests, hidden steps of YoRHa and the Resistance Weapons) are filed under the genre their links point at, so a class's quests start with its intro and a zone's sidequests include its leve unlock; the detail pane says which rule filed them. The class intros (So You Want to Be a Gladiator and the other A Realm Reborn classes) are listed but never counted: the class you started as hands you "Way of the …" directly and never offers its intro, so counting it would keep that class one short for good; the job intros (A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual. Settings › Advanced › Hidden quest filing › Legacy puts every one of them back in the single bucket releases before 0.6.1 showed.</value>
   </data>
   <data name="Help.CountsCardBodies.1" xml:space="preserve">
     <value>A seasonal quest of an event that is not running shows Blocked with "seasonal event not active", and is left out of its genre's total the way a locked-out quest is, so the halo can close without it; it counts again while the event runs. An event whose end date is known and past locks its quests out for good.</value>
@@ -4047,7 +4047,7 @@
     <value>Some past seasonal rewards (minions, emotes, mounts, bardings, orchestrion rolls, ornaments) are sold again on the Online Store, which the game files cannot know. Moonlit says so on the rows the curated list covers; if you find one it does not, open a data correction issue with the store page as evidence.</value>
   </data>
   <data name="Help.QuirkCardBodies.5" xml:space="preserve">
-    <value>The item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint sit beside the game's own interface, which a patch can move. Each Tsukimichi release records the game version they were tested on; on a newer game patch (a new patch date) they pause until an update is tested there, and a chat line at login and a notice in Settings › Integrations say so. Hotfixes keep the patch date and do not pause them. The Journal, Moonlit, Characters, Nearby, the Todo overlay and every /tsuki command work as usual. To use the hooks anyway, tick Settings › Advanced › "Enable game hooks on this untested version"; it covers the patch you are on now and its hotfixes, so the next patch pauses them again. If one then draws in the wrong place, untick it and it stops at once.</value>
+    <value>The item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint sit beside the game's own interface, which a patch can move. Each Tsukimichi release records the game version they were tested on; on a newer game patch (a new patch date) they pause until an update is tested there, and a chat line at login and a notice in Settings › In game says so. Hotfixes keep the patch date and do not pause them. The Journal, Moonlit, Characters, Nearby, the Todo overlay and every /tsuki command work as usual. To use the hooks anyway, turn on Settings › Advanced › "Run game panels on an untested patch"; it covers the patch you are on now and its hotfixes, so the next patch pauses them again. If one then draws in the wrong place, turn it off and it stops at once.</value>
   </data>
   <data name="Help.QuirkCardBodies.6" xml:space="preserve">
     <value>HaselTweaks' Reveal Duty Requirements shows the names of the quests a padlocked duty needs, in the game's own Duty Finder. Tsukimichi's spoiler shield covers only what Tsukimichi draws, so a main scenario name it hides can still show there; turn that tweak off if you want the names kept back.</value>
@@ -4086,7 +4086,7 @@
     <value>Settings › Spoilers turns the names or the artwork off, sets how many quests ahead keep their names (0 to 10), and holds an override for the character shown: a character who finished the story can show everything while an alt stays shielded.</value>
   </data>
   <data name="Help.SpoilerCardBodies.4" xml:space="preserve">
-    <value>Some optional content changes a scene later in the story, and the game never says so. When your main scenario (or, for a few, a side story) reaches such a point and the content is not done, a line appears under the MSQ line on Characters and in the Tonight card: "Before you continue: Finish the Eden raid series first." It names only what to do, never what it changes, and it shows only while that quest is ready or in your journal, never earlier and never after. why? (spoiler) under it tells the reason, only when clicked, and stays open for that character until you close it. Chat says it once per character (Settings › Notices); Settings › Spoilers › Show "Before you continue" notes turns the lines and the chat line off. The pairs are curated from player reports; if one looks wrong, open a data correction issue.</value>
+    <value>Some optional content changes a scene later in the story, and the game never says so. When your main scenario (or, for a few, a side story) reaches such a point and the content is not done, a line appears under the MSQ line on Characters and in the Tonight card: "Before you continue: Finish the Eden raid series first." It names only what to do, never what it changes, and it shows only while that quest is ready or in your journal, never earlier and never after. why? (spoiler) under it tells the reason, only when clicked, and stays open for that character until you close it. Chat says it once per character (Settings › Alerts); Settings › Spoilers › "Before you continue notes" turns the lines and the chat line off. The pairs are curated from player reports; if one looks wrong, open a data correction issue.</value>
   </data>
   <data name="Help.SpoilersTip" xml:space="preserve">
     <value>Without a character (or a stored one with no data yet) there is no position to measure from, so every main scenario name after the first quest stays hidden until the first capture.</value>
@@ -4310,22 +4310,22 @@
     <value>Nameplate marks and quest banners</value>
   </data>
   <data name="Help.PlayCardBodies.0" xml:space="preserve">
-    <value>A small panel that stays on screen: your pins, Event quests running now, unlocks you can start here, the next main scenario quest and job quests, an expansion pinned from My blues and a route you follow. Turn it on with the list button at the foot of the tabs, /tsuki todo or Settings › Todo overlay. Locked makes it click-through.</value>
+    <value>A small panel that stays on screen: your pins, Event quests running now, unlocks you can start here, the next main scenario quest and job quests, an expansion pinned from My blues and a route you follow. Turn it on with the list button at the foot of the tabs, /tsuki todo or Settings › Overlay &amp; routes. Locked makes it click-through.</value>
   </data>
   <data name="Help.PlayCardBodies.1" xml:space="preserve">
     <value>Nearby quests lists what you can start in the zone you stand in, by level, with Flag and Teleport. ☾ N in the server info bar is the same count: hover it for the first names, click it for the list. The marker button at the foot of the tabs and /tsuki nearby open it too; its cog opens its settings, where the count can be hidden.</value>
   </data>
   <data name="Help.PlayCardBodies.2" xml:space="preserve">
-    <value>Hover an item that a quest rewards and a short line near the cursor names the quest and whether it is done. Right-click the item for "Tsukimichi: quest reward", which opens the quest here. Items a quest asks you to hand in say so too. Settings › Integrations turns each off.</value>
+    <value>Hover an item that a quest rewards and a short line near the cursor names the quest and whether it is done. Right-click the item for "Tsukimichi: quest reward", which opens the quest here. Items a quest asks you to hand in say so too. Settings › In game turns each off.</value>
   </data>
   <data name="Help.PlayCardBodies.3" xml:space="preserve">
     <value>Target a quest giver and open the target bar's menu: "Tsukimichi: quests here (N)" opens the Journal on every quest that NPC hands out, Blocked ones with their blocker. /tsuki which prints the same list to chat.</value>
   </data>
   <data name="Help.PlayCardBodies.4" xml:space="preserve">
-    <value>Select a padlocked duty in the Duty Finder or Raid Finder and a small panel beside the window names the quest that unlocks it, with its moon, what it is waiting for, and buttons to reveal it here or flag its giver. It follows the duty you select, not the one under the mouse, and speaks for the character you are logged in on. It knows the unlocks the game data links, a curated list (the A Realm Reborn and Dawntrail launch dungeons, the Crystal Tower and Shadow of Mhach alliance raids, the Heavensward optional dungeons and more) and Moonlit's duty unlocks; for any other padlocked duty it stays silent rather than guess. If the panel names the wrong quest, or a padlocked duty you know the quest for shows nothing, open a data correction issue with the duty's name. Turn it off in Settings › Integrations › "Duty Finder unlock hint".</value>
+    <value>Select a padlocked duty in the Duty Finder or Raid Finder and a small panel beside the window names the quest that unlocks it, with its moon, what it is waiting for, and buttons to reveal it here or flag its giver. It follows the duty you select, not the one under the mouse, and speaks for the character you are logged in on. It knows the unlocks the game data links, a curated list (the A Realm Reborn and Dawntrail launch dungeons, the Crystal Tower and Shadow of Mhach alliance raids, the Heavensward optional dungeons and more) and Moonlit's duty unlocks; for any other padlocked duty it stays silent rather than guess. If the panel names the wrong quest, or a padlocked duty you know the quest for shows nothing, open a data correction issue with the duty's name. Turn it off in Settings › In game › "Unlock hint in Duty Finder".</value>
   </data>
   <data name="Help.PlayCardBodies.5" xml:space="preserve">
-    <value>A quest you accepted and then abandoned is remembered: the Characters dashboard lists it with Flag and Teleport, and Show in Journal filters the table to them. A chat line names it once per session (Settings › Notices), so a mis-click is noticed.</value>
+    <value>A quest you accepted and then abandoned is remembered: the Characters dashboard lists it with Flag and Teleport, and Show in Journal filters the table to them. A chat line names it once per session (Settings › Alerts), so a mis-click is noticed.</value>
   </data>
   <data name="Help.PlayCardBodies.6" xml:space="preserve">
     <value>Route to this under a quest, Route to this reward in Moonlit, Route to unlock beside Job quests and the Duty Finder, and /tsuki route [quest name] list every quest still needed, in order, with where to level up. Copy route and Pin all are in the route window.</value>
@@ -4337,13 +4337,13 @@
     <value>Teleport, the aethernet hop and Walk to giver (Lifestream and vnavmesh) take you to a quest's giver, or Go to giver does all three in one click, with Stop at every step. Nothing moves your character unless you press a button.</value>
   </data>
   <data name="Help.PlayCardBodies.9" xml:space="preserve">
-    <value>Small panels sit beside the game's own windows: "Worth it?" beside a quest offer (what it unlocks, its Moonlit rewards, its chain step), "What this opened" beside the reward window after a turn-in, and a companion beside the Journal for the selected quest. They never accept, decline or complete anything. Settings › Integrations turns each off.</value>
+    <value>Small panels sit beside the game's own windows: "Worth it?" beside a quest offer (what it unlocks, its Moonlit rewards, its chain step), "What this opened" beside the reward window after a turn-in, and a companion beside the Journal for the selected quest. They never accept, decline or complete anything. Settings › In game turns each off.</value>
   </data>
   <data name="Help.PlayCardBodies.10" xml:space="preserve">
-    <value>After a turn-in, one chat line counts what it opened ("Opened: 2 unlock quests, 8 side quests") with Show to list them, never naming a quest. Tsukimichi's chat lines end each quest with [Open] [Pin] [Route], and Chat 2 gets "Open in Tsukimichi" on quest and item links. Settings › Notices and Integrations turn them off.</value>
+    <value>After a turn-in, one chat line counts what it opened ("Opened: 2 unlock quests, 8 side quests") with Show to list them, never naming a quest. Tsukimichi's chat lines end each quest with [Open] [Pin] [Route], and Chat 2 gets "Open in Tsukimichi" on quest and item links. Settings › Alerts and In game turn them off.</value>
   </data>
   <data name="Help.PlayCardBodies.11" xml:space="preserve">
-    <value>Off by default: a short line under a quest giver's name ("☾ Pinned", "☾ Moonlit reward", "☾ Ready on WHM"), and the game's quest banner when a turn-in gives a Moonlit reward or unlocks a duty. Turn them on in Settings › Integrations and Settings › Notices.</value>
+    <value>Off by default: a short line under a quest giver's name ("☾ Pinned", "☾ Moonlit reward", "☾ Ready on WHM"), and the game's quest banner when a turn-in gives a Moonlit reward or unlocks a duty. Turn them on in Settings › In game and Settings › Alerts.</value>
   </data>
   <data name="Help.PlayTip" xml:space="preserve">
     <value>None of these change the game: they read what the game shows you and draw beside it. After a game patch the parts drawn beside the game's own windows pause until they are tested (Known quirks).</value>
@@ -4394,7 +4394,7 @@
     <value>Questionable, AutoDuty, Artisan, GatherBuddy, Lifestream and vnavmesh get work only when you press one of their buttons. While a Tsukimichi window is open it may ask installed ones for their status (what Questionable is running, Allagan Tools' item counts). Other plugins can ask Tsukimichi for quest states through its IPC (docs/ipc.md).</value>
   </data>
   <data name="Help.PrivacyCardBodies.5" xml:space="preserve">
-    <value>Forget this character, on a stored character in Characters, deletes that character's files. Settings › Data › Delete all data removes every snapshot, pin and override and keeps your settings. Uninstalling leaves the folder; delete it to remove everything.</value>
+    <value>Forget this character, on a stored character in Characters, deletes that character's files. Settings › Characters &amp; data › Delete all Tsukimichi data removes every snapshot, pin and override and keeps your settings. Uninstalling leaves the folder; delete it to remove everything.</value>
   </data>
   <data name="MoonlitEmptyBody" xml:space="preserve">
     <value>The kind, Hide obtained, the search or the filters above leave nothing to show.</value>
@@ -4449,16 +4449,16 @@
     <comment>{0} = the curated instruction, {1} = the link to the first content quest left.</comment>
   </data>
   <data name="PayoffConfigShow" xml:space="preserve">
-    <value>Show "Before you continue" notes</value>
+    <value>Before you continue notes</value>
   </data>
   <data name="PayoffConfigShowHint" xml:space="preserve">
-    <value>When your story reaches a point where optional content changes a scene, a line under the MSQ line on the Characters tab and in the Tonight card says what to do first. Off hides the line and the chat notice.</value>
+    <value>A note when optional content changes a scene ahead. Off hides the chat line too.</value>
   </data>
   <data name="PayoffConfigNotice" xml:space="preserve">
-    <value>Chat line when optional content pays off in the story ahead</value>
+    <value>Before you continue</value>
   </data>
   <data name="PayoffConfigNoticeHint" xml:space="preserve">
-    <value>"Before you continue: Finish the Eden raid series first.", once per character, when the main scenario reaches the point where it matters. It never says why; the Characters tab and the Tonight card keep the line, with the reason behind "why? (spoiler)".</value>
+    <value>Once per character, when optional content matters to the story ahead.</value>
   </data>
   <data name="PlanningExpFormat" xml:space="preserve">
     <value>{0} EXP</value>
@@ -4619,19 +4619,19 @@
     <value>No allied society unlocked yet.</value>
   </data>
   <data name="PlanningConfigHeading" xml:space="preserve">
-    <value>Planning</value>
+    <value>Dashboard</value>
   </data>
   <data name="PlanningConfigExpColumn" xml:space="preserve">
-    <value>EXP column in the Journal</value>
+    <value>EXP column</value>
   </data>
   <data name="PlanningConfigExpColumnHint" xml:space="preserve">
-    <value>Adds each quest's base EXP as a column of the Journal table. The detail pane shows the EXP and gil either way.</value>
+    <value>Each quest's base EXP as a column. The detail pane shows it either way.</value>
   </data>
   <data name="PlanningConfigBoard" xml:space="preserve">
-    <value>Allied society board on the Characters dashboard</value>
+    <value>Allied society board</value>
   </data>
   <data name="PlanningConfigBoardHint" xml:space="preserve">
-    <value>Each unlocked allied society's rank and reputation, today's dailies, the allowances left, Teleport to its giver and the time to the daily reset.</value>
+    <value>Ranks, today's dailies and allowances left, on the Characters dashboard.</value>
   </data>
   <data name="PlanTab" xml:space="preserve">
     <value>My blues</value>
@@ -4762,7 +4762,7 @@
     <value>My blues: clear your unlock quests</value>
   </data>
   <data name="PlanHelpBody" xml:space="preserve">
-    <value>The My blues tab is every blue unlock quest you have left, by expansion and then zone, zones in the order the story reaches them and quests by level. Each row shows its moon, what it unlocks (Dungeon, Trial, Raid, Alliance raid, Field operation, Job, Allied society, Flying, System, Other; "leads to" when the quest is a step towards it), its status and what blocks it, with Flag and Reveal. Filter by kind, Ready only, or Sprout mode to hide expansions your story has not reached. Copy as checklist puts the list as shown on the clipboard as Markdown, ready for Discord ("- [ ] Hallo Halatali (Lv 20, Western Thanalan) — unlocks: Dungeon: Halatali"), with nothing that names you. Pin to overlay on an expansion shows its Ready unlock quests in the Todo overlay; Settings › Todo overlay turns that section off. Seasonal event quests are not in the plan.</value>
+    <value>The My blues tab is every blue unlock quest you have left, by expansion and then zone, zones in the order the story reaches them and quests by level. Each row shows its moon, what it unlocks (Dungeon, Trial, Raid, Alliance raid, Field operation, Job, Allied society, Flying, System, Other; "leads to" when the quest is a step towards it), its status and what blocks it, with Flag and Reveal. Filter by kind, Ready only, or Sprout mode to hide expansions your story has not reached. Copy as checklist puts the list as shown on the clipboard as Markdown, ready for Discord ("- [ ] Hallo Halatali (Lv 20, Western Thanalan) — unlocks: Dungeon: Halatali"), with nothing that names you. Pin to overlay on an expansion shows its Ready unlock quests in the Todo overlay; Settings › Overlay &amp; routes turns that section off. Seasonal event quests are not in the plan.</value>
   </data>
   <data name="PlanTodoSection" xml:space="preserve">
     <value>Clear my blues</value>
@@ -4772,10 +4772,10 @@
     <comment>{0} = expansion, {1} = quests left there.</comment>
   </data>
   <data name="PlanTodoConfig" xml:space="preserve">
-    <value>Pinned expansion from Clear my blues</value>
+    <value>Pinned expansion</value>
   </data>
   <data name="PlanTodoConfigHint" xml:space="preserve">
-    <value>The Ready unlock quests of the expansion pinned from the My blues tab ("Pin to overlay" on an expansion).</value>
+    <value>Ready unlock quests of the expansion you pinned on the My blues tab.</value>
   </data>
   <data name="PlanTodoConfigPinnedFormat" xml:space="preserve">
     <value>Pinned: {0}</value>
@@ -4824,10 +4824,10 @@
     <value>Questionable did not take the quest; see /xllog</value>
   </data>
   <data name="ConfigQuestionableHandoff" xml:space="preserve">
-    <value>Show Questionable hand-off</value>
+    <value>Add to priority list</value>
   </data>
   <data name="ConfigQuestionableHandoffHint" xml:space="preserve">
-    <value>When Questionable is loaded, the detail pane's "…" button offers "Add to Questionable priority", which puts the quest on Questionable's own priority list and starts nothing. The "Questionable agrees" line under a quest shows whether this is on or not.</value>
+    <value>Offers Add to Questionable priority in the detail pane's menu. Starts nothing.</value>
   </data>
   <data name="RouteWindowTitle" xml:space="preserve">
     <value>Unlock route###tsukimichiRoute</value>
@@ -5079,13 +5079,13 @@
     <value>Followed route</value>
   </data>
   <data name="TodoConfigShowRouteHint" xml:space="preserve">
-    <value>The next three steps of the route you follow ("Follow this route" in the route window)</value>
+    <value>The next three steps of the route you follow.</value>
   </data>
   <data name="TodoConfigRouteFlagAdvance" xml:space="preserve">
-    <value>Move the map flag to the next stop as you go</value>
+    <value>Move the map flag as you go</value>
   </data>
   <data name="TodoConfigRouteFlagAdvanceHint" xml:space="preserve">
-    <value>When you turn in a step of the followed route, the map flag moves to the next quest's giver. The map does not open.</value>
+    <value>After each turn-in on a followed route, the flag moves to the next giver.</value>
   </data>
   <data name="ConfigSectionRoutes" xml:space="preserve">
     <value>Routes</value>
@@ -5095,7 +5095,7 @@
     <value>Next stops</value>
   </data>
   <data name="TodoConfigShowNextStopsHint" xml:space="preserve">
-    <value>Quests you can pick up now, grouped by the aetheryte nearest their givers: your zone first, then the busiest stops</value>
+    <value>Quests to pick up now, grouped by the nearest aetheryte.</value>
   </data>
   <data name="TonightStopsTitle" xml:space="preserve">
     <value>Next stops</value>
@@ -5155,10 +5155,10 @@
     <value>Year not known</value>
   </data>
   <data name="SeasonalConfigNotice" xml:space="preserve">
-    <value>Chat line at login when a seasonal event has quests ready</value>
+    <value>Seasonal events at login</value>
   </data>
   <data name="SeasonalConfigNoticeHint" xml:space="preserve">
-    <value>"Moonfire Faire is running: 2 quests ready (ends Aug 28)", once per login per event, with a link to the first quest. The end date shows only when the Lodestone announced it.</value>
+    <value>A chat line when an event has quests ready, with a link to the first.</value>
   </data>
   <data name="ArtworkHidden" xml:space="preserve">
     <value>Artwork appears once the quest is in your journal</value>
@@ -5176,22 +5176,22 @@
     <value>Spoilers</value>
   </data>
   <data name="SpoilerHideNames" xml:space="preserve">
-    <value>Hide main scenario names ahead of me</value>
+    <value>Hide story names ahead</value>
   </data>
   <data name="SpoilerHideNamesHelp" xml:space="preserve">
-    <value>Main scenario quests further along the story than you read "Main scenario quest (Lv 83)" everywhere: the table, the detail pane, the status bar, the Todo overlay, chat, Wotsit and search.</value>
+    <value>Main scenario quests past yours read Main scenario quest (Lv 83) everywhere.</value>
   </data>
   <data name="SpoilerAhead" xml:space="preserve">
     <value>Quests ahead to reveal</value>
   </data>
   <data name="SpoilerAheadHelp" xml:space="preserve">
-    <value>How many main scenario quests past your current one keep their names (0 to 10).</value>
+    <value>How many main scenario quests past your current one keep their names.</value>
   </data>
   <data name="SpoilerHideArtwork" xml:space="preserve">
-    <value>Hide journal artwork until a quest is in my journal</value>
+    <value>Hide journal artwork</value>
   </data>
   <data name="SpoilerHideArtworkHelp" xml:space="preserve">
-    <value>The banner art sums up a quest; it shows once you accept or complete the quest.</value>
+    <value>A quest's banner art shows once the quest is in your journal or done.</value>
   </data>
   <data name="SpoilerCharacterLabel" xml:space="preserve">
     <value>For this character</value>
@@ -5200,10 +5200,10 @@
     <value>For {0}</value>
   </data>
   <data name="SpoilerCharacterNone" xml:space="preserve">
-    <value>No character is shown; the settings above apply.</value>
+    <value>No character is shown, so the settings above apply.</value>
   </data>
   <data name="SpoilerCharacterDefault" xml:space="preserve">
-    <value>Use the settings above</value>
+    <value>As above</value>
   </data>
   <data name="SpoilerCharacterOn" xml:space="preserve">
     <value>Always shield</value>
@@ -5212,7 +5212,7 @@
     <value>Show everything</value>
   </data>
   <data name="SpoilerCharacterHelp" xml:space="preserve">
-    <value>A character who finished the story can show everything while an alt stays shielded.</value>
+    <value>A character who finished the story can show everything while alts stay shielded.</value>
   </data>
   <data name="SpoilerMaskedCountFormat" xml:space="preserve">
     <value>{0:N0} main scenario names hidden for the character shown.</value>
@@ -5279,7 +5279,7 @@
     <value>Lock (click-through)</value>
   </data>
   <data name="TodoMenuLockTooltip" xml:space="preserve">
-    <value>The overlay stops taking clicks so the game behind it gets them. Unlock it again in Settings › Todo overlay.</value>
+    <value>The overlay stops taking clicks so the game behind it gets them. Unlock it again in Settings › Overlay &amp; routes.</value>
   </data>
   <data name="TodoMenuCompact" xml:space="preserve">
     <value>Compact</value>
@@ -5294,30 +5294,30 @@
     <value>Todo overlay</value>
   </data>
   <data name="TodoConfigEnabled" xml:space="preserve">
-    <value>Show the Todo overlay</value>
+    <value>Show the overlay</value>
   </data>
   <data name="TodoConfigEnabledHint" xml:space="preserve">
-    <value>A small always-visible panel: your pins, event quests running now, unlock quests you can start here, the next main scenario quest and your job quests. /tsuki todo toggles it.</value>
+    <value>A small panel that stays on screen while you play. /tsuki todo toggles it.</value>
   </data>
   <data name="TodoConfigLocked" xml:space="preserve">
-    <value>Locked (click-through)</value>
+    <value>Lock in place</value>
   </data>
   <data name="TodoConfigLockedHint" xml:space="preserve">
-    <value>The overlay cannot be moved and ignores the mouse: clicks go to the game behind it. Untick this to use its rows and menu again.</value>
+    <value>Clicks pass through to the game. Turn off to use its rows and menu.</value>
   </data>
   <data name="TodoLockUpgradeNotice" xml:space="preserve">
-    <value>Since 0.8.0, Locked means click-through: your locked overlay lets every click through to the game, so its rows and menu do not respond. Untick Locked above to use them again.</value>
+    <value>Since 0.8.0 a locked overlay lets every click through, so its rows do not respond. Turn off Lock in place to use them.</value>
     <comment>Settings › Todo overlay, under Locked, for a player who upgraded with the overlay locked (shown until they unlock it).</comment>
   </data>
   <data name="TodoLockUpgradeChat" xml:space="preserve">
-    <value>Your Todo overlay is locked, and since 0.8.0 Locked means click-through: clicks go to the game behind it. To use its rows and menu again, untick Settings › Todo overlay › Locked (click-through).</value>
+    <value>Your Todo overlay is locked, and since 0.8.0 Locked means click-through: clicks go to the game behind it. To use its rows and menu again, turn off Settings › Overlay &amp; routes › Lock in place.</value>
     <comment>The one chat line at login for a player who upgraded with the overlay locked.</comment>
   </data>
   <data name="TodoConfigCompact" xml:space="preserve">
     <value>Compact</value>
   </data>
   <data name="TodoConfigCompactHint" xml:space="preserve">
-    <value>Moon and name only, one line per row, at a fixed width.</value>
+    <value>Moon and name only, one line per row.</value>
   </data>
   <data name="TodoConfigOpacity" xml:space="preserve">
     <value>Background opacity</value>
@@ -5329,25 +5329,25 @@
     <value>Pinned quests</value>
   </data>
   <data name="TodoConfigShowSeasonal" xml:space="preserve">
-    <value>Event quests running now</value>
+    <value>Event quests</value>
   </data>
   <data name="TodoConfigShowSeasonalHint" xml:space="preserve">
-    <value>Quests of the seasonal events running now that you can start or have in your journal, with their giver. An end date shows only when the Lodestone announced it ("Ends Aug 28 (Lodestone)").</value>
+    <value>Quests of the seasonal events running now, with their giver.</value>
   </data>
   <data name="TodoConfigShowNearby" xml:space="preserve">
-    <value>Unlock quests you can start in this zone</value>
+    <value>Unlock quests in this zone</value>
   </data>
   <data name="TodoConfigShowMsq" xml:space="preserve">
     <value>Next main scenario quest</value>
   </data>
   <data name="TodoConfigShowJobQuests" xml:space="preserve">
-    <value>Job and role quests for the current job</value>
+    <value>Job quests</value>
   </data>
   <data name="TodoConfigResetPosition" xml:space="preserve">
     <value>Reset position</value>
   </data>
   <data name="TodoConfigResetPositionHint" xml:space="preserve">
-    <value>Move the overlay back to the top left of the screen</value>
+    <value>Move the overlay back to the top left of the screen.</value>
   </data>
   <data name="QuickViewAll" xml:space="preserve">
     <value>All</value>
@@ -5557,7 +5557,7 @@
     <value>Companion plugins</value>
   </data>
   <data name="Tutorial.CompanionsBody" xml:space="preserve">
-    <value>Optional plugins such as Lifestream, vnavmesh, Questionable and AutoDuty add buttons for travel and duties. Settings › Integrations shows which you have and where to get the rest.</value>
+    <value>Optional plugins such as Lifestream, vnavmesh, Questionable and AutoDuty add buttons for travel and duties. Settings › Automation shows which you have and where to get the rest.</value>
   </data>
   <data name="Tutorial.HelpTitle" xml:space="preserve">
     <value>Help, tour and settings</value>
@@ -5585,7 +5585,7 @@
     <value>Don't show again</value>
   </data>
   <data name="WelcomeBackDontShowTooltip" xml:space="preserve">
-    <value>Never open this on its own for this character. Since you were away… on the Characters tab still opens it; Settings › Notices turns it off for every character.</value>
+    <value>Never open this on its own for this character. Since you were away… on the Characters tab still opens it; Settings › Alerts turns it off for every character.</value>
   </data>
   <data name="WelcomeBackReading" xml:space="preserve">
     <value>Reading your last capture…</value>
@@ -5762,16 +5762,16 @@
     <value>What this character was doing, where the main scenario stands and what the game added since: from the capture before your last long break, or since the patch you say you last played.</value>
   </data>
   <data name="WelcomeBackConfigDays" xml:space="preserve">
-    <value>Show "Since you were away" after</value>
+    <value>Welcome-back card after</value>
   </data>
   <data name="WelcomeBackConfigDaysFormat" xml:space="preserve">
     <value>%d days</value>
   </data>
   <data name="WelcomeBackConfigOff" xml:space="preserve">
-    <value>off</value>
+    <value>Off</value>
   </data>
   <data name="WelcomeBackConfigHint" xml:space="preserve">
-    <value>At a login after this many days away, a card above the detail pane says what you were doing, where the main scenario stands and what the game added since. It waits until every character's last capture is this old, so an alt left idle while you play another stays quiet, and it opens at most once per session. 0 turns it off; Since you were away… on the Characters tab opens it at any time.</value>
+    <value>Sums up what changed when you return from a break. Off never shows it.</value>
   </data>
   <data name="MainWindowTitle" xml:space="preserve">
     <value>Tsukimichi###TsukimichiMain</value>
@@ -5978,23 +5978,23 @@
     <comment>Settings › Data: the block for the alt lists.</comment>
   </data>
   <data name="Alts.SettingsByDataCenter" xml:space="preserve">
-    <value>Group the Characters list by data center</value>
+    <value>Group by data center</value>
   </data>
   <data name="Alts.SettingsByDataCenterHint" xml:space="preserve">
-    <value>Characters not logged in are listed under their data center when they are on more than one. Logged-in characters stay at the top.</value>
+    <value>Characters not logged in are listed under their data center.</value>
   </data>
   <data name="Alts.SettingsShowHidden" xml:space="preserve">
-    <value>Show hidden characters in the lists</value>
+    <value>Show hidden characters</value>
   </data>
   <data name="Alts.SettingsShowHiddenHint" xml:space="preserve">
-    <value>Hidden characters show dimmed in the character switcher and the Characters list, so you can show them again. Compare with, the account view and the collection grid still leave them out.</value>
+    <value>Hidden characters show dimmed in the switcher and the Characters list.</value>
   </data>
   <data name="Alts.SettingsHiddenFormat" xml:space="preserve">
     <value>Hidden or not tracked ({0})</value>
     <comment>{0} = how many characters are hidden or not tracked.</comment>
   </data>
   <data name="Alts.SettingsHiddenHint" xml:space="preserve">
-    <value>Characters you hid from the lists or chose not to track. Right-click a character in the Characters list to change it there too.</value>
+    <value>Characters you hid or chose not to track. Show or Track brings one back.</value>
   </data>
   <data name="Alts.SettingsHiddenNone" xml:space="preserve">
     <value>No character is hidden or untracked.</value>
@@ -6015,7 +6015,7 @@
     <value>days</value>
   </data>
   <data name="Alts.SettingsForgetHint" xml:space="preserve">
-    <value>Forgets every character whose last save is at least this old, as Forget character does for one. A character logged in here or on another game client is never forgotten.</value>
+    <value>Deletes the saved data of characters unseen this long. Logged-in ones are kept.</value>
   </data>
   <data name="Alts.SettingsForgetButtonFormat" xml:space="preserve">
     <value>Forget ({0})…</value>
@@ -6654,16 +6654,16 @@
     <value>Item hints</value>
   </data>
   <data name="ConfigItemHints" xml:space="preserve">
-    <value>Show a hint when hovering an item that is a quest reward</value>
+    <value>Reward hint on item hover</value>
   </data>
   <data name="ConfigItemHintsHint" xml:space="preserve">
-    <value>A small line near the cursor naming the quest and whether it is done</value>
+    <value>A small line naming the quest that rewards the item, and whether it is done.</value>
   </data>
   <data name="ConfigItemContextMenu" xml:space="preserve">
-    <value>Add a Tsukimichi entry to item context menus</value>
+    <value>Item right-click entry</value>
   </data>
   <data name="ConfigItemContextMenuHint" xml:space="preserve">
-    <value>Right-click an item to reveal the quest that rewards it</value>
+    <value>Right-click an item to reveal the quest that rewards it.</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
     <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; settings (or config) and help open those windows.</value>
@@ -6703,10 +6703,10 @@
     <value>Chat commands</value>
   </data>
   <data name="ConfigCommandAliases" xml:space="preserve">
-    <value>Extra command aliases</value>
+    <value>Extra command names</value>
   </data>
   <data name="ConfigCommandAliasesHint" xml:space="preserve">
-    <value>Other names for /tsuki, separated by spaces: a slash, then letters and digits, such as /quests. Each works like /tsuki, subcommands included. /ts and /moon always work. A name Dalamud, the game or another plugin already uses is skipped.</value>
+    <value>Other names for /tsuki, such as /quests. Names already in use are skipped.</value>
   </data>
   <data name="ConfigCommandAliasesActiveFormat" xml:space="preserve">
     <value>Tsukimichi answers to /tsuki, {0}.</value>
@@ -8354,7 +8354,7 @@
     <value>Adds the quests, then starts Questionable on the first one it can do. It works through its priority list in order, then carries on with its own choices (the main scenario) until you stop it.</value>
   </data>
   <data name="QuestionableStartOffSetting" xml:space="preserve">
-    <value>Starting Questionable is turned off in Settings › Integrations.</value>
+    <value>Starting Questionable is turned off in Settings › Automation.</value>
   </data>
   <data name="QuestionableStartNoGate" xml:space="preserve">
     <value>This version of Questionable cannot be started by another plugin.</value>
@@ -8559,22 +8559,22 @@
     <comment>Settings › Integrations sub-heading.</comment>
   </data>
   <data name="ConfigQuestionableAllowStart" xml:space="preserve">
-    <value>Allow Tsukimichi to start Questionable</value>
+    <value>Allow starting Questionable</value>
   </data>
   <data name="ConfigQuestionableAllowStartHint" xml:space="preserve">
-    <value>Offers "Add and start Questionable" beside Send to Questionable, and Stop while it runs. Questionable then plays for you until you stop it. Nothing starts unless you press the button.</value>
+    <value>Adds Add and start beside Send, and Stop while it runs. Only on your click.</value>
   </data>
   <data name="ConfigQuestionableConfirmStart" xml:space="preserve">
-    <value>Ask before starting Questionable</value>
+    <value>Ask before starting</value>
   </data>
   <data name="ConfigQuestionableConfirmStartHint" xml:space="preserve">
-    <value>Shows what starting Questionable does and asks you to confirm, each time until you tick "Don't ask again".</value>
+    <value>Explains what starting does and asks, until you choose Don't ask again.</value>
   </data>
   <data name="ConfigQuestionableConfirmStopCommand" xml:space="preserve">
-    <value>Ask before stopping Questionable when it runs a command after a stop</value>
+    <value>Confirm Stop when it runs a command</value>
   </data>
   <data name="ConfigQuestionableConfirmStopCommandHint" xml:space="preserve">
-    <value>Questionable runs its "Run command after stop" (/li auto by default) whenever another plugin stops it. While that setting is on, Stop asks first, until you tick "Don't ask again".</value>
+    <value>Ask first when Questionable runs a command after a stop, such as /li auto.</value>
   </data>
   <data name="ConfigQuestionableStatusFormat" xml:space="preserve">
     <value>Questionable is loaded. It needs {0} to run; missing: {1}.</value>
@@ -8828,18 +8828,18 @@
     <value>you left the giver's zone</value>
   </data>
   <data name="ConfigShowWalk" xml:space="preserve">
-    <value>Show Walk to giver (vnavmesh)</value>
+    <value>Walk button</value>
     <comment>Settings › Integrations checkbox.</comment>
   </data>
   <data name="ConfigShowWalkHint" xml:space="preserve">
-    <value>A Walk button beside Teleport: vnavmesh walks your character to the quest giver until you press Stop. It only moves when you press it. Without vnavmesh the button is greyed and says so.</value>
+    <value>Walks you to the giver with vnavmesh. It moves only when you press it.</value>
   </data>
   <data name="ConfigShowGoTo" xml:space="preserve">
-    <value>Show Go to giver (Lifestream and vnavmesh)</value>
+    <value>Go to giver button</value>
     <comment>Settings › Integrations checkbox.</comment>
   </data>
   <data name="ConfigShowGoToHint" xml:space="preserve">
-    <value>One button that teleports, takes the aethernet and walks to the quest giver, with Stop at every step. It only moves when you press it.</value>
+    <value>Teleports, takes the aethernet and walks there, with Stop at every step.</value>
   </data>
   <data name="LinksOpenOn" xml:space="preserve">
     <value>Open on…</value>
@@ -8967,7 +8967,7 @@
     <value>Read the story so far</value>
   </data>
   <data name="RecapReadMsqTooltip" xml:space="preserve">
-    <value>Opens the journal of the last main scenario quests you completed as one page. Only quests you have done are shown, so nothing is spoiled. Settings › Display sets how many.</value>
+    <value>Opens the journal of the last main scenario quests you completed as one page. Only quests you have done are shown, so nothing is spoiled. Settings › Journal sets how many.</value>
   </data>
   <data name="RecapReadChain" xml:space="preserve">
     <value>Read the story so far</value>
@@ -9057,22 +9057,22 @@
     <comment>{0} = unlock quests in the expansions after the trial's</comment>
   </data>
   <data name="CollectorSettingsHeading" xml:space="preserve">
-    <value>Free trial and story recap</value>
+    <value>Story and account</value>
   </data>
   <data name="TrialSetting" xml:space="preserve">
-    <value>I'm on the free trial</value>
+    <value>Free trial account</value>
   </data>
   <data name="TrialSettingHint" xml:space="preserve">
-    <value>The free trial includes A Realm Reborn through Shadowbringers (every patch up to 5.5) and level 80. With this on, the quest counts, My blues and the Journal table put what lies beyond it in a "Beyond your trial" group instead of reading it as Blocked. Off by default.</value>
+    <value>Content past Shadowbringers is grouped as Beyond your trial, not Blocked.</value>
   </data>
   <data name="TrialDetected" xml:space="preserve">
-    <value>The game reports this account as a free trial. Tick the box above if that is right.</value>
+    <value>The game reports a free trial account. Turn this on if that is right.</value>
   </data>
   <data name="RecapLengthSetting" xml:space="preserve">
     <value>Story recap length</value>
   </data>
   <data name="RecapLengthHint" xml:space="preserve">
-    <value>How many of your last completed main scenario quests "Read the story so far" shows.</value>
+    <value>How many recent main scenario quests Read the story so far covers.</value>
   </data>
   <data name="RecapLengthFormat" xml:space="preserve">
     <value>%d quests</value>
@@ -9240,10 +9240,10 @@
     <value>Landing…</value>
   </data>
   <data name="ConfigTravelMountDistance" xml:space="preserve">
-    <value>Mount for walks longer than</value>
+    <value>Mount for walks over</value>
   </data>
   <data name="ConfigTravelMountDistanceHint" xml:space="preserve">
-    <value>Walk to giver and Go to giver summon a mount before a walk longer than this, where the zone allows mounts and you are not in combat. 0 never mounts. You stay mounted at the end.</value>
+    <value>Summons a mount before a longer walk where mounts are allowed.</value>
   </data>
   <data name="ConfigTravelMountDistanceFormat" xml:space="preserve">
     <value>%d yalms</value>
@@ -9253,22 +9253,22 @@
     <value>Mount</value>
   </data>
   <data name="ConfigTravelMountHint" xml:space="preserve">
-    <value>Which mount Walk and Go to giver summon: Mount Roulette, or one of your mounts.</value>
+    <value>Mount Roulette, or one of your own mounts.</value>
   </data>
   <data name="ConfigTravelMountRoulette" xml:space="preserve">
     <value>Mount Roulette</value>
   </data>
   <data name="ConfigTravelFly" xml:space="preserve">
-    <value>Fly where flying is unlocked</value>
+    <value>Fly where unlocked</value>
   </data>
   <data name="ConfigTravelFlyHint" xml:space="preserve">
-    <value>On a mount, fly to the giver in zones where you have attuned every aether current, then land beside them.</value>
+    <value>Fly to the giver in zones where every aether current is attuned.</value>
   </data>
   <data name="ConfigTravelSprint" xml:space="preserve">
     <value>Sprint in towns</value>
   </data>
   <data name="ConfigTravelSprintHint" xml:space="preserve">
-    <value>Use Sprint at the start of a walk in a town or another place where mounts are not allowed.</value>
+    <value>Sprint at the start of a walk where mounts are not allowed.</value>
   </data>
   <data name="TravelTheGiver" xml:space="preserve">
     <value>the giver</value>
@@ -9370,10 +9370,10 @@
     <value>Safety</value>
   </data>
   <data name="ConfigSafetyRules" xml:space="preserve">
-    <value>Changes to your data ask for a key or a hold</value>
+    <value>How changes are confirmed</value>
   </data>
   <data name="ConfigSafetyRulesHint" xml:space="preserve">
-    <value>Verdicts and Don't track need Shift or Ctrl held, then offer Undo. Forget, Delete all, Replace and Apply need a hold.</value>
+    <value>Verdicts need Shift or Ctrl and offer Undo. Forget, Delete all and Apply need a hold.</value>
   </data>
   <data name="ConfigSafetyHold" xml:space="preserve">
     <value>Press-and-hold length</value>
@@ -9388,7 +9388,7 @@
     <value>Click twice instead of holding</value>
   </data>
   <data name="ConfigSafetyTwoClickHint" xml:space="preserve">
-    <value>For hand strain: a second click confirms, in place of a held key or a held button.</value>
+    <value>For hand strain: a second click confirms instead of a held key or button.</value>
   </data>
   <data name="ChipLaneMoreTooltip" xml:space="preserve">
     <value>More filters narrow the list: click to see them all, each with its own ×</value>
@@ -9438,5 +9438,277 @@
   </data>
   <data name="FilterDrawerCloseTooltip" xml:space="preserve">
     <value>Close the filters (Esc)</value>
+  </data>
+  <data name="Settings.Page.General" xml:space="preserve">
+    <value>General</value>
+    <comment>Settings page title.</comment>
+  </data>
+  <data name="Settings.Page.Journal" xml:space="preserve">
+    <value>Journal</value>
+    <comment>Settings page title.</comment>
+  </data>
+  <data name="Settings.Page.Overlay" xml:space="preserve">
+    <value>Overlay &amp; routes</value>
+    <comment>Settings page title.</comment>
+  </data>
+  <data name="Settings.Page.Alerts" xml:space="preserve">
+    <value>Alerts</value>
+    <comment>Settings page title.</comment>
+  </data>
+  <data name="Settings.Page.InGame" xml:space="preserve">
+    <value>In game</value>
+    <comment>Settings page title.</comment>
+  </data>
+  <data name="Settings.Page.Automation" xml:space="preserve">
+    <value>Automation</value>
+    <comment>Settings page title.</comment>
+  </data>
+  <data name="Settings.Page.Characters" xml:space="preserve">
+    <value>Characters &amp; data</value>
+    <comment>Settings page title.</comment>
+  </data>
+  <data name="Settings.Intro.General" xml:space="preserve">
+    <value>Size, look and motion for every Tsukimichi window.</value>
+    <comment>One line under the Settings page title.</comment>
+  </data>
+  <data name="Settings.Intro.Journal" xml:space="preserve">
+    <value>The quest table, the tree and the search.</value>
+    <comment>One line under the Settings page title.</comment>
+  </data>
+  <data name="Settings.Intro.Overlay" xml:space="preserve">
+    <value>The Todo overlay, what it shows, and followed routes.</value>
+    <comment>One line under the Settings page title.</comment>
+  </data>
+  <data name="Settings.Intro.Alerts" xml:space="preserve">
+    <value>What Tsukimichi says in chat, and the welcome-back card.</value>
+    <comment>One line under the Settings page title.</comment>
+  </data>
+  <data name="Settings.Intro.Spoilers" xml:space="preserve">
+    <value>Keep the story ahead hidden, for every character or one.</value>
+    <comment>One line under the Settings page title.</comment>
+  </data>
+  <data name="Settings.Intro.InGame" xml:space="preserve">
+    <value>Panels, menus and hints inside the game's own windows.</value>
+    <comment>One line under the Settings page title.</comment>
+  </data>
+  <data name="Settings.Intro.Automation" xml:space="preserve">
+    <value>Plugins that move or play for you, only when you press a button.</value>
+    <comment>One line under the Settings page title.</comment>
+  </data>
+  <data name="Settings.Intro.Characters" xml:space="preserve">
+    <value>Your characters, your verdicts and what Tsukimichi saves.</value>
+    <comment>One line under the Settings page title.</comment>
+  </data>
+  <data name="Settings.Intro.Advanced" xml:space="preserve">
+    <value>Keys, commands, safety and the rarely needed rest.</value>
+    <comment>One line under the Settings page title.</comment>
+  </data>
+  <data name="Settings.SizeHeading" xml:space="preserve">
+    <value>Size</value>
+    <comment>Settings › General block heading.</comment>
+  </data>
+  <data name="Settings.TextSize" xml:space="preserve">
+    <value>Text size</value>
+    <comment>Settings › General › Size: label of the text size slider (80–150%).</comment>
+  </data>
+  <data name="Settings.TextSizeHint" xml:space="preserve">
+    <value>Tsukimichi's text alone, drawn sharp at the size you pick. Layouts make room.</value>
+    <comment>Hint under Text size.</comment>
+  </data>
+  <data name="Settings.ResetSizes" xml:space="preserve">
+    <value>Default sizes</value>
+    <comment>Settings › General › Size: the row that resets the three sizes.</comment>
+  </data>
+  <data name="Settings.ResetSizesHint" xml:space="preserve">
+    <value>Window scale 1.15, text size 100% and icon size 1.25.</value>
+    <comment>Hint under Default sizes.</comment>
+  </data>
+  <data name="Settings.ResetButton" xml:space="preserve">
+    <value>Reset</value>
+    <comment>Settings: a row button that puts something back as it was.</comment>
+  </data>
+  <data name="Settings.GameFontsPlainReason" xml:space="preserve">
+    <value>Not used with Plain decoration.</value>
+    <comment>Shown in place of the hint while Game fonts for headings is greyed out.</comment>
+  </data>
+  <data name="Settings.MainWindowHeading" xml:space="preserve">
+    <value>Main window</value>
+    <comment>Settings › General block heading.</comment>
+  </data>
+  <data name="Settings.StartTutorialHint" xml:space="preserve">
+    <value>A short walk through the main window. Stop at any step.</value>
+    <comment>Hint under Start the tour.</comment>
+  </data>
+  <data name="Settings.StartButton" xml:space="preserve">
+    <value>Start</value>
+    <comment>Settings: the button that starts the tour.</comment>
+  </data>
+  <data name="Settings.TableHeading" xml:space="preserve">
+    <value>Table</value>
+    <comment>Settings › Journal block heading.</comment>
+  </data>
+  <data name="Settings.TreeHeading" xml:space="preserve">
+    <value>Tree</value>
+    <comment>Settings › Journal block heading.</comment>
+  </data>
+  <data name="Settings.ShowInOverlayHeading" xml:space="preserve">
+    <value>Show in overlay</value>
+    <comment>Settings › Overlay &amp; routes block heading: the overlay sections.</comment>
+  </data>
+  <data name="Settings.OverlayOffReason" xml:space="preserve">
+    <value>Turn on Show the overlay to use this.</value>
+    <comment>Shown in place of a hint while the Todo overlay is off.</comment>
+  </data>
+  <data name="TodoConfigOpacityHint" xml:space="preserve">
+    <value>How solid the panel behind the overlay's rows is.</value>
+    <comment>Hint under Background opacity.</comment>
+  </data>
+  <data name="TodoConfigShowPinsHint" xml:space="preserve">
+    <value>Quests you pinned for the character you play.</value>
+    <comment>Hint under Pinned quests.</comment>
+  </data>
+  <data name="TodoConfigShowNearbyHint" xml:space="preserve">
+    <value>Unlock quests you can start in the zone you are in.</value>
+    <comment>Hint under Unlock quests in this zone.</comment>
+  </data>
+  <data name="TodoConfigShowMsqHint" xml:space="preserve">
+    <value>Where the story goes on from here.</value>
+    <comment>Hint under Next main scenario quest.</comment>
+  </data>
+  <data name="TodoConfigShowJobQuestsHint" xml:space="preserve">
+    <value>Job and role quests for the job you are on.</value>
+    <comment>Hint under Job quests.</comment>
+  </data>
+  <data name="ConfigChatNoticeHint" xml:space="preserve">
+    <value>A chat line when a quest becomes ready to take.</value>
+    <comment>Hint under Newly available quests.</comment>
+  </data>
+  <data name="ConfigIncludeMsqHint" xml:space="preserve">
+    <value>Also count main scenario quests in that line.</value>
+    <comment>Hint under Include main scenario.</comment>
+  </data>
+  <data name="Settings.NoticeOffReason" xml:space="preserve">
+    <value>Turn on Newly available quests to use this.</value>
+    <comment>Shown in place of a hint while its parent is off.</comment>
+  </data>
+  <data name="JobsConfigNudgeHint" xml:space="preserve">
+    <value>A chat line when a level-up readies a job or role quest.</value>
+    <comment>Hint under Job quests after a level-up.</comment>
+  </data>
+  <data name="Settings.PayoffOffReason" xml:space="preserve">
+    <value>Turn on Before you continue notes in Spoilers to use this.</value>
+    <comment>Shown in place of a hint while the notes are off.</comment>
+  </data>
+  <data name="Settings.WelcomeBackHeading" xml:space="preserve">
+    <value>Welcome back</value>
+    <comment>Settings › Alerts block heading.</comment>
+  </data>
+  <data name="Settings.HooksPaused" xml:space="preserve">
+    <value>Paused on this patch</value>
+    <comment>Settings › In game: the row shown while the game panels wait for a tested update.</comment>
+  </data>
+  <data name="Settings.HooksPausedHint" xml:space="preserve">
+    <value>The game panels wait for a tested update. Advanced can run them anyway.</value>
+    <comment>Hint under Paused on this patch.</comment>
+  </data>
+  <data name="DiscoveryDtrShowWhenEmptyHint" xml:space="preserve">
+    <value>Keep the count when there is nothing to start.</value>
+    <comment>Hint under Show at zero.</comment>
+  </data>
+  <data name="Settings.DtrOffReason" xml:space="preserve">
+    <value>Turn on Count in the server info bar to use this.</value>
+    <comment>Shown in place of a hint while its parent is off.</comment>
+  </data>
+  <data name="DiscoveryIncludeOtherJobHint" xml:space="preserve">
+    <value>Nearby quests also lists quests another of your jobs can take.</value>
+    <comment>Hint under Quests ready on another job.</comment>
+  </data>
+  <data name="Settings.MountOffReason" xml:space="preserve">
+    <value>Set Mount for walks over above Off to use this.</value>
+    <comment>Shown in place of a hint while mounting is off.</comment>
+  </data>
+  <data name="Settings.QuestionableStatus" xml:space="preserve">
+    <value>Status</value>
+    <comment>Settings › Automation › Questionable: the row saying whether Questionable is loaded.</comment>
+  </data>
+  <data name="Settings.QuestionableStartOffReason" xml:space="preserve">
+    <value>Turn on Allow starting Questionable to use this.</value>
+    <comment>Shown in place of a hint while its parent is off.</comment>
+  </data>
+  <data name="Settings.CompanionsLabel" xml:space="preserve">
+    <value>Plugins Tsukimichi works with</value>
+    <comment>Settings › Automation: the row over the companion plugin table.</comment>
+  </data>
+  <data name="Settings.SpoilerAheadOffReason" xml:space="preserve">
+    <value>Turn on Hide story names ahead to use this.</value>
+    <comment>Shown in place of a hint while names are not hidden.</comment>
+  </data>
+  <data name="Settings.DataKept" xml:space="preserve">
+    <value>What Tsukimichi keeps</value>
+    <comment>Settings › Characters &amp; data: the row saying what is stored.</comment>
+  </data>
+  <data name="Settings.Verdicts" xml:space="preserve">
+    <value>Your Moonlit verdicts</value>
+    <comment>Settings › Characters &amp; data: the row over the verdicts table (search label).</comment>
+  </data>
+  <data name="Settings.VerdictsHint" xml:space="preserve">
+    <value>Quests you marked unique or not. Restore one to use the shipped data again.</value>
+    <comment>Hint under Your Moonlit verdicts.</comment>
+  </data>
+  <data name="Settings.ExportFormatHint" xml:space="preserve">
+    <value>JSON for a collection tracker, CSV for a spreadsheet.</value>
+    <comment>Hint under Export format.</comment>
+  </data>
+  <data name="Settings.ExportFolderHint" xml:space="preserve">
+    <value>Empty writes to the exports folder in the plugin's config folder.</value>
+    <comment>Hint under Export folder.</comment>
+  </data>
+  <data name="Settings.ExportHint" xml:space="preserve">
+    <value>The viewed character's quests or Moonlit collection. Nothing is uploaded.</value>
+    <comment>Hint under Export.</comment>
+  </data>
+  <data name="Settings.DangerZoneHeading" xml:space="preserve">
+    <value>Danger zone</value>
+    <comment>Settings › Characters &amp; data block heading: Delete all.</comment>
+  </data>
+  <data name="Settings.DeleteButton" xml:space="preserve">
+    <value>Delete…</value>
+    <comment>Settings › Danger zone: the button that opens the delete confirmation.</comment>
+  </data>
+  <data name="Settings.KeysAlwaysOn" xml:space="preserve">
+    <value>Always on</value>
+    <comment>Settings › Advanced › Keyboard: the row naming the keys that are always bound.</comment>
+  </data>
+  <data name="Settings.KeysGameSees" xml:space="preserve">
+    <value>The game sees these keys too</value>
+    <comment>Settings › Advanced › Keyboard: the caution row over the shortcuts.</comment>
+  </data>
+  <data name="Settings.FilingLabel" xml:space="preserve">
+    <value>Where hidden quests are listed</value>
+    <comment>Settings › Advanced: label of the Sorted / Legacy choice.</comment>
+  </data>
+  <data name="Settings.HooksNoVersion" xml:space="preserve">
+    <value>The game version is unknown, so the panels already run.</value>
+    <comment>Shown in place of the hint while the override is greyed out.</comment>
+  </data>
+  <data name="Settings.DiagnosticsHeading" xml:space="preserve">
+    <value>Diagnostics</value>
+    <comment>Settings › Advanced block heading (About, folded in).</comment>
+  </data>
+  <data name="Settings.Diagnostics" xml:space="preserve">
+    <value>Versions and timing</value>
+    <comment>Settings › Advanced › Diagnostics: the row label.</comment>
+  </data>
+  <data name="Settings.DiagnosticsHint" xml:space="preserve">
+    <value>Version, data stamp, quest list and refresh timing, for bug reports.</value>
+    <comment>Hint under Versions and timing.</comment>
+  </data>
+  <data name="Settings.ShowButton" xml:space="preserve">
+    <value>Show</value>
+    <comment>Settings: a row button that unfolds more.</comment>
+  </data>
+  <data name="Settings.HideButton" xml:space="preserve">
+    <value>Hide</value>
+    <comment>Settings: a row button that folds it again.</comment>
   </data>
 </root>

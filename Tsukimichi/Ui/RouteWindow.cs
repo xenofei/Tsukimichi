@@ -137,7 +137,7 @@ public sealed class RouteWindow : Window
         // The window is its own top level, so its minimum follows the UI scale like Nearby's.
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.FontScale,
+            MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.UiScale,
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
         };
         nightChrome = Theme.PushNightWindow();

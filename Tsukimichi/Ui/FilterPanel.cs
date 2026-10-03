@@ -64,7 +64,6 @@ public sealed class FilterPanel
 
     private readonly UiState ui;
     private readonly Action changed;
-    private readonly Action displayChanged;
 
     private CatalogBundle? bundle;
     private readonly List<(uint Id, string Name)> categories = [];
@@ -104,17 +103,16 @@ public sealed class FilterPanel
     private int jobPreviewLanguage = -1;
 
     /// <param name="changed">A filter changed: the window re-runs the query and persists the filters.</param>
-    /// <param name="displayChanged">A display slider changed: the window persists the settings (no query re-run).</param>
-    public FilterPanel(UiState ui, Action changed, Action displayChanged)
+    public FilterPanel(UiState ui, Action changed)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
         this.changed = changed ?? throw new ArgumentNullException(nameof(changed));
-        this.displayChanged = displayChanged ?? throw new ArgumentNullException(nameof(displayChanged));
     }
 
     /// <summary>
     /// The panel body. <paramref name="snapshot"/> null means browse mode: runtime-only filters are disabled.
-    /// <paramref name="settings"/> receives the Display sliders' values.
+    /// <paramref name="settings"/> holds the Stalled threshold. The window and icon scales live in Settings › General
+    /// alone (feature plan v6 decision 7).
     /// </summary>
     public void Draw(CatalogBundle current, CharacterSnapshot? snapshot, Configuration settings)
     {
@@ -156,52 +154,7 @@ public sealed class FilterPanel
 
         Tip(Strings.ResetTooltip);
         ImGui.Separator();
-        DrawDisplay(settings);
-        ImGui.Separator();
         ui.RecordSpan(UiRects.FilterPanel, start, width);
-    }
-
-    /// <summary>UI and icon scale sliders; the values take effect on the next frame and are saved with the settings.</summary>
-    private void DrawDisplay(Configuration settings)
-    {
-        // The controls shrink to a narrow panel and their labels move under them, wrapped (feature plan v4 L6).
-        ImGui.TextDisabled(Strings.Display);
-        var sliderWidth = UiMetrics.Px(150f);
-
-        var uiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
-        ImGui.SetNextItemWidth(Chrome.FitWidth(sliderWidth));
-        if (ImGui.SliderFloat("##uiScale", ref uiScale, ScaleMetrics.MinUiScale, ScaleMetrics.MaxUiScale, Strings.ScaleFormat, ImGuiSliderFlags.AlwaysClamp))
-        {
-            settings.UiScale = uiScale;
-            displayChanged();
-        }
-
-        Tip(Strings.UiScaleTooltip);
-        Chrome.TrailingLabel(Strings.UiScale);
-
-        var iconScale = ScaleMetrics.ClampIconScale(settings.IconScale);
-        ImGui.SetNextItemWidth(Chrome.FitWidth(sliderWidth));
-        if (ImGui.SliderFloat("##iconScale", ref iconScale, ScaleMetrics.MinIconScale, ScaleMetrics.MaxIconScale, Strings.ScaleFormat, ImGuiSliderFlags.AlwaysClamp))
-        {
-            settings.IconScale = iconScale;
-            displayChanged();
-        }
-
-        Tip(Strings.IconScaleTooltip);
-        Chrome.TrailingLabel(Strings.IconScale);
-
-        var isDefault = settings.UiScale == ScaleMetrics.DefaultUiScale && settings.IconScale == ScaleMetrics.DefaultIconScale;
-        using (ImRaii.Disabled(isDefault))
-        {
-            if (ImGui.SmallButton(Strings.ResetDisplay))
-            {
-                settings.UiScale = ScaleMetrics.DefaultUiScale;
-                settings.IconScale = ScaleMetrics.DefaultIconScale;
-                displayChanged();
-            }
-        }
-
-        Tip(Strings.ResetDisplayTooltip);
     }
 
     /// <summary>

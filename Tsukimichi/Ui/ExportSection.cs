@@ -11,15 +11,13 @@ using Tsukimichi.Game;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Data › Export (P12): format (JSON or CSV), "Include character name" (off by default), the full-journal
-/// option, the output folder (empty for the default <c>exports</c> folder), "Export completed quests" and "Export
-/// Moonlit collection", then the path written last with an "Open folder" button. Settings save as they change.
+/// Settings › Characters &amp; data › Export (P12): the output folder field (empty for the default <c>exports</c>
+/// folder), "Export completed quests" and "Export Moonlit collection", then the path written last with an "Open
+/// folder" button. The format and the two options are Settings rows the window draws itself (feature plan v6 U7).
 /// </summary>
 public sealed class ExportSection(Configuration settings, ExportService exports, Action save, IPluginLog log)
 {
     private const int FolderMaxLength = 512;
-
-    private static readonly Localization.LocText FolderLabel = new(static () => Strings.ExportFolderLabel + "##folder");
 
     private string? line;
     private bool lineOk;
@@ -28,68 +26,35 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
     private string? hintFolder;
     private string hint = string.Empty;
 
-    public void Draw()
+    /// <summary>Writes the viewed character's completed quests (or every quest) and shows the result under the buttons.</summary>
+    public void ExportQuests() => Show(exports.Export(ExportKind.Quests));
+
+    /// <summary>Writes the viewed character's Moonlit collection and shows the result under the buttons.</summary>
+    public void ExportMoonlit() => Show(exports.Export(ExportKind.Moonlit));
+
+    /// <summary>
+    /// The two export buttons on one line (wrapping when narrow), then the path written last (or why nothing was) with
+    /// "Open folder" beside a success.
+    /// </summary>
+    public void DrawButtons()
     {
         using var id = ImRaii.PushId("export");
-        ImGui.TextUnformatted(Strings.ExportHeader);
-        ImGui.TextWrapped(Strings.ExportIntro);
-
-        ImGui.TextUnformatted(Strings.ExportFormatLabel);
-        ImGui.SameLine();
-        if (ImGui.RadioButton(Strings.ExportFormatJson, settings.ExportFormat == ExportFormat.Json) && settings.ExportFormat != ExportFormat.Json)
-        {
-            settings.ExportFormat = ExportFormat.Json;
-            save();
-        }
-
-        ImGui.SameLine();
-        if (ImGui.RadioButton(Strings.ExportFormatCsv, settings.ExportFormat == ExportFormat.Csv) && settings.ExportFormat != ExportFormat.Csv)
-        {
-            settings.ExportFormat = ExportFormat.Csv;
-            save();
-        }
-
-        var includeName = settings.ExportIncludeCharacterName;
-        if (ImGui.Checkbox(Strings.ExportIncludeName, ref includeName))
-        {
-            settings.ExportIncludeCharacterName = includeName;
-            save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ExportIncludeNameHint);
-        }
-
-        var incomplete = settings.ExportIncludeIncomplete;
-        if (ImGui.Checkbox(Strings.ExportIncludeIncomplete, ref incomplete))
-        {
-            settings.ExportIncludeIncomplete = incomplete;
-            save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ExportIncludeIncompleteHint);
-        }
-
-        DrawFolder();
-
         if (ImGui.Button(Strings.ExportQuests))
         {
-            Show(exports.Export(ExportKind.Quests));
+            ExportQuests();
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.ExportMoonlit).X + (ImGui.GetStyle().FramePadding.X * 2f));
         if (ImGui.Button(Strings.ExportMoonlit))
         {
-            Show(exports.Export(ExportKind.Moonlit));
+            ExportMoonlit();
         }
 
         DrawLastLine();
     }
 
-    private void DrawFolder()
+    /// <summary>The output folder field, <paramref name="width"/> wide, with Default beside it once a folder is typed; saved when the field is left.</summary>
+    public void DrawFolder(float width)
     {
         var folder = settings.ExportFolder ?? string.Empty;
         if (hintFolder is null || !string.Equals(hintFolder, folder, StringComparison.Ordinal))
@@ -98,8 +63,11 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
             hint = exports.Folder;
         }
 
-        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(260f)));
-        if (ImGui.InputTextWithHint(FolderLabel.Value, hint, ref folder, FolderMaxLength))
+        // Default sits beside the field once a folder is typed, inside the same width.
+        var style = ImGui.GetStyle();
+        var room = string.IsNullOrEmpty(settings.ExportFolder) ? width : width - ImGui.CalcTextSize(Strings.ExportFolderDefault).X - (style.FramePadding.X * 2f) - style.ItemSpacing.X;
+        ImGui.SetNextItemWidth(MathF.Max(UiMetrics.Px(60f), room));
+        if (ImGui.InputTextWithHint("##exportFolder", hint, ref folder, FolderMaxLength))
         {
             settings.ExportFolder = folder;
         }

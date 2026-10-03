@@ -51,7 +51,7 @@ One phrase per quest that is not Ready, from `BlockerText` in Core: the single r
 | Quick view of quests sitting in the journal | Stalled | Stalled | unchanged |
 | Group label of the quick views | Quick views | Presets | Head of the filter panel |
 | Table column after Job | Status | Next step | Journal table, Characters › Pinned, Characters › Account view, Flight table |
-| Todo overlay section of unlock quests in the zone | Unlocks you can start here | Feature quests here | Todo overlay header, Settings › Todo overlay |
+| Todo overlay section of unlock quests in the zone | Unlocks you can start here | Feature quests here | Todo overlay header, Settings › Overlay & routes |
 | Moonlit tab | Moonlit (pane subtitle: rewards only a quest gives) | Moonlit | Tab strip; subtitle at the top of the Moonlit pane |
 | Compare "Why" column reason | Unlock quest | Feature quest | Characters › Compare with |
 | Beast tribe requirements | Allied Society rank / Allied Society reputation | Allied society rank / reputation | Requirement names in the detail pane; "Tribal" never appears |
@@ -64,7 +64,7 @@ One phrase per quest that is not Ready, from `BlockerText` in Core: the single r
 | Virtual tree node of quests the game deleted (`QuestRecord.IsRemoved`: retired rows, plus any genre-0 row no rule could place) | Removed from the game | Unlisted | Journal tree (off by default), detail pane journal path of a genre-0 quest, tutorial Journal tree step, Help › Why my counts differ |
 | Setting that shows the node | Show removed quests | Show Unlisted bucket | Settings › Journal |
 | Filter that widens All quests and Unlock quests to the node's quests | Include removed | Include Unlisted | Filters › Advanced, active-filter chip, empty-result guard |
-| Setting that picks the filing (`Configuration.JournalFiling`) | Journal filing: Refiled / Legacy | – | Settings › Display; Legacy is the in-field rollback to the 0.6.0 filing |
+| Setting that picks the filing (`Configuration.JournalFiling`) | Hidden quest filing: Sorted / Legacy | Journal filing, Refiled | Settings › Advanced; Legacy is the in-field rollback to the 0.6.0 filing |
 | Requirement of a retired quest (`RequirementKind.Retired`) | Removed (requirement name); "Locked out · removed from the game" (status) | – | Detail pane requirement list, Status column, blocker line |
 | Provenance line of a refiled quest | Filed under {genre} (rule N: {reason}) / Filed under {genre} (curated override) | – | Detail pane, under the journal path |
 | Provenance line of a retired quest | Removed from the game / Removed from the game in patch {patch} | – | Detail pane, under the journal path |
@@ -101,7 +101,7 @@ A character takes one start city, one starting class and one Grand Company, and 
 
 ## Translated display names
 
-Since 1.1 (V2-19) the display names follow the plugin language (Settings › Display › Plugin language; [docs/localization.md](localization.md)). English is the source and owns the concepts above; the Japanese (ja), German (de) and French (fr) names below are the **draft** translations' choices, and players of each language are invited to correct them ([CONTRIBUTING.md › Translations](../CONTRIBUTING.md#translations)). One name per concept per language, as in English: change the resource key (named in the first column) and this table together. Core's names are keys `Core.*` in `Tsukimichi/Localization/Strings*.resx`; the English stays written at its call site in Core (`CoreText.T`), which the tests keep equal to `Strings.resx`.
+Since 1.1 (V2-19) the display names follow the plugin language (the language picker is hidden while localization is frozen; [docs/localization.md](localization.md)). English is the source and owns the concepts above; the Japanese (ja), German (de) and French (fr) names below are the **draft** translations' choices, and players of each language are invited to correct them ([CONTRIBUTING.md › Translations](../CONTRIBUTING.md#translations)). One name per concept per language, as in English: change the resource key (named in the first column) and this table together. Core's names are keys `Core.*` in `Tsukimichi/Localization/Strings*.resx`; the English stays written at its call site in Core (`CoreText.T`), which the tests keep equal to `Strings.resx`.
 
 ### Quest states
 

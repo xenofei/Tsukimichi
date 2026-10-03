@@ -11,7 +11,7 @@ using Tsukimichi.Game;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Companion setup in Settings › Integrations › Companion plugins: the one-line summary at the top ("Ready for full
+/// Companion setup in Settings › Automation › Companion plugins: the one-line summary at the top ("Ready for full
 /// automation", "2 plugins need setup"), and under each loaded plugin a "Setup" expander listing the settings that
 /// matter to Tsukimichi's hand-offs (<see cref="CompanionSetupCatalog"/>) with a check mark (as recommended), a cross
 /// (set otherwise) or a question mark (Tsukimichi cannot read it), and, where the plugin's own IPC can set them,

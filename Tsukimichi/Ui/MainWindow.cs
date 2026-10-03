@@ -165,7 +165,7 @@ public sealed partial class MainWindow : Window, IDisposable
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale, ScaleMetrics.RailCompactLogical) };
 
-        filterPanel = new FilterPanel(ui, OnFiltersChanged, OnDisplayChanged);
+        filterPanel = new FilterPanel(ui, OnFiltersChanged);
         ui.FiltersChanged += OnFiltersChanged;
         tabStrip = new TabStrip(ui);
         treePane = new TreePane(ui, textures, () => plugin.Session.NodeIcons);
@@ -478,7 +478,7 @@ public sealed partial class MainWindow : Window, IDisposable
         // between the two minimums back on every load, before the rail had turned compact.
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize, ScaleMetrics.RailCompactLogical),
+            MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.UiScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize, ScaleMetrics.RailCompactLogical),
         };
 
         // Dalamud closes the window on Esc while it or one of its popups is focused. Esc closes the topmost thing first
@@ -1482,7 +1482,7 @@ public sealed partial class MainWindow : Window, IDisposable
 
         // The rail keeps its own width (it follows the UI scale every frame): 64 logical px with labels, or the 44 px
         // compact rail on a narrow window or by setting (feature plan v4 L7).
-        tabStrip.UpdateMode(ImGui.GetWindowSize().X / ImGuiHelpers.GlobalScale, UiMetrics.FontScale, settings.CompactRail);
+        tabStrip.UpdateMode(ImGui.GetWindowSize().X / ImGuiHelpers.GlobalScale, UiMetrics.UiScale, settings.CompactRail);
         var widths = PaneSplit.Solve(settings, total, tabStrip.RailWidth, stripAllowed);
 
         // A rail taller than a short window scrolls with the wheel, without a scrollbar eating its width.

@@ -33,7 +33,13 @@ namespace Tsukimichi.Ui;
 /// ASCII and Latin-1 (accented letters for French and German names, "·" U+00B7) plus "–", "—" and "’", but no "›",
 /// "…", "→" or "•"; MiedingerMid has ASCII and Latin-1 with "·" but no "–", "—", "’", "›" or "…"; none has kana,
 /// kanji or hangul. Jupiter 45 and 90 are digits only and are never used. The roles are built only while
-/// <see cref="GameHeadingFonts"/> is on (Settings › Display › Look), and each falls back to the role it replaces.
+/// <see cref="GameHeadingFonts"/> is on (Settings › General › Look), and each falls back to the role it replaces.
+/// </para>
+/// <para>
+/// Text size (feature plan v6 U7): away from 100% a body font is built at that size from Dalamud's default font and
+/// pushed around every Tsukimichi window (<see cref="Body"/>), and every role is picked from the body size times the
+/// text size, so captions, headings and numbers follow it. A change rebuilds the handles on the next frame; meanwhile
+/// the default font, scaled, stands in at the same size.
 /// </para>
 /// </summary>
 public static class Typography
@@ -92,6 +98,13 @@ public static class Typography
     private static IFontHandle? numeral;
     private static bool headingFontsFailed;
 
+    // The body font at the text size (Settings › General › Text size): built only away from 100%, in pixels at global
+    // scale 1; 0 while none is built or wanted.
+    private static IFontHandle? body;
+    private static float bodyPx;
+    private static bool bodyBuilt;
+    private static bool bodyFailed;
+
     /// <summary>
     /// Whether the Moon Road roles draw in the game's fonts: Settings › Display › Look › Game fonts for headings, off
     /// under Plain flair (<see cref="FlairRules.GameHeadingFonts"/>). As of the last <see cref="Update"/>.
@@ -108,6 +121,8 @@ public static class Typography
         displayFont = -1;
         eyebrowFont = titleFont = numeralFont = -1;
         headingFontsFailed = false;
+        bodyFailed = false;
+        bodyPx = 0f;
     }
 
     /// <summary>
@@ -124,14 +139,20 @@ public static class Typography
             return;
         }
 
-        var next = TypeScale.Bucket(UiMetrics.FontScale);
+        var next = TypeScale.Bucket(UiMetrics.UiScale);
 
         // The body size at UI scale 1 and global scale 1: the default font's size without Dalamud's global scale.
-        var basePx = ImGui.GetFont().FontSize / UiMetrics.GlobalScale;
-        if (!float.IsFinite(basePx) || basePx <= 0f)
+        var defaultPx = ImGui.GetFont().FontSize / UiMetrics.GlobalScale;
+        if (!float.IsFinite(defaultPx) || defaultPx <= 0f)
         {
+            UiMetrics.SetTextFontBuilt(false);
             return;
         }
+
+        UpdateBodyHandle(atlas, defaultPx, UiMetrics.TextScale);
+
+        // Every role is sized from the body, so the text size carries into the game font each role picks.
+        var basePx = defaultPx * UiMetrics.TextScale;
 
         UpdateHeadingHandles(atlas, next, basePx, headingFonts);
         CheckHeadingLoad();
@@ -158,6 +179,60 @@ public static class Typography
             DisposeHandles();
         }
     }
+
+    /// <summary>
+    /// Builds the body font at the text size (Dalamud's own default font, its icons and the glyphs of Dalamud's language
+    /// included), rebuilding it when the text size or Dalamud's font size moved, and says whether this frame draws with
+    /// it (<see cref="UiMetrics.SetTextFontBuilt"/>). At 100% none is built: Dalamud's font is already that size. Until a
+    /// new handle is built the default font stands in, scaled to the same size, so nothing moves when it lands.
+    /// </summary>
+    private static void UpdateBodyHandle(IFontAtlas fontAtlas, float defaultPx, float textScale)
+    {
+        var wanted = bodyFailed || MathF.Abs(textScale - ScaleMetrics.DefaultTextScale) < 0.001f ? 0f : ScaleMetrics.TextFontPx(defaultPx, textScale);
+        if (wanted != bodyPx)
+        {
+            DisposeBodyHandle();
+            bodyPx = wanted;
+            if (wanted > 0f)
+            {
+                try
+                {
+                    body = fontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(tk => tk.AddDalamudDefaultFont(wanted)));
+                }
+                catch (Exception ex)
+                {
+                    log?.Warning(ex, "Text size font unavailable; text is scaled from the default font instead");
+                    bodyFailed = true;
+                    DisposeBodyHandle();
+                }
+            }
+        }
+
+        if (!bodyFailed && body?.LoadException is { } error)
+        {
+            log?.Warning(error, "Text size font failed to build; text is scaled from the default font instead");
+            bodyFailed = true;
+            DisposeBodyHandle();
+        }
+
+        bodyBuilt = body is { Available: true };
+        UiMetrics.SetTextFontBuilt(bodyBuilt);
+    }
+
+    private static void DisposeBodyHandle()
+    {
+        body?.Dispose();
+        body = null;
+        bodyPx = 0f;
+        bodyBuilt = false;
+    }
+
+    /// <summary>
+    /// The body font until disposed: the font built at the text size once it is ready, Dalamud's default font otherwise
+    /// (scaled to the same size by <see cref="UiMetrics.FontScale"/>). The plugin pushes it around every window it
+    /// draws; tooltips push it again so one hung off a heading role still reads in the body font. Allocation-free.
+    /// </summary>
+    public static BodyScope Body() => new(bodyBuilt ? body : null);
 
     /// <summary>Builds, rebuilds or disposes the Eyebrow, Title and Numeral handles for the bucket and the setting.</summary>
     private static void UpdateHeadingHandles(IFontAtlas fontAtlas, int next, float basePx, bool on)
@@ -254,6 +329,8 @@ public static class Typography
     {
         DisposeHandles();
         DisposeHeadingHandles();
+        DisposeBodyHandle();
+        bodyFailed = false;
         atlas = null;
         bucket = -1;
         captionFont = -1;
@@ -427,6 +504,44 @@ public static class Typography
             font?.Dispose();
             font = null;
             ImGui.SetWindowFontScale(ownScale);
+        }
+    }
+}
+
+/// <summary>A pushed body font (<see cref="Typography.Body"/>): the text-size handle's push, or the default font's.</summary>
+public readonly struct BodyScope : IDisposable
+{
+    private readonly IDisposable? pushed;
+    private readonly bool active;
+
+    internal BodyScope(IFontHandle? handle)
+    {
+        active = true;
+        if (handle is { Available: true })
+        {
+            pushed = handle.Push();
+        }
+        else
+        {
+            pushed = null;
+            ImGui.PushFont(UiBuilder.DefaultFont);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (!active)
+        {
+            return;
+        }
+
+        if (pushed is not null)
+        {
+            pushed.Dispose();
+        }
+        else
+        {
+            ImGui.PopFont();
         }
     }
 }

@@ -1,59 +1,66 @@
-using Dalamud.Bindings.ImGui;
+using Tsukimichi.Core.Ui;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Display › Planning (1.9.0, R6 E and G): the Journal's EXP column (off by default) and the allied society
-/// board on the Characters dashboard (on by default).
+/// Settings › Journal › Table and Tree (feature plan v6 U7; the columns from 1.9.0, R6 E and G): the quest table's row
+/// height, the EXP column (off by default), the Unlocks column (on by default), and the Removed from the game node; and
+/// Settings › Characters &amp; data › Dashboard: the allied society board (on by default).
 /// </summary>
 public sealed partial class ConfigWindow
 {
-    private void DrawPlanning()
+    private static readonly LocArray DensityOptions = new(static () => [Strings.ConfigDensityComfortable, Strings.ConfigDensityDense]);
+
+    private void DrawJournalTable()
+    {
+        Header(Strings.SettingsTableHeading);
+
+        // Density: the quest table's row height only (T12).
+        var density = settings.Density == RowDensity.Dense ? 1 : 0;
+        if (Choice(Strings.ConfigDensity, Strings.ConfigDensityHint, ref density, DensityOptions.Value, "comfortable dense row height compact density"))
+        {
+            settings.Density = density == 1 ? RowDensity.Dense : RowDensity.Comfortable;
+            Save();
+        }
+
+        var exp = settings.JournalShowExpColumn;
+        if (Toggle(Strings.PlanningConfigExpColumn, Strings.PlanningConfigExpColumnHint, ref exp, "exp experience column journal table reward"))
+        {
+            settings.JournalShowExpColumn = exp;
+            Save();
+        }
+
+        var opens = settings.JournalShowOpensColumn;
+        if (Toggle(Strings.PlanningConfigOpensColumn, Strings.PlanningConfigOpensColumnHint, ref opens, "opens unlocks column journal table area duty aetheryte"))
+        {
+            settings.JournalShowOpensColumn = opens;
+            Save();
+        }
+    }
+
+    /// <summary>Settings › Journal › Tree: the Removed from the game node.</summary>
+    private void DrawJournal()
+    {
+        Header(Strings.SettingsTreeHeading);
+        var unlisted = settings.ShowUnlisted;
+        if (Toggle(Strings.ConfigShowUnlisted, Strings.ConfigShowUnlistedHint, ref unlisted, "removed deleted quests tree"))
+        {
+            settings.ShowUnlisted = unlisted;
+            Save();
+            onShowUnlistedChanged(unlisted);
+        }
+    }
+
+    /// <summary>Settings › Characters &amp; data › Dashboard: the allied society board.</summary>
+    private void DrawDashboard()
     {
         Header(Strings.PlanningConfigHeading);
-        if (Row(Strings.PlanningConfigExpColumn, Strings.PlanningConfigExpColumnHint, "exp experience column journal table reward"))
+        var board = settings.ShowAlliedSocietyBoard;
+        if (Toggle(Strings.PlanningConfigBoard, Strings.PlanningConfigBoardHint, ref board, "allied society beast tribe daily board reset allowances dashboard"))
         {
-            var exp = settings.JournalShowExpColumn;
-            if (ImGui.Checkbox(Strings.PlanningConfigExpColumn, ref exp))
-            {
-                settings.JournalShowExpColumn = exp;
-                Save();
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(Strings.PlanningConfigExpColumnHint);
-            }
-        }
-
-        if (Row(Strings.PlanningConfigOpensColumn, Strings.PlanningConfigOpensColumnHint, "opens unlocks column journal table area duty aetheryte"))
-        {
-            var opens = settings.JournalShowOpensColumn;
-            if (ImGui.Checkbox(Strings.PlanningConfigOpensColumn, ref opens))
-            {
-                settings.JournalShowOpensColumn = opens;
-                Save();
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(Strings.PlanningConfigOpensColumnHint);
-            }
-        }
-
-        if (Row(Strings.PlanningConfigBoard, Strings.PlanningConfigBoardHint, "allied society beast tribe daily board reset allowances"))
-        {
-            var board = settings.ShowAlliedSocietyBoard;
-            if (ImGui.Checkbox(Strings.PlanningConfigBoard, ref board))
-            {
-                settings.ShowAlliedSocietyBoard = board;
-                Save();
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(Strings.PlanningConfigBoardHint);
-            }
+            settings.ShowAlliedSocietyBoard = board;
+            Save();
         }
     }
 }

@@ -1,13 +1,10 @@
-using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Utility.Raii;
-
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Integrations › Nearby and server info bar (1.7.0, merged from the cog that Nearby quests had): show the
-/// "☾ N" count in the server info bar, keep it at zero, and list quests ready on another job. The values still live in
+/// Settings › In game › Nearby and server info bar (1.7.0, merged from the cog that Nearby quests had): the "☾ N" count
+/// in the server info bar, keeping it at zero, and listing quests ready on another job. The values still live in
 /// <c>user/discovery.json</c> (<see cref="Core.Discovery.DiscoverySettings"/>); <see cref="DiscoveryWindow.SettingsChanged"/>
-/// saves them and refreshes the window and the entry. Nearby's cog opens Settings on this section.
+/// saves them and refreshes the window and the entry. Nearby's cog opens Settings on this block.
 /// </summary>
 public sealed partial class ConfigWindow
 {
@@ -23,40 +20,25 @@ public sealed partial class ConfigWindow
 
         var discovery = nearby.Settings;
         Header(Strings.ConfigSectionNearby);
-        if (Row(Strings.DiscoveryShowDtrLabel, Strings.DiscoveryShowDtrHint, "server info bar dtr nearby count"))
+        var show = discovery.ShowDtrEntry;
+        if (Toggle(Strings.DiscoveryShowDtrLabel, Strings.DiscoveryShowDtrHint, ref show, "server info bar dtr nearby count"))
         {
-            var show = discovery.ShowDtrEntry;
-            if (ImGui.Checkbox(Strings.DiscoveryShowDtrLabel, ref show))
-            {
-                discovery.ShowDtrEntry = show;
-                nearby.SettingsChanged(rowsChanged: false);
-            }
-
-            HintOnHover(Strings.DiscoveryShowDtrHint);
+            discovery.ShowDtrEntry = show;
+            nearby.SettingsChanged(rowsChanged: false);
         }
 
-        if (Row(Strings.DiscoveryDtrShowWhenEmptyLabel, null, "server info bar dtr nearby zero empty"))
+        var whenEmpty = discovery.DtrShowWhenEmpty;
+        if (Toggle(Strings.DiscoveryDtrShowWhenEmptyLabel, Strings.DiscoveryDtrShowWhenEmptyHint, ref whenEmpty, "server info bar dtr nearby zero empty", discovery.ShowDtrEntry, sub: true, reason: Strings.SettingsDtrOffReason))
         {
-            using (ImRaii.PushIndent())
-            using (ImRaii.Disabled(!discovery.ShowDtrEntry))
-            {
-                var whenEmpty = discovery.DtrShowWhenEmpty;
-                if (ImGui.Checkbox(Strings.DiscoveryDtrShowWhenEmptyLabel, ref whenEmpty))
-                {
-                    discovery.DtrShowWhenEmpty = whenEmpty;
-                    nearby.SettingsChanged(rowsChanged: false);
-                }
-            }
+            discovery.DtrShowWhenEmpty = whenEmpty;
+            nearby.SettingsChanged(rowsChanged: false);
         }
 
-        if (Row(Strings.DiscoveryIncludeOtherJobLabel, null, "nearby quests other job class"))
+        var otherJob = discovery.NearbyIncludeOtherJob;
+        if (Toggle(Strings.DiscoveryIncludeOtherJobLabel, Strings.DiscoveryIncludeOtherJobHint, ref otherJob, "nearby quests other job class"))
         {
-            var otherJob = discovery.NearbyIncludeOtherJob;
-            if (ImGui.Checkbox(Strings.DiscoveryIncludeOtherJobLabel, ref otherJob))
-            {
-                discovery.NearbyIncludeOtherJob = otherJob;
-                nearby.SettingsChanged(rowsChanged: true);
-            }
+            discovery.NearbyIncludeOtherJob = otherJob;
+            nearby.SettingsChanged(rowsChanged: true);
         }
     }
 }

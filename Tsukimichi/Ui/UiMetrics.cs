@@ -28,8 +28,18 @@ public static class UiMetrics
     /// <summary>Pixels per logical unit for layout (widths, paddings): global scale × UI scale.</summary>
     public static float Scale { get; private set; } = 1f;
 
-    /// <summary>The UI scale alone, what <see cref="ImGui.SetWindowFontScale"/> takes on top of Dalamud's fonts.</summary>
+    /// <summary>
+    /// What <see cref="ImGui.SetWindowFontScale"/> takes on top of the font in use: the UI scale, times the text size
+    /// while the text-size font is still being built (<see cref="Typography.Body"/> pushes the default font then). The
+    /// text drawn is the UI scale × the text size either way; only how much of it is a built font differs.
+    /// </summary>
     public static float FontScale { get; private set; } = 1f;
+
+    /// <summary>The user's UI scale alone (clamped): the window scale for layouts and minimum window sizes.</summary>
+    public static float UiScale { get; private set; } = 1f;
+
+    /// <summary>The user's text size alone (clamped and stepped, Settings › General › Text size).</summary>
+    public static float TextScale { get; private set; } = 1f;
 
     /// <summary>Pixels per logical unit for moons, icons and banners: <see cref="Scale"/> × icon scale.</summary>
     public static float IconScale { get; private set; } = 1f;
@@ -51,7 +61,9 @@ public static class UiMetrics
     {
         ArgumentNullException.ThrowIfNull(settings);
         var global = ImGuiHelpers.GlobalScale;
-        FontScale = ScaleMetrics.ClampUiScale(settings.UiScale);
+        UiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
+        TextScale = ScaleMetrics.ClampTextScale(settings.TextScale);
+        FontScale = UiScale * TextScale;
         Scale = ScaleMetrics.LayoutFactor(global, settings.UiScale);
         IconScale = ScaleMetrics.IconFactor(global, settings.UiScale, settings.IconScale);
         IconFactor = ScaleMetrics.ClampIconScale(settings.IconScale);
@@ -60,6 +72,12 @@ public static class UiMetrics
         ReduceMotion = settings.ReduceMotion;
         Safety.Update(settings);
     }
+
+    /// <summary>
+    /// Called by <see cref="Typography.Update"/> once per frame: whether the fonts pushed this frame are already built at
+    /// the text size, in which case the windows scale them by the UI scale alone.
+    /// </summary>
+    internal static void SetTextFontBuilt(bool built) => FontScale = built ? UiScale : UiScale * TextScale;
 
     /// <summary>Applies the font scale to the current window (see the class remarks for where that is right).</summary>
     public static void ApplyFontScale() => ImGui.SetWindowFontScale(FontScale);
@@ -153,20 +171,18 @@ public static class UiMetrics
 
     /// <summary>
     /// A plain text tooltip, Night styled and drawn with the UI scale (SetTooltip can be neither). It is always in the
-    /// default font, even when hung off an item drawn in a <see cref="Typography"/> role, and wraps at <see cref="TooltipWrapEm"/>.
+    /// body font at the text size, even when hung off an item drawn in a <see cref="Typography"/> role, and wraps at <see cref="TooltipWrapEm"/>.
     /// </summary>
     public static void Tooltip(string text)
     {
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
-        ImGui.PushFont(UiBuilder.DefaultFont);
+        using var body = Typography.Body();
         ApplyFontScale();
         using (TooltipWrap())
         {
             ImGui.TextUnformatted(text);
         }
-
-        ImGui.PopFont();
     }
 
     /// <summary>A two-line tooltip: <paramref name="text"/>, then <paramref name="detail"/> in the disabled tone when it is not empty; both wrap.</summary>
@@ -174,7 +190,7 @@ public static class UiMetrics
     {
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
-        ImGui.PushFont(UiBuilder.DefaultFont);
+        using var body = Typography.Body();
         ApplyFontScale();
         using (TooltipWrap())
         {
@@ -184,8 +200,6 @@ public static class UiMetrics
                 ImGui.TextDisabled(detail);
             }
         }
-
-        ImGui.PopFont();
     }
 
     // The last reason line composed for a moon tooltip: one moon is hovered at a time, and an evaluation is an
