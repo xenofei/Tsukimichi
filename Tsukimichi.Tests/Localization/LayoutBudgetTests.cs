@@ -19,8 +19,11 @@ public class LayoutBudgetTests(ITestOutputHelper output)
     /// <summary>Header labels are captions: 0.85 of the body size, never under 12 px (Typography.Caption).</summary>
     private const float CaptionPx = LayoutBudgets.BodyFontPx * 0.85f;
 
-    /// <summary>The rail's station labels are drawn at <see cref="LayoutBudgets.RailLabelFraction"/> of the body size.</summary>
-    private const float RailLabelPx = LayoutBudgets.BodyFontPx * LayoutBudgets.RailLabelFraction;
+    /// <summary>The Text sizes the rail's label fit is checked at (Settings › General › Text size).</summary>
+    private static readonly float[] TextSizes = [0.8f, 0.9f, 1f, 1.1f, 1.25f, 1.5f];
+
+    /// <summary>A label's width at a size of one, from the font table: what <see cref="RailLabel.Fit"/> scales.</summary>
+    private static readonly EmMeasure FontEm = static text => Width(text.ToString(), 1f);
 
     /// <summary>The Rewards column's icons at UI scale 1 and the default icon scale: four 17.5 px icons, gaps and margin.</summary>
     private const float RewardsContentLogical = (14f * ScaleMetrics.DefaultIconScale * 4f) + (2f * 3f) + 8f;
@@ -67,9 +70,17 @@ public class LayoutBudgetTests(ITestOutputHelper output)
         var labels = Labels("en");
         foreach (var key in TabKeys)
         {
-            // Every English tab label shows whole under its icon on the 64 px rail (feature plan v4 L7).
-            var width = Width(labels[key], RailLabelPx);
-            Assert.True(width <= LayoutBudgets.RailLabelRoomLogical, $"{key} \"{labels[key]}\" is {width:0.0} px, wider than the rail's {LayoutBudgets.RailLabelRoomLogical} px of label room");
+            // Every English tab label shows on one line under its icon at every level and Text size (plan v7 UI-4):
+            // at most tracked or a little smaller, never wrapped or left to the tooltip.
+            foreach (var flair in new[] { Flair.Full, Flair.Quiet })
+            {
+                foreach (var text in TextSizes)
+                {
+                    var fit = RailFit(labels[key], flair, text, maxLines: 1);
+                    Assert.False(fit.IconOnly, $"{key} \"{labels[key]}\" at {flair}, {text:P0} has no room");
+                    Assert.Equal(1, fit.Lines);
+                }
+            }
         }
 
         foreach (var (key, content, sortable) in FixedColumns)
@@ -85,24 +96,84 @@ public class LayoutBudgetTests(ITestOutputHelper output)
 
     [Theory]
     [MemberData(nameof(AllLanguages))]
-    public void The_tab_rail_keeps_its_width_and_ellipsises_a_long_label(string language)
+    public void The_tab_rail_keeps_its_width_and_fits_every_label_inside_its_plate(string language)
     {
-        // The rail no longer widens for a translation (feature plan v4 L7): a label wider than its station ends in
-        // an ellipsis and the station's tooltip names the tab. Listed here so a translator can see what is cut.
+        // The rail does not widen for a translation, and since plan v7 UI-4 (spec Revision 3) nothing is cut: every
+        // label ends no wider than its plate's room at every level, Text size and line count, or the station shows its
+        // icon alone and the tooltip names the tab. Listed here so a translator can see what is squeezed.
         var labels = Labels(language);
         foreach (var key in TabKeys)
         {
-            var width = Width(labels[key], RailLabelPx);
-            if (width > LayoutBudgets.RailLabelRoomLogical)
+            var label = labels[key];
+            Assert.False(string.IsNullOrWhiteSpace(label), $"{language}: {key} is empty, so an icon-only station would have no name in its tooltip");
+            foreach (var flair in new[] { Flair.Full, Flair.Quiet })
             {
-                output.WriteLine($"{language}: tab {key} \"{labels[key]}\" is {width:0} px of the rail's {LayoutBudgets.RailLabelRoomLogical:0}; it ends in an ellipsis");
+                var room = LayoutBudgets.RailLabelRoom(flair);
+                foreach (var text in TextSizes)
+                {
+                    foreach (var lines in new[] { 1, 2 })
+                    {
+                        var fit = RailFit(label, flair, text, lines);
+                        if (fit.IconOnly)
+                        {
+                            output.WriteLine($"{language}: tab {key} \"{label}\" at {flair}, {text:P0}, {lines} line(s): icon only");
+                            continue;
+                        }
+
+                        Assert.True(fit.Width <= room + 0.01f, $"{language}: {key} \"{label}\" is {fit.Width:0.0} px of {room} at {flair}, {text:P0}");
+                        Assert.True(fit.Size >= LayoutBudgets.RailLabelMinLogical - 0.001f, $"{language}: {key} shrank to {fit.Size}");
+                        Assert.InRange(fit.Lines, 1, lines);
+                        if (!fit.AsIs && lines == 1)
+                        {
+                            output.WriteLine($"{language}: tab {key} \"{label}\" at {flair}, {text:P0}: {fit.Size:0.0} px, tracking {fit.Tracking:0.00}");
+                        }
+                    }
+                }
             }
-
-            Assert.False(string.IsNullOrWhiteSpace(labels[key]), $"{language}: {key} is empty, so a cut station would have no name in its tooltip");
         }
-
-        Assert.Equal(ScaleMetrics.RailLogical - (2f * LayoutBudgets.RailLabelPadLogical), LayoutBudgets.RailLabelRoomLogical);
     }
+
+    [Theory]
+    [InlineData(Flair.Full, 1f, 12f, true)]
+    [InlineData(Flair.Full, 1.5f, 12f, true)]
+    [InlineData(Flair.Full, 0.8f, 10f, false)]
+    [InlineData(Flair.Quiet, 0.8f, 10f, false)]
+    public void Characters_fits_its_plate_as_the_spec_measured(Flair flair, float text, float size, bool tracked)
+    {
+        // Spec Revision 3 R3.1: "Characters" at 12 px is about 62 px against Full's 60 of room, so it is tracked at
+        // -0.02 em; at 80 % Text size it is 10 px and fits as is. The owner saw it escape its plate at 64 px.
+        var fit = RailFit("Characters", flair, text, maxLines: 1);
+        Assert.False(fit.IconOnly);
+        Assert.Equal(1, fit.Lines);
+        // The font table measures it 62.3 wide (the spec's live table 62.0), so tracked it is a hair over 60 and takes
+        // 11.96 px: within a tenth of the label size either way.
+        Assert.InRange(fit.Size, size - 0.1f, size);
+        Assert.Equal(tracked, fit.Tracking < 0f);
+        Assert.True(fit.Width <= LayoutBudgets.RailLabelRoom(flair));
+    }
+
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1.5f)]
+    public void Characters_at_quiet_is_tracked_then_shrunk_but_never_under_10_px(float text)
+    {
+        // 56 px of room at Quiet: tracked is still about 60, so it shrinks to about 11.2 px.
+        var fit = RailFit("Characters", Flair.Quiet, text, maxLines: 1);
+        Assert.False(fit.IconOnly);
+        Assert.InRange(fit.Size, 10.8f, 11.6f);
+        Assert.True(fit.Tracking < 0f);
+        Assert.True(fit.Width <= 56f);
+    }
+
+    /// <summary>The fit the rail draws a label with at a level and a Text size (UI scale moves rail, plate and label together, so it is logical).</summary>
+    private static RailLabelFit RailFit(string label, Flair flair, float textSize, int maxLines) =>
+        RailLabel.Fit(
+            label,
+            LayoutBudgets.RailLabelLogical(LayoutBudgets.BodyFontPx * textSize),
+            LayoutBudgets.RailLabelMinLogical,
+            LayoutBudgets.RailLabelRoom(flair),
+            maxLines,
+            FontEm);
 
     [Theory]
     [MemberData(nameof(AllLanguages))]

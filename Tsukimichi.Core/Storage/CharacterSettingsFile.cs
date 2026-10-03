@@ -40,6 +40,15 @@ public sealed class CharacterSettings
     [OmitWhenEmpty]
     public List<string> PayoffWhyOpen { get; set; } = [];
 
+    /// <summary>
+    /// The available quests the player has seen (plan v7, the Journal badge's "Newly ready", <see cref="Query.NewlyReady"/>),
+    /// ascending row ids. Null until the character is first looked at, when it is seeded with everything available; an
+    /// empty list is a character with nothing seen. Ids accepted, done or locked out are pruned, so it stays about the size
+    /// of the Ready list.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<uint>? SeenReady { get; set; }
+
     /// <summary>Properties this build does not know (a newer build's), written back unchanged.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; set; }
@@ -48,7 +57,7 @@ public sealed class CharacterSettings
     [JsonIgnore]
     public bool IsEmpty =>
         SpoilerShield is null && !Hidden && !DontTrack && CompareWith is null
-        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && (Extra is null || Extra.Count == 0);
+        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && SeenReady is null && (Extra is null || Extra.Count == 0);
 
     /// <summary>
     /// What outlives Forget character and "Delete all data": the player's choices about the character itself, hidden
@@ -68,6 +77,7 @@ public sealed class CharacterSettings
         CompareWith = CompareWith,
         PayoffGatesNoticed = [.. PayoffGatesNoticed],
         PayoffWhyOpen = [.. PayoffWhyOpen],
+        SeenReady = SeenReady is null ? null : [.. SeenReady],
         Extra = Extra is null ? null : new Dictionary<string, JsonElement>(Extra, StringComparer.Ordinal),
     };
 
@@ -94,6 +104,12 @@ public enum CharacterSettingField
     WhyOpen,
 
     /// <summary>
+    /// Replaces <see cref="CharacterSettings.SeenReady"/> with <see cref="CharacterSettingChange.RowIds"/> (seeded, pruned
+    /// or grown in this client, which is the only one logged in as the character).
+    /// </summary>
+    SeenReady,
+
+    /// <summary>
     /// Forget character: drops the character's entry except <see cref="CharacterSettings.Hidden"/> and
     /// <see cref="CharacterSettings.DontTrack"/> (<see cref="CharacterSettings.Lasting"/>).
     /// </summary>
@@ -107,8 +123,11 @@ public enum CharacterSettingField
 /// <param name="Flag">The new value of a flag field; for <see cref="CharacterSettingField.WhyOpen"/>, open or closed.</param>
 /// <param name="Other">The Compare target for <see cref="CharacterSettingField.CompareWith"/>.</param>
 /// <param name="Id">The gate id for <see cref="CharacterSettingField.GateNoticed"/> and <see cref="CharacterSettingField.WhyOpen"/>.</param>
-public readonly record struct CharacterSettingChange(ulong ContentId, CharacterSettingField Field, bool? Flag = null, ulong? Other = null, string? Id = null)
+/// <param name="RowIds">The seen set for <see cref="CharacterSettingField.SeenReady"/>, ascending.</param>
+public readonly record struct CharacterSettingChange(ulong ContentId, CharacterSettingField Field, bool? Flag = null, ulong? Other = null, string? Id = null, IReadOnlyList<uint>? RowIds = null)
 {
+    public static CharacterSettingChange Seen(ulong contentId, IReadOnlyList<uint> rowIds) => new(contentId, CharacterSettingField.SeenReady, RowIds: rowIds);
+
     public static CharacterSettingChange Spoiler(ulong contentId, bool? shield) => new(contentId, CharacterSettingField.SpoilerShield, shield);
 
     public static CharacterSettingChange Hide(ulong contentId, bool hidden) => new(contentId, CharacterSettingField.Hidden, hidden);
@@ -232,6 +251,9 @@ public static class CharacterSettingsFile
                         entry.PayoffWhyOpen.Remove(change.Id);
                     }
 
+                    break;
+                case CharacterSettingField.SeenReady:
+                    entry.SeenReady = change.RowIds is null ? null : [.. change.RowIds];
                     break;
             }
 

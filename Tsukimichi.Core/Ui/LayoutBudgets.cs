@@ -33,6 +33,13 @@ public readonly record struct RailFit(float Crest, float Station, bool Percent, 
     public bool GaugeHidden { get; init; }
 }
 
+/// <summary>How a rail's stations share its height at one level (<see cref="LayoutBudgets.Stations"/>), in logical pixels.</summary>
+/// <param name="Min">The least a station takes before the rail gives up anything but its reserve.</param>
+/// <param name="Max">The most a station takes, however tall the rail.</param>
+/// <param name="Reserve">The sky kept under the stations while they are above <paramref name="Min"/>.</param>
+/// <param name="Floor">The least a station takes on a window too short for the whole rail.</param>
+public readonly record struct RailStations(float Min, float Max, float Reserve, float Floor);
+
 /// <summary>The rail's pixel layout for one frame (<see cref="LayoutBudgets.PlaceRail"/>), offsets from the pane's top.</summary>
 /// <param name="Fit">The logical fit it was placed from.</param>
 /// <param name="CrestTop">The crest's top.</param>
@@ -53,34 +60,127 @@ public readonly record struct RailPlacement(RailFit Fit, float CrestTop, float C
 /// </summary>
 public static class LayoutBudgets
 {
-    // ---- Tab rail (TabStrip; feature plan v4 L7, design v4 §7.1) ----
+    // ---- Tab rail (TabStrip; feature plan v4 L7, design v4 §7.1, plan v7 UI-4) ----
 
-    /// <summary>A station of the labelled rail: a 22 px icon with the tab's label under it.</summary>
+    /// <summary>
+    /// The shortest a labelled station is at Full before the rail gives anything else up (plan v7 UI-4): stations share
+    /// the rail's height, from this up to <see cref="StationMaxLogical"/> (<see cref="Stations"/>).
+    /// </summary>
     public const float StationLogical = 54f;
 
-    /// <summary>The shortest a labelled station gets when the window is too short for the whole rail.</summary>
-    public const float StationMinLogical = 44f;
+    /// <summary>The tallest a labelled station grows at Full.</summary>
+    public const float StationMaxLogical = 84f;
 
-    /// <summary>A station of the compact rail: the icon alone.</summary>
+    /// <summary>
+    /// The sky Full keeps between the last station and the foot before the stations take the rest of the height: room
+    /// for the rail's stars. The stations give it back before they go under <see cref="StationLogical"/>.
+    /// </summary>
+    public const float RailSkyReserveLogical = 96f;
+
+    /// <summary>
+    /// The shortest a labelled station gets at Full when the window is too short for the whole rail: the icon, the gap
+    /// and one line of label on its plate.
+    /// </summary>
+    public const float StationMinLogical = 48f;
+
+    /// <summary>Quiet's labelled stations: from this up to <see cref="QuietStationMaxLogical"/>.</summary>
+    public const float QuietStationLogical = 50f;
+
+    /// <summary>The tallest a labelled station grows at Quiet.</summary>
+    public const float QuietStationMaxLogical = 76f;
+
+    /// <summary>Quiet's smaller reserve under the stations (it has no stars, only air).</summary>
+    public const float QuietSkyReserveLogical = 32f;
+
+    /// <summary>The shortest a labelled station gets at Quiet.</summary>
+    public const float QuietStationMinLogical = 46f;
+
+    /// <summary>A station of the compact rail (the icon alone), from this up to <see cref="CompactStationMaxLogical"/>.</summary>
     public const float CompactStationLogical = 40f;
+
+    /// <summary>The tallest a compact station grows.</summary>
+    public const float CompactStationMaxLogical = 52f;
 
     /// <summary>The shortest a compact station gets (still at least the 26 px click target).</summary>
     public const float CompactStationMinLogical = 30f;
 
-    /// <summary>A station's icon box.</summary>
-    public const float StationIconLogical = 22f;
+    /// <summary>A station's icon box at Full (plan v7 UI-4; 22 before). Quiet draws 28 and Plain 20 (<see cref="StationIcon"/>).</summary>
+    public const float StationIconLogical = 30f;
+
+    /// <summary>A station's icon box at Quiet.</summary>
+    public const float QuietStationIconLogical = 28f;
+
+    /// <summary>A station's icon box at Plain, on its compact rail (16 before).</summary>
+    public const float PlainStationIconLogical = 20f;
 
     /// <summary>Between a station's icon and its label.</summary>
-    public const float StationGapLogical = 4f;
+    public const float StationGapLogical = 5f;
 
-    /// <summary>The rail's labels (and the gauge's percentage) are drawn at this fraction of the body font.</summary>
-    public const float RailLabelFraction = 0.7f;
+    /// <summary>
+    /// A station's plate inset from the rail's sides (spec Revision 3; 5 before) and from the station's top and bottom.
+    /// Plain's plate is full bleed.
+    /// </summary>
+    public const float RailPlateInsetLogical = 3f;
 
-    /// <summary>Space either side of a station's label.</summary>
+    /// <summary>
+    /// The rail's labels (and the gauge's percentage) are drawn at this fraction of the body font, held between
+    /// <see cref="RailLabelMinLogical"/> and <see cref="RailLabelMaxLogical"/> (<see cref="RailLabelLogical"/>).
+    /// </summary>
+    public const float RailLabelFraction = 0.75f;
+
+    /// <summary>The smallest a rail label is drawn; the fit (<see cref="RailLabel.Fit"/>) never shrinks one below it.</summary>
+    public const float RailLabelMinLogical = 10f;
+
+    /// <summary>The largest a rail label is drawn: a large Text size enlarges the quest text, not the rail's captions.</summary>
+    public const float RailLabelMaxLogical = 12f;
+
+    /// <summary>Space either side of a station's label inside its plate.</summary>
     public const float RailLabelPadLogical = 2f;
 
-    /// <summary>A station label's room (the rail less its pads); the label is measured at its own, smaller size.</summary>
-    public const float RailLabelRoomLogical = ScaleMetrics.RailLogical - (2f * RailLabelPadLogical);
+    /// <summary>A station label's room at Full: the rail less the plate insets and the label pads (60).</summary>
+    public const float RailLabelRoomLogical = ScaleMetrics.RailLogical - (2f * RailPlateInsetLogical) - (2f * RailLabelPadLogical);
+
+    /// <summary>A rail label's size in logical px for a body of <paramref name="bodyLogical"/>: 0.75 of it, held to 10–12.</summary>
+    public static float RailLabelLogical(float bodyLogical) =>
+        float.IsFinite(bodyLogical) ? Math.Clamp(bodyLogical * RailLabelFraction, RailLabelMinLogical, RailLabelMaxLogical) : RailLabelMaxLogical;
+
+    /// <summary>The rail's width at a level: 70 at Full, 66 at Quiet; the compact rail (always Plain's) is 44.</summary>
+    public static float RailWidthLogical(Flair flair, bool compact) =>
+        compact || flair == Flair.Plain ? ScaleMetrics.RailCompactLogical
+        : flair == Flair.Quiet ? ScaleMetrics.RailQuietLogical
+        : ScaleMetrics.RailLogical;
+
+    /// <summary>A station label's room on the labelled rail at a level: its width less the plate insets and the label pads (60 at Full, 56 at Quiet).</summary>
+    public static float RailLabelRoom(Flair flair) =>
+        RailWidthLogical(flair == Flair.Plain ? Flair.Quiet : flair, compact: false) - (2f * RailPlateInsetLogical) - (2f * RailLabelPadLogical);
+
+    /// <summary>A station's icon box at a level: 30 at Full, 28 at Quiet, 20 at Plain.</summary>
+    public static float StationIcon(Flair flair) => flair switch
+    {
+        Flair.Quiet => QuietStationIconLogical,
+        Flair.Plain => PlainStationIconLogical,
+        _ => StationIconLogical,
+    };
+
+    /// <summary>
+    /// How a rail's stations share its height (plan v7 UI-4, spec §6): each is (rail − crest − foot − reserve) over the
+    /// stations, held between <see cref="RailStations.Min"/> and <see cref="RailStations.Max"/>. Full: 54–84 with a
+    /// 96 px sky; Quiet: 50–76 with 32; the compact rail (always Plain's): 40–52 with none. A short window gives up the
+    /// reserve first, and the stations go under their minimum only after the crest's size and the percentage, down to
+    /// <see cref="RailStations.Floor"/> (on the compact rail at least the icon on its plate).
+    /// </summary>
+    public static RailStations Stations(Flair flair, bool compact)
+    {
+        if (compact || flair == Flair.Plain)
+        {
+            var floor = MathF.Max(CompactStationMinLogical, StationIcon(flair) + (2f * RailPlateInsetLogical));
+            return new RailStations(CompactStationLogical, CompactStationMaxLogical, 0f, floor);
+        }
+
+        return flair == Flair.Quiet
+            ? new RailStations(QuietStationLogical, QuietStationMaxLogical, QuietSkyReserveLogical, QuietStationMinLogical)
+            : new RailStations(StationLogical, StationMaxLogical, RailSkyReserveLogical, StationMinLogical);
+    }
 
     /// <summary>The crest on top of the rail, and its size when the window is short.</summary>
     public const float CrestLogical = 40f;
@@ -142,9 +242,12 @@ public static class LayoutBudgets
     /// <summary>
     /// How the rail fills a pane <paramref name="heightLogical"/> tall with <paramref name="stations"/> stations: the
     /// crest, the stations, and the foot (gauge, its percentage, Overlay, Nearby, Help and Settings) held to the bottom.
-    /// When the height runs short the rail gives up, in order: the crest's full size, the percentage (the gauge's tooltip
-    /// still has it), the stations' spare height, the gauge (the Journal station's orbit shows the same progress), the
-    /// crest; past that the foot follows the stations and the rail scrolls.
+    /// The stations share the height left (plan v7 UI-4, <see cref="Stations"/>): each takes its part of what the crest,
+    /// the foot and the level's sky reserve leave, between the level's least and most, so the icons fill the rail and the
+    /// sky under them keeps its room. When the height runs short the rail gives up, in order: the sky reserve, the
+    /// crest's full size, the percentage (the gauge's tooltip still has it), the stations' height under their least, the
+    /// gauge (the Journal station's orbit shows the same progress), the crest; past that the foot follows the stations and
+    /// the rail scrolls.
     /// </summary>
     /// <param name="heightLogical">The rail pane's height in logical pixels.</param>
     /// <param name="stations">How many stations the rail has.</param>
@@ -153,28 +256,30 @@ public static class LayoutBudgets
     /// The foot buttons' side in logical pixels as drawn: <see cref="RailButtonLogical"/>, or more where the 24 px click
     /// target floor lifts it at a small scale (<see cref="PlaceRail"/> passes it).
     /// </param>
-    public static RailFit FitRail(float heightLogical, int stations, bool compact, float buttonLogical = RailButtonLogical)
+    /// <param name="flair">The Decoration level, which sets the stations' range and reserve.</param>
+    public static RailFit FitRail(float heightLogical, int stations, bool compact, float buttonLogical = RailButtonLogical, Flair flair = Flair.Full)
     {
         var height = float.IsFinite(heightLogical) ? MathF.Max(0f, heightLogical) : 0f;
         var count = Math.Max(0, stations);
         var button = Button(buttonLogical);
-        var station = compact ? CompactStationLogical : StationLogical;
-        var stationMin = compact ? CompactStationMinLogical : StationMinLogical;
+        var rule = Stations(flair, compact);
+        var station = rule.Min;
+        var stationMin = rule.Floor;
         var crest = compact ? CrestSmallLogical : CrestLogical;
 
-        var fit = new RailFit(crest, station, Percent: true, FootAnchored: true);
+        var fit = Share(new RailFit(crest, station, Percent: true, FootAnchored: true), height, count, compact, button, rule);
         if (RailHeight(fit, count, compact, button) <= height)
         {
             return fit;
         }
 
-        fit = fit with { Crest = CrestSmallLogical };
+        fit = Share(fit with { Crest = CrestSmallLogical }, height, count, compact, button, rule);
         if (RailHeight(fit, count, compact, button) <= height)
         {
             return fit;
         }
 
-        fit = fit with { Percent = false };
+        fit = Share(fit with { Percent = false }, height, count, compact, button, rule);
         if (RailHeight(fit, count, compact, button) <= height)
         {
             return fit;
@@ -196,6 +301,21 @@ public static class LayoutBudgets
 
         fit = fit with { Crest = 0f };
         return RailHeight(fit, count, compact, button) <= height + 0.01f ? fit : fit with { FootAnchored = false };
+    }
+
+    /// <summary>
+    /// The stations' share of the height <paramref name="fit"/>'s crest and foot leave, less the sky reserve, held to the
+    /// rule's range: at its least when even that does not fit (the caller then gives something up).
+    /// </summary>
+    private static RailFit Share(RailFit fit, float height, int count, bool compact, float button, RailStations rule)
+    {
+        if (count <= 0)
+        {
+            return fit with { Station = rule.Min };
+        }
+
+        var free = height - RailHeight(fit with { Station = 0f }, count, compact, button) - rule.Reserve;
+        return fit with { Station = Math.Clamp(free / count, rule.Min, rule.Max) };
     }
 
     /// <summary>The stations give up their spare height, as far as their minimum.</summary>
@@ -247,13 +367,13 @@ public static class LayoutBudgets
     /// a whole number of pixels, rounded down so the pixel layout is never taller than the logical one, and while the
     /// foot is anchored the content ends inside the pane: a rail that fits never scrolls. Offsets are from the pane's top.
     /// </summary>
-    public static RailPlacement PlaceRail(float heightPx, float scale, int stations, bool compact, float buttonPx)
+    public static RailPlacement PlaceRail(float heightPx, float scale, int stations, bool compact, float buttonPx, Flair flair = Flair.Full)
     {
         var s = float.IsFinite(scale) && scale > 0.01f ? scale : 1f;
         var height = float.IsFinite(heightPx) ? MathF.Max(0f, heightPx) : 0f;
         var count = Math.Max(0, stations);
         var buttonLogical = Button(float.IsFinite(buttonPx) ? buttonPx / s : RailButtonLogical);
-        var fit = FitRail(height / s, count, compact, buttonLogical);
+        var fit = FitRail(height / s, count, compact, buttonLogical, flair);
         var pad = RailPadLogical * s;
         var gap = RailGapLogical * s;
 

@@ -4,6 +4,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Localization;
 
@@ -19,6 +20,10 @@ public sealed partial class ConfigWindow
     private static readonly LocArray FlairOptions = new(static () => [Strings.ConfigFlairFull, Strings.ConfigFlairQuiet, Strings.ConfigFlairPlain]);
     private static readonly LocArray MoonStyleOptions = new(static () => [Strings.ConfigMoonStyleMedallion, Strings.ConfigMoonStyleClassic]);
     private static readonly LocArray PaletteOptions = new(static () => [Strings.ConfigGlyphPaletteStandard, Strings.ConfigGlyphPaletteHighContrast]);
+
+    /// <summary>The Journal badge's choices, in <see cref="JournalBadgeMode"/> order.</summary>
+    private static readonly LocArray JournalBadgeOptions = new(static () =>
+        [Strings.RailNewlyReady, Strings.ConfigJournalBadgeStory, Strings.ConfigJournalBadgeEvery, Strings.ConfigJournalBadgeNothing]);
 
     // The window-scale slider keeps its screen place and width while it is held: the scale applies live, so it would
     // otherwise move and resize under the pointer as it is dragged.
@@ -180,6 +185,40 @@ public sealed partial class ConfigWindow
             settings.CompactRail = compactRail;
             Save();
         }
+
+        DrawJournalBadgeChoice();
+    }
+
+    /// <summary>
+    /// Settings › Main window › Journal badge (plan v7, spec Revision 3 R3.2): what the rail's Journal badge counts. Four
+    /// long choices, so a combo rather than a segmented picker.
+    /// </summary>
+    private void DrawJournalBadgeChoice()
+    {
+        if (!Setting(Strings.ConfigJournalBadge, Strings.ConfigJournalBadgeHint, "journal badge count ready new newly rail tab number 99"))
+        {
+            return;
+        }
+
+        var options = JournalBadgeOptions.Value;
+        var current = Enum.IsDefined(settings.JournalBadge) ? (int)settings.JournalBadge : 0;
+        ImGui.SetNextItemWidth(ControlWidth);
+        using (var combo = ImRaii.Combo("##journalBadge", options[current]))
+        {
+            if (combo)
+            {
+                for (var i = 0; i < options.Length; i++)
+                {
+                    if (ImGui.Selectable(options[i], i == current) && i != current)
+                    {
+                        settings.JournalBadge = (JournalBadgeMode)i;
+                        Save();
+                    }
+                }
+            }
+        }
+
+        EndSetting();
     }
 
     /// <summary>Settings › General › Help: start the tour, and whether it is offered when the main window next opens.</summary>

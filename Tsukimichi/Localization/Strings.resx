@@ -5410,6 +5410,44 @@
   <data name="TabJournalTooltip" xml:space="preserve">
     <value>Every quest in the game, filed as the journal files it</value>
   </data>
+  <data name="RailNewlyReady" xml:space="preserve">
+    <value>Newly ready</value>
+    <comment>The list the rail's Journal badge opens (its scope chip and title), and the Journal badge setting's default choice.</comment>
+  </data>
+  <data name="RailNewlyReadyFormat" xml:space="preserve">
+    <value>{0:N0} newly ready since you last looked</value>
+    <comment>Journal station tooltip. {0} = quests that became available since the player last looked.</comment>
+  </data>
+  <data name="RailStoryReadyFormat" xml:space="preserve">
+    <value>{0:N0} story and unlock quests ready</value>
+    <comment>Journal station tooltip when the badge counts story and unlock quests. {0} = their number.</comment>
+  </data>
+  <data name="RailCountSeparator" xml:space="preserve">
+    <value> · </value>
+    <comment>Joins two counts on one tooltip line.</comment>
+  </data>
+  <data name="RailNewlyReadyClick" xml:space="preserve">
+    <value>Click to show the new ones</value>
+    <comment>Journal station tooltip, last line, while the pointer is on the badge.</comment>
+  </data>
+  <data name="ConfigJournalBadge" xml:space="preserve">
+    <value>Journal badge</value>
+  </data>
+  <data name="ConfigJournalBadgeHint" xml:space="preserve">
+    <value>What the number on the rail's Journal tab counts.</value>
+  </data>
+  <data name="ConfigJournalBadgeStory" xml:space="preserve">
+    <value>Ready story and unlock quests</value>
+    <comment>Journal badge choice: main scenario, feature, job and unlock quests that are Ready.</comment>
+  </data>
+  <data name="ConfigJournalBadgeEvery" xml:space="preserve">
+    <value>Every Ready quest</value>
+    <comment>Journal badge choice: the 1.13 count.</comment>
+  </data>
+  <data name="ConfigJournalBadgeNothing" xml:space="preserve">
+    <value>Nothing</value>
+    <comment>Journal badge choice: no badge.</comment>
+  </data>
   <data name="TabMoonlitTooltip" xml:space="preserve">
     <value>Quest rewards that exist nowhere else, and which you already own</value>
   </data>

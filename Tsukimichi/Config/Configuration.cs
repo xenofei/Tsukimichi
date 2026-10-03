@@ -464,6 +464,13 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public bool CompactRail { get; set; }
 
+    /// <summary>
+    /// Settings › Main window › Journal badge (plan v7, spec Revision 3 R3.2): what the number on the rail's Journal
+    /// station counts. Newly ready (the default) counts the quests that became available since the player last looked;
+    /// Every Ready quest is the 1.13 count.
+    /// </summary>
+    public Core.Query.JournalBadgeMode JournalBadge { get; set; } = Core.Query.JournalBadgeMode.NewlyReady;
+
     // ---- 1.4: the Moon Road look (feature plan v4 V1, V3) ----
     /// <summary>
     /// Settings › Display › Look › Flair: how much of the Moon Road ornament shows. Full (the default) draws all of it,

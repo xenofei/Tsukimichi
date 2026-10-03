@@ -105,7 +105,7 @@ public class ScaleMetricsTests
     public void Min_window_size_at_scale_one_is_the_rail_the_pane_floors_the_gutters_and_the_padding()
     {
         var size = ScaleMetrics.MinWindowSize(1f);
-        Assert.Equal(64f + 180f + 320f + 260f + (3f * 6f) + 16f + PaneLayout.RoundingReservePx, size.X);
+        Assert.Equal(70f + 180f + 320f + 260f + (3f * 6f) + 16f + PaneLayout.RoundingReservePx, size.X);
         Assert.Equal(500f, size.Y);
     }
 
@@ -113,9 +113,10 @@ public class ScaleMetricsTests
     public void Min_window_size_at_the_default_ui_scale_is_narrower_than_before_the_splitter()
     {
         // 1,076 before L1 (rail 136 + columns 240 and 360 + a 200 centre floor, at 1.15); the splitter's floors and
-        // gutters beside the 64 px rail of L7 need about 984 (988 with the whole-pixel reserve), and about 965 while the rail is compact.
+        // gutters beside the 70 px rail of plan v7 UI-4 need about 991 (995 with the whole-pixel reserve), and about 965
+        // while the rail is compact.
         var size = ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale);
-        Assert.InRange(size.X, 980f, 995f);
+        Assert.InRange(size.X, 985f, 1000f);
         Assert.InRange(ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale, ScaleMetrics.RailCompactLogical).X, 955f, 970f);
     }
 
@@ -133,9 +134,9 @@ public class ScaleMetricsTests
     }
 
     [Theory]
-    [InlineData(100f, 64f)]
+    [InlineData(100f, 70f)]
     [InlineData(10f, 44f)]
-    [InlineData(float.NaN, 64f)]
+    [InlineData(float.NaN, 70f)]
     public void A_rail_width_outside_the_two_modes_is_taken_as_the_nearer_one(float rail, float taken)
     {
         Assert.Equal(ScaleMetrics.MinWindowSize(1f, taken), ScaleMetrics.MinWindowSize(1f, rail));
@@ -199,9 +200,10 @@ public class ScaleMetricsTests
     [InlineData(1.3f)]
     public void Default_window_holds_the_default_panes_with_room_for_the_quest_list(float uiScale)
     {
-        // Rail, tree and detail at their defaults plus the gutters, and the quest list at least 60 logical over its floor.
+        // Rail, tree and detail at their defaults plus the gutters, and the quest list at least 54 logical over its floor
+        // (60 before the rail grew from 64 to 70 in plan v7 UI-4).
         var size = ScaleMetrics.DefaultWindowSize(uiScale, 1f, new Vector2(3840f, 2160f));
-        var needed = ((ScaleMetrics.RailLogical + PaneLayout.TreeDefaultLogical + PaneLayout.CentreFloorLogical + 60f
+        var needed = ((ScaleMetrics.RailLogical + PaneLayout.TreeDefaultLogical + PaneLayout.CentreFloorLogical + 54f
             + PaneLayout.DetailDefaultLogical + (PaneLayout.GutterCount * PaneLayout.GutterLogical)) * uiScale)
             + ScaleMetrics.WindowPaddingX + PaneLayout.RoundingReservePx;
         Assert.True(size.X >= needed, $"default width {size.X} under {needed}");
