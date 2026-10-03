@@ -9557,6 +9557,38 @@
     <value>Not used with Plain decoration.</value>
     <comment>Shown in place of the hint while Game fonts for headings is greyed out.</comment>
   </data>
+  <data name="Settings.MovingNightSky" xml:space="preserve">
+    <value>Moving night sky</value>
+    <comment>Settings, Look: toggle for the slow drift of the Full sky's stars (feature plan v7 UI-6).</comment>
+  </data>
+  <data name="Settings.MovingNightSkyHint" xml:space="preserve">
+    <value>At Full, the stars drift slowly across the empty sky while this window has focus, with a rare faint shooting star.</value>
+    <comment>Hint under Moving night sky.</comment>
+  </data>
+  <data name="Settings.CompletionMeteor" xml:space="preserve">
+    <value>Shooting star on completion</value>
+    <comment>Settings, Look: toggle for the meteor that crosses the Full sky when a quest is completed.</comment>
+  </data>
+  <data name="Settings.CompletionMeteorHint" xml:space="preserve">
+    <value>At Full, a shooting star crosses the empty sky when you complete a quest, at most once every 30 seconds.</value>
+    <comment>Hint under Shooting star on completion.</comment>
+  </data>
+  <data name="Settings.MilkyWay" xml:space="preserve">
+    <value>Milky Way in the sky</value>
+    <comment>Settings, Look: toggle for a faint band of stars in the Full sky. Off by default.</comment>
+  </data>
+  <data name="Settings.MilkyWayHint" xml:space="preserve">
+    <value>At Full, a faint band of stars across the one large patch of empty sky, when there is one.</value>
+    <comment>Hint under Milky Way in the sky.</comment>
+  </data>
+  <data name="Settings.SkyFullReason" xml:space="preserve">
+    <value>Only drawn with Full decoration.</value>
+    <comment>Shown in place of the hint while a sky setting is greyed out because Decoration is not Full.</comment>
+  </data>
+  <data name="Settings.SkyMotionReason" xml:space="preserve">
+    <value>Off while Reduce motion is on.</value>
+    <comment>Shown in place of the hint while a moving-sky setting is greyed out by Reduce motion.</comment>
+  </data>
   <data name="Settings.MainWindowHeading" xml:space="preserve">
     <value>Main window</value>
     <comment>Settings › General block heading.</comment>

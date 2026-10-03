@@ -102,8 +102,46 @@ public static class MotionTokens
     /// <summary>How long after a completion a count that grew may still start a road glint.</summary>
     public const float CompletionWindow = 1.5f;
 
+    /// <summary>
+    /// The shooting star (docs/design/v7/ui/spec.md §3.6): one streak across the largest empty sky when a quest is
+    /// completed (Full only, its own setting), or, far fainter, every few minutes at rest (Revision 3).
+    /// </summary>
+    public const float Meteor = 0.7f;
+
+    /// <summary>
+    /// The completion meteor's head at its brightest: above every star (the near stars reach .60), so it reads as a
+    /// meteor and not a moving star. The one moment above <see cref="MomentPeak"/>: under a second, small and cool white.
+    /// </summary>
+    public const float MeteorPeak = 0.80f;
+
+    /// <summary>The ambient meteor's head at its brightest (Revision 3): a rare, faint one.</summary>
+    public const float AmbientMeteorPeak = 0.45f;
+
+    /// <summary>The tail's alpha where it meets the head, at the completion meteor's peak; it fades to 0 along its length.</summary>
+    public const float MeteorTailFrom = 0.45f;
+
+    /// <summary>The share of <see cref="Meteor"/> the head takes to fade in.</summary>
+    public const float MeteorFadeIn = 0.08f;
+
+    /// <summary>The fewest seconds between two completion meteors, and how long one keeps an ambient meteor away.</summary>
+    public const float MeteorCooldown = 30f;
+
+    /// <summary>The ambient meteor's interval, in seconds of focused time (Revision 3): a random 3 to 6 minutes.</summary>
+    public const float AmbientMeteorMinSeconds = 180f;
+
+    public const float AmbientMeteorMaxSeconds = 360f;
+
+    /// <summary>
+    /// The moving night sky's drift (Revision 3), logical px a minute, right to left: you notice it over minutes, never
+    /// second to second.
+    /// </summary>
+    public const float SkyDriftPxPerMinute = 6f;
+
+    /// <summary>How far the stars fade in and out at a sky rect's left and right edges as they drift, logical px.</summary>
+    public const float SkyEdgeFadeLogical = 10f;
+
     /// <summary>Every moment token: each one-shot, none over a second.</summary>
-    public static ReadOnlySpan<float> Moments => [Wax, Glint, Halo, Beat];
+    public static ReadOnlySpan<float> Moments => [Wax, Glint, Halo, Beat, Meteor];
 
     /// <summary>ln 10: an exponential approach at rate k covers 90 % of the way in ln 10 / k seconds.</summary>
     public const float Ln10 = 2.30258509f;
@@ -141,6 +179,26 @@ public static class MotionTokens
         }
 
         return MomentPeak * (1f - MotionMath.EaseOutCubic(progress));
+    }
+
+    /// <summary>
+    /// A meteor's head alpha at <paramref name="progress"/> (0..1 over <see cref="Meteor"/>): up to
+    /// <paramref name="peak"/> over the first <see cref="MeteorFadeIn"/>, then <see cref="MomentAlpha"/>'s eased fade
+    /// scaled to that peak. 0 when none is playing.
+    /// </summary>
+    public static float MeteorAlpha(float progress, float peak = MeteorPeak)
+    {
+        if (!float.IsFinite(progress) || progress < 0f || progress >= 1f || !(peak > 0f))
+        {
+            return 0f;
+        }
+
+        if (progress < MeteorFadeIn)
+        {
+            return peak * (progress / MeteorFadeIn);
+        }
+
+        return MomentAlpha((progress - MeteorFadeIn) / (1f - MeteorFadeIn)) / MomentPeak * peak;
     }
 
     /// <summary>

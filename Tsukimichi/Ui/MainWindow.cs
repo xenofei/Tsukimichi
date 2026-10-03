@@ -501,6 +501,11 @@ public sealed partial class MainWindow : Window, IDisposable
 
         selectionAtStart = ui.SelectedRowId;
 
+        // The Full sky runs its clock only while this window is focused, and shows the selected quest's constellation.
+        NightSky.NoteMainWindow(
+            ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows),
+            ui.SelectedRowId is { } skyRowId ? session.Bundle?.Catalog.GetByRowId(skyRowId)?.Expansion : null);
+
         // Regions are re-recorded by whichever panes draw this frame; clearing first keeps hidden panes' rects
         // from lingering (the tutorial unions them for its dimmed area).
         ui.Rects.Clear();

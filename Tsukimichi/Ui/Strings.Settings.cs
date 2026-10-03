@@ -52,6 +52,14 @@ static partial class Strings
     public static string SettingsResetSizesHint => Loc.Get("Settings.ResetSizesHint");
     public static string SettingsResetButton => Loc.Get("Settings.ResetButton");
     public static string SettingsGameFontsPlainReason => Loc.Get("Settings.GameFontsPlainReason");
+    public static string SettingsMovingNightSky => Loc.Get("Settings.MovingNightSky");
+    public static string SettingsMovingNightSkyHint => Loc.Get("Settings.MovingNightSkyHint");
+    public static string SettingsCompletionMeteor => Loc.Get("Settings.CompletionMeteor");
+    public static string SettingsCompletionMeteorHint => Loc.Get("Settings.CompletionMeteorHint");
+    public static string SettingsMilkyWay => Loc.Get("Settings.MilkyWay");
+    public static string SettingsMilkyWayHint => Loc.Get("Settings.MilkyWayHint");
+    public static string SettingsSkyFullReason => Loc.Get("Settings.SkyFullReason");
+    public static string SettingsSkyMotionReason => Loc.Get("Settings.SkyMotionReason");
     public static string SettingsMainWindowHeading => Loc.Get("Settings.MainWindowHeading");
     public static string SettingsStartTutorialHint => Loc.Get("Settings.StartTutorialHint");
     public static string SettingsStartButton => Loc.Get("Settings.StartButton");

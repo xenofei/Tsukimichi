@@ -130,8 +130,8 @@ public sealed class TablePane : IDisposable
     /// <summary>The road under a Ready row (proposal §7.3), brass fading out to the right; faint, so the gold moon keeps the signal.</summary>
     private const float ReadyRoadAlpha = 0.4f;
 
-    /// <summary>Full's star field in the title band: seeded once, so it never shimmers.</summary>
-    private static readonly Star[] TitleStars = StarField.Generate(97, 7);
+    /// <summary>Full's star field over the title band, shown between the title and the count: seeded once, so it never reshuffles.</summary>
+    private static readonly SkyField TitleStars = new(97, 48);
 
     /// <summary>The Ready road's glint at Full: one run every 9 s, taking the last 18 % of the cycle.</summary>
     private const double GlintCycleSeconds = 9.0;
@@ -1263,7 +1263,9 @@ public sealed class TablePane : IDisposable
             // Full: a few faint stars in the title band's empty sky, between the title and the count, never on either.
             var skyLeft = x + MathF.Min(titleWidth, fit.NameRoom) + clearSide + UiMetrics.Px(16f);
             var skyRight = (countVisible ? countX : start.X + room) - UiMetrics.Px(16f);
-            Ornament.Stars(dl, new Vector2(skyLeft, start.Y), new Vector2(skyRight, start.Y + height - UiMetrics.Px(2f)), TitleStars);
+            var canvasMax = new Vector2(start.X + room, start.Y + height - UiMetrics.Px(2f));
+            var size = (canvasMax - start) / UiMetrics.Scale;
+            NightSky.Field(dl, SkySite.Title, 0, TitleStars.For(size.X, size.Y), start, canvasMax, new Vector2(skyLeft, start.Y), new Vector2(skyRight, canvasMax.Y));
         }
 
         if (scoped)

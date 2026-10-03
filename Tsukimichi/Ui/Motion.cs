@@ -242,6 +242,7 @@ public static class Motion
         if (completed > 0 && !UiMetrics.ReduceMotion)
         {
             lastCompletion = ImGui.GetTime();
+            NightSky.NoteCompletion();
         }
 
         foreach (var rowId in JustCompleted)

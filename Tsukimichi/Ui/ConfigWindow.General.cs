@@ -132,6 +132,8 @@ public sealed partial class ConfigWindow
             EndSetting();
         }
 
+        DrawSkyLook();
+
         var moonStyle = Enum.IsDefined(settings.MoonStyle) ? (int)settings.MoonStyle : 0;
         if (Choice(Strings.ConfigMoonStyle, Strings.ConfigMoonStyleHint, ref moonStyle, MoonStyleOptions.Value, "medallion classic moon medal glyph style compare"))
         {
@@ -168,6 +170,8 @@ public sealed partial class ConfigWindow
             DrawMotionStatus();
             EndSetting();
         }
+
+        DrawSkyMotion();
     }
 
     /// <summary>Settings › General › Main window: icon-only tabs.</summary>
@@ -372,8 +376,8 @@ public sealed partial class ConfigWindow
     /// <summary>The sample's three rows: a Ready quest, the selected quest in the journal, a completed one.</summary>
     private static readonly QuestState[] PreviewStates = [QuestState.Ready, QuestState.Accepted, QuestState.Completed];
 
-    /// <summary>Full's star field in the preview's sky: seeded once, so it never shimmers.</summary>
-    private static readonly Star[] PreviewStars = StarField.Generate(53, 6);
+    /// <summary>Full's star field in the preview's sky: seeded once, so it never reshuffles, and drawn still.</summary>
+    private static readonly Star[] PreviewStars = StarField.Generate(53, 12);
 
     /// <summary>
     /// One miniature, at the level pushed: the panes' tones (or the sky and its stars), the table's header and rows on
@@ -431,7 +435,7 @@ public sealed partial class ConfigWindow
         var cardTop = split + UiMetrics.Px(flair == Flair.Plain ? 6f : 12f);
         if (Theme.ShowStars)
         {
-            Ornament.Stars(dl, new Vector2(min.X + pad, split + UiMetrics.Px(1f)), new Vector2(max.X - pad, cardTop - UiMetrics.Px(1f)), PreviewStars);
+            NightSky.Still(dl, PreviewStars, new Vector2(min.X + pad, split + UiMetrics.Px(1f)), new Vector2(max.X - pad, cardTop - UiMetrics.Px(1f)));
         }
 
         var cardMin = new Vector2(min.X + pad, cardTop);
