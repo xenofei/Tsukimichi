@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Evaluation;
@@ -126,8 +125,8 @@ public sealed partial class DetailPane
     // ------------------------------------------------------------------ hero
 
     /// <summary>
-    /// The location line's ladder (<see cref="LocationLine.Rungs"/>): the journal path and the level, without the path's
-    /// prefix, then the level alone; built once per selection.
+    /// The location line's ladder (<see cref="LocationLine.Rungs"/>): the journal path, then its last segment; built once
+    /// per selection. It carries no level: the level chip under the banner is the level's one home.
     /// </summary>
     private string[] HeroLocation(QuestRecord quest)
     {
@@ -135,8 +134,7 @@ public sealed partial class DetailPane
         {
             heroPathFrom = model.JournalSegments;
             heroPathRow = quest.RowId;
-            var level = string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, quest.DisplayLevel);
-            heroPath = LocationLine.Rungs(model.JournalSegments, JournalSeparator, level);
+            heroPath = LocationLine.Rungs(model.JournalSegments, JournalSeparator, string.Empty);
         }
 
         return heroPath;

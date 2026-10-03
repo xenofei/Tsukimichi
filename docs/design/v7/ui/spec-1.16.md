@@ -159,7 +159,7 @@ The gates on a light palette:
 | **Stars** | **None on light palettes** (the supervisor's ruling). Snow is a still dawn with no stars at all; stars are a dark-palette feature. The morning star of the first draft is removed. |
 | Moving sky, twinkle, completion meteor, Milky Way | **Off** on light palettes. The Motion settings show them disabled, with "Night palettes only". |
 | Constellations | Off |
-| Banners (Full) | The **daylight grade**: no night multiply, 20 % desaturation, brightness 1.04, and a scrim to Snow (`#EEF1F6`: 0 at the top, .22 at 40 %, .92 at the foot). The title is **navy ink** with a white 1 px shadow and a 10 px white bloom. **The location line takes the same shadow and bloom**, and fits **one line by the label ladder**: the full path ("Main Scenario (Heavensward) › Heavensward · Lv 54"), then without its "Main Scenario (…) ›" prefix ("Heavensward · Lv 54"), then the level alone. It never ends in an ellipsis and never wraps, so no word is left alone over bright art. The keyline is 1 px lead. |
+| Banners (Full) | The **daylight grade**: no night multiply, 20 % desaturation, brightness 1.04, and a scrim to Snow (`#EEF1F6`: 0 at the top, .22 at 40 %, .92 at the foot). The title is **navy ink** with a white 1 px shadow and a 10 px white bloom. **The location line takes the same shadow and bloom**, and fits **one line by the label ladder**: the full path ("Main Scenario (Heavensward) › Heavensward"), then without its "Main Scenario (…) ›" prefix ("Heavensward"). It never ends in an ellipsis and never wraps, so no word is left alone over bright art. The location line carries no level; the level chip under the banner does. The keyline is 1 px lead. |
 
 ### A6. Ornament and frames on a light palette
 
