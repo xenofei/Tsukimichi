@@ -269,7 +269,9 @@ public sealed class MedalTests
     [Fact]
     public void Medallion_detail_tokens_come_from_gen5()
     {
-        var gen5 = File.ReadAllText(Path.Combine(Round5Dir(), "_src", "gen5.py"));
+        // Plan v7 V1 adds the Completed face's basalt, hearts and highland from make_completed.py, the v7 face's generator.
+        var gen5 = File.ReadAllText(Path.Combine(Round5Dir(), "_src", "gen5.py"))
+            + File.ReadAllText(Path.Combine(OrnamentLayoutTests.RepoRoot(), "docs", "design", "v7", "ui", "completed-moon", "make_completed.py"));
         var hexes = Regex.Matches(gen5, "#([0-9A-Fa-f]{6})").Select(static m => Convert.ToUInt32(m.Groups[1].Value, 16)).ToHashSet();
         var fields = typeof(GlyphTokens.MedallionDetail).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         foreach (var field in fields.Where(static f => f.IsLiteral && f.FieldType == typeof(uint)))

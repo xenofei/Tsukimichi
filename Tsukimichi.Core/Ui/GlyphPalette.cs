@@ -574,6 +574,15 @@ public static class GlyphTokens
         /// <summary>#7B8AAF – Completed's full moon, dark limb.</summary>
         public const uint FullMoonDeepHex = 0x7B8AAF;
 
+        /// <summary>#56658C – Completed's maria (plan v7 V1, make_completed.py): a deeper basalt, one union at .46.</summary>
+        public const uint MariaBasaltHex = 0x56658C;
+
+        /// <summary>#3F4B70 – the darker hearts of Completed's three largest seas (plan v7 V1).</summary>
+        public const uint MareHeartHex = 0x3F4B70;
+
+        /// <summary>#EEF1F8 – the soft albedo lift of Completed's southern highlands (plan v7 V1).</summary>
+        public const uint HighlandHex = 0xEEF1F8;
+
         /// <summary>#4A5B90 – Not checked's veiled earthshine moon, lit end.</summary>
         public const uint VeiledHex = 0x4A5B90;
 
@@ -613,6 +622,9 @@ public static class GlyphTokens
         public static readonly Vector4 FullMoon = ColorMath.FromHex(FullMoonHex);
         public static readonly Vector4 FullMoonMid = ColorMath.FromHex(FullMoonMidHex);
         public static readonly Vector4 FullMoonDeep = ColorMath.FromHex(FullMoonDeepHex);
+        public static readonly Vector4 MariaBasalt = ColorMath.FromHex(MariaBasaltHex);
+        public static readonly Vector4 MareHeart = ColorMath.FromHex(MareHeartHex);
+        public static readonly Vector4 Highland = ColorMath.FromHex(HighlandHex);
         public static readonly Vector4 Veiled = ColorMath.FromHex(VeiledHex);
         public static readonly Vector4 VeiledDeep = ColorMath.FromHex(VeiledDeepHex);
         public static readonly Vector4 VeiledMaria = ColorMath.FromHex(VeiledMariaHex);
