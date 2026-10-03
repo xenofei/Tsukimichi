@@ -70,8 +70,12 @@ public sealed class CharacterSettingsBook
     public bool IsWhyOpen(ulong contentId, string gateId) =>
         Get(contentId)?.PayoffWhyOpen.Contains(gateId, StringComparer.Ordinal) == true;
 
-    /// <summary>The available quests the player has seen (the Journal badge's "Newly ready"); null before the character's first look.</summary>
-    public IReadOnlyList<uint>? SeenReady(ulong contentId) => Get(contentId)?.SeenReady;
+    /// <summary>
+    /// The available quests the player has seen (the Journal badge's "Newly ready"); null before the character's first
+    /// look, and for a set kept under another <see cref="Query.NewlyReady.RulesVersion"/>, which is seeded again.
+    /// </summary>
+    public IReadOnlyList<uint>? SeenReady(ulong contentId) =>
+        Get(contentId) is { SeenReady: { } seen } entry && (entry.SeenReadyRules ?? 1) == Query.NewlyReady.RulesVersion ? seen : null;
 
     /// <summary>Applies one edit here and queues its save.</summary>
     public void Edit(CharacterSettingChange change) => Edit([change]);
@@ -319,7 +323,8 @@ public sealed class CharacterSettingsBook
                 || x.CompareWith != y.CompareWith
                 || !x.PayoffGatesNoticed.SequenceEqual(y.PayoffGatesNoticed, StringComparer.Ordinal)
                 || !x.PayoffWhyOpen.SequenceEqual(y.PayoffWhyOpen, StringComparer.Ordinal)
-                || !SameIds(x.SeenReady, y.SeenReady))
+                || !SameIds(x.SeenReady, y.SeenReady)
+                || x.SeenReadyRules != y.SeenReadyRules)
             {
                 return false;
             }

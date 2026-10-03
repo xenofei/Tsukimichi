@@ -69,6 +69,61 @@ public class NewlyReadyTests
     }
 
     [Fact]
+    public void Nothing_available_seeds_nothing_so_the_next_evaluation_is_not_a_flood()
+    {
+        // A capture committed before the game sent the quest data lists nothing: no set is seeded or saved.
+        var empty = NewlyReady.Reconcile([], seen: null);
+        Assert.Empty(empty.New);
+        Assert.Null(empty.Seen);
+        Assert.False(empty.SeenChanged);
+
+        // So the first real evaluation seeds, rather than reporting all 300 quests as new.
+        var real = NewlyReady.Reconcile([.. Enumerable.Range(1, 300).Select(static i => (uint)i)], empty.Seen);
+        Assert.Empty(real.New);
+        Assert.Equal(300, real.Seen!.Length);
+        Assert.True(real.SeenChanged);
+    }
+
+    [Fact]
+    public void A_seen_set_kept_under_other_rules_is_seeded_again()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"tsukimichi-seen-rules-{Guid.NewGuid():N}.json");
+        try
+        {
+            var book = new CharacterSettingsBook(path);
+            book.Edit(CharacterSettingChange.Seen(7, [5, 6]));
+            Assert.Equal(NewlyReady.RulesVersion, book.Get(7)!.SeenReadyRules);
+
+            // A set written under another version of the rules reads as none, so the badge seeds it again silently.
+            var text = File.ReadAllText(path);
+            Assert.Matches("\"seenReadyRules\"\\s*:\\s*" + NewlyReady.RulesVersion, text);
+            File.WriteAllText(path, System.Text.RegularExpressions.Regex.Replace(text, "(\"seenReadyRules\"\\s*:\\s*)\\d+", "${1}" + (NewlyReady.RulesVersion + 1)));
+            var newer = new CharacterSettingsBook(path);
+            newer.Load();
+            Assert.Null(newer.SeenReady(7));
+
+            // One written before the version was stored reads as the first rules.
+            File.WriteAllText(path, System.Text.RegularExpressions.Regex.Replace(text, ",?\\s*\"seenReadyRules\"\\s*:\\s*\\d+", string.Empty));
+            var older = new CharacterSettingsBook(path);
+            older.Load();
+            Assert.Null(older.Get(7)!.SeenReadyRules);
+            var rules = NewlyReady.RulesVersion;
+            if (rules == 1)
+            {
+                Assert.Equal(new uint[] { 5, 6 }, older.SeenReady(7));
+            }
+            else
+            {
+                Assert.Null(older.SeenReady(7));
+            }
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void What_became_available_since_is_new()
     {
         var state = NewlyReady.Reconcile([1, 2, 3, 4, 5], seen: [1, 2, 3, 4]);
@@ -144,7 +199,7 @@ public class NewlyReadyTests
         var state = NewlyReady.Reconcile([1, 2, 3], [1]);
         Assert.Equal(new uint[] { 2, 3 }, state.New);
 
-        var seen = NewlyReady.MarkSeen(state.Seen, [3], new HashSet<uint> { 1, 2, 3 })!;
+        var seen = NewlyReady.MarkSeen(state.Seen!, [3], new HashSet<uint> { 1, 2, 3 })!;
         Assert.Equal(new uint[] { 2 }, NewlyReady.Reconcile([1, 2, 3], seen).New);
     }
 

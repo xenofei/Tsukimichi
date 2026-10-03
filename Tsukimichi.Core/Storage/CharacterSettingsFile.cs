@@ -49,6 +49,13 @@ public sealed class CharacterSettings
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<uint>? SeenReady { get; set; }
 
+    /// <summary>
+    /// The <see cref="Query.NewlyReady.RulesVersion"/> <see cref="SeenReady"/> was kept under (null reads as 1, the
+    /// first). A set kept under another version is ignored and seeded again (<see cref="CharacterSettingsBook.SeenReady"/>).
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? SeenReadyRules { get; set; }
+
     /// <summary>Properties this build does not know (a newer build's), written back unchanged.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; set; }
@@ -57,7 +64,7 @@ public sealed class CharacterSettings
     [JsonIgnore]
     public bool IsEmpty =>
         SpoilerShield is null && !Hidden && !DontTrack && CompareWith is null
-        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && SeenReady is null && (Extra is null || Extra.Count == 0);
+        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
 
     /// <summary>
     /// What outlives Forget character and "Delete all data": the player's choices about the character itself, hidden
@@ -78,6 +85,7 @@ public sealed class CharacterSettings
         PayoffGatesNoticed = [.. PayoffGatesNoticed],
         PayoffWhyOpen = [.. PayoffWhyOpen],
         SeenReady = SeenReady is null ? null : [.. SeenReady],
+        SeenReadyRules = SeenReadyRules,
         Extra = Extra is null ? null : new Dictionary<string, JsonElement>(Extra, StringComparer.Ordinal),
     };
 
@@ -254,6 +262,7 @@ public static class CharacterSettingsFile
                     break;
                 case CharacterSettingField.SeenReady:
                     entry.SeenReady = change.RowIds is null ? null : [.. change.RowIds];
+                    entry.SeenReadyRules = change.RowIds is null ? null : Query.NewlyReady.RulesVersion;
                     break;
             }
 
