@@ -182,7 +182,7 @@ public sealed partial class MainWindow : Window, IDisposable
         };
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tablePane.Lane = filterPanel;
-        tonightCard = new TonightCard(ui, runner, OnFiltersChanged);
+        tonightCard = new TonightCard(ui, runner, OnFiltersChanged) { Textures = textures };
         runner.QuestPinned += OnQuestPinned;
 
         version = typeof(Plugin).Assembly.GetName().Version?.ToString(3) ?? "0";

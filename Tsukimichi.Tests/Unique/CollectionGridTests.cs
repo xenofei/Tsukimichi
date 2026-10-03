@@ -48,6 +48,9 @@ public sealed class CollectionGridTests
         Assert.Equal(1, zu.OwnedCount);
         Assert.Equal(100u, zu.QuestRowId);
         Assert.Equal([OwnedCell.Unknown, OwnedCell.Unknown, OwnedCell.Unknown], rows.Single(static r => r.Name == "Dance").Cells);
+
+        // Each row carries the entry it was made from, so the grid can draw the reward's own art (UI-5d).
+        Assert.All(rows, static r => Assert.True(r.Entry is { } e && e.Kind == r.Kind && e.RewardId == r.RewardId && e.RewardName == r.Name));
     }
 
     [Fact]

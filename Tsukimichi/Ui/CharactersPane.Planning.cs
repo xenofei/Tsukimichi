@@ -1,6 +1,7 @@
 using System;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
@@ -128,12 +129,22 @@ public sealed partial class CharactersPane
         ImGui.TableSetupColumn(Strings.PlanningBoardColumnToday, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.PlanningBoardColumnWhere, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableHeadersRow();
+        var sheets = IconSheets;
+        var iconSize = MathF.Round(UiMetrics.JobIconSize);
         for (var i = 0; i < lines.Count; i++)
         {
             var line = lines[i];
             using var rowId = ImRaii.PushId(i);
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
+
+            // The society's emblem leads its name, as on the dashboard's allied societies table (UI-5d).
+            var emblem = PaneIcons.Tribe(line.Row.Tribe, sheets);
+            if (emblem != 0)
+            {
+                DrawLeadIcon(NodeIcon.Game(emblem), iconSize);
+            }
+
             if (!Chrome.FitText(line.Society, ImGui.GetColorU32(ImGuiCol.Text)) && ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(line.Society);

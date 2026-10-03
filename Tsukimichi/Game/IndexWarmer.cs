@@ -23,7 +23,9 @@ namespace Tsukimichi.Game;
 /// <item><see cref="Duties"/>: the duty kinds (the Plan tab, the unlocks index);</item>
 /// <item><see cref="Aetherytes"/>: aetherytes and aethernet shards (travel, the interior warm-up);</item>
 /// <item><see cref="DutyRuns"/>: the duties AutoDuty can run (the Duties section, the catch-up);</item>
-/// <item><see cref="RewardArt"/>: every Moonlit reward's own game art (G6).</item>
+/// <item><see cref="RewardArt"/>: every Moonlit reward's own game art (G6);</item>
+/// <item><see cref="PaneIcons"/>: the role, society, Grand Company, achievement and Duty Finder icons of the Characters,
+/// Journal table and Plan panes (UI-5d).</item>
 /// </list>
 /// When the last one lands, one log line gives each build's time: the cost the first open of each pane paid before.
 /// </summary>
@@ -65,6 +67,9 @@ public sealed class IndexWarmer
                     message => log.Warning("{Message}", message));
             },
             ex => log.Warning(ex, "Reward art could not be read; Moonlit shows the rewards' item icons"));
+        PaneIcons = new WarmedValue<PaneIconSheets>(
+            () => PaneIconSheets.Build(data.Excel, message => log.Warning("{Message}", message)),
+            ex => log.Warning(ex, "Pane icons could not be read; the Characters, Journal and Plan rows keep their stand-ins"));
     }
 
     public WarmedValue<FlightIndex> Flight { get; }
@@ -77,17 +82,19 @@ public sealed class IndexWarmer
 
     public WarmedValue<RewardArtIndex> RewardArt { get; }
 
+    public WarmedValue<PaneIconSheets> PaneIcons { get; }
+
     /// <summary>Whether every index has landed (or failed).</summary>
-    public bool IsDone => Flight.IsDone && Duties.IsDone && Aetherytes.IsDone && DutyRuns.IsDone && RewardArt.IsDone;
+    public bool IsDone => Flight.IsDone && Duties.IsDone && Aetherytes.IsDone && DutyRuns.IsDone && RewardArt.IsDone && PaneIcons.IsDone;
 
     /// <summary>Starts every build on the thread pool, once; the returned task ends when all have landed and logged.</summary>
     public Task Start()
     {
         var started = Stopwatch.GetTimestamp();
-        var all = Task.WhenAll(Flight.Start(), Duties.Start(), Aetherytes.Start(), DutyRuns.Start(), RewardArt.Start());
+        var all = Task.WhenAll(Flight.Start(), Duties.Start(), Aetherytes.Start(), DutyRuns.Start(), RewardArt.Start(), PaneIcons.Start());
         return all.ContinueWith(
             _ => log.Information(
-                "Indexes warmed off the frame in {Total:F0} ms: flight {Flight:F0} ms, duty kinds {Duties:F0} ms, aetherytes {Aetherytes:F0} ms, AutoDuty duties {DutyRuns:F0} ms, reward art {Art:F0} ms ({ArtCount} icons, {Pictures} pictures); the first open of a pane builds none of them",
+                "Indexes warmed off the frame in {Total:F0} ms: flight {Flight:F0} ms, duty kinds {Duties:F0} ms, aetherytes {Aetherytes:F0} ms, AutoDuty duties {DutyRuns:F0} ms, reward art {Art:F0} ms ({ArtCount} icons, {Pictures} pictures), pane icons {PaneIcons:F0} ms; the first open of a pane builds none of them",
                 Stopwatch.GetElapsedTime(started).TotalMilliseconds,
                 Flight.BuildMs,
                 Duties.BuildMs,
@@ -95,7 +102,8 @@ public sealed class IndexWarmer
                 DutyRuns.BuildMs,
                 RewardArt.BuildMs,
                 RewardArt.Value?.Count ?? 0,
-                RewardArt.Value?.ArtCount ?? 0),
+                RewardArt.Value?.ArtCount ?? 0,
+                PaneIcons.BuildMs),
             TaskScheduler.Default);
     }
 }

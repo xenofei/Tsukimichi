@@ -12,7 +12,11 @@ public enum OwnedCell : byte
 }
 
 /// <summary>One reward row of the collection grid: the reward, one cell per character column, and how many own it.</summary>
-public sealed record CollectionGridRow(RewardKind Kind, uint RewardId, string Name, uint QuestRowId, OwnedCell[] Cells, int OwnedCount);
+public sealed record CollectionGridRow(RewardKind Kind, uint RewardId, string Name, uint QuestRowId, OwnedCell[] Cells, int OwnedCount)
+{
+    /// <summary>The entry the row was made from, for its icon (UI-5d); null for a row built by hand.</summary>
+    public UniqueRewardEntry? Entry { get; init; }
+}
 
 /// <summary>One unlock quest row of the grid's quest mode: the quest and its state per character column (null: not known yet).</summary>
 public sealed record QuestGridRow(QuestRecord Quest, string Name, QuestState?[] Cells, int DoneCount);
@@ -79,7 +83,7 @@ public static class CollectionGrid
                 continue;
             }
 
-            rows.Add(new CollectionGridRow(entry.Kind, entry.RewardId, entry.RewardName, entry.QuestRowId, cells, owned));
+            rows.Add(new CollectionGridRow(entry.Kind, entry.RewardId, entry.RewardName, entry.QuestRowId, cells, owned) { Entry = entry });
         }
 
         rows.Sort(static (a, b) =>
