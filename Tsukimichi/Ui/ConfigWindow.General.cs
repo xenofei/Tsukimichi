@@ -19,6 +19,9 @@ public sealed partial class ConfigWindow
 {
     private static readonly LocArray FlairOptions = new(static () => [Strings.ConfigFlairFull, Strings.ConfigFlairQuiet, Strings.ConfigFlairPlain]);
     private static readonly LocArray MoonStyleOptions = new(static () => [Strings.ConfigMoonStyleMedallion, Strings.ConfigMoonStyleClassic]);
+
+    /// <summary>Giver portraits (1.15, spec-1.15 A8), in <see cref="GiverPortraitMode"/> order. The portrait pack joins as a third choice with F4.</summary>
+    private static readonly LocArray GiverPortraitOptions = new(static () => [Strings.SettingsGiverPortraitsOff, Strings.SettingsGiverPortraitsGameArt]);
     private static readonly LocArray PaletteOptions = new(static () => [Strings.ConfigGlyphPaletteStandard, Strings.ConfigGlyphPaletteHighContrast]);
 
     /// <summary>The Journal badge's choices, in <see cref="JournalBadgeMode"/> order.</summary>
@@ -143,6 +146,13 @@ public sealed partial class ConfigWindow
         if (Choice(Strings.ConfigMoonStyle, Strings.ConfigMoonStyleHint, ref moonStyle, MoonStyleOptions.Value, "medallion classic moon medal glyph style compare"))
         {
             settings.MoonStyle = (MoonStyle)moonStyle;
+            Save();
+        }
+
+        var portraits = Enum.IsDefined(settings.GiverPortraits) ? (int)settings.GiverPortraits : (int)GiverPortraitMode.GameArt;
+        if (Choice(Strings.SettingsGiverPortraits, Strings.SettingsGiverPortraitsHint, ref portraits, GiverPortraitOptions.Value, "giver portrait face picture avatar npc art silhouette"))
+        {
+            settings.GiverPortraits = (GiverPortraitMode)portraits;
             Save();
         }
 

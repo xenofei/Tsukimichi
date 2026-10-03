@@ -50,6 +50,12 @@ Moonlit treasures collects quests with unique rewards, and per-character snapsho
     -->
     <EmbeddedResource Include="assets\ui\medals.png" LogicalName="Tsukimichi.assets.ui.medals.png" />
     <EmbeddedResource Include="assets\ui\medals@2x.png" LogicalName="Tsukimichi.assets.ui.medals@2x.png" />
+    <!--
+      The giver-portrait atlas (1.15, docs/design/v7/ui/1.15/silhouettes/gen_portrait_atlas.py): the race silhouettes, the
+      moon disc and Full's plate shade. Ui\PortraitAtlas.cs, layout in Core/Ui/PortraitAtlasLayout.cs, portraits.json beside.
+    -->
+    <EmbeddedResource Include="assets\ui\portraits.png" LogicalName="Tsukimichi.assets.ui.portraits.png" />
+    <EmbeddedResource Include="assets\ui\portraits@2x.png" LogicalName="Tsukimichi.assets.ui.portraits@2x.png" />
   </ItemGroup>
 
   <ItemGroup>

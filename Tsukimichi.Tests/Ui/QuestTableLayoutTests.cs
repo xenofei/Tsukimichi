@@ -192,6 +192,28 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void The_giver_column_steps_aside_first_and_takes_no_room_while_it_is_off()
+    {
+        // 1.15 (F5): the optional Giver column (a 20 px avatar and the name) hides before every other column, EXP
+        // included; unmeasured (Giver portraits off) it takes no room at all.
+        var with = English with { Exp = 90f, Giver = 160f };
+        var specs = Specs(with);
+        Assert.Equal(8, specs[Col(QuestColumn.Giver)].Priority);
+        Assert.True(specs[Col(QuestColumn.Giver)].Priority > specs[Col(QuestColumn.Exp)].Priority);
+        Assert.Equal(0f, Specs(English)[Col(QuestColumn.Giver)].Min);
+
+        var all = Need(QuestColumn.Glyph, QuestColumn.Name, QuestColumn.Level, QuestColumn.Job, QuestColumn.Status, QuestColumn.Expansion, QuestColumn.Rewards)
+            + specs[Col(QuestColumn.Exp)].Min;
+        var wide = Plan(all + specs[Col(QuestColumn.Giver)].Min, with);
+        Assert.True(wide.Visible[Col(QuestColumn.Giver)]);
+        Assert.True(wide.Visible[Col(QuestColumn.Exp)]);
+
+        var tight = Plan(all, with);
+        Assert.False(tight.Visible[Col(QuestColumn.Giver)]);
+        Assert.True(tight.Visible[Col(QuestColumn.Exp)]);
+    }
+
+    [Fact]
     public void Columns_step_aside_rewards_expansion_job_icon_job_level_and_never_status()
     {
         var all = Need(QuestColumn.Glyph, QuestColumn.Name, QuestColumn.Level, QuestColumn.Job, QuestColumn.Status, QuestColumn.Expansion, QuestColumn.Rewards);
@@ -308,7 +330,7 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
     {
         var (plan, visible, widths) = Plan(340f);
         Assert.True(plan.TwoLine);
-        Assert.Equal(new[] { true, true, false, false, false, false, false, false, false }, visible);
+        Assert.Equal(new[] { true, true, false, false, false, false, false, false, false, false }, visible);
         Assert.Equal(English.Glyph + English.CellOverhead, widths[Col(QuestColumn.Glyph)], 3);
         Assert.Equal(340f, widths.Sum(), 3);
     }

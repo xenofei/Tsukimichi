@@ -10044,4 +10044,44 @@
     <value>Level 100</value>
     <comment>Settings, Decoration preview: a sample line in the card.</comment>
   </data>
+  <data name="Portrait.SourceDutySupport" xml:space="preserve">
+    <value>Portrait: Duty Support portrait</value>
+    <comment>Giver portrait tooltip: where the face comes from (the game's Duty Support member art).</comment>
+  </data>
+  <data name="Portrait.SourceTripleTriad" xml:space="preserve">
+    <value>Portrait: Triple Triad card art</value>
+    <comment>Giver portrait tooltip: where the face comes from (the giver's Triple Triad card).</comment>
+  </data>
+  <data name="Portrait.SourceBattleTalk" xml:space="preserve">
+    <value>Portrait: battle dialogue portrait</value>
+    <comment>Giver portrait tooltip: where the face comes from (the painted face shown in battle dialogue).</comment>
+  </data>
+  <data name="Portrait.SourceDelivery" xml:space="preserve">
+    <value>Portrait: custom delivery portrait</value>
+    <comment>Giver portrait tooltip: where the face comes from (the custom delivery client's portrait).</comment>
+  </data>
+  <data name="Settings.GiverPortraits" xml:space="preserve">
+    <value>Giver portraits</value>
+    <comment>Settings, Look: choice of portraits for quest givers (the Giver card, Next stops, the Route window, the Journal's Giver column).</comment>
+  </data>
+  <data name="Settings.GiverPortraitsHint" xml:space="preserve">
+    <value>The giver's face from the game's art, or a silhouette, emblem or initials. Read locally; never uploaded.</value>
+    <comment>Hint under Giver portraits.</comment>
+  </data>
+  <data name="Settings.GiverPortraitsOff" xml:space="preserve">
+    <value>Off</value>
+    <comment>Giver portraits choice: no portraits.</comment>
+  </data>
+  <data name="Settings.GiverPortraitsGameArt" xml:space="preserve">
+    <value>Game art</value>
+    <comment>Giver portraits choice: faces from the game's own art (the default).</comment>
+  </data>
+  <data name="ColumnGiver" xml:space="preserve">
+    <value>Giver</value>
+    <comment>Journal table column header: the quest giver's portrait and name. Off by default.</comment>
+  </data>
+  <data name="ColumnGiverTooltip" xml:space="preserve">
+    <value>Who gives the quest, with their portrait. Hover a portrait for a larger one.</value>
+    <comment>Journal table: the Giver column header's tooltip.</comment>
+  </data>
 </root>

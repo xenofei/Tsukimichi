@@ -179,6 +179,15 @@ public sealed partial class MainWindow : Window, IDisposable
             ShowOpens = () => plugin.Settings?.JournalShowOpensColumn == true,
             ColumnWidths = () => plugin.Settings?.JournalColumnWidths,
             ColumnWidthsChanged = OnDisplayChanged,
+            GiverColumnDefaulted = () => plugin.Settings?.JournalGiverColumnDefaulted ?? true,
+            MarkGiverColumnDefaulted = () =>
+            {
+                if (plugin.Settings is { } settings)
+                {
+                    settings.JournalGiverColumnDefaulted = true;
+                    OnDisplayChanged();
+                }
+            },
         };
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tablePane.Lane = filterPanel;

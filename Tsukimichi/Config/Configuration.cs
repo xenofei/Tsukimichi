@@ -512,6 +512,14 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public bool MilkyWay { get; set; }
 
+    // ---- 1.15.0: giver portraits (feature plan v7 F2, F5) ----
+    /// <summary>
+    /// Settings › General › Look › Giver portraits (docs/design/v7/ui/spec-1.15.md A8): Game art (the default) puts the
+    /// giver's face from the game's own art, or a fallback, on a moon plate in the Giver card, beside each stop and in the
+    /// Journal's optional Giver column; Off draws no plates. The art is read from the install and never uploaded.
+    /// </summary>
+    public Core.Ui.GiverPortraitMode GiverPortraits { get; set; } = Core.Ui.GiverPortraitMode.GameArt;
+
     /// <summary>
     /// Moonlit's view (feature plan v4 V5, proposal §7.5): a gallery of reward icons instead of the table. Off (the
     /// table) by default; remembered once switched.
@@ -743,6 +751,11 @@ public sealed partial class Configuration : IPluginConfiguration
         if (!Enum.IsDefined(config.Flair))
         {
             config.Flair = Flair.Full;
+        }
+
+        if (!Enum.IsDefined(config.GiverPortraits))
+        {
+            config.GiverPortraits = Core.Ui.GiverPortraitMode.GameArt;
         }
 
         if (!Enum.IsDefined(config.JournalBadge))
