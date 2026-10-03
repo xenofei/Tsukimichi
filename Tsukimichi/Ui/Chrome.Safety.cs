@@ -25,6 +25,38 @@ public static partial class Chrome
     // Each label with the armed id, made once per label so the items allocate nothing per frame.
     private static readonly Dictionary<string, string> ArmedLabels = new(StringComparer.Ordinal);
 
+    // The guards holding a first click made in a context menu (two-click mode), checked once a frame by BeginFrame.
+    private static readonly HashSet<ClickGuard> MenuArmedGuards = [];
+    private static readonly List<ClickGuard> MenuGuardsClosed = [];
+
+    /// <summary>
+    /// Once per frame, before any window draws: a first click made in a context menu (<see cref="ArmedMenuItem"/>) is
+    /// forgotten once its menu was not drawn, so "Click again" never outlives the popup.
+    /// </summary>
+    public static void BeginFrame()
+    {
+        if (MenuArmedGuards.Count == 0)
+        {
+            return;
+        }
+
+        var frame = ImGui.GetFrameCount();
+        foreach (var guard in MenuArmedGuards)
+        {
+            if (!guard.KeepMenuArm(frame))
+            {
+                MenuGuardsClosed.Add(guard);
+            }
+        }
+
+        foreach (var guard in MenuGuardsClosed)
+        {
+            MenuArmedGuards.Remove(guard);
+        }
+
+        MenuGuardsClosed.Clear();
+    }
+
     /// <summary>The width <see cref="ArmedButton"/> takes for <paramref name="label"/>, so a caller can wrap it whole.</summary>
     public static float ArmedButtonWidth(string label) =>
         MathF.Max(ImGui.CalcTextSize(label).X, ImGui.CalcTextSize(Strings.SafetyClickAgain).X) + (ImGui.GetStyle().FramePadding.X * 2f);
@@ -65,14 +97,14 @@ public static partial class Chrome
     /// <summary>
     /// A context-menu item guarded by <paramref name="guard"/>: dimmed until Ctrl or Shift is held (or the first of two
     /// clicks landed), a plain click keeps the menu open and says which key arms it, and the click that acts closes the
-    /// menu and returns true.
+    /// menu and returns true. A first click lasts only while the menu stays open (<see cref="BeginFrame"/>).
     /// </summary>
     public static bool ArmedMenuItem(string label, ClickGuard guard, GuardedAction action, string tooltip, ulong target = 0)
     {
         ArgumentNullException.ThrowIfNull(guard);
         var now = ImGui.GetTime();
         var twoClick = Safety.Settings.TwoClick;
-        var awaiting = twoClick && guard.AwaitingSecond(now, target);
+        var awaiting = twoClick && guard.AwaitingSecond(now, target, inMenu: true);
         var armed = Safety.KeyHeld || awaiting;
 
         bool clicked;
@@ -83,7 +115,14 @@ public static partial class Chrome
         }
 
         var hovered = ImGui.IsItemHovered();
-        var fired = clicked && guard.Click(Safety.KeyHeld, twoClick, now, target);
+        var fired = clicked && guard.Click(Safety.KeyHeld, twoClick, now, target, inMenu: true);
+
+        // "Click again" lasts only as long as the menu: BeginFrame forgets the first click once the menu is not drawn.
+        if (guard.MenuShown(ImGui.GetFrameCount(), target))
+        {
+            MenuArmedGuards.Add(guard);
+        }
+
         DrawArmedCue(ImGuiP.GetItemID(), hovered, awaiting, clicked && !fired, ImGui.GetItemRectMin(), ImGui.GetItemRectMax());
         if (hovered)
         {

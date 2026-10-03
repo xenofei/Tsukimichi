@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
@@ -21,6 +22,10 @@ public sealed partial class ConfigWindow
     private string? aliasSkippedLine;
     private string? aliasInvalidLine;
 
+    // The aliases as typed, until the field is left (or Settings closes): only then are they saved and registered
+    // together, so Settings never holds an alias that is not applied. Null when not editing.
+    private string? aliasDraft;
+
     /// <summary>The chat command, whose aliases this block edits; set by the plugin. Null hides the block.</summary>
     public TsukimichiCommand? Command { get; set; }
 
@@ -37,17 +42,16 @@ public sealed partial class ConfigWindow
             return;
         }
 
-        var text = settings.CommandAliases ?? string.Empty;
+        var text = aliasDraft ?? settings.CommandAliases ?? string.Empty;
         ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(260f)));
         if (ImGui.InputTextWithHint("##commandAliases", "/quests /tm", ref text, CommandAliasesMaxLength))
         {
-            settings.CommandAliases = text;
+            aliasDraft = text;
         }
 
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
-            Save();
-            command.ApplyAliases(settings.CommandAliases);
+            ApplyAliasDraft();
         }
 
         HintOnHover(Strings.ConfigCommandAliasesHint);
@@ -71,6 +75,28 @@ public sealed partial class ConfigWindow
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Commits the aliases being typed: into Settings, saved, and registered, together. Runs when the field is left
+    /// after an edit and when the Settings window closes with the field still being typed in.
+    /// </summary>
+    private void ApplyAliasDraft()
+    {
+        if (aliasDraft is not { } draft)
+        {
+            return;
+        }
+
+        aliasDraft = null;
+        if (string.Equals(draft, settings.CommandAliases ?? string.Empty, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        settings.CommandAliases = draft;
+        Save();
+        Command?.ApplyAliases(settings.CommandAliases);
     }
 
     private void RefreshAliasLines(TsukimichiCommand command)

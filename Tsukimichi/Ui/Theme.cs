@@ -18,6 +18,9 @@ namespace Tsukimichi.Ui;
 /// Gold discipline (game UX panel finding 2): Moon is for what the player can act on now (Ready, Accepted, the next
 /// step, pins, the MSQ pill, primary buttons, progress) and the selected tree row's rule; chrome that is not a call to
 /// action (sort arrows, selection outlines, focus rings, generic badges, active segments) uses Silver or VeilLine.
+///
+/// New UI from 1.11 on takes its gilt, moonstone and scene colours from the "Menphina's Medallion" palette,
+/// <see cref="GlyphTokens.Medallion"/> (docs/design/moon-v6/round5/medallion-r5/concept.md), not from the old gold.
 /// </summary>
 public static class Theme
 {

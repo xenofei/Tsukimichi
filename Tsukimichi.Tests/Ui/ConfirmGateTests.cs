@@ -56,8 +56,9 @@ public class ConfirmGateTests
 
         var fired = Hold(gate, 120);
 
-        // 36 frames of 1/60 s is exactly 0.6 s; float accumulation may need one more.
-        Assert.InRange(fired, 35, 37);
+        // The first frame (the press beginning) adds nothing; 36 more of 1/60 s are exactly 0.6 s, and float
+        // accumulation may need one more.
+        Assert.InRange(fired, 36, 38);
         Assert.Equal(1f, gate.Progress);
         Assert.False(gate.Holding);
         Assert.False(gate.Update(chordHeld: false, pressed: true, Frame), "latched until release");
@@ -68,15 +69,17 @@ public class ConfirmGateTests
     {
         var gate = new ConfirmGate(1f);
 
-        Assert.False(gate.Update(chordHeld: false, pressed: true, 0.25f));
+        Assert.False(gate.Update(chordHeld: false, pressed: true, 0.05f));
+        Assert.Equal(0f, gate.Progress);
+        Assert.Equal(-1, Hold(gate, 5, 0.05f));
         Assert.Equal(0.25f, gate.Progress, 3);
         Assert.True(gate.Holding);
         Assert.Equal(0.75f, gate.Remaining, 3);
 
-        Assert.False(gate.Update(chordHeld: false, pressed: true, 0.5f));
+        Assert.Equal(-1, Hold(gate, 10, 0.05f));
         Assert.Equal(0.75f, gate.Progress, 3);
 
-        Assert.True(gate.Update(chordHeld: false, pressed: true, 5f));
+        Assert.InRange(Hold(gate, 10, 0.05f), 4, 5);
         Assert.Equal(1f, gate.Progress);
         Assert.Equal(0f, gate.Remaining);
     }
@@ -142,12 +145,18 @@ public class ConfirmGateTests
         Assert.Equal(0, gate.RemainingTenths);
 
         gate.Update(chordHeld: false, pressed: true, 0.05f);
+        Assert.Equal(0, gate.RemainingTenths); // the press only began
+
+        gate.Update(chordHeld: false, pressed: true, 0.05f);
         Assert.Equal(6, gate.RemainingTenths); // 0.55 s left rounds up
 
-        gate.Update(chordHeld: false, pressed: true, 0.5f);
-        Assert.Equal(1, gate.RemainingTenths); // 0.05 s left never shows as zero
+        Hold(gate, 9, 0.05f);
+        Assert.Equal(1, gate.RemainingTenths); // 0.1 s left
 
-        gate.Update(chordHeld: false, pressed: true, 0.1f);
+        gate.Update(chordHeld: false, pressed: true, 0.04f);
+        Assert.Equal(1, gate.RemainingTenths); // 0.01 s left never shows as zero
+
+        Assert.InRange(Hold(gate, 2, 0.05f), 0, 1);
         Assert.True(gate.Confirmed);
         Assert.Equal(0, gate.RemainingTenths);
     }
@@ -156,6 +165,7 @@ public class ConfirmGateTests
     public void Countdown_tenths_scale_with_a_custom_hold()
     {
         var gate = new ConfirmGate(1.2f);
+        gate.Update(chordHeld: false, pressed: true, 0.01f);
         gate.Update(chordHeld: false, pressed: true, 0.01f);
 
         Assert.Equal(12, gate.HoldTenths);
@@ -171,7 +181,7 @@ public class ConfirmGateTests
 
         gate.SetHoldSeconds(1.5f);
         Assert.Equal(1.5f, gate.HoldSeconds, 4);
-        Assert.InRange(Hold(gate, 200), 89, 91); // 90 frames of 1/60 s
+        Assert.InRange(Hold(gate, 200), 90, 92); // the press beginning, then 90 frames of 1/60 s
 
         gate.Update(chordHeld: false, pressed: false, Frame);
         gate.SetHoldSeconds(0.01f);
@@ -258,6 +268,56 @@ public class ConfirmGateTests
         Assert.False(gate.ClickTwice(chordHeld: false, now: 1.0));
         Assert.False(gate.ClickTwice(chordHeld: false, now: 1.05));
         Assert.True(gate.ClickTwice(chordHeld: true, now: 1.06), "Ctrl or Shift still confirms at once");
+    }
+
+    // ---- 1.11.0 review: only time held counts ----
+
+    [Fact]
+    public void The_frame_the_press_begins_adds_nothing()
+    {
+        // A one-second hitch just before the click: none of that time was held.
+        var gate = new ConfirmGate();
+
+        Assert.False(gate.Update(chordHeld: false, pressed: true, 1f));
+        Assert.Equal(0f, gate.Elapsed);
+        Assert.False(gate.Confirmed);
+    }
+
+    [Fact]
+    public void A_single_long_frame_cannot_finish_the_hold()
+    {
+        var gate = new ConfirmGate();
+        gate.Update(chordHeld: false, pressed: true, Frame);
+
+        Assert.False(gate.Update(chordHeld: false, pressed: true, 5f));
+        Assert.Equal(ConfirmGate.MaxFrameSeconds, gate.Elapsed, 4);
+    }
+
+    [Theory]
+    [InlineData(0.1f)]
+    [InlineData(0.25f)]
+    [InlineData(1f)]
+    public void A_low_frame_rate_never_finishes_the_hold_early(float frame)
+    {
+        var gate = new ConfirmGate();
+
+        var fired = Hold(gate, 200, frame);
+
+        // Frames after the first are the time the press had lasted when it fired; never less than the hold.
+        Assert.True(fired > 0, "it still finishes, only later");
+        Assert.True(fired * frame >= ConfirmGate.DefaultHoldSeconds, $"fired after {fired * frame} s at {frame} s a frame");
+    }
+
+    [Fact]
+    public void A_new_press_after_a_release_skips_its_first_frame_again()
+    {
+        var gate = new ConfirmGate();
+        Hold(gate, 10);
+        gate.Update(chordHeld: false, pressed: false, Frame);
+
+        gate.Update(chordHeld: false, pressed: true, 0.5f);
+
+        Assert.Equal(0f, gate.Elapsed);
     }
 
     [Fact]

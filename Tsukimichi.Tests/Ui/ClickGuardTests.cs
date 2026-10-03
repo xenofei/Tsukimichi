@@ -135,6 +135,79 @@ public class ClickGuardTests
         Assert.False(guard.Click(modifierHeld: false, twoClick: true, now: 2.0), "after Cancel the next click is a first click");
     }
 
+    // ---- 1.11.0 review: a menu's first click ends with the menu ----
+
+    [Fact]
+    public void A_menu_first_click_lasts_while_the_menu_is_drawn()
+    {
+        var guard = new ClickGuard();
+        Assert.False(guard.Click(modifierHeld: false, twoClick: true, now: 1.0, target: 5, inMenu: true));
+        Assert.True(guard.MenuShown(frame: 100, target: 5));
+
+        for (var frame = 101L; frame < 110; frame++)
+        {
+            Assert.True(guard.KeepMenuArm(frame));
+            Assert.True(guard.MenuShown(frame, target: 5));
+        }
+
+        Assert.True(guard.AwaitingSecond(1.5, target: 5, inMenu: true));
+        Assert.True(guard.Click(modifierHeld: false, twoClick: true, now: 2.0, target: 5, inMenu: true));
+    }
+
+    [Fact]
+    public void Closing_the_menu_forgets_its_first_click()
+    {
+        var guard = new ClickGuard();
+        guard.Click(modifierHeld: false, twoClick: true, now: 1.0, target: 5, inMenu: true);
+        guard.MenuShown(frame: 100, target: 5);
+        Assert.True(guard.KeepMenuArm(101));
+
+        // Frame 101 drew no menu (it closed): frame 102 starts without the first click.
+        Assert.False(guard.KeepMenuArm(102));
+        Assert.False(guard.AwaitingSecond(1.5, target: 5, inMenu: true));
+
+        // Reopened in time, the menu shows the plain label and the next click is a first click again.
+        Assert.False(guard.MenuShown(frame: 103, target: 5));
+        Assert.False(guard.Click(modifierHeld: false, twoClick: true, now: 2.0, target: 5, inMenu: true));
+    }
+
+    [Fact]
+    public void Another_rows_menu_does_not_keep_a_first_click_alive()
+    {
+        var guard = new ClickGuard();
+        guard.Click(modifierHeld: false, twoClick: true, now: 1.0, target: 5, inMenu: true);
+        guard.MenuShown(frame: 100, target: 5);
+
+        // Row 5's menu closed and row 6's opened at once: row 6's item never renews row 5's click.
+        Assert.False(guard.MenuShown(frame: 101, target: 6));
+        Assert.False(guard.KeepMenuArm(102));
+        Assert.False(guard.AwaitingSecond(1.5, target: 5, inMenu: true));
+    }
+
+    [Fact]
+    public void A_menu_click_and_a_button_click_never_make_two_clicks()
+    {
+        // One guard serves "Not unique" in a row's menu and "Mark as unique" in the detail pane, for the same row.
+        var guard = new ClickGuard();
+
+        Assert.False(guard.Click(modifierHeld: false, twoClick: true, now: 1.0, target: 5, inMenu: true));
+        Assert.False(guard.AwaitingSecond(1.5, target: 5), "the button does not show Click again");
+        Assert.False(guard.Click(modifierHeld: false, twoClick: true, now: 2.0, target: 5), "a button click is a first click there");
+        Assert.True(guard.AwaitingSecond(2.5, target: 5));
+        Assert.False(guard.AwaitingSecond(2.5, target: 5, inMenu: true));
+    }
+
+    [Fact]
+    public void A_button_first_click_needs_no_menu()
+    {
+        var guard = new ClickGuard();
+        guard.Click(modifierHeld: false, twoClick: true, now: 1.0, target: 5);
+
+        Assert.False(guard.MenuShown(frame: 100, target: 5));
+        Assert.False(guard.KeepMenuArm(200));
+        Assert.True(guard.AwaitingSecond(1.5, target: 5), "the sweep leaves a button's first click alone");
+    }
+
     [Fact]
     public void A_clock_that_went_backwards_does_not_act()
     {

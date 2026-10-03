@@ -11,7 +11,9 @@ namespace Tsukimichi.Ui;
 /// in, above its status bar, for <see cref="SafetyRules.UndoSeconds"/>; the pointer resting on it stops the clock. It is
 /// its own window drawn after the others (<see cref="Draw"/>, on <c>UiBuilder.Draw</c>), so it never takes a line of
 /// the layout and nothing under it moves. One slot: a newer change replaces an older toast, whose change then stays.
-/// It closes with its window. It fades in over 180 ms, at once under Reduce motion.
+/// It closes with its window. It settles its size unseen for <see cref="GamePanelShell.SettleFrames"/> frames, then
+/// fades in over 180 ms (at once under Reduce motion), so it never jumps once shown. While any popup is open (a context
+/// menu) it stays behind it and takes no hover or click, so the menu under the pointer keeps them.
 /// </summary>
 public static class UndoToast
 {
@@ -33,6 +35,8 @@ public static class UndoToast
     private static uint ownerId;
     private static int token;
     private static Vector2 size;
+    private static int settled;
+    private static double shownAt;
 
     // The bottom edge the toast keeps above in its owner (the main window's status bar), reported each frame.
     private static uint clearOwner;
@@ -57,6 +61,7 @@ public static class UndoToast
         action = onExtra;
         ownerId = OwnerWindowId();
         size = Vector2.Zero;
+        settled = 0;
         Timer.Start(ImGui.GetTime());
         return ++token;
     }
@@ -107,20 +112,33 @@ public static class UndoToast
         ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
 
         var now = ImGui.GetTime();
-        var fade = UiMetrics.ReduceMotion ? 1f : Math.Clamp((float)((now - Timer.StartedAt) / FadeSeconds), 0f, 1f);
-        using var style = GamePanelShell.PushPanelStyle(measuring: size == Vector2.Zero);
-        ImGui.PushStyleVar(ImGuiStyleVar.Alpha, size == Vector2.Zero ? 0f : fade);
+        var measuring = settled < GamePanelShell.SettleFrames;
+        var fade = measuring ? 0f : UiMetrics.ReduceMotion ? 1f : Math.Clamp((float)((now - shownAt) / FadeSeconds), 0f, 1f);
+
+        // A context menu (any popup) stays on top and keeps the pointer; so does everything under a toast still settling.
+        var popupOpen = ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
+        var flags = measuring || popupOpen ? Flags | ImGuiWindowFlags.NoInputs : Flags;
+        using var style = GamePanelShell.PushPanelStyle(measuring);
+        ImGui.PushStyleVar(ImGuiStyleVar.Alpha, fade);
         var hovered = false;
         try
         {
-            if (ImGui.Begin(WindowId, Flags))
+            if (ImGui.Begin(WindowId, flags))
             {
-                // Above its owner even after a click brought the owner forward.
-                ImGuiP.BringWindowToDisplayFront(ImGuiP.GetCurrentWindow());
+                // Above its owner even after a click brought the owner forward, but never above an open popup.
+                if (!popupOpen)
+                {
+                    ImGuiP.BringWindowToDisplayFront(ImGuiP.GetCurrentWindow());
+                }
+
                 UiMetrics.ApplyFontScale();
-                hovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows);
+                hovered = !measuring && !popupOpen && ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows);
                 DrawBody();
                 size = ImGui.GetWindowSize();
+                if (measuring && ++settled >= GamePanelShell.SettleFrames)
+                {
+                    shownAt = now;
+                }
             }
         }
         finally
