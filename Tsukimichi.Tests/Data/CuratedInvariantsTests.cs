@@ -90,6 +90,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
             CuratedData.FestivalsFileName, CuratedData.ChainsFileName, CuratedData.OnlineStoreFileName, CuratedData.OtherSourcesFileName,
             CuratedData.RefileOverridesFileName, CuratedData.RetiredQuestsFileName, CuratedData.QuirksFileName, CuratedData.PayoffGatesFileName,
             CuratedData.PathChoicesFileName, CuratedData.ExtraPrerequisitesFileName, CuratedData.GameGatesFileName, CuratedData.VersionFileName,
+            CuratedData.AetheryteUnlocksFileName,
         };
         Assert.Equal(known.OrderBy(n => n, StringComparer.Ordinal), files.Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal));
         Assert.Empty(Curated().Warnings);
@@ -103,6 +104,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         var ids = curated.SystemUnlocks.Keys.Select(id => (File: CuratedData.SystemUnlocksFileName, Id: id))
             .Concat(curated.DutyUnlocks.Keys.Select(id => (File: CuratedData.DutyUnlocksFileName, Id: id)))
             .Concat(curated.FeatureQuests.Select(id => (File: CuratedData.FeatureQuestsFileName, Id: id)))
+            .Concat(curated.AetheryteUnlocks.Values.SelectMany(a => a.Quests).Select(id => (File: CuratedData.AetheryteUnlocksFileName, Id: id)))
             .ToList();
         Assert.NotEmpty(ids);
 

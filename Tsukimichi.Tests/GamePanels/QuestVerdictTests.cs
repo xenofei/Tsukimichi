@@ -75,6 +75,20 @@ public class QuestVerdictTests
         PlanUnlock[] unlocks = [new(UnlockKind.Trial, "Aglaia")];
 
         Assert.Equal(QuestVerdict.Masked, QuestVerdict.Line(Quest(A), true, unlocks, NoMoonlit, null, string.Empty));
+        Assert.Equal(QuestVerdict.Masked, QuestVerdict.Line(Quest(A), true, NoUnlocks, NoMoonlit, null, string.Empty, "Kugane"));
+    }
+
+    [Fact]
+    public void The_unlock_index_headline_speaks_for_every_quest_after_the_plans_own_tags()
+    {
+        // Feature plan v6 K4: "Unlocks Kugane" for a main scenario quest the plan does not tag, before a Moonlit reward;
+        // a duty the plan names still comes first.
+        PlanUnlock[] trial = [new(UnlockKind.Trial, "Aglaia")];
+        MoonlitReward[] moonlit = [new("Wind-up Sun", false)];
+
+        Assert.Equal("Unlocks Kugane", QuestVerdict.Line(Quest(A), false, NoUnlocks, moonlit, null, string.Empty, "Kugane"));
+        Assert.Equal("Unlocks Aglaia", QuestVerdict.Line(Quest(A), false, trial, NoMoonlit, null, string.Empty, "Kugane"));
+        Assert.Equal("Moonlit: Wind-up Sun", QuestVerdict.Line(Quest(A), false, NoUnlocks, moonlit, null, string.Empty, string.Empty));
     }
 
     [Fact]

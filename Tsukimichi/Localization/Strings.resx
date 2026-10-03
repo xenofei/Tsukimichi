@@ -781,6 +781,194 @@
     <value>Tsukimichi: quest rewards ({0})</value>
     <comment>{0} = number of quests; the entry opens a submenu with one line per quest.</comment>
   </data>
+  <data name="UnlocksSection" xml:space="preserve">
+    <value>Unlocks</value>
+  </data>
+  <data name="UnlocksMasked" xml:space="preserve">
+    <value>Hidden by the spoiler shield. Reveal the name to see what this quest opens.</value>
+  </data>
+  <data name="UnlocksMoreFormat" xml:space="preserve">
+    <value>+{0} more</value>
+    <comment>{0} = rows past the group's cap.</comment>
+  </data>
+  <data name="UnlocksMoreInPathFormat" xml:space="preserve">
+    <value>+{0} in Path</value>
+    <comment>{0} = next quests past the three shown.</comment>
+  </data>
+  <data name="UnlocksLikely" xml:space="preserve">
+    <value>Likely: you first reach it here</value>
+  </data>
+  <data name="UnlocksAttuned" xml:space="preserve">
+    <value>Attuned</value>
+  </data>
+  <data name="UnlocksDutyUnlocked" xml:space="preserve">
+    <value>Unlocked on this character</value>
+  </data>
+  <data name="UnlocksOwned" xml:space="preserve">
+    <value>You have it</value>
+  </data>
+  <data name="UnlocksClickShowQuest" xml:space="preserve">
+    <value>Click to show this quest</value>
+  </data>
+  <data name="UnlocksClickTeleport" xml:space="preserve">
+    <value>Click to teleport here through Lifestream</value>
+  </data>
+  <data name="UnlocksClickFlag" xml:space="preserve">
+    <value>Click to flag it on the map</value>
+  </data>
+  <data name="UnlocksClickMap" xml:space="preserve">
+    <value>Click to open the map</value>
+  </data>
+  <data name="UnlocksRightClickDuty" xml:space="preserve">
+    <value>Right-click to open it in the Duty Finder</value>
+  </data>
+  <data name="UnlocksMenuShowQuest" xml:space="preserve">
+    <value>Show quest</value>
+  </data>
+  <data name="UnlocksMenuTeleportFormat" xml:space="preserve">
+    <value>Teleport to {0}</value>
+    <comment>{0} = aetheryte name.</comment>
+  </data>
+  <data name="UnlocksMenuCopyCoordinates" xml:space="preserve">
+    <value>Copy coordinates</value>
+  </data>
+  <data name="UnlocksMenuOpenMap" xml:space="preserve">
+    <value>Open map</value>
+  </data>
+  <data name="UnlocksMenuDutyFinder" xml:space="preserve">
+    <value>Open in Duty Finder</value>
+  </data>
+  <data name="UnlocksMenuDutyFinderHint" xml:space="preserve">
+    <value>Selects the duty in the Duty Finder. It never queues.</value>
+  </data>
+  <data name="UnlocksMenuCopyName" xml:space="preserve">
+    <value>Copy name</value>
+  </data>
+  <data name="UnlocksTeleportNoLifestream" xml:space="preserve">
+    <value>Teleport goes through Lifestream, which is not loaded.</value>
+  </data>
+  <data name="UnlocksTeleportNotAttuned" xml:space="preserve">
+    <value>The game does not show this aetheryte as attuned.</value>
+  </data>
+  <data name="UnlocksTeleportBusy" xml:space="preserve">
+    <value>A trip is already under way.</value>
+  </data>
+  <data name="ColumnOpens" xml:space="preserve">
+    <value>Opens</value>
+  </data>
+  <data name="ColumnOpensTooltip" xml:space="preserve">
+    <value>What the quest opens: areas, aetherytes, duties and features. Settings › Display › Planning turns this column on or off.</value>
+  </data>
+  <data name="PlanningConfigOpensColumn" xml:space="preserve">
+    <value>Opens column in the Journal</value>
+  </data>
+  <data name="PlanningConfigOpensColumnHint" xml:space="preserve">
+    <value>Up to three icons per quest for what it opens. The quest's tooltip and the detail pane say it either way.</value>
+  </data>
+  <data name="UnlocksChatFormat" xml:space="preserve">
+    <value>Unlocked: {0}</value>
+    <comment>{0} = what the completed quests opened ("Kugane · The Sirensong Sea").</comment>
+  </data>
+  <data name="MoonlitAlsoOpensFormat" xml:space="preserve">
+    <value>Also opens: {0}</value>
+    <comment>{0} = areas, duties and features the quest opens.</comment>
+  </data>
+  <data name="Core.UnlockTarget.Zone" xml:space="preserve">
+    <value>Area</value>
+  </data>
+  <data name="Core.UnlockTarget.WorldMap" xml:space="preserve">
+    <value>World map</value>
+  </data>
+  <data name="Core.UnlockTarget.Aetheryte" xml:space="preserve">
+    <value>Aetheryte</value>
+  </data>
+  <data name="Core.UnlockTarget.AethernetShard" xml:space="preserve">
+    <value>Aethernet</value>
+  </data>
+  <data name="Core.UnlockTarget.OtherDuty" xml:space="preserve">
+    <value>Duty</value>
+  </data>
+  <data name="Core.UnlockTarget.System" xml:space="preserve">
+    <value>Feature</value>
+  </data>
+  <data name="Core.UnlockTarget.Action" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="Core.UnlockTarget.Trait" xml:space="preserve">
+    <value>Trait</value>
+  </data>
+  <data name="Core.UnlockTarget.Emote" xml:space="preserve">
+    <value>Emote</value>
+  </data>
+  <data name="Core.UnlockTarget.GeneralAction" xml:space="preserve">
+    <value>General action</value>
+  </data>
+  <data name="Core.UnlockTarget.BlueMageSpell" xml:space="preserve">
+    <value>Blue magic</value>
+  </data>
+  <data name="Core.UnlockTarget.Mount" xml:space="preserve">
+    <value>Mount</value>
+  </data>
+  <data name="Core.UnlockTarget.Minion" xml:space="preserve">
+    <value>Minion</value>
+  </data>
+  <data name="Core.UnlockTarget.Orchestrion" xml:space="preserve">
+    <value>Orchestrion roll</value>
+  </data>
+  <data name="Core.UnlockTarget.Card" xml:space="preserve">
+    <value>Triple Triad card</value>
+  </data>
+  <data name="Core.UnlockTarget.Hairstyle" xml:space="preserve">
+    <value>Hairstyle</value>
+  </data>
+  <data name="Core.UnlockTarget.Barding" xml:space="preserve">
+    <value>Barding</value>
+  </data>
+  <data name="Core.UnlockTarget.Ornament" xml:space="preserve">
+    <value>Fashion accessory</value>
+  </data>
+  <data name="Core.UnlockTarget.Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Core.UnlockTarget.NextQuest" xml:space="preserve">
+    <value>Quest</value>
+  </data>
+  <data name="Core.UnlockGroup.Area" xml:space="preserve">
+    <value>Areas</value>
+  </data>
+  <data name="Core.UnlockGroup.Aetheryte" xml:space="preserve">
+    <value>Aetherytes</value>
+  </data>
+  <data name="Core.UnlockGroup.Duty" xml:space="preserve">
+    <value>Duties</value>
+  </data>
+  <data name="Core.UnlockGroup.Feature" xml:space="preserve">
+    <value>Features &amp; systems</value>
+  </data>
+  <data name="Core.UnlockGroup.ActionEmote" xml:space="preserve">
+    <value>Actions &amp; emotes</value>
+  </data>
+  <data name="Core.UnlockGroup.Collectable" xml:space="preserve">
+    <value>Items</value>
+  </data>
+  <data name="Core.UnlockGroup.NextQuest" xml:space="preserve">
+    <value>Next quests</value>
+  </data>
+  <data name="Core.Unlock.LevelFormat" xml:space="preserve">
+    <value>Lv {0}</value>
+  </data>
+  <data name="Core.Unlock.FlyingDetail" xml:space="preserve">
+    <value>aether current</value>
+  </data>
+  <data name="Core.Unlock.OpensFormat" xml:space="preserve">
+    <value>Opens {0}</value>
+  </data>
+  <data name="Core.Unlock.WithKindFormat" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="Core.Unlock.MoreFormat" xml:space="preserve">
+    <value>+{0}</value>
+  </data>
   <data name="HandInSection" xml:space="preserve">
     <value>Hand in</value>
   </data>

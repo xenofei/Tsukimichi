@@ -174,6 +174,7 @@ public sealed class MainWindow : Window, IDisposable
         {
             Catalog = () => plugin.Session?.Bundle?.Catalog,
             ShowExp = () => plugin.Settings?.JournalShowExpColumn == true,
+            ShowOpens = () => plugin.Settings?.JournalShowOpensColumn == true,
         };
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tonightCard = new TonightCard(ui, runner, OnFiltersChanged);
@@ -355,6 +356,16 @@ public sealed class MainWindow : Window, IDisposable
     public void AttachTravelStatus(Func<string?> status)
     {
         detailPane.TravelStatusText = status ?? throw new ArgumentNullException(nameof(status));
+    }
+
+    /// <summary>
+    /// What quests open (feature plan v6 K2): the game's owned answers for the Unlocks section's checks and the Moonlit
+    /// icon resolver for rows the index has no icon for. The index itself is <see cref="QueryRunner.Unlocks"/>.
+    /// </summary>
+    public void AttachUnlocks(Func<Core.Model.UniqueRewardEntry, bool?> obtained, Func<Core.Model.QuestRecord?, Core.Model.UniqueRewardEntry, uint> icon)
+    {
+        detailPane.UnlockObtained = obtained ?? throw new ArgumentNullException(nameof(obtained));
+        detailPane.UnlockIcon = icon ?? throw new ArgumentNullException(nameof(icon));
     }
 
     /// <summary>The game's achievement flags for the detail pane's achievement lines (1.9.0 collector extras); without them the quests decide.</summary>
@@ -726,7 +737,9 @@ public sealed class MainWindow : Window, IDisposable
 
             if (count < MaxChatMatches)
             {
-                links.PrintQuestLink(quest);
+                // What it opens after the link (feature plan v6 K4), never for a quest the shield masks.
+                var opens = runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) ? Core.Unlocks.UnlockText.Opens(unlocks.Places(quest.RowId)) : string.Empty;
+                links.PrintQuestLink(quest, opens.Length > 0 ? opens : null);
             }
 
             count++;

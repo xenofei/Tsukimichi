@@ -139,6 +139,12 @@ public sealed class TravelService : ITravelPorts, IDisposable
     /// </summary>
     public bool IsAttuned(uint aetheryteId) => !attunementKnown || attuned.ContainsKey(aetheryteId);
 
+    /// <summary>
+    /// True only when the game's attuned list has been read and holds the aetheryte: the unlock rows' check mark
+    /// (feature plan v6 K2) says "attuned" only when the game confirms it, never on the optimistic default.
+    /// </summary>
+    public bool IsAttunedConfirmed(uint aetheryteId) => attunementKnown && attuned.ContainsKey(aetheryteId);
+
     /// <summary>The teleport's gil cost and favourite flag, when the attuned list holds the aetheryte.</summary>
     public bool TryGetCost(uint aetheryteId, out uint gil, out bool favourite)
     {

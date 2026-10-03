@@ -128,6 +128,12 @@ public sealed class PathChart
         this.select = select ?? throw new ArgumentNullException(nameof(select));
     }
 
+    /// <summary>
+    /// What a next quest opens, for its station's tooltip ("Opens Kugane"; feature plan v6 K4): the places it names,
+    /// empty for none. Never asked for a quest the shield masks. Null leaves the tooltips as they were.
+    /// </summary>
+    public Func<uint, string>? OpensOf { get; set; }
+
     /// <summary>"N steps · M done" (or "1 step") for the card header.</summary>
     public string HeaderCaption { get; private set; } = string.Empty;
 
@@ -303,7 +309,13 @@ public sealed class PathChart
                 }
 
                 var state = session.States.TryGetValue(dependentId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-                unlocks.Add(new Unlock(dependentId, name, state, Detail(bundle, dependent)));
+                var detail = Detail(bundle, dependent);
+                if (OpensOf is { } opensOf && !session.Spoilers.IsMasked(dependent) && opensOf(dependentId) is { Length: > 0 } places)
+                {
+                    detail += Core.Evaluation.BlockerText.Separator + Core.Unlocks.UnlockText.Opens(places);
+                }
+
+                unlocks.Add(new Unlock(dependentId, name, state, detail));
             }
         }
 

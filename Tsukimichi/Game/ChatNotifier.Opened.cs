@@ -89,6 +89,7 @@ public sealed partial class ChatNotifier
             return;
         }
 
+        PrintUnlocked(bundle, batch);
         var counts = OpenedSummary.Count(bundle.Catalog, batch.Opened, session.FeatureQuestIds, session.Stories.RowIds);
         if (counts.Total == 0)
         {
@@ -104,6 +105,46 @@ public sealed partial class ChatNotifier
 
         chat.Print(builder.Build(), Strings.ChatTag);
     }
+
+    /// <summary>
+    /// "Unlocked: Kugane · The Sirensong Sea" (feature plan v6 K4): the areas, aetherytes, duties and features the batch's
+    /// completed quests opened, once each, before the counts line; nothing when they opened none of those. A quest the
+    /// logged-in character's shield masks names nothing.
+    /// </summary>
+    private void PrintUnlocked(GameData.CatalogBundle bundle, OpenedBatch batch)
+    {
+        if (QuestUnlocks?.Invoke() is not { } index || batch.Completed.Count == 0)
+        {
+            return;
+        }
+
+        var entries = new List<Core.Unlocks.UnlockEntry>();
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var rowId in batch.Completed)
+        {
+            if (bundle.Catalog.GetByRowId(rowId) is not { } quest || session.LiveSpoilers.IsMasked(quest))
+            {
+                continue;
+            }
+
+            foreach (var entry in index.For(rowId))
+            {
+                if (entry.Group <= Core.Unlocks.UnlockGroup.Feature && names.Add(entry.Name))
+                {
+                    entries.Add(entry);
+                }
+            }
+        }
+
+        var text = Core.Unlocks.UnlockText.Names(entries);
+        if (text.Length > 0)
+        {
+            chat.Print(new SeStringBuilder().AddText(string.Format(CultureInfo.CurrentCulture, Strings.UnlocksChatFormat, text)).Build(), Strings.ChatTag);
+        }
+    }
+
+    /// <summary>What every quest opens, for the "Unlocked:" line; set by the plugin. Null prints none.</summary>
+    public Func<Core.Unlocks.QuestUnlocks?>? QuestUnlocks { get; set; }
 
     private void ShowToasts(List<QuestEvent> fresh)
     {

@@ -110,6 +110,12 @@ public sealed class TablePane : IDisposable
     /// <summary>Settings › Display › Planning: whether the EXP column (1.9.0, R6 G) is offered; null or false keeps it off.</summary>
     public Func<bool>? ShowExp { get; set; }
 
+    /// <summary>Settings › Display › Planning: whether the Opens column (feature plan v6 K4) is offered; null or false keeps it off.</summary>
+    public Func<bool>? ShowOpens { get; set; }
+
+    /// <summary>How many kind icons the Opens column shows per quest.</summary>
+    private const int MaxOpensIcons = 3;
+
     /// <summary>The brass line under the Moon Road header (proposal §7.3: Gilt at 0.5; opaque under high contrast).</summary>
     private const float HeaderRuleAlpha = 0.5f;
 
@@ -171,6 +177,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnExpansion,
         Strings.ColumnRewards,
         Strings.ColumnExp,
+        Strings.ColumnOpens,
     ]);
 
     /// <summary>Header tooltip per <see cref="Column"/>, in column order.</summary>
@@ -186,6 +193,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnExpansionTooltip,
         Strings.ColumnRewardsTooltip,
         Strings.ColumnExpTooltip,
+        Strings.ColumnOpensTooltip,
     ]);
 
     private readonly UiState ui;
@@ -403,7 +411,12 @@ public sealed class TablePane : IDisposable
         // The EXP column (off by default): as wide as a Quest Sync range or its header; no room at all while Settings leaves it off.
         var showExp = ShowExp?.Invoke() == true;
         var expColumn = showExp ? MathF.Max(ImGui.CalcTextSize(WidestExp).X, HeaderFloor(Strings.ColumnExp, sortable: false)) : 0f;
-        var widths = new QuestTableWidths(glyphColumn, levelColumn, jobIconColumn, jobColumn, StateWordWidth(), expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f), expColumn);
+        // The Opens column (off by default, feature plan v6 K4): three kind icons or its header.
+        var showOpens = ShowOpens?.Invoke() == true && runner.Unlocks is not null;
+        var opensColumn = showOpens
+            ? MathF.Max(UiMetrics.RowIconSize * MaxOpensIcons + UiMetrics.Px(2f) * (MaxOpensIcons - 1), HeaderFloor(Strings.ColumnOpens, sortable: false))
+            : 0f;
+        var widths = new QuestTableWidths(glyphColumn, levelColumn, jobIconColumn, jobColumn, StateWordWidth(), expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f), expColumn, opensColumn);
         var sortedWasHidden = SortColumnAutoHidden();
         PlanColumns(available, in widths);
 
@@ -419,6 +432,7 @@ public sealed class TablePane : IDisposable
         ImGui.TableSetupColumn(Strings.ColumnExpansion, fixedFlags | Planned(Column.Expansion), expansionColumn);
         ImGui.TableSetupColumn(Strings.ColumnRewards, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Rewards), rewardsColumn);
         ImGui.TableSetupColumn(Strings.ColumnExp, fixedFlags | ImGuiTableColumnFlags.NoSort | (showExp ? Planned(Column.Exp) : ImGuiTableColumnFlags.Disabled), expColumn);
+        ImGui.TableSetupColumn(Strings.ColumnOpens, fixedFlags | ImGuiTableColumnFlags.NoSort | (showOpens ? Planned(Column.Opens) : ImGuiTableColumnFlags.Disabled), opensColumn);
         ImGui.TableSetupScrollFreeze(0, 1);
 
         // The persisted sort is written straight into the column state on the table's first frame: ImGui's own saved
@@ -1000,6 +1014,11 @@ public sealed class TablePane : IDisposable
             ImGui.PopStyleColor();
         }
 
+        if (ImGui.TableNextColumn())
+        {
+            DrawOpensIcons(quest, in layout);
+        }
+
         ImGui.PopID();
     }
 
@@ -1328,6 +1347,51 @@ public sealed class TablePane : IDisposable
         ImGui.TextDisabled(Strings.ColumnLevel);
         ImGui.SameLine(0f, UiMetrics.Px(3f));
         ImGui.TextDisabled(runner.LevelText(quest.DisplayLevel));
+
+        // What it opens (feature plan v6 K4), never for a quest the shield masks.
+        if (runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) && unlocks.OpensLine(quest.RowId) is { Length: > 0 } opens)
+        {
+            ImGui.TextWrapped(opens);
+        }
+    }
+
+    /// <summary>The Opens column: the icons of the first three things the quest opens (next quests left out); nothing for a masked quest.</summary>
+    private void DrawOpensIcons(QuestRecord quest, in RowLayout layout)
+    {
+        if (runner.Unlocks is not { } unlocks || runner.Spoilers.IsMasked(quest))
+        {
+            return;
+        }
+
+        var entries = unlocks.For(quest.RowId);
+        var drawn = 0;
+        var iconSize = UiMetrics.RowIconSize;
+        var iconOffset = MathF.Max(0f, (layout.RowContent - iconSize) * 0.5f);
+        for (var i = 0; i < entries.Count && drawn < MaxOpensIcons; i++)
+        {
+            var entry = entries[i];
+            if (entry.Target == Core.Unlocks.UnlockTarget.NextQuest || entry.Icon == 0)
+            {
+                continue;
+            }
+
+            if (drawn > 0)
+            {
+                ImGui.SameLine(0f, UiMetrics.Px(2f));
+            }
+            else if (iconOffset > 0.5f)
+            {
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + iconOffset);
+            }
+
+            GameIcon.Draw(textures, entry.Icon, iconSize);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(entry.Name, entry.Caption);
+            }
+
+            drawn++;
+        }
     }
 
     private void DrawRewardIcons(QuestRecord quest, in RowLayout layout)

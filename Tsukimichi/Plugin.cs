@@ -964,6 +964,14 @@ public sealed partial class Plugin : IDalamudPlugin
             // the same kill switch; the lookup follows the curated overlay and the Moonlit catalog like the item hint's.
             var dutyUnlocks = new Core.Unique.DutyUnlockIndexSource(() => Session.Curated, () => moonlit.Catalog);
             dutyFinderHint = new Game.DutyFinderHint(AddonLifecycle, GameGui, DataManager, Session, dutyUnlocks, gate, Log) { Enabled = Settings.DutyFinderHintEnabled };
+            // What every quest opens (feature plan v6 K1): built once per catalog off the frame, from the client's own
+            // sheets (warps, map regions, aethernet gates, objectives) and the shipped and curated data. The unlock
+            // rows' map and Duty Finder calls take the same kill switch as the hooks.
+            questUnlocks = BuildQuestUnlocksSource();
+            queryRunner.Unlocks = questUnlocks;
+            moonlit.Unlocks = questUnlocks;
+            gameLinks.GameCallsAllowed = () => gate.HooksAllowed;
+            mainWindow.AttachUnlocks(entry => unlockReader.IsObtained(entry), moonlit.Icons.Resolve);
             // Hero banners (V4): every quest's banner through the fallback chain, resolved off the frame once per catalog
             // and duty unlock index; the duty step reads the same index as the Duty Finder hint.
             banners = new Core.Ui.BannerIndexSource<Core.Unique.DutyUnlockIndex>(
@@ -1157,7 +1165,7 @@ public sealed partial class Plugin : IDalamudPlugin
             // Journal companion. Their reads take the same kill switch as the Duty Finder hint.
             PlanSource plans = planSource;
             gamePanels = new GamePanels(PluginInterface.UiBuilder, AddonLifecycle, GameGui, TargetManager, Settings,
-                new Game.QuestBriefBuilder(Session, () => moonlit.Catalog, unlockReader, () => plans.Tags),
+                new Game.QuestBriefBuilder(Session, () => moonlit.Catalog, unlockReader, () => plans.Tags) { QuestUnlocks = () => questUnlocks?.Current },
                 queryRunner, gameLinks, gate, Log, quest =>
                 {
                     mainWindow.IsOpen = true;
@@ -1167,7 +1175,7 @@ public sealed partial class Plugin : IDalamudPlugin
             // Next stops (1.6.0): Ready quests batched by aetheryte, for the Tonight card and the todo overlay.
             var nextStops = new NextStopsSource(Session, gameLinks, queryRunner, planSource, followed, Settings, () => ClientState.TerritoryType);
             mainWindow.AttachNextStops(nextStops);
-            chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
+            chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log) { QuestUnlocks = () => questUnlocks?.Current };
             // "Before you continue" (P5): the dashboard and the Tonight card lines, and the once-per-character chat line.
             var payoffGates = new Game.PayoffGateSource(Session, Log);
             var payoffLines = new PayoffGateLines(payoffGates, Session, Settings, CharacterBook);

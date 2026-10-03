@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "note": "Aetherytes the first-visit rule of the unlock index (feature plan v6 K1) cannot place: no objective of the main scenario stands within 40 yalms of them. Keys are Aetheryte sheet row ids; quests are the Quest sheet row ids that first take a character there (several when paths differ). A curated entry replaces whatever the rule inferred for that aetheryte, and the Unlocks section shows it as stated rather than likely. Every entry needs the aetheryte's name, a note and an evidence URL; notes are original wording, never wiki sentences. Aetherytes still missing are listed in UnlockLinkReaderTests.NotYetCurated.",
+  "entries": {
+    "62": {
+      "name": "The Gold Saucer",
+      "quests": [ 65970 ],
+      "note": "The Gold Saucer's aetheryte stands at the arrival point of the passage this quest opens (the game gates the Gold Saucer warps on it), so the first trip there is this quest's.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/It_Could_Happen_to_You"
+    },
+    "74": {
+      "name": "Helix",
+      "quests": [ 67199 ],
+      "note": "The Excelsior's first landing in Azys Lla is beside Helix; this quest's objectives stand about 80 yalms from the aetheryte, beyond the rule's reach.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_First_Flight_of_the_Excelsior"
+    },
+    "75": {
+      "name": "Idyllshire",
+      "quests": [ 67191 ],
+      "note": "The main scenario's first visit to Idyllshire; its objectives stand about 43 yalms from the aetheryte, just past the rule's reach.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Great_New_Nation"
+    },
+    "174": {
+      "name": "Sinus Lacrimarum",
+      "quests": [ 69932 ],
+      "note": "The arrival on the moon: this quest's objectives stand about 63 yalms from the Sinus Lacrimarum aetheryte.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Trip_to_the_Moon"
+    },
+    "179": {
+      "name": "Reah Tahra",
+      "quests": [ 69991 ],
+      "note": "The first main scenario objective beside Reah Tahra in Ultima Thule, about 41 yalms from the aetheryte.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Test_of_Will"
+    },
+    "180": {
+      "name": "Abode of the Ea",
+      "quests": [ 69992 ],
+      "note": "The first main scenario objective beside the Abode of the Ea, about 43 yalms from the aetheryte.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Roads_Paved_of_Sacrifice"
+    },
+    "202": {
+      "name": "Ok'hanu",
+      "quests": [ 70402 ],
+      "note": "The main scenario's first visit to Ok'hanu in Kozama'uka; its objectives stand about 49 yalms from the aetheryte.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Festive_People"
+    },
+    "205": {
+      "name": "Iq Br'aax",
+      "quests": [ 70433 ],
+      "note": "The arrival in Yak T'el: this quest's objectives stand about 47 yalms from the Iq Br'aax aetheryte.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Leap_to_Yak_T%27el"
+    },
+    "208": {
+      "name": "Sheshenewezi Springs",
+      "quests": [ 70449 ],
+      "note": "The first main scenario objective at Sheshenewezi Springs in Shaaloani, about 52 yalms from the aetheryte.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Saddled_Up"
+    }
+  }
+}

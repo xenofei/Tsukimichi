@@ -964,12 +964,22 @@ public sealed class TodoOverlay : Window, IDisposable
                     continue;
                 }
 
+                // An unlock quest startable here names what it opens after its hint (feature plan v6 K4): one quiet
+                // line, never for a quest the shield masks.
+                var hint = row.Hint;
+                if (section.Section == TodoSection.NearbyFeature && pins.Unlocks is { } unlocks && !session.Spoilers.IsMasked(quest)
+                    && unlocks.Current.Headline(quest.RowId) is { Group: <= Core.Unlocks.UnlockGroup.Feature } headline)
+                {
+                    var opens = Core.Unlocks.UnlockText.Opens(headline.Name);
+                    hint = hint.Length > 0 ? hint + Strings.StateReasonSeparator + opens : opens;
+                }
+
                 var tooltip = row.Kind == TodoRowKind.Stop
                     ? row.Name + Strings.StateReasonSeparator + row.Hint + "\n" + Strings.TodoStopClickHint
-                    : row.Hint.Length > 0
-                        ? Strings.StateName(row.State, quest) + Strings.StateReasonSeparator + row.Hint + "\n" + Strings.TodoRowClickHint
+                    : hint.Length > 0
+                        ? Strings.StateName(row.State, quest) + Strings.StateReasonSeparator + hint + "\n" + Strings.TodoRowClickHint
                         : Strings.StateName(row.State, quest) + "\n" + Strings.TodoRowClickHint;
-                rows.Add(new Row(quest, row.Name, row.State, row.Hint, tooltip));
+                rows.Add(new Row(quest, row.Name, row.State, hint, tooltip));
             }
 
             // A capped section counts every row it holds in its caption ("Pinned (60)") and names the rest on one line.

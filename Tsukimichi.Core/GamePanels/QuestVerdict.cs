@@ -109,7 +109,9 @@ public static class QuestVerdict
 
     /// <summary>
     /// The verdict line, or <see cref="Masked"/> when <paramref name="masked"/>. <paramref name="chainName"/> is the
-    /// chain's name through the spoiler shield; ignored without <paramref name="step"/>.
+    /// chain's name through the spoiler shield; ignored without <paramref name="step"/>. <paramref name="opensHeadline"/>
+    /// is what the unlock index names first for the quest (<c>QuestUnlocks.Headline</c>: an area, an aetheryte, a duty;
+    /// feature plan v6 K4), said ("Unlocks Kugane") when the plan's tags name nothing more specific; null or empty for none.
     /// </summary>
     public static string Line(
         QuestRecord quest,
@@ -117,7 +119,8 @@ public static class QuestVerdict
         IReadOnlyList<PlanUnlock> unlocks,
         IReadOnlyList<MoonlitReward> moonlit,
         ChainStep? step,
-        string chainName)
+        string chainName,
+        string? opensHeadline = null)
     {
         ArgumentNullException.ThrowIfNull(quest);
         ArgumentNullException.ThrowIfNull(unlocks);
@@ -140,6 +143,11 @@ public static class QuestVerdict
         if (opens is not null && opens.Kind != UnlockKind.Other)
         {
             return Format(CoreText.T("Core.Verdict.Unlocks", "Unlocks {0}"), opens.Name);
+        }
+
+        if (opensHeadline is { Length: > 0 })
+        {
+            return Format(CoreText.T("Core.Verdict.Unlocks", "Unlocks {0}"), opensHeadline);
         }
 
         // A Moonlit reward the character lacks (or cannot be told to have) before one it owns.
