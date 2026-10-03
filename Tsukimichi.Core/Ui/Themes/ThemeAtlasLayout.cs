@@ -207,7 +207,8 @@ public sealed class RowStripLayout
         ((float)rect.X / Width, (float)rect.Y / Height, (float)(rect.X + rect.Width) / Width, (float)(rect.Y + rect.Height) / Height);
 
     /// <summary>
-    /// Parses and checks a <c>row.json</c>: contiguous whole-pixel sizes, the <c>full</c> finish and any of <c>quiet</c> and
+    /// Parses and checks a <c>row.json</c> (states straight under <c>sprites</c> for the full finish alone, or keyed by
+    /// finish first): contiguous whole-pixel sizes, the <c>full</c> finish and any of <c>quiet</c> and
     /// <c>plain</c>, each with all eight states (<see cref="AppearanceStates.Key"/>) at every size, cells square at their
     /// size, inside the image and apart. False with a reason for anything else.
     /// </summary>
@@ -242,12 +243,16 @@ public sealed class RowStripLayout
                 return false;
             }
 
+            // The plain form (what build_themes.py writes) keys states straight under "sprites" and is the full finish; the
+            // nested form keys finishes first ("full", "quiet", "plain").
+            var nested = sprites.TryGetProperty(ThemeAtlasRules.FinishKey(RowFinish.Full), out _);
             var all = new List<AtlasRect>();
             var finishes = new AtlasRect[]?[FinishCount];
             foreach (var finish in Enum.GetValues<RowFinish>())
             {
                 var name = ThemeAtlasRules.FinishKey(finish);
-                if (!sprites.TryGetProperty(name, out var states))
+                var states = sprites;
+                if (nested ? !sprites.TryGetProperty(name, out states) : finish != RowFinish.Full)
                 {
                     if (finish == RowFinish.Full)
                     {

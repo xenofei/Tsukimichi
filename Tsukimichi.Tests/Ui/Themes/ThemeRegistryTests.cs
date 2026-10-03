@@ -43,10 +43,10 @@ public sealed class ThemeRegistryTests
     [Fact]
     public void Ids_fit_a_share_code_nibble_and_zero_means_from_theme()
     {
-        foreach (var id in Enum.GetValues<GlyphSetId>().Cast<int>()
-                     .Concat(Enum.GetValues<FrameKitId>().Cast<int>())
-                     .Concat(Enum.GetValues<PaletteId>().Cast<int>())
-                     .Concat(Enum.GetValues<ThemeId>().Cast<int>()))
+        foreach (var id in Enum.GetValues<GlyphSetId>().Select(static v => (int)v)
+                     .Concat(Enum.GetValues<FrameKitId>().Select(static v => (int)v))
+                     .Concat(Enum.GetValues<PaletteId>().Select(static v => (int)v))
+                     .Concat(Enum.GetValues<ThemeId>().Select(static v => (int)v)))
         {
             Assert.InRange(id, 1, 15);
         }

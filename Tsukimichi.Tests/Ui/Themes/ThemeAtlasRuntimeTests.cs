@@ -12,7 +12,7 @@ namespace Tsukimichi.Tests.Ui.Themes;
 /// docs/design/v7/themes/ATLAS-CONTRACT.md): layout parsing and checks, the tier choice, the residency rules (what loads,
 /// what is kept, what is let go), and every shipped theme set folder against the contract and its budgets.
 /// </summary>
-public sealed class ThemeAtlasTests
+public sealed class ThemeAtlasRuntimeTests
 {
     private static string ThemesDir() => Path.Combine(OrnamentLayoutTests.AssetsDir(), "themes");
 
@@ -158,7 +158,7 @@ public sealed class ThemeAtlasTests
         var hero = ThemeAtlasRules.Pick(48f, MedalFinish.Gilt, medals, plain, row);
         Assert.Equal(new AtlasPick(AtlasSource.Medals, 48, false, RowFinish.Full), hero);
 
-        Assert.Equal(new AtlasPick(AtlasSource.Medals, 64, true, RowFinish.Full), ThemeAtlasRules.Pick(200f, MedalFinish.Gilt, medals, plain, row));
+        Assert.Equal(new AtlasPick(AtlasSource.Medals, 96, true, RowFinish.Full), ThemeAtlasRules.Pick(190f, MedalFinish.Gilt, medals, plain, row));
         Assert.Equal(new AtlasPick(AtlasSource.Medals, 48, false, RowFinish.Full), ThemeAtlasRules.Pick(32f, MedalFinish.LightRim, medals, plain, row));
         Assert.Equal(new AtlasPick(AtlasSource.Plain, 64, false, RowFinish.Full), ThemeAtlasRules.Pick(60f, MedalFinish.Plain, medals, plain, row));
 
@@ -181,7 +181,8 @@ public sealed class ThemeAtlasTests
         Assert.Equal(AtlasPick.StandIn, ThemeAtlasRules.Pick(20f, MedalFinish.Gilt, medals, null, null));
         Assert.Equal(AtlasPick.StandIn, ThemeAtlasRules.Pick(64f, MedalFinish.Gilt, null, null, row));
         Assert.Equal(AtlasPick.StandIn, ThemeAtlasRules.Pick(64f, MedalFinish.Plain, medals, null, row));
-        Assert.Equal(AtlasPick.StandIn, ThemeAtlasRules.Pick(16f, MedalFinish.Plain, medals, null, row));
+        Assert.True(RowStripLayout.TryParse(RowJson("full").ToJsonString(), out var fullOnly, out _));
+        Assert.Equal(AtlasPick.StandIn, ThemeAtlasRules.Pick(16f, MedalFinish.Plain, medals, null, fullOnly));
         Assert.Equal(AtlasPick.StandIn, ThemeAtlasRules.Pick(64f, MedalFinish.Classic, medals, medals, row));
         Assert.Equal(AtlasPick.StandIn, ThemeAtlasRules.Pick(0f, MedalFinish.Gilt, medals, medals, row));
         Assert.Equal(AtlasSource.StandIn, AtlasPick.StandIn.Source);
@@ -267,7 +268,12 @@ public sealed class ThemeAtlasTests
             var key = Path.GetFileName(folder);
             Assert.True(GlyphSets.TryGet(key, out var set), $"assets/ui/themes/{key} is not a registered glyph set");
             Assert.Equal(key, set.Key);
-            Assert.Equal(GlyphRenderKind.Atlas, set.Kind);
+            if (set.Kind == GlyphRenderKind.Procedural)
+            {
+                // Medallion's folder holds only the build's metrics: its atlas stays embedded at assets/ui/.
+                Assert.Empty(Directory.GetFiles(folder, "*.png"));
+                continue;
+            }
 
             var medals = Path.Combine(folder, "medals.json");
             Assert.True(File.Exists(medals), $"{key}: medals.json is required");
@@ -302,6 +308,29 @@ public sealed class ThemeAtlasTests
         }
 
         Assert.True(worstCase1x <= 12L * 1024 * 1024, $"every set at once is {worstCase1x} bytes at 1x (budget 12 MB)");
+    }
+
+    [Theory]
+    [InlineData("ishgard-glass")]
+    [InlineData("aether-crystal")]
+    public void The_shipped_revived_sets_are_drawable_from_hero_to_row(string key)
+    {
+        var folder = Path.Combine(ThemesDir(), key);
+        Assert.True(HeroAtlasLayout.TryParse(File.ReadAllText(Path.Combine(folder, "medals.json")), out var medals, out var error), error);
+        Assert.True(RowStripLayout.TryParse(File.ReadAllText(Path.Combine(folder, "row.json")), out var row, out error), error);
+        Assert.True(row!.Has(RowFinish.Full));
+        Assert.True(GlyphSets.TryGet(key, out var set) && set.Offered && set.Kind == GlyphRenderKind.Atlas);
+
+        // Every size a medal is drawn at has a source: the strip's exact cell below 32 px, a hero tier from there.
+        for (var px = 8f; px <= 300f; px += 1f)
+        {
+            var pick = ThemeAtlasRules.Pick(px, MedalFinish.Gilt, medals, null, row);
+            Assert.Equal(px < MedalLayout.RowTierMaxPx ? AtlasSource.Row : AtlasSource.Medals, pick.Source);
+            if (pick.Source == AtlasSource.Row)
+            {
+                Assert.Equal(Math.Clamp((int)px, 12, 31), pick.Cell);
+            }
+        }
     }
 
     [Fact]
