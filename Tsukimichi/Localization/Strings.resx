@@ -6823,7 +6823,7 @@
     <value>Right-click an item to reveal the quest that rewards it.</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
-    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; settings (or config) and help open those windows.</value>
+    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
   </data>
   <data name="CommandAliasHelp" xml:space="preserve">
     <value>Short form of /tsukimichi; every subcommand works with it.</value>
@@ -10347,5 +10347,137 @@
   <data name="UndoToastAppearanceReset" xml:space="preserve">
     <value>Appearance reset</value>
     <comment>Undo toast after Reset appearance.</comment>
+  </data>
+  <data name="ThemesHeadingShare" xml:space="preserve">
+    <value>Share</value>
+    <comment>Settings › Themes: the share codes block's heading (1.17).</comment>
+  </data>
+  <data name="ThemesShareCode" xml:space="preserve">
+    <value>This look's code</value>
+    <comment>Settings › Themes › Share: the row with the current look's share code.</comment>
+  </data>
+  <data name="ThemesShareCodeHint" xml:space="preserve">
+    <value>Copy it to share your look. A code holds only the choices on this page.</value>
+    <comment>Settings › Themes › Share: the code row's hint.</comment>
+  </data>
+  <data name="ThemesShareCopy" xml:space="preserve">
+    <value>Copy</value>
+    <comment>Settings › Themes › Share: copies the code.</comment>
+  </data>
+  <data name="ThemesShareCopied" xml:space="preserve">
+    <value>Copied</value>
+    <comment>Settings › Themes › Share: the Copy button for a moment after a copy.</comment>
+  </data>
+  <data name="ThemesShareCopiedFormat" xml:space="preserve">
+    <value>Code copied · {0}</value>
+    <comment>{0} = the share code; the quiet note after Copy.</comment>
+  </data>
+  <data name="ThemesSharePaste" xml:space="preserve">
+    <value>Paste a code</value>
+    <comment>Settings › Themes › Share: the paste field's row.</comment>
+  </data>
+  <data name="ThemesSharePasteHint" xml:space="preserve">
+    <value>From a friend or from chat. You see what it would change before anything does.</value>
+    <comment>Settings › Themes › Share: the paste row's hint.</comment>
+  </data>
+  <data name="ThemesSharePastePlaceholder" xml:space="preserve">
+    <value>TM1-…</value>
+    <comment>Settings › Themes › Share: the empty paste field.</comment>
+  </data>
+  <data name="ThemesShareWouldChange" xml:space="preserve">
+    <value>This code would change:</value>
+    <comment>Settings › Themes › Share: the preview's first line.</comment>
+  </data>
+  <data name="ThemesShareSameLook" xml:space="preserve">
+    <value>This code is the look you have now.</value>
+    <comment>Settings › Themes › Share: a pasted code that changes nothing.</comment>
+  </data>
+  <data name="ThemesShareChangeFormat" xml:space="preserve">
+    <value>{0} {1} → {2}</value>
+    <comment>{0} = Theme, Palette or Frames; {1} = what it is now; {2} = what the code makes it.</comment>
+  </data>
+  <data name="ThemesShareTheme" xml:space="preserve">
+    <value>Theme</value>
+    <comment>Settings › Themes › Share: a preview line's label.</comment>
+  </data>
+  <data name="ThemesSharePalette" xml:space="preserve">
+    <value>Palette</value>
+    <comment>Settings › Themes › Share: a preview line's label.</comment>
+  </data>
+  <data name="ThemesShareFrames" xml:space="preserve">
+    <value>Frames</value>
+    <comment>Settings › Themes › Share: a preview line's label.</comment>
+  </data>
+  <data name="ThemesSharePickFormat" xml:space="preserve">
+    <value>{0} from {1}</value>
+    <comment>{0} = a state (Ready); {1} = the set its moon comes from.</comment>
+  </data>
+  <data name="ThemesSharePickFromThemeFormat" xml:space="preserve">
+    <value>{0} from theme</value>
+    <comment>{0} = a state (Ready) whose moon follows the theme again.</comment>
+  </data>
+  <data name="ThemesShareLeftOutOneFormat" xml:space="preserve">
+    <value>One choice in this code isn't in this version ({0}), so it is left out; the rest applies.</value>
+    <comment>{0} = what was left out (Ready: a set this version doesn't have).</comment>
+  </data>
+  <data name="ThemesShareLeftOutManyFormat" xml:space="preserve">
+    <value>{0} choices in this code aren't in this version ({1}), so they are left out; the rest applies.</value>
+    <comment>{0} = how many; {1} = what was left out, separated by semicolons.</comment>
+  </data>
+  <data name="ThemesShareLeftOutItemFormat" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>{0} = Theme, Palette, Frames or a state; {1} = what the code names.</comment>
+  </data>
+  <data name="ThemesShareListSeparator" xml:space="preserve">
+    <value>; </value>
+    <comment>Settings › Themes › Share: between the left-out choices.</comment>
+  </data>
+  <data name="ThemesShareUnknownTheme" xml:space="preserve">
+    <value>a theme this version doesn't have</value>
+    <comment>Settings › Themes › Share: a theme id from a newer build.</comment>
+  </data>
+  <data name="ThemesShareUnknownPalette" xml:space="preserve">
+    <value>a palette this version doesn't have</value>
+    <comment>Settings › Themes › Share: a palette id from a newer build.</comment>
+  </data>
+  <data name="ThemesShareUnknownFrames" xml:space="preserve">
+    <value>frames this version doesn't have</value>
+    <comment>Settings › Themes › Share: a frame kit id from a newer build.</comment>
+  </data>
+  <data name="ThemesShareUnknownSet" xml:space="preserve">
+    <value>a set this version doesn't have</value>
+    <comment>Settings › Themes › Share: a glyph set id from a newer build.</comment>
+  </data>
+  <data name="ThemesShareNotOfferedFormat" xml:space="preserve">
+    <value>{0}, not offered yet</value>
+    <comment>{0} = a theme, palette, frames or set this version lists but does not offer yet.</comment>
+  </data>
+  <data name="ThemesShareWholeThemeFormat" xml:space="preserve">
+    <value>{0}, whole theme only</value>
+    <comment>{0} = a set that cannot be mixed state by state (Classic).</comment>
+  </data>
+  <data name="ThemesShareCancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Settings › Themes › Share: clears the pasted code.</comment>
+  </data>
+  <data name="ThemesShareApply" xml:space="preserve">
+    <value>Apply</value>
+    <comment>Settings › Themes › Share: applies the pasted code's look, with Undo.</comment>
+  </data>
+  <data name="ThemesShareApplyRest" xml:space="preserve">
+    <value>Apply the rest</value>
+    <comment>Settings › Themes › Share: Apply when part of the code was left out.</comment>
+  </data>
+  <data name="ThemesShareMistyped" xml:space="preserve">
+    <value>That code doesn't read: a character may be mistyped. Nothing was changed.</value>
+    <comment>Settings › Themes › Share: a pasted code that fails its checksum.</comment>
+  </data>
+  <data name="ThemesShareNewer" xml:space="preserve">
+    <value>This code is from a newer Tsukimichi. Nothing was changed; update the plugin to use it.</value>
+    <comment>Settings › Themes › Share: a code in a later format.</comment>
+  </data>
+  <data name="UndoToastLookApplied" xml:space="preserve">
+    <value>Look applied</value>
+    <comment>Undo toast after a share code's look is applied.</comment>
   </data>
 </root>

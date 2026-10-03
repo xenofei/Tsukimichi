@@ -49,6 +49,16 @@ public class CommandLineTests
     }
 
     [Fact]
+    public void Look_keeps_the_code_with_its_spaces_and_dashes()
+    {
+        var look = CommandLine.Parse("LOOK  tm1 202C-000C 02C ");
+        Assert.Equal(Subcommand.Look, look.Kind);
+        Assert.Equal("tm1 202C-000C 02C", look.Rest);
+        Assert.Equal(string.Empty, CommandLine.Parse("look").Rest);
+        Assert.Contains("look", CommandLine.ListedWords);
+    }
+
+    [Fact]
     public void Any_other_line_is_a_search_for_the_whole_line()
     {
         var parsed = CommandLine.Parse("Hallo Halatali");
