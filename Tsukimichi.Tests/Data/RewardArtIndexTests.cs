@@ -33,19 +33,6 @@ public class RewardArtIndexTests(GameDataFixture fixture, ITestOutputHelper outp
         Assert.Equal((RewardKind.Item, 2558u), RewardArtIndex.KeyOf(item));
     }
 
-    [Fact]
-    public void System_unlocks_point_at_the_menu_they_belong_to()
-    {
-        Assert.Equal(MoonlitKindIcons.MainCommandGoldSaucer, MoonlitKindIcons.SystemUnlockCommand("Triple Triad"));
-        Assert.Equal(MoonlitKindIcons.MainCommandSightseeingLog, MoonlitKindIcons.SystemUnlockCommand("Sightseeing Log (Dawntrail) · entries 29-45"));
-        Assert.Equal(MoonlitKindIcons.MainCommandActionsAndTraits, MoonlitKindIcons.SystemUnlockCommand("Egi glamours (Summoner)"));
-        Assert.Equal(MoonlitKindIcons.MainCommandArmouryChest, MoonlitKindIcons.SystemUnlockCommand("Glamour (cast/dispel)"));
-        Assert.Equal(MoonlitKindIcons.MainCommandHuntingLog, MoonlitKindIcons.SystemUnlockCommand("Hunts (Endwalker elite)"));
-        Assert.Equal(MoonlitKindIcons.MainCommandDutyFinder, MoonlitKindIcons.SystemUnlockCommand("Palace of the Dead"));
-        Assert.Equal(0u, MoonlitKindIcons.SystemUnlockCommand("Retainers"));
-        Assert.Equal(0u, MoonlitKindIcons.SystemUnlockCommand(null));
-    }
-
     [GameDataFact]
     public void Every_collectible_wears_its_own_art_and_the_textures_exist()
     {
@@ -89,15 +76,12 @@ public class RewardArtIndexTests(GameDataFixture fixture, ITestOutputHelper outp
         output.WriteLine($"Titles: {titled} of {titles.Count} wear their achievement's icon");
         Assert.True(titled >= titles.Count * 9 / 10, $"only {titled} of {titles.Count} titles have an icon");
 
+        // Every system unlock wears a game icon now (UI-5a): its Duty Finder tile, its menu or an item standing for it.
         var systems = entries.Where(e => e.Kind == RewardKind.SystemUnlock).ToList();
-        var mapped = systems.Count(e => index.MenuIcon(MoonlitKindIcons.SystemUnlockCommand(e.RewardName)) != 0);
-        output.WriteLine($"System unlocks: {mapped} of {systems.Count} wear a game menu's icon; the rest their kind's glyph");
-        Assert.True(mapped >= systems.Count / 2, $"only {mapped} of {systems.Count} system unlocks have a menu icon");
-
-        foreach (var row in MoonlitKindIcons.SystemUnlockCommands().Distinct())
-        {
-            Assert.True(index.MenuIcon(row) != 0, $"MainCommand {row} has no icon");
-        }
+        var blank = systems.Where(e => index.FeatureIcon(e.RewardName) == 0).Select(e => e.RewardName).Distinct().ToList();
+        output.WriteLine($"System unlocks: {systems.Count - blank.Count} of {systems.Count} wear a game icon");
+        Assert.True(blank.Count == 0, "system unlocks without an icon: " + string.Join(", ", blank));
+        Assert.All(systems, e => Assert.True(fixture.Game.FileExists(RewardArtIndex.IconPath(index.FeatureIcon(e.RewardName))), e.RewardName));
     }
 
     private RewardArtIndex Build(IReadOnlyList<UniqueRewardEntry> entries) =>

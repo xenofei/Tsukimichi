@@ -4,6 +4,7 @@ using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Unlocks;
 
 namespace Tsukimichi.GameData;
 
@@ -21,7 +22,8 @@ namespace Tsukimichi.GameData;
 /// <item>duties their content type's icon, jobs the 062100-series job icon, aether currents the attunement crystal,
 /// traits, achievements, actions, general actions, blue mage spells and other rewards their sheet icon, items and
 /// titles (the achievement named in the entry's source) theirs;</item>
-/// <item>and the MainCommand menu icons, which system unlocks wear (<see cref="MoonlitKindIcons.SystemUnlockCommand"/>).</item>
+/// <item>the MainCommand menu icons, which the kinds list wears (<see cref="MoonlitKindIcons.MainCommandRow"/>);</item>
+/// <item>and the icons system unlocks wear (<see cref="FeatureArt"/>, read by <see cref="FeatureIconReader"/>).</item>
 /// </list>
 /// Each part is read on its own: a sheet that cannot be read leaves only its kind out, and is logged. Immutable once
 /// built, so safe to read from any thread. Standalone (takes an <see cref="ExcelModule"/>) so tests build it against
@@ -47,16 +49,18 @@ public sealed class RewardArtIndex
     private readonly Dictionary<(RewardKind Kind, uint Id), uint> icons;
     private readonly Dictionary<(RewardKind Kind, uint Id), uint> art;
     private readonly Dictionary<uint, uint> menus;
+    private readonly FeatureIcons features;
 
-    private RewardArtIndex(Dictionary<(RewardKind, uint), uint> icons, Dictionary<(RewardKind, uint), uint> art, Dictionary<uint, uint> menus)
+    private RewardArtIndex(Dictionary<(RewardKind, uint), uint> icons, Dictionary<(RewardKind, uint), uint> art, Dictionary<uint, uint> menus, FeatureIcons features)
     {
         this.icons = icons;
         this.art = art;
         this.menus = menus;
+        this.features = features;
     }
 
     /// <summary>No art at all (no game data, or nothing could be read).</summary>
-    public static RewardArtIndex Empty { get; } = new([], [], []);
+    public static RewardArtIndex Empty { get; } = new([], [], [], FeatureIcons.Empty);
 
     /// <summary>How many rewards have an icon here.</summary>
     public int Count => icons.Count;
@@ -75,6 +79,9 @@ public sealed class RewardArtIndex
 
     /// <summary>The icon of a MainCommand (menu) row; 0 when unknown.</summary>
     public uint MenuIcon(uint mainCommandRow) => menus.GetValueOrDefault(mainCommandRow);
+
+    /// <summary>The icon a system unlock's label wears (<see cref="FeatureArt"/>); 0 when none fits.</summary>
+    public uint FeatureIcon(string? label) => features.For(label);
 
     /// <summary>
     /// The (kind, id) an entry's own art is filed under: the item for an item reward, the achievement named in the
@@ -372,7 +379,8 @@ public sealed class RewardArtIndex
             }
         });
 
-        return new RewardArtIndex(icons, art, menus);
+        var features = FeatureIconReader.Read(excel, language, log);
+        return new RewardArtIndex(icons, art, menus, features);
     }
 
     /// <summary>The game path of an icon's texture (the normal resolution), for an <c>iconExists</c> check.</summary>
