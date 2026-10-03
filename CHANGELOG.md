@@ -4,6 +4,38 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- **Quest givers have faces.** The Giver card shows the giver's portrait from the game's own art: Duty Support busts, Triple Triad cards, painted dialogue portraits and custom delivery portraits.
+  - Portraits are night-toned to match the moon look. Hover one for a larger view and where it comes from.
+  - They cover about 70% of main scenario quests.
+  - Each portrait matches the quest's era, so early quests never show a later outfit or a face you haven't met yet.
+  - Givers without art get a race silhouette, their allied society's emblem or their initials on the same moon plate.
+  - The spoiler shield never shows a face from story you haven't reached.
+- **Small portraits of who to walk up to** in Next stops, the Route window and the Todo overlay. The Journal table has an optional Giver column (right-click the header to show it).
+- **Giver portraits setting** (Settings › Look): Off or Game art.
+
+### Changed
+- **Every travel and route button wears the game's own icon:**
+  - the aetheryte for Teleport, Sprint for Walk and the map flag;
+  - the quest's own marker for Go to giver, and the aethernet shard for the hop.
+  
+  Plain's buttons get them too. When space runs short, a button shortens its label, then shows the icon alone with the full name in its tooltip; it is never cut off.
+- **Requirement lines show the thing they name:** the job, the quest marker, the allied society, the Grand Company rank, the mount, the achievement or the duty.
+- **The Route window's title shows what you're routing to.**
+- **The panels beside the game's quest windows have icon buttons,** with icons on their reward and unlock lines.
+- **Duties with their own emblem show it instead of the generic category tile:** the Great Hunt, the Windward Wilds, Blunderville and the seasonal event duties.
+- **The Duties section (Run with AutoDuty) and the Duty Finder hint show each duty's icon.**
+- **More game icons in Characters:**
+  - role ladders and job groups;
+  - your Grand Company rank and allied societies;
+  - collection progress, and achievements that need several quests;
+  - Collection by character shows each reward's art.
+- **Journal table:** crafter, gatherer and mixed-job quests show a Disciples of the Hand or Land tile, or the Class & Job emblem.
+- **Plan:** the kind chips show each kind's Duty Finder icon, and expansions show their ring.
+
+### Fixed
+- A duty the game gives no picture shows the Duty Finder icon instead of a blank moon. Unnamed instances take their area's name.
+
 ## [1.14.0] - 2026-10-03
 
 ### Added
