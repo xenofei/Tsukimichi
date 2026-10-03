@@ -12,7 +12,7 @@ namespace Tsukimichi.Core.Unlocks;
 /// scenario quest (Lv 83)".</item>
 /// <item>Sprout mode leaves out rows past the character's reach (<see cref="SpoilerMask.ReachExpansion"/>): a warp on
 /// a side quest that names a later expansion's city.</item>
-/// <item>A row the quest's Rewards already show (<see cref="UnlockEntry.InRewards"/>) is never shown:
+/// <item>A row that belongs to Rewards (<see cref="UnlockEntry.InRewards"/>, <see cref="RewardSplit"/>) is never shown:
 /// <see cref="QuestUnlocks.For"/> leaves it out, and so does <see cref="Visible"/> for a list that still holds it.</item>
 /// </list>
 /// </summary>

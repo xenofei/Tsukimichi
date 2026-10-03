@@ -830,7 +830,7 @@
     <value>Unlocks</value>
   </data>
   <data name="ColumnOpensTooltip" xml:space="preserve">
-    <value>What the quest unlocks: areas, aetherytes, duties and features. Settings › Display › Planning turns this column on or off.</value>
+    <value>Areas, duties, flying, features, jobs and actions this opens. Settings › Display › Planning turns this column on or off.</value>
   </data>
   <data name="PlanningConfigOpensColumn" xml:space="preserve">
     <value>Unlocks column in the Journal</value>
@@ -919,7 +919,7 @@
     <value>Features &amp; systems</value>
   </data>
   <data name="Core.UnlockGroup.ActionEmote" xml:space="preserve">
-    <value>Actions &amp; emotes</value>
+    <value>Actions</value>
   </data>
   <data name="Core.UnlockGroup.Collectable" xml:space="preserve">
     <value>Items</value>
@@ -6457,7 +6457,7 @@
     <value>Expansion the quest belongs to; click to sort</value>
   </data>
   <data name="ColumnRewardsTooltip" xml:space="preserve">
-    <value>Up to four reward icons; hover one for details</value>
+    <value>Items and collectables you receive: up to four icons; hover one for details</value>
   </data>
   <data name="TableSortHiddenFormat" xml:space="preserve">
     <value>Sorted by {0}, a column hidden at this width</value>

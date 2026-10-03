@@ -47,9 +47,10 @@ public sealed record UnlockEntry(
     public uint ItemId { get; init; }
 
     /// <summary>
-    /// The quest's own reward list carries the same thing (<see cref="UnlockRewards"/>), so the table's Rewards column
-    /// and the detail pane's Rewards tiles already show it: no unlock surface draws the row
-    /// (<see cref="QuestUnlocks.For"/> and <see cref="UnlockView.Visible"/> leave it out).
+    /// The row belongs to Rewards: a reward-class thing (an emote, a collectable, a title: <see cref="RewardSplit"/>),
+    /// or one a reward-class reward of the quest names (<see cref="UnlockRewards"/>). The Rewards column and tiles show
+    /// it (a title no reward slot carries through <see cref="QuestUnlocks.ExtraRewards"/>); no unlock surface draws the
+    /// row (<see cref="QuestUnlocks.For"/> and <see cref="UnlockView.Visible"/> leave it out).
     /// </summary>
     public bool InRewards { get; init; }
 

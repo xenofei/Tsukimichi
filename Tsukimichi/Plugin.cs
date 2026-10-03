@@ -992,7 +992,14 @@ public sealed partial class Plugin : IDalamudPlugin
             moonlit.Unlocks = questUnlocks;
             moonlit.UnlockReach = () => queryRunner.UnlockReach;
             gameLinks.GameCallsAllowed = () => gate.HooksAllowed;
-            mainWindow.AttachUnlocks(entry => unlockReader.IsObtained(entry), moonlit.Icons.Resolve);
+            // A row or tile the sheets give no icon of its own (a title) wears its kind's menu icon, as Moonlit's kinds list does.
+            mainWindow.AttachUnlocks(
+                entry => unlockReader.IsObtained(entry),
+                (quest, entry) =>
+                {
+                    var icon = moonlit.Icons.Resolve(quest, entry);
+                    return icon != 0 ? icon : moonlit.Icons.KindIcon(entry.Kind).IconId;
+                });
             // Hero banners (V4): every quest's banner through the fallback chain, resolved off the frame once per catalog
             // and duty unlock index; the duty step reads the same index as the Duty Finder hint.
             banners = new Core.Ui.BannerIndexSource<Core.Unique.DutyUnlockIndex>(

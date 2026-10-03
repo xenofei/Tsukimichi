@@ -15,16 +15,17 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The detail pane's Unlocks section (feature plan v6 K2), between Rewards and Hand in: what the quest opens, as icon
-/// rows grouped like the wiki's "Unlocks" column (Areas · Aetherytes · Duties · Features · Actions &amp; emotes ·
-/// Items), from <see cref="QueryRunner.Unlocks"/>.
+/// rows grouped like the wiki's "Unlocks" column (Areas · Aetherytes · Duties · Features · Actions), from
+/// <see cref="QueryRunner.Unlocks"/>.
 /// <list type="bullet">
-/// <item>Each row: the game icon on a sunken tile (the veiled moon while none is known), the name, the kind and one
-/// fact on the right ("Dungeon · Lv 61"), and a check in a reserved slot only when the game confirms the character has
-/// it (a duty unlocked, an aetheryte attuned, an emote owned). There is no "not yet" mark.</item>
-/// <item>Nothing is drawn twice in the pane: anything the Rewards tiles already show (a job, a duty, an emote, a mount,
-/// an aether current: <see cref="UnlockRewards"/>) is left out of every group, and next quests are left to the Path
-/// card, which lists the same quests with their moons. A group left empty is not drawn, and a quest left with nothing
-/// draws no section at all.</item>
+/// <item>Each row: the game icon on a sunken well the size of a Rewards tile (the veiled moon while none is known), the
+/// name over the kind and one fact ("Dungeon · Lv 61"), and a check in a reserved slot only when the game confirms the
+/// character has it (a duty unlocked, an aetheryte attuned, a job). Rows keep the Rewards tiles' gap, so Rewards and
+/// Unlocks read as a pair. There is no "not yet" mark.</item>
+/// <item>One split with Rewards (<see cref="RewardSplit"/>): the quest's own duty, job, action, flying and feature
+/// rewards are rows here and never Rewards tiles; what the character keeps (an emote, a mount, a title) is a tile and
+/// never a row. Next quests are left to the Path card, which lists the same quests with their moons. A group left
+/// empty is not drawn, and a quest left with nothing draws no section at all.</item>
 /// <item>At most six rows a group, then "+N more" with the rest in a popup.</item>
 /// <item>Clicks: an aetheryte teleports through Lifestream when the game confirms it is attuned, else it is flagged on
 /// the map; an area opens the map. A duty's right-click menu opens the Duty Finder on it (a read-only UI call that never
@@ -143,7 +144,7 @@ public sealed partial class DetailPane
         unlockGroups.Clear();
         unlocksCaption = string.Empty;
 
-        // The index already leaves out what the Rewards tiles show (UnlockRewards); next quests are the Path card's.
+        // The index already leaves out what belongs to the Rewards tiles (RewardSplit); next quests are the Path card's.
         var entries = index.For(quest.RowId);
         unlocksMasked = session.Spoilers.IsMasked(quest);
         if (unlocksMasked)
@@ -233,10 +234,14 @@ public sealed partial class DetailPane
                 TextFlow.Wrapped(group.Caption, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
             }
 
-            for (var i = 0; i < group.Rows.Count; i++)
+            // The Rewards tiles' gap between rows, so the two sections keep one rhythm.
+            using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, PairGap)))
             {
-                using var rowId = ImRaii.PushId(i);
-                DrawUnlockRow(quest, group.Rows[i]);
+                for (var i = 0; i < group.Rows.Count; i++)
+                {
+                    using var rowId = ImRaii.PushId(i);
+                    DrawUnlockRow(quest, group.Rows[i]);
+                }
             }
 
             if (group.MoreLabel.Length > 0)
@@ -246,20 +251,25 @@ public sealed partial class DetailPane
         }
     }
 
-    /// <summary>One row: an item the full row wide and one icon high, so the layout never moves on hover.</summary>
+    /// <summary>
+    /// One row: the icon on a well the size of a Rewards tile, the name over its caption, and the check slot; an item
+    /// the full row wide and one tile high, with the Rewards tiles' gap below it, so the two sections read as a pair
+    /// and the layout never moves on hover.
+    /// </summary>
     private void DrawUnlockRow(QuestRecord quest, UnlockRowView row)
     {
         var dl = ImGui.GetWindowDrawList();
-        var iconSize = UiMetrics.Icon(24f);
+        var tile = PairTile;
+        var iconSize = tile - UiMetrics.Px(8f);
         var lineHeight = ImGui.GetTextLineHeight();
-        var height = MathF.Max(iconSize + UiMetrics.Px(4f), lineHeight);
+        var height = MathF.Max(tile, 2f * lineHeight);
         var min = ImGui.GetCursorScreenPos();
         var width = MathF.Max(1f, cardRight - min.X - UiMetrics.Px(4f));
         ImGui.InvisibleButton("##unlock", new Vector2(width, height));
         var hovered = ImGui.IsItemHovered();
         var clicked = ImGui.IsItemClicked(ImGuiMouseButton.Left) || (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter, false));
         Keyboard.OpenMenuOnKey(UnlockMenuId);
-        var rounding = UiMetrics.Px(4f);
+        var rounding = UiMetrics.Px(6f);
         if (hovered)
         {
             dl.AddRectFilled(min, min + new Vector2(width, height), Theme.U32(Theme.Surface.Hover), rounding);
@@ -267,12 +277,14 @@ public sealed partial class DetailPane
 
         Chrome.FocusRing(rounding);
 
-        // The icon tile: the game icon, or the veiled moon while none is known.
-        var tileMin = min + new Vector2(0f, (height - iconSize) * 0.5f);
-        var tileMax = tileMin + new Vector2(iconSize);
+        // The icon well, as a Rewards tile draws it: the game icon, or the veiled moon while none is known.
+        var tileMin = min + new Vector2(0f, (height - tile) * 0.5f);
+        var tileMax = tileMin + new Vector2(tile);
         dl.AddRectFilled(tileMin, tileMax, Theme.U32(Theme.Surface.Sunken), rounding);
+        dl.AddRect(tileMin, tileMax, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         var center = (tileMin + tileMax) * 0.5f;
-        if (row.Icon == 0 || !GameIcon.DrawAt(dl, textures, row.Icon, tileMin + new Vector2(UiMetrics.Px(1f)), tileMax - new Vector2(UiMetrics.Px(1f)), rounding))
+        var iconMin = center - new Vector2(iconSize * 0.5f);
+        if (row.Icon == 0 || !GameIcon.DrawAt(dl, textures, row.Icon, iconMin, iconMin + new Vector2(iconSize), UiMetrics.Px(4f)))
         {
             MoonGlyph.DrawVeiled(dl, center, iconSize * 0.32f, 0.6f);
         }
@@ -285,20 +297,13 @@ public sealed partial class DetailPane
             Marks.Draw(dl, checkMin + new Vector2(checkSize * 0.5f), checkSize, Mark.Check);
         }
 
-        // The caption on the right, before the check slot, while the name keeps room; else it lives in the tooltip.
-        var gap = UiMetrics.Px(8f);
-        var textY = min.Y + ((height - lineHeight) * 0.5f);
+        // The name over its caption ("Dungeon · Lv 61"), the pair centred on the well.
+        var gap = UiMetrics.Px(10f);
         var nameX = tileMax.X + gap;
-        var right = checkMin.X - UiMetrics.Px(4f);
-        var captionWidth = ImGui.CalcTextSize(row.Caption).X;
-        var nameRoom = right - nameX;
-        if (captionWidth > 0f && nameRoom - captionWidth - gap >= UiMetrics.Px(80f))
-        {
-            dl.AddText(new Vector2(right - captionWidth, textY), Theme.U32(Theme.Surface.TextTertiary), row.Caption);
-            nameRoom -= captionWidth + gap;
-        }
-
-        Chrome.EllipsisTextAt(dl, new Vector2(nameX, textY), MathF.Max(1f, nameRoom), row.Name, Theme.U32(Theme.Surface.Text));
+        var room = MathF.Max(1f, checkMin.X - UiMetrics.Px(4f) - nameX);
+        var nameY = min.Y + ((height - (2f * lineHeight)) * 0.5f);
+        Chrome.EllipsisTextAt(dl, new Vector2(nameX, nameY), room, row.Name, Theme.U32(Theme.Surface.Text));
+        Chrome.EllipsisTextAt(dl, new Vector2(nameX, nameY + lineHeight), room, row.Caption, Theme.U32(Theme.Surface.TextTertiary));
 
         if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
         {

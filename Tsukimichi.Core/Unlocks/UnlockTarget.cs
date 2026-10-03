@@ -6,7 +6,7 @@ namespace Tsukimichi.Core.Unlocks;
 
 /// <summary>
 /// The section an unlock row is drawn under (feature plan v6 K2), in display order: Areas, Aetherytes, Duties, Features
-/// &amp; systems, Actions &amp; emotes, Items &amp; collectables, Next quests.
+/// &amp; systems, Actions, Items &amp; collectables (never drawn: they belong to Rewards), Next quests.
 /// </summary>
 public enum UnlockGroup : byte
 {
@@ -185,14 +185,14 @@ public static class UnlockTargets
         _ => CoreText.T("Core.UnlockTarget.NextQuest", "Quest"),
     };
 
-    /// <summary>A group's caption: "Areas", "Aetherytes", "Duties", "Features", "Actions & emotes", "Items", "Next quests".</summary>
+    /// <summary>A group's caption: "Areas", "Aetherytes", "Duties", "Features", "Actions", "Items", "Next quests".</summary>
     public static string GroupName(UnlockGroup group) => group switch
     {
         UnlockGroup.Area => CoreText.T("Core.UnlockGroup.Area", "Areas"),
         UnlockGroup.Aetheryte => CoreText.T("Core.UnlockGroup.Aetheryte", "Aetherytes"),
         UnlockGroup.Duty => CoreText.T("Core.UnlockGroup.Duty", "Duties"),
         UnlockGroup.Feature => CoreText.T("Core.UnlockGroup.Feature", "Features & systems"),
-        UnlockGroup.ActionEmote => CoreText.T("Core.UnlockGroup.ActionEmote", "Actions & emotes"),
+        UnlockGroup.ActionEmote => CoreText.T("Core.UnlockGroup.ActionEmote", "Actions"),
         UnlockGroup.Collectable => CoreText.T("Core.UnlockGroup.Collectable", "Items"),
         _ => CoreText.T("Core.UnlockGroup.NextQuest", "Next quests"),
     };

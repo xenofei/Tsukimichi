@@ -227,34 +227,46 @@ public sealed class QuestUnlocks
 [24px icon]  Onokoro                         ✓        Aetheryte · The Ruby Sea
 ```
 
-- **Layout:** the icon is `UiMetrics.Icon(24)` on the sunken tile used by reward tiles. The name is in the body text. The right caption is TextTertiary: the kind word plus one fact (region, level, territory, "1 current").
+- **Layout:** the icon sits on a sunken well the size of a Rewards tile, with the tiles' hairline and 6 px gap between rows, so Rewards and Unlocks read as a pair. The name is in the body text, over a TextTertiary caption: the kind word plus one fact (region, level, territory, "aether current").
 - **Owned check:** a ✓ in Moon colour only when the game *confirms* it: duty unlocked, aetheryte attuned, emote or mount owned, through `CollectibleReader` / `RewardUnlockReader`. Otherwise nothing is drawn. There is no "not unlocked" mark, so the pane stays calm.
 - **Caps:** at most 6 rows per group, then a "+N more" text button that opens a popover with the rest. The section's height never changes on hover or as icons load; the stand-in tile holds the place.
 - **Not repeated** (owner request after 1.12.1: "If the reward is already listed, then don't show the unlock"; see 3.2.1):
-  - no group lists anything the quest's Rewards already show. These groups are then often empty, and an empty group is never drawn;
+  - no group lists anything that belongs to the quest's Rewards (the split in 3.2.1), and an empty group is never drawn;
   - next quests are not drawn here: the Path card's "Unlocks next" comb lists the same quests with the same moons and the same click, so rows here were a full duplicate.
 - **When it shows:** the section is left out when nothing is left to draw, so a quest whose only unlocks are its rewards or next quests has no Unlocks section (and an empty Unlocks cell in the table).
 
 ### 3.2.1 What belongs in Unlocks, and what stays in Rewards
 
-**What the Rewards surfaces draw** (checked in the code after 1.12.1):
+**One split, nothing in both** (owner request after 1.12.2: "Those need to be explicitly in one section"; `Core/Unlocks/RewardSplit.cs`, tested over every `RewardKind` and `UnlockTarget`):
 
-| Surface | Draws | Source | Identified by |
-|---|---|---|---|
-| Journal table, Rewards column | The first 4 rewards that have an icon | `QuestRecord.Rewards` | `RewardRef` kind, id, item id |
-| Detail pane, Rewards tiles | Every reward; a gold ring when the unique-reward data names it | `QuestRecord.Rewards` (+ `UniqueRewardCatalog` for the ring only) | the same; the ring matches kind + id or item id |
-| Moonlit | One row per unique reward | `UniqueRewardCatalog` (shipped + curated + the user's verdicts) | `UniqueRewardEntry` kind, reward id, item id, name |
-| Game panels (offer/result) | A Moonlit line per unique reward | `UniqueRewardCatalog` | the same |
+| Section | Holds | Kinds |
+|---|---|---|
+| **Rewards**: what you receive and keep | items, optional items, gear, gil and currencies; mounts, minions, emotes, hairstyles, orchestrion rolls, Triple Triad cards, bardings, fashion accessories, titles, achievements; the seven 2.x soul crystals (`QuestRewardOther` 10-16) | `Item`, `OptionalItem`, `ArtifactGear`, `Other` (a currency, a kept other reward), `Emote`, `Mount`, `Minion`, `Orchestrion`, `TripleTriadCard`, `Ornament`, `Barding`, `Hairstyle`, `Achievement`, `Title` |
+| **Unlocks**: access and abilities you gain | areas, world-map regions, aetherytes; duties of every kind; flying; features and systems (a system unlock, a named `Quest.OtherReward` such as Wondrous Tails or Spearfishing); jobs and classes; actions, general actions, traits, blue magic | `Instance`, `DutyUnlock`, `AetherCurrent`, `SystemUnlock`, `ClassJob`, `Action`, `GeneralAction`, `Trait`, `BlueMageSpell`, a named `Other` (`QuestRewardOther` 2-8) |
+
+Emotes stay in Rewards: the game and Moonlit count them as collectables. A new `QuestRewardOther` row fails `RewardUnlockSplitTests` until it is sorted.
+
+**What the surfaces draw** (after the split):
+
+| Surface | Draws | Source |
+|---|---|---|
+| Journal table, Rewards column | The first 4 reward-class rewards that have an icon | `QuestRecord.Rewards` |
+| Detail pane, Rewards tiles | Every reward-class reward, then the reward-class rows no reward slot carries (`QuestUnlocks.ExtraRewards`: titles); a gold ring when the unique-reward data names it | `QuestRecord.Rewards`, the unlock index |
+| Unlocks column and section, tooltips, Todo, panels, chat | `QuestUnlocks.For`: never a reward-class row, and always the quest's own unlock-class rewards | the unlock index |
+| Moonlit | One row per unique reward, in its own categories (duty unlocks, aether currents, jobs and system unlocks among them; left as they are) | `UniqueRewardCatalog` |
+| Game panels (offer/result) | A Moonlit line per unique reward | `UniqueRewardCatalog` |
 
 `QuestRecord.Rewards` holds items and optional items (a mount's whistle, a minion, a roll, a card, a hairstyle, a barding, an emote's book), currency, the emote, the action, general actions, the instance (`InstanceContentUnlock`, now with its duty-kind icon), the class or job (now with its job icon) and the named `OtherReward` (Aether Current, Aether Compass, Wondrous Tails, Spearfishing, the soul crystals).
 
-**The rule** (`Core/Unlocks/UnlockRewards.cs`, applied once per catalog in `QuestUnlocks.Build`): an unlock row is *the same thing* as a reward when they name the same item; or the same sheet row of the same kind (emote, action, general action, class/job); or the reward is the aether current (`QuestRewardOther` 2) and the row is flying a current opens; or, failing ids, they carry the same name (case, a leading "the" and a floor set aside) and the row is a duty, feature, job, action, emote or collectable. Areas, aetherytes and next quests never match. Such a row is marked `UnlockEntry.InRewards`; `QuestUnlocks.For` and `UnlockView.Visible` leave it out, so every surface agrees: the Unlocks column, the detail pane, the row tooltip, the Todo hint, Path's station tooltips, Moonlit's "Also opens", the game panels, `/tsuki` search output and the "Unlocked:" chat line. `QuestUnlocks.IncludingRewards` keeps every row for the reverse lookup and the tests. Moonlit's "Also opens" and the panels' unlock lines also leave out what the quest's own Moonlit rows or lines name.
+**The rule** (`Core/Unlocks/UnlockRewards.cs`, applied once per catalog in `QuestUnlocks.Build`): an unlock row is *the same thing* as a reward when they name the same item; or the same sheet row of the same kind (emote, action, general action, class/job); or the reward is the aether current (`QuestRewardOther` 2) and the row is flying a current opens; or, failing ids, they carry the same name (case, a leading "the" and a floor set aside) and the row is a duty, feature, job, action, emote or collectable. Areas, aetherytes and next quests never match. A row whose target is reward-class, or that one of the quest's *reward-class* rewards names, is marked `UnlockEntry.InRewards`; an unlock-class reward hides nothing and is drawn as its row (an instance as its duty with the duty-kind icon, the aether current as flying in the zone the reward data names, a named other reward as a feature with the reward's icon or as the action of its name, "Aether Compass"). `QuestUnlocks.For` and `UnlockView.Visible` leave it out, so every surface agrees: the Unlocks column, the detail pane, the row tooltip, the Todo hint, Path's station tooltips, Moonlit's "Also opens", the game panels, `/tsuki` search output and the "Unlocked:" chat line. `QuestUnlocks.IncludingRewards` keeps every row for the reverse lookup and the tests. Moonlit's "Also opens" and the panels' unlock lines also leave out what the quest's own Moonlit rows or lines name.
 
-**Unlocks holds** what the quest opens access to: areas and world-map regions, aetherytes and aethernet shards, duties, features and systems, jobs and classes, flying, and actions, emotes and collectables found only through the sheets or the reward data. **Rewards holds** anything the quest hands over as a reward: items and collectables, emotes, actions, general actions, the instance it opens, the class or job, the aether current and the named other rewards. Next quests live in Path.
+Next quests live in Path.
 
-**Inside Unlocks**, two rows of one kind with one name are one row ("Collect" for two actions, a title listed twice), a zone and the world map of its name are the zone's row ("The Tempest", "Mare Lamentorum", "Solution Nine"), and a curated feature named like a duty or job of the quest is that duty or job ("Blue Mage").
+**Inside Unlocks**, two rows of one kind with one name are one row ("Collect" for two actions, a title listed twice), a zone and the world map of its name are the zone's row ("The Tempest", "Mare Lamentorum", "Solution Nine"), and a feature named like a duty, job or action of the quest is that duty, job or action ("Blue Mage", "Desynthesis", "Aether Compass"), keeping the feature's icon and note. Action rows wear the sheet's icon (`UnlockLinks.ActionIcons`).
 
-**Measured** over the installed game (`UnlockRewardDuplicateTests`): 600 quests drew at least one unlock that repeated a reward in 1.12.1 (163 named-feature rows, 160 actions, 150 aether currents, 79 rolls, 64 minions, 56 emotes, 38 mounts, 25 jobs, 45 duties, and more); 0 do now, and no quest shows one unlock twice. The AutoDuty Duties section keeps its duty rows: it is the automation surface (a Run pill), only drawn with AutoDuty loaded.
+**Visual pair** (detail pane): Rewards, then Unlocks, under the same section header. An Unlocks row's icon well is the size of a Rewards tile, rows keep the tiles' 6 px gap, and the name sits over its caption. Neither section draws an empty header: a quest with no EXP, gil or kept reward has no Rewards section.
+
+**Measured** over the installed game. In 1.12.1, 600 quests drew at least one unlock that repeated a reward; 1.12.2 hid those rows. In 1.12.2, 398 quests drew an unlock-class entry among their Rewards (160 actions, 150 aether currents, 48 instances, 25 jobs, 12 general actions, 6 named features); 0 do after the split (`RewardUnlockSplitTests`). Every reward lands in exactly one section (25 currencies stay in Rewards; 3 solo-instance slots name nothing either could draw), no quest shows a thing in both, no shown unlock repeats a kept reward (206 quests would without the rule, `UnlockRewardDuplicateTests`), no quest shows one unlock twice, and all 308 action rows have an icon. The AutoDuty Duties section keeps its duty rows: it is the automation surface (a Run pill), only drawn with AutoDuty loaded.
 
 **Clicks** (every row is a focusable item, accessibility A6):
 

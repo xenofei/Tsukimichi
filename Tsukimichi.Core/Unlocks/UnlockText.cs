@@ -26,7 +26,7 @@ public static class UnlockText
 
     /// <summary>
     /// "Kugane · The Sirensong Sea": the names of the places and things the quest opens (areas, aetherytes, duties,
-    /// features), leaving out actions, emotes and items, which a reward list already names; empty when none.
+    /// features), leaving out actions, which the Unlocks column and section show by icon; empty when none.
     /// </summary>
     public static string Places(IReadOnlyList<UnlockEntry> entries, int max = DefaultMax)
     {
