@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-10-03
+
 ### Added
 - **Quest givers have faces.** The Giver card shows the giver's portrait from the game's own art: Duty Support busts, Triple Triad cards, painted dialogue portraits and custom delivery portraits.
   - Portraits are night-toned to match the moon look. Hover one for a larger view and where it comes from.
@@ -35,6 +37,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Fixed
 - A duty the game gives no picture shows the Duty Finder icon instead of a blank moon. Unnamed instances take their area's name.
+- A followed route keeps its header icon after a restart.
 
 ## [1.14.0] - 2026-10-03
 
