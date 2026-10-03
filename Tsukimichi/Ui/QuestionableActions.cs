@@ -115,6 +115,16 @@ public sealed class QuestionableActions
     public Func<string?>? CommandAfterStop { get; set; }
 
     /// <summary>
+    /// <see cref="CommandAfterStop"/> for a stop about to happen: the companion settings are read again first when they
+    /// may be out of date, so the stop's confirmation is never skipped on an old read. Set by the plugin; unset falls
+    /// back to <see cref="CommandAfterStop"/>.
+    /// </summary>
+    public Func<string?>? CommandAfterStopNow { get; set; }
+
+    /// <summary>The command after stop as a stop deciding whether to ask first must see it (<see cref="CommandAfterStopNow"/>).</summary>
+    private string? StopDecisionCommand() => (CommandAfterStopNow ?? CommandAfterStop)?.Invoke();
+
+    /// <summary>
     /// The states the quests sent are judged by: the logged-in character's, whoever is viewed, since Questionable plays
     /// that character; the viewed character's only while nobody is logged in.
     /// </summary>
@@ -163,7 +173,7 @@ public sealed class QuestionableActions
     /// first (the same rule as Stop's confirmation), for the chat line's question; null when a stop needs no question.
     /// </summary>
     public string? StopQuestionCommand() =>
-        settings.QuestionableConfirmStopCommand && CommandAfterStop?.Invoke() is { } command ? CommandText(command) : null;
+        settings.QuestionableConfirmStopCommand && StopDecisionCommand() is { } command ? CommandText(command) : null;
 
     /// <summary>
     /// Stops Questionable with no chat line and no question, for <c>/tsuki stop</c>, which asks in chat and names what it
@@ -230,6 +240,8 @@ public sealed class QuestionableActions
     /// </summary>
     public void StartQuest(string host, uint rowId)
     {
+        // A hand-off: the blocker reads the companion settings as they are now, not as last read.
+        CompanionPlugins.ReadSetupNow();
         if (StartQuestBlocker(rowId) is not null)
         {
             return;
@@ -581,7 +593,12 @@ public sealed class QuestionableActions
         var startBlocker = StartBlocker();
         if (ImGui.MenuItem(startLabel, string.Empty, false, canSend && startBlocker is null))
         {
-            RequestStart(host, sendPlan);
+            // A hand-off: checked again on the companion settings as they are now, not as last read.
+            CompanionPlugins.ReadSetupNow();
+            if (StartBlocker() is null)
+            {
+                RequestStart(host, sendPlan);
+            }
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
@@ -774,7 +791,7 @@ public sealed class QuestionableActions
     /// </summary>
     private void RequestStop(string host)
     {
-        if (!settings.QuestionableConfirmStopCommand || CommandAfterStop?.Invoke() is not { } command)
+        if (!settings.QuestionableConfirmStopCommand || StopDecisionCommand() is not { } command)
         {
             DoStop();
             return;

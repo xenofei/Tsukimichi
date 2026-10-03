@@ -107,6 +107,13 @@ public sealed class CompanionPlugins : IDisposable
     /// </summary>
     public static string? SetupNote(CompanionPlugin plugin) => Current?.NoteFor(plugin);
 
+    /// <summary>
+    /// Before a hand-off acts (a click, a command): reads the companions' settings again at once when the last read may
+    /// be out of date (<see cref="CompanionSetupService.ReadNowIfStale"/>), so <see cref="DisabledReason(CompanionPlugin)"/>
+    /// answers from the settings as they are now. Framework thread; does nothing before the plugin finished loading.
+    /// </summary>
+    public static void ReadSetupNow() => Current?.Setup?.ReadNowIfStale();
+
     /// <summary>The instance form of <see cref="DisabledReason(CompanionPlugin)"/>; the text is composed once per list change, settings read and language.</summary>
     public string? ReasonFor(CompanionPlugin plugin)
     {

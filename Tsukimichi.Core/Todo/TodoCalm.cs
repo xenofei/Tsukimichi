@@ -1,3 +1,4 @@
+using System.Numerics;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Core.Todo;
@@ -74,5 +75,44 @@ public static class TodoBeat
         var halo = p is >= 0.25f and < 0.85f ? (p - 0.25f) / 0.6f : -1f;
         var alpha = p < 0.6f ? 1f : 1f - MotionMath.EaseOutCubic((p - 0.6f) / 0.4f);
         return (lit, halo, alpha);
+    }
+}
+
+/// <summary>
+/// Whether the unlocked Todo overlay lets a click through to the game this frame (1.13.0). Its opacity goes down to 0,
+/// and a panel that can hardly be seen should not catch clicks meant for the world: below
+/// <see cref="NearlyInvisibleOpacity"/> it takes no input, except while the pointer is over one of its interactive parts
+/// (a row, its "…", a section caption, the title line) or a modifier key is held (to move the panel or reach it).
+/// Locked, it is click-through whatever the opacity. Pure and allocation-free.
+/// </summary>
+public static class TodoClickThrough
+{
+    /// <summary>The background opacity under which the panel counts as nearly invisible.</summary>
+    public const float NearlyInvisibleOpacity = 0.1f;
+
+    /// <summary>Whether a panel at <paramref name="opacity"/> is nearly invisible.</summary>
+    public static bool NearlyInvisible(float opacity) => float.IsFinite(opacity) && opacity < NearlyInvisibleOpacity;
+
+    /// <summary>
+    /// Whether the unlocked panel passes the pointer through this frame: nearly invisible, the pointer on none of its
+    /// interactive parts and no modifier held.
+    /// </summary>
+    public static bool PassesClicks(float opacity, bool pointerOnTarget, bool modifierHeld) =>
+        NearlyInvisible(opacity) && !pointerOnTarget && !modifierHeld;
+
+    /// <summary>Whether <paramref name="point"/> lies inside one of <paramref name="targets"/> (edges included).</summary>
+    public static bool Hits(ReadOnlySpan<ScreenRect> targets, Vector2 point)
+    {
+        foreach (var target in targets)
+        {
+            if (!target.IsEmpty
+                && point.X >= target.Min.X && point.X <= target.Max.X
+                && point.Y >= target.Min.Y && point.Y <= target.Max.Y)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

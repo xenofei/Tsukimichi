@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Tsukimichi.Core.Model;
@@ -106,8 +107,14 @@ public sealed partial class ConfigWindow
     // The row being drawn (between Setting and EndSetting).
     private RowLayout row;
 
-    // Set until the window first draws after the 1.13 rebuild (see PreDraw).
+    // Set until the window takes its new size after the 1.13 rebuild (see PreDraw).
     private bool widenOnce;
+
+    // Where the window stood when it last drew (null before its first draw this session), and the frames it last went
+    // through PreDraw and Draw: a frame with the one and not the other was drawn collapsed.
+    private Vector2? drawnPos;
+    private int preDrawnFrame = -10;
+    private int drawnFrame = -10;
 
     /// <summary>
     /// The blocks of settings in the order they draw: grouped by section in <see cref="SettingsSections.Order"/>, and
@@ -196,12 +203,25 @@ public sealed partial class ConfigWindow
 
     public override void PreDraw()
     {
+        // Collapsed last frame, the window did not draw, so a change waiting to save would wait until it is expanded
+        // again (or be lost at unload): it is saved now.
+        var frame = ImGui.GetFrameCount();
+        if (preDrawnFrame == frame - 1 && drawnFrame != frame - 1 && pendingSave.Flush())
+        {
+            Save();
+        }
+
+        preDrawnFrame = frame;
+
         // Opened for the first time since the rebuild (no page remembered yet): the window takes the new size once, so
-        // rows that were laid out for the old 680 px window get their control column; afterwards it is the player's.
-        if (widenOnce)
+        // rows that were laid out for the old 680 px window get their control column; afterwards it is the player's. It
+        // waits for one draw to know where the window stands, and never reaches past the screen's work area from there.
+        var minimum = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.UiScale;
+        if (widenOnce && drawnPos is { } pos)
         {
             widenOnce = false;
-            Size = DefaultSizeLogical;
+            var viewport = ImGuiHelpers.MainViewport;
+            Size = Vector2.Max(ScaleMetrics.FitFromPosition(DefaultSizeLogical, ImGuiHelpers.GlobalScale, pos, viewport.WorkPos, viewport.WorkSize), minimum);
             SizeCondition = ImGuiCond.Always;
             settings.SettingsPage = SettingsSections.Name(section);
             SaveSoon();
@@ -214,7 +234,7 @@ public sealed partial class ConfigWindow
         // The window is its own top level, so its minimum follows the UI scale like Nearby's.
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.UiScale,
+            MinimumSize = minimum,
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
         };
         nightChrome = Theme.PushNightWindow();
@@ -228,6 +248,9 @@ public sealed partial class ConfigWindow
 
     public override void Draw()
     {
+        drawnFrame = ImGui.GetFrameCount();
+        drawnPos = ImGui.GetWindowPos();
+
         // The window scales itself (its two children inherit it); the scale is reset before Begin lays the title bar
         // out again.
         UiMetrics.ApplyFontScale();
@@ -911,9 +934,14 @@ public sealed partial class ConfigWindow
         ImGui.Dummy(new Vector2(0f, MathF.Max(1f, UiMetrics.Px(CardGapLogical) - ImGui.GetStyle().ItemSpacing.Y)));
     }
 
-    /// <summary>Frees the card splitter (plugin unload).</summary>
+    /// <summary>Saves a change still waiting to (the plugin unloads before the window closes) and frees the card splitter.</summary>
     public void Dispose()
     {
+        if (pendingSave.Flush())
+        {
+            Save();
+        }
+
         if (!cardSplitter.IsNull)
         {
             cardSplitter.Destroy();

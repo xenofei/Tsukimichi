@@ -629,6 +629,8 @@ public sealed partial class GameLinks
     /// </summary>
     public bool TeleportToGiver(QuestRecord quest)
     {
+        // A hand-off: Lifestream's setup is checked as it is now, not as last read.
+        CompanionPlugins.ReadSetupNow();
         ForgetTravelFrame();
         var check = CheckTeleport(quest);
         if (!check.Ready || Lifestream is not { } lifestream || ClickHeld)
@@ -968,6 +970,8 @@ public sealed partial class GameLinks
     /// </summary>
     public bool WalkToGiver(QuestRecord quest)
     {
+        // A hand-off: vnavmesh's setup is checked as it is now, not as last read.
+        CompanionPlugins.ReadSetupNow();
         ForgetTravelFrame();
         if (ClickHeld || !CheckWalk(quest).Ready || Travel is not { } travel || GoalFor(quest) is not { } goal)
         {
@@ -1212,6 +1216,8 @@ public sealed partial class GameLinks
     /// </summary>
     public bool GoToGiver(QuestRecord quest)
     {
+        // A hand-off: Lifestream's and vnavmesh's setup are checked as they are now, not as last read.
+        CompanionPlugins.ReadSetupNow();
         ForgetTravelFrame();
         if (ClickHeld || CheckGoTo(quest) is not { Ready: true, Plan: { } plan } || Travel is not { } travel || GoalFor(quest) is not { } goal)
         {

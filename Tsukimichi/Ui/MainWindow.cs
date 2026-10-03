@@ -470,7 +470,6 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         EnsureInitialized();
-        UiMetrics.Update(plugin.Settings);
 
         // The rail and the panes' floors grow with the UI scale, so the minimum size must too or a pane goes under its
         // floor (ScaleMetrics.MinWindowSize, PaneLayout); it never exceeds the viewport, so the window can always be

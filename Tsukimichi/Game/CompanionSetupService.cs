@@ -22,7 +22,8 @@ namespace Tsukimichi.Game;
 /// several times in a row, or through a temporary file, costs one read and is never read half-written), after Dalamud's
 /// plugin list changed or an apply, and otherwise at most every <see cref="RefreshMs"/> as a backstop for the settings
 /// read through IPC (every <see cref="UnwatchedRefreshMs"/> when the folder cannot be watched). Nothing is read while
-/// nobody asks. Only the very first ask reads at once, so it never answers with nothing. Each file is checked once per
+/// nobody asks. Only the very first ask reads at once, so it never answers with nothing, and a decision about to act
+/// on the settings (a stop, a hand-off) reads at once when they may be out of date (<see cref="ReadNowIfStale"/>). Each file is checked once per
 /// read and parsed again only when its write time moved, and <see cref="Version"/> moves only when something read
 /// differently, so the reasons composed from it are not built again. A per-frame caller (a hand-off button's disabled
 /// reason) costs a field read. Framework thread only, apart from the watcher's flag.
@@ -151,6 +152,37 @@ public sealed class CompanionSetupService : IDisposable
         {
             Refresh();
         }
+    }
+
+    /// <summary>
+    /// For a decision about to act on the settings (a Questionable stop deciding whether to ask first, a hand-off):
+    /// reads them again at once when what was last read may be out of date (never read, the plugin list changed, a
+    /// companion's file changed, invalidated, or older than the backstop), without waiting for a changed file to settle
+    /// or for the tick, so the decision never acts on a stale read. Otherwise the last read stands. Framework thread.
+    /// </summary>
+    public void ReadNowIfStale()
+    {
+        var due = SetupReadSchedule.IsDueForDecision(
+            Reads == 0,
+            readGeneration != companions.Generation,
+            stale,
+            Environment.TickCount64,
+            readAt,
+            watcher is null ? UnwatchedRefreshMs : RefreshMs);
+        if (due)
+        {
+            Refresh();
+        }
+    }
+
+    /// <summary>
+    /// <see cref="QuestionableCommandAfterStop"/> for the stop about to happen: the settings are read again first when
+    /// they may be out of date (<see cref="ReadNowIfStale"/>), so a stop never skips its confirmation on an old read.
+    /// </summary>
+    public string? QuestionableCommandAfterStopNow()
+    {
+        ReadNowIfStale();
+        return QuestionableCommandAfterStop();
     }
 
     /// <summary>One companion's setup.</summary>
