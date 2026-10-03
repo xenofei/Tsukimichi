@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace Tsukimichi.Config;
 
 /// <summary>
@@ -23,4 +26,38 @@ public sealed partial class Configuration
 
     /// <summary>The allied society board on the Characters dashboard. On by default.</summary>
     public bool ShowAlliedSocietyBoard { get; set; } = true;
+
+    /// <summary>
+    /// The Journal table's column widths the player dragged (feature plan v6 U9), by column name
+    /// (<see cref="Core.Ui.QuestColumn"/>: "Level", "Job", "Status", "Expansion", "Rewards", "Exp", "Opens"), in logical
+    /// pixels of content, so a width keeps its look at every UI scale. A column not listed is sized automatically; the
+    /// table header's "Reset column widths" empties it. Unknown names and unreadable widths are dropped on load.
+    /// </summary>
+    public Dictionary<string, float> JournalColumnWidths { get; set; } = [];
+
+    /// <summary>
+    /// <paramref name="widths"/> with only the columns the player can size and a readable width each
+    /// (<see cref="Core.Ui.TableGeometry.SanitizePlayerWidth"/>); a new dictionary.
+    /// </summary>
+    internal static Dictionary<string, float> SanitizeColumnWidths(Dictionary<string, float>? widths)
+    {
+        var clean = new Dictionary<string, float>(StringComparer.Ordinal);
+        if (widths is null)
+        {
+            return clean;
+        }
+
+        foreach (var (name, width) in widths)
+        {
+            if (Enum.TryParse<Core.Ui.QuestColumn>(name, ignoreCase: false, out var column)
+                && column is not (Core.Ui.QuestColumn.Glyph or Core.Ui.QuestColumn.Name)
+                && Enum.IsDefined(column)
+                && Core.Ui.TableGeometry.SanitizePlayerWidth(width) is > 0f and var kept)
+            {
+                clean[column.ToString()] = kept;
+            }
+        }
+
+        return clean;
+    }
 }

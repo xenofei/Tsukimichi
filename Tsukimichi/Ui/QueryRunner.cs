@@ -592,6 +592,46 @@ public sealed class QueryRunner : IDisposable
         return label;
     }
 
+    // Every label the Job column can show (JobLabels), and the catalog and language it was listed for.
+    private string[] jobLabels = [];
+    private CatalogBundle? jobLabelsBundle;
+    private int jobLabelsLanguage = -1;
+
+    /// <summary>
+    /// Every label the Job column can show in the current language: the group labels and each job's abbreviation, so the
+    /// column is measured to fit the widest (feature plan v6 U9). Listed again when the catalog or the language changes;
+    /// the same array otherwise.
+    /// </summary>
+    public IReadOnlyList<string> JobLabels
+    {
+        get
+        {
+            if (jobLabelsLanguage != Localization.Loc.Version || !ReferenceEquals(jobLabelsBundle, bundle))
+            {
+                jobLabelsLanguage = Localization.Loc.Version;
+                jobLabelsBundle = bundle;
+                var labels = new HashSet<string>(StringComparer.Ordinal)
+                {
+                    Strings.JobAny, Strings.JobMulti, Strings.JobDol, Strings.JobDoh, Strings.JobDohDol, Strings.JobDowDom,
+                };
+                if (bundle is { } b)
+                {
+                    foreach (var abbreviation in b.Names.ClassJobAbbreviations.Values)
+                    {
+                        if (!string.IsNullOrEmpty(abbreviation))
+                        {
+                            labels.Add(abbreviation);
+                        }
+                    }
+                }
+
+                jobLabels = [.. labels];
+            }
+
+            return jobLabels;
+        }
+    }
+
     /// <summary>Empties the expansion and job label caches after a language switch.</summary>
     private void EnsureTextLanguage()
     {

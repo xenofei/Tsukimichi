@@ -675,6 +675,7 @@ public sealed partial class Configuration : IPluginConfiguration
             config.Density = RowDensity.Comfortable;
         }
 
+        config.JournalColumnWidths = SanitizeColumnWidths(config.JournalColumnWidths);
         config.TreePaneWidth = PaneLayout.SanitizeTree(config.TreePaneWidth);
         config.DetailPaneWidth = PaneLayout.SanitizeDetail(config.DetailPaneWidth);
 

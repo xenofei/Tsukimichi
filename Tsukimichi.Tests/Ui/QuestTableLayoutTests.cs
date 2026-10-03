@@ -31,7 +31,10 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
         var glyph = 8f + (TableGeometry.GlyphRadius(28f, 6f) * TableGeometry.GlyphBoxPerRadius) + 2f;
         var level = MathF.Max(MathF.Max(LayoutBudgets.LevelColumnLogical, MathF.Max(28f, Body("100") + 12f)), Header("ColumnLevel", sortable: true));
         var jobHeader = Header("ColumnJob", sortable: false);
-        var job = MathF.Max(MathF.Max(LayoutBudgets.JobColumnLogical, 16f + 5f + Body(en["JobDohDol"])), jobHeader);
+        // The widest label the job column can show (feature plan v6 U9): the group labels and the three-letter job abbreviations.
+        var widestJobLabel = new[] { "JobAny", "JobMulti", "JobDol", "JobDoh", "JobDohDol", "JobDowDom" }.Max(k => Body(en[k]));
+        widestJobLabel = MathF.Max(widestJobLabel, Body("WHM"));
+        var job = MathF.Max(MathF.Max(LayoutBudgets.JobColumnLogical, 16f + 5f + widestJobLabel), jobHeader);
         var jobIcon = MathF.Max(16f, jobHeader);
         var expansion = MathF.Max(LayoutBudgets.ExpansionColumnLogical, Header("ColumnExpansion", sortable: true));
         var rewards = MathF.Max((14f * 4f) + (2f * 3f) + 8f, Header("ColumnRewards", sortable: false));
