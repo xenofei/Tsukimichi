@@ -184,6 +184,20 @@ Dalamud's API 16 ships with Patch 8.0 in January 2027 and removes Lumina.Excel, 
 10. **Mount quests:** the Firebird (Lanner) and Kamuy quests wait for their mounts instead of reading Ready.
 11. **Installer:** the new icon shows in the plugin installer, and the Installed check is readable on it.
 
+### 1.12.0 (released 2026-10-03)
+
+1. **New moons:** the Journal and table show the Menphina's Medallion medals. Read each state at your normal UI scale, in daylight and night scenes. Settings › Look › Moon style switches to Classic and back.
+2. **Glyph debug window (A/B sheet):** all states at 5–32 px, with the greyscale and colour-blind toggles. Tell me anything that reads wrong.
+3. **Badges:** open lock on Ready, closed lock on Blocked, a journal on In journal, and your job's real icon on a quest ready on another job (centred). In lists the badge sits beside the medal.
+4. **Gauges:** the rail's Journal moon and the progress gauges look gilt over lapis.
+5. **Unlocks:** open "Not without Incident". The Unlocks section shows Kugane and The Sirensong Sea with icons. Click Kugane (Lifestream teleport), right-click the dungeon (opens the Duty Finder, no queue), and try the map.
+6. **Unlocks elsewhere:** row tooltips, the Opens column (Settings › Display › Planning), the Todo overlay hint, and the "Unlocked:" chat line after a turn-in.
+7. **Steady window:** apply and clear filters. The list doesn't move, the scope shows in the title with an ×, and the chip lane shows "+N". The filter drawer opens and can be pinned.
+8. **Selected row:** stays put while you filter, re-sort or the list updates, and never fights your mouse wheel.
+9. **Notices:** float in a corner above the action bar. One-time ones close after about 15 s (hover pauses) and still show after you close and reopen the window.
+10. **Path card:** "3 quests before this one" with a Next link, or nothing when the quest is next. Counts say what's left.
+11. **Motion:** completing a visible quest waxes its moon once. Settings › Look shows the Motion line.
+
 ## Not doing, for now
 
 | Idea | Why not |
