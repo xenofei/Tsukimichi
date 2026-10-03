@@ -31,4 +31,7 @@ static partial class Strings
     public static string ColumnGiver => Loc.Get("ColumnGiver");
 
     public static string ColumnGiverTooltip => Loc.Get("ColumnGiverTooltip");
+
+    /// <summary>The Journal's Giver cell for a quest the spoiler shield masks, in place of the giver's name.</summary>
+    public static string GiverHidden => Loc.Get("Portrait.GiverHidden");
 }

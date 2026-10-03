@@ -821,9 +821,9 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// The Giver card (1.15, spec A5): at Full and Quiet the portrait plate (72 or 64 px) on the left, its slot always
-    /// held so nothing moves when a texture lands, and the name and the place centred on it; at Plain an 18 px plate
-    /// inline before the name. With Giver portraits off, the name and the place as before. Hovering the plate shows the
-    /// 128 px portrait with where it comes from.
+    /// held so nothing moves when a texture lands, and the name and the place centred on it. At Plain the card is text
+    /// alone: the Ledger hero's Giver row already carries the 18 px plate, and one plate per giver is enough. With Giver
+    /// portraits off, the name and the place as before. Hovering the plate shows the 128 px portrait with where it comes from.
     /// </summary>
     private void DrawGiver()
     {
@@ -834,7 +834,8 @@ public sealed partial class DetailPane
         }
 
         var place = model.PlaceLine ?? Strings.DetailNoGiverPlace;
-        if (!GiverPortraits.Enabled || model.Quest is not { } quest)
+        var flair = Theme.Flair;
+        if (!GiverPortraits.Enabled || model.Quest is not { } quest || flair == Flair.Plain)
         {
             // The giver's name ends in an ellipsis when it is too long for the card, with the whole name on hover (L5).
             if (Chrome.EllipsisText(giver, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
@@ -847,35 +848,11 @@ public sealed partial class DetailPane
         }
 
         var request = GiverPortraits.For(quest, lastSpoilers ?? Core.Query.SpoilerMask.None);
-        var flair = Theme.Flair;
         var plate = MathF.Round(UiMetrics.Px(PortraitPlate.CardSize(flair)));
         var gap = UiMetrics.Px(PortraitPlate.CardGap(flair));
         var dl = ImGui.GetWindowDrawList();
         var start = ImGui.GetCursorScreenPos();
         var line = ImGui.GetTextLineHeight();
-        if (flair == Flair.Plain)
-        {
-            // Plain: the plate inline before the name, then the place under it; no fade.
-            var row = MathF.Max(line, plate);
-            ImGui.Dummy(new Vector2(plate, row));
-            var plateMin = new Vector2(start.X, start.Y + MathF.Round((row - plate) * 0.5f));
-            Chrome.Portrait(dl, plateMin, plate, request);
-            if (ImGui.IsItemHovered())
-            {
-                Chrome.PortraitTooltip(request, giver, model.PlaceLine);
-            }
-
-            ImGui.SameLine(0f, gap);
-            ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, start.Y + MathF.Floor((row - line) * 0.5f)));
-            if (Chrome.EllipsisText(giver, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(giver);
-            }
-
-            TextFlow.Wrapped(place, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
-            return;
-        }
-
         // Full and Quiet: the plate holds its slot; the name and the place are centred on it.
         var x = start.X + plate + gap;
         var room = MathF.Max(1f, cardRight - x);

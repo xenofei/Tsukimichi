@@ -24,7 +24,9 @@ namespace Tsukimichi.Ui;
 /// patch, <see cref="TryGet"/> says so and the plate draws the fallback; the unkeyed art is never drawn.
 /// </para>
 /// Copies are kept by icon, size and palette (<see cref="Key"/>); a few dozen are kept and the least recently drawn let go,
-/// never one a frame's draw list may still hold. Nothing allocates on the draw thread once a copy exists.
+/// never one a frame's draw list may still hold. At most <see cref="MaxInFlight"/> copies are made at once (a Journal
+/// page of givers asks for dozens in one frame); the rest stay pending, drawn with the tint, until a slot frees. A read
+/// that failed is tried once more after <see cref="RetryAfterMs"/>. Nothing allocates on the draw thread once a copy exists.
 /// </summary>
 public static class PortraitGrading
 {
@@ -33,6 +35,12 @@ public static class PortraitGrading
 
     /// <summary>Frames an evicted copy is kept after it was last drawn, so a draw list never holds a freed texture.</summary>
     private const int RetireFrames = 2;
+
+    /// <summary>How many copies are read back and graded at once; the rest wait their turn, pending.</summary>
+    private const int MaxInFlight = 3;
+
+    /// <summary>How long a failed copy waits before its one retry, ms (a read during a zone load often succeeds later).</summary>
+    private const long RetryAfterMs = 30_000;
 
     /// <summary>DXGI_FORMAT_B8G8R8A8_UNORM.</summary>
     private const int BgraFormat = 87;
@@ -52,7 +60,7 @@ public static class PortraitGrading
         /// <summary>The graded copy is ready.</summary>
         Ready,
 
-        /// <summary>The copy is being made: draw the source with the tint (a delivery portrait: the fallback).</summary>
+        /// <summary>The copy is being made or waits its turn: draw the source with the tint (a delivery portrait: the fallback).</summary>
         Pending,
 
         /// <summary>No copy can be made (no readback, a failed read): draw the source with the tint (a delivery portrait: the fallback).</summary>
@@ -67,6 +75,12 @@ public static class PortraitGrading
         public Task? Work;
         public IDalamudTextureWrap? Graded;
         public int UsedFrame;
+
+        /// <summary>When it failed (<see cref="Environment.TickCount64"/>), written before <see cref="Failed"/>.</summary>
+        public long FailedAt;
+
+        /// <summary>Whether its one retry has been spent. Under <see cref="Gate"/>.</summary>
+        public bool Retried;
         public volatile bool Failed;
         public volatile bool Mismatch;
     }
@@ -77,12 +91,13 @@ public static class PortraitGrading
     private static readonly Dictionary<uint, MaskData> Masks = [];
     private static readonly List<(IDalamudTextureWrap Wrap, int Frame)> Retired = [];
     private static readonly object Gate = new();
+    private static int inFlight;
     private static bool disposed;
 
     /// <summary>
     /// The graded copy of <paramref name="portrait"/>'s crop from <paramref name="source"/> (its hr texture), the small one
-    /// with <paramref name="small"/>; starts making it the first time it is asked for. The copy is the crop alone, drawn
-    /// with UVs 0–1.
+    /// with <paramref name="small"/>; starts making it the first time it is asked for and a slot is free. The copy is the
+    /// crop alone, drawn with UVs 0–1.
     /// </summary>
     public static State TryGet(IDalamudTextureWrap source, in PortraitRef portrait, bool small, out IDalamudTextureWrap? graded)
     {
@@ -95,13 +110,25 @@ public static class PortraitGrading
             FlushRetired(frame);
             if (!Entries.TryGetValue(key, out entry))
             {
-                entry = new Entry();
+                // Drawn this frame before eviction looks, so the new entry is never the one let go.
+                entry = new Entry { UsedFrame = frame };
                 Entries[key] = entry;
-                Start(entry, source, portrait, small, key.Night);
                 Evict(frame);
             }
 
             entry.UsedFrame = frame;
+            if (entry.Failed && !entry.Retried && Environment.TickCount64 - entry.FailedAt >= RetryAfterMs)
+            {
+                // One more try after the back-off; a second failure is final.
+                entry.Retried = true;
+                entry.Work = null;
+                entry.Failed = false;
+            }
+
+            if (entry.Work is null && !entry.Failed && !entry.Mismatch && inFlight < MaxInFlight)
+            {
+                Start(entry, source, portrait, small, key.Night);
+            }
         }
 
         if (entry.Graded is { } ready)
@@ -134,6 +161,7 @@ public static class PortraitGrading
 
             Entries.Clear();
             Masks.Clear();
+            inFlight = 0;
             foreach (var (wrap, _) in Retired)
             {
                 wrap.Dispose();
@@ -143,11 +171,15 @@ public static class PortraitGrading
         }
     }
 
-    /// <summary>Reads the crop back at its own pixels, keys and grades it, and makes the copy. Under <see cref="Gate"/>.</summary>
+    /// <summary>
+    /// Reads the crop back at its own pixels, keys and grades it, and makes the copy, taking one of the
+    /// <see cref="MaxInFlight"/> slots until it is done. Under <see cref="Gate"/>.
+    /// </summary>
     private static void Start(Entry entry, IDalamudTextureWrap source, PortraitRef portrait, bool small, bool night)
     {
         if (Plugin.TextureReadback is not { } readback || Plugin.TextureProvider is not { } textures)
         {
+            entry.FailedAt = Environment.TickCount64;
             entry.Failed = true;
             return;
         }
@@ -166,6 +198,7 @@ public static class PortraitGrading
 
         var matrix = PortraitGrade.For(PortraitGrade.FamilyOf(portrait.Source), night);
         var icon = portrait.Icon;
+        inFlight++;
         entry.Work = Task.Run(async () =>
         {
             try
@@ -222,8 +255,16 @@ public static class PortraitGrading
             }
             catch (Exception ex)
             {
+                entry.FailedAt = Environment.TickCount64;
                 entry.Failed = true;
                 Plugin.Log?.Debug(ex, "Giver portrait {Icon}: could not read the art back; it draws with the tint alone", icon);
+            }
+            finally
+            {
+                lock (Gate)
+                {
+                    inFlight = Math.Max(0, inFlight - 1);
+                }
             }
         });
     }
