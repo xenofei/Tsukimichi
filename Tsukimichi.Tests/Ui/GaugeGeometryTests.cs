@@ -161,4 +161,23 @@ public class GaugeGeometryTests
         Assert.Equal(0f, GaugeGeometry.CoreLitWidth(0f, core));
         Assert.Equal(1f, GaugeGeometry.CoreLitWidth(1f, core));
     }
+
+    [Theory]
+    [InlineData(0.1f)]
+    [InlineData(0.5f)]
+    [InlineData(0.9f)]
+    public void A_filling_moon_is_lit_toward_its_lit_limb(float width)
+    {
+        // It waxes from the right: the shading peaks right of centre (nudged up for the key light), never on the dark side.
+        var highlight = GaugeGeometry.MoonHighlight(width);
+        Assert.Equal(new Vector2(0.45f, -0.25f), highlight);
+        Assert.True(highlight.X > 0f && highlight.Y < 0f);
+    }
+
+    [Fact]
+    public void Only_a_full_moon_takes_the_upper_left_key_light()
+    {
+        Assert.Equal(new Vector2(-0.32f, -0.34f), GaugeGeometry.MoonHighlight(1f));
+        Assert.Equal(GaugeGeometry.MoonHighlight(1f), GaugeGeometry.MoonHighlight(1.5f));
+    }
 }

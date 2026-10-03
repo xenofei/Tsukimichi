@@ -11,7 +11,9 @@ namespace Tsukimichi.Ui;
 /// medal of "Menphina's Medallion" (<see cref="MedalGlyph"/>, feature plan v6 G1) and the gauges are drawn in the
 /// medal's material, a gilt arc in a lapis groove round a moonstone moon (<see cref="MedalGauge"/>, G5). A medal means a
 /// quest state and nothing else (accessibility B2): met requirements, obtained rewards and the live indicator use
-/// <see cref="Marks"/>. The high-contrast gauges keep their flat 1.11 look (<see cref="LegacyMoonGlyph"/>).
+/// <see cref="Marks"/>. The high-contrast gauges keep their flat 1.11 look (<see cref="LegacyMoonGlyph"/>), and
+/// Settings › Display › Look › Moon style set to Classic (<see cref="Theme.ClassicMoons"/>) draws every glyph and gauge
+/// here the 1.11 way, the wax included (<see cref="MoonWax"/> draws through these).
 /// </summary>
 public static class MoonGlyph
 {
@@ -22,15 +24,31 @@ public static class MoonGlyph
     private const float VeiledMedalAlpha = 0.7f;
 
     /// <summary>Draws the medal for <paramref name="state"/> centred at <paramref name="center"/> with the given keyline radius (px).</summary>
-    public static void Draw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state) =>
-        MedalGlyph.Draw(dl, center, radius, state);
+    public static void Draw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state) => Draw(dl, center, radius, state, 0);
 
     /// <summary>The medal with the job a Ready on another job quest is ready on, for its badge (0: unknown).</summary>
-    public static void Draw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state, byte job) =>
+    public static void Draw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state, byte job)
+    {
+        if (Theme.ClassicMoons)
+        {
+            LegacyMoonGlyph.Draw(dl, center, radius, state);
+            return;
+        }
+
         MedalGlyph.Draw(dl, center, radius, state, job);
+    }
 
     /// <summary>Reserves a <paramref name="size"/> × <paramref name="size"/> item at the cursor and draws the medal inside it.</summary>
-    public static void DrawInline(QuestState state, float size) => MedalGlyph.DrawInline(state, size);
+    public static void DrawInline(QuestState state, float size)
+    {
+        if (Theme.ClassicMoons)
+        {
+            LegacyMoonGlyph.DrawInline(state, size);
+            return;
+        }
+
+        MedalGlyph.DrawInline(state, size);
+    }
 
     /// <summary>
     /// The Not checked medal faded to <paramref name="alpha"/>, as a stand-in where an icon would go and none exists
@@ -47,13 +65,19 @@ public static class MoonGlyph
     /// <summary>The veiled stand-in of <see cref="DrawVeiledInline"/> drawn at <paramref name="center"/> without an item (a gallery tile).</summary>
     public static void DrawVeiled(ImDrawListPtr dl, Vector2 center, float radius, float alpha)
     {
+        if (Theme.ClassicMoons)
+        {
+            LegacyMoonGlyph.DrawVeiled(dl, center, radius, alpha);
+            return;
+        }
+
         if (!(radius > 0.5f))
         {
             return;
         }
 
         var (min, size) = MedalGlyph.Box(center, radius);
-        MedalGlyph.DrawMesh(dl, MedalArt.Medal(QuestState.Unknown, MedalTokens.For(Theme.Glyphs), row: size < MedalLayout.RowTierMaxPx), min, size, alpha * VeiledMedalAlpha);
+        MedalGlyph.DrawMesh(dl, MedalArt.Medal(QuestState.Unknown, MedalTokens.For(Theme.Glyphs), size), min, size, alpha * VeiledMedalAlpha);
     }
 
     /// <summary>
@@ -62,12 +86,24 @@ public static class MoonGlyph
     /// fraction. At exactly 1 the ring is whole gilt with a soft glow round a full moon, or, with
     /// <paramref name="dimComplete"/>, the gilt's shaded side round a quiet moon. Below R 12 only groove and arc are
     /// drawn and the caller writes the number beside it; below R 8 nothing is drawn and the caller writes the number alone.
-    /// High contrast draws the 1.11 flat gauge. Allocation-free.
+    /// High contrast and the Classic moon style draw the 1.11 gauge. Allocation-free.
     /// </summary>
     /// <param name="radius">Half the box, R.</param>
     /// <param name="onCard">Drawn on a raised card (the high-contrast track uses it; the groove carries its own keyline).</param>
     /// <param name="dimComplete">Whether a complete gauge steps back instead of glowing; the Journal tree sets it so finished nodes recede.</param>
     public static void DrawHalo(ImDrawListPtr dl, Vector2 center, float radius, float fraction, bool onCard = false, bool dimComplete = false)
+    {
+        if (Theme.ClassicMoons)
+        {
+            LegacyMoonGlyph.DrawHalo(dl, center, radius, fraction, onCard, dimComplete);
+            return;
+        }
+
+        DrawMedalHalo(dl, center, radius, fraction, onCard, dimComplete);
+    }
+
+    /// <summary><see cref="DrawHalo"/> in the medal's material whatever the moon style (the glyph window's B side).</summary>
+    internal static void DrawMedalHalo(ImDrawListPtr dl, Vector2 center, float radius, float fraction, bool onCard = false, bool dimComplete = false)
     {
         var mode = GaugeGeometry.ModeFor(radius);
         if (mode == HaloMode.NumberOnly)
@@ -144,9 +180,22 @@ public static class MoonGlyph
     /// <summary>
     /// The filling moon: lit <paramref name="fraction"/> from 0 (new) to 1 (full), filling right to left like a waxing
     /// moon, with the terminator floor of <see cref="MoonGeometry.FillingLayers"/>, in moonstone over its dark side
-    /// (G5). The rail's Journal station and foot gauge, the loading moon and the orbit cores draw it.
+    /// (G5). The rail's Journal station and foot gauge, the loading moon and the orbit cores draw it. High contrast and
+    /// the Classic moon style draw the 1.11 filling moon.
     /// </summary>
     public static void DrawFilling(ImDrawListPtr dl, Vector2 center, float radius, float fraction)
+    {
+        if (Theme.ClassicMoons)
+        {
+            LegacyMoonGlyph.DrawFilling(dl, center, radius, fraction);
+            return;
+        }
+
+        DrawMedalFilling(dl, center, radius, fraction);
+    }
+
+    /// <summary><see cref="DrawFilling"/> in moonstone whatever the moon style (the glyph window's B side).</summary>
+    internal static void DrawMedalFilling(ImDrawListPtr dl, Vector2 center, float radius, float fraction)
     {
         if (!(radius > 0.5f))
         {

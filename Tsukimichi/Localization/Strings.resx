@@ -3318,6 +3318,18 @@
   <data name="ConfigFlairHint" xml:space="preserve">
     <value>How much decoration the windows show. Full: a soft night-sky shading at the top of each pane, brass lines and dividers, framed corners and small animations. Quiet: the brass lines and dividers only. Plain: the look before 1.4. With the high-contrast glyph palette, Full looks like Quiet.</value>
   </data>
+  <data name="ConfigMoonStyle" xml:space="preserve">
+    <value>Moon style</value>
+  </data>
+  <data name="ConfigMoonStyleMedallion" xml:space="preserve">
+    <value>Medallion (new)</value>
+  </data>
+  <data name="ConfigMoonStyleClassic" xml:space="preserve">
+    <value>Classic</value>
+  </data>
+  <data name="ConfigMoonStyleHint" xml:space="preserve">
+    <value>Compare both in the glyph debug window; Classic is the 1.11 look.</value>
+  </data>
   <data name="ConfigGameHeadingFonts" xml:space="preserve">
     <value>Game fonts for headings</value>
   </data>

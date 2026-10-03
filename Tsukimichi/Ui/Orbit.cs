@@ -196,11 +196,12 @@ public static class Orbit
     /// <summary>
     /// The track, the arc from 12 o'clock with round caps, and the bead at its head (a full-moon pip once closed). Since
     /// 1.12 (feature plan v6 G5) in the medal's material: a lapis groove between Abyss keylines, a gilt arc lit from the
-    /// upper left and a moonstone pearl (<see cref="MedalGauge"/>); high contrast keeps its flat 1.11 ring.
+    /// upper left and a moonstone pearl (<see cref="MedalGauge"/>); high contrast and the Classic moon style
+    /// (<see cref="Theme.ClassicMoons"/>) keep the 1.11 ring.
     /// </summary>
     private static void Ring(ImDrawListPtr dl, Vector2 center, float k, float f, bool highContrast)
     {
-        if (!highContrast)
+        if (!highContrast && !Theme.ClassicMoons)
         {
             MedalRing(dl, center, k, f);
             return;

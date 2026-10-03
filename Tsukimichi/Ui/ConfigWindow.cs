@@ -373,9 +373,10 @@ public sealed partial class ConfigWindow : Window
     }
 
     /// <summary>
-    /// Settings › Display › Look (moon-road proposal §7.9, feature plan v4 V1/V3): Flair (Full / Quiet / Plain), Game
-    /// fonts for headings (off under Plain, which is the look before 1.4) and Reduce motion. Saved at once and applied
-    /// from the next frame (<see cref="Theme.Refresh"/>, <see cref="Typography.Update"/>).
+    /// Settings › Display › Look (moon-road proposal §7.9, feature plan v4 V1/V3): Flair (Full / Quiet / Plain), Moon
+    /// style (Medallion / Classic, feature plan v6 G3), Game fonts for headings (off under Plain, which is the look
+    /// before 1.4) and Reduce motion. Saved at once and applied from the next frame (<see cref="Theme.Refresh"/>,
+    /// <see cref="Typography.Update"/>).
     /// </summary>
     private void DrawLook()
     {
@@ -387,6 +388,18 @@ public sealed partial class ConfigWindow : Window
             FlairRadio(Strings.ConfigFlairQuiet, Flair.Quiet);
             FlairRadio(Strings.ConfigFlairPlain, Flair.Plain);
             DrawFlairPreviews();
+        }
+
+        if (Row(Strings.ConfigMoonStyle, Strings.ConfigMoonStyleHint, "medallion classic moon medal glyph style 1.11 compare"))
+        {
+            ImGui.TextUnformatted(Strings.ConfigMoonStyle);
+            MoonStyleRadio(Strings.ConfigMoonStyleMedallion, MoonStyle.Medallion);
+            MoonStyleRadio(Strings.ConfigMoonStyleClassic, MoonStyle.Classic);
+            using (ImRaii.TextWrapPos(0f))
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextWrapped(Strings.ConfigMoonStyleHint);
+            }
         }
 
         if (Row(Strings.ConfigGameHeadingFonts, Strings.ConfigGameHeadingFontsHint, "font typeface"))
@@ -615,6 +628,18 @@ public sealed partial class ConfigWindow : Window
         {
             dl.AddRectFilledMultiColor(new Vector2(textX, y), new Vector2(walked, y + road), Theme.MoonDeepU32, Theme.MoonU32, Theme.MoonU32, Theme.MoonDeepU32);
         }
+    }
+
+    private void MoonStyleRadio(string label, MoonStyle style)
+    {
+        Chrome.SameLineOrWrap(RadioWidth(label));
+        if (ImGui.RadioButton(label, settings.MoonStyle == style))
+        {
+            settings.MoonStyle = style;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigMoonStyleHint);
     }
 
     private void FlairRadio(string label, Flair flair)

@@ -684,8 +684,12 @@ public sealed class TablePane : IDisposable
     /// line's height (the caption role) and <paramref name="LineGap"/> the space between the lines.
     /// <paramref name="ReadyRoad"/> draws the road under Ready rows (Flair Full).
     /// </summary>
-    /// <summary>The square beside a row's medal that holds its badge's content: text height, inside the row.</summary>
-    private static float RowBadgeSide(float lineHeight, float rowContent) => MathF.Round(MathF.Min(lineHeight, rowContent));
+    /// <summary>
+    /// The square beside a row's medal that holds its badge's content: text height, inside the row. None under the
+    /// Classic moon style (<see cref="Theme.ClassicMoons"/>), whose 1.11 moons have no badges.
+    /// </summary>
+    private static float RowBadgeSide(float lineHeight, float rowContent) =>
+        Theme.ClassicMoons ? 0f : MathF.Round(MathF.Min(lineHeight, rowContent));
 
     private readonly record struct RowLayout(float LineHeight, float RowContent, float RowHeight, float PadY, float GlyphBox, float GlyphRadius, bool Dense, bool TwoLine, float StatusLine, float LineGap, bool ReadyRoad)
     {

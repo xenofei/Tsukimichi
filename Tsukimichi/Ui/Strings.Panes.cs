@@ -492,6 +492,10 @@ static partial class Strings
     public static string ConfigFlairQuiet => Loc.Get("ConfigFlairQuiet");
     public static string ConfigFlairPlain => Loc.Get("ConfigFlairPlain");
     public static string ConfigFlairHint => Loc.Get("ConfigFlairHint");
+    public static string ConfigMoonStyle => Loc.Get("ConfigMoonStyle");
+    public static string ConfigMoonStyleMedallion => Loc.Get("ConfigMoonStyleMedallion");
+    public static string ConfigMoonStyleClassic => Loc.Get("ConfigMoonStyleClassic");
+    public static string ConfigMoonStyleHint => Loc.Get("ConfigMoonStyleHint");
     public static string ConfigGameHeadingFonts => Loc.Get("ConfigGameHeadingFonts");
     public static string ConfigGameHeadingFontsHint => Loc.Get("ConfigGameHeadingFontsHint");
     public static string ConfigFlairPreviewPlainNote => Loc.Get("ConfigFlairPreviewPlainNote");
