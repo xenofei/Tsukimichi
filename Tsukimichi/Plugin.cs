@@ -1613,6 +1613,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("fonts", Ui.Typography.Dispose);
         Unwind("banner grades", Ui.BannerGrading.Dispose);
         Unwind("portrait grades", Ui.PortraitGrading.Dispose);
+        Unwind("theme atlases", Ui.Themes.ThemeAtlasCache.Dispose);
         Unwind("in the game", DisposeInGame);
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());

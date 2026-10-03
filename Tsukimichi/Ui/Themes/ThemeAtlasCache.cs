@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Threading;
@@ -7,6 +8,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Ui.Themes;
@@ -22,8 +24,11 @@ namespace Tsukimichi.Ui.Themes;
 /// out (logged once).</item>
 /// <item>The row strip is requested as soon as the set is in the appearance; the hero atlas on its first hero draw; the
 /// 2x atlas only above the largest 1x tier (while it loads, the 1x atlas's largest tier stands in).</item>
+/// <item>A requested part is rented (<see cref="ISharedImmediateTexture.RentAsync"/>), so Dalamud's shared cache cannot let
+/// it go while the plugin holds it: a set's medals never drop back to a stand-in after a spell off-screen.</item>
 /// <item>A part that has not drawn for <see cref="AtlasResidency.IdleSeconds"/> is released unless it is a 1x part of a set
-/// the saved appearance uses (<see cref="AtlasResidency"/>).</item>
+/// the saved appearance uses (<see cref="AtlasResidency"/>). Its texture is disposed a frame later, never in a frame that
+/// could still draw it; everything is disposed on unload (<see cref="Dispose()"/>).</item>
 /// </list>
 /// Until a part is ready <see cref="TryDraw"/> returns false and the seam draws Medallion's procedural medal instead.
 /// </summary>
@@ -31,29 +36,41 @@ internal static class ThemeAtlasCache
 {
     private const int Slots = 8;
 
+    /// <summary>Frames a released texture is kept before it is disposed, so no draw list still holds it.</summary>
+    private const int RetireFrames = 1;
+
     private static readonly AtlasResidency Residency = new();
     private static readonly SetEntry?[] Entries = new SetEntry?[Slots];
+    private static readonly List<(IDalamudTextureWrap Wrap, long Frame)> Retired = [];
     private static ITextureProvider? provider;
     private static string? root;
+    private static long frame;
 
     /// <summary>Sets the texture provider and the plugin directory; optional, since the plugin's own are used when none is set.</summary>
     public static void Initialize(ITextureProvider textures, string pluginDirectory)
     {
         provider = textures ?? throw new ArgumentNullException(nameof(textures));
         root = pluginDirectory ?? throw new ArgumentNullException(nameof(pluginDirectory));
-        Array.Clear(Entries);
+        ReleaseAll();
     }
+
+    /// <summary>On unload: disposes every texture held, released or still renting.</summary>
+    public static void Dispose() => ReleaseAll();
 
     /// <summary>
     /// Once per frame, with the saved appearance: marks its atlas sets as wanted, requests their row strips, and releases
-    /// parts left idle. Allocation-free once the sets' layouts have loaded.
+    /// parts left idle; disposes the textures released a frame ago. Allocation-free once the sets' layouts have loaded.
     /// </summary>
     public static void BeginFrame(ResolvedAppearance appearance)
     {
+        frame++;
+        FlushRetired();
         Residency.Retain(appearance);
         var now = Now;
-        foreach (var set in GlyphSets.All)
+        var sets = GlyphSets.All;
+        for (var i = 0; i < sets.Count; i++)
         {
+            var set = sets[i];
             if (set.Kind != GlyphRenderKind.Atlas)
             {
                 continue;
@@ -175,7 +192,10 @@ internal static class ThemeAtlasCache
         return location is null ? null : root = Path.GetDirectoryName(location.FullName);
     }
 
-    /// <summary>The texture of <paramref name="part"/>, requested on first use; null while it loads or when the set has no such file.</summary>
+    /// <summary>
+    /// The texture of <paramref name="part"/>, requested and rented on first use; null while it loads, when the set has no
+    /// such file, or when it failed to load (logged once).
+    /// </summary>
     private static IDalamudTextureWrap? Texture(SetEntry entry, AtlasPart part, double now)
     {
         var layouts = entry.Layouts;
@@ -195,14 +215,19 @@ internal static class ThemeAtlasCache
         }
 
         Residency.Touch(entry.Set, part, now);
-        ref var texture = ref entry.Textures[(int)part];
-        if (texture is null)
+        ref var held = ref entry.Parts[(int)part];
+        if (held.Wrap is { } owned)
         {
-            if (entry.Missing[(int)part])
-            {
-                return null;
-            }
+            return owned;
+        }
 
+        if (entry.Missing[(int)part])
+        {
+            return null;
+        }
+
+        if (held.Shared is null)
+        {
             var path = Path.Combine(entry.Directory, ThemeAtlasRules.RelativePath(entry.Set, file));
             if (!File.Exists(path))
             {
@@ -211,10 +236,128 @@ internal static class ThemeAtlasCache
                 return null;
             }
 
-            texture = textures.GetFromFile(path);
+            try
+            {
+                held.Shared = textures.GetFromFile(path);
+                held.Rent = held.Shared.RentAsync();
+            }
+            catch (Exception ex)
+            {
+                Fail(entry, part, file, ex);
+                return null;
+            }
         }
 
-        return texture.TryGetWrap(out var wrap, out _) ? wrap : null;
+        if (held.Rent is { IsCompleted: true } rent)
+        {
+            if (rent.IsCompletedSuccessfully)
+            {
+                held.Rent = null;
+                return held.Wrap = rent.Result;
+            }
+
+            Fail(entry, part, file, rent.Exception?.GetBaseException());
+            return null;
+        }
+
+        // Still renting: this frame's wrap, if the shared texture has landed already.
+        if (held.Shared is not { } shared)
+        {
+            return null;
+        }
+
+        try
+        {
+            if (shared.TryGetWrap(out var wrap, out var error))
+            {
+                return wrap;
+            }
+
+            if (error is not null)
+            {
+                Fail(entry, part, file, error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Fail(entry, part, file, ex);
+        }
+
+        return null;
+    }
+
+    /// <summary>A part that could not load: logged once, not asked for again, and Medallion stands in.</summary>
+    private static void Fail(SetEntry entry, AtlasPart part, string file, Exception? error)
+    {
+        entry.Missing[(int)part] = true;
+        Let(ref entry.Parts[(int)part]);
+        entry.WarnOnce($"{file} could not be loaded ({error?.Message ?? "cancelled"})");
+    }
+
+    /// <summary>Drops a part: its wrap is disposed after <see cref="RetireFrames"/>, a rent still running disposes its result when it lands.</summary>
+    private static void Let(ref HeldTexture held)
+    {
+        if (held.Wrap is { } wrap)
+        {
+            Retired.Add((wrap, frame));
+        }
+
+        if (held.Rent is { } rent)
+        {
+            _ = rent.ToContentDisposedTask(true);
+        }
+
+        held = default;
+    }
+
+    /// <summary>Disposes the textures released more than <see cref="RetireFrames"/> frames ago.</summary>
+    private static void FlushRetired()
+    {
+        for (var i = Retired.Count - 1; i >= 0; i--)
+        {
+            if (frame - Retired[i].Frame > RetireFrames)
+            {
+                DisposeWrap(Retired[i].Wrap);
+                Retired.RemoveAt(i);
+            }
+        }
+    }
+
+    private static void ReleaseAll()
+    {
+        for (var s = 0; s < Slots; s++)
+        {
+            if (Entries[s] is not { } entry)
+            {
+                continue;
+            }
+
+            for (var p = AtlasPart.Row; p <= AtlasPart.Plain2x; p++)
+            {
+                Let(ref entry.Parts[(int)p]);
+                Residency.Released(entry.Set, p);
+            }
+        }
+
+        foreach (var (wrap, _) in Retired)
+        {
+            DisposeWrap(wrap);
+        }
+
+        Retired.Clear();
+        Array.Clear(Entries);
+    }
+
+    private static void DisposeWrap(IDalamudTextureWrap wrap)
+    {
+        try
+        {
+            wrap.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Plugin.Log?.Warning(ex, "Theme atlas: a texture could not be disposed");
+        }
     }
 
     private static void ReleaseIdle(GlyphSetId set, double now)
@@ -228,10 +371,18 @@ internal static class ThemeAtlasCache
         {
             if (Residency.ShouldRelease(set, p, now))
             {
-                entry.Textures[(int)p] = null;
+                Let(ref entry.Parts[(int)p]);
                 Residency.Released(set, p);
             }
         }
+    }
+
+    /// <summary>A part's texture: the shared handle, the rent in flight, then the rented wrap the plugin owns until released.</summary>
+    private struct HeldTexture
+    {
+        public ISharedImmediateTexture? Shared;
+        public Task<IDalamudTextureWrap>? Rent;
+        public IDalamudTextureWrap? Wrap;
     }
 
     /// <summary>A set's parsed layouts: null for a file the set does not ship or that did not parse.</summary>
@@ -246,18 +397,30 @@ internal static class ThemeAtlasCache
 
         public string Directory { get; } = directory;
 
-        public ISharedImmediateTexture?[] Textures { get; } = new ISharedImmediateTexture?[(int)AtlasPart.Plain2x + 1];
+        public HeldTexture[] Parts { get; } = new HeldTexture[(int)AtlasPart.Plain2x + 1];
 
-        /// <summary>Parts whose PNG was not on disk when first asked for (checked once, not every frame).</summary>
+        /// <summary>Parts whose PNG was not on disk when first asked for, or that failed to load (checked once, not every frame).</summary>
         public bool[] Missing { get; } = new bool[(int)AtlasPart.Plain2x + 1];
 
         /// <summary>The layouts once read; null while they load.</summary>
         public SetLayouts? Layouts => Volatile.Read(ref layouts);
 
-        public void StartLoad() => Task.Run(() => Volatile.Write(ref layouts, new SetLayouts(
-            ReadHero("medals.json"),
-            ReadHero("plain.json"),
-            ReadRow("row.json"))));
+        public void StartLoad() => Task.Run(() =>
+        {
+            SetLayouts read;
+            try
+            {
+                read = new SetLayouts(ReadHero("medals.json"), ReadHero("plain.json"), ReadRow("row.json"));
+            }
+            catch (Exception ex)
+            {
+                // Anything unexpected is logged once; the set then draws as Medallion rather than loading forever.
+                WarnOnce($"its layouts could not be loaded ({ex.Message})");
+                read = new SetLayouts(null, null, null);
+            }
+
+            Volatile.Write(ref layouts, read);
+        });
 
         public void WarnOnce(string message)
         {

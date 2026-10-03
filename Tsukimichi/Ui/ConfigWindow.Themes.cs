@@ -48,6 +48,9 @@ public sealed partial class ConfigWindow
     private const float TileHeightLogical = 48f;
     private const float TileGapLogical = 10f;
 
+    /// <summary>How long the Preview keeps the last hovered card after the pointer leaves it, so crossing the gap between cards does not fade to the saved look and back.</summary>
+    private const double PreviewHoldSeconds = 0.1;
+
     // Motion keys: the card's gilt edge ("THCS"), its hover line ("THCH"), the preview's swap ("THPV"), a tile's edge ("THPT").
     private const uint CardSelectTag = 0x5448_4353;
     private const uint CardHoverTag = 0x5448_4348;
@@ -79,6 +82,12 @@ public sealed partial class ConfigWindow
     // The card hovered this frame (the Preview block, drawn after the cards, reads it), and the frame it was hovered in.
     private ThemePreset? hoveredTheme;
     private int hoveredThemeFrame = -1;
+    private double hoveredThemeAt = double.NegativeInfinity;
+
+    // The Preview panel's crossfade: what it shows (its signature), and its fill and rule now and as the swap began.
+    private uint previewSignature = uint.MaxValue;
+    private (Vector4 Window, Vector4 Line) previewPanel;
+    private (Vector4 Window, Vector4 Line) previewPanelFrom;
 
     // The palette tiles, listed once (the registry is fixed for the session).
     private PaletteInfo[]? paletteTiles;
@@ -199,6 +208,7 @@ public sealed partial class ConfigWindow
             {
                 hoveredTheme = theme;
                 hoveredThemeFrame = ImGui.GetFrameCount();
+                hoveredThemeAt = ImGui.GetTime();
             }
 
             var card = themesPreview.Card(saved, theme);
@@ -251,7 +261,7 @@ public sealed partial class ConfigWindow
         Save();
     }
 
-    /// <summary>The cards' second lines ("Came frames · Ishgard Snow", "The 1.11 moons · Night"), once per language.</summary>
+    /// <summary>The cards' second lines ("Brass frames · Night", "Ishgard Snow", "The 1.11 moons · Night"), once per language.</summary>
     private void RefreshCardSubtitles(System.Collections.Generic.IReadOnlyList<ThemePreset> themes)
     {
         if (cardSubtitlesLanguage == Loc.Version && cardSubtitles.Length == themes.Count)
@@ -265,9 +275,13 @@ public sealed partial class ConfigWindow
         {
             var theme = themes[i];
             var palette = PaletteName(ThemesPage.Drawable(theme.Palette, UiPalettes.IsRegistered));
+
+            // A kit is named only once it draws its own metal (1.17 T11); until then the palette alone, never a promise.
             cardSubtitles[i] = theme.Legacy
                 ? string.Format(CultureInfo.CurrentCulture, Strings.ThemesCardSubtitleClassicFormat, palette)
-                : string.Format(CultureInfo.CurrentCulture, Strings.ThemesCardSubtitleFormat, KitName(theme.Frames), palette);
+                : FrameKitRenderers.HasOwnMetal(theme.Frames)
+                    ? string.Format(CultureInfo.CurrentCulture, Strings.ThemesCardSubtitleFormat, KitName(theme.Frames), palette)
+                    : palette;
         }
     }
 
@@ -295,7 +309,10 @@ public sealed partial class ConfigWindow
         var columnWidth = (size.X - (pad * 2f)) / 4f;
         var firstRow = min.Y + pad + (face * 0.5f);
         var rowStep = face + UiMetrics.Px(10f);
+
+        // The card's appearance and its palette's glyph inputs (light or dark, gauges, washes, the high-contrast ladder).
         using (GlyphSeam.PushAppearance(card))
+        using (Theme.PushPalette(PaletteFor(card.Palette, highContrast: false), card.GlyphPalette))
         {
             var states = AppearanceStates.All;
             for (var i = 0; i < states.Count; i++)
@@ -419,14 +436,27 @@ public sealed partial class ConfigWindow
 
         var saved = settings.Appearance;
         var inUse = GlyphSeam.Appearance;
-        var hovered = hoveredThemeFrame == ImGui.GetFrameCount() ? hoveredTheme : null;
+        // The card hovered this frame, or the last one for a moment after (crossing the gap to the next card keeps it).
+        var hovered = hoveredThemeFrame == ImGui.GetFrameCount() || ImGui.GetTime() - hoveredThemeAt < PreviewHoldSeconds ? hoveredTheme : null;
         var target = themesPreview.Target(saved, inUse, hovered);
         var palette = target.Previewing ? PaletteFor(target.Appearance.Palette, target.Appearance.HighContrast) : Theme.Palette;
         var ps = palette.Surface;
 
-        var signature = (uint)target.Theme.Id | (target.Previewing ? 1u << 8 : 0u) | ((uint)target.Appearance.Palette << 12) | (target.Appearance.HighContrast ? 1u << 20 : 0u);
-        var alpha = MotionTokens.SwapAlpha(Motion.Changed(Motion.Key(PreviewSwapTag, 0), signature, MotionTokens.Swap));
+        // What is drawn, not whether it is a preview: clicking the hovered card applies what is already shown, so no dip.
+        var signature = (uint)target.Theme.Id | ((uint)target.Appearance.Palette << 12) | (target.Appearance.HighContrast ? 1u << 20 : 0u);
+        if (signature != previewSignature)
+        {
+            previewPanelFrom = previewSignature == uint.MaxValue ? (ps.Window, ps.Line) : previewPanel;
+            previewSignature = signature;
+        }
+
+        var swap = Motion.Changed(Motion.Key(PreviewSwapTag, 0), signature, MotionTokens.Swap);
+        var alpha = MotionTokens.SwapAlpha(swap);
         uint Ink(Vector4 color) => Theme.WithAlpha(color, color.W * alpha);
+
+        // The panel's fill and rules cross from the last palette to this one over the same swap, as the content dips.
+        var blend = swap is >= 0f and < 1f ? MotionMath.EaseInOutCubic(swap) : 1f;
+        previewPanel = (Vector4.Lerp(previewPanelFrom.Window, ps.Window, blend), Vector4.Lerp(previewPanelFrom.Line, ps.Line, blend));
 
         var avail = MathF.Max(1f, ImGui.GetContentRegionAvail().X);
         var line = ImGui.GetTextLineHeight();
@@ -440,8 +470,9 @@ public sealed partial class ConfigWindow
         var max = min + size;
         var dl = ImGui.GetWindowDrawList();
         var rounding = UiMetrics.Px(CardRoundingLogical);
-        dl.AddRectFilled(min, max, Theme.U32(ps.Window with { W = 1f }), rounding);
-        dl.AddRect(min, max, Theme.U32(ps.Line with { W = 1f }), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        var panelLine = Theme.U32(previewPanel.Line with { W = 1f });
+        dl.AddRectFilled(min, max, Theme.U32(previewPanel.Window with { W = 1f }), rounding);
+        dl.AddRect(min, max, panelLine, rounding, ImDrawFlags.None, UiMetrics.Hairline);
 
         // The header: what is previewed, and what is in use beside it while previewing.
         RefreshPreviewHeader(target, inUse.Theme.Id, AppearanceEdits.IsCustom(saved));
@@ -458,7 +489,7 @@ public sealed partial class ConfigWindow
         }
 
         Chrome.EllipsisTextAt(dl, new Vector2(min.X + pad, headerY), MathF.Max(1f, right - min.X - pad), previewHeader, Ink(ps.Text));
-        dl.AddLine(new Vector2(min.X, min.Y + header), new Vector2(max.X, min.Y + header), Theme.U32(ps.Line with { W = 1f }), UiMetrics.Hairline);
+        dl.AddLine(new Vector2(min.X, min.Y + header), new Vector2(max.X, min.Y + header), panelLine, UiMetrics.Hairline);
 
         // The hero card on the right (when there is room), the rows on the left.
         var heroWidth = UiMetrics.Px(PreviewCardWidthLogical);
@@ -466,6 +497,7 @@ public sealed partial class ConfigWindow
         var rowsRight = showHero ? max.X - pad - heroWidth - pad : max.X - pad;
         var top = min.Y + header + UiMetrics.Px(4f);
         using (GlyphSeam.PushAppearance(target.Appearance))
+        using (target.Previewing ? Theme.PushPalette(PaletteFor(target.Appearance.Palette, highContrast: false), target.Appearance.GlyphPalette) : default)
         {
             var glyph = UiMetrics.InlineGlyphSize(line);
             for (var i = 0; i < ThemePreviewStates.Length; i++)
@@ -576,10 +608,11 @@ public sealed partial class ConfigWindow
             UndoToast.Show(highContrast ? Strings.UndoToastHighContrastOn : Strings.UndoToastHighContrastOff, () => RestoreAppearance(before));
         }
 
-        // Frames: a choice once two kits draw a metal of their own (1.17 T11); until then each theme's own kit, shown.
+        // Frames: a choice once two kits draw a metal of their own (1.17 T11); until then the kit that really draws
+        // (Brass, for a theme whose own kit has no metal yet), shown.
         var choosable = ThemesPage.FramesChoosable(FrameKitRenderers.HasOwnMetal);
         var resolved = GlyphSeam.Appearance;
-        var frames = choosable ? ThemesPage.FramesIndex(saved) : 1 + IndexOfKit(resolved.Frames);
+        var frames = choosable ? ThemesPage.FramesIndex(saved) : 1 + IndexOfKit(FrameKitRenderers.HasOwnMetal(resolved.Frames) ? resolved.Frames : FrameKitId.Brass);
         if (Choice(Strings.ThemesFrames, Strings.ThemesFramesHint, ref frames, FrameOptions.Value, "frames frame metal brass silver came lead rim border", enabled: choosable, reason: Strings.ThemesFramesFixedReason) && choosable)
         {
             var before = saved.Clone();
@@ -716,7 +749,8 @@ public sealed partial class ConfigWindow
     private void DrawThemeReset()
     {
         var saved = settings.Appearance;
-        var isDefault = AppearanceEdits.IsDefault(saved);
+        // The frame's resolved appearance (the saved one: no preview is pushed here), so nothing resolves per frame.
+        var isDefault = AppearanceEdits.IsDefault(saved, GlyphSeam.Appearance);
         if (!ButtonRow(Strings.ThemesReset, Strings.ThemesResetHint, Strings.ThemesResetButton, "reset appearance default theme restore look", enabled: !isDefault, reason: Strings.ThemesResetDefaultReason) || isDefault)
         {
             return;

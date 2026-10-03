@@ -56,7 +56,10 @@ internal sealed class MedallionGlyphSet : IGlyphSet
     }
 }
 
-/// <summary>The 1.11 moons (<see cref="LegacyMoonGlyph"/>), unchanged. Always draws; they carry no alpha (nothing fades them).</summary>
+/// <summary>
+/// The 1.11 moons (<see cref="LegacyMoonGlyph"/>), unchanged. Always draws; a fade scales the alpha of the vertices it drew
+/// (<see cref="Chrome.FadeVertices"/>), since the moons pack their own colours.
+/// </summary>
 internal sealed class ClassicGlyphSet : IGlyphSet
 {
     public static readonly ClassicGlyphSet Instance = new();
@@ -65,7 +68,18 @@ internal sealed class ClassicGlyphSet : IGlyphSet
 
     public bool TryDraw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state, byte job, float alpha)
     {
+        if (!(alpha > 0f))
+        {
+            return true;
+        }
+
+        var first = dl.VtxBuffer.Size;
         LegacyMoonGlyph.Draw(dl, center, radius, state);
+        if (alpha < 1f)
+        {
+            Chrome.FadeVertices(dl, first, alpha);
+        }
+
         return true;
     }
 

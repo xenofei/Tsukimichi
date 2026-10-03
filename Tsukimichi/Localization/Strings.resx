@@ -10301,7 +10301,7 @@
     <comment>Settings › Themes: the frames row's hint.</comment>
   </data>
   <data name="ThemesFramesFixedReason" xml:space="preserve">
-    <value>Each theme wears its own frames in this version.</value>
+    <value>Every theme wears Brass frames in this version; each theme's own frames arrive in a later one.</value>
     <comment>Settings › Themes: the frames row's hint while the choice is not offered yet (1.17).</comment>
   </data>
   <data name="ThemesFramesFromTheme" xml:space="preserve">

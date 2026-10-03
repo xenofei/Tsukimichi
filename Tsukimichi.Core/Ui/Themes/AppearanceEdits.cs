@@ -98,7 +98,18 @@ public static class AppearanceEdits
     public static bool IsDefault(AppearanceConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
-        return !IsCustom(config) && !config.HighContrast && AppearanceResolver.Resolve(config).Theme.Id == ThemePresets.Default.Id;
+        return IsDefault(config, AppearanceResolver.Resolve(config));
+    }
+
+    /// <summary>
+    /// <see cref="IsDefault(AppearanceConfig)"/> with <paramref name="resolved"/>, <paramref name="config"/> already
+    /// resolved (the frame's appearance), so a per-frame check resolves and allocates nothing.
+    /// </summary>
+    public static bool IsDefault(AppearanceConfig config, ResolvedAppearance resolved)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(resolved);
+        return !IsCustom(config) && !config.HighContrast && resolved.Theme.Id == ThemePresets.Default.Id;
     }
 
     /// <summary>Whether the appearance overrides any axis of its theme ("Custom (based on X)" on the Themes page).</summary>

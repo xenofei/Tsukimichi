@@ -192,7 +192,11 @@ public sealed class ThemesPageTests
     [InlineData("from-a-newer-build", null, false, true)]
     public void Reset_has_nothing_to_do_only_on_the_default_look(string theme, string? palette, bool highContrast, bool isDefault)
     {
-        Assert.Equal(isDefault, AppearanceEdits.IsDefault(new AppearanceConfig { Theme = theme, Palette = palette, HighContrast = highContrast }));
+        var config = new AppearanceConfig { Theme = theme, Palette = palette, HighContrast = highContrast };
+        Assert.Equal(isDefault, AppearanceEdits.IsDefault(config));
+
+        // The per-frame form, given the appearance already resolved, agrees.
+        Assert.Equal(isDefault, AppearanceEdits.IsDefault(config, AppearanceResolver.Resolve(config)));
     }
 
     [Fact]
