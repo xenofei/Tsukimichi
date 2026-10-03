@@ -15,7 +15,8 @@ namespace Tsukimichi.DataGen;
 /// their keep mask, with the guide bands of <see cref="PortraitFraming"/> (crown 8–12 % blue, eye line 42–46 % gold with
 /// a line at 44 %, chin 78–84 % red with a line at 81 %, two ticks at the foot 55 % of the diameter apart) and the
 /// circle; labelled with the icon id, the giver, the box (hr px) and the quests it is picked for, and flagged CLAMPED
-/// (the box meets the texture's edge) or KEY n (script-colour pixels left inside the circle).</item>
+/// (the box meets the texture's edge), KEY n (script-colour pixels left inside the circle) or FRAME n (pixels of a
+/// card's gold frame inside the circle: the crop catches the frame).</item>
 /// <item><c>Delivery-keyed.png</c>: every masked delivery portrait at 128 px three ways: source, keyed, keyed and graded
 /// (the colour family's night grade, spec A3), for signing off a mask before it ships.</item>
 /// <item><c>&lt;Family&gt;-&lt;n&gt;-source.png</c>: each whole texture with a grid every 0.1 in texture coordinates and the
@@ -80,9 +81,27 @@ internal static class PortraitSheet
             }
         }
 
+        // The cards' gold frame, from every card worn (so a focus page of one card still knows it).
+        var cardFrame = CardFrame(data, cells.Keys.Where(k => k.Rank == PortraitSources.Rank(PortraitSource.TripleTriadCard)).Select(k => k.Icon).ToList());
+        if (cardFrame is not null)
+        {
+            // The frame itself (white), at hr: for measuring a card box that keeps clear of it.
+            var (frameWidth, frameHeight) = PortraitSources.TextureSize(PortraitSource.TripleTriadCard);
+            var frameCanvas = new SheetCanvas(frameWidth, frameHeight);
+            for (var p = 0; p < cardFrame.Length; p++)
+            {
+                if (cardFrame[p])
+                {
+                    frameCanvas.Fill(p % frameWidth, p / frameWidth, 1, 1, (255, 255, 255));
+                }
+            }
+
+            frameCanvas.Save(Path.Combine(outDir, $"{prefix}TripleTriadCard-frame.png"));
+        }
+
         if (only is not null)
         {
-            var kept = new SortedDictionary<(int Rank, uint Icon), (PortraitSource Source, SortedSet<string> Givers)>();
+            var kept =new SortedDictionary<(int Rank, uint Icon), (PortraitSource Source, SortedSet<string> Givers)>();
             foreach (var icon in only)
             {
                 var source = PortraitSources.FamilyOfIcon(icon);
@@ -97,7 +116,7 @@ internal static class PortraitSheet
         var picked = new Dictionary<uint, int>();
         foreach (var quest in inputs.Quests)
         {
-            if (index.For(quest.GiverId, quest.Expansion, quest.BeastTribe) is { HasArt: true } portrait)
+            if (index.For(quest.GiverId, quest.QuestId) is { HasArt: true } portrait)
             {
                 picked[portrait.Icon] = picked.GetValueOrDefault(portrait.Icon) + 1;
             }
@@ -115,7 +134,7 @@ internal static class PortraitSheet
         var md = new StringBuilder();
         md.AppendLine("# Giver portrait contact sheet");
         md.AppendLine();
-        md.AppendLine(CultureInfo.InvariantCulture, $"Written by `Tsukimichi.DataGen --portrait-sheet`. {cells.Count} faces, worn by {index.GiversWithArt} of {index.GiverCount} giver ids; {picked.Values.Sum()} quests show a portrait. Boxes are (x, y, side) in hr px. Flags: CLAMPED, the box meets the texture's edge; KEY n, n script-colour pixels left inside the circle of a keyed delivery portrait.");
+        md.AppendLine(CultureInfo.InvariantCulture, $"Written by `Tsukimichi.DataGen --portrait-sheet`. {cells.Count} faces, worn by {index.GiversWithArt} of {index.GiverCount} giver ids; {picked.Values.Sum()} quests show a portrait. Boxes are (x, y, side) in hr px. Flags: CLAMPED, the box meets the texture's edge; KEY n, n script-colour pixels left inside the circle of a keyed delivery portrait; FRAME n, n pixels of the Triple Triad card's gold frame inside the circle.");
         var flagged = 0;
 
         foreach (var family in cells.GroupBy(c => c.Value.Source))
@@ -157,6 +176,11 @@ internal static class PortraitSheet
                     if (keyLeft > 0)
                     {
                         flags.Add($"KEY {keyLeft}");
+                    }
+
+                    if (source == PortraitSource.TripleTriadCard && texture is not null && FramePixelsInCircle(cardFrame, texture.Header.Width, texture.Header.Height, crop) is > 0 and var frameIn)
+                    {
+                        flags.Add($"FRAME {frameIn}");
                     }
 
                     flagged += flags.Any(f => f != "KEYED") ? 1 : 0;
@@ -206,6 +230,78 @@ internal static class PortraitSheet
         File.WriteAllText(mdFile, md.ToString());
         Console.WriteLine($"wrote:   {mdFile} ({flagged} cells flagged)");
         return 0;
+    }
+
+    /// <summary>A pixel is the card frame's gold in at least this share of the cards.</summary>
+    private const double FrameConsensus = 0.8;
+
+    /// <summary>
+    /// The Triple Triad cards' gold frame at hr (208 × 256, true = frame): the pixels that are gold (warm, bright,
+    /// opaque) in at least <see cref="FrameConsensus"/> of <paramref name="icons"/>' textures. Every card shares the one
+    /// frame, so its ornaments (the crest at the top, the scrolls in the corners) are found wherever they reach into
+    /// the art, which <see cref="PortraitSources.ArtBounds"/>' rectangle does not follow. Null with fewer than eight cards.
+    /// </summary>
+    private static bool[]? CardFrame(Lumina.GameData data, IReadOnlyList<uint> icons)
+    {
+        var (width, height) = PortraitSources.TextureSize(PortraitSource.TripleTriadCard);
+        var gold = new int[width * height];
+        var cards = 0;
+        foreach (var icon in icons)
+        {
+            if (data.GetFile<TexFile>(PortraitMasks.HrPath(icon)) is not { } texture || texture.Header.Width != width || texture.Header.Height != height)
+            {
+                continue;
+            }
+
+            cards++;
+            var pixels = texture.ImageData;
+            for (var p = 0; p < width * height; p++)
+            {
+                int b = pixels[p * 4], g = pixels[(p * 4) + 1], r = pixels[(p * 4) + 2], a = pixels[(p * 4) + 3];
+                if (a > 200 && r > 90 && r - b > 40 && g > b)
+                {
+                    gold[p]++;
+                }
+            }
+        }
+
+        if (cards < 8)
+        {
+            return null;
+        }
+
+        var frame = new bool[width * height];
+        for (var p = 0; p < frame.Length; p++)
+        {
+            frame[p] = gold[p] >= cards * FrameConsensus;
+        }
+
+        return frame;
+    }
+
+    /// <summary>How many frame pixels (<see cref="CardFrame"/>) lie inside the circle the plugin draws of <paramref name="crop"/>.</summary>
+    private static int FramePixelsInCircle(bool[]? frame, int width, int height, PortraitCrop crop)
+    {
+        if (frame is null || frame.Length != width * height)
+        {
+            return 0;
+        }
+
+        double cx = (crop.U0 + crop.U1) * 0.5 * width, cy = (crop.V0 + crop.V1) * 0.5 * height;
+        var radius = (crop.U1 - crop.U0) * 0.5 * width;
+        var count = 0;
+        for (var y = Math.Max(0, (int)(cy - radius)); y < Math.Min(height, (int)Math.Ceiling(cy + radius)); y++)
+        {
+            for (var x = Math.Max(0, (int)(cx - radius)); x < Math.Min(width, (int)Math.Ceiling(cx + radius)); x++)
+            {
+                if (frame[(y * width) + x] && Math.Pow(x + 0.5 - cx, 2) + Math.Pow(y + 0.5 - cy, 2) <= radius * radius)
+                {
+                    count++;
+                }
+            }
+        }
+
+        return count;
     }
 
     private static TexFile? Load(Lumina.GameData data, uint icon) =>

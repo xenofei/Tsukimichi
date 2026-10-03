@@ -87,13 +87,48 @@ public static class DutyArtReader
     /// <summary>What every entry's chain shares: PvP's tile and name, and the Duty Finder menu icon.</summary>
     public readonly record struct Shared(uint PvpIcon, string PvpName, uint DutyFinderIcon)
     {
-        /// <summary>Reads them; a row the sheet lacks reads as 0 or empty.</summary>
-        public static Shared Read(ExcelModule excel, Language language)
+        /// <summary>
+        /// Reads them; a row the sheet lacks reads as 0 or empty, and so does a sheet that cannot be read (one line to
+        /// <paramref name="log"/>), so the catalog and the unlock rows still build when, say, MainCommand fails to load.
+        /// </summary>
+        public static Shared Read(ExcelModule excel, Language language, Action<string>? log = null)
         {
             ArgumentNullException.ThrowIfNull(excel);
-            var pvp = excel.GetSheet<ContentType>(language).GetRowOrDefault(DutyArt.PvpContentType);
-            var menu = excel.GetSheet<MainCommand>(language).GetRowOrDefault(DutyArt.DutyFinderMenu);
-            return new Shared(pvp?.Icon ?? 0u, pvp?.Name.ExtractText() ?? string.Empty, menu is { Icon: > 0 } m ? (uint)m.Icon : 0u);
+            return From(
+                () => excel.GetSheet<ContentType>(language).GetRowOrDefault(DutyArt.PvpContentType) is { } pvp ? (pvp.Icon, pvp.Name.ExtractText()) : (0u, string.Empty),
+                () => excel.GetSheet<MainCommand>(language).GetRowOrDefault(DutyArt.DutyFinderMenu) is { Icon: > 0 } menu ? (uint)menu.Icon : 0u,
+                log);
+        }
+
+        /// <summary>
+        /// The shared fields from their two reads (PvP's ContentType row, the Duty Finder's MainCommand row), each
+        /// guarded on its own: a read that throws gives 0 or empty for its fields and one line to <paramref name="log"/>.
+        /// </summary>
+        public static Shared From(Func<(uint Icon, string Name)> readPvp, Func<uint> readDutyFinderIcon, Action<string>? log = null)
+        {
+            ArgumentNullException.ThrowIfNull(readPvp);
+            ArgumentNullException.ThrowIfNull(readDutyFinderIcon);
+            (uint Icon, string Name) pvp = (0u, string.Empty);
+            uint menu = 0;
+            try
+            {
+                pvp = readPvp();
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                log?.Invoke($"PvP's duty icon could not be read ({ex.GetType().Name}: {ex.Message}); PvP duties show the Duty Finder icon");
+            }
+
+            try
+            {
+                menu = readDutyFinderIcon();
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                log?.Invoke($"The Duty Finder menu icon could not be read ({ex.GetType().Name}: {ex.Message}); duties without art show none");
+            }
+
+            return new Shared(pvp.Icon, pvp.Name ?? string.Empty, menu);
         }
     }
 }

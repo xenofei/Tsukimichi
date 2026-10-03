@@ -42,7 +42,8 @@ public static class GiverPortraits
 
     /// <summary>
     /// The plate for <paramref name="quest"/>'s giver through <paramref name="spoilers"/>: never a face for a quest the
-    /// shield masks, nor, while the shield is on, a face from an expansion the character's story has not reached.
+    /// shield masks, nor, while the shield is on, a face from an expansion the character's story has not reached. A
+    /// masked quest's plate never shows its allied society's emblem either (<see cref="PortraitPlate.ForMaskedQuest"/>).
     /// </summary>
     public static PortraitRequest For(QuestRecord quest, SpoilerMask spoilers)
     {
@@ -50,9 +51,15 @@ public static class GiverPortraits
         ArgumentNullException.ThrowIfNull(spoilers);
         var index = Index?.Invoke() ?? PortraitIndex.Empty;
         var portrait = index.For(quest);
+        var masked = spoilers.IsMasked(quest);
+        if (masked)
+        {
+            portrait = PortraitPlate.ForMaskedQuest(portrait);
+        }
+
         var options = spoilers.Options;
         var allowed = Enabled && portrait.HasArt
-            && PortraitPlate.FaceAllowed(portrait.Era, spoilers.IsMasked(quest), options.HideNames || options.HideArtwork, spoilers.ReachExpansion);
+            && PortraitPlate.FaceAllowed(portrait.Era, masked, options.HideNames || options.HideArtwork, spoilers.ReachExpansion);
         return new PortraitRequest(portrait, allowed);
     }
 

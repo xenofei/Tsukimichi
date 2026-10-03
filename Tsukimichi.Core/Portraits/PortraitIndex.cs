@@ -107,7 +107,10 @@ public readonly record struct PortraitRef(uint GiverId, uint Icon, PortraitSourc
 /// battle-talk face, delivery portrait, Trust strip). The first family with a face from the quest's expansion or
 /// earlier wins, with its latest such face: the look the character had then. A face from a later expansion than the
 /// quest is never shown, even when it is the giver's only face: the giver gets the fallback instead (G'raha Tia's
-/// A Realm Reborn Crystal Tower quests must not wear his Shadowbringers Trust bust).
+/// A Realm Reborn Crystal Tower quests must not wear his Shadowbringers Trust bust). A seasonal event's quest has no
+/// expansion of its own (the sheet files it under A Realm Reborn whatever the year it runs): it reads as the newest,
+/// the event's present day, so it wears the giver's latest face; the spoiler shield still hides a face from an
+/// expansion the character has not reached (<c>PortraitPlate.FaceAllowed</c>).
 /// </para>
 /// <para>
 /// <b>Eras.</b> A face's era is what its source says (a Trust member's duties, a quest battle's quest, a card's place
@@ -145,23 +148,26 @@ public sealed class PortraitIndex
     /// <summary>How many giver ids the index knows (with art or not).</summary>
     public int GiverCount => givers.Count;
 
-    /// <summary>The portrait for a catalog quest: its giver, expansion and allied society.</summary>
+    /// <summary>The era a seasonal event's quest picks a face for: the newest (see Picking above).</summary>
+    public const byte SeasonalEra = byte.MaxValue;
+
+    /// <summary>The portrait for a catalog quest: its giver, expansion (the newest for a seasonal event's quest) and allied society.</summary>
     public PortraitRef For(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        return For(quest.Issuer?.NpcId ?? 0, quest.Expansion, quest.BeastTribe);
+        return For(quest.Issuer?.NpcId ?? 0, quest.Festival != 0 ? SeasonalEra : quest.Expansion, quest.BeastTribe);
     }
 
     /// <summary>
     /// The portrait of <paramref name="giverId"/> (an ENpcResident row) for quest <paramref name="questId"/> (a Quest
-    /// row): the quest's expansion picks the era and its allied society the emblem. A quest the index does not know
-    /// reads as the giver's first quest's expansion and no society.
+    /// row): the quest's expansion (the newest for a seasonal event's quest) picks the era and its allied society the
+    /// emblem. A quest the index does not know reads as the giver's first quest's expansion and no society.
     /// </summary>
     public PortraitRef For(uint giverId, uint questId)
     {
         if (quests.TryGetValue(questId, out var quest))
         {
-            return For(giverId, quest.Expansion, quest.BeastTribe);
+            return For(giverId, quest.Seasonal ? SeasonalEra : quest.Expansion, quest.BeastTribe);
         }
 
         return For(giverId, givers.TryGetValue(giverId, out var giver) ? giver.FirstEra : (byte)0, 0);

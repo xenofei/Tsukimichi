@@ -250,6 +250,25 @@ public sealed class PortraitPlateTests
         Assert.Equal(PortraitShow.MoonDisc, PortraitPlate.Choose(default, faceAllowed: true, 72f));
     }
 
+    [Fact]
+    public void A_masked_quest_never_shows_its_societys_emblem()
+    {
+        // A beast-tribe giver (no playable race): the moon disc, never the emblem that names whose story it is.
+        var society = Ref(PortraitFallbackKind.SocietyEmblem, 0, string.Empty, society: 65016, icon: 0, source: PortraitSource.None);
+        var masked = PortraitPlate.ForMaskedQuest(society);
+        Assert.Equal(0u, masked.Fallback.SocietyIcon);
+        Assert.Equal(PortraitShow.MoonDisc, PortraitPlate.Choose(masked, faceAllowed: false, 72f));
+        Assert.Equal(PortraitShow.MoonDisc, PortraitPlate.Choose(masked, faceAllowed: false, 18f));
+
+        // A humanoid giver of a society quest: the race silhouette.
+        var humanoid = Ref(PortraitFallbackKind.SocietyEmblem, 4, "MM", society: 65016);
+        Assert.Equal(PortraitShow.Silhouette, PortraitPlate.Choose(PortraitPlate.ForMaskedQuest(humanoid), faceAllowed: false, 24f));
+
+        // Every other fallback is kept as it was.
+        var named = Ref(PortraitFallbackKind.Initials, 3, "TT");
+        Assert.Equal(named, PortraitPlate.ForMaskedQuest(named));
+    }
+
     [Theory]
     [InlineData("MM", 72f, 2)]
     [InlineData("MM", 32f, 2)]
