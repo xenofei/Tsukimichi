@@ -26,9 +26,6 @@ public sealed partial class MainWindow
     /// <summary>A folded notice's chip padding, logical.</summary>
     private const float DockChipPadLogical = 4f;
 
-    /// <summary>The drawer's least width, logical: it covers the tree, and more when the tree is narrower.</summary>
-    private const float DrawerWidthLogical = 300f;
-
     /// <summary>How long a floating layer fades in (opacity only; at once under Reduce motion).</summary>
     private const float FadeSeconds = 0.16f;
 
@@ -48,6 +45,7 @@ public sealed partial class MainWindow
     private float bodyHeight;
     private Vector2 leftMin;
     private float leftWidth;
+    private bool leftStrip;
     private float statusTop;
 
     // The dock: the notice it last drew and when that one appeared (its fade), and the pager's text.
@@ -62,6 +60,13 @@ public sealed partial class MainWindow
 
     // When the drawer opened (its fade); negative while it is shut.
     private double drawerOpenedAt = -1.0;
+
+    // The drawer's body content as last measured (px; 0 until it first draws), and its header's and footer's labels.
+    private float drawerContent;
+    private readonly CountText drawerOnText = new(static () => Strings.FilterDrawerOnFormat);
+    private (int Shown, int Total, int Language) showingKey = (-1, -1, -1);
+    private (string Before, string Number, string After) showing = (string.Empty, string.Empty, string.Empty);
+    private string showingWhole = string.Empty;
 
     /// <summary>
     /// After the status bar: the drawer and the dock, with the Undo toast's place handed out beside the dock's. The
@@ -604,9 +609,14 @@ public sealed partial class MainWindow
     // ------------------------------------------------------------------ filter drawer
 
     /// <summary>
-    /// The filter panel as a drawer over the Journal tree (feature plan v6 U2): it opens over the tree's column (at least
-    /// <see cref="DrawerWidthLogical"/> wide) instead of pushing the tree down, fades in, scrolls on its own, and closes
-    /// on Esc, on its ×, on the Filters button, or on a click elsewhere in the window unless it is pinned open.
+    /// The filter drawer (feature plan v6 U2, plan v7 UI-2): one opaque sheet exactly over the Journal tree's column
+    /// (<see cref="DrawerLayout.Width"/>, never over the list), as tall as its content (measured on the last frame and
+    /// capped at the body: past that its body scrolls and its header and footer stay). Header: the filter glyph,
+    /// Filters in the Title role, a neutral "3 on" pill, pin and ×. Footer: "Showing N of M" and a quiet Reset with the
+    /// floating Undo. It fades in, and closes on Esc, on its ×, on the Filters button, or on a click elsewhere in the
+    /// window unless it is pinned. The tree under it fades out with it and is not drawn once it is opaque
+    /// (<see cref="DrawNavigation"/>), so nothing of the tree shows at its sides or over its title. Each Decoration level
+    /// has its own sheet (<see cref="DrawDrawerSheet"/>).
     /// </summary>
     private void DrawDrawer(SessionState session, CatalogBundle bundle, float right)
     {
@@ -623,8 +633,14 @@ public sealed partial class MainWindow
             drawerOpenedAt = now;
         }
 
-        var size = new Vector2(MathF.Max(1f, MathF.Min(MathF.Max(leftWidth, UiMetrics.Px(DrawerWidthLogical)), right - leftMin.X)), bodyHeight);
-        var rect = ScreenRect.FromSize(leftMin, size);
+        var flair = Theme.Flair;
+        var metrics = DrawerLayout.MetricsFor(flair);
+        var tones = DrawerTones.For(flair, Theme.Surface);
+        var width = DrawerLayout.Width(leftWidth, leftStrip, UiMetrics.Px(DrawerLayout.StripFloorLogical), right - leftMin.X);
+        var (header, row) = DrawerHeaderHeight(flair, metrics);
+        var footer = MathF.Max(UiMetrics.Px(metrics.Footer), ImGui.GetTextLineHeight() + UiMetrics.Px(8f));
+        var heights = DrawerLayout.Heights(header, drawerContent, footer, bodyHeight);
+        var rect = ScreenRect.FromSize(leftMin, new Vector2(width, heights.Sheet));
         if (ClickedOutsideDrawer(in rect))
         {
             ui.FilterPanelOpen = false;
@@ -633,28 +649,41 @@ public sealed partial class MainWindow
             return;
         }
 
-        var fade = UiMetrics.ReduceMotion ? 1f : Math.Clamp((float)((now - drawerOpenedAt) / FadeSeconds), 0f, 1f);
-        var s = Theme.Surface;
+        // Until its content has been measured once the sheet is drawn unseen, so it never shows at the wrong height.
+        var fade = drawerContent > 0f ? DrawerLayout.Fade(drawerOpenedAt, now, FadeSeconds, UiMetrics.ReduceMotion) : 0f;
         ImGui.SetCursorScreenPos(leftMin);
-        using (ImRaii.PushColor(ImGuiCol.ChildBg, s.Raised with { W = 1f }).Push(ImGuiCol.Border, s.Line))
-        using (ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(UiMetrics.Px(10f), UiMetrics.Px(8f)))
-                   .Push(ImGuiStyleVar.ChildBorderSize, 1f)
-                   .Push(ImGuiStyleVar.Alpha, fade))
-        using (var drawer = ImRaii.Child("##filterDrawer", size, true, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoSavedSettings))
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+        ImGui.PushStyleVar(ImGuiStyleVar.ChildBorderSize, 0f);
+        ImGui.PushStyleColor(ImGuiCol.ChildBg, Vector4.Zero);
+        var open = ImGui.BeginChild("##filterDrawer", rect.Size, false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoSavedSettings);
+        ImGui.PopStyleColor();
+        ImGui.PopStyleVar(2);
+        if (open)
         {
-            if (!drawer)
+            using var alpha = ImRaii.PushStyle(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * fade);
+            DrawDrawerSheet(in rect, flair, in metrics, in tones);
+            DrawDrawerHeader(in rect, header, row, flair, in metrics, in tones);
+
+            // The body scrolls on its own; its side padding is the level's, and nothing it opens (a combo, the
+            // per-category popup) inherits it.
+            ImGui.SetCursorScreenPos(new Vector2(rect.Min.X, rect.Min.Y + header));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(UiMetrics.Px(metrics.PadX), 0f));
+            ImGui.PushStyleColor(ImGuiCol.ChildBg, Vector4.Zero);
+            var bodyFlags = ImGuiWindowFlags.NoSavedSettings | (heights.Scrolls ? ImGuiWindowFlags.None : ImGuiWindowFlags.NoScrollbar);
+            var body = ImGui.BeginChild("##filterDrawerBody", new Vector2(width, MathF.Max(1f, heights.Body)), false, bodyFlags);
+            ImGui.PopStyleColor();
+            ImGui.PopStyleVar();
+            if (body)
             {
-                return;
+                drawerContent = filterPanel.DrawSheet(bundle, session.ViewedSnapshot, plugin.Settings);
             }
 
-            DrawDrawerEdge(rect, fade);
-            DrawDrawerHeader();
-            using var panel = ImRaii.Child("##filterDrawerBody", Vector2.Zero, false, ImGuiWindowFlags.NoSavedSettings);
-            if (panel)
-            {
-                filterPanel.Draw(bundle, session.ViewedSnapshot, plugin.Settings);
-            }
+            ImGui.EndChild();
+            DrawDrawerFooter(in rect, rect.Min.Y + header + heights.Body, footer, flair, in metrics, in tones);
         }
+
+        ImGui.EndChild();
+        ui.RecordRect(UiRects.FilterPanel, rect.Min, rect.Max);
     }
 
     /// <summary>
@@ -678,54 +707,433 @@ public sealed partial class MainWindow
         return !(ui.Rects.TryGetValue(UiRects.FiltersButton, out var button) && new ScreenRect(button.Min, button.Max).Contains(mouse));
     }
 
-    /// <summary>The drawer's title, its pin and its ×, on one line.</summary>
-    private void DrawDrawerHeader()
+    /// <summary>The header's height (its row, plus the moon-road divider's band at Full) and its row alone, at this level and text size.</summary>
+    private static (float Header, float Row) DrawerHeaderHeight(Flair flair, in DrawerMetrics metrics)
     {
-        ImGui.AlignTextToFramePadding();
-        using (Theme.PushText(Theme.Surface.TextSecondary))
+        float titleLine;
+        using (DrawerTitleRole(flair))
         {
-            ImGui.TextUnformatted(Strings.Filters);
+            titleLine = ImGui.GetTextLineHeight();
         }
 
-        var side = ImGui.GetFrameHeight();
+        var row = MathF.Max(UiMetrics.Px(metrics.Header), titleLine + UiMetrics.Px(flair == Flair.Plain ? 6f : 14f));
+        return (row + UiMetrics.Px(metrics.Divider), row);
+    }
+
+    /// <summary>"Filters" is in the Title role at Full, the display size at Quiet, the body at Plain.</summary>
+    private static Typography.Scope DrawerTitleRole(Flair flair) => flair switch
+    {
+        Flair.Full => Typography.Title(Strings.Filters),
+        Flair.Quiet => Typography.Display(),
+        _ => default,
+    };
+
+    /// <summary>
+    /// The sheet under everything else in the drawer, at its level (spec §2.2). Full: a drop shadow straight down
+    /// (0 14 30 at .55), an unoffset contact shadow on the list side (0 0 14 at .30), the raised gradient at .995, a
+    /// MoonHigh highlight along the top, a brass edge on the right and bottom (the sides that face content), rounded 6 at
+    /// the bottom right with a darker corner mark. Quiet: a separation shadow (0 8 20 at .45), a flat sheet one tone
+    /// above the tree and a 1 px edge. Plain: the flat sheet and its 1 px line, square, no shadow.
+    /// </summary>
+    private static void DrawDrawerSheet(in ScreenRect rect, Flair flair, in DrawerMetrics metrics, in DrawerTones tones)
+    {
+        var dl = ImGui.GetWindowDrawList();
+        var min = rect.Min;
+        var max = rect.Max;
+        var alpha = ImGui.GetStyle().Alpha;
+        var rounding = UiMetrics.Px(metrics.Rounding);
+        var corners = rounding > 0f ? ImDrawFlags.RoundCornersBottomRight : ImDrawFlags.RoundCornersNone;
+
+        // The shadows fall outside the child, to the right and below only: never over the rail or the toolbar.
+        dl.PushClipRect(min, max + new Vector2(UiMetrics.Px(48f)), false);
+        switch (flair)
+        {
+            case Flair.Full:
+            {
+                Ornament.DropShadow(dl, min, max, rounding, UiMetrics.Px(14f), UiMetrics.Px(30f), 0.55f * alpha);
+                var contact = UiMetrics.Px(14f);
+                var dark = Theme.WithAlpha(Vector4.UnitW, 0.30f * alpha);
+                var clear = Theme.WithAlpha(Vector4.UnitW, 0f);
+                dl.AddRectFilledMultiColor(new Vector2(max.X, min.Y), new Vector2(max.X + contact, max.Y - rounding), dark, clear, clear, dark);
+                GradientFill(dl, min, max, tones.SheetTop with { W = DrawerTones.FullSheetAlpha }, tones.SheetFoot with { W = DrawerTones.FullSheetAlpha }, rounding, corners);
+                dl.AddRectFilled(min, new Vector2(max.X - rounding, min.Y + UiMetrics.Hairline), ImGui.GetColorU32(Theme.MoonHigh with { W = 0.06f }));
+                var first = dl.VtxBuffer.Size;
+                EdgePath(dl, min, max, rounding, 0xFFFFFFFFu, UiMetrics.Hairline);
+                BrassVertices(dl, first, min, max, alpha);
+                CornerMark(dl, max, rounding, MathF.Round(UiMetrics.Px(9f)), alpha);
+                break;
+            }
+
+            case Flair.Quiet:
+                Ornament.DropShadow(dl, min, max, rounding, UiMetrics.Px(8f), UiMetrics.Px(20f), 0.45f * alpha);
+                dl.AddRectFilled(min, max, ImGui.GetColorU32(tones.SheetTop), rounding, corners);
+                EdgePath(dl, min, max, rounding, ImGui.GetColorU32(tones.Edge), UiMetrics.Hairline);
+                break;
+
+            default:
+                dl.AddRectFilled(min, max, ImGui.GetColorU32(tones.SheetTop));
+                EdgePath(dl, min, max, 0f, ImGui.GetColorU32(tones.Edge), UiMetrics.Hairline);
+                break;
+        }
+
+        dl.PopClipRect();
+    }
+
+    /// <summary>A rectangle filled from <paramref name="top"/> down to <paramref name="foot"/>, rounded at <paramref name="corners"/>, at the style's alpha.</summary>
+    private static void GradientFill(ImDrawListPtr dl, Vector2 min, Vector2 max, Vector4 top, Vector4 foot, float rounding, ImDrawFlags corners)
+    {
+        var first = dl.VtxBuffer.Size;
+        dl.AddRectFilled(min, max, 0xFFFFFFFFu, rounding, corners);
+        var vertices = dl.VtxBuffer;
+        var height = MathF.Max(1f, max.Y - min.Y);
+        for (var i = first; i < vertices.Size; i++)
+        {
+            var vertex = vertices[i];
+            var c = Vector4.Lerp(top, foot, Math.Clamp((vertex.Pos.Y - min.Y) / height, 0f, 1f));
+            c.W *= (vertex.Col >> 24) / 255f;
+            vertex.Col = ImGui.GetColorU32(c);
+            vertices[i] = vertex;
+        }
+    }
+
+    /// <summary>The sheet's edge on its right and bottom (the sides that face content), round the bottom-right corner.</summary>
+    private static void EdgePath(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding, uint color, float thickness)
+    {
+        var inset = thickness * 0.5f;
+        dl.PathLineTo(new Vector2(max.X - inset, min.Y));
+        if (rounding > 0f)
+        {
+            dl.PathArcTo(new Vector2(max.X - rounding, max.Y - rounding), rounding - inset, 0f, MathF.PI * 0.5f, 10);
+        }
+        else
+        {
+            dl.PathLineTo(new Vector2(max.X - inset, max.Y - inset));
+        }
+
+        dl.PathLineTo(new Vector2(min.X, max.Y - inset));
+        dl.PathStroke(color, ImDrawFlags.None, thickness);
+    }
+
+    /// <summary>Recolours the vertices drawn since <paramref name="first"/> as the card's lit brass (<see cref="Ornament.Brass"/>, light from the upper left).</summary>
+    private static void BrassVertices(ImDrawListPtr dl, int first, Vector2 min, Vector2 max, float alpha)
+    {
+        var vertices = dl.VtxBuffer;
+        var size = max - min;
+        var dir = new Vector2(0.139f, 0.990f);
+        var span = MathF.Max(1f, MathF.Abs(size.X * dir.X) + MathF.Abs(size.Y * dir.Y));
+        for (var i = first; i < vertices.Size; i++)
+        {
+            var vertex = vertices[i];
+            var c = Ornament.Brass(Vector2.Dot(vertex.Pos - min, dir) / span);
+            c.W = (vertex.Col >> 24) / 255f * alpha;
+            vertex.Col = Theme.U32(c);
+            vertices[i] = vertex;
+        }
+    }
+
+    /// <summary>The 9 px darker brass mark round the sheet's bottom-right corner, overlapping the edge by a hair.</summary>
+    private static void CornerMark(ImDrawListPtr dl, Vector2 max, float rounding, float size, float alpha)
+    {
+        var width = MathF.Max(1.5f, UiMetrics.Px(1.5f));
+        var o = 0.25f * width;
+        var ink = Theme.WithAlpha(Ornament.CornerShaded, alpha);
+        dl.PathLineTo(new Vector2(max.X + o - (width * 0.5f), max.Y - size));
+        dl.PathArcTo(new Vector2(max.X - rounding, max.Y - rounding), rounding + o - (width * 0.5f), 0f, MathF.PI * 0.5f, 10);
+        dl.PathLineTo(new Vector2(max.X - size, max.Y + o - (width * 0.5f)));
+        dl.PathStroke(ink, ImDrawFlags.None, width);
+    }
+
+    /// <summary>
+    /// The header row: the filter glyph (not at Plain), "Filters" in the level's title face, a neutral count pill ("3 on";
+    /// Plain: "· 3 on"), then pin and × at the end; under it the moon-road divider (Full), a hairline (Quiet), or the
+    /// header band itself (Plain).
+    /// </summary>
+    private void DrawDrawerHeader(in ScreenRect rect, float header, float row, Flair flair, in DrawerMetrics metrics, in DrawerTones tones)
+    {
+        var s = Theme.Surface;
+        var dl = ImGui.GetWindowDrawList();
+        var mid = MathF.Round(rect.Min.Y + (row * 0.5f));
+        if (flair == Flair.Plain)
+        {
+            dl.AddRectFilled(rect.Min, new Vector2(rect.Max.X, rect.Min.Y + row), ImGui.GetColorU32(tones.HeaderBand));
+        }
+
+        // Pin and close at the end.
+        var side = MathF.Max(18f, UiMetrics.Px(metrics.Button));
+        var gap = UiMetrics.Px(6f);
+        var closeMin = new Vector2(rect.Max.X - UiMetrics.Px(flair == Flair.Plain ? 4f : 10f) - side, MathF.Round(mid - (side * 0.5f)));
+        var pinMin = closeMin - new Vector2(side + gap, 0f);
         var pinned = plugin.Settings.FilterDrawerPinned;
-        ImGui.SameLine(MathF.Max(0f, ImGui.GetWindowContentRegionMax().X - (2f * side) - ImGui.GetStyle().ItemSpacing.X));
-        var pinMin = ImGui.GetCursorScreenPos();
-        if (pinned)
-        {
-            ImGui.GetWindowDrawList().AddRectFilled(pinMin, pinMin + new Vector2(side), Theme.WithAlpha(Theme.Surface.Text, 0.12f), side * 0.5f);
-        }
-
-        if (IconButton(PinIcon, "##drawerPin", side, pinned ? Strings.FilterDrawerUnpinTooltip : Strings.FilterDrawerPinTooltip))
+        if (DrawerButton("##drawerPin", PinIcon, pinMin, side, pinned, pinned ? Strings.FilterDrawerUnpinTooltip : Strings.FilterDrawerPinTooltip, flair, in tones))
         {
             plugin.Settings.FilterDrawerPinned = !pinned;
             OnDisplayChanged();
         }
 
-        ImGui.SameLine();
-        if (IconButton(DismissIcon, "##drawerClose", side, Strings.FilterDrawerCloseTooltip))
+        if (DrawerButton("##drawerClose", DismissIcon, closeMin, side, false, Strings.FilterDrawerCloseTooltip, flair, in tones))
         {
             ui.FilterPanelOpen = false;
         }
 
-        ImGui.Spacing();
-    }
-
-    /// <summary>The drawer's right edge: a brass rule where the flair draws rules, and a soft shadow over the list beside it.</summary>
-    private static void DrawDrawerEdge(in ScreenRect rect, float fade)
-    {
-        var dl = ImGui.GetWindowDrawList();
-        var shadow = UiMetrics.Px(10f);
-        dl.PushClipRect(rect.Min, rect.Max + new Vector2(shadow, 0f), false);
-        var dark = Theme.WithAlpha(System.Numerics.Vector4.UnitW, 0.22f * fade);
-        var clear = Theme.WithAlpha(System.Numerics.Vector4.UnitW, 0f);
-        dl.AddRectFilledMultiColor(new Vector2(rect.Max.X, rect.Min.Y), new Vector2(rect.Max.X + shadow, rect.Max.Y), dark, clear, clear, dark);
-        if (Theme.MoonRoadArt)
+        var x = rect.Min.X + UiMetrics.Px(flair switch { Flair.Full => 13f, Flair.Quiet => 12f, _ => 8f });
+        var end = pinMin.X - UiMetrics.Px(8f);
+        if (flair != Flair.Plain)
         {
-            var line = UiMetrics.Hairline;
-            dl.AddLine(new Vector2(rect.Max.X - (line * 0.5f), rect.Min.Y), new Vector2(rect.Max.X - (line * 0.5f), rect.Max.Y), Theme.WithAlpha(Theme.Surface.Ornament, Theme.OrnamentAlpha(0.6f) * fade), line);
+            // A bare 13 px glyph, no disc: MoonHigh at Full, Mist at Quiet.
+            ImGui.PushFont(UiBuilder.IconFont);
+            var glyphSize = UiMetrics.Px(13f);
+            var glyph = ImGui.CalcTextSize(FilterIcon) * (glyphSize / MathF.Max(1f, ImGui.GetFontSize()));
+            dl.AddText(ImGui.GetFont(), glyphSize, new Vector2(x, MathF.Round(mid - (glyph.Y * 0.5f))), ImGui.GetColorU32(flair == Flair.Full ? Theme.MoonHigh : s.TextSecondary), FilterIcon);
+            ImGui.PopFont();
+            x += glyph.X + UiMetrics.Px(9f);
         }
 
-        dl.PopClipRect();
+        float titleWidth;
+        using (DrawerTitleRole(flair))
+        {
+            var title = Strings.Filters;
+            titleWidth = MathF.Min(ImGui.CalcTextSize(title).X, MathF.Max(1f, end - x));
+            var at = new Vector2(x, MathF.Round(mid - (ImGui.GetTextLineHeight() * 0.5f)));
+            if (flair == Flair.Full)
+            {
+                Chrome.EllipsisTextAt(dl, at + new Vector2(0f, 1f), MathF.Max(1f, end - x), title, ImGui.GetColorU32(s.Deep with { W = 0.5f }));
+            }
+
+            var ink = flair == Flair.Full ? Vector4.Lerp(s.Text, Theme.MoonHigh, 0.25f) : s.Text;
+            Chrome.EllipsisTextAt(dl, at, MathF.Max(1f, end - x), title, ImGui.GetColorU32(ink));
+        }
+
+        x += titleWidth + UiMetrics.Px(9f);
+        var count = FilterBadge.Count(ui.Filters);
+        if (count > 0)
+        {
+            using var caption = Typography.Caption();
+            var text = drawerOnText.For(count);
+            var size = ImGui.CalcTextSize(text);
+            if (flair == Flair.Plain)
+            {
+                var dot = Strings.UndoToastSeparator.TrimEnd();
+                var label = new Vector2(x - UiMetrics.Px(5f), MathF.Round(mid - (size.Y * 0.5f)));
+                var dotWidth = ImGui.CalcTextSize(dot).X + UiMetrics.Px(3f);
+                if (label.X + dotWidth + size.X <= end)
+                {
+                    dl.AddText(label, ImGui.GetColorU32(s.TextSecondary), dot);
+                    dl.AddText(label + new Vector2(dotWidth, 0f), ImGui.GetColorU32(s.TextSecondary), text);
+                }
+            }
+            else
+            {
+                var height = MathF.Max(UiMetrics.Px(19f), size.Y + UiMetrics.Px(4f));
+                var pillWidth = size.X + (2f * UiMetrics.Px(8f));
+                if (x + pillWidth <= end)
+                {
+                    var min = new Vector2(x, MathF.Round(mid - (height * 0.5f)));
+                    dl.AddRectFilled(min, min + new Vector2(pillWidth, height), ImGui.GetColorU32(tones.Pill), height * 0.5f);
+                    dl.AddText(new Vector2(x + UiMetrics.Px(8f), MathF.Round(mid - (size.Y * 0.5f))), ImGui.GetColorU32(s.Text), text);
+                }
+            }
+        }
+
+        switch (flair)
+        {
+            case Flair.Full:
+            {
+                var first = dl.VtxBuffer.Size;
+                Ornament.Divider(dl, new Vector2(rect.Center.X, rect.Min.Y + row + (UiMetrics.Px(metrics.Divider) * 0.5f) - UiMetrics.Px(2f)), rect.Width - UiMetrics.Px(24f), UiMetrics.Px(10f));
+                Chrome.FadeVertices(dl, first, ImGui.GetStyle().Alpha);
+                break;
+            }
+
+            case Flair.Quiet:
+                dl.AddRectFilled(new Vector2(rect.Min.X, rect.Min.Y + header - UiMetrics.Hairline), new Vector2(rect.Max.X, rect.Min.Y + header), ImGui.GetColorU32(Theme.RuleColor));
+                break;
+        }
     }
+
+    /// <summary>
+    /// A header button: 26 px round at Full (a raised disc with a line border; pinned, a gold ring and tint) and at Quiet
+    /// (a 1 px border; pinned, a silver wash), 20 px square with a 3 px radius at Plain. True on click.
+    /// </summary>
+    private static bool DrawerButton(string id, string icon, Vector2 min, float side, bool active, string tooltip, Flair flair, in DrawerTones tones)
+    {
+        var s = Theme.Surface;
+        var dl = ImGui.GetWindowDrawList();
+        ImGui.SetCursorScreenPos(min);
+        var clicked = ImGui.InvisibleButton(id, new Vector2(side));
+        var hovered = ImGui.IsItemHovered();
+        var max = min + new Vector2(side);
+        var rounding = flair == Flair.Plain ? UiMetrics.Px(3f) : side * 0.5f;
+        var gold = active && flair == Flair.Full;
+        switch (flair)
+        {
+            case Flair.Full:
+                dl.AddRectFilled(min, max, ImGui.GetColorU32(gold ? Theme.Moon with { W = 0.10f } : hovered ? s.Hover : Vector4.Lerp(s.Raised, s.Text, 0.04f)), rounding);
+                dl.AddRect(min, max, ImGui.GetColorU32(gold ? Theme.Moon with { W = 0.5f } : s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+                break;
+            case Flair.Quiet:
+                if (hovered || active)
+                {
+                    dl.AddRectFilled(min, max, ImGui.GetColorU32(active ? s.Text with { W = 0.08f } : s.Hover), rounding);
+                }
+
+                dl.AddRect(min, max, ImGui.GetColorU32(tones.Edge), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+                break;
+            default:
+                if (hovered || active)
+                {
+                    dl.AddRectFilled(min, max, ImGui.GetColorU32(active ? s.Text with { W = 0.12f } : s.Hover), rounding);
+                }
+
+                break;
+        }
+
+        ImGui.PushFont(UiBuilder.IconFont);
+        var iconPx = MathF.Round(side * 0.44f);
+        var size = ImGui.CalcTextSize(icon) * (iconPx / MathF.Max(1f, ImGui.GetFontSize()));
+        var ink = gold ? Theme.Moon : hovered || active ? s.Text : s.TextSecondary;
+        dl.AddText(ImGui.GetFont(), iconPx, min + ((new Vector2(side) - size) * 0.5f), ImGui.GetColorU32(ink), icon);
+        ImGui.PopFont();
+        Chrome.FocusRing(rounding);
+        if (hovered)
+        {
+            UiMetrics.Tooltip(tooltip);
+        }
+
+        return clicked;
+    }
+
+    /// <summary>
+    /// The footer under the body: "Showing N of M" (the number in the text tone) and Reset at the end, a quiet text
+    /// action that clears every filter and the search and offers Undo, shown disabled while there is nothing to clear.
+    /// Over a brass rule at Full, a hairline at Quiet, its own band at Plain.
+    /// </summary>
+    private void DrawDrawerFooter(in ScreenRect rect, float top, float height, Flair flair, in DrawerMetrics metrics, in DrawerTones tones)
+    {
+        var s = Theme.Surface;
+        var dl = ImGui.GetWindowDrawList();
+        var min = new Vector2(rect.Min.X, top);
+        var max = new Vector2(rect.Max.X, top + height);
+        switch (flair)
+        {
+            case Flair.Full:
+            {
+                // Brass at its brightest in the middle, fading toward both ends.
+                var line = UiMetrics.Hairline;
+                var midX = MathF.Round((min.X + max.X) * 0.5f);
+                var faint = ImGui.GetColorU32(s.Ornament with { W = 0.15f });
+                var bright = ImGui.GetColorU32(s.OrnamentHigh with { W = 0.7f });
+                dl.AddRectFilledMultiColor(min, new Vector2(midX, min.Y + line), faint, bright, bright, faint);
+                dl.AddRectFilledMultiColor(new Vector2(midX, min.Y), new Vector2(max.X, min.Y + line), bright, faint, faint, bright);
+                break;
+            }
+
+            case Flair.Quiet:
+                dl.AddRectFilled(min, new Vector2(max.X, min.Y + UiMetrics.Hairline), ImGui.GetColorU32(Theme.RuleColor));
+                break;
+            default:
+                dl.AddRectFilled(min, max, ImGui.GetColorU32(tones.FooterBand));
+                break;
+        }
+
+        var mid = MathF.Round(top + (height * 0.5f));
+        var lineHeight = ImGui.GetTextLineHeight();
+        var textY = MathF.Round(mid - (lineHeight * 0.5f));
+        var x = rect.Min.X + UiMetrics.Px(metrics.PadX);
+
+        // Reset first, so "Showing" knows where it has to end.
+        var canReset = FilterSummary.CanReset(ui.Filters, ui.SearchText);
+        var plain = flair == Flair.Plain;
+        var label = Strings.Reset;
+        var labelWidth = ImGui.CalcTextSize(label).X;
+        var iconPx = MathF.Round(lineHeight * 0.8f);
+        float iconWidth;
+        ImGui.PushFont(UiBuilder.IconFont);
+        iconWidth = plain ? 0f : ImGui.CalcTextSize(ResetIcon).X * (iconPx / MathF.Max(1f, ImGui.GetFontSize()));
+        ImGui.PopFont();
+        var padX = plain ? 0f : UiMetrics.Px(11f);
+        var resetWidth = (2f * padX) + iconWidth + (plain ? 0f : UiMetrics.Px(6f)) + labelWidth;
+        var resetHeight = plain ? lineHeight : MathF.Max(UiMetrics.Px(28f), lineHeight + UiMetrics.Px(6f));
+        var resetMin = new Vector2(rect.Max.X - UiMetrics.Px(plain ? metrics.PadX : metrics.PadX - 4f) - resetWidth, MathF.Round(mid - (resetHeight * 0.5f)));
+        ImGui.SetCursorScreenPos(resetMin);
+        var clicked = ImGui.InvisibleButton("##drawerReset", new Vector2(resetWidth, resetHeight));
+        var hovered = canReset && ImGui.IsItemHovered();
+        if (hovered && !plain)
+        {
+            dl.AddRectFilled(resetMin, resetMin + new Vector2(resetWidth, resetHeight), ImGui.GetColorU32(tones.Hover with { W = DrawerTones.HoverAlpha }), resetHeight * 0.5f);
+        }
+
+        Chrome.FocusRing(plain ? UiMetrics.Px(2f) : resetHeight * 0.5f);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(canReset ? Strings.ResetTooltip : Strings.FilterDrawerResetNothing);
+        }
+
+        var ink = ImGui.GetColorU32(!canReset ? s.TextDisabled : hovered ? s.Text : s.TextSecondary);
+        var labelX = resetMin.X + padX;
+        if (!plain)
+        {
+            ImGui.PushFont(UiBuilder.IconFont);
+            dl.AddText(ImGui.GetFont(), iconPx, new Vector2(labelX, MathF.Round(mid - (iconPx * 0.5f))), ink, ResetIcon);
+            ImGui.PopFont();
+            labelX += iconWidth + UiMetrics.Px(6f);
+        }
+
+        dl.AddText(new Vector2(labelX, textY), ink, label);
+        if (plain && canReset)
+        {
+            var underline = MathF.Round(textY + lineHeight - UiMetrics.Px(1f));
+            dl.AddLine(new Vector2(labelX, underline), new Vector2(labelX + labelWidth, underline), ink, UiMetrics.Hairline);
+        }
+
+        if (clicked && canReset)
+        {
+            filterPanel.ResetAll();
+        }
+
+        // "Showing 7 of 26": the number the filters keep in the text tone, the rest secondary.
+        var (before, number, after) = ShowingParts(runner.Rows.Length, runner.TotalInScope);
+        var room = resetMin.X - UiMetrics.Px(8f) - x;
+        var beforeWidth = ImGui.CalcTextSize(before).X;
+        var numberWidth = ImGui.CalcTextSize(number).X;
+        var afterWidth = ImGui.CalcTextSize(after).X;
+        if (beforeWidth + numberWidth + afterWidth > room)
+        {
+            Chrome.EllipsisTextAt(dl, new Vector2(x, textY), MathF.Max(1f, room), showingWhole, ImGui.GetColorU32(s.TextSecondary));
+            return;
+        }
+
+        dl.AddText(new Vector2(x, textY), ImGui.GetColorU32(s.TextSecondary), before);
+        dl.AddText(new Vector2(x + beforeWidth, textY), ImGui.GetColorU32(s.Text), number);
+        dl.AddText(new Vector2(x + beforeWidth + numberWidth, textY), ImGui.GetColorU32(s.TextSecondary), after);
+    }
+
+    /// <summary>"Showing {0} of {1}" split round its number, rebuilt when the counts or the language change.</summary>
+    private (string Before, string Number, string After) ShowingParts(int shown, int total)
+    {
+        if (showingKey != (shown, total, Loc.Version))
+        {
+            showingKey = (shown, total, Loc.Version);
+            var culture = CultureInfo.CurrentCulture;
+            var format = Strings.FilterDrawerShowingFormat;
+            showingWhole = string.Format(culture, format, shown, total);
+            var open = format.IndexOf("{0", StringComparison.Ordinal);
+            var close = open < 0 ? -1 : format.IndexOf('}', open);
+            if (close < 0)
+            {
+                showing = (showingWhole, string.Empty, string.Empty);
+            }
+            else
+            {
+                showing = (
+                    string.Format(culture, format[..open], string.Empty, total),
+                    string.Format(culture, format[open..(close + 1)], shown),
+                    string.Format(culture, format[(close + 1)..], string.Empty, total));
+            }
+        }
+
+        return showing;
+    }
+
+    private static readonly string FilterIcon = FontAwesomeIcon.Filter.ToIconString();
+    private static readonly string ResetIcon = FontAwesomeIcon.UndoAlt.ToIconString();
 }
