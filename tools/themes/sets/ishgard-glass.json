@@ -1,0 +1,87 @@
+{
+  "key": "ishgard-glass",
+  "name": "Ishgard Glass",
+  "note": "Approved in round 3 (supervisor signed). Hero tiers 96 and 128 draw the full masters; 48 and 64 draw _mid/ (Completed without Crisium's lead and Tycho). Ready on another job's empty seats are layered from the faces and the Came kit in gen.py compose()'s order (face under, frame, badge ring, seat, face over); the Hand seat is the tank seat recoloured to Medallion's Hand enamel (GlyphTokens.Medallion.HandHex).",
+  "root": "docs/design/v7/themes/ishgard-glass",
+  "dest": "Tsukimichi/assets/ui/themes/ishgard-glass",
+  "palette": "ishgard-snow",
+  "kit": "came",
+  "tiers": {
+    "48": "_mid",
+    "64": "_mid",
+    "96": ".",
+    "128": "."
+  },
+  "sprites": {
+    "ready": "{tier}/ready.svg",
+    "in-journal": "{tier}/in-journal.svg",
+    "blocked": "{tier}/blocked.svg",
+    "done-this-cycle": "{tier}/done-this-cycle.svg",
+    "completed": "{tier}/completed.svg",
+    "locked-out": "{tier}/locked-out.svg",
+    "not-checked": "{tier}/not-checked.svg",
+    "other-job-tank": {
+      "layers": [
+        "{tier}/faces/ready-on-another-job-under.svg",
+        "kit/frame-resting-full.svg",
+        "kit/badge-ring-resting.svg",
+        "kit/badge-seat-tank.svg",
+        "{tier}/faces/ready-on-another-job-over.svg"
+      ]
+    },
+    "other-job-healer": {
+      "layers": [
+        "{tier}/faces/ready-on-another-job-under.svg",
+        "kit/frame-resting-full.svg",
+        "kit/badge-ring-resting.svg",
+        "kit/badge-seat-healer.svg",
+        "{tier}/faces/ready-on-another-job-over.svg"
+      ]
+    },
+    "other-job-dps": {
+      "layers": [
+        "{tier}/faces/ready-on-another-job-under.svg",
+        "kit/frame-resting-full.svg",
+        "kit/badge-ring-resting.svg",
+        "kit/badge-seat-dps.svg",
+        "{tier}/faces/ready-on-another-job-over.svg"
+      ]
+    },
+    "other-job-hand": {
+      "layers": [
+        "{tier}/faces/ready-on-another-job-under.svg",
+        "kit/frame-resting-full.svg",
+        "kit/badge-ring-resting.svg",
+        {
+          "file": "kit/badge-seat-tank.svg",
+          "recolour": {
+            "#5878C2": "#66708E",
+            "#2C417E": "#2C324C"
+          }
+        },
+        "{tier}/faces/ready-on-another-job-over.svg"
+      ]
+    }
+  },
+  "metrics": {
+    "ready-on-another-job": [
+      "{tier}/ready-on-another-job.svg",
+      "{tier}/ready-on-another-job-bard.svg",
+      "{tier}/ready-on-another-job-white-mage.svg"
+    ]
+  },
+  "row": {
+    "dir": "_row",
+    "atlas": true,
+    "sprites": {
+      "ready": "_row/ready.svg",
+      "ready-on-another-job": "_row/ready-on-another-job.svg",
+      "in-journal": "_row/in-journal.svg",
+      "blocked": "_row/blocked.svg",
+      "done-this-cycle": "_row/done-this-cycle.svg",
+      "completed": "_row/completed.svg",
+      "locked-out": "_row/locked-out.svg",
+      "not-checked": "_row/not-checked.svg"
+    }
+  }
+}
