@@ -168,6 +168,22 @@ Dalamud's API 16 ships with Patch 8.0 in January 2027 and removes Lumina.Excel, 
 - It merges when Dalamud announces v16, whatever release slot that falls in.
 - Recheck after Fan Fest.
 
+## In-game checks
+
+### 1.11.0 (released 2026-10-02)
+
+1. **Journal:** no "#" before any row's moon; chapter names look crisp, not smeared.
+2. **Flight:** expansion icons are big, sharp and centred on their heading; the zone banner icon is larger.
+3. **Mark as unique:** clicking alone does nothing. Ctrl+click or Shift+click saves at once and shows a floating Undo with "Add note"; Enter in a note doesn't confirm.
+4. **Press and hold:** Forget, Delete all, Replace Questionable's list and Apply need a hold. In Settings › Keyboard › Safety, change the hold length and try "Click twice instead".
+5. **Undo:** the toast floats above the status bar, never covers a right-click menu, and fades away.
+6. **Commands:** `/ts` and `/moon` open Tsukimichi; add a custom alias in Settings › Keyboard; try one already in use (e.g. `/say`) and see it skipped.
+7. **`/tsuki stop`:** start a Walk to giver or a Questionable run and stop it from a macro. One chat line says what stopped.
+8. **Duties:** the Duties section and "Run with AutoDuty" appear on dungeon quests again.
+9. **WigglyQuest:** if you use the fork, Companion plugins shows it as Questionable-compatible.
+10. **Mount quests:** the Firebird (Lanner) and Kamuy quests wait for their mounts instead of reading Ready.
+11. **Installer:** the new icon shows in the plugin installer, and the Installed check is readable on it.
+
 ## Not doing, for now
 
 | Idea | Why not |
