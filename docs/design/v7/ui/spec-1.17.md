@@ -475,3 +475,8 @@ No open questions remain for 1.17.
 
 
 **Coordinator decision (Dawn fallback):** if Dawn fails the Ready lead or Completed ratio for a set, Ready's halo on Dawn rises from .45 to .60 with the same footprint, the same rule as Kugane. Medals are never recoloured.
+
+**Implementation note (1.17, measured):** the neutral-kit, per-mode cross-set numbers replace §A3's earlier worked figures.
+- **Distinctness:** it can warn. Ishgard Glass's Blocked or Not checked beside Medallion's Locked out reads 11.70 / 11.74 in greyscale, which is "close". The weakest cross pair is 11.47 under protanopia, and nothing falls under 10.
+- **The live Ready-lead case:** Medallion with Ready from Ishgard Glass leads by 1.20× at 48 px and 1.28× in rows, with Completed at 0.83× Ready. "Fix it" proposes "Use Ishgard Glass for Completed too".
+- **When there is no fix:** if no single change keeps the player's pick, "Fix it" is disabled and its tooltip says why.
