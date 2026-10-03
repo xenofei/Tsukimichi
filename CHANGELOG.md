@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-10-03
+
 ### Added
 - **Back and forward through quests.** Use the new ‹ › buttons at the left of the toolbar, mouse buttons 4 and 5 over the window, or Alt+← and Alt+→. Hover a button to see which quest it goes to. The keys can be turned off in Settings › Advanced › Keyboard.
 - **A moving night sky** (Full):
