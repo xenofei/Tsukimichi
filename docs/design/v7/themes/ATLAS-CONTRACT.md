@@ -180,8 +180,12 @@ in one appearance, so each path has its own budget.
 - Per set, the `@2x` textures of each path: **≤ 12 MB** of RGBA.
 - Per set, PNG files on disk: **≤ 2.5 MB** as designed, **≤ 1.5 MB** of faces. Per kit: **≤ 1.5 MB**, and its 1x
   textures **≤ 4 MB**.
-- Every reachable appearance (every shipped set, each by its larger path, Medallion included, plus the largest kit,
-  1x): **≤ 12 MB** of RGBA in total.
+- Every reachable appearance: **≤ 12 MB** of RGBA at 1x in total. The resolver composes every set whose own kit is not
+  the appearance's (`ResolvedAppearance.Composes`), so in kit K only the set whose own kit is K draws as designed and
+  every other set draws from its faces. The worst case is therefore, maximised over the kits K: the K set as designed
+  (Medallion's is its embedded atlas) + every other shipped set's `faces` and `faces-row` + K's `frames`, `frames-row`
+  and `ornaments` (every set in the column at once). With Sumi to Kinpaku (1.17) the worst is in Kirikane, about
+  11.0 MB. Until 1.17 this counted every set at its larger path, a look nothing draws (owner's ruling, 1.17 T15).
 
 ## 7. Faces and frames: the frames axis (1.17 T11)
 
