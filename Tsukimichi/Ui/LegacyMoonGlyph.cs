@@ -50,11 +50,14 @@ internal static class LegacyMoonGlyph
     /// <summary>Radius from which the Unknown rim has twelve 16° dashes; below it eight 22° dashes stay readable.</summary>
     public const float FineDashMinRadius = 10f;
 
-    /// <summary>Glow discs for Ready at r ≥ 9, largest first: (radius multiplier, alpha), approximating the proposal's blurred gold disc.</summary>
+    /// <summary>
+    /// Glow discs for Ready at r ≥ 9, largest first: (radius multiplier, alpha), approximating the proposal's blurred gold
+    /// disc. Night only: a light palette lays its Ready wash instead (<see cref="ReadyLight"/>).
+    /// </summary>
     private static readonly (float Scale, float Alpha)[] Glow = [(1.70f, 0.05f), (1.42f, 0.09f), (1.20f, 0.15f)];
     private static readonly uint[] GlowColors = Array.ConvertAll(Glow, static g => Theme.WithAlpha(Theme.Moon, g.Alpha));
 
-    /// <summary>Ready below r 9: one 1 px Moon ring at 1.25 r, 35 % — the glow discs vanish at that size.</summary>
+    /// <summary>Ready below r 9: one 1 px Moon ring at 1.25 r, 35 % — the glow discs vanish at that size. Night only, as the glow.</summary>
     private const float SmallReadyRingScale = 1.25f;
     private static readonly uint SmallReadyRingColor = Theme.WithAlpha(Theme.Moon, 0.35f);
 
@@ -96,7 +99,10 @@ internal static class LegacyMoonGlyph
 
     private const float Degrees = MathF.PI / 180f;
 
-    /// <summary>Halo gauge: the track on raised cards (Dusk at 80 %, about 3.6 : 1) and the complete gauge's two glow rings.</summary>
+    /// <summary>
+    /// Halo gauge: the track on raised cards (Dusk at 80 %, about 3.6 : 1) and the complete gauge's two glow rings (only
+    /// where the palette's gauges glow, <see cref="GaugeInks.Glows"/>: never on a light palette).
+    /// </summary>
     private static readonly uint HaloTrackOnCard = Theme.WithAlpha(Theme.Dusk, 0.80f);
     private static readonly uint HaloGlowOuter = Theme.WithAlpha(Theme.Moon, 0.10f);
     private static readonly uint HaloGlowInner = Theme.WithAlpha(Theme.Moon, 0.16f);
@@ -112,6 +118,25 @@ internal static class LegacyMoonGlyph
 
     /// <summary>Rim stroke for a state moon of radius <paramref name="radius"/> px: 0.12 r clamped to 1.5–3 px (ui-revamp §2.7).</summary>
     public static float Rim(float radius) => Math.Clamp(0.12f * radius, 1.5f, 3f);
+
+    /// <summary>
+    /// The cut-outs (the Accepted seal, the Foreclosed notch): the window behind the moon, opaque. Night on Night, as in
+    /// 1.11; snow on a light palette, never a navy dot.
+    /// </summary>
+    private static uint CutOutU32 => Theme.OutlineU32;
+
+    /// <summary>
+    /// Ready on a light palette (spec-1.16 §A4): additive gold would be invisible on snow, so where Night glows the row's
+    /// warm Ready wash goes behind the moon instead (<see cref="TablePane.ReadyWash"/>), at Full only like the rows'; the
+    /// moon itself is never recoloured.
+    /// </summary>
+    private static void ReadyLight(ImDrawListPtr dl, Vector2 center, float radius)
+    {
+        if (Theme.ShowGlow)
+        {
+            TablePane.ReadyWash(dl, center, radius);
+        }
+    }
 
     /// <summary>Draws the glyph for <paramref name="state"/> centred at <paramref name="center"/> with the given pixel radius.</summary>
     public static void Draw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state)
@@ -143,12 +168,14 @@ internal static class LegacyMoonGlyph
                 FillPhase(dl, center, radius, MoonPhase.WaxingGibbous, segments, Theme.MoonU32);
                 Shade(dl, center, radius, Scratch, GoldTone);
                 Detail(dl, center, radius, segments, LitRegion.ForWidth(MoonGeometry.AcceptedLitWidth), GoldTone);
-                dl.AddCircleFilled(center + SealOffset * radius, MathF.Max(SealRadiusFraction * radius, SealMinRadius), Theme.NightU32);
+                dl.AddCircleFilled(center + SealOffset * radius, MathF.Max(SealRadiusFraction * radius, SealMinRadius), CutOutU32);
                 Ring(dl, center, radius, segments, rim, Theme.SilverU32);
                 break;
 
             case QuestState.Ready:                           // first quarter, gold, Dusk rim under the lit half, glow or thin outer ring
-                if (radius < ShadingMinRadius)
+                if (Theme.Washes)
+                    ReadyLight(dl, center, radius);
+                else if (radius < ShadingMinRadius)
                     dl.AddCircle(center, radius * SmallReadyRingScale, SmallReadyRingColor, segments, 1f);
                 else
                     for (var i = 0; i < Glow.Length; i++)
@@ -186,7 +213,7 @@ internal static class LegacyMoonGlyph
                 Ring(dl, center, radius, segments, rim, Theme.EclipseU32);
                 dl.AddLine(center - BarEnd * radius, center + BarEnd * radius, Theme.EclipseU32, MathF.Max(BarMinWidth, BarWidthFraction * radius));
                 if (radius >= NotchMinRadius)
-                    dl.AddCircleFilled(center + NotchOffset * radius, radius * NotchRadius, Theme.NightU32);
+                    dl.AddCircleFilled(center + NotchOffset * radius, radius * NotchRadius, CutOutU32);
                 break;
 
             case QuestState.Unknown:                         // veiled: faint disc, dashed Dusk rim
@@ -282,8 +309,12 @@ internal static class LegacyMoonGlyph
                 return;
             }
 
-            dl.AddCircle(center, track, HaloGlowOuter, segments, stroke * 2.2f);
-            dl.AddCircle(center, track, HaloGlowInner, segments, stroke * 1.5f);
+            if (Theme.Gauges.Glows)
+            {
+                dl.AddCircle(center, track, HaloGlowOuter, segments, stroke * 2.2f);
+                dl.AddCircle(center, track, HaloGlowInner, segments, stroke * 1.5f);
+            }
+
             dl.AddCircle(center, track, Theme.MoonU32, segments, stroke);
             if (mode == HaloMode.Core)
                 FillingMoon(dl, center, core, MoonGeometry.SegmentsFor(core), 1f);

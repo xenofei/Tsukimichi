@@ -577,8 +577,16 @@ public sealed partial class ConfigWindow
         {
             if (state == QuestState.Ready && Theme.ShowGlow)
             {
-                dl.AddCircleFilled(center, radius + UiMetrics.Px(4f), Theme.Glow(0.10f), 32);
-                dl.AddCircleFilled(center, radius + UiMetrics.Px(2f), Theme.Glow(0.16f), 32);
+                if (Theme.Washes)
+                {
+                    // A light palette: the Ready wash the table draws (spec-1.16 §A4.1), not a glow.
+                    TablePane.ReadyWash(dl, center, radius);
+                }
+                else
+                {
+                    dl.AddCircleFilled(center, radius + UiMetrics.Px(4f), Theme.Glow(0.10f), 32);
+                    dl.AddCircleFilled(center, radius + UiMetrics.Px(2f), Theme.Glow(0.16f), 32);
+                }
             }
 
             dl.AddCircleFilled(center + new Vector2(0f, UiMetrics.Px(1.5f)), radius, Theme.DropShadow(0.55f), 24);

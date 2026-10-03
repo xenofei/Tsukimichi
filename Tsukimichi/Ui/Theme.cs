@@ -595,6 +595,35 @@ public static class Theme
         return new GlyphScope(previous);
     }
 
+    /// <summary>
+    /// Draws as <paramref name="palette"/> with the glyph palette <paramref name="glyphPalette"/> until the returned scope
+    /// is disposed, then restores the frame's: the Themes page's cards and Preview, so a previewed palette's moons, gauges,
+    /// washes and high-contrast ladder are the ones it will really draw. Resolved as <see cref="Refresh"/> resolves them
+    /// (the glyph palette against <paramref name="palette"/>'s window, its high-contrast form under high contrast); Flair
+    /// stays the frame's. A struct; <c>using</c> allocates nothing.
+    /// </summary>
+    public static PaletteScope PushPalette(UiPalette palette, GlyphPaletteKind glyphPalette)
+    {
+        ArgumentNullException.ThrowIfNull(palette);
+        var scope = new PaletteScope(Palette, Glyphs);
+        Glyphs = GlyphPalette.Resolve(glyphPalette, palette.Surface.Window);
+        ApplyPalette(Glyphs.HighContrast ? palette.HighContrast : palette);
+        return scope;
+    }
+
+    /// <summary>Restores the palette and glyph palette in effect before <see cref="PushPalette"/>. Dispose exactly once.</summary>
+    public readonly struct PaletteScope(UiPalette previous, GlyphPalette previousGlyphs) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (previous is not null)
+            {
+                ApplyPalette(previous);
+                Glyphs = previousGlyphs;
+            }
+        }
+    }
+
     /// <summary>Restores the glyph palette that was in effect before <see cref="PushGlyphs"/>. Dispose exactly once.</summary>
     public readonly struct GlyphScope(GlyphPalette previous) : IDisposable
     {
