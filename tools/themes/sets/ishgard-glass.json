@@ -6,6 +6,10 @@
   "dest": "Tsukimichi/assets/ui/themes/ishgard-glass",
   "palette": "ishgard-snow",
   "kit": "came",
+  "faces": {
+    "hero": "{tier}/faces/{state}-{layer}.svg",
+    "row": "_row/faces/{state}-{layer}.svg"
+  },
   "tiers": {
     "48": "_mid",
     "64": "_mid",

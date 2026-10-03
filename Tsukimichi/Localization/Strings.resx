@@ -10165,7 +10165,7 @@
     <comment>Frame kit name.</comment>
   </data>
   <data name="FrameKitCame" xml:space="preserve">
-    <value>Came</value>
+    <value>Lead came</value>
     <comment>Frame kit name: lead came, as in stained glass.</comment>
   </data>
   <data name="FrameKitAstrolabe" xml:space="preserve">
@@ -10297,7 +10297,7 @@
     <comment>Settings › Themes: the frames row's label.</comment>
   </data>
   <data name="ThemesFramesHint" xml:space="preserve">
-    <value>The metal round each moon and card.</value>
+    <value>The metal round each moon, badge, gauge and card: one metal for the whole column, however you mix.</value>
     <comment>Settings › Themes: the frames row's hint.</comment>
   </data>
   <data name="ThemesFramesFixedReason" xml:space="preserve">

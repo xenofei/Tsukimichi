@@ -1,0 +1,20 @@
+{
+  "key": "brass",
+  "name": "Brass",
+  "note": "Menphina's Medallion's gilt brass, from gen5.py read-only (tools/themes/sources.py): one bezel for every urgency tier (so act-now is the shared gilt, as in every kit), its light rim at Quiet, and its badges. Every urgency tier being one frame makes Brass the neutral kit of the cross-set table.",
+  "root": "docs/design/moon-v6/round5/medallion-r5",
+  "dest": "Tsukimichi/assets/ui/kits/brass",
+  "frames": {
+    "hero": {"python": "tools/themes/sources.py", "call": "brass_frame", "args": ["{urgency}", "{finish}", "{tier}"]},
+    "row": {"python": "tools/themes/sources.py", "call": "brass_frame", "args": ["{urgency}", "{finish}", "row"]}
+  },
+  "badges": {
+    "open": {"python": "tools/themes/sources.py", "call": "brass_badge", "args": ["open"]},
+    "closed": {"python": "tools/themes/sources.py", "call": "brass_badge", "args": ["closed"]},
+    "journal": {"python": "tools/themes/sources.py", "call": "brass_badge", "args": ["journal"]},
+    "seat-tank": {"python": "tools/themes/sources.py", "call": "brass_badge", "args": ["seat-tank"]},
+    "seat-healer": {"python": "tools/themes/sources.py", "call": "brass_badge", "args": ["seat-healer"]},
+    "seat-dps": {"python": "tools/themes/sources.py", "call": "brass_badge", "args": ["seat-dps"]},
+    "seat-hand": {"python": "tools/themes/sources.py", "call": "brass_badge", "args": ["seat-hand"]}
+  }
+}

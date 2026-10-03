@@ -608,8 +608,8 @@ public sealed partial class ConfigWindow
             UndoToast.Show(highContrast ? Strings.UndoToastHighContrastOn : Strings.UndoToastHighContrastOff, () => RestoreAppearance(before));
         }
 
-        // Frames: a choice once two kits draw a metal of their own (1.17 T11); until then the kit that really draws
-        // (Brass, for a theme whose own kit has no metal yet), shown.
+        // Frames: a choice once two kits draw a metal of their own (1.17 T11: Brass, Silver, Lead came, Astrolabe); a
+        // build with fewer shows the kit that really draws (Brass, for a theme whose own kit has no metal yet).
         var choosable = ThemesPage.FramesChoosable(FrameKitRenderers.HasOwnMetal);
         var resolved = GlyphSeam.Appearance;
         var frames = choosable ? ThemesPage.FramesIndex(saved) : 1 + IndexOfKit(FrameKitRenderers.HasOwnMetal(resolved.Frames) ? resolved.Frames : FrameKitId.Brass);

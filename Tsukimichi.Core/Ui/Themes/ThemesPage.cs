@@ -14,8 +14,8 @@ public static class ThemesPage
     private static readonly FrameKitInfo[] OfferedKits = [.. FrameKits.All.Where(static k => k.Offered)];
 
     /// <summary>
-    /// The theme cards, in the registry's order: only the themes this build offers (Orrery and Sumi stay hidden until
-    /// their art ships, spec §B6), Classic last as Legacy.
+    /// The theme cards, in the registry's order: only the themes this build offers (Sumi stays hidden until its art
+    /// ships, spec §B6), Classic last as Legacy.
     /// </summary>
     public static IReadOnlyList<ThemePreset> Themes => OfferedThemes;
 
@@ -54,8 +54,8 @@ public static class ThemesPage
 
     /// <summary>
     /// Whether the Frames choice can be used: at least two offered kits draw a metal of their own
-    /// (<paramref name="ownMetal"/>). In 1.16 every kit's gauges and badges are brass (the choice is 1.17 T11), so the
-    /// control shows each theme's own kit and says why it is fixed (spec §B2 with the T9 brief).
+    /// (<paramref name="ownMetal"/>). From 1.17 (T11) Brass, Silver, Lead came and Astrolabe each do, so it is; a build
+    /// with fewer shows each theme's own kit and says why it is fixed (spec-1.16 §B2 with the T9 brief).
     /// </summary>
     public static bool FramesChoosable(Func<FrameKitId, bool> ownMetal)
     {

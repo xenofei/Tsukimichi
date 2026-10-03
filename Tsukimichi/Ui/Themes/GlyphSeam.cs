@@ -10,8 +10,10 @@ namespace Tsukimichi.Ui.Themes;
 /// The renderer seam (feature plan v7 T3; theme-system §6.1): the appearance in effect this frame, and the compositor
 /// <see cref="MoonGlyph"/> draws every state medal and gauge through. For a state it looks up the glyph set the
 /// appearance gives it (<see cref="ResolvedAppearance.SetFor"/>) and asks that set to draw; a set that cannot draw yet (an
-/// atlas still loading, a file it does not ship) gives way to Menphina's Medallion, which always can. Gauges and row badge
-/// content come from the frame kit (<see cref="Kit"/>), or the 1.11 gauges under the Classic theme. With the default
+/// atlas still loading, a file it does not ship) gives way to Menphina's Medallion, which always can. A set drawn in a kit
+/// other than its own is composed from its faces and that kit's frames (<see cref="ResolvedAppearance.Composes"/>,
+/// <see cref="ThemeAtlasCache.TryCompose"/>). Gauges and row badge content come from the frame kit (<see cref="Kit"/>),
+/// in its metal (<see cref="Theme.UseFrameKit"/>), or the 1.11 gauges under the Classic theme. With the default
 /// appearance every draw is exactly the 1.15 one: Medallion is <see cref="MedalGlyph"/>, Classic is
 /// <see cref="LegacyMoonGlyph"/>, and the Brass kit is <see cref="MedalGauge"/>.
 /// </summary>
@@ -21,7 +23,7 @@ public static class GlyphSeam
     private static readonly IGlyphSet[] ByState = new IGlyphSet[AppearanceStates.Count];
     private static readonly IGlyphSet?[] AtlasSets = new IGlyphSet?[8];
     private static ResolvedAppearance appearance = null!;
-    private static IFrameKit kit = BrassFrameKit.Instance;
+    private static IFrameKit kit = FrameKitRenderers.Brass;
 
     static GlyphSeam() => Apply(ResolvedAppearance.Default);
 
@@ -104,6 +106,7 @@ public static class GlyphSeam
         }
 
         kit = resolved.Classic ? ClassicFrameKit.Instance : FrameKitRenderers.For(resolved.Frames);
+        Theme.UseFrameKit(resolved.Classic || resolved.HighContrast ? FrameKitId.Brass : resolved.Frames);
     }
 
     private static IGlyphSet Renderer(GlyphSetId id)

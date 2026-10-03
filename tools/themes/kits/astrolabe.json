@@ -1,0 +1,20 @@
+{
+  "key": "astrolabe",
+  "name": "Astrolabe",
+  "note": "Astrologian's Orrery's astrolabe limb (kit/, approved after round 2): the frame per urgency tier (act-now in the shared gilt; the engraved scale from 48 px, a clean limb in rows), the Quiet hairline, and the badge ring, seat and glyph in gen.py kit_badge()'s order. Role seats tint the white seat mask with each role's enamel; the Hand seat takes Medallion's Hand enamel.",
+  "root": "docs/design/v7/themes/astrologian-orrery",
+  "dest": "Tsukimichi/assets/ui/kits/astrolabe",
+  "frames": {
+    "hero": "kit/frame-{urgency}-{finish}.svg",
+    "row": {"full": "kit/row/frame-{urgency}-full.svg", "quiet": "kit/frame-{urgency}-quiet.svg"}
+  },
+  "badges": {
+    "open": {"layers": ["kit/badge-ring-act-now.svg", "kit/badge-seat-open.svg", "kit/badge-open.svg"]},
+    "closed": {"layers": ["kit/badge-ring.svg", "kit/badge-seat-closed.svg", "kit/badge-closed.svg"]},
+    "journal": {"layers": ["kit/badge-ring.svg", "kit/badge-seat-journal.svg", "kit/badge-journal.svg"]},
+    "seat-tank": {"layers": ["kit/badge-ring.svg", {"file": "kit/badge-seat-role-mask.svg", "recolour": {"offset=\"0\" stop-color=\"#FFFFFF\"": "offset=\"0\" stop-color=\"#5878C2\"", "offset=\"1\" stop-color=\"#FFFFFF\"": "offset=\"1\" stop-color=\"#2C417E\""}}]},
+    "seat-healer": {"layers": ["kit/badge-ring.svg", {"file": "kit/badge-seat-role-mask.svg", "recolour": {"offset=\"0\" stop-color=\"#FFFFFF\"": "offset=\"0\" stop-color=\"#5C9A68\"", "offset=\"1\" stop-color=\"#FFFFFF\"": "offset=\"1\" stop-color=\"#2B5A38\""}}]},
+    "seat-dps": {"layers": ["kit/badge-ring.svg", {"file": "kit/badge-seat-role-mask.svg", "recolour": {"offset=\"0\" stop-color=\"#FFFFFF\"": "offset=\"0\" stop-color=\"#B25A64\"", "offset=\"1\" stop-color=\"#FFFFFF\"": "offset=\"1\" stop-color=\"#5E2632\""}}]},
+    "seat-hand": {"layers": ["kit/badge-ring.svg", {"file": "kit/badge-seat-role-mask.svg", "recolour": {"offset=\"0\" stop-color=\"#FFFFFF\"": "offset=\"0\" stop-color=\"#66708E\"", "offset=\"1\" stop-color=\"#FFFFFF\"": "offset=\"1\" stop-color=\"#2C324C\""}}]}
+  }
+}

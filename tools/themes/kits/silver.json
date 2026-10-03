@@ -1,0 +1,20 @@
+{
+  "key": "silver",
+  "name": "Silver",
+  "note": "Aether Crystal's moonstone silver (gen_ac.py read-only, through tools/themes/sources.py): the 16-sided cut frame per urgency tier (act-now in the shared gilt), its row cut below 32 px, and the 12-sided badge frame with its seats and glyphs.",
+  "root": "docs/design/v7/themes/aether-crystal",
+  "dest": "Tsukimichi/assets/ui/kits/silver",
+  "frames": {
+    "hero": {"python": "tools/themes/sources.py", "call": "silver_frame", "args": ["{urgency}", "{finish}", "{tier}"]},
+    "row": {"python": "tools/themes/sources.py", "call": "silver_frame", "args": ["{urgency}", "{finish}", "row"]}
+  },
+  "badges": {
+    "open": {"python": "tools/themes/sources.py", "call": "silver_badge", "args": ["open"]},
+    "closed": {"python": "tools/themes/sources.py", "call": "silver_badge", "args": ["closed"]},
+    "journal": {"python": "tools/themes/sources.py", "call": "silver_badge", "args": ["journal"]},
+    "seat-tank": {"python": "tools/themes/sources.py", "call": "silver_badge", "args": ["seat-tank"]},
+    "seat-healer": {"python": "tools/themes/sources.py", "call": "silver_badge", "args": ["seat-healer"]},
+    "seat-dps": {"python": "tools/themes/sources.py", "call": "silver_badge", "args": ["seat-dps"]},
+    "seat-hand": {"python": "tools/themes/sources.py", "call": "silver_badge", "args": ["seat-hand"]}
+  }
+}

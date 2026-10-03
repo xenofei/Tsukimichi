@@ -83,11 +83,12 @@ public sealed class ThemeRegistryTests
             Assert.Empty(resolved.Unknown);
             Assert.False(resolved.IsMixed);
             Assert.Equal(theme.Frames, resolved.Frames);
-            Assert.Equal(theme.Palette, resolved.Palette);
+
+            // The Orrery is offered before its paired palette (Dawn, plan v7 T16): until Dawn is offered it draws on Night.
+            Assert.Equal(PaletteChoices.Get(theme.Palette).Offered ? theme.Palette : PaletteId.Night, resolved.Palette);
             Assert.All(Core.Ui.Themes.AppearanceStates.All, state => Assert.Equal(theme.Glyphs, resolved.SetFor(state)));
             Assert.True(GlyphSets.Get(theme.Glyphs).Offered, theme.Key);
             Assert.True(FrameKits.Get(theme.Frames).Offered, theme.Key);
-            Assert.True(PaletteChoices.Get(theme.Palette).Offered, theme.Key);
         }
     }
 
@@ -105,11 +106,14 @@ public sealed class ThemeRegistryTests
     }
 
     [Fact]
-    public void The_1_16_offer_is_medallion_classic_aether_crystal_and_ishgard_glass()
+    public void The_1_17_offer_adds_the_Orrery_and_the_Astrolabe_kit()
     {
         Assert.Equal(
-            [GlyphSetId.Medallion, GlyphSetId.Classic, GlyphSetId.AetherCrystal, GlyphSetId.IshgardGlass],
+            [GlyphSetId.Medallion, GlyphSetId.Classic, GlyphSetId.AetherCrystal, GlyphSetId.IshgardGlass, GlyphSetId.Orrery],
             GlyphSets.All.Where(static s => s.Offered).Select(static s => s.Id));
+        Assert.Equal(
+            [FrameKitId.Brass, FrameKitId.Silver, FrameKitId.Came, FrameKitId.Astrolabe],
+            FrameKits.All.Where(static k => k.Offered).Select(static k => k.Id));
         Assert.Equal([PaletteId.Night, PaletteId.IshgardSnow, PaletteId.FollowDalamud], PaletteChoices.All.Where(static p => p.Offered).Select(static p => p.Id));
         Assert.Equal(GlyphRenderKind.Procedural, GlyphSets.Medallion.Kind);
         Assert.Equal(GlyphRenderKind.Procedural, GlyphSets.Classic.Kind);

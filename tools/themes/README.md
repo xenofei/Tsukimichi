@@ -1,6 +1,6 @@
 # The multi-theme build
 
-`build_themes.py` turns each glyph set's approved SVG masters into the plugin's atlases and checks them (feature plan v7 T4; `docs/research/plan-v7/theme-system.md` §6.4 and §7.1). It replaces `docs/design/moon-v6/round5/gen_atlas.py`, which stays as history; Medallion's manifest rebuilds that script's atlas byte for byte.
+`build_themes.py` turns each glyph set's approved SVG masters into the plugin's atlases and checks them (feature plan v7 T4; `docs/research/plan-v7/theme-system.md` §6.4 and §7.1). Since 1.17 (T11) it also writes each set's unframed faces and each frame kit's frames and badges, and gates every set's faces in every kit. It replaces `docs/design/moon-v6/round5/gen_atlas.py`, which stays as history; Medallion's manifest rebuilds that script's atlas byte for byte.
 
 ```
 python tools/themes/build_themes.py                  # every set: atlases, gates, cross-set table, sheets
@@ -9,7 +9,7 @@ python tools/themes/build_themes.py --check          # rebuild into a temp folde
 python tools/themes/build_themes.py --out DIR        # contact sheets and report.txt (default: %TEMP%/tsukimichi-themes)
 ```
 
-Needs Python 3 with numpy and Pillow, and Chrome (the same headless renderer as `gen_atlas.py`). Pixels depend on Chrome's version, which `metrics.json` records; the C# tests compare layouts and numbers, never pixels, and check that each committed PNG is the one `metrics.json` was measured from (its SHA-256).
+Every run builds every kit (`kits/*.json`). Needs Python 3 with numpy and Pillow, and Chrome (the same headless renderer as `gen_atlas.py`). Pixels depend on Chrome's version, which `metrics.json` records; the C# tests compare layouts and numbers, never pixels, and check that each committed PNG is the one `metrics.json` was measured from (its SHA-256).
 
 ## Manifests (`sets/<set>.json`)
 
@@ -21,15 +21,28 @@ Needs Python 3 with numpy and Pillow, and Chrome (the same headless renderer as 
 | `metrics` | Ready on another job's composites with job icons, measured in place of the empty-seat sprites. |
 | `row` | The row-tier masters, and whether the set ships a row strip (`atlas`). Medallion's row tier is procedural, so it only measures. |
 | `dest`, `atlasDest` | Where the set's files go. Medallion's atlas stays at `Tsukimichi/assets/ui/`. |
+| `kit` | The set's own frame kit (a `kits/<kit>.json`): its composites are drawn as designed in it, and composed in any other. |
+| `faces` | The unframed faces: `hero` (per tier, `{tier}` as in `sprites`) and `row`. A spec is a path with `{state}` and `{layer}` (`under`, `over`), a `{"under": …, "over": …}` pair, or a python source (Medallion's faces come from `sources.py`, which cuts them from gen5.py read-only). |
+
+## Kit manifests (`kits/<kit>.json`)
+
+| Field | Meaning |
+|---|---|
+| `root`, `dest` | The kit's design folder, and where its files go (`Tsukimichi/assets/ui/kits/<kit>/`). |
+| `frames` | `hero` and `row` specs with `{urgency}` (`act-now`, `resting`, `finished`, `ghost`) and `{finish}` (`full`, `quiet`); a `{"full": …, "quiet": …}` pair picks by finish. |
+| `badges` | The seven badges at the shared slot: `open`, `closed`, `journal` (ring, seat and glyph), and `seat-tank`, `seat-healer`, `seat-dps`, `seat-hand` (ring and empty role seat). Layers or python sources (`sources.py` for Brass and Silver). |
 
 ## What it writes
 
 Per set, under `Tsukimichi/assets/ui/themes/<set>/`:
 - `medals.png`, `medals@2x.png`, `medals.json`: the hero atlas, in Medallion's cell layout (`MedalLayout`), with the same sprite names. Ready on another job ships once per role seat, the seat left empty for the game's job icon.
 - `row.png`, `row.json`: each state's row-tier master at every whole device pixel from 12 to 31, rendered at that size.
+- `faces.png`, `faces@2x.png`, `faces.json`, `faces-row.png`, `faces-row.json`: the set's unframed faces (ATLAS-CONTRACT §7): each state's under layer and, where it has one, its over layer, each sprite cropped to its box of the 128-unit box (8-unit grid) at the hero tiers, and whole cells at every pixel from 12 to 31.
 - `metrics.json`: the gate results and the numbers behind them, the set's half of the cross-set table, and the SHA-256 of each PNG the set ships (`pngs`). It is not packaged with the plugin.
 
-Contact sheets, the cross-set heatmaps and `report.txt` go to `--out`, never into the repo.
+Per kit, under `Tsukimichi/assets/ui/kits/<kit>/`: `frames.png`, `frames@2x.png`, `frames.json`, `frames-row.png`, `frames-row.json` (the four urgency tiers at Full and Quiet, and the seven badges at hero tiers), and `metrics.json` (below).
+
+Contact sheets, the cross-set heatmaps, `mix-sheet.png` (every set's faces in every kit, composed from the shipped atlases exactly as the plugin composes them) and `report.txt` go to `--out`, never into the repo.
 
 ## Gates (fail the build; `ThemeAtlasTests` asserts them again from `metrics.json`)
 
@@ -50,6 +63,12 @@ Distinctness and salience are judged at one decimal, as round 5 judged them, and
 
 Each measure is recorded with no wash, the shipped wash and the old fallback (.90 within 4 px) at 16 and 20 px. Only the shipped wash is gated. Full OKLab difference is not used: it is mostly lightness, so on a light page every dark-faced state outweighs Ready's light face, and no set reached 1.3 under it with either wash.
 
+- **G2D (the dark palettes, 1.17):** on Dawn's and Kugane Lacquer's windows (read from `docs/design/v7/ui/1.17/palettes17.json`), for every tier group at 16 and 20 px in greyscale, Ready is at least 1.3× the next state and Completed at most 0.8× Ready; and every mix (Ready from one set, the rest from another, in the neutral kit, row tier and 48 px) keeps Ready at least 1.25×. Ready's halo on a dark palette is Moon gold in the wash's 3 px footprint; each variant is recorded (none, the shipped .45, the raised .60) and each palette's gate uses the least under which every set and mix passes, recorded as `dark.halo`. Medals are never recoloured.
+
+## Faces in every kit (1.17 T11)
+
+Each kit's `metrics.json` holds every set's faces composed in that kit as the plugin composes them (face under, the frame for the state's urgency tier, face over, the badge from 32 px), held to G1, G1c, G2 and G2L. A set in its own kit (`own`) is measured on its shipped composites and must pass; any other pairing is a frames choice the player makes, and a gate it misses is recorded under `warnings`, never failing the build (theme-system §5.2: measured checks warn). `ThemeAtlasTests` re-judges every recorded verdict against its own bars.
+
 ## Cross-set table (§5.2)
 
-For every ordered pair of sets and every pair of different states, the build records the distinctness of the two side by side, worst over all five vision modes, at 16 and 20 px, for the row tier and the 48 px hero tier. It also records Ready's lead when Ready comes from one set and the other states from another. Values under 12 are "close" and under 10 "hard to tell apart"; these warn on the Themes page and never fail the build. Each set is compared framed in its own kit, as it ships; a neutral-frame table needs separate face and frame atlases (mix and match, 1.17).
+For every ordered pair of sets and every pair of different states, the build records the distinctness of the two side by side, worst over all five vision modes, at 16 and 20 px, for the row tier and the 48 px hero tier. It also records Ready's lead when Ready comes from one set and the other states from another. Values under 12 are "close" and under 10 "hard to tell apart"; these warn on the Themes page and never fail the build. Since 1.17 every face is framed in the neutral kit, Brass (one bezel for every urgency tier, so the frame cancels and the faces decide), as a mix draws one kit for the whole column. `cross.sets` keeps the worst over all vision modes; `cross.modes` records each mode (`grey`, `deut`, `machado-deut`, `machado-prot`, `machado-trit`) as `{other set: {tier: {px: {mode: {"this state|other state": d}}}}}`, so the mix table can hold greyscale and deuteranopia to 12 and Machado's modes to 11, as each set's own gates do.

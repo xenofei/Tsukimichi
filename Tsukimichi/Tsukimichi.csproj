@@ -67,6 +67,8 @@ Moonlit treasures collects quests with unique rewards, and per-character snapsho
       metrics.json is the build's record for the tests and reviewers; the plugin never reads it, so it does not ship.
     -->
     <Content Include="assets\ui\themes\**\*.png;assets\ui\themes\**\*.json" Exclude="assets\ui\themes\**\metrics.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The frame kits' frames and badges (1.17 T11, ATLAS-CONTRACT.md §7): one folder per kit, loaded only while a set is composed in it. -->
+    <Content Include="assets\ui\kits\**\*.png;assets\ui\kits\**\*.json" Exclude="assets\ui\kits\**\metrics.json" CopyToOutputDirectory="PreserveNewest" />
     <!-- Packaged as images\icon.png, where Dalamud looks for a plugin's icon inside the zip; assets\icon.png stays the source. -->
     <Content Include="..\assets\icon.png" Link="images\icon.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\assets\icon.png')" />
   </ItemGroup>

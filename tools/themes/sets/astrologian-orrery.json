@@ -1,0 +1,160 @@
+{
+  "key": "astrologian-orrery",
+  "name": "Astrologian's Orrery",
+  "note": "Approved after the supervisor's round 2. Hero tiers 96 and 128 draw hero/ (the engraved hatching on the lit moons); 48 and 64 draw mid/ (the row tier's smooth tone, no hatching), never the one-file composites' media query. Each sprite is layered in gen.py composite()'s order: face under, the Astrolabe frame for the state's urgency tier, face over, then the badge (ring, seat, glyph). Ready on another job's empty seats tint the kit's white seat mask with each role's enamel (gen.py ROLE; the Hand seat takes Medallion's Hand enamel, GlyphTokens.Medallion.HandHex).",
+  "root": "docs/design/v7/themes/astrologian-orrery",
+  "dest": "Tsukimichi/assets/ui/themes/astrologian-orrery",
+  "palette": "dawn",
+  "kit": "astrolabe",
+  "faces": {
+    "hero": {"under": "{tier}/{state}.svg", "over": "{tier}/{state}.over.svg"},
+    "row": {"under": "row/{state}.svg", "over": "row/{state}.over.svg"}
+  },
+  "tiers": {
+    "48": "mid",
+    "64": "mid",
+    "96": "hero",
+    "128": "hero"
+  },
+  "sprites": {
+    "ready": {
+      "layers": [
+        "{tier}/ready.svg",
+        "kit/frame-act-now-full.svg",
+        "{tier}/ready.over.svg",
+        "kit/badge-ring-act-now.svg",
+        "kit/badge-seat-open.svg",
+        "kit/badge-open.svg"
+      ]
+    },
+    "in-journal": {
+      "layers": [
+        "{tier}/in-journal.svg",
+        "kit/frame-resting-full.svg",
+        "{tier}/in-journal.over.svg",
+        "kit/badge-ring.svg",
+        "kit/badge-seat-journal.svg",
+        "kit/badge-journal.svg"
+      ]
+    },
+    "blocked": {
+      "layers": [
+        "{tier}/blocked.svg",
+        "kit/frame-resting-full.svg",
+        "{tier}/blocked.over.svg",
+        "kit/badge-ring.svg",
+        "kit/badge-seat-closed.svg",
+        "kit/badge-closed.svg"
+      ]
+    },
+    "done-this-cycle": {
+      "layers": [
+        "{tier}/done-this-cycle.svg",
+        "kit/frame-resting-full.svg",
+        "{tier}/done-this-cycle.over.svg"
+      ]
+    },
+    "completed": {
+      "layers": [
+        "{tier}/completed.svg",
+        "kit/frame-finished-full.svg",
+        "{tier}/completed.over.svg"
+      ]
+    },
+    "locked-out": {
+      "layers": [
+        "{tier}/locked-out.svg",
+        "kit/frame-resting-full.svg",
+        "{tier}/locked-out.over.svg"
+      ]
+    },
+    "not-checked": {
+      "layers": [
+        "{tier}/not-checked.svg",
+        "kit/frame-ghost-full.svg",
+        "{tier}/not-checked.over.svg"
+      ]
+    },
+    "other-job-tank": {
+      "layers": [
+        "{tier}/ready-on-another-job.svg",
+        "kit/frame-resting-full.svg",
+        "{tier}/ready-on-another-job.over.svg",
+        "kit/badge-ring.svg",
+        {
+          "file": "kit/badge-seat-role-mask.svg",
+          "recolour": {
+            "offset=\"0\" stop-color=\"#FFFFFF\"": "offset=\"0\" stop-color=\"#5878C2\"",
+            "offset=\"1\" stop-color=\"#FFFFFF\"": "offset=\"1\" stop-color=\"#2C417E\""
+          }
+        }
+      ]
+    },
+    "other-job-healer": {
+      "layers": [
+        "{tier}/ready-on-another-job.svg",
+        "kit/frame-resting-full.svg",
+        "{tier}/ready-on-another-job.over.svg",
+        "kit/badge-ring.svg",
+        {
+          "file": "kit/badge-seat-role-mask.svg",
+          "recolour": {
+            "offset=\"0\" stop-color=\"#FFFFFF\"": "offset=\"0\" stop-color=\"#5C9A68\"",
+            "offset=\"1\" stop-color=\"#FFFFFF\"": "offset=\"1\" stop-color=\"#2B5A38\""
+          }
+        }
+      ]
+    },
+    "other-job-dps": {
+      "layers": [
+        "{tier}/ready-on-another-job.svg",
+        "kit/frame-resting-full.svg",
+        "{tier}/ready-on-another-job.over.svg",
+        "kit/badge-ring.svg",
+        {
+          "file": "kit/badge-seat-role-mask.svg",
+          "recolour": {
+            "offset=\"0\" stop-color=\"#FFFFFF\"": "offset=\"0\" stop-color=\"#B25A64\"",
+            "offset=\"1\" stop-color=\"#FFFFFF\"": "offset=\"1\" stop-color=\"#5E2632\""
+          }
+        }
+      ]
+    },
+    "other-job-hand": {
+      "layers": [
+        "{tier}/ready-on-another-job.svg",
+        "kit/frame-resting-full.svg",
+        "{tier}/ready-on-another-job.over.svg",
+        "kit/badge-ring.svg",
+        {
+          "file": "kit/badge-seat-role-mask.svg",
+          "recolour": {
+            "offset=\"0\" stop-color=\"#FFFFFF\"": "offset=\"0\" stop-color=\"#66708E\"",
+            "offset=\"1\" stop-color=\"#FFFFFF\"": "offset=\"1\" stop-color=\"#2C324C\""
+          }
+        }
+      ]
+    }
+  },
+  "metrics": {
+    "ready-on-another-job": [
+      "ready-on-another-job.svg",
+      "ready-on-another-job-bard.svg",
+      "ready-on-another-job-white-mage.svg"
+    ]
+  },
+  "row": {
+    "dir": "_row",
+    "atlas": true,
+    "sprites": {
+      "ready": "_row/ready.svg",
+      "ready-on-another-job": "_row/ready-on-another-job.svg",
+      "in-journal": "_row/in-journal.svg",
+      "blocked": "_row/blocked.svg",
+      "done-this-cycle": "_row/done-this-cycle.svg",
+      "completed": "_row/completed.svg",
+      "locked-out": "_row/locked-out.svg",
+      "not-checked": "_row/not-checked.svg"
+    }
+  }
+}

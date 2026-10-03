@@ -6,6 +6,10 @@
   "dest": "Tsukimichi/assets/ui/themes/aether-crystal",
   "palette": "night",
   "kit": "silver",
+  "faces": {
+    "hero": "faces/{state}-{layer}.svg",
+    "row": "faces/row/{state}-{layer}.svg"
+  },
   "tiers": {
     "48": ".",
     "64": ".",

@@ -12,7 +12,7 @@ namespace Tsukimichi.Tests.Ui;
 /// </summary>
 public sealed class ThemeAtlasTests
 {
-    private static readonly string[] Shipped = ["ishgard-glass", "aether-crystal"];
+    private static readonly string[] Shipped = ["ishgard-glass", "aether-crystal", "astrologian-orrery"];
     private static readonly string[] Measured = ["medallion", .. Shipped];
 
     /// <summary>Sets that ship their own atlases under <c>assets/ui/themes/&lt;set&gt;/</c>.</summary>
@@ -158,9 +158,10 @@ public sealed class ThemeAtlasTests
         using var json = Json(ThemesDir(), set, "metrics.json");
         var pngs = json.RootElement.GetProperty("pngs").EnumerateObject().ToDictionary(static p => p.Name, static p => p.Value.GetString());
         var atlas = set == "medallion" ? "Tsukimichi/assets/ui" : $"Tsukimichi/assets/ui/themes/{set}";
+        var faces = $"Tsukimichi/assets/ui/themes/{set}";
         string[] expected = set == "medallion"
-            ? [$"{atlas}/medals.png", $"{atlas}/medals@2x.png"]
-            : [$"{atlas}/medals.png", $"{atlas}/medals@2x.png", $"{atlas}/row.png"];
+            ? [$"{atlas}/medals.png", $"{atlas}/medals@2x.png", $"{faces}/faces.png", $"{faces}/faces@2x.png", $"{faces}/faces-row.png"]
+            : [$"{atlas}/medals.png", $"{atlas}/medals@2x.png", $"{atlas}/row.png", $"{faces}/faces.png", $"{faces}/faces@2x.png", $"{faces}/faces-row.png"];
         Assert.Equal(expected.Order(StringComparer.Ordinal), pngs.Keys.Order(StringComparer.Ordinal));
         foreach (var (path, sha) in pngs)
         {
@@ -331,6 +332,232 @@ public sealed class ThemeAtlasTests
         var layers = json.RootElement.GetProperty("sprites").GetProperty("other-job-hand").GetProperty("layers");
         var recolour = layers.EnumerateArray().Single(static l => l.ValueKind == JsonValueKind.Object).GetProperty("recolour");
         var hand = $"#{GlyphTokens.MedallionDetail.HandHex:X6}";
-        Assert.Contains(recolour.EnumerateObject(), p => p.Value.GetString() == hand);
+        Assert.Contains(recolour.EnumerateObject(), p => p.Value.GetString()!.Contains(hand, StringComparison.Ordinal));
+    }
+
+    // ------------------------------------------------------------------ the frames axis (1.17 T11)
+
+    private static readonly string[] Kits = ["astrolabe", "brass", "came", "silver"];
+
+    /// <summary>Every frame kit the build writes.</summary>
+    public static readonly TheoryData<string> ShippedKits = new(Kits);
+
+    private static string KitsDir() => Path.Combine(OrnamentLayoutTests.AssetsDir(), "kits");
+
+    private static readonly Dictionary<string, string> OwnKit = new()
+    {
+        ["medallion"] = "brass",
+        ["aether-crystal"] = "silver",
+        ["ishgard-glass"] = "came",
+        ["astrologian-orrery"] = "astrolabe",
+    };
+
+    [Fact]
+    public void Every_kit_folder_has_a_manifest_and_every_set_names_one()
+    {
+        Assert.Equal(Kits, Directory.GetDirectories(KitsDir()).Select(Path.GetFileName).Order(StringComparer.Ordinal));
+        foreach (var kit in Kits)
+        {
+            Assert.True(File.Exists(Path.Combine(OrnamentLayoutTests.RepoRoot(), "tools", "themes", "kits", kit + ".json")), kit);
+        }
+
+        foreach (var set in Measured)
+        {
+            using var json = Json(OrnamentLayoutTests.RepoRoot(), "tools", "themes", "sets", set + ".json");
+            Assert.Equal(OwnKit[set], json.RootElement.GetProperty("kit").GetString());
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(ShippedKits))]
+    public void Every_set_is_measured_in_every_kit_and_its_own_kit_passes_every_gate(string kit)
+    {
+        using var json = Json(KitsDir(), kit, "metrics.json");
+        var root = json.RootElement;
+        Assert.Equal(kit, root.GetProperty("kit").GetString());
+        Assert.True(root.GetProperty("pass").GetBoolean(), $"{kit}: the build recorded a failing own-kit or fit gate");
+        Assert.All(root.GetProperty("fit").EnumerateArray(), static g => Assert.True(g.GetProperty("pass").GetBoolean(), g.ToString()));
+
+        var faces = root.GetProperty("faces");
+        Assert.Equal(Measured.Order(StringComparer.Ordinal), faces.EnumerateObject().Select(static p => p.Name).Order(StringComparer.Ordinal));
+        foreach (var entry in faces.EnumerateObject())
+        {
+            var own = OwnKit[entry.Name] == kit;
+            Assert.Equal(own, entry.Value.GetProperty("own").GetBoolean());
+            var gates = entry.Value.GetProperty("gates").EnumerateArray().ToArray();
+
+            // Every gate a set passes is recorded for every tier group (G1, G1c, G2) and the row tier (G2L).
+            var groups = entry.Value.GetProperty("tiers").EnumerateArray().Select(static t => t.GetProperty("name").GetString()!).ToArray();
+            Assert.Contains("row", groups);
+            Assert.Equal(MedalLayout.Tiers, entry.Value.GetProperty("tiers").EnumerateArray().SelectMany(static t => t.GetProperty("atlasTiers").EnumerateArray().Select(static x => x.GetInt32())).Order());
+            foreach (var group in groups)
+            {
+                Assert.Contains(gates, g => g.GetProperty("tier").GetString() == group && g.GetProperty("gate").GetString() == "G2 Ready lead");
+                Assert.Contains(gates, g => g.GetProperty("tier").GetString() == group && g.GetProperty("gate").GetString()!.StartsWith("G1 weakest pair 16 px grey", StringComparison.Ordinal));
+                Assert.Equal(9, gates.Count(g => g.GetProperty("tier").GetString() == group && g.GetProperty("gate").GetString()!.StartsWith("G1c ", StringComparison.Ordinal)));
+            }
+
+            Assert.Contains(gates, static g => g.GetProperty("gate").GetString()!.StartsWith("G2L Ready lead", StringComparison.Ordinal));
+
+            // Each recorded verdict is the value against the bar, judged here (a rebuilt file cannot loosen them).
+            foreach (var g in gates)
+            {
+                var name = g.GetProperty("gate").GetString()!;
+                var value = g.GetProperty("value").GetDouble();
+                var bar = g.GetProperty("bar").GetDouble();
+                Assert.Equal(GateBar(name), bar);
+                var pass = name.Contains("Completed recedes", StringComparison.Ordinal) ? Math.Round(value, 2) <= bar
+                    : name.Contains("Not checked under Ready", StringComparison.Ordinal) ? value <= bar
+                    : name.StartsWith("G2 Ready lead", StringComparison.Ordinal) || name.StartsWith("G2L", StringComparison.Ordinal) ? Math.Round(value, 2) >= bar
+                    : Math.Round(value, 1) >= bar;
+                if (!name.Contains("Not checked under Ready", StringComparison.Ordinal))
+                {
+                    Assert.True(pass == g.GetProperty("pass").GetBoolean(), $"{kit} {entry.Name}: {g}");
+                }
+            }
+
+            var failing = gates.Where(static g => !g.GetProperty("pass").GetBoolean()).Select(static g => $"{g.GetProperty("tier").GetString()}: {g.GetProperty("gate").GetString()}");
+            Assert.Equal(failing, entry.Value.GetProperty("warnings").EnumerateArray().Select(static w => w.GetString()));
+            Assert.Equal(!failing.Any(), entry.Value.GetProperty("pass").GetBoolean());
+
+            // A set in its own kit is what it ships: it must pass, as its own metrics do.
+            if (own)
+            {
+                Assert.True(entry.Value.GetProperty("pass").GetBoolean(), $"{entry.Name} fails in its own kit {kit}");
+            }
+        }
+    }
+
+    private static double GateBar(string gate) => gate switch
+    {
+        _ when gate.StartsWith("G1 weakest pair 16", StringComparison.Ordinal) => Weakest16,
+        _ when gate.StartsWith("G1 weakest pair 20", StringComparison.Ordinal) => Weakest20,
+        _ when gate.StartsWith("G1c", StringComparison.Ordinal) => CvdWeakest16,
+        "G2 Ready lead" => ReadyLead,
+        "G2 Completed recedes" => CompletedOfReady,
+        "G2 every state visible" => SalienceMin,
+        _ when gate.StartsWith("G2L Ready lead", StringComparison.Ordinal) => LightReadyLead,
+        _ when gate.StartsWith("G2L lightness floor", StringComparison.Ordinal) => LightLumaFloor,
+        _ when gate.StartsWith("G2L Not checked", StringComparison.Ordinal) => 1.0,
+        _ => throw new InvalidOperationException($"unknown gate {gate}"),
+    };
+
+    [Theory]
+    [MemberData(nameof(ShippedKits))]
+    public void The_kit_pngs_are_the_ones_its_metrics_were_measured_from(string kit)
+    {
+        using var json = Json(KitsDir(), kit, "metrics.json");
+        var pngs = json.RootElement.GetProperty("pngs").EnumerateObject().ToDictionary(static p => p.Name, static p => p.Value.GetString());
+        var dir = $"Tsukimichi/assets/ui/kits/{kit}";
+        Assert.Equal(new[] { $"{dir}/frames-row.png", $"{dir}/frames.png", $"{dir}/frames@2x.png" }, pngs.Keys.Order(StringComparer.Ordinal));
+        foreach (var (path, sha) in pngs)
+        {
+            var bytes = File.ReadAllBytes(Path.Combine(OrnamentLayoutTests.RepoRoot(), path));
+            Assert.True(string.Equals(sha, Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)), StringComparison.Ordinal), $"{path} is not the PNG metrics.json was measured from");
+        }
+    }
+
+    // ------------------------------------------------------------------ the dark palettes (G2D, 1.17)
+
+    /// <summary>The 1.17 dark palettes' windows, from their design record, keyed by palette.</summary>
+    private static Dictionary<string, string> DarkWindows()
+    {
+        using var json = Json(OrnamentLayoutTests.RepoRoot(), "docs", "design", "v7", "ui", "1.17", "palettes17.json");
+        var palettes = json.RootElement.GetProperty("palettes");
+        return new Dictionary<string, string>
+        {
+            ["dawn"] = palettes.GetProperty("dawn").GetProperty("Window").GetString()!,
+            ["kugane-lacquer"] = palettes.GetProperty("kugane").GetProperty("Window").GetString()!,
+        };
+    }
+
+    private const double MixReadyLead = 1.25;
+
+    [Theory]
+    [MemberData(nameof(MeasuredSets))]
+    public void Metrics_pass_the_dark_palette_salience_gates(string set)
+    {
+        using var json = Json(ThemesDir(), set, "metrics.json");
+        var dark = json.RootElement.GetProperty("dark");
+        var windows = DarkWindows();
+        Assert.Equal(windows, dark.GetProperty("windows").EnumerateObject().ToDictionary(static p => p.Name, static p => p.Value.GetString()!));
+
+        // The halo is Moon gold in the wash's footprint: .45 as shipped, .60 raised; never a recolour of the medal.
+        var halos = dark.GetProperty("halos");
+        Assert.Equal(("#F2D27A", 0.45, 3), (halos.GetProperty("default").GetProperty("color").GetString(), halos.GetProperty("default").GetProperty("alpha").GetDouble(), halos.GetProperty("default").GetProperty("radiusPx").GetInt32()));
+        Assert.Equal(("#F2D27A", 0.60, 3), (halos.GetProperty("raised").GetProperty("color").GetString(), halos.GetProperty("raised").GetProperty("alpha").GetDouble(), halos.GetProperty("raised").GetProperty("radiusPx").GetInt32()));
+
+        var tiers = json.RootElement.GetProperty("tiers").EnumerateArray().Select(static t => t.GetProperty("name").GetString()!).ToArray();
+        foreach (var (palette, _) in windows)
+        {
+            var halo = dark.GetProperty("halo").GetProperty(palette).GetString()!;
+            Assert.Contains(halo, new[] { "none", "default", "raised" });
+            var byGroup = dark.GetProperty("tiers").GetProperty(palette);
+            Assert.Equal(tiers.Order(StringComparer.Ordinal), byGroup.EnumerateObject().Select(static p => p.Name).Order(StringComparer.Ordinal));
+            foreach (var group in byGroup.EnumerateObject())
+            {
+                foreach (var px in new[] { "16", "20" })
+                {
+                    var e = group.Value.GetProperty(halo).GetProperty(px);
+                    var sal = States.ToDictionary(static s => s, s => e.GetProperty("salience").GetProperty(s).GetDouble());
+                    var next = sal.Where(static kv => kv.Key != "ready").Max(static kv => kv.Value);
+                    var lead = Math.Round(sal["ready"] / next, 2);
+                    var comp = Math.Round(sal["completed"] / sal["ready"], 2);
+                    Assert.True(lead >= ReadyLead, $"{set} on {palette} ({halo} halo), {group.Name} {px} px: Ready leads by only {lead}x");
+                    Assert.True(comp <= CompletedOfReady, $"{set} on {palette} ({halo} halo), {group.Name} {px} px: Completed is {comp}x Ready");
+                }
+            }
+        }
+
+        // The mix: Ready from one set beside the rest from another, on each dark window, row tier and 48 px.
+        var mixes = dark.GetProperty("mix").EnumerateArray().ToArray();
+        Assert.Equal(2 * 2 * 2 * 2 * (Measured.Length - 1), mixes.Length);
+        Assert.All(mixes, m => Assert.True(m.GetProperty("lead").GetDouble() >= MixReadyLead, $"{set}: {m}"));
+    }
+
+    [Fact]
+    public void Every_set_records_the_same_halo_per_dark_palette_the_least_that_passes()
+    {
+        var halos = Measured.Select(set =>
+        {
+            using var json = Json(ThemesDir(), set, "metrics.json");
+            return json.RootElement.GetProperty("dark").GetProperty("halo").GetRawText();
+        }).Distinct().ToArray();
+        Assert.Single(halos);
+    }
+
+    // ------------------------------------------------------------------ the cross-set table per vision mode (1.17)
+
+    private static readonly string[] CrossModes = ["grey", "deut", "machado-deut", "machado-prot", "machado-trit"];
+
+    [Theory]
+    [MemberData(nameof(MeasuredSets))]
+    public void The_cross_set_table_is_recorded_per_vision_mode_in_the_neutral_kit(string set)
+    {
+        using var json = Json(ThemesDir(), set, "metrics.json");
+        var cross = json.RootElement.GetProperty("cross");
+        Assert.Equal("brass", cross.GetProperty("kit").GetString());
+        var worst = cross.GetProperty("sets");
+        var modes = cross.GetProperty("modes");
+        Assert.Equal(Measured.Where(s => s != set).Order(StringComparer.Ordinal), modes.EnumerateObject().Select(static p => p.Name).Order(StringComparer.Ordinal));
+        foreach (var other in modes.EnumerateObject())
+        {
+            foreach (var which in new[] { "row", "hero" })
+            {
+                foreach (var px in new[] { "16", "20" })
+                {
+                    var byMode = other.Value.GetProperty(which).GetProperty(px);
+                    Assert.Equal(CrossModes.Order(StringComparer.Ordinal), byMode.EnumerateObject().Select(static p => p.Name).Order(StringComparer.Ordinal));
+                    foreach (var pair in worst.GetProperty(other.Name).GetProperty(which).GetProperty(px).EnumerateObject())
+                    {
+                        // The worst-of-modes value is the least of the per-mode values.
+                        var least = CrossModes.Min(m => byMode.GetProperty(m).GetProperty(pair.Name).GetDouble());
+                        Assert.Equal(least, pair.Value.GetDouble(), 0.011);
+                    }
+
+                    Assert.All(CrossModes, m => Assert.Equal(States.Length * (States.Length - 1), byMode.GetProperty(m).EnumerateObject().Count()));
+                }
+            }
+        }
     }
 }
