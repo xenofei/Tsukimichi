@@ -240,7 +240,7 @@ Carried from plan v6 (was 1.16), plus new features.
 |---|---|---|
 | 1 | Release order: polish (1.14), faces (1.15), themes (1.16 to 1.17), then automation, right answers, Before Evercold and what next? | As written. Polish and faces are what you asked for first; Before Evercold must land by December. |
 | 2 | Which revived themes ship first? | Ishgard Glass and Aether Crystal (the critic's top two) |
-| 3 | Astrologian's Orrery | Remade with its own identity (in progress) rather than dropped; its constellation "?" is the best single glyph |
+| 3 | Astrologian's Orrery | Keep it: remade with its own identity (supervisor-approved) rather than dropped; its constellation "?" is the best single glyph |
 | 4 | Keep Classic (the 1.11 moons) as a theme? | Yes, as a whole theme only (it predates the shared visual language) |
 | 5 | High contrast | One shared low-vision set, ignoring the mix, for safety |
 | 6 | Does each theme get its own Plain (ledger) moons? | Medallion keeps its own; the revived themes share a flat Plain set at first |
