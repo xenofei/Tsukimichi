@@ -247,9 +247,10 @@ public static class MedalGlyph
     /// <summary>
     /// The tokens a medal draws with this frame: the glyph palette's, then the Decoration level's finish
     /// (<see cref="Theme.MedalFinish"/>): the medallion as designed at Full, Quiet's light rim, Plain's flat ladder. The
-    /// high-contrast palette keeps its own tokens at every level. On a light palette Quiet's rim takes its light ink.
+    /// high-contrast palette keeps its own tokens at every level. On a light palette Quiet's rim takes its light ink, and
+    /// the rim's gap is the palette's pane (<see cref="Core.Ui.Themes.UiPalette.MedalRimGap"/>).
     /// </summary>
-    public static MedalTokens Tokens => MedalTokens.For(Theme.Glyphs, Theme.MedalFinish, Theme.IsLight);
+    public static MedalTokens Tokens => MedalTokens.For(Theme.Glyphs, Theme.MedalFinish, Theme.IsLight, Theme.Palette.MedalRimGap);
 
     /// <summary>
     /// Whether a row's badge content draws beside its medal (<see cref="DrawRowBadge"/>): at Full and Quiet; Plain's

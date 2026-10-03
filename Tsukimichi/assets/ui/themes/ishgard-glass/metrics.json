@@ -8,6 +8,7 @@
   "gateModes": ["grey", "deut"],
   "cvdModes": ["machado-prot", "machado-deut", "machado-trit"],
   "readyWash": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
+  "pngs": {"Tsukimichi/assets/ui/themes/ishgard-glass/medals.png": "ffbcf982baff960730a03e8157ccf05a32ca6287a5761b2660c8bd8ca0579f83", "Tsukimichi/assets/ui/themes/ishgard-glass/medals@2x.png": "59d78c532600aa0d7019122945da0fd01ccd0abe43c5f629a27aac03d4bb6838", "Tsukimichi/assets/ui/themes/ishgard-glass/row.png": "46d3281b05e8d36a54c070db620b35d48a936814f5db3c8a1bf5fa207628fdaa"},
   "pass": true,
   "gates": [
     {"gate": "G1 weakest pair 16 px grey", "tier": "hero-48-64", "value": 12.52, "bar": 12.0, "detail": "RoJ-Jrn", "pass": true},

@@ -312,4 +312,44 @@ public sealed class IshgardSnowTests
         Assert.Same(MedalTokens.LightRim, MedalTokens.For(GlyphPalette.Standard, MedalFinish.LightRim));
         Assert.Same(MedalTokens.Standard, MedalTokens.For(GlyphPalette.Standard, MedalFinish.Gilt, onLight: true));
     }
+
+    [Fact]
+    public void Quiet_medals_lay_their_rim_on_the_palettes_own_pane()
+    {
+        // The rim's gap is a palette role: Night and Snow keep their static tokens (and meshes)...
+        Assert.Same(MedalTokens.LightRim, MedalTokens.For(GlyphPalette.Standard, MedalFinish.LightRim, false, UiPalettes.Night.MedalRimGap));
+        Assert.Same(MedalTokens.LightRimOnLight, MedalTokens.For(GlyphPalette.Standard, MedalFinish.LightRim, true, UiPalettes.IshgardSnow.MedalRimGap));
+        Hex(0xEEF1F6, UiPalettes.IshgardSnow.MedalRimGap, "Snow's rim gap");
+        Assert.Equal(UiPalettes.IshgardSnow.Surface.Window, UiPalettes.IshgardSnow.HighContrast.MedalRimGap);
+
+        // ...a light host's medals sit on its own window, not on snow, and a dark host keeps Night's gap.
+        var host = UiPalettes.FollowDalamud(
+            ColorMath.FromHex(0xF7F3EA), ColorMath.FromHex(0xE0E0E0), ColorMath.FromHex(0xD0D0D0),
+            ColorMath.FromHex(0xB0B0B0), ColorMath.FromHex(0x101010), ColorMath.FromHex(0x808080));
+        Hex(0xF7F3EA, host.MedalRimGap, "a light host's rim gap");
+        var tokens = MedalTokens.For(GlyphPalette.Standard, MedalFinish.LightRim, true, host.MedalRimGap);
+        Assert.True(tokens.IsLightRim && tokens.OnLight);
+        Assert.Equal(host.MedalRimGap, tokens.RimGap);
+        Assert.Same(tokens, MedalTokens.For(GlyphPalette.Standard, MedalFinish.LightRim, true, host.MedalRimGap));
+        var dark = UiPalettes.FollowDalamud(
+            ColorMath.FromHex(0x202020), ColorMath.FromHex(0x2A2A2A), ColorMath.FromHex(0x3A3A3A),
+            ColorMath.FromHex(0x444444), ColorMath.FromHex(0xF0F0F0), ColorMath.FromHex(0x808080));
+        Assert.Equal(MedalTokens.LightRimGap, dark.MedalRimGap);
+
+        // The gap only matters to Quiet's rim: the other finishes and high contrast keep their tokens on any pane.
+        Assert.Same(MedalTokens.Standard, MedalTokens.For(GlyphPalette.Standard, MedalFinish.Gilt, true, host.MedalRimGap));
+        Assert.Same(MedalTokens.Plain, MedalTokens.For(GlyphPalette.Standard, MedalFinish.Plain, true, host.MedalRimGap));
+        Assert.Same(MedalTokens.HighContrastLight, MedalTokens.For(GlyphPalette.HighContrastLight, MedalFinish.LightRim, true, host.MedalRimGap));
+
+        // A host style being edited makes a new pane each step: older panes' tokens are let go with their meshes.
+        var mesh = MedalArt.Medal(QuestState.Ready, tokens, 16f);
+        Assert.Same(mesh, MedalArt.Medal(QuestState.Ready, tokens, 16f));
+        for (var step = 1; step <= 4; step++)
+        {
+            _ = MedalTokens.For(GlyphPalette.Standard, MedalFinish.LightRim, true, ColorMath.FromHex(0xF7F3EAu - (uint)step));
+        }
+
+        Assert.NotSame(tokens, MedalTokens.For(GlyphPalette.Standard, MedalFinish.LightRim, true, host.MedalRimGap));
+        Assert.NotSame(mesh, MedalArt.Medal(QuestState.Ready, tokens, 16f));
+    }
 }

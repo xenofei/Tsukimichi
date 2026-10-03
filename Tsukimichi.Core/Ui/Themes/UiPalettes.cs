@@ -143,6 +143,7 @@ public static class UiPalettes
         QuietTones = FlairTones.NightQuiet,
         PlainTones = FlairTones.NightPlain,
         DrawerTones = Ui.DrawerTones.NightSet,
+        MedalRimGap = MedalTokens.LightRimGap,
         HighContrastBuilder = NightHighContrast,
     };
 
@@ -425,6 +426,7 @@ public static class UiPalettes
         QuietTones = SnowQuiet,
         PlainTones = SnowPlain,
         DrawerTones = SnowDrawer,
+        MedalRimGap = SnowQuiet.Table,
         HighContrastBuilder = SnowHighContrast,
     };
 
@@ -501,29 +503,56 @@ public static class UiPalettes
     }
 
     /// <summary>Whether a designed palette is registered for <paramref name="id"/>.</summary>
-    public static bool IsRegistered(PaletteId id) => Array.Exists(Designed, p => p.Id == id);
+    public static bool IsRegistered(PaletteId id)
+    {
+        foreach (var palette in Designed)
+        {
+            if (palette.Id == id)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>
-    /// The Follow Dalamud palette (the hook, not a designed palette): the surface roles mapped from the host style
-    /// (<see cref="SurfaceColors.FromHost"/>), gold as text pushed until it reads at 4.5 : 1 on the window (a light host
-    /// gets a deep gold), the state text inks taken from the surface, the danger and Unknown text pushed until they read,
-    /// and the scene from the window's lightness (<see cref="SceneTokens.Derived"/>). Gold fills, the brass and the gold
-    /// pill material keep Night's; the gauges are Night's on a dark host and the light gauges on a light one. No designed
-    /// tones, so Quiet, Plain and the drawer are mixed from the surface, and no lit pills. Allocates one palette;
+    /// The Follow Dalamud palette (the hook, not a designed palette), held to the designed palettes' bars
+    /// (<c>PaletteContrastTests</c>, on a dark and a light host): the surface roles mapped from the host style
+    /// (<see cref="SurfaceColors.FromHost"/>); every text ink (secondary, tertiary, Cool, gold as text, the danger and
+    /// Unknown text) pushed towards the host text until it reads at 4.5 : 1 on the worst of the window, cards, hovered rows
+    /// and wells (a light host gets a deep gold); the strong line and the state stripes pushed the same way to 3 : 1; the
+    /// state words taken from those inks; Silver on the destructive button, or white or the host text where Silver does
+    /// not read; and the scene from the window's lightness (<see cref="SceneTokens.Derived"/>). Gold fills, the brass and
+    /// the gold pill material keep Night's; the gauges and the tree ring are Night's on a dark host and the light gauges'
+    /// gilt on a light one. No designed tones, so Quiet, Plain and the drawer are mixed from the surface, and no lit pills.
     /// <c>Theme</c> builds it only when the host colours change.
     /// </summary>
     public static UiPalette FollowDalamud(Vector4 windowBg, Vector4 frameBg, Vector4 frameBgHovered, Vector4 border, Vector4 text, Vector4 textDisabled)
     {
-        var s = SurfaceColors.FromHost(windowBg, frameBg, frameBgHovered, border, text, textDisabled);
+        var host = SurfaceColors.FromHost(windowBg, frameBg, frameBgHovered, border, text, textDisabled);
         const float min = SurfaceColors.TextMinContrast;
-        Vector4 Read(Vector4 ink) => ColorMath.EnsureContrast(ink, s.Text, s.Window, min);
+        const float line = SurfaceColors.LineMinContrast;
+        var s = host with
+        {
+            StrongLine = OnEverySurface(host.StrongLine, host, line),
+            TextSecondary = OnEverySurface(host.TextSecondary, host, min),
+            TextTertiary = OnEverySurface(host.TextTertiary, host, min),
+            Cool = OnEverySurface(host.Cool, host, min),
+        };
+        Vector4 Read(Vector4 ink) => OnEverySurface(ink, s, min);
         var accent = Read(GlyphTokens.Moon);
+        var dangerButton = ColorMath.Over(GlyphTokens.Eclipse with { W = PaletteInks.DangerButtonAlpha }, s.Window);
         var inks = NightInks with
         {
             DangerText = Read(GlyphTokens.EclipseText),
             UnknownText = Read(GlyphTokens.VeilText),
-            OnDanger = GlyphTokens.Silver,
+            OnDanger = OnDangerFor(dangerButton, s.Text),
+            GaugeArc = s.Light ? ColorMath.FromHex(GaugeInks.LightArcHighHex) : NightInks.GaugeArc,
+            GaugeDone = s.Light ? ColorMath.FromHex(GaugeInks.LightArcShadeHex) : NightInks.GaugeDone,
         };
+        var states = StateInks.Compose(GlyphTokens.Moon, GlyphTokens.MoonDim, accent, s.Text, s.TextTertiary, s.TextSecondary, GlyphTokens.Eclipse, inks.DangerText, s.TextDisabled, inks.UnknownText)
+            .Map(static word => word, stripe => OnEverySurface(stripe, s, line));
         return new UiPalette
         {
             Id = PaletteId.FollowDalamud,
@@ -534,14 +563,71 @@ public static class UiPalettes
             AccentDim = Read(GlyphTokens.MoonDim),
             OrnamentLight = s.OrnamentLight,
             Inks = inks,
-            States = StateInks.Compose(GlyphTokens.Moon, GlyphTokens.MoonDim, accent, s.Text, s.TextTertiary, s.TextSecondary, GlyphTokens.Eclipse, inks.DangerText, s.TextDisabled, inks.UnknownText),
+            States = states,
             Scene = SceneTokens.Derived(s),
             Brass = NightBrass,
             Plate = NightPlate,
             Gauges = s.Light ? LightGauges : NightGauges with { Track = s.StrongLine with { W = 0.55f } },
 
+            // A light host's medals sit on its own window, as Snow's sit on snow; a dark host keeps Night's gap.
+            MedalRimGap = s.Light ? FlairTones.Mixed(Flair.Quiet, s).Table : MedalTokens.LightRimGap,
+
             // As 1.15: the high-contrast surface roles alone; the accent already reads at 4.5 : 1 on the host.
             HighContrastBuilder = static p => p.ToHighContrast(pushInks: false),
         };
+    }
+
+    /// <summary>
+    /// <paramref name="ink"/> pushed towards the surface's text until it reaches <paramref name="minRatio"/> on every
+    /// surface it is drawn on (<see cref="UiPalette.Surfaces"/>: the window, cards, wells and hovered rows), each pass
+    /// against the one it reads worst on. The ink itself when it already does.
+    /// </summary>
+    internal static Vector4 OnEverySurface(Vector4 ink, in SurfaceColors s, float minRatio)
+    {
+        for (var pass = 0; pass < 4; pass++)
+        {
+            var worst = s.Window;
+            var worstRatio = ColorMath.Contrast(ink, worst);
+            foreach (var ground in (ReadOnlySpan<Vector4>)[s.Raised, s.Hover, s.Sunken])
+            {
+                var ratio = ColorMath.Contrast(ink, ground);
+                if (ratio < worstRatio)
+                {
+                    (worst, worstRatio) = (ground, ratio);
+                }
+            }
+
+            if (worstRatio >= minRatio)
+            {
+                break;
+            }
+
+            ink = ColorMath.EnsureContrast(ink, s.Text, worst, minRatio);
+        }
+
+        return ink;
+    }
+
+    /// <summary>
+    /// The ink on a derived palette's destructive button (<paramref name="button"/>, the danger fill over the window):
+    /// Night's Silver where it reads as text, else white, else whichever of Silver, white and the host text reads best
+    /// (on a light host the button is a light rose, and only a dark ink reads on it).
+    /// </summary>
+    internal static Vector4 OnDangerFor(Vector4 button, Vector4 text)
+    {
+        var silver = GlyphTokens.Silver;
+        if (ColorMath.ReadsAsText(silver, button))
+        {
+            return silver;
+        }
+
+        var white = Vector4.One;
+        if (ColorMath.ReadsAsText(white, button))
+        {
+            return white;
+        }
+
+        var best = ColorMath.Contrast(white, button) >= ColorMath.Contrast(silver, button) ? white : silver;
+        return ColorMath.Contrast(ColorMath.Opaque(text), button) > ColorMath.Contrast(best, button) ? ColorMath.Opaque(text) : best;
     }
 }

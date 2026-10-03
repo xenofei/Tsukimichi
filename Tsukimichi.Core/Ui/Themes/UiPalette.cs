@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Tsukimichi.Core.Ui.Themes;
 
@@ -60,6 +61,13 @@ public sealed record UiPalette
     /// <summary>The gauges' inks: the medal's material on Night, their own gilt and lead on a light palette (spec-1.16 §A6).</summary>
     public required GaugeInks Gauges { get; init; }
 
+    /// <summary>
+    /// The pane colour under Quiet's light medal rim (<see cref="MedalTokens.RimGap"/>): the gap between the medal's well
+    /// and its hairline, so the medal reads as laid on the pane. Night's darkest Quiet tone #0E1322; on a light palette the
+    /// pane the rows sit on (Ishgard Snow's #EEF1F6, a light host's own window).
+    /// </summary>
+    public required Vector4 MedalRimGap { get; init; }
+
     /// <summary>The table's alternate row tint; null draws the disabled tone at .16 (Night's 1.15 zebra).</summary>
     public Vector4? Zebra { get; init; }
 
@@ -82,30 +90,43 @@ public sealed record UiPalette
     public bool IsLight => Surface.Light;
 
     /// <summary>
-    /// The high-contrast form, built once and kept (allocation-free after the first call): the palette's own
-    /// <see cref="HighContrastBuilder"/>, or the generic §A3 transform (<see cref="ToHighContrast"/>). A high-contrast
-    /// form is its own high-contrast form.
+    /// The high-contrast form, built once per palette instance and kept (allocation-free after the first call): the
+    /// palette's own <see cref="HighContrastBuilder"/>, or the generic §A3 transform (<see cref="ToHighContrast"/>). A
+    /// high-contrast form is its own high-contrast form. The form is kept beside the palette, not in it, so a copy made
+    /// with <c>with</c> builds its own from its own roles, and the cache never takes part in equality.
     /// </summary>
-    public UiPalette HighContrast
-    {
-        get
-        {
-            if (IsHighContrast)
-            {
-                return this;
-            }
-
-            return highContrast ??= HighContrastBuilder?.Invoke(this) ?? ToHighContrast(pushInks: true);
-        }
-    }
+    public UiPalette HighContrast => IsHighContrast ? this : HighContrastForms.GetValue(this, BuildHighContrast);
 
     /// <summary>
     /// How this palette builds its high-contrast form when it is not the generic transform: a designed form (the
     /// spec's Night HC and Snow HC hexes), or Night's 1.15 form (<see cref="SurfaceColors.ForHighContrast"/> alone).
+    /// Not part of the palette's equality: two palettes with the same roles are the same palette.
     /// </summary>
-    public Func<UiPalette, UiPalette>? HighContrastBuilder { get; init; }
+    public Func<UiPalette, UiPalette>? HighContrastBuilder
+    {
+        get => builder.Value;
+        init => builder = new(value);
+    }
 
-    private UiPalette? highContrast;
+    private readonly EqualityExempt<Func<UiPalette, UiPalette>?> builder;
+
+    /// <summary>Each palette instance's high-contrast form, held only as long as the palette is.</summary>
+    private static readonly ConditionalWeakTable<UiPalette, UiPalette> HighContrastForms = new();
+
+    private static readonly ConditionalWeakTable<UiPalette, UiPalette>.CreateValueCallback BuildHighContrast =
+        static p => p.HighContrastBuilder?.Invoke(p) ?? p.ToHighContrast(pushInks: true);
+
+    /// <summary>A field the record's generated equality skips: every value equals every other.</summary>
+    private readonly struct EqualityExempt<T>(T value) : IEquatable<EqualityExempt<T>>
+    {
+        public T Value { get; } = value;
+
+        public bool Equals(EqualityExempt<T> other) => true;
+
+        public override bool Equals(object? obj) => obj is EqualityExempt<T>;
+
+        public override int GetHashCode() => 0;
+    }
 
     /// <summary>
     /// The generic high-contrast form (theme-system §8.3, spec-1.16 §A3): the surface's high-contrast roles (no sky
@@ -128,7 +149,6 @@ public sealed record UiPalette
             DrawerTones = null,
             IsHighContrast = true,
             HighContrastBuilder = null,
-            highContrast = null,
         };
         if (!pushInks)
         {
@@ -150,44 +170,57 @@ public sealed record UiPalette
 
     /// <summary>
     /// Every text-on-surface pair the palette promises reads at WCAG AA (4.5 : 1), as (role, ink, ground): spec-1.16 §A8
-    /// (text, secondary and tertiary text on every surface, accent, cool, the status words) and the pill and button inks.
+    /// (the text inks, accent, danger and the status words on every surface, <see cref="Surfaces"/>; Cool and the Not
+    /// checked word on all but hovered rows) and the pill and button inks.
     /// <c>PaletteContrastTests</c> holds every palette and form to this list.
     /// </summary>
     public IEnumerable<(string Role, Vector4 Ink, Vector4 Ground)> TextPairs()
     {
         var s = Surface;
-        (string Name, Vector4 Color)[] all = [("Window", s.Window), ("Raised", s.Raised), ("Sunken", s.Sunken), ("Hover", s.Hover)];
-        foreach (var (name, ground) in all)
+        foreach (var (name, ground) in Surfaces())
         {
             yield return ($"Text on {name}", s.Text, ground);
             yield return ($"TextSecondary on {name}", s.TextSecondary, ground);
             yield return ($"TextTertiary on {name}", s.TextTertiary, ground);
+            yield return ($"Accent on {name}", Accent, ground);
+            yield return ($"AccentDim on {name}", AccentDim, ground);
+            yield return ($"DangerText on {name}", Inks.DangerText, ground);
+
+            // Cool and the Not checked word are held on the window, cards and wells, not on hovered rows (spec-1.16
+            // §A8 lists both on the window and cards): nothing draws them on a hover fill (Cool is no text in the
+            // panes yet; a hovered path step's name turns to Text and the table's state word is Text). Night's Tide
+            // and Veil text sit at 4.2 and 4.46 : 1 on Hover, so a pane that starts drawing them there adds the pair.
+            var hovered = name == HoverSurface;
+            if (!hovered)
+            {
+                yield return ($"Cool on {name}", s.Cool, ground);
+                yield return ($"UnknownText on {name}", Inks.UnknownText, ground);
+            }
+
+            foreach (var state in StateInks.Order)
+            {
+                if (!(hovered && state == Model.QuestState.Unknown))
+                {
+                    yield return ($"{state} word on {name}", States.Text(state), ground);
+                }
+            }
         }
 
         yield return ("Text on Deep", s.Text, s.Deep);
         yield return ("Text on Top", s.Text, s.Top);
-        yield return ("Accent on Window", Accent, s.Window);
-        yield return ("Accent on Raised", Accent, s.Raised);
-        yield return ("Accent on Sunken", Accent, s.Sunken);
-        yield return ("AccentDim on Window", AccentDim, s.Window);
-        yield return ("Cool on Window", s.Cool, s.Window);
-        yield return ("Cool on Raised", s.Cool, s.Raised);
-        yield return ("DangerText on Window", Inks.DangerText, s.Window);
-        yield return ("DangerText on Raised", Inks.DangerText, s.Raised);
-        yield return ("UnknownText on Window", Inks.UnknownText, s.Window);
         yield return ("OnGold on Gold", Inks.OnGold, Inks.Gold);
         yield return ("OnDanger on the destructive button", Inks.OnDanger, ColorMath.Over(Inks.Danger with { W = PaletteInks.DangerButtonAlpha }, s.Window));
         if (Pills is { } pills)
         {
             yield return ("Gold pill ink", pills.GoldInk, Vector4.Lerp(pills.GoldTop, pills.GoldFoot, 0.5f));
         }
-
-        foreach (var state in StateInks.Order)
-        {
-            yield return ($"{state} word on Window", States.Text(state), s.Window);
-            yield return ($"{state} word on Raised", States.Text(state), s.Raised);
-        }
     }
+
+    /// <summary>The four surfaces text is drawn on (spec-1.16 §A8, "every surface"): the window, cards, wells and hovered rows.</summary>
+    public (string Name, Vector4 Color)[] Surfaces() =>
+        [("Window", Surface.Window), ("Raised", Surface.Raised), ("Sunken", Surface.Sunken), (HoverSurface, Surface.Hover)];
+
+    private const string HoverSurface = "Hover";
 
     /// <summary>
     /// The non-text pairs the palette promises reach 3 : 1 (WCAG 1.4.11 and large text), as (role, ink, ground): the

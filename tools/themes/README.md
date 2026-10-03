@@ -5,11 +5,11 @@
 ```
 python tools/themes/build_themes.py                  # every set: atlases, gates, cross-set table, sheets
 python tools/themes/build_themes.py --set ishgard-glass
-python tools/themes/build_themes.py --check          # rebuild into a temp folder, diff against the repo, exit 1 on a difference or a failed gate
+python tools/themes/build_themes.py --check          # rebuild into a temp folder, diff against the repo, exit 1 on a difference, a file no build writes, or a failed gate
 python tools/themes/build_themes.py --out DIR        # contact sheets and report.txt (default: %TEMP%/tsukimichi-themes)
 ```
 
-Needs Python 3 with numpy and Pillow, and Chrome (the same headless renderer as `gen_atlas.py`). Pixels depend on Chrome's version, which `metrics.json` records; the C# tests compare layouts and numbers, never pixels.
+Needs Python 3 with numpy and Pillow, and Chrome (the same headless renderer as `gen_atlas.py`). Pixels depend on Chrome's version, which `metrics.json` records; the C# tests compare layouts and numbers, never pixels, and check that each committed PNG is the one `metrics.json` was measured from (its SHA-256).
 
 ## Manifests (`sets/<set>.json`)
 
@@ -27,7 +27,7 @@ Needs Python 3 with numpy and Pillow, and Chrome (the same headless renderer as 
 Per set, under `Tsukimichi/assets/ui/themes/<set>/`:
 - `medals.png`, `medals@2x.png`, `medals.json`: the hero atlas, in Medallion's cell layout (`MedalLayout`), with the same sprite names. Ready on another job ships once per role seat, the seat left empty for the game's job icon.
 - `row.png`, `row.json`: each state's row-tier master at every whole device pixel from 12 to 31, rendered at that size.
-- `metrics.json`: the gate results and the numbers behind them, and the set's half of the cross-set table.
+- `metrics.json`: the gate results and the numbers behind them, the set's half of the cross-set table, and the SHA-256 of each PNG the set ships (`pngs`). It is not packaged with the plugin.
 
 Contact sheets, the cross-set heatmaps and `report.txt` go to `--out`, never into the repo.
 

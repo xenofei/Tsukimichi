@@ -148,6 +148,40 @@ public sealed class ThemeAtlasRuntimeTests
         Assert.Contains("locked-out", error);
     }
 
+    [Fact]
+    public void A_cell_far_outside_the_image_is_refused_however_large_its_position()
+    {
+        // x + width past int.MaxValue wrapped to a negative right edge and passed the bounds check in int arithmetic.
+        foreach (var (index, value) in new[] { (0, int.MaxValue - 5), (1, int.MaxValue - 5), (0, int.MaxValue) })
+        {
+            var huge = RowJson("full");
+            var cell = huge["sprites"]!["full"]!["ready"]!["12"]!.AsArray();
+            cell[index] = value;
+            Assert.False(RowStripLayout.TryParse(huge.ToJsonString(), out _, out var error));
+            Assert.Contains("not inside the image", error);
+        }
+    }
+
+    [Fact]
+    public void Per_frame_registry_and_residency_checks_allocate_nothing()
+    {
+        var residency = new AtlasResidency();
+        var appearance = Mix("ishgard-glass");
+        residency.Retain(appearance);
+        _ = UiPalettes.IsRegistered(PaletteId.IshgardSnow);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 100; i++)
+        {
+            residency.Retain(appearance);
+            _ = UiPalettes.IsRegistered(PaletteId.IshgardSnow);
+            _ = UiPalettes.IsRegistered(PaletteId.Dawn);
+        }
+
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        Assert.True(residency.IsWanted(GlyphSetId.IshgardGlass));
+    }
+
     // ------------------------------------------------------------------ tier choice
 
     [Fact]
@@ -337,8 +371,37 @@ public sealed class ThemeAtlasRuntimeTests
     public void Theme_folders_are_packaged_as_content_files()
     {
         var csproj = File.ReadAllText(Path.Combine(OrnamentLayoutTests.RepoRoot(), "Tsukimichi", "Tsukimichi.csproj"));
-        Assert.Contains(@"<Content Include=""assets\ui\themes\**\*.png;assets\ui\themes\**\*.json"" CopyToOutputDirectory=""PreserveNewest"" />", csproj);
+        Assert.Contains(@"<Content Include=""assets\ui\themes\**\*.png;assets\ui\themes\**\*.json"" Exclude=""assets\ui\themes\**\metrics.json"" CopyToOutputDirectory=""PreserveNewest"" />", csproj);
         Assert.Equal(Path.Combine("assets", "ui", "themes", "ishgard-glass", "row.png"), ThemeAtlasRules.RelativePath(GlyphSetId.IshgardGlass, "row.png"));
+
+        // What the build actually put beside the plugin (the gates build the solution first; a test run that did not
+        // build the plugin checks the project file alone): every atlas and layout of every set, byte for byte, where the
+        // runtime looks for it, and no metrics.json, which is the build's record and not the plugin's.
+        if (Diagnostics.NoNetworkTests.PluginAssembly() is not { } plugin)
+        {
+            return;
+        }
+
+        var output = Path.GetDirectoryName(plugin)!;
+        var expected = Directory.GetFiles(ThemesDir(), "*", SearchOption.AllDirectories)
+            .Where(static f => Path.GetFileName(f) != "metrics.json")
+            .Select(f => Path.GetRelativePath(OrnamentLayoutTests.AssetsDir(), f))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        Assert.Contains(Path.Combine("themes", "ishgard-glass", "row.png"), expected);
+        var shipped = Directory.GetFiles(Path.Combine(output, "assets", "ui", "themes"), "*", SearchOption.AllDirectories)
+            .Select(f => Path.GetRelativePath(Path.Combine(output, "assets", "ui"), f))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(expected, shipped);
+        foreach (var file in expected)
+        {
+            Assert.True(
+                File.ReadAllBytes(Path.Combine(OrnamentLayoutTests.AssetsDir(), file)).AsSpan().SequenceEqual(File.ReadAllBytes(Path.Combine(output, "assets", "ui", file))),
+                $"{file} in the build output differs from the repo's");
+        }
+
+        Assert.True(File.Exists(Path.Combine(output, ThemeAtlasRules.RelativePath(GlyphSetId.IshgardGlass, "row.png"))));
     }
 
     // ------------------------------------------------------------------ helpers

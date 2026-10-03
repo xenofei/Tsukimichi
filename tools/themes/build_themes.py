@@ -6,7 +6,8 @@
 #                                           eleven sprites at 48/64/96/128 px, 2 px apart, and the same JSON schema
 #   row.png, row.json                       the row strip: each state's row-tier master at every whole device pixel
 #                                           from 12 to 31 (a real render at that size, not a downscale); 1x only
-#   metrics.json                            the per-set gates (section 7.1) and the cross-set similarity table (5.2)
+#   metrics.json                            the per-set gates (section 7.1), the cross-set similarity table (5.2) and
+#                                           the SHA-256 of each PNG the set ships
 # and, outside the repo, contact sheets, a cross-set heatmap and a plain-text report (--out, default a temp folder).
 #
 # Each tier takes its source explicitly from the manifest (Ishgard Glass's _mid/ for 48 and 64 px, its full masters
@@ -24,7 +25,8 @@
 # Usage:
 #   python tools/themes/build_themes.py                 build every set, run the gates, write sheets to the temp folder
 #   python tools/themes/build_themes.py --set ishgard-glass
-#   python tools/themes/build_themes.py --check         rebuild into a temp folder and diff against the repo (exit 1)
+#   python tools/themes/build_themes.py --check         rebuild into a temp folder and diff against the repo, and flag
+#                                                       any file in a theme folder no build writes (exit 1)
 #   python tools/themes/build_themes.py --out DIR       contact sheets and the report go to DIR
 import argparse
 import base64
@@ -733,11 +735,12 @@ def summary(x):
             "readyLead": r1(sal["ready"] / nxt), "completedOfReady": r1(sal["completed"] / sal["ready"])}
 
 
-def metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver):
+def metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver, pngs):
     """The committed record: the full pair and salience tables behind the gates (Night, greyscale and Vienot
     deuteranopia, 16 and 20 px; every ground, Machado's three, 16 px), a one-line summary for every other ground,
-    mode and size, the light-palette salience and the Ready wash the plugin must draw, and this set's half of the
-    cross-set table."""
+    mode and size, the light-palette salience and the Ready wash the plugin must draw, this set's half of the
+    cross-set table, and the SHA-256 of every PNG the set ships (so ThemeAtlasTests can hold the committed atlases
+    to the build these numbers came from)."""
     tiers = []
     for g in groups:
         gate_measures = [x for x in g["measures"] if is_gated(x)]
@@ -772,6 +775,7 @@ def metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver):
         "gateModes": GATE_MODES,
         "cvdModes": CVD_MODES,
         "readyWash": light["washes"][light["use"]],
+        "pngs": pngs,
         "pass": all(r["pass"] for r in gates),
         "gates": gates,
         "tiers": tiers,
@@ -949,7 +953,7 @@ def build(manifests, selected, root, out_dir, sheets=True):
             groups = groups_by[m["key"]]
             light_gates, light = light_measures(groups)
             gates = gate_rows(m, groups) + light_gates + fit_rows(atlases[m["key"]])
-            data = metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver)
+            data = metrics_json(m, groups, gates, light, cross, mix_sal, chrome_ver, png_hashes(m, root))
             _, dest_set = destinations(m, root)
             os.makedirs(dest_set, exist_ok=True)
             write_json(data, os.path.join(dest_set, "metrics.json"), compact=True)
@@ -973,6 +977,34 @@ def outputs(m):
     if m.get("row", {}).get("atlas"):
         files += [os.path.join(dest_set, n) for n in ("row.png", "row.json")]
     return files + [os.path.join(dest_set, "metrics.json")]
+
+
+def png_hashes(m, root):
+    """{repo-relative path: SHA-256} of every PNG the set ships, as written under `root`."""
+    out = {}
+    for rel in outputs(m):
+        if rel.endswith(".png"):
+            with open(os.path.join(root, rel), "rb") as fh:
+                out[rel.replace(os.sep, "/")] = hashlib.sha256(fh.read()).hexdigest()
+    return out
+
+
+THEMES_DIR = os.path.join("Tsukimichi", "assets", "ui", "themes")
+
+
+def extras(manifests):
+    """Files and folders under the themes folder that no build writes: a stale plain.* or an old set's folder. Every
+    theme folder is checked, whichever sets were selected."""
+    expected = {os.path.normcase(os.path.normpath(rel)) for m in manifests for rel in outputs(m)}
+    folders = {os.path.normcase(os.path.normpath(destinations(m, "")[1])) for m in manifests}
+    found = []
+    for dirpath, _, names in os.walk(os.path.join(REPO, THEMES_DIR)):
+        rel_dir = os.path.relpath(dirpath, REPO)
+        if os.path.normcase(rel_dir) != os.path.normcase(THEMES_DIR) and os.path.normcase(rel_dir) not in folders:
+            found.append(rel_dir)
+            continue
+        found += [os.path.join(rel_dir, n) for n in names if os.path.normcase(os.path.join(rel_dir, n)) not in expected]
+    return sorted(found)
 
 
 def main():
@@ -1000,6 +1032,9 @@ def main():
                     print(f"{'same ' if same else 'DIFF '} {rel.replace(os.sep, '/')}")
                     if not same:
                         stale.append(rel)
+            for rel in extras(manifests):
+                print(f"EXTRA {rel.replace(os.sep, '/')}  (no build writes it; delete it or add it to a manifest)")
+                stale.append(rel)
         failed = [k for k, r in results.items() if not r["pass"]]
         if failed:
             print(f"gates fail: {failed}")

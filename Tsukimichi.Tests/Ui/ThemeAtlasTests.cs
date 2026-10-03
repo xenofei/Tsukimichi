@@ -110,7 +110,7 @@ public sealed class ThemeAtlasTests
 
     [Theory]
     [MemberData(nameof(ShippedSets))]
-    public void Row_strip_has_every_state_at_every_whole_pixel_from_12_to_31(string set)
+    public void Row_strip_has_every_state_at_every_whole_pixel_from_12_to_31_apart_by_the_runtime_pad(string set)
     {
         using var json = Json(ThemesDir(), set, "row.json");
         var root = json.RootElement;
@@ -135,15 +135,37 @@ public sealed class ThemeAtlasTests
             }
         }
 
+        // The runtime's gap (ThemeAtlasRules.MinPad, 2 px at 1x), so bilinear sampling never bleeds a neighbour in.
+        const int pad = Core.Ui.Themes.ThemeAtlasRules.MinPad;
         for (var i = 0; i < rects.Count; i++)
         {
             for (var j = i + 1; j < rects.Count; j++)
             {
                 var a = rects[i];
                 var b = rects[j];
-                var apart = a.X + a.Width + 1 <= b.X || b.X + b.Width + 1 <= a.X || a.Y + a.Height + 1 <= b.Y || b.Y + b.Height + 1 <= a.Y;
-                Assert.True(apart, $"{set}: {a} and {b} touch");
+                var apart = a.X + a.Width + pad <= b.X || b.X + b.Width + pad <= a.X || a.Y + a.Height + pad <= b.Y || b.Y + b.Height + pad <= a.Y;
+                Assert.True(apart, $"{set}: {a} and {b} are closer than {pad} px");
             }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(MeasuredSets))]
+    public void The_shipped_pngs_are_the_ones_the_metrics_were_measured_from(string set)
+    {
+        // metrics.json records the SHA-256 of every PNG the build wrote with these numbers; a PNG re-exported or edited
+        // by hand without a rebuild would ship atlases the gates never measured.
+        using var json = Json(ThemesDir(), set, "metrics.json");
+        var pngs = json.RootElement.GetProperty("pngs").EnumerateObject().ToDictionary(static p => p.Name, static p => p.Value.GetString());
+        var atlas = set == "medallion" ? "Tsukimichi/assets/ui" : $"Tsukimichi/assets/ui/themes/{set}";
+        string[] expected = set == "medallion"
+            ? [$"{atlas}/medals.png", $"{atlas}/medals@2x.png"]
+            : [$"{atlas}/medals.png", $"{atlas}/medals@2x.png", $"{atlas}/row.png"];
+        Assert.Equal(expected.Order(StringComparer.Ordinal), pngs.Keys.Order(StringComparer.Ordinal));
+        foreach (var (path, sha) in pngs)
+        {
+            var bytes = File.ReadAllBytes(Path.Combine(OrnamentLayoutTests.RepoRoot(), path));
+            Assert.True(string.Equals(sha, Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)), StringComparison.Ordinal), $"{path} is not the PNG metrics.json was measured from; rebuild with tools/themes/build_themes.py");
         }
     }
 
