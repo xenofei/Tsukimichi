@@ -814,7 +814,8 @@ public sealed class QueryRunner : IDisposable
             JustOpened: ui.JustOpened,
             NewGamePlus: current.NewGamePlus,
             Chains: session.Chains,
-            FreeTrial: plugin.Settings.FreeTrialView);
+            FreeTrial: plugin.Settings.FreeTrialView,
+            NewlyReady: ui.NewlyReady);
         ranFreeTrial = ctx.FreeTrial;
 
         // The Unlocks quick view reads best with its unlocks from the newest patch series on top (P8), then what can be picked up

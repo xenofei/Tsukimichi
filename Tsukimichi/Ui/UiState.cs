@@ -225,6 +225,35 @@ public sealed class UiState
     }
 
     /// <summary>
+    /// What the Journal badge counted as newly ready when it was clicked (plan v7): the quest row ids the Newly ready
+    /// scope lists. Session-only; replaced by the next <see cref="ShowNewlyReady"/>.
+    /// </summary>
+    public IReadOnlySet<uint> NewlyReady { get; private set; } = new HashSet<uint>();
+
+    /// <summary>
+    /// Switch to the Journal tab scoped to the quests the Journal badge counts as newly ready
+    /// (<see cref="QuestScope.NewlyReady"/>), from a click on the badge. The narrowing filters and the search are
+    /// cleared as <see cref="ShowJustOpened"/> clears them, so every one of them is listed; the scope chip clears the
+    /// scope, and closing it marks them seen.
+    /// </summary>
+    public void ShowNewlyReady(uint serial, IReadOnlyCollection<uint> rowIds)
+    {
+        ArgumentNullException.ThrowIfNull(rowIds);
+        NewlyReady = new HashSet<uint>(rowIds);
+        Tab = NavTab.Journal;
+        Scope = QuestScope.NewlyReady(serial);
+        SelectedRowId = null;
+        RevealPending = false;
+        SearchText = string.Empty;
+        if (ClearNarrowingFilters(includeUnlisted: false))
+        {
+            FiltersChanged?.Invoke();
+        }
+
+        MarkQueryDirty();
+    }
+
+    /// <summary>
     /// Turns off the state-based narrowing filters and the active preset (and turns Include removed on when asked);
     /// true when anything changed and the window should persist the filters.
     /// </summary>

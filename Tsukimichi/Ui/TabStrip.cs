@@ -9,24 +9,33 @@ using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
+/// <summary>What the rail's Journal badge shows this frame (plan v7, spec Revision 3 R3.2).</summary>
+/// <param name="Mode">What the badge counts (Settings › Main window › Journal badge).</param>
+/// <param name="Count">The number on it; 0 draws none.</param>
+/// <param name="New">Quests newly ready since the player last looked.</param>
+/// <param name="Ready">Quests Ready on the current job.</param>
+/// <param name="StoryReady">Of those, the main scenario and unlock quests.</param>
+public readonly record struct RailBadge(JournalBadgeMode Mode, int Count, int New, int Ready, int StoryReady);
+
 /// <summary>
-/// The main window's rail (feature plan v4 L7, design v4 §7.1), drawn in its own fixed pane left of the tree
-/// (<see cref="PaneSplit"/>). Top to bottom: the crest (a click shows Journal › All quests), one station per tab (a
-/// 22 px icon over a small label, the Journal station carrying the Ready count as a badge), and at the foot the overall
-/// gauge with its percentage and the round Todo overlay, Nearby (1.7.0), Help and Settings buttons, which live here
-/// rather than in the toolbar. The
-/// rail is 64 logical px wide; on a window under about 1,040 px, or by Settings › Display › Compact rail, it is a 44 px
-/// compact rail of icons whose labels are in the tooltips (<see cref="LayoutBudgets.CompactRail"/>). On a short window
-/// the rail gives up height in a fixed order (<see cref="LayoutBudgets.FitRail"/>) and scrolls only past that.
+/// The main window's rail (feature plan v4 L7, design v4 §7.1, plan v7 UI-4), drawn in its own fixed pane left of the
+/// tree (<see cref="PaneSplit"/>). Top to bottom: the crest (a click shows Journal › All quests), one station per tab,
+/// and at the foot the overall gauge with its percentage and the round Todo overlay, Nearby (1.7.0), Help and Settings
+/// buttons. The rail is 70 logical px wide at Full and 66 at Quiet; on a window under about 1,040 px, by Settings ›
+/// Display › Compact rail, and always at Plain, it is a 44 px compact rail of icons whose labels are in the tooltips
+/// (<see cref="LayoutBudgets.CompactRail"/>). The stations share the rail's height (<see cref="LayoutBudgets.Stations"/>);
+/// on a short window the rail gives up height in a fixed order (<see cref="LayoutBudgets.FitRail"/>) and scrolls only
+/// past that.
 /// <para>
-/// The Moon Road look (feature plan v4 V2), under Full and Quiet flair: the rail sits on the deepest surface (Abyss);
-/// the crest is the ornament atlas's moon over night water with a fading brass rule under it; the stations are strung
-/// on a thin brass thread, and the active one is lit by a short gold bar on the thread with a moon bead at its head
-/// (with a soft glow behind its icon under Full). The Journal station and the foot gauge are orbits round a filling
-/// moon; Moonlit and Flight use the kit's glyphs and My blues the game's blue unlock-quest marker (FontAwesome stands
-/// in while a texture loads, and for Characters). Under Full flair with motion on, the orbits fill when first shown
-/// and after a tab change the bead travels along the thread to the new station before its bar lights (1.13, feature plan
-/// v6 M1). Station and crest hover glide in and out (U8). Plain flair keeps the 1.3 rail.
+/// A station (plan v7 UI-4, spec §6 with Revisions 2 and 3) is a 30 px icon (28 at Quiet, 20 at Plain) over its label, on
+/// a plate inset 3 px from the rail's sides. The label is fitted to the plate (<see cref="RailLabel.Fit"/>): tracked,
+/// shrunk to no less than 10 px, wrapped, or left to the tooltip with the icon alone, never cut and never overflowing.
+/// Hovering lifts the icon 2 px (1 at Quiet) and lays a plate with a darker foot; the selected station keeps three marks
+/// only: its plate, the icon in gold, and the moon bead on the rail's left edge, which travels from the station left
+/// behind to the new one. Labels never move, only their ink changes. Every motion takes its pace from
+/// <see cref="MotionTokens"/>, and under Reduce motion (or at Plain) everything lands at once. The thread and the lit bar
+/// of 1.4–1.13 are gone. The Journal station carries the Journal badge (<see cref="RailBadge"/>): one fixed size, hidden
+/// at 0, and a click on it opens the quests it counts as newly ready.
 /// </para>
 /// <para>
 /// Each station is a real item (an <see cref="ImGui.InvisibleButton(string, Vector2)"/> with the focus ring), so
@@ -34,7 +43,7 @@ namespace Tsukimichi.Ui;
 /// it, and a programmatic switch (Reveal, ShowIssuer, the tutorial, help) is simply the next frame's active station.
 /// The union of the stations is recorded as <see cref="UiRects.Tabs"/>, and the foot's buttons as
 /// <see cref="UiRects.HelpButton"/> and <see cref="UiRects.SettingsButton"/>, for the tutorial. Nothing allocates per
-/// frame: labels are constants measured once per language and font size, and the tooltips and the percentage are
+/// frame: the labels' fits are measured once per language, size and room, and the tooltips and the percentage are
 /// rebuilt only when their counts or the language change. Everything is placed by <see cref="LayoutBudgets.PlaceRail"/>,
 /// so a rail that fits its pane never overflows it by a rounding pixel and turns wheel-scrollable.
 /// </para>
@@ -67,39 +76,83 @@ public sealed class TabStrip
     private static readonly string NearbyIcon = FontAwesomeIcon.MapMarkerAlt.ToIconString();
     private static readonly string SettingsIcon = FontAwesomeIcon.Cog.ToIconString();
 
+    /// <summary>A label's width at a font size of one, in the body font: what the fit scales.</summary>
+    private static readonly EmMeasure MeasureEm = static text => ImGui.CalcTextSize(text).X / MathF.Max(1f, ImGui.GetFontSize());
+
     /// <summary>The overall gauge's fill motion (it moves only when the count changes, or fills once under Full flair).</summary>
     private static readonly ulong GaugeKey = Motion.Key(0x5241_494C, 0); // "RAIL"
 
     /// <summary>The Journal station's orbit fill.</summary>
     private static readonly ulong JournalKey = Motion.Key(0x5241_494C, 1);
 
-    /// <summary>The active station lighting up after a tab change.</summary>
+    /// <summary>The bead's travel after a tab change.</summary>
     private static readonly ulong StationKey = Motion.Key(0x5241_494C, 2);
 
-    /// <summary>The crest's and the stations' hover glow (by station index; the crest after them).</summary>
+    /// <summary>The crest's and the stations' hover (by station index; the crest after them).</summary>
     private const uint HoverTag = 0x5241_4948; // "RAIH"
 
-    /// <summary>The Moon Road rail's sizes: the lit bar on the thread, the gap between the thread and an icon or label, the crest rule.</summary>
-    private const float LitBarLogical = 22f;
-    private const float ThreadGapLogical = 3f;
-    private const float ThreadAlpha = 0.35f;
+    /// <summary>The stations' selection (by station index): the plate and the gold ink settling in and out.</summary>
+    private const uint SelectTag = 0x5241_4953; // "RAIS"
+
     private const float CrestRuleLogical = 40f;
-    private const float GlowRadiusLogical = 18f;
+
+    /// <summary>A plate's corner radius at Full and Quiet.</summary>
+    private const float PlateRadiusLogical = 10f;
+
+    /// <summary>How far a hovered icon rises: 2 px at Full, 1 at Quiet, none at Plain.</summary>
+    private const float RiseLogical = 2f;
+
+    private const float QuietRiseLogical = 1f;
+
+    /// <summary>The hovered plate's wash (the hover tone) and its darker foot (Abyss), at full hover.</summary>
+    private const float PlateHoverAlpha = 0.55f;
+
+    private const float PlainHoverAlpha = 0.62f;
+    private const float PlateFootAlpha = 0.38f;
+
+    /// <summary>The selected plate: Moon at Full, the text tone with a VeilLine border at Quiet.</summary>
+    private const float SelectedPlateAlpha = 0.07f;
+
+    private const float QuietSelectedPlateAlpha = 0.06f;
+    private const float QuietSelectedBorderAlpha = 0.55f;
+
+    /// <summary>The bead: 7 px MoonHigh with a 1.5 px Night rim at Full, its centre 4.5 px in from the rail's left edge; a 5 px Moon dot at Quiet.</summary>
+    private const float BeadRadiusLogical = 3.5f;
+
+    private const float BeadRimLogical = 1.5f;
+    private const float BeadInsetLogical = 4.5f;
+    private const float QuietBeadRadiusLogical = 2.5f;
+    private const float QuietBeadInsetLogical = 4f;
 
     /// <summary>Station icon alpha by state (the kit's glyphs and the game icon carry their own colours).</summary>
     private const float IdleIconAlpha = 0.72f;
-    private const float HoverIconAlpha = 0.9f;
+
+    private const float HoverIconAlpha = 0.95f;
+    private const float PlainIconAlpha = 0.8f;
+
+    /// <summary>The Journal badge: one fixed size (16 px tall, at least 16 wide, 10 px text), its left edge 4 px inside the icon's right and its top 5 px over the icon.</summary>
+    private const float BadgeLogical = 16f;
+
+    private const float BadgeTextLogical = 10f;
+    private const float BadgePadLogical = 4f;
+    private const float BadgeOverlapLogical = 4f;
+    private const float BadgeRiseLogical = 5f;
 
     private readonly UiState ui;
 
-    private int readyTooltipCount = -1;
-    private int readyTooltipLanguage = -1;
-    private string readyTooltip = string.Empty;
+    // The Journal tooltip, rebuilt only when what it says changes.
+    private RailBadge tooltipBadge;
+    private int tooltipEveryReady = -1;
+    private bool tooltipOnBadge;
+    private int tooltipLanguage = -1;
+    private string journalTooltip = string.Empty;
 
-    // The labels' widths at their own size, measured again only when the language or the font size changes.
-    private readonly float[] labelWidths = new float[Tabs.Length];
-    private int labelsLanguage = -1;
-    private float labelsFontSize = -1f;
+    // The labels' fits (RailLabel.Fit), measured again only when the language, the label size, the room or the lines change.
+    private readonly RailLabelFit[] fits = new RailLabelFit[Tabs.Length];
+    private int fitsLanguage = -1;
+    private float fitsSize = -1f;
+    private float fitsRoom = -1f;
+    private int fitsLines = -1;
 
     // The foot's texts, rebuilt when the overall count or the language changes.
     private NodeCount gaugeCount = new(-1, -1, 0);
@@ -108,16 +161,14 @@ public sealed class TabStrip
     private float percentWidth;
     private string progressText = string.Empty;
 
-    /// <summary>The tab the lit bar last lit for; a change starts the light-up.</summary>
-    private NavTab? litTab;
+    /// <summary>The tab the bead last stood at; a change starts its travel.</summary>
+    private NavTab? beadTab;
 
     /// <summary>The station the bead travels from after a tab change (feature plan v6 M1), or -1.</summary>
     private int travelFrom = -1;
 
-    // This frame's station geometry, for the bead's travel between two stations.
-    private float stationsTop;
-    private float stationHeight;
-    private float stationsThreadTop;
+    // This frame's station geometry: where each icon's centre line is, for the bead.
+    private readonly float[] iconCenters = new float[Tabs.Length];
 
     public TabStrip(UiState ui)
     {
@@ -127,11 +178,14 @@ public sealed class TabStrip
     /// <summary>Whether the rail is the compact icon rail this frame (<see cref="UpdateMode"/>).</summary>
     public bool Compact { get; private set; }
 
-    /// <summary>The rail's logical width: <see cref="ScaleMetrics.RailLogical"/>, or <see cref="ScaleMetrics.RailCompactLogical"/> while compact.</summary>
-    public float RailLogicalWidth => Compact ? ScaleMetrics.RailCompactLogical : ScaleMetrics.RailLogical;
+    /// <summary>The rail's logical width at the Decoration level in effect (<see cref="LayoutBudgets.RailWidthLogical"/>).</summary>
+    public float RailLogicalWidth => LayoutBudgets.RailWidthLogical(Theme.Flair, Compact);
 
     /// <summary>The rail's width in pixels.</summary>
     public float RailWidth => MathF.Round(UiMetrics.Px(RailLogicalWidth));
+
+    /// <summary>Opens the Journal on the quests the badge counts as newly ready; null leaves the badge a plain number.</summary>
+    public Action? ShowNewlyReady { get; set; }
 
     /// <summary>
     /// Decides the rail's mode for this frame (<see cref="LayoutBudgets.CompactRail"/>): compact when the user chose
@@ -147,35 +201,37 @@ public sealed class TabStrip
     /// Draws the rail from the cursor down, filling the current (rail) child window: crest, stations and foot.
     /// </summary>
     /// <param name="overall">Overall completion for the Journal moon and the foot's gauge (0 / 0 with no character).</param>
-    /// <param name="ready">Ready quests for the viewed character; 0 hides the Journal badge.</param>
+    /// <param name="badge">The Journal badge; a count of 0 hides it.</param>
+    /// <param name="everyReady">Every Ready quest (the tree's count), for the tooltip.</param>
     /// <param name="openHelp">Opens the help window; null draws the button disabled.</param>
     /// <param name="openSettings">Opens Settings; null draws the button disabled.</param>
-    public void Draw(NodeCount overall, int ready, Action? openHelp, Action? openSettings)
+    public void Draw(NodeCount overall, RailBadge badge, int everyReady, Action? openHelp, Action? openSettings)
     {
         var origin = ImGui.GetCursorScreenPos();
         var avail = ImGui.GetContentRegionAvail();
         var width = MathF.Max(1f, avail.X);
+        var flair = Theme.Flair;
         // Everything is placed by the fit, with the foot's buttons at the size they are drawn and whole-pixel stations,
         // so a rail that fits its pane ends inside it and never becomes wheel-scrollable.
-        var place = LayoutBudgets.PlaceRail(avail.Y, UiMetrics.Scale, Tabs.Length, Compact, UiMetrics.MinTarget);
+        var place = LayoutBudgets.PlaceRail(avail.Y, UiMetrics.Scale, Tabs.Length, Compact, UiMetrics.MinTarget, flair);
         var dl = ImGui.GetWindowDrawList();
         var centerX = MathF.Round(origin.X + width * 0.5f);
         var moonRoad = Theme.MoonRoadArt;
 
-        MeasureLabels();
+        FitLabels(place.Station);
         RefreshGauge(overall);
 
-        // Station travel (Full flair, motion on; feature plan v6 M1): on a tab change the bead travels along the thread
-        // from the old station to the new one, then the new station's bar and glow light.
-        if (litTab != ui.Tab)
+        // The bead's travel (Full and Quiet, motion on; feature plan v6 M1): on a tab change it runs the rail's left edge
+        // from the old station to the new one while the new plate fades in.
+        if (beadTab != ui.Tab)
         {
-            if (litTab is { } previous && Theme.FlairMotion)
+            if (beadTab is { } previous && Theme.UiMotion)
             {
                 travelFrom = Array.IndexOf(Tabs, previous);
                 Motion.Trigger(StationKey);
             }
 
-            litTab = ui.Tab;
+            beadTab = ui.Tab;
         }
 
         {
@@ -202,22 +258,13 @@ public sealed class TabStrip
 
         var y = origin.Y + place.StationsTop;
         var first = y;
-        // The thread starts under the crest (in the middle of the gap its rule sits in), or at the stations' top.
-        var threadTop = place.Crest > 0f ? origin.Y + place.CrestTop + place.Crest + (UiMetrics.Px(LayoutBudgets.RailGapLogical) * 0.5f) : first;
-        stationsTop = first;
-        stationHeight = place.Station;
-        stationsThreadTop = threadTop;
-        if (moonRoad)
-        {
-            DrawThread(dl, centerX, threadTop, first, place.Station);
-        }
-
         for (var i = 0; i < Tabs.Length; i++)
         {
-            DrawStation(dl, i, new Vector2(origin.X, y), width, place.Station, overall.Fraction, ready, moonRoad, threadTop);
+            DrawStation(dl, i, new Vector2(origin.X, y), width, place.Station, overall.Fraction, badge, everyReady, moonRoad);
             y += place.Station;
         }
 
+        DrawBead(dl, origin.X);
         ui.RecordRect(UiRects.Tabs, new Vector2(origin.X, first), new Vector2(origin.X + width, y));
         DrawFoot(dl, centerX, origin.Y + place.FootTop, place.Fit, place.Button, overall.Fraction, openHelp, openSettings, moonRoad);
 
@@ -303,217 +350,329 @@ public sealed class TabStrip
         }
     }
 
-    /// <summary>Where a station's icon and label sit: the icon's centre and top, and the bottom of its content (the label, or the icon on the compact rail).</summary>
-    private (Vector2 IconCenter, float IconTop, float ContentBottom) StationLayout(Vector2 min, float width, float height)
+    /// <summary>The rail labels' size in pixels this frame: 0.75 of the body, held to 10–12 logical px (<see cref="LayoutBudgets.RailLabelLogical"/>).</summary>
+    private static float LabelPx()
     {
-        var iconSize = UiMetrics.Px(LayoutBudgets.StationIconLogical);
-        var labelHeight = ImGui.GetFontSize() * LayoutBudgets.RailLabelFraction;
-        var contentHeight = Compact ? iconSize : iconSize + UiMetrics.Px(LayoutBudgets.StationGapLogical) + labelHeight;
+        var scale = MathF.Max(0.01f, UiMetrics.Scale);
+        return LayoutBudgets.RailLabelLogical(ImGui.GetFontSize() / scale) * scale;
+    }
+
+    /// <summary>
+    /// Where a station's icon and label sit: the icon's centre (before any hover rise) and the label's top, the content
+    /// (icon, gap, label lines) centred in the station; the compact rail and an icon-only label centre the icon alone.
+    /// </summary>
+    private (Vector2 IconCenter, float LabelTop) StationLayout(int i, Vector2 min, float width, float height)
+    {
+        var iconSize = MathF.Round(UiMetrics.Px(LayoutBudgets.StationIcon(Theme.Flair)));
+        var fit = fits[i];
+        var labelled = !Compact && !fit.IconOnly;
+        var gap = UiMetrics.Px(LayoutBudgets.StationGapLogical);
+        var labelHeight = labelled ? LabelBlockHeight(fit) : 0f;
+        var contentHeight = labelled ? iconSize + gap + labelHeight : iconSize;
         var top = min.Y + MathF.Max(0f, (height - contentHeight) * 0.5f);
         var iconCenter = new Vector2(MathF.Round(min.X + width * 0.5f), MathF.Round(top + iconSize * 0.5f));
-        return (iconCenter, iconCenter.Y - iconSize * 0.5f, top + contentHeight);
+        return (iconCenter, MathF.Round(top + iconSize + gap));
     }
 
-    /// <summary>
-    /// The thread (Moon Road): one brass hairline down the rail's middle from under the crest to the last station, broken
-    /// around each station's icon and label so it strings them rather than crossing them.
-    /// </summary>
-    private void DrawThread(ImDrawListPtr dl, float centerX, float top, float firstStation, float station)
+    /// <summary>A fitted label's height in pixels: its lines at its size.</summary>
+    private static float LabelBlockHeight(RailLabelFit fit)
     {
-        var color = Theme.WithAlpha(Theme.Surface.Ornament, Theme.OrnamentAlpha(ThreadAlpha));
-        var gap = UiMetrics.Px(ThreadGapLogical);
-        var from = top;
-        for (var i = 0; i < Tabs.Length; i++)
-        {
-            var (_, iconTop, contentBottom) = StationLayout(new Vector2(0f, firstStation + (i * station)), 0f, station);
-            var to = iconTop - gap;
-            if (to - from >= 1f)
-            {
-                dl.AddRectFilled(new Vector2(centerX, MathF.Round(from)), new Vector2(centerX + 1f, MathF.Round(to)), color);
-            }
-
-            from = contentBottom + gap;
-        }
+        var size = UiMetrics.Px(fit.Size);
+        return fit.Lines <= 1 ? size : size * (1f + RailLabel.LineHeight);
     }
 
     /// <summary>
-    /// One station: the icon (with the Journal badge) and, on the labelled rail, the label under it in the secondary
-    /// tone (primary when active or hovered), ending in an ellipsis where it is wider than the station. Under the Moon
-    /// Road look the active station is lit on the thread (a short gold bar ending at its icon, a moon bead at the bar's
-    /// head, and under Full flair a soft glow behind the icon); under Plain it has the hover-tone fill, the glow and a
-    /// 2 px Moon bar on the left edge. The tooltip names the tab first whenever the label is not shown whole.
+    /// One station: its plate, its icon (with the Journal badge) and, on the labelled rail, its fitted label. Hover lays the
+    /// plate with a darker foot and lifts the icon; selection settles the selected plate and the gold ink in (the bead is
+    /// drawn after the stations, <see cref="DrawBead"/>). The tooltip names the tab first whenever the label is not shown.
     /// </summary>
-    private void DrawStation(ImDrawListPtr dl, int i, Vector2 min, float width, float height, float overallFraction, int ready, bool moonRoad, float threadTop)
+    private void DrawStation(ImDrawListPtr dl, int i, Vector2 min, float width, float height, float overallFraction, RailBadge badge, int everyReady, bool moonRoad)
     {
         var tab = Tabs[i];
-        var active = ui.Tab == tab;
-        ImGui.SetCursorScreenPos(min);
-        if (ImGui.InvisibleButton(Ids[i], new Vector2(width, height)) && !active)
-        {
-            ui.Tab = tab;
-            active = true;
-        }
-
-        var hovered = ImGui.IsItemHovered();
-        // Hover glides in and out (U8): the wash, the icon and the label ink follow one eased value.
-        var hover = Motion.Hover(Motion.Key(HoverTag, (uint)i), hovered);
-        var s = Theme.Surface;
+        var flair = Theme.Flair;
+        var plain = flair == Flair.Plain;
         var max = min + new Vector2(width, height);
-        var inset = UiMetrics.Px(3f);
-        var rounding = UiMetrics.Px(5f);
-        var fillMin = new Vector2(min.X + inset, min.Y + 1f);
-        var fillMax = new Vector2(max.X - inset, max.Y - 1f);
-        var (iconCenter, iconTop, _) = StationLayout(min, width, height);
-        var iconSize = UiMetrics.Px(LayoutBudgets.StationIconLogical);
+        var (iconCenter, labelTop) = StationLayout(i, min, width, height);
+        iconCenters[i] = iconCenter.Y;
+        var iconSize = MathF.Round(UiMetrics.Px(LayoutBudgets.StationIcon(flair)));
 
-        if (active && !moonRoad)
+        // The badge's place is fixed (it rides the icon's rise when drawn), so it can be hit-tested before the click.
+        var journal = tab == NavTab.Journal;
+        var badgeText = journal ? NewlyReady.BadgeText(badge.Count) : string.Empty;
+        var (badgeMin, badgeMax) = badgeText.Length > 0 ? BadgeRect(badgeText, iconCenter, iconSize, min, max, plain) : (Vector2.Zero, Vector2.Zero);
+        var onBadge = false;
+
+        ImGui.SetCursorScreenPos(min);
+        var clicked = ImGui.InvisibleButton(Ids[i], new Vector2(width, height));
+        var hovered = ImGui.IsItemHovered();
+        if (badgeText.Length > 0 && hovered)
         {
-            dl.AddRectFilled(fillMin, fillMax, Theme.U32(s.Hover), rounding);
-            var bar = MathF.Max(2f, MathF.Round(UiMetrics.Px(2f)));
-            dl.AddRectFilled(new Vector2(min.X, min.Y + UiMetrics.Px(8f)), new Vector2(min.X + bar, max.Y - UiMetrics.Px(8f)), Theme.MoonU32, bar * 0.5f);
-        }
-        else if (hover > 0.004f)
-        {
-            dl.AddRectFilled(fillMin, fillMax, Theme.WithAlpha(s.Hover, 0.6f * hover), rounding);
+            var mouse = ImGui.GetMousePos();
+            var slack = UiMetrics.Px(2f);
+            onBadge = mouse.X >= badgeMin.X - slack && mouse.X <= badgeMax.X + slack && mouse.Y >= badgeMin.Y - slack && mouse.Y <= badgeMax.Y + slack;
         }
 
-        if (active)
+        var newlyReady = onBadge && badge.Mode == JournalBadgeMode.NewlyReady && badge.New > 0 && ShowNewlyReady is not null;
+        if (clicked)
+        {
+            if (newlyReady)
+            {
+                ShowNewlyReady!();
+            }
+            else if (ui.Tab != tab)
+            {
+                ui.Tab = tab;
+            }
+        }
+
+        var active = ui.Tab == tab;
+
+        // Hover glides in and out (U8); selection settles in over Select and out over the shorter Leave.
+        var hover = Motion.Hover(Motion.Key(HoverTag, (uint)i), hovered);
+        var select = Motion.LerpAsym(Motion.Key(SelectTag, (uint)i), active ? 1f : 0f, MotionMath.SelectRate, MotionTokens.RateFor(MotionTokens.Leave));
+        var lift = hover * (1f - select);
+
+        DrawPlate(dl, min, max, flair, lift, select);
+
+        // The icon rises on hover and settles to its place when selected; the label never moves.
+        var rise = plain ? 0f : UiMetrics.Px(flair == Flair.Quiet ? QuietRiseLogical : RiseLogical) * lift;
+        var icon = iconCenter - new Vector2(0f, rise);
+        var alpha = plain
+            ? PlainIconAlpha + ((1f - PlainIconAlpha) * select)
+            : MathF.Min(1f, IdleIconAlpha + ((HoverIconAlpha - IdleIconAlpha) * hover) + ((1f - HoverIconAlpha) * select));
+        var s = Theme.Surface;
+        var selectedInk = plain ? s.Text : Theme.Accent;
+        var ink = Vector4.Lerp(Vector4.Lerp(s.TextTertiary, s.TextSecondary, hover), selectedInk, select);
+        if (journal)
         {
             if (moonRoad)
             {
-                DrawLit(dl, iconCenter, i);
+                Orbit.DrawMoon(dl, icon - new Vector2(iconSize * 0.5f), iconSize, Motion.Fill(JournalKey, overallFraction), Theme.Glyphs.HighContrast);
             }
             else
             {
-                dl.AddCircleFilled(iconCenter, UiMetrics.Px(GlowRadiusLogical), Theme.WithAlpha(Theme.Moon, 0.06f), 24);
+                MoonGlyph.DrawFilling(dl, icon, iconSize * 0.45f, overallFraction);
             }
-        }
 
-        if (tab == NavTab.Journal)
-        {
-            if (moonRoad)
+            if (badgeText.Length > 0)
             {
-                var box = MathF.Round(iconSize);
-                Orbit.DrawMoon(dl, iconCenter - new Vector2(box * 0.5f), box, Motion.Fill(JournalKey, overallFraction), Theme.Glyphs.HighContrast);
-            }
-            else
-            {
-                MoonGlyph.DrawFilling(dl, iconCenter, iconSize * 0.45f, overallFraction);
-            }
-
-            if (ready > 0)
-            {
-                // The Ready count on the icon's top right, held inside the station: on the 44 px compact rail a "99+"
-                // pill there would run past the rail's edge and be clipped.
-                var badge = Chrome.BadgeSize(ready);
-                var edge = UiMetrics.Px(1f);
-                var badgeX = MathF.Min(iconCenter.X + iconSize * 0.55f, max.X - edge - badge.X * 0.5f);
-                var badgeY = MathF.Max(iconCenter.Y - iconSize * 0.42f, min.Y + edge + badge.Y * 0.5f);
-                Chrome.Badge(dl, new Vector2(badgeX, badgeY), ready, actionable: true);
+                DrawBadge(dl, badgeText, badgeMin - new Vector2(0f, rise), badgeMax - new Vector2(0f, rise), plain);
             }
         }
-        else if (!moonRoad || !DrawArtIcon(dl, tab, iconCenter, iconSize, active ? 1f : IdleIconAlpha + ((HoverIconAlpha - IdleIconAlpha) * hover)))
+        else if (!moonRoad || !DrawArtIcon(dl, tab, icon, iconSize, alpha))
         {
-            var ink = active ? Theme.AccentU32 : Theme.U32(Vector4.Lerp(s.TextTertiary, s.TextSecondary, hover));
-            DrawIcon(dl, iconCenter, tab == NavTab.Moonlit ? GemIcon : tab == NavTab.Characters ? UsersIcon : tab == NavTab.Flight ? PlaneIcon : PlanIcon, ink);
+            DrawIcon(dl, icon, iconSize, tab == NavTab.Moonlit ? GemIcon : tab == NavTab.Characters ? UsersIcon : tab == NavTab.Flight ? PlaneIcon : PlanIcon, Theme.WithAlpha(ink, alpha));
         }
 
-        var cut = Compact;
-        if (!Compact)
+        var fit = fits[i];
+        var shown = !Compact && !fit.IconOnly;
+        if (shown)
         {
-            ImGui.SetWindowFontScale(LayoutBudgets.RailLabelFraction);
-            var room = MathF.Max(0f, width - 2f * UiMetrics.Px(LayoutBudgets.RailLabelPadLogical));
-            var labelWidth = labelWidths[i];
-            var shown = MathF.Min(labelWidth, room);
-            var labelPos = new Vector2(MathF.Round(min.X + (width - shown) * 0.5f), MathF.Round(iconTop + iconSize + UiMetrics.Px(LayoutBudgets.StationGapLogical)));
-            cut = Chrome.EllipsisTextAt(dl, labelPos, room, Labels[i], Theme.U32(active ? s.Text : Vector4.Lerp(s.TextSecondary, s.Text, hover)), labelWidth);
-            ImGui.SetWindowFontScale(1f);
+            var labelInk = Theme.U32(Vector4.Lerp(s.TextSecondary, s.Text, MathF.Max(hover, select)));
+            DrawLabel(dl, Labels[i], fit, min.X + width * 0.5f, labelTop, labelInk);
         }
 
-        Chrome.FocusRing(rounding);
+        Chrome.FocusRing(UiMetrics.Px(PlateRadiusLogical));
         if (hovered)
         {
-            var description = tab == NavTab.Journal ? JournalTooltip(ready) : Tooltips[i];
-            if (cut)
-            {
-                UiMetrics.Tooltip(Labels[i], description);
-            }
-            else
+            var description = journal ? JournalTooltip(badge, everyReady, newlyReady) : Tooltips[i];
+            if (shown)
             {
                 UiMetrics.Tooltip(description);
             }
+            else
+            {
+                UiMetrics.Tooltip(Labels[i], description);
+            }
         }
     }
 
     /// <summary>
-    /// Where station <paramref name="i"/>'s lit bar runs on the thread this frame: its bottom (just above the icon) and its
-    /// top (where the bead sits), within the thread's segment above the station (from the crest, or from under the
-    /// station above).
+    /// A station's plate (spec §6, Revision 2): at Full and Quiet inset 3 px with a 10 px radius, at Plain full bleed and
+    /// square. Hover (<paramref name="lift"/>, none while selected) lays the hover tone at .55 with, at Full, a 1 px darker
+    /// foot under it, so the icon's rise has a cause. Selected (<paramref name="select"/>): Moon at .07 at Full, the text
+    /// tone at .06 inside a VeilLine border at Quiet, Plain's band with a 2 px text-coloured bar on the left edge. No glow,
+    /// no hairline.
     /// </summary>
-    private (float Bottom, float Top) LitSpan(int i)
+    private static void DrawPlate(ImDrawListPtr dl, Vector2 min, Vector2 max, Flair flair, float lift, float select)
     {
-        var (_, iconTop, contentBottom) = StationLayout(new Vector2(0f, stationsTop + (i * stationHeight)), 0f, stationHeight);
-        var segmentTop = i == 0 ? stationsThreadTop : contentBottom - stationHeight + UiMetrics.Px(ThreadGapLogical);
-        var bottom = MathF.Round(iconTop - UiMetrics.Px(ThreadGapLogical));
-        var length = MathF.Min(UiMetrics.Px(LitBarLogical), MathF.Max(0f, bottom - segmentTop));
-        return (bottom, MathF.Round(bottom - length));
+        var s = Theme.Surface;
+        if (flair == Flair.Plain)
+        {
+            if (select > 0.004f)
+            {
+                dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Tones.Band, select));
+                var bar = MathF.Max(2f, MathF.Round(UiMetrics.Px(2f)));
+                dl.AddRectFilled(min, new Vector2(min.X + bar, max.Y), Theme.WithAlpha(s.Text, select));
+            }
+
+            if (lift > 0.004f)
+            {
+                dl.AddRectFilled(min, max, Theme.WithAlpha(s.Hover, PlainHoverAlpha * lift));
+            }
+
+            return;
+        }
+
+        var inset = MathF.Round(UiMetrics.Px(LayoutBudgets.RailPlateInsetLogical));
+        var plateMin = min + new Vector2(inset);
+        var plateMax = max - new Vector2(inset);
+        var radius = UiMetrics.Px(PlateRadiusLogical);
+        if (lift > 0.004f)
+        {
+            dl.AddRectFilled(plateMin, plateMax, Theme.WithAlpha(s.Hover, PlateHoverAlpha * lift), radius);
+            if (flair == Flair.Full)
+            {
+                // The foot: the plate's bottom pixel row, clear of its rounded corners.
+                var foot = MathF.Max(1f, MathF.Round(UiMetrics.Px(1f)));
+                var curve = MathF.Round(radius * 0.7f);
+                dl.AddRectFilled(new Vector2(plateMin.X + curve, plateMax.Y - foot), new Vector2(plateMax.X - curve, plateMax.Y), Theme.WithAlpha(Theme.Abyss, PlateFootAlpha * lift));
+            }
+        }
+
+        if (select > 0.004f)
+        {
+            if (flair == Flair.Quiet)
+            {
+                dl.AddRectFilled(plateMin, plateMax, Theme.WithAlpha(s.Text, QuietSelectedPlateAlpha * select), radius);
+                dl.AddRect(plateMin, plateMax, Theme.WithAlpha(s.StrongLine, QuietSelectedBorderAlpha * select), radius, ImDrawFlags.None, UiMetrics.Hairline);
+            }
+            else
+            {
+                dl.AddRectFilled(plateMin, plateMax, Theme.WithAlpha(Theme.Moon, SelectedPlateAlpha * select), radius);
+            }
+        }
     }
 
     /// <summary>
-    /// The active station lit on the thread: a 2 px gold bar (MoonHigh → MoonDeep) ending just above the icon, a moon bead
-    /// at its head, and under Full flair a soft glow behind the icon. After a tab change under Full flair the bead first
-    /// travels along the thread from the old station's place to the new one (<see cref="MotionTokens.Travel"/>, ease in
-    /// and out), and the bar and glow light over the last part of the trip; otherwise it is simply lit.
+    /// The moon bead on the rail's left edge, at the selected station's icon line: 7 px MoonHigh in a 1.5 px Night rim
+    /// with a soft glow at Full, a 5 px Moon dot at Quiet, none at Plain or on a station off the rail. After a tab change it
+    /// runs from the station left behind to the new one over <see cref="MotionTokens.Travel"/>, eased in and out, and lands
+    /// as the new plate finishes; with motion off it simply stands there.
     /// </summary>
-    private void DrawLit(ImDrawListPtr dl, Vector2 iconCenter, int station)
+    private void DrawBead(ImDrawListPtr dl, float railLeft)
     {
-        var progress = Theme.FlairMotion ? Motion.Pulse(StationKey, MotionTokens.Travel) : -1f;
-        var travelling = progress >= 0f && travelFrom >= 0 && travelFrom < Tabs.Length && travelFrom != station;
+        var flair = Theme.Flair;
+        var station = Array.IndexOf(Tabs, ui.Tab);
+        if (flair == Flair.Plain || station < 0)
+        {
+            travelFrom = -1;
+            return;
+        }
+
+        var progress = Theme.UiMotion ? Motion.Pulse(StationKey, MotionTokens.Travel) : -1f;
+        var y = iconCenters[station];
         if (progress < 0f)
         {
             travelFrom = -1;
         }
-
-        // The bar and glow light over the trip's last 40 %; without a trip they are simply lit.
-        var light = travelling ? MotionMath.EaseOutCubic((progress - 0.6f) / 0.4f) : progress < 0f ? 1f : MotionMath.EaseOutCubic(progress);
-        if (Theme.ShowGlow && light > 0f)
+        else if (travelFrom >= 0 && travelFrom < Tabs.Length && travelFrom != station)
         {
-            dl.AddCircleFilled(iconCenter, UiMetrics.Px(GlowRadiusLogical), Theme.WithAlpha(Theme.Moon, 0.06f * light), 24);
+            var from = iconCenters[travelFrom];
+            y = from + ((y - from) * MotionMath.EaseInOutCubic(progress));
         }
 
-        var (bottom, top) = LitSpan(station);
-        var bar = MathF.Max(2f, MathF.Round(UiMetrics.Px(2f)));
-        var left = MathF.Round(iconCenter.X - ((bar - 1f) * 0.5f));
-        if (bottom - top >= 1f && light > 0f)
+        if (flair == Flair.Quiet)
         {
-            var length = (bottom - top) * (travelling ? 1f : 0.2f + (0.8f * light));
-            var barTop = MathF.Round(bottom - length);
-            dl.AddRectFilledMultiColor(
-                new Vector2(left, barTop),
-                new Vector2(left + bar, bottom),
-                Theme.WithAlpha(Theme.MoonHigh, light),
-                Theme.WithAlpha(Theme.MoonHigh, light),
-                Theme.WithAlpha(Theme.MoonDeep, light),
-                Theme.WithAlpha(Theme.MoonDeep, light));
-            top = travelling ? top : barTop;
-        }
-        else if (!travelling && bottom - top < 1f)
-        {
+            var dot = new Vector2(railLeft + UiMetrics.Px(QuietBeadInsetLogical), y);
+            dl.AddCircleFilled(dot, UiMetrics.Px(QuietBeadRadiusLogical), Theme.MoonU32, 12);
             return;
         }
 
-        // The bead: at the bar's head, or on its way there along the thread from the station left behind.
-        var beadY = top;
-        var beadAlpha = travelling ? 1f : light;
-        if (travelling)
+        var c = new Vector2(railLeft + UiMetrics.Px(BeadInsetLogical), y);
+        var r = UiMetrics.Px(BeadRadiusLogical);
+        if (Theme.ShowGlow)
         {
-            var (_, fromTop) = LitSpan(travelFrom);
-            beadY = MathF.Round(fromTop + ((top - fromTop) * MotionMath.EaseInOutCubic(progress)));
+            // The bead's own light: a soft MoonHigh halo, faint at its edge.
+            dl.AddCircleFilled(c, r + UiMetrics.Px(6f), Theme.WithAlpha(Theme.MoonHigh, 0.7f * 0.05f), 20);
+            dl.AddCircleFilled(c, r + UiMetrics.Px(3.5f), Theme.WithAlpha(Theme.MoonHigh, 0.7f * 0.10f), 20);
         }
 
-        var bead = new Vector2(left + (bar * 0.5f), beadY);
-        dl.AddCircleFilled(bead, UiMetrics.Px(Orbit.BeadRimLogical), Theme.WithAlpha(Theme.Night, beadAlpha));
-        dl.AddCircleFilled(bead, UiMetrics.Px(Orbit.BeadLogical), Theme.WithAlpha(Theme.MoonHigh, beadAlpha));
+        dl.AddCircleFilled(c, r + UiMetrics.Px(BeadRimLogical), Theme.WithAlpha(Theme.Night, 1f), 16);
+        dl.AddCircleFilled(c, r, Theme.MoonHighU32, 16);
+        // Lit from the upper left, as every light on the Moon Road.
+        dl.AddCircleFilled(c - new Vector2(r * 0.25f, r * 0.3f), r * 0.45f, Theme.WithAlpha(Vector4.One, 0.55f), 10);
+    }
+
+    /// <summary>
+    /// Where the Journal badge sits: one fixed size (16 px tall, at least 16 wide), its left edge just inside the icon's
+    /// right and its top over the icon, held inside the station. At Plain it is the gold number alone.
+    /// </summary>
+    private static (Vector2 Min, Vector2 Max) BadgeRect(string text, Vector2 iconCenter, float iconSize, Vector2 stationMin, Vector2 stationMax, bool plain)
+    {
+        var font = UiMetrics.Px(BadgeTextLogical);
+        var textWidth = ImGui.CalcTextSize(text).X * font / MathF.Max(1f, ImGui.GetFontSize());
+        var height = MathF.Round(UiMetrics.Px(BadgeLogical));
+        var width = plain ? MathF.Ceiling(textWidth) : MathF.Max(height, MathF.Round(textWidth + (2f * UiMetrics.Px(BadgePadLogical))));
+        var edge = UiMetrics.Px(1f);
+        var left = MathF.Round(iconCenter.X + (iconSize * 0.5f) - UiMetrics.Px(BadgeOverlapLogical));
+        left = MathF.Min(left, stationMax.X - edge - width);
+        var top = MathF.Round(iconCenter.Y - (iconSize * 0.5f) - UiMetrics.Px(BadgeRiseLogical));
+        top = MathF.Max(top, stationMin.Y + edge);
+        return (new Vector2(left, top), new Vector2(left + width, top + height));
+    }
+
+    /// <summary>The Journal badge: Moon with Night text in a thin Abyss rim at full strength whatever the station's state; at Plain a gold number.</summary>
+    private static void DrawBadge(ImDrawListPtr dl, string text, Vector2 min, Vector2 max, bool plain)
+    {
+        var font = ImGui.GetFont();
+        var size = UiMetrics.Px(BadgeTextLogical);
+        var textWidth = ImGui.CalcTextSize(text).X * size / MathF.Max(1f, ImGui.GetFontSize());
+        var center = (min + max) * 0.5f;
+        var textPos = new Vector2(MathF.Round(center.X - (textWidth * 0.5f)), MathF.Round(center.Y - (size * 0.5f)));
+        if (plain)
+        {
+            dl.AddText(font, size, textPos, Theme.MoonU32, text);
+            return;
+        }
+
+        var radius = (max.Y - min.Y) * 0.5f;
+        var rim = UiMetrics.Px(1.5f);
+        dl.AddRectFilled(min - new Vector2(rim), max + new Vector2(rim), Theme.AbyssU32, radius + rim);
+        dl.AddRectFilled(min, max, Theme.MoonU32, radius);
+        dl.AddText(font, size, textPos, Theme.NightU32, text);
+    }
+
+    /// <summary>
+    /// A fitted label (<see cref="RailLabel.Fit"/>) centred on <paramref name="centerX"/> from <paramref name="top"/>: one
+    /// or two lines at the fit's size, glyph by glyph when it is tracked (ImGui has no letter spacing).
+    /// </summary>
+    private static void DrawLabel(ImDrawListPtr dl, string label, RailLabelFit fit, float centerX, float top, uint color)
+    {
+        var text = label.AsSpan().Trim();
+        var offset = label.Length - label.AsSpan().TrimStart().Length;
+        var size = UiMetrics.Px(fit.Size);
+        var tracking = UiMetrics.Px(fit.Tracking);
+        if (fit.Lines >= 2 && fit.Break - offset > 0 && fit.Break - offset < text.Length)
+        {
+            var at = fit.Break - offset;
+            DrawLine(dl, text[..at].TrimEnd(), size, tracking, centerX, top, color);
+            DrawLine(dl, text[(at + 1)..].TrimStart(), size, tracking, centerX, MathF.Round(top + (size * RailLabel.LineHeight)), color);
+            return;
+        }
+
+        DrawLine(dl, text, size, tracking, centerX, top, color);
+    }
+
+    private static void DrawLine(ImDrawListPtr dl, ReadOnlySpan<char> text, float size, float tracking, float centerX, float top, uint color)
+    {
+        var font = ImGui.GetFont();
+        var perPx = size / MathF.Max(1f, ImGui.GetFontSize());
+        var width = (ImGui.CalcTextSize(text).X * perPx) + (tracking * (text.Length - 1));
+        var x = MathF.Round(centerX - (width * 0.5f));
+        if (tracking == 0f)
+        {
+            dl.AddText(font, size, new Vector2(x, top), color, text);
+            return;
+        }
+
+        var pen = x;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var glyph = text.Slice(i, 1);
+            dl.AddText(font, size, new Vector2(MathF.Round(pen), top), color, glyph);
+            pen += (ImGui.CalcTextSize(glyph).X * perPx) + tracking;
+        }
     }
 
     /// <summary>
@@ -584,11 +743,14 @@ public sealed class TabStrip
 
         if (percent)
         {
-            ImGui.SetWindowFontScale(LayoutBudgets.RailLabelFraction);
-            ImGui.SetCursorScreenPos(new Vector2(MathF.Round(centerX - percentWidth * ImGui.GetFontSize() * 0.5f), y));
-            ImGui.TextUnformatted(percentText);
+            // At the rail labels' size, as one item so its hover shows the gauge's tooltip.
+            var size = LabelPx();
+            var width = percentWidth * size;
+            var pos = new Vector2(MathF.Round(centerX - width * 0.5f), y);
+            ImGui.SetCursorScreenPos(pos);
+            ImGui.Dummy(new Vector2(MathF.Max(1f, width), size));
             gaugeHovered |= ImGui.IsItemHovered();
-            ImGui.SetWindowFontScale(1f);
+            dl.AddText(ImGui.GetFont(), size, pos, ImGui.GetColorU32(ImGuiCol.Text), percentText);
             y += UiMetrics.Px(LayoutBudgets.PercentLine(percent: true));
         }
 
@@ -655,33 +817,55 @@ public sealed class TabStrip
         ui.RecordItem(rectKey);
     }
 
-    private static void DrawIcon(ImDrawListPtr dl, Vector2 center, string icon, uint color)
+    /// <summary>
+    /// A FontAwesome station icon filling its <paramref name="box"/>: drawn at the size that fits the glyph's height and
+    /// width in the box (FontAwesome glyphs sit a little inside their em, and Users is wider than tall).
+    /// </summary>
+    private static void DrawIcon(ImDrawListPtr dl, Vector2 center, float box, string icon, uint color)
     {
         ImGui.PushFont(UiBuilder.IconFont);
-        var size = ImGui.CalcTextSize(icon);
-        dl.AddText(center - size * 0.5f, color, icon);
-        ImGui.PopFont();
+        try
+        {
+            var font = ImGui.GetFont();
+            var native = ImGui.CalcTextSize(icon);
+            var em = MathF.Max(1f, ImGui.GetFontSize());
+            var size = MathF.Round(MathF.Min(box * 0.86f, box * em / MathF.Max(1f, native.X)));
+            var drawn = native * (size / em);
+            dl.AddText(font, size, new Vector2(MathF.Round(center.X - drawn.X * 0.5f), MathF.Round(center.Y - drawn.Y * 0.5f)), color, icon);
+        }
+        finally
+        {
+            ImGui.PopFont();
+        }
     }
 
-    /// <summary>Measures the labels at their own size when the language or the font size changed.</summary>
-    private void MeasureLabels()
+    /// <summary>
+    /// Fits the labels to their plates (<see cref="RailLabel.Fit"/>) when the language, the label size, the room or the
+    /// lines the stations take changed: in logical px, so the UI scale moves the rail, the plate and the label together.
+    /// </summary>
+    private void FitLabels(float stationPx)
     {
-        var fontSize = ImGui.GetFontSize();
-        if (labelsLanguage == Localization.Loc.Version && labelsFontSize == fontSize)
+        var scale = MathF.Max(0.01f, UiMetrics.Scale);
+        var size = LayoutBudgets.RailLabelLogical(ImGui.GetFontSize() / scale);
+        var flair = Theme.Flair;
+        var room = LayoutBudgets.RailLabelRoom(flair);
+        // Two lines where the station has the height for them under its icon, inside its plate.
+        var below = (stationPx / scale) - (2f * LayoutBudgets.RailPlateInsetLogical) - LayoutBudgets.StationIcon(flair) - LayoutBudgets.StationGapLogical;
+        var lines = below >= size * (1f + RailLabel.LineHeight) ? 2 : 1;
+        if (fitsLanguage == Localization.Loc.Version && fitsSize == size && fitsRoom == room && fitsLines == lines)
         {
             return;
         }
 
-        labelsLanguage = Localization.Loc.Version;
-        labelsFontSize = fontSize;
-        ImGui.SetWindowFontScale(LayoutBudgets.RailLabelFraction);
+        fitsLanguage = Localization.Loc.Version;
+        fitsSize = size;
+        fitsRoom = room;
+        fitsLines = lines;
         var labels = Labels;
         for (var i = 0; i < labels.Length; i++)
         {
-            labelWidths[i] = ImGui.CalcTextSize(labels[i]).X;
+            fits[i] = RailLabel.Fit(labels[i], size, LayoutBudgets.RailLabelMinLogical, room, lines, MeasureEm);
         }
-
-        ImGui.SetWindowFontScale(1f);
     }
 
     /// <summary>The foot's percentage and progress texts, rebuilt when the overall count or the language changes.</summary>
@@ -701,18 +885,35 @@ public sealed class TabStrip
         progressText = UiFormat.Progress(Math.Max(0, overall.Done), Math.Max(0, overall.Total));
     }
 
-    /// <summary>The Journal station's hover text: what it holds, then the Ready count; rebuilt only when the count or the language changes.</summary>
-    private string JournalTooltip(int ready)
+    /// <summary>
+    /// The Journal station's hover text: what it holds, then what the badge counts (the newly ready quests and the Ready
+    /// ones, the story and unlock quests, or the Ready count), then "Click to show the new ones" while the pointer is on a
+    /// badge that opens them. Rebuilt only when one of those or the language changes.
+    /// </summary>
+    private string JournalTooltip(RailBadge badge, int everyReady, bool onBadge)
     {
-        if (ready != readyTooltipCount || readyTooltipLanguage != Localization.Loc.Version)
+        if (badge == tooltipBadge && everyReady == tooltipEveryReady && onBadge == tooltipOnBadge && tooltipLanguage == Localization.Loc.Version && journalTooltip.Length > 0)
         {
-            readyTooltipCount = ready;
-            readyTooltipLanguage = Localization.Loc.Version;
-            readyTooltip = ready > 0
-                ? Strings.TabJournalTooltip + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.TreeReadyBadgeFormat, ready)
-                : Strings.TabJournalTooltip;
+            return journalTooltip;
         }
 
-        return readyTooltip;
+        tooltipBadge = badge;
+        tooltipEveryReady = everyReady;
+        tooltipOnBadge = onBadge;
+        tooltipLanguage = Localization.Loc.Version;
+        var c = CultureInfo.CurrentCulture;
+        var ready = string.Format(c, Strings.TreeReadyBadgeFormat, badge.Mode == JournalBadgeMode.EveryReady ? everyReady : badge.Ready);
+        var counts = badge.Mode switch
+        {
+            JournalBadgeMode.NewlyReady when badge.New > 0 => string.Format(c, Strings.RailNewlyReadyFormat, badge.New) + Strings.RailCountSeparator + ready,
+            JournalBadgeMode.StoryAndUnlock when badge.StoryReady > 0 => string.Format(c, Strings.RailStoryReadyFormat, badge.StoryReady) + Strings.RailCountSeparator + ready,
+            JournalBadgeMode.EveryReady when everyReady > 0 => ready,
+            _ => badge.Ready > 0 ? ready : string.Empty,
+        };
+
+        journalTooltip = Strings.TabJournalTooltip
+            + (counts.Length > 0 ? "\n" + counts : string.Empty)
+            + (onBadge ? "\n" + Strings.RailNewlyReadyClick : string.Empty);
+        return journalTooltip;
     }
 }

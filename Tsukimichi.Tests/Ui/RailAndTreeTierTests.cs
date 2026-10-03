@@ -123,11 +123,84 @@ public class RailAndTreeTierTests
     // ---- Rail ----
 
     [Fact]
-    public void The_rail_is_64_with_a_44_compact_mode()
+    public void The_rail_is_70_at_full_66_at_quiet_with_a_44_compact_mode()
     {
-        Assert.Equal(64f, ScaleMetrics.RailLogical);
+        // Plan v7 UI-4, spec Revision 3: wider rails so "Characters" fits its plate.
+        Assert.Equal(70f, ScaleMetrics.RailLogical);
+        Assert.Equal(66f, ScaleMetrics.RailQuietLogical);
         Assert.Equal(44f, ScaleMetrics.RailCompactLogical);
+        Assert.Equal(70f, LayoutBudgets.RailWidthLogical(Flair.Full, compact: false));
+        Assert.Equal(66f, LayoutBudgets.RailWidthLogical(Flair.Quiet, compact: false));
+        Assert.Equal(44f, LayoutBudgets.RailWidthLogical(Flair.Plain, compact: false));
+        Assert.Equal(44f, LayoutBudgets.RailWidthLogical(Flair.Full, compact: true));
         Assert.True(ScaleMetrics.RailCompactLogical >= LayoutBudgets.RailButtonLogical + 2f * LayoutBudgets.RailLabelPadLogical);
+    }
+
+    [Fact]
+    public void Labels_have_60_px_at_full_and_56_at_quiet_inside_a_3_px_plate_inset()
+    {
+        Assert.Equal(60f, LayoutBudgets.RailLabelRoom(Flair.Full));
+        Assert.Equal(56f, LayoutBudgets.RailLabelRoom(Flair.Quiet));
+        Assert.Equal(LayoutBudgets.RailLabelRoomLogical, LayoutBudgets.RailLabelRoom(Flair.Full));
+        Assert.Equal(3f, LayoutBudgets.RailPlateInsetLogical);
+    }
+
+    [Theory]
+    [InlineData(Flair.Full, 30f)]
+    [InlineData(Flair.Quiet, 28f)]
+    [InlineData(Flair.Plain, 20f)]
+    public void Station_icons_are_30_28_and_20(Flair flair, float icon)
+    {
+        Assert.Equal(icon, LayoutBudgets.StationIcon(flair));
+    }
+
+    [Theory]
+    [InlineData(12.8f, 10f)]
+    [InlineData(14.4f, 10.8f)]
+    [InlineData(16f, 12f)]
+    [InlineData(24f, 12f)]
+    [InlineData(8f, 10f)]
+    public void Rail_labels_are_three_quarters_of_the_body_held_to_10_to_12(float body, float label)
+    {
+        Assert.Equal(label, LayoutBudgets.RailLabelLogical(body), 3);
+    }
+
+    [Theory]
+    [InlineData(Flair.Full, false)]
+    [InlineData(Flair.Quiet, false)]
+    [InlineData(Flair.Full, true)]
+    [InlineData(Flair.Plain, true)]
+    public void Stations_share_the_rail_between_their_least_and_most(Flair flair, bool compact)
+    {
+        // Plan v7 UI-4: the stations take the height the crest, the foot and the sky reserve leave, never past their most.
+        var rule = LayoutBudgets.Stations(flair, compact);
+        for (var height = 300f; height <= 2000f; height += 10f)
+        {
+            var fit = LayoutBudgets.FitRail(height, 5, compact, flair: flair);
+            Assert.InRange(fit.Station, rule.Floor, rule.Max);
+            if (fit.FootAnchored)
+            {
+                Assert.True(LayoutBudgets.RailHeight(fit, 5, compact) <= height + 0.05f, $"{height}: {LayoutBudgets.RailHeight(fit, 5, compact)}");
+            }
+        }
+
+        // Tall: the most, with at least the reserve of sky left under the stations.
+        var tall = LayoutBudgets.FitRail(2000f, 5, compact, flair: flair);
+        Assert.Equal(rule.Max, tall.Station);
+        Assert.True(2000f - LayoutBudgets.RailHeight(tall, 5, compact) >= rule.Reserve);
+    }
+
+    [Fact]
+    public void A_full_rail_of_middling_height_keeps_its_sky_reserve()
+    {
+        // Between the least and the most, the stations stop where the 96 px of sky for the stars begins.
+        var rule = LayoutBudgets.Stations(Flair.Full, compact: false);
+        Assert.Equal(new RailStations(54f, 84f, 96f, 48f), rule);
+        var noStations = LayoutBudgets.RailHeight(new RailFit(LayoutBudgets.CrestLogical, 0f, true, true), 5, compact: false);
+        var height = noStations + rule.Reserve + (5 * 70f);
+        var fit = LayoutBudgets.FitRail(height, 5, compact: false);
+        Assert.Equal(70f, fit.Station, 3);
+        Assert.Equal(rule.Reserve, height - LayoutBudgets.RailHeight(fit, 5, compact: false), 3);
     }
 
     [Fact]
@@ -184,7 +257,8 @@ public class RailAndTreeTierTests
     {
         var fit = LayoutBudgets.FitRail(1000f, 5, compact);
         Assert.Equal(compact ? LayoutBudgets.CrestSmallLogical : LayoutBudgets.CrestLogical, fit.Crest);
-        Assert.Equal(compact ? LayoutBudgets.CompactStationLogical : LayoutBudgets.StationLogical, fit.Station);
+        // The stations share the height (plan v7 UI-4): a tall rail gives them their most.
+        Assert.Equal(compact ? LayoutBudgets.CompactStationMaxLogical : LayoutBudgets.StationMaxLogical, fit.Station);
         Assert.True(fit.Percent);
         Assert.True(fit.FootAnchored);
     }
@@ -215,7 +289,8 @@ public class RailAndTreeTierTests
         var fit = LayoutBudgets.FitRail(120f, 5, compact);
         Assert.False(fit.FootAnchored);
         Assert.Equal(0f, fit.Crest);
-        Assert.Equal(compact ? LayoutBudgets.CompactStationMinLogical : LayoutBudgets.StationMinLogical, fit.Station);
+        // At its floor: the icon (and on the labelled rail one line of label) on its plate.
+        Assert.Equal(LayoutBudgets.Stations(Flair.Full, compact).Floor, fit.Station);
     }
 
     [Theory]
@@ -242,11 +317,11 @@ public class RailAndTreeTierTests
         // ContentBottom) must end inside the pane whenever the foot is anchored, or the rail becomes wheel-scrollable.
         var scale = ScaleMetrics.LayoutFactor(globalScale, uiScale);
         var button = MathF.Max(LayoutBudgets.RailButtonLogical * scale, 24f);
-        foreach (var compact in new[] { false, true })
+        foreach (var (compact, flair) in new[] { (false, Flair.Full), (false, Flair.Quiet), (true, Flair.Full), (true, Flair.Plain) })
         {
             for (var height = 150f; height <= 1400f; height += 0.75f)
             {
-                var place = LayoutBudgets.PlaceRail(height, scale, 5, compact, button);
+                var place = LayoutBudgets.PlaceRail(height, scale, 5, compact, button, flair);
                 if (!place.Fit.FootAnchored)
                 {
                     continue;
@@ -307,7 +382,7 @@ public class RailAndTreeTierTests
     public void A_short_rail_gives_up_the_gauge_before_the_crest(bool compact)
     {
         // Just short of what the stations at their minimum need with the gauge: the gauge goes, the crest stays.
-        var stationMin = compact ? LayoutBudgets.CompactStationMinLogical : LayoutBudgets.StationMinLogical;
+        var stationMin = LayoutBudgets.Stations(Flair.Full, compact).Floor;
         var withGauge = LayoutBudgets.RailHeight(new RailFit(LayoutBudgets.CrestSmallLogical, stationMin, false, true), 5, compact);
         var fit = LayoutBudgets.FitRail(withGauge - 1f, 5, compact);
         Assert.True(fit.GaugeHidden);

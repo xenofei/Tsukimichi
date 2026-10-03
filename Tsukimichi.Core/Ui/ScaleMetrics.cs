@@ -101,11 +101,16 @@ public static class ScaleMetrics
     public static float IconFactor(float globalScale, float uiScale, float iconScale) => LayoutFactor(globalScale, uiScale) * ClampIconScale(iconScale);
 
     /// <summary>
-    /// Logical width of the main window's tab rail (feature plan v4 L7, design v4 §7.1): its own column left of the
-    /// tree, a crest on top, one 54 px station per tab (a 22 px icon over a small label) and the overall gauge, Help
-    /// and Settings at its foot. A label wider than the station ends in an ellipsis and its tooltip carries it.
+    /// Logical width of the main window's tab rail at Full (feature plan v4 L7; 70 since plan v7 UI-4, spec Revision 3):
+    /// its own column left of the tree, a crest on top, one station per tab (a 30 px icon on a plate over a small label,
+    /// the stations sharing the rail's height) and the overall gauge, Help and Settings at its foot. A label that does
+    /// not fit its plate is tracked, shrunk or wrapped (<see cref="RailLabel.Fit"/>), never cut. The widest rail, so the
+    /// main window's minimum is reckoned with it.
     /// </summary>
-    public const float RailLogical = 64f;
+    public const float RailLogical = 70f;
+
+    /// <summary>The labelled rail at Quiet (plan v7 UI-4, spec Revision 3): a little narrower than Full's, for 28 px icons.</summary>
+    public const float RailQuietLogical = 66f;
 
     /// <summary>
     /// The compact rail: icons only, the labels in tooltips. It turns on by itself on a narrow window

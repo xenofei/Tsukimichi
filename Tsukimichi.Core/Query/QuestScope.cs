@@ -32,4 +32,11 @@ public readonly record struct QuestScope(ScopeKind Kind, uint Id)
     /// line's scope differs from an older one's. Not a tree node; the scope chip names it.
     /// </summary>
     public static QuestScope JustOpened(uint serial) => new(ScopeKind.VirtualJustOpened, serial);
+
+    /// <summary>
+    /// The quests the Journal badge counted as newly ready when it was clicked (<see cref="QueryContext.NewlyReady"/>), in
+    /// journal order. <paramref name="serial"/> tells one click's list from the next. Not a tree node; the scope chip
+    /// names it, and closing it marks those quests seen.
+    /// </summary>
+    public static QuestScope NewlyReady(uint serial) => new(ScopeKind.VirtualNewlyReady, serial);
 }

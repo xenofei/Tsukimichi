@@ -48,6 +48,10 @@ namespace Tsukimichi.Core.Query;
 /// The free-trial view (<see cref="Query.FreeTrial"/>): quests beyond the trial read "Beyond your trial" instead of their
 /// blocker and are listed after the rest (<see cref="QueryResult.BeyondTrial"/>).
 /// </param>
+/// <param name="NewlyReady">
+/// Row ids the "Newly ready" scope lists (<see cref="QuestScope.NewlyReady"/>, plan v7): what the Journal badge counted
+/// when it was clicked; null or empty lists nothing there.
+/// </param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
@@ -68,7 +72,8 @@ public sealed record QueryContext(
     IReadOnlySet<uint>? JustOpened = null,
     IReadOnlySet<uint>? NewGamePlus = null,
     ChainCatalog? Chains = null,
-    bool FreeTrial = false)
+    bool FreeTrial = false,
+    IReadOnlySet<uint>? NewlyReady = null)
 {
     public const int DefaultStalledDays = 7;
 

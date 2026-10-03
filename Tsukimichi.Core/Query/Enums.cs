@@ -42,6 +42,13 @@ public enum ScopeKind
     /// from the "Opened:" chat line's Show link, not the tree. <see cref="QuestScope.Id"/> is the batch's serial.
     /// </summary>
     VirtualJustOpened,
+
+    /// <summary>
+    /// The quests the Journal badge counted as newly ready when it was clicked (plan v7, <see cref="NewlyReady"/>):
+    /// <see cref="QueryContext.NewlyReady"/>, reached from the rail's badge, not the tree. <see cref="QuestScope.Id"/> is
+    /// the click's serial.
+    /// </summary>
+    VirtualNewlyReady,
 }
 
 /// <summary>One-click table presets from the filter panel; at most one is active at a time.</summary>

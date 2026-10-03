@@ -70,6 +70,9 @@ public sealed class CharacterSettingsBook
     public bool IsWhyOpen(ulong contentId, string gateId) =>
         Get(contentId)?.PayoffWhyOpen.Contains(gateId, StringComparer.Ordinal) == true;
 
+    /// <summary>The available quests the player has seen (the Journal badge's "Newly ready"); null before the character's first look.</summary>
+    public IReadOnlyList<uint>? SeenReady(ulong contentId) => Get(contentId)?.SeenReady;
+
     /// <summary>Applies one edit here and queues its save.</summary>
     public void Edit(CharacterSettingChange change) => Edit([change]);
 
@@ -291,6 +294,9 @@ public sealed class CharacterSettingsBook
         return true;
     }
 
+    private static bool SameIds(List<uint>? a, List<uint>? b) =>
+        ReferenceEquals(a, b) || (a is not null && b is not null && a.SequenceEqual(b));
+
     /// <summary>The same characters with the same settings (lists compared in order; extra fields not compared).</summary>
     private static bool Same(IReadOnlyDictionary<ulong, CharacterSettings> a, IReadOnlyDictionary<ulong, CharacterSettings> b)
     {
@@ -312,7 +318,8 @@ public sealed class CharacterSettingsBook
                 || x.DontTrack != y.DontTrack
                 || x.CompareWith != y.CompareWith
                 || !x.PayoffGatesNoticed.SequenceEqual(y.PayoffGatesNoticed, StringComparer.Ordinal)
-                || !x.PayoffWhyOpen.SequenceEqual(y.PayoffWhyOpen, StringComparer.Ordinal))
+                || !x.PayoffWhyOpen.SequenceEqual(y.PayoffWhyOpen, StringComparer.Ordinal)
+                || !SameIds(x.SeenReady, y.SeenReady))
             {
                 return false;
             }

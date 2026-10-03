@@ -47,6 +47,7 @@ public sealed partial class MainWindow : Window, IDisposable
     private readonly ITextureProvider textures;
     private readonly FilterPanel filterPanel;
     private readonly TabStrip tabStrip;
+    private readonly JournalBadge journalBadge;
     private readonly TreePane treePane;
     private readonly TablePane tablePane;
     private readonly DetailPane detailPane;
@@ -168,6 +169,8 @@ public sealed partial class MainWindow : Window, IDisposable
         filterPanel = new FilterPanel(ui, OnFiltersChanged);
         ui.FiltersChanged += OnFiltersChanged;
         tabStrip = new TabStrip(ui);
+        journalBadge = new JournalBadge(ui, () => plugin.CharacterBook);
+        tabStrip.ShowNewlyReady = journalBadge.ShowNew;
         treePane = new TreePane(ui, textures, () => plugin.Session.NodeIcons);
         tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll, OnFiltersChanged)
         {
@@ -686,6 +689,7 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         runner.Update(now);
+        journalBadge.Update(session);
         // "Set up your road" comes once the tour offer is answered and any tour taken has ended (decision 7). The offer
         // is decided after this window's first draw (TutorialOverlay.CheckFirstRun), so the card waits a few frames.
         if (contentFrames < SetupDelayFrames)
@@ -1495,8 +1499,8 @@ public sealed partial class MainWindow : Window, IDisposable
         // drawer over the tree (feature plan v6 U2), so it no longer takes the column.
         var stripAllowed = ui.Tab == NavTab.Journal;
 
-        // The rail keeps its own width (it follows the UI scale every frame): 64 logical px with labels, or the 44 px
-        // compact rail on a narrow window or by setting (feature plan v4 L7).
+        // The rail keeps its own width (it follows the UI scale every frame): 70 logical px with labels at Full and 66 at
+        // Quiet (plan v7 UI-4), or the 44 px compact rail on a narrow window or by setting (feature plan v4 L7).
         // Plain's rail is always the compact one: icons only, no crest or labels (docs/design/flair-v13 §1).
         tabStrip.UpdateMode(ImGui.GetWindowSize().X / ImGuiHelpers.GlobalScale, UiMetrics.UiScale, settings.CompactRail || FlairRules.CompactRail(Theme.Flair));
         var widths = PaneSplit.Solve(settings, total, tabStrip.RailWidth, stripAllowed);
@@ -1507,7 +1511,10 @@ public sealed partial class MainWindow : Window, IDisposable
             if (rail)
             {
                 var counts = runner.Counts;
-                tabStrip.Draw(counts?.Overall ?? default, counts?.OverallReady ?? 0, openHelp, openSettings);
+                var everyReady = counts?.OverallReady ?? 0;
+                var mode = Enum.IsDefined(settings.JournalBadge) ? settings.JournalBadge : JournalBadgeMode.NewlyReady;
+                var badge = new RailBadge(mode, journalBadge.Count(mode, everyReady), journalBadge.NewCount, journalBadge.ReadyCount, journalBadge.StoryReadyCount);
+                tabStrip.Draw(counts?.Overall ?? default, badge, everyReady, openHelp, openSettings);
             }
         }
 
