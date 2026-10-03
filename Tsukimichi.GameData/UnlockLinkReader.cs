@@ -18,7 +18,8 @@ namespace Tsukimichi.GameData;
 /// <item>aethernet gates a quest opens: <c>Aetheryte.RequiredQuest</c>;</item>
 /// <item>where each quest's objectives lead: its <c>IssuerLocation</c> and every <c>TodoParams.ToDoLocation</c>
 /// <c>Level</c> row in a town or field zone, with the coordinates;</item>
-/// <item>every duty's icon (its content type's), level and expansion;</item>
+/// <item>every duty's icon (<see cref="DutyArt"/>'s chain, read by <see cref="DutyArtReader"/>), level and expansion,
+/// and the Duty Finder menu icon a duty the sheets do not know wears;</item>
 /// <item>the icons of the actions, traits, general actions and blue magic a quest can teach;</item>
 /// <item>the icons of the feature rows (<see cref="FeatureIconReader"/>);</item>
 /// <item>the aetherytes (from <see cref="AetheryteIndex"/>, placed by their map markers) and the gates' names.</item>
@@ -121,8 +122,9 @@ public static class UnlockLinkReader
         // Where each quest's objectives lead, in town and field zones.
         var touches = Part("quest objectives' places", () => ReadTouches(excel, language, areaTerritories), [], log);
 
-        // Duties: their content type's icon, their level and expansion.
+        // Duties: their icon (DutyArt's chain), their level and expansion; the Duty Finder menu icon for any other.
         var duties = Part("duties", () => ReadDuties(excel, language), [], log);
+        var dutyFinderIcon = Part("Duty Finder menu icon", () => DutyArtReader.Shared.Read(excel, language).DutyFinderIcon, 0u, log);
 
         // Actions, traits, general actions and blue magic: their icons, for the action rows the reward data names.
         var actionIcons = Part("action icons", () => ReadActionIcons(excel, language), [], log);
@@ -141,6 +143,7 @@ public static class UnlockLinkReader
             GatedAethernet = gates,
             Touches = touches,
             Duties = duties,
+            DutyFinderIcon = dutyFinderIcon,
             ActionIcons = actionIcons,
             AreaIcon = areaIcon,
             FeatureIcons = featureIcons,
@@ -315,6 +318,7 @@ public static class UnlockLinkReader
     private static List<UnlockDuty> ReadDuties(ExcelModule excel, Language language)
     {
         var duties = new List<UnlockDuty>();
+        var shared = DutyArtReader.Shared.Read(excel, language);
         foreach (var row in excel.GetSheet<ContentFinderCondition>(language))
         {
             if (row.Name.IsEmpty)
@@ -322,7 +326,8 @@ public static class UnlockLinkReader
                 continue;
             }
 
-            var icon = row.ContentType.ValueNullable?.Icon ?? 0u;
+            // The duty's emblem, else its category's tile, and on to the Duty Finder menu icon (DutyArt).
+            var icon = DutyArtReader.Icon(in row, in shared);
             duties.Add(new UnlockDuty(row.RowId, icon, row.ClassJobLevelRequired, (byte)(row.TerritoryType.ValueNullable?.ExVersion.RowId ?? 0)));
         }
 

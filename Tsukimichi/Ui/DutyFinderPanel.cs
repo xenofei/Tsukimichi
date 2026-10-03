@@ -1,6 +1,7 @@
 using System;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Game;
 
@@ -8,9 +9,10 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The Duty Finder unlock hint (P13), drawn side: a small borderless window beside the game's Duty Finder while a
-/// padlocked duty is selected (<see cref="DutyFinderHint.Current"/>): "Locked duty", the duty's name, then per quest that
-/// unlocks it "Unlocked by:" with its state moon and name, <see cref="Core.Evaluation.BlockerText.StatusText"/> under it
-/// in the quieter tone (the quest done: in the dimmed accent), and the buttons Reveal in Tsukimichi and Flag giver.
+/// padlocked duty is selected (<see cref="DutyFinderHint.Current"/>): "Locked duty", the duty's icon and name, then per
+/// quest that unlocks it "Unlocked by:" with its state moon and name, <see cref="Core.Evaluation.BlockerText.StatusText"/>
+/// under it in the quieter tone (the quest done: in the dimmed accent), and the buttons Reveal in Tsukimichi and Flag
+/// giver.
 /// <para>
 /// Drawn from <c>UiBuilder.Draw</c>, outside the window system, so it has no chrome; unlike the item hover hint it takes
 /// clicks. Since 1.8.0 it draws in the frame the 1.7 panels share (<see cref="GamePanelShell"/>, R3 #11): placed by
@@ -26,6 +28,7 @@ public sealed class DutyFinderPanel
 {
     private readonly DutyFinderHint hint;
     private readonly GameLinks links;
+    private readonly ITextureProvider textures;
     private readonly Action<QuestRecord> reveal;
     private readonly GamePanelShell shell = new(Strings.DutyHintWindowId);
     private readonly Action drawContent;
@@ -33,11 +36,13 @@ public sealed class DutyFinderPanel
     // The model this frame's content draws.
     private DutyHintModel? model;
 
+    /// <param name="textures">Draws the duty's icon.</param>
     /// <param name="reveal">Opens the main window on the quest (the Journal reveal every in-world surface uses).</param>
-    public DutyFinderPanel(DutyFinderHint hint, GameLinks links, Action<QuestRecord> reveal)
+    public DutyFinderPanel(DutyFinderHint hint, GameLinks links, ITextureProvider textures, Action<QuestRecord> reveal)
     {
         this.hint = hint ?? throw new ArgumentNullException(nameof(hint));
         this.links = links ?? throw new ArgumentNullException(nameof(links));
+        this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
         this.reveal = reveal ?? throw new ArgumentNullException(nameof(reveal));
         drawContent = DrawContent;
     }
@@ -75,6 +80,17 @@ public sealed class DutyFinderPanel
         var indent = ImGui.CalcTextSize(Strings.DutyHintUnlockedBy).X + ImGui.GetStyle().ItemSpacing.X;
 
         GamePanelShell.Caption(Strings.DutyHintCaption);
+
+        // The duty's icon, as the Duty Finder lists it, a little taller than the name it stands before.
+        if (m.Icon != 0)
+        {
+            var side = MathF.Round(lineHeight * 1.25f);
+            var top = ImGui.GetCursorScreenPos();
+            GameIcon.Draw(textures, m.Icon, side);
+            ImGui.SameLine();
+            ImGui.SetCursorScreenPos(new System.Numerics.Vector2(ImGui.GetCursorScreenPos().X, top.Y + ((side - lineHeight) * 0.5f)));
+        }
+
         ImGui.TextUnformatted(m.DutyName);
 
         // "Route to unlock" (1.6.0): the route window on every quest that opens the duty, the cheapest way first.

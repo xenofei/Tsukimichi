@@ -8,14 +8,15 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Characters › Collection by character (1.8.0, R7 C, R5 F2): "who has it". Rows are the Moonlit collectibles (or, in
-/// the Unlock quests mode, the unlock quests), columns the characters the lists show (hidden ones left out), cells
+/// Characters › Collection by character (1.8.0, R7 C, R5 F2): "who has it". Rows are the Moonlit collectibles, each led
+/// by its own art or its kind's menu icon (UI-5d) (or, in the Unlock quests mode, the unlock quests), columns the characters the lists show (hidden ones left out), cells
 /// a check, a cross or the unknown mark from what each character's last save holds (decision 9), or the quest's state
 /// moon. Filters: the reward kind, "missing on any" ("not done on any"), and a name filter. The table scrolls both
 /// ways with the name column frozen, and only the rows in view are drawn (a clipper), so hundreds of rows cost the same
@@ -43,6 +44,9 @@ public sealed partial class CharactersPane
     private string[] gridColumnTips = [];
     private string[] gridHeaders = [];
     private string[] gridCountTexts = [];
+
+    // Per reward row: its own icon (Moonlit's, UI-5d), else its kind's menu icon; empty without Moonlit's resolver.
+    private NodeIcon[] gridIcons = [];
 
     // Per character column in the Unlock quests mode: true when its states could not be read (no stored save, or the
     // worker failed), so its cells say "unreadable" instead of "being read" forever.
@@ -119,6 +123,12 @@ public sealed partial class CharactersPane
 
                     for (var i = 0; i < gridKinds.Count; i++)
                     {
+                        // Each kind led by its menu icon, as Moonlit's kinds list (UI-5d).
+                        if (MoonlitIcons is { } icons)
+                        {
+                            DrawGridIcon(icons.KindIcon(gridKinds[i]), MathF.Round(ImGui.GetTextLineHeight()));
+                        }
+
                         if (ImGui.Selectable(Strings.MoonlitKindName(gridKinds[i]), gridKind == i))
                         {
                             gridKind = i;
@@ -152,7 +162,7 @@ public sealed partial class CharactersPane
     private void RefreshGrid(CatalogBundle bundle)
     {
         var rewards = RewardsCatalog();
-        var key = new GridKey(session.RosterVersion, itemsRoster, gridMode, gridKind, gridMissingOnAny, gridNotDoneOnAny, gridSearch, bundle, rewards, gridResolved, itemsMinute);
+        var key = new GridKey(session.RosterVersion, itemsRoster, gridMode, gridKind, gridMissingOnAny, gridNotDoneOnAny, gridSearch, bundle, rewards, gridResolved, itemsMinute, MoonlitIcons?.Revision ?? -1);
         if (key == gridKey)
         {
             return;
@@ -189,6 +199,7 @@ public sealed partial class CharactersPane
 
             rewardRows = CollectionGrid.Rewards(rewards.All, lookups, gridKind < 0 ? null : gridKinds[gridKind], gridMissingOnAny, gridSearch);
             gridCountTexts = rewardRows.Select(r => UiFormat.Count(r.OwnedCount, items.Length)).ToArray();
+            gridIcons = MoonlitIcons is { } icons ? rewardRows.Select(r => RowIcon(icons, bundle, r)).ToArray() : [];
             rowCount = rewardRows.Count;
         }
         else
@@ -403,7 +414,7 @@ public sealed partial class CharactersPane
                 ImGui.TableNextRow(ImGuiTableRowFlags.None, rowHeight);
                 if (gridMode == -1)
                 {
-                    DrawRewardRow(ui, rewardRows[r], gridCountTexts[r], characterColumns, glyph);
+                    DrawRewardRow(ui, rewardRows[r], r < gridIcons.Length ? gridIcons[r] : null, gridCountTexts[r], characterColumns, glyph);
                 }
                 else
                 {
@@ -415,9 +426,15 @@ public sealed partial class CharactersPane
         gridClipper.End();
     }
 
-    private void DrawRewardRow(UiState ui, CollectionGridRow row, string count, int characterColumns, float glyph)
+    private void DrawRewardRow(UiState ui, CollectionGridRow row, NodeIcon? icon, string count, int characterColumns, float glyph)
     {
         ImGui.TableNextColumn();
+        if (icon is { } shown)
+        {
+            // The reward's own art at the line's height, so the row keeps its height and the name its baseline (UI-5d).
+            DrawGridIcon(shown, MathF.Round(ImGui.GetTextLineHeight()));
+        }
+
         GridName(ui, row.Name, row.QuestRowId);
         ImGui.TableNextColumn();
         ImGui.TextDisabled(count);
@@ -468,6 +485,26 @@ public sealed partial class CharactersPane
         }
     }
 
+    /// <summary>A reward row's icon: the reward's own art (a mount's, a minion's), else its kind's menu icon.</summary>
+    private static NodeIcon RowIcon(MoonlitIconResolver icons, CatalogBundle bundle, CollectionGridRow row)
+    {
+        var own = row.Entry is { } entry ? icons.Resolve(bundle.Catalog.GetByRowId(row.QuestRowId), entry) : 0u;
+        return own != 0 ? NodeIcon.Game(own) : icons.KindIcon(row.Kind);
+    }
+
+    /// <summary>An icon <paramref name="size"/> across leading the item after it on the line (a reward's name, a kind in the filter).</summary>
+    private void DrawGridIcon(NodeIcon icon, float size)
+    {
+        var min = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(size, size));
+        if (textures is not null && ImGui.IsItemVisible())
+        {
+            Orbit.DrawIcon(ImGui.GetWindowDrawList(), textures, icon, min, min + new Vector2(size, size));
+        }
+
+        ImGui.SameLine(0f, MathF.Round(UiMetrics.Px(LeadIconGapLogical)));
+    }
+
     /// <summary>The row's name: a click selects its quest, so the detail pane shows where the reward comes from.</summary>
     private static void GridName(UiState ui, string name, uint questRowId)
     {
@@ -493,5 +530,6 @@ public sealed partial class CharactersPane
         CatalogBundle? Bundle,
         UniqueRewardCatalog? Rewards,
         int Resolved,
-        long Minute);
+        long Minute,
+        int Art);
 }

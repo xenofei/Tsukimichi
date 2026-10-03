@@ -486,8 +486,9 @@ public sealed class QuestUnlocks
             var target = duty is null ? UnlockTarget.OtherDuty : UnlockTargets.FromDutyKind(duty.Kind);
             var info = conditionId != 0 ? dutyInfo.GetValueOrDefault(conditionId) : null;
             var detail = info is { Level: > 0 } ? string.Format(CultureInfo.CurrentCulture, LevelFormat, info.Level) : string.Empty;
-            // The duty's own icon, else the reward tile's (an instance wears its duty kind's).
-            var dutyIcon = info is { Icon: > 0 } ? info.Icon : icon;
+            // The duty's own icon (DutyArt's chain), else the reward tile's, else the Duty Finder menu icon: never the
+            // stand-in while the game has something.
+            var dutyIcon = info is { Icon: > 0 } ? info.Icon : icon != 0 ? icon : links.DutyFinderIcon;
             RowsOf(quest.RowId).Add(new UnlockEntry(target, conditionId, name, dutyIcon, source, info?.Expansion ?? quest.Expansion, info?.Level ?? 0, Detail: detail)
             {
                 Reward = conditionId != 0 ? reward : null,

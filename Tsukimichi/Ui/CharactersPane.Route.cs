@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Route;
+using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Unlocks;
 
 namespace Tsukimichi.Ui;
 
@@ -52,8 +55,11 @@ public sealed partial class CharactersPane
             return;
         }
 
+        // Each job led by its icon, as in the Jobs table (UI-5d).
+        var iconSize = MathF.Round(ImGui.GetTextLineHeight());
         foreach (var job in locked)
         {
+            DrawGridIcon(NodeIcon.Game(QuestUnlocks.JobIconBase + job.JobId), iconSize);
             if (ImGui.MenuItem(job.Name))
             {
                 ui.OpenRoute(RouteTarget.ForJob(job.Name, job.UnlockQuestRowId));

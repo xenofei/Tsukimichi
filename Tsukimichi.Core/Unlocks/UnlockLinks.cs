@@ -38,7 +38,7 @@ public readonly record struct UnlockGatedAethernet(uint QuestRowId, uint Aethery
 /// </summary>
 public readonly record struct UnlockTouch(uint QuestRowId, uint TerritoryId, float X, float Z);
 
-/// <summary>A duty's icon, level and expansion, for the duty rows (ContentFinderCondition row id).</summary>
+/// <summary>A duty's icon (<see cref="DutyArt"/>'s chain), level and expansion, for the duty rows (ContentFinderCondition row id).</summary>
 public sealed record UnlockDuty(uint ContentFinderConditionId, uint Icon, byte Level, byte Expansion);
 
 /// <summary>
@@ -66,6 +66,12 @@ public sealed record UnlockLinks
     public IReadOnlyList<UnlockTouch> Touches { get; init; } = [];
 
     public IReadOnlyList<UnlockDuty> Duties { get; init; } = [];
+
+    /// <summary>
+    /// The icon a duty row wears when nothing of its own is known (the game's Duty Finder menu icon, the last step of
+    /// <see cref="DutyArt"/>'s chain); 0 for the stand-in.
+    /// </summary>
+    public uint DutyFinderIcon { get; init; }
 
     /// <summary>
     /// The sheet icon of every action, trait, general action and blue magic spell (keyed by the reward kind and its

@@ -11,7 +11,8 @@ namespace Tsukimichi.GameData;
 /// lists it. Duty Support follows AutoDuty's own rule (erdelf/AutoDuty <c>Helpers/ContentHelper.cs</c>): a DawnContent
 /// row names the duty and its DawnContentParticipable row has more than one party choice. Trust needs a DawnContent row
 /// and a duty from Shadowbringers (ExVersion 3) on; AutoDuty reads an unnamed DawnContent column for it, which this
-/// leaves alone so a renamed column cannot stop the plugin loading. Standalone (takes an <see cref="ExcelModule"/>) so
+/// leaves alone so a renamed column cannot stop the plugin loading. Each duty wears its icon through
+/// <see cref="Core.Unlocks.DutyArt"/>'s chain (<see cref="DutyArtReader"/>). Standalone (takes an <see cref="ExcelModule"/>) so
 /// tests run it against game data without Dalamud.
 /// </summary>
 public static class DutyRunSheets
@@ -53,6 +54,7 @@ public static class DutyRunSheets
         }
 
         var duties = new List<DutyRunInfo>();
+        var art = DutyArtReader.Shared.Read(excel, language);
         foreach (var row in excel.GetSheet<ContentFinderCondition>(language))
         {
             var name = row.Name.ExtractText().Trim();
@@ -71,7 +73,7 @@ public static class DutyRunSheets
             }
 
             var instance = row.ContentLinkType == InstanceContentLink ? row.Content.RowId : 0u;
-            duties.Add(new DutyRunInfo(row.RowId, instance, territory, row.ContentType.RowId, name, support, trust));
+            duties.Add(new DutyRunInfo(row.RowId, instance, territory, row.ContentType.RowId, name, support, trust, DutyArtReader.Icon(in row, in art)));
         }
 
         return DutyRunIndex.From(duties);
