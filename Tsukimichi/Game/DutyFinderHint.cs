@@ -12,6 +12,7 @@ using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
+using Tsukimichi.Core.Unlocks;
 using Tsukimichi.Ui;
 
 namespace Tsukimichi.Game;
@@ -70,7 +71,7 @@ public sealed unsafe class DutyFinderHint : IDisposable
     private readonly IAddonLifecycle.AddonEventDelegate onFinalize;
     private readonly List<DutyHintQuest> quests = [];
 
-    private Dictionary<uint, (uint Instance, string Name)>? duties;
+    private Dictionary<uint, (uint Instance, string Name, uint Icon)>? duties;
     private bool enabled = true;
     private bool registered;
     private bool disposed;
@@ -352,7 +353,7 @@ public sealed unsafe class DutyFinderHint : IDisposable
         // panel already has rather than hand it an equal new one.
         model = previous is not null && SameContent(previous, selected, duty.Name, quests, more)
             ? previous
-            : new DutyHintModel(selected, duty.Name, quests.Count == 0 ? NoQuests : quests.ToArray(), more) { AllQuestRowIds = RowIds(resolved) };
+            : new DutyHintModel(selected, duty.Name, quests.Count == 0 ? NoQuests : quests.ToArray(), more) { AllQuestRowIds = RowIds(resolved), Icon = duty.Icon };
     }
 
     private static uint[] RowIds(IReadOnlyList<QuestRecord> quests)
@@ -388,14 +389,19 @@ public sealed unsafe class DutyFinderHint : IDisposable
         return true;
     }
 
-    /// <summary>ContentFinderCondition row id to its InstanceContent row and display name, read once from the sheet.</summary>
-    private (uint Instance, string Name)? Duty(uint conditionId)
+    /// <summary>
+    /// ContentFinderCondition row id to its InstanceContent row, display name and icon (<see cref="DutyArt"/>'s chain:
+    /// its emblem, its category's tile, and on to the Duty Finder menu icon), read once from the sheet.
+    /// </summary>
+    private (uint Instance, string Name, uint Icon)? Duty(uint conditionId)
     {
         if (duties is null)
         {
-            var map = new Dictionary<uint, (uint, string)>();
+            var map = new Dictionary<uint, (uint, string, uint)>();
             try
             {
+                var pvpIcon = data.GetExcelSheet<ContentType>().GetRowOrDefault(DutyArt.PvpContentType)?.Icon ?? 0u;
+                var menuIcon = data.GetExcelSheet<MainCommand>().GetRowOrDefault(DutyArt.DutyFinderMenu) is { Icon: > 0 } menu ? (uint)menu.Icon : 0u;
                 foreach (var row in data.GetExcelSheet<ContentFinderCondition>())
                 {
                     if (row.ContentLinkType != InstanceContentLink || row.Content.RowId == 0)
@@ -406,7 +412,11 @@ public sealed unsafe class DutyFinderHint : IDisposable
                     var text = row.Name.ExtractText();
                     // The sheet writes "the Vault"; the panel opens with the name, so its first letter is raised.
                     var name = text.Length > 0 && char.IsLower(text[0]) ? char.ToUpperInvariant(text[0]) + text[1..] : text;
-                    map[row.RowId] = (row.Content.RowId, name);
+                    var type = row.ContentType.RowId != 0 ? row.ContentType.ValueNullable : null;
+                    var genre = row.JournalGenre.RowId != 0 ? row.JournalGenre.ValueNullable : null;
+                    var pvp = row.Content.GetValueOrDefault<Lumina.Excel.Sheets.InstanceContent>() is { } instance && instance.InstanceContentType.RowId == DutyArt.PvpInstanceContentType;
+                    var sources = new DutyArtSources(row.Icon, type?.Icon ?? 0u, type?.IconDutyFinder ?? 0u, genre is { Icon: > 0 } g ? (uint)g.Icon : 0u, pvp);
+                    map[row.RowId] = (row.Content.RowId, name, DutyArt.Icon(sources, pvpIcon, menuIcon));
                 }
             }
             catch (Exception ex)
@@ -442,6 +452,9 @@ public sealed record DutyHintModel(uint ContentFinderConditionId, string DutyNam
 {
     /// <summary>Every quest that unlocks the duty (not only the first <see cref="DutyFinderHint.MaxQuests"/>), for "Route to unlock".</summary>
     public IReadOnlyList<uint> AllQuestRowIds { get; init; } = [];
+
+    /// <summary>The duty's icon (<see cref="DutyArt"/>'s chain), drawn before its name; 0 draws none.</summary>
+    public uint Icon { get; init; }
 }
 
 /// <summary>One unlocking quest of <see cref="DutyHintModel"/>, its strings built once.</summary>

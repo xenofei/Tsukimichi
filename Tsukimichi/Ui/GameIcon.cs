@@ -14,7 +14,8 @@ namespace Tsukimichi.Ui;
 /// through <c>TryGetFromGameIcon</c> here. The resolution follows the drawn size (<see cref="Orbit.LowResMaxPx"/>: the
 /// native texture at small sizes, the hi-res one above, so a 56 px tooltip icon is sharp). Where no icon can be drawn a
 /// sunken rounded square holds its place, and an icon the game does not have gets the faded veiled moon on it (the
-/// stand-in Moonlit uses for a reward without art), so layout and hover behave as with the image.
+/// stand-in Moonlit uses for a reward without art), so layout and hover behave as with the image. An icon that is not
+/// square (a duty's own emblem, a 136 × 168 card) is drawn whole and centred in its box (<see cref="Core.Ui.IconFit"/>).
 /// </summary>
 internal static class GameIcon
 {
@@ -65,7 +66,8 @@ internal static class GameIcon
         {
             if (texture.TryGetWrap(out var wrap, out _))
             {
-                dl.AddImage(wrap.Handle, min, max);
+                var (fitMin, fitMax) = Fit(wrap, min, max);
+                dl.AddImage(wrap.Handle, fitMin, fitMax);
                 return true;
             }
 
@@ -88,13 +90,14 @@ internal static class GameIcon
         var side = MathF.Min(max.X - min.X, max.Y - min.Y);
         if (TryGetWrap(textures, iconId, side, out var wrap, out var missing))
         {
+            var (fitMin, fitMax) = Fit(wrap, min, max);
             if (rounding > 0f)
             {
-                dl.AddImageRounded(wrap.Handle, min, max, Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding);
+                dl.AddImageRounded(wrap.Handle, fitMin, fitMax, Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding);
             }
             else
             {
-                dl.AddImage(wrap.Handle, min, max);
+                dl.AddImage(wrap.Handle, fitMin, fitMax);
             }
 
             return true;
@@ -103,6 +106,13 @@ internal static class GameIcon
         DrawStandIn(dl, min, max, side, rounding, missing);
         return false;
     }
+
+    /// <summary>
+    /// Where <paramref name="wrap"/> goes in <paramref name="min"/>..<paramref name="max"/>: the whole box for a square
+    /// icon, the largest centred rectangle of its aspect otherwise.
+    /// </summary>
+    public static (Vector2 Min, Vector2 Max) Fit(IDalamudTextureWrap wrap, Vector2 min, Vector2 max) =>
+        Core.Ui.IconFit.Contain(min, max, wrap.Width, wrap.Height);
 
     /// <summary>A sunken rounded square; with the faded veiled moon on it when the game has no such icon (not while it merely loads).</summary>
     private static void DrawStandIn(ImDrawListPtr dl, Vector2 min, Vector2 max, float side, float rounding, bool missing)

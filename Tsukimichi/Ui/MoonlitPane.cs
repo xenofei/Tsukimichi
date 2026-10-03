@@ -1565,7 +1565,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 if ((row.Picture != 0 && GameIcon.TryGetWrap(textures, row.Picture, inner, out var wrap))
                     || GameIcon.TryGetWrap(textures, row.Icon, inner, out wrap))
                 {
-                    dl.AddImageRounded(wrap.Handle, iconMin + new Vector2(art), iconMax - new Vector2(art), Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding * 0.5f);
+                    // A duty's emblem is no square: whole and centred (GameIcon.Fit).
+                    var (artMin, artMax) = GameIcon.Fit(wrap, iconMin + new Vector2(art), iconMax - new Vector2(art));
+                    dl.AddImageRounded(wrap.Handle, artMin, artMax, Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding * 0.5f);
                 }
             }
             else

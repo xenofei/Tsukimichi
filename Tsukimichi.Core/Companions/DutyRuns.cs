@@ -17,6 +17,7 @@ namespace Tsukimichi.Core.Companions;
 /// <param name="Name">The duty's name as the sheet spells it.</param>
 /// <param name="OffersDutySupport">A DawnContent row names it with more than one party choice: the Duty Support window lists it.</param>
 /// <param name="OffersTrust">A DawnContent row names it and it is from Shadowbringers on: Trust lists it.</param>
+/// <param name="Icon">The duty's icon through <see cref="Unlocks.DutyArt"/>'s chain (its emblem, its category's tile, …); 0 for the stand-in.</param>
 public sealed record DutyRunInfo(
     uint ContentFinderConditionId,
     uint InstanceContentId,
@@ -24,7 +25,8 @@ public sealed record DutyRunInfo(
     uint ContentTypeId,
     string Name,
     bool OffersDutySupport,
-    bool OffersTrust)
+    bool OffersTrust,
+    uint Icon = 0)
 {
     public const uint Dungeons = 2;
     public const uint Trials = 4;

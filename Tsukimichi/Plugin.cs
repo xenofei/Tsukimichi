@@ -1070,7 +1070,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 (catalog, duties) => BannerSources.Build(DataManager.Excel, catalog, duties).Resolve(catalog),
                 onError: ex => Log.Warning(ex, "Hero banners unavailable; quests show their own banner or category art"));
             mainWindow.AttachBanners(banners);
-            dutyFinderPanel = new DutyFinderPanel(dutyFinderHint, gameLinks, quest =>
+            dutyFinderPanel = new DutyFinderPanel(dutyFinderHint, gameLinks, TextureProvider, quest =>
             {
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
