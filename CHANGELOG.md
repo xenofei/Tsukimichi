@@ -4,6 +4,30 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-10-02
+
+### Added
+- **`/tsuki stop`** stops everything Tsukimichi started: walks, flights, Go to giver, Lifestream hops, Questionable, and AutoDuty and Artisan runs. One chat line says what stopped. Put it in a macro for one-key use.
+- **`/ts` and `/moon`** work like `/tsuki`, subcommands included. Add your own aliases in Settings › Keyboard; an alias already taken by the game or another plugin is skipped with a notice.
+- **A floating Undo** follows verdicts, Restore, Pin all, unpin, Hide and Don't track.
+- **Settings › Keyboard › Safety:** choose how long a press-and-hold takes, or click twice instead of holding.
+- **A new plugin icon:** the moon road on calm water, a Kugane shore and a stone lantern, in a gilt frame.
+
+### Changed
+- **Mark as unique and Not unique act only while Ctrl or Shift is held.** They save at once, with Undo and Add note. Enter in the note box no longer confirms.
+- **Forget, Delete all, Replace Questionable's list and Apply need a press and hold.**
+- **Flight's expansion icons are twice as big and sharp**, and line up with their headings. The zone banner's icon is bigger too.
+- **Questionable's fork WigglyQuest is recognised.** The leftover "Questionable" stub at 99.0.0.0 counts as not installed.
+- **Quests that need mounts wait for them.** The Firebird, Kamuy, Landerwaffe, apocryphal Bahamut and Wings of Legacy quests wait for the mounts they need. A quest that needs a mount or a house no longer shows Ready before that is checked.
+
+### Fixed
+- The stray "#" before Journal icons is gone, and chapter names look crisp instead of smeared.
+- The Duties section and "Run with AutoDuty" show again in game. They had been hidden since 1.6 because the duty list failed to build. The main-scenario catch-up counts duties again.
+- Replaying a chapter in New Game+ can no longer overwrite your saved progress, and the rest of your progress keeps saving during the replay.
+- Learning the last mount of a set updates the quest that needs it straight away.
+- Moonlit "Copy view as TSV" no longer crashes when the view is grouped by expansion.
+- Removed a small stall every 5 seconds while travel or hand-off buttons were on screen. The travel buttons also do less work each frame.
+
 ## [1.10.0] - 2026-10-02
 
 ### Added
