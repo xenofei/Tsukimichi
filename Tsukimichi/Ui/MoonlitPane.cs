@@ -58,9 +58,14 @@ namespace Tsukimichi.Ui;
 /// ("Honorbound (1 of 18)") with its repeatable "another job" twin. Rows whose every quest lies on another path are not
 /// listed. Each row has an availability label (Get now, Event running, Upcoming event, Collab — may return, Past event —
 /// on the Online Store, Gone for good); gone-for-good rewards the character lacks leave the totals unless "Count rewards
-/// that are gone for good" (Configuration.MoonlitCountGone) is on, and a line under the toolbar says how many there
-/// are. Expansion and State filters, "Group by expansion" (Configuration.MoonlitGroupByExpansion; headings in the
-/// table) and "Copy missing" (Markdown for Discord, in 2,000-character parts) sit in the toolbar.
+/// that are gone for good" (Configuration.MoonlitCountGone) is on, and the status strip says how many there are.
+/// Expansion and State filters, "Group by expansion" (Configuration.MoonlitGroupByExpansion; headings in the table)
+/// sit in the Filters popover and "Copy missing" (Markdown for Discord, in 2,000-character parts) in the toolbar.
+/// </para>
+/// <para>
+/// A steady layout (feature plan v6, U4): the toolbar is one line whatever is set (search, Filters with a count badge,
+/// Copy missing, the view toggle), and under it one reserved status strip holds the listed count, "Owned as of …",
+/// the missed rewards and "Copied", so setting a filter or copying never moves the table.
 /// </para>
 /// </summary>
 public sealed class MoonlitPane : IDisposable, IUniqueOverrides
@@ -504,7 +509,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// </summary>
     public bool HideStoreResells => settings.MoonlitHideStoreResells;
 
-    /// <summary>Center column: toolbar (hide obtained, hide rewards found elsewhere, filter) and the reward table with a list clipper.</summary>
+    /// <summary>
+    /// Center column: the title, the one-line toolbar, the one-line status strip, and the reward table with a list
+    /// clipper (or the gallery). The toolbar and the strip keep their height whatever is set or said, so the table never
+    /// moves under the player (feature plan v6, U4).
+    /// </summary>
     public void DrawMain(UiState ui)
     {
         ArgumentNullException.ThrowIfNull(ui);
@@ -512,120 +521,14 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         Refresh();
 
         DrawTitle(ui);
-
-        // The toolbar flows: under MoonlitTwoRowToolbarLogical the two checkboxes take the first row and the rest the
-        // second, and any item that would run past the edge starts a new row (feature plan v4 L6).
-        var twoRows = ImGui.GetContentRegionAvail().X / UiMetrics.Scale < LayoutBudgets.MoonlitTwoRowToolbarLogical;
-        var hide = ui.MoonlitHideObtained;
-        if (ImGui.Checkbox(Strings.MoonlitHideObtainedLabel, ref hide))
-        {
-            ui.MoonlitHideObtained = hide;
-        }
-
-        Chrome.SameLineOrWrap(CheckboxWidth(Strings.MoonlitHideStoreResellsLabel));
-        var hideStore = settings.MoonlitHideStoreResells;
-        if (ImGui.Checkbox(Strings.MoonlitHideStoreResellsLabel, ref hideStore))
-        {
-            settings.MoonlitHideStoreResells = hideStore;
-            settings.Save(pluginInterface);
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.MoonlitHideStoreResellsTooltip);
-        }
-
-        Chrome.SameLineOrWrap(CheckboxWidth(Strings.MoonlitCountGoneLabel));
-        var countGone = settings.MoonlitCountGone;
-        if (ImGui.Checkbox(Strings.MoonlitCountGoneLabel, ref countGone))
-        {
-            settings.MoonlitCountGone = countGone;
-            settings.Save(pluginInterface);
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.MoonlitCountGoneTooltip);
-        }
-
-        var comboWidth = UiMetrics.Px(150f);
-        if (!twoRows)
-        {
-            Chrome.SameLineOrWrap(comboWidth);
-        }
-
-        ImGui.SetNextItemWidth(Chrome.FitWidth(comboWidth));
-        DrawConfidenceCombo();
-
-        Chrome.SameLineOrWrap(comboWidth);
-        ImGui.SetNextItemWidth(Chrome.FitWidth(comboWidth));
-        DrawExpansionCombo();
-
-        var stateWidth = UiMetrics.Px(120f);
-        Chrome.SameLineOrWrap(stateWidth);
-        ImGui.SetNextItemWidth(Chrome.FitWidth(stateWidth));
-        DrawStateCombo();
-
-        Chrome.SameLineOrWrap(stateWidth);
-        ImGui.SetNextItemWidth(Chrome.FitWidth(stateWidth));
-        DrawAddedInCombo();
-
-        Chrome.SameLineOrWrap(CheckboxWidth(Strings.MoonlitGroupByExpansionLabel));
-        var groupBy = settings.MoonlitGroupByExpansion;
-        if (ImGui.Checkbox(Strings.MoonlitGroupByExpansionLabel, ref groupBy))
-        {
-            settings.MoonlitGroupByExpansion = groupBy;
-            settings.Save(pluginInterface);
-        }
-
-        // The filter keeps at least a third of its width on the line, and shrinks to the room left.
-        var filterWidth = UiMetrics.Px(220f);
-        Chrome.SameLineOrWrap(filterWidth / 3f);
-        ImGui.SetNextItemWidth(Chrome.FitWidth(filterWidth));
-        ImGui.InputTextWithHint("##moonlitFilter", Strings.MoonlitFilterHint, ref filterText, FilterMaxLength);
-
-        RefreshVisible(ui);
-        Chrome.SameLineOrWrap(ImGui.CalcTextSize(visibleSummary).X);
-        ImGui.TextDisabled(visibleSummary);
-        DrawCopyMissing();
-        if (!session.IsLive)
-        {
-            // A stored character's owned states are its last capture's ("Owned as of …"); older files have none.
-            var ownedNote = Strings.MoonlitOwnedNote(unlocks.StoredAsOfUtc);
-            Chrome.SameLineOrWrap(ImGui.CalcTextSize(ownedNote).X);
-            using (Theme.PushText(Theme.Dusk))
-            {
-                TextFlow.Wrapped(ownedNote, Chrome.RoomX());
-            }
-        }
+        DrawToolbar(ui);
 
         // The note popup ("Add note" on the floating Undo) is begun here, in the centre column's scope, because the
         // context menu a verdict is given from lives inside the table's inner window and closes before a popup could be
         // shown from there.
         verdict.Draw(this);
 
-        // Rewards on the character's path that can no longer be had and are not theirs: said once, under the toolbar.
-        if (totals.Missed > 0)
-        {
-            using (Theme.PushText(Theme.Dusk))
-            {
-                ImGui.TextUnformatted(missedText);
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.MoonlitMissedTooltip);
-            }
-        }
-
-        // Until the client has loaded the title or achievement list, those obtained marks are worked out from quests.
-        if (session.IsLive && ui.MoonlitKind is { } shownKind && (shownKind is RewardKind.Title or RewardKind.Achievement) && !unlocks.ReadsExactly(shownKind))
-        {
-            using (Theme.PushText(Theme.Dusk))
-            {
-                ImGui.TextWrapped(Strings.MoonlitAchievementsFromQuests);
-            }
-        }
+        DrawStatusStrip(ui);
 
         if (rows.Length == 0)
         {
@@ -822,16 +725,266 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// <summary>The "…" button's side in a row.</summary>
     private static float MoreSize(float line) => MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));
 
-    /// <summary>A checkbox's width: the box, the inner spacing and the label.</summary>
-    private static float CheckboxWidth(string label) =>
-        ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.CalcTextSize(label).X;
-
     /// <summary>The row's context menu, opened by a right-click, the Menu key or Shift+F10, or the "…" button.</summary>
     private const string RowMenuId = "ctx";
 
     // The row whose "…" button had keyboard focus last frame (it stays drawn while focused), and this frame's; -1 none.
     private int moreFocusedRow = -1;
     private int moreFocusedNext = -1;
+
+    private const string FiltersPopupId = "##moonlitFilters";
+
+    /// <summary>Under this much room for the search, Copy missing leaves the toolbar for the Filters popover, in logical pixels.</summary>
+    private const float SearchMinLogical = 80f;
+
+    private readonly TextFade copiedFade = new();
+    private int filtersBadgeCount = -1;
+    private string? filtersBadgeText;
+
+    /// <summary>
+    /// The toolbar (feature plan v6, U4), one line whatever is set: the search, the Filters button with a count badge
+    /// (the filters themselves in its popover), Copy missing, and the table/gallery toggle at the right end. In a pane too
+    /// narrow for all of it Copy missing moves into the popover; nothing ever wraps onto a second line.
+    /// </summary>
+    private void DrawToolbar(UiState ui)
+    {
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var frame = ImGui.GetFrameHeight();
+        var height = MathF.Max(frame, UiMetrics.MinTarget);
+        var origin = ImGui.GetCursorScreenPos();
+        var room = ImGui.GetContentRegionAvail().X;
+        var toggleWidth = (UiMetrics.MinTarget * 2f) + spacing;
+        var filtersWidth = Chrome.FiltersPillWidth();
+        var copyWidth = CopyButtonWidth();
+        var searchWidth = room - toggleWidth - filtersWidth - copyWidth - (3f * spacing);
+        var copyInline = searchWidth >= UiMetrics.Px(SearchMinLogical);
+        if (!copyInline)
+        {
+            searchWidth += copyWidth + spacing;
+        }
+
+        searchWidth = MathF.Max(UiMetrics.Px(40f), searchWidth);
+        var frameY = origin.Y + ((height - frame) * 0.5f);
+        ImGui.SetCursorScreenPos(new Vector2(origin.X, frameY));
+        ImGui.SetNextItemWidth(searchWidth);
+        ImGui.InputTextWithHint("##moonlitFilter", Strings.MoonlitFilterHint, ref filterText, FilterMaxLength);
+
+        var x = origin.X + searchWidth + spacing;
+        var count = NarrowingCount(ui);
+        if (Chrome.FiltersPill("##moonlitFiltersButton", new Vector2(x, frameY), filtersWidth, frame, count, ImGui.IsPopupOpen(FiltersPopupId)))
+        {
+            ImGui.OpenPopup(FiltersPopupId);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitFiltersTooltip, FiltersBadgeText(count));
+        }
+
+        DrawFiltersPopover(ui, count, copyInline ? 0f : copyWidth);
+        RefreshVisible(ui);
+        if (copyInline)
+        {
+            ImGui.SetCursorScreenPos(new Vector2(x + filtersWidth + spacing, frameY));
+            DrawCopyMissing(copyWidth);
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(MathF.Max(x, origin.X + room - toggleWidth), origin.Y + ((height - UiMetrics.MinTarget) * 0.5f)));
+        DrawViewToggle();
+
+        ImGui.SetCursorScreenPos(origin);
+        ImGui.Dummy(new Vector2(room, height));
+    }
+
+    /// <summary>How many narrowing filters are set (the badge): Hide obtained, confidence, expansion, state and Added in. The search shows itself.</summary>
+    private int NarrowingCount(UiState ui) =>
+        (ui.MoonlitHideObtained ? 1 : 0)
+        + (confidenceFilter != ConfidenceFilter.Any ? 1 : 0)
+        + (expansionFilter is null ? 0 : 1)
+        + (stateFilter != MoonlitStateFilter.Any ? 1 : 0)
+        + (addedInFilter.Length > 0 ? 1 : 0);
+
+    /// <summary>The badge's meaning under the Filters tooltip, rebuilt only when the count changes; null with no badge.</summary>
+    private string? FiltersBadgeText(int count)
+    {
+        if (count != filtersBadgeCount)
+        {
+            filtersBadgeCount = count;
+            filtersBadgeText = count switch
+            {
+                0 => null,
+                1 => Strings.MoonlitFiltersBadgeOne,
+                _ => string.Format(CultureInfo.CurrentCulture, Strings.MoonlitFiltersBadgeFormat, count),
+            };
+        }
+
+        return filtersBadgeText;
+    }
+
+    /// <summary>
+    /// The Filters popover, roomy: what to list (Hide obtained, then confidence, expansion, state and Added in, each
+    /// labelled), how to count and group (Group by expansion, Hide rewards found elsewhere, Count rewards that are gone
+    /// for good), Copy missing when the toolbar had no room for it (<paramref name="copyWidth"/> over 0), and Reset
+    /// filters for the narrowing ones. It opens from the centre column (own font scale 1), so it scales itself.
+    /// </summary>
+    private void DrawFiltersPopover(UiState ui, int count, float copyWidth)
+    {
+        if (!ImGui.IsPopupOpen(FiltersPopupId))
+        {
+            return;
+        }
+
+        using var style = Theme.PushPopup();
+        using var roomy = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(UiMetrics.Px(14f), UiMetrics.Px(12f)))
+            .Push(ImGuiStyleVar.ItemSpacing, new Vector2(UiMetrics.Px(10f), UiMetrics.Px(8f)));
+        using var popup = ImRaii.Popup(FiltersPopupId);
+        if (!popup)
+        {
+            return;
+        }
+
+        UiMetrics.ApplyFontScale();
+        var hide = ui.MoonlitHideObtained;
+        if (ImGui.Checkbox(Strings.MoonlitHideObtainedLabel, ref hide))
+        {
+            ui.MoonlitHideObtained = hide;
+        }
+
+        var labels = MathF.Max(
+            MathF.Max(ImGui.CalcTextSize(Strings.MoonlitColumnConfidence).X, ImGui.CalcTextSize(Strings.ColumnExpansion).X),
+            MathF.Max(ImGui.CalcTextSize(Strings.MoonlitColumnState).X, ImGui.CalcTextSize(Strings.AddedIn).X));
+        var column = ImGui.GetStyle().WindowPadding.X + labels + UiMetrics.Px(16f);
+        var comboWidth = UiMetrics.Px(190f);
+
+        PopoverLabel(Strings.MoonlitColumnConfidence, column);
+        ImGui.SetNextItemWidth(comboWidth);
+        DrawConfidenceCombo();
+
+        PopoverLabel(Strings.ColumnExpansion, column);
+        ImGui.SetNextItemWidth(comboWidth);
+        DrawExpansionCombo();
+
+        PopoverLabel(Strings.MoonlitColumnState, column);
+        ImGui.SetNextItemWidth(comboWidth);
+        DrawStateCombo();
+
+        PopoverLabel(Strings.AddedIn, column);
+        ImGui.SetNextItemWidth(comboWidth);
+        DrawAddedInCombo();
+
+        ImGui.Separator();
+        var groupBy = settings.MoonlitGroupByExpansion;
+        if (ImGui.Checkbox(Strings.MoonlitGroupByExpansionLabel, ref groupBy))
+        {
+            settings.MoonlitGroupByExpansion = groupBy;
+            settings.Save(pluginInterface);
+        }
+
+        var hideStore = settings.MoonlitHideStoreResells;
+        if (ImGui.Checkbox(Strings.MoonlitHideStoreResellsLabel, ref hideStore))
+        {
+            settings.MoonlitHideStoreResells = hideStore;
+            settings.Save(pluginInterface);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitHideStoreResellsTooltip);
+        }
+
+        var countGone = settings.MoonlitCountGone;
+        if (ImGui.Checkbox(Strings.MoonlitCountGoneLabel, ref countGone))
+        {
+            settings.MoonlitCountGone = countGone;
+            settings.Save(pluginInterface);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitCountGoneTooltip);
+        }
+
+        ImGui.Separator();
+        if (copyWidth > 0f)
+        {
+            DrawCopyMissing(copyWidth);
+            ImGui.SameLine();
+        }
+
+        using (ImRaii.Disabled(count == 0))
+        {
+            if (ImGui.Button(Strings.ResetFilters))
+            {
+                ResetNarrowing(ui);
+            }
+        }
+    }
+
+    /// <summary>A popover row's label, centred on the control that follows it at <paramref name="column"/>.</summary>
+    private static void PopoverLabel(string label, float column)
+    {
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextUnformatted(label);
+        ImGui.SameLine(column);
+    }
+
+    /// <summary>The popover's Reset filters: the narrowing choices the badge counts, back to their defaults. The kind, the search and the settings stay.</summary>
+    private void ResetNarrowing(UiState ui)
+    {
+        ui.MoonlitHideObtained = false;
+        confidenceFilter = ConfidenceFilter.Any;
+        expansionFilter = null;
+        stateFilter = MoonlitStateFilter.Any;
+        addedInFilter = string.Empty;
+    }
+
+    /// <summary>
+    /// The status strip under the toolbar (feature plan v6, U4): one line, always reserved, so nothing said here moves the
+    /// table. Left to right: how many rewards are listed, "Owned as of …" for a stored character, the rewards missed for
+    /// good, and the note while titles or achievements are worked out from quests, in the Dusk tone and cut to the room
+    /// left with the whole text on hover; "Copied" at the right end for a moment after a copy, fading in.
+    /// </summary>
+    private void DrawStatusStrip(UiState ui)
+    {
+        var line = ImGui.GetTextLineHeight();
+        var origin = ImGui.GetCursorScreenPos();
+        var room = ImGui.GetContentRegionAvail().X;
+        var gap = ImGui.GetStyle().ItemSpacing.X;
+        var right = origin.X + room;
+
+        var copied = ImGui.GetTime() - copiedAt < CopiedNoteSeconds ? Strings.MoonlitCopied : null;
+        var alpha = copiedFade.Alpha(copied);
+        if (copied is not null)
+        {
+            var mist = Theme.Surface.TextSecondary;
+            right -= ImGui.CalcTextSize(copied).X;
+            ImGui.GetWindowDrawList().AddText(new Vector2(right, origin.Y), Theme.WithAlpha(mist, mist.W * alpha), copied);
+            right -= gap * 2f;
+        }
+
+        var x = Chrome.StripSegment(origin.X, origin.X, right, origin.Y, visibleSummary, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        var dusk = Theme.U32(Theme.Dusk);
+        if (!session.IsLive)
+        {
+            // A stored character's owned states are its last capture's ("Owned as of …"); older files have none.
+            x = Chrome.StripSegment(x, origin.X, right, origin.Y, Strings.MoonlitOwnedNote(unlocks.StoredAsOfUtc), dusk);
+        }
+
+        // Rewards on the character's path that can no longer be had and are not theirs.
+        if (totals.Missed > 0)
+        {
+            x = Chrome.StripSegment(x, origin.X, right, origin.Y, missedText, dusk, Strings.MoonlitMissedTooltip);
+        }
+
+        // Until the client has loaded the title or achievement list, those obtained marks are worked out from quests.
+        if (session.IsLive && ui.MoonlitKind is { } shownKind && (shownKind is RewardKind.Title or RewardKind.Achievement) && !unlocks.ReadsExactly(shownKind))
+        {
+            Chrome.StripSegment(x, origin.X, right, origin.Y, Strings.MoonlitAchievementsFromQuests, dusk);
+        }
+
+        ImGui.SetCursorScreenPos(origin);
+        ImGui.Dummy(new Vector2(room, line));
+    }
 
     /// <summary>The confidence filter; its popup opens from the centre column (own font scale 1), so it scales itself.</summary>
     private void DrawConfidenceCombo()
@@ -951,18 +1104,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// <summary>
     /// "Copy missing": copies the listed rows the character does not have as Markdown (<see cref="MoonlitMarkdown"/>);
     /// longer than a Discord message, one part per click, the button naming the part it copies next ("Copy part 2/3").
+    /// "Copied" shows at the status strip's right end, never beside the button.
     /// </summary>
-    private void DrawCopyMissing()
+    private void DrawCopyMissing(float width)
     {
-        if (copyLabel.Length == 0 || copyLabelLanguage != Localization.Loc.Version)
-        {
-            UpdateCopyLabel();
-        }
-
-        Chrome.SameLineOrWrap(ImGui.CalcTextSize(copyLabel, true, -1f).X + (ImGui.GetStyle().FramePadding.X * 2f));
         using (ImRaii.Disabled(copyParts.Count == 0))
         {
-            if (ImGui.SmallButton(copyLabel) && copyParts.Count > 0)
+            if (ImGui.Button(copyLabel, new Vector2(width, 0f)) && copyParts.Count > 0)
             {
                 ImGui.SetClipboardText(copyParts[copyNext]);
                 copyNext = (copyNext + 1) % copyParts.Count;
@@ -975,12 +1123,18 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             UiMetrics.Tooltip(copyParts.Count == 0 ? Strings.MoonlitCopyNothing : Strings.MoonlitCopyMissingTooltip);
         }
+    }
 
-        if (ImGui.GetTime() - copiedAt < CopiedNoteSeconds)
+    /// <summary>The Copy missing button's width: its label now, and never narrower than "Copy missing".</summary>
+    private float CopyButtonWidth()
+    {
+        if (copyLabel.Length == 0 || copyLabelLanguage != Localization.Loc.Version)
         {
-            Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.MoonlitCopied).X);
-            ImGui.TextDisabled(Strings.MoonlitCopied);
+            UpdateCopyLabel();
         }
+
+        var label = MathF.Max(ImGui.CalcTextSize(copyLabel, true, -1f).X, ImGui.CalcTextSize(Strings.MoonlitCopyMissing).X);
+        return label + (ImGui.GetStyle().FramePadding.X * 2f);
     }
 
     /// <summary>
@@ -1103,7 +1257,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// <summary>
     /// The centre column's first line: at Full and Quiet the shown kind in the Title role (the pane's one title) with
     /// the subtitle beside it and a brass rule under both; under Plain the subtitle alone, as before 1.4. The view
-    /// toggle (table or gallery) sits at the line's right end.
+    /// toggle (table or gallery) is the toolbar's last item (1.12.0).
     /// </summary>
     /// <summary>
     /// The empty state's Reset filters: every narrowing choice of this pane back to its default (all kinds, obtained
@@ -1125,7 +1279,6 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var art = Theme.ShowRules;
         var start = ImGui.GetCursorScreenPos();
         var room = ImGui.GetContentRegionAvail().X;
-        var toggle = (UiMetrics.MinTarget * 2f) + ImGui.GetStyle().ItemSpacing.X;
         if (art)
         {
             var title = ui.MoonlitKind is { } kind ? Strings.MoonlitKindName(kind) : Strings.TabMoonlit;
@@ -1139,13 +1292,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
             var targetLine = MathF.Max(titleLine, UiMetrics.MinTarget);
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (targetLine - titleLine) * 0.5f));
-            if (SectionHeading.Title(title, MathF.Max(0f, MathF.Min(titleWidth, room - toggle - ImGui.GetStyle().ItemSpacing.X))) && ImGui.IsItemHovered())
+            if (SectionHeading.Title(title, MathF.Max(0f, MathF.Min(titleWidth, room))) && ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(title);
             }
 
             var subtitle = ImGui.CalcTextSize(Strings.MoonlitSubtitle).X;
-            if (ImGui.GetItemRectMax().X + ImGui.GetStyle().ItemSpacing.X + subtitle + toggle <= start.X + room)
+            if (ImGui.GetItemRectMax().X + ImGui.GetStyle().ItemSpacing.X + subtitle <= start.X + room)
             {
                 ImGui.SameLine();
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, titleLine - ImGui.GetTextLineHeight()) * 0.7f);
@@ -1163,19 +1316,6 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
-        // The toggle at the line's right end, or at the right of the next line when the line has no room left.
-        var toggleX = MathF.Max(start.X, start.X + room - toggle);
-        if (ImGui.GetItemRectMax().X + ImGui.GetStyle().ItemSpacing.X <= toggleX)
-        {
-            ImGui.SameLine();
-            ImGui.SetCursorScreenPos(new Vector2(toggleX, start.Y));
-        }
-        else
-        {
-            ImGui.SetCursorScreenPos(new Vector2(toggleX, ImGui.GetCursorScreenPos().Y));
-        }
-
-        DrawViewToggle();
         if (art)
         {
             var y = ImGui.GetCursorScreenPos().Y;

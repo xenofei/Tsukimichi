@@ -27,7 +27,7 @@ namespace Tsukimichi.Ui;
 /// Requirements card first with one marker on the blocking line, Rewards as tiles, the Moonlit verdict, the Path card (the chain
 /// line once, then the star chart, <see cref="PathChart"/>), the Giver card; under the scrolling stack a sticky action
 /// bar: a row of labelled travel and automation pills (Go to giver, Teleport, Walk, Start Questionable, Run with
-/// AutoDuty; DetailPane.Actions.cs) with their live lines, then round buttons for Pin, Show path, Route to this (the
+/// AutoDuty; DetailPane.Actions.cs; their live status is in the status bar), then round buttons for Pin, Show path, Route to this (the
 /// unlock route window), Flag on map, Link in chat, Copy coordinates, Open journal and Report, and a plain provenance line. Every action is a
 /// focusable item, so the pane works without a mouse (accessibility A6). Everything shown is materialized when the
 /// selection or the session version changes, so drawing allocates nothing.
@@ -996,7 +996,7 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// Height under the scrolling stack, as laid out: the spacing after the body child, the hairline and its spacing,
-    /// the pill row and its live lines, each round-button row and its spacing, then the provenance line (a caption).
+    /// the pill row, each round-button row and its spacing, then the provenance line (a caption).
     /// Fits the pill row to the width as it goes, so the bar draws what was planned.
     /// </summary>
     private float ActionBarHeight()
@@ -1009,7 +1009,7 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// The sticky action bar (1.10): first the travel and automation pills with their live lines
+    /// The sticky action bar (1.10): first the travel and automation pills
     /// (DetailPane.Actions.cs), then round buttons for Pin, Show path, Route to this, Flag on map (while Lifestream is
     /// loaded), Link in chat, Copy coordinates, Open journal, Report, the aethernet hop in the giver's city, and "…".
     /// Disabled buttons say why on hover. All are focusable items (accessibility A6).

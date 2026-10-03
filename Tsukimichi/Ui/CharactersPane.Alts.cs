@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Storage;
 
@@ -35,32 +36,29 @@ public sealed partial class CharactersPane
     }
 
     /// <summary>
-    /// Under the dashboard header: "Not tracked" for a character the player chose not to track, and "not updating" with
-    /// its reason for one whose file another game client saved and this client cannot read (1.8.0, R7 G).
+    /// Under the dashboard header, one line that is always reserved (feature plan v6, U4): "Not tracked" for a character
+    /// the player chose not to track, and "not updating" with its reason for one whose file another game client saved
+    /// and this client cannot read (1.8.0, R7 G), each cut to the room left with the whole text on hover. Ticking "Don't
+    /// track" in the Actions row below therefore never moves the dashboard, or the box under the pointer.
     /// </summary>
     private void DrawStatusNotices(ulong contentId)
     {
+        var origin = ImGui.GetCursorScreenPos();
+        var room = ImGui.GetContentRegionAvail().X;
+        var right = origin.X + room;
+        var x = origin.X;
         if (!roster.Settings.IsTracked(contentId))
         {
-            using (Theme.PushText(Theme.Surface.TextSecondary))
-            {
-                ImGui.TextWrapped(Strings.AltsUntrackedNotice);
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.AltsDontTrackTooltip);
-            }
+            x = Chrome.StripSegment(x, origin.X, right, origin.Y, Strings.AltsUntrackedNotice, Theme.U32(Theme.Surface.TextSecondary), Strings.AltsDontTrackTooltip);
         }
 
         if (session.NotUpdating.TryGetValue(contentId, out var problem))
         {
-            var text = NotUpdatingTooltip(problem);
-            using (Theme.PushText(Theme.Surface.Text))
-            {
-                ImGui.TextWrapped(text);
-            }
+            Chrome.StripSegment(x, origin.X, right, origin.Y, NotUpdatingTooltip(problem), Theme.U32(Theme.Surface.Text));
         }
+
+        ImGui.SetCursorScreenPos(origin);
+        ImGui.Dummy(new Vector2(room, ImGui.GetTextLineHeight()));
     }
 
     /// <summary>The character's not-updating reason as a <see cref="SharedLoad"/>, for the switcher in the main window too.</summary>

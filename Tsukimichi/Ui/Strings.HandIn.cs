@@ -79,6 +79,15 @@ static partial class Strings
 
     public static string HandInArtisanFailed => Loc.Get("HandInArtisanFailed");
 
+    /// <summary>The status bar's line while an Artisan craft Tsukimichi handed off runs (1.12.0, U4).</summary>
+    public static string ArtisanCraftingStatus => Loc.Get("ArtisanCraftingStatus");
+
+    /// <summary>The status bar's Stop for that craft.</summary>
+    public static string ArtisanStopTooltip => Loc.Get("ArtisanStopTooltip");
+
+    /// <summary>The status bar's note when that Stop could not reach Artisan.</summary>
+    public static string ArtisanStopFailed => Loc.Get("ArtisanStopFailed");
+
     /// <summary>{0} = the chat command that will run ("/gather Maple Log").</summary>
     public static string HandInGatherTooltipFormat => Loc.Get("HandInGatherTooltipFormat");
 

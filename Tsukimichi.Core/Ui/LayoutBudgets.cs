@@ -488,9 +488,6 @@ public static class LayoutBudgets
     /// <summary>My blues: under this Flag and Reveal fold into one "…" menu.</summary>
     public const float PlanMenuLogical = 420f;
 
-    /// <summary>Moonlit: under this the toolbar takes two rows.</summary>
-    public const float MoonlitTwoRowToolbarLogical = 560f;
-
     /// <summary>
     /// Label beside value (<c>Chrome.LabelValue</c>) while the value keeps at least this many ems of room; under it the
     /// label goes above the value.

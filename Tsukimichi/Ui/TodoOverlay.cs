@@ -52,8 +52,13 @@ namespace Tsukimichi.Ui;
 /// Next stops (<see cref="NextStops"/>, off by default) lists one row per stop standing on its first quest; and a
 /// right-click on the Pinned caption offers a route through every pin (<see cref="OpenRoute"/>).
 /// Questionable (feature plan v5, 1.6.0): while it runs, a gold "Questionable: running · &lt;quest&gt; · step 3 of 7"
-/// line under the title with a Stop button (polled at most once a second, only while the panel draws), its quest's
-/// name in gold in the rows, and "Send pins to Questionable" in the title's menu (<see cref="QuestionableActions"/>).
+/// in the title's own line, cut to the room it has, with a Stop beside the title's "…" (polled at most once a second,
+/// only while the panel draws), its quest's name in gold in the rows, and "Send pins to Questionable" in the title's
+/// menu (<see cref="QuestionableActions"/>).
+///
+/// 1.12.0 (feature plan v6, U4: the panel never moves under the player): the Questionable status no longer adds a line
+/// under the title, and the text column only grows during a session; it gives back room only after
+/// <see cref="ShrinkAfterSeconds"/> without a change, and never while the pointer is on the panel.
 /// </summary>
 public sealed class TodoOverlay : Window, IDisposable
 {
@@ -62,6 +67,9 @@ public sealed class TodoOverlay : Window, IDisposable
 
     /// <summary>Logical minimum width of the panel.</summary>
     private const float MinWidthLogical = 180f;
+
+    /// <summary>How long the text column waits, unchanged and not hovered, before it narrows to what the rows need.</summary>
+    private const double ShrinkAfterSeconds = 3.0;
 
     /// <summary>Logical width of the panel in Compact mode (fixed; long names are clipped).</summary>
     private const float CompactWidthLogical = 260f;
@@ -128,6 +136,11 @@ public sealed class TodoOverlay : Window, IDisposable
     private bool resetPosition;
     private bool disposed;
     private Theme.StyleScope nightChrome;
+
+    // The text column's width as shown, the width the rows asked for last frame, and when that last changed (ImGui time).
+    private float heldText;
+    private float wantedText = -1f;
+    private double wantedSince;
 
     // A clicked row whose reveal waits out the double-click window (ImGui time of the click); see DrawRow.
     private QuestRecord? pendingReveal;
@@ -274,7 +287,6 @@ public sealed class TodoOverlay : Window, IDisposable
         var compact = settings.TodoOverlayCompact;
         var layout = Measure(compact);
         DrawHeader(layout);
-        DrawQuestionableLine(layout);
         if (!catalogReady)
         {
             Chrome.OutlinedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, Theme.Surface.TextSecondary);
@@ -455,12 +467,40 @@ public sealed class TodoOverlay : Window, IDisposable
             }
         }
 
+        text = compact ? text : HeldWidth(text);
         return new RowLayout(glyph, rowHeight, text, glyph + spacing + text + spacing + button);
     }
 
     /// <summary>
-    /// "☾ Tsukimichi" outlined in the primary tone, a lock glyph while locked, and a "…" with the overlay's options
-    /// (the same menu as a right-click on the title): Lock (click-through), Compact, Reset position, Hide.
+    /// The width ratchet: wider at once, narrower only once the rows have asked for less for
+    /// <see cref="ShrinkAfterSeconds"/> and the pointer is not on the panel, so a zone change or a finished quest does not
+    /// pull the "…" column out from under the eye.
+    /// </summary>
+    private float HeldWidth(float wanted)
+    {
+        var now = ImGui.GetTime();
+        if (wanted != wantedText)
+        {
+            wantedText = wanted;
+            wantedSince = now;
+        }
+
+        if (wanted >= heldText)
+        {
+            heldText = wanted;
+        }
+        else if (now - wantedSince >= ShrinkAfterSeconds && !ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows | ImGuiHoveredFlags.AllowWhenBlockedByPopup))
+        {
+            heldText = wanted;
+        }
+
+        return heldText;
+    }
+
+    /// <summary>
+    /// "☾ Tsukimichi" outlined in the primary tone, a lock glyph while locked, Questionable's status while it runs, and a
+    /// "…" with the overlay's options (the same menu as a right-click on the title): Lock (click-through), Compact,
+    /// Reset position, Hide.
     /// </summary>
     private void DrawHeader(in RowLayout layout)
     {
@@ -479,7 +519,10 @@ public sealed class TodoOverlay : Window, IDisposable
             ImGui.PopFont();
             UiMetrics.ApplyFontScale();
         }
-        else
+
+        var titleEnd = ImGui.GetItemRectMax().X;
+        DrawQuestionableStatus(start, titleEnd, textY, layout);
+        if (!settings.TodoOverlayLocked)
         {
             // The "…" sits in the rows' button column; while locked nothing can be clicked, so it is not drawn.
             ImGui.SetCursorScreenPos(new Vector2(start.X + layout.RowWidth - UiMetrics.MinTarget, start.Y));
@@ -548,38 +591,48 @@ public sealed class TodoOverlay : Window, IDisposable
     }
 
     /// <summary>
-    /// Questionable's live status under the title while it runs, outlined in gold and cut to the panel's width, and a
-    /// small Stop (not while locked: the panel takes no clicks then).
+    /// Questionable's live status in the title's line while it runs (1.12.0, U4: never a line of its own), outlined in
+    /// gold and cut to the room between the title and the button column, the whole text on hover, and a small Stop
+    /// left of the "…" (not while locked: the panel takes no clicks then). The panel is not widened for it.
     /// </summary>
-    private void DrawQuestionableLine(in RowLayout layout)
+    private void DrawQuestionableStatus(Vector2 start, float titleEnd, float textY, in RowLayout layout)
     {
         if (Questionable?.PollStatusText() is not { } text)
         {
             return;
         }
 
+        var style = ImGui.GetStyle();
         var locked = settings.TodoOverlayLocked;
-        var stopWidth = locked ? 0f : ImGui.CalcTextSize(Strings.QuestionableStopShort).X + (ImGui.GetStyle().FramePadding.X * 2f) + ImGui.GetStyle().ItemSpacing.X;
-        var start = ImGui.GetCursorScreenPos();
-        var line = ImGui.GetTextLineHeight();
-        var room = MathF.Max(UiMetrics.Px(40f), layout.RowWidth - stopWidth);
-        ImGui.Dummy(new Vector2(room, line));
-        if (ImGui.IsItemHovered())
+        var right = start.X + layout.RowWidth - (locked ? 0f : UiMetrics.MinTarget + style.ItemSpacing.X);
+        var stopWidth = locked ? 0f : ImGui.CalcTextSize(Strings.QuestionableStopShort).X + (style.FramePadding.X * 2f);
+        var textX = titleEnd + style.ItemSpacing.X;
+        var room = right - textX - (locked ? 0f : stopWidth + style.ItemSpacing.X);
+        if (room < UiMetrics.Px(32f))
         {
-            UiMetrics.Tooltip(text, Strings.QuestionableStatusTooltip);
+            // No room beside the title: the Stop alone still shows Questionable is running.
+            room = 0f;
         }
 
-        var dl = ImGui.GetWindowDrawList();
-        dl.PushClipRect(start, new Vector2(start.X + room, start.Y + line), true);
-        Chrome.OutlinedTextAt(dl, start, text, Theme.AccentU32);
-        dl.PopClipRect();
-        if (locked)
+        var line = ImGui.GetTextLineHeight();
+        if (room > 0f)
+        {
+            var dl = ImGui.GetWindowDrawList();
+            var textMin = new Vector2(textX, textY);
+            Chrome.OutlinedEllipsisAt(dl, textMin, room, text, Theme.AccentU32);
+            if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(textMin, textMin + new Vector2(room, line)))
+            {
+                UiMetrics.Tooltip(text, Strings.QuestionableStatusTooltip);
+            }
+        }
+
+        if (locked || right - stopWidth < titleEnd)
         {
             return;
         }
 
-        ImGui.SameLine();
-        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 0f)))
+        ImGui.SetCursorScreenPos(new Vector2(right - stopWidth, textY));
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(style.FramePadding.X, 0f)))
         {
             Questionable.DrawStopSmallButton(QuestionableHost, "##questionableStop");
         }

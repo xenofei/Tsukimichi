@@ -873,6 +873,16 @@
   <data name="HandInArtisanFailed" xml:space="preserve">
     <value>Artisan did not take the craft.</value>
   </data>
+  <data name="ArtisanCraftingStatus" xml:space="preserve">
+    <value>Artisan is crafting.</value>
+    <comment>Status bar line while an Artisan craft Tsukimichi handed off runs.</comment>
+  </data>
+  <data name="ArtisanStopTooltip" xml:space="preserve">
+    <value>Ends the craft run Tsukimichi handed to Artisan. Artisan finishes the craft in hand.</value>
+  </data>
+  <data name="ArtisanStopFailed" xml:space="preserve">
+    <value>Artisan could not be asked to stop.</value>
+  </data>
   <data name="HandInGatherTooltipFormat" xml:space="preserve">
     <value>Gather with GatherBuddy: runs {0}</value>
     <comment>{0} = the chat command that will run ("/gather Maple Log").</comment>
@@ -1605,6 +1615,16 @@
   </data>
   <data name="MoonlitCopied" xml:space="preserve">
     <value>Copied</value>
+  </data>
+  <data name="MoonlitFiltersTooltip" xml:space="preserve">
+    <value>Choose which rewards to list, and how the table counts and groups them</value>
+  </data>
+  <data name="MoonlitFiltersBadgeOne" xml:space="preserve">
+    <value>1 filter narrows the list; Reset filters in this menu clears it</value>
+  </data>
+  <data name="MoonlitFiltersBadgeFormat" xml:space="preserve">
+    <value>{0} filters narrow the list; Reset filters in this menu clears them</value>
+    <comment>{0} = engaged filters.</comment>
   </data>
   <data name="TabFlight" xml:space="preserve">
     <value>Flight</value>

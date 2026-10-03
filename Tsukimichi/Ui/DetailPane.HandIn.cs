@@ -31,7 +31,6 @@ namespace Tsukimichi.Ui;
 public sealed partial class DetailPane
 {
     private const string HandInCopyMenuId = "##handInCopy";
-    private const double HandInNoteSeconds = 5.0;
 
     /// <summary>The least room a hand-in row keeps for the item's name before its pills drop their labels, logical pixels.</summary>
     private const float HandInNameRoomLogical = 120f;
@@ -51,9 +50,6 @@ public sealed partial class DetailPane
     private bool handInHqMixed;
     private string handInCaption = string.Empty;
     private bool handInCaptionDirty;
-    private string handInNote = string.Empty;
-    private double handInNoteUntil;
-    private uint handInNoteRowId;
 
     /// <summary>Live item counts; null until the plugin attaches it, which leaves the counts line out.</summary>
     public HandInStock? Stock { get; set; }
@@ -375,14 +371,9 @@ public sealed partial class DetailPane
         }
     }
 
-    /// <summary>"Copy missing items" with its menu, and the note a hand-off leaves for a few seconds.</summary>
+    /// <summary>"Copy missing items" with its menu.</summary>
     private void DrawHandInFooter(SessionState session, QuestRecord quest)
     {
-        if (handInNote.Length > 0 && handInNoteRowId == quest.RowId && ImGui.GetTime() < handInNoteUntil)
-        {
-            TextFlow.Wrapped(handInNote, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
-        }
-
         if (Chrome.IconButtonRound("##handInCopy", HandInCopyIcon, Strings.HandInCopyTooltip))
         {
             ImGui.OpenPopup(HandInCopyMenuId);
@@ -471,10 +462,6 @@ public sealed partial class DetailPane
         return result;
     }
 
-    private void ShowHandInNote(string note)
-    {
-        handInNote = note;
-        handInNoteUntil = ImGui.GetTime() + HandInNoteSeconds;
-        handInNoteRowId = handInRowId;
-    }
+    /// <summary>What a hand-in button just did, said in the status bar (feature plan v6, U4) rather than in a line that would push the card down.</summary>
+    private void ShowHandInNote(string note) => ShowCompanionNote(note);
 }

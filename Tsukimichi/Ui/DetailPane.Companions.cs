@@ -18,7 +18,8 @@ namespace Tsukimichi.Ui;
 /// AutoDuty", which hands the duty to AutoDuty for one clear in Duty Support, else Trust, else (with Settings ›
 /// Integrations › "Allow AutoDuty to queue in the regular Duty Finder") the Duty Finder. The button is always shown;
 /// disabled, its tooltip says why (<see cref="AutoDutyPlan.Choose"/>: AutoDuty or what it needs is missing, a stored
-/// character, no path, not unlocked, no Duty Support or Trust). While AutoDuty runs the section says so and offers Stop.
+/// character, no path, not unlocked, no Duty Support or Trust). While AutoDuty runs, the status bar says so and offers
+/// Stop, as the action row's pill does; the section itself never grows a line for it (feature plan v6, U4).
 /// </para>
 /// <para>
 /// <b>Open in Quest Map</b>, a small button at the end of the Path section, disabled with the reason while Quest Map is
@@ -29,8 +30,6 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed partial class DetailPane
 {
-    private const double CompanionNoteSeconds = 6.0;
-
     private static readonly string DutiesIcon = FontAwesomeIcon.Dungeon.ToIconString();
 
     private static readonly Localization.LocText QuestMapLabel = new(static () => Strings.QuestMapOpen + "##questMap");
@@ -43,11 +42,6 @@ public sealed partial class DetailPane
     private int dutyVersion = -1;
     private int dutyGeneration = -1;
     private DutyRunIndex? dutyIndex;
-
-    // "AutoDuty is running …" / "Quest Map does not chart this quest" for a few seconds after a press.
-    private string? companionNote;
-    private double companionNoteUntil;
-    private uint companionNoteRowId;
 
     /// <summary>The companion plugin registry; null until the plugin attaches it, which hides the Duties section and Quest Map.</summary>
     public CompanionPlugins? Companions { get; set; }
@@ -125,19 +119,6 @@ public sealed partial class DetailPane
         Gap();
         BeginSection("##duties", Strings.DutiesSection, DutiesIcon);
         var running = autoDuty.Available && !autoDuty.IsStopped;
-        if (running)
-        {
-            using (Theme.PushText(Theme.Surface.Text))
-            {
-                TextFlow.Wrapped(Strings.AutoDutyRunning, RoomTo(cardRight));
-            }
-
-            if (Chrome.ActionPill("##autoDutyStop", StopIcon, Strings.AutoDutyStop, PillTone.Danger, true, Strings.AutoDutyStopTooltip) && !autoDuty.Stop())
-            {
-                ShowCompanionNote(quest.RowId, Strings.AutoDutyUnreachable);
-            }
-        }
-
         var inputsBase = AutoDutyInputsFor(companions, session, running);
         var anyPath = false;
         for (var i = 0; i < dutyRows.Count; i++)
@@ -189,7 +170,6 @@ public sealed partial class DetailPane
             TextFlow.Wrapped(Strings.AutoDutyRotationNote, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
         }
 
-        DrawCompanionNote(quest.RowId);
         EndSection();
     }
 
@@ -210,11 +190,11 @@ public sealed partial class DetailPane
         Traveling = links.IsTraveling,
     };
 
-    /// <summary>Hands the duty to AutoDuty in the chosen mode and says how it went under the Duties section.</summary>
+    /// <summary>Hands the duty to AutoDuty in the chosen mode and says how it went in the status bar.</summary>
     private void StartAutoDuty(AutoDutyIpc autoDuty, QuestRecord quest, DutyRow row, AutoDutyChoice choice)
     {
         var result = autoDuty.Run(row.Duty.Duty.TerritoryTypeId, choice.Mode);
-        ShowCompanionNote(quest.RowId, result switch
+        ShowCompanionNote(result switch
         {
             AutoDutyStart.Started => string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyStartedFormat, row.Duty.Duty.Name),
             AutoDutyStart.ModeRefused => Strings.AutoDutyModeRefused,
@@ -259,28 +239,7 @@ public sealed partial class DetailPane
 
         if (pressed && available && !questMap.ShowGraph(rowId))
         {
-            ShowCompanionNote(rowId, Strings.QuestMapNotCharted);
-        }
-
-        // The note belongs to the Duties section when it has one; a quest without duties shows it here.
-        if (dutyRows.Count == 0 || dutyRowId != rowId)
-        {
-            DrawCompanionNote(rowId);
-        }
-    }
-
-    private void ShowCompanionNote(uint rowId, string note)
-    {
-        companionNote = note;
-        companionNoteRowId = rowId;
-        companionNoteUntil = ImGui.GetTime() + CompanionNoteSeconds;
-    }
-
-    private void DrawCompanionNote(uint rowId)
-    {
-        if (companionNote is { } note && companionNoteRowId == rowId && ImGui.GetTime() < companionNoteUntil)
-        {
-            TextFlow.Wrapped(note, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
+            ShowCompanionNote(Strings.QuestMapNotCharted);
         }
     }
 }

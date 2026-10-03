@@ -186,6 +186,13 @@ static partial class Strings
     public static string MoonlitCopyNothing => Loc.Get("MoonlitCopyNothing");
     public static string MoonlitCopied => Loc.Get("MoonlitCopied");
 
+    /// <summary>The Moonlit toolbar's Filters button (1.12.0, U4).</summary>
+    public static string MoonlitFiltersTooltip => Loc.Get("MoonlitFiltersTooltip");
+    public static string MoonlitFiltersBadgeOne => Loc.Get("MoonlitFiltersBadgeOne");
+
+    /// <summary>{0} = engaged filters.</summary>
+    public static string MoonlitFiltersBadgeFormat => Loc.Get("MoonlitFiltersBadgeFormat");
+
     // ---- Flight pane ----
     public static string TabFlight => Loc.Get("TabFlight");
     public static string FlightNoData => Loc.Get("FlightNoData");

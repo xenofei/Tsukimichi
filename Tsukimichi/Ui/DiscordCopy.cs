@@ -50,7 +50,11 @@ public sealed class DiscordCopy
     /// </summary>
     /// <param name="state">What <paramref name="build"/> reads, so it can be a static lambda.</param>
     /// <param name="build">Builds the whole text from <paramref name="state"/>; the flag says whether to add links. Called only on a click.</param>
-    public void Draw<TState>(string id, object key, TState state, Func<TState, bool, string> build, bool small = false)
+    /// <param name="note">
+    /// Whether "Copied" follows the button for a moment. A caller that keeps its toolbar steady passes false and says it
+    /// in a slot of its own (<see cref="JustCopied"/>), so the note never pushes the next item onto another line.
+    /// </param>
+    public void Draw<TState>(string id, object key, TState state, Func<TState, bool, string> build, bool small = false, bool note = true)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(build);
@@ -99,11 +103,25 @@ public sealed class DiscordCopy
             }
         }
 
-        if (ImGui.GetTime() - copiedAt < CopiedSeconds)
+        if (note && JustCopied)
         {
             ImGui.SameLine();
             ImGui.TextDisabled(Strings.LinksDiscordCopied);
         }
+    }
+
+    /// <summary>True for a moment after a click copied a part.</summary>
+    public bool JustCopied => ImGui.GetTime() - copiedAt < CopiedSeconds;
+
+    /// <summary>
+    /// The regular button's widest label ("Copy for Discord", or "Copy part 9/9") with its frame padding, for a caller
+    /// that lays its toolbar out before drawing, so the toolbar wraps the same way whatever part is next.
+    /// </summary>
+    public static float ButtonWidth()
+    {
+        var parts = string.Format(CultureInfo.CurrentCulture, Strings.LinksCopyPartFormat, 9, 9);
+        var text = MathF.Max(ImGui.CalcTextSize(Strings.LinksCopyDiscord).X, ImGui.CalcTextSize(parts).X);
+        return text + (ImGui.GetStyle().FramePadding.X * 2f);
     }
 
     /// <summary>"Copy for Discord" or "Copy part 2/3", with the id; rebuilt only when the id, the text or the part changes.</summary>
