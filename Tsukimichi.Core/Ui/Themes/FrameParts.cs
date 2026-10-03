@@ -104,6 +104,23 @@ public static class FrameParts
     public static bool Required(PartAtlasKind kind, int sprite, bool row) =>
         kind == PartAtlasKind.Faces ? sprite < AppearanceStates.Count : sprite < 8 || !row;
 
+    /// <summary>The light-palette outer keyline's alpha (spec-1.17 §B2): Abyss at .6.</summary>
+    public const float LightKeylineAlpha = 0.6f;
+
+    /// <summary>
+    /// Whether a medal gets the 1 px Abyss outer keyline (spec-1.17 §B2, the supervisor's condition for Silver on Ishgard
+    /// Snow): on a light palette, at Decoration Full, in every kit, so a medal's outline never depends on its metal's own
+    /// darkest stop. Not at Quiet (its hairline rim is the outline) or Plain (its flat rim is), nor under high contrast.
+    /// </summary>
+    public static bool LightKeyline(bool lightPalette, bool highContrast, MedalFinish finish) =>
+        lightPalette && !highContrast && finish == MedalFinish.Gilt;
+
+    /// <summary>
+    /// The light-palette keyline's radius for a medal <paramref name="size"/> px across: centred half a pixel outside the
+    /// medal's own keyline (r 63.2 of the 128-unit box), so the 1 px line lies just outside the rim.
+    /// </summary>
+    public static float LightKeylineRadius(float size) => (size * MedalArt.KeylineRadius / 128f) + 0.5f;
+
     /// <summary>
     /// The destination of a part covering <paramref name="box"/> (in the 128-unit box) of a medal drawn in the box
     /// <paramref name="min"/> .. <paramref name="min"/> + <paramref name="size"/>: its top-left corner and its size.

@@ -99,7 +99,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     },
     "astrologian-orrery": {
       "own": false,
@@ -220,7 +221,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     },
     "ishgard-glass": {
       "own": true,
@@ -341,7 +343,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     },
     "medallion": {
       "own": false,
@@ -462,7 +465,10 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": [
+        {"kind": "pair", "a": "blocked", "b": "locked-out", "d": 10.82, "mode": "machado-prot", "ground": "night", "tier": "row", "level": "close"}
+      ]
     }
   }
 }

@@ -46,6 +46,22 @@ public sealed class FramePartsTests
     }
 
     [Fact]
+    public void On_a_light_palette_every_medal_keeps_the_Abyss_outer_keyline_at_Full()
+    {
+        // spec-1.17 §B2, the supervisor's condition for Silver on Ishgard Snow: 1 px Abyss at .6 round every kit's medals.
+        Assert.True(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.Gilt));
+        Assert.False(FrameParts.LightKeyline(lightPalette: false, highContrast: false, MedalFinish.Gilt));
+        Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: true, MedalFinish.Gilt));
+        Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.LightRim));
+        Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.Plain));
+        Assert.Equal(0.6f, FrameParts.LightKeylineAlpha);
+
+        // Half a pixel outside the medal's own keyline (r 63.2 of 128), so the 1 px line sits just outside the rim.
+        Assert.Equal((128f * MedalArt.KeylineRadius / 128f) + 0.5f, FrameParts.LightKeylineRadius(128f));
+        Assert.True(FrameParts.LightKeylineRadius(48f) > 48f * MedalArt.KeylineRadius / 128f);
+    }
+
+    [Fact]
     public void A_part_is_placed_at_its_box_of_the_medal()
     {
         Assert.Equal((10f + 48f, 20f + 48f, 48f, 48f), FrameParts.Place(FrameParts.BadgeBox, 10f, 20f, 96f));

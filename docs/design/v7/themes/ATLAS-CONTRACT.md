@@ -187,6 +187,10 @@ approved mix proofs' order (the sets' `_src/mix.py` and `compose()`):
 4. from 32 px, the kit's **badge** at the shared slot (open lock, book, closed lock, or an empty role seat for Ready on
    another job, into which the plugin draws the game's job icon).
 
+On a light palette at Decoration Full, every medal (any kit, composed or not) also gets a 1 px Abyss `#080B16` outer
+keyline at .6, half a pixel outside its own keyline (spec-1.17 §B2; `FrameParts.LightKeyline`), drawn by the plugin, not
+baked into the atlases.
+
 A set in its own kit draws `medals.*` and `row.*` as designed (the same art, byte for byte the 1.16 atlases), and
 Decoration Plain never composes (Plain has no frames). Until every part a medal needs has loaded, Menphina's Medallion
 stands in, as §4.
@@ -221,6 +225,9 @@ Parsed by `Tsukimichi.Core/Ui/Themes/FrameParts.cs` (`PartAtlasLayout`); drawn b
 **Gates.** The build composes every set's faces in every kit as the plugin does and runs the per-set gates on each
 (G1, G1c and G2 per tier group, G2L on the row tier), recorded in the kit's `metrics.json` under `faces`. A set in its own
 kit is its shipped composites and must pass; any other pairing is a user's frames choice, and a gate it misses is a
-warning (`warnings`), never a build failure (theme-system §5.2). The cross-set table frames every face in the neutral kit,
+warning (`warnings`), never a build failure (theme-system §5.2). What the Frames row says is each pairing's `flags`: every
+pair of states under the bars at 16 px (greyscale and deuteranopia 12, Machado's 11; "hard" under 10), Ready leading by
+under 1.25, Completed over 0.8 of Ready. The build compiles them into `Tsukimichi.Core/Ui/Themes/FrameKitChecks.g.cs`
+(`--check` covers it), since `metrics.json` is not packaged. The cross-set table frames every face in the neutral kit,
 Brass, whose four urgency tiers are one bezel, so the frame cancels and the faces decide; it is recorded worst-of-modes
 (`cross.sets`) and per vision mode (`cross.modes`).

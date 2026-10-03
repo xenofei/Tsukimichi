@@ -99,7 +99,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     },
     "astrologian-orrery": {
       "own": false,
@@ -220,7 +221,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     },
     "ishgard-glass": {
       "own": false,
@@ -341,7 +343,10 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": [
+        {"kind": "pair", "a": "locked-out", "b": "not-checked", "d": 9.91, "mode": "machado-prot", "ground": "ishgard-snow", "tier": "hero-96-128", "level": "hard"}
+      ]
     },
     "medallion": {
       "own": true,
@@ -462,7 +467,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     }
   }
 }

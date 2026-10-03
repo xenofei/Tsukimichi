@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
@@ -616,7 +617,20 @@ public sealed partial class ConfigWindow
         var choosable = ThemesPage.FramesChoosable(FrameKitRenderers.HasOwnMetal);
         var resolved = GlyphSeam.Appearance;
         var frames = choosable ? ThemesPage.FramesIndex(saved) : 1 + IndexOfKit(FrameKitRenderers.HasOwnMetal(resolved.Frames) ? resolved.Frames : FrameKitId.Brass);
-        if (Choice(Strings.ThemesFrames, Strings.ThemesFramesHint, ref frames, FrameOptions.Value, "frames frame metal brass silver came lead rim border", enabled: choosable, reason: Strings.ThemesFramesFixedReason) && choosable)
+        var options = FrameOptions.Value;
+        if (!Setting(Strings.ThemesFrames, Strings.ThemesFramesHint, "frames frame metal brass silver came lead astrolabe rim border", Chrome.SegmentedWidth(options), UiMetrics.MinTarget, choosable, reason: Strings.ThemesFramesFixedReason))
+        {
+            return;
+        }
+
+        var changed = Chrome.Segmented("##choice", ref frames, options, ControlWidth) && choosable;
+        if (choosable)
+        {
+            DrawFramesWarning(resolved);
+        }
+
+        EndSetting();
+        if (changed)
         {
             var before = saved.Clone();
             var kit = ThemesPage.KitAt(frames);
@@ -624,6 +638,73 @@ public sealed partial class ConfigWindow
             Save();
             UndoToast.Show(string.Format(CultureInfo.CurrentCulture, Strings.UndoToastFramesFormat, kit is null ? Strings.ThemesFramesFromTheme : KitName(kit.Id)), () => RestoreAppearance(before));
         }
+    }
+
+    // The Frames row's warning line, rebuilt when the appearance or the language changes.
+    private ResolvedAppearance? framesWarningFor;
+    private int framesWarningLanguage = -1;
+    private string framesWarning = string.Empty;
+    private string framesWarningAll = string.Empty;
+
+    /// <summary>
+    /// Under the Frames control, one calm line (its place always kept, so nothing moves): what the chosen kit plus the
+    /// faces drawn in it miss (<see cref="FrameKitChecks"/>), in plain words naming the states, the first in full and the
+    /// rest in its tooltip. Nothing is blocked; the line only says so.
+    /// </summary>
+    private void DrawFramesWarning(ResolvedAppearance resolved)
+    {
+        if (!ReferenceEquals(resolved, framesWarningFor) || framesWarningLanguage != Loc.Version)
+        {
+            framesWarningFor = resolved;
+            framesWarningLanguage = Loc.Version;
+            var flags = FrameKitChecks.For(resolved);
+            var lines = flags.Select(FramesWarningText).ToArray();
+            framesWarningAll = string.Join("\n", lines);
+            framesWarning = lines.Length switch
+            {
+                0 => string.Empty,
+                1 => lines[0],
+                _ => string.Format(CultureInfo.CurrentCulture, Strings.ThemesFramesMoreFormat, lines[0], lines.Length - 1),
+            };
+        }
+
+        SettingBelow();
+        using (Typography.Caption())
+        {
+            var at = ImGui.GetCursorScreenPos();
+            var width = MathF.Max(1f, row.Right - at.X);
+            var line = ImGui.GetTextLineHeight();
+            if (framesWarning.Length > 0)
+            {
+                Chrome.EllipsisTextAt(ImGui.GetWindowDrawList(), at, width, framesWarning, Theme.U32(Theme.Surface.TextSecondary));
+            }
+
+            ImGui.Dummy(new Vector2(width, line));
+            if (framesWarning.Length > 0 && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(framesWarningAll);
+            }
+        }
+    }
+
+    private static string FramesWarningText(KitFlag flag)
+    {
+        var kit = KitName(flag.Kit);
+        var set = ThemeName((ThemeId)(byte)flag.Set);
+        return flag.Kind switch
+        {
+            KitFlagKind.ReadyLead => string.Format(CultureInfo.CurrentCulture, Strings.ThemesFramesReadyFormat, kit, set),
+            KitFlagKind.CompletedRecedes => string.Format(CultureInfo.CurrentCulture, Strings.ThemesFramesCompletedFormat, kit, set),
+            _ => string.Format(
+                CultureInfo.CurrentCulture,
+                flag.Hard
+                    ? flag.ColourVision ? Strings.ThemesFramesHardColourFormat : Strings.ThemesFramesHardFormat
+                    : flag.ColourVision ? Strings.ThemesFramesCloseColourFormat : Strings.ThemesFramesCloseFormat,
+                kit,
+                Strings.StateName(flag.A),
+                Strings.StateName(flag.B),
+                set),
+        };
     }
 
     private static int IndexOfKit(FrameKitId id)

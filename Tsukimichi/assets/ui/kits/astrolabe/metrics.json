@@ -99,7 +99,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     },
     "astrologian-orrery": {
       "own": true,
@@ -220,7 +221,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     },
     "ishgard-glass": {
       "own": false,
@@ -341,7 +343,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     },
     "medallion": {
       "own": false,
@@ -462,7 +465,8 @@
           ]
         }
       ],
-      "lightMeasure": "chroma"
+      "lightMeasure": "chroma",
+      "flags": []
     }
   }
 }

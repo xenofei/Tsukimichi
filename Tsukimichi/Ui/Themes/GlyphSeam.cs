@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Ui.Themes;
 
 namespace Tsukimichi.Ui.Themes;
@@ -80,6 +81,15 @@ public static class GlyphSeam
         if (!SetFor(state).TryDraw(dl, center, radius, state, job, alpha))
         {
             MedallionGlyphSet.Instance.TryDraw(dl, center, radius, state, job, alpha);
+        }
+
+        // On a light palette every kit keeps a 1 px Abyss outer keyline (spec-1.17 §B2), so a medal's outline never
+        // depends on its metal's darkest stop (Silver on Ishgard Snow).
+        if (radius > 0.5f && alpha > 0f && FrameParts.LightKeyline(Theme.IsLight, Theme.Glyphs.HighContrast, Theme.MedalFinish))
+        {
+            var (min, size) = MedalGlyph.Box(center, radius);
+            var mid = min + new Vector2(size * 0.5f);
+            dl.AddCircle(mid, FrameParts.LightKeylineRadius(size), Theme.WithAlpha(GlyphTokens.Abyss, FrameParts.LightKeylineAlpha * alpha), 0, 1f);
         }
     }
 

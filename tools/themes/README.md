@@ -67,7 +67,7 @@ Each measure is recorded with no wash, the shipped wash and the old fallback (.9
 
 ## Faces in every kit (1.17 T11)
 
-Each kit's `metrics.json` holds every set's faces composed in that kit as the plugin composes them (face under, the frame for the state's urgency tier, face over, the badge from 32 px), held to G1, G1c, G2 and G2L. A set in its own kit (`own`) is measured on its shipped composites and must pass; any other pairing is a frames choice the player makes, and a gate it misses is recorded under `warnings`, never failing the build (theme-system §5.2: measured checks warn). `ThemeAtlasTests` re-judges every recorded verdict against its own bars.
+Each kit's `metrics.json` holds every set's faces composed in that kit as the plugin composes them (face under, the frame for the state's urgency tier, face over, the badge from 32 px), held to G1, G1c, G2 and G2L. A set in its own kit (`own`) is measured on its shipped composites and must pass; any other pairing is a frames choice the player makes, and a gate it misses is recorded under `warnings`, never failing the build (theme-system §5.2: measured checks warn). `ThemeAtlasTests` re-judges every recorded verdict against its own bars. Each pairing's `flags` (pairs under the bars at 16 px, "hard" under 10; Ready leading by under 1.25; Completed over 0.8 of Ready) are what Settings › Themes › Frames says in words; the build compiles them into `Tsukimichi.Core/Ui/Themes/FrameKitChecks.g.cs`, which `--check` covers and `FrameKitChecksTests` holds to the JSON.
 
 ## Cross-set table (§5.2)
 

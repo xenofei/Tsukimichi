@@ -119,6 +119,20 @@ public static partial class Strings
 
     public static string ThemesFramesFromTheme => Loc.Get("ThemesFramesFromTheme");
 
+    public static string ThemesFramesHardFormat => Loc.Get("ThemesFramesHardFormat");
+
+    public static string ThemesFramesHardColourFormat => Loc.Get("ThemesFramesHardColourFormat");
+
+    public static string ThemesFramesCloseFormat => Loc.Get("ThemesFramesCloseFormat");
+
+    public static string ThemesFramesCloseColourFormat => Loc.Get("ThemesFramesCloseColourFormat");
+
+    public static string ThemesFramesReadyFormat => Loc.Get("ThemesFramesReadyFormat");
+
+    public static string ThemesFramesCompletedFormat => Loc.Get("ThemesFramesCompletedFormat");
+
+    public static string ThemesFramesMoreFormat => Loc.Get("ThemesFramesMoreFormat");
+
     public static string ThemesReset => Loc.Get("ThemesReset");
 
     public static string ThemesResetHint => Loc.Get("ThemesResetHint");
