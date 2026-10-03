@@ -51,7 +51,8 @@ def bullets(block: str):
 
 
 releases = []
-heads = re.findall(r"^### ((?:1\.\d+\.\d|Parallel track)[^\n]*)\n(.*?)(?=^### |^## )", md, re.S | re.M)
+rel_md = section("Releases") + "\n## end\n"
+heads = re.findall(r"^### ((?:1\.\d+\.\d|Parallel track)[^\n]*)\n(.*?)(?=^### |^## )", rel_md, re.S | re.M)
 for head, body in heads:
     ver, _, theme = head.partition("·")
     ver, theme = ver.strip(), theme.strip()

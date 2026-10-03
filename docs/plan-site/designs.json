@@ -1,21 +1,21 @@
 {
- "heading": "Moon & icon: Menphina's Medallion, round four",
- "intro": "<p>Round four answers your eight notes on round three and takes the tester's best ideas. The realism supervisor checked it again before it reached this page.</p><p><strong>What changed from your notes:</strong> Ready has a complete rim. Ready on another job shows the real job icon as a badge; in the plugin it is read from the game, so it works for every job. Blocked is clouds over the moon. Done this cycle has a repeat arrow. Completed is a full, bright, detailed moon with a check, in gold or green; you choose. Locked out is a shattered moon with thin cracks. Not checked is a question mark. The moon and the water have more detail. From the tester: In journal is the Ready moon with the bookmark.</p><p>Nothing is final. Vote or comment on the round-four card, and switch between rounds in the plugin mock below.</p>",
+ "heading": "Moon & icon: Menphina's Medallion, round five",
+ "intro": "<p>You said round four \"looks great\". Round five is the polish you asked for, approved by the realism supervisor with a design critic's help. <strong>The new plugin icon shipped in 1.11.0</strong>; the moons arrive in 1.12.0 with the new renderer.</p><p><strong>What changed:</strong> the job icons are centred in their badge. The icon is centred, with a bigger moon and a Kugane shore of pagodas and red-orange lanterns, each reflected in the water. Blocked is a new moon behind cloud and a thin wisp; the supervisor chose it from three options because a new moon gives almost no light. Ready has an open padlock badge, Blocked a closed one, and In journal a journal badge, all in embossed metal like the job icons. Completed keeps the gold check (the green one meant the same thing).</p>",
  "before": {
-  "name": "Round three",
-  "icon": "designs/medallion-r3-icon.png",
-  "glyphs": "designs/medallion-r3-glyphs.png",
-  "text": "Supervisor-approved, but you said it still needed work: Ready's rim was open, the crystal didn't read as a job, Blocked, Done and Not checked didn't make sense, the crack was too thick, and the moon and water needed more detail.",
-  "tag": "R3"
+  "tag": "R4",
+  "name": "Round four",
+  "icon": "designs/medallion-r4-icon.png",
+  "glyphs": "designs/medallion-r4-glyphs.png",
+  "text": "You said it looked great. Notes: job icons off-centre, the icon not centred and short on FFXIV detail, Blocked not obscured enough, and no lock or journal badges."
  },
  "concepts": [
   {
-   "id": "medallion-r4",
-   "tag": "R4",
-   "name": "Menphina's Medallion, round four",
-   "icon": "designs/medallion-r4-icon.png",
-   "glyphs": "designs/medallion-r4-glyphs.png",
-   "pitch": "Every quest state is a minted job-icon medal in one shared gilt rim, now each with a meaning you can read: a moon road for Ready, clouds for Blocked, a repeat arrow for Done this cycle, a shattered moon for Locked out, and a question mark for Not checked.",
+   "id": "medallion-r5",
+   "tag": "R5",
+   "name": "Menphina's Medallion, round five",
+   "icon": "designs/medallion-r5-icon.png",
+   "glyphs": "designs/medallion-r5-glyphs.png",
+   "pitch": "The final polish: one gilt rim and one badge system. An open lock on Ready, the real job icon on Ready on another job, a journal on In journal and a closed lock on Blocked. The icon is centred over a Kugane shore.",
    "metrics": [
     [
      "Weakest pair, 16 px",
@@ -24,45 +24,57 @@
     ],
     [
      "Ready vs next",
-     "1.37×",
+     "1.34×",
      "≥ 1.3"
     ],
     [
      "Completed vs Ready",
-     "0.73×",
+     "0.74×",
      "≤ 0.8"
     ],
     [
-     "Road brightness",
-     "0.89×",
-     "of the moon"
+     "Blocked vs Locked out",
+     "12.0",
+     "row size"
     ]
    ],
    "changes": [
-    "Ready: complete rim; still the loudest, through a brighter moon, the road inside the medal and a warm afterglow",
-    "Ready on another job: the real job icon as a badge (Paladin shown; Bard and White Mage below). At row size the job icon sits beside the medal",
-    "In journal: the Ready moon, quieter, with the bookmark (the tester's idea)",
-    "Blocked: clouds drifting across the moon, casting soft shadow from the same light",
-    "Done this cycle: a gilt repeat arrow spiralling around the moon",
-    "Completed: a full, bright, detailed moon with a check, in gold or green",
-    "Locked out: Dalamud's red moon shattered with thin fractures and a falling shard",
-    "Not checked: a question mark in moon silver",
-    "Moon and water: smooth tonal detail on the moon, softer, more natural ripples"
+    "Job icons centred optically in their badge (shifts up to 3.7 units)",
+    "Icon: moon and road centred, a bigger moon, a Kugane shore with pagodas and red-orange lanterns, each light reflected below it",
+    "Blocked: a new moon behind cloud with a thin wisp across its lit edge (the supervisor's choice of three)",
+    "Ready: an open padlock badge. Blocked: a closed padlock badge. In journal: a journal badge",
+    "Badges drawn as embossed metal like the job icons; both locks share one position",
+    "Gold check only"
    ],
    "watch": [
-    "Not checked reads as a question mark in a ring until about 48 px",
-    "The weakest pair (Locked out vs Not checked, 12.3) clears the bar only just",
-    "The job badge needs its row-size fallback (the job icon beside the medal)"
+    "The weakest pair at row size (Blocked vs Locked out) is exactly at the bar, 12.0",
+    "Below 32 px the badge moves beside the medal; check this in game with 1.12.0",
+    "The installer's Installed check sits over the moonlit water; it's readable in the render, so confirm it in game"
    ]
   }
  ],
  "supervisor": {
   "verdict": "Approved",
-  "summary": "<p>The supervisor checked rendered images, never source, against one rule: realistic light, shadow, reflection, colour and material, even in stylised art.</p><ul class='prose' style='margin:0;padding-left:20px'><li><strong>Art, round one:</strong> 14 fixes. Mirror slices were moved to the mirror point. The road was re-spaced so it foreshortens. Glints became thin streaks. The lantern got its own warm reflection. The sky gradient was un-inverted. The ribbon was folded behind the medal. The check now breaks the rim.</li><li><strong>Art, round two:</strong> one fix. The lantern's light pool moved in front of its base, where the light can actually reach.</li><li><strong>Plugin mock:</strong> 16 fixes, then 2. The mock now matches the real 1.10 window: overlay content, the colour of the state words, quick views, the three-row action bar, and an ImGui look with no window shadows. The game-screen credit stays visible at every size.</li></ul><ul class='prose' style='margin:0;padding-left:20px'><li><strong>Round four:</strong> 3 fixes. A green fringe on blurred shadows (a colour-space setting), ripples that looked like glossy pills, and In journal's crescent tip ending exactly on the bookmark's edge. Then approved.</li></ul><p>Full reviews: <code>docs/design/moon-v6/round3/supervisor/</code> and <code>docs/design/moon-v6/round4/supervisor/</code>.</p>"
+  "summary": "<p>The supervisor checked rendered images, never source, against one rule: realistic light, shadow, reflection, colour and material, even in stylised art.</p><ul class='prose' style='margin:0;padding-left:20px'><li><strong>Art, round one:</strong> 14 fixes. Mirror slices were moved to the mirror point. The road was re-spaced so it foreshortens. Glints became thin streaks. The lantern got its own warm reflection. The sky gradient was un-inverted. The ribbon was folded behind the medal. The check now breaks the rim.</li><li><strong>Art, round two:</strong> one fix. The lantern's light pool moved in front of its base, where the light can actually reach.</li><li><strong>Plugin mock:</strong> 16 fixes, then 2. The mock now matches the real 1.10 window: overlay content, the colour of the state words, quick views, the three-row action bar, and an ImGui look with no window shadows. The game-screen credit stays visible at every size.</li></ul><ul class='prose' style='margin:0;padding-left:20px'><li><strong>Round four:</strong> 3 fixes. A green fringe on blurred shadows (a colour-space setting), ripples that looked like glossy pills, and In journal's crescent tip ending exactly on the bookmark's edge. Then approved.</li></ul><ul class='prose' style='margin:0;padding-left:20px'><li><strong>Round five:</strong> a design critic ranked the Blocked options and the badge style; the supervisor chose Blocked b and required 9 fixes (cloud lining only over the lit edge, a soft wisp, metal badges, aligned locks, the icon's horizon seam, a bigger centred moon, a symmetric road). Then approved.</li></ul><p>Full reviews: <code>docs/design/moon-v6/round3/supervisor/</code> and <code>docs/design/moon-v6/round4/supervisor/</code> and <code>docs/design/moon-v6/round5/supervisor/</code>.</p>"
  },
  "mockArt": {
   "sceneBase": "mock/",
   "variants": [
+   {
+    "id": "r5d",
+    "label": "Round 5 D",
+    "glyphs": {
+     "ready": "art/r5/ready.svg",
+     "ready-on-another-job": "art/r5/ready-on-another-job.svg",
+     "in-journal": "art/r5/in-journal.svg",
+     "blocked": "art/r5/blocked.svg",
+     "done-this-cycle": "art/r5/done-this-cycle.svg",
+     "completed": "art/r5/completed.svg",
+     "locked-out": "art/r5/locked-out.svg",
+     "not-checked": "art/r5/not-checked.svg"
+    },
+    "icon": "art/r5/plugin-icon.svg"
+   },
    {
     "id": "r4d",
     "label": "Round 4 D",
@@ -111,6 +123,41 @@
   ]
  },
  "archive": [
+  {
+   "round": "Round four",
+   "note": "Built from your eight notes on round three; you said it looked great and asked for the polish in round five.",
+   "items": [
+    {
+     "id": "r4-medallion",
+     "tag": "R4",
+     "name": "Menphina's Medallion, round four",
+     "verdict": "Looked great (you); polished",
+     "icon": "designs/medallion-r4-icon.png",
+     "glyphs": "designs/medallion-r4-glyphs.png",
+     "pitch": "Every quest state is a minted job-icon medal in one shared gilt rim, now each with a meaning you can read: a moon road for Ready, clouds for Blocked, a repeat arrow for Done this cycle, a shattered moon for Locked out, and a question mark for Not checked.",
+     "scores": [
+      [
+       "Weakest pair",
+       "12.3"
+      ],
+      [
+       "Ready vs next",
+       "1.37×"
+      ]
+     ],
+     "liked": [
+      "Looked great to you",
+      "Clouds, repeat arrow, shattered moon and question mark all read"
+     ],
+     "failed": [
+      "Job icons off-centre",
+      "The icon not centred and short on FFXIV detail",
+      "Blocked not obscured enough",
+      "No lock or journal badges"
+     ]
+    }
+   ]
+  },
   {
    "round": "Round three",
    "note": "Concept D alone, enhanced from your first notes and approved by the realism supervisor. You said it still needed more work.",
@@ -397,8 +444,8 @@
  ],
  "extras": [
   {
-   "src": "designs/medallion-r4-variants.png",
-   "cap": "Ready on another job with three real job badges, both Completed checks, and the row-size fallback with the job icon beside the medal."
+   "src": "designs/medallion-r5-variants.png",
+   "cap": "Every badge (open lock, three jobs, journal, closed lock), the Blocked options the supervisor chose from, the row-size fallback, and the icon from 32 to 256 px."
   }
  ]
 }
