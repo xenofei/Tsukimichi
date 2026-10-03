@@ -49,11 +49,15 @@ public sealed class PaneSplit
         return PaneLayout.Solve(total, rail, settings.TreePaneWidth, settings.DetailPaneWidth, UiMetrics.Scale, stripAllowed && settings.TreePaneStrip);
     }
 
-    /// <summary>A plain gutter with its line (between the rail and the tree): nothing to drag.</summary>
+    /// <summary>
+    /// A plain gutter with its line (between the rail and the tree): nothing to drag. At Full the line is the palette's
+    /// rail edge where it has one (Kugane Lacquer's vermilion lacquer edge, spec-1.17 §E2).
+    /// </summary>
     public static void Divider(string id, in PaneWidths widths, float height)
     {
         ImGui.InvisibleButton(id, new Vector2(MathF.Max(1f, widths.Gutter), MathF.Max(1f, height)));
-        DrawLine(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), Theme.U32(Theme.Surface.Line));
+        var line = Theme.Flair == Flair.Full && Theme.Scene.RailEdge is { } edge ? edge : Theme.Surface.Line;
+        DrawLine(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), Theme.U32(line));
     }
 
     /// <summary>
