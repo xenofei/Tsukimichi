@@ -126,6 +126,10 @@ public sealed partial class ConfigWindow
         new(SettingsSection.General, DrawLook),
         new(SettingsSection.General, DrawMainWindow),
         new(SettingsSection.General, DrawHelp),
+        new(SettingsSection.Themes, DrawThemeCards, ThemeCardsKeywords),
+        new(SettingsSection.Themes, DrawThemePreview),
+        new(SettingsSection.Themes, DrawThemeColours, ThemeColoursKeywords),
+        new(SettingsSection.Themes, DrawThemeReset),
         new(SettingsSection.Journal, DrawJournalTable),
         new(SettingsSection.Journal, DrawJournal),
         new(SettingsSection.Journal, DrawJournalText),
@@ -172,6 +176,7 @@ public sealed partial class ConfigWindow
         SettingsSection.Automation => Strings.SettingsPageAutomation,
         SettingsSection.Characters => Strings.SettingsPageCharacters,
         SettingsSection.Advanced => Strings.ConfigSectionAdvanced,
+        SettingsSection.Themes => Strings.SettingsPageThemes,
         _ => Strings.SettingsPageGeneral,
     };
 
@@ -186,6 +191,7 @@ public sealed partial class ConfigWindow
         SettingsSection.Automation => Strings.SettingsIntroAutomation,
         SettingsSection.Characters => Strings.SettingsIntroCharacters,
         SettingsSection.Advanced => Strings.SettingsIntroAdvanced,
+        SettingsSection.Themes => Strings.SettingsIntroThemes,
         _ => Strings.SettingsIntroGeneral,
     };
 
@@ -238,6 +244,7 @@ public sealed partial class ConfigWindow
             MinimumSize = minimum,
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
         };
+        CaptureHostStyle();
         nightChrome = Theme.PushNightWindow();
     }
 
@@ -639,6 +646,28 @@ public sealed partial class ConfigWindow
         ImGui.Dummy(new Vector2(0f, MathF.Max(0f, UiMetrics.Px(RowPadLogical) - ImGui.GetStyle().ItemSpacing.Y)));
         return true;
     }
+
+    /// <summary>
+    /// A setting drawn without the block's card, for a surface of its own (the Themes page's cards and preview): it
+    /// registers with the search as <see cref="Row"/> does and draws the waiting headings, closes any open card, and
+    /// leaves the cursor at the row's left. Returns false, drawing nothing, when the search hides it. End it with
+    /// <see cref="EndBareRow"/>.
+    /// </summary>
+    private bool BareRow(string label, string? hint = null, string? keywords = null)
+    {
+        if (!filter.Row(label, hint, keywords))
+        {
+            return false;
+        }
+
+        DrawPendingHeadings();
+        CloseCard();
+        return true;
+    }
+
+    /// <summary>The gap a card leaves before whatever follows, after a <see cref="BareRow"/>.</summary>
+    private static void EndBareRow() =>
+        ImGui.Dummy(new Vector2(0f, MathF.Max(1f, UiMetrics.Px(CardGapLogical) - ImGui.GetStyle().ItemSpacing.Y)));
 
     /// <summary>
     /// A sub-setting's indent, greyed out while <paramref name="parentOn"/> is false, for a free-form <see cref="Row"/>.
