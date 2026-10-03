@@ -932,6 +932,7 @@ public sealed partial class Plugin : IDalamudPlugin
             var warmer = new Game.IndexWarmer(DataManager, Session, Strings.FlightAllZonesFormat, Log);
             _ = warmer.Start();
             gameLinks.AetheryteWarmup = warmer.Aetherytes;
+            queryRunner.IconSheets = () => warmer.PaneIcons.Value;
 
             // "Open on…" (1.8.0): the shipped link table; the browser opens the pages, the plugin stays offline (decision 8).
             var externalIds = Core.Links.ExternalIds.Load(Paths.ExternalIdsFile);
@@ -1185,6 +1186,9 @@ public sealed partial class Plugin : IDalamudPlugin
             charactersPane.Pins = queryRunner;
             charactersPane.Links = gameLinks;
             charactersPane.Questionable = questionableActions;
+            // Role, society, Grand Company and achievement icons (UI-5d), read off the frame; Moonlit's for the collection.
+            charactersPane.IconSheetsSource = () => warmer.PaneIcons.Value;
+            charactersPane.MoonlitIcons = moonlitPane.Icons;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(moonlitPane);
             // Multibox (D11): pins and overrides another game client saved are merged in as they land.
@@ -1242,6 +1246,8 @@ public sealed partial class Plugin : IDalamudPlugin
             {
                 RewardEntries = () => moonlit.Catalog.All,
                 Questionable = questionableActions,
+                Textures = TextureProvider,
+                IconSheets = () => warmer.PaneIcons.Value,
             });
             // Panels beside game windows (1.7.0): "Worth it?" on quest offers, "What this opened" on completions and the
             // Journal companion. Their reads take the same kill switch as the Duty Finder hint.

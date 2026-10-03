@@ -1,4 +1,9 @@
+using System;
+using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Unlocks;
 
 namespace Tsukimichi.Ui;
 
@@ -14,6 +19,9 @@ public sealed partial class TonightCard
     /// <summary>The planning lines; set by the plugin. Null draws nothing.</summary>
     public PlanningSource? Planning { get; set; }
 
+    /// <summary>The game's textures, for the job icon leading the main scenario level line; null draws the line alone.</summary>
+    public ITextureProvider? Textures { get; init; }
+
     private void DrawPlanning()
     {
         if (Planning is not { } planning)
@@ -25,6 +33,20 @@ public sealed partial class TonightCard
         var gate = planning.MsqGateLine;
         if (gate.Length > 0)
         {
+            // The job to level leads the line with its icon, at the text's height so the line keeps its spacing (UI-5d).
+            if (Textures is { } textures && planning.MsqGate is { Job: > 0 } level)
+            {
+                var size = MathF.Round(ImGui.GetTextLineHeight());
+                var min = ImGui.GetCursorScreenPos();
+                ImGui.Dummy(new Vector2(size, size));
+                if (ImGui.IsItemVisible())
+                {
+                    Orbit.DrawIcon(ImGui.GetWindowDrawList(), textures, NodeIcon.Game(QuestUnlocks.JobIconBase + level.Job), min, min + new Vector2(size, size));
+                }
+
+                ImGui.SameLine(0f, MathF.Round(UiMetrics.Px(6f)));
+            }
+
             TextFlow.Wrapped(gate, Chrome.RoomX());
         }
 

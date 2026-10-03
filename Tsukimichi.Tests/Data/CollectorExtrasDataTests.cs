@@ -71,4 +71,17 @@ public sealed class CollectorExtrasDataTests(GameDataFixture fixture) : IClassFi
             Assert.All(l.RowIds, id => Assert.False(bundle.Catalog.GetByRowId(id)?.IsRemoved ?? true, $"{l.Name}: {id}"));
         });
     }
+
+    [GameDataFact]
+    public void Every_achievement_that_needs_several_quests_has_an_icon_the_game_draws()
+    {
+        // The dashboard leads each row with the achievement's own icon (UI-5d).
+        var sheets = PaneIconSheets.Build(fixture.Game.Excel);
+        Assert.All(fixture.Bundle.AchievementLadders.All, l =>
+        {
+            var icon = sheets.AchievementIcon(l.AchievementId);
+            Assert.True(icon != 0, $"{l.Name} has no icon");
+            Assert.True(fixture.Game.FileExists(RewardArtIndex.IconPath(icon)), $"{l.Name}: icon {icon} is not in the game");
+        });
+    }
 }

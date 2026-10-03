@@ -99,6 +99,9 @@ public sealed partial class CharactersPane
     /// <summary>The least room a heading keeps beside a button on its line before the button moves under it.</summary>
     private const float HeadingLeastLogical = 80f;
 
+    /// <summary>The gap between an icon leading a line and its text (<see cref="DrawLeadIcon"/>), logical px.</summary>
+    private const float LeadIconGapLogical = 6f;
+
     /// <summary>The section rings show this many rows until "Show all sections" (the table under them lists every one).</summary>
     private const int SectionRingRows = 2;
 
@@ -221,6 +224,14 @@ public sealed partial class CharactersPane
     /// summary agrees with the Moonlit pane. Null hides the Moonlit section.
     /// </summary>
     public Func<RewardKind, UniqueRewardCounts>? MoonlitCounts { get; set; }
+
+    /// <summary>The role, society, Grand Company and achievement icons (UI-5d), once read off the frame; set by the plugin. Null or unread: the rows keep blank slots.</summary>
+    public Func<IPaneIconSheets?>? IconSheetsSource { get; set; }
+
+    /// <summary>Moonlit's reward and kind icons, for the collection rows; set by the plugin. Null: names only.</summary>
+    public MoonlitIconResolver? MoonlitIcons { get; set; }
+
+    private IPaneIconSheets IconSheets => IconSheetsSource?.Invoke() ?? PaneIconSheets.Empty;
 
     /// <summary>
     /// The merged unique-reward catalog (normally <c>MoonlitPane.Catalog</c>), which gives the comparison its unlock
@@ -1128,6 +1139,12 @@ public sealed partial class CharactersPane
             }
 
             ImGui.TableNextColumn();
+            if (MoonlitIcons is { } icons)
+            {
+                // The kind's own menu icon (Mount Guide, Emotes, the Duty Finder), as Moonlit's kinds list wears (UI-5d).
+                DrawLeadIcon(icons.KindIcon(row.Kind), MathF.Round(UiMetrics.JobIconSize));
+            }
+
             Chrome.FitText(row.Name, ImGui.GetColorU32(ImGuiCol.Text));
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Count);
@@ -1320,8 +1337,14 @@ public sealed partial class CharactersPane
                 group = row.Group;
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
+
+                // The group's role icon (the Disciples of the Hand's or the Land's tile) in the icon column, so the icons
+                // read down one column and the group name stays a quiet heading (UI-5d).
+                var groupName = Strings.CharactersJobGroupName(group);
+                DrawJobIcon(PaneIcons.Family(FamilyOf(group), IconSheets), iconSize, groupName, string.Empty);
+
                 ImGui.TableNextColumn();
-                Chrome.FitText(Strings.CharactersJobGroupName(group), Theme.U32(Theme.Dusk));
+                Chrome.FitText(groupName, Theme.U32(Theme.Dusk));
             }
 
             ImGui.TableNextRow();
@@ -1341,8 +1364,11 @@ public sealed partial class CharactersPane
         }
     }
 
-    /// <summary>The job's icon (a blank of the same size without one), naming the job and its level on hover.</summary>
-    private void DrawJobIcon(uint iconId, Vector2 size, string name, string level)
+    /// <summary>
+    /// The job's icon (a blank of the same size without one), naming the job and its level on hover; a role, a job group
+    /// or an allied society has no level, and a society's <paramref name="note"/> (its rank) goes under its name.
+    /// </summary>
+    private void DrawJobIcon(uint iconId, Vector2 size, string name, string level, string? note = null)
     {
         if (textures is null || iconId == 0)
         {
@@ -1353,11 +1379,33 @@ public sealed partial class CharactersPane
             GameIcon.Draw(textures, iconId, size.X);
         }
 
-        if (ImGui.IsItemHovered())
+        if (!ImGui.IsItemHovered())
+        {
+            return;
+        }
+
+        if (note is { Length: > 0 })
+        {
+            UiMetrics.Tooltip(name, note);
+        }
+        else
         {
             JobTooltip(name, level);
         }
     }
+
+    /// <summary>The icon family of a Jobs table group: its role, or the Disciples of the Hand or the Land.</summary>
+    private static JobFamily FamilyOf(JobGroup group) => group switch
+    {
+        JobGroup.Tank => JobFamily.Tank,
+        JobGroup.Healer => JobFamily.Healer,
+        JobGroup.Melee => JobFamily.Melee,
+        JobGroup.Ranged => JobFamily.PhysicalRanged,
+        JobGroup.Caster => JobFamily.MagicalRanged,
+        JobGroup.Crafter => JobFamily.Hand,
+        JobGroup.Gatherer => JobFamily.Land,
+        _ => JobFamily.None,
+    };
 
     /// <summary>Job icon tooltip: the job's name, then "Level N" under it; a role row has no level and shows the name alone.</summary>
     private static void JobTooltip(string name, string level)
@@ -1391,10 +1439,23 @@ public sealed partial class CharactersPane
         }
     }
 
-    private static void DrawGrandCompanyAndTribes(Dashboard d)
+    /// <summary>
+    /// The Grand Company line, led by the rank's insignia in that company (UI-5d), then the allied societies, each led by
+    /// its emblem; an icon's hover names the company and rank, or the society and its rank.
+    /// </summary>
+    private void DrawGrandCompanyAndTribes(Dashboard d)
     {
         SectionHeading.Draw(Strings.CharactersGrandCompany);
-        TextFlow.Wrapped(d.GrandCompanyLine);
+        var company = d.Snapshot.GrandCompany;
+        var rank = company < d.Snapshot.GcRanks.Length ? d.Snapshot.GcRanks[company] : (byte)0;
+        var insignia = PaneIcons.GrandCompanyRank(company, rank, IconSheets);
+        if (insignia != 0)
+        {
+            // The insignia is a wide badge in a square icon: half again the job icons' size keeps it legible.
+            DrawLeadIcon(NodeIcon.Game(insignia), MathF.Round(UiMetrics.JobIconSize * 1.5f), d.GrandCompanyLine);
+        }
+
+        TextFlow.Wrapped(d.GrandCompanyLine, Chrome.RoomX());
         ImGui.Spacing();
 
         SectionHeading.Draw(Strings.CharactersTribes);
@@ -1405,7 +1466,7 @@ public sealed partial class CharactersPane
             return;
         }
 
-        using var table = ImRaii.Table("##tribes", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
+        using var table = ImRaii.Table("##tribes", 4, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
         if (!table)
         {
             return;
@@ -1414,7 +1475,7 @@ public sealed partial class CharactersPane
         if (TribesReputationWidth.Stale(d.Tribes))
         {
             var reputation = FixedWidth.Fit(0f, Strings.CharactersColumnReputation);
-            foreach (var (_, _, value) in d.Tribes)
+            foreach (var (_, _, _, value) in d.Tribes)
             {
                 reputation = FixedWidth.Fit(reputation, value);
             }
@@ -1422,20 +1483,49 @@ public sealed partial class CharactersPane
             TribesReputationWidth.Store(d.Tribes, reputation);
         }
 
+        var iconSize = UiMetrics.Square(UiMetrics.JobIconSize);
+        ImGui.TableSetupColumn("##icon", ImGuiTableColumnFlags.WidthFixed, MathF.Max(ImGui.GetTextLineHeight() * 1.4f, iconSize.X));
         ImGui.TableSetupColumn(Strings.CharactersColumnTribe, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.CharactersColumnRank, ImGuiTableColumnFlags.WidthStretch, 2f);
         ImGui.TableSetupColumn(Strings.CharactersColumnReputation, ImGuiTableColumnFlags.WidthFixed, TribesReputationWidth.Value);
         ImGui.TableHeadersRow();
-        foreach (var (tribe, rank, value) in d.Tribes)
+        var sheets = IconSheets;
+        foreach (var (id, tribe, rankName, value) in d.Tribes)
         {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
+            DrawJobIcon(PaneIcons.Tribe(id, sheets), iconSize, tribe, string.Empty, rankName);
+            ImGui.TableNextColumn();
             Chrome.FitText(tribe, ImGui.GetColorU32(ImGuiCol.Text));
             ImGui.TableNextColumn();
-            Chrome.FitText(rank, ImGui.GetColorU32(ImGuiCol.Text));
+            Chrome.FitText(rankName, ImGui.GetColorU32(ImGuiCol.Text));
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(value);
         }
+    }
+
+    /// <summary>
+    /// A game icon <paramref name="size"/> across leading the text drawn after it on the same line, centred on that
+    /// text's first line (the line moves down to meet the icon's centre); its hover says <paramref name="tooltip"/>.
+    /// Leaves the cursor where the text goes.
+    /// </summary>
+    private void DrawLeadIcon(NodeIcon icon, float size, string? tooltip = null)
+    {
+        var line = ImGui.GetTextLineHeight();
+        var start = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(size, size));
+        if (textures is not null && ImGui.IsItemVisible())
+        {
+            Orbit.DrawIcon(ImGui.GetWindowDrawList(), textures, icon, start, start + new Vector2(size, size));
+        }
+
+        if (tooltip is { Length: > 0 } && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(tooltip);
+        }
+
+        ImGui.SameLine(0f, MathF.Round(UiMetrics.Px(LeadIconGapLogical)));
+        ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, start.Y + MathF.Round(MathF.Max(0f, size - line) * 0.5f)));
     }
 
     /// <summary>(g) Export and Forget.</summary>
@@ -2500,13 +2590,13 @@ public sealed partial class CharactersPane
         }
 
         tribes.Sort((a, b) => a.Id.CompareTo(b.Id));
-        var tribeRows = new (string Tribe, string Rank, string Value)[tribes.Count];
+        var tribeRows = new (byte Id, string Tribe, string Rank, string Value)[tribes.Count];
         for (var i = 0; i < tribeRows.Length; i++)
         {
             var (id, standing) = tribes[i];
             var tribeName = names?.Tribe(id) is { Length: > 0 } t ? t : string.Format(CultureInfo.InvariantCulture, Strings.CharactersTribeFormat, id);
             var rankName = names?.TribeRank(standing.Rank) is { Length: > 0 } r ? r : TribeRanks.Name(standing.Rank);
-            tribeRows[i] = (tribeName, rankName, standing.Value.ToString(CultureInfo.InvariantCulture));
+            tribeRows[i] = (id, tribeName, rankName, standing.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         // A stored character's allied society allowances are full again once the daily reset passed since it was saved.
@@ -2623,7 +2713,7 @@ public sealed partial class CharactersPane
             }
 
             var name = string.Format(CultureInfo.CurrentCulture, Strings.JobsRoleRowFormat, Strings.JobsRoleName(role));
-            rows.Add(LadderRowFor(0, name, string.Empty, isRole: true, ladder.Progress(quests, states, level), quests));
+            rows.Add(LadderRowFor(PaneIcons.Role(role), name, string.Empty, isRole: true, ladder.Progress(quests, states, level), quests));
         }
 
         return rows.ToArray();
@@ -2875,6 +2965,7 @@ public sealed partial class CharactersPane
             }
 
             rows.Add(new MoonlitRow(
+                kind,
                 Strings.MoonlitKindName(kind),
                 counts.Obtained.ToString(CultureInfo.InvariantCulture) + "/" + counts.Total.ToString(CultureInfo.InvariantCulture),
                 (float)counts.Obtained / counts.Total,
@@ -3153,7 +3244,7 @@ public sealed partial class CharactersPane
         }
     }
 
-    private sealed record MoonlitRow(string Name, string Count, float Fraction, bool AllUnknown);
+    private sealed record MoonlitRow(RewardKind Kind, string Name, string Count, float Fraction, bool AllUnknown);
 
     private sealed record PinnedRow(QuestRecord? Quest, string Name, QuestState State, string NextStep);
 
@@ -3161,7 +3252,7 @@ public sealed partial class CharactersPane
 
     private sealed record JobRow(JobGroup Group, uint JobId, uint IconId, string Name, string Abbreviation, string Level, short LevelValue);
 
-    /// <summary>A job's (or a role's) ladder: icon and level are empty for role rows; <paramref name="Next"/> is null once finished.</summary>
+    /// <summary>A job's (or a role's) ladder: a role row wears its role's icon and has no level; <paramref name="Next"/> is null once finished.</summary>
     /// <param name="Count">The tally ("4/7"), shown on hover only.</param>
     /// <param name="Left">How many are still to do ("3 left"), empty once none is.</param>
     private sealed record LadderRow(uint IconId, string Name, string Level, bool IsRole, float Fraction, string Count, string Left, QuestRecord? Next, string NextText, bool Ready, IReadOnlyList<uint> RowIds);
@@ -3226,7 +3317,7 @@ public sealed partial class CharactersPane
         RecentRow[] Recent,
         JobRow[] Jobs,
         string GrandCompanyLine,
-        (string Tribe, string Rank, string Value)[] Tribes,
+        (byte Id, string Tribe, string Rank, string Value)[] Tribes,
         string AllowancesLine,
         uint JobIconId);
 }

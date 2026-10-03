@@ -32,7 +32,7 @@ public sealed partial class CharactersPane
     /// <summary>The game's achievement flag for the viewed character (<c>RewardUnlockReader.AchievementEarned</c>); null lets the quests decide.</summary>
     public Func<uint, bool?>? AchievementEarned { get; set; }
 
-    private sealed record AchievementRow(string Name, float Fraction, string Count, string Left, QuestRecord? Next, string NextText, bool Ready, string Tooltip, IReadOnlyList<uint> RowIds);
+    private sealed record AchievementRow(uint AchievementId, string Name, float Fraction, string Count, string Left, QuestRecord? Next, string NextText, bool Ready, string Tooltip, IReadOnlyList<uint> RowIds);
 
     private (int Version, ulong? Viewed, CatalogBundle? Bundle, long Tick, int Language) laddersKey = (-1, null, null, -1, -1);
     private AchievementRow[] ladderRows = [];
@@ -79,6 +79,8 @@ public sealed partial class CharactersPane
         ImGui.TableSetupColumn(Strings.JobsColumnLeft, ImGuiTableColumnFlags.WidthFixed, LaddersDoneWidth.Value);
         ImGui.TableSetupColumn(Strings.JobsColumnNext, ImGuiTableColumnFlags.WidthStretch, 3f);
 
+        var sheets = IconSheets;
+        var iconSize = MathF.Round(UiMetrics.JobIconSize);
         for (var i = 0; i < ladderRows.Length; i++)
         {
             var row = ladderRows[i];
@@ -92,6 +94,14 @@ public sealed partial class CharactersPane
             }
 
             ImGui.TableNextColumn();
+
+            // The achievement's own icon leads its name (UI-5d).
+            var icon = sheets.AchievementIcon(row.AchievementId);
+            if (icon != 0)
+            {
+                DrawLeadIcon(NodeIcon.Game(icon), iconSize);
+            }
+
             Chrome.FitText(row.Name, ImGui.GetColorU32(ImGuiCol.Text));
             if (ImGui.IsItemHovered())
             {
@@ -142,6 +152,7 @@ public sealed partial class CharactersPane
             }
 
             rows.Add(new AchievementRow(
+                ladder.AchievementId,
                 ladder.Name,
                 progress.Fraction,
                 string.Format(CultureInfo.CurrentCulture, Strings.JobsChainCountFormat, progress.Done, progress.Total),

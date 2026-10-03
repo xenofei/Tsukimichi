@@ -17,7 +17,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// "Clear my blues" (P3), the My blues tab: every unlock quest the viewed character has left, by expansion and zone
 /// in story order (<see cref="UnlockPlan"/>). <see cref="DrawLeft"/> holds the summary, the filters (one toggle chip
-/// per kind with its count, Ready only, Sprout mode) and the expansion list; <see cref="DrawMain"/> the "Copy as
+/// per kind with its count and, at Full and Quiet, the kind's game icon; Ready only, Sprout mode) and the expansion
+/// list, each expansion led by its ring; <see cref="DrawMain"/> the "Copy as
 /// checklist" button and one card per expansion, folded but for the one opened, with the zone groups and a row per
 /// quest: state moon, name (click shows it in the detail pane), kind pills, the status line, Flag, Reveal, Teleport
 /// and Walk (Go to giver in the row's right-click and "…" menus). Each
@@ -79,6 +80,15 @@ public sealed class PlanPane
     /// <summary>The shared Questionable hand-offs (1.6.0); null hides the cards' Send to Questionable button.</summary>
     public QuestionableActions? Questionable { get; init; }
 
+    /// <summary>The game's textures, for the kind chips' icons and the expansions' rings (UI-5d); null: text only.</summary>
+    public Dalamud.Plugin.Services.ITextureProvider? Textures { get; init; }
+
+    /// <summary>The Duty Finder tiles the kind chips wear (UI-5d), once read off the frame; null or unread: the slot stays empty.</summary>
+    public Func<IPaneIconSheets?>? IconSheets { get; init; }
+
+    /// <summary>The gap between an icon and the text after it, logical px.</summary>
+    private const float IconGapLogical = 5f;
+
     public PlanPane(SessionState session, PlanSource source, GameLinks links, Configuration settings, Action save)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
@@ -125,7 +135,8 @@ public sealed class PlanPane
         {
             var bit = UnlockKinds.Bit(UnlockKinds.All[i]);
             var on = kinds != UnlockKinds.AllMask && (kinds & bit) != 0;
-            if (FlowChip(KindChipId(i), kindLabels[i], on, Strings.PlanKindChipTooltip, ref first))
+            var icon = KindChipIcon(UnlockKinds.All[i], out var iconSlot);
+            if (FlowChip(KindChipId(i), kindLabels[i], on, Strings.PlanKindChipTooltip, ref first, icon: icon, iconSlot: iconSlot))
             {
                 // From "all kinds" the first click narrows to that kind; clearing the last kind shows all again.
                 kinds = kinds == UnlockKinds.AllMask ? bit : (ushort)(kinds ^ bit);
@@ -167,7 +178,10 @@ public sealed class PlanPane
             var room = Chrome.RoomX();
             var countWidth = ImGui.CalcTextSize(text.Count).X;
             countPart[0] = countWidth + gap;
-            var fit = RowFit.Fit(room, ImGui.CalcTextSize(block.Name).X, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), countPart, countShown);
+
+            // The expansion's ring leads the name (UI-5d); the name's room is what the ring leaves.
+            var ring = RingWidth(block.Expansion);
+            var fit = RowFit.Fit(room - ring, ImGui.CalcTextSize(block.Name).X, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), countPart, countShown);
             if (ImGui.Selectable(text.Label, isOpen, ImGuiSelectableFlags.None, new Vector2(MathF.Max(1f, room), 0f)))
             {
                 open[block.Expansion] = true;
@@ -176,7 +190,8 @@ public sealed class PlanPane
 
             var hovered = ImGui.IsItemHovered();
             var dl = ImGui.GetWindowDrawList();
-            var cut = Chrome.EllipsisTextAt(dl, rowMin, fit.NameRoom, block.Name, ImGui.GetColorU32(ImGuiCol.Text));
+            DrawRing(dl, block.Expansion, rowMin);
+            var cut = Chrome.EllipsisTextAt(dl, rowMin + new Vector2(ring, 0f), fit.NameRoom, block.Name, ImGui.GetColorU32(ImGuiCol.Text));
             if (countShown[0])
             {
                 dl.AddText(new Vector2(rowMin.X + room - countWidth, rowMin.Y), ImGui.GetColorU32(ImGuiCol.TextDisabled), text.Count);
@@ -400,8 +415,11 @@ public sealed class PlanPane
         dl.AddText(new Vector2(min.X, textY), Theme.U32(Theme.Surface.TextSecondary), isOpen ? OpenGlyph : FoldedGlyph);
         ImGui.PopFont();
 
-        // The title ends in an ellipsis short of Pin (UI audit §3); the Ready count after it gives way first.
+        // The expansion's ring after the caret, at the title's height (UI-5d, as the Flight tab and the Journal tree wear it).
         var x = min.X + UiMetrics.Px(16f);
+        x += DrawRing(dl, block.Expansion, new Vector2(x, textY));
+
+        // The title ends in an ellipsis short of Pin (UI audit §3); the Ready count after it gives way first.
         Span<float> readyPart = stackalloc float[1];
         Span<bool> readyShown = stackalloc bool[1];
         readyPart[0] = block.ReadyCount > 0 ? ImGui.CalcTextSize(text.Ready).X + UiMetrics.Px(10f) : 0f;
@@ -572,7 +590,7 @@ public sealed class PlanPane
         {
             for (var i = 0; i < kindCount; i++)
             {
-                parts[i] = PillSize(Strings.PlanKindName(kinds[i])).X + (i == 0 ? gap : UiMetrics.Px(4f));
+                parts[i] = PillSize(kinds[i], Strings.PlanKindName(kinds[i])).X + (i == 0 ? gap : UiMetrics.Px(4f));
             }
         }
 
@@ -703,24 +721,61 @@ public sealed class PlanPane
         return count;
     }
 
-    /// <summary>A kind pill's size; measure in the caption role.</summary>
-    private static Vector2 PillSize(string label) =>
-        ImGui.CalcTextSize(label) + new Vector2(UiMetrics.Px(7f) * 2f, UiMetrics.Px(2f) * 2f);
+    /// <summary>
+    /// A kind pill's size: its label, led by the kind's icon at the caption's height where the chips wear one (UI-5d);
+    /// measure in the caption role.
+    /// </summary>
+    private Vector2 PillSize(UnlockKind kind, string label)
+    {
+        var size = ImGui.CalcTextSize(label) + new Vector2(UiMetrics.Px(7f) * 2f, UiMetrics.Px(2f) * 2f);
+        KindChipIcon(kind, out var slot);
+        if (slot)
+        {
+            size.X += PillIconPart() - UiMetrics.Px(7f - PillIconPadLogical);
+        }
+
+        return size;
+    }
+
+    /// <summary>The left pad of a pill led by an icon, logical px (the label's side keeps 7).</summary>
+    private const float PillIconPadLogical = 4f;
+
+    /// <summary>The icon and its gap in a kind pill, at the caption's line height.</summary>
+    private static float PillIconPart() => MathF.Round(ImGui.GetTextLineHeight()) + MathF.Round(UiMetrics.Px(3f));
 
     /// <summary>
     /// Paints the kind pills from <paramref name="x"/>, each after its gap (<paramref name="parts"/> holds gap and
     /// pill), while they end by <paramref name="end"/>. Returns where the last pill drawn ends.
     /// </summary>
-    private static float DrawPills(ImDrawListPtr dl, ReadOnlySpan<UnlockKind> kinds, ReadOnlySpan<float> parts, float x, float end, float top, float height)
+    private float DrawPills(ImDrawListPtr dl, ReadOnlySpan<UnlockKind> kinds, ReadOnlySpan<float> parts, float x, float end, float top, float height)
     {
         using var caption = Typography.Caption();
         var tone = Theme.Surface.TextSecondary;
+        var line = ImGui.GetTextLineHeight();
+        var iconSize = MathF.Round(line);
         for (var i = 0; i < kinds.Length && x + parts[i] <= end + 0.5f; i++)
         {
             var label = Strings.PlanKindName(kinds[i]);
-            var pill = PillSize(label);
-            Chrome.PillAt(dl, new Vector2(x + parts[i] - pill.X, top + ((height - pill.Y) * 0.5f)), pill, label,
-                Theme.WithAlpha(tone, 0.12f), Theme.WithAlpha(tone, 0.45f), Theme.U32(tone));
+            var pill = PillSize(kinds[i], label);
+            var min = new Vector2(x + parts[i] - pill.X, top + ((height - pill.Y) * 0.5f));
+            var icon = KindChipIcon(kinds[i], out var slot);
+            if (!slot)
+            {
+                Chrome.PillAt(dl, min, pill, label, Theme.WithAlpha(tone, 0.12f), Theme.WithAlpha(tone, 0.45f), Theme.U32(tone));
+                x += parts[i];
+                continue;
+            }
+
+            // The pill, then the icon from the narrower left pad and the label after it, both centred on the pill.
+            Chrome.PillAt(dl, min, pill, string.Empty, Theme.WithAlpha(tone, 0.12f), Theme.WithAlpha(tone, 0.45f), Theme.U32(tone));
+            var iconX = min.X + UiMetrics.Px(PillIconPadLogical);
+            if (icon != 0 && Textures is { } textures)
+            {
+                var iconMin = new Vector2(iconX, min.Y + MathF.Round((pill.Y - iconSize) * 0.5f));
+                Orbit.DrawIcon(dl, textures, NodeIcon.Game(icon), iconMin, iconMin + new Vector2(iconSize, iconSize));
+            }
+
+            dl.AddText(new Vector2(iconX + PillIconPart(), min.Y + ((pill.Y - line) * 0.5f)), Theme.U32(tone), label);
             x += parts[i];
         }
 
@@ -821,15 +876,49 @@ public sealed class PlanPane
         return text.Length > 0 ? text : Strings.PlanKindName(entry.PrimaryKind);
     }
 
+    /// <summary>The room an expansion's ring and its gap take before a name at the text's height; 0 for an expansion without one.</summary>
+    private float RingWidth(byte expansion) =>
+        Textures is null || PaneIcons.Expansion(expansion) == 0 ? 0f : MathF.Round(ImGui.GetTextLineHeight()) + MathF.Round(UiMetrics.Px(IconGapLogical));
+
+    /// <summary>
+    /// The expansion's ring (061875 A Realm Reborn …) at <paramref name="min"/>, a text line across, unrounded (a ring is
+    /// a circle); returns the room it took with its gap (<see cref="RingWidth"/>).
+    /// </summary>
+    private float DrawRing(ImDrawListPtr dl, byte expansion, Vector2 min)
+    {
+        var width = RingWidth(expansion);
+        if (width > 0f && Textures is { } textures)
+        {
+            var size = MathF.Round(ImGui.GetTextLineHeight());
+            Orbit.DrawIcon(dl, textures, NodeIcon.Game(PaneIcons.Expansion(expansion)), min, min + new Vector2(size, size));
+        }
+
+        return width;
+    }
+
+    /// <summary>
+    /// The icon of a kind chip (UI-5d): the kind's Duty Finder tile, emblem or marker; 0 for Other, without textures and
+    /// at Plain, whose chips stay text only as its action buttons do. <paramref name="reserved"/> says whether the chip
+    /// keeps the icon's slot, also while the sheets are still read, so the chip never widens under the pointer.
+    /// </summary>
+    private uint KindChipIcon(UnlockKind kind, out bool reserved)
+    {
+        reserved = Textures is not null && Theme.Flair != Flair.Plain && kind != UnlockKind.Other;
+        return reserved && IconSheets?.Invoke() is { } sheets ? PaneIcons.UnlockKind(kind, sheets) : 0u;
+    }
+
     /// <summary>
     /// A toggle chip flowing onto the next line when the row is full: a pill painted silver-tinted when on, raised when
-    /// off, with the focus ring; returns true on the click that flips it.
+    /// off, with the focus ring; returns true on the click that flips it. With <paramref name="iconSlot"/> the label is
+    /// led by <paramref name="icon"/> at the text's height (the slot kept empty while the icon is 0).
     /// </summary>
-    private static bool FlowChip(string id, string label, bool on, string tooltip, ref bool first, bool enabled = true)
+    private bool FlowChip(string id, string label, bool on, string tooltip, ref bool first, bool enabled = true, uint icon = 0, bool iconSlot = false)
     {
         var padX = UiMetrics.Px(9f);
         var height = MathF.Max(ImGui.GetTextLineHeight() + UiMetrics.Px(6f), UiMetrics.Px(22f));
-        var size = new Vector2(ImGui.CalcTextSize(label).X + padX * 2f, height);
+        var iconSize = MathF.Round(ImGui.GetTextLineHeight());
+        var iconPart = iconSlot ? iconSize + MathF.Round(UiMetrics.Px(IconGapLogical)) : 0f;
+        var size = new Vector2(ImGui.CalcTextSize(label).X + iconPart + padX * 2f, height);
         if (!first)
         {
             ImGui.SameLine(0f, UiMetrics.Px(4f));
@@ -864,7 +953,25 @@ public sealed class PlanPane
             ink = Theme.U32(enabled ? (hovered ? s.Text : s.TextSecondary) : s.TextDisabled);
         }
 
-        Chrome.PillAt(ImGui.GetWindowDrawList(), ImGui.GetItemRectMin(), size, label, fill, border, ink);
+        var dl = ImGui.GetWindowDrawList();
+        var min = ImGui.GetItemRectMin();
+        if (iconSlot)
+        {
+            // The pill without its centred label, then the icon and the label from the left pad, both centred on the pill.
+            Chrome.PillAt(dl, min, size, string.Empty, fill, border, ink);
+            if (icon != 0 && Textures is { } textures)
+            {
+                var iconMin = new Vector2(min.X + padX, min.Y + MathF.Round((height - iconSize) * 0.5f));
+                Orbit.DrawIcon(dl, textures, NodeIcon.Game(icon), iconMin, iconMin + new Vector2(iconSize, iconSize), enabled ? 1f : 0.5f);
+            }
+
+            dl.AddText(new Vector2(min.X + padX + iconPart, min.Y + ((height - ImGui.GetTextLineHeight()) * 0.5f)), ink, label);
+        }
+        else
+        {
+            Chrome.PillAt(dl, min, size, label, fill, border, ink);
+        }
+
         Chrome.FocusRing(height * 0.5f);
         if (hovered)
         {

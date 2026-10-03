@@ -1986,10 +1986,11 @@ public sealed class TablePane : IDisposable
     }
 
     /// <summary>
-    /// The Job cell: a quest limited to one job shows the job's game icon (16 px at scale 1) before its abbreviation;
-    /// groups and "Any" keep the icon's slot so the labels line up. Hovering it names the job, or the group. When the
+    /// The Job cell: a quest limited to one job shows the job's game icon (16 px at scale 1) before its abbreviation, a
+    /// group of jobs its discipline's (the Disciples of the Hand's or the Land's tile, the Class &amp; Job emblem for a
+    /// mix, UI-5d); "Any" keeps the icon's slot so the labels line up. Hovering it names the job, or the group. When the
     /// column plan narrows the column to its icon (<paramref name="iconOnly"/>, <see cref="QuestTablePlan.JobIconOnly"/>)
-    /// a job shows its icon alone and a group its label, ellipsised in the cell. In a cell the player made narrower than
+    /// a job or group shows its icon alone (its name on hover) and "Any" its label, ellipsised in the cell. In a cell the player made narrower than
     /// the label (feature plan v6 U9) the label ends in an ellipsis after the icon, or the icon shows alone when not even
     /// that fits; a cut label's hover names the job (or the label itself when there is no other name).
     /// </summary>

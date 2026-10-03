@@ -570,8 +570,16 @@ public sealed class QueryRunner : IDisposable
         plugin.Session?.States is { } states && states.TryGetValue(rowId, out var evaluation) && evaluation?.ReadyOnJob is { } job ? job : (byte)0;
 
     /// <summary>
-    /// <see cref="JobShort"/> with the game icon of a quest limited to one job (0 otherwise) and a hover name: the
-    /// job's name, or the category's for a group (empty for everyone). Cached per category id.
+    /// The role, discipline and Duty Finder icons (UI-5d), once read off the frame; set by the plugin. Null or unread:
+    /// a group's label keeps the icon's slot empty.
+    /// </summary>
+    public Func<Core.Ui.IPaneIconSheets?>? IconSheets { get; set; }
+
+    /// <summary>
+    /// <see cref="JobShort"/> with a game icon (a quest limited to one job its job's; a group of jobs the Disciples of
+    /// the Hand's or the Land's tile, or the Class &amp; Job emblem for a mix, UI-5d; none for everyone) and a hover
+    /// name: the job's name, or the category's for a group (empty for everyone). Cached per category id; a group's
+    /// label is not cached until its icon could be read.
     /// </summary>
     public JobLabel Job(QuestRecord quest)
     {
@@ -587,8 +595,13 @@ public sealed class QueryRunner : IDisposable
             return cached;
         }
 
-        var label = ComputeJob(b, category);
-        jobShort[category] = label;
+        var sheets = IconSheets?.Invoke();
+        var label = ComputeJob(b, category, sheets);
+        if (sheets is not null || label.IconId != 0 || label.Name.Length == 0)
+        {
+            jobShort[category] = label;
+        }
+
         return label;
     }
 
@@ -739,18 +752,37 @@ public sealed class QueryRunner : IDisposable
         pinsDirtyAtUtc = DateTime.UtcNow;
     }
 
-    private static JobLabel ComputeJob(CatalogBundle b, uint category)
+    private static JobLabel ComputeJob(CatalogBundle b, uint category, Core.Ui.IPaneIconSheets? sheets)
     {
         var groupName = b.Names.ClassJobCategory(category);
         var (label, single) = ComputeJobShort(b, category);
         if (single is not { } job)
         {
-            return new JobLabel(label, 0, ReferenceEquals(label, Strings.JobAny) ? string.Empty : groupName);
+            if (ReferenceEquals(label, Strings.JobAny))
+            {
+                return new JobLabel(label, 0, string.Empty);
+            }
+
+            var icon = sheets is null ? 0u : Core.Ui.PaneIcons.Family(GroupFamily(b.ClassifyJobs(category).Group), sheets);
+            return new JobLabel(label, icon, groupName);
         }
 
         var name = b.Names.ClassJobs.GetValueOrDefault(job, string.Empty);
         return new JobLabel(label, name.Length > 0 ? JobIconBase + job : 0u, name.Length > 0 ? name : groupName);
     }
+
+    /// <summary>The icon family of a Job column group: the disciplines its jobs come from (<see cref="Core.Ui.PaneIcons.Disciples"/>).</summary>
+    private static Core.Ui.JobFamily GroupFamily(JobGroup group) => group switch
+    {
+        JobGroup.Any => Core.Ui.JobFamily.None,
+        JobGroup.Hand => Core.Ui.PaneIcons.Disciples(hand: true, land: false, combat: false),
+        JobGroup.Land => Core.Ui.PaneIcons.Disciples(hand: false, land: true, combat: false),
+        JobGroup.HandAndLand => Core.Ui.PaneIcons.Disciples(hand: true, land: true, combat: false),
+        JobGroup.WarAndMagic => Core.Ui.PaneIcons.Disciples(hand: false, land: false, combat: true),
+
+        // Several jobs across the disciplines, or one job without an abbreviation ("Multi").
+        _ => Core.Ui.JobFamily.Mixed,
+    };
 
     /// <summary>First id of the game's job icon set (062101 Gladiator …), offset by ClassJob row id (<see cref="ClassJobInfo.IconId"/>).</summary>
     private const uint JobIconBase = 62100u;
