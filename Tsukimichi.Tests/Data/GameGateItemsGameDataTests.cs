@@ -242,7 +242,7 @@ public sealed class GameGateItemsGameDataTests(GameDataFixture game) : IClassFix
     }
 
     /// <summary>The printable strings of a quest's script (<c>game_script/quest/&lt;nnn&gt;/&lt;id&gt;.luab</c>): the game functions it calls.</summary>
-    private static List<string> ScriptStrings(LuminaGameData game, string questId)
+    internal static List<string> ScriptStrings(LuminaGameData game, string questId)
     {
         var under = questId.LastIndexOf('_');
         var file = game.GetFile($"game_script/quest/{questId.Substring(under + 1, 3)}/{questId}.luab");

@@ -27,7 +27,7 @@ public class RequirementEvaluatorTests
             InstanceContentRequired = [7],
             Festival = 9,
             AcceptConditions = [11],
-            MountRequired = true,
+            MountRequired = 1,
             HouseRequired = true,
             SatisfactionNpc = 2,
             SatisfactionLevel = 4,
@@ -384,19 +384,30 @@ public class RequirementEvaluatorTests
     }
 
     [Fact]
-    public void Mount_and_house_use_context_hooks_and_pass_when_unknown()
+    public void Mount_and_house_are_judged_from_the_capture_and_never_met_when_unknown()
     {
-        var quest = Quest(Target) with { MountRequired = true, HouseRequired = true };
+        var quest = Quest(Target) with { MountRequired = 1, HouseRequired = true };
 
+        // Nobody read them (1.11.0, C2): listed as not checked and unmet, so the quest is never a silent Ready.
         var unknown = Eval(quest, Snapshot());
-        Assert.True(Only(unknown, RequirementKind.Mount).Met);
-        Assert.True(Only(unknown, RequirementKind.House).Met);
+        Assert.False(Only(unknown, RequirementKind.Mount).Met);
+        Assert.Null(((MountRequirement)Only(unknown, RequirementKind.Mount).Req).HasMount);
+        Assert.Equal("requires a mount: mount 1, not checked", Only(unknown, RequirementKind.Mount).Detail);
+        Assert.False(Only(unknown, RequirementKind.House).Met);
+        Assert.Equal("requires a house, not checked", Only(unknown, RequirementKind.House).Detail);
 
-        var ctx = new EvalContext { HasMount = false, HasHouse = false };
-        var known = Eval(quest, Snapshot(), ctx: ctx);
+        var ctx = new EvalContext { HasHouse = false, MountName = id => id == 1 ? "company chocobo" : string.Empty };
+        var missing = Snapshot() with { Collectibles = new Dictionary<string, CollectibleSet> { ["Mount"] = new() { Missing = [1] } } };
+        var known = Eval(quest, missing, ctx: ctx);
         var mount = Only(known, RequirementKind.Mount);
         Assert.False(mount.Met);
-        Assert.Equal("requires a mount", mount.Detail);
+        Assert.False(((MountRequirement)mount.Req).HasMount);
+        Assert.Equal("requires a mount: company chocobo", mount.Detail);
+
+        var owned = Snapshot() with { Collectibles = new Dictionary<string, CollectibleSet> { ["Mount"] = new() { Owned = [1] } } };
+        var has = Only(Eval(quest, owned, ctx: ctx), RequirementKind.Mount);
+        Assert.True(has.Met);
+        Assert.Equal("owns the company chocobo", has.Detail);
         var house = Only(known, RequirementKind.House);
         Assert.False(house.Met);
         Assert.Equal("requires a house", house.Detail);

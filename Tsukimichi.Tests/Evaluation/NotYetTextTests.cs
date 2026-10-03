@@ -11,6 +11,9 @@ namespace Tsukimichi.Tests.Evaluation;
 /// </summary>
 public class NotYetTextTests
 {
+    /// <summary>Owned mounts as a capture saves them: the company chocobo (mount 1) read and not owned.</summary>
+    private static readonly Dictionary<string, CollectibleSet> NoMount = new() { ["Mount"] = new() { Missing = [1] } };
+
     private static BlockerNames Names(QuestCatalog catalog) => new()
     {
         Catalog = catalog,
@@ -48,12 +51,12 @@ public class NotYetTextTests
             Level = 56,
             PreviousQuests = new Prereq([A, B], JoinKind.All),
             GrandCompany = 1,
-            MountRequired = true,
+            MountRequired = 1,
             HouseRequired = true,
         };
         var catalog = Catalog(quest, Quest(A), Quest(B));
-        var context = new EvalContext { HasMount = false, HasHouse = false };
-        var evaluation = Resolve(quest, Snapshot() with { JobLevels = Levels((Gladiator, 52)) }, catalog, context);
+        var context = new EvalContext { HasHouse = false };
+        var evaluation = Resolve(quest, Snapshot() with { JobLevels = Levels((Gladiator, 52)), Collectibles = NoMount }, catalog, context);
 
         Assert.Equal(
             "Not yet · level 56 (you're 52), 2 previous quests, joining the Maelstrom and 2 more",
@@ -286,11 +289,10 @@ public class NotYetTextTests
             Level = 56,
             PreviousQuests = new Prereq([A, B], JoinKind.All),
             GrandCompany = 1,
-            MountRequired = true,
+            MountRequired = 1,
         };
         var catalog = Catalog(quest, Quest(A), Quest(B));
-        var context = new EvalContext { HasMount = false };
-        var evaluation = Resolve(quest, Snapshot() with { JobLevels = Levels((Gladiator, 52)) }, catalog, context);
+        var evaluation = Resolve(quest, Snapshot() with { JobLevels = Levels((Gladiator, 52)), Collectibles = NoMount }, catalog);
 
         Assert.Equal(
             "Not yet · level 56 (you're 52), 2 previous quests, joining the Maelstrom and a mount",

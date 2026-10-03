@@ -264,8 +264,9 @@ public static class StateResolver
             return new(QuestState.Unknown, requirements, FirstOfKind(requirements, RequirementKind.Achievement), null, null);
         }
 
-        // 7. Requirements on the current job, then on other jobs. A game gate Tsukimichi cannot read (game_gates.json)
-        //    is never judged: it turns what would read Ready (on this job or another) into Not checked, and leaves a
+        // 7. Requirements on the current job, then on other jobs. A game gate Tsukimichi cannot read (game_gates.json),
+        //    and mounts or a house nobody read (IsNotChecked), are never judged: they turn what would read Ready (on
+        //    this job or another) into Not checked, and leave a
         //    quest Blocked by something else Blocked by that. A gear gate judged from the capture counts like any other,
         //    except one whose weapon the character carries but has not equipped, which goes with a level or job gate:
         //    equipping that weapon is switching to a job that wears it, so the quest is Ready on such a job when one
@@ -282,7 +283,7 @@ public static class StateResolver
                 continue;
             }
 
-            if (r.Req is GameGateRequirement { Checked: null })
+            if (IsNotChecked(r.Req))
             {
                 gameGate ??= r;
                 continue;
@@ -327,6 +328,13 @@ public static class StateResolver
 
         return new(QuestState.Blocked, requirements, firstUnmet, null, null);
     }
+
+    /// <summary>
+    /// A requirement nobody could judge, which turns Ready into Not checked and never blocks on its own: a game gate
+    /// Tsukimichi cannot read, mounts the capture did not read, a house (1.11.0, C2: these read a silent Ready before).
+    /// </summary>
+    internal static bool IsNotChecked(Requirement requirement) =>
+        requirement is GameGateRequirement { Checked: null } or MountRequirement { HasMount: null } or HouseRequirement { HasHouse: null };
 
     /// <summary>
     /// An unmet gear gate whose weapons must be equipped and that the character carries (in the Armoury Chest or the

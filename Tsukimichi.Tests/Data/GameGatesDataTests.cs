@@ -47,6 +47,13 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
     ];
 
     /// <summary>
+    /// The mount-collection quests (1.11.0, C2), each offered only once the seven extreme-trial mounts of its expansion
+    /// are owned: Fiery Wings, Fiery Hearts (Firebird), A Lone Wolf No More (Kamuy of the Nine Tails), The Dragon Made
+    /// (Landerwaffe), Wings of Hope (apocryphal Bahamut) and The Wing Spirit Cometh (wings of legacy).
+    /// </summary>
+    internal static readonly uint[] MountGates = [67086, 68736, 69593, 70331, 71005];
+
+    /// <summary>
     /// Quests after the first of their chain that have no prerequisite at all, with the reason each may stay so. Empty:
     /// every one found so far was a gate the data did not record.
     /// </summary>
@@ -60,7 +67,7 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
         EvalContextBuilder.Build(fixture.Curated.Festivals, fixture.Bundle.Jobs, static () => DateTime.UtcNow, jobParents: fixture.Bundle.JobParents());
 
     /// <summary>The real anonymised character of <c>Fixtures/snapshot-v1.json</c> (the one that reported His Dark Materia).</summary>
-    private static CharacterSnapshot Character()
+    internal static CharacterSnapshot Character()
     {
         using var tmp = new TempDir();
         Directory.CreateDirectory(Path.Combine(tmp.Path, "characters"));
@@ -71,7 +78,7 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
     }
 
     /// <summary><paramref name="snapshot"/> with <paramref name="rowIds"/> completed as well.</summary>
-    private static CharacterSnapshot With(CharacterSnapshot snapshot, params uint[] rowIds)
+    internal static CharacterSnapshot With(CharacterSnapshot snapshot, params uint[] rowIds)
     {
         var maxId = rowIds.Max(QuestRecord.ToQuestId);
         var bits = new byte[Math.Max(snapshot.CompletedBits.Length, (maxId >> 3) + 1)];
@@ -86,7 +93,7 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
     }
 
     /// <summary><paramref name="snapshot"/> with <paramref name="rowIds"/> not completed.</summary>
-    private static CharacterSnapshot Without(CharacterSnapshot snapshot, params uint[] rowIds)
+    internal static CharacterSnapshot Without(CharacterSnapshot snapshot, params uint[] rowIds)
     {
         var bits = snapshot.CompletedBits.ToArray();
         foreach (var rowId in rowIds)
@@ -110,8 +117,9 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
         var keys = root["entries"]!.AsObject().Select(kv => uint.Parse(kv.Key, CultureInfo.InvariantCulture)).ToList();
         Assert.Equal(keys.Order().Distinct(), keys);
         Assert.Equal(keys.Count, Gates.Count);
-        Assert.Equal(GearGates.Concat([Pyros, Hydatos, Pagos, LightingTheWay]).Order(), Gates.Keys.Order());
+        Assert.Equal(GearGates.Concat(MountGates).Concat([Pyros, Hydatos, Pagos, LightingTheWay]).Order(), Gates.Keys.Order());
         Assert.Equal(GearGates.Order(), Gates.Where(kv => kv.Value.Items is not null).Select(kv => kv.Key).Order());
+        Assert.Equal(MountGates.Order(), Gates.Where(kv => kv.Value.Mounts is not null).Select(kv => kv.Key).Order());
 
         var byScript = Catalog.All.Where(q => q.InternalId.Length > 0).GroupBy(q => q.InternalId.ToUpperInvariant()).ToDictionary(g => g.Key, g => g.First().RowId);
         var problems = new List<string>();

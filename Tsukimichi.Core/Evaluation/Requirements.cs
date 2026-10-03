@@ -149,10 +149,25 @@ public sealed record CarrierLevelRequirement(byte RequiredLevel, byte? ActualLev
 /// </summary>
 public sealed record AcceptConditionRequirement(uint[] ConditionIds) : Requirement(RequirementKind.AcceptCondition);
 
-/// <summary>A mount is required. Null means the plugin did not say.</summary>
-public sealed record MountRequirement(bool? HasMount) : Requirement(RequirementKind.Mount);
+/// <summary>
+/// Mounts the character must own (<see cref="MountCheck"/>): the sheet's <see cref="Model.QuestRecord.MountRequired"/>,
+/// or every mount of a mount-collection gate (<see cref="Model.QuestGate.Mounts"/>). <paramref name="HasMount"/> is true
+/// when all are owned, false when the capture read one as missing, and null when it did not read them all (a capture
+/// from before 1.11.0): such a requirement is listed as not checked and keeps the quest from reading Ready.
+/// </summary>
+public sealed record MountRequirement(bool? HasMount) : Requirement(RequirementKind.Mount)
+{
+    /// <summary>The Mount row ids needed, every one; ascending.</summary>
+    public uint[] Mounts { get; init; } = [];
 
-/// <summary>A house is required. Null means the plugin did not say.</summary>
+    /// <summary>Of <see cref="Mounts"/>, those the capture read as not owned; ascending.</summary>
+    public uint[] Missing { get; init; } = [];
+
+    /// <summary>A mount-collection gate's phrase after "needs" ("all seven Heavensward Lanners"); null for the sheet's mount.</summary>
+    public string? Gate { get; init; }
+}
+
+/// <summary>A house is required. Null means the plugin did not say, which is listed as not checked and keeps the quest from reading Ready.</summary>
 public sealed record HouseRequirement(bool? HasHouse) : Requirement(RequirementKind.House);
 
 /// <summary>The quest is gated by an achievement per curated data; it can only be judged once achievements are loaded.</summary>

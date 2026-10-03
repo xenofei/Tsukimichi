@@ -78,6 +78,43 @@ public static class Collectibles
     }
 
     /// <summary>
+    /// <paramref name="targets"/> with the mounts quests need owned (<see cref="QuestCatalog.MountWatch"/>, 1.11.0)
+    /// added, so a capture reads them with the rest and the evaluator can judge them (<c>Evaluation.MountCheck</c>).
+    /// In kind then id order, as <see cref="Targets"/>; the same instance when every mount is a target already.
+    /// </summary>
+    public static IReadOnlyList<CollectibleTarget> WithMounts(IReadOnlyList<CollectibleTarget> targets, IReadOnlyList<uint> mounts)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+        ArgumentNullException.ThrowIfNull(mounts);
+
+        var have = new HashSet<uint>();
+        foreach (var target in targets)
+        {
+            if (target.Kind == RewardKind.Mount)
+            {
+                have.Add(target.RewardId);
+            }
+        }
+
+        var added = new List<CollectibleTarget>(targets);
+        foreach (var mount in mounts)
+        {
+            if (mount != 0 && have.Add(mount))
+            {
+                added.Add(new CollectibleTarget(RewardKind.Mount, mount, 0));
+            }
+        }
+
+        if (added.Count == targets.Count)
+        {
+            return targets;
+        }
+
+        added.Sort(static (a, b) => a.Kind != b.Kind ? a.Kind.CompareTo(b.Kind) : a.RewardId.CompareTo(b.RewardId));
+        return added;
+    }
+
+    /// <summary>
     /// The snapshot field for one read: per kind, the ids owned and the ids checked and missing. A target the client
     /// could not answer (null) is left out of both, so it reads unknown. Kinds with no answered target are left out.
     /// </summary>

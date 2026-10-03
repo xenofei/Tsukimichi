@@ -686,9 +686,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             for (var i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
             {
                 var index = visible[i];
-                if (index < 0)
+                if (GroupedRows.IsHeading(index))
                 {
-                    DrawGroupHeading((byte)~index, rowHeight);
+                    DrawGroupHeading(GroupedRows.HeadingExpansion(index), rowHeight);
                 }
                 else
                 {
@@ -976,10 +976,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private void CopyViewTsv()
     {
         var ids = links.ExternalIds;
-        var exported = new List<Core.Export.MoonlitExportRow>(visibleCount);
-        for (var i = 0; i < visibleCount && i < visible.Length; i++)
+        // Grouped by expansion, the list also holds heading entries (negative); only the rows are exported.
+        var listed = GroupedRows.RowIndices(visible, visibleCount);
+        var exported = new List<Core.Export.MoonlitExportRow>(listed.Count);
+        foreach (var index in listed)
         {
-            var row = rows[visible[i]];
+            var row = rows[index];
             exported.Add(Core.Export.ExportWriter.Row(row.Entry, row.Obtained, row.Availability.Kind, ids));
         }
 
@@ -2020,27 +2022,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             visible = new int[capacity];
         }
 
-        var count = 0;
         var names = session.Names;
-        for (var i = 0; i < picked.Count; i++)
-        {
-            var row = rows[picked[i]];
-            if (headings && (i == 0 || rows[picked[i - 1]].Expansion != row.Expansion))
-            {
-                var size = 1;
-                while (i + size < picked.Count && rows[picked[i + size]].Expansion == row.Expansion)
-                {
-                    size++;
-                }
-
-                groupHeadings[row.Expansion] = names.Expansion(row.Expansion) + " (" + size.ToString(CultureInfo.InvariantCulture) + ")";
-                visible[count++] = ~(int)row.Expansion;
-            }
-
-            visible[count++] = picked[i];
-        }
-
-        visibleCount = count;
+        visibleCount = GroupedRows.Fill(picked, index => rows[index].Expansion, headings, visible, (expansion, size) =>
+            groupHeadings[expansion] = names.Expansion(expansion) + " (" + size.ToString(CultureInfo.InvariantCulture) + ")");
         visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + listableCount.ToString(CultureInfo.InvariantCulture);
         BuildCopyMissing(picked, groupBy);
     }

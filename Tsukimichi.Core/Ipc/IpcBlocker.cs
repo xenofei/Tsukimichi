@@ -71,7 +71,7 @@ public static class IpcBlockerKinds
     /// <summary>Needs an achievement. refId: the Achievement row id; have: -1 while the achievement list is not loaded.</summary>
     public const string Achievement = "achievement";
 
-    /// <summary>Needs a mount (have: -1 when the plugin could not tell).</summary>
+    /// <summary>Needs a mount, or every mount of a collection. refId: the Mount row id still missing, else the first one needed; have: -1 when the plugin could not tell.</summary>
     public const string Mount = "mount";
 
     /// <summary>Needs a house (have: -1 when the plugin could not tell).</summary>
@@ -165,7 +165,7 @@ public readonly record struct IpcBlocker(string Kind, uint RefId, int Need, int 
         ForeclosureRequirement r => new(IpcBlockerKinds.LockedOut, FirstOr0(r.CompletedLockIds.Length > 0 ? r.CompletedLockIds : r.LockIds), 0, 0),
         RetiredRequirement => new(IpcBlockerKinds.Removed, 0, 0, 0),
         AchievementRequirement r => new(IpcBlockerKinds.Achievement, r.RowId, 1, r.Loaded ? 0 : -1),
-        MountRequirement r => new(IpcBlockerKinds.Mount, 0, 1, r.HasMount is { } has ? (has ? 1 : 0) : -1),
+        MountRequirement r => new(IpcBlockerKinds.Mount, FirstOr0(r.Missing.Length > 0 ? r.Missing : r.Mounts), 1, r.HasMount is { } has ? (has ? 1 : 0) : -1),
         HouseRequirement r => new(IpcBlockerKinds.House, 0, 1, r.HasHouse is { } has ? (has ? 1 : 0) : -1),
         CustomDeliveryRankRequirement r => new(IpcBlockerKinds.CustomDeliveryRank, r.Npc, r.RequiredRank, r.ActualRank ?? -1),
         CarrierLevelRequirement r => new(IpcBlockerKinds.CarrierLevel, 0, r.RequiredLevel, r.ActualLevel ?? -1),

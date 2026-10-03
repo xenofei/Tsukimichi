@@ -244,19 +244,16 @@ public static class RequirementEvaluator
             results.Add(new(new AcceptConditionRequirement(notChecked), true, n == 1 ? "1 accept condition not checked" : $"{n} accept conditions not checked"));
         }
 
-        if (q.MountRequired)
+        // The mount the sheet asks for, judged from the owned mounts the capture read (MountCheck); one it did not read
+        // is not checked and, like a house nobody reads, keeps the quest from a confident Ready (1.11.0, C2).
+        if (q.MountRequired != 0)
         {
-            results.Add(new(new MountRequirement(ctx.HasMount), ctx.HasMount != false, ctx.HasMount switch
-            {
-                true => "mount available",
-                false => "requires a mount",
-                null => "requires a mount, not checked",
-            }));
+            results.Add(MountCheck.Evaluate([q.MountRequired], null, s, ctx.MountName));
         }
 
         if (q.HouseRequired)
         {
-            results.Add(new(new HouseRequirement(ctx.HasHouse), ctx.HasHouse != false, ctx.HasHouse switch
+            results.Add(new(new HouseRequirement(ctx.HasHouse), ctx.HasHouse == true, ctx.HasHouse switch
             {
                 true => "house available",
                 false => "requires a house",
@@ -273,11 +270,13 @@ public static class RequirementEvaluator
         }
 
         // A gate the game checks before it offers the quest (curated/game_gates.json). A gear gate the capture can
-        // answer is judged; any other is never judged, so never met, and the resolver reads the quest Not checked
-        // rather than Blocked when nothing else is missing (GameGateCheck).
+        // answer is judged, and so is a mount collection (MountCheck); any other is never judged, so never met, and the
+        // resolver reads the quest Not checked rather than Blocked when nothing else is missing (GameGateCheck).
         if (catalog.GameGateOf(q.RowId) is { } gate)
         {
-            results.Add(GameGateCheck.Evaluate(gate, s, catalog, ctx.ItemName));
+            results.Add(gate.Mounts is { } mounts
+                ? MountCheck.Evaluate(mounts, gate.Gate, s, ctx.MountName)
+                : GameGateCheck.Evaluate(gate, s, catalog, ctx.ItemName));
         }
 
         return results;

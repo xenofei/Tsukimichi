@@ -93,6 +93,8 @@ public static class RequirementDetail
             AcceptConditionRequirement a => a.ConditionIds.Length == 1
                 ? T("Core.Req.AcceptConditionOne", "1 accept condition not checked")
                 : F("Core.Req.AcceptConditions", "{0} accept conditions not checked", a.ConditionIds.Length),
+            // Names the mounts (MountCheck), which no CoreText phrase carries yet: the English detail stands.
+            MountRequirement { Mounts.Length: > 0 } => null,
             MountRequirement m => m.HasMount switch
             {
                 true => T("Core.Req.MountAvailable", "mount available"),

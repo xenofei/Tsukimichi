@@ -52,6 +52,16 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
     /// <summary>A weapon's ClassJobCategory from <see cref="GateItemJobCategories"/>; 0 for one the gates do not list.</summary>
     public uint GateItemJobCategory(uint itemId) => GateItemJobCategories.GetValueOrDefault(itemId);
 
+    /// <summary>
+    /// The names of the mounts quests need owned (<see cref="QuestCatalog.MountWatch"/>), read at catalog build in the
+    /// catalog's language, for the mount details (<see cref="Core.Evaluation.EvalContext.MountName"/>); empty for a
+    /// bundle from the frozen fixture, where the details print mount ids.
+    /// </summary>
+    public IReadOnlyDictionary<uint, string> MountNames { get; init; } = new Dictionary<uint, string>();
+
+    /// <summary>A mount's name from <see cref="MountNames"/>; empty for one no quest needs.</summary>
+    public string MountName(uint mountId) => MountNames.GetValueOrDefault(mountId, string.Empty);
+
     /// <summary>The name lookups <see cref="BlockerText"/> prints with, over this bundle's catalog and sheet names; the callers memoize one per bundle.</summary>
     public BlockerNames BlockerNames() => new()
     {

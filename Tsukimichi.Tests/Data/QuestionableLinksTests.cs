@@ -164,6 +164,83 @@ public sealed partial class VerificationAllowlistTests
         Assert.True(problems.Count == 0, string.Join("\n", problems));
     }
 
+    /// <summary>
+    /// Every entry for a verifier row (any source but <c>questionable</c>, whose links
+    /// <see cref="QuestionableLinksTests"/> checks) still excuses a row the committed report holds with the entry's
+    /// verdict: once the data settles a row (1.11.0, S6: the Eureka and Doman gates of <c>curated/game_gates.json</c>),
+    /// its excuse goes, so pushing <c>until</c> back is never the only way an entry leaves the list.
+    /// </summary>
+    [Fact]
+    public void Every_verifier_entry_still_excuses_a_row_of_the_committed_report()
+    {
+        var dir = ExtraPrerequisitesDataTests.DocsDataDir();
+        var questRows = ReadCsv(Path.Combine(dir, "quest-verification.csv"))
+            .Select(f => (RowId: f[0], Fact: f[2], Source: f[4], Verdict: f[7], RewardId: (string?)null))
+            .ToList();
+        var rewardRows = ReadCsv(Path.Combine(dir, "reward-verification.csv"))
+            .Select(f => (RowId: f[0], Fact: "reward:" + f[2], Source: f[7], Verdict: f[10], RewardId: (string?)f[3]))
+            .ToList();
+        Assert.True(questRows.Count > 100_000, $"only {questRows.Count} quest rows; was the report truncated?");
+
+        var stale = new List<string>();
+        foreach (var e in Entries().Where(e => (string?)e["source"] != "questionable"))
+        {
+            var fact = (string)e["fact"]!;
+            var rows = fact.StartsWith("reward:", StringComparison.Ordinal) ? rewardRows : questRows;
+            var excuses = rows.Any(r =>
+                ((string?)e["rowId"] == "*" || r.RowId == (string?)e["rowId"])
+                && (fact == "*" || r.Fact == fact)
+                && ((string?)e["source"] is not { } source || r.Source == source)
+                && ((string?)e["verdict"] == "*" || r.Verdict == (string?)e["verdict"])
+                && ((string?)e["rewardId"] is not { } rewardId || r.RewardId == rewardId));
+            if (!excuses)
+            {
+                stale.Add($"{(string?)e["rowId"]} {fact}/{(string?)e["source"]} ({(string?)e["verdict"]})");
+            }
+        }
+
+        Assert.True(stale.Count == 0, "verification-allowlist.json entries that excuse no row of the committed report; the data settled them, remove them: " + string.Join(", ", stale));
+    }
+
+    /// <summary>The data lines of a committed report, split on commas outside double quotes ("" is a quote).</summary>
+    private static List<string[]> ReadCsv(string path)
+    {
+        var rows = new List<string[]>();
+        foreach (var line in File.ReadLines(path).Skip(1))
+        {
+            var fields = new List<string>();
+            var field = new System.Text.StringBuilder();
+            var quoted = false;
+            for (var i = 0; i < line.Length; i++)
+            {
+                var c = line[i];
+                if (quoted && c == '"' && i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    field.Append('"');
+                    i++;
+                }
+                else if (c == '"')
+                {
+                    quoted = !quoted;
+                }
+                else if (c == ',' && !quoted)
+                {
+                    fields.Add(field.ToString());
+                    field.Clear();
+                }
+                else
+                {
+                    field.Append(c);
+                }
+            }
+
+            fields.Add(field.ToString());
+            rows.Add([.. fields]);
+        }
+
+        return rows;
+    }
+
     [Theory]
     [InlineData("1.5.0", "1.5.0", true)]
     [InlineData("1.5.0", "1.4.2", false)]
