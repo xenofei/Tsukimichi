@@ -18,7 +18,10 @@ namespace Tsukimichi.Core.Ui.Themes;
 /// </summary>
 public sealed record UiPalette
 {
-    /// <summary>The stable key the palette is saved and shared as ("night", "follow-dalamud", …).</summary>
+    /// <summary>The appearance's palette id (<see cref="PaletteId"/>; the registry is <see cref="UiPalettes"/>).</summary>
+    public required PaletteId Id { get; init; }
+
+    /// <summary>The stable key the palette is saved and shared as (<see cref="PaletteChoices"/>: "night", "dalamud", …).</summary>
     public required string Key { get; init; }
 
     /// <summary>The palette's name in English (the Themes page localises its own label).</summary>

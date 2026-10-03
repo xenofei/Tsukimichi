@@ -1,0 +1,79 @@
+{
+  "key": "medallion",
+  "name": "Menphina's Medallion",
+  "note": "The shipped default. Its atlas stays embedded at Tsukimichi/assets/ui and must rebuild byte-identically (--check). Its row tier is procedural (MedalArt), so it ships no row strip; the gates measure the _row masters the meshes transcribe.",
+  "root": "docs/design/moon-v6/round5/medallion-r5",
+  "atlasDest": "Tsukimichi/assets/ui",
+  "dest": "Tsukimichi/assets/ui/themes/medallion",
+  "palette": "night",
+  "kit": "brass",
+  "tiers": {
+    "48": ".",
+    "64": ".",
+    "96": ".",
+    "128": "."
+  },
+  "sprites": {
+    "ready": "ready.svg",
+    "in-journal": "in-journal.svg",
+    "blocked": "blocked.svg",
+    "done-this-cycle": "done-this-cycle.svg",
+    "completed": {
+      "48": "/docs/design/v7/ui/completed-moon/completed-v7-small.svg",
+      "64": "/docs/design/v7/ui/completed-moon/completed-v7-small.svg",
+      "96": "/docs/design/v7/ui/completed-moon/completed-v7.svg",
+      "128": "/docs/design/v7/ui/completed-moon/completed-v7.svg"
+    },
+    "locked-out": "locked-out.svg",
+    "not-checked": "not-checked.svg",
+    "other-job-tank": {
+      "python": "docs/design/moon-v6/round5/gen_atlas.py",
+      "call": "empty_seat_medal",
+      "args": [
+        "tank"
+      ]
+    },
+    "other-job-healer": {
+      "python": "docs/design/moon-v6/round5/gen_atlas.py",
+      "call": "empty_seat_medal",
+      "args": [
+        "healer"
+      ]
+    },
+    "other-job-dps": {
+      "python": "docs/design/moon-v6/round5/gen_atlas.py",
+      "call": "empty_seat_medal",
+      "args": [
+        "dps"
+      ]
+    },
+    "other-job-hand": {
+      "python": "docs/design/moon-v6/round5/gen_atlas.py",
+      "call": "empty_seat_medal",
+      "args": [
+        "hand"
+      ]
+    }
+  },
+  "metrics": {
+    "ready-on-another-job": [
+      "ready-on-another-job.svg",
+      "ready-on-another-job-bard.svg",
+      "ready-on-another-job-white-mage.svg"
+    ]
+  },
+  "row": {
+    "dir": "_row",
+    "atlas": false,
+    "sprites": {
+      "ready": "_row/ready.svg",
+      "ready-on-another-job": "_row/ready-on-another-job.svg",
+      "in-journal": "_row/in-journal.svg",
+      "blocked": "_row/blocked.svg",
+      "done-this-cycle": "_row/done-this-cycle.svg",
+      "completed": "_row/completed.svg",
+      "locked-out": "_row/locked-out.svg",
+      "not-checked": "_row/not-checked.svg"
+    }
+  }
+}

@@ -9,11 +9,6 @@ namespace Tsukimichi.Core.Ui.Themes;
 /// </summary>
 public static class UiPalettes
 {
-    /// <summary>Night's key, the default palette.</summary>
-    public const string NightKey = "night";
-
-    /// <summary>The Follow Dalamud palette's key: mapped from the user's Dalamud style each time it changes.</summary>
-    public const string FollowDalamudKey = "follow-dalamud";
 
     /// <summary>Night's scene (the Full sky, stars, Abyss shadows, the night grades). Initialised before <see cref="Night"/>.</summary>
     public static readonly SceneTokens NightScene = new(
@@ -99,8 +94,9 @@ public static class UiPalettes
     /// </summary>
     public static readonly UiPalette Night = new()
     {
-        Key = NightKey,
-        Name = "Night",
+        Id = PaletteId.Night,
+        Key = PaletteChoices.Night.Key,
+        Name = PaletteChoices.Night.Name,
         Surface = SurfaceColors.Night,
         Accent = GlyphTokens.Moon,
         AccentDim = GlyphTokens.MoonDim,
@@ -122,26 +118,27 @@ public static class UiPalettes
     /// <summary>The designed palettes, in the order the Themes page lists them (Follow Dalamud is offered after them).</summary>
     public static IReadOnlyList<UiPalette> All => Designed;
 
-    /// <summary>The designed palette saved as <paramref name="key"/>; Night for an unknown or empty key (a share code from a newer build).</summary>
-    public static UiPalette Get(string? key)
+    /// <summary>
+    /// The designed palette for <paramref name="id"/> (the appearance's <see cref="ResolvedAppearance.Palette"/>); Night for
+    /// an id with no palette registered yet (Ishgard Snow until T8 adds it, Dawn and Kugane Lacquer until 1.17) and for
+    /// <see cref="PaletteId.FollowDalamud"/>, which is built from the host style (<see cref="FollowDalamud"/>).
+    /// Allocates nothing.
+    /// </summary>
+    public static UiPalette Get(PaletteId id)
     {
-        if (!string.IsNullOrEmpty(key))
+        foreach (var palette in Designed)
         {
-            foreach (var palette in Designed)
+            if (palette.Id == id)
             {
-                if (string.Equals(palette.Key, key, StringComparison.Ordinal))
-                {
-                    return palette;
-                }
+                return palette;
             }
         }
 
         return Night;
     }
 
-    /// <summary>Whether <paramref name="key"/> names a designed palette or Follow Dalamud.</summary>
-    public static bool IsKnown(string? key) =>
-        string.Equals(key, FollowDalamudKey, StringComparison.Ordinal) || Designed.Any(p => string.Equals(p.Key, key, StringComparison.Ordinal));
+    /// <summary>Whether a designed palette is registered for <paramref name="id"/>.</summary>
+    public static bool IsRegistered(PaletteId id) => Array.Exists(Designed, p => p.Id == id);
 
     /// <summary>
     /// The Follow Dalamud palette (the hook, not a designed palette): the surface roles mapped from the host style
@@ -165,8 +162,9 @@ public static class UiPalettes
         };
         return new UiPalette
         {
-            Key = FollowDalamudKey,
-            Name = "Follow Dalamud",
+            Id = PaletteId.FollowDalamud,
+            Key = PaletteChoices.FollowDalamud.Key,
+            Name = PaletteChoices.FollowDalamud.Name,
             Surface = s,
             Accent = accent,
             AccentDim = Read(GlyphTokens.MoonDim),

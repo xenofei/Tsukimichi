@@ -1520,7 +1520,7 @@ public sealed class TablePane : IDisposable
         {
             MoonWax.DrawHalo(dl, glyphCenter, layout.GlyphRadius, moment);
         }
-        MedalGlyph.DrawRowBadge(dl, new Vector2(cell.X + lead + layout.GlyphBox, centerY - badgeSide * 0.5f), badgeSide, state, readyOn);
+        MoonGlyph.DrawRowBadge(dl, new Vector2(cell.X + lead + layout.GlyphBox, centerY - badgeSide * 0.5f), badgeSide, state, readyOn);
 
         // Name column carries the row-wide selectable and the context menu. Its Header colours are transparent so it
         // paints neither hover nor selection over the fills above (keyboard focus still gets ImGui's nav frame). The

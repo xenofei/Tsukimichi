@@ -481,7 +481,8 @@ public sealed partial class Configuration : IPluginConfiguration
 
     /// <summary>
     /// Settings › Display › Look › Moon style (feature plan v6 G3): Medallion (the default) draws the 1.12 medals and
-    /// gauges, Classic the 1.11 moons everywhere they draw, so the two can be compared in game.
+    /// gauges, Classic the 1.11 moons everywhere they draw, so the two can be compared in game. Since 1.16.0 the
+    /// <see cref="Appearance"/>'s theme holds this; the value is written from it on save for a downgrade.
     /// </summary>
     public MoonStyle MoonStyle { get; set; } = MoonStyle.Medallion;
 
@@ -530,7 +531,8 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>
     /// Draw the windows in the user's Dalamud colours instead of the Night palette: the same layout, with the surface
     /// and text roles mapped from the Dalamud style (<c>Ui.Theme.Refresh</c>). Gold, Eclipse and the moons keep their
-    /// colours. Off by default.
+    /// colours. Off by default. Since 1.16.0 the <see cref="Appearance"/>'s palette holds this ("dalamud"); the value is
+    /// written from it on save for a downgrade.
     /// </summary>
     public bool FollowDalamudColours { get; set; }
 
@@ -538,7 +540,8 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>
     /// Settings › Display › Glyph palette: Standard (the moons as designed) or High contrast (flat colours on a
     /// luminance ladder, thicker rims and one in-disc mark per state; the table stripes, halos and marks follow it).
-    /// Standard by default.
+    /// Standard by default. Since 1.16.0 <see cref="Core.Ui.Themes.AppearanceConfig.HighContrast"/> holds this; the value
+    /// is written from it on save for a downgrade.
     /// </summary>
     public GlyphPaletteKind GlyphPalette { get; set; } = GlyphPaletteKind.Standard;
 
@@ -764,6 +767,7 @@ public sealed partial class Configuration : IPluginConfiguration
         }
 
         config.MoonStyle = MoonStyleRules.Effective(config.MoonStyle);
+        LoadAppearance(config, log);
 
         // 1.13.0: the language picker is hidden while localization is frozen, so a language chosen before (English, or
         // the pseudo layout check) would stick with no way back; it follows Dalamud again, once. An unknown value does too.
@@ -828,6 +832,7 @@ public sealed partial class Configuration : IPluginConfiguration
     {
         ArgumentNullException.ThrowIfNull(pluginInterface);
         Version = CurrentVersion;
+        SyncLegacyAppearance();
         pluginInterface.SavePluginConfig(this);
     }
 }

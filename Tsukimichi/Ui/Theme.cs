@@ -316,9 +316,11 @@ public static class Theme
 
     /// <summary>
     /// Settings › Display › Look › Moon style this frame (feature plan v6 G3): whether <see cref="MoonGlyph"/>, the orbit
-    /// rings and the quest table draw the 1.12 medals and gauges or the 1.11 moons (<see cref="LegacyMoonGlyph"/>).
+    /// rings and the quest table draw the 1.12 medals and gauges or the 1.11 moons (<see cref="LegacyMoonGlyph"/>). Since
+    /// 1.16.0 it is the appearance in effect (<see cref="Themes.GlyphSeam.Appearance"/>): Classic for the Classic theme,
+    /// Medallion for every other, so a pushed preview switches it too.
     /// </summary>
-    public static MoonStyle MoonStyle { get; private set; } = MoonStyle.Medallion;
+    public static MoonStyle MoonStyle => Themes.GlyphSeam.Appearance.MoonStyle;
 
     /// <summary>Whether the 1.11 moons draw this frame (<see cref="MoonStyle.Classic"/>).</summary>
     public static bool ClassicMoons => MoonStyle == MoonStyle.Classic;
@@ -437,18 +439,18 @@ public static class Theme
 
     /// <summary>
     /// Picks this frame's palette. Call once per frame before any window draws (nothing is pushed then, so the style
-    /// read is the user's own): with <paramref name="followDalamud"/> the Follow Dalamud palette, mapped from the Dalamud
-    /// style (<see cref="UiPalettes.FollowDalamud"/>, rebuilt only when the host colours change), otherwise the designed
-    /// palette saved as <paramref name="paletteKey"/> (<see cref="UiPalettes.Get"/>; Night by default). The glyph palette
-    /// <paramref name="glyphPalette"/> is resolved against the palette's window colour (<see cref="Glyphs"/>), so the
-    /// high-contrast glyphs switch to their light variant on a light palette. Under high contrast the palette's
-    /// high-contrast form is drawn (<see cref="UiPalette.HighContrast"/>) and <paramref name="flair"/> is capped at Quiet
-    /// (<see cref="Flair"/>). <paramref name="moonStyle"/> picks the glyph renderer (<see cref="MoonStyle"/>). The palette's
-    /// tokens are re-packed only when the palette changes. Allocates nothing on a frame where nothing changed.
+    /// read is the user's own): the palette the appearance names (<paramref name="palette"/>, from
+    /// <see cref="Themes.GlyphSeam.Refresh"/>, called first) out of the registry (<see cref="UiPalettes.Get(PaletteId)"/>),
+    /// or with <paramref name="followDalamud"/> (or <see cref="PaletteId.FollowDalamud"/>) the Follow Dalamud palette,
+    /// mapped from the Dalamud style (<see cref="UiPalettes.FollowDalamud"/>, rebuilt only when the host colours change).
+    /// The glyph palette <paramref name="glyphPalette"/> is resolved against the palette's window colour
+    /// (<see cref="Glyphs"/>), so the high-contrast glyphs switch to their light variant on a light palette. Under high
+    /// contrast the palette's high-contrast form is drawn (<see cref="UiPalette.HighContrast"/>) and <paramref name="flair"/>
+    /// is capped at Quiet (<see cref="Flair"/>). The palette's tokens are re-packed only when the palette changes, so a
+    /// frame where nothing changed allocates nothing.
     /// </summary>
-    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard, Flair flair = Flair.Full, MoonStyle moonStyle = MoonStyle.Medallion, string? paletteKey = null)
+    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard, Flair flair = Flair.Full, PaletteId palette = PaletteId.Night)
     {
-        MoonStyle = MoonStyleRules.Effective(moonStyle);
         var colors = ImGui.GetStyle().Colors;
         var windowBg = colors[(int)ImGuiCol.WindowBg];
         hostWindowAlpha = float.IsFinite(windowBg.W) ? Math.Clamp(windowBg.W, 0f, 1f) : 1f;
@@ -461,7 +463,7 @@ public static class Theme
                 colors[(int)ImGuiCol.Border],
                 colors[(int)ImGuiCol.Text],
                 colors[(int)ImGuiCol.TextDisabled])
-            : UiPalettes.Get(paletteKey);
+            : UiPalettes.Get(palette);
         Glyphs = GlyphPalette.Resolve(glyphPalette, chosen.Surface.Window);
         ApplyPalette(Glyphs.HighContrast ? chosen.HighContrast : chosen);
 

@@ -1,0 +1,83 @@
+{
+  "key": "aether-crystal",
+  "name": "Aether Crystal",
+  "note": "Approved (supervisor signed). One hero master per state for every hero tier (48 to 128). Ready on another job's empty seats are layered from the faces and the Silver kit in gen_ac.py compose()'s order (face under, frame, face over, badge frame with its seat); the Hand seat is the tank seat recoloured to Medallion's Hand enamel (GlyphTokens.Medallion.HandHex).",
+  "root": "docs/design/v7/themes/aether-crystal",
+  "dest": "Tsukimichi/assets/ui/themes/aether-crystal",
+  "palette": "night",
+  "kit": "silver",
+  "tiers": {
+    "48": ".",
+    "64": ".",
+    "96": ".",
+    "128": "."
+  },
+  "sprites": {
+    "ready": "ready.svg",
+    "in-journal": "in-journal.svg",
+    "blocked": "blocked.svg",
+    "done-this-cycle": "done-this-cycle.svg",
+    "completed": "completed.svg",
+    "locked-out": "locked-out.svg",
+    "not-checked": "not-checked.svg",
+    "other-job-tank": {
+      "layers": [
+        "faces/ready-on-another-job-under.svg",
+        "kit/frame-resting-full.svg",
+        "faces/ready-on-another-job-over.svg",
+        "kit/badge-seat-tank.svg"
+      ]
+    },
+    "other-job-healer": {
+      "layers": [
+        "faces/ready-on-another-job-under.svg",
+        "kit/frame-resting-full.svg",
+        "faces/ready-on-another-job-over.svg",
+        "kit/badge-seat-healer.svg"
+      ]
+    },
+    "other-job-dps": {
+      "layers": [
+        "faces/ready-on-another-job-under.svg",
+        "kit/frame-resting-full.svg",
+        "faces/ready-on-another-job-over.svg",
+        "kit/badge-seat-dps.svg"
+      ]
+    },
+    "other-job-hand": {
+      "layers": [
+        "faces/ready-on-another-job-under.svg",
+        "kit/frame-resting-full.svg",
+        "faces/ready-on-another-job-over.svg",
+        {
+          "file": "kit/badge-seat-tank.svg",
+          "recolour": {
+            "#5878C2": "#66708E",
+            "#2C417E": "#2C324C"
+          }
+        }
+      ]
+    }
+  },
+  "metrics": {
+    "ready-on-another-job": [
+      "ready-on-another-job.svg",
+      "ready-on-another-job-bard.svg",
+      "ready-on-another-job-white-mage.svg"
+    ]
+  },
+  "row": {
+    "dir": "_row",
+    "atlas": true,
+    "sprites": {
+      "ready": "_row/ready.svg",
+      "ready-on-another-job": "_row/ready-on-another-job.svg",
+      "in-journal": "_row/in-journal.svg",
+      "blocked": "_row/blocked.svg",
+      "done-this-cycle": "_row/done-this-cycle.svg",
+      "completed": "_row/completed.svg",
+      "locked-out": "_row/locked-out.svg",
+      "not-checked": "_row/not-checked.svg"
+    }
+  }
+}
