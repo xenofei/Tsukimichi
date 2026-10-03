@@ -6,7 +6,10 @@
   // Triad, delivery, pack photo) and the sepia battle-talk faces get their own, so the four sit together as one set.
   var GRADE = {
     colour: "0.6162 0.1372 0.0138 0 0.0147  0.0413 0.7224 0.0140 0 0.0196  0.0435 0.1462 0.6279 0 0.0353  0 0 0 1 0",
-    bt: "0.4842 0.2856 0.0288 0 0.0147  0.0858 0.6923 0.0291 0 0.0196  0.0893 0.3003 0.4502 0 0.0353  0 0 0 1 0"
+    bt: "0.4842 0.2856 0.0288 0 0.0147  0.0858 0.6923 0.0291 0 0.0196  0.0893 0.3003 0.4502 0 0.0353  0 0 0 1 0",
+    // 1.16, light palettes (the supervisor's ruling): no night multiply; desaturation, scale .97 and the black lift kept
+    "snow-colour": "0.7791 0.1734 0.0175 0 0.0147  0.0516 0.9009 0.0175 0 0.0196  0.0516 0.1734 0.7450 0 0.0353  0 0 0 1 0",
+    "snow-bt": "0.5881 0.3469 0.0350 0 0.0147  0.1031 0.8319 0.0350 0 0.0196  0.1031 0.3469 0.5200 0 0.0353  0 0 0 1 0"
   };
   // Source families: texture size and the head crop (source px), as spec-1.15 §A2 gives them.
   var SRC = {
@@ -33,12 +36,12 @@
   function plate(size, lv, kind, o) {
     o = o || {};
     var id = "pp" + (++uid), full = lv === "full", plain = lv === "plain", inner = "";
-    var defs = '<linearGradient id="' + id + 'w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + (plain ? "#1C2237" : "#1D2B5A") + '"/><stop offset="1" stop-color="' + (plain ? "#1C2237" : "#131C40") + '"/></linearGradient>' +
+    var defs = '<linearGradient id="' + id + 'w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + (SNOW ? (plain ? "#D9DFE9" : "#DCE3EE") : plain ? "#1C2237" : "#1D2B5A") + '"/><stop offset="1" stop-color="' + (SNOW ? (plain ? "#D9DFE9" : "#C8D1E0") : plain ? "#1C2237" : "#131C40") + '"/></linearGradient>' +
       '<clipPath id="' + id + 'c"><circle cx="36" cy="36" r="34.5"/></clipPath>' +
-      '<linearGradient id="' + id + 'k" x1="8" y1="6" x2="64" y2="68" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#E6CF98"/><stop offset=".45" stop-color="#9A7E4A"/><stop offset=".8" stop-color="#7C6236"/><stop offset="1" stop-color="#5C4724"/></linearGradient>';
+      '<linearGradient id="' + id + 'k" x1="8" y1="6" x2="64" y2="68" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="' + (SNOW ? "#B8C0D0" : "#E6CF98") + '"/><stop offset=".45" stop-color="' + (SNOW ? "#7C8498" : "#9A7E4A") + '"/><stop offset=".8" stop-color="' + (SNOW ? "#5A6278" : "#7C6236") + '"/><stop offset="1" stop-color="' + (SNOW ? "#4A5268" : "#5C4724") + '"/></linearGradient>';
     if (kind === "face") {
       var g = GIVERS[o.giver], s = SRC[g.src], c = o.crop || g.crop || s.crop, k = 69 / c[2];
-      defs += '<filter id="' + id + 'g" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="' + GRADE[s.fam] + '"/></filter>';
+      defs += '<filter id="' + id + 'g" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="' + GRADE[(SNOW ? "snow-" : "") + s.fam] + '"/></filter>';
       inner += '<image href="' + A15 + "art/" + g.file + (g.keyed && !o.unkeyed ? "-keyed" : "") + '.png" x="' + (1.5 - c[0] * k).toFixed(2) + '" y="' + (1.5 - c[1] * k).toFixed(2) + '" width="' + (s.w * k).toFixed(2) + '" height="' + (s.h * k).toFixed(2) + '"' + (o.raw ? "" : ' filter="url(#' + id + 'g)"') + (o.alpha != null ? ' opacity="' + o.alpha + '"' : "") + ' preserveAspectRatio="none"/>';
     } else if (kind === "sil") {
       inner += '<image href="' + A15 + "silhouettes/" + o.sil + '.svg" x="4" y="6" width="64" height="64"/>';
@@ -62,8 +65,8 @@
     }
     var svg = '<svg class="pp' + (o.fade ? " fade" : "") + '" width="' + size + '" height="' + size + '" viewBox="0 0 72 72" aria-hidden="true"><defs>' + defs + "</defs>" +
       '<circle cx="36" cy="36" r="35" fill="url(#' + id + 'w)"/><g clip-path="url(#' + id + 'c)">' + inner +
-      (lip ? '<circle cx="36" cy="36" r="35.5" fill="#080B16" fill-opacity=".55" mask="url(#' + id + 'm)" filter="url(#' + id + 'b)"/><circle cx="36" cy="36" r="35" fill="url(#' + id + 'h)"/>' : "") + "</g>" +
-      (full ? '<circle cx="36" cy="36" r="35.6" fill="none" stroke="#080B16" stroke-opacity=".6" stroke-width="1" vector-effect="non-scaling-stroke"/><circle cx="36" cy="36" r="34.9" fill="none" stroke="url(#' + id + 'k)" stroke-width="1" vector-effect="non-scaling-stroke"/>'
+      (lip ? '<circle cx="36" cy="36" r="35.5" fill="' + (SNOW ? "#1A2136" : "#080B16") + '" fill-opacity="' + (SNOW ? ".22" : ".55") + '" mask="url(#' + id + 'm)" filter="url(#' + id + 'b)"/><circle cx="36" cy="36" r="35" fill="url(#' + id + 'h)"/>' : "") + "</g>" +
+      (full ? '<circle cx="36" cy="36" r="35.6" fill="none" stroke="' + (SNOW ? "#FFFFFF" : "#080B16") + '" stroke-opacity="' + (SNOW ? ".9" : ".6") + '" stroke-width="1" vector-effect="non-scaling-stroke"/><circle cx="36" cy="36" r="34.9" fill="none" stroke="url(#' + id + 'k)" stroke-width="1" vector-effect="non-scaling-stroke"/>'
         : '<circle cx="36" cy="36" r="34.9" fill="none" stroke="' + (plain ? "#3A4050" : "#C3CBDF") + '" stroke-opacity="' + (plain ? 1 : 0.62) + '" stroke-width="1" vector-effect="non-scaling-stroke"/>') + "</svg>";
     return svg;
   }

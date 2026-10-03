@@ -10,6 +10,12 @@
     rail: "The rail: 1.13 against v7 at each level, and every station state with its timing.",
     stars: "The Full sky: three depths, four temperatures, a slow twinkle, the region constellations, the completion meteor and an optional band.",
     ba: "1.13 against v7 at Full, with the quest pane's headings and the column headers at true size.",
+    "snow-full": "1.16: Ishgard Glass on Ishgard Snow, Decoration Full: a dawn sky with one morning star, came (lead) frames, cool shadows.",
+    "snow-full-drawer": "1.16: Ishgard Snow at Full with the filter drawer open.",
+    "snow-quiet": "1.16: Ishgard Snow at Quiet, the filter drawer open.",
+    "snow-plain": "1.16: Ishgard Snow at Plain, the drawer open with Advanced.",
+    palettes: "1.16: Night, Ishgard Snow and their high-contrast forms, the contrast table, portraits on light.",
+    themes: "1.16: Settings › Themes, and how 1.17's mix-and-match fits the same page.",
     giver: "1.15: giver portraits from the game's own art, night-graded, on the medal plate; avatars in Next stops, Route and the Journal.",
     fallbacks: "1.15: the 16 race silhouettes, the moon disc, society emblems and initials, on the same plate.",
     buttons: "1.15: icon-and-label buttons with the game's own icons, per level, and how they shrink.",
@@ -99,14 +105,19 @@
   var V7 = true;
   function heroFile(st) { return st === "ready-on-another-job" ? "ready-on-another-job-paladin" : st; }
   // v7 Completed: the 96 and 128 px atlas tiers carry the rim-lit craters; 48, 64 and the row tier use the crater-less source.
-  function medalSrc(st, hero, px) { return V7 && st === "completed" ? (px >= 96 ? MOON7 : MOON7S) : M + (hero ? heroFile(st) : "_row/" + st) + ".svg"; }
+  var THEME = "medallion", SNOW = false, SELN = null;
+  var TDIR = { glass: "../themes/ishgard-glass/", aether: "../themes/aether-crystal/" };
+  function medalSrc(st, hero, px) {
+    if (TDIR[THEME]) return TDIR[THEME] + (hero ? heroFile(st) : "_row/" + st) + ".svg";
+    return V7 && st === "completed" ? (px >= 96 ? MOON7 : MOON7S) : M + (hero ? heroFile(st) : "_row/" + st) + ".svg";
+  }
   function medalImg(st, px, hero) { return '<img alt="" width="' + px + '" height="' + px + '" src="' + medalSrc(st, hero, px) + '">'; }
   function quietMedal(st, px, hero) {
     var id = "qm" + (++uid), href = medalSrc(st, hero, px);
     var clip = '<circle cx="64" cy="64" r="53.2"/>' + (hero ? '<circle cx="95" cy="95" r="20.5"/>' : "") + (hero && st === "in-journal" ? '<rect x="24.5" y="1.5" width="17.5" height="75"/>' : "");
     return '<svg width="' + px + '" height="' + px + '" viewBox="0 0 128 128" aria-hidden="true"><defs><clipPath id="' + id + '">' + clip + '</clipPath></defs>' +
       '<circle cx="64" cy="64" r="55.6" fill="#0E1322"/>' +
-      '<circle cx="64" cy="64" r="55.6" fill="none" stroke="#C3CBDF" stroke-opacity=".62" stroke-width="' + (hero ? 1.25 : 1) + '" vector-effect="non-scaling-stroke"/>' +
+      '<circle cx="64" cy="64" r="55.6" fill="none" stroke="' + (SNOW ? "#7A859C" : "#C3CBDF") + '" stroke-opacity="' + (SNOW ? ".8" : ".62") + '" stroke-width="' + (hero ? 1.25 : 1) + '" vector-effect="non-scaling-stroke"/>' +
       (hero ? '<circle cx="95" cy="95" r="23.4" fill="#182033"/>' : "") +
       '<image href="' + href + '" width="128" height="128" clip-path="url(#' + id + ')"/>' +
       (hero ? '<circle cx="95" cy="95" r="21.6" fill="none" stroke="#C3CBDF" stroke-opacity=".62" stroke-width="1" vector-effect="non-scaling-stroke"/>' : "") + "</svg>";
@@ -144,6 +155,24 @@
   function rowGlyph(lv, st, px) { return lv === "full" ? medalImg(st, px || 18) : lv === "quiet" ? quietMedal(st, px ? px - 2 : 16) : flatGlyph(st, px ? 12 : 12); }
 
   function orbit(f, lv) {
+    var o0 = orbit0(f, lv);
+    return SNOW ? orbitLight(f, lv) : o0;
+  }
+  // 1.16, light palettes (supervisor): the gauge gets its own ink so it holds 3:1 as a UI graphic: a gilt arc ramping
+  // #8A6A1C (highlight, upper left) to #755308 (shade), a #CAD2DF groove between #7A859C keylines, and the filling moon
+  // in moonstone over a #59627A dark side.
+  function orbitLight(f, lv) {
+    var r = 9.5, c = 2 * Math.PI * r, a = -Math.PI / 2 + 2 * Math.PI * f, id = "og" + (++uid);
+    var groove = '<circle cx="12" cy="12" r="' + r + '" fill="none" stroke="#CAD2DF" stroke-width="2"/>' +
+      '<circle cx="12" cy="12" r="' + (r + 1.25) + '" fill="none" stroke="#7A859C" stroke-width=".5"/><circle cx="12" cy="12" r="' + (r - 1.25) + '" fill="none" stroke="#7A859C" stroke-width=".5"/>';
+    var arc = '<defs><linearGradient id="' + id + '" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8A6A1C"/><stop offset="1" stop-color="#755308"/></linearGradient></defs>' +
+      '<circle cx="12" cy="12" r="' + r + '" fill="none" stroke="url(#' + id + ')" stroke-width="2"' + (lv === "quiet" ? "" : ' stroke-linecap="round"') + ' stroke-dasharray="' + (c * f).toFixed(2) + " " + c.toFixed(2) + '" transform="rotate(-90 12 12)"/>';
+    if (lv === "quiet") return '<svg class="orb" viewBox="0 0 24 24" aria-hidden="true">' + arc + groove.replace("<circle", "<circle") + arc.replace(/<defs>.*<\/defs>/, "") + "</svg>";
+    return '<svg class="orb" viewBox="0 0 24 24" aria-hidden="true">' + arc + groove + arc.replace(/<defs>.*<\/defs>/, "") +
+      '<circle cx="' + (12 + r * Math.cos(a)).toFixed(2) + '" cy="' + (12 + r * Math.sin(a)).toFixed(2) + '" r="2.1" fill="#8A6A1C" stroke="#F9FAFC" stroke-width="1"/>' +
+      '<circle cx="12" cy="12" r="5.2" fill="#59627A"/><path d="M12 6.8a5.2 5.2 0 0 1 0 10.4a' + (5.2 * (1 - 2 * Math.min(f, 1))).toFixed(2) + ' 5.2 0 0 ' + (f > 0.5 ? 1 : 0) + ' 0-10.4z" fill="#C3CEE4"/></svg>';
+  }
+  function orbit0(f, lv) {
     var r = 9.5, c = 2 * Math.PI * r, a = -Math.PI / 2 + 2 * Math.PI * f;
     if (lv === "quiet") {
       return '<svg class="orb" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="' + r + '" fill="none" stroke="#2A3149" stroke-width="2"/>' +
@@ -332,7 +361,7 @@
   }
   function rail7(lv, o) {
     var H = o.h || 790, top = 8 + 40 + 4 + 1 + 8 + 5 * 72 + 10, fTop = H - 216;
-    var h = '<nav class="rail r7">' + (lv === "full" ? sky7({ seed: 7, w: 70, h: H, n: 18, rects: [[0, top, 70, Math.max(0, fTop - top)]], anim: true, drift: true }) : "");
+    var h = '<nav class="rail r7">' + (lv === "full" && !SNOW ? sky7({ seed: 7, w: 70, h: H, n: 18, rects: [[0, top, 70, Math.max(0, fTop - top)]], anim: true, drift: true }) : "");
     h += '<div class="lay" style="display:flex;flex-direction:column;align-items:center;width:100%;flex:1">' + (lv === "plain" ? "" : CREST + '<div class="rule"></div>');
     h += stations(lv, o) + foot(lv);
     return h + "</div></nav>";
@@ -341,7 +370,9 @@
   function tree(lv, o) {
     var H = o.h || 790, w = lv === "full" ? 292 : 0;
     var sky = "";
-    if (lv === "full") sky = o.v7 ? sky7({ seed: 31, w: w, h: H, n: 46, rects: [[8, 396, w - 16, H - 404]], band: o.band ? [-30, 640, w + 30, 450, 74] : null, fig: ["arr", 160, 520, 90], anim: true, drift: true }) : stars13(31, 292, 820, 34, 1, .64, .04, .96);
+    // Light palettes: no stars at all (the supervisor's ruling); the dawn sky is the pane gradient alone.
+    if (lv === "full" && SNOW) sky = "";
+    else if (lv === "full") sky = o.v7 ? sky7({ seed: 31, w: w, h: H, n: 46, rects: [[8, 396, w - 16, H - 404]], band: o.band ? [-30, 640, w + 30, 450, 74] : null, fig: ["arr", 160, 520, 90], anim: true, drift: true }) : stars13(31, 292, 820, 34, 1, .64, .04, .96);
     var h = '<div class="tree">' + sky + '<div class="lay">';
     h += '<div class="th">' + ICON.sig + "<b>Journal</b>" + (lv === "full" ? '<i class="r"></i>' : "") + "<span>5,373 quests</span></div>";
     TREE.forEach(function (t, k) {
@@ -355,13 +386,13 @@
       if (lv === "full" && t[0] === "sec") h += '<span class="road"></span>';
       h += "</div>";
     });
-    h += "</div>" + (lv === "full" && o.v7 ? meteor(96, 410) + meteor(150, 470).replace('class="shooting"', 'class="shooting faint"') : "") + "</div>";
+    h += "</div>" + (lv === "full" && o.v7 && !SNOW ? meteor(96, 410) + meteor(150, 470).replace('class="shooting"', 'class="shooting faint"') : "") + "</div>";
     return h;
   }
 
   function table(lv, o) {
     var h = '<div class="tbl" role="grid">';
-    if (lv === "full") h += o.v7 ? sky7({ seed: 97, w: 760, h: 40, n: 22, rects: [[150, 4, 470, 16]], anim: true, drift: true }).replace('class="sky"', 'class="sky" style="height:40px"') : stars13(97, 900, 34, 16, .8, .15, .34, .8).replace('class="sky"', 'class="sky" style="height:34px"');
+    if (lv === "full" && !SNOW) h += o.v7 ? sky7({ seed: 97, w: 760, h: 40, n: 22, rects: [[150, 4, 470, 16]], anim: true, drift: true }).replace('class="sky"', 'class="sky" style="height:40px"') : stars13(97, 900, 34, 16, .8, .15, .34, .8).replace('class="sky"', 'class="sky" style="height:34px"');
     if (lv !== "plain") h += '<div class="ttl"><b>Pinned</b><span>' + ROWS.length + ' quests</span><em>sorted by name</em></div>';
     h += '<div class="thd cols"><div></div><div class="sort">Name ▴</div><div>Lv</div><div>Job</div><div>Status</div><div>Exp</div></div><div class="rows">';
     var groups = [];
@@ -370,7 +401,7 @@
       var items = ROWS.filter(function (q) { return q.g === g; });
       h += '<div class="grp"><b>' + esc(g) + "</b><span>" + items.length + "</span></div>";
       items.forEach(function (q) {
-        var cls = "tr cols" + (STRIPE[q.st][1] ? " " + STRIPE[q.st][1] : "") + (q.sel ? " sel" : "") + (q.tip ? " hov" : "") + (q.st === "ready" ? " rdy" : "");
+        var cls = "tr cols" + (STRIPE[q.st][1] ? " " + STRIPE[q.st][1] : "") + ((SELN ? q.n === SELN : q.sel) ? " sel" : "") + (q.tip ? " hov" : "") + (q.st === "ready" ? " rdy" : "");
         h += '<div class="' + cls + '" style="--stripe:' + STRIPE[q.st][0] + '"><div class="g">' + rowGlyph(lv, q.st) + "</div>";
         h += '<div class="nmc' + (q.st === "completed" ? " cp" : "") + '">' + esc(q.n) + "</div>";
         h += '<div><span class="lvp">' + q.lv + "</span></div>";
@@ -524,10 +555,13 @@
 
   function win(lv, o) {
     o = o || {}; V7 = o.v7 !== false; o.v7 = V7; ROWS = V7 ? filterQ(o.F || F_WIN) : Q;
-    var cls = "mk " + lv + (V7 ? " v7" : "") + (o.drawer && V7 ? " dopen" : "") + (o.drawer && !V7 ? " b13open" : "");
-    var body = (V7 ? rail7(lv, o) : rail13(lv)) + tree(lv, o) + table(lv, o) + detail(lv, o);
+    THEME = o.theme || "medallion"; SNOW = o.palette === "snow"; SELN = o.sel || null;
+    var cls = "mk " + lv + (V7 ? " v7" : "") + (SNOW ? " snow" : "") + (o.hc ? " hc" : "") + " th-" + THEME + (o.drawer && V7 ? " dopen" : "") + (o.drawer && !V7 ? " b13open" : "");
+    var body = (V7 ? rail7(lv, o) : rail13(lv)) + tree(lv, o) + table(lv, o) + (o.detailFn ? o.detailFn(lv, o) : detail(lv, o));
     if (o.drawer) body += V7 ? drawer(lv, o.drawer === "e", o.F || F_WIN, o.dopt || {}) : drawer13();
-    return '<div class="' + cls + '"' + (o.style ? ' style="' + o.style + '"' : "") + '><div class="win">' + frame(lv, o) + '<div class="w-body">' + body + "</div>" + status(lv) + "</div></div>";
+    var out = '<div class="' + cls + '"' + (o.style ? ' style="' + o.style + '"' : "") + '><div class="win">' + frame(lv, o) + '<div class="w-body">' + body + "</div>" + status(lv) + "</div></div>";
+    THEME = "medallion"; SNOW = false; SELN = null;
+    return out;
   }
 
   // ---------- Boards ----------
@@ -677,6 +711,13 @@
     return h;
   }
 
+  // The label ladder (1.16): take the first rung that fits on one line.
+  function fitLadders(root) {
+    root.querySelectorAll("[data-ladder]").forEach(function (el) {
+      var rungs = JSON.parse(el.getAttribute("data-ladder")); el.style.whiteSpace = "nowrap";
+      for (var i = 0; i < rungs.length; i++) { el.textContent = rungs[i]; if (el.scrollWidth <= el.clientWidth + 0.5) break; }
+    });
+  }
   // ---------- Rail label fit (Revision 3) ----------
   // 1. Draw at the label size. 2. If wider than the plate's inner width, track -0.02 em. 3. Still wider: shrink to fit,
   // never under 10 px. 4. Still wider: two lines at a space; a single word that cannot fit goes icon-only with the label in
@@ -720,6 +761,18 @@
     t.innerHTML = "<tr><th>Level</th><th>Text size</th><th>Label</th><th>Size</th><th>Width</th><th>Room</th><th>Step</th></tr>" + rows;
   }
 
+  function renderContrast() {
+    var el = document.getElementById("ct16"); if (!el) return;
+    var lines = CONTRAST.trim().split(String.fromCharCode(10)).filter(function (l) { return l.indexOf("|---") !== 0; });
+    el.innerHTML = "<table>" + lines.map(function (l, i) {
+      var cells = l.split("|").slice(1, -1).map(function (c) { return c.trim(); });
+      return "<tr>" + cells.map(function (c) {
+        if (i === 0) return "<th>" + c + "</th>";
+        var m = c.match(/^(#[0-9A-F]{6}) ([0-9.]+)(.*)$/);
+        return m ? '<td><i style="display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:5px;background:' + m[1] + '"></i><code>' + m[1] + "</code> <b>" + m[2] + "</b>" + m[3] + "</td>" : "<td>" + c + "</td>";
+      }).join("") + "</tr>";
+    }).join("") + "</table>";
+  }
   // ---------- Page ----------
   var host = document.getElementById("host"), seg = document.getElementById("seg"), ver = document.getElementById("ver"), pn = document.getElementById("pn");
   function show(hash) {
@@ -733,6 +786,12 @@
     else if (v === "rail") host.innerHTML = boardRail();
     else if (v === "stars") host.innerHTML = boardStars();
     else if (v === "ba") host.innerHTML = boardBA();
+    else if (v === "snow-full") host.innerHTML = snowWin("full");
+    else if (v === "snow-full-drawer") host.innerHTML = snowWin("full", { drawer: "c", dopt: { hovRow: 1 } });
+    else if (v === "snow-quiet") host.innerHTML = snowWin("quiet", { drawer: "c" });
+    else if (v === "snow-plain") host.innerHTML = snowWin("plain", { drawer: "e", dopt: { to: "adv" } });
+    else if (v === "palettes") { host.innerHTML = boardPalettes(); renderContrast(); }
+    else if (v === "themes") host.innerHTML = boardThemes();
     else if (v === "giver") host.innerHTML = boardGiver();
     else if (v === "fallbacks") host.innerHTML = boardFallbacks();
     else if (v === "buttons") host.innerHTML = boardButtons();
@@ -740,7 +799,8 @@
     else host.innerHTML = win(v, { v7: w !== "before", drawer: w === "open" ? "c" : w === "open-adv" ? "e" : null, h: 790 });
     // Expanded drawers on the boards open scrolled to the Advanced section (as after a click on its summary).
     fitLabels(host);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fitLabels(host); labelTable(); });
+    fitLadders(host);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fitLabels(host); fitLadders(host); labelTable(); });
     function toAdvanced() {
       host.querySelectorAll(".dsc-in[data-to=adv]").forEach(function (el) {
         var t = el.querySelectorAll(".dsec")[2], pad = parseFloat(getComputedStyle(el.parentNode).paddingTop) || 0;

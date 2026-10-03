@@ -1,0 +1,230 @@
+{
+ "palettes": {
+  "night": {
+   "Window": "#0F1424",
+   "Sunken": "#0B0F1C",
+   "Raised": "#1E2437",
+   "Hover": "#262D45",
+   "Line": "#2A3149",
+   "StrongLine": "#646D8A",
+   "Text": "#DDE3F0",
+   "TextSecondary": "#A9B2CC",
+   "TextTertiary": "#8B94B3",
+   "TextDisabled": "#4A5270",
+   "Deep": "#080B16",
+   "Top": "#151C33",
+   "Zenith": "#1B2552",
+   "Ornament": "#A88B52",
+   "OrnamentHigh": "#D9BE82",
+   "OrnamentLight": "#E6CF98",
+   "Cool": "#6F8FD0",
+   "Accent": "#F2D27A",
+   "Ready": "#F2D27A",
+   "InJournal": "#F2D27A",
+   "Completed": "#F2D27A",
+   "ReadyOnOtherJob": "#DDE3F0",
+   "DoneThisCycle": "#DDE3F0",
+   "Blocked": "#A9B2CC",
+   "LockedOut": "#D68AA8",
+   "NotChecked": "#8A93B0",
+   "GaugeArc": "#F2D27A",
+   "GaugeArcShade": "#D6B25A",
+   "Groove": "#262C46",
+   "StripeGold": "#F2D27A",
+   "StripeCompleted": "#B39A5C",
+   "StripeSilver": "#DDE3F0",
+   "StripeLocked": "#B25C7F",
+   "StripeVeil": "#5C6584"
+  },
+  "snow": {
+   "Window": "#EEF1F6",
+   "Sunken": "#E1E6EE",
+   "Raised": "#F9FAFC",
+   "Hover": "#DCE3ED",
+   "Line": "#CAD2DF",
+   "StrongLine": "#7A859C",
+   "Text": "#1A2136",
+   "TextSecondary": "#434D6A",
+   "TextTertiary": "#56607C",
+   "TextDisabled": "#8A93AA",
+   "Deep": "#D9DFE9",
+   "Top": "#F8FAFD",
+   "Zenith": "#D3DEF0",
+   "Ornament": "#7C8498",
+   "OrnamentHigh": "#59627A",
+   "OrnamentLight": "#3F4862",
+   "Cool": "#2C569E",
+   "Accent": "#755308",
+   "Ready": "#755308",
+   "InJournal": "#755308",
+   "Completed": "#6B5420",
+   "ReadyOnOtherJob": "#1A2136",
+   "DoneThisCycle": "#2A3454",
+   "Blocked": "#434D6A",
+   "LockedOut": "#962A6A",
+   "NotChecked": "#56607C",
+   "GaugeArc": "#8A6A1C",
+   "GaugeArcShade": "#755308",
+   "Groove": "#CAD2DF",
+   "StripeGold": "#A07B25",
+   "StripeCompleted": "#B9A06A",
+   "StripeSilver": "#59627A",
+   "StripeLocked": "#962A6A",
+   "StripeVeil": "#8A93AA"
+  },
+  "night-hc": {
+   "Window": "#0F1424",
+   "Sunken": "#0B0F1C",
+   "Raised": "#1E2437",
+   "Hover": "#262D45",
+   "Line": "#2A3149",
+   "StrongLine": "#7C86A8",
+   "Text": "#DDE3F0",
+   "TextSecondary": "#C3CBDF",
+   "TextTertiary": "#A0A9C4",
+   "TextDisabled": "#4A5270",
+   "Deep": "#080B16",
+   "Top": "#0F1424",
+   "Zenith": "#0F1424",
+   "Ornament": "#7C86A8",
+   "OrnamentHigh": "#D9BE82",
+   "OrnamentLight": "#E6CF98",
+   "Cool": "#86A1D7",
+   "Accent": "#F2D27A",
+   "Ready": "#F2D27A",
+   "InJournal": "#F2D27A",
+   "Completed": "#F2D27A",
+   "ReadyOnOtherJob": "#DDE3F0",
+   "DoneThisCycle": "#DDE3F0",
+   "Blocked": "#A9B2CC",
+   "LockedOut": "#D68AA8",
+   "NotChecked": "#97A0BA",
+   "GaugeArc": "#F2D27A",
+   "GaugeArcShade": "#D6B25A",
+   "Groove": "#262C46",
+   "StripeGold": "#F2D27A",
+   "StripeCompleted": "#B39A5C",
+   "StripeSilver": "#DDE3F0",
+   "StripeLocked": "#B25C7F",
+   "StripeVeil": "#5C6584"
+  },
+  "snow-hc": {
+   "Window": "#EEF1F6",
+   "Sunken": "#E1E6EE",
+   "Raised": "#F9FAFC",
+   "Hover": "#DCE3ED",
+   "Line": "#9AA4B8",
+   "StrongLine": "#4A5470",
+   "Text": "#0B1020",
+   "TextSecondary": "#2A3350",
+   "TextTertiary": "#3A4462",
+   "TextDisabled": "#8A93AA",
+   "Deep": "#D9DFE9",
+   "Top": "#EEF1F6",
+   "Zenith": "#EEF1F6",
+   "Ornament": "#4A5470",
+   "OrnamentHigh": "#59627A",
+   "OrnamentLight": "#3F4862",
+   "Cool": "#294F91",
+   "Accent": "#694C0B",
+   "Ready": "#694C0B",
+   "InJournal": "#694C0B",
+   "Completed": "#624E20",
+   "ReadyOnOtherJob": "#1A2136",
+   "DoneThisCycle": "#2A3454",
+   "Blocked": "#434D6A",
+   "LockedOut": "#8E2866",
+   "NotChecked": "#47506A",
+   "GaugeArc": "#8A6A1C",
+   "GaugeArcShade": "#755308",
+   "Groove": "#CAD2DF",
+   "StripeGold": "#A07B25",
+   "StripeCompleted": "#9D895E",
+   "StripeSilver": "#59627A",
+   "StripeLocked": "#962A6A",
+   "StripeVeil": "#828BA2"
+  }
+ },
+ "grades": {
+  "night-colour": [
+   [
+    0.6162,
+    0.1372,
+    0.0138,
+    0.0147
+   ],
+   [
+    0.0413,
+    0.7224,
+    0.014,
+    0.0196
+   ],
+   [
+    0.0435,
+    0.1462,
+    0.6279,
+    0.0353
+   ]
+  ],
+  "night-bt": [
+   [
+    0.4842,
+    0.2856,
+    0.0288,
+    0.0147
+   ],
+   [
+    0.0858,
+    0.6923,
+    0.0291,
+    0.0196
+   ],
+   [
+    0.0893,
+    0.3003,
+    0.4502,
+    0.0353
+   ]
+  ],
+  "snow-colour": [
+   [
+    0.7791,
+    0.1734,
+    0.0175,
+    0.0147
+   ],
+   [
+    0.0516,
+    0.9009,
+    0.0175,
+    0.0196
+   ],
+   [
+    0.0516,
+    0.1734,
+    0.745,
+    0.0353
+   ]
+  ],
+  "snow-bt": [
+   [
+    0.5881,
+    0.3469,
+    0.035,
+    0.0147
+   ],
+   [
+    0.1031,
+    0.8319,
+    0.035,
+    0.0196
+   ],
+   [
+    0.1031,
+    0.3469,
+    0.52,
+    0.0353
+   ]
+  ]
+ }
+}
