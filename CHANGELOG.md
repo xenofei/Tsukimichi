@@ -4,6 +4,43 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-10-03
+
+### Added
+- **New moons: "Menphina's Medallion".** Every quest state is a gilt-rimmed medal that keeps its detail at every size:
+  - a moon road for Ready;
+  - clouds over a new moon for Blocked;
+  - a repeat arrow for Done this cycle;
+  - a full moon with a gold check for Completed;
+  - a shattered red moon for Locked out;
+  - a question mark for Not checked.
+- **Badges on the medals.**
+  - Ready shows an open padlock, Blocked a closed one, and In journal a journal.
+  - Quests ready on another job show that job's own icon. In quest lists the badge sits beside the medal.
+- **Settings › Look › Moon style:** switch between the new Medallion medals and the Classic 1.11 moons, to compare them in game.
+- **What a quest unlocks.** A new Unlocks section in the quest pane lists, with game icons:
+  - areas and aetherytes;
+  - dungeons and trials;
+  - features and emotes;
+  - the next quests.
+
+  Click an entry to teleport through Lifestream, open the map or jump to the next quest. Right-click a duty to open it in the Duty Finder (it never queues).
+- **Unlocks in more places.** Quest tooltips, the game-window panels, the Todo overlay, Path, Moonlit and `/tsuki` search say what a quest opens. An "Unlocked:" chat line follows each turn-in, and there's a new optional "Opens" column in the Journal (Settings › Display › Planning).
+- **A completed quest's moon waxes to full** once, never under Reduce motion. Settings › Look says when Windows' "Show animations" setting has turned motion off, with a one-click override.
+
+### Changed
+- **The window no longer moves under you.**
+  - The scope sits in the list's title with an ×.
+  - Filters sit in one fixed line with "+N", and open as a drawer you can pin.
+  - Notices float in a corner, clear of the action bar.
+  - One-time prompts close after about 15 seconds, hovering pauses them, and anything that needs you stays.
+- **The selected quest stays where it is** on screen when you filter, search, re-sort or the list updates.
+- **Status lives in the status bar.** Starting or stopping a hand-off, or copying, no longer pushes the detail pane down; status and Stop sit in the status bar.
+- **Moonlit's** filters fit on one toolbar line. The **Todo overlay** shows Questionable's status in its title line and no longer jumps narrower.
+- **The Path card says what to do next:** "3 quests before this one" with a Next link, or nothing when the quest is up next. Chains show what's next in them over a slim bar.
+- **Counts say what's left** ("3 left", "1 prerequisite left"); full totals are on hover.
+- **Progress gauges and the rail's Journal moon** are gilt in a lapis groove around a moonstone moon.
+
 ## [1.11.0] - 2026-10-02
 
 ### Added
