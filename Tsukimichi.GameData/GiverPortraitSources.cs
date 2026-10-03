@@ -13,8 +13,10 @@ namespace Tsukimichi.GameData;
 /// <item>Duty Support and Trust members (<c>DawnQuestMember</c>): <c>BigImageOld</c> the tall bust,
 /// <c>BigImageNew</c> the wide strip, named by the member's ENpcResident or, for a blank one, by
 /// <c>DawnMemberUIParam.Name</c> (Wuk Lamat, Koana, Krile); the era is the earliest expansion of the duties the row
-/// joins (<c>DawnContentParticipable</c> → <c>DawnContent</c> → the duty's territory's ExVersion);</item>
-/// <item>Triple Triad cards: icon 087000 + the card row, named by the card;</item>
+/// joins (<c>DawnContentParticipable</c> → <c>DawnContent</c> → the duty's territory's ExVersion), else of another row
+/// with the same art; a row whose era cannot be told (it joins no duty yet) is left out rather than guessed;</item>
+/// <item>Triple Triad cards: icon 087000 + the card row, named by the card; the era is the expansion whose cards the
+/// card's number falls among (<see cref="CardEra"/>);</item>
 /// <item>battle-talk faces (073001–073999), named three ways: a quest battle's <c>FACE_GRAPHIC_&lt;NAME&gt;</c> script
 /// variable (era: the battle's quest), a Scion note (<c>AkatsukiNote</c> list and title names, era: the quest that
 /// unlocks the note), and a Doman Mahjong costume row, whose faces all show one character (a face shares the names
@@ -93,7 +95,7 @@ public static class GiverPortraitSources
                     continue;
                 }
 
-                quests.Add(new PortraitQuest(quest.RowId, issuer.RowId, (byte)quest.Expansion.RowId, (byte)quest.BeastTribe.RowId));
+                quests.Add(new PortraitQuest(quest.RowId, issuer.RowId, (byte)quest.Expansion.RowId, (byte)quest.BeastTribe.RowId, Seasonal: quest.Festival.RowId != 0));
                 if (seen.Add(issuer.RowId))
                 {
                     var npc = bases.GetRowOrDefault(issuer.RowId);
@@ -136,8 +138,26 @@ public static class GiverPortraitSources
                 }
             }
 
+            // A row that joins no duty takes the era of another row with the same art; one with neither is left out,
+            // since a face whose era cannot be told could be a later expansion's.
+            var members = excel.GetSheet<DawnQuestMember>();
+            var eraByArt = new Dictionary<uint, byte>();
+            foreach (var row in members)
+            {
+                if (eraByMember.TryGetValue(row.RowId, out var era))
+                {
+                    foreach (var art in (ReadOnlySpan<uint>)[row.BigImageOld, row.BigImageNew])
+                    {
+                        if (art != 0)
+                        {
+                            eraByArt[art] = eraByArt.TryGetValue(art, out var seen) ? Math.Min(seen, era) : era;
+                        }
+                    }
+                }
+            }
+
             var labels = English<DawnMemberUIParam>(excel);
-            foreach (var row in excel.GetSheet<DawnQuestMember>())
+            foreach (var row in members)
             {
                 var name = NameOf(row.Member.RowId);
                 if (name.Length == 0)
@@ -145,7 +165,15 @@ public static class GiverPortraitSources
                     name = labels.GetRowOrDefault(row.Class.RowId)?.Name.ExtractText() ?? string.Empty;
                 }
 
-                byte? era = eraByMember.TryGetValue(row.RowId, out var known) ? known : null;
+                byte? era = eraByMember.TryGetValue(row.RowId, out var known) ? known
+                    : eraByArt.TryGetValue(row.BigImageOld, out var old) ? old
+                    : eraByArt.TryGetValue(row.BigImageNew, out var strip) ? strip
+                    : null;
+                if (era is null)
+                {
+                    continue;
+                }
+
                 Face(row.BigImageOld, PortraitSource.TrustBust, name, era, row.Member.RowId);
                 Face(row.BigImageNew, PortraitSource.TrustStrip, name, era, row.Member.RowId);
             }
@@ -153,11 +181,13 @@ public static class GiverPortraitSources
 
         Part("Triple Triad cards", () =>
         {
+            var residents = excel.GetSheet<TripleTriadCardResident>();
             foreach (var card in English<TripleTriadCard>(excel))
             {
                 if (card.RowId != 0)
                 {
-                    Face(CardArtBase + card.RowId, PortraitSource.TripleTriadCard, card.Name.ExtractText(), null);
+                    var era = residents.GetRowOrDefault(card.RowId) is { } resident ? CardEra(resident.Order, resident.UIPriority) : null;
+                    Face(CardArtBase + card.RowId, PortraitSource.TripleTriadCard, card.Name.ExtractText(), era);
                 }
             }
         });
@@ -289,6 +319,39 @@ public static class GiverPortraitSources
         }
 
         return stem.Trim('_');
+    }
+
+    /// <summary>
+    /// The card number (<c>TripleTriadCardResident.Order</c>) each expansion's cards start at: No. 1 A Realm Reborn,
+    /// No. 68 Heavensward (Gaelicat), No. 170 Stormblood (Namazu), No. 239 Shadowbringers (Amaro), No. 313 Endwalker
+    /// (Troll), No. 391 Dawntrail (Pelupelu). The game numbers cards in the order they were added, so a card's number
+    /// tells the expansion of its art. A new expansion's first card number goes here when it ships; until then its
+    /// cards read as the last expansion listed.
+    /// </summary>
+    public static readonly IReadOnlyList<ushort> CardEraStarts = [1, 68, 170, 239, 313, 391];
+
+    /// <summary>
+    /// A card's era from its number (<see cref="CardEraStarts"/>); null for a card outside the numbered list (the
+    /// crossover cards, <c>UIPriority</c> set, are numbered on their own), whose era then reads as its giver's first
+    /// expansion.
+    /// </summary>
+    public static byte? CardEra(ushort order, byte uiPriority)
+    {
+        if (uiPriority != 0 || order == 0)
+        {
+            return null;
+        }
+
+        byte era = 0;
+        for (var i = 1; i < CardEraStarts.Count; i++)
+        {
+            if (order >= CardEraStarts[i])
+            {
+                era = (byte)i;
+            }
+        }
+
+        return era;
     }
 
     /// <summary>"Heavensward Attire" → 1: the expansion a costume's attire is named for; null when it names none ("Growing Light Attire").</summary>

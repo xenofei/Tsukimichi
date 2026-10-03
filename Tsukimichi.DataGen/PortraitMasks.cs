@@ -12,8 +12,9 @@ namespace Tsukimichi.DataGen;
 /// <c>giver_portraits.json</c>) with <see cref="DeliveryKey"/>, and writes the keep masks the plugin ships into
 /// <c>curated/portrait_masks/</c>: one 1-bit PNG per icon at the hr size, and <c>masks.json</c> naming each mask's texture
 /// and the SHA-256 of that texture's file, so a patch that changes the art invalidates its mask (the portrait then
-/// falls back until this runs again). Deterministic: the same art writes the same bytes. Fails when a key would touch
-/// the figure, which the algorithm promises never happens.
+/// falls back until this runs again). Deterministic: the same art writes the same bytes. Fails (exit 1, nothing written,
+/// no mask deleted) when a seeded icon has no texture or a key would touch the figure, which the algorithm promises never
+/// happens.
 /// </summary>
 internal static class PortraitMasks
 {
@@ -27,9 +28,9 @@ internal static class PortraitMasks
         }
 
         var folder = Path.Combine(curatedDir, PortraitCuration.MaskFolder);
-        Directory.CreateDirectory(folder);
         var entries = new SortedDictionary<uint, (string File, string Texture, string Hash, int Width, int Height, int Removed)>();
-        var failed = false;
+        var keeps = new Dictionary<uint, bool[]>();
+        var failed = new List<uint>();
         foreach (var (icon, key) in curation.DeliveryKeys.OrderBy(kv => kv.Key))
         {
             var path = HrPath(icon);
@@ -37,7 +38,8 @@ internal static class PortraitMasks
             var texture = data.GetFile<TexFile>(path);
             if (raw is null || texture is null)
             {
-                Console.WriteLine($"  {icon:D6}: no hr texture at {path}; no mask written");
+                Console.Error.WriteLine($"  {icon:D6}: no hr texture at {path}; check its seed's icon id in giver_portraits.json");
+                failed.Add(icon);
                 continue;
             }
 
@@ -49,13 +51,26 @@ internal static class PortraitMasks
             if (result.RemovedInsideFigure != 0 || figure < 100)
             {
                 Console.Error.WriteLine($"  {icon:D6}: the key touched the figure, or the seed found no face; check its seed in giver_portraits.json");
-                failed = true;
+                failed.Add(icon);
                 continue;
             }
 
-            var file = $"{icon:D6}.png";
-            PortraitMaskFile.Write(Path.Combine(folder, file), result.Keep, width, height);
-            entries[icon] = (file, path, PortraitMask.HashOf(raw.Data), width, height, result.Removed);
+            keeps[icon] = result.Keep;
+            entries[icon] = ($"{icon:D6}.png", path, PortraitMask.HashOf(raw.Data), width, height, result.Removed);
+        }
+
+        // A seed that keys nothing fails the run before anything is written: the shipped masks and manifest stay as
+        // they were (a mask that cannot be keyed again today is never deleted), so the release cannot lose a portrait.
+        if (failed.Count > 0)
+        {
+            Console.Error.WriteLine($"  {failed.Count} delivery portrait(s) could not be keyed ({string.Join(", ", failed.Select(i => i.ToString("D6", System.Globalization.CultureInfo.InvariantCulture)))}); {folder} left unchanged");
+            return 1;
+        }
+
+        Directory.CreateDirectory(folder);
+        foreach (var (icon, entry) in entries)
+        {
+            PortraitMaskFile.Write(Path.Combine(folder, entry.File), keeps[icon], entry.Width, entry.Height);
         }
 
         // Masks no longer seeded go, so the folder holds exactly what the manifest lists.
@@ -93,7 +108,7 @@ internal static class PortraitMasks
         var text = Encoding.UTF8.GetString(stream.ToArray()).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
         File.WriteAllText(Path.Combine(folder, PortraitCuration.MaskManifestFileName), text, new UTF8Encoding(false));
         Console.WriteLine($"wrote:   {entries.Count} masks and {Path.Combine(folder, PortraitCuration.MaskManifestFileName)}");
-        return failed ? 1 : 0;
+        return 0;
     }
 
     /// <summary>The game path of an icon's hr texture.</summary>

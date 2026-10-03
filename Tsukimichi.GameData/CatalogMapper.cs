@@ -48,7 +48,7 @@ public static class CatalogMapper
             excel.GetSheet<Item>(language),
             excel.GetSubrowSheet<QuestClassJobReward>(language),
             excel.GetSheet<BeastRankBonus>(language),
-            DutyArtReader.Shared.Read(excel, language),
+            DutyArtReader.Shared.Read(excel, language, log),
             excel.GetSheet<QuestAcceptAdditionCondition>(language),
             excel.GetSubrowSheet<QuestClassJobSupply>(language),
             QuestHandIns.Sources.Build(excel, language));

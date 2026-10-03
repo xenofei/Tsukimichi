@@ -89,14 +89,15 @@ public static class PortraitSources
     };
 
     /// <summary>
-    /// The family an icon id belongs to by its range: 072621–072680 Trust busts, 072681–072799 Trust strips,
+    /// The family an icon id belongs to by its range: 072621–072680 Trust busts, 072681–072999 Trust strips (the game
+    /// has filled them to 072799; the rest of the block up to the battle-talk faces is left to the strips it adds next),
     /// 073001–073999 battle-talk faces, 087001–087999 Triple Triad cards, 061661–061699 delivery portraits;
     /// <see cref="PortraitSource.None"/> outside them.
     /// </summary>
     public static PortraitSource FamilyOfIcon(uint icon) => icon switch
     {
         >= 72621 and <= 72680 => PortraitSource.TrustBust,
-        >= 72681 and <= 72799 => PortraitSource.TrustStrip,
+        >= 72681 and <= 72999 => PortraitSource.TrustStrip,
         >= 73001 and <= 73999 => PortraitSource.BattleTalk,
         >= 87001 and <= 87999 => PortraitSource.TripleTriadCard,
         >= 61661 and <= 61699 => PortraitSource.Delivery,

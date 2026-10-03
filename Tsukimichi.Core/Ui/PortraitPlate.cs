@@ -231,6 +231,17 @@ public static class PortraitPlate
         return Fallback(kind, fallback, logicalSize);
     }
 
+    /// <summary>
+    /// <paramref name="portrait"/> for a quest the spoiler shield masks: its fallback is never the allied society's
+    /// emblem, which would tell whose story the masked quest belongs to, but the race silhouette (the moon disc for a
+    /// giver that is not one of the playable races). Every other fallback is kept; the face never shows for a masked
+    /// quest anyway (<see cref="FaceAllowed"/>).
+    /// </summary>
+    public static PortraitRef ForMaskedQuest(in PortraitRef portrait) =>
+        portrait.Fallback.Kind == PortraitFallbackKind.SocietyEmblem
+            ? portrait with { Fallback = portrait.Fallback with { Kind = PortraitFallbackKind.Silhouette, SocietyIcon = 0 } }
+            : portrait;
+
     /// <summary>The fallback <paramref name="kind"/> as drawn at <paramref name="logicalSize"/>.</summary>
     public static PortraitShow Fallback(PortraitFallbackKind kind, in PortraitFallback fallback, float logicalSize) => kind switch
     {
