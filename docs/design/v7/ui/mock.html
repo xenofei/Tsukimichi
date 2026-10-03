@@ -1264,6 +1264,176 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 .b16 .pp16{width:470px}
 .b16 figure:has(.pp16) figcaption{width:470px}
 
+/* ======================================================================================================
+   1.17 "Mix and match" (spec-1.17.md)
+   ====================================================================================================== */
+/* ---------- Dawn: dark, plum night with a rose horizon; Astrolabe brass ---------- */
+.mk.dawn{--night:#1A1526;--sunk:#120E1B;--raised:#262036;--hover:#30283F;--line:#352D46;--vline:#76698C;--umbra:#30283F;
+  --silver:#F2E8E6;--mist:#C4B4C0;--dusk:#A495AC;--veil:#5A4E66;--vtext:#A595AE;--moon:#F5C47C;--moonhi:#FFE6B8;--moondeep:#D9A55E;
+  --etext:#EE94BC;--eclipse:#C46A92;--abyss:#0F0B17;--top:#2B1F3A;--gilt:#B8924E;--gilthi:#EAD3A0;--giltlo:#7C6034;color:#F2E8E6}
+.mk.dawn .win{background:#1A1526;border-color:#4A3A40}
+.mk.dawn .w-title{background:#262036;border-bottom-color:#352D46}
+.mk.full.dawn .w-body{background:linear-gradient(180deg,#3A2746 0%,#352444 14%,#2B1F3A 30%,#3E2A44 40%,#4E3044 46%,#2B1F3A 58%,#1A1526 76%,#1D1729 100%)}
+.mk.full.dawn .rail{background:linear-gradient(180deg,rgba(15,11,23,.92),rgba(18,14,27,.86));border-right-color:rgba(184,146,78,.28)}
+.mk.full.dawn .det{background:linear-gradient(180deg,rgba(26,21,38,.35),rgba(20,16,30,.6))}
+.mk.full.dawn .card{background:linear-gradient(180deg,rgba(44,36,60,.86),rgba(32,26,46,.9)) padding-box,linear-gradient(160deg,#EAD3A0 0%,#B8924E 28%,#7C6034 55%,#A88550 78%,#4E3B1E 100%) border-box}
+.mk.full.dawn .card .cm.a,.mk.full.dawn .card .cm.b{border-color:#F2DDB0}
+.mk.full.dawn .acts{background:linear-gradient(180deg,rgba(30,24,44,.92),rgba(20,16,30,.96))}
+.mk.full.dawn .apill:not(.pri){background:linear-gradient(180deg,#30283F,#262036)}
+.mk.full.dawn .apill.pri{background:linear-gradient(180deg,#FFE2AE,#F5C47C 45%,#D9A55E);border-color:#F8D9A4}
+.mk.full.dawn .ab{background:linear-gradient(180deg,#30283F,#262036)}
+.mk.full.dawn .w-stat{background:linear-gradient(180deg,#1E1830,#140F20)}
+.mk.full.dawn .tr.hov{background:rgba(48,40,63,.8)}
+.mk.full.dawn .tr:nth-child(even of .tr){background:rgba(220,180,200,.025)}
+.mk.full.dawn .tr{border-bottom-color:rgba(53,45,70,.4)}
+.mk.full.dawn .ttl b{color:#F2E8E6}
+.mk.full.dawn .w-tool{background:#2B1F3A}
+.mk.quiet.dawn{--q-tone:#1E1829;--q-card:#2A2338;--q-rule:#3A3049}
+.mk.quiet.dawn .rail{background:#17121F}
+.mk.quiet.dawn .tree{background:#1A1524}
+.mk.quiet.dawn .det,.mk.quiet.dawn .acts{background:#221B30}
+.mk.quiet.dawn .tr.hov{background:#2A2338}
+/* ---------- Kugane Lacquer: dark, black lacquer at dusk; vermilion only in surfaces ---------- */
+.mk.kugane{--night:#16100F;--sunk:#0E0A09;--raised:#231917;--hover:#2D211E;--line:#342620;--vline:#7A6458;--umbra:#2D211E;
+  --silver:#F3E9DB;--mist:#C6B6A2;--dusk:#A69482;--veil:#5C4C42;--vtext:#A89888;--moon:#F0CC72;--moonhi:#FFE9B0;--moondeep:#D4AE55;
+  --etext:#E58AC0;--eclipse:#C25E92;--abyss:#0B0807;--top:#2A1613;--gilt:#A88B52;--gilthi:#E7C87C;--giltlo:#6E5732;color:#F3E9DB}
+.mk.kugane .win{background:#16100F;border-color:#4A3424}
+.mk.kugane .w-title{background:#231917;border-bottom-color:#342620}
+.mk.full.kugane .w-body{background:linear-gradient(180deg,#3A1A14 0%,#33170F 12%,#2A1613 26%,#3B1D14 40%,#4E2218 45%,#2A1613 56%,#16100F 74%,#1A1210 100%)}
+.mk.full.kugane .rail{background:linear-gradient(180deg,rgba(11,8,7,.94),rgba(14,10,9,.9));border-right:1px solid rgba(178,52,34,.45)}
+.mk.full.kugane .det{background:linear-gradient(180deg,rgba(22,16,15,.35),rgba(18,13,12,.6))}
+.mk.full.kugane .card{background:linear-gradient(180deg,rgba(40,29,26,.88),rgba(30,22,20,.92)) padding-box,linear-gradient(160deg,#E2C78C 0%,#A88B52 28%,#6E5732 55%,#9C8049 78%,#5A4729 100%) border-box}
+.mk.full.kugane .acts{background:linear-gradient(180deg,rgba(28,20,18,.94),rgba(18,13,12,.97))}
+.mk.full.kugane .apill:not(.pri),.mk.full.kugane .ab{background:linear-gradient(180deg,#2D211E,#231917)}
+.mk.full.kugane .w-stat{background:linear-gradient(180deg,#1E1513,#120D0C)}
+.mk.full.kugane .tr.hov{background:rgba(45,33,30,.85)}
+.mk.full.kugane .tr:nth-child(even of .tr){background:rgba(240,200,160,.022)}
+.mk.full.kugane .tr{border-bottom-color:rgba(52,38,32,.45)}
+.mk.full.kugane .w-tool{background:#2A1613}
+.mk.quiet.kugane{--q-tone:#1B1412;--q-card:#281D1A;--q-rule:#3A2B24}
+.mk.quiet.kugane .rail{background:#140E0D}
+.mk.quiet.kugane .tree{background:#171110}
+.mk.quiet.kugane .det,.mk.quiet.kugane .acts{background:#201715}
+.mk.quiet.kugane .tr.hov{background:#281D1A}
+
+/* ---------- mix table ---------- */
+.clip7{position:relative;width:900px;overflow:hidden;border-radius:7px;box-shadow:0 0 0 1px #232A42}
+.clip7>.mk{height:auto!important}
+.mk.set17{width:900px}
+.mk.set17 .win{height:auto}
+.mk.set17 .sbody{min-height:600px}
+.mk.set17 .spage{padding-top:6px}
+.mk .mix7 .lead7{margin:-4px 0 10px;font-size:12px;color:var(--dusk)}
+.mk .mixt7{display:flex;flex-direction:column}
+.mk .mx7{display:grid;grid-template-columns:172px 44px 216px 1fr;align-items:center;height:46px;border-bottom:1px solid rgba(42,49,73,.45);font-size:12.5px}
+.mk .mx7.focus{background:rgba(242,210,122,.06)}
+.mk .mx7 .mn{color:var(--silver)}
+.mk .mx7 .mm{width:32px;height:32px;display:block}
+.mk .mx7 .mm img{display:block}
+.mk .dd7{display:inline-flex;align-items:center;gap:8px;height:30px;border-radius:15px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);padding:0 12px 0 6px;font-size:12px;color:var(--silver);width:200px}
+.mk .dd7.open{box-shadow:inset 0 0 0 1px #7C86A8}
+.mk .dd7 i{margin-left:auto;font-style:normal;font-size:9px;color:var(--dusk)}
+.mk .mx7 .nt{font-size:11.5px;color:#C9A866;padding-left:14px;display:flex;align-items:center;gap:6px}
+.mk .ad{display:inline-block;width:6px;height:6px;border-radius:50%;background:#C9A866;flex:none}
+.mk .cl7{margin:-4px 0 6px 216px;width:440px;background:linear-gradient(180deg,rgba(26,31,52,.98),rgba(17,21,38,.98));border:1px solid #4A4130;border-radius:6px;box-shadow:0 10px 26px rgba(0,0,0,.6);padding:4px}
+.mk .cl7 .co{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:4px;font-size:12.5px;color:var(--silver)}
+.mk .cl7 .co.on{background:rgba(242,210,122,.08)}
+.mk .cl7 .co em{font-style:normal;color:var(--dusk);font-size:11.5px}
+.mk .cl7 .co b{margin-left:auto;font-weight:500;font-size:11px;color:#C9A866;display:flex;align-items:center;gap:6px}
+.mk .cl7 .co b.new{color:var(--dusk)}
+.mk .ws7{display:flex;align-items:center;gap:10px;min-height:44px;font-size:12.5px;color:var(--silver)}
+.mk .ws7 .wl{flex:1;display:flex;align-items:center;gap:8px}
+.mk .ws7.calm .wl{color:var(--mist)}
+.mk .qa.pri7{color:#F2D27A;border:1px solid rgba(242,210,122,.45);border-radius:14px}
+.mk .qa.hold7{border:1px solid #2E3550;border-radius:14px;position:relative;min-width:100px;justify-content:center}
+.mk .qa.hold7 .harc{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px)}
+.mk .qa.hold7.holding{color:var(--silver)}
+.mk .wd7{margin:0 0 6px;padding:10px 12px;border-radius:6px;background:rgba(201,168,102,.07);box-shadow:inset 0 0 0 1px rgba(201,168,102,.25);font-size:12px;line-height:1.55;color:var(--mist)}
+.mk .wd7 b{color:var(--silver)}
+.mk .fp7{margin:8px 0 0 auto;width:470px;background:linear-gradient(180deg,rgba(26,31,52,.98),rgba(17,21,38,.98));border:1px solid #6E5732;border-radius:6px;padding:12px 14px;box-shadow:0 10px 26px rgba(0,0,0,.6)}
+.mk .fp7 .fpt{font-size:11.5px;color:var(--dusk);margin-bottom:8px}
+.mk .fp7 .fpr{display:flex;align-items:center;gap:10px}
+.mk .fp7 .fpr .ar{color:var(--mist)}
+.mk .fp7 .fpr div{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mist)}
+.mk .fp7 .fpr b{color:var(--silver);font-weight:500;font-size:13px}
+.mk .fpb{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+/* ---------- frames ---------- */
+.fg7{display:grid;grid-template-columns:170px repeat(4,1fr);gap:10px;align-items:stretch}
+.fg7 .fh{font:400 15px/1.2 Marcellus,Georgia,serif;color:#F4F1E8;padding:2px 4px}
+.fg7 .fk{display:flex;flex-direction:column;gap:4px;padding:10px 6px}
+.fg7 .fk b{font:400 15px/1.2 Marcellus,Georgia,serif;color:#F4F1E8}
+.fg7 .fk span{font-size:11px;color:#A9B2CC}
+.fg7 .rmp{display:flex;gap:3px;margin-top:4px}
+.fg7 .rmp i{width:22px;height:8px;border-radius:2px}
+.fg7 .ft{border-radius:7px;box-shadow:0 0 0 1px #232A42;padding:10px;display:flex;flex-direction:column;gap:10px}
+.fg7 .fmr{display:flex;gap:4px;justify-content:center}
+.fm{position:relative;display:block;flex:none}
+.fm>img,.fm>svg{position:absolute;left:0;top:0;width:100%;height:100%}
+.kc7{position:relative;border:1px solid transparent;border-radius:4px;padding:8px 10px;font-size:11.5px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.kc7 h5{margin:0 0 4px;font:500 15px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.kc7 .k1,.kc7 .k2{position:absolute;width:8px;height:8px}
+.kc7 .k1{left:-1.5px;top:-1.5px}.kc7 .k2{right:-1.5px;bottom:-1.5px}
+.kc7.L .k1{border-left:1.5px solid var(--c1);border-top:1.5px solid var(--c1)}
+.kc7.L .k2{border-right:1.5px solid var(--c3);border-bottom:1.5px solid var(--c3)}
+.kc7.chip .k1,.kc7.chip .k2{width:7px;height:7px;transform:rotate(45deg);background:linear-gradient(135deg,var(--c1),var(--c3))}
+.kc7.chip .k1{left:-4px;top:-4px}.kc7.chip .k2{right:-4px;bottom:-4px}
+.kc7.quatrefoil .k1,.kc7.quatrefoil .k2{width:9px;height:9px;background:radial-gradient(circle at 50% 22%,var(--c1) 22%,transparent 24%),radial-gradient(circle at 50% 78%,var(--c3) 22%,transparent 24%),radial-gradient(circle at 22% 50%,var(--c1) 22%,transparent 24%),radial-gradient(circle at 78% 50%,var(--c3) 22%,transparent 24%)}
+.kc7.quatrefoil .k1{left:-5px;top:-5px}.kc7.quatrefoil .k2{right:-5px;bottom:-5px}
+.kc7.scale .k1{width:12px;height:12px;border-top:1.5px solid var(--c1);border-left:1.5px solid var(--c1);border-radius:12px 0 0 0;background:repeating-conic-gradient(from 270deg at 100% 100%,var(--c1) 0 2deg,transparent 2deg 15deg);-webkit-mask:radial-gradient(circle at 100% 100%,transparent 8px,#000 8.5px)}
+.kc7.scale .k2{border-right:1.5px solid var(--c3);border-bottom:1.5px solid var(--c3);border-radius:0 0 12px 0;width:12px;height:12px}
+/* ---------- share ---------- */
+.mk.shb7{width:330px;height:auto}
+.mk.shb7 .win{height:auto}
+.sh7{display:flex;flex-direction:column;gap:10px}
+.shr7{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.shr7 code{font-size:12px;color:var(--silver);background:var(--sunk);border-radius:4px;padding:5px 8px}
+.pin7{height:28px;border-radius:14px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);padding:0 12px;display:flex;align-items:center;font-size:12px;color:var(--dusk);flex:1;min-width:150px}
+.pin7.v{color:var(--silver);font-family:ui-monospace,Consolas,monospace;box-shadow:inset 0 0 0 1px #7C86A8}
+.tst7{align-self:flex-start;display:flex;gap:10px;align-items:center;height:34px;padding:0 12px;border-radius:8px;background:linear-gradient(180deg,rgba(26,31,52,.97),rgba(17,21,38,.97));border:1px solid #6E5732;font-size:12px;color:#DDE3F0}
+.tst7 .u{color:#F2D27A}
+.pv7{border-radius:6px;background:var(--raised);box-shadow:inset 0 0 0 1px var(--line);padding:10px 12px;font-size:12px;color:var(--mist)}
+.pv7 .pvt{color:var(--silver);margin-bottom:4px}
+.pv7 ul{margin:0;padding-left:16px;line-height:1.6}
+.pv7 b{color:var(--silver);font-weight:500}
+.pv7 .pvm{display:flex;gap:6px;margin-top:8px}
+.nw7{margin-top:8px;color:#C9A866;font-size:11.5px;line-height:1.45}
+.er7{font-size:12px;color:var(--etext)}
+/* ---------- glyph window ---------- */
+.mk.gw7{width:1500px}
+.mk.gw7 .win{height:auto}
+.gwb{padding:12px 16px 16px;background:#0F1424}
+.gtabs{display:flex;gap:2px;border-bottom:1px solid #2A3149;margin-bottom:12px}
+.gtabs span{padding:6px 14px;font-size:12.5px;color:#A9B2CC;border-radius:5px 5px 0 0}
+.gtabs span.on{background:#1E2437;color:#DDE3F0;box-shadow:inset 0 2px 0 #F2D27A}
+.gpk{display:flex;gap:28px;align-items:center;margin-bottom:12px}
+.gpk>div{display:flex;align-items:center;gap:8px;font-size:12px;color:#A9B2CC}
+.gpk b{color:#DDE3F0;font-weight:500}
+.gpk .dd7{width:auto}
+.lps{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lp7{border-radius:7px;box-shadow:0 0 0 1px #2A3149;overflow:hidden}
+.lph{display:flex;gap:10px;align-items:baseline;padding:7px 12px;background:#1E2437;font-size:12px;color:#A9B2CC}
+.lph b{color:#DDE3F0;font:400 15px/1 Marcellus,Georgia,serif}
+.lpb{padding:12px}
+.hr7{display:flex;gap:8px;margin-bottom:10px}
+.rr7{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 10px;font-size:12px}
+.rr7 div{display:flex;align-items:center;gap:6px}
+.hts{display:flex;gap:16px;margin-top:14px;align-items:flex-start}
+.ht7 .htt{font-size:12px;color:#A9B2CC;margin-bottom:6px}
+.ht7 table{border-collapse:separate;border-spacing:2px}
+.ht7 th{font:600 10.5px/1 "Noto Sans",sans-serif;color:#7C86A8;padding:2px 4px}
+.ht7 td{width:44px;height:26px;text-align:center;font-size:11px;color:#DDE3F0;border-radius:3px;font-variant-numeric:tabular-nums}
+.ht7 td.e{background:transparent}
+.ht7 td.x{box-shadow:inset 0 0 0 1px rgba(255,240,190,.55)}
+.lg7{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:10px;font-size:11px}
+.lg7 i{display:inline-block;width:14px;height:10px;border-radius:2px}
+.b16 figure:has(.shb7){width:330px}
+.gw7 .sg16{display:flex;height:28px;border-radius:14px;background:#0B0F1C;box-shadow:inset 0 0 0 1px #2A3149;overflow:hidden}
+.gw7 .sg16 span{display:flex;align-items:center;padding:0 12px;font-size:12px;color:#A9B2CC;border-right:1px solid #2A3149}
+.gw7 .sg16 span:last-child{border-right:0}
+.gw7 .sg16 span.on{background:rgba(221,227,240,.10);color:#DDE3F0}
+.lg7{flex-direction:column;align-items:flex-start}
+.lg7 span{display:flex;align-items:center;gap:6px;color:#A9B2CC;line-height:1.4}
+
 </style>
 </head>
 <body>
@@ -1271,7 +1441,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   <div class="pbar">
     <span class="pt"><b>Tsukimichi plan v7</b> · UI</span>
     <div class="seg" id="seg" role="group" aria-label="View">
-      <button type="button" data-v="full">Full</button><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="plain">Plain</button><button type="button" data-v="drawer">Filter drawer</button><button type="button" data-v="rail">Rail</button><button type="button" data-v="stars">Stars</button><button type="button" data-v="ba">Before / after</button><button type="button" data-v="sky">Sky</button><button type="button" data-v="giver">1.15 Givers</button><button type="button" data-v="fallbacks">Fallbacks</button><button type="button" data-v="buttons">Buttons</button><button type="button" data-v="snow-full">1.16 Snow</button><button type="button" data-v="palettes">Palettes</button><button type="button" data-v="themes">Themes page</button>
+      <button type="button" data-v="full">Full</button><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="plain">Plain</button><button type="button" data-v="drawer">Filter drawer</button><button type="button" data-v="rail">Rail</button><button type="button" data-v="stars">Stars</button><button type="button" data-v="ba">Before / after</button><button type="button" data-v="sky">Sky</button><button type="button" data-v="giver">1.15 Givers</button><button type="button" data-v="fallbacks">Fallbacks</button><button type="button" data-v="buttons">Buttons</button><button type="button" data-v="snow-full">1.16 Snow</button><button type="button" data-v="palettes">Palettes</button><button type="button" data-v="themes">Themes page</button><button type="button" data-v="mix">1.17 Mix</button><button type="button" data-v="frames">Frames</button><button type="button" data-v="share">Share</button><button type="button" data-v="glyphwin">Glyph window</button><button type="button" data-v="palettes17">Dawn · Kugane</button>
     </div>
     <div class="seg" id="ver" role="group" aria-label="Version">
       <button type="button" data-w="before">1.13</button><button type="button" data-w="">v7</button><button type="button" data-w="open">v7 + Filters</button><button type="button" data-w="open-adv">+ Advanced</button>
@@ -1301,6 +1471,9 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     "snow-plain": "1.16: Ishgard Snow at Plain, the drawer open with Advanced.",
     palettes: "1.16: Night, Ishgard Snow and their high-contrast forms, the contrast table, portraits on light.",
     themes: "1.16: Settings › Themes, and how 1.17's mix-and-match fits the same page.",
+    mix: "1.17: the per-state mix, its warnings and Fix it.", frames: "1.17: four frame kits on four palettes.", share: "1.17: share codes.",
+    glyphwin: "1.17: the glyph window's Themes tab.", palettes17: "1.17: Dawn and Kugane Lacquer with their high-contrast forms.",
+    "dawn-full": "1.17: Dawn, Full, with Astrologian's Orrery.", "dawn-quiet": "1.17: Dawn, Quiet.", "kugane-full": "1.17: Kugane Lacquer, Full, with Menphina's Medallion.", "kugane-quiet": "1.17: Kugane Lacquer, Quiet.",
     giver: "1.15: giver portraits from the game's own art, night-graded, on the medal plate; avatars in Next stops, Route and the Journal.",
     fallbacks: "1.15: the 16 race silhouettes, the moon disc, society emblems and initials, on the same plate.",
     buttons: "1.15: icon-and-label buttons with the game's own icons, per level, and how they shrink.",
@@ -1391,7 +1564,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   function heroFile(st) { return st === "ready-on-another-job" ? "ready-on-another-job-paladin" : st; }
   // v7 Completed: the 96 and 128 px atlas tiers carry the rim-lit craters; 48, 64 and the row tier use the crater-less source.
   var THEME = "medallion", SNOW = false, SELN = null;
-  var TDIR = { glass: "../themes/ishgard-glass/", aether: "../themes/aether-crystal/" };
+  var TDIR = { glass: "../themes/ishgard-glass/", aether: "../themes/aether-crystal/", orrery: "../themes/astrologian-orrery/" };
   function medalSrc(st, hero, px) {
     if (TDIR[THEME]) return TDIR[THEME] + (hero ? heroFile(st) : "_row/" + st) + ".svg";
     return V7 && st === "completed" ? (px >= 96 ? MOON7 : MOON7S) : M + (hero ? heroFile(st) : "_row/" + st) + ".svg";
@@ -1487,7 +1660,9 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   // v7: three depths (far 60 %, mid 32 %, near 8 %), four temperatures, a slow twinkle on mid and near stars, an optional
   // Milky Way band and an optional region constellation. Everything stays inside the given sky rects (never under text).
   var TEMP = [[0.64, "#DCE5FF"], [0.88, "#F4F2EA"], [0.97, "#FFE2A8"], [1.01, "#FFC9AE"]];
-  function tempOf(r, layer) { if (layer === 0) return r < 0.8 ? TEMP[0][1] : TEMP[1][1]; for (var i = 0; i < TEMP.length; i++) if (r < TEMP[i][0]) return TEMP[i][1]; return TEMP[0][1]; }
+  // 1.17, Kugane Lacquer (supervisor's accepted option): far stars warm slightly, a hazier sky over a lantern-lit port
+  var PALNOW = null;
+  function tempOf(r, layer) { if (layer === 0) return PALNOW === "kugane" ? (r < 0.6 ? "#E9E2DA" : "#F1E3CC") : r < 0.8 ? TEMP[0][1] : TEMP[1][1]; for (var i = 0; i < TEMP.length; i++) if (r < TEMP[i][0]) return TEMP[i][1]; return TEMP[0][1]; }
   var FIG = {
     arr: { name: "The Chocobo", exp: "A Realm Reborn", p: [[.2, .12], [0, .22], [.3, .46], [.66, .38], [1, .18], [.6, .68], [.46, 1], [.74, 1]], e: [[1, 0], [0, 2], [2, 3], [3, 4], [2, 5], [5, 3], [5, 6], [5, 7]] },
     hw: { name: "The Wyrm", exp: "Heavensward", p: [[0, .78], [.2, .5], [.42, .56], [.6, .3], [.82, .36], [1, .06], [.66, .66]], e: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [3, 6]] },
@@ -1510,6 +1685,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   function sky7(o) {
     // o: { seed, w, h, n, rects: [[x,y,w,h],...], band: [x0,y0,x1,y1,width] | null, fig: [key,x,y,size] | null, anim, ox, oy }
     var r = rng(o.seed), id = "sk" + (++uid), w = o.w, h = o.h, out = "";
+    if (PALNOW === "kugane") o = Object.assign({}, o, { n: Math.max(4, Math.round(o.n / 2)) }); // half the density
     out += '<svg class="sky" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h + '" aria-hidden="true" style="width:' + w + "px;height:" + h + 'px">';
     out += '<defs><clipPath id="' + id + 'c">' + o.rects.map(function (q) { return '<rect x="' + q[0] + '" y="' + q[1] + '" width="' + q[2] + '" height="' + q[3] + '"/>'; }).join("") + "</clipPath>" +
       '<filter id="' + id + 'b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter></defs>';
@@ -1840,12 +2016,12 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 
   function win(lv, o) {
     o = o || {}; V7 = o.v7 !== false; o.v7 = V7; ROWS = V7 ? filterQ(o.F || F_WIN) : Q;
-    THEME = o.theme || "medallion"; SNOW = o.palette === "snow"; SELN = o.sel || null;
-    var cls = "mk " + lv + (V7 ? " v7" : "") + (SNOW ? " snow" : "") + (o.hc ? " hc" : "") + " th-" + THEME + (o.drawer && V7 ? " dopen" : "") + (o.drawer && !V7 ? " b13open" : "");
+    THEME = o.theme || "medallion"; SNOW = o.palette === "snow"; SELN = o.sel || null; PALNOW = o.palette || null;
+    var cls = "mk " + lv + (V7 ? " v7" : "") + (SNOW ? " snow" : "") + (o.palette && o.palette !== "snow" ? " " + o.palette : "") + (o.hc ? " hc" : "") + " th-" + THEME + (o.drawer && V7 ? " dopen" : "") + (o.drawer && !V7 ? " b13open" : "");
     var body = (V7 ? rail7(lv, o) : rail13(lv)) + tree(lv, o) + table(lv, o) + (o.detailFn ? o.detailFn(lv, o) : detail(lv, o));
     if (o.drawer) body += V7 ? drawer(lv, o.drawer === "e", o.F || F_WIN, o.dopt || {}) : drawer13();
     var out = '<div class="' + cls + '"' + (o.style ? ' style="' + o.style + '"' : "") + '><div class="win">' + frame(lv, o) + '<div class="w-body">' + body + "</div>" + status(lv) + "</div></div>";
-    THEME = "medallion"; SNOW = false; SELN = null;
+    THEME = "medallion"; SNOW = false; SELN = null; PALNOW = null;
     return out;
   }
 
@@ -2434,6 +2610,1540 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     return '<div class="board b15 b16"><h2>1.16 · Settings › Themes<small>Left: the page as 1.16 ships it, the Ishgard Glass card hovered and previewed. Right: the same page in 1.17 with the Orrery (Sumi to Kinpaku stays hidden until its art is approved), two more palettes, Mix by state and Share: the same column, the same widths; sections are added below Frames, nothing above moves.</small></h2>' +
       '<div class="row" style="align-items:flex-start">' + fig(settingsPage("1.16"), "<b>1.16</b>") + fig(settingsPage("1.17"), "<b>1.17</b> (mix-and-match; no redesign)") + "</div></div>";
   }
+  // ======================================================================================================
+  // 1.17 "Mix and match": the mix table (T10), frames (T11), share codes (T12), the glyph window's Themes tab (T13),
+  // and the Dawn and Kugane Lacquer palettes (T16). Numbers are the shipped metrics.json files (1.17/mixdata.py).
+  // ======================================================================================================
+  var MIX = {
+ "sets": [
+  "medallion",
+  "ishgard-glass",
+  "aether-crystal"
+ ],
+ "states": [
+  "ready",
+  "ready-on-another-job",
+  "in-journal",
+  "blocked",
+  "done-this-cycle",
+  "completed",
+  "locked-out",
+  "not-checked"
+ ],
+ "bars": {
+  "weakest16": 12.0,
+  "weakest20": 16.0,
+  "readyLead": 1.3,
+  "completedOfReady": 0.8,
+  "salienceMin": 15.0,
+  "cvdWeakest16": 11.0,
+  "lightReadyLead": 1.3,
+  "lightLumaFloor": 0.7,
+  "mixClose": 12.0,
+  "mixHard": 10.0,
+  "mixReadyLead": 1.25
+ },
+ "own": {
+  "medallion": {
+   "ready|ready-on-another-job": 45.71,
+   "ready|in-journal": 33.42,
+   "ready|blocked": 45.58,
+   "ready|done-this-cycle": 40.46,
+   "ready|completed": 25.44,
+   "ready|locked-out": 41.97,
+   "ready|not-checked": 44.74,
+   "ready-on-another-job|in-journal": 15.04,
+   "ready-on-another-job|blocked": 12.6,
+   "ready-on-another-job|done-this-cycle": 13.63,
+   "ready-on-another-job|completed": 24.82,
+   "ready-on-another-job|locked-out": 15.08,
+   "ready-on-another-job|not-checked": 13.83,
+   "in-journal|blocked": 19.09,
+   "in-journal|done-this-cycle": 17.89,
+   "in-journal|completed": 20.2,
+   "in-journal|locked-out": 16.15,
+   "in-journal|not-checked": 19.37,
+   "blocked|done-this-cycle": 12.92,
+   "blocked|completed": 27.32,
+   "blocked|locked-out": 11.1,
+   "blocked|not-checked": 13.67,
+   "done-this-cycle|completed": 21.48,
+   "done-this-cycle|locked-out": 14.9,
+   "done-this-cycle|not-checked": 18.13,
+   "completed|locked-out": 21.19,
+   "completed|not-checked": 24.41,
+   "locked-out|not-checked": 12.11
+  },
+  "ishgard-glass": {
+   "ready|ready-on-another-job": 43.88,
+   "ready|in-journal": 32.45,
+   "ready|blocked": 40.57,
+   "ready|done-this-cycle": 40.52,
+   "ready|completed": 32.76,
+   "ready|locked-out": 39.34,
+   "ready|not-checked": 51.76,
+   "ready-on-another-job|in-journal": 15.12,
+   "ready-on-another-job|blocked": 18.18,
+   "ready-on-another-job|done-this-cycle": 11.69,
+   "ready-on-another-job|completed": 25.29,
+   "ready-on-another-job|locked-out": 17.33,
+   "ready-on-another-job|not-checked": 20.17,
+   "in-journal|blocked": 17.35,
+   "in-journal|done-this-cycle": 15.96,
+   "in-journal|completed": 23.76,
+   "in-journal|locked-out": 17.18,
+   "in-journal|not-checked": 25.58,
+   "blocked|done-this-cycle": 13.32,
+   "blocked|completed": 22.71,
+   "blocked|locked-out": 13.78,
+   "blocked|not-checked": 20.94,
+   "done-this-cycle|completed": 22.78,
+   "done-this-cycle|locked-out": 13.99,
+   "done-this-cycle|not-checked": 20.78,
+   "completed|locked-out": 24.94,
+   "completed|not-checked": 25.7,
+   "locked-out|not-checked": 18.49
+  },
+  "aether-crystal": {
+   "ready|ready-on-another-job": 47.04,
+   "ready|in-journal": 35.42,
+   "ready|blocked": 46.33,
+   "ready|done-this-cycle": 43.61,
+   "ready|completed": 26.51,
+   "ready|locked-out": 33.51,
+   "ready|not-checked": 51.93,
+   "ready-on-another-job|in-journal": 16.81,
+   "ready-on-another-job|blocked": 15.08,
+   "ready-on-another-job|done-this-cycle": 12.61,
+   "ready-on-another-job|completed": 28.6,
+   "ready-on-another-job|locked-out": 18.04,
+   "ready-on-another-job|not-checked": 18.15,
+   "in-journal|blocked": 17.25,
+   "in-journal|done-this-cycle": 17.81,
+   "in-journal|completed": 23.82,
+   "in-journal|locked-out": 14.44,
+   "in-journal|not-checked": 24.32,
+   "blocked|done-this-cycle": 12.87,
+   "blocked|completed": 28.39,
+   "blocked|locked-out": 12.73,
+   "blocked|not-checked": 17.76,
+   "done-this-cycle|completed": 25.53,
+   "done-this-cycle|locked-out": 15.77,
+   "done-this-cycle|not-checked": 21.27,
+   "completed|locked-out": 17.82,
+   "completed|not-checked": 31.2,
+   "locked-out|not-checked": 18.07
+  }
+ },
+ "cross": {
+  "medallion": {
+   "aether-crystal": {
+    "ready|ready-on-another-job": 52.72,
+    "ready|in-journal": 40.55,
+    "ready|blocked": 52.0,
+    "ready|done-this-cycle": 49.11,
+    "ready|completed": 29.58,
+    "ready|locked-out": 38.92,
+    "ready|not-checked": 57.55,
+    "ready-on-another-job|ready": 44.89,
+    "ready-on-another-job|in-journal": 18.84,
+    "ready-on-another-job|blocked": 19.07,
+    "ready-on-another-job|done-this-cycle": 16.56,
+    "ready-on-another-job|completed": 28.2,
+    "ready-on-another-job|locked-out": 20.94,
+    "ready-on-another-job|not-checked": 19.98,
+    "in-journal|ready": 33.05,
+    "in-journal|ready-on-another-job": 22.01,
+    "in-journal|blocked": 23.44,
+    "in-journal|done-this-cycle": 23.32,
+    "in-journal|completed": 23.83,
+    "in-journal|locked-out": 18.76,
+    "in-journal|not-checked": 27.87,
+    "blocked|ready": 44.79,
+    "blocked|ready-on-another-job": 18.51,
+    "blocked|in-journal": 20.17,
+    "blocked|done-this-cycle": 17.96,
+    "blocked|completed": 31.23,
+    "blocked|locked-out": 17.18,
+    "blocked|not-checked": 19.52,
+    "done-this-cycle|ready": 39.58,
+    "done-this-cycle|ready-on-another-job": 19.9,
+    "done-this-cycle|in-journal": 20.06,
+    "done-this-cycle|blocked": 19.78,
+    "done-this-cycle|completed": 25.34,
+    "done-this-cycle|locked-out": 19.48,
+    "done-this-cycle|not-checked": 24.27,
+    "completed|ready": 26.97,
+    "completed|ready-on-another-job": 31.95,
+    "completed|in-journal": 24.33,
+    "completed|blocked": 31.22,
+    "completed|done-this-cycle": 28.67,
+    "completed|locked-out": 21.33,
+    "completed|not-checked": 33.91,
+    "locked-out|ready": 40.98,
+    "locked-out|ready-on-another-job": 20.61,
+    "locked-out|in-journal": 17.23,
+    "locked-out|blocked": 15.14,
+    "locked-out|done-this-cycle": 18.21,
+    "locked-out|completed": 25.82,
+    "locked-out|not-checked": 16.58,
+    "not-checked|ready": 43.9,
+    "not-checked|ready-on-another-job": 19.38,
+    "not-checked|in-journal": 21.71,
+    "not-checked|blocked": 18.78,
+    "not-checked|done-this-cycle": 21.85,
+    "not-checked|completed": 27.88,
+    "not-checked|locked-out": 16.25
+   },
+   "ishgard-glass": {
+    "ready|ready-on-another-job": 44.16,
+    "ready|in-journal": 34.25,
+    "ready|blocked": 41.0,
+    "ready|done-this-cycle": 40.29,
+    "ready|completed": 28.74,
+    "ready|locked-out": 39.33,
+    "ready|not-checked": 49.95,
+    "ready-on-another-job|ready": 48.5,
+    "ready-on-another-job|in-journal": 21.22,
+    "ready-on-another-job|blocked": 22.5,
+    "ready-on-another-job|done-this-cycle": 17.27,
+    "ready-on-another-job|completed": 25.24,
+    "ready-on-another-job|locked-out": 23.64,
+    "ready-on-another-job|not-checked": 16.65,
+    "in-journal|ready": 35.55,
+    "in-journal|ready-on-another-job": 15.22,
+    "in-journal|blocked": 21.0,
+    "in-journal|done-this-cycle": 17.85,
+    "in-journal|completed": 20.03,
+    "in-journal|locked-out": 19.81,
+    "in-journal|not-checked": 21.11,
+    "blocked|ready": 48.01,
+    "blocked|ready-on-another-job": 14.69,
+    "blocked|in-journal": 20.15,
+    "blocked|done-this-cycle": 14.59,
+    "blocked|completed": 27.0,
+    "blocked|locked-out": 18.29,
+    "blocked|not-checked": 15.57,
+    "done-this-cycle|ready": 43.66,
+    "done-this-cycle|ready-on-another-job": 16.09,
+    "done-this-cycle|in-journal": 20.85,
+    "done-this-cycle|blocked": 19.15,
+    "done-this-cycle|completed": 21.58,
+    "done-this-cycle|locked-out": 19.89,
+    "done-this-cycle|not-checked": 20.04,
+    "completed|ready": 30.42,
+    "completed|ready-on-another-job": 27.42,
+    "completed|in-journal": 24.7,
+    "completed|blocked": 26.32,
+    "completed|done-this-cycle": 25.12,
+    "completed|locked-out": 25.87,
+    "completed|not-checked": 28.32,
+    "locked-out|ready": 44.33,
+    "locked-out|ready-on-another-job": 18.49,
+    "locked-out|in-journal": 18.43,
+    "locked-out|blocked": 15.05,
+    "locked-out|done-this-cycle": 17.28,
+    "locked-out|completed": 21.24,
+    "locked-out|not-checked": 13.75,
+    "not-checked|ready": 47.8,
+    "not-checked|ready-on-another-job": 18.37,
+    "not-checked|in-journal": 23.69,
+    "not-checked|blocked": 19.98,
+    "not-checked|done-this-cycle": 19.82,
+    "not-checked|completed": 24.73,
+    "not-checked|locked-out": 18.75
+   }
+  },
+  "ishgard-glass": {
+   "aether-crystal": {
+    "ready|ready-on-another-job": 53.91,
+    "ready|in-journal": 40.31,
+    "ready|blocked": 53.13,
+    "ready|done-this-cycle": 51.33,
+    "ready|completed": 34.57,
+    "ready|locked-out": 40.65,
+    "ready|not-checked": 59.11,
+    "ready-on-another-job|ready": 43.6,
+    "ready-on-another-job|in-journal": 17.64,
+    "ready-on-another-job|blocked": 20.3,
+    "ready-on-another-job|done-this-cycle": 18.08,
+    "ready-on-another-job|completed": 29.99,
+    "ready-on-another-job|locked-out": 21.21,
+    "ready-on-another-job|not-checked": 24.42,
+    "in-journal|ready": 34.7,
+    "in-journal|ready-on-another-job": 25.78,
+    "in-journal|blocked": 24.46,
+    "in-journal|done-this-cycle": 25.28,
+    "in-journal|completed": 28.71,
+    "in-journal|locked-out": 21.12,
+    "in-journal|not-checked": 31.74,
+    "blocked|ready": 40.15,
+    "blocked|ready-on-another-job": 25.97,
+    "blocked|in-journal": 21.55,
+    "blocked|done-this-cycle": 20.8,
+    "blocked|completed": 28.69,
+    "blocked|locked-out": 18.46,
+    "blocked|not-checked": 26.02,
+    "done-this-cycle|ready": 39.39,
+    "done-this-cycle|ready-on-another-job": 21.7,
+    "done-this-cycle|in-journal": 19.41,
+    "done-this-cycle|blocked": 19.55,
+    "done-this-cycle|completed": 27.76,
+    "done-this-cycle|locked-out": 19.12,
+    "done-this-cycle|not-checked": 25.7,
+    "completed|ready": 26.6,
+    "completed|ready-on-another-job": 29.61,
+    "completed|in-journal": 22.6,
+    "completed|blocked": 28.17,
+    "completed|done-this-cycle": 25.07,
+    "completed|locked-out": 18.65,
+    "completed|not-checked": 31.82,
+    "locked-out|ready": 38.47,
+    "locked-out|ready-on-another-job": 26.22,
+    "locked-out|in-journal": 20.51,
+    "locked-out|blocked": 21.05,
+    "locked-out|done-this-cycle": 22.05,
+    "locked-out|completed": 29.95,
+    "locked-out|not-checked": 23.09,
+    "not-checked|ready": 45.55,
+    "not-checked|ready-on-another-job": 18.24,
+    "not-checked|in-journal": 20.29,
+    "not-checked|blocked": 17.43,
+    "not-checked|done-this-cycle": 20.24,
+    "not-checked|completed": 28.33,
+    "not-checked|locked-out": 15.66
+   },
+   "medallion": {
+    "ready|ready-on-another-job": 48.5,
+    "ready|in-journal": 35.55,
+    "ready|blocked": 48.01,
+    "ready|done-this-cycle": 43.66,
+    "ready|completed": 30.42,
+    "ready|locked-out": 44.33,
+    "ready|not-checked": 47.8,
+    "ready-on-another-job|ready": 44.16,
+    "ready-on-another-job|in-journal": 15.22,
+    "ready-on-another-job|blocked": 14.69,
+    "ready-on-another-job|done-this-cycle": 16.09,
+    "ready-on-another-job|completed": 27.42,
+    "ready-on-another-job|locked-out": 18.49,
+    "ready-on-another-job|not-checked": 18.37,
+    "in-journal|ready": 34.25,
+    "in-journal|ready-on-another-job": 21.22,
+    "in-journal|blocked": 20.15,
+    "in-journal|done-this-cycle": 20.85,
+    "in-journal|completed": 24.7,
+    "in-journal|locked-out": 18.43,
+    "in-journal|not-checked": 23.69,
+    "blocked|ready": 41.0,
+    "blocked|ready-on-another-job": 22.5,
+    "blocked|in-journal": 21.0,
+    "blocked|done-this-cycle": 19.15,
+    "blocked|completed": 26.32,
+    "blocked|locked-out": 15.05,
+    "blocked|not-checked": 19.98,
+    "done-this-cycle|ready": 40.29,
+    "done-this-cycle|ready-on-another-job": 17.27,
+    "done-this-cycle|in-journal": 17.85,
+    "done-this-cycle|blocked": 14.59,
+    "done-this-cycle|completed": 25.12,
+    "done-this-cycle|locked-out": 17.28,
+    "done-this-cycle|not-checked": 19.82,
+    "completed|ready": 28.74,
+    "completed|ready-on-another-job": 25.24,
+    "completed|in-journal": 20.03,
+    "completed|blocked": 27.0,
+    "completed|done-this-cycle": 21.58,
+    "completed|locked-out": 21.24,
+    "completed|not-checked": 24.73,
+    "locked-out|ready": 39.33,
+    "locked-out|ready-on-another-job": 23.64,
+    "locked-out|in-journal": 19.81,
+    "locked-out|blocked": 18.29,
+    "locked-out|done-this-cycle": 19.89,
+    "locked-out|completed": 25.87,
+    "locked-out|not-checked": 18.75,
+    "not-checked|ready": 49.95,
+    "not-checked|ready-on-another-job": 16.65,
+    "not-checked|in-journal": 21.11,
+    "not-checked|blocked": 15.57,
+    "not-checked|done-this-cycle": 20.04,
+    "not-checked|completed": 28.32,
+    "not-checked|locked-out": 13.75
+   }
+  },
+  "aether-crystal": {
+   "ishgard-glass": {
+    "ready|ready-on-another-job": 43.6,
+    "ready|in-journal": 34.7,
+    "ready|blocked": 40.15,
+    "ready|done-this-cycle": 39.39,
+    "ready|completed": 26.6,
+    "ready|locked-out": 38.47,
+    "ready|not-checked": 45.55,
+    "ready-on-another-job|ready": 53.91,
+    "ready-on-another-job|in-journal": 25.78,
+    "ready-on-another-job|blocked": 25.97,
+    "ready-on-another-job|done-this-cycle": 21.7,
+    "ready-on-another-job|completed": 29.61,
+    "ready-on-another-job|locked-out": 26.22,
+    "ready-on-another-job|not-checked": 18.24,
+    "in-journal|ready": 40.31,
+    "in-journal|ready-on-another-job": 17.64,
+    "in-journal|blocked": 21.55,
+    "in-journal|done-this-cycle": 19.41,
+    "in-journal|completed": 22.6,
+    "in-journal|locked-out": 20.51,
+    "in-journal|not-checked": 20.29,
+    "blocked|ready": 53.13,
+    "blocked|ready-on-another-job": 20.3,
+    "blocked|in-journal": 24.46,
+    "blocked|done-this-cycle": 19.55,
+    "blocked|completed": 28.17,
+    "blocked|locked-out": 21.05,
+    "blocked|not-checked": 17.43,
+    "done-this-cycle|ready": 51.33,
+    "done-this-cycle|ready-on-another-job": 18.08,
+    "done-this-cycle|in-journal": 25.28,
+    "done-this-cycle|blocked": 20.8,
+    "done-this-cycle|completed": 25.07,
+    "done-this-cycle|locked-out": 22.05,
+    "done-this-cycle|not-checked": 20.24,
+    "completed|ready": 34.57,
+    "completed|ready-on-another-job": 29.99,
+    "completed|in-journal": 28.71,
+    "completed|blocked": 28.69,
+    "completed|done-this-cycle": 27.76,
+    "completed|locked-out": 29.95,
+    "completed|not-checked": 28.33,
+    "locked-out|ready": 40.65,
+    "locked-out|ready-on-another-job": 21.21,
+    "locked-out|in-journal": 21.12,
+    "locked-out|blocked": 18.46,
+    "locked-out|done-this-cycle": 19.12,
+    "locked-out|completed": 18.65,
+    "locked-out|not-checked": 15.66,
+    "not-checked|ready": 59.11,
+    "not-checked|ready-on-another-job": 24.42,
+    "not-checked|in-journal": 31.74,
+    "not-checked|blocked": 26.02,
+    "not-checked|done-this-cycle": 25.7,
+    "not-checked|completed": 31.82,
+    "not-checked|locked-out": 23.09
+   },
+   "medallion": {
+    "ready|ready-on-another-job": 44.89,
+    "ready|in-journal": 33.05,
+    "ready|blocked": 44.79,
+    "ready|done-this-cycle": 39.58,
+    "ready|completed": 26.97,
+    "ready|locked-out": 40.98,
+    "ready|not-checked": 43.9,
+    "ready-on-another-job|ready": 52.72,
+    "ready-on-another-job|in-journal": 22.01,
+    "ready-on-another-job|blocked": 18.51,
+    "ready-on-another-job|done-this-cycle": 19.9,
+    "ready-on-another-job|completed": 31.95,
+    "ready-on-another-job|locked-out": 20.61,
+    "ready-on-another-job|not-checked": 19.38,
+    "in-journal|ready": 40.55,
+    "in-journal|ready-on-another-job": 18.84,
+    "in-journal|blocked": 20.17,
+    "in-journal|done-this-cycle": 20.06,
+    "in-journal|completed": 24.33,
+    "in-journal|locked-out": 17.23,
+    "in-journal|not-checked": 21.71,
+    "blocked|ready": 52.0,
+    "blocked|ready-on-another-job": 19.07,
+    "blocked|in-journal": 23.44,
+    "blocked|done-this-cycle": 19.78,
+    "blocked|completed": 31.22,
+    "blocked|locked-out": 15.14,
+    "blocked|not-checked": 18.78,
+    "done-this-cycle|ready": 49.11,
+    "done-this-cycle|ready-on-another-job": 16.56,
+    "done-this-cycle|in-journal": 23.32,
+    "done-this-cycle|blocked": 17.96,
+    "done-this-cycle|completed": 28.67,
+    "done-this-cycle|locked-out": 18.21,
+    "done-this-cycle|not-checked": 21.85,
+    "completed|ready": 29.58,
+    "completed|ready-on-another-job": 28.2,
+    "completed|in-journal": 23.83,
+    "completed|blocked": 31.23,
+    "completed|done-this-cycle": 25.34,
+    "completed|locked-out": 25.82,
+    "completed|not-checked": 27.88,
+    "locked-out|ready": 38.92,
+    "locked-out|ready-on-another-job": 20.94,
+    "locked-out|in-journal": 18.76,
+    "locked-out|blocked": 17.18,
+    "locked-out|done-this-cycle": 19.48,
+    "locked-out|completed": 21.33,
+    "locked-out|not-checked": 16.25,
+    "not-checked|ready": 57.55,
+    "not-checked|ready-on-another-job": 19.98,
+    "not-checked|in-journal": 27.87,
+    "not-checked|blocked": 19.52,
+    "not-checked|done-this-cycle": 24.27,
+    "not-checked|completed": 33.91,
+    "not-checked|locked-out": 16.58
+   }
+  }
+ },
+ "salience": {
+  "medallion": {
+   "ready": 84.86,
+   "ready-on-another-job": 38.42,
+   "in-journal": 52.13,
+   "blocked": 38.51,
+   "done-this-cycle": 43.38,
+   "completed": 60.94,
+   "locked-out": 39.84,
+   "not-checked": 39.54
+  },
+  "ishgard-glass": {
+   "ready": 86.55,
+   "ready-on-another-job": 42.67,
+   "in-journal": 54.85,
+   "blocked": 45.92,
+   "done-this-cycle": 46.13,
+   "completed": 57.43,
+   "locked-out": 45.66,
+   "not-checked": 34.69
+  },
+  "aether-crystal": {
+   "ready": 79.27,
+   "ready-on-another-job": 32.55,
+   "in-journal": 46.37,
+   "blocked": 33.25,
+   "done-this-cycle": 36.21,
+   "completed": 57.15,
+   "locked-out": 44.32,
+   "not-checked": 27.1
+  }
+ },
+ "salienceHero": {
+  "medallion": {
+   "ready": 82.03,
+   "ready-on-another-job": 43.22,
+   "in-journal": 54.64,
+   "blocked": 40.35,
+   "done-this-cycle": 43.38,
+   "completed": 60.23,
+   "locked-out": 39.84,
+   "not-checked": 39.57
+  },
+  "ishgard-glass": {
+   "ready": 77.34,
+   "ready-on-another-job": 47.1,
+   "in-journal": 54.63,
+   "blocked": 44.99,
+   "done-this-cycle": 46.75,
+   "completed": 55.37,
+   "locked-out": 41.04,
+   "not-checked": 34.53
+  },
+  "aether-crystal": {
+   "ready": 73.81,
+   "ready-on-another-job": 34.86,
+   "in-journal": 46.76,
+   "blocked": 32.27,
+   "done-this-cycle": 34.35,
+   "completed": 54.83,
+   "locked-out": 41.42,
+   "not-checked": 26.34
+  }
+ },
+ "ownModes": {
+  "medallion": {
+   "grey": {
+    "ready|ready-on-another-job": 46.56,
+    "ready|in-journal": 33.96,
+    "ready|blocked": 46.44,
+    "ready|done-this-cycle": 41.54,
+    "ready|completed": 26.27,
+    "ready|locked-out": 45.11,
+    "ready|not-checked": 45.51,
+    "ready-on-another-job|in-journal": 15.45,
+    "ready-on-another-job|blocked": 12.82,
+    "ready-on-another-job|done-this-cycle": 14.13,
+    "ready-on-another-job|completed": 25.34,
+    "ready-on-another-job|locked-out": 17.01,
+    "ready-on-another-job|not-checked": 14.05,
+    "in-journal|blocked": 19.47,
+    "in-journal|done-this-cycle": 18.02,
+    "in-journal|completed": 20.46,
+    "in-journal|locked-out": 16.48,
+    "in-journal|not-checked": 19.6,
+    "blocked|done-this-cycle": 13.26,
+    "blocked|completed": 27.82,
+    "blocked|locked-out": 11.96,
+    "blocked|not-checked": 13.83,
+    "done-this-cycle|completed": 21.74,
+    "done-this-cycle|locked-out": 15.79,
+    "done-this-cycle|not-checked": 18.62,
+    "completed|locked-out": 22.73,
+    "completed|not-checked": 24.94,
+    "locked-out|not-checked": 12.31
+   },
+   "deut": {
+    "ready|ready-on-another-job": 45.91,
+    "ready|in-journal": 33.57,
+    "ready|blocked": 45.78,
+    "ready|done-this-cycle": 40.78,
+    "ready|completed": 25.7,
+    "ready|locked-out": 42.65,
+    "ready|not-checked": 44.93,
+    "ready-on-another-job|in-journal": 15.19,
+    "ready-on-another-job|blocked": 12.78,
+    "ready-on-another-job|done-this-cycle": 14.25,
+    "ready-on-another-job|completed": 25.44,
+    "ready-on-another-job|locked-out": 17.92,
+    "ready-on-another-job|not-checked": 14.01,
+    "in-journal|blocked": 19.24,
+    "in-journal|done-this-cycle": 17.92,
+    "in-journal|completed": 20.57,
+    "in-journal|locked-out": 16.22,
+    "in-journal|not-checked": 19.4,
+    "blocked|done-this-cycle": 13.26,
+    "blocked|completed": 27.94,
+    "blocked|locked-out": 12.78,
+    "blocked|not-checked": 13.83,
+    "done-this-cycle|completed": 21.85,
+    "done-this-cycle|locked-out": 16.32,
+    "done-this-cycle|not-checked": 18.76,
+    "completed|locked-out": 21.39,
+    "completed|not-checked": 25.13,
+    "locked-out|not-checked": 12.45
+   },
+   "machado-deut": {
+    "ready|ready-on-another-job": 45.71,
+    "ready|in-journal": 33.42,
+    "ready|blocked": 45.58,
+    "ready|done-this-cycle": 40.46,
+    "ready|completed": 25.44,
+    "ready|locked-out": 41.97,
+    "ready|not-checked": 44.74,
+    "ready-on-another-job|in-journal": 15.04,
+    "ready-on-another-job|blocked": 12.84,
+    "ready-on-another-job|done-this-cycle": 14.32,
+    "ready-on-another-job|completed": 25.55,
+    "ready-on-another-job|locked-out": 18.2,
+    "ready-on-another-job|not-checked": 14.13,
+    "in-journal|blocked": 19.09,
+    "in-journal|done-this-cycle": 17.89,
+    "in-journal|completed": 20.69,
+    "in-journal|locked-out": 16.15,
+    "in-journal|not-checked": 19.37,
+    "blocked|done-this-cycle": 13.33,
+    "blocked|completed": 28.05,
+    "blocked|locked-out": 13.03,
+    "blocked|not-checked": 13.91,
+    "done-this-cycle|completed": 21.87,
+    "done-this-cycle|locked-out": 16.52,
+    "done-this-cycle|not-checked": 18.9,
+    "completed|locked-out": 21.19,
+    "completed|not-checked": 25.26,
+    "locked-out|not-checked": 12.63
+   },
+   "machado-prot": {
+    "ready|ready-on-another-job": 47.7,
+    "ready|in-journal": 34.64,
+    "ready|blocked": 47.55,
+    "ready|done-this-cycle": 43.16,
+    "ready|completed": 27.4,
+    "ready|locked-out": 50.32,
+    "ready|not-checked": 46.58,
+    "ready-on-another-job|in-journal": 15.91,
+    "ready-on-another-job|blocked": 12.61,
+    "ready-on-another-job|done-this-cycle": 13.63,
+    "ready-on-another-job|completed": 24.82,
+    "ready-on-another-job|locked-out": 15.08,
+    "ready-on-another-job|not-checked": 13.83,
+    "in-journal|blocked": 19.82,
+    "in-journal|done-this-cycle": 18.24,
+    "in-journal|completed": 20.2,
+    "in-journal|locked-out": 18.15,
+    "in-journal|not-checked": 19.93,
+    "blocked|done-this-cycle": 12.92,
+    "blocked|completed": 27.32,
+    "blocked|locked-out": 11.1,
+    "blocked|not-checked": 13.67,
+    "done-this-cycle|completed": 21.48,
+    "done-this-cycle|locked-out": 14.9,
+    "done-this-cycle|not-checked": 18.13,
+    "completed|locked-out": 25.86,
+    "completed|not-checked": 24.41,
+    "locked-out|not-checked": 12.11
+   },
+   "machado-trit": {
+    "ready|ready-on-another-job": 46.56,
+    "ready|in-journal": 33.98,
+    "ready|blocked": 46.49,
+    "ready|done-this-cycle": 41.78,
+    "ready|completed": 26.42,
+    "ready|locked-out": 45.51,
+    "ready|not-checked": 45.55,
+    "ready-on-another-job|in-journal": 15.48,
+    "ready-on-another-job|blocked": 12.6,
+    "ready-on-another-job|done-this-cycle": 13.87,
+    "ready-on-another-job|completed": 25.0,
+    "ready-on-another-job|locked-out": 16.64,
+    "ready-on-another-job|not-checked": 13.83,
+    "in-journal|blocked": 19.46,
+    "in-journal|done-this-cycle": 18.09,
+    "in-journal|completed": 20.37,
+    "in-journal|locked-out": 16.52,
+    "in-journal|not-checked": 19.6,
+    "blocked|done-this-cycle": 13.06,
+    "blocked|completed": 27.57,
+    "blocked|locked-out": 11.74,
+    "blocked|not-checked": 13.71,
+    "done-this-cycle|completed": 21.56,
+    "done-this-cycle|locked-out": 15.56,
+    "done-this-cycle|not-checked": 18.36,
+    "completed|locked-out": 22.76,
+    "completed|not-checked": 24.72,
+    "locked-out|not-checked": 12.14
+   }
+  },
+  "ishgard-glass": {
+   "grey": {
+    "ready|ready-on-another-job": 44.02,
+    "ready|in-journal": 33.04,
+    "ready|blocked": 40.69,
+    "ready|done-this-cycle": 40.76,
+    "ready|completed": 33.01,
+    "ready|locked-out": 41.74,
+    "ready|not-checked": 52.11,
+    "ready-on-another-job|in-journal": 15.39,
+    "ready-on-another-job|blocked": 18.22,
+    "ready-on-another-job|done-this-cycle": 12.24,
+    "ready-on-another-job|completed": 25.77,
+    "ready-on-another-job|locked-out": 19.18,
+    "ready-on-another-job|not-checked": 20.44,
+    "in-journal|blocked": 17.44,
+    "in-journal|done-this-cycle": 16.11,
+    "in-journal|completed": 24.07,
+    "in-journal|locked-out": 17.18,
+    "in-journal|not-checked": 25.8,
+    "blocked|done-this-cycle": 13.6,
+    "blocked|completed": 23.16,
+    "blocked|locked-out": 13.8,
+    "blocked|not-checked": 21.18,
+    "done-this-cycle|completed": 23.19,
+    "done-this-cycle|locked-out": 14.56,
+    "done-this-cycle|not-checked": 21.39,
+    "completed|locked-out": 25.66,
+    "completed|not-checked": 26.27,
+    "locked-out|not-checked": 20.18
+   },
+   "deut": {
+    "ready|ready-on-another-job": 43.98,
+    "ready|in-journal": 33.13,
+    "ready|blocked": 40.78,
+    "ready|done-this-cycle": 40.52,
+    "ready|completed": 33.04,
+    "ready|locked-out": 39.66,
+    "ready|not-checked": 52.07,
+    "ready-on-another-job|in-journal": 15.25,
+    "ready-on-another-job|blocked": 18.29,
+    "ready-on-another-job|done-this-cycle": 12.4,
+    "ready-on-another-job|completed": 25.88,
+    "ready-on-another-job|locked-out": 20.31,
+    "ready-on-another-job|not-checked": 20.38,
+    "in-journal|blocked": 17.5,
+    "in-journal|done-this-cycle": 16.07,
+    "in-journal|completed": 24.2,
+    "in-journal|locked-out": 17.56,
+    "in-journal|not-checked": 25.64,
+    "blocked|done-this-cycle": 13.79,
+    "blocked|completed": 23.24,
+    "blocked|locked-out": 14.17,
+    "blocked|not-checked": 21.09,
+    "done-this-cycle|completed": 23.24,
+    "done-this-cycle|locked-out": 15.02,
+    "done-this-cycle|not-checked": 21.42,
+    "completed|locked-out": 24.95,
+    "completed|not-checked": 26.38,
+    "locked-out|not-checked": 21.16
+   },
+   "machado-deut": {
+    "ready|ready-on-another-job": 44.18,
+    "ready|in-journal": 33.49,
+    "ready|blocked": 40.96,
+    "ready|done-this-cycle": 40.55,
+    "ready|completed": 33.33,
+    "ready|locked-out": 39.34,
+    "ready|not-checked": 52.35,
+    "ready-on-another-job|in-journal": 15.12,
+    "ready-on-another-job|blocked": 18.32,
+    "ready-on-another-job|done-this-cycle": 12.62,
+    "ready-on-another-job|completed": 26.13,
+    "ready-on-another-job|locked-out": 20.65,
+    "ready-on-another-job|not-checked": 20.52,
+    "in-journal|blocked": 17.35,
+    "in-journal|done-this-cycle": 15.96,
+    "in-journal|completed": 24.32,
+    "in-journal|locked-out": 17.58,
+    "in-journal|not-checked": 25.58,
+    "blocked|done-this-cycle": 13.87,
+    "blocked|completed": 23.47,
+    "blocked|locked-out": 14.14,
+    "blocked|not-checked": 21.17,
+    "done-this-cycle|completed": 23.42,
+    "done-this-cycle|locked-out": 15.18,
+    "done-this-cycle|not-checked": 21.62,
+    "completed|locked-out": 24.94,
+    "completed|not-checked": 26.55,
+    "locked-out|not-checked": 21.45
+   },
+   "machado-prot": {
+    "ready|ready-on-another-job": 43.98,
+    "ready|in-journal": 32.45,
+    "ready|blocked": 40.57,
+    "ready|done-this-cycle": 41.28,
+    "ready|completed": 32.76,
+    "ready|locked-out": 45.84,
+    "ready|not-checked": 51.76,
+    "ready-on-another-job|in-journal": 16.06,
+    "ready-on-another-job|blocked": 18.28,
+    "ready-on-another-job|done-this-cycle": 11.69,
+    "ready-on-another-job|completed": 25.29,
+    "ready-on-another-job|locked-out": 17.33,
+    "ready-on-another-job|not-checked": 20.22,
+    "in-journal|blocked": 17.8,
+    "in-journal|done-this-cycle": 16.41,
+    "in-journal|completed": 23.76,
+    "in-journal|locked-out": 17.59,
+    "in-journal|not-checked": 26.11,
+    "blocked|done-this-cycle": 13.32,
+    "blocked|completed": 22.71,
+    "blocked|locked-out": 13.78,
+    "blocked|not-checked": 21.06,
+    "done-this-cycle|completed": 22.78,
+    "done-this-cycle|locked-out": 13.99,
+    "done-this-cycle|not-checked": 20.78,
+    "completed|locked-out": 27.11,
+    "completed|not-checked": 25.7,
+    "locked-out|not-checked": 18.49
+   },
+   "machado-trit": {
+    "ready|ready-on-another-job": 43.88,
+    "ready|in-journal": 32.62,
+    "ready|blocked": 40.61,
+    "ready|done-this-cycle": 40.74,
+    "ready|completed": 32.84,
+    "ready|locked-out": 41.97,
+    "ready|not-checked": 51.82,
+    "ready-on-another-job|in-journal": 15.73,
+    "ready-on-another-job|blocked": 18.18,
+    "ready-on-another-job|done-this-cycle": 12.04,
+    "ready-on-another-job|completed": 25.55,
+    "ready-on-another-job|locked-out": 19.0,
+    "ready-on-another-job|not-checked": 20.17,
+    "in-journal|blocked": 17.62,
+    "in-journal|done-this-cycle": 16.26,
+    "in-journal|completed": 23.93,
+    "in-journal|locked-out": 17.24,
+    "in-journal|not-checked": 25.85,
+    "blocked|done-this-cycle": 13.54,
+    "blocked|completed": 23.0,
+    "blocked|locked-out": 13.85,
+    "blocked|not-checked": 20.94,
+    "done-this-cycle|completed": 23.04,
+    "done-this-cycle|locked-out": 14.43,
+    "done-this-cycle|not-checked": 21.02,
+    "completed|locked-out": 25.6,
+    "completed|not-checked": 26.02,
+    "locked-out|not-checked": 19.87
+   }
+  },
+  "aether-crystal": {
+   "grey": {
+    "ready|ready-on-another-job": 47.43,
+    "ready|in-journal": 35.61,
+    "ready|blocked": 46.69,
+    "ready|done-this-cycle": 43.89,
+    "ready|completed": 26.61,
+    "ready|locked-out": 35.71,
+    "ready|not-checked": 52.24,
+    "ready-on-another-job|in-journal": 17.23,
+    "ready-on-another-job|blocked": 15.21,
+    "ready-on-another-job|done-this-cycle": 12.79,
+    "ready-on-another-job|completed": 29.07,
+    "ready-on-another-job|locked-out": 20.38,
+    "ready-on-another-job|not-checked": 18.37,
+    "in-journal|blocked": 17.49,
+    "in-journal|done-this-cycle": 18.07,
+    "in-journal|completed": 24.27,
+    "in-journal|locked-out": 14.98,
+    "in-journal|not-checked": 24.62,
+    "blocked|done-this-cycle": 13.04,
+    "blocked|completed": 28.95,
+    "blocked|locked-out": 15.09,
+    "blocked|not-checked": 17.93,
+    "done-this-cycle|completed": 25.93,
+    "done-this-cycle|locked-out": 17.73,
+    "done-this-cycle|not-checked": 21.56,
+    "completed|locked-out": 18.68,
+    "completed|not-checked": 31.67,
+    "locked-out|not-checked": 20.16
+   },
+   "deut": {
+    "ready|ready-on-another-job": 47.18,
+    "ready|in-journal": 35.58,
+    "ready|blocked": 46.47,
+    "ready|done-this-cycle": 43.76,
+    "ready|completed": 26.52,
+    "ready|locked-out": 34.03,
+    "ready|not-checked": 52.07,
+    "ready-on-another-job|in-journal": 17.01,
+    "ready-on-another-job|blocked": 15.18,
+    "ready-on-another-job|done-this-cycle": 12.72,
+    "ready-on-another-job|completed": 29.18,
+    "ready-on-another-job|locked-out": 21.46,
+    "ready-on-another-job|not-checked": 18.34,
+    "in-journal|blocked": 17.33,
+    "in-journal|done-this-cycle": 17.94,
+    "in-journal|completed": 24.41,
+    "in-journal|locked-out": 15.5,
+    "in-journal|not-checked": 24.4,
+    "blocked|done-this-cycle": 12.99,
+    "blocked|completed": 29.02,
+    "blocked|locked-out": 16.21,
+    "blocked|not-checked": 17.91,
+    "done-this-cycle|completed": 26.05,
+    "done-this-cycle|locked-out": 18.65,
+    "done-this-cycle|not-checked": 21.49,
+    "completed|locked-out": 17.9,
+    "completed|not-checked": 31.76,
+    "locked-out|not-checked": 21.08
+   },
+   "machado-deut": {
+    "ready|ready-on-another-job": 47.04,
+    "ready|in-journal": 35.62,
+    "ready|blocked": 46.33,
+    "ready|done-this-cycle": 43.61,
+    "ready|completed": 26.55,
+    "ready|locked-out": 33.51,
+    "ready|not-checked": 52.1,
+    "ready-on-another-job|in-journal": 16.81,
+    "ready-on-another-job|blocked": 15.26,
+    "ready-on-another-job|done-this-cycle": 12.77,
+    "ready-on-another-job|completed": 29.32,
+    "ready-on-another-job|locked-out": 21.8,
+    "ready-on-another-job|not-checked": 18.44,
+    "in-journal|blocked": 17.25,
+    "in-journal|done-this-cycle": 17.81,
+    "in-journal|completed": 24.56,
+    "in-journal|locked-out": 15.77,
+    "in-journal|not-checked": 24.32,
+    "blocked|done-this-cycle": 13.04,
+    "blocked|completed": 29.17,
+    "blocked|locked-out": 16.58,
+    "blocked|not-checked": 18.0,
+    "done-this-cycle|completed": 26.12,
+    "done-this-cycle|locked-out": 18.93,
+    "done-this-cycle|not-checked": 21.63,
+    "completed|locked-out": 17.82,
+    "completed|not-checked": 31.93,
+    "locked-out|not-checked": 21.43
+   },
+   "machado-prot": {
+    "ready|ready-on-another-job": 48.13,
+    "ready|in-journal": 35.96,
+    "ready|blocked": 47.33,
+    "ready|done-this-cycle": 44.59,
+    "ready|completed": 26.99,
+    "ready|locked-out": 39.7,
+    "ready|not-checked": 52.48,
+    "ready-on-another-job|in-journal": 17.67,
+    "ready-on-another-job|blocked": 15.16,
+    "ready-on-another-job|done-this-cycle": 12.72,
+    "ready-on-another-job|completed": 28.6,
+    "ready-on-another-job|locked-out": 18.04,
+    "ready-on-another-job|not-checked": 18.15,
+    "in-journal|blocked": 17.85,
+    "in-journal|done-this-cycle": 18.42,
+    "in-journal|completed": 23.82,
+    "in-journal|locked-out": 14.44,
+    "in-journal|not-checked": 24.87,
+    "blocked|done-this-cycle": 12.95,
+    "blocked|completed": 28.39,
+    "blocked|locked-out": 12.73,
+    "blocked|not-checked": 17.77,
+    "done-this-cycle|completed": 25.53,
+    "done-this-cycle|locked-out": 15.77,
+    "done-this-cycle|not-checked": 21.28,
+    "completed|locked-out": 20.44,
+    "completed|not-checked": 31.2,
+    "locked-out|not-checked": 18.07
+   },
+   "machado-trit": {
+    "ready|ready-on-another-job": 47.2,
+    "ready|in-journal": 35.42,
+    "ready|blocked": 46.53,
+    "ready|done-this-cycle": 43.81,
+    "ready|completed": 26.51,
+    "ready|locked-out": 35.88,
+    "ready|not-checked": 51.93,
+    "ready-on-another-job|in-journal": 17.2,
+    "ready-on-another-job|blocked": 15.08,
+    "ready-on-another-job|done-this-cycle": 12.61,
+    "ready-on-another-job|completed": 28.76,
+    "ready-on-another-job|locked-out": 20.05,
+    "ready-on-another-job|not-checked": 18.18,
+    "in-journal|blocked": 17.51,
+    "in-journal|done-this-cycle": 18.13,
+    "in-journal|completed": 24.01,
+    "in-journal|locked-out": 14.82,
+    "in-journal|not-checked": 24.53,
+    "blocked|done-this-cycle": 12.87,
+    "blocked|completed": 28.6,
+    "blocked|locked-out": 14.83,
+    "blocked|not-checked": 17.76,
+    "done-this-cycle|completed": 25.73,
+    "done-this-cycle|locked-out": 17.51,
+    "done-this-cycle|not-checked": 21.27,
+    "completed|locked-out": 18.72,
+    "completed|not-checked": 31.36,
+    "locked-out|not-checked": 19.81
+   }
+  }
+ },
+ "warnings": [
+  {
+   "base": "medallion",
+   "state": "ready",
+   "set": "aether-crystal",
+   "close": [],
+   "hard": [],
+   "readyLead": {
+    "row": 1.3,
+    "hero": 1.23
+   },
+   "completedOfReady": {
+    "row": 0.77,
+    "hero": 0.82
+   },
+   "fix": {
+    "state": "completed",
+    "set": "aether-crystal"
+   }
+  },
+  {
+   "base": "aether-crystal",
+   "state": "completed",
+   "set": "medallion",
+   "close": [],
+   "hard": [],
+   "readyLead": {
+    "row": 1.3,
+    "hero": 1.23
+   },
+   "completedOfReady": {
+    "row": 0.77,
+    "hero": 0.82
+   },
+   "fix": {
+    "state": "ready",
+    "set": "medallion"
+   }
+  }
+ ],
+ "example": {
+  "mix": {
+   "ready": "aether-crystal",
+   "ready-on-another-job": "medallion",
+   "in-journal": "medallion",
+   "blocked": "medallion",
+   "done-this-cycle": "medallion",
+   "completed": "medallion",
+   "locked-out": "medallion",
+   "not-checked": "medallion"
+  },
+  "eval": {
+   "close": [],
+   "hard": [],
+   "readyLead": {
+    "row": 1.3,
+    "hero": 1.23
+   },
+   "completedOfReady": {
+    "row": 0.77,
+    "hero": 0.82
+   },
+   "ok": false
+  },
+  "fix": {
+   "state": "completed",
+   "set": "aether-crystal"
+  },
+  "fixed": {
+   "close": [],
+   "hard": [],
+   "readyLead": {
+    "row": 1.39,
+    "hero": 1.35
+   },
+   "completedOfReady": {
+    "row": 0.72,
+    "hero": 0.74
+   },
+   "ok": true
+  }
+ }
+};
+  var P17 = {
+ "palettes": {
+  "dawn": {
+   "Window": "#1A1526",
+   "Sunken": "#120E1B",
+   "Raised": "#262036",
+   "Hover": "#30283F",
+   "Line": "#352D46",
+   "StrongLine": "#76698C",
+   "Text": "#F2E8E6",
+   "TextSecondary": "#C4B4C0",
+   "TextTertiary": "#A495AC",
+   "TextDisabled": "#5A4E66",
+   "Deep": "#0F0B17",
+   "Top": "#2B1F3A",
+   "Zenith": "#3A2746",
+   "Horizon": "#5A3448",
+   "Ornament": "#B98C6E",
+   "OrnamentHigh": "#E9C4A4",
+   "OrnamentLight": "#EDCBAA",
+   "Cool": "#92A2E4",
+   "Accent": "#F5C47C",
+   "Ready": "#F5C47C",
+   "InJournal": "#F5C47C",
+   "Completed": "#F5C47C",
+   "ReadyOnOtherJob": "#F2E8E6",
+   "DoneThisCycle": "#F2E8E6",
+   "Blocked": "#C4B4C0",
+   "LockedOut": "#E68FB4",
+   "NotChecked": "#A595AE",
+   "GaugeArc": "#F5C47C",
+   "GaugeArcShade": "#D9A55E",
+   "Groove": "#3A3050",
+   "StripeGold": "#F5C47C",
+   "StripeCompleted": "#B99A6A",
+   "StripeSilver": "#F2E8E6",
+   "StripeLocked": "#C46A92",
+   "StripeVeil": "#76698C"
+  },
+  "dawn-hc": {
+   "Window": "#1A1526",
+   "Sunken": "#120E1B",
+   "Raised": "#262036",
+   "Hover": "#30283F",
+   "Line": "#352D46",
+   "StrongLine": "#877B99",
+   "Text": "#F2E8E6",
+   "TextSecondary": "#C4B4C0",
+   "TextTertiary": "#AD9EB2",
+   "TextDisabled": "#5A4E66",
+   "Deep": "#0F0B17",
+   "Top": "#1A1526",
+   "Zenith": "#1A1526",
+   "Horizon": "#5A3448",
+   "Ornament": "#877B99",
+   "OrnamentHigh": "#E9C4A4",
+   "OrnamentLight": "#EDCBAA",
+   "Cool": "#92A2E4",
+   "Accent": "#F5C47C",
+   "Ready": "#F5C47C",
+   "InJournal": "#F5C47C",
+   "Completed": "#F5C47C",
+   "ReadyOnOtherJob": "#F2E8E6",
+   "DoneThisCycle": "#F2E8E6",
+   "Blocked": "#C4B4C0",
+   "LockedOut": "#E68FB4",
+   "NotChecked": "#AD9DB4",
+   "GaugeArc": "#F5C47C",
+   "GaugeArcShade": "#D9A55E",
+   "Groove": "#3A3050",
+   "StripeGold": "#F5C47C",
+   "StripeCompleted": "#B99A6A",
+   "StripeSilver": "#F2E8E6",
+   "StripeLocked": "#C46A92",
+   "StripeVeil": "#76698C"
+  },
+  "kugane": {
+   "Window": "#16100F",
+   "Sunken": "#0E0A09",
+   "Raised": "#231917",
+   "Hover": "#2D211E",
+   "Line": "#342620",
+   "StrongLine": "#7A6458",
+   "Text": "#F3E9DB",
+   "TextSecondary": "#C6B6A2",
+   "TextTertiary": "#A69482",
+   "TextDisabled": "#5C4C42",
+   "Deep": "#0B0807",
+   "Top": "#2A1613",
+   "Zenith": "#3A1A14",
+   "Horizon": "#4E2218",
+   "Ornament": "#B8913F",
+   "OrnamentHigh": "#E7C87C",
+   "OrnamentLight": "#ECD08A",
+   "Cool": "#7FA3DA",
+   "Accent": "#F0CC72",
+   "Ready": "#F0CC72",
+   "InJournal": "#F0CC72",
+   "Completed": "#F0CC72",
+   "ReadyOnOtherJob": "#F3E9DB",
+   "DoneThisCycle": "#F3E9DB",
+   "Blocked": "#C6B6A2",
+   "LockedOut": "#E58AC0",
+   "NotChecked": "#A89888",
+   "GaugeArc": "#F0CC72",
+   "GaugeArcShade": "#D4AE55",
+   "Groove": "#3A2A24",
+   "StripeGold": "#F0CC72",
+   "StripeCompleted": "#B79A5E",
+   "StripeSilver": "#F3E9DB",
+   "StripeLocked": "#C25E92",
+   "StripeVeil": "#7A6458"
+  },
+  "kugane-hc": {
+   "Window": "#16100F",
+   "Sunken": "#0E0A09",
+   "Raised": "#231917",
+   "Hover": "#2D211E",
+   "Line": "#342620",
+   "StrongLine": "#8C786C",
+   "Text": "#F3E9DB",
+   "TextSecondary": "#C6B6A2",
+   "TextTertiary": "#AD9C8A",
+   "TextDisabled": "#5C4C42",
+   "Deep": "#0B0807",
+   "Top": "#16100F",
+   "Zenith": "#16100F",
+   "Horizon": "#4E2218",
+   "Ornament": "#8C786C",
+   "OrnamentHigh": "#E7C87C",
+   "OrnamentLight": "#ECD08A",
+   "Cool": "#7FA3DA",
+   "Accent": "#F0CC72",
+   "Ready": "#F0CC72",
+   "InJournal": "#F0CC72",
+   "Completed": "#F0CC72",
+   "ReadyOnOtherJob": "#F3E9DB",
+   "DoneThisCycle": "#F3E9DB",
+   "Blocked": "#C6B6A2",
+   "LockedOut": "#E58AC0",
+   "NotChecked": "#AC9C8C",
+   "GaugeArc": "#F0CC72",
+   "GaugeArcShade": "#D4AE55",
+   "Groove": "#3A2A24",
+   "StripeGold": "#F0CC72",
+   "StripeCompleted": "#B79A5E",
+   "StripeSilver": "#F3E9DB",
+   "StripeLocked": "#C25E92",
+   "StripeVeil": "#7A6458"
+  }
+ },
+ "tuned": {
+  "dawn": "StrongLine #6F6486 -> #76698C (3.0:1 on Raised); TextTertiary #9A8BA2 -> #A495AC (4.5:1 on Hover); NotChecked #9C8FA8 -> #A595AE (4.5:1 on Hover)",
+  "kugane": "StrongLine #705C52 -> #7A6458 (3.0:1 on Raised); TextTertiary #998775 -> #A69482 (4.5:1 on Hover); NotChecked #9A8C80 -> #A89888 (4.5:1 on Hover)"
+ },
+ "cvd": {
+  "dawn": 0.103,
+  "kugane": 0.128,
+  "night": 0.16
+ }
+};
+  var CONTRAST17 = "| Ink | On | Bar | Dawn | Dawn HC | Kugane Lacquer | Kugane HC |\n|---|---|---|---|---|---|---|\n| Text | Window, Raised, Sunken, Hover (worst) | 4.5:1 | #F2E8E6 11.6 | #F2E8E6 11.6 | #F3E9DB 13.0 | #F3E9DB 13.0 |\n| TextSecondary | Window, Raised, Sunken, Hover (worst) | 4.5:1 | #C4B4C0 7.1 | #C4B4C0 7.1 | #C6B6A2 7.9 | #C6B6A2 7.9 |\n| TextTertiary | Window, Raised, Sunken, Hover (worst) | 4.5:1 | #A495AC 5.0 | #AD9EB2 5.5 | #A69482 5.3 | #AD9C8A 5.9 |\n| Accent | Window, Raised, Sunken, Hover (worst) | 4.5:1 | #F5C47C 8.7 | #F5C47C 8.7 | #F0CC72 10.1 | #F0CC72 10.1 |\n| Cool | Window, Raised, Hover (worst) | 4.5:1 | #92A2E4 5.7 | #92A2E4 5.7 | #7FA3DA 6.0 | #7FA3DA 6.0 |\n| OrnamentLight | Window, Raised (worst) | 3:1 | #EDCBAA 10.2 | #EDCBAA 10.2 | #ECD08A 11.4 | #ECD08A 11.4 |\n| Ready | Window, Raised, Hover (worst) | 4.5:1 | #F5C47C 8.7 | #F5C47C 8.7 | #F0CC72 10.1 | #F0CC72 10.1 |\n| Completed | Window, Raised (worst) | 4.5:1 | #F5C47C 9.7 | #F5C47C 9.7 | #F0CC72 11.1 | #F0CC72 11.1 |\n| ReadyOnOtherJob | Window, Raised (worst) | 4.5:1 | #F2E8E6 13.0 | #F2E8E6 13.0 | #F3E9DB 14.3 | #F3E9DB 14.3 |\n| DoneThisCycle | Window, Raised (worst) | 4.5:1 | #F2E8E6 13.0 | #F2E8E6 13.0 | #F3E9DB 14.3 | #F3E9DB 14.3 |\n| Blocked | Window, Raised, Hover (worst) | 4.5:1 | #C4B4C0 7.1 | #C4B4C0 7.1 | #C6B6A2 7.9 | #C6B6A2 7.9 |\n| LockedOut | Window, Raised, Hover (worst) | 4.5:1 | #E68FB4 6.0 | #E68FB4 6.0 | #E58AC0 6.5 | #E58AC0 6.5 |\n| NotChecked | Window, Raised, Hover (worst) | 4.5:1 | #A595AE 5.0 | #AD9DB4 5.5 | #A89888 5.6 | #AC9C8C 5.9 |\n| StrongLine | Window, Raised (worst) | 3:1 | #76698C 3.1 | #877B99 4.0 | #7A6458 3.1 | #8C786C 4.1 |\n| GaugeArc | Window, Groove, Zenith (worst) | 3:1 | #F5C47C 7.6 | #F5C47C 7.6 | #F0CC72 8.8 | #F0CC72 8.8 |\n| StripeGold | Window, Raised, Hover (worst) | 3:1 | #F5C47C 8.7 | #F5C47C 8.7 | #F0CC72 10.1 | #F0CC72 10.1 |\n| StripeLocked | Window, Raised (worst) | 3:1 | #C46A92 4.3 | #C46A92 4.3 | #C25E92 4.3 | #C25E92 4.3 |\n| OrnamentHigh | Window (worst) | 3:1 | #E9C4A4 10.9 | #E9C4A4 10.9 | #E7C87C 11.6 | #E7C87C 11.6 |\n";
+  var MR5 = "../../moon-v6/round5/medallion-r5/";
+  var SET17 = {
+    "medallion": { id: 1, name: "Menphina's Medallion", short: "Medallion", row: MR5 + "_row/", hero: MR5, kit: "brass" },
+    "ishgard-glass": { id: 4, name: "Ishgard Glass", short: "Glass", row: TH + "ishgard-glass/_row/", hero: TH + "ishgard-glass/", kit: "came", faces: TH + "ishgard-glass/faces/", fsep: "-" },
+    "aether-crystal": { id: 3, name: "Aether Crystal", short: "Aether", row: TH + "aether-crystal/_row/", hero: TH + "aether-crystal/", kit: "silver", faces: TH + "aether-crystal/faces/", fsep: "-" },
+    "astrologian-orrery": { id: 5, name: "Astrologian's Orrery", short: "Orrery", row: TH + "astrologian-orrery/_row/", hero: TH + "astrologian-orrery/", kit: "astrolabe", faces: TH + "astrologian-orrery/hero/", fsep: "." }
+  };
+  var SNAME = { "ready": "Ready", "ready-on-another-job": "Ready on another job", "in-journal": "In journal", "blocked": "Blocked", "done-this-cycle": "Done this cycle", "completed": "Completed", "locked-out": "Locked out", "not-checked": "Not checked" };
+  function heroOf(k, st) { return SET17[k].hero + (st === "ready-on-another-job" ? "ready-on-another-job-paladin" : st) + ".svg"; }
+  function rowOf(k, st) { return SET17[k].row + st + ".svg"; }
+
+  // ---------- the warning rules (spec-1.17 §A3), the same as 1.17/mixdata.py ----------
+  function pairOf(mix, a, b) {
+    var A = mix[a], B = mix[b];
+    if (!MIX.cross[A] || !MIX.cross[B]) return null;
+    if (A === B) { var o = MIX.own[A]; return o[a + "|" + b] != null ? o[a + "|" + b] : o[b + "|" + a]; }
+    var c = MIX.cross[A][B]; if (c && c[a + "|" + b] != null) return c[a + "|" + b];
+    c = MIX.cross[B][A]; return c ? c[b + "|" + a] : null;
+  }
+  function evalMix(mix) {
+    var close = [], hard = [], S = MIX.states, i, j, unmeasured = false;
+    for (i = 0; i < S.length; i++) for (j = i + 1; j < S.length; j++) {
+      if (mix[S[i]] === mix[S[j]]) continue;
+      var v = pairOf(mix, S[i], S[j]);
+      if (v == null) { unmeasured = true; continue; }
+      if (v < MIX.bars.mixHard) hard.push([S[i], S[j], v]); else if (v < MIX.bars.mixClose) close.push([S[i], S[j], v]);
+    }
+    var lead = {}, comp = {};
+    [["row", MIX.salience], ["hero", MIX.salienceHero]].forEach(function (t) {
+      var T = t[1]; if (!S.every(function (s) { return T[mix[s]]; })) { unmeasured = true; return; }
+      var r = T[mix.ready].ready, nx = 0, nxs = null;
+      S.forEach(function (s) { if (s !== "ready" && T[mix[s]][s] > nx) { nx = T[mix[s]][s]; nxs = s; } });
+      lead[t[0]] = { v: r / nx, next: nxs }; comp[t[0]] = T[mix.completed].completed / r;
+    });
+    var minLead = Math.min.apply(null, Object.keys(lead).map(function (k) { return lead[k].v; }));
+    var maxComp = Math.max.apply(null, Object.keys(comp).map(function (k) { return comp[k]; }));
+    return { close: close, hard: hard, lead: lead, comp: comp, minLead: minLead, maxComp: maxComp, unmeasured: unmeasured,
+      ok: !close.length && !hard.length && minLead >= MIX.bars.mixReadyLead && maxComp <= MIX.bars.completedOfReady };
+  }
+  function fixMix(mix, keep) {
+    var best = null;
+    MIX.states.forEach(function (st, si) {
+      if (st === keep) return;
+      MIX.sets.forEach(function (k) {
+        if (k === mix[st]) return;
+        var m2 = Object.assign({}, mix); m2[st] = k;
+        if (!evalMix(m2).ok) return;
+        var cover = MIX.states.filter(function (x) { return m2[x] === k; }).length, key = [-cover, si];
+        if (!best || key[0] < best.key[0] || (key[0] === best.key[0] && key[1] < best.key[1])) best = { key: key, state: st, set: k };
+      });
+    });
+    return best;
+  }
+  var EXMIX = MIX.example.mix;
+
+  // ---------- frames: one kit per look (T11) ----------
+  var KITS = {
+    brass: { name: "Brass", note: "gilt brass, lit upper left", ramp: ["#E2C78C", "#A88B52", "#6E5732", "#5A4729"], dir: null },
+    silver: { name: "Silver", note: "moonstone silver", ramp: ["#E2E8F4", "#A9B5D0", "#7B8AAF", "#5E6E97"], dir: TH + "aether-crystal/kit/" },
+    came: { name: "Lead came", note: "Ishgard lead, a gilt inner line on act-now", ramp: ["#B8C0D0", "#8C95B0", "#5A6278", "#323950"], dir: TH + "ishgard-glass/kit/" },
+    astrolabe: { name: "Astrolabe", note: "two-tone instrument brass, a scale at hero", ramp: ["#EAD3A0", "#B8924E", "#7C6034", "#4E3B1E"], dir: TH + "astrologian-orrery/kit/" }
+  };
+  var TIER = { "ready": "act-now", "completed": "finished", "not-checked": "ghost" };
+  var BADGE = { "ready": "open", "in-journal": "journal", "blocked": "closed" };
+  // A face framed in a kit, drawn as the plugin layers it: face under, the kit's frame for the state's urgency tier,
+  // face over, then the badge seat and glyph. Brass has no separate frame file in the design folders, so it is cut
+  // from Medallion's shipped composite (the ring outside the shared well, r 52.4) with an SVG mask.
+  // Brass's badge (Medallion r5): a night gap r 24, an enamel seat r 19.9 in a brass ring, the glyph at text height.
+  function brassBadge(st) {
+    var id = "bb" + (++uid);
+    return '<svg viewBox="0 0 128 128"><defs><linearGradient id="' + id + '" x1="76" y1="76" x2="114" y2="114" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#E6CF98"/><stop offset=".5" stop-color="#9A7E4A"/><stop offset="1" stop-color="#5C4724"/></linearGradient></defs>' +
+      '<circle cx="95" cy="95" r="24" fill="#080B16"/><circle cx="95" cy="95" r="21.6" fill="url(#' + id + ')"/><circle cx="95" cy="95" r="19.9" fill="#1C2752"/>' +
+      '<image href="' + MR5 + "_row/badge-" + BADGE[st] + '.svg" x="78" y="78" width="34" height="34"/></svg>';
+  }
+  // light: on a light palette every kit keeps the 1 px Abyss outer keyline at .6 (the supervisor's ruling for Silver on Snow)
+  function framed(faceSet, kit, st, px, noBadge, light) {
+    var F = SET17[faceSet], K = KITS[kit], tier = TIER[st] || "resting", L = [];
+    if (kit === "brass" && faceSet === "astrologian-orrery" && !noBadge) return '<img src="' + TH + "astrologian-orrery/_mix/orrery-in-brass/" + st + '.svg" width="' + px + '" height="' + px + '">';
+    if (!F.faces) return '<img src="' + heroOf(faceSet, st) + '" width="' + px + '" height="' + px + '">';
+    var under = F.faces + st + (F.fsep === "." ? ".svg" : "-under.svg"), over = F.faces + st + (F.fsep === "." ? ".over.svg" : "-over.svg");
+    L.push(under);
+    var ring = "";
+    if (K.dir) L.push(K.dir + "frame-" + tier + "-full.svg");
+    else { var id = "bm" + (++uid); ring = '<svg viewBox="0 0 128 128" style="position:absolute;inset:0;width:100%;height:100%"><defs><mask id="' + id + '"><rect width="128" height="128" fill="#000"/><circle cx="64" cy="64" r="64" fill="#fff"/><circle cx="64" cy="64" r="52.4" fill="#000"/></mask></defs><image href="' + MR5 + (st === "completed" ? "completed" : st === "not-checked" ? "not-checked" : "done-this-cycle") + '.svg" width="128" height="128" mask="url(#' + id + ')"/></svg>'; }
+    var after = [over];
+    if (BADGE[st] && K.dir && !noBadge) {
+      after.push(K.dir + "badge-seat-" + BADGE[st] + ".svg");
+      if (kit !== "silver") after.push(K.dir + (kit === "came" ? "glyph-" : "badge-") + BADGE[st] + ".svg");
+    }
+    // Silver's badge glyphs are drawn in a 34-unit box centred on the seat (95, 95), as the kit's compose() places them
+    var sg = (BADGE[st] && kit === "silver" && !noBadge) ? '<img src="' + K.dir + "badge-" + BADGE[st] + '.svg" style="left:' + (78 / 128 * 100) + "%;top:" + (78 / 128 * 100) + "%;width:" + (34 / 128 * 100) + "%;height:" + (34 / 128 * 100) + '%">' : "";
+    return '<span class="fm" style="width:' + px + "px;height:" + px + 'px">' + L.map(function (x) { return '<img src="' + x + '">'; }).join("") + ring + after.map(function (x) { return '<img src="' + x + '">'; }).join("") + sg + (kit === "brass" && BADGE[st] && !noBadge ? brassBadge(st) : "") + (light ? '<svg viewBox="0 0 128 128"><circle cx="64" cy="64" r="63.4" fill="none" stroke="#080B16" stroke-opacity=".6" stroke-width="1" vector-effect="non-scaling-stroke"/></svg>' : "") + "</span>";
+  }
+
+  // ---------- the Themes page in 1.17 ----------
+  var THEMES17 = [
+    { k: "medallion", name: "Menphina's Medallion", sub: "Brass frames · Night", pal: "night", dir: MR5 + "_row/" },
+    { k: "glass", name: "Ishgard Glass", sub: "Came frames · Ishgard Snow", pal: "snow", dir: TH + "ishgard-glass/_row/" },
+    { k: "aether", name: "Aether Crystal", sub: "Silver frames · Night", pal: "night", dir: TH + "aether-crystal/_row/" },
+    { k: "classic", name: "Classic", sub: "The 1.11 moons · Night", pal: "night", legacy: true },
+    { k: "orrery", name: "Astrologian's Orrery", sub: "Astrolabe frames · Dawn", pal: "dawn", dir: TH + "astrologian-orrery/_row/", fresh: true }
+  ];
+  function mixRow(st, mix, theme, o) {
+    o = o || {};
+    var k = mix[st], from = k === theme;
+    // the look's one kit frames every face (Brass for a Medallion look); at 32 px the row tier, so no badges
+    var med = k === "medallion" ? '<img src="' + rowOf(k, st) + '" width="32" height="32">' : framed(k, SET17[theme].kit, st, 32, true);
+    var h = '<div class="mx7' + (o.focus ? " focus" : "") + '"><span class="mn">' + SNAME[st] + '</span><span class="mm">' + med + "</span>" +
+      '<span class="dd7' + (o.open ? " open" : "") + '"><img src="' + rowOf(k, st) + '" width="18" height="18"><span>' + (from ? "From theme" : SET17[k].name) + "</span><i>▾</i></span>";
+    h += '<span class="nt">' + (o.note ? '<i class="ad"></i>' + o.note : "") + "</span></div>";
+    return h;
+  }
+  function comboList(st, mix, theme) {
+    var opts = [["", "From theme", theme]].concat(MIX.sets.map(function (k) { return [k, SET17[k].name, k]; }));
+    return '<div class="cl7">' + opts.map(function (op) {
+      var m2 = Object.assign({}, mix); m2[st] = op[2];
+      var e = MIX.salience[op[2]] ? evalMix(m2) : null, e0 = evalMix(mix), note = "";
+      // an option says only what it would add: a new close or hard pair, or Ready losing its lead
+      if (e && !e.ok && e0.ok) note = e.hard.length ? "hard to tell apart in a list" : e.close.length ? "close to " + SNAME[e.close[0][0] === st ? e.close[0][1] : e.close[0][0]] + " in a list" : "Ready would stop leading at large sizes";
+      var on = (op[0] === "" && mix[st] === theme) || (op[0] && op[0] === mix[st] && mix[st] !== theme);
+      return '<div class="co' + (on ? " on" : "") + '"><img src="' + rowOf(op[2], st) + '" width="20" height="20"><span>' + op[1] + (op[0] === "" ? ' <em>' + SET17[theme].name + "</em>" : "") + "</span>" + (note ? '<b><i class="ad"></i>' + note + "</b>" : op[0] === "astrologian-orrery" ? "<b class=\"new\">new in 1.17</b>" : "") + "</div>";
+    }).join("") + "</div>";
+  }
+  function mixSection(mode) {
+    // mode: "warn" (Ready from Aether Crystal: the hero lead fails), "fix" (the Fix it proposal), "hold" (Reset mix held), "combo"
+    var theme = "medallion", mix = Object.assign({}, EXMIX), e = evalMix(mix), fx = fixMix(mix, "ready");
+    if (mode === "fixed" || mode === "hold" || mode === "combo") { mix[fx.state] = fx.set; e = evalMix(mix); }
+    var h = '<section class="new17 mix7"><h4>Mix moons by state</h4><p class="lead7">Pick each state\'s moon from any set. The frames stay one kit (Frames above), so the column keeps one metal.</p><div class="mixt7">';
+    MIX.states.forEach(function (st) {
+      var note = "";
+      if (!e.ok && st === "ready") note = "quieter than Completed at large sizes";
+      h += mixRow(st, mix, theme, { note: note, open: mode === "combo" && st === "completed", focus: (mode === "fix" && st === fx.state) });
+      if (mode === "combo" && st === "completed") h += comboList("completed", mix, theme);
+    });
+    h += "</div>";
+    if (!e.ok) {
+      var L = e.lead.hero, C = e.comp.hero;
+      h += '<div class="ws7"><span class="wl"><i class="ad"></i>Ready is no longer the loudest moon at large sizes.</span><span class="qa">Details ▾</span><span class="qa pri7">Fix it</span><span class="qa hold7">Reset mix</span></div>';
+      h += '<div class="wd7">At 48 px and up, ' + SET17[mix.ready].name + "'s Ready leads the column by <b>" + L.v.toFixed(2) + "×</b> (it should lead by 1.25× or more), and " + SET17[mix.completed].name + "'s Completed is <b>" + C.toFixed(2) + "×</b> Ready (it should stay at 0.80× or less). In rows it still leads (" + e.lead.row.v.toFixed(2) + "×).</div>";
+      if (mode === "fix") {
+        var m2 = Object.assign({}, mix); m2[fx.state] = fx.set; var e2 = evalMix(m2);
+        h += '<div class="fp7"><div class="fpt">Fix it suggests one change</div><div class="fpr"><img src="' + heroOf(mix[fx.state], fx.state) + '" width="40"><span class="ar">→</span><img src="' + heroOf(fx.set, fx.state) + '" width="40"><div><b>Use ' + SET17[fx.set].name + " for " + SNAME[fx.state] + ' too</b><span>Ready leads again: ' + e2.lead.hero.v.toFixed(2) + "× at large sizes, " + e2.lead.row.v.toFixed(2) + "× in rows. Your Ready pick stays.</span></div></div>" +
+          '<div class="fpb"><span class="qa">Not now</span><span class="qa pri7">Use it</span></div></div>';
+      }
+    } else {
+      h += '<div class="ws7 calm"><span class="wl">Every moon reads apart, and Ready leads (' + e.minLead.toFixed(2) + "×).</span>" + '<span class="qa hold7' + (mode === "hold" ? " holding" : "") + '">' + (mode === "hold" ? '<svg class="harc" viewBox="0 0 100 32" preserveAspectRatio="none"><rect x=".75" y=".75" width="98.5" height="30.5" rx="15" fill="none" stroke="#2E3550" stroke-width="1.5"/><rect x=".75" y=".75" width="98.5" height="30.5" rx="15" fill="none" stroke="#F2D27A" stroke-width="1.5" pathLength="100" stroke-dasharray="62 100"/></svg>Reset mix' : "Reset mix") + "</span></div>";
+    }
+    return h + "</section>";
+  }
+  function themesPage17(mode, extra) {
+    var nav = ["General", "Themes", "Journal", "Travel", "In-game panels", "Overlay", "Alerts", "Companions", "Data", "Advanced"];
+    var h = '<div class="mk full v7 set16 set17"><div class="win"><div class="w-title"><span class="tri"></span>Tsukimichi Settings<span class="wc">' + ICON.x + '</span></div><div class="sbody"><nav class="snav"><div class="ssearch">' + ICON.search + "<span>Search settings</span></div>" +
+      nav.map(function (n) { return '<div class="sn' + (n === "Themes" ? " on" : "") + '">' + n + "</div>"; }).join("") + '</nav><div class="spage">';
+    h += extra || "";
+    h += mixSection(mode);
+    return h + "</div></div></div></div>";
+  }
+  function boardMix() {
+    var h = '<div class="board b15 b16"><h2>1.17 · Mix moons by state<small>Real numbers from the shipped metrics.json (row tier 16 px and the 48 px hero tier, Night). Ready from Aether Crystal in a Menphina\'s Medallion look: in rows Ready still leads (1.30×), at 48 px and up it does not (1.23×). Fix it keeps the player\'s pick and changes one other state.</small></h2><div class="row" style="align-items:flex-start">';
+    h += fig('<div class="clip7" style="height:760px">' + themesPage17("warn") + "</div>", "<b>A warning</b>, in words, with its reason under Details");
+    h += fig('<div class="clip7" style="height:760px">' + themesPage17("fix") + "</div>", "<b>Fix it</b>: the smallest change that clears every warning");
+    h += "</div><div class=\"row\" style=\"align-items:flex-start\">";
+    h += fig('<div class="clip7" style="height:750px">' + themesPage17("combo") + "</div>", "<b>A state's list</b> (after the fix): every offered set with that state's moon; an option that would add a warning says so before it is picked");
+    h += fig('<div class="clip7" style="height:600px">' + themesPage17("hold") + "</div>", "<b>Reset mix</b> after the fix: no warning; a hold (the Hold tier, 0.6 s by default) with the Moon arc closing; Undo follows");
+    return h + "</div></div>";
+  }
+
+  // ---------- frames on each palette (T11) ----------
+  var PALW = {
+    night: { name: "Night", bg: "linear-gradient(180deg,#1B2552,#0F1424)", win: "#0F1424", card: "#1E2437", text: "#DDE3F0", t2: "#A9B2CC", light: false },
+    snow: { name: "Ishgard Snow", bg: "linear-gradient(180deg,#D3DEF0,#EEF1F6 70%)", win: "#EEF1F6", card: "#F9FAFC", text: "#1A2136", t2: "#434D6A", light: true },
+    dawn: { name: "Dawn", bg: "linear-gradient(180deg,#3A2746,#2B1F3A 40%,#1A1526)", win: "#1A1526", card: "#262036", text: "#F2E8E6", t2: "#C4B4C0", light: false },
+    kugane: { name: "Kugane Lacquer", bg: "linear-gradient(180deg,#3A1A14,#2A1613 40%,#16100F)", win: "#16100F", card: "#231917", text: "#F3E9DB", t2: "#C6B6A2", light: false }
+  };
+  function kitCard(kit, pal) {
+    var K = KITS[kit], P = PALW[pal], r = K.ramp;
+    var edge = "linear-gradient(160deg," + r[0] + " 0%," + r[1] + " 30%," + r[2] + " 62%," + r[1] + " 80%," + r[3] + " 100%)";
+    var corner = { brass: "L", silver: "chip", came: "quatrefoil", astrolabe: "scale" }[kit];
+    return '<div class="kc7 ' + corner + '" style="--e:' + edge + ";--c1:" + r[0] + ";--c3:" + r[3] + ";background:linear-gradient(" + P.card + "," + P.card + ") padding-box," + edge + ' border-box"><i class="k1"></i><i class="k2"></i><h5 style="color:' + (P.light ? "#3F4862" : r[0]) + '">Requirements</h5><div style="color:' + P.t2 + '">Level 54 · met</div></div>';
+  }
+  function boardFrames() {
+    var faces = "astrologian-orrery", sts = ["ready", "in-journal", "blocked", "completed", "not-checked"];
+    var h = '<div class="board b15 b16"><h2>1.17 · Frames<small>One kit per look: the medals\' frames and badges, the gauges and the Decoration ornament all come from it. Here the Orrery faces sit in each kit on each palette. Act now (Ready) is gilt in every kit; resting, finished and ghost take the kit\'s own metal.</small></h2>';
+    h += '<div class="fg7"><div></div>' + ["night", "snow", "dawn", "kugane"].map(function (p) { return '<div class="fh">' + PALW[p].name + "</div>"; }).join("");
+    Object.keys(KITS).forEach(function (kit) {
+      h += '<div class="fk"><b>' + KITS[kit].name + "</b><span>" + KITS[kit].note + '</span><div class="rmp">' + KITS[kit].ramp.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join("") + "</div></div>";
+      ["night", "snow", "dawn", "kugane"].forEach(function (p) {
+        var P = PALW[p];
+        h += '<div class="ft" style="background:' + P.bg + '"><div class="fmr">' + sts.map(function (s) { return framed(faces, kit, s, 52, false, PALW[p].light); }).join("") + "</div>" + kitCard(kit, p) + "</div>";
+      });
+    });
+    return h + "</div></div>";
+  }
+
+  // ---------- share codes (T12) ----------
+  function shareBox(state) {
+    var h = '<div class="sh7">';
+    if (state === "copy") h += '<div class="shr7"><code>TM1-202C-000C-02C</code><span class="qa">Copy</span><span class="pin7">Paste a code</span></div><div class="tst7">Code copied · TM1-202C-000C-02C</div>';
+    if (state === "paste") h += '<div class="shr7"><code>TM1-202C-000C-02C</code><span class="qa">Copy</span><span class="pin7 v">tm1 ad24 0000 028</span></div>' +
+      '<div class="pv7"><div class="pvt">This code would change:</div><ul><li><b>Theme</b> Menphina\'s Medallion → <b>Astrologian\'s Orrery</b></li><li><b>Palette</b> Night → <b>Dawn</b></li><li><b>Frames</b> Brass → <b>Astrolabe</b></li><li><b>Ready</b> from ' + "Menphina's Medallion" + '</li></ul><div class="pvm">' + ["ready", "in-journal", "blocked", "completed", "not-checked"].map(function (s) { return '<img src="' + (s === "ready" ? TH + "astrologian-orrery/_mix/medallion-in-astrolabe/ready.svg" : heroOf("astrologian-orrery", s)) + '" width="36">'; }).join("") + '</div><div class="fpb"><span class="qa">Cancel</span><span class="qa pri7">Apply</span></div></div>';
+    if (state === "newer") h += '<div class="shr7"><code>TM1-202C-000C-02C</code><span class="qa">Copy</span><span class="pin7 v">TM1-2034-000C-0DJ</span></div>' +
+      '<div class="pv7"><div class="pvt">This code would change:</div><ul><li><b>Completed</b> from <b>Aether Crystal</b></li></ul><div class="nw7">One pick comes from a newer Tsukimichi (Ready: a set this version doesn\'t have). It stays From theme; the rest applies.</div><div class="fpb"><span class="qa">Cancel</span><span class="qa pri7">Apply the rest</span></div></div>';
+    if (state === "bad") h += '<div class="shr7"><code>TM1-202C-000C-02C</code><span class="qa">Copy</span><span class="pin7 v">TM1-202C-000X-02C</span></div><div class="er7">That code doesn\'t read: a character may be mistyped. Nothing was changed.</div>';
+    if (state === "applied") h += '<div class="shr7"><code>TM1-AD24-0000-028</code><span class="qa">Copy</span><span class="pin7">Paste a code</span></div><div class="tst7">Look applied · <span class="u">Undo</span></div>';
+    return h + "</div>";
+  }
+  function boardShare() {
+    var cap = { copy: "<b>Copy</b>: the current look's code; a quiet toast", paste: "<b>Paste</b>: read as you type; a preview of every change before anything applies", newer: "<b>From a newer version</b>: unknown sets are named and left out; the rest still applies", bad: "<b>A typo</b>: the checksum catches every single-character typo; nothing changes", applied: "<b>Applied</b>: the look changes at once; Undo for 8 s" };
+    return '<div class="board b15 b16"><h2>1.17 · Share codes<small>TM1- then base32 (Crockford): 6 characters for a theme, 12 for a full mix. Case, spaces and dashes don\'t matter; O reads 0 and I or L read 1. The section sits under Mix on the Themes page; codes carry ids only.</small></h2><div class="row" style="align-items:flex-start">' +
+      ["copy", "paste", "newer", "bad", "applied"].map(function (s) { return fig('<div class="mk full v7 set16 shb7"><div class="win"><div class="spage" style="padding:16px 18px"><section class="new17" style="margin-top:0"><h4>Share</h4>' + shareBox(s) + "</section></div></div></div>", cap[s]); }).join("") + "</div></div>";
+  }
+
+  // ---------- the glyph window's Themes tab (T13) ----------
+  function heat(v) {
+    if (v == null) return "#2A3149";
+    if (v < MIX.bars.mixHard) return "#8E3A5E"; if (v < 11) return "#B0645A"; if (v < MIX.bars.mixClose) return "#C9A866";
+    var t = Math.min(1, (v - 12) / 30); return "rgb(" + Math.round(46 + t * 10) + "," + Math.round(64 + t * 40) + "," + Math.round(96 + t * 50) + ")";
+  }
+  function heatTable(mix, mode, title) {
+    var S = MIX.states, sh = ["Rdy", "RoJ", "Jrn", "Blk", "Done", "Comp", "Lock", "NotC"];
+    var h = '<div class="ht7"><div class="htt">' + title + '</div><table><tr><th></th>' + sh.map(function (x) { return "<th>" + x + "</th>"; }).join("") + "</tr>";
+    S.forEach(function (a, i) {
+      h += "<tr><th>" + sh[i] + "</th>";
+      S.forEach(function (b, j) {
+        if (j >= i) { h += '<td class="e"></td>'; return; }
+        var v = pairOf(mix, a, b), same = mix[a] === mix[b], col = heat(v);
+        if (same && v != null) {
+          // a set's own pair passed its build gates: 12 in greyscale and deuteranopia, 11 under Machado CVD
+          var M = MIX.ownModes[mix[a]], g = function (md) { var o = M[md] || {}; return o[a + "|" + b] != null ? o[a + "|" + b] : o[b + "|" + a]; };
+          var r1 = function (x) { return Math.round(x * 10) / 10; }; // judged at one decimal, as the build judges
+          var okG = r1(Math.min(g("grey"), g("deut"))) >= 12, okC = r1(Math.min(g("machado-prot"), g("machado-deut"), g("machado-trit"))) >= 11;
+          col = okG && okC ? heat(Math.max(v, 12)) : heat(v);
+        }
+        h += '<td style="background:' + col + '"' + (!same ? ' class="x"' : "") + ">" + (v == null ? "–" : v.toFixed(1)) + "</td>";
+      });
+      h += "</tr>";
+    });
+    return h + "</table></div>";
+  }
+  function lookPanel(label, mix, pal, kitName, kit) {
+    var P = PALW[pal], rows = ["ready", "ready-on-another-job", "in-journal", "blocked", "done-this-cycle", "completed", "locked-out", "not-checked"];
+    return '<div class="lp7"><div class="lph"><b>' + label + "</b><span>" + kitName + "</span></div>" +
+      '<div class="lpb" style="background:' + P.bg + ";color:" + P.text + '"><div class="hr7">' + rows.map(function (s) { return mix[s] === "medallion" && kit === "brass" ? '<img src="' + heroOf("medallion", s) + '" width="40">' : framed(mix[s], kit, s, 40); }).join("") + '</div><div class="rr7">' + rows.map(function (s) { return '<div><img src="' + rowOf(mix[s], s) + '" width="16" height="16"><span>' + SNAME[s] + "</span></div>"; }).join("") + "</div></div></div>";
+  }
+  function boardGlyphWin() {
+    var A = Object.assign({}, EXMIX), B = Object.assign({}, A); B.completed = "aether-crystal";
+    var eA = evalMix(A), eB = evalMix(B);
+    var h = '<div class="board b15 b16"><h2>1.17 · Glyph window › Themes<small>For reviewers and curious players (/tsukimichi glyphs). Two looks side by side, then how alike every pair of moons is: the shipped metrics, row tier at 16 px on Night, as a heat table. Cross-set pairs are outlined. Numbers are round 5\'s units; 12 and 11 are the bars.</small></h2>';
+    h += '<div class="mk full v7 gw7"><div class="win"><div class="w-title"><span class="tri"></span>Tsukimichi Glyphs<span class="wc">' + ICON.x + '</span></div><div class="gwb"><div class="gtabs"><span>Medals</span><span>Palettes</span><span>Gauges</span><span class="on">Themes</span></div>';
+    h += '<div class="gpk"><div><b>Look A</b><span class="dd7"><span>Medallion · Ready from Aether</span><i>▾</i></span><span class="dd7"><span>Night</span><i>▾</i></span></div><div><b>Look B</b><span class="dd7"><span>Look A + Completed from Aether</span><i>▾</i></span><span class="dd7"><span>Night</span><i>▾</i></span></div><div class="cvd"><b>Vision</b>' + seg16(["Worst", "Grey", "Deut", "Prot", "Trit"], 0) + "</div></div>";
+    h += '<div class="lps">' + lookPanel("A", A, "night", "Brass frames (one kit for the look)", "brass") + lookPanel("B", B, "night", "Brass frames", "brass") + "</div>";
+    h += '<div class="hts">' + heatTable(A, "worst", "A · how alike, worst of every vision mode") + heatTable(B, "worst", "B") +
+      '<div class="spec" style="width:300px"><b>Ready\'s lead</b><table><tr><th></th><th>A</th><th>B</th></tr><tr><td>Rows, 16 px</td><td>' + eA.lead.row.v.toFixed(2) + "×</td><td>" + eB.lead.row.v.toFixed(2) + "×</td></tr><tr><td>48 px and up</td><td><b style=\"color:#C9A866\">" + eA.lead.hero.v.toFixed(2) + "×</b></td><td>" + eB.lead.hero.v.toFixed(2) + "×</td></tr><tr><td>Completed of Ready, 48 px</td><td><b style=\"color:#C9A866\">" + eA.comp.hero.toFixed(2) + "</b></td><td>" + eB.comp.hero.toFixed(2) + '</td></tr></table><div class="lg7"><span><i style="background:' + heat(20) + '"></i>reads apart</span><span><i style="background:' + heat(11.5) + '"></i>close (a cross-set pair under its bar: 12 grey, 11 prot, deut or trit)</span><span><i style="background:' + heat(9) + '"></i>hard to tell apart (under 10 in any mode)</span><span>A pair within one set is coloured by the gates that set passed (12 grey, 11 colour vision), so the Medallion pair Blk–Lock at 11.1 under protanopia reads apart.</span></div></div></div>';
+    return h + "</div></div></div></div>";
+  }
+
+  // ---------- Dawn and Kugane Lacquer (T16) ----------
+  function boardPal17() {
+    var keys = [["dawn", "Dawn", "dark · the hour before sunrise"], ["dawn-hc", "Dawn · High contrast", "no sky, inks at 7 : 1"], ["kugane", "Kugane Lacquer", "dark · black lacquer at dusk"], ["kugane-hc", "Kugane Lacquer · High contrast", "no sky, inks at 7 : 1"]];
+    var h = '<div class="board b15 b16"><h2>1.17 · Dawn and Kugane Lacquer<small>Both are dark palettes: stars stay on (dark-palette feature), glows stay light, portraits use the night grade. Medals are never recoloured.</small></h2><div class="row">';
+    keys.forEach(function (k) {
+      var p = P17.palettes[k[0]], names = ["Window", "Sunken", "Raised", "Hover", "Line", "StrongLine"];
+      var sky = k[0].indexOf("hc") > 0 ? p.Window : "linear-gradient(180deg," + p.Zenith + " 0%," + p.Horizon + " 34%," + p.Top + " 52%," + p.Window + " 80%)";
+      h += '<div class="pc16" style="--w:' + p.Window + ";--r:" + p.Raised + ";--t:" + p.Text + ";--t2:" + p.TextSecondary + ";--t3:" + p.TextTertiary + ";--ln:" + p.Line + '"><div class="pch"><b>' + k[1] + "</b><span>" + k[2] + '</span></div><div class="sw">' +
+        names.map(function (n) { return '<div><i style="background:' + p[n] + '"></i><span>' + n + "<br><code>" + p[n] + "</code></span></div>"; }).join("") + '</div><div class="pan" style="background:' + sky + '">' +
+        (k[0].indexOf("hc") > 0 ? "" : stars13(k[0] === "dawn" ? 41 : 43, 410, 196, 14, .5, 0, 0, 1)) +
+        '<div class="pcard"><h5 style="color:' + p.OrnamentLight + '">Requirements</h5><div class="tl" style="color:' + p.Text + '">Text · Level 54, you are 100</div><div class="tl" style="color:' + p.TextSecondary + '">Secondary · Ishgard · The Pillars</div><div class="tl" style="color:' + p.TextTertiary + '">Tertiary · Checked 5 min ago</div>' +
+        '<div class="tl"><span style="color:' + p.Ready + ';font-weight:600">Ready</span> · <span style="color:' + p.Completed + '">Completed</span> · <span style="color:' + p.LockedOut + '">Locked out</span> · <span style="color:' + p.NotChecked + '">Not checked</span> · <u style="color:' + p.Cool + '">Blood Drain</u></div>' +
+        '<div class="mr">' + MIX.states.map(function (s) { return '<img src="' + rowOf(k[0].indexOf("dawn") === 0 ? "astrologian-orrery" : "medallion", s) + '" width="20" height="20">'; }).join("") + '<span class="gp16">Go to giver</span></div></div></div></div>';
+    });
+    h += '</div><div class="row"><div class="spec" id="ct17" style="width:1000px"></div><div class="spec" style="width:520px"><b>Tuned from research §8.2</b> (only where the worst surface missed the bar):<br>Dawn: ' + P17.tuned.dawn + "<br><br>Kugane Lacquer: " + P17.tuned.kugane + "<br><br><b>Accent against Locked out</b>, worst OKLab ΔE under Machado protan, deutan and tritan: Dawn " + P17.cvd.dawn + ", Kugane " + P17.cvd.kugane + " (Night " + P17.cvd.night + "; the gate is 0.08).</div></div></div>";
+    return h;
+  }
+  function renderContrast17() {
+    var el = document.getElementById("ct17"); if (!el) return;
+    var lines = CONTRAST17.trim().split(String.fromCharCode(10)).filter(function (l) { return l.indexOf("|---") !== 0; });
+    el.innerHTML = "<table>" + lines.map(function (l, i) {
+      var cells = l.split("|").slice(1, -1).map(function (c) { return c.trim(); });
+      return "<tr>" + cells.map(function (c) {
+        if (i === 0) return "<th>" + c + "</th>";
+        var m = c.match(/^(#[0-9A-F]{6}) ([0-9.]+)(.*)$/);
+        return m ? '<td><i style="display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:5px;background:' + m[1] + '"></i><code>' + m[1] + "</code> <b>" + m[2] + "</b>" + m[3] + "</td>" : "<td>" + c + "</td>";
+      }).join("") + "</tr>";
+    }).join("") + "</table>";
+  }
+  function palWin(pal, lv, theme) { return win(lv, { v7: true, palette: pal, theme: theme, tips: false, h: 790 }).replace("v1.14.0", "v1.17.0"); }
   // ---------- Page ----------
   var host = document.getElementById("host"), seg = document.getElementById("seg"), ver = document.getElementById("ver"), pn = document.getElementById("pn");
   function show(hash) {
@@ -2453,6 +4163,15 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     else if (v === "snow-plain") host.innerHTML = snowWin("plain", { drawer: "e", dopt: { to: "adv" } });
     else if (v === "palettes") { host.innerHTML = boardPalettes(); renderContrast(); }
     else if (v === "themes") host.innerHTML = boardThemes();
+    else if (v === "mix") host.innerHTML = boardMix();
+    else if (v === "frames") host.innerHTML = boardFrames();
+    else if (v === "share") host.innerHTML = boardShare();
+    else if (v === "glyphwin") host.innerHTML = boardGlyphWin();
+    else if (v === "palettes17") { host.innerHTML = boardPal17(); renderContrast17(); }
+    else if (v === "dawn-full") host.innerHTML = palWin("dawn", "full", "orrery");
+    else if (v === "dawn-quiet") host.innerHTML = palWin("dawn", "quiet", "orrery");
+    else if (v === "kugane-full") host.innerHTML = palWin("kugane", "full", "medallion");
+    else if (v === "kugane-quiet") host.innerHTML = palWin("kugane", "quiet", "medallion");
     else if (v === "giver") host.innerHTML = boardGiver();
     else if (v === "fallbacks") host.innerHTML = boardFallbacks();
     else if (v === "buttons") host.innerHTML = boardButtons();
