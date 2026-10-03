@@ -11,7 +11,8 @@ namespace Tsukimichi.Tests.Unlocks;
 
 /// <summary>
 /// The unlock index (feature plan v6 K1): grouping and order, precedence (curated over sheet over derived), the dedupe
-/// rules, curated aetherytes, next quests, the reverse lookup, the masks and the one-line forms, without game files.
+/// rules, what the quest's Rewards already show (never an unlock row), curated aetherytes, next quests, the reverse
+/// lookup, the masks and the one-line forms, without game files.
 /// </summary>
 public class QuestUnlocksTests
 {
@@ -22,6 +23,7 @@ public class QuestUnlocksTests
     private const uint Sirensong = 238;
     private const uint SirensongInstance = 62;
     private const uint Onokoro = 106;
+    private const uint EasternBow = 154;
 
     private static readonly PlanDuties Duties = PlanDuties.From(
     [
@@ -30,20 +32,23 @@ public class QuestUnlocksTests
         new PlanDuty(175, 0, UnlockKind.System, "the Palace of the Dead (Floors 11-20)"),
     ]);
 
-    private static QuestRecord OpenerQuest() => Quest(Opener, "Not without Incident") with
+    /// <summary>The opener; <paramref name="rewarded"/> lists the Sirensong Sea and the Eastern Bow among its own Rewards.</summary>
+    private static QuestRecord OpenerQuest(bool rewarded = false) => Quest(Opener, "Not without Incident") with
     {
         EventIconType = UnlockAreas.MainScenarioIconType,
         Expansion = 2,
         Level = 61,
-        Rewards =
-        [
-            new RewardRef(RewardKind.Instance, SirensongInstance, 0, 1, "the Sirensong Sea", 0),
-            new RewardRef(RewardKind.Emote, 154, 0, 1, "Eastern Bow", 246315),
-        ],
+        Rewards = rewarded
+            ?
+            [
+                new RewardRef(RewardKind.Instance, SirensongInstance, 0, 1, "the Sirensong Sea", 61801),
+                new RewardRef(RewardKind.Emote, EasternBow, 0, 1, "Eastern Bow", 246315),
+            ]
+            : [],
     };
 
-    private static QuestCatalog Quests() => Catalog(
-        OpenerQuest(),
+    private static QuestCatalog Quests(bool rewarded = false) => Catalog(
+        OpenerQuest(rewarded),
         Quest(Next, "The Man from Ul'dah") with { EventIconType = UnlockAreas.MainScenarioIconType, Expansion = 2, PreviousQuests = new Prereq([Opener], JoinKind.All) },
         Quest(Locked, "A Lock Only") with { QuestLocks = [Opener] });
 
@@ -63,8 +68,13 @@ public class QuestUnlocksTests
     private static UniqueRewardEntry DutyEntry(uint quest, uint cfc, string name, Confidence confidence = Confidence.Curated) =>
         new(quest, RewardKind.DutyUnlock, cfc, 0, name, confidence, "curated/duty_unlocks.json");
 
-    private static QuestUnlocks Build(UniqueRewardCatalog? rewards = null, CuratedData? curated = null) =>
-        QuestUnlocks.Build(Quests(), rewards ?? Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea")), Duties, Links(), curated);
+    /// <summary>The reward data's Eastern Bow on the opener: an emote its Rewards do not list unless the quest is built rewarded.</summary>
+    private static UniqueRewardEntry EmoteEntry() => new(Opener, RewardKind.Emote, EasternBow, 0, "Eastern Bow", Confidence.Static, "Quest.EmoteReward");
+
+    private static UniqueRewardCatalog DefaultRewards() => Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea"), EmoteEntry());
+
+    private static QuestUnlocks Build(UniqueRewardCatalog? rewards = null, CuratedData? curated = null, bool rewarded = false) =>
+        QuestUnlocks.Build(Quests(rewarded), rewards ?? DefaultRewards(), Duties, Links(), curated);
 
     [Fact]
     public void Rows_come_grouped_in_display_order_with_next_quests_last()
@@ -93,12 +103,13 @@ public class QuestUnlocksTests
     [Fact]
     public void An_instance_and_the_duty_unlock_of_one_duty_are_one_curated_row()
     {
-        var duty = Assert.Single(Build().For(Opener), e => e.Group == UnlockGroup.Duty);
+        var duty = Assert.Single(Build(rewarded: true).IncludingRewards(Opener), e => e.Group == UnlockGroup.Duty);
 
         Assert.Equal(UnlockTarget.Dungeon, duty.Target);
         Assert.Equal(Sirensong, duty.TargetId);
         Assert.Equal(UnlockSource.Curated, duty.Source);
         Assert.Equal(RewardKind.DutyUnlock, duty.Reward);
+        Assert.True(duty.InRewards);
     }
 
     [Fact]
@@ -115,13 +126,50 @@ public class QuestUnlocksTests
     }
 
     [Fact]
-    public void Actions_and_collectables_the_rewards_already_show_are_marked()
+    public void What_the_rewards_already_show_is_marked_and_never_shown()
     {
-        var emote = Assert.Single(Build().For(Opener), e => e.Target == UnlockTarget.Emote);
+        var unlocks = Build(rewarded: true);
 
+        // The duty and the emote are Rewards tiles: marked, kept for the reverse lookup, never shown.
+        var emote = Assert.Single(unlocks.IncludingRewards(Opener), e => e.Target == UnlockTarget.Emote);
         Assert.True(emote.InRewards);
         Assert.Equal(246315u, emote.Icon);
         Assert.Equal(RewardKind.Emote, emote.Reward);
+        Assert.DoesNotContain(unlocks.For(Opener), e => e.InRewards);
+        Assert.DoesNotContain(unlocks.For(Opener), e => e.Group is UnlockGroup.Duty or UnlockGroup.ActionEmote);
+        Assert.Equal(["Kugane", "Onokoro", "The Man from Ul'dah"], unlocks.For(Opener).Select(e => e.Name).ToArray());
+        Assert.Equal([Opener], unlocks.UnlockedBy(UnlockTarget.Dungeon, Sirensong).ToArray());
+        Assert.Equal("Kugane", unlocks.Headline(Opener)!.Name);
+        Assert.Equal("kugane\nonokoro", unlocks.SearchText(Opener));
+        Assert.Equal(0, unlocks.GroupMask(Opener) & UnlockTargets.Bit(UnlockGroup.Duty));
+
+        // A list that still holds them shows none either.
+        Assert.DoesNotContain(UnlockView.Visible(unlocks.IncludingRewards(Opener), masked: false), e => e.InRewards);
+        Assert.False(UnlockView.Shows(emote));
+    }
+
+    [Fact]
+    public void One_rule_matches_a_reward_by_item_by_row_by_current_or_by_name()
+    {
+        var mount = new UnlockEntry(UnlockTarget.Mount, 55, "Manacutter", 4001, UnlockSource.Sheet, 1) { Reward = RewardKind.Mount, ItemId = 12073 };
+        var job = new UnlockEntry(UnlockTarget.Job, 4, "Lancer", QuestUnlocks.JobIconBase + 4, UnlockSource.Sheet, 0) { Reward = RewardKind.ClassJob };
+        var flying = new UnlockEntry(UnlockTarget.Flying, 0, "Coerthas Western Highlands", QuestUnlocks.AetherCurrentIcon, UnlockSource.Sheet, 1) { Reward = RewardKind.AetherCurrent };
+        var feature = new UnlockEntry(UnlockTarget.System, 0, "Desynthesis", 0, UnlockSource.Curated, 0);
+        var duty = new UnlockEntry(UnlockTarget.Dungeon, Sirensong, "The Sirensong Sea", 61801, UnlockSource.Curated, 2) { Reward = RewardKind.DutyUnlock };
+        var kugane = new UnlockEntry(UnlockTarget.Zone, Kugane, "Kugane", 7, UnlockSource.Sheet, 2);
+
+        Assert.True(UnlockRewards.Same(new RewardRef(RewardKind.Item, 12073, 12073, 1, "Manacutter Key", 26014), mount));
+        Assert.True(UnlockRewards.Same(new RewardRef(RewardKind.ClassJob, 4, 0, 1, "Lancer", 0), job));
+        Assert.True(UnlockRewards.Same(new RewardRef(RewardKind.Other, UnlockRewards.AetherCurrentOtherReward, 0, 1, "Aether Current", 60033), flying));
+        Assert.True(UnlockRewards.Same(new RewardRef(RewardKind.GeneralAction, 5, 0, 1, "desynthesis", 120), feature));
+        Assert.True(UnlockRewards.Same(new RewardRef(RewardKind.Instance, SirensongInstance, 0, 1, "the Sirensong Sea", 61801), duty));
+        Assert.True(UnlockRewards.Same(new UniqueRewardEntry(Opener, RewardKind.AetherCurrent, 9, 0, "Aether Current (Coerthas Western Highlands)", Confidence.Static, "test"), flying));
+
+        // Another job, a currency, a place: no match.
+        Assert.False(UnlockRewards.Same(new RewardRef(RewardKind.ClassJob, 5, 0, 1, "Archer", 0), job));
+        Assert.False(UnlockRewards.Same(new RewardRef(RewardKind.Other, 28, 28, 5, "Desynthesis", 65001), feature));
+        Assert.False(UnlockRewards.Same(new RewardRef(RewardKind.Other, 9, 0, 1, "Kugane", 0), kugane));
+        Assert.False(UnlockRewards.Same(new RewardRef(RewardKind.Other, 9, 0, 1, "Wondrous Tails", 25987), flying));
     }
 
     [Fact]
@@ -183,9 +231,9 @@ public class QuestUnlocksTests
     public void The_headline_prefers_a_stated_row_over_a_likely_one()
     {
         var links = Links() with { Warps = [] };
-        var unlocks = QuestUnlocks.Build(Quests(), Rewards(), PlanDuties.Empty, links);
+        var unlocks = QuestUnlocks.Build(Quests(), Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea")), PlanDuties.Empty, links);
 
-        // Kugane and Onokoro are only inferred now; the duty the quest's own rewards name is stated.
+        // Kugane and Onokoro are only inferred now; the duty the reward data names is stated.
         Assert.True(unlocks.For(Opener)[0].IsLikely);
         Assert.True(unlocks.For(Opener)[1].IsLikely);
         Assert.Equal(UnlockGroup.Duty, unlocks.Headline(Opener)!.Group);
@@ -207,7 +255,7 @@ public class QuestUnlocksTests
     public void An_empty_catalog_or_no_links_build_without_failing()
     {
         Assert.Same(QuestUnlocks.Empty, QuestUnlocks.Build(QuestCatalog.Empty, Rewards(), PlanDuties.Empty, UnlockLinks.Empty));
-        var bare = QuestUnlocks.Build(Quests(), Rewards(), PlanDuties.Empty, UnlockLinks.Empty);
+        var bare = QuestUnlocks.Build(Quests(), Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea")), PlanDuties.Empty, UnlockLinks.Empty);
         Assert.DoesNotContain(bare.For(Opener), e => e.Group is UnlockGroup.Area or UnlockGroup.Aetheryte);
         Assert.Contains(bare.For(Opener), e => e.Group == UnlockGroup.Duty && e.Target == UnlockTarget.OtherDuty);
     }
@@ -223,7 +271,7 @@ public class QuestUnlocksTests
             c =>
             {
                 builds++;
-                return QuestUnlocks.Build(c, Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea")), Duties, Links());
+                return QuestUnlocks.Build(c, DefaultRewards(), Duties, Links());
             },
             start: work => Task.FromResult(work()));
 
@@ -252,7 +300,7 @@ public class QuestUnlocksTests
             c =>
             {
                 builds++;
-                return QuestUnlocks.Build(c, Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea")), Duties, Links());
+                return QuestUnlocks.Build(c, DefaultRewards(), Duties, Links());
             },
             start: work => Task.FromResult(work()));
 
@@ -270,7 +318,7 @@ public class QuestUnlocksTests
         var catalog = Quests();
         var source = new QuestUnlocksSource(
             () => catalog,
-            c => QuestUnlocks.Build(c, Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea")), Duties, Links()),
+            c => QuestUnlocks.Build(c, DefaultRewards(), Duties, Links()),
             start: work => Task.FromResult(work()));
 
         // Kugane, Onokoro and the Sirensong Sea are Stormblood's (expansion 2): a character who reached Heavensward sees none.

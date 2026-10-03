@@ -28,8 +28,12 @@ namespace Tsukimichi.Core.Unlocks;
 /// </list>
 /// Dedupe: an instance and the duty unlock of one duty are one row, and so are a deep dungeon's floor sets (one row
 /// named for the dungeon); a curated feature named like a duty of the quest is that duty; a zone a warp opens and the
-/// rule also finds is one Sheet row. Order: by group (<see cref="UnlockGroup"/>), by target, by expansion, by the
-/// target's own order (a duty's level, a zone's sheet order), by name; next quests last, in catalog order.
+/// rule also finds is one Sheet row; two rows of one kind with one name ("Collect", a world map and its place name)
+/// are one row. A row the quest's own Rewards already show (<see cref="UnlockRewards"/>: a job, a duty, an emote, a
+/// mount, an aether current, a named feature) is marked <see cref="UnlockEntry.InRewards"/> and left out of
+/// <see cref="For"/>, so no surface draws it twice. Order: by group (<see cref="UnlockGroup"/>), by target, by
+/// expansion, by the target's own order (a duty's level, a zone's sheet order), by name; next quests last, in catalog
+/// order.
 /// Immutable; reads allocate nothing.
 /// </summary>
 public sealed class QuestUnlocks
@@ -37,34 +41,53 @@ public sealed class QuestUnlocks
     public static readonly QuestUnlocks Empty = new(
         null,
         FrozenDictionary<uint, UnlockEntry[]>.Empty,
+        FrozenDictionary<uint, UnlockEntry[]>.Empty,
         FrozenDictionary<(UnlockTarget, uint), uint[]>.Empty);
 
     private static readonly UnlockEntry[] NoEntries = [];
     private static readonly uint[] NoQuests = [];
 
     private readonly FrozenDictionary<uint, UnlockEntry[]> byQuest;
+    private readonly FrozenDictionary<uint, UnlockEntry[]> withRewards;
     private readonly FrozenDictionary<(UnlockTarget, uint), uint[]> byTarget;
 
-    private QuestUnlocks(QuestCatalog? catalog, FrozenDictionary<uint, UnlockEntry[]> byQuest, FrozenDictionary<(UnlockTarget, uint), uint[]> byTarget)
+    private QuestUnlocks(
+        QuestCatalog? catalog,
+        FrozenDictionary<uint, UnlockEntry[]> byQuest,
+        FrozenDictionary<uint, UnlockEntry[]> withRewards,
+        FrozenDictionary<(UnlockTarget, uint), uint[]> byTarget)
     {
         Catalog = catalog;
         this.byQuest = byQuest;
+        this.withRewards = withRewards;
         this.byTarget = byTarget;
     }
 
     /// <summary>The catalog the index was built over; null for <see cref="Empty"/>.</summary>
     public QuestCatalog? Catalog { get; }
 
-    /// <summary>How many quests open anything.</summary>
-    public int Count => byQuest.Count;
+    /// <summary>How many quests open anything, counting what their Rewards already show.</summary>
+    public int Count => withRewards.Count;
 
-    /// <summary>Every quest that opens anything, by row id.</summary>
-    public IEnumerable<uint> Quests => byQuest.Keys;
+    /// <summary>Every quest that opens anything, by row id, counting what their Rewards already show.</summary>
+    public IEnumerable<uint> Quests => withRewards.Keys;
 
-    /// <summary>What the quest opens, grouped and in display order; empty when nothing.</summary>
+    /// <summary>
+    /// What the quest opens, grouped and in display order, without the rows its Rewards already show
+    /// (<see cref="UnlockEntry.InRewards"/>): what every surface draws. Empty when nothing.
+    /// </summary>
     public IReadOnlyList<UnlockEntry> For(uint rowId) => byQuest.GetValueOrDefault(rowId) ?? NoEntries;
 
-    /// <summary>The quests that open a target ("which quest opens Kugane?"), in catalog order; empty when none.</summary>
+    /// <summary>
+    /// What the quest opens with the rows its Rewards already show (marked <see cref="UnlockEntry.InRewards"/>), in
+    /// display order: for the reverse lookup and the tests, never drawn as it is. Empty when nothing.
+    /// </summary>
+    public IReadOnlyList<UnlockEntry> IncludingRewards(uint rowId) => withRewards.GetValueOrDefault(rowId) ?? NoEntries;
+
+    /// <summary>
+    /// The quests that open a target ("which quest opens Kugane?"), in catalog order, a quest whose Rewards show it
+    /// included; empty when none.
+    /// </summary>
     public IReadOnlyList<uint> UnlockedBy(UnlockTarget target, uint targetId) => byTarget.GetValueOrDefault((target, targetId)) ?? NoQuests;
 
     /// <summary>The groups the quest has rows in, one bit each (<see cref="UnlockTargets.Bit"/>).</summary>
@@ -316,7 +339,7 @@ public sealed class QuestUnlocks
                     }
 
                     var source = entry.Confidence >= Confidence.Curated ? UnlockSource.Curated : UnlockSource.Sheet;
-                    AddReward(quest, entry.Kind, entry.RewardId, entry.ItemId, entry.RewardName, source, 0);
+                    AddReward(quest, entry.Kind, entry.RewardId, entry.ItemId, entry.RewardName, source, 0, inRewards: false);
                 }
 
                 foreach (var reward in quest.Rewards)
@@ -327,14 +350,14 @@ public sealed class QuestUnlocks
                         continue;
                     }
 
-                    AddReward(quest, reward.Kind, reward.Id, reward.ItemId, reward.Name, UnlockSource.Sheet, reward.Icon);
+                    // Each of these is a Rewards tile already: the row is kept for the reverse lookup, never drawn.
+                    AddReward(quest, reward.Kind, reward.Id, reward.ItemId, reward.Name, UnlockSource.Sheet, reward.Icon, inRewards: true);
                 }
             }
         }
 
-        private void AddReward(QuestRecord quest, RewardKind kind, uint id, uint itemId, string name, UnlockSource source, uint icon)
+        private void AddReward(QuestRecord quest, RewardKind kind, uint id, uint itemId, string name, UnlockSource source, uint icon, bool inRewards)
         {
-            var inRewards = InRewards(quest, kind, id, itemId);
             if (icon == 0)
             {
                 icon = IconFromRewards(quest, kind, id, itemId);
@@ -343,17 +366,17 @@ public sealed class QuestUnlocks
             switch (kind)
             {
                 case RewardKind.DutyUnlock:
-                    AddDuty(quest, duties.TryGetCondition(id, out var duty) ? duty : null, id, name, source, kind);
+                    AddDuty(quest, duties.TryGetCondition(id, out var duty) ? duty : null, id, name, source, kind, inRewards);
                     return;
 
                 case RewardKind.Instance:
                     if (duties.TryGetInstance(id, out var instance) || duties.TryGetByName(name, out instance))
                     {
-                        AddDuty(quest, instance, instance.ContentFinderConditionId, name, source, RewardKind.DutyUnlock);
+                        AddDuty(quest, instance, instance.ContentFinderConditionId, name, source, RewardKind.DutyUnlock, inRewards);
                     }
                     else if (name.Length > 0)
                     {
-                        AddDuty(quest, null, 0, name, source, null);
+                        AddDuty(quest, null, 0, name, source, null, inRewards);
                     }
 
                     return;
@@ -374,18 +397,23 @@ public sealed class QuestUnlocks
                     var zoneName = CurrentZone(name);
                     if (zoneName.Length > 0)
                     {
-                        RowsOf(quest.RowId).Add(new UnlockEntry(UnlockTarget.Flying, 0, zoneName, AetherCurrentIcon, source, quest.Expansion, Detail: FlyingDetail));
+                        // The reward kind lets UnlockRewards match the quest's "Aether Current" reward tile.
+                        RowsOf(quest.RowId).Add(new UnlockEntry(UnlockTarget.Flying, 0, zoneName, AetherCurrentIcon, source, quest.Expansion, Detail: FlyingDetail)
+                        {
+                            Reward = kind,
+                            InRewards = inRewards,
+                        });
                     }
 
                     return;
 
                 case RewardKind.SystemUnlock:
-                    AddFeature(quest, name, source);
+                    AddFeature(quest, name, source, inRewards);
                     return;
 
                 case RewardKind.Other:
                     // A named Quest.OtherReward: Wondrous Tails, the Aether Compass, Spearfishing.
-                    AddFeature(quest, name, UnlockSource.Sheet);
+                    AddFeature(quest, name, UnlockSource.Sheet, inRewards);
                     return;
             }
 
@@ -402,7 +430,7 @@ public sealed class QuestUnlocks
             });
         }
 
-        private void AddDuty(QuestRecord quest, PlanDuty? duty, uint conditionId, string fallbackName, UnlockSource source, RewardKind? reward)
+        private void AddDuty(QuestRecord quest, PlanDuty? duty, uint conditionId, string fallbackName, UnlockSource source, RewardKind? reward, bool inRewards)
         {
             var name = UnlockTags.Capitalize(UnlockTags.ContentName(duty?.Name ?? fallbackName));
             if (name.Length == 0)
@@ -416,10 +444,11 @@ public sealed class QuestUnlocks
             RowsOf(quest.RowId).Add(new UnlockEntry(target, conditionId, name, info?.Icon ?? 0, source, info?.Expansion ?? quest.Expansion, info?.Level ?? 0, Detail: detail)
             {
                 Reward = conditionId != 0 ? reward : null,
+                InRewards = inRewards,
             });
         }
 
-        private void AddFeature(QuestRecord quest, string label, UnlockSource source)
+        private void AddFeature(QuestRecord quest, string label, UnlockSource source, bool inRewards)
         {
             if (label.Length == 0)
             {
@@ -432,20 +461,10 @@ public sealed class QuestUnlocks
             var note = curated is not null && curated.SystemUnlocks.TryGetValue(quest.RowId, out var system) && string.Equals(system.Label, label, StringComparison.Ordinal)
                 ? system.Note
                 : null;
-            RowsOf(quest.RowId).Add(new UnlockEntry(target, 0, label, target == UnlockTarget.Flying ? AetherCurrentIcon : 0, source, quest.Expansion, Note: note));
-        }
-
-        private static bool InRewards(QuestRecord quest, RewardKind kind, uint id, uint itemId)
-        {
-            foreach (var reward in quest.Rewards)
+            RowsOf(quest.RowId).Add(new UnlockEntry(target, 0, label, target == UnlockTarget.Flying ? AetherCurrentIcon : 0, source, quest.Expansion, Note: note)
             {
-                if ((itemId != 0 && reward.ItemId == itemId) || (reward.Kind == kind && reward.Id == id && id != 0))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+                InRewards = inRewards,
+            });
         }
 
         private static uint IconFromRewards(QuestRecord quest, RewardKind kind, uint id, uint itemId)
@@ -498,6 +517,7 @@ public sealed class QuestUnlocks
         public QuestUnlocks Finish()
         {
             var result = new Dictionary<uint, UnlockEntry[]>();
+            var shown = new Dictionary<uint, UnlockEntry[]>();
             var reverse = new Dictionary<(UnlockTarget, uint), List<uint>>();
             foreach (var quest in catalog.All)
             {
@@ -509,9 +529,16 @@ public sealed class QuestUnlocks
                 }
 
                 var ordered = new List<UnlockEntry>((rows?.Count ?? 0) + (next?.Count ?? 0));
+                var hidden = 0;
                 if (rows is not null)
                 {
-                    ordered.AddRange(rows.Ordered());
+                    foreach (var row in rows.Ordered())
+                    {
+                        // One rule for every kind and every surface: what a Rewards tile shows is no unlock row.
+                        var entry = row.InRewards || !UnlockRewards.Shown(quest.Rewards, row) ? row : row with { InRewards = true };
+                        hidden += entry.InRewards ? 1 : 0;
+                        ordered.Add(entry);
+                    }
                 }
 
                 if (next is not null)
@@ -520,6 +547,11 @@ public sealed class QuestUnlocks
                 }
 
                 result[quest.RowId] = [.. ordered];
+                if (hidden < ordered.Count)
+                {
+                    shown[quest.RowId] = hidden == 0 ? result[quest.RowId] : [.. ordered.Where(static e => !e.InRewards)];
+                }
+
                 foreach (var entry in ordered)
                 {
                     if (entry.TargetId == 0)
@@ -540,7 +572,7 @@ public sealed class QuestUnlocks
 
             return result.Count == 0
                 ? Empty
-                : new QuestUnlocks(catalog, result.ToFrozenDictionary(), reverse.ToFrozenDictionary(kv => kv.Key, kv => kv.Value.ToArray()));
+                : new QuestUnlocks(catalog, shown.ToFrozenDictionary(), result.ToFrozenDictionary(), reverse.ToFrozenDictionary(kv => kv.Key, kv => kv.Value.ToArray()));
         }
     }
 
@@ -561,6 +593,16 @@ public sealed class QuestUnlocks
                     continue;
                 }
 
+                if (existing.Target != entry.Target && existing.Group == UnlockGroup.Area)
+                {
+                    // A zone and the world map of its name ("The Tempest"): the zone's row (the map opens on it), as sure
+                    // as the surer of the two.
+                    var zone = existing.Target == UnlockTarget.Zone ? existing : entry;
+                    var surer = UnlockTargets.Trust(entry.Source) > UnlockTargets.Trust(existing.Source) ? entry.Source : existing.Source;
+                    entries[i] = zone with { Source = surer };
+                    return;
+                }
+
                 if (UnlockTargets.Trust(entry.Source) > UnlockTargets.Trust(existing.Source))
                 {
                     // The more trusted claim, keeping what the first knew that it does not (an icon, a note, a reward kind).
@@ -571,6 +613,7 @@ public sealed class QuestUnlocks
                         Detail = entry.Detail.Length > 0 ? entry.Detail : existing.Detail,
                         TargetId = entry.TargetId != 0 ? entry.TargetId : existing.TargetId,
                         Reward = entry.Reward ?? existing.Reward,
+                        ItemId = entry.ItemId != 0 ? entry.ItemId : existing.ItemId,
                         InRewards = entry.InRewards || existing.InRewards,
                     };
                 }
@@ -591,9 +634,18 @@ public sealed class QuestUnlocks
                 return;
             }
 
-            // A curated feature named like one of the quest's duties is that duty ("Palace of the Dead").
-            if (entry.Target == UnlockTarget.System && entries.Exists(e => e.Group == UnlockGroup.Duty && SameName(e, entry)))
+            // A curated feature named like one of the quest's duties or jobs is that duty or job ("Palace of the Dead",
+            // "Blue Mage"), whichever came first.
+            if (entry.Target == UnlockTarget.System && entries.Exists(e => NamesFeature(e, entry)))
             {
+                return;
+            }
+
+            var feature = entries.FindIndex(e => e.Target == UnlockTarget.System && NamesFeature(entry, e));
+            if (feature >= 0)
+            {
+                var old = entries[feature];
+                entries[feature] = entry with { Note = entry.Note ?? old.Note, InRewards = entry.InRewards || old.InRewards };
                 return;
             }
 
@@ -601,8 +653,9 @@ public sealed class QuestUnlocks
         }
 
         /// <summary>
-        /// One row per target: the same sheet row of the same kind, else (a row without an id, a duty's floor sets, a
-        /// duty named only by the reward data) the same name within the group.
+        /// One row per target: the same sheet row of the same kind, else the same name: within the group for a duty (a
+        /// duty's floor sets, a duty named only by the reward data) and an area (a zone and the world map of its name, a
+        /// world map and its own place name), within the kind otherwise (two actions both named "Collect" read as one).
         /// </summary>
         private static bool SameTarget(UnlockEntry a, UnlockEntry b)
         {
@@ -616,13 +669,23 @@ public sealed class QuestUnlocks
                 return (a.TargetId != 0 && a.TargetId == b.TargetId) || SameName(a, b);
             }
 
+            // A zone's id is a TerritoryType row and a world map's a PlaceName row: only the name joins the two.
+            if (a.Group == UnlockGroup.Area)
+            {
+                return (a.Target == b.Target && a.TargetId != 0 && a.TargetId == b.TargetId) || SameName(a, b);
+            }
+
             if (a.Target != b.Target)
             {
                 return false;
             }
 
-            return a.TargetId != 0 && b.TargetId != 0 ? a.TargetId == b.TargetId : SameName(a, b);
+            return (a.TargetId != 0 && a.TargetId == b.TargetId) || SameName(a, b);
         }
+
+        /// <summary>Whether <paramref name="row"/> is a duty or a job named like the curated <paramref name="feature"/>.</summary>
+        private static bool NamesFeature(UnlockEntry row, UnlockEntry feature) =>
+            (row.Group == UnlockGroup.Duty || row.Target == UnlockTarget.Job) && SameName(row, feature);
 
         private static bool SameName(UnlockEntry a, UnlockEntry b) =>
             string.Equals(PlanDuties.NameKey(a.Name), PlanDuties.NameKey(b.Name), StringComparison.Ordinal);
@@ -646,10 +709,5 @@ public sealed class QuestUnlocks
     private static string FlyingDetail => CoreText.T("Core.Unlock.FlyingDetail", "aether current");
 
     /// <summary>"Aether Current (Coerthas Western Highlands)" names the zone flying opens in.</summary>
-    private static string CurrentZone(string name)
-    {
-        var open = name.IndexOf('(', StringComparison.Ordinal);
-        var close = name.LastIndexOf(')');
-        return open >= 0 && close > open + 1 ? name[(open + 1)..close].Trim() : name;
-    }
+    private static string CurrentZone(string name) => UnlockRewards.CurrentZone(name);
 }

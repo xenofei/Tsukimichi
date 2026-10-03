@@ -1567,7 +1567,11 @@ public sealed class TablePane : IDisposable
         }
     }
 
-    /// <summary>The Opens column: the icons of the first three things the quest opens (next quests left out); nothing for a masked quest.</summary>
+    /// <summary>
+    /// The Opens column: the icons of the first three things the quest opens (next quests left out, and anything the
+    /// Rewards column and tiles already show: <see cref="Core.Unlocks.UnlockRewards"/>); nothing for a masked quest, and
+    /// an empty cell for a quest whose only unlocks are its rewards.
+    /// </summary>
     private void DrawOpensIcons(QuestRecord quest, in RowLayout layout)
     {
         if (runner.Unlocks is not { } unlocks || runner.Spoilers.IsMasked(quest))
@@ -1583,8 +1587,8 @@ public sealed class TablePane : IDisposable
         for (var i = 0; i < entries.Count && drawn < MaxOpensIcons; i++)
         {
             var entry = entries[i];
-            // Sprout mode leaves out rows past the character's reach, as the detail pane does (UnlockView.Visible).
-            if (entry.Target == Core.Unlocks.UnlockTarget.NextQuest || entry.Icon == 0 || !Core.Unlocks.UnlockView.InReach(entry, reach))
+            // Sprout mode leaves out rows past the character's reach, and no row repeats a reward, as in the detail pane (UnlockView.Visible).
+            if (entry.Target == Core.Unlocks.UnlockTarget.NextQuest || entry.Icon == 0 || !Core.Unlocks.UnlockView.Shows(entry, reach))
             {
                 continue;
             }

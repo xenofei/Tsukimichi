@@ -19,9 +19,6 @@ static partial class Strings
     /// <summary>{0} = rows past a group's cap, listed in a popup.</summary>
     public static string UnlocksMoreFormat => Loc.Get("UnlocksMoreFormat");
 
-    /// <summary>{0} = next quests past the three shown; the button scrolls to the Path card.</summary>
-    public static string UnlocksMoreInPathFormat => Loc.Get("UnlocksMoreInPathFormat");
-
     /// <summary>The tooltip line of a row the first-visit rule inferred.</summary>
     public static string UnlocksLikely => Loc.Get("UnlocksLikely");
 
@@ -32,8 +29,6 @@ static partial class Strings
     public static string UnlocksOwned => Loc.Get("UnlocksOwned");
 
     // ---- Clicks ----
-    public static string UnlocksClickShowQuest => Loc.Get("UnlocksClickShowQuest");
-
     public static string UnlocksClickTeleport => Loc.Get("UnlocksClickTeleport");
 
     public static string UnlocksClickFlag => Loc.Get("UnlocksClickFlag");
@@ -43,8 +38,6 @@ static partial class Strings
     public static string UnlocksRightClickDuty => Loc.Get("UnlocksRightClickDuty");
 
     // ---- Row menu ----
-    public static string UnlocksMenuShowQuest => Loc.Get("UnlocksMenuShowQuest");
-
     /// <summary>{0} = the aetheryte's name.</summary>
     public static string UnlocksMenuTeleportFormat => Loc.Get("UnlocksMenuTeleportFormat");
 

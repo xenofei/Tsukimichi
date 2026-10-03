@@ -15,23 +15,23 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The detail pane's Unlocks section (feature plan v6 K2), between Rewards and Hand in: what the quest opens, as icon
-/// rows grouped like the wiki's "Unlocks" column (Areas · Aetherytes · Duties · Features · Actions &amp; emotes · Items ·
-/// Next quests), from <see cref="QueryRunner.Unlocks"/>.
+/// rows grouped like the wiki's "Unlocks" column (Areas · Aetherytes · Duties · Features · Actions &amp; emotes ·
+/// Items), from <see cref="QueryRunner.Unlocks"/>.
 /// <list type="bullet">
-/// <item>Each row: the game icon on a sunken tile (the veiled moon while none is known; a next quest wears its state
-/// moon), the name, the kind and one fact on the right ("Dungeon · Lv 61"), and a check in a reserved slot only when
-/// the game confirms the character has it (a duty unlocked, an aetheryte attuned, an emote or mount owned). There is no
-/// "not yet" mark.</item>
-/// <item>At most six rows a group, then "+N more" with the rest in a popup; next quests at most three, then "+N in
-/// Path", which scrolls to the Path card. Actions, emotes and items the Rewards tiles already show are left out, and a
-/// group left empty is not drawn.</item>
-/// <item>Clicks: a next quest is selected; an aetheryte teleports through Lifestream when the game confirms it is
-/// attuned, else it is flagged on the map; an area opens the map. A duty's right-click menu opens the Duty Finder on it
-/// (a read-only UI call that never queues). Every row has a right-click menu and is a focusable item.</item>
+/// <item>Each row: the game icon on a sunken tile (the veiled moon while none is known), the name, the kind and one
+/// fact on the right ("Dungeon · Lv 61"), and a check in a reserved slot only when the game confirms the character has
+/// it (a duty unlocked, an aetheryte attuned, an emote owned). There is no "not yet" mark.</item>
+/// <item>Nothing is drawn twice in the pane: anything the Rewards tiles already show (a job, a duty, an emote, a mount,
+/// an aether current: <see cref="UnlockRewards"/>) is left out of every group, and next quests are left to the Path
+/// card, which lists the same quests with their moons. A group left empty is not drawn, and a quest left with nothing
+/// draws no section at all.</item>
+/// <item>At most six rows a group, then "+N more" with the rest in a popup.</item>
+/// <item>Clicks: an aetheryte teleports through Lifestream when the game confirms it is attuned, else it is flagged on
+/// the map; an area opens the map. A duty's right-click menu opens the Duty Finder on it (a read-only UI call that never
+/// queues). Every row has a right-click menu and is a focusable item.</item>
 /// <item>The tooltip says how sure a row is: "Likely: you first reach it here" for the first-visit rule's rows, the
 /// curated note for curated ones.</item>
-/// <item>Spoiler shield: a masked quest's section is one line and nothing else; next quests print through the shield;
-/// Sprout mode leaves out rows past the character's reach (<see cref="UnlockView"/>).</item>
+/// <item>Spoiler shield: a masked quest's section is one line and nothing else; Sprout mode leaves out rows past the character's reach (<see cref="UnlockView"/>).</item>
 /// </list>
 /// Rows are rebuilt only when the quest, the session, the index, attunement, the reach or the language changes; their
 /// height never changes on hover or as icons load, so nothing moves under the player.
@@ -39,7 +39,6 @@ namespace Tsukimichi.Ui;
 public sealed partial class DetailPane
 {
     private const int UnlocksPerGroup = 6;
-    private const int UnlockNextQuestsShown = 3;
     private const string UnlockMenuId = "##unlockMenu";
     private const string UnlockMoreId = "##unlockMore";
 
@@ -65,7 +64,7 @@ public sealed partial class DetailPane
     /// <summary>The icon of a reward-backed row the index has none for (the Moonlit resolver); null leaves the stand-in.</summary>
     public Func<QuestRecord?, UniqueRewardEntry, uint>? UnlockIcon { get; set; }
 
-    private sealed class UnlockRowView(UnlockEntry entry, string name, string caption, uint icon, bool confirmed, string? confirmedText, RewardRef? reward, QuestState state)
+    private sealed class UnlockRowView(UnlockEntry entry, string name, string caption, uint icon, bool confirmed, string? confirmedText)
     {
         public UnlockEntry Entry { get; } = entry;
 
@@ -80,12 +79,6 @@ public sealed partial class DetailPane
 
         /// <summary>What the check means ("Attuned", "Unlocked", "You have it"); null without a check.</summary>
         public string? ConfirmedText { get; } = confirmedText;
-
-        /// <summary>The quest's own reward for the row, whose tooltip it shows; null for none.</summary>
-        public RewardRef? Reward { get; } = reward;
-
-        /// <summary>A next quest's state, for its moon.</summary>
-        public QuestState State { get; } = state;
     }
 
     private sealed class UnlockGroupView(UnlockGroup group, string caption)
@@ -96,7 +89,7 @@ public sealed partial class DetailPane
 
         public List<UnlockRowView> Rows { get; } = [];
 
-        /// <summary>The rows past the cap, listed in the "+N more" popup (next quests: in Path instead).</summary>
+        /// <summary>The rows past the cap, listed in the "+N more" popup.</summary>
         public List<UnlockRowView> More { get; } = [];
 
         public string MoreLabel { get; set; } = string.Empty;
@@ -150,22 +143,26 @@ public sealed partial class DetailPane
         unlockGroups.Clear();
         unlocksCaption = string.Empty;
 
+        // The index already leaves out what the Rewards tiles show (UnlockRewards); next quests are the Path card's.
         var entries = index.For(quest.RowId);
         unlocksMasked = session.Spoilers.IsMasked(quest);
         if (unlocksMasked)
         {
-            unlocksAny = entries.Count > 0;
+            unlocksAny = false;
+            foreach (var entry in entries)
+            {
+                unlocksAny |= entry.Target != UnlockTarget.NextQuest;
+            }
+
             return;
         }
 
         var visible = UnlockView.Visible(entries, masked: false, reach);
         var catalog = index.Catalog ?? session.Bundle?.Catalog;
         UnlockGroupView? group = null;
-        var nextMore = 0;
         foreach (var entry in visible)
         {
-            // Actions, emotes and items the Rewards tiles already show are not repeated.
-            if (entry.InRewards && entry.Group is UnlockGroup.ActionEmote or UnlockGroup.Collectable)
+            if (entry.Target == UnlockTarget.NextQuest)
             {
                 continue;
             }
@@ -176,18 +173,9 @@ public sealed partial class DetailPane
                 unlockGroups.Add(group);
             }
 
-            var cap = entry.Group == UnlockGroup.NextQuest ? UnlockNextQuestsShown : UnlocksPerGroup;
-            if (group.Rows.Count >= cap)
+            if (group.Rows.Count >= UnlocksPerGroup)
             {
-                if (entry.Group == UnlockGroup.NextQuest)
-                {
-                    nextMore++;
-                }
-                else
-                {
-                    group.More.Add(UnlockRow(session, quest, entry, catalog));
-                }
-
+                group.More.Add(UnlockRow(session, quest, entry, catalog));
                 continue;
             }
 
@@ -200,10 +188,6 @@ public sealed partial class DetailPane
             {
                 view.MoreLabel = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMoreFormat, view.More.Count);
             }
-            else if (view.Group == UnlockGroup.NextQuest && nextMore > 0)
-            {
-                view.MoreLabel = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMoreInPathFormat, nextMore);
-            }
         }
 
         unlocksAny = unlockGroups.Count > 0;
@@ -213,25 +197,6 @@ public sealed partial class DetailPane
     private UnlockRowView UnlockRow(SessionState session, QuestRecord quest, UnlockEntry entry, QuestCatalog? catalog)
     {
         var name = catalog is null ? entry.Name : UnlockView.NameOf(entry, catalog, session.Spoilers);
-        var state = QuestState.Unknown;
-        if (entry.Target == UnlockTarget.NextQuest && session.States.TryGetValue(entry.TargetId, out var evaluation))
-        {
-            state = evaluation.State;
-        }
-
-        RewardRef? reward = null;
-        if (entry.Reward is { } kind)
-        {
-            foreach (var r in quest.Rewards)
-            {
-                if ((entry.ItemId != 0 && r.ItemId == entry.ItemId) || (r.Kind == kind && r.Id == entry.TargetId && entry.TargetId != 0))
-                {
-                    reward = r;
-                    break;
-                }
-            }
-        }
-
         var icon = entry.Icon;
         UniqueRewardEntry? asReward = entry.Reward is { } k && entry.TargetId != 0
             ? new UniqueRewardEntry(quest.RowId, k, entry.TargetId, entry.ItemId, entry.Name, Confidence.Static, string.Empty)
@@ -254,7 +219,7 @@ public sealed partial class DetailPane
             confirmedText = entry.Group == UnlockGroup.Duty ? Strings.UnlocksDutyUnlocked : Strings.UnlocksOwned;
         }
 
-        return new UnlockRowView(entry, name, entry.Caption, icon, confirmed, confirmedText, reward, state);
+        return new UnlockRowView(entry, name, entry.Caption, icon, confirmed, confirmedText);
     }
 
     private void DrawUnlockGroups(QuestRecord quest)
@@ -302,16 +267,12 @@ public sealed partial class DetailPane
 
         Chrome.FocusRing(rounding);
 
-        // The icon tile: the game icon, a next quest's moon, or the veiled moon while none is known.
+        // The icon tile: the game icon, or the veiled moon while none is known.
         var tileMin = min + new Vector2(0f, (height - iconSize) * 0.5f);
         var tileMax = tileMin + new Vector2(iconSize);
         dl.AddRectFilled(tileMin, tileMax, Theme.U32(Theme.Surface.Sunken), rounding);
         var center = (tileMin + tileMax) * 0.5f;
-        if (row.Entry.Target == UnlockTarget.NextQuest)
-        {
-            MoonGlyph.Draw(dl, center, iconSize * 0.36f, row.State);
-        }
-        else if (row.Icon == 0 || !GameIcon.DrawAt(dl, textures, row.Icon, tileMin + new Vector2(UiMetrics.Px(1f)), tileMax - new Vector2(UiMetrics.Px(1f)), rounding))
+        if (row.Icon == 0 || !GameIcon.DrawAt(dl, textures, row.Icon, tileMin + new Vector2(UiMetrics.Px(1f)), tileMax - new Vector2(UiMetrics.Px(1f)), rounding))
         {
             MoonGlyph.DrawVeiled(dl, center, iconSize * 0.32f, 0.6f);
         }
@@ -352,15 +313,9 @@ public sealed partial class DetailPane
         DrawUnlockMenu(row);
     }
 
-    /// <summary>The row's tooltip: the reward's own card for a reward, else the name, the caption, how sure, the check and the click.</summary>
+    /// <summary>The row's tooltip: the name, the caption, how sure, the check and the click.</summary>
     private void UnlockTooltip(UnlockRowView row)
     {
-        if (row.Reward is { } reward && row.Entry.Group is UnlockGroup.ActionEmote or UnlockGroup.Collectable)
-        {
-            RewardTooltip.Draw(reward, links, textures);
-            return;
-        }
-
         using var style = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
@@ -396,7 +351,6 @@ public sealed partial class DetailPane
     /// <summary>What a left click does on the row, or null when it does nothing.</summary>
     private string? ClickHint(UnlockRowView row) => row.Entry.Target switch
     {
-        UnlockTarget.NextQuest => Strings.UnlocksClickShowQuest,
         UnlockTarget.Aetheryte => links.CanTeleportTo(row.Entry.TargetId) ? Strings.UnlocksClickTeleport : Strings.UnlocksClickFlag,
         UnlockTarget.Zone when links.CanOpenMap(row.Entry.PlaceId) => Strings.UnlocksClickMap,
         _ when row.Entry.Group == UnlockGroup.Duty && links.CanOpenDutyFinder(row.Entry.TargetId) => Strings.UnlocksRightClickDuty,
@@ -408,9 +362,6 @@ public sealed partial class DetailPane
         var entry = row.Entry;
         switch (entry.Target)
         {
-            case UnlockTarget.NextQuest:
-                RevealRow(entry.TargetId);
-                break;
             case UnlockTarget.Aetheryte:
                 if (!links.TeleportTo(entry.TargetId, entry.Name))
                 {
@@ -436,13 +387,6 @@ public sealed partial class DetailPane
         var entry = row.Entry;
         switch (entry.Target)
         {
-            case UnlockTarget.NextQuest:
-                if (ImGui.MenuItem(Strings.UnlocksMenuShowQuest))
-                {
-                    RevealRow(entry.TargetId);
-                }
-
-                break;
             case UnlockTarget.Aetheryte:
             case UnlockTarget.AethernetShard:
                 if (entry.Target == UnlockTarget.Aetheryte)
@@ -515,25 +459,13 @@ public sealed partial class DetailPane
         }
     }
 
-    /// <summary>"+N more" (the rest in a popup) or, for next quests, "+N in Path" (scrolls to the Path card).</summary>
+    /// <summary>"+N more": the rest in a popup.</summary>
     private void DrawUnlockMore(UnlockGroupView group)
     {
         using var color = ImRaii.PushColor(ImGuiCol.Text, Theme.Surface.TextSecondary);
         if (ImGui.SmallButton(group.MoreLabel))
         {
-            if (group.Group == UnlockGroup.NextQuest)
-            {
-                ui.ScrollToPath = true;
-            }
-            else
-            {
-                ImGui.OpenPopup(UnlockMoreId);
-            }
-        }
-
-        if (group.More.Count == 0)
-        {
-            return;
+            ImGui.OpenPopup(UnlockMoreId);
         }
 
         using var popup = ImRaii.Popup(UnlockMoreId);

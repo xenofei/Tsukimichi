@@ -38,8 +38,8 @@ public sealed record UnlockEntry(
     public bool IsLikely => Source == UnlockSource.Derived;
 
     /// <summary>
-    /// The reward kind the row came from (a duty unlock, an emote, a mount), so the plugin can ask the game whether the
-    /// character has it; null for a row no reward stands behind (an area, an aetheryte, a next quest).
+    /// The reward kind the row came from (a duty unlock, an emote, a mount, an aether current), so the plugin can ask the
+    /// game whether the character has it; null for a row no reward stands behind (an area, an aetheryte, a next quest).
     /// </summary>
     public RewardKind? Reward { get; init; }
 
@@ -47,8 +47,9 @@ public sealed record UnlockEntry(
     public uint ItemId { get; init; }
 
     /// <summary>
-    /// The quest's own reward list carries the same thing, so the detail pane's Rewards tiles already show it and its
-    /// Unlocks section leaves it out of Actions &amp; emotes and Items.
+    /// The quest's own reward list carries the same thing (<see cref="UnlockRewards"/>), so the table's Rewards column
+    /// and the detail pane's Rewards tiles already show it: no unlock surface draws the row
+    /// (<see cref="QuestUnlocks.For"/> and <see cref="UnlockView.Visible"/> leave it out).
     /// </summary>
     public bool InRewards { get; init; }
 

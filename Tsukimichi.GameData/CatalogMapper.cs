@@ -457,19 +457,23 @@ public static class CatalogMapper
 
         if (quest.InstanceContentUnlock.RowId != 0 && quest.InstanceContentUnlock.ValueNullable is { } instance)
         {
+            // The tile wears the duty's kind icon (dungeon, trial, raid), as the Unlocks rows do; ContentFinderCondition's
+            // own Icon is 0 on the duties a quest opens.
             var condition = instance.ContentFinderCondition.RowId != 0 ? instance.ContentFinderCondition.ValueNullable : null;
+            var icon = condition is not { } c ? 0u : c.Icon != 0 ? c.Icon : c.ContentType.ValueNullable?.Icon ?? 0u;
             rewards.Add(new RewardRef(
                 RewardKind.Instance,
                 instance.RowId,
                 0,
                 1,
                 condition?.Name.ExtractText() ?? string.Empty,
-                condition?.Icon ?? 0));
+                icon));
         }
 
         if (quest.ClassJobUnlock.RowId != 0 && quest.ClassJobUnlock.ValueNullable is { } classJob)
         {
-            rewards.Add(new RewardRef(RewardKind.ClassJob, classJob.RowId, 0, 1, NameCase.Title(classJob.Name.ExtractText()), 0));
+            // The job's own icon (the 062100 set), so the Rewards column and tiles show the job the Unlocks rows leave to them.
+            rewards.Add(new RewardRef(RewardKind.ClassJob, classJob.RowId, 0, 1, NameCase.Title(classJob.Name.ExtractText()), ClassJobIconBase + classJob.RowId));
         }
 
         if (quest.OtherReward.RowId != 0 && quest.OtherReward.ValueNullable is { } other)
@@ -514,6 +518,9 @@ public static class CatalogMapper
 
     private static RewardRef ItemReward(RewardKind kind, in Item item, byte count)
         => new(kind, item.RowId, item.RowId, Math.Max(count, (byte)1), item.Name.ExtractText(), item.Icon);
+
+    /// <summary>First job icon in the 062000 set, offset by ClassJob row id.</summary>
+    private const uint ClassJobIconBase = 62100;
 
     /// <summary>ClassJobCategory rows "Disciples of the Land" and "Disciples of the Hand"; membership marks gatherers and crafters.</summary>
     private const uint DisciplesOfTheLandCategory = 32;
