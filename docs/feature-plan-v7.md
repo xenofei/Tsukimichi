@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **proposed on 2026-10-03, waiting for your review.** Nothing in this plan is built. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -252,3 +252,20 @@ Carried from plan v6 (was 1.16), plus new features.
 | 12 | The Milky Way band | Its own setting, off by default |
 | 13 | Revive Sumi to Kinpaku as a fourth theme in 1.17? | Yes, after its own design round |
 | 14 | Before Evercold (1.20) by early December | Yes; recheck its contents after the Tokyo Fan Fest |
+
+### Your answers (3 October 2026)
+
+You agreed with all 14 recommendations and voted "build it" on every item except A6, which you asked to put to a panel. **The plan is signed off and executing from 1.14.0.**
+
+Your notes, and what happens with each:
+
+| Item | You said | What happens |
+|---|---|---|
+| UI-5a | "If an icon would give it more emphasis and it supports it, then add it in." | Icons are added wherever they give emphasis and fit, not only for the 24 audited gaps. |
+| A6 | "Get with critics, power users, casual players, and others to determine if this is wanted or not." | A panel of personas plus community evidence decides before 1.18. The verdict will be recorded here. |
+| Rail badge | People with 99+ quests see a number that never goes down. "Think of a better solution, and implement it." | A redesigned Journal badge (UI addendum, Revision 3), built in 1.14 with the rail. |
+| UI-4 | The "Characters" label escapes the highlighted plate. | Labels always fit inside their plate (Revision 3), built in 1.14. |
+| UI-6 | "Subtle star animations … or maybe even a slow moving night sky." | A very slow drift of the whole sky at Full, off under Reduce motion (Revision 3), built in 1.14. |
+| V1 | The craters are part blurry and part crisp. "Needs to have consistency, and maybe a bit more realism." | The craters are redesigned for one consistent, realistic treatment, then reviewed by the supervisor, built in 1.14. |
+| Ishgard Glass | Completed "looks just like a blob"; Locked out should be "similarly cracked like the others … slightly different", with no large hole | Glass round 3, reviewed by the supervisor before 1.16. |
+| Aether Crystal, Orrery | "Looks great!" | No change. |
