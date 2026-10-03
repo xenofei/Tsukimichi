@@ -20,10 +20,44 @@ public delegate Vector4 Paint(Vector2 point);
 /// </summary>
 public sealed class MedalMesh
 {
+    // The brightest vertex's luminance, worked out on first use (-1 until then); a racing first use writes the same value.
+    private float brightest = -1f;
+
     public MedalMesh(IReadOnlyList<MeshPart> parts) => Parts = parts;
 
     /// <summary>The parts in draw order.</summary>
     public IReadOnlyList<MeshPart> Parts { get; }
+
+    /// <summary>
+    /// The <see cref="Luminance"/> of the brightest vertex colour in any part (alpha ignored; 0 for an empty mesh): what a
+    /// glyph drawn in one ink scales each vertex's brightness by. Worked out once, then free.
+    /// </summary>
+    public float Brightest
+    {
+        get
+        {
+            if (brightest < 0f)
+            {
+                var max = 0f;
+                for (var p = 0; p < Parts.Count; p++)
+                {
+                    var colors = Parts[p].Colors;
+                    for (var i = 0; i < colors.Length; i++)
+                    {
+                        max = MathF.Max(max, Luminance(colors[i]));
+                    }
+                }
+
+                brightest = max;
+            }
+
+            return brightest;
+        }
+    }
+
+    /// <summary>A packed IM_COL32 colour's (0xAABBGGRR) Rec. 709 luminance on its 0–255 channels, alpha ignored.</summary>
+    public static float Luminance(uint color) =>
+        ((color & 0xFFu) * 0.2126f) + (((color >> 8) & 0xFFu) * 0.7152f) + (((color >> 16) & 0xFFu) * 0.0722f);
 
     /// <summary>Vertices and indices of the parts drawn at <paramref name="sizePx"/>.</summary>
     public (int Vertices, int Indices) Count(float sizePx)

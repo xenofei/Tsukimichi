@@ -117,7 +117,8 @@ public static partial class Chrome
 
     /// <summary>
     /// The hover tooltip of a plate (spec A5): the plate at <see cref="PortraitPlate.TooltipSize"/>, then the giver's
-    /// name in the Title role, the source line ("Portrait: Triple Triad card art") when a face shows, and the place.
+    /// name in the Title role, the source line ("Portrait: Triple Triad card art") when the face is drawn (not while a
+    /// fallback stands in for it), and the place.
     /// In the level's tooltip frame. Call while the plate's item is hovered.
     /// </summary>
     public static void PortraitTooltip(in PortraitRequest request, string name, string? place)
@@ -126,13 +127,12 @@ public static partial class Chrome
         UiMetrics.ApplyFontScale();
         var face = request.ShowsFace(PortraitPlate.TooltipMax);
         var plate = UiMetrics.Px(PortraitPlate.TooltipSize(request.Portrait, face));
-        var source = face ? Strings.PortraitSource(request.Portrait.Source) : string.Empty;
         var width = MathF.Max(plate, UiMetrics.Px(PortraitTooltipMinLogical));
         var left = ImGui.GetCursorScreenPos().X;
 
         var at = new Vector2(left + ((width - plate) * 0.5f), ImGui.GetCursorScreenPos().Y);
         ImGui.Dummy(new Vector2(width, plate));
-        Portrait(ImGui.GetWindowDrawList(), at, plate, request);
+        var drawn = Portrait(ImGui.GetWindowDrawList(), at, plate, request) && face;
         ImGui.Dummy(new Vector2(1f, UiMetrics.Px(4f)));
 
         using (Typography.Title(name))
@@ -140,9 +140,9 @@ public static partial class Chrome
             CenteredLine(name, left, width, Theme.Surface.Text);
         }
 
-        if (source.Length > 0)
+        if (drawn)
         {
-            CenteredLine(source, left, width, Theme.Surface.TextTertiary);
+            CenteredLine(Strings.PortraitSource(request.Portrait.Source), left, width, Theme.Surface.TextTertiary);
         }
 
         if (!string.IsNullOrEmpty(place))

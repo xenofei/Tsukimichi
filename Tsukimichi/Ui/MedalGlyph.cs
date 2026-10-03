@@ -164,8 +164,10 @@ public static class MedalGlyph
         var k = size / 128f;
         var uv = ImGui.GetFontTexUvWhitePixel();
         var fade = Math.Clamp(alpha, 0f, 1f);
-        foreach (var part in mesh.Parts)
+        var parts = mesh.Parts;
+        for (var p = 0; p < parts.Count; p++)
         {
+            var part = parts[p];
             if (size < part.MinSizePx)
             {
                 continue;
@@ -212,15 +214,7 @@ public static class MedalGlyph
     /// </summary>
     internal static void DrawMeshInk(ImDrawListPtr dl, MedalMesh mesh, Vector2 min, float size, uint ink)
     {
-        var brightest = 0f;
-        foreach (var part in mesh.Parts)
-        {
-            foreach (var color in part.Colors)
-            {
-                brightest = MathF.Max(brightest, Brightness(color));
-            }
-        }
-
+        var brightest = mesh.Brightest;
         if (!(brightest > 0f))
         {
             return;
@@ -236,13 +230,11 @@ public static class MedalGlyph
         for (var i = start; i < vertices.Size; i++)
         {
             var vertex = vertices[i];
-            var k = Math.Clamp(Brightness(vertex.Col) / brightest, 0f, 1f);
+            var k = Math.Clamp(MedalMesh.Luminance(vertex.Col) / brightest, 0f, 1f);
             var alpha = (uint)MathF.Round((vertex.Col >> 24) * a);
             vertex.Col = (uint)MathF.Round(r * k) | ((uint)MathF.Round(g * k) << 8) | ((uint)MathF.Round(b * k) << 16) | (alpha << 24);
             vertices[i] = vertex;
         }
-
-        static float Brightness(uint color) => ((color & 0xFFu) * 0.2126f) + (((color >> 8) & 0xFFu) * 0.7152f) + (((color >> 16) & 0xFFu) * 0.0722f);
     }
 
     /// <summary>The medal's box for a keyline radius: whole-pixel size and corner, so atlas texels and rims land on pixels.</summary>

@@ -933,6 +933,7 @@ public sealed partial class Plugin : IDalamudPlugin
             _ = warmer.Start();
             gameLinks.AetheryteWarmup = warmer.Aetherytes;
             queryRunner.IconSheets = () => warmer.PaneIcons.Value;
+            queryRunner.IconSheetsSettled = () => warmer.PaneIcons.IsDone;
 
             // Giver portraits (1.15, F2/F5): the index is warmed with the others; every plate shows its fallback until it lands.
             Ui.GiverPortraits.Index = () => warmer.Portraits.Value;
