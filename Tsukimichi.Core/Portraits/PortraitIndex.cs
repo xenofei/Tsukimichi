@@ -11,7 +11,9 @@ namespace Tsukimichi.Core.Portraits;
 /// <param name="Era">The expansion the face belongs to (ExVersion row); null when the source does not say, which then
 /// reads as the expansion of the giver's first quest.</param>
 /// <param name="NpcId">The ENpcResident the source points at directly (a Trust member, a delivery client); 0 when it only names.</param>
-public sealed record PortraitFace(uint Icon, PortraitSource Source, string Name, byte? Era = null, uint NpcId = 0);
+/// <param name="Curated">Named by the curated file (<see cref="PortraitCuration.Faces"/>): its era, when it gives one,
+/// wins over a sheet face's for the same icon.</param>
+public sealed record PortraitFace(uint Icon, PortraitSource Source, string Name, byte? Era = null, uint NpcId = 0, bool Curated = false);
 
 /// <summary>A quest giver as the index sees it: the ENpcResident row, its name and its ENpcBase race and gender.</summary>
 /// <param name="Name">The English name, as the sources spell it (names are matched, never shown).</param>
@@ -20,7 +22,9 @@ public sealed record PortraitFace(uint Icon, PortraitSource Source, string Name,
 public sealed record PortraitGiver(uint NpcId, string Name, byte Race, byte Gender);
 
 /// <summary>A quest's giver, expansion and allied society, which pick the portrait and the fallback.</summary>
-public readonly record struct PortraitQuest(uint QuestId, uint GiverId, byte Expansion, byte BeastTribe);
+/// <param name="Seasonal">A seasonal event's quest (<c>Quest.Festival</c> set): the sheet files those under A Realm
+/// Reborn whatever the year, so they do not count toward the giver's first expansion.</param>
+public readonly record struct PortraitQuest(uint QuestId, uint GiverId, byte Expansion, byte BeastTribe, bool Seasonal = false);
 
 /// <summary>Everything read from the game for <see cref="PortraitIndex.Build"/>.</summary>
 /// <param name="TribeIcons">BeastTribe row to its emblem icon (<c>BeastTribe.Icon</c>).</param>
@@ -101,8 +105,15 @@ public readonly record struct PortraitRef(uint GiverId, uint Icon, PortraitSourc
 /// <para>
 /// <b>Picking.</b> Families are tried in <see cref="PortraitSources.Priority"/> order (Trust bust, Triple Triad card,
 /// battle-talk face, delivery portrait, Trust strip). The first family with a face from the quest's expansion or
-/// earlier wins, with its latest such face: the look the character had then, never a later one. When every face is
-/// from a later expansion, the earliest face is used (the better family among faces of one era): the nearest look.
+/// earlier wins, with its latest such face: the look the character had then. A face from a later expansion than the
+/// quest is never shown, even when it is the giver's only face: the giver gets the fallback instead (G'raha Tia's
+/// A Realm Reborn Crystal Tower quests must not wear his Shadowbringers Trust bust).
+/// </para>
+/// <para>
+/// <b>Eras.</b> A face's era is what its source says (a Trust member's duties, a quest battle's quest, a card's place
+/// in the card list); a face whose source says nothing reads as the giver's first expansion, counted over the giver's
+/// story quests (a seasonal event's quests are filed under A Realm Reborn whatever the year, so they count only for a
+/// giver with no other quest). When a curated face and a sheet face share an icon, the curated era wins.
 /// </para>
 /// </summary>
 public sealed class PortraitIndex
@@ -167,6 +178,11 @@ public sealed class PortraitIndex
         }
 
         var variant = Pick(giver.Variants, era);
+        if (variant.Source == PortraitSource.None)
+        {
+            return new PortraitRef(giverId, 0, PortraitSource.None, PortraitCrop.Full, era, fallback);
+        }
+
         return new PortraitRef(giverId, variant.Icon, variant.Source, Crops.For(variant.Source, variant.Icon), variant.Era, fallback, masks.GetValueOrDefault(variant.Icon));
     }
 
@@ -179,8 +195,9 @@ public sealed class PortraitIndex
 
     /// <summary>
     /// The face among <paramref name="variants"/> (sorted by family rank, then era, then icon) for a quest of
-    /// <paramref name="era"/>: the first family with a face from that era or earlier, its latest such face; else the
-    /// earliest face of all (the better family among equals).
+    /// <paramref name="era"/>: the first family with a face from that era or earlier, its latest such face. When every
+    /// face is from a later expansion there is none (<c>default</c>, <see cref="PortraitSource.None"/>): a later face
+    /// could show a look, or a person, the story has not reached, so the giver's fallback shows instead. Allocates nothing.
     /// </summary>
     public static PortraitVariant Pick(IReadOnlyList<PortraitVariant> variants, byte era)
     {
@@ -215,17 +232,9 @@ public sealed class PortraitIndex
             i = end;
         }
 
-        // Every face is from a later expansion: the earliest of them, the better family among equals.
-        var earliest = variants[0];
-        foreach (var variant in variants)
-        {
-            if (variant.Era < earliest.Era)
-            {
-                earliest = variant;
-            }
-        }
-
-        return earliest;
+        // Every face is from a later expansion than the quest: none. Never the nearest later face, which for a giver
+        // met early (G'raha Tia in the Crystal Tower) would be a later expansion's look, or reveal who they become.
+        return default;
     }
 
     /// <summary>
@@ -240,10 +249,19 @@ public sealed class PortraitIndex
         string Aliased(string normalized) =>
             curation.Aliases.TryGetValue(normalized, out var alias) ? PortraitNames.Normalize(alias.Name) : normalized;
 
-        var faces = new List<PortraitFace>(inputs.Faces.Count + curation.Faces.Count);
         // A delivery portrait without its keep mask would show the emblem script: it is not offered at all.
-        faces.AddRange(inputs.Faces.Where(f => f.Icon != 0 && f.Source != PortraitSource.None && (f.Source != PortraitSource.Delivery || curation.Masks.ContainsKey(f.Icon))));
-        faces.AddRange(curation.Faces.Select(kv => new PortraitFace(kv.Key, kv.Value.Source, kv.Value.Name, kv.Value.Era)));
+        bool Offered(uint icon, PortraitSource source) =>
+            icon != 0 && source != PortraitSource.None && (source != PortraitSource.Delivery || curation.Masks.ContainsKey(icon));
+
+        // A curated face or pin whose icon is not of the family it names is a typo (its crop would be measured on the
+        // wrong texture): it is not offered either. The curated file's reader warns about both.
+        bool CuratedOffered(uint icon, PortraitSource source) => Offered(icon, source) && PortraitSources.FamilyOfIcon(icon) == source;
+
+        var faces = new List<PortraitFace>(inputs.Faces.Count + curation.Faces.Count);
+        faces.AddRange(inputs.Faces.Where(f => Offered(f.Icon, f.Source)));
+        faces.AddRange(curation.Faces
+            .Where(kv => CuratedOffered(kv.Key, kv.Value.Source))
+            .Select(kv => new PortraitFace(kv.Key, kv.Value.Source, kv.Value.Name, kv.Value.Era, Curated: true)));
 
         var byName = new Dictionary<string, List<PortraitFace>>(StringComparer.Ordinal);
         var byNpc = new Dictionary<uint, List<PortraitFace>>();
@@ -275,8 +293,10 @@ public sealed class PortraitIndex
             }
         }
 
+        // A giver's first expansion, over its story quests; over its seasonal ones only when it has no other.
         var questMap = new Dictionary<uint, PortraitQuest>();
         var firstEraByName = new Dictionary<string, byte>(StringComparer.Ordinal);
+        var firstSeasonalEraByName = new Dictionary<string, byte>(StringComparer.Ordinal);
         var nameById = inputs.Givers.GroupBy(g => g.NpcId).ToDictionary(g => g.Key, g => g.First().Name);
         foreach (var quest in inputs.Quests)
         {
@@ -284,8 +304,14 @@ public sealed class PortraitIndex
             if (nameById.TryGetValue(quest.GiverId, out var name))
             {
                 var key = PortraitNames.Normalize(name);
-                firstEraByName[key] = firstEraByName.TryGetValue(key, out var seen) ? Math.Min(seen, quest.Expansion) : quest.Expansion;
+                var map = quest.Seasonal ? firstSeasonalEraByName : firstEraByName;
+                map[key] = map.TryGetValue(key, out var seen) ? Math.Min(seen, quest.Expansion) : quest.Expansion;
             }
+        }
+
+        foreach (var (key, era) in firstSeasonalEraByName)
+        {
+            firstEraByName.TryAdd(key, era);
         }
 
         var built = new Dictionary<uint, Giver>();
@@ -301,7 +327,7 @@ public sealed class PortraitIndex
             var firstEra = firstEraByName.GetValueOrDefault(normalized);
             var variants = generic
                 ? []
-                : Match(giver, normalized, Aliased(normalized), firstEra, byName, byNpc, byFirstWord, curation);
+                : Match(giver, normalized, Aliased(normalized), firstEra, byName, byNpc, byFirstWord, curation, CuratedOffered);
             built[giver.NpcId] = new Giver(
                 giver.Name,
                 variants,
@@ -324,11 +350,12 @@ public sealed class PortraitIndex
         Dictionary<string, List<PortraitFace>> byName,
         Dictionary<uint, List<PortraitFace>> byNpc,
         Dictionary<(PortraitSource, string), HashSet<string>> byFirstWord,
-        PortraitCuration curation)
+        PortraitCuration curation,
+        Func<uint, PortraitSource, bool> offered)
     {
-        if (curation.Pins.TryGetValue(giver.NpcId, out var pin))
+        if (curation.Pins.TryGetValue(giver.NpcId, out var pin) && offered(pin.Icon, pin.Source))
         {
-            return [new PortraitVariant(pin.Icon, pin.Source, firstEra, giver.Name)];
+            return [new PortraitVariant(pin.Icon, pin.Source, pin.Era ?? firstEra, giver.Name)];
         }
 
         var found = new List<PortraitFace>();
@@ -363,7 +390,9 @@ public sealed class PortraitIndex
         return found
             .Where(f => !blocks.Any(b => b.Blocks(f.Icon)))
             .GroupBy(f => f.Icon)
-            .Select(g => g.OrderBy(f => PortraitSources.Rank(f.Source)).ThenBy(f => f.Era ?? firstEra).First())
+            // One face per icon: a curated face that gives an era first (the hand-checked era wins over a sheet's
+            // guess for the same art), then the better family, then the earliest era.
+            .Select(g => g.OrderBy(f => f.Curated && f.Era is not null ? 0 : 1).ThenBy(f => PortraitSources.Rank(f.Source)).ThenBy(f => f.Era ?? firstEra).First())
             .Select(f => new PortraitVariant(f.Icon, f.Source, f.Era ?? firstEra, f.Name))
             .OrderBy(v => PortraitSources.Rank(v.Source))
             .ThenBy(v => v.Era)

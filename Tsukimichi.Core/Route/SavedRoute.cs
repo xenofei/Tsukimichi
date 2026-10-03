@@ -17,6 +17,9 @@ public sealed class SavedRoute
 
     public List<uint> QuestRowIds { get; set; } = [];
 
+    /// <summary>The target's own game icon (<see cref="RouteTarget.Icon"/>); 0 when it has none, and in a file written before 1.15.</summary>
+    public uint Icon { get; set; }
+
     /// <summary>The parts of a route to several targets; empty for a single target.</summary>
     public List<SavedRoutePart> Parts { get; set; } = [];
 
@@ -24,7 +27,7 @@ public sealed class SavedRoute
     public RouteTarget ToTarget()
     {
         var quests = QuestRowIds ?? [];
-        var target = new RouteTarget(Kind, Label ?? string.Empty, quests.ToArray());
+        var target = new RouteTarget(Kind, Label ?? string.Empty, quests.ToArray()) { Icon = Icon };
         if (Parts is not { Count: > 0 } parts)
         {
             return target;
@@ -35,11 +38,11 @@ public sealed class SavedRoute
         {
             if (part is not null)
             {
-                list.Add(new RouteTarget(part.Kind, part.Label ?? string.Empty, (part.QuestRowIds ?? []).ToArray()));
+                list.Add(new RouteTarget(part.Kind, part.Label ?? string.Empty, (part.QuestRowIds ?? []).ToArray()) { Icon = part.Icon });
             }
         }
 
-        return RouteTarget.Union(Kind, Label ?? string.Empty, list);
+        return RouteTarget.Union(Kind, Label ?? string.Empty, list) with { Icon = Icon };
     }
 
     /// <summary>What to store for <paramref name="target"/> followed by <paramref name="ownerContentId"/>.</summary>
@@ -52,10 +55,11 @@ public sealed class SavedRoute
             Kind = target.Kind,
             Label = target.Label,
             QuestRowIds = [.. target.QuestRowIds],
+            Icon = target.Icon,
         };
         foreach (var part in target.Parts)
         {
-            saved.Parts.Add(new SavedRoutePart { Kind = part.Kind, Label = part.Label, QuestRowIds = [.. part.QuestRowIds] });
+            saved.Parts.Add(new SavedRoutePart { Kind = part.Kind, Label = part.Label, QuestRowIds = [.. part.QuestRowIds], Icon = part.Icon });
         }
 
         return saved;
@@ -98,4 +102,7 @@ public sealed class SavedRoutePart
     public string Label { get; set; } = string.Empty;
 
     public List<uint> QuestRowIds { get; set; } = [];
+
+    /// <summary>The part's own game icon (<see cref="RouteTarget.Icon"/>); 0 when it has none.</summary>
+    public uint Icon { get; set; }
 }

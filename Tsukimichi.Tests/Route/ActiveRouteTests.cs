@@ -225,6 +225,26 @@ public class ActiveRouteTests
     }
 
     [Fact]
+    public void A_stored_route_keeps_its_header_icon()
+    {
+        var part = RouteTarget.ForQuest(A, "part") with { Icon = 61802 };
+        var union = RouteTarget.Union(RouteTargetKind.Blues, "A Realm Reborn blues", [part, RouteTarget.ForQuest(B, string.Empty)]) with { Icon = 61875 };
+        var back = SavedRoute.From(union, 1).ToTarget();
+        Assert.Equal(61875u, back.Icon);
+        Assert.Equal(61802u, back.Parts[0].Icon);
+        Assert.Equal(0u, back.Parts[1].Icon);
+
+        var single = SavedRoute.From(RouteTarget.ForJob("Paladin", Target) with { Icon = 62119 }, 7).ToTarget();
+        Assert.Equal(62119u, single.Icon);
+
+        // A route stored before 1.15 has no icon: it reads as 0.
+        var old = System.Text.Json.JsonSerializer.Deserialize<SavedRoute>("""{"OwnerContentId":7,"Kind":1,"Label":"Paladin","QuestRowIds":[5],"Parts":[{"Kind":0,"Label":"","QuestRowIds":[5]}]}""")!;
+        Assert.Equal(0u, old.Icon);
+        Assert.Equal(0u, old.Parts[0].Icon);
+        Assert.Equal(0u, old.ToTarget().Icon);
+    }
+
+    [Fact]
     public void A_stored_route_with_missing_lists_still_reads()
     {
         var saved = new SavedRoute { Kind = RouteTargetKind.Quest, Label = "x", QuestRowIds = null!, Parts = null! };

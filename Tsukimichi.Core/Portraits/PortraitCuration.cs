@@ -24,7 +24,9 @@ public sealed record CuratedPortraitBlock(uint GiverId, string NormalizedName, I
 }
 
 /// <summary>A giver pinned to one portrait, ahead of every rule (an era pick the rules get wrong).</summary>
-public sealed record CuratedPortraitPin(uint Icon, PortraitSource Source, string Note);
+/// <param name="Era">The expansion the pinned face belongs to (ExVersion row); null takes the giver's first quest's. A
+/// quest of an earlier expansion than the pin's era shows the fallback, as for any later face.</param>
+public sealed record CuratedPortraitPin(uint Icon, PortraitSource Source, string Note, byte? Era = null);
 
 /// <summary>
 /// The face seed of a custom delivery portrait (1.15 design spec A2.4): the hr px inside the client's face from which
@@ -45,7 +47,7 @@ public sealed record CuratedDeliveryKey(int SeedX, int SeedY, string Note);
 ///   "faces": { "73270": { "name": "Sphene", "source": "BattleTalk", "era": 5, "note": "..." } },   (source defaults to BattleTalk, era optional)
 ///   "aliases": { "PAPARIMO": { "name": "Papalymo", "note": "..." } },
 ///   "blocks": { "Clive": { "icons": [ 87371 ], "note": "..." }, "1012345": { "note": "..." } },  (by giver name or ENpcResident id; no icons = every portrait)
-///   "pins": { "1001234": { "icon": 73034, "source": "BattleTalk", "note": "..." } },              (by ENpcResident id)
+///   "pins": { "1001234": { "icon": 73034, "source": "BattleTalk", "era": 1, "note": "..." } },    (by ENpcResident id, era optional)
 ///   "deliveryKeys": { "61661": { "seed": [ 190, 225 ], "note": "..." } }                            (the face seed DataGen keys the emblem script from)
 /// }
 /// </code>
@@ -53,7 +55,8 @@ public sealed record CuratedDeliveryKey(int SeedX, int SeedY, string Note);
 /// boxes; <c>"eyes": [u, v]</c> and <c>"chin": v</c> measured on the texture, which the framing rule turns into a box
 /// (<see cref="PortraitFraming"/>); or <c>"crop": [u0, v0, u1, v1]</c> in texture coordinates. The keep masks DataGen
 /// writes from the delivery keys sit beside the file, in <c>portrait_masks/</c> with their manifest
-/// <c>masks.json</c> (<see cref="Masks"/>).
+/// <c>masks.json</c> (<see cref="Masks"/>). A face or pin whose icon is not of the family it names, or a delivery
+/// portrait that has no shipped keep mask, is skipped with a warning.
 /// </summary>
 public sealed record PortraitCuration
 {
@@ -207,19 +210,7 @@ public sealed record PortraitCuration
                 return;
             }
 
-            byte? era = null;
-            if (obj.TryGetPropertyValue("era", out var eraNode))
-            {
-                if (!StorageJson.TryReadId(eraNode, out var eraValue) || eraValue > MaxEra)
-                {
-                    warn($"era must be an expansion number from 0 to {MaxEra}");
-                    return;
-                }
-
-                era = (byte)eraValue;
-            }
-
-            if (!HasNote(obj, warn, out var note))
+            if (!FitsFamily(icon, source, masks, warn) || !TryReadEra(obj, warn, out var era) || !HasNote(obj, warn, out var note))
             {
                 return;
             }
@@ -346,12 +337,12 @@ public sealed record PortraitCuration
                 return;
             }
 
-            if (!HasNote(obj, warn, out var note))
+            if (!FitsFamily((uint)icon, source, masks, warn) || !TryReadEra(obj, warn, out var era) || !HasNote(obj, warn, out var note))
             {
                 return;
             }
 
-            pins[giverId] = new CuratedPortraitPin(icon, source, note);
+            pins[giverId] = new CuratedPortraitPin((uint)icon, source, note, era);
         });
 
         var deliveryKeys = new Dictionary<uint, CuratedDeliveryKey>();
@@ -493,6 +484,47 @@ public sealed record PortraitCuration
     }
 
     private static bool HasNote(JsonObject obj, Action<string> warn) => HasNote(obj, warn, out _);
+
+    /// <summary>
+    /// Whether <paramref name="icon"/> is of the family <paramref name="source"/> names (its id range,
+    /// <see cref="PortraitSources.FamilyOfIcon"/>), and, for a delivery portrait, has a shipped keep mask.
+    /// </summary>
+    private static bool FitsFamily(uint icon, PortraitSource source, IReadOnlyDictionary<uint, PortraitMask> masks, Action<string> warn)
+    {
+        var family = PortraitSources.FamilyOfIcon(icon);
+        if (family != source)
+        {
+            warn(family == PortraitSource.None ? $"icon {icon} is not of any portrait family" : $"icon {icon} is a {family} icon, not {source}");
+            return false;
+        }
+
+        if (source == PortraitSource.Delivery && !masks.ContainsKey(icon))
+        {
+            warn($"delivery portrait {icon} has no keep mask in {MaskFolder}/ (its emblem script would show)");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>The optional <c>"era"</c>: an expansion number from 0 to <see cref="MaxEra"/>; null when absent.</summary>
+    private static bool TryReadEra(JsonObject obj, Action<string> warn, out byte? era)
+    {
+        era = null;
+        if (!obj.TryGetPropertyValue("era", out var eraNode))
+        {
+            return true;
+        }
+
+        if (!StorageJson.TryReadId(eraNode, out var value) || value > MaxEra)
+        {
+            warn($"era must be an expansion number from 0 to {MaxEra}");
+            return false;
+        }
+
+        era = (byte)value;
+        return true;
+    }
 
     private static bool HasNote(JsonObject obj, Action<string> warn, out string note)
     {
