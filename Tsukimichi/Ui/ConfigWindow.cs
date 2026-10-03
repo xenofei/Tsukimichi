@@ -14,9 +14,9 @@ using Tsukimichi.Localization;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings (spec §7; rebuilt in 1.13.0, feature plan v6 U7): nine pages with an index and a search box
+/// Settings (spec §7; rebuilt in 1.13.0, feature plan v6 U7): ten pages with an index and a search box
 /// (<c>ConfigWindow.Layout.cs</c>, which also holds the one row design and says how to add a block). General (size,
-/// text size, look, motion, the main window, the tour), Journal, Overlay &amp; routes, Alerts, Spoilers, In game,
+/// text size, look, motion, the main window, the tour), Themes (since 1.16), Journal, Overlay &amp; routes, Alerts, Spoilers, In game,
 /// Automation, Characters &amp; data and Advanced, each page in its own partial file. Every change applies on the
 /// frame it is made, the window scale and the text size included; a toggle or a choice is saved at once, a slider once
 /// it has been still a moment (<see cref="SaveDebounce"/>), and anything waiting is saved when the window closes.

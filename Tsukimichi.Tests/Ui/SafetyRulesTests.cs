@@ -48,6 +48,7 @@ public class SafetyRulesTests
     [InlineData(GuardedAction.HideCharacter)]
     [InlineData(GuardedAction.Unpin)]
     [InlineData(GuardedAction.ResetFilters)]
+    [InlineData(GuardedAction.ResetAppearance)]
     public void Small_changes_are_one_click_with_undo(GuardedAction action)
     {
         Assert.Equal(SafetyTier.None, SafetyRules.TierOf(action));

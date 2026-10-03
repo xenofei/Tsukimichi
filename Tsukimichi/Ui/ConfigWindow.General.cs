@@ -13,17 +13,16 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// Settings › General (feature plan v6 U7): Size (window scale, text size and icon size, each applying on the frame it
-/// changes in every Tsukimichi window), Look (Decoration with its previews, moon style, moon colours with the legend,
-/// Dalamud colours, game fonts for headings, Reduce motion with the Motion line), the main window's tabs, and the tour.
+/// changes in every Tsukimichi window), Look (Decoration with its previews, the sky, giver portraits, game fonts for
+/// headings, Reduce motion with the Motion line), the main window's tabs, and the tour. Moon style, Moon colours and
+/// Dalamud colours moved to Settings › Themes in 1.16 (<c>ConfigWindow.Themes.cs</c>).
 /// </summary>
 public sealed partial class ConfigWindow
 {
     private static readonly LocArray FlairOptions = new(static () => [Strings.ConfigFlairFull, Strings.ConfigFlairQuiet, Strings.ConfigFlairPlain]);
-    private static readonly LocArray MoonStyleOptions = new(static () => [Strings.ConfigMoonStyleMedallion, Strings.ConfigMoonStyleClassic]);
 
     /// <summary>Giver portraits (1.15, spec-1.15 A8), in <see cref="GiverPortraitMode"/> order. The portrait pack joins as a third choice with F4.</summary>
     private static readonly LocArray GiverPortraitOptions = new(static () => [Strings.SettingsGiverPortraitsOff, Strings.SettingsGiverPortraitsGameArt]);
-    private static readonly LocArray PaletteOptions = new(static () => [Strings.ConfigGlyphPaletteStandard, Strings.ConfigGlyphPaletteHighContrast]);
 
     /// <summary>The Journal badge's choices, in <see cref="JournalBadgeMode"/> order.</summary>
     private static readonly LocArray JournalBadgeOptions = new(static () =>
@@ -121,8 +120,8 @@ public sealed partial class ConfigWindow
 
     /// <summary>
     /// Settings › General › Look (moon-road proposal §7.9, feature plan v4 V1/V3, v6 G3 and U7): Decoration (Full, Quiet,
-    /// Plain) with its previews, moon style, moon colours with the eight moons as a legend, Dalamud colours, game fonts
-    /// for headings (not used under Plain) and Reduce motion with the Motion line. Saved at once and applied from the
+    /// Plain) with its previews, the sky, giver portraits, game fonts for headings (not used under Plain) and Reduce motion
+    /// with the Motion line. The moons and colours are on Settings › Themes since 1.16 (spec-1.16 §B1). Saved at once and applied from the
     /// next frame (<see cref="Theme.Refresh"/>, <see cref="Typography.Update"/>).
     /// </summary>
     private void DrawLook()
@@ -143,27 +142,11 @@ public sealed partial class ConfigWindow
 
         DrawSkyLook();
 
-        // 1.16: these three edit the appearance (feature plan v7 T1) until Settings › Themes (T9) replaces them.
-        var moonStyle = (int)Themes.GlyphSeam.Appearance.MoonStyle;
-        if (Choice(Strings.ConfigMoonStyle, Strings.ConfigMoonStyleHint, ref moonStyle, MoonStyleOptions.Value, "medallion classic moon medal glyph style compare"))
-        {
-            AppearanceEdits.SetMoonStyle(settings.Appearance, (MoonStyle)moonStyle);
-            Save();
-        }
-
+        // Moon style, Moon colours and Follow Dalamud colours moved to Settings › Themes in 1.16 (spec-1.16 §B1).
         var portraits = Enum.IsDefined(settings.GiverPortraits) ? (int)settings.GiverPortraits : (int)GiverPortraitMode.GameArt;
         if (Choice(Strings.SettingsGiverPortraits, Strings.SettingsGiverPortraitsHint, ref portraits, GiverPortraitOptions.Value, "giver portrait face picture avatar npc art silhouette"))
         {
             settings.GiverPortraits = (GiverPortraitMode)portraits;
-            Save();
-        }
-
-        DrawGlyphPalette();
-
-        var followDalamud = Themes.GlyphSeam.Appearance.FollowDalamud;
-        if (Toggle(Strings.ConfigFollowDalamudColours, Strings.ConfigFollowDalamudColoursHint, ref followDalamud, "colors colours theme style night palette"))
-        {
-            AppearanceEdits.SetFollowDalamud(settings.Appearance, followDalamud);
             Save();
         }
 
@@ -618,48 +601,5 @@ public sealed partial class ConfigWindow
         {
             Ornament.Rule(dl, new Vector2(nameX, max.Y - 1f), (max.X - nameX) * 0.7f, 0.55f, 1f, Theme.Gold);
         }
-    }
-
-    /// <summary>States in the order the moon colours legend shows them (the Help legend's order).</summary>
-    private static readonly QuestState[] PalettePreviewStates =
-    [
-        QuestState.Completed, QuestState.Accepted, QuestState.Ready, QuestState.ReadyOnOtherJob,
-        QuestState.DoneThisCycle, QuestState.Blocked, QuestState.Foreclosed, QuestState.Unknown,
-    ];
-
-    /// <summary>
-    /// Settings › General › Moon colours (accessibility panel §2.2): Standard or High contrast, saved at once and applied
-    /// from the next frame (<see cref="Theme.Refresh"/>), with the eight state moons under it in the palette in effect so
-    /// the choice can be seen before closing the window. Each moon's tooltip names its state and shape.
-    /// </summary>
-    private void DrawGlyphPalette()
-    {
-        if (!Setting(Strings.ConfigGlyphPalette, Strings.ConfigGlyphPaletteHint, "moon colours colors palette standard high contrast colour blind accessibility glyph", Chrome.SegmentedWidth(PaletteOptions.Value), UiMetrics.MinTarget))
-        {
-            return;
-        }
-
-        var palette = settings.Appearance.HighContrast ? 1 : 0;
-        if (Chrome.Segmented("##palette", ref palette, PaletteOptions.Value, ControlWidth))
-        {
-            AppearanceEdits.SetHighContrast(settings.Appearance, palette == 1);
-            Save();
-        }
-
-        SettingBelow();
-        var glyph = UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight());
-        var gap = UiMetrics.Px(6f);
-        for (var i = 0; i < PalettePreviewStates.Length; i++)
-        {
-            if (i > 0)
-            {
-                ImGui.SameLine(0f, gap);
-            }
-
-            MoonGlyph.DrawInline(PalettePreviewStates[i], glyph);
-            HintOnHover(Strings.StateTooltip(PalettePreviewStates[i]));
-        }
-
-        EndSetting();
     }
 }

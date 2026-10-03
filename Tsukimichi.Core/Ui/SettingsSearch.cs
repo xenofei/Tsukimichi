@@ -3,8 +3,8 @@ using System.Globalization;
 namespace Tsukimichi.Core.Ui;
 
 /// <summary>
-/// The Settings window's nine pages (feature plan v6 U7), in the order the section index lists them:
-/// <see cref="SettingsSections.Order"/>. The page last open is remembered by name
+/// The Settings window's ten pages (feature plan v6 U7; Themes since 1.16, plan v7 T9), in the order the section index
+/// lists them: <see cref="SettingsSections.Order"/>. The page last open is remembered by name
 /// (<see cref="SettingsSections.Name"/>, <see cref="SettingsSections.Parse"/>), never by number, so reordering or
 /// renaming a page never opens the wrong one.
 /// </summary>
@@ -36,6 +36,9 @@ public enum SettingsSection
 
     /// <summary>Keyboard, chat commands, safety, refresh rate, hidden quest filing, the patch override and diagnostics.</summary>
     Advanced,
+
+    /// <summary>Themes (1.16, spec-1.16 §B): the theme cards, the live preview, the palette, high contrast, frames and Reset.</summary>
+    Themes,
 }
 
 /// <summary>
@@ -59,12 +62,14 @@ public enum SettingsAnchor
 public static class SettingsSections
 {
     /// <summary>
-    /// What a player changes most first (size and look), then each surface in the order it is met (the Journal, the
-    /// overlay, chat, spoilers, the game's own windows), the other plugins, the player's data and Advanced last.
+    /// What a player changes most first (size and look, then the theme), then each surface in the order it is met (the
+    /// Journal, the overlay, chat, spoilers, the game's own windows), the other plugins, the player's data and Advanced
+    /// last.
     /// </summary>
     public static IReadOnlyList<SettingsSection> Order { get; } =
     [
         SettingsSection.General,
+        SettingsSection.Themes,
         SettingsSection.Journal,
         SettingsSection.TodoOverlay,
         SettingsSection.Alerts,
@@ -103,6 +108,7 @@ public static class SettingsSections
         SettingsSection.Automation => "Automation",
         SettingsSection.Characters => "Characters",
         SettingsSection.Advanced => "Advanced",
+        SettingsSection.Themes => "Themes",
         _ => "General",
     };
 
@@ -122,6 +128,7 @@ public static class SettingsSections
         "AUTOMATION" => SettingsSection.Automation,
         "CHARACTERS" or "DATA" => SettingsSection.Characters,
         "ADVANCED" or "KEYBOARD" => SettingsSection.Advanced,
+        "THEMES" => SettingsSection.Themes,
         _ => SettingsSection.General,
     };
 }

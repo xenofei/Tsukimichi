@@ -3715,7 +3715,7 @@
     <comment>{0} = state name; a "Shown by" chip in Help › The moon phases.</comment>
   </data>
   <data name="Help.HighContrastLegendNote" xml:space="preserve">
-    <value>Showing the high-contrast glyphs (Settings › General › Moon colours): each moon carries a mark as well as its shape, and states with the same shape differ clearly in brightness.</value>
+    <value>Showing the high-contrast glyphs (Settings › Themes › High contrast): each moon carries a mark as well as its shape, and states with the same shape differ clearly in brightness.</value>
   </data>
   <data name="Help.StripeTitle" xml:space="preserve">
     <value>The table's state stripe</value>
@@ -10087,5 +10087,261 @@
   <data name="Portrait.GiverHidden" xml:space="preserve">
     <value>Hidden giver</value>
     <comment>Journal table's Giver column: shown instead of the giver's name for a quest the spoiler shield hides.</comment>
+  </data>
+  <data name="SettingsPageThemes" xml:space="preserve">
+    <value>Themes</value>
+    <comment>Settings: the Themes page's title and index entry (1.16, spec-1.16 §B).</comment>
+  </data>
+  <data name="SettingsIntroThemes" xml:space="preserve">
+    <value>Moons, frames and colours. Hover a theme to preview it; click to use it.</value>
+    <comment>Settings › Themes: the line under the page title.</comment>
+  </data>
+  <data name="ThemesHeadingTheme" xml:space="preserve">
+    <value>Theme</value>
+    <comment>Settings › Themes: the heading over the theme cards.</comment>
+  </data>
+  <data name="ThemesHeadingPreview" xml:space="preserve">
+    <value>Preview</value>
+    <comment>Settings › Themes: the heading over the live preview panel.</comment>
+  </data>
+  <data name="ThemesHeadingColours" xml:space="preserve">
+    <value>Colours</value>
+    <comment>Settings › Themes: the heading over Palette, High contrast and Frames.</comment>
+  </data>
+  <data name="ThemesCards" xml:space="preserve">
+    <value>Theme</value>
+    <comment>Settings › Themes: the theme cards' row, for the search box.</comment>
+  </data>
+  <data name="ThemesCardsHint" xml:space="preserve">
+    <value>Hover a theme to preview it; click to use it.</value>
+    <comment>Settings › Themes: the theme cards' hint, for the search box.</comment>
+  </data>
+  <data name="ThemeNameMedallion" xml:space="preserve">
+    <value>Menphina's Medallion</value>
+    <comment>Theme name (the default).</comment>
+  </data>
+  <data name="ThemeNameClassic" xml:space="preserve">
+    <value>Classic</value>
+    <comment>Theme name: the 1.11 moons.</comment>
+  </data>
+  <data name="ThemeNameAetherCrystal" xml:space="preserve">
+    <value>Aether Crystal</value>
+    <comment>Theme name.</comment>
+  </data>
+  <data name="ThemeNameIshgardGlass" xml:space="preserve">
+    <value>Ishgard Glass</value>
+    <comment>Theme name.</comment>
+  </data>
+  <data name="ThemeNameOrrery" xml:space="preserve">
+    <value>Astrologian's Orrery</value>
+    <comment>Theme name (1.17).</comment>
+  </data>
+  <data name="ThemeNameSumi" xml:space="preserve">
+    <value>Sumi to Kinpaku</value>
+    <comment>Theme name (1.17).</comment>
+  </data>
+  <data name="ThemesLegacyTag" xml:space="preserve">
+    <value>Legacy</value>
+    <comment>Settings › Themes: the small tag beside Classic's name (whole theme only).</comment>
+  </data>
+  <data name="ThemesCardSubtitleFormat" xml:space="preserve">
+    <value>{0} frames · {1}</value>
+    <comment>{0} = the frame kit (Brass, Silver, Came), {1} = the palette (Night, Ishgard Snow); a theme card's second line.</comment>
+  </data>
+  <data name="ThemesCardSubtitleClassicFormat" xml:space="preserve">
+    <value>The 1.11 moons · {0}</value>
+    <comment>{0} = the palette; Classic's card, second line.</comment>
+  </data>
+  <data name="FrameKitBrass" xml:space="preserve">
+    <value>Brass</value>
+    <comment>Frame kit name.</comment>
+  </data>
+  <data name="FrameKitSilver" xml:space="preserve">
+    <value>Silver</value>
+    <comment>Frame kit name.</comment>
+  </data>
+  <data name="FrameKitCame" xml:space="preserve">
+    <value>Came</value>
+    <comment>Frame kit name: lead came, as in stained glass.</comment>
+  </data>
+  <data name="FrameKitAstrolabe" xml:space="preserve">
+    <value>Astrolabe</value>
+    <comment>Frame kit name (1.17).</comment>
+  </data>
+  <data name="FrameKitKirikane" xml:space="preserve">
+    <value>Kirikane</value>
+    <comment>Frame kit name (1.17).</comment>
+  </data>
+  <data name="PaletteNameNight" xml:space="preserve">
+    <value>Night</value>
+    <comment>Palette name (the default).</comment>
+  </data>
+  <data name="PaletteNameDawn" xml:space="preserve">
+    <value>Dawn</value>
+    <comment>Palette name (1.17).</comment>
+  </data>
+  <data name="PaletteNameIshgardSnow" xml:space="preserve">
+    <value>Ishgard Snow</value>
+    <comment>Palette name: the first light palette.</comment>
+  </data>
+  <data name="PaletteNameKuganeLacquer" xml:space="preserve">
+    <value>Kugane Lacquer</value>
+    <comment>Palette name (1.17).</comment>
+  </data>
+  <data name="PaletteNameFollowDalamud" xml:space="preserve">
+    <value>Follow Dalamud</value>
+    <comment>Palette name: the colours of the user's Dalamud style.</comment>
+  </data>
+  <data name="ThemesInUse" xml:space="preserve">
+    <value>In use</value>
+    <comment>Settings › Themes: on the card of the theme in use.</comment>
+  </data>
+  <data name="ThemesSampleQuest" xml:space="preserve">
+    <value>Firmament</value>
+    <comment>Settings › Themes: the sample row's quest name on each card.</comment>
+  </data>
+  <data name="ThemesHighContrastNote" xml:space="preserve">
+    <value>High contrast uses one set of moons on every theme.</value>
+    <comment>Settings › Themes: under the cards while High contrast is on.</comment>
+  </data>
+  <data name="ThemesPreviewingFormat" xml:space="preserve">
+    <value>Previewing: {0}</value>
+    <comment>{0} = the hovered theme; the preview's header while a card is hovered.</comment>
+  </data>
+  <data name="ThemesPreviewInUseFormat" xml:space="preserve">
+    <value>In use: {0}</value>
+    <comment>{0} = the theme in use; the preview's header while a card is hovered.</comment>
+  </data>
+  <data name="ThemesPreviewFormat" xml:space="preserve">
+    <value>Preview · {0}</value>
+    <comment>{0} = the theme in use; the preview's header.</comment>
+  </data>
+  <data name="ThemesCustomisedFormat" xml:space="preserve">
+    <value>{0}, customised</value>
+    <comment>{0} = the theme; the theme in use when its palette or frames were picked by hand.</comment>
+  </data>
+  <data name="ThemesSampleReady" xml:space="preserve">
+    <value>Towards the Firmament</value>
+    <comment>Settings › Themes, the preview: a sample Ready quest.</comment>
+  </data>
+  <data name="ThemesSampleReadyDetail" xml:space="preserve">
+    <value>Lv 60</value>
+    <comment>Settings › Themes, the preview: the sample Ready quest's detail.</comment>
+  </data>
+  <data name="ThemesSampleJournal" xml:space="preserve">
+    <value>Dawntrail</value>
+    <comment>Settings › Themes, the preview: a sample In journal quest.</comment>
+  </data>
+  <data name="ThemesSampleJournalDetail" xml:space="preserve">
+    <value>step 4 of 6</value>
+    <comment>Settings › Themes, the preview: the sample In journal quest's detail.</comment>
+  </data>
+  <data name="ThemesSampleCompleted" xml:space="preserve">
+    <value>A General Summons</value>
+    <comment>Settings › Themes, the preview: a sample Completed quest.</comment>
+  </data>
+  <data name="ThemesSampleCompletedDetail" xml:space="preserve">
+    <value>in your history</value>
+    <comment>Settings › Themes, the preview: the sample Completed quest's detail.</comment>
+  </data>
+  <data name="ThemesSampleBlocked" xml:space="preserve">
+    <value>Crossroads</value>
+    <comment>Settings › Themes, the preview: a sample Blocked quest.</comment>
+  </data>
+  <data name="ThemesSampleBlockedDetail" xml:space="preserve">
+    <value>after the story</value>
+    <comment>Settings › Themes, the preview: the sample Blocked quest's detail.</comment>
+  </data>
+  <data name="ThemesSampleLocked" xml:space="preserve">
+    <value>Heads, I Win</value>
+    <comment>Settings › Themes, the preview: a sample Locked out quest.</comment>
+  </data>
+  <data name="ThemesSampleLockedDetail" xml:space="preserve">
+    <value>another choice</value>
+    <comment>Settings › Themes, the preview: the sample Locked out quest's detail.</comment>
+  </data>
+  <data name="ThemesSampleUnknown" xml:space="preserve">
+    <value>Faerie Tale</value>
+    <comment>Settings › Themes, the preview: a sample Not checked quest.</comment>
+  </data>
+  <data name="ThemesSampleUnknownDetail" xml:space="preserve">
+    <value>accept condition</value>
+    <comment>Settings › Themes, the preview: the sample Not checked quest's detail.</comment>
+  </data>
+  <data name="ThemesSampleHeroLine" xml:space="preserve">
+    <value>Dawntrail · step 4 of 6</value>
+    <comment>Settings › Themes, the preview: the line under the large medal.</comment>
+  </data>
+  <data name="ThemesPalette" xml:space="preserve">
+    <value>Palette</value>
+    <comment>Settings › Themes: the palette row's label.</comment>
+  </data>
+  <data name="ThemesPaletteHint" xml:space="preserve">
+    <value>Window, text and sky colours. Moons keep their own.</value>
+    <comment>Settings › Themes: the palette row's hint.</comment>
+  </data>
+  <data name="ThemesHighContrast" xml:space="preserve">
+    <value>High contrast</value>
+    <comment>Settings › Themes: the high-contrast toggle (the old Moon colours › High contrast).</comment>
+  </data>
+  <data name="ThemesHighContrastHint" xml:space="preserve">
+    <value>One set of moons made for low vision, on every theme. Your theme's moons return when it is off.</value>
+    <comment>Settings › Themes: the high-contrast toggle's hint.</comment>
+  </data>
+  <data name="ThemesFrames" xml:space="preserve">
+    <value>Frames</value>
+    <comment>Settings › Themes: the frames row's label.</comment>
+  </data>
+  <data name="ThemesFramesHint" xml:space="preserve">
+    <value>The metal round each moon and card.</value>
+    <comment>Settings › Themes: the frames row's hint.</comment>
+  </data>
+  <data name="ThemesFramesFixedReason" xml:space="preserve">
+    <value>Each theme wears its own frames in this version.</value>
+    <comment>Settings › Themes: the frames row's hint while the choice is not offered yet (1.17).</comment>
+  </data>
+  <data name="ThemesFramesFromTheme" xml:space="preserve">
+    <value>From theme</value>
+    <comment>Settings › Themes: the frames choice that follows the theme.</comment>
+  </data>
+  <data name="ThemesReset" xml:space="preserve">
+    <value>Reset appearance</value>
+    <comment>Settings › Themes: the reset row's label.</comment>
+  </data>
+  <data name="ThemesResetHint" xml:space="preserve">
+    <value>Back to Menphina's Medallion on Night. Undo follows.</value>
+    <comment>Settings › Themes: the reset row's hint.</comment>
+  </data>
+  <data name="ThemesResetDefaultReason" xml:space="preserve">
+    <value>This is the default look already.</value>
+    <comment>Settings › Themes: the reset row's hint while there is nothing to reset.</comment>
+  </data>
+  <data name="ThemesResetButton" xml:space="preserve">
+    <value>Reset appearance</value>
+    <comment>Settings › Themes: the reset button.</comment>
+  </data>
+  <data name="UndoToastThemeFormat" xml:space="preserve">
+    <value>Theme: {0}</value>
+    <comment>{0} = the theme; the Undo toast after a theme card is clicked.</comment>
+  </data>
+  <data name="UndoToastPaletteFormat" xml:space="preserve">
+    <value>Palette: {0}</value>
+    <comment>{0} = the palette; the Undo toast after a palette tile is clicked.</comment>
+  </data>
+  <data name="UndoToastFramesFormat" xml:space="preserve">
+    <value>Frames: {0}</value>
+    <comment>{0} = the kit, or From theme; the Undo toast after a frames choice.</comment>
+  </data>
+  <data name="UndoToastHighContrastOn" xml:space="preserve">
+    <value>High contrast on</value>
+    <comment>Undo toast after High contrast is turned on.</comment>
+  </data>
+  <data name="UndoToastHighContrastOff" xml:space="preserve">
+    <value>High contrast off</value>
+    <comment>Undo toast after High contrast is turned off.</comment>
+  </data>
+  <data name="UndoToastAppearanceReset" xml:space="preserve">
+    <value>Appearance reset</value>
+    <comment>Undo toast after Reset appearance.</comment>
   </data>
 </root>
