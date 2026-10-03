@@ -8,8 +8,9 @@ namespace Tsukimichi.Ui.Themes;
 /// <summary>
 /// The frame kit layer behind the renderer seam (feature plan v7 T3; theme-system §3.3, §6.1): everything metal that is
 /// not a state's medal, which is to say the gauges (the halo and the filling moon) and a row medal's badge content drawn
-/// beside it at text height. A medal's own rim and hero badge are baked into its set's art (ATLAS-CONTRACT §2), so the kit
-/// does not draw them. <see cref="GlyphSeam.Kit"/> is the kit in effect; Classic short-circuits to the 1.11 gauges.
+/// beside it at text height. A medal's rim and hero badge come from the kit's frames atlas when the medal is composed
+/// (<see cref="ThemeAtlasCache.TryCompose"/>), and are baked into a set's own art otherwise (ATLAS-CONTRACT §2, §7).
+/// <see cref="GlyphSeam.Kit"/> is the kit in effect; Classic short-circuits to the 1.11 gauges.
 /// </summary>
 internal interface IFrameKit
 {
@@ -24,13 +25,15 @@ internal interface IFrameKit
 }
 
 /// <summary>
-/// The Brass kit: the Moon Road's gilt brass, as shipped since 1.12 (<see cref="MedalGauge"/>, <see cref="MedalArt.RowGlyph"/>).
-/// In 1.16 every kit draws its gauges and row badges in brass; their own metals arrive with the frames choice (1.17 T11),
-/// which only has to add an implementation per kit here.
+/// A metal kit (Brass, Silver, Lead came, Astrolabe): the Moon Road's gauges (<see cref="MedalGauge"/>) and the row badge
+/// content (<see cref="MedalArt.RowGlyph"/>) drawn in the kit's metal. The metal itself is in <see cref="Theme.Gauges"/>
+/// and <see cref="Theme.Brass"/>, which the seam sets from the kit (<see cref="Theme.UseFrameKit"/>;
+/// <see cref="FrameKitMetals"/>), so Brass draws exactly as shipped. The row badges at text height stay one drawing for
+/// every kit (theme-system §3.3: at 12–16 px the material barely shows).
 /// </summary>
-internal sealed class BrassFrameKit : IFrameKit
+internal sealed class MetalFrameKit(FrameKitId id) : IFrameKit
 {
-    public static readonly BrassFrameKit Instance = new();
+    public FrameKitId Id { get; } = id;
 
     public void DrawHalo(ImDrawListPtr dl, Vector2 center, float radius, float fraction, bool onCard, bool dimComplete) =>
         MoonGlyph.DrawMedalHalo(dl, center, radius, fraction, onCard, dimComplete);
@@ -59,15 +62,29 @@ internal sealed class ClassicFrameKit : IFrameKit
 /// <summary>The kit implementations by id.</summary>
 internal static class FrameKitRenderers
 {
-    /// <summary>The kit that draws <paramref name="id"/> (Brass for every kit until 1.17 T11 gives each its metal).</summary>
-    public static IFrameKit For(FrameKitId id) => id switch
+    private static readonly MetalFrameKit[] Kits =
+        [new(FrameKitId.Brass), new(FrameKitId.Silver), new(FrameKitId.Came), new(FrameKitId.Astrolabe)];
+
+    /// <summary>The Brass kit, the default.</summary>
+    public static IFrameKit Brass => Kits[0];
+
+    /// <summary>The kit that draws <paramref name="id"/>: its own metal, or Brass for a kit without one yet (Kirikane).</summary>
+    public static IFrameKit For(FrameKitId id)
     {
-        _ => BrassFrameKit.Instance,
-    };
+        foreach (var kit in Kits)
+        {
+            if (kit.Id == id)
+            {
+                return kit;
+            }
+        }
+
+        return Kits[0];
+    }
 
     /// <summary>
-    /// Whether <paramref name="id"/> draws a metal of its own rather than Brass's: Settings › Themes offers the Frames
-    /// choice once two kits do (<see cref="ThemesPage.FramesChoosable"/>). Brass alone until 1.17 T11.
+    /// Whether <paramref name="id"/> draws a metal of its own (<see cref="FrameKitMetals.HasOwnMetal"/>): Settings ›
+    /// Themes offers the Frames choice once two offered kits do (<see cref="ThemesPage.FramesChoosable"/>).
     /// </summary>
-    public static bool HasOwnMetal(FrameKitId id) => id == FrameKitId.Brass;
+    public static bool HasOwnMetal(FrameKitId id) => FrameKitMetals.HasOwnMetal(id);
 }

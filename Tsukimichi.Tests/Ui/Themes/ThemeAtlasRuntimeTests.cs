@@ -279,6 +279,47 @@ public sealed class ThemeAtlasRuntimeTests
     }
 
     [Fact]
+    public void A_set_in_another_kit_wants_its_faces_and_the_kit_its_frames_never_its_composites()
+    {
+        var residency = new AtlasResidency();
+
+        // Ishgard Glass in Silver frames, Ready from Medallion: both are composed (neither's own kit), so their faces and
+        // the Silver kit's frames are wanted, and the row strips of both preload; Glass's medals and row are not.
+        residency.Retain(AppearanceResolver.Resolve(new AppearanceConfig
+        {
+            Theme = "ishgard-glass",
+            Frames = "silver",
+            Glyphs = new Dictionary<string, string> { ["ready"] = "medallion" },
+        }));
+        Assert.True(residency.WantsFaces(GlyphSetId.IshgardGlass));
+        Assert.True(residency.WantsFaces(GlyphSetId.Medallion));
+        Assert.False(residency.WantsComposites(GlyphSetId.IshgardGlass));
+        Assert.True(residency.IsWanted(FrameKitId.Silver));
+        Assert.False(residency.IsWanted(FrameKitId.Came));
+        Assert.True(residency.ShouldPreload(GlyphSetId.IshgardGlass, AtlasPart.FacesRow));
+        Assert.False(residency.ShouldPreload(GlyphSetId.IshgardGlass, AtlasPart.Row));
+        Assert.True(residency.ShouldPreload(FrameKitId.Silver, AtlasPart.FramesRow));
+        Assert.False(residency.ShouldPreload(FrameKitId.Silver, AtlasPart.Frames));
+
+        // The kit's 1x frames stay while wanted; its 2x goes once idle; a dropped kit goes once idle.
+        residency.Touch(FrameKitId.Silver, AtlasPart.Frames, 0);
+        residency.Touch(FrameKitId.Silver, AtlasPart.Frames2x, 0);
+        var later = AtlasResidency.IdleSeconds + 1;
+        Assert.False(residency.ShouldRelease(FrameKitId.Silver, AtlasPart.Frames, later));
+        Assert.True(residency.ShouldRelease(FrameKitId.Silver, AtlasPart.Frames2x, later));
+        residency.Retain(ResolvedAppearance.Default);
+        Assert.True(residency.ShouldRelease(FrameKitId.Silver, AtlasPart.Frames, later));
+        residency.Released(FrameKitId.Silver, AtlasPart.Frames);
+        Assert.False(residency.IsLoaded(FrameKitId.Silver, AtlasPart.Frames));
+
+        // The default look composes nothing: no faces, no kit.
+        Assert.All(GlyphSets.All, set => Assert.False(residency.WantsFaces(set.Id)));
+        Assert.All(FrameKits.All, kit => Assert.False(residency.IsWanted(kit.Id)));
+        Assert.False(residency.IsWanted((FrameKitId)0));
+        Assert.False(residency.IsWanted((FrameKitId)200));
+    }
+
+    [Fact]
     public void Residency_ignores_ids_it_has_no_slot_for()
     {
         var residency = new AtlasResidency();
@@ -296,16 +337,28 @@ public sealed class ThemeAtlasRuntimeTests
     {
         var dir = ThemesDir();
         var folders = Directory.Exists(dir) ? Directory.GetDirectories(dir) : [];
-        long worstCase1x = (long)MedalLayout.Width * MedalLayout.Height * 4;
+
+        // A reachable appearance draws each set it uses either as designed (medals, plain, row) or composed in another
+        // kit (faces, faces-row), never both, plus at most one kit's frames; Medallion as designed is its embedded atlas.
+        long worstCase1x = 0;
         foreach (var folder in folders)
         {
             var key = Path.GetFileName(folder);
             Assert.True(GlyphSets.TryGet(key, out var set), $"assets/ui/themes/{key} is not a registered glyph set");
             Assert.Equal(key, set.Key);
+
+            var (faces1x, faces2x) = AssertParts(folder, "faces", PartAtlasKind.Faces);
+            Assert.True(faces1x <= 4L * 1024 * 1024, $"{key}: {faces1x} bytes of 1x faces textures (budget 4 MB)");
+            Assert.True(faces2x <= 12L * 1024 * 1024, $"{key}: {faces2x} bytes of 2x faces textures (budget 12 MB)");
+            var facesOnDisk = Directory.GetFiles(folder, "faces*.png").Sum(static f => new FileInfo(f).Length);
+            Assert.True(facesOnDisk <= 1_572_864, $"{key}: {facesOnDisk} bytes of faces PNG (budget 1.5 MB)");
+
             if (set.Kind == GlyphRenderKind.Procedural)
             {
-                // Medallion's folder holds only the build's metrics: its atlas stays embedded at assets/ui/.
-                Assert.Empty(Directory.GetFiles(folder, "*.png"));
+                // Medallion's folder holds its faces for the frames axis and the build's metrics: its own atlas stays
+                // embedded at assets/ui/.
+                Assert.Equal(["faces-row.png", "faces.png", "faces@2x.png"], Directory.GetFiles(folder, "*.png").Select(Path.GetFileName).Order(StringComparer.Ordinal));
+                worstCase1x += Math.Max((long)MedalLayout.Width * MedalLayout.Height * 4, faces1x);
                 continue;
             }
 
@@ -336,17 +389,66 @@ public sealed class ThemeAtlasRuntimeTests
 
             Assert.True(bytes1x <= 4L * 1024 * 1024, $"{key}: {bytes1x} bytes of 1x textures (budget 4 MB)");
             Assert.True(bytes2x <= 12L * 1024 * 1024, $"{key}: {bytes2x} bytes of 2x textures (budget 12 MB)");
-            var onDisk = Directory.GetFiles(folder, "*.png").Sum(static f => new FileInfo(f).Length);
-            Assert.True(onDisk <= 2_621_440, $"{key}: {onDisk} bytes of PNG (budget 2.5 MB)");
-            worstCase1x += bytes1x;
+            var onDisk = Directory.GetFiles(folder, "*.png").Where(static f => !Path.GetFileName(f).StartsWith("faces", StringComparison.Ordinal)).Sum(static f => new FileInfo(f).Length);
+            Assert.True(onDisk <= 2_621_440, $"{key}: {onDisk} bytes of PNG as designed (budget 2.5 MB)");
+            worstCase1x += Math.Max(bytes1x, faces1x);
         }
 
-        Assert.True(worstCase1x <= 12L * 1024 * 1024, $"every set at once is {worstCase1x} bytes at 1x (budget 12 MB)");
+        long kit1x = 0;
+        foreach (var folder in Directory.GetDirectories(KitsDir()))
+        {
+            var key = Path.GetFileName(folder);
+            Assert.True(FrameKits.TryGet(key, out var kit) && kit.Key == key, $"assets/ui/kits/{key} is not a registered frame kit");
+            var (frames1x, frames2x) = AssertParts(folder, "frames", PartAtlasKind.Frames);
+            Assert.True(frames1x <= 4L * 1024 * 1024, $"{key}: {frames1x} bytes of 1x frames textures (budget 4 MB)");
+            Assert.True(frames2x <= 12L * 1024 * 1024, $"{key}: {frames2x} bytes of 2x frames textures (budget 12 MB)");
+            var onDisk = Directory.GetFiles(folder, "*.png").Sum(static f => new FileInfo(f).Length);
+            Assert.True(onDisk <= 1_572_864, $"{key}: {onDisk} bytes of PNG (budget 1.5 MB)");
+            kit1x = Math.Max(kit1x, frames1x);
+        }
+
+        worstCase1x += kit1x;
+        Assert.True(worstCase1x <= 12L * 1024 * 1024, $"every set at once, in the largest kit, is {worstCase1x} bytes at 1x (budget 12 MB)");
+    }
+
+    [Fact]
+    public void Every_offered_kit_ships_its_frames_and_every_mixable_offered_set_its_faces()
+    {
+        foreach (var kit in FrameKits.All.Where(static k => k.Offered))
+        {
+            Assert.True(File.Exists(Path.Combine(KitsDir(), kit.Key, "frames.json")), kit.Key);
+            Assert.True(File.Exists(Path.Combine(KitsDir(), kit.Key, "frames-row.json")), kit.Key);
+        }
+
+        foreach (var set in GlyphSets.All.Where(static s => s.Offered && s.Mixable))
+        {
+            Assert.True(File.Exists(Path.Combine(ThemesDir(), set.Key, "faces.json")), set.Key);
+            Assert.True(File.Exists(Path.Combine(ThemesDir(), set.Key, "faces-row.json")), set.Key);
+        }
+
+        Assert.Equal(Path.Combine("assets", "ui", "kits", "came", "frames.png"), ThemeAtlasRules.RelativePath(FrameKitId.Came, "frames.png"));
+    }
+
+    private static string KitsDir() => Path.Combine(OrnamentLayoutTests.AssetsDir(), "kits");
+
+    /// <summary>A faces or frames pair (hero atlas at 1x and 2x, row strip) that parses and is the PNGs' size; its texture bytes.</summary>
+    private static (long OneX, long TwoX) AssertParts(string folder, string stem, PartAtlasKind kind)
+    {
+        Assert.True(PartAtlasLayout.TryParse(File.ReadAllText(Path.Combine(folder, stem + ".json")), kind, out var hero, out var error), $"{folder} {stem}: {error}");
+        Assert.False(hero!.Row);
+        Assert.Equal(MedalLayout.Tiers, hero.Cells);
+        AssertPngs(folder, stem, hero.Width, hero.Height, twoX: true);
+        Assert.True(PartAtlasLayout.TryParse(File.ReadAllText(Path.Combine(folder, stem + "-row.json")), kind, out var row, out error), $"{folder} {stem}-row: {error}");
+        Assert.True(row!.Row);
+        Assert.Equal(Enumerable.Range(12, 20), row.Cells);
+        AssertPngs(folder, stem + "-row", row.Width, row.Height, twoX: false);
+        return (hero.Bytes1x + row.Bytes1x, hero.Bytes2x);
     }
 
     [Theory]
     [InlineData("ishgard-glass")]
     [InlineData("aether-crystal")]
+    [InlineData("astrologian-orrery")]
     public void The_shipped_revived_sets_are_drawable_from_hero_to_row(string key)
     {
         var folder = Path.Combine(ThemesDir(), key);
@@ -372,6 +474,7 @@ public sealed class ThemeAtlasRuntimeTests
     {
         var csproj = File.ReadAllText(Path.Combine(OrnamentLayoutTests.RepoRoot(), "Tsukimichi", "Tsukimichi.csproj"));
         Assert.Contains(@"<Content Include=""assets\ui\themes\**\*.png;assets\ui\themes\**\*.json"" Exclude=""assets\ui\themes\**\metrics.json"" CopyToOutputDirectory=""PreserveNewest"" />", csproj);
+        Assert.Contains(@"<Content Include=""assets\ui\kits\**\*.png;assets\ui\kits\**\*.json"" Exclude=""assets\ui\kits\**\metrics.json"" CopyToOutputDirectory=""PreserveNewest"" />", csproj);
         Assert.Equal(Path.Combine("assets", "ui", "themes", "ishgard-glass", "row.png"), ThemeAtlasRules.RelativePath(GlyphSetId.IshgardGlass, "row.png"));
 
         // What the build actually put beside the plugin (the gates build the solution first; a test run that did not
@@ -384,12 +487,15 @@ public sealed class ThemeAtlasRuntimeTests
 
         var output = Path.GetDirectoryName(plugin)!;
         var expected = Directory.GetFiles(ThemesDir(), "*", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(KitsDir(), "*", SearchOption.AllDirectories))
             .Where(static f => Path.GetFileName(f) != "metrics.json")
             .Select(f => Path.GetRelativePath(OrnamentLayoutTests.AssetsDir(), f))
             .Order(StringComparer.Ordinal)
             .ToArray();
         Assert.Contains(Path.Combine("themes", "ishgard-glass", "row.png"), expected);
+        Assert.Contains(Path.Combine("kits", "astrolabe", "frames@2x.png"), expected);
         var shipped = Directory.GetFiles(Path.Combine(output, "assets", "ui", "themes"), "*", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(Path.Combine(output, "assets", "ui", "kits"), "*", SearchOption.AllDirectories))
             .Select(f => Path.GetRelativePath(Path.Combine(output, "assets", "ui"), f))
             .Order(StringComparer.Ordinal)
             .ToArray();

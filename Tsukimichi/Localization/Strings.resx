@@ -10165,7 +10165,7 @@
     <comment>Frame kit name.</comment>
   </data>
   <data name="FrameKitCame" xml:space="preserve">
-    <value>Came</value>
+    <value>Lead came</value>
     <comment>Frame kit name: lead came, as in stained glass.</comment>
   </data>
   <data name="FrameKitAstrolabe" xml:space="preserve">
@@ -10297,7 +10297,7 @@
     <comment>Settings › Themes: the frames row's label.</comment>
   </data>
   <data name="ThemesFramesHint" xml:space="preserve">
-    <value>The metal round each moon and card.</value>
+    <value>The metal round each moon, badge, gauge and card: one metal for the whole column, however you mix.</value>
     <comment>Settings › Themes: the frames row's hint.</comment>
   </data>
   <data name="ThemesFramesFixedReason" xml:space="preserve">
@@ -10307,6 +10307,34 @@
   <data name="ThemesFramesFromTheme" xml:space="preserve">
     <value>From theme</value>
     <comment>Settings › Themes: the frames choice that follows the theme.</comment>
+  </data>
+  <data name="ThemesFramesHardFormat" xml:space="preserve">
+    <value>With {0} frames, {1} and {2} ({3}) are hard to tell apart in a list.</value>
+    <comment>Settings › Themes, under Frames: {0} = the frame kit, {1} and {2} = two quest states, {3} = the glyph set they come from.</comment>
+  </data>
+  <data name="ThemesFramesHardColourFormat" xml:space="preserve">
+    <value>With {0} frames, {1} and {2} ({3}) are hard to tell apart for some colour vision.</value>
+    <comment>As ThemesFramesHardFormat, when the pair only fails under colour-vision simulation.</comment>
+  </data>
+  <data name="ThemesFramesCloseFormat" xml:space="preserve">
+    <value>With {0} frames, {1} and {2} ({3}) look close in a list.</value>
+    <comment>Settings › Themes, under Frames: a pair under the close bar. {0} = kit, {1} and {2} = states, {3} = set.</comment>
+  </data>
+  <data name="ThemesFramesCloseColourFormat" xml:space="preserve">
+    <value>With {0} frames, {1} and {2} ({3}) look close for some colour vision.</value>
+    <comment>As ThemesFramesCloseFormat, under colour-vision simulation only.</comment>
+  </data>
+  <data name="ThemesFramesReadyFormat" xml:space="preserve">
+    <value>With {0} frames, Ready ({1}) is no longer the brightest moon in the column.</value>
+    <comment>Settings › Themes, under Frames: {0} = kit, {1} = set.</comment>
+  </data>
+  <data name="ThemesFramesCompletedFormat" xml:space="preserve">
+    <value>With {0} frames, Completed ({1}) draws the eye more than Ready.</value>
+    <comment>Settings › Themes, under Frames: {0} = kit, {1} = set.</comment>
+  </data>
+  <data name="ThemesFramesMoreFormat" xml:space="preserve">
+    <value>{0} (and {1} more)</value>
+    <comment>Settings › Themes, under Frames: {0} = the first warning, {1} = how many more (all are in its tooltip).</comment>
   </data>
   <data name="ThemesReset" xml:space="preserve">
     <value>Reset appearance</value>

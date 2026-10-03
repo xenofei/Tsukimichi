@@ -17,14 +17,14 @@ public sealed class ThemesPageTests
     // ------------------------------------------------------------------ what the page offers
 
     [Fact]
-    public void The_cards_are_the_offered_themes_with_Classic_last_and_the_1_17_ones_hidden()
+    public void The_cards_are_the_offered_themes_with_Classic_last_and_Sumi_hidden()
     {
-        // The approved Themes design's order: Medallion, Ishgard Glass second, Aether Crystal, Classic.
+        // The approved Themes design's order: Medallion, Ishgard Glass second, Aether Crystal, the Orrery (1.17), Classic.
         Assert.Equal(
-            [ThemeId.Medallion, ThemeId.IshgardGlass, ThemeId.AetherCrystal, ThemeId.Classic],
+            [ThemeId.Medallion, ThemeId.IshgardGlass, ThemeId.AetherCrystal, ThemeId.Orrery, ThemeId.Classic],
             ThemesPage.Themes.Select(static t => t.Id));
         Assert.True(ThemesPage.Themes[^1].Legacy);
-        Assert.DoesNotContain(ThemesPage.Themes, static t => t.Id is ThemeId.Orrery or ThemeId.Sumi);
+        Assert.DoesNotContain(ThemesPage.Themes, static t => t.Id is ThemeId.Sumi);
     }
 
     [Fact]
@@ -56,14 +56,19 @@ public sealed class ThemesPageTests
         Assert.False(ThemesPage.FramesChoosable(static id => id == FrameKitId.Brass));
         Assert.True(ThemesPage.FramesChoosable(static id => id is FrameKitId.Brass or FrameKitId.Silver));
 
-        // A 1.17 kit that is not offered does not count.
-        Assert.False(ThemesPage.FramesChoosable(static id => id is FrameKitId.Brass or FrameKitId.Astrolabe));
+        // A kit that is not offered (Kirikane, until Sumi ships) does not count.
+        Assert.False(ThemesPage.FramesChoosable(static id => id is FrameKitId.Brass or FrameKitId.Kirikane));
+
+        // 1.17 T11: Brass, Silver, Lead came and Astrolabe each draw their own metal, so the row is a choice.
+        Assert.True(ThemesPage.FramesChoosable(FrameKitMetals.HasOwnMetal));
+        Assert.All(ThemesPage.Kits, static k => Assert.True(FrameKitMetals.HasOwnMetal(k.Id), k.Key));
+        Assert.False(FrameKitMetals.HasOwnMetal(FrameKitId.Kirikane));
     }
 
     [Fact]
     public void The_frames_choice_is_From_theme_then_the_offered_kits()
     {
-        Assert.Equal([FrameKitId.Brass, FrameKitId.Silver, FrameKitId.Came], ThemesPage.Kits.Select(static k => k.Id));
+        Assert.Equal([FrameKitId.Brass, FrameKitId.Silver, FrameKitId.Came, FrameKitId.Astrolabe], ThemesPage.Kits.Select(static k => k.Id));
         Assert.Null(ThemesPage.KitAt(0));
         Assert.Null(ThemesPage.KitAt(ThemesPage.Kits.Count + 1));
 

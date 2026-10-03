@@ -39,13 +39,19 @@ internal sealed class MedallionGlyphSet : IGlyphSet
 
     public bool TryDraw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state, byte job, float alpha)
     {
-        MedalGlyph.Draw(dl, center, radius, state, job, alpha);
+        // In another kit Medallion's faces are composed with that kit's frames; until they load, and in Brass, the medal
+        // is drawn exactly as shipped.
+        if (!Compose(dl, center, radius, state, job, alpha))
+        {
+            MedalGlyph.Draw(dl, center, radius, state, job, alpha);
+        }
+
         return true;
     }
 
     public bool TryDrawVeiled(ImDrawListPtr dl, Vector2 center, float radius, float alpha)
     {
-        if (!(radius > 0.5f))
+        if (!(radius > 0.5f) || Compose(dl, center, radius, QuestState.Unknown, 0, alpha * VeiledMedalAlpha))
         {
             return true;
         }
@@ -54,6 +60,15 @@ internal sealed class MedallionGlyphSet : IGlyphSet
         MedalGlyph.DrawMesh(dl, MedalArt.Medal(QuestState.Unknown, MedalTokens.For(Theme.Glyphs), size), min, size, alpha * VeiledMedalAlpha);
         return true;
     }
+
+    /// <summary>
+    /// Draws Medallion's face of <paramref name="state"/> in the appearance's kit when the appearance composes Medallion
+    /// (<see cref="ResolvedAppearance.Composes"/>: its kit is not Brass) at Full or Quiet; false when it does not, or while
+    /// the parts load. The glyph window's forced renderers and high contrast always draw the medal as shipped.
+    /// </summary>
+    private static bool Compose(ImDrawListPtr dl, Vector2 center, float radius, QuestState state, byte job, float alpha) =>
+        MedalGlyph.Renderer == MedalRenderer.Auto && !Theme.Glyphs.HighContrast
+        && AtlasGlyphSet.TryCompose(dl, GlyphSetId.Medallion, center, radius, state, job, alpha);
 }
 
 /// <summary>
@@ -115,6 +130,13 @@ internal sealed class AtlasGlyphSet(GlyphSetId id) : IGlyphSet
             return false;
         }
 
+        if (GlyphSeam.Appearance.Composes(Id) && Theme.MedalFinish != MedalFinish.Plain)
+        {
+            // In another kit than its own the set's faces take that kit's frames and badges; Plain has no frames, so it
+            // draws the set's flat finish as below.
+            return TryCompose(dl, Id, center, radius, state, job, alpha);
+        }
+
         var (min, size) = MedalGlyph.Box(center, radius);
         var tint = Theme.WithAlpha(Vector4.One, alpha);
         var seat = state == QuestState.ReadyOnOtherJob ? JobBadges.Seat(job) : JobSeat.Hand;
@@ -133,4 +155,33 @@ internal sealed class AtlasGlyphSet(GlyphSetId id) : IGlyphSet
 
     public bool TryDrawVeiled(ImDrawListPtr dl, Vector2 center, float radius, float alpha) =>
         TryDraw(dl, center, radius, QuestState.Unknown, 0, alpha * VeiledMedalAlpha);
+
+    /// <summary>
+    /// <paramref name="set"/>'s face of <paramref name="state"/> composed in the appearance's kit
+    /// (<see cref="ThemeAtlasCache.TryCompose"/>), the game's job icon in a hero badge's seat; false, with nothing drawn,
+    /// when the appearance does not compose the set or a part is not ready.
+    /// </summary>
+    internal static bool TryCompose(ImDrawListPtr dl, GlyphSetId set, Vector2 center, float radius, QuestState state, byte job, float alpha)
+    {
+        var appearance = GlyphSeam.Appearance;
+        if (!(radius > 0.5f) || !(alpha > 0f) || !appearance.Composes(set))
+        {
+            return false;
+        }
+
+        var (min, size) = MedalGlyph.Box(center, radius);
+        var tint = Theme.WithAlpha(Vector4.One, alpha);
+        var seat = state == QuestState.ReadyOnOtherJob ? JobBadges.Seat(job) : JobSeat.Hand;
+        if (!ThemeAtlasCache.TryCompose(dl, set, appearance.Frames, state, seat, min, size, Theme.MedalFinish, tint, out var hero))
+        {
+            return false;
+        }
+
+        if (hero && state == QuestState.ReadyOnOtherJob)
+        {
+            MedalGlyph.DrawJobInSeat(dl, min, size, job, tint);
+        }
+
+        return true;
+    }
 }

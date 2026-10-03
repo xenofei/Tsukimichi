@@ -259,7 +259,7 @@ public sealed class AppearanceTests
 
         resolved = AppearanceResolver.Resolve(new AppearanceConfig
         {
-            Theme = "astrologian-orrery",
+            Theme = "sumi-to-kinpaku",
             Palette = "sunset",
             Frames = "pewter",
             Glyphs = new Dictionary<string, string> { ["ready"] = "sumi-to-kinpaku" },
@@ -269,7 +269,15 @@ public sealed class AppearanceTests
         Assert.Equal(PaletteId.Night, resolved.Palette);
         Assert.Equal(FrameKitId.Brass, resolved.Frames);
         Assert.Equal(GlyphSetId.Medallion, resolved.SetFor(QuestState.Ready));
-        Assert.Equal(["theme: astrologian-orrery", "ready: sumi-to-kinpaku", "palette: sunset", "frames: pewter"], resolved.Unknown);
+        Assert.Equal(["theme: sumi-to-kinpaku", "ready: sumi-to-kinpaku", "palette: sunset", "frames: pewter"], resolved.Unknown);
+
+        // The Orrery and its Astrolabe kit are offered from 1.17.
+        resolved = AppearanceResolver.Resolve(new AppearanceConfig { Theme = "astrologian-orrery", Glyphs = new Dictionary<string, string> { ["ready"] = "medallion" } });
+        Assert.Equal(ThemeId.Orrery, resolved.Theme.Id);
+        Assert.Equal(FrameKitId.Astrolabe, resolved.Frames);
+        Assert.Equal(GlyphSetId.Orrery, resolved.SetFor(QuestState.Blocked));
+        Assert.Equal(GlyphSetId.Medallion, resolved.SetFor(QuestState.Ready));
+        Assert.Empty(resolved.Unknown);
     }
 
     [Fact]

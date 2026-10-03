@@ -1,4 +1,4 @@
-# The per-set atlas contract (1.16.0, T4 ⇄ T5)
+# The per-set atlas contract (1.16.0 T4 ⇄ T5; faces and frames 1.17.0 T11)
 
 What `tools/themes/build_themes.py` (T4) writes for a glyph set, and what the plugin's atlas runtime (T5,
 `Tsukimichi/Ui/Themes/ThemeAtlasCache.cs`, layouts parsed by `Tsukimichi.Core/Ui/Themes/ThemeAtlasLayout.cs`) reads.
@@ -20,14 +20,25 @@ Tsukimichi/assets/ui/themes/<set-key>/
   plain.png         optional   the flat (Decoration Plain) finish at hero tiers, schema §2
   plain@2x.png      optional
   plain.json        optional
-  faces.*           reserved   unframed faces for the frames axis (1.17 T11); schema §2, 8 sprites
-  frames.*          reserved   a frame kit's frames and badges (1.17 T11); schema §2
+  faces.png         required†  the set's unframed faces at the hero tiers (§7), 1x
+  faces@2x.png      required†  the same layout at exactly twice the size
+  faces.json        required†  the layout (schema §7)
+  faces-row.png     required†  the faces at every whole device pixel from 12 to 31 (§7)
+  faces-row.json    required†
   metrics.json      optional   the build's gate numbers (§5); not read by the runtime, not packaged
+
+Tsukimichi/assets/ui/kits/<kit-key>/          (1.17 T11)
+  frames.png, frames@2x.png, frames.json      the kit's frames and badges at the hero tiers (§7)
+  frames-row.png, frames-row.json             its frames at every whole device pixel from 12 to 31
+  metrics.json                                every set's faces gated in this kit (§5); not packaged
 ```
 
-\* Every set that ships (Ishgard Glass and Aether Crystal in 1.16) has `row.*`; without them the set would show
+† For every mixable set that ships, Menphina's Medallion included (its faces are cut from gen5.py by
+`tools/themes/sources.py`; its own medals stay embedded and procedural).
+
+\* Every set that ships (Ishgard Glass and Aether Crystal in 1.16, Astrologian's Orrery in 1.17) has `row.*`; without them the set would show
 Medallion's medals at row sizes (§4), so `ThemeAtlasRuntimeTests` requires them for the shipped sets. Medallion has no
-row strip (its row tier stays procedural); `themes/medallion/` holds only the build's `metrics.json`.
+row strip (its row tier stays procedural); `themes/medallion/` holds its faces (§7) and the build's `metrics.json`.
 
 `tools/themes/build_themes.py` (manifests in `tools/themes/sets/`) writes all of these; `Tsukimichi.Tests/Ui/ThemeAtlasTests.cs`
 holds its output to the gates, and `Tsukimichi.Tests/Ui/Themes/ThemeAtlasRuntimeTests.cs` to this contract and its budgets.
@@ -41,11 +52,11 @@ holds its output to the gates, and `Tsukimichi.Tests/Ui/Themes/ThemeAtlasRuntime
   | 2 | `classic` | Classic | procedural (`LegacyMoonGlyph`); no folder |
   | 3 | `aether-crystal` | Aether Crystal | atlas (this contract) |
   | 4 | `ishgard-glass` | Ishgard Glass | atlas (this contract) |
-  | 5 | `astrologian-orrery` | Astrologian's Orrery | atlas (1.17) |
+  | 5 | `astrologian-orrery` | Astrologian's Orrery | atlas (this contract; ships in 1.17) |
   | 6 | `sumi-to-kinpaku` | Sumi to Kinpaku | atlas (1.17) |
 
-- Every `.png` and `.json` under `Tsukimichi/assets/ui/themes/` is packaged as a content file (the csproj already
-  globs the folder) and loaded from disk with `ITextureProvider.GetFromFile`, so new sets never grow the DLL. Nothing
+- Every `.png` and `.json` under `Tsukimichi/assets/ui/themes/` and `Tsukimichi/assets/ui/kits/` but `metrics.json` is
+  packaged as a content file (the csproj globs both folders) and loaded from disk with `ITextureProvider.GetFromFile`, so new sets never grow the DLL. Nothing
   else needs registering: dropping a valid folder in makes the set drawable.
 - A set whose folder is missing, or whose `medals.json` does not parse, is not drawable; the plugin draws Menphina's
   Medallion for its states instead (the stand-in rule, §4). `ThemeAtlasRuntimeTests` fails the build on a malformed folder.
@@ -152,7 +163,71 @@ schema (`tools/themes/README.md`), and `Tsukimichi.Tests/Ui/ThemeAtlasTests.cs` 
 
 ## 6. Budgets (asserted by `ThemeAtlasRuntimeTests`)
 
-- Per set, 1x textures (`medals` + `row` + `plain`): **≤ 4 MB** of RGBA (W × H × 4 summed).
-- Per set, the `@2x` textures: **≤ 12 MB** of RGBA.
-- Per set, all PNG files on disk: **≤ 2.5 MB**.
-- Every reachable appearance (any mix of the shipped sets, 1x): **≤ 12 MB** of RGBA in total, Medallion included.
+A set draws either as designed (`medals`, `plain`, `row`) or composed in another kit (`faces`, `faces-row`), never both
+in one appearance, so each path has its own budget.
+
+- Per set, 1x textures as designed (`medals` + `row` + `plain`): **≤ 4 MB** of RGBA (W × H × 4 summed); composed
+  (`faces` + `faces-row`): **≤ 4 MB**.
+- Per set, the `@2x` textures of each path: **≤ 12 MB** of RGBA.
+- Per set, PNG files on disk: **≤ 2.5 MB** as designed, **≤ 1.5 MB** of faces. Per kit: **≤ 1.5 MB**, and its 1x
+  textures **≤ 4 MB**.
+- Every reachable appearance (every shipped set, each by its larger path, Medallion included, plus the largest kit,
+  1x): **≤ 12 MB** of RGBA in total.
+
+## 7. Faces and frames: the frames axis (1.17 T11)
+
+theme-system §3.2–3.3 and §6.1; `docs/design/v7/ui/spec-1.17.md` §B. When the appearance's frame kit is not a set's own
+(`ResolvedAppearance.Composes`), the plugin composes that set's medals from its faces and the kit's frames, in the
+approved mix proofs' order (the sets' `_src/mix.py` and `compose()`):
+
+1. the face's **under** layer (the well and emblem, inside the shared well: centre 64, 64, r 52.4);
+2. the kit's **frame** for the state's urgency tier: act-now (Ready; the shared gilt in every kit), resting, finished
+   (Completed), ghost (Not checked); at Decoration Full its rim, at Quiet its hairline;
+3. the face's **over** layer (the overhangs drawn above the rim: In journal's ribbon, Completed's check), where it has one;
+4. from 32 px, the kit's **badge** at the shared slot (open lock, book, closed lock, or an empty role seat for Ready on
+   another job, into which the plugin draws the game's job icon).
+
+On a light palette at Decoration Full, every medal (any kit, composed or not) also gets a 1 px Abyss `#080B16` outer
+keyline at .6, half a pixel outside its own keyline (spec-1.17 §B2; `FrameParts.LightKeyline`), drawn by the plugin, not
+baked into the atlases.
+
+A set in its own kit draws `medals.*` and `row.*` as designed (the same art, byte for byte the 1.16 atlases), and
+Decoration Plain never composes (Plain has no frames). Until every part a medal needs has loaded, Menphina's Medallion
+stands in, as §4.
+
+**`faces.json`, `frames.json` (hero tiers)**:
+
+```json
+{
+  "size": [W, H],
+  "tiers": [48, 64, 96, 128],
+  "boxes": { "ready": [8, 8, 112, 112], "badge-open": [64, 64, 64, 64], "frame-act-now-full": [0, 0, 128, 128], ... },
+  "sprites": { "ready": { "48": [x, y, 42, 42], ... }, ... }
+}
+```
+
+- A sprite's **box** is the part of the 128-unit medal box it covers, `[x, y, w, h]` in units, on an 8-unit grid so a
+  cell is whole pixels at every tier: its cell at tier T is `w × T / 128` by `h × T / 128` px. The plugin draws it at
+  `min + box.xy × S / 128`, `box.wh × S / 128` px for a medal of side S. A badge's box is always `[64, 64, 64, 64]`.
+- `@2x` is the layout doubled, as §2. Rects follow §2's padding rules.
+- **Faces sprites:** `<state>` (the under layer) for all 8 states, required; `<state>-over` only for states with
+  overhangs. Ready on another job's face leaves the badge slot empty.
+- **Frames sprites:** `frame-<urgency>-<finish>` for urgency `act-now`, `resting`, `finished`, `ghost` and finish
+  `full`, `quiet` (8, required), and `badge-open`, `badge-closed`, `badge-journal`, `badge-seat-tank`,
+  `badge-seat-healer`, `badge-seat-dps`, `badge-seat-hand` (7, required).
+
+**`faces-row.json`, `frames-row.json` (row strips)**: `size`, `sizes` (12 … 31, contiguous) and `sprites`, the same
+sprite names (no badges in a row strip: the badge content goes beside the medal at text height), each cell the whole
+128-unit box rendered at that exact size. 1x only.
+
+Parsed by `Tsukimichi.Core/Ui/Themes/FrameParts.cs` (`PartAtlasLayout`); drawn by `ThemeAtlasCache.TryCompose`.
+
+**Gates.** The build composes every set's faces in every kit as the plugin does and runs the per-set gates on each
+(G1, G1c and G2 per tier group, G2L on the row tier), recorded in the kit's `metrics.json` under `faces`. A set in its own
+kit is its shipped composites and must pass; any other pairing is a user's frames choice, and a gate it misses is a
+warning (`warnings`), never a build failure (theme-system §5.2). What the Frames row says is each pairing's `flags`: every
+pair of states under the bars at 16 px (greyscale and deuteranopia 12, Machado's 11; "hard" under 10), Ready leading by
+under 1.25, Completed over 0.8 of Ready. The build compiles them into `Tsukimichi.Core/Ui/Themes/FrameKitChecks.g.cs`
+(`--check` covers it), since `metrics.json` is not packaged. The cross-set table frames every face in the neutral kit,
+Brass, whose four urgency tiers are one bezel, so the frame cancels and the faces decide; it is recorded worst-of-modes
+(`cross.sets`) and per vision mode (`cross.modes`).

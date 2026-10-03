@@ -105,11 +105,14 @@ public sealed class ThemeRegistryTests
     }
 
     [Fact]
-    public void The_1_16_offer_is_medallion_classic_aether_crystal_and_ishgard_glass()
+    public void The_1_17_offer_adds_the_Orrery_and_the_Astrolabe_kit()
     {
         Assert.Equal(
-            [GlyphSetId.Medallion, GlyphSetId.Classic, GlyphSetId.AetherCrystal, GlyphSetId.IshgardGlass],
+            [GlyphSetId.Medallion, GlyphSetId.Classic, GlyphSetId.AetherCrystal, GlyphSetId.IshgardGlass, GlyphSetId.Orrery],
             GlyphSets.All.Where(static s => s.Offered).Select(static s => s.Id));
+        Assert.Equal(
+            [FrameKitId.Brass, FrameKitId.Silver, FrameKitId.Came, FrameKitId.Astrolabe],
+            FrameKits.All.Where(static k => k.Offered).Select(static k => k.Id));
         // 1.17 (T16) offers Dawn and Kugane Lacquer beside them.
         Assert.Equal(
             [PaletteId.Night, PaletteId.IshgardSnow, PaletteId.Dawn, PaletteId.KuganeLacquer, PaletteId.FollowDalamud],

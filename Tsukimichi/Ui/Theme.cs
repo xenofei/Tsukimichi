@@ -183,8 +183,36 @@ public static class Theme
     /// <summary>The palette's scene this frame: sky, stars, shadows, glows, halos and the night grades.</summary>
     public static SceneTokens Scene { get; private set; } = UiPalettes.Night.Scene;
 
-    /// <summary>The palette's Decoration brass this frame: the card frame's ramp and the corner marks.</summary>
+    /// <summary>
+    /// The Decoration ornament's metal this frame: the card frame's ramp and the corner marks. The palette's brass in the
+    /// Brass kit; another kit's own metal on a dark palette (<see cref="FrameKitMetals.Ornament"/>).
+    /// </summary>
     public static BrassTokens Brass { get; private set; } = UiPalettes.Night.Brass;
+
+    /// <summary>The frame kit whose metal the ornament and gauges take (<see cref="UseFrameKit"/>).</summary>
+    public static FrameKitId FrameKit { get; private set; } = FrameKitId.Brass;
+
+    /// <summary>
+    /// Makes <paramref name="kit"/>'s metal the ornament's and the gauges' (feature plan v7 T11): set by the renderer seam
+    /// with the appearance in effect, so a pushed appearance (the Themes page's preview) draws its own. Re-resolves the two
+    /// only when the kit changes; allocates nothing.
+    /// </summary>
+    internal static void UseFrameKit(FrameKitId kit)
+    {
+        if (kit == FrameKit)
+        {
+            return;
+        }
+
+        FrameKit = kit;
+        ApplyMetal(Palette);
+    }
+
+    private static void ApplyMetal(UiPalette palette)
+    {
+        Brass = FrameKitMetals.Ornament(palette, FrameKit);
+        Gauges = FrameKitMetals.Gauges(palette, FrameKit);
+    }
 
     // ---- The chrome inks (UiPalette.Inks), resolved once per palette change. Night values in brackets.
 
@@ -300,7 +328,10 @@ public static class Theme
     /// </summary>
     public static bool ReadyHaloWash => Scene.WashInsteadOfGlow || Scene.ReadyHaloWash;
 
-    /// <summary>The palette's gauge inks this frame (<see cref="UiPalette.Gauges"/>): the medal's material on Night, their own on a light palette.</summary>
+    /// <summary>
+    /// The gauge inks this frame (<see cref="UiPalette.Gauges"/>): the medal's material on Night, their own on a light
+    /// palette, the arc in the frame kit's metal on a dark one (<see cref="FrameKitMetals.Gauges"/>).
+    /// </summary>
     public static GaugeInks Gauges { get; private set; } = UiPalettes.Night.Gauges;
 
     /// <summary>A highlight sheen or glint at its designed <paramref name="alpha"/>, packed: <see cref="GoldHigh"/> at that alpha times <see cref="SceneTokens.GlowStrength"/>.</summary>
@@ -508,7 +539,7 @@ public static class Theme
         Palette = palette;
         var s = Surface = palette.Surface;
         Scene = palette.Scene;
-        Brass = palette.Brass;
+        ApplyMetal(palette);
         Accent = palette.Accent;
         AccentU32 = Pack(Accent);
         AccentDim = palette.AccentDim;
@@ -535,7 +566,6 @@ public static class Theme
         ToggleKnob = inks.ToggleKnob;
         OrnamentLight = palette.OrnamentLight;
         Plate = palette.Plate;
-        Gauges = palette.Gauges;
         GaugeArc = inks.GaugeArc;
         GaugeDone = inks.GaugeDone;
         DeepU32 = Pack(s.Deep);

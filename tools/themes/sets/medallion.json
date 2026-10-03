@@ -7,6 +7,10 @@
   "dest": "Tsukimichi/assets/ui/themes/medallion",
   "palette": "night",
   "kit": "brass",
+  "faces": {
+    "hero": {"python": "tools/themes/sources.py", "call": "medallion_face", "args": ["{state}", "{layer}", "{tier}"]},
+    "row": {"python": "tools/themes/sources.py", "call": "medallion_face", "args": ["{state}", "{layer}", "row"]}
+  },
   "tiers": {
     "48": ".",
     "64": ".",

@@ -30,9 +30,24 @@ public sealed class ResolvedAppearance
 
         usedMask = used;
         IsMixed = mixed;
+
+        var composed = 0;
+        if (!highContrast && theme.Id != ThemeId.Classic)
+        {
+            foreach (var info in GlyphSets.All)
+            {
+                if (info.Mixable && info.DefaultFrames != frames)
+                {
+                    composed |= 1 << (int)info.Id;
+                }
+            }
+        }
+
+        composeMask = composed;
     }
 
     private readonly int usedMask;
+    private readonly int composeMask;
 
     /// <summary>The default appearance: Menphina's Medallion on Night with Brass, standard contrast.</summary>
     public static ResolvedAppearance Default { get; } = AppearanceResolver.Resolve(new AppearanceConfig());
@@ -63,6 +78,17 @@ public sealed class ResolvedAppearance
 
     /// <summary>Whether any state draws from <paramref name="set"/>.</summary>
     public bool Uses(GlyphSetId set) => (usedMask & (1 << (int)set)) != 0;
+
+    /// <summary>
+    /// Whether <paramref name="set"/>'s medals are composed from its unframed faces and this appearance's frame kit
+    /// (theme-system §6.1; ATLAS-CONTRACT §7) rather than drawn as the set ships them: whenever the kit is not the set's
+    /// own, which is also how a state mixed in from another set takes the column's one kit. A set in its own kit draws
+    /// its composites, the same pixels. High contrast (one shared set) and the Classic theme never compose.
+    /// </summary>
+    public bool Composes(GlyphSetId set) => (uint)set < 32 && (composeMask & (1 << (int)set)) != 0;
+
+    /// <summary>Whether any state this appearance draws is composed (<see cref="Composes"/>), so the kit's frames are needed.</summary>
+    public bool ComposesAny => (usedMask & composeMask) != 0;
 
     /// <summary>The 1.15 Moon style this appearance amounts to (written back for a downgrade, and read by the 1.11 gauges' switch).</summary>
     public MoonStyle MoonStyle => Classic ? MoonStyle.Classic : MoonStyle.Medallion;

@@ -1,0 +1,20 @@
+{
+  "key": "came",
+  "name": "Lead came",
+  "note": "Ishgard Glass's lead came (kit/, approved in round 3): the frame per urgency tier with the gilt inner line on act-now, the row tier's frames (kit/_row/), and the badge ring, seat and glyph in gen.py badge()'s order. The Hand seat is the tank seat in Medallion's Hand enamel.",
+  "root": "docs/design/v7/themes/ishgard-glass",
+  "dest": "Tsukimichi/assets/ui/kits/came",
+  "frames": {
+    "hero": "kit/frame-{urgency}-{finish}.svg",
+    "row": "kit/_row/frame-{urgency}-{finish}.svg"
+  },
+  "badges": {
+    "open": {"layers": ["kit/badge-ring-act-now.svg", "kit/badge-seat-open.svg", "kit/glyph-open.svg"]},
+    "closed": {"layers": ["kit/badge-ring-resting.svg", "kit/badge-seat-closed.svg", "kit/glyph-closed.svg"]},
+    "journal": {"layers": ["kit/badge-ring-resting.svg", "kit/badge-seat-journal.svg", "kit/glyph-journal.svg"]},
+    "seat-tank": {"layers": ["kit/badge-ring-resting.svg", "kit/badge-seat-tank.svg"]},
+    "seat-healer": {"layers": ["kit/badge-ring-resting.svg", "kit/badge-seat-healer.svg"]},
+    "seat-dps": {"layers": ["kit/badge-ring-resting.svg", "kit/badge-seat-dps.svg"]},
+    "seat-hand": {"layers": ["kit/badge-ring-resting.svg", {"file": "kit/badge-seat-tank.svg", "recolour": {"#5878C2": "#66708E", "#2C417E": "#2C324C"}}]}
+  }
+}

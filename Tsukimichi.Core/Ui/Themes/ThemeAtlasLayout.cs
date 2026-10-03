@@ -340,6 +340,9 @@ public static class ThemeAtlasRules
     /// <summary>A file's path relative to the plugin directory: <c>assets/ui/themes/&lt;key&gt;/&lt;file&gt;</c>.</summary>
     public static string RelativePath(GlyphSetId set, string file) => Path.Combine("assets", "ui", "themes", Folder(set), file);
 
+    /// <summary>A frame kit's file relative to the plugin directory: <c>assets/ui/kits/&lt;key&gt;/&lt;file&gt;</c> (ATLAS-CONTRACT §7).</summary>
+    public static string RelativePath(FrameKitId kit, string file) => Path.Combine("assets", "ui", "kits", FrameKits.Get(kit).Key, file);
+
     /// <summary>
     /// The texture and tier to draw a medal <paramref name="sizePx"/> device px across from <paramref name="tiers"/>: the
     /// smallest 1x tier at or above it, else the smallest 2x tier (twice a 1x tier) at or above it, else the largest 2x
