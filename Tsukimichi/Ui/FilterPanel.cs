@@ -14,8 +14,9 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The filter panel (spec §7) drawn in the left column above the tree, plus the toolbar's Quick views control and the
-/// chip row under the toolbar (T14). Binds straight to <see cref="UiState.Filters"/>; every change calls
+/// The filter panel (spec §7), drawn in the drawer over the Journal tree (feature plan v6 U2), plus the toolbar's Quick
+/// views control (T14) and the one-line chip lane at the top of the quest list (<see cref="DrawLane"/>). Binds straight
+/// to <see cref="UiState.Filters"/>; every change calls
 /// <c>changed</c> so the window can mark the query dirty and persist the filters.
 /// </summary>
 public sealed class FilterPanel
@@ -94,10 +95,6 @@ public sealed class FilterPanel
     private string stateChipTooltip = string.Empty;
     private QuestStateMask stateChipMask = QuestStateMask.All;
     private int stateChipLanguage = -1;
-    // The scope chip's label, memoized per (scope, catalog): naming a node is a scan of the whole catalog.
-    private string scopeChip = string.Empty;
-    private QuestScope scopeChipScope = QuestScope.None;
-    private QuestCatalog? scopeChipCatalog;
     private string levelChip = string.Empty;
     private byte levelChipMin = byte.MaxValue;
     private byte levelChipMax;
@@ -323,115 +320,107 @@ public sealed class FilterPanel
         }
     }
 
-    /// <summary>
-    /// Whether the chip row under the toolbar has anything to show: a tree scope other than All quests, or any filter
-    /// the Filters badge counts (<see cref="FilterBadge"/>). The row is not drawn at all otherwise.
-    /// </summary>
-    public bool HasChips() => ui.Scope != QuestScope.None || FilterBadge.Count(ui.Filters) > 0;
-
-    /// <summary>
-    /// The chip row (T14, ui-revamp §2.1): the scope first ("Scope: Sidequests › Gridania", or the NPC from the context
-    /// menu), clearing to All quests, then one <see cref="Chrome.Chip"/> per filter the Filters badge counts, each
-    /// clearing its filter. The search and the quick view are not chips: the search pill and the Quick views control
-    /// already show them, each with its own way out. Chips flow onto another line when the row is full. Records
-    /// <see cref="UiRects.Chips"/>.
-    /// </summary>
-    /// <param name="current">The catalog, for the scope's names; null while it is loading.</param>
-    public void DrawChips(CatalogBundle? current)
+    /// <summary>The lane's chips, most useful first; the order they show and spill behind "+N" in.</summary>
+    private enum LaneChip
     {
-        var f = ui.Filters;
+        HiddenSelection,
+        HideCompleted,
+        Available,
+        States,
+        Expansion,
+        AddedIn,
+        Level,
+        Job,
+        Rewards,
+        Repeatable,
+        Seasonal,
+        Pinned,
+        Abandoned,
+        OnceOnly,
+    }
+
+    private const string LaneMorePopup = "##chipLaneMore";
+
+    /// <summary>"+1" … "+16": the "+N" chip's labels, built once.</summary>
+    private static readonly string[] MoreLabels = BuildMoreLabels();
+
+    // This frame's chips (reused, so collecting them allocates nothing once the list has grown).
+    private readonly List<(LaneChip Kind, string Id, string Label, string? Explanation)> laneChips = new(16);
+
+    private static string[] BuildMoreLabels()
+    {
+        var labels = new string[16];
+        for (var i = 0; i < labels.Length; i++)
+        {
+            labels[i] = "+" + (i + 1).ToString(CultureInfo.InvariantCulture);
+        }
+
+        return labels;
+    }
+
+    /// <summary>
+    /// The Journal's chip lane (feature plan v6 U2, decision 5): one line of fixed <paramref name="height"/> at the top of
+    /// the quest list, under its title. One <see cref="Chrome.Chip"/> per filter the Filters badge counts, each clearing
+    /// its filter, in a single line that never wraps: when they do not fit, the rest go behind a "+N" chip whose popover
+    /// lists them, each still clearable, with Reset (<see cref="ChipLane"/>). The tree scope is not a chip: the list's
+    /// title names it, with its own ×. When <paramref name="hiddenSelection"/> is set (the selected quest is not in the
+    /// list, feature plan v6 U3), "Selected quest hidden · Show" leads the lane and shows it in the Journal. With no chip
+    /// the lane holds <paramref name="caption"/> (a quick view's line), or nothing; either way its height never changes.
+    /// Records <see cref="UiRects.Chips"/>.
+    /// </summary>
+    public void DrawLane(float height, QuestRecord? hiddenSelection, string? caption)
+    {
+        CollectChips(hiddenSelection);
         var start = ImGui.GetCursorScreenPos();
-        var width = ImGui.GetContentRegionAvail().X;
-        var any = false;
+        var room = MathF.Max(1f, ImGui.GetContentRegionAvail().X);
+        var gap = ImGui.GetStyle().ItemSpacing.X;
+        var count = laneChips.Count;
+        var chipHeight = Chrome.ChipHeightPx();
+        var y = start.Y + MathF.Max(0f, (height - chipHeight) * 0.5f);
+
+        Span<float> widths = stackalloc float[Math.Max(1, count)];
+        for (var i = 0; i < count; i++)
+        {
+            var chip = laneChips[i];
+            widths[i] = chip.Kind == LaneChip.HiddenSelection ? Chrome.ActionChipWidth(chip.Label) : Chrome.ChipWidth(chip.Label);
+        }
+
+        // The "+N" is measured at its widest (every chip behind it), so the fit never changes its mind about it.
+        var shown = ChipLane.Fit(widths[..count], room, gap, Chrome.ActionChipWidth(MoreLabels[Math.Clamp(count, 1, MoreLabels.Length) - 1]));
+        var x = start.X;
         var filtersChanged = false;
-
-        if (ui.Scope != QuestScope.None
-            && Chip("##chipScope", ScopeChipText(ui.Scope, current?.Catalog), ref any, ui.Scope.Kind == ScopeKind.VirtualIssuer ? Strings.ChipIssuerTooltip : Strings.ScopeChipTooltip))
+        for (var i = 0; i < shown; i++)
         {
-            // The scope is not a filter and is not persisted; the query re-runs on the dirty mark alone.
-            ui.Scope = QuestScope.None;
-            ui.MarkQueryDirty();
+            ImGui.SetCursorScreenPos(new Vector2(x, y));
+            filtersChanged |= DrawLaneChip(i, hiddenSelection);
+            x += widths[i] + gap;
         }
 
-        if (f.HideCompletedEngaged() && Chip("##chipHideCompleted", Strings.HideCompleted, ref any))
+        if (shown < count)
         {
-            f.HideCompleted = false;
-            f.PerCategoryHideCompleted.Clear();
-            filtersChanged = true;
+            ImGui.SetCursorScreenPos(new Vector2(x, y));
+            if (Chrome.ActionChip("##chipLaneMore", MoreLabels[Math.Min(count - shown, MoreLabels.Length) - 1]))
+            {
+                ImGui.OpenPopup(LaneMorePopup);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.ChipLaneMoreTooltip);
+            }
+
+            filtersChanged |= DrawLaneMore(shown, hiddenSelection, new Vector2(x, y + chipHeight + UiMetrics.Px(4f)));
         }
 
-        if (f.AvailableOnlyEngaged() && Chip("##chipAvailable", Strings.AvailableOnly, ref any))
+        if (count == 0 && caption is { Length: > 0 })
         {
-            f.AvailableOnly = false;
-            f.PerCategoryAvailableOnly.Clear();
-            filtersChanged = true;
-        }
-
-        if (f.StateMask != QuestStateMask.All && Chip("##chipStates", StateChipText(f), ref any, stateChipTooltip))
-        {
-            f.StateMask = QuestStateMask.All;
-            filtersChanged = true;
-        }
-
-        if (f.Expansions.Count > 0 && Chip("##chipExpansion", Strings.ChipExpansion, ref any))
-        {
-            f.Expansions.Clear();
-            filtersChanged = true;
-        }
-
-        if (f.AddedInEngaged() && Chip("##chipAddedIn", AddedInChipText(f), ref any))
-        {
-            f.AddedIn = string.Empty;
-            filtersChanged = true;
-        }
-
-        if (f.LevelRangeEngaged() && Chip("##chipLevel", LevelChipText(f), ref any))
-        {
-            f.LevelMin = FilterSet.NoLevelMin;
-            f.LevelMax = FilterSet.NoLevelMax;
-            filtersChanged = true;
-        }
-
-        if (f.ClassJobCategoryId is not null && Chip("##chipJob", JobPreview(f), ref any))
-        {
-            f.ClassJobCategoryId = null;
-            filtersChanged = true;
-        }
-
-        if (f.RewardKindsEngaged() && Chip("##chipRewards", Strings.RewardKinds, ref any))
-        {
-            f.RewardKinds.Clear();
-            filtersChanged = true;
-        }
-
-        if (f.RepeatableOnly && Chip("##chipRepeatable", Strings.ChipRepeatable, ref any))
-        {
-            f.RepeatableOnly = false;
-            filtersChanged = true;
-        }
-
-        if (f.SeasonalActiveOnly && Chip("##chipSeasonal", Strings.ChipSeasonal, ref any))
-        {
-            f.SeasonalActiveOnly = false;
-            filtersChanged = true;
-        }
-
-        if (f.PinnedOnly && Chip("##chipPinned", Strings.ChipPinned, ref any))
-        {
-            f.PinnedOnly = false;
-            filtersChanged = true;
-        }
-
-        if (f.AbandonedOnly && Chip("##chipAbandoned", Strings.AbandonedChip, ref any))
-        {
-            f.AbandonedOnly = false;
-            filtersChanged = true;
-        }
-
-        if (f.OnceOnlyStory && Chip("##chipOnceOnly", Strings.OnceOnlyStoryChip, ref any))
-        {
-            f.OnceOnlyStory = false;
-            filtersChanged = true;
+            var captionWidth = ImGui.CalcTextSize(caption).X;
+            ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + MathF.Max(0f, (height - ImGui.GetTextLineHeight()) * 0.5f)));
+            Chrome.EllipsisText(caption, room, Theme.U32(Theme.Surface.TextTertiary), captionWidth);
+            if (captionWidth > room && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(caption);
+            }
         }
 
         if (filtersChanged)
@@ -439,10 +428,12 @@ public sealed class FilterPanel
             changed();
         }
 
-        if (any)
+        // The lane is one item of its fixed height, whatever it held.
+        ImGui.SetCursorScreenPos(start);
+        ImGui.Dummy(new Vector2(room, height));
+        if (count > 0)
         {
-            var end = ImGui.GetItemRectMax();
-            ui.RecordRect(UiRects.Chips, start, new Vector2(start.X + width, end.Y));
+            ui.RecordRect(UiRects.Chips, start, start + new Vector2(room, height));
         }
         else
         {
@@ -450,32 +441,109 @@ public sealed class FilterPanel
         }
     }
 
-    /// <summary>Clears every filter and the search text.</summary>
-    public void ResetAll()
+    /// <summary>The "+N" popover under its chip: the chips the lane had no room for, one per line, each still clearable, and Reset.</summary>
+    private bool DrawLaneMore(int from, QuestRecord? hiddenSelection, Vector2 position)
     {
-        ui.Filters.Reset();
-        ui.SearchText = string.Empty;
-        changed();
-    }
-
-    /// <summary>
-    /// One chip of the chip row, flowing onto the next line when the row is full; true on the click that clears it.
-    /// <paramref name="explanation"/>, when given, says what the chip's text means (the state chip names only a few
-    /// excluded states and counts the rest) above the "click to clear" line.
-    /// </summary>
-    private static bool Chip(string id, string label, ref bool any, string? explanation = null)
-    {
-        if (any)
+        // Next-window data only when the popup will begin, or it would land on the next child window.
+        if (!ImGui.IsPopupOpen(LaneMorePopup))
         {
-            var needed = Chrome.ChipWidth(label) + ImGui.GetStyle().ItemSpacing.X;
-            var limit = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
-            if (ImGui.GetItemRectMax().X + needed <= limit)
-            {
-                ImGui.SameLine();
-            }
+            return false;
         }
 
-        any = true;
+        ImGui.SetNextWindowPos(position, ImGuiCond.Appearing);
+        using var popup = ImRaii.Popup(LaneMorePopup);
+        if (!popup)
+        {
+            return false;
+        }
+
+        UiMetrics.ApplyFontScale();
+        var changedAny = false;
+        for (var i = from; i < laneChips.Count; i++)
+        {
+            changedAny |= DrawLaneChip(i, hiddenSelection);
+        }
+
+        ImGui.Spacing();
+        if (ImGui.SmallButton(Strings.Reset + "##chipLaneReset"))
+        {
+            ResetAll();
+            ImGui.CloseCurrentPopup();
+        }
+
+        Tip(Strings.ResetTooltip);
+        return changedAny;
+    }
+
+    /// <summary>The chips engaged this frame, in <see cref="LaneChip"/> order.</summary>
+    private void CollectChips(QuestRecord? hiddenSelection)
+    {
+        laneChips.Clear();
+        var f = ui.Filters;
+        if (hiddenSelection is not null)
+        {
+            laneChips.Add((LaneChip.HiddenSelection, "##chipHiddenSelection", Strings.SelectedHiddenChip, null));
+        }
+
+        AddIf(f.HideCompletedEngaged(), LaneChip.HideCompleted, "##chipHideCompleted", Strings.HideCompleted);
+        AddIf(f.AvailableOnlyEngaged(), LaneChip.Available, "##chipAvailable", Strings.AvailableOnly);
+        if (f.StateMask != QuestStateMask.All)
+        {
+            laneChips.Add((LaneChip.States, "##chipStates", StateChipText(f), stateChipTooltip));
+        }
+
+        AddIf(f.Expansions.Count > 0, LaneChip.Expansion, "##chipExpansion", Strings.ChipExpansion);
+        if (f.AddedInEngaged())
+        {
+            laneChips.Add((LaneChip.AddedIn, "##chipAddedIn", AddedInChipText(f), null));
+        }
+
+        if (f.LevelRangeEngaged())
+        {
+            laneChips.Add((LaneChip.Level, "##chipLevel", LevelChipText(f), null));
+        }
+
+        if (f.ClassJobCategoryId is not null)
+        {
+            laneChips.Add((LaneChip.Job, "##chipJob", JobPreview(f), null));
+        }
+
+        AddIf(f.RewardKindsEngaged(), LaneChip.Rewards, "##chipRewards", Strings.RewardKinds);
+        AddIf(f.RepeatableOnly, LaneChip.Repeatable, "##chipRepeatable", Strings.ChipRepeatable);
+        AddIf(f.SeasonalActiveOnly, LaneChip.Seasonal, "##chipSeasonal", Strings.ChipSeasonal);
+        AddIf(f.PinnedOnly, LaneChip.Pinned, "##chipPinned", Strings.ChipPinned);
+        AddIf(f.AbandonedOnly, LaneChip.Abandoned, "##chipAbandoned", Strings.AbandonedChip);
+        AddIf(f.OnceOnlyStory, LaneChip.OnceOnly, "##chipOnceOnly", Strings.OnceOnlyStoryChip);
+    }
+
+    private void AddIf(bool engaged, LaneChip kind, string id, string label)
+    {
+        if (engaged)
+        {
+            laneChips.Add((kind, id, label, null));
+        }
+    }
+
+    /// <summary>Draws chip <paramref name="index"/> at the cursor; true when its click cleared a filter.</summary>
+    private bool DrawLaneChip(int index, QuestRecord? hiddenSelection)
+    {
+        var (kind, id, label, explanation) = laneChips[index];
+        if (kind == LaneChip.HiddenSelection)
+        {
+            var show = Chrome.ActionChip(id, label, accent: true);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.SelectedHiddenChipTooltip);
+            }
+
+            if (show && hiddenSelection is not null)
+            {
+                ui.Reveal(hiddenSelection);
+            }
+
+            return false;
+        }
+
         var clicked = Chrome.Chip(id, label);
         if (ImGui.IsItemHovered())
         {
@@ -489,7 +557,67 @@ public sealed class FilterPanel
             }
         }
 
-        return clicked;
+        if (!clicked)
+        {
+            return false;
+        }
+
+        var f = ui.Filters;
+        switch (kind)
+        {
+            case LaneChip.HideCompleted:
+                f.HideCompleted = false;
+                f.PerCategoryHideCompleted.Clear();
+                break;
+            case LaneChip.Available:
+                f.AvailableOnly = false;
+                f.PerCategoryAvailableOnly.Clear();
+                break;
+            case LaneChip.States:
+                f.StateMask = QuestStateMask.All;
+                break;
+            case LaneChip.Expansion:
+                f.Expansions.Clear();
+                break;
+            case LaneChip.AddedIn:
+                f.AddedIn = string.Empty;
+                break;
+            case LaneChip.Level:
+                f.LevelMin = FilterSet.NoLevelMin;
+                f.LevelMax = FilterSet.NoLevelMax;
+                break;
+            case LaneChip.Job:
+                f.ClassJobCategoryId = null;
+                break;
+            case LaneChip.Rewards:
+                f.RewardKinds.Clear();
+                break;
+            case LaneChip.Repeatable:
+                f.RepeatableOnly = false;
+                break;
+            case LaneChip.Seasonal:
+                f.SeasonalActiveOnly = false;
+                break;
+            case LaneChip.Pinned:
+                f.PinnedOnly = false;
+                break;
+            case LaneChip.Abandoned:
+                f.AbandonedOnly = false;
+                break;
+            case LaneChip.OnceOnly:
+                f.OnceOnlyStory = false;
+                break;
+        }
+
+        return true;
+    }
+
+    /// <summary>Clears every filter and the search text.</summary>
+    public void ResetAll()
+    {
+        ui.Filters.Reset();
+        ui.SearchText = string.Empty;
+        changed();
     }
 
     private void DrawRuntimeToggle(string label, string tooltip, string popupId, bool hasSnapshot, bool value, FilterSet filters, Action<FilterSet, bool> set, Dictionary<uint, bool> overrides)
@@ -831,33 +959,6 @@ public sealed class FilterPanel
         stateChip = string.Format(CultureInfo.CurrentCulture, Strings.ChipStateFormat, text);
         stateChipTooltip = string.Format(CultureInfo.CurrentCulture, Strings.ChipStateTooltipFormat, tooltip);
         return stateChip;
-    }
-
-    /// <summary>
-    /// "Scope: Sidequests › Gridania": the tree node narrowing the table, named from the catalog (a section alone, a
-    /// category under its section, a genre under its category, the virtual nodes by their tree names, an NPC's quests
-    /// as "Quests from Gerolt"). Memoized per (scope, catalog): naming a node scans the catalog once.
-    /// </summary>
-    private int scopeChipLanguage = -1;
-
-    private string ScopeChipText(QuestScope scope, QuestCatalog? catalog)
-    {
-        if (scopeChip.Length > 0 && scope == scopeChipScope && ReferenceEquals(catalog, scopeChipCatalog) && scopeChipLanguage == Localization.Loc.Version)
-        {
-            return scopeChip;
-        }
-
-        scopeChipLanguage = Localization.Loc.Version;
-        scopeChipScope = scope;
-        scopeChipCatalog = catalog;
-        scopeChip = string.Format(CultureInfo.CurrentCulture, Strings.ScopeChipFormat, ScopeName(scope, catalog));
-        return scopeChip;
-    }
-
-    private static string ScopeName(QuestScope scope, QuestCatalog? catalog)
-    {
-        var (parent, name) = ScopeParts(scope, catalog);
-        return ScopePath(parent, name);
     }
 
     /// <summary>

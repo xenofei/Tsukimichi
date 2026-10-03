@@ -440,6 +440,12 @@ public sealed partial class Configuration : IPluginConfiguration
     public bool TreePaneStrip { get; set; }
 
     /// <summary>
+    /// The filter drawer's pin (feature plan v6 U2): while on, a click elsewhere in the window leaves the drawer open; it
+    /// still closes on Esc, its × and the Filters button. Off by default.
+    /// </summary>
+    public bool FilterDrawerPinned { get; set; }
+
+    /// <summary>
     /// Settings › Display › Compact rail (feature plan v4 L7): the 44 px rail of icons, their labels in tooltips, at every
     /// window width. Off by default, when the rail is compact only on windows under about 1,040 px.
     /// </summary>

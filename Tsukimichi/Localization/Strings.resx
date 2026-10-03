@@ -3343,7 +3343,7 @@
     <value>Narrow with filters</value>
   </data>
   <data name="Help.StepFiltersBody" xml:space="preserve">
-    <value>Filters opens a panel beside the tree; the number on the button counts the filters narrowing the table. Each one shows as a chip under the toolbar, the tree scope first; click a chip to clear it.</value>
+    <value>Filters opens a drawer over the tree; the number on the button counts the filters narrowing the table. Each one shows as a chip in the line over the list, and the list's title names the tree scope with an × to clear it; click a chip to clear it.</value>
   </data>
   <data name="Help.StepReadTitle" xml:space="preserve">
     <value>Read why a quest is locked</value>
@@ -3479,7 +3479,7 @@
     <value>One-click views on the toolbar, with All first to turn them off: Unlocks, My level, Stalled, Story sidequests and Sprout mode; the filter panel keeps the number of days Stalled waits. Unlocks opens with the unlock quests of the newest patch series ("New in 7.5x": 7.5, 7.51, 7.55 and the rest), above a gold line; the detail pane says which patch any quest came with ("Added in 7.5"). Story sidequests lists the sidequests with journal artwork, the ones that tell a small story, zone by zone, with each side story in the order you play it; a book after the name marks them in any view, and its tooltip says which story and how far in ("3 of 9"). The detail pane shows the story's progress as "Story: &lt;first quest&gt; · 3 of 9 done · next: …". The blue aether current quests that open a zone's story lines are part of it; other blue unlock quests (dungeons, systems, jobs) are left out.</value>
   </data>
   <data name="Help.FilterCardBodies.5" xml:space="preserve">
-    <value>While something narrows the table, a row of chips sits under the toolbar: the tree scope first, then one chip per filter, which the Filters button's number counts. Click a chip to clear it; Reset clears them all and the search.</value>
+    <value>While filters narrow the table, a line of chips sits over the list, one per filter, which the Filters button's number counts; when they do not fit, "+N" lists the rest. Click a chip to clear it; Reset clears them all and the search. The tree scope is in the list's title, with an × to clear it.</value>
   </data>
   <data name="Help.FilterCardBodies.6" xml:space="preserve">
     <value>When the table empties, it names the filters responsible as chips: click one to clear only that filter, or Reset filters to clear them all.</value>
@@ -3599,7 +3599,7 @@
     <value>Everything read from a character: completed quests, journal, job levels, Grand Company, allied societies and unlocked duties. One per character, refreshed while you play and again on logout.</value>
   </data>
   <data name="Help.CharacterCardBodies.1" xml:space="preserve">
-    <value>Pick a stored character to browse the catalog as that character. The toolbar's live pip turns hollow and a banner names the snapshot.</value>
+    <value>Pick a stored character to browse the catalog as that character. The toolbar's live pip turns hollow and the status bar names the snapshot.</value>
   </data>
   <data name="Help.CharacterCardBodies.2" xml:space="preserve">
     <value>Completion per journal section, Moonlit progress, pins, recent activity, job levels by role, Grand Company and society standings.</value>
@@ -5161,10 +5161,10 @@
     <value>The quick views sit on the toolbar; the Stalled view reads the number of days set here</value>
   </data>
   <data name="FiltersBadgeOne" xml:space="preserve">
-    <value>1 filter narrows the table; its chip under the toolbar clears it</value>
+    <value>1 filter narrows the table; its chip over the list clears it</value>
   </data>
   <data name="FiltersBadgeFormat" xml:space="preserve">
-    <value>{0} filters narrow the table; each chip under the toolbar clears one</value>
+    <value>{0} filters narrow the table; each chip over the list clears one</value>
     <comment>{0} = engaged filters.</comment>
   </data>
   <data name="CharacterChipTooltip" xml:space="preserve">
@@ -5281,7 +5281,7 @@
     <value>Narrow it further</value>
   </data>
   <data name="Tutorial.FiltersBody" xml:space="preserve">
-    <value>Filters opens this panel beside the tree. The badge counts what narrows the table, and each chip under the toolbar clears one; the first chip is the tree scope.</value>
+    <value>Filters opens this drawer over the tree. The badge counts what narrows the table; each chip over the list clears one, and the list's title clears the tree scope with its ×.</value>
   </data>
   <data name="Tutorial.TabsTitle" xml:space="preserve">
     <value>Where things live</value>
@@ -5607,7 +5607,7 @@
     <value>Filters</value>
   </data>
   <data name="FiltersTooltip" xml:space="preserve">
-    <value>Show or hide the filter panel beside the tree</value>
+    <value>Show or hide the filters, in a drawer over the tree</value>
   </data>
   <data name="NoCharacter" xml:space="preserve">
     <value>No character</value>
@@ -5893,7 +5893,7 @@
     <comment>{0} = time.</comment>
   </data>
   <data name="StatusNoSnapshot" xml:space="preserve">
-    <value>no snapshot</value>
+    <value>not logged in · browsing</value>
   </data>
   <data name="StatusMsqFormat" xml:space="preserve">
     <value>MSQ · {0} ›</value>
@@ -9082,5 +9082,42 @@
   </data>
   <data name="ConfigSafetyTwoClickHint" xml:space="preserve">
     <value>For hand strain: a second click confirms, in place of a held key or a held button.</value>
+  </data>
+  <data name="ChipLaneMoreTooltip" xml:space="preserve">
+    <value>More filters narrow the list: click to see them all, each with its own ×</value>
+  </data>
+  <data name="SelectedHiddenChip" xml:space="preserve">
+    <value>Selected quest hidden · Show</value>
+  </data>
+  <data name="SelectedHiddenChipTooltip" xml:space="preserve">
+    <value>The quest in the detail pane is not in this list. Click to show it in the Journal.</value>
+  </data>
+  <data name="DockCardWaitingFormat" xml:space="preserve">
+    <value>{0} is waiting for you</value>
+    <comment>{0} = the waiting card's title, such as "Since you were away".</comment>
+  </data>
+  <data name="DockCardShow" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="DockCardShowTooltip" xml:space="preserve">
+    <value>Clears the selection, so the card shows in the detail pane</value>
+  </data>
+  <data name="DockPreviousTooltip" xml:space="preserve">
+    <value>Previous notice</value>
+  </data>
+  <data name="DockNextTooltip" xml:space="preserve">
+    <value>Next notice</value>
+  </data>
+  <data name="DockCloseTooltip" xml:space="preserve">
+    <value>Close this notice</value>
+  </data>
+  <data name="FilterDrawerPinTooltip" xml:space="preserve">
+    <value>Keep the filters open: a click elsewhere no longer closes them</value>
+  </data>
+  <data name="FilterDrawerUnpinTooltip" xml:space="preserve">
+    <value>Let a click elsewhere close the filters again</value>
+  </data>
+  <data name="FilterDrawerCloseTooltip" xml:space="preserve">
+    <value>Close the filters (Esc)</value>
   </data>
 </root>

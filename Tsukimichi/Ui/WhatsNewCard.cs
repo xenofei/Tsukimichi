@@ -70,6 +70,9 @@ public sealed class WhatsNewCard
     /// <summary>True while the card has a section to show.</summary>
     public bool Visible => sections.Count > 0;
 
+    /// <summary>The card's title ("What's new in 1.12.0"), for the notice that says it is waiting; empty while hidden.</summary>
+    public string Title => title?.Value ?? string.Empty;
+
     /// <summary>
     /// Decides once per plugin load, when the main window first draws, whether to show the card, and records the
     /// version at once when there is nothing to show (fresh install, same version, or nothing new in the changelog).
