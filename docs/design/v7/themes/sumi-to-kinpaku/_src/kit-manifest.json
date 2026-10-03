@@ -1,0 +1,64 @@
+{
+  "key": "kirikane",
+  "name": "Kirikane",
+  "note": "Sumi to Kinpaku's kit (kit/): ro-iro lacquer frames with a crest line of cut gold leaf, the shared gilt on act-now, the row tier's frames (kit/_row/), and the badge ring, seat and glyph in gen.py badge()'s order. The Hand seat is the tank seat in Medallion's Hand enamel. Kept beside the set (not in tools/themes/kits/) until the set is offered.",
+  "root": "docs/design/v7/themes/sumi-to-kinpaku",
+  "dest": "Tsukimichi/assets/ui/kits/kirikane",
+  "frames": {
+    "hero": "kit/frame-{urgency}-{finish}.svg",
+    "row": "kit/_row/frame-{urgency}-{finish}.svg"
+  },
+  "badges": {
+    "open": {
+      "layers": [
+        "kit/badge-ring-act-now.svg",
+        "kit/badge-seat-open.svg",
+        "kit/glyph-open.svg"
+      ]
+    },
+    "closed": {
+      "layers": [
+        "kit/badge-ring-resting.svg",
+        "kit/badge-seat-closed.svg",
+        "kit/glyph-closed.svg"
+      ]
+    },
+    "journal": {
+      "layers": [
+        "kit/badge-ring-resting.svg",
+        "kit/badge-seat-journal.svg",
+        "kit/glyph-journal.svg"
+      ]
+    },
+    "seat-tank": {
+      "layers": [
+        "kit/badge-ring-resting.svg",
+        "kit/badge-seat-tank.svg"
+      ]
+    },
+    "seat-healer": {
+      "layers": [
+        "kit/badge-ring-resting.svg",
+        "kit/badge-seat-healer.svg"
+      ]
+    },
+    "seat-dps": {
+      "layers": [
+        "kit/badge-ring-resting.svg",
+        "kit/badge-seat-dps.svg"
+      ]
+    },
+    "seat-hand": {
+      "layers": [
+        "kit/badge-ring-resting.svg",
+        {
+          "file": "kit/badge-seat-tank.svg",
+          "recolour": {
+            "#5878C2": "#66708E",
+            "#2C417E": "#2C324C"
+          }
+        }
+      ]
+    }
+  }
+}
