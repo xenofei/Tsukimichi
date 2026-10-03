@@ -53,13 +53,45 @@ internal static class MedalGauge
     private static readonly List<Vector2> Scratch = new(128);
     private static readonly List<Vector2> Overlay = new(128);
 
-    /// <summary>The groove a gauge runs in: Abyss keylines either side of a lapis track <paramref name="stroke"/> px wide.</summary>
+    /// <summary>
+    /// The groove a gauge runs in: Abyss keylines either side of a lapis track <paramref name="stroke"/> px wide. From a
+    /// 3 px track, each wall's shadow lies a pixel deep inside it where the wall faces the key light (the outer wall's
+    /// upper left, the inner wall's lower right), so it reads as a recess, as the medal's well does.
+    /// </summary>
     public static void Groove(ImDrawListPtr dl, Vector2 center, float radius, float stroke, int segments)
     {
         var keyline = MathF.Max(1f, MathF.Round(stroke * 0.25f));
         dl.AddCircle(center, radius, KeylineU32, segments, stroke + 2f * keyline);
         dl.AddCircle(center, radius, GrooveU32, segments, stroke);
+        if (stroke < 3f)
+        {
+            return;
+        }
+
+        var light = MathF.Atan2(MedalArt.Light.Y, MedalArt.Light.X);
+        WallShadow(dl, center, radius + stroke * 0.5f - 0.5f, light, segments);
+        WallShadow(dl, center, radius - stroke * 0.5f + 0.5f, light + MathF.PI, segments);
     }
+
+    /// <summary>A 1 px Abyss arc on the circle of <paramref name="radius"/>, deepest at <paramref name="facing"/> and fading out a quarter turn either side.</summary>
+    private static void WallShadow(ImDrawListPtr dl, Vector2 center, float radius, float facing, int segments)
+    {
+        const int pieces = 8;
+        const float reach = MathF.PI / 2f;
+        var steps = Math.Max(1, GaugeGeometry.ArcSegments(segments, 2f * reach) / pieces);
+        for (var i = 0; i < pieces; i++)
+        {
+            var a0 = facing - reach + 2f * reach * i / pieces;
+            var a1 = a0 + 2f * reach / pieces;
+            var depth = MathF.Cos((a0 + a1) * 0.5f - facing);
+            dl.PathClear();
+            dl.PathArcTo(center, radius, a0, a1, steps);
+            dl.PathStroke(Theme.WithAlpha(M.Keyline, WallShadowAlpha * depth * depth), ImDrawFlags.None, 1f);
+        }
+    }
+
+    /// <summary>The groove's wall shadow at its deepest.</summary>
+    private const float WallShadowAlpha = 0.55f;
 
     /// <summary>
     /// A gilt arc from <paramref name="start"/> through <paramref name="sweep"/> radians on the circle of
@@ -79,15 +111,17 @@ internal static class MedalGauge
         dl.PathArcTo(center, radius, start, start + sweep, steps);
         dl.PathStroke(GiltU32, ImDrawFlags.None, stroke);
 
-        var (s0, c0) = MathF.SinCos(start);
-        var (s1, c1) = MathF.SinCos(start + sweep);
-        dl.AddCircleFilled(center + new Vector2(c0, s0) * radius, stroke * 0.5f, Slope(OuterSlope, center, box, center + new Vector2(c0, s0) * radius));
-        dl.AddCircleFilled(center + new Vector2(c1, s1) * radius, stroke * 0.5f, Slope(OuterSlope, center, box, center + new Vector2(c1, s1) * radius));
-
         if (stroke < 3f)
         {
+            var (s0, c0) = MathF.SinCos(start);
+            var (s1, c1) = MathF.SinCos(start + sweep);
+            dl.AddCircleFilled(center + new Vector2(c0, s0) * radius, stroke * 0.5f, Slope(OuterSlope, center, box, center + new Vector2(c0, s0) * radius));
+            dl.AddCircleFilled(center + new Vector2(c1, s1) * radius, stroke * 0.5f, Slope(OuterSlope, center, box, center + new Vector2(c1, s1) * radius));
             return;
         }
+
+        Cap(dl, center, radius, stroke, start, box);
+        Cap(dl, center, radius, stroke, start + sweep, box);
 
         // Rows: the inner slope's foot, the crest twice (a crisp edge between the slopes), the outer slope's foot.
         var inner = radius - stroke * 0.5f + 0.5f;
@@ -116,10 +150,26 @@ internal static class MedalGauge
     }
 
     /// <summary>
+    /// A round cap at <paramref name="angle"/> lit in two halves split along the crest, as the arc is: the half outside
+    /// the track in the outer slope's colour, the half inside it in the inner slope's. The outer half goes over a whole
+    /// inner-coloured disc, so no background shows through where the halves meet.
+    /// </summary>
+    private static void Cap(ImDrawListPtr dl, Vector2 center, float radius, float stroke, float angle, float box)
+    {
+        var (s, c) = MathF.SinCos(angle);
+        var at = center + new Vector2(c, s) * radius;
+        dl.AddCircleFilled(at, stroke * 0.5f, Slope(InnerSlope, center, box, at));
+        dl.PathClear();
+        dl.PathArcTo(at, stroke * 0.5f, angle - MathF.PI * 0.5f, angle + MathF.PI * 0.5f, Math.Max(6, (int)MathF.Ceiling(stroke * 1.5f)));
+        dl.PathFillConvex(Slope(OuterSlope, center, box, at));
+    }
+
+    /// <summary>
     /// The filling moon in moonstone (G5): lit <paramref name="width"/> from 0 (new) to 1 (full), waxing from the right
     /// (<see cref="MoonGeometry.TerminatorLayers"/>), on its dark side, inside an Abyss keyline; from r 9 the lit part
-    /// takes a radial gradient lit from the upper left. A new moon keeps a fine gilt outline so an empty node still shows.
-    /// With <paramref name="dim"/> the lit part is flat moonstone mid (a finished gauge stepping back).
+    /// takes a radial gradient (<see cref="GaugeGeometry.MoonHighlight"/>), from the upper left on a full disc and toward
+    /// its lit limb while it fills. A new moon keeps a fine gilt outline so an empty node still shows. With
+    /// <paramref name="dim"/> the lit part is flat moonstone mid (a finished gauge stepping back).
     /// </summary>
     public static void FillingMoon(ImDrawListPtr dl, Vector2 center, float radius, float width, bool dim = false)
     {
@@ -141,7 +191,7 @@ internal static class MedalGauge
             FillDisc(dl, center, radius, segments, lit);
             if (!dim)
             {
-                Shade(dl, center, radius, Scratch);
+                Shade(dl, center, radius, width, Scratch);
             }
 
             if (hasOverlay)
@@ -155,7 +205,7 @@ internal static class MedalGauge
             FillPolygon(dl, Overlay, lit);
             if (!dim)
             {
-                Shade(dl, center, radius, Overlay);
+                Shade(dl, center, radius, width, Overlay);
             }
         }
         else
@@ -175,8 +225,12 @@ internal static class MedalGauge
         return Theme.U32(MeshBuilder.Stop(stops, t));
     }
 
-    /// <summary>A radial gradient over the convex lit polygon <paramref name="lit"/> (already filled flat): one fan mesh in three rings, from r 9.</summary>
-    private static void Shade(ImDrawListPtr dl, Vector2 center, float radius, List<Vector2> lit)
+    /// <summary>
+    /// A radial gradient over the convex lit polygon <paramref name="lit"/> (already filled flat), peaking where
+    /// <see cref="GaugeGeometry.MoonHighlight"/> puts it for a lit <paramref name="width"/>: one fan mesh in three rings,
+    /// from r 9.
+    /// </summary>
+    private static void Shade(ImDrawListPtr dl, Vector2 center, float radius, float width, List<Vector2> lit)
     {
         var n = lit.Count;
         if (radius < LegacyMoonGlyph.ShadingMinRadius || n < 3)
@@ -184,7 +238,7 @@ internal static class MedalGauge
             return;
         }
 
-        var highlight = center + new Vector2(-0.32f, -0.34f) * radius;
+        var highlight = center + GaugeGeometry.MoonHighlight(width) * radius;
         var hub = Centroid(lit);
         var span = 1f / (1.25f * radius);
         var uv = ImGui.GetFontTexUvWhitePixel();

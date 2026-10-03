@@ -185,6 +185,15 @@ public static class Theme
     /// </summary>
     public static Flair FlairSetting { get; private set; } = Flair.Full;
 
+    /// <summary>
+    /// Settings › Display › Look › Moon style this frame (feature plan v6 G3): whether <see cref="MoonGlyph"/>, the orbit
+    /// rings and the quest table draw the 1.12 medals and gauges or the 1.11 moons (<see cref="LegacyMoonGlyph"/>).
+    /// </summary>
+    public static MoonStyle MoonStyle { get; private set; } = MoonStyle.Medallion;
+
+    /// <summary>Whether the 1.11 moons draw this frame (<see cref="MoonStyle.Classic"/>).</summary>
+    public static bool ClassicMoons => MoonStyle == MoonStyle.Classic;
+
     /// <summary>Whether the pane gradient draws this frame (Full only).</summary>
     public static bool ShowPaneGradient => FlairRules.PaneGradient(Flair);
 
@@ -241,10 +250,11 @@ public static class Theme
     /// <paramref name="glyphPalette"/> is resolved against the resulting window colour (<see cref="Glyphs"/>), so the
     /// high-contrast glyphs switch to their light variant on a light Dalamud theme. Under high contrast the Moon Road
     /// roles take that palette's versions and <paramref name="flair"/> is capped at Quiet (<see cref="Flair"/>).
-    /// Allocates nothing.
+    /// <paramref name="moonStyle"/> picks the glyph renderer (<see cref="MoonStyle"/>). Allocates nothing.
     /// </summary>
-    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard, Flair flair = Flair.Full)
+    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard, Flair flair = Flair.Full, MoonStyle moonStyle = MoonStyle.Medallion)
     {
+        MoonStyle = MoonStyleRules.Effective(moonStyle);
         var colors = ImGui.GetStyle().Colors;
         var windowBg = colors[(int)ImGuiCol.WindowBg];
         hostWindowAlpha = float.IsFinite(windowBg.W) ? Math.Clamp(windowBg.W, 0f, 1f) : 1f;

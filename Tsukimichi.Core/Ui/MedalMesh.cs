@@ -11,7 +11,9 @@ public delegate Vector4 Paint(Vector2 point);
 /// and offsetting its vertices into an ImGui draw list. Nothing is evaluated at draw time: each vertex carries its
 /// colour (packed IM_COL32) and an anti-aliasing offset in device pixels, so a part's outline is feathered by one
 /// pixel at any size, as ImGui's own anti-aliased fills are (the inner edge pulled in half a pixel, a transparent
-/// fringe half a pixel out).
+/// fringe half a pixel out). A mesh built for one drawn size (<see cref="MeshBuilder(float, float)"/>) also knows which of
+/// its shapes are thinner than a pixel there and draws them as coverage: collapsed to their centreline, their alpha
+/// scaled by their thickness, feathered a pixel either side.
 ///
 /// <para>The parts are in draw order. A part with a <see cref="MeshPart.MinSizePx"/> is detail that only reads from that
 /// size (the drawn box, device px) up, and is skipped below it.</para>
@@ -66,15 +68,31 @@ public sealed class MeshBuilder
     private readonly List<uint> colors = [];
     private readonly List<ushort> indices = [];
     private readonly float detail;
+    private readonly float pixels;
     private float minSize;
     private Matrix3x2 transform = Matrix3x2.Identity;
 
     /// <summary>
     /// A builder whose discs, bands and row grids take <paramref name="levelOfDetail"/> of the segments they ask for
     /// (at least 8): the row tier's meshes are built at 0.4, where a 72-segment rim is 29 and still under a tenth of a
-    /// pixel off the circle at 31 px.
+    /// pixel off the circle at 31 px. With <paramref name="sizePx"/> (the device px its <see cref="BoxUnits"/>-unit box
+    /// is drawn at) the mesh is for that size only, and every feathered shape thinner than a pixel there is drawn as
+    /// coverage (see <see cref="Fringe"/>); 0 builds a mesh for any size.
     /// </summary>
-    public MeshBuilder(float levelOfDetail = 1f) => detail = Math.Clamp(levelOfDetail, 0.1f, 1f);
+    public MeshBuilder(float levelOfDetail = 1f, float sizePx = 0f)
+    {
+        detail = Math.Clamp(levelOfDetail, 0.1f, 1f);
+        pixels = sizePx > 0f ? sizePx / BoxUnits : 0f;
+    }
+
+    /// <summary>The side of the box a mesh is drawn in, in its own units: a mesh drawn <c>s</c> px across scales by <c>s / BoxUnits</c>.</summary>
+    public const float BoxUnits = 128f;
+
+    /// <summary>Whether this builder's mesh is for one drawn size, so a shape finer than a pixel there draws as its coverage.</summary>
+    public bool Coverage => pixels > 0f;
+
+    /// <summary>Device px per unit of the one size this builder's mesh is for (0: any size).</summary>
+    public float PixelsPerUnit => pixels;
 
     /// <summary>Starts a new part drawn only from <paramref name="minSizePx"/> up (0: always).</summary>
     public MeshBuilder Detail(float minSizePx)
@@ -291,21 +309,38 @@ public sealed class MeshBuilder
 
         if (aa)
         {
+            // Across the band at each ring vertex: radially to the matching vertex of the other ring.
+            var outerRing = Range(start + (rows - 1) * count, count);
+            var innerRing = Range(start, count);
+            var inwardAcross = new List<Vector2>(count);
+            var outwardAcross = new List<Vector2>(count);
+            for (var k = 0; k < count; k++)
+            {
+                inwardAcross.Add(positions[innerRing[k]] - positions[outerRing[k]]);
+                outwardAcross.Add(positions[outerRing[k]] - positions[innerRing[k]]);
+            }
+
+            for (var j = 1; j < rows - 1; j++)
+            {
+                for (var k = 0; k < count; k++)
+                {
+                    var a = positions[innerRing[k]];
+                    var c = positions[outerRing[k]];
+                    Collapse(start + j * count + k, (a + c) * 0.5f, Vector2.Distance(a, c));
+                }
+            }
+
             if (full)
             {
-                Fringe(Range(start + (rows - 1) * count, count));
-                Fringe(Range(start, count), inward: true);
+                Fringe(outerRing, across: inwardAcross);
+                Fringe(innerRing, inward: true, across: outwardAcross);
             }
             else
             {
                 // One loop: the outer ring forward, then the inner ring back.
-                var ids = Range(start + (rows - 1) * count, count);
-                for (var k = count - 1; k >= 0; k--)
-                {
-                    ids.Add(start + k);
-                }
-
-                Fringe(ids);
+                innerRing.Reverse();
+                outwardAcross.Reverse();
+                Fringe([.. outerRing, .. innerRing], across: [.. inwardAcross, .. outwardAcross]);
             }
         }
 
@@ -359,18 +394,34 @@ public sealed class MeshBuilder
 
         if (aa)
         {
+            // Across the strip at each outline vertex: to its matching point on the other curve.
             var ids = new List<int>(2 * n);
+            var across = new List<Vector2>(2 * n);
             for (var i = 0; i < n; i++)
             {
-                ids.Add(start + i * cols);
+                var a = start + i * cols;
+                ids.Add(a);
+                across.Add(positions[a + cols - 1] - positions[a]);
             }
 
             for (var i = n - 1; i >= 0; i--)
             {
-                ids.Add(start + i * cols + cols - 1);
+                var a = start + i * cols;
+                ids.Add(a + cols - 1);
+                across.Add(positions[a] - positions[a + cols - 1]);
             }
 
-            Fringe(ids);
+            for (var i = 0; i < n; i++)
+            {
+                var a = positions[start + i * cols];
+                var c = positions[start + i * cols + cols - 1];
+                for (var j = 1; j < cols - 1; j++)
+                {
+                    Collapse(start + i * cols + j, (a + c) * 0.5f, Vector2.Distance(a, c));
+                }
+            }
+
+            Fringe(ids, across: across);
         }
 
         return this;
@@ -737,8 +788,16 @@ public sealed class MeshBuilder
     /// a pixel along its normal and a transparent copy is added half a pixel out, joined by a quad per edge. With
     /// <paramref name="inward"/> the shape lies outside the loop (the hole of a ring). Coincident neighbours (a horn's tip)
     /// take the normal of their nearest distinct neighbours.
+    ///
+    /// <para>In a mesh built for one size, a vertex where the shape is thinner than a pixel is not pulled in half a pixel:
+    /// for such a shape that crosses the far side's pull and draws it about a pixel wide at full strength, however fine it
+    /// is. Its thickness <c>t</c> (device px) is the length of its <paramref name="across"/> vector, the way to the
+    /// shape's far side, or found by casting a ray inward (<see cref="Thickness"/>) when that is not given. The vertex
+    /// moves onto the shape's centreline instead, its alpha scaled by <c>t</c>, and its transparent copy goes a pixel out
+    /// from there (half a pixel past the edge at <c>t</c> = 1, where the two schemes meet): a tent a pixel either side of
+    /// the centreline, which carries <c>t</c> of coverage wherever the line falls between pixel centres.</para>
     /// </summary>
-    private void Fringe(List<int> ids, bool inward = false)
+    private void Fringe(List<int> ids, bool inward = false, IReadOnlyList<Vector2>? across = null)
     {
         var n = ids.Count;
         if (n < 3)
@@ -754,6 +813,7 @@ public sealed class MeshBuilder
 
         var sign = (SignedArea(loop) >= 0f ? 1f : -1f) * (inward ? -1f : 1f);
         var normals = new Vector2[n];
+        var sides = new (Vector2 In, Vector2 Out)[n];
         for (var i = 0; i < n; i++)
         {
             var prev = (i + n - 1) % n;
@@ -768,7 +828,8 @@ public sealed class MeshBuilder
                 next = (next + 1) % n;
             }
 
-            var m = (Outward(loop[prev], loop[i], sign) + Outward(loop[i], loop[next], sign)) * 0.5f;
+            sides[i] = (Outward(loop[prev], loop[i], sign), Outward(loop[i], loop[next], sign));
+            var m = (sides[i].In + sides[i].Out) * 0.5f;
 
             // ImGui's IM_FIXNORMAL2F: lengthen the averaged normal at corners, capped.
             normals[i] = m * (1f / MathF.Max(m.LengthSquared(), 0.5f));
@@ -777,10 +838,28 @@ public sealed class MeshBuilder
         var outer = positions.Count;
         for (var i = 0; i < n; i++)
         {
-            offsets[ids[i]] = -0.5f * normals[i];
+            var id = ids[i];
+            if (pixels > 0f)
+            {
+                var unit = normals[i].LengthSquared() > Epsilon ? Vector2.Normalize(normals[i]) : Vector2.Zero;
+                var way = across?[i] ?? Across(loop, i, unit, sides[i].In, sides[i].Out);
+                var thickness = way.Length() * pixels;
+                if (thickness < 1f)
+                {
+                    var centre = 0.5f * pixels * way;
+                    offsets[id] = centre;
+                    colors[id] = Fade(colors[id], thickness);
+                    positions.Add(loop[i]);
+                    offsets.Add(centre + unit);
+                    colors.Add(colors[id] & 0x00FFFFFFu);
+                    continue;
+                }
+            }
+
+            offsets[id] = -0.5f * normals[i];
             positions.Add(loop[i]);
             offsets.Add(0.5f * normals[i]);
-            colors.Add(colors[ids[i]] & 0x00FFFFFFu);
+            colors.Add(colors[id] & 0x00FFFFFFu);
         }
 
         for (var i = 0; i < n; i++)
@@ -788,6 +867,89 @@ public sealed class MeshBuilder
             var next = (i + 1) % n;
             Quad(ids[i], ids[next], outer + next, outer + i);
         }
+    }
+
+    /// <summary>
+    /// An interior vertex of a shape <paramref name="width"/> units across there (a strip's middle column, a band's middle
+    /// ring): in a mesh built for one size, where that is under a pixel, it joins the outline on the centreline
+    /// <paramref name="centre"/> and fades with it (see <see cref="Fringe"/>).
+    /// </summary>
+    private void Collapse(int vertex, Vector2 centre, float width)
+    {
+        var thickness = width * pixels;
+        if (pixels > 0f && thickness < 1f)
+        {
+            offsets[vertex] = (centre - positions[vertex]) * pixels;
+            colors[vertex] = Fade(colors[vertex], thickness);
+        }
+    }
+
+    /// <summary>
+    /// The shortest way across the shape from <paramref name="loop"/>[<paramref name="i"/>]: the nearest far side
+    /// straight in along the vertex's normal or either edge's (so a corner of a thin bar measures the bar, not its
+    /// diagonal), as a vector; at most <see cref="BoxUnits"/> long.
+    /// </summary>
+    private static Vector2 Across(IReadOnlyList<Vector2> loop, int i, Vector2 normal, Vector2 edgeIn, Vector2 edgeOut)
+    {
+        var best = new Vector2(0f, BoxUnits);
+        var length = BoxUnits;
+        foreach (var outward in (ReadOnlySpan<Vector2>)[normal, edgeIn, edgeOut])
+        {
+            var t = Thickness(loop, i, -outward);
+            if (t < length)
+            {
+                length = t;
+                best = -outward * t;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>A packed colour with its alpha multiplied by <paramref name="k"/> (0..1).</summary>
+    private static uint Fade(uint color, float k) =>
+        (color & 0x00FFFFFFu) | ((uint)MathF.Round((color >> 24) * Math.Clamp(k, 0f, 1f)) << 24);
+
+    /// <summary>
+    /// How far a ray from <paramref name="loop"/>[<paramref name="i"/>] along <paramref name="direction"/> runs before it
+    /// meets an edge of the loop not at that point: the shape's thickness there. Infinite if it meets none.
+    /// </summary>
+    public static float Thickness(IReadOnlyList<Vector2> loop, int i, Vector2 direction)
+    {
+        var best = float.PositiveInfinity;
+        if (direction.LengthSquared() <= Epsilon)
+        {
+            return best;
+        }
+
+        var p = loop[i];
+        for (var j = 0; j < loop.Count; j++)
+        {
+            var a = loop[j];
+            var b = loop[(j + 1) % loop.Count];
+            if (Vector2.DistanceSquared(a, p) <= Epsilon || Vector2.DistanceSquared(b, p) <= Epsilon)
+            {
+                continue;
+            }
+
+            // p + s·direction = a + u·(b - a), with s > 0 and u in 0..1.
+            var e = b - a;
+            var denom = direction.X * e.Y - direction.Y * e.X;
+            if (MathF.Abs(denom) <= Epsilon)
+            {
+                continue;
+            }
+
+            var w = a - p;
+            var s = (w.X * e.Y - w.Y * e.X) / denom;
+            var u = (w.X * direction.Y - w.Y * direction.X) / denom;
+            if (s > Epsilon && u is >= 0f and <= 1f && s < best)
+            {
+                best = s;
+            }
+        }
+
+        return best;
     }
 
     private void Flush()

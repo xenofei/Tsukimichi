@@ -115,10 +115,17 @@ public static class MedalArt
     /// <summary>The direction toward the key light (upper left), in screen space.</summary>
     public static readonly Vector2 Light = new(-0.6f, -0.8f);
 
-    /// <summary>The share of segments the row tier's meshes are built with (<see cref="MeshBuilder(float)"/>).</summary>
+    /// <summary>The share of segments the row tier's meshes are built with (<see cref="MeshBuilder(float, float)"/>).</summary>
     public const float RowDetail = 0.4f;
 
-    private static readonly ConcurrentDictionary<(QuestState, MedalTokens, bool), MedalMesh> Medals = new();
+    /// <summary>How wide the keyline shows through the bezel's crest at row size, in device px (see <see cref="Frame"/>).</summary>
+    public const float CrestSeamPx = 1f / 6f;
+
+    /// <summary>The smallest row medal built for its own size; anything smaller is drawn with this one's mesh.</summary>
+    public const int RowMinPx = 8;
+
+    /// <summary>The medals by state, palette and drawn size: 0 for the hero mesh, a whole number of px for a row one.</summary>
+    private static readonly ConcurrentDictionary<(QuestState, MedalTokens, int), MedalMesh> Medals = new();
     private static readonly ConcurrentDictionary<(MedalBadge, JobSeat, MedalTokens), MedalMesh> Badges = new();
     private static readonly ConcurrentDictionary<(MedalBadge, MedalTokens), MedalMesh> RowGlyphs = new();
 
@@ -133,17 +140,22 @@ public static class MedalArt
     };
 
     /// <summary>
-    /// The medal of <paramref name="state"/> without its badge (the row tier, and the ground a hero badge sits on);
-    /// <paramref name="row"/> builds it with <see cref="RowDetail"/> of the segments, for medals under 32 px.
+    /// The medal of <paramref name="state"/> without its badge (the row tier, and the ground a hero badge sits on), to
+    /// draw <paramref name="sizePx"/> device px across. Under <see cref="MedalLayout.RowTierMaxPx"/> it is a row mesh
+    /// built for that whole-pixel size, with <see cref="RowDetail"/> of the segments and its sub-pixel detail drawn as
+    /// coverage (<see cref="MeshBuilder(float, float)"/>); otherwise (and for 0) the one hero mesh, for any size.
     /// </summary>
-    public static MedalMesh Medal(QuestState state, MedalTokens tokens, bool row = false)
+    public static MedalMesh Medal(QuestState state, MedalTokens tokens, float sizePx = 0f)
     {
         if (!Enum.IsDefined(state))
         {
             state = QuestState.Unknown;
         }
 
-        return Medals.GetOrAdd((state, tokens, row), static key => BuildMedal(key.Item1, key.Item2, key.Item3 ? RowDetail : 1f));
+        var px = sizePx > 0f && sizePx < MedalLayout.RowTierMaxPx
+            ? Math.Clamp((int)MathF.Round(sizePx), RowMinPx, (int)MedalLayout.RowTierMaxPx - 1)
+            : 0;
+        return Medals.GetOrAdd((state, tokens, px), static key => BuildMedal(key.Item1, key.Item2, key.Item3));
     }
 
     /// <summary>The badge at hero size: its shadow, keyline, ring and seat, and the lock or book (a job's icon is the plugin's).</summary>
@@ -208,9 +220,9 @@ public static class MedalArt
 
     // ------------------------------------------------------------------ the medals
 
-    private static MedalMesh BuildMedal(QuestState state, MedalTokens t, float detail)
+    private static MedalMesh BuildMedal(QuestState state, MedalTokens t, int rowPx)
     {
-        var b = new MeshBuilder(detail);
+        var b = rowPx > 0 ? new MeshBuilder(RowDetail, rowPx) : new MeshBuilder();
         switch (state)
         {
             case QuestState.Ready:
@@ -314,12 +326,23 @@ public static class MedalArt
         var inner = MeshBuilder.Linear(from, to, (0f, M.GiltDeep), (0.55f, M.GiltShade), (1f, M.Gilt));
         b.Band(Center, [RimInner, RimCrest, RimCrest, RimOuter], [inner, inner, outer, outer], segments: 72);
 
-        b.Detail(12f);
+        Fine(b, 12f);
         TaperArc(b, Center, RimCrest + 2.3f, -168f, -102f, 2.4f, MeshBuilder.Solid(M.GiltSpecular, 0.95f));
-        b.Detail(24f);
+        Fine(b, 24f);
         b.Annulus(Center, RimCrest - 0.25f, RimCrest + 0.25f, MeshBuilder.Solid(M.GiltDark, 0.45f), segments: 72);
         TaperArc(b, Center, RimInner + 1.9f, 18f, 52f, 1.6f, MeshBuilder.Solid(M.GiltSpecular, 0.45f));
         b.Detail(0f);
+
+        // Row size only, where both are drawn as coverage: the outer slope's lip (gen5's ring at R_OUT − 1.2..0.65,
+        // under a pixel at any size), and the keyline showing through the crest. The approved row art draws the two
+        // slopes as separate fills over the keyline, so where they meet within a pixel the keyline shows between
+        // them: a sixth of a pixel of it on average, at every size.
+        if (b.Coverage)
+        {
+            b.Annulus(Center, RimOuter - 1.2f, RimOuter - 0.65f, MeshBuilder.Solid(M.GiltDark, 0.35f), segments: 72);
+            var w = CrestSeamPx / b.PixelsPerUnit;
+            b.Annulus(Center, RimCrest - w / 2f, RimCrest + w / 2f, MeshBuilder.Solid(M.Keyline, 0.92f), segments: 72);
+        }
     }
 
     /// <summary>A crescent-shaped band along a circle from <paramref name="from"/> to <paramref name="to"/> degrees, width 0 → w → 0 (gen5 <c>taper_arc</c>).</summary>
@@ -419,12 +442,12 @@ public static class MedalArt
         SceneCrescent(b, t, night, state);
 
         // The horizon: a fine moonlit line, brightest where the road meets it.
-        b.Detail(20f);
+        Fine(b, 20f);
         var at = (SceneLitCentroid.X - 12f) / 104f;
         var line = MeshBuilder.Linear(new Vector2(12f, 0f), new Vector2(116f, 0f),
             (0f, MeshBuilder.Alpha(M.MoonstoneHigh, 0.06f)), (at, MeshBuilder.Alpha(M.MoonstoneHigh, night ? 0.4f : 0.7f)), (1f, MeshBuilder.Alpha(M.MoonstoneHigh, 0.06f)));
         b.Strip(HorizontalLine(14f, 114f, Horizon - 0.5f, 10), HorizontalLine(14f, 114f, Horizon + 0.5f, 10), line);
-        b.Detail(14f);
+        Fine(b, 14f);
         Road(b, MeshBuilder.Solid(night ? M.Moonstone : M.MoonstoneHigh), opacity: true);
         b.Detail(0f);
         InnerShadow(b, Center, WellRadius, new Vector2(2.6f, 3.6f), 1.3f, 0.55f, [44f, 47.5f, 50f, 51.5f, 52.6f]);
@@ -611,7 +634,7 @@ public static class MedalArt
             return self != -1 && p.X > bar.X0 + 0.05f && p.X < bar.X1 - 0.05f && p.Y > bar.Top + 0.05f && p.Y < bar.Bottom - 0.05f;
         }
 
-        b.Detail(24f);
+        Fine(b, 24f);
         Rims(b, bumps, Inside, new Vector2(-1.4f, -1.9f), MeshBuilder.Solid(M.CloudDeep, 0.75f));
         Rims(b, bumps, Inside, new Vector2(0.75f, 1f), MeshBuilder.Solid(M.CloudHigh, 0.7f * lit));
         b.Detail(0f);
@@ -679,7 +702,7 @@ public static class MedalArt
         b.Polygon(arrow, MeshBuilder.Linear(new Vector2(20f, 18f), new Vector2(104f, 106f), (0f, M.GiltHigh), (0.5f, M.Gilt), (1f, M.GiltMid)));
 
         // Bevels riding the spiral: the outer edge lit where it faces up-left, the inner edge lit on the right.
-        b.Detail(24f);
+        Fine(b, 24f);
         SpiralTaper(b, ArrowWidth / 2f - 0.5f, 175f, 268f, 1.6f, MeshBuilder.Solid(M.GiltSpecular, 0.9f));
         SpiralTaper(b, -ArrowWidth / 2f + 0.4f, 320f, 384f, 1.1f, MeshBuilder.Solid(M.GiltSpecular, 0.4f));
         SpiralTaper(b, -ArrowWidth / 2f + 0.5f, 175f, 268f, 1.4f, MeshBuilder.Solid(M.GiltDeep, 0.55f));
@@ -725,7 +748,7 @@ public static class MedalArt
 
         b.Disc(c, r, MeshBuilder.Radial(c - new Vector2(0.38f * r, 0.42f * r), 1.55f * r, (0f, X.FullMoon), (0.55f, X.FullMoonMid), (1f, X.FullMoonDeep)), segments: 56, rings: 4);
 
-        b.Detail(24f);
+        Fine(b, 24f);
         foreach (var (x, y, rx, ry, degrees, o) in FullMaria)
         {
             var centre = c + new Vector2(x, y) * r;
@@ -755,7 +778,7 @@ public static class MedalArt
         b.Polygon(MeshBuilder.Stroke(Check, CheckKeylineWidth), MeshBuilder.Solid(M.Keyline));
         b.Polygon(MeshBuilder.Stroke(Check, CheckWidth), MeshBuilder.Linear(new Vector2(64f, 40f), new Vector2(117f, 100f),
             (0f, M.GiltHigh), (0.5f, M.Gilt), (1f, GlyphTokens.Gilt)));
-        b.Detail(20f);
+        Fine(b, 20f);
         b.Polygon(MeshBuilder.Stroke([new Vector2(62.3f, 83.3f), new Vector2(76.5f, 97.4f), new Vector2(115.1f, 38.3f)], 1.5f), MeshBuilder.Solid(M.GiltSpecular, 0.85f));
         b.Detail(0f);
     }
@@ -774,7 +797,7 @@ public static class MedalArt
         b.Disc(Center, R + 0.4f, MeshBuilder.Solid(t.Flat ? t.Ground : M.DalamudSocket));
         if (!t.Flat)
         {
-            b.Detail(20f);
+            Fine(b, 20f);
             TaperArc(b, Center, R - 0.5f, 15f, 140f, 1.8f, MeshBuilder.Solid(M.DalamudCrack, 0.42f));
             b.Detail(0f);
         }
@@ -844,7 +867,7 @@ public static class MedalArt
             if (!t.Flat)
             {
                 b.Band(Center, [R - 2.8f, R - 2.1f, R - 0.4f], [clear, limb, limb], e0, e1, segments: 16, aa: false);
-                b.Detail(20f);
+                Fine(b, 20f);
                 FractureEdges(b, shard, 3, shard.Count - 2);
                 b.Detail(0f);
             }
@@ -908,7 +931,7 @@ public static class MedalArt
         var v = VeiledMoon;
         b.Disc(v, VeiledMoonRadius + 4.5f, MeshBuilder.Radial(v - new Vector2(4f, 5f), VeiledMoonRadius + 10f,
             (0f, MeshBuilder.Alpha(X.Veiled, 0.9f)), (1f, MeshBuilder.Alpha(X.VeiledDeep, 0.9f))), segments: 40, rings: 2);
-        b.Detail(24f);
+        Fine(b, 24f);
         foreach (var (centre, radii, degrees, o) in new (Vector2, Vector2, float, float)[]
                  {
                      (v + new Vector2(-7f, -6f), new Vector2(7.5f, 5.5f), -18f, 0.5f),
@@ -1246,6 +1269,13 @@ public static class MedalArt
     }
 
     // ------------------------------------------------------------------ small geometry
+
+    /// <summary>
+    /// Starts fine detail (hairlines, seams, glints, crack faces, soft maria) drawn from <paramref name="minSizePx"/> up
+    /// in a mesh for any size, where a feature under a pixel would draw a pixel wide; a mesh built for one size draws it
+    /// at every size, as its coverage (<see cref="MeshBuilder(float, float)"/>), as the approved art does.
+    /// </summary>
+    private static void Fine(MeshBuilder b, float minSizePx) => b.Detail(b.Coverage ? 0f : minSizePx);
 
     private static List<Vector2> Rect(float x0, float y0, float x1, float y1) =>
         [new(x0, y0), new(x1, y0), new(x1, y1), new(x0, y1)];

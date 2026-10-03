@@ -387,7 +387,7 @@ public sealed class GlyphDebugWindow : Window, IDisposable
                     }
                     else
                     {
-                        MoonGlyph.DrawHalo(dl, center, box * 0.5f, f, haloOnCard);
+                        MoonGlyph.DrawMedalHalo(dl, center, box * 0.5f, f, haloOnCard);
                     }
 
                     x += box + gap;
@@ -400,7 +400,7 @@ public sealed class GlyphDebugWindow : Window, IDisposable
                 }
                 else
                 {
-                    MoonGlyph.DrawHalo(dl, center1, box * 0.5f, 1f, haloOnCard, dimComplete: true);
+                    MoonGlyph.DrawMedalHalo(dl, center1, box * 0.5f, 1f, haloOnCard, dimComplete: true);
                 }
 
                 ImGui.Dummy(new Vector2(x + box - row.X, box + gap));
@@ -423,7 +423,7 @@ public sealed class GlyphDebugWindow : Window, IDisposable
                     }
                     else
                     {
-                        MoonGlyph.DrawFilling(dl, center, radius, f);
+                        MoonGlyph.DrawMedalFilling(dl, center, radius, f);
                     }
 
                     x += radius * 2.4f;

@@ -133,4 +133,13 @@ public static class GaugeGeometry
     /// <summary>Segments for the arc: the track circle's density over the sweep, at least six.</summary>
     public static int ArcSegments(int circleSegments, float sweep) =>
         Math.Max(6, (int)MathF.Ceiling(circleSegments * sweep / TwoPi));
+
+    /// <summary>
+    /// Where the filling moon's shading peaks, as a fraction of its radius from the centre, for a lit
+    /// <paramref name="width"/>: a full disc takes the medals' upper-left key light (Completed's full moon); a partial
+    /// one is lit from the right, as it waxes, so the peak sits toward its lit limb, nudged up for the key light, and the
+    /// lit part brightens from the terminator to the limb as the approved phase moons do.
+    /// </summary>
+    public static Vector2 MoonHighlight(float width) =>
+        width >= 1f ? new Vector2(-0.32f, -0.34f) : new Vector2(0.45f, -0.25f);
 }

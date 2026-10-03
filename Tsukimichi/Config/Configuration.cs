@@ -460,6 +460,12 @@ public sealed partial class Configuration : IPluginConfiguration
     public Flair Flair { get; set; } = Flair.Full;
 
     /// <summary>
+    /// Settings › Display › Look › Moon style (feature plan v6 G3): Medallion (the default) draws the 1.12 medals and
+    /// gauges, Classic the 1.11 moons everywhere they draw, so the two can be compared in game.
+    /// </summary>
+    public MoonStyle MoonStyle { get; set; } = MoonStyle.Medallion;
+
+    /// <summary>
     /// Settings › Display › Look › Game fonts for headings: section headings, titles and counts in the game's own
     /// display fonts (TrumpGothic, Jupiter, MiedingerMid). On by default; off, or with Flair set to Plain, headings use
     /// the Caption and Display roles as before.
@@ -681,6 +687,8 @@ public sealed partial class Configuration : IPluginConfiguration
         {
             config.Flair = Flair.Full;
         }
+
+        config.MoonStyle = MoonStyleRules.Effective(config.MoonStyle);
 
         if (!Enum.IsDefined(config.PluginLanguage))
         {

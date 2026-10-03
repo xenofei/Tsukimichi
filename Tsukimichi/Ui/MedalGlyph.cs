@@ -72,7 +72,7 @@ public static class MedalGlyph
             }
         }
 
-        DrawMesh(dl, MedalArt.Medal(state, tokens, row: !hero), min, size, alpha);
+        DrawMesh(dl, MedalArt.Medal(state, tokens, size), min, size, alpha);
         if (!hero)
         {
             return;
