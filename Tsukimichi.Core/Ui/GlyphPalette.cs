@@ -473,6 +473,151 @@ public static class GlyphTokens
         public static readonly Vector4 DpsDeep = ColorMath.FromHex(DpsDeepHex);
         public static readonly Vector4 Lantern = ColorMath.FromHex(LanternHex);
     }
+
+    /// <summary>
+    /// The rest of the medal colours (feature plan v6 G2): the ones round 5 added in its generator
+    /// (docs/design/moon-v6/round5/medallion-r5/_src/gen5.py) beyond the concept's palette table — the badge seats and
+    /// the metals of their glyphs, the moons of Blocked, Done, Completed and Not checked, and In journal's lighter night
+    /// scene — plus <see cref="HandHex"/>, the seat for crafters and gatherers that the concept leaves open. The medal
+    /// renderer (<c>Ui.MedalGlyph</c>) and <see cref="MedalTokens"/> draw with these and <see cref="Medallion"/>; a test
+    /// holds every value here to gen5.py.
+    /// </summary>
+    public static class MedallionDetail
+    {
+        // Badge seats (light stop, dark stop): the enamel each badge's glyph sits on.
+
+        /// <summary>#4A72C4 – Ready's badge seat: deep lapis under the warm open lock.</summary>
+        public const uint ReadySeatHex = 0x4A72C4;
+
+        /// <summary>#1E3470 – Ready's badge seat, dark stop.</summary>
+        public const uint ReadySeatDeepHex = 0x1E3470;
+
+        /// <summary>#2E3A66 – Blocked's badge seat: night enamel under the cool closed lock.</summary>
+        public const uint BlockedSeatHex = 0x2E3A66;
+
+        /// <summary>#111832 – Blocked's badge seat, dark stop.</summary>
+        public const uint BlockedSeatDeepHex = 0x111832;
+
+        /// <summary>#5674B8 – In journal's badge seat: the ribbon's Tide silk blue.</summary>
+        public const uint JournalSeatHex = 0x5674B8;
+
+        /// <summary>#243C78 – In journal's badge seat, dark stop.</summary>
+        public const uint JournalSeatDeepHex = 0x243C78;
+
+        /// <summary>
+        /// #66708E – the job badge's seat for a Disciple of the Hand or Land (no combat role): a slate that keeps the
+        /// game's gold job glyph legible. Not in round 5; chosen for 1.12 and checked in game on the glyph sheet.
+        /// </summary>
+        public const uint HandHex = 0x66708E;
+
+        /// <summary>#2C324C – the Hand and Land seat, dark stop.</summary>
+        public const uint HandDeepHex = 0x2C324C;
+
+        // The badge glyphs' metals: warm gilt (the open lock and the book) and cool pewter (the closed lock).
+
+        /// <summary>#F4DFA6 – the warm gilt glyphs' lit face.</summary>
+        public const uint LockGiltHighHex = 0xF4DFA6;
+
+        /// <summary>#9A7A40 – the warm gilt glyphs' shaded face.</summary>
+        public const uint LockGiltLowHex = 0x9A7A40;
+
+        /// <summary>#DCE2EE – pewter's glint; also the silver lining of Blocked's clouds.</summary>
+        public const uint PewterSpecularHex = 0xDCE2EE;
+
+        /// <summary>#B4C0DA – pewter's lit face (the closed lock).</summary>
+        public const uint PewterHighHex = 0xB4C0DA;
+
+        /// <summary>#8292B8 – pewter's body.</summary>
+        public const uint PewterHex = 0x8292B8;
+
+        /// <summary>#4E5C82 – pewter's shaded face.</summary>
+        public const uint PewterDeepHex = 0x4E5C82;
+
+        /// <summary>#2E3858 – pewter's darkest edge.</summary>
+        public const uint PewterShadeHex = 0x2E3858;
+
+        /// <summary>#0E0B08 – the keyhole's recess.</summary>
+        public const uint KeyholeHex = 0x0E0B08;
+
+        // The moons beyond Ready's crescent.
+
+        /// <summary>#3C528A – In journal's sky at the horizon (round 5: a little lighter than the table's #2A3D72).</summary>
+        public const uint JournalSkyHorizonHex = 0x3C528A;
+
+        /// <summary>#2A4080 – In journal's sea at the horizon (round 5).</summary>
+        public const uint JournalSeaHorizonHex = 0x2A4080;
+
+        /// <summary>#18244E – In journal's sea at the bottom (round 5).</summary>
+        public const uint JournalSeaBottomHex = 0x18244E;
+
+        /// <summary>#3A4A78 – In journal's earthshine on the crescent's dark side.</summary>
+        public const uint JournalEarthshineHex = 0x3A4A78;
+
+        /// <summary>#2A3966 – Ready on another job's earthshine on the crescent's dark side.</summary>
+        public const uint RestingEarthshineHex = 0x2A3966;
+
+        /// <summary>#4A5682 – Blocked's ashen new moon, lit end.</summary>
+        public const uint AshenHex = 0x4A5682;
+
+        /// <summary>#252E52 – Blocked's ashen new moon, dark end.</summary>
+        public const uint AshenDeepHex = 0x252E52;
+
+        /// <summary>#2B3966 – Done this cycle's dark half.</summary>
+        public const uint HalfMoonDarkHex = 0x2B3966;
+
+        /// <summary>#D8DFED – Completed's full moon, lit end (a hair under moonstone's lit face).</summary>
+        public const uint FullMoonHex = 0xD8DFED;
+
+        /// <summary>#A9B5D0 – Completed's full moon, middle.</summary>
+        public const uint FullMoonMidHex = 0xA9B5D0;
+
+        /// <summary>#7B8AAF – Completed's full moon, dark limb.</summary>
+        public const uint FullMoonDeepHex = 0x7B8AAF;
+
+        /// <summary>#4A5B90 – Not checked's veiled earthshine moon, lit end.</summary>
+        public const uint VeiledHex = 0x4A5B90;
+
+        /// <summary>#2A3866 – Not checked's veiled moon, dark end.</summary>
+        public const uint VeiledDeepHex = 0x2A3866;
+
+        /// <summary>#1E2A52 – the faint maria on Not checked's veiled moon.</summary>
+        public const uint VeiledMariaHex = 0x1E2A52;
+
+        /// <summary>#17224A – a moon's unlit side on enamel: the filling moon of the gauges (G5).</summary>
+        public const uint DarkSideHex = 0x17224A;
+
+        public static readonly Vector4 ReadySeat = ColorMath.FromHex(ReadySeatHex);
+        public static readonly Vector4 ReadySeatDeep = ColorMath.FromHex(ReadySeatDeepHex);
+        public static readonly Vector4 BlockedSeat = ColorMath.FromHex(BlockedSeatHex);
+        public static readonly Vector4 BlockedSeatDeep = ColorMath.FromHex(BlockedSeatDeepHex);
+        public static readonly Vector4 JournalSeat = ColorMath.FromHex(JournalSeatHex);
+        public static readonly Vector4 JournalSeatDeep = ColorMath.FromHex(JournalSeatDeepHex);
+        public static readonly Vector4 Hand = ColorMath.FromHex(HandHex);
+        public static readonly Vector4 HandDeep = ColorMath.FromHex(HandDeepHex);
+        public static readonly Vector4 LockGiltHigh = ColorMath.FromHex(LockGiltHighHex);
+        public static readonly Vector4 LockGiltLow = ColorMath.FromHex(LockGiltLowHex);
+        public static readonly Vector4 PewterSpecular = ColorMath.FromHex(PewterSpecularHex);
+        public static readonly Vector4 PewterHigh = ColorMath.FromHex(PewterHighHex);
+        public static readonly Vector4 Pewter = ColorMath.FromHex(PewterHex);
+        public static readonly Vector4 PewterDeep = ColorMath.FromHex(PewterDeepHex);
+        public static readonly Vector4 PewterShade = ColorMath.FromHex(PewterShadeHex);
+        public static readonly Vector4 Keyhole = ColorMath.FromHex(KeyholeHex);
+        public static readonly Vector4 JournalSkyHorizon = ColorMath.FromHex(JournalSkyHorizonHex);
+        public static readonly Vector4 JournalSeaHorizon = ColorMath.FromHex(JournalSeaHorizonHex);
+        public static readonly Vector4 JournalSeaBottom = ColorMath.FromHex(JournalSeaBottomHex);
+        public static readonly Vector4 JournalEarthshine = ColorMath.FromHex(JournalEarthshineHex);
+        public static readonly Vector4 RestingEarthshine = ColorMath.FromHex(RestingEarthshineHex);
+        public static readonly Vector4 Ashen = ColorMath.FromHex(AshenHex);
+        public static readonly Vector4 AshenDeep = ColorMath.FromHex(AshenDeepHex);
+        public static readonly Vector4 HalfMoonDark = ColorMath.FromHex(HalfMoonDarkHex);
+        public static readonly Vector4 FullMoon = ColorMath.FromHex(FullMoonHex);
+        public static readonly Vector4 FullMoonMid = ColorMath.FromHex(FullMoonMidHex);
+        public static readonly Vector4 FullMoonDeep = ColorMath.FromHex(FullMoonDeepHex);
+        public static readonly Vector4 Veiled = ColorMath.FromHex(VeiledHex);
+        public static readonly Vector4 VeiledDeep = ColorMath.FromHex(VeiledDeepHex);
+        public static readonly Vector4 VeiledMaria = ColorMath.FromHex(VeiledMariaHex);
+        public static readonly Vector4 DarkSide = ColorMath.FromHex(DarkSideHex);
+    }
 }
 
 /// <summary>

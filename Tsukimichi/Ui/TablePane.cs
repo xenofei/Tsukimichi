@@ -382,7 +382,8 @@ public sealed class TablePane : IDisposable
         // The moon, and with it the Glyph column, follows the one-line row height (r 9 Comfortable, r 6.4 Dense at scale 1).
         var glyphRadius = TableGeometry.GlyphRadius(rowContent, UiMetrics.RowGlyphRadius);
         var glyphBox = glyphRadius * TableGeometry.GlyphBoxPerRadius;
-        var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);
+        // Beside the row-size medal, its badge's content at text height (the row fallback, feature plan v6 G1).
+        var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + RowBadgeSide(lineHeight, rowContent) + UiMetrics.Px(2f);
         // A translated header is never cut (V2-19, LayoutBudgets): each fixed column is at least its header label wide,
         // with, where the column sorts, the arrow. These are content widths: ImGui adds the cell padding either side of
         // a TableSetupColumn / TableSetColumnWidth width itself, so it is not added here.
@@ -658,6 +659,9 @@ public sealed class TablePane : IDisposable
     /// line's height (the caption role) and <paramref name="LineGap"/> the space between the lines.
     /// <paramref name="ReadyRoad"/> draws the road under Ready rows (Flair Full).
     /// </summary>
+    /// <summary>The square beside a row's medal that holds its badge's content: text height, inside the row.</summary>
+    private static float RowBadgeSide(float lineHeight, float rowContent) => MathF.Round(MathF.Min(lineHeight, rowContent));
+
     private readonly record struct RowLayout(float LineHeight, float RowContent, float RowHeight, float PadY, float GlyphBox, float GlyphRadius, bool Dense, bool TwoLine, float StatusLine, float LineGap, bool ReadyRoad)
     {
         /// <summary>Offset that centres a text line in the row.</summary>
@@ -987,7 +991,8 @@ public sealed class TablePane : IDisposable
         ImGui.TableNextColumn();
         var cell = ImGui.GetCursorScreenPos();
         var lead = UiMetrics.Px(GlyphColumnLead);
-        ImGui.Dummy(new Vector2(lead + layout.GlyphBox, layout.RowContent));
+        var badgeSide = RowBadgeSide(layout.LineHeight, layout.RowContent);
+        ImGui.Dummy(new Vector2(lead + layout.GlyphBox + badgeSide, layout.RowContent));
         var dl = ImGui.GetWindowDrawList();
         var centerY = cell.Y + layout.RowContent * 0.5f;
 
@@ -996,7 +1001,9 @@ public sealed class TablePane : IDisposable
             dl.AddCircleFilled(cell + new Vector2(UiMetrics.Px(3f), centerY - cell.Y), UiMetrics.Px(2.5f), Theme.MoonU32);
         }
 
-        MoonWax.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), layout.GlyphRadius, state, quest.RowId);
+        var readyOn = state == QuestState.ReadyOnOtherJob ? runner.ReadyOnJob(quest.RowId) : (byte)0;
+        MoonWax.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), layout.GlyphRadius, state, quest.RowId, readyOn);
+        MedalGlyph.DrawRowBadge(dl, new Vector2(cell.X + lead + layout.GlyphBox, centerY - badgeSide * 0.5f), badgeSide, state, readyOn);
 
         // Name column carries the row-wide selectable and the context menu. Its Header colours are transparent so it
         // paints neither hover nor selection over the fills above (keyboard focus still gets ImGui's nav frame). The

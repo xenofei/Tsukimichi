@@ -112,6 +112,9 @@ public sealed partial class DetailPane
         public string StatusTail = string.Empty;
         public string? StateNote;
 
+        /// <summary>The job a Ready on another job quest is ready on, for its medal's badge (feature plan v6 G1); 0 otherwise.</summary>
+        public byte ReadyOnJob;
+
         /// <summary>"Note: …" from <c>curated/quirks.json</c>, drawn under the requirements; null for a quest without one.</summary>
         public string? QuirkNote;
         /// <summary>The chain's name on the Path card's chain line; null for a quest outside every chain.</summary>
@@ -477,7 +480,7 @@ public sealed partial class DetailPane
         dl.AddRectFilled(min, max, Theme.WithAlpha(tone, 0.18f), rounding);
         dl.AddRect(min, max, Theme.WithAlpha(tone, 0.7f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         var center = new Vector2(min.X + UiMetrics.Px(5f) + moon, min.Y + (height * 0.5f));
-        MoonGlyph.Draw(dl, center, moon, model.State);
+        MoonGlyph.Draw(dl, center, moon, model.State, model.ReadyOnJob);
         var textRoom = size.X - chrome;
         if (textRoom > 0f)
         {
@@ -530,7 +533,7 @@ public sealed partial class DetailPane
         var box = stacked ? radius * 2f : radius * 2.3f;
         var pos = ImGui.GetCursorScreenPos();
         ImGui.Dummy(new Vector2(box, box));
-        MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
+        MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State, model.ReadyOnJob);
         if (ImGui.IsItemHovered())
         {
             UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
@@ -1267,6 +1270,7 @@ public sealed partial class DetailPane
         model.Requirements.Clear();
         model.Rewards.Clear();
         model.StateNote = null;
+        model.ReadyOnJob = 0;
         model.QuirkNote = null;
         model.ChainText = null;
         model.ChainNextName = null;
@@ -1343,6 +1347,7 @@ public sealed partial class DetailPane
             // that can take the quest is a note beside it.
             if (evaluation.ReadyOnJob is { } job)
             {
+                model.ReadyOnJob = job;
                 model.StateNote = string.Format(CultureInfo.CurrentCulture, Strings.ReadyOnJobFormat, bundle.Names.ClassJobAbbreviation(job));
             }
             else if (evaluation.OtherPath is { } path)

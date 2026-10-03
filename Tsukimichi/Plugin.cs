@@ -26,6 +26,8 @@ public sealed partial class Plugin : IDalamudPlugin
     [PluginService] internal static IGameGui GameGui { get; private set; } = null!;
     [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
     [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
+    // The glyph window's colour-vision copies of the medal atlas (feature plan v6 G3).
+    [PluginService] internal static ITextureReadbackProvider TextureReadback { get; private set; } = null!;
     [PluginService] internal static ITargetManager TargetManager { get; private set; } = null!;
     [PluginService] internal static IDtrBar DtrBar { get; private set; } = null!;
     [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
@@ -1519,6 +1521,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("followed route", () => activeRoutes?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
         Unwind("nearby window", () => discoveryWindow?.Dispose());
+        Unwind("glyph window", () => glyphDebugWindow?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());
         Unwind("wotsit ipc", () => wotsit?.Dispose());
         Unwind("questionable ipc", () => questionable?.Dispose());

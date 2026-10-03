@@ -193,9 +193,19 @@ public static class Orbit
         }
     }
 
-    /// <summary>The track, the arc from 12 o'clock with round caps, and the bead at its head (a full-moon pip once closed).</summary>
+    /// <summary>
+    /// The track, the arc from 12 o'clock with round caps, and the bead at its head (a full-moon pip once closed). Since
+    /// 1.12 (feature plan v6 G5) in the medal's material: a lapis groove between Abyss keylines, a gilt arc lit from the
+    /// upper left and a moonstone pearl (<see cref="MedalGauge"/>); high contrast keeps its flat 1.11 ring.
+    /// </summary>
     private static void Ring(ImDrawListPtr dl, Vector2 center, float k, float f, bool highContrast)
     {
+        if (!highContrast)
+        {
+            MedalRing(dl, center, k, f);
+            return;
+        }
+
         var r = RingRadiusLogical * k;
         var stroke = (highContrast ? 3f : StrokeLogical) * k;
         var track = highContrast ? Theme.VeilLineU32 : TrackU32;
@@ -256,6 +266,34 @@ public static class Orbit
         }
 
         OrnamentAtlas.Draw(dl, icon.Glyph == OrnamentGlyph.None ? OrnamentGlyph.Other : icon.Glyph, min, max, tint);
+    }
+
+    /// <summary>The ring in the medal's material: groove, gilt arc with its floor, and a moonstone pearl on an Abyss bead.</summary>
+    private static void MedalRing(ImDrawListPtr dl, Vector2 center, float k, float f)
+    {
+        var r = RingRadiusLogical * k;
+        var stroke = StrokeLogical * k;
+        var box = BoxLogical * k * 0.5f;
+        MedalGauge.Groove(dl, center, r, stroke, RingSegments);
+        var start = GaugeGeometry.StartAngle;
+        if (f >= 1f)
+        {
+            MedalGauge.GiltArc(dl, center, r, stroke, start, 2f * MathF.PI, box, RingSegments);
+            dl.AddCircleFilled(center + new Vector2(0f, -r), BeadRimLogical * k, MedalGauge.KeylineU32);
+            dl.AddCircleFilled(center + new Vector2(0f, -r), BeadLogical * k, MedalGauge.PearlU32);
+            return;
+        }
+
+        if (f > 0f)
+        {
+            var visual = MathF.Max(f, (stroke + 1.5f) / (2f * MathF.PI * r));
+            var sweep = 2f * MathF.PI * MathF.Min(visual, 0.999f);
+            MedalGauge.GiltArc(dl, center, r, stroke, start, sweep, box, RingSegments);
+            var (sin, cos) = MathF.SinCos(start + sweep);
+            var at = center + (new Vector2(cos, sin) * r);
+            dl.AddCircleFilled(at, BeadRimLogical * k, MedalGauge.KeylineU32);
+            dl.AddCircleFilled(at, BeadLogical * k, MedalGauge.PearlU32);
+        }
     }
 
     private static void Bead(ImDrawListPtr dl, Vector2 at, float k, bool full)

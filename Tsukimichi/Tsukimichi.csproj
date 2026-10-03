@@ -44,6 +44,12 @@ Moonlit treasures collects quests with unique rewards, and per-character snapsho
     <EmbeddedResource Include="assets\ui\ornaments.png" LogicalName="Tsukimichi.assets.ui.ornaments.png" />
     <EmbeddedResource Include="assets\ui\ornaments@2x.png" LogicalName="Tsukimichi.assets.ui.ornaments@2x.png" />
     <EmbeddedResource Include="assets\ui\banners\*.png" LogicalName="Tsukimichi.assets.ui.banners.%(Filename)%(Extension)" />
+    <!--
+      The hero-size medal atlas (Menphina's Medallion, docs/design/moon-v6/round5/gen_atlas.py): Ui\MedalAtlas.cs, layout
+      in Core/Ui/MedalLayout.cs, medals.json beside them as the build-time reference.
+    -->
+    <EmbeddedResource Include="assets\ui\medals.png" LogicalName="Tsukimichi.assets.ui.medals.png" />
+    <EmbeddedResource Include="assets\ui\medals@2x.png" LogicalName="Tsukimichi.assets.ui.medals@2x.png" />
   </ItemGroup>
 
   <ItemGroup>

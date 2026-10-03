@@ -17,12 +17,12 @@ public static class MoonWax
     /// Draws the state moon of quest <paramref name="rowId"/> as <see cref="MoonGlyph.Draw"/> does, or, while its wax
     /// plays, the filling moon at the wax's lit fraction. The high-contrast palette keeps its flat Completed glyph.
     /// </summary>
-    public static void Draw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state, uint rowId)
+    public static void Draw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state, uint rowId, byte job = 0)
     {
         var lit = state == QuestState.Completed && !Theme.Glyphs.HighContrast ? Motion.Wax(rowId) : -1f;
         if (lit < 0f)
         {
-            MoonGlyph.Draw(dl, center, radius, state);
+            MoonGlyph.Draw(dl, center, radius, state, job);
             return;
         }
 
