@@ -3,7 +3,7 @@
     "Author": "Michiru Tsukikage",
     "Name": "Tsukimichi",
     "InternalName": "Tsukimichi",
-    "AssemblyVersion": "1.12.2.0",
+    "AssemblyVersion": "1.12.3.0",
     "Description": "A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.\nMoonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/xenofei/Tsukimichi",
@@ -21,13 +21,13 @@
     "IconUrl": "https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon.png",
     "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.2/latest.zip",
-    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.2/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.2/latest.zip",
-    "LastUpdate": 1791001340,
+    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.3/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.3/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.3/latest.zip",
+    "LastUpdate": 1791006249,
     "DownloadCount": 0,
     "IsHide": false,
     "IsTestingExclusive": false,
-    "Changelog": "Changed\n- **Unlocks never repeats what the quest's Rewards already show.** If a job, duty, emote, mount, minion or aether current is in the Rewards, it isn't listed again in the Unlocks column, the quest pane's Unlocks section, tooltips, the Todo overlay, Moonlit, the game-window panels or chat.\n- **Unlocks now holds what a quest opens access to:** areas, aetherytes, duties, features, jobs and flying. Actions, emotes and collectables appear only when they aren't rewards. Next quests stay in the Path card instead of being listed twice.\n- **Job and duty rewards show their icons** in the Rewards column and tiles.\n\nFixed\n- Unlocks no longer lists the same thing twice: two \"Collect\" actions, a title listed twice, a zone next to its own world map, or the Blue Mage feature next to the Blue Mage job.\n- Moonlit's \"Also opens\" and the game-window panels no longer repeat the quest's own Moonlit rewards."
+    "Changelog": "Changed\n- **Rewards and Unlocks split cleanly.** Rewards shows only what you receive and keep: items, gear, currencies, mounts, minions, emotes, hairstyles, orchestrion rolls, Triple Triad cards, titles and soul crystals. Unlocks shows the access and abilities you gain: areas, aetherytes, duties, flying (aether currents), features, jobs and actions. Nothing appears in both.\n- **Rewards and Unlocks look like a pair in the quest pane:** the same tile size and spacing, Rewards first, and a section with nothing in it is hidden. Action rows show their own icons, and titles moved into Rewards."
   }
 ]
