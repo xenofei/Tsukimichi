@@ -205,6 +205,46 @@ public static class MedalGlyph
         }
     }
 
+    /// <summary>
+    /// A flat glyph mesh (the Journal book of a button, UI-5e) recoloured to <paramref name="ink"/>: every vertex takes
+    /// the ink's colour scaled by the vertex's own brightness over the mesh's brightest, so the light parts (the pages)
+    /// read in the ink and the dark ones (the spine) as a crease; the ink's alpha scales the whole. Allocation-free.
+    /// </summary>
+    internal static void DrawMeshInk(ImDrawListPtr dl, MedalMesh mesh, Vector2 min, float size, uint ink)
+    {
+        var brightest = 0f;
+        foreach (var part in mesh.Parts)
+        {
+            foreach (var color in part.Colors)
+            {
+                brightest = MathF.Max(brightest, Brightness(color));
+            }
+        }
+
+        if (!(brightest > 0f))
+        {
+            return;
+        }
+
+        var start = dl.VtxBuffer.Size;
+        DrawMesh(dl, mesh, min, size);
+        var r = ink & 0xFFu;
+        var g = (ink >> 8) & 0xFFu;
+        var b = (ink >> 16) & 0xFFu;
+        var a = (ink >> 24) / 255f;
+        var vertices = dl.VtxBuffer;
+        for (var i = start; i < vertices.Size; i++)
+        {
+            var vertex = vertices[i];
+            var k = Math.Clamp(Brightness(vertex.Col) / brightest, 0f, 1f);
+            var alpha = (uint)MathF.Round((vertex.Col >> 24) * a);
+            vertex.Col = (uint)MathF.Round(r * k) | ((uint)MathF.Round(g * k) << 8) | ((uint)MathF.Round(b * k) << 16) | (alpha << 24);
+            vertices[i] = vertex;
+        }
+
+        static float Brightness(uint color) => ((color & 0xFFu) * 0.2126f) + (((color >> 8) & 0xFFu) * 0.7152f) + (((color >> 16) & 0xFFu) * 0.0722f);
+    }
+
     /// <summary>The medal's box for a keyline radius: whole-pixel size and corner, so atlas texels and rims land on pixels.</summary>
     internal static (Vector2 Min, float Size) Box(Vector2 center, float radius)
     {

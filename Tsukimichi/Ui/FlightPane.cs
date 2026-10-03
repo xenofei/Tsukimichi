@@ -330,7 +330,7 @@ public sealed class FlightPane
 
         // Flag, Teleport and Walk fold into one "…" under the fold width.
         var fold = PaneFit.FoldActions(width / UiMetrics.Scale);
-        var actionsWidth = fold ? MoreSize(line) : ImGui.CalcTextSize(Strings.FlightFlag).X + padding + TravelControls.ButtonsWidth(links, Strings.FlightTeleport);
+        var actionsWidth = fold ? MoreSize(line) : TravelControls.FlagWidth(Strings.FlightFlag) + TravelControls.ButtonsWidth(links, Strings.FlightTeleport);
 
         // A fixed column is at least as wide as its header, which ImGui would widen it to anyway.
         Span<ColumnSpec> specs = stackalloc ColumnSpec[5];
@@ -456,12 +456,9 @@ public sealed class FlightPane
             return;
         }
 
-        using (ImRaii.Disabled(!links.CanFlagMap(target)))
+        if (TravelControls.FlagButton(Strings.FlightFlag, links.CanFlagMap(target)))
         {
-            if (ImGui.SmallButton(Strings.FlightFlag))
-            {
-                links.FlagMap(target);
-            }
+            links.FlagMap(target);
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))

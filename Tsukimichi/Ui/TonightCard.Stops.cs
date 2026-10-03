@@ -3,6 +3,7 @@ using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Route;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
@@ -74,7 +75,7 @@ public sealed partial class TonightCard
 
             var first = stop.Quests[0].Quest;
             using var id = ImRaii.PushId(StopRowIdBase + i);
-            var teleportWidth = ImGui.CalcTextSize(Strings.TonightStopTeleport).X + (ImGui.GetStyle().FramePadding.X * 2f);
+            var teleportWidth = Chrome.ActionPillWidth(ActionIcons.TeleportIcon, Strings.TonightStopTeleport, PillLayout.Row);
             var room = MathF.Max(1f, Chrome.RoomX() - teleportWidth - ImGui.GetStyle().ItemSpacing.X);
             if (Chrome.EllipsisSelectable(text, false, room, out var cut))
             {
@@ -88,12 +89,9 @@ public sealed partial class TonightCard
 
             ImGui.SameLine();
             var canTeleport = links.CanTeleport(first);
-            using (ImRaii.Disabled(!canTeleport))
+            if (Chrome.ActionPill("##stopTeleport", ActionIcons.TeleportIcon, Strings.TonightStopTeleport, PillTone.Normal, canTeleport, size: PillLayout.Row))
             {
-                if (ImGui.SmallButton(Strings.TonightStopTeleport))
-                {
-                    links.TeleportToGiver(first);
-                }
+                links.TeleportToGiver(first);
             }
 
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))

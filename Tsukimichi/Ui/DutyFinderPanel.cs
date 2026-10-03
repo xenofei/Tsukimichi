@@ -3,6 +3,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
@@ -97,7 +98,7 @@ public sealed class DutyFinderPanel
         if (OpenRoute is { } openRoute && m.AllQuestRowIds.Count > 0)
         {
             ImGui.SameLine();
-            if (shell.Button(Strings.DutyHintRoute, Strings.DutyHintRouteTooltip))
+            if (shell.Button(ActionGlyphs.Route, Strings.DutyHintRoute, Strings.DutyHintRouteTooltip))
             {
                 openRoute(m);
             }
@@ -121,14 +122,14 @@ public sealed class DutyFinderPanel
                 ImGui.TextUnformatted(line.StatusText);
             }
 
-            if (shell.Button(Strings.DutyHintReveal, Strings.DutyHintRevealHint))
+            if (shell.Button(ActionGlyphs.Reveal, Strings.DutyHintReveal, Strings.DutyHintRevealHint))
             {
                 reveal(line.Quest);
             }
 
             ImGui.SameLine();
             var canFlag = links.CanFlagMap(line.Quest);
-            if (shell.Button(Strings.DutyHintFlagGiver, canFlag ? Strings.DutyHintFlagGiverHint : Strings.DutyHintNoGiver, canFlag))
+            if (shell.Button(ActionIcons.FlagIcon, Strings.DutyHintFlagGiver, canFlag ? Strings.DutyHintFlagGiverHint : Strings.DutyHintNoGiver, canFlag))
             {
                 links.FlagMap(line.Quest);
             }

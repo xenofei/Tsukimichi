@@ -265,13 +265,10 @@ public sealed class PlanPane
 
         // "Flag next stop" (1.6.0, C3 C): the first quest the list shows that can be started now.
         var next = NextStop();
-        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.RouteFlagNextStop).X + (ImGui.GetStyle().FramePadding.X * 2f));
-        using (ImRaii.Disabled(next is null))
+        Chrome.SameLineOrWrap(TravelControls.ToolbarButtonWidth(ActionIcons.FlagIcon, Strings.RouteFlagNextStop));
+        if (TravelControls.ToolbarButton("##flagNextStop", ActionIcons.FlagIcon, Strings.RouteFlagNextStop, next is not null) && next is not null)
         {
-            if (ImGui.Button(Strings.RouteFlagNextStop) && next is not null)
-            {
-                links.FlagMap(next);
-            }
+            links.FlagMap(next);
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
@@ -394,8 +391,8 @@ public sealed class PlanPane
         var pinned = settings.TodoPlanExpansion == block.Expansion;
         var pinLabel = pinned ? Strings.PlanUnpin : Strings.PlanPin;
         var right = ImGui.GetWindowContentRegionMax().X - UiMetrics.Px(10f);
-        var pinWidth = ImGui.CalcTextSize(pinLabel).X + ImGui.GetStyle().FramePadding.X * 2f;
-        var routeWidth = ImGui.CalcTextSize(Strings.PlanRouteBlues).X + ImGui.GetStyle().FramePadding.X * 2f;
+        var pinWidth = TravelControls.ToolbarButtonWidth(ActionGlyphs.Pin, pinLabel);
+        var routeWidth = TravelControls.ToolbarButtonWidth(ActionGlyphs.Route, Strings.PlanRouteBlues);
         var headerStart = ImGui.GetCursorPos();
         var questionableWidth = Questionable is null ? 0f : UiMetrics.MinTarget + UiMetrics.Px(4f);
         var titleWidth = MathF.Max(1f, right - pinWidth - routeWidth - questionableWidth - UiMetrics.Px(14f) - headerStart.X);
@@ -456,7 +453,7 @@ public sealed class PlanPane
 
         // "Route": every quest the card lists (the filters apply) in one route through their prerequisites (1.6.0).
         ImGui.SetCursorPos(new Vector2(right - pinWidth - routeWidth - UiMetrics.Px(6f), headerStart.Y));
-        if (ImGui.Button(Strings.PlanRouteBlues))
+        if (TravelControls.ToolbarButton("##routeBlues", ActionGlyphs.Route, Strings.PlanRouteBlues))
         {
             ui.OpenRoute(Core.Route.RouteTarget.ForBlues(block));
         }
@@ -467,7 +464,7 @@ public sealed class PlanPane
         }
 
         ImGui.SetCursorPos(new Vector2(right - pinWidth, headerStart.Y));
-        if (ImGui.Button(pinLabel))
+        if (TravelControls.ToolbarButton("##pinBlues", ActionGlyphs.Pin, pinLabel))
         {
             if (pinned)
             {
@@ -540,7 +537,7 @@ public sealed class PlanPane
         var logical = width / UiMetrics.Scale;
         var tier = PaneFit.PlanTier(logical);
         var style = ImGui.GetStyle();
-        var flagReveal = ImGui.CalcTextSize(Strings.PlanFlag).X + ImGui.CalcTextSize(Strings.PlanReveal).X + (style.FramePadding.X * 4f) + style.ItemSpacing.X;
+        var flagReveal = TravelControls.FlagWidth(Strings.PlanFlag) + TravelControls.RowButtonWidth(ActionGlyphs.Reveal, Strings.PlanReveal) + style.ItemSpacing.X;
         var travel = TravelControls.ButtonsWidth(links, Strings.PlanTeleport);
 
         // The travel buttons keep the one-line row's middle as wide as before they came: one line only from the old
@@ -789,12 +786,9 @@ public sealed class PlanPane
     private void DrawRowButtons(UiState ui, QuestRecord quest, Vector2 min, Vector2? travelBelow)
     {
         ImGui.SetCursorScreenPos(min);
-        using (ImRaii.Disabled(!links.CanFlagMap(quest)))
+        if (TravelControls.FlagButton(Strings.PlanFlag, links.CanFlagMap(quest)))
         {
-            if (ImGui.SmallButton(Strings.PlanFlag))
-            {
-                links.FlagMap(quest);
-            }
+            links.FlagMap(quest);
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
@@ -803,7 +797,7 @@ public sealed class PlanPane
         }
 
         ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.PlanReveal))
+        if (TravelControls.RowButton("##reveal", ActionGlyphs.Reveal, Strings.PlanReveal))
         {
             ui.Reveal(quest);
         }

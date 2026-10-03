@@ -12,7 +12,8 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The action bar's travel and automation row (1.10, the owner's "give the automation buttons the emphasis Teleport
-/// has"): labelled pills of one weight, in this order: Flag on map (leading only while Lifestream is not loaded, as
+/// has"; 1.15 the game's own icons, UI-5e: the flag marker, the quest's map marker, the aetheryte, Sprint, the duty's
+/// tile): labelled pills of one weight, in this order: Flag on map (leading only while Lifestream is not loaded, as
 /// the primary action did before), Go to giver, Teleport, Walk to giver, then, when they concern the quest, Start
 /// Questionable and Run with AutoDuty. The first travel pill that can start now wears the accent
 /// (<see cref="PillTone.Primary"/>). While a hand-off runs its pill turns into a labelled Stop (Eclipse); what it does
@@ -47,7 +48,7 @@ public sealed partial class DetailPane
     private struct ActionSlot
     {
         public ActionKind Kind;
-        public string Icon;
+        public PillIcon Icon;
         public string Label;
         public string Short;
         public PillTone Tone;
@@ -90,25 +91,25 @@ public sealed partial class DetailPane
         if (!links.TeleportAvailable)
         {
             var canFlag = links.CanFlagMap(quest);
-            AddAction(ActionKind.Flag, FlagIcon, Strings.FlagOnMap, Strings.FlagOnMap, PillTone.Normal, canFlag);
+            AddAction(ActionKind.Flag, ActionIcons.FlagIcon, Strings.FlagOnMap, Strings.FlagOnMap, PillTone.Normal, canFlag);
         }
 
         if (links.GoToShown)
         {
             var go = goToCheck;
             var stop = go.Stoppable && (travelStartedBy != ActionKind.Walk || !links.WalkShown);
-            AddAction(ActionKind.GoTo, stop ? StopIcon : GoToIcon, stop ? Strings.TravelStop : Strings.TravelGoTo, stop ? Strings.TravelStop : Strings.ActionGoToShort,
+            AddAction(ActionKind.GoTo, stop ? StopIcon : ActionIcons.GoTo(quest), stop ? Strings.TravelStop : Strings.TravelGoTo, stop ? Strings.TravelStop : Strings.ActionGoToShort,
                 stop ? PillTone.Danger : PillTone.Normal, stop || go.Ready, stop, waits: go.Stoppable && !stop);
         }
 
         var teleport = teleportCheck;
-        AddAction(ActionKind.Teleport, TeleportIcon, Strings.ActionTeleport, Strings.ActionTeleport, teleport.AlreadyHere ? PillTone.Quiet : PillTone.Normal, teleport.Ready);
+        AddAction(ActionKind.Teleport, ActionIcons.TeleportIcon, Strings.ActionTeleport, Strings.ActionTeleport, teleport.AlreadyHere ? PillTone.Quiet : PillTone.Normal, teleport.Ready);
 
         if (links.WalkShown)
         {
             var walk = walkCheck;
             var stop = walk.Stoppable && (travelStartedBy == ActionKind.Walk || !links.GoToShown);
-            AddAction(ActionKind.Walk, stop ? StopIcon : WalkIcon, stop ? Strings.TravelStop : Strings.TravelWalk, stop ? Strings.TravelStop : Strings.TravelWalkShort,
+            AddAction(ActionKind.Walk, stop ? StopIcon : ActionIcons.WalkIcon, stop ? Strings.TravelStop : Strings.TravelWalk, stop ? Strings.TravelStop : Strings.TravelWalkShort,
                 stop ? PillTone.Danger : PillTone.Normal, stop || walk.Ready, stop, waits: walk.Stoppable && !stop);
         }
 
@@ -137,7 +138,7 @@ public sealed partial class DetailPane
         PrepareAutoDutyAction(session, quest);
     }
 
-    private void AddAction(ActionKind kind, string icon, string label, string shortLabel, PillTone tone, bool enabled, bool stop = false, bool waits = false)
+    private void AddAction(ActionKind kind, PillIcon icon, string label, string shortLabel, PillTone tone, bool enabled, bool stop = false, bool waits = false)
     {
         actions[actionCount++] = new ActionSlot
         {
@@ -233,7 +234,7 @@ public sealed partial class DetailPane
         }
 
         autoDutyChoice = AutoDutyPlan.Choose(row.Duty.Duty, AutoDutyInputsFor(companions, session, running: false) with { HasPath = row.HasPath, Unlocked = row.Unlocked });
-        AddAction(ActionKind.AutoDuty, AutoDutyIcon, Strings.AutoDutyRun, Strings.ActionAutoDutyShort, PillTone.Normal, autoDutyChoice.CanRun);
+        AddAction(ActionKind.AutoDuty, DutyPillIcon(row), Strings.AutoDutyRun, Strings.ActionAutoDutyShort, PillTone.Normal, autoDutyChoice.CanRun);
     }
 
     /// <summary>Fits the row to <paramref name="width"/>: each pill's form, and how many stay on it (the rest go into "…").</summary>
@@ -248,6 +249,10 @@ public sealed partial class DetailPane
     }
 
     private static float ActionGap => UiMetrics.Px(ActionPillFit.GapLogical);
+
+    /// <summary>Run with AutoDuty's icon (UI-5e): the duty's own tile, else the Duty Finder's.</summary>
+    private static PillIcon DutyPillIcon(DutyRow row) =>
+        GameIconRef.Tile(row.Duty.Duty.Icon != 0 ? row.Duty.Duty.Icon : ActionIcons.DutyFinder);
 
     /// <summary>The row of pills.</summary>
     private void DrawActionRow(QuestRecord quest, uint rowId)

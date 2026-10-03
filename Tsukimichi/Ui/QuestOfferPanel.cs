@@ -61,7 +61,7 @@ public sealed class QuestOfferPanel
         GamePanelShell.Caption(Strings.GamePanelOfferCaption);
         GamePanelShell.BriefBody(brief);
         ImGui.Spacing();
-        if (shell.Button(Strings.GamePanelOpen, Strings.GamePanelOpenHint))
+        if (shell.Button(ActionGlyphs.Open, Strings.GamePanelOpen, Strings.GamePanelOpenHint))
         {
             reveal(brief.Quest);
         }
@@ -69,7 +69,7 @@ public sealed class QuestOfferPanel
         ImGui.SameLine();
         var canPin = GamePanelShell.CanPinLive(session, runner);
         var pinned = canPin && runner.IsPinned(brief.Quest.RowId);
-        if (shell.Button(pinned ? Strings.GamePanelUnpin : Strings.GamePanelPin, canPin ? Strings.GamePanelPinHint : Strings.GamePanelPinUnavailable, canPin))
+        if (shell.Button(ActionGlyphs.Pin, pinned ? Strings.GamePanelUnpin : Strings.GamePanelPin, canPin ? Strings.GamePanelPinHint : Strings.GamePanelPinUnavailable, canPin))
         {
             runner.TogglePin(brief.Quest.RowId);
         }

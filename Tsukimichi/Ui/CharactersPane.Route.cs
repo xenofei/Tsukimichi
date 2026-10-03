@@ -31,7 +31,7 @@ public sealed partial class CharactersPane
     /// <summary>"Route to unlock…" and its popup of locked jobs, on the current line.</summary>
     private void DrawRouteToUnlockButton(UiState ui, Dashboard d)
     {
-        if (ImGui.SmallButton(Strings.RouteToUnlockMenu))
+        if (TravelControls.RowButton("##routeToUnlock", ActionGlyphs.Route, Strings.RouteToUnlockMenu))
         {
             ImGui.OpenPopup(RouteToUnlockPopupId);
         }
@@ -62,7 +62,7 @@ public sealed partial class CharactersPane
             DrawGridIcon(NodeIcon.Game(QuestUnlocks.JobIconBase + job.JobId), iconSize);
             if (ImGui.MenuItem(job.Name))
             {
-                ui.OpenRoute(RouteTarget.ForJob(job.Name, job.UnlockQuestRowId));
+                ui.OpenRoute(RouteTarget.ForJob(job.Name, job.UnlockQuestRowId) with { Icon = ActionIcons.Job(job.JobId) });
             }
         }
     }
@@ -98,7 +98,7 @@ public sealed partial class CharactersPane
 
             if (ImGui.MenuItem(job.MenuLabel))
             {
-                ui.OpenRoute(RouteTarget.ForJob(job.Name, job.UnlockQuestRowId));
+                ui.OpenRoute(RouteTarget.ForJob(job.Name, job.UnlockQuestRowId) with { Icon = ActionIcons.Job(job.JobId) });
             }
         }
 

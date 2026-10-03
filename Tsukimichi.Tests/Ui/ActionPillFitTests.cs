@@ -119,20 +119,49 @@ public class ActionPillFitTests
     }
 
     [Fact]
-    public void Pill_widths_follow_the_scale()
+    public void Pill_widths_follow_the_level_and_the_scale()
     {
-        Assert.Equal(12f + 6f + 14f + 14f + 60f, ActionPillFit.LabelledWidth(14f, 60f, 1f), 3);
-        Assert.Equal(((12f + 6f + 14f) * 2f) + 28f + 120f, ActionPillFit.LabelledWidth(28f, 120f, 2f), 3);
+        // Full: 11 + 18 + 6 + label + 13.
+        Assert.Equal(11f + 18f + 6f + 60f + 13f, ActionPillFit.LabelledWidth(PillMetrics.Full, 18f, 60f, 1f), 3);
+        Assert.Equal(((11f + 6f + 13f) * 2f) + 36f + 120f, ActionPillFit.LabelledWidth(PillMetrics.Full, 36f, 120f, 2f), 3);
+
+        // Plain has its icon too (spec-1.15 decision 3), on tighter pads.
+        Assert.Equal(7f + 14f + 4f + 60f + 8f, ActionPillFit.LabelledWidth(PillMetrics.Plain, 14f, 60f, 1f), 3);
+        Assert.Equal(7f + 4f + 8f, ActionPillFit.LabelledWidth(PillMetrics.Plain, float.NaN, float.NaN, float.NaN), 3);
+
         Assert.Equal(38f, ActionPillFit.IconOnlyWidth(26f), 3);
         Assert.Equal(0f, ActionPillFit.IconOnlyWidth(float.NaN));
     }
 
-    [Fact]
-    public void A_text_only_pill_is_the_label_between_its_pads()
+    [Theory]
+    [InlineData(Flair.Full, 30f, 18f)]
+    [InlineData(Flair.Quiet, 28f, 16f)]
+    [InlineData(Flair.Plain, 22f, 14f)]
+    public void Each_level_has_its_height_and_icon(Flair flair, float height, float icon)
     {
-        // Plain's buttons: no icon and no gap, so neither is counted (nor clamped away into an off-centre label).
-        Assert.Equal(12f + 14f + 60f, ActionPillFit.TextOnlyWidth(60f, 1f), 3);
-        Assert.Equal(((12f + 14f) * 2f) + 120f, ActionPillFit.TextOnlyWidth(120f, 2f), 3);
-        Assert.Equal(12f + 14f, ActionPillFit.TextOnlyWidth(float.NaN, float.NaN), 3);
+        var metrics = PillMetrics.For(flair);
+        Assert.Equal(height, metrics.Height);
+        Assert.Equal(icon, metrics.Icon);
+        Assert.Equal(icon, ActionPillFit.IconPx(metrics, height, 1f));
+
+        // Icon-only is 1.45 x the height: 44 / 41 / 32.
+        Assert.Equal(MathF.Round(height * 1.45f), ActionPillFit.IconOnlyWidth(height));
+    }
+
+    [Fact]
+    public void The_icon_keeps_a_pixel_clear_of_the_pills_edges()
+    {
+        // A list row's button is the text line tall: 14 px icons fit a 17 px line, a 12 px line takes a 10 px icon.
+        Assert.Equal(14f, ActionPillFit.IconPx(PillMetrics.Row, 17f, 1f));
+        Assert.Equal(10f, ActionPillFit.IconPx(PillMetrics.Row, 12f, 1f));
+        Assert.Equal(21f, ActionPillFit.IconPx(PillMetrics.Row, 30f, 1.5f));
+        Assert.Equal(0f, ActionPillFit.IconPx(PillMetrics.Row, float.NaN, 1f));
+
+        // A toolbar's button is the frame tall: 16 px icons in a 25 px frame, 14 in a 16 px one.
+        Assert.Equal(16f, ActionPillFit.IconPx(PillMetrics.Frame, 25f, 1f));
+        Assert.Equal(14f, ActionPillFit.IconPx(PillMetrics.Frame, 16f, 1f));
+
+        // The panels beside game windows: 26 px pills with 16 px icons at every level.
+        Assert.Equal(16f, ActionPillFit.IconPx(PillMetrics.Panel, PillMetrics.Panel.Height, 1f));
     }
 }

@@ -25,6 +25,9 @@ public interface IPaneIconSheets
 
     /// <summary><c>Achievement.Icon</c>.</summary>
     uint AchievementIcon(uint achievement);
+
+    /// <summary><c>Mount.Icon</c> (UI-5e, a mount requirement's line).</summary>
+    uint MountIcon(uint mount);
 }
 
 /// <summary>Which kind of job a row or a group stands for, for its icon (<see cref="PaneIcons.Family"/>).</summary>

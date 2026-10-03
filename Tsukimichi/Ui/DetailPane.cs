@@ -63,7 +63,11 @@ public sealed partial class DetailPane
     /// and <paramref name="GapText"/>, "52 → 56"); an unmet one a quest clears carries that quest
     /// (<paramref name="JumpRowId"/>, 0 for none) and the jump button's tooltip.
     /// </summary>
-    private sealed record RequirementLine(bool Met, bool IsNext, string Label, string Detail, float GapFraction = 0f, string? GapText = null, uint JumpRowId = 0, string? JumpTooltip = null);
+    private sealed record RequirementLine(bool Met, bool IsNext, string Label, string Detail, float GapFraction = 0f, string? GapText = null, uint JumpRowId = 0, string? JumpTooltip = null)
+    {
+        /// <summary>The game icon after the check or cross (UI-5e, I17): the job's, the previous quest's marker, the society's emblem; none for most others.</summary>
+        public GameIconRef Icon { get; init; }
+    }
 
     /// <summary>A reward tile: unique rewards wear the gold ring and crescent; a mark says when the store sells it or a duty drops it.</summary>
     private sealed record RewardTile(RewardRef Reward, bool Unique, string? Mark);
@@ -77,6 +81,9 @@ public sealed partial class DetailPane
         /// <summary>The unlock index's revision and Sprout mode's reach the Path stations' "Opens …" lines were built with.</summary>
         public int UnlocksRevision = -1;
         public byte UnlocksReach;
+
+        /// <summary>The sheet icons the requirement lines were built with (null while they are read).</summary>
+        public IPaneIconSheets? IconSheets;
         public QuestRecord? Quest;
         public QuestEvaluation? Evaluation;
         public QuestState State;
@@ -827,19 +834,13 @@ public sealed partial class DetailPane
 
     // ------------------------------------------------------------------ action bar
 
-    private static readonly string FlagIcon = FontAwesomeIcon.Flag.ToIconString();
-    private static readonly string TeleportIcon = FontAwesomeIcon.PaperPlane.ToIconString();
     private static readonly string PinIcon = FontAwesomeIcon.Thumbtack.ToIconString();
     private static readonly string ShowPathIcon = FontAwesomeIcon.Route.ToIconString();
     private static readonly string RouteIcon = FontAwesomeIcon.MapSigns.ToIconString();
     private static readonly string LinkIcon = FontAwesomeIcon.Link.ToIconString();
     private static readonly string CopyIcon = FontAwesomeIcon.Copy.ToIconString();
-    private static readonly string JournalIcon = FontAwesomeIcon.BookOpen.ToIconString();
     private static readonly string ReportIcon = FontAwesomeIcon.Bug.ToIconString();
 
-    private static readonly string WalkIcon = FontAwesomeIcon.Walking.ToIconString();
-    private static readonly string GoToIcon = FontAwesomeIcon.LocationArrow.ToIconString();
-    private static readonly string HopIcon = FontAwesomeIcon.ExchangeAlt.ToIconString();
     private static readonly string StopIcon = FontAwesomeIcon.Stop.ToIconString();
 
     // This frame's travel checks for the quest shown (PrepareTravel), read by the bar's layout and its buttons.
@@ -970,7 +971,7 @@ public sealed partial class DetailPane
             // Without Lifestream Flag on map leads the pills instead.
             NextRound(ref used, width);
             var canFlag = links.CanFlagMap(quest);
-            if (Chrome.IconButtonRound("##flagIcon", FlagIcon, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable, enabled: canFlag))
+            if (Chrome.IconButtonRound("##flagIcon", ActionIcons.FlagIcon, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable, enabled: canFlag))
             {
                 links.FlagMap(quest);
             }
@@ -992,7 +993,7 @@ public sealed partial class DetailPane
 
         NextRound(ref used, width);
         var canOpen = GameLinks.CanOpenJournal(quest, model.State);
-        if (Chrome.IconButtonRound("##journal", JournalIcon, canOpen ? Strings.OpenJournal : Strings.OpenJournalUnavailable, enabled: canOpen))
+        if (Chrome.IconButtonRound("##journal", PillIcon.JournalBook, canOpen ? Strings.OpenJournal : Strings.OpenJournalUnavailable, enabled: canOpen))
         {
             links.OpenJournal(quest);
         }
@@ -1022,7 +1023,7 @@ public sealed partial class DetailPane
 
         NextRound(ref used, width);
         var hop = hopCheck;
-        if (Chrome.IconButtonRound("##hop", HopIcon, null, enabled: hop.Ready))
+        if (Chrome.IconButtonRound("##hop", ActionIcons.AethernetIcon, null, enabled: hop.Ready))
         {
             links.AethernetToGiver(quest);
         }
@@ -1114,12 +1115,15 @@ public sealed partial class DetailPane
         // read it (and Sprout mode's reach) once per build.
         var unlocksRevision = runner.Unlocks?.Revision ?? 0;
         var unlocksReach = runner.UnlockReach;
+        // The requirement lines' icons (UI-5e) read sheets warmed off the frame: their landing builds the lines again.
+        var iconSheets = IconSheets?.Invoke();
         if (model.RowId == rowId && model.Version == session.Version && ReferenceEquals(model.Bundle, bundle) && pinnedShown == pinned
-            && model.UnlocksRevision == unlocksRevision && model.UnlocksReach == unlocksReach)
+            && model.UnlocksRevision == unlocksRevision && model.UnlocksReach == unlocksReach && ReferenceEquals(model.IconSheets, iconSheets))
         {
             return;
         }
 
+        model.IconSheets = iconSheets;
         pinnedShown = pinned;
         model.RowId = rowId;
         model.Version = session.Version;
@@ -1224,6 +1228,7 @@ public sealed partial class DetailPane
             model.CalloutDetail = model.Callout is not null && evaluation.OtherPath is not null ? model.StateNote : null;
 
             var unmet = 0;
+            var levelJob = LevelJobOf(shown.Requirements);
             foreach (var result in shown.Requirements)
             {
                 // The evaluator wrote the prerequisite's or lock's real name into the detail; the shield masks it here.
@@ -1235,7 +1240,10 @@ public sealed partial class DetailPane
                     ForeclosureRequirement f => spoilers.MaskNamesIn(clause, bundle.Catalog, f.CompletedLockIds),
                     _ => clause,
                 };
-                model.Requirements.Add(UnmetLine(session, bundle, quest, result, ReferenceEquals(result, shown.NextStep), detail));
+                model.Requirements.Add(UnmetLine(session, bundle, quest, result, ReferenceEquals(result, shown.NextStep), detail) with
+                {
+                    Icon = RequirementIcon(bundle, result.Req, levelJob, iconSheets),
+                });
                 unmet += result.Met ? 0 : 1;
             }
 

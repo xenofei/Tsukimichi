@@ -45,6 +45,9 @@ public sealed class RouteWindow : Window
     private const float IndentLogical = 22f;
 
     private static readonly string RouteIcon = FontAwesomeIcon.MapSigns.ToIconString();
+
+    /// <summary>The target's own icon before the title, logical px (spec-1.15 B4).</summary>
+    private const float HeaderIconLogical = 22f;
     private static readonly string PinAllLabelSuffix = Chrome.HoldIdSuffix;
 
     /// <summary>The widest level label ("Lv 100"), which sets where a step's text starts.</summary>
@@ -184,7 +187,8 @@ public sealed class RouteWindow : Window
         Refresh(bundle, target);
         var v = view;
 
-        DrawHeader(v);
+        var firstQuest = target.QuestRowIds.Count > 0 ? bundle.Catalog.GetByRowId(target.QuestRowIds[0]) : null;
+        DrawHeader(v, ActionIcons.RouteHeader(target, firstQuest));
 
         switch (v.Route.Outcome)
         {
@@ -226,9 +230,11 @@ public sealed class RouteWindow : Window
     /// <summary>
     /// The route's title and whom it is for (R3 #5, #9): the sign icon, then the title, which wraps between words rather
     /// than running off a narrow window; in the Title role at Flair Full and Quiet (the icon centred on its first line),
-    /// the body font under Plain. The caption wraps under it in the disabled tone.
+    /// the body font under Plain. The caption wraps under it in the disabled tone. 1.15 (UI-5e, I19): the sign gives way
+    /// to the target's own icon at 22 px (<see cref="ActionIcons.RouteHeader"/>: a quest's map marker, a duty's tile, a
+    /// reward's, a job's or an expansion's icon), the sign staying for a target without one.
     /// </summary>
-    private static void DrawHeader(View v)
+    private static void DrawHeader(View v, GameIconRef icon)
     {
         var moonRoad = Theme.Sectioned;
         var y = ImGui.GetCursorPosY();
@@ -238,14 +244,26 @@ public sealed class RouteWindow : Window
             titleLine = ImGui.GetTextLineHeight();
         }
 
-        ImGui.SetCursorPosY(y + MathF.Max(0f, (titleLine - ImGui.GetTextLineHeight()) * 0.5f));
-        ImGui.PushFont(UiBuilder.IconFont);
-        using (Theme.PushText(Theme.Surface.TextSecondary))
+        if (icon.HasIcon)
         {
-            ImGui.TextUnformatted(RouteIcon);
+            var side = MathF.Round(UiMetrics.Px(HeaderIconLogical));
+            ImGui.SetCursorPosY(y + MathF.Max(0f, (titleLine - side) * 0.5f));
+            var min = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(side));
+            Chrome.DrawPillIcon(ImGui.GetWindowDrawList(), icon, min, side, Theme.U32(Theme.Surface.TextSecondary), enabled: true);
+        }
+        else
+        {
+            ImGui.SetCursorPosY(y + MathF.Max(0f, (titleLine - ImGui.GetTextLineHeight()) * 0.5f));
+            ImGui.PushFont(UiBuilder.IconFont);
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextUnformatted(RouteIcon);
+            }
+
+            ImGui.PopFont();
         }
 
-        ImGui.PopFont();
         ImGui.SameLine();
         ImGui.SetCursorPosY(y);
         using (moonRoad ? Typography.Title(v.Title) : default)
@@ -372,18 +390,16 @@ public sealed class RouteWindow : Window
         var owner = session.ViewedContentId;
         var following = target is not null && routes.Follows(target, owner);
         var canFollow = owner is not null && v.Route.Steps.Count > 0;
-        using (ImRaii.Disabled(!following && !canFollow))
+        var followLabel = following ? Strings.RouteStopFollowing : Strings.RouteFollow;
+        if (TravelControls.ToolbarButton("##follow", following ? ActionGlyphs.Stop : ActionGlyphs.Follow, followLabel, following || canFollow) && target is not null)
         {
-            if (ImGui.Button(following ? Strings.RouteStopFollowing : Strings.RouteFollow) && target is not null)
+            if (following)
             {
-                if (following)
-                {
-                    routes.Stop();
-                }
-                else if (owner is { } id)
-                {
-                    routes.Follow(target, id);
-                }
+                routes.Stop();
+            }
+            else if (owner is { } id)
+            {
+                routes.Follow(target, id);
             }
         }
 
@@ -394,13 +410,10 @@ public sealed class RouteWindow : Window
 
         var stop = routes.NextStopQuest(v.Route);
         var canFlag = stop is not null && links.CanFlagMap(stop);
-        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.RouteFlagNextStop).X + (ImGui.GetStyle().FramePadding.X * 2f));
-        using (ImRaii.Disabled(!canFlag))
+        Chrome.SameLineOrWrap(TravelControls.ToolbarButtonWidth(ActionIcons.FlagIcon, Strings.RouteFlagNextStop));
+        if (TravelControls.ToolbarButton("##flagNextStop", ActionIcons.FlagIcon, Strings.RouteFlagNextStop, canFlag))
         {
-            if (ImGui.Button(Strings.RouteFlagNextStop))
-            {
-                routes.FlagNextStop(v.Route);
-            }
+            routes.FlagNextStop(v.Route);
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
@@ -478,12 +491,8 @@ public sealed class RouteWindow : Window
         }
     }
 
-    /// <summary>A small button's width for <paramref name="label"/>.</summary>
-    private static float SmallButtonWidth(string label) => ImGui.CalcTextSize(label).X + (ImGui.GetStyle().FramePadding.X * 2f);
-
     /// <summary>Walk's width, sized for the longer of Walk and Stop so the row does not shift when it turns.</summary>
-    private static float WalkButtonWidth() =>
-        MathF.Max(SmallButtonWidth(Strings.TravelWalkShort), SmallButtonWidth(Strings.TravelStop));
+    private static float WalkButtonWidth() => TravelControls.WalkWidth();
 
     /// <summary>
     /// The line's Flag, Teleport and Walk (Stop while the character moves), right-aligned at <paramref name="right"/> on
@@ -494,14 +503,16 @@ public sealed class RouteWindow : Window
     {
         var gap = UiMetrics.Px(4f);
         var width = 0f;
+        var flagWidth = TravelControls.FlagWidth(Strings.RouteStepFlag);
+        var teleportWidth = Chrome.ActionPillWidth(ActionIcons.TeleportIcon, Strings.RouteStepTeleport, PillLayout.Row);
         if (flag)
         {
-            width += SmallButtonWidth(Strings.RouteStepFlag);
+            width += flagWidth;
         }
 
         if (teleport)
         {
-            width += SmallButtonWidth(Strings.RouteStepTeleport) + (flag ? gap : 0f);
+            width += teleportWidth + (flag ? gap : 0f);
         }
 
         if (walk)
@@ -520,12 +531,9 @@ public sealed class RouteWindow : Window
         {
             ImGui.SetCursorScreenPos(new Vector2(x, y));
             var canFlag = links.CanFlagMap(quest);
-            using (ImRaii.Disabled(!canFlag))
+            if (TravelControls.FlagButton(Strings.RouteStepFlag, canFlag))
             {
-                if (ImGui.SmallButton(Strings.RouteStepFlag))
-                {
-                    links.FlagMap(quest);
-                }
+                links.FlagMap(quest);
             }
 
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
@@ -533,19 +541,16 @@ public sealed class RouteWindow : Window
                 UiMetrics.Tooltip(canFlag ? Strings.RouteStepFlagTooltip : Strings.RouteStepFlagUnavailable);
             }
 
-            x += SmallButtonWidth(Strings.RouteStepFlag) + gap;
+            x += flagWidth + gap;
         }
 
         if (teleport)
         {
             ImGui.SetCursorScreenPos(new Vector2(x, y));
             var canTeleport = links.CanTeleport(quest);
-            using (ImRaii.Disabled(!canTeleport))
+            if (Chrome.ActionPill("##stepTeleport", ActionIcons.TeleportIcon, Strings.RouteStepTeleport, PillTone.Normal, canTeleport, size: PillLayout.Row))
             {
-                if (ImGui.SmallButton(Strings.RouteStepTeleport))
-                {
-                    links.TeleportToGiver(quest);
-                }
+                links.TeleportToGiver(quest);
             }
 
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
@@ -553,7 +558,7 @@ public sealed class RouteWindow : Window
                 UiMetrics.Tooltip(TeleportTip(quest));
             }
 
-            x += SmallButtonWidth(Strings.RouteStepTeleport) + gap;
+            x += teleportWidth + gap;
         }
 
         if (walk)
@@ -568,27 +573,7 @@ public sealed class RouteWindow : Window
     private void DrawWalkButton(QuestRecord quest, Vector2 at)
     {
         ImGui.SetCursorScreenPos(at);
-        var walk = links.CheckWalk(quest);
-        using (ImRaii.PushId("walk"))
-        using (ImRaii.Disabled(!walk.Ready && !walk.Stoppable))
-        {
-            if (ImGui.SmallButton(walk.Stoppable ? Strings.TravelStop : Strings.TravelWalkShort))
-            {
-                if (walk.Stoppable)
-                {
-                    links.StopTravel();
-                }
-                else
-                {
-                    links.WalkToGiver(quest);
-                }
-            }
-        }
-
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(links.WalkTooltip(quest, walk));
-        }
+        TravelControls.WalkButton(links, quest);
     }
 
     /// <summary>

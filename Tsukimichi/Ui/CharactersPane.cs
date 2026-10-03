@@ -842,7 +842,7 @@ public sealed partial class CharactersPane
     /// </summary>
     private void DrawJobQuests(UiState ui, Dashboard d)
     {
-        var routeButton = ImGui.CalcTextSize(Strings.RouteToUnlockMenu).X + (ImGui.GetStyle().FramePadding.X * 2f);
+        var routeButton = TravelControls.RowButtonWidth(ActionGlyphs.Route, Strings.RouteToUnlockMenu);
         var reserve = routeButton + ImGui.GetStyle().ItemSpacing.X;
         if (Theme.Sectioned && ImGui.GetContentRegionAvail().X - reserve >= UiMetrics.Px(HeadingLeastLogical))
         {

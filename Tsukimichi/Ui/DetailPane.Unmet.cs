@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
@@ -31,6 +32,9 @@ namespace Tsukimichi.Ui;
 public sealed partial class DetailPane
 {
     private static readonly string JumpIcon = FontAwesomeIcon.ArrowRight.ToIconString();
+
+    /// <summary>A requirement line's game icon, logical px (spec-1.15 B4).</summary>
+    private const float RequirementIconLogical = 18f;
 
     /// <summary>Between the journal path's genre and category (<see cref="Strings.JournalPathFormat"/>'s own separator).</summary>
     private const string JournalSeparator = " › ";
@@ -195,6 +199,60 @@ public sealed partial class DetailPane
         return new RequirementLine(false, isNext, label, detail, gap?.Fraction ?? 0f, gapText, jump, tooltip);
     }
 
+    /// <summary>The sheet icons of the requirement lines (UI-5e); null until the plugin attaches them, or while they are read.</summary>
+    public Func<IPaneIconSheets?>? IconSheets { get; set; }
+
+    // Every instance's icon by InstanceContent id, from the catalog's Instance rewards (UI-5b's chain), built once per catalog.
+    private QuestCatalog? instanceIconsCatalog;
+    private Dictionary<uint, uint> instanceIcons = [];
+
+    /// <summary>The job a Level line speaks of: the Class or job line's pinned job, else the job the check was made for; 0 when none.</summary>
+    private static uint LevelJobOf(IEnumerable<RequirementResult> results)
+    {
+        foreach (var result in results)
+        {
+            if (result.Req is ClassJobRequirement job)
+            {
+                return job.RequiredJob != 0 ? job.RequiredJob : job.Job;
+            }
+        }
+
+        return 0;
+    }
+
+    /// <summary>A requirement line's icon (<see cref="ActionIcons.Requirement"/>); none while the sheet icons are read.</summary>
+    private GameIconRef RequirementIcon(CatalogBundle bundle, Requirement requirement, uint levelJob, IPaneIconSheets? sheets)
+    {
+        if (sheets is null)
+        {
+            return GameIconRef.None;
+        }
+
+        var catalog = bundle.Catalog;
+        if (!ReferenceEquals(instanceIconsCatalog, catalog))
+        {
+            instanceIconsCatalog = catalog;
+            instanceIcons = [];
+            foreach (var quest in catalog.All)
+            {
+                foreach (var reward in quest.Rewards)
+                {
+                    if (reward.Kind == RewardKind.Instance && reward.Icon != 0)
+                    {
+                        instanceIcons.TryAdd(reward.Id, reward.Icon);
+                    }
+                }
+            }
+        }
+
+        return ActionIcons.Requirement(
+            requirement,
+            levelJob,
+            id => catalog.GetByRowId(id)?.EventIconType,
+            id => instanceIcons.GetValueOrDefault(id),
+            sheets);
+    }
+
     /// <summary>A job's unlock quest from the ClassJob sheet; 0 for none.</summary>
     private static uint JobUnlockQuest(CatalogBundle bundle, uint job)
     {
@@ -225,16 +283,22 @@ public sealed partial class DetailPane
         var gapX = ImGui.GetStyle().ItemSpacing.X;
         var left = ImGui.GetCursorScreenPos().X;
         var right = cardRight;
-        var textLeft = left + box + gapX;
-        var textRoom = MathF.Max(1f, right - textLeft);
         var jump = UiMetrics.MinTarget;
         var labelWidth = 0f;
         var anyJump = false;
+        var anyIcon = false;
         foreach (var line in model.Requirements)
         {
             labelWidth = MathF.Max(labelWidth, ImGui.CalcTextSize(line.Label).X);
             anyJump |= line.JumpRowId != 0;
+            anyIcon |= line.Icon.HasIcon;
         }
+
+        // The game icon after the mark (UI-5e): one column for every line once any has one, so the labels stay aligned.
+        var iconSide = anyIcon ? MathF.Round(UiMetrics.Px(RequirementIconLogical)) : 0f;
+        var iconLeft = left + box + gapX;
+        var textLeft = iconLeft + (anyIcon ? iconSide + gapX : 0f);
+        var textRoom = MathF.Max(1f, right - textLeft);
 
         var jumpReserve = anyJump ? jump + gapX : 0f;
         var stacked = DetailTiers.Stacks(tier) || LayoutBudgets.StackLabelValue(textRoom - jumpReserve, labelWidth, gapX, ImGui.GetFontSize());
@@ -246,7 +310,7 @@ public sealed partial class DetailPane
             var hasJump = line.JumpRowId != 0;
 
             // With a jump button the first line is the button's height, its text centred on it.
-            var firstLine = hasJump ? MathF.Max(lineHeight, jump) : lineHeight;
+            var firstLine = MathF.Max(hasJump ? MathF.Max(lineHeight, jump) : lineHeight, iconSide);
             var textY = top + ((firstLine - lineHeight) * 0.5f);
 
             // Met is a small check, unmet an eclipse cross: a moon means a quest state or a fraction only (accessibility B2).
@@ -256,6 +320,12 @@ public sealed partial class DetailPane
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(line.Met ? Strings.MetTooltip : Strings.UnmetTooltip);
+            }
+
+            if (line.Icon.HasIcon)
+            {
+                var iconMin = new Vector2(iconLeft, MathF.Round(top + ((firstLine - iconSide) * 0.5f)));
+                Chrome.DrawPillIcon(dl, line.Icon, iconMin, iconSide, Theme.U32(s.TextSecondary), enabled: true);
             }
 
             var labelInk = line.Met ? s.TextSecondary : line.IsNext ? Theme.Moon : s.Text;

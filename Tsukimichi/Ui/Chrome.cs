@@ -774,14 +774,21 @@ public static partial class Chrome
 
     private static float SegmentWidth(string label, float padX) => ImGui.CalcTextSize(label).X + padX * 2f;
 
+    /// <summary>A round button's game icon or book, logical px (spec-1.15 B2): 14, and 12 at Plain.</summary>
+    private const float RoundIconLogical = 14f;
+
+    private const float RoundIconPlainLogical = 12f;
+
     /// <summary>
     /// A round icon button (ui-revamp §2.1 right cluster), <see cref="UiMetrics.MinTarget"/> across so it never drops
     /// under 24 px (accessibility B4): transparent at rest, the hover fill easing in, the icon in the secondary tone
     /// turning primary on hover. <paramref name="active"/> keeps a neutral wash (an open panel). Disabled buttons still
-    /// show their tooltip. Returns true when clicked.
+    /// show their tooltip. Returns true when clicked. 1.15 (UI-5e): the icon may be the game's own (Flag on the map, the
+    /// aethernet hop) or the Journal book (<see cref="PillIcon"/>), drawn 14 px (12 at Plain) in the colours it carries,
+    /// at .45 and grey when disabled; a FontAwesome glyph keeps the ink.
     /// </summary>
-    /// <param name="icon">A FontAwesome string (<see cref="Icon"/>).</param>
-    public static bool IconButtonRound(string id, string icon, string? tooltip = null, bool active = false, bool enabled = true)
+    /// <param name="icon">A FontAwesome string (<see cref="Icon"/>), a game icon or the Journal book.</param>
+    public static bool IconButtonRound(string id, PillIcon icon, string? tooltip = null, bool active = false, bool enabled = true)
     {
         var size = UiMetrics.MinTarget;
         var pos = ImGui.GetCursorScreenPos();
@@ -806,10 +813,18 @@ public static partial class Chrome
         }
 
         var ink = !enabled ? s.TextDisabled : hovered || active ? s.Text : s.TextSecondary;
-        ImGui.PushFont(UiBuilder.IconFont);
-        var iconSize = ImGui.CalcTextSize(icon);
-        dl.AddText(center - iconSize * 0.5f, Theme.U32(ink), icon);
-        ImGui.PopFont();
+        if (icon.Glyph is { } glyph)
+        {
+            ImGui.PushFont(UiBuilder.IconFont);
+            var iconSize = ImGui.CalcTextSize(glyph);
+            dl.AddText(center - iconSize * 0.5f, Theme.U32(ink), glyph);
+            ImGui.PopFont();
+        }
+        else
+        {
+            var side = MathF.Round(UiMetrics.Px(Theme.Flair == Flair.Plain ? RoundIconPlainLogical : RoundIconLogical));
+            DrawPillIcon(dl, icon, new Vector2(MathF.Round(center.X - (side * 0.5f)), MathF.Round(center.Y - (side * 0.5f))), side, Theme.U32(ink), enabled);
+        }
 
         FocusRing(radius);
         if (tooltip is not null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
