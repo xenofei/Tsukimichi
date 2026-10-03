@@ -782,7 +782,7 @@ public sealed partial class MainWindow
                 var clear = Theme.CastShadow(0f);
                 dl.AddRectFilledMultiColor(new Vector2(max.X, min.Y), new Vector2(max.X + contact, max.Y - rounding), dark, clear, clear, dark);
                 GradientFill(dl, min, max, tones.SheetTop with { W = DrawerTones.FullSheetAlpha }, tones.SheetFoot with { W = DrawerTones.FullSheetAlpha }, rounding, corners);
-                dl.AddRectFilled(min, new Vector2(max.X - rounding, min.Y + UiMetrics.Hairline), ImGui.GetColorU32(Theme.Scene.TopHighlight with { W = 0.06f }));
+                dl.AddRectFilled(min, new Vector2(max.X - rounding, min.Y + UiMetrics.Hairline), Theme.TopHighlight(0.06f));
                 var first = dl.VtxBuffer.Size;
                 EdgePath(dl, min, max, rounding, 0xFFFFFFFFu, UiMetrics.Hairline);
                 BrassVertices(dl, first, min, max, alpha);

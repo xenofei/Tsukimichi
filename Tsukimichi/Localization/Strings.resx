@@ -9820,6 +9820,10 @@
     <value>Only drawn with Full decoration.</value>
     <comment>Shown in place of the hint while a sky setting is greyed out because Decoration is not Full.</comment>
   </data>
+  <data name="Settings.SkyNightPaletteReason" xml:space="preserve">
+    <value>Night palettes only.</value>
+    <comment>Shown in place of the hint while a sky setting (Milky Way, moving sky, shooting star) is greyed out because a light palette such as Ishgard Snow has no stars.</comment>
+  </data>
   <data name="Settings.SkyMotionReason" xml:space="preserve">
     <value>Off while Reduce motion is on.</value>
     <comment>Shown in place of the hint while a moving-sky setting is greyed out by Reduce motion.</comment>

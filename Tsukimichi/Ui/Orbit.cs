@@ -34,8 +34,11 @@ public static class Orbit
 
     private const int RingSegments = 32;
 
-    /// <summary>The ring's unlit track: VeilLine at 0.55 (proposal §3, OrbitTrack).</summary>
-    public static uint TrackU32 => Theme.WithAlpha(Theme.Surface.StrongLine, 0.55f);
+    /// <summary>The ring's unlit track: the palette's gauge track (the strong line at 0.55 on Night, proposal §3, OrbitTrack; a light palette's keyline).</summary>
+    public static uint TrackU32 => Theme.U32(Theme.Gauges.Track);
+
+    /// <summary>A flat ring's lit arc (high contrast, the Classic moons, Flight's bead ring): Moon on Night, a light palette's gauge gilt.</summary>
+    public static uint ArcU32 => Theme.U32(Theme.Gauges.Arc);
 
     /// <summary>The filling moon's radius inside an orbit (the mockup's 8.5 in a ring of 14).</summary>
     public const float MoonLogical = 8f;
@@ -217,7 +220,7 @@ public static class Orbit
         var start = GaugeGeometry.StartAngle;
         if (f >= 1f)
         {
-            dl.AddCircle(center, r, Theme.GoldU32, RingSegments, stroke);
+            dl.AddCircle(center, r, ArcU32, RingSegments, stroke);
             Bead(dl, center + new Vector2(0f, -r), k, full: true);
         }
         else if (f > 0f)
@@ -234,8 +237,8 @@ public static class Orbit
 
             dl.PathClear();
             dl.PathArcTo(center, r, start, start + sweep, GaugeGeometry.ArcSegments(RingSegments, sweep));
-            dl.PathStroke(Theme.GoldU32, ImDrawFlags.None, stroke);
-            dl.AddCircleFilled(center + new Vector2(0f, -r), stroke * 0.5f, Theme.GoldU32);
+            dl.PathStroke(ArcU32, ImDrawFlags.None, stroke);
+            dl.AddCircleFilled(center + new Vector2(0f, -r), stroke * 0.5f, ArcU32);
             var (sin, cos) = MathF.SinCos(start + sweep);
             Bead(dl, center + (new Vector2(cos, sin) * r), k, full: false);
         }
@@ -283,7 +286,7 @@ public static class Orbit
         if (f >= 1f)
         {
             MedalGauge.GiltArc(dl, center, r, stroke, start, 2f * MathF.PI, box, RingSegments);
-            dl.AddCircleFilled(center + new Vector2(0f, -r), BeadRimLogical * k, MedalGauge.KeylineU32);
+            dl.AddCircleFilled(center + new Vector2(0f, -r), BeadRimLogical * k, MedalGauge.PearlRimU32);
             dl.AddCircleFilled(center + new Vector2(0f, -r), BeadLogical * k, MedalGauge.PearlU32);
             return;
         }
@@ -295,7 +298,7 @@ public static class Orbit
             MedalGauge.GiltArc(dl, center, r, stroke, start, sweep, box, RingSegments);
             var (sin, cos) = MathF.SinCos(start + sweep);
             var at = center + (new Vector2(cos, sin) * r);
-            dl.AddCircleFilled(at, BeadRimLogical * k, MedalGauge.KeylineU32);
+            dl.AddCircleFilled(at, BeadRimLogical * k, MedalGauge.PearlRimU32);
             dl.AddCircleFilled(at, BeadLogical * k, MedalGauge.PearlU32);
         }
     }

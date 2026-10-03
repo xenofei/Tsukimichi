@@ -156,7 +156,7 @@ public sealed partial class TreePane
     private static Vector4 SelectedWash => Theme.WithAlphaVector(Theme.Surface.TextDisabled, 0.22f);
     private static Vector4 SelectedHoverWash => Theme.WithAlphaVector(Theme.Surface.TextDisabled, 0.30f);
     private static Vector4 ActiveWash => Theme.WithAlphaVector(Theme.Surface.Text, 0.09f);
-    private static uint ReadyBadgeFill => Theme.WithAlpha(Theme.Gold, 0.16f);
+    private static uint ReadyBadgeFill => Theme.U32(Theme.Scene.Washes.ReadyBadge);
 
     /// <summary>The widest percentage, which Plain's percentage column is sized for.</summary>
     private const string PercentColumnSample = "100%";
@@ -554,7 +554,15 @@ public sealed partial class TreePane
         {
             var bar = MathF.Max(2f, MathF.Round(UiMetrics.Px(2f)));
             var plain = Theme.Flair == Flair.Plain;
-            if (Theme.ShowGlow)
+            if (Theme.ShowGlow && Theme.Washes)
+            {
+                // A light palette: a lead-gold wash from the left (.14 → a quarter of it), never light (spec-1.16 §A4).
+                var tint = Theme.Scene.Washes.TreeSelection;
+                var from = Theme.WithAlpha(tint, tint.W * settled);
+                var to = Theme.WithAlpha(tint, tint.W * 0.25f * settled);
+                dl.AddRectFilledMultiColor(min, max, from, to, to, from);
+            }
+            else if (Theme.ShowGlow)
             {
                 dl.AddRectFilled(min, new Vector2(min.X + (3f * bar), max.Y), Theme.Glow(0.10f * settled));
                 dl.AddRectFilledMultiColor(min, new Vector2(min.X + ((max.X - min.X) * 0.7f), max.Y), Theme.Glow(0.08f * settled), Theme.Glow(0f), Theme.Glow(0f), Theme.Glow(0.08f * settled));

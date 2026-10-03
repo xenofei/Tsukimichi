@@ -53,6 +53,53 @@ public static class BannerGrade
     public static readonly (float At, float Alpha)[] ScrimStops = [(0f, 0f), (0.45f, 0.25f), (1f, 0.85f)];
 
     /// <summary>
+    /// The daylight grade's scrim to a light palette's window (spec-1.16 §A5): 0 at the top, .22 at 40 %, .92 at the foot,
+    /// so the navy title reads over the art's lower part.
+    /// </summary>
+    public static readonly (float At, float Alpha)[] DaylightScrimStops = [(0f, 0f), (0.40f, 0.22f), (1f, 0.92f)];
+
+    /// <summary>The daylight grade's desaturation toward each pixel's own grey (spec-1.16 §A5: 20 %).</summary>
+    public const float DaylightDesaturation = 0.20f;
+
+    /// <summary>The daylight grade's brightness (spec-1.16 §A5: 1.04).</summary>
+    public const float DaylightBrightness = 1.04f;
+
+    /// <summary>
+    /// One pixel through the daylight grade (a light palette's, spec-1.16 §A5): no night multiply, the desaturation
+    /// toward its own grey (<see cref="DaylightDesaturation"/>), then the brightness (<see cref="DaylightBrightness"/>),
+    /// clamped to 0..1.
+    /// </summary>
+    public static Vector3 Daylight(Vector3 rgb)
+    {
+        var grey = Luma(rgb) / 255f;
+        var c = Vector3.Lerp(rgb, new Vector3(grey), DaylightDesaturation) * DaylightBrightness;
+        return Vector3.Clamp(c, Vector3.Zero, Vector3.One);
+    }
+
+    /// <summary>Grades a 32-bit image in place through the daylight grade (<see cref="Daylight"/>); alpha is kept.</summary>
+    public static void DaylightInPlace(Span<byte> pixels, int width, int height, int pitch, bool bgra)
+    {
+        for (var y = 0; y < height; y++)
+        {
+            var row = y * pitch;
+            for (var x = 0; x < width; x++)
+            {
+                var o = row + (x * 4);
+                if (o + 3 >= pixels.Length)
+                {
+                    return;
+                }
+
+                var (ri, bi) = bgra ? (o + 2, o) : (o, o + 2);
+                var c = Daylight(new Vector3(pixels[ri] / 255f, pixels[o + 1] / 255f, pixels[bi] / 255f));
+                pixels[ri] = Byte(c.X);
+                pixels[o + 1] = Byte(c.Y);
+                pixels[bi] = Byte(c.Z);
+            }
+        }
+    }
+
+    /// <summary>
     /// The moon road on the water along the banner's bottom edge (spec §1, "Banners"): six MoonHigh dashes, each as
     /// (its top from the bottom edge as a fraction of <see cref="RoadHeightFraction"/>, its width as a fraction of the
     /// banner's width, its alpha, its sideways nudge as a fraction of the width), widening toward the viewer.

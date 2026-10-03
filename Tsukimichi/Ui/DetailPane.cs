@@ -415,14 +415,8 @@ public sealed partial class DetailPane
     private Core.Query.SpoilerMask? lastSpoilers;
     private QuestCatalog? lastCatalog;
 
-    /// <summary>A state's text tone for pills and captions: the state colour, with Locked out, Not checked and Blocked in their readable text tones.</summary>
-    private static Vector4 StateTextColor(QuestState state) => state switch
-    {
-        QuestState.Foreclosed => Theme.DangerText,
-        QuestState.Unknown => Theme.UnknownText,
-        QuestState.Blocked => Theme.Surface.TextSecondary,
-        _ => Theme.StateColor(state),
-    };
+    /// <summary>A state's text tone for pills and captions: the palette's status word (<see cref="Theme.StateText"/>, at least 4.5 : 1).</summary>
+    private static Vector4 StateTextColor(QuestState state) => Theme.StateText(state);
 
     /// <summary>
     /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>;

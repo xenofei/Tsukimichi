@@ -48,14 +48,26 @@ public sealed class PortraitPlateTests
         Assert.Equal(night.Ro, light.Ro);
         Assert.Equal(night.Bo, light.Bo);
 
-        // A grey stays grey (the desaturation leaves it be), scaled by .94 and lifted.
+        // A grey stays grey (the desaturation leaves it be), scaled by the light scale (.97, spec-1.16 §A7) and lifted.
         var grey = light.Apply(new Vector3(0.5f));
         Assert.Equal(grey.X - light.Ro, grey.Y - light.Go, 3);
-        Assert.Equal(0.5f * PortraitGrade.Scale, grey.Y - light.Go, 3);
+        Assert.Equal(0.5f * PortraitGrade.LightScale, grey.Y - light.Go, 3);
 
         // Pure red loses a quarter of its saturation toward luma.
         var red = light.Apply(Vector3.UnitX);
-        Assert.Equal(((1f - .25f) + (.25f * .2126f)) * .94f, red.X - light.Ro, 3);
+        Assert.Equal(((1f - .25f) + (.25f * .2126f)) * .97f, red.X - light.Ro, 3);
+    }
+
+    [Fact]
+    public void The_light_palette_matrices_are_spec_1_16s()
+    {
+        // docs/design/v7/ui/spec-1.16.md §A7 (palettes.json "snow-colour", "snow-bt"): d = .25 / .50, no multiply, scale .97, lift Night × .25.
+        AssertMatrix(
+            PortraitGrade.For(PortraitGradeFamily.Colour, nightMultiply: false),
+            [.7791f, .1734f, .0175f, .0147f, .0516f, .9009f, .0175f, .0196f, .0516f, .1734f, .7450f, .0353f]);
+        AssertMatrix(
+            PortraitGrade.For(PortraitGradeFamily.BattleTalk, nightMultiply: false),
+            [.5881f, .3469f, .0350f, .0147f, .1031f, .8319f, .0350f, .0196f, .1031f, .3469f, .5200f, .0353f]);
     }
 
     [Fact]

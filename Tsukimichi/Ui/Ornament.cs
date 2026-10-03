@@ -175,8 +175,24 @@ public static class Ornament
         }
 
         var s = Theme.Surface;
-        var zenith = Zenith;
         var height = max.Y - min.Y;
+        if (Theme.Scene.SkyStops is { Length: > 1 } stops)
+        {
+            // A designed sky (Ishgard Snow's still dawn over the snowfield, spec-1.16 §A5): its stops top to foot, opaque
+            // but for the window's own opacity. No water lift: the snow brightens low down in the stops themselves.
+            for (var i = 1; i < stops.Length; i++)
+            {
+                var (a0, c0) = stops[i - 1];
+                var (a1, c1) = stops[i];
+                var top = Theme.WithAlpha(c0, alpha);
+                var foot = Theme.WithAlpha(c1, alpha);
+                dl.AddRectFilledMultiColor(new Vector2(min.X, min.Y + (height * a0)), new Vector2(max.X, min.Y + (height * a1)), top, top, foot, foot);
+            }
+
+            return;
+        }
+
+        var zenith = Zenith;
         var from = Theme.WithAlpha(zenith, alpha);
         var clear = Theme.WithAlpha(zenith, 0f);
         dl.AddRectFilledMultiColor(min, new Vector2(max.X, min.Y + (height * SkyFade)), from, from, clear, clear);

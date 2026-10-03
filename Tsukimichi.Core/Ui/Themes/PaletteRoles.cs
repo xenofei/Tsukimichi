@@ -131,6 +131,14 @@ public sealed class StateInks
         return new StateInks(tones, mappedTexts, mappedStripes);
     }
 
+    /// <summary>The same inks with <paramref name="state"/>'s word in <paramref name="text"/> (a designed high-contrast form's one change).</summary>
+    public StateInks WithText(QuestState state, Vector4 text)
+    {
+        var mappedTexts = (Vector4[])texts.Clone();
+        mappedTexts[Index(state)] = text;
+        return new StateInks(tones, mappedTexts, stripes);
+    }
+
     private int Index(QuestState state) => (uint)state < (uint)tones.Length ? (int)state : (int)QuestState.Blocked;
 }
 
@@ -154,10 +162,17 @@ public sealed class StateInks
 /// <param name="Scrim">The tour's dimming veil over the window (Night).</param>
 /// <param name="Moonlight">The banner grade's wash and moon road, and the meteors (MoonHigh).</param>
 /// <param name="BannerTitle">A quest title drawn on banner art (#F4F1E8 warm near-white; Snow's navy ink).</param>
-/// <param name="StarField">Whether Full draws the star field, the moving sky and the meteors (off on a light palette).</param>
-/// <param name="MorningStar">Whether Full draws Snow's single static morning star in the tree's sky (§A5; off on Night).</param>
+/// <param name="StarField">
+/// Whether Full draws the star field, the moving sky, the meteors, the Milky Way and the constellations. Off on a light
+/// palette, with nothing drawn in their place (spec-1.16 §A5, the supervisor's ruling: no stars at all on a light palette).
+/// </param>
 /// <param name="NightGrade">Whether banners and giver portraits take the night multiply (off on a light palette: the daylight grade).</param>
 /// <param name="Stars">The star field's inks.</param>
+/// <param name="TopHighlightAlpha">
+/// The alpha every raised surface's 1 px top highlight is drawn at, or 0 for each caller's designed alpha (Night's MoonHigh
+/// at about .06). A light palette's white lit edge is drawn near opaque (spec-1.16 §A4).
+/// </param>
+/// <param name="Washes">The warm washes a light palette lays where Night glows (spec-1.16 §A4), and the Ready badge's fill.</param>
 public readonly record struct SceneTokens(
     Vector4 Zenith,
     (float At, Vector4 Color)[]? SkyStops,
@@ -175,9 +190,10 @@ public readonly record struct SceneTokens(
     Vector4 Moonlight,
     Vector4 BannerTitle,
     bool StarField,
-    bool MorningStar,
     bool NightGrade,
-    StarInks Stars)
+    StarInks Stars,
+    float TopHighlightAlpha,
+    WashTokens Washes)
 {
     /// <summary>#1B2552 – Full's sky zenith on Night (docs/design/flair-v13 §1).</summary>
     public const uint ZenithHex = 0x1B2552;
@@ -196,6 +212,9 @@ public readonly record struct SceneTokens(
 
     /// <summary>A light palette's gold glows and sheens, as a share of the designed alpha.</summary>
     public const float LightGlowStrength = 0.6f;
+
+    /// <summary>The white 1 px top highlight of a raised surface on a light palette, near opaque (the mock's inset white line).</summary>
+    public const float LightTopHighlightAlpha = 0.85f;
 
     /// <summary>
     /// The scene a derived palette (Follow Dalamud) draws on <paramref name="surface"/>: on a dark window Night's (stars,
@@ -219,11 +238,191 @@ public readonly record struct SceneTokens(
             GlowStrength = LightGlowStrength,
             WashInsteadOfGlow = true,
             TopHighlight = Vector4.One,
+            TopHighlightAlpha = LightTopHighlightAlpha,
             TextHalo = surface.Window,
             BannerTitle = surface.Text,
             StarField = false,
             NightGrade = false,
+            Washes = WashTokens.Light(ColorMath.EnsureContrast(ColorMath.FromHex(WashTokens.LeadGoldHex), surface.Text, surface.Window, SurfaceColors.LineMinContrast)),
         };
+    }
+}
+
+/// <summary>
+/// The warm washes of a palette (spec-1.16 §A4, §A4.1): where a dark palette glows (additive gold light), a light one
+/// lays a warm wash, because light added to a light page is invisible or muddy. Each colour carries its designed alpha
+/// in W. Drawn only where <see cref="SceneTokens.WashInsteadOfGlow"/> is set, but for the Ready badge's fill, which every
+/// palette draws. The Ready wash's alpha and reach are roles, so a ruling can change them without code.
+/// </summary>
+/// <param name="ReadyHalo">The Ready-only wash within <paramref name="ReadyHaloReach"/> of a row medal (Snow #F2D27A at .75; the supervisor's final ruling).</param>
+/// <param name="ReadyHaloReach">How far the Ready wash reaches past the row medal's edge, logical px (3).</param>
+/// <param name="HeroHalo">The hero medal's halo at its edge, fading to 0 (Snow #E9C46A at .30).</param>
+/// <param name="Selection">The selected table row's wash at its left edge (Snow #F2D27A at .30).</param>
+/// <param name="SelectionFoot">The selected row wash's alpha at its far end (.05).</param>
+/// <param name="SelectionRule">The selected table row's hairlines top and bottom (Snow #AC8324 at .45).</param>
+/// <param name="TreeSelection">The selected tree row's wash from the left (Snow #AC8324 at .14, falling to a quarter of it).</param>
+/// <param name="ReadyRoad">The Ready road's 1 px line under a Ready row, fading out (Snow's lead gold #AC8324 at .55); no glint and no glow on a light palette.</param>
+/// <param name="ReadyBadge">The tree's Ready count badge fill (Night: Moon at .16; Snow #F2D27A at .38).</param>
+public readonly record struct WashTokens(
+    Vector4 ReadyHalo,
+    float ReadyHaloReach,
+    Vector4 HeroHalo,
+    Vector4 Selection,
+    float SelectionFoot,
+    Vector4 SelectionRule,
+    Vector4 TreeSelection,
+    Vector4 ReadyRoad,
+    Vector4 ReadyBadge)
+{
+    /// <summary>#F2D27A – the warm wash of a light palette (Moon, laid as a wash rather than light).</summary>
+    public const uint WashHex = 0xF2D27A;
+
+    /// <summary>#E9C46A – the hero halo's wash on a light palette.</summary>
+    public const uint HeroHaloHex = 0xE9C46A;
+
+    /// <summary>#AC8324 – lead gold: Snow's gold hairlines, set marks and the Ready road (3.1 : 1 on the window).</summary>
+    public const uint LeadGoldHex = 0xAC8324;
+
+    /// <summary>
+    /// The Ready-only wash's alpha and reach (spec-1.16 §A4.1; the supervisor's final ruling: .75 within 3 px for every
+    /// set, and no .90 / 4 px fallback).
+    /// </summary>
+    public const float ReadyHaloAlpha = 0.75f;
+
+    /// <inheritdoc cref="ReadyHaloAlpha"/>
+    public const float ReadyHaloReachLogical = 3f;
+
+    /// <summary>
+    /// Night's washes. Night glows instead, so the Ready badge's Moon at .16 is the one it draws; the rest mirror the light
+    /// washes in Moon so a palette that turns the wash rule on has something sane to draw.
+    /// </summary>
+    public static readonly WashTokens Night = Light(GlyphTokens.Moon) with { ReadyBadge = GlyphTokens.Moon with { W = 0.16f } };
+
+    /// <summary>
+    /// A light palette's washes (spec-1.16 §A4) with <paramref name="leadGold"/> as its gold hairline: the Ready halo
+    /// #F2D27A at .75 within 3 px, the hero halo #E9C46A at .30, the selected row #F2D27A .30 → .05 between lead-gold
+    /// hairlines at .45, the selected tree row lead gold at .14, the Ready road lead gold at .55, the Ready badge #F2D27A
+    /// at .38.
+    /// </summary>
+    public static WashTokens Light(Vector4 leadGold)
+    {
+        var wash = ColorMath.FromHex(WashHex);
+        return new WashTokens(
+            ReadyHalo: wash with { W = ReadyHaloAlpha },
+            ReadyHaloReach: ReadyHaloReachLogical,
+            HeroHalo: ColorMath.FromHex(HeroHaloHex) with { W = 0.30f },
+            Selection: wash with { W = 0.30f },
+            SelectionFoot: 0.05f,
+            SelectionRule: leadGold with { W = 0.45f },
+            TreeSelection: leadGold with { W = 0.14f },
+            ReadyRoad: leadGold with { W = 0.55f },
+            ReadyBadge: wash with { W = 0.38f });
+    }
+}
+
+/// <summary>
+/// A palette's gauge inks (spec-1.16 §A6): the halo gauge, the tree's orbit ring, the rail's Journal station and foot
+/// gauge, Quiet's ring and Flight's bead ring. On Night they are the medal's material (a lapis groove between Abyss
+/// keylines, a gilt arc lit as the bezel is, a moonstone moon over its dark side), exactly as 1.12 drew them. A light
+/// palette gives them their own ink so they read as UI graphics at 3 : 1: Snow's gilt ramp #8A6A1C → #755308 (the
+/// supervisor's ruling, not #A07B25), a #CAD2DF groove between #7A859C keylines, a #8A6A1C knob with a #F9FAFC rim, and
+/// moonstone over a #59627A dark side.
+/// </summary>
+/// <param name="Groove">The track the arc runs in (Night: the lapis sea bottom).</param>
+/// <param name="Keyline">The keylines either side of the groove and round the moon (Night: the medal keyline).</param>
+/// <param name="ArcBase">The arc's base stroke and thin arcs' caps (Night: Gilt).</param>
+/// <param name="ArcDim">A finished gauge stepping back (the Journal tree's), and a new moon's fine outline (Night: the gilt's shade).</param>
+/// <param name="OuterSlope">The arc's outer slope across the gauge's box, upper left to lower right, as (t, colour) stops.</param>
+/// <param name="InnerSlope">The arc's inner slope, the same way.</param>
+/// <param name="Knob">The bead at the arc's head and the full-moon pip (Night: moonstone's glint).</param>
+/// <param name="KnobRim">The ring round the knob (Night: the keyline; Snow #F9FAFC).</param>
+/// <param name="MoonGlint">The filling moon's highlight.</param>
+/// <param name="MoonLit">The filling moon's lit face (Snow's moonstone #C3CEE4).</param>
+/// <param name="MoonBody">The filling moon's body, where the lit face falls away from the light.</param>
+/// <param name="MoonDim">A finished moon stepping back, flat.</param>
+/// <param name="DarkSide">The filling moon's dark side (Snow #59627A).</param>
+/// <param name="Track">A flat gauge's unlit track (the Classic ring, Flight's bead ring): the strong line at .55 on Night; Snow's keyline, opaque.</param>
+/// <param name="Arc">A flat gauge's lit arc (the Classic ring, Flight's bead ring): Moon on Night; Snow's #8A6A1C.</param>
+/// <param name="Glows">Whether a complete gauge glows (Night); a light palette never glows.</param>
+public readonly record struct GaugeInks(
+    Vector4 Groove,
+    Vector4 Keyline,
+    Vector4 ArcBase,
+    Vector4 ArcDim,
+    (float At, Vector4 Color)[] OuterSlope,
+    (float At, Vector4 Color)[] InnerSlope,
+    Vector4 Knob,
+    Vector4 KnobRim,
+    Vector4 MoonGlint,
+    Vector4 MoonLit,
+    Vector4 MoonBody,
+    Vector4 MoonDim,
+    Vector4 DarkSide,
+    Vector4 Track,
+    Vector4 Arc,
+    bool Glows)
+{
+    /// <summary>#8A6A1C – a light palette's gauge arc at its highlight (upper left): 3.3 : 1 on the groove, 3.7 on the zenith, 4.5 on the window.</summary>
+    public const uint LightArcHighHex = 0x8A6A1C;
+
+    /// <summary>#755308 – a light palette's gauge arc at its shade (lower right): at least 4.6 : 1 everywhere.</summary>
+    public const uint LightArcShadeHex = 0x755308;
+
+    /// <summary>#CAD2DF – a light palette's groove.</summary>
+    public const uint LightGrooveHex = 0xCAD2DF;
+
+    /// <summary>#7A859C – a light palette's groove keylines (3.3 : 1 on the window), so a gauge has an edge whatever is behind it.</summary>
+    public const uint LightKeylineHex = 0x7A859C;
+
+    /// <summary>#F9FAFC – the light knob's rim.</summary>
+    public const uint LightKnobRimHex = 0xF9FAFC;
+
+    /// <summary>#C3CEE4 – a light palette's moonstone.</summary>
+    public const uint LightMoonstoneHex = 0xC3CEE4;
+
+    /// <summary>#59627A – a light palette's moon dark side.</summary>
+    public const uint LightDarkSideHex = 0x59627A;
+
+    /// <summary>The lightest and darkest colours the arc is drawn in: every stop of both slopes and the base.</summary>
+    public IEnumerable<Vector4> ArcColors()
+    {
+        yield return ArcBase;
+        foreach (var (_, color) in OuterSlope)
+        {
+            yield return color;
+        }
+
+        foreach (var (_, color) in InnerSlope)
+        {
+            yield return color;
+        }
+    }
+
+    /// <summary>The colour of a stop ramp at <paramref name="t"/> (clamped; the end stops' colours held past the ends).</summary>
+    public static Vector4 Stop(ReadOnlySpan<(float At, Vector4 Color)> stops, float t)
+    {
+        if (stops.IsEmpty)
+        {
+            return Vector4.Zero;
+        }
+
+        t = float.IsFinite(t) ? t : 0f;
+        if (t <= stops[0].At)
+        {
+            return stops[0].Color;
+        }
+
+        for (var i = 1; i < stops.Length; i++)
+        {
+            if (t <= stops[i].At)
+            {
+                var (a0, c0) = stops[i - 1];
+                var (a1, c1) = stops[i];
+                return Vector4.Lerp(c0, c1, (t - a0) / MathF.Max(1e-6f, a1 - a0));
+            }
+        }
+
+        return stops[^1].Color;
     }
 }
 

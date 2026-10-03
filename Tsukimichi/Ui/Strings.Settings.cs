@@ -59,6 +59,7 @@ static partial class Strings
     public static string SettingsMilkyWay => Loc.Get("Settings.MilkyWay");
     public static string SettingsMilkyWayHint => Loc.Get("Settings.MilkyWayHint");
     public static string SettingsSkyFullReason => Loc.Get("Settings.SkyFullReason");
+    public static string SettingsSkyNightPaletteReason => Loc.Get("Settings.SkyNightPaletteReason");
     public static string SettingsSkyMotionReason => Loc.Get("Settings.SkyMotionReason");
     public static string SettingsMainWindowHeading => Loc.Get("Settings.MainWindowHeading");
     public static string SettingsStartTutorialHint => Loc.Get("Settings.StartTutorialHint");

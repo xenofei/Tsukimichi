@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Evaluation;
@@ -59,9 +60,11 @@ public sealed partial class DetailPane
     private uint riseRowId = uint.MaxValue;
     private double riseStart;
 
-    // The hero's path line ("Main Scenario › Dawntrail"), joined when the journal segments change.
+    // The hero's location line's ladder ("Main Scenario › Dawntrail · Lv 100", "Dawntrail · Lv 100", "Lv 100"), built
+    // when the selection or its journal segments change.
     private string[]? heroPathFrom;
-    private string heroPath = string.Empty;
+    private uint heroPathRow = uint.MaxValue;
+    private string[] heroPath = [];
 
     /// <summary>Every quest's hero banner; null until the plugin attaches it, when a quest shows its own banner or its category art.</summary>
     public BannerIndexSource<DutyUnlockIndex>? Banners { get; set; }
@@ -122,16 +125,45 @@ public sealed partial class DetailPane
 
     // ------------------------------------------------------------------ hero
 
-    /// <summary>The journal path on one line ("Main Scenario › Dawntrail"), joined once per selection.</summary>
-    private string HeroPath()
+    /// <summary>
+    /// The location line's ladder (<see cref="LocationLine.Rungs"/>): the journal path and the level, without the path's
+    /// prefix, then the level alone; built once per selection.
+    /// </summary>
+    private string[] HeroLocation(QuestRecord quest)
     {
-        if (!ReferenceEquals(heroPathFrom, model.JournalSegments))
+        if (!ReferenceEquals(heroPathFrom, model.JournalSegments) || heroPathRow != quest.RowId)
         {
             heroPathFrom = model.JournalSegments;
-            heroPath = string.Join(JournalSeparator, model.JournalSegments);
+            heroPathRow = quest.RowId;
+            var level = string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, quest.DisplayLevel);
+            heroPath = LocationLine.Rungs(model.JournalSegments, JournalSeparator, level);
         }
 
         return heroPath;
+    }
+
+    /// <summary>
+    /// The location line on the art (spec-1.16 §A5): the longest rung of <paramref name="rungs"/> that fits
+    /// <paramref name="room"/> on one line, never an ellipsis and never a wrap; the shortest is clipped to the banner if
+    /// even it does not fit. On a light palette it takes the title's white shadow and bloom (<see cref="Chrome.ArtTextAt"/>).
+    /// </summary>
+    private static void LocationOnArt(ImDrawListPtr dl, Vector2 pos, float room, string[] rungs, Vector2 clipMin, Vector2 clipMax, float alpha)
+    {
+        if (rungs.Length == 0)
+        {
+            return;
+        }
+
+        Span<float> widths = stackalloc float[Math.Min(rungs.Length, 4)];
+        for (var i = 0; i < widths.Length; i++)
+        {
+            widths[i] = ImGui.CalcTextSize(rungs[i]).X;
+        }
+
+        var pick = LocationLine.Fit(widths, room);
+        dl.PushClipRect(clipMin, clipMax, true);
+        Chrome.ArtTextAt(dl, pos, MathF.Max(room, widths[pick]), rungs[pick], Theme.WithAlphaVector(Theme.Surface.TextSecondary, alpha), widths[pick], alpha);
+        dl.PopClipRect();
     }
 
     /// <summary>Full's hero: the night-graded banner, the medal rising over its edge, the title on the art (see the type's summary).</summary>
@@ -232,7 +264,7 @@ public sealed partial class DetailPane
         var pad2 = UiMetrics.Px(12f);
         var artLeft = stacked ? min.X + pad2 : centerX + radius + pad2;
         var artRoom = max.X - pad2 - artLeft;
-        var path = HeroPath();
+        var location = HeroLocation(quest);
         float titleLine;
         float titleWidth;
         using (Typography.HeroTitle(model.DisplayName))
@@ -256,12 +288,12 @@ public sealed partial class DetailPane
             bool cut;
             using (Typography.HeroTitle(model.DisplayName))
             {
-                cut = Chrome.OutlinedEllipsisAt(dl, new Vector2(artLeft, titleY), artRoom, model.DisplayName, Theme.WithAlpha(TitleOnArt, titleIn), titleWidth);
+                cut = Chrome.ArtTextAt(dl, new Vector2(artLeft, titleY), artRoom, model.DisplayName, Theme.WithAlphaVector(TitleOnArt, titleIn), titleWidth, titleIn);
             }
 
             using (Typography.Caption())
             {
-                Chrome.OutlinedEllipsisAt(dl, new Vector2(artLeft, pathY), artRoom, path, Theme.WithAlpha(Theme.Surface.TextSecondary, titleIn), ImGui.CalcTextSize(path).X);
+                LocationOnArt(dl, new Vector2(artLeft, pathY), artRoom, location, min, max, titleIn);
             }
 
             if (cut && ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(new Vector2(artLeft, titleY), new Vector2(artLeft + artRoom, titleY + titleLine)))
@@ -305,10 +337,15 @@ public sealed partial class DetailPane
     {
         const int Rings = 7;
         var reach = UiMetrics.Px(14f);
+        var washes = Theme.Washes;
+        var wash = Theme.Scene.Washes.HeroHalo;
         for (var i = Rings; i >= 1; i--)
         {
             var t = i / (float)Rings;
-            dl.AddCircleFilled(center, radius + (reach * t), Theme.Glow(0.30f * (1f - t) * 0.55f + 0.02f), 48);
+
+            // On a light palette a warm wash (#E9C46A .30 at the edge → 0; spec-1.16 §A4), never light.
+            var ring = washes ? Theme.WithAlpha(wash, wash.W * (1f - t) * 0.55f) : Theme.Glow(0.30f * (1f - t) * 0.55f + 0.02f);
+            dl.AddCircleFilled(center, radius + (reach * t), ring, 48);
         }
     }
 

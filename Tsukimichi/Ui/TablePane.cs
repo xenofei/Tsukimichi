@@ -1507,9 +1507,17 @@ public sealed class TablePane : IDisposable
             // Full: the medal sits on a 1.5 px shadow falling straight down, and a Ready medal glows (4 px, gold).
             if (state == QuestState.Ready && Theme.ShowGlow)
             {
-                var reach = UiMetrics.Px(4f);
-                dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + reach, Theme.Glow(0.10f), 32);
-                dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + (reach * 0.5f), Theme.Glow(0.16f), 32);
+                if (Theme.Washes)
+                {
+                    // A light palette: the Ready-only warm wash within 3 px of the medal (spec-1.16 §A4.1), never light.
+                    ReadyWash(dl, glyphCenter, layout.GlyphRadius);
+                }
+                else
+                {
+                    var reach = UiMetrics.Px(4f);
+                    dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + reach, Theme.Glow(0.10f), 32);
+                    dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + (reach * 0.5f), Theme.Glow(0.16f), 32);
+                }
             }
 
             dl.AddCircleFilled(glyphCenter + new Vector2(0f, UiMetrics.Px(1.5f)), layout.GlyphRadius, Theme.DropShadow(0.55f), 24);
@@ -1853,13 +1861,40 @@ public sealed class TablePane : IDisposable
         MathF.Max(2f, MathF.Round(UiMetrics.Px(Theme.Flair == Flair.Full || Theme.Glyphs.HighContrast ? Theme.Glyphs.StripeWidth : 2f)));
 
     /// <summary>
+    /// A light palette's Ready-only warm wash behind a row medal (spec-1.16 §A4.1; the supervisor's final ruling): the
+    /// palette's <see cref="Core.Ui.Themes.WashTokens.ReadyHalo"/> (#F2D27A at .75) within its reach (3 px) of the
+    /// medal's edge, at full strength over the inner half and half strength over the outer half (a 3 px blur's footprint).
+    /// Drawn before the medal, which is never recoloured.
+    /// </summary>
+    internal static void ReadyWash(ImDrawListPtr dl, Vector2 center, float radius)
+    {
+        var washes = Theme.Scene.Washes;
+        var wash = washes.ReadyHalo;
+        var reach = UiMetrics.Px(washes.ReadyHaloReach);
+        var outer = wash.W * 0.5f;
+
+        // The inner disc goes over the outer one: its alpha brings the two together to the wash's own.
+        var inner = outer < 1f ? 1f - ((1f - wash.W) / (1f - outer)) : 1f;
+        dl.AddCircleFilled(center, radius + reach, Theme.WithAlpha(wash, outer), 32);
+        dl.AddCircleFilled(center, radius + (reach * 0.5f), Theme.WithAlpha(wash, inner), 32);
+    }
+
+    /// <summary>
     /// The road under a Ready row at Full (R3 #6, proposal §7.3): a gold line along its bottom from the name, fading out
-    /// by 70 %, with a faint glow; and under the Moon Road's motion, a glint that runs along it once every 9 s.
+    /// by 70 %, with a faint glow; and under the Moon Road's motion, a glint that runs along it once every 9 s. On a light
+    /// palette only the 1 px lead-gold line (#AC8324 at .55, fading out): no glow and no glint (spec-1.16 §A4).
     /// </summary>
     private static void DrawReadyRoad(ImDrawListPtr dl, float nameX, Vector2 rowMax, float hairline)
     {
         var y = rowMax.Y - hairline;
         var end = nameX + ((rowMax.X - nameX) * 0.7f);
+        if (Theme.Washes)
+        {
+            var road = Theme.Scene.Washes.ReadyRoad;
+            Ornament.Rule(dl, new Vector2(nameX, y), end - nameX, road.W, hairline, road with { W = 1f });
+            return;
+        }
+
         Ornament.Rule(dl, new Vector2(nameX, y), end - nameX, ReadyRoadAlpha, hairline, Theme.GoldLine);
         if (Theme.ShowGlow)
         {
@@ -1933,6 +1968,19 @@ public sealed class TablePane : IDisposable
         {
             switch (flair)
             {
+                case Flair.Full when !Theme.Glyphs.HighContrast && Theme.Washes:
+                {
+                    // A light palette: a gold wash (#F2D27A .30 → .05) between lead-gold hairlines at .45 (spec-1.16 §A4).
+                    var washes = Theme.Scene.Washes;
+                    var from = Theme.WithAlpha(washes.Selection, washes.Selection.W * settled);
+                    var to = Theme.WithAlpha(washes.Selection, washes.SelectionFoot * settled);
+                    dl.AddRectFilledMultiColor(rowMin, rowMax, from, to, to, from);
+                    var rule = Theme.WithAlpha(washes.SelectionRule, washes.SelectionRule.W * settled);
+                    dl.AddRectFilled(rowMin, new Vector2(rowMax.X, rowMin.Y + hairline), rule);
+                    dl.AddRectFilled(new Vector2(rowMin.X, rowMax.Y - hairline), rowMax, rule);
+                    break;
+                }
+
                 case Flair.Full when !Theme.Glyphs.HighContrast:
                 {
                     // Full: a warm wash from the left (Moon 0.13 → 0.02) between brass hairlines top and bottom.
@@ -2132,7 +2180,11 @@ public sealed class TablePane : IDisposable
         var s = Theme.Surface;
         var split = TableGeometry.StateWordLength(text);
         var stateWord = text.AsSpan(0, split);
-        ImGui.PushStyleColor(ImGuiCol.Text, hasSnapshot ? s.Text : s.TextTertiary);
+
+        // On a light palette the Ready word is gold (#755308 on Snow), one of Ready's four carriers in a row with the
+        // medals never recoloured (spec-1.16 §A4.1: the gilt ring, the wash, the gold word, the gold stripe).
+        var wordInk = !hasSnapshot ? s.TextTertiary : Theme.IsLight && state == QuestState.Ready ? Theme.StateText(state) : s.Text;
+        ImGui.PushStyleColor(ImGuiCol.Text, wordInk);
         ImGui.TextUnformatted(stateWord);
         ImGui.PopStyleColor();
         if (split >= text.Length)
