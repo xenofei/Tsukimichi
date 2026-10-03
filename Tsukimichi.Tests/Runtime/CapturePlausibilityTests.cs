@@ -346,6 +346,69 @@ public sealed class CapturePlausibilityTests
     }
 
     [Fact]
+    public void A_New_Game_plus_replay_commits_new_progress_and_keeps_the_replayed_quests()
+    {
+        // Mid-chapter: three replayed quests read as not completed, while the character also levelled and completed a
+        // quest no chapter lists. Before, the whole capture was held back on every poll for as long as the replay lasted.
+        var last = With(OneOff.Take(300)) with { JobLevels = Fixture.Levels((Fixture.Gladiator, 50)) };
+        var now = With(OneOff.Take(301).Skip(3)) with { JobLevels = Fixture.Levels((Fixture.Gladiator, 51)) };
+        Assert.Equal(PlausibilityVerdict.NewGamePlusReplay, CapturePlausibility.Check(last, now, Catalog, Replayable).Verdict);
+
+        var (capture, result) = CapturePlausibility.Judge(last, now, Catalog, Replayable);
+
+        Assert.True(result.Plausible);
+        Assert.All(OneOff.Take(301), id => Assert.True(capture.IsCompleted(QuestRecord.ToQuestId(id))));
+        Assert.Equal((short)51, capture.JobLevels[Fixture.Gladiator]);
+        var diff = SnapshotDiff.Compute(last, capture);
+        Assert.Equal([QuestRecord.ToQuestId(OneOff[300])], diff.ChangedQuestIds);
+        Assert.Equal([Fixture.Gladiator], diff.ChangedJobs);
+    }
+
+    [Fact]
+    public void A_New_Game_plus_replay_keeps_only_the_replayed_quests()
+    {
+        var last = With([.. OneOff.Take(300), .. Seasonal.Take(20)]);
+        var now = With(OneOff.Take(300).Skip(5));
+
+        var (capture, result) = CapturePlausibility.Judge(last, now, Catalog, Replayable);
+
+        Assert.True(result.Plausible);
+        Assert.All(OneOff.Take(5), id => Assert.True(capture.IsCompleted(QuestRecord.ToQuestId(id))));
+        // The festival's quests stay cleared as the capture read them: only the replayed chapter's are kept.
+        Assert.Equal(Seasonal.Take(20).Select(QuestRecord.ToQuestId), SnapshotDiff.Compute(last, capture).ChangedQuestIds);
+    }
+
+    [Fact]
+    public void A_login_mid_chapter_goes_live_with_the_stored_progress()
+    {
+        // The first capture of a session, judged against the stored snapshot, lacks a whole replayed chapter.
+        var stored = With(OneOff);
+        var login = With(OneOff.Skip(150));
+
+        var (capture, result) = CapturePlausibility.Judge(stored, login, Catalog, Replayable);
+
+        Assert.True(result.Plausible);
+        Assert.Same(stored.CompletedBits, capture.CompletedBits);
+        Assert.True(SnapshotDiff.Compute(stored, capture).IsEmpty);
+    }
+
+    [Fact]
+    public void Judge_leaves_any_other_capture_as_it_is()
+    {
+        var last = With(OneOff.Take(300));
+        var progress = With(OneOff.Take(301));
+        var (same, plausible) = CapturePlausibility.Judge(last, progress, Catalog, Replayable);
+        Assert.Same(progress, same);
+        Assert.True(plausible.Plausible);
+
+        // A loss beyond the replayable quests is held back as before, with the capture untouched.
+        var big = With(OneOff.Skip(100).Take(100));
+        var (untouched, lost) = CapturePlausibility.Judge(With(OneOff), big, Catalog, Replayable);
+        Assert.Same(big, untouched);
+        Assert.Equal(PlausibilityVerdict.LostCompletions, lost.Verdict);
+    }
+
+    [Fact]
     public void Ordinary_progress_stays_plausible_with_the_replayable_quests_known()
     {
         var last = With(OneOff.Take(300));

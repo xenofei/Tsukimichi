@@ -31,7 +31,7 @@ public sealed record FullPassResult(
 
 /// <summary>
 /// A re-evaluation of the whole catalog after a capture changed something the reverse index cannot narrow down to a
-/// few quests: a job or level change, a duty clear, an allowance or rank, today's allied society offer, or many quests
+/// few quests: a job or level change, a duty clear, an allowance or rank, today's allied society offer, a new mount, or many quests
 /// at once. It took 14–17 ms, a dropped frame on every gearset change, so the poller runs it on a worker: it decides on
 /// the framework thread whether a diff needs one (<see cref="Needed"/>), runs <see cref="Run"/> over the immutable
 /// capture, and on a later frame commits the result only when <see cref="Judge"/> finds nothing it was computed from
@@ -45,12 +45,14 @@ public static class FullPass
     /// <summary>
     /// Whether a diff needs the whole catalog resolved. A level change touches every level-gated quest, which the
     /// reverse index cannot enumerate by job, and the other inputs (current job, duties, allowances, ranks) touch
-    /// quests it cannot enumerate at all; a new daily offer changes every allied society daily.
+    /// quests it cannot enumerate at all; a new daily offer changes every allied society daily, and a new mount every
+    /// quest that needs one owned (<see cref="SnapshotDiff.MountsChanged"/>: the last mount of a collection opens its gate).
     /// </summary>
     public static bool Needed(SnapshotDiff diff, bool offerChanged, int threshold = ChangedQuestThreshold)
     {
         ArgumentNullException.ThrowIfNull(diff);
         return diff.OtherChanged
+            || diff.MountsChanged
             || offerChanged
             || diff.ChangedJobs.Count > 0
             || diff.ChangedQuestIds.Count > threshold;

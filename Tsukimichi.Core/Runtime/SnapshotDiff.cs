@@ -17,16 +17,27 @@ namespace Tsukimichi.Core.Runtime;
 /// index cannot enumerate, so the caller resolves everything.
 /// </param>
 /// <param name="CollectiblesChanged">
-/// The owned collectibles (<see cref="CharacterSnapshot.Collectibles"/>) changed: a new mount, minion, emote, …. No
-/// quest's state depends on them, so nothing needs resolving, but the capture is saved and published.
+/// The owned collectibles (<see cref="CharacterSnapshot.Collectibles"/>) changed: a new mount, minion, emote, …. The
+/// capture is saved and published. Only the owned mounts feed a quest's state (<see cref="MountsChanged"/>); the other
+/// kinds need nothing resolved.
+/// </param>
+/// <param name="MountsChanged">
+/// The owned mounts changed (the <c>Mount</c> set of <see cref="CharacterSnapshot.Collectibles"/>; 1.11.0, C2). The
+/// mounts a quest needs owned (<see cref="Model.QuestRecord.MountRequired"/>, the mount-collection gates, judged by
+/// <see cref="Evaluation.MountCheck"/>) are not in the reverse index, so the caller resolves everything
+/// (<see cref="FullPass.Needed"/>); a new mount is rare, so the full pass costs little.
 /// </param>
 public sealed record SnapshotDiff(
     IReadOnlyList<ushort> ChangedQuestIds,
     IReadOnlyList<byte> ChangedJobs,
     IReadOnlyList<ushort> ChangedFestivals,
     bool OtherChanged,
-    bool CollectiblesChanged = false)
+    bool CollectiblesChanged = false,
+    bool MountsChanged = false)
 {
+    /// <summary>The <see cref="CharacterSnapshot.Collectibles"/> key the owned mounts are saved under.</summary>
+    private static readonly string MountKind = RewardKind.Mount.ToString();
+
     public static readonly SnapshotDiff Empty = new([], [], [], false);
 
     /// <summary>Largest id list the order-insensitive compare sorts on the stack; longer ones borrow from the array pool.</summary>
@@ -69,13 +80,22 @@ public sealed record SnapshotDiff(
 
         var other = OtherInputsChanged(old, @new);
         var collectibles = !Collectibles.Same(old.Collectibles, @new.Collectibles);
+        var mounts = collectibles && !SameMounts(old, @new);
 
         if (quests.Count == 0 && jobs.Count == 0 && festivals.Count == 0 && !other && !collectibles)
         {
             return Empty;
         }
 
-        return new SnapshotDiff([.. quests], [.. jobs], [.. festivals], other, collectibles);
+        return new SnapshotDiff([.. quests], [.. jobs], [.. festivals], other, collectibles, mounts);
+    }
+
+    /// <summary>The same owned and missing mounts in both captures; a capture that read none is a value of its own.</summary>
+    private static bool SameMounts(CharacterSnapshot old, CharacterSnapshot @new)
+    {
+        old.Collectibles.TryGetValue(MountKind, out var before);
+        @new.Collectibles.TryGetValue(MountKind, out var now);
+        return before is null ? now is null : before.SameIds(now);
     }
 
     private static bool OtherInputsChanged(CharacterSnapshot old, CharacterSnapshot @new) =>

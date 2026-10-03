@@ -172,8 +172,7 @@ public sealed class StopCommand : IDisposable
                     travel.Stop();
                     return true;
                 case StopTarget.Lifestream:
-                    lifestream.Abort();
-                    return true;
+                    return lifestream.Abort();
                 case StopTarget.Questionable:
                     return questionable.StopQuietly();
                 case StopTarget.AutoDuty:
