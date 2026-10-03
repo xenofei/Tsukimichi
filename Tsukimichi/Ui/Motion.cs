@@ -224,7 +224,7 @@ public static class Motion
 
         var outset = UiMetrics.Px(6f) * grow;
         var pad = new System.Numerics.Vector2(outset);
-        dl.AddRect(min - pad, max + pad, Theme.WithAlpha(Theme.Moon, 0.7f * (1f - grow)), rounding + outset, ImDrawFlags.None, System.MathF.Max(1.5f, UiMetrics.Px(2f)));
+        dl.AddRect(min - pad, max + pad, Theme.WithAlpha(Theme.Gold, 0.7f * (1f - grow)), rounding + outset, ImDrawFlags.None, System.MathF.Max(1.5f, UiMetrics.Px(2f)));
     }
 
     /// <summary>

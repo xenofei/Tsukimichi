@@ -144,8 +144,8 @@ public sealed partial class DetailPane
         var markLeft = start.X + rule + padX;
         var textLeft = markLeft + box + UiMetrics.Px(6f);
         var textRoom = MathF.Max(1f, start.X + width - padX - textLeft);
-        var tone = callout.LockedOut ? Theme.Eclipse : Theme.StateColor(QuestState.Blocked);
-        var ink = callout.LockedOut ? Theme.EclipseText : Theme.Surface.Text;
+        var tone = callout.LockedOut ? Theme.Danger : Theme.StateColor(QuestState.Blocked);
+        var ink = callout.LockedOut ? Theme.DangerText : Theme.Surface.Text;
 
         dl.ChannelsSplit(2);
         dl.ChannelsSetCurrent(1);
@@ -165,7 +165,7 @@ public sealed partial class DetailPane
         var rounding = UiMetrics.Px(6f);
         dl.AddRectFilled(start, max, Theme.WithAlpha(tone, 0.16f), rounding);
         dl.AddRect(start, max, Theme.WithAlpha(tone, 0.5f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
-        dl.AddRectFilled(start, new Vector2(start.X + rule, max.Y), Theme.EclipseU32, rounding, ImDrawFlags.RoundCornersLeft);
+        dl.AddRectFilled(start, new Vector2(start.X + rule, max.Y), Theme.DangerU32, rounding, ImDrawFlags.RoundCornersLeft);
         dl.ChannelsMerge();
 
         ImGui.SetCursorScreenPos(start);
@@ -328,7 +328,7 @@ public sealed partial class DetailPane
                 Chrome.DrawPillIcon(dl, line.Icon, iconMin, iconSide, Theme.U32(s.TextSecondary), enabled: true);
             }
 
-            var labelInk = line.Met ? s.TextSecondary : line.IsNext ? Theme.Moon : s.Text;
+            var labelInk = line.Met ? s.TextSecondary : line.IsNext ? Theme.Accent : s.Text;
             var labelRoom = stacked ? textRoom - (hasJump ? jump + gapX : 0f) : labelWidth;
             ImGui.SetCursorScreenPos(new Vector2(textLeft, textY));
             if (Chrome.EllipsisText(line.Label, labelRoom, Theme.U32(labelInk)) && ImGui.IsItemHovered())
@@ -343,7 +343,7 @@ public sealed partial class DetailPane
             if (line.Detail.Length > 0)
             {
                 ImGui.SetCursorScreenPos(new Vector2(valueLeft, valueTop));
-                TextFlow.Wrapped(line.Detail, valueRoom, Theme.U32(line.Met ? s.TextSecondary : Theme.EclipseText));
+                TextFlow.Wrapped(line.Detail, valueRoom, Theme.U32(line.Met ? s.TextSecondary : Theme.DangerText));
                 bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
             }
 
@@ -364,7 +364,7 @@ public sealed partial class DetailPane
             if (line.IsNext)
             {
                 var x = cardLeft + UiMetrics.Px(1f);
-                dl.AddRectFilled(new Vector2(x, top - UiMetrics.Px(1f)), new Vector2(x + MathF.Max(2f, UiMetrics.Px(2f)), bottom + UiMetrics.Px(1f)), Theme.MoonU32);
+                dl.AddRectFilled(new Vector2(x, top - UiMetrics.Px(1f)), new Vector2(x + MathF.Max(2f, UiMetrics.Px(2f)), bottom + UiMetrics.Px(1f)), Theme.GoldU32);
             }
 
             // The row as one item, so the next row starts under all of it.
@@ -390,11 +390,11 @@ public sealed partial class DetailPane
         {
             var rowHeight = MathF.Max(labelSize.Y, barHeight);
             GapBar(dl, new Vector2(pos.X, pos.Y + ((rowHeight - barHeight) * 0.5f)), beside, barHeight, fraction);
-            dl.AddText(new Vector2(pos.X + beside + gap, pos.Y + ((rowHeight - labelSize.Y) * 0.5f)), Theme.EclipseTextU32, label);
+            dl.AddText(new Vector2(pos.X + beside + gap, pos.Y + ((rowHeight - labelSize.Y) * 0.5f)), Theme.DangerTextU32, label);
             return pos.Y + rowHeight;
         }
 
-        Chrome.EllipsisTextAt(dl, pos, room, label, Theme.EclipseTextU32, labelSize.X);
+        Chrome.EllipsisTextAt(dl, pos, room, label, Theme.DangerTextU32, labelSize.X);
         var barTop = pos.Y + labelSize.Y + UiMetrics.Px(2f);
         GapBar(dl, new Vector2(pos.X, barTop), MathF.Max(1f, MathF.Min(room, barMax)), barHeight, fraction);
         return barTop + barHeight;
@@ -408,7 +408,7 @@ public sealed partial class DetailPane
         dl.AddRect(min, max, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         if (fraction > 0f)
         {
-            dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(height, width * Math.Clamp(fraction, 0f, 1f)), max.Y), Theme.EclipseU32, rounding);
+            dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(height, width * Math.Clamp(fraction, 0f, 1f)), max.Y), Theme.DangerU32, rounding);
         }
     }
 }

@@ -508,7 +508,7 @@ public sealed partial class ConfigWindow
         }
 
         var dot = UiMetrics.Px(3f);
-        dl.AddCircleFilled(new Vector2(textMin.X + dot, textMin.Y + (line * 0.5f)), dot, Theme.MoonDeepU32, 12);
+        dl.AddCircleFilled(new Vector2(textMin.X + dot, textMin.Y + (line * 0.5f)), dot, Theme.GoldDeepU32, 12);
         Chrome.EllipsisTextAt(dl, new Vector2(textMin.X + (dot * 2f) + UiMetrics.Px(6f), textMin.Y), MathF.Max(1f, room - (dot * 2f) - UiMetrics.Px(6f)), Strings.ConfigFlairPreviewCardLine, Theme.U32(s.Text));
     }
 
@@ -567,13 +567,13 @@ public sealed partial class ConfigWindow
             switch (flair)
             {
                 case Flair.Full:
-                    dl.AddRectFilledMultiColor(min, max, Theme.WithAlpha(Theme.Moon, 0.13f), Theme.WithAlpha(Theme.Moon, 0.02f), Theme.WithAlpha(Theme.Moon, 0.02f), Theme.WithAlpha(Theme.Moon, 0.13f));
+                    dl.AddRectFilledMultiColor(min, max, Theme.Glow(0.13f), Theme.Glow(0.02f), Theme.Glow(0.02f), Theme.Glow(0.13f));
                     dl.AddRectFilled(min, new Vector2(max.X, min.Y + 1f), Theme.WithAlpha(s.OrnamentHigh, 0.35f));
                     dl.AddRectFilled(new Vector2(min.X, max.Y - 1f), max, Theme.WithAlpha(s.OrnamentHigh, 0.35f));
                     break;
                 case Flair.Quiet:
                     dl.AddRectFilled(min, max, Theme.WithAlpha(s.Text, 0.06f));
-                    dl.AddRect(min, max, Theme.U32(Theme.Glyphs.HighContrast ? s.Text : Theme.Veil), 0f, ImDrawFlags.None, 1f);
+                    dl.AddRect(min, max, Theme.U32(Theme.Glyphs.HighContrast ? s.Text : Theme.Surface.TextDisabled), 0f, ImDrawFlags.None, 1f);
                     break;
                 default:
                     dl.AddRectFilled(min, max, Theme.WithAlpha(s.Text, 0.09f));
@@ -594,11 +594,11 @@ public sealed partial class ConfigWindow
         {
             if (state == QuestState.Ready && Theme.ShowGlow)
             {
-                dl.AddCircleFilled(center, radius + UiMetrics.Px(4f), Theme.WithAlpha(Theme.Moon, 0.10f), 32);
-                dl.AddCircleFilled(center, radius + UiMetrics.Px(2f), Theme.WithAlpha(Theme.Moon, 0.16f), 32);
+                dl.AddCircleFilled(center, radius + UiMetrics.Px(4f), Theme.Glow(0.10f), 32);
+                dl.AddCircleFilled(center, radius + UiMetrics.Px(2f), Theme.Glow(0.16f), 32);
             }
 
-            dl.AddCircleFilled(center + new Vector2(0f, UiMetrics.Px(1.5f)), radius, Theme.WithAlpha(Theme.Abyss, 0.55f), 24);
+            dl.AddCircleFilled(center + new Vector2(0f, UiMetrics.Px(1.5f)), radius, Theme.DropShadow(0.55f), 24);
         }
 
         MoonGlyph.Draw(dl, center, radius, state);
@@ -616,7 +616,7 @@ public sealed partial class ConfigWindow
 
         if (state == QuestState.Ready && FlairRules.ReadyRoad(flair))
         {
-            Ornament.Rule(dl, new Vector2(nameX, max.Y - 1f), (max.X - nameX) * 0.7f, 0.55f, 1f, Theme.Moon);
+            Ornament.Rule(dl, new Vector2(nameX, max.Y - 1f), (max.X - nameX) * 0.7f, 0.55f, 1f, Theme.Gold);
         }
     }
 

@@ -157,8 +157,8 @@ public static class SectionHeading
             var at = new Vector2(g.TitleX, MathF.Round(midY - (titleLine * 0.5f)));
             if (section)
             {
-                var ink = moonRoad ? Theme.Surface.OrnamentLight : Theme.Surface.Text;
-                Chrome.TrackedTextAt(dl, at, g.TitleRoom, label, Theme.U32(ink), tracking, moonRoad ? Theme.WithAlpha(Theme.Abyss, 0.55f) : 0u);
+                var ink = moonRoad ? Theme.OrnamentLight : Theme.Surface.Text;
+                Chrome.TrackedTextAt(dl, at, g.TitleRoom, label, Theme.U32(ink), tracking, moonRoad ? Theme.Halo(0.55f) : 0u);
             }
             else
             {

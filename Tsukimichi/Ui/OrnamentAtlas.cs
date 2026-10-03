@@ -127,7 +127,7 @@ public static class OrnamentAtlas
         {
             if (placeholder)
             {
-                dl.AddRectFilled(min, max, Theme.NightRaisedU32, (max.X - min.X) * 0.15f);
+                dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Raised), (max.X - min.X) * 0.15f);
             }
 
             return false;

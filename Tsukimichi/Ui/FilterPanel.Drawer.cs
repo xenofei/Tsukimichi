@@ -236,7 +236,7 @@ public sealed partial class FilterPanel
         }
 
         var ruleEnd = sheetRight - (pill is null ? 0f : pillWidth + UiMetrics.Px(8f));
-        var shadow = flair == Flair.Full ? Ink(Theme.Abyss, 0.55f) : 0u;
+        var shadow = flair == Flair.Full ? Ink(Theme.Scene.TextHalo, 0.55f) : 0u;
         Chrome.TrackedTextAt(dl, new Vector2(x, MathF.Round(mid - (line * 0.5f))), MathF.Max(1f, ruleEnd - x), label, Ink(tones.Heading), tracking, shadow);
         role.Dispose();
 
@@ -732,13 +732,13 @@ public sealed partial class FilterPanel
 
         if (star > 0f)
         {
-            dl.AddText(new Vector2(valueRight - star + UiMetrics.Px(2f), textY), Ink(Theme.Moon), PlainSetMark);
+            dl.AddText(new Vector2(valueRight - star + UiMetrics.Px(2f), textY), Ink(Theme.GoldLine), PlainSetMark);
         }
         else if (dot > 0f)
         {
             // A MoonHigh dot at Full, a silver one at Quiet: the value stays in the text tone.
             var center = new Vector2(valueX - UiMetrics.Px(6f), MathF.Round(sheetY + (height * 0.5f)));
-            dl.AddCircleFilled(center, MathF.Max(2f, UiMetrics.Px(2.5f)), Ink(flair == Flair.Full ? Theme.MoonHigh : s.Text), 12);
+            dl.AddCircleFilled(center, MathF.Max(2f, UiMetrics.Px(2.5f)), Ink(flair == Flair.Full ? Theme.GoldHigh : s.Text), 12);
         }
 
         if (!last && flair != Flair.Plain)

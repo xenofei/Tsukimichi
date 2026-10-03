@@ -217,7 +217,7 @@ public sealed partial class DetailPane
                 TextFlow.Wrapped(row.Line, MathF.Max(1f, RoomTo(cardRight) - buttons - UiMetrics.Px(8f)));
                 if (live && row.CountText.Length > 0)
                 {
-                    using (Theme.PushText(row.Enough ? Theme.Moon : Theme.Surface.TextSecondary))
+                    using (Theme.PushText(row.Enough ? Theme.Accent : Theme.Surface.TextSecondary))
                     {
                         ImGui.TextUnformatted(row.CountText);
                     }

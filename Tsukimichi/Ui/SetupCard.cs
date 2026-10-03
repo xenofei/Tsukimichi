@@ -118,7 +118,7 @@ public sealed class SetupCard
     private void DrawBody()
     {
         // The title, then Recommended and Done at the right end of the line, or under it when the two would run into it.
-        Chrome.FitText(Strings.Setup.Title, Theme.U32(Theme.Moon));
+        Chrome.FitText(Strings.Setup.Title, Theme.AccentU32);
         var recommendedWidth = ImGuiHelpers.GetButtonSize(Strings.Setup.Recommended).X;
         var doneWidth = ImGuiHelpers.GetButtonSize(Strings.Setup.Done).X;
         Chrome.SameLineRightOrWrap(recommendedWidth + doneWidth + ImGui.GetStyle().ItemSpacing.X);
@@ -189,7 +189,7 @@ public sealed class SetupCard
         if (Game.CompanionPlugins.Current?.Setup is { } setup)
         {
             var summary = setup.Summary;
-            using (Theme.PushText(summary.Ready ? Theme.Moon : Theme.EclipseText))
+            using (Theme.PushText(summary.Ready ? Theme.Accent : Theme.DangerText))
             {
                 ImGui.TextUnformatted(Strings.CompanionSetupSummaryLine(summary));
             }

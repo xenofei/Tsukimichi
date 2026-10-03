@@ -197,7 +197,7 @@ public sealed class WhatsNewCard
     {
         // The title, then Help and Close at the right end of the line, never over the title: on the next line,
         // right-aligned, when the two would run into it (feature plan v4 L6).
-        Chrome.FitText(title?.Value ?? string.Empty, Theme.U32(Theme.Moon));
+        Chrome.FitText(title?.Value ?? string.Empty, Theme.AccentU32);
         var closeWidth = ImGuiHelpers.GetButtonSize(Strings.WhatsNew.Close).X;
         var helpWidth = ImGuiHelpers.GetButtonSize(Strings.WhatsNew.Help).X;
         var spacing = ImGui.GetStyle().ItemSpacing.X;
@@ -229,7 +229,7 @@ public sealed class WhatsNewCard
                     ImGui.Spacing();
                 }
 
-                using (Theme.PushText(Theme.Moon))
+                using (Theme.PushText(Theme.Accent))
                 {
                     ImGui.TextUnformatted(headings[s]);
                 }
@@ -242,7 +242,7 @@ public sealed class WhatsNewCard
             else
             {
                 using (ImRaii.PushIndent(pad, false))
-                using (Theme.PushText(Theme.Silver))
+                using (Theme.PushText(Theme.Surface.Text))
                 {
                     foreach (var line in highlights[s])
                     {
@@ -272,14 +272,14 @@ public sealed class WhatsNewCard
         {
             if (groupTitle.Length > 0)
             {
-                using (Theme.PushText(Theme.Dusk))
+                using (Theme.PushText(Theme.Surface.TextTertiary))
                 {
                     ImGui.TextUnformatted(groupTitle);
                 }
             }
 
             using (ImRaii.PushIndent(pad, false))
-            using (Theme.PushText(Theme.Silver))
+            using (Theme.PushText(Theme.Surface.Text))
             {
                 foreach (var (text, nested) in lines)
                 {

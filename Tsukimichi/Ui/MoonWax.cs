@@ -45,6 +45,6 @@ public static class MoonWax
 
         var grow = UiMetrics.Px(Core.Ui.MotionTokens.HaloLogical) * Core.Ui.MotionMath.EaseOutCubic(progress);
         var thickness = System.MathF.Max(1.5f, UiMetrics.Px(1.5f));
-        dl.AddCircle(center, radius + grow, Theme.WithAlpha(Theme.Moon, alpha), 32, thickness);
+        dl.AddCircle(center, radius + grow, Theme.WithAlpha(Theme.Gold, alpha), 32, thickness);
     }
 }

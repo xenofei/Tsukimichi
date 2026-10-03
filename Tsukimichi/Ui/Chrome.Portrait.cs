@@ -18,18 +18,18 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public static partial class Chrome
 {
-    private static readonly Vector4 WellTop = ColorMath.FromHex(0x1D2B5A);
-    private static readonly Vector4 WellFoot = ColorMath.FromHex(0x131C40);
-    private static readonly Vector4 PlainWell = ColorMath.FromHex(0x1C2237);
-    private static readonly Vector4 PlainKeyline = ColorMath.FromHex(0x3A4050);
-    private static readonly Vector4 QuietKeyline = ColorMath.FromHex(0xC3CBDF);
-    private static readonly Vector4 InitialsInk = ColorMath.FromHex(PortraitPlate.InitialsHex);
+    // The plate's well, keylines and fallback ink come from the palette (Theme.Plate; spec-1.16 §A7 for a light one).
+    private static Vector4 WellTop => Theme.Plate.WellTop;
 
-    // The brass keyline's stops along its light (spec A4: lit upper left), from (8, 6) to (64, 68) in the 72-unit box.
-    private static readonly Vector4 BrassLit = ColorMath.FromHex(0xE6CF98);
-    private static readonly Vector4 BrassMid = ColorMath.FromHex(0x9A7E4A);
-    private static readonly Vector4 BrassLow = ColorMath.FromHex(0x7C6236);
-    private static readonly Vector4 BrassDark = ColorMath.FromHex(0x5C4724);
+    private static Vector4 WellFoot => Theme.Plate.WellFoot;
+
+    private static Vector4 PlainWell => Theme.Plate.PlainWell;
+
+    private static Vector4 PlainKeyline => Theme.Plate.PlainKeyline;
+
+    private static Vector4 QuietKeyline => Theme.Plate.QuietKeyline;
+
+    private static Vector4 InitialsInk => Theme.Plate.Initials;
 
     /// <summary>
     /// Draws the plate for <paramref name="request"/> at <paramref name="min"/>, <paramref name="size"/> px across, on
@@ -101,7 +101,7 @@ public static partial class Chrome
         switch (flair)
         {
             case Flair.Full when !Theme.Glyphs.HighContrast:
-                dl.AddCircle(center, PortraitPlate.OuterRingRadius * unit, Theme.WithAlpha(Theme.Abyss, PortraitPlate.OuterRingAlpha), 0, hairline);
+                dl.AddCircle(center, PortraitPlate.OuterRingRadius * unit, Theme.WithAlpha(Theme.Plate.OuterRing, PortraitPlate.OuterRingAlpha), 0, hairline);
                 BrassRing(dl, min, size, PortraitPlate.KeylineRadius * unit, hairline);
                 break;
             case Flair.Full or Flair.Quiet:
@@ -257,7 +257,7 @@ public static partial class Chrome
         {
             // The shadow as a tinted copy, offset down-right; two copies a quarter-pixel apart soften its edge.
             var offset = PortraitPlate.EmblemShadowOffset * UiMetrics.Scale;
-            var shadow = Theme.WithAlpha(Theme.Abyss, PortraitPlate.EmblemShadowAlpha * 0.5f * alpha);
+            var shadow = Theme.DropShadow(PortraitPlate.EmblemShadowAlpha * 0.5f * alpha);
             var soft = new Vector2(UiMetrics.Px(0.5f));
             dl.AddImage(wrap.Handle, tileMin + offset, tileMax + offset, Vector2.Zero, Vector2.One, shadow);
             dl.AddImage(wrap.Handle, tileMin + offset + soft, tileMax + offset + soft, Vector2.Zero, Vector2.One, shadow);
@@ -318,13 +318,13 @@ public static partial class Chrome
         var from = min + (new Vector2(8f, 6f) * unit);
         var dir = new Vector2(56f, 62f) * unit;
         var length = MathF.Max(1f, dir.LengthSquared());
+        var plate = Theme.Plate;
         for (var i = first; i < vertices.Size; i++)
         {
             var vertex = vertices[i];
             var t = Math.Clamp(Vector2.Dot(vertex.Pos - from, dir) / length, 0f, 1f);
-            var c = t < 0.45f ? Vector4.Lerp(BrassLit, BrassMid, t / 0.45f)
-                : t < 0.8f ? Vector4.Lerp(BrassMid, BrassLow, (t - 0.45f) / 0.35f)
-                : Vector4.Lerp(BrassLow, BrassDark, (t - 0.8f) / 0.2f);
+            // The keyline's stops along its light (spec A4: lit upper left), from (8, 6) to (64, 68) in the 72-unit box.
+            var c = plate.KeylineAt(t);
             c.W = (vertex.Col >> 24) / 255f;
             vertex.Col = Theme.U32(c);
             vertices[i] = vertex;

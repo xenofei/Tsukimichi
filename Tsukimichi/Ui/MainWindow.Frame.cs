@@ -296,8 +296,8 @@ public sealed partial class MainWindow
 
     private static Vector4 NoticeTone(NoticeKind kind) => kind switch
     {
-        NoticeKind.RebuildFailed => Theme.Eclipse,
-        NoticeKind.Freshness => Theme.Gilt,
+        NoticeKind.RebuildFailed => Theme.Danger,
+        NoticeKind.Freshness => Theme.Brass.Body,
         _ => Theme.Surface.Text,
     };
 
@@ -778,11 +778,11 @@ public sealed partial class MainWindow
             {
                 Ornament.DropShadow(dl, min, max, rounding, UiMetrics.Px(14f), UiMetrics.Px(30f), 0.55f * alpha);
                 var contact = UiMetrics.Px(14f);
-                var dark = Theme.WithAlpha(Vector4.UnitW, 0.30f * alpha);
-                var clear = Theme.WithAlpha(Vector4.UnitW, 0f);
+                var dark = Theme.CastShadow(0.30f * alpha);
+                var clear = Theme.CastShadow(0f);
                 dl.AddRectFilledMultiColor(new Vector2(max.X, min.Y), new Vector2(max.X + contact, max.Y - rounding), dark, clear, clear, dark);
                 GradientFill(dl, min, max, tones.SheetTop with { W = DrawerTones.FullSheetAlpha }, tones.SheetFoot with { W = DrawerTones.FullSheetAlpha }, rounding, corners);
-                dl.AddRectFilled(min, new Vector2(max.X - rounding, min.Y + UiMetrics.Hairline), ImGui.GetColorU32(Theme.MoonHigh with { W = 0.06f }));
+                dl.AddRectFilled(min, new Vector2(max.X - rounding, min.Y + UiMetrics.Hairline), ImGui.GetColorU32(Theme.Scene.TopHighlight with { W = 0.06f }));
                 var first = dl.VtxBuffer.Size;
                 EdgePath(dl, min, max, rounding, 0xFFFFFFFFu, UiMetrics.Hairline);
                 BrassVertices(dl, first, min, max, alpha);
@@ -909,7 +909,7 @@ public sealed partial class MainWindow
             ImGui.PushFont(UiBuilder.IconFont);
             var glyphSize = UiMetrics.Px(13f);
             var glyph = ImGui.CalcTextSize(FilterIcon) * (glyphSize / MathF.Max(1f, ImGui.GetFontSize()));
-            dl.AddText(ImGui.GetFont(), glyphSize, new Vector2(x, MathF.Round(mid - (glyph.Y * 0.5f))), ImGui.GetColorU32(flair == Flair.Full ? Theme.MoonHigh : s.TextSecondary), FilterIcon);
+            dl.AddText(ImGui.GetFont(), glyphSize, new Vector2(x, MathF.Round(mid - (glyph.Y * 0.5f))), ImGui.GetColorU32(flair == Flair.Full ? Theme.GoldHigh : s.TextSecondary), FilterIcon);
             ImGui.PopFont();
             x += glyph.X + UiMetrics.Px(9f);
         }
@@ -925,7 +925,7 @@ public sealed partial class MainWindow
                 Chrome.EllipsisTextAt(dl, at + new Vector2(0f, 1f), MathF.Max(1f, end - x), title, ImGui.GetColorU32(s.Deep with { W = 0.5f }));
             }
 
-            var ink = flair == Flair.Full ? Vector4.Lerp(s.Text, Theme.MoonHigh, 0.25f) : s.Text;
+            var ink = flair == Flair.Full ? Vector4.Lerp(s.Text, Theme.GoldHigh, 0.25f) : s.Text;
             Chrome.EllipsisTextAt(dl, at, MathF.Max(1f, end - x), title, ImGui.GetColorU32(ink));
         }
 
@@ -993,8 +993,8 @@ public sealed partial class MainWindow
         switch (flair)
         {
             case Flair.Full:
-                dl.AddRectFilled(min, max, ImGui.GetColorU32(gold ? Theme.Moon with { W = 0.10f } : hovered ? s.Hover : Vector4.Lerp(s.Raised, s.Text, 0.04f)), rounding);
-                dl.AddRect(min, max, ImGui.GetColorU32(gold ? Theme.Moon with { W = 0.5f } : s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+                dl.AddRectFilled(min, max, ImGui.GetColorU32(gold ? Theme.Gold with { W = 0.10f } : hovered ? s.Hover : Vector4.Lerp(s.Raised, s.Text, 0.04f)), rounding);
+                dl.AddRect(min, max, ImGui.GetColorU32(gold ? Theme.Gold with { W = 0.5f } : s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
                 break;
             case Flair.Quiet:
                 if (hovered || active)
@@ -1016,7 +1016,7 @@ public sealed partial class MainWindow
         ImGui.PushFont(UiBuilder.IconFont);
         var iconPx = MathF.Round(side * 0.44f);
         var size = ImGui.CalcTextSize(icon) * (iconPx / MathF.Max(1f, ImGui.GetFontSize()));
-        var ink = gold ? Theme.Moon : hovered || active ? s.Text : s.TextSecondary;
+        var ink = gold ? Theme.Accent : hovered || active ? s.Text : s.TextSecondary;
         dl.AddText(ImGui.GetFont(), iconPx, min + ((new Vector2(side) - size) * 0.5f), ImGui.GetColorU32(ink), icon);
         ImGui.PopFont();
         Chrome.FocusRing(rounding);

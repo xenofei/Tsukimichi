@@ -235,9 +235,9 @@ public static partial class Chrome
         var rounding = ImGui.GetStyle().FrameRounding;
         if (wash > 0.001f)
         {
-            dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Moon, 0.22f * wash), rounding);
+            dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Gold, 0.22f * wash), rounding);
         }
 
-        dl.AddRect(min, max, Theme.WithAlpha(Theme.Moon, outline), rounding, ImDrawFlags.RoundCornersAll, MathF.Max(1f, UiMetrics.Hairline));
+        dl.AddRect(min, max, Theme.WithAlpha(Theme.Gold, outline), rounding, ImDrawFlags.RoundCornersAll, MathF.Max(1f, UiMetrics.Hairline));
     }
 }

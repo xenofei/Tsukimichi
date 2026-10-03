@@ -28,7 +28,7 @@ public enum PaneSide
 /// </summary>
 public sealed class PaneSplit
 {
-    private static readonly uint HoverLine = Theme.WithAlpha(Theme.Moon, 0.6f);
+    private static uint HoverLine => Theme.WithAlpha(Theme.Gold, 0.6f);
 
     /// <summary>How long the mouse rests on a handle before its hint shows.</summary>
     private const double TooltipDelaySeconds = 0.6;

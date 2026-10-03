@@ -1049,7 +1049,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         var x = Chrome.StripSegment(origin.X, origin.X, right, origin.Y, visibleSummary, ImGui.GetColorU32(ImGuiCol.TextDisabled));
-        var dusk = Theme.U32(Theme.Dusk);
+        var dusk = Theme.U32(Theme.Surface.TextTertiary);
         if (!session.IsLive)
         {
             // A stored character's owned states are its last capture's ("Owned as of …"); older files have none.
@@ -1264,7 +1264,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ImGui.TableSetColumnIndex(1);
         ImGui.Dummy(new Vector2(1f, MathF.Max(1f, rowHeight - (ImGui.GetStyle().CellPadding.Y * 2f))));
         ImGui.SameLine();
-        using (Theme.PushText(Theme.Silver))
+        using (Theme.PushText(Theme.Surface.Text))
         {
             ImGui.TextUnformatted(groupHeadings.GetValueOrDefault(expansion) ?? string.Empty);
         }
@@ -1388,7 +1388,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             {
                 ImGui.SameLine();
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, titleLine - ImGui.GetTextLineHeight()) * 0.7f);
-                using (Theme.PushText(Theme.Dusk))
+                using (Theme.PushText(Theme.Surface.TextTertiary))
                 {
                     ImGui.TextUnformatted(Strings.MoonlitSubtitle);
                 }
@@ -1396,7 +1396,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
         else
         {
-            using (Theme.PushText(Theme.Dusk))
+            using (Theme.PushText(Theme.Surface.TextTertiary))
             {
                 ImGui.TextUnformatted(Strings.MoonlitSubtitle);
             }
@@ -1579,11 +1579,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
             if (obtained)
             {
-                dl.AddRect(iconMin, iconMax, Theme.MoonU32, rounding, ImDrawFlags.None, MathF.Max(1.5f, UiMetrics.Px(highContrast ? 2.5f : 1.5f)));
+                dl.AddRect(iconMin, iconMax, Theme.GoldU32, rounding, ImDrawFlags.None, MathF.Max(1.5f, UiMetrics.Px(highContrast ? 2.5f : 1.5f)));
             }
             else
             {
-                dl.AddRect(iconMin, iconMax, highContrast ? Theme.VeilLineU32 : Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+                dl.AddRect(iconMin, iconMax, highContrast ? Theme.U32(Theme.Surface.StrongLine) : Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
             }
 
             // The pip on the frame's corner: a checked full moon when obtained, the unknown dash in a ring when it cannot
@@ -1598,7 +1598,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
             else if (row.Obtained is null)
             {
-                dl.AddCircle(pip, pipRadius, highContrast ? Theme.VeilLineU32 : Theme.DuskU32, 0, MathF.Max(1f, UiMetrics.Hairline));
+                dl.AddCircle(pip, pipRadius, highContrast ? Theme.U32(Theme.Surface.StrongLine) : Theme.U32(Theme.Surface.TextTertiary), 0, MathF.Max(1f, UiMetrics.Hairline));
                 Marks.Draw(dl, pip, pipRadius * 2.5f, Mark.Unknown);
             }
             else
@@ -1610,7 +1610,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             var textX = tileMin.X + pad;
             var textWidth = MathF.Max(1f, tileSize.X - (2f * pad));
             var nameY = iconMax.Y + UiMetrics.Px(6f);
-            var nameInk = row.Hidden ? Theme.DuskU32 : Theme.U32(s.Text);
+            var nameInk = row.Hidden ? Theme.U32(Theme.Surface.TextTertiary) : Theme.U32(s.Text);
             // Hidden by the user's verdict: struck through across the name's own width, as in the table (not colour alone).
             var nameCut = TextFlow.DrawClamped(dl, new Vector2(textX, nameY), row.Name, textWidth, 2, nameInk, center: true, strike: row.Hidden);
 
@@ -1691,7 +1691,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// </summary>
     private static void ObtainedPip(ImDrawListPtr dl, Vector2 center, float radius)
     {
-        dl.AddCircleFilled(center, radius, Theme.MoonU32);
+        dl.AddCircleFilled(center, radius, Theme.GoldU32);
         var ink = Theme.U32(Theme.Surface.Window);
         var t = MathF.Max(1.2f, radius * 0.24f);
         var a = center + new Vector2(-radius * 0.45f, radius * 0.02f);
@@ -1726,7 +1726,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         DrawIcon(row, RewardIconSize);
         ImGui.SameLine();
         DropInCell(drop);
-        using (Theme.PushText(Theme.Dusk, row.Hidden))
+        using (Theme.PushText(Theme.Surface.TextTertiary, row.Hidden))
         {
             // The highlight follows the global selection, as in the Flight pane, so a quest picked from the detail
             // pane's path, another pane or chat lights its Moonlit row too, and an override never wipes it.
@@ -1811,7 +1811,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         DropInCell(drop);
         if (row.Quest is { } quest)
         {
-            using (Theme.PushText(Theme.Dusk, row.Hidden))
+            using (Theme.PushText(Theme.Surface.TextTertiary, row.Hidden))
             {
                 if (ImGui.Selectable(row.QuestLabel))
                 {
@@ -1866,7 +1866,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         // Availability: can the reward still be had, and how (feature plan v5, decision 4). Past and gone in Dusk.
         ImGui.TableNextColumn();
         DropInCell(drop);
-        using (Theme.PushText(Theme.Dusk, row.Availability.Kind is RewardAvailability.GoneForGood or RewardAvailability.PastEventOnStore))
+        using (Theme.PushText(Theme.Surface.TextTertiary, row.Availability.Kind is RewardAvailability.GoneForGood or RewardAvailability.PastEventOnStore))
         {
             ImGui.TextUnformatted(row.AvailabilityText);
         }
@@ -1976,7 +1976,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var lineHeight = ImGui.GetTextLineHeight();
         var pos = ImGui.GetCursorScreenPos();
         pos.Y += MathF.Round((lineHeight - extent.Y) * 0.5f);
-        ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), size, pos, Theme.DuskU32, text, 0f);
+        ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), size, pos, Theme.U32(Theme.Surface.TextTertiary), text, 0f);
         ImGui.Dummy(new Vector2(extent.X, lineHeight));
     }
 
@@ -1987,7 +1987,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var max = ImGui.GetItemRectMax();
         var y = MathF.Round((min.Y + max.Y) * 0.5f);
         var right = MathF.Min(max.X, min.X + ImGui.CalcTextSize(text, true, -1f).X);
-        ImGui.GetWindowDrawList().AddLine(new Vector2(min.X, y), new Vector2(right, y), Theme.DuskU32, UiMetrics.Hairline);
+        ImGui.GetWindowDrawList().AddLine(new Vector2(min.X, y), new Vector2(right, y), Theme.U32(Theme.Surface.TextTertiary), UiMetrics.Hairline);
     }
 
     /// <summary>Shows a quest in the Journal tab scoped to its genre (or the Unlisted bucket); also used by Wotsit picks.</summary>
@@ -2476,11 +2476,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     private static Vector4 ConfidenceColor(Confidence confidence) => confidence switch
     {
-        Confidence.Static => Theme.Mist,
-        Confidence.Community => Theme.VeilText,
-        Confidence.Curated => Theme.Silver,
-        Confidence.UserOverride => Theme.EclipseText,
-        _ => Theme.Veil,
+        Confidence.Static => Theme.Surface.TextSecondary,
+        Confidence.Community => Theme.UnknownText,
+        Confidence.Curated => Theme.Surface.Text,
+        Confidence.UserOverride => Theme.DangerText,
+        _ => Theme.Surface.TextDisabled,
     };
 
     /// <summary>One left-column line: a kind (null for All), its name, its identity icon and the current counts.</summary>
@@ -2593,7 +2593,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             search.Add(KindName);
             searchText = string.Join("\n", search);
             ConfidenceLabel = hidden ? Strings.MoonlitConfidenceUser : MoonlitPane.ConfidenceLabel(entry.Confidence);
-            ConfidenceColor = hidden ? Theme.EclipseText : MoonlitPane.ConfidenceColor(entry.Confidence);
+            ConfidenceColor = hidden ? Theme.DangerText : MoonlitPane.ConfidenceColor(entry.Confidence);
             ConfidenceTooltip = hidden ? Strings.MoonlitBadgeHidden : MoonlitPane.ConfidenceTooltip(entry.Confidence);
             SourceText = string.IsNullOrWhiteSpace(entry.Source) ? Strings.MoonlitSourceUnknown : entry.Source;
 

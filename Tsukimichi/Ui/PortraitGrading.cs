@@ -46,10 +46,11 @@ public static class PortraitGrading
     private const int BgraFormat = 87;
 
     /// <summary>
-    /// Whether the grade's night multiply (step 2) applies: on every palette the plugin has today. A future light palette
-    /// (Ishgard Snow) returns false here and keeps the desaturation and the black lift (the supervisor's ruling, Q5).
+    /// Whether the grade's night multiply (step 2) applies: the palette's <see cref="Core.Ui.Themes.SceneTokens.NightGrade"/>,
+    /// on for Night. A light palette (Ishgard Snow) turns it off and keeps the desaturation and the black lift (the
+    /// supervisor's ruling, Q5); the copies are keyed by it, so a palette switch regrades.
     /// </summary>
-    public static bool NightMultiply => true;
+    public static bool NightMultiply => Theme.Scene.NightGrade;
 
     /// <summary>Which copy: the icon, the small or full-size copy, and whether the night multiply is in it.</summary>
     public readonly record struct Key(uint Icon, bool Small, bool Night);

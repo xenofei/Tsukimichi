@@ -1177,7 +1177,7 @@ public sealed class TablePane : IDisposable
             ImGui.PushID(i);
 
             // The sorted column's label in the primary tone (at Full the lighter gilt); the rest in the secondary tone.
-            var ink = i == sortedColumn ? moonRoad ? s.OrnamentLight : s.Text : s.TextSecondary;
+            var ink = i == sortedColumn ? moonRoad ? Theme.OrnamentLight : s.Text : s.TextSecondary;
 
             // ImGui's header (its hover, click to sort and sort arrow, in the label's ink) with no label of its own; the
             // label is drawn over it in the header's role, tracked at Full, ending in an ellipsis before the arrow.
@@ -1461,7 +1461,7 @@ public sealed class TablePane : IDisposable
             // Full: a warm wash (drawn as a gradient in the row's chrome); Quiet a neutral 0.06 wash; Plain 0.09.
             var wash = Theme.Flair switch
             {
-                Flair.Full => Theme.WithAlpha(Theme.Moon, 0.035f * settled),
+                Flair.Full => Theme.Glow(0.035f * settled),
                 Flair.Quiet => Theme.WithAlpha(s.Text, 0.06f * settled),
                 _ => Theme.WithAlpha(s.Text, 0.09f * settled),
             };
@@ -1479,7 +1479,7 @@ public sealed class TablePane : IDisposable
         var moonRoadMoment = Theme.FlairMotion;
         if (moment >= 0f && !moonRoadMoment)
         {
-            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, Theme.WithAlpha(Theme.MoonHigh, MomentWashAlpha * (1f - MotionMath.EaseOutCubic(moment))));
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, Theme.Sheen(MomentWashAlpha * (1f - MotionMath.EaseOutCubic(moment))));
         }
         else if (hover > 0.004f)
         {
@@ -1497,7 +1497,7 @@ public sealed class TablePane : IDisposable
 
         if (runner.IsPinned(quest.RowId))
         {
-            dl.AddCircleFilled(cell + new Vector2(UiMetrics.Px(3f), centerY - cell.Y), UiMetrics.Px(2.5f), Theme.MoonU32);
+            dl.AddCircleFilled(cell + new Vector2(UiMetrics.Px(3f), centerY - cell.Y), UiMetrics.Px(2.5f), Theme.GoldU32);
         }
 
         var readyOn = state == QuestState.ReadyOnOtherJob ? runner.ReadyOnJob(quest.RowId) : (byte)0;
@@ -1508,11 +1508,11 @@ public sealed class TablePane : IDisposable
             if (state == QuestState.Ready && Theme.ShowGlow)
             {
                 var reach = UiMetrics.Px(4f);
-                dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + reach, Theme.WithAlpha(Theme.Moon, 0.10f), 32);
-                dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + (reach * 0.5f), Theme.WithAlpha(Theme.Moon, 0.16f), 32);
+                dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + reach, Theme.Glow(0.10f), 32);
+                dl.AddCircleFilled(glyphCenter, layout.GlyphRadius + (reach * 0.5f), Theme.Glow(0.16f), 32);
             }
 
-            dl.AddCircleFilled(glyphCenter + new Vector2(0f, UiMetrics.Px(1.5f)), layout.GlyphRadius, Theme.WithAlpha(Theme.Abyss, 0.55f), 24);
+            dl.AddCircleFilled(glyphCenter + new Vector2(0f, UiMetrics.Px(1.5f)), layout.GlyphRadius, Theme.DropShadow(0.55f), 24);
         }
 
         MoonWax.Draw(dl, glyphCenter, layout.GlyphRadius, state, quest.RowId, readyOn);
@@ -1841,7 +1841,7 @@ public sealed class TablePane : IDisposable
         ImGuiP.TablePushBackgroundChannel();
         var thickness = MathF.Max(1f, UiMetrics.Hairline * 2f);
         var y = rowMax.Y - thickness * 0.5f;
-        ImGui.GetWindowDrawList().AddLine(new Vector2(rowMin.X, y), new Vector2(rowMax.X, y), Theme.WithAlpha(Theme.Moon, 0.55f), thickness);
+        ImGui.GetWindowDrawList().AddLine(new Vector2(rowMin.X, y), new Vector2(rowMax.X, y), Theme.WithAlpha(Theme.GoldLine, 0.55f), thickness);
         ImGuiP.TablePopBackgroundChannel();
     }
 
@@ -1860,11 +1860,11 @@ public sealed class TablePane : IDisposable
     {
         var y = rowMax.Y - hairline;
         var end = nameX + ((rowMax.X - nameX) * 0.7f);
-        Ornament.Rule(dl, new Vector2(nameX, y), end - nameX, ReadyRoadAlpha, hairline, Theme.Moon);
+        Ornament.Rule(dl, new Vector2(nameX, y), end - nameX, ReadyRoadAlpha, hairline, Theme.GoldLine);
         if (Theme.ShowGlow)
         {
-            var glow = Theme.WithAlpha(Theme.Moon, 0.12f);
-            var none = Theme.WithAlpha(Theme.Moon, 0f);
+            var glow = Theme.Glow(0.12f);
+            var none = Theme.Glow(0f);
             dl.AddRectFilledMultiColor(new Vector2(nameX, y - UiMetrics.Px(2f)), new Vector2(end, y), none, none, glow, glow);
         }
 
@@ -1891,8 +1891,8 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        var bright = Theme.WithAlpha(Theme.MoonHigh, 0.9f * (1f - t));
-        var clear = Theme.WithAlpha(Theme.MoonHigh, 0f);
+        var bright = Theme.Sheen(0.9f * (1f - t));
+        var clear = Theme.Sheen(0f);
         var mid = (left + right) * 0.5f;
         dl.AddRectFilledMultiColor(new Vector2(left, y), new Vector2(mid, y + hairline), clear, bright, bright, clear);
         dl.AddRectFilledMultiColor(new Vector2(mid, y), new Vector2(right, y + hairline), bright, clear, clear, bright);
@@ -1936,8 +1936,8 @@ public sealed class TablePane : IDisposable
                 case Flair.Full when !Theme.Glyphs.HighContrast:
                 {
                     // Full: a warm wash from the left (Moon 0.13 → 0.02) between brass hairlines top and bottom.
-                    var warm = Theme.WithAlpha(Theme.Moon, 0.10f * settled);
-                    var cool = Theme.WithAlpha(Theme.Moon, 0f);
+                    var warm = Theme.Glow(0.10f * settled);
+                    var cool = Theme.Glow(0f);
                     dl.AddRectFilledMultiColor(rowMin, new Vector2(rowMin.X + ((rowMax.X - rowMin.X) * 0.6f), rowMax.Y), warm, cool, cool, warm);
                     var brass = Theme.WithAlpha(Theme.Surface.OrnamentHigh, 0.35f * settled);
                     dl.AddRectFilled(rowMin, new Vector2(rowMax.X, rowMin.Y + hairline), brass);
@@ -1953,7 +1953,7 @@ public sealed class TablePane : IDisposable
                 {
                     // Quiet (and high contrast): a 1 px outline settling in from 2 px inside the row.
                     var inset = new Vector2(hairline * 0.5f + UiMetrics.Px(2f - settled));
-                    var ring = flair == Flair.Quiet && !Theme.Glyphs.HighContrast ? Theme.WithAlpha(Theme.Veil, settled) : Theme.WithAlpha(s.Text, SelectionRingAlpha * settled);
+                    var ring = flair == Flair.Quiet && !Theme.Glyphs.HighContrast ? Theme.WithAlpha(Theme.Surface.TextDisabled, settled) : Theme.WithAlpha(s.Text, SelectionRingAlpha * settled);
                     dl.AddRect(rowMin + inset, rowMax - inset, ring, flair == Flair.Quiet ? 0f : UiMetrics.Px(SelectionRounding), ImDrawFlags.None, hairline);
                     break;
                 }
@@ -1964,7 +1964,7 @@ public sealed class TablePane : IDisposable
         if (flash > 0f)
         {
             // The stripe's flash (M1, Full flair): MoonHigh over the stripe, fading out, never brighter than the moment's peak.
-            dl.AddRectFilled(rowMin, new Vector2(rowMin.X + StripeThickness(), rowMax.Y), Theme.WithAlpha(Theme.MoonHigh, flash));
+            dl.AddRectFilled(rowMin, new Vector2(rowMin.X + StripeThickness(), rowMax.Y), Theme.Sheen(flash));
         }
         if (selected)
         {
@@ -2000,14 +2000,8 @@ public sealed class TablePane : IDisposable
     /// not the colour, carries the state. The high-contrast glyph palette uses its own rungs instead
     /// (<see cref="GlyphPalette.Stripe"/>: the state's identity colour, 3 : 1 or better on the host window).
     /// </summary>
-    internal static uint StripeColor(QuestState state) => Theme.Glyphs.HighContrast ? Theme.U32(Theme.Glyphs.Stripe(state)) : state switch
-    {
-        QuestState.Ready or QuestState.Accepted => Theme.MoonU32,
-        QuestState.Completed => Theme.MoonDimU32,
-        QuestState.ReadyOnOtherJob or QuestState.DoneThisCycle => Theme.Surface.Light ? Theme.U32(Theme.Surface.Text) : Theme.SilverU32,
-        QuestState.Foreclosed => Theme.EclipseU32,
-        _ => Theme.VeilTextU32,
-    };
+    internal static uint StripeColor(QuestState state) =>
+        Theme.U32(Theme.Glyphs.HighContrast ? Theme.Glyphs.Stripe(state) : Theme.Palette.States.Stripe(state));
 
     /// <summary>
     /// A level or expansion pill (ui-revamp §2.4): the palette's sunken fill with the text in <paramref name="ink"/>,
@@ -2147,7 +2141,7 @@ public sealed class TablePane : IDisposable
         }
 
         var reason = text.AsSpan(split);
-        var reasonInk = !hasSnapshot ? s.TextTertiary : state is QuestState.Blocked or QuestState.Foreclosed ? Theme.EclipseText : s.TextSecondary;
+        var reasonInk = !hasSnapshot ? s.TextTertiary : state is QuestState.Blocked or QuestState.Foreclosed ? Theme.DangerText : s.TextSecondary;
         var room = TableGeometry.ReasonWidth(cellWidth, ImGui.CalcTextSize(stateWord).X);
         var reasonWidth = ImGui.CalcTextSize(reason).X;
         ImGui.SameLine(0f, 0f);

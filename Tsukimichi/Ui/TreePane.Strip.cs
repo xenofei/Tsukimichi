@@ -89,7 +89,7 @@ public sealed partial class TreePane
 
         if (selected)
         {
-            dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, MathF.Round(UiMetrics.Px(2f))), max.Y), Theme.MoonU32);
+            dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, MathF.Round(UiMetrics.Px(2f))), max.Y), Theme.GoldU32);
         }
 
         var center = new Vector2(MathF.Round((min.X + max.X) * 0.5f), MathF.Round((min.Y + max.Y) * 0.5f));
@@ -119,7 +119,7 @@ public sealed partial class TreePane
 
         if (node.Ready > 0)
         {
-            using (ImRaii.PushColor(ImGuiCol.Text, Theme.Moon))
+            using (ImRaii.PushColor(ImGuiCol.Text, Theme.Accent))
             {
                 ImGui.TextUnformatted(node.ReadyTooltip);
             }

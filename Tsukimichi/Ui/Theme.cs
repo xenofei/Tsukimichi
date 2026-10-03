@@ -5,15 +5,25 @@ using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Ui.Themes;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Colour tokens (spec §2.3, ui-revamp §4.3) and the style pushes built from them. The fixed tokens (Night … Eclipse,
-/// the glyph gradients) never change; the surface and text roles the chrome draws with live in <see cref="Surface"/>,
-/// which is the Night palette or, with <see cref="Configuration.FollowDalamudColours"/> on, a palette mapped from the
-/// user's Dalamud style (one layout, two palettes: game UX panel finding 9). <see cref="Refresh"/> picks the palette
-/// once per frame, before any window draws.
+/// Colour tokens (spec §2.3, ui-revamp §4.3) and the style pushes built from them. Two kinds:
+/// <list type="bullet">
+/// <item>The <b>palette</b> (plan v7 T2, theme-system §8): every colour the chrome draws with, by role, from the
+/// <see cref="UiPalette"/> in effect (<see cref="Palette"/>): the surface and text roles in <see cref="Surface"/>, gold as
+/// text in <see cref="Accent"/>, the chrome inks (<see cref="Gold"/>, <see cref="Danger"/>, <see cref="DangerText"/> …),
+/// the state inks (<see cref="StateColor"/>, <see cref="StateText"/>), the brass (<see cref="Brass"/>) and the scene
+/// (<see cref="Scene"/>, <see cref="DropShadow"/>, <see cref="Glow"/>, <see cref="ShowStars"/>). It is Night, or with
+/// <see cref="Configuration.FollowDalamudColours"/> on a palette mapped from the user's Dalamud style (game UX panel
+/// finding 9). <see cref="Refresh"/> resolves it once per frame, before any window draws, and re-packs it only when it
+/// changes.</item>
+/// <item>The <b>fixed tokens</b> (Night … TideDeep, the glyph gradients): the glyphs' own colours, the same in every
+/// palette. Only glyph code (the Classic moons, the glyph window) draws with them; <c>PaletteLintTests</c> keeps the
+/// chrome on the palette.</item>
+/// </list>
 ///
 /// Gold discipline (game UX panel finding 2): Moon is for what the player can act on now (Ready, Accepted, the next
 /// step, pins, the MSQ pill, primary buttons, progress) and the selected tree row's rule; chrome that is not a call to
@@ -114,8 +124,8 @@ public static class Theme
     /// <summary>#24345C – the bottom stop of the drawn night sky and Flight's water. Surface only (1.5 : 1 on Night).</summary>
     public static readonly Vector4 TideDeep = Rgb(GlyphTokens.TideDeepHex);
 
-    /// <summary>Alternate table row tint for zebra striping: Veil at low alpha, readable on Night and on the default style alike.</summary>
-    public static readonly Vector4 ZebraRow = Veil with { W = 0.16f };
+    /// <summary>Alternate table row tint for zebra striping: the palette's disabled tone (Veil on Night) at low alpha.</summary>
+    public static Vector4 ZebraRow => Surface.TextDisabled with { W = 0.16f };
 
     public static readonly uint NightU32 = Pack(Night);
     public static readonly uint MoonU32 = Pack(Moon);
@@ -150,6 +160,12 @@ public static class Theme
     public static readonly SurfaceColors NightSurface = SurfaceColors.Night;
 
     /// <summary>
+    /// The palette in effect this frame (see <see cref="Refresh"/>): the chosen palette, or its high-contrast form under
+    /// the high-contrast glyph palette. Every palette-driven token below is resolved from it.
+    /// </summary>
+    public static UiPalette Palette { get; private set; } = UiPalettes.Night;
+
+    /// <summary>
     /// The surface and text roles in effect this frame (see <see cref="Refresh"/>), with the Moon Road roles: under the
     /// high-contrast palette those are its own versions (<see cref="SurfaceColors.ForHighContrast"/>).
     /// </summary>
@@ -157,6 +173,119 @@ public static class Theme
 
     /// <summary>Whether <see cref="Surface"/> is mapped from the user's Dalamud style this frame.</summary>
     public static bool FollowingDalamud { get; private set; }
+
+    /// <summary>Whether the palette in effect is light (dark ink on a light ground): <see cref="UiPalette.IsLight"/>.</summary>
+    public static bool IsLight => Surface.Light;
+
+    /// <summary>The palette's scene this frame: sky, stars, shadows, glows, halos and the night grades.</summary>
+    public static SceneTokens Scene { get; private set; } = UiPalettes.Night.Scene;
+
+    /// <summary>The palette's Decoration brass this frame: the card frame's ramp and the corner marks.</summary>
+    public static BrassTokens Brass { get; private set; } = UiPalettes.Night.Brass;
+
+    // ---- The chrome inks (UiPalette.Inks), resolved once per palette change. Night values in brackets.
+
+    /// <summary>Gold fills, rules, outlines, progress and the "act now" marks (Moon). Text in gold uses <see cref="Accent"/>.</summary>
+    public static Vector4 Gold { get; private set; } = Moon;
+
+    /// <summary><see cref="Gold"/> packed.</summary>
+    public static uint GoldU32 { get; private set; } = MoonU32;
+
+    /// <summary>Gold's highlight: sheens, glints, the selected bead (MoonHigh).</summary>
+    public static Vector4 GoldHigh { get; private set; } = MoonHigh;
+
+    /// <summary><see cref="GoldHigh"/> packed.</summary>
+    public static uint GoldHighU32 { get; private set; } = MoonHighU32;
+
+    /// <summary>Gold's deep stop: a pressed gold pill, a ring's shade (MoonDeep).</summary>
+    public static Vector4 GoldDeep { get; private set; } = MoonDeep;
+
+    /// <summary><see cref="GoldDeep"/> packed.</summary>
+    public static uint GoldDeepU32 { get; private set; } = MoonDeepU32;
+
+    /// <summary>The quieter gold of finished things as a fill or stroke (MoonDim); as text, <see cref="AccentDim"/>.</summary>
+    public static Vector4 GoldDim { get; private set; } = MoonDim;
+
+    /// <summary><see cref="GoldDim"/> packed.</summary>
+    public static uint GoldDimU32 { get; private set; } = MoonDimU32;
+
+    /// <summary>Gold as a hairline: the Ready road, the selected row's rules, the drawer's set mark (Moon).</summary>
+    public static Vector4 GoldLine { get; private set; } = Moon;
+
+    /// <summary>The gold an "on" toggle's track is mixed toward (Moon), and its crescent knob (MoonHigh).</summary>
+    public static Vector4 ToggleOn { get; private set; } = Moon;
+
+    public static Vector4 ToggleKnob { get; private set; } = MoonHigh;
+
+    /// <summary>
+    /// Text in the ornament: Full's Section headings, the sorted column header, the drawer's heads (the medallion's
+    /// GiltLight on Night; <see cref="UiPalette.OrnamentLight"/>).
+    /// </summary>
+    public static Vector4 OrnamentLight { get; private set; } = UiPalettes.Night.OrnamentLight;
+
+    /// <summary>The giver portrait plate's well, keylines and fallback ink this frame.</summary>
+    public static PlateTokens Plate { get; private set; } = UiPalettes.Night.Plate;
+
+    /// <summary>Text and marks on a gold fill (Night).</summary>
+    public static Vector4 OnGold { get; private set; } = Night;
+
+    /// <summary><see cref="OnGold"/> packed.</summary>
+    public static uint OnGoldU32 { get; private set; } = NightU32;
+
+    /// <summary>Destructive actions and Locked out as a fill or rule (Eclipse); never text.</summary>
+    public static Vector4 Danger { get; private set; } = Eclipse;
+
+    /// <summary><see cref="Danger"/> packed.</summary>
+    public static uint DangerU32 { get; private set; } = EclipseU32;
+
+    /// <summary>Locked out and error text (EclipseText).</summary>
+    public static Vector4 DangerText { get; private set; } = EclipseText;
+
+    /// <summary><see cref="DangerText"/> packed.</summary>
+    public static uint DangerTextU32 { get; private set; } = EclipseTextU32;
+
+    /// <summary>Text on a destructive button (Silver).</summary>
+    public static Vector4 OnDanger { get; private set; } = Silver;
+
+    /// <summary>Not checked text and captions (VeilText).</summary>
+    public static Vector4 UnknownText { get; private set; } = VeilText;
+
+    /// <summary><see cref="UnknownText"/> packed.</summary>
+    public static uint UnknownTextU32 { get; private set; } = VeilTextU32;
+
+    /// <summary>A tree node's progress ring: the arc and a finished node's ring.</summary>
+    public static Vector4 GaugeArc { get; private set; } = UiPalettes.NightInks.GaugeArc;
+
+    public static Vector4 GaugeDone { get; private set; } = UiPalettes.NightInks.GaugeDone;
+
+    /// <summary>
+    /// A drop shadow at its designed <paramref name="alpha"/> (the alpha for a dark window), packed: the scene's shadow
+    /// colour (Abyss on Night) at that alpha times <see cref="SceneTokens.ShadowStrength"/>, so a light palette casts a
+    /// softer one.
+    /// </summary>
+    public static uint DropShadow(float alpha) => WithAlpha(Scene.Shadow, alpha * Scene.ShadowStrength);
+
+    /// <summary>
+    /// A soft cast shadow (cards, the drawer) at its designed <paramref name="alpha"/>, packed: the scene's ShadowInk
+    /// (black on Night, navy on a light palette) at that alpha times <see cref="SceneTokens.ShadowStrength"/>.
+    /// </summary>
+    public static uint CastShadow(float alpha) => WithAlpha(Scene.ShadowInk, alpha * Scene.ShadowStrength);
+
+    /// <summary>
+    /// A gold glow or bloom at its designed <paramref name="alpha"/>, packed: <see cref="Gold"/> at that alpha times
+    /// <see cref="SceneTokens.GlowStrength"/>; on a light palette that washes instead of glowing
+    /// (<see cref="SceneTokens.WashInsteadOfGlow"/>), the scene's warm wash colour.
+    /// </summary>
+    public static uint Glow(float alpha) => WithAlpha(Scene.WashInsteadOfGlow ? Scene.GlowWash : Gold, alpha * Scene.GlowStrength);
+
+    /// <summary>The 1 px lit edge inside the top of a raised surface at <paramref name="alpha"/>, packed (MoonHigh on Night, white on a light palette).</summary>
+    public static uint TopHighlight(float alpha) => WithAlpha(Scene.TopHighlight, alpha);
+
+    /// <summary>A highlight sheen or glint at its designed <paramref name="alpha"/>, packed: <see cref="GoldHigh"/> at that alpha times <see cref="SceneTokens.GlowStrength"/>.</summary>
+    public static uint Sheen(float alpha) => WithAlpha(GoldHigh, alpha * Scene.GlowStrength);
+
+    /// <summary>The halo behind text drawn over brass or sky, at <paramref name="alpha"/>, packed (Abyss on Night; light on a light palette).</summary>
+    public static uint Halo(float alpha) => WithAlpha(Scene.TextHalo, alpha);
 
     /// <summary><see cref="SurfaceColors.Deep"/> this frame, packed (Abyss on Night).</summary>
     public static uint DeepU32 { get; private set; } = AbyssU32;
@@ -221,7 +350,8 @@ public static class Theme
     public static bool ShowGlow => FlairRules.Glow(Flair);
 
     /// <summary>Whether the faint star field draws in empty sky this frame (Full only).</summary>
-    public static bool ShowStars => FlairRules.StarField(Flair);
+    /// <remarks>And only on a palette with a star field (<see cref="SceneTokens.StarField"/>): a light palette has none.</remarks>
+    public static bool ShowStars => FlairRules.StarField(Flair) && Scene.StarField;
 
     /// <summary>Whether the Moon Road's own motion plays this frame (Full, and Reduce motion off).</summary>
     public static bool FlairMotion => FlairRules.Motion(Flair, UiMetrics.ReduceMotion);
@@ -242,7 +372,7 @@ public static class Theme
     public static FlairSpacing Spacing => FlairRules.Spacing(Flair);
 
     /// <summary>The level's surfaces this frame (<see cref="FlairTones.For"/>): Quiet's tonal panes, Plain's ledger bands.</summary>
-    public static FlairTones Tones { get; private set; } = FlairTones.For(Flair.Full, SurfaceColors.Night);
+    public static FlairTones Tones { get; private set; } = FlairTones.For(Flair.Full, UiPalettes.Night);
 
     /// <summary>
     /// A structure line's colour this frame: Quiet's hairline or Plain's line, and under the high-contrast palette the
@@ -258,7 +388,7 @@ public static class Theme
     {
         var previous = Flair;
         Flair = FlairRules.Effective(flair, Glyphs.HighContrast);
-        Tones = FlairTones.For(Flair, Surface);
+        Tones = FlairTones.For(Flair, Palette);
         return new FlairScope(previous);
     }
 
@@ -268,7 +398,7 @@ public static class Theme
         public void Dispose()
         {
             Flair = previous;
-            Tones = FlairTones.For(previous, Surface);
+            Tones = FlairTones.For(previous, Palette);
         }
     }
 
@@ -289,9 +419,10 @@ public static class Theme
     public static GlyphPalette Glyphs { get; private set; } = GlyphPalette.Standard;
 
     /// <summary>
-    /// Gold for text and small ink (pill labels, the active tab icon): <see cref="Moon"/>, or under "Follow Dalamud
-    /// colours" Moon pushed towards the palette's text colour until it reads at 4.5 : 1 on the window, so a light
-    /// Dalamud style gets a deep gold instead of Moon's 1.4 : 1. Fills, rims and glyphs keep Moon.
+    /// Gold for text and small ink (pill labels, the active tab icon, gold headings): the palette's
+    /// <see cref="UiPalette.Accent"/>, Moon on Night; under "Follow Dalamud colours" Moon pushed towards the palette's
+    /// text colour until it reads at 4.5 : 1 on the window, so a light Dalamud style gets a deep gold instead of Moon's
+    /// 1.4 : 1. Fills, rims and glows use <see cref="Gold"/>; the glyphs keep Moon.
     /// </summary>
     public static Vector4 Accent { get; private set; } = Moon;
 
@@ -308,46 +439,104 @@ public static class Theme
 
     /// <summary>
     /// Picks this frame's palette. Call once per frame before any window draws (nothing is pushed then, so the style
-    /// read is the user's own): with <paramref name="followDalamud"/> the surface roles are mapped from the Dalamud
-    /// style (<see cref="SurfaceColors.FromHost"/>), otherwise they are the Night tokens. The glyph palette
-    /// <paramref name="glyphPalette"/> is resolved against the resulting window colour (<see cref="Glyphs"/>), so the
-    /// high-contrast glyphs switch to their light variant on a light Dalamud theme. Under high contrast the Moon Road
-    /// roles take that palette's versions and <paramref name="flair"/> is capped at Quiet (<see cref="Flair"/>).
-    /// The glyph renderer follows the appearance (<see cref="Themes.GlyphSeam.Refresh"/>, called first). Allocates nothing.
+    /// read is the user's own): the palette the appearance names (<paramref name="palette"/>, from
+    /// <see cref="Themes.GlyphSeam.Refresh"/>, called first) out of the registry (<see cref="UiPalettes.Get(PaletteId)"/>),
+    /// or with <paramref name="followDalamud"/> (or <see cref="PaletteId.FollowDalamud"/>) the Follow Dalamud palette,
+    /// mapped from the Dalamud style (<see cref="UiPalettes.FollowDalamud"/>, rebuilt only when the host colours change).
+    /// The glyph palette <paramref name="glyphPalette"/> is resolved against the palette's window colour
+    /// (<see cref="Glyphs"/>), so the high-contrast glyphs switch to their light variant on a light palette. Under high
+    /// contrast the palette's high-contrast form is drawn (<see cref="UiPalette.HighContrast"/>) and <paramref name="flair"/>
+    /// is capped at Quiet (<see cref="Flair"/>). The palette's tokens are re-packed only when the palette changes, so a
+    /// frame where nothing changed allocates nothing.
     /// </summary>
-    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard, Flair flair = Flair.Full)
+    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard, Flair flair = Flair.Full, PaletteId palette = PaletteId.Night)
     {
         var colors = ImGui.GetStyle().Colors;
         var windowBg = colors[(int)ImGuiCol.WindowBg];
         hostWindowAlpha = float.IsFinite(windowBg.W) ? Math.Clamp(windowBg.W, 0f, 1f) : 1f;
         FollowingDalamud = followDalamud;
-        Surface = followDalamud
-            ? SurfaceColors.FromHost(
+        var chosen = followDalamud
+            ? FollowDalamudPalette(
                 windowBg,
                 colors[(int)ImGuiCol.FrameBg],
                 colors[(int)ImGuiCol.FrameBgHovered],
                 colors[(int)ImGuiCol.Border],
                 colors[(int)ImGuiCol.Text],
                 colors[(int)ImGuiCol.TextDisabled])
-            : NightSurface;
-        var s = Surface;
-        Accent = followDalamud ? ColorMath.EnsureContrast(Moon, s.Text, s.Window, SurfaceColors.TextMinContrast) : Moon;
-        AccentDim = followDalamud ? ColorMath.EnsureContrast(MoonDim, s.Text, s.Window, SurfaceColors.TextMinContrast) : MoonDim;
-        AccentU32 = Pack(Accent);
-        Glyphs = GlyphPalette.Resolve(glyphPalette, s.Window);
-        if (Glyphs.HighContrast)
-        {
-            Surface = s = s.ForHighContrast();
-        }
+            : UiPalettes.Get(palette);
+        Glyphs = GlyphPalette.Resolve(glyphPalette, chosen.Surface.Window);
+        ApplyPalette(Glyphs.HighContrast ? chosen.HighContrast : chosen);
 
         Flair = FlairRules.Effective(flair, Glyphs.HighContrast);
         FlairSetting = FlairRules.Effective(flair, highContrast: false);
-        Tones = FlairTones.For(Flair, s);
+        Tones = FlairTones.For(Flair, Palette);
+    }
+
+    /// <summary>
+    /// Makes <paramref name="palette"/> the palette in effect: resolves and packs every palette-driven token once. Does
+    /// nothing when it already is (the usual frame), so a frame allocates and packs nothing.
+    /// </summary>
+    private static void ApplyPalette(UiPalette palette)
+    {
+        if (ReferenceEquals(palette, Palette))
+        {
+            return;
+        }
+
+        Palette = palette;
+        var s = Surface = palette.Surface;
+        Scene = palette.Scene;
+        Brass = palette.Brass;
+        Accent = palette.Accent;
+        AccentU32 = Pack(Accent);
+        AccentDim = palette.AccentDim;
+        var inks = palette.Inks;
+        Gold = inks.Gold;
+        GoldU32 = Pack(Gold);
+        GoldHigh = inks.GoldHigh;
+        GoldHighU32 = Pack(GoldHigh);
+        GoldDeep = inks.GoldDeep;
+        GoldDeepU32 = Pack(GoldDeep);
+        GoldDim = inks.GoldDim;
+        GoldDimU32 = Pack(GoldDim);
+        OnGold = inks.OnGold;
+        OnGoldU32 = Pack(OnGold);
+        Danger = inks.Danger;
+        DangerU32 = Pack(Danger);
+        DangerText = inks.DangerText;
+        DangerTextU32 = Pack(DangerText);
+        OnDanger = inks.OnDanger;
+        UnknownText = inks.UnknownText;
+        UnknownTextU32 = Pack(UnknownText);
+        GoldLine = inks.GoldLine;
+        ToggleOn = inks.ToggleOn;
+        ToggleKnob = inks.ToggleKnob;
+        OrnamentLight = palette.OrnamentLight;
+        Plate = palette.Plate;
+        GaugeArc = inks.GaugeArc;
+        GaugeDone = inks.GaugeDone;
         DeepU32 = Pack(s.Deep);
         TopU32 = Pack(s.Top);
         OrnamentU32 = Pack(s.Ornament);
         OrnamentHighU32 = Pack(s.OrnamentHigh);
         CoolU32 = Pack(s.Cool);
+    }
+
+    // The Follow Dalamud palette and the host colours it was built from: rebuilt only when the user's style changes.
+    private static UiPalette? followPalette;
+    private static Vector4 followWindow, followFrame, followFrameHovered, followBorder, followText, followTextDisabled;
+
+    private static UiPalette FollowDalamudPalette(Vector4 windowBg, Vector4 frameBg, Vector4 frameBgHovered, Vector4 border, Vector4 text, Vector4 textDisabled)
+    {
+        if (followPalette is { } cached
+            && windowBg == followWindow && frameBg == followFrame && frameBgHovered == followFrameHovered
+            && border == followBorder && text == followText && textDisabled == followTextDisabled)
+        {
+            return cached;
+        }
+
+        (followWindow, followFrame, followFrameHovered, followBorder, followText, followTextDisabled) = (windowBg, frameBg, frameBgHovered, border, text, textDisabled);
+        return followPalette = UiPalettes.FollowDalamud(windowBg, frameBg, frameBgHovered, border, text, textDisabled);
     }
 
     /// <summary>
@@ -402,21 +591,17 @@ public static class Theme
         }
     }
 
-    /// <summary>Text color for a state badge next to a glyph.</summary>
-    public static Vector4 StateColor(QuestState state) => state switch
-    {
-        QuestState.Completed => Moon,
-        QuestState.Accepted => Moon,
-        QuestState.Ready => Moon,
-        QuestState.ReadyOnOtherJob => Silver,
-        QuestState.DoneThisCycle => Silver,
-        QuestState.Blocked => Dusk,
-        QuestState.Foreclosed => Eclipse,
-        QuestState.Unknown => Veil,
-        _ => Dusk,
-    };
+    /// <summary>
+    /// A state's tone in the palette (<see cref="StateInks.Tone"/>): a stripe or badge beside a glyph. On Night: gold for
+    /// Completed, In journal and Ready; Silver for the other-job and Done states; Dusk for Blocked; Eclipse for Locked out;
+    /// Veil for Not checked. Locked out's and Not checked's tones are not text; <see cref="StateText"/> is.
+    /// </summary>
+    public static Vector4 StateColor(QuestState state) => Palette.States.Tone(state);
 
     public static uint StateColorU32(QuestState state) => Pack(StateColor(state));
+
+    /// <summary>A state's readable text ink in the palette (<see cref="StateInks.Text"/>): at least 4.5 : 1 on the window.</summary>
+    public static Vector4 StateText(QuestState state) => Palette.States.Text(state);
 
     /// <summary>The token with a different alpha, packed for ImDrawList calls.</summary>
     public static uint WithAlpha(Vector4 color, float alpha) => Pack(color with { W = Math.Clamp(alpha, 0f, 1f) });
@@ -640,12 +825,12 @@ public static class Theme
         return new StyleScope(count, 2);
     }
 
-    /// <summary>Eclipse-toned button for destructive actions (Forget character, Delete all data). Dispose to pop.</summary>
+    /// <summary>Danger-toned button for destructive actions (Forget character, Delete all data): Eclipse on Night. Dispose to pop.</summary>
     public static ImRaii.ColorDisposable PushDestructiveButton(bool condition = true) =>
-        ImRaii.PushColor(ImGuiCol.Button, WithAlphaVector(Eclipse, 0.75f), condition)
-              .Push(ImGuiCol.ButtonHovered, Eclipse, condition)
-              .Push(ImGuiCol.ButtonActive, Vector4.Lerp(Eclipse, Night, 0.25f) with { W = 1f }, condition)
-              .Push(ImGuiCol.Text, Silver, condition);
+        ImRaii.PushColor(ImGuiCol.Button, WithAlphaVector(Danger, PaletteInks.DangerButtonAlpha), condition)
+              .Push(ImGuiCol.ButtonHovered, Danger, condition)
+              .Push(ImGuiCol.ButtonActive, Vector4.Lerp(Danger, Surface.Window, 0.25f) with { W = 1f }, condition)
+              .Push(ImGuiCol.Text, OnDanger, condition);
 
     /// <summary>Text in the token color, for badges. Dispose to pop.</summary>
     public static ImRaii.ColorDisposable PushText(Vector4 color, bool condition = true) =>

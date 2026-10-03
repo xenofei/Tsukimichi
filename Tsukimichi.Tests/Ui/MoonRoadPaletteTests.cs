@@ -189,9 +189,10 @@ public class MoonRoadPaletteTests
     {
         var s = SurfaceColors.Night.ForHighContrast();
 
-        // No gradient, opaque VeilLine lines (3.2 : 1), points and the cool accent pushed up.
+        // No gradient, opaque strong lines (#646D8A since spec-1.16 §A2, 3.5 : 1), points and the cool accent pushed up.
         Assert.Equal(s.Window, s.Top);
-        Assert.Equal(GlyphTokens.VeilLine, s.Ornament);
+        Assert.Equal(SurfaceColors.Night.StrongLine, s.Ornament);
+        Assert.Equal(SurfaceColors.NightStrongLineHex, ColorMath.ToHex(s.Ornament));
         Assert.True(Ratio(s.Ornament, s.Window) >= SurfaceColors.LineMinContrast);
         Assert.True(Ratio(s.OrnamentHigh, s.Window) >= SurfaceColors.LineMinContrast);
         Assert.True(Ratio(s.Cool, s.Window) >= SurfaceColors.HighContrastTextMinContrast);

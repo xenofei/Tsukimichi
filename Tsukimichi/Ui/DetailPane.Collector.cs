@@ -115,7 +115,7 @@ public sealed partial class DetailPane
             var (rowId, name) = line.Remaining[i];
             using var id = ImRaii.PushId((int)rowId);
             bool cut;
-            using (Theme.PushText(Theme.Moon))
+            using (Theme.PushText(Theme.Accent))
             {
                 // A long name ends in an ellipsis inside the card; the tooltip then carries it whole.
                 if (Chrome.EllipsisSelectable(name, false, RoomTo(cardRight), out cut))

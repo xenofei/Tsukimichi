@@ -124,4 +124,38 @@ public class ColorMathTests
         Assert.True(ColorMath.Contrast(s.StrongLine, s.Window) >= SurfaceColors.LineMinContrast);
         Assert.True(ColorMath.Contrast(s.Raised, s.Window) > 1.05f);
     }
+
+    [Fact]
+    public void Wcag_ratio_matches_the_reference_values()
+    {
+        var black = new Vector4(0f, 0f, 0f, 1f);
+        Assert.Equal(21f, ColorMath.Contrast(Vector4.One, black), 2);
+        Assert.Equal(1f, ColorMath.Contrast(Night, Night), 3);
+        Assert.Equal(ColorMath.Contrast(Silver, Night), ColorMath.Contrast(Night, Silver), 4);
+
+        // The WebAIM reference: #777777 on white is 4.48 : 1, just under AA; #767676 is 4.54 : 1, just over.
+        Assert.Equal(4.48f, ColorMath.Contrast(ColorMath.FromHex(0x777777), Vector4.One), 2);
+        Assert.False(ColorMath.ReadsAsText(ColorMath.FromHex(0x777777), Vector4.One));
+        Assert.True(ColorMath.ReadsAsText(ColorMath.FromHex(0x767676), Vector4.One));
+    }
+
+    [Fact]
+    public void Contrast_on_a_translucent_ground_composites_it_first()
+    {
+        // A clear ground is the backdrop itself; an opaque one hides it.
+        Assert.Equal(ColorMath.Contrast(Silver, Night), ColorMath.ContrastOn(Silver, Night with { W = 0f }, Night), 3);
+        Assert.Equal(ColorMath.Contrast(Silver, NightRaised), ColorMath.ContrastOn(Silver, NightRaised, Vector4.One), 3);
+
+        // Half white over Night lightens the ground, so silver text on it reads worse than on Night.
+        Assert.True(ColorMath.ContrastOn(Silver, Vector4.One with { W = 0.5f }, Night) < ColorMath.Contrast(Silver, Night));
+    }
+
+    [Fact]
+    public void ToHex_round_trips_FromHex()
+    {
+        foreach (var hex in new uint[] { 0x000000, 0xFFFFFF, 0x0F1424, 0xF2D27A, 0x8B94B3 })
+        {
+            Assert.Equal(hex, ColorMath.ToHex(ColorMath.FromHex(hex)));
+        }
+    }
 }

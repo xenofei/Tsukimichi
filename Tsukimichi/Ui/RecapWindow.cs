@@ -227,7 +227,7 @@ public sealed class RecapWindow : Window
             }
 
             using (Typography.Title(chapter.Title))
-            using (ImRaii.PushColor(ImGuiCol.Text, Theme.Moon))
+            using (ImRaii.PushColor(ImGuiCol.Text, Theme.Accent))
             {
                 ImGui.TextWrapped(chapter.Title);
             }

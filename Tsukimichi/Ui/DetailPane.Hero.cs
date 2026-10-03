@@ -52,8 +52,8 @@ public sealed partial class DetailPane
 
     private const float LedgerGlyphLogical = 5.9f;
 
-    /// <summary>The title drawn on the art: a warm near-white over the night grade.</summary>
-    private static readonly Vector4 TitleOnArt = Core.Ui.ColorMath.FromHex(0xF4F1E8);
+    /// <summary>The title drawn on the art: a warm near-white over the night grade (the palette's scene; navy ink on a light one).</summary>
+    private static Vector4 TitleOnArt => Theme.Scene.BannerTitle;
 
     // The moonrise: the row it last started for and when.
     private uint riseRowId = uint.MaxValue;
@@ -208,7 +208,7 @@ public sealed partial class DetailPane
 
         if (!highContrast)
         {
-            dl.AddCircleFilled(center + new Vector2(0f, UiMetrics.Px(4f)), radius + UiMetrics.Px(1f), Theme.WithAlpha(Theme.Abyss, 0.45f), 40);
+            dl.AddCircleFilled(center + new Vector2(0f, UiMetrics.Px(4f)), radius + UiMetrics.Px(1f), Theme.DropShadow(0.45f), 40);
         }
 
         MoonWax.Draw(dl, center, radius, model.State, quest.RowId, model.ReadyOnJob);
@@ -308,7 +308,7 @@ public sealed partial class DetailPane
         for (var i = Rings; i >= 1; i--)
         {
             var t = i / (float)Rings;
-            dl.AddCircleFilled(center, radius + (reach * t), Theme.WithAlpha(Theme.Moon, 0.30f * (1f - t) * 0.55f + 0.02f), 48);
+            dl.AddCircleFilled(center, radius + (reach * t), Theme.Glow(0.30f * (1f - t) * 0.55f + 0.02f), 48);
         }
     }
 
@@ -571,7 +571,7 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// The placeholder while a banner loads: a night sky (NightTop → TideDeep), a faint brass horizon, and at Flair Full a
-    /// few stars placed by the quest's row id (the same sky for the same quest).
+    /// few stars placed by the quest's row id (the same sky for the same quest), on a palette with a star field.
     /// </summary>
     private static void NightSky(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding, uint seed)
     {
@@ -582,7 +582,7 @@ public sealed partial class DetailPane
         var horizon = MathF.Floor(min.Y + (height * 0.72f));
         var line = Theme.WithAlpha(s.Ornament, Theme.OrnamentAlpha(0.45f));
         dl.AddRectFilled(new Vector2(min.X + UiMetrics.Px(6f), horizon), new Vector2(max.X - UiMetrics.Px(6f), horizon + 1f), line);
-        if (!Theme.ShowGlow)
+        if (!Theme.ShowGlow || !Theme.Scene.StarField)
         {
             return;
         }
@@ -596,7 +596,7 @@ public sealed partial class DetailPane
             var x = min.X + (width * ((hash & 0xFFFF) / 65535f));
             var y = min.Y + (height * 0.66f * (((hash >> 16) & 0xFFFF) / 65535f));
             var bright = (hash & 0x7) == 0;
-            dl.AddCircleFilled(new Vector2(x, y), bright ? UiMetrics.Px(1.2f) : UiMetrics.Px(0.7f), Theme.WithAlpha(Theme.Silver, bright ? 0.7f : 0.4f), 6);
+            dl.AddCircleFilled(new Vector2(x, y), bright ? UiMetrics.Px(1.2f) : UiMetrics.Px(0.7f), Theme.WithAlpha(Theme.Surface.Text, bright ? 0.7f : 0.4f), 6);
         }
     }
 

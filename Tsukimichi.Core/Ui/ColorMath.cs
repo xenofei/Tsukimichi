@@ -25,6 +25,35 @@ public static class ColorMath
         return (MathF.Max(la, lb) + 0.05f) / (MathF.Min(la, lb) + 0.05f);
     }
 
+    /// <summary>WCAG 2.x AA for body text (1.4.3): 4.5 : 1.</summary>
+    public const float AaText = 4.5f;
+
+    /// <summary>WCAG 2.x AA for large text and UI components (1.4.3, 1.4.11): 3 : 1.</summary>
+    public const float AaNonText = 3f;
+
+    /// <summary>WCAG 2.x AAA for body text (1.4.6): 7 : 1.</summary>
+    public const float AaaText = 7f;
+
+    /// <summary>
+    /// The contrast of <paramref name="ink"/> on <paramref name="ground"/> as drawn over an opaque
+    /// <paramref name="backdrop"/>: the ground composited over the backdrop, then the ink over that, each with its alpha.
+    /// </summary>
+    public static float ContrastOn(Vector4 ink, Vector4 ground, Vector4 backdrop)
+    {
+        var bg = Over(ground, Opaque(backdrop));
+        return Contrast(Over(ink, bg), bg);
+    }
+
+    /// <summary>Whether <paramref name="ink"/> reads as body text on the opaque <paramref name="ground"/> (<see cref="AaText"/>).</summary>
+    public static bool ReadsAsText(Vector4 ink, Vector4 ground) => Contrast(ink, ground) >= AaText;
+
+    /// <summary>The colour's RGB as 0xRRGGBB (rounded; alpha ignored): for messages and the palette tests.</summary>
+    public static uint ToHex(Vector4 color)
+    {
+        static uint Channel(float v) => (uint)Math.Clamp((int)MathF.Round((float.IsFinite(v) ? v : 0f) * 255f), 0, 255);
+        return (Channel(color.X) << 16) | (Channel(color.Y) << 8) | Channel(color.Z);
+    }
+
     /// <summary><paramref name="top"/> composited over an opaque <paramref name="bottom"/> with the top's alpha; the result is opaque.</summary>
     public static Vector4 Over(Vector4 top, Vector4 bottom)
     {
@@ -81,7 +110,8 @@ public static class ColorMath
 /// <summary>
 /// The surface and text roles the chrome draws with (ui-revamp §4.3): the Night palette by default, or one derived
 /// from the user's Dalamud style when "Follow Dalamud colours" is on (game UX panel finding 9: one layout, two
-/// palettes). Gold, Eclipse and the glyph colours are not part of it; they stay fixed in both palettes.
+/// palettes). It is one part of a <see cref="Themes.UiPalette"/>; gold, the danger tone and the scene live beside it
+/// there, and the glyph colours stay fixed in every palette.
 /// </summary>
 /// <param name="Window">Window body (Night).</param>
 /// <param name="Sunken">Wells: search pill, gauge wells, level pills (NightSunken).</param>
@@ -142,8 +172,20 @@ public readonly record struct SurfaceColors(
     public const float DeepDarkenLight = 0.10f;
 
     /// <summary>
-    /// The Night palette (ui-revamp §4.3, moon-road proposal §3): what the chrome draws with unless the user follows
-    /// Dalamud's colours.
+    /// #8B94B3 – Night's tertiary text since 1.16 (spec-1.16 §A2): Dusk #7C86A8 was 3.8 : 1 on Hover and 4.3 : 1 on
+    /// Raised; this reads at 4.5 : 1 on all four surfaces. The glyphs keep Dusk.
+    /// </summary>
+    public const uint NightTextTertiaryHex = 0x8B94B3;
+
+    /// <summary>
+    /// #646D8A – Night's strong line since 1.16 (spec-1.16 §A2): VeilLine #5C6584 was 2.7 : 1 on Raised; this is 3 : 1.
+    /// The glyphs keep VeilLine.
+    /// </summary>
+    public const uint NightStrongLineHex = 0x646D8A;
+
+    /// <summary>
+    /// The Night palette (ui-revamp §4.3, moon-road proposal §3, the spec-1.16 §A2 contrast fixes): what the chrome
+    /// draws with unless the user follows Dalamud's colours.
     /// </summary>
     public static readonly SurfaceColors Night = new(
         GlyphTokens.Night,
@@ -151,10 +193,10 @@ public readonly record struct SurfaceColors(
         GlyphTokens.NightRaised,
         GlyphTokens.NightHover,
         GlyphTokens.NightLine,
-        GlyphTokens.VeilLine,
+        ColorMath.FromHex(NightStrongLineHex),
         GlyphTokens.Silver,
         GlyphTokens.Mist,
-        GlyphTokens.Dusk,
+        ColorMath.FromHex(NightTextTertiaryHex),
         GlyphTokens.Veil,
         Light: false,
         Deep: GlyphTokens.Abyss,

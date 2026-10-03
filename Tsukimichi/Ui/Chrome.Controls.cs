@@ -54,7 +54,7 @@ public static partial class Chrome
         var radius = size.Y * 0.5f;
 
         // The track: sunken when off, a gold wash when on; the border goes gold with it.
-        var accent = silver ? s.Text : Theme.Moon;
+        var accent = silver ? s.Text : Theme.ToggleOn;
         var off = Theme.WithAlphaVector(s.Sunken, alpha);
         var on = Theme.WithAlphaVector(Vector4.Lerp(s.Sunken, accent, silver ? 0.30f : 0.38f), alpha);
         dl.AddRectFilled(min, max, Theme.U32(Vector4.Lerp(off, on, t)), radius);
@@ -63,7 +63,7 @@ public static partial class Chrome
             dl.AddRectFilled(min, max, Theme.WithAlpha(s.Hover, 0.5f * hover * alpha), radius);
         }
 
-        var border = Vector4.Lerp(s.Line, silver ? s.Text with { W = 0.55f } : Theme.Moon, t);
+        var border = Vector4.Lerp(s.Line, silver ? s.Text with { W = 0.55f } : Theme.Gold, t);
         dl.AddRect(min, max, Theme.WithAlpha(border, border.W * alpha), radius, ImDrawFlags.None, UiMetrics.Hairline);
 
         // The knob: a disc in the secondary tone when off, a crescent of moonlight when on.
@@ -72,7 +72,7 @@ public static partial class Chrome
         var left = min.X + radius;
         var right = max.X - radius;
         var center = new Vector2(left + ((right - left) * t), min.Y + radius);
-        var knobInk = Vector4.Lerp(s.TextSecondary, silver ? s.Text : Theme.MoonHigh, t);
+        var knobInk = Vector4.Lerp(s.TextSecondary, silver ? s.Text : Theme.ToggleKnob, t);
         dl.AddCircleFilled(center, knob, Theme.WithAlpha(knobInk, alpha), 24);
         if (t > 0.01f)
         {
@@ -170,7 +170,7 @@ public static partial class Chrome
         dl.AddRect(chosenMin, chosenMax, Theme.WithAlpha(s.Line, alpha), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         var bar = MathF.Max(1f, UiMetrics.Px(2f));
         var barInset = UiMetrics.Px(8f);
-        dl.AddRectFilled(new Vector2(chosenMin.X + barInset, chosenMax.Y - bar - UiMetrics.Px(2f)), new Vector2(chosenMax.X - barInset, chosenMax.Y - UiMetrics.Px(2f)), Theme.WithAlpha(Theme.Moon, alpha), bar * 0.5f);
+        dl.AddRectFilled(new Vector2(chosenMin.X + barInset, chosenMax.Y - bar - UiMetrics.Px(2f)), new Vector2(chosenMax.X - barInset, chosenMax.Y - UiMetrics.Px(2f)), Theme.WithAlpha(Theme.Gold, alpha), bar * 0.5f);
 
         for (var i = 0; i < count; i++)
         {

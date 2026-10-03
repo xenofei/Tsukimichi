@@ -65,43 +65,43 @@ public static class Marks
         {
             case Mark.Check:
                 if (keyline > 0f) Check(dl, center, size, ground, stroke + 2f * keyline);
-                Check(dl, center, size, palette.HighContrast ? Theme.U32(colors.Check) : Theme.MoonDimU32, stroke);
+                Check(dl, center, size, palette.HighContrast ? Theme.U32(colors.Check) : Theme.GoldDimU32, stroke);
                 break;
 
             case Mark.Cross:
                 if (keyline > 0f) Cross(dl, center, size, ground, stroke + 2f * keyline);
-                Cross(dl, center, size, palette.HighContrast ? Theme.U32(colors.Cross) : Theme.DuskU32, stroke);
+                Cross(dl, center, size, palette.HighContrast ? Theme.U32(colors.Cross) : Theme.U32(Theme.Surface.TextTertiary), stroke);
                 break;
 
             case Mark.Unmet:
                 var bold = stroke * 1.25f;
                 if (keyline > 0f) Cross(dl, center, size, ground, bold + 2f * keyline);
-                Cross(dl, center, size, palette.HighContrast ? Theme.U32(colors.Cross) : Theme.EclipseTextU32, bold);
+                Cross(dl, center, size, palette.HighContrast ? Theme.U32(colors.Cross) : Theme.DangerTextU32, bold);
                 break;
 
             case Mark.Unknown:
                 var h = DashHalf * size;
                 if (keyline > 0f) dl.AddLine(center + new Vector2(-h - keyline, 0f), center + new Vector2(h + keyline, 0f), ground, stroke + 2f * keyline);
-                dl.AddLine(center + new Vector2(-h, 0f), center + new Vector2(h, 0f), palette.HighContrast ? Theme.U32(colors.Dash) : Theme.DuskU32, stroke);
+                dl.AddLine(center + new Vector2(-h, 0f), center + new Vector2(h, 0f), palette.HighContrast ? Theme.U32(colors.Dash) : Theme.U32(Theme.Surface.TextTertiary), stroke);
                 break;
 
             case Mark.LivePip:
                 var live = MathF.Max(2.5f, PipRadius * size);
                 if (keyline > 0f) dl.AddCircleFilled(center, live + keyline, ground);
-                dl.AddCircleFilled(center, live, palette.HighContrast ? Theme.U32(colors.LivePip) : Theme.MoonU32);
+                dl.AddCircleFilled(center, live, palette.HighContrast ? Theme.U32(colors.LivePip) : Theme.GoldU32);
                 break;
 
             case Mark.SnapshotPip:
                 var r = MathF.Max(2.5f, PipRadius * size);
                 var ring = 1.5f * colors.StrokeScale;
                 if (keyline > 0f) dl.AddCircleFilled(center, r + keyline, ground);
-                dl.AddCircle(center, r - ring * 0.5f, palette.HighContrast ? Theme.U32(colors.SnapshotPip) : Theme.DuskU32, 0, ring);
+                dl.AddCircle(center, r - ring * 0.5f, palette.HighContrast ? Theme.U32(colors.SnapshotPip) : Theme.U32(Theme.Surface.TextTertiary), 0, ring);
                 break;
 
             case Mark.ElsewherePip:
                 var outer = MathF.Max(3.5f, PipRadius * 1.6f * size);
                 var elsewhereRing = 1.5f * colors.StrokeScale;
-                var ink = palette.HighContrast ? Theme.U32(colors.LivePip) : Theme.MoonU32;
+                var ink = palette.HighContrast ? Theme.U32(colors.LivePip) : Theme.GoldU32;
                 if (keyline > 0f) dl.AddCircleFilled(center, outer + keyline, ground);
                 dl.AddCircle(center, outer - elsewhereRing * 0.5f, ink, 0, elsewhereRing);
                 dl.AddCircleFilled(center, MathF.Max(1.5f, outer * 0.4f), ink);

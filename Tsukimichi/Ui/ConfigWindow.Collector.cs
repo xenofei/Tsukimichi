@@ -48,7 +48,7 @@ public sealed partial class ConfigWindow
 
         if (!settings.FreeTrialView && FreeTrialDetected?.Invoke() == true)
         {
-            SettingNote(Strings.TrialDetected, Theme.Moon);
+            SettingNote(Strings.TrialDetected, Theme.Accent);
         }
 
         EndSetting();

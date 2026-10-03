@@ -172,10 +172,10 @@ public sealed class HelpWindow : Window
     private static readonly Localization.LocCache<BadgeItem[]> badgesCache = new(static () =>
         [
         // The same tones as the Moonlit table's badge column (never gold: a badge is not a call to action).
-        new(Strings.MoonlitConfidenceStatic, Theme.Mist, Strings.Help.ConfidenceStaticMeaning),
-        new(Strings.MoonlitConfidenceCommunity, Theme.VeilText, Strings.Help.ConfidenceCommunityMeaning),
-        new(Strings.MoonlitConfidenceCurated, Theme.Silver, Strings.Help.ConfidenceCuratedMeaning),
-        new(Strings.MoonlitConfidenceUser, Theme.EclipseText, Strings.Help.ConfidenceUserMeaning),
+        new(Strings.MoonlitConfidenceStatic, Theme.Surface.TextSecondary, Strings.Help.ConfidenceStaticMeaning),
+        new(Strings.MoonlitConfidenceCommunity, Theme.UnknownText, Strings.Help.ConfidenceCommunityMeaning),
+        new(Strings.MoonlitConfidenceCurated, Theme.Surface.Text, Strings.Help.ConfidenceCuratedMeaning),
+        new(Strings.MoonlitConfidenceUser, Theme.DangerText, Strings.Help.ConfidenceUserMeaning),
     ]);
 
     private static CardItem[] CharacterCards => characterCardsCache.Value;
@@ -504,7 +504,7 @@ public sealed class HelpWindow : Window
         if (selected)
         {
             var inset = 4f * scale;
-            dl.AddRectFilled(new Vector2(min.X, min.Y + inset), new Vector2(min.X + BarWidth * scale, max.Y - inset), Theme.MoonU32, BarWidth * scale * 0.5f);
+            dl.AddRectFilled(new Vector2(min.X, min.Y + inset), new Vector2(min.X + BarWidth * scale, max.Y - inset), Theme.GoldU32, BarWidth * scale * 0.5f);
         }
 
         var textY = min.Y + (rowHeight - ImGui.GetTextLineHeight()) * 0.5f;
@@ -1010,14 +1010,14 @@ public sealed class HelpWindow : Window
         using var idScope = ImRaii.PushId(id);
         ImGui.Dummy(new Vector2(box, box));
         var center = pos + new Vector2(box * 0.5f);
-        dl.AddCircleFilled(center, radius, Theme.MoonU32);
+        dl.AddCircleFilled(center, radius, Theme.GoldU32);
         var numberSize = ImGui.CalcTextSize(step.Number);
-        dl.AddText(center - numberSize * 0.5f, Theme.NightU32, step.Number);
+        dl.AddText(center - numberSize * 0.5f, Theme.OnGoldU32, step.Number);
 
         ImGui.SameLine(0f, 10f * scale);
         using (ImRaii.Group())
         {
-            using (Theme.PushText(Theme.Moon))
+            using (Theme.PushText(Theme.Accent))
             {
                 ImGui.TextUnformatted(step.Title);
             }

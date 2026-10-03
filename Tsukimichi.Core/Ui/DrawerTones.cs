@@ -53,11 +53,25 @@ public readonly record struct DrawerTones(
     /// <summary>How strong the hover wash is drawn.</summary>
     public const float HoverAlpha = 0.8f;
 
-    /// <summary>The drawer's tones for <paramref name="flair"/> on <paramref name="surface"/>.</summary>
-    public static DrawerTones For(Flair flair, in SurfaceColors surface)
+    /// <summary>The designed tones on Night at each level: the Night palette's <see cref="Themes.UiPalette.DrawerTones"/>.</summary>
+    public static readonly Themes.DrawerToneSet NightSet = new(
+        For(Flair.Full, SurfaceColors.Night),
+        For(Flair.Quiet, SurfaceColors.Night),
+        For(Flair.Plain, SurfaceColors.Night));
+
+    /// <summary>
+    /// The drawer's tones for <paramref name="flair"/> in <paramref name="palette"/>: its designed tones when it has them
+    /// (Night's hexes), otherwise mixed from its surface. Allocates nothing.
+    /// </summary>
+    public static DrawerTones For(Flair flair, Themes.UiPalette palette) =>
+        palette.DrawerTones is { } designed ? designed.For(flair) : Build(flair, palette.Surface, night: false, palette.OrnamentLight);
+
+    /// <summary>The drawer's tones for <paramref name="flair"/> on <paramref name="surface"/>: Night's hexes on the Night surface, else mixed.</summary>
+    public static DrawerTones For(Flair flair, in SurfaceColors surface) => Build(flair, surface, surface == SurfaceColors.Night, surface.OrnamentLight);
+
+    private static DrawerTones Build(Flair flair, in SurfaceColors surface, bool night, Vector4 heading)
     {
         var s = surface;
-        var night = s == SurfaceColors.Night;
         var down = s.Light ? s.Text : new Vector4(0f, 0f, 0f, 1f);
         var pill = night ? ColorMath.FromHex(PillHex) : ColorMath.Mix(s.Raised, s.Text, 0.08f);
         var hover = night ? ColorMath.FromHex(HoverHex) : s.Hover;
@@ -67,7 +81,7 @@ public readonly record struct DrawerTones(
             {
                 var top = night ? ColorMath.FromHex(FullTopHex) : ColorMath.Mix(s.Raised, s.Text, 0.02f);
                 var foot = night ? ColorMath.FromHex(FullFootHex) : ColorMath.Mix(s.Raised, down, s.Light ? 0.03f : 0.25f);
-                return new DrawerTones(top, foot, s.Line, pill, top, foot, hover, s.OrnamentLight);
+                return new DrawerTones(top, foot, s.Line, pill, top, foot, hover, heading);
             }
 
             case Flair.Quiet:

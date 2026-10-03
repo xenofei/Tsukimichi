@@ -129,7 +129,7 @@ public sealed partial class MainWindow : Window, IDisposable
     private const float StatusMinLogical = 120f;
 
     /// <summary>The MSQ pill's fill: Moon at 10 % (ui-revamp §2.6).</summary>
-    private static readonly uint MsqPillFill = Theme.WithAlpha(Theme.Moon, 0.10f);
+    private static uint MsqPillFill => Theme.WithAlpha(Theme.Gold, 0.10f);
 
     /// <summary>The data version stamp the status text shows on hover (the same line as Settings › About); null shows no tooltip.</summary>
     public string? DataStamp { get; set; }
@@ -936,7 +936,7 @@ public sealed partial class MainWindow : Window, IDisposable
 
     private void DrawCatalogError(SessionState session)
     {
-        using (Theme.PushText(Theme.Eclipse))
+        using (Theme.PushText(Theme.Danger))
         {
             ImGui.TextUnformatted(Strings.CatalogUnavailable);
         }
@@ -1875,8 +1875,8 @@ public sealed partial class MainWindow : Window, IDisposable
             {
                 // Full: the live pip glows (warm light, low).
                 var pip = new Vector2(x + (pipSize * 0.5f), textY + (pipSize * 0.5f));
-                dl.AddCircleFilled(pip, pipSize * 0.42f, Theme.WithAlpha(Theme.Moon, 0.14f), 16);
-                dl.AddCircleFilled(pip, pipSize * 0.30f, Theme.WithAlpha(Theme.Moon, 0.16f), 16);
+                dl.AddCircleFilled(pip, pipSize * 0.42f, Theme.Glow(0.14f), 16);
+                dl.AddCircleFilled(pip, pipSize * 0.30f, Theme.Glow(0.16f), 16);
             }
 
             ImGui.SetCursorScreenPos(new Vector2(x, textY));
@@ -1908,7 +1908,7 @@ public sealed partial class MainWindow : Window, IDisposable
                     // Full: the gold-tinted pill with a gold edge and the MSQ quest's medal at its start.
                     var r = (pillMax.Y - pillMin.Y) * 0.5f;
                     dl.AddRectFilledMultiColor(pillMin, pillMax, MsqPillTop, MsqPillTop, MsqPillFill, MsqPillFill);
-                    dl.AddRect(pillMin, pillMax, Theme.WithAlpha(Theme.Moon, 0.35f), r, ImDrawFlags.None, UiMetrics.Hairline);
+                    dl.AddRect(pillMin, pillMax, Theme.WithAlpha(Theme.Gold, 0.35f), r, ImDrawFlags.None, UiMetrics.Hairline);
                     if (msq is { } position && msqRoom > (2f * pillPad) + line)
                     {
                         var medal = MathF.Round(line * 0.42f);
@@ -1974,11 +1974,11 @@ public sealed partial class MainWindow : Window, IDisposable
     private const string StatusBar = "|";
 
     /// <summary>The MSQ pill's lit top at Full (the gold tint at 0.16 over 0.08 at its foot).</summary>
-    private static readonly uint MsqPillTop = Theme.WithAlpha(Theme.Moon, 0.16f);
+    private static uint MsqPillTop => Theme.WithAlpha(Theme.Gold, 0.16f);
 
-    /// <summary>The status bar's ground at Full: the Deep gradient's two stops.</summary>
-    private static readonly System.Numerics.Vector4 StatusDeepTop = Core.Ui.ColorMath.FromHex(0x0E1329);
-    private static readonly System.Numerics.Vector4 StatusDeepFoot = Core.Ui.ColorMath.FromHex(0x0A0E1C);
+    /// <summary>The status bar's ground at Full: the Deep gradient's two stops (the palette's scene; Deep under Follow Dalamud).</summary>
+    private static System.Numerics.Vector4 StatusDeepTop => Theme.Scene.StatusTop;
+    private static System.Numerics.Vector4 StatusDeepFoot => Theme.Scene.StatusFoot;
 
     /// <summary>
     /// The status bar's ground from <paramref name="min"/> (its rule) to the window's foot: at Full the Deep gradient
@@ -1994,8 +1994,8 @@ public sealed partial class MainWindow : Window, IDisposable
         {
             case StatusBarStyle.MoonRoad:
             {
-                var top = Theme.FollowingDalamud ? Theme.Surface.Deep : StatusDeepTop;
-                var foot = Theme.FollowingDalamud ? Theme.Surface.Deep : StatusDeepFoot;
+                var top = StatusDeepTop;
+                var foot = StatusDeepFoot;
                 dl.AddRectFilledMultiColor(min, max, Theme.WithAlpha(top, alpha), Theme.WithAlpha(top, alpha), Theme.WithAlpha(foot, alpha), Theme.WithAlpha(foot, alpha));
                 if (Theme.Glyphs.HighContrast)
                 {

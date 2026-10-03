@@ -192,7 +192,7 @@ public sealed class FlightPane
                 else
                 {
                     ImGui.TableNextColumn();
-                    using (Theme.PushText(Theme.Dusk))
+                    using (Theme.PushText(Theme.Surface.TextTertiary))
                     {
                         ImGui.TextUnformatted(group.Header);
                     }
@@ -246,7 +246,7 @@ public sealed class FlightPane
 
         if (!session.IsLive)
         {
-            using var dusk = Theme.PushText(Theme.Dusk);
+            using var dusk = Theme.PushText(Theme.Surface.TextTertiary);
             ImGui.TextWrapped(Strings.FlightOfflineHint);
         }
 
@@ -567,7 +567,7 @@ public sealed class FlightPane
             var min = ImGui.GetItemRectMin();
             var max = ImGui.GetItemRectMax();
             ImGuiP.TablePushBackgroundChannel();
-            ImGui.GetWindowDrawList().AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, UiMetrics.Px(2f)), max.Y), Theme.MoonU32);
+            ImGui.GetWindowDrawList().AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, UiMetrics.Px(2f)), max.Y), Theme.GoldU32);
             ImGuiP.TablePopBackgroundChannel();
         }
 
@@ -648,7 +648,7 @@ public sealed class FlightPane
         else
         {
             // Loading, or no such file: the drawn night sky (NightTop over TideDeep).
-            dl.AddRectFilledMultiColor(min, max, Theme.NightTopU32, Theme.NightTopU32, Theme.TideDeepU32, Theme.TideDeepU32);
+            dl.AddRectFilledMultiColor(min, max, Theme.TopU32, Theme.TopU32, Theme.U32(Theme.Surface.CoolDeep), Theme.U32(Theme.Surface.CoolDeep));
         }
 
         var s = Theme.Surface;
@@ -669,7 +669,7 @@ public sealed class FlightPane
             dl.AddRectFilledMultiColor(min, new Vector2(min.X + (width * 0.6f), max.Y), side, clear, clear, side);
         }
 
-        dl.AddRect(min, max, highContrast ? Theme.VeilLineU32 : Theme.U32(s.Line), 0f, ImDrawFlags.None, UiMetrics.Hairline);
+        dl.AddRect(min, max, highContrast ? Theme.U32(Theme.Surface.StrongLine) : Theme.U32(s.Line), 0f, ImDrawFlags.None, UiMetrics.Hairline);
         var x = min.X + pad;
         var icon = zone.Zone.ExpansionIcon;
         if (icon != 0)

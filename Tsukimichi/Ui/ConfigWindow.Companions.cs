@@ -112,9 +112,9 @@ public sealed partial class ConfigWindow
         ImGui.TableNextColumn();
         var (icon, color) = status.State switch
         {
-            CompanionState.Loaded => (LoadedIcon, Theme.Moon),
+            CompanionState.Loaded => (LoadedIcon, Theme.Accent),
             CompanionState.Disabled => (DisabledIcon, Theme.Surface.TextSecondary),
-            CompanionState.Outdated => (OutdatedIcon, Theme.EclipseText),
+            CompanionState.Outdated => (OutdatedIcon, Theme.DangerText),
             _ => (MissingIcon, Theme.Surface.TextDisabled),
         };
         using (ImRaii.PushFont(UiBuilder.IconFont))
