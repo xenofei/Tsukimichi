@@ -62,7 +62,7 @@ def main() -> int:
     entry = dict(manifest)
     entry["Description"] = entry.get("Description", "").replace("\r\n", "\n")
     entry.update({
-        "IconUrl": f"{raw}/assets/icon.png",
+        "IconUrl": f"{raw}/assets/icon-medallion.png",
         "DownloadLinkInstall": download,
         "DownloadLinkTesting": download,
         "DownloadLinkUpdate": download,

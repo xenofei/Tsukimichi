@@ -1,7 +1,7 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
 
   <PropertyGroup>
-    <Version>1.12.3.0</Version>
+    <Version>1.12.4.0</Version>
     <Author>Michiru Tsukikage</Author>
     <Name>Tsukimichi</Name>
     <Punchline>Walk the moon's path: every quest, every requirement, every unique reward.</Punchline>
@@ -9,7 +9,7 @@
 Moonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.</Description>
     <RepoUrl>https://github.com/xenofei/Tsukimichi</RepoUrl>
     <!-- Dalamud reads the installer icon from the plugin's own manifest (DalamudPackager maps IconUrl to it), not from pluginmaster.json. -->
-    <IconUrl>https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon.png</IconUrl>
+    <IconUrl>https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon-medallion.png</IconUrl>
     <Tags>quests;journal;tracker;rewards</Tags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Copyright>Copyright (c) 2026 Michiru Tsukikage</Copyright>

@@ -4,6 +4,11 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.12.4] - 2026-10-03
+
+### Fixed
+- The plugin installer shows the new Menphina's Medallion icon. Dalamud had kept the old picture because its address never changed; the icon now has a new address. If you still see the old one, restart the game once.
+
 ## [1.12.3] - 2026-10-03
 
 ### Changed
