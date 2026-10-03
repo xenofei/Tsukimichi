@@ -1590,8 +1590,8 @@
     <value>Yours: you hid this reward as not unique</value>
   </data>
   <data name="MoonlitNoIconTooltip" xml:space="preserve">
-    <value>No icon for this reward kind</value>
-    <comment>Hover text of the veiled stand-in drawn where a reward of a kind without sheet art would show its icon.</comment>
+    <value>The game has no art of its own for this reward; its kind's icon stands in</value>
+    <comment>Hover text of the faded kind icon drawn where a reward without art of its own would show its icon.</comment>
   </data>
   <data name="MoonlitKindCountTooltipFormat" xml:space="preserve">
     <value>{0} obtained</value>
@@ -1793,6 +1793,10 @@
   </data>
   <data name="FlightNoData" xml:space="preserve">
     <value>Aether current data could not be read from the game; the Flight view is empty.</value>
+  </data>
+  <data name="FlightLoading" xml:space="preserve">
+    <value>Reading the flying zones…</value>
+    <comment>Shown in the Flight tab for the moment the zone list is still being read from the game after the plugin loads.</comment>
   </data>
   <data name="FlightNoZone" xml:space="preserve">
     <value>Pick a zone on the left.</value>

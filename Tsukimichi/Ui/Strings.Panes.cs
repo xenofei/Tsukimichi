@@ -196,6 +196,8 @@ static partial class Strings
     // ---- Flight pane ----
     public static string TabFlight => Loc.Get("TabFlight");
     public static string FlightNoData => Loc.Get("FlightNoData");
+
+    public static string FlightLoading => Loc.Get("FlightLoading");
     public static string FlightNoZone => Loc.Get("FlightNoZone");
     public static string FlightOfflineHint => Loc.Get("FlightOfflineHint");
     public const string FlightCurrentZoneMarker = "● ";

@@ -697,6 +697,27 @@ public sealed partial class Plugin : IDalamudPlugin
         {
             Log.Warning(ex, "Collecting what quests open failed");
         }
+
+        try
+        {
+            // The plan's tags start on a worker as the catalog lands, not on the Plan tab's first draw (A11).
+            planSource?.Warm();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Starting the plan's tags failed");
+        }
+
+        try
+        {
+            // Companion settings are read here, when a hand-off button or Settings asked for them and a read is due, so
+            // a draw only ever reads the last answer (A11).
+            companionSetup.Tick();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Reading the companion plugins' settings failed");
+        }
     }
 
     /// <summary>
@@ -877,6 +898,13 @@ public sealed partial class Plugin : IDalamudPlugin
             InitializeGameState();
             // ---- end game state ----
 
+            // No first-open freezes (feature plan v6 A11): the sheet indexes the Flight, Plan and Moonlit panes, travel
+            // and the Duties section read are built now on workers, in the client's language; a pane shows its loading
+            // line for the moment one takes, and never builds one on its first draw.
+            var warmer = new Game.IndexWarmer(DataManager, Session, Strings.FlightAllZonesFormat, Log);
+            _ = warmer.Start();
+            gameLinks.AetheryteWarmup = warmer.Aetherytes;
+
             // "Open on…" (1.8.0): the shipped link table; the browser opens the pages, the plugin stays offline (decision 8).
             var externalIds = Core.Links.ExternalIds.Load(Paths.ExternalIdsFile);
             foreach (var warning in externalIds.Warnings)
@@ -896,6 +924,10 @@ public sealed partial class Plugin : IDalamudPlugin
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log, CollectibleFlags!);
             moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface, gameLinks) { Writer = Writer };
             MoonlitPane moonlit = moonlitPane;
+            // Every reward's own game art (feature plan v6 G6), read at load off the frame; the rows show what the quest
+            // data knows until it lands, then are built again with it.
+            moonlit.Icons.Art = () => warmer.RewardArt.Value;
+            moonlit.WarmCatalog();
             // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells and
             // "Also drops in …" for rewards a duty also drops.
             gameLinks.IsStoreResell = reward => Session.StoreResells.Contains(reward);
@@ -989,7 +1021,7 @@ public sealed partial class Plugin : IDalamudPlugin
             // What every quest opens (feature plan v6 K1): built once per catalog off the frame, from the client's own
             // sheets (warps, map regions, aethernet gates, objectives) and the shipped and curated data. The unlock
             // rows' map and Duty Finder calls take the same kill switch as the hooks.
-            questUnlocks = BuildQuestUnlocksSource();
+            questUnlocks = BuildQuestUnlocksSource(warmer);
             queryRunner.Unlocks = questUnlocks;
             moonlit.Unlocks = questUnlocks;
             moonlit.UnlockReach = () => queryRunner.UnlockReach;
@@ -1060,17 +1092,7 @@ public sealed partial class Plugin : IDalamudPlugin
             var autoDuty = new Game.AutoDutyIpc(PluginInterface, companions, Log);
             companionSetup.UseGates(Core.Companions.CompanionPlugin.AutoDuty, new Game.AutoDutySettingGates(PluginInterface, autoDuty, Log));
             var questMap = new Game.QuestMapIpc(PluginInterface, companions, Log);
-            var dutyLanguage = Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language);
-            var dutyRuns = new Core.Runtime.WarmedValue<Core.Companions.DutyRunIndex>(
-                () =>
-                {
-                    var started = Stopwatch.GetTimestamp();
-                    var index = DutyRunSheets.Build(DataManager.Excel, dutyLanguage);
-                    Log.Debug("Duty index: {Count} duties read in {Ms:F0} ms on a worker", index.Count, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
-                    return index;
-                },
-                ex => Log.Warning(ex, "Duty index unavailable; the Duties section is hidden"));
-            _ = dutyRuns.Start();
+            var dutyRuns = warmer.DutyRuns;
             mainWindow.AttachCompanions(
                 companions,
                 autoDuty,
@@ -1177,11 +1199,12 @@ public sealed partial class Plugin : IDalamudPlugin
 
                 ui.OpenRoute(duty with { QuestRowIds = quests });
             };
-            // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
-            flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => FlightIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language), Strings.FlightAllZonesFormat));
+            // The flight index (a few small sheets) is warmed at load; the pane says it is reading them until it lands.
+            flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => warmer.Flight.IsDone ? warmer.Flight.Value ?? FlightIndex.Empty : null);
             mainWindow.AttachFlight(flightPane);
-            // Clear my blues (P3): the duty kinds (ContentFinderCondition) are read on the plan's first use.
-            planSource = new PlanSource(Session, () => DutyIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)), Log)
+            // Clear my blues (P3): the duty kinds (ContentFinderCondition) are warmed at load; the plan's tags are built
+            // off the frame once they and the catalog are in.
+            planSource = new PlanSource(Session, () => warmer.Duties.IsDone ? warmer.Duties.Value ?? Core.Plan.PlanDuties.Empty : null, Log)
             {
                 // Zones of a level band are walked region by region (1.6.0), the region read from the giver's map.
                 RegionOfMap = mapId => gameLinks.Map(mapId)?.Region ?? string.Empty,

@@ -84,4 +84,35 @@ public sealed class WarmedValueTests
         Assert.Null(warmed.Value);
         Assert.IsType<InvalidOperationException>(reported);
     }
+
+    [Fact]
+    public async Task Wait_starts_the_build_once_and_waits_for_the_one_under_way()
+    {
+        using var gate = new ManualResetEventSlim();
+        var builds = 0;
+        var warmed = new WarmedValue<string>(() =>
+        {
+            Interlocked.Increment(ref builds);
+            gate.Wait(TimeSpan.FromSeconds(10));
+            return "index";
+        });
+
+        _ = warmed.Start();
+        Assert.False(warmed.IsDone);
+        var waiter = Task.Run(warmed.Wait);
+        gate.Set();
+
+        Assert.Equal("index", await waiter);
+        Assert.Equal("index", warmed.Wait());
+        Assert.Equal(1, builds);
+        Assert.True(warmed.IsDone);
+        Assert.True(warmed.BuildMs >= 0);
+    }
+
+    [Fact]
+    public void Wait_without_a_start_builds_on_a_worker_and_a_failure_reads_as_null()
+    {
+        Assert.Equal("index", new WarmedValue<string>(static () => "index").Wait());
+        Assert.Null(new WarmedValue<string>(static () => throw new InvalidOperationException("no sheet")).Wait());
+    }
 }
