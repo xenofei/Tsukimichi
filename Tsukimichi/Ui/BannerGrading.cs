@@ -70,6 +70,13 @@ public static class BannerGrading
     /// </summary>
     public static void DrawImage(ImDrawListPtr dl, IDalamudTextureWrap source, in Key key, Vector2 min, Vector2 max, float rounding)
     {
+        if (!Theme.Scene.NightGrade)
+        {
+            // A light palette's daylight: the art as painted (the scrim to the window still applies in DrawOver).
+            Chrome.ImageCoverAt(dl, source.Handle, min, max, new Vector2(source.Width, source.Height), rounding);
+            return;
+        }
+
         var frame = ImGui.GetFrameCount();
         var drawWidth = (int)MathF.Ceiling(max.X - min.X);
         Entry? entry;
@@ -140,14 +147,14 @@ public static class BannerGrading
             }
         }
 
-        if (Theme.Glyphs.HighContrast)
+        if (Theme.Glyphs.HighContrast || !Theme.Scene.NightGrade)
         {
             return;
         }
 
         // The moonlight wash: MoonHigh from the upper-left corner, gone by the far side.
-        var wash = Theme.WithAlpha(Theme.MoonHigh, BannerGrade.WashAlpha);
-        var clear = Theme.WithAlpha(Theme.MoonHigh, 0f);
+        var wash = Theme.WithAlpha(Theme.Scene.Moonlight, BannerGrade.WashAlpha);
+        var clear = Theme.WithAlpha(Theme.Scene.Moonlight, 0f);
         dl.AddRectFilledMultiColor(min, new Vector2(min.X + (size.X * 0.7f), min.Y + (size.Y * 0.8f)), wash, clear, clear, clear);
 
         // The moon road on the water: six MoonHigh dashes, faint, widening toward the viewer.
@@ -160,7 +167,7 @@ public static class BannerGrading
             var w = MathF.Max(2f, size.X * width);
             var x = cx + (size.X * nudge) - (w * 0.5f);
             var at = MathF.Round(roadTop + (roadHeight * y));
-            dl.AddRectFilled(new Vector2(x, at), new Vector2(x + w, at + thickness), Theme.WithAlpha(Theme.MoonHigh, alpha), thickness * 0.5f);
+            dl.AddRectFilled(new Vector2(x, at), new Vector2(x + w, at + thickness), Theme.WithAlpha(Theme.Scene.Moonlight, alpha), thickness * 0.5f);
         }
     }
 

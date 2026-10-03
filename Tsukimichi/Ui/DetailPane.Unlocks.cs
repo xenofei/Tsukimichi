@@ -339,7 +339,7 @@ public sealed partial class DetailPane
 
             if (row.ConfirmedText is { } confirmed)
             {
-                using (Theme.PushText(Theme.Moon))
+                using (Theme.PushText(Theme.Accent))
                 {
                     ImGui.TextUnformatted(confirmed);
                 }

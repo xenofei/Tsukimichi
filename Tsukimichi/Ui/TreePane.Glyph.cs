@@ -51,10 +51,10 @@ public sealed partial class TreePane
         }
     }
 
-    /// <summary>The Quiet ring's track (NightLine) and its arc (a muted gold, deeper once complete).</summary>
-    private static readonly Vector4 RingTrack = Core.Ui.ColorMath.FromHex(0x2A3149);
-    private static readonly Vector4 RingArc = Core.Ui.ColorMath.FromHex(0xCDB57A);
-    private static readonly Vector4 RingDone = Core.Ui.ColorMath.FromHex(0xB8933F);
+    /// <summary>The Quiet ring's track (the palette's line, NightLine) and its arc (a muted gold, deeper once complete).</summary>
+    private static Vector4 RingTrack => Theme.Surface.Line;
+    private static Vector4 RingArc => Theme.GaugeArc;
+    private static Vector4 RingDone => Theme.GaugeDone;
 
     /// <summary>
     /// Quiet's gauge (docs/design/flair-v13 §1, "Tree gauges"): a 2 px track and its arc from twelve o'clock, clockwise,
@@ -64,7 +64,7 @@ public sealed partial class TreePane
     {
         var thickness = MathF.Max(1.5f, UiMetrics.Px(2f));
         var highContrast = Theme.Glyphs.HighContrast;
-        dl.AddCircle(center, radius, highContrast ? Theme.VeilLineU32 : Theme.U32(RingTrack), 40, thickness);
+        dl.AddCircle(center, radius, highContrast ? Theme.U32(Theme.Surface.StrongLine) : Theme.U32(RingTrack), 40, thickness);
         var f = Math.Clamp(float.IsFinite(fraction) ? fraction : 0f, 0f, 1f);
         if (f <= 0f)
         {
@@ -74,7 +74,7 @@ public sealed partial class TreePane
         var start = -MathF.PI * 0.5f;
         dl.PathClear();
         dl.PathArcTo(center, radius, start, start + (MathF.Tau * f), Math.Max(6, (int)MathF.Ceiling(40 * f)));
-        dl.PathStroke(highContrast ? Theme.MoonU32 : Theme.U32(complete ? RingDone : RingArc), ImDrawFlags.None, thickness);
+        dl.PathStroke(highContrast ? Theme.GoldU32 : Theme.U32(complete ? RingDone : RingArc), ImDrawFlags.None, thickness);
     }
 
     /// <summary>The Ready dot on the halo: a Moon disc on the ring at its upper right, ringed in Night so it reads over the arc.</summary>
@@ -82,7 +82,7 @@ public sealed partial class TreePane
     {
         var dot = center + (new Vector2(0.7071f, -0.7071f) * radius);
         var r = MathF.Max(2.5f, UiMetrics.Px(3f));
-        dl.AddCircleFilled(dot, r + MathF.Max(1f, UiMetrics.Px(1f)), Theme.NightU32);
-        dl.AddCircleFilled(dot, r, Theme.MoonU32);
+        dl.AddCircleFilled(dot, r + MathF.Max(1f, UiMetrics.Px(1f)), Theme.U32(Theme.Surface.Window));
+        dl.AddCircleFilled(dot, r, Theme.GoldU32);
     }
 }

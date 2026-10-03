@@ -53,7 +53,7 @@ public static class RewardTooltip
         if (links.IsStoreResell?.Invoke(reward) == true)
         {
             // Sold on the FFXIV Online Store as well (curated/online_store.json), so not exclusive to the quest.
-            using (Theme.PushText(Theme.Dusk))
+            using (Theme.PushText(Theme.Surface.TextTertiary))
             {
                 ImGui.TextUnformatted(Strings.MoonlitStoreOnly);
                 ImGui.SameLine();
@@ -64,7 +64,7 @@ public static class RewardTooltip
         if (links.DropWhere?.Invoke(reward) is { } where)
         {
             // A duty drops it too (curated/other_sources.json): the same "Also drops in …" line as the item hover hint.
-            using (Theme.PushText(Theme.Dusk))
+            using (Theme.PushText(Theme.Surface.TextTertiary))
             {
                 ImGui.TextUnformatted(DropLine(where));
             }

@@ -215,7 +215,7 @@ public sealed class RouteWindow : Window
 
         if (v.Route.Outcome == RouteOutcome.LockedOut)
         {
-            using (Theme.PushText(Theme.EclipseText))
+            using (Theme.PushText(Theme.DangerText))
             {
                 ImGui.TextWrapped(Strings.RouteLockedOut);
             }

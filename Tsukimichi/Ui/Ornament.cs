@@ -102,7 +102,7 @@ public static class Ornament
         if (!OrnamentAtlas.Draw(dl, OrnamentSprite.DividerPhases, min, min + new Vector2(phaseWidth, height)))
         {
             var r = height * 0.2f;
-            dl.AddCircleFilled(center, r * 1.3f, Theme.MoonU32);
+            dl.AddCircleFilled(center, r * 1.3f, Theme.GoldU32);
             dl.AddCircleFilled(center - new Vector2(phaseWidth * 0.3f, 0f), r, Theme.OrnamentHighU32);
             dl.AddCircleFilled(center + new Vector2(phaseWidth * 0.3f, 0f), r, Theme.OrnamentHighU32);
         }
@@ -125,7 +125,7 @@ public static class Ornament
         var w = r * 0.2f;
         dl.AddQuadFilled(center + new Vector2(0f, -r), center + new Vector2(w, 0f), center + new Vector2(0f, r), center + new Vector2(-w, 0f), c);
         dl.AddQuadFilled(center + new Vector2(-r, 0f), center + new Vector2(0f, -w), center + new Vector2(r, 0f), center + new Vector2(0f, w), c);
-        dl.AddCircleFilled(center, MathF.Max(0.8f, r * 0.17f), Theme.MoonHighU32);
+        dl.AddCircleFilled(center, MathF.Max(0.8f, r * 0.17f), Theme.GoldHighU32);
     }
 
     /// <summary>
@@ -150,8 +150,8 @@ public static class Ornament
         dl.AddRectFilledMultiColor(min, new Vector2(max.X, split), from, from, to, to);
     }
 
-    /// <summary>The Full sky's zenith on Night (docs/design/flair-v13 §1): the top brightened toward indigo.</summary>
-    public static readonly Vector4 Zenith = Core.Ui.ColorMath.FromHex(0x1B2552);
+    /// <summary>The Full sky's zenith (docs/design/flair-v13 §1): on Night the top brightened toward indigo; the palette's scene.</summary>
+    public static Vector4 Zenith => Theme.Scene.Zenith;
 
     /// <summary>How far down the Full sky falls to Night (46 %), and where the water's lift begins (70 %).</summary>
     public const float SkyFade = 0.46f;
@@ -175,7 +175,7 @@ public static class Ornament
         }
 
         var s = Theme.Surface;
-        var zenith = Theme.FollowingDalamud ? s.Top : Zenith;
+        var zenith = Zenith;
         var height = max.Y - min.Y;
         var from = Theme.WithAlpha(zenith, alpha);
         var clear = Theme.WithAlpha(zenith, 0f);
@@ -189,31 +189,25 @@ public static class Ornament
 
     // ------------------------------------------------------------------ gilt brass (Full's cards and tooltips)
 
-    /// <summary>The brass's four stops, lit from the upper left (spec §1, "Card frame"): highlight, body, shadow, reflected, deep.</summary>
-    public static readonly Vector4 BrassHigh = Core.Ui.ColorMath.FromHex(0xE2C78C);
-    public static readonly Vector4 BrassShadow = Core.Ui.ColorMath.FromHex(0x6E5732);
-    public static readonly Vector4 BrassReflected = Core.Ui.ColorMath.FromHex(0x9C8049);
-    public static readonly Vector4 BrassDeep = Core.Ui.ColorMath.FromHex(0x5A4729);
+    /// <summary>The brass's four stops, lit from the upper left (spec §1, "Card frame"): highlight, body, shadow, reflected, deep. The palette's <see cref="Theme.Brass"/>.</summary>
+    public static Vector4 BrassHigh => Theme.Brass.High;
+
+    public static Vector4 BrassShadow => Theme.Brass.Shadow;
+
+    public static Vector4 BrassReflected => Theme.Brass.Reflected;
+
+    public static Vector4 BrassDeep => Theme.Brass.Deep;
 
     /// <summary>The corner marks: the top two lit (GiltHigh, brighter), the bottom two a darker brass.</summary>
-    public static readonly Vector4 CornerLit = Core.Ui.ColorMath.FromHex(0xF0D9A0);
-    public static readonly Vector4 CornerShaded = Core.Ui.ColorMath.FromHex(0xB79755);
+    public static Vector4 CornerLit => Theme.Brass.CornerLit;
+
+    public static Vector4 CornerShaded => Theme.Brass.CornerShaded;
 
     /// <summary>
     /// The brass's colour at <paramref name="t"/> along its light (0 at the upper left, 1 at the lower right), a 160°
     /// gradient: highlight, Gilt at 28 %, shadow at 55 %, the reflected lift at 78 %, deep at the end.
     /// </summary>
-    public static Vector4 Brass(float t)
-    {
-        t = Math.Clamp(t, 0f, 1f);
-        return t switch
-        {
-            < 0.28f => Vector4.Lerp(BrassHigh, Theme.Gilt, t / 0.28f),
-            < 0.55f => Vector4.Lerp(Theme.Gilt, BrassShadow, (t - 0.28f) / 0.27f),
-            < 0.78f => Vector4.Lerp(BrassShadow, BrassReflected, (t - 0.55f) / 0.23f),
-            _ => Vector4.Lerp(BrassReflected, BrassDeep, (t - 0.78f) / 0.22f),
-        };
-    }
+    public static Vector4 Brass(float t) => Theme.Brass.At(t);
 
     /// <summary>
     /// A gilt brass border round <paramref name="min"/>..<paramref name="max"/>: one rounded outline, each vertex coloured
@@ -241,12 +235,13 @@ public static class Ornament
 
         // 160°: mostly down the card, a little to the right.
         var dir = new Vector2(0.342f, 0.940f);
+        var brass = Theme.Brass;
         var span = MathF.Max(1f, MathF.Abs(size.X * dir.X) + MathF.Abs(size.Y * dir.Y));
         for (var i = first; i < vertices.Size; i++)
         {
             var vertex = vertices[i];
             var t = Vector2.Dot(vertex.Pos - min, dir) / span;
-            var c = Brass(t);
+            var c = brass.At(t);
             c.W = (vertex.Col >> 24) / 255f;
             vertex.Col = Theme.U32(c);
             vertices[i] = vertex;

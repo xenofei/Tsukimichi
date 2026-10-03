@@ -158,7 +158,7 @@ public static class SectionHeading
             if (section)
             {
                 var ink = moonRoad ? Theme.Surface.OrnamentLight : Theme.Surface.Text;
-                Chrome.TrackedTextAt(dl, at, g.TitleRoom, label, Theme.U32(ink), tracking, moonRoad ? Theme.WithAlpha(Theme.Abyss, 0.55f) : 0u);
+                Chrome.TrackedTextAt(dl, at, g.TitleRoom, label, Theme.U32(ink), tracking, moonRoad ? Theme.Halo(0.55f) : 0u);
             }
             else
             {

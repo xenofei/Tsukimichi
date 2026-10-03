@@ -60,12 +60,12 @@ public sealed class TutorialOverlay : ITutorial
     /// <summary>Two holes (target and card) split the area into at most 4² pieces.</summary>
     private const int PieceCapacity = 16;
 
-    private static readonly uint DimU32 = Theme.WithAlpha(Theme.Night, DimAlpha);
-    private static readonly Vector4 CardBorder = Theme.WithAlphaVector(Theme.Moon, 0.8f);
-    private static readonly Vector4 CardButton = Vector4.Lerp(Theme.Night, Theme.Veil, 0.45f) with { W = 1f };
-    private static readonly Vector4 CardButtonHovered = Theme.Veil;
-    private static readonly Vector4 CardButtonActive = Theme.Dusk;
-    private static readonly Vector4 ChapterActive = Theme.WithAlphaVector(Theme.Moon, 0.22f);
+    private static uint DimU32 => Theme.WithAlpha(Theme.Scene.Scrim, DimAlpha);
+    private static Vector4 CardBorder => Theme.WithAlphaVector(Theme.Gold, 0.8f);
+    private static Vector4 CardButton => Vector4.Lerp(Theme.Surface.Window, Theme.Surface.TextDisabled, 0.45f) with { W = 1f };
+    private static Vector4 CardButtonHovered => Theme.Surface.TextDisabled;
+    private static Vector4 CardButtonActive => Theme.Surface.TextTertiary;
+    private static Vector4 ChapterActive => Theme.WithAlphaVector(Theme.Gold, 0.22f);
 
     private const ImGuiWindowFlags CardFlags =
         ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysAutoResize |
@@ -634,10 +634,10 @@ public sealed class TutorialOverlay : ITutorial
         {
             var spread = k * GlowStep * scale;
             var alpha = 0.28f - 0.08f * k;
-            dl.AddRect(target.Min - new Vector2(spread), target.Max + new Vector2(spread), Theme.WithAlpha(Theme.Moon, alpha), rounding + spread, ImDrawFlags.RoundCornersAll, GlowStep * scale);
+            dl.AddRect(target.Min - new Vector2(spread), target.Max + new Vector2(spread), Theme.Glow(alpha), rounding + spread, ImDrawFlags.RoundCornersAll, GlowStep * scale);
         }
 
-        dl.AddRect(target.Min, target.Max, Theme.MoonU32, rounding, ImDrawFlags.RoundCornersAll, BorderThickness * scale);
+        dl.AddRect(target.Min, target.Max, Theme.GoldU32, rounding, ImDrawFlags.RoundCornersAll, BorderThickness * scale);
     }
 
     private void DrawCard(Vector2 pos, in Step step, in ScreenRect screen, bool mainFocused)
@@ -652,11 +652,11 @@ public sealed class TutorialOverlay : ITutorial
             focusCard = false;
         }
 
-        using var colors = ImRaii.PushColor(ImGuiCol.WindowBg, Theme.Night)
+        using var colors = ImRaii.PushColor(ImGuiCol.WindowBg, Theme.Surface.Window)
                                  .Push(ImGuiCol.Border, CardBorder)
-                                 .Push(ImGuiCol.Text, Theme.Silver)
-                                 .Push(ImGuiCol.TextDisabled, Theme.Mist)
-                                 .Push(ImGuiCol.Separator, Theme.Veil)
+                                 .Push(ImGuiCol.Text, Theme.Surface.Text)
+                                 .Push(ImGuiCol.TextDisabled, Theme.Surface.TextSecondary)
+                                 .Push(ImGuiCol.Separator, Theme.Surface.TextDisabled)
                                  .Push(ImGuiCol.Button, CardButton)
                                  .Push(ImGuiCol.ButtonHovered, CardButtonHovered)
                                  .Push(ImGuiCol.ButtonActive, CardButtonActive);
@@ -702,7 +702,7 @@ public sealed class TutorialOverlay : ITutorial
         }
 
         using (Typography.Display())
-        using (Theme.PushText(Theme.Moon))
+        using (Theme.PushText(Theme.Accent))
         {
             ImGui.TextUnformatted(step.Title);
         }
@@ -808,7 +808,7 @@ public sealed class TutorialOverlay : ITutorial
 
             var active = !offering && (int)current == c;
             using (ImRaii.PushId(ChapterIds[c]))
-            using (ImRaii.PushColor(ImGuiCol.Button, ChapterActive, active).Push(ImGuiCol.Text, Theme.Moon, active))
+            using (ImRaii.PushColor(ImGuiCol.Button, ChapterActive, active).Push(ImGuiCol.Text, Theme.Accent, active))
             {
                 if (ImGui.Button(ChapterNames[c], new Vector2(0f, height)))
                 {

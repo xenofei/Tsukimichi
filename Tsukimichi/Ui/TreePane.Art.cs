@@ -136,7 +136,7 @@ public sealed partial class TreePane
         var max = new Vector2(MathF.Round(left) + length, MathF.Round(bottom));
         var min = new Vector2(MathF.Round(left), max.Y - thickness);
         var highContrast = Theme.Glyphs.HighContrast;
-        dl.AddRectFilled(min, max, highContrast ? Theme.VeilLineU32 : Theme.NightLineU32, thickness * 0.5f);
+        dl.AddRectFilled(min, max, highContrast ? Theme.U32(Theme.Surface.StrongLine) : Theme.U32(Theme.Surface.Line), thickness * 0.5f);
 
         var walked = MathF.Round(TreeRoad.Walked(length, fraction, thickness));
         if (walked <= 0f)
@@ -147,12 +147,12 @@ public sealed partial class TreePane
         var end = new Vector2(min.X + walked, max.Y);
         if (highContrast)
         {
-            dl.AddRectFilled(min, end, Theme.MoonU32, thickness * 0.5f);
+            dl.AddRectFilled(min, end, Theme.GoldU32, thickness * 0.5f);
             return;
         }
 
-        var from = selected ? Theme.MoonU32 : Theme.MoonDeepU32;
-        var to = selected ? Theme.MoonHighU32 : Theme.MoonU32;
+        var from = selected ? Theme.GoldU32 : Theme.GoldDeepU32;
+        var to = selected ? Theme.GoldHighU32 : Theme.GoldU32;
         dl.AddRectFilledMultiColor(min, end, from, to, to, from);
     }
 
@@ -178,8 +178,8 @@ public sealed partial class TreePane
         var thickness = MathF.Max(1f, MathF.Round(UiMetrics.Px(RoadLogical))) + 1f;
         var y1 = MathF.Round(bottom) + 0.5f;
         var y0 = y1 - thickness - 1f;
-        var peak = Theme.WithAlpha(Theme.MoonHigh, alpha);
-        var clear = Theme.WithAlpha(Theme.MoonHigh, 0f);
+        var peak = Theme.Sheen(alpha);
+        var clear = Theme.Sheen(0f);
         dl.PushClipRect(new Vector2(left, y0 - 1f), new Vector2(right, y1 + 1f), true);
         dl.AddRectFilledMultiColor(new Vector2(center - half, y0), new Vector2(center, y1), clear, peak, peak, clear);
         dl.AddRectFilledMultiColor(new Vector2(center, y0), new Vector2(center + half, y1), peak, clear, clear, peak);

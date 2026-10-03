@@ -35,7 +35,7 @@ public static class Orbit
     private const int RingSegments = 32;
 
     /// <summary>The ring's unlit track: VeilLine at 0.55 (proposal §3, OrbitTrack).</summary>
-    public static readonly uint TrackU32 = Theme.WithAlpha(Theme.VeilLine, 0.55f);
+    public static uint TrackU32 => Theme.WithAlpha(Theme.Surface.StrongLine, 0.55f);
 
     /// <summary>The filling moon's radius inside an orbit (the mockup's 8.5 in a ring of 14).</summary>
     public const float MoonLogical = 8f;
@@ -151,10 +151,10 @@ public static class Orbit
         var at = center + (new Vector2(cos, sin) * ringRadius);
         var pip = ReadyPipLogical * k;
         var spark = (2f * pip) + (3f * k);
-        dl.AddCircleFilled(at, pip + k, Theme.NightU32);
-        Ornament.Sigil(dl, at, spark + (2.5f * k), Theme.NightU32);
-        Ornament.Sigil(dl, at, spark, Theme.MoonU32);
-        dl.AddCircleFilled(at, pip * 0.75f, Theme.MoonU32);
+        dl.AddCircleFilled(at, pip + k, Theme.U32(Theme.Surface.Window));
+        Ornament.Sigil(dl, at, spark + (2.5f * k), Theme.U32(Theme.Surface.Window));
+        Ornament.Sigil(dl, at, spark, Theme.GoldU32);
+        dl.AddCircleFilled(at, pip * 0.75f, Theme.GoldU32);
     }
 
     private static (Vector2 Min, Vector2 Max) IconRect(Vector2 center, float k)
@@ -180,11 +180,11 @@ public static class Orbit
             // A 1 px Silver keyline, so dark tribe tiles do not melt into Night (proposal §10.2).
             if (IsCircular(icon))
             {
-                dl.AddCircle(center, (iconMax.X - iconMin.X) * 0.5f, Theme.SilverU32, 24, 1f);
+                dl.AddCircle(center, (iconMax.X - iconMin.X) * 0.5f, Theme.U32(Theme.Surface.Text), 24, 1f);
             }
             else
             {
-                dl.AddRect(iconMin, iconMax, Theme.SilverU32, rounding, ImDrawFlags.None, 1f);
+                dl.AddRect(iconMin, iconMax, Theme.U32(Theme.Surface.Text), rounding, ImDrawFlags.None, 1f);
             }
         }
 
@@ -211,13 +211,13 @@ public static class Orbit
 
         var r = RingRadiusLogical * k;
         var stroke = (highContrast ? 3f : StrokeLogical) * k;
-        var track = highContrast ? Theme.VeilLineU32 : TrackU32;
+        var track = highContrast ? Theme.U32(Theme.Surface.StrongLine) : TrackU32;
         dl.AddCircle(center, r, track, RingSegments, stroke);
 
         var start = GaugeGeometry.StartAngle;
         if (f >= 1f)
         {
-            dl.AddCircle(center, r, Theme.MoonU32, RingSegments, stroke);
+            dl.AddCircle(center, r, Theme.GoldU32, RingSegments, stroke);
             Bead(dl, center + new Vector2(0f, -r), k, full: true);
         }
         else if (f > 0f)
@@ -229,13 +229,13 @@ public static class Orbit
             {
                 dl.PathClear();
                 dl.PathArcTo(center, r, start, start + sweep, GaugeGeometry.ArcSegments(RingSegments, sweep));
-                dl.PathStroke(Theme.NightU32, ImDrawFlags.None, stroke + (2f * k));
+                dl.PathStroke(Theme.U32(Theme.Surface.Window), ImDrawFlags.None, stroke + (2f * k));
             }
 
             dl.PathClear();
             dl.PathArcTo(center, r, start, start + sweep, GaugeGeometry.ArcSegments(RingSegments, sweep));
-            dl.PathStroke(Theme.MoonU32, ImDrawFlags.None, stroke);
-            dl.AddCircleFilled(center + new Vector2(0f, -r), stroke * 0.5f, Theme.MoonU32);
+            dl.PathStroke(Theme.GoldU32, ImDrawFlags.None, stroke);
+            dl.AddCircleFilled(center + new Vector2(0f, -r), stroke * 0.5f, Theme.GoldU32);
             var (sin, cos) = MathF.SinCos(start + sweep);
             Bead(dl, center + (new Vector2(cos, sin) * r), k, full: false);
         }
@@ -263,7 +263,7 @@ public static class Orbit
             }
             else
             {
-                dl.AddRectFilled(min, max, Theme.NightRaisedU32, rounding);
+                dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Raised), rounding);
             }
 
             return;
@@ -302,7 +302,7 @@ public static class Orbit
 
     private static void Bead(ImDrawListPtr dl, Vector2 at, float k, bool full)
     {
-        dl.AddCircleFilled(at, BeadRimLogical * k, Theme.NightU32);
-        dl.AddCircleFilled(at, BeadLogical * k, full ? Theme.MoonU32 : Theme.MoonHighU32);
+        dl.AddCircleFilled(at, BeadRimLogical * k, Theme.U32(Theme.Surface.Window));
+        dl.AddCircleFilled(at, BeadLogical * k, full ? Theme.GoldU32 : Theme.GoldHighU32);
     }
 }

@@ -283,7 +283,7 @@ public sealed partial class DetailPane
 
         Gap();
         var start = ImGui.GetCursorScreenPos();
-        BeginSection("##requirements", Strings.Requirements, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.EclipseText : Theme.Surface.TextSecondary);
+        BeginSection("##requirements", Strings.Requirements, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.DangerText : Theme.Surface.TextSecondary);
         DrawRequirements(start.X);
         EndSection();
         ui.RecordItem(UiRects.DetailRequirements);
@@ -418,8 +418,8 @@ public sealed partial class DetailPane
     /// <summary>A state's text tone for pills and captions: the state colour, with Locked out, Not checked and Blocked in their readable text tones.</summary>
     private static Vector4 StateTextColor(QuestState state) => state switch
     {
-        QuestState.Foreclosed => Theme.EclipseText,
-        QuestState.Unknown => Theme.VeilText,
+        QuestState.Foreclosed => Theme.DangerText,
+        QuestState.Unknown => Theme.UnknownText,
         QuestState.Blocked => Theme.Surface.TextSecondary,
         _ => Theme.StateColor(state),
     };
@@ -604,7 +604,7 @@ public sealed partial class DetailPane
 
             if (reward.Unique)
             {
-                dl.AddRect(min, max, Theme.MoonU32, rounding, ImDrawFlags.None, MathF.Max(1.5f, UiMetrics.Px(1.5f)));
+                dl.AddRect(min, max, Theme.GoldU32, rounding, ImDrawFlags.None, MathF.Max(1.5f, UiMetrics.Px(1.5f)));
                 Crescent(dl, new Vector2(max.X - UiMetrics.Px(1f), min.Y + UiMetrics.Px(1f)), MathF.Max(3f, UiMetrics.Px(4f)));
             }
             else if (obtained)
@@ -641,7 +641,7 @@ public sealed partial class DetailPane
     private static void Crescent(ImDrawListPtr dl, Vector2 center, float r)
     {
         dl.AddCircleFilled(center, r + 1f, Theme.U32(Theme.Surface.Raised), 12);
-        dl.AddCircleFilled(center, r, Theme.MoonU32, 12);
+        dl.AddCircleFilled(center, r, Theme.GoldU32, 12);
         dl.AddCircleFilled(center + new Vector2(r * 0.45f, -r * 0.35f), r * 0.8f, Theme.U32(Theme.Surface.Raised), 12);
     }
 
@@ -776,7 +776,7 @@ public sealed partial class DetailPane
         var fraction = Motion.Gauge(Motion.Key(ChainBarTag, model.ChainKeyId), model.ChainFraction);
         if (fraction > 0f)
         {
-            var fill = model.ChainKind == ChainNextKind.Complete ? Theme.U32(Theme.AccentDim) : Theme.MoonU32;
+            var fill = model.ChainKind == ChainNextKind.Complete ? Theme.U32(Theme.AccentDim) : Theme.GoldU32;
             dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(height, width * fraction), max.Y), fill, rounding);
         }
     }
@@ -793,7 +793,7 @@ public sealed partial class DetailPane
         var min = ImGui.GetCursorScreenPos();
         var clicked = ImGui.InvisibleButton(id, new Vector2(nameRoom, lineHeight));
         var hovered = ImGui.IsItemHovered();
-        var ink = hovered ? Theme.Surface.Text : Theme.Moon;
+        var ink = hovered ? Theme.Surface.Text : Theme.Accent;
         var cut = Chrome.EllipsisTextAt(ImGui.GetWindowDrawList(), min, nameRoom, name, Theme.U32(ink), nameWidth);
         Chrome.FocusRing(UiMetrics.Px(3f));
         if (clicked)

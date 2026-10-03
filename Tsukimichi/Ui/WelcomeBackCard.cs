@@ -133,7 +133,7 @@ public sealed class WelcomeBackCard
     {
         // The title, then its two buttons at the right end of the line, or right-aligned on the next line when they
         // would run into it (feature plan v4 L6).
-        Chrome.FitText(title, Theme.U32(Theme.Moon));
+        Chrome.FitText(title, Theme.AccentU32);
         var closeWidth = ImGuiHelpers.GetButtonSize(Strings.WelcomeBackClose).X;
         var quietWidth = ImGuiHelpers.GetButtonSize(Strings.WelcomeBackDontShow).X;
         var spacing = ImGui.GetStyle().ItemSpacing.X;

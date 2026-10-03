@@ -31,7 +31,7 @@ public static class BeadRing
         var highContrast = Theme.Glyphs.HighContrast;
         var litStroke = highContrast ? stroke * 1.5f : stroke;
         var unlitStroke = highContrast ? MathF.Max(1f, stroke * 0.6f) : MathF.Max(1f, stroke * 0.5f);
-        var unlitColor = highContrast ? Theme.VeilLineU32 : Orbit.TrackU32;
+        var unlitColor = highContrast ? Theme.U32(Theme.Surface.StrongLine) : Orbit.TrackU32;
         lit = Math.Clamp(lit, 0, Math.Max(0, segments));
 
         if (!BeadRingMath.Segmented(segments))
@@ -41,12 +41,12 @@ public static class BeadRing
             var fraction = segments > 0 ? (float)lit / segments : 0f;
             if (fraction >= 1f)
             {
-                dl.AddCircle(center, radius, Theme.WithAlpha(Theme.Moon, headAlpha), CircleSegments, litStroke);
+                dl.AddCircle(center, radius, Theme.WithAlpha(Theme.Gold, headAlpha), CircleSegments, litStroke);
             }
             else if (fraction > 0f)
             {
                 var sweep = 2f * MathF.PI * fraction;
-                Arc(dl, center, radius, GaugeGeometry.StartAngle, sweep, Theme.MoonU32, litStroke);
+                Arc(dl, center, radius, GaugeGeometry.StartAngle, sweep, Theme.GoldU32, litStroke);
             }
 
             return;
@@ -62,7 +62,7 @@ public static class BeadRing
                 continue;
             }
 
-            var color = i == lit - 1 && headAlpha < 1f ? Theme.WithAlpha(Theme.Moon, Math.Clamp(headAlpha, 0f, 1f)) : Theme.MoonU32;
+            var color = i == lit - 1 && headAlpha < 1f ? Theme.WithAlpha(Theme.Gold, Math.Clamp(headAlpha, 0f, 1f)) : Theme.GoldU32;
             if (i == lit - 1 && headAlpha < 1f)
             {
                 // Lighting up: the hairline stays under it until the gold has faded in.

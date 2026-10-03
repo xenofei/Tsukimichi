@@ -68,7 +68,7 @@ public sealed partial class ConfigWindow
         }
         else if (line is not null)
         {
-            SettingNote(line, service.Status == JournalIndexStatus.Failed ? Theme.EclipseText : null);
+            SettingNote(line, service.Status == JournalIndexStatus.Failed ? Theme.DangerText : null);
         }
     }
 

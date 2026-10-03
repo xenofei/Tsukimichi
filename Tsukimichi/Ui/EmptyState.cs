@@ -140,8 +140,8 @@ public static class EmptyState
             var hovered = ImGui.IsItemHovered();
             var held = ImGui.IsItemActive();
             var rounding = size.Y * 0.5f;
-            dl.AddRectFilled(min, min + size, Theme.WithAlpha(Theme.Moon, held ? 0.28f : hovered ? 0.22f : 0.16f), rounding);
-            dl.AddRect(min, min + size, Theme.WithAlpha(Theme.Moon, 0.45f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+            dl.AddRectFilled(min, min + size, Theme.WithAlpha(Theme.Gold, held ? 0.28f : hovered ? 0.22f : 0.16f), rounding);
+            dl.AddRect(min, min + size, Theme.WithAlpha(Theme.Gold, 0.45f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
             dl.AddText(min + ((size - labelSize) * 0.5f), Theme.AccentU32, action);
             Chrome.FocusRing(rounding);
         }

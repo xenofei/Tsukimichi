@@ -657,7 +657,7 @@ public sealed class PathChart
         ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarSize, ScrollbarSize);
         ImGui.PushStyleColor(ImGuiCol.ChildBg, Vector4.Zero);
         ImGui.PushStyleColor(ImGuiCol.ScrollbarBg, Vector4.Zero);
-        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrab, Theme.WithAlphaVector(Theme.Veil, 0.5f));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrab, Theme.WithAlphaVector(Theme.Surface.TextDisabled, 0.5f));
         using (var child = ImRaii.Child("##pathChart", new Vector2(width, view), false))
         {
             if (child)
@@ -850,7 +850,7 @@ public sealed class PathChart
         }
 
         var x = origin.X + Px(4f);
-        dl.AddLine(new Vector2(x, node.Y - Px(8f)), new Vector2(x, origin.Y + layout[lastChild].NodeY + Px(8f)), Theme.WithAlpha(Theme.Moon, 0.25f), UiMetrics.Hairline);
+        dl.AddLine(new Vector2(x, node.Y - Px(8f)), new Vector2(x, origin.Y + layout[lastChild].NodeY + Px(8f)), Theme.WithAlpha(Theme.Gold, 0.25f), UiMetrics.Hairline);
     }
 
     private int FirstRowAt(float y)
@@ -936,8 +936,8 @@ public sealed class PathChart
         }
         else if (upper.OutDone)
         {
-            dl.AddLine(from, to, Theme.WithAlpha(Theme.Moon, 0.10f), MathF.Max(3f, Px(5f)));
-            dl.AddLine(from, to, Theme.WithAlpha(Theme.Moon, 0.9f), MathF.Max(1.5f, Px(2f)));
+            dl.AddLine(from, to, Theme.Glow(0.10f), MathF.Max(3f, Px(5f)));
+            dl.AddLine(from, to, Theme.WithAlpha(Theme.Gold, 0.9f), MathF.Max(1.5f, Px(2f)));
         }
         else
         {
@@ -1150,7 +1150,7 @@ public sealed class PathChart
                 dl.AddText(font, captionSize, new Vector2(x, captionY), dusk, before);
                 x += ImGui.CalcTextSize(before).X * CaptionScale;
                 var name = rowLabels[row.Core];
-                dl.AddText(font, captionSize, new Vector2(x, captionY), Theme.U32(hovered ? s.TextSecondary : Theme.VeilText), name);
+                dl.AddText(font, captionSize, new Vector2(x, captionY), Theme.U32(hovered ? s.TextSecondary : Theme.UnknownText), name);
                 x += ImGui.CalcTextSize(name).X * CaptionScale;
                 var after = AlternativeAfter.Value;
                 if (after.Length > 0)
@@ -1168,7 +1168,7 @@ public sealed class PathChart
                 break;
 
             case VKind.Caption:
-                dl.AddText(font, captionSize, new Vector2(origin.X + labelX, captionY), captionVeiled ? Theme.VeilTextU32 : Theme.U32(s.TextTertiary), caption ?? string.Empty);
+                dl.AddText(font, captionSize, new Vector2(origin.X + labelX, captionY), captionVeiled ? Theme.UnknownTextU32 : Theme.U32(s.TextTertiary), caption ?? string.Empty);
                 break;
 
             case VKind.UnlocksHeader:
@@ -1211,21 +1211,21 @@ public sealed class PathChart
         // Spotlight row: gold fading left to right, under everything.
         dl.ChannelsSetCurrent(0);
         var inset = Px(2f);
-        var left = Theme.WithAlpha(Theme.Moon, 0.14f);
-        var right = Theme.WithAlpha(Theme.Moon, 0.02f);
+        var left = Theme.Glow(0.14f);
+        var right = Theme.Glow(0.02f);
         dl.AddRectFilledMultiColor(origin + new Vector2(inset, row.Y + inset), origin + new Vector2(width - inset, row.Y + row.H - inset), left, right, right, left);
         dl.ChannelsSetCurrent(2);
 
         // Halo: three soft discs, the orrery ring, the moon; the "Show path" pulse widens the ring twice.
-        dl.AddCircleFilled(node, r * 2.2f, Theme.WithAlpha(Theme.Moon, 0.04f), 24);
-        dl.AddCircleFilled(node, r * 1.7f, Theme.WithAlpha(Theme.Moon, 0.07f), 24);
-        dl.AddCircleFilled(node, r * 1.35f, Theme.WithAlpha(Theme.Moon, 0.10f), 24);
-        dl.AddCircle(node, r * 1.5f, Theme.WithAlpha(Theme.Moon, 0.45f), 24, UiMetrics.Hairline);
+        dl.AddCircleFilled(node, r * 2.2f, Theme.Glow(0.04f), 24);
+        dl.AddCircleFilled(node, r * 1.7f, Theme.Glow(0.07f), 24);
+        dl.AddCircleFilled(node, r * 1.35f, Theme.Glow(0.10f), 24);
+        dl.AddCircle(node, r * 1.5f, Theme.WithAlpha(Theme.Gold, 0.45f), 24, UiMetrics.Hairline);
         var pulse = Motion.Pulse(PulseKeyBase ^ targetRowId, PulseSeconds);
         if (pulse >= 0f)
         {
             var phase = (pulse * 2f) % 1f;
-            dl.AddCircle(node, r * (1.5f + (0.9f * phase)), Theme.WithAlpha(Theme.Moon, 0.7f * (1f - phase)), 24, MathF.Max(1f, Px(1.5f)));
+            dl.AddCircle(node, r * (1.5f + (0.9f * phase)), Theme.WithAlpha(Theme.Gold, 0.7f * (1f - phase)), 24, MathF.Max(1f, Px(1.5f)));
         }
 
         MoonGlyph.Draw(dl, node, r, path[row.Item].State);
@@ -1260,22 +1260,22 @@ public sealed class PathChart
             // Capsule on the thread with three stacked gold dots: moons, folded.
             var half = new Vector2(UiMetrics.Icon(7f), UiMetrics.Icon(11f));
             dl.AddRectFilled(node - half, node + half, Theme.U32(s.Sunken), half.X);
-            dl.AddRect(node - half, node + half, Theme.WithAlpha(Theme.Moon, hovered ? 1f : 0.6f), half.X, ImDrawFlags.None, UiMetrics.Hairline);
+            dl.AddRect(node - half, node + half, Theme.WithAlpha(Theme.Gold, hovered ? 1f : 0.6f), half.X, ImDrawFlags.None, UiMetrics.Hairline);
             var dot = MathF.Max(1f, UiMetrics.Icon(1.1f));
             var step = UiMetrics.Icon(5f);
             for (var d = -1; d <= 1; d++)
             {
-                dl.AddCircleFilled(node + new Vector2(0f, d * step), dot, Theme.MoonU32, 6);
+                dl.AddCircleFilled(node + new Vector2(0f, d * step), dot, Theme.GoldU32, 6);
             }
         }
         else
         {
             // Open ring with a down chevron, and a faint bracket spanning the opened steps.
             var r = UiMetrics.Icon(7f);
-            dl.AddCircle(node, r, Theme.MoonU32, 16, UiMetrics.Hairline);
+            dl.AddCircle(node, r, Theme.GoldU32, 16, UiMetrics.Hairline);
             var c = UiMetrics.Icon(2.5f);
-            dl.AddLine(node + new Vector2(-c, -c * 0.4f), node + new Vector2(0f, c * 0.6f), Theme.MoonU32, UiMetrics.Hairline);
-            dl.AddLine(node + new Vector2(0f, c * 0.6f), node + new Vector2(c, -c * 0.4f), Theme.MoonU32, UiMetrics.Hairline);
+            dl.AddLine(node + new Vector2(-c, -c * 0.4f), node + new Vector2(0f, c * 0.6f), Theme.GoldU32, UiMetrics.Hairline);
+            dl.AddLine(node + new Vector2(0f, c * 0.6f), node + new Vector2(c, -c * 0.4f), Theme.GoldU32, UiMetrics.Hairline);
             DrawRunBracket(dl, origin, row, node);
         }
 
@@ -1374,19 +1374,19 @@ public sealed class PathChart
         dl.ChannelsSetCurrent(3);
         var max = min + size;
         dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Surface.Window, 0.9f), height * 0.5f);
-        dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Moon, hovered ? 0.24f : 0.16f), height * 0.5f);
+        dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Gold, hovered ? 0.24f : 0.16f), height * 0.5f);
         var cx = min.X + Px(8f) + arrow;
         var cy = min.Y + (height * 0.5f);
         if (above)
         {
-            dl.AddTriangleFilled(new Vector2(cx, cy - arrow * 0.6f), new Vector2(cx + arrow, cy + arrow * 0.6f), new Vector2(cx - arrow, cy + arrow * 0.6f), Theme.MoonU32);
+            dl.AddTriangleFilled(new Vector2(cx, cy - arrow * 0.6f), new Vector2(cx + arrow, cy + arrow * 0.6f), new Vector2(cx - arrow, cy + arrow * 0.6f), Theme.GoldU32);
         }
         else
         {
-            dl.AddTriangleFilled(new Vector2(cx - arrow, cy - arrow * 0.6f), new Vector2(cx + arrow, cy - arrow * 0.6f), new Vector2(cx, cy + arrow * 0.6f), Theme.MoonU32);
+            dl.AddTriangleFilled(new Vector2(cx - arrow, cy - arrow * 0.6f), new Vector2(cx + arrow, cy - arrow * 0.6f), new Vector2(cx, cy + arrow * 0.6f), Theme.GoldU32);
         }
 
-        dl.AddText(ImGui.GetFont(), captionSize, new Vector2(cx + arrow + Px(4f), cy - (captionSize * 0.5f)), Theme.MoonU32, Strings.PathJumpToTarget);
+        dl.AddText(ImGui.GetFont(), captionSize, new Vector2(cx + arrow + Px(4f), cy - (captionSize * 0.5f)), Theme.AccentU32, Strings.PathJumpToTarget);
 
         // The pill's ring on its own channel, after its fill (the button is still the last item).
         Chrome.FocusRing(height * 0.5f);
@@ -1403,10 +1403,10 @@ public sealed class PathChart
         var width = MathF.Max(3f, Px(4f));
         var max = min + new Vector2(width, view);
         var rounding = width * 0.5f;
-        dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Veil, 0.35f), rounding);
+        dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Surface.TextDisabled, 0.35f), rounding);
         if (walkedFraction > 0f)
         {
-            dl.AddRectFilled(min, new Vector2(max.X, min.Y + (view * walkedFraction)), Theme.WithAlpha(Theme.Moon, 0.8f), rounding);
+            dl.AddRectFilled(min, new Vector2(max.X, min.Y + (view * walkedFraction)), Theme.WithAlpha(Theme.Gold, 0.8f), rounding);
         }
 
         var windowTop = min.Y + (view * scrollY / contentHeight);
@@ -1415,7 +1415,7 @@ public sealed class PathChart
         if (targetRow >= 0)
         {
             var dotY = min.Y + (view * layout[targetRow].NodeY / contentHeight);
-            dl.AddCircleFilled(new Vector2(min.X + (width * 0.5f), dotY), MathF.Max(1.5f, Px(2f)), Theme.MoonU32, 8);
+            dl.AddCircleFilled(new Vector2(min.X + (width * 0.5f), dotY), MathF.Max(1.5f, Px(2f)), Theme.GoldU32, 8);
         }
 
         // A click on the track scrolls proportionally (a mouse convenience; the pill serves the keyboard).
@@ -1441,9 +1441,9 @@ public sealed class PathChart
 
     private static void HoverHalo(ImDrawListPtr dl, Vector2 center, float r)
     {
-        dl.AddCircleFilled(center, r * 1.6f, Theme.WithAlpha(Theme.Moon, 0.016f), 16);
-        dl.AddCircleFilled(center, r * 1.35f, Theme.WithAlpha(Theme.Moon, 0.028f), 16);
-        dl.AddCircleFilled(center, r * 1.15f, Theme.WithAlpha(Theme.Moon, 0.04f), 16);
+        dl.AddCircleFilled(center, r * 1.6f, Theme.Glow(0.016f), 16);
+        dl.AddCircleFilled(center, r * 1.35f, Theme.Glow(0.028f), 16);
+        dl.AddCircleFilled(center, r * 1.15f, Theme.Glow(0.04f), 16);
     }
 
     /// <summary>A hollow ring of eight 22° dashes: a road not taken, a cousin of the Unknown moon.</summary>
@@ -1513,9 +1513,9 @@ public sealed class PathChart
     /// </summary>
     private static Vector4 NameColor(QuestState state) => state switch
     {
-        QuestState.Completed => Theme.Sectioned && !Theme.Surface.Light ? Theme.MoonDim : Theme.Surface.TextSecondary,
-        QuestState.Foreclosed => Theme.EclipseText,
-        QuestState.Unknown => Theme.VeilText,
+        QuestState.Completed => Theme.Sectioned && !Theme.Surface.Light ? Theme.GoldDim : Theme.Surface.TextSecondary,
+        QuestState.Foreclosed => Theme.DangerText,
+        QuestState.Unknown => Theme.UnknownText,
         _ => Theme.Surface.Text,
     };
 }

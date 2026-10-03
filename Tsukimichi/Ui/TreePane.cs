@@ -152,11 +152,11 @@ public sealed partial class TreePane
     }
 
     // Row washes (ui-revamp §2.3, glyph proposal §4): hover Silver 5 %, selected Veil 22 %, both a touch stronger while held.
-    private static readonly Vector4 HoverWash = Theme.WithAlphaVector(Theme.Silver, 0.05f);
-    private static readonly Vector4 SelectedWash = Theme.WithAlphaVector(Theme.Veil, 0.22f);
-    private static readonly Vector4 SelectedHoverWash = Theme.WithAlphaVector(Theme.Veil, 0.30f);
-    private static readonly Vector4 ActiveWash = Theme.WithAlphaVector(Theme.Silver, 0.09f);
-    private static readonly uint ReadyBadgeFill = Theme.WithAlpha(Theme.Moon, 0.16f);
+    private static Vector4 HoverWash => Theme.WithAlphaVector(Theme.Surface.Text, 0.05f);
+    private static Vector4 SelectedWash => Theme.WithAlphaVector(Theme.Surface.TextDisabled, 0.22f);
+    private static Vector4 SelectedHoverWash => Theme.WithAlphaVector(Theme.Surface.TextDisabled, 0.30f);
+    private static Vector4 ActiveWash => Theme.WithAlphaVector(Theme.Surface.Text, 0.09f);
+    private static uint ReadyBadgeFill => Theme.WithAlpha(Theme.Gold, 0.16f);
 
     /// <summary>The widest percentage, which Plain's percentage column is sized for.</summary>
     private const string PercentColumnSample = "100%";
@@ -556,11 +556,11 @@ public sealed partial class TreePane
             var plain = Theme.Flair == Flair.Plain;
             if (Theme.ShowGlow)
             {
-                dl.AddRectFilled(min, new Vector2(min.X + (3f * bar), max.Y), Theme.WithAlpha(Theme.Moon, 0.10f * settled));
-                dl.AddRectFilledMultiColor(min, new Vector2(min.X + ((max.X - min.X) * 0.7f), max.Y), Theme.WithAlpha(Theme.Moon, 0.08f * settled), Theme.WithAlpha(Theme.Moon, 0f), Theme.WithAlpha(Theme.Moon, 0f), Theme.WithAlpha(Theme.Moon, 0.08f * settled));
+                dl.AddRectFilled(min, new Vector2(min.X + (3f * bar), max.Y), Theme.Glow(0.10f * settled));
+                dl.AddRectFilledMultiColor(min, new Vector2(min.X + ((max.X - min.X) * 0.7f), max.Y), Theme.Glow(0.08f * settled), Theme.Glow(0f), Theme.Glow(0f), Theme.Glow(0.08f * settled));
             }
 
-            dl.AddRectFilled(min, new Vector2(min.X + bar, max.Y), Theme.WithAlpha(plain ? Theme.Surface.Text : Theme.Moon, settled));
+            dl.AddRectFilled(min, new Vector2(min.X + bar, max.Y), Theme.WithAlpha(plain ? Theme.Surface.Text : Theme.Gold, settled));
         }
 
         // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding). Plain draws
@@ -576,7 +576,7 @@ public sealed partial class TreePane
         {
             var column = ImGui.CalcTextSize(PercentColumnSample).X;
             var percentWidth = node.PercentWidth;
-            dl.AddText(new Vector2(right - percentWidth, textY), Theme.MistU32, node.PercentText);
+            dl.AddText(new Vector2(right - percentWidth, textY), Theme.U32(Theme.Surface.TextSecondary), node.PercentText);
             right -= column + pad;
         }
 
@@ -614,7 +614,7 @@ public sealed partial class TreePane
         var progressLeft = right;
         if (showCount)
         {
-            var countColor = complete ? Theme.MoonDimU32 : selected ? Theme.SilverU32 : Theme.DuskU32;
+            var countColor = complete ? Theme.GoldDimU32 : selected ? Theme.U32(Theme.Surface.Text) : Theme.U32(Theme.Surface.TextTertiary);
             progressLeft = right - countWidth;
             dl.AddText(new Vector2(progressLeft, textY), countColor, countText);
         }
@@ -631,7 +631,7 @@ public sealed partial class TreePane
         // names its expansion in the label instead ("Main Scenario · DT"), drawn whole after the name, which is cut
         // before it ("Main Sc… · DT"), so the two Main Scenario rows always stay apart. Drawn once: a section reads as a
         // chapter by its place, its road and its dividers, not by a second pass that smears at fractional scales.
-        var nameColor = complete ? Theme.MoonDimU32 : ImGui.GetColorU32(ImGuiCol.Text);
+        var nameColor = complete ? Theme.GoldDimU32 : ImGui.GetColorU32(ImGuiCol.Text);
         var textRoom = MathF.Max(0f, fit.HeadRoom);
         var cut = node.Name.Length > 0 && textRoom <= 0f;
         if (textRoom > 0f)
@@ -659,8 +659,8 @@ public sealed partial class TreePane
             var pillHeight = MathF.Min(max.Y - min.Y - 4f, pillFont + 2f * UiMetrics.Px(2f));
             var pillMin = new Vector2(pillX, rowCenterY - pillHeight * 0.5f);
             var pillMax = new Vector2(pillX + node.PillWidth, rowCenterY + pillHeight * 0.5f);
-            dl.AddRect(pillMin, pillMax, Theme.VeilU32, pillHeight * 0.5f, ImDrawFlags.None, 1f);
-            dl.AddText(ImGui.GetFont(), pillFont, new Vector2(pillX + UiMetrics.Px(PillPadLogical), rowCenterY - pillFont * 0.5f), Theme.DuskU32, pillText);
+            dl.AddRect(pillMin, pillMax, Theme.U32(Theme.Surface.TextDisabled), pillHeight * 0.5f, ImDrawFlags.None, 1f);
+            dl.AddText(ImGui.GetFont(), pillFont, new Vector2(pillX + UiMetrics.Px(PillPadLogical), rowCenterY - pillFont * 0.5f), Theme.U32(Theme.Surface.TextTertiary), pillText);
             pillX = pillMax.X + pad;
         }
 
@@ -674,7 +674,7 @@ public sealed partial class TreePane
                 // Plain's Ready count is a bare gold number.
                 dl.AddRectFilled(badgeMin, badgeMax, ReadyBadgeFill, badgeHeight * 0.5f);
             }
-            dl.AddText(new Vector2(pillX + UiMetrics.Px(PillPadLogical), textY), Theme.MoonU32, node.ReadyText);
+            dl.AddText(new Vector2(pillX + UiMetrics.Px(PillPadLogical), textY), Theme.AccentU32, node.ReadyText);
             if (ImGui.IsMouseHoveringRect(badgeMin, badgeMax, false))
             {
                 hover = Hover.Ready;
@@ -714,7 +714,7 @@ public sealed partial class TreePane
         if (section && !road && Theme.MoonRoadArt)
         {
             var y = max.Y - 0.5f;
-            dl.AddLine(new Vector2(labelX, y), new Vector2(max.X - pad, y), Theme.VeilLineU32, 1f);
+            dl.AddLine(new Vector2(labelX, y), new Vector2(max.X - pad, y), Theme.U32(Theme.Surface.StrongLine), 1f);
         }
 
         outcome = new RowOutcome(cut, readyDot);
@@ -761,14 +761,14 @@ public sealed partial class TreePane
         var top = MathF.Round(leftCenter.Y - height * 0.5f);
         var trackMin = new Vector2(MathF.Round(leftCenter.X), top);
         var trackMax = new Vector2(trackMin.X + MathF.Round(width), top + height);
-        dl.AddRectFilled(trackMin, trackMax, Theme.VeilU32, height * 0.5f);
+        dl.AddRectFilled(trackMin, trackMax, Theme.U32(Theme.Surface.TextDisabled), height * 0.5f);
         if (count.Done <= 0 || count.Total <= 0)
         {
             return;
         }
 
         var fill = MathF.Max(2f, MathF.Round(width * count.Fraction));
-        dl.AddRectFilled(trackMin, new Vector2(MathF.Min(trackMax.X, trackMin.X + fill), trackMax.Y), complete ? Theme.MoonDimU32 : Theme.MoonU32, height * 0.5f);
+        dl.AddRectFilled(trackMin, new Vector2(MathF.Min(trackMax.X, trackMin.X + fill), trackMax.Y), complete ? Theme.GoldDimU32 : Theme.GoldU32, height * 0.5f);
     }
 
     /// <summary>
@@ -812,7 +812,7 @@ public sealed partial class TreePane
                     using var readyWrap = UiMetrics.TooltipWrap();
                     ImGui.TextUnformatted(Strings.FillingMoonTooltip);
                     ImGui.TextDisabled(progress);
-                    using (ImRaii.PushColor(ImGuiCol.Text, Theme.Moon))
+                    using (ImRaii.PushColor(ImGuiCol.Text, Theme.Accent))
                     {
                         ImGui.TextUnformatted(node.ReadyTooltip);
                     }

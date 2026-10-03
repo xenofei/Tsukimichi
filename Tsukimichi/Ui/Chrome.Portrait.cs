@@ -101,7 +101,7 @@ public static partial class Chrome
         switch (flair)
         {
             case Flair.Full when !Theme.Glyphs.HighContrast:
-                dl.AddCircle(center, PortraitPlate.OuterRingRadius * unit, Theme.WithAlpha(Theme.Abyss, PortraitPlate.OuterRingAlpha), 0, hairline);
+                dl.AddCircle(center, PortraitPlate.OuterRingRadius * unit, Theme.DropShadow(PortraitPlate.OuterRingAlpha), 0, hairline);
                 BrassRing(dl, min, size, PortraitPlate.KeylineRadius * unit, hairline);
                 break;
             case Flair.Full or Flair.Quiet:
@@ -257,7 +257,7 @@ public static partial class Chrome
         {
             // The shadow as a tinted copy, offset down-right; two copies a quarter-pixel apart soften its edge.
             var offset = PortraitPlate.EmblemShadowOffset * UiMetrics.Scale;
-            var shadow = Theme.WithAlpha(Theme.Abyss, PortraitPlate.EmblemShadowAlpha * 0.5f * alpha);
+            var shadow = Theme.DropShadow(PortraitPlate.EmblemShadowAlpha * 0.5f * alpha);
             var soft = new Vector2(UiMetrics.Px(0.5f));
             dl.AddImage(wrap.Handle, tileMin + offset, tileMax + offset, Vector2.Zero, Vector2.One, shadow);
             dl.AddImage(wrap.Handle, tileMin + offset + soft, tileMax + offset + soft, Vector2.Zero, Vector2.One, shadow);

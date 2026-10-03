@@ -300,7 +300,7 @@ public sealed class TabStrip
         {
             if (glow > 0.004f && Theme.ShowGlow)
             {
-                dl.AddCircleFilled(c, size * 0.5f, Theme.WithAlpha(Theme.Moon, 0.08f * glow), 32);
+                dl.AddCircleFilled(c, size * 0.5f, Theme.Glow(0.08f * glow), 32);
             }
 
             drawn = OrnamentAtlas.Draw(dl, OrnamentSprite.Crest, min, min + new Vector2(size), Theme.WithAlpha(Vector4.One, 0.92f + (0.08f * glow)));
@@ -330,23 +330,23 @@ public sealed class TabStrip
     private static void DrawCrestStandIn(ImDrawListPtr dl, Vector2 c, float size, float hover)
     {
         var line = MathF.Max(1f, size / 32f);
-        dl.AddCircle(c, size * 0.4625f, Theme.WithAlpha(Theme.MoonDeep, 0.75f + (0.2f * hover)), 32, line);
+        dl.AddCircle(c, size * 0.4625f, Theme.WithAlpha(Theme.GoldDeep, 0.75f + (0.2f * hover)), 32, line);
 
         // The moon, with a halo that brightens on hover.
         var moon = c - new Vector2(0f, size * 0.125f);
-        dl.AddCircleFilled(moon, size * 0.30f, Theme.WithAlpha(Theme.Moon, 0.10f + (0.06f * hover)), 24);
-        dl.AddCircleFilled(moon, size * 0.205f, Theme.MoonU32, 24);
+        dl.AddCircleFilled(moon, size * 0.30f, Theme.Glow(0.10f + (0.06f * hover)), 24);
+        dl.AddCircleFilled(moon, size * 0.205f, Theme.GoldU32, 24);
 
         // The horizon, then the road of light: four gold strokes narrowing and fading toward the viewer.
         var horizonY = c.Y + size * 0.1375f;
-        dl.AddLine(new Vector2(c.X - size * 0.3625f, horizonY), new Vector2(c.X + size * 0.3625f, horizonY), Theme.WithAlpha(Theme.Silver, 0.55f), line);
+        dl.AddLine(new Vector2(c.X - size * 0.3625f, horizonY), new Vector2(c.X + size * 0.3625f, horizonY), Theme.WithAlpha(Theme.Surface.Text, 0.55f), line);
         ReadOnlySpan<float> rows = [0.205f, 0.27f, 0.33f, 0.385f];
         ReadOnlySpan<float> halves = [0.1375f, 0.095f, 0.06f, 0.03f];
         ReadOnlySpan<float> alphas = [1f, 0.8f, 0.6f, 0.4f];
         for (var i = 0; i < rows.Length; i++)
         {
             var ry = c.Y + size * rows[i];
-            dl.AddLine(new Vector2(c.X - size * halves[i], ry), new Vector2(c.X + size * halves[i], ry), Theme.WithAlpha(Theme.Moon, alphas[i]), line * 1.2f);
+            dl.AddLine(new Vector2(c.X - size * halves[i], ry), new Vector2(c.X + size * halves[i], ry), Theme.WithAlpha(Theme.Gold, alphas[i]), line * 1.2f);
         }
     }
 
@@ -526,7 +526,7 @@ public sealed class TabStrip
                 // The foot: the plate's bottom pixel row, clear of its rounded corners.
                 var foot = MathF.Max(1f, MathF.Round(UiMetrics.Px(1f)));
                 var curve = MathF.Round(radius * 0.7f);
-                dl.AddRectFilled(new Vector2(plateMin.X + curve, plateMax.Y - foot), new Vector2(plateMax.X - curve, plateMax.Y), Theme.WithAlpha(Theme.Abyss, PlateFootAlpha * lift));
+                dl.AddRectFilled(new Vector2(plateMin.X + curve, plateMax.Y - foot), new Vector2(plateMax.X - curve, plateMax.Y), Theme.DropShadow(PlateFootAlpha * lift));
             }
         }
 
@@ -539,7 +539,7 @@ public sealed class TabStrip
             }
             else
             {
-                dl.AddRectFilled(plateMin, plateMax, Theme.WithAlpha(Theme.Moon, SelectedPlateAlpha * select), radius);
+                dl.AddRectFilled(plateMin, plateMax, Theme.WithAlpha(Theme.Gold, SelectedPlateAlpha * select), radius);
             }
         }
     }
@@ -575,7 +575,7 @@ public sealed class TabStrip
         if (flair == Flair.Quiet)
         {
             var dot = new Vector2(railLeft + UiMetrics.Px(QuietBeadInsetLogical), y);
-            dl.AddCircleFilled(dot, UiMetrics.Px(QuietBeadRadiusLogical), Theme.MoonU32, 12);
+            dl.AddCircleFilled(dot, UiMetrics.Px(QuietBeadRadiusLogical), Theme.GoldU32, 12);
             return;
         }
 
@@ -584,12 +584,12 @@ public sealed class TabStrip
         if (Theme.ShowGlow)
         {
             // The bead's own light: a soft MoonHigh halo, faint at its edge.
-            dl.AddCircleFilled(c, r + UiMetrics.Px(6f), Theme.WithAlpha(Theme.MoonHigh, 0.7f * 0.05f), 20);
-            dl.AddCircleFilled(c, r + UiMetrics.Px(3.5f), Theme.WithAlpha(Theme.MoonHigh, 0.7f * 0.10f), 20);
+            dl.AddCircleFilled(c, r + UiMetrics.Px(6f), Theme.Sheen(0.7f * 0.05f), 20);
+            dl.AddCircleFilled(c, r + UiMetrics.Px(3.5f), Theme.Sheen(0.7f * 0.10f), 20);
         }
 
-        dl.AddCircleFilled(c, r + UiMetrics.Px(BeadRimLogical), Theme.WithAlpha(Theme.Night, 1f), 16);
-        dl.AddCircleFilled(c, r, Theme.MoonHighU32, 16);
+        dl.AddCircleFilled(c, r + UiMetrics.Px(BeadRimLogical), Theme.WithAlpha(Theme.Surface.Window, 1f), 16);
+        dl.AddCircleFilled(c, r, Theme.GoldHighU32, 16);
         // Lit from the upper left, as every light on the Moon Road.
         dl.AddCircleFilled(c - new Vector2(r * 0.25f, r * 0.3f), r * 0.45f, Theme.WithAlpha(Vector4.One, 0.55f), 10);
     }
@@ -622,15 +622,15 @@ public sealed class TabStrip
         var textPos = new Vector2(MathF.Round(center.X - (textWidth * 0.5f)), MathF.Round(center.Y - (size * 0.5f)));
         if (plain)
         {
-            dl.AddText(font, size, textPos, Theme.MoonU32, text);
+            dl.AddText(font, size, textPos, Theme.AccentU32, text);
             return;
         }
 
         var radius = (max.Y - min.Y) * 0.5f;
         var rim = UiMetrics.Px(1.5f);
-        dl.AddRectFilled(min - new Vector2(rim), max + new Vector2(rim), Theme.AbyssU32, radius + rim);
-        dl.AddRectFilled(min, max, Theme.MoonU32, radius);
-        dl.AddText(font, size, textPos, Theme.NightU32, text);
+        dl.AddRectFilled(min - new Vector2(rim), max + new Vector2(rim), Theme.DeepU32, radius + rim);
+        dl.AddRectFilled(min, max, Theme.GoldU32, radius);
+        dl.AddText(font, size, textPos, Theme.OnGoldU32, text);
     }
 
     /// <summary>

@@ -402,7 +402,7 @@ public sealed partial class ConfigWindow
         var inset = UiMetrics.Px(6f);
         var bar = UiMetrics.Px(IndexBarWidth);
         var top = origin.Y + (at * step);
-        dl.AddRectFilled(new Vector2(origin.X, top + inset), new Vector2(origin.X + bar, top + rowHeight - inset), Theme.MoonU32, bar * 0.5f);
+        dl.AddRectFilled(new Vector2(origin.X, top + inset), new Vector2(origin.X + bar, top + rowHeight - inset), Theme.GoldU32, bar * 0.5f);
     }
 
     /// <summary>The index's foot: the plugin's version (the data stamp on hover) and "Help &amp; tour", About folded in.</summary>
@@ -491,7 +491,7 @@ public sealed partial class ConfigWindow
                 var min = ImGui.GetItemRectMin();
                 var max = ImGui.GetItemRectMax();
                 var bar = MathF.Max(1f, UiMetrics.Px(2f));
-                dl.AddRectFilled(new Vector2(min.X, max.Y - bar), new Vector2(max.X, max.Y), Theme.MoonU32);
+                dl.AddRectFilled(new Vector2(min.X, max.Y - bar), new Vector2(max.X, max.Y), Theme.GoldU32);
             }
         }
     }
@@ -927,7 +927,7 @@ public sealed partial class ConfigWindow
         cardSplitter.SetCurrentChannel(dl, 0);
         dl.PushClipRect(bodyMin, bodyMax, false);
         dl.AddRectFilled(min, max, Theme.WithAlpha(s.Raised, 0.55f), rounding);
-        dl.AddRect(min, max, cardDanger ? Theme.WithAlpha(Theme.Eclipse, 0.7f) : Theme.WithAlpha(s.Line, 0.8f), rounding, ImDrawFlags.None, cardDanger ? MathF.Max(1f, UiMetrics.Px(1.5f)) : UiMetrics.Hairline);
+        dl.AddRect(min, max, cardDanger ? Theme.WithAlpha(Theme.Danger, 0.7f) : Theme.WithAlpha(s.Line, 0.8f), rounding, ImDrawFlags.None, cardDanger ? MathF.Max(1f, UiMetrics.Px(1.5f)) : UiMetrics.Hairline);
         dl.PopClipRect();
         cardSplitter.Merge(dl);
         cardDanger = false;

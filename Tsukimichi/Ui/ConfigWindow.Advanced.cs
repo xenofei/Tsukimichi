@@ -185,7 +185,7 @@ public sealed partial class ConfigWindow
 
                 if (gate.IsPaused)
                 {
-                    SettingNote(Strings.SettingsHooksPausedHint, Theme.EclipseText);
+                    SettingNote(Strings.SettingsHooksPausedHint, Theme.DangerText);
                 }
                 else if (gate.Decision.Verdict == HookGateVerdict.Overridden)
                 {
@@ -233,7 +233,7 @@ public sealed partial class ConfigWindow
 
             if (diagnostics.VersionMismatchWarning is { } warning)
             {
-                using var eclipse = Theme.PushText(Theme.EclipseText);
+                using var eclipse = Theme.PushText(Theme.DangerText);
                 ImGui.TextWrapped(warning);
             }
 
@@ -278,7 +278,7 @@ public sealed partial class ConfigWindow
 
         if (catalogRebuildLine is { } line)
         {
-            using var eclipse = Theme.PushText(Theme.EclipseText);
+            using var eclipse = Theme.PushText(Theme.DangerText);
             ImGui.TextWrapped(line);
         }
 

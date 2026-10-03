@@ -600,7 +600,7 @@ public sealed partial class CharactersPane
             }
         }
 
-        dl.AddRect(frameMin, frameMax, highContrast ? Theme.VeilLineU32 : Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        dl.AddRect(frameMin, frameMax, highContrast ? Theme.U32(Theme.Surface.StrongLine) : Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         if (Theme.ShowCornerMarks)
         {
             OrnamentAtlas.Corners(dl, frameMin - new Vector2(outset), frameMax + new Vector2(outset), mark, 0f, Theme.OrnamentU32);
@@ -723,7 +723,7 @@ public sealed partial class CharactersPane
 
             ImGui.TableNextColumn();
             // The overall row is a heading, not a call to action: Silver, not gold (game UX panel finding 2).
-            Chrome.FitText(row.Name, row.Overall ? Theme.U32(Theme.Silver) : ImGui.GetColorU32(ImGuiCol.Text));
+            Chrome.FitText(row.Name, row.Overall ? Theme.U32(Theme.Surface.Text) : ImGui.GetColorU32(ImGuiCol.Text));
 
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Count);
@@ -908,7 +908,7 @@ public sealed partial class CharactersPane
             ImGui.TableNextColumn();
             DrawJobIcon(row.IconId, iconSize, row.Name, row.Level);
             ImGui.TableNextColumn();
-            Chrome.FitText(row.Name, row.IsRole ? Theme.U32(Theme.Dusk) : ImGui.GetColorU32(ImGuiCol.Text));
+            Chrome.FitText(row.Name, row.IsRole ? Theme.U32(Theme.Surface.TextTertiary) : ImGui.GetColorU32(ImGuiCol.Text));
             DrawRowMenu(ui, row.RowIds);
 
             ImGui.TableNextColumn();
@@ -1064,7 +1064,7 @@ public sealed partial class CharactersPane
         }
 
         bool cut;
-        using (Theme.PushText(ready ? Theme.Moon : Theme.Dusk))
+        using (Theme.PushText(ready ? Theme.Accent : Theme.Surface.TextTertiary))
         {
             if (Chrome.EllipsisSelectable(text, false, 0f, out cut))
             {
@@ -1088,7 +1088,7 @@ public sealed partial class CharactersPane
         if (!session.IsLive)
         {
             // The counts come from the character's last capture (decision 9); a file from before 1.5 saved none.
-            using (Theme.PushText(Theme.Dusk))
+            using (Theme.PushText(Theme.Surface.TextTertiary))
             {
                 ImGui.TextUnformatted(Strings.MoonlitOwnedNote(d.Snapshot.Collectibles.Count > 0 ? d.Snapshot.TakenUtc : null));
             }
@@ -1344,7 +1344,7 @@ public sealed partial class CharactersPane
                 DrawJobIcon(PaneIcons.Family(FamilyOf(group), IconSheets), iconSize, groupName, string.Empty);
 
                 ImGui.TableNextColumn();
-                Chrome.FitText(groupName, Theme.U32(Theme.Dusk));
+                Chrome.FitText(groupName, Theme.U32(Theme.Surface.TextTertiary));
             }
 
             ImGui.TableNextRow();
@@ -1648,7 +1648,7 @@ public sealed partial class CharactersPane
             return;
         }
 
-        using (Theme.PushText(Theme.Silver))
+        using (Theme.PushText(Theme.Surface.Text))
         {
             ImGui.TextWrapped(toast);
         }
@@ -1875,7 +1875,7 @@ public sealed partial class CharactersPane
             ImGui.TableNextColumn();
             DrawValueBadge(row.Value);
             ImGui.TableNextColumn();
-            Chrome.FitText(row.Reason, Theme.U32(Theme.Dusk));
+            Chrome.FitText(row.Reason, Theme.U32(Theme.Surface.TextTertiary));
         }
     }
 
@@ -1888,7 +1888,7 @@ public sealed partial class CharactersPane
         var max = new Vector2(min.X + ImGui.CalcTextSize(value).X + pad * 2f, min.Y + height);
         ImGui.GetWindowDrawList().AddRectFilled(min, max, Theme.U32(Theme.Surface.Raised), height * 0.35f);
         ImGui.SetCursorScreenPos(new Vector2(min.X + pad, min.Y));
-        using (Theme.PushText(Theme.Silver))
+        using (Theme.PushText(Theme.Surface.Text))
         {
             ImGui.TextUnformatted(value);
         }
@@ -3143,11 +3143,11 @@ public sealed partial class CharactersPane
 
     private static Vector4 EventColor(QuestEventKind kind) => kind switch
     {
-        QuestEventKind.Completed => Theme.MoonDim,
-        QuestEventKind.Accepted => Theme.Silver,
-        QuestEventKind.NewlyAvailable => Theme.Moon,
-        QuestEventKind.Abandoned => Theme.Eclipse,
-        _ => Theme.Dusk,
+        QuestEventKind.Completed => Theme.AccentDim,
+        QuestEventKind.Accepted => Theme.Surface.Text,
+        QuestEventKind.NewlyAvailable => Theme.Accent,
+        QuestEventKind.Abandoned => Theme.Danger,
+        _ => Theme.Surface.TextTertiary,
     };
 
     private static string JobName(GameNames? names, byte job)

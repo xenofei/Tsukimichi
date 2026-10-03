@@ -84,7 +84,7 @@ public sealed partial class ConfigWindow
         }
         else if (task.IsFaulted)
         {
-            SettingNote(FingerprintNote(task), Theme.EclipseText);
+            SettingNote(FingerprintNote(task), Theme.DangerText);
         }
         else
         {

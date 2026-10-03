@@ -58,12 +58,12 @@ public sealed partial class ConfigWindow
         SettingNote(aliasActiveLine);
         if (aliasInvalidLine is not null)
         {
-            SettingNote(aliasInvalidLine, Theme.EclipseText);
+            SettingNote(aliasInvalidLine, Theme.DangerText);
         }
 
         if (aliasSkippedLine is not null)
         {
-            SettingNote(aliasSkippedLine, Theme.EclipseText);
+            SettingNote(aliasSkippedLine, Theme.DangerText);
         }
 
         EndSetting();

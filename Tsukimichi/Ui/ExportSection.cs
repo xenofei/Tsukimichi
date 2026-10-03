@@ -103,7 +103,7 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
             return;
         }
 
-        using (Theme.PushText(lineOk ? Theme.Silver : Theme.EclipseText))
+        using (Theme.PushText(lineOk ? Theme.Surface.Text : Theme.DangerText))
         {
             ImGui.TextWrapped(line);
         }

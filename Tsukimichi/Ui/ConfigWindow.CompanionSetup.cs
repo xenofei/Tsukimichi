@@ -46,7 +46,7 @@ public sealed partial class ConfigWindow
 
         var summary = setup.Summary;
         using (ImRaii.PushFont(UiBuilder.IconFont))
-        using (Theme.PushText(summary.Ready ? Theme.Moon : Theme.EclipseText))
+        using (Theme.PushText(summary.Ready ? Theme.Accent : Theme.DangerText))
         {
             ImGui.TextUnformatted(summary.Ready ? LoadedIcon : OutdatedIcon);
         }
@@ -137,7 +137,7 @@ public sealed partial class ConfigWindow
         };
 
         bool open;
-        using (Theme.PushText(setup.State == PluginSetupState.NeedsSetup ? Theme.EclipseText : Theme.Surface.TextSecondary))
+        using (Theme.PushText(setup.State == PluginSetupState.NeedsSetup ? Theme.DangerText : Theme.Surface.TextSecondary))
         {
             open = ImGui.TreeNode(title + "###setup");
         }
@@ -190,8 +190,8 @@ public sealed partial class ConfigWindow
         var id = result.Requirement.Id;
         var (icon, color, word) = result.Check switch
         {
-            SetupCheck.Ok => (SetupOkIcon, Theme.Moon, result.Covered ? Strings.CompanionSetupCovered : Strings.CompanionSetupOk),
-            SetupCheck.NeedsChange => (SetupChangeIcon, Theme.EclipseText, Strings.CompanionSetupNeedsChange),
+            SetupCheck.Ok => (SetupOkIcon, Theme.Accent, result.Covered ? Strings.CompanionSetupCovered : Strings.CompanionSetupOk),
+            SetupCheck.NeedsChange => (SetupChangeIcon, Theme.DangerText, Strings.CompanionSetupNeedsChange),
             _ => (SetupUnknownIcon, Theme.Surface.TextSecondary, Strings.CompanionSetupUnknown),
         };
 

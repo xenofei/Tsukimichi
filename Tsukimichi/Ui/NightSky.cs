@@ -3,6 +3,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Ui.Themes;
 
 namespace Tsukimichi.Ui;
 
@@ -25,15 +26,19 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public static class NightSky
 {
-    /// <summary>The temperatures' inks (spec §3.2).</summary>
-    private static readonly Vector4 Cool = ColorMath.FromHex(0xDCE5FF);
-    private static readonly Vector4 MoonWhite = ColorMath.FromHex(0xF4F2EA);
-    private static readonly Vector4 Gold = ColorMath.FromHex(0xFFE2A8);
-    private static readonly Vector4 Ember = ColorMath.FromHex(0xFFC9AE);
+    /// <summary>The temperatures' inks (spec §3.2), from the palette's scene (<see cref="StarInks"/>).</summary>
+    private static Vector4 Cool => Theme.Scene.Stars.Cool;
+
+    private static Vector4 MoonWhite => Theme.Scene.Stars.MoonWhite;
+
+    private static Vector4 Gold => Theme.Scene.Stars.Gold;
+
+    private static Vector4 Ember => Theme.Scene.Stars.Ember;
 
     /// <summary>The constellations' stars (spec §3.5) and the Milky Way's tint (§3.4).</summary>
-    private static readonly Vector4 FigureStar = ColorMath.FromHex(0xEEF1FA);
-    private static readonly Vector4 BandTint = ColorMath.FromHex(0xC9D3F0);
+    private static Vector4 FigureStar => Theme.Scene.Stars.Figure;
+
+    private static Vector4 BandTint => Theme.Scene.Stars.Band;
 
     /// <summary>Every mark keeps this far inside its sky, logical px (spec §3).</summary>
     private const float InsetLogical = 4f;
@@ -409,12 +414,12 @@ public static class NightSky
             var from = head + (back * (length * k / MeteorTailSegments));
             var to = head + (back * (length * (k + 1) / MeteorTailSegments));
             var segment = tail * (1f - ((k + 0.5f) / MeteorTailSegments));
-            dl.AddLine(from, to, Theme.WithAlpha(Theme.MoonHigh, segment), thickness);
+            dl.AddLine(from, to, Theme.WithAlpha(Theme.Scene.Moonlight, segment), thickness);
         }
 
         var unit = MathF.Max(1f, UiMetrics.Px(1f));
-        dl.AddCircleFilled(head, 4.5f * unit, Theme.WithAlpha(Theme.MoonHigh, alpha * 0.25f), 16);
-        dl.AddCircleFilled(head, 1.6f * unit, Theme.WithAlpha(Theme.MoonHigh, alpha), 10);
+        dl.AddCircleFilled(head, 4.5f * unit, Theme.WithAlpha(Theme.Scene.Moonlight, alpha * 0.25f), 16);
+        dl.AddCircleFilled(head, 1.6f * unit, Theme.WithAlpha(Theme.Scene.Moonlight, alpha), 10);
     }
 
     private static Vector4 Tone(StarTemperature temperature) => temperature switch

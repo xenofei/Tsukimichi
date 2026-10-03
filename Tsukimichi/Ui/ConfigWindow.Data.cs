@@ -142,7 +142,7 @@ public sealed partial class ConfigWindow
                 }
                 else
                 {
-                    SettingNote(toast, toastFailed ? Theme.EclipseText : Theme.Silver);
+                    SettingNote(toast, toastFailed ? Theme.DangerText : Theme.Surface.Text);
                 }
             }
 
@@ -277,7 +277,7 @@ public sealed partial class ConfigWindow
                 rowId,
                 name,
                 stored.Unique ? Strings.ConfigVerdictUnique : Strings.ConfigVerdictNotUnique,
-                stored.Unique ? Theme.Silver : Theme.Dusk,
+                stored.Unique ? Theme.Surface.Text : Theme.Surface.TextTertiary,
                 stored.Note ?? string.Empty,
                 stored.MarkedUtc?.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? string.Empty));
         }
