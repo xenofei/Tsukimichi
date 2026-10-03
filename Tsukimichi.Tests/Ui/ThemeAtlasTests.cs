@@ -110,7 +110,7 @@ public sealed class ThemeAtlasTests
 
     [Theory]
     [MemberData(nameof(ShippedSets))]
-    public void Row_strip_has_every_state_at_every_whole_pixel_from_12_to_31(string set)
+    public void Row_strip_has_every_state_at_every_whole_pixel_from_12_to_31_apart_by_the_runtime_pad(string set)
     {
         using var json = Json(ThemesDir(), set, "row.json");
         var root = json.RootElement;
@@ -135,14 +135,16 @@ public sealed class ThemeAtlasTests
             }
         }
 
+        // The runtime's gap (ThemeAtlasRules.MinPad, 2 px at 1x), so bilinear sampling never bleeds a neighbour in.
+        const int pad = Core.Ui.Themes.ThemeAtlasRules.MinPad;
         for (var i = 0; i < rects.Count; i++)
         {
             for (var j = i + 1; j < rects.Count; j++)
             {
                 var a = rects[i];
                 var b = rects[j];
-                var apart = a.X + a.Width + 1 <= b.X || b.X + b.Width + 1 <= a.X || a.Y + a.Height + 1 <= b.Y || b.Y + b.Height + 1 <= a.Y;
-                Assert.True(apart, $"{set}: {a} and {b} touch");
+                var apart = a.X + a.Width + pad <= b.X || b.X + b.Width + pad <= a.X || a.Y + a.Height + pad <= b.Y || b.Y + b.Height + pad <= a.Y;
+                Assert.True(apart, $"{set}: {a} and {b} are closer than {pad} px");
             }
         }
     }

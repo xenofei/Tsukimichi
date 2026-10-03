@@ -260,6 +260,28 @@ public sealed class UiPaletteTests
         Assert.Null(hc.Scene.SkyStops);
     }
 
+    [Fact]
+    public void A_copy_builds_its_own_high_contrast_form_and_the_cache_and_builder_are_not_in_equality()
+    {
+        // A palette whose form is already built, copied with a new accent: the copy's form is built from the copy (an
+        // inherited cache would hand back the original's form, with the original's accent).
+        var palette = Night with { };
+        var original = palette.HighContrast;
+        var accent = ColorMath.FromHex(0xFFE9A8);
+        var copy = palette with { Accent = accent };
+        Assert.NotSame(original, copy.HighContrast);
+        Assert.Equal(accent, copy.HighContrast.Accent);
+        Assert.Same(copy.HighContrast, copy.HighContrast);
+        Assert.Same(original, palette.HighContrast);
+
+        // Equality is the roles: a built form and a different builder do not make two palettes different.
+        var fresh = Night with { };
+        Assert.Equal(palette, fresh);
+        Assert.Equal(palette.GetHashCode(), fresh.GetHashCode());
+        Assert.Equal(palette, palette with { HighContrastBuilder = static p => p });
+        Assert.NotEqual(palette, copy);
+    }
+
     // ---- The registry follows the appearance.
 
     [Fact]

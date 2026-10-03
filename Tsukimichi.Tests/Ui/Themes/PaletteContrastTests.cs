@@ -11,20 +11,40 @@ namespace Tsukimichi.Tests.Ui.Themes;
 /// </summary>
 public sealed class PaletteContrastTests
 {
+    /// <summary>The Follow Dalamud hook on a plain dark host style (<see cref="Host"/>).</summary>
+    private const string DalamudDark = "dalamud-dark-host";
+
+    /// <summary>The Follow Dalamud hook on a plain light host style (<see cref="Host"/>).</summary>
+    private const string DalamudLight = "dalamud-light-host";
+
     public static IEnumerable<object[]> Palettes()
     {
-        foreach (var palette in UiPalettes.All)
+        foreach (var key in UiPalettes.All.Select(static p => p.Key).Append(DalamudDark).Append(DalamudLight))
         {
-            yield return [palette.Key, false];
-            yield return [palette.Key, true];
+            yield return [key, false];
+            yield return [key, true];
         }
     }
 
     private static UiPalette Find(string key, bool highContrast)
     {
-        var palette = UiPalettes.All.Single(p => p.Key == key);
+        var palette = key switch
+        {
+            DalamudDark => Host(light: false),
+            DalamudLight => Host(light: true),
+            _ => UiPalettes.All.Single(p => p.Key == key),
+        };
         return highContrast ? palette.HighContrast : palette;
     }
+
+    /// <summary>Follow Dalamud on a plain dark or light host style, with a mid-grey disabled text on both.</summary>
+    private static UiPalette Host(bool light) => UiPalettes.FollowDalamud(
+        ColorMath.FromHex(light ? 0xF0F0F0u : 0x202020u),
+        ColorMath.FromHex(light ? 0xE0E0E0u : 0x2A2A2Au),
+        ColorMath.FromHex(light ? 0xD0D0D0u : 0x3A3A3Au),
+        ColorMath.FromHex(light ? 0xB0B0B0u : 0x444444u),
+        ColorMath.FromHex(light ? 0x101010u : 0xF0F0F0u),
+        ColorMath.FromHex(0x808080));
 
     private static void AssertPairs(UiPalette palette, IEnumerable<(string Role, System.Numerics.Vector4 Ink, System.Numerics.Vector4 Ground)> pairs, float min)
     {
@@ -65,8 +85,10 @@ public sealed class PaletteContrastTests
     [Fact]
     public void Every_palette_and_form_has_a_row()
     {
-        // spec-1.16 §A8: one row per palette and form, four in 1.16.
-        Assert.Equal(["night", "night", "ishgard-snow", "ishgard-snow"], Palettes().Select(static r => (string)r[0]));
+        // spec-1.16 §A8: one row per palette and form, four in 1.16, and Follow Dalamud's on a dark and a light host.
+        Assert.Equal(
+            ["night", "night", "ishgard-snow", "ishgard-snow", DalamudDark, DalamudDark, DalamudLight, DalamudLight],
+            Palettes().Select(static r => (string)r[0]));
     }
 
     [Fact]
@@ -88,13 +110,16 @@ public sealed class PaletteContrastTests
     [Fact]
     public void The_pair_lists_cover_every_surface_and_state()
     {
-        var roles = UiPalettes.Night.TextPairs().Select(p => p.Role).ToList();
-        foreach (var surface in new[] { "Window", "Raised", "Sunken", "Hover" })
-        {
-            Assert.Contains($"TextTertiary on {surface}", roles);
-        }
-
-        Assert.Equal(StateInks.Order.Length * 2, roles.Count(r => r.Contains(" word on ", StringComparison.Ordinal)));
+        // spec-1.16 §A8 "every surface": each text ink and status word on the window, cards, wells and hovered rows,
+        // but for exactly the three pairs nothing draws on a hover fill (Cool, and the Not checked word in both forms).
+        var roles = UiPalettes.Night.TextPairs().Select(p => p.Role).ToHashSet();
+        var inks = new[] { "Text", "TextSecondary", "TextTertiary", "Accent", "AccentDim", "Cool", "DangerText", "UnknownText" }
+            .Concat(StateInks.Order.Select(static s => $"{s} word"));
+        var missing = new[] { "Window", "Raised", "Sunken", "Hover" }
+            .SelectMany(surface => inks.Select(ink => $"{ink} on {surface}"))
+            .Where(role => !roles.Contains(role))
+            .ToArray();
+        Assert.Equal(["Cool on Hover", "UnknownText on Hover", "Unknown word on Hover"], missing);
         Assert.Contains("StrongLine on Raised", UiPalettes.Night.LinePairs().Select(p => p.Role));
     }
 
@@ -103,24 +128,35 @@ public sealed class PaletteContrastTests
     [InlineData(true)]
     public void Follow_Dalamud_keeps_its_text_readable_on_a_dark_and_a_light_host(bool light)
     {
-        var p = UiPalettes.FollowDalamud(
-            ColorMath.FromHex(light ? 0xF0F0F0u : 0x202020u),
-            ColorMath.FromHex(light ? 0xE0E0E0u : 0x2A2A2Au),
-            ColorMath.FromHex(light ? 0xD0D0D0u : 0x3A3A3Au),
-            ColorMath.FromHex(light ? 0xB0B0B0u : 0x444444u),
-            ColorMath.FromHex(light ? 0x101010u : 0xF0F0F0u),
-            ColorMath.FromHex(0x808080));
+        // The pairs the 1.16.0 review measured under the bar (every pair is in the theories above; these name them):
+        // the stripes, the tree ring, the destructive button's ink, the strong line on cards, and the gold, danger,
+        // tertiary and Not checked words on cards and hovered rows.
+        var p = Host(light);
         var s = p.Surface;
-        (string, System.Numerics.Vector4, System.Numerics.Vector4)[] window =
-        [
-            ("Text", s.Text, s.Window),
-            ("TextSecondary", s.TextSecondary, s.Window),
-            ("Accent", p.Accent, s.Window),
-            ("AccentDim", p.AccentDim, s.Window),
-            ("Cool", s.Cool, s.Window),
-            ("DangerText", p.Inks.DangerText, s.Window),
-            ("UnknownText", p.Inks.UnknownText, s.Window),
-        ];
-        AssertPairs(p, window, ColorMath.AaText);
+        foreach (var (name, ground) in p.Surfaces())
+        {
+            Assert.True(ColorMath.Contrast(p.Accent, ground) >= ColorMath.AaText, $"Accent on {name}");
+            Assert.True(ColorMath.Contrast(p.Inks.DangerText, ground) >= ColorMath.AaText, $"DangerText on {name}");
+            Assert.True(ColorMath.Contrast(s.TextTertiary, ground) >= ColorMath.AaText, $"TextTertiary on {name}");
+            Assert.True(ColorMath.Contrast(p.States.Text(Core.Model.QuestState.Unknown), ground) >= ColorMath.AaText, $"Not checked on {name}");
+            Assert.True(ColorMath.Contrast(p.States.Stripe(Core.Model.QuestState.Ready), ground) >= ColorMath.AaNonText, $"Ready stripe on {name}");
+        }
+
+        Assert.True(ColorMath.Contrast(s.StrongLine, s.Raised) >= ColorMath.AaNonText);
+        Assert.True(ColorMath.Contrast(p.Inks.GaugeArc, s.Window) >= ColorMath.AaNonText);
+        Assert.True(ColorMath.Contrast(p.Inks.GaugeDone, s.Window) >= ColorMath.AaNonText);
+        var button = ColorMath.Over(p.Inks.Danger with { W = PaletteInks.DangerButtonAlpha }, s.Window);
+        Assert.True(ColorMath.Contrast(p.Inks.OnDanger, button) >= ColorMath.AaText);
+        if (light)
+        {
+            Assert.Equal(ColorMath.FromHex(GaugeInks.LightArcHighHex), p.Inks.GaugeArc);
+            Assert.Equal(ColorMath.FromHex(GaugeInks.LightArcShadeHex), p.Inks.GaugeDone);
+        }
+        else
+        {
+            // A dark host keeps Night's inks where they already read: Silver on the danger button, Night's tree ring.
+            Assert.Equal(GlyphTokens.Silver, p.Inks.OnDanger);
+            Assert.Equal(ColorMath.FromHex(PaletteInks.GaugeArcHex), p.Inks.GaugeArc);
+        }
     }
 }

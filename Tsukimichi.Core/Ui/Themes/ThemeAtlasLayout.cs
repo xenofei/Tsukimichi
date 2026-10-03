@@ -457,7 +457,8 @@ public static class ThemeAtlasRules
             return false;
         }
 
-        if (rect.X < 1 || rect.Y < 1 || rect.X + rect.Width > width - 1 || rect.Y + rect.Height > height - 1)
+        // In long: a cell at x near int.MaxValue would wrap round to a negative right edge and pass in int.
+        if (rect.X < 1 || rect.Y < 1 || (long)rect.X + rect.Width > width - 1 || (long)rect.Y + rect.Height > height - 1)
         {
             error = "cell not inside the image";
             return false;

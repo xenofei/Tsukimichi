@@ -57,8 +57,11 @@ public sealed class AtlasResidency
             wanted[s] = false;
         }
 
-        foreach (var set in GlyphSets.All)
+        // Indexed: Retain runs every frame, and a foreach over the IReadOnlyList would box its enumerator.
+        var sets = GlyphSets.All;
+        for (var i = 0; i < sets.Count; i++)
         {
+            var set = sets[i];
             if (set.Kind == GlyphRenderKind.Atlas && appearance.Uses(set.Id) && Slot(set.Id) is var slot and >= 0)
             {
                 wanted[slot] = true;

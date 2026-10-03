@@ -148,6 +148,40 @@ public sealed class ThemeAtlasRuntimeTests
         Assert.Contains("locked-out", error);
     }
 
+    [Fact]
+    public void A_cell_far_outside_the_image_is_refused_however_large_its_position()
+    {
+        // x + width past int.MaxValue wrapped to a negative right edge and passed the bounds check in int arithmetic.
+        foreach (var (index, value) in new[] { (0, int.MaxValue - 5), (1, int.MaxValue - 5), (0, int.MaxValue) })
+        {
+            var huge = RowJson("full");
+            var cell = huge["sprites"]!["full"]!["ready"]!["12"]!.AsArray();
+            cell[index] = value;
+            Assert.False(RowStripLayout.TryParse(huge.ToJsonString(), out _, out var error));
+            Assert.Contains("not inside the image", error);
+        }
+    }
+
+    [Fact]
+    public void Per_frame_registry_and_residency_checks_allocate_nothing()
+    {
+        var residency = new AtlasResidency();
+        var appearance = Mix("ishgard-glass");
+        residency.Retain(appearance);
+        _ = UiPalettes.IsRegistered(PaletteId.IshgardSnow);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 100; i++)
+        {
+            residency.Retain(appearance);
+            _ = UiPalettes.IsRegistered(PaletteId.IshgardSnow);
+            _ = UiPalettes.IsRegistered(PaletteId.Dawn);
+        }
+
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        Assert.True(residency.IsWanted(GlyphSetId.IshgardGlass));
+    }
+
     // ------------------------------------------------------------------ tier choice
 
     [Fact]
