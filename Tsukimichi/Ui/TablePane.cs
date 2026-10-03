@@ -150,6 +150,12 @@ public sealed class TablePane : IDisposable
     /// <summary>High half of the <see cref="Motion"/> key of a row's reveal pulse.</summary>
     private const uint RevealTag = 0x5441_5250; // "TARP"
 
+    /// <summary>High half of the <see cref="Motion"/> key of a row's selection settling (1.13, U8).</summary>
+    private const uint SelectTag = 0x5441_5253; // "TARS"
+
+    /// <summary>The row wash a completion or a quest becoming Ready plays at Quiet and Plain flair (M1), at its start.</summary>
+    private const float MomentWashAlpha = 0.18f;
+
     /// <summary>How long a reveal waits for its row to be drawn (the query and the scroll land a frame or two later).</summary>
     private const double RevealWaitSeconds = 2.0;
 
@@ -1005,18 +1011,29 @@ public sealed class TablePane : IDisposable
         var selected = ui.SelectedRowId == quest.RowId;
 
         // Fills are the row's own background (painted when the row ends, behind every cell): the selection wash in
-        // RowBg0 (it replaces the zebra), the hover fill over it in RowBg1, easing in and out through Motion.
-        var hover = Motion.Lerp(HoverKeyTag | quest.RowId, liftRow == quest.RowId ? 1f : 0f);
-        if (selected)
+        // RowBg0 (it replaces the zebra), the hover fill over it in RowBg1, easing in and out through Motion (1.13, U8:
+        // hover in 120 ms and out 180 ms; a new selection settles in over 150 ms, wash and ring together).
+        var hover = Motion.Hover(HoverKeyTag | quest.RowId, liftRow == quest.RowId);
+        var settled = Motion.Select(Motion.Key(SelectTag, quest.RowId), selected);
+        if (settled > 0.004f)
         {
-            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, Theme.WithAlpha(s.Text, SelectionWashAlpha));
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, Theme.WithAlpha(s.Text, SelectionWashAlpha * settled));
         }
         else if (questionableRow == quest.RowId)
         {
             ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, Theme.WithAlpha(Theme.Accent, QuestionableWashAlpha));
         }
 
-        if (hover > 0.004f)
+        // The Moon Road moments (M1): a completion (the moon waxes) and a quest that just became Ready. At Full flair
+        // the stripe flashes and a soft halo swells round the moon; at Quiet and Plain the row takes one soft gold wash.
+        var completion = Motion.Completion(quest.RowId);
+        var moment = completion >= 0f ? completion : Motion.ReadyHalo(quest.RowId);
+        var moonRoadMoment = Theme.FlairMotion;
+        if (moment >= 0f && !moonRoadMoment)
+        {
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, Theme.WithAlpha(Theme.MoonHigh, MomentWashAlpha * (1f - MotionMath.EaseOutCubic(moment))));
+        }
+        else if (hover > 0.004f)
         {
             ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, Theme.WithAlpha(s.Hover, hover * s.Hover.W));
         }
@@ -1036,7 +1053,12 @@ public sealed class TablePane : IDisposable
         }
 
         var readyOn = state == QuestState.ReadyOnOtherJob ? runner.ReadyOnJob(quest.RowId) : (byte)0;
-        MoonWax.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), layout.GlyphRadius, state, quest.RowId, readyOn);
+        var glyphCenter = new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY);
+        MoonWax.Draw(dl, glyphCenter, layout.GlyphRadius, state, quest.RowId, readyOn);
+        if (moonRoadMoment && moment >= 0f)
+        {
+            MoonWax.DrawHalo(dl, glyphCenter, layout.GlyphRadius, moment);
+        }
         MedalGlyph.DrawRowBadge(dl, new Vector2(cell.X + lead + layout.GlyphBox, centerY - badgeSide * 0.5f), badgeSide, state, readyOn);
 
         // Name column carries the row-wide selectable and the context menu. Its Header colours are transparent so it
@@ -1085,7 +1107,7 @@ public sealed class TablePane : IDisposable
             }
         }
 
-        DrawRowChrome(rowMin, rowMax, nameCellMin.X, state, selected, liftRow == quest.RowId && hover > 0.5f, in layout, Motion.Key(RevealTag, quest.RowId));
+        DrawRowChrome(rowMin, rowMax, nameCellMin.X, state, selected, settled, liftRow == quest.RowId && hover > 0.5f, in layout, Motion.Key(RevealTag, quest.RowId), moonRoadMoment && moment >= 0f ? MotionTokens.MomentAlpha(moment) : 0f);
         if (newGroupEnd == quest.RowId || trialGroupEnd == quest.RowId)
         {
             DrawGroupEnd(rowMin, rowMax);
@@ -1311,7 +1333,7 @@ public sealed class TablePane : IDisposable
     /// road (R3 #6, proposal §7.3): a brass hairline along its bottom from the name to the right edge, fading out, faint
     /// enough that the gold moon stays the signal.
     /// </summary>
-    private static void DrawRowChrome(Vector2 rowMin, Vector2 rowMax, float nameX, QuestState state, bool selected, bool lifted, in RowLayout layout, ulong revealKey)
+    private static void DrawRowChrome(Vector2 rowMin, Vector2 rowMax, float nameX, QuestState state, bool selected, float settled, bool lifted, in RowLayout layout, ulong revealKey, float flash)
     {
         var s = Theme.Surface;
         ImGuiP.TablePushBackgroundChannel();
@@ -1333,13 +1355,19 @@ public sealed class TablePane : IDisposable
             Chrome.Lift(dl, rowMin, rowMax);
         }
 
-        if (selected)
+        if (settled > 0.004f)
         {
-            var inset = new Vector2(hairline * 0.5f + UiMetrics.Px(1f));
-            dl.AddRect(rowMin + inset, rowMax - inset, Theme.WithAlpha(s.Text, SelectionRingAlpha), UiMetrics.Px(SelectionRounding), ImDrawFlags.None, hairline);
+            // The ring settles in with the wash: it fades in while drawing in from 2 px inside the row to 1 px.
+            var inset = new Vector2(hairline * 0.5f + UiMetrics.Px(2f - settled));
+            dl.AddRect(rowMin + inset, rowMax - inset, Theme.WithAlpha(s.Text, SelectionRingAlpha * settled), UiMetrics.Px(SelectionRounding), ImDrawFlags.None, hairline);
         }
 
         DrawStripe(dl, rowMin.X, rowMin.Y, rowMax.Y - rowMin.Y, state);
+        if (flash > 0f)
+        {
+            // The stripe's flash (M1, Full flair): MoonHigh over the stripe, fading out, never brighter than the moment's peak.
+            dl.AddRectFilled(rowMin, new Vector2(rowMin.X + StripeThickness(), rowMax.Y), Theme.WithAlpha(Theme.MoonHigh, flash));
+        }
         if (selected)
         {
             Motion.DrawRevealPulse(dl, revealKey, rowMin, rowMax, UiMetrics.Px(SelectionRounding));

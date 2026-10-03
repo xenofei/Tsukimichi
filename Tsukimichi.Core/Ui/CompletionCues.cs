@@ -5,7 +5,8 @@ namespace Tsukimichi.Core.Ui;
 /// <summary>
 /// Finds the completions that just happened, for the waxing moon (feature plan v6 U8a): each frame it is handed the
 /// session's recent events (newest first, the same list throughout, <see cref="RecentEventsTracker"/>) and reports the
-/// <see cref="QuestEventKind.Completed"/> events that arrived since the last frame. The first look at a character only
+/// <see cref="QuestEventKind.Completed"/> events that arrived since the last frame, and, for the Ready halo (feature plan
+/// v6 M1), the <see cref="QuestEventKind.NewlyAvailable"/> ones. The first look at a character only
 /// notes where its events stand, so opening the plugin, logging in or switching characters never replays old
 /// completions. Allocation-free.
 /// </summary>
@@ -20,7 +21,14 @@ public sealed class CompletionCues
     /// (the live character; null while logged out) and returns how many. With <paramref name="shown"/> false (another
     /// character is on screen) the events are noted but none is reported, so they do not play later either.
     /// </summary>
-    public int Take(ulong? character, IReadOnlyList<QuestEvent> newestFirst, bool shown, List<uint> into)
+    public int Take(ulong? character, IReadOnlyList<QuestEvent> newestFirst, bool shown, List<uint> into) =>
+        Take(character, newestFirst, shown, into, null);
+
+    /// <summary>
+    /// <see cref="Take(ulong?, IReadOnlyList{QuestEvent}, bool, List{uint})"/>, also adding to <paramref name="ready"/>
+    /// (when given) the row ids that became Ready since the last call; returns how many completions were found.
+    /// </summary>
+    public int Take(ulong? character, IReadOnlyList<QuestEvent> newestFirst, bool shown, List<uint> into, List<uint>? ready)
     {
         ArgumentNullException.ThrowIfNull(newestFirst);
         ArgumentNullException.ThrowIfNull(into);
@@ -47,6 +55,10 @@ public sealed class CompletionCues
             {
                 into.Add(e.RowId);
                 found++;
+            }
+            else if (shown && ready is not null && e.Kind == QuestEventKind.NewlyAvailable)
+            {
+                ready.Add(e.RowId);
             }
         }
 

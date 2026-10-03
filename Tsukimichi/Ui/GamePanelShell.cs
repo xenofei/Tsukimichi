@@ -12,8 +12,16 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// The frame every panel beside a game window (1.7.0) draws in, as the Duty Finder unlock hint draws its own: a small
 /// borderless window placed by <see cref="BesidePlacement"/> (right of the game window, else left, below or above,
-/// and not at all when no side has room, so it never covers it), drawn transparent and not clickable for
-/// <see cref="SettleFrames"/> frames whenever its content changes shape while ImGui settles its auto-resized size.
+/// and not at all when no side has room, so it never covers it).
+/// <para>
+/// 1.13 (feature plan v6 M2): it rises in instead of blinking. The first appearance is measured unseen for one frame,
+/// then fades in over <see cref="MotionTokens.Rise"/> while rising a few pixels; a new subject while it is up (the
+/// player arrowing through the Journal or the Duty Finder) dips the content and brings it back in place, and the
+/// window's size eases to the new content instead of being re-measured unseen. When the subject goes away the panel
+/// holds its last content for a moment (<see cref="Linger"/>), so stepping past a line that has no panel keeps it up.
+/// It stays on the side of the game window it first took while it still fits there. The timing is
+/// <see cref="PanelPresence"/>'s; under Reduce motion nothing fades, rises or eases.
+/// </para>
 /// <para>
 /// Its colours follow <see cref="Theme.Surface"/>: the window, text and lines of the palette in use (Night, the
 /// Dalamud-mapped one, or the high-contrast one, which also draws the panel opaque with a strong border), and a
@@ -23,24 +31,26 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed class GamePanelShell
 {
-    /// <summary>Frames a reshaped panel is drawn transparent while ImGui measures it.</summary>
+    /// <summary>Frames a reshaped panel is drawn transparent while ImGui measures it (the Undo toast's settle; the panels measure once).</summary>
     public const int SettleFrames = 2;
 
     private const float GapPx = 6f;
     private const float RoundingPx = 4f;
 
     private const ImGuiWindowFlags PanelFlags =
-        ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysAutoResize |
-        ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoDocking |
-        ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoNav |
+        ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoSavedSettings |
+        ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoScrollbar |
+        ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoNav |
         ImGuiWindowFlags.NoFocusOnAppearing;
 
     private readonly string windowId;
+    private readonly PanelPresence presence = new();
+    private readonly PanelSize sized = new();
 
     private uint drawnKey;
     private int drawnCount = -1;
-    private Vector2 size;
-    private int settled;
+    private ScreenRect lastTarget;
+    private CardSide? side;
 
     /// <param name="windowId">The ImGui id of the panel's window ("##…", never shown).</param>
     public GamePanelShell(string windowId)
@@ -48,46 +58,85 @@ public sealed class GamePanelShell
         this.windowId = windowId ?? throw new ArgumentNullException(nameof(windowId));
     }
 
-    /// <summary>Whether the panel has settled this frame: buttons act only then.</summary>
-    public bool Interactive => settled >= SettleFrames;
+    /// <summary>Whether the panel is up with a subject this frame: buttons act only then (never unseen or on its way out).</summary>
+    public bool Interactive => presence.Interactive && sized.Known;
 
-    /// <summary>Forgets the measured shape: the next draw settles again.</summary>
+    /// <summary>Forgets the measured shape and the side: the next draw measures again and rises in.</summary>
     public void Reset()
     {
         drawnKey = 0;
         drawnCount = -1;
+        side = null;
+        presence.Reset();
+        sized.Reset();
+    }
+
+    /// <summary>
+    /// The panel has no subject this frame (the hint answered null, or its game window closed): it holds the last
+    /// content drawn through <paramref name="content"/> for a moment and fades out, then is gone. The panel's own
+    /// model must stay what it was, so the content can still draw it.
+    /// </summary>
+    public void Linger(Action content)
+    {
+        if (!presence.Lose(ImGui.GetTime(), Motion.WorldEnabled))
+        {
+            Reset();
+            return;
+        }
+
+        DrawWindow(in lastTarget, content);
     }
 
     /// <summary>
     /// Draws the panel beside <paramref name="target"/>. <paramref name="key"/> (the quest's row id) and
-    /// <paramref name="count"/> (how many lines it holds) decide when the size must be measured again; a session
-    /// change that keeps both redraws in place, visible and clickable.
+    /// <paramref name="count"/> (how many lines it holds) say when the subject changed: the content then dips and comes
+    /// back in place while the size eases to fit it; a session change that keeps both redraws in place.
     /// </summary>
     public void Draw(in ScreenRect target, uint key, int count, Action content)
     {
-        if (key != drawnKey || count != drawnCount)
-        {
-            drawnKey = key;
-            drawnCount = count;
-            settled = 0;
-        }
+        var changed = key != drawnKey || count != drawnCount;
+        drawnKey = key;
+        drawnCount = count;
+        lastTarget = target;
+        presence.Show(ImGui.GetTime(), changed);
+        DrawWindow(in target, content);
+    }
 
+    private void DrawWindow(in ScreenRect target, Action content)
+    {
+        var now = ImGui.GetTime();
+        var animate = Motion.WorldEnabled;
         var viewport = ImGuiHelpers.MainViewport;
         var bounds = new ScreenRect(viewport.Pos, viewport.Pos + viewport.Size);
         var gap = GapPx * UiMetrics.Scale;
+        var measuring = presence.Measuring || !sized.Known;
         Vector2 pos;
-        if (settled < SettleFrames)
+        if (measuring)
         {
-            // Measuring: drawn transparent where it will most likely go.
+            // Measuring: drawn unseen where it will most likely go, at no size of its own yet.
             pos = new Vector2(target.Max.X + gap, target.Min.Y);
         }
-        else if (!BesidePlacement.TryPlace(in target, size, in bounds, gap, out pos, out _))
+        else
         {
-            return;
+            var size = sized.Shown(ImGui.GetIO().DeltaTime, animate);
+            if (!BesidePlacement.TryPlace(in target, size, in bounds, gap, side, out pos, out var placed))
+            {
+                return;
+            }
+
+            if (side is { } was && was != placed)
+            {
+                // Moved to another side of its window (no room left where it stood): it appears there afresh.
+                presence.Reappear(now);
+            }
+
+            side = placed;
+            pos.Y += MathF.Round(presence.Rise(now, animate) * UiMetrics.Px(MotionTokens.RiseLogical));
+            ImGui.SetNextWindowSize(size, ImGuiCond.Always);
         }
 
         ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
-        using var style = PushPanelStyle(measuring: settled < SettleFrames);
+        using var style = PushPanelStyle(measuring: false);
 
         // Drawn from a raw UiBuilder.Draw handler, so nothing rebalances a Begin left open: End runs whatever Begin
         // returned and whatever the content throws, and the style scope pops after it.
@@ -96,20 +145,43 @@ public sealed class GamePanelShell
         {
             if (visible)
             {
-                size = ImGui.GetWindowSize();
-                if (settled < SettleFrames)
+                UiMetrics.ApplyFontScale();
+                var dl = ImGui.GetWindowDrawList();
+                var contentStart = dl.VtxBuffer.Size;
+                content();
+                sized.Measure(ContentExtent(), measuring);
+
+                // One fade for the whole window (frame, text and hand-drawn moons alike), and a dip of the content alone
+                // while a new subject takes over.
+                var contentAlpha = presence.ContentAlpha(now, animate);
+                if (contentAlpha < 1f)
                 {
-                    settled++;
+                    Chrome.FadeVertices(dl, contentStart, contentAlpha);
                 }
 
-                UiMetrics.ApplyFontScale();
-                content();
+                var alpha = measuring ? 0f : presence.Alpha(now, animate);
+                if (alpha < 1f)
+                {
+                    Chrome.FadeVertices(dl, 0, alpha);
+                }
             }
         }
         finally
         {
             ImGui.End();
         }
+    }
+
+    /// <summary>
+    /// The size the current window's content asks for this frame: from the window's corner to the furthest any item
+    /// reached (clipped or not), plus the closing padding. Call inside the window after its content. The panels lay
+    /// their text out at fixed wrap widths, never from the window's width, so this never chases its own size.
+    /// </summary>
+    internal static Vector2 ContentExtent()
+    {
+        var window = ImGuiP.GetCurrentWindow();
+        var reach = Vector2.Max(window.DC.CursorMaxPos, window.DC.IdealMaxPos);
+        return reach - window.Pos + ImGui.GetStyle().WindowPadding;
     }
 
     /// <summary>

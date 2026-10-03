@@ -135,4 +135,34 @@ public sealed partial class TreePane
         var to = selected ? Theme.MoonHighU32 : Theme.MoonU32;
         dl.AddRectFilledMultiColor(min, end, from, to, to, from);
     }
+
+    /// <summary>The road glint's width, logical px.</summary>
+    private const float GlintLogical = 24f;
+
+    /// <summary>
+    /// The road glint (feature plan v6 M1): a <see cref="GlintLogical"/> px MoonHigh gleam that runs once along the road,
+    /// left to right, at <paramref name="progress"/> (0..1 over <see cref="MotionTokens.Glint"/>), coming up and going
+    /// out softly and never brighter than <see cref="MotionTokens.MomentPeak"/>. Clipped to the road's length.
+    /// </summary>
+    private static void DrawGlint(ImDrawListPtr dl, float left, float right, float bottom, float progress)
+    {
+        var length = right - left;
+        if (!(length > 0f))
+        {
+            return;
+        }
+
+        var half = UiMetrics.Px(GlintLogical) * 0.5f;
+        var center = left - half + ((length + (2f * half)) * MotionMath.EaseInOutCubic(progress));
+        var alpha = MotionTokens.MomentPeak * MathF.Sin(MathF.PI * Math.Clamp(progress, 0f, 1f));
+        var thickness = MathF.Max(1f, MathF.Round(UiMetrics.Px(RoadLogical))) + 1f;
+        var y1 = MathF.Round(bottom) + 0.5f;
+        var y0 = y1 - thickness - 1f;
+        var peak = Theme.WithAlpha(Theme.MoonHigh, alpha);
+        var clear = Theme.WithAlpha(Theme.MoonHigh, 0f);
+        dl.PushClipRect(new Vector2(left, y0 - 1f), new Vector2(right, y1 + 1f), true);
+        dl.AddRectFilledMultiColor(new Vector2(center - half, y0), new Vector2(center, y1), clear, peak, peak, clear);
+        dl.AddRectFilledMultiColor(new Vector2(center, y0), new Vector2(center + half, y1), peak, clear, clear, peak);
+        dl.PopClipRect();
+    }
 }

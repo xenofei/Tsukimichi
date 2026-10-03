@@ -37,12 +37,15 @@ public sealed class QuestOfferPanel
     public void Draw()
     {
         // Off, paused by the kill switch, closed or unknown: the hint answers null before any game read.
-        current = hint.Current();
-        if (current is null || !hint.TryGetWindowRect(out var target))
+        var next = hint.Current();
+        if (next is null || !hint.TryGetWindowRect(out var target))
         {
-            shell.Reset();
+            // The last quest's panel lingers a moment (feature plan v6 M2): stepping through the list keeps it up.
+            shell.Linger(drawContent);
             return;
         }
+
+        current = next;
 
         shell.Draw(in target, current.Brief.Quest.RowId, GamePanelShell.BriefLines(current.Brief), drawContent);
     }

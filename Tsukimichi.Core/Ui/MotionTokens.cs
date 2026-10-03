@@ -6,8 +6,9 @@ namespace Tsukimichi.Core.Ui;
 /// <item><b>Interaction</b> (hover, selection, chevrons, reveals, content veils, popups, travel): 120–220 ms, at every
 /// Flair level, off under Reduce motion. Entrances ease out; continuous targets use the exponential approach of
 /// <see cref="MotionMath.Approach"/> at the rate <see cref="RateFor"/> gives for the token.</item>
-/// <item><b>Moments</b> (the moon waxing on a completion): one-shot, never looping, never longer than a second, off under
-/// Reduce motion.</item>
+/// <item><b>Moments</b> (the moon waxing on a completion, the road glint, the Ready halo, the Todo overlay's completion
+/// beat): one-shot, never looping, never longer than a second, off under Reduce motion, at a soft gold that never
+/// passes <see cref="MomentPeak"/>.</item>
 /// </list>
 /// Text the player is reading only ever changes opacity: nothing a player reads slides, grows or moves (the fixed-frame
 /// rule of owner point 3). Durations are in seconds.
@@ -44,14 +45,65 @@ public static class MotionTokens
     /// <summary>An ornament travelling between two places (the rail's bead between stations).</summary>
     public const float Travel = 0.22f;
 
+    /// <summary>
+    /// A panel beside a game window rising into place (feature plan v6 M2, "moonrise"): it fades in while it rises
+    /// <see cref="RiseLogical"/> px. The Todo overlay fades in and out over the same time when it opens or steps aside.
+    /// </summary>
+    public const float Rise = 0.16f;
+
+    /// <summary>A panel's content changing in place (another quest, another duty): its text dips to <see cref="SwapDip"/> and back.</summary>
+    public const float Swap = 0.12f;
+
+    /// <summary>
+    /// How long a panel beside a game window stays up after its subject went away (the player arrowing through the
+    /// Duty Finder or the Journal), so the next subject replaces it instead of the panel blinking out and back.
+    /// </summary>
+    public const float Linger = 0.15f;
+
+    /// <summary>A panel leaving: shorter than its entrance, as every exit is.</summary>
+    public const float Leave = 0.12f;
+
     /// <summary>Every interaction token, for tests and the glyph window.</summary>
-    public static ReadOnlySpan<float> Interaction => [HoverIn, HoverOut, Select, Chevron, Reveal, Veil, Popup, Travel];
+    public static ReadOnlySpan<float> Interaction => [HoverIn, HoverOut, Select, Chevron, Reveal, Veil, Popup, Travel, Rise, Swap, Linger, Leave];
+
+    /// <summary>How far a panel rises as it appears, in logical px: a hint of movement, never a slide.</summary>
+    public const float RiseLogical = 4f;
+
+    /// <summary>The lowest a panel's content dims to while it changes in place.</summary>
+    public const float SwapDip = 0.4f;
 
     /// <summary>The moon waxing to full when a quest the player can see is completed (a moment, not an interaction).</summary>
     public const float Wax = 0.6f;
 
     /// <summary>Where the waxing moon starts: the half moon, so the change reads as the moon filling, not appearing.</summary>
     public const float WaxFrom = 0.5f;
+
+    /// <summary>The glint running once along a tree road when a quest under it is completed (Full flair only).</summary>
+    public const float Glint = 0.6f;
+
+    /// <summary>The soft halo that swells once round a quest's moon when it becomes Ready, or when it is completed.</summary>
+    public const float Halo = 0.6f;
+
+    /// <summary>How far that halo swells past the moon's rim, in logical px.</summary>
+    public const float HaloLogical = 4f;
+
+    /// <summary>
+    /// The brightest any moment draws (a glint, a halo, a stripe flash), as an alpha of the gold: a soft cue, never a
+    /// flash, for photosensitive players.
+    /// </summary>
+    public const float MomentPeak = 0.6f;
+
+    /// <summary>
+    /// The Todo overlay's completion beat: a finished row stays this long as a ghost (its moon fills, one halo, then it
+    /// fades out where it stood, with no collapse).
+    /// </summary>
+    public const float Beat = 0.6f;
+
+    /// <summary>How long after a completion a count that grew may still start a road glint.</summary>
+    public const float CompletionWindow = 1.5f;
+
+    /// <summary>Every moment token: each one-shot, none over a second.</summary>
+    public static ReadOnlySpan<float> Moments => [Wax, Glint, Halo, Beat];
 
     /// <summary>ln 10: an exponential approach at rate k covers 90 % of the way in ln 10 / k seconds.</summary>
     public const float Ln10 = 2.30258509f;
@@ -75,5 +127,34 @@ public static class MotionTokens
         }
 
         return WaxFrom + ((1f - WaxFrom) * MotionMath.EaseOutCubic(progress));
+    }
+
+    /// <summary>
+    /// A moment's soft gold at <paramref name="progress"/> (0..1): <see cref="MomentPeak"/> fading out to nothing, eased
+    /// so most of the light goes early. 0 when no moment is playing (negative, non-finite, or 1 and beyond).
+    /// </summary>
+    public static float MomentAlpha(float progress)
+    {
+        if (!float.IsFinite(progress) || progress < 0f || progress >= 1f)
+        {
+            return 0f;
+        }
+
+        return MomentPeak * (1f - MotionMath.EaseOutCubic(progress));
+    }
+
+    /// <summary>
+    /// The opacity of content changing in place at <paramref name="progress"/> (0..1 over <see cref="Swap"/>): down to
+    /// <see cref="SwapDip"/> at the middle and back to 1. 1 when no change is playing.
+    /// </summary>
+    public static float SwapAlpha(float progress)
+    {
+        if (!float.IsFinite(progress) || progress < 0f || progress >= 1f)
+        {
+            return 1f;
+        }
+
+        var depth = 1f - MathF.Abs((2f * progress) - 1f);
+        return 1f - ((1f - SwapDip) * depth);
     }
 }

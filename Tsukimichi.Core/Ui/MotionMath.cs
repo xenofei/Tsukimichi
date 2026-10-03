@@ -37,7 +37,7 @@ public static class MotionMath
     /// </summary>
     public const float OrbitFillSeconds = 0.9f;
 
-    /// <summary>The rail's active station lighting up after a tab change (the mockup's 0.5 s ease-out).</summary>
+    /// <summary>The rail's active station lighting up after a tab change (the mockup's 0.5 s ease-out); since 1.13 the bead travels instead (<see cref="MotionTokens.Travel"/>).</summary>
     public const float StationLightSeconds = 0.5f;
 
     /// <summary>Closer than this to the target counts as there, so an eased value settles instead of creeping forever.</summary>
@@ -95,6 +95,29 @@ public static class MotionMath
         var u = 1f - t;
         return 1f - u * u * u;
     }
+
+    /// <summary>
+    /// Cubic ease-in-out of <paramref name="t"/> (clamped to 0..1): a soft start and a soft landing, for something that
+    /// travels from one place to another (the rail's bead between stations).
+    /// </summary>
+    public static float EaseInOutCubic(float t)
+    {
+        t = float.IsFinite(t) ? Math.Clamp(t, 0f, 1f) : 1f;
+        if (t < 0.5f)
+        {
+            return 4f * t * t * t;
+        }
+
+        var u = (-2f * t) + 2f;
+        return 1f - (u * u * u * 0.5f);
+    }
+
+    /// <summary>
+    /// One frame of <see cref="Approach"/> at <paramref name="rateUp"/> while the value rises and
+    /// <paramref name="rateDown"/> while it falls: a hover wash comes in quicker than it leaves.
+    /// </summary>
+    public static float ApproachAsym(float current, float target, float rateUp, float rateDown, float deltaSeconds) =>
+        Approach(current, target, float.IsFinite(current) && target < current ? rateDown : rateUp, deltaSeconds);
 
     /// <summary>
     /// Progress 0..1 of a pulse that started at <paramref name="startSeconds"/> and lasts <paramref name="durationSeconds"/>,
@@ -168,6 +191,8 @@ public sealed class MotionStore
         public float To;
         public double TweenStart;
         public bool Tweening;
+        public uint Signature;
+        public bool Signed;
     }
 
     private readonly Dictionary<ulong, Entry> entries = [];
@@ -189,6 +214,59 @@ public sealed class MotionStore
         entry.Touched = nowSeconds;
         entry.Value = existed && animate ? MotionMath.Approach(entry.Value, target, rate, deltaSeconds) : target;
         return entry.Value;
+    }
+
+    /// <summary>
+    /// <see cref="Lerp"/> at <paramref name="rateUp"/> while the value rises and <paramref name="rateDown"/> while it
+    /// falls (<see cref="MotionMath.ApproachAsym"/>): hover in 120 ms, out 180 ms.
+    /// </summary>
+    public float LerpAsym(ulong key, float target, float rateUp, float rateDown, double nowSeconds, float deltaSeconds, bool animate)
+    {
+        ref var entry = ref System.Runtime.InteropServices.CollectionsMarshal.GetValueRefOrAddDefault(entries, key, out var existed);
+        entry.Touched = nowSeconds;
+        entry.Value = existed && animate ? MotionMath.ApproachAsym(entry.Value, target, rateUp, rateDown, deltaSeconds) : target;
+        return entry.Value;
+    }
+
+    /// <summary>
+    /// A one-shot that plays when <paramref name="signature"/> changes (a pill's label, a count, a page): progress 0..1
+    /// over <paramref name="seconds"/> after the change, or -1 when none is playing. A key seen for the first time only
+    /// notes its signature, so nothing plays when an item first shows or comes back after being pruned. A change starts
+    /// the one-shot only while <paramref name="start"/> is true (the caller's own condition, such as "a quest was just
+    /// completed"); with <paramref name="animate"/> false (Reduce motion, the user scrolling) the change is noted and
+    /// nothing plays. Allocation-free once the key exists.
+    /// </summary>
+    public float Changed(ulong key, uint signature, float seconds, double nowSeconds, bool animate, bool start = true)
+    {
+        ref var entry = ref System.Runtime.InteropServices.CollectionsMarshal.GetValueRefOrAddDefault(entries, key, out var existed);
+        entry.Touched = nowSeconds;
+        if (!existed || !entry.Signed)
+        {
+            entry.Signature = signature;
+            entry.Signed = true;
+            entry.Pulsing = false;
+            return -1f;
+        }
+
+        if (entry.Signature != signature)
+        {
+            entry.Signature = signature;
+            entry.Pulsing = animate && start;
+            entry.PulseStart = nowSeconds;
+        }
+
+        if (!entry.Pulsing)
+        {
+            return -1f;
+        }
+
+        var progress = animate ? MotionMath.PulseProgress(entry.PulseStart, nowSeconds, seconds) : -1f;
+        if (progress < 0f)
+        {
+            entry.Pulsing = false;
+        }
+
+        return progress;
     }
 
     /// <summary>

@@ -30,7 +30,9 @@ namespace Tsukimichi.Ui;
 /// <para>
 /// Placement: beside the <c>ItemDetail</c> addon when it is visible (right of it, else left, below or above, whichever
 /// fits the viewport), otherwise beside a small box at the cursor. The hint model is memoized per item id, session
-/// version and lookup, so hovering costs no allocation after the first frame of a new item.
+/// version and lookup, so hovering costs no allocation after the first frame of a new item. Since 1.13.0 (feature plan
+/// v6 M2) it rises in once, eases its size from item to item instead of blinking while it is measured, and lingers a
+/// moment where it stood when the pointer leaves an item (<see cref="PanelPresence"/>).
 /// </para>
 /// <para>
 /// Behind the addon kill switch (T20): on a game version newer than the tested one <see cref="Draw"/> returns before
@@ -45,14 +47,11 @@ public sealed class HoverHint
     /// <summary>Quests listed before the hint folds the rest into "and N more".</summary>
     public const int MaxQuestLines = 5;
 
-    /// <summary>Frames a new model is drawn transparent while ImGui settles its auto-resized size.</summary>
-    private const int SettleFrames = 2;
-
     private const float GapPx = 6f;
     private const float CursorBoxPx = 24f;
 
     private const ImGuiWindowFlags HintFlags =
-        ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysAutoResize |
+        ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollWithMouse |
         ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoDocking |
         ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoInputs |
         ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus;
@@ -72,8 +71,10 @@ public sealed class HoverHint
     private HandInIndex? modelHandIns;
     private bool modelNeededFor;
     private string moreText = string.Empty;
-    private Vector2 size;
-    private int settled;
+    private readonly PanelPresence presence = new();
+    private readonly PanelSize sized = new();
+    private bool modelChanged;
+    private ScreenRect lastTarget;
     private bool warned;
 
     /// <param name="gate">The shared addon kill switch (T20): while it pauses game hooks the hint reads nothing from the game.</param>
@@ -118,6 +119,18 @@ public sealed class HoverHint
         var hovered = gameGui.HoveredItem;
         if (hovered == 0)
         {
+            // Between two items (or the tooltip just closed): the last hint lingers a moment instead of blinking
+            // out and back as the pointer crosses the gap (feature plan v6 M2).
+            if (lines.Count > 0 && presence.Lose(ImGui.GetTime(), Motion.WorldEnabled))
+            {
+                DrawWindow();
+            }
+            else
+            {
+                presence.Reset();
+                sized.Reset();
+            }
+
             return;
         }
 
@@ -135,14 +148,20 @@ public sealed class HoverHint
 
         if (lines.Count == 0)
         {
+            presence.Reset();
+            sized.Reset();
             return;
         }
 
+        presence.Show(ImGui.GetTime(), modelChanged);
+        modelChanged = false;
         DrawWindow();
     }
 
     private void Forget()
     {
+        presence.Reset();
+        sized.Reset();
         if (modelItem == 0)
         {
             return;
@@ -162,7 +181,7 @@ public sealed class HoverHint
         modelItem = itemId;
         modelVersion = session.Version;
         modelLookup = current;
-        settled = 0;
+        modelChanged = true;
 
         var entries = current.ByItem(itemId);
         var quests = 0;
@@ -250,31 +269,55 @@ public sealed class HoverHint
 
     private void DrawWindow()
     {
+        var now = ImGui.GetTime();
+        var animate = Motion.WorldEnabled;
         var viewport = ImGuiHelpers.MainViewport;
         var bounds = new ScreenRect(viewport.Pos, viewport.Pos + viewport.Size);
-        var target = TooltipRect() ?? ScreenRect.FromSize(ImGui.GetMousePos(), new Vector2(CursorBoxPx * UiMetrics.Scale));
+        // A lingering hint stays where it stood: the tooltip it sat beside is gone.
+        var target = presence.Phase == PanelPhase.Lingering ? lastTarget : TooltipRect() ?? ScreenRect.FromSize(ImGui.GetMousePos(), new Vector2(CursorBoxPx * UiMetrics.Scale));
+        lastTarget = target;
         var gap = GapPx * UiMetrics.Scale;
-        var pos = settled >= SettleFrames
-            ? OverlayGeometry.PlaceCard(in target, size, in bounds, gap, out _)
-            : new Vector2(target.Max.X + gap, target.Min.Y);
-        ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
+
+        // Measured unseen once when it first shows (feature plan v6 M2), then placed at a size that eases to each new
+        // item's lines, so moving from item to item never blinks the hint out while ImGui measures it.
+        var measuring = presence.Measuring || !sized.Known;
+        if (measuring)
+        {
+            ImGui.SetNextWindowPos(new Vector2(target.Max.X + gap, target.Min.Y), ImGuiCond.Always);
+        }
+        else
+        {
+            var size = sized.Shown(ImGui.GetIO().DeltaTime, animate);
+            var pos = OverlayGeometry.PlaceCard(in target, size, in bounds, gap, out _);
+            pos.Y += MathF.Round(presence.Rise(now, animate) * UiMetrics.Px(MotionTokens.RiseLogical));
+            ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
+            ImGui.SetNextWindowSize(size, ImGuiCond.Always);
+        }
 
         // The frame every in-game panel shares (R3 #11): the palette in use (Night, "Follow Dalamud colours" or high
-        // contrast) rather than fixed Night tokens; transparent while a new model settles its size.
-        using var style = GamePanelShell.PushPanelStyle(measuring: settled < SettleFrames);
+        // contrast) rather than fixed Night tokens.
+        using var style = GamePanelShell.PushPanelStyle(measuring: false);
 
         var visible = ImGui.Begin(Strings.ItemsHintWindowId, HintFlags);
         try
         {
             if (visible)
             {
-                size = ImGui.GetWindowSize();
-                if (settled < SettleFrames)
+                var dl = ImGui.GetWindowDrawList();
+                var contentStart = dl.VtxBuffer.Size;
+                DrawLines();
+                sized.Measure(GamePanelShell.ContentExtent(), measuring);
+                var contentAlpha = presence.ContentAlpha(now, animate);
+                if (contentAlpha < 1f)
                 {
-                    settled++;
+                    Chrome.FadeVertices(dl, contentStart, contentAlpha);
                 }
 
-                DrawLines();
+                var alpha = measuring ? 0f : presence.Alpha(now, animate);
+                if (alpha < 1f)
+                {
+                    Chrome.FadeVertices(dl, 0, alpha);
+                }
             }
         }
         finally

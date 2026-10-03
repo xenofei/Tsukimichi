@@ -1500,6 +1500,7 @@ public sealed partial class ConfigWindow : Window
             Chrome.TrailingLabel(Strings.TodoConfigOpacity);
         }
 
+        DrawTodoHiding(enabled);
         if (!filter.Active)
         {
             using var sub = SubSetting(enabled);

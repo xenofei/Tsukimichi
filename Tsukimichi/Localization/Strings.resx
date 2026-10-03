@@ -5322,6 +5322,24 @@
   <data name="TodoConfigOpacity" xml:space="preserve">
     <value>Background opacity</value>
   </data>
+  <data name="TodoConfigHideInCombat" xml:space="preserve">
+    <value>Hide in combat</value>
+  </data>
+  <data name="TodoConfigHideInCombatHint" xml:space="preserve">
+    <value>The overlay fades away while you fight and comes back after.</value>
+  </data>
+  <data name="TodoConfigHideTalking" xml:space="preserve">
+    <value>Hide while talking to NPCs</value>
+  </data>
+  <data name="TodoConfigHideTalkingHint" xml:space="preserve">
+    <value>The overlay fades away during dialogue, shops and other NPC menus.</value>
+  </data>
+  <data name="TodoConfigHideGroupPose" xml:space="preserve">
+    <value>Hide in group pose</value>
+  </data>
+  <data name="TodoConfigHideGroupPoseHint" xml:space="preserve">
+    <value>Keeps the overlay out of your screenshots.</value>
+  </data>
   <data name="TodoConfigSectionsLabel" xml:space="preserve">
     <value>Sections</value>
   </data>

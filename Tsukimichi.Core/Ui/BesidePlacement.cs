@@ -15,7 +15,16 @@ public static class BesidePlacement
     /// <paramref name="bounds"/>, <paramref name="gap"/> away from it: to its right, else left, else below, else above.
     /// False when no side has room; the panel is then not to be drawn.
     /// </summary>
-    public static bool TryPlace(in ScreenRect target, Vector2 size, in ScreenRect bounds, float gap, out Vector2 position, out CardSide side)
+    public static bool TryPlace(in ScreenRect target, Vector2 size, in ScreenRect bounds, float gap, out Vector2 position, out CardSide side) =>
+        TryPlace(in target, size, in bounds, gap, null, out position, out side);
+
+    /// <summary>
+    /// <see cref="TryPlace(in ScreenRect, Vector2, in ScreenRect, float, out Vector2, out CardSide)"/> with a sticky side
+    /// (feature plan v6 M2): <paramref name="preferred"/> (the side the panel stood on last frame) is tried first and
+    /// kept while the panel still fits there, so a brief that grows a line does not send the panel to the other side
+    /// of the game window. Only when that side has no room does the usual order (right, left, below, above) decide.
+    /// </summary>
+    public static bool TryPlace(in ScreenRect target, Vector2 size, in ScreenRect bounds, float gap, CardSide? preferred, out Vector2 position, out CardSide side)
     {
         position = default;
         side = CardSide.Right;
@@ -24,43 +33,55 @@ public static class BesidePlacement
             return false;
         }
 
-        // Right and left: aligned with the target's top, slid vertically into the screen.
-        var y = Slide(target.Min.Y, size.Y, bounds.Min.Y, bounds.Max.Y);
-        var right = target.Max.X + gap;
-        if (right + size.X <= bounds.Max.X && right >= bounds.Min.X)
+        if (preferred is { } sticky && TrySide(in target, size, in bounds, gap, sticky, out position))
         {
-            position = new Vector2(right, y);
-            side = CardSide.Right;
+            side = sticky;
             return true;
         }
 
-        var left = target.Min.X - gap - size.X;
-        if (left >= bounds.Min.X && left + size.X <= bounds.Max.X)
+        ReadOnlySpan<CardSide> order = [CardSide.Right, CardSide.Left, CardSide.Below, CardSide.Above];
+        foreach (var candidate in order)
         {
-            position = new Vector2(left, y);
-            side = CardSide.Left;
+            if (TrySide(in target, size, in bounds, gap, candidate, out position))
+            {
+                side = candidate;
+                return true;
+            }
+        }
+
+        position = default;
+        return false;
+    }
+
+    /// <summary>Whether the panel fits wholly on <paramref name="side"/> of the target, and where it then goes.</summary>
+    private static bool TrySide(in ScreenRect target, Vector2 size, in ScreenRect bounds, float gap, CardSide side, out Vector2 position)
+    {
+        position = default;
+
+        // Right and left: aligned with the target's top, slid vertically into the screen.
+        if (side is CardSide.Right or CardSide.Left)
+        {
+            var y = Slide(target.Min.Y, size.Y, bounds.Min.Y, bounds.Max.Y);
+            var x = side == CardSide.Right ? target.Max.X + gap : target.Min.X - gap - size.X;
+            if (x < bounds.Min.X || x + size.X > bounds.Max.X)
+            {
+                return false;
+            }
+
+            position = new Vector2(x, y);
             return true;
         }
 
         // Below and above: aligned with the target's left edge, slid horizontally into the screen.
-        var x = Slide(target.Min.X, size.X, bounds.Min.X, bounds.Max.X);
-        var below = target.Max.Y + gap;
-        if (below + size.Y <= bounds.Max.Y && below >= bounds.Min.Y)
+        var left = Slide(target.Min.X, size.X, bounds.Min.X, bounds.Max.X);
+        var top = side == CardSide.Below ? target.Max.Y + gap : target.Min.Y - gap - size.Y;
+        if (top < bounds.Min.Y || top + size.Y > bounds.Max.Y)
         {
-            position = new Vector2(x, below);
-            side = CardSide.Below;
-            return true;
+            return false;
         }
 
-        var above = target.Min.Y - gap - size.Y;
-        if (above >= bounds.Min.Y && above + size.Y <= bounds.Max.Y)
-        {
-            position = new Vector2(x, above);
-            side = CardSide.Above;
-            return true;
-        }
-
-        return false;
+        position = new Vector2(left, top);
+        return true;
     }
 
     /// <summary><paramref name="start"/> moved so a span of <paramref name="length"/> lies within [min, max] (the caller checked it fits).</summary>
