@@ -1,3 +1,5 @@
+using Tsukimichi.Core.Model;
+
 namespace Tsukimichi.Core.Unlocks;
 
 /// <summary>A zone an unlock row can name: a town or field zone, or the destination of a quest-gated warp.</summary>
@@ -64,6 +66,12 @@ public sealed record UnlockLinks
     public IReadOnlyList<UnlockTouch> Touches { get; init; } = [];
 
     public IReadOnlyList<UnlockDuty> Duties { get; init; } = [];
+
+    /// <summary>
+    /// The sheet icon of every action, trait, general action and blue magic spell (keyed by the reward kind and its
+    /// row id: Action, Trait, GeneralAction, AozAction), for an action row the reward data names without one.
+    /// </summary>
+    public IReadOnlyDictionary<(RewardKind Kind, uint Id), uint> ActionIcons { get; init; } = new Dictionary<(RewardKind Kind, uint Id), uint>();
 
     /// <summary>The icon a zone or world-map row wears (the game's Map menu icon); 0 for the stand-in.</summary>
     public uint AreaIcon { get; init; }

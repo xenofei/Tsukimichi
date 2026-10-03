@@ -4,9 +4,11 @@ using Tsukimichi.Core.Plan;
 namespace Tsukimichi.Core.Unlocks;
 
 /// <summary>
-/// The one rule that keeps a reward out of Unlocks: an unlock the quest's own Rewards already show (the table's Rewards
-/// column, the detail pane's Rewards tiles, both drawn from <see cref="QuestRecord.Rewards"/>) is not shown again on
-/// any unlock surface. <see cref="QuestUnlocks"/> sets <see cref="UnlockEntry.InRewards"/> with it once per catalog,
+/// The one rule that says when a reward and an unlock row are one thing. With <see cref="RewardSplit"/> it keeps the
+/// two sections apart: a row one of the quest's reward-class rewards names (the table's Rewards column and the detail
+/// pane's Rewards tiles draw it, from <see cref="QuestRecord.Rewards"/>) is not shown again on any unlock surface
+/// (<see cref="Shown"/>), while an unlock-class reward (a duty, a job, an action, flying, a feature) is drawn only as
+/// its unlock row. <see cref="QuestUnlocks"/> sets <see cref="UnlockEntry.InRewards"/> once per catalog,
 /// <see cref="QuestUnlocks.For"/> and <see cref="UnlockView.Visible"/> leave those rows out, and a surface that lists
 /// other rewards beside the unlocks (Moonlit's rows, the game panels' Moonlit lines) asks <see cref="Same(UniqueRewardEntry, UnlockEntry)"/>.
 /// <para>A reward and an unlock row are the same thing when, in this order:</para>
@@ -25,14 +27,18 @@ public static class UnlockRewards
     /// <summary>The <c>QuestRewardOther</c> row "Aether Current": the reward tile that stands for flying in the zone.</summary>
     public const uint AetherCurrentOtherReward = 2;
 
-    /// <summary>Whether any of <paramref name="rewards"/> (a quest's own) is the row's thing.</summary>
+    /// <summary>
+    /// Whether any of <paramref name="rewards"/> (a quest's own) that the Rewards tiles draw is the row's thing. An
+    /// unlock-class reward (a duty, a job, an action, flying, a feature: <see cref="RewardSplit"/>) is drawn by the
+    /// row itself, so it hides nothing.
+    /// </summary>
     public static bool Shown(IReadOnlyList<RewardRef> rewards, UnlockEntry entry)
     {
         ArgumentNullException.ThrowIfNull(rewards);
         ArgumentNullException.ThrowIfNull(entry);
         foreach (var reward in rewards)
         {
-            if (Same(reward, entry))
+            if (RewardSplit.IsReward(reward) && Same(reward, entry))
             {
                 return true;
             }

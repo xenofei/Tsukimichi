@@ -1,6 +1,7 @@
 using Lumina.Data;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Unlocks;
 
 namespace Tsukimichi.GameData;
@@ -18,6 +19,7 @@ namespace Tsukimichi.GameData;
 /// <item>where each quest's objectives lead: its <c>IssuerLocation</c> and every <c>TodoParams.ToDoLocation</c>
 /// <c>Level</c> row in a town or field zone, with the coordinates;</item>
 /// <item>every duty's icon (its content type's), level and expansion;</item>
+/// <item>the icons of the actions, traits, general actions and blue magic a quest can teach;</item>
 /// <item>the aetherytes (from <see cref="AetheryteIndex"/>, placed by their map markers) and the gates' names.</item>
 /// </list>
 /// Standalone (takes an <see cref="ExcelModule"/>) so tests read it against game data without Dalamud.
@@ -121,6 +123,9 @@ public static class UnlockLinkReader
         // Duties: their content type's icon, their level and expansion.
         var duties = Part("duties", () => ReadDuties(excel, language), [], log);
 
+        // Actions, traits, general actions and blue magic: their icons, for the action rows the reward data names.
+        var actionIcons = Part("action icons", () => ReadActionIcons(excel, language), [], log);
+
         var areaIcon = Part("Map menu icon", () => excel.GetSheet<MainCommand>(language).GetRowOrDefault(MapMainCommand) is { Icon: > 0 } command ? (uint)command.Icon : 0u, 0u, log);
 
         return new UnlockLinks
@@ -132,6 +137,7 @@ public static class UnlockLinkReader
             GatedAethernet = gates,
             Touches = touches,
             Duties = duties,
+            ActionIcons = actionIcons,
             AreaIcon = areaIcon,
         };
     }
@@ -316,5 +322,47 @@ public static class UnlockLinkReader
         }
 
         return duties;
+    }
+
+    /// <summary>
+    /// The icon of every action a quest can teach: player actions and those of a class or job (Action), traits,
+    /// general actions and blue magic (AozAction, which wears its action's icon). Rows without a name or an icon are left out.
+    /// </summary>
+    private static Dictionary<(RewardKind Kind, uint Id), uint> ReadActionIcons(ExcelModule excel, Language language)
+    {
+        var icons = new Dictionary<(RewardKind Kind, uint Id), uint>();
+        foreach (var row in excel.GetSheet<Lumina.Excel.Sheets.Action>(language))
+        {
+            if (row.Icon != 0 && !row.Name.IsEmpty && (row.IsPlayerAction || row.ClassJob.RowId != 0 || row.ClassJobLevel != 0))
+            {
+                icons[(RewardKind.Action, row.RowId)] = row.Icon;
+            }
+        }
+
+        foreach (var row in excel.GetSheet<Trait>(language))
+        {
+            if (row.Icon > 0 && !row.Name.IsEmpty)
+            {
+                icons[(RewardKind.Trait, row.RowId)] = (uint)row.Icon;
+            }
+        }
+
+        foreach (var row in excel.GetSheet<GeneralAction>(language))
+        {
+            if (row.Icon > 0 && !row.Name.IsEmpty)
+            {
+                icons[(RewardKind.GeneralAction, row.RowId)] = (uint)row.Icon;
+            }
+        }
+
+        foreach (var row in excel.GetSheet<AozAction>(language))
+        {
+            if (row.Action.ValueNullable is { Icon: > 0 } action)
+            {
+                icons[(RewardKind.BlueMageSpell, row.RowId)] = action.Icon;
+            }
+        }
+
+        return icons;
     }
 }

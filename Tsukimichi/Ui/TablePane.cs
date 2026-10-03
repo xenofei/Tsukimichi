@@ -1568,9 +1568,9 @@ public sealed class TablePane : IDisposable
     }
 
     /// <summary>
-    /// The Opens column: the icons of the first three things the quest opens (next quests left out, and anything the
-    /// Rewards column and tiles already show: <see cref="Core.Unlocks.UnlockRewards"/>); nothing for a masked quest, and
-    /// an empty cell for a quest whose only unlocks are its rewards.
+    /// The Opens column: the icons of the first three things the quest opens, its own duty, job, action, flying and
+    /// feature rewards among them (next quests left out, and anything that belongs to the Rewards column:
+    /// <see cref="Core.Unlocks.RewardSplit"/>); nothing for a masked quest.
     /// </summary>
     private void DrawOpensIcons(QuestRecord quest, in RowLayout layout)
     {
@@ -1620,8 +1620,9 @@ public sealed class TablePane : IDisposable
         var iconOffset = MathF.Max(0f, (layout.RowContent - iconSize) * 0.5f);
         for (var i = 0; i < rewards.Count && drawn < MaxRewardIcons; i++)
         {
+            // Only what the quest hands over to keep: a duty, a job, an action, flying or a feature is the Unlocks column's (RewardSplit).
             var reward = rewards[i];
-            if (reward.Icon == 0)
+            if (reward.Icon == 0 || !Core.Unlocks.RewardSplit.IsReward(reward))
             {
                 continue;
             }

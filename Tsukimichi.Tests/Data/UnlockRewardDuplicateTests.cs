@@ -7,8 +7,9 @@ namespace Tsukimichi.Tests.Data;
 /// <summary>
 /// No unlock repeats a reward, over the installed game: for every quest of the catalog, no row any unlock surface draws
 /// (<see cref="QuestUnlocks.For"/>, the table's Unlocks column, the detail pane's Unlocks section, the tooltips) is a
-/// thing the quest's own Rewards already show (the Rewards column and tiles, both drawn from
-/// <see cref="QuestRecord.Rewards"/>), and no quest's rows name one thing twice. The matching here is written out on
+/// thing the quest's own Rewards show (the Rewards column and tiles: the reward-class entries of
+/// <see cref="QuestRecord.Rewards"/>, <see cref="RewardSplit"/>), and no quest's rows name one thing twice.
+/// <see cref="RewardUnlockSplitTests"/> checks the other half: no Rewards surface draws an unlock. The matching here is written out on
 /// its own rather than through <see cref="UnlockRewards"/>, so the two keep each other honest.
 /// </summary>
 public sealed class UnlockRewardDuplicateTests(UnlockIndexFixture fixture, ITestOutputHelper output) : IClassFixture<UnlockIndexFixture>
@@ -37,7 +38,7 @@ public sealed class UnlockRewardDuplicateTests(UnlockIndexFixture fixture, ITest
             output.WriteLine($"   {count,5} {kind}");
         }
 
-        Assert.True(before.Count > 300, $"the rule's floor fell: {before.Count} quests repeat a reward before it");
+        Assert.True(before.Count > 150, $"the rule's floor fell: {before.Count} quests repeat a reward before it");
         Assert.True(after.Count == 0, "shown unlocks that repeat a reward:\n" + string.Join('\n', after.SelectMany(q => q.Value).Take(40).Select(d => d.Text)));
     }
 
@@ -83,32 +84,35 @@ public sealed class UnlockRewardDuplicateTests(UnlockIndexFixture fixture, ITest
         Assert.DoesNotContain(Index.For(ConfederateConsternation), e => e.Target == UnlockTarget.Emote);
         Assert.Contains(Index.For(ConfederateConsternation), e => e.Target == UnlockTarget.Aetheryte && e.Name == "Onokoro");
 
-        // A class quest rewards its class: the tile wears the job icon, and Unlocks says nothing of it.
+        // A class quest rewards its class: the job icon on the Unlocks row (RewardSplit: a job is access), once.
         var lancer = Assert.Single(fixture.Catalog.GetByRowId(CloseToHomeLancer)!.Rewards, r => r.Kind == RewardKind.ClassJob);
         Assert.Equal(Lancer, lancer.Id);
         Assert.Equal(QuestUnlocks.JobIconBase + Lancer, lancer.Icon);
-        Assert.Contains(Index.IncludingRewards(CloseToHomeLancer), e => e.Target == UnlockTarget.Job && e.InRewards);
-        Assert.DoesNotContain(Index.For(CloseToHomeLancer), e => e.Target == UnlockTarget.Job);
+        var job = Assert.Single(Index.For(CloseToHomeLancer), e => e.Target == UnlockTarget.Job);
+        Assert.False(job.InRewards);
+        Assert.Equal(lancer.Icon, job.Icon);
 
-        // Into the Aery rewards the Manacutter's key and an aether current; the Aery itself is no reward and stays.
+        // Into the Aery rewards the Manacutter's key (a tile) and an aether current (flying, an Unlocks row); the Aery stays.
         var aery = Index.For(IntoTheAery);
         Assert.DoesNotContain(aery, e => e.Target == UnlockTarget.Mount);
         Assert.Contains(Index.IncludingRewards(IntoTheAery), e => e.Target == UnlockTarget.Mount && e.TargetId == Manacutter && e.InRewards);
-        Assert.DoesNotContain(aery, e => e.Target is UnlockTarget.Flying or UnlockTarget.System);
+        Assert.Single(aery, e => e.Target == UnlockTarget.Flying);
+        Assert.DoesNotContain(aery, e => e.Target == UnlockTarget.System);
         Assert.Contains(aery, e => e.Target == UnlockTarget.Dungeon && e.Name == "The Aery");
 
-        // An emote reward.
+        // An emote reward: a tile, never a row.
         Assert.Contains(fixture.Catalog.GetByRowId(ActingThePart)!.Rewards, r => r.Kind == RewardKind.Emote && r.Name == "Imperial Salute");
         Assert.DoesNotContain(Index.For(ActingThePart), e => e.Target == UnlockTarget.Emote);
 
-        // A duty the quest's reward opens: a tile with the dungeon icon, no Duties row.
+        // A duty the quest's reward opens: the Duties row with the dungeon icon.
         var halatali = Assert.Single(fixture.Catalog.GetByRowId(HalloHalatali)!.Rewards, r => r.Kind == RewardKind.Instance);
         Assert.NotEqual(0u, halatali.Icon);
-        Assert.Contains(Index.IncludingRewards(HalloHalatali), e => e.Group == UnlockGroup.Duty && e.Name == "Halatali" && e.InRewards);
-        Assert.DoesNotContain(Index.For(HalloHalatali), e => e.Group == UnlockGroup.Duty);
+        Assert.Contains(Index.For(HalloHalatali), e => e.Group == UnlockGroup.Duty && e.Name == "Halatali" && !e.InRewards);
 
-        // The Aether Compass reward is neither a feature row nor an action row.
-        Assert.DoesNotContain(Index.For(DivineIntervention), e => e.Name.Contains("Aether Compass", StringComparison.OrdinalIgnoreCase));
+        // The Aether Compass reward is one row: the action, wearing the reward's icon.
+        var compass = Assert.Single(Index.For(DivineIntervention), e => e.Name.Contains("Aether Compass", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(UnlockTarget.Action, compass.Target);
+        Assert.NotEqual(0u, compass.Icon);
 
         // A world map and its own place name are one row.
         var moon = Index.For(ATripToTheMoon).Where(e => e.Target == UnlockTarget.WorldMap).Select(e => e.Name).ToList();
@@ -130,7 +134,8 @@ public sealed class UnlockRewardDuplicateTests(UnlockIndexFixture fixture, ITest
 
                 foreach (var reward in quest.Rewards)
                 {
-                    if (!IsReward(reward, entry))
+                    // Only a Rewards tile can be repeated: an unlock-class reward is drawn as its row alone (RewardSplit).
+                    if (!RewardSplit.IsReward(reward) || !IsReward(reward, entry))
                     {
                         continue;
                     }

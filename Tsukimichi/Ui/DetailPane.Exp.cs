@@ -20,8 +20,8 @@ public sealed partial class DetailPane
     private string expLine = string.Empty;
     private string expTooltip = string.Empty;
 
-    /// <summary>The EXP and gil line, when the quest gives either; returns whether it drew one.</summary>
-    private bool DrawExpAndGil(QuestRecord quest)
+    /// <summary>Whether the quest gives EXP or gil (the line is built once per quest, catalog and language).</summary>
+    private bool HasExpAndGil(QuestRecord quest)
     {
         if (model.Bundle is not { } bundle)
         {
@@ -36,7 +36,13 @@ public sealed partial class DetailPane
             (expLine, expTooltip) = ExpAndGil(quest, QuestExp.For(quest, bundle.ExpTable));
         }
 
-        if (expLine.Length == 0)
+        return expLine.Length > 0;
+    }
+
+    /// <summary>The EXP and gil line, when the quest gives either; returns whether it drew one.</summary>
+    private bool DrawExpAndGil(QuestRecord quest)
+    {
+        if (!HasExpAndGil(quest))
         {
             return false;
         }

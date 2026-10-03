@@ -29,17 +29,24 @@ namespace Tsukimichi.Core.Unlocks;
 /// Dedupe: an instance and the duty unlock of one duty are one row, and so are a deep dungeon's floor sets (one row
 /// named for the dungeon); a curated feature named like a duty of the quest is that duty; a zone a warp opens and the
 /// rule also finds is one Sheet row; two rows of one kind with one name ("Collect", a world map and its place name)
-/// are one row. A row the quest's own Rewards already show (<see cref="UnlockRewards"/>: a job, a duty, an emote, a
-/// mount, an aether current, a named feature) is marked <see cref="UnlockEntry.InRewards"/> and left out of
-/// <see cref="For"/>, so no surface draws it twice. Order: by group (<see cref="UnlockGroup"/>), by target, by
-/// expansion, by the target's own order (a duty's level, a zone's sheet order), by name; next quests last, in catalog
-/// order.
+/// are one row; a feature named like an action of the quest is that action ("Aether Compass").
+/// <para>
+/// The split (<see cref="RewardSplit"/>): the quest's own unlock-class rewards (an instance, a job, an action, a
+/// general action, an aether current, a named feature) are Unlocks rows, and no Rewards surface draws them; a
+/// reward-class row (an emote, a mount, a title) is marked <see cref="UnlockEntry.InRewards"/> and left out of
+/// <see cref="For"/>, as is any row one of the quest's reward-class rewards names (<see cref="UnlockRewards"/>), so no
+/// surface draws a thing twice. The reward-class rows the quest's own list does not carry (a title the reward data
+/// names) are <see cref="ExtraRewards"/>, which the Rewards tiles draw. Order: by group (<see cref="UnlockGroup"/>), by
+/// target, by expansion, by the target's own order (a duty's level, a zone's sheet order), by name; next quests last,
+/// in catalog order.
+/// </para>
 /// Immutable; reads allocate nothing.
 /// </summary>
 public sealed class QuestUnlocks
 {
     public static readonly QuestUnlocks Empty = new(
         null,
+        FrozenDictionary<uint, UnlockEntry[]>.Empty,
         FrozenDictionary<uint, UnlockEntry[]>.Empty,
         FrozenDictionary<uint, UnlockEntry[]>.Empty,
         FrozenDictionary<(UnlockTarget, uint), uint[]>.Empty);
@@ -49,17 +56,20 @@ public sealed class QuestUnlocks
 
     private readonly FrozenDictionary<uint, UnlockEntry[]> byQuest;
     private readonly FrozenDictionary<uint, UnlockEntry[]> withRewards;
+    private readonly FrozenDictionary<uint, UnlockEntry[]> extraRewards;
     private readonly FrozenDictionary<(UnlockTarget, uint), uint[]> byTarget;
 
     private QuestUnlocks(
         QuestCatalog? catalog,
         FrozenDictionary<uint, UnlockEntry[]> byQuest,
         FrozenDictionary<uint, UnlockEntry[]> withRewards,
+        FrozenDictionary<uint, UnlockEntry[]> extraRewards,
         FrozenDictionary<(UnlockTarget, uint), uint[]> byTarget)
     {
         Catalog = catalog;
         this.byQuest = byQuest;
         this.withRewards = withRewards;
+        this.extraRewards = extraRewards;
         this.byTarget = byTarget;
     }
 
@@ -83,6 +93,13 @@ public sealed class QuestUnlocks
     /// display order: for the reverse lookup and the tests, never drawn as it is. Empty when nothing.
     /// </summary>
     public IReadOnlyList<UnlockEntry> IncludingRewards(uint rowId) => withRewards.GetValueOrDefault(rowId) ?? NoEntries;
+
+    /// <summary>
+    /// The reward-class rows (<see cref="RewardSplit"/>) the quest's own reward list does not carry: a title, or a
+    /// collectable the reward data names that no reward slot holds. Never an Unlocks row; the detail pane's Rewards
+    /// tiles draw them after the quest's own. Empty when none.
+    /// </summary>
+    public IReadOnlyList<UnlockEntry> ExtraRewards(uint rowId) => extraRewards.GetValueOrDefault(rowId) ?? NoEntries;
 
     /// <summary>
     /// The quests that open a target ("which quest opens Kugane?"), in catalog order, a quest whose Rewards show it
@@ -350,8 +367,16 @@ public sealed class QuestUnlocks
                         continue;
                     }
 
-                    // Each of these is a Rewards tile already: the row is kept for the reverse lookup, never drawn.
-                    AddReward(quest, reward.Kind, reward.Id, reward.ItemId, reward.Name, UnlockSource.Sheet, reward.Icon, inRewards: true);
+                    // The split (RewardSplit): a duty, a job, an action, flying or a feature is an Unlocks row and no
+                    // Rewards tile; an emote is a Rewards tile, its row kept for the reverse lookup and never drawn. A
+                    // soul crystal is a tile too, and the job it carries is the job row.
+                    var kept = RewardSplit.IsReward(reward);
+                    if (kept && reward.Kind == RewardKind.Other)
+                    {
+                        continue;
+                    }
+
+                    AddReward(quest, reward.Kind, reward.Id, reward.ItemId, reward.Name, UnlockSource.Sheet, reward.Icon, inRewards: kept);
                 }
             }
         }
@@ -363,20 +388,26 @@ public sealed class QuestUnlocks
                 icon = IconFromRewards(quest, kind, id, itemId);
             }
 
+            if (icon == 0 && id != 0)
+            {
+                // An action, trait or general action only the reward data names: the sheet's own icon.
+                icon = links.ActionIcons.GetValueOrDefault((kind, id));
+            }
+
             switch (kind)
             {
                 case RewardKind.DutyUnlock:
-                    AddDuty(quest, duties.TryGetCondition(id, out var duty) ? duty : null, id, name, source, kind, inRewards);
+                    AddDuty(quest, duties.TryGetCondition(id, out var duty) ? duty : null, id, name, source, kind, icon, inRewards);
                     return;
 
                 case RewardKind.Instance:
                     if (duties.TryGetInstance(id, out var instance) || duties.TryGetByName(name, out instance))
                     {
-                        AddDuty(quest, instance, instance.ContentFinderConditionId, name, source, RewardKind.DutyUnlock, inRewards);
+                        AddDuty(quest, instance, instance.ContentFinderConditionId, name, source, RewardKind.DutyUnlock, icon, inRewards);
                     }
                     else if (name.Length > 0)
                     {
-                        AddDuty(quest, null, 0, name, source, null, inRewards);
+                        AddDuty(quest, null, 0, name, source, null, icon, inRewards);
                     }
 
                     return;
@@ -408,12 +439,26 @@ public sealed class QuestUnlocks
                     return;
 
                 case RewardKind.SystemUnlock:
-                    AddFeature(quest, name, source, inRewards);
+                    AddFeature(quest, name, source, icon, inRewards);
+                    return;
+
+                case RewardKind.Other when id == UnlockRewards.AetherCurrentOtherReward:
+                    // The quest's "Aether Current" reward is flying in the zone the reward data names, whose row is
+                    // already there; a quest the data names no zone for keeps the reward's own flying row.
+                    if (name.Length > 0 && !RowsOf(quest.RowId).Has(static e => e.Target == UnlockTarget.Flying && e.Reward == RewardKind.AetherCurrent))
+                    {
+                        RowsOf(quest.RowId).Add(new UnlockEntry(UnlockTarget.Flying, 0, name, icon != 0 ? icon : AetherCurrentIcon, source, quest.Expansion, Detail: FlyingDetail)
+                        {
+                            Reward = RewardKind.AetherCurrent,
+                            InRewards = inRewards,
+                        });
+                    }
+
                     return;
 
                 case RewardKind.Other:
-                    // A named Quest.OtherReward: Wondrous Tails, the Aether Compass, Spearfishing.
-                    AddFeature(quest, name, UnlockSource.Sheet, inRewards);
+                    // A named Quest.OtherReward: Wondrous Tails, the Aether Compass, Spearfishing, with the reward's icon.
+                    AddFeature(quest, name, UnlockSource.Sheet, icon, inRewards);
                     return;
             }
 
@@ -430,7 +475,7 @@ public sealed class QuestUnlocks
             });
         }
 
-        private void AddDuty(QuestRecord quest, PlanDuty? duty, uint conditionId, string fallbackName, UnlockSource source, RewardKind? reward, bool inRewards)
+        private void AddDuty(QuestRecord quest, PlanDuty? duty, uint conditionId, string fallbackName, UnlockSource source, RewardKind? reward, uint icon, bool inRewards)
         {
             var name = UnlockTags.Capitalize(UnlockTags.ContentName(duty?.Name ?? fallbackName));
             if (name.Length == 0)
@@ -441,14 +486,16 @@ public sealed class QuestUnlocks
             var target = duty is null ? UnlockTarget.OtherDuty : UnlockTargets.FromDutyKind(duty.Kind);
             var info = conditionId != 0 ? dutyInfo.GetValueOrDefault(conditionId) : null;
             var detail = info is { Level: > 0 } ? string.Format(CultureInfo.CurrentCulture, LevelFormat, info.Level) : string.Empty;
-            RowsOf(quest.RowId).Add(new UnlockEntry(target, conditionId, name, info?.Icon ?? 0, source, info?.Expansion ?? quest.Expansion, info?.Level ?? 0, Detail: detail)
+            // The duty's own icon, else the reward tile's (an instance wears its duty kind's).
+            var dutyIcon = info is { Icon: > 0 } ? info.Icon : icon;
+            RowsOf(quest.RowId).Add(new UnlockEntry(target, conditionId, name, dutyIcon, source, info?.Expansion ?? quest.Expansion, info?.Level ?? 0, Detail: detail)
             {
                 Reward = conditionId != 0 ? reward : null,
                 InRewards = inRewards,
             });
         }
 
-        private void AddFeature(QuestRecord quest, string label, UnlockSource source, bool inRewards)
+        private void AddFeature(QuestRecord quest, string label, UnlockSource source, uint icon, bool inRewards)
         {
             if (label.Length == 0)
             {
@@ -461,7 +508,7 @@ public sealed class QuestUnlocks
             var note = curated is not null && curated.SystemUnlocks.TryGetValue(quest.RowId, out var system) && string.Equals(system.Label, label, StringComparison.Ordinal)
                 ? system.Note
                 : null;
-            RowsOf(quest.RowId).Add(new UnlockEntry(target, 0, label, target == UnlockTarget.Flying ? AetherCurrentIcon : 0, source, quest.Expansion, Note: note)
+            RowsOf(quest.RowId).Add(new UnlockEntry(target, 0, label, target == UnlockTarget.Flying ? AetherCurrentIcon : icon, source, quest.Expansion, Note: note)
             {
                 InRewards = inRewards,
             });
@@ -518,6 +565,7 @@ public sealed class QuestUnlocks
         {
             var result = new Dictionary<uint, UnlockEntry[]>();
             var shown = new Dictionary<uint, UnlockEntry[]>();
+            var extras = new Dictionary<uint, UnlockEntry[]>();
             var reverse = new Dictionary<(UnlockTarget, uint), List<uint>>();
             foreach (var quest in catalog.All)
             {
@@ -530,14 +578,23 @@ public sealed class QuestUnlocks
 
                 var ordered = new List<UnlockEntry>((rows?.Count ?? 0) + (next?.Count ?? 0));
                 var hidden = 0;
+                List<UnlockEntry>? extra = null;
                 if (rows is not null)
                 {
                     foreach (var row in rows.Ordered())
                     {
-                        // One rule for every kind and every surface: what a Rewards tile shows is no unlock row.
-                        var entry = row.InRewards || !UnlockRewards.Shown(quest.Rewards, row) ? row : row with { InRewards = true };
+                        // One split for every kind and every surface (RewardSplit): a reward-class row is the Rewards
+                        // tiles', and so is a row one of the quest's reward-class rewards names; neither is an unlock row.
+                        var named = UnlockRewards.Shown(quest.Rewards, row);
+                        var kept = RewardSplit.Of(row.Target) == RewardOrUnlock.Reward;
+                        var entry = row.InRewards || (!named && !kept) ? row : row with { InRewards = true };
                         hidden += entry.InRewards ? 1 : 0;
                         ordered.Add(entry);
+                        if (kept && !named)
+                        {
+                            // No reward slot carries it (a title): the Rewards tiles draw it from here.
+                            (extra ??= []).Add(entry);
+                        }
                     }
                 }
 
@@ -547,6 +604,11 @@ public sealed class QuestUnlocks
                 }
 
                 result[quest.RowId] = [.. ordered];
+                if (extra is not null)
+                {
+                    extras[quest.RowId] = [.. extra];
+                }
+
                 if (hidden < ordered.Count)
                 {
                     shown[quest.RowId] = hidden == 0 ? result[quest.RowId] : [.. ordered.Where(static e => !e.InRewards)];
@@ -572,7 +634,7 @@ public sealed class QuestUnlocks
 
             return result.Count == 0
                 ? Empty
-                : new QuestUnlocks(catalog, shown.ToFrozenDictionary(), result.ToFrozenDictionary(), reverse.ToFrozenDictionary(kv => kv.Key, kv => kv.Value.ToArray()));
+                : new QuestUnlocks(catalog, shown.ToFrozenDictionary(), result.ToFrozenDictionary(), extras.ToFrozenDictionary(), reverse.ToFrozenDictionary(kv => kv.Key, kv => kv.Value.ToArray()));
         }
     }
 
@@ -634,23 +696,36 @@ public sealed class QuestUnlocks
                 return;
             }
 
-            // A curated feature named like one of the quest's duties or jobs is that duty or job ("Palace of the Dead",
-            // "Blue Mage"), whichever came first.
-            if (entry.Target == UnlockTarget.System && entries.Exists(e => NamesFeature(e, entry)))
+            // A feature named like one of the quest's duties, jobs or actions is that duty, job or action ("Palace of
+            // the Dead", "Blue Mage", "Aether Compass"), whichever came first; the row keeps the feature's icon and note.
+            var named = entry.Target == UnlockTarget.System ? entries.FindIndex(e => NamesFeature(e, entry)) : -1;
+            if (named >= 0)
             {
+                entries[named] = Absorb(entries[named], entry);
                 return;
             }
 
             var feature = entries.FindIndex(e => e.Target == UnlockTarget.System && NamesFeature(entry, e));
             if (feature >= 0)
             {
-                var old = entries[feature];
-                entries[feature] = entry with { Note = entry.Note ?? old.Note, InRewards = entry.InRewards || old.InRewards };
+                entries[feature] = Absorb(entry, entries[feature]);
                 return;
             }
 
             entries.Add(entry);
         }
+
+        /// <summary>Whether any of the rows so far matches.</summary>
+        public bool Has(Predicate<UnlockEntry> match) => entries.Exists(match);
+
+        /// <summary>The duty, job or action row with what the feature row of its name knew that it does not.</summary>
+        private static UnlockEntry Absorb(UnlockEntry row, UnlockEntry feature) => row with
+        {
+            Icon = row.Icon != 0 ? row.Icon : feature.Icon,
+            Note = row.Note ?? feature.Note,
+            Source = UnlockTargets.Trust(feature.Source) > UnlockTargets.Trust(row.Source) ? feature.Source : row.Source,
+            InRewards = row.InRewards || feature.InRewards,
+        };
 
         /// <summary>
         /// One row per target: the same sheet row of the same kind, else the same name: within the group for a duty (a
@@ -683,9 +758,10 @@ public sealed class QuestUnlocks
             return (a.TargetId != 0 && a.TargetId == b.TargetId) || SameName(a, b);
         }
 
-        /// <summary>Whether <paramref name="row"/> is a duty or a job named like the curated <paramref name="feature"/>.</summary>
+        /// <summary>Whether <paramref name="row"/> is a duty, a job or an action named like the <paramref name="feature"/>.</summary>
         private static bool NamesFeature(UnlockEntry row, UnlockEntry feature) =>
-            (row.Group == UnlockGroup.Duty || row.Target == UnlockTarget.Job) && SameName(row, feature);
+            (row.Group == UnlockGroup.Duty || row.Target is UnlockTarget.Job or UnlockTarget.Action or UnlockTarget.GeneralAction or UnlockTarget.Trait or UnlockTarget.BlueMageSpell)
+            && SameName(row, feature);
 
         private static bool SameName(UnlockEntry a, UnlockEntry b) =>
             string.Equals(PlanDuties.NameKey(a.Name), PlanDuties.NameKey(b.Name), StringComparison.Ordinal);

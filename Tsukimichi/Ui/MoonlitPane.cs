@@ -301,8 +301,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     /// <summary>
     /// "Also opens: Kugane · The Sirensong Sea" for a quest the shield does not mask; empty otherwise. What the quest's
-    /// own Moonlit rows already show (its duty unlock, its aether current: <see cref="Core.Unlocks.UnlockRewards"/>) is
-    /// left out, as is what its Rewards show (the index never holds that).
+    /// own Moonlit rows already show (its duty unlock, its aether current, its job: <see cref="Core.Unlocks.UnlockRewards"/>)
+    /// is left out, as is what belongs to its Rewards (the index never draws a reward-class row: <see cref="Core.Unlocks.RewardSplit"/>).
     /// </summary>
     private string AlsoOpensText(QuestRecord quest)
     {

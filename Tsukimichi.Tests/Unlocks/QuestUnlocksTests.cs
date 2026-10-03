@@ -24,6 +24,8 @@ public class QuestUnlocksTests
     private const uint SirensongInstance = 62;
     private const uint Onokoro = 106;
     private const uint EasternBow = 154;
+    private const uint SpiritsWithin = 29;
+    private const uint SpiritsWithinIcon = 2503;
 
     private static readonly PlanDuties Duties = PlanDuties.From(
     [
@@ -59,6 +61,7 @@ public class QuestUnlocksTests
         Warps = [new UnlockWarp(Opener, Kugane)],
         Touches = [new UnlockTouch(Opener, Kugane, 0f, 0f)],
         Duties = [new UnlockDuty(Sirensong, 61801, 61, 2)],
+        ActionIcons = new Dictionary<(RewardKind Kind, uint Id), uint> { [(RewardKind.Action, SpiritsWithin)] = SpiritsWithinIcon },
         AreaIcon = 7,
     };
 
@@ -71,7 +74,10 @@ public class QuestUnlocksTests
     /// <summary>The reward data's Eastern Bow on the opener: an emote its Rewards do not list unless the quest is built rewarded.</summary>
     private static UniqueRewardEntry EmoteEntry() => new(Opener, RewardKind.Emote, EasternBow, 0, "Eastern Bow", Confidence.Static, "Quest.EmoteReward");
 
-    private static UniqueRewardCatalog DefaultRewards() => Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea"), EmoteEntry());
+    /// <summary>The reward data's Spirits Within on the opener: an action, which wears the sheet's icon from the links.</summary>
+    private static UniqueRewardEntry ActionEntry() => new(Opener, RewardKind.Action, SpiritsWithin, 0, "Spirits Within", Confidence.Static, "Quest.ActionReward");
+
+    private static UniqueRewardCatalog DefaultRewards() => Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea"), EmoteEntry(), ActionEntry());
 
     private static QuestUnlocks Build(UniqueRewardCatalog? rewards = null, CuratedData? curated = null, bool rewarded = false) =>
         QuestUnlocks.Build(Quests(rewarded), rewards ?? DefaultRewards(), Duties, Links(), curated);
@@ -84,7 +90,8 @@ public class QuestUnlocksTests
         Assert.Equal(
             [UnlockGroup.Area, UnlockGroup.Aetheryte, UnlockGroup.Duty, UnlockGroup.ActionEmote, UnlockGroup.NextQuest],
             entries.Select(e => e.Group).ToArray());
-        Assert.Equal(["Kugane", "Onokoro", "The Sirensong Sea", "Eastern Bow", "The Man from Ul'dah"], entries.Select(e => e.Name).ToArray());
+        Assert.Equal(["Kugane", "Onokoro", "The Sirensong Sea", "Spirits Within", "The Man from Ul'dah"], entries.Select(e => e.Name).ToArray());
+        Assert.Equal(2503u, entries[3].Icon);
         Assert.Equal("Dungeon · Lv 61", entries[2].Caption);
         Assert.Equal("Area · Hingashi", entries[0].Caption);
         Assert.Equal(61801u, entries[2].Icon);
@@ -109,7 +116,10 @@ public class QuestUnlocksTests
         Assert.Equal(Sirensong, duty.TargetId);
         Assert.Equal(UnlockSource.Curated, duty.Source);
         Assert.Equal(RewardKind.DutyUnlock, duty.Reward);
-        Assert.True(duty.InRewards);
+
+        // The instance reward is access: the duty row is drawn, and no Rewards tile stands for it.
+        Assert.False(duty.InRewards);
+        Assert.Contains(duty, Build(rewarded: true).For(Opener));
     }
 
     [Fact]
@@ -126,26 +136,89 @@ public class QuestUnlocksTests
     }
 
     [Fact]
-    public void What_the_rewards_already_show_is_marked_and_never_shown()
+    public void The_split_keeps_what_is_kept_in_Rewards_and_the_rest_in_Unlocks()
     {
         var unlocks = Build(rewarded: true);
 
-        // The duty and the emote are Rewards tiles: marked, kept for the reverse lookup, never shown.
+        // The emote is a Rewards tile: marked, kept for the reverse lookup, never shown, and no extra tile either.
         var emote = Assert.Single(unlocks.IncludingRewards(Opener), e => e.Target == UnlockTarget.Emote);
         Assert.True(emote.InRewards);
         Assert.Equal(246315u, emote.Icon);
         Assert.Equal(RewardKind.Emote, emote.Reward);
+        Assert.Empty(unlocks.ExtraRewards(Opener));
         Assert.DoesNotContain(unlocks.For(Opener), e => e.InRewards);
-        Assert.DoesNotContain(unlocks.For(Opener), e => e.Group is UnlockGroup.Duty or UnlockGroup.ActionEmote);
-        Assert.Equal(["Kugane", "Onokoro", "The Man from Ul'dah"], unlocks.For(Opener).Select(e => e.Name).ToArray());
+        Assert.DoesNotContain(unlocks.For(Opener), e => e.Target == UnlockTarget.Emote);
+
+        // The instance reward is the Sirensong Sea's row, and the action the reward data names is drawn with its icon.
+        Assert.Equal(["Kugane", "Onokoro", "The Sirensong Sea", "Spirits Within", "The Man from Ul'dah"], unlocks.For(Opener).Select(e => e.Name).ToArray());
         Assert.Equal([Opener], unlocks.UnlockedBy(UnlockTarget.Dungeon, Sirensong).ToArray());
         Assert.Equal("Kugane", unlocks.Headline(Opener)!.Name);
-        Assert.Equal("kugane\nonokoro", unlocks.SearchText(Opener));
-        Assert.Equal(0, unlocks.GroupMask(Opener) & UnlockTargets.Bit(UnlockGroup.Duty));
+        Assert.Equal("kugane\nonokoro\nthe sirensong sea\nspirits within", unlocks.SearchText(Opener));
+        Assert.NotEqual(0, unlocks.GroupMask(Opener) & UnlockTargets.Bit(UnlockGroup.Duty));
 
-        // A list that still holds them shows none either.
+        // A list that still holds the emote shows it no more than the index does.
         Assert.DoesNotContain(UnlockView.Visible(unlocks.IncludingRewards(Opener), masked: false), e => e.InRewards);
         Assert.False(UnlockView.Shows(emote));
+    }
+
+    [Fact]
+    public void A_kept_thing_no_reward_slot_carries_is_an_extra_reward_and_never_an_unlock()
+    {
+        var title = new UniqueRewardEntry(Opener, RewardKind.Title, 351, 0, "Survivor of the Song", Confidence.Static, "Title.Quest");
+        var unlocks = Build(Rewards(DutyEntry(Opener, Sirensong, "the Sirensong Sea"), EmoteEntry(), title));
+
+        // The emote and the title belong to Rewards; the quest's own list carries neither, so both are extra tiles.
+        Assert.Equal([UnlockTarget.Emote, UnlockTarget.Title], unlocks.ExtraRewards(Opener).Select(e => e.Target).ToArray());
+        Assert.All(unlocks.ExtraRewards(Opener), e => Assert.True(e.InRewards));
+        Assert.DoesNotContain(unlocks.For(Opener), e => e.Group is UnlockGroup.Collectable || e.Target == UnlockTarget.Emote);
+        Assert.Equal(RewardKind.Title, unlocks.ExtraRewards(Opener)[1].Reward);
+    }
+
+    [Fact]
+    public void The_quests_own_access_rewards_are_unlock_rows_with_their_icons()
+    {
+        var quest = Quest(Opener, "Divine Intervention") with
+        {
+            Expansion = 1,
+            Rewards =
+            [
+                new RewardRef(RewardKind.Item, 12075, 12075, 1, "Black Chocobo Whistle", 26012),
+                new RewardRef(RewardKind.Other, 5, 0, 1, "Aether Compass", 25948),
+                new RewardRef(RewardKind.Other, UnlockRewards.AetherCurrentOtherReward, 0, 1, "Aether Current", QuestUnlocks.AetherCurrentIcon),
+                new RewardRef(RewardKind.Other, 7, 0, 1, "Wondrous Tails", 25987),
+                new RewardRef(RewardKind.Other, 10, 0, 1, "Soul of the Paladin", 26003),
+                new RewardRef(RewardKind.Other, 28, 28, 5, "Allagan Tomestone of Poetics", 65023),
+                new RewardRef(RewardKind.ClassJob, 19, 0, 1, "Paladin", QuestUnlocks.JobIconBase + 19),
+                new RewardRef(RewardKind.GeneralAction, 5, 0, 1, "Desynthesis", 120),
+            ],
+        };
+        var reward = Rewards(
+            new UniqueRewardEntry(Opener, RewardKind.Action, 26988, 0, "the Aether Compass", Confidence.Static, "Action.UnlockLink"),
+            new UniqueRewardEntry(Opener, RewardKind.AetherCurrent, 9, 0, "Aether Current (The Dravanian Forelands)", Confidence.Static, "AetherCurrent.Quest"),
+            new UniqueRewardEntry(Opener, RewardKind.SystemUnlock, 0, 0, "Desynthesis", Confidence.Curated, "curated/system_unlocks.json"));
+        var unlocks = QuestUnlocks.Build(Catalog(quest), reward, PlanDuties.Empty, UnlockLinks.Empty);
+        var rows = unlocks.For(Opener);
+
+        // The Aether Compass feature is the action's row, with the reward's icon.
+        var compass = Assert.Single(rows, e => e.Name.Contains("Aether Compass", StringComparison.Ordinal));
+        Assert.Equal(UnlockTarget.Action, compass.Target);
+        Assert.Equal(25948u, compass.Icon);
+
+        // The aether current reward is flying in the zone the reward data names: one row.
+        var flying = Assert.Single(rows, e => e.Target == UnlockTarget.Flying);
+        Assert.Equal("The Dravanian Forelands", flying.Name);
+
+        // A named feature wears the reward's icon; the general action takes in the curated feature of its name.
+        Assert.Equal(25987u, Assert.Single(rows, e => e.Name == "Wondrous Tails").Icon);
+        var desynthesis = Assert.Single(rows, e => e.Name.Equals("Desynthesis", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(UnlockTarget.GeneralAction, desynthesis.Target);
+        Assert.Equal(120u, desynthesis.Icon);
+        Assert.Equal(UnlockSource.Curated, desynthesis.Source);
+
+        // The job is a row; the soul crystal, the whistle and the currency are no row at all.
+        Assert.Contains(rows, e => e.Target == UnlockTarget.Job && e.TargetId == 19);
+        Assert.DoesNotContain(rows, e => e.Name.StartsWith("Soul of", StringComparison.Ordinal) || e.Name.Contains("Whistle", StringComparison.Ordinal) || e.Name.Contains("Poetics", StringComparison.Ordinal));
+        Assert.All(rows, e => Assert.False(e.InRewards));
     }
 
     [Fact]
@@ -223,7 +296,7 @@ public class QuestUnlocksTests
 
         Assert.Equal("Kugane", unlocks.Headline(Opener)!.Name);
         Assert.Null(unlocks.Headline(Next));
-        Assert.Equal("kugane\nonokoro\nthe sirensong sea\neastern bow", unlocks.SearchText(Opener));
+        Assert.Equal("kugane\nonokoro\nthe sirensong sea\nspirits within", unlocks.SearchText(Opener));
         Assert.Empty(unlocks.For(Locked));
     }
 
@@ -245,7 +318,7 @@ public class QuestUnlocksTests
     {
         var entries = Build().For(Opener);
 
-        Assert.Equal("Kugane (area) · Onokoro (aetheryte) · The Sirensong Sea (dungeon) · Eastern Bow (emote)", UnlockText.Summary(entries));
+        Assert.Equal("Kugane (area) · Onokoro (aetheryte) · The Sirensong Sea (dungeon) · Spirits Within (action)", UnlockText.Summary(entries));
         Assert.Equal("Kugane · Onokoro · +2", UnlockText.Names(entries, 2));
         Assert.Equal("Opens Kugane (area) · +3", UnlockText.OpensLine(entries, 1));
         Assert.Empty(UnlockText.Summary(Build().For(Next).Where(e => e.Target == UnlockTarget.NextQuest).ToList()));
@@ -281,7 +354,7 @@ public class QuestUnlocksTests
         Assert.True(source.IsCurrent);
         var summary = source.Summary(Opener);
         Assert.Same(summary, source.Summary(Opener));
-        Assert.Equal("Kugane · Onokoro · The Sirensong Sea · Eastern Bow", source.Names(Opener));
+        Assert.Equal("Kugane · Onokoro · The Sirensong Sea · Spirits Within", source.Names(Opener));
         _ = source.Current;
         Assert.Equal(1, builds);
 

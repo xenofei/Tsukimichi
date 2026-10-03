@@ -14,6 +14,7 @@ using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Travel;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Unlocks;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -281,13 +282,20 @@ public sealed partial class DetailPane
         EndSection();
         ui.RecordItem(UiRects.DetailRequirements);
 
-        Gap();
-        BeginSection("##rewards", Strings.Rewards, RewardsIcon, model.RewardsCaption, Theme.Surface.TextTertiary);
-        if (!DrawExpAndGil(quest) || model.Rewards.Count > 0)
+        // Rewards then Unlocks, a pair of sections in one rhythm (RewardSplit keeps them apart); neither draws an empty header.
+        if (HasExpAndGil(quest) || model.Rewards.Count > 0)
         {
-            DrawRewards(cardRight);
+            Gap();
+            BeginSection("##rewards", Strings.Rewards, RewardsIcon, model.RewardsCaption, Theme.Surface.TextTertiary);
+            DrawExpAndGil(quest);
+            if (model.Rewards.Count > 0)
+            {
+                DrawRewards(cardRight);
+            }
+
+            EndSection();
         }
-        EndSection();
+
         DrawUnlocksSection(session, quest);
         DrawHandInSection(session, quest);
 
@@ -330,6 +338,12 @@ public sealed partial class DetailPane
     }
 
     private static void Gap() => ImGui.Dummy(new Vector2(0f, UiMetrics.Px(2f)));
+
+    /// <summary>The side of a Rewards tile and of an Unlocks row's icon well, so the two sections read as a pair.</summary>
+    private static float PairTile => MathF.Max(UiMetrics.Px(40f), UiMetrics.Icon(34f) + UiMetrics.Px(8f));
+
+    /// <summary>The gap between two rows of Rewards tiles, and between two Unlocks rows.</summary>
+    private static float PairGap => UiMetrics.Px(6f);
 
     /// <summary>
     /// A card header's caption (0.85×): right-aligned on the title line, draw-list only, while it clears the title;
@@ -724,9 +738,9 @@ public sealed partial class DetailPane
         }
 
         var dl = ImGui.GetWindowDrawList();
-        var tile = MathF.Max(UiMetrics.Px(40f), UiMetrics.Icon(34f) + UiMetrics.Px(8f));
+        var tile = PairTile;
         var iconSize = tile - UiMetrics.Px(8f);
-        var gap = UiMetrics.Px(6f);
+        var gap = PairGap;
         var markSize = ImGui.GetFontSize() * MarkScale;
         var obtained = Theme.ShowRules && model.State is QuestState.Completed or QuestState.DoneThisCycle;
         var rowStart = ImGui.GetCursorScreenPos();
@@ -755,10 +769,11 @@ public sealed partial class DetailPane
             ImGui.PopID();
             var rounding = UiMetrics.Px(6f);
             dl.AddRectFilled(min, max, Theme.U32(hovered ? Theme.Surface.Hover : Theme.Surface.Sunken), rounding);
-            if (reward.Reward.Icon != 0)
+            var iconMin = min + new Vector2((tile - iconSize) * 0.5f);
+            if (reward.Reward.Icon == 0 || !GameIcon.DrawAt(dl, textures, reward.Reward.Icon, iconMin, iconMin + new Vector2(iconSize), UiMetrics.Px(4f)))
             {
-                var iconMin = min + new Vector2((tile - iconSize) * 0.5f);
-                GameIcon.DrawAt(dl, textures, reward.Reward.Icon, iconMin, iconMin + new Vector2(iconSize), UiMetrics.Px(4f));
+                // No icon known (a title): the veiled moon, as an Unlocks row draws it.
+                MoonGlyph.DrawVeiled(dl, (min + max) * 0.5f, iconSize * 0.32f, 0.6f);
             }
 
             if (reward.Unique)
@@ -1436,25 +1451,23 @@ public sealed partial class DetailPane
         }
     }
 
-    /// <summary>The reward tiles: which rewards are unique for this quest (shipped entries), and which the store sells or a duty drops.</summary>
+    /// <summary>
+    /// The reward tiles: what the quest hands over to keep (<see cref="RewardSplit"/>: a duty, a job, an action, flying
+    /// or a feature is an Unlocks row instead), then what the unlock index files under Rewards that no reward slot
+    /// carries (a title); which are unique for this quest (shipped entries), and which the store sells or a duty drops.
+    /// </summary>
     private void BuildRewards(SessionState session, QuestRecord quest)
     {
         uniqueByQuest.TryGetValue(quest.RowId, out var entries);
         var unique = 0;
         foreach (var reward in quest.Rewards)
         {
-            var isUnique = false;
-            if (entries is not null)
+            if (!RewardSplit.IsReward(reward))
             {
-                foreach (var entry in entries)
-                {
-                    if (entry.Kind == reward.Kind && (entry.RewardId == reward.Id || (entry.ItemId != 0 && entry.ItemId == reward.ItemId)))
-                    {
-                        isUnique = true;
-                        break;
-                    }
-                }
+                continue;
             }
+
+            var isUnique = IsUniqueReward(entries, reward.Kind, reward.Id, reward.ItemId);
 
             // The reward tooltip says where else it comes from; the tile's caption only names the kind of source.
             var mark = session.StoreResells.Contains(reward) ? Strings.MoonlitStoreOnly
@@ -1464,7 +1477,49 @@ public sealed partial class DetailPane
             model.Rewards.Add(new RewardTile(reward, isUnique, mark));
         }
 
+        // A title the reward data names: a Rewards tile as well, under the shield and Sprout mode's reach like an unlock row.
+        if (runner.Unlocks is { } source && !session.Spoilers.IsMasked(quest))
+        {
+            var reach = runner.UnlockReach;
+            foreach (var extra in source.Current.ExtraRewards(quest.RowId))
+            {
+                if (extra.Reward is not { } kind || !UnlockView.InReach(extra, reach))
+                {
+                    continue;
+                }
+
+                var icon = extra.Icon;
+                if (icon == 0 && UnlockIcon is { } resolve)
+                {
+                    icon = resolve(quest, new UniqueRewardEntry(quest.RowId, kind, extra.TargetId, extra.ItemId, extra.Name, Confidence.Static, string.Empty));
+                }
+
+                var isUnique = IsUniqueReward(entries, kind, extra.TargetId, extra.ItemId);
+                unique += isUnique ? 1 : 0;
+                model.Rewards.Add(new RewardTile(new RewardRef(kind, extra.TargetId, extra.ItemId, 1, extra.Name, icon), isUnique, null));
+            }
+        }
+
         model.RewardsCaption = unique == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.DetailRewardsUniqueFormat, unique);
+    }
+
+    /// <summary>Whether a shipped unique-reward entry of the quest names the reward: same kind, and same row or same item.</summary>
+    private static bool IsUniqueReward(List<UniqueRewardEntry>? entries, RewardKind kind, uint id, uint itemId)
+    {
+        if (entries is null)
+        {
+            return false;
+        }
+
+        foreach (var entry in entries)
+        {
+            if (entry.Kind == kind && (entry.RewardId == id || (entry.ItemId != 0 && entry.ItemId == itemId)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
