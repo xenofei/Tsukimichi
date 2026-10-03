@@ -1489,6 +1489,36 @@
   <data name="ConfigShortcutPinHint" xml:space="preserve">
     <value>The same as the detail pane's Pin.</value>
   </data>
+  <data name="ConfigShortcutHistory" xml:space="preserve">
+    <value>Back and forward keys</value>
+  </data>
+  <data name="ConfigShortcutHistoryHint" xml:space="preserve">
+    <value>Alt+Left and Alt+Right, and mouse buttons 4 and 5, step through the quests you looked at.</value>
+  </data>
+  <data name="HistoryBackFormat" xml:space="preserve">
+    <value>Back to {0}</value>
+    <comment>{0} = quest name (through the spoiler shield). Toolbar Back button tooltip.</comment>
+  </data>
+  <data name="HistoryForwardFormat" xml:space="preserve">
+    <value>Forward to {0}</value>
+    <comment>{0} = quest name (through the spoiler shield). Toolbar Forward button tooltip.</comment>
+  </data>
+  <data name="HistoryBackNone" xml:space="preserve">
+    <value>Nothing to go back to</value>
+    <comment>Toolbar Back button tooltip while there is no earlier quest.</comment>
+  </data>
+  <data name="HistoryForwardNone" xml:space="preserve">
+    <value>Nothing to go forward to</value>
+    <comment>Toolbar Forward button tooltip while there is no later quest.</comment>
+  </data>
+  <data name="HistoryBackKeys" xml:space="preserve">
+    <value>Alt+← or mouse button 4</value>
+    <comment>Toolbar Back button tooltip, second line: the keys.</comment>
+  </data>
+  <data name="HistoryForwardKeys" xml:space="preserve">
+    <value>Alt+→ or mouse button 5</value>
+    <comment>Toolbar Forward button tooltip, second line: the keys.</comment>
+  </data>
   <data name="MoonlitAllKinds" xml:space="preserve">
     <value>All</value>
   </data>
@@ -3189,6 +3219,57 @@
     <value>Tsukimichi {0}</value>
     <comment>{0} = plugin version.</comment>
   </data>
+  <data name="ConfigPrivacyHeading" xml:space="preserve">
+    <value>Privacy &amp; trust</value>
+  </data>
+  <data name="ConfigPrivacyStatement" xml:space="preserve">
+    <value>What Tsukimichi reads and sends</value>
+  </data>
+  <data name="ConfigPrivacyStatementHint" xml:space="preserve">
+    <value>It reads your game on this PC and keeps its files here. It has no network code and sends nothing.</value>
+  </data>
+  <data name="ConfigPrivacyReads" xml:space="preserve">
+    <value>Reads: your quests, levels, unlocks and items through Dalamud, and the game data on your disk.</value>
+    <comment>Settings › Advanced › Privacy &amp; trust: the first of the statement's three lines.</comment>
+  </data>
+  <data name="ConfigPrivacyKeeps" xml:space="preserve">
+    <value>Keeps: its settings and a few files per character in Dalamud's pluginConfigs folder, and exports only when you ask.</value>
+  </data>
+  <data name="ConfigPrivacySends" xml:space="preserve">
+    <value>Sends: nothing. A web page opens in your browser only when you click its link, and other plugins see only what they ask Tsukimichi for.</value>
+  </data>
+  <data name="ConfigPrivacyFull" xml:space="preserve">
+    <value>The full statement</value>
+  </data>
+  <data name="ConfigPrivacyFullHint" xml:space="preserve">
+    <value>What it reads, the files it keeps and what other plugins can ask, on GitHub.</value>
+  </data>
+  <data name="ConfigPrivacyOpen" xml:space="preserve">
+    <value>Open in browser</value>
+  </data>
+  <data name="ConfigPrivacyFingerprint" xml:space="preserve">
+    <value>This build's fingerprint</value>
+  </data>
+  <data name="ConfigPrivacyFingerprintHint" xml:space="preserve">
+    <value>The SHA-256 of the Tsukimichi.dll running now. Each release page lists it to compare.</value>
+  </data>
+  <data name="ConfigPrivacyCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="ConfigPrivacyCopied" xml:space="preserve">
+    <value>Copied</value>
+  </data>
+  <data name="ConfigPrivacyHashFormat" xml:space="preserve">
+    <value>SHA-256 {0}</value>
+    <comment>{0} = 64 hex digits.</comment>
+  </data>
+  <data name="ConfigPrivacyHashing" xml:space="preserve">
+    <value>Reading the plugin file…</value>
+  </data>
+  <data name="ConfigPrivacyHashFailedFormat" xml:space="preserve">
+    <value>Could not read the plugin file ({0}).</value>
+    <comment>{0} = the error message.</comment>
+  </data>
   <data name="ConfigCuratedFormat" xml:space="preserve">
     <value>Curated: {0} system unlocks, {1} duty unlocks, {2} unlock quests, {3} festivals</value>
     <comment>{0} = system unlocks, {1} = duty unlocks, {2} = unlock quests, {3} = festivals in the curated data.</comment>
@@ -3918,6 +3999,9 @@
   <data name="Help.CommandKeys.19" xml:space="preserve">
     <value>Ctrl+1 to 5, F, Enter, P</value>
   </data>
+  <data name="Help.CommandKeys.20" xml:space="preserve">
+    <value>Alt+← / Alt+→, mouse 4 / 5</value>
+  </data>
   <data name="Help.CommandMeanings.0" xml:space="preserve">
     <value>open or close the window</value>
   </data>
@@ -3977,6 +4061,9 @@
   </data>
   <data name="Help.CommandMeanings.19" xml:space="preserve">
     <value>off unless turned on in Settings › Advanced › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 5 are hotbar 2 by default</value>
+  </data>
+  <data name="Help.CommandMeanings.20" xml:space="preserve">
+    <value>back and forward through the quests you looked at, like a browser; the ‹ › buttons at the toolbar's left do the same. The mouse buttons work while the pointer is over the window. The game sees these keys too: turn them off in Settings › Advanced › Keyboard if one is bound there</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">
     <value>Removed and hidden quests</value>
@@ -4382,6 +4469,9 @@
   <data name="Help.PrivacyCardTitles.5" xml:space="preserve">
     <value>Forget and delete</value>
   </data>
+  <data name="Help.PrivacyCardTitles.6" xml:space="preserve">
+    <value>Check the build</value>
+  </data>
   <data name="Help.PrivacyCardBodies.0" xml:space="preserve">
     <value>Tsukimichi reads the quests, levels, jobs and unlocks of the character you are logged in as, from the game on this PC, the same things the game shows you. It reads nothing about other players.</value>
   </data>
@@ -4399,6 +4489,9 @@
   </data>
   <data name="Help.PrivacyCardBodies.5" xml:space="preserve">
     <value>Forget this character, on a stored character in Characters, deletes that character's files. Settings › Characters &amp; data › Delete all Tsukimichi data removes every snapshot, pin and override and keeps your settings. Uninstalling leaves the folder; delete it to remove everything.</value>
+  </data>
+  <data name="Help.PrivacyCardBodies.6" xml:space="preserve">
+    <value>Settings › Advanced › Privacy &amp; trust shows the SHA-256 of the Tsukimichi.dll you are running, with Copy. Each GitHub release lists the same hash beside latest.zip, so you can check the plugin you run is the one built there. docs/privacy.md has the whole statement.</value>
   </data>
   <data name="MoonlitEmptyBody" xml:space="preserve">
     <value>The kind, Hide obtained, the search or the filters above leave nothing to show.</value>
@@ -9503,6 +9596,110 @@
   <data name="FilterDrawerCloseTooltip" xml:space="preserve">
     <value>Close the filters (Esc)</value>
   </data>
+  <data name="FilterDrawerShow" xml:space="preserve">
+    <value>Show</value>
+    <comment>Filter drawer: the first section's heading (the toggles that hide or keep quests).</comment>
+  </data>
+  <data name="FilterDrawerPerCategory" xml:space="preserve">
+    <value>Per category ›</value>
+    <comment>Filter drawer: the link under a toggle that opens its per-category overrides.</comment>
+  </data>
+  <data name="FilterDrawerPerCategoryChangedFormat" xml:space="preserve">
+    <value>Per category · {0} changed ›</value>
+    <comment>Filter drawer: the per-category link when some categories are overridden. {0} = how many.</comment>
+  </data>
+  <data name="FilterDrawerPinnedFirstCaption" xml:space="preserve">
+    <value>Sort pinned quests to the top</value>
+    <comment>Filter drawer: the caption under Pinned first.</comment>
+  </data>
+  <data name="FilterDrawerStalledCaption" xml:space="preserve">
+    <value>The Stalled view counts from here</value>
+    <comment>Filter drawer: the caption under Stalled after (the toolbar's Stalled quick view reads this number).</comment>
+  </data>
+  <data name="FilterDrawerStalledFewer" xml:space="preserve">
+    <value>One day fewer (hold to repeat)</value>
+    <comment>Filter drawer: the Stalled after stepper's minus button.</comment>
+  </data>
+  <data name="FilterDrawerStalledMore" xml:space="preserve">
+    <value>One day more (hold to repeat)</value>
+    <comment>Filter drawer: the Stalled after stepper's plus button.</comment>
+  </data>
+  <data name="FilterDrawerShowingFormat" xml:space="preserve">
+    <value>Showing {0} of {1}</value>
+    <comment>Filter drawer footer: {0} = quests the filters keep, {1} = quests in the selected tree node.</comment>
+  </data>
+  <data name="FilterDrawerOnFormat" xml:space="preserve">
+    <value>{0} on</value>
+    <comment>Filter drawer header: the count pill. {0} = how many filters are on.</comment>
+  </data>
+  <data name="FilterDrawerSetFormat" xml:space="preserve">
+    <value>{0} set</value>
+    <comment>Filter drawer: the Advanced heading's pill and the Rewards summary. {0} = how many groups or kinds are set.</comment>
+  </data>
+  <data name="FilterDrawerAllStatesFormat" xml:space="preserve">
+    <value>All {0}</value>
+    <comment>Filter drawer: the States summary when every state is kept. {0} = how many states there are.</comment>
+  </data>
+  <data name="FilterDrawerSomeStatesFormat" xml:space="preserve">
+    <value>{0} of {1}</value>
+    <comment>Filter drawer: the States summary. {0} = states kept, {1} = how many states there are.</comment>
+  </data>
+  <data name="FilterDrawerAny" xml:space="preserve">
+    <value>Any</value>
+    <comment>Filter drawer: a summary value for a group that keeps everything (Expansions, Rewards).</comment>
+  </data>
+  <data name="FilterDrawerAddedInFormat" xml:space="preserve">
+    <value>{0}x</value>
+    <comment>Filter drawer: the Added in summary. {0} = the patch series ("7.5"); "7.5x" is 7.5 and its point releases.</comment>
+  </data>
+  <data name="FilterDrawerLevelFormat" xml:space="preserve">
+    <value>{0} to {1}</value>
+    <comment>Filter drawer: the Level summary. {0} = lowest level, {1} = highest.</comment>
+  </data>
+  <data name="FilterDrawerLevelTo" xml:space="preserve">
+    <value>to</value>
+    <comment>Filter drawer: the word between the two level fields.</comment>
+  </data>
+  <data name="FilterDrawerNoneOn" xml:space="preserve">
+    <value>None on</value>
+    <comment>Filter drawer: the More summary when none of its toggles is on.</comment>
+  </data>
+  <data name="FilterDrawerLevel" xml:space="preserve">
+    <value>Level</value>
+    <comment>Filter drawer: the Level group's name.</comment>
+  </data>
+  <data name="FilterDrawerJob" xml:space="preserve">
+    <value>Job</value>
+    <comment>Filter drawer: the Job group's name.</comment>
+  </data>
+  <data name="FilterDrawerRewards" xml:space="preserve">
+    <value>Rewards</value>
+    <comment>Filter drawer: the Rewards group's name.</comment>
+  </data>
+  <data name="FilterDrawerMore" xml:space="preserve">
+    <value>More</value>
+    <comment>Filter drawer: the group of the remaining toggles (Repeatable only and the rest).</comment>
+  </data>
+  <data name="FilterDrawerMoreKindsFormat" xml:space="preserve">
+    <value>{0} more kinds ›</value>
+    <comment>Filter drawer: the link that lists the rest of the reward kinds. {0} = how many.</comment>
+  </data>
+  <data name="FilterDrawerFewerKinds" xml:space="preserve">
+    <value>Fewer kinds</value>
+    <comment>Filter drawer: the link that folds the reward kinds back to the common six.</comment>
+  </data>
+  <data name="FilterDrawerSummaryTooltip" xml:space="preserve">
+    <value>Open Advanced at this group</value>
+    <comment>Filter drawer: hover text on a summary line.</comment>
+  </data>
+  <data name="FilterDrawerResetNothing" xml:space="preserve">
+    <value>Nothing to reset: no filter or search is set</value>
+    <comment>Filter drawer: hover text on Reset while it is disabled.</comment>
+  </data>
+  <data name="UndoToastFiltersReset" xml:space="preserve">
+    <value>Filters reset</value>
+    <comment>The Undo toast after Reset cleared every filter and the search.</comment>
+  </data>
   <data name="Settings.Page.General" xml:space="preserve">
     <value>General</value>
     <comment>Settings page title.</comment>
@@ -9594,6 +9791,38 @@
   <data name="Settings.GameFontsPlainReason" xml:space="preserve">
     <value>Not used with Plain decoration.</value>
     <comment>Shown in place of the hint while Game fonts for headings is greyed out.</comment>
+  </data>
+  <data name="Settings.MovingNightSky" xml:space="preserve">
+    <value>Moving night sky</value>
+    <comment>Settings, Look: toggle for the slow drift of the Full sky's stars (feature plan v7 UI-6).</comment>
+  </data>
+  <data name="Settings.MovingNightSkyHint" xml:space="preserve">
+    <value>At Full, the stars drift slowly across the sky while this window has focus, with a rare faint shooting star.</value>
+    <comment>Hint under Moving night sky.</comment>
+  </data>
+  <data name="Settings.CompletionMeteor" xml:space="preserve">
+    <value>Shooting star on completion</value>
+    <comment>Settings, Look: toggle for the meteor that crosses the Full sky when a quest is completed.</comment>
+  </data>
+  <data name="Settings.CompletionMeteorHint" xml:space="preserve">
+    <value>At Full, a shooting star crosses the empty sky when you complete a quest, at most once every 30 seconds.</value>
+    <comment>Hint under Shooting star on completion.</comment>
+  </data>
+  <data name="Settings.MilkyWay" xml:space="preserve">
+    <value>Milky Way in the sky</value>
+    <comment>Settings, Look: toggle for a faint band of stars in the Full sky. Off by default.</comment>
+  </data>
+  <data name="Settings.MilkyWayHint" xml:space="preserve">
+    <value>At Full, a faint band of stars across the one large patch of empty sky, when there is one.</value>
+    <comment>Hint under Milky Way in the sky.</comment>
+  </data>
+  <data name="Settings.SkyFullReason" xml:space="preserve">
+    <value>Only drawn with Full decoration.</value>
+    <comment>Shown in place of the hint while a sky setting is greyed out because Decoration is not Full.</comment>
+  </data>
+  <data name="Settings.SkyMotionReason" xml:space="preserve">
+    <value>Off while Reduce motion is on.</value>
+    <comment>Shown in place of the hint while a moving-sky setting is greyed out by Reduce motion.</comment>
   </data>
   <data name="Settings.MainWindowHeading" xml:space="preserve">
     <value>Main window</value>

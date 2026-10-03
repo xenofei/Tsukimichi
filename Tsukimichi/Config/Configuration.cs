@@ -492,6 +492,26 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public bool GameHeadingFonts { get; set; } = true;
 
+    // ---- 1.14.0: the Full sky (feature plan v7 UI-6) ----
+    /// <summary>
+    /// Settings › General › Look › Moving night sky (docs/design/v7/ui/spec.md Revision 3): at Full, the stars drift as
+    /// one sky, 6 px a minute, while the main window is focused, with a rare faint shooting star. On by default; Reduce
+    /// motion stills it.
+    /// </summary>
+    public bool MovingNightSky { get; set; } = true;
+
+    /// <summary>
+    /// Settings › General › Look › Shooting star on completion (spec §3.6): at Full, one meteor crosses the largest empty
+    /// sky when a quest is completed, at most once in 30 seconds. On by default; Reduce motion stops it.
+    /// </summary>
+    public bool CompletionMeteor { get; set; } = true;
+
+    /// <summary>
+    /// Settings › General › Look › Milky Way in the sky (spec §3.4): at Full, a faint band across one large patch of empty
+    /// sky. Off by default (the owner's call).
+    /// </summary>
+    public bool MilkyWay { get; set; }
+
     /// <summary>
     /// Moonlit's view (feature plan v4 V5, proposal §7.5): a gallery of reward icons instead of the table. Off (the
     /// table) by default; remembered once switched.
@@ -546,6 +566,13 @@ public sealed partial class Configuration : IPluginConfiguration
 
     /// <summary>P pins or unpins the selected quest while the main window has focus. Off by default.</summary>
     public bool ShortcutPin { get; set; }
+
+    // ---- 1.14.0: back and forward (feature plan v7 N1) ----
+    /// <summary>
+    /// Alt+Left and Alt+Right step back and forward through the quests looked at while the main window has focus, and
+    /// mouse buttons 4 and 5 while it is hovered. On by default, as a browser's are; the toolbar's buttons stay either way.
+    /// </summary>
+    public bool ShortcutHistory { get; set; } = true;
 
     // ---- 1.11.0: command aliases (A12) ----
     /// <summary>

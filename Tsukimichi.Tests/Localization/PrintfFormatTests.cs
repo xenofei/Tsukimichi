@@ -33,7 +33,8 @@ public class PrintfFormatTests
     public void The_scan_finds_the_known_format_keys()
     {
         var keys = FormatKeys();
-        foreach (var key in new[] { "StalledDaysFormat", "LevelFormat", "LevelMaxFormat", "WelcomeBackConfigDaysFormat", "WelcomeBackConfigOff" })
+        // The filter drawer (1.14.0) fills "Stalled after" itself (a stepper, not a slider) and draws "to" between its level fields.
+        foreach (var key in new[] { "LevelFormat", "WelcomeBackConfigDaysFormat", "WelcomeBackConfigOff" })
         {
             Assert.Contains(key, keys);
         }

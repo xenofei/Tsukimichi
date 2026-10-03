@@ -384,4 +384,26 @@ public class ScaleMetricsTests
         var unknown = ScaleMetrics.FitFromPosition(new Vector2(880f, 720f), 1f, Vector2.Zero, Vector2.Zero, new Vector2(float.NaN, 0f));
         Assert.Equal(new Vector2(880f, 720f), unknown);
     }
+
+    [Theory]
+    [InlineData(Flair.Full, 30f)]
+    [InlineData(Flair.Quiet, 28f)]
+    [InlineData(Flair.Plain, 22f)]
+    [InlineData((Flair)99, 30f)]
+    public void The_table_header_has_a_floor_per_level(Flair flair, float height)
+    {
+        Assert.Equal(height, ScaleMetrics.TableHeaderMin(flair));
+    }
+
+    [Fact]
+    public void The_table_header_centres_its_label_in_the_row()
+    {
+        // A 25 px label in a 30 px row: 2 px over it, 3 under (ImGui rounds the cell down), never under the padding.
+        Assert.Equal((30f, 2f), ScaleMetrics.TableHeaderRow(30f, 25f, 2f));
+        Assert.Equal((28f, 5f), ScaleMetrics.TableHeaderRow(28f, 18f, 2f));
+
+        // A label taller than the floor makes the row taller, with the normal padding.
+        Assert.Equal((42f, 2f), ScaleMetrics.TableHeaderRow(30f, 38f, 2f));
+        Assert.Equal((4f, 2f), ScaleMetrics.TableHeaderRow(float.NaN, float.NaN, 2f));
+    }
 }

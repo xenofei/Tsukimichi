@@ -751,12 +751,99 @@ public static class MedalArt
 
     // ------------------------------------------------------------------ Completed
 
-    private static readonly (float X, float Y, float Rx, float Ry, float Degrees, float Opacity)[] FullMaria =
+    // The face of plan v7 (V1; docs/design/v7/ui/completed-moon/make_completed.py, spec.md section 4 and R3.4), as the
+    // atlas's crater-less source completed-v7-small.svg draws it: basalt seas, darker hearts and a brighter southern
+    // highland. The rim-lit craters, the young crater and the well's glow are the atlas's only (spec section 4, Ship 3):
+    // this mesh draws the row tier and stands in while the atlas loads. Ellipses are (centre, radii, degrees clockwise).
+
+    /// <summary>Round 5's eight seas at x1.2 (Crisium, an isolated sea, kept), then the nine lobes of the near-side chain.</summary>
+    private static readonly (Vector2 C, Vector2 R, float Degrees)[] FullSeas =
     [
-        (-.30f, -.36f, .30f, .22f, -18f, .36f), (.12f, -.30f, .17f, .15f, 0f, .34f), (.28f, -.02f, .22f, .17f, 20f, .32f),
-        (.70f, -.18f, .10f, .08f, 0f, .36f), (.56f, .24f, .10f, .17f, -15f, .28f), (.26f, .36f, .09f, .10f, 0f, .24f),
-        (-.22f, .30f, .17f, .13f, 10f, .24f), (-.58f, -.02f, .22f, .36f, 8f, .26f),
+        (new(49.5f, 47.4f), new(12.60f, 9.24f), -18f), (new(64.2f, 49.5f), new(7.14f, 6.30f), 0f),
+        (new(69.8f, 59.3f), new(9.24f, 7.14f), 20f), (new(84.5f, 53.7f), new(3.50f, 2.80f), 0f),
+        (new(79.6f, 68.4f), new(4.20f, 7.14f), -15f), (new(69.1f, 72.6f), new(3.78f, 4.20f), 0f),
+        (new(52.3f, 70.5f), new(7.14f, 5.46f), 10f), (new(39.7f, 59.3f), new(9.24f, 15.12f), 8f),
+        (new(42.6f, 43.6f), new(4.6f, 3.2f), -30f), (new(57.6f, 46.4f), new(4.0f, 3.0f), 10f),
+        (new(74.6f, 63.6f), new(3.8f, 2.8f), 35f), (new(35.2f, 50.6f), new(3.0f, 4.8f), -6f),
+        (new(36.6f, 68.4f), new(3.2f, 4.0f), 14f), (new(47.6f, 67.2f), new(3.4f, 2.4f), -12f),
+        (new(67.0f, 54.0f), new(4.0f, 3.2f), 0f), (new(70.0f, 66.4f), new(3.0f, 3.2f), 0f),
+        (new(44.4f, 51.0f), new(4.2f, 4.0f), 0f),
     ];
+
+    /// <summary>The darker cores of Imbrium, Serenitatis and Procellarum, with their opacities.</summary>
+    private static readonly (Vector2 C, Vector2 R, float Degrees, float Opacity)[] FullSeaHearts =
+    [
+        (new(49.0f, 47.0f), new(7.4f, 5.2f), -18f, .22f), (new(70.4f, 59.6f), new(5.4f, 4.0f), 20f, .20f),
+        (new(40.6f, 60.2f), new(4.8f, 8.8f), 8f, .18f),
+    ];
+
+    /// <summary>Completed's seas and lobes (centre, radii, degrees clockwise), for the tests to hold to completed-v7-small.svg.</summary>
+    public static IReadOnlyList<(Vector2 C, Vector2 R, float Degrees)> FullSeaShapes => FullSeas;
+
+    /// <summary>Completed's sea hearts (centre, radii, degrees clockwise, opacity), likewise.</summary>
+    public static IReadOnlyList<(Vector2 C, Vector2 R, float Degrees, float Opacity)> FullSeaHeartShapes => FullSeaHearts;
+
+    /// <summary>The seas' one opacity: the SVG draws them opaque inside a group at .46, so overlaps never stack.</summary>
+    public const float FullSeaOpacity = 0.46f;
+
+    /// <summary>The edge softness (Gaussian deviation, medal units) of the seas and their hearts: R3.4's one edge rule.</summary>
+    public const float FullSeaSoftness = 1.0f;
+
+    /// <summary>The softer edge of the southern highlands' albedo lift.</summary>
+    public const float HighlandSoftness = 2.4f;
+
+    private static readonly Paint FullFace = BuildFullFace();
+
+    /// <summary>
+    /// How much of the seas covers <paramref name="p"/>, 0 to 1: the union of every sea and lobe with its blurred edge.
+    /// The mesh cannot composite overlapping shapes at one group opacity, so the union is flattened here instead: the
+    /// largest of the seas' soft coverages, which never adds where two overlap (no darker spots), times
+    /// <see cref="FullSeaOpacity"/> once.
+    /// </summary>
+    public static float FullSeaCover(Vector2 p)
+    {
+        var cover = 0f;
+        foreach (var (c, r, degrees) in FullSeas)
+        {
+            cover = MathF.Max(cover, SoftEllipse(p, c, r, degrees, FullSeaSoftness));
+        }
+
+        return cover;
+    }
+
+    /// <summary>Completed's face detail at <paramref name="p"/> (straight alpha): the seas, then the highland lift, then the hearts.</summary>
+    public static Vector4 FullFaceDetail(Vector2 p) => FullFace(p);
+
+    private static Paint BuildFullFace()
+    {
+        Paint face = p => MeshBuilder.Alpha(X.MariaBasalt, FullSeaOpacity * FullSeaCover(p));
+        Paint highland = p => MeshBuilder.Alpha(X.Highland, 0.10f * SoftEllipse(p, new Vector2(60f, 84f), new Vector2(18f, 8f), 0f, HighlandSoftness));
+        face = MeshBuilder.Over(highland, face);
+        foreach (var (c, r, degrees, o) in FullSeaHearts)
+        {
+            face = MeshBuilder.Over(p => MeshBuilder.Alpha(X.MareHeart, o * SoftEllipse(p, c, r, degrees, FullSeaSoftness)), face);
+        }
+
+        return face;
+    }
+
+    /// <summary>
+    /// The coverage at <paramref name="p"/> of an ellipse whose edge is blurred by a Gaussian of deviation
+    /// <paramref name="softness"/> (an SVG feGaussianBlur): the normal CDF (logistic fit) of the distance to its outline.
+    /// </summary>
+    private static float SoftEllipse(Vector2 p, Vector2 c, Vector2 radii, float degrees, float softness)
+    {
+        var (s, k) = MathF.SinCos(degrees * MathF.PI / 180f);
+        var d = p - c;
+        var u = (d.X * k + d.Y * s) / radii.X;
+        var v = (-d.X * s + d.Y * k) / radii.Y;
+        var q = MathF.Sqrt(u * u + v * v);
+
+        // Distance to the outline to first order: (q - 1) over the gradient of q.
+        var gradient = q > 1e-5f ? MathF.Sqrt(u * u / (radii.X * radii.X) + v * v / (radii.Y * radii.Y)) / q : 0f;
+        var distance = gradient > 0f ? (q - 1f) / gradient : -MathF.Min(radii.X, radii.Y);
+        return 1f / (1f + MathF.Exp(1.702f * distance / softness));
+    }
 
     private static void Completed(MeshBuilder b, MedalTokens t)
     {
@@ -770,14 +857,9 @@ public static class MedalArt
 
         b.Disc(c, r, MeshBuilder.Radial(c - new Vector2(0.38f * r, 0.42f * r), 1.55f * r, (0f, X.FullMoon), (0.55f, X.FullMoonMid), (1f, X.FullMoonDeep)), segments: 56, rings: 4);
 
+        // The seas, highland and hearts as one paint over a dense disc (clipped to the face, as the SVG's are).
         Fine(b, 24f);
-        foreach (var (x, y, rx, ry, degrees, o) in FullMaria)
-        {
-            var centre = c + new Vector2(x, y) * r;
-            var radii = new Vector2(rx, ry) * r * 1.35f;
-            b.Ellipse(centre, radii, degrees, MeshBuilder.Radial(centre, radii,
-                (0f, MeshBuilder.Alpha(M.MoonstoneMid, o)), (0.55f, MeshBuilder.Alpha(M.MoonstoneMid, o * 0.8f)), (1f, MeshBuilder.Alpha(M.MoonstoneMid, 0f))), segments: 20, rings: 2, aa: false);
-        }
+        b.Disc(c, r, FullFace, segments: 80, rings: b.Coverage ? 10 : 20, aa: false);
 
         b.Detail(0f);
 

@@ -298,18 +298,25 @@ public sealed partial class TreePane
         if (Theme.ShowStars)
         {
             // Full: a faint star field in the empty sky under the last node, kept off the pane's edges.
+            // The field is laid over the whole pane, so a sky that grows or shrinks as nodes open shows more or fewer
+            // of the same stars instead of stretching them.
             var skyTop = ImGui.GetCursorScreenPos().Y + UiMetrics.Px(16f);
-            var windowMax = ImGui.GetWindowPos() + ImGui.GetWindowSize();
-            var top = MathF.Max(skyTop, ImGui.GetWindowPos().Y);
+            var windowMin = ImGui.GetWindowPos();
+            var windowMax = windowMin + ImGui.GetWindowSize();
+            var top = MathF.Max(skyTop, windowMin.Y);
             if (windowMax.Y - top > UiMetrics.Px(40f))
             {
-                Ornament.Stars(ImGui.GetWindowDrawList(), new Vector2(start.X + UiMetrics.Px(8f), top), new Vector2(start.X + width - UiMetrics.Px(8f), windowMax.Y - UiMetrics.Px(8f)), TreeStars);
+                var size = (windowMax - windowMin) / UiMetrics.Scale;
+                NightSky.Field(ImGui.GetWindowDrawList(), SkySite.Tree, 0, TreeStars.For(size.X, size.Y), windowMin, windowMax, new Vector2(start.X + UiMetrics.Px(8f), top), new Vector2(start.X + width - UiMetrics.Px(8f), windowMax.Y - UiMetrics.Px(8f)));
             }
         }
     }
 
-    /// <summary>Full's star field under the tree: seeded once, so it never shimmers.</summary>
-    private static readonly Star[] TreeStars = StarField.Generate(31, 14);
+    /// <summary>
+    /// Full's star field over the tree's column, shown in the sky under its last node (or under the open filter drawer's
+    /// sheet): seeded once, so it never reshuffles.
+    /// </summary>
+    internal static readonly SkyField TreeStars = new(31, 240);
 
     /// <summary>Whether Sprout mode folds <paramref name="node"/>: every quest under it lies beyond the reach.</summary>
     private static bool IsSproutFolded(Node node, byte reach) =>

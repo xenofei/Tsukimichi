@@ -126,4 +126,165 @@ public class TypeScaleTests
         Assert.Equal(0f, TypeScale.EyebrowPxFor(float.NaN));
         Assert.Equal(1, TypeScale.NumeralGameFont(1, float.NaN));
     }
+
+    // ------------------------------------------------------------------ plan v7: Section, Header, hero title
+
+    /// <summary>The Text sizes Settings offers (80–150 % in 10 % steps) and the spec table's 125 %.</summary>
+    public static readonly float[] TextSizes = [0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.25f, 1.3f, 1.4f, 1.5f];
+
+    [Theory]
+    [InlineData(0.8f, 1.80f)]
+    [InlineData(1.0f, 1.80f)]
+    [InlineData(1.1f, 1.80f)]
+    [InlineData(1.25f, 1.725f)]
+    [InlineData(1.5f, 1.60f)]
+    [InlineData(2.0f, 1.60f)]
+    [InlineData(float.NaN, 1.80f)]
+    public void The_section_role_is_180_tapering_to_160_at_150_percent(float textScale, float factor)
+    {
+        Assert.Equal(factor, TypeScale.SectionFactorFor(textScale), 3);
+    }
+
+    [Theory]
+    // Spec §1's table at a 16 px body and UI scale 1: the size and the TrumpGothic it is drawn from.
+    [InlineData(0.8f, 23.04f, 0)]  // TG 18.4 × 0.94
+    [InlineData(0.9f, 25.92f, 0)]  // TG 18.4 × 1.06
+    [InlineData(1.0f, 28.8f, 1)]   // TG 23 × 0.94
+    [InlineData(1.1f, 31.68f, 1)]  // TG 23 × 1.03
+    [InlineData(1.25f, 34.5f, 2)]  // TG 34 × 0.76
+    [InlineData(1.5f, 38.4f, 2)]   // TG 34 × 0.85
+    public void The_section_role_follows_the_spec_table(float textScale, float px, int font)
+    {
+        var body = 16f * textScale;
+        Assert.Equal(px, TypeScale.SectionPxFor(body, textScale), 2);
+        Assert.Equal(font, TypeScale.SectionGameFont(TypeScale.Bucket(1f), body, textScale));
+    }
+
+    [Theory]
+    [InlineData(1.0f, 0)]  // 24.8 px: TG 18.4 × 1.01
+    [InlineData(1.25f, 1)] // 31.0 px: TG 23 × 1.01
+    [InlineData(1.5f, 2)]  // 37.2 px: TG 23 would be 1.21×, so TG 34 × 0.82
+    public void Column_headers_are_155_of_the_body_in_trumpgothic(float textScale, int font)
+    {
+        var body = 16f * textScale;
+        Assert.Equal(body * 1.55f, TypeScale.HeaderPxFor(body), 3);
+        Assert.Equal(font, TypeScale.HeaderGameFont(TypeScale.Bucket(1f), body));
+    }
+
+    [Fact]
+    public void Column_headers_never_outrank_the_section_headings()
+    {
+        // Metadata under structure (spec §5): never larger, and never tracked wider, than the Section role.
+        foreach (var textScale in TextSizes)
+        {
+            Assert.True(TypeScale.HeaderFactor < TypeScale.SectionFactorFor(textScale), $"{textScale}");
+        }
+
+        Assert.True(TypeScale.HeaderTrackingEm <= TypeScale.SectionTrackingEm);
+        Assert.True(TypeScale.HeaderFactor > TypeScale.EyebrowFactor, "a step larger than 1.13's headers");
+    }
+
+    [Fact]
+    public void No_heading_role_is_ever_smaller_than_the_body()
+    {
+        foreach (var textScale in TextSizes)
+        {
+            Assert.True(TypeScale.SectionFactorFor(textScale) >= 1f);
+            Assert.True(TypeScale.HeroTitleFactorFor(textScale) > TypeScale.SectionFactorFor(textScale));
+        }
+
+        Assert.True(TypeScale.LeadFactor > 1f);
+        Assert.True(TypeScale.HeaderFactor > 1f);
+
+        // The title of each level stays above that level's section headings: Quiet's Lead headings, Plain's body bands.
+        Assert.True(TypeScale.QuietTitleFactor > TypeScale.LeadFactor);
+        Assert.True(TypeScale.PlainTitleFactor > 1f);
+    }
+
+    [Theory]
+    [InlineData(16f)]
+    [InlineData(17f)]
+    [InlineData(18f)]
+    public void The_hero_title_keeps_its_caps_above_the_section_caps_at_every_text_size(float defaultBody)
+    {
+        // Spec §1 "Hierarchy": the quest title's cap height is at least 1.2× the Section role's, in the faces each is
+        // actually drawn from (Jupiter and TrumpGothic, measured cap heights), at every Text size and UI-scale bucket.
+        foreach (var textScale in TextSizes)
+        {
+            var basePx = defaultBody * textScale;
+            for (var bucket = 0; bucket < TypeScale.Buckets.Length; bucket++)
+            {
+                var body = basePx * TypeScale.Buckets[bucket];
+                var section = TypeScale.SectionPxFor(body, textScale);
+                var hero = TypeScale.HeroTitlePxFor(body, textScale);
+                var sectionCaps = TypeScale.EyebrowCapHeight(TypeScale.SectionGameFont(bucket, basePx, textScale), section);
+                var heroCaps = TypeScale.TitleCapHeight(TypeScale.HeroTitleGameFont(bucket, basePx, textScale), hero);
+                Assert.True(
+                    heroCaps >= TypeScale.HeroTitleCapLead * sectionCaps,
+                    $"body {defaultBody} at {textScale:P0}, bucket {TypeScale.Buckets[bucket]}: title caps {heroCaps:0.0} px, section caps {sectionCaps:0.0} px");
+            }
+        }
+    }
+
+    [Fact]
+    public void The_section_caps_grow_from_113s_eyebrow()
+    {
+        // The owner's point: 1.13's headings were TrumpGothic 18.4 at 1.45× (about 13 px caps at a 16 px body).
+        var bucket = TypeScale.Bucket(1f);
+        var before = TypeScale.EyebrowCapHeight(TypeScale.EyebrowGameFont(bucket, 16f), TypeScale.EyebrowPxFor(16f));
+        var after = TypeScale.EyebrowCapHeight(TypeScale.SectionGameFont(bucket, 16f, 1f), TypeScale.SectionPxFor(16f, 1f));
+        Assert.InRange(before, 12.5f, 13.5f);
+        Assert.InRange(after, 16.5f, 17.5f);
+    }
+
+    [Fact]
+    public void Every_bucket_draws_the_new_roles_without_stretching_a_bitmap_past_a_tenth()
+    {
+        foreach (var textScale in TextSizes)
+        {
+            for (var bucket = 0; bucket < TypeScale.Buckets.Length; bucket++)
+            {
+                var basePx = 17f * textScale;
+                var body = basePx * TypeScale.Buckets[bucket];
+                Assert.InRange(TypeScale.SectionPxFor(body, textScale) / TypeScale.EyebrowGameFontSizesPx[TypeScale.SectionGameFont(bucket, basePx, textScale)], 0.55f, TypeScale.MaxUpscale);
+                Assert.InRange(TypeScale.HeaderPxFor(body) / TypeScale.EyebrowGameFontSizesPx[TypeScale.HeaderGameFont(bucket, basePx)], 0.55f, TypeScale.MaxUpscale);
+
+                // Jupiter 46 is the largest title face with letters, so past it the hero title is scaled up as it must be.
+                var hero = TypeScale.HeroTitleGameFont(bucket, basePx, textScale);
+                var heroScale = TypeScale.HeroTitlePxFor(body, textScale) / TypeScale.TitleGameFontSizesPx[hero];
+                Assert.InRange(heroScale, 0.5f, hero == TypeScale.TitleGameFontSizesPx.Length - 1 ? 1.4f : TypeScale.MaxUpscale);
+            }
+        }
+    }
+
+    [Fact]
+    public void The_lead_face_and_quiet_title_are_built_near_their_sizes()
+    {
+        Assert.Equal(18f, TypeScale.LeadFontPx(16f));
+        Assert.Equal(20f, TypeScale.LeadFontPx(17f));
+        Assert.Equal(0f, TypeScale.LeadFontPx(float.NaN));
+        Assert.Equal(16f * 1.15f, TypeScale.LeadPxFor(16f), 3);
+
+        // Quiet's title at 1.40× a 16 px body is 22.4 px: Axis 18 (24 px).
+        Assert.Equal(3, TypeScale.QuietTitleGameFont(TypeScale.Bucket(1f), 16f));
+    }
+
+    [Theory]
+    [InlineData(28.8f, 0.08f, 2f)]
+    [InlineData(38.4f, 0.08f, 3f)]
+    [InlineData(20f, 0f, 0f)]
+    [InlineData(float.NaN, 0.08f, 0f)]
+    public void Tracking_is_whole_pixels(float fontPx, float em, float px)
+    {
+        Assert.Equal(px, TypeScale.TrackingPx(fontPx, em));
+    }
+
+    [Fact]
+    public void Tracking_goes_between_glyphs_only()
+    {
+        Assert.Equal(108f, TypeScale.TrackedWidth(100f, 5, 2f));
+        Assert.Equal(40f, TypeScale.TrackedWidth(40f, 1, 2f));
+        Assert.Equal(40f, TypeScale.TrackedWidth(40f, 5, -2f));
+        Assert.Equal(4f, TypeScale.TrackedWidth(float.NaN, 3, 2f));
+    }
 }

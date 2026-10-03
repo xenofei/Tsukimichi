@@ -52,8 +52,8 @@ public sealed class TabStrip
 {
     private static readonly NavTab[] Tabs = [NavTab.Journal, NavTab.Moonlit, NavTab.Characters, NavTab.Flight, NavTab.Plan];
 
-    /// <summary>Full's star field in the rail's empty sky: seeded once, so it never shimmers.</summary>
-    private static readonly Core.Ui.Star[] RailStars = Core.Ui.StarField.Generate(7, 9);
+    /// <summary>Full's star field over the rail, shown in its empty sky: seeded once, so it never reshuffles.</summary>
+    private static readonly Core.Ui.SkyField RailStars = new(7, 64);
 
     private static string[] Labels => labelsText.Value;
 
@@ -246,7 +246,8 @@ public sealed class TabStrip
                 // Full: a faint seeded star field in the rail's empty sky, between the last station and the foot.
                 var skyTop = origin.Y + place.StationsTop + (place.Station * Tabs.Length) + UiMetrics.Px(6f);
                 var skyFoot = origin.Y + place.FootTop - UiMetrics.Px(6f);
-                Ornament.Stars(dl, new Vector2(windowMin.X, skyTop), new Vector2(windowMax.X, skyFoot), RailStars);
+                var size = (windowMax - windowMin) / UiMetrics.Scale;
+                NightSky.Field(dl, Core.Ui.SkySite.Rail, 0, RailStars.For(size.X, size.Y), windowMin, windowMax, new Vector2(windowMin.X, skyTop), new Vector2(windowMax.X, skyFoot));
             }
         }
 

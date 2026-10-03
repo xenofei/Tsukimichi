@@ -392,3 +392,34 @@
 .mk.full .st7.on .pl{background:rgba(242,210,122,.07);box-shadow:none}
 .mk.full .st7.on .gl{opacity:0}
 .mk.full .st7.on .ic{filter:none}
+
+/* ======================================================================================================
+   Revision 3 (owner notes after approval)
+   ====================================================================================================== */
+/* Rail labels: the rail is 70 (Full) / 66 (Quiet) so every English label fits its plate at 12 px; the plate insets 3 px;
+   the fit pass (fitLabels) tracks or shrinks a label that still does not fit, and never lets it leave the plate. */
+.mk.full.v7{--railw:70px}
+.mk.quiet.v7{--railw:66px}
+.mk .st7 .pl{left:3px;right:3px}
+.mk.full .st7 .lb,.mk.quiet .st7 .lb{font-size:12px;max-width:none;text-align:center;line-height:1.05}
+.mk .st7.iconly .lb{display:none}
+/* The Journal badge: one fixed size that never shrinks (16 px tall, 10 px semibold), 1-2 digits; "99+" is not expected */
+.mk .st7 .bd{top:-5px;right:-12px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;font-size:10px;font-weight:600;line-height:16px}
+.mk .st7 .bd.w2{right:-16px}
+.mk .st .bd.b13{top:3px;right:6px;min-width:0;height:12px;padding:0 3px;font-size:7px;line-height:12px;border-radius:6px}
+.mk.plain .st7 .bd{background:transparent;color:var(--moon);font-size:10px;box-shadow:none;right:-10px}
+.tipx{background:linear-gradient(180deg,rgba(26,31,52,.97),rgba(17,21,38,.97));border:1px solid #6E5732;border-radius:4px;padding:9px 11px;color:#A9B2CC;font-size:12px;line-height:1.5}
+.tipx b{color:#DDE3F0}
+.tipx i{color:#7C86A8;font-style:normal}
+/* The moving sky: one rigid drift, wrapping (keyframes take the tile width from --dw) */
+@keyframes mk-drift{from{transform:translateX(0)}to{transform:translateX(var(--dw))}}
+.mk .drift{animation:mk-drift linear infinite}
+@keyframes mk-shoot-faint{0%{transform:translate(0,0);opacity:0}8%{opacity:.45}100%{transform:translate(64px,34px);opacity:0}}
+.mk .shooting.faint.go{animation:mk-shoot-faint .7s cubic-bezier(.215,.61,.355,1) both}
+/* The badge keeps full strength on an idle station: the idle dimming applies to the icon, not to its badge */
+.mk .st7 .ic,.mk .st7.half .ic,.mk .st7:hover .ic,.mk .st7.hov .ic{opacity:1}
+.mk .st7 .ic>svg{opacity:.72;transition:opacity .18s}
+.mk .st7.half .ic>svg{opacity:.88}
+.mk .st7:hover .ic>svg,.mk .st7.hov .ic>svg{opacity:.95;transition-duration:.12s}
+.mk .st7.on .ic>svg{opacity:1}
+.mk.plain .st7 .ic>svg{opacity:.8}

@@ -20,10 +20,97 @@ Round 2's concept C, revived as a full theme for the v7 theme picker. Each quest
 | `kit/badge-seat-<open, closed, journal, tank, healer, dps>.svg` | The glass seats |
 | `kit/glyph-open.svg`, `glyph-closed.svg`, `glyph-journal.svg` | The leaded-glass badge glyphs, at the badge position in the 128 box |
 | `ready.svg` … `not-checked.svg`, `ready-on-another-job-<job>.svg` | **Composites**, built as face under, then kit frame for the state's tier, then kit badge, then face over. They use the same names as `medallion-r5`. |
+| `_mid/<state>.svg`, `_mid/faces/…` | Mid-tier composites and faces (32–64 px). They are the same as the top-level files except Completed, which leaves out Crisium's lead and Tycho. The top-level files are the full tier, for 96 px and up. |
 | `_row/<state>.svg` | Row-tier composites, with no badge |
 | `_row/badge-open.svg`, `badge-closed.svg`, `badge-journal.svg` | The badge glyphs at text height, for drawing after a row-tier medal |
 | `_sheet.png` | The standard sheet of the composites (`moon-v6/round5/render_sheet.py`) |
 | `_mix.png` | The swap test, at 96, 48 and 20 px, in four rows:<ol><li>Glass faces in the Came kit</li><li>Glass faces in Medallion's Brass kit</li><li>Medallion's faces in the Came kit</li><li>Medallion as shipped</li></ol> |
+
+## Review fixes (round 3: owner)
+
+The owner's notes: "Looks great!", with two changes. This section supersedes the Completed and Locked out rows of rounds 1 and 2 below.
+
+| # | Owner's words | Done |
+|---|---|---|
+| 1 | "I really don't like that completed moon though. Craters inside of it need a different design, as it looks just like a blob." | **The single lobed mare pane is gone.**<br>**The maria.** The moon's face is cut as a glazier would cut it: seven maria, each its own leaded piece, in their real layout.<ul><li>Oceanus Procellarum runs down the west limb.</li><li>Nubium lies below it.</li><li>Imbrium, Serenitatis and Tranquillitatis form the familiar chain.</li><li>Fecunditatis is to the south-east.</li><li>Crisium sits alone near the east limb.</li></ul>Each outline is an irregular, smoothed ellipse, so the pieces read as cut glass, not pebbles. Neighbours overlap and share one lead, as adjacent panes do.<br>**The glass.** Three related flat mare glasses (`#8E9ABD`, `#9AA6C6`, `#A6B1CD`) sit on flat highland glass (`#C8D2E8`), with no gradients.<br>**Crater roundels.** Copernicus and Tycho are small bullseye quarries of the palest moon glass, leaded in, each with a hero-only pontil ring. They are bright, as the rayed craters are at full moon, never dark holes.<br>**Hero only:** the grisaille hatching on the maria at 0.15, and the roundels.<br>**Row tier:** only the maria's tones remain (no lead round them, no roundels), so it stays clean at 16–20 px.<br>**Tried and rejected:** a Voronoi mosaic of the whole disc (read as a football) and smaller separate maria (read as a caterpillar or paw print). |
+| 2 | "Not the biggest fan of the locked out having a large hole. Just leave it similarly cracked like the others, but maybe just slightly different." | **No hole, and no falling splinter.**<br>**The cracks.** Dalamud is a cracked ruby moon like the other sets: seven shards split along cracks that each bend twice. Every shard is still held in its lead at the limb, and the night shows only through the crack gaps.<br>**The glass-language difference:**<ul><li>one pane (lower right) has **sagged in its lead**: pushed further out of plane (3.6) and turned 4°;</li><li>the lowest pane is a **darker, strained ruby**: `#7A2034` over it at 0.85.</li></ul>**Ruby.** The ruby is now denser toward the foot of the sheet (a vertical density gradient), as flashed ruby is uneven.<br>**Row tier.** The crack gaps open 2.6× wider, so they survive at 16–20 px. |
+| Guard | Blocked vs Locked out ≥ 12 at row size | Removing the hole dropped it to 9.3. Five changes brought it back to **13.2**:<ul><li>the strained pane moved to the bottom;</li><li>the ruby's vertical density;</li><li>its top made a step lighter (`#EA7A89` / `#CC4E62`);</li><li>wider row-tier cracks;</li><li>Blocked's light cloud piece widened to r 48 about the moon (most of the front bank's upper billows).</li></ul> |
+
+**Metrics, round 3** (`moon-v6/round5/metrics.py`, composites)
+
+```
+hero (with badges)
+glass 16px grey:      weakest Done-Lock 12.4, Blk-Lock 12.6, RoJ-Jrn 12.6 | salience Rdy=77 RoJ=46 Jrn=55 Blk=45 Done=47 Comp=55 Lock=43 NotC=35
+glass 16px deut+grey: weakest RoJ-Jrn 12.5, Done-Lock 12.9, Blk-Lock 13.0
+glass 20px grey:      weakest RoJ-Jrn 20.3, Done-Lock 21.5, Blk-Lock 22.1 | salience Rdy=120 ... Comp=84
+with Bard as RoJ: 12.4;  with White Mage: 12.4
+row tier (no badges)
+row 16px grey:        weakest RoJ-Done 12.2, Done-Lock 12.8, Blk-Lock 13.2 | salience Rdy=87 RoJ=43 Jrn=55 Blk=46 Done=46 Comp=58 Lock=42 NotC=35
+row 16px deut+grey:   weakest RoJ-Done 12.4, Done-Lock 13.3, Blk-Lock 13.5
+row 20px grey:        weakest RoJ-Done 21.3, Blk-Lock 21.9, Done-Lock 22.1 | salience Rdy=135 ... Comp=89
+```
+
+| Target (16 px grey) | Hero | Row tier |
+|---|---|---|
+| Weakest pair ≥ 12 | 12.4 | 12.2 |
+| Ready ≥ 1.3× the next state | 77/55 = 1.40 | 87/58 = 1.50 |
+| Completed ≤ 0.8× Ready | 0.71 | 0.67 |
+
+### Round 3, supervisor follow-up (CHANGES REQUIRED, two items)
+
+This supersedes the Completed and Locked out rows above.
+
+| # | Ruling | Done |
+|---|---|---|
+| 1 | **Completed read as cheese:** seven islands of similar size, each ringed in lead, plus rivet-like craters | **The maria are now three leaded pieces in their real connectivity:**<ul><li>**West:** Imbrium joined to Oceanus Procellarum, down the western half and off the limb.</li><li>**East:** one connected, irregular chain of Serenitatis, Tranquillitatis, Fecunditatis and Nectaris.</li><li>**Crisium:** a small separate oval near the east limb.</li></ul>**Tones.** The three flat glasses are now tone shifts *inside* the big pieces, across a lead:<ul><li>Imbrium in deep glass over Procellarum in pale;</li><li>Serenitatis in mid glass, over Tranquillitatis in deep, over Fecunditatis and Nectaris in pale.</li></ul>**Craters.** Copernicus is gone. Tycho is the only crater: hero only, r 3.4, lead 0.8.<br>**Row tier:** only the two big pieces, one tone each, with no lead, no Crisium and no crater.<br>**Hero tier:** it is used from 32 px, so Crisium's lead and Tycho still render at 48 px. There they fall to about one pixel, so 48 px reads mainly as the two big mare tones. |
+| 2 | **Locked out read as a basketball at row size** | **The cracks are moved off every axis:**<ul><li>The impact point moves to (52, 50), up and to the left.</li><li>Three through-cracks run at −62°, 35° and 128°. Each is at least 25° from vertical and horizontal, and none crosses the centre on an axis.</li><li>These three are the only cracks at row size.</li></ul>**Hero tier:** adds four hairline cracks that did not run through: a fine dark line with a pale lip, which never opens.<br>**Kept:**<ul><li>the sagged pane (now the right one: 3.6 out, turned 3.5°);</li><li>the strained, darker pane (the lower one);</li><li>the ruby that grows denser toward the foot.</li></ul>**Crack width.** Through-cracks open 1.4× at hero and 2.2× at row size. That keeps Done vs Locked out at 12.6 or more: the moved cracks had dropped it to 11.6. |
+
+**Metrics, round 3 follow-up**
+
+```
+hero (with badges)
+glass 16px grey:      weakest Done-Lock 12.6, RoJ-Jrn 12.6, Blk-Lock 13.3 | salience Rdy=77 RoJ=46 Jrn=55 Blk=45 Done=47 Comp=55 Lock=41 NotC=35
+glass 16px deut+grey: weakest RoJ-Jrn 12.5, Done-Lock 12.6, Blk-Lock 13.5
+glass 20px grey:      weakest RoJ-Jrn 20.3, Done-Lock 21.3, Blk-Lock 23.0 | salience Rdy=120 ... Comp=84
+with Bard as RoJ: 12.6;  with White Mage: 12.5
+row tier (no badges)
+row 16px grey:        weakest RoJ-Done 12.2, Blk-Done 13.6, Done-Lock 13.9 | salience Rdy=87 RoJ=43 Jrn=55 Blk=46 Done=46 Comp=57 Lock=41 NotC=35
+row 16px deut+grey:   weakest RoJ-Done 12.4, Blk-Done 13.8, Done-Lock 14.1
+row 20px grey:        weakest RoJ-Done 21.3, Done-Lock 24.3, Blk-Done 24.4 | salience Rdy=135 ... Comp=89
+```
+
+| Target (16 px grey) | Hero | Row tier |
+|---|---|---|
+| Weakest pair ≥ 12 | 12.5 (White Mage) / 12.6 | 12.2 |
+| Blocked vs Locked out ≥ 12 | 13.3 | above 13.9 (not among the three weakest) |
+| Ready ≥ 1.3× the next state | 77/55 = 1.40 | 87/57 = 1.53 |
+| Completed ≤ 0.8× Ready | 0.71 | 0.66 |
+
+**Follow-up doubts**
+- **Locked out's strained lower pane** is a large dark area, so at 20–28 px the disc is bright above and dark below. Phase-lit moons do that too. It reads as cracked because of the open Λ crack. If the supervisor sees a phase in it, the strained pane can drop to 0.6 at the hero tier, which costs about 0.4 on Done vs Locked out.
+- **The wider hero cracks** (up to about 5 units at 128) make the break more dramatic than before.
+
+### Round 3, supervisor spot check (two small items)
+
+| # | Ruling | Done |
+|---|---|---|
+| 1 | At 48 px, Crisium and Tycho fall to about 1 px, and Crisium's lead becomes a speck | **New mid tier `_mid/` (32–64 px).** In it, Completed shows only the west and east pieces, with their tone shifts and leads. Crisium stays as a tone only, with no lead of its own, and Tycho is left out.<br>Crisium's lead and Tycho now draw only in the full tier (the top-level files, 96 px and up), the same split as the Orrery's hatching.<br>The other seven states are unchanged in `_mid/`, so the runtime can pick one tier for every state. The row tier was already clean. |
+| 2 | **Locked out's row tier read as a phase:** lighter upper panes over a much darker lower pane | **Row tier only.** The strained lower pane is now flat `#B04456`, one step under the ruby body, not the deep `#7A2034` range. The ruby's density step is also shortened (`#EA7A89` → `#CC4E62` → `#B04456`). At 20–28 px it reads as one red body split by dark cracks.<br>**Hero and mid tiers:** full contrast is kept, with the strained pane under `#7A2034` at 0.85. |
+
+**Metrics after the spot check** (16 px greyscale; the hero tier is unchanged)
+
+```
+hero:     weakest Done-Lock 12.6, RoJ-Jrn 12.6, Blk-Lock 13.3 | Rdy=77 Comp=55 (0.71), Ready lead 1.40
+row:      weakest RoJ-Done 12.2, Blk-Done 13.6, Blk-Lock 13.8; Done-Lock 14.6 | Rdy=87 Lock=46 Comp=57 (0.66), Ready lead 1.53
+row deut: weakest RoJ-Done 12.4, Blk-Done 13.8, Blk-Lock 14.2
+row 20px: weakest RoJ-Done 21.3, Blk-Lock 24.3, Blk-Done 24.4
+```
+
+**Note:** `_sheet.png` and `_mix.png` show the full tier at every size, as the shared sheet script does, so their 48 px Completed still has Crisium's lead and Tycho. The mid tier is in `_mid/`.
+
+**Round-3 doubts** (from the first round-3 pass; the follow-up above answers both)
+- **Completed's maria are separate leaded pieces on a pale disc.** At 48 px the face reads like the familiar full-moon emoji. The owner dislikes "cheese", though, so the maria and the two bright crater roundels should be checked against that taste.
+- **At row size, Locked out is a red disc with bold dark radial cracks.** It is close to Medallion's shipped Locked out, but on its own it could suggest a basketball.
 
 ## Review fixes (round 2)
 
