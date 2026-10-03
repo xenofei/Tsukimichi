@@ -44,7 +44,7 @@ public sealed partial class CharactersPane
             return;
         }
 
-        if (ImGui.SmallButton(Strings.AbandonedShowInJournal))
+        if (TravelControls.RowButton("##showAbandoned", PillIcon.JournalBook, Strings.AbandonedShowInJournal))
         {
             ui.ShowAbandoned();
         }
@@ -164,11 +164,10 @@ public sealed partial class CharactersPane
     private float AbandonedActionsWidth()
     {
         var style = ImGui.GetStyle();
-        var padding = style.FramePadding.X * 2f;
-        var width = ImGui.CalcTextSize(Strings.AbandonedReveal).X + padding;
+        var width = TravelControls.RowButtonWidth(ActionGlyphs.Reveal, Strings.AbandonedReveal);
         if (Links is { } links)
         {
-            width += ImGui.CalcTextSize(Strings.AbandonedFlag).X + padding + style.ItemSpacing.X;
+            width += TravelControls.FlagWidth(Strings.AbandonedFlag) + style.ItemSpacing.X;
             width += TravelControls.ButtonsWidth(links, Strings.AbandonedTeleport);
         }
 
@@ -218,15 +217,12 @@ public sealed partial class CharactersPane
     {
         if (Links is { } links)
         {
-            using (ImRaii.Disabled(!links.CanFlagMap(quest)))
+            if (TravelControls.FlagButton(Strings.AbandonedFlag, links.CanFlagMap(quest)))
             {
-                if (ImGui.SmallButton(Strings.AbandonedFlag))
-                {
-                    links.FlagMap(quest);
-                }
+                links.FlagMap(quest);
             }
 
-            if (ImGui.IsItemHovered())
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
                 UiMetrics.Tooltip(Strings.AbandonedFlagTooltip);
             }
@@ -235,7 +231,7 @@ public sealed partial class CharactersPane
             ImGui.SameLine();
         }
 
-        if (ImGui.SmallButton(Strings.AbandonedReveal))
+        if (TravelControls.RowButton("##reveal", ActionGlyphs.Reveal, Strings.AbandonedReveal))
         {
             Reveal(ui, quest);
         }

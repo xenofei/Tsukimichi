@@ -130,8 +130,9 @@ public sealed partial class DetailPane
             var choice = AutoDutyPlan.Choose(row.Duty.Duty, inputsBase with { HasPath = row.HasPath, Unlocked = row.Unlocked });
 
             // The same pill as the action bar's Run with AutoDuty (1.10); the icon alone when the card is narrower than its label.
-            var label = Chrome.ActionPillWidth(AutoDutyIcon, Strings.AutoDutyRun) <= RoomTo(cardRight) ? Strings.AutoDutyRun : null;
-            var pressed = Chrome.ActionPill(row.RunId, AutoDutyIcon, label, PillTone.Normal, choice.CanRun);
+            var runIcon = DutyPillIcon(row);
+            var label = Chrome.ActionPillWidth(runIcon, Strings.AutoDutyRun) <= RoomTo(cardRight) ? Strings.AutoDutyRun : null;
+            var pressed = Chrome.ActionPill(row.RunId, runIcon, label, PillTone.Normal, choice.CanRun);
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
                 var text = choice.CanRun

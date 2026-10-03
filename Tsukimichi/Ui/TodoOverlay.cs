@@ -464,12 +464,9 @@ public sealed class TodoOverlay : Window, IDisposable
         var route = routes.ViewedRoute;
         var stop = routes.NextStopQuest(route);
         var canFlag = stop is not null && links.CanFlagMap(stop);
-        using (ImRaii.Disabled(!canFlag))
+        if (TravelControls.FlagButton(Strings.RouteFlagNextStop, canFlag, "##flagNextStop"))
         {
-            if (ImGui.SmallButton(Strings.RouteFlagNextStop))
-            {
-                routes.FlagNextStop(route);
-            }
+            routes.FlagNextStop(route);
         }
 
         NoteTarget();
@@ -480,7 +477,7 @@ public sealed class TodoOverlay : Window, IDisposable
         }
 
         ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.TodoRouteStop))
+        if (Chrome.ActionPill("##routeStop", ActionGlyphs.Stop, Strings.TodoRouteStop, PillTone.Danger, true, size: PillLayout.Row))
         {
             routes.Stop();
             dirty = true;

@@ -1188,6 +1188,7 @@ public sealed partial class Plugin : IDalamudPlugin
             charactersPane.Questionable = questionableActions;
             // Role, society, Grand Company and achievement icons (UI-5d), read off the frame; Moonlit's for the collection.
             charactersPane.IconSheetsSource = () => warmer.PaneIcons.Value;
+            mainWindow.AttachIconSheets(() => warmer.PaneIcons.Value);
             charactersPane.MoonlitIcons = moonlitPane.Icons;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(moonlitPane);
@@ -1230,7 +1231,7 @@ public sealed partial class Plugin : IDalamudPlugin
                     }
                 }
 
-                ui.OpenRoute(duty with { QuestRowIds = quests });
+                ui.OpenRoute(duty with { QuestRowIds = quests, Icon = model.Icon });
             };
             // The flight index (a few small sheets) is warmed at load; the pane says it is reading them until it lands.
             flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => warmer.Flight.IsDone ? warmer.Flight.Value ?? FlightIndex.Empty : null);
@@ -1253,7 +1254,12 @@ public sealed partial class Plugin : IDalamudPlugin
             // Journal companion. Their reads take the same kill switch as the Duty Finder hint.
             PlanSource plans = planSource;
             gamePanels = new GamePanels(PluginInterface.UiBuilder, AddonLifecycle, GameGui, TargetManager, Settings,
-                new Game.QuestBriefBuilder(Session, () => moonlit.Catalog, unlockReader, () => plans.Tags) { QuestUnlocks = () => questUnlocks?.Current },
+                new Game.QuestBriefBuilder(Session, () => moonlit.Catalog, unlockReader, () => plans.Tags)
+                {
+                    QuestUnlocks = () => questUnlocks?.Current,
+                    MoonlitIcon = moonlit.Icons.Resolve,
+                    IconSheets = () => warmer.PaneIcons.Value,
+                },
                 queryRunner, gameLinks, gate, Log, quest =>
                 {
                     mainWindow.IsOpen = true;

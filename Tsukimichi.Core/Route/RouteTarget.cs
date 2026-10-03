@@ -54,6 +54,13 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
     /// </summary>
     public IReadOnlyList<RouteTarget> Parts { get; init; } = [];
 
+    /// <summary>
+    /// The target's own game icon for the Route window's header (UI-5e, I19): a duty's tile, a reward's icon, a job's,
+    /// an expansion's ring; 0 when the caller did not know it (a quest target then wears its map marker,
+    /// <see cref="Ui.ActionIcons.RouteHeader"/>). Only drawn, never compared by the route itself.
+    /// </summary>
+    public uint Icon { get; init; }
+
     /// <summary>True for a route to several targets (<see cref="Parts"/>).</summary>
     public bool IsUnion => Parts.Count > 0;
 
@@ -133,7 +140,7 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
             }
         }
 
-        return Union(RouteTargetKind.JobQuests, F("Core.Route.JobQuestsLabel", "everything for {0}", name), parts);
+        return Union(RouteTargetKind.JobQuests, F("Core.Route.JobQuestsLabel", "everything for {0}", name), parts) with { Icon = Ui.ActionIcons.Job(jobId) };
     }
 
     /// <summary>"All my pins": every pinned quest, in the order pinned, each its own milestone.</summary>
@@ -159,7 +166,7 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
             parts.Add(new RouteTarget(RouteTargetKind.Quest, string.Empty, [entry.Quest.RowId]));
         }
 
-        return Union(RouteTargetKind.Blues, F("Core.Route.BluesLabel", "{0} blues", block.Name), parts);
+        return Union(RouteTargetKind.Blues, F("Core.Route.BluesLabel", "{0} blues", block.Name), parts) with { Icon = Ui.PaneIcons.Expansion(block.Expansion) };
     }
 
     /// <summary>

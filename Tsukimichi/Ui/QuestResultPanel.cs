@@ -2,6 +2,7 @@ using System;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
@@ -72,17 +73,9 @@ public sealed class QuestResultPanel
             ImGui.TextDisabled(model.MoreText);
         }
 
-        if (!brief.Masked && brief.Unlocks.Count > 0)
+        if (!brief.Masked)
         {
-            ImGui.Spacing();
-            ImGui.TextDisabled(Strings.GamePanelUnlocksHeading);
-            foreach (var unlock in brief.Unlocks)
-            {
-                using (ImRaii.PushIndent(UiMetrics.Px(8f), scaled: false))
-                {
-                    ImGui.TextUnformatted(unlock);
-                }
-            }
+            GamePanelShell.UnlockLines(brief);
         }
 
         if (model.ChainNext is { } next)
@@ -106,7 +99,7 @@ public sealed class QuestResultPanel
         GamePanelShell.QuestLine(line.State, line.Name);
         ImGui.SameLine();
         var canFlag = links.CanFlagMap(line.Quest);
-        if (shell.Button(Strings.DutyHintFlagGiver, canFlag ? Strings.DutyHintFlagGiverHint : Strings.DutyHintNoGiver, canFlag))
+        if (shell.Button(ActionIcons.FlagIcon, Strings.DutyHintFlagGiver, canFlag ? Strings.DutyHintFlagGiverHint : Strings.DutyHintNoGiver, canFlag))
         {
             links.FlagMap(line.Quest);
         }
@@ -114,7 +107,7 @@ public sealed class QuestResultPanel
         ImGui.SameLine();
         var canPin = GamePanelShell.CanPinLive(session, runner);
         var pinned = canPin && runner.IsPinned(line.Quest.RowId);
-        if (shell.Button(pinned ? Strings.GamePanelUnpin : Strings.GamePanelPin, canPin ? Strings.GamePanelPinHint : Strings.GamePanelPinUnavailable, canPin))
+        if (shell.Button(ActionGlyphs.Pin, pinned ? Strings.GamePanelUnpin : Strings.GamePanelPin, canPin ? Strings.GamePanelPinHint : Strings.GamePanelPinUnavailable, canPin))
         {
             runner.TogglePin(line.Quest.RowId);
         }

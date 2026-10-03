@@ -1927,7 +1927,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         if (ImGui.MenuItem(Strings.RouteToThisReward))
         {
-            ui.OpenRoute(Core.Route.RouteTarget.ForReward(row.Entry, catalog.All, row.Name));
+            ui.OpenRoute(Core.Route.RouteTarget.ForReward(row.Entry, catalog.All, row.Name) with { Icon = row.Icon });
         }
 
         // "Open on FFXIV Collect" and the item on Garland Tools (1.8.0); a masked quest's reward asks first.

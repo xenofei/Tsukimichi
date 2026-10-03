@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
@@ -22,10 +23,76 @@ public enum PillTone : byte
     Danger,
 }
 
+/// <summary>How tall an <see cref="Chrome.ActionPill"/> is (docs/design/v7/ui/spec-1.15.md B2).</summary>
+public enum PillLayout : byte
+{
+    /// <summary>The action bar's pill at the Decoration level: 30 / 28 / 22 px with 18 / 16 / 14 px icons.</summary>
+    Bar,
+
+    /// <summary>The panels beside game windows: 26 px with 16 px icons at every level.</summary>
+    Panel,
+
+    /// <summary>A list row's small button: the text line tall (as the text-only small button it replaces), 14 px icons.</summary>
+    Row,
+
+    /// <summary>A toolbar's button beside framed ones: the frame's height, 16 px icons.</summary>
+    Frame,
+}
+
+/// <summary>
+/// The icon an <see cref="Chrome.ActionPill"/> or a round button wears (UI-5e): a game icon (<see cref="GameIconRef"/>,
+/// a map symbol or an action tile), the approved Journal book glyph, or a FontAwesome glyph for an action the game has
+/// no icon for. A string converts to a FontAwesome glyph and a <see cref="GameIconRef"/> to a game icon, so a call site
+/// passes either.
+/// </summary>
+public readonly struct PillIcon
+{
+    private PillIcon(string? glyph, GameIconRef game, bool book)
+    {
+        Glyph = glyph;
+        Game = game;
+        Book = book;
+    }
+
+    /// <summary>The FontAwesome glyph; null for a game icon or the book.</summary>
+    public string? Glyph { get; }
+
+    /// <summary>The game icon; <see cref="GameIconRef.None"/> otherwise.</summary>
+    public GameIconRef Game { get; }
+
+    /// <summary>The Journal book glyph (<see cref="MedalArt.RowGlyph"/> of <see cref="MedalBadge.Journal"/>) in the button's ink.</summary>
+    public bool Book { get; }
+
+    /// <summary>"Read the journal": the approved book glyph, never the red "!" tile (spec-1.15 B1, Revision 2 ruling 4).</summary>
+    public static PillIcon JournalBook { get; } = new(null, GameIconRef.None, true);
+
+    /// <summary>A game icon, or <paramref name="fallback"/> (FontAwesome) when its id is 0.</summary>
+    public static PillIcon GameOr(GameIconRef game, string fallback) =>
+        game.HasIcon ? new PillIcon(null, game, false) : new PillIcon(fallback, GameIconRef.None, false);
+
+    public static implicit operator PillIcon(string glyph) => new(glyph, GameIconRef.None, false);
+
+    public static implicit operator PillIcon(GameIconRef game) => new(null, game, false);
+
+    /// <summary>A number that changes when the icon does, for the pill's swap fade.</summary>
+    internal uint Signature => Book ? 0xB00Bu : Glyph is { } g ? (uint)g.GetHashCode() : Game.IconId * 2654435761u;
+}
+
 public static partial class Chrome
 {
     /// <summary>A brass edge drawn on a disabled pill keeps this much of the enabled one's alpha.</summary>
     private const float DisabledEdgeShare = 0.45f;
+
+    /// <summary>A disabled button's game icon: this alpha, tinted <see cref="DisabledIconTint"/>, which also takes its colour out (spec-1.15 B2).</summary>
+    private const float DisabledIconAlpha = 0.45f;
+
+    private static readonly Vector4 DisabledIconTint = Core.Ui.ColorMath.FromHex(0x8A93B0);
+
+    /// <summary>An action tile's corner radius, logical px (spec-1.15 B1).</summary>
+    private const float TileRoundingLogical = 3f;
+
+    /// <summary>The Journal book's mesh is drawn this many times the icon box, so the book (about two thirds of its badge box) fills the box.</summary>
+    private const float BookOverscan = 1.45f;
 
     // 1.13 (feature plan v6 U8): a pill's hover glides in and out, and a new label or tone (Walk becoming Stop) fades in.
     private const uint PillHoverTag = 0x5049_4C48; // "PILH"
@@ -35,16 +102,34 @@ public static partial class Chrome
     /// The height of an <see cref="ActionPill"/> at the Decoration level (docs/design/flair-v13 §1, "Spacing tokens"):
     /// 30 logical px at Full, 28 at Quiet, a 22 px button at Plain; never under the 24 px minimum target.
     /// </summary>
-    public static float ActionPillHeight => MathF.Max(UiMetrics.Px(Theme.Spacing.PillHeight), 24f);
+    public static float ActionPillHeight => PillHeight(PillLayout.Bar);
 
-    /// <summary>Plain draws its action buttons as text only (no icon), so their widths leave the icon and its gap out.</summary>
-    private static bool TextOnlyPills => Theme.Flair == Flair.Plain;
+    /// <summary>The height of a pill of <paramref name="size"/>: the bar's (never under 24 px), the panels' 26 px, a row's text line.</summary>
+    public static float PillHeight(PillLayout size) => size switch
+    {
+        PillLayout.Panel => MathF.Round(UiMetrics.Px(PillMetrics.Panel.Height)),
+        PillLayout.Row => ImGui.GetTextLineHeight(),
+        PillLayout.Frame => ImGui.GetFrameHeight(),
+        _ => MathF.Max(UiMetrics.Px(Theme.Spacing.PillHeight), 24f),
+    };
 
-    /// <summary>A labelled pill's width with a label <paramref name="labelWidth"/> wide: the icon, the gap and the label, or at Plain the label alone.</summary>
-    private static float LabelledPillWidth(string icon, float labelWidth) =>
-        TextOnlyPills
-            ? ActionPillFit.TextOnlyWidth(labelWidth, UiMetrics.Scale)
-            : ActionPillFit.LabelledWidth(IconWidth(icon), labelWidth, UiMetrics.Scale);
+    private static PillMetrics MetricsOf(PillLayout size) => size switch
+    {
+        PillLayout.Panel => PillMetrics.Panel,
+        PillLayout.Row => PillMetrics.Row,
+        PillLayout.Frame => PillMetrics.Frame,
+        _ => PillMetrics.For(Theme.Flair),
+    };
+
+    /// <summary>The icon's box in a pill of <paramref name="size"/>, pixels.</summary>
+    private static float PillIconPx(PillLayout size) => ActionPillFit.IconPx(MetricsOf(size), PillHeight(size), UiMetrics.Scale);
+
+    /// <summary>The width the icon takes in a labelled pill: its box, or a wider FontAwesome glyph's own width.</summary>
+    private static float PillIconWidth(in PillIcon icon, float box) => icon.Glyph is { } glyph ? MathF.Max(box, IconWidth(glyph)) : box;
+
+    /// <summary>A labelled pill's width with a label <paramref name="labelWidth"/> wide: the pads, the icon, the gap and the label.</summary>
+    private static float LabelledPillWidth(in PillIcon icon, float labelWidth, PillLayout size) =>
+        ActionPillFit.LabelledWidth(MetricsOf(size), PillIconWidth(icon, PillIconPx(size)), labelWidth, UiMetrics.Scale);
 
     /// <summary>The dark ink on Full's lit gold pill and Quiet's flat gold one.</summary>
     private static readonly Vector4 GoldInk = Core.Ui.ColorMath.FromHex(0x1A1406);
@@ -62,44 +147,45 @@ public static partial class Chrome
     /// The widths an <see cref="ActionPill"/> takes with <paramref name="label"/>, with <paramref name="shortLabel"/>
     /// and with its icon alone, for <see cref="ActionPillFit.Fit"/>.
     /// </summary>
-    public static PillWidths ActionPillWidths(string icon, string label, string shortLabel)
+    public static PillWidths ActionPillWidths(PillIcon icon, string label, string shortLabel, PillLayout size = PillLayout.Bar)
     {
-        var full = LabelledPillWidth(icon, ImGui.CalcTextSize(label).X);
+        var full = LabelledPillWidth(icon, ImGui.CalcTextSize(label).X, size);
         var brief = ReferenceEquals(label, shortLabel) || string.Equals(label, shortLabel, StringComparison.Ordinal)
             ? full
-            : LabelledPillWidth(icon, ImGui.CalcTextSize(shortLabel).X);
-        return new PillWidths(full, MathF.Min(full, brief), ActionPillFit.IconOnlyWidth(ActionPillHeight));
+            : LabelledPillWidth(icon, ImGui.CalcTextSize(shortLabel).X, size);
+        return new PillWidths(full, MathF.Min(full, brief), ActionPillFit.IconOnlyWidth(PillHeight(size)));
     }
 
     /// <summary>The width of one <see cref="ActionPill"/>: labelled, or its icon alone when <paramref name="label"/> is null.</summary>
-    public static float ActionPillWidth(string icon, string? label) =>
+    public static float ActionPillWidth(PillIcon icon, string? label, PillLayout size = PillLayout.Bar) =>
         label is null
-            ? ActionPillFit.IconOnlyWidth(ActionPillHeight)
-            : LabelledPillWidth(icon, ImGui.CalcTextSize(label).X);
+            ? ActionPillFit.IconOnlyWidth(PillHeight(size))
+            : LabelledPillWidth(icon, ImGui.CalcTextSize(label).X, size);
 
     /// <summary>
-    /// A labelled action pill (1.10, the detail pane's travel and automation row, the Hand in and Duties hand-offs):
-    /// <see cref="UiMetrics.MinTarget"/> tall, an icon and a label, or the icon alone (still pill-shaped) when
-    /// <paramref name="label"/> is null. Its look follows the Flair level: Full a brass edge, the
-    /// <see cref="PillTone.Primary"/> one filled with the accent; Quiet the brass edge alone, the primary in accent ink;
-    /// Plain the standard button fill, still labelled, the primary keeping the accent wash it had in 1.3. Under the
-    /// high-contrast palette the edge is a solid line. A disabled pill stays labelled and dimmed and still shows its
-    /// tooltip; <see cref="PillTone.Danger"/> (Stop) is Eclipse. Hover eases in and out (a press shows at once), and a
-    /// new label, icon or tone fades its ink in over <see cref="MotionTokens.Reveal"/>. A real, focusable item with the
-    /// focus ring; a null <paramref name="tooltip"/> leaves the hover text to the caller (check
-    /// <c>IsItemHovered(AllowWhenDisabled)</c> after the call). Returns true when clicked while enabled.
+    /// A labelled action pill (1.10, the detail pane's travel and automation row, the Hand in and Duties hand-offs; 1.15
+    /// every travel and route button, UI-5e): an icon and a label, or the icon alone (still pill-shaped) when
+    /// <paramref name="label"/> is null. The icon is the game's own where it has one (<see cref="PillIcon"/>; drawn by
+    /// <see cref="DrawPillIcon"/>), at every Decoration level, Plain's buttons included; its size and the pads follow
+    /// <paramref name="size"/> and the level (<see cref="PillMetrics"/>). Its look follows the Flair level: Full a brass
+    /// edge, the <see cref="PillTone.Primary"/> one filled with the accent; Quiet the brass edge alone, the primary in
+    /// accent ink; Plain the standard button fill, the primary keeping the accent wash it had in 1.3. Under the
+    /// high-contrast palette the edge is a solid line. A disabled pill stays labelled and dimmed (its game icon at .45,
+    /// tinted grey) and still shows its tooltip; <see cref="PillTone.Danger"/> (Stop) is Eclipse. Hover eases in and out
+    /// (a press shows at once), and a new label, icon or tone fades its ink in over <see cref="MotionTokens.Reveal"/>. A
+    /// real, focusable item with the focus ring; a null <paramref name="tooltip"/> leaves the hover text to the caller
+    /// (check <c>IsItemHovered(AllowWhenDisabled)</c> after the call). Returns true when clicked while enabled.
     /// </summary>
-    public static bool ActionPill(string id, string icon, string? label, PillTone tone, bool enabled, string? tooltip = null)
+    public static bool ActionPill(string id, PillIcon icon, string? label, PillTone tone, bool enabled, string? tooltip = null, PillLayout size = PillLayout.Bar)
     {
-        var height = ActionPillHeight;
-        var iconSize = IconSize(icon);
+        var height = PillHeight(size);
+        var metrics = MetricsOf(size);
+        var iconBox = PillIconPx(size);
+        var iconWidth = PillIconWidth(icon, iconBox);
         var labelSize = label is null ? Vector2.Zero : ImGui.CalcTextSize(label);
-        var textOnly = label is not null && TextOnlyPills;
         var width = label is null
             ? ActionPillFit.IconOnlyWidth(height)
-            : textOnly
-                ? ActionPillFit.TextOnlyWidth(labelSize.X, UiMetrics.Scale)
-                : ActionPillFit.LabelledWidth(iconSize.X, labelSize.X, UiMetrics.Scale);
+            : ActionPillFit.LabelledWidth(metrics, iconWidth, labelSize.X, UiMetrics.Scale);
         var min = ImGui.GetCursorScreenPos();
         ImGui.BeginDisabled(!enabled);
         var clicked = ImGui.InvisibleButton(id, new Vector2(width, height));
@@ -122,11 +208,12 @@ public static partial class Chrome
             ink = LerpColor(restInk, hoverInk, hover);
         }
 
-        var signature = (uint)tone ^ ((uint)icon.GetHashCode() * 31u) ^ (uint)(label?.GetHashCode() ?? 0);
+        var signature = (uint)tone ^ (icon.Signature * 31u) ^ (uint)(label?.GetHashCode() ?? 0);
         var swap = Motion.Changed(Motion.Key(PillSwapTag, itemId), signature, MotionTokens.Reveal);
-        if (swap >= 0f)
+        var fade = swap >= 0f ? MotionMath.EaseOutCubic(swap) : 1f;
+        if (fade < 1f)
         {
-            ink = ScaleAlpha(ink, MotionMath.EaseOutCubic(swap));
+            ink = ScaleAlpha(ink, fade);
         }
 
         var dl = ImGui.GetWindowDrawList();
@@ -174,18 +261,14 @@ public static partial class Chrome
             dl.AddRect(min, max, edge, rounding, ImDrawFlags.None, thickness);
         }
 
-        var iconX = label is null ? min.X + ((width - iconSize.X) * 0.5f) : min.X + UiMetrics.Px(ActionPillFit.PadStartLogical);
-        if (!textOnly)
-        {
-            ImGui.PushFont(UiBuilder.IconFont);
-            dl.AddText(new Vector2(MathF.Round(iconX), MathF.Round(min.Y + ((height - iconSize.Y) * 0.5f))), ink, icon);
-            ImGui.PopFont();
-        }
+        // The icon sits in its box at the start pad (centred when alone); the label follows after the gap.
+        var iconX = label is null ? min.X + ((width - iconWidth) * 0.5f) : min.X + UiMetrics.Px(metrics.PadStart);
+        var boxMin = new Vector2(MathF.Round(iconX + ((iconWidth - iconBox) * 0.5f)), MathF.Round(min.Y + ((height - iconBox) * 0.5f)));
+        DrawPillIcon(dl, icon, boxMin, iconBox, ink, enabled, fade);
 
         if (label is not null)
         {
-            // Plain's text-only button centres its label; the others set it after the icon and the gap.
-            var labelX = textOnly ? min.X + ((width - labelSize.X) * 0.5f) : iconX + iconSize.X + UiMetrics.Px(ActionPillFit.IconGapLogical);
+            var labelX = iconX + iconWidth + UiMetrics.Px(metrics.IconGap);
             dl.AddText(new Vector2(MathF.Round(labelX), MathF.Round(min.Y + ((height - labelSize.Y) * 0.5f))), ink, label);
         }
 
@@ -199,10 +282,69 @@ public static partial class Chrome
     }
 
     /// <summary>
+    /// <paramref name="icon"/> in the square <paramref name="min"/>..<paramref name="min"/> + <paramref name="side"/>
+    /// (spec-1.15 B1): a FontAwesome glyph or the Journal book in <paramref name="ink"/>; a map symbol bare over a 1 px
+    /// shadow (the icon in Abyss at .5, one pixel down); an action tile rounded 3 with a 1 px Abyss .5 inset ring. Game
+    /// icons keep their colours at every level, since they carry meaning, except on a disabled button: .45 alpha,
+    /// tinted grey. Nothing is drawn while a game icon loads. <paramref name="fade"/> scales the whole icon (the pill's
+    /// swap fade).
+    /// </summary>
+    internal static void DrawPillIcon(ImDrawListPtr dl, in PillIcon icon, Vector2 min, float side, uint ink, bool enabled, float fade = 1f)
+    {
+        if (!(side > 0f) || !(fade > 0f))
+        {
+            return;
+        }
+
+        if (icon.Glyph is { } glyph)
+        {
+            ImGui.PushFont(UiBuilder.IconFont);
+            var size = ImGui.CalcTextSize(glyph);
+            dl.AddText(new Vector2(MathF.Round(min.X + ((side - size.X) * 0.5f)), MathF.Round(min.Y + ((side - size.Y) * 0.5f))), ink, glyph);
+            ImGui.PopFont();
+            return;
+        }
+
+        if (icon.Book)
+        {
+            // The approved book in its flat cut (the high-contrast tokens), recoloured to the ink: pages in the ink, the
+            // spine a dark crease.
+            var mesh = MedalArt.RowGlyph(MedalBadge.Journal, MedalTokens.For(Theme.Glyphs.HighContrast ? Theme.Glyphs : GlyphPalette.HighContrastDark));
+            var meshSide = MathF.Round(side * BookOverscan);
+            var meshMin = new Vector2(MathF.Round(min.X + ((side - meshSide) * 0.5f)), MathF.Round(min.Y + ((side - meshSide) * 0.5f)));
+            MedalGlyph.DrawMeshInk(dl, mesh, meshMin, meshSide, ink);
+            return;
+        }
+
+        var game = icon.Game;
+        if (!game.HasIcon || Plugin.TextureProvider is not { } textures || !GameIcon.TryGetWrap(textures, game.IconId, side, out var wrap))
+        {
+            return;
+        }
+
+        var max = min + new Vector2(side);
+        var alpha = (enabled ? 1f : DisabledIconAlpha) * fade;
+        var tint = Theme.WithAlpha(enabled ? Vector4.One : DisabledIconTint, alpha);
+        var shadow = Theme.WithAlpha(Theme.Abyss, 0.5f * alpha);
+        if (game.Style == IconStyle.MapSymbol)
+        {
+            var (fitMin, fitMax) = GameIcon.Fit(wrap, min, max);
+            var drop = new Vector2(0f, MathF.Max(1f, MathF.Round(UiMetrics.Px(1f))));
+            dl.AddImage(wrap.Handle, fitMin + drop, fitMax + drop, Vector2.Zero, Vector2.One, shadow);
+            dl.AddImage(wrap.Handle, fitMin, fitMax, Vector2.Zero, Vector2.One, tint);
+            return;
+        }
+
+        var rounding = UiMetrics.Px(TileRoundingLogical);
+        dl.AddImageRounded(wrap.Handle, min, max, Vector2.Zero, Vector2.One, tint, rounding);
+        dl.AddRect(min + new Vector2(0.5f), max - new Vector2(0.5f), shadow, rounding, ImDrawFlags.None, 1f);
+    }
+
+    /// <summary>
     /// The fill, edge (0 for none) and ink of a pill at the frame's Decoration level and palette (docs/design/flair-v13
     /// §1, "Action pills"): Full raised pills with brass edges, the primary lit gold with dark ink (drawn as a gradient
     /// by <see cref="ActionPill"/>); Quiet flat pills with a neutral edge, the primary flat gold; Plain rectangular
-    /// buttons, text only, the primary set apart by gold text.
+    /// buttons, the primary set apart by gold text.
     /// </summary>
     private static (uint Fill, uint Edge, uint Ink) PillColors(PillTone tone, bool enabled, bool hovered, bool held)
     {

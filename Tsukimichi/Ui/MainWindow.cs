@@ -382,6 +382,12 @@ public sealed partial class MainWindow : Window, IDisposable
         detailPane.AchievementEarned = earned ?? throw new ArgumentNullException(nameof(earned));
     }
 
+    /// <summary>The sheet icons the detail pane's requirement lines wear (UI-5e): societies, Grand Company ranks, mounts, achievements.</summary>
+    public void AttachIconSheets(Func<Core.Ui.IPaneIconSheets?> sheets)
+    {
+        detailPane.IconSheets = sheets ?? throw new ArgumentNullException(nameof(sheets));
+    }
+
     /// <summary>The detail pane's Report button and the status bar's data stamp tooltip.</summary>
     public void AttachDiagnostics(DiagnosticBuilder diagnostics)
     {

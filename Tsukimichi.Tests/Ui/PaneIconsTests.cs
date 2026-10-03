@@ -22,6 +22,8 @@ public sealed class PaneIconsTests
         public uint GrandCompanyRankIcon(byte grandCompany, byte rank) => rank is 0 or > 19 ? 0 : 83000u + ((grandCompany - 1u) * 50u) + rank;
 
         public uint AchievementIcon(uint achievement) => achievement == 0 ? 0 : 1000u + achievement;
+
+        public uint MountIcon(uint mount) => mount == 0 ? 0 : 4000u + mount;
     }
 
     private static readonly FakeSheets Sheets = new();

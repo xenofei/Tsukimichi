@@ -38,6 +38,50 @@ public readonly record struct PillWidths(float Full, float Short, float Icon)
 public readonly record struct PillRowFit(float Width, int Visible);
 
 /// <summary>
+/// An icon-and-label pill's anatomy in logical pixels (docs/design/v7/ui/spec-1.15.md B2): its height, the icon's box,
+/// the pad before the icon, the gap between icon and label, and the pad after the label.
+/// </summary>
+/// <param name="Height">The pill's height; 0 for <see cref="Row"/>, which takes the text line's.</param>
+/// <param name="Icon">The icon's box.</param>
+/// <param name="PadStart">Before the icon.</param>
+/// <param name="IconGap">Between the icon and the label.</param>
+/// <param name="PadEnd">After the label.</param>
+public readonly record struct PillMetrics(float Height, float Icon, float PadStart, float IconGap, float PadEnd)
+{
+    /// <summary>Full: 30 px pills, 18 px icons.</summary>
+    public static readonly PillMetrics Full = new(30f, 18f, 11f, 6f, 13f);
+
+    /// <summary>Quiet: 28 px, 16 px icons.</summary>
+    public static readonly PillMetrics Quiet = new(28f, 16f, 10f, 6f, 12f);
+
+    /// <summary>Plain: 22 px buttons, 14 px icons (text only before 1.15).</summary>
+    public static readonly PillMetrics Plain = new(22f, 14f, 7f, 4f, 8f);
+
+    /// <summary>The panels beside game windows (offer, result, journal companion): 26 px pills with 16 px icons at every level.</summary>
+    public static readonly PillMetrics Panel = new(26f, 16f, 10f, 6f, 12f);
+
+    /// <summary>
+    /// A list row's small button (Plan, Flight, Abandoned, the Route window's steps): the text line's height, so a row
+    /// keeps the height it had with a text-only small button, and a 14 px icon.
+    /// </summary>
+    public static readonly PillMetrics Row = new(0f, 14f, 6f, 4f, 7f);
+
+    /// <summary>
+    /// A toolbar's button among framed ones (Flag next stop, Follow this route, Route): the frame's height, so it lines
+    /// up with the buttons beside it, and a 16 px icon.
+    /// </summary>
+    public static readonly PillMetrics Frame = new(0f, 16f, 8f, 5f, 10f);
+
+    /// <summary>The action bar's pill at a Decoration level.</summary>
+    public static PillMetrics For(Flair flair) => flair switch
+    {
+        Flair.Quiet => Quiet,
+        Flair.Plain => Plain,
+        _ => Full,
+    };
+}
+
+/// <summary>
 /// The detail pane's travel and automation row (1.10: "Go to giver", "Teleport", "Walk", "Start Questionable", "Run
 /// with AutoDuty", each a labelled pill) fitted to the pane's width without cutting a label mid-letter. The pills come
 /// in priority order, the first the most important. While the row is too wide it gives up, in this order and each
@@ -48,36 +92,32 @@ public readonly record struct PillRowFit(float Width, int Visible);
 /// </summary>
 public static class ActionPillFit
 {
-    /// <summary>Space before the icon, logical pixels.</summary>
-    public const float PadStartLogical = 12f;
-
-    /// <summary>Space after the label, logical pixels.</summary>
-    public const float PadEndLogical = 14f;
-
-    /// <summary>Between the icon and the label, logical pixels.</summary>
-    public const float IconGapLogical = 6f;
-
     /// <summary>An icon-only pill is this many times its height across, so it still reads as a pill beside the round buttons.</summary>
     public const float IconOnlyAspect = 1.45f;
 
     /// <summary>Between two pills on the row, logical pixels.</summary>
     public const float GapLogical = 6f;
 
-    /// <summary>A labelled pill's width: the pads, the icon, the gap and the label.</summary>
-    public static float LabelledWidth(float iconWidth, float labelWidth, float scale)
+    /// <summary>
+    /// A labelled pill's width: the start pad, the icon box (<paramref name="iconPx"/>, already in pixels), the gap,
+    /// the label and the end pad of <paramref name="metrics"/> at <paramref name="scale"/>. Every level has its icon
+    /// since 1.15 (spec-1.15 B2, decision 3: Plain's buttons too).
+    /// </summary>
+    public static float LabelledWidth(in PillMetrics metrics, float iconPx, float labelWidth, float scale)
     {
         var s = float.IsFinite(scale) && scale > 0f ? scale : 1f;
-        return ((PadStartLogical + IconGapLogical + PadEndLogical) * s) + Positive(iconWidth) + Positive(labelWidth);
+        return ((metrics.PadStart + metrics.IconGap + metrics.PadEnd) * s) + Positive(iconPx) + Positive(labelWidth);
     }
 
     /// <summary>
-    /// A text-only pill's width (Plain's buttons): the label between the two pads, with no icon and no gap, so the label
-    /// can sit centred in it.
+    /// The icon box of a pill <paramref name="height"/> pixels tall: the level's icon size at <paramref name="scale"/>,
+    /// whole pixels, never closer than a pixel to the pill's top and bottom.
     /// </summary>
-    public static float TextOnlyWidth(float labelWidth, float scale)
+    public static float IconPx(in PillMetrics metrics, float height, float scale)
     {
         var s = float.IsFinite(scale) && scale > 0f ? scale : 1f;
-        return ((PadStartLogical + PadEndLogical) * s) + Positive(labelWidth);
+        var room = Positive(height) - 2f;
+        return MathF.Max(0f, MathF.Round(MathF.Min(metrics.Icon * s, room)));
     }
 
     /// <summary>An icon-only pill's width for a pill <paramref name="height"/> tall.</summary>

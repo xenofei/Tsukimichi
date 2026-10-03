@@ -279,15 +279,13 @@ public sealed class GamePanelShell
         }
     }
 
-    /// <summary>A small button that acts only once the panel settled; its tooltip on hover (disabled buttons too).</summary>
-    public bool Button(string label, string tooltip, bool enabled = true)
+    /// <summary>
+    /// An icon-and-label pill (UI-5e: 26 px with a 16 px icon at every level, the game's own icon where it has one) that
+    /// acts only once the panel settled; its tooltip on hover (disabled buttons too). The label is its id.
+    /// </summary>
+    public bool Button(PillIcon icon, string label, string tooltip, bool enabled = true)
     {
-        var clicked = false;
-        using (ImRaii.Disabled(!enabled))
-        {
-            clicked = ImGui.SmallButton(label) && Interactive && enabled;
-        }
-
+        var clicked = Chrome.ActionPill(label, icon, label, PillTone.Normal, enabled, size: PillLayout.Panel) && Interactive && enabled;
         if (tooltip.Length > 0 && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             UiMetrics.Tooltip(tooltip);
@@ -327,10 +325,17 @@ public sealed class GamePanelShell
         {
             ImGui.Spacing();
             ImGui.TextDisabled(Strings.GamePanelMoonlitHeading);
+            var slot = false;
+            foreach (var reward in brief.Moonlit)
+            {
+                slot |= reward.Icon != 0;
+            }
+
             foreach (var reward in brief.Moonlit)
             {
                 using (ImRaii.PushIndent(UiMetrics.Px(8f), scaled: false))
                 {
+                    LineIcon(reward.Icon, slot);
                     ImGui.TextUnformatted(reward.Name);
                     ImGui.SameLine();
                     using (ImRaii.PushColor(ImGuiCol.Text, reward.Owned == false ? Theme.Accent : Theme.Glyphs.HighContrast ? Theme.Surface.TextSecondary : Theme.Surface.TextTertiary))
@@ -341,18 +346,7 @@ public sealed class GamePanelShell
             }
         }
 
-        if (brief.Unlocks.Count > 0)
-        {
-            ImGui.Spacing();
-            ImGui.TextDisabled(Strings.GamePanelUnlocksHeading);
-            foreach (var unlock in brief.Unlocks)
-            {
-                using (ImRaii.PushIndent(UiMetrics.Px(8f), scaled: false))
-                {
-                    ImGui.TextUnformatted(unlock);
-                }
-            }
-        }
+        UnlockLines(brief);
 
         if (brief.ChainLine.Length > 0 || brief.FactsLine.Length > 0)
         {
@@ -368,6 +362,56 @@ public sealed class GamePanelShell
         {
             Quiet(brief.FactsLine);
         }
+    }
+
+    /// <summary>"Unlocks" and its lines, each after its game icon (UI-5e, I15); nothing when the brief opens nothing.</summary>
+    public static void UnlockLines(QuestBrief brief)
+    {
+        if (brief.Unlocks.Count == 0)
+        {
+            return;
+        }
+
+        ImGui.Spacing();
+        ImGui.TextDisabled(Strings.GamePanelUnlocksHeading);
+        var slot = false;
+        foreach (var unlock in brief.Unlocks)
+        {
+            slot |= unlock.Icon != 0;
+        }
+
+        foreach (var unlock in brief.Unlocks)
+        {
+            using (ImRaii.PushIndent(UiMetrics.Px(8f), scaled: false))
+            {
+                LineIcon(unlock.Icon, slot);
+                ImGui.TextUnformatted(unlock.Label);
+            }
+        }
+    }
+
+    /// <summary>
+    /// A reward or unlock line's game icon at the text's height (an action tile, rounded 3), then the cursor after it on
+    /// the same line; an empty slot of the same width for a line without one when <paramref name="slot"/> (a sibling has
+    /// one), so the names stay aligned; nothing at all when no line of the list has an icon.
+    /// </summary>
+    private static void LineIcon(uint icon, bool slot)
+    {
+        if (!slot)
+        {
+            return;
+        }
+
+        var side = MathF.Round(MathF.Min(UiMetrics.Px(PillMetrics.Panel.Icon), ImGui.GetTextLineHeight()));
+        var min = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(side, ImGui.GetTextLineHeight()));
+        if (icon != 0)
+        {
+            var top = MathF.Round(min.Y + ((ImGui.GetTextLineHeight() - side) * 0.5f));
+            Chrome.DrawPillIcon(ImGui.GetWindowDrawList(), GameIconRef.Tile(icon), new Vector2(min.X, top), side, Theme.U32(Theme.Surface.Text), enabled: true);
+        }
+
+        ImGui.SameLine(0f, UiMetrics.Px(5f));
     }
 
     /// <summary>How many lines <see cref="BriefBody"/> draws for a brief: part of the shape the panel measures.</summary>

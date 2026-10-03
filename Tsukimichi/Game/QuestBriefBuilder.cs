@@ -38,14 +38,20 @@ public sealed record QuestBrief(
     string StatusText,
     string Verdict,
     IReadOnlyList<MoonlitBriefLine> Moonlit,
-    IReadOnlyList<string> Unlocks,
+    IReadOnlyList<BriefUnlockLine> Unlocks,
     string ChainLine,
     QuestRecord? ChainNext,
     string ChainNextName,
     string FactsLine);
 
-/// <summary>One Moonlit reward line: "Wind-up Sun" with whether the logged-in character has it (null: cannot tell).</summary>
-public sealed record MoonlitBriefLine(string Name, bool? Owned, string StatusWord);
+/// <summary>
+/// One Moonlit reward line: "Wind-up Sun" with whether the logged-in character has it (null: cannot tell), and its game
+/// icon (UI-5e, I15; 0 for none).
+/// </summary>
+public sealed record MoonlitBriefLine(string Name, bool? Owned, string StatusWord, uint Icon = 0);
+
+/// <summary>One unlock line, "Dungeon: Aglaia", with its game icon (UI-5e, I15; 0 for none).</summary>
+public sealed record BriefUnlockLine(string Label, uint Icon);
 
 /// <summary>
 /// Builds <see cref="QuestBrief"/>s for the logged-in character (its states, blocker names and spoiler shield; the
@@ -83,6 +89,12 @@ public sealed class QuestBriefBuilder
     /// its headline ("Unlocks Kugane") the verdict when the plan's tags name nothing more specific. Null leaves both out.
     /// </summary>
     public Func<Core.Unlocks.QuestUnlocks?>? QuestUnlocks { get; set; }
+
+    /// <summary>A Moonlit reward's icon (the Moonlit tab's resolver), for the reward lines' icons (UI-5e); null leaves them bare.</summary>
+    public Func<QuestRecord?, UniqueRewardEntry, uint>? MoonlitIcon { get; set; }
+
+    /// <summary>The sheet icons of the plan's unlock kinds (UI-5d's <see cref="Core.Ui.PaneIcons.UnlockKind"/>); null leaves those lines bare.</summary>
+    public Func<Core.Ui.IPaneIconSheets?>? IconSheets { get; set; }
 
     private static bool NamedAlready(IReadOnlyList<PlanUnlock> opens, string name)
     {
@@ -169,7 +181,8 @@ public sealed class QuestBriefBuilder
         var masked = spoilers.IsMasked(quest);
 
         var moonlitLines = new List<MoonlitBriefLine>();
-        var unlockLabels = new List<string>();
+        var unlockLabels = new List<BriefUnlockLine>();
+        var iconSheets = IconSheets?.Invoke();
         verdictRewards.Clear();
         IReadOnlyList<PlanUnlock> opens = [];
         string? opensHeadline = null;
@@ -189,7 +202,7 @@ public sealed class QuestBriefBuilder
                     true => Strings.GamePanelOwned,
                     false => Strings.GamePanelNotOwned,
                     _ => Strings.GamePanelOwnedUnknown,
-                }));
+                }, MoonlitIcon?.Invoke(quest, entry) ?? 0u));
             }
 
             // A Moonlit line already names what it shows, so the unlock lines never repeat it.
@@ -201,7 +214,7 @@ public sealed class QuestBriefBuilder
                     continue;
                 }
 
-                unlockLabels.Add(unlock.Label);
+                unlockLabels.Add(new BriefUnlockLine(unlock.Label, iconSheets is null ? 0u : Core.Ui.PaneIcons.UnlockKind(unlock.Kind, iconSheets)));
             }
 
             // Every quest's areas, aetherytes, duties and features from the unlock index (feature plan v6 K4), after
@@ -216,7 +229,7 @@ public sealed class QuestBriefBuilder
                         continue;
                     }
 
-                    unlockLabels.Add(Core.Unlocks.UnlockTargets.Name(entry.Target) + ": " + entry.Name);
+                    unlockLabels.Add(new BriefUnlockLine(Core.Unlocks.UnlockTargets.Name(entry.Target) + ": " + entry.Name, entry.Icon));
                     added++;
                 }
 

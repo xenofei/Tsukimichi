@@ -179,25 +179,13 @@ public sealed partial class CharactersPane
             return;
         }
 
-        var teleportWidth = ImGui.CalcTextSize(Strings.PlanningBoardTeleport).X + (ImGui.GetStyle().FramePadding.X * 2f);
+        var teleportWidth = Chrome.ActionPillWidth(ActionIcons.TeleportIcon, Strings.PlanningBoardTeleport, PillLayout.Row);
         if (line.Zone.Length > 0)
         {
             Chrome.FitText(line.Zone, ImGui.GetColorU32(ImGuiCol.Text));
             Chrome.SameLineOrWrap(teleportWidth);
         }
 
-        var check = links.CheckTeleport(giver);
-        using (ImRaii.Disabled(!check.Ready))
-        {
-            if (ImGui.SmallButton(Strings.PlanningBoardTeleport))
-            {
-                links.TeleportToGiver(giver);
-            }
-        }
-
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(links.TeleportTooltip(giver, check));
-        }
+        TravelControls.TeleportButton(links, giver, Strings.PlanningBoardTeleport);
     }
 }

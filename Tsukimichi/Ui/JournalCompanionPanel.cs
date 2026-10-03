@@ -64,13 +64,13 @@ public sealed class JournalCompanionPanel
         }
 
         ImGui.Spacing();
-        if (shell.Button(Strings.GamePanelOpen, Strings.GamePanelOpenHint))
+        if (shell.Button(ActionGlyphs.Open, Strings.GamePanelOpen, Strings.GamePanelOpenHint))
         {
             reveal(brief.Quest);
         }
 
         ImGui.SameLine();
-        if (shell.Button(Strings.GamePanelRoute, Strings.GamePanelRouteHint))
+        if (shell.Button(ActionGlyphs.Route, Strings.GamePanelRoute, Strings.GamePanelRouteHint))
         {
             route(brief.Quest, brief.Name);
         }
