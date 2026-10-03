@@ -105,8 +105,8 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
 
         Assert.Equal(2, specs[Col(QuestColumn.Level)].Priority);
         Assert.Equal(3, specs[Col(QuestColumn.Job)].Priority);
-        Assert.Equal(4, specs[Col(QuestColumn.Expansion)].Priority);
-        Assert.Equal(5, specs[Col(QuestColumn.Rewards)].Priority);
+        Assert.Equal(5, specs[Col(QuestColumn.Expansion)].Priority);
+        Assert.Equal(6, specs[Col(QuestColumn.Rewards)].Priority);
         Assert.Equal(English.Job + English.CellOverhead, specs[Col(QuestColumn.Job)].Min);
     }
 
@@ -142,7 +142,7 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
         // from the header menu, it takes no room and the rest of the plan is the one without it.
         var withExp = English with { Exp = 90f };
         var specs = Specs(withExp);
-        Assert.Equal(6, specs[Col(QuestColumn.Exp)].Priority);
+        Assert.Equal(7, specs[Col(QuestColumn.Exp)].Priority);
         Assert.Equal(90f + English.CellOverhead, specs[Col(QuestColumn.Exp)].Min);
         Assert.Equal(0f, Specs(English)[Col(QuestColumn.Exp)].Min);
 
@@ -165,22 +165,27 @@ public class QuestTableLayoutTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public void The_opens_column_hides_before_exp_and_takes_no_room_while_it_is_off()
+    public void The_unlocks_column_outlasts_expansion_rewards_and_exp_and_takes_no_room_while_it_is_off()
     {
-        // Feature plan v6 K4: off by default (unmeasured, no room); measured, it steps aside before the EXP column.
+        // Feature plan v6 K4, owner request after 1.12.0: the Unlocks column belongs in the main view, so it steps aside
+        // only after EXP, Rewards and Expansion have gone (before Job and Level); unmeasured (switched off) it takes no room.
         var both = English with { Exp = 90f, Opens = 50f };
         var specs = Specs(both);
-        Assert.Equal(7, specs[Col(QuestColumn.Opens)].Priority);
+        Assert.Equal(4, specs[Col(QuestColumn.Opens)].Priority);
         Assert.Equal(0f, Specs(English)[Col(QuestColumn.Opens)].Min);
 
-        var all = Need(QuestColumn.Glyph, QuestColumn.Name, QuestColumn.Level, QuestColumn.Job, QuestColumn.Status, QuestColumn.Expansion, QuestColumn.Rewards)
-            + specs[Col(QuestColumn.Exp)].Min;
-        var wide = Plan(all + specs[Col(QuestColumn.Opens)].Min, both);
+        var core = Need(QuestColumn.Glyph, QuestColumn.Name, QuestColumn.Level, QuestColumn.Job, QuestColumn.Status) + specs[Col(QuestColumn.Opens)].Min;
+        var all = core + Need(QuestColumn.Expansion, QuestColumn.Rewards) + specs[Col(QuestColumn.Exp)].Min;
+        var wide = Plan(all, both);
         Assert.True(wide.Visible[Col(QuestColumn.Opens)]);
+        Assert.True(wide.Visible[Col(QuestColumn.Exp)]);
 
-        var narrower = Plan(all + specs[Col(QuestColumn.Opens)].Min - 1f, both);
-        Assert.False(narrower.Visible[Col(QuestColumn.Opens)]);
-        Assert.True(narrower.Visible[Col(QuestColumn.Exp)]);
+        var tight = Plan(core, both);
+        Assert.True(tight.Visible[Col(QuestColumn.Opens)]);
+        Assert.False(tight.Visible[Col(QuestColumn.Exp)]);
+        Assert.False(tight.Visible[Col(QuestColumn.Rewards)]);
+        Assert.False(tight.Visible[Col(QuestColumn.Expansion)]);
+        Assert.True(tight.Visible[Col(QuestColumn.Job)]);
     }
 
     [Fact]

@@ -4,6 +4,14 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-10-03
+
+### Changed
+- **The Journal's quest list shows an Unlocks column**, on by default. It shows up to three icons per quest for the areas, aetherytes, duties and features it unlocks, and hovering it names them.
+  - The column was called "Opens" and was off by default in 1.12.0; it is now switched on for everyone.
+  - It stays in view on narrower windows: Expansion, Rewards and EXP step aside first.
+  - Turn it off in Settings › Display › Planning if you prefer.
+
 ## [1.12.0] - 2026-10-03
 
 ### Added

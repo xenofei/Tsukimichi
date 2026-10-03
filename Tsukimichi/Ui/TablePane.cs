@@ -420,7 +420,7 @@ public sealed class TablePane : IDisposable
         // The EXP column (off by default): as wide as a Quest Sync range or its header; no room at all while Settings leaves it off.
         var showExp = ShowExp?.Invoke() == true;
         var expColumn = showExp ? MathF.Max(ImGui.CalcTextSize(WidestExp).X, HeaderFloor(Strings.ColumnExp, sortable: false)) : 0f;
-        // The Opens column (off by default, feature plan v6 K4): three kind icons or its header.
+        // The Unlocks column (on by default since 1.12.1, feature plan v6 K4): three kind icons or its header.
         var showOpens = ShowOpens?.Invoke() == true && runner.Unlocks is not null;
         var opensColumn = showOpens
             ? MathF.Max(UiMetrics.RowIconSize * MaxOpensIcons + UiMetrics.Px(2f) * (MaxOpensIcons - 1), HeaderFloor(Strings.ColumnOpens, sortable: false))

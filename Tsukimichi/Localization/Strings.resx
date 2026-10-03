@@ -837,16 +837,16 @@
     <value>A trip is already under way.</value>
   </data>
   <data name="ColumnOpens" xml:space="preserve">
-    <value>Opens</value>
+    <value>Unlocks</value>
   </data>
   <data name="ColumnOpensTooltip" xml:space="preserve">
-    <value>What the quest opens: areas, aetherytes, duties and features. Settings › Display › Planning turns this column on or off.</value>
+    <value>What the quest unlocks: areas, aetherytes, duties and features. Settings › Display › Planning turns this column on or off.</value>
   </data>
   <data name="PlanningConfigOpensColumn" xml:space="preserve">
-    <value>Opens column in the Journal</value>
+    <value>Unlocks column in the Journal</value>
   </data>
   <data name="PlanningConfigOpensColumnHint" xml:space="preserve">
-    <value>Up to three icons per quest for what it opens. The quest's tooltip and the detail pane say it either way.</value>
+    <value>Up to three icons per quest for what it unlocks: areas, aetherytes, duties, features and more. The quest's tooltip and the detail pane say it either way.</value>
   </data>
   <data name="UnlocksChatFormat" xml:space="preserve">
     <value>Unlocked: {0}</value>

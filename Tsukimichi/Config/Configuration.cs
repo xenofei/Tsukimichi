@@ -715,6 +715,14 @@ public sealed partial class Configuration : IPluginConfiguration
             config.TodoLockNoticeDue = true;
         }
 
+        // 1.12.1: the Unlocks column is on by default. A configuration saved by 1.12.0 (where it was off by default) gets it
+        // turned on once; from then on the player's own choice stands.
+        if (config.UnlocksColumnDefaultApplied != true)
+        {
+            config.JournalShowOpensColumn = true;
+            config.UnlocksColumnDefaultApplied = true;
+        }
+
         // The setup card (1.7.0) is for a fresh install; a configuration saved before the card existed has set up already.
         config.SetupCardSeen ??= hadFile;
 
