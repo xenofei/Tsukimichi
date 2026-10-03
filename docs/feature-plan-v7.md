@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **signed off on 2026-10-03 and executing.** 1.14.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 is released; 1.15.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -66,7 +66,7 @@ The targets are a weakest pair of at least 12, a Ready lead of at least 1.3×, a
 
 Each release gets the usual gates, two reviews and fixers, the supervisor on any art, then the tag, plus an in-game check list in this document.
 
-### 1.14.0 · The polish you asked for
+### 1.14.0 · The polish you asked for (released 2026-10-03)
 
 Points 1, 2, 3, 5, 6, 8 and part of 9, plus two small features.
 
@@ -269,3 +269,37 @@ Your notes, and what happens with each:
 | V1 | The craters are part blurry and part crisp. "Needs to have consistency, and maybe a bit more realism." | The craters are redesigned for one consistent, realistic treatment, then reviewed by the supervisor, built in 1.14. |
 | Ishgard Glass | Completed "looks just like a blob"; Locked out should be "similarly cracked like the others … slightly different", with no large hole | Glass round 3, reviewed by the supervisor before 1.16. |
 | Aether Crystal, Orrery | "Looks great!" | No change. |
+
+## In-game checks
+
+### 1.14.0 (released 2026-10-03)
+
+- **Headings:**
+  - The quest title is now 2.25× body. The spec said 1.92×, but the game's real fonts needed more for the title to stay above the new section headings. If it's too big, it's one setting in code.
+  - Do long titles still fit on the banner?
+  - Is the letter spacing even, and does the sort arrow sit level with the larger column headers?
+- **Filter drawer:**
+  - At Full, Quiet and Plain, with Advanced open and closed: no bleed at the edges, and the shadow stays above the status bar.
+  - Clicking a summary line opens that group.
+  - Reset, then Undo, brings back your filters and your search.
+  - With the tree dragged down to its icon strip, the drawer uses a 262 px floor.
+- **Rail:**
+  - Hover, select and bead motion.
+  - "Characters" fits at 150% Text size.
+  - The Journal badge starts at 0 and counts newly ready quests; clicking it shows them, and it clears after you close that list.
+  - The same works on a character set to "Don't track".
+- **Stars:**
+  - The drift pauses when you click into the game, and stars fade at the edges.
+  - The constellation needs a tall window.
+  - A meteor crosses the sky on completion.
+  - Milky Way faintness (off by default).
+- **Back and forward:**
+  - The ‹ › buttons, and mouse buttons 4 and 5.
+  - Alt+←/→ against your camera keybinds; the keys can be turned off in Settings › Advanced › Keyboard.
+  - Nothing happens while a menu is open.
+- **Trust:** Settings › Advanced › Privacy & trust shows a hash. Compare it to the release's "Verify this build" table: Tsukimichi.dll is `04c14ca9…921778`.
+- **Icons:**
+  - The EXP and gil icons line up with their text.
+  - A Pup quest shows one "PvP · Duty" row.
+  - Judgement calls to look at: Aesthetician, the striking dummies, Doman Enclave, and Cosmic Exploration and Ishgardian Restoration.
+- **Completed moon:** the craters read as hollows at 96 px and up, and smaller medals have the darker seas without craters.
