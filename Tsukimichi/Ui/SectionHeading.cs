@@ -39,6 +39,32 @@ public static class SectionHeading
         DrawLine(text, caption, Theme.U32(Theme.Surface.TextTertiary), reserve, sigil, flair, CaptionOverflow.Tooltip);
 
     /// <summary>
+    /// How tall <see cref="Draw(string, string?, float, bool)"/> draws <paramref name="text"/> without a caption at the
+    /// current flair, and how far down its title is centred: for an item placed beside the heading on its centre line
+    /// (Flight's expansion marks). Allocates nothing after the heading's first frame.
+    /// </summary>
+    public static (float Height, float MidY) Measure(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (!FlairRules.Rules(Theme.Flair))
+        {
+            var line = ImGui.GetTextLineHeight();
+            return (line, line * 0.5f);
+        }
+
+        var capitals = Capitals;
+        var label = Case.For(text, capitals);
+        float titleLine;
+        using (TitleRole(label, capitals))
+        {
+            titleLine = ImGui.GetTextLineHeight();
+        }
+
+        var g = HeadingLayout.Compute(0f, 0f, UiMetrics.Scale, titleLine, 0f, 0f, 0f, sigil: false, CaptionOverflow.Tooltip);
+        return (g.TotalHeight, g.MidY);
+    }
+
+    /// <summary>
     /// The heading line itself: <paramref name="text"/> (cased by <see cref="Label"/>), the rule, and
     /// <paramref name="caption"/> in <paramref name="captionColor"/> on the right, in the Caption role or, with
     /// <paramref name="numeral"/>, the Numeral role. A caption that would crowd the heading follows

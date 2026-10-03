@@ -45,9 +45,6 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed partial class TreePane
 {
-    /// <summary>A label ImGui renders as nothing (text after "##" is hidden) but that is still a real, terminated string.</summary>
-    private const string HiddenLabel = "##";
-
     /// <summary>No expansion pill: the node's quests span several expansions (or it has none).</summary>
     private const int MixedExpansion = -1;
 
@@ -360,9 +357,9 @@ public sealed partial class TreePane
     }
 
     /// <summary>
-    /// One node: the tree item is drawn with an empty label so its arrow, hover, selection and keyboard navigation
+    /// One node: the tree item is id-only (no label drawn) so its arrow, hover, selection and keyboard navigation
     /// behave as usual, then the halo, the name, the pills and the right-aligned count are painted over it.
-    /// <paramref name="section"/> nodes (the top level) are drawn a touch bolder with a VeilLine rule under them.
+    /// <paramref name="section"/> nodes (the top level) get the road or a VeilLine rule under them.
     /// </summary>
     private void DrawNode(Node node, bool section)
     {
@@ -386,8 +383,9 @@ public sealed partial class TreePane
         }
 
         // The indented start of the row: TreeNodeEx puts its arrow here even though the item spans the full width.
-        // The label is hidden, so the text colour only paints ImGui's arrow: it is made transparent and the overlay
-        // draws a chevron that turns through Motion instead (T17, 140 ms).
+        // The node is id-only (its id starts with "##", so ImGui draws no label: a separate label argument would be drawn
+        // verbatim, the stray "#" of 1.10); the text colour, transparent on every row, only ever painted ImGui's arrow,
+        // and the overlay draws a chevron that turns through Motion instead (T17, 140 ms). ImGuiLintTests keeps it so.
         var indentX = ImGui.GetCursorScreenPos().X;
         var expandable = !node.Leaf && !sproutFolded;
         var arrowColor = ImGui.GetColorU32(ImGuiCol.Text);
@@ -396,9 +394,9 @@ public sealed partial class TreePane
         using (ImRaii.PushColor(ImGuiCol.Header, SelectedWash)
                      .Push(ImGuiCol.HeaderHovered, selected ? SelectedHoverWash : HoverWash)
                      .Push(ImGuiCol.HeaderActive, selected ? SelectedHoverWash : ActiveWash)
-                     .Push(ImGuiCol.Text, Vector4.Zero, expandable))
+                     .Push(ImGuiCol.Text, Vector4.Zero))
         {
-            open = ImGui.TreeNodeEx(node.Id, flags, HiddenLabel);
+            open = ImGui.TreeNodeEx(node.Id, flags);
         }
 
         var itemId = ImGuiP.GetItemID();
@@ -479,7 +477,7 @@ public sealed partial class TreePane
         var rowCenterY = (min.Y + max.Y) * 0.5f;
         var textY = rowCenterY - lineHeight * 0.5f;
         var complete = node.Complete;
-        Measure(node, section);
+        Measure(node);
 
         // The selected row's one gold element: a 2 px Moon rule on the left edge.
         if (selected)
@@ -540,23 +538,23 @@ public sealed partial class TreePane
 
         // The name in the room the parts leave, with an ellipsis when cut. A section whose expansion pill does not show
         // names its expansion in the label instead ("Main Scenario · DT"), drawn whole after the name, which is cut
-        // before it ("Main Sc… · DT"), so the two Main Scenario rows always stay apart.
+        // before it ("Main Sc… · DT"), so the two Main Scenario rows always stay apart. Drawn once: a section reads as a
+        // chapter by its place, its road and its dividers, not by a second pass that smears at fractional scales.
         var nameColor = complete ? Theme.MoonDimU32 : ImGui.GetColorU32(ImGuiCol.Text);
-        var bold = section ? UiMetrics.Hairline : 0f;
-        var textRoom = MathF.Max(0f, fit.HeadRoom - bold);
+        var textRoom = MathF.Max(0f, fit.HeadRoom);
         var cut = node.Name.Length > 0 && textRoom <= 0f;
         if (textRoom > 0f)
         {
-            cut = DrawLabelText(dl, namePos, textRoom, node.Name, nameColor, node.NameWidth - bold, bold);
+            cut = Chrome.EllipsisTextAt(dl, namePos, textRoom, node.Name, nameColor, node.NameWidth);
         }
 
         if (fit.SuffixInLabel)
         {
-            var suffixPos = new Vector2(namePos.X + MathF.Min(node.NameWidth - bold, textRoom), namePos.Y);
-            var suffixRoom = namePos.X + fit.LabelRoom - bold - suffixPos.X;
+            var suffixPos = new Vector2(namePos.X + MathF.Min(node.NameWidth, textRoom), namePos.Y);
+            var suffixRoom = namePos.X + fit.LabelRoom - suffixPos.X;
             if (suffixRoom > 0f)
             {
-                cut |= DrawLabelText(dl, suffixPos, suffixRoom, node.SuffixText, nameColor, node.SuffixWidth, bold);
+                cut |= Chrome.EllipsisTextAt(dl, suffixPos, suffixRoom, node.SuffixText, nameColor, node.SuffixWidth);
             }
         }
 
@@ -631,7 +629,7 @@ public sealed partial class TreePane
     /// Measures the node's texts at the current font size, once: again only when the font size (the UI scale) or one
     /// of the texts changed, so a row costs no text measuring per frame.
     /// </summary>
-    private static void Measure(Node node, bool section)
+    private static void Measure(Node node)
     {
         var fontSize = ImGui.GetFontSize();
         if (node.MeasuredAt == fontSize)
@@ -639,30 +637,14 @@ public sealed partial class TreePane
             return;
         }
 
-        var bold = section ? UiMetrics.Hairline : 0f;
         var pillPad = 2f * UiMetrics.Px(PillPadLogical);
-        node.NameWidth = ImGui.CalcTextSize(node.Name).X + bold;
+        node.NameWidth = ImGui.CalcTextSize(node.Name).X;
         node.SuffixWidth = node.SuffixText.Length > 0 ? ImGui.CalcTextSize(node.SuffixText).X : 0f;
         node.CountWidth = node.CountText.Length > 0 ? ImGui.CalcTextSize(node.CountText).X : 0f;
         node.PercentWidth = node.PercentText.Length > 0 ? ImGui.CalcTextSize(node.PercentText).X : 0f;
         node.ReadyWidth = node.Ready > 0 ? ImGui.CalcTextSize(node.ReadyText).X + pillPad : 0f;
         node.PillWidth = node.PillText.Length > 0 ? (ImGui.CalcTextSize(node.PillText).X * PillFontFraction) + pillPad : 0f;
         node.MeasuredAt = fontSize;
-    }
-
-    /// <summary>
-    /// Label text in its room, ending in an ellipsis when cut; on a section row (<paramref name="bold"/> above 0) a second
-    /// pass that many pixels to the right thickens the strokes, as Dalamud has no bold face. Returns whether it was cut.
-    /// </summary>
-    private static bool DrawLabelText(ImDrawListPtr dl, Vector2 pos, float room, string text, uint color, float width, float bold)
-    {
-        var cut = Chrome.EllipsisTextAt(dl, pos, room, text, color, width);
-        if (bold > 0f)
-        {
-            Chrome.EllipsisTextAt(dl, pos + new Vector2(bold, 0f), room, text, color, width);
-        }
-
-        return cut;
     }
 
     /// <summary>The 44 × 3 mini bar: Veil track, Moon fill (MoonDim once complete), at least 2 px of fill above 0.</summary>

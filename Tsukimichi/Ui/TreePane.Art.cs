@@ -7,8 +7,7 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The Moon Road art of the Journal tree (design v4 §5, §7.2, feature plan v4 V2), drawn under Full and Quiet flair
-/// (<see cref="Theme.ShowRules"/>): the header line ("✦ JOURNAL", a fading brass rule and the overall count in the
-/// Numeral role), the moon-road dividers between the story, side and virtual blocks, and the road under each row, a
+/// (<see cref="Theme.ShowRules"/>): the header line ("✦ JOURNAL" and a fading brass rule), the moon-road dividers between the story, side and virtual blocks, and the road under each row, a
 /// 2 px track whose gold walked part is the node's completion. Plain flair keeps the 1.3 tree (the mini bar and the
 /// section rules). Everything is draw-list work over plain <c>Dummy</c> items, so keyboard navigation, the tiers and the
 /// tour rects are untouched.
@@ -36,28 +35,17 @@ public sealed partial class TreePane
 
     /// <summary>
     /// The header: the shared heading line (<see cref="SectionHeading.DrawLine"/>: the sigil star, "JOURNAL" cased for
-    /// the language, the rule) with the overall "done / total" right-aligned in the Numeral role, inset from the pane's
-    /// edges and as tall as the other headings plus their top pad again below. A narrow pane drops the count (named on
-    /// hover), then the rule; the title is cut last. Measured every frame, so a heading font that finishes building
-    /// mid-session is measured in the face it draws in.
+    /// the language, the rule), inset from the pane's edges and as tall as the other headings plus their top pad again
+    /// below. No count: the All quests row right under it already shows the overall "done / total" (and names it on
+    /// hover), so the header reads as a title. A narrow pane drops the rule; the title is cut last. Measured every frame,
+    /// so a heading font that finishes building mid-session is measured in the face it draws in.
     /// </summary>
-    private void DrawHeader(float width)
+    private static void DrawHeader(float width)
     {
         var origin = ImGui.GetCursorScreenPos();
         var pad = UiMetrics.Px(HeaderPadLogical);
-        var count = allNode.CountText;
         ImGui.SetCursorScreenPos(new Vector2(origin.X + pad, origin.Y));
-        var drawn = SectionHeading.DrawLine(Strings.TabJournal, count, Theme.U32(Theme.Surface.TextSecondary), pad, sigil: true, Theme.Flair, CaptionOverflow.Tooltip, numeral: true);
-        if (drawn.CaptionShown && ImGui.IsItemHovered())
-        {
-            var min = ImGui.GetItemRectMin();
-            var max = ImGui.GetItemRectMax();
-            if (ImGui.IsMouseHoveringRect(new Vector2(drawn.CaptionMin.X, min.Y), new Vector2(drawn.CaptionMax.X, max.Y), false))
-            {
-                UiMetrics.Tooltip(Strings.FillingMoonTooltip, allNode.HoverText.Length > 0 ? allNode.HoverText : allNode.ProgressText);
-            }
-        }
-
+        SectionHeading.DrawLine(Strings.TabJournal, null, Theme.U32(Theme.Surface.TextSecondary), pad, sigil: true, Theme.Flair, CaptionOverflow.Tooltip);
         ImGui.SetCursorScreenPos(new Vector2(origin.X, ImGui.GetCursorScreenPos().Y));
         ImGui.Dummy(new Vector2(MathF.Max(1f, width), UiMetrics.Px(HeadingLayout.TopPadLogical)));
     }

@@ -136,6 +136,12 @@ public sealed class FlightPane
         var line = ImGui.GetTextLineHeight();
         var art = Theme.ShowRules;
         var countWidth = CountWidth(art);
+
+        // The ring column holds the zone rows' bead rings and, at Full and Quiet, the expansion marks (U6: 32 px, hi-res,
+        // centred on their heading); both centre in it.
+        var glyph = UiMetrics.HaloBoxSize(line);
+        var mark = UiMetrics.ExpansionMarkSize;
+        var column = art ? FlightGeometry.ColumnWidth(mark, glyph) : glyph;
         using (var table = ImRaii.Table("##flightZones", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.NoPadOuterX))
         {
             if (!table)
@@ -143,26 +149,32 @@ public sealed class FlightPane
                 return;
             }
 
-            ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+            ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, column);
             ImGui.TableSetupColumn("##name", ImGuiTableColumnFlags.WidthStretch);
             ImGui.TableSetupColumn("##count", ImGuiTableColumnFlags.WidthFixed, countWidth);
 
+            var first = true;
             foreach (var group in groups)
             {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 if (art)
                 {
-                    // The expansion's ring beside an open-section heading (proposal §7.7).
+                    // The expansion's mark beside an open-section heading (proposal §7.7), its centre on the title's.
+                    var gap = first ? 0f : UiMetrics.Px(FlightGeometry.GroupGapLogical);
+                    var (headingHeight, headingMid) = SectionHeading.Measure(group.Header);
+                    var row = FlightGeometry.HeadingRow(group.Icon != 0 ? mark : 0f, headingHeight, headingMid, gap);
+                    var cellY = ImGui.GetCursorPosY();
                     if (group.Icon != 0)
                     {
-                        var size = MathF.Min(line, UiMetrics.HaloBoxSize(line));
+                        ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPosX() + FlightGeometry.Centred(column, mark), cellY + row.MarkTop));
                         var min = ImGui.GetCursorScreenPos();
-                        ImGui.Dummy(new Vector2(size, size));
-                        Orbit.DrawIcon(ImGui.GetWindowDrawList(), textures, NodeIcon.Game(group.Icon), min, min + new Vector2(size, size));
+                        ImGui.Dummy(new Vector2(mark, mark));
+                        Orbit.DrawIcon(ImGui.GetWindowDrawList(), textures, NodeIcon.Game(group.Icon), min, min + new Vector2(mark, mark));
                     }
 
                     ImGui.TableNextColumn();
+                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + row.HeadingTop);
                     SectionHeading.Draw(group.Header, sigil: group.Icon == 0);
                 }
                 else
@@ -176,8 +188,10 @@ public sealed class FlightPane
 
                 foreach (var zone in group.Zones)
                 {
-                    DrawZoneRow(ui, zone, ReferenceEquals(zone.Zone, here), line, art);
+                    DrawZoneRow(ui, zone, ReferenceEquals(zone.Zone, here), glyph, column, art);
                 }
+
+                first = false;
             }
         }
 
@@ -468,12 +482,17 @@ public sealed class FlightPane
         }
     }
 
-    private void DrawZoneRow(UiState ui, ZoneItem zone, bool here, float line, bool art)
+    /// <summary>
+    /// One zone: its bead ring (<paramref name="glyph"/> square, centred in the <paramref name="column"/>-wide ring
+    /// column), then the name and the count, the row as tall as the ring with both centred on it, so the selection
+    /// wash and the gold edge cover the whole row.
+    /// </summary>
+    private void DrawZoneRow(UiState ui, ZoneItem zone, bool here, float glyph, float column, bool art)
     {
         using var id = ImRaii.PushId((int)zone.TerritoryId);
         ImGui.TableNextRow();
         ImGui.TableNextColumn();
-        var glyph = UiMetrics.HaloBoxSize(line);
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + FlightGeometry.Centred(column, glyph));
         if (zone.AllUnknown)
         {
             Marks.DrawInline(Mark.Unknown, glyph);
@@ -494,7 +513,13 @@ public sealed class FlightPane
 
         ImGui.TableNextColumn();
         var isSelected = ReferenceEquals(selected, zone);
-        if (ImGui.Selectable(here ? zone.HereLabel : zone.Label, isSelected, ImGuiSelectableFlags.SpanAllColumns))
+        bool clicked;
+        using (ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f)))
+        {
+            clicked = ImGui.Selectable(here ? zone.HereLabel : zone.Label, isSelected, ImGuiSelectableFlags.SpanAllColumns, new Vector2(0f, glyph));
+        }
+
+        if (clicked)
         {
             Select(ui, zone);
         }
@@ -516,16 +541,11 @@ public sealed class FlightPane
             ImGuiP.TablePopBackgroundChannel();
         }
 
+        // The count, centred on the row in the face it draws in.
         ImGui.TableNextColumn();
-        if (art)
-        {
-            using var numeral = Typography.Numeral(zone.CountText);
-            ImGui.TextDisabled(zone.CountText);
-        }
-        else
-        {
-            ImGui.TextDisabled(zone.CountText);
-        }
+        using var role = art ? Typography.Numeral(zone.CountText) : default;
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, MathF.Round((glyph - ImGui.GetTextLineHeight()) * 0.5f)));
+        ImGui.TextDisabled(zone.CountText);
     }
 
     /// <summary>The count column's width: the widest count, in the Numeral role at Full and Quiet.</summary>
@@ -624,10 +644,18 @@ public sealed class FlightPane
         var icon = zone.Zone.ExpansionIcon;
         if (icon != 0)
         {
-            var size = MathF.Min(UiMetrics.Icon(26f), titleLine + body);
-            var iconMin = new Vector2(x, titleY + MathF.Max(0f, (titleLine + body - size) * 0.5f));
+            // The expansion's mark at 44 px (U6), centred on the title and counts lines and kept inside the banner's
+            // padding, on a soft Deep disc that keeps it legible over bright art (the high-contrast band does that there).
+            var size = MathF.Min(UiMetrics.BannerExpansionMarkSize, height - (2f * pad));
+            var centerY = titleY + ((titleLine + body) * 0.5f);
+            var iconMin = new Vector2(x, MathF.Round(Math.Clamp(centerY - (size * 0.5f), min.Y + pad, max.Y - pad - size)));
+            if (!highContrast)
+            {
+                dl.AddCircleFilled(iconMin + new Vector2(size * 0.5f), size * 0.56f, Theme.WithAlpha(s.Deep, 0.55f));
+            }
+
             Orbit.DrawIcon(dl, textures, NodeIcon.Game(icon), iconMin, iconMin + new Vector2(size, size));
-            x += size + UiMetrics.Px(10f);
+            x += size + UiMetrics.Px(12f);
         }
 
         var room = MathF.Max(0f, max.X - pad - x);

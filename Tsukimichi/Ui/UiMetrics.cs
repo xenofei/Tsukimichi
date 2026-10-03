@@ -109,6 +109,10 @@ public static class UiMetrics
     public static float TooltipIconSize => Icon(56f);
     public static float BannerTooltipWidth => Px(240f);
     public static float BannerBadgeSize => Icon(22f);
+    /// <summary>Flight's expansion mark in the zone list: 32 px, never under 28 so the game's hi-res texture loads (<see cref="FlightGeometry"/>).</summary>
+    public static float ExpansionMarkSize => FlightGeometry.MarkSize(IconScale);
+    /// <summary>Flight's expansion mark in the zone banner: 44 px.</summary>
+    public static float BannerExpansionMarkSize => FlightGeometry.BannerMarkSize(IconScale);
     public static float BannerMaxHeight => Px(200f);
 
     /// <summary>Content height of a table row holding a moon, an icon and a line of text.</summary>
