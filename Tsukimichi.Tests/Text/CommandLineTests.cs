@@ -29,6 +29,8 @@ public class CommandLineTests
     [InlineData("zone", Subcommand.Zone)]
     [InlineData("which", Subcommand.Which)]
     [InlineData("glyphs", Subcommand.Glyphs)]
+    [InlineData("stop", Subcommand.Stop)]
+    [InlineData("STOP", Subcommand.Stop)]
     public void A_first_word_names_its_subcommand(string word, Subcommand expected)
     {
         Assert.Equal(expected, CommandLine.Parse(word).Kind);

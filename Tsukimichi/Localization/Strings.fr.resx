@@ -1971,16 +1971,16 @@
   <data name="Help.CommandKeys.14" xml:space="preserve">
     <value>/tsuki export [quests|moonlit] [json|csv]</value>
   </data>
-  <data name="Help.CommandKeys.15" xml:space="preserve">
+  <data name="Help.CommandKeys.16" xml:space="preserve">
     <value>Ctrl+F</value>
   </data>
-  <data name="Help.CommandKeys.16" xml:space="preserve">
+  <data name="Help.CommandKeys.17" xml:space="preserve">
     <value>Échap</value>
   </data>
-  <data name="Help.CommandKeys.17" xml:space="preserve">
+  <data name="Help.CommandKeys.18" xml:space="preserve">
     <value>Touche Menu, Maj+F10, …</value>
   </data>
-  <data name="Help.CommandKeys.18" xml:space="preserve">
+  <data name="Help.CommandKeys.19" xml:space="preserve">
     <value>Ctrl+1 à 5, F, Entrée, P</value>
   </data>
   <data name="Help.CommandMeanings.0" xml:space="preserve">
@@ -2016,16 +2016,16 @@
   <data name="Help.CommandMeanings.14" xml:space="preserve">
     <value>écrire les quêtes terminées du personnage affiché, sa collection Moonlit, ou les deux, dans le dossier « exports » en JSON ou en CSV (le format des paramètres si aucun n'est précisé) et indiquer où ; voir docs/export-format.md. Ni identifiant de contenu, ni compte, ni monde, et le nom seulement si Paramètres › Données › Export › « Inclure le nom du personnage » est coché</value>
   </data>
-  <data name="Help.CommandMeanings.15" xml:space="preserve">
+  <data name="Help.CommandMeanings.16" xml:space="preserve">
     <value>placer le curseur dans la recherche, quand la fenêtre a le focus</value>
   </data>
-  <data name="Help.CommandMeanings.16" xml:space="preserve">
+  <data name="Help.CommandMeanings.17" xml:space="preserve">
     <value>fermer le menu ouvert ou le panneau des filtres ; si aucun n'est ouvert, fermer la fenêtre</value>
   </data>
-  <data name="Help.CommandMeanings.17" xml:space="preserve">
+  <data name="Help.CommandMeanings.18" xml:space="preserve">
     <value>ouvrir le menu de la ligne active dans le tableau des quêtes et la liste Moonlit, le même menu qu'un clic droit ; le bouton … au bout d'une ligne (affiché au survol ou au focus) l'ouvre d'un clic gauche</value>
   </data>
-  <data name="Help.CommandMeanings.18" xml:space="preserve">
+  <data name="Help.CommandMeanings.19" xml:space="preserve">
     <value>désactivés sauf activation dans Paramètres › Clavier : changer d'onglet, marquer le donneur de la quête sélectionnée, l'afficher dans le Journal, l'épingler. Le jeu reçoit aussi ces touches : Ctrl+1 à 5 correspondent à la barre de raccourcis 2 par défaut</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">

@@ -3,6 +3,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Ipc;
 
 namespace Tsukimichi.Game;
@@ -27,7 +28,10 @@ namespace Tsukimichi.Game;
 /// calls a second. Every call is wrapped: a gate that throws reads as not busy / failed, and the first failure is logged
 /// once. A gate that is not registered is remembered per gate (<see cref="IpcGateHealth"/>) until the plugin list
 /// changes: only a missing <c>Teleport</c> makes Lifestream unavailable; another missing gate only turns its own feature
-/// off, so an older Lifestream without <c>GetActiveAetheryte</c> still teleports.
+/// off, so an older Lifestream without <c>GetActiveAetheryte</c> still teleports. An aethernet hop or <c>/li</c> command
+/// Tsukimichi hands Lifestream is remembered while Lifestream works on it (<see cref="HandOffClaim"/>), so
+/// <c>/tsuki stop</c> (1.11.0) aborts that task and not one the player started; a teleport is a cast, not a task, and is
+/// not claimed.
 /// </summary>
 public sealed class LifestreamIpc : IDisposable
 {
@@ -54,6 +58,7 @@ public sealed class LifestreamIpc : IDisposable
     private readonly ICallGateSubscriber<uint>? activeAetheryte;
     private readonly ICallGateSubscriber<string, object>? executeCommand;
 
+    private readonly HandOffClaim claim = new();
     private bool? available;
     private bool busyCached;
     private long? busyCheckedAt;
@@ -204,6 +209,7 @@ public sealed class LifestreamIpc : IDisposable
 
         var accepted = Invoke(aethernetById, AethernetByIdGate, gate => gate.InvokeFunc(aetheryteId), false);
         busyCheckedAt = null;
+        ClaimIf(accepted);
         return accepted;
     }
 
@@ -217,6 +223,7 @@ public sealed class LifestreamIpc : IDisposable
 
         var accepted = Invoke(firmament, FirmamentGate, static gate => gate.InvokeFunc(), false);
         busyCheckedAt = null;
+        ClaimIf(accepted);
         return accepted;
     }
 
@@ -234,7 +241,25 @@ public sealed class LifestreamIpc : IDisposable
             return true;
         }, false);
         busyCheckedAt = null;
+        ClaimIf(sent);
         return sent;
+    }
+
+    /// <summary>True while a hop or command Tsukimichi handed off may still be under way (<see cref="TrackHandOff"/> keeps it current).</summary>
+    public bool HandOffClaimed => claim.Claimed;
+
+    /// <summary>
+    /// True while Lifestream works on a task Tsukimichi handed it; ends the claim once that task is over. Called each
+    /// frame while <see cref="HandOffClaimed"/>, and by <c>/tsuki stop</c>.
+    /// </summary>
+    public bool TrackHandOff() => claim.Observe(IsBusy, Environment.TickCount64);
+
+    private void ClaimIf(bool accepted)
+    {
+        if (accepted)
+        {
+            claim.Claim(Environment.TickCount64);
+        }
     }
 
     /// <summary>Stops Lifestream's running task, if any.</summary>
@@ -251,6 +276,7 @@ public sealed class LifestreamIpc : IDisposable
             return true;
         }, false);
         busyCheckedAt = null;
+        claim.Release();
     }
 
     /// <summary>

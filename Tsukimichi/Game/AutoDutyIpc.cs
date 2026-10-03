@@ -69,6 +69,9 @@ public sealed class AutoDutyIpc
     private long? stoppedCheckedAt;
     private bool warned;
 
+    // A run Run started, so /tsuki stop (1.11.0) stops it and not one the player started in AutoDuty's own window.
+    private readonly HandOffClaim claim = new();
+
     public AutoDutyIpc(IDalamudPluginInterface pluginInterface, CompanionPlugins companions, IPluginLog log)
     {
         ArgumentNullException.ThrowIfNull(pluginInterface);
@@ -217,11 +220,21 @@ public sealed class AutoDutyIpc
                 break;
             default:
                 log.Information("AutoDuty started territory {Territory} in {Mode}", territoryType, value);
+                claim.Claim(Environment.TickCount64);
                 break;
         }
 
         return outcome;
     }
+
+    /// <summary>True while a run Tsukimichi started may still be under way (<see cref="TrackHandOff"/> keeps it current).</summary>
+    public bool HandOffClaimed => claim.Claimed;
+
+    /// <summary>
+    /// True while AutoDuty runs the duty Tsukimichi started; ends the claim once that run is over. Called each frame
+    /// while <see cref="HandOffClaimed"/>, and by <c>/tsuki stop</c>.
+    /// </summary>
+    public bool TrackHandOff() => claim.Observe(!IsStopped, Environment.TickCount64);
 
     /// <summary>Asks AutoDuty to stop (it restores its settings as it does). False when it could not be asked.</summary>
     public bool Stop()
@@ -235,6 +248,7 @@ public sealed class AutoDutyIpc
         {
             stop.InvokeAction();
             stoppedCheckedAt = null;
+            claim.Release();
             return true;
         }
         catch (IpcNotReadyError)

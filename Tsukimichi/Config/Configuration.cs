@@ -492,6 +492,13 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>P pins or unpins the selected quest while the main window has focus. Off by default.</summary>
     public bool ShortcutPin { get; set; }
 
+    // ---- 1.11.0: command aliases (A12) ----
+    /// <summary>
+    /// Extra names for <c>/tsuki</c>, separated by spaces (Settings › Keyboard › Chat commands); <c>/ts</c> and
+    /// <c>/moon</c> work without them. Read by <see cref="Core.Text.CommandAliases.Parse"/>. Empty by default.
+    /// </summary>
+    public string CommandAliases { get; set; } = string.Empty;
+
     // ---- 1.0.0: "Before you continue" payoff gates (P5) ----
     /// <summary>
     /// Show "Before you continue" notes (Settings › Spoilers): the lines under the MSQ line on the Characters
@@ -619,6 +626,7 @@ public sealed partial class Configuration : IPluginConfiguration
         config.PayoffGatesNoticedByCharacter ??= [];
         config.PayoffWhyOpenByCharacter ??= [];
         config.ExportFolder ??= string.Empty;
+        config.CommandAliases ??= string.Empty;
         config.WelcomeBackDays = Math.Clamp(config.WelcomeBackDays, 0, Core.Return.WelcomeBackTrigger.MaxDays);
         config.ForgetNotSeenDays = Math.Clamp(config.ForgetNotSeenDays, MinForgetDays, MaxForgetDays);
         if (!Enum.IsDefined(config.ExportFormat))

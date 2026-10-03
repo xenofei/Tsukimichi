@@ -49,6 +49,12 @@ public enum Subcommand
 
     /// <summary><c>recap [quest name]</c>: the story recap ("Previously…") of the main scenario, or of the named quest's chain.</summary>
     Recap,
+
+    /// <summary>
+    /// <c>stop</c> (1.11.0, A1): stops every walk, flight, travel chain and hand-off Tsukimichi started, for a macro or a
+    /// single key.
+    /// </summary>
+    Stop,
 }
 
 /// <summary>A parsed <c>/tsukimichi</c> line.</summary>
@@ -93,6 +99,7 @@ public static class CommandLine
         ("characters", Subcommand.Characters, true),
         ("flight", Subcommand.Flight, true),
         ("blues", Subcommand.Blues, true),
+        ("stop", Subcommand.Stop, true),
     ];
 
     /// <summary>The subcommand words players are shown (and offered by <see cref="DidYouMean"/>), in help order; <c>glyphs</c> and <c>ipc</c> are not.</summary>

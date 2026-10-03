@@ -3659,7 +3659,7 @@
     <value>/tsukimichi</value>
   </data>
   <data name="Help.CommandKeys.1" xml:space="preserve">
-    <value>/tsuki</value>
+    <value>/tsuki, /ts, /moon</value>
   </data>
   <data name="Help.CommandKeys.2" xml:space="preserve">
     <value>/tsukimichi search &lt;text&gt;</value>
@@ -3701,22 +3701,25 @@
     <value>/tsuki export [quests|moonlit] [json|csv]</value>
   </data>
   <data name="Help.CommandKeys.15" xml:space="preserve">
-    <value>Ctrl+F</value>
+    <value>/tsuki stop</value>
   </data>
   <data name="Help.CommandKeys.16" xml:space="preserve">
-    <value>Esc</value>
+    <value>Ctrl+F</value>
   </data>
   <data name="Help.CommandKeys.17" xml:space="preserve">
-    <value>Menu key, Shift+F10, …</value>
+    <value>Esc</value>
   </data>
   <data name="Help.CommandKeys.18" xml:space="preserve">
+    <value>Menu key, Shift+F10, …</value>
+  </data>
+  <data name="Help.CommandKeys.19" xml:space="preserve">
     <value>Ctrl+1 to 5, F, Enter, P</value>
   </data>
   <data name="Help.CommandMeanings.0" xml:space="preserve">
     <value>open or close the window</value>
   </data>
   <data name="Help.CommandMeanings.1" xml:space="preserve">
-    <value>the same, shorter; every subcommand works with either</value>
+    <value>the same, shorter; every subcommand works with any of them, and with your own aliases from Settings › Keyboard</value>
   </data>
   <data name="Help.CommandMeanings.2" xml:space="preserve">
     <value>search and print matching quests to chat as links; /tsukimichi &lt;text&gt; does the same, and suggests a command when the word was a near miss (Did you mean /tsuki nearby?)</value>
@@ -3758,15 +3761,18 @@
     <value>write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked</value>
   </data>
   <data name="Help.CommandMeanings.15" xml:space="preserve">
-    <value>put the caret in the search, while the window has focus</value>
+    <value>stop every walk, flight, travel chain and hand-off Tsukimichi started (a Questionable run, and the AutoDuty and Artisan runs it began) and say in chat what stopped; put it in a macro for one key. Questionable with a command after stop, and AutoDuty inside a duty, ask first: type it again to confirm</value>
   </data>
   <data name="Help.CommandMeanings.16" xml:space="preserve">
-    <value>close the open menu or the filter panel; with neither open, close the window</value>
+    <value>put the caret in the search, while the window has focus</value>
   </data>
   <data name="Help.CommandMeanings.17" xml:space="preserve">
-    <value>open the focused row's menu in the quest table and the Moonlit list, the same menu a right-click opens; the … button at a row's right end (shown on hover or focus) opens it with a left click</value>
+    <value>close the open menu or the filter panel; with neither open, close the window</value>
   </data>
   <data name="Help.CommandMeanings.18" xml:space="preserve">
+    <value>open the focused row's menu in the quest table and the Moonlit list, the same menu a right-click opens; the … button at a row's right end (shown on hover or focus) opens it with a left click</value>
+  </data>
+  <data name="Help.CommandMeanings.19" xml:space="preserve">
     <value>off unless turned on in Settings › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 5 are hotbar 2 by default</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">
@@ -6489,10 +6495,59 @@
     <value>Right-click an item to reveal the quest that rewards it</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
-    <value>Open Tsukimichi (also /tsuki). search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; settings (or config) and help open those windows.</value>
+    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; settings (or config) and help open those windows.</value>
   </data>
   <data name="CommandAliasHelp" xml:space="preserve">
-    <value>Short form of /tsukimichi.</value>
+    <value>Short form of /tsukimichi; every subcommand works with it.</value>
+  </data>
+  <data name="CommandAlsoFormat" xml:space="preserve">
+    <value>Short forms: {0}.</value>
+    <comment>/xlhelp, after the command help. {0} = /tsuki and every alias, joined by ", ".</comment>
+  </data>
+  <data name="StopNothing" xml:space="preserve">
+    <value>Nothing to stop.</value>
+    <comment>Chat line of /tsuki stop when nothing Tsukimichi started is running.</comment>
+  </data>
+  <data name="StopDoneFormat" xml:space="preserve">
+    <value>Stopped: {0}.</value>
+    <comment>Chat line of /tsuki stop. {0} = what stopped (Go to giver, Walk to giver, Lifestream, Questionable, AutoDuty, Artisan), joined by ", ".</comment>
+  </data>
+  <data name="StopFailedFormat" xml:space="preserve">
+    <value>Could not stop {0}.</value>
+    <comment>Chat line of /tsuki stop. {0} = the plugins that could not be asked to stop, joined by ", ".</comment>
+  </data>
+  <data name="StopAskQuestionableFormat" xml:space="preserve">
+    <value>Questionable runs {0} after a stop; type /tsuki stop again within {1} s to stop it.</value>
+    <comment>Chat line of /tsuki stop. {0} = the command Questionable runs after a stop, {1} = seconds.</comment>
+  </data>
+  <data name="StopAskAutoDutyFormat" xml:space="preserve">
+    <value>AutoDuty is running a duty; type /tsuki stop again within {0} s to stop it.</value>
+    <comment>Chat line of /tsuki stop inside a duty. {0} = seconds.</comment>
+  </data>
+  <data name="StopFailedAll" xml:space="preserve">
+    <value>Stop failed; see /xllog for details.</value>
+    <comment>Chat line when /tsuki stop itself failed.</comment>
+  </data>
+  <data name="ConfigCommandAliasesHeading" xml:space="preserve">
+    <value>Chat commands</value>
+  </data>
+  <data name="ConfigCommandAliases" xml:space="preserve">
+    <value>Extra command aliases</value>
+  </data>
+  <data name="ConfigCommandAliasesHint" xml:space="preserve">
+    <value>Other names for /tsuki, separated by spaces: a slash, then letters and digits, such as /quests. Each works like /tsuki, subcommands included. /ts and /moon always work. A name Dalamud, the game or another plugin already uses is skipped.</value>
+  </data>
+  <data name="ConfigCommandAliasesActiveFormat" xml:space="preserve">
+    <value>Tsukimichi answers to /tsuki, {0}.</value>
+    <comment>{0} = every alias in use, joined by ", ".</comment>
+  </data>
+  <data name="ConfigCommandAliasesSkippedFormat" xml:space="preserve">
+    <value>Skipped {0}: Dalamud, the game or another plugin already uses it.</value>
+    <comment>{0} = the aliases skipped, joined by ", ".</comment>
+  </data>
+  <data name="ConfigCommandAliasesInvalidFormat" xml:space="preserve">
+    <value>Not an alias: {0}. Use a slash, then letters and digits, with no spaces.</value>
+    <comment>{0} = the words typed that are not an alias, joined by ", ".</comment>
   </data>
   <data name="JustNow" xml:space="preserve">
     <value>just now</value>
