@@ -142,7 +142,8 @@ public sealed partial class FilterPanel
         }
 
         var reveal = Motion.Lerp(Motion.Key(RevealTag, 1u), advancedOpen ? 1f : 0f, MotionTokens.RateFor(MotionTokens.Reveal));
-        using (ImRaii.PushStyle(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * (advancedOpen ? reveal : 1f - reveal)))
+        ImGui.PushStyleVar(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * (advancedOpen ? reveal : 1f - reveal));
+        try
         {
             if (advancedOpen)
             {
@@ -152,6 +153,10 @@ public sealed partial class FilterPanel
             {
                 DrawSummaryLines();
             }
+        }
+        finally
+        {
+            ImGui.PopStyleVar();
         }
 
         if (scrollFrames > 0 && --scrollFrames == 0)
@@ -182,7 +187,11 @@ public sealed partial class FilterPanel
         var dl = ImGui.GetWindowDrawList();
         sheetY += first ? 0f : UiMetrics.Px(metrics.SectionGap);
         var upper = SectionHeading.Label(text);
-        using var role = SectionRole(upper);
+
+        // The pill is in the caption role of the sheet's body size, as the header's "3 on" is: measured and drawn
+        // outside the Section role, whose larger face its caption would otherwise be scaled from.
+        var pillWidth = pill is null ? 0f : PillWidth(pill);
+        var role = SectionRole(upper);
         var label = role.GameFace ? upper : text;
         var tracking = Typography.SectionTracking(in role);
         var line = ImGui.GetTextLineHeight();
@@ -226,10 +235,10 @@ public sealed partial class FilterPanel
             x += size + UiMetrics.Px(7f);
         }
 
-        var pillWidth = pill is null ? 0f : PillWidth(pill);
         var ruleEnd = sheetRight - (pill is null ? 0f : pillWidth + UiMetrics.Px(8f));
         var shadow = flair == Flair.Full ? Ink(Theme.Abyss, 0.55f) : 0u;
         Chrome.TrackedTextAt(dl, new Vector2(x, MathF.Round(mid - (line * 0.5f))), MathF.Max(1f, ruleEnd - x), label, Ink(tones.Heading), tracking, shadow);
+        role.Dispose();
 
         var ruleStart = x + labelWidth + UiMetrics.Px(10f);
         if (flair != Flair.Plain && ruleEnd - ruleStart > UiMetrics.Px(8f))
@@ -329,8 +338,8 @@ public sealed partial class FilterPanel
         var s = Theme.Surface;
         var dl = ImGui.GetWindowDrawList();
         var flipped = false;
-        using var scope = ImRaii.PushId(id);
-        using var disabled = ImRaii.Disabled(!enabled);
+        using var scope = new IdScope(id);
+        using var disabled = new DisabledScope(!enabled);
         var hint = enabled ? tooltip : Strings.NeedsSnapshot;
         var line = ImGui.GetTextLineHeight();
         var width = sheetRight - sheetLeft;
@@ -492,6 +501,39 @@ public sealed partial class FilterPanel
         var c = min + new Vector2(side * 0.80f, side * 0.28f);
         dl.AddLine(a, b, ink, thickness);
         dl.AddLine(b, c, ink, thickness);
+    }
+
+    /// <summary>An ID pushed until disposed: <c>ImRaii.PushId</c> as a struct, so a row allocates nothing per frame.</summary>
+    private readonly struct IdScope : IDisposable
+    {
+        public IdScope(string id) => ImGui.PushID(id);
+
+        public IdScope(int id) => ImGui.PushID(id);
+
+        public void Dispose() => ImGui.PopID();
+    }
+
+    /// <summary>The items disabled until disposed while <c>disabled</c>: <c>ImRaii.Disabled</c> as a struct.</summary>
+    private readonly struct DisabledScope : IDisposable
+    {
+        private readonly bool active;
+
+        public DisabledScope(bool disabled)
+        {
+            active = disabled;
+            if (disabled)
+            {
+                ImGui.BeginDisabled();
+            }
+        }
+
+        public void Dispose()
+        {
+            if (active)
+            {
+                ImGui.EndDisabled();
+            }
+        }
     }
 
     /// <summary>The per-category overrides behind a "Per category" link: a Default / On / Off choice per journal category.</summary>
@@ -659,7 +701,7 @@ public sealed partial class FilterPanel
         var bleed = UiMetrics.Px(flair == Flair.Plain ? 4f : 8f);
         var min = new Vector2(sheetLeft - bleed, sheetY);
         var max = new Vector2(sheetRight + bleed, sheetY + height);
-        using var id = ImRaii.PushId(index);
+        using var id = new IdScope(index);
         ImGui.SetCursorScreenPos(min);
         var clicked = ImGui.InvisibleButton("##summary", max - min);
         var hovered = ImGui.IsItemHovered();
@@ -919,7 +961,7 @@ public sealed partial class FilterPanel
             var min = new Vector2(x, sheetY);
             var max = min + new Vector2(width, height);
             var on = f.StateMask.Contains(state);
-            using (ImRaii.PushId(i))
+            using (new IdScope(i))
             {
                 ImGui.SetCursorScreenPos(min);
                 if (ImGui.InvisibleButton("##state", max - min))
@@ -1107,7 +1149,7 @@ public sealed partial class FilterPanel
 
             var name = Strings.RewardKindName(kind);
             int clicked;
-            using (ImRaii.PushId((int)kind))
+            using (new IdScope((int)kind))
             {
                 if (stacked)
                 {
@@ -1196,7 +1238,7 @@ public sealed partial class FilterPanel
         var clicked = -1;
         dl.AddRectFilled(origin, max, Ink(s.Sunken), rounding);
         using (Typography.Caption())
-        using (ImRaii.PushId(id))
+        using (new IdScope(id))
         {
             var line = ImGui.GetTextLineHeight();
             var pad = UiMetrics.Px(4f);
@@ -1204,7 +1246,7 @@ public sealed partial class FilterPanel
             {
                 var cellMin = new Vector2(origin.X + (i * cell), origin.Y);
                 var cellMax = new Vector2(i == count - 1 ? max.X : cellMin.X + cell, max.Y);
-                using var cellId = ImRaii.PushId(i);
+                using var cellId = new IdScope(i);
                 ImGui.SetCursorScreenPos(cellMin);
                 if (ImGui.InvisibleButton("##cell", cellMax - cellMin))
                 {

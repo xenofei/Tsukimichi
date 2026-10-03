@@ -66,6 +66,13 @@ public static class Keyboard
         return io.KeyAlt && !io.KeyCtrl && !io.KeyShift && ImGui.IsKeyPressed(key, false);
     }
 
+    /// <summary>Alt and the key are held (no Ctrl, no Shift), pressed this frame or earlier.</summary>
+    public static bool AltHeld(ImGuiKey key)
+    {
+        var io = ImGui.GetIO();
+        return io.KeyAlt && !io.KeyCtrl && !io.KeyShift && ImGui.IsKeyDown(key);
+    }
+
     /// <summary>Ctrl and the key went down (no Alt, no Shift).</summary>
     public static bool CtrlPressed(ImGuiKey key)
     {

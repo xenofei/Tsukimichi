@@ -145,5 +145,21 @@ public sealed class SkyRects
     /// left and travels <paramref name="travel"/> px (64 × 34 logical, 28° below level), eased out cubic.
     /// </summary>
     public static Vector2 MeteorHead(Vector2 skyMin, Vector2 skyMax, Vector2 travel, float progress) =>
-        skyMin + ((skyMax - skyMin) * 0.2f) + (travel * MotionMath.EaseOutCubic(Math.Clamp(progress, 0f, 1f)));
+        MeteorHeadFrom(Vector2.Zero, MeteorStart(Vector2.Zero, skyMin, skyMax), travel, progress);
+
+    /// <summary>
+    /// Where a meteor starts in a sky (20 % in from its top left), relative to the top left of the sky's canvas
+    /// (<paramref name="canvasMin"/>, its pane): latched on the flight's first frame, so a sky that grows or shrinks
+    /// mid-flight (a tree node opening) never makes the meteor jump, while one that moves with its pane carries it along.
+    /// </summary>
+    public static Vector2 MeteorStart(Vector2 canvasMin, Vector2 skyMin, Vector2 skyMax) =>
+        skyMin + ((skyMax - skyMin) * 0.2f) - canvasMin;
+
+    /// <summary>
+    /// A meteor's head at <paramref name="progress"/> (0..1) from a latched <paramref name="start"/>
+    /// (<see cref="MeteorStart"/>) on a canvas now at <paramref name="canvasMin"/>: <paramref name="travel"/> px from
+    /// there, eased out cubic.
+    /// </summary>
+    public static Vector2 MeteorHeadFrom(Vector2 canvasMin, Vector2 start, Vector2 travel, float progress) =>
+        canvasMin + start + (travel * MotionMath.EaseOutCubic(Math.Clamp(progress, 0f, 1f)));
 }

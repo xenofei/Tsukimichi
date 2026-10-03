@@ -109,7 +109,16 @@ public sealed class TutorialOverlay : ITutorial
         QuestState.Unknown,
     ];
 
-    private static readonly Action<UiState> ShowJournal = static ui => ui.Tab = NavTab.Journal;
+    /// <summary>
+    /// The Journal with the filter drawer shut: only the Filters step opens it, and it would otherwise stay over the tree
+    /// for the steps after it (the Tree step's highlight needs the tree drawn). <see cref="End"/> puts the drawer back as
+    /// the player had it.
+    /// </summary>
+    private static readonly Action<UiState> ShowJournal = static ui =>
+    {
+        ui.Tab = NavTab.Journal;
+        ui.FilterPanelOpen = false;
+    };
 
     /// <summary>
     /// One step: its chapter, what the card shows, the rect keys whose union is highlighted (empty for a card with no

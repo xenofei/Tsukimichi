@@ -1642,16 +1642,14 @@ public sealed partial class MainWindow : Window, IDisposable
         // Under the open filter drawer the tree fades out with the drawer's own fade, and once the drawer is opaque it is
         // not drawn at all (plan v7 UI-2): nothing of it can paint over the sheet or take its clicks, whatever order the
         // child windows end up in. The column's backdrop above still shows below the sheet.
-        var drawerFade = ui.FilterPanelOpen && ui.Tab == NavTab.Journal
-            ? DrawerLayout.Fade(drawerOpenedAt, ImGui.GetTime(), FadeSeconds, UiMetrics.ReduceMotion)
-            : 0f;
-        if (DrawerLayout.TreeHidden(drawerFade))
+        var drawerFade = DrawerFadeNow(ImGui.GetTime());
+        treeHiddenThisFrame = DrawerLayout.TreeHidden(drawerFade);
+        if (treeHiddenThisFrame)
         {
             ImGui.Dummy(new Vector2(MathF.Max(1f, widths.Tree), height));
             return;
         }
 
-        using var fade = ImRaii.PushStyle(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * DrawerLayout.TreeAlpha(drawerFade), drawerFade > 0f);
         using var left = ImRaii.Child("##left", new Vector2(MathF.Max(1f, widths.Tree), height));
         if (!left)
         {
@@ -1662,11 +1660,29 @@ public sealed partial class MainWindow : Window, IDisposable
         {
             // Dragged shut: the Journal tree as a strip of icons (only ever on the Journal tab).
             treePane.DrawStrip(bundle, runner, plugin.Settings.ShowUnlisted);
-            return;
+        }
+        else
+        {
+            DrawTabBody(ui.Tab, session, bundle);
         }
 
-        DrawTabBody(ui.Tab, session, bundle);
+        // The fade reaches everything the column drew, its hand-drawn rows, medals and stars as well as its widgets
+        // (the style's Alpha would miss the draw-list shapes): the column's own draw list, scaled once.
+        if (drawerFade > 0f)
+        {
+            Chrome.FadeVertices(ImGui.GetWindowDrawList(), 0, DrawerLayout.TreeAlpha(drawerFade));
+        }
     }
+
+    /// <summary>
+    /// The open drawer's opacity at <paramref name="now"/> (0 while it is shut, or not measured yet and so drawn unseen),
+    /// which the tree under it fades out by: the one value the tree, the sheet and the column's sky all follow, so each
+    /// frame shows exactly one of the tree and the sheet's sky.
+    /// </summary>
+    private float DrawerFadeNow(double now) =>
+        ui.FilterPanelOpen && ui.Tab == NavTab.Journal && drawerContent > 0f
+            ? DrawerLayout.Fade(drawerOpenedAt, now, FadeSeconds, UiMetrics.ReduceMotion)
+            : 0f;
 
     /// <summary>
     /// A column's backdrop about to be drawn at the cursor, on the window's draw list under the column's clear child

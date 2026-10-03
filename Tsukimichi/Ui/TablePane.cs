@@ -501,7 +501,9 @@ public sealed class TablePane : IDisposable
         var opensColumn = showOpens
             ? MathF.Ceiling(MathF.Max(UiMetrics.RowIconSize * MaxOpensIcons + UiMetrics.Px(2f) * (MaxOpensIcons - 1), HeaderFloor(Strings.ColumnOpens, sortable: false)))
             : 0f;
-        var widths = new QuestTableWidths(MathF.Ceiling(glyphColumn), levelColumn, jobIconColumn, jobColumn, MathF.Ceiling(StateWordWidth()), expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f), expColumn, opensColumn, MathF.Max(UiMetrics.RowIconSize, jobIcon));
+        // Status is at least its header too, like every fixed column: the automatic width each "size to fit" returns to.
+        var statusWord = MathF.Ceiling(MathF.Max(StateWordWidth(), HeaderFloor(Strings.ColumnStatus, sortable: false)));
+        var widths = new QuestTableWidths(MathF.Ceiling(glyphColumn), levelColumn, jobIconColumn, jobColumn, statusWord, expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f), expColumn, opensColumn, MathF.Max(UiMetrics.RowIconSize, jobIcon));
         autoContent[(int)Column.Level] = levelColumn;
         autoContent[(int)Column.Job] = jobColumn;
         autoContent[(int)Column.Status] = TableGeometry.StatusColumnMin(widths) - overhead;
@@ -1163,6 +1165,7 @@ public sealed class TablePane : IDisposable
                 Chrome.TrackedTextAt(ImGui.GetWindowDrawList(), new Vector2(labelPos.X, y), MathF.Max(0f, labelRight - labelPos.X), label, Theme.U32(ink), tracking);
             }
 
+            HintHeaderWidth(i, labelPos.X + labelWidth, arrow);
             ImGui.PopID();
             bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
             if (style == TableHeaderStyle.Raised && i != lastShown)
@@ -1189,6 +1192,24 @@ public sealed class TablePane : IDisposable
         }
 
         return bottom;
+    }
+
+    /// <summary>
+    /// Tells ImGui how far column <paramref name="index"/>'s header label reaches (<paramref name="labelRight"/>, plus the
+    /// sort arrow where the column sorts), as its own labelled header does: the header is "##header" with the label drawn
+    /// over it, so ImGui's fit would otherwise size the column below its label.
+    /// </summary>
+    private static unsafe void HintHeaderWidth(int index, float labelRight, float arrow)
+    {
+        var table = ImGuiP.GetCurrentTable();
+        if (table.IsNull || index >= table.ColumnsCount)
+        {
+            return;
+        }
+
+        var column = new ImGuiTableColumnPtr(table.Columns.Data + index);
+        var reach = labelRight + ((column.Flags & ImGuiTableColumnFlags.NoSort) == 0 ? arrow : 0f);
+        column.ContentMaxXHeadersIdeal = MathF.Max(column.ContentMaxXHeadersIdeal, reach);
     }
 
     /// <summary>A header label as drawn: cased like a section heading in Moon Road (<see cref="SectionHeading.Label"/>, cached), else as is.</summary>

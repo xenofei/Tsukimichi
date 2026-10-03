@@ -18,7 +18,8 @@ namespace Tsukimichi.Ui;
 /// focused.</item>
 /// <item>The selected quest's region constellation in the first sky that holds a clear 120 × 100 box, the optional
 /// Milky Way in the one sky at least 200 px tall, and the meteors (on completion, and a faint one every few minutes) in
-/// the largest. These choices are made from last frame's sky rects (<see cref="SkyRects"/>), as the layout is the same.</item>
+/// the largest. These choices are made from last frame's sky rects (<see cref="SkyRects"/>), as the layout is the same;
+/// a meteor's sky is chosen as it starts and kept for its flight.</item>
 /// </list>
 /// Per frame: one offset and a loop over cached fields, about 200 draw calls, nothing allocated.
 /// </summary>
@@ -72,6 +73,10 @@ public static class NightSky
     private static double meteorStart = double.NegativeInfinity;
     private static float meteorPeak;
 
+    // Where the meteor playing starts, against its sky's canvas (SkyRects.MeteorStart), once its first frame drew it.
+    private static bool meteorLatched;
+    private static Vector2 meteorFrom;
+
     /// <summary>The field's drift offset this frame, px.</summary>
     private static float offset;
 
@@ -118,9 +123,8 @@ public static class NightSky
         var inset = UiMetrics.Px(InsetLogical);
         constellationHost = At(rects, SkyRects.ConstellationHost(rects, Constellations.ClearBoxLogical * UiMetrics.Scale, inset));
         bandHost = milkyWay ? At(rects, SkyRects.BandHost(rects, UiMetrics.Px(BandMinHeightLogical))) : null;
-        meteorHost = At(rects, SkyRects.Largest(rects));
-
         var playing = now - meteorStart < MotionTokens.Meteor;
+        var started = false;
         if (completionNoted)
         {
             completionNoted = false;
@@ -129,6 +133,7 @@ public static class NightSky
                 meteorStart = now;
                 meteorPeak = MotionTokens.MeteorPeak;
                 playing = true;
+                started = true;
             }
         }
 
@@ -136,6 +141,15 @@ public static class NightSky
         {
             meteorStart = now;
             meteorPeak = MotionTokens.AmbientMeteorPeak;
+            started = true;
+        }
+
+        // A meteor's sky is chosen once, as it starts, and kept for its flight (with where it starts, latched on its
+        // first drawn frame): chosen again every frame it could hop to another sky mid-flight when the largest changed.
+        if (started)
+        {
+            meteorHost = At(rects, SkyRects.Largest(rects));
+            meteorLatched = false;
         }
     }
 
@@ -185,8 +199,14 @@ public static class NightSky
             var progress = (float)((ImGui.GetTime() - meteorStart) / MotionTokens.Meteor);
             if (progress is >= 0f and < 1f)
             {
+                if (!meteorLatched)
+                {
+                    meteorFrom = SkyRects.MeteorStart(canvasMin, skyMin, skyMax);
+                    meteorLatched = true;
+                }
+
                 dl.PushClipRect(clipMin, clipMax, true);
-                DrawMeteor(dl, skyMin, skyMax, progress);
+                DrawMeteor(dl, canvasMin, progress);
                 dl.PopClipRect();
             }
         }
@@ -367,9 +387,10 @@ public static class NightSky
 
     /// <summary>
     /// A meteor at <paramref name="progress"/> (spec §3.6): the head r 1.6 in MoonHigh with an r 4.5 halo at .25 of its
-    /// alpha, and a 46 px tail of six segments from .45 (at the completion meteor's peak) down to nothing.
+    /// alpha, and a 46 px tail of six segments from .45 (at the completion meteor's peak) down to nothing. It flies from
+    /// its latched start on its sky's canvas, now at <paramref name="canvasMin"/>.
     /// </summary>
-    private static void DrawMeteor(ImDrawListPtr dl, Vector2 skyMin, Vector2 skyMax, float progress)
+    private static void DrawMeteor(ImDrawListPtr dl, Vector2 canvasMin, float progress)
     {
         var alpha = MotionTokens.MeteorAlpha(progress, meteorPeak);
         if (alpha <= 0f)
@@ -378,7 +399,7 @@ public static class NightSky
         }
 
         var travel = MeteorTravelLogical * UiMetrics.Scale;
-        var head = SkyRects.MeteorHead(skyMin, skyMax, travel, progress);
+        var head = SkyRects.MeteorHeadFrom(canvasMin, meteorFrom, travel, progress);
         var back = -Vector2.Normalize(MeteorTravelLogical);
         var length = UiMetrics.Px(MeteorTailLogical);
         var tail = alpha * (MotionTokens.MeteorTailFrom / MotionTokens.MeteorPeak);

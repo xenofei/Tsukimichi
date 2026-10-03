@@ -68,6 +68,9 @@ public sealed partial class MainWindow
     private (string Before, string Number, string After) showing = (string.Empty, string.Empty, string.Empty);
     private string showingWhole = string.Empty;
 
+    // Whether the navigation column skipped the tree under the opaque drawer this frame (its sky is then the drawer's to draw).
+    private bool treeHiddenThisFrame;
+
     /// <summary>
     /// After the status bar: the drawer and the dock, with the Undo toast's place handed out beside the dock's. The
     /// selected Journal row is kept clear on the Journal tab.
@@ -606,6 +609,9 @@ public sealed partial class MainWindow
 
     private static readonly string DismissIcon = FontAwesomeIcon.Times.ToIconString();
 
+    /// <summary>Plain's "·" before the drawer header's count: the Undo toast's separator without its trailing space, made once.</summary>
+    private static readonly string DrawerCountDot = Strings.UndoToastSeparator.TrimEnd();
+
     // ------------------------------------------------------------------ filter drawer
 
     /// <summary>
@@ -620,6 +626,8 @@ public sealed partial class MainWindow
     /// </summary>
     private void DrawDrawer(SessionState session, CatalogBundle bundle, float right)
     {
+        var treeHidden = treeHiddenThisFrame;
+        treeHiddenThisFrame = false;
         if (!ui.FilterPanelOpen || ui.Tab != NavTab.Journal || bodyHeight <= 0f)
         {
             drawerOpenedAt = -1.0;
@@ -650,7 +658,7 @@ public sealed partial class MainWindow
         }
 
         // Until its content has been measured once the sheet is drawn unseen, so it never shows at the wrong height.
-        var fade = drawerContent > 0f ? DrawerLayout.Fade(drawerOpenedAt, now, FadeSeconds, UiMetrics.ReduceMotion) : 0f;
+        var fade = DrawerFadeNow(now);
         ImGui.SetCursorScreenPos(leftMin);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.PushStyleVar(ImGuiStyleVar.ChildBorderSize, 0f);
@@ -661,7 +669,7 @@ public sealed partial class MainWindow
         if (open)
         {
             using var alpha = ImRaii.PushStyle(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * fade);
-            DrawDrawerSheet(in rect, flair, in metrics, in tones);
+            DrawDrawerSheet(in rect, new Vector2(right, MathF.Max(bodyMin.Y, statusTop)), flair, in metrics, in tones);
             DrawDrawerHeader(in rect, header, row, flair, in metrics, in tones);
 
             // The body scrolls on its own; its side padding is the level's, and nothing it opens (a combo, the
@@ -685,9 +693,10 @@ public sealed partial class MainWindow
         ImGui.EndChild();
         ui.RecordRect(UiRects.FilterPanel, rect.Min, rect.Max);
 
-        // Full: once the sheet is opaque (the tree is no longer drawn), the column's sky shows below it with the tree's
-        // own stars where they always are, never under the sheet (plan v7 UI-6, spec §3).
-        if (Theme.ShowStars && DrawerLayout.TreeHidden(DrawerLayout.Fade(drawerOpenedAt, now, FadeSeconds, UiMetrics.ReduceMotion)))
+        // Full: once the sheet is opaque (the tree was not drawn this frame, DrawNavigation), the column's sky shows below
+        // it with the tree's own stars where they always are, never under the sheet (plan v7 UI-6, spec §3). Read from
+        // what the column did, never recomputed after the sheet measured itself, so one frame never has both skies.
+        if (Theme.ShowStars && treeHidden)
         {
             var columnMin = leftMin;
             var columnMax = leftMin + new Vector2(leftWidth, bodyHeight);
@@ -750,7 +759,7 @@ public sealed partial class MainWindow
     /// the bottom right with a darker corner mark. Quiet: a separation shadow (0 8 20 at .45), a flat sheet one tone
     /// above the tree and a 1 px edge. Plain: the flat sheet and its 1 px line, square, no shadow.
     /// </summary>
-    private static void DrawDrawerSheet(in ScreenRect rect, Flair flair, in DrawerMetrics metrics, in DrawerTones tones)
+    private static void DrawDrawerSheet(in ScreenRect rect, Vector2 bodyMax, Flair flair, in DrawerMetrics metrics, in DrawerTones tones)
     {
         var dl = ImGui.GetWindowDrawList();
         var min = rect.Min;
@@ -759,8 +768,10 @@ public sealed partial class MainWindow
         var rounding = UiMetrics.Px(metrics.Rounding);
         var corners = rounding > 0f ? ImDrawFlags.RoundCornersBottomRight : ImDrawFlags.RoundCornersNone;
 
-        // The shadows fall outside the child, to the right and below only: never over the rail or the toolbar.
-        dl.PushClipRect(min, max + new Vector2(UiMetrics.Px(48f)), false);
+        // The shadows fall outside the child, to the right and below only: never over the rail or the toolbar, and never
+        // past the body (<paramref name="bodyMax"/>: the status bar's top and the content's right edge), so they stay in
+        // the window and off the status bar.
+        dl.PushClipRect(min, Vector2.Min(max + new Vector2(UiMetrics.Px(48f)), Vector2.Max(max, bodyMax)), false);
         switch (flair)
         {
             case Flair.Full:
@@ -927,7 +938,7 @@ public sealed partial class MainWindow
             var size = ImGui.CalcTextSize(text);
             if (flair == Flair.Plain)
             {
-                var dot = Strings.UndoToastSeparator.TrimEnd();
+                var dot = DrawerCountDot;
                 var label = new Vector2(x - UiMetrics.Px(5f), MathF.Round(mid - (size.Y * 0.5f)));
                 var dotWidth = ImGui.CalcTextSize(dot).X + UiMetrics.Px(3f);
                 if (label.X + dotWidth + size.X <= end)
