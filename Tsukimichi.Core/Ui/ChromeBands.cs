@@ -72,6 +72,16 @@ public static class ChromeBands
     /// <summary>The character chip's floor on a two-row toolbar, logical.</summary>
     public const float CharacterMinLogical = 120f;
 
+    /// <summary>The gap between the Back and Forward buttons (feature plan v7 N1), logical.</summary>
+    public const float HistoryGapLogical = 2f;
+
+    /// <summary>
+    /// The Back and Forward buttons' width (feature plan v7 N1): two round buttons of the minimum target with
+    /// <see cref="HistoryGapLogical"/> between them. They lead the row that holds the Filters button: the only row on a
+    /// one-row toolbar, so they sit before the search as a browser's do, or the last row's start when it reflows.
+    /// </summary>
+    public static float HistoryWidth(float scale, float minTarget) => (2f * minTarget) + (HistoryGapLogical * scale);
+
     /// <summary>A filter chip's height, logical (it is never under the line plus 4 px, nor under the minimum target).</summary>
     public const float ChipHeightLogical = 22f;
 
@@ -108,10 +118,11 @@ public static class ChromeBands
         var gap = ToolbarGapLogical * scale;
         var search = SearchLogical * scale;
         var character = CharacterSlotLogical * scale;
-        var oneRow = search + m.QuickViewsWidth + m.FiltersWidth + character + (3f * gap);
+        var history = HistoryWidth(scale, m.MinTarget);
+        var oneRow = history + search + m.QuickViewsWidth + m.FiltersWidth + character + (4f * gap);
 
-        // Row 0 holds the search (and the Quick views when they fit beside it); the last row the Filters button and the
-        // character chip. As in 1.10, but decided from the width alone.
+        // Row 0 holds the search (and the Quick views when they fit beside it); the last row Back and Forward, the Filters
+        // button and the character chip. As in 1.10, but decided from the width alone.
         var twoRows = avail < ToolbarReflowPx || oneRow > avail;
         var quickOwnRow = false;
         if (twoRows)

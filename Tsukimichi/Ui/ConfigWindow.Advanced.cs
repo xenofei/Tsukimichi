@@ -38,13 +38,21 @@ public sealed partial class ConfigWindow
 
     /// <summary>
     /// Settings › Advanced › Keyboard (T17, accessibility A7): what is always bound, the warning that the game sees the
-    /// keys too, and the opt-in shortcuts, all off by default. Saved at once.
+    /// keys too, Back and forward (on by default, feature plan v7 N1) and the opt-in shortcuts, off by default. Saved at
+    /// once.
     /// </summary>
     private void DrawKeyboard()
     {
         Header(Strings.ConfigSectionKeyboard);
         Note(Strings.SettingsKeysAlwaysOn, Strings.ConfigKeyboardAlwaysOn, "keys shortcuts hotkeys keybinds always escape search");
         Note(Strings.SettingsKeysGameSees, Strings.ConfigKeyboardGameSeesKeys, "keys shortcuts hotkeys game hotbar");
+
+        var history = settings.ShortcutHistory;
+        if (Toggle(Strings.ConfigShortcutHistory, Strings.ConfigShortcutHistoryHint, ref history, "shortcut keys hotkey back forward history alt arrow mouse button"))
+        {
+            settings.ShortcutHistory = history;
+            Save();
+        }
 
         var tabs = settings.ShortcutTabs;
         if (Toggle(Strings.ConfigShortcutTabs, Strings.ConfigShortcutTabsHint, ref tabs, "shortcut keys hotkey tabs"))

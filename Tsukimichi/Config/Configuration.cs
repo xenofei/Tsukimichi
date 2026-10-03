@@ -540,6 +540,13 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>P pins or unpins the selected quest while the main window has focus. Off by default.</summary>
     public bool ShortcutPin { get; set; }
 
+    // ---- 1.14.0: back and forward (feature plan v7 N1) ----
+    /// <summary>
+    /// Alt+Left and Alt+Right step back and forward through the quests looked at while the main window has focus, and
+    /// mouse buttons 4 and 5 while it is hovered. On by default, as a browser's are; the toolbar's buttons stay either way.
+    /// </summary>
+    public bool ShortcutHistory { get; set; } = true;
+
     // ---- 1.11.0: command aliases (A12) ----
     /// <summary>
     /// Extra names for <c>/tsuki</c>, separated by spaces (Settings › Keyboard › Chat commands); <c>/ts</c> and
