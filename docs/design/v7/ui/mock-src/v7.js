@@ -9,7 +9,8 @@
     drawer: "The filter drawer at each level, Advanced collapsed and expanded, against 1.13 as shipped.",
     rail: "The rail: 1.13 against v7 at each level, and every station state with its timing.",
     stars: "The Full sky: three depths, four temperatures, a slow twinkle, the region constellations, the completion meteor and an optional band.",
-    ba: "1.13 against v7 at Full, with the quest pane's headings and the column headers at true size."
+    ba: "1.13 against v7 at Full, with the quest pane's headings and the column headers at true size.",
+    sky: "Revision 3: the moving night sky at Full. 6 px a minute, paused while the window is unfocused; a rare faint meteor. Use x30 to see it move."
   };
   var NAME = { "ready": "Ready", "ready-on-another-job": "Ready on another job", "in-journal": "In journal", "blocked": "Blocked",
     "done-this-cycle": "Done this cycle", "completed": "Completed", "locked-out": "Locked out", "not-checked": "Not checked" };
@@ -196,6 +197,16 @@
     out += '<defs><clipPath id="' + id + 'c">' + o.rects.map(function (q) { return '<rect x="' + q[0] + '" y="' + q[1] + '" width="' + q[2] + '" height="' + q[3] + '"/>'; }).join("") + "</clipPath>" +
       '<filter id="' + id + 'b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter></defs>';
     var g = '<g clip-path="url(#' + id + 'c)">';
+    // Revision 3 drift: the whole field moves left as one sky (no per-layer speeds), wrapping on a tile as wide as the
+    // sky's extent; each rect fades its stars over 10 px at the left and right edges so nothing pops in or out.
+    var DW = 0;
+    if (o.drift) {
+      o.rects.forEach(function (q) { DW = Math.max(DW, q[0] + q[2]); });
+      out = out.replace("</defs>", '<linearGradient id="' + id + 'g" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="' + (10 / DW).toFixed(3) + '" stop-color="#fff"/><stop offset="' + (1 - 10 / DW).toFixed(3) + '" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+        '<mask id="' + id + 'm">' + o.rects.map(function (q) { return '<rect x="' + q[0] + '" y="' + q[1] + '" width="' + q[2] + '" height="' + q[3] + '" fill="url(#' + id + 'g)"/>'; }).join("") + "</mask></defs>");
+      g = '<g clip-path="url(#' + id + 'c)" mask="url(#' + id + 'm)"><g class="drift" data-w="' + DW + '" style="--dw:-' + DW + "px;animation-duration:" + (DW / DRIFT_PX_PER_MIN * 60).toFixed(0) + 's">';
+    }
+    var g0 = g.length;
     var band = o.band;
     if (band) {
       var bx = band[2] - band[0], by = band[3] - band[1], len = Math.sqrt(bx * bx + by * by), ang = Math.atan2(by, bx) * 180 / Math.PI;
@@ -213,8 +224,8 @@
       tries++;
       var x, y;
       if (placed >= n && band) { var t2 = r(), off = (r() + r() + r() - 1.5) * band[4] * 0.45; x = band[0] + (band[2] - band[0]) * t2 - Math.sin(Math.atan2(band[3] - band[1], band[2] - band[0])) * off; y = band[1] + (band[3] - band[1]) * t2 + Math.cos(Math.atan2(band[3] - band[1], band[2] - band[0])) * off; }
-      else { var q = o.rects[Math.floor(r() * o.rects.length)]; x = q[0] + r() * q[2]; y = q[1] + r() * q[3]; }
-      if (!inRects(x, y, 4)) continue;
+      else { var q = o.rects[Math.floor(r() * o.rects.length)]; x = (o.drift ? r() * DW : q[0] + r() * q[2]); y = q[1] + r() * q[3]; }
+      if (o.drift ? !inRects(q ? q[0] + 5 : x, y, 4) : !inRects(x, y, 4)) continue;
       if (o.fig) { var f = o.fig; if (x > f[1] - 10 && x < f[1] + f[3] + 10 && y > f[2] - 10 && y < f[2] + f[3] + 10) continue; }
       placed++;
       var m = placed > n ? r() * 0.7 : r(), layer = m < 0.60 ? 0 : m < 0.92 ? 1 : 2, col = tempOf(r(), layer);
@@ -230,9 +241,11 @@
       }
     }
     if (o.fig) g += figure(o.fig[0], o.fig[1], o.fig[2], o.fig[3]);
+    if (o.drift) { var field = g.slice(g0); return out + g + '<g transform="translate(' + DW + ' 0)">' + field + "</g></g></g></svg>"; }
     return out + g + "</g></svg>";
   }
   // The completion meteor (a moment: once, 0.7 s, MomentPeak .6, Full and Reduce motion off only).
+  var DRIFT_PX_PER_MIN = 6;
   function meteor(x, y) { return '<div class="shooting" style="left:' + x + "px;top:" + y + 'px"><i></i></div>'; }
 
   var ICON = {
@@ -299,13 +312,15 @@
       '<div class="rb on">' + ICON.todo + '</div><div class="rb">' + ICON.pinmap + '</div><div class="rb">' + ICON.help + '</div><div class="rb">' + ICON.set + "</div></div>";
   }
   // v7's rail: no thread; plates, a 30 px icon, the label at 0.78x and the moon bead on the rail's left edge.
-  var RAIL = [["Journal", "orbit", "41"], ["Moonlit", "moon"], ["Characters", "chars"], ["Flight", "flight"], ["My blues", "blues"]];
+  // Revision 3: the Journal badge counts quests newly ready since the player last looked (3 here), not every Ready quest.
+  var RAIL = [["Journal", "orbit", "3"], ["Moonlit", "moon"], ["Characters", "chars"], ["Flight", "flight"], ["My blues", "blues"]];
   function stationIcon(lv, k) { return k === "orbit" ? (lv === "plain" ? flatGlyph("in-journal", 20).replace('width="20" height="20"', "") : orbit(0.65, lv === "quiet" ? "quiet" : "full")) : ICON[k]; }
   function stations(lv, o, list) {
     var sth = lv === "full" ? 72 : lv === "quiet" ? 66 : 46, on = o.on == null ? 0 : o.on, h = "";
     (list || RAIL.map(function (_, i) { return i; })).forEach(function (k, i) {
       var s = RAIL[k], cls = "st7" + (k === on ? " on" : "") + (o.hov === k ? " hov" : "") + (o.half === k ? " half" : "");
-      h += '<div class="' + cls + '" data-st="' + k + '"><i class="pl"></i><i class="gl"></i><span class="ic">' + stationIcon(lv, s[1]) + (s[2] ? '<span class="bd">' + s[2] + "</span>" : "") + '</span><span class="lb">' + s[0] + "</span></div>";
+      var bd = k === 0 ? (o.badge != null ? o.badge : s[2]) : s[2];
+      h += '<div class="' + cls + '" data-st="' + k + '"><i class="pl"></i><i class="gl"></i><span class="ic">' + stationIcon(lv, s[1]) + (bd ? '<span class="bd' + (String(bd).length > 2 ? " w3" : String(bd).length > 1 ? " w2" : "") + '">' + bd + "</span>" : "") + '</span><span class="lb">' + (o.label && k === o.labelAt ? o.label : s[0]) + "</span></div>";
     });
     var bi = o.bead != null ? o.bead : (list ? list.indexOf(on) : on);
     var beadTop = (bi + 0.5) * sth - (lv === "plain" ? 0 : 8);
@@ -314,7 +329,7 @@
   }
   function rail7(lv, o) {
     var H = o.h || 790, top = 8 + 40 + 4 + 1 + 8 + 5 * 72 + 10, fTop = H - 216;
-    var h = '<nav class="rail r7">' + (lv === "full" ? sky7({ seed: 7, w: 64, h: H, n: 18, rects: [[0, top, 64, Math.max(0, fTop - top)]], anim: true }) : "");
+    var h = '<nav class="rail r7">' + (lv === "full" ? sky7({ seed: 7, w: 70, h: H, n: 18, rects: [[0, top, 70, Math.max(0, fTop - top)]], anim: true, drift: true }) : "");
     h += '<div class="lay" style="display:flex;flex-direction:column;align-items:center;width:100%;flex:1">' + (lv === "plain" ? "" : CREST + '<div class="rule"></div>');
     h += stations(lv, o) + foot(lv);
     return h + "</div></nav>";
@@ -323,7 +338,7 @@
   function tree(lv, o) {
     var H = o.h || 790, w = lv === "full" ? 292 : 0;
     var sky = "";
-    if (lv === "full") sky = o.v7 ? sky7({ seed: 31, w: w, h: H, n: 46, rects: [[8, 396, w - 16, H - 404]], band: o.band ? [-30, 640, w + 30, 450, 74] : null, fig: ["arr", 160, 520, 90], anim: true }) : stars13(31, 292, 820, 34, 1, .64, .04, .96);
+    if (lv === "full") sky = o.v7 ? sky7({ seed: 31, w: w, h: H, n: 46, rects: [[8, 396, w - 16, H - 404]], band: o.band ? [-30, 640, w + 30, 450, 74] : null, fig: ["arr", 160, 520, 90], anim: true, drift: true }) : stars13(31, 292, 820, 34, 1, .64, .04, .96);
     var h = '<div class="tree">' + sky + '<div class="lay">';
     h += '<div class="th">' + ICON.sig + "<b>Journal</b>" + (lv === "full" ? '<i class="r"></i>' : "") + "<span>5,373 quests</span></div>";
     TREE.forEach(function (t, k) {
@@ -337,13 +352,13 @@
       if (lv === "full" && t[0] === "sec") h += '<span class="road"></span>';
       h += "</div>";
     });
-    h += "</div>" + (lv === "full" && o.v7 ? meteor(96, 410) : "") + "</div>";
+    h += "</div>" + (lv === "full" && o.v7 ? meteor(96, 410) + meteor(150, 470).replace('class="shooting"', 'class="shooting faint"') : "") + "</div>";
     return h;
   }
 
   function table(lv, o) {
     var h = '<div class="tbl" role="grid">';
-    if (lv === "full") h += o.v7 ? sky7({ seed: 97, w: 760, h: 40, n: 22, rects: [[150, 4, 470, 16]], anim: true }).replace('class="sky"', 'class="sky" style="height:40px"') : stars13(97, 900, 34, 16, .8, .15, .34, .8).replace('class="sky"', 'class="sky" style="height:34px"');
+    if (lv === "full") h += o.v7 ? sky7({ seed: 97, w: 760, h: 40, n: 22, rects: [[150, 4, 470, 16]], anim: true, drift: true }).replace('class="sky"', 'class="sky" style="height:40px"') : stars13(97, 900, 34, 16, .8, .15, .34, .8).replace('class="sky"', 'class="sky" style="height:34px"');
     if (lv !== "plain") h += '<div class="ttl"><b>Pinned</b><span>' + ROWS.length + ' quests</span><em>sorted by name</em></div>';
     h += '<div class="thd cols"><div></div><div class="sort">Name ▴</div><div>Lv</div><div>Job</div><div>Status</div><div>Exp</div></div><div class="rows">';
     var groups = [];
@@ -551,24 +566,24 @@
     var h = '<div class="board"><h2>The rail<small>Left: 1:1 crops. Right: station states at 2x. No thread and no lit bar between stations. Stations share the rail\'s height (72 px at Full, up to 84), icons 30 px, labels 0.78x. Motion from MotionTokens.</small></h2><div class="row">';
     var H = 742;
     h += fig(crop(118, H, "full", { v7: false, tips: false }), "<b>1.13 Full</b><br><i>thread, lit bar, 22 px icons</i>");
-    h += fig(crop(118, H, "full", { v7: true, tips: false }), "<b>v7 Full</b><br><i>plate, gold icon, bead</i>");
-    h += fig(crop(112, H, "quiet", { v7: true, tips: false }), "<b>v7 Quiet</b><br><i>flat plate, dot</i>");
+    h += fig(crop(124, H, "full", { v7: true, tips: false }), "<b>v7 Full</b><br><i>plate, gold icon, bead</i>");
+    h += fig(crop(118, H, "quiet", { v7: true, tips: false }), "<b>v7 Quiet</b><br><i>flat plate, dot</i>");
     h += fig(crop(92, H, "plain", { v7: true, tips: false }), "<b>v7 Plain</b><br><i>band and bar</i>");
     h += '<div style="display:flex;flex-direction:column;gap:14px">';
     var z = 2, row = '<div class="row" style="gap:12px">';
-    row += fig(railTile("full", { on: -1 }, [1], 64, 72, z), "<b>Idle</b><br><i>icon .72, no plate</i>");
-    row += fig(railTile("full", { on: -1, half: 1 }, [1], 64, 72, z), "<b>Hover, 60 ms</b><br><i>halfway in</i>");
-    row += fig(railTile("full", { on: -1, hov: 1 }, [1], 64, 72, z), "<b>Hover</b><br><i>lift 2 px, plate .55, dark foot</i>");
-    row += fig(railTile("full", { on: 1 }, [1], 64, 72, z), "<b>Selected</b><br><i>plate, gold icon, bead</i>");
-    row += fig(railTile("full", { on: 2, bead: 0.62, half: 2 }, [1, 2], 64, 144, z), "<b>Travel, 110 ms</b><br><i>bead between stations, plate fading in</i>");
+    row += fig(railTile("full", { on: -1 }, [1], 70, 72, z), "<b>Idle</b><br><i>icon .72, no plate</i>");
+    row += fig(railTile("full", { on: -1, half: 1 }, [1], 70, 72, z), "<b>Hover, 60 ms</b><br><i>halfway in</i>");
+    row += fig(railTile("full", { on: -1, hov: 1 }, [1], 70, 72, z), "<b>Hover</b><br><i>lift 2 px, plate .55, dark foot</i>");
+    row += fig(railTile("full", { on: 1 }, [1], 70, 72, z), "<b>Selected</b><br><i>plate, gold icon, bead</i>");
+    row += fig(railTile("full", { on: 2, bead: 0.62, half: 2 }, [1, 2], 70, 144, z), "<b>Travel, 110 ms</b><br><i>bead between stations, plate fading in</i>");
     h += row + "</div>";
     row = '<div class="row" style="gap:12px;align-items:flex-end">';
-    row += fig(railTile("quiet", { on: -1 }, [3], 60, 66, z), "<b>Quiet idle</b>");
-    row += fig(railTile("quiet", { on: -1, hov: 3 }, [3], 60, 66, z), "<b>Quiet hover</b><br><i>lift 1 px</i>");
-    row += fig(railTile("quiet", { on: 3 }, [3], 60, 66, z), "<b>Quiet selected</b>");
-    row += fig(railTile("plain", { on: -1 }, [3], 40, 46, z), "<b>Plain idle</b>");
-    row += fig(railTile("plain", { on: -1, hov: 3 }, [3], 40, 46, z), "<b>Plain hover</b><br><i>instant</i>");
-    row += fig(railTile("plain", { on: 3 }, [3], 40, 46, z), "<b>Plain selected</b>");
+    row += fig(railTile("quiet", { on: -1 }, [3], 66, 66, z), "<b>Quiet idle</b>");
+    row += fig(railTile("quiet", { on: -1, hov: 3 }, [3], 66, 66, z), "<b>Quiet hover</b><br><i>lift 1 px</i>");
+    row += fig(railTile("quiet", { on: 3 }, [3], 66, 66, z), "<b>Quiet selected</b>");
+    row += fig(railTile("plain", { on: -1 }, [3], 44, 46, z), "<b>Plain idle</b>");
+    row += fig(railTile("plain", { on: -1, hov: 3 }, [3], 44, 46, z), "<b>Plain hover</b><br><i>instant</i>");
+    row += fig(railTile("plain", { on: 3 }, [3], 44, 46, z), "<b>Plain selected</b>");
     h += row + "</div>";
     h += '<div class="spec"><table><tr><th>Moment</th><th>Full</th><th>Quiet</th><th>Plain</th></tr>' +
       "<tr><td>Hover in</td><td>plate 0 → .55 with a 1 px darker bottom edge, icon alpha .72 → .95, icon rises 2 px; <b>HoverIn 0.12 s</b>, ease-out cubic</td><td>plate wash, rise 1 px; HoverIn 0.12 s</td><td>flat wash, instant</td></tr>" +
@@ -577,6 +592,23 @@
       "<tr><td>Select</td><td>plate (Moon .07) and gold icon ink fade in over <b>Select 0.15 s</b>; the old station's fade out over <b>Leave 0.12 s</b>; icon settles to 0 px. No glow, border or hairline</td><td>plate in 0.15 s</td><td>band, instant</td></tr>" +
       "<tr><td>Travel</td><td>bead runs the rail's left edge from the old station to the new, <b>Travel 0.22 s</b>, ease-in-out cubic; arrives as the plate finishes</td><td>dot, same timing, no glow</td><td>none (2 px bar)</td></tr>" +
       "<tr><td>Reduce motion</td><td colspan=\"3\">everything lands at once: no rise, no fades, the bead jumps.</td></tr></table></div>";
+    h += "</div></div>";
+    // Revision 3: labels and the Journal badge
+    var z2 = 2;
+    h += '<div class="row" style="gap:12px;align-items:flex-start">';
+    h += fig(railTile("full", { on: 2 }, [2], 70, 72, z2), "<b>Full, selected</b><br><i>Characters fits its plate</i>");
+    h += fig(railTile("full", { on: -1, hov: 2 }, [2], 70, 72, z2), "<b>Full, hovered</b>");
+    h += fig(railTile("quiet", { on: 2 }, [2], 66, 66, z2), "<b>Quiet, selected</b>");
+    h += '<div class="spec" style="width:470px"><b>Label fit</b> (game units, measured live): label px = clamp(0.75 x body, 10, 12), room = rail - 2 x 3 inset - 2 x 2 pad. Every other English label fits at every size untracked.<table id="lbt"></table></div>';
+    h += "</div>";
+    h += '<div class="row" style="gap:12px;align-items:flex-start">';
+    h += fig('<div class="tile" style="width:140px;height:144px"><div class="mk full" style="width:70px;height:72px;zoom:2"><div class="win" style="border:0;box-shadow:none;border-radius:0"><div class="w-body" style="grid-template-columns:70px"><nav class="rail" style="border-right:0;padding:0;justify-content:center"><div class="sts"><div class="st"><span class="bd b13">99+</span>' + ICON.book + '<span class="lb">Journal</span></div></div></nav></div></div></div></div>', "<b>1.13</b>: every Ready quest; stuck at a shrunken 99+");
+    h += fig(railTile("full", { on: 0, badge: "3" }, [0], 70, 72, z2), "<b>v7</b>: 3 newly ready since you last looked");
+    h += fig(railTile("full", { on: -1, badge: "12" }, [0], 70, 72, z2), "<b>v7</b>: after a level-up, 12 new");
+    h += fig(railTile("full", { on: 0, badge: "" }, [0], 70, 72, z2), "<b>v7</b>: nothing new, no badge");
+    h += fig(railTile("plain", { on: -1, badge: "3" }, [0], 44, 46, z2), "<b>Plain</b>: a gold digit");
+    h += '<div class="spec" style="width:430px"><div class="tipx"><b>Journal</b><br>Every quest in the game, filed as the journal files it<br><span style="color:#F2D27A">3 newly ready since you last looked</span> · 214 ready to accept now<br><i>Click to show the new ones</i></div>' +
+      '<div style="margin-top:8px"><b>Settings › Display › Rail › Journal badge:</b> <u>Newly ready</u> (default) · Ready story and unlock quests · Every Ready quest (1.13) · Nothing</div></div>';
     return h + "</div></div></div>";
   }
 
@@ -642,6 +674,49 @@
     return h;
   }
 
+  // ---------- Rail label fit (Revision 3) ----------
+  // 1. Draw at the label size. 2. If wider than the plate's inner width, track -0.02 em. 3. Still wider: shrink to fit,
+  // never under 10 px. 4. Still wider: two lines at a space; a single word that cannot fit goes icon-only with the label in
+  // the tooltip. Never an ellipsis, never past the plate.
+  function fitLabels(root) {
+    root.querySelectorAll(".r7 .st7 .lb").forEach(function (lb) {
+      var st = lb.parentNode, pl = st.querySelector(".pl");
+      if (!pl || getComputedStyle(lb).display === "none") return;
+      lb.style.letterSpacing = ""; lb.style.fontSize = ""; lb.style.whiteSpace = ""; st.classList.remove("iconly"); lb.removeAttribute("data-fit");
+      var room = pl.getBoundingClientRect().width - 4 * (pl.getBoundingClientRect().width / pl.offsetWidth || 1);
+      var w = function () { return lb.getBoundingClientRect().width; }, step = "fits";
+      if (w() > room) { lb.style.letterSpacing = "-0.02em"; step = "tracked -0.02 em"; }
+      if (w() > room) {
+        var fs = parseFloat(getComputedStyle(lb).fontSize), nf = Math.max(10, Math.floor(fs * room / w() * 0.98 * 10) / 10);
+        lb.style.fontSize = nf.toFixed(2) + "px"; step = "tracked and " + nf.toFixed(1) + " px";
+      }
+      if (w() > room + 0.5) {
+        if (/ /.test(lb.textContent)) { lb.style.whiteSpace = "normal"; step = "two lines"; }
+        else { st.classList.add("iconly"); step = "icon only, label in the tooltip"; }
+      }
+      lb.setAttribute("data-fit", step);
+    });
+  }
+  // The rule in game units (Noto Sans Medium as Dalamud draws it), measured live: label px = clamp(0.75 x body, 10, 12).
+  function labelTable() {
+    var t = document.getElementById("lbt");
+    if (!t) return;
+    var c = document.createElement("canvas").getContext("2d"), rows = "";
+    [["Full", 70], ["Quiet", 66]].forEach(function (lvl) {
+      [["80 %", 12.8], ["100 %", 16], ["150 %", 24]].forEach(function (ts) {
+        var px = Math.max(10, Math.min(12, 0.75 * ts[1])), room = lvl[1] - 6 - 4;
+        RAIL.forEach(function (s) {
+          if (s[0] !== "Characters") return;
+          c.font = "500 " + px + "px 'Noto Sans'";
+          var w0 = c.measureText(s[0]).width, w1 = w0 - 0.02 * px * (s[0].length - 1), step;
+          if (w0 <= room) step = "fits"; else if (w1 <= room) step = "track -0.02 em"; else if (px * room / w1 >= 10) step = "track, " + (px * room / w1).toFixed(1) + " px"; else step = s[0].indexOf(" ") > 0 ? "two lines" : "icon only";
+          rows += "<tr><td>" + lvl[0] + "</td><td>" + ts[0] + "</td><td>" + s[0] + "</td><td>" + px.toFixed(1) + " px</td><td>" + w0.toFixed(1) + "</td><td>" + room + "</td><td><b>" + step + "</b></td></tr>";
+        });
+      });
+    });
+    t.innerHTML = "<tr><th>Level</th><th>Text size</th><th>Label</th><th>Size</th><th>Width</th><th>Room</th><th>Step</th></tr>" + rows;
+  }
+
   // ---------- Page ----------
   var host = document.getElementById("host"), seg = document.getElementById("seg"), ver = document.getElementById("ver"), pn = document.getElementById("pn");
   function show(hash) {
@@ -655,8 +730,11 @@
     else if (v === "rail") host.innerHTML = boardRail();
     else if (v === "stars") host.innerHTML = boardStars();
     else if (v === "ba") host.innerHTML = boardBA();
+    else if (v === "sky") host.innerHTML = win("full", { v7: true, h: 790 });
     else host.innerHTML = win(v, { v7: w !== "before", drawer: w === "open" ? "c" : w === "open-adv" ? "e" : null, h: 790 });
     // Expanded drawers on the boards open scrolled to the Advanced section (as after a click on its summary).
+    fitLabels(host);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fitLabels(host); labelTable(); });
     function toAdvanced() {
       host.querySelectorAll(".dsc-in[data-to=adv]").forEach(function (el) {
         var t = el.querySelectorAll(".dsec")[2], pad = parseFloat(getComputedStyle(el.parentNode).paddingTop) || 0;
@@ -686,6 +764,27 @@
     if (!m || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     m.classList.remove("go"); void m.offsetWidth; m.classList.add("go");
   });
-  window.addEventListener("hashchange", function () { show(location.hash.slice(1)); });
+  // The moving sky: x1 is the real speed (6 px a minute); x30 previews it. It pauses while this page is unfocused.
+  var K = 1;
+  function setSpeed() {
+    host.querySelectorAll(".drift").forEach(function (d) { d.style.animationDuration = (parseFloat(d.getAttribute("data-w")) / DRIFT_PX_PER_MIN * 60 / K).toFixed(1) + "s"; });
+    var b = document.getElementById("spd"); if (b) b.textContent = K === 1 ? "Sky speed: x1" : "Sky speed: x30 (preview)";
+  }
+  document.getElementById("spd").addEventListener("click", function () { K = K === 1 ? 30 : 1; setSpeed(); });
+  function pause(p) {
+    host.querySelectorAll(".drift").forEach(function (d) { d.style.animationPlayState = p ? "paused" : "running"; });
+    host.querySelectorAll("svg.sky").forEach(function (sv) { if (sv.pauseAnimations) { if (p) sv.pauseAnimations(); else sv.unpauseAnimations(); } });
+  }
+  window.addEventListener("blur", function () { pause(true); });
+  window.addEventListener("focus", function () { pause(false); });
+  // A rare faint meteor at rest: every 3 to 6 minutes of focused time (Full, Reduce motion off).
+  (function ambient() {
+    setTimeout(function () {
+      var m = host.querySelector(".mk.full .shooting.faint");
+      if (m && document.hasFocus() && !matchMedia("(prefers-reduced-motion: reduce)").matches) { m.classList.remove("go"); void m.offsetWidth; m.classList.add("go"); }
+      ambient();
+    }, (180 + Math.random() * 180) * 1000 / K);
+  })();
+  window.addEventListener("hashchange", function () { show(location.hash.slice(1)); setSpeed(); });
   show(location.hash.slice(1) || "full");
 })();
