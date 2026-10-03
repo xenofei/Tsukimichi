@@ -17,14 +17,19 @@ public sealed class ThemesPageTests
     // ------------------------------------------------------------------ what the page offers
 
     [Fact]
-    public void The_cards_are_the_offered_themes_with_Classic_last_and_Sumi_hidden()
+    public void The_cards_are_the_offered_themes_with_Classic_last()
     {
-        // The approved Themes design's order: Medallion, Ishgard Glass second, Aether Crystal, the Orrery (1.17), Classic.
+        // The approved Themes design's order: Medallion, Ishgard Glass second, Aether Crystal, then 1.17's Orrery and Sumi to
+        // Kinpaku, and Classic last.
         Assert.Equal(
-            [ThemeId.Medallion, ThemeId.IshgardGlass, ThemeId.AetherCrystal, ThemeId.Orrery, ThemeId.Classic],
+            [ThemeId.Medallion, ThemeId.IshgardGlass, ThemeId.AetherCrystal, ThemeId.Orrery, ThemeId.Sumi, ThemeId.Classic],
             ThemesPage.Themes.Select(static t => t.Id));
         Assert.True(ThemesPage.Themes[^1].Legacy);
-        Assert.DoesNotContain(ThemesPage.Themes, static t => t.Id is ThemeId.Sumi);
+
+        // Sumi to Kinpaku comes as designed: its crests in the Kirikane kit on Kugane Lacquer.
+        var sumi = ThemePresets.Get(ThemeId.Sumi);
+        Assert.Equal((GlyphSetId.Sumi, FrameKitId.Kirikane, PaletteId.KuganeLacquer), (sumi.Glyphs, sumi.Frames, sumi.Palette));
+        Assert.Equal((FrameKitId.Kirikane, PaletteId.KuganeLacquer), (GlyphSets.Sumi.DefaultFrames, GlyphSets.Sumi.DefaultPalette));
     }
 
     [Fact]
@@ -56,19 +61,19 @@ public sealed class ThemesPageTests
         Assert.False(ThemesPage.FramesChoosable(static id => id == FrameKitId.Brass));
         Assert.True(ThemesPage.FramesChoosable(static id => id is FrameKitId.Brass or FrameKitId.Silver));
 
-        // A kit that is not offered (Kirikane, until Sumi ships) does not count.
-        Assert.False(ThemesPage.FramesChoosable(static id => id is FrameKitId.Brass or FrameKitId.Kirikane));
+        // A kit that is not offered does not count.
+        Assert.False(ThemesPage.FramesChoosable(static id => id is FrameKitId.Brass or (FrameKitId)7));
 
-        // 1.17 T11: Brass, Silver, Lead came and Astrolabe each draw their own metal, so the row is a choice.
+        // 1.17 T11 and T15: Brass, Silver, Lead came, Astrolabe and Kirikane each draw their own metal, so the row is a choice.
         Assert.True(ThemesPage.FramesChoosable(FrameKitMetals.HasOwnMetal));
+        Assert.Equal([FrameKitId.Brass, FrameKitId.Silver, FrameKitId.Came, FrameKitId.Astrolabe, FrameKitId.Kirikane], ThemesPage.Kits.Select(static k => k.Id));
         Assert.All(ThemesPage.Kits, static k => Assert.True(FrameKitMetals.HasOwnMetal(k.Id), k.Key));
-        Assert.False(FrameKitMetals.HasOwnMetal(FrameKitId.Kirikane));
     }
 
     [Fact]
     public void The_frames_choice_is_From_theme_then_the_offered_kits()
     {
-        Assert.Equal([FrameKitId.Brass, FrameKitId.Silver, FrameKitId.Came, FrameKitId.Astrolabe], ThemesPage.Kits.Select(static k => k.Id));
+        Assert.Equal([FrameKitId.Brass, FrameKitId.Silver, FrameKitId.Came, FrameKitId.Astrolabe, FrameKitId.Kirikane], ThemesPage.Kits.Select(static k => k.Id));
         Assert.Null(ThemesPage.KitAt(0));
         Assert.Null(ThemesPage.KitAt(ThemesPage.Kits.Count + 1));
 
@@ -80,8 +85,9 @@ public sealed class ThemesPageTests
             Assert.Equal(i, ThemesPage.FramesIndex(config));
         }
 
+        // Kirikane joins with Sumi to Kinpaku (1.17 T15), last.
         config.Frames = "kirikane";
-        Assert.Equal(0, ThemesPage.FramesIndex(config));
+        Assert.Equal(5, ThemesPage.FramesIndex(config));
         config.Frames = "from-a-newer-build";
         Assert.Equal(0, ThemesPage.FramesIndex(config));
     }

@@ -1,7 +1,7 @@
 {
   "key": "sumi-to-kinpaku",
   "name": "Sumi to Kinpaku",
-  "note": "Tsukimi crests in sumi lacquer, gofun and cut gold leaf (plan v7 T15). Hero tiers 96 and 128 draw the full masters; 48 and 64 draw _mid/ (relief and its one-pixel kirie shadow, without the hero's kirikane hairlines, Kugane Castle, the susuki grass and the lacquer crazing). Ready on another job's empty seats are layered from the faces and the Kirikane kit in gen.py compose()'s order (face under, frame, badge ring, seat, face over); the Hand seat is the tank seat recoloured to Medallion's Hand enamel (GlyphTokens.Medallion.HandHex). Not offered yet (AppearanceCatalog: Offered false).",
+  "note": "Tsukimi crests in sumi lacquer, gofun and cut gold leaf (plan v7 T15). Hero tiers 96 and 128 draw the full masters; 48 and 64 draw _mid/ (relief and its one-pixel kirie shadow, without the hero's kirikane hairlines, Kugane Castle, the susuki grass and the lacquer crazing). Ready on another job's empty seats are layered from the faces and the Kirikane kit in gen.py compose()'s order (face under, frame, badge ring, seat, face over); the Hand seat is the tank seat recoloured to Medallion's Hand enamel (GlyphTokens.Medallion.HandHex). Decoration Plain draws _plain/ (one flat master per state with Medallion's Plain rim, no badge), built into the row strip as its 'plain' finish.",
   "root": "docs/design/v7/themes/sumi-to-kinpaku",
   "dest": "Tsukimichi/assets/ui/themes/sumi-to-kinpaku",
   "palette": "kugane-lacquer",
@@ -86,6 +86,19 @@
       "completed": "_row/completed.svg",
       "locked-out": "_row/locked-out.svg",
       "not-checked": "_row/not-checked.svg"
+    }
+  },
+  "plain": {
+    "dir": "_plain",
+    "sprites": {
+      "ready": "_plain/ready.svg",
+      "ready-on-another-job": "_plain/ready-on-another-job.svg",
+      "in-journal": "_plain/in-journal.svg",
+      "blocked": "_plain/blocked.svg",
+      "done-this-cycle": "_plain/done-this-cycle.svg",
+      "completed": "_plain/completed.svg",
+      "locked-out": "_plain/locked-out.svg",
+      "not-checked": "_plain/not-checked.svg"
     }
   }
 }

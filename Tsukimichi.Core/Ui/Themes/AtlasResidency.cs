@@ -35,6 +35,9 @@ public enum AtlasPart : byte
 
     /// <summary>A kit's <c>frames@2x.png</c>.</summary>
     Frames2x,
+
+    /// <summary>A kit's <c>ornaments.png</c> (Kirikane): loaded as soon as the kit's metal is the ornament's.</summary>
+    Ornaments,
 }
 
 /// <summary>
@@ -62,12 +65,13 @@ public sealed class AtlasResidency
     /// <summary>Slots per kind: ids 1–7 (0 is never an id).</summary>
     private const int Slots = 8;
 
-    private const int PartSlots = (int)AtlasPart.Frames2x + 1;
+    private const int PartSlots = (int)AtlasPart.Ornaments + 1;
 
     // Sets take slots 0–7 and kits 8–15, so one table serves both.
     private readonly bool[] composite = new bool[Slots];
     private readonly bool[] faces = new bool[Slots];
     private readonly bool[] kits = new bool[Slots];
+    private FrameKitId ornamentKit;
     private readonly bool[] loaded = new bool[2 * Slots * PartSlots];
     private readonly double[] lastDrawn = new double[2 * Slots * PartSlots];
 
@@ -78,6 +82,9 @@ public sealed class AtlasResidency
         Array.Clear(composite);
         Array.Clear(faces);
         Array.Clear(kits);
+
+        // The kit whose metal the ornament takes (the seam's Theme.UseFrameKit): Brass under Classic and high contrast.
+        ornamentKit = appearance.Classic || appearance.HighContrast ? FrameKitId.Brass : appearance.Frames;
 
         // Indexed: Retain runs every frame, and a foreach over the IReadOnlyList would box its enumerator.
         var sets = GlyphSets.All;
@@ -120,14 +127,24 @@ public sealed class AtlasResidency
     public bool IsWanted(FrameKitId kit) => Slot(kit) is var slot and >= 0 && kits[slot];
 
     /// <summary>
+    /// Whether that appearance's ornament is <paramref name="kit"/>'s (its frames, unless Classic or high contrast): its
+    /// <c>ornaments</c> strip, where the kit ships one, is wanted.
+    /// </summary>
+    public bool WantsOrnaments(FrameKitId kit) => Slot(kit) >= 0 && kit == ornamentKit;
+
+    /// <summary>
     /// Whether <paramref name="part"/> of <paramref name="set"/> should be requested before anything draws it: the row
     /// strip of a set drawn as designed, the faces' row strip of a set composed.
     /// </summary>
     public bool ShouldPreload(GlyphSetId set, AtlasPart part) =>
         ((part == AtlasPart.Row && WantsComposites(set)) || (part == AtlasPart.FacesRow && WantsFaces(set))) && !IsLoaded(set, part);
 
-    /// <summary>Whether <paramref name="part"/> of <paramref name="kit"/> should be requested before anything draws it (a wanted kit's row strip).</summary>
-    public bool ShouldPreload(FrameKitId kit, AtlasPart part) => part == AtlasPart.FramesRow && IsWanted(kit) && !IsLoaded(kit, part);
+    /// <summary>
+    /// Whether <paramref name="part"/> of <paramref name="kit"/> should be requested before anything draws it: a wanted
+    /// kit's row strip, and the ornament kit's ornaments.
+    /// </summary>
+    public bool ShouldPreload(FrameKitId kit, AtlasPart part) =>
+        ((part == AtlasPart.FramesRow && IsWanted(kit)) || (part == AtlasPart.Ornaments && WantsOrnaments(kit))) && !IsLoaded(kit, part);
 
     /// <summary>Records that <paramref name="part"/> of <paramref name="set"/> was drawn (or requested) at <paramref name="now"/> seconds.</summary>
     public void Touch(GlyphSetId set, AtlasPart part, double now) => Touch(Index(Slot(set), part), now);
@@ -156,7 +173,7 @@ public sealed class AtlasResidency
 
     /// <summary>Whether a held part of <paramref name="kit"/> should be let go at <paramref name="now"/>.</summary>
     public bool ShouldRelease(FrameKitId kit, AtlasPart part, double now) =>
-        Expired(KitIndex(kit, part), part is AtlasPart.FramesRow or AtlasPart.Frames && IsWanted(kit), now);
+        Expired(KitIndex(kit, part), (part is AtlasPart.FramesRow or AtlasPart.Frames && IsWanted(kit)) || (part == AtlasPart.Ornaments && WantsOrnaments(kit)), now);
 
     /// <summary>Records that a part of <paramref name="set"/> was let go.</summary>
     public void Released(GlyphSetId set, AtlasPart part) => Release(Index(Slot(set), part));

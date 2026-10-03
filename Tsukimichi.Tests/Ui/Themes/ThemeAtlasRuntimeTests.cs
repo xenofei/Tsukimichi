@@ -449,6 +449,7 @@ public sealed class ThemeAtlasRuntimeTests
     [InlineData("ishgard-glass")]
     [InlineData("aether-crystal")]
     [InlineData("astrologian-orrery")]
+    [InlineData("sumi-to-kinpaku")]
     public void The_shipped_revived_sets_are_drawable_from_hero_to_row(string key)
     {
         var folder = Path.Combine(ThemesDir(), key);
@@ -467,6 +468,62 @@ public sealed class ThemeAtlasRuntimeTests
                 Assert.Equal(Math.Clamp((int)px, 12, 31), pick.Cell);
             }
         }
+    }
+
+    [Fact]
+    public void Sumi_draws_its_own_flat_finish_at_Plain_below_32_px_and_every_other_set_Medallions()
+    {
+        // theme-system §3.5: a set's own flat finish where it has one (HasPlainFinish: Sumi to Kinpaku's row strip carries
+        // a 'plain' finish), otherwise Medallion's Plain ladder stands in. No set ships a hero 'plain' atlas (one would
+        // break the 4 MB per-set budget beside medals and the row strip), so from 32 px Medallion's Plain stands in for all.
+        foreach (var set in GlyphSets.All.Where(static s => s.Offered && s.Kind == GlyphRenderKind.Atlas))
+        {
+            var folder = Path.Combine(ThemesDir(), set.Key);
+            Assert.True(RowStripLayout.TryParse(File.ReadAllText(Path.Combine(folder, "row.json")), out var row, out var error), error);
+            Assert.True(HeroAtlasLayout.TryParse(File.ReadAllText(Path.Combine(folder, "medals.json")), out var medals, out error), error);
+            Assert.False(File.Exists(Path.Combine(folder, "plain.json")), set.Key);
+            Assert.Equal(set.HasPlainFinish, row!.Has(RowFinish.Plain));
+            for (var px = 8f; px <= 300f; px += 1f)
+            {
+                var pick = ThemeAtlasRules.Pick(px, MedalFinish.Plain, medals, null, row);
+                if (px < MedalLayout.RowTierMaxPx && set.HasPlainFinish)
+                {
+                    Assert.Equal((AtlasSource.Row, RowFinish.Plain, Math.Clamp((int)px, 12, 31)), (pick.Source, pick.Finish, pick.Cell));
+                    Assert.True(row.TryRect(QuestState.Ready, RowFinish.Plain, pick.Cell, out var plain) && row.TryRect(QuestState.Ready, RowFinish.Full, pick.Cell, out var full) && plain != full);
+                }
+                else
+                {
+                    Assert.Equal(AtlasSource.StandIn, pick.Source);
+                }
+            }
+        }
+
+        Assert.True(GlyphSets.Sumi.HasPlainFinish);
+    }
+
+    [Fact]
+    public void The_ornament_kits_strip_is_kept_while_its_metal_is_the_ornaments()
+    {
+        var residency = new AtlasResidency();
+        residency.Retain(AppearanceResolver.Resolve(new AppearanceConfig { Theme = "sumi-to-kinpaku" }));
+        Assert.True(residency.WantsOrnaments(FrameKitId.Kirikane));
+        Assert.False(residency.WantsOrnaments(FrameKitId.Brass));
+        Assert.True(residency.ShouldPreload(FrameKitId.Kirikane, AtlasPart.Ornaments));
+
+        // Sumi in its own kit composes nothing, so the kit's frames are not wanted; its ornaments are.
+        Assert.False(residency.IsWanted(FrameKitId.Kirikane));
+        residency.Touch(FrameKitId.Kirikane, AtlasPart.Ornaments, 0);
+        Assert.False(residency.ShouldPreload(FrameKitId.Kirikane, AtlasPart.Ornaments));
+        var later = AtlasResidency.IdleSeconds + 1;
+        Assert.False(residency.ShouldRelease(FrameKitId.Kirikane, AtlasPart.Ornaments, later));
+
+        // Another kit's frames (or high contrast, which draws the palette's ornament) let the strip go once idle.
+        residency.Retain(AppearanceResolver.Resolve(new AppearanceConfig { Theme = "sumi-to-kinpaku", HighContrast = true }));
+        Assert.False(residency.WantsOrnaments(FrameKitId.Kirikane));
+        Assert.True(residency.ShouldRelease(FrameKitId.Kirikane, AtlasPart.Ornaments, later));
+        residency.Retain(AppearanceResolver.Resolve(new AppearanceConfig { Theme = "sumi-to-kinpaku", Frames = "brass" }));
+        Assert.False(residency.WantsOrnaments(FrameKitId.Kirikane));
+        Assert.True(residency.WantsOrnaments(FrameKitId.Brass));
     }
 
     [Fact]

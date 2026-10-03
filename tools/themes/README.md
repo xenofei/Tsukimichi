@@ -23,6 +23,7 @@ Every run builds every kit (`kits/*.json`). Needs Python 3 with numpy and Pillow
 | `dest`, `atlasDest` | Where the set's files go. Medallion's atlas stays at `Tsukimichi/assets/ui/`. |
 | `kit` | The set's own frame kit (a `kits/<kit>.json`): its composites are drawn as designed in it, and composed in any other. |
 | `faces` | The unframed faces: `hero` (per tier, `{tier}` as in `sprites`) and `row`. A spec is a path with `{state}` and `{layer}` (`under`, `over`), a `{"under": …, "over": …}` pair, or a python source (Medallion's faces come from `sources.py`, which cuts them from gen5.py read-only). |
+| `plain` | Optional (Sumi to Kinpaku, 1.17 T15): the set's own flat finish for Decoration Plain, `dir` and one master per state in `sprites` (every size, no frame, no badge). It needs `row.atlas`: the strip is then written in ATLAS-CONTRACT §3's nested form, `full` then `plain`. Without it, Plain shows Medallion's Plain ladder. |
 
 ## Kit manifests (`kits/<kit>.json`)
 
@@ -31,16 +32,17 @@ Every run builds every kit (`kits/*.json`). Needs Python 3 with numpy and Pillow
 | `root`, `dest` | The kit's design folder, and where its files go (`Tsukimichi/assets/ui/kits/<kit>/`). |
 | `frames` | `hero` and `row` specs with `{urgency}` (`act-now`, `resting`, `finished`, `ghost`) and `{finish}` (`full`, `quiet`); a `{"full": …, "quiet": …}` pair picks by finish. |
 | `badges` | The seven badges at the shared slot: `open`, `closed`, `journal` (ring, seat and glyph), and `seat-tank`, `seat-healer`, `seat-dps`, `seat-hand` (ring and empty role seat). Layers or python sources (`sources.py` for Brass and Silver). |
+| `ornaments` | Optional (Kirikane, 1.17 T15): the kit's Decoration ornament sprites, `sigil`, `sigil-small`, `lozenge` and `corner`, each `{"file": …, "sizes": [first, last]}` (whole device pixels). The sizes must keep the sigil's size rule: `sigil` from 13 px, `sigil-small` within 10–12, `lozenge` under 10, `corner` from 15. |
 
 ## What it writes
 
 Per set, under `Tsukimichi/assets/ui/themes/<set>/`:
 - `medals.png`, `medals@2x.png`, `medals.json`: the hero atlas, in Medallion's cell layout (`MedalLayout`), with the same sprite names. Ready on another job ships once per role seat, the seat left empty for the game's job icon.
-- `row.png`, `row.json`: each state's row-tier master at every whole device pixel from 12 to 31, rendered at that size.
+- `row.png`, `row.json`: each state's row-tier master at every whole device pixel from 12 to 31, rendered at that size; for a set with a `plain` finish, the nested form (ATLAS-CONTRACT §3) with every state's Plain master on shelves of their own below.
 - `faces.png`, `faces@2x.png`, `faces.json`, `faces-row.png`, `faces-row.json`: the set's unframed faces (ATLAS-CONTRACT §7): each state's under layer and, where it has one, its over layer, each sprite cropped to its box of the 128-unit box (8-unit grid) at the hero tiers, and whole cells at every pixel from 12 to 31.
 - `metrics.json`: the gate results and the numbers behind them, the set's half of the cross-set table, and the SHA-256 of each PNG the set ships (`pngs`). It is not packaged with the plugin.
 
-Per kit, under `Tsukimichi/assets/ui/kits/<kit>/`: `frames.png`, `frames@2x.png`, `frames.json`, `frames-row.png`, `frames-row.json` (the four urgency tiers at Full and Quiet, and the seven badges at hero tiers), and `metrics.json` (below).
+Per kit, under `Tsukimichi/assets/ui/kits/<kit>/`: `frames.png`, `frames@2x.png`, `frames.json`, `frames-row.png`, `frames-row.json` (the four urgency tiers at Full and Quiet, and the seven badges at hero tiers), for a kit with `ornaments` its `ornaments.png` and `ornaments.json` (each sprite at every whole device pixel of its range, 1x; ATLAS-CONTRACT §8), and `metrics.json` (below).
 
 Contact sheets, the cross-set heatmaps, `mix-sheet.png` (every set's faces in every kit, composed from the shipped atlases exactly as the plugin composes them) and `report.txt` go to `--out`, never into the repo.
 
@@ -56,6 +58,7 @@ On the Night window, for every hero tier group and the row tier, at 16 px in a 4
   - **Not checked under Ready:** Not checked's chroma salience is below Ready's.
   - Not checked still counts in every distinctness and colour-vision gate.
 - **Fit:** nothing outside the cells, and no sprite cut by its cell.
+- **Plain (1.17 T15):** a set's `plain` masters are measured as a tier group of their own (`plain`, no atlas tiers) and held to G1, G1c, G2 and G2D like every other group. G2L stays on the row tier: the light-palette measure's unmatte check (Chrome's render reproduced within 6/255) misses one edge pixel of Sumi's Plain Locked out at 20 px (7.7/255), so the Plain group is not measured on Ishgard Snow.
 
 Distinctness and salience are judged at one decimal, as round 5 judged them, and ratios at two. Everything else (other grounds and sizes) is recorded under `survey` for reviewers.
 
@@ -64,6 +67,10 @@ Distinctness and salience are judged at one decimal, as round 5 judged them, and
 Each measure is recorded with no wash, the shipped wash and the old fallback (.90 within 4 px) at 16 and 20 px. Only the shipped wash is gated. Full OKLab difference is not used: it is mostly lightness, so on a light page every dark-faced state outweighs Ready's light face, and no set reached 1.3 under it with either wash.
 
 - **G2D (the dark palettes, 1.17):** on Dawn's and Kugane Lacquer's windows (read from `docs/design/v7/ui/1.17/palettes17.json`), for every tier group at 16 and 20 px in greyscale, Ready is at least 1.3× the next state and Completed at most 0.8× Ready; and every mix (Ready from one set, the rest from another, in the neutral kit, row tier and 48 px) keeps Ready at least 1.25×. Ready's halo on a dark palette is Moon gold in the wash's 3 px footprint; each variant is recorded (none, the shipped .45, the raised .60) and each palette's gate uses the least under which every set and mix passes, recorded as `dark.halo`. Medals are never recoloured.
+
+## Kit ornaments (1.17 T15)
+
+A kit's `ornaments` strip is gated in its `metrics.json` under `ornaments.gates`, and the kit passes only if they do: the size rule (above), fit (no bleed, not cut), and the leaf's WCAG contrast on Night's, Dawn's and Kugane Lacquer's windows, at least 3 : 1 (the ornament's bar; the plugin draws the sprites on dark standard-contrast palettes only). Its PNG's SHA-256 is in the kit's `pngs`.
 
 ## Faces in every kit (1.17 T11)
 

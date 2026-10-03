@@ -19,6 +19,7 @@ public sealed class MixTableTests
         ["ishgard-glass"] = GlyphSetId.IshgardGlass,
         ["aether-crystal"] = GlyphSetId.AetherCrystal,
         ["astrologian-orrery"] = GlyphSetId.Orrery,
+        ["sumi-to-kinpaku"] = GlyphSetId.Sumi,
     };
 
     private static Dictionary<string, JsonElement> LoadMetrics()
@@ -44,9 +45,9 @@ public sealed class MixTableTests
         var measured = metrics.Where(static m => m.Value.GetProperty("cross").TryGetProperty("neutralSalience", out _)).Select(static m => Sets[m.Key]).Order().ToArray();
         Assert.Equal(measured, MixTable.Sets.ToArray());
 
-        // The Orrery's cross-set numbers exist, so it joins the per-state lists (the owner's decision); Sumi does not.
+        // The Orrery's and Sumi to Kinpaku's cross-set numbers exist, so both join the per-state lists (the owner's decision).
         Assert.Contains(GlyphSetId.Orrery, MixTable.Sets);
-        Assert.DoesNotContain(GlyphSetId.Sumi, MixTable.Sets);
+        Assert.Contains(GlyphSetId.Sumi, MixTable.Sets);
 
         // Within-set pairs never warn because every set passed its own gates in the build.
         foreach (var (_, m) in metrics)
@@ -80,8 +81,8 @@ public sealed class MixTableTests
             }
         }
 
-        // Four sets, twelve ordered pairs, 56 state pairs each, five modes.
-        Assert.Equal(4 * 3 * 56 * 5, checkedPairs);
+        // Five sets, twenty ordered pairs, 56 state pairs each, five modes.
+        Assert.Equal(5 * 4 * 56 * 5, checkedPairs);
     }
 
     [Fact]
@@ -149,7 +150,7 @@ public sealed class MixTableTests
     [Fact]
     public void An_unmeasured_set_or_the_same_state_twice_has_no_number()
     {
-        Assert.False(MixTable.TryPair(GlyphSetId.Sumi, QuestState.Ready, GlyphSetId.Medallion, QuestState.Blocked, VisionMode.Grey, out _));
+        Assert.False(MixTable.TryPair((GlyphSetId)7, QuestState.Ready, GlyphSetId.Medallion, QuestState.Blocked, VisionMode.Grey, out _));
         Assert.False(MixTable.TryPair(GlyphSetId.Medallion, QuestState.Ready, GlyphSetId.AetherCrystal, QuestState.Ready, VisionMode.Grey, out _));
         Assert.False(MixTable.TrySalience(GlyphSetId.Classic, QuestState.Ready, MixTier.Row, out _));
     }

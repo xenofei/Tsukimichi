@@ -14,8 +14,8 @@ public static class ThemesPage
     private static readonly FrameKitInfo[] OfferedKits = [.. FrameKits.All.Where(static k => k.Offered)];
 
     /// <summary>
-    /// The theme cards, in the registry's order: only the themes this build offers (Sumi stays hidden until its art
-    /// ships, spec §B6), Classic last as Legacy.
+    /// The theme cards, in the registry's order: only the themes this build offers (Sumi to Kinpaku since 1.17), Classic
+    /// last as Legacy.
     /// </summary>
     public static IReadOnlyList<ThemePreset> Themes => OfferedThemes;
 

@@ -247,12 +247,12 @@ public sealed class MixRulesTests
     }
 
     [Fact]
-    public void The_lists_offer_every_measured_mixable_set_and_never_Classic_or_Sumi()
+    public void The_lists_offer_every_measured_mixable_set_and_never_Classic()
     {
+        // Sumi to Kinpaku joins with its measured numbers (1.17 T15).
         var offered = MixRules.Choices.Select(static c => c.Id).ToArray();
-        Assert.Equal([GlyphSetId.Medallion, GlyphSetId.AetherCrystal, GlyphSetId.IshgardGlass, GlyphSetId.Orrery], offered.Order());
+        Assert.Equal([GlyphSetId.Medallion, GlyphSetId.AetherCrystal, GlyphSetId.IshgardGlass, GlyphSetId.Orrery, GlyphSetId.Sumi], offered.Order());
         Assert.DoesNotContain(GlyphSetId.Classic, offered);
-        Assert.DoesNotContain(GlyphSetId.Sumi, offered);
     }
 
     [Fact]
@@ -266,7 +266,8 @@ public sealed class MixRulesTests
     [Fact]
     public void A_set_without_numbers_is_not_judged()
     {
-        var column = With(Pure(GlyphSetId.Medallion), QuestState.Ready, GlyphSetId.Sumi);
+        // Every offered mixable set is measured, so an id this build does not know stands for one without numbers.
+        var column = With(Pure(GlyphSetId.Medallion), QuestState.Ready, (GlyphSetId)7);
         var verdict = MixRules.Evaluate(column);
         Assert.False(verdict.Measured);
         Assert.True(verdict.Ok);

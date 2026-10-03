@@ -18,6 +18,7 @@ public sealed class FrameKitChecksTests
         ["ishgard-glass"] = GlyphSetId.IshgardGlass,
         ["aether-crystal"] = GlyphSetId.AetherCrystal,
         ["astrologian-orrery"] = GlyphSetId.Orrery,
+        ["sumi-to-kinpaku"] = GlyphSetId.Sumi,
     };
 
     [Fact]
