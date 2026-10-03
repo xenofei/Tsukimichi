@@ -174,6 +174,8 @@ public sealed partial class MainWindow : Window, IDisposable
             Catalog = () => plugin.Session?.Bundle?.Catalog,
             ShowExp = () => plugin.Settings?.JournalShowExpColumn == true,
             ShowOpens = () => plugin.Settings?.JournalShowOpensColumn == true,
+            ColumnWidths = () => plugin.Settings?.JournalColumnWidths,
+            ColumnWidthsChanged = OnDisplayChanged,
         };
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tablePane.Lane = filterPanel;

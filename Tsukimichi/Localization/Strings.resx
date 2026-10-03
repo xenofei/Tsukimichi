@@ -6481,6 +6481,10 @@
     <value>Sorted by {0}, a column hidden at this width</value>
     <comment>{0} = the sorted column's header (Level, Expansion). The Name header's tooltip while the table is too narrow to show the sorted column.</comment>
   </data>
+  <data name="TableResetColumnWidths" xml:space="preserve">
+    <value>Reset column widths</value>
+    <comment>The Journal table header's right-click menu: every column the player dragged goes back to its automatic width.</comment>
+  </data>
   <data name="JobAny" xml:space="preserve">
     <value>Any</value>
   </data>

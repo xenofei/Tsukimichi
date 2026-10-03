@@ -45,7 +45,8 @@ public enum QuestColumn
 /// <param name="Scale">Pixels per logical pixel, for the logical budgets (name minimum, status pad, hysteresis).</param>
 /// <param name="Exp">The EXP column; 0 when it is not measured, which gives it no room at all.</param>
 /// <param name="Opens">The Opens column; 0 when it is not measured, which gives it no room at all.</param>
-public readonly record struct QuestTableWidths(float Glyph, float Level, float JobIcon, float Job, float StateWord, float Expansion, float Rewards, float CellOverhead, float Scale = 1f, float Exp = 0f, float Opens = 0f);
+/// <param name="Icon">A row icon's side (the job, reward and unlock icons): the least a column of icons can be sized to; 0 when not measured.</param>
+public readonly record struct QuestTableWidths(float Glyph, float Level, float JobIcon, float Job, float StateWord, float Expansion, float Rewards, float CellOverhead, float Scale = 1f, float Exp = 0f, float Opens = 0f, float Icon = 0f);
 
 /// <summary>What <see cref="TableGeometry.PlanQuestTable"/> decided for a frame, beyond the columns.</summary>
 /// <param name="TwoLine">The rows are two-line: the name and the level, then the status under the name.</param>
@@ -75,7 +76,20 @@ public static partial class TableGeometry
     /// <param name="widths">The measured content widths.</param>
     /// <param name="playerHidden">Whether the player hid each column, in <see cref="QuestColumn"/> order; empty for none.</param>
     /// <param name="specs">Filled with the specs; at least <see cref="QuestColumnCount"/> long.</param>
-    public static void QuestColumnSpecs(in QuestTableWidths widths, ReadOnlySpan<bool> playerHidden, Span<ColumnSpec> specs)
+    public static void QuestColumnSpecs(in QuestTableWidths widths, ReadOnlySpan<bool> playerHidden, Span<ColumnSpec> specs) =>
+        QuestColumnSpecs(widths, playerHidden, [], specs);
+
+    /// <summary>
+    /// <see cref="QuestColumnSpecs(in QuestTableWidths, ReadOnlySpan{bool}, Span{ColumnSpec})"/> with the widths the
+    /// player dragged columns to (feature plan v6 U9): a column the player sized is fixed at that width (never under
+    /// <see cref="PlayerColumnFloor"/>), keeps its priority and gives up its stretch share (the status), so it hides in
+    /// the same order as before, at the width the player chose. The glyph and the name are never sized by the player.
+    /// </summary>
+    /// <param name="widths">The measured content widths.</param>
+    /// <param name="playerHidden">Whether the player hid each column, in <see cref="QuestColumn"/> order; empty for none.</param>
+    /// <param name="playerWidths">The player's content width of each column in pixels, in <see cref="QuestColumn"/> order; 0 (or empty) for automatic.</param>
+    /// <param name="specs">Filled with the specs; at least <see cref="QuestColumnCount"/> long.</param>
+    public static void QuestColumnSpecs(in QuestTableWidths widths, ReadOnlySpan<bool> playerHidden, ReadOnlySpan<float> playerWidths, Span<ColumnSpec> specs)
     {
         if (specs.Length < QuestColumnCount)
         {
@@ -94,6 +108,15 @@ public static partial class TableGeometry
         specs[(int)QuestColumn.Rewards] = FixedSpec(6, widths.Rewards, pad);
         specs[(int)QuestColumn.Exp] = NonNegative(widths.Exp) > 0f ? FixedSpec(7, widths.Exp, pad) : new(0, 0f, 0f);
         specs[(int)QuestColumn.Opens] = NonNegative(widths.Opens) > 0f ? FixedSpec(4, widths.Opens, pad) : new(0, 0f, 0f);
+        for (var i = (int)QuestColumn.Level; i < QuestColumnCount; i++)
+        {
+            // A column with no room at all (EXP or Unlocks while Settings leaves it off) stays without room.
+            if (PlayerSized(playerWidths, (QuestColumn)i) && specs[i].Min > 0f)
+            {
+                specs[i] = FixedSpec(specs[i].Priority, MathF.Max(playerWidths[i], PlayerColumnFloor((QuestColumn)i, widths)), pad);
+            }
+        }
+
         for (var i = (int)QuestColumn.Level; i < QuestColumnCount && i < playerHidden.Length; i++)
         {
             if (playerHidden[i])
@@ -145,14 +168,25 @@ public static partial class TableGeometry
     /// <param name="specs">Filled with the specs (the job's as planned).</param>
     /// <param name="visible">Filled with this frame's visibility.</param>
     /// <param name="columnWidths">Filled with each column's width, overhead included (0 when hidden).</param>
-    public static QuestTablePlan PlanQuestTable(float available, in QuestTableWidths widths, ReadOnlySpan<bool> playerHidden, QuestTablePlan was, ReadOnlySpan<bool> wasVisible, Span<ColumnSpec> specs, Span<bool> visible, Span<float> columnWidths)
+    public static QuestTablePlan PlanQuestTable(float available, in QuestTableWidths widths, ReadOnlySpan<bool> playerHidden, QuestTablePlan was, ReadOnlySpan<bool> wasVisible, Span<ColumnSpec> specs, Span<bool> visible, Span<float> columnWidths) =>
+        PlanQuestTable(available, widths, playerHidden, [], was, wasVisible, specs, visible, columnWidths);
+
+    /// <summary>
+    /// <see cref="PlanQuestTable(float, in QuestTableWidths, ReadOnlySpan{bool}, QuestTablePlan, ReadOnlySpan{bool}, Span{ColumnSpec}, Span{bool}, Span{float})"/>
+    /// with the widths the player dragged columns to (feature plan v6 U9,
+    /// <see cref="QuestColumnSpecs(in QuestTableWidths, ReadOnlySpan{bool}, ReadOnlySpan{float}, Span{ColumnSpec})"/>):
+    /// the columns the player sized are planned at their width and hide in the usual order, and a job column the player
+    /// sized hides whole rather than going to its icon (its cell ellipsises the label instead). Without player widths
+    /// (Reset column widths) the plan is the automatic one.
+    /// </summary>
+    public static QuestTablePlan PlanQuestTable(float available, in QuestTableWidths widths, ReadOnlySpan<bool> playerHidden, ReadOnlySpan<float> playerWidths, QuestTablePlan was, ReadOnlySpan<bool> wasVisible, Span<ColumnSpec> specs, Span<bool> visible, Span<float> columnWidths)
     {
         if (visible.Length < QuestColumnCount || columnWidths.Length < QuestColumnCount)
         {
             throw new ArgumentException("The output spans are shorter than the quest table's columns.");
         }
 
-        QuestColumnSpecs(widths, playerHidden, specs);
+        QuestColumnSpecs(widths, playerHidden, playerWidths, specs);
         var room = float.IsFinite(available) ? MathF.Max(0f, available) : 0f;
         var scale = ScaleOf(widths);
         var hysteresis = LayoutBudgets.HysteresisLogical * scale;
@@ -187,7 +221,7 @@ public static partial class TableGeometry
 
         PlanColumns(room, columns, hasHistory ? history : [], visible, columnWidths, hysteresis);
         var iconOnly = false;
-        if (!visible[(int)QuestColumn.Job] && !Hidden(playerHidden, QuestColumn.Job))
+        if (!visible[(int)QuestColumn.Job] && !Hidden(playerHidden, QuestColumn.Job) && !PlayerSized(playerWidths, QuestColumn.Job))
         {
             // Its icon alone: the columns that hide before the job stay hidden.
             var jobPriority = columns[(int)QuestColumn.Job].Priority;
@@ -214,7 +248,7 @@ public static partial class TableGeometry
             }
 
             // The specs as planned: every column's own, the job's with its icon alone when that is what shows.
-            QuestColumnSpecs(widths, playerHidden, specs);
+            QuestColumnSpecs(widths, playerHidden, playerWidths, specs);
             if (iconOnly)
             {
                 specs[(int)QuestColumn.Job] = FixedSpec(jobPriority, widths.JobIcon, NonNegative(widths.CellOverhead));
@@ -231,6 +265,184 @@ public static partial class TableGeometry
         }
 
         return new QuestTablePlan(TwoLine: false, JobIconOnly: iconOnly);
+    }
+
+    /// <summary>Whether the player sized <paramref name="column"/> (a finite width over 0); never the glyph or the name.</summary>
+    public static bool PlayerSized(ReadOnlySpan<float> playerWidths, QuestColumn column) =>
+        column is not (QuestColumn.Glyph or QuestColumn.Name) && playerWidths.Length > (int)column && float.IsFinite(playerWidths[(int)column]) && playerWidths[(int)column] > 0f;
+
+    /// <summary>The widest a saved column width may be, in logical pixels: wider is a hand-edited file, not a drag.</summary>
+    public const float MaxPlayerWidthLogical = 2000f;
+
+    /// <summary>A saved column width (logical pixels) as the table uses it: 0 (automatic) when unreadable or not over 0, else at most <see cref="MaxPlayerWidthLogical"/>.</summary>
+    public static float SanitizePlayerWidth(float logical) =>
+        float.IsFinite(logical) && logical > 0f ? MathF.Min(logical, MaxPlayerWidthLogical) : 0f;
+
+    /// <summary>
+    /// The least content width the player can drag <paramref name="column"/> to (feature plan v6 U9), in pixels: the
+    /// widest state word for the status (it is never cut, P1), else <see cref="LayoutBudgets.TableColumnMinLogical"/>,
+    /// and at least one icon for the job, reward and unlock columns. Never over the column's own automatic width, so a
+    /// floor never widens a column; 0 for the glyph and the name, which the player does not size.
+    /// </summary>
+    public static float PlayerColumnFloor(QuestColumn column, in QuestTableWidths widths)
+    {
+        var floor = LayoutBudgets.TableColumnMinLogical * ScaleOf(widths);
+        var icon = MathF.Max(floor, NonNegative(widths.Icon));
+        var auto = column switch
+        {
+            QuestColumn.Level => NonNegative(widths.Level),
+            QuestColumn.Job => NonNegative(widths.JobIcon),
+            QuestColumn.Expansion => NonNegative(widths.Expansion),
+            QuestColumn.Rewards => NonNegative(widths.Rewards),
+            QuestColumn.Exp => NonNegative(widths.Exp),
+            QuestColumn.Opens => NonNegative(widths.Opens),
+            _ => 0f,
+        };
+
+        return column switch
+        {
+            QuestColumn.Glyph or QuestColumn.Name => 0f,
+            QuestColumn.Status => NonNegative(widths.StateWord),
+            QuestColumn.Job or QuestColumn.Rewards or QuestColumn.Opens => auto > 0f ? MathF.Min(icon, auto) : icon,
+            _ => auto > 0f ? MathF.Min(floor, auto) : floor,
+        };
+    }
+
+    /// <summary>
+    /// The widths a drag on a column edge leaves (feature plan v6 U9). ImGui moves the edge under the pointer by trading
+    /// width between the two columns beside it, or, beside the stretching name, by changing one column while the name
+    /// gives or takes the difference. This keeps that, within the rules: every changed column stays at or over its
+    /// floor; a traded pair keeps its sum, so its outer edges (and every other column) stay where they are; and the
+    /// columns together grow at most by <paramref name="slack"/>, the room the name has over its minimum, so a drag
+    /// never pushes another column out of the plan. A change under half a pixel is no change. Nothing allocates.
+    /// </summary>
+    /// <param name="before">Each column's content width as it was laid out before the drag.</param>
+    /// <param name="after">Each column's content width as the drag left it; rewritten to the widths kept.</param>
+    /// <param name="floors">Each column's floor (<see cref="PlayerColumnFloor"/>).</param>
+    /// <param name="slack">How much the columns may grow together; under 0 counts as 0.</param>
+    /// <param name="changed">Filled with whether each column's width changed.</param>
+    /// <returns>Whether any column changed.</returns>
+    public static bool ApplyColumnDrag(ReadOnlySpan<float> before, Span<float> after, ReadOnlySpan<float> floors, float slack, Span<bool> changed)
+    {
+        var n = before.Length;
+        if (after.Length < n || floors.Length < n || changed.Length < n)
+        {
+            throw new ArgumentException("The spans are shorter than the columns.");
+        }
+
+        var count = 0;
+        var first = -1;
+        var second = -1;
+        var sumBefore = 0f;
+        var sumAfter = 0f;
+        for (var i = 0; i < n; i++)
+        {
+            var was = NonNegative(before[i]);
+            changed[i] = float.IsFinite(after[i]) && MathF.Abs(after[i] - was) > 0.5f;
+            if (!changed[i])
+            {
+                after[i] = was;
+                continue;
+            }
+
+            count++;
+            sumBefore += was;
+            sumAfter += MathF.Max(0f, after[i]);
+            if (first < 0)
+            {
+                first = i;
+            }
+            else if (second < 0)
+            {
+                second = i;
+            }
+        }
+
+        if (count == 0)
+        {
+            return false;
+        }
+
+        if (count == 2 && MathF.Abs(sumAfter - sumBefore) <= 1f)
+        {
+            // A trade between the two columns beside the edge: the one that shrank stops at its floor and the other
+            // takes what the pair had, so the pair's outer edges stay put.
+            var shrank = after[first] < NonNegative(before[first]) ? first : second;
+            var grew = shrank == first ? second : first;
+            var pair = NonNegative(before[first]) + NonNegative(before[second]);
+            after[shrank] = MathF.Max(MathF.Max(0f, after[shrank]), NonNegative(floors[shrank]));
+            after[grew] = pair - after[shrank];
+            if (after[grew] < NonNegative(floors[grew]))
+            {
+                after[grew] = NonNegative(floors[grew]);
+                after[shrank] = MathF.Max(NonNegative(floors[shrank]), pair - after[grew]);
+            }
+        }
+        else
+        {
+            for (var i = 0; i < n; i++)
+            {
+                if (changed[i])
+                {
+                    after[i] = MathF.Max(MathF.Max(0f, after[i]), NonNegative(floors[i]));
+                }
+            }
+        }
+
+        // The name gives up at most the slack; the columns that grew give back the rest, never under their floor.
+        var growth = 0f;
+        for (var i = 0; i < n; i++)
+        {
+            growth += after[i] - NonNegative(before[i]);
+        }
+
+        var excess = growth - NonNegative(slack);
+        for (var i = 0; i < n && excess > 0f; i++)
+        {
+            var grown = after[i] - NonNegative(before[i]);
+            if (changed[i] && grown > 0f)
+            {
+                var give = MathF.Min(excess, MathF.Min(grown, MathF.Max(0f, after[i] - NonNegative(floors[i]))));
+                after[i] -= give;
+                excess -= give;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// How many of <paramref name="count"/> icons a cell <paramref name="room"/> wide shows whole (feature plan v6 U9):
+    /// all of them when they fit, else as many as leave room for the "+N" after them (<paramref name="more"/> wide),
+    /// which may be none. An icon is never cut part-way.
+    /// </summary>
+    /// <param name="room">The cell's width.</param>
+    /// <param name="icon">An icon's side.</param>
+    /// <param name="gap">The gap between icons, and before the "+N".</param>
+    /// <param name="count">How many icons there are.</param>
+    /// <param name="more">The "+N" label's width.</param>
+    public static int IconsThatFit(float room, float icon, float gap, int count, float more)
+    {
+        if (count <= 0)
+        {
+            return 0;
+        }
+
+        var width = NonNegative(room) + 0.5f;
+        var side = NonNegative(icon);
+        var space = NonNegative(gap);
+        if ((count * side) + ((count - 1) * space) <= width)
+        {
+            return count;
+        }
+
+        var shown = 0;
+        while (shown < count - 1 && ((shown + 1) * (side + space)) + NonNegative(more) <= width)
+        {
+            shown++;
+        }
+
+        return shown;
     }
 
     private static bool Hidden(ReadOnlySpan<bool> playerHidden, QuestColumn column) =>

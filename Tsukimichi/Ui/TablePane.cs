@@ -34,6 +34,14 @@ namespace Tsukimichi.Ui;
 /// Level. The plan hides a column with <see cref="ImGuiTableColumnFlags.Disabled"/>, which ImGui neither saves nor
 /// lists in the header menu, so the player's own hidden columns (the menu's) stay theirs and stay hidden. Under
 /// 360 px the rows go two-line: the name and the level pill, then the status under the name.
+///
+/// Column widths (feature plan v6 U9): every automatic width is measured from the current font, so nothing is cut at
+/// any UI scale or text size. The player can drag any column edge but the glyph's: the two columns beside the edge
+/// trade width (beside the name, the name gives or takes it), so nothing else on screen moves. A column the player
+/// sized keeps that width (saved in the configuration, never under <see cref="TableGeometry.PlayerColumnFloor"/>) and
+/// the plan hides it in the usual order; what no longer fits in it ends in an ellipsis or "+N" with the whole on
+/// hover. "Reset column widths" in the header's menu, ImGui's "Size all columns to default", "Size column to fit" and a
+/// double-click on an edge give columns back to the automatic width.
 /// </summary>
 public sealed class TablePane : IDisposable
 {
@@ -167,8 +175,14 @@ public sealed class TablePane : IDisposable
     /// <summary>The widest level a pill is sized for when the Level column is first laid out.</summary>
     private const string WidestLevel = "100";
 
-    /// <summary>The widest EXP the column is sized for: a Quest Sync range at Dawntrail's levels.</summary>
-    private const string WidestExp = "888,888–888,888";
+    /// <summary>The widest EXP the column is sized for: a Quest Sync range at Dawntrail's levels, each end this wide.</summary>
+    private const int WidestExp = 888_888;
+
+    /// <summary>How many expansions have a short label (<see cref="Strings.ExpansionShort"/>), all measured for the Expansion column.</summary>
+    private const int ExpansionCount = 6;
+
+    /// <summary>The id of ImGui's own header menu under the table's id (imgui_tables.cpp, TableOpenContextMenu).</summary>
+    private const string HeaderMenuId = "##ContextMenu";
 
     /// <summary>Header label per <see cref="Column"/>; the glyph column keeps its name for the hide/show menu but shows none.</summary>
     private static string[] HeaderLabels => headerLabelsText.Value;
@@ -255,6 +269,43 @@ public sealed class TablePane : IDisposable
     private readonly bool[] playerHidden = new bool[ColumnCount];
     private bool planned;
     private QuestTablePlan plan;
+
+    // Column widths the player dragged (feature plan v6 U9), in QuestColumn order (0: automatic): logical content pixels
+    // as saved, and the pixels the plan takes. The content widths written into the table's columns last frame (a drag is
+    // what ImGui changed since; zero before the first frame) and each column's automatic content width this frame. The
+    // drag's scratch arrays. All arrays, so nothing allocates per frame.
+    private readonly float[] playerLogical = new float[ColumnCount];
+    private readonly float[] playerPixels = new float[ColumnCount];
+    private readonly float[] written = new float[ColumnCount];
+    private readonly float[] autoContent = new float[ColumnCount];
+    private readonly float[] dragWidths = new float[ColumnCount];
+    private readonly float[] dragFloors = new float[ColumnCount];
+    private readonly bool[] dragChanged = new bool[ColumnCount];
+    private bool hasWritten;
+
+    // The configuration's dictionary the player widths were read from: another one (a reload) is read again.
+    private System.Collections.Generic.Dictionary<string, float>? widthsSource;
+
+    /// <summary>The saved key of each column's width (<see cref="Config.Configuration.JournalColumnWidths"/>), in <see cref="Column"/> order.</summary>
+    private static readonly string[] ColumnKeys = Enum.GetNames<Column>();
+
+    /// <summary>
+    /// The configuration's saved column widths (feature plan v6 U9), which the table reads and writes in place; null
+    /// leaves every column automatic and keeps a drag for this session only.
+    /// </summary>
+    public Func<System.Collections.Generic.Dictionary<string, float>?>? ColumnWidths { get; set; }
+
+    /// <summary>Called after a drag or a reset changed the saved column widths, so the configuration is saved.</summary>
+    public Action? ColumnWidthsChanged { get; set; }
+
+    // The content widths measured from the current font (feature plan v6 U9): the widest job label, expansion pill and
+    // EXP text, measured again when the font size, the language or the job labels change.
+    private float measuredFont = -1f;
+    private int measuredLanguage = -1;
+    private System.Collections.Generic.IReadOnlyList<string>? measuredJobLabels;
+    private float widestJobLabel;
+    private float widestExpansionPill;
+    private float widestExpText;
 
     // A sort to write back into the column state once the sorted column is shown again (ImGui drops a hidden column's sort).
     private bool restoreSort;
@@ -406,18 +457,24 @@ public sealed class TablePane : IDisposable
             return width + (sortable ? sortArrow : 0f);
         }
 
-        var rewardsColumn = MathF.Max(
+        // Every content width is measured from the current font (feature plan v6 U9: a larger UI scale or text size widens
+        // the columns rather than cutting them) and rounded up to a whole pixel, since ImGui lays columns out in whole
+        // pixels and would clip a fraction of the last icon or letter.
+        MeasureContent();
+        var rewardsColumn = MathF.Ceiling(MathF.Max(
             UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f),
-            HeaderFloor(Strings.ColumnRewards, sortable: false));
-        var levelColumn = MathF.Max(
-            MathF.Max(UiMetrics.Px(LayoutBudgets.LevelColumnLogical), PillWidth(WidestLevel, UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX))),
-            HeaderFloor(Strings.ColumnLevel, sortable: true));
-        var expansionColumn = MathF.Max(UiMetrics.Px(LayoutBudgets.ExpansionColumnLogical), HeaderFloor(Strings.ColumnExpansion, sortable: true));
-        // The job column: icon, gap and "DoH/DoL" (never under its 76 px budget); narrowed, its icon alone (and its header).
+            HeaderFloor(Strings.ColumnRewards, sortable: false)));
+        // The level pill as drawn (the caption role, "100" padded), or its budget or header when wider.
+        var levelColumn = MathF.Ceiling(MathF.Max(
+            MathF.Max(UiMetrics.Px(LayoutBudgets.LevelColumnLogical), PillSize(WidestLevel, UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX), rowContent).X),
+            HeaderFloor(Strings.ColumnLevel, sortable: true)));
+        var expansionColumn = MathF.Ceiling(MathF.Max(MathF.Max(UiMetrics.Px(LayoutBudgets.ExpansionColumnLogical), widestExpansionPill), HeaderFloor(Strings.ColumnExpansion, sortable: true)));
+        // The job column: icon, gap and the widest label it can show (never under its 76 px budget); narrowed, its icon
+        // alone (and its header).
         var jobIcon = MathF.Min(UiMetrics.Icon(JobIconSide), rowContent);
         var jobHeader = HeaderFloor(Strings.ColumnJob, sortable: false);
-        var jobColumn = MathF.Max(MathF.Max(UiMetrics.Px(LayoutBudgets.JobColumnLogical), jobIcon + UiMetrics.Px(JobIconGap) + ImGui.CalcTextSize(Strings.JobDohDol).X), jobHeader);
-        var jobIconColumn = MathF.Max(jobIcon, jobHeader);
+        var jobColumn = MathF.Ceiling(MathF.Max(MathF.Max(UiMetrics.Px(LayoutBudgets.JobColumnLogical), jobIcon + UiMetrics.Px(JobIconGap) + widestJobLabel), jobHeader));
+        var jobIconColumn = MathF.Ceiling(MathF.Max(jobIcon, jobHeader));
 
         // The column plan, from the table's width (its window less the scrollbar when the rows overflow). ImGui adds the
         // cell padding either side of a column's content width, and the border between columns.
@@ -425,30 +482,43 @@ public sealed class TablePane : IDisposable
         var available = ImGui.GetWindowWidth() - (ImGui.GetScrollMaxY() > 0f ? style.ScrollbarSize : 0f);
         // The EXP column (off by default): as wide as a Quest Sync range or its header; no room at all while Settings leaves it off.
         var showExp = ShowExp?.Invoke() == true;
-        var expColumn = showExp ? MathF.Max(ImGui.CalcTextSize(WidestExp).X, HeaderFloor(Strings.ColumnExp, sortable: false)) : 0f;
+        var expColumn = showExp ? MathF.Ceiling(MathF.Max(widestExpText, HeaderFloor(Strings.ColumnExp, sortable: false))) : 0f;
         // The Unlocks column (on by default since 1.12.1, feature plan v6 K4): three kind icons or its header.
         var showOpens = ShowOpens?.Invoke() == true && runner.Unlocks is not null;
         var opensColumn = showOpens
-            ? MathF.Max(UiMetrics.RowIconSize * MaxOpensIcons + UiMetrics.Px(2f) * (MaxOpensIcons - 1), HeaderFloor(Strings.ColumnOpens, sortable: false))
+            ? MathF.Ceiling(MathF.Max(UiMetrics.RowIconSize * MaxOpensIcons + UiMetrics.Px(2f) * (MaxOpensIcons - 1), HeaderFloor(Strings.ColumnOpens, sortable: false)))
             : 0f;
-        var widths = new QuestTableWidths(glyphColumn, levelColumn, jobIconColumn, jobColumn, StateWordWidth(), expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f), expColumn, opensColumn);
+        var widths = new QuestTableWidths(MathF.Ceiling(glyphColumn), levelColumn, jobIconColumn, jobColumn, MathF.Ceiling(StateWordWidth()), expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f), expColumn, opensColumn, MathF.Max(UiMetrics.RowIconSize, jobIcon));
+        autoContent[(int)Column.Level] = levelColumn;
+        autoContent[(int)Column.Job] = jobColumn;
+        autoContent[(int)Column.Status] = TableGeometry.StatusColumnMin(widths) - overhead;
+        autoContent[(int)Column.Expansion] = expansionColumn;
+        autoContent[(int)Column.Rewards] = rewardsColumn;
+        autoContent[(int)Column.Exp] = expColumn;
+        autoContent[(int)Column.Opens] = opensColumn;
+
+        // A drag on a column's edge last frame becomes the player's width before the plan (feature plan v6 U9).
+        var tableState = ImGuiP.GetCurrentTable();
+        ReadPlayerWidths(tableState, in widths);
         var sortedWasHidden = SortColumnAutoHidden();
         PlanColumns(available, in widths);
 
-        // Name is the one ImGui stretch column: it takes what the fixed columns leave. Every other column is fixed and
-        // NoResize, so ImGui lays it out at the width given here each frame (the plan's for Job and Status); a column the
-        // plan hides is Disabled, which ImGui neither saves nor lists in the header menu.
-        const ImGuiTableColumnFlags fixedFlags = ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize;
-        ImGui.TableSetupColumn(Strings.ColumnGlyph, fixedFlags | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, glyphColumn);
+        // Name is the one ImGui stretch column: it takes what the fixed columns leave. Every other column is fixed, at the
+        // width the plan gives it, written into the column each frame (WriteColumnWidths); the player can drag any edge
+        // but the glyph's (ReadPlayerWidths keeps the drag). A column the plan hides is Disabled, which ImGui neither saves
+        // nor lists in the header menu.
+        const ImGuiTableColumnFlags fixedFlags = ImGuiTableColumnFlags.WidthFixed;
+        ImGui.TableSetupColumn(Strings.ColumnGlyph, fixedFlags | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, widths.Glyph);
         ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoHide, LayoutBudgets.TableNameWeight);
-        ImGui.TableSetupColumn(Strings.ColumnLevel, fixedFlags | Planned(Column.Level), levelColumn);
-        ImGui.TableSetupColumn(Strings.ColumnJob, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Job), plan.JobIconOnly ? jobIconColumn : jobColumn);
-        ImGui.TableSetupColumn(Strings.ColumnStatus, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Status), PlannedContent(Column.Status, TableGeometry.StatusColumnMin(widths) - overhead, overhead));
-        ImGui.TableSetupColumn(Strings.ColumnExpansion, fixedFlags | Planned(Column.Expansion), expansionColumn);
-        ImGui.TableSetupColumn(Strings.ColumnRewards, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Rewards), rewardsColumn);
-        ImGui.TableSetupColumn(Strings.ColumnExp, fixedFlags | ImGuiTableColumnFlags.NoSort | (showExp ? Planned(Column.Exp) : ImGuiTableColumnFlags.Disabled), expColumn);
-        ImGui.TableSetupColumn(Strings.ColumnOpens, fixedFlags | ImGuiTableColumnFlags.NoSort | (showOpens ? Planned(Column.Opens) : ImGuiTableColumnFlags.Disabled), opensColumn);
+        ImGui.TableSetupColumn(Strings.ColumnLevel, fixedFlags | Planned(Column.Level), PlannedContent(Column.Level, levelColumn, overhead));
+        ImGui.TableSetupColumn(Strings.ColumnJob, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Job), PlannedContent(Column.Job, jobColumn, overhead));
+        ImGui.TableSetupColumn(Strings.ColumnStatus, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Status), PlannedContent(Column.Status, autoContent[(int)Column.Status], overhead));
+        ImGui.TableSetupColumn(Strings.ColumnExpansion, fixedFlags | Planned(Column.Expansion), PlannedContent(Column.Expansion, expansionColumn, overhead));
+        ImGui.TableSetupColumn(Strings.ColumnRewards, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Rewards), PlannedContent(Column.Rewards, rewardsColumn, overhead));
+        ImGui.TableSetupColumn(Strings.ColumnExp, fixedFlags | ImGuiTableColumnFlags.NoSort | (showExp ? Planned(Column.Exp) : ImGuiTableColumnFlags.Disabled), MathF.Max(1f, PlannedContent(Column.Exp, expColumn, overhead)));
+        ImGui.TableSetupColumn(Strings.ColumnOpens, fixedFlags | ImGuiTableColumnFlags.NoSort | (showOpens ? Planned(Column.Opens) : ImGuiTableColumnFlags.Disabled), MathF.Max(1f, PlannedContent(Column.Opens, opensColumn, overhead)));
         ImGui.TableSetupScrollFreeze(0, 1);
+        WriteColumnWidths(tableState, overhead);
 
         // The persisted sort is written straight into the column state on the table's first frame: ImGui's own saved
         // settings (imgui.ini) would otherwise win over DefaultSort and hand their sort back through SpecsDirty. It is
@@ -465,8 +535,15 @@ public sealed class TablePane : IDisposable
             ApplyInitialSort(ui.Sort);
         }
 
+        // ImGui draws its header menu while laying the table out (in DrawHeaders), from the frame after the right-click.
+        var headerMenuDrawn = !tableState.IsNull && tableState.IsContextPopupOpen;
+
         // While the plan hides the sorted column (its header and arrow are gone), the Name header's tooltip names the sort.
         var headerBottom = DrawHeaders(SortedColumn(ui.Sort), SortColumnAutoHidden() ? HiddenSortNote() : null, moonRoad);
+        if (headerMenuDrawn)
+        {
+            DrawHeaderMenuExtras(tableState);
+        }
 
         // The player's own hidden columns, read after the layout: a column the plan did not hide is shown unless the
         // player hid it from the header menu (the plan's hides never touch that flag).
@@ -714,12 +791,12 @@ public sealed class TablePane : IDisposable
 
     /// <summary>
     /// Plans the columns for <paramref name="available"/> pixels (<see cref="TableGeometry.PlanQuestTable"/>) with the
-    /// player's hidden columns, keeping this plan's visibility for the next one's hysteresis, and marks the columns the
+    /// player's hidden columns and column widths, keeping this plan's visibility for the next one's hysteresis, and marks the columns the
     /// plan hides (Disabled at the next setup).
     /// </summary>
     private void PlanColumns(float available, in QuestTableWidths widths)
     {
-        plan = TableGeometry.PlanQuestTable(available, widths, playerHidden, plan, planned ? lastVisible : [], planSpecs, planVisible, planWidths);
+        plan = TableGeometry.PlanQuestTable(available, widths, playerHidden, playerPixels, plan, planned ? lastVisible : [], planSpecs, planVisible, planWidths);
         planned = true;
         Array.Copy(planVisible, lastVisible, ColumnCount);
         for (var i = 0; i < ColumnCount; i++)
@@ -748,6 +825,235 @@ public sealed class TablePane : IDisposable
     /// <summary>A column's content width from the plan (its width less the cell overhead), or <paramref name="fallback"/> while it is hidden.</summary>
     private float PlannedContent(Column column, float fallback, float overhead) =>
         planVisible[(int)column] && planWidths[(int)column] > overhead ? planWidths[(int)column] - overhead : fallback;
+
+    /// <summary>
+    /// The widest job label, expansion pill and EXP text in the current font and language (feature plan v6 U9), measured
+    /// again only when the font size, the language or the job labels change.
+    /// </summary>
+    private void MeasureContent()
+    {
+        var font = ImGui.GetFontSize();
+        var labels = runner.JobLabels;
+        if (measuredFont == font && measuredLanguage == Localization.Loc.Version && ReferenceEquals(measuredJobLabels, labels))
+        {
+            return;
+        }
+
+        measuredFont = font;
+        measuredLanguage = Localization.Loc.Version;
+        measuredJobLabels = labels;
+        widestJobLabel = 0f;
+        foreach (var label in labels)
+        {
+            widestJobLabel = MathF.Max(widestJobLabel, ImGui.CalcTextSize(label).X);
+        }
+
+        widestExpansionPill = 0f;
+        for (byte expansion = 0; expansion < ExpansionCount; expansion++)
+        {
+            widestExpansionPill = MathF.Max(widestExpansionPill, PillSize(runner.ExpansionShort(expansion), 0f, UiMetrics.Px(ExpansionPillPadX), float.MaxValue).X);
+        }
+
+        var widest = WidestExp.ToString("N0", CultureInfo.CurrentCulture);
+        widestExpText = ImGui.CalcTextSize(string.Format(CultureInfo.CurrentCulture, Strings.PlanningExpRangeShortFormat, widest, widest)).X;
+    }
+
+    /// <summary>
+    /// The player's column widths (feature plan v6 U9), read from the configuration when it is another dictionary than
+    /// last frame, then any drag on a column edge since last frame. ImGui applies a drag to the columns' requested widths
+    /// before the table is set up; whatever moved since <see cref="WriteColumnWidths"/> wrote them is the player's:
+    /// <list type="bullet">
+    /// <item>a drag (the table's last resized column is set) keeps the widths it left, within
+    /// <see cref="TableGeometry.ApplyColumnDrag"/>'s rules, so no other column moves and none is pushed out of the plan;</item>
+    /// <item>ImGui's "Size column to fit" (or a double-click on an edge) and "Size all columns to default" give the
+    /// columns they touched back to the automatic width.</item>
+    /// </list>
+    /// Then the pixels the plan takes, at this frame's UI scale. A change saves the configuration.
+    /// </summary>
+    private unsafe void ReadPlayerWidths(ImGuiTablePtr table, in QuestTableWidths widths)
+    {
+        var source = ColumnWidths?.Invoke();
+        if (!ReferenceEquals(source, widthsSource))
+        {
+            widthsSource = source;
+            for (var i = 0; i < ColumnCount; i++)
+            {
+                playerLogical[i] = source is not null && source.TryGetValue(ColumnKeys[i], out var saved) ? TableGeometry.SanitizePlayerWidth(saved) : 0f;
+            }
+
+            playerLogical[(int)Column.Glyph] = 0f;
+            playerLogical[(int)Column.Name] = 0f;
+        }
+
+        var changed = false;
+        if (hasWritten && !table.IsNull && table.ColumnsCount >= ColumnCount)
+        {
+            var dragged = table.LastResizedColumn >= 0;
+            for (var i = 0; i < ColumnCount; i++)
+            {
+                dragWidths[i] = written[i];
+                dragFloors[i] = TableGeometry.PlayerColumnFloor((Column)i, widths);
+                if (i is (int)Column.Glyph or (int)Column.Name)
+                {
+                    continue;
+                }
+
+                var column = new ImGuiTableColumnPtr(table.Columns.Data + i);
+                if (column.AutoFitQueue != 0)
+                {
+                    // "Size all columns to default": this column goes back to automatic, with no frame at ImGui's fit.
+                    column.AutoFitQueue = 0;
+                    if (column.IsEnabled && playerLogical[i] > 0f)
+                    {
+                        playerLogical[i] = 0f;
+                        changed = true;
+                    }
+
+                    continue;
+                }
+
+                if (column.WidthRequest > 0f)
+                {
+                    dragWidths[i] = column.WidthRequest;
+                }
+            }
+
+            if (dragged)
+            {
+                // The name gives up at most what it has over its minimum, so the drag never hides a column.
+                var name = (int)Column.Name;
+                var slack = MathF.Max(0f, planWidths[name] - planSpecs[name].Min - 1f);
+                if (TableGeometry.ApplyColumnDrag(written, dragWidths, dragFloors, slack, dragChanged))
+                {
+                    var scale = UiMetrics.Px(1f);
+                    for (var i = (int)Column.Level; i < ColumnCount; i++)
+                    {
+                        if (dragChanged[i])
+                        {
+                            playerLogical[i] = TableGeometry.SanitizePlayerWidth(MathF.Round(dragWidths[i]) / scale);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (var i = (int)Column.Level; i < ColumnCount; i++)
+                {
+                    if (MathF.Abs(dragWidths[i] - written[i]) > 0.5f && playerLogical[i] > 0f)
+                    {
+                        playerLogical[i] = 0f;
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        var px = UiMetrics.Px(1f);
+        for (var i = 0; i < ColumnCount; i++)
+        {
+            playerPixels[i] = MathF.Round(playerLogical[i] * px);
+        }
+
+        if (changed)
+        {
+            SavePlayerWidths();
+        }
+    }
+
+    /// <summary>
+    /// Writes each column's planned content width (its saved or automatic width while the plan hides it) into the table,
+    /// in whole pixels, after the columns are set up and before the layout. ImGui keeps a resizable column at the width
+    /// written, so the plan, not ImGui's own fit, decides the layout; what a drag changes is read back next frame.
+    /// </summary>
+    private unsafe void WriteColumnWidths(ImGuiTablePtr table, float overhead)
+    {
+        if (table.IsNull || table.ColumnsCount < ColumnCount)
+        {
+            return;
+        }
+
+        for (var i = (int)Column.Level; i < ColumnCount; i++)
+        {
+            var fallback = playerPixels[i] > 0f ? playerPixels[i] : autoContent[i];
+            var width = MathF.Max(1f, MathF.Round(PlannedContent((Column)i, fallback, overhead)));
+            new ImGuiTableColumnPtr(table.Columns.Data + i).WidthRequest = width;
+            written[i] = width;
+        }
+
+        hasWritten = true;
+    }
+
+    /// <summary>Copies the player's widths into the configuration's dictionary (a column at 0 is removed) and asks for a save.</summary>
+    private void SavePlayerWidths()
+    {
+        if (widthsSource is { } target)
+        {
+            for (var i = (int)Column.Level; i < ColumnCount; i++)
+            {
+                if (playerLogical[i] > 0f)
+                {
+                    target[ColumnKeys[i]] = playerLogical[i];
+                }
+                else
+                {
+                    target.Remove(ColumnKeys[i]);
+                }
+            }
+        }
+
+        ColumnWidthsChanged?.Invoke();
+    }
+
+    /// <summary>Whether the player sized any column.</summary>
+    private bool AnyPlayerWidth()
+    {
+        for (var i = (int)Column.Level; i < ColumnCount; i++)
+        {
+            if (playerLogical[i] > 0f)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>"Reset column widths": every column goes back to its automatic width; next frame's plan and widths follow.</summary>
+    private void ResetColumnWidths()
+    {
+        Array.Clear(playerLogical);
+        Array.Clear(playerPixels);
+        SavePlayerWidths();
+    }
+
+    /// <summary>
+    /// "Reset column widths" at the end of the table header's right-click menu (feature plan v6 U9), under ImGui's own
+    /// sizing, order and visibility items: the menu is ImGui's popup, which ImGui draws while laying the table out, so it
+    /// is opened again here (by the same id, under the table's) and this item appended to it. Called only on a frame
+    /// ImGui already drew the menu, so the item never shows alone.
+    /// </summary>
+    private void DrawHeaderMenuExtras(ImGuiTablePtr table)
+    {
+        if (table.IsNull || !table.IsContextPopupOpen)
+        {
+            return;
+        }
+
+        const ImGuiWindowFlags popupFlags = ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings;
+        if (!ImGuiP.BeginPopupEx(ImGui.GetID(HeaderMenuId), popupFlags))
+        {
+            return;
+        }
+
+        ImGui.Separator();
+        if (ImGui.MenuItem(Strings.TableResetColumnWidths, enabled: AnyPlayerWidth()))
+        {
+            ResetColumnWidths();
+        }
+
+        ImGui.EndPopup();
+    }
 
     /// <summary>Whether the persisted sort is on a column the plan hides this frame (ImGui drops a hidden column's sort).</summary>
     private bool SortColumnAutoHidden() => ui.Sort.Column switch
@@ -798,8 +1104,10 @@ public sealed class TablePane : IDisposable
             var label = HeaderText(HeaderLabels[i], moonRoad);
             ImGui.PushID(i);
             ImGui.PushStyleColor(ImGuiCol.Text, i == sortedColumn ? s.Text : s.TextSecondary);
+            float labelWidth;
             using (HeaderRole(label, moonRoad))
             {
+                labelWidth = ImGui.CalcTextSize(label).X;
                 ImGui.TableHeader(label);
             }
 
@@ -808,7 +1116,17 @@ public sealed class TablePane : IDisposable
             bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(HeaderTooltips[i], i == (int)Column.Name ? nameNote : null);
+                // A column the player made narrower than its label ends the label in an ellipsis (ImGui's header does);
+                // its tooltip then starts with the whole label.
+                var cut = i != (int)Column.Glyph && labelWidth > ImGui.GetItemRectSize().X - ImGui.GetStyle().CellPadding.X * 2f + 0.5f;
+                if (cut)
+                {
+                    UiMetrics.Tooltip(HeaderLabels[i], HeaderTooltips[i]);
+                }
+                else
+                {
+                    UiMetrics.Tooltip(HeaderTooltips[i], i == (int)Column.Name ? nameNote : null);
+                }
             }
         }
 
@@ -1242,10 +1560,17 @@ public sealed class TablePane : IDisposable
 
         if (ImGui.TableNextColumn())
         {
+            // Ellipsised in a column the player made narrower than the number, which its hover then shows whole.
             CenterText(in layout);
-            ImGui.PushStyleColor(ImGuiCol.Text, s.TextSecondary);
-            ImGui.TextUnformatted(runner.ExpText(quest));
-            ImGui.PopStyleColor();
+            var exp = runner.ExpText(quest);
+            var expPos = ImGui.GetCursorScreenPos();
+            var expRoom = ImGui.GetContentRegionAvail().X;
+            var expWidth = ImGui.CalcTextSize(exp).X;
+            ImGui.Dummy(new Vector2(MathF.Max(1f, MathF.Min(expRoom, expWidth)), ImGui.GetTextLineHeight()));
+            if (EllipsisAt(ImGui.GetWindowDrawList(), expPos, expRoom, exp, Theme.U32(s.TextSecondary), expWidth) && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(exp);
+            }
         }
 
         if (ImGui.TableNextColumn())
@@ -1411,12 +1736,11 @@ public sealed class TablePane : IDisposable
         _ => Theme.VeilTextU32,
     };
 
-    /// <summary>Width of a pill holding <paramref name="text"/>: the text padded each side, at least <paramref name="minWidth"/>.</summary>
-    private static float PillWidth(string text, float minWidth, float padX) => MathF.Max(minWidth, ImGui.CalcTextSize(text).X + padX * 2f);
-
     /// <summary>
     /// A level or expansion pill (ui-revamp §2.4): the palette's sunken fill with the text in <paramref name="ink"/>,
-    /// vertically centred in the row and never wider than the cell. A dummy of the pill's width is the cell's item.
+    /// vertically centred in the row and never wider than the cell. A dummy of the pill's width is the cell's item. In a
+    /// cell the player made narrower than the pill (feature plan v6 U9) the pill fills the cell and its text ends in an
+    /// ellipsis, never cut part-way, and hovering it shows the whole text.
     /// </summary>
     private static void DrawPill(string text, float minWidth, float padX, Vector4 ink, in RowLayout layout)
     {
@@ -1428,10 +1752,32 @@ public sealed class TablePane : IDisposable
         var pos = ImGui.GetCursorScreenPos();
         var avail = ImGui.GetContentRegionAvail().X;
         var size = PillSize(text, minWidth, padX, layout.RowContent);
+        var fits = size.X <= avail + 0.5f;
         size.X = MathF.Max(1f, MathF.Min(avail, size.X));
         ImGui.Dummy(new Vector2(size.X, layout.RowContent));
         var min = new Vector2(pos.X, pos.Y + MathF.Round((layout.RowContent - size.Y) * 0.5f));
-        PillAt(ImGui.GetWindowDrawList(), min, size, text, ink);
+        var dl = ImGui.GetWindowDrawList();
+        if (fits)
+        {
+            PillAt(dl, min, size, text, ink);
+            return;
+        }
+
+        // The padding gives way first (the text centred in what the cell has), then the text takes the ellipsis.
+        bool cut;
+        using (Typography.Caption())
+        {
+            Chrome.PillAt(dl, min, size, string.Empty, Theme.U32(Theme.Surface.Sunken), 0u, 0u);
+            var textWidth = ImGui.CalcTextSize(text).X;
+            var pad = Math.Clamp((size.X - textWidth) * 0.5f, UiMetrics.Px(1f), padX);
+            var textPos = new Vector2(min.X + pad, min.Y + MathF.Round((size.Y - ImGui.GetTextLineHeight()) * 0.5f));
+            cut = EllipsisAt(dl, textPos, size.X - pad * 2f, text, Theme.U32(ink), textWidth);
+        }
+
+        if (cut && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(text);
+        }
     }
 
     /// <summary>A pill's size for <paramref name="text"/> in the caption role: 16 px tall (never over <paramref name="maxHeight"/>), padded, at least <paramref name="minWidth"/> wide.</summary>
@@ -1454,7 +1800,9 @@ public sealed class TablePane : IDisposable
     /// The Job cell: a quest limited to one job shows the job's game icon (16 px at scale 1) before its abbreviation;
     /// groups and "Any" keep the icon's slot so the labels line up. Hovering it names the job, or the group. When the
     /// column plan narrows the column to its icon (<paramref name="iconOnly"/>, <see cref="QuestTablePlan.JobIconOnly"/>)
-    /// a job shows its icon alone and a group its label, ellipsised in the cell.
+    /// a job shows its icon alone and a group its label, ellipsised in the cell. In a cell the player made narrower than
+    /// the label (feature plan v6 U9) the label ends in an ellipsis after the icon, or the icon shows alone when not even
+    /// that fits; a cut label's hover names the job (or the label itself when there is no other name).
     /// </summary>
     private void DrawJob(JobLabel job, bool iconOnly, bool rowHovered, float mouseX, in RowLayout layout)
     {
@@ -1463,34 +1811,46 @@ public sealed class TablePane : IDisposable
         var icon = MathF.Min(UiMetrics.Icon(JobIconSide), layout.RowContent);
         var gap = UiMetrics.Px(JobIconGap);
         var textSize = ImGui.CalcTextSize(job.Short);
-        var width = iconOnly ? MathF.Max(1f, cellWidth) : icon + gap + textSize.X;
+        var width = iconOnly ? MathF.Max(1f, cellWidth) : MathF.Max(1f, MathF.Min(cellWidth, icon + gap + textSize.X));
         ImGui.Dummy(new Vector2(width, layout.RowContent));
 
         var dl = ImGui.GetWindowDrawList();
         var ink = Theme.U32(Theme.Surface.TextSecondary);
+        var labelPos = new Vector2(pos.X + icon + gap, pos.Y + layout.TextOffset);
+        var labelRoom = cellWidth - icon - gap;
+        var cut = false;
         if (job.IconId != 0)
         {
             var iconMin = new Vector2(pos.X, pos.Y + MathF.Round((layout.RowContent - icon) * 0.5f));
             GameIcon.DrawAt(dl, textures, job.IconId, iconMin, iconMin + new Vector2(icon, icon));
             if (!iconOnly)
             {
-                dl.AddText(new Vector2(pos.X + icon + gap, pos.Y + layout.TextOffset), ink, job.Short);
+                // The icon alone when the room after it holds less than a letter and the ellipsis.
+                cut = labelRoom < textSize.X - 0.5f;
+                if (!cut || labelRoom >= EllipsisRoom())
+                {
+                    EllipsisAt(dl, labelPos, labelRoom, job.Short, ink, textSize.X);
+                }
             }
         }
-        else if (iconOnly)
+        else if (iconOnly || labelRoom < textSize.X - 0.5f)
         {
-            EllipsisAt(dl, new Vector2(pos.X, pos.Y + layout.TextOffset), cellWidth, job.Short, ink, textSize.X);
+            // A group's label without an icon takes the icon's slot too once it would not fit after it.
+            cut = EllipsisAt(dl, new Vector2(pos.X, pos.Y + layout.TextOffset), cellWidth, job.Short, ink, textSize.X);
         }
         else
         {
-            dl.AddText(new Vector2(pos.X + icon + gap, pos.Y + layout.TextOffset), ink, job.Short);
+            dl.AddText(labelPos, ink, job.Short);
         }
 
-        if (rowHovered && job.Name.Length > 0 && mouseX >= pos.X && mouseX <= pos.X + width)
+        if (rowHovered && mouseX >= pos.X && mouseX <= pos.X + width && (job.Name.Length > 0 || cut))
         {
-            UiMetrics.Tooltip(job.Name);
+            UiMetrics.Tooltip(job.Name.Length > 0 ? job.Name : job.Short);
         }
     }
+
+    /// <summary>The least room an ellipsised label is drawn in: a letter and the ellipsis, else it is left out.</summary>
+    private static float EllipsisRoom() => ImGui.CalcTextSize("W…").X;
 
     /// <summary>
     /// Status text (P1): the state word first in the primary text colour, then the reason after the separator in the
@@ -1598,7 +1958,8 @@ public sealed class TablePane : IDisposable
     /// <summary>
     /// The Opens column: the icons of the first three things the quest opens, its own duty, job, action, flying and
     /// feature rewards among them (next quests left out, and anything that belongs to the Rewards column:
-    /// <see cref="Core.Unlocks.RewardSplit"/>); nothing for a masked quest.
+    /// <see cref="Core.Unlocks.RewardSplit"/>); nothing for a masked quest. In a column the player made narrower than
+    /// the icons (feature plan v6 U9) only whole icons show, then "+N", whose hover names the rest.
     /// </summary>
     private void DrawOpensIcons(QuestRecord quest, in RowLayout layout)
     {
@@ -1609,21 +1970,34 @@ public sealed class TablePane : IDisposable
 
         var entries = unlocks.For(quest.RowId);
         var reach = runner.UnlockReach;
-        var drawn = 0;
+        var count = 0;
+        for (var i = 0; i < entries.Count && count < MaxOpensIcons; i++)
+        {
+            count += ShowsOpens(entries[i], reach) ? 1 : 0;
+        }
+
+        if (count == 0)
+        {
+            return;
+        }
+
+        var cell = ImGui.GetCursorScreenPos();
         var iconSize = UiMetrics.RowIconSize;
+        var gap = UiMetrics.Px(2f);
+        var fit = TableGeometry.IconsThatFit(ImGui.GetContentRegionAvail().X, iconSize, gap, count, ImGui.CalcTextSize(MoreLabel(count)).X);
         var iconOffset = MathF.Max(0f, (layout.RowContent - iconSize) * 0.5f);
-        for (var i = 0; i < entries.Count && drawn < MaxOpensIcons; i++)
+        var drawn = 0;
+        for (var i = 0; i < entries.Count && drawn < fit; i++)
         {
             var entry = entries[i];
-            // Sprout mode leaves out rows past the character's reach, and no row repeats a reward, as in the detail pane (UnlockView.Visible).
-            if (entry.Target == Core.Unlocks.UnlockTarget.NextQuest || entry.Icon == 0 || !Core.Unlocks.UnlockView.Shows(entry, reach))
+            if (!ShowsOpens(entry, reach))
             {
                 continue;
             }
 
             if (drawn > 0)
             {
-                ImGui.SameLine(0f, UiMetrics.Px(2f));
+                ImGui.SameLine(0f, gap);
             }
             else if (iconOffset > 0.5f)
             {
@@ -1638,26 +2012,65 @@ public sealed class TablePane : IDisposable
 
             drawn++;
         }
+
+        if (fit < count && DrawMoreCount(count - fit, cell, fit > 0 ? ImGui.GetItemRectMax().X + gap : cell.X, in layout))
+        {
+            using var tooltipStyle = Theme.PushTooltip();
+            using var tooltip = ImRaii.Tooltip();
+            ImGui.PushFont(UiBuilder.DefaultFont);
+            UiMetrics.ApplyFontScale();
+            var skipped = 0;
+            for (var i = 0; i < entries.Count && skipped < count; i++)
+            {
+                if (ShowsOpens(entries[i], reach) && skipped++ >= fit)
+                {
+                    ImGui.TextUnformatted(entries[i].Name);
+                }
+            }
+
+            ImGui.PopFont();
+        }
     }
 
+    /// <summary>Whether the Opens column shows <paramref name="entry"/>: Sprout mode leaves out rows past the character's reach, and no row repeats a reward, as in the detail pane (UnlockView.Visible).</summary>
+    private static bool ShowsOpens(Core.Unlocks.UnlockEntry entry, byte reach) =>
+        entry.Target != Core.Unlocks.UnlockTarget.NextQuest && entry.Icon != 0 && Core.Unlocks.UnlockView.Shows(entry, reach);
+
+    /// <summary>
+    /// The Rewards column: up to four icons of what the quest hands over to keep. In a column the player made narrower
+    /// than the icons (feature plan v6 U9) only whole icons show, then "+N", whose hover names the rest.
+    /// </summary>
     private void DrawRewardIcons(QuestRecord quest, in RowLayout layout)
     {
-        var drawn = 0;
         var rewards = quest.Rewards;
-        var iconSize = UiMetrics.RowIconSize;
-        var iconOffset = MathF.Max(0f, (layout.RowContent - iconSize) * 0.5f);
-        for (var i = 0; i < rewards.Count && drawn < MaxRewardIcons; i++)
+        var count = 0;
+        for (var i = 0; i < rewards.Count && count < MaxRewardIcons; i++)
         {
-            // Only what the quest hands over to keep: a duty, a job, an action, flying or a feature is the Unlocks column's (RewardSplit).
+            count += ShowsReward(rewards[i]) ? 1 : 0;
+        }
+
+        if (count == 0)
+        {
+            return;
+        }
+
+        var cell = ImGui.GetCursorScreenPos();
+        var iconSize = UiMetrics.RowIconSize;
+        var gap = UiMetrics.Px(2f);
+        var fit = TableGeometry.IconsThatFit(ImGui.GetContentRegionAvail().X, iconSize, gap, count, ImGui.CalcTextSize(MoreLabel(count)).X);
+        var iconOffset = MathF.Max(0f, (layout.RowContent - iconSize) * 0.5f);
+        var drawn = 0;
+        for (var i = 0; i < rewards.Count && drawn < fit; i++)
+        {
             var reward = rewards[i];
-            if (reward.Icon == 0 || !Core.Unlocks.RewardSplit.IsReward(reward))
+            if (!ShowsReward(reward))
             {
                 continue;
             }
 
             if (drawn > 0)
             {
-                ImGui.SameLine(0f, UiMetrics.Px(2f));
+                ImGui.SameLine(0f, gap);
             }
             else if (iconOffset > 0.5f)
             {
@@ -1672,6 +2085,45 @@ public sealed class TablePane : IDisposable
 
             drawn++;
         }
+
+        if (fit < count && DrawMoreCount(count - fit, cell, fit > 0 ? ImGui.GetItemRectMax().X + gap : cell.X, in layout))
+        {
+            using var tooltipStyle = Theme.PushTooltip();
+            using var tooltip = ImRaii.Tooltip();
+            ImGui.PushFont(UiBuilder.DefaultFont);
+            UiMetrics.ApplyFontScale();
+            var skipped = 0;
+            for (var i = 0; i < rewards.Count && skipped < count; i++)
+            {
+                if (ShowsReward(rewards[i]) && skipped++ >= fit)
+                {
+                    ImGui.TextUnformatted(rewards[i].Name);
+                }
+            }
+
+            ImGui.PopFont();
+        }
+    }
+
+    /// <summary>Whether the Rewards column shows <paramref name="reward"/>: only what the quest hands over to keep (a duty, a job, an action, flying or a feature is the Unlocks column's, RewardSplit).</summary>
+    private static bool ShowsReward(RewardRef reward) => reward.Icon != 0 && Core.Unlocks.RewardSplit.IsReward(reward);
+
+    /// <summary>"+1" … "+8", the count of icons a narrowed column leaves out.</summary>
+    private static readonly string[] MoreLabels = ["+0", "+1", "+2", "+3", "+4", "+5", "+6", "+7", "+8"];
+
+    private static string MoreLabel(int count) => MoreLabels[Math.Clamp(count, 0, MoreLabels.Length - 1)];
+
+    /// <summary>
+    /// "+N" in the tertiary tone at <paramref name="x"/> on the row's text line, for the icons a narrowed column leaves
+    /// out; draw list only, so the row stays the hovered item. Returns whether the mouse is over it.
+    /// </summary>
+    private static bool DrawMoreCount(int count, Vector2 cell, float x, in RowLayout layout)
+    {
+        var label = MoreLabel(count);
+        var size = ImGui.CalcTextSize(label);
+        var pos = new Vector2(x, cell.Y + layout.TextOffset);
+        ImGui.GetWindowDrawList().AddText(pos, Theme.U32(Theme.Surface.TextTertiary), label);
+        return ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(new Vector2(x, cell.Y), new Vector2(x + size.X, cell.Y + layout.RowContent));
     }
 
     private void DrawContextMenu(QuestRecord quest, QuestState state)

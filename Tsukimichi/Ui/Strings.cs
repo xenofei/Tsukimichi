@@ -275,6 +275,7 @@ public static partial class Strings
     public static string ColumnRewardsTooltip => Loc.Get("ColumnRewardsTooltip");
     /// <summary>{0} = the sorted column's header, hidden by the table's width.</summary>
     public static string TableSortHiddenFormat => Loc.Get("TableSortHiddenFormat");
+    public static string TableResetColumnWidths => Loc.Get("TableResetColumnWidths");
     public static string JobAny => Loc.Get("JobAny");
     public static string JobMulti => Loc.Get("JobMulti");
     public static string JobDohDol => Loc.Get("JobDohDol");

@@ -433,13 +433,13 @@ public static class LayoutBudgets
     // scale moves the steps instead of cutting a column.
 
     /// <summary>Quest table: every column shows, the job with its label; Name and Status stretch 3 : 2. Under this Rewards hides.</summary>
-    public const float TableFullLogical = 664f;
+    public const float TableFullLogical = 672f;
 
     /// <summary>Quest table: Rewards hidden. Under this Expansion hides too.</summary>
-    public const float TableNoRewardsLogical = 586f;
+    public const float TableNoRewardsLogical = 592f;
 
     /// <summary>Quest table: Rewards and Expansion hidden. Under this the job shows its icon alone, then hides.</summary>
-    public const float TableNoExpansionLogical = 534f;
+    public const float TableNoExpansionLogical = 540f;
 
     /// <summary>Quest table: the job as an icon, then hidden. Under this Level hides too (its level stays in the name's hover card).</summary>
     public const float TableNoJobLogical = 434f;
@@ -472,6 +472,12 @@ public static class LayoutBudgets
 
     /// <summary>Quest table: the gap between the two lines of a two-line row.</summary>
     public const float TableTwoLineGapLogical = 2f;
+
+    /// <summary>
+    /// Quest table: the least content width the player can drag a column to (feature plan v6 U9); a column of icons keeps
+    /// at least one icon and the status its state word (<see cref="TableGeometry.PlayerColumnFloor"/>).
+    /// </summary>
+    public const float TableColumnMinLogical = 24f;
 
     /// <summary>Detail pane D1: the full hero, requirements as a grid.</summary>
     public const float DetailFullLogical = 340f;
