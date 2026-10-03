@@ -135,6 +135,19 @@ The light model is v13's: one moon, upper left. On snow a few things change.
 
 **If the gate fails:** raise the wash to **.90 within 4 px**. The medal is never recoloured to pass.
 
+**The measure, revised (the supervisor's final ruling).** This replaces the gate and the fallback above. Full OKLab ΔE turned out to be mostly lightness: on a light page every dark-faced state outweighs Ready's light face, so no set reached 1.3 under it with either wash. The gate is now G2L in `tools/themes/build_themes.py`, asserted again in `ThemeAtlasTests` with the bars written in C#.
+
+What it measures: the row tier at **16 and 20 px** on Ishgard Snow (`#EEF1F6`), every set. Each state's per-pixel difference from the window is summed over the cell. Each state is drawn on black and white mattes to recover its colour and alpha, and Ready is composited over its wash.
+
+The wash ships at **#F2D27A .75 within 3 px for every set**. The .90 / 4 px wash is no longer a fallback; the build records it for reference only.
+
+The gates on a light palette:
+1. **Lead:** Ready ≥ **1.3×** the next state by lightness-down-weighted OKLab ΔE, √((ΔL/3)² + Δa² + Δb²). If a set falls under 1.3 on that measure at either size, it must reach **1.3×** by chroma-only ΔE, √(Δa² + Δb²). `metrics.json` records which measure passed.
+2. **Lightness floor:** Ready's plain luminance salience (round 5's greyscale salience), with the wash, ≥ **0.70×** the next state's. **Not checked is left out of "next state" here**, because its dark face outweighs Ready's light one in plain luminance. Gate 3 holds it instead.
+3. **Not checked under Ready:** Not checked's chroma-only salience is below Ready's, at 16 and 20 px.
+4. **Colour vision and greyscale (§A8.1):** the weakest pair is ≥ **11** under protanopia, deuteranopia and tritanopia, and ≥ **12** in greyscale. Not checked counts in these, as in every distinctness gate.
+5. **Redundancy:** on light palettes, Ready always keeps the gilt act-now ring, the gold stripe and the "Ready" word. Gates 1–3 measure only the medal and its wash, so these three are never dropped on a light palette.
+
 ### A5. The sky on a light palette: a dawn over snow
 
 **Decision:** on Ishgard Snow, Full's night sky becomes **a still dawn over the Coerthas snowfield**.
@@ -377,7 +390,7 @@ The data model (`AppearanceConfig`: Theme, Glyphs, Palette, Frames, HighContrast
    - the gold word;
    - the gold stripe.
 
-   It is gated at ≥ 1.3× the next state by OKLab ΔE, falling back to a .90 / 4 px wash (§A4.1).
+   It is gated at ≥ 1.3× the next state by lightness-down-weighted OKLab ΔE (or chroma-only ΔE), with a 0.70× luminance floor (Not checked aside, held under Ready on chroma) and the .75 / 3 px wash for every set (§A4.1, the supervisor's final ruling).
 4. **Gauges get their own ink on light palettes** (§A6).
 5. **Ishgard Snow pairs with the Came (lead) kit** by default. Brass on Snow is allowed, with deep-gilt headings.
 6. **Night gets two token bumps** (TextTertiary and StrongLine).

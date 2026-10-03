@@ -10,6 +10,7 @@ public class SettingsSearchTests
         SettingsSection[] expected =
         [
             SettingsSection.General,
+            SettingsSection.Themes,
             SettingsSection.Journal,
             SettingsSection.TodoOverlay,
             SettingsSection.Alerts,
@@ -296,6 +297,7 @@ public class SettingsSearchTests
     [InlineData("Automation", SettingsSection.Automation)]
     [InlineData("Characters", SettingsSection.Characters)]
     [InlineData("Advanced", SettingsSection.Advanced)]
+    [InlineData("Themes", SettingsSection.Themes)]
     [InlineData("Display", SettingsSection.General)]
     [InlineData("About", SettingsSection.General)]
     [InlineData("TodoOverlay", SettingsSection.TodoOverlay)]

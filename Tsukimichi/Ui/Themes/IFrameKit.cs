@@ -64,4 +64,10 @@ internal static class FrameKitRenderers
     {
         _ => BrassFrameKit.Instance,
     };
+
+    /// <summary>
+    /// Whether <paramref name="id"/> draws a metal of its own rather than Brass's: Settings › Themes offers the Frames
+    /// choice once two kits do (<see cref="ThemesPage.FramesChoosable"/>). Brass alone until 1.17 T11.
+    /// </summary>
+    public static bool HasOwnMetal(FrameKitId id) => id == FrameKitId.Brass;
 }

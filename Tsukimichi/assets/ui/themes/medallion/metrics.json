@@ -1,10 +1,10 @@
 {
   "set": "medallion",
   "name": "Menphina's Medallion",
-  "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. Distinctness and salience are round 5's metrics.py units (summed blurred luminance difference) in a 40 px cell. Gates run on the Night window in greyscale and deuteranopia (16 and 20 px), and on every ground under Machado protanopia, deuteranopia and tritanopia (16 px); 'survey' records the rest. 'light' is the row tier's salience on Ishgard Snow in OKLab units (summed colour difference from the window, chroma included), Ready over its warm wash; 'readyWash' is the wash the plugin draws for this set.",
+  "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. Distinctness and salience are round 5's metrics.py units (summed blurred luminance difference) in a 40 px cell. Gates run on the Night window in greyscale and deuteranopia (16 and 20 px), and on every ground under Machado protanopia, deuteranopia and tritanopia (16 px); 'survey' records the rest. 'light' is the row tier's salience on Ishgard Snow with Ready over its warm wash, per measure: 'weighted' sums sqrt((dL/3)^2 + da^2 + db^2) and 'chroma' sqrt(da^2 + db^2) in OKLab, 'luma' is round 5's greyscale salience (its lead leaves Not checked out); G2L gates the default wash at 16 and 20 px, and 'measure' names the lead measure that passed. 'readyWash' is the wash the plugin draws for this set.",
   "chrome": "154.0.8037.97",
   "grounds": {"night": "#0F1424", "ishgard-snow": "#EEF1F6", "daylight": "#E9E4D6"},
-  "bars": {"weakest16": 12.0, "weakest20": 16.0, "readyLead": 1.3, "completedOfReady": 0.8, "salienceMin": 15.0, "cvdWeakest16": 11.0, "lightReadyLead": 1.3, "mixClose": 12.0, "mixHard": 10.0, "mixReadyLead": 1.25},
+  "bars": {"weakest16": 12.0, "weakest20": 16.0, "readyLead": 1.3, "completedOfReady": 0.8, "salienceMin": 15.0, "cvdWeakest16": 11.0, "lightReadyLead": 1.3, "lightLumaFloor": 0.7, "mixClose": 12.0, "mixHard": 10.0, "mixReadyLead": 1.25},
   "gateModes": ["grey", "deut"],
   "cvdModes": ["machado-prot", "machado-deut", "machado-trit"],
   "readyWash": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
@@ -58,6 +58,12 @@
     {"gate": "G1c weakest pair 16 px machado-deut on daylight", "tier": "row", "value": 12.56, "bar": 11.0, "detail": "Lock-NotC", "pass": true},
     {"gate": "G1c weakest pair 16 px machado-prot on daylight", "tier": "row", "value": 11.06, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
     {"gate": "G1c weakest pair 16 px machado-trit on daylight", "tier": "row", "value": 11.68, "bar": 11.0, "detail": "Blk-Lock", "pass": true},
+    {"gate": "G2L Ready lead 16 px (chroma) on Ishgard Snow", "tier": "row", "value": 1.86, "bar": 1.3, "detail": "wash 0.75 within 3 px: Rdy 28 / Lock 15", "pass": true},
+    {"gate": "G2L lightness floor 16 px on Ishgard Snow", "tier": "row", "value": 0.75, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 97 / RoJ 129", "pass": true},
+    {"gate": "G2L Not checked under Ready 16 px (chroma) on Ishgard Snow", "tier": "row", "value": 0.36, "bar": 1.0, "detail": "NotC 10 / Rdy 28", "pass": true},
+    {"gate": "G2L Ready lead 20 px (chroma) on Ishgard Snow", "tier": "row", "value": 1.57, "bar": 1.3, "detail": "wash 0.75 within 3 px: Rdy 37 / Lock 24", "pass": true},
+    {"gate": "G2L lightness floor 20 px on Ishgard Snow", "tier": "row", "value": 0.7, "bar": 0.7, "detail": "wash 0.75 within 3 px: Rdy 140 / RoJ 200", "pass": true},
+    {"gate": "G2L Not checked under Ready 20 px (chroma) on Ishgard Snow", "tier": "row", "value": 0.42, "bar": 1.0, "detail": "NotC 16 / Rdy 37", "pass": true},
     {"gate": "Fit medals: no bleed", "tier": "hero", "value": 0, "bar": 0, "detail": "max alpha outside every cell", "pass": true},
     {"gate": "Fit medals: not cut", "tier": "hero", "value": 171, "bar": 254, "detail": "max alpha on a cell edge: in-journal at 48", "pass": true},
     {"gate": "Fit medals@2x: no bleed", "tier": "hero", "value": 0, "bar": 0, "detail": "max alpha outside every cell", "pass": true},
@@ -417,49 +423,120 @@
     "ground": "ishgard-snow",
     "window": "#EEF1F6",
     "tier": "row",
-    "gatePx": 16,
-    "enforced": false,
-    "gate": {"gate": "G2L Ready lead on Ishgard Snow", "tier": "row", "value": 0.8, "bar": 1.3, "detail": "default wash 0.75 within 3 px: Rdy 87 / RoJ 109", "pass": false},
+    "gatePx": [16, 20],
+    "measure": "chroma",
+    "use": "default",
     "washes": {
       "default": {"color": "#F2D27A", "alpha": 0.75, "radiusPx": 3},
       "fallback": {"color": "#F2D27A", "alpha": 0.9, "radiusPx": 4}
     },
-    "use": "default",
     "variants": {
       "none": {
         "16": {
-          "salience": {"ready": 69.07, "ready-on-another-job": 109.22, "in-journal": 97.96, "blocked": 108.53, "done-this-cycle": 104.66, "completed": 89.88, "locked-out": 107.29, "not-checked": 107.93},
-          "readyLead": 0.63,
-          "next": "ready-on-another-job"
+          "weighted": {
+            "salience": {"ready": 26.92, "ready-on-another-job": 37.72, "in-journal": 34.84, "blocked": 37.51, "done-this-cycle": 36.28, "completed": 31.39, "locked-out": 39.44, "not-checked": 37.32},
+            "readyLead": 0.68,
+            "next": "locked-out"
+          },
+          "chroma": {
+            "salience": {"ready": 12.72, "ready-on-another-job": 10.12, "in-journal": 12.01, "blocked": 10.15, "done-this-cycle": 9.5, "completed": 8.71, "locked-out": 15.05, "not-checked": 10.16},
+            "readyLead": 0.85,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 82.96, "ready-on-another-job": 128.95, "in-journal": 117.2, "blocked": 128.81, "done-this-cycle": 123.93, "completed": 107.36, "locked-out": 127.54, "not-checked": 127.75},
+            "readyLead": 0.64,
+            "next": "ready-on-another-job"
+          }
         },
         "20": {
-          "salience": {"ready": 103.31, "ready-on-another-job": 169.3, "in-journal": 150.03, "blocked": 165.12, "done-this-cycle": 160.77, "completed": 136.46, "locked-out": 163.75, "not-checked": 165.45},
-          "readyLead": 0.61,
-          "next": "ready-on-another-job"
+          "weighted": {
+            "salience": {"ready": 40.84, "ready-on-another-job": 58.63, "in-journal": 53.56, "blocked": 57.21, "done-this-cycle": 55.96, "completed": 47.98, "locked-out": 60.82, "not-checked": 57.37},
+            "readyLead": 0.67,
+            "next": "locked-out"
+          },
+          "chroma": {
+            "salience": {"ready": 20.23, "ready-on-another-job": 15.98, "in-journal": 18.86, "blocked": 15.63, "done-this-cycle": 14.93, "completed": 13.67, "locked-out": 23.8, "not-checked": 15.82},
+            "readyLead": 0.85,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 124.07, "ready-on-another-job": 199.53, "in-journal": 179.55, "blocked": 196.08, "done-this-cycle": 190.16, "completed": 162.71, "locked-out": 194.36, "not-checked": 195.49},
+            "readyLead": 0.62,
+            "next": "ready-on-another-job"
+          }
         }
       },
       "default": {
         "16": {
-          "salience": {"ready": 87.04, "ready-on-another-job": 109.22, "in-journal": 97.96, "blocked": 108.53, "done-this-cycle": 104.66, "completed": 89.88, "locked-out": 107.29, "not-checked": 107.93},
-          "readyLead": 0.8,
-          "next": "ready-on-another-job"
+          "weighted": {
+            "salience": {"ready": 41.86, "ready-on-another-job": 37.72, "in-journal": 34.84, "blocked": 37.51, "done-this-cycle": 36.28, "completed": 31.39, "locked-out": 39.44, "not-checked": 37.32},
+            "readyLead": 1.06,
+            "next": "locked-out"
+          },
+          "chroma": {
+            "salience": {"ready": 27.96, "ready-on-another-job": 10.12, "in-journal": 12.01, "blocked": 10.15, "done-this-cycle": 9.5, "completed": 8.71, "locked-out": 15.05, "not-checked": 10.16},
+            "readyLead": 1.86,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 96.62, "ready-on-another-job": 128.95, "in-journal": 117.2, "blocked": 128.81, "done-this-cycle": 123.93, "completed": 107.36, "locked-out": 127.54, "not-checked": 127.75},
+            "readyLead": 0.75,
+            "next": "ready-on-another-job"
+          }
         },
         "20": {
-          "salience": {"ready": 123.65, "ready-on-another-job": 169.3, "in-journal": 150.03, "blocked": 165.12, "done-this-cycle": 160.77, "completed": 136.46, "locked-out": 163.75, "not-checked": 165.45},
-          "readyLead": 0.73,
-          "next": "ready-on-another-job"
+          "weighted": {
+            "salience": {"ready": 57.58, "ready-on-another-job": 58.63, "in-journal": 53.56, "blocked": 57.21, "done-this-cycle": 55.96, "completed": 47.98, "locked-out": 60.82, "not-checked": 57.37},
+            "readyLead": 0.95,
+            "next": "locked-out"
+          },
+          "chroma": {
+            "salience": {"ready": 37.44, "ready-on-another-job": 15.98, "in-journal": 18.86, "blocked": 15.63, "done-this-cycle": 14.93, "completed": 13.67, "locked-out": 23.8, "not-checked": 15.82},
+            "readyLead": 1.57,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 139.75, "ready-on-another-job": 199.53, "in-journal": 179.55, "blocked": 196.08, "done-this-cycle": 190.16, "completed": 162.71, "locked-out": 194.36, "not-checked": 195.49},
+            "readyLead": 0.7,
+            "next": "ready-on-another-job"
+          }
         }
       },
       "fallback": {
         "16": {
-          "salience": {"ready": 100.08, "ready-on-another-job": 109.22, "in-journal": 97.96, "blocked": 108.53, "done-this-cycle": 104.66, "completed": 89.88, "locked-out": 107.29, "not-checked": 107.93},
-          "readyLead": 0.92,
-          "next": "ready-on-another-job"
+          "weighted": {
+            "salience": {"ready": 52.81, "ready-on-another-job": 37.72, "in-journal": 34.84, "blocked": 37.51, "done-this-cycle": 36.28, "completed": 31.39, "locked-out": 39.44, "not-checked": 37.32},
+            "readyLead": 1.34,
+            "next": "locked-out"
+          },
+          "chroma": {
+            "salience": {"ready": 38.71, "ready-on-another-job": 10.12, "in-journal": 12.01, "blocked": 10.15, "done-this-cycle": 9.5, "completed": 8.71, "locked-out": 15.05, "not-checked": 10.16},
+            "readyLead": 2.57,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 106.35, "ready-on-another-job": 128.95, "in-journal": 117.2, "blocked": 128.81, "done-this-cycle": 123.93, "completed": 107.36, "locked-out": 127.54, "not-checked": 127.75},
+            "readyLead": 0.82,
+            "next": "ready-on-another-job"
+          }
         },
         "20": {
-          "salience": {"ready": 138.75, "ready-on-another-job": 169.3, "in-journal": 150.03, "blocked": 165.12, "done-this-cycle": 160.77, "completed": 136.46, "locked-out": 163.75, "not-checked": 165.45},
-          "readyLead": 0.82,
-          "next": "ready-on-another-job"
+          "weighted": {
+            "salience": {"ready": 70.25, "ready-on-another-job": 58.63, "in-journal": 53.56, "blocked": 57.21, "done-this-cycle": 55.96, "completed": 47.98, "locked-out": 60.82, "not-checked": 57.37},
+            "readyLead": 1.16,
+            "next": "locked-out"
+          },
+          "chroma": {
+            "salience": {"ready": 49.88, "ready-on-another-job": 15.98, "in-journal": 18.86, "blocked": 15.63, "done-this-cycle": 14.93, "completed": 13.67, "locked-out": 23.8, "not-checked": 15.82},
+            "readyLead": 2.1,
+            "next": "locked-out"
+          },
+          "luma": {
+            "salience": {"ready": 151.04, "ready-on-another-job": 199.53, "in-journal": 179.55, "blocked": 196.08, "done-this-cycle": 190.16, "completed": 162.71, "locked-out": 194.36, "not-checked": 195.49},
+            "readyLead": 0.76,
+            "next": "ready-on-another-job"
+          }
         }
       }
     }
