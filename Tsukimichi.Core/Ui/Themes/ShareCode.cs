@@ -118,7 +118,8 @@ public sealed class ShareCodeRead
 /// <item><term>theme, 4</term><description>a <see cref="ThemeId"/> (the same numbers as <see cref="GlyphSetId"/>)</description></item>
 /// <item><term>palette, 4</term><description>0 from the theme, else <see cref="PaletteWire"/></description></item>
 /// <item><term>frames, 4</term><description>0 from the theme, else a <see cref="FrameKitId"/></description></item>
-/// <item><term>high contrast, 1; has mix, 1</term><description></description></item>
+/// <item><term>high contrast, 1; has mix, 1</term><description>the sender's high contrast is written and read for the
+/// format's sake, but never applied: it is the receiver's own accessibility setting (<see cref="Apply"/>)</description></item>
 /// <item><term>8 picks × 4</term><description>only with the mix: 0 from the theme, else a <see cref="GlyphSetId"/>, in <see cref="QuestState"/> order</description></item>
 /// <item><term>CRC-8, 8</term><description>polynomial 0x07, initial 0, over every bit before it; the padding bits must be 0</description></item>
 /// </list>
@@ -370,7 +371,9 @@ public static class ShareCode
 
     /// <summary>
     /// What applying <paramref name="look"/> over <paramref name="saved"/> saves: a copy of <paramref name="saved"/> (its
-    /// version and the fields a newer build saved are kept) with the code's theme, palette, frames, high contrast and mix.
+    /// version and the fields a newer build saved are kept) with the code's theme, palette, frames and mix. High contrast
+    /// stays the receiver's own, whatever the code carries: it is a personal accessibility setting, never part of a shared
+    /// look (the coordinator's ruling for 1.17), as picking a theme card keeps it too.
     /// A palette or frames equal to the theme's own is saved as from the theme, as the Themes page saves it. What this
     /// build lists but does not offer (a theme, palette or kit still in its design round, or a pick of a set that is not
     /// offered or cannot be mixed) is left out and added to <paramref name="leftOut"/>: a theme then reads as the default
@@ -439,15 +442,14 @@ public static class ShareCode
         result.Theme = theme.Key;
         result.Palette = palette;
         result.Frames = frames;
-        result.HighContrast = look.HighContrast;
         result.Glyphs = glyphs;
         return result;
     }
 
     /// <summary>
     /// Everything that would look different going from <paramref name="before"/> to <paramref name="after"/>, in the
-    /// preview's order: the theme, the palette and the frames as they resolve (a theme brings its own), high contrast, then
-    /// each state whose own pick changes. Empty when the two look the same.
+    /// preview's order: the theme, the palette and the frames as they resolve (a theme brings its own), then each state
+    /// whose own pick changes. High contrast is not a change a share code makes (<see cref="Apply"/>), so it is not listed. Empty when the two look the same.
     /// </summary>
     public static IReadOnlyList<ShareChange> Changes(AppearanceConfig before, AppearanceConfig after)
     {
@@ -469,11 +471,6 @@ public static class ShareCode
         if (from.Frames != to.Frames)
         {
             changes.Add(new ShareChange(ShareChangeKind.Frames, QuestState.Ready, (int)from.Frames, (int)to.Frames));
-        }
-
-        if (before.HighContrast != after.HighContrast)
-        {
-            changes.Add(new ShareChange(ShareChangeKind.HighContrast, QuestState.Ready, before.HighContrast ? 1 : 0, after.HighContrast ? 1 : 0));
         }
 
         foreach (var state in AppearanceStates.All)
@@ -576,7 +573,6 @@ public enum ShareChangeKind
     Theme,
     Palette,
     Frames,
-    HighContrast,
 
     /// <summary>One state's own pick (<see cref="ShareChange.State"/>).</summary>
     State,
@@ -585,7 +581,7 @@ public enum ShareChangeKind
 /// <summary>
 /// One line of the share preview ("Theme Menphina's Medallion → Astrologian's Orrery", "Ready from Aether Crystal"):
 /// <paramref name="From"/> and <paramref name="To"/> are a <see cref="ThemeId"/>, <see cref="PaletteId"/> or
-/// <see cref="FrameKitId"/> by number, 0 or 1 for high contrast, and a <see cref="GlyphSetId"/> or 0 (from the theme)
+/// <see cref="FrameKitId"/> by number, and a <see cref="GlyphSetId"/> or 0 (from the theme)
 /// for a state.
 /// </summary>
 /// <param name="State">The state, for <see cref="ShareChangeKind.State"/>; otherwise <see cref="QuestState.Ready"/>.</param>

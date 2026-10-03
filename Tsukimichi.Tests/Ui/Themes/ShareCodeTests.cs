@@ -8,8 +8,8 @@ namespace Tsukimichi.Tests.Ui.Themes;
 /// Share codes (feature plan v7 T12; docs/design/v7/ui/spec-1.17.md §C): the encoder and decoder agree with the approved
 /// Python reference (docs/design/v7/ui/1.17/sharecode.py) on every vector <c>tools/themes/sharecode_vectors.py</c> wrote to
 /// <c>Fixtures/sharecode-vectors.json</c>, character for character; the spec's examples; tolerant reading; the checksum
-/// catching every single-character typo; ids from a newer build named and left out; and what applying a code saves and
-/// changes, which a code that does not read never does.
+/// catching every single-character typo; ids from a newer build named and left out; what applying a code saves and
+/// changes, which a code that does not read never does; and the receiver's high contrast, which a code never changes.
 /// </summary>
 public sealed class ShareCodeTests
 {
@@ -359,7 +359,7 @@ public sealed class ShareCodeTests
         var read = ShareCode.Decode(ShareCode.Encode(original));
         Assert.True(read.Ok);
         var leftOut = new List<ShareCodeOmission>();
-        var applied = ShareCode.Apply(new AppearanceConfig(), read.Look, leftOut);
+        var applied = ShareCode.Apply(new AppearanceConfig { HighContrast = highContrast }, read.Look, leftOut);
         Assert.Empty(leftOut);
         Assert.True(original.SameAs(applied), $"{AppearanceJson.Write(original)} came back as {AppearanceJson.Write(applied)}");
         Assert.Empty(ShareCode.Changes(original, applied));
@@ -434,6 +434,33 @@ public sealed class ShareCodeTests
         }
     }
 
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public void A_code_never_changes_the_receivers_high_contrast(bool mine, bool theirs)
+    {
+        // The bit is still written and read, for the format's sake.
+        var sender = new AppearanceConfig { Theme = "aether-crystal", HighContrast = theirs };
+        var read = ShareCode.Decode(ShareCode.Encode(sender));
+        Assert.Equal(theirs, read.Look.HighContrast);
+
+        var saved = new AppearanceConfig { HighContrast = mine };
+        var preview = SharePreview.Of(ShareCode.Encode(sender), saved);
+        Assert.Equal(mine, preview.Result!.HighContrast);
+        Assert.Equal(
+            [
+                new ShareChange(ShareChangeKind.Theme, QuestState.Ready, (int)ThemeId.Medallion, (int)ThemeId.AetherCrystal),
+                new ShareChange(ShareChangeKind.Frames, QuestState.Ready, (int)FrameKitId.Brass, (int)FrameKitId.Silver),
+            ],
+            preview.Changes);
+
+        // A code that differs only in high contrast has nothing to change.
+        var same = SharePreview.Of(ShareCode.Encode(new AppearanceConfig { HighContrast = theirs }), saved);
+        Assert.Equal(ShareVerdict.NothingToChange, same.Verdict(editing: false));
+    }
+
     [Fact]
     public void Classic_is_never_a_pick()
     {
@@ -459,12 +486,12 @@ public sealed class ShareCodeTests
                 new ShareChange(ShareChangeKind.Theme, QuestState.Ready, (int)ThemeId.Medallion, (int)ThemeId.IshgardGlass),
                 new ShareChange(ShareChangeKind.Palette, QuestState.Ready, (int)PaletteId.Night, (int)PaletteId.IshgardSnow),
                 new ShareChange(ShareChangeKind.Frames, QuestState.Ready, (int)FrameKitId.Brass, (int)FrameKitId.Came),
-                new ShareChange(ShareChangeKind.HighContrast, QuestState.Ready, 0, 1),
                 new ShareChange(ShareChangeKind.State, QuestState.Ready, 0, (int)GlyphSetId.Medallion),
                 new ShareChange(ShareChangeKind.State, QuestState.Completed, (int)GlyphSetId.AetherCrystal, 0),
             ],
             preview.Changes);
         Assert.Empty(preview.LeftOut);
+        Assert.False(preview.Result!.HighContrast);
 
         // Building the preview saved nothing.
         Assert.Equal("medallion", saved.Theme);

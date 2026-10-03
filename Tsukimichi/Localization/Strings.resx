@@ -10394,7 +10394,7 @@
   </data>
   <data name="ThemesShareChangeFormat" xml:space="preserve">
     <value>{0} {1} → {2}</value>
-    <comment>{0} = Theme, Palette, Frames or High contrast; {1} = what it is now; {2} = what the code makes it.</comment>
+    <comment>{0} = Theme, Palette or Frames; {1} = what it is now; {2} = what the code makes it.</comment>
   </data>
   <data name="ThemesShareTheme" xml:space="preserve">
     <value>Theme</value>
@@ -10407,18 +10407,6 @@
   <data name="ThemesShareFrames" xml:space="preserve">
     <value>Frames</value>
     <comment>Settings › Themes › Share: a preview line's label.</comment>
-  </data>
-  <data name="ThemesShareHighContrast" xml:space="preserve">
-    <value>High contrast</value>
-    <comment>Settings › Themes › Share: a preview line's label.</comment>
-  </data>
-  <data name="ThemesShareOn" xml:space="preserve">
-    <value>On</value>
-    <comment>Settings › Themes › Share: high contrast on, in a preview line.</comment>
-  </data>
-  <data name="ThemesShareOff" xml:space="preserve">
-    <value>Off</value>
-    <comment>Settings › Themes › Share: high contrast off, in a preview line.</comment>
   </data>
   <data name="ThemesSharePickFormat" xml:space="preserve">
     <value>{0} from {1}</value>

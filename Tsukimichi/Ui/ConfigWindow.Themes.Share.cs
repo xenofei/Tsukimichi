@@ -20,6 +20,7 @@ namespace Tsukimichi.Ui;
 /// before anything changes: every change in words, five sample medals at 36 px drawn in the code's look
 /// (<see cref="GlyphSeam.PushAppearance"/>), what this version leaves out in amber words, and Cancel and Apply ("Apply the
 /// rest" when something is left out). Apply saves the look at once with an Undo (<see cref="GuardedAction.ApplyShareCode"/>).
+/// The player's own high contrast is kept, and the medals are drawn with it, whatever the code carries.
 /// A code that does not read says so in Locked out's ink and changes nothing.</item>
 /// </list>
 /// The status line under the field is always there, so a note or a short error never moves what follows; the preview
@@ -347,7 +348,6 @@ public sealed partial class ConfigWindow
         ShareChangeKind.Theme => Arrow(Strings.ThemesShareTheme, ThemeName((ThemeId)change.From), ThemeName((ThemeId)change.To)),
         ShareChangeKind.Palette => Arrow(Strings.ThemesSharePalette, PaletteName((PaletteId)change.From), PaletteName((PaletteId)change.To)),
         ShareChangeKind.Frames => Arrow(Strings.ThemesShareFrames, KitName((FrameKitId)change.From), KitName((FrameKitId)change.To)),
-        ShareChangeKind.HighContrast => Arrow(Strings.ThemesShareHighContrast, OnOff(change.From), OnOff(change.To)),
         _ => change.To == 0
             ? string.Format(CultureInfo.CurrentCulture, Strings.ThemesSharePickFromThemeFormat, Strings.StateName(change.State))
             : string.Format(CultureInfo.CurrentCulture, Strings.ThemesSharePickFormat, Strings.StateName(change.State), ShareSetName((GlyphSetId)change.To)),
@@ -355,8 +355,6 @@ public sealed partial class ConfigWindow
 
     private static string Arrow(string label, string from, string to) =>
         string.Format(CultureInfo.CurrentCulture, Strings.ThemesShareChangeFormat, label, from, to);
-
-    private static string OnOff(int value) => value != 0 ? Strings.ThemesShareOn : Strings.ThemesShareOff;
 
     /// <summary>A glyph set's name: the theme of the same number's (the two tables share their numbers; ThemeRegistryTests pins both).</summary>
     private static string ShareSetName(GlyphSetId id) => ThemeName((ThemeId)(byte)id);

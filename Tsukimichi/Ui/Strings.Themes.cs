@@ -166,7 +166,7 @@ public static partial class Strings
 
     public static string ThemesShareSameLook => Loc.Get("ThemesShareSameLook");
 
-    /// <summary>{0} = Theme, Palette, Frames or High contrast; {1} = what it is now; {2} = what the code makes it.</summary>
+    /// <summary>{0} = Theme, Palette or Frames; {1} = what it is now; {2} = what the code makes it.</summary>
     public static string ThemesShareChangeFormat => Loc.Get("ThemesShareChangeFormat");
 
     public static string ThemesShareTheme => Loc.Get("ThemesShareTheme");
@@ -174,12 +174,6 @@ public static partial class Strings
     public static string ThemesSharePalette => Loc.Get("ThemesSharePalette");
 
     public static string ThemesShareFrames => Loc.Get("ThemesShareFrames");
-
-    public static string ThemesShareHighContrast => Loc.Get("ThemesShareHighContrast");
-
-    public static string ThemesShareOn => Loc.Get("ThemesShareOn");
-
-    public static string ThemesShareOff => Loc.Get("ThemesShareOff");
 
     /// <summary>{0} = a state (Ready); {1} = the set its moon comes from.</summary>
     public static string ThemesSharePickFormat => Loc.Get("ThemesSharePickFormat");
