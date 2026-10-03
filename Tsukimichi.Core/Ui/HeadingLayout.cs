@@ -76,6 +76,25 @@ public static class HeadingLayout
         return new HeadingGeometry(top, height, midY, sigilCenter, sigilSize, x, titleRoom, ruleStart, ruleEnd, captionShown ? captionX : right, captionShown, captionBelow);
     }
 
+    /// <summary>
+    /// A Section heading's row at a Decoration level, in logical pixels (docs/design/v7/ui/spec.md §1, "Heading row"):
+    /// Full 30 tall then 10 to the content, Quiet 26 then 8, Plain a 22 px band then 2. A taller title line grows the
+    /// row (<see cref="SectionRowHeight"/>). Unknown values read as Full.
+    /// </summary>
+    public static (float Row, float Gap) SectionRow(Flair flair) => (Enum.IsDefined(flair) ? flair : Flair.Full) switch
+    {
+        Flair.Plain => (22f, 2f),
+        Flair.Quiet => (26f, 8f),
+        _ => (30f, 10f),
+    };
+
+    /// <summary>The Section heading row's height in pixels at <paramref name="scale"/>: the level's row, or the title's line when taller.</summary>
+    public static float SectionRowHeight(Flair flair, float scale, float titleLine)
+    {
+        scale = float.IsFinite(scale) && scale > 0f ? scale : 1f;
+        return MathF.Round(MathF.Max(SectionRow(flair).Row * scale, Finite(titleLine)));
+    }
+
     private static float Finite(float value) => float.IsFinite(value) ? MathF.Max(0f, value) : 0f;
 }
 

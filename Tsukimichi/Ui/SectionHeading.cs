@@ -72,10 +72,22 @@ public static class SectionHeading
     /// <paramref name="captionOverflow"/>: left out and named on hover, or wrapped under the heading. Returns where the
     /// caption landed on the line, for a caller's own hover text.
     /// </summary>
-    public static HeadingDrawn DrawLine(string text, string? caption, uint captionColor, float reserve, bool sigil, Flair flair, CaptionOverflow captionOverflow, bool numeral = false)
+    /// <param name="role">
+    /// <see cref="TypeRole.Eyebrow"/> (the default: pane headings, the Journal header) or <see cref="TypeRole.Section"/>
+    /// (plan v7 §1: the detail pane's open sections, the filter drawer's section heads): at Full the Section role,
+    /// tracked, in the lighter gilt over a 1 px shadow; at Quiet the Lead face in the primary tone; at Plain a band.
+    /// </param>
+    public static HeadingDrawn DrawLine(string text, string? caption, uint captionColor, float reserve, bool sigil, Flair flair, CaptionOverflow captionOverflow, bool numeral = false, TypeRole role = TypeRole.Eyebrow)
     {
         ArgumentNullException.ThrowIfNull(text);
         var style = FlairRules.Rule(flair);
+        if (role == TypeRole.Section)
+        {
+            return style == RuleStyle.Line
+                ? DrawBand(text, caption, captionColor, reserve, captionOverflow, numeral)
+                : DrawSectionLine(text, caption, captionColor, reserve, sigil, style == RuleStyle.MoonRoad, captionOverflow, numeral);
+        }
+
         if (style == RuleStyle.Line)
         {
             ImGui.TextDisabled(text);
@@ -88,10 +100,24 @@ public static class SectionHeading
             return default;
         }
 
+        return DrawRuled(text, caption, captionColor, reserve, sigil, style == RuleStyle.MoonRoad, captionOverflow, numeral, section: false);
+    }
+
+    /// <summary>The Section role's heading line at Full and Quiet (<see cref="DrawLine"/> with <see cref="TypeRole.Section"/>).</summary>
+    private static HeadingDrawn DrawSectionLine(string text, string? caption, uint captionColor, float reserve, bool sigil, bool moonRoad, CaptionOverflow captionOverflow, bool numeral) =>
+        DrawRuled(text, caption, captionColor, reserve, sigil, moonRoad, captionOverflow, numeral, section: true);
+
+    /// <summary>
+    /// The heading line with its rule (Full and Quiet): the sigil, the title, the rule and the caption, laid out by
+    /// <see cref="HeadingLayout.Compute"/>. A <paramref name="section"/> heading's title is in the Section role (tracked
+    /// gilt capitals over a 1 px shadow at Full, sentence case where the game face falls back; the Lead face at Quiet);
+    /// otherwise in the Eyebrow role in the secondary tone.
+    /// </summary>
+    private static HeadingDrawn DrawRuled(string text, string? caption, uint captionColor, float reserve, bool sigil, bool moonRoad, CaptionOverflow captionOverflow, bool numeral, bool section)
+    {
         var start = ImGui.GetCursorScreenPos();
         var room = MathF.Max(0f, ImGui.GetContentRegionAvail().X - MathF.Max(0f, reserve));
         var dl = ImGui.GetWindowDrawList();
-        var moonRoad = style == RuleStyle.MoonRoad;
         var capitals = Capitals && moonRoad;
         var label = Case.For(text, capitals);
         sigil &= moonRoad;
@@ -108,10 +134,18 @@ public static class SectionHeading
 
         float titleLine;
         float titleWidth;
-        using (TitleRole(label, capitals))
+        var tracking = 0f;
+        using (var role = section ? SectionRole(label, moonRoad) : TitleRole(label, capitals))
         {
+            if (section && !role.GameFace)
+            {
+                // Where the game face cannot draw it, the Section heading takes the Lead face's sentence case.
+                label = text;
+            }
+
+            tracking = section ? Typography.SectionTracking(in role) : 0f;
             titleLine = ImGui.GetTextLineHeight();
-            titleWidth = ImGui.CalcTextSize(label).X;
+            titleWidth = Chrome.TrackedTextWidth(label, tracking);
         }
 
         var g = HeadingLayout.Compute(start.X, room, UiMetrics.Scale, titleLine, titleWidth, captionWidth, captionLine, sigil, captionOverflow);
@@ -121,10 +155,19 @@ public static class SectionHeading
             Ornament.Sigil(dl, new Vector2(g.SigilCenterX, midY), g.SigilSize);
         }
 
-        using (TitleRole(label, capitals))
+        using (section ? SectionRole(label, moonRoad) : TitleRole(label, capitals))
         {
-            var ink = moonRoad ? Theme.Surface.TextSecondary : Theme.Surface.Text;
-            Chrome.EllipsisTextAt(dl, new Vector2(g.TitleX, MathF.Round(midY - (titleLine * 0.5f))), g.TitleRoom, label, Theme.U32(ink), titleWidth);
+            var at = new Vector2(g.TitleX, MathF.Round(midY - (titleLine * 0.5f)));
+            if (section)
+            {
+                var ink = moonRoad ? Theme.Surface.OrnamentLight : Theme.Surface.Text;
+                Chrome.TrackedTextAt(dl, at, g.TitleRoom, label, Theme.U32(ink), tracking, moonRoad ? Theme.WithAlpha(Theme.Abyss, 0.55f) : 0u);
+            }
+            else
+            {
+                var ink = moonRoad ? Theme.Surface.TextSecondary : Theme.Surface.Text;
+                Chrome.EllipsisTextAt(dl, at, g.TitleRoom, label, Theme.U32(ink), titleWidth);
+            }
         }
 
         if (g.HasRule)
@@ -144,21 +187,78 @@ public static class SectionHeading
 
         ImGui.SetCursorScreenPos(start);
         ImGui.Dummy(new Vector2(MathF.Max(1f, room), g.TotalHeight));
-        if (caption is { Length: > 0 } && !g.CaptionShown)
+        PlaceCaption(caption, captionColor, g.CaptionShown, g.CaptionBelow, g.TitleX, start.X + room);
+        return new HeadingDrawn(g.CaptionShown, captionMin, captionMax);
+    }
+
+    /// <summary>
+    /// The Section role's heading at Plain (docs/design/v7/ui/spec.md §1): a band (<see cref="HeadingLayout.SectionRow"/>,
+    /// 22 px) in the ledger's band tone with a 1 px line under it, the title at the body size in the primary tone and
+    /// the caption at the band's right end while it clears the title; else wrapped under the band or named on hover,
+    /// as <paramref name="captionOverflow"/> says. The content follows 2 px under the line.
+    /// </summary>
+    private static HeadingDrawn DrawBand(string text, string? caption, uint captionColor, float reserve, CaptionOverflow captionOverflow, bool numeral)
+    {
+        var start = ImGui.GetCursorScreenPos();
+        var room = MathF.Max(0f, ImGui.GetContentRegionAvail().X - MathF.Max(0f, reserve));
+        var dl = ImGui.GetWindowDrawList();
+        var line = ImGui.GetTextLineHeight();
+        var row = HeadingLayout.SectionRowHeight(Flair.Plain, UiMetrics.Scale, line);
+        var pad = UiMetrics.Px(6f);
+        dl.AddRectFilled(start, new Vector2(start.X + room, start.Y + row), Theme.U32(Theme.Tones.Band));
+        dl.AddRectFilled(new Vector2(start.X, start.Y + row), new Vector2(start.X + room, start.Y + row + 1f), Theme.U32(Theme.Tones.Rule));
+
+        var captionWidth = 0f;
+        var captionLine = 0f;
+        if (caption is { Length: > 0 })
         {
-            if (g.CaptionBelow)
-            {
-                using var role = Typography.Caption();
-                ImGui.SetCursorScreenPos(new Vector2(g.TitleX, ImGui.GetCursorScreenPos().Y));
-                TextFlow.Wrapped(caption, MathF.Max(1f, start.X + room - g.TitleX), captionColor);
-            }
-            else if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(caption);
-            }
+            using var role = numeral ? Typography.Numeral(caption) : Typography.Caption();
+            captionWidth = ImGui.CalcTextSize(caption).X;
+            captionLine = ImGui.GetTextLineHeight();
         }
 
-        return new HeadingDrawn(g.CaptionShown, captionMin, captionMax);
+        var titleX = start.X + pad;
+        var titleWidth = ImGui.CalcTextSize(text).X;
+        var captionX = start.X + room - pad - captionWidth;
+        var captionShown = captionWidth > 0f && captionX >= titleX + titleWidth + UiMetrics.Px(HeadingLayout.RuleGapLogical);
+        var titleRoom = MathF.Max(0f, (captionShown ? captionX - UiMetrics.Px(HeadingLayout.RuleGapLogical) : start.X + room - pad) - titleX);
+        Chrome.EllipsisTextAt(dl, new Vector2(titleX, start.Y + MathF.Round((row - line) * 0.5f)), titleRoom, text, Theme.U32(Theme.Surface.Text), titleWidth);
+
+        var captionMin = Vector2.Zero;
+        var captionMax = Vector2.Zero;
+        if (captionShown)
+        {
+            using var role = numeral ? Typography.Numeral(caption) : Typography.Caption();
+            captionMin = new Vector2(MathF.Round(captionX), start.Y + MathF.Round((row - captionLine) * 0.5f));
+            captionMax = captionMin + new Vector2(captionWidth, captionLine);
+            dl.AddText(captionMin, captionColor, caption!);
+        }
+
+        ImGui.SetCursorScreenPos(start);
+        ImGui.Dummy(new Vector2(MathF.Max(1f, room), row + 1f));
+        PlaceCaption(caption, captionColor, captionShown, captionOverflow == CaptionOverflow.Below, titleX, start.X + room);
+        ImGui.SetCursorScreenPos(new Vector2(start.X, ImGui.GetItemRectMax().Y + UiMetrics.Px(HeadingLayout.SectionRow(Flair.Plain).Gap)));
+        return new HeadingDrawn(captionShown, captionMin, captionMax);
+    }
+
+    /// <summary>A caption that is not on the heading's line: wrapped under it from <paramref name="left"/>, or named while the heading is hovered.</summary>
+    private static void PlaceCaption(string? caption, uint captionColor, bool shown, bool below, float left, float right)
+    {
+        if (caption is not { Length: > 0 } || shown)
+        {
+            return;
+        }
+
+        if (below)
+        {
+            using var role = Typography.Caption();
+            ImGui.SetCursorScreenPos(new Vector2(left, ImGui.GetCursorScreenPos().Y));
+            TextFlow.Wrapped(caption, MathF.Max(1f, right - left), captionColor);
+        }
+        else if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(caption);
+        }
     }
 
     /// <summary>
@@ -223,6 +323,10 @@ public static class SectionHeading
     /// </summary>
     private static Typography.Scope TitleRole(string label, bool capitals) =>
         capitals ? Typography.Eyebrow(label) : Theme.MoonRoadArt ? Typography.Caption() : default;
+
+    /// <summary>The Section heading's role: the Section role at Full (falling back to the Lead face), the Lead face at Quiet.</summary>
+    private static Typography.Scope SectionRole(string label, bool moonRoad) =>
+        moonRoad ? Typography.Section(label) : Typography.Lead();
 }
 
 /// <summary>Where <see cref="SectionHeading.DrawLine"/> put its caption: <see cref="CaptionShown"/> false when it is not on the line.</summary>

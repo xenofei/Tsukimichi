@@ -276,7 +276,7 @@ public sealed partial class DetailPane
 
         Gap();
         var start = ImGui.GetCursorScreenPos();
-        BeginSection("##requirements", Strings.Requirements, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.EclipseText : Theme.Surface.TextTertiary);
+        BeginSection("##requirements", Strings.Requirements, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.EclipseText : Theme.Surface.TextSecondary);
         DrawRequirements(start.X);
         EndSection();
         ui.RecordItem(UiRects.DetailRequirements);
@@ -285,7 +285,7 @@ public sealed partial class DetailPane
         if (HasExpAndGil(quest) || model.Rewards.Count > 0)
         {
             Gap();
-            BeginSection("##rewards", Strings.Rewards, RewardsIcon, model.RewardsCaption, Theme.Surface.TextTertiary);
+            BeginSection("##rewards", Strings.Rewards, RewardsIcon, model.RewardsCaption, Theme.Surface.TextSecondary);
             DrawExpAndGil(quest);
             if (model.Rewards.Count > 0)
             {
@@ -314,7 +314,7 @@ public sealed partial class DetailPane
         }
 
         var pad = UiMetrics.Px(10f);
-        BeginSection("##path", Strings.Path, PathIcon, chart.HeaderCaption, Theme.Surface.TextTertiary, chart.HeaderTooltip);
+        BeginSection("##path", Strings.Path, PathIcon, chart.HeaderCaption, Theme.Surface.TextSecondary, chart.HeaderTooltip);
         DrawPathNext();
         DrawChain();
 

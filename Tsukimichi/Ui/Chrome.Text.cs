@@ -122,6 +122,85 @@ public static partial class Chrome
         EllipsisTextAt(dl, pos, width, text.AsSpan(), color, textWidth);
 
     /// <summary>
+    /// The width of <paramref name="text"/> in the current font with <paramref name="tracking"/> pixels between glyphs
+    /// (<see cref="TrackedTextAt"/>); the plain width when there is no tracking or the text holds surrogate pairs.
+    /// </summary>
+    public static float TrackedTextWidth(ReadOnlySpan<char> text, float tracking)
+    {
+        var plain = ImGui.CalcTextSize(text).X;
+        return Trackable(text, tracking) ? TypeScale.TrackedWidth(plain, text.Length, tracking) : plain;
+    }
+
+    /// <summary>
+    /// <paramref name="text"/> drawn on <paramref name="dl"/> at <paramref name="pos"/> with <paramref name="tracking"/>
+    /// pixels of letter spacing (ImGui has none, so it is drawn glyph by glyph, each placed at its prefix's width plus
+    /// the spacing so far: no rounding builds up). A text that does not fit <paramref name="width"/> tracked is drawn
+    /// untracked, ending in an ellipsis when it must. With a <paramref name="shadow"/> colour (not 0) it is drawn 1 px
+    /// lower in that colour first, so thin strokes hold on a busy surface. Returns whether the text was cut. Headings
+    /// only: it measures each prefix, which is fine for a dozen glyphs a heading has.
+    /// </summary>
+    public static bool TrackedTextAt(ImDrawListPtr dl, Vector2 pos, float width, ReadOnlySpan<char> text, uint color, float tracking, uint shadow = 0)
+    {
+        if (text.IsEmpty)
+        {
+            return false;
+        }
+
+        var plain = ImGui.CalcTextSize(text).X;
+        var below = new Vector2(pos.X, pos.Y + UiMetrics.Hairline);
+        if (!Trackable(text, tracking) || TypeScale.TrackedWidth(plain, text.Length, tracking) > width + 0.5f)
+        {
+            if (shadow != 0)
+            {
+                EllipsisTextAt(dl, below, width, text, shadow, plain);
+            }
+
+            return EllipsisTextAt(dl, pos, width, text, color, plain);
+        }
+
+        if (shadow != 0)
+        {
+            DrawTracked(dl, below, text, shadow, tracking);
+        }
+
+        DrawTracked(dl, pos, text, color, tracking);
+        return false;
+    }
+
+    private static void DrawTracked(ImDrawListPtr dl, Vector2 pos, ReadOnlySpan<char> text, uint color, float tracking)
+    {
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] == ' ')
+            {
+                continue;
+            }
+
+            var x = i == 0 ? 0f : ImGui.CalcTextSize(text[..i]).X + (tracking * i);
+            dl.AddText(new Vector2(MathF.Round(pos.X + x), pos.Y), color, text.Slice(i, 1));
+        }
+    }
+
+    /// <summary>Whether <paramref name="text"/> is drawn tracked: a spacing to add, and no surrogate pair to split.</summary>
+    private static bool Trackable(ReadOnlySpan<char> text, float tracking)
+    {
+        if (!(tracking > 0f) || text.Length < 2)
+        {
+            return false;
+        }
+
+        foreach (var c in text)
+        {
+            if (char.IsSurrogate(c))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// A status line (P1, game UX panel finding 3): the state word (<see cref="TableGeometry.StateWordLength"/>) in
     /// <paramref name="stateInk"/>, never cut, then the reason after the separator in <paramref name="reasonInk"/>,
     /// ellipsised in the room the state word leaves (<see cref="TableGeometry.ReasonWidth"/>). With

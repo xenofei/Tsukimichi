@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Dalamud;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -34,6 +35,12 @@ namespace Tsukimichi.Ui;
 /// "…", "→" or "•"; MiedingerMid has ASCII and Latin-1 with "·" but no "–", "—", "’", "›" or "…"; none has kana,
 /// kanji or hangul. Jupiter 45 and 90 are digits only and are never used. The roles are built only while
 /// <see cref="GameHeadingFonts"/> is on (Settings › General › Look), and each falls back to the role it replaces.
+/// </para>
+/// <para>
+/// Plan v7 adds <see cref="TypeRole.Section"/> (the detail pane's card headings, 1.80× tapering to 1.60× at 150 % Text
+/// size), <see cref="TypeRole.Header"/> (the Journal's column headers, 1.55×) and <see cref="TypeRole.HeroTitle"/> (the
+/// Full quest title, kept above the Section headings). A heading never falls back below the body size: the Section
+/// role falls back to <see cref="Lead"/>, the body face built at 1.15×, never to the caption.
 /// </para>
 /// <para>
 /// Text size (feature plan v6 U7): away from 100% a body font is built at that size from Dalamud's default font and
@@ -89,14 +96,18 @@ public static class Typography
     private static IFontHandle? caption;
     private static IFontHandle? display;
 
-    // The Moon Road roles: indices into EyebrowFonts, TitleFonts and NumeralFonts, -1 while not built.
-    private static int eyebrowFont = -1;
-    private static int titleFont = -1;
-    private static int numeralFont = -1;
-    private static IFontHandle? eyebrow;
-    private static IFontHandle? title;
-    private static IFontHandle? numeral;
+    // Quiet's quest title (and the Full hero title's fallback): an Axis size, built as the display role is.
+    private static int quietTitleFont = -1;
+    private static IFontHandle? quietTitle;
+
+    // The game-face roles (TypeRole): the game font each draws in, or null while not built. Roles that pick the same
+    // font share one handle from the pool, so Eyebrow, Section and Header at one TrumpGothic size cost one build.
+    private static readonly GameFontFamilyAndSize?[] RoleFonts = new GameFontFamilyAndSize?[RoleCount];
+    private static readonly Dictionary<GameFontFamilyAndSize, IFontHandle> HeadingPool = [];
+    private static readonly List<GameFontFamilyAndSize> UnusedFonts = [];
     private static bool headingFontsFailed;
+
+    private const int RoleCount = (int)TypeRole.HeroTitle + 1;
 
     // The body font at the text size (Settings › General › Text size): built only away from 100%, in pixels at global
     // scale 1; 0 while none is built or wanted.
@@ -104,6 +115,12 @@ public static class Typography
     private static float bodyPx;
     private static bool bodyBuilt;
     private static bool bodyFailed;
+
+    // The Lead font (the body face at 1.15×: Quiet's section headings, the Section fallback, Plain's quest title), built
+    // from Dalamud's default font at the text size; 0 while none is built.
+    private static IFontHandle? lead;
+    private static float leadPx;
+    private static bool leadFailed;
 
     /// <summary>
     /// Whether the Moon Road roles draw in the game's fonts: Settings › Display › Look › Game fonts for headings, off
@@ -119,10 +136,13 @@ public static class Typography
         bucket = -1;
         captionFont = -1;
         displayFont = -1;
-        eyebrowFont = titleFont = numeralFont = -1;
+        quietTitleFont = -1;
+        Array.Clear(RoleFonts);
         headingFontsFailed = false;
         bodyFailed = false;
         bodyPx = 0f;
+        leadFailed = false;
+        leadPx = 0f;
     }
 
     /// <summary>
@@ -154,11 +174,13 @@ public static class Typography
         // Every role is sized from the body, so the text size carries into the game font each role picks.
         var basePx = defaultPx * UiMetrics.TextScale;
 
-        UpdateHeadingHandles(atlas, next, basePx, headingFonts);
+        UpdateLeadHandle(atlas, basePx);
+        UpdateHeadingHandles(atlas, next, basePx, UiMetrics.TextScale, headingFonts);
         CheckHeadingLoad();
         var nextCaption = TypeScale.CaptionGameFont(next, basePx);
         var nextDisplay = TypeScale.DisplayGameFont(next, basePx);
-        if (next == bucket && nextCaption == captionFont && nextDisplay == displayFont)
+        var nextQuietTitle = TypeScale.QuietTitleGameFont(next, basePx);
+        if (next == bucket && nextCaption == captionFont && nextDisplay == displayFont && nextQuietTitle == quietTitleFont)
         {
             return;
         }
@@ -167,10 +189,12 @@ public static class Typography
         bucket = next;
         captionFont = nextCaption;
         displayFont = nextDisplay;
+        quietTitleFont = nextQuietTitle;
         try
         {
             caption = NewRoleHandle(atlas, GameFonts[captionFont]);
             display = NewRoleHandle(atlas, GameFonts[displayFont]);
+            quietTitle = NewRoleHandle(atlas, GameFonts[quietTitleFont]);
         }
         catch (Exception ex)
         {
@@ -219,6 +243,48 @@ public static class Typography
         UiMetrics.SetTextFontBuilt(bodyBuilt);
     }
 
+    /// <summary>
+    /// Builds the Lead font (<see cref="TypeScale.LeadFontPx"/>: the body face at 1.15× the body at the text size),
+    /// rebuilding it when that size moved. Like the body font it reaches the UI scale through the window's font scale,
+    /// so it is exactly as crisp as the body text under it. Until it is built the body font stands in, scaled.
+    /// </summary>
+    private static void UpdateLeadHandle(IFontAtlas fontAtlas, float basePx)
+    {
+        var wanted = leadFailed ? 0f : TypeScale.LeadFontPx(basePx);
+        if (wanted != leadPx)
+        {
+            DisposeLeadHandle();
+            leadPx = wanted;
+            if (wanted > 0f)
+            {
+                try
+                {
+                    lead = fontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(tk => tk.AddDalamudDefaultFont(wanted)));
+                }
+                catch (Exception ex)
+                {
+                    log?.Warning(ex, "Heading font unavailable; headings are scaled from the body font instead");
+                    leadFailed = true;
+                    DisposeLeadHandle();
+                }
+            }
+        }
+
+        if (!leadFailed && lead?.LoadException is { } error)
+        {
+            log?.Warning(error, "Heading font failed to build; headings are scaled from the body font instead");
+            leadFailed = true;
+            DisposeLeadHandle();
+        }
+    }
+
+    private static void DisposeLeadHandle()
+    {
+        lead?.Dispose();
+        lead = null;
+        leadPx = 0f;
+    }
+
     private static void DisposeBodyHandle()
     {
         body?.Dispose();
@@ -234,40 +300,74 @@ public static class Typography
     /// </summary>
     public static BodyScope Body() => new(bodyBuilt ? body : null);
 
-    /// <summary>Builds, rebuilds or disposes the Eyebrow, Title and Numeral handles for the bucket and the setting.</summary>
-    private static void UpdateHeadingHandles(IFontAtlas fontAtlas, int next, float basePx, bool on)
+    /// <summary>
+    /// Picks the game font of every game-face role (<see cref="TypeRole"/>) for the bucket, the body and the text size
+    /// (the Section role and the hero title taper with the text size), builds the ones the pool lacks and disposes the
+    /// ones no role uses any more. While <paramref name="on"/> is off every handle goes. Nothing happens when no role's
+    /// font moved.
+    /// </summary>
+    private static void UpdateHeadingHandles(IFontAtlas fontAtlas, int next, float basePx, float textScale, bool on)
     {
-        var nextEyebrow = on ? TypeScale.EyebrowGameFont(next, basePx) : -1;
-        var nextTitle = on ? TypeScale.TitleGameFont(next, basePx) : -1;
-        var nextNumeral = on ? TypeScale.NumeralGameFont(next, basePx) : -1;
-        if (nextEyebrow == eyebrowFont && nextTitle == titleFont && nextNumeral == numeralFont)
+        var changed = false;
+        for (var i = 0; i < RoleCount; i++)
+        {
+            GameFontFamilyAndSize? font = on && !headingFontsFailed ? RoleFont((TypeRole)i, next, basePx, textScale) : null;
+            if (RoleFonts[i] != font)
+            {
+                RoleFonts[i] = font;
+                changed = true;
+            }
+        }
+
+        if (!changed)
         {
             return;
         }
 
-        DisposeHeadingHandles();
-        eyebrowFont = nextEyebrow;
-        titleFont = nextTitle;
-        numeralFont = nextNumeral;
-        if (!on || headingFontsFailed)
+        UnusedFonts.Clear();
+        foreach (var font in HeadingPool.Keys)
         {
-            return;
+            if (Array.IndexOf(RoleFonts, font) < 0)
+            {
+                UnusedFonts.Add(font);
+            }
+        }
+
+        foreach (var font in UnusedFonts)
+        {
+            HeadingPool[font].Dispose();
+            HeadingPool.Remove(font);
         }
 
         try
         {
-            eyebrow = NewGameOnlyHandle(fontAtlas, EyebrowFonts[eyebrowFont]);
-            title = NewGameOnlyHandle(fontAtlas, TitleFonts[titleFont]);
-            numeral = NewGameOnlyHandle(fontAtlas, NumeralFonts[numeralFont]);
+            foreach (var wanted in RoleFonts)
+            {
+                if (wanted is { } font && !HeadingPool.ContainsKey(font))
+                {
+                    HeadingPool[font] = NewGameOnlyHandle(fontAtlas, font);
+                }
+            }
         }
         catch (Exception ex)
         {
-            // The headings keep the Caption and Display roles for the session rather than retrying every bucket change.
-            log?.Warning(ex, "Game heading fonts unavailable; headings use the caption and display roles");
+            // The headings keep their fallbacks for the session rather than retrying every bucket change.
+            log?.Warning(ex, "Game heading fonts unavailable; headings use the body and display faces");
             headingFontsFailed = true;
             DisposeHeadingHandles();
         }
     }
+
+    /// <summary>The game font <paramref name="role"/> draws in for the bucket, the body at UI scale 1 and the text size.</summary>
+    private static GameFontFamilyAndSize RoleFont(TypeRole role, int next, float basePx, float textScale) => role switch
+    {
+        TypeRole.Eyebrow => EyebrowFonts[TypeScale.EyebrowGameFont(next, basePx)],
+        TypeRole.Title => TitleFonts[TypeScale.TitleGameFont(next, basePx)],
+        TypeRole.Numeral => NumeralFonts[TypeScale.NumeralGameFont(next, basePx)],
+        TypeRole.Section => EyebrowFonts[TypeScale.SectionGameFont(next, basePx, textScale)],
+        TypeRole.Header => EyebrowFonts[TypeScale.HeaderGameFont(next, basePx)],
+        _ => TitleFonts[TypeScale.HeroTitleGameFont(next, basePx, textScale)],
+    };
 
     /// <summary>
     /// A heading handle whose build failed (<see cref="IFontHandle.LoadException"/>: the delegate handle never throws when
@@ -281,13 +381,18 @@ public static class Typography
             return;
         }
 
-        var error = eyebrow?.LoadException ?? title?.LoadException ?? numeral?.LoadException;
+        Exception? error = null;
+        foreach (var handle in HeadingPool.Values)
+        {
+            error ??= handle.LoadException;
+        }
+
         if (error is null)
         {
             return;
         }
 
-        log?.Warning(error, "Game heading fonts failed to build; headings use the caption and display roles");
+        log?.Warning(error, "Game heading fonts failed to build; headings use the body and display faces");
         headingFontsFailed = true;
         DisposeHeadingHandles();
     }
@@ -330,12 +435,14 @@ public static class Typography
         DisposeHandles();
         DisposeHeadingHandles();
         DisposeBodyHandle();
+        DisposeLeadHandle();
         bodyFailed = false;
+        leadFailed = false;
         atlas = null;
         bucket = -1;
         captionFont = -1;
         displayFont = -1;
-        eyebrowFont = titleFont = numeralFont = -1;
+        quietTitleFont = -1;
     }
 
     /// <summary>The caption size in the current window: 0.85× its body size, never under 12 px.</summary>
@@ -369,8 +476,11 @@ public static class Typography
             {
                 TypeRole.Eyebrow => TypeScale.EyebrowPxFor(body),
                 TypeRole.Title => TypeScale.TitlePxFor(body),
+                TypeRole.Section => TypeScale.SectionPxFor(body, UiMetrics.TextScale),
+                TypeRole.Header => TypeScale.HeaderPxFor(body),
+                TypeRole.HeroTitle => TypeScale.HeroTitlePxFor(body, UiMetrics.TextScale),
                 _ => TypeScale.NumeralPxFor(body),
-            });
+            }, gameFace: true);
             if (scope.GameFont && Covers(text))
             {
                 return scope;
@@ -383,6 +493,8 @@ public static class Typography
         {
             TypeRole.Eyebrow => Caption(),
             TypeRole.Title => Display(),
+            TypeRole.Section => Lead(),
+            TypeRole.HeroTitle => QuietTitle(),
             _ => new Scope(null, ImGui.GetFontSize()),
         };
     }
@@ -396,13 +508,41 @@ public static class Typography
     /// <summary>Counts and percentages in the Numeral role (MiedingerMid), falling back to the current font: <see cref="Push"/>.</summary>
     public static Scope Numeral(ReadOnlySpan<char> text) => Push(TypeRole.Numeral, text);
 
-    private static IFontHandle? HeadingHandle(TypeRole role) => role switch
-    {
-        TypeRole.Eyebrow => eyebrow,
-        TypeRole.Title => title,
-        TypeRole.Numeral => numeral,
-        _ => null,
-    };
+    /// <summary>
+    /// A Section heading at Full (the detail pane's cards, the filter drawer's sections): TrumpGothic at
+    /// <see cref="TypeScale.SectionPxFor"/>, falling back to <see cref="Lead"/> (never a caption): <see cref="Push"/>.
+    /// Whether the game face is in use is the scope's <see cref="Scope.GameFace"/>, which says whether to track it
+    /// (<see cref="SectionTracking"/>) and upper-case it.
+    /// </summary>
+    public static Scope Section(ReadOnlySpan<char> text) => Push(TypeRole.Section, text);
+
+    /// <summary>The Journal's column headers at Full: TrumpGothic at 1.55× the body, falling back to the body size: <see cref="Push"/>.</summary>
+    public static Scope Header(ReadOnlySpan<char> text) => Push(TypeRole.Header, text);
+
+    /// <summary>Full's hero quest title: Jupiter at <see cref="TypeScale.HeroTitlePxFor"/>, falling back to <see cref="QuietTitle"/>: <see cref="Push"/>.</summary>
+    public static Scope HeroTitle(ReadOnlySpan<char> text) => Push(TypeRole.HeroTitle, text);
+
+    /// <summary>
+    /// Draws in the body face one step up (1.15×, <see cref="TypeScale.LeadFactor"/>) until disposed: Quiet's section
+    /// headings, the Section role's fallback and Plain's quest title. The Lead font once it is built, the body font
+    /// scaled until then.
+    /// </summary>
+    public static Scope Lead() => new(lead, TypeScale.LeadPxFor(ImGui.GetFontSize()));
+
+    /// <summary>Draws Quiet's quest title block until disposed: the display face at 1.40× the body (<see cref="TypeScale.QuietTitleFactor"/>).</summary>
+    public static Scope QuietTitle() => new(quietTitle, TypeScale.QuietTitlePxFor(ImGui.GetFontSize()));
+
+    /// <summary>
+    /// The letter spacing of the Section role in the current font, in pixels: +0.08 em while <paramref name="scope"/>
+    /// draws in the game face, none in the body face's fallback. Call inside the scope.
+    /// </summary>
+    public static float SectionTracking(in Scope scope) => scope.GameFace ? TypeScale.TrackingPx(ImGui.GetFontSize(), TypeScale.SectionTrackingEm) : 0f;
+
+    /// <summary>The column headers' letter spacing in the current font: +0.08 em in the game face, none otherwise. Call inside the scope.</summary>
+    public static float HeaderTracking(in Scope scope) => scope.GameFace ? TypeScale.TrackingPx(ImGui.GetFontSize(), TypeScale.HeaderTrackingEm) : 0f;
+
+    private static IFontHandle? HeadingHandle(TypeRole role) =>
+        RoleFonts[(int)role] is { } font && HeadingPool.TryGetValue(font, out var handle) ? handle : null;
 
     /// <summary>Whether the current font (a heading role just pushed) has a glyph of its own for every printable character.</summary>
     private static unsafe bool Covers(ReadOnlySpan<char> text)
@@ -454,32 +594,38 @@ public static class Typography
     {
         caption?.Dispose();
         display?.Dispose();
+        quietTitle?.Dispose();
         caption = null;
         display = null;
+        quietTitle = null;
     }
 
+    /// <summary>Disposes every game-face handle; the roles fall back until <see cref="Update"/> builds them again.</summary>
     private static void DisposeHeadingHandles()
     {
-        eyebrow?.Dispose();
-        title?.Dispose();
-        numeral?.Dispose();
-        eyebrow = null;
-        title = null;
-        numeral = null;
+        foreach (var handle in HeadingPool.Values)
+        {
+            handle.Dispose();
+        }
+
+        HeadingPool.Clear();
+        Array.Clear(RoleFonts);
     }
 
     /// <summary>A pushed role: the game font when it is built, and the window font scale that brings it to the role's size.</summary>
     public struct Scope : IDisposable
     {
         private readonly float ownScale;
+        private readonly bool gameFace;
         private IDisposable? font;
         private bool active;
 
-        internal Scope(IFontHandle? handle, float targetPx)
+        internal Scope(IFontHandle? handle, float targetPx, bool gameFace = false)
         {
             var window = ImGuiP.GetCurrentWindow();
             ownScale = window.FontWindowScale;
             font = handle is { Available: true } ? handle.Push() : null;
+            this.gameFace = gameFace;
             active = true;
 
             // Whatever font is now current, scale the window so text lands on the target size.
@@ -492,6 +638,12 @@ public static class Typography
 
         /// <summary>Whether the game font is in use (false while it is still being built: the default font stands in).</summary>
         public readonly bool GameFont => font is not null;
+
+        /// <summary>
+        /// Whether a Moon Road role draws in its game display face (not a fallback): what decides the capitals and
+        /// the letter spacing of a Section heading or a column header. False for the plain roles and while building.
+        /// </summary>
+        public readonly bool GameFace => gameFace && font is not null;
 
         public void Dispose()
         {
@@ -557,4 +709,13 @@ public enum TypeRole
 
     /// <summary>MiedingerMid: counts, percentages, level pills. Falls back to the current font.</summary>
     Numeral,
+
+    /// <summary>TrumpGothic, tracked: the detail pane's card headings, the filter drawer's sections (plan v7). Falls back to the Lead face.</summary>
+    Section,
+
+    /// <summary>TrumpGothic, tracked: the Journal's column headers at Full (plan v7). Falls back to the body size.</summary>
+    Header,
+
+    /// <summary>Jupiter: the Full hero's quest title, the largest text in the pane (plan v7). Falls back to Quiet's title face.</summary>
+    HeroTitle,
 }

@@ -111,7 +111,7 @@ public sealed partial class DetailPane
         }
 
         Gap();
-        BeginSection("##unlocks", Strings.UnlocksSection, UnlocksIcon, unlocksMasked ? string.Empty : unlocksCaption, Theme.Surface.TextTertiary);
+        BeginSection("##unlocks", Strings.UnlocksSection, UnlocksIcon, unlocksMasked ? string.Empty : unlocksCaption, Theme.Surface.TextSecondary);
         if (unlocksMasked)
         {
             TextFlow.Wrapped(Strings.UnlocksMasked, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
