@@ -172,8 +172,20 @@ public readonly record struct SurfaceColors(
     public const float DeepDarkenLight = 0.10f;
 
     /// <summary>
-    /// The Night palette (ui-revamp §4.3, moon-road proposal §3): what the chrome draws with unless the user follows
-    /// Dalamud's colours.
+    /// #8B94B3 – Night's tertiary text since 1.16 (spec-1.16 §A2): Dusk #7C86A8 was 3.8 : 1 on Hover and 4.3 : 1 on
+    /// Raised; this reads at 4.5 : 1 on all four surfaces. The glyphs keep Dusk.
+    /// </summary>
+    public const uint NightTextTertiaryHex = 0x8B94B3;
+
+    /// <summary>
+    /// #646D8A – Night's strong line since 1.16 (spec-1.16 §A2): VeilLine #5C6584 was 2.7 : 1 on Raised; this is 3 : 1.
+    /// The glyphs keep VeilLine.
+    /// </summary>
+    public const uint NightStrongLineHex = 0x646D8A;
+
+    /// <summary>
+    /// The Night palette (ui-revamp §4.3, moon-road proposal §3, the spec-1.16 §A2 contrast fixes): what the chrome
+    /// draws with unless the user follows Dalamud's colours.
     /// </summary>
     public static readonly SurfaceColors Night = new(
         GlyphTokens.Night,
@@ -181,10 +193,10 @@ public readonly record struct SurfaceColors(
         GlyphTokens.NightRaised,
         GlyphTokens.NightHover,
         GlyphTokens.NightLine,
-        GlyphTokens.VeilLine,
+        ColorMath.FromHex(NightStrongLineHex),
         GlyphTokens.Silver,
         GlyphTokens.Mist,
-        GlyphTokens.Dusk,
+        ColorMath.FromHex(NightTextTertiaryHex),
         GlyphTokens.Veil,
         Light: false,
         Deep: GlyphTokens.Abyss,

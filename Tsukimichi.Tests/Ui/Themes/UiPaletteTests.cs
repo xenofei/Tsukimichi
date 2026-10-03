@@ -18,7 +18,8 @@ public sealed class UiPaletteTests
     private static void Hex(uint expected, Vector4 actual, string role) =>
         Assert.True(ColorMath.ToHex(actual) == expected && actual.W == 1f, $"{role}: expected #{expected:X6}, got #{ColorMath.ToHex(actual):X6} (alpha {actual.W})");
 
-    // ---- Night is 1.15's colours (the zero-visual-change port).
+    // ---- Night is 1.15's colours (the zero-visual-change port), but for the two spec-1.16 §A2 contrast fixes:
+    // TextTertiary #7C86A8 → #8B94B3 and StrongLine #5C6584 → #646D8A.
 
     [Theory]
     [InlineData("Window", 0x0F1424u)]
@@ -26,10 +27,10 @@ public sealed class UiPaletteTests
     [InlineData("Raised", 0x1E2437u)]
     [InlineData("Hover", 0x262D45u)]
     [InlineData("Line", 0x2A3149u)]
-    [InlineData("StrongLine", 0x5C6584u)]
+    [InlineData("StrongLine", 0x646D8Au)]
     [InlineData("Text", 0xDDE3F0u)]
     [InlineData("TextSecondary", 0xA9B2CCu)]
-    [InlineData("TextTertiary", 0x7C86A8u)]
+    [InlineData("TextTertiary", 0x8B94B3u)]
     [InlineData("TextDisabled", 0x4A5270u)]
     [InlineData("Deep", 0x080B16u)]
     [InlineData("Top", 0x151C33u)]
@@ -37,7 +38,7 @@ public sealed class UiPaletteTests
     [InlineData("OrnamentHigh", 0xD9BE82u)]
     [InlineData("Cool", 0x6F8FD0u)]
     [InlineData("CoolDeep", 0x24345Cu)]
-    public void Night_surface_roles_are_the_1_15_hexes(string role, uint hex)
+    public void Night_surface_roles_are_the_1_15_hexes_with_the_1_16_contrast_fixes(string role, uint hex)
     {
         var s = Night.Surface;
         var color = role switch
