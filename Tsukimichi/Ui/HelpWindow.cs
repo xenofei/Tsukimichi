@@ -289,7 +289,10 @@ public sealed class HelpWindow : Window
 
     private static CardItem[] PrivacyCards => privacyCardsCache.Value;
 
-    /// <summary>What Tsukimichi reads and keeps (1.7.0): whose data, which files, no network, links, companions, deleting.</summary>
+    /// <summary>
+    /// What Tsukimichi reads and keeps (1.7.0): whose data, which files, no network, links, companions, deleting, and
+    /// checking the build (feature plan v7 N2).
+    /// </summary>
     private static readonly Localization.LocCache<CardItem[]> privacyCardsCache = new(static () =>
         Cards(
         Strings.Help.PrivacyCardTitles,
@@ -299,7 +302,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Ban,
         FontAwesomeIcon.ExternalLinkAlt,
         FontAwesomeIcon.PuzzlePiece,
-        FontAwesomeIcon.TrashAlt));
+        FontAwesomeIcon.TrashAlt,
+        FontAwesomeIcon.Fingerprint));
 
     private static CardItem[] SpoilerCards => spoilerCardsCache.Value;
 

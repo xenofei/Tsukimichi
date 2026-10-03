@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **proposed on 2026-10-03, waiting for your review.** Nothing in this plan is built. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -135,9 +135,9 @@ Carried from plan v6 (was 1.14). Automation, built on what the community accepts
 |---|---|---|
 | A2 | A "Why it stopped" card with one-click fixes and Copy report | M |
 | A3 | Keep automation out of other players' runs: Questionable stops (or warns, or does nothing, per your setting) before a duty with no Duty Support or Trust | M |
-| A4 | Stop after this quest, after N quests, or at a set time; a run receipt | S |
+| A4 | Stop after N quests or at a set time, a run receipt, and stop-after-current for runs started some other way (Questionable has had its own "Stop after current quest" toggle since May 2026, and A6 covers single quests) | S |
 | A5 | "Needs you" alerts while a hand-off runs: death, stuck, a duty pop, a tell | M |
-| A6 | Questionable: "Just this quest" and "Do this next" | S |
+| A6 | Questionable, **decided by the panel: build with changes.**<br>• **Start does one quest:** the Start pill calls `StartSingleQuest`: "Questionable does this quest, then stops." It falls back to the old path, with a tooltip saying so, only if the gate is missing.<br>• **"Start here and keep going"** (the old behaviour) moves to the "…" menu.<br>• **"Do this next"** (insert at #1) goes in the "…" menu under the hand-off setting. It is enabled only for quests Questionable has a path for, and the list is read back afterwards. It is disabled while Questionable runs if in-game testing reproduces Questionable#45.<br>• **When a run ends,** a chat line says what finished.<br>No split button and no new setting. | S |
 | A7 | Craft with Artisan becomes Stop while running | S |
 | A8 | Travel recovery: reload the navmesh and retry; walk to an aetheryte before a hop; land where you can talk | M |
 | A9 | A travel preflight in Setup | S |
@@ -252,3 +252,20 @@ Carried from plan v6 (was 1.16), plus new features.
 | 12 | The Milky Way band | Its own setting, off by default |
 | 13 | Revive Sumi to Kinpaku as a fourth theme in 1.17? | Yes, after its own design round |
 | 14 | Before Evercold (1.20) by early December | Yes; recheck its contents after the Tokyo Fan Fest |
+
+### Your answers (3 October 2026)
+
+You agreed with all 14 recommendations and voted "build it" on every item except A6, which you asked to put to a panel. **The plan is signed off and executing from 1.14.0.**
+
+Your notes, and what happens with each:
+
+| Item | You said | What happens |
+|---|---|---|
+| UI-5a | "If an icon would give it more emphasis and it supports it, then add it in." | Icons are added wherever they give emphasis and fit, not only for the 24 audited gaps. |
+| A6 | "Get with critics, power users, casual players, and others to determine if this is wanted or not." | **Decided: build with changes.** All six personas want it: a design critic, a power user, a casual story player, a returning player, an automation skeptic and an accessibility view. Evidence: r/ffxivdiscussion threads, Questionable#5, #45 and #118, AutoDuty#556. The main change is that Start does one quest by default (see A6 in 1.18), with no split button. A4 is narrowed to match. |
+| Rail badge | People with 99+ quests see a number that never goes down. "Think of a better solution, and implement it." | A redesigned Journal badge (UI addendum, Revision 3), built in 1.14 with the rail. |
+| UI-4 | The "Characters" label escapes the highlighted plate. | Labels always fit inside their plate (Revision 3), built in 1.14. |
+| UI-6 | "Subtle star animations … or maybe even a slow moving night sky." | A very slow drift of the whole sky at Full, off under Reduce motion (Revision 3), built in 1.14. |
+| V1 | The craters are part blurry and part crisp. "Needs to have consistency, and maybe a bit more realism." | The craters are redesigned for one consistent, realistic treatment, then reviewed by the supervisor, built in 1.14. |
+| Ishgard Glass | Completed "looks just like a blob"; Locked out should be "similarly cracked like the others … slightly different", with no large hole | Glass round 3, reviewed by the supervisor before 1.16. |
+| Aether Crystal, Orrery | "Looks great!" | No change. |

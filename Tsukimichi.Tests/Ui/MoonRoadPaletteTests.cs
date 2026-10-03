@@ -218,4 +218,21 @@ public class MoonRoadPaletteTests
         Assert.True(Ratio(s.Ornament, s.Window) >= SurfaceColors.LineMinContrast);
         Assert.True(Ratio(s.Cool, s.Window) >= SurfaceColors.HighContrastTextMinContrast);
     }
+
+    [Fact]
+    public void The_lighter_gilt_is_giltlight_on_night_and_reads_as_text_everywhere()
+    {
+        // Plan v7 §1: Full's Section headings are GiltLight #E6CF98, about 9.5 : 1 on Raised.
+        Assert.Equal(ColorMath.FromHex(0xE6CF98), SurfaceColors.Night.OrnamentLight);
+        Assert.InRange(Ratio(SurfaceColors.Night.OrnamentLight, GlyphTokens.NightRaised), 9f, 10.5f);
+
+        var light = SurfaceColors.FromHost(
+            ColorMath.FromHex(0xFFFFFF),
+            ColorMath.FromHex(0xF0F0F0),
+            ColorMath.FromHex(0xE0E0E0),
+            ColorMath.FromHex(0xC0C0C0),
+            ColorMath.FromHex(0x101010),
+            ColorMath.FromHex(0x808080));
+        Assert.True(Ratio(light.OrnamentLight, light.Window) >= SurfaceColors.TextMinContrast);
+    }
 }

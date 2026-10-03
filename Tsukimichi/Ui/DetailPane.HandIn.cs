@@ -144,7 +144,7 @@ public sealed partial class DetailPane
             handInCaption = HandInCaption();
         }
 
-        BeginSection("##handIn", Strings.HandInSection, HandInIcon, handInMasked ? string.Empty : handInCaption, Theme.Surface.TextTertiary);
+        BeginSection("##handIn", Strings.HandInSection, HandInIcon, handInMasked ? string.Empty : handInCaption, Theme.Surface.TextSecondary);
         if (handInMasked)
         {
             TextFlow.Wrapped(Strings.HandInMasked, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));

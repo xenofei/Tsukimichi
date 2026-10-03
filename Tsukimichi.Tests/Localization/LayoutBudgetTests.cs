@@ -16,8 +16,11 @@ namespace Tsukimichi.Tests.Localization;
 /// </summary>
 public class LayoutBudgetTests(ITestOutputHelper output)
 {
-    /// <summary>Header labels are captions: 0.85 of the body size, never under 12 px (Typography.Caption).</summary>
-    private const float CaptionPx = LayoutBudgets.BodyFontPx * 0.85f;
+    /// <summary>
+    /// Header labels at Quiet and Plain, and at Full where the game face cannot draw them, are at the body size (plan v7
+    /// §5; they were captions, 0.85×, before 1.14). Full's TrumpGothic capitals are narrower than the body face's.
+    /// </summary>
+    private const float HeaderPx = LayoutBudgets.BodyFontPx;
 
     /// <summary>The rail's station labels are drawn at <see cref="LayoutBudgets.RailLabelFraction"/> of the body size.</summary>
     private const float RailLabelPx = LayoutBudgets.BodyFontPx * LayoutBudgets.RailLabelFraction;
@@ -75,7 +78,7 @@ public class LayoutBudgetTests(ITestOutputHelper output)
         foreach (var (key, content, sortable) in FixedColumns)
         {
             // English widens nothing but, on the narrow Level column, room for the sort arrow its pills already give.
-            var width = LayoutBudgets.FixedColumnWidth(content, Width(labels[key], CaptionPx), sortable);
+            var width = LayoutBudgets.FixedColumnWidth(content, Width(labels[key], HeaderPx), sortable);
             Assert.True(width <= content + LayoutBudgets.SortArrowLogical, $"{key} \"{labels[key]}\" widens its column to {width:0} px");
         }
 
@@ -111,7 +114,7 @@ public class LayoutBudgetTests(ITestOutputHelper output)
         var labels = Labels(language);
         foreach (var (key, content, sortable) in FixedColumns)
         {
-            var header = Width(labels[key], CaptionPx);
+            var header = Width(labels[key], HeaderPx);
             var width = LayoutBudgets.FixedColumnWidth(content, header, sortable);
             var need = header + (2f * LayoutBudgets.CellPaddingLogical) + (sortable ? LayoutBudgets.SortArrowLogical : 0f);
             if (need > content)

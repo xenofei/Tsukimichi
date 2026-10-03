@@ -166,12 +166,58 @@ jobs:
       - name: Build the plugin package
         run: dotnet build Tsukimichi/Tsukimichi.csproj -c Release
 
+      - name: Hash latest.zip and the Tsukimichi.dll inside it
+        # Trust you can check (feature plan v7 N2): the SHA-256 of latest.zip and of the Tsukimichi.dll inside it (the
+        # very file Dalamud installs and the game loads) go into SHA256SUMS.txt, in sha256sum's format, attached to the
+        # release beside latest.zip, and into the top of the release notes. Settings > Advanced > Privacy & trust shows
+        # the same hash of the DLL a player is running. Nothing here changes latest.zip or pluginmaster.json.
+        shell: pwsh
+        run: |
+          $package = 'Tsukimichi/bin/Release/Tsukimichi'
+          $zip = Join-Path $package 'latest.zip'
+          if (-not (Test-Path $zip)) { Write-Host "::error::$zip was not built."; exit 1 }
+          $extract = Join-Path $env:RUNNER_TEMP 'latest-zip'
+          if (Test-Path $extract) { Remove-Item $extract -Recurse -Force }
+          Expand-Archive $zip -DestinationPath $extract
+          $dll = Join-Path $extract 'Tsukimichi.dll'
+          if (-not (Test-Path $dll)) { Write-Host "::error::latest.zip has no Tsukimichi.dll at its root."; exit 1 }
+          $zipHash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          $dllHash = (Get-FileHash $dll -Algorithm SHA256).Hash.ToLowerInvariant()
+
+          # sha256sum's format: hash, two spaces, name; LF line ends, no BOM, so `sha256sum -c` reads it.
+          $sums = Join-Path (Resolve-Path $package).Path 'SHA256SUMS.txt'
+          [IO.File]::WriteAllText($sums, "$zipHash  latest.zip`n$dllHash  Tsukimichi.dll`n")
+
+          $privacy = "https://github.com/${{ github.repository }}/blob/$env:RELEASE_TAG/docs/privacy.md"
+          $notes = @(
+            '### Verify this build',
+            '',
+            'SHA-256 of the files this release ships (also in `SHA256SUMS.txt` below). Letter case does not matter: PowerShell''s `Get-FileHash` prints capitals.',
+            '',
+            '| File | SHA-256 |',
+            '|---|---|',
+            "| ``latest.zip`` | ``$zipHash`` |",
+            "| ``Tsukimichi.dll`` (inside latest.zip; the file the game loads) | ``$dllHash`` |",
+            '',
+            "In game, Settings > Advanced > Privacy & trust shows the SHA-256 of the Tsukimichi.dll you are running: it matches the one above when you run this release. What the plugin reads and sends: [docs/privacy.md]($privacy).",
+            ''
+          ) -join "`n"
+          $notesPath = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          [IO.File]::WriteAllText($notesPath, $notes)
+          "RELEASE_NOTES_PATH=$notesPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "latest.zip      $zipHash"
+          Write-Host "Tsukimichi.dll  $dllHash"
+
       - name: Create or update the GitHub Release with latest.zip
+        # The hashes above head the notes; GitHub's generated notes follow them.
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: Tsukimichi ${{ env.RELEASE_TAG }}
-          files: Tsukimichi/bin/Release/Tsukimichi/latest.zip
+          files: |
+            Tsukimichi/bin/Release/Tsukimichi/latest.zip
+            Tsukimichi/bin/Release/Tsukimichi/SHA256SUMS.txt
+          body_path: ${{ env.RELEASE_NOTES_PATH }}
           prerelease: ${{ env.RELEASE_PRERELEASE == 'true' }}
           generate_release_notes: true
 

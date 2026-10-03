@@ -497,6 +497,7 @@ public sealed partial class MainWindow : Window, IDisposable
 
             HandleEscape(panelOpen);
             HandleShortcuts(session);
+            HandleHistoryInput();
         }
 
         selectionAtStart = ui.SelectedRowId;
@@ -515,6 +516,9 @@ public sealed partial class MainWindow : Window, IDisposable
             {
                 HandleRevealShortcut(session);
             }
+
+            // After every pane and shortcut had its say, so each way of selecting a quest is recorded the same (N1).
+            ObserveSelection();
         }
         finally
         {
@@ -993,12 +997,13 @@ public sealed partial class MainWindow : Window, IDisposable
 
     /// <summary>
     /// The toolbar (T14): a NightRaised strip, 36 px a row, flush with the title bar and edge to edge, with a hairline
-    /// under it. Left to right: the search pill, the Quick views segmented control, the Filters button with its badge
-    /// and the character chip; Help and Settings are at the rail's foot (feature plan v4 L7). Below 1000 px of
-    /// available width, or whenever one row cannot hold everything, it reflows to two rows (search and quick views /
-    /// filters and character) instead of hiding anything, and the quick views take a row of their own as the last
-    /// resort. The rows come from the width alone (<see cref="ChromeBands"/>): the character chip has a fixed slot in
-    /// that decision, so logging in as another character never reflows the toolbar.
+    /// under it. Left to right: Back and Forward (feature plan v7 N1), the search pill, the Quick views segmented
+    /// control, the Filters button with its badge and the character chip; Help and Settings are at the rail's foot
+    /// (feature plan v4 L7). Below 1000 px of available width, or whenever one row cannot hold everything, it reflows to
+    /// two rows (search and quick views / Back, Forward, filters and character) instead of hiding anything, and the
+    /// quick views take a row of their own as the last resort. The rows come from the width alone
+    /// (<see cref="ChromeBands"/>): the character chip has a fixed slot in that decision, so logging in as another
+    /// character never reflows the toolbar.
     /// </summary>
     private void DrawToolbar(SessionState session)
     {
@@ -1027,8 +1032,16 @@ public sealed partial class MainWindow : Window, IDisposable
 
         float RowY(int row) => top + row * rowHeight + (rowHeight - control) * 0.5f;
 
-        // Row 0: search, then the quick views beside it (or on row 1).
+        // Back and Forward lead the row the Filters button is on (feature plan v7 N1): before the search on one row.
+        var historyWidth = ChromeBands.HistoryWidth(UiMetrics.Scale, control);
         var x = origin.X;
+        if (!twoRows)
+        {
+            DrawHistoryButtons(session, new Vector2(x, RowY(0)));
+            x += historyWidth + gap;
+        }
+
+        // Row 0: search, then the quick views beside it (or on row 1).
         DrawSearchPill(new Vector2(x, RowY(0)), searchWidth, control);
         x += searchWidth + gap;
         if (quickOwnRow)
@@ -1045,6 +1058,8 @@ public sealed partial class MainWindow : Window, IDisposable
         if (twoRows)
         {
             x = origin.X;
+            DrawHistoryButtons(session, new Vector2(x, RowY(lastRow)));
+            x += historyWidth + gap;
         }
 
         DrawFiltersButton(new Vector2(x, RowY(lastRow)), filtersWidth, control);

@@ -9,7 +9,8 @@ namespace Tsukimichi.Ui;
 /// Hand-rolled shortcuts (T17, accessibility A6/A7, dalamud-developer panel §4): the binding has no <c>ImGui.Shortcut</c>,
 /// so every key is <see cref="ImGui.IsKeyPressed(ImGuiKey, bool)"/> gated on the window having focus and no text field
 /// wanting the keyboard. Dalamud passes every key on to the game as well (only a text field swallows them), so only
-/// Ctrl+F and Esc are bound by default; the Ctrl+1..5, F, Enter and P shortcuts are opt-in under Settings › Keyboard.
+/// Ctrl+F, Esc and Back and Forward (Alt+Left and Alt+Right, mouse buttons 4 and 5; feature plan v7 N1, with a switch
+/// of its own) are bound by default; the Ctrl+1..5, F, Enter and P shortcuts are opt-in under Settings › Keyboard.
 /// Also the row "…" button every right-click menu gets, so no action needs a mouse's right button.
 /// </summary>
 public static class Keyboard
@@ -56,6 +57,13 @@ public static class Keyboard
     {
         var io = ImGui.GetIO();
         return !io.KeyCtrl && !io.KeyAlt && !io.KeyShift && ImGui.IsKeyPressed(key, false);
+    }
+
+    /// <summary>Alt and the key went down (no Ctrl, no Shift): Back and Forward's Alt+Left and Alt+Right (feature plan v7 N1).</summary>
+    public static bool AltPressed(ImGuiKey key)
+    {
+        var io = ImGui.GetIO();
+        return io.KeyAlt && !io.KeyCtrl && !io.KeyShift && ImGui.IsKeyPressed(key, false);
     }
 
     /// <summary>Ctrl and the key went down (no Alt, no Shift).</summary>

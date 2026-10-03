@@ -158,6 +158,7 @@ public sealed partial class ConfigWindow
         new(SettingsSection.Advanced, DrawHookGate),
         new(SettingsSection.Advanced, DrawQuestionableStopConfirm),
         new(SettingsSection.Advanced, DrawDiagnostics),
+        new(SettingsSection.Advanced, DrawPrivacy),
     ];
 
     /// <summary>The section's title: the index entry, the page title and the search results' heading.</summary>

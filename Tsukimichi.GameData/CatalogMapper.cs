@@ -16,6 +16,12 @@ public static class CatalogMapper
     /// <summary>Rows mapped between cancellation checks.</summary>
     public const int CancellationBatch = 256;
 
+    /// <summary><c>InstanceContentType</c> of a PvP instance (Crystalline Conflict, A Pup No Longer's solo instance).</summary>
+    private const uint PvpInstanceContentType = 5;
+
+    /// <summary><c>ContentType</c> row of PvP, whose name and Duty Finder tile a nameless PvP instance takes.</summary>
+    private const uint PvpContentType = 6;
+
     /// <summary>Quest sheet SortKey occupies the low 16 bits of <see cref="JournalRef.SortKey"/>; the genre rank sits above it.</summary>
     private const int SortKeyGenreShift = 16;
 
@@ -47,6 +53,7 @@ public static class CatalogMapper
             excel.GetSheet<Item>(language),
             excel.GetSubrowSheet<QuestClassJobReward>(language),
             excel.GetSheet<BeastRankBonus>(language),
+            excel.GetSheet<ContentType>(language),
             excel.GetSheet<QuestAcceptAdditionCondition>(language),
             excel.GetSubrowSheet<QuestClassJobSupply>(language),
             QuestHandIns.Sources.Build(excel, language));
@@ -461,12 +468,27 @@ public static class CatalogMapper
             // own Icon is 0 on the duties a quest opens.
             var condition = instance.ContentFinderCondition.RowId != 0 ? instance.ContentFinderCondition.ValueNullable : null;
             var icon = condition is not { } c ? 0u : c.Icon != 0 ? c.Icon : c.ContentType.ValueNullable?.Icon ?? 0u;
+            var instanceName = condition?.Name.ExtractText() ?? string.Empty;
+            if (instanceName.Length == 0 && condition?.TerritoryType.ValueNullable?.PlaceName.ValueNullable is { } place)
+            {
+                // A nameless duty is named for its territory.
+                instanceName = place.Name.ExtractText();
+            }
+
+            if (instanceName.Length == 0 && instance.InstanceContentType.RowId == PvpInstanceContentType
+                && sheets.ContentTypes.GetRowOrDefault(PvpContentType) is { } pvp)
+            {
+                // A Pup No Longer's solo PvP instance has neither name nor territory: it is PvP, and wears PvP's tile.
+                instanceName = pvp.Name.ExtractText();
+                icon = icon != 0 ? icon : pvp.Icon;
+            }
+
             rewards.Add(new RewardRef(
                 RewardKind.Instance,
                 instance.RowId,
                 0,
                 1,
-                condition?.Name.ExtractText() ?? string.Empty,
+                instanceName,
                 icon));
         }
 
@@ -680,6 +702,7 @@ public static class CatalogMapper
         ExcelSheet<Item> Items,
         SubrowExcelSheet<QuestClassJobReward> ClassJobRewards,
         ExcelSheet<BeastRankBonus> BeastRankBonus,
+        ExcelSheet<ContentType> ContentTypes,
         ExcelSheet<QuestAcceptAdditionCondition> AcceptConditions,
         SubrowExcelSheet<QuestClassJobSupply> Supply,
         QuestHandIns.Sources HandIns);

@@ -45,7 +45,7 @@ public static class OpenSection
         ImGui.PushID(id);
         start = ImGui.GetCursorScreenPos();
         width = MathF.Max(1f, ImGui.GetContentRegionAvail().X);
-        SectionHeading.DrawLine(title, caption, captionColor, 0f, sigil: true, Theme.Flair, CaptionOverflow.Below);
+        SectionHeading.DrawLine(title, caption, captionColor, 0f, sigil: true, Theme.Flair, CaptionOverflow.Below, role: TypeRole.Section);
 
         var inset = Inset;
         ImGui.SetCursorScreenPos(new Vector2(start.X + inset, ImGui.GetCursorScreenPos().Y + UiMetrics.Px(2f)));
