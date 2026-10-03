@@ -3,7 +3,7 @@
     "Author": "Michiru Tsukikage",
     "Name": "Tsukimichi",
     "InternalName": "Tsukimichi",
-    "AssemblyVersion": "1.12.0.0",
+    "AssemblyVersion": "1.12.1.0",
     "Description": "A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.\nMoonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/xenofei/Tsukimichi",
@@ -21,13 +21,13 @@
     "IconUrl": "https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon.png",
     "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.0/latest.zip",
-    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.0/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.0/latest.zip",
-    "LastUpdate": 1790998662,
+    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.1/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.1/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.12.1/latest.zip",
+    "LastUpdate": 1790999630,
     "DownloadCount": 0,
     "IsHide": false,
     "IsTestingExclusive": false,
-    "Changelog": "Added\n- **New moons: \"Menphina's Medallion\".** Every quest state is a gilt-rimmed medal that keeps its detail at every size:\n  - a moon road for Ready;\n  - clouds over a new moon for Blocked;\n  - a repeat arrow for Done this cycle;\n  - a full moon with a gold check for Completed;\n  - a shattered red moon for Locked out;\n  - a question mark for Not checked.\n- **Badges on the medals.**\n  - Ready shows an open padlock, Blocked a closed one, and In journal a journal.\n  - Quests ready on another job show that job's own icon. In quest lists the badge sits beside the medal.\n- **Settings › Look › Moon style:** switch between the new Medallion medals and the Classic 1.11 moons, to compare them in game.\n- **What a quest unlocks.** A new Unlocks section in the quest pane lists, with game icons:\n  - areas and aetherytes;\n  - dungeons and trials;\n  - features and emotes;\n  - the next quests.\n\n  Click an entry to teleport through Lifestream, open the map or jump to the next quest. Right-click a duty to open it in the Duty Finder (it never queues).\n- **Unlocks in more places.** Quest tooltips, the game-window panels, the Todo overlay, Path, Moonlit and `/tsuki` search say what a quest opens. An \"Unlocked:\" chat line follows each turn-in, and there's a new optional \"Opens\" column in the Journal (Settings › Display › Planning).\n- **A completed quest's moon waxes to full** once, never under Reduce motion. Settings › Look says when Windows' \"Show animations\" setting has turned motion off, with a one-click override.\n\nChanged\n- **The window no longer moves under you.**\n  - The scope sits in the list's title with an ×.\n  - Filters sit in one fixed line with \"+N\", and open as a drawer you can pin.\n  - Notices float in a corner, clear of the action bar.\n  - One-time prompts close after about 15 seconds, hovering pauses them, and anything that needs you stays.\n- **The selected quest stays where it is** on screen when you filter, search, re-sort or the list updates.\n- **Status lives in the status bar.** Starting or stopping a hand-off, or copying, no longer pushes the detail pane down; status and Stop sit in the status bar.\n- **Moonlit's** filters fit on one toolbar line. The **Todo overlay** shows Questionable's status in its title line and no longer jumps narrower.\n- **The Path card says what to do next:** \"3 quests before this one\" with a Next link, or nothing when the quest is up next. Chains show what's next in them over a slim bar.\n- **Counts say what's left** (\"3 left\", \"1 prerequisite left\"); full totals are on hover.\n- **Progress gauges and the rail's Journal moon** are gilt in a lapis groove around a moonstone moon."
+    "Changelog": "Changed\n- **The Journal's quest list shows an Unlocks column**, on by default. It shows up to three icons per quest for the areas, aetherytes, duties and features it unlocks, and hovering it names them.\n  - The column was called \"Opens\" and was off by default in 1.12.0; it is now switched on for everyone.\n  - It stays in view on narrower windows: Expansion, Rewards and EXP step aside first.\n  - Turn it off in Settings › Display › Planning if you prefer."
   }
 ]
