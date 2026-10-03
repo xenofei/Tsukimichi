@@ -33,9 +33,12 @@ public sealed record ReadyTally(uint[] Available, int Ready, int StoryReady)
 
 /// <summary>Where the newly-ready set stands after <see cref="NewlyReady.Reconcile"/>.</summary>
 /// <param name="New">The available quests not seen yet, ascending.</param>
-/// <param name="Seen">The seen set to keep: only quests still available, ascending.</param>
+/// <param name="Seen">
+/// The seen set to keep, ascending: the stored one less the quests gone for good. Null while nothing has been seeded
+/// (nothing stored and nothing available yet), so the next evaluation seeds it.
+/// </param>
 /// <param name="SeenChanged">Whether <paramref name="Seen"/> differs from what was stored (seeded or pruned), so it is saved.</param>
-public readonly record struct NewlyReadyState(uint[] New, uint[] Seen, bool SeenChanged);
+public readonly record struct NewlyReadyState(uint[] New, uint[]? Seen, bool SeenChanged);
 
 /// <summary>
 /// The Journal badge's "newly ready" count (plan v7, spec Revision 3 R3.2). A quest is <em>new</em> when it is
@@ -47,7 +50,8 @@ public readonly record struct NewlyReadyState(uint[] New, uint[] Seen, bool Seen
 /// stops being available; once it is gone for good (accepted, completed, locked out: <see cref="IsGone"/>) the seen set
 /// lets it go, so that set stays about the size of the available list;</item>
 /// <item>the first look at a character seeds the seen set with everything available, so a returning player starts at 0,
-/// not at 300.</item>
+/// not at 300; an evaluation with nothing available (a capture read before the game's quest data) seeds nothing, so the
+/// first real one is not reported as 300 new quests.</item>
 /// </list>
 /// The seen set is stored per character (<see cref="Storage.CharacterSettings.SeenReady"/>). Pure; the window recomputes
 /// it when the evaluation changes, never per frame.
@@ -56,6 +60,14 @@ public static class NewlyReady
 {
     /// <summary>The most the badge spells out; past it the badge reads "99+" at the same size.</summary>
     public const int MaxShown = 99;
+
+    /// <summary>
+    /// The version of what counts as available (<see cref="IsAvailable"/>), stored with each seen set
+    /// (<see cref="Storage.CharacterSettings.SeenReadyRules"/>). Bump it when that rule changes: a seen set stored under
+    /// another version is ignored and the set is seeded again, silently, rather than reporting every quest the new rule
+    /// admits as new.
+    /// </summary>
+    public const int RulesVersion = 1;
 
     /// <summary>
     /// Whether the quest is available to the badge: listed and counted (as the tree counts it: not removed, not a class
@@ -125,8 +137,10 @@ public static class NewlyReady
     /// <summary>
     /// The new quests and the seen set to keep for <paramref name="available"/> against what was stored. Nothing stored
     /// (<paramref name="seen"/> null: the character's first look) seeds the set with everything available, so nothing is
-    /// new. Otherwise what is available but not in the set is new, and the set lets go of the quests no longer available
-    /// that <paramref name="gone"/> names (every one of them when it is null).
+    /// new; with nothing available either nothing is seeded (<see cref="NewlyReadyState.Seen"/> stays null, nothing to
+    /// save), so the next evaluation seeds instead of reporting everything as new. Otherwise what is available but not in
+    /// the set is new, and the set lets go of the quests no longer available that <paramref name="gone"/> names (every one
+    /// of them when it is null).
     /// </summary>
     public static NewlyReadyState Reconcile(IReadOnlyList<uint> available, IReadOnlyCollection<uint>? seen, Func<uint, bool>? gone = null)
     {
@@ -134,7 +148,7 @@ public static class NewlyReady
         var ids = Ascending(available);
         if (seen is null)
         {
-            return new NewlyReadyState([], ids, SeenChanged: true);
+            return ids.Length == 0 ? new NewlyReadyState([], null, SeenChanged: false) : new NewlyReadyState([], ids, SeenChanged: true);
         }
 
         var stored = seen as IReadOnlySet<uint> ?? new HashSet<uint>(seen);

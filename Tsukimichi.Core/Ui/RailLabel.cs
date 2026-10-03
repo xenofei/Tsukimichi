@@ -121,53 +121,56 @@ public static class RailLabel
     }
 
     /// <summary>
-    /// Two lines split at the space that leaves the narrower widest line, at one size and tracking for both (the larger
-    /// that fits). Null when the label has no space or no split fits.
+    /// Two lines split at a space, at one size and tracking for both (the larger either line needs). Every space is
+    /// tried: the split kept is the one at the largest size, then untracked before tracked, then with the narrower
+    /// widest line, so a label is not left to its icon while any split fits. Both lines are trimmed, so a run of spaces
+    /// is one split and the second line never starts with a space (the rail draws them trimmed the same way). Null when
+    /// the label has no space or no split fits.
     /// </summary>
     private static RailLabelFit? Wrap(ReadOnlySpan<char> text, float size, float least, float room, EmMeasure measure)
     {
-        var best = -1;
-        var bestWidth = float.MaxValue;
+        RailLabelFit? best = null;
         for (var i = 1; i < text.Length - 1; i++)
         {
-            if (text[i] != ' ')
+            // The first space of a run: the rest of the run trims away to the same two lines.
+            if (text[i] != ' ' || text[i - 1] == ' ')
             {
                 continue;
             }
 
-            var first = text[..i].TrimEnd();
-            var second = text[(i + 1)..].TrimStart();
-            if (first.IsEmpty || second.IsEmpty)
+            var a = text[..i].TrimEnd();
+            var b = text[(i + 1)..].TrimStart();
+            if (a.IsEmpty || b.IsEmpty
+                || Line(a, size, least, room, measure) is not { } lineA
+                || Line(b, size, least, room, measure) is not { } lineB)
             {
                 continue;
             }
 
-            var widest = MathF.Max(Width(first, 1f, 0f, measure), Width(second, 1f, 0f, measure));
-            if (widest < bestWidth)
+            // Both lines at the smaller size and the tighter tracking either needed, so they read as one label.
+            var shared = MathF.Min(lineA.Size, lineB.Size);
+            var trackingEm = lineA.Tracking != 0f || lineB.Tracking != 0f ? TrackingEm : 0f;
+            var fit = new RailLabelFit(
+                shared,
+                trackingEm * shared,
+                2,
+                i,
+                MathF.Max(Width(a, shared, trackingEm, measure), Width(b, shared, trackingEm, measure)),
+                false);
+            if (best is not { } held || Better(fit, held))
             {
-                bestWidth = widest;
-                best = i;
+                best = fit;
             }
         }
 
-        if (best < 0)
-        {
-            return null;
-        }
-
-        var a = text[..best].TrimEnd();
-        var b = text[(best + 1)..].TrimStart();
-        if (Line(a, size, least, room, measure) is not { } lineA || Line(b, size, least, room, measure) is not { } lineB)
-        {
-            return null;
-        }
-
-        // Both lines at the smaller size and the tighter tracking either needed, so they read as one label.
-        var shared = MathF.Min(lineA.Size, lineB.Size);
-        var trackingEm = lineA.Tracking != 0f || lineB.Tracking != 0f ? TrackingEm : 0f;
-        var width = MathF.Max(Width(a, shared, trackingEm, measure), Width(b, shared, trackingEm, measure));
-        return new RailLabelFit(shared, trackingEm * shared, 2, best, width, false);
+        return best;
     }
+
+    /// <summary>Whether wrap <paramref name="a"/> reads better than <paramref name="b"/>: larger, then less tracked, then narrower.</summary>
+    private static bool Better(RailLabelFit a, RailLabelFit b) =>
+        a.Size != b.Size ? a.Size > b.Size
+        : a.Tracking != b.Tracking ? a.Tracking > b.Tracking
+        : a.Width < b.Width;
 
     private static RailLabelFit IconOnlyFit(float size) => new(size, 0f, 0, -1, 0f, true);
 }

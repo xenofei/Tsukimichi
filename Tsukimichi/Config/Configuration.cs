@@ -745,6 +745,11 @@ public sealed partial class Configuration : IPluginConfiguration
             config.Flair = Flair.Full;
         }
 
+        if (!Enum.IsDefined(config.JournalBadge))
+        {
+            config.JournalBadge = Core.Query.JournalBadgeMode.NewlyReady;
+        }
+
         config.MoonStyle = MoonStyleRules.Effective(config.MoonStyle);
 
         // 1.13.0: the language picker is hidden while localization is frozen, so a language chosen before (English, or

@@ -58,6 +58,56 @@ public class RailLabelTests
     }
 
     [Fact]
+    public void Every_split_is_tried_before_the_icon_alone()
+    {
+        // 'W' is an em, '.' takes no width (so tracking pulls a run of them in), the rest half an em. The most balanced
+        // split untracked, "WWW" | ".... W", leaves "WWW" needing 29.6 px even tracked at the least size; the other,
+        // "WWW ...." | "W", is wider untracked but has 43 gaps to track and fits 28 px at about 10.6 px.
+        EmMeasure measure = static text =>
+        {
+            var em = 0f;
+            foreach (var c in text)
+            {
+                em += c switch { 'W' => 1f, '.' => 0f, _ => 0.5f };
+            }
+
+            return em;
+        };
+        var label = "WWW " + new string('.', 40) + " W";
+
+        var fit = RailLabel.Fit(label, 12f, 10f, 28f, 2, measure);
+
+        Assert.False(fit.IconOnly);
+        Assert.Equal(2, fit.Lines);
+        Assert.Equal(label.LastIndexOf(' '), fit.Break);
+        Assert.True(fit.Width <= 28f);
+        Assert.InRange(fit.Size, 10f, 12f);
+    }
+
+    [Fact]
+    public void A_run_of_spaces_wraps_once_and_the_second_line_starts_at_its_word()
+    {
+        const string label = "  Clear   my blues ";
+        var fit = RailLabel.Fit(label, 12f, 10f, 50f, 2, HalfEm);
+
+        Assert.Equal(2, fit.Lines);
+        Assert.Equal(' ', label[fit.Break]);
+
+        // The lines as the rail draws them (trimmed either side of the break) are the lines measured.
+        var text = label.AsSpan().Trim();
+        var at = fit.Break - (label.Length - label.AsSpan().TrimStart().Length);
+        var first = text[..at].TrimEnd().ToString();
+        var second = text[(at + 1)..].TrimStart().ToString();
+        // "Clear" | "my blues" keeps 12 px; "Clear   my" | "blues" would have to shrink.
+        Assert.Equal("Clear", first);
+        Assert.Equal("my blues", second);
+        Assert.Equal(12f, fit.Size);
+        var widest = MathF.Max(RailLabel.Width(first, fit.Size, fit.Tracking / fit.Size, HalfEm), RailLabel.Width(second, fit.Size, fit.Tracking / fit.Size, HalfEm));
+        Assert.Equal(widest, fit.Width, 3);
+        Assert.True(fit.Width <= 50f);
+    }
+
+    [Fact]
     public void A_label_with_no_room_for_two_lines_does_not_wrap()
     {
         Assert.True(RailLabel.Fit("Clear my blues", 12f, 10f, 50f, 1, HalfEm).IconOnly);

@@ -8,8 +8,11 @@ name: Release
 # non-prerelease tag must have its CHANGELOG.md section. A tag containing "-" is published as a
 # prerelease and never touches pluginmaster.json.
 #
-# Run it by hand (workflow_dispatch) with an existing tag to publish that tag again: the release
-# is updated in place (latest.zip re-attached) and pluginmaster.json regenerated, without a new tag.
+# Run it by hand (workflow_dispatch) with an existing tag to publish that tag again, without a new
+# tag: pluginmaster.json is regenerated, and the release is created if it is missing. A release that
+# exists keeps its notes and assets; only a missing latest.zip is attached (with its SHA256SUMS.txt
+# and a "Rebuilt on" line heading the notes), since a rebuild is not byte-identical and replacing
+# latest.zip would break the hashes players already checked.
 on:
   push:
     tags: ["v*"]
@@ -208,8 +211,58 @@ jobs:
           Write-Host "latest.zip      $zipHash"
           Write-Host "Tsukimichi.dll  $dllHash"
 
-      - name: Create or update the GitHub Release with latest.zip
-        # The hashes above head the notes; GitHub's generated notes follow them.
+      - name: Look up the existing release (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $json = gh release view "$env:RELEASE_TAG" --repo "${{ github.repository }}" --json body,assets 2>$null
+          if ($LASTEXITCODE -ne 0 -or -not $json) {
+            Write-Host "No release for $env:RELEASE_TAG yet; it is created as on a tag push"
+            "RELEASE_EXISTS=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+            exit 0
+          }
+          $release = $json | ConvertFrom-Json
+          $names = @($release.assets | ForEach-Object { $_.name })
+          $bodyPath = Join-Path $env:RUNNER_TEMP 'release-body.md'
+          [IO.File]::WriteAllText($bodyPath, [string]$release.body)
+          "RELEASE_EXISTS=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "RELEASE_HAS_ZIP=$(($names -contains 'latest.zip').ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "RELEASE_BODY_PATH=$bodyPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Release $env:RELEASE_TAG exists with assets: $($names -join ', ')"
+          exit 0
+
+      - name: Attach what is missing to the existing release (manual run)
+        # Players may already have installed this release and checked its hashes: its latest.zip, SHA256SUMS.txt and
+        # notes stay as they are. Only a release without latest.zip (a run that failed before attaching it) gets the
+        # rebuilt one, its SHA256SUMS.txt, and the new hashes at the top of the notes under a "Rebuilt on" line.
+        if: env.RELEASE_EXISTS == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ($env:RELEASE_HAS_ZIP -eq 'true') {
+            Write-Host "::notice::$env:RELEASE_TAG already has latest.zip; its assets and notes are kept unchanged."
+            exit 0
+          }
+          $package = 'Tsukimichi/bin/Release/Tsukimichi'
+          gh release upload "$env:RELEASE_TAG" "$package/latest.zip" "$package/SHA256SUMS.txt" --clobber --repo "${{ github.repository }}"
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::could not attach latest.zip to $env:RELEASE_TAG"; exit 1 }
+          $date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
+          $notes = [IO.File]::ReadAllText($env:RELEASE_NOTES_PATH)
+          $existing = [IO.File]::ReadAllText($env:RELEASE_BODY_PATH)
+          $body = "_Rebuilt on $date (UTC): latest.zip attached; the hashes below are this build's._`n`n$notes`n$existing"
+          $bodyPath = Join-Path $env:RUNNER_TEMP 'release-body-rebuilt.md'
+          [IO.File]::WriteAllText($bodyPath, $body)
+          gh release edit "$env:RELEASE_TAG" --notes-file $bodyPath --repo "${{ github.repository }}"
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::could not update the notes of $env:RELEASE_TAG"; exit 1 }
+          Write-Host "latest.zip attached to $env:RELEASE_TAG"
+
+      - name: Create the GitHub Release with latest.zip
+        # The hashes above head the notes; GitHub's generated notes follow them. A manual run on a release that
+        # exists is handled above instead.
+        if: env.RELEASE_EXISTS != 'true'
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
