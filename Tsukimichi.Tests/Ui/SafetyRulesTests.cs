@@ -37,6 +37,8 @@ public class SafetyRulesTests
     [Theory]
     [InlineData(GuardedAction.RestoreAllVerdicts)]
     [InlineData(GuardedAction.PinAll)]
+    [InlineData(GuardedAction.ResetMix)]
+    [InlineData(GuardedAction.ResetAppearanceWithMix)]
     public void Bulk_changes_need_a_press_and_hold_and_still_offer_undo(GuardedAction action)
     {
         Assert.Equal(SafetyTier.Hold, SafetyRules.TierOf(action));
@@ -50,6 +52,7 @@ public class SafetyRulesTests
     [InlineData(GuardedAction.ResetFilters)]
     [InlineData(GuardedAction.ResetAppearance)]
     [InlineData(GuardedAction.ApplyShareCode)]
+    [InlineData(GuardedAction.ApplyFix)]
     public void Small_changes_are_one_click_with_undo(GuardedAction action)
     {
         Assert.Equal(SafetyTier.None, SafetyRules.TierOf(action));
@@ -130,6 +133,16 @@ public class SafetyRulesTests
             .Select(Path.GetFileName)
             .ToList();
         Assert.True(offenders.Count == 0, "A verdict changed outside VerdictPrompt (armed, with Undo): " + string.Join(", ", offenders));
+    }
+
+    [Theory]
+    [InlineData("ThemesMixReset")]
+    [InlineData("ThemesResetButton")]
+    public void Resets_that_discard_a_mix_are_held(string label)
+    {
+        // Spec-1.17 §A5: Reset mix, and Reset appearance while a mix is set, discard several picks.
+        var hold = "Strings." + label + " + Chrome.HoldIdSuffix";
+        Assert.Contains(UiFiles(), f => File.ReadAllText(f).Contains(hold, StringComparison.Ordinal));
     }
 
     [Theory]

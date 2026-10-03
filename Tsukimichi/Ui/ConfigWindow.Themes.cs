@@ -22,9 +22,12 @@ namespace Tsukimichi.Ui;
 /// appearance (<see cref="GlyphSeam.PushAppearance"/>) or the saved one, crossfading over
 /// <see cref="MotionTokens.Swap"/> (at once under Reduce motion).</item>
 /// <item><b>Colours</b>: the palette tiles (Follow Dalamud is one), High contrast, and Frames.</item>
+/// <item><b>Mix moons by state</b> (1.17): each state's moon from any set, with warnings in words, Fix it and a held
+/// Reset mix (<c>ConfigWindow.Themes.Mix.cs</c>).</item>
 /// <item><b>Share</b> (1.17): the look's share code with Copy, and a paste field that previews a code before Apply
 /// (<c>ConfigWindow.Themes.Share.cs</c>).</item>
-/// <item><b>Reset appearance</b>: one click with Undo (<see cref="GuardedAction.ResetAppearance"/>).</item>
+/// <item><b>Reset appearance</b>: one click with Undo (<see cref="GuardedAction.ResetAppearance"/>); held while a mix is
+/// set (<see cref="GuardedAction.ResetAppearanceWithMix"/>).</item>
 /// </list>
 /// Hover previews, click applies at once, Undo follows (<see cref="UndoToast"/>); only a pasted share code waits for an
 /// Apply, after its preview. Moon style,
@@ -835,7 +838,13 @@ public sealed partial class ConfigWindow
         var saved = settings.Appearance;
         // The frame's resolved appearance (the saved one: no preview is pushed here), so nothing resolves per frame.
         var isDefault = AppearanceEdits.IsDefault(saved, GlyphSeam.Appearance);
-        if (!ButtonRow(Strings.ThemesReset, Strings.ThemesResetHint, Strings.ThemesResetButton, "reset appearance default theme restore look", enabled: !isDefault, reason: Strings.ThemesResetDefaultReason) || isDefault)
+
+        // While a mix is set the reset discards several picks, so it is held (spec-1.17 §A5).
+        var mixed = AppearanceEdits.HasMix(saved);
+        var action = mixed ? GuardedAction.ResetAppearanceWithMix : GuardedAction.ResetAppearance;
+        if (mixed
+            ? !HoldResetAppearance()
+            : !ButtonRow(Strings.ThemesReset, Strings.ThemesResetHint, Strings.ThemesResetButton, "reset appearance default theme restore look", enabled: !isDefault, reason: Strings.ThemesResetDefaultReason) || isDefault)
         {
             return;
         }
@@ -843,7 +852,8 @@ public sealed partial class ConfigWindow
         var before = saved.Clone();
         AppearanceEdits.Reset(saved);
         Save();
-        if (SafetyRules.OffersUndo(GuardedAction.ResetAppearance))
+        mixKeep = null;
+        if (SafetyRules.OffersUndo(action))
         {
             UndoToast.Show(Strings.UndoToastAppearanceReset, () => RestoreAppearance(before));
         }

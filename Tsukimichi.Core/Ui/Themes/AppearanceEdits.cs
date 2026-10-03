@@ -1,3 +1,5 @@
+using Tsukimichi.Core.Model;
+
 namespace Tsukimichi.Core.Ui.Themes;
 
 /// <summary>
@@ -81,6 +83,61 @@ public static class AppearanceEdits
         ArgumentNullException.ThrowIfNull(config);
         var theme = AppearanceResolver.Resolve(config).Theme;
         config.Frames = kit is null || kit.Id == theme.Frames ? null : kit.Key;
+    }
+
+    /// <summary>
+    /// Settings › Themes › Mix moons by state (1.17 T10): <paramref name="state"/> draws from <paramref name="set"/>.
+    /// Null, or the theme's own set, is "From theme": the state's override is removed (and the mix with it once empty),
+    /// so a theme picked later brings its own moon for that state too.
+    /// </summary>
+    public static void SetGlyph(AppearanceConfig config, QuestState state, GlyphSetInfo? set)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        var key = AppearanceStates.Key(state);
+        var theme = AppearanceResolver.Resolve(config).Theme;
+        if (set is null || set.Id == theme.Glyphs)
+        {
+            if (config.Glyphs is { } glyphs)
+            {
+                RemoveState(glyphs, key);
+                if (glyphs.Count == 0)
+                {
+                    config.Glyphs = null;
+                }
+            }
+
+            return;
+        }
+
+        var mix = config.Glyphs ??= new Dictionary<string, string>(StringComparer.Ordinal);
+        RemoveState(mix, key);
+        mix[key] = set.Key;
+    }
+
+    /// <summary>Reset mix (spec-1.17 §A5): every state from the theme again. The caller keeps a clone for Undo.</summary>
+    public static void ResetMix(AppearanceConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        config.Glyphs = null;
+    }
+
+    /// <summary>Whether the appearance picks any state's moon itself (a mix is set, even one this build cannot draw).</summary>
+    public static bool HasMix(AppearanceConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        return config.Glyphs is { Count: > 0 };
+    }
+
+    // A saved key may differ in case or spacing (the resolver reads it leniently), so every spelling of the state goes.
+    private static void RemoveState(Dictionary<string, string> glyphs, string key)
+    {
+        foreach (var saved in glyphs.Keys.ToArray())
+        {
+            if (AppearanceStates.TryParse(saved, out var parsed) && AppearanceStates.Key(parsed) == key)
+            {
+                glyphs.Remove(saved);
+            }
+        }
     }
 
     /// <summary>

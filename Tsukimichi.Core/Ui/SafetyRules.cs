@@ -72,6 +72,15 @@ public enum GuardedAction
 
     /// <summary>Apply on a pasted share code's preview (Settings › Themes › Share, plan v7 T12): the code's look replaces the saved one.</summary>
     ApplyShareCode,
+
+    /// <summary>Reset mix (Settings › Themes › Mix moons by state, plan v7 T10): every state's moon from the theme again.</summary>
+    ResetMix,
+
+    /// <summary>Use it on Fix it's proposal (Settings › Themes › Mix moons by state, plan v7 T10): one other state's moon changes.</summary>
+    ApplyFix,
+
+    /// <summary>Reset appearance while a mix is set (spec-1.17 §A5): it discards several picks, so it is held like Reset mix.</summary>
+    ResetAppearanceWithMix,
 }
 
 /// <summary>
@@ -118,6 +127,9 @@ public static class SafetyRules
         GuardedAction.ResetFilters => SafetyTier.None,
         GuardedAction.ResetAppearance => SafetyTier.None,
         GuardedAction.ApplyShareCode => SafetyTier.None,
+        GuardedAction.ApplyFix => SafetyTier.None,
+        GuardedAction.ResetMix => SafetyTier.Hold,
+        GuardedAction.ResetAppearanceWithMix => SafetyTier.Hold,
         GuardedAction.RestoreAllVerdicts => SafetyTier.Hold,
         GuardedAction.PinAll => SafetyTier.Hold,
         GuardedAction.QuestionableReplace => SafetyTier.Hold,
