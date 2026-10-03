@@ -28,7 +28,7 @@ public sealed class ThemeRegistryTests
     public void Palette_ids_and_keys_are_pinned()
     {
         Assert.Equal(
-            [(1, "night"), (2, "dawn"), (3, "ishgard-snow"), (4, "kugane-lacquer"), (5, "dalamud")],
+            [(1, "night"), (3, "ishgard-snow"), (2, "dawn"), (4, "kugane-lacquer"), (5, "dalamud")],
             PaletteChoices.All.Select(static p => ((int)p.Id, p.Key)).ToArray());
     }
 
@@ -110,7 +110,10 @@ public sealed class ThemeRegistryTests
         Assert.Equal(
             [GlyphSetId.Medallion, GlyphSetId.Classic, GlyphSetId.AetherCrystal, GlyphSetId.IshgardGlass],
             GlyphSets.All.Where(static s => s.Offered).Select(static s => s.Id));
-        Assert.Equal([PaletteId.Night, PaletteId.IshgardSnow, PaletteId.FollowDalamud], PaletteChoices.All.Where(static p => p.Offered).Select(static p => p.Id));
+        // 1.17 (T16) offers Dawn and Kugane Lacquer beside them.
+        Assert.Equal(
+            [PaletteId.Night, PaletteId.IshgardSnow, PaletteId.Dawn, PaletteId.KuganeLacquer, PaletteId.FollowDalamud],
+            PaletteChoices.All.Where(static p => p.Offered).Select(static p => p.Id));
         Assert.Equal(GlyphRenderKind.Procedural, GlyphSets.Medallion.Kind);
         Assert.Equal(GlyphRenderKind.Procedural, GlyphSets.Classic.Kind);
     }

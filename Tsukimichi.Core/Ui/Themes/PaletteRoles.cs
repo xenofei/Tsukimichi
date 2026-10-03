@@ -217,6 +217,20 @@ public readonly record struct SceneTokens(
     public const float LightTopHighlightAlpha = 0.85f;
 
     /// <summary>
+    /// The 1 px line on the rail's right edge at Full, with its alpha in W; null draws the surface's hairline as Night
+    /// does. Kugane Lacquer's vermilion lacquer edge #B23422 at .45 (spec-1.17 §E2: vermilion lives only in surfaces).
+    /// </summary>
+    public Vector4? RailEdge { get; init; }
+
+    /// <summary>
+    /// Whether a dark palette draws a Ready row medal's halo as <see cref="Washes"/>' Ready halo (its colour at its alpha
+    /// within its reach, composited, the light wash's footprint) instead of Night's 1.12 glow. Dawn and Kugane Lacquer do
+    /// (spec-1.17 §E4.1): the build gates Ready's lead on their windows with exactly that halo. A light palette draws the
+    /// wash anyway (<see cref="WashInsteadOfGlow"/>).
+    /// </summary>
+    public bool ReadyHaloWash { get; init; }
+
+    /// <summary>
     /// The scene a derived palette (Follow Dalamud) draws on <paramref name="surface"/>: on a dark window Night's (stars,
     /// night grade, Abyss shadows), with the sky and status bar from the surface; on a light window the daylight hook
     /// (no stars, no night multiply, navy shadows and washes at about half strength, a light text halo, a white top
@@ -293,10 +307,34 @@ public readonly record struct WashTokens(
     public const float ReadyHaloReachLogical = 3f;
 
     /// <summary>
+    /// A dark palette's Ready halo alpha (spec-1.17 §E4.1, build_themes.py's "default" dark halo): #F2D27A at .45 within
+    /// 3 px, the light wash's footprint.
+    /// </summary>
+    public const float DarkReadyHaloAlpha = 0.45f;
+
+    /// <summary>
+    /// The raised dark halo (build_themes.py's "raised"): a palette whose window fails Ready's lead for some set at
+    /// <see cref="DarkReadyHaloAlpha"/> draws its halo at .60, the same footprint. Medals are never recoloured.
+    /// </summary>
+    public const float DarkReadyHaloRaisedAlpha = 0.60f;
+
+    /// <summary>
     /// Night's washes. Night glows instead, so the Ready badge's Moon at .16 is the one it draws; the rest mirror the light
     /// washes in Moon so a palette that turns the wash rule on has something sane to draw.
     /// </summary>
     public static readonly WashTokens Night = Light(GlyphTokens.Moon) with { ReadyBadge = GlyphTokens.Moon with { W = 0.16f } };
+
+    /// <summary>
+    /// A dark palette's washes (Dawn, Kugane Lacquer; spec-1.17 §E4.1): Night's, with the Ready badge in the palette's
+    /// <paramref name="gold"/> at .16 and Ready's halo #F2D27A at <paramref name="readyHaloAlpha"/> within 3 px (drawn
+    /// where <see cref="SceneTokens.ReadyHaloWash"/> is set).
+    /// </summary>
+    public static WashTokens Dark(Vector4 gold, float readyHaloAlpha) => Night with
+    {
+        ReadyHalo = ColorMath.FromHex(WashHex) with { W = readyHaloAlpha },
+        ReadyHaloReach = ReadyHaloReachLogical,
+        ReadyBadge = gold with { W = 0.16f },
+    };
 
     /// <summary>
     /// A light palette's washes (spec-1.16 §A4) with <paramref name="leadGold"/> as its gold hairline: the Ready halo
@@ -426,7 +464,7 @@ public readonly record struct GaugeInks(
     }
 }
 
-/// <summary>The star field's inks (docs/design/flair-v13 §3.2–3.5).</summary>
+/// <summary>The star field's inks and density (docs/design/flair-v13 §3.2–3.5; spec-1.17 §E for a palette's own sky).</summary>
 /// <param name="Cool">Cool stars and constellation lines (#DCE5FF).</param>
 /// <param name="MoonWhite">Moon-white stars (#F4F2EA).</param>
 /// <param name="Gold">Gold stars (#FFE2A8).</param>
@@ -441,6 +479,19 @@ public readonly record struct StarInks(Vector4 Cool, Vector4 MoonWhite, Vector4 
     public const uint EmberHex = 0xFFC9AE;
     public const uint FigureHex = 0xEEF1FA;
     public const uint BandHex = 0xC9D3F0;
+
+    /// <summary>The far stars' cool ink (and the Milky Way's own stars'): <see cref="Cool"/> unless the palette warms its far sky.</summary>
+    public Vector4 FarCool { get; init; } = Cool;
+
+    /// <summary>The far stars' moon-white ink: <see cref="MoonWhite"/> unless the palette warms its far sky.</summary>
+    public Vector4 FarMoon { get; init; } = MoonWhite;
+
+    /// <summary>
+    /// The share of a sky's stars the palette shows (1 on Night; Kugane Lacquer's hazier, lantern-lit port sky .5): each
+    /// field shows the first share of its stars (<see cref="StarField.Thinned"/>), so a thinner sky is the same sky with
+    /// fewer stars.
+    /// </summary>
+    public float Density { get; init; } = 1f;
 }
 
 /// <summary>

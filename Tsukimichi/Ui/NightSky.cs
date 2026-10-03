@@ -182,7 +182,7 @@ public static class NightSky
         var clipMin = new Vector2(view.Left, view.Top);
         var clipMax = new Vector2(view.Right, view.Bottom);
         var band = Hosts(bandHost, site, key);
-        var shown = StarField.Place(stars, view, Placed);
+        var shown = StarField.Place(Thin(stars), view, Placed);
         if (band)
         {
             dl.PushClipRect(clipMin, clipMax, true);
@@ -229,9 +229,12 @@ public static class NightSky
             return;
         }
 
-        var shown = StarField.Place(stars, view, Placed);
+        var shown = StarField.Place(Thin(stars), view, Placed);
         DrawStars(dl, shown);
     }
+
+    /// <summary>The share of a field the palette's sky shows (<see cref="StarInks.Density"/>: all on Night, half on Kugane Lacquer).</summary>
+    private static ReadOnlySpan<Star> Thin(ReadOnlySpan<Star> stars) => stars[..StarField.Thinned(stars.Length, Theme.Scene.Stars.Density)];
 
     /// <summary>The first <paramref name="count"/> placed stars: far dots, mid discs, near stars with their cross and halo.</summary>
     private static void DrawStars(ImDrawListPtr dl, int count)
@@ -243,7 +246,7 @@ public static class NightSky
         {
             ref readonly var star = ref Placed[i];
             var p = star.Position;
-            var tone = Tone(star.Temperature);
+            var tone = star.Layer == StarLayer.Far ? FarTone(star.Temperature) : Tone(star.Temperature);
             switch (star.Layer)
             {
                 case StarLayer.Far when drifting:
@@ -385,7 +388,7 @@ public static class NightSky
             var fade = StarField.EdgeFade(p.X, view.Left, view.Right, view.Fade);
             if (fade > 0f)
             {
-                dl.AddCircleFilled(p, 0.6f * unit, Theme.WithAlpha(Tone(star.Temperature), star.Alpha * fade), 6);
+                dl.AddCircleFilled(p, 0.6f * unit, Theme.WithAlpha(FarTone(star.Temperature), star.Alpha * fade), 6);
             }
         }
     }
@@ -429,6 +432,10 @@ public static class NightSky
         StarTemperature.Ember => Ember,
         _ => Cool,
     };
+
+    /// <summary>A far star's ink: the palette's far inks (Night's cool and moon white; Kugane Lacquer's warmer pair).</summary>
+    private static Vector4 FarTone(StarTemperature temperature) =>
+        temperature == StarTemperature.Moon ? Theme.Scene.Stars.FarMoon : Theme.Scene.Stars.FarCool;
 
     /// <summary>A fixed, seeded 0..1 per band column, so the band is mottled the same way every frame.</summary>
     private static float Mottle(int column)

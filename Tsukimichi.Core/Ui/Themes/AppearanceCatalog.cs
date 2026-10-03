@@ -72,14 +72,15 @@ public static class FrameKits
 public static class PaletteChoices
 {
     public static readonly PaletteInfo Night = new(PaletteId.Night, "night", "Night", Light: false, Offered: true);
-    public static readonly PaletteInfo Dawn = new(PaletteId.Dawn, "dawn", "Dawn", Light: false, Offered: false);
+    public static readonly PaletteInfo Dawn = new(PaletteId.Dawn, "dawn", "Dawn", Light: false, Offered: true);
     public static readonly PaletteInfo IshgardSnow = new(PaletteId.IshgardSnow, "ishgard-snow", "Ishgard Snow", Light: true, Offered: true);
-    public static readonly PaletteInfo KuganeLacquer = new(PaletteId.KuganeLacquer, "kugane-lacquer", "Kugane Lacquer", Light: false, Offered: false);
+    public static readonly PaletteInfo KuganeLacquer = new(PaletteId.KuganeLacquer, "kugane-lacquer", "Kugane Lacquer", Light: false, Offered: true);
 
     /// <summary>The user's Dalamud style; light or dark as the style is, so <see cref="PaletteInfo.Light"/> is false here.</summary>
     public static readonly PaletteInfo FollowDalamud = new(PaletteId.FollowDalamud, "dalamud", "Follow Dalamud", Light: false, Offered: true);
 
-    public static readonly IReadOnlyList<PaletteInfo> All = [Night, Dawn, IshgardSnow, KuganeLacquer, FollowDalamud];
+    /// <summary>Every palette, in the Themes page's order (spec-1.16 §B6): the designed ones, then Follow Dalamud.</summary>
+    public static readonly IReadOnlyList<PaletteInfo> All = [Night, IshgardSnow, Dawn, KuganeLacquer, FollowDalamud];
 
     /// <summary>The palette with id <paramref name="id"/>; Night for an id this build does not know.</summary>
     public static PaletteInfo Get(PaletteId id) => Catalog.ById(All, id, static p => p.Id) ?? Night;

@@ -85,9 +85,10 @@ public sealed class PaletteContrastTests
     [Fact]
     public void Every_palette_and_form_has_a_row()
     {
-        // spec-1.16 §A8: one row per palette and form, four in 1.16, and Follow Dalamud's on a dark and a light host.
+        // spec-1.16 §A8 and spec-1.17 §E4: one row per palette and form, eight in 1.17, and Follow Dalamud's on a dark and
+        // a light host.
         Assert.Equal(
-            ["night", "night", "ishgard-snow", "ishgard-snow", DalamudDark, DalamudDark, DalamudLight, DalamudLight],
+            ["night", "night", "ishgard-snow", "ishgard-snow", "dawn", "dawn", "kugane-lacquer", "kugane-lacquer", DalamudDark, DalamudDark, DalamudLight, DalamudLight],
             Palettes().Select(static r => (string)r[0]));
     }
 

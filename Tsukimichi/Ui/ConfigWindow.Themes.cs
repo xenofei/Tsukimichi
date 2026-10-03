@@ -593,7 +593,7 @@ public sealed partial class ConfigWindow
     }
 
     /// <summary>
-    /// Settings › Themes › Colours: the palette tiles (Night, Ishgard Snow once it is registered, Follow Dalamud), High
+    /// Settings › Themes › Colours: the palette tiles (Night, Ishgard Snow, Dawn, Kugane Lacquer, Follow Dalamud), High
     /// contrast (the old Moon colours) and Frames. Each applies at once, with Undo.
     /// </summary>
     private void DrawThemeColours()
@@ -660,7 +660,7 @@ public sealed partial class ConfigWindow
         var gap = UiMetrics.Px(TileGapLogical);
         var pitch = widest + gap;
         var controlHeight = tile.Y + UiMetrics.Px(4f) + labelHeight;
-        if (!Setting(Strings.ThemesPalette, Strings.ThemesPaletteHint, "palette colours colors window sky night ishgard snow light dark follow dalamud style theme", (pitch * tiles.Length) - gap, controlHeight))
+        if (!Setting(Strings.ThemesPalette, Strings.ThemesPaletteHint, "palette colours colors window sky night ishgard snow dawn kugane lacquer light dark follow dalamud style theme", (pitch * tiles.Length) - gap, controlHeight))
         {
             return;
         }

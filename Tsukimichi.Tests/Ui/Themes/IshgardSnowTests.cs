@@ -1,17 +1,15 @@
 using System.Numerics;
-using System.Text.Json;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Ui.Themes;
-using Tsukimichi.Tests.Localization;
 
 namespace Tsukimichi.Tests.Ui.Themes;
 
 /// <summary>
 /// Ishgard Snow and the designed high-contrast forms (plan v7 T8, docs/design/v7/ui/spec-1.16.md §A): every role is the
-/// hex the approved design computed (<c>docs/design/v7/ui/1.16/palettes.json</c>, read from the repository), the light
-/// scene has no stars at all and washes where Night glows, the gauges have their own ink, and the high-contrast forms
-/// push every ink to 7 : 1 on the window.
+/// hex the approved design computed (<c>docs/design/v7/ui/1.16/palettes.json</c>, read from the repository by
+/// <see cref="PaletteDesign"/>), the light scene has no stars at all and washes where Night glows, the gauges have their
+/// own ink, and the high-contrast forms push every ink to 7 : 1 on the window.
 /// </summary>
 public sealed class IshgardSnowTests
 {
@@ -19,63 +17,6 @@ public sealed class IshgardSnowTests
 
     private static void Hex(uint expected, Vector4 actual, string role) =>
         Assert.True(ColorMath.ToHex(actual) == expected, $"{role}: expected #{expected:X6}, got #{ColorMath.ToHex(actual):X6}");
-
-    private static Dictionary<string, uint> Design(string key)
-    {
-        var path = Path.Combine(ResxFiles.RepositoryRoot(), "docs", "design", "v7", "ui", "1.16", "palettes.json");
-        using var json = JsonDocument.Parse(File.ReadAllText(path));
-        var roles = new Dictionary<string, uint>(StringComparer.Ordinal);
-        foreach (var role in json.RootElement.GetProperty("palettes").GetProperty(key).EnumerateObject())
-        {
-            roles[role.Name] = Convert.ToUInt32(role.Value.GetString()!.TrimStart('#'), 16);
-        }
-
-        return roles;
-    }
-
-    /// <summary>The palette's colour for a role name in palettes.json.</summary>
-    private static Vector4? Role(UiPalette p, string role)
-    {
-        var s = p.Surface;
-        return role switch
-        {
-            "Window" => s.Window,
-            "Sunken" => s.Sunken,
-            "Raised" => s.Raised,
-            "Hover" => s.Hover,
-            "Line" => s.Line,
-            "StrongLine" => s.StrongLine,
-            "Text" => s.Text,
-            "TextSecondary" => s.TextSecondary,
-            "TextTertiary" => s.TextTertiary,
-            "TextDisabled" => s.TextDisabled,
-            "Deep" => s.Deep,
-            "Top" => s.Top,
-            "Zenith" => p.Scene.Zenith,
-            "Ornament" => s.Ornament,
-            "OrnamentHigh" => s.OrnamentHigh,
-            "OrnamentLight" => p.OrnamentLight,
-            "Cool" => s.Cool,
-            "Accent" => p.Accent,
-            "Ready" => p.States.Text(QuestState.Ready),
-            "InJournal" => p.States.Text(QuestState.Accepted),
-            "Completed" => p.States.Text(QuestState.Completed),
-            "ReadyOnOtherJob" => p.States.Text(QuestState.ReadyOnOtherJob),
-            "DoneThisCycle" => p.States.Text(QuestState.DoneThisCycle),
-            "Blocked" => p.States.Text(QuestState.Blocked),
-            "LockedOut" => p.States.Text(QuestState.Foreclosed),
-            "NotChecked" => p.States.Text(QuestState.Unknown),
-            "GaugeArc" => p.Gauges.Arc,
-            "GaugeArcShade" => p.Gauges.OuterSlope[^1].Color,
-            "Groove" => p.Gauges.Groove,
-            "StripeGold" => p.States.Stripe(QuestState.Ready),
-            "StripeCompleted" => p.States.Stripe(QuestState.Completed),
-            "StripeSilver" => p.States.Stripe(QuestState.ReadyOnOtherJob),
-            "StripeLocked" => p.States.Stripe(QuestState.Foreclosed),
-            "StripeVeil" => p.States.Stripe(QuestState.Unknown),
-            _ => null,
-        };
-    }
 
     /// <summary>
     /// Night's design row models a few graphics Night draws in its own 1.15 material (the medal gauges' lapis groove and
@@ -92,14 +33,14 @@ public sealed class IshgardSnowTests
     {
         var palette = (night ? UiPalettes.Night : Snow) is var p && key.EndsWith("-hc", StringComparison.Ordinal) ? p.HighContrast : p;
         var failures = new List<string>();
-        foreach (var (role, hex) in Design(key))
+        foreach (var (role, hex) in PaletteDesign.Read("1.16/palettes.json", key))
         {
             if (night && NightKeeps.Contains(role))
             {
                 continue;
             }
 
-            var color = Role(palette, role);
+            var color = PaletteDesign.Role(palette, role);
             Assert.True(color.HasValue, $"palettes.json role {role} has no palette role");
             if (ColorMath.ToHex(color.Value) != hex)
             {
@@ -263,31 +204,9 @@ public sealed class IshgardSnowTests
         // spec-1.16 §A2: the deep gold against the plum, worst-case ΔE in OKLab under protan, deutan and tritan ≥ 0.08.
         foreach (var palette in new[] { Snow, Snow.HighContrast, UiPalettes.Night })
         {
-            var accent = palette.Accent;
-            var locked = palette.States.Text(QuestState.Foreclosed);
-            foreach (var mode in new[] { ColorVision.Protanopia, ColorVision.Deuteranopia, ColorVision.Tritanopia })
-            {
-                var a = Oklab(ColorVisionSimulation.Simulate(accent, mode));
-                var b = Oklab(ColorVisionSimulation.Simulate(locked, mode));
-                var distance = Vector3.Distance(a, b);
-                Assert.True(distance >= 0.08f, $"{palette.Key} {mode}: ΔE {distance:0.000}");
-            }
+            var distance = PaletteDesign.WorstColourVisionDistance(palette.Accent, palette.States.Text(QuestState.Foreclosed));
+            Assert.True(distance >= 0.08f, $"{palette.Key}: ΔE {distance:0.000}");
         }
-    }
-
-    /// <summary>An sRGB colour in OKLab (Björn Ottosson's matrices).</summary>
-    private static Vector3 Oklab(Vector4 srgb)
-    {
-        var r = ColorVisionSimulation.ToLinear(srgb.X);
-        var g = ColorVisionSimulation.ToLinear(srgb.Y);
-        var b = ColorVisionSimulation.ToLinear(srgb.Z);
-        var l = MathF.Cbrt((0.4122214708f * r) + (0.5363325363f * g) + (0.0514459929f * b));
-        var m = MathF.Cbrt((0.2119034982f * r) + (0.6806995451f * g) + (0.1073969566f * b));
-        var s = MathF.Cbrt((0.0883024619f * r) + (0.2817188376f * g) + (0.6299787005f * b));
-        return new Vector3(
-            (0.2104542553f * l) + (0.7936177850f * m) - (0.0040720468f * s),
-            (1.9779984951f * l) - (2.4285922050f * m) + (0.4505937099f * s),
-            (0.0259040371f * l) + (0.7827717662f * m) - (0.8086757660f * s));
     }
 
     [Fact]

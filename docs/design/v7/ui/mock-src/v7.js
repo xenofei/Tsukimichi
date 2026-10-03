@@ -16,6 +16,9 @@
     "snow-plain": "1.16: Ishgard Snow at Plain, the drawer open with Advanced.",
     palettes: "1.16: Night, Ishgard Snow and their high-contrast forms, the contrast table, portraits on light.",
     themes: "1.16: Settings › Themes, and how 1.17's mix-and-match fits the same page.",
+    mix: "1.17: the per-state mix, its warnings and Fix it.", frames: "1.17: four frame kits on four palettes.", share: "1.17: share codes.",
+    glyphwin: "1.17: the glyph window's Themes tab.", palettes17: "1.17: Dawn and Kugane Lacquer with their high-contrast forms.",
+    "dawn-full": "1.17: Dawn, Full, with Astrologian's Orrery.", "dawn-quiet": "1.17: Dawn, Quiet.", "kugane-full": "1.17: Kugane Lacquer, Full, with Menphina's Medallion.", "kugane-quiet": "1.17: Kugane Lacquer, Quiet.",
     giver: "1.15: giver portraits from the game's own art, night-graded, on the medal plate; avatars in Next stops, Route and the Journal.",
     fallbacks: "1.15: the 16 race silhouettes, the moon disc, society emblems and initials, on the same plate.",
     buttons: "1.15: icon-and-label buttons with the game's own icons, per level, and how they shrink.",
@@ -106,7 +109,7 @@
   function heroFile(st) { return st === "ready-on-another-job" ? "ready-on-another-job-paladin" : st; }
   // v7 Completed: the 96 and 128 px atlas tiers carry the rim-lit craters; 48, 64 and the row tier use the crater-less source.
   var THEME = "medallion", SNOW = false, SELN = null;
-  var TDIR = { glass: "../themes/ishgard-glass/", aether: "../themes/aether-crystal/" };
+  var TDIR = { glass: "../themes/ishgard-glass/", aether: "../themes/aether-crystal/", orrery: "../themes/astrologian-orrery/" };
   function medalSrc(st, hero, px) {
     if (TDIR[THEME]) return TDIR[THEME] + (hero ? heroFile(st) : "_row/" + st) + ".svg";
     return V7 && st === "completed" ? (px >= 96 ? MOON7 : MOON7S) : M + (hero ? heroFile(st) : "_row/" + st) + ".svg";
@@ -202,7 +205,9 @@
   // v7: three depths (far 60 %, mid 32 %, near 8 %), four temperatures, a slow twinkle on mid and near stars, an optional
   // Milky Way band and an optional region constellation. Everything stays inside the given sky rects (never under text).
   var TEMP = [[0.64, "#DCE5FF"], [0.88, "#F4F2EA"], [0.97, "#FFE2A8"], [1.01, "#FFC9AE"]];
-  function tempOf(r, layer) { if (layer === 0) return r < 0.8 ? TEMP[0][1] : TEMP[1][1]; for (var i = 0; i < TEMP.length; i++) if (r < TEMP[i][0]) return TEMP[i][1]; return TEMP[0][1]; }
+  // 1.17, Kugane Lacquer (supervisor's accepted option): far stars warm slightly, a hazier sky over a lantern-lit port
+  var PALNOW = null;
+  function tempOf(r, layer) { if (layer === 0) return PALNOW === "kugane" ? (r < 0.6 ? "#E9E2DA" : "#F1E3CC") : r < 0.8 ? TEMP[0][1] : TEMP[1][1]; for (var i = 0; i < TEMP.length; i++) if (r < TEMP[i][0]) return TEMP[i][1]; return TEMP[0][1]; }
   var FIG = {
     arr: { name: "The Chocobo", exp: "A Realm Reborn", p: [[.2, .12], [0, .22], [.3, .46], [.66, .38], [1, .18], [.6, .68], [.46, 1], [.74, 1]], e: [[1, 0], [0, 2], [2, 3], [3, 4], [2, 5], [5, 3], [5, 6], [5, 7]] },
     hw: { name: "The Wyrm", exp: "Heavensward", p: [[0, .78], [.2, .5], [.42, .56], [.6, .3], [.82, .36], [1, .06], [.66, .66]], e: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [3, 6]] },
@@ -225,6 +230,7 @@
   function sky7(o) {
     // o: { seed, w, h, n, rects: [[x,y,w,h],...], band: [x0,y0,x1,y1,width] | null, fig: [key,x,y,size] | null, anim, ox, oy }
     var r = rng(o.seed), id = "sk" + (++uid), w = o.w, h = o.h, out = "";
+    if (PALNOW === "kugane") o = Object.assign({}, o, { n: Math.max(4, Math.round(o.n / 2)) }); // half the density
     out += '<svg class="sky" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h + '" aria-hidden="true" style="width:' + w + "px;height:" + h + 'px">';
     out += '<defs><clipPath id="' + id + 'c">' + o.rects.map(function (q) { return '<rect x="' + q[0] + '" y="' + q[1] + '" width="' + q[2] + '" height="' + q[3] + '"/>'; }).join("") + "</clipPath>" +
       '<filter id="' + id + 'b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter></defs>';
@@ -555,12 +561,12 @@
 
   function win(lv, o) {
     o = o || {}; V7 = o.v7 !== false; o.v7 = V7; ROWS = V7 ? filterQ(o.F || F_WIN) : Q;
-    THEME = o.theme || "medallion"; SNOW = o.palette === "snow"; SELN = o.sel || null;
-    var cls = "mk " + lv + (V7 ? " v7" : "") + (SNOW ? " snow" : "") + (o.hc ? " hc" : "") + " th-" + THEME + (o.drawer && V7 ? " dopen" : "") + (o.drawer && !V7 ? " b13open" : "");
+    THEME = o.theme || "medallion"; SNOW = o.palette === "snow"; SELN = o.sel || null; PALNOW = o.palette || null;
+    var cls = "mk " + lv + (V7 ? " v7" : "") + (SNOW ? " snow" : "") + (o.palette && o.palette !== "snow" ? " " + o.palette : "") + (o.hc ? " hc" : "") + " th-" + THEME + (o.drawer && V7 ? " dopen" : "") + (o.drawer && !V7 ? " b13open" : "");
     var body = (V7 ? rail7(lv, o) : rail13(lv)) + tree(lv, o) + table(lv, o) + (o.detailFn ? o.detailFn(lv, o) : detail(lv, o));
     if (o.drawer) body += V7 ? drawer(lv, o.drawer === "e", o.F || F_WIN, o.dopt || {}) : drawer13();
     var out = '<div class="' + cls + '"' + (o.style ? ' style="' + o.style + '"' : "") + '><div class="win">' + frame(lv, o) + '<div class="w-body">' + body + "</div>" + status(lv) + "</div></div>";
-    THEME = "medallion"; SNOW = false; SELN = null;
+    THEME = "medallion"; SNOW = false; SELN = null; PALNOW = null;
     return out;
   }
 
@@ -792,6 +798,15 @@
     else if (v === "snow-plain") host.innerHTML = snowWin("plain", { drawer: "e", dopt: { to: "adv" } });
     else if (v === "palettes") { host.innerHTML = boardPalettes(); renderContrast(); }
     else if (v === "themes") host.innerHTML = boardThemes();
+    else if (v === "mix") host.innerHTML = boardMix();
+    else if (v === "frames") host.innerHTML = boardFrames();
+    else if (v === "share") host.innerHTML = boardShare();
+    else if (v === "glyphwin") host.innerHTML = boardGlyphWin();
+    else if (v === "palettes17") { host.innerHTML = boardPal17(); renderContrast17(); }
+    else if (v === "dawn-full") host.innerHTML = palWin("dawn", "full", "orrery");
+    else if (v === "dawn-quiet") host.innerHTML = palWin("dawn", "quiet", "orrery");
+    else if (v === "kugane-full") host.innerHTML = palWin("kugane", "full", "medallion");
+    else if (v === "kugane-quiet") host.innerHTML = palWin("kugane", "quiet", "medallion");
     else if (v === "giver") host.innerHTML = boardGiver();
     else if (v === "fallbacks") host.innerHTML = boardFallbacks();
     else if (v === "buttons") host.innerHTML = boardButtons();

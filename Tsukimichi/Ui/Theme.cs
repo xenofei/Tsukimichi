@@ -293,6 +293,13 @@ public static class Theme
     /// </summary>
     public static bool Washes => Scene.WashInsteadOfGlow;
 
+    /// <summary>
+    /// Whether a Ready row medal's halo is the palette's Ready halo (<see cref="WashTokens.ReadyHalo"/>, drawn by
+    /// <c>TablePane.ReadyWash</c>) rather than Night's glow: on a light palette (the wash), and on Dawn and Kugane Lacquer
+    /// (<see cref="SceneTokens.ReadyHaloWash"/>, spec-1.17 §E4.1).
+    /// </summary>
+    public static bool ReadyHaloWash => Scene.WashInsteadOfGlow || Scene.ReadyHaloWash;
+
     /// <summary>The palette's gauge inks this frame (<see cref="UiPalette.Gauges"/>): the medal's material on Night, their own on a light palette.</summary>
     public static GaugeInks Gauges { get; private set; } = UiPalettes.Night.Gauges;
 

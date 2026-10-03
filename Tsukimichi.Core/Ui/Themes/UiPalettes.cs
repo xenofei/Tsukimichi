@@ -7,9 +7,9 @@ namespace Tsukimichi.Core.Ui.Themes;
 /// <summary>
 /// The palette registry (plan v7 T2 and T8, theme-system §8, docs/design/v7/ui/spec-1.16.md §A): the designed palettes
 /// by key, and the "Follow Dalamud" palette derived from the host style. 1.16 ships Night and Ishgard Snow, the first
-/// light palette, each with a designed high-contrast form; Dawn and Kugane Lacquer join in 1.17 (T16). Every role is the
-/// hex in <c>docs/design/v7/ui/1.16/palettes.json</c>: <c>UiPaletteTests</c> holds each to it, and
-/// <c>PaletteContrastTests</c> every pair to WCAG.
+/// light palette; 1.17 adds the dark Dawn and Kugane Lacquer (T16, spec-1.17 §E); each has a designed high-contrast
+/// form. Every role is the hex in <c>docs/design/v7/ui/1.16/palettes.json</c> or <c>1.17/palettes17.json</c>:
+/// <c>IshgardSnowTests</c> and <c>DawnKuganeTests</c> hold each to it, and <c>PaletteContrastTests</c> every pair to WCAG.
 /// </summary>
 public static class UiPalettes
 {
@@ -476,16 +476,365 @@ public static class UiPalettes
         };
     }
 
+    // ------------------------------------------------------------------ Dawn and Kugane Lacquer: the dark path
+
+    /// <summary>
+    /// Kugane Lacquer's Ready halo alpha (spec-1.17 §E4.1): <see cref="WashTokens.DarkReadyHaloAlpha"/> (.45), or
+    /// <see cref="WashTokens.DarkReadyHaloRaisedAlpha"/> (.60) if the build's Ready-lead gate on the Kugane window records
+    /// the raised halo for some set. The one value to change.
+    /// </summary>
+    public const float KuganeReadyHaloAlpha = WashTokens.DarkReadyHaloAlpha;
+
+    /// <summary>Dawn's Ready halo alpha (the same rule as Kugane's: .45, or .60 if the build records the raised halo).</summary>
+    public const float DawnReadyHaloAlpha = WashTokens.DarkReadyHaloAlpha;
+
+    /// <summary>
+    /// A dark palette's scene beside Night's (spec-1.17 §E1): the star field, moving sky and meteor, glows and the night
+    /// grades all stay; the sky is its own designed stops, the status bar its own gradient, shadows and the text halo in
+    /// its <paramref name="deep"/>, the tour's veil its <paramref name="window"/>, the lit edge its <paramref name="goldHigh"/>
+    /// and glows in its <paramref name="gold"/>; Ready's row halo is the gated #F2D27A halo at <paramref name="readyHalo"/>.
+    /// </summary>
+    private static SceneTokens DarkScene((float At, Vector4 Color)[] sky, uint statusTop, uint statusFoot, Vector4 deep, Vector4 window, Vector4 gold, Vector4 goldHigh, float readyHalo) => NightScene with
+    {
+        Zenith = sky[0].Color,
+        SkyStops = sky,
+        StatusTop = ColorMath.FromHex(statusTop),
+        StatusFoot = ColorMath.FromHex(statusFoot),
+        Shadow = deep,
+        TextHalo = deep,
+        Scrim = window,
+        GlowWash = gold,
+        TopHighlight = goldHigh,
+        Washes = WashTokens.Dark(gold, readyHalo),
+        ReadyHaloWash = true,
+    };
+
+    /// <summary>
+    /// A dark palette's chrome inks (spec-1.17 §E2): gold as fill, line and toggle; its highlight and deep stops; the
+    /// faded Completed gold as the dim gold; the window as the ink on gold; the Locked out stripe as the danger tone and
+    /// its word as danger text; the Not checked word; the tree ring in the gauge shade, done in the faded gold.
+    /// </summary>
+    private static PaletteInks DarkInks(Vector4 gold, uint goldHigh, uint goldDeep, uint goldDim, Vector4 window, uint danger, uint dangerText, Vector4 onDanger, uint unknownText) => new(
+        Gold: gold,
+        GoldHigh: ColorMath.FromHex(goldHigh),
+        GoldDeep: ColorMath.FromHex(goldDeep),
+        GoldDim: ColorMath.FromHex(goldDim),
+        GoldLine: gold,
+        OnGold: window,
+        Danger: ColorMath.FromHex(danger),
+        DangerText: ColorMath.FromHex(dangerText),
+        OnDanger: onDanger,
+        UnknownText: ColorMath.FromHex(unknownText),
+        GaugeArc: ColorMath.FromHex(goldDeep),
+        GaugeDone: ColorMath.FromHex(goldDim),
+        ToggleOn: gold,
+        ToggleKnob: ColorMath.FromHex(goldHigh));
+
+    /// <summary>
+    /// A dark palette's state inks (spec-1.17 §E2, palettes17.json): the gold states in its gold (Completed's stripe the
+    /// faded gold), the silver states in its text, Blocked's word in secondary text over the tertiary tone, Locked out in
+    /// its plum, Not checked's word; Blocked and Not checked share the veil stripe (the dotted grey), as on Snow.
+    /// </summary>
+    private static StateInks DarkStates(Vector4 gold, uint completedStripe, Vector4 text, in SurfaceColors s, uint lockedStripe, uint lockedText, uint notChecked, uint veilStripe)
+    {
+        var veil = ColorMath.FromHex(veilStripe);
+        var locked = ColorMath.FromHex(lockedStripe);
+        return StateInks.From(
+        [
+            (QuestState.Completed, gold, gold, ColorMath.FromHex(completedStripe)),
+            (QuestState.Accepted, gold, gold, gold),
+            (QuestState.Ready, gold, gold, gold),
+            (QuestState.ReadyOnOtherJob, text, text, text),
+            (QuestState.DoneThisCycle, text, text, text),
+            (QuestState.Blocked, s.TextTertiary, s.TextSecondary, veil),
+            (QuestState.Foreclosed, locked, ColorMath.FromHex(lockedText), locked),
+            (QuestState.Unknown, s.TextDisabled, ColorMath.FromHex(notChecked), veil),
+        ]);
+    }
+
+    /// <summary>
+    /// A dark palette's gauges (spec-1.17 §E2): Night's medal gauges (they glow, with the moonstone moon over its dark
+    /// side) in the palette's own ink, as a light palette's are: a two-stop gilt ramp <paramref name="arc"/> (upper left)
+    /// → <paramref name="shade"/> (lower right), its own <paramref name="groove"/> between keylines in its deep, and the
+    /// flat track in the strong line at .55.
+    /// </summary>
+    private static GaugeInks DarkGauges(uint arc, uint shade, uint groove, Vector4 deep, Vector4 strongLine)
+    {
+        var lit = ColorMath.FromHex(arc);
+        var shaded = ColorMath.FromHex(shade);
+        return NightGauges with
+        {
+            Groove = ColorMath.FromHex(groove),
+            Keyline = deep,
+            ArcBase = lit,
+            ArcDim = shaded,
+            OuterSlope = [(0f, lit), (1f, shaded)],
+            InnerSlope = [(0f, shaded), (1f, lit)],
+            KnobRim = deep,
+            Track = strongLine with { W = 0.55f },
+            Arc = lit,
+        };
+    }
+
+    /// <summary>
+    /// A dark palette's high-contrast form (spec-1.17 §E3, research §8.3): the generic transform from its own warm inks
+    /// (no sky, the opaque strong-line ornament, every ink pushed towards its text until it reads 7 : 1 on the window),
+    /// with the designed hexes of palettes17.json for the strong line and ornament, tertiary text and the Not checked word.
+    /// </summary>
+    private static UiPalette DarkHighContrast(UiPalette palette, uint strongLine, uint textTertiary, uint notChecked)
+    {
+        ArgumentNullException.ThrowIfNull(palette);
+        var form = palette.ToHighContrast(pushInks: true);
+        var strong = ColorMath.FromHex(strongLine);
+        var unknown = ColorMath.FromHex(notChecked);
+        return form with
+        {
+            Surface = form.Surface with { StrongLine = strong, Ornament = strong, TextTertiary = ColorMath.FromHex(textTertiary) },
+            Inks = form.Inks with { UnknownText = unknown },
+            States = form.States.WithText(QuestState.Unknown, unknown),
+        };
+    }
+
+    // ------------------------------------------------------------------ Dawn
+
+    /// <summary>#1A1526 – Dawn's window, plum night.</summary>
+    public const uint DawnWindowHex = 0x1A1526;
+
+    /// <summary>#F5C47C – Dawn's gold: the accent, the Ready, In journal and Completed words, the gold stripe and gauge arc.</summary>
+    public const uint DawnGoldHex = 0xF5C47C;
+
+    /// <summary>Dawn's surface and text roles (spec-1.17 §E2; StrongLine and TextTertiary re-tuned for Hover and Raised).</summary>
+    public static readonly SurfaceColors DawnSurface = new(
+        Window: ColorMath.FromHex(DawnWindowHex),
+        Sunken: ColorMath.FromHex(0x120E1B),
+        Raised: ColorMath.FromHex(0x262036),
+        Hover: ColorMath.FromHex(0x30283F),
+        Line: ColorMath.FromHex(0x352D46),
+        StrongLine: ColorMath.FromHex(0x76698C),
+        Text: ColorMath.FromHex(0xF2E8E6),
+        TextSecondary: ColorMath.FromHex(0xC4B4C0),
+        TextTertiary: ColorMath.FromHex(0xA495AC),
+        TextDisabled: ColorMath.FromHex(0x5A4E66),
+        Light: false,
+        Deep: ColorMath.FromHex(0x0F0B17),
+        Top: ColorMath.FromHex(0x2B1F3A),
+        Ornament: ColorMath.FromHex(0xB98C6E),
+        OrnamentHigh: ColorMath.FromHex(0xE9C4A4),
+        Cool: ColorMath.FromHex(0x92A2E4),
+        CoolDeep: GlyphTokens.TideDeep);
+
+    /// <summary>#5A3448 – Dawn's rose horizon, the brightest band of its sky.</summary>
+    public const uint DawnHorizonHex = 0x5A3448;
+
+    /// <summary>
+    /// Dawn's sky, the hour before sunrise (spec-1.17 §E2, the mock's dawn-full): zenith #3A2746, the rose horizon
+    /// #5A3448 between 34 and 46 %, down to the top colour #2B1F3A and the window by 76 %, a faint lift at the foot.
+    /// </summary>
+    public static readonly (float At, Vector4 Color)[] DawnSky =
+    [
+        (0f, ColorMath.FromHex(0x3A2746)),
+        (0.14f, ColorMath.FromHex(0x352444)),
+        (0.30f, ColorMath.FromHex(0x2B1F3A)),
+        (0.40f, ColorMath.FromHex(0x3E2A44)),
+        (0.46f, ColorMath.FromHex(DawnHorizonHex)),
+        (0.58f, ColorMath.FromHex(0x2B1F3A)),
+        (0.76f, ColorMath.FromHex(DawnWindowHex)),
+        (1f, ColorMath.FromHex(0x1D1729)),
+    ];
+
+    /// <summary>
+    /// Quiet on Dawn (spec-1.17 §E5): rail #17121F, tree #1A1524, table #1E1829, detail #221B30, cards #2A2338, rule
+    /// #3A3049.
+    /// </summary>
+    public static readonly FlairTones DawnQuiet = new(
+        Rail: ColorMath.FromHex(0x17121F),
+        Tree: ColorMath.FromHex(0x1A1524),
+        Table: ColorMath.FromHex(0x1E1829),
+        Detail: ColorMath.FromHex(0x221B30),
+        Card: ColorMath.FromHex(0x2A2338),
+        Rule: ColorMath.FromHex(0x3A3049),
+        Band: ColorMath.FromHex(0x2A2338),
+        HeaderBand: ColorMath.FromHex(0x2A2338),
+        HeaderLine: ColorMath.FromHex(0x3A3049),
+        Status: ColorMath.FromHex(0x1E1829));
+
+    /// <summary>
+    /// Dawn (spec-1.17 §E): the hour before sunrise, plum night with a rose horizon, warm pearl text, dawn gold for "act
+    /// now". A dark palette: stars, glows and the night grades stay. Medals are never recoloured. Its high-contrast form is
+    /// the spec's (<see cref="DawnHighContrast"/>).
+    /// </summary>
+    public static readonly UiPalette Dawn = BuildDawn();
+
+    private static UiPalette BuildDawn()
+    {
+        var s = DawnSurface;
+        var gold = ColorMath.FromHex(DawnGoldHex);
+        return new UiPalette
+        {
+            Id = PaletteId.Dawn,
+            Key = PaletteChoices.Dawn.Key,
+            Name = PaletteChoices.Dawn.Name,
+            Surface = s,
+            Accent = gold,
+            AccentDim = ColorMath.FromHex(0xB99A6A),
+            OrnamentLight = ColorMath.FromHex(0xEDCBAA),
+
+            // The danger button #9A5577 under Dawn's pearl text is 4.4 : 1; white reads at 5.3.
+            Inks = DarkInks(gold, 0xFFE6B8, 0xD9A55E, 0xB99A6A, s.Window, 0xC46A92, 0xE68FB4, Vector4.One, 0xA595AE),
+            States = DarkStates(gold, 0xB99A6A, s.Text, s, 0xC46A92, 0xE68FB4, 0xA595AE, 0x76698C),
+            Scene = DarkScene(DawnSky, 0x1E1830, 0x140F20, s.Deep, s.Window, gold, ColorMath.FromHex(0xFFE6B8), DawnReadyHaloAlpha),
+            Brass = NightBrass,
+            Plate = NightPlate,
+            Gauges = DarkGauges(DawnGoldHex, 0xD9A55E, 0x3A3050, s.Deep, s.StrongLine),
+            Zebra = ColorMath.FromHex(0xDCB4C8) with { W = 0.025f },
+            Pills = new PillSurfaces(s.Hover, s.Raised, ColorMath.FromHex(0xFFE2AE), ColorMath.FromHex(0xD9A55E), ColorMath.FromHex(0xF8D9A4), ColorMath.FromHex(PillSurfaces.GoldInkHex)),
+            QuietTones = DawnQuiet,
+            MedalRimGap = DawnQuiet.Tree,
+            HighContrastBuilder = DawnHighContrast,
+        };
+    }
+
+    /// <summary>
+    /// Dawn's high-contrast form (spec-1.17 §E3, palettes17.json "dawn-hc"): no sky; the strong line and the opaque
+    /// ornament #877B99, tertiary #AD9EB2, the Not checked word #AD9DB4; every other ink already reads 7 : 1 or is pushed
+    /// there from Dawn's own warm inks.
+    /// </summary>
+    public static UiPalette DawnHighContrast(UiPalette dawn) => DarkHighContrast(dawn, 0x877B99, 0xAD9EB2, 0xAD9DB4);
+
+    // ------------------------------------------------------------------ Kugane Lacquer
+
+    /// <summary>#16100F – Kugane Lacquer's window, black lacquer.</summary>
+    public const uint KuganeWindowHex = 0x16100F;
+
+    /// <summary>#F0CC72 – Kugane Lacquer's gold.</summary>
+    public const uint KuganeGoldHex = 0xF0CC72;
+
+    /// <summary>#B23422 – vermilion: Kugane's dusk band and the rail's lacquer edge, never an ink (red means Locked out).</summary>
+    public const uint VermilionHex = 0xB23422;
+
+    /// <summary>Kugane Lacquer's surface and text roles (spec-1.17 §E2; StrongLine and TextTertiary re-tuned).</summary>
+    public static readonly SurfaceColors KuganeSurface = new(
+        Window: ColorMath.FromHex(KuganeWindowHex),
+        Sunken: ColorMath.FromHex(0x0E0A09),
+        Raised: ColorMath.FromHex(0x231917),
+        Hover: ColorMath.FromHex(0x2D211E),
+        Line: ColorMath.FromHex(0x342620),
+        StrongLine: ColorMath.FromHex(0x7A6458),
+        Text: ColorMath.FromHex(0xF3E9DB),
+        TextSecondary: ColorMath.FromHex(0xC6B6A2),
+        TextTertiary: ColorMath.FromHex(0xA69482),
+        TextDisabled: ColorMath.FromHex(0x5C4C42),
+        Light: false,
+        Deep: ColorMath.FromHex(0x0B0807),
+        Top: ColorMath.FromHex(0x2A1613),
+        Ornament: ColorMath.FromHex(0xB8913F),
+        OrnamentHigh: ColorMath.FromHex(0xE7C87C),
+        Cool: ColorMath.FromHex(0x7FA3DA),
+        CoolDeep: GlyphTokens.TideDeep);
+
+    /// <summary>#4E2218 – Kugane's vermilion dusk band, the brightest of its sky.</summary>
+    public const uint KuganeHorizonHex = 0x4E2218;
+
+    /// <summary>
+    /// Kugane Lacquer's sky, dusk over the port (spec-1.17 §E2, the mock's kugane-full): zenith #3A1A14, the vermilion
+    /// dusk band #4E2218 between 40 and 46 %, down to the top colour #2A1613 and the window by 74 %.
+    /// </summary>
+    public static readonly (float At, Vector4 Color)[] KuganeSky =
+    [
+        (0f, ColorMath.FromHex(0x3A1A14)),
+        (0.12f, ColorMath.FromHex(0x33170F)),
+        (0.26f, ColorMath.FromHex(0x2A1613)),
+        (0.40f, ColorMath.FromHex(0x3B1D14)),
+        (0.45f, ColorMath.FromHex(KuganeHorizonHex)),
+        (0.56f, ColorMath.FromHex(0x2A1613)),
+        (0.74f, ColorMath.FromHex(KuganeWindowHex)),
+        (1f, ColorMath.FromHex(0x1A1210)),
+    ];
+
+    /// <summary>
+    /// Kugane's stars (the supervisor's accepted option, spec-1.17 decision 6): a hazier sky over a lantern-lit port, half
+    /// as dense, its far stars warmed slightly (#E9E2DA and #F1E3CC for Night's cool and moon white).
+    /// </summary>
+    public static readonly StarInks KuganeStars = NightScene.Stars with
+    {
+        FarCool = ColorMath.FromHex(0xE9E2DA),
+        FarMoon = ColorMath.FromHex(0xF1E3CC),
+        Density = 0.5f,
+    };
+
+    /// <summary>
+    /// Quiet on Kugane Lacquer (spec-1.17 §E5): rail #140E0D, tree #171110, table #1B1412, detail #201715, cards #281D1A,
+    /// rule #3A2B24.
+    /// </summary>
+    public static readonly FlairTones KuganeQuiet = new(
+        Rail: ColorMath.FromHex(0x140E0D),
+        Tree: ColorMath.FromHex(0x171110),
+        Table: ColorMath.FromHex(0x1B1412),
+        Detail: ColorMath.FromHex(0x201715),
+        Card: ColorMath.FromHex(0x281D1A),
+        Rule: ColorMath.FromHex(0x3A2B24),
+        Band: ColorMath.FromHex(0x281D1A),
+        HeaderBand: ColorMath.FromHex(0x281D1A),
+        HeaderLine: ColorMath.FromHex(0x3A2B24),
+        Status: ColorMath.FromHex(0x1B1412));
+
+    /// <summary>
+    /// Kugane Lacquer (spec-1.17 §E): black lacquer at dusk, washi text, brass on lacquer, an ai-zome indigo for links.
+    /// Vermilion lives only in surfaces (the dusk band, the rail's lacquer edge), never in ink. A dark palette: stars
+    /// (half as dense, warmer far stars), glows and the night grades stay. Medals are never recoloured. Its high-contrast
+    /// form is the spec's (<see cref="KuganeHighContrast"/>).
+    /// </summary>
+    public static readonly UiPalette KuganeLacquer = BuildKugane();
+
+    private static UiPalette BuildKugane()
+    {
+        var s = KuganeSurface;
+        var gold = ColorMath.FromHex(KuganeGoldHex);
+        return new UiPalette
+        {
+            Id = PaletteId.KuganeLacquer,
+            Key = PaletteChoices.KuganeLacquer.Key,
+            Name = PaletteChoices.KuganeLacquer.Name,
+            Surface = s,
+            Accent = gold,
+            AccentDim = ColorMath.FromHex(0xB79A5E),
+            OrnamentLight = ColorMath.FromHex(0xECD08A),
+            Inks = DarkInks(gold, 0xFFE9B0, 0xD4AE55, 0xB79A5E, s.Window, 0xC25E92, 0xE58AC0, s.Text, 0xA89888),
+            States = DarkStates(gold, 0xB79A5E, s.Text, s, 0xC25E92, 0xE58AC0, 0xA89888, 0x7A6458),
+            Scene = DarkScene(KuganeSky, 0x1E1513, 0x120D0C, s.Deep, s.Window, gold, ColorMath.FromHex(0xFFE9B0), KuganeReadyHaloAlpha) with
+            {
+                Stars = KuganeStars,
+                RailEdge = ColorMath.FromHex(VermilionHex) with { W = 0.45f },
+            },
+            Brass = NightBrass,
+            Plate = NightPlate,
+            Gauges = DarkGauges(KuganeGoldHex, 0xD4AE55, 0x3A2A24, s.Deep, s.StrongLine),
+            Zebra = ColorMath.FromHex(0xF0C8A0) with { W = 0.022f },
+            Pills = NightPills with { RaisedTop = s.Hover, RaisedFoot = s.Raised },
+            QuietTones = KuganeQuiet,
+            MedalRimGap = KuganeQuiet.Tree,
+            HighContrastBuilder = KuganeHighContrast,
+        };
+    }
+
+    /// <summary>
+    /// Kugane Lacquer's high-contrast form (spec-1.17 §E3, palettes17.json "kugane-hc"): no sky and no lacquer edge; the
+    /// strong line and the opaque ornament #8C786C, tertiary #AD9C8A, the Not checked word #AC9C8C; every other ink
+    /// already reads 7 : 1 or is pushed there from Kugane's own warm inks.
+    /// </summary>
+    public static UiPalette KuganeHighContrast(UiPalette kugane) => DarkHighContrast(kugane, 0x8C786C, 0xAD9C8A, 0xAC9C8C);
+
     // ------------------------------------------------------------------ the registry
 
-    private static readonly UiPalette[] Designed = [Night, IshgardSnow];
+    /// <summary>The designed palettes in the Themes page's order (spec-1.16 §B6): Night, Ishgard Snow, Dawn, Kugane Lacquer.</summary>
+    private static readonly UiPalette[] Designed = [Night, IshgardSnow, Dawn, KuganeLacquer];
 
     /// <summary>The designed palettes, in the order the Themes page lists them (Follow Dalamud is offered after them).</summary>
     public static IReadOnlyList<UiPalette> All => Designed;
 
     /// <summary>
     /// The designed palette for <paramref name="id"/> (the appearance's <see cref="ResolvedAppearance.Palette"/>); Night for
-    /// an id with no palette registered yet (Dawn and Kugane Lacquer until 1.17) and for
+    /// an id with no palette registered (one a newer build adds) and for
     /// <see cref="PaletteId.FollowDalamud"/>, which is built from the host style (<see cref="FollowDalamud"/>).
     /// Allocates nothing.
     /// </summary>
