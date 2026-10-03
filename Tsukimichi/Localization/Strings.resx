@@ -9465,6 +9465,110 @@
   <data name="FilterDrawerCloseTooltip" xml:space="preserve">
     <value>Close the filters (Esc)</value>
   </data>
+  <data name="FilterDrawerShow" xml:space="preserve">
+    <value>Show</value>
+    <comment>Filter drawer: the first section's heading (the toggles that hide or keep quests).</comment>
+  </data>
+  <data name="FilterDrawerPerCategory" xml:space="preserve">
+    <value>Per category ›</value>
+    <comment>Filter drawer: the link under a toggle that opens its per-category overrides.</comment>
+  </data>
+  <data name="FilterDrawerPerCategoryChangedFormat" xml:space="preserve">
+    <value>Per category · {0} changed ›</value>
+    <comment>Filter drawer: the per-category link when some categories are overridden. {0} = how many.</comment>
+  </data>
+  <data name="FilterDrawerPinnedFirstCaption" xml:space="preserve">
+    <value>Sort pinned quests to the top</value>
+    <comment>Filter drawer: the caption under Pinned first.</comment>
+  </data>
+  <data name="FilterDrawerStalledCaption" xml:space="preserve">
+    <value>The Stalled view counts from here</value>
+    <comment>Filter drawer: the caption under Stalled after (the toolbar's Stalled quick view reads this number).</comment>
+  </data>
+  <data name="FilterDrawerStalledFewer" xml:space="preserve">
+    <value>One day fewer (hold to repeat)</value>
+    <comment>Filter drawer: the Stalled after stepper's minus button.</comment>
+  </data>
+  <data name="FilterDrawerStalledMore" xml:space="preserve">
+    <value>One day more (hold to repeat)</value>
+    <comment>Filter drawer: the Stalled after stepper's plus button.</comment>
+  </data>
+  <data name="FilterDrawerShowingFormat" xml:space="preserve">
+    <value>Showing {0} of {1}</value>
+    <comment>Filter drawer footer: {0} = quests the filters keep, {1} = quests in the selected tree node.</comment>
+  </data>
+  <data name="FilterDrawerOnFormat" xml:space="preserve">
+    <value>{0} on</value>
+    <comment>Filter drawer header: the count pill. {0} = how many filters are on.</comment>
+  </data>
+  <data name="FilterDrawerSetFormat" xml:space="preserve">
+    <value>{0} set</value>
+    <comment>Filter drawer: the Advanced heading's pill and the Rewards summary. {0} = how many groups or kinds are set.</comment>
+  </data>
+  <data name="FilterDrawerAllStatesFormat" xml:space="preserve">
+    <value>All {0}</value>
+    <comment>Filter drawer: the States summary when every state is kept. {0} = how many states there are.</comment>
+  </data>
+  <data name="FilterDrawerSomeStatesFormat" xml:space="preserve">
+    <value>{0} of {1}</value>
+    <comment>Filter drawer: the States summary. {0} = states kept, {1} = how many states there are.</comment>
+  </data>
+  <data name="FilterDrawerAny" xml:space="preserve">
+    <value>Any</value>
+    <comment>Filter drawer: a summary value for a group that keeps everything (Expansions, Rewards).</comment>
+  </data>
+  <data name="FilterDrawerAddedInFormat" xml:space="preserve">
+    <value>{0}x</value>
+    <comment>Filter drawer: the Added in summary. {0} = the patch series ("7.5"); "7.5x" is 7.5 and its point releases.</comment>
+  </data>
+  <data name="FilterDrawerLevelFormat" xml:space="preserve">
+    <value>{0} to {1}</value>
+    <comment>Filter drawer: the Level summary. {0} = lowest level, {1} = highest.</comment>
+  </data>
+  <data name="FilterDrawerLevelTo" xml:space="preserve">
+    <value>to</value>
+    <comment>Filter drawer: the word between the two level fields.</comment>
+  </data>
+  <data name="FilterDrawerNoneOn" xml:space="preserve">
+    <value>None on</value>
+    <comment>Filter drawer: the More summary when none of its toggles is on.</comment>
+  </data>
+  <data name="FilterDrawerLevel" xml:space="preserve">
+    <value>Level</value>
+    <comment>Filter drawer: the Level group's name.</comment>
+  </data>
+  <data name="FilterDrawerJob" xml:space="preserve">
+    <value>Job</value>
+    <comment>Filter drawer: the Job group's name.</comment>
+  </data>
+  <data name="FilterDrawerRewards" xml:space="preserve">
+    <value>Rewards</value>
+    <comment>Filter drawer: the Rewards group's name.</comment>
+  </data>
+  <data name="FilterDrawerMore" xml:space="preserve">
+    <value>More</value>
+    <comment>Filter drawer: the group of the remaining toggles (Repeatable only and the rest).</comment>
+  </data>
+  <data name="FilterDrawerMoreKindsFormat" xml:space="preserve">
+    <value>{0} more kinds ›</value>
+    <comment>Filter drawer: the link that lists the rest of the reward kinds. {0} = how many.</comment>
+  </data>
+  <data name="FilterDrawerFewerKinds" xml:space="preserve">
+    <value>Fewer kinds</value>
+    <comment>Filter drawer: the link that folds the reward kinds back to the common six.</comment>
+  </data>
+  <data name="FilterDrawerSummaryTooltip" xml:space="preserve">
+    <value>Open Advanced at this group</value>
+    <comment>Filter drawer: hover text on a summary line.</comment>
+  </data>
+  <data name="FilterDrawerResetNothing" xml:space="preserve">
+    <value>Nothing to reset: no filter or search is set</value>
+    <comment>Filter drawer: hover text on Reset while it is disabled.</comment>
+  </data>
+  <data name="UndoToastFiltersReset" xml:space="preserve">
+    <value>Filters reset</value>
+    <comment>The Undo toast after Reset cleared every filter and the search.</comment>
+  </data>
   <data name="Settings.Page.General" xml:space="preserve">
     <value>General</value>
     <comment>Settings page title.</comment>

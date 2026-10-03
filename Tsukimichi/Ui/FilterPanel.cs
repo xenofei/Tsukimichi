@@ -14,12 +14,12 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The filter panel (spec §7), drawn in the drawer over the Journal tree (feature plan v6 U2), plus the toolbar's Quick
-/// views control (T14) and the one-line chip lane at the top of the quest list (<see cref="DrawLane"/>). Binds straight
-/// to <see cref="UiState.Filters"/>; every change calls
+/// The filter panel (spec §7), drawn as the sheet of the drawer over the Journal tree (feature plan v6 U2, plan v7 UI-2,
+/// <see cref="DrawSheet"/>), plus the toolbar's Quick views control (T14) and the one-line chip lane at the top of the
+/// quest list (<see cref="DrawLane"/>). Binds straight to <see cref="UiState.Filters"/>; every change calls
 /// <c>changed</c> so the window can mark the query dirty and persist the filters.
 /// </summary>
-public sealed class FilterPanel
+public sealed partial class FilterPanel
 {
     private const int LevelCap = 100;
     private const int MaxStateChipNames = 3;
@@ -39,18 +39,9 @@ public sealed class FilterPanel
         QuestState.Unknown,
     ];
 
-    private static readonly RewardKind[] Kinds = Enum.GetValues<RewardKind>();
-
-    // The toggles' setters, built once: a lambda capturing the filter set would allocate a closure every frame.
+    // The Show toggles' setters, built once: a lambda capturing the filter set would allocate a closure every frame.
     private static readonly Action<FilterSet, bool> SetHideCompleted = static (f, v) => f.HideCompleted = v;
     private static readonly Action<FilterSet, bool> SetAvailableOnly = static (f, v) => f.AvailableOnly = v;
-    private static readonly Action<FilterSet, bool> SetRepeatableOnly = static (f, v) => f.RepeatableOnly = v;
-    private static readonly Action<FilterSet, bool> SetSeasonalActiveOnly = static (f, v) => f.SeasonalActiveOnly = v;
-    private static readonly Action<FilterSet, bool> SetIncludeUnlisted = static (f, v) => f.IncludeUnlisted = v;
-    private static readonly Action<FilterSet, bool> SetIncludeOtherPaths = static (f, v) => f.IncludeOtherPaths = v;
-    private static readonly Action<FilterSet, bool> SetPinnedOnly = static (f, v) => f.PinnedOnly = v;
-    private static readonly Action<FilterSet, bool> SetAbandonedOnly = static (f, v) => f.AbandonedOnly = v;
-    private static readonly Action<FilterSet, bool> SetOnceOnlyStory = static (f, v) => f.OnceOnlyStory = v;
 
     /// <summary>Fixed job-category choices: ClassJobCategory row ids (null = all), labelled by <see cref="JobChoiceLabels"/>.</summary>
     private static readonly uint?[] JobChoiceIds = [null, 142u, 33u, 32u];
@@ -58,9 +49,6 @@ public sealed class FilterPanel
     /// <summary>The labels of <see cref="JobChoiceIds"/>, in the current language.</summary>
     private static readonly Localization.LocArray JobChoiceLabels = new(static () =>
         [Strings.JobAll, Strings.JobDowDom, Strings.JobDoh, Strings.JobDol]);
-
-    /// <summary>The Advanced header; its id does not change with the language, so its open state survives a switch.</summary>
-    private static readonly Localization.LocText AdvancedHeader = new(static () => Strings.Advanced + "###filterAdvanced");
 
     private readonly UiState ui;
     private readonly Action changed;
@@ -107,54 +95,6 @@ public sealed class FilterPanel
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
         this.changed = changed ?? throw new ArgumentNullException(nameof(changed));
-    }
-
-    /// <summary>
-    /// The panel body. <paramref name="snapshot"/> null means browse mode: runtime-only filters are disabled.
-    /// <paramref name="settings"/> holds the Stalled threshold. The window and icon scales live in Settings › General
-    /// alone (feature plan v6 decision 7).
-    /// </summary>
-    public void Draw(CatalogBundle current, CharacterSnapshot? snapshot, Configuration settings)
-    {
-        ArgumentNullException.ThrowIfNull(settings);
-        EnsureLists(current);
-        var f = ui.Filters;
-        var hasSnapshot = snapshot is not null;
-        var start = ImGui.GetCursorScreenPos();
-        var width = ImGui.GetContentRegionAvail().X;
-
-        DrawPresets(settings);
-        ImGui.Separator();
-        DrawRuntimeToggle(Strings.HideCompleted, Strings.HideCompletedTooltip, "##hideCompleted", hasSnapshot, f.HideCompleted, f, SetHideCompleted, f.PerCategoryHideCompleted);
-        DrawRuntimeToggle(Strings.AvailableOnly, Strings.AvailableOnlyTooltip, "##availableOnly", hasSnapshot, f.AvailableOnly, f, SetAvailableOnly, f.PerCategoryAvailableOnly);
-        DrawPinnedFirst();
-
-        if (ImGui.CollapsingHeader(AdvancedHeader.Value))
-        {
-            using var indent = ImRaii.PushIndent(UiMetrics.Px(8f));
-            DrawStates(f);
-            DrawExpansions(f);
-            DrawAddedIn(f);
-            DrawLevelRange(f);
-            DrawJobCategory(f, snapshot);
-            DrawRewardKinds(f);
-            Toggle(Strings.RepeatableOnly, Strings.RepeatableOnlyTooltip, f.RepeatableOnly, f, SetRepeatableOnly);
-            Toggle(Strings.SeasonalActiveOnly, Strings.SeasonalActiveOnlyTooltip, f.SeasonalActiveOnly, f, SetSeasonalActiveOnly, hasSnapshot);
-            Toggle(Strings.IncludeUnlisted, Strings.IncludeUnlistedTooltip, f.IncludeUnlisted, f, SetIncludeUnlisted);
-            Toggle(Strings.IncludeOtherPaths, Strings.IncludeOtherPathsTooltip, f.IncludeOtherPaths, f, SetIncludeOtherPaths, hasSnapshot);
-            Toggle(Strings.PinnedOnly, Strings.PinnedOnlyTooltip, f.PinnedOnly, f, SetPinnedOnly);
-            Toggle(Strings.AbandonedOnly, Strings.AbandonedOnlyTooltip, f.AbandonedOnly, f, SetAbandonedOnly, hasSnapshot);
-            Toggle(Strings.OnceOnlyStoryFilter, Strings.OnceOnlyStoryFilterTooltip, f.OnceOnlyStory, f, SetOnceOnlyStory, hasSnapshot);
-        }
-
-        if (ImGui.SmallButton(Strings.Reset))
-        {
-            ResetAll();
-        }
-
-        Tip(Strings.ResetTooltip);
-        ImGui.Separator();
-        ui.RecordSpan(UiRects.FilterPanel, start, width);
     }
 
     /// <summary>
@@ -228,41 +168,6 @@ public sealed class FilterPanel
         tips[0] = Strings.QuickViewAllTooltip;
         Array.Copy(QuickViewTooltips, 0, tips, 1, QuickViewTooltips.Length);
         return tips;
-    }
-
-    /// <summary>
-    /// The Quick views heading of the panel: the views themselves sit on the toolbar; the panel keeps the Stalled
-    /// threshold they read.
-    /// </summary>
-    private void DrawPresets(Configuration settings)
-    {
-        ImGui.TextDisabled(Strings.Presets);
-        Tip(Strings.QuickViewsPanelTooltip);
-
-        // The Stalled threshold; a change re-runs the query and is saved with the settings.
-        var days = settings.StalledDaysClamped;
-        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(110f)));
-        if (ImGui.SliderInt("##stalledDays", ref days, Configuration.MinStalledDays, Configuration.MaxStalledDays, Strings.StalledDaysFormat, ImGuiSliderFlags.AlwaysClamp))
-        {
-            settings.StalledDays = days;
-            changed();
-        }
-
-        Tip(Strings.StalledDaysTooltip);
-        Chrome.TrailingLabel(Strings.StalledDaysLabel);
-    }
-
-    /// <summary>The sort's pinned-first flag lives beside the filters; MainWindow persists it with the sort.</summary>
-    private void DrawPinnedFirst()
-    {
-        var pinnedFirst = ui.Sort.PinnedFirst;
-        if (ImGui.Checkbox(Strings.PinnedFirst, ref pinnedFirst))
-        {
-            ui.Sort = ui.Sort with { PinnedFirst = pinnedFirst };
-            ui.MarkQueryDirty();
-        }
-
-        Tip(Strings.PinnedFirstTooltip);
     }
 
     private static void Tip(string text)
@@ -565,126 +470,48 @@ public sealed class FilterPanel
         return true;
     }
 
-    /// <summary>Clears every filter and the search text.</summary>
+    /// <summary>
+    /// Clears every filter and the search text (Reset in the drawer, the chip lane's "+N" popover, the context dock's
+    /// Clear and the empty list's reset), then offers the floating Undo, "Filters reset · Undo", which puts the filter
+    /// set and the search back (plan v7 UI-2, <see cref="GuardedAction.ResetFilters"/>). Call it inside the window the
+    /// click was in. Nothing happens when there is nothing to clear.
+    /// </summary>
     public void ResetAll()
     {
-        ui.Filters.Reset();
-        ui.SearchText = string.Empty;
-        changed();
-    }
-
-    private void DrawRuntimeToggle(string label, string tooltip, string popupId, bool hasSnapshot, bool value, FilterSet filters, Action<FilterSet, bool> set, Dictionary<uint, bool> overrides)
-    {
-        using (ImRaii.Disabled(!hasSnapshot))
-        {
-            if (ImGui.Checkbox(label, ref value))
-            {
-                set(filters, value);
-                changed();
-            }
-        }
-
-        Tip(hasSnapshot ? tooltip : Strings.NeedsSnapshot);
-
-        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.Overrides).X + (ImGui.GetStyle().FramePadding.X * 2f));
-        using var id = ImRaii.PushId(popupId);
-        using (ImRaii.Disabled(!hasSnapshot))
-        {
-            if (ImGui.SmallButton(Strings.Overrides))
-            {
-                ImGui.OpenPopup(popupId);
-            }
-        }
-
-        Tip(hasSnapshot ? Strings.OverridesTooltip : Strings.NeedsSnapshot);
-
-        using var popup = ImRaii.Popup(popupId);
-        if (!popup)
+        if (!FilterSummary.CanReset(ui.Filters, ui.SearchText))
         {
             return;
         }
 
-        // Opened from the left column (own font scale 1), so the popup scales itself.
-        UiMetrics.ApplyFontScale();
-        var width = UiMetrics.Px(90f);
-        foreach (var (categoryId, name) in categories)
+        var before = ui.Filters.Clone();
+        var search = ui.SearchText;
+        ui.Filters.Reset();
+        ui.SearchText = string.Empty;
+        changed();
+        if (SafetyRules.OffersUndo(GuardedAction.ResetFilters))
         {
-            using var row = ImRaii.PushId((int)categoryId);
-            var current = overrides.TryGetValue(categoryId, out var v) ? (v ? 1 : 2) : 0;
-            ImGui.SetNextItemWidth(width);
-            if (ImGui.Combo("##override", ref current, Strings.OverrideOptions))
-            {
-                if (current == 0)
-                {
-                    overrides.Remove(categoryId);
-                }
-                else
-                {
-                    overrides[categoryId] = current == 1;
-                }
-
-                changed();
-            }
-
-            ImGui.SameLine();
-            ImGui.TextUnformatted(name);
+            UndoToast.Show(Strings.UndoToastFiltersReset, () => Restore(before, search));
         }
     }
 
-    private void DrawStates(FilterSet f)
+    /// <summary>Undo of <see cref="ResetAll"/>: the filter set and the search as they were.</summary>
+    private void Restore(FilterSet before, string search)
     {
-        ImGui.TextDisabled(Strings.States);
-        Tip(Strings.StatesTooltip);
-        foreach (var state in StateOrder)
-        {
-            var mask = f.StateMask;
-            var on = mask.Contains(state);
-            if (ImGui.Checkbox(Strings.StateName(state), ref on))
-            {
-                f.StateMask = on ? mask | state.ToMask() : mask & ~state.ToMask();
-                changed();
-            }
-
-            Tip(Strings.StatesTooltip);
-        }
-    }
-
-    private void DrawExpansions(FilterSet f)
-    {
-        ImGui.TextDisabled(Strings.Expansions);
-        Tip(Strings.ExpansionsTooltip);
-        foreach (var (id, name) in expansions)
-        {
-            var on = f.Expansions.Contains(id);
-            if (ImGui.Checkbox(name, ref on))
-            {
-                if (on)
-                {
-                    f.Expansions.Add(id);
-                }
-                else
-                {
-                    f.Expansions.Remove(id);
-                }
-
-                changed();
-            }
-
-            Tip(Strings.ExpansionsTooltip);
-        }
+        ui.Filters = before;
+        ui.SearchText = search;
+        changed();
     }
 
     /// <summary>
     /// The "Added in" filter (P8): a combo of the patch series the catalog's quests were added in, newest first, with
     /// "Any patch" on top, then "New since data" while the game has quests newer than the shipped data (1.5.0).
     /// Disabled, showing "Any patch", when no quest has a known patch (quest_patches.json missing) and none is new.
+    /// <paramref name="width"/> wide, at the cursor (the drawer's field pill style pushed by the caller).
     /// </summary>
-    private void DrawAddedIn(FilterSet f)
+    private void DrawAddedIn(FilterSet f, float width)
     {
-        ImGui.TextDisabled(Strings.AddedIn);
-        Tip(Strings.AddedInTooltip);
         var preview = f.AddedInEngaged() ? AddedInChipText(f) : Strings.AddedInAny;
-        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(180f)));
+        ImGui.SetNextItemWidth(width);
         var newSinceData = NewSinceDataCount?.Invoke() ?? 0;
         using (ImRaii.Disabled(patchSeries.Count == 0 && newSinceData == 0 && !f.AddedInEngaged()))
         {
@@ -754,123 +581,6 @@ public sealed class FilterPanel
         }
 
         return addedInChip;
-    }
-
-    private void DrawLevelRange(FilterSet f)
-    {
-        ImGui.TextDisabled(Strings.LevelRange);
-        int min = f.LevelMin;
-        int max = f.LevelMax == FilterSet.NoLevelMax ? LevelCap : f.LevelMax;
-        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(180f)));
-        if (ImGui.DragIntRange2("##level", ref min, ref max, 0.5f, 0, LevelCap, Strings.LevelFormat, Strings.LevelMaxFormat, ImGuiSliderFlags.AlwaysClamp))
-        {
-            f.LevelMin = (byte)Math.Clamp(min, 0, LevelCap);
-            f.LevelMax = max >= LevelCap ? FilterSet.NoLevelMax : (byte)Math.Clamp(max, 0, LevelCap);
-            changed();
-        }
-
-        Tip(Strings.LevelRangeTooltip);
-    }
-
-    private void DrawJobCategory(FilterSet f, CharacterSnapshot? snapshot)
-    {
-        ImGui.TextDisabled(Strings.JobCategory);
-        var currentOnly = CurrentJobCategory(snapshot);
-        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(180f)));
-        using var combo = ImRaii.Combo("##job", JobPreview(f));
-        Tip(Strings.JobCategoryTooltip);
-        if (!combo)
-        {
-            return;
-        }
-
-        // The combo popup opens from the left column (own font scale 1), so it scales itself.
-        UiMetrics.ApplyFontScale();
-
-        var labels = JobChoiceLabels.Value;
-        for (var i = 0; i < JobChoiceIds.Length; i++)
-        {
-            var id = JobChoiceIds[i];
-            if (ImGui.Selectable(labels[i], f.ClassJobCategoryId == id))
-            {
-                f.ClassJobCategoryId = id;
-                changed();
-            }
-        }
-
-        using (ImRaii.Disabled(currentOnly is null))
-        {
-            if (ImGui.Selectable(Strings.JobCurrentOnly, currentOnly is not null && f.ClassJobCategoryId == currentOnly))
-            {
-                f.ClassJobCategoryId = currentOnly;
-                changed();
-            }
-        }
-
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(currentOnly is null ? Strings.NeedsSnapshot : Strings.JobCurrentOnlyTooltip);
-        }
-    }
-
-    private void DrawRewardKinds(FilterSet f)
-    {
-        ImGui.TextDisabled(Strings.RewardKinds);
-        Tip(Strings.RewardKindsTooltip);
-        var width = UiMetrics.Px(80f);
-        foreach (var kind in Kinds)
-        {
-            using var id = ImRaii.PushId((int)kind);
-            var current = f.RewardKinds.TryGetValue(kind, out var v) ? v : TriState.Show;
-            ImGui.SetNextItemWidth(Chrome.FitWidth(width));
-            DrawRewardKindCombo(f, kind, current);
-            Tip(Strings.RewardKindsTooltip);
-            Chrome.TrailingLabel(Strings.RewardKindName(kind));
-        }
-    }
-
-    /// <summary>One reward kind's Hidden / Show / Only choice; the popup opens from the left column, so it scales itself.</summary>
-    private void DrawRewardKindCombo(FilterSet f, RewardKind kind, TriState current)
-    {
-        using var combo = ImRaii.Combo("##kind", Strings.RewardOptionName(current));
-        if (!combo)
-        {
-            return;
-        }
-
-        UiMetrics.ApplyFontScale();
-        foreach (var option in RewardOptionOrder)
-        {
-            if (!ImGui.Selectable(Strings.RewardOptionName(option), option == current))
-            {
-                continue;
-            }
-
-            if (option == TriState.Show)
-            {
-                f.RewardKinds.Remove(kind);
-            }
-            else
-            {
-                f.RewardKinds[kind] = option;
-            }
-
-            changed();
-        }
-    }
-
-    private void Toggle(string label, string tooltip, bool value, FilterSet filters, Action<FilterSet, bool> set, bool enabled = true)
-    {
-        using (ImRaii.Disabled(!enabled))
-        {
-            if (ImGui.Checkbox(label, ref value))
-            {
-                set(filters, value);
-                changed();
-            }
-        }
-
-        Tip(enabled ? tooltip : Strings.NeedsSnapshot);
     }
 
     /// <summary>"States: −Completed, −Locked out", naming up to <see cref="MaxStateChipNames"/> excluded states then "+N"; rebuilt when the mask changes.</summary>
@@ -1086,6 +796,12 @@ public sealed class FilterPanel
             {
                 expansions.Add(((byte)id, current.Names.Expansion(id)));
             }
+        }
+
+        expansionLabels = new string[expansions.Count];
+        for (var i = 0; i < expansions.Count; i++)
+        {
+            expansionLabels[i] = Strings.ExpansionShort(expansions[i].Id);
         }
 
         currentJobCached = byte.MaxValue;

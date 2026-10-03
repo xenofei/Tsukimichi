@@ -27,9 +27,11 @@ public static partial class Chrome
     /// <summary>
     /// A moon toggle: a pill whose knob slides right and turns into a gold crescent on a gold-washed track when on, and
     /// rests left as a plain disc on the sunken track when off. Returns true on the frame it was flipped (the value is
-    /// already flipped). Disabled through <c>ImGui.BeginDisabled</c> it dims and ignores clicks.
+    /// already flipped). Disabled through <c>ImGui.BeginDisabled</c> it dims and ignores clicks. With
+    /// <paramref name="silver"/> (the filter drawer at Quiet, plan v7 UI-2) the track leans toward the text tone, the
+    /// border is the text tone at 0.55 and the knob a silver crescent, so the level keeps its gold for states.
     /// </summary>
-    public static bool MoonToggle(string id, ref bool value)
+    public static bool MoonToggle(string id, ref bool value, bool silver = false)
     {
         var size = ToggleSize;
         var min = ImGui.GetCursorScreenPos();
@@ -52,16 +54,17 @@ public static partial class Chrome
         var radius = size.Y * 0.5f;
 
         // The track: sunken when off, a gold wash when on; the border goes gold with it.
+        var accent = silver ? s.Text : Theme.Moon;
         var off = Theme.WithAlphaVector(s.Sunken, alpha);
-        var on = Theme.WithAlphaVector(Vector4.Lerp(s.Sunken, Theme.Moon, 0.38f), alpha);
+        var on = Theme.WithAlphaVector(Vector4.Lerp(s.Sunken, accent, silver ? 0.30f : 0.38f), alpha);
         dl.AddRectFilled(min, max, Theme.U32(Vector4.Lerp(off, on, t)), radius);
         if (hover > 0f && !disabled)
         {
             dl.AddRectFilled(min, max, Theme.WithAlpha(s.Hover, 0.5f * hover * alpha), radius);
         }
 
-        var border = Vector4.Lerp(s.Line, Theme.Moon, t);
-        dl.AddRect(min, max, Theme.WithAlpha(border, alpha), radius, ImDrawFlags.None, UiMetrics.Hairline);
+        var border = Vector4.Lerp(s.Line, silver ? s.Text with { W = 0.55f } : Theme.Moon, t);
+        dl.AddRect(min, max, Theme.WithAlpha(border, border.W * alpha), radius, ImDrawFlags.None, UiMetrics.Hairline);
 
         // The knob: a disc in the secondary tone when off, a crescent of moonlight when on.
         var inset = MathF.Max(2f, UiMetrics.Px(3f));
@@ -69,7 +72,7 @@ public static partial class Chrome
         var left = min.X + radius;
         var right = max.X - radius;
         var center = new Vector2(left + ((right - left) * t), min.Y + radius);
-        var knobInk = Vector4.Lerp(s.TextSecondary, Theme.MoonHigh, t);
+        var knobInk = Vector4.Lerp(s.TextSecondary, silver ? s.Text : Theme.MoonHigh, t);
         dl.AddCircleFilled(center, knob, Theme.WithAlpha(knobInk, alpha), 24);
         if (t > 0.01f)
         {

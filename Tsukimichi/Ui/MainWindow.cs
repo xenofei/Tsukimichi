@@ -1610,6 +1610,21 @@ public sealed partial class MainWindow : Window, IDisposable
         PaneBackdropAtCursor(widths.Tree, height, Theme.Tones.Tree);
         leftMin = ImGui.GetCursorScreenPos();
         leftWidth = MathF.Max(1f, widths.Tree);
+        leftStrip = widths.TreeStrip;
+
+        // Under the open filter drawer the tree fades out with the drawer's own fade, and once the drawer is opaque it is
+        // not drawn at all (plan v7 UI-2): nothing of it can paint over the sheet or take its clicks, whatever order the
+        // child windows end up in. The column's backdrop above still shows below the sheet.
+        var drawerFade = ui.FilterPanelOpen && ui.Tab == NavTab.Journal
+            ? DrawerLayout.Fade(drawerOpenedAt, ImGui.GetTime(), FadeSeconds, UiMetrics.ReduceMotion)
+            : 0f;
+        if (DrawerLayout.TreeHidden(drawerFade))
+        {
+            ImGui.Dummy(new Vector2(MathF.Max(1f, widths.Tree), height));
+            return;
+        }
+
+        using var fade = ImRaii.PushStyle(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * DrawerLayout.TreeAlpha(drawerFade), drawerFade > 0f);
         using var left = ImRaii.Child("##left", new Vector2(MathF.Max(1f, widths.Tree), height));
         if (!left)
         {
@@ -1657,7 +1672,8 @@ public sealed partial class MainWindow : Window, IDisposable
         switch (tab)
         {
             case NavTab.Journal:
-                // The filter panel is a drawer over the tree (DrawFloating), so the tree never moves.
+                // The filter panel is a drawer over the tree (DrawFloating), so the tree never moves; under the open
+                // drawer it is faded out or skipped (DrawNavigation).
                 treePane.Draw(bundle, runner, plugin.Settings.ShowUnlisted);
                 break;
 
