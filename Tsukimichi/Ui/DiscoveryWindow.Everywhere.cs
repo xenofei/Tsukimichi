@@ -110,6 +110,8 @@ public sealed partial class DiscoveryWindow
         {
             if (combo)
             {
+                // The list is its own popup window: it scales itself.
+                UiMetrics.ApplyFontScale();
                 foreach (var sort in (ReadOnlySpan<ZoneSort>)[ZoneSort.LevelFit, ZoneSort.ReadyFirst, ZoneSort.StoryOrder])
                 {
                     if (ImGui.Selectable(SortName(sort), settings.NearbySort == sort))
@@ -271,12 +273,6 @@ public sealed partial class DiscoveryWindow
         if (board.Count == 0)
         {
             Chrome.OutlinedText(Strings.ZoneEmpty, Theme.Surface.TextSecondary);
-            return;
-        }
-
-        using var child = ImRaii.Child("##zonesBoard", Vector2.Zero, false);
-        if (!child)
-        {
             return;
         }
 

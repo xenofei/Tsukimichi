@@ -73,6 +73,8 @@ internal static class BoardRow
         var max = min + new Vector2(width, height);
         var line = ImGui.GetTextLineHeight();
         var gap = UiMetrics.Px(GapLogical);
+        // The row's "…" menu lives in the caller's id scope (one per row), so ask before this row's own scope.
+        var menuOpen = ImGui.IsPopupOpen(MenuId);
         ImGui.PushID(id);
         try
         {
@@ -153,7 +155,7 @@ internal static class BoardRow
                 var slotX = max.X - slotWidth;
                 var frame = ImGui.GetFrameHeight();
                 var buttonY = MathF.Round(min.Y + ((height - frame) * 0.5f));
-                var shown = rowHovered || ImGui.IsPopupOpen(MenuId);
+                var shown = rowHovered || menuOpen;
                 if (shown && teleport is { } canTeleport)
                 {
                     ImGui.SetCursorScreenPos(new Vector2(slotX, buttonY));
