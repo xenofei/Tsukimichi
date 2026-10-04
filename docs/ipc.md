@@ -498,6 +498,11 @@ Special zones: the Firmament is a teleport to the Foundation and the Firmament h
 | `vnavmesh.SimpleMove.PathfindInProgress` | `() -> bool` | the Walk button reads Stop while a path is found |
 | `vnavmesh.Path.IsRunning` | `() -> bool` | the Walk button reads Stop while the character moves |
 | `vnavmesh.Path.Stop` | `()` (action) | Stop; also on leaving the zone, logging out and unloading Tsukimichi |
+| `vnavmesh.Nav.Reload` | `() -> bool` | travel recovery (1.18): once per Walk or Go to giver, after a walk got stuck, ended short of the giver on its own, never started or waited too long for a navmesh; the walk is then tried once more |
+| `vnavmesh.Query.Mesh.PointOnFloor` | `(Vector3 p, bool allowUnlandable, float halfExtentXZ) -> Vector3?` | the landing spot a flight aims for: the floor under the giver (probed 2 yalms above it, 3 around, `allowUnlandable` false) |
+| `vnavmesh.Query.Mesh.NearestPointReachable` | `(Vector3 p, float halfExtentXZ, float halfExtentY) -> Vector3?` | the landing spot when there is no floor under the giver, and the aetheryte's place on the mesh when its object is not loaded |
+| `vnavmesh.Path.GetMovementAllowed` | `() -> bool` | the travel preflight's "vnavmesh movement" line (another plugin paused vnavmesh's movement) |
+| `vnavmesh.Path.SetMovementAllowed` | `(bool)` (action) | the preflight's "Let vnavmesh move" button only, with `true` |
 
 Source: `Game/VnavmeshIpc.cs` (state reads cached for 250 ms) and `Game/TravelService.cs` (the Go to giver chain, `Core/Travel/GoToGiver.cs`). Read from [github.com/awgil/ffxiv_navmesh](https://github.com/awgil/ffxiv_navmesh) `vnavmesh/IPCProvider.cs` at commit `6fc80725eb8290472eee433fc4be7ee06ec79357` (2026-08-31). The character moves only after an explicit click on Walk or Go to giver (feature plan v5, decision 1); Settings › Integrations hides either button.
 
@@ -508,6 +513,12 @@ Mounting and flying (1.10, Settings › Integrations › Travel). How vnavmesh f
 - lands when the path ends in the air: Dismount (GeneralAction 23) brings a flying mount down; it is asked again every second for up to 15 seconds. The character is never dismounted on the ground;
 - sprints (GeneralAction 4) at the start of a walk on foot where mounts are not allowed, when "Sprint in towns" is on;
 - gives a walk that comes no 2 yalms closer in 15 seconds one new path, and stops with "the walk stopped making progress" when that one sticks too. vnavmesh's own stuck retry (its `RetryOnStuck` setting) works underneath and is left alone.
+
+Runs you can trust (1.18, feature plan v7 A8). Each recovery happens at most once per run, so a run never loops, and Stop or `/tsuki stop` ends it at any step:
+
+- a walk that got stuck on its new path, ended more than 8 yalms from the giver with its path run out, never started, or waited two minutes for a navmesh has vnavmesh reload the zone's navmesh (`Nav.Reload`, the fix vnavmesh's developers prescribe), waits for `Nav.IsReady`, and walks again from where the character stands; a chat line says so. A walk stopped by hand (its path still had waypoints) is not retried;
+- before an aethernet hop, when Lifestream's `GetActiveAetheryte` answers 0, the chain walks to the network's nearest attuned aetheryte or shard first (the aetheryte object when the object table holds one, else its map marker on the mesh), then hops; a hop that never started is asked for once more, after that walk or after a second's pause (Lifestream checks it can teleport once, too soon after zoning or dismounting). Go to giver offers this from anywhere in the city when the walk and the hop beat walking straight to the giver;
+- a flight aims for the landing spot above, and a landing more than 4.5 yalms from the giver walks the last yalms on the landed mount.
 
 Every game call runs on the framework thread, only during a Walk or Go to giver the player clicked, and only while the shared hook gate allows game calls (without it the walk stays on foot).
 

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
+using System.Linq;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -33,6 +35,11 @@ namespace Tsukimichi.Game;
 /// flying mount down), only while the shared <see cref="HookGate"/> allows game calls and only during a Walk or Go to
 /// giver the player clicked; whether the zone's flying is unlocked is Dalamud's <see cref="IUnlockState"/>
 /// (<c>PlayerState.IsAetherCurrentZoneComplete</c>). The character is never dismounted.</para>
+/// <para>Recovery (feature plan v7 A8): the chain's one navmesh reload goes through vnavmesh's <c>Nav.Reload</c> and says
+/// so in chat; the walk to the aetheryte before a hop heads for the network's nearest attuned aetheryte or shard (its
+/// object in the object table when loaded, else its map marker on vnavmesh's mesh); a flight aims for vnavmesh's floor
+/// point beside the goal. When the walk starts, one chat line names what the travel preflight (A9) found that makes
+/// walks run the wrong way, at most once per <see cref="WalkWarningRepeatMs"/> for the same findings.</para>
 /// </summary>
 public sealed class TravelService : ITravelPorts, IDisposable
 {
@@ -41,6 +48,18 @@ public sealed class TravelService : ITravelPorts, IDisposable
 
     /// <summary>How close (raw units) vnavmesh is asked to bring the player to the giver.</summary>
     public const float WalkRange = 3f;
+
+    /// <summary>The same preflight findings are named in chat at most once in this long.</summary>
+    public const long WalkWarningRepeatMs = 300_000;
+
+    /// <summary>How far above the goal the floor under it is looked for (raw units).</summary>
+    private const float LandingLift = 2f;
+
+    /// <summary>How far around the goal (raw units) a landing spot is looked for.</summary>
+    private const float LandingSearch = 3f;
+
+    /// <summary>How far (raw units) from a map marker an aetheryte object may stand and still be that aetheryte.</summary>
+    private const float AetheryteMatch = 10f;
 
     private const uint SprintAction = TravelActions.Sprint;
     private const uint MountRouletteAction = TravelActions.MountRoulette;
@@ -71,6 +90,9 @@ public sealed class TravelService : ITravelPorts, IDisposable
     private bool zoneMount;
     private uint zoneCurrents;
     private string? journeyArrivalNote;
+    private GoToGiverStep notedStep;
+    private string? lastWalkWarning;
+    private long lastWalkWarningAt;
 
     public TravelService(IFramework framework, IClientState clientState, ICondition condition, IObjectTable objects, IAetheryteList aetheryteList, IDataManager data, IUnlockState unlocks, LifestreamIpc lifestream, VnavmeshIpc vnavmesh, IPluginLog log)
     {
@@ -116,6 +138,12 @@ public sealed class TravelService : ITravelPorts, IDisposable
 
     /// <summary>Whether AutoDuty is not stopped (its cached state); a trip under way then ends and leaves vnavmesh to it. Unset reads as stopped.</summary>
     public Func<bool>? AutoDutyRunning { get; set; }
+
+    /// <summary>
+    /// What the travel preflight finds that makes a walk run the wrong way or not move (feature plan v7 A9), named in one
+    /// chat line when a walk starts. Unset reads as nothing.
+    /// </summary>
+    public Func<IReadOnlyList<PreflightItem>>? WalkWarnings { get; set; }
 
     /// <summary>The settings' movement options now (<see cref="TravelOptions.OnFoot"/> when unset); every new plan carries them.</summary>
     public TravelOptions CurrentOptions => Options?.Invoke() ?? TravelOptions.OnFoot;
@@ -414,7 +442,63 @@ public sealed class TravelService : ITravelPorts, IDisposable
         journeyIsWalkOnly = plan.Teleport is null && plan.Hop is null;
         JourneyTarget = target ?? string.Empty;
         journeyArrivalNote = arrivalNote;
-        Report(journey.Start(plan, Environment.TickCount64));
+        notedStep = GoToGiverStep.Idle;
+        var now = Environment.TickCount64;
+        WarnBeforeWalk(now);
+        Report(journey.Start(plan, now));
+        NoteStep();
+    }
+
+    /// <summary>One chat line naming the preflight's findings that make a walk go wrong; the same ones not again soon.</summary>
+    private void WarnBeforeWalk(long now)
+    {
+        IReadOnlyList<PreflightItem> items;
+        try
+        {
+            items = WalkWarnings?.Invoke() ?? [];
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, "Travel preflight unavailable");
+            return;
+        }
+
+        if (items.Count == 0)
+        {
+            lastWalkWarning = null;
+            return;
+        }
+
+        var clauses = string.Join(Strings.TravelPreflightClauseSeparator, items.Select(Strings.TravelPreflightWalkClause));
+        if (clauses == lastWalkWarning && now - lastWalkWarningAt < WalkWarningRepeatMs)
+        {
+            return;
+        }
+
+        lastWalkWarning = clauses;
+        lastWalkWarningAt = now;
+        PrintLine(string.Format(CultureInfo.CurrentCulture, Strings.TravelPreflightWalkWarningFormat, clauses));
+    }
+
+    /// <summary>Says in chat when the chain starts its one recovery; logs the walk to the aetheryte before a hop.</summary>
+    private void NoteStep()
+    {
+        var step = journey.Step;
+        if (step == notedStep)
+        {
+            return;
+        }
+
+        notedStep = step;
+        if (step == GoToGiverStep.ReloadingNav)
+        {
+            log.Information("Go to giver: {Failure}; reloading the navmesh and trying once more", journey.RecoveringFrom);
+            PrintLine(string.Format(CultureInfo.CurrentCulture, Strings.TravelReloadingFormat, journeyIsWalkOnly ? Strings.TravelWalk : Strings.TravelGoTo, FailureText(journey.RecoveringFrom)));
+        }
+        else if (step == GoToGiverStep.ToAetheryte)
+        {
+            log.Information("Go to giver: not at an aetheryte; walking to the nearest one before the hop");
+        }
     }
 
     /// <summary>
@@ -449,8 +533,20 @@ public sealed class TravelService : ITravelPorts, IDisposable
             return;
         }
 
-        log.Information("Go to giver ended: {Failure}", failed.Failure);
-        var reason = failed.Failure switch
+        log.Information("Go to giver ended: {Failure} (reloaded: {Reloaded}, hop retried: {HopRetried})", failed.Failure, journey.Reloaded, journey.HopRetried);
+        var reason = FailureText(failed.Failure);
+        if (journey.Reloaded && failed.Failure is GoToGiverFailure.Stuck or GoToGiverFailure.WalkStoppedShort or GoToGiverFailure.PathNotReady or GoToGiverFailure.WalkDidNotStart)
+        {
+            reason = string.Format(CultureInfo.CurrentCulture, Strings.TravelFailAfterReloadFormat, reason);
+        }
+
+        var format = journeyIsWalkOnly ? Strings.TravelWalkStoppedFormat : Strings.TravelGoToStoppedFormat;
+        PrintLine(string.Format(CultureInfo.CurrentCulture, format, reason));
+    }
+
+    /// <summary>The reason clause for a failure, as the chat lines say it.</summary>
+    private string FailureText(GoToGiverFailure failure) =>
+        failure switch
         {
             GoToGiverFailure.NotInZone => Strings.TravelFailNotInZone,
             GoToGiverFailure.TeleportRefused => RefusalReason(),
@@ -469,9 +565,6 @@ public sealed class TravelService : ITravelPorts, IDisposable
             GoToGiverFailure.LandingFailed => Strings.TravelFailLanding,
             _ => Strings.TravelReasonDeclined,
         };
-        var format = journeyIsWalkOnly ? Strings.TravelWalkStoppedFormat : Strings.TravelGoToStoppedFormat;
-        PrintLine(string.Format(CultureInfo.CurrentCulture, format, reason));
-    }
 
     // ------------------------------------------------------------------ ports for the chain
 
@@ -489,9 +582,9 @@ public sealed class TravelService : ITravelPorts, IDisposable
         shardId == GoToGiverPlan.FirmamentHop ? Lifestream.AethernetTeleportToFirmament() : Lifestream.AethernetTeleport(shardId);
 
     /// <inheritdoc />
-    public bool StartWalk(GoToGiverPlan plan, bool fly)
+    public bool StartWalk(float x, float y, float z, bool fly)
     {
-        if (!Vnavmesh.MoveCloseTo(new Vector3(plan.GoalX, plan.GoalY, plan.GoalZ), WalkRange, fly))
+        if (!Vnavmesh.MoveCloseTo(new Vector3(x, y, z), WalkRange, fly))
         {
             // Refused (a pathfind still pending among the reasons): a stop still waiting for one keeps waiting.
             return false;
@@ -655,6 +748,90 @@ public sealed class TravelService : ITravelPorts, IDisposable
     /// <inheritdoc />
     public void AbortLifestream() => Lifestream.Abort();
 
+    /// <inheritdoc />
+    public uint? ActiveAetheryte => Lifestream.CanReadActiveAetheryte ? Lifestream.ActiveAetheryte : null;
+
+    /// <inheritdoc />
+    public bool StartNavReload()
+    {
+        var accepted = Vnavmesh.Reload();
+        log.Information("vnavmesh navmesh reload {Result}", accepted ? "started" : "declined");
+        return accepted;
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// The highest floor point within a few yalms under the goal, on polygons reachable on foot; else the reachable
+    /// point nearest the goal; null when vnavmesh has neither.
+    /// </remarks>
+    public (float X, float Y, float Z)? LandingSpot(float x, float y, float z)
+    {
+        var goal = new Vector3(x, y, z);
+        var spot = Vnavmesh.PointOnFloor(goal with { Y = y + LandingLift }, LandingSearch) ?? Vnavmesh.NearestPointReachable(goal, LandingSearch, LandingSearch);
+        return spot is { } p ? (p.X, p.Y, p.Z) : null;
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// The network is the hop destination's (the Foundation's for the Firmament, whose hop leaves only from there). The
+    /// nearest attuned node in the player's zone, by the index's map markers; placed at the aetheryte object standing
+    /// there when the object table holds one, else at vnavmesh's reachable point by the marker, else at the marker at
+    /// the player's height.
+    /// </remarks>
+    public (float X, float Y, float Z)? HopStart(uint hopId)
+    {
+        if (Index?.Invoke() is not { } index || position is not { } here)
+        {
+            return null;
+        }
+
+        var territory = Territory;
+        TravelNode? node;
+        if (hopId == GoToGiverPlan.FirmamentHop)
+        {
+            node = index.Find(TravelSpecials.FoundationAetheryte) is { } foundation && foundation.TerritoryId == territory ? foundation.Node : null;
+        }
+        else
+        {
+            if (index.Find(hopId) is not { Group: > 0 } destination)
+            {
+                return null;
+            }
+
+            var nodes = index.ShardNodesInGroup(destination.Group).AsEnumerable();
+            if (index.GroupAetheryte(destination.Group) is { } main)
+            {
+                nodes = nodes.Append(main.Node);
+            }
+
+            node = TravelPlanner.NearestNode(nodes, territory, here.X, here.Z, id => id != hopId && (IsShardAttuned(id) || IsAttuned(id)));
+        }
+
+        if (node is not { } start)
+        {
+            return null;
+        }
+
+        try
+        {
+            foreach (var obj in objects)
+            {
+                if (obj.ObjectKind == ObjectKind.Aetheryte && TravelPlanner.Distance(obj.Position.X, obj.Position.Z, start.X, start.Z) < AetheryteMatch)
+                {
+                    return (obj.Position.X, obj.Position.Y, obj.Position.Z);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, "Aetheryte objects unavailable");
+        }
+
+        var marker = new Vector3(start.X, here.Y, start.Z);
+        var point = Vnavmesh.NearestPointReachable(marker, AetheryteMatch, AetheryteMatch) ?? marker;
+        return (point.X, point.Y, point.Z);
+    }
+
     // ------------------------------------------------------------------ events
 
     private void OnUpdate(IFramework _)
@@ -681,6 +858,7 @@ public sealed class TravelService : ITravelPorts, IDisposable
             }
 
             Report(journey.Tick(now));
+            NoteStep();
             TickPendingStop(now);
         }
         catch (Exception ex)
