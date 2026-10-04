@@ -6836,6 +6836,10 @@
     <value>Nothing to stop.</value>
     <comment>Chat line of /tsuki stop when nothing Tsukimichi started is running.</comment>
   </data>
+  <data name="CommandLookUnreadable" xml:space="preserve">
+    <value>That code doesn't read.</value>
+    <comment>Chat line of /tsuki look &lt;code&gt; when the code is mistyped or not a share code (spec-1.17 §C2); nothing opens.</comment>
+  </data>
   <data name="StopDoneFormat" xml:space="preserve">
     <value>Stopped: {0}.</value>
     <comment>Chat line of /tsuki stop. {0} = what stopped (Go to giver, Walk to giver, Lifestream, Questionable, AutoDuty, Artisan), joined by ", ".</comment>

@@ -12,8 +12,13 @@ Payload bits (big-endian, then zero-padded to a whole base32 character):
               Completed, Locked out, Not checked): 0 from theme, else a GlyphSetId
   crc     8   CRC-8 (poly 0x07, init 0) over every bit before it, packed MSB first; padding bits must be zero
 Lengths: a preset-only look is 27 bits = 6 characters (TM1-XXXXX); a mix is 59 bits = 12 characters (TM1-XXXX-XXXX-XXX).
-Reading is tolerant: case-insensitive; spaces, dashes and a missing "TM" are ignored; O reads 0 and I/L read 1; U is
-never written. Unknown ids (a newer build's sets, palettes or frames) are kept out of the applied look and named.
+Reading is tolerant: case-insensitive; spaces (any white space), dashes and a missing "TM" are ignored; O reads 0 and
+I/L read 1; U is never written. What a chat client or an input method makes of a pasted code reads as typed (the
+coordinator's 1.17 ruling, normalize below): typographic dashes and the minus sign read as "-", zero-width characters
+and the no-break space as nothing, and full-width ASCII (U+FF01-U+FF5E) as ASCII.
+Unknown ids (a newer build's sets, palettes or frames) are kept out of the applied look and named: an unknown theme
+reads as 0, so the receiver keeps their own theme (spec-1.17 section C1); an unknown palette, frames or pick as 0, from
+the theme.
 Run: py -3 -X utf8 sharecode.py
 """
 ALPHA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
@@ -42,8 +47,20 @@ def encode(theme, palette=0, frames=0, hc=False, picks=None):
     body = chars[1:]
     return "TM" + chars[0] + "-" + "-".join(body[i:i + 4] for i in range(0, len(body), 4))
 
+DASHES = "‐‑‒–—−"        # hyphen, non-breaking hyphen, figure/en/em dash, minus sign
+INVISIBLE = "​‌‍⁠﻿ "      # zero-width space/non-joiner/joiner, word joiner, BOM, no-break space
+
+def normalize(text):
+    out = []
+    for ch in text:
+        if "！" <= ch <= "～": ch = chr(ord(ch) - 0xFEE0)   # full-width ASCII
+        if ch in DASHES: ch = "-"
+        if ch in INVISIBLE or ch == "-" or ch.isspace(): continue
+        out.append(ch)
+    return "".join(out)
+
 def decode(text):
-    t = text.upper().replace("-", "").replace(" ", "").replace("O", "0").replace("I", "1").replace("L", "1")
+    t = normalize(text).upper().replace("O", "0").replace("I", "1").replace("L", "1")
     if t.startswith("TM"): t = t[2:]
     if not t or any(ch not in ALPHA for ch in t): return {"error": "unreadable"}
     bits = [int(b) for ch in t for b in format(ALPHA.index(ch), "05b")]
@@ -54,7 +71,7 @@ def decode(text):
     if len(bits) < n + 8 or crc8(bits[:n]) != get(n, 8) or any(bits[n + 8:]): return {"error": "checksum"}
     look = {"theme": get(5, 4), "palette": get(9, 4), "frames": get(13, 4), "hc": bool(bits[17]), "picks": {}}
     unknown = []
-    if look["theme"] not in SETS: unknown.append(("theme", look["theme"])); look["theme"] = 1
+    if look["theme"] not in SETS: unknown.append(("theme", look["theme"])); look["theme"] = 0
     if look["palette"] and look["palette"] not in PALETTES: unknown.append(("palette", look["palette"])); look["palette"] = 0
     if look["frames"] and look["frames"] not in FRAMES: unknown.append(("frames", look["frames"])); look["frames"] = 0
     if bits[18]:

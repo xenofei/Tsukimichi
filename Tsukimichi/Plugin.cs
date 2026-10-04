@@ -1334,6 +1334,7 @@ public sealed partial class Plugin : IDalamudPlugin
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
             command.Look = configWindow.OpenShareCode;
+            command.OpenConfigWindow = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Themes, Core.Ui.SettingsAnchor.ThemeShare);
             configWindow.Command = command;
 
             // Todo overlay (V2-13): follows Settings.TodoOverlayEnabled; /tsuki todo and the settings window flip it.

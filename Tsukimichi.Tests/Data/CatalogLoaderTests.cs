@@ -96,6 +96,27 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     }
 
     [GameDataFact]
+    public void Quests_named_look_something_are_still_searched_by_tsuki_look()
+    {
+        // 1.17 made "look" a first word (/tsuki look <code>). A quest whose name starts with it ("Look to the Stars"
+        // today) must still be found by "/tsuki <its name>": the rest of its name is not code-shaped, so the command
+        // searches the whole line (SharePreview.CommandRoute), as it did before.
+        var named = Catalog.All
+            .Select(static q => q.Name)
+            .Where(static n => Tsukimichi.Core.Text.CommandLine.Parse(n).Kind == Tsukimichi.Core.Text.Subcommand.Look)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        output.WriteLine($"quests named \"Look ...\": {(named.Length == 0 ? "none" : string.Join(" | ", named))}");
+        Assert.Contains("Look to the Stars", named);
+        foreach (var name in named)
+        {
+            var parsed = Tsukimichi.Core.Text.CommandLine.Parse(name);
+            Assert.True(Tsukimichi.Core.Ui.Themes.SharePreview.CommandRoute(parsed.Rest) == Tsukimichi.Core.Ui.Themes.LookCommandRoute.Search, $"\"/tsuki {name}\" no longer searches");
+            Assert.Equal(name, parsed.Arguments);
+        }
+    }
+
+    [GameDataFact]
     public void Maps_every_named_quest()
     {
         output.WriteLine($"CatalogMapper.Map: {Catalog.Count} quests in {fixture.MapElapsed.TotalMilliseconds:F0} ms (excludes GameData construction)");

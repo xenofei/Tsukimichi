@@ -700,9 +700,14 @@ def build_frames(k, dest, tmp):
 # largest cell is scaled. Kits without them recolour the palette's drawn ornament (FrameKitMetals).
 ORNAMENTS = ["sigil", "sigil-small", "lozenge", "corner"]
 ORNAMENT_RULE = {"sigil": (13, None), "sigil-small": (10, 12), "lozenge": (None, 9), "corner": (15, None)}
-# The grounds the sprites are drawn on: the dark palettes' windows (a light palette and high contrast keep the palette's
-# own ornament, designed for 3 : 1 on snow). The bar is the ornament's (spec-1.17 OrnamentLight, 3 : 1 graphic).
-ORNAMENT_GROUNDS = {"night": NIGHT, **DARK_GROUNDS}
+# The grounds the sprites are drawn on: every dark window (a light palette and high contrast keep the palette's own
+# ornament, designed for 3 : 1 on snow): Night, the 1.17 dark palettes, and Follow Dalamud on a dark host. A host's
+# window is the player's Dalamud style, so two references stand in for it: #0F0F0F, Dalamud's own dark styles' window
+# background (ImGui's dark WindowBg, rgb 0.06, opaque; GlyphPaletteTests' "Dalamud default"), and #141414, the same
+# window lifted by a dark scene behind its translucency (the Dalamud default the glyph and moon designs were checked on).
+# The bar is the ornament's (spec-1.17 OrnamentLight, 3 : 1 graphic).
+ORNAMENT_HOSTS = {"follow-dalamud": "#0F0F0F", "follow-dalamud-lifted": "#141414"}
+ORNAMENT_GROUNDS = {"night": NIGHT, **DARK_GROUNDS, **ORNAMENT_HOSTS}
 ORNAMENT_CONTRAST = 3.0
 
 
@@ -763,14 +768,21 @@ def build_ornaments(k, dest, tmp):
         gates.append({"gate": f"Ornament size rule: {name}", "tier": "ornaments", "value": f"{a}-{b}", "bar": f"{lo or ''}-{hi or ''}",
                       "detail": "sigil from 13 px, sigil-small 10-12 px, lozenge below 10 px, corner from 15 px", "pass": ok})
     gates += [dict(g, tier="ornaments") for g in fit_check({"ornaments": im}, [("ornaments", 1, rects)])]
-    big = max(rects["sigil"])
-    x, y, s, _ = rects["sigil"][big]
-    px = np.asarray(im, dtype=float)[y:y + s, x:x + s] / 255
-    ink = px[..., :3][px[..., 3] >= 0.9].mean(axis=0)
-    for ground, hexc in ORNAMENT_GROUNDS.items():
-        c = contrast(ink, hex_rgb(hexc))
-        gates.append({"gate": f"Ornament contrast on {ground}", "tier": "ornaments", "value": round(float(c), 2), "bar": ORNAMENT_CONTRAST,
-                      "detail": f"leaf #{''.join(f'{round(v * 255):02X}' for v in ink)} on {hexc}", "pass": bool(c >= ORNAMENT_CONTRAST)})
+    pixels = np.asarray(im, dtype=float) / 255
+    for name in ORNAMENTS:
+        # Each sprite at the largest and the smallest size it ships: its ink is its opaque pixels' mean colour (where no
+        # pixel is fully opaque, its most opaque ones), judged on every dark window.
+        for s in sorted({min(rects[name]), max(rects[name])}):
+            x, y, _, _ = rects[name][s]
+            px = pixels[y:y + s, x:x + s]
+            alpha = px[..., 3]
+            assert alpha.max() > 0, f"kit {k['key']}: ornament {name} at {s} px is empty"
+            ink = px[..., :3][alpha >= min(0.9, alpha.max())].mean(axis=0)
+            for ground, hexc in ORNAMENT_GROUNDS.items():
+                c = contrast(ink, hex_rgb(hexc))
+                gates.append({"gate": f"Ornament contrast: {name} {s} px on {ground}", "tier": "ornaments", "value": round(float(c), 2),
+                              "bar": ORNAMENT_CONTRAST, "detail": f"ink #{''.join(f'{round(v * 255):02X}' for v in ink)} on {hexc}",
+                              "pass": bool(c >= ORNAMENT_CONTRAST)})
     return {"ornaments": im, "rects": rects, "gates": gates}
 
 
@@ -825,31 +837,43 @@ def measure_groups(groups, tmp, name):
 
 
 def kit_flags(groups):
-    """What the Frames row warns about for a set's faces in a kit (spec-1.17 §A3's words, the sets' own bars): each pair
-    of states under the bars at 16 px on a gated ground and mode (greyscale and Vienot deuteranopia 12 on Night, Machado's
-    three 11 on every gated ground; 'hard' under 10, else 'close'), its lowest value; and, at 16 px greyscale on Night,
-    Ready leading the next state by under mixReadyLead, or Completed over completedOfReady of Ready."""
+    """What the Frames row warns about for a set's faces in a kit (spec-1.17 §A3's words, the sets' own bars, so the row
+    names every pair the kit's G1 and G1c gates would fail): each pair of states under the bars on a gated ground and mode
+    (at 16 px greyscale and Vienot deuteranopia 12 on Night, Machado's three 11 on every gated ground; at 20 px greyscale
+    and Vienot deuteranopia 16 on Night; 'hard' under 10, else 'close'), its lowest value at 16 px, else at 20 px (a pair
+    the list size already flags keeps that reading); and, at 16 px greyscale on Night, Ready leading the next state by
+    under mixReadyLead, or Completed over completedOfReady of Ready. Each pair records the size it was read at."""
     pairs, ready, completed = {}, None, None
+    for px in SIZES:
+        for g in groups:
+            for meas in g["measures"]:
+                if not is_gated(meas) or meas["px"] != px:
+                    continue
+                if px == 16:
+                    bar = BARS["weakest16"] if meas["mode"] in GATE_MODES else BARS["cvdWeakest16"]
+                else:
+                    bar = BARS["weakest20"]
+                for (a, b), v in meas["pairs"].items():
+                    held = pairs.get((a, b))
+                    if at_bar(v) < bar and (held is None or (held["px"] == px and v < held["d"])):
+                        pairs[(a, b)] = {"kind": "pair", "a": a, "b": b, "d": r1(v), "mode": meas["mode"],
+                                         "ground": meas["ground"], "tier": g["name"], "px": px,
+                                         "level": "hard" if at_bar(v) < BARS["mixHard"] else "close"}
     for g in groups:
         for meas in g["measures"]:
             if not is_gated(meas) or meas["px"] != 16:
                 continue
-            bar = BARS["weakest16"] if meas["mode"] in GATE_MODES else BARS["cvdWeakest16"]
-            for (a, b), v in meas["pairs"].items():
-                if at_bar(v) < bar and ((a, b) not in pairs or v < pairs[(a, b)]["d"]):
-                    pairs[(a, b)] = {"kind": "pair", "a": a, "b": b, "d": r1(v), "mode": meas["mode"], "ground": meas["ground"],
-                                     "tier": g["name"], "level": "hard" if at_bar(v) < BARS["mixHard"] else "close"}
             if meas["ground"] == "night" and meas["mode"] == "grey":
                 sal = meas["salience"]
                 nxt_state, nxt = max(((s, v) for s, v in sal.items() if s != "ready"), key=lambda kv: kv[1])
                 lead = round(sal["ready"] / nxt, 2)
                 if lead < BARS["mixReadyLead"] and (ready is None or lead < ready["d"]):
                     ready = {"kind": "ready", "a": "ready", "b": nxt_state, "d": lead, "mode": "grey", "ground": "night",
-                             "tier": g["name"], "level": "close"}
+                             "tier": g["name"], "px": 16, "level": "close"}
                 comp = round(sal["completed"] / sal["ready"], 2)
                 if comp > BARS["completedOfReady"] and (completed is None or comp > completed["d"]):
                     completed = {"kind": "completed", "a": "completed", "b": "ready", "d": comp, "mode": "grey",
-                                 "ground": "night", "tier": g["name"], "level": "close"}
+                                 "ground": "night", "tier": g["name"], "px": 16, "level": "close"}
     flags = sorted(pairs.values(), key=lambda x: (x["d"], STATES.index(x["a"]), STATES.index(x["b"])))
     return flags + [x for x in (ready, completed) if x]
 
@@ -874,7 +898,8 @@ def checks_cs(kit_results):
             for x in f["flags"]:
                 rows.append(f"        new(FrameKitId.{CS_KIT[kit]}, GlyphSetId.{CS_SET[set_key]}, KitFlagKind.{CS_KIND[x['kind']]}, "
                             f"QuestState.{CS_STATE[x['a']]}, QuestState.{CS_STATE[x['b']]}, {x['d']}f, "
-                            f"Hard: {'true' if x['level'] == 'hard' else 'false'}, ColourVision: {'true' if x['mode'].startswith('machado') else 'false'}),")
+                            f"Hard: {'true' if x['level'] == 'hard' else 'false'}, ColourVision: {'true' if x['mode'].startswith('machado') else 'false'}"
+                            + (f", Px: {x['px']}" if x["px"] != 16 else "") + "),")
     return ("// <auto-generated>\n"
             "// Written by tools/themes/build_themes.py from Tsukimichi/assets/ui/kits/*/metrics.json (each kit's 'faces[set].flags');\n"
             "// rebuild with the tool, never by hand. FrameKitChecksTests holds it to those files.\n"
@@ -1630,8 +1655,11 @@ def kit_metrics_json(k, combos, own, fit, chrome_ver, pngs, ornaments=None):
         "fit": fit,
         "faces": faces,
         **({"ornaments": {"note": "The kit's Decoration ornament sprites (ornaments.png): the size rule, the strip's fit, "
-                                  "and the leaf's contrast on each dark palette's window (a light palette and high "
-                                  "contrast draw the palette's own ornament).",
+                                  "and every sprite's contrast (sigil, sigil-small, lozenge and corner, each at its "
+                                  "largest and smallest size) on every dark window: Night, Dawn, Kugane Lacquer, and "
+                                  "Follow Dalamud on a dark host (#0F0F0F, Dalamud's dark styles' window background, and "
+                                  "#141414, that window over a dark scene). A light palette and high contrast draw the "
+                                  "palette's own ornament.",
                           "gates": ornaments["gates"]}} if ornaments else {}),
     }
 

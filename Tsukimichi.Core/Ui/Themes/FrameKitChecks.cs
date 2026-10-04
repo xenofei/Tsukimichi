@@ -22,7 +22,11 @@ public enum KitFlagKind : byte
 /// <param name="Value">The measured value: a pair's distinctness, Ready's lead, or Completed's share of Ready.</param>
 /// <param name="Hard">A pair under the "hard to tell apart" bar (10), rather than only "close" (12, or 11 under colour-vision simulation).</param>
 /// <param name="ColourVision">The value is under a colour-vision simulation (Machado protanopia, deuteranopia or tritanopia), not greyscale.</param>
-public readonly record struct KitFlag(FrameKitId Kit, GlyphSetId Set, KitFlagKind Kind, QuestState A, QuestState B, float Value, bool Hard, bool ColourVision);
+/// <param name="Px">
+/// The medal size the value was read at: 16 (the list's size; bars 12, or 11 under colour-vision simulation), or 20 for
+/// a pair only the 20 px gate catches (bar 16, greyscale and deuteranopia on Night).
+/// </param>
+public readonly record struct KitFlag(FrameKitId Kit, GlyphSetId Set, KitFlagKind Kind, QuestState A, QuestState B, float Value, bool Hard, bool ColourVision, int Px = 16);
 
 /// <summary>
 /// The Frames row's warnings (feature plan v7 T11; spec-1.17 §A3's wording and bars): what the chosen kit plus the

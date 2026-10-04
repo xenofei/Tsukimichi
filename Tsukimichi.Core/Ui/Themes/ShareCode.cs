@@ -40,13 +40,18 @@ public enum ShareCodeField
 /// </summary>
 /// <param name="State">The state, for <see cref="ShareCodeField.State"/>; otherwise <see cref="QuestState.Ready"/>.</param>
 /// <param name="Id">The id as the code carries it (a palette's share-code number, <see cref="ShareCode.PaletteWire"/>).</param>
-public readonly record struct ShareCodeOmission(ShareCodeField Field, QuestState State, int Id, bool Registered);
+/// <param name="WholeTheme">
+/// A state's pick left out because the look's theme is Classic, which is whole theme only: it draws every state itself,
+/// so a mix under it would be saved but never drawn.
+/// </param>
+public readonly record struct ShareCodeOmission(ShareCodeField Field, QuestState State, int Id, bool Registered, bool WholeTheme = false);
 
 /// <summary>
 /// A look as a share code carries it: ids only (spec-1.17 §C1). <paramref name="Theme"/> is a <see cref="ThemeId"/>,
 /// <paramref name="Frames"/> a <see cref="FrameKitId"/> and each pick a <see cref="GlyphSetId"/>, by number;
 /// <paramref name="Palette"/> is the code's own palette number (<see cref="ShareCode.PaletteWire"/>). 0 means "from the
-/// theme" for the palette, the frames and each pick. <paramref name="Picks"/> packs the eight picks four bits each, in
+/// theme" for the palette, the frames and each pick; a <paramref name="Theme"/> of 0 is one the code's reader did not
+/// know, left out, so applying the look keeps the receiver's own theme (<see cref="ShareCode.Apply"/>). <paramref name="Picks"/> packs the eight picks four bits each, in
 /// <see cref="QuestState"/> order with Ready in the top nibble, as the code writes them.
 /// </summary>
 public readonly record struct ShareLook(int Theme, int Palette, int Frames, bool HighContrast, uint Picks)
@@ -101,7 +106,8 @@ public sealed class ShareCodeRead
 
     /// <summary>
     /// The look, when <see cref="Ok"/>: the ids this build knows, with each it does not replaced as the reference does
-    /// (an unknown theme reads as Menphina's Medallion; an unknown palette, frames or pick as from the theme).
+    /// (an unknown theme reads as 0, left out so the receiver keeps their own theme; an unknown palette, frames or pick
+    /// as from the theme).
     /// </summary>
     public ShareLook Look { get; }
 
@@ -124,7 +130,8 @@ public sealed class ShareCodeRead
 /// <item><term>CRC-8, 8</term><description>polynomial 0x07, initial 0, over every bit before it; the padding bits must be 0</description></item>
 /// </list>
 /// A look without a mix is 6 characters ("TM1-8003-0"), one with a mix 12 ("TM1-202C-000C-02C"). Reading is tolerant:
-/// letter case, spaces, dashes and a missing "TM" do not matter, O reads 0 and I or L read 1 (U is never written). Every
+/// letter case, spaces, dashes and a missing "TM" do not matter, O reads 0 and I or L read 1 (U is never written), and
+/// what a chat client or an input method makes of a pasted code reads as typed (<see cref="Normalize"/>). Every
 /// single-character typo fails the checksum. Codes carry ids only, so reading checks ranges and nothing else. Pure, and
 /// it allocates only what it returns.
 /// </summary>
@@ -268,12 +275,13 @@ public static class ShareCode
     /// </summary>
     public static ShareCodeRead Decode(string? text)
     {
-        // Normalise: upper case; spaces (any white space) and dashes dropped; O reads 0, I and L read 1.
+        // Normalise: typography undone; upper case; spaces (any white space) and dashes dropped; O reads 0, I and L read 1.
         var source = text ?? string.Empty;
         var normal = new StringBuilder(source.Length);
-        foreach (var raw in source)
+        foreach (var typed in source)
         {
-            if (raw == '-' || char.IsWhiteSpace(raw))
+            var raw = Normalize(typed);
+            if (raw is '-' or '\0' || char.IsWhiteSpace(raw))
             {
                 continue;
             }
@@ -327,12 +335,14 @@ public static class ShareCode
             return Fail(ShareCodeStatus.Checksum, version, prefixed, body.Length);
         }
 
+        // An id this build does not know is named and left out (spec-1.17 §C1): a theme reads as 0, so the receiver keeps
+        // theirs; a palette, frames or pick as from the theme.
         List<ShareCodeOmission>? unknown = null;
         var theme = Get(bits, 5, 4);
         if (!Known(ThemePresets.All, theme, static t => (int)t.Id))
         {
             (unknown ??= []).Add(new ShareCodeOmission(ShareCodeField.Theme, QuestState.Ready, theme, Registered: false));
-            theme = (int)ThemeId.Medallion;
+            theme = 0;
         }
 
         var palette = Get(bits, 9, 4);
@@ -374,33 +384,61 @@ public static class ShareCode
     /// version and the fields a newer build saved are kept) with the code's theme, palette, frames and mix. High contrast
     /// stays the receiver's own, whatever the code carries: it is a personal accessibility setting, never part of a shared
     /// look (the coordinator's ruling for 1.17), as picking a theme card keeps it too.
-    /// A palette or frames equal to the theme's own is saved as from the theme, as the Themes page saves it. What this
-    /// build lists but does not offer (a theme, palette or kit still in its design round, or a pick of a set that is not
-    /// offered or cannot be mixed) is left out and added to <paramref name="leftOut"/>: a theme then reads as the default
-    /// theme, the rest as from the theme.
+    /// <list type="bullet">
+    /// <item>A palette or frames equal to the theme's own is saved as from the theme, and a pick of the theme's own set
+    /// as no pick, as the Themes page saves them (<see cref="AppearanceEdits.SetGlyph"/>).</item>
+    /// <item>What this build cannot apply is left out and added to <paramref name="leftOut"/>, and the rest applies
+    /// (spec-1.17 §C1): a theme it lists but does not offer, or one it does not know (<see cref="ShareLook.Theme"/> 0,
+    /// which <see cref="Decode"/> has named already), keeps the receiver's own theme; a palette or kit it does not offer
+    /// reads as from the theme; a pick of a set it does not offer, or one that cannot be mixed (Classic), is dropped.</item>
+    /// <item>Under the Classic theme, which is whole theme only, every pick is left out
+    /// (<see cref="ShareCodeOmission.WholeTheme"/>), so no mix is saved that would never draw.</item>
+    /// </list>
     /// </summary>
-    public static AppearanceConfig Apply(AppearanceConfig saved, ShareLook look, ICollection<ShareCodeOmission> leftOut)
+    public static AppearanceConfig Apply(AppearanceConfig saved, ShareLook look, ICollection<ShareCodeOmission> leftOut) =>
+        Apply(saved, look, leftOut, null);
+
+    /// <summary>
+    /// <see cref="Apply(AppearanceConfig, ShareLook, ICollection{ShareCodeOmission})"/> with <paramref name="offered"/>
+    /// in place of the catalog's own Offered flags (asked with the field and the id as the code carries them, and only
+    /// for an id this build registers). For tests: this build offers every choice it registers, so only a stand-in
+    /// reaches the paths for a choice that is registered but not offered.
+    /// </summary>
+    internal static AppearanceConfig Apply(AppearanceConfig saved, ShareLook look, ICollection<ShareCodeOmission> leftOut, Func<ShareCodeField, int, bool>? offered)
     {
         ArgumentNullException.ThrowIfNull(saved);
         ArgumentNullException.ThrowIfNull(leftOut);
+        offered ??= Offered;
 
-        var theme = ThemePresets.Get((ThemeId)look.Theme);
-        if ((int)theme.Id != look.Theme || !theme.Offered)
+        // The code's theme, or the receiver's own when the code's is left out (unknown to this build, or not offered).
+        var theme = AppearanceResolver.Resolve(saved).Theme;
+        var themeKey = saved.Theme;
+        if (look.Theme != 0)
         {
-            leftOut.Add(new ShareCodeOmission(ShareCodeField.Theme, QuestState.Ready, look.Theme, (int)theme.Id == look.Theme));
-            theme = ThemePresets.Default;
+            var named = ThemePresets.Get((ThemeId)look.Theme);
+            var registered = (int)named.Id == look.Theme;
+            if (registered && offered(ShareCodeField.Theme, look.Theme))
+            {
+                theme = named;
+                themeKey = named.Key;
+            }
+            else
+            {
+                leftOut.Add(new ShareCodeOmission(ShareCodeField.Theme, QuestState.Ready, look.Theme, registered));
+            }
         }
 
         string? palette = null;
         if (look.Palette != 0)
         {
-            if (TryPaletteFromWire(look.Palette, out var id) && PaletteChoices.Get(id) is { Offered: true } info)
+            var registered = TryPaletteFromWire(look.Palette, out var id);
+            if (registered && offered(ShareCodeField.Palette, look.Palette))
             {
-                palette = info.Id == theme.Palette ? null : info.Key;
+                palette = id == theme.Palette ? null : PaletteChoices.Get(id).Key;
             }
             else
             {
-                leftOut.Add(new ShareCodeOmission(ShareCodeField.Palette, QuestState.Ready, look.Palette, TryPaletteFromWire(look.Palette, out _)));
+                leftOut.Add(new ShareCodeOmission(ShareCodeField.Palette, QuestState.Ready, look.Palette, registered));
             }
         }
 
@@ -408,13 +446,14 @@ public static class ShareCode
         if (look.Frames != 0)
         {
             var kit = FrameKits.Get((FrameKitId)look.Frames);
-            if ((int)kit.Id == look.Frames && kit.Offered)
+            var registered = (int)kit.Id == look.Frames;
+            if (registered && offered(ShareCodeField.Frames, look.Frames))
             {
                 frames = kit.Id == theme.Frames ? null : kit.Key;
             }
             else
             {
-                leftOut.Add(new ShareCodeOmission(ShareCodeField.Frames, QuestState.Ready, look.Frames, (int)kit.Id == look.Frames));
+                leftOut.Add(new ShareCodeOmission(ShareCodeField.Frames, QuestState.Ready, look.Frames, registered));
             }
         }
 
@@ -428,18 +467,23 @@ public static class ShareCode
             }
 
             var set = GlyphSets.Get((GlyphSetId)pick);
-            if ((int)set.Id == pick && set.Offered && set.Mixable)
+            var registered = (int)set.Id == pick;
+            if (!registered || !offered(ShareCodeField.State, pick) || !set.Mixable)
+            {
+                leftOut.Add(new ShareCodeOmission(ShareCodeField.State, state, pick, registered));
+            }
+            else if (theme.Id == ThemeId.Classic)
+            {
+                leftOut.Add(new ShareCodeOmission(ShareCodeField.State, state, pick, Registered: true, WholeTheme: true));
+            }
+            else if (set.Id != theme.Glyphs)
             {
                 (glyphs ??= new Dictionary<string, string>(StringComparer.Ordinal))[AppearanceStates.Key(state)] = set.Key;
-            }
-            else
-            {
-                leftOut.Add(new ShareCodeOmission(ShareCodeField.State, state, pick, (int)set.Id == pick));
             }
         }
 
         var result = saved.Clone();
-        result.Theme = theme.Key;
+        result.Theme = themeKey;
         result.Palette = palette;
         result.Frames = frames;
         result.Glyphs = glyphs;
@@ -509,6 +553,29 @@ public static class ShareCode
 
         return found;
     }
+
+    /// <summary>
+    /// One pasted character as it was meant (the coordinator's ruling for 1.17; the reference's <c>normalize</c>): a
+    /// hyphen, a non-breaking hyphen, a figure, en or em dash, or a minus sign reads as '-'; a zero-width space, joiner or
+    /// non-joiner, a word joiner, a byte-order mark and a no-break space read as nothing ('\0'); a full-width ASCII
+    /// character (U+FF01–U+FF5E, as an input method types it) reads as its ASCII self.
+    /// </summary>
+    internal static char Normalize(char ch) => ch switch
+    {
+        '‐' or '‑' or '‒' or '–' or '—' or '−' => '-',
+        '​' or '‌' or '‍' or '⁠' or '﻿' or ' ' => '\0',
+        >= '！' and <= '～' => (char)(ch - 0xFEE0),
+        _ => ch,
+    };
+
+    /// <summary>The catalog's own Offered flag for a registered id, as <see cref="Apply(AppearanceConfig, ShareLook, ICollection{ShareCodeOmission})"/> asks it.</summary>
+    private static bool Offered(ShareCodeField field, int id) => field switch
+    {
+        ShareCodeField.Theme => ThemePresets.Get((ThemeId)id).Offered,
+        ShareCodeField.Palette => TryPaletteFromWire(id, out var palette) && PaletteChoices.Get(palette).Offered,
+        ShareCodeField.Frames => FrameKits.Get((FrameKitId)id).Offered,
+        _ => GlyphSets.Get((GlyphSetId)id).Offered,
+    };
 
     private static ShareCodeRead Fail(ShareCodeStatus status, int version, bool prefixed, int length) =>
         new(status, version, prefixed, length, default, []);
@@ -587,6 +654,19 @@ public enum ShareChangeKind
 /// <param name="State">The state, for <see cref="ShareChangeKind.State"/>; otherwise <see cref="QuestState.Ready"/>.</param>
 public readonly record struct ShareChange(ShareChangeKind Kind, QuestState State, int From, int To);
 
+/// <summary>What <c>/tsuki look &lt;text&gt;</c> does (<see cref="SharePreview.CommandRoute"/>).</summary>
+public enum LookCommandRoute
+{
+    /// <summary>Opens Settings › Themes › Share with the text pasted (or the field focused, for no text).</summary>
+    OpenShare,
+
+    /// <summary>A code-shaped text that does not read: "That code doesn't read." in chat, and nothing opens.</summary>
+    Unreadable,
+
+    /// <summary>Not a code: the whole line ("look …") is a quest search, as before "look" was a subcommand.</summary>
+    Search,
+}
+
 /// <summary>What the paste field says about its text (<see cref="SharePreview.Verdict"/>).</summary>
 public enum ShareVerdict
 {
@@ -653,20 +733,54 @@ public sealed class SharePreview
     /// 0 is wrong whatever follows, so it says so at once. "From a newer Tsukimichi" needs the text to start with "TM": a
     /// word that happens to read as a later version is a mistyped code, not a newer one.
     /// </summary>
-    public ShareVerdict Verdict(bool editing)
+    public ShareVerdict Verdict(bool editing) => VerdictOf(Read, Changes.Count > 0, editing);
+
+    /// <summary>
+    /// What <c>/tsuki look &lt;text&gt;</c> does with <paramref name="text"/> (spec-1.17 §C2, and the coordinator's ruling
+    /// that it must not cost quest search, "Look to the Stars" among them). The text is read as the field takes it:
+    /// trimmed, and cut to <see cref="ShareCode.MaxTextLength"/>.
+    /// <list type="bullet">
+    /// <item>Empty: <see cref="LookCommandRoute.OpenShare"/>, the Share section with the field focused.</item>
+    /// <item>Code-shaped, meaning it reads as a code or begins with "TM" (any case, after normalisation): opened with the
+    /// code pasted when it reads or is from a newer Tsukimichi (its preview says so);
+    /// <see cref="LookCommandRoute.Unreadable"/> when the field would call it mistyped, so the command prints "That code
+    /// doesn't read." and opens nothing.</item>
+    /// <item>Anything else: <see cref="LookCommandRoute.Search"/>, the whole line searched as before "look" was a
+    /// subcommand.</item>
+    /// </list>
+    /// </summary>
+    public static LookCommandRoute CommandRoute(string? text)
     {
-        switch (Read.Status)
+        var trimmed = (text ?? string.Empty).Trim();
+        var field = trimmed.Length > ShareCode.MaxTextLength ? trimmed[..ShareCode.MaxTextLength] : trimmed;
+        var read = ShareCode.Decode(field);
+        if (read.Status == ShareCodeStatus.Empty && !read.Prefixed)
+        {
+            return field.Length == 0 ? LookCommandRoute.OpenShare : LookCommandRoute.Search;
+        }
+
+        if (!read.Ok && !read.Prefixed)
+        {
+            return LookCommandRoute.Search;
+        }
+
+        return VerdictOf(read, changes: false, editing: false) == ShareVerdict.Mistyped ? LookCommandRoute.Unreadable : LookCommandRoute.OpenShare;
+    }
+
+    private static ShareVerdict VerdictOf(ShareCodeRead read, bool changes, bool editing)
+    {
+        switch (read.Status)
         {
             case ShareCodeStatus.Empty:
                 return ShareVerdict.None;
             case ShareCodeStatus.Ok:
-                return Changes.Count > 0 ? ShareVerdict.Preview : ShareVerdict.NothingToChange;
+                return changes ? ShareVerdict.Preview : ShareVerdict.NothingToChange;
             case ShareCodeStatus.Unreadable:
                 return ShareVerdict.Mistyped;
-            case ShareCodeStatus.Newer when Read.Prefixed:
+            case ShareCodeStatus.Newer when read.Prefixed:
                 return ShareVerdict.Newer;
             default:
-                return editing && Read.Length < ShareCode.MixLength ? ShareVerdict.None : ShareVerdict.Mistyped;
+                return editing && read.Length < ShareCode.MixLength ? ShareVerdict.None : ShareVerdict.Mistyped;
         }
     }
 }

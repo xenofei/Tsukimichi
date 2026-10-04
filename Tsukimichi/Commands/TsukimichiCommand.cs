@@ -5,6 +5,7 @@ using System.Linq;
 using Dalamud.Game.Command;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Text;
+using Tsukimichi.Core.Ui.Themes;
 using Tsukimichi.Ui;
 
 namespace Tsukimichi.Commands;
@@ -117,9 +118,14 @@ public sealed class TsukimichiCommand : IDisposable
 
     /// <summary>
     /// Invoked for <c>/tsukimichi look &lt;code&gt;</c> with the rest of the line (empty opens the Share section): opens
-    /// Settings › Themes with the code pasted and its preview showing. It never applies the look. Falls back to Settings.
+    /// Settings › Themes with the code pasted and its preview showing. It never applies the look. A code-shaped text that
+    /// does not read prints one chat line instead and opens nothing, and text that is not a code searches the whole line
+    /// (<see cref="SharePreview.CommandRoute"/>). Falls back to <see cref="OpenConfigWindow"/>.
     /// </summary>
     public Action<string>? Look { get; set; }
+
+    /// <summary>Opens Settings (never closes it), for <c>/tsukimichi look</c> while <see cref="Look"/> is not wired.</summary>
+    public Action? OpenConfigWindow { get; set; }
 
     /// <summary>The aliases registered now: the built-in ones, then the player's, in order.</summary>
     public IReadOnlyList<string> ActiveAliases { get; private set; } = [];
@@ -402,13 +408,24 @@ public sealed class TsukimichiCommand : IDisposable
                 break;
 
             case Subcommand.Look:
-                if (Look is { } look)
+                // spec-1.17 §C2: a code-shaped text that does not read says so in chat and opens nothing; text that is not
+                // a code at all ("look to the stars") is the quest search it was before "look" was a subcommand.
+                var route = SharePreview.CommandRoute(rest);
+                if (route == LookCommandRoute.Search)
+                {
+                    search(args);
+                }
+                else if (route == LookCommandRoute.Unreadable)
+                {
+                    Print?.Invoke(Strings.CommandLookUnreadable);
+                }
+                else if (Look is { } look)
                 {
                     look(rest);
                 }
                 else
                 {
-                    Run(ToggleConfigWindow);
+                    OpenConfigWindow?.Invoke();
                 }
 
                 break;
