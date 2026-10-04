@@ -1,0 +1,90 @@
+{
+ "heading": "Designs for plan 8",
+ "intro": "<p>The designs below show 1.22.0 and the Umbra add-on before anything is built. A designer made every board and painting, and the realism supervisor reviewed each one for light, shadow, reflection, colour and contrast. <strong>Option A is approved after three rounds.</strong> <strong>Option B is a sample for decision 1.</strong> The supervisor asked for changes to four of its six looks (the moon cropped or lost, the glass reading as mosaic, the Orrery's snow turned to desert), and those fixes are being made now. Nothing here is in the plugin yet.</p>",
+ "groups": [
+  {
+   "key": "whatsnew",
+   "title": "What's new, after an update",
+   "wide": true,
+   "note": "W1–W4. In these examples a player on 1.18.0 updates, so four releases arrive as four pages, newest first.",
+   "items": [
+    {"id": "wn-evercold", "tag": "W1 · W2", "name": "The popup, in all six themes", "for": ["Request 2"], "img": "designs/whatsnew-evercold.webp",
+     "alt": "The What's new popup on page 3 of 4, 1.20.0 Before Evercold, in Medallion, Classic, Ishgard Glass, Aether Crystal, Orrery and Sumi to Kinpaku",
+     "pitch": "A 560 px window that shows once per update, at the first quiet moment: not in combat, a duty, a cutscene or Group Pose. Each release gets 3 to 5 plain points for players, one painting, and your theme's frame.",
+     "changes": ["Skipped releases become pages, newest first, under \"You were on 1.18.0\"", "Its height comes from the tallest page, so ‹ › and Close never move", "The same plain notes go into Dalamud's installer listing", "Not modal; Close or Esc, and it never shows again for that version"],
+     "more": [{"src": "designs/whatsnew-answers.webp", "cap": "Page 4 of 4: 1.19.0 Right answers, in all six themes"}, {"src": "designs/whatsnew-states.webp", "cap": "1.22.0 on page 1; Quiet, Plain (no art), a single release, and 150% text size"}],
+     "verdict": "Supervisor: approved"},
+    {"id": "wn-art", "tag": "W2 · Option A", "name": "Release art: one painting, six looks", "for": ["Request 2", "Decision 1"], "img": "designs/release-art.webp",
+     "alt": "Four paintings (Welcome home, What next, Before Evercold, Right answers), each restyled for the six themes",
+     "pitch": "There is one painting per release. Each theme restyles it when the popup opens, with its own colour grade, its kit's motifs (frost, shards, orbits, gold dust) and its frame. The art loads only while the popup is open, inside the texture budget.",
+     "changes": ["Welcome home: a backlit house whose open door spills warm light down the path", "What next: a lantern at a crossroads, with paths to distant lights", "Before Evercold: dawn under a pass, cold snow", "Right answers: a moonlit road and a rim-lit signpost"],
+     "watch": ["Medallion and Classic look almost the same; the themes differ mostly by colour"],
+     "verdict": "Supervisor: approved"},
+    {"id": "wn-optionb", "tag": "W2 · Option B", "name": "Release art, Option B: a richer painting, each theme its own craft", "for": ["Decision 1"], "img": "designs/release-art-option-b.webp",
+     "alt": "1.20.0 in Option A and Option B side by side for all six themes, with the cost table",
+     "pitch": "This is a sample for decision 1. The painting is richer: Ishgard at dawn, with an adventurer and a chocobo. Each theme gets its own craft: a gilt-framed oil, stained glass, cut crystal, an engraved astrolabe plate, and sumi-e ink with gold leaf. It costs about 2–3 days of art per release instead of 1, and you'd approve six pictures each time.",
+     "changes": ["Medallion: an oval oil painting in gilt", "Ishgard Glass: leaded stained glass", "Aether Crystal: cut-crystal facets", "Orrery: an engraved astrolabe plate", "Sumi to Kinpaku: ink on washi with gold leaf"],
+     "watch": ["The supervisor asked for changes. Medallion's oval crops out the moon. The glass loses the moon and reads as mosaic. The Orrery's brass turns the snow to desert. Smaller fixes to the shadows, the gold bands and the facets. All are being fixed now."],
+     "verdict": "Supervisor: changes in progress"},
+    {"id": "wn-history", "tag": "W3 · U1", "name": "Settings › About: What's new history, and updates", "for": ["Request 2", "Request 3", "Request 4"], "img": "designs/about-history.webp",
+     "alt": "Settings › About with the update switches, the What's new history from 1.14 to 1.22, and the Umbra rows",
+     "pitch": "Every release from 1.14.0 is listed, newest first. Each one opens its popup page. The update switches and the Umbra status sit in the same place.",
+     "verdict": "Supervisor: approved"}
+   ]
+  },
+  {
+   "key": "update",
+   "title": "New version available",
+   "wide": true,
+   "note": "U1. Tsukimichi asks Dalamud, so it never contacts the internet itself.",
+   "items": [
+    {"id": "up-note", "tag": "U1", "name": "The update note", "for": ["Request 3"], "img": "designs/update-ready.webp",
+     "alt": "The status-bar update note at Full, Quiet and Plain, its hover, the dot on the moon icon and Dalamud's installer",
+     "pitch": "A quiet note in the status bar says \"Tsukimichi 1.23.0 is ready\", and a dot appears on the moon icon. Its hover shows the new version's plain notes. Update opens Dalamud's installer on the update. Later hides the note.",
+     "changes": ["Drawn in the Tide blue, not gold, because it's news, not something to act on now", "On by default; Settings › About turns it off"],
+     "verdict": "Supervisor: approved"}
+   ]
+  },
+  {
+   "key": "icon",
+   "title": "The moon icon",
+   "wide": true,
+   "note": "H1–H2.",
+   "items": [
+    {"id": "ic-icon", "tag": "H1", "name": "On your screen: show, hide, move, lock", "for": ["Request 5"], "img": "designs/moon-icon.webp",
+     "alt": "The moon icon at rest, on hover with its quick card, its menu, locked, first run, and the update and needs-you dots",
+     "pitch": "A small moon you place anywhere. Hover shows a quick card: Up next, Ready count, journal room and events ending soon. Click opens Tsukimichi. Right-click gives Lock or Unlock, Hide, Tonight and Settings.",
+     "changes": ["Locked has no padlock, because a padlock already means Blocked in Tsukimichi", "Hide has Undo", "Its position is saved per screen size and keeps clear of Umbra's toolbar", "It can hide in cutscenes, Group Pose and duties"],
+     "verdict": "Supervisor: approved"},
+    {"id": "ic-particles", "tag": "H2", "name": "Theme particles and hover", "for": ["Request 5"], "img": "designs/icon-particles.webp",
+     "alt": "Four-frame particle strips per theme, the hover in four frames, and the timings",
+     "pitch": "Each theme has its own subtle motion: gold motes, frost glints, crystal shards ringing the icon's foot, a dot in orbit, gold-leaf flecks, or stars. Hover adds a soft rise and a cool glow.",
+     "changes": ["At most three particles at once, never above .55 alpha", "Full only; Plain is a flat icon; Reduce motion means none"],
+     "verdict": "Supervisor: approved"}
+   ]
+  },
+  {
+   "key": "umbra",
+   "title": "Umbra support",
+   "wide": true,
+   "note": "M1–M3 and the add-on, A1–A3.",
+   "items": [
+    {"id": "um-dtr", "tag": "M1", "name": "Server info bar entry", "for": ["Request 4"], "img": "designs/server-info-bar.webp",
+     "alt": "\"◐ 12 Ready\" in the game's server info bar and in Umbra's toolbar, with its hover",
+     "pitch": "One entry, \"◐ 12 Ready\", with the moon in your theme's colour. It works in the game's own bar and inside Umbra. Hover gives the quick card, click opens Tsukimichi, and right-click opens Tonight.",
+     "changes": ["It replaces today's Nearby entry; choosing \"Quests in this zone\" keeps today's count", "◐ is lit from the upper left, like every Tsukimichi moon"],
+     "verdict": "Supervisor: approved"},
+    {"id": "um-widgets", "tag": "A1 · A2", "name": "Tsukimichi for Umbra: native widgets", "for": ["Request 4", "Decision 3"], "img": "designs/umbra-widgets.webp",
+     "alt": "The add-on's bar widget and native popup, and the small widgets, on two Umbra profiles",
+     "pitch": "A Tsukimichi widget for Umbra's toolbar, with a popup built from Umbra's own controls and your Umbra colours. It shows Up next, Tonight's Ready quests, journal room and events ending soon. Small widgets cover Up next, Journal, Story meter and Next reset.",
+     "changes": ["Go opens Tsukimichi; nothing starts travel by itself", "A clear message when Tsukimichi isn't running or is too old"],
+     "verdict": "Supervisor: approved"},
+    {"id": "um-clear", "tag": "M3", "name": "Keeping clear of Umbra", "for": ["Request 4"], "img": "designs/umbra-clearance.webp",
+     "alt": "The icon, Todo overlay and Needs you panel under Umbra's top bar in 1.21, and clear of it in 1.22",
+     "pitch": "When Umbra is installed, the moon icon, the Todo overlay and the Needs you panel sit below or above its toolbar instead of under it. Follow Umbra is an optional palette in Settings › Themes.",
+     "verdict": "Supervisor: approved"}
+   ]
+  }
+ ],
+ "supervisor": {"summary": "<p><strong>Option A design set: approved after three rounds.</strong> Round 1 found 4 Major issues: contrast, a footer that moved, shards above the moon, and missing paintings. Round 2 found the lantern pool cut by a hard edge, a detached shadow, and a shard on the moon's face. All are fixed.</p><p><strong>Option B: changes in progress.</strong> The moon is cropped or lost in two looks, the glass reads as mosaic, and the Orrery's snow became desert. The page will be updated when it's approved.</p>"}
+}
