@@ -5522,10 +5522,10 @@
     <value>Days before an event's known end (the Lodestone's, or your date) that Tonight and the Journal warn.</value>
   </data>
   <data name="EventWarnChatConfig" xml:space="preserve">
-    <value>Chat line when an event ends soon</value>
+    <value>Notice when an event ends soon</value>
   </data>
   <data name="EventWarnChatConfigHint" xml:space="preserve">
-    <value>Once per event per login, and again on its last day.</value>
+    <value>A chat line (once per event per login, again on its last day) and a notice in the window.</value>
   </data>
   <data name="EventWarnOffReason" xml:space="preserve">
     <value>Turn on the warning first.</value>

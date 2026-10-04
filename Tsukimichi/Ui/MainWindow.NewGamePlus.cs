@@ -15,7 +15,8 @@ namespace Tsukimichi.Ui;
 /// · quest 87 of 112" in Text, "Your saved progress is kept" in Secondary and End session, a quiet button that asks
 /// first ("Leave New Game+ in the game first. This only stops Tsukimichi's replay mode."). End session never touches the
 /// game; it exists for detection that is stuck (<see cref="NewGamePlusSession.End"/>). The line is rebuilt only when the
-/// session or the language changes.
+/// session or the language changes. Also the 1.19.0 wiring of the rows' chips, Tonight's ending-soon cards and the
+/// dock's ending-soon notice (C10).
 /// </summary>
 public sealed partial class MainWindow
 {
@@ -33,6 +34,53 @@ public sealed partial class MainWindow
         ArgumentNullException.ThrowIfNull(chips);
         tablePane.RowChips = chips.For;
         tonightCard.EventWarnings = events ?? throw new ArgumentNullException(nameof(events));
+        eventWarnings = events;
+    }
+
+    private EventWarningSource? eventWarnings;
+    private (int Revision, int Language) eventEndingKey = (-1, -1);
+    private string eventEndingText = string.Empty;
+
+    /// <summary>
+    /// The ending-soon notice in the dock (1.19.0, C10): once per session, the soonest event's title and what is left,
+    /// only while the player turned the ending-soon notice on (Settings › Alerts; off by default). Tonight's card
+    /// shows it whatever the setting.
+    /// </summary>
+    private bool EventEndingDue() =>
+        plugin.Settings is { ChatNoticeSeasonalEnding: true, SeasonalWarnDays: > 0 } && eventWarnings is { Current.Count: > 0 };
+
+    private string EventEndingText()
+    {
+        if (eventWarnings is not { } source || source.Current.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        if (eventEndingKey != (source.Revision, Localization.Loc.Version))
+        {
+            eventEndingKey = (source.Revision, Localization.Loc.Version);
+            var warning = source.Current[0];
+            var left = warning.InJournal > 0
+                ? warning.InJournal == 1 ? Strings.EventCardJournalOne : string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.EventCardJournalFormat, warning.InJournal)
+                : warning.Left == 1 ? Strings.EventCardLeftOne : string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.EventCardLeftFormat, warning.Left);
+            eventEndingText = string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.EventChatFormat, EventWarningSource.Title(warning), left);
+        }
+
+        return eventEndingText;
+    }
+
+    /// <summary>Show the event: Tonight's card waits in the no-selection slot.</summary>
+    private void DrawEventEndingActions()
+    {
+        if (ImGui.SmallButton(Strings.EventCardShow + "##dockEventShow"))
+        {
+            ui.SelectedRowId = null;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.DockCardShowTooltip);
+        }
     }
 
     private (int Version, int Language, CatalogBundle? Bundle) newGamePlusKey = (-1, -1, null);

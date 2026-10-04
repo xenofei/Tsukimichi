@@ -34,6 +34,9 @@ public sealed partial class TonightCard
     private (int Revision, int Language) eventCardsKey = (-1, -1);
     private EventCardText[] eventCards = [];
 
+    // Each card's height as drawn last frame: its frame goes under the words before they are drawn.
+    private float[] eventCardHeights = [];
+
     private sealed record EventCardText(EndingSoonEvent Warning, string Title, string Why, string Context, QuestRecord? First, uint Icon);
 
     private void DrawReplayAndEvents(SessionState session, CatalogBundle bundle)
@@ -66,12 +69,13 @@ public sealed partial class TonightCard
         {
             eventCardsKey = (source.Revision, Localization.Loc.Version);
             eventCards = BuildEventCards(warnings, session);
+            eventCardHeights = new float[eventCards.Length];
         }
 
         for (var i = 0; i < eventCards.Length; i++)
         {
             using var id = ImRaii.PushId(EventRowIdBase + i);
-            DrawEventCard(eventCards[i]);
+            DrawEventCard(eventCards[i], i);
             ImGui.Spacing();
         }
     }
@@ -151,9 +155,10 @@ public sealed partial class TonightCard
 
     /// <summary>
     /// One ending-soon card: the plain keyline card, with the 1.18 copper bar on its left while an event quest is in the
-    /// journal. Its words go on channel 1 and the frame under them after, sized to what they took.
+    /// journal. The Tonight card already splits the draw list's channels for its own frame, so this frame is drawn
+    /// before the words at the height they took last frame (<see cref="eventCardHeights"/>); the words never move.
     /// </summary>
-    private void DrawEventCard(EventCardText card)
+    private void DrawEventCard(EventCardText card, int index)
     {
         var dl = ImGui.GetWindowDrawList();
         var s = Theme.Surface;
@@ -163,8 +168,10 @@ public sealed partial class TonightCard
         var bar = card.Warning.InJournal > 0;
         var left = min.X + pad + (bar ? UiMetrics.Px(6f) : 0f);
         var wrap = MathF.Max(1f, min.X + width - pad - left);
-        dl.ChannelsSplit(2);
-        dl.ChannelsSetCurrent(1);
+        if (index < eventCardHeights.Length && eventCardHeights[index] > 0f)
+        {
+            DrawEventCardFrame(dl, min, new Vector2(min.X + width, min.Y + eventCardHeights[index]), bar);
+        }
 
         ImGui.SetCursorScreenPos(new Vector2(left, min.Y + pad));
         var line = ImGui.GetTextLineHeight();
@@ -208,10 +215,32 @@ public sealed partial class TonightCard
         }
 
         var bottom = ImGui.GetCursorScreenPos().Y + pad - ImGui.GetStyle().ItemSpacing.Y;
-        var max = new Vector2(min.X + width, MathF.Max(min.Y + (2f * pad) + line, bottom));
-        dl.ChannelsSetCurrent(0);
+        var height = MathF.Ceiling(MathF.Max((2f * pad) + line, bottom - min.Y));
+        if (index < eventCardHeights.Length)
+        {
+            if (eventCardHeights[index] <= 0f)
+            {
+                // The first frame: the words are drawn, the frame is not yet; draw it now, over the empty ground only.
+                DrawEventCardFrame(dl, min, new Vector2(min.X + width, min.Y + height), bar, outlineOnly: true);
+            }
+
+            eventCardHeights[index] = height;
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(min.X, min.Y + height));
+        ImGui.Dummy(new Vector2(width, 0f));
+    }
+
+    /// <summary>The card's ground and keyline, and the copper bar beside the words while an event quest is in the journal.</summary>
+    private static void DrawEventCardFrame(ImDrawListPtr dl, Vector2 min, Vector2 max, bool bar, bool outlineOnly = false)
+    {
+        var s = Theme.Surface;
         var rounding = UiMetrics.Px(Theme.Spacing.CardRounding);
-        dl.AddRectFilled(min, max, Theme.U32(s.Raised), rounding);
+        if (!outlineOnly)
+        {
+            dl.AddRectFilled(min, max, Theme.U32(s.Raised), rounding);
+        }
+
         dl.AddRect(min, max, Theme.U32(Theme.Glyphs.HighContrast ? s.StrongLine : s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         if (bar)
         {
@@ -219,9 +248,5 @@ public sealed partial class TonightCard
             var ends = UiMetrics.Px(10f);
             dl.AddRectFilled(new Vector2(min.X + inset, min.Y + ends), new Vector2(min.X + inset + UiMetrics.Px(3f), MathF.Max(min.Y + ends + 1f, max.Y - ends)), Theme.U32(Theme.Copper));
         }
-
-        dl.ChannelsMerge();
-        ImGui.SetCursorScreenPos(new Vector2(min.X, max.Y));
-        ImGui.Dummy(new Vector2(width, 0f));
     }
 }

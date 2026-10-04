@@ -276,7 +276,10 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public int SeasonalWarnDays { get; set; } = Core.Seasonal.EventWarnings.DefaultWarnDays;
 
-    /// <summary>Also print one chat line per event when it starts ending soon, once per login. Off by default: notices stay off until the player turns them on.</summary>
+    /// <summary>
+    /// Also say it when an event starts ending soon: one chat line per event per login (again on its last day) and the
+    /// main window's notice dock. Off by default: notices stay off until the player turns them on.
+    /// </summary>
     public bool ChatNoticeSeasonalEnding { get; set; }
 
     /// <summary>

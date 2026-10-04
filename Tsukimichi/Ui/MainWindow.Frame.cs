@@ -136,6 +136,7 @@ public sealed partial class MainWindow
         notices.Set(NoticeKind.Setup, card == NoticeKind.Setup);
         notices.Set(NoticeKind.WhatsNew, card == NoticeKind.WhatsNew);
         notices.Set(NoticeKind.WelcomeBack, card == NoticeKind.WelcomeBack);
+        notices.Set(NoticeKind.EventEnding, EventEndingDue());
     }
 
     /// <summary>
@@ -195,6 +196,9 @@ public sealed partial class MainWindow
 
             case NoticeKind.PinPrompt:
                 return Strings.PinOverlayPrompt;
+
+            case NoticeKind.EventEnding:
+                return EventEndingText();
 
             default:
                 var title = kind switch
@@ -402,6 +406,10 @@ public sealed partial class MainWindow
                     pinPromptVisible = false;
                 }
 
+                break;
+
+            case NoticeKind.EventEnding:
+                DrawEventEndingActions();
                 break;
 
             default:

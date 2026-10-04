@@ -23,6 +23,12 @@ public enum NoticeKind
 
     /// <summary>Since you were away is waiting in the detail column while a quest is selected.</summary>
     WelcomeBack = 6,
+
+    /// <summary>
+    /// "All Saints' Wake ends in 2 days" (1.19.0, C10), once per session while the player turned the ending-soon notice
+    /// on; Show the event.
+    /// </summary>
+    EventEnding = 7,
 }
 
 /// <summary>
