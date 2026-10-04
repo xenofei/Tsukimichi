@@ -1857,8 +1857,9 @@ public sealed partial class MainWindow : Window, IDisposable
         var separatorWidth = ImGui.CalcTextSize(separator).X + 2f * gap;
         var x = origin.X;
 
-        // While a New Game+ session runs, its line takes the bar's left side (1.19.0, C4; DrawNewGamePlus).
-        var replay = session.NewGamePlus.Active;
+        // While a New Game+ session runs for the character on view, its line takes the bar's left side (1.19.0, C4;
+        // DrawNewGamePlus). Another character on view keeps the usual bar.
+        var replay = session.NewGamePlus.IsFor(session.ViewedContentId);
 
         // The overall gauge with its percentage (Full and Quiet), or the percentage alone (Plain), before the counts.
         if (!replay && runner.Counts is { } counts && counts.Overall.Total > 0)
