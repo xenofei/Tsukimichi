@@ -943,6 +943,7 @@ public sealed class FlightPane
         var hasStates = states.Count > 0;
         foreach (var zone in zones)
         {
+            zone.SetName(session.Spoilers);
             var attuned = 0;
             var unknown = 0;
             var questsDone = 0;
@@ -1007,6 +1008,7 @@ public sealed class FlightPane
         {
             Zone = zone;
             Rows = rows;
+            Name = zone.Name;
             Label = zone.Name;
             HereLabel = Strings.FlightCurrentZoneMarker + zone.Name;
             CountText = LeftText.Left(0, rows.Length);
@@ -1033,9 +1035,26 @@ public sealed class FlightPane
         public FlightZone Zone { get; }
         public QuestRow[] Rows { get; }
         public uint TerritoryId => Zone.TerritoryId;
-        public string Name => Zone.Name;
-        public string Label { get; }
-        public string HereLabel { get; }
+
+        /// <summary>The zone's name as the spoiler shield prints it: its placeholder before the story reaches it (1.20.0 N6).</summary>
+        public string Name { get; private set; }
+
+        public string Label { get; private set; }
+        public string HereLabel { get; private set; }
+
+        /// <summary>Names the zone through <paramref name="spoilers"/>; composes only when the printed name changes.</summary>
+        public void SetName(Core.Query.SpoilerMask spoilers)
+        {
+            var name = spoilers.Name(Core.Query.SpoilerKind.Area, Zone.Name);
+            if (string.Equals(name, Name, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Name = name;
+            Label = name;
+            HereLabel = Strings.FlightCurrentZoneMarker + name;
+        }
 
         /// <summary>The zone list's count: quest currents left ("2 left"), empty once none is (the moon says so).</summary>
         public string CountText { get; private set; }

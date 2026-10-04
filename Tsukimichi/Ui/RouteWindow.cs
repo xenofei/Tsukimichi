@@ -752,7 +752,7 @@ public sealed class RouteWindow : Window
         var nameCut = DrawStepText(dl, l, min, textEnd, textY, rowHeight, line, questionableMark, avatar, request, out var avatarMin);
         if (hovered && avatar > 0f && ImGui.IsMouseHoveringRect(avatarMin, avatarMin + new Vector2(avatar)))
         {
-            Chrome.PortraitTooltip(request, stepQuest!.Issuer?.Name ?? string.Empty, GiverPortraits.Place(stepQuest));
+            Chrome.PortraitTooltip(request, GiverPortraits.Name(stepQuest!, session.Spoilers), GiverPortraits.Place(stepQuest!, session.Spoilers));
         }
         else if (hovered)
         {
@@ -926,6 +926,10 @@ public sealed class RouteWindow : Window
             routeTarget = routeTarget with { Label = session.Spoilers.DisplayName(catalog, routeTarget.QuestRowIds[0], routeTarget.Label) };
         }
 
+        // A duty, reward or place the story has not introduced is titled by its placeholder (1.20.0 N6), in the
+        // title, the milestones and both copies.
+        routeTarget = routeTarget.Through(session.Spoilers);
+
         var route = UnlockRoute.Build(routeTarget, catalog, states, session.Names, levelOf);
 
         var caption = snapshot is null
@@ -991,7 +995,7 @@ public sealed class RouteWindow : Window
             {
                 stopEnd = i + group.Count - 1;
                 inStop = true;
-                lines.Add(new Line(LineKind.Stop, step.RowId, QuestState.Unknown, string.Format(CultureInfo.CurrentCulture, Strings.RouteStopFormat, group.Count, shared.Name)));
+                lines.Add(new Line(LineKind.Stop, step.RowId, QuestState.Unknown, string.Format(CultureInfo.CurrentCulture, Strings.RouteStopFormat, group.Count, session.Spoilers.Name(Core.Query.SpoilerKind.Area, shared.Name))));
             }
 
             var name = NameOf(catalog, step.RowId);
@@ -999,7 +1003,8 @@ public sealed class RouteWindow : Window
                 : step.IsTarget ? Strings.RouteTargetMark
                 : step.IsMainScenario ? Strings.RouteMsqMark
                 : string.Empty;
-            var near = !inStop && place.TryGetValue(step.RowId, out var own) ? own.Name : string.Empty;
+            // An aetheryte the story has not reached reads as its placeholder (1.20.0 N6).
+            var near = !inStop && place.TryGetValue(step.RowId, out var own) ? session.Spoilers.Name(Core.Query.SpoilerKind.Area, own.Name) : string.Empty;
             var detail = near.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.RouteNearFormat, near) + Strings.RouteDetailSeparator + step.StatusText : step.StatusText;
             lines.Add(new Line(LineKind.Step, step.RowId, step.State, name)
             {
@@ -1070,7 +1075,7 @@ public sealed class RouteWindow : Window
         foreach (var id in zone.FieldCurrentIds)
         {
             var nearest = placeOf.TryGetValue(id, out var at) ? links.Aetherytes.Nearest(at.TerritoryId, at.X, at.Z) : null;
-            all.Add(new FieldCurrentStop(id, nearest?.RowId ?? 0, nearest?.Name ?? string.Empty));
+            all.Add(new FieldCurrentStop(id, nearest?.RowId ?? 0, session.Spoilers.Name(Core.Query.SpoilerKind.Area, nearest?.Name ?? string.Empty)));
         }
 
         var attuned = Attuned ?? (static _ => null);

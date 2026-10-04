@@ -197,9 +197,10 @@ public sealed partial class CharactersPane
                 lookups[c] = LookupFor(items[c]);
             }
 
-            rewardRows = CollectionGrid.Rewards(rewards.All, lookups, gridKind < 0 ? null : gridKinds[gridKind], gridMissingOnAny, gridSearch);
+            // A reward the story has not introduced and nobody owns: its placeholder, no art (1.20.0 N6).
+            rewardRows = CollectionGrid.Rewards(rewards.All, lookups, gridKind < 0 ? null : gridKinds[gridKind], gridMissingOnAny, gridSearch, session.Spoilers);
             gridCountTexts = rewardRows.Select(r => UiFormat.Count(r.OwnedCount, items.Length)).ToArray();
-            gridIcons = MoonlitIcons is { } icons ? rewardRows.Select(r => RowIcon(icons, bundle, r)).ToArray() : [];
+            gridIcons = MoonlitIcons is { } icons ? rewardRows.Select(r => r.Entry is { } e && !string.Equals(r.Name, e.RewardName, StringComparison.Ordinal) ? icons.KindIcon(r.Kind) : RowIcon(icons, bundle, r)).ToArray() : [];
             rowCount = rewardRows.Count;
         }
         else

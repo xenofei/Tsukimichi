@@ -195,14 +195,16 @@ public sealed class QuestBriefBuilder
             foreach (var entry in uniques)
             {
                 var owned = forLive ? unlocks.IsObtained(entry) : null;
-                var name = RewardNames.Display(entry, quest, bundle.Language);
+                // A reward the story has not introduced reads as its placeholder (1.20.0 N6), unless the character has it.
+                var display = RewardNames.Display(entry, quest, bundle.Language);
+                var name = owned == true ? display : spoilers.Name(Core.Query.SpoilerKind.Reward, display);
                 verdictRewards.Add(new MoonlitReward(name, owned));
                 moonlitLines.Add(new MoonlitBriefLine(name, owned, owned switch
                 {
                     true => Strings.GamePanelOwned,
                     false => Strings.GamePanelNotOwned,
                     _ => Strings.GamePanelOwnedUnknown,
-                }, MoonlitIcon?.Invoke(quest, entry) ?? 0u));
+                }, ReferenceEquals(name, display) ? MoonlitIcon?.Invoke(quest, entry) ?? 0u : 0u));
             }
 
             // A Moonlit line already names what it shows, so the unlock lines never repeat it.
@@ -229,13 +231,13 @@ public sealed class QuestBriefBuilder
                         continue;
                     }
 
-                    unlockLabels.Add(new BriefUnlockLine(Core.Unlocks.UnlockTargets.Name(entry.Target) + ": " + entry.Name, entry.Icon));
+                    unlockLabels.Add(new BriefUnlockLine(Core.Unlocks.UnlockTargets.Name(entry.Target) + ": " + Core.Unlocks.UnlockView.ShieldedName(entry, spoilers), Core.Unlocks.UnlockView.IconOf(entry, spoilers)));
                     added++;
                 }
 
                 if (index.Headline(quest.RowId) is { Group: <= Core.Unlocks.UnlockGroup.Feature } headline)
                 {
-                    opensHeadline = headline.Name;
+                    opensHeadline = Core.Unlocks.UnlockView.ShieldedName(headline, spoilers);
                 }
             }
         }
