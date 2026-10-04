@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-10-03
+
 ### Added
 - **Mix moons by state** (Settings › Themes):
   - Pick each state's moon from any theme.
