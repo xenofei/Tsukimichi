@@ -6,7 +6,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Copy table as TSV (1.8.0, research C9 #4) for the Journal table: the rows it shows now (scope, filters, search and
 /// sort applied) under the export's quest columns plus a link (<see cref="TableTsv"/>). Names are the spoiler shield's,
-/// as the table prints them, and a masked quest carries no link (no url, no lodestoneId), as in Copy for Discord;
+/// as the table prints them (the quest's, and its journal section, category and genre: a genre named after a hidden
+/// area reads "Dawntrail area 5 Sidequests"), and a masked quest carries no link (no url, no lodestoneId), as in Copy for Discord;
 /// states, completion and dates are the viewed character's.
 /// </summary>
 internal static class TableCopy
@@ -33,7 +34,7 @@ internal static class TableCopy
                 masked.Add(quest.RowId);
             }
 
-            exported.Add(ExportWriter.Row(quest, snapshot, spoilers.DisplayName(quest), id => bundle.Names.Expansion(id), states.GetValueOrDefault(quest.RowId), ids));
+            exported.Add(ExportWriter.Row(quest, snapshot, spoilers.DisplayName(quest), id => bundle.Names.Expansion(id), states.GetValueOrDefault(quest.RowId), ids, spoilers));
         }
 
         return TableTsv.Quests(exported, r => links.PreferredLink(r.RowId), r => masked.Contains(r.RowId));

@@ -5,6 +5,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unlocks;
 using Tsukimichi.Game;
 
@@ -15,19 +16,17 @@ namespace Tsukimichi.Ui;
 /// slot, size and weight of the name it hides and only turns Secondary, and a string that holds one is Secondary as a
 /// whole (<see cref="Tone"/>); no glyph. Its hover says what it is in three lines (<see cref="Hover"/>), and its
 /// right-click offers "Reveal this name" for the session, "Reveal names in this quest" inside one quest's context, and
-/// any "Open on…" link behind the spoiler question (<see cref="Menu"/>).
+/// any "Open on…" link behind the spoiler question (<see cref="DrawMenu"/>).
 /// </summary>
 internal static class ShieldText
 {
     private const string MenuId = "##shieldMenu";
 
-    // The placeholder whose menu is open: one popup at a time.
-    private static SpoilerKind menuKind;
-    private static string menuName = string.Empty;
-    private static string menuShown = string.Empty;
-    private static QuestRecord? menuQuest;
-    private static string? menuLink;
-    private static int menuFrame = -1;
+    /// <summary>What the open menu acts on: the hidden name, its placeholder, its quest with that quest's duties, the links, a page.</summary>
+    private sealed record MenuTarget(SpoilerKind Kind, string Name, string Shown, QuestRecord? Quest, GameLinks? Links, string? Link, string[] Duties, bool StandIn);
+
+    // The one menu: placeholders ask for it, the window that hosts them draws it (DrawMenu).
+    private static readonly PlaceholderMenu<MenuTarget> Menu = new();
 
     /// <summary>Whether <paramref name="text"/> is or holds a placeholder (<see cref="SpoilerMask.HoldsPlaceholder"/>).</summary>
     public static bool Holds(string? text) => SpoilerMask.HoldsPlaceholder(text);
@@ -83,8 +82,9 @@ internal static class ShieldText
 
     /// <summary>
     /// The hover and the right-click of a placeholder drawn on the draw list over <paramref name="min"/>–<paramref name="max"/>
-    /// (no item of its own): while the pointer is on it the three-line hover shows, and a right-click opens its menu.
-    /// Draws the menu while it is open; call every frame the placeholder is drawn. Returns whether the pointer is on it.
+    /// (no item of its own): while the pointer is on it the three-line hover shows, and a right-click asks for its menu,
+    /// which the window hosting it draws (<see cref="DrawMenu"/>). Call every frame the placeholder is drawn. Returns
+    /// whether the pointer is on it.
     /// </summary>
     /// <param name="session">The session whose reveals the menu adds to.</param>
     /// <param name="kind">The hidden name's kind.</param>
@@ -94,64 +94,65 @@ internal static class ShieldText
     /// <param name="links">For the quest's place in "Reveal names in this quest" and the "Open on…" question; null for neither.</param>
     /// <param name="link">An "Open on Garland Tools" page of the hidden thing; null for none.</param>
     /// <param name="lead">The placeholder as the hover's first line (<see cref="Hover"/>); null for none.</param>
-    public static bool Interact(Vector2 min, Vector2 max, SessionState session, SpoilerKind kind, string name, string shown, QuestRecord? quest = null, GameLinks? links = null, string? link = null, string? lead = null)
+    /// <param name="duties">The duties <paramref name="quest"/> involves, by name, which "Reveal names in this quest" reveals with the rest; null for none.</param>
+    /// <param name="standIn">The placeholder stands for a duty hidden because <paramref name="quest"/> is (<see cref="SpoilerMask.HidesDuty"/>), not by its own name: "Reveal this name" reveals the quest's names.</param>
+    public static bool Interact(Vector2 min, Vector2 max, SessionState session, SpoilerKind kind, string name, string shown, QuestRecord? quest = null, GameLinks? links = null, string? link = null, string? lead = null, IEnumerable<string>? duties = null, bool standIn = false)
     {
+        ArgumentNullException.ThrowIfNull(session);
         var hovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup) && ImGui.IsMouseHoveringRect(min, max);
-        if (hovered && !ImGui.IsPopupOpen(MenuId))
+        if (hovered && !ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel))
         {
             Hover(lead);
-            if (ImGui.IsMouseClicked(ImGuiMouseButton.Right))
-            {
-                OpenMenu(kind, name, shown, quest, link);
-            }
         }
 
-        DrawMenu(session, links);
+        // On release, even while a menu is open: the press closed it, so one right-click moves the menu here.
+        if (PlaceholderMenu<MenuTarget>.Opens(hovered, ImGui.IsMouseReleased(ImGuiMouseButton.Right)))
+        {
+            Menu.Request(new MenuTarget(kind, name, shown, quest, links, link, duties is null ? [] : [.. duties], standIn && quest is not null));
+        }
+
         return hovered;
     }
 
-    /// <summary>As <see cref="Interact(Vector2, Vector2, SessionState, SpoilerKind, string, string, QuestRecord?, GameLinks?, string?, string?)"/>, for the last item.</summary>
-    public static bool InteractItem(SessionState session, SpoilerKind kind, string name, string shown, QuestRecord? quest = null, GameLinks? links = null, string? link = null, string? lead = null) =>
-        Interact(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), session, kind, name, shown, quest, links, link, lead);
+    /// <summary>As <see cref="Interact(Vector2, Vector2, SessionState, SpoilerKind, string, string, QuestRecord?, GameLinks?, string?, string?, IEnumerable{string}?, bool)"/>, for the last item.</summary>
+    public static bool InteractItem(SessionState session, SpoilerKind kind, string name, string shown, QuestRecord? quest = null, GameLinks? links = null, string? link = null, string? lead = null, IEnumerable<string>? duties = null, bool standIn = false) =>
+        Interact(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), session, kind, name, shown, quest, links, link, lead, duties, standIn);
 
-    /// <summary>Opens the menu for one placeholder; it draws through <see cref="DrawMenu"/>.</summary>
-    private static void OpenMenu(SpoilerKind kind, string name, string shown, QuestRecord? quest, string? link)
+    /// <summary>
+    /// The placeholder menu of a window that hosts placeholders (Reveal this name, Reveal names in this quest, Open on
+    /// Garland Tools…): call once a frame at the end of the window's Draw, at its root id scope, so the menu stays
+    /// open while the placeholder that opened it is clipped out or skipped. <paramref name="host"/> names the window;
+    /// a menu opened in one is drawn only there.
+    /// </summary>
+    public static void DrawMenu(string host, SessionState session)
     {
-        menuKind = kind;
-        menuName = name;
-        menuShown = shown;
-        menuQuest = quest;
-        menuLink = link;
-        ImGui.OpenPopup(MenuId);
-    }
+        ArgumentNullException.ThrowIfNull(session);
+        if (Menu.TakeOpen(host))
+        {
+            ImGui.OpenPopup(MenuId);
+        }
 
-    /// <summary>The open placeholder's menu, if any: Reveal this name, Reveal names in this quest, Open on Garland Tools….</summary>
-    private static void DrawMenu(SessionState session, GameLinks? links)
-    {
-        // Several placeholders of one window share the popup: it is drawn once a frame, by the first that reaches it.
-        var frame = ImGui.GetFrameCount();
-        if (frame == menuFrame)
+        if (!Menu.Owns(host))
         {
             return;
         }
 
         using var popup = ImRaii.Popup(MenuId);
-        if (!popup)
+        if (!popup || Menu.Target is not { } target)
         {
+            Menu.Closed(host);
             return;
         }
 
-        menuFrame = frame;
-
         UiMetrics.ApplyFontScale();
-        RevealItems(session, links, menuKind, menuName, menuQuest);
-        if (menuLink is { } url && links is not null)
+        RevealItems(session, target.Links, target.Kind, target.Name, target.Quest, target.Duties, target.StandIn);
+        if (target.Link is { } url && target.Links is { } links)
         {
             ImGui.Separator();
             if (ImGui.MenuItem(Strings.LinksOpenItemOnGarland))
             {
                 // Asks first, naming the thing by its placeholder (spec-1.20; LinkConfirmWindow).
-                links.OpenExternal(url, menuShown, mayShowSpoilers: true);
+                links.OpenExternal(url, target.Shown, mayShowSpoilers: true);
             }
         }
     }
@@ -159,14 +160,22 @@ internal static class ShieldText
     /// <summary>
     /// The reveal items of a placeholder's menu, for a menu of its own (a row's right-click): "Reveal this name" with
     /// "this session" trailing in the disabled (Tertiary) tone, then "Reveal names in this quest" when
-    /// <paramref name="quest"/> is given.
+    /// <paramref name="quest"/> is given. For a <paramref name="standIn"/> (a duty hidden because its quest is) the
+    /// name shows once the quest's do, so "Reveal this name" reveals those.
     /// </summary>
-    public static void RevealItems(SessionState session, GameLinks? links, SpoilerKind kind, string name, QuestRecord? quest, IEnumerable<string>? duties = null)
+    public static void RevealItems(SessionState session, GameLinks? links, SpoilerKind kind, string name, QuestRecord? quest, IEnumerable<string>? duties = null, bool standIn = false)
     {
         ArgumentNullException.ThrowIfNull(session);
         if (ImGui.MenuItem(Strings.SpoilerRevealName, Strings.SpoilerRevealThisSession))
         {
-            session.RevealName(kind, name);
+            if (standIn && quest is not null)
+            {
+                RevealQuest(session, links, quest, duties);
+            }
+            else
+            {
+                session.RevealName(kind, name);
+            }
         }
 
         if (quest is null)
@@ -196,35 +205,17 @@ internal static class ShieldText
         session.RevealQuestNames(quest.RowId, QuestNames(links, session.Unlocks, quest, duties));
     }
 
-    /// <summary>The names <see cref="RevealQuest"/> reveals.</summary>
+    /// <summary>
+    /// The names <see cref="RevealQuest"/> reveals (<see cref="ShieldRules.QuestNames"/>): pass the quest's
+    /// <paramref name="duties"/> (<see cref="ShieldRules.DutyNames"/>), or a quest hidden only by its duty offers no reveal.
+    /// </summary>
     public static List<(SpoilerKind Kind, string Name)> QuestNames(GameLinks? links, QuestUnlocks? unlocks, QuestRecord quest, IEnumerable<string>? duties = null)
     {
         var map = quest.Issuer is { } issuer ? links?.Map(issuer.MapId) : null;
-        return SpoilerNames.NamesIn(quest, unlocks ?? QuestUnlocks.Empty, map?.PlaceName, map?.Region, duties);
+        return ShieldRules.QuestNames(quest, unlocks ?? QuestUnlocks.Empty, map?.PlaceName, map?.Region, duties);
     }
 
-    /// <summary>Whether the shield hides anything of the quest: its name, or one of <paramref name="names"/>.</summary>
-    public static bool HidesAny(SpoilerMask spoilers, QuestRecord quest, IReadOnlyList<(SpoilerKind Kind, string Name)> names)
-    {
-        ArgumentNullException.ThrowIfNull(spoilers);
-        if (spoilers.IsMasked(quest))
-        {
-            return true;
-        }
-
-        if (!spoilers.MasksNames)
-        {
-            return false;
-        }
-
-        foreach (var (kind, name) in names)
-        {
-            if (spoilers.IsNameMasked(kind, name))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+    /// <summary>Whether the shield hides anything of the quest: its name, or one of <paramref name="names"/> (<see cref="ShieldRules.HidesAny"/>).</summary>
+    public static bool HidesAny(SpoilerMask spoilers, QuestRecord quest, IReadOnlyList<(SpoilerKind Kind, string Name)> names) =>
+        ShieldRules.HidesAny(spoilers, quest, names);
 }

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
+using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Ui;
 
@@ -132,10 +133,22 @@ public sealed partial class CharactersPane
         ImGui.TextColored(Theme.Surface.TextSecondary, state);
     }
 
-    /// <summary>A duty: its name, its size badge, and at the trailing end "not unlocked · with" the quest (click shows it).</summary>
+    /// <summary>
+    /// A duty: its name, its size badge, and at the trailing end "not unlocked · with" the quest (click shows it). A
+    /// duty past the story reads as its placeholder, in Secondary, with the shield's hover and right-click (1.20.0 N6).
+    /// </summary>
     private void DrawDutyRow(UiState ui, DutyBoardSource.Row row)
     {
-        Chrome.FitText(row.Duty, ImGui.GetColorU32(ImGuiCol.Text));
+        if (HiddenDuty(row) is { } hidden)
+        {
+            var cut = Chrome.EllipsisText(row.Duty, Chrome.RoomX(), ShieldText.U32(row.Duty, Theme.Surface.Text));
+            ShieldText.InteractItem(session, SpoilerKind.Duty, hidden.Name, row.Duty, row.Quest, Links, lead: cut ? row.Duty : null, standIn: hidden.StandIn);
+        }
+        else
+        {
+            Chrome.FitText(row.Duty, ShieldText.U32(row.Duty, Theme.Surface.Text));
+        }
+
         if (row.Badge is { } badge)
         {
             Chrome.SameLineOrWrap(DutyBadges.Width(badge));
@@ -170,6 +183,39 @@ public sealed partial class CharactersPane
         {
             UiMetrics.Tooltip(row.QuestName, Strings.DutyBoardQuestTip);
         }
+    }
+
+    /// <summary>
+    /// What a row's placeholder stands for: the duty its unlock quest opens whose placeholder the row prints, or, for
+    /// the stand-in of a duty hidden because its unlock quest is (<see cref="SpoilerMask.HidesDuty"/>), that duty with
+    /// <c>StandIn</c> set (its reveal is the quest's). Null when the row shows the name, or has no unlock quest to find
+    /// it by. Allocates nothing.
+    /// </summary>
+    private (string Name, bool StandIn)? HiddenDuty(DutyBoardSource.Row row)
+    {
+        if (row.Quest is not { } quest || !ShieldText.Holds(row.Duty) || session.Unlocks is not { } unlocks)
+        {
+            return null;
+        }
+
+        var spoilers = session.Spoilers;
+        string? opened = null;
+        foreach (var entry in unlocks.For(quest.RowId))
+        {
+            if (SpoilerNames.KindOf(entry.Target) != SpoilerKind.Duty)
+            {
+                continue;
+            }
+
+            if (spoilers.IsNameMasked(SpoilerKind.Duty, entry.Name) && string.Equals(spoilers.Name(SpoilerKind.Duty, entry.Name), row.Duty, StringComparison.Ordinal))
+            {
+                return (entry.Name, false);
+            }
+
+            opened ??= entry.Name;
+        }
+
+        return spoilers.IsMasked(quest) ? (opened ?? row.Duty, true) : null;
     }
 
     /// <summary>Route and Pin both / Pin all under a block, when its duties have unlock quests.</summary>

@@ -519,13 +519,13 @@ public sealed partial class GameLinks
 
     /// <summary>
     /// The giver's display name, or "the giver" when the sheet has none; a person the story has not introduced by the
-    /// wider shield's placeholder (1.20.0 N6).
+    /// wider shield's placeholder (1.20.0 N6), through the viewed character's mask as the pane around it prints.
     /// </summary>
     private string GiverName(QuestRecord quest) =>
-        quest.Issuer is { Name.Length: > 0 } issuer ? Spoilers?.Invoke().Name(Core.Query.SpoilerKind.Npc, issuer.Name) ?? issuer.Name : Strings.TravelTheGiver;
+        quest.Issuer is { Name.Length: > 0 } issuer ? PaneSpoilers?.Name(Core.Query.SpoilerKind.Npc, issuer.Name) ?? issuer.Name : Strings.TravelTheGiver;
 
-    /// <summary>A place's name through the wider shield (1.20.0 N6): its placeholder before the story reaches it.</summary>
-    private string PlaceName(string name) => Spoilers?.Invoke().Name(Core.Query.SpoilerKind.Area, name) ?? name;
+    /// <summary>A place's name through the viewed character's wider shield (1.20.0 N6): its placeholder before that story reaches it.</summary>
+    private string PlaceName(string name) => PaneSpoilers?.Name(Core.Query.SpoilerKind.Area, name) ?? name;
 
     /// <summary>The name of the zone a territory is (its TerritoryType place name) through the shield; empty when unknown.</summary>
     private string TerritoryName(uint territoryId)

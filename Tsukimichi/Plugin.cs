@@ -1034,6 +1034,9 @@ public sealed partial class Plugin : IDalamudPlugin
             // hints and Wotsit speak for the logged-in character, so they use its mask, not the viewed character's.
             gameLinks.QuestName = quest => Session.LiveSpoilers.DisplayName(quest);
             gameLinks.Spoilers = () => Session.LiveSpoilers;
+            // The panes' travel labels and tooltips print through the viewed character's mask, and travel to a place
+            // either character's story has not reached is hidden (1.20.0 N6).
+            gameLinks.ViewedSpoilers = () => Session.Spoilers;
             gameLinks.DropWhere = reward => Session.StoreResells.DropWhere(reward);
             wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
             wotsit.Enabled = Settings.WotsitIntegration;

@@ -100,11 +100,13 @@ public sealed partial class TreePane
         public string PercentText { get; set; } = string.Empty;
 
         // The spoiler shield's form of the label (1.20.0 N6): the label as named, the form last shown, and the shield's
-        // fingerprint it was worked out for; Shielded while a hidden area's placeholder stands in it.
+        // fingerprint it was worked out for; Shielded while a hidden area's placeholder stands in it, ShieldArea the
+        // area's own name (what the placeholder's "Reveal this name" reveals).
         public string? ShieldPlain { get; set; }
         public string? ShieldShown { get; set; }
         public int ShieldPrint { get; set; } = int.MinValue;
         public bool Shielded { get; set; }
+        public string? ShieldArea { get; set; }
 
         // Measured widths, kept for the font size they were measured at; any text change resets MeasuredAt.
         public float MeasuredAt { get; set; } = -1f;
@@ -201,6 +203,9 @@ public sealed partial class TreePane
 
     // The viewed character's spoiler shield as of this frame, for the nodes named after a hidden area (1.20.0 N6).
     private Core.Query.SpoilerMask spoilers = Core.Query.SpoilerMask.None;
+
+    // The session a node's placeholder reveals into (1.20.0 N6); null without one.
+    private Game.SessionState? shieldSession;
     private readonly Node allNode = new(QuestScope.None, "##all", Strings.AllQuests, leaf: true);
     private readonly Node featureNode = new(QuestScope.VirtualFeature, "##feature", Strings.FeatureUnlocks, leaf: true);
     private readonly Node unlistedNode = new(QuestScope.VirtualUnlisted, "##unlisted", Strings.RemovedFromGame, leaf: true);
@@ -251,6 +256,7 @@ public sealed partial class TreePane
         ui.RevealPending = false;
         sproutReach = ui.Filters.Preset == Preset.Sprout ? runner.Spoilers.ReachExpansion : null;
         spoilers = runner.Spoilers;
+        shieldSession = runner.Session;
         KeepSelectionVisible();
 
         lineHeight = ImGui.GetTextLineHeight();
@@ -487,8 +493,15 @@ public sealed partial class TreePane
         {
             if (node.Shielded && hover is not (Hover.Halo or Hover.Progress or Hover.Ready))
             {
-                // Its journal path would name the hidden place: the placeholder's own hover instead.
-                ShieldText.Hover(node.Name);
+                // Its journal path would name the hidden place: the placeholder's own hover and right-click instead.
+                if (shieldSession is { } session && node.ShieldArea is { } area)
+                {
+                    ShieldText.InteractItem(session, Core.Query.SpoilerKind.Area, area, node.Name, lead: node.Name);
+                }
+                else
+                {
+                    ShieldText.Hover(node.Name);
+                }
             }
             else if (sproutFolded && hover is not (Hover.Halo or Hover.Progress or Hover.Ready))
             {
@@ -779,6 +792,7 @@ public sealed partial class TreePane
         var plain = node.ShieldPlain ?? node.Name;
         var shown = spoilers.NodeName(plain);
         node.Shielded = !ReferenceEquals(shown, plain);
+        node.ShieldArea = node.Shielded ? Core.Query.ShieldRules.NodeArea(spoilers, plain) : null;
         if (!ReferenceEquals(shown, node.Name))
         {
             node.Name = shown;

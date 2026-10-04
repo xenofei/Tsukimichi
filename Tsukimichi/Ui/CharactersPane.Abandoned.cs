@@ -188,14 +188,18 @@ public sealed partial class CharactersPane
         UiMetrics.ApplyFontScale();
         if (Links is { } links)
         {
-            if (ImGui.MenuItem(Strings.AbandonedFlag, enabled: links.CanFlagMap(quest)))
+            // A giver in a place the story has not reached: no Flag, as everywhere (the map would name it; 1.20.0 N6).
+            if (!links.GiverPlaceHidden(quest))
             {
-                links.FlagMap(quest);
-            }
+                if (ImGui.MenuItem(Strings.AbandonedFlag, enabled: links.CanFlagMap(quest)))
+                {
+                    links.FlagMap(quest);
+                }
 
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(Strings.AbandonedFlagTooltip);
+                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                {
+                    UiMetrics.Tooltip(Strings.AbandonedFlagTooltip);
+                }
             }
 
             TravelControls.MenuItems(links, quest, Strings.AbandonedTeleport);
@@ -217,16 +221,8 @@ public sealed partial class CharactersPane
     {
         if (Links is { } links)
         {
-            if (TravelControls.FlagButton(Strings.AbandonedFlag, links.CanFlagMap(quest)))
-            {
-                links.FlagMap(quest);
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(Strings.AbandonedFlagTooltip);
-            }
-
+            // No Flag for a giver in a place the story has not reached; its room stays (1.20.0 N6).
+            TravelControls.FlagButtonFor(links, quest, Strings.AbandonedFlag, Strings.AbandonedFlagTooltip);
             TravelControls.Buttons(links, quest, Strings.AbandonedTeleport);
             ImGui.SameLine();
         }

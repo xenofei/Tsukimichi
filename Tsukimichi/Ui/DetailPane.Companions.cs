@@ -7,6 +7,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
@@ -37,8 +38,12 @@ public sealed partial class DetailPane
 
     private static readonly Localization.LocText QuestMapLabel = new(static () => Strings.QuestMapOpen + "##questMap");
 
-    /// <summary>One duty row as of the last refresh; <paramref name="Name"/> through the spoiler shield, <paramref name="Masked"/> when it is the stand-in.</summary>
-    private sealed record DutyRow(QuestDuty Duty, string Name, bool Masked, string Caption, bool? HasPath, bool? Unlocked, string RunId);
+    /// <summary>
+    /// One duty row as of the last refresh; <paramref name="Name"/> through the spoiler shield, <paramref name="Masked"/>
+    /// when it is the stand-in or the wider shield's placeholder (its own icon hidden), <paramref name="Hidden"/> the
+    /// duty's own name while the wider shield hides it (its placeholder answers the shield's hover and right-click).
+    /// </summary>
+    private sealed record DutyRow(QuestDuty Duty, string Name, bool Masked, string Caption, bool? HasPath, bool? Unlocked, string RunId, string? Hidden = null);
 
     private readonly List<DutyRow> dutyRows = [];
     private uint dutyRowId = uint.MaxValue;
@@ -90,11 +95,13 @@ public sealed partial class DetailPane
 
         var duties = QuestDuties.For(quest, index, session.Curated, RewardEntries?.Invoke(quest.RowId));
         QuestRecord[] shownThrough = [quest];
-        var masked = session.Spoilers.HidesDuty(shownThrough);
         foreach (var duty in duties)
         {
             var info = duty.Duty;
             var name = DutyBoardSource.ShownDutyName(info, shownThrough, session.Spoilers);
+            // A duty the wider shield hides is masked too, its own icon with its name (1.20.0 N6), even in a quest it shows.
+            var masked = ShieldRules.HidesDuty(session.Spoilers, shownThrough, info.Name);
+            var hidden = session.Spoilers.IsNameMasked(SpoilerKind.Duty, info.Name) ? info.Name : null;
             var hasPath = autoDuty.HasPath(info.TerritoryTypeId);
             bool? unlocked = session.IsLive && info.InstanceContentId != 0 ? IsDutyUnlocked?.Invoke(info.InstanceContentId) : null;
             var relation = duty.Relation == QuestDutyRelation.Required ? Strings.AutoDutyRelationRequired : Strings.AutoDutyRelationUnlocks;
@@ -104,7 +111,7 @@ public sealed partial class DetailPane
                 false => relation + Strings.AutoDutyCaptionSeparator + Strings.AutoDutyNoPath,
                 _ => relation,
             };
-            dutyRows.Add(new DutyRow(duty, name, masked, caption, hasPath, unlocked, "##autoDuty" + info.ContentFinderConditionId.ToString(CultureInfo.InvariantCulture)));
+            dutyRows.Add(new DutyRow(duty, name, masked, caption, hasPath, unlocked, "##autoDuty" + info.ContentFinderConditionId.ToString(CultureInfo.InvariantCulture), hidden));
         }
     }
 
@@ -199,7 +206,18 @@ public sealed partial class DetailPane
 
         var textX = wellMax.X + UiMetrics.Px(8f);
         ImGui.SetCursorScreenPos(new Vector2(textX, start.Y));
-        if (Chrome.EllipsisText(row.Name, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
+        var cut = Chrome.EllipsisText(row.Name, RoomTo(cardRight), ShieldText.U32(row.Name, Theme.Surface.Text));
+        if (row.Hidden is { } hidden)
+        {
+            // The placeholder's hover and right-click, as in How you'll clear it (spec-1.20 N6).
+            ShieldItem(SpoilerKind.Duty, hidden, row.Name, cut ? row.Name : null);
+        }
+        else if (row.Masked)
+        {
+            // The stand-in of a duty hidden because the quest is: its reveal is the quest's.
+            ShieldItem(SpoilerKind.Duty, row.Duty.Duty.Name, row.Name, cut ? row.Name : null, standIn: true);
+        }
+        else if (cut && ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(row.Name);
         }

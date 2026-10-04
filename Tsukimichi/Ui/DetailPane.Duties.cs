@@ -26,7 +26,8 @@ public sealed partial class DetailPane
 {
     /// <summary>One duty of the section as of the last refresh.</summary>
     /// <param name="Hidden">The duty's own name while the spoiler shield hides it (1.20.0 N6: <see cref="Name"/> is its placeholder); null when shown.</param>
-    private sealed record ClearRow(string Name, DutyBadges.Look[] Badges, string Wall, string WallNote, string? Hidden = null);
+    /// <param name="StandIn">The duty's own name while <see cref="Name"/> is the stand-in of a duty hidden because the quest is; null otherwise.</param>
+    private sealed record ClearRow(string Name, DutyBadges.Look[] Badges, string Wall, string WallNote, string? Hidden = null, string? StandIn = null);
 
     private readonly List<ClearRow> clearRows = [];
     private string clearCaption = string.Empty;
@@ -73,13 +74,32 @@ public sealed partial class DetailPane
             // A duty the story has not introduced reads as its placeholder (1.20.0 N6), and one shown only through
             // masked quests as the board's stand-in; the badges stay, being generic.
             var hidden = session.Spoilers.IsNameMasked(SpoilerKind.Duty, info.Name);
-            clearRows.Add(new ClearRow(DutyBoardSource.ShownDutyName(info, shownThrough, session.Spoilers), badges, wall, note, hidden ? info.Name : null));
+            var shown = DutyBoardSource.ShownDutyName(info, shownThrough, session.Spoilers);
+            var standIn = !hidden && !string.Equals(shown, info.Name, StringComparison.Ordinal);
+            clearRows.Add(new ClearRow(shown, badges, wall, note, hidden ? info.Name : null, standIn ? info.Name : null));
             model.DutyNames.Add(info.Name);
         }
 
         clearCaption = duties.Count == 1
             ? Strings.DutyClearCaptionOne
             : string.Format(CultureInfo.CurrentCulture, Strings.DutyClearCaptionFormat, duties.Count);
+    }
+
+    /// <summary>
+    /// Whether the wider shield hides a duty the quest involves (as of the last <see cref="RefreshClear"/>): the note
+    /// under the hero then offers "Reveal names in this quest", which reveals it with the rest (1.20.0 N6).
+    /// </summary>
+    private bool ClearDutyHidden()
+    {
+        foreach (var row in clearRows)
+        {
+            if (row.Hidden is not null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -143,6 +163,10 @@ public sealed partial class DetailPane
             if (row.Hidden is { } hidden)
             {
                 ShieldItem(SpoilerKind.Duty, hidden, row.Name, cut ? row.Name : null);
+            }
+            else if (row.StandIn is { } standIn)
+            {
+                ShieldItem(SpoilerKind.Duty, standIn, row.Name, cut ? row.Name : null, standIn: true);
             }
             else if (cut && Dalamud.Bindings.ImGui.ImGui.IsItemHovered())
             {

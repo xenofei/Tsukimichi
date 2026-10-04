@@ -342,16 +342,19 @@ public sealed class PlanPane
     /// <summary>The first quest of the view, in plan order, that can be started now and whose giver can be flagged; null when none.</summary>
     private QuestRecord? NextStop()
     {
-        if (nextStopKey == viewKey)
+        // Keyed on both shields too: a reveal, or the logged-in character moving on, can change which giver may be flagged.
+        var key = (viewKey, session.Spoilers.Fingerprint, session.LiveSpoilers.Fingerprint);
+        if (nextStopKey == key)
         {
             return nextStop;
         }
 
-        nextStopKey = viewKey;
+        nextStopKey = key;
         nextStop = null;
         foreach (var entry in view.Entries)
         {
-            if (entry.IsReady && links.CanFlagMap(entry.Quest))
+            // A giver in a place the story has not reached is never the next stop: no Flag leads there (1.20.0 N6).
+            if (entry.IsReady && links.CanFlagMap(entry.Quest) && !links.GiverPlaceHidden(entry.Quest))
             {
                 nextStop = entry.Quest;
                 break;
@@ -361,7 +364,7 @@ public sealed class PlanPane
         return nextStop;
     }
 
-    private (int Revision, ushort Kinds, bool Ready, int MaxExpansion) nextStopKey = (-2, 0, false, -1);
+    private ((int Revision, ushort Kinds, bool Ready, int MaxExpansion) View, int Viewed, int Live) nextStopKey = ((-2, 0, false, -1), 0, 0);
     private QuestRecord? nextStop;
 
     /// <summary>
@@ -495,6 +498,11 @@ public sealed class PlanPane
                 var zone = block.Zones[z];
                 ImGui.Spacing();
                 Chrome.FitText(ZoneLabel(zone), Theme.U32(Theme.Surface.TextTertiary));
+                if (HiddenZone(zone) is { } hidden)
+                {
+                    // A zone the story has not reached: its placeholder's hover and right-click (spec-1.20 N6).
+                    ShieldText.InteractItem(session, Core.Query.SpoilerKind.Area, hidden, ZoneLabel(zone), links: links);
+                }
 
                 for (var i = 0; i < zone.Entries.Count; i++)
                 {
@@ -810,16 +818,9 @@ public sealed class PlanPane
     private void DrawRowButtons(UiState ui, QuestRecord quest, Vector2 min, Vector2? travelBelow)
     {
         ImGui.SetCursorScreenPos(min);
-        if (TravelControls.FlagButton(Strings.PlanFlag, links.CanFlagMap(quest)))
-        {
-            links.FlagMap(quest);
-        }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(Strings.PlanFlagTooltip);
-        }
-
+        // No Flag for a giver in a place the story has not reached; its room stays, so Reveal does not move (1.20.0 N6).
+        TravelControls.FlagButtonFor(links, quest, Strings.PlanFlag, Strings.PlanFlagTooltip);
         ImGui.SameLine();
         if (TravelControls.RowButton("##reveal", ActionGlyphs.Reveal, Strings.PlanReveal))
         {
@@ -854,14 +855,17 @@ public sealed class PlanPane
 
         // Opened from the cards' child window (own font scale 1), so the menu scales itself.
         UiMetrics.ApplyFontScale();
-        if (ImGui.MenuItem(Strings.PlanFlag, enabled: links.CanFlagMap(quest)))
+        if (!links.GiverPlaceHidden(quest))
         {
-            links.FlagMap(quest);
-        }
+            if (ImGui.MenuItem(Strings.PlanFlag, enabled: links.CanFlagMap(quest)))
+            {
+                links.FlagMap(quest);
+            }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(Strings.PlanFlagTooltip);
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.PlanFlagTooltip);
+            }
         }
 
         TravelControls.MenuItems(links, quest, Strings.PlanTeleport);
@@ -1017,6 +1021,10 @@ public sealed class PlanPane
     /// <summary>Whether a card is unfolded: the first expansion shown opens by default, the rest start folded.</summary>
     private bool IsOpen(PlanExpansion block) =>
         open.TryGetValue(block.Expansion, out var isOpen) ? isOpen : view.Expansions.Count > 0 && view.Expansions[0].Expansion == block.Expansion;
+
+    /// <summary>The zone's own name while the shield shows its placeholder (1.20.0 N6); null when it shows the name.</summary>
+    private string? HiddenZone(PlanZone zone) =>
+        zone.MapId != 0 && zoneNames.TryGetValue(zone.MapId, out var name) && session.Spoilers.IsNameMasked(Core.Query.SpoilerKind.Area, name) ? name : null;
 
     private string ZoneLabel(PlanZone zone)
     {
