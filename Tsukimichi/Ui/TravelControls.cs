@@ -10,7 +10,7 @@ namespace Tsukimichi.Ui;
 /// Travel and walking; Stop while the character moves; greyed naming vnavmesh without it). <see cref="MenuItems"/> for a row's "…" or right-click menu,
 /// <see cref="Buttons"/> for a row's small buttons. Tooltips are composed only on hover.
 /// </summary>
-internal static class TravelControls
+internal static partial class TravelControls
 {
     /// <summary>
     /// Teleport, then Walk to giver and Go to giver (one Stop while moving), as menu items; each only while its

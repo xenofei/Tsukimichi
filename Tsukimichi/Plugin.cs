@@ -852,6 +852,7 @@ public sealed partial class Plugin : IDalamudPlugin
             }
         });
         // After the poller's last save: the heartbeat goes once nothing more is written for the character.
+        Unwind("linked folders", () => linkedFolders?.Dispose());
         Unwind("multibox", () =>
         {
             if (Multibox is not null)
@@ -1431,6 +1432,8 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.RunNextTick = action => _ = Framework.RunOnTick(action);
             configWindow.Overrides = moonlitPane;
             configWindow.Roster = Roster;
+            // Every character (1.21.0 P1, P3, N11): Up next, the roster, alt goals and the linked launcher folders.
+            WireRoster(mainWindow, charactersPane, configWindow, followed, () => moonlit.Catalog, () => dutyRuns.Value, dutyUnlocks, flightZones);
             configWindow.QuestText = QuestText;
             configWindow.OpenAboutAutomation = () => aboutAutomationWindow?.Show();
             // The optional portrait pack (1.20, F4, decision 8): the installed one is read from the config folder off the

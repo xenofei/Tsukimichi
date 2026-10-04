@@ -28,6 +28,7 @@ public sealed partial class Plugin
             Pins = () => runner.PinnedInOrder,
             Closest = () => nextStops.Stops.SelectMany(static stop => stop.Quests).Select(static q => q.Quest.RowId),
         };
+        guidanceCommand = guidance;
         command.Msq = guidance.Msq;
         command.Next = guidance.Next;
         command.Go = guidance.Go;

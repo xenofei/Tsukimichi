@@ -47,11 +47,13 @@ public sealed class LinkedFolderService : IDisposable
     private IReadOnlyList<LinkedCharacter> shown = [];
     private int ownVersion = -1;
 
-    public LinkedFolderService(Configuration settings, SessionState session, IPluginLog log)
+    public LinkedFolderService(Configuration settings, SessionState session, string ownConfigDir, IPluginLog log)
     {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownConfigDir);
+        OwnConfigDir = ownConfigDir;
         loop = Task.Run(() => RunAsync(lifetime.Token));
     }
 
@@ -66,6 +68,35 @@ public sealed class LinkedFolderService : IDisposable
             Update();
             return shown;
         }
+    }
+
+    /// <summary>This client's own Tsukimichi config folder (never linked to itself).</summary>
+    public string OwnConfigDir { get; }
+
+    /// <summary>
+    /// Links a folder the player typed or picked (<see cref="LinkedFolders.Resolve"/>: the Tsukimichi folder, its
+    /// <c>pluginConfigs</c> or the roaming folder above); false when it holds no characters folder, is this client's own
+    /// or is linked already. The caller saves the settings.
+    /// </summary>
+    public bool Link(string path)
+    {
+        if (LinkedFolders.Resolve(path) is not { } folder
+            || string.Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(OwnConfigDir)), folder, StringComparison.OrdinalIgnoreCase)
+            || settings.LinkedCharacterFolders.Contains(folder, StringComparer.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        settings.LinkedCharacterFolders.Add(folder);
+        Refresh();
+        return true;
+    }
+
+    /// <summary>Unlinks a folder; its characters leave the roster on the next pass. The caller saves the settings.</summary>
+    public void Unlink(string folder)
+    {
+        settings.LinkedCharacterFolders.RemoveAll(f => string.Equals(f, folder, StringComparison.OrdinalIgnoreCase));
+        Refresh();
     }
 
     /// <summary>Whether any folder is linked.</summary>

@@ -24,13 +24,17 @@ public sealed partial class CharactersPane
     private int listHiddenCount;
     private string listShowHiddenLabel = string.Empty;
 
-    // The centre column's view: -1 the dashboard, 0 the collection grid.
+    // The centre column's view: -1 the dashboard, 0 the collection grid, 1 All characters (1.21.0 P3).
     private int view = -1;
 
-    /// <summary>The Dashboard / Collection by character switch at the top of the centre column; true while the grid is chosen.</summary>
+    /// <summary>
+    /// The Dashboard / Collection by character / All characters switch at the top of the centre column, with the
+    /// roster's caption on its right while the roster shows; true while the grid is chosen.
+    /// </summary>
     private bool DrawViewSwitch()
     {
-        Chrome.SegmentedControl("##charactersView", ref view, Strings.AltsViewDashboard, [Strings.AltsViewCollection]);
+        Chrome.SegmentedControl("##charactersView", ref view, Strings.AltsViewDashboard, [Strings.AltsViewCollection, Strings.RosterView]);
+        DrawRosterCaption();
         ImGui.Spacing();
         return view == 0;
     }

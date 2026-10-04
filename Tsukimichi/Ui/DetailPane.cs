@@ -288,6 +288,8 @@ public sealed partial class DetailPane
             return;
         }
 
+        // The way back to Tonight (1.21.0 P1), on the pane's header row.
+        DrawTonightHeader();
         var detailHeight = ImGui.GetContentRegionAvail().Y;
 
         // Travel aims at the current step of a quest in the journal (1.21.0 P2, DetailPane.Step.cs), else at the giver.
@@ -545,6 +547,12 @@ public sealed partial class DetailPane
         if (model.Callout is null && Theme.HeroStyle == HeroStyle.Banner)
         {
             DrawStateLine();
+        }
+
+        // Your other characters (1.21.0 P3): one fixed-height line under the status, its hover the account table.
+        if (model.Quest is { } others)
+        {
+            DrawOtherCharacters(session, others);
         }
 
         // The journal path wraps on its "›", never inside a name (L5); the plate and the ledger carry it in their title block.
