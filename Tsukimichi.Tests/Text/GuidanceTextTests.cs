@@ -152,7 +152,7 @@ public sealed class GuidanceTextTests
     public void Go_says_where_and_how()
     {
         var line = GuidanceText.Go("The Long Road to Xak Tural", 70448, 3, "Erenville", new GuidancePlace("Shaaloani", 27f, 34.8f), GuidanceText.GoAction.TeleportFirst);
-        Assert.Equal("Going to step 3 of The Long Road to Xak Tural: Erenville, Shaaloani, X 27, Y 34.8. Teleporting first.", line.Text);
+        Assert.Equal("Going to The Long Road to Xak Tural, step 3: Erenville, Shaaloani, X 27, Y 34.8. Teleporting first.", line.Text);
         Assert.Equal("The Long Road to Xak Tural", line.QuestName);
         AssertPlain(line);
 

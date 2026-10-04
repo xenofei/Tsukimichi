@@ -266,13 +266,14 @@ public static class GuidanceText
     }
 
     /// <summary>
-    /// "Going to step 3 of The Long Road to Xak Tural: Erenville, Shaaloani, X 27, Y 34.8. Teleporting first." With no
-    /// step, the giver: "Going to the giver of Caught in the Act: Elaisse, The Pillars, X 7.8, Y 10.8. Walking there."
+    /// "Going to The Long Road to Xak Tural, step 3: Erenville, Shaaloani, X 27, Y 34.8. Teleporting first." (never
+    /// "step 3 of …", which reads as a tally). With no step, the giver: "Going to the giver of Caught in the Act:
+    /// Elaisse, The Pillars, X 7.8, Y 10.8. Walking there."
     /// </summary>
     public static GuidanceLine Go(string questName, uint questRowId, int step, string? target, GuidancePlace? place, GoAction action)
     {
         var head = step > 0
-            ? F("Core.Guidance.GoStep", "Going to step {0} of {1}:", step, NameMark)
+            ? F("Core.Guidance.GoStep", "Going to {0}, step {1}:", NameMark, step)
             : F("Core.Guidance.GoGiver", "Going to the giver of {0}:", NameMark);
         var parts = new List<string>(4);
         if (Speakable(target) is { Length: > 0 } name)

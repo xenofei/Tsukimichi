@@ -7282,7 +7282,7 @@
     <value>Say what's next in chat</value>
   </data>
   <data name="GuidanceSayNextHint" xml:space="preserve">
-    <value>After each step or quest you finish, prints the /tsuki next line as plain sentences, for text-to-speech. At most one line every 10 seconds, in Tsukimichi's own chat lines only.</value>
+    <value>After each step or quest you finish, prints the /tsuki next line for text-to-speech, at most one every 10 s.</value>
   </data>
   <data name="GuidanceSayNextExampleFormat" xml:space="preserve">
     <value>Example: {0}</value>
@@ -7401,7 +7401,7 @@
     <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
   </data>
   <data name="Core.Guidance.GoStep" xml:space="preserve">
-    <value>Going to step {0} of {1}:</value>
+    <value>Going to {0}, step {1}:</value>
     <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
   </data>
   <data name="Core.Guidance.GoGiver" xml:space="preserve">
