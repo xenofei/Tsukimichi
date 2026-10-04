@@ -21,7 +21,7 @@ Only under Dalamud's plugin configuration folder, `%AppData%\XIVLauncher\pluginC
 |---|---|
 | `Tsukimichi.json` | Your settings (Dalamud's own plugin configuration file) |
 | `Tsukimichi\characters\<id>.json` | One snapshot per character: quest states, levels and unlocks as last read |
-| `Tsukimichi\characters\<id>.dates.json`, `.accepted.json`, `.abandoned.json`, `.return.json` | Quest completion dates, when quests were accepted, abandoned quests, and the "Since you were away" state |
+| `Tsukimichi\characters\<id>.dates.json`, `.accepted.json`, `.abandoned.json`, `.return.json`, `.offers.json` | Quest completion dates, when quests were accepted, abandoned quests, the "Since you were away" state, and the quests the game showed you as available (its map markers and quest offers) |
 | `Tsukimichi\characters\<id>.prev.json`, `.prev2.json` | Daily backups of the snapshot ([how to restore them](restore-backup.md)) |
 | `Tsukimichi\characters\<id>.live.json` | While that character is logged in: who is logged in, for a second game client |
 | `Tsukimichi\user\pins.json`, `overrides.json`, `discovery.json`, `characters.json` | Pins, your Moonlit verdicts, Nearby settings, per-character settings |

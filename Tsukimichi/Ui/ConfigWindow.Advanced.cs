@@ -199,8 +199,8 @@ public sealed partial class ConfigWindow
 
     /// <summary>
     /// Settings › Advanced › Diagnostics (About, folded in): the plugin's version, the reward data's stamp, the game
-    /// version warning, the curated lists, the quest list with Retry after a failed build, and the refresh timing. Folded
-    /// until asked for.
+    /// version warning, the curated lists, the quest list with Retry after a failed build, the refresh timing, and what
+    /// the game's own offers say (ConfigWindow.GameOffers.cs). Folded until asked for.
     /// </summary>
     private void DrawDiagnostics()
     {
@@ -238,6 +238,7 @@ public sealed partial class ConfigWindow
             }
 
             DrawCatalogFailure();
+            DrawGameOffers();
         }
 
         EndSetting();

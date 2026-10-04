@@ -29,6 +29,7 @@ namespace Tsukimichi.Core.Diagnostics;
 /// quirk: Up in Arms is optional once the Zenith is in hand …   (only when curated/quirks.json names the quest)
 /// questionable: agrees; not locked   (only when Questionable is loaded)
 /// questionable more: path yes; list #3; unobtainable no, agrees   (what Questionable's other gates answered)
+/// in game: offered on the map 2026-10-03T08:00:00Z; agrees   (when the game showed the quest, C1)
 /// inputs: job WHM 31, msq 66043, tribe 1 rank 2 rep 0
 /// captured: 2026-09-28T21:14:02Z live
 /// ```
@@ -85,6 +86,7 @@ public static class QuestDiagnostic
         AppendRequirements(sb, inputs);
         AppendQuirk(sb, inputs);
         AppendQuestionable(sb, inputs);
+        AppendGameOffer(sb, inputs);
         AppendInputs(sb, inputs);
 
         sb.Append("captured: ");
@@ -161,6 +163,18 @@ public static class QuestDiagnostic
         if (inputs.QuestionableMore is { } more && Ipc.QuestionableWiderCheck.DiagnosticText(more, inputs.Evaluation?.State) is { Length: > 0 } text)
         {
             sb.Append("questionable more: ").Append(text).Append('\n');
+        }
+    }
+
+    /// <summary>
+    /// What the game's own offers say (feature plan v7, C1): "in game: offered on the map 2026-10-03T08:00:00Z; agrees",
+    /// "…; disagrees: tsukimichi Blocked". A disagreement is the line a triager looks for.
+    /// </summary>
+    private static void AppendGameOffer(StringBuilder sb, DiagnosticInputs inputs)
+    {
+        if (inputs.GameOffer is { } check && GameOfferChecks.DiagnosticText(check, inputs.Evaluation) is { Length: > 0 } text)
+        {
+            sb.Append("in game: ").Append(text).Append('\n');
         }
     }
 
