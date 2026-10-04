@@ -13,7 +13,8 @@ Light: one natural light, the sun below the horizon behind the city (gx), plus o
   lantern lays a small warm pool on the snow at their feet.
 - The waning crescent is lit on its sun-facing (lower-left) limb.
 
-Run: py -3 paint_option_b.py -> ../optionb/evercold-b-base.png (1120 x 440); option_b_themes.py imports paint().
+This is the painter for release key evercold-b in painters_b.PAINTERS. Run: py -3 painters_b.py evercold-b
+(-> ../optionb/evercold-b-base.png and evercold-b-masks.npz). option_b_themes.py imports kuwahara() from here.
 """
 import math
 import pathlib
@@ -158,15 +159,6 @@ def paint():
             city = np.maximum(city, c.poly([(px_ - 2.5, body_top + 20), (px_ + 2.5, body_top + 20), (px_, body_top - 18)], 0.6))
     # the Vault's nave between its paired spires: a steep gable under them
     city = np.maximum(city, c.poly([(0.582 * W, top_y + 4), (0.620 * W, top_y + 4), (0.620 * W, 0.300 * H), (0.601 * W, 0.255 * H), (0.582 * W, 0.300 * H)], 0.8))
-    # two of the Pillars, flat-topped towers, joined high up by an arched bridge
-    for px0 in (0.712, 0.748):
-        city = np.maximum(city, c.poly([(px0 * W - 9, top_y + 6), (px0 * W + 9, top_y + 6), (px0 * W + 8, 0.335 * H), (px0 * W - 8, 0.335 * H)], 0.8))
-        city = np.maximum(city, c.poly([(px0 * W - 11, 0.335 * H), (px0 * W + 11, 0.335 * H), (px0 * W + 11, 0.325 * H), (px0 * W - 11, 0.325 * H)], 0.6))
-    deck_top, deck_bot = 0.360 * H, 0.372 * H
-    bx_a, bx_b = 0.712 * W + 8, 0.748 * W - 8
-    bridge = c.poly([(bx_a, deck_top), (bx_b, deck_top), (bx_b, deck_bot + 14), (bx_a, deck_bot + 14)], 0.6)
-    arch = c.ellipse((bx_a + bx_b) / 2, deck_bot + 26, (bx_b - bx_a) / 2 - 2, 22, 0.6)
-    city = np.maximum(city, np.clip(bridge - arch, 0, 1))
     # walls, roofs and the Pillars' terraces along the top of the bluff
     for i in range(90):
         x = (0.48 + 0.31 * rng.random()) * W
@@ -181,14 +173,6 @@ def paint():
     M["city"] = city.copy()
     crim = np.clip(city - np.roll(city, -2, axis=1), 0, 1) * (c.yy < top_y + 6) * (0.35 + 0.65 * np.exp(-((c.xx - gx) / (0.20 * W)) ** 2))
     c.add(hexc("#FFD0A0"), crim * 0.9)
-    win = np.zeros((H, W), np.float32)
-    for i in range(34):
-        wx_ = (0.50 + 0.28 * rng.random()) * W
-        wy_ = top_y - rng.random() * 0.06 * H
-        if city[int(wy_), int(wx_)] > 0.99 and city[int(wy_) - 3, int(wx_)] > 0.99 and city[int(wy_) + 3, int(wx_)] > 0.99:
-            win = np.maximum(win, c.ellipse(wx_, wy_, 1.3, 1.8, 0.4))
-    c.add(hexc("#FFC37A"), win * 0.9)
-    c.add(hexc("#FFB060"), blur(win, 5) * 1.1)
     # the bluff's cliff below the city: rock face in shadow, snow on its ledges
     cliff = c.below_curve(bt, 1.2) * (c.yy > top_y + 4)
     M["cliff"] = cliff
@@ -309,6 +293,7 @@ def paint():
     c.add(hexc("#FFC9A0"), rimf * 0.85)
     c.add(hexc("#9AA6D8"), top_edge(figs, 2) * 0.22)
     # the lantern: its glow, a warm bounce on the chocobo's chest and on the adventurer's arm, a foreshortened pool
+    c.over(hexc("#141A33"), c.poly([(ax + 38.6, ay - 84), (ax + 40.6, ay - 84), (lpx + 1.0, lpy + 1), (lpx - 1.0, lpy + 1)], 0.5))
     c.over(hexc("#FFD48E"), lan)
     c.add(hexc("#FFB466"), blur(lan, 10) * 1.6)
     c.add(hexc("#FFB466"), np.exp(-((c.xx - lpx) ** 2 + (c.yy - lpy) ** 2) / (2 * 70 ** 2)) * 0.14)
@@ -328,10 +313,5 @@ def paint():
 
 
 if __name__ == "__main__":
-    OUT.mkdir(exist_ok=True)
-    c, M = paint()
-    c.save(OUT / "evercold-b-base.png", (1120, 440), grain=0.008, seed=3)
-    from PIL import Image
-    small = {k: np.asarray(Image.fromarray((np.clip(v, 0, 1) * 255).astype(np.uint8)).resize((1120, 440), Image.LANCZOS), np.float32) / 255 for k, v in M.items()}
-    np.savez_compressed(OUT / "src-masks.npz", **small)
-    print("evercold-b-base.png")
+    import painters_b
+    painters_b.run("evercold-b")

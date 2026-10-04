@@ -5323,7 +5323,8 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     var h = '<div class="' + cls + '">' + (lv === "full" ? corners22(T.kit) : "");
     h += '<div class="wh">' + (lv === "plain" ? "" : mi22(th, 22, { lv: lv, fx: false }).replace('class="mi22"', 'class="mi22" style="margin:-15px -14px"')) + '<span class="ey">What\'s new</span>' +
       '<span class="vc">' + (o.from ? "You were on " + o.from : "") + '</span><span class="x" title="Close">' + I22.x + "</span></div>";
-    if (lv !== "plain") h += '<div class="art"><img src="' + V8 + "art/themed/" + o.page + "-" + th + (lv === "quiet" ? "-quiet" : "") + '.png" alt=""></div>';
+    // Option B art (the owner's choice): each theme's own treatment; Quiet shows the Classic painting
+    if (lv !== "plain") h += '<div class="art"><img src="' + V8 + "art/optionb/" + o.page + "-b-" + (lv === "quiet" ? "classic" : th) + '.png" alt=""></div>';
     h += '<div class="wtt">' + R.name + '</div><div class="wst">Tsukimichi ' + R.v + " · " + R.date + "</div>";
     h += '<div class="ptw"><ul class="pts">' + R.pts.map(function (p) { return "<li><b>" + p[0] + "</b> " + p[1] + "</li>"; }).join("") + "</ul>" + (o.scroll ? '<i class="sbar"><i></i></i>' : "") + "</div>";
     var idx = o.idx || 1, tot = o.total || 1;
@@ -5333,10 +5334,10 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   function scene22(inner, img, pad, extra) { return '<div class="sc22' + (extra || "") + '"><div class="bg" style="background-image:url(' + SCN + (img || "scene-night.jpg") + ')"></div><div class="fg" style="padding:' + (pad || 16) + 'px">' + inner + "</div></div>"; }
   function cap22(t, s) { return '<figcaption><b>' + t + "</b>" + (s ? " <i>· " + s + "</i>" : "") + "</figcaption>"; }
 
-  function board_wn22a() { return boardWn22("evercold", 3, "1.22 · What's new, page 3 of 4", "A player on 1.18.0 updates to 1.22.0: four releases arrived, so four pages, newest first (1.22.0, 1.21.0, then these two). The popup keeps the height of its tallest page (page 4 has five points), so ‹ › never moves. One painting per release, restyled by each theme (decision 1)."); }
-  function board_wn22b() { return boardWn22("answers", 4, "1.22 · What's new, page 4 of 4", "The same popup on its last page, 1.19.0 Right answers: five points, the most a release gets. The moonlit road is the same painting in every theme; each theme's grade and motif layer restyle it, and the kit draws the frame."); }
+  function board_wn22a() { return boardWn22("evercold", 3, "1.22 · What's new, page 3 of 4", "A player on 1.18.0 updates to 1.22.0: four releases arrived, so four pages, newest first (1.22.0, 1.21.0, then these two). The popup keeps the height of its tallest page (page 4 has five points), so ‹ › never moves. Option B art: one painting per release in each theme's own treatment (decision 1)."); }
+  function board_wn22b() { return boardWn22("answers", 4, "1.22 · What's new, page 4 of 4", "The same popup on its last page, 1.19.0 Right answers: five points, the most a release gets. The moonlit road is one painting, rendered in each theme's own craft (Option B); the kit draws the frame."); }
   function boardWn22(page, idx, title, sub) {
-    var h = '<div class="board b15 b22"><h2>' + title + "<small>" + sub + '</small></h2><div class="row">';
+    var h = '<div class="board b15 b22"><h2>' + title + " · Option B art<small>" + sub + '</small></h2><div class="row">';
     TH22.forEach(function (T) {
       h += "<figure>" + scene22(popup22(T.k, { lv: "full", page: page, idx: idx, total: 4, from: "1.18.0" })) + cap22(T.name, T.paln + " palette · " + T.kitn + " frames") + "</figure>";
     });
@@ -5345,10 +5346,10 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 
   // ---------- W1 states ----------
   function board_wn22s() {
-    var h = '<div class="board b15 b22"><h2>1.22 · The popup: states<small>The first page anyone sees in 1.22 (Full, Medallion), Quiet and Plain, one release with no pager (a player on 1.21), and Text size 150 % on a short and a long page. The width is fixed; only height follows the text.</small></h2>';
+    var h = '<div class="board b15 b22"><h2>1.22 · The popup: states · Option B art<small>The first page anyone sees in 1.22 (Full, Medallion), Quiet and Plain, one release with no pager (a player on 1.21), and Text size 150 % on a short and a long page. The width is fixed; only height follows the text.</small></h2>';
     h += '<div class="row">';
-    h += "<figure>" + scene22(popup22("medallion", { lv: "full", page: "welcome", idx: 1, total: 4, from: "1.18.0" })) + cap22("Full, page 1 of 4", "1.22.0 Welcome home: the kit frame, the graded art with its motif, the Eyebrow, Title face") + "</figure>";
-    h += "<figure>" + scene22(popup22("medallion", { lv: "quiet", page: "evercold", idx: 3, total: 4, from: "1.18.0" })) + cap22("Quiet", "a tonal card and a hairline; the header keeps the theme's moon; the art is graded with no motif layer") + "</figure>";
+    h += "<figure>" + scene22(popup22("medallion", { lv: "full", page: "welcome", idx: 1, total: 4, from: "1.18.0" })) + cap22("Full, page 1 of 4", "1.22.0 Welcome home: the kit frame, the theme's Option B art, the Eyebrow, Title face") + "</figure>";
+    h += "<figure>" + scene22(popup22("medallion", { lv: "quiet", page: "evercold", idx: 3, total: 4, from: "1.18.0" })) + cap22("Quiet", "a tonal card and a hairline; the header keeps the theme's moon; the art is the Classic painting") + "</figure>";
     h += "<figure>" + scene22(popup22("medallion", { lv: "plain", page: "evercold", idx: 3, total: 4, from: "1.18.0" })) + cap22("Plain", "no art (nothing is loaded), the ledger band, flat buttons") + "</figure>";
     h += '</div><div class="row">';
     h += "<figure>" + scene22(popup22("astrologian-orrery", { lv: "full", page: "welcome", one: true })) + cap22("One release", "a player on 1.21: no pager and no “You were on”") + "</figure>";
@@ -5378,7 +5379,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   };
   var ARTNOTE22 = { "medallion": "as painted", "classic": "softer, a little cooler", "ishgard-glass": "milky daylight grade, rime at the corners", "aether-crystal": "cool highlights, shards far from the moon", "astrologian-orrery": "plum and dawn gold, orbits clear of the moon", "sumi-to-kinpaku": "ink grade, gold dust in the top corners" };
   function board_art22() {
-    var h = '<div class="board b15 b22"><h2>1.22 · Release art: one painting, six looks<small>Decision 1. Each release has one painting (1120 × 440, the 2x tier of the 560 × 220 art band). Each theme restyles it with a grade and its kit\'s motif layer; the frame comes from the kit. Quiet keeps the grade only; Plain shows no art. These are the four releases of the first popup: 1.22.0, 1.21.0, 1.20.0, 1.19.0.</small></h2>';
+    var h = '<div class="board b15 b22"><h2>1.22 · Release art, Option A (the approved fallback): one painting, six looks<small>Decision 1. Each release has one painting (1120 × 440, the 2x tier of the 560 × 220 art band). Each theme restyles it with a grade and its kit\'s motif layer; the frame comes from the kit. Quiet keeps the grade only; Plain shows no art. These are the four releases of the first popup: 1.22.0, 1.21.0, 1.20.0, 1.19.0.</small></h2>';
     ["welcome", "whatnext", "evercold", "answers"].forEach(function (rel) {
       var R = REL22[rel];
       h += "<h3>" + R.v + " · " + R.name + " · " + ART22[rel][0] + "</h3>";
@@ -5402,7 +5403,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 
   // ---------- Decision 1, Option B: one release with a distinct treatment per theme ----------
   var OPTB22 = {
-    "medallion": "an oil painting: heavier impasto, warm varnish, faint craquelure only in the thick paint, a slim gilt slip lit from the upper left inside the popup's own brass frame",
+    "medallion": "visibly oil: an amber varnish, brush strokes lit from the upper left, faint craquelure in the thick paint, a deeper vignette, a slim gilt slip (the popup drops its art keyline here)",
     "classic": "the painting as painted",
     "ishgard-glass": "a stained-glass window whose lead follows the drawing: large sky pieces, clouds cut along their edges, snow as contour strips, grisaille figures and spires, a white glass crescent, an amber lantern piece",
     "aether-crystal": "cut moonstone over the sky and the far range only: facets shaded as on domed gems lit from the upper left, a faint blue adularescent sheen; the ground and figures stay clear",
@@ -5410,13 +5411,13 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     "sumi-to-kinpaku": "sumi-e on toned washi: ink washes by depth, bare-paper snow, one tapered dry-brush stroke for the ridge, genji-gumo gold bands with gold-dust edges, kirigane in the bands and corners, a seal carved with a crescent"
   };
   function board_optb22() {
-    var h = '<div class="board b15 b22"><h2>Decision 1 · Option A or Option B<small>1.20.0 Before Evercold in both options. Option A (recommended in the plan): one painting, restyled per theme by a grade and a motif layer. Option B: a richer painting, rendered in a distinct art treatment per theme. Each row is one theme: A on the left, B on the right, at the popup\'s art size.</small></h2>';
+    var h = '<div class="board b15 b22"><h2>Decision 1 · Option A or Option B<small>1.20.0 Before Evercold in both options. The owner chose Option B for every release. Option A (the approved fallback): one painting, restyled per theme by a grade and a motif layer. Option B: a richer painting, rendered in a distinct art treatment per theme. Each row is one theme: A on the left, B on the right, at the popup\'s art size.</small></h2>';
     h += '<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><figure style="width:560px;flex:none"><img src="' + V8 + 'art/optionb/evercold-b-base.png" width="560" height="220" style="border-radius:4px;display:block">' +
-      cap22("Option B's painting", "dawn over Coerthas: Ishgard on its bluff (the Vault's paired spires, two of the Pillars and their bridge), backlit by the sun still under the horizon; an adventurer with a lantern and her chocobo, rim-lit, with short soft shadows from their feet; the lantern warms the chocobo's chest and the snow. One natural light and one warm practical light.") + "</figure>";
+      cap22("Option B's painting", "dawn over Coerthas: Ishgard on its bluff (the Vault's paired spires), backlit by the sun still under the horizon, no lit windows; an adventurer with a lantern on a bail and her chocobo, rim-lit, with short soft shadows from their feet; the lantern warms the chocobo's chest and the snow. One natural light and one warm practical light.") + "</figure>";
     h += '<div class="spec" style="width:760px"><table><tr><th></th><th>Option A · one painting, restyled</th><th>Option B · one painting, six treatments</th></tr>' +
       "<tr><td>Art per release</td><td>1 painting (about a day with supervision) plus its moon's place; the six restyles are automatic</td><td>1 richer painting (2 to 3 days) plus its region masks; the six treatments are code, but each release needs a check of all six, since a treatment can break a new composition (a band across a figure, a came line through a face)</td></tr>" +
-      "<tr><td>Ships</td><td>1 base image per release (about 180 KB JPEG) and six motif sprite sheets once</td><td>1 base image (about 250 KB) and a mask file (about 250 KB) per release, or six pre-rendered images (about 2.4 MB per release)</td></tr>" +
-      "<tr><td>Texture</td><td>one 1120 × 440 texture while the popup is open (1.9 MB), released on close</td><td>the same one texture (1.9 MB); composing takes longer (the glass and facet passes are about 0.3 s on a worker), so the theme's flat sky shows for a moment first</td></tr>" +
+      "<tr><td>Ships</td><td>1 base image per release (about 180 KB JPEG) and six motif sprite sheets once</td><td>six pre-rendered JPEGs per release: about 450 KB for this one (budget 600 KB); about 4 MB for all nine releases</td></tr>" +
+      "<tr><td>Texture</td><td>one 1120 × 440 texture while the popup is open (1.9 MB), released on close</td><td>the same one texture (1.9 MB); pre-rendered, so it only decodes</td></tr>" +
       "<tr><td>Each theme</td><td>looks like its palette; Medallion and Classic are almost the same</td><td>looks like its own craft: oil, glass, crystal, engraving, ink and gold</td></tr>" +
       "<tr><td>Risk</td><td>low: a grade cannot break a picture</td><td>higher: treatments must keep the subject legible at 560 × 220 and in Quiet; the owner sees six pictures per release to approve</td></tr></table>" +
       '<p style="margin:8px 0 0">Every treatment keeps the painting\'s light: none adds a light of its own, and the lantern stays the one warm practical light. Quiet would show the Classic painting graded to the palette; Plain shows no art in either option.</p></div></div>';
@@ -5434,7 +5435,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   // ---------- W3, U1, M3: Settings › About ----------
   var HIST22 = [["1.22.0", "Welcome home", "5 Oct", "welcome"], ["1.21.0", "What next, for every character", "4 Oct", "whatnext"], ["1.20.0", "Before Evercold", "4 Oct", "evercold"],
     ["1.19.0", "Right answers", "4 Oct", "answers"], ["1.18.0", "Runs you can trust", "3 Oct", "banners/grand-company"], ["1.17.0", "Mix and match", "3 Oct", "banners/chronicles"]];
-  function histImg22(src, th) { return src.indexOf("banners/") === 0 ? "../../../../Tsukimichi/assets/ui/" + src + "@2x.png" : V8 + "art/themed/" + src + "-" + th + ".png"; }
+  function histImg22(src, th) { return src.indexOf("banners/") === 0 ? "../../../../Tsukimichi/assets/ui/" + src + "@2x.png" : V8 + "art/optionb/" + src + "-b-" + th + ".png"; }
   function settings22(th, o) {
     o = o || {};
     var T = th22(th);
@@ -5459,7 +5460,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     return h + "</div></div>";
   }
   function board_about22() {
-    var h = '<div class="board b15 b22"><h2>1.22 · Settings › About<small>W3: every release\'s popup, newest first, backfilled to 1.14.0 (row hovered: 1.20.0). U1: the update switch, on by default. M3: the Umbra status row and how to add the add-on. Medallion on Night, Full.</small></h2><div class="row">';
+    var h = '<div class="board b15 b22"><h2>1.22 · Settings › About · Option B art<small>W3: every release\'s popup, newest first, backfilled to 1.14.0 (row hovered: 1.20.0). U1: the update switch, on by default. M3: the Umbra status row and how to add the add-on. Medallion on Night, Full.</small></h2><div class="row">';
     h += "<figure>" + settings22("medallion") + cap22("About, up to date", "a row opens the popup on that release; ‹ › then walks the whole history") + "</figure>";
     h += '<figure style="gap:10px">' + scene22(popup22("medallion", { lv: "full", page: "evercold", idx: 3, total: 9 }), "scene-night.jpg", 14) + cap22("Opened from the list", "the same popup, 3 of 9; no “You were on” caption, since it was not an update") + "</figure>";
     return h + "</div></div>";
