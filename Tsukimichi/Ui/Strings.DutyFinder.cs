@@ -31,6 +31,11 @@ static partial class Strings
     /// <summary>Folded quest count: {0} is how many more quests also unlock the duty.</summary>
     public static string DutyHintMoreFormat => Loc.Get("DutyHintMoreFormat");
 
+    /// <summary>The caption for a selected roulette (1.19.0, N4).</summary>
+    public static string DutyHintRouletteCaption => Loc.Get("DutyHintRouletteCaption");
+
+    public static string DutyHintRouletteRouteTooltip => Loc.Get("DutyHintRouletteRouteTooltip");
+
     public static string DutyHintSetting => Loc.Get("DutyHintSetting");
 
     public static string DutyHintSettingHint => Loc.Get("DutyHintSettingHint");

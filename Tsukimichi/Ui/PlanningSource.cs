@@ -482,7 +482,7 @@ public sealed class PlanningSource
             text.Append('\n').Append(othersLine);
         }
 
-        if (ItemLevelWall.For(highest, snapshot, ItemLevelRule.For(bundle.Catalog)) is { Met: false } wall)
+        if (ItemLevelWall.For(highest, snapshot, ItemLevelRule.For(bundle.Catalog), bundle.DutyJobs()) is { Met: false } wall)
         {
             text.Append('\n').Append(string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpWallFormat, wall.Required, wall.Have));
         }

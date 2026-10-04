@@ -118,6 +118,9 @@ static partial class Strings
 
     public static string DutyBoardNotRead => Loc.Get("DutyBoardNotRead");
 
+    /// <summary>A roulette a stored capture of an older duty list cannot judge.</summary>
+    public static string DutyBoardUnknownState => Loc.Get("DutyBoardUnknownState");
+
     /// <summary>{0} = the roulette's short name ("Level Cap Dungeons").</summary>
     public static string DutyBoardRouletteFormat => Loc.Get("DutyBoardRouletteFormat");
 

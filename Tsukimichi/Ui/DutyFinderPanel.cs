@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
@@ -10,10 +11,13 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The Duty Finder unlock hint (P13), drawn side: a small borderless window beside the game's Duty Finder while a
-/// padlocked duty is selected (<see cref="DutyFinderHint.Current"/>): "Locked duty", the duty's icon and name, then per
-/// quest that unlocks it "Unlocked by:" with its state moon and name, <see cref="Core.Evaluation.BlockerText.StatusText"/>
-/// under it in the quieter tone (the quest done: in the dimmed accent), and the buttons Reveal in Tsukimichi and Flag
-/// giver.
+/// padlocked duty is selected (<see cref="DutyFinderHint.Current"/>): "Locked duty", the duty's icon and name, its clear
+/// badges (1.19.0, C7), then per quest that unlocks it "Unlocked by:" with its state moon and name,
+/// <see cref="Core.Evaluation.BlockerText.StatusText"/> under it in the quieter tone (the quest done: in the dimmed
+/// accent), and the buttons Reveal in Tsukimichi and Flag giver. For a selected roulette with something left
+/// (<see cref="DutyFinderHint.CurrentRoulette"/>, 1.19.0 N4) it shows the Duties card's block instead: the roulette and
+/// its state, then its first duties not unlocked, each with its size badge, "not unlocked · with" the quest that unlocks
+/// it and Reveal, and Route to unlock over those quests.
 /// <para>
 /// Drawn from <c>UiBuilder.Draw</c>, outside the window system, so it has no chrome; unlike the item hover hint it takes
 /// clicks. Since 1.8.0 it draws in the frame the 1.7 panels share (<see cref="GamePanelShell"/>, R3 #11): placed by
@@ -34,8 +38,12 @@ public sealed class DutyFinderPanel
     private readonly GamePanelShell shell = new(Strings.DutyHintWindowId);
     private readonly Action drawContent;
 
-    // The model this frame's content draws.
+    /// <summary>The panel's size key of a roulette: apart from every ContentFinderCondition id.</summary>
+    private const uint RouletteKey = 0x8000_0000;
+
+    // The model this frame's content draws: a duty's, or a roulette's.
     private DutyHintModel? model;
+    private RouletteHintModel? roulette;
 
     /// <param name="textures">Draws the duty's icon.</param>
     /// <param name="reveal">Opens the main window on the quest (the Journal reveal every in-world surface uses).</param>
@@ -51,12 +59,16 @@ public sealed class DutyFinderPanel
     /// <summary>Opens the route to the duty (set by the plugin, which builds the target); null hides "Route to unlock".</summary>
     public Action<DutyHintModel>? OpenRoute { get; set; }
 
+    /// <summary>Opens the route over a roulette's unlock quests (1.19.0, N4); null hides its "Route to unlock".</summary>
+    public Action<Core.Route.RouteTarget>? OpenRouteTarget { get; set; }
+
     /// <summary><c>UiBuilder.Draw</c> handler.</summary>
     public void Draw()
     {
         // Off, paused by the kill switch, closed, unlocked or unknown: the hint answers null before any game read.
         var current = hint.Current();
-        if (current is null || !hint.TryGetWindowRect(out var target))
+        var currentRoulette = current is null ? hint.CurrentRoulette() : null;
+        if ((current is null && currentRoulette is null) || !hint.TryGetWindowRect(out var target))
         {
             // The last duty's panel lingers a moment (feature plan v6 M2), so arrowing past an unlocked duty keeps it up.
             shell.Linger(drawContent);
@@ -66,13 +78,26 @@ public sealed class DutyFinderPanel
         // A new duty or another number of quests changes the size; a session change that only rewords a status line
         // does not, so it keeps the panel visible and clickable.
         model = current;
-        shell.Draw(in target, current.ContentFinderConditionId, current.Quests.Count, drawContent);
+        roulette = currentRoulette;
+        if (current is not null)
+        {
+            shell.Draw(in target, current.ContentFinderConditionId, current.Quests.Count, drawContent);
+        }
+        else if (currentRoulette is not null)
+        {
+            shell.Draw(in target, RouletteKey | currentRoulette.RouletteId, currentRoulette.Rows.Count, drawContent);
+        }
     }
 
     private void DrawContent()
     {
         if (model is not { } m)
         {
+            if (roulette is { } r)
+            {
+                DrawRoulette(r);
+            }
+
             return;
         }
 
@@ -103,6 +128,9 @@ public sealed class DutyFinderPanel
                 openRoute(m);
             }
         }
+
+        // How you'll clear it (C7): the duty's badges on a line of their own under its name.
+        DrawBadges(m.Badges);
 
         var quests = m.Quests;
         for (var i = 0; i < quests.Count; i++)
@@ -138,6 +166,76 @@ public sealed class DutyFinderPanel
         if (m.MoreText.Length > 0)
         {
             ImGui.TextDisabled(m.MoreText);
+        }
+    }
+
+    /// <summary>A run of badges, side by side, as one line; nothing for none.</summary>
+    private void DrawBadges(IReadOnlyList<DutyBadges.Look> badges)
+    {
+        for (var i = 0; i < badges.Count; i++)
+        {
+            if (i > 0)
+            {
+                ImGui.SameLine(0f, DutyBadges.RunGap);
+            }
+
+            DutyBadges.Draw(badges[i], textures);
+        }
+    }
+
+    /// <summary>
+    /// A roulette with something left, as the Duties card's block (spec-1.19 N4): its name and Route to unlock, its state
+    /// in the quieter tone, then per duty not unlocked its name and size badge, "not unlocked · with" the quest, and
+    /// Reveal.
+    /// </summary>
+    private void DrawRoulette(RouletteHintModel r)
+    {
+        GamePanelShell.Caption(Strings.DutyHintRouletteCaption);
+        Chrome.SemiboldText(r.Header, Theme.Surface.Text);
+        if (OpenRouteTarget is { } openRoute && r.Route is { } route)
+        {
+            ImGui.SameLine();
+            if (shell.Button(ActionGlyphs.Route, Strings.DutyHintRoute, Strings.DutyHintRouletteRouteTooltip))
+            {
+                openRoute(route);
+            }
+        }
+
+        GamePanelShell.Quiet(r.State);
+        var rows = r.Rows;
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            using var id = ImRaii.PushId(i);
+            ImGui.Spacing();
+            ImGui.TextUnformatted(row.Duty);
+            if (row.Badges.Count > 0)
+            {
+                ImGui.SameLine();
+                DrawBadges(row.Badges);
+            }
+
+            using (ImRaii.PushColor(ImGuiCol.Text, GamePanelShell.QuietTone))
+            {
+                ImGui.TextUnformatted(row.Trailing);
+            }
+
+            if (row.Quest is not { } quest)
+            {
+                continue;
+            }
+
+            ImGui.SameLine(0f, 0f);
+            ImGui.TextUnformatted(row.QuestName);
+            if (shell.Button(ActionGlyphs.Reveal, Strings.DutyHintReveal, Strings.DutyHintRevealHint))
+            {
+                reveal(quest);
+            }
+        }
+
+        if (r.MoreText.Length > 0)
+        {
+            ImGui.TextDisabled(r.MoreText);
         }
     }
 }

@@ -6,6 +6,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Evaluation;
+using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
@@ -187,7 +188,16 @@ public sealed partial class DetailPane
         var label = Strings.RequirementName(result.Req.Kind);
         if (result.Met)
         {
-            return new RequirementLine(true, isNext, label, detail);
+            return new RequirementLine(true, isNext, label, detail) { IsClassJob = result.Req is ClassJobRequirement };
+        }
+
+        // An unmet Job line names the one job the quest requires and the one you are on (spec-1.19 C8): "Culinarian ·
+        // you're on Dragoon"; Switch gearset sits under it.
+        if (result.Req is ClassJobRequirement && GearsetChoice.PinnedJob(quest, session.Context) is { } pinned
+            && session.ViewedSnapshot is { CurrentJob: not 0 } viewed
+            && bundle.Names.ClassJob(pinned) is { Length: > 0 } required && bundle.Names.ClassJob(viewed.CurrentJob) is { Length: > 0 } on)
+        {
+            detail = string.Format(CultureInfo.CurrentCulture, Strings.JobRequirementDetailFormat, required, on);
         }
 
         var gap = NotYetText.Gap(result.Req);
@@ -196,7 +206,7 @@ public sealed partial class DetailPane
         var tooltip = jump == 0
             ? null
             : string.Format(CultureInfo.CurrentCulture, Strings.DetailJumpTooltipFormat, session.Spoilers.DisplayName(bundle.Catalog, jump, jump.ToString(CultureInfo.InvariantCulture)));
-        return new RequirementLine(false, isNext, label, detail, gap?.Fraction ?? 0f, gapText, jump, tooltip);
+        return new RequirementLine(false, isNext, label, detail, gap?.Fraction ?? 0f, gapText, jump, tooltip) { IsClassJob = result.Req is ClassJobRequirement };
     }
 
     /// <summary>The sheet icons of the requirement lines (UI-5e); null until the plugin attaches them, or while they are read.</summary>
@@ -356,6 +366,12 @@ public sealed partial class DetailPane
             if (!line.Met && line.GapText is { } gapText)
             {
                 bottom = DrawGapMeter(dl, new Vector2(valueLeft, bottom + UiMetrics.Px(3f)), valueRoom, line.GapFraction, gapText);
+            }
+
+            // Switch gearset under the unmet Job requirement (spec-1.19 C8).
+            if (!line.Met && line.IsClassJob)
+            {
+                bottom = DrawGearsetUnderJob(textLeft, bottom);
             }
 
             if (hasJump)

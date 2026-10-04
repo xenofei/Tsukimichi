@@ -35,6 +35,14 @@ public sealed record ExpAdvice(ExpReward Reward, JobExp Current, bool CurrentTak
 {
     /// <summary>Whether <see cref="Best"/> is another job worth naming.</summary>
     public bool NamesOther => Best is { } best && best.Job != Current.Job && Warning != ExpWarning.None;
+
+    /// <summary>
+    /// Another of the character's jobs at the level cap that could hand the quest in and would get nothing (spec-1.19
+    /// C8: "your SGE is capped, 0"); null when none is. The game keeps no record of which job was used last, so the
+    /// capped job named is the one the character keeps best geared (the highest gearset item level), then the lowest
+    /// row id.
+    /// </summary>
+    public JobExp? Capped { get; init; }
 }
 
 /// <summary>
@@ -95,7 +103,43 @@ public static class ExpAdvisor
             : current.Exp == 0 && top.Exp > 0 ? ExpWarning.Capped
             : top.Exp > 2 * current.Exp ? ExpWarning.LessThanBest
             : ExpWarning.None;
-        return new ExpAdvice(reward, current, currentTakes, best, warning);
+        return new ExpAdvice(reward, current, currentTakes, best, warning) { Capped = CappedOther(quest, snapshot, context, isLimited) };
+    }
+
+    /// <summary>
+    /// The capped job <see cref="ExpAdvice.Capped"/> names: another job (not the current one's level line) at the
+    /// character's level cap that may hand the quest in; the best geared, then the lowest row id. Null without a known
+    /// cap.
+    /// </summary>
+    private static JobExp? CappedOther(QuestRecord quest, CharacterSnapshot snapshot, EvalContext context, Func<byte, bool>? isLimited)
+    {
+        if (snapshot.LevelCap == 0)
+        {
+            return null;
+        }
+
+        var currentLine = Line(context, snapshot.CurrentJob);
+        JobExp? capped = null;
+        ushort cappedGear = 0;
+        foreach (var (job, rawLevel) in snapshot.JobLevels.OrderBy(static kv => kv.Key))
+        {
+            if (job == 0 || rawLevel < snapshot.LevelCap || (isLimited?.Invoke(job) ?? false)
+                || Line(context, job) == currentLine
+                || !RequirementEvaluator.AdmitsJob(quest, snapshot, context, job)
+                || HasJobOver(quest, snapshot, context, job))
+            {
+                continue;
+            }
+
+            var gear = snapshot.JobItemLevels.GetValueOrDefault(job);
+            if (capped is null || gear > cappedGear)
+            {
+                capped = new JobExp(job, rawLevel, 0);
+                cappedGear = gear;
+            }
+        }
+
+        return capped;
     }
 
     /// <summary>Whether <paramref name="a"/> ranks before <paramref name="b"/>: more EXP, then the current job, then the higher level, then the lower row id.</summary>

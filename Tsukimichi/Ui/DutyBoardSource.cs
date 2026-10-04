@@ -139,7 +139,7 @@ public sealed class DutyBoardSource
 
         var catalog = bundle.Catalog;
         var states = session.States;
-        var model = DutyBoard.Build(index, snapshot, condition => UnlockQuests(unlockIndex, condition, catalog, states));
+        var model = DutyBoard.Build(index, snapshot, condition => UnlockQuests(unlockIndex, condition, catalog, states), bundle.DutyJobs());
         var locked = model.Locked.Count();
         caption = locked switch
         {
@@ -172,7 +172,7 @@ public sealed class DutyBoardSource
     }
 
     /// <summary>"locked · needs a Lv 100 job · best is BLM 98", "locked · 2 dungeons not unlocked", "open · 1 raid not unlocked".</summary>
-    private static string State(RouletteLine line, CharacterSnapshot snapshot, CatalogBundle bundle)
+    internal static string State(RouletteLine line, CharacterSnapshot snapshot, CatalogBundle bundle)
     {
         switch (line.Lock)
         {
@@ -180,18 +180,11 @@ public sealed class DutyBoardSource
                 var expansion = bundle.Names.Expansion(line.Roulette.RequiredExpansion) is { Length: > 0 } named ? named : Core.Evaluation.Expansions.Name(line.Roulette.RequiredExpansion);
                 return string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardLockedExpansionFormat, expansion);
             case RouletteLock.NeedsLevel:
-                byte job = 0;
-                short level = 0;
-                foreach (var (id, jobLevel) in snapshot.JobLevels)
-                {
-                    if (jobLevel > level || (jobLevel == level && id < job))
-                    {
-                        job = id;
-                        level = jobLevel;
-                    }
-                }
-
+                // The best job that enters duties: a crafter's level never opens a roulette.
+                var (job, level) = DutyBoard.CombatJob(snapshot, bundle.DutyJobs());
                 return string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardLockedLevelFormat, line.Roulette.RequiredLevel, bundle.Names.ClassJobAbbreviation(job), level);
+            case RouletteLock.Unknown:
+                return Strings.DutyBoardUnknownState;
             case RouletteLock.NeedsDuties when !line.NeedsEvery:
                 return string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardLockedSomeFormat, line.Left);
             case RouletteLock.NeedsDuties:
@@ -224,7 +217,7 @@ public sealed class DutyBoardSource
     /// The quests that unlock a duty, those still to do first (Ready, then accepted, then the rest), completed ones last,
     /// leaving out another path's (another city's, Grand Company's).
     /// </summary>
-    private static IReadOnlyList<QuestRecord> UnlockQuests(DutyUnlockIndex index, uint condition, QuestCatalog catalog, IReadOnlyDictionary<uint, Core.Evaluation.QuestEvaluation> states)
+    internal static IReadOnlyList<QuestRecord> UnlockQuests(DutyUnlockIndex index, uint condition, QuestCatalog catalog, IReadOnlyDictionary<uint, Core.Evaluation.QuestEvaluation> states)
     {
         var quests = index.Resolve(condition, catalog);
         if (quests.Count <= 1)
