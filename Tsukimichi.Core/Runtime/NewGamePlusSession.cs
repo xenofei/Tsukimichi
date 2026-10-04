@@ -69,6 +69,13 @@ public sealed class NewGamePlusSession
     public ulong ContentId => Active ? contentId : 0;
 
     /// <summary>
+    /// Whether a session runs for <paramref name="character"/> (the character on view): the New Game+ line shows only
+    /// for the character whose capture the session came from, never for a stored one viewed meanwhile, nor before
+    /// any capture names its character.
+    /// </summary>
+    public bool IsFor(ulong? character) => Active && contentId != 0 && character == contentId;
+
+    /// <summary>
     /// The quests (runtime ids) this session replays: every one whose completion the replay cleared since it began,
     /// re-completed ones included, and the HUD's current quest. Empty when no session runs or the player ended it.
     /// </summary>

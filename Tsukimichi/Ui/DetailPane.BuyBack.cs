@@ -21,8 +21,10 @@ namespace Tsukimichi.Ui;
 /// salvager, 100 gil" for an item the character no longer carries; where it is when it sits elsewhere ("In your
 /// armoury chest"); "Not offered by the Salvager" for a reward only the quest gives when no shop sells it back. Only the
 /// buy-back line wears the gold dot, and only it offers Flag and Teleport (the latter at the automation level). The
-/// counts and the learned flags are the logged-in character's; another character on view gets the buy-back facts
-/// without "Not on you". It never says which optional reward was picked: the game does not record it.
+/// counts and the learned flags are the logged-in character's; another character on view, or an item the reads cannot
+/// place (the saddlebag not opened this session, the retainers without Allagan Tools), gets the buy-back facts without
+/// "Not on you", the gold dot or the actions ("If you no longer have it · buy it back from …"). It never says which
+/// optional reward was picked: the game does not record it.
 /// </summary>
 public sealed partial class DetailPane
 {
@@ -166,7 +168,7 @@ public sealed partial class DetailPane
                 UiMetrics.Tooltip(BuyBacks.Tooltip(buyBack));
             }
 
-            if (line.BuyBack?.Vendor.Spot is { } spot)
+            if (line.IsBuyBack && line.BuyBack?.Vendor.Spot is { } spot)
             {
                 DrawSpotActions(spot);
             }

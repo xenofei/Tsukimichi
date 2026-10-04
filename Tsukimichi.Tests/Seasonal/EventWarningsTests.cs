@@ -54,7 +54,7 @@ public sealed class EventWarningsTests
         var festival = Running(Rerun, QuestState.Accepted, QuestState.Ready);
         Assert.Equal(RunEnd, festival.AnnouncedEndUtc);
         Assert.Equal(FestivalEndSource.Rerun, festival.EndSource);
-        Assert.Equal("announced to end Oct 13 (Lodestone)", SeasonalNow.Status(festival, Now));
+        Assert.Equal("announced to end Oct 13 (Lodestone)", SeasonalNow.Status(festival, Now, TimeZoneInfo.Utc));
         Assert.Equal(1, festival.InJournal);
 
         // Between runs: no end, and the entry stays undated, so nothing reads Locked out.
@@ -69,8 +69,8 @@ public sealed class EventWarningsTests
     {
         var wiki = Rerun with { Runs = [new FestivalRun(Now.AddDays(-5), RunEnd, Wiki)] };
         var festival = Running(wiki, QuestState.Ready, QuestState.Ready);
-        Assert.Equal("ends Oct 13 (wiki)", SeasonalNow.Status(festival, Now));
-        Assert.Equal("Ends Oct 13 (wiki)", SeasonalNow.EndsLine(festival, named: false, Now));
+        Assert.Equal("ends Oct 13 (wiki)", SeasonalNow.Status(festival, Now, TimeZoneInfo.Utc));
+        Assert.Equal("Ends Oct 13 (wiki)", SeasonalNow.EndsLine(festival, named: false, Now, TimeZoneInfo.Utc));
     }
 
     [Fact]
@@ -81,8 +81,8 @@ public sealed class EventWarningsTests
 
         var own = Running(named, QuestState.Ready, QuestState.Ready, entered);
         Assert.Equal(FestivalEndSource.Entered, own.EndSource);
-        Assert.Equal("ends Oct 20 · you entered this", SeasonalNow.Status(own, Now));
-        Assert.Equal("Ends Oct 20 (you entered)", SeasonalNow.EndsLine(own, named: false, Now));
+        Assert.Equal("ends Oct 20 · you entered this", SeasonalNow.Status(own, Now, TimeZoneInfo.Utc));
+        Assert.Equal("Ends Oct 20 (you entered)", SeasonalNow.EndsLine(own, named: false, Now, TimeZoneInfo.Utc));
 
         // A curated run wins over the player's date.
         Assert.Equal(FestivalEndSource.Rerun, Running(Rerun, QuestState.Ready, QuestState.Ready, entered).EndSource);
@@ -90,6 +90,45 @@ public sealed class EventWarningsTests
         // A passed date is no end at all.
         var passed = new Dictionary<ushort, DateTime> { [Festival] = Now.AddDays(-1) };
         Assert.Equal(FestivalEndSource.None, Running(named, QuestState.Ready, QuestState.Ready, passed).EndSource);
+    }
+
+    [Fact]
+    public void A_passed_curated_end_gives_way_to_a_run_under_way_or_the_player_s_date()
+    {
+        // The Lodestone said Oct 1, but on Oct 3 the server still runs the event (an extension, or stale data).
+        var now = new DateTime(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc);
+        var stale = new FestivalInfo("Moonfire Faire (2026)", new DateTime(2026, 8, 1, 8, 0, 0, DateTimeKind.Utc), new DateTime(2026, 10, 1, 14, 59, 0, DateTimeKind.Utc), false, Lodestone);
+        var own = new DateTime(2026, 10, 10, 0, 0, 0, DateTimeKind.Utc);
+
+        Assert.Equal((own, FestivalEndSource.Entered, (string?)null), SeasonalNow.ResolveEnd(stale, own, now));
+
+        var run = new FestivalRun(new DateTime(2026, 10, 2, 8, 0, 0, DateTimeKind.Utc), new DateTime(2026, 10, 8, 14, 59, 0, DateTimeKind.Utc), Wiki);
+        Assert.Equal((run.End, FestivalEndSource.Rerun, Wiki), SeasonalNow.ResolveEnd(stale with { Runs = [run] }, own, now));
+
+        // Nothing else known: "running now", as before. A curated end still ahead wins over the player's date.
+        Assert.Equal((null, FestivalEndSource.None, null), SeasonalNow.ResolveEnd(stale, null, now));
+        Assert.Equal(FestivalEndSource.Announced, SeasonalNow.ResolveEnd(stale, own, new DateTime(2026, 9, 30, 0, 0, 0, DateTimeKind.Utc)).Source);
+    }
+
+    [Fact]
+    public void The_printed_end_date_is_in_the_zone_the_days_are_counted_in()
+    {
+        // Ends 14:59 UTC on Oct 5: at UTC+11 that is 01:59 on Oct 6, and at 11:30 local on Oct 5 it ends tomorrow.
+        var plus11 = TimeZoneInfo.CreateCustomTimeZone("Plus11", TimeSpan.FromHours(11), "Plus11", "Plus11");
+        var end = new DateTime(2026, 10, 5, 14, 59, 0, DateTimeKind.Utc);
+        var now = new DateTime(2026, 10, 5, 0, 30, 0, DateTimeKind.Utc);
+        var entered = new Dictionary<ushort, DateTime> { [Festival] = end };
+        var festival = Running(new FestivalInfo("A Nocturne for Heroes", null, null, false, Lodestone), QuestState.Accepted, QuestState.Ready, entered, now);
+
+        Assert.Equal(1, EventWarnings.DaysLeft(end, now, plus11));
+        Assert.Equal("Oct 6", SeasonalNow.DateText(end, now, plus11));
+        Assert.Equal("ends Oct 6 · you entered this", SeasonalNow.Status(festival, now, plus11));
+        Assert.Equal("Ends Oct 6 (you entered)", SeasonalNow.EndsLine(festival, named: false, now, plus11));
+        Assert.EndsWith("(ends Oct 6)", SeasonalNow.NoticeText(festival, now, plus11), StringComparison.Ordinal);
+
+        // West of UTC the same end is still Oct 5.
+        var minus5 = TimeZoneInfo.CreateCustomTimeZone("Minus5", TimeSpan.FromHours(-5), "Minus5", "Minus5");
+        Assert.Equal("Oct 5", SeasonalNow.DateText(end, now, minus5));
     }
 
     [Fact]
