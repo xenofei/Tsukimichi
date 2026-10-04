@@ -11,6 +11,9 @@ public enum FilterGroup
     Level,
     Job,
     Rewards,
+
+    /// <summary>The Unlocks group (plan v7, 1.19.0 K3): what kinds of thing the quests open.</summary>
+    Unlocks,
     More,
 }
 
@@ -92,6 +95,7 @@ public static class FilterSummary
             FilterGroup.Level => filters.LevelRangeEngaged(),
             FilterGroup.Job => filters.ClassJobCategoryId is not null,
             FilterGroup.Rewards => filters.RewardKindsEngaged(),
+            FilterGroup.Unlocks => filters.UnlockKindsEngaged(),
             FilterGroup.More => MoreOn(filters) > 0,
             _ => false,
         };

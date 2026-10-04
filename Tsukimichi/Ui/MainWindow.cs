@@ -776,7 +776,7 @@ public sealed partial class MainWindow : Window, IDisposable
         var count = 0;
         foreach (var quest in bundle.Catalog.All)
         {
-            if ((quest.IsRemoved && !showUnlisted) || !index.Matches(quest.RowId, normalized, spoilers))
+            if ((quest.IsRemoved && !showUnlisted) || !index.Matches(quest.RowId, normalized, spoilers, runner.Unlocks?.Current, reach))
             {
                 continue;
             }
@@ -1108,6 +1108,9 @@ public sealed partial class MainWindow : Window, IDisposable
         ui.RecordRect(UiRects.Toolbar, new Vector2(origin.X, top), new Vector2(origin.X + avail, top + stripHeight));
         ImGui.SetCursorScreenPos(new Vector2(origin.X, top));
         ImGui.Dummy(new Vector2(avail, stripHeight));
+
+        // Find by unlock (K3): the Unlocks group under the search pill, while it has the caret.
+        DrawUnlockResults(session);
     }
 
     /// <summary>The raised strip behind the toolbar rows, edge to edge, with a hairline under it.</summary>
@@ -1190,6 +1193,8 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         ui.RecordRect(UiRects.Search, min, max);
+        searchPillMin = min;
+        searchPillMax = max;
 
         // Clear target, only while there is something to clear.
         if (searchBuffer.Length == 0)

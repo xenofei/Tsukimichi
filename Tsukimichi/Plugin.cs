@@ -6,6 +6,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
 using Tsukimichi.Commands;
 using Tsukimichi.Data;
 using Tsukimichi.GameData;
@@ -1323,6 +1324,24 @@ public sealed partial class Plugin : IDalamudPlugin
             // The flight index (a few small sheets) is warmed at load; the pane says it is reading them until it lands.
             flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => warmer.Flight.IsDone ? warmer.Flight.Value ?? FlightIndex.Empty : null);
             mainWindow.AttachFlight(flightPane);
+            // Find by unlock and Route to unlock flying (K3): the zone's currents, where its field currents stand (the
+            // game's own layouts, read once per zone when a route asks) and which the live character has attuned.
+            Func<FlightIndex?> flightZones = () => warmer.Flight.IsDone ? warmer.Flight.Value : null;
+            mainWindow.FlightZones = flightZones;
+            routeWindow.Flight = flightZones;
+            routeWindow.Attuned = unlockReader.IsAetherCurrentUnlocked;
+            routeWindow.FieldPlaces = zone =>
+            {
+                try
+                {
+                    return AetherCurrentPlaces.Read(DataManager.Excel, path => DataManager.GetFile<Lumina.Data.Files.LgbFile>(path), zone, DataManager.Language.ToLumina());
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Where the field aether currents of {Zone} stand could not be read", zone.Name);
+                    return [];
+                }
+            };
             // Clear my blues (P3): the duty kinds (ContentFinderCondition) are warmed at load; the plan's tags are built
             // off the frame once they and the catalog are in.
             planSource = new PlanSource(Session, () => warmer.Duties.IsDone ? warmer.Duties.Value ?? Core.Plan.PlanDuties.Empty : null, Log)

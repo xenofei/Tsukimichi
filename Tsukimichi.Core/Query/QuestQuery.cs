@@ -46,6 +46,7 @@ public static class QuestQuery
         LevelRange,
         JobCategory,
         RewardKinds,
+        UnlockKinds,
         Repeatable,
         SeasonalActive,
         IncludeUnlisted,
@@ -68,6 +69,7 @@ public static class QuestQuery
         (Filter.LevelRange, FilterNames.LevelRange),
         (Filter.JobCategory, FilterNames.JobCategory),
         (Filter.RewardKinds, FilterNames.RewardKinds),
+        (Filter.UnlockKinds, FilterNames.UnlockKinds),
         (Filter.Repeatable, FilterNames.Repeatable),
         (Filter.SeasonalActive, FilterNames.SeasonalActive),
         (Filter.IncludeUnlisted, FilterNames.IncludeUnlisted),
@@ -233,7 +235,8 @@ public static class QuestQuery
     /// </summary>
     /// <param name="activeFestivals">The festivals running (<see cref="QueryContext.ActiveFestivals"/>); null reads as none.</param>
     /// <param name="newSinceData">The quests newer than the data (<see cref="QueryContext.NewSinceData"/>), for "New since data"; null reads as none.</param>
-    public static bool ClearFiltersHiding(QuestRecord quest, FilterSet filters, IReadOnlySet<ushort>? activeFestivals, IReadOnlySet<uint>? newSinceData = null)
+    /// <param name="unlocks">What every quest opens, for the Unlocks filter (plan v7 K3); null clears an engaged one.</param>
+    public static bool ClearFiltersHiding(QuestRecord quest, FilterSet filters, IReadOnlySet<ushort>? activeFestivals, IReadOnlySet<uint>? newSinceData = null, Unlocks.QuestUnlocks? unlocks = null)
     {
         ArgumentNullException.ThrowIfNull(quest);
         ArgumentNullException.ThrowIfNull(filters);
@@ -269,6 +272,12 @@ public static class QuestQuery
             changed = true;
         }
 
+        if (filters.UnlockKindsEngaged() && ((unlocks?.KindMask(quest.RowId) ?? 0) & Unlocks.UnlockFindKinds.Mask(filters.UnlockKinds)) == 0)
+        {
+            filters.UnlockKinds = [];
+            changed = true;
+        }
+
         if (filters.RepeatableOnly && !quest.IsRepeatable)
         {
             filters.RepeatableOnly = false;
@@ -300,7 +309,7 @@ public static class QuestQuery
         }
 
         return ctx?.SearchIndex is not { } index
-            || (!index.Matches(quest.RowId, query, ctx.Spoilers) && ctx.JournalHits?.Contains(quest.RowId) != true);
+            || (!index.Matches(quest.RowId, query, ctx.Spoilers, ctx.Unlocks) && ctx.JournalHits?.Contains(quest.RowId) != true);
     }
 
     /// <summary>
@@ -569,6 +578,8 @@ public static class QuestQuery
         private readonly int bandMax;
         private readonly DateTime stalledBeforeUtc;
         private readonly byte reachExpansion;
+        private readonly ushort unlockKindMask;
+        private readonly byte unlockReach;
         public Plan(FilterSet filters, QueryContext ctx, SearchIndex? index, string query, QuestScope scope)
         {
             this.filters = filters;
@@ -581,6 +592,9 @@ public static class QuestQuery
             var days = Math.Max(0, ctx.StalledDays);
             stalledBeforeUtc = ctx.NowUtc > DateTime.MinValue + TimeSpan.FromDays(days) ? ctx.NowUtc - TimeSpan.FromDays(days) : DateTime.MinValue;
             reachExpansion = ctx.Spoilers?.ReachExpansion ?? byte.MaxValue;
+            unlockKindMask = Unlocks.UnlockFindKinds.Mask(filters.UnlockKinds);
+            // Sprout mode leaves out what lies past the character's reach, in the unlock labels a search matches too.
+            unlockReach = filters.Preset == Preset.Sprout ? reachExpansion : byte.MaxValue;
             UnlistedToggleable = scope.Kind is ScopeKind.None or ScopeKind.VirtualFeature;
             IncludeOtherPaths = scope.Kind == ScopeKind.VirtualOtherPaths || filters.IncludeOtherPaths;
             IncludeUnlisted = scope.Kind switch
@@ -636,6 +650,7 @@ public static class QuestQuery
             Filter.LevelRange => levelRangeEngaged,
             Filter.JobCategory => filters.ClassJobCategoryId is not null,
             Filter.RewardKinds => (hiddenRewardMask | onlyRewardMask) != 0,
+            Filter.UnlockKinds => unlockKindMask != 0,
             Filter.Repeatable => filters.RepeatableOnly,
             Filter.SeasonalActive => filters.SeasonalActiveOnly,
             Filter.IncludeUnlisted => UnlistedToggleable && !IncludeUnlisted,
@@ -704,6 +719,11 @@ public static class QuestQuery
                 return false;
             }
 
+            if (skip != Filter.UnlockKinds && unlockKindMask != 0 && ((ctx.Unlocks?.KindMask(quest.RowId) ?? 0) & unlockKindMask) == 0)
+            {
+                return false;
+            }
+
             if (skip != Filter.Repeatable && filters.RepeatableOnly && !quest.IsRepeatable)
             {
                 return false;
@@ -733,7 +753,7 @@ public static class QuestQuery
                 return false;
             }
 
-            if (skip != Filter.Search && index is not null && !index.Matches(quest.RowId, query, ctx.Spoilers)
+            if (skip != Filter.Search && index is not null && !index.Matches(quest.RowId, query, ctx.Spoilers, ctx.Unlocks, unlockReach)
                 && ctx.JournalHits?.Contains(quest.RowId) != true)
             {
                 return false;

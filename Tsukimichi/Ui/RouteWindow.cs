@@ -110,10 +110,29 @@ public sealed class RouteWindow : Window
     /// <summary>The shared Questionable hand-offs (1.6.0); null hides Send to Questionable and the step marks.</summary>
     public QuestionableActions? Questionable { get; set; }
 
+    /// <summary>The flying zones, for a route to flying (K3); null while they are read. Set by the plugin.</summary>
+    public Func<FlightIndex?>? Flight { get; set; }
+
+    /// <summary>Where a flying zone's field currents stand (<see cref="AetherCurrentPlaces"/>), read once per zone. Set by the plugin.</summary>
+    public Func<FlightZone, IReadOnlyList<AetherCurrentPlace>>? FieldPlaces { get; set; }
+
+    /// <summary>Whether the viewed character has attuned an aether current; null when that cannot be read (a stored alt). Set by the plugin.</summary>
+    public Func<uint, bool?>? Attuned { get; set; }
+
+    private readonly Dictionary<uint, IReadOnlyList<AetherCurrentPlace>> fieldPlaces = [];
+
     /// <summary>Opens the window on the route to <paramref name="routeTarget"/> and brings it to the front.</summary>
     public void Show(RouteTarget routeTarget)
     {
-        target = routeTarget ?? throw new ArgumentNullException(nameof(routeTarget));
+        ArgumentNullException.ThrowIfNull(routeTarget);
+
+        // Route to flying (K3) from a surface that did not know the zone: the zone whose quest currents the route takes.
+        if (routeTarget is { Kind: RouteTargetKind.Unlock, IsUnion: true, FlyingTerritory: 0 } && Flight?.Invoke()?.ZoneOfQuests(routeTarget.QuestRowIds) is { } zone)
+        {
+            routeTarget = routeTarget with { FlyingTerritory = zone.TerritoryId };
+        }
+
+        target = routeTarget;
         builtVersion = -1;
         pinGate.Cancel();
         DropUndo();
@@ -190,7 +209,9 @@ public sealed class RouteWindow : Window
         var firstQuest = target.QuestRowIds.Count > 0 ? bundle.Catalog.GetByRowId(target.QuestRowIds[0]) : null;
         DrawHeader(v, ActionIcons.RouteHeader(target, firstQuest));
 
-        switch (v.Route.Outcome)
+        // A route to flying whose quests are done can still have field currents left: those lines are the route then.
+        var fieldOnly = v.FieldLeft > 0 && v.Route.Outcome == RouteOutcome.AlreadyDone;
+        switch (fieldOnly ? RouteOutcome.Route : v.Route.Outcome)
         {
             case RouteOutcome.AlreadyDone:
                 EmptyState.DrawWithAction(Strings.RouteAlreadyDoneHeading, Strings.RouteAlreadyDoneBody, null, moon: QuestState.Completed);
@@ -266,9 +287,22 @@ public sealed class RouteWindow : Window
 
         ImGui.SameLine();
         ImGui.SetCursorPosY(y);
+
+        // A route to an unlock (K3) says how many stops are left at the title line's right end ("10 stops").
+        var stopsWidth = v.Stops.Length > 0 ? ImGui.CalcTextSize(v.Stops).X + UiMetrics.Px(12f) : 0f;
+        var titleTop = ImGui.GetCursorScreenPos();
         using (moonRoad ? Typography.Title(v.Title) : default)
         {
-            TextFlow.Wrapped(v.Title, Chrome.RoomX(), Theme.U32(Theme.Surface.Text));
+            TextFlow.Wrapped(v.Title, MathF.Max(1f, Chrome.RoomX() - stopsWidth), Theme.U32(Theme.Surface.Text));
+        }
+
+        if (stopsWidth > 0f)
+        {
+            var right = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
+            ImGui.GetWindowDrawList().AddText(
+                new Vector2(right - stopsWidth + UiMetrics.Px(12f), titleTop.Y + MathF.Max(0f, (titleLine - ImGui.GetTextLineHeight()) * 0.5f)),
+                Theme.U32(Theme.Surface.TextSecondary),
+                v.Stops);
         }
 
         TextFlow.Wrapped(v.Caption, Chrome.RoomX(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
@@ -652,6 +686,12 @@ public sealed class RouteWindow : Window
             }
         }
 
+        if (l.Kind == LineKind.Field)
+        {
+            DrawFieldLine(dl, l, min, width, rowHeight, textY);
+            return;
+        }
+
         // A step or an alternative: one selectable up to the step's buttons, content drawn over it.
         var stepQuest = l.Kind == LineKind.Step ? bundle.Catalog.GetByRowId(l.RowId) : null;
         var textEnd = min.X + width;
@@ -704,6 +744,49 @@ public sealed class RouteWindow : Window
             {
                 UiMetrics.Tooltip(l.Tooltip, questionableTooltip.Length > 0 ? questionableTooltip + "\n" + hint : hint);
             }
+        }
+    }
+
+    /// <summary>
+    /// A field current (K3): the number, "Aether current · &lt;nearest aetheryte&gt;" and "field", with a Flag on where the
+    /// game's layout places it (none when it does not).
+    /// </summary>
+    private void DrawFieldLine(ImDrawListPtr dl, Line l, Vector2 min, float width, float rowHeight, float textY)
+    {
+        var end = min.X + width;
+        if (l.FieldPosition is { } at && l.FieldTerritory != 0)
+        {
+            var flagWidth = TravelControls.FlagWidth(Strings.RouteStepFlag);
+            end -= flagWidth;
+            ImGui.SetCursorScreenPos(new Vector2(end, min.Y + ((rowHeight - ImGui.GetTextLineHeight()) * 0.5f)));
+            var canFlag = links.CanFlagSpot(l.FieldTerritory);
+            if (TravelControls.FlagButton(Strings.RouteStepFlag, canFlag))
+            {
+                links.FlagSpot(l.FieldTerritory, at);
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(canFlag ? Strings.RouteFieldFlagTooltip : Strings.RouteStepFlagUnavailable);
+            }
+
+            end -= UiMetrics.Px(8f);
+        }
+
+        ImGui.SetCursorScreenPos(min);
+        ImGui.Dummy(new Vector2(MathF.Max(1f, end - min.X), rowHeight));
+        var hovered = ImGui.IsItemHovered();
+        var numberWidth = ImGui.CalcTextSize("0000").X;
+        var number = ImGui.CalcTextSize(l.Number);
+        dl.AddText(new Vector2(min.X + numberWidth - number.X, textY), Theme.U32(Theme.Surface.TextTertiary), l.Number);
+        var x = min.X + numberWidth + UiMetrics.Px(6f) + UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()) + UiMetrics.Px(6f);
+        var markWidth = ImGui.CalcTextSize(l.Detail).X;
+        var room = MathF.Max(1f, end - x - markWidth - UiMetrics.Px(8f));
+        var cut = Chrome.EllipsisTextAt(dl, new Vector2(x, textY), room, l.Text, Theme.U32(Theme.Surface.Text));
+        dl.AddText(new Vector2(end - markWidth, textY), Theme.U32(Theme.Surface.TextTertiary), l.Detail);
+        if (hovered)
+        {
+            UiMetrics.Tooltip(cut ? l.Tooltip : Strings.RouteFieldTooltip);
         }
     }
 
@@ -910,8 +993,75 @@ public sealed class RouteWindow : Window
             }
         }
 
+        // Route to flying (K3): after the quests, each field current not attuned yet, by the aetheryte nearest it.
+        var fieldLeft = AddFieldLines(routeTarget, route.Steps.Count, lines);
+        var stopsText = string.Empty;
+        if (routeTarget.Kind == RouteTargetKind.Unlock)
+        {
+            var count = FieldCurrentStops.Stops(route.Steps.Count, fieldLeft);
+            stopsText = string.Format(CultureInfo.CurrentCulture, count == 1 ? Strings.RouteStopsOne : Strings.RouteStopsFormat, count);
+        }
+
         var title = string.Format(CultureInfo.CurrentCulture, Strings.RouteTitleFormat, routeTarget.Label);
-        view = new View(route, title, caption, route.Summary.Text, also.Length == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.RouteAlsoUnlockedByFormat, also), lines.ToArray());
+        var summary = route.Steps.Count == 0 && fieldLeft > 0 ? stopsText : route.Summary.Text;
+        view = new View(route, title, caption, summary, also.Length == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.RouteAlsoUnlockedByFormat, also), lines.ToArray())
+        {
+            FieldLeft = fieldLeft,
+            Stops = stopsText,
+        };
+    }
+
+    /// <summary>
+    /// The field currents of a route to flying the viewed character has not attuned (a stored alt's are all listed,
+    /// since attunement can only be read live), numbered on from the quests; returns how many. Places come from the
+    /// game's layouts, read once per zone; a current no layout places reads "in the field".
+    /// </summary>
+    private int AddFieldLines(RouteTarget routeTarget, int questSteps, List<Line> lines)
+    {
+        if (routeTarget.FlyingTerritory == 0 || Flight?.Invoke()?.ZoneFor(routeTarget.FlyingTerritory) is not { } zone || zone.FieldCurrentIds.Count == 0)
+        {
+            return 0;
+        }
+
+        if (!fieldPlaces.TryGetValue(zone.TerritoryId, out var placed))
+        {
+            placed = FieldPlaces?.Invoke(zone) ?? [];
+            fieldPlaces[zone.TerritoryId] = placed;
+        }
+
+        var placeOf = new Dictionary<uint, AetherCurrentPlace>(placed.Count);
+        foreach (var place in placed)
+        {
+            placeOf[place.AetherCurrentId] = place;
+        }
+
+        var all = new List<FieldCurrentStop>(zone.FieldCurrentIds.Count);
+        foreach (var id in zone.FieldCurrentIds)
+        {
+            var nearest = placeOf.TryGetValue(id, out var at) ? links.Aetherytes.Nearest(at.TerritoryId, at.X, at.Z) : null;
+            all.Add(new FieldCurrentStop(id, nearest?.RowId ?? 0, nearest?.Name ?? string.Empty));
+        }
+
+        var attuned = Attuned ?? (static _ => null);
+        var left = FieldCurrentStops.Left(all, id => session.IsLive ? attuned(id) : null);
+        for (var i = 0; i < left.Count; i++)
+        {
+            var stop = left[i];
+            var text = stop.AetheryteName.Length > 0
+                ? string.Format(CultureInfo.CurrentCulture, Strings.RouteFieldCurrentFormat, stop.AetheryteName)
+                : Strings.RouteFieldCurrentUnplaced;
+            var place = placeOf.TryGetValue(stop.AetherCurrentId, out var spot) ? spot : null;
+            lines.Add(new Line(LineKind.Field, stop.AetherCurrentId, QuestState.Unknown, text)
+            {
+                Number = (questSteps + i + 1).ToString(CultureInfo.CurrentCulture) + ".",
+                Detail = Strings.RouteFieldMark,
+                Tooltip = text + "\n" + Strings.RouteFieldTooltip,
+                FieldTerritory = place?.TerritoryId ?? 0,
+                FieldPosition = place is null ? null : new Vector3(place.X, place.Y, place.Z),
+            });
+        }
+
+        return left.Count;
     }
 
     private string NameOf(QuestCatalog catalog, uint rowId) =>
@@ -926,6 +1076,9 @@ public sealed class RouteWindow : Window
 
         /// <summary>"3 quests near Camp Dragonhead", heading consecutive steps at one aetheryte; <see cref="Line.RowId"/> is its first step.</summary>
         Stop,
+
+        /// <summary>A field aether current on a route to flying (K3): "Aether current · Yedlihmad"; <see cref="Line.RowId"/> is the AetherCurrent row.</summary>
+        Field,
     }
 
     /// <summary>One line of the list; every string composed when the route is built.</summary>
@@ -948,10 +1101,21 @@ public sealed class RouteWindow : Window
 
         /// <summary>The step shows its own Teleport (a stop of one step).</summary>
         public bool Teleport { get; init; }
+
+        /// <summary>A field current's place, for its Flag; 0 and null when the game's layout does not place it.</summary>
+        public uint FieldTerritory { get; init; }
+
+        public Vector3? FieldPosition { get; init; }
     }
 
     private sealed record View(UnlockRoute Route, string Title, string Caption, string Summary, string AlsoUnlockedBy, Line[] Lines)
     {
+        /// <summary>The field currents left on a route to flying (K3); 0 for any other route.</summary>
+        public int FieldLeft { get; init; }
+
+        /// <summary>"10 stops" beside the title of a route to an unlock (K3): the quests and field currents left; empty otherwise.</summary>
+        public string Stops { get; init; } = string.Empty;
+
         public static readonly View Empty = new(
             UnlockRoute.Build(RouteTarget.ForQuest(0, string.Empty), QuestCatalog.Empty, new Dictionary<uint, Core.Evaluation.QuestEvaluation>()),
             string.Empty,

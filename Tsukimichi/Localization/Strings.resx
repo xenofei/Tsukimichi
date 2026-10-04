@@ -12056,4 +12056,110 @@
     <value>Artisan: crafting {0}</value>
     <comment>Status bar line while an Artisan craft Tsukimichi handed off runs. {0} = the item.</comment>
   </data>
+  <data name="Core.UnlockFindKind.Mount" xml:space="preserve">
+    <value>Mount</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Flying" xml:space="preserve">
+    <value>Flying</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Duty" xml:space="preserve">
+    <value>Duty</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Feature" xml:space="preserve">
+    <value>Feature</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Job" xml:space="preserve">
+    <value>Job</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Area" xml:space="preserve">
+    <value>Area</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group (zones and aetherytes).</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Emote" xml:space="preserve">
+    <value>Emote</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Orchestrion" xml:space="preserve">
+    <value>Orchestrion</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFind.FlyingIn" xml:space="preserve">
+    <value>Flying in {0}</value>
+    <comment>Core: UnlockFind.cs. A flying unlock's name in search results and the Route window. {0} = the zone.</comment>
+  </data>
+  <data name="Core.UnlockFind.Currents" xml:space="preserve">
+    <value>{0} aether currents, {1} from quests</value>
+    <comment>Core: UnlockFind.cs. A flying search result's summary. {0} = the zone's currents, {1} = how many quests give.</comment>
+  </data>
+  <data name="Core.UnlockFind.CurrentsOne" xml:space="preserve">
+    <value>1 aether current, {1} from quests</value>
+    <comment>Core: UnlockFind.cs. A flying search result's summary for a zone with one current. {1} = how many quests give.</comment>
+  </data>
+  <data name="Core.Filter.UnlockKinds" xml:space="preserve">
+    <value>Unlock kinds</value>
+    <comment>Core: FilterNames.cs. The Unlocks filter, as the empty-result guard names it.</comment>
+  </data>
+  <data name="FindUnlocksHeading" xml:space="preserve">
+    <value>Unlocks</value>
+    <comment>The head of the Unlocks group under the toolbar search (things quests open that match the text).</comment>
+  </data>
+  <data name="FindUnlockViaFormat" xml:space="preserve">
+    <value>via {0}</value>
+    <comment>A search result's quest. {0} = the first quest that opens it.</comment>
+  </data>
+  <data name="RouteToUnlockAction" xml:space="preserve">
+    <value>Route to unlock</value>
+    <comment>Quiet button on a search result and an item of an Unlocks row's menu.</comment>
+  </data>
+  <data name="RouteToUnlockTooltip" xml:space="preserve">
+    <value>Opens the Route window: the quests still to do before this opens, for the character on view.</value>
+  </data>
+  <data name="FilterDrawerUnlocks" xml:space="preserve">
+    <value>Unlocks</value>
+    <comment>The filter drawer's Unlocks group (what kinds of thing the quests open).</comment>
+  </data>
+  <data name="UnlockKindsCountOne" xml:space="preserve">
+    <value>1 kind</value>
+  </data>
+  <data name="UnlockKindsCountFormat" xml:space="preserve">
+    <value>{0} kinds</value>
+    <comment>{0} = how many Unlocks chips are on.</comment>
+  </data>
+  <data name="UnlockKindsHint" xml:space="preserve">
+    <value>Keeps quests that unlock one of these. Off: every quest.</value>
+  </data>
+  <data name="UnlockKindsChipFormat" xml:space="preserve">
+    <value>Opens: {0}</value>
+    <comment>The chip lane's Unlocks filter chip. {0} = the kinds on ("Mount · Flying").</comment>
+  </data>
+  <data name="RouteStopsOne" xml:space="preserve">
+    <value>1 stop</value>
+  </data>
+  <data name="RouteStopsFormat" xml:space="preserve">
+    <value>{0} stops</value>
+    <comment>Beside a route to an unlock's title. {0} = the quests and field aether currents left.</comment>
+  </data>
+  <data name="RouteFieldCurrentFormat" xml:space="preserve">
+    <value>Aether current · {0}</value>
+    <comment>A field aether current on a route to flying. {0} = the aetheryte nearest it.</comment>
+  </data>
+  <data name="RouteFieldCurrentUnplaced" xml:space="preserve">
+    <value>Aether current · in the field</value>
+    <comment>A field aether current the game's layouts do not place.</comment>
+  </data>
+  <data name="RouteFieldMark" xml:space="preserve">
+    <value>field</value>
+    <comment>The mark at the end of a field aether current's line on a route to flying.</comment>
+  </data>
+  <data name="RouteFieldTooltip" xml:space="preserve">
+    <value>Found in the field, not from a quest. The Aether Compass points to it, and Flag marks where it stands.</value>
+  </data>
+  <data name="RouteFieldFlagTooltip" xml:space="preserve">
+    <value>Marks where this aether current stands on the map.</value>
+  </data>
 </root>

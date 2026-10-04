@@ -32,6 +32,12 @@ public enum RouteTargetKind : byte
 
     /// <summary>"This expansion's blues" (1.6.0): the unlock quests of one expansion left in My blues.</summary>
     Blues,
+
+    /// <summary>
+    /// Anything a quest opens (plan v7, 1.19.0 K3, <see cref="Unlocks.UnlockFind"/>): an area, an aetheryte, a duty, a
+    /// feature, a job, a mount or an emote through any one of its quests, or flying in a zone through every quest current.
+    /// </summary>
+    Unlock,
 }
 
 /// <summary>
@@ -60,6 +66,12 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
     /// <see cref="Ui.ActionIcons.RouteHeader"/>). Only drawn, never compared by the route itself.
     /// </summary>
     public uint Icon { get; init; }
+
+    /// <summary>
+    /// For a route to flying in a zone (<see cref="ForUnlock"/>): the zone's territory, whose field currents the Route
+    /// window adds after the quests (plan v7, 1.19.0 K3); 0 for any other target.
+    /// </summary>
+    public uint FlyingTerritory { get; init; }
 
     /// <summary>True for a route to several targets (<see cref="Parts"/>).</summary>
     public bool IsUnion => Parts.Count > 0;
@@ -211,6 +223,29 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
         }
 
         return ForQuest(quest.RowId, label ?? string.Empty);
+    }
+
+    /// <summary>
+    /// Route to unlock (plan v7, 1.19.0 K3): to <paramref name="find"/>, titled with its label ("Flying in Thavnair",
+    /// "Kugane") and wearing its icon. Flying needs every quest current of the zone, so each is a part of its own (all on
+    /// one route); anything else is reached through whichever of its quests has the fewest left, the others listed.
+    /// </summary>
+    /// <param name="flyingTerritory">For flying, the zone's territory (its field currents follow the quests); 0 otherwise.</param>
+    public static RouteTarget ForUnlock(Unlocks.UnlockFind find, uint flyingTerritory = 0)
+    {
+        ArgumentNullException.ThrowIfNull(find);
+        if (!find.NeedsAll)
+        {
+            return new RouteTarget(RouteTargetKind.Unlock, find.Label, find.Quests) { Icon = find.Icon };
+        }
+
+        var parts = new List<RouteTarget>(find.Quests.Count);
+        foreach (var rowId in find.Quests)
+        {
+            parts.Add(new RouteTarget(RouteTargetKind.Quest, string.Empty, [rowId]));
+        }
+
+        return Union(RouteTargetKind.Unlock, find.Label, parts) with { Icon = find.Icon, FlyingTerritory = flyingTerritory };
     }
 
     private static string F(string key, string english, string value) =>

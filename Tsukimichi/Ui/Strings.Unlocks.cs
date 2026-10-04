@@ -75,4 +75,50 @@ static partial class Strings
 
     /// <summary>Moonlit's quest tooltip: {0} = what else the quest opens.</summary>
     public static string MoonlitAlsoOpensFormat => Loc.Get("MoonlitAlsoOpensFormat");
+
+    // ---- Find by unlock (plan v7, 1.19.0 K3) ----
+
+    /// <summary>The head of the Unlocks group under the toolbar search.</summary>
+    public static string FindUnlocksHeading => Loc.Get("FindUnlocksHeading");
+
+    /// <summary>{0} = the first quest that opens it, through the spoiler shield.</summary>
+    public static string FindUnlockViaFormat => Loc.Get("FindUnlockViaFormat");
+
+    /// <summary>The search row's quiet button and the Unlocks row menu's item.</summary>
+    public static string RouteToUnlockAction => Loc.Get("RouteToUnlockAction");
+
+    public static string RouteToUnlockTooltip => Loc.Get("RouteToUnlockTooltip");
+
+    /// <summary>The filter drawer's Unlocks group.</summary>
+    public static string FilterDrawerUnlocks => Loc.Get("FilterDrawerUnlocks");
+
+    public static string UnlockKindsCountOne => Loc.Get("UnlockKindsCountOne");
+
+    /// <summary>{0} = how many kinds are on.</summary>
+    public static string UnlockKindsCountFormat => Loc.Get("UnlockKindsCountFormat");
+
+    /// <summary>Below the Unlocks chips, and their tooltip.</summary>
+    public static string UnlockKindsHint => Loc.Get("UnlockKindsHint");
+
+    /// <summary>The chip lane's chip: {0} = the kinds on ("Mount · Flying").</summary>
+    public static string UnlockKindsChipFormat => Loc.Get("UnlockKindsChipFormat");
+
+    // ---- Route to unlock ----
+    public static string RouteStopsOne => Loc.Get("RouteStopsOne");
+
+    /// <summary>{0} = the quests and field currents left.</summary>
+    public static string RouteStopsFormat => Loc.Get("RouteStopsFormat");
+
+    /// <summary>{0} = the aetheryte nearest the field current.</summary>
+    public static string RouteFieldCurrentFormat => Loc.Get("RouteFieldCurrentFormat");
+
+    /// <summary>A field current the game's layouts do not place.</summary>
+    public static string RouteFieldCurrentUnplaced => Loc.Get("RouteFieldCurrentUnplaced");
+
+    /// <summary>The mark at a field current's line end.</summary>
+    public static string RouteFieldMark => Loc.Get("RouteFieldMark");
+
+    public static string RouteFieldTooltip => Loc.Get("RouteFieldTooltip");
+
+    public static string RouteFieldFlagTooltip => Loc.Get("RouteFieldFlagTooltip");
 }

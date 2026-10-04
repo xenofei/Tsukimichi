@@ -461,6 +461,21 @@ public sealed partial class DetailPane
 
                 break;
         }
+
+        // Route to unlock (K3): the quests to this thing for the viewed character, whichever quest opens it.
+        if (runner.Unlocks?.Current.FindFor(entry) is { } find)
+        {
+            ImGui.Separator();
+            if (ImGui.MenuItem(Strings.RouteToUnlockAction))
+            {
+                ui.OpenRoute(Core.Route.RouteTarget.ForUnlock(find));
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.RouteToUnlockTooltip);
+            }
+        }
     }
 
     /// <summary>"+N more": the rest in a popup.</summary>
