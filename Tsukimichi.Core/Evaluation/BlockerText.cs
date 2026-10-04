@@ -123,7 +123,7 @@ public static class BlockerText
         MountRequirement { HasMount: null } => CoreText.T("Core.Blocker.NotChecked.Mount", "mount"),
         HouseRequirement { HasHouse: null } => CoreText.T("Core.Blocker.NotChecked.House", "house"),
         AchievementRequirement => CoreText.T("Core.Blocker.NotChecked.Achievements", "achievements"),
-        GameGateRequirement { Checked: null } g => g.Gate,
+        GameGateRequirement { IsNotChecked: true } g => g.Gate,
         AcceptConditionRequirement => CoreText.T("Core.Blocker.NotChecked.AcceptCondition", "accept condition"),
         _ => null,
     };
@@ -168,6 +168,12 @@ public static class BlockerText
         {
             // "Not checked · achievements", not "Not checked · Not checked: achievements".
             reason = evaluation.ChoiceOf > 1 ? item + Separator + PathText.ChooseOne(evaluation.ChoiceOf) : item;
+
+            // A game gate Tsukimichi can't check reads "Can't check · <gate>" (1.19 C3): the moon stays Not checked.
+            if (decisive.Req is GameGateRequirement { IsNotChecked: true })
+            {
+                name = CoreText.T("Core.Blocker.CantCheck", "Can't check");
+            }
         }
 
         return reason.Length == 0 ? name : name + Separator + reason;

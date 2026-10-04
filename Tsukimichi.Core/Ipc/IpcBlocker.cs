@@ -170,7 +170,8 @@ public readonly record struct IpcBlocker(string Kind, uint RefId, int Need, int 
         CustomDeliveryRankRequirement r => new(IpcBlockerKinds.CustomDeliveryRank, r.Npc, r.RequiredRank, r.ActualRank ?? -1),
         CarrierLevelRequirement r => new(IpcBlockerKinds.CarrierLevel, 0, r.RequiredLevel, r.ActualLevel ?? -1),
         AcceptConditionRequirement r => new(IpcBlockerKinds.Unchecked, FirstOr0(r.ConditionIds), 0, 0),
-        GameGateRequirement { Checked: null } => new(IpcBlockerKinds.Unchecked, 0, 0, 0),
+        GameGateRequirement { IsNotChecked: true } => new(IpcBlockerKinds.Unchecked, 0, 0, 0),
+        GameGateRequirement { Judged: true } r => new(IpcBlockerKinds.GameGate, FirstOr0(r.MissingLinks), 1, 0),
         GameGateRequirement r => new(IpcBlockerKinds.GameGate, FirstOr0(r.Matching.Length > 0 ? r.Matching : r.FirstGroup), 1, 0),
         _ => new(IpcBlockerKinds.Other, 0, 0, 0),
     };

@@ -67,6 +67,13 @@ public sealed class CharacterSettingsBook
     /// <summary>The gate ids announced in chat for the character.</summary>
     public IReadOnlyList<string> Noticed(ulong contentId) => Get(contentId)?.PayoffGatesNoticed ?? NoIds;
 
+    /// <summary>Every character's "I've done this" gate marks: content id to quest row ids, characters without one left out.</summary>
+    public Dictionary<ulong, IReadOnlyList<uint>> GatesDoneByCharacter() =>
+        map.Where(kv => kv.Value.GatesDone.Count > 0).ToDictionary(kv => kv.Key, kv => (IReadOnlyList<uint>)[.. kv.Value.GatesDone]);
+
+    /// <summary>Whether the player marked the game gate of <paramref name="questRowId"/> passed on the character ("I've done this").</summary>
+    public bool IsGateDone(ulong contentId, uint questRowId) => Get(contentId)?.GatesDone.Contains(questRowId) == true;
+
     public bool IsWhyOpen(ulong contentId, string gateId) =>
         Get(contentId)?.PayoffWhyOpen.Contains(gateId, StringComparer.Ordinal) == true;
 

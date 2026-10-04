@@ -192,6 +192,13 @@ internal sealed partial class WikiSource(PoliteHttp http, TextWriter log)
 
     private static string BatchUrl(string query) => $"{Api}?action=query&format=json&formatversion=2&prop=revisions&rvprop=content&rvslots=main&redirects=1&maxlag=5&titles={Uri.EscapeDataString(query)}";
 
+    /// <summary>Every page the fetch cache holds, once each (by title); never fetches.</summary>
+    public IEnumerable<WikiPage> CachedPages()
+    {
+        index ??= BuildIndex();
+        return index.Values.DistinctBy(p => p.Title, StringComparer.Ordinal);
+    }
+
     private Dictionary<string, WikiPage> BuildIndex()
     {
         var built = new Dictionary<string, WikiPage>(StringComparer.Ordinal);

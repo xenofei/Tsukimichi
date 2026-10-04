@@ -231,7 +231,7 @@ GetQuestsInState("Accepted") -> [66045, 67112, 70210]   // the journal, in journ
 | `customDeliveryRank` | needs a custom delivery satisfaction rank | SatisfactionNpc row id | ranks (have -1: not read) |
 | `carrierLevel` | needs a Delivery Moogle carrier level | 0 | levels (have -1: not read) |
 | `unchecked` | a condition the game does not expose (the quest reads Not checked): an accept condition, or a game gate Tsukimichi cannot read (a relic weapon gate before the gear was captured) | the first condition id; 0 for a game gate | 0 / 0 |
-| `gameGate` | a relic weapon at the right stage is not equipped (or not held), judged from the gear Tsukimichi read (1.10) | the first weapon (Item row id) of the passing group the character carries but has not equipped, else of the gate's first group | 1 / 0 |
+| `gameGate` | a relic weapon or tool at the right stage is not equipped (or not held), judged from the gear Tsukimichi read (1.10); or an unlock link the gate needs is not set (an Occult Record entry, blue magic, 1.19) | the first weapon (Item row id) of the passing group the character carries but has not equipped, else of the gate's first group; for an unlock-link gate, the first link not set | 1 / 0 |
 | `other` | something this vocabulary has no word for yet | 0 | 0 / 0 |
 
 The words are frozen: none is renamed or removed within API version 1. A later release may add one; treat a word you do not know as `other`.

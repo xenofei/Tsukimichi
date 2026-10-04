@@ -24,6 +24,7 @@ public sealed partial class Plugin
         }
 
         mainWindow.AttachRightAnswers(offers, new Game.GearsetSwitcher(Condition, ClientState, gate, Log));
+        mainWindow.AttachGateMarks(CharacterBook);
     }
 
     private void DisposeRightAnswers()

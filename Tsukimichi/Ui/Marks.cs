@@ -30,6 +30,12 @@ public enum Mark
     /// so an unmet line reads apart from the quiet met ones.
     /// </summary>
     Unmet,
+
+    /// <summary>
+    /// A requirement Tsukimichi can't check (1.19 C3): a hollow Dusk ring, 9 px across at a 1.5 px stroke (2 px in the
+    /// high-contrast palette), the third verdict beside check and cross. Never read as unmet.
+    /// </summary>
+    CantCheck,
 }
 
 /// <summary>
@@ -83,6 +89,13 @@ public static class Marks
                 var h = DashHalf * size;
                 if (keyline > 0f) dl.AddLine(center + new Vector2(-h - keyline, 0f), center + new Vector2(h + keyline, 0f), ground, stroke + 2f * keyline);
                 dl.AddLine(center + new Vector2(-h, 0f), center + new Vector2(h, 0f), palette.HighContrast ? Theme.U32(colors.Dash) : Theme.U32(Theme.Surface.TextTertiary), stroke);
+                break;
+
+            case Mark.CantCheck:
+                var hollowStroke = palette.HighContrast ? 2f : 1.5f;
+                var hollow = MathF.Min(UiMetrics.Px(4.5f), size * 0.5f) - (hollowStroke * 0.5f);
+                if (keyline > 0f) dl.AddCircle(center, hollow, ground, 0, hollowStroke + 2f * keyline);
+                dl.AddCircle(center, hollow, palette.HighContrast ? Theme.U32(colors.Dash) : Theme.U32(Theme.Surface.TextTertiary), 0, hollowStroke);
                 break;
 
             case Mark.LivePip:

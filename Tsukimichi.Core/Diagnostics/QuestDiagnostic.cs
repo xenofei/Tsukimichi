@@ -209,7 +209,7 @@ public static class QuestDiagnostic
             MountRequirement { HasMount: null } => NotChecked,
             HouseRequirement { HasHouse: null } => NotChecked,
             AchievementRequirement { Loaded: false } => NotChecked,
-            GameGateRequirement { Checked: null } => NotChecked,
+            GameGateRequirement { IsNotChecked: true } => NotChecked,
             CustomDeliveryRankRequirement { ActualRank: null } => NotChecked,
             CarrierLevelRequirement { ActualLevel: null } => NotChecked,
             TribeReputationRequirement { NotChecked: true } => NotChecked,
@@ -441,8 +441,14 @@ public static class QuestDiagnostic
                 sb.Append("achievements ").Append(a.Loaded ? "loaded" : "not loaded").Append(", quest ").Append(a.RowId.ToString(CultureInfo.InvariantCulture));
                 break;
 
-            case GameGateRequirement { Checked: null } g:
+            case GameGateRequirement { IsNotChecked: true } g:
                 sb.Append("game gate \"").Append(g.Gate).Append("\"; listed, not judged");
+                break;
+
+            case GameGateRequirement { Judged: true } g:
+                // Unlock link ids only, as for the weapons below.
+                sb.Append("game gate \"").Append(g.Gate).Append("\"; judged, ").Append(result.Met ? "met" : "unmet")
+                    .Append(", links not set [").Append(string.Join(", ", g.MissingLinks)).Append(']');
                 break;
 
             case GameGateRequirement g:

@@ -5,10 +5,10 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Field | Value |
 |---|---|
 | Game version | `2026.09.15.0000.0000` |
-| Generated (UTC) | `2026-10-04T03:24:03Z` |
-| Curated revision | `a87f28b` (last commit touching a data file under `Tsukimichi/Data/curated`) |
+| Generated (UTC) | `2026-10-04T03:29:21Z` |
+| Curated revision | `519422f` (last commit touching a data file under `Tsukimichi/Data/curated`) |
 | Catalog fixture | `catalog-2026.09.15.0000.0000.json.gz` |
-| unique_quests.json entries | 2744 across 1319 quests |
+| unique_quests.json entries | 2750 across 1325 quests |
 | feature_quests.json (derived) | 1722 quests |
 | quest_patches.json | 5373 of 5373 quests with a patch, newest 7.56 |
 | Online Store re-sells | 69 entries |
@@ -24,7 +24,7 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | ArtifactGear | 607 |
 | Barding | 6 |
 | BlueMageSpell | 16 |
-| ClassJob | 48 |
+| ClassJob | 49 |
 | DutyUnlock | 464 |
 | Emote | 56 |
 | GeneralAction | 12 |
@@ -36,7 +36,7 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Orchestrion | 79 |
 | Ornament | 4 |
 | Other | 6 |
-| SystemUnlock | 133 |
+| SystemUnlock | 138 |
 | Title | 199 |
 | Trait | 54 |
 | TripleTriadCard | 6 |

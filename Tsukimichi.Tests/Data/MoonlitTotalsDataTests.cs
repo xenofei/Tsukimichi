@@ -53,10 +53,11 @@ public sealed class MoonlitTotalsDataTests(FixtureCatalog fixture, ITestOutputHe
 
         Assert.True(twice.Count == 0, "counted in two groups: " + string.Join(", ", twice));
 
-        // 2,629 entries less the 192 that repeat another row's (kind, reward), the relic items folded per quest.
+        // 2,635 entries less the 195 that repeat another row's (kind, reward), the relic items folded per quest; 1.19 (K5)
+        // added the three city variants of guildleves and inn rooms and the second Thaumaturge class quest.
         var duplicates = rewards.All.Count - rewards.All.Select(RewardKey.Of).Distinct().Count();
         output.WriteLine($"entries {rewards.Count}, repeated (kind, reward) rows {duplicates}, counted rewards {groups.All.Count}");
-        Assert.Equal(192, duplicates);
+        Assert.Equal(195, duplicates);
     }
 
     [Fact]

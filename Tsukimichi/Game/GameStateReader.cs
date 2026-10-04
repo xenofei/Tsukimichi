@@ -97,6 +97,9 @@ public sealed class GameStateReader
     private readonly List<uint> gateHeldScratch = new(8);
     private bool gateItemsWarned;
 
+    // The last unlock-link read of the game gates, reused while unchanged.
+    private CollectibleSet? gateUnlockLinks;
+    private bool gateUnlockLinksWarned;
     // The equipped gear's item levels by slot (ReadItemLevels), the best level per job, and whether a failed read was logged.
     private readonly ushort[] slotLevelScratch = new ushort[EquippedItemLevel.SoulCrystal + 1];
     private IReadOnlyDictionary<byte, ushort> jobItemLevels = new Dictionary<byte, ushort>();
@@ -409,6 +412,7 @@ public sealed class GameStateReader
             // A quest turned in is when most collectibles arrive, so a changed completion mask reads them again too.
             Collectibles = ReadCollectibles(contentId, catalog, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
             GateItems = ReadGateItems(ids),
+            GateUnlockLinks = ReadGateUnlockLinks(ui, ids),
             ItemLevel = itemLevel,
             JobItemLevels = jobItemLevels,
             DutyRecords = ReadDutyRecords(contentId, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
@@ -497,6 +501,48 @@ public sealed class GameStateReader
         }
 
         return mountTargets;
+    }
+
+    /// <summary>
+    /// The unlock links the catalog's gates check (<see cref="CharacterSnapshot.GateUnlockLinks"/>,
+    /// <see cref="QuestCatalog.GateUnlockLinkWatch"/>): each read from the client's unlock-link flags
+    /// (<c>UIState.IsUnlockLinkUnlocked</c>, a bit test), set or not. Null when the catalog watches none or the read
+    /// failed (logged once), which leaves those gates not checked. An unchanged answer returns the previous instance, so
+    /// the diff sees it unchanged by reference.
+    /// </summary>
+    private unsafe CollectibleSet? ReadGateUnlockLinks(UIState* ui, CatalogIds ids)
+    {
+        if (ids.UnlockLinkWatch.Length == 0)
+        {
+            return gateUnlockLinks = null;
+        }
+
+        try
+        {
+            var owned = new List<uint>();
+            var missing = new List<uint>();
+            foreach (var link in ids.UnlockLinkWatch)
+            {
+                (ui->IsUnlockLinkUnlocked(link) ? owned : missing).Add(link);
+            }
+
+            if (gateUnlockLinks is { } previous && previous.Owned.SequenceEqual(owned) && previous.Missing.SequenceEqual(missing))
+            {
+                return previous;
+            }
+
+            return gateUnlockLinks = new CollectibleSet { Owned = owned, Missing = missing };
+        }
+        catch (Exception ex)
+        {
+            if (!gateUnlockLinksWarned)
+            {
+                gateUnlockLinksWarned = true;
+                log.Warning(ex, "The unlock links of the game gates could not be read; those gates read as not checked");
+            }
+
+            return gateUnlockLinks = null;
+        }
     }
 
     /// <summary>
@@ -967,7 +1013,7 @@ public sealed class GameStateReader
             }
         }
 
-        var built = new CatalogIds(catalog, [.. quests], [.. instances], new HashSet<uint>(catalog.GateItemWatch), catalog.GateItemFingerprint);
+        var built = new CatalogIds(catalog, [.. quests], [.. instances], new HashSet<uint>(catalog.GateItemWatch), catalog.GateItemFingerprint, catalog.GateUnlockLinkWatch);
         catalogIds = built;
         return built;
     }
@@ -986,5 +1032,5 @@ public sealed class GameStateReader
         return false;
     }
 
-    private sealed record CatalogIds(QuestCatalog Catalog, ushort[] QuestIds, uint[] InstanceIds, HashSet<uint> GateWatch, uint GateFingerprint);
+    private sealed record CatalogIds(QuestCatalog Catalog, ushort[] QuestIds, uint[] InstanceIds, HashSet<uint> GateWatch, uint GateFingerprint, uint[] UnlockLinkWatch);
 }

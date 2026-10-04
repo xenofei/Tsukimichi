@@ -2,6 +2,176 @@
   "$schema_note": "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional; \"questionable\" for a Questionable prerequisite link the catalog does not imply, checked by Tsukimichi.Verify questionable and QuestionableLinksTests), verdict, reason, evidence (URL), fix (where a catalogWrong is corrected, or what a human must check for an unresolved row), until (release in which the fix lands; the entry expires once the plugin version reaches it, and CI fails while an expired entry is listed), rewardId (reward rows only: narrows the entry to that reward id), prereqId (questionable entries only: narrows the entry to that required quest) }",
   "entries": [
     {
+      "rowId": "67923",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "What Lies Beneath: the quasi-quest the game hands out once floor 50 of the Palace of the Dead is cleared; the wiki names the floor, its own text and sheet do not. Tsukimichi uses it the other way round, as the proof that floor 50 was cleared (metBy of Knocking on Heaven's Door, Delve into Myth and Pilgrimage of Light). Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/What_Lies_Beneath",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "67093",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "The Nightmare's End: the wiki's requirements name a deep-dungeon floor, but neither the quest's own text nor the sheet states a gate (no accept condition, no script check), and the quest's own completion text says the floors beyond are now open: the floor is most likely the quest's objective, not what it waits for. Single source, so curated/game_gates.json does not take it (two sources of the game's text, the sheets and the wiki). Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Nightmare%27s_End",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "67924",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "Dead but Not Gone: the wiki's requirements name a deep-dungeon floor, but neither the quest's own text nor the sheet states a gate (no accept condition, no script check), and the quest's own completion text says the floors beyond are now open: the floor is most likely the quest's objective, not what it waits for. Single source, so curated/game_gates.json does not take it (two sources of the game's text, the sheets and the wiki). Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Dead_but_Not_Gone",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70200",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "Rage Extinguished: the wiki's requirements name a deep-dungeon floor, but neither the quest's own text nor the sheet states a gate (no accept condition, no script check), and the quest's own completion text says the floors beyond are now open: the floor is most likely the quest's objective, not what it waits for. Single source, so curated/game_gates.json does not take it (two sources of the game's text, the sheets and the wiki). Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Rage_Extinguished",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70201",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "Orthos Unveiled: the wiki's requirements name a deep-dungeon floor, but neither the quest's own text nor the sheet states a gate (no accept condition, no script check), and the quest's own completion text says the floors beyond are now open: the floor is most likely the quest's objective, not what it waits for. Single source, so curated/game_gates.json does not take it (two sources of the game's text, the sheets and the wiki). Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Orthos_Unveiled",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70943",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "A Branch and Their Sapling: the wiki's requirements name a deep-dungeon floor, but neither the quest's own text nor the sheet states a gate (no accept condition, no script check), and the quest's own completion text says the floors beyond are now open: the floor is most likely the quest's objective, not what it waits for. Single source, so curated/game_gates.json does not take it (two sources of the game's text, the sheets and the wiki). Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Branch_and_Their_Sapling",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "66058",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "The Black Wolf's Ultimatum: the wiki names My Little Chocobo; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Operation Archon, which follows it, states the same need in its own text and carries the gate. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Black_Wolf%27s_Ultimatum",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "69617",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "The Adventurer with All the Cards: the wiki names the achievement A Card in the Hand; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Questionable also checks the achievement, but it is no source game_gates.json takes. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Adventurer_with_All_the_Cards",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70181",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "The Land, Wind, and Sea: the wiki names island sanctuary rank 9 and every building; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Land,_Wind,_and_Sea",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70265",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "A Far Eastern Yarn: the wiki names island sanctuary rank 12; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Far_Eastern_Yarn",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70299",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "An Ideal Marriage: the wiki names island sanctuary rank 15; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_Ideal_Marriage",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70185",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "For Coin, Country, and Comrades: the wiki names a variant dungeon's survey record notes; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/For_Coin,_Country,_and_Comrades",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70270",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "Of Price and Ruin: the wiki names a variant dungeon's survey record notes; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Of_Price_and_Ruin",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70326",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "A Fish a Day: the wiki names a variant dungeon's survey record notes; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Fish_a_Day",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "70978",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "Starting a New Chapter: the wiki names a variant dungeon's survey record notes; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Starting_a_New_Chapter",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "71036",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "Free for All: the wiki names a count of beasts tamed; only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Free_for_All",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
+      "rowId": "71037",
+      "fact": "gates",
+      "source": "wiki",
+      "verdict": "unresolved",
+      "reason": "Mastery Rematch: the wiki names a count of beasts tamed (beside the board, which the sheet requires as a duty); only the wiki states it: neither the quest's own text nor the sheet does, so curated/game_gates.json cannot take it under its two-source rule. Feature plan v7 C3 (1.19.0) added the gates fact.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Mastery_Rematch",
+      "fix": "in-game check (feature plan v7 C1's observer: the quest offered while the gate is not passed means the wiki names an objective); if the game waits for it, find a second source and add the gate to curated/game_gates.json",
+      "until": "1.21.0"
+    },
+    {
       "rowId": "65895",
       "fact": "prereqs",
       "source": "wiki",
@@ -131,17 +301,6 @@
       "fix": "none: kept quest-only by decision; re-check if the cake is ever sold outside the ceremony (then add item 8791 to curated/online_store.json)",
       "until": "1.21.0",
       "rewardId": "8791"
-    },
-    {
-      "rowId": "67016",
-      "fact": "prereqs",
-      "source": "questionable",
-      "prereqId": "67909",
-      "verdict": "unresolved",
-      "reason": "Unidentified Flying Object: Questionable makes it wait for Where Shadows Reign (67909). The quest text asks instead for the Dun Scaith raid to be unlocked, which that quest does, and the wiki names only Freedom for Our Skies (67822). A duty unlock is not a quest prerequisite curated/extra_prerequisites.json can take, and no second source names the quest itself, so it is not added. 1.11.0 review: no sheet, quest script or game gate decides it, so the game data settles nothing more; extended to 1.15.0 for the in-game check (feature plan v6, C1). 1.15.0: extended to 1.19.0, where feature plan v7 item C1 (\"The game confirms it\") checks it against live game state. 1.19.0: feature plan v7 item C1 shipped the observer: Tsukimichi now records the game's own available-quest markers and quest offers per character and shows them in the Report block (\"in game:\" line), /tsuki why and Settings › Advanced › Diagnostics (Copy game checks). No character has stood in this quest's giver zone with the observer running yet, so the game's answer is still pending; extended to 1.21.0. To settle it: on a character that has not done the disputed prerequisite, visit the giver's zone (or talk to the giver), then copy the Report block: an \"in game: offered\" line while the prerequisite is not done means the extra prerequisite is wrong",
-      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
-      "fix": "model the gate as \"Dun Scaith unlocked\" (a duty requirement) or, after an in-game check, a curated extra prerequisite",
-      "until": "1.21.0"
     },
     {
       "rowId": "68434",

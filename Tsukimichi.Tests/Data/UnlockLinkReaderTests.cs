@@ -101,7 +101,8 @@ public sealed class UnlockLinkReaderTests(UnlockIndexFixture fixture, ITestOutpu
         var byRule = UnlockAreas.Derive(fixture.Catalog, Links).Aetherytes.Values.SelectMany(a => a).Distinct().Count();
         output.WriteLine($"aetherytes by the rule alone: {byRule}");
         Assert.True(byRule >= 87, "the first-visit rule's aetheryte coverage fell");
-        Assert.True(reached.Count >= 96, "aetheryte coverage with the curated file fell");
+        // Every teleportable aetheryte has its quest since 1.19 (K5): the rule's and the curated file's together.
+        Assert.True(missed.Count == 0, "aetherytes no quest opens: " + string.Join(", ", missed.Select(a => $"{a.AetheryteId} {a.Name}")));
     }
 
     [GameDataFact]
@@ -178,25 +179,12 @@ public sealed class UnlockLinkReaderTests(UnlockIndexFixture fixture, ITestOutpu
 public sealed class UnlockIndexFixture : IDisposable
 {
     /// <summary>
-    /// Teleportable aetherytes neither the first-visit rule nor <c>aetheryte_unlocks.json</c> places yet, each with why
-    /// (feature plan v6 K5 curates them): no main scenario objective stands near enough to tell which quest first takes
-    /// a character there. Their rows are simply absent. A new patch's aetheryte is not in this list, so it fails
-    /// <see cref="UnlockLinkReaderTests"/> until it is curated or listed here with a reason.
+    /// Teleportable aetherytes neither the first-visit rule nor <c>aetheryte_unlocks.json</c> places yet, each with why:
+    /// no main scenario objective stands near enough to tell which quest first takes a character there. Their rows are
+    /// simply absent. Empty since 1.19 (feature plan v7 K5 curated the last eleven). A new patch's aetheryte is not in
+    /// this list, so it fails <see cref="UnlockLinkReaderTests"/> until it is curated or listed here with a reason.
     /// </summary>
-    public static readonly IReadOnlyDictionary<uint, string> NotYetCurated = new Dictionary<uint, string>
-    {
-        [7] = "Fallgourd Float: the nearest main scenario objectives (Lv 27-28) stand 56-71 yalms away; which one attunes it is unverified",
-        [55] = "Wolves' Den Pier: reached through the PvP introduction, which is no main scenario quest",
-        [72] = "Camp Cloudtop: the nearest main scenario objectives stand 91 yalms away or more",
-        [79] = "Zenith: the nearest main scenario objective stands 159 yalms away",
-        [110] = "The Dawn Throne: the nearest main scenario objective stands 121 yalms away",
-        [128] = "Dhoro Iloh: no main scenario objective within 600 yalms",
-        [143] = "Fanow: no main scenario objective within 500 yalms",
-        [148] = "The Macarenses Angle: no main scenario objective within 700 yalms",
-        [178] = "Poieten Oikos: no main scenario objective within 400 yalms",
-        [212] = "Electrope Strike: no main scenario objective within 400 yalms",
-        [238] = "Dock Poga: the nearest main scenario objective stands 142 yalms away",
-    };
+    public static readonly IReadOnlyDictionary<uint, string> NotYetCurated = new Dictionary<uint, string>();
 
     private readonly GameDataFixture game = new();
     private readonly Lazy<(UnlockLinks Links, QuestUnlocks Unlocks, CuratedData Curated)> built;

@@ -1,12 +1,30 @@
 {
   "schema": 1,
-  "note": "Aetherytes the first-visit rule of the unlock index (feature plan v6 K1) cannot place: no objective of the main scenario stands within 40 yalms of them. Keys are Aetheryte sheet row ids; quests are the Quest sheet row ids that first take a character there (several when paths differ). A curated entry replaces whatever the rule inferred for that aetheryte, and the Unlocks section shows it as stated rather than likely. Every entry needs the aetheryte's name, a note and an evidence URL; notes are original wording, never wiki sentences. Aetherytes still missing are listed in UnlockLinkReaderTests.NotYetCurated.",
+  "note": "Aetherytes the first-visit rule of the unlock index (feature plan v6 K1) cannot place: no objective of the main scenario stands within 40 yalms of them. Keys are Aetheryte sheet row ids; quests are the Quest sheet row ids that first take a character there (several when paths differ). A curated entry replaces whatever the rule inferred for that aetheryte, and the Unlocks section shows it as stated rather than likely. Every entry needs the aetheryte's name, a note and an evidence URL; notes are original wording, never wiki sentences. Where no main scenario objective stands near an aetheryte, the quest is the one the wiki lists it under, else the first whose objectives stand nearest. An aetheryte still missing would be listed in UnlockLinkReaderTests.NotYetCurated (none since 1.19).",
   "entries": {
+    "7": {
+      "name": "Fallgourd Float",
+      "quests": [ 69399 ],
+      "note": "The main scenario's errand to Fallgourd Float in the North Shroud, the first of the level 27 and 28 quests whose objectives stand 56 to 68 yalms from the aetheryte, beyond the rule's reach; the wiki lists no aetheryte for it.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Terror_at_Fallgourd"
+    },
+    "55": {
+      "name": "Wolves' Den Pier",
+      "quests": [ 66640,  66641,  66642 ],
+      "note": "The PvP introduction of each Grand Company takes the character to Wolves' Den Pier (the wiki lists the pier under its unlocks); its objectives stand about 44 yalms from the aetheryte, just past the rule's reach.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Pup_No_Longer_(Maelstrom)"
+    },
     "62": {
       "name": "The Gold Saucer",
       "quests": [ 65970 ],
       "note": "The Gold Saucer's aetheryte stands at the arrival point of the passage this quest opens (the game gates the Gold Saucer warps on it), so the first trip there is this quest's.",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/It_Could_Happen_to_You"
+    },
+    "72": {
+      "name": "Camp Cloudtop",
+      "quests": [ 67126 ],
+      "note": "The wiki lists Camp Cloudtop under this quest's unlocks, the arrival in the Sea of Clouds; no main scenario objective stands within 90 yalms of the aetheryte, the nearest of this quest about 144.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Onwards_and_Upwards"
     },
     "74": {
       "name": "Helix",
@@ -20,11 +38,47 @@
       "note": "The main scenario's first visit to Idyllshire; its objectives stand about 43 yalms from the aetheryte, just past the rule's reach.",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Great_New_Nation"
     },
+    "79": {
+      "name": "Zenith",
+      "quests": [ 67164 ],
+      "note": "The climb to Hraesvelgr's perch at Zenith; this quest's objectives stand about 159 yalms from the aetheryte, the nearest of any main scenario quest. The wiki lists no aetheryte for it.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Wyrm%27s_Lair"
+    },
+    "110": {
+      "name": "The Dawn Throne",
+      "quests": [ 68045 ],
+      "note": "The first of three main scenario quests whose objectives stand at the Dawn Throne, about 43 yalms from the aetheryte, just past the rule's reach.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Labors_of_Magnai"
+    },
+    "128": {
+      "name": "Dhoro Iloh",
+      "quests": [ 68632 ],
+      "note": "No main scenario quest comes within 500 yalms of Dhoro Iloh: the Namazu's first quest is the first that takes a character there, its objectives about 28 yalms from the aetheryte.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Something_Fishy_This_Way_Comes"
+    },
+    "143": {
+      "name": "Fanow",
+      "quests": [ 68869 ],
+      "note": "The wiki lists Fanow under this quest's unlocks, the main scenario's way into the west of the Rak'tika Greatwood; Top of the Tree, the next quest, has objectives about 58 yalms from the aetheryte.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Into_the_Wood"
+    },
+    "148": {
+      "name": "The Macarenses Angle",
+      "quests": [ 69188 ],
+      "note": "The wiki lists the Macarenses Angle under this quest's unlocks; no quest's objectives stand within 150 yalms of the aetheryte, this one's about 255.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_End_of_a_World"
+    },
     "174": {
       "name": "Sinus Lacrimarum",
       "quests": [ 69932 ],
       "note": "The arrival on the moon: this quest's objectives stand about 63 yalms from the Sinus Lacrimarum aetheryte.",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Trip_to_the_Moon"
+    },
+    "178": {
+      "name": "Poieten Oikos",
+      "quests": [ 69965 ],
+      "note": "The wiki lists Poieten Oikos under this quest's unlocks; its objectives stand about 115 yalms from the aetheryte, the next quest's about 68.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Travelers_at_the_Crossroads"
     },
     "179": {
       "name": "Reah Tahra",
@@ -55,6 +109,18 @@
       "quests": [ 70449 ],
       "note": "The first main scenario objective at Sheshenewezi Springs in Shaaloani, about 52 yalms from the aetheryte.",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Saddled_Up"
+    },
+    "212": {
+      "name": "Electrope Strike",
+      "quests": [ 70462 ],
+      "note": "The wiki lists Electrope Strike with the other Heritage Found aetherytes under this quest's unlocks, the train ride into the zone; no main scenario objective stands within 300 yalms of it.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/All_Aboard"
+    },
+    "238": {
+      "name": "Dock Poga",
+      "quests": [ 70730 ],
+      "note": "No main scenario quest comes within 140 yalms of Dock Poga: this allied society quest is the first that takes a character there, its objectives about 15 yalms from the aetheryte.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Tentative_First_Tour"
     }
   }
 }

@@ -334,7 +334,7 @@ public static class StateResolver
     /// Tsukimichi cannot read, mounts the capture did not read, a house (1.11.0, C2: these read a silent Ready before).
     /// </summary>
     internal static bool IsNotChecked(Requirement requirement) =>
-        requirement is GameGateRequirement { Checked: null } or MountRequirement { HasMount: null } or HouseRequirement { HasHouse: null };
+        requirement is GameGateRequirement { IsNotChecked: true } or MountRequirement { HasMount: null } or HouseRequirement { HasHouse: null };
 
     /// <summary>
     /// An unmet gear gate whose weapons must be equipped and that the character carries (in the Armoury Chest or the
