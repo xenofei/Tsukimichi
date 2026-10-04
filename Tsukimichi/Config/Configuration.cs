@@ -146,6 +146,12 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public bool QuestionableConfirmStopCommand { get; set; } = true;
 
+    /// <summary>
+    /// The receipt of the last Questionable run Tsukimichi watched (feature plan v7 A4): when it ran, the quests done and
+    /// why it stopped, shown in Settings › Automation › Questionable after a restart. Null until a run ends.
+    /// </summary>
+    public Core.Ipc.QuestionableRunReceipt? QuestionableLastReceipt { get; set; }
+
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
     public bool TodoOverlayEnabled { get; set; } = false;
@@ -718,6 +724,11 @@ public sealed partial class Configuration : IPluginConfiguration
         config.SpoilerShieldByCharacter ??= [];
         config.PayoffGatesNoticedByCharacter ??= [];
         config.PayoffWhyOpenByCharacter ??= [];
+        if (config.QuestionableLastReceipt is { } receipt)
+        {
+            receipt.Completed ??= [];
+        }
+
         config.ExportFolder ??= string.Empty;
         config.CommandAliases ??= string.Empty;
         config.SettingsPage ??= string.Empty;
