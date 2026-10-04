@@ -4,6 +4,40 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- **Why it stopped:** when a run Tsukimichi started stops, a card says why in plain words.
+  - It offers up to two safe fixes: Start again, Show the duty, Keep going after it, Reload navmesh and retry, Teleport closer, or Open Setup.
+  - Copy report never includes your character's name, world or chat.
+- **Needs you:** if you're knocked out, stuck, your duty pops or a tell arrives during a run, one calm panel appears at the top of the screen.
+  - It comes with a chat line, a game sound (pick one per alert, or none, in Settings › Alerts) and a taskbar flash when the game isn't in front.
+  - On a knock-out or a stall, Tsukimichi stops its own walks, AutoDuty runs and Artisan crafts; stopping Questionable too is your choice.
+- **Duty guard:** Questionable no longer walks you into a party with other players.
+  - Before a duty with no Duty Support or Trust, Tsukimichi stops it and says why.
+  - Settings › Automation › Questionable can switch this to Warn or Do nothing.
+- **Stop later:** stop Questionable after this quest, after a number of quests, or at a time, however it was started.
+  - Find it in the Send menus, the "…" menu, or by right-clicking Stop.
+  - The status line shows what's set.
+- **Run receipts:** each run ends with a line saying how long it ran, the quests done and why it stopped. Settings › Automation › Questionable › Recent runs keeps the last ten.
+- **"Do this next"** (with "Show Questionable hand-off" on) puts a quest first on Questionable's list and says in chat where it landed.
+- **Automation buttons** (Settings › Automation): choose Tracker only, Travel, Travel and walking, or Full hand-offs.
+  - Buttons above your level are hidden everywhere, and you can fine-tune each button.
+  - New installs start at Travel; if you're updating, you keep every button you had.
+- **About automation:** a card explaining what Tsukimichi does itself, what the User Agreement says, where players draw the line, and that Tsukimichi is local only.
+- **"Before a walk" checks** (Settings › Automation):
+  - Legacy movement, with one-click Switch to Standard and Restore Legacy;
+  - first-person camera;
+  - vnavmesh movement paused by another plugin (Allow movement, with Undo);
+  - plugins known to break travel.
+
+### Changed
+- **Start Questionable does one quest:** Questionable does it, then stops, and chat says "Questionable finished <quest> and stopped." The old "keep going" start is "Start here and keep going" in the "…" menu.
+- **Walks recover by themselves:**
+  - A walk that gets stuck or finds no path has vnavmesh reload its map and tries once more.
+  - Go to giver walks to the nearest aetheryte or shard before taking the aethernet.
+  - Flights land on solid ground beside the quest giver and walk the last few yalms.
+- **"Craft with Artisan" turns into Stop** while Artisan crafts the run you started, and the status bar names the item.
+- **A new copper colour** means "needs you" on every palette, always beside words that say the same.
+
 ## [1.17.0] - 2026-10-03
 
 ### Added
