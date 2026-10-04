@@ -1,0 +1,5884 @@
+{
+ "meta": {
+  "built": "2026-10-04",
+  "source": "reconciled.json and the three team reports",
+  "agreement": "agreedBy counts teams marked 'proposed' or 'agrees'; 'reconciliation' is this pass's own check and is not counted."
+ },
+ "findings": [
+  {
+   "id": "F1",
+   "title": "Most curated card chins sit on the mouth, so those plates are about 25 % too tight",
+   "evidence": "On 6 cards read on a 0.01 grid (Merlwyb 87065, Nanamo 87063, Thancred 87046, Miounne 87030, Lucia 87089, Alisaie 73036) the curated chin is the lip line; the true chin span is 1.26-1.49 x the curated one. Rendered: the real chin falls at about 0.92-0.94 of the plate (the rim). Trust busts were curated to the true chin (Thancred 72623, Urianger 72625, G'raha 72637, Emet-Selch 72648).",
+   "effect": "The reconciled finals use the true chin, so card faces shrink about 20 % on the plate and gain the crown band. Owner question Q7.",
+   "teams": {
+    "A": "silent (its readings follow the curated plates)",
+    "B": "silent",
+    "C": "silent (its chin errs the other way)"
+   }
+  },
+  {
+   "id": "F2",
+   "title": "Team C's detector chin sits below the jaw on painted art",
+   "evidence": "18 hand readings: true span = 0.80-1.03 (median 0.87) x the detector span; on Garland 3D renders it is the true chin (8 of 8).",
+   "effect": "Game finals use eye + 0.87 x (detector chin - eye)."
+  },
+  {
+   "id": "F3",
+   "title": "Team A's readings anchor to the crop they were read on",
+   "evidence": "Where a curated crop was wrong, Team A read the eyes where the curated entry put them: Hien 87202 (dx 0.21), Raubahn 87067 (0.21), Fourchenault 87338, Tansui 87214, Thancred 87165, Y'shtola 87166, Magnai 87195. On pack photos where Team C's detector missed, Team A was right in 13 of 14 checked (the hooded Crystal Exarch 1028108 is unclear).",
+   "effect": "Team A wins on Team C review-status pack photos; Team C wins on confident ones (8 of 8 checked)."
+  },
+  {
+   "id": "F4",
+   "title": "Team B's basis is the same as A's and C's; its disagreements are readings",
+   "evidence": "B's suggested [u, v] are hr texture fractions (its 'today the eyes sit at' figures are plate %, and they convert to the same texture values). Its eye x points at the head's centre or the far eye in three-quarter views (Wuk Lamat 0.57 vs true 0.405, Venat 0.27, Koana 0.42, Alisaie 72622 0.60, Alphinaud 72638 0.50), and its Estinien v 0.259 is the nose (eyes at 0.205).",
+   "effect": "B measurements were outvoted on every crop; its lore and body-model findings drive the era changes."
+  },
+  {
+   "id": "F5",
+   "title": "Most pack photos Team C could not read hold a face the builder missed",
+   "evidence": "Team C's detector re-run on an enlarged region around each of its 367 review-status photos found a face in 335 (276 with both detectors); 10 of 12 random ones checked by eye are right. The rest are helmets, masks, creatures, or a weapon with no head.",
+   "effect": "Their reconciled boxes are starting points for the overlay page (still review); only 6 photos are proposed for --skip outright."
+  },
+  {
+   "id": "F6",
+   "title": "Team counts of quests differ by basis",
+   "evidence": "Team A counts quests a character appears in (Wuk Lamat DT: 112 MSQ); Team B and C count quests a portrait is worn on as giver (36). Both are kept per row in reconciled.json."
+  }
+ ],
+ "dataChanges": {
+  "iconCrops": {
+   "note": "Curated-format entries from reconciled.json. 'ready': confidence >= 0.78 and not flagged; 'provisional': on the owner's overlay page first. Every other curated entry stays as it is.",
+   "ready": {
+    "61661": {
+     "entry": {
+      "eyes": [
+       0.473,
+       0.458
+      ],
+      "chin": 0.587,
+      "note": "Zhloe Aliapoh's delivery portrait: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Zhloe Aliapoh",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.903,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "61662": {
+     "entry": {
+      "eyes": [
+       0.439,
+       0.436
+      ],
+      "chin": 0.564,
+      "note": "M'naago's delivery portrait: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "M'naago",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.832,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "61663": {
+     "entry": {
+      "eyes": [
+       0.489,
+       0.445
+      ],
+      "chin": 0.583,
+      "note": "Kurenai's delivery portrait: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Kurenai",
+     "shownToday": true,
+     "quests": 6,
+     "confidence": 0.953,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "61669": {
+     "entry": {
+      "eyes": [
+       0.56,
+       0.403
+      ],
+      "chin": 0.539,
+      "note": "Charlemend de Durendaire's delivery portrait: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Charlemend de Durendaire",
+     "shownToday": true,
+     "quests": 0,
+     "confidence": 0.954,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "61670": {
+     "entry": {
+      "eyes": [
+       0.456,
+       0.437
+      ],
+      "chin": 0.577,
+      "note": "Ameliance's delivery portrait: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Ameliance",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.953,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72621": {
+     "entry": {
+      "eyes": [
+       0.325,
+       0.35
+      ],
+      "chin": 0.462,
+      "note": "Alphinaud's ShB bust: his face sits at the bust's left edge; the box is clamped there."
+     },
+     "character": "Alphinaud",
+     "shownToday": true,
+     "quests": 22,
+     "confidence": 0.989,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72622": {
+     "entry": {
+      "eyes": [
+       0.505,
+       0.347
+      ],
+      "chin": 0.451,
+      "note": "Alisaie's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Alisaie",
+     "shownToday": true,
+     "quests": 10,
+     "confidence": 0.795,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72624": {
+     "entry": {
+      "eyes": [
+       0.43,
+       0.356
+      ],
+      "chin": 0.463,
+      "note": "Minfilia's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Minfilia",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.99,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "B",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72625": {
+     "entry": {
+      "eyes": [
+       0.464,
+       0.185
+      ],
+      "chin": 0.298,
+      "note": "Urianger's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Urianger",
+     "shownToday": true,
+     "quests": 25,
+     "confidence": 0.992,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72626": {
+     "entry": {
+      "eyes": [
+       0.387,
+       0.252
+      ],
+      "chin": 0.362,
+      "note": "Y'shtola's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Y'shtola",
+     "shownToday": true,
+     "quests": 23,
+     "confidence": 0.991,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72627": {
+     "entry": {
+      "eyes": [
+       0.515,
+       0.34
+      ],
+      "chin": 0.447,
+      "note": "Ryne's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Ryne",
+     "shownToday": true,
+     "quests": 15,
+     "confidence": 0.89,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72630": {
+     "entry": {
+      "eyes": [
+       0.461,
+       0.338
+      ],
+      "chin": 0.451,
+      "note": "Alphinaud's Duty Support bust: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alphinaud",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.9,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72631": {
+     "entry": {
+      "eyes": [
+       0.623,
+       0.347
+      ],
+      "chin": 0.452,
+      "note": "Alisaie's Duty Support bust: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alisaie",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.9,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72637": {
+     "entry": {
+      "eyes": [
+       0.549,
+       0.289
+      ],
+      "chin": 0.397,
+      "note": "G'raha Tia's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "G'raha Tia",
+     "shownToday": true,
+     "quests": 17,
+     "confidence": 0.963,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72638": {
+     "entry": {
+      "eyes": [
+       0.388,
+       0.32
+      ],
+      "chin": 0.422,
+      "note": "Alphinaud's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Alphinaud",
+     "shownToday": true,
+     "quests": 21,
+     "confidence": 0.877,
+     "teamsFlaggedCurrent": [
+      "B"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72639": {
+     "entry": {
+      "eyes": [
+       0.564,
+       0.318
+      ],
+      "chin": 0.428,
+      "note": "Alisaie's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Alisaie",
+     "shownToday": true,
+     "quests": 10,
+     "confidence": 0.846,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72647": {
+     "entry": {
+      "eyes": [
+       0.477,
+       0.241
+      ],
+      "chin": 0.342,
+      "note": "Venat's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Venat",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.925,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72648": {
+     "entry": {
+      "eyes": [
+       0.478,
+       0.153
+      ],
+      "chin": 0.268,
+      "note": "Emet-Selch's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Emet-Selch",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.945,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72649": {
+     "entry": {
+      "eyes": [
+       0.414,
+       0.175
+      ],
+      "chin": 0.286,
+      "note": "Hythlodaeus's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Hythlodaeus",
+     "shownToday": true,
+     "quests": 6,
+     "confidence": 0.977,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72650": {
+     "entry": {
+      "eyes": [
+       0.457,
+       0.198
+      ],
+      "chin": 0.3,
+      "note": "Varshahn's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Varshahn",
+     "shownToday": true,
+     "quests": 11,
+     "confidence": 0.912,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72659": {
+     "entry": {
+      "eyes": [
+       0.416,
+       0.489
+      ],
+      "chin": 0.589,
+      "note": "Krile's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Krile",
+     "shownToday": true,
+     "quests": 11,
+     "confidence": 0.988,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72661": {
+     "entry": {
+      "eyes": [
+       0.421,
+       0.194
+      ],
+      "chin": 0.312,
+      "note": "Wuk Lamat's bust: a three-quarter view; the box sits 0.03 of the plate toward her turned-away side so the mane balances the face."
+     },
+     "character": "Wuk Lamat",
+     "shownToday": true,
+     "quests": 36,
+     "confidence": 0.839,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72663": {
+     "entry": {
+      "eyes": [
+       0.565,
+       0.287
+      ],
+      "chin": 0.392,
+      "note": "Koana's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Koana",
+     "shownToday": true,
+     "quests": 8,
+     "confidence": 0.905,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72664": {
+     "entry": {
+      "eyes": [
+       0.581,
+       0.331
+      ],
+      "chin": 0.429,
+      "note": "Sphene's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Sphene",
+     "shownToday": true,
+     "quests": 13,
+     "confidence": 0.991,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72681": {
+     "entry": {
+      "eyes": [
+       0.742,
+       0.37
+      ],
+      "chin": 0.743,
+      "note": "Alphinaud's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alphinaud",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.877,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72682": {
+     "entry": {
+      "eyes": [
+       0.817,
+       0.404
+      ],
+      "chin": 0.784,
+      "note": "Alisaie's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alisaie",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.876,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72683": {
+     "entry": {
+      "eyes": [
+       0.739,
+       0.229
+      ],
+      "chin": 0.707,
+      "note": "Thancred's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Thancred",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.879,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72684": {
+     "entry": {
+      "eyes": [
+       0.795,
+       0.386
+      ],
+      "chin": 0.773,
+      "note": "Minfilia's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Minfilia",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.902,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72685": {
+     "entry": {
+      "eyes": [
+       0.782,
+       0.251
+      ],
+      "chin": 0.667,
+      "note": "Urianger's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Urianger",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.88,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72686": {
+     "entry": {
+      "eyes": [
+       0.765,
+       0.414
+      ],
+      "chin": 0.831,
+      "note": "Y'shtola's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Y'shtola",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.902,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72687": {
+     "entry": {
+      "eyes": [
+       0.838,
+       0.386
+      ],
+      "chin": 0.777,
+      "note": "Ryne's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Ryne",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.882,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72690": {
+     "entry": {
+      "eyes": [
+       0.757,
+       0.322
+      ],
+      "chin": 0.724,
+      "note": "Alphinaud's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alphinaud",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.871,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72691": {
+     "entry": {
+      "eyes": [
+       0.847,
+       0.502
+      ],
+      "chin": 0.876,
+      "note": "Alisaie's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alisaie",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.878,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72697": {
+     "entry": {
+      "eyes": [
+       0.777,
+       0.404
+      ],
+      "chin": 0.832,
+      "note": "G'raha Tia's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "G'raha Tia",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.9,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72699": {
+     "entry": {
+      "eyes": [
+       0.829,
+       0.493
+      ],
+      "chin": 0.855,
+      "note": "Alisaie's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alisaie",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.878,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72707": {
+     "entry": {
+      "eyes": [
+       0.764,
+       0.413
+      ],
+      "chin": 0.844,
+      "note": "Venat's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Venat",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.902,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72708": {
+     "entry": {
+      "eyes": [
+       0.816,
+       0.344
+      ],
+      "chin": 0.83,
+      "note": "Emet-Selch's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Emet-Selch",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.881,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72709": {
+     "entry": {
+      "eyes": [
+       0.751,
+       0.363
+      ],
+      "chin": 0.813,
+      "note": "Hythlodaeus's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Hythlodaeus",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.881,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72711": {
+     "entry": {
+      "eyes": [
+       0.802,
+       0.34
+      ],
+      "chin": 0.759,
+      "note": "Zero's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Zero",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.879,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72761": {
+     "entry": {
+      "eyes": [
+       0.849,
+       0.379
+      ],
+      "chin": 0.758,
+      "note": "Ysayle's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Ysayle",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.881,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72765": {
+     "entry": {
+      "eyes": [
+       0.801,
+       0.318
+      ],
+      "chin": 0.747,
+      "note": "Haurchefant's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Haurchefant",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.878,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72767": {
+     "entry": {
+      "eyes": [
+       0.798,
+       0.497
+      ],
+      "chin": 0.86,
+      "note": "Y'shtola's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Y'shtola",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.881,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72772": {
+     "entry": {
+      "eyes": [
+       0.725,
+       0.481
+      ],
+      "chin": 0.838,
+      "note": "Thancred's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Thancred",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.816,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72773": {
+     "entry": {
+      "eyes": [
+       0.764,
+       0.412
+      ],
+      "chin": 0.776,
+      "note": "Thancred's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Thancred",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.875,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72774": {
+     "entry": {
+      "eyes": [
+       0.762,
+       0.433
+      ],
+      "chin": 0.874,
+      "note": "Aymeric's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Aymeric",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.901,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72779": {
+     "entry": {
+      "eyes": [
+       0.783,
+       0.388
+      ],
+      "chin": 0.833,
+      "note": "Lyse's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Lyse",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.904,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72780": {
+     "entry": {
+      "eyes": [
+       0.761,
+       0.498
+      ],
+      "chin": 0.863,
+      "note": "Gosetsu's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Gosetsu",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.9,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72781": {
+     "entry": {
+      "eyes": [
+       0.759,
+       0.437
+      ],
+      "chin": 0.875,
+      "note": "Hien's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Hien",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.902,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72783": {
+     "entry": {
+      "eyes": [
+       0.878,
+       0.312
+      ],
+      "chin": 0.693,
+      "note": "Yugiri's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Yugiri",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.87,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72788": {
+     "entry": {
+      "eyes": [
+       0.8,
+       0.389
+      ],
+      "chin": 0.864,
+      "note": "Arenvald's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Arenvald",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.813,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72792": {
+     "entry": {
+      "eyes": [
+       0.732,
+       0.384
+      ],
+      "chin": 0.819,
+      "note": "Wuk Lamat's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Wuk Lamat",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.902,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72794": {
+     "entry": {
+      "eyes": [
+       0.825,
+       0.505
+      ],
+      "chin": 0.868,
+      "note": "Koana's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Koana",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.9,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73016": {
+     "entry": {
+      "eyes": [
+       0.447,
+       0.441
+      ],
+      "chin": 0.56,
+      "note": "Emmanellain's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Emmanellain",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.842,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73024": {
+     "entry": {
+      "eyes": [
+       0.434,
+       0.432
+      ],
+      "chin": 0.565,
+      "note": "Thancred's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Thancred",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.886,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73026": {
+     "entry": {
+      "eyes": [
+       0.44,
+       0.426
+      ],
+      "chin": 0.558,
+      "note": "Urianger's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Urianger",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.83,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73060": {
+     "entry": {
+      "eyes": [
+       0.46,
+       0.447
+      ],
+      "chin": 0.562,
+      "note": "Ryne's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Ryne",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.832,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73061": {
+     "entry": {
+      "eyes": [
+       0.402,
+       0.458
+      ],
+      "chin": 0.575,
+      "note": "Alisaie's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alisaie",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.895,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73074": {
+     "entry": {
+      "eyes": [
+       0.444,
+       0.425
+      ],
+      "chin": 0.558,
+      "note": "Fourchenault's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Fourchenault",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.896,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73085": {
+     "entry": {
+      "eyes": [
+       0.426,
+       0.452
+      ],
+      "chin": 0.568,
+      "note": "Y'shtola's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Y'shtola",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.866,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73095": {
+     "entry": {
+      "eyes": [
+       0.413,
+       0.42
+      ],
+      "chin": 0.562,
+      "note": "Arenvald's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Arenvald",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.895,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73104": {
+     "entry": {
+      "eyes": [
+       0.426,
+       0.429
+      ],
+      "chin": 0.575,
+      "note": "Lyse's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Lyse",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.902,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73119": {
+     "entry": {
+      "eyes": [
+       0.386,
+       0.407
+      ],
+      "chin": 0.556,
+      "note": "Isse's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Isse",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.894,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73124": {
+     "entry": {
+      "eyes": [
+       0.42,
+       0.412
+      ],
+      "chin": 0.56,
+      "note": "Haurchefant's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Haurchefant",
+     "shownToday": true,
+     "quests": 7,
+     "confidence": 0.946,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73128": {
+     "entry": {
+      "eyes": [
+       0.449,
+       0.445
+      ],
+      "chin": 0.568,
+      "note": "Alphinaud's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alphinaud",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.833,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73130": {
+     "entry": {
+      "eyes": [
+       0.45,
+       0.411
+      ],
+      "chin": 0.556,
+      "note": "Raubahn's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Raubahn",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.858,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73132": {
+     "entry": {
+      "eyes": [
+       0.43,
+       0.417
+      ],
+      "chin": 0.554,
+      "note": "Ilberd's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Ilberd",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.953,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73149": {
+     "entry": {
+      "eyes": [
+       0.435,
+       0.428
+      ],
+      "chin": 0.562,
+      "note": "Artoirel's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Artoirel",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.899,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73165": {
+     "entry": {
+      "eyes": [
+       0.432,
+       0.43
+      ],
+      "chin": 0.563,
+      "note": "Thancred's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Thancred",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.901,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73168": {
+     "entry": {
+      "eyes": [
+       0.435,
+       0.418
+      ],
+      "chin": 0.564,
+      "note": "Hoary Boulder's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Hoary Boulder",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.951,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73177": {
+     "entry": {
+      "eyes": [
+       0.418,
+       0.43
+      ],
+      "chin": 0.563,
+      "note": "Minfilia's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Minfilia",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.83,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73182": {
+     "entry": {
+      "eyes": [
+       0.426,
+       0.397
+      ],
+      "chin": 0.55,
+      "note": "Biggs's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Biggs",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.898,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73184": {
+     "entry": {
+      "eyes": [
+       0.396,
+       0.414
+      ],
+      "chin": 0.549,
+      "note": "Cid's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Cid",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.898,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73187": {
+     "entry": {
+      "eyes": [
+       0.426,
+       0.429
+      ],
+      "chin": 0.56,
+      "note": "Y'shtola's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Y'shtola",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.9,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73196": {
+     "entry": {
+      "eyes": [
+       0.433,
+       0.42
+      ],
+      "chin": 0.568,
+      "note": "Trachtoum's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Trachtoum",
+     "shownToday": true,
+     "quests": 3,
+     "confidence": 0.947,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73199": {
+     "entry": {
+      "eyes": [
+       0.434,
+       0.388
+      ],
+      "chin": 0.533,
+      "note": "Gundobald's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Gundobald",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.878,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73210": {
+     "entry": {
+      "eyes": [
+       0.433,
+       0.437
+      ],
+      "chin": 0.566,
+      "note": "Erenville (DT battle talk): the face turns left; the box sits 0.03 of the plate toward the face."
+     },
+     "character": "Erenville",
+     "shownToday": true,
+     "quests": 0,
+     "confidence": 0.929,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73237": {
+     "entry": {
+      "eyes": [
+       0.439,
+       0.419
+      ],
+      "chin": 0.547,
+      "note": "Ahtbyrm's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Ahtbyrm",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.908,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73250": {
+     "entry": {
+      "eyes": [
+       0.431,
+       0.41
+      ],
+      "chin": 0.563,
+      "note": "Owyne's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Owyne",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.951,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73256": {
+     "entry": {
+      "eyes": [
+       0.419,
+       0.42
+      ],
+      "chin": 0.557,
+      "note": "Emet-Selch's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Emet-Selch",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.901,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73266": {
+     "entry": {
+      "eyes": [
+       0.403,
+       0.439
+      ],
+      "chin": 0.566,
+      "note": "Koana's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Koana",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.9,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73270": {
+     "entry": {
+      "eyes": [
+       0.405,
+       0.448
+      ],
+      "chin": 0.577,
+      "note": "Sphene's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Sphene",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.897,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73274": {
+     "entry": {
+      "eyes": [
+       0.455,
+       0.439
+      ],
+      "chin": 0.571,
+      "note": "Zero's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Zero",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.9,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73275": {
+     "entry": {
+      "eyes": [
+       0.433,
+       0.427
+      ],
+      "chin": 0.558,
+      "note": "Erenville (EW battle talk): the face turns left; the box sits 0.03 of the plate toward the face."
+     },
+     "character": "Erenville",
+     "shownToday": true,
+     "quests": 16,
+     "confidence": 0.918,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73276": {
+     "entry": {
+      "eyes": [
+       0.425,
+       0.451
+      ],
+      "chin": 0.568,
+      "note": "Koana's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Koana",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.899,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73281": {
+     "entry": {
+      "eyes": [
+       0.408,
+       0.424
+      ],
+      "chin": 0.558,
+      "note": "Sphene's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Sphene",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.896,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73290": {
+     "entry": {
+      "eyes": [
+       0.432,
+       0.415
+      ],
+      "chin": 0.566,
+      "note": "Jullus's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Jullus",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.901,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73291": {
+     "entry": {
+      "eyes": [
+       0.43,
+       0.424
+      ],
+      "chin": 0.563,
+      "note": "Ysayle's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Ysayle",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.869,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87019": {
+     "entry": {
+      "eyes": [
+       0.517,
+       0.356
+      ],
+      "chin": 0.468,
+      "note": "Tataru's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Tataru",
+     "shownToday": true,
+     "quests": 8,
+     "confidence": 0.953,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87028": {
+     "entry": {
+      "eyes": [
+       0.537,
+       0.429
+      ],
+      "chin": 0.562,
+      "note": "Momodi's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Momodi",
+     "shownToday": true,
+     "quests": 10,
+     "confidence": 0.963,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87029": {
+     "entry": {
+      "eyes": [
+       0.424,
+       0.354
+      ],
+      "chin": 0.516,
+      "note": "Baderon's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Baderon",
+     "shownToday": true,
+     "quests": 8,
+     "confidence": 0.992,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87030": {
+     "entry": {
+      "eyes": [
+       0.53,
+       0.312
+      ],
+      "chin": 0.462,
+      "note": "Mother Miounne's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Mother Miounne",
+     "shownToday": true,
+     "quests": 9,
+     "confidence": 0.893,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87033": {
+     "entry": {
+      "eyes": [
+       0.359,
+       0.386
+      ],
+      "chin": 0.49,
+      "note": "Biggs's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Biggs",
+     "shownToday": true,
+     "quests": 8,
+     "confidence": 0.991,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87034": {
+     "entry": {
+      "eyes": [
+       0.45,
+       0.303
+      ],
+      "chin": 0.494,
+      "note": "Gerolt's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Gerolt",
+     "shownToday": true,
+     "quests": 20,
+     "confidence": 0.993,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87044": {
+     "entry": {
+      "eyes": [
+       0.727,
+       0.281
+      ],
+      "chin": 0.379,
+      "note": "Raya-O-Senna's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Raya-O-Senna",
+     "shownToday": true,
+     "quests": 10,
+     "confidence": 0.952,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87046": {
+     "entry": {
+      "eyes": [
+       0.425,
+       0.359
+      ],
+      "chin": 0.529,
+      "note": "Thancred's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Thancred",
+     "shownToday": true,
+     "quests": 3,
+     "confidence": 0.803,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87048": {
+     "entry": {
+      "eyes": [
+       0.315,
+       0.486
+      ],
+      "chin": 0.59,
+      "note": "Papalymo's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Papalymo",
+     "shownToday": true,
+     "quests": 3,
+     "confidence": 0.964,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87049": {
+     "entry": {
+      "eyes": [
+       0.493,
+       0.332
+      ],
+      "chin": 0.503,
+      "note": "Y'shtola's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Y'shtola",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.992,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87056": {
+     "entry": {
+      "eyes": [
+       0.372,
+       0.333
+      ],
+      "chin": 0.52,
+      "note": "Minfilia's card: a profile facing left; the box sits 0.04 of the plate toward the back of her head."
+     },
+     "character": "Minfilia",
+     "shownToday": true,
+     "quests": 36,
+     "confidence": 0.969,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87058": {
+     "entry": {
+      "eyes": [
+       0.441,
+       0.321
+      ],
+      "chin": 0.51,
+      "note": "Cid's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Cid",
+     "shownToday": true,
+     "quests": 19,
+     "confidence": 0.993,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87062": {
+     "entry": {
+      "eyes": [
+       0.649,
+       0.294
+      ],
+      "chin": 0.4,
+      "note": "Hildibrand's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Hildibrand",
+     "shownToday": true,
+     "quests": 20,
+     "confidence": 0.896,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87063": {
+     "entry": {
+      "eyes": [
+       0.484,
+       0.478
+      ],
+      "chin": 0.624,
+      "note": "Nanamo Ul Namo's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Nanamo Ul Namo",
+     "shownToday": true,
+     "quests": 3,
+     "confidence": 0.839,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87065": {
+     "entry": {
+      "eyes": [
+       0.497,
+       0.36
+      ],
+      "chin": 0.557,
+      "note": "Merlwyb's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Merlwyb",
+     "shownToday": true,
+     "quests": 3,
+     "confidence": 0.892,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87066": {
+     "entry": {
+      "eyes": [
+       0.43,
+       0.424
+      ],
+      "chin": 0.582,
+      "note": "Kan-E-Senna's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Kan-E-Senna",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.944,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87067": {
+     "entry": {
+      "eyes": [
+       0.389,
+       0.35
+      ],
+      "chin": 0.549,
+      "note": "Raubahn's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Raubahn",
+     "shownToday": true,
+     "quests": 10,
+     "confidence": 0.888,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87084": {
+     "entry": {
+      "eyes": [
+       0.477,
+       0.333
+      ],
+      "chin": 0.451,
+      "note": "Yugiri's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Yugiri",
+     "shownToday": true,
+     "quests": 15,
+     "confidence": 0.906,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87090": {
+     "entry": {
+      "eyes": [
+       0.633,
+       0.285
+      ],
+      "chin": 0.434,
+      "note": "Ysayle's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Ysayle",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.919,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87091": {
+     "entry": {
+      "eyes": [
+       0.525,
+       0.341
+      ],
+      "chin": 0.485,
+      "note": "Hilda's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Hilda",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.992,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87092": {
+     "entry": {
+      "eyes": [
+       0.5,
+       0.519
+      ],
+      "chin": 0.635,
+      "note": "Matoya's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Matoya",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.947,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87095": {
+     "entry": {
+      "eyes": [
+       0.453,
+       0.299
+      ],
+      "chin": 0.448,
+      "note": "Haurchefant's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Haurchefant",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.986,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87096": {
+     "entry": {
+      "eyes": [
+       0.6,
+       0.26
+      ],
+      "chin": 0.382,
+      "note": "Aymeric's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Aymeric",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.932,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87113": {
+     "entry": {
+      "eyes": [
+       0.413,
+       0.377
+      ],
+      "chin": 0.484,
+      "note": "Pipin's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Pipin",
+     "shownToday": true,
+     "quests": 3,
+     "confidence": 0.876,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87114": {
+     "entry": {
+      "eyes": [
+       0.326,
+       0.38
+      ],
+      "chin": 0.512,
+      "note": "Julyan's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Julyan",
+     "shownToday": true,
+     "quests": 0,
+     "confidence": 0.96,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87121": {
+     "entry": {
+      "eyes": [
+       0.47,
+       0.236
+      ],
+      "chin": 0.374,
+      "note": "Honoroit's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Honoroit",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.854,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87133": {
+     "entry": {
+      "eyes": [
+       0.49,
+       0.274
+      ],
+      "chin": 0.452,
+      "note": "Artoirel's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Artoirel",
+     "shownToday": true,
+     "quests": 9,
+     "confidence": 0.898,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87134": {
+     "entry": {
+      "eyes": [
+       0.506,
+       0.424
+      ],
+      "chin": 0.581,
+      "note": "Emmanellain's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Emmanellain",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.991,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87138": {
+     "entry": {
+      "eyes": [
+       0.47,
+       0.241
+      ],
+      "chin": 0.348,
+      "note": "F'lhaminn's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "F'lhaminn",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.969,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87143": {
+     "entry": {
+      "eyes": [
+       0.483,
+       0.27
+      ],
+      "chin": 0.416,
+      "note": "Laniaitte's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Laniaitte",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.951,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87165": {
+     "entry": {
+      "eyes": [
+       0.581,
+       0.339
+      ],
+      "chin": 0.49,
+      "note": "Thancred's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Thancred",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.877,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87166": {
+     "entry": {
+      "eyes": [
+       0.386,
+       0.436
+      ],
+      "chin": 0.641,
+      "note": "Y'shtola's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Y'shtola",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.828,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87186": {
+     "entry": {
+      "eyes": [
+       0.45,
+       0.451
+      ],
+      "chin": 0.573,
+      "note": "M'naago's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "M'naago",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.861,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87187": {
+     "entry": {
+      "eyes": [
+       0.48,
+       0.405
+      ],
+      "chin": 0.574,
+      "note": "Kotokaze's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Kotokaze",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.951,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87193": {
+     "entry": {
+      "eyes": [
+       0.464,
+       0.408
+      ],
+      "chin": 0.615,
+      "note": "Rasho's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Rasho",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.95,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87199": {
+     "entry": {
+      "eyes": [
+       0.524,
+       0.52
+      ],
+      "chin": 0.674,
+      "note": "Krile's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Krile",
+     "shownToday": true,
+     "quests": 12,
+     "confidence": 0.87,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87200": {
+     "entry": {
+      "eyes": [
+       0.569,
+       0.321
+      ],
+      "chin": 0.463,
+      "note": "Lyse's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Lyse",
+     "shownToday": true,
+     "quests": 19,
+     "confidence": 0.993,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87202": {
+     "entry": {
+      "eyes": [
+       0.325,
+       0.412
+      ],
+      "chin": 0.568,
+      "note": "Hien's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Hien",
+     "shownToday": true,
+     "quests": 20,
+     "confidence": 0.797,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87214": {
+     "entry": {
+      "eyes": [
+       0.342,
+       0.366
+      ],
+      "chin": 0.538,
+      "note": "Tansui's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Tansui",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.891,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87219": {
+     "entry": {
+      "eyes": [
+       0.496,
+       0.392
+      ],
+      "chin": 0.531,
+      "note": "Hancock's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Hancock",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.991,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87230": {
+     "entry": {
+      "eyes": [
+       0.484,
+       0.341
+      ],
+      "chin": 0.499,
+      "note": "Gosetsu's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Gosetsu",
+     "shownToday": true,
+     "quests": 7,
+     "confidence": 0.957,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87238": {
+     "entry": {
+      "eyes": [
+       0.47,
+       0.364
+      ],
+      "chin": 0.571,
+      "note": "Asahi's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Asahi",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.952,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87241": {
+     "entry": {
+      "eyes": [
+       0.481,
+       0.403
+      ],
+      "chin": 0.532,
+      "note": "Tataru's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Tataru",
+     "shownToday": true,
+     "quests": 10,
+     "confidence": 0.936,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87252": {
+     "entry": {
+      "eyes": [
+       0.444,
+       0.348
+      ],
+      "chin": 0.513,
+      "note": "Noctis's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Noctis",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.917,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87259": {
+     "entry": {
+      "eyes": [
+       0.692,
+       0.289
+      ],
+      "chin": 0.426,
+      "note": "Grenoldt's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Grenoldt",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.949,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87269": {
+     "entry": {
+      "eyes": [
+       0.521,
+       0.309
+      ],
+      "chin": 0.463,
+      "note": "Urianger's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Urianger",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.902,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87301": {
+     "entry": {
+      "eyes": [
+       0.579,
+       0.35
+      ],
+      "chin": 0.486,
+      "note": "Thancred's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Thancred",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.844,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87313": {
+     "entry": {
+      "eyes": [
+       0.46,
+       0.36
+      ],
+      "chin": 0.492,
+      "note": "Ryne's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Ryne",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.9,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87314": {
+     "entry": {
+      "eyes": [
+       0.492,
+       0.315
+      ],
+      "chin": 0.465,
+      "note": "Gaia's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Gaia",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.971,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87338": {
+     "entry": {
+      "eyes": [
+       0.395,
+       0.351
+      ],
+      "chin": 0.49,
+      "note": "Fourchenault's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Fourchenault",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.889,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87342": {
+     "entry": {
+      "eyes": [
+       0.414,
+       0.304
+      ],
+      "chin": 0.447,
+      "note": "Hythlodaeus's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Hythlodaeus",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.903,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87366": {
+     "entry": {
+      "eyes": [
+       0.501,
+       0.356
+      ],
+      "chin": 0.489,
+      "note": "Lahabrea's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Lahabrea",
+     "shownToday": true,
+     "quests": 6,
+     "confidence": 0.934,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87369": {
+     "entry": {
+      "eyes": [
+       0.567,
+       0.417
+      ],
+      "chin": 0.556,
+      "note": "Dreamingway's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Dreamingway",
+     "shownToday": true,
+     "quests": 9,
+     "confidence": 0.886,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87374": {
+     "entry": {
+      "eyes": [
+       0.686,
+       0.318
+      ],
+      "chin": 0.416,
+      "note": "Menphina's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Menphina",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.95,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87377": {
+     "entry": {
+      "eyes": [
+       0.484,
+       0.322
+      ],
+      "chin": 0.451,
+      "note": "Venat's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Venat",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.901,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87385": {
+     "entry": {
+      "eyes": [
+       0.384,
+       0.286
+      ],
+      "chin": 0.396,
+      "note": "Themis's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Themis",
+     "shownToday": true,
+     "quests": 3,
+     "confidence": 0.891,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87423": {
+     "entry": {
+      "eyes": [
+       0.562,
+       0.386
+      ],
+      "chin": 0.493,
+      "note": "Cahciua's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Cahciua",
+     "shownToday": true,
+     "quests": 8,
+     "confidence": 0.99,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87424": {
+     "entry": {
+      "eyes": [
+       0.367,
+       0.333
+      ],
+      "chin": 0.481,
+      "note": "Wuk Lamat's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Wuk Lamat",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.879,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87425": {
+     "entry": {
+      "eyes": [
+       0.507,
+       0.345
+      ],
+      "chin": 0.487,
+      "note": "Sphene's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Sphene",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.898,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87434": {
+     "entry": {
+      "eyes": [
+       0.607,
+       0.367
+      ],
+      "chin": 0.472,
+      "note": "Prishe's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Prishe",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.919,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87437": {
+     "entry": {
+      "eyes": [
+       0.495,
+       0.364
+      ],
+      "chin": 0.518,
+      "note": "Ollier's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Ollier",
+     "shownToday": true,
+     "quests": 6,
+     "confidence": 0.954,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87450": {
+     "entry": {
+      "eyes": [
+       0.373,
+       0.366
+      ],
+      "chin": 0.503,
+      "note": "Namingway's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Namingway",
+     "shownToday": true,
+     "quests": 0,
+     "confidence": 0.947,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87453": {
+     "entry": {
+      "eyes": [
+       0.59,
+       0.184
+      ],
+      "chin": 0.316,
+      "note": "Fahrafahr's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Fahrafahr",
+     "shownToday": true,
+     "quests": 6,
+     "confidence": 0.858,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87465": {
+     "entry": {
+      "eyes": [
+       0.616,
+       0.369
+      ],
+      "chin": 0.577,
+      "note": "Nitowikwe's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Nitowikwe",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.921,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87466": {
+     "entry": {
+      "eyes": [
+       0.359,
+       0.4
+      ],
+      "chin": 0.579,
+      "note": "Jullus's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Jullus",
+     "shownToday": true,
+     "quests": 0,
+     "confidence": 0.992,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87467": {
+     "entry": {
+      "eyes": [
+       0.353,
+       0.4
+      ],
+      "chin": 0.578,
+      "note": "Zero's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Zero",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.902,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    }
+   },
+   "provisional": {
+    "72623": {
+     "entry": {
+      "eyes": [
+       0.451,
+       0.245
+      ],
+      "chin": 0.352,
+      "note": "Thancred's bust: Team C's eye line sat 0.027 low (on the bridge of the nose); eyes and chin read by eye."
+     },
+     "character": "Thancred",
+     "shownToday": true,
+     "quests": 18,
+     "confidence": 0.699,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72628": {
+     "entry": {
+      "eyes": [
+       0.246,
+       0.26
+      ],
+      "chin": 0.37,
+      "note": "Lyna's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Lyna",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.64,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72629": {
+     "entry": {
+      "eyes": [
+       0.37,
+       0.275
+      ],
+      "chin": 0.358,
+      "note": "The hooded Crystal Exarch: the eyes are in the hood's shadow, read by eye from the nose and cheek."
+     },
+     "character": "Crystal Exarch",
+     "shownToday": true,
+     "quests": 11,
+     "confidence": 0.32,
+     "teamsFlaggedCurrent": [
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72636": {
+     "entry": {
+      "eyes": [
+       0.449,
+       0.301
+      ],
+      "chin": 0.412,
+      "note": "Crystal Exarch's Duty Support bust: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Crystal Exarch",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.674,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72644": {
+     "entry": {
+      "eyes": [
+       0.288,
+       0.211
+      ],
+      "chin": 0.309,
+      "note": "Estinien's bust: his face sits at the bust's left edge; the box is clamped there and the eyes land 0.07 left of centre."
+     },
+     "character": "Estinien",
+     "shownToday": true,
+     "quests": 7,
+     "confidence": 0.628,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72651": {
+     "entry": {
+      "eyes": [
+       0.555,
+       0.23
+      ],
+      "chin": 0.337,
+      "note": "Zero's Duty Support bust: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Zero",
+     "shownToday": true,
+     "quests": 7,
+     "confidence": 0.627,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "72688": {
+     "entry": {
+      "eyes": [
+       0.68,
+       0.427
+      ],
+      "chin": 0.864,
+      "note": "Lyna's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Lyna",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.673,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72689": {
+     "entry": {
+      "eyes": [
+       0.78,
+       0.55
+      ],
+      "chin": 0.724,
+      "note": "Crystal Exarch's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Crystal Exarch",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.41,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72696": {
+     "entry": {
+      "eyes": [
+       0.83,
+       0.469
+      ],
+      "chin": 0.861,
+      "note": "Crystal Exarch's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Crystal Exarch",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.676,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72698": {
+     "entry": {
+      "eyes": [
+       0.763,
+       0.469
+      ],
+      "chin": 0.861,
+      "note": "Alphinaud's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alphinaud",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.77,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72704": {
+     "entry": {
+      "eyes": [
+       0.74,
+       0.418
+      ],
+      "chin": 0.8,
+      "note": "Estinien's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Estinien",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.722,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72710": {
+     "entry": {
+      "eyes": [
+       0.72,
+       0.274
+      ],
+      "chin": 0.701,
+      "note": "Varshahn's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Varshahn",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.7,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72719": {
+     "entry": {
+      "eyes": [
+       0.772,
+       0.51
+      ],
+      "chin": 0.79,
+      "note": "Krile's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Krile",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.67,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72789": {
+     "entry": {
+      "eyes": [
+       0.696,
+       0.352
+      ],
+      "chin": 0.748,
+      "note": "Lyse's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Lyse",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.652,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72790": {
+     "entry": {
+      "eyes": [
+       0.779,
+       0.479
+      ],
+      "chin": 0.811,
+      "note": "Raubahn's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Raubahn",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.692,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "72795": {
+     "entry": {
+      "eyes": [
+       0.815,
+       0.507
+      ],
+      "chin": 0.888,
+      "note": "Sphene's Duty Support strip: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Sphene",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.654,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73007": {
+     "entry": {
+      "eyes": [
+       0.455,
+       0.472
+      ],
+      "chin": 0.58,
+      "note": "Estinien's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Estinien",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.718,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73008": {
+     "entry": {
+      "eyes": [
+       0.423,
+       0.44
+      ],
+      "chin": 0.568,
+      "note": "Alphinaud's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alphinaud",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.664,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73011": {
+     "entry": {
+      "eyes": [
+       0.443,
+       0.432
+      ],
+      "chin": 0.572,
+      "note": "Alisaie's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alisaie",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.672,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73012": {
+     "entry": {
+      "eyes": [
+       0.443,
+       0.417
+      ],
+      "chin": 0.551,
+      "note": "G'raha Tia's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "G'raha Tia",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.649,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73025": {
+     "entry": {
+      "eyes": [
+       0.428,
+       0.445
+      ],
+      "chin": 0.568,
+      "note": "Y'shtola's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Y'shtola",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.675,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73030": {
+     "entry": {
+      "eyes": [
+       0.429,
+       0.419
+      ],
+      "chin": 0.562,
+      "note": "Aymeric's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Aymeric",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.764,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73034": {
+     "entry": {
+      "eyes": [
+       0.427,
+       0.463
+      ],
+      "chin": 0.575,
+      "note": "Alphinaud's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Alphinaud",
+     "shownToday": true,
+     "quests": 75,
+     "confidence": 0.675,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73036": {
+     "entry": {
+      "eyes": [
+       0.43,
+       0.441
+      ],
+      "chin": 0.558,
+      "note": "Alisaie's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Alisaie",
+     "shownToday": true,
+     "quests": 17,
+     "confidence": 0.717,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73052": {
+     "entry": {
+      "eyes": [
+       0.438,
+       0.425
+      ],
+      "chin": 0.559,
+      "note": "Lyna's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Lyna",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.678,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73053": {
+     "entry": {
+      "eyes": [
+       0.421,
+       0.468
+      ],
+      "chin": 0.578,
+      "note": "Alphinaud's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alphinaud",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.66,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73056": {
+     "entry": {
+      "eyes": [
+       0.41,
+       0.466
+      ],
+      "chin": 0.572,
+      "note": "Alisaie's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alisaie",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.662,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73062": {
+     "entry": {
+      "eyes": [
+       0.433,
+       0.465
+      ],
+      "chin": 0.571,
+      "note": "Alphinaud's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Alphinaud",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.655,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73064": {
+     "entry": {
+      "eyes": [
+       0.479,
+       0.407
+      ],
+      "chin": 0.538,
+      "note": "Ryne's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Ryne",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.673,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73071": {
+     "entry": {
+      "eyes": [
+       0.398,
+       0.494
+      ],
+      "chin": 0.572,
+      "note": "Krile's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Krile",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.66,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73072": {
+     "entry": {
+      "eyes": [
+       0.426,
+       0.473
+      ],
+      "chin": 0.587,
+      "note": "Tataru's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Tataru",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.656,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73077": {
+     "entry": {
+      "eyes": [
+       0.434,
+       0.433
+      ],
+      "chin": 0.56,
+      "note": "Zero's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Zero",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.755,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73080": {
+     "entry": {
+      "eyes": [
+       0.476,
+       0.438
+      ],
+      "chin": 0.573,
+      "note": "Lyse's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Lyse",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.698,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73081": {
+     "entry": {
+      "eyes": [
+       0.393,
+       0.436
+      ],
+      "chin": 0.576,
+      "note": "Yugiri's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Yugiri",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.608,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73090": {
+     "entry": {
+      "eyes": [
+       0.426,
+       0.443
+      ],
+      "chin": 0.558,
+      "note": "Tansui's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Tansui",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.67,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73093": {
+     "entry": {
+      "eyes": [
+       0.42,
+       0.426
+      ],
+      "chin": 0.565,
+      "note": "Asahi's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Asahi",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.749,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73100": {
+     "entry": {
+      "eyes": [
+       0.399,
+       0.517
+      ],
+      "chin": 0.613,
+      "note": "Krile's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Krile",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.679,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73109": {
+     "entry": {
+      "eyes": [
+       0.426,
+       0.411
+      ],
+      "chin": 0.555,
+      "note": "Conrad's battle-talk face turns left; the box sits 0.04 of the plate toward the face."
+     },
+     "character": "Conrad",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.708,
+     "teamsFlaggedCurrent": [
+      "A",
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73112": {
+     "entry": {
+      "eyes": [
+       0.443,
+       0.447
+      ],
+      "chin": 0.585,
+      "note": "Thancred's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Thancred",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.641,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73125": {
+     "entry": {
+      "eyes": [
+       0.406,
+       0.471
+      ],
+      "chin": 0.58,
+      "note": "Tataru's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Tataru",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.693,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73129": {
+     "entry": {
+      "eyes": [
+       0.426,
+       0.447
+      ],
+      "chin": 0.569,
+      "note": "Yugiri's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Yugiri",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.648,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73139": {
+     "entry": {
+      "eyes": [
+       0.441,
+       0.436
+      ],
+      "chin": 0.576,
+      "note": "Hilda's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Hilda",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.667,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73156": {
+     "entry": {
+      "eyes": [
+       0.33,
+       0.45
+      ],
+      "chin": 0.55,
+      "note": "Yda's masked battle-talk face."
+     },
+     "character": "Yda",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.35,
+     "teamsFlaggedCurrent": [
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73164": {
+     "entry": {
+      "eyes": [
+       0.38,
+       0.41
+      ],
+      "chin": 0.519,
+      "note": "Papalymo's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Papalymo",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.703,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73178": {
+     "entry": {
+      "eyes": [
+       0.398,
+       0.425
+      ],
+      "chin": 0.548,
+      "note": "Urianger's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Urianger",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.633,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73181": {
+     "entry": {
+      "eyes": [
+       0.42,
+       0.475
+      ],
+      "chin": 0.562,
+      "note": "Wedge's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Wedge",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.48,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73189": {
+     "entry": {
+      "eyes": [
+       0.413,
+       0.401
+      ],
+      "chin": 0.528,
+      "note": "Drillemont's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Drillemont",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.716,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73231": {
+     "entry": {
+      "eyes": [
+       0.417,
+       0.423
+      ],
+      "chin": 0.553,
+      "note": "Ryssfloh's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Ryssfloh",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.717,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73239": {
+     "entry": {
+      "eyes": [
+       0.426,
+       0.473
+      ],
+      "chin": 0.561,
+      "note": "Ghimthota's battle-talk face: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Ghimthota",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.72,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73242": {
+     "entry": {
+      "eyes": [
+       0.411,
+       0.419
+      ],
+      "chin": 0.543,
+      "note": "Galfrid's masked battle-talk face."
+     },
+     "character": "Galfrid",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.617,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73249": {
+     "entry": {
+      "eyes": [
+       0.41,
+       0.48
+      ],
+      "chin": 0.582,
+      "note": "Papashan's battle-talk face: a Lalafell whose chin is under the moustache; the span is widened 25 % so the chin lands on the band."
+     },
+     "character": "Papashan",
+     "shownToday": true,
+     "quests": 3,
+     "confidence": 0.648,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "73257": {
+     "entry": {
+      "eyes": [
+       0.415,
+       0.462
+      ],
+      "chin": 0.583,
+      "note": "Krile's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Krile",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.603,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73265": {
+     "entry": {
+      "eyes": [
+       0.409,
+       0.436
+      ],
+      "chin": 0.602,
+      "note": "Wuk Lamat's battle-talk face: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Wuk Lamat",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.673,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "73289": {
+     "entry": {
+      "eyes": [
+       0.325,
+       0.51
+      ],
+      "chin": 0.615,
+      "note": "Livingway (a Loporrit): Team C found one eye only and Team A the other; the midpoint and the muzzle's chin are read by eye."
+     },
+     "character": "Livingway",
+     "shownToday": true,
+     "quests": 0,
+     "confidence": 0.56,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87045": {
+     "entry": {
+      "eyes": [
+       0.521,
+       0.314
+      ],
+      "chin": 0.498,
+      "note": "Godbert's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Godbert",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.728,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A",
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87050": {
+     "entry": {
+      "eyes": [
+       0.538,
+       0.382
+      ],
+      "chin": 0.496,
+      "note": "Urianger's ARR card: hooded, goggles over the eyes."
+     },
+     "character": "Urianger",
+     "shownToday": true,
+     "quests": 12,
+     "confidence": 0.689,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87088": {
+     "entry": {
+      "eyes": [
+       0.446,
+       0.327
+      ],
+      "chin": 0.459,
+      "note": "Estinien's Heavensward card: the helmeted dragoon; Team A's crop centres the helmet (owner question 1)."
+     },
+     "character": "Estinien",
+     "shownToday": true,
+     "quests": 6,
+     "confidence": 0.45,
+     "teamsFlaggedCurrent": [
+      "B",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "A"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87089": {
+     "entry": {
+      "eyes": [
+       0.404,
+       0.322
+      ],
+      "chin": 0.494,
+      "note": "Lucia's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Lucia",
+     "shownToday": true,
+     "quests": 10,
+     "confidence": 0.762,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87142": {
+     "entry": {
+      "eyes": [
+       0.416,
+       0.272
+      ],
+      "chin": 0.413,
+      "note": "Gibrillont's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Gibrillont",
+     "shownToday": true,
+     "quests": 4,
+     "confidence": 0.75,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87194": {
+     "entry": {
+      "eyes": [
+       0.667,
+       0.402
+      ],
+      "chin": 0.564,
+      "note": "Cirina's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Cirina",
+     "shownToday": true,
+     "quests": 5,
+     "confidence": 0.7,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87195": {
+     "entry": {
+      "eyes": [
+       0.44,
+       0.35
+      ],
+      "chin": 0.466,
+      "note": "Magnai's card: Team C's eye point sat on his right eye; the midpoint is read by eye (it matches Team A and the curated value)."
+     },
+     "character": "Magnai",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.666,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [],
+     "agreement": "one team only"
+    },
+    "87217": {
+     "entry": {
+      "eyes": [
+       0.371,
+       0.315
+      ],
+      "chin": 0.453,
+      "note": "Arenvald's card: his face turns down and left; no square box centres it cleanly."
+     },
+     "character": "Arenvald",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.739,
+     "teamsFlaggedCurrent": [
+      "A",
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "agreed (2-3 teams)"
+    },
+    "87258": {
+     "entry": {
+      "eyes": [
+       0.295,
+       0.356
+      ],
+      "chin": 0.515,
+      "note": "Runar's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Runar",
+     "shownToday": true,
+     "quests": 3,
+     "confidence": 0.639,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87265": {
+     "entry": {
+      "eyes": [
+       0.399,
+       0.397
+      ],
+      "chin": 0.521,
+      "note": "Lyna's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Lyna",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.758,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87268": {
+     "entry": {
+      "eyes": [
+       0.493,
+       0.335
+      ],
+      "chin": 0.48,
+      "note": "Y'shtola's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Y'shtola",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.765,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87405": {
+     "entry": {
+      "eyes": [
+       0.57,
+       0.325
+      ],
+      "chin": 0.45,
+      "note": "Clive's card: the eyes are under his hair in a three-quarter view looking down; read by eye."
+     },
+     "character": "Clive",
+     "shownToday": true,
+     "quests": 2,
+     "confidence": 0.439,
+     "teamsFlaggedCurrent": [],
+     "teamsAgreeingWithFinal": [],
+     "agreement": "one team only"
+    },
+    "87454": {
+     "entry": {
+      "eyes": [
+       0.548,
+       0.497
+      ],
+      "chin": 0.624,
+      "note": "Krile's card: eyes from the face detectors, chin at the true chin."
+     },
+     "character": "Krile",
+     "shownToday": false,
+     "quests": 0,
+     "confidence": 0.756,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    },
+    "87475": {
+     "entry": {
+      "eyes": [
+       0.639,
+       0.333
+      ],
+      "chin": 0.555,
+      "note": "Tiisol Ja's card: eyes from the face detectors, chin at the true chin, checked by eye."
+     },
+     "character": "Tiisol Ja",
+     "shownToday": true,
+     "quests": 1,
+     "confidence": 0.705,
+     "teamsFlaggedCurrent": [
+      "C"
+     ],
+     "teamsAgreeingWithFinal": [
+      "C"
+     ],
+     "agreement": "one team only"
+    }
+   },
+   "unchangedCount": 20
+  },
+  "pins": [
+   {
+    "id": "PIN-1",
+    "type": "pins",
+    "target": [
+     1038824,
+     1038969,
+     1039570,
+     1039818,
+     1041232,
+     1058995
+    ],
+    "value": {
+     "icon": 73072,
+     "source": "BattleTalk",
+     "era": 4,
+     "note": "Tataru's Endwalker look; the family-first pick hides it behind the SB kimono card 87241."
+    },
+    "teams": {
+     "A": "proposed: EW/DT rows show SB card 87241 while EW battle talk 73072 exists",
+     "B": "proposed: pin the 6 ids or pick by era first",
+     "C": "disagrees: \"earlier look reused, acceptable\"",
+     "reconciliation": "agrees"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Team A rows Tataru EW (15 MSQ) and DT (5 MSQ): wrong era; Team B 6.0-7.x: wrong look. 73072 already has a curated crop (reconciled: review, confidence 0.66).",
+    "supersededBy": "C4 (era before family)",
+    "quests": 6
+   },
+   {
+    "id": "PIN-2",
+    "type": "pins",
+    "target": [
+     1026990,
+     1031257,
+     1032081
+    ],
+    "value": {
+     "icon": 87019,
+     "source": "TripleTriadCard",
+     "era": 0,
+     "note": "Tataru is back in her ARR look from 4.56 to 5.x (CGW and the ARR body model)."
+    },
+    "teams": {
+     "A": "silent",
+     "B": "proposed",
+     "C": "silent",
+     "reconciliation": "agrees"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Team B: lore (CGW) and ENpcBase body agree; the SB card is the latest card face not after era 3.",
+    "quests": 3,
+    "supersededBy": "C7 (look key)"
+   },
+   {
+    "id": "PIN-3",
+    "type": "pins",
+    "target": [
+     1058818
+    ],
+    "value": {
+     "icon": 73274,
+     "source": "BattleTalk",
+     "era": 5,
+     "note": "Zero's Dawntrail look (no hat); 87467 is the alternative."
+    },
+    "teams": {
+     "A": "proposed: DT card 87467 and battle talk 73274 are out-ranked by the EW bust",
+     "B": "proposed: pin to 73274 or 87467",
+     "C": "silent",
+     "reconciliation": "agrees: 73274 frames cleanly (0.90)"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Team A Zero DT (2 MSQ) wrong era; Team B 7.x wrong look.",
+    "quests": 1,
+    "supersededBy": "C4"
+   },
+   {
+    "id": "PIN-4",
+    "type": "pins",
+    "target": [
+     1047403,
+     1047406,
+     1048062,
+     1048067
+    ],
+    "value": {
+     "icon": 87425,
+     "source": "TripleTriadCard",
+     "era": 5,
+     "note": "Sphene as the veiled queen of 7.0; the restored 7.2 bust 72664 is a within-expansion spoiler."
+    },
+    "teams": {
+     "A": "silent: measured 72664 framing only",
+     "B": "proposed: pin to 87425 or 73270",
+     "C": "silent",
+     "reconciliation": "agrees: 87425 frames cleanly (0.90)"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Team B: 72664 shows the restored 7.2 Sphene on 7.0 quests.",
+    "quests": 4,
+    "ownerQuestion": "Q9"
+   },
+   {
+    "id": "PIN-5",
+    "type": "pins",
+    "target": [
+     1036346
+    ],
+    "value": {
+     "icon": 72644,
+     "source": "TrustBust",
+     "era": 3,
+     "note": "Estinien in his travel outfit with Gaius (5.4); the same body model as Endwalker."
+    },
+    "teams": {
+     "A": "agrees: ShB rows wear the HW helmet card (wrong era); A proposed naming 73035 instead",
+     "B": "proposed",
+     "C": "silent",
+     "reconciliation": "agrees"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Body model 262465 is shared by the 5.4 row and the EW rows (Team B).",
+    "quests": 1
+   },
+   {
+    "id": "PIN-6",
+    "type": "pins",
+    "target": [
+     1035381,
+     1035386,
+     1035391,
+     1035398,
+     1036330,
+     1036376,
+     1036426,
+     1036452,
+     1038702
+    ],
+    "value": {
+     "icon": 72630,
+     "source": "TrustBust",
+     "era": 3,
+     "note": "Alphinaud back in his HW coat from 5.4 to early 6.0 (HW body model 74639)."
+    },
+    "teams": {
+     "A": "agrees: 72630 matches his HW-outfit rows",
+     "B": "proposed",
+     "C": "silent",
+     "reconciliation": "agrees: 72630 frames cleanly"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Team B: 18 twin quests show ShB/EW busts in the HW-coat arc; game data agrees.",
+    "quests": 9,
+    "supersededBy": "C7"
+   },
+   {
+    "id": "PIN-7",
+    "type": "pins",
+    "target": [
+     1035354,
+     1035613,
+     1036400,
+     1038681,
+     1038684,
+     1038719,
+     1038731,
+     1038741,
+     1038746
+    ],
+    "value": {
+     "icon": 72631,
+     "source": "TrustBust",
+     "era": 3,
+     "note": "Alisaie back in her HW coat from 5.4 to early 6.0 (HW body model 74650)."
+    },
+    "teams": {
+     "A": "agrees: 72631 matches her HW-ShB outfit rows",
+     "B": "proposed",
+     "C": "silent",
+     "reconciliation": "agrees"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Team B, as PIN-6.",
+    "quests": 9,
+    "supersededBy": "C7"
+   },
+   {
+    "id": "PIN-8",
+    "type": "pins",
+    "target": [
+     1020011,
+     1020012,
+     1020020,
+     1020046,
+     1020055,
+     1020068,
+     1020079,
+     1023780,
+     1024738,
+     1024837
+    ],
+    "value": {
+     "icon": 73081,
+     "source": "BattleTalk",
+     "era": 2,
+     "note": "Yugiri's Stormblood look; the HW card 87084 out-ranks it today."
+    },
+    "teams": {
+     "A": "proposed: SB battle talk 73081 and strip 72783 exist but the HW card wins",
+     "B": "agrees: names Yugiri in SB as a family-before-era case",
+     "C": "silent",
+     "reconciliation": "agrees, but 73081 framing is in review (0.61)"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Team A Yugiri SB: 49 MSQ quests on wrong-era art.",
+    "quests": 10,
+    "supersededBy": "C4"
+   }
+  ],
+  "faces": [
+   {
+    "id": "FACE-1",
+    "type": "faces (re-date)",
+    "target": 72630,
+    "value": {
+     "name": "Alphinaud",
+     "source": "TrustBust",
+     "era": 1,
+     "note": "His HW coat: worn from 3.0 (after \"In Search of Iceheart\") and again in 5.4-6.0."
+    },
+    "teams": {
+     "A": "proposed: re-date 72630/72690 to HW",
+     "B": "agrees: 72630 is read at era 3, so HW quests never pick it",
+     "C": "silent",
+     "reconciliation": "agrees; needs BLOCK-1"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Index era today 3 (DawnQuestMember duties). Gives his HW quests a bust instead of battle talk 73034 (same look)."
+   },
+   {
+    "id": "FACE-2",
+    "type": "faces (re-date)",
+    "target": 72631,
+    "value": {
+     "name": "Alisaie",
+     "source": "TrustBust",
+     "era": 1,
+     "note": "Her HW coat, worn from 3.4 through ShB."
+    },
+    "teams": {
+     "A": "proposed: re-date 72631/72691 to HW",
+     "B": "proposed: 73036 or 72631 at era 1",
+     "C": "agrees: Alisaie HW has no game art (missing arc)",
+     "reconciliation": "agrees"
+    },
+    "agreedBy": 3,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Alisaie HW: 15 MSQ quests (Team A) / 2 giver quests (Team B) show the fallback today."
+   },
+   {
+    "id": "FACE-3",
+    "type": "faces (re-date)",
+    "target": [
+     72690,
+     72691
+    ],
+    "value": {
+     "source": "TrustStrip",
+     "era": 1
+    },
+    "teams": {
+     "A": "proposed",
+     "B": "silent",
+     "C": "silent",
+     "reconciliation": "optional: strips rank last, so this changes nothing once FACE-1/2 land"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Team A only."
+   },
+   {
+    "id": "FACE-4",
+    "type": "faces (re-date)",
+    "target": 87199,
+    "value": {
+     "name": "Krile",
+     "source": "TripleTriadCard",
+     "era": 1,
+     "note": "Her 3.1 Cloak of Nine Lives look, unchanged to 6.5."
+    },
+    "teams": {
+     "A": "agrees: Krile HW none",
+     "B": "proposed",
+     "C": "agrees: Krile HW missing arc",
+     "reconciliation": "agrees"
+    },
+    "agreedBy": 3,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Card numbered among SB cards; look unchanged 3.1-6.5."
+   },
+   {
+    "id": "FACE-5",
+    "type": "faces (re-date)",
+    "target": 87466,
+    "value": {
+     "name": "Jullus",
+     "source": "TripleTriadCard",
+     "era": 4,
+     "note": "His Endwalker look, on a card numbered among the DT cards."
+    },
+    "teams": {
+     "A": "agrees: Jullus EW none (17 MSQ); his art is DT only",
+     "B": "proposed",
+     "C": "silent",
+     "reconciliation": "agrees"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Matches pack photo 1038047 (Team B)."
+   },
+   {
+    "id": "FACE-6",
+    "type": "faces (new name)",
+    "target": 73078,
+    "value": {
+     "name": "Varshahn",
+     "source": "BattleTalk",
+     "era": 4,
+     "note": "Unnamed battle-talk face: dark hair over one eye, as his Duty Support bust."
+    },
+    "teams": {
+     "A": "proposed: high confidence",
+     "B": "silent",
+     "C": "silent",
+     "reconciliation": "agrees: medium-high"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Low value while 72650 is fixed; a back-up face.",
+    "identification": {
+     "A": "high",
+     "reconciliation": "medium-high"
+    }
+   },
+   {
+    "id": "FACE-7",
+    "type": "faces (new name)",
+    "target": 73070,
+    "value": {
+     "name": "Varshahn",
+     "source": "BattleTalk",
+     "era": 4
+    },
+    "teams": {
+     "A": "proposed: medium",
+     "B": "silent",
+     "C": "silent",
+     "reconciliation": "disagrees: too cropped to tell"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Do not add yet.",
+    "identification": {
+     "A": "medium",
+     "reconciliation": "low"
+    },
+    "recommended": false
+   },
+   {
+    "id": "FACE-8",
+    "type": "faces (new name)",
+    "target": 73035,
+    "value": {
+     "name": "Estinien",
+     "source": "BattleTalk",
+     "era": 3,
+     "note": "Unnamed battle-talk face: long white hair, Elezen ears, dark coat (ShB/EW look)."
+    },
+    "teams": {
+     "A": "proposed: medium",
+     "B": "silent",
+     "C": "silent",
+     "reconciliation": "agrees: medium"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Only helps ShB quests once C4 lands (the HW card out-ranks it today); PIN-5 covers the one ShB giver row.",
+    "identification": {
+     "A": "medium",
+     "reconciliation": "medium"
+    }
+   },
+   {
+    "id": "FACE-9",
+    "type": "faces (new name)",
+    "target": 73032,
+    "value": {
+     "name": "Hien",
+     "source": "BattleTalk",
+     "era": 2
+    },
+    "teams": {
+     "A": "proposed: medium",
+     "B": "silent",
+     "C": "silent",
+     "reconciliation": "agrees: medium (sideburn line as card 87202)"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Back-up face; Hien already has card 87202.",
+    "identification": {
+     "A": "medium",
+     "reconciliation": "medium"
+    }
+   },
+   {
+    "id": "FACE-10",
+    "type": "faces (new name)",
+    "target": 73023,
+    "value": {
+     "name": "Cirina",
+     "source": "BattleTalk",
+     "era": 2
+    },
+    "teams": {
+     "A": "proposed: medium",
+     "B": "silent",
+     "C": "silent",
+     "reconciliation": "agrees: medium-high (pink hair, dark scales, as card 87194)"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Back-up face.",
+    "identification": {
+     "A": "medium",
+     "reconciliation": "medium-high"
+    }
+   },
+   {
+    "id": "FACE-11",
+    "type": "faces (new name)",
+    "target": 73013,
+    "value": {
+     "name": "Thancred"
+    },
+    "teams": {
+     "A": "proposed: low",
+     "B": "silent",
+     "C": "silent",
+     "reconciliation": "disagrees: long hair, not his look"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Do not add.",
+    "identification": {
+     "A": "low",
+     "reconciliation": "not confirmed"
+    },
+    "recommended": false
+   },
+   {
+    "id": "FACE-12",
+    "type": "faces (new name)",
+    "target": 73001,
+    "value": {
+     "name": "Venat"
+    },
+    "teams": {
+     "A": "proposed: low",
+     "B": "silent",
+     "C": "silent",
+     "reconciliation": "disagrees: not confirmed"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Do not add.",
+    "identification": {
+     "A": "low",
+     "reconciliation": "not confirmed"
+    },
+    "recommended": false
+   },
+   {
+    "id": "FACE-13",
+    "type": "faces (new name)",
+    "target": 73261,
+    "value": {
+     "name": "Bakool Ja Ja",
+     "source": "BattleTalk",
+     "era": 5,
+     "note": "Unnamed battle-talk face with two Mamool Ja heads."
+    },
+    "teams": {
+     "A": "silent",
+     "B": "proposed: unsure, one of 73259-73264",
+     "C": "silent",
+     "reconciliation": "agrees: medium (the only two-headed face of the six)"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Bakool Ja Ja has no art at all (10 DT quests, Team A). Confirm in ContentDirectorBattleTalk text before adding.",
+    "identification": {
+     "B": "unsure",
+     "reconciliation": "medium"
+    }
+   },
+   {
+    "id": "FACE-14",
+    "type": "aliases + deliveryKeys",
+    "target": 61665,
+    "value": {
+     "aliases": {
+      "<the source spelling>": {
+       "name": "Kai-Shirr"
+      }
+     },
+     "deliveryKeys": {
+      "61665": {
+       "seed": "<face centre, hr px>"
+      }
+     }
+    },
+    "teams": {
+     "A": "proposed: the index does not match Kai-Shirr to the giver",
+     "B": "silent",
+     "C": "silent",
+     "reconciliation": "agrees: the emblem script shows; a keep mask is needed first"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Kai-Shirr ShB: 10 MSQ quests with no art (Team A). Check the giver and source spellings with the DataGen probe."
+   }
+  ],
+  "blocks": [
+   {
+    "id": "BLOCK-1",
+    "type": "blocks",
+    "target": [
+     1010925,
+     1012387,
+     1012579,
+     1012588,
+     1013036,
+     1013038
+    ],
+    "value": {
+     "icons": [
+      73034,
+      72630
+     ],
+     "note": "Alphinaud before \"In Search of Iceheart\" still wears his ARR outfit."
+    },
+    "teams": {
+     "A": "silent",
+     "B": "proposed",
+     "C": "silent",
+     "reconciliation": "agrees; required with FACE-1"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "Team B: these 6 giver rows wear the ARR body model."
+   },
+   {
+    "id": "BLOCK-2",
+    "type": "blocks",
+    "target": "Erichthonios",
+    "value": {
+     "icons": [
+      87335
+     ],
+     "note": "The card shows his armoured form, not the man who gives the quests."
+    },
+    "teams": {
+     "A": "proposed: armoured form",
+     "B": "silent",
+     "C": "agrees: no face",
+     "reconciliation": "agrees (as Hermes 87333)"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Erichthonios EW: 16 quests (Team A)."
+   },
+   {
+    "id": "BLOCK-3",
+    "type": "blocks",
+    "target": "Raubahn",
+    "value": {
+     "icons": [
+      73031
+     ],
+     "note": "The SB battle-talk face named RAUBAHN is a helmeted figure with no face."
+    },
+    "teams": {
+     "A": "disagrees: lists 73031 as an SB face to use",
+     "B": "agrees: 73031 is helmeted, keep the ARR card",
+     "C": "proposed",
+     "reconciliation": "agrees; required with C4"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "Not shown today; C4 would pick it for his SB quests."
+   },
+   {
+    "id": "BLOCK-4",
+    "type": "blocks",
+    "target": 1033629,
+    "value": {
+     "icons": [
+      87064
+     ],
+     "note": "Gaius's 6.x side quest: the card shows his ARR armour."
+    },
+    "teams": {
+     "A": "silent",
+     "B": "proposed: wrong look (1 quest)",
+     "C": "agrees: faceless",
+     "reconciliation": "agrees"
+    },
+    "agreedBy": 2,
+    "agreement": "agreed (2-3 teams)",
+    "evidence": "He falls back to the pack photo 1027649 or initials."
+   },
+   {
+    "id": "BLOCK-5",
+    "type": "blocks",
+    "target": "Nero",
+    "value": {
+     "icons": [
+      87047
+     ]
+    },
+    "teams": {
+     "A": "proposed: helmet",
+     "B": "silent",
+     "C": "owner call: faceless",
+     "reconciliation": "owner call"
+    },
+    "agreedBy": 1,
+    "agreement": "one team only",
+    "evidence": "See owner question Q3.",
+    "ownerQuestion": "Q3",
+    "recommended": null
+   },
+   {
+    "id": "BLOCK-6",
+    "type": "blocks",
+    "target": "Yugiri",
+    "value": {
+     "icons": [
+      73167
+     ]
+    },
+    "teams": {
+     "A": "owner call: her real masked ARR look",
+     "B": "silent",
+     "C": "owner call",
+     "reconciliation": "owner call"
+    },
+    "agreedBy": 0,
+    "agreement": "one team only",
+    "evidence": "See Q2.",
+    "ownerQuestion": "Q2",
+    "recommended": null
+   },
+   {
+    "id": "BLOCK-7",
+    "type": "blocks",
+    "target": "Estinien",
+    "value": {
+     "icons": [
+      87088
+     ]
+    },
+    "teams": {
+     "A": "disagrees: accurate to HW",
+     "B": "disagrees: re-box the helmet",
+     "C": "owner call",
+     "reconciliation": "keep, with the helmet centred"
+    },
+    "agreedBy": 0,
+    "agreement": "one team only",
+    "evidence": "See Q1.",
+    "ownerQuestion": "Q1",
+    "recommended": false
+   }
+  ],
+  "packSkip": {
+   "note": "PortraitPackBuilder --skip takes giver ENpc ids, not photo ids: every giver sharing a photo is listed. 'skipNow' photos have no usable head; 'skipUntilOverride' photos hold a face the builder's crop misses: skip them now and re-crop them with C9's per-NPC box (reconciledBox) once it exists.",
+   "skipNow": [
+    {
+     "photo": 1007115,
+     "character": "Estinien",
+     "skipGiverIds": [
+      1012589,
+      1012698,
+      1012764
+     ],
+     "why": "Estinien HW: lance and helmet, no face",
+     "teams": {
+      "A": "silent",
+      "B": "proposed",
+      "C": "agrees: no detector",
+      "reconciliation": "agrees: re-detection finds none"
+     },
+     "agreedBy": 2,
+     "reconciledBox": null
+    },
+    {
+     "photo": 1012111,
+     "character": "Estinien",
+     "skipGiverIds": [
+      1012746,
+      1014110
+     ],
+     "why": "Estinien HW: lance and helmet, no face",
+     "teams": {
+      "A": "silent",
+      "B": "proposed",
+      "C": "agrees: no detector",
+      "reconciliation": "agrees"
+     },
+     "agreedBy": 2,
+     "reconciledBox": null
+    },
+    {
+     "photo": 1014565,
+     "character": "Unukalhai",
+     "skipGiverIds": [
+      1014565
+     ],
+     "why": "Unukalhai: a white blob",
+     "teams": {
+      "A": "silent",
+      "B": "proposed",
+      "C": "agrees: no detector",
+      "reconciliation": "agrees"
+     },
+     "agreedBy": 2,
+     "reconciledBox": null
+    },
+    {
+     "photo": 1013559,
+     "character": "Maenne",
+     "skipGiverIds": [
+      1013560,
+      1013567
+     ],
+     "why": "a weapon fills the photo",
+     "teams": {
+      "A": "silent",
+      "B": "silent",
+      "C": "proposed: no detector",
+      "reconciliation": "agrees"
+     },
+     "agreedBy": 1,
+     "reconciledBox": null
+    },
+    {
+     "photo": 1019347,
+     "character": "Tamachag",
+     "skipGiverIds": [
+      1019347
+     ],
+     "why": "a weapon fills the photo",
+     "teams": {
+      "A": "silent",
+      "B": "silent",
+      "C": "proposed: no detector",
+      "reconciliation": "agrees"
+     },
+     "agreedBy": 1,
+     "reconciledBox": null
+    },
+    {
+     "photo": 1034001,
+     "character": "Bajsaljen",
+     "skipGiverIds": [
+      1034001,
+      1036746
+     ],
+     "why": "a wheel fills the photo",
+     "teams": {
+      "A": "silent",
+      "B": "silent",
+      "C": "proposed: no detector",
+      "reconciliation": "agrees"
+     },
+     "agreedBy": 1,
+     "reconciledBox": null
+    }
+   ],
+   "skipUntilOverride": [
+    {
+     "photo": 1026571,
+     "character": "Y'shtola",
+     "skipGiverIds": [
+      1029011,
+      1029194,
+      1029216,
+      1029221,
+      1029223,
+      1029234,
+      1029557,
+      1030225,
+      1030517,
+      1032518,
+      1033829,
+      1033860,
+      1035367,
+      1038953,
+      1039586,
+      1039591,
+      1039624,
+      1039633,
+      1043848,
+      1045681,
+      1045758
+     ],
+     "why": "Y'shtola: staff only in the crop; her face is below it",
+     "teams": {
+      "A": "proposed: staff only",
+      "B": "proposed: skip",
+      "C": "agrees: no detector",
+      "reconciliation": "agrees: re-detected below the box"
+     },
+     "agreedBy": 3,
+     "reconciledBox": [
+      142.0,
+      100.6,
+      84.1
+     ]
+    },
+    {
+     "photo": 1036120,
+     "character": "Estinien",
+     "skipGiverIds": [
+      1038611,
+      1039058,
+      1039579,
+      1041214,
+      1043815,
+      1044229
+     ],
+     "why": "Estinien EW: lance and hair tip",
+     "teams": {
+      "A": "proposed",
+      "B": "proposed: skip",
+      "C": "agrees",
+      "reconciliation": "agrees: re-detected"
+     },
+     "agreedBy": 3,
+     "reconciledBox": [
+      169.3,
+      91.5,
+      77.9
+     ]
+    },
+    {
+     "photo": 1029535,
+     "character": "Estinien",
+     "skipGiverIds": [
+      1036346
+     ],
+     "why": "Estinien 5.4: lance",
+     "teams": {
+      "A": "proposed",
+      "B": "proposed",
+      "C": "agrees",
+      "reconciliation": "agrees: re-detected"
+     },
+     "agreedBy": 3,
+     "reconciledBox": [
+      169.1,
+      91.2,
+      78.8
+     ]
+    },
+    {
+     "photo": 1042980,
+     "character": "Zero",
+     "skipGiverIds": [
+      1043822,
+      1043839,
+      1044289,
+      1044291,
+      1045482,
+      1045631
+     ],
+     "why": "Zero: scythe",
+     "teams": {
+      "A": "proposed",
+      "B": "proposed: skip",
+      "C": "agrees",
+      "reconciliation": "agrees: re-detected under the hat"
+     },
+     "agreedBy": 3,
+     "reconciledBox": [
+      149.0,
+      99.6,
+      86.5
+     ]
+    },
+    {
+     "photo": 1028865,
+     "character": "Lyna",
+     "skipGiverIds": [
+      1028947,
+      1030369,
+      1030587,
+      1032502
+     ],
+     "why": "Lyna: ears only",
+     "teams": {
+      "A": "silent",
+      "B": "proposed: skip",
+      "C": "agrees: no detector",
+      "reconciliation": "agrees: Team A's eyes and the re-detection agree"
+     },
+     "agreedBy": 2,
+     "reconciledBox": [
+      149.7,
+      113.8,
+      75.9
+     ]
+    },
+    {
+     "photo": 1035057,
+     "character": "Unukalhai",
+     "skipGiverIds": [
+      1035281,
+      1035283
+     ],
+     "why": "Unukalhai: weapon",
+     "teams": {
+      "A": "silent",
+      "B": "proposed: skip",
+      "C": "agrees: no detector",
+      "reconciliation": "agrees: re-detected; check by eye"
+     },
+     "agreedBy": 2,
+     "reconciledBox": [
+      131.0,
+      51.9,
+      115.9
+     ]
+    },
+    {
+     "photo": 1020400,
+     "character": "Raubahn",
+     "skipGiverIds": [
+      1020400
+     ],
+     "why": "Raubahn: horned helmet",
+     "teams": {
+      "A": "proposed: no face",
+      "B": "proposed: skip",
+      "C": "agrees: no detector",
+      "reconciliation": "agrees: re-detected"
+     },
+     "agreedBy": 3,
+     "reconciledBox": [
+      150.3,
+      93.2,
+      85.6
+     ]
+    },
+    {
+     "photo": 1032665,
+     "character": "Bajsaljen",
+     "skipGiverIds": [
+      1032880
+     ],
+     "why": "Bajsaljen: helmet",
+     "teams": {
+      "A": "proposed: no face",
+      "B": "silent",
+      "C": "agrees: no detector",
+      "reconciliation": "agrees: re-detected"
+     },
+     "agreedBy": 2,
+     "reconciledBox": [
+      144.1,
+      98.9,
+      100.9
+     ]
+    },
+    {
+     "photo": 1024752,
+     "character": "J'olhmyn",
+     "skipGiverIds": [
+      1026401
+     ],
+     "why": "J'olhmyn: staff (Team C's one confident false accept)",
+     "teams": {
+      "A": "silent",
+      "B": "silent",
+      "C": "proposed",
+      "reconciliation": "agrees: re-detected"
+     },
+     "agreedBy": 1,
+     "reconciledBox": [
+      140.6,
+      98.7,
+      84.9
+     ]
+    }
+   ],
+   "keepFacelessByDesign": {
+    "photos": [
+     1005472,
+     1006372,
+     1006454,
+     1007097,
+     1014592,
+     1014875,
+     1019156,
+     1022228,
+     1027296,
+     1027297,
+     1027442,
+     1027467,
+     1027468,
+     1027469,
+     1027483,
+     1027990,
+     1028881,
+     1029404,
+     1029423,
+     1029999,
+     1030775,
+     1033710,
+     1033712,
+     1039516,
+     1044977
+    ],
+    "teams": {
+     "A": "silent",
+     "B": "silent",
+     "C": "disagrees: proposed dropping all 129 no-detector photos",
+     "reconciliation": "keep: re-detection found faces in 118 of the 136 photos where no detector fired; the rest are bell-helmeted dwarves, masks, Fray's helmet, a pumpkin costume or creatures, which is their look"
+    },
+    "ownerQuestion": "Q4"
+   }
+  },
+  "packOverrides": {
+   "note": "Per-photo Garland boxes for C9: reconciled.json rows with kind pack and final.action change.",
+   "count": 1230,
+   "ready": 894,
+   "provisional": 336
+  }
+ },
+ "codeChanges": [
+  {
+   "priority": 1,
+   "id": "C1",
+   "title": "Curated game art must rank above the pack",
+   "file": "Tsukimichi.Core/Portraits/PortraitIndex.cs",
+   "function": "PortraitIndex.For(uint, byte, byte) and PackWins; PortraitSources.Rank",
+   "change": "Let the pack win only when the game pick is None, or when the picked icon has no curated crop and no curated face. Give PackWins the variant (icon + source) and the crop table; 'curated' = Crops has an icon entry (PortraitCrops needs a HasIconCrop(icon)) or the face came from PortraitCuration.Faces. Keep Rank(Pack) = -1 for the uncurated case. Update the spec-1.20 F4 note and the PackWins tests.",
+   "evidence": "Y'shtola 1026571 (staff) replaces curated bust 72626 on 146 MSQ quests; Estinien 1036120 (lance) replaces 72644; Lyna 1028865, Zero 1042980 likewise.",
+   "teams": {
+    "A": "proposed (cause C)",
+    "B": "proposed (cause 2)",
+    "C": "agrees (pack fixes must otherwise go through the builder)"
+   }
+  },
+  {
+   "priority": 2,
+   "id": "C2",
+   "title": "Cast plates: three faults",
+   "file": "Tsukimichi/Ui/CastText.cs",
+   "function": "CastText.PlateFor",
+   "change": "(a) Do not take the first known row of member.NpcIds (a SortedSet: the lowest id, an ARR row): pick the member row that appears in this quest (the cast reader knows the quest's script rows), else the row whose giver quests are of the quest's era, else the latest row not after the era. (b) Replace `break` with `continue` when a row has no art, so a later row's art is tried before initials. (c) For a cast member with no giver row the index knows, look the face up by name: add PortraitIndex.ForName(string name, byte era) that runs Match on a synthetic PortraitGiver (generic=false, race 0) and Pick by era. (d) Pack photos used on plates must carry the photo row's own era, not the quest's: PortraitIndex.For stamps packEra = the quest era, so the shield never hides a later-look photo.",
+   "evidence": "63 MSQ rows wrong era on plates (Team A). Spoiler-grade: Emet-Selch's ShB quests show his Elpis photo; Lahabrea's ARR quest shows the unmasked Keyward; Arenvald, Honoroit, Magnai, Fourchenault in ARR show later looks. Members with art but no giver row: Count Edmont 87093, Meteion 87337, Hakuro 73116, Gigi 87181, Coultenet 73171/87122, Wilred 73198, J'moldva 72791, Frixio 87035 (all measured in reconciled.json).",
+   "teams": {
+    "A": "proposed (cause D)",
+    "B": "silent (did not audit plates)",
+    "C": "silent"
+   }
+  },
+  {
+   "priority": 3,
+   "id": "C3",
+   "title": "The pack head crop frames low and takes weapons for crowns",
+   "file": "Tsukimichi.DataGen/PortraitHeadCrop.cs",
+   "function": "PortraitHeadCrop.Crop",
+   "change": "The chin is the neck's narrowest row, below the real chin, so eyes land at a median 0.574 of the box (target 0.43) and the chin at 0.87. Fix the vertical: eyes = neck - 0.62 x head (was chin - 0.48 x head) and chin = neck - 0.14 x head, or equivalently move boxTop down by 0.134 x square and shrink only while the box stays >= MinBox. Fix the crown: require the crown row's opaque run to be contiguous and at least 0.35 x head wide for 3 consecutive rows, and reject a candidate crown whose row centroid is more than 0.4 x head from the centroid of the rows below it (a raised staff or lance). Keep MinFilled. Verify on the 22 photos in reconciled.json flagged by two or more teams, and against the reconciled boxes (median eye line should come to 0.42-0.46).",
+   "evidence": "Team C: 895 confident photos, median eye 0.574, chin 0.87; 578 off-centre and 163 cut photos on 1,992 quests. Team A: 167 photos, median eye 62 %, 9 of 156 in band; weapon crowns on Y'shtola, Estinien, Zero, J'olhmyn.",
+   "teams": {
+    "A": "proposed (cause B)",
+    "B": "agrees (faces sit low)",
+    "C": "proposed"
+   }
+  },
+  {
+   "priority": 4,
+   "id": "C4",
+   "title": "`Pick` should choose the era before the family",
+   "file": "Tsukimichi.Core/Portraits/PortraitIndex.cs",
+   "function": "PortraitIndex.Pick (and the variant sort in Match)",
+   "change": "Pick the latest era not after the quest's across all families; break ties by family rank; keep TrustStrip last (only when no other family has a face of that era or earlier). Sort variants by era desc, rank asc. Needs BLOCK-3 (Raubahn 73031) first, and makes PIN-1, PIN-3 and PIN-8 unnecessary. Test cases: Tataru EW (73072 over 87241), Zero DT (73274 over 72651), Yugiri SB (73081 over 87084), G'raha ARR (still none), Raubahn SB (73130 or the ARR card, never 73031).",
+   "evidence": "Tataru EW/DT, Zero DT, Yugiri SB-EW, Cid HW-EW (Team A cause E; Team B cause 3).",
+   "teams": {
+    "A": "proposed",
+    "B": "proposed",
+    "C": "disagrees: calls earlier looks reused in later arcs acceptable"
+   }
+  },
+  {
+   "priority": 5,
+   "id": "C5",
+   "title": "Trust-bust family default only fits ShB busts",
+   "file": "Tsukimichi.Core/Portraits/PortraitCrop.cs",
+   "function": "PortraitCrops.Defaults[TrustBust]",
+   "change": "Every bust a quest shows now has a reconciled iconCrop, so this matters for new busts. Split the default: icons 072621-072637 keep (6, 86, 140) (median reconciled ShB box 13, 77, 143); 072638 and up use (24, 58, 135) (median reconciled EW/DT box). Needs a per-range default (e.g. PortraitCrops.DefaultFor(source, icon)) and a test.",
+   "evidence": "Eyes under the default box: Wuk Lamat 0.04-0.06, Varshahn 0.04-0.08, Estinien 0.08-0.11, Zero 0.13, Venat 0.21 (all three teams).",
+   "teams": {
+    "A": "proposed (cause A)",
+    "B": "proposed (cause 1)",
+    "C": "proposed"
+   }
+  },
+  {
+   "priority": 6,
+   "id": "C6",
+   "title": "Two-person cards need a crop per giver",
+   "file": "Tsukimichi.Core/Portraits/PortraitCuration.cs, PortraitIndex.cs",
+   "function": "PortraitCuration.Load (iconCrops), PortraitIndex.Build/Match/For",
+   "change": "Allow a curated face to carry its own crop: faces { '87062': { name: 'Nashu Mhakaracca', source: 'TripleTriadCard', eyes: [...], chin: ... } } keyed by icon plus name (e.g. key '87062/Nashu Mhakaracca'). PortraitVariant gets an optional crop; For uses it before Crops.For(source, icon). Cards: 87062 Hildibrand & Nashu, 87210 Raubahn & Pipin, 87059/87251/87341 the twins, 87122 Hoary Boulder & Coultenet, 87033 Biggs & Wedge, 87048 Papalymo & Yda, 87044 Raya-O-Senna & A-Ruhn-Senna.",
+   "evidence": "Nashu: 22+ quests with no art; the twins' ARR card is blocked for both (Alphinaud ARR 53 MSQ, owner question Q8).",
+   "teams": {
+    "A": "proposed (cause H)",
+    "B": "proposed (Nashu)",
+    "C": "silent"
+   }
+  },
+  {
+   "priority": 7,
+   "id": "C9",
+   "title": "Per-NPC override in the pack builder",
+   "file": "Tsukimichi.DataGen/PortraitPackBuilder.cs (--portrait-pack) and PortraitHeadCrop",
+   "function": "PortraitPackBuilder.Build",
+   "change": "Read a curated packBoxes map { '<photo ENpc id>': { box: [x, y, side], note } } (Garland photo px) and resample that box instead of PortraitHeadCrop.Crop; still enforce MinBox and write the box to the manifest. Seed it from reconciled.json: pack rows with review false and final.action change (the C3 fix may make most redundant: rebuild, then keep overrides only where the C3 box and the reconciled box differ by more than 0.05 of the plate).",
+   "evidence": "Garland photo boxes in reconciled.json; 9 photos in packSkip.skipUntilOverride need it to come back.",
+   "teams": {
+    "A": "agrees (gives suggestedBox per photo)",
+    "B": "silent",
+    "C": "proposed"
+   }
+  },
+  {
+   "priority": 8,
+   "id": "C7",
+   "title": "Looks change by patch: a look key by ENpcBase body model",
+   "file": "Tsukimichi.GameData/GiverPortraitSources.cs (giver read), PortraitCuration.cs, PortraitIndex.cs",
+   "function": "GiverPortraitSources.Read (Givers part), PortraitIndex.Match",
+   "change": "Read each giver's ENpcBase look (ModelChara, ModelBody/ModelHead or NpcEquip) into PortraitGiver.LookKey. Add curated looks { '<look key>': { icon, source, note } }; Match checks it after pins and before name matching. About 30 body models cover the major characters (Team B's npcmodels.tsv). Replaces PIN-2, PIN-6, PIN-7 and BLOCK-1.",
+   "evidence": "Twins 5.4-6.0 (18 quests), Alphinaud 3.0 before Iceheart (6), Tataru 4.56-5.x (3) and 6.0+ (6), Estinien 5.4 (1).",
+   "teams": {
+    "A": "agrees (its wrong-era test compares these same fields)",
+    "B": "proposed (cause 4)",
+    "C": "silent"
+   }
+  },
+  {
+   "priority": 9,
+   "id": "C8",
+   "title": "Read DawnGrowMember outfits",
+   "file": "Tsukimichi.GameData/GiverPortraitSources.cs",
+   "function": "the 'Duty Support and Trust members' part",
+   "change": "Also read DawnGrowMember's bust and strip images for each member, with the era of the outfit (map by look, or via curated faces with an era); exclude the Trust summer outfits 072652-072658 and 072660 (never story looks). Each new bust has a reconciled crop in reconciled.json (72632, 72634, 72635, 72640-72643, 72646 frame cleanly; 72633 hooded; 72645 helmeted).",
+   "evidence": "Unread era-correct busts: Thancred 3.1 eyepatch 72632, Urianger ARR hood 72633, Y'shtola HW 72634, Ryne as Minfilia 72635, EW outfits 72640-72643/72646, Estinien HW armour 72645 (Team B cause 5).",
+   "teams": {
+    "A": "silent",
+    "B": "proposed",
+    "C": "silent"
+   }
+  }
+ ]
+}
