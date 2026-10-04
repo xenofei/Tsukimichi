@@ -35,14 +35,23 @@ public enum PortraitSource : byte
     /// right): the last resort, for members the game gives no tall bust.
     /// </summary>
     TrustStrip = 5,
+
+    /// <summary>
+    /// A photo from the optional portrait pack (feature plan v7 F4): a Garland Tools render of that exact NPC, head-cropped
+    /// offline to a <see cref="PortraitPackManifest.ImageSide"/> px square and installed only when the player downloads the
+    /// pack. Its <see cref="PortraitRef.Icon"/> is the ENpcResident id whose photo it is, not a game icon.
+    /// </summary>
+    Pack = 6,
 }
 
 /// <summary>The order the families are tried in, and their names in the curated file.</summary>
 public static class PortraitSources
 {
     /// <summary>
-    /// Best first: Trust bust, Triple Triad card, battle-talk face, delivery portrait, Trust strip. The optional
-    /// portrait pack (F4) will go in front of them all.
+    /// Best first among the game's own art: Trust bust, Triple Triad card, battle-talk face, delivery portrait, Trust
+    /// strip. The optional portrait pack (F4) is not in the index: when installed it goes in front of them all
+    /// (spec-1.20 F4, the 1.15 order A1: <see cref="Rank"/>, <see cref="PortraitIndex.WithPack"/>), as a photo of that
+    /// exact NPC; the game art stands in wherever the pack has no photo.
     /// </summary>
     public static readonly IReadOnlyList<PortraitSource> Priority =
     [
@@ -53,7 +62,10 @@ public static class PortraitSources
         PortraitSource.TrustStrip,
     ];
 
-    /// <summary>The rank of a family in <see cref="Priority"/> (0 best); <see cref="PortraitSource.None"/> ranks last.</summary>
+    /// <summary>
+    /// The rank of a family in <see cref="Priority"/> (0 best); the portrait pack ranks before them all (-1), and
+    /// <see cref="PortraitSource.None"/> last.
+    /// </summary>
     public static int Rank(PortraitSource source) => source switch
     {
         PortraitSource.TrustBust => 0,
@@ -61,6 +73,7 @@ public static class PortraitSources
         PortraitSource.BattleTalk => 2,
         PortraitSource.Delivery => 3,
         PortraitSource.TrustStrip => 4,
+        PortraitSource.Pack => -1,
         _ => int.MaxValue,
     };
 
@@ -75,6 +88,7 @@ public static class PortraitSources
         PortraitSource.BattleTalk => (640, 512),
         PortraitSource.Delivery => (400, 480),
         PortraitSource.TrustStrip => (640, 180),
+        PortraitSource.Pack => (PortraitPackManifest.ImageSide, PortraitPackManifest.ImageSide),
         _ => (0, 0),
     };
 
@@ -104,12 +118,15 @@ public static class PortraitSources
         _ => PortraitSource.None,
     };
 
-    /// <summary>Reads a family by its enum name ("BattleTalk"), ignoring case; <see cref="PortraitSource.None"/> is never accepted.</summary>
+    /// <summary>
+    /// Reads a family by its enum name ("BattleTalk"), ignoring case; <see cref="PortraitSource.None"/> is never accepted,
+    /// nor <see cref="PortraitSource.Pack"/> (the curated file names game art only).
+    /// </summary>
     public static bool TryParse(string? text, out PortraitSource source)
     {
         source = PortraitSource.None;
         if (string.IsNullOrWhiteSpace(text) || !Enum.TryParse(text.Trim(), ignoreCase: true, out PortraitSource parsed)
-            || parsed == PortraitSource.None || !Enum.IsDefined(parsed) || int.TryParse(text, out _))
+            || parsed is PortraitSource.None or PortraitSource.Pack || !Enum.IsDefined(parsed) || int.TryParse(text, out _))
         {
             return false;
         }

@@ -64,6 +64,9 @@ public enum GuardedAction
     /// <summary>The last step of Delete all data.</summary>
     DeleteAllData,
 
+    /// <summary>Remove pack (Settings › Look › Portrait pack, spec-1.20 F4): deletes the downloaded portrait pack; getting it back is a download.</summary>
+    RemovePortraitPack,
+
     /// <summary>Reset in the filter drawer (plan v7 UI-2): clears every filter and the search.</summary>
     ResetFilters,
 
@@ -141,6 +144,7 @@ public static class SafetyRules
         GuardedAction.ForgetCharacter => SafetyTier.Hold,
         GuardedAction.ForgetCharacters => SafetyTier.Hold,
         GuardedAction.DeleteAllData => SafetyTier.Hold,
+        GuardedAction.RemovePortraitPack => SafetyTier.Hold,
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Every guarded action needs a row in the safety table."),
     };
 
@@ -152,6 +156,7 @@ public static class SafetyRules
         GuardedAction.ForgetCharacter => false,
         GuardedAction.ForgetCharacters => false,
         GuardedAction.DeleteAllData => false,
+        GuardedAction.RemovePortraitPack => false,
         _ => true,
     };
 

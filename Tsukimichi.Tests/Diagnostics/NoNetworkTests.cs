@@ -9,15 +9,40 @@ using Tsukimichi.Tests.Localization;
 namespace Tsukimichi.Tests.Diagnostics;
 
 /// <summary>
-/// "Trust you can check" (feature plan v7 N2): docs/privacy.md says Tsukimichi has no network code. These keep it true:
-/// no source file of the shipped projects (the plugin, Core and GameData; the tools are not shipped) names an HTTP
-/// client, a web request, a socket or a DNS lookup, and none of the three assemblies references a networking assembly.
-/// The one way out is a page the player clicks to open in their browser, through Dalamud's <c>Util.OpenLink</c>, which
-/// the statement lists.
+/// "Trust you can check" (feature plan v7 N2): docs/privacy.md says Tsukimichi sends nothing and goes online for one
+/// thing only, the optional portrait pack the player confirms (F4, decision 8). The owner allowed one narrow exception
+/// for it (spec-1.20 F4, open question 1), and these keep it exactly that narrow:
+/// <list type="bullet">
+/// <item>one named file: no source of the shipped projects (the plugin, Core and GameData; the tools are not shipped)
+/// names an HTTP client, a web request, a socket or a DNS lookup, except the pack's downloader (<see cref="NetworkFile"/>);</item>
+/// <item>one host and path prefix: every address the downloader or the pack's offer names starts with
+/// <see cref="AllowedPrefix"/>, and the offer allows nothing else to be asked for first;</item>
+/// <item>one pinned URL per release: the shipped <c>portrait_pack.json</c> names one release asset under that prefix.</item>
+/// </list>
+/// <see cref="Offenders"/> fails on any other file, host or address pattern (proved by
+/// <see cref="Any_other_network_file_host_or_address_fails"/>). Core and GameData reference no networking assembly and
+/// the plugin only <c>System.Net.Http</c> (and <c>System.Net.Primitives</c>, for the status code); the transport is
+/// made in one place and a download starts only from the Settings confirmation. The other way out is a page the player
+/// clicks to open in their browser, through Dalamud's <c>Util.OpenLink</c>, which the statement lists.
 /// </summary>
 public class NoNetworkTests
 {
     private static readonly string[] Shipped = ["Tsukimichi", "Tsukimichi.Core", "Tsukimichi.GameData"];
+
+    /// <summary>The portrait pack's transport (docs/privacy.md, "The portrait pack"): the one file that may name network code.</summary>
+    private static readonly string NetworkFile = Path.Combine("Tsukimichi", "Game", "PortraitPackHttp.cs");
+
+    /// <summary>The one host and path prefix the exception covers.</summary>
+    private const string AllowedPrefix = "https://github.com/xenofei/Tsukimichi/releases/download/";
+
+    /// <summary>The files whose addresses must all sit under <see cref="AllowedPrefix"/>: the downloader and the offer that pins its URL.</summary>
+    private static readonly string[] PinnedFiles = [NetworkFile, Path.Combine("Tsukimichi.Core", "Portraits", "PortraitPackOffer.cs")];
+
+    // An http(s) address in a string literal.
+    private static readonly Regex Address = new(@"https?://[^\s""']*", RegexOptions.Compiled);
+
+    /// <summary>What the plugin's assembly alone may reference for that file: HttpClient and its status code.</summary>
+    private static readonly HashSet<string> PluginNetworkAssemblies = new(StringComparer.Ordinal) { "System.Net.Http", "System.Net.Primitives" };
 
     // Any identifier that contains a network type's name (HttpClientHandler, SocketsHttpHandler, IHttpClientFactory,
     // DnsEndPoint, ...), or a System.Net namespace.
@@ -47,23 +72,139 @@ public class NoNetworkTests
     [Fact]
     public void No_shipped_source_names_network_code()
     {
+        var files = SourceFiles().Select(file => (Path.GetRelativePath(ResxFiles.RepositoryRoot(), file), File.ReadAllText(file)));
+        var offenders = Offenders(files);
+        Assert.True(offenders.Count == 0, "docs/privacy.md says the portrait pack's downloader is the only network code, and only for Tsukimichi's GitHub releases; update it before adding any:" + Environment.NewLine + string.Join(Environment.NewLine, offenders));
+    }
+
+    /// <summary>
+    /// The exception's three limits, checked on sources: network code in any file but <see cref="NetworkFile"/>, and any
+    /// address in the downloader or the offer that is not under <see cref="AllowedPrefix"/>.
+    /// </summary>
+    internal static List<string> Offenders(IEnumerable<(string Path, string Source)> files)
+    {
         var offenders = new List<string>();
-        foreach (var file in SourceFiles())
+        foreach (var (path, source) in files)
         {
-            var lines = StripComments(File.ReadAllText(file)).Split('\n');
+            var lines = StripComments(source).Split('\n');
+            var networkFile = path == NetworkFile;
+            var pinned = PinnedFiles.Contains(path);
             for (var i = 0; i < lines.Length; i++)
             {
-                foreach (Match match in Network.Matches(lines[i]))
+                if (!networkFile)
                 {
-                    if (!NotNetwork.Contains(match.Value))
+                    foreach (Match match in Network.Matches(lines[i]))
                     {
-                        offenders.Add($"{Path.GetRelativePath(ResxFiles.RepositoryRoot(), file)}:{i + 1}: {match.Value}");
+                        if (!NotNetwork.Contains(match.Value))
+                        {
+                            offenders.Add($"{path}:{i + 1}: {match.Value}");
+                        }
+                    }
+                }
+
+                if (pinned)
+                {
+                    foreach (Match match in Address.Matches(lines[i]))
+                    {
+                        if (!match.Value.StartsWith(AllowedPrefix, StringComparison.Ordinal))
+                        {
+                            offenders.Add($"{path}:{i + 1}: {match.Value} is not under {AllowedPrefix}");
+                        }
                     }
                 }
             }
         }
 
-        Assert.True(offenders.Count == 0, "docs/privacy.md says there is no network code; update it before adding any:" + Environment.NewLine + string.Join(Environment.NewLine, offenders));
+        return offenders;
+    }
+
+    [Fact]
+    public void Any_other_network_file_host_or_address_fails()
+    {
+        var other = Path.Combine("Tsukimichi", "Game", "Telemetry.cs");
+
+        // Another file with network code: refused, whatever it fetches.
+        Assert.NotEmpty(Offenders([(other, "var c = new HttpClient(); c.GetAsync(\"https://github.com/xenofei/Tsukimichi/releases/download/x\");")]));
+        Assert.NotEmpty(Offenders([(other, "using System.Net.Sockets;")]));
+
+        // The downloader naming another host, or another path on GitHub: refused.
+        Assert.NotEmpty(Offenders([(NetworkFile, "var u = new Uri(\"https://evil.example/pack.zip\");")]));
+        Assert.NotEmpty(Offenders([(NetworkFile, "var u = new Uri(\"https://github.com/xenofei/Tsukimichi/archive/main.zip\");")]));
+        Assert.NotEmpty(Offenders([(NetworkFile, "var u = new Uri(\"http://github.com/xenofei/Tsukimichi/releases/download/v1/x.zip\");")]));
+        Assert.NotEmpty(Offenders([(NetworkFile, "var u = new Uri(\"https://github.com/someone/Tsukimichi/releases/download/x\");")]));
+
+        // The offer pinning a URL elsewhere: refused.
+        Assert.NotEmpty(Offenders([(PinnedFiles[1], "public const string ReleaseBase = \"https://example.com/releases/download/\";")]));
+
+        // What the exception covers: the downloader's own network code, and the pinned prefix.
+        Assert.Empty(Offenders([(NetworkFile, "var h = new HttpClient(new SocketsHttpHandler());")]));
+        Assert.Empty(Offenders([(PinnedFiles[1], "public const string ReleaseBase = \"https://github.com/xenofei/Tsukimichi/releases/download/\";")]));
+
+        // And a link elsewhere in the plugin stays a link, not network code (opened in the browser by Dalamud).
+        Assert.Empty(Offenders([(other, "Util.OpenLink(\"https://na.finalfantasyxiv.com/lodestone/\");")]));
+    }
+
+    [Fact]
+    public void The_shipped_offer_names_one_release_asset_under_the_prefix()
+    {
+        Assert.Equal(AllowedPrefix, Core.Portraits.PortraitPackOffer.ReleaseBase);
+        var path = Path.Combine(ResxFiles.RepositoryRoot(), "Tsukimichi", "Data", Core.Portraits.PortraitPackOffer.FileName);
+        Assert.True(File.Exists(path), "Tsukimichi/Data/portrait_pack.json ships with every build");
+        var offer = Core.Portraits.PortraitPackOffer.Parse(File.ReadAllBytes(path), out var warning);
+        Assert.Null(warning);
+        if (offer is not null)
+        {
+            Assert.StartsWith(AllowedPrefix, offer.DownloadUri.AbsoluteUri, StringComparison.Ordinal);
+            Assert.True(offer.Allows(offer.DownloadUri));
+            Assert.False(offer.Allows(new Uri(AllowedPrefix + "portraits-999/other.zip")));
+        }
+    }
+
+    [Fact]
+    public void The_one_network_file_is_the_portrait_pack_transport_and_follows_no_redirect_itself()
+    {
+        var source = StripComments(File.ReadAllText(Path.Combine(ResxFiles.RepositoryRoot(), NetworkFile)));
+        Assert.Contains("class PortraitPackHttp : IPortraitPackTransport", source, StringComparison.Ordinal);
+        Assert.Contains("AllowAutoRedirect = false", source, StringComparison.Ordinal);
+        Assert.Contains("UseCookies = false", source, StringComparison.Ordinal);
+        Assert.Contains("if (!offer.Allows(uri))", source, StringComparison.Ordinal);
+
+        // It names no address of its own: every one comes from the offer, checked hop by hop (PortraitPackOffer.Allows).
+        Assert.DoesNotContain("://", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_pack_is_fetched_only_from_the_pinned_release_after_the_settings_confirmation()
+    {
+        Assert.Equal("https://github.com/xenofei/Tsukimichi/releases/download/", Core.Portraits.PortraitPackOffer.ReleaseBase);
+
+        // The transport is made in one place (the plugin's wiring), and a download starts only from the confirmation's button.
+        var plugin = Path.Combine(ResxFiles.RepositoryRoot(), "Tsukimichi");
+        var made = new List<string>();
+        var started = new List<string>();
+        foreach (var file in Directory.GetFiles(plugin, "*.cs", SearchOption.AllDirectories))
+        {
+            var sep = Path.DirectorySeparatorChar;
+            if (file.Contains($"{sep}obj{sep}", StringComparison.Ordinal) || file.Contains($"{sep}bin{sep}", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var source = StripComments(File.ReadAllText(file));
+            var name = Path.GetRelativePath(ResxFiles.RepositoryRoot(), file);
+            if (source.Contains("new Game.PortraitPackHttp(", StringComparison.Ordinal) || source.Contains("new PortraitPackHttp(", StringComparison.Ordinal))
+            {
+                made.Add(name);
+            }
+
+            if (source.Contains(".StartDownload()", StringComparison.Ordinal))
+            {
+                started.Add(name);
+            }
+        }
+
+        Assert.Equal([Path.Combine("Tsukimichi", "Plugin.cs")], made);
+        Assert.Equal([Path.Combine("Tsukimichi", "Ui", "ConfigWindow.PortraitPack.cs")], started);
     }
 
     [Fact]
@@ -111,11 +252,12 @@ public class NoNetworkTests
         var offenders = new List<string>();
         foreach (var path in assemblies)
         {
+            var isPlugin = Path.GetFileName(path) == "Tsukimichi.dll";
             foreach (var reference in References(path))
             {
-                // System.Net.Primitives and System.Private.Uri hold types like Uri and WebUtility that any assembly may
-                // reference without opening a connection; nothing of ours does today, so none are allowed yet.
-                if (reference.StartsWith("System.Net", StringComparison.Ordinal))
+                // Core and GameData reference no networking assembly at all; the plugin only what the portrait pack's
+                // transport needs (HttpClient, and its status code from System.Net.Primitives).
+                if (reference.StartsWith("System.Net", StringComparison.Ordinal) && !(isPlugin && PluginNetworkAssemblies.Contains(reference)))
                 {
                     offenders.Add($"{Path.GetFileName(path)} references {reference}");
                 }

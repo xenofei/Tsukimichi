@@ -34,6 +34,48 @@ public static class GiverPortraits
     /// <summary>Settings › General › Look › Giver portraits; null reads as the default, Game art.</summary>
     public static Func<GiverPortraitMode>? Mode { get; set; }
 
+    /// <summary>The installed portrait pack (feature plan v7 F4); null (or returning null) when none is.</summary>
+    public static Func<PortraitPack?>? Pack { get; set; }
+
+    // The index with the pack behind it, kept while neither changes, so asking for a plate allocates nothing.
+    private static PortraitIndex? lastIndex;
+    private static PortraitPack? lastPack;
+    private static PortraitIndex combined = PortraitIndex.Empty;
+
+    /// <summary>
+    /// The index the plates use: the warmed game-art index, with the portrait pack behind it under Game art + portrait
+    /// pack (<see cref="PortraitIndex.WithPack"/>). Draw thread only.
+    /// </summary>
+    public static PortraitIndex Current
+    {
+        get
+        {
+            var index = Index?.Invoke() ?? PortraitIndex.Empty;
+            var pack = (Mode?.Invoke() ?? GiverPortraitMode.GameArt) == GiverPortraitMode.GameArtAndPack ? Pack?.Invoke() : null;
+            if (!ReferenceEquals(index, lastIndex) || !ReferenceEquals(pack, lastPack))
+            {
+                lastIndex = index;
+                lastPack = pack;
+                combined = index.WithPack(pack);
+            }
+
+            return combined;
+        }
+    }
+
+    /// <summary>The image file of a pack portrait (<see cref="PortraitSource.Pack"/>: its icon is the NPC id); false when the pack in use has none.</summary>
+    public static bool TryGetPackPath(in PortraitRef portrait, out string path)
+    {
+        if (portrait.Source == PortraitSource.Pack && combined.Pack is { } pack && pack.TryGetPath(portrait.Icon, out var found))
+        {
+            path = found;
+            return true;
+        }
+
+        path = string.Empty;
+        return false;
+    }
+
     /// <summary>"Region › Place" of a quest's giver for the hover tooltip, through a spoiler shield; null leaves the place out.</summary>
     public static Func<QuestRecord, SpoilerMask, string?>? PlaceOf { get; set; }
 
@@ -50,8 +92,7 @@ public static class GiverPortraits
     {
         ArgumentNullException.ThrowIfNull(quest);
         ArgumentNullException.ThrowIfNull(spoilers);
-        var index = Index?.Invoke() ?? PortraitIndex.Empty;
-        var portrait = index.For(quest);
+        var portrait = Current.For(quest);
         var masked = spoilers.IsMasked(quest) || (quest.Issuer is { } issuer && spoilers.IsNameMasked(SpoilerKind.Npc, issuer.Name));
         if (masked)
         {

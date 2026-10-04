@@ -16,6 +16,7 @@ static partial class Strings
         Core.Portraits.PortraitSource.TripleTriadCard => Loc.Get("Portrait.SourceTripleTriad"),
         Core.Portraits.PortraitSource.BattleTalk => Loc.Get("Portrait.SourceBattleTalk"),
         Core.Portraits.PortraitSource.Delivery => Loc.Get("Portrait.SourceDelivery"),
+        Core.Portraits.PortraitSource.Pack => Loc.Get("Portrait.SourcePack"),
         _ => string.Empty,
     };
 
@@ -26,6 +27,8 @@ static partial class Strings
     public static string SettingsGiverPortraitsOff => Loc.Get("Settings.GiverPortraitsOff");
 
     public static string SettingsGiverPortraitsGameArt => Loc.Get("Settings.GiverPortraitsGameArt");
+
+    public static string SettingsGiverPortraitsGameArtAndPack => Loc.Get("Settings.GiverPortraitsGameArtAndPack");
 
     /// <summary>The Journal table's Giver column header.</summary>
     public static string ColumnGiver => Loc.Get("ColumnGiver");

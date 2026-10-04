@@ -184,17 +184,32 @@ public static partial class Chrome
         var textures = Plugin.TextureProvider;
         var delivery = portrait.Mask is not null;
         var fallback = PortraitPlate.Fallback(portrait.Fallback.Kind, portrait.Fallback, logical);
-        if (textures is null || !textures.TryGetFromGameIcon(new GameIconLookup(portrait.Icon, false, true), out var shared))
+        ISharedImmediateTexture? shared = null;
+        if (textures is not null)
         {
-            // The game has no such icon (a patch dropped it): the fallback, as for a giver without art.
+            if (portrait.Source == PortraitSource.Pack)
+            {
+                // A portrait pack photo (F4): its file in the installed pack, checked and decoded once at install.
+                shared = GiverPortraits.TryGetPackPath(portrait, out var path) ? textures.GetFromFileAbsolute(path) : null;
+            }
+            else if (textures.TryGetFromGameIcon(new GameIconLookup(portrait.Icon, false, true), out var icon))
+            {
+                shared = icon;
+            }
+        }
+
+        if (shared is null)
+        {
+            // The game has no such icon (a patch dropped it), or the pack no such photo: the fallback, as for a giver without art.
             fallbackUnder = fallback;
             return false;
         }
 
-        if (!shared.TryGetWrap(out var source, out _))
+        if (!shared.TryGetWrap(out var source, out var loadError))
         {
             // Loading: the bare well (the face fades in on arrival); a delivery portrait's fallback, never its unkeyed art.
-            fallbackUnder = delivery ? fallback : PortraitShow.Face;
+            // A file that failed to load (a pack photo deleted or damaged since install) shows the fallback.
+            fallbackUnder = delivery || loadError is not null ? fallback : PortraitShow.Face;
             return false;
         }
 

@@ -267,13 +267,34 @@ public sealed partial class ConfigWindow
         // The window scales itself (its two children inherit it); the scale is reset before Begin lays the title bar
         // out again.
         UiMetrics.ApplyFontScale();
+
+        // While the portrait pack's confirmation is up, Settings takes no input; only the dialog's own scrim dims it
+        // (spec-1.20 F4), so the disabled alpha stays 1.
+        var blocked = packDialogOpen;
+        if (blocked)
+        {
+            ImGui.PushStyleVar(ImGuiStyleVar.DisabledAlpha, 1f);
+            ImGui.BeginDisabled();
+        }
+
         try
         {
             DrawFrame();
         }
         finally
         {
+            if (blocked)
+            {
+                ImGui.EndDisabled();
+                ImGui.PopStyleVar();
+            }
+
             ImGui.SetWindowFontScale(1f);
+        }
+
+        if (packDialogOpen)
+        {
+            DrawPackDialog(ImGui.GetWindowPos(), ImGui.GetWindowPos() + ImGui.GetWindowSize(), ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows));
         }
 
         // Live settings (the scales, the sliders) save once they have been still a moment and nothing is held.
