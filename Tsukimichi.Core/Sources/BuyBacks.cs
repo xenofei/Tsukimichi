@@ -82,10 +82,12 @@ public static class BuyBacks
     /// The line under a reward: "Can be bought back from a Calamity salvager for 100 gil" or "Also sold by a material
     /// supplier, Limsa Lominsa Lower Decks (9.4, 11.2) for 20 gil"; the price is left out when the data does not give it.
     /// </summary>
-    public static string Line(BuyBack buyBack)
+    /// <param name="buyBack">The shop row.</param>
+    /// <param name="spoilers">Names a vendor or a place past the story point by its placeholder (1.20.0 N6); null names all.</param>
+    public static string Line(BuyBack buyBack, Query.SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(buyBack);
-        var vendor = SourceText.VendorWithPlace(buyBack.Vendor);
+        var vendor = SourceText.VendorWithPlace(buyBack.Vendor, spoilers);
         var cost = SourceText.Cost(buyBack.Offer.Costs);
         return (buyBack.Kind, cost.Length > 0) switch
         {
@@ -97,13 +99,15 @@ public static class BuyBacks
     }
 
     /// <summary>The mark's tooltip: <see cref="Line"/> plus what it means for the reward.</summary>
-    public static string Tooltip(BuyBack buyBack)
+    /// <param name="buyBack">The shop row.</param>
+    /// <param name="spoilers">Names a vendor or a place past the story point by its placeholder (1.20.0 N6); null names all.</param>
+    public static string Tooltip(BuyBack buyBack, Query.SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(buyBack);
         var note = buyBack.Kind == BuyBackKind.BuyBack
             ? CoreText.T("Core.BuyBack.BuyBackNote", "Once the quest is done, a reward you sold or discarded can be had again.")
             : CoreText.T("Core.BuyBack.SoldNote", "Anyone can buy it, so the quest is not the only way to get it.");
-        return Line(buyBack) + "\n" + note;
+        return Line(buyBack, spoilers) + "\n" + note;
     }
 
     /// <summary>What a shop row means for a reward of <paramref name="questRowId"/>; null when it does not count.</summary>

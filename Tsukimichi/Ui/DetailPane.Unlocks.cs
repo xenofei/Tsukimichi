@@ -32,7 +32,9 @@ namespace Tsukimichi.Ui;
 /// queues). Every row has a right-click menu and is a focusable item.</item>
 /// <item>The tooltip says how sure a row is: "Likely: you first reach it here" for the first-visit rule's rows, the
 /// curated note for curated ones.</item>
-/// <item>Spoiler shield: a masked quest's section is one line and nothing else; Sprout mode leaves out rows past the character's reach (<see cref="UnlockView"/>).</item>
+/// <item>Spoiler shield: a masked quest's section is one line and nothing else; Sprout mode leaves out rows past the
+/// character's reach; a zone, duty or reward past the story point reads "Area ahead (Lv 61)" with no icon, place or
+/// note of its own (1.20.0 N6), unless the game confirms the character has it (<see cref="UnlockView"/>).</item>
 /// </list>
 /// Rows are rebuilt only when the quest, the session, the index, attunement, the reach or the language changes; their
 /// height never changes on hover or as icons load, so nothing moves under the player.
@@ -65,9 +67,12 @@ public sealed partial class DetailPane
     /// <summary>The icon of a reward-backed row the index has none for (the Moonlit resolver); null leaves the stand-in.</summary>
     public Func<QuestRecord?, UniqueRewardEntry, uint>? UnlockIcon { get; set; }
 
-    private sealed class UnlockRowView(UnlockEntry entry, string name, string caption, uint icon, bool confirmed, string? confirmedText)
+    private sealed class UnlockRowView(UnlockEntry entry, string name, string caption, uint icon, bool confirmed, string? confirmedText, bool shielded)
     {
         public UnlockEntry Entry { get; } = entry;
+
+        /// <summary>The wider shield masks the row's name (1.20.0 N6): no note, no coordinates, the placeholder in every label.</summary>
+        public bool Shielded { get; } = shielded;
 
         public string Name { get; } = name;
 
@@ -192,21 +197,14 @@ public sealed partial class DetailPane
         }
 
         unlocksAny = unlockGroups.Count > 0;
-        unlocksCaption = UnlockText.Places(visible, 2);
+        unlocksCaption = UnlockText.Places(UnlockView.Visible(entries, masked: false, reach, session.Spoilers), 2);
     }
 
     private UnlockRowView UnlockRow(SessionState session, QuestRecord quest, UnlockEntry entry, QuestCatalog? catalog)
     {
-        var name = catalog is null ? entry.Name : UnlockView.NameOf(entry, catalog, session.Spoilers);
-        var icon = entry.Icon;
         UniqueRewardEntry? asReward = entry.Reward is { } k && entry.TargetId != 0
             ? new UniqueRewardEntry(quest.RowId, k, entry.TargetId, entry.ItemId, entry.Name, Confidence.Static, string.Empty)
             : null;
-        if (icon == 0 && asReward is not null && UnlockIcon is { } resolve)
-        {
-            icon = resolve(quest, asReward);
-        }
-
         var confirmed = false;
         string? confirmedText = null;
         if (entry.Target == UnlockTarget.Aetheryte)
@@ -220,7 +218,18 @@ public sealed partial class DetailPane
             confirmedText = entry.Group == UnlockGroup.Duty ? Strings.UnlocksDutyUnlocked : Strings.UnlocksOwned;
         }
 
-        return new UnlockRowView(entry, name, entry.Caption, icon, confirmed, confirmedText);
+        // The wider shield (1.20.0 N6): a thing past the story point prints its placeholder, unless the game confirms
+        // the character has it (seen already); its icon is the stand-in unless it is a generic map or aetheryte marker.
+        var shown = confirmed ? entry : UnlockView.Shielded(entry, session.Spoilers);
+        var shielded = !ReferenceEquals(shown, entry) && !string.Equals(shown.Name, entry.Name, StringComparison.Ordinal);
+        var name = catalog is null || shielded ? shown.Name : UnlockView.NameOf(entry, catalog, session.Spoilers);
+        var icon = shown.Icon;
+        if (icon == 0 && !shielded && asReward is not null && UnlockIcon is { } resolve)
+        {
+            icon = resolve(quest, asReward);
+        }
+
+        return new UnlockRowView(entry, name, shown.Caption, icon, confirmed, confirmedText, shielded);
     }
 
     private void DrawUnlockGroups(QuestRecord quest)
@@ -332,7 +341,7 @@ public sealed partial class DetailPane
                 case UnlockSource.Derived:
                     ImGui.TextDisabled(Strings.UnlocksLikely);
                     break;
-                case UnlockSource.Curated when row.Entry.Note is { Length: > 0 } note:
+                case UnlockSource.Curated when !row.Shielded && row.Entry.Note is { Length: > 0 } note:
                     ImGui.TextDisabled(note);
                     break;
             }
@@ -367,7 +376,7 @@ public sealed partial class DetailPane
         switch (entry.Target)
         {
             case UnlockTarget.Aetheryte:
-                if (!links.TeleportTo(entry.TargetId, entry.Name))
+                if (!links.TeleportTo(entry.TargetId, row.Name))
                 {
                     links.FlagAetheryte(entry.TargetId);
                 }
@@ -395,10 +404,10 @@ public sealed partial class DetailPane
             case UnlockTarget.AethernetShard:
                 if (entry.Target == UnlockTarget.Aetheryte && links.TeleportShown)
                 {
-                    var teleport = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, entry.Name);
+                    var teleport = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, row.Name);
                     if (ImGui.MenuItem(teleport, string.Empty, false, links.CanTeleportTo(entry.TargetId)))
                     {
-                        links.TeleportTo(entry.TargetId, entry.Name);
+                        links.TeleportTo(entry.TargetId, row.Name);
                     }
 
                     if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) && links.TeleportToBlocked(entry.TargetId) is { } why)
@@ -412,7 +421,8 @@ public sealed partial class DetailPane
                     links.FlagAetheryte(entry.TargetId);
                 }
 
-                if (ImGui.MenuItem(Strings.UnlocksMenuCopyCoordinates, string.Empty, false, links.Aetherytes.Find(entry.TargetId) is not null)
+                // The coordinates line names the place: not for a name the shield hides.
+                if (ImGui.MenuItem(Strings.UnlocksMenuCopyCoordinates, string.Empty, false, !row.Shielded && links.Aetherytes.Find(entry.TargetId) is not null)
                     && links.AetheryteCoordinateText(entry.TargetId) is { } coordinates)
                 {
                     ImGui.SetClipboardText(coordinates);
@@ -427,10 +437,11 @@ public sealed partial class DetailPane
 
                 if (links.TeleportShown && links.ZoneAetheryte(entry.PlaceId) is { } home)
                 {
-                    var teleport = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, home.Name);
+                    var homeName = runner.Spoilers.Name(SpoilerKind.Area, home.Name);
+                    var teleport = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, homeName);
                     if (ImGui.MenuItem(teleport, string.Empty, false, links.CanTeleportTo(home.RowId)))
                     {
-                        links.TeleportTo(home.RowId, home.Name);
+                        links.TeleportTo(home.RowId, homeName);
                     }
 
                     if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) && links.TeleportToBlocked(home.RowId) is { } why)

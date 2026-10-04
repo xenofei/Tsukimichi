@@ -265,7 +265,7 @@ public sealed partial class CharactersPane
             var name = quest is null ? string.Format(CultureInfo.InvariantCulture, Strings.MoonlitQuestFormat, entry.RowId) : session.Spoilers.DisplayName(quest);
             var when = string.Format(CultureInfo.CurrentCulture, Strings.AbandonedAtFormat, entry.AbandonedUtc.ToLocalTime().ToString(Strings.DateTimeFormat, CultureInfo.CurrentCulture));
             var tooltip = quest?.Issuer is { } issuer && issuer.Name.Length > 0
-                ? string.Format(CultureInfo.CurrentCulture, Strings.AbandonedGiverFormat, issuer.Name) + "\n" + when
+                ? string.Format(CultureInfo.CurrentCulture, Strings.AbandonedGiverFormat, session.Spoilers.Name(Core.Query.SpoilerKind.Npc, issuer.Name)) + "\n" + when
                 : when;
             rows.Add(new AbandonedRow(quest, name, state, AbandonedLedger.Describe(entry, now), tooltip, name + "\n" + tooltip));
         }

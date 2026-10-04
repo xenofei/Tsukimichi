@@ -194,7 +194,8 @@ public sealed partial class MainWindow
 
         var spoilers = session.Spoilers;
         var catalog = bundle.Catalog;
-        var matches = source.Current.Find(query, rowId => !spoilers.IsMasked(rowId), reach, MaxUnlockResults);
+        // Neither through a masked quest nor by a name past the story point (1.20.0 N6).
+        var matches = source.Current.Find(query, rowId => !spoilers.IsMasked(rowId), reach, MaxUnlockResults, spoilers);
         var rows = new List<UnlockResultRow>(matches.Count);
         var index = FlightZones?.Invoke();
         foreach (var match in matches)

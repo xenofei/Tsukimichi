@@ -2027,7 +2027,7 @@ public sealed partial class CharactersPane
         CatalogBundle bundle,
         SpoilerMask spoilers)
     {
-        var names = bundle.BlockerNames() with { QuestName = spoilers.DisplayName };
+        var names = bundle.BlockerNames().Through(spoilers);
         var header = string.Format(CultureInfo.CurrentCulture, Strings.DiffOnlyFormat, has, lacks) + " · " + Strings.DiffQuestCount(entries.Count);
         var rows = new List<DiffRow>(Math.Min(entries.Count, MaxDiffRows));
         var clipboard = new StringBuilder();

@@ -517,16 +517,22 @@ public sealed partial class GameLinks
         return memo.Goal;
     }
 
-    /// <summary>The giver's display name, or "the giver" when the sheet has none.</summary>
-    private static string GiverName(QuestRecord quest) =>
-        quest.Issuer is { Name.Length: > 0 } issuer ? issuer.Name : Strings.TravelTheGiver;
+    /// <summary>
+    /// The giver's display name, or "the giver" when the sheet has none; a person the story has not introduced by the
+    /// wider shield's placeholder (1.20.0 N6).
+    /// </summary>
+    private string GiverName(QuestRecord quest) =>
+        quest.Issuer is { Name.Length: > 0 } issuer ? Spoilers?.Invoke().Name(Core.Query.SpoilerKind.Npc, issuer.Name) ?? issuer.Name : Strings.TravelTheGiver;
 
-    /// <summary>The name of the zone a territory is (its TerritoryType place name); empty when unknown.</summary>
+    /// <summary>A place's name through the wider shield (1.20.0 N6): its placeholder before the story reaches it.</summary>
+    private string PlaceName(string name) => Spoilers?.Invoke().Name(Core.Query.SpoilerKind.Area, name) ?? name;
+
+    /// <summary>The name of the zone a territory is (its TerritoryType place name) through the shield; empty when unknown.</summary>
     private string TerritoryName(uint territoryId)
     {
         try
         {
-            return data.GetExcelSheet<TerritoryType>().GetRowOrDefault(territoryId)?.PlaceName.ValueNullable?.Name.ExtractText() ?? string.Empty;
+            return PlaceName(data.GetExcelSheet<TerritoryType>().GetRowOrDefault(territoryId)?.PlaceName.ValueNullable?.Name.ExtractText() ?? string.Empty);
         }
         catch (Exception ex)
         {
@@ -761,8 +767,8 @@ public sealed partial class GameLinks
 
     private static string NeedsVnavmesh() => NeedsPlugin(CompanionPlugin.Vnavmesh, Strings.TravelNeedsVnavmesh);
 
-    /// <summary>The giver's zone name (the Map sheet's place name); empty when unknown.</summary>
-    private string ZoneName(QuestRecord quest) => quest.Issuer is { } issuer ? Map(issuer.MapId)?.PlaceName ?? string.Empty : string.Empty;
+    /// <summary>The giver's zone name (the Map sheet's place name) through the shield; empty when unknown.</summary>
+    private string ZoneName(QuestRecord quest) => quest.Issuer is { } issuer ? PlaceName(Map(issuer.MapId)?.PlaceName ?? string.Empty) : string.Empty;
 
     /// <summary>The goal's zone name: the outside zone of an interior's way in, else the giver's zone.</summary>
     private string GoalZoneName(QuestRecord quest, TravelGoal? goal) =>

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Tsukimichi.Core.Localization;
+using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Core.Sources;
 
@@ -19,15 +20,16 @@ public static class SourceText
 
     /// <summary>
     /// The vendor as a sentence names it, in the game's own letter case: "a Calamity salvager", "an independent
-    /// merchant" for a role (<see cref="Vendor.Generic"/>), the name alone for a person ("Kurogai").
+    /// merchant" for a role (<see cref="Vendor.Generic"/>), the name alone for a person ("Kurogai"); a person the story
+    /// has not introduced by the placeholder of <paramref name="spoilers"/> ("Someone ahead (Lv 61)", 1.20.0 N6).
     /// </summary>
-    public static string VendorInSentence(Vendor vendor)
+    public static string VendorInSentence(Vendor vendor, SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(vendor);
         var name = vendor.Name;
         if (!vendor.Generic)
         {
-            return name;
+            return spoilers?.Name(SpoilerKind.Npc, name) ?? name;
         }
 
         return string.Format(
@@ -40,18 +42,34 @@ public static class SourceText
     /// "a Calamity salvager, Ul'dah - Steps of Thal (11.2, 9.8)" (<see cref="VendorInSentence"/> and the place), or the
     /// vendor alone when the data does not place it.
     /// </summary>
-    public static string VendorWithPlace(Vendor vendor)
+    public static string VendorWithPlace(Vendor vendor, SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(vendor);
-        var name = VendorInSentence(vendor);
-        return vendor.Spot is { } spot ? string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Sources.VendorAt", "{0}, {1}"), name, Spot(spot)) : name;
+        var name = VendorInSentence(vendor, spoilers);
+        return vendor.Spot is { } spot ? string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Sources.VendorAt", "{0}, {1}"), name, Spot(spot, spoilers)) : name;
     }
 
-    /// <summary>"Ul'dah - Steps of Thal (11.2, 9.8)": the zone and the map coordinates the game prints.</summary>
-    public static string Spot(WorldSpot spot)
+    /// <summary>
+    /// "Ul'dah - Steps of Thal (11.2, 9.8)": the zone and the map coordinates the game prints; a zone the story has not
+    /// reached by the placeholder of <paramref name="spoilers"/>, without coordinates (1.20.0 N6).
+    /// </summary>
+    public static string Spot(WorldSpot spot, SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(spot);
+        if (spoilers is not null && spoilers.IsNameMasked(SpoilerKind.Area, spot.Zone))
+        {
+            return spoilers.Name(SpoilerKind.Area, spot.Zone);
+        }
+
         return string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Sources.Spot", "{0} ({1:0.0}, {2:0.0})"), spot.Zone, spot.MapX, spot.MapY);
+    }
+
+    /// <summary>Whether <paramref name="spoilers"/> hides the vendor's name or the zone it stands in (1.20.0 N6).</summary>
+    public static bool Shielded(Vendor vendor, SpoilerMask? spoilers)
+    {
+        ArgumentNullException.ThrowIfNull(vendor);
+        return spoilers is { MasksNames: true }
+            && ((!vendor.Generic && spoilers.IsNameMasked(SpoilerKind.Npc, vendor.Name)) || (vendor.Spot is { } spot && spoilers.IsNameMasked(SpoilerKind.Area, spot.Zone)));
     }
 
     /// <summary>"1,500 gil", "200 Storm Seals", "3 Bicolor Gemstones + 100 gil"; empty when the costs are unknown.</summary>

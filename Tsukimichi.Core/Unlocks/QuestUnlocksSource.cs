@@ -1,5 +1,6 @@
 using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Core.Unlocks;
 
@@ -9,8 +10,8 @@ namespace Tsukimichi.Core.Unlocks;
 /// index of the previous catalog serves (a row id names the same quest in both), or <see cref="QuestUnlocks.Empty"/>. A
 /// build that throws is reported once and not retried until the catalog changes. Poll it from one thread (the framework
 /// thread), every frame: a reader that waited for the first draw to start the build would get an empty index. The
-/// one-line forms (<see cref="Summary"/>, <see cref="Names"/>) are memoized per quest and reach until the index or the
-/// language changes, so a tooltip drawn every frame allocates once.
+/// one-line forms (<see cref="Summary"/>, <see cref="Names"/>) are memoized per quest and reach until the index, the
+/// language or the spoiler shield they print through changes, so a tooltip drawn every frame allocates once.
 /// </summary>
 public sealed class QuestUnlocksSource
 {
@@ -28,6 +29,7 @@ public sealed class QuestUnlocksSource
     private QuestCatalog? pendingCatalog;
     private QuestCatalog? doneCatalog;
     private int textVersion = -1;
+    private SpoilerMask? textSpoilers;
 
     /// <param name="catalog">The loaded catalog, or null while none is.</param>
     /// <param name="build">The index for a catalog; runs off the polling thread, so it reads only what it is given.</param>
@@ -54,6 +56,9 @@ public sealed class QuestUnlocksSource
         }
     }
 
+    /// <summary>The index as of the last poll, without polling: <see cref="Current"/> for a reader that must not start a build.</summary>
+    public QuestUnlocks Latest => current;
+
     /// <summary>Whether the index for the catalog as it is now is in hand (a failed build counts as done).</summary>
     public bool IsCurrent
     {
@@ -68,26 +73,31 @@ public sealed class QuestUnlocksSource
     public IReadOnlyList<UnlockEntry> For(uint rowId) => Current.For(rowId);
 
     // Each one-line form reads only the rows within reach (UnlockView.Visible): Sprout mode passes the character's
-    // reach, so a later expansion's city stays out of every tooltip and column, not only the detail pane.
+    // reach, so a later expansion's city stays out of every tooltip and column, not only the detail pane. Each names a
+    // zone, duty or reward past the story point by its placeholder when given the shield (plan v7, 1.20.0 N6).
 
     /// <summary><see cref="UnlockText.Summary"/> of the quest's rows within <paramref name="reach"/>, memoized; empty when it opens nothing but next quests.</summary>
-    public string Summary(uint rowId, byte reach = byte.MaxValue) => Memo(summaries, rowId, reach, static e => UnlockText.Summary(e));
+    public string Summary(uint rowId, byte reach = byte.MaxValue, SpoilerMask? spoilers = null) => Memo(summaries, rowId, reach, spoilers, static e => UnlockText.Summary(e));
 
     /// <summary><see cref="UnlockText.Names"/> of the quest's rows within <paramref name="reach"/>, memoized; empty when it opens nothing but next quests.</summary>
-    public string Names(uint rowId, byte reach = byte.MaxValue) => Memo(names, rowId, reach, static e => UnlockText.Names(e));
+    public string Names(uint rowId, byte reach = byte.MaxValue, SpoilerMask? spoilers = null) => Memo(names, rowId, reach, spoilers, static e => UnlockText.Names(e));
 
     /// <summary><see cref="UnlockText.OpensLine"/> of the quest's rows within <paramref name="reach"/>, memoized: "Opens Kugane (area) · …"; empty when none.</summary>
-    public string OpensLine(uint rowId, byte reach = byte.MaxValue) => Memo(opensLines, rowId, reach, static e => UnlockText.OpensLine(e));
+    public string OpensLine(uint rowId, byte reach = byte.MaxValue, SpoilerMask? spoilers = null) => Memo(opensLines, rowId, reach, spoilers, static e => UnlockText.OpensLine(e));
 
     /// <summary><see cref="UnlockText.Places"/> of the quest's rows within <paramref name="reach"/>, memoized: areas, aetherytes, duties and features only.</summary>
-    public string Places(uint rowId, byte reach = byte.MaxValue) => Memo(places, rowId, reach, static e => UnlockText.Places(e));
+    public string Places(uint rowId, byte reach = byte.MaxValue, SpoilerMask? spoilers = null) => Memo(places, rowId, reach, spoilers, static e => UnlockText.Places(e));
 
-    private string Memo(Dictionary<(uint RowId, byte Reach), string> cache, uint rowId, byte reach, Func<IReadOnlyList<UnlockEntry>, string> compose)
+    private string Memo(Dictionary<(uint RowId, byte Reach), string> cache, uint rowId, byte reach, SpoilerMask? spoilers, Func<IReadOnlyList<UnlockEntry>, string> compose)
     {
         var index = Current;
-        if (textVersion != CoreText.Version)
+        // The texts follow one shield at a time: another one (a setting flipped, a quest done, the live character's
+        // shield for a chat line) composes them afresh.
+        var shield = spoilers is { MasksNames: true } ? spoilers : null;
+        if (textVersion != CoreText.Version || !SameShield(textSpoilers, shield))
         {
             textVersion = CoreText.Version;
+            textSpoilers = shield;
             ClearText();
         }
 
@@ -96,10 +106,13 @@ public sealed class QuestUnlocksSource
             return known;
         }
 
-        var text = compose(UnlockView.Visible(index.For(rowId), masked: false, reach));
+        var text = compose(UnlockView.Visible(index.For(rowId), masked: false, reach, shield));
         cache[(rowId, reach)] = text;
         return text;
     }
+
+    private static bool SameShield(SpoilerMask? a, SpoilerMask? b) =>
+        ReferenceEquals(a, b) || (a is not null && b is not null && a.Fingerprint == b.Fingerprint);
 
     /// <summary>Collects a finished build and starts one when the catalog moved on.</summary>
     public void Poll()
