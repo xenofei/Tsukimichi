@@ -36,6 +36,7 @@ Updates arrive through the plugin installer like any other plugin.
 - **Patch of origin**: every quest knows the patch it came with ("Added in 7.5" in the detail pane); the Added in filter keeps one patch series, and the Unlocks quick view opens with a "New in 7.5x" group, the unlock quests of the newest patch series.
 - **Nearby quests** (`/tsuki nearby`): the quests you can start in the current zone, with a "☾ N" count in the server info bar.
 - **Todo overlay** (`/tsuki todo`): a small always-visible panel with your pins, the feature quests you can start here, the next main scenario quest, the current job's next job and role quest, and, once you pin an expansion from My blues, its Ready unlock quests under Clear my blues. Its text is outlined so it reads over bright scenes; Compact mode shows one line per quest, and Locked makes it click-through.
+- **Moon icon** (`/tsuki icon`): a small moon on your screen in your theme's style. Click it to open Tsukimichi; hover it for Up next, what is Ready, your journal room and events ending soon; drag it anywhere (its place is kept per screen size) and lock it from its right-click menu. It steps aside in cutscenes and Group Pose, and in duties if you like (Settings › In game › Moon icon).
 - **Duty Finder unlock hint**: select a padlocked duty in the Duty Finder and a small panel beside it names the quest that unlocks it, its state and what it waits for, with Reveal and Flag giver buttons. It never queues or opens a duty.
 - **Item hints**: hovering an item that is a quest-exclusive reward shows which quest gives it and whether it is done; right-clicking such an item in the inventory adds "Tsukimichi: quest reward" to its context menu.
 - **Chains and ladders**: Hildibrand, the relic lines, the raid stories and every job and role quest ladder with "N of M" and the next quest.
@@ -58,6 +59,7 @@ Updates arrive through the plugin installer like any other plugin.
 | `/tsuki route [quest name]` | open the unlock route to the selected or named quest: every quest still needed, in order |
 | `/tsuki nearby` | open or close the Nearby quests window |
 | `/tsuki todo` | show or hide the Todo overlay |
+| `/tsuki icon` | show or hide the moon icon (with text after `icon`, it searches as before) |
 | `/tsuki report [quest name]` | copy a diagnostic block for the selected or named quest to the clipboard, ready to paste into a GitHub issue |
 | `/tsuki export [quests\|moonlit] [json\|csv]` | write your completed quests, your Moonlit collection, or both to the exports folder (see [docs/export-format.md](docs/export-format.md)) |
 | `/tsuki stop` | stop every walk, flight, travel chain and hand-off Tsukimichi started (a Questionable run, and the AutoDuty and Artisan runs it began) and say in chat what stopped; put it in a macro for one key |

@@ -6285,6 +6285,133 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="TodoConfigResetPositionHint" xml:space="preserve">
     <value>Move the overlay back to the top left of the screen.</value>
   </data>
+  <data name="MoonIconMenuLock" xml:space="preserve">
+    <value>Lock in place</value>
+    <comment>The moon icon's right-click menu (1.22 H1). Words only: a padlock would mean Blocked.</comment>
+  </data>
+  <data name="MoonIconMenuUnlock" xml:space="preserve">
+    <value>Unlock</value>
+    <comment>The moon icon's right-click menu while it is locked (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconMenuHide" xml:space="preserve">
+    <value>Hide icon</value>
+    <comment>The moon icon's right-click menu (1.22 H1); /tsuki icon shows it again.</comment>
+  </data>
+  <data name="MoonIconMenuSettings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>The moon icon's right-click menu (1.22 H1): opens Settings.</comment>
+  </data>
+  <data name="MoonIconFirstRunHint" xml:space="preserve">
+    <value>Right-click for options</value>
+    <comment>Beside the moon icon once, after it first appears (1.22 H1, decision 5).</comment>
+  </data>
+  <data name="MoonIconLockedHint" xml:space="preserve">
+    <value>Locked in place · right-click to unlock</value>
+    <comment>Beside the moon icon when a locked icon is dragged, and the quick card's last line while it is locked (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconHidden" xml:space="preserve">
+    <value>Moon icon hidden</value>
+    <comment>Undo toast after Hide icon (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconShowsAgain" xml:space="preserve">
+    <value>/tsuki icon shows it again</value>
+    <comment>Undo toast after Hide icon, after Undo (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconCardHint" xml:space="preserve">
+    <value>Click to open · right-click for options</value>
+    <comment>The moon icon's quick card, its last line (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconCardWhoFormat" xml:space="preserve">
+    <value>{0} · {1} {2}</value>
+    <comment>The quick card's header, right side (1.22 H1). {0} = the character's first name, {1} = job abbreviation, {2} = level.</comment>
+  </data>
+  <data name="MoonIconCardReadyFormat" xml:space="preserve">
+    <value>{0} quests are Ready</value>
+    <comment>The quick card (1.22 H1). {0} = Ready quests, two or more.</comment>
+  </data>
+  <data name="MoonIconCardReadyOne" xml:space="preserve">
+    <value>1 quest is Ready</value>
+    <comment>The quick card (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconCardReadyNone" xml:space="preserve">
+    <value>Nothing is Ready</value>
+    <comment>The quick card (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconCardOnJobFormat" xml:space="preserve">
+    <value>on {0}</value>
+    <comment>The quick card, after the Ready count (1.22 H1). {0} = job abbreviation.</comment>
+  </data>
+  <data name="MoonIconCardUpdateFormat" xml:space="preserve">
+    <value>Tsukimichi {0} is ready</value>
+    <comment>The quick card when Dalamud has a newer version (1.22 U1). {0} = the version.</comment>
+  </data>
+  <data name="MoonIconCardUpdate" xml:space="preserve">
+    <value>Update</value>
+    <comment>The quick card, after the update line: the status bar note's Update does it (1.22 U1).</comment>
+  </data>
+  <data name="MoonIconCardShow" xml:space="preserve">
+    <value>Show</value>
+    <comment>The quick card, after the Needs you line (1.22 H1).</comment>
+  </data>
+  <data name="ConfigSectionMoonIcon" xml:space="preserve">
+    <value>Moon icon</value>
+    <comment>Settings › In game (1.22 H1).</comment>
+  </data>
+  <data name="ConfigMoonIconShow" xml:space="preserve">
+    <value>Show the moon icon</value>
+  </data>
+  <data name="ConfigMoonIconShowHint" xml:space="preserve">
+    <value>A small moon on your screen: click it to open Tsukimichi, hover it for what's next. /tsuki icon</value>
+  </data>
+  <data name="ConfigMoonIconSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="ConfigMoonIconSizeHint" xml:space="preserve">
+    <value>Small 32, Medium 40 or Large 48 px, times the window scale. Text size leaves it alone.</value>
+  </data>
+  <data name="ConfigMoonIconSizeSmall" xml:space="preserve">
+    <value>Small</value>
+  </data>
+  <data name="ConfigMoonIconSizeMedium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="ConfigMoonIconSizeLarge" xml:space="preserve">
+    <value>Large</value>
+  </data>
+  <data name="ConfigMoonIconLock" xml:space="preserve">
+    <value>Lock in place</value>
+  </data>
+  <data name="ConfigMoonIconLockHint" xml:space="preserve">
+    <value>Dragging the icon does nothing. Its right-click menu unlocks it too.</value>
+  </data>
+  <data name="ConfigMoonIconHideCutscenes" xml:space="preserve">
+    <value>Hide in cutscenes</value>
+  </data>
+  <data name="ConfigMoonIconHideCutscenesHint" xml:space="preserve">
+    <value>The icon steps aside while a cutscene plays.</value>
+  </data>
+  <data name="ConfigMoonIconHideGroupPose" xml:space="preserve">
+    <value>Hide in Group Pose</value>
+  </data>
+  <data name="ConfigMoonIconHideGroupPoseHint" xml:space="preserve">
+    <value>Keeps the icon out of your screenshots.</value>
+  </data>
+  <data name="ConfigMoonIconHideDuties" xml:space="preserve">
+    <value>Hide in duties</value>
+  </data>
+  <data name="ConfigMoonIconHideDutiesHint" xml:space="preserve">
+    <value>The icon steps aside while you are in a duty.</value>
+  </data>
+  <data name="ConfigMoonIconOffReason" xml:space="preserve">
+    <value>Turn on Show the moon icon to use this.</value>
+    <comment>Shown in place of a hint while the moon icon is off (1.22 H1).</comment>
+  </data>
+  <data name="ConfigMoonIconReset" xml:space="preserve">
+    <value>Reset position</value>
+  </data>
+  <data name="ConfigMoonIconResetHint" xml:space="preserve">
+    <value>Puts the icon back where it starts on this screen size.</value>
+  </data>
   <data name="QuickViewAll" xml:space="preserve">
     <value>All</value>
   </data>
@@ -7644,7 +7771,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <value>Right-click an item to reveal the quest that rewards it.</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
-    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; msq says where you are in the main scenario and next says what to do next, both as plain sentences; go [quest name] travels to the current step of the selected or named quest, else to its giver; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
+    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby, todo and icon toggle the Nearby quests window, the Todo overlay and the moon icon; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; msq says where you are in the main scenario and next says what to do next, both as plain sentences; go [quest name] travels to the current step of the selected or named quest, else to its giver; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
   </data>
   <data name="StepWhereToGo" xml:space="preserve">
     <value>Where to go</value>
