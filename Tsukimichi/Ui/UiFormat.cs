@@ -14,6 +14,18 @@ public static class UiFormat
         return local.ToString(local.Date == today ? Strings.TimeFormat : Strings.DateTimeFormat, CultureInfo.CurrentCulture);
     }
 
+    /// <summary>
+    /// "3 Oct": the short date in the client's culture, local time, with the year only when it is not this year ("3 Oct
+    /// 2025"). Spec-1.19 C1's "Offered by the game · 3 Oct".
+    /// </summary>
+    public static string ShortDate(DateTime utc, DateTime? nowUtc = null)
+    {
+        var local = utc.Kind == DateTimeKind.Utc ? utc.ToLocalTime() : DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime();
+        var year = (nowUtc ?? DateTime.UtcNow).ToLocalTime().Year;
+        var format = local.Year == year ? Strings.EventCardDateFormat : Strings.EventCardDateFormat + " yyyy";
+        return local.ToString(format, CultureInfo.CurrentCulture);
+    }
+
     /// <summary>"just now", "5 min ago", "3 h ago", "2 d ago": the one age rule every surface follows (<see cref="Core.Ui.AgeText"/>).</summary>
     public static string Age(DateTime utc, DateTime? nowUtc = null)
     {

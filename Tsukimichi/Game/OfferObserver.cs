@@ -17,7 +17,9 @@ namespace Tsukimichi.Game;
 /// each quest the quest offer window shows is handed in by <see cref="QuestOfferHint"/> (<see cref="Offered"/>). The
 /// sightings go to the character's sidecar (<see cref="OfferSightings"/>, saved on the background writer) and are
 /// compared with Tsukimichi's own states (<see cref="GameOfferChecks"/>): the detail pane, <c>/tsuki why</c>, the
-/// Report block and Settings › Advanced › Diagnostics show what they say. Nothing here changes a state.
+/// Report block and Settings › Advanced › Diagnostics show what they say. The session takes each change of the book
+/// (<see cref="SessionState.SetGameOffers"/>): a quest Tsukimichi reads Not checked that the game shows reads Ready, and
+/// a Blocked one stays Blocked until the player chooses "Go with the game".
 /// <para>
 /// Safety: only reads, never calls a game function; nothing runs while the shared <see cref="HookGate"/> holds the game
 /// hooks, and a read that throws is logged once and skipped. Framework thread only.
@@ -340,6 +342,7 @@ public sealed unsafe class OfferObserver : IDisposable
         }
 
         Version++;
+        session.SetGameOffers(contentId, book);
     }
 
     /// <summary>Hands the book to the writer: when it changed, never while it is still loading (that would overwrite the file with less), and only when this client may write the character.</summary>
@@ -372,10 +375,12 @@ public sealed unsafe class OfferObserver : IDisposable
             });
     }
 
+    /// <summary>The book moved: saved later, and handed to the session, whose resolvers read it (a Not checked quest the game shows reads Ready).</summary>
     private void Changed()
     {
         dirty = true;
         Version++;
+        session.SetGameOffers(contentId, book);
     }
 
     private void Reset()
@@ -401,11 +406,14 @@ public sealed unsafe class OfferObserver : IDisposable
             Reset();
             contentId = 0;
         }
+
+        session.ClearGameOffers(forgotten);
     }
 
     private void OnDataDeleted()
     {
         Reset();
         contentId = 0;
+        session.ClearGameOffers(null);
     }
 }

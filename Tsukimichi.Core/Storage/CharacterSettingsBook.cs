@@ -74,6 +74,13 @@ public sealed class CharacterSettingsBook
     /// <summary>Whether the player marked the game gate of <paramref name="questRowId"/> passed on the character ("I've done this").</summary>
     public bool IsGateDone(ulong contentId, uint questRowId) => Get(contentId)?.GatesDone.Contains(questRowId) == true;
 
+    /// <summary>Every character's "Go with the game" choices: content id to quest row ids, characters without one left out.</summary>
+    public Dictionary<ulong, IReadOnlyList<uint>> GoWithGameByCharacter() =>
+        map.Where(kv => kv.Value.GoWithGame.Count > 0).ToDictionary(kv => kv.Key, kv => (IReadOnlyList<uint>)[.. kv.Value.GoWithGame]);
+
+    /// <summary>Whether the player chose "Go with the game" for <paramref name="questRowId"/> on the character.</summary>
+    public bool IsGoWithGame(ulong contentId, uint questRowId) => Get(contentId)?.GoWithGame.Contains(questRowId) == true;
+
     public bool IsWhyOpen(ulong contentId, string gateId) =>
         Get(contentId)?.PayoffWhyOpen.Contains(gateId, StringComparer.Ordinal) == true;
 
@@ -331,6 +338,7 @@ public sealed class CharacterSettingsBook
                 || !x.PayoffGatesNoticed.SequenceEqual(y.PayoffGatesNoticed, StringComparer.Ordinal)
                 || !x.PayoffWhyOpen.SequenceEqual(y.PayoffWhyOpen, StringComparer.Ordinal)
                 || !x.GatesDone.SequenceEqual(y.GatesDone)
+                || !x.GoWithGame.SequenceEqual(y.GoWithGame)
                 || !SameIds(x.SeenReady, y.SeenReady)
                 || x.SeenReadyRules != y.SeenReadyRules)
             {

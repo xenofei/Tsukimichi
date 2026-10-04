@@ -112,6 +112,22 @@ public sealed record EvalContext
     /// </summary>
     public Func<ulong, uint, bool> GateMarkedDone { get; init; } = static (_, _) => false;
 
+    /// <summary>
+    /// Whether the game itself showed the quest to this character as available (feature plan v7 C1: a map marker or the
+    /// offer window, <see cref="Runtime.OfferSightings"/>): content id and quest row id. A quest Tsukimichi reads Not
+    /// checked then reads Ready, "offered by the game" (<see cref="GameAnswer.Offered"/>); a Blocked or Locked out one
+    /// stays as it is, the disagreement only reported. Defaults to none.
+    /// </summary>
+    public Func<ulong, uint, bool> GameOffered { get; init; } = static (_, _) => false;
+
+    /// <summary>
+    /// Whether the player chose "Go with the game" for the quest on this character (feature plan v7 C1, spec-1.19
+    /// "When the game disagrees"): content id and quest row id. A quest Tsukimichi reads Blocked, Locked out or Not
+    /// checked then reads Ready (<see cref="GameAnswer.Override"/>) until the player takes it back. The plugin reads the
+    /// per-character choices of <c>user/characters.json</c>; defaults to none.
+    /// </summary>
+    public Func<ulong, uint, bool> GoWithGame { get; init; } = static (_, _) => false;
+
     /// <summary>Allied society rank name for requirement details; defaults to <see cref="TribeRanks.Name"/>. The plugin supplies sheet names for other languages.</summary>
     public Func<byte, string> TribeRankName { get; init; } = TribeRanks.Name;
 
@@ -216,6 +232,19 @@ public sealed record EvalContext
     }
 }
 
+/// <summary>Whether a quest's state is the game's answer rather than Tsukimichi's own (feature plan v7 C1).</summary>
+public enum GameAnswer : byte
+{
+    /// <summary>Tsukimichi's own answer.</summary>
+    None,
+
+    /// <summary>Not checked by Tsukimichi, Ready because the game offered it to the character (<see cref="EvalContext.GameOffered"/>).</summary>
+    Offered,
+
+    /// <summary>Ready because the player chose "Go with the game" over Tsukimichi's answer (<see cref="EvalContext.GoWithGame"/>).</summary>
+    Override,
+}
+
 /// <summary>Outcome of resolving one quest for one character.</summary>
 /// <param name="Requirements">Every applicable gate in display order, evaluated on the current job.</param>
 /// <param name="NextStep">First unmet requirement; null when nothing blocks.</param>
@@ -279,4 +308,13 @@ public sealed record QuestEvaluation(
     /// <see cref="QuestRecord.IsAlliedSocietyDaily"/>).
     /// </summary>
     public bool CountsAsDone => State == QuestState.Completed || RepeatableDoneBefore;
+
+    /// <summary>
+    /// Whether <see cref="State"/> is the game's answer (feature plan v7 C1): a Not checked quest the game offered, or
+    /// one the player chose to "Go with the game" on. <see cref="Own"/> then holds Tsukimichi's own answer.
+    /// </summary>
+    public GameAnswer ByGame { get; init; }
+
+    /// <summary>What Tsukimichi itself reads when <see cref="ByGame"/> is set (Not checked, Blocked or Locked out); null otherwise.</summary>
+    public QuestEvaluation? Own { get; init; }
 }
