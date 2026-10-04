@@ -21,6 +21,13 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
     public IReadOnlySet<uint> NewGamePlus { get; init; } = System.Collections.Frozen.FrozenSet<uint>.Empty;
 
     /// <summary>
+    /// The New Game+ chapters as parts, with their names (<see cref="NewGamePlusQuests.ReadChapters"/>, 1.19.0 C4), for
+    /// the status bar's "New Game+ · chapter · quest 87 of 112"; empty when the sheets could not be read or the bundle
+    /// came from a frozen fixture, which leaves the line without a chapter.
+    /// </summary>
+    public Core.Query.NewGamePlusChapters NewGamePlusChapters { get; init; } = Core.Query.NewGamePlusChapters.Empty;
+
+    /// <summary>
     /// The achievements that need several quests (<see cref="AchievementQuests.Ladders"/>, read with the catalog);
     /// empty when the sheet could not be read or the bundle came from a frozen fixture.
     /// </summary>

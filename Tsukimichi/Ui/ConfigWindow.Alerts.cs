@@ -52,6 +52,8 @@ public sealed partial class ConfigWindow
             Save();
         }
 
+        DrawEventWarnings();
+
         var payoff = settings.ChatNoticePayoffGates;
         if (Toggle(Strings.PayoffConfigNotice, Strings.PayoffConfigNoticeHint, ref payoff, "chat notice before you continue optional", settings.ShowPayoffGates, reason: Strings.SettingsPayoffOffReason))
         {
@@ -211,6 +213,34 @@ public sealed partial class ConfigWindow
         ImGui.PopID();
         EndSetting();
         return changed;
+    }
+
+    /// <summary>
+    /// "Warn before an event ends" (1.19.0, C10): how many days before a running event's known end Tonight, the Todo
+    /// overlay and the Journal rows warn (3 by default; Off turns the warnings off), and the optional chat line for it
+    /// (off by default: notices stay off until the player turns them on).
+    /// </summary>
+    private void DrawEventWarnings()
+    {
+        if (Setting(Strings.EventWarnConfig, Strings.EventWarnConfigHint, "event festival seasonal ending soon end warn days last day"))
+        {
+            var days = Math.Clamp(settings.SeasonalWarnDays, 0, Core.Seasonal.EventWarnings.MaxWarnDays);
+            ImGui.SetNextItemWidth(ControlWidth);
+            if (ImGui.SliderInt("##eventWarnDays", ref days, 0, Core.Seasonal.EventWarnings.MaxWarnDays, days == 0 ? Strings.WelcomeBackConfigOff : Strings.WelcomeBackConfigDaysFormat, ImGuiSliderFlags.AlwaysClamp))
+            {
+                settings.SeasonalWarnDays = days;
+                SaveSoon();
+            }
+
+            EndSetting();
+        }
+
+        var chat = settings.ChatNoticeSeasonalEnding;
+        if (Toggle(Strings.EventWarnChatConfig, Strings.EventWarnChatConfigHint, ref chat, "chat notice event ending soon last day", settings.SeasonalWarnDays > 0, sub: true, reason: Strings.EventWarnOffReason))
+        {
+            settings.ChatNoticeSeasonalEnding = chat;
+            Save();
+        }
     }
 
     /// <summary>"Welcome-back card after N days" (P7): Off turns the card off; saved once the slider is still.</summary>

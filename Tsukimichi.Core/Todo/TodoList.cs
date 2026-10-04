@@ -125,6 +125,7 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="ShowRoute">Include the route section.</param>
 /// <param name="Stops">Next stops (<see cref="StopPlanner.Plan"/>); null leaves the section out.</param>
 /// <param name="ShowNextStops">Include the Next stops section.</param>
+/// <param name="EndingSoon">The events ending soon (<see cref="EventWarnings.EndingSoon"/>, 1.19.0 C10): their quests in the journal lead the seasonal section; null keeps the events' order.</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -150,7 +151,8 @@ public sealed record TodoInputs(
     UnlockRoute? Route = null,
     bool ShowRoute = true,
     IReadOnlyList<Stop>? Stops = null,
-    bool ShowNextStops = false);
+    bool ShowNextStops = false,
+    IReadOnlyList<EndingSoonEvent>? EndingSoon = null);
 
 /// <summary>
 /// Pure builder for the todo overlay (V2-13). Six sections, each only when enabled and non-empty: the character's
@@ -379,28 +381,40 @@ public static class TodoList
     /// </summary>
     private static void AddSeasonal(List<TodoSectionModel> sections, TodoInputs inputs, IReadOnlyList<RunningFestival> running)
     {
-        var rows = new List<TodoRow>();
+        var entries = new List<SeasonalQuest>();
         var contributing = new List<RunningFestival>();
         foreach (var festival in running)
         {
-            var before = rows.Count;
+            var before = entries.Count;
             foreach (var entry in festival.Quests)
             {
                 if (entry.IsActionable)
                 {
-                    rows.Add(new TodoRow(entry.Quest.RowId, QuestName(inputs, entry.Quest), entry.State, SeasonalHint(inputs, entry.Quest, entry.State), TodoRowKind.Seasonal));
+                    entries.Add(entry);
                 }
             }
 
-            if (rows.Count > before)
+            if (entries.Count > before)
             {
                 contributing.Add(festival);
             }
         }
 
-        if (rows.Count == 0)
+        if (entries.Count == 0)
         {
             return;
+        }
+
+        // The quests in the journal of an event that ends soon go first: the game takes them away when it ends (C10).
+        if (inputs.EndingSoon is { Count: > 0 } soon)
+        {
+            entries = EventWarnings.JournalFirst(entries, static e => e.Quest, static e => e.State, soon);
+        }
+
+        var rows = new List<TodoRow>(entries.Count);
+        foreach (var entry in entries)
+        {
+            rows.Add(new TodoRow(entry.Quest.RowId, QuestName(inputs, entry.Quest), entry.State, SeasonalHint(inputs, entry.Quest, entry.State), TodoRowKind.Seasonal));
         }
 
         var now = inputs.NowUtc ?? DateTime.UtcNow;

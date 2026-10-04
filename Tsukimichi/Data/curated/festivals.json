@@ -1,5 +1,5 @@
 {
-  "$schema_note": "festivalId -> { name, start, end (UTC), evidence (the Lodestone announcement or special-site page), note }. Seeded from docs/data/festival-end-dates.json (Tsukimichi.Verify, game 2026.09.15) after checking each id's quests against the catalog. A past end turns that festival's undone quests Locked out while it is not running; the plugin shows 'ends <date> (Lodestone)' only for an end still ahead with an https evidence URL. Collaboration events rerun under the same Festival id, so their entries carry a name without an edition year, evidence and no dates; such an entry never locks its quests out. An edition without a Lodestone window in docs/data/festival-end-dates.json may still carry its name with the year (\"The Rising (2024)\") and evidence (the Lodestone page, or the wiki's event page for one not yet announced) but no dates, so the plugin reads its real name and leaves it to the completed-quest rule. Festival ids with no Lodestone link (the 2023-2026 editions without one, Heavensturn and Hatching-tide 2014 whose wiki dates did not validate) are left out; the plugin then shows 'running now' only.",
+  "$schema_note": "festivalId -> { name, start, end (UTC), evidence (the Lodestone announcement or special-site page), note }. Seeded from docs/data/festival-end-dates.json (Tsukimichi.Verify, game 2026.09.15) after checking each id's quests against the catalog. A past end turns that festival's undone quests Locked out while it is not running; the plugin shows 'ends <date> (Lodestone)' only for an end still ahead with an https evidence URL. Collaboration events rerun under the same Festival id, so their entries carry a name without an edition year, evidence and no dates; such an entry never locks its quests out. A collaboration may list its dated runs under runs: [{ start, end (UTC), evidence (the official page dating that run) }], oldest first; the run under way gives the running event its end date and ending-soon warning, and a run never locks anything out. An edition without a Lodestone window in docs/data/festival-end-dates.json may still carry its name with the year (\"The Rising (2024)\") and evidence (the Lodestone page, or the wiki's event page for one not yet announced) but no dates, so the plugin reads its real name and leaves it to the completed-quest rule. Festival ids with no Lodestone link (the 2023-2026 editions without one, Heavensturn and Hatching-tide 2014 whose wiki dates did not validate) are left out; the plugin then shows 'running now' only.",
   "entries": {
     "2": {
       "name": "All Saints' Wake (2013)",
@@ -164,7 +164,19 @@
     "39": {
       "name": "Yo-kai Watch: Gather One, Gather All!",
       "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/youkai-watch/",
-      "note": "Collaboration event; the game reuses Festival id 39 for its reruns (it ran July 26 to October 3, 2016 (the window the Lodestone link gives), then September 3 to November 1, 2017, August 19 to December 8, 2020, April 24 to June 26, 2024 and August 4 to October 5, 2026, per the wiki). No dates: a past end would read Locked out between runs, and a running rerun must not show an old end date. Quests: A Complete Game Changer."
+      "note": "Collaboration event; the game reuses Festival id 39 for its reruns (it ran July 26 to October 3, 2016 (the window the Lodestone link gives), then September 3 to November 1, 2017, August 19 to December 8, 2020, April 24 to June 26, 2024 and August 4 to October 5, 2026, per the wiki). No entry dates: a past end would read Locked out between runs. Dated runs (1.19.0, C10) carry the runs a Lodestone page dates: 2016 (dates only, so the close of the last day, UTC) and 2026 (August 4, 2026 1:00 a.m. to October 5, 2026 7:59 a.m. PDT, from the 2026 special site); the run under way gives the event its end. Quests: A Complete Game Changer.",
+      "runs": [
+        {
+          "start": "2016-07-26T00:00:00Z",
+          "end": "2016-10-03T23:59:59Z",
+          "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/youkai-watch/"
+        },
+        {
+          "start": "2026-08-04T08:00:00Z",
+          "end": "2026-10-05T14:59:00Z",
+          "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2026/youkai-watch/u6bmhovibh"
+        }
+      ]
     },
     "42": {
       "name": "All Saints' Wake (2016)",
@@ -337,7 +349,19 @@
     "84": {
       "name": "A Nocturne for Heroes",
       "evidence": "https://na.finalfantasyxiv.com/lodestone/special/ffxv/",
-      "note": "Collaboration event; the game reuses Festival id 84 for its reruns (it ran April 16 to May 27, 2019, September 13 to October 18, 2021, February 28 to March 13, 2024 (the window the Lodestone link gives) and again from September 24, 2026, per the wiki). No dates: a past end would read Locked out between runs, and a running rerun must not show an old end date. Quests: In the Dark of Night, Messenger of the Winds, The Man in Black."
+      "note": "Collaboration event; the game reuses Festival id 84 for its reruns (it ran April 16 to May 27, 2019, September 13 to October 18, 2021, February 28 to March 13, 2024 (the window the Lodestone link gives) and again from September 24, 2026, per the wiki). No entry dates: a past end would read Locked out between runs. Dated runs (1.19.0, C10) carry the runs a Lodestone page dates: 2024 (February 28, 2024 12:00 a.m. PST to March 13, 2024 7:59 a.m. PDT, the blog post) and 2026 (September 24, 2026 1:00 a.m. to October 13, 2026 7:59 a.m. PDT, the topic); the run under way gives the event its end. Quests: In the Dark of Night, Messenger of the Winds, The Man in Black.",
+      "runs": [
+        {
+          "start": "2024-02-28T08:00:00Z",
+          "end": "2024-03-13T14:59:00Z",
+          "evidence": "https://na.finalfantasyxiv.com/blog/003571.html"
+        },
+        {
+          "start": "2026-09-24T08:00:00Z",
+          "end": "2026-10-13T14:59:00Z",
+          "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/b7ff81b627294a36825255532371d6d8f9066d74"
+        }
+      ]
     },
     "85": {
       "name": "Hatching-tide (2019)",

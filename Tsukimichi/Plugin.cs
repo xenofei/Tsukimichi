@@ -1464,6 +1464,7 @@ public sealed partial class Plugin : IDalamudPlugin
             todoOverlay.ShowFollowedRoute = () => routes.ShowFollowed();
             todoOverlay.RunStops = runStops;
             windowSystem.AddWindow(todoOverlay);
+            InitializeReplayAndEvents(gate, unlockReader, () => moonlit.Catalog);
             // 0.8.0: Locked became click-through; a player who upgraded with it on is told once in chat.
             todoLockNotice = new Game.TodoLockNotice(Settings, ClientState, ChatGui, PluginInterface, Log);
             command.ToggleTodoOverlay = todoOverlay.ToggleEnabled;
@@ -1755,6 +1756,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("npc hooks", () => npcHooks?.Dispose());
         Unwind("duty finder hint", () => dutyFinderHint?.Dispose());
         Unwind("right answers", DisposeRightAnswers);
+        Unwind("new game plus watch", () => newGamePlusWatch?.Dispose());
         Unwind("game panels", () => gamePanels?.Dispose());
         Unwind("hook gate notice", () => hookGateNotice?.Dispose());
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());

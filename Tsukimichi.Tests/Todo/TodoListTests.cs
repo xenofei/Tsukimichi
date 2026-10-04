@@ -451,6 +451,20 @@ public sealed class TodoListTests
     }
 
     [Fact]
+    public void An_ending_event_s_quests_in_the_journal_lead_the_seasonal_section()
+    {
+        // 1.19.0, C10: the game takes them out of the journal when the event ends.
+        var end = new DateTime(2026, 8, 22, 14, 59, 0, DateTimeKind.Utc);
+        var ready = new SeasonalQuest(Catalog.GetByRowId(SideQuest)! with { Festival = 174 }, QuestState.Ready);
+        var accepted = new SeasonalQuest(Catalog.GetByRowId(FeatureFar)! with { Festival = 174 }, QuestState.Accepted);
+        var moonfire = new RunningFestival(174, "Moonfire Faire", [ready, accepted], 1, end, "https://na.finalfantasyxiv.com/lodestone/");
+        var soon = EventWarnings.EndingSoon([moonfire], Now, 3, TimeZoneInfo.Utc);
+
+        Assert.Equal([SideQuest, FeatureFar], Section(TodoList.Build(SeasonalInputs([moonfire])), TodoSection.Seasonal)!.Rows.Select(r => r.RowId));
+        Assert.Equal([FeatureFar, SideQuest], Section(TodoList.Build(SeasonalInputs([moonfire]) with { EndingSoon = soon }), TodoSection.Seasonal)!.Rows.Select(r => r.RowId));
+    }
+
+    [Fact]
     public void Spare_alternatives_are_not_todos_among_pins_nearby_quests_or_event_quests()
     {
         // An open choice's options other than the presumed one leave the counts, so no list offers them as a to-do.

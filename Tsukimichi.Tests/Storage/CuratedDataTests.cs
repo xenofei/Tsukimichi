@@ -429,6 +429,40 @@ public sealed class CuratedDataTests : IDisposable
     }
 
     [Fact]
+    public void Festival_runs_parse_oldest_first_and_a_malformed_run_rejects_its_entry()
+    {
+        WriteCurated("festivals.json",
+            """
+            {
+              "entries": {
+                "84": { "name": "A Nocturne for Heroes", "evidence": "https://na.finalfantasyxiv.com/lodestone/special/ffxv/", "note": "rerun",
+                        "runs": [
+                          { "start": "2026-09-24T08:00:00Z", "end": "2026-10-13T14:59:00Z", "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/b7ff" },
+                          { "start": "2024-02-28T08:00:00Z", "end": "2024-03-13T14:59:00Z", "evidence": "https://na.finalfantasyxiv.com/blog/003571.html" }
+                        ] },
+                "39": { "name": "Yo-kai Watch", "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/youkai-watch/", "note": "bad",
+                        "runs": [ { "start": "2026-10-05T00:00:00Z", "end": "2026-08-04T00:00:00Z", "evidence": "https://na.finalfantasyxiv.com/" } ] },
+                "148": { "name": "Blunderville", "evidence": "https://na.finalfantasyxiv.com/lodestone/special/fallguys/", "note": "bad",
+                        "runs": [ { "start": "2025-11-06T00:00:00Z", "end": "2025-11-27T00:00:00Z", "evidence": "http://example.com/" } ] }
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        var nocturne = data.Festivals[84];
+        Assert.Equal([2024, 2026], nocturne.Runs.Select(r => r.Start.Year));
+        Assert.Null(nocturne.End);
+        Assert.True(nocturne.IsRerun);
+        Assert.Equal(DateTimeKind.Utc, nocturne.Runs[1].End.Kind);
+
+        // A run that runs backwards or names no https page is not shipped half-read: the entry is warned about and left out.
+        Assert.False(data.Festivals.ContainsKey(39));
+        Assert.False(data.Festivals.ContainsKey(148));
+        Assert.Equal(2, data.Warnings.Count);
+    }
+
+    [Fact]
     public void Quirks_parse_note_and_evidence_by_row_id()
     {
         WriteCurated("quirks.json",

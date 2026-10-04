@@ -36,7 +36,30 @@ public sealed record RunningFestival(
     IReadOnlyList<SeasonalQuest> Quests,
     int ReadyCount,
     DateTime? AnnouncedEndUtc,
-    string? EndEvidence);
+    string? EndEvidence)
+{
+    /// <summary>Where <see cref="AnnouncedEndUtc"/> comes from (1.19.0, C10); <see cref="FestivalEndSource.None"/> without one.</summary>
+    public FestivalEndSource EndSource { get; init; } = AnnouncedEndUtc is null ? FestivalEndSource.None : FestivalEndSource.Announced;
+
+    /// <summary>Quests of the event in the character's journal (spare alternatives aside).</summary>
+    public int InJournal => Quests.Count(static q => q.State == QuestState.Accepted && !q.IsSpareAlternative);
+}
+
+/// <summary>Where a running event's end date comes from (feature plan v7, 1.19.0, C10).</summary>
+public enum FestivalEndSource : byte
+{
+    /// <summary>No end is known: the event reads "running now" and never warns.</summary>
+    None,
+
+    /// <summary>The curated edition's end, from the Lodestone announcement.</summary>
+    Announced,
+
+    /// <summary>A collaboration's curated dated run (<see cref="FestivalInfo.Runs"/>), from its announcement.</summary>
+    Rerun,
+
+    /// <summary>A date the player entered (Characters › Seasonal events › Set end date…); curated data replaces it.</summary>
+    Entered,
+}
 
 /// <summary>One event edition in a character's seasonal history: the quests of it the character completed.</summary>
 public sealed record SeasonalHistoryFestival(ushort FestivalId, string Name, IReadOnlyList<QuestRecord> Quests);
@@ -90,6 +113,12 @@ public static class SeasonalNow
     private static string NoticeFormat => CoreText.T("Core.Seasonal.Notice", "{0} is running: {1} quests ready");
     private static string NoticeOneFormat => CoreText.T("Core.Seasonal.NoticeOne", "{0} is running: {1} quest ready");
     private static string NoticeEndFormat => CoreText.T("Core.Seasonal.NoticeEnd", " (ends {0})");
+    private static string EndsFromFormat => CoreText.T("Core.Seasonal.EndsFrom", "Ends {0} ({1})");
+    private static string NamedEndsFromFormat => CoreText.T("Core.Seasonal.NamedEndsFrom", "{0}: ends {1} ({2})");
+    private static string AnnouncedFromFormat => CoreText.T("Core.Seasonal.AnnouncedFrom", "ends {0} ({1})");
+    private static string EnteredFormat => CoreText.T("Core.Seasonal.Entered", "ends {0} · you entered this");
+    private static string SourceWiki => CoreText.T("Core.Seasonal.SourceWiki", "wiki");
+    private static string SourceEntered => CoreText.T("Core.Seasonal.SourceEntered", "you entered");
 
     /// <summary>The culture dates print in: the UI language's ("en-US" in English, where "Aug 28" reads as before).</summary>
     private static CultureInfo DateCulture
@@ -117,23 +146,27 @@ public static class SeasonalNow
         CharacterSnapshot snapshot,
         IReadOnlyDictionary<uint, QuestEvaluation> states,
         IReadOnlyDictionary<ushort, FestivalInfo> curated,
-        DateTime nowUtc)
+        DateTime nowUtc,
+        IReadOnlyDictionary<ushort, DateTime>? entered = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        return Running(catalog, ServerFestivals.Of(snapshot), states, curated, nowUtc);
+        return Running(catalog, ServerFestivals.Of(snapshot), states, curated, nowUtc, entered);
     }
 
     /// <summary>
     /// The events running on the server (<paramref name="running"/>, see <see cref="ServerFestivals.For"/>), by Festival
     /// id, each with its listed quests and their states from <paramref name="states"/> (a quest without an evaluation
-    /// reads <see cref="QuestState.Unknown"/>). A running id with no listed quest in the catalog is left out.
+    /// reads <see cref="QuestState.Unknown"/>). A running id with no listed quest in the catalog is left out. Each end
+    /// comes from <see cref="ResolveEnd"/>: the curated edition's, a collaboration's dated run, or the player's
+    /// <paramref name="entered"/> date (Festival id to UTC end; null for none).
     /// </summary>
     public static IReadOnlyList<RunningFestival> Running(
         QuestCatalog catalog,
         ServerFestivals running,
         IReadOnlyDictionary<uint, QuestEvaluation> states,
         IReadOnlyDictionary<ushort, FestivalInfo> curated,
-        DateTime nowUtc)
+        DateTime nowUtc,
+        IReadOnlyDictionary<ushort, DateTime>? entered = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(running);
@@ -182,12 +215,66 @@ public static class SeasonalNow
 
             var ready = list.Count(q => q.State == QuestState.Ready && !q.IsSpareAlternative);
             curated.TryGetValue(id, out var info);
-            var end = AnnouncedEnd(info, nowUtc);
-            result.Add(new RunningFestival(id, DisplayName(id, info, list.Select(q => q.Quest)), list, ready, end, end is null ? null : info!.Evidence));
+            var (end, source, evidence) = ResolveEnd(info, entered is not null && entered.TryGetValue(id, out var own) ? own : null, nowUtc);
+            result.Add(new RunningFestival(id, DisplayName(id, info, list.Select(q => q.Quest)), list, ready, end, evidence) { EndSource = source });
         }
 
         return result;
     }
+
+    /// <summary>
+    /// A running event's end and where it comes from, first match wins: the curated edition's end
+    /// (<see cref="AnnouncedEnd"/>), the collaboration's dated run under way (<see cref="RunUnderWay"/>), then the date
+    /// the player <paramref name="entered"/> while it is still ahead. Each needs to be ahead of <paramref name="nowUtc"/>;
+    /// none gives (null, <see cref="FestivalEndSource.None"/>, null), which reads "running now" and never warns.
+    /// </summary>
+    public static (DateTime? End, FestivalEndSource Source, string? Evidence) ResolveEnd(FestivalInfo? info, DateTime? entered, DateTime nowUtc)
+    {
+        if (info?.End is not null)
+        {
+            return AnnouncedEnd(info, nowUtc) is { } announced
+                ? (announced, FestivalEndSource.Announced, info.Evidence)
+                : (null, FestivalEndSource.None, null);
+        }
+
+        if (RunUnderWay(info, nowUtc) is { } run)
+        {
+            return (run.End, FestivalEndSource.Rerun, run.Evidence);
+        }
+
+        if (entered is { } date && AsUtc(date) >= nowUtc)
+        {
+            return (AsUtc(date), FestivalEndSource.Entered, null);
+        }
+
+        return (null, FestivalEndSource.None, null);
+    }
+
+    /// <summary>The collaboration's dated run whose window holds <paramref name="nowUtc"/>; null for none.</summary>
+    public static FestivalRun? RunUnderWay(FestivalInfo? info, DateTime nowUtc)
+    {
+        if (info is null)
+        {
+            return null;
+        }
+
+        foreach (var run in info.Runs)
+        {
+            if (run.Start <= nowUtc && nowUtc <= run.End && IsHttps(run.Evidence))
+            {
+                return run;
+            }
+        }
+
+        return null;
+    }
+
+    private static DateTime AsUtc(DateTime value) => value.Kind switch
+    {
+        DateTimeKind.Local => value.ToUniversalTime(),
+        DateTimeKind.Unspecified => DateTime.SpecifyKind(value, DateTimeKind.Utc),
+        _ => value,
+    };
 
     /// <summary>
     /// True for the states the Todo overlay lists for a running event: startable now (here or on another job) or in
@@ -198,10 +285,16 @@ public static class SeasonalNow
 
     /// <summary>
     /// The curated end of a festival when it may be shown: the entry has an end that has not passed and an https
-    /// evidence URL. Null otherwise, which the surfaces render as "running now".
+    /// evidence URL, or (an undated collaboration) a dated run under way (<see cref="RunUnderWay"/>, 1.19.0 C10). Null
+    /// otherwise, which the surfaces render as "running now".
     /// </summary>
     public static DateTime? AnnouncedEnd(FestivalInfo? info, DateTime nowUtc)
     {
+        if (info is { End: null })
+        {
+            return RunUnderWay(info, nowUtc)?.End;
+        }
+
         if (info?.End is not { } end || end < nowUtc || !IsHttps(info.Evidence))
         {
             return null;
@@ -238,19 +331,53 @@ public static class SeasonalNow
         }
 
         var date = DateText(end, nowUtc);
+        if (OtherSource(festival) is { } source)
+        {
+            return named
+                ? string.Format(CultureInfo.InvariantCulture, NamedEndsFromFormat, festival.Name, date, source)
+                : string.Format(CultureInfo.InvariantCulture, EndsFromFormat, date, source);
+        }
+
         return named
             ? string.Format(CultureInfo.InvariantCulture, NamedEndsFormat, festival.Name, date)
             : string.Format(CultureInfo.InvariantCulture, EndsFormat, date);
     }
 
-    /// <summary>The dashboard's status for a running event: "announced to end Aug 28 (Lodestone)" or "running now".</summary>
+    /// <summary>
+    /// The dashboard's status for a running event: "announced to end Aug 28 (Lodestone)", "ends Oct 13 (wiki)" for a
+    /// rerun read from the wiki, "ends Oct 20 · you entered this", or "running now".
+    /// </summary>
     public static string Status(RunningFestival festival, DateTime nowUtc)
     {
         ArgumentNullException.ThrowIfNull(festival);
-        return festival.AnnouncedEndUtc is { } end
-            ? string.Format(CultureInfo.InvariantCulture, AnnouncedFormat, DateText(end, nowUtc))
-            : RunningNow;
+        if (festival.AnnouncedEndUtc is not { } end)
+        {
+            return RunningNow;
+        }
+
+        var date = DateText(end, nowUtc);
+        return festival.EndSource switch
+        {
+            FestivalEndSource.Entered => string.Format(CultureInfo.InvariantCulture, EnteredFormat, date),
+            _ when OtherSource(festival) is { } source => string.Format(CultureInfo.InvariantCulture, AnnouncedFromFormat, date, source),
+            _ => string.Format(CultureInfo.InvariantCulture, AnnouncedFormat, date),
+        };
     }
+
+    /// <summary>
+    /// Whether <paramref name="evidence"/> is a Lodestone page (an official announcement or special site) rather than
+    /// the wiki's event page.
+    /// </summary>
+    public static bool IsLodestone(string? evidence) =>
+        Uri.TryCreate(evidence, UriKind.Absolute, out var uri) && uri.Host.EndsWith("finalfantasyxiv.com", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The source to name when the end is not the Lodestone's ("wiki", "you entered"); null for the Lodestone's.</summary>
+    private static string? OtherSource(RunningFestival festival) => festival.EndSource switch
+    {
+        FestivalEndSource.Entered => SourceEntered,
+        FestivalEndSource.Rerun when !IsLodestone(festival.EndEvidence) => SourceWiki,
+        _ => null,
+    };
 
     /// <summary>The login notice: "Moonfire Faire is running: 2 quests ready (ends Aug 28)"; the end only when announced.</summary>
     public static string NoticeText(RunningFestival festival, DateTime nowUtc)

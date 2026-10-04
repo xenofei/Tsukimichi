@@ -93,17 +93,27 @@ public sealed class SeasonalNowTests(FixtureCatalog fixture) : IClassFixture<Fix
     }
 
     [Fact]
-    public void A_rerun_collaboration_is_named_from_curated_data_and_has_no_date()
+    public void A_rerun_collaboration_is_named_from_curated_data_and_dated_only_by_the_run_under_way()
     {
+        // The 2026 run (September 24 to October 13, 7:59 a.m. PDT, 1.19.0 C10) gives the running rerun its end; the
+        // entry itself stays undated, so its quests never read Locked out between runs.
         var snapshot = Character(Nocturne, Moonfire2026);
         var running = SeasonalNow.Running(Catalog, snapshot, Resolve(snapshot, AfterMoonfire), Curated, AfterMoonfire);
 
         Assert.Equal([Nocturne, Moonfire2026], running.Select(f => f.FestivalId));
         var nocturne = running[0];
         Assert.Equal("A Nocturne for Heroes", nocturne.Name);
-        Assert.Null(nocturne.AnnouncedEndUtc);
+        Assert.Equal(new DateTime(2026, 10, 13, 14, 59, 0, DateTimeKind.Utc), nocturne.AnnouncedEndUtc);
+        Assert.Equal(FestivalEndSource.Rerun, nocturne.EndSource);
+        Assert.Null(Curated[Nocturne].End);
         Assert.Equal(3, nocturne.Quests.Count);
         Assert.DoesNotContain(nocturne.Quests, q => q.State == QuestState.Foreclosed);
+
+        // The game still flags it after the run's end (a late close): no date at all, never an old one.
+        var late = new DateTime(2026, 10, 20, 12, 0, 0, DateTimeKind.Utc);
+        var stale = SeasonalNow.Running(Catalog, snapshot, Resolve(snapshot, late), Curated, late)[0];
+        Assert.Null(stale.AnnouncedEndUtc);
+        Assert.DoesNotContain(stale.Quests, q => q.State == QuestState.Foreclosed);
     }
 
     [Fact]

@@ -155,6 +155,13 @@ public sealed partial class SessionState
     public IReadOnlyDictionary<ushort, DateTime> AcceptedSince { get; private set; } = NoAcceptedSince;
 
     /// <summary>
+    /// The logged-in character's New Game+ session (1.19.0, C4): fed by <see cref="NewGamePlusWatch"/> (the game's HUD)
+    /// and the poller (the replays the plausibility guard restores), read by the status bar, the rows and the notices.
+    /// Never saved.
+    /// </summary>
+    public NewGamePlusSession NewGamePlus { get; } = new();
+
+    /// <summary>
     /// Quests <see cref="ViewedSnapshot"/>'s character abandoned (runtime quest id to entry), from the poller for the
     /// live character or the <c>.abandoned.json</c> sidecar for a stored one; empty when there is none. Feeds the
     /// Characters dashboard's Abandoned section and the Abandoned filter.
@@ -272,6 +279,20 @@ public sealed partial class SessionState
 
     /// <summary>A spoiler setting changed: every surface re-reads the mask.</summary>
     public void RefreshSpoilers() => Bump();
+
+    /// <summary>
+    /// The end dates the player entered for running events with no known end (1.19.0, C10: Characters › Seasonal
+    /// events › Set end date…), Festival id to UTC end; passed to every running-events list (<see cref="Core.Seasonal.SeasonalNow"/>).
+    /// Curated data replaces an entry when it gives one.
+    /// </summary>
+    public IReadOnlyDictionary<ushort, DateTime> EnteredFestivalEnds { get; private set; } = new Dictionary<ushort, DateTime>();
+
+    /// <summary>The player entered or cleared an event's end date: every surface reads the new set.</summary>
+    public void SetEnteredFestivalEnds(IReadOnlyDictionary<ushort, DateTime> ends)
+    {
+        EnteredFestivalEnds = ends ?? throw new ArgumentNullException(nameof(ends));
+        Bump();
+    }
 
     /// <summary>
     /// The UI language changed (V2-19): every cache keyed by <see cref="Version"/> (the panes' labels, the spoiler
