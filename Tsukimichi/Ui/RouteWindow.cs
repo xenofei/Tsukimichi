@@ -730,7 +730,7 @@ public sealed class RouteWindow : Window
         var nameCut = DrawStepText(dl, l, min, textEnd, textY, rowHeight, line, questionableMark, avatar, request, out var avatarMin);
         if (hovered && avatar > 0f && ImGui.IsMouseHoveringRect(avatarMin, avatarMin + new Vector2(avatar)))
         {
-            Chrome.PortraitTooltip(request, stepQuest!.Issuer?.Name ?? string.Empty, GiverPortraits.Place(stepQuest));
+            Chrome.PortraitTooltip(request, GiverPortraits.Name(stepQuest!, session.Spoilers), GiverPortraits.Place(stepQuest!, session.Spoilers));
         }
         else if (hovered)
         {

@@ -990,10 +990,9 @@ public sealed partial class Plugin : IDalamudPlugin
             // Giver portraits (1.15, F2/F5): the index is warmed with the others; every plate shows its fallback until it lands.
             Ui.GiverPortraits.Index = () => warmer.Portraits.Value;
             Ui.GiverPortraits.Mode = () => Settings.GiverPortraits;
-            Ui.GiverPortraits.PlaceOf = quest => quest.Issuer is { } issuer && gameLinks.Map(issuer.MapId) is { } map
-                ? map.Region.Length > 0 && map.Region != map.PlaceName
-                    ? string.Format(System.Globalization.CultureInfo.CurrentCulture, Ui.Strings.JournalPathFormat, map.Region, map.PlaceName)
-                    : map.PlaceName
+            // A place the story has not reached reads as its placeholder (1.20.0 N6).
+            Ui.GiverPortraits.PlaceOf = (quest, spoilers) => quest.Issuer is { } issuer && gameLinks.Map(issuer.MapId) is { } map
+                ? spoilers.Place(map.Region, map.PlaceName, Ui.Strings.JournalPathFormat)
                 : null;
 
             // "Open on…" (1.8.0): the shipped link table; the browser opens the pages, the plugin stays offline (decision 8).

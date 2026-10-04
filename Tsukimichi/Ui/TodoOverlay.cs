@@ -965,7 +965,7 @@ public sealed class TodoOverlay : Window, IDisposable
         dl.PopClipRect();
         if (hovered && avatar > 0f && ImGui.IsMouseHoveringRect(avatarMin, avatarMin + new Vector2(avatar)))
         {
-            Chrome.PortraitTooltip(portrait, row.Quest.Issuer?.Name ?? string.Empty, GiverPortraits.Place(row.Quest));
+            Chrome.PortraitTooltip(portrait, GiverPortraits.Name(row.Quest, session.Spoilers), GiverPortraits.Place(row.Quest, session.Spoilers));
         }
         else if (hovered)
         {

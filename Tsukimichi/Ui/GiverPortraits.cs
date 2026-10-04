@@ -34,8 +34,8 @@ public static class GiverPortraits
     /// <summary>Settings › General › Look › Giver portraits; null reads as the default, Game art.</summary>
     public static Func<GiverPortraitMode>? Mode { get; set; }
 
-    /// <summary>"Region › Place" of a quest's giver for the hover tooltip; null leaves the place out.</summary>
-    public static Func<QuestRecord, string?>? PlaceOf { get; set; }
+    /// <summary>"Region › Place" of a quest's giver for the hover tooltip, through a spoiler shield; null leaves the place out.</summary>
+    public static Func<QuestRecord, SpoilerMask, string?>? PlaceOf { get; set; }
 
     /// <summary>Whether plates are drawn at all (Settings: anything but Off).</summary>
     public static bool Enabled => (Mode?.Invoke() ?? GiverPortraitMode.GameArt) != GiverPortraitMode.Off;
@@ -44,6 +44,7 @@ public static class GiverPortraits
     /// The plate for <paramref name="quest"/>'s giver through <paramref name="spoilers"/>: never a face for a quest the
     /// shield masks, nor, while the shield is on, a face from an expansion the character's story has not reached. A
     /// masked quest's plate never shows its allied society's emblem either (<see cref="PortraitPlate.ForMaskedQuest"/>).
+    /// A giver the wider shield hides (1.20.0 N6: a person the story has not introduced) is treated the same way.
     /// </summary>
     public static PortraitRequest For(QuestRecord quest, SpoilerMask spoilers)
     {
@@ -51,7 +52,7 @@ public static class GiverPortraits
         ArgumentNullException.ThrowIfNull(spoilers);
         var index = Index?.Invoke() ?? PortraitIndex.Empty;
         var portrait = index.For(quest);
-        var masked = spoilers.IsMasked(quest);
+        var masked = spoilers.IsMasked(quest) || (quest.Issuer is { } issuer && spoilers.IsNameMasked(SpoilerKind.Npc, issuer.Name));
         if (masked)
         {
             portrait = PortraitPlate.ForMaskedQuest(portrait);
@@ -67,17 +68,36 @@ public static class GiverPortraits
     private static QuestRecord? placeQuest;
     private static string? placeText;
     private static int placeLanguage = -1;
+    private static int placeShield;
 
-    /// <summary>The giver's place for the tooltip, composed once per quest (and language).</summary>
-    public static string? Place(QuestRecord quest)
+    /// <summary>The giver's place for the tooltip through <paramref name="spoilers"/>, composed once per quest (and language and shield).</summary>
+    public static string? Place(QuestRecord quest, SpoilerMask spoilers)
     {
-        if (!ReferenceEquals(quest, placeQuest) || placeLanguage != Localization.Loc.Version)
+        ArgumentNullException.ThrowIfNull(spoilers);
+        if (!ReferenceEquals(quest, placeQuest) || placeLanguage != Localization.Loc.Version || placeShield != spoilers.Fingerprint)
         {
             placeQuest = quest;
             placeLanguage = Localization.Loc.Version;
-            placeText = PlaceOf?.Invoke(quest);
+            placeShield = spoilers.Fingerprint;
+            placeText = PlaceOf?.Invoke(quest, spoilers);
         }
 
         return placeText;
+    }
+
+    /// <summary>
+    /// The giver's name as a tooltip prints it: "Hidden giver" for a quest the shield masks, a person the story has not
+    /// introduced by the wider shield's placeholder (1.20.0 N6), the name otherwise; empty for none.
+    /// </summary>
+    public static string Name(QuestRecord quest, SpoilerMask spoilers)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        ArgumentNullException.ThrowIfNull(spoilers);
+        if (quest.Issuer is not { Name.Length: > 0 } issuer)
+        {
+            return string.Empty;
+        }
+
+        return spoilers.IsMasked(quest) ? Strings.GiverHidden : spoilers.Name(SpoilerKind.Npc, issuer.Name);
     }
 }

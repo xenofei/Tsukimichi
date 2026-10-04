@@ -88,15 +88,37 @@ public static class UnlockView
             return entry;
         }
 
-        var generic = entry.Group is UnlockGroup.Area or UnlockGroup.Aetheryte || entry.Target == UnlockTarget.Flying;
         return entry with
         {
             Name = nameMasked ? NameOf(entry, spoilers) : entry.Name,
             Detail = detailMasked ? string.Empty : entry.Detail,
             Note = nameMasked ? null : entry.Note,
-            Icon = nameMasked && !generic ? 0 : entry.Icon,
+            Icon = nameMasked && !IsGenericIcon(entry) ? 0 : entry.Icon,
         };
     }
+
+    /// <summary>
+    /// The icon a row shows through the wider shield: its own, or 0 (the stand-in) for a row whose name is masked and
+    /// whose icon is its own art (a mount's, a duty's) rather than the generic map, aetheryte or aether current marker.
+    /// Allocates nothing.
+    /// </summary>
+    public static uint IconOf(UnlockEntry entry, SpoilerMask spoilers)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentNullException.ThrowIfNull(spoilers);
+        return IsGenericIcon(entry) || !IsShielded(entry, spoilers) ? entry.Icon : 0;
+    }
+
+    /// <summary>A row's name through the wider shield (a next quest's as it is); allocates nothing.</summary>
+    public static string ShieldedName(UnlockEntry entry, SpoilerMask spoilers)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentNullException.ThrowIfNull(spoilers);
+        return NameOf(entry, spoilers);
+    }
+
+    private static bool IsGenericIcon(UnlockEntry entry) =>
+        entry.Group is UnlockGroup.Area or UnlockGroup.Aetheryte || entry.Target == UnlockTarget.Flying;
 
     /// <summary>The row's caption ("Area · Hingashi") without a place the wider shield masks ("Area").</summary>
     public static string CaptionOf(UnlockEntry entry, SpoilerMask spoilers)

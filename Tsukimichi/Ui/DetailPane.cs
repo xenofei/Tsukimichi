@@ -646,7 +646,7 @@ public sealed partial class DetailPane
             Chrome.FocusRing(rounding);
             if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
             {
-                RewardTooltip.Draw(reward.Reward, links, textures, reward.Unique ? Strings.DetailUniqueRewardTooltip : null, model.RowId);
+                RewardTooltip.Draw(reward.Reward, links, textures, reward.Unique ? Strings.DetailUniqueRewardTooltip : null, model.RowId, runner.Spoilers);
             }
 
             if (reward.Mark is { } mark)
