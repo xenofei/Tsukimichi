@@ -1000,7 +1000,10 @@ public sealed class PlanPane
         return name.Length > 0 ? name : Strings.PlanUnknownZone;
     }
 
-    /// <summary>The zone's place name from its giver's map, memoized; empty when unknown.</summary>
+    /// <summary>
+    /// The zone's place name from its giver's map, memoized; empty when unknown. A zone the story has not reached reads
+    /// as its placeholder (1.20.0 N6), on screen and in both copies.
+    /// </summary>
     private string ZoneName(PlanZone zone)
     {
         if (zone.MapId == 0)
@@ -1014,7 +1017,7 @@ public sealed class PlanPane
             zoneNames[zone.MapId] = name;
         }
 
-        return name;
+        return session.Spoilers.Name(Core.Query.SpoilerKind.Area, name);
     }
 
     /// <summary>The plan view as Copy for Discord copies it; built only on a click.</summary>
