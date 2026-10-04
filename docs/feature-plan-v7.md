@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.17.0 are released; 1.18.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.18.0 are released; 1.19.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -127,7 +127,7 @@ Point 7, part 2.
 | T15 | **Sumi to Kinpaku** revived, with the gold-leaf kit (design round first) | L |
 | T16 | Palettes **Dawn** and **Kugane Lacquer**, with high-contrast forms | M |
 
-### 1.18.0 · Runs you can trust
+### 1.18.0 · Runs you can trust (released 2026-10-03)
 
 Carried from plan v6 (was 1.14). Automation, built on what the community accepts: solo and NPC content only.
 
@@ -388,3 +388,40 @@ Your notes, and what happens with each:
   - Your High contrast setting is never changed by a code.
 - **Glyph window:** the Themes tab compares two looks, with a heat table and Ready's lead.
 - **Plain:** after the window has been closed for over 30 s, there is no flash of Medallion.
+
+### 1.18.0 (released 2026-10-03)
+
+- **Questionable:**
+  - Start does one quest, then stops, and the finish line arrives.
+  - "Do this next" while idle.
+  - Stop later: after 1 or 2 quests, at a time (check around midnight), and on a run started from Questionable's own window.
+  - Recent runs, including after a restart.
+- **Duty guard:**
+  - It stops before The Martyr or the Final Day; pressing Start again goes ahead.
+  - At the Endwalker finale's Dead Ends step it only warns and names no later duty.
+  - Questionable's step kind reads "Duty".
+- **Needs you:**
+  - The death, stuck, duty-pop and tell alerts each fire once.
+  - The sound and its Test button.
+  - The taskbar flash only when another window is in front.
+  - No false stuck during long pathfinds, cutscenes or inside AutoDuty.
+  - A knock-out inside a duty doesn't stop AutoDuty.
+  - Logging out clears alerts.
+- **Why it stopped:**
+  - The card at each Decoration level and palette.
+  - Keep going after it, end to end.
+  - Reload navmesh and retry.
+  - Copy report (it shows your current job; capturing the job at stop time comes in 1.19).
+  - The Todo overlay title line shows the card, and quest rows never move.
+- **Travel:**
+  - Reload and retry at a known bad spot.
+  - Walk to the aetheryte, then hop.
+  - Land under a roof.
+  - The preflight's Switch to Standard and Restore Legacy (Undo goes after switching characters).
+  - Allow movement.
+- **Automation level:**
+  - The cards and each level's buttons.
+  - Stops stay when you lower the level mid-run.
+  - A fresh config starts at Travel; a 1.17 config keeps its buttons.
+  - The User Agreement link.
+- **Artisan:** Craft becomes Stop on the right row.
