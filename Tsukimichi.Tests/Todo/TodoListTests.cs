@@ -429,7 +429,7 @@ public sealed class TodoListTests
         new(id, name, quests.Select(q => new SeasonalQuest(Catalog.GetByRowId(q.RowId)!, q.State)).ToList(), quests.Count(q => q.State == QuestState.Ready), end, end is null ? null : "https://na.finalfantasyxiv.com/lodestone/");
 
     private static TodoInputs SeasonalInputs(IReadOnlyList<RunningFestival>? running, Dictionary<uint, QuestEvaluation>? states = null, bool seasonal = true) =>
-        Inputs(states) with { Running = running, ShowSeasonal = seasonal, NowUtc = Now };
+        Inputs(states) with { Running = running, ShowSeasonal = seasonal, NowUtc = Now, TimeZone = TimeZoneInfo.Utc };
 
     [Fact]
     public void Seasonal_lists_the_ready_and_in_journal_event_quests_between_pins_and_unlocks_with_their_giver()

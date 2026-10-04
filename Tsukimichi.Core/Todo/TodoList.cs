@@ -126,6 +126,7 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="Stops">Next stops (<see cref="StopPlanner.Plan"/>); null leaves the section out.</param>
 /// <param name="ShowNextStops">Include the Next stops section.</param>
 /// <param name="EndingSoon">The events ending soon (<see cref="EventWarnings.EndingSoon"/>, 1.19.0 C10): their quests in the journal lead the seasonal section; null keeps the events' order.</param>
+/// <param name="TimeZone">The zone the end-date line prints its date in (<see cref="SeasonalNow.DateText"/>); null reads <see cref="TimeZoneInfo.Local"/>, the player's.</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -152,7 +153,8 @@ public sealed record TodoInputs(
     bool ShowRoute = true,
     IReadOnlyList<Stop>? Stops = null,
     bool ShowNextStops = false,
-    IReadOnlyList<EndingSoonEvent>? EndingSoon = null);
+    IReadOnlyList<EndingSoonEvent>? EndingSoon = null,
+    TimeZoneInfo? TimeZone = null);
 
 /// <summary>
 /// Pure builder for the todo overlay (V2-13). Six sections, each only when enabled and non-empty: the character's
@@ -421,7 +423,7 @@ public static class TodoList
         var notes = new List<string>();
         foreach (var festival in contributing)
         {
-            if (SeasonalNow.EndsLine(festival, contributing.Count > 1, now) is { } line)
+            if (SeasonalNow.EndsLine(festival, contributing.Count > 1, now, inputs.TimeZone) is { } line)
             {
                 notes.Add(line);
             }

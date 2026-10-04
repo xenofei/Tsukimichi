@@ -41,9 +41,7 @@ public sealed partial class TonightCard
 
     private void DrawReplayAndEvents(SessionState session, CatalogBundle bundle)
     {
-        var line = session.NewGamePlus.Active && session.ViewedContentId == session.NewGamePlus.ContentId
-            ? newGamePlusText.Line(session, bundle)
-            : string.Empty;
+        var line = newGamePlusText.Line(session, bundle);
         if (line.Length > 0)
         {
             using (Theme.PushText(Theme.Surface.Text))
