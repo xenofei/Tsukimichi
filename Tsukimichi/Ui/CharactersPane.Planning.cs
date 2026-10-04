@@ -173,7 +173,7 @@ public sealed partial class CharactersPane
     /// <summary>The giver's zone and, when there is a giver, Teleport (through Lifestream; greyed with the reason when it cannot).</summary>
     private void DrawBoardWhere(PlanningSource.BoardLine line)
     {
-        if (line.Row.Giver is not { } giver || Links is not { } links)
+        if (line.Row.Giver is not { } giver || Links is not { TeleportShown: true } links)
         {
             ImGui.TextDisabled(line.Zone);
             return;

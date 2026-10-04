@@ -128,6 +128,9 @@ public sealed partial class QuestionableActions
     /// </summary>
     public Func<string?>? CommandAfterStop { get; set; }
 
+    /// <summary>Opens About automation from the first-start confirmation (1.18, A10); null leaves the link out.</summary>
+    public Action? OpenAboutAutomation { get; set; }
+
     /// <summary>
     /// <see cref="CommandAfterStop"/> for a stop about to happen: the companion settings are read again first when they
     /// may be out of date, so the stop's confirmation is never skipped on an old read. Set by the plugin; unset falls
@@ -520,6 +523,17 @@ public sealed partial class QuestionableActions
         if (pending is PendingKind.Start or PendingKind.Stop)
         {
             ImGui.Checkbox(Strings.QuestionableStartDontAsk, ref dontAskAgain);
+            ImGui.Spacing();
+        }
+
+        // The first start links About automation (1.18, A10): the rules and where players draw the line, never a promise.
+        if (pending == PendingKind.Start && OpenAboutAutomation is { } openAbout)
+        {
+            if (ImGui.SmallButton(Strings.AboutAutomationTitle))
+            {
+                openAbout();
+            }
+
             ImGui.Spacing();
         }
 

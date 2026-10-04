@@ -107,6 +107,7 @@ public sealed class ArtisanIpc : IDisposable
             craftItem.InvokeAction((ushort)recipeId, amount);
             busyCheckedAt = null;
             claim.Claim(Environment.TickCount64);
+            ClaimedRecipeId = recipeId;
             log.Information("Handed recipe {RecipeId} x{Amount} to Artisan", recipeId, amount);
             return true;
         }
@@ -124,6 +125,12 @@ public sealed class ArtisanIpc : IDisposable
 
     /// <summary>True while a craft Tsukimichi handed to Artisan may still be under way (<see cref="TrackHandOff"/> keeps it current).</summary>
     public bool HandOffClaimed => claim.Claimed;
+
+    /// <summary>
+    /// The recipe of the last craft Tsukimichi handed Artisan (0 before any), so the Hand in row that started it shows
+    /// Stop while <see cref="HandOffClaimed"/> (1.18, A7).
+    /// </summary>
+    public uint ClaimedRecipeId { get; private set; }
 
     /// <summary>
     /// True while Artisan crafts a run Tsukimichi started; ends the claim once that run is over. Called each frame while

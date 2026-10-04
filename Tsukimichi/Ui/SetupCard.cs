@@ -204,7 +204,33 @@ public sealed class SetupCard
         {
             UiMetrics.Tooltip(Strings.Setup.CompanionsTooltip);
         }
+
+        // The automation level (1.18, A10), offered once here: which hand-off buttons show, and where to choose.
+        if (AutomationLevelName is { } levelName && OpenAutomationLevel is { } openLevel)
+        {
+            ImGui.Spacing();
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextUnformatted(string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.SetupAutomationFormat, levelName()));
+            }
+
+            if (ImGui.SmallButton(Strings.SetupAutomationButton))
+            {
+                openLevel();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.SetupAutomationTooltip);
+            }
+        }
     }
+
+    /// <summary>The automation level's name ("Travel", "Custom"); null leaves the line out.</summary>
+    public Func<string>? AutomationLevelName { get; init; }
+
+    /// <summary>Opens Settings › Automation › Automation buttons; null leaves the line out.</summary>
+    public Action? OpenAutomationLevel { get; init; }
 
     private void Save()
     {

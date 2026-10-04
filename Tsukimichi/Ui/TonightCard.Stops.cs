@@ -75,7 +75,9 @@ public sealed partial class TonightCard
 
             var first = stop.Quests[0].Quest;
             using var id = ImRaii.PushId(StopRowIdBase + i);
-            var teleportWidth = Chrome.ActionPillWidth(ActionIcons.TeleportIcon, Strings.TonightStopTeleport, PillLayout.Row);
+            // Teleport only while the automation level shows it (1.18, A10); the name then takes the row.
+            var teleportShown = links.TeleportShown;
+            var teleportWidth = teleportShown ? Chrome.ActionPillWidth(ActionIcons.TeleportIcon, Strings.TonightStopTeleport, PillLayout.Row) : 0f;
 
             // The first quest's giver as a 24 px avatar before the stop (1.15, spec A5), so you know who to walk up to.
             var rowTop = ImGui.GetCursorScreenPos();
@@ -88,7 +90,7 @@ public sealed partial class TonightCard
                 ImGui.SameLine(0f, UiMetrics.Px(PortraitPlate.AvatarGap));
             }
 
-            var room = MathF.Max(1f, Chrome.RoomX() - teleportWidth - ImGui.GetStyle().ItemSpacing.X);
+            var room = MathF.Max(1f, Chrome.RoomX() - (teleportShown ? teleportWidth + ImGui.GetStyle().ItemSpacing.X : 0f));
             if (Chrome.EllipsisSelectable(text, false, room, out var cut, height: row))
             {
                 ui.Reveal(first);
@@ -97,6 +99,11 @@ public sealed partial class TonightCard
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(cut ? text : stop.Place.Name, Strings.TonightStopTooltip);
+            }
+
+            if (!teleportShown)
+            {
+                continue;
             }
 
             ImGui.SameLine();
