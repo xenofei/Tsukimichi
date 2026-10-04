@@ -3,7 +3,7 @@
     "Author": "Michiru Tsukikage",
     "Name": "Tsukimichi",
     "InternalName": "Tsukimichi",
-    "AssemblyVersion": "1.16.0.0",
+    "AssemblyVersion": "1.17.0.0",
     "Description": "A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.\nMoonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/xenofei/Tsukimichi",
@@ -21,13 +21,13 @@
     "IconUrl": "https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon-medallion.png",
     "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.16.0/latest.zip",
-    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.16.0/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.16.0/latest.zip",
-    "LastUpdate": 1791062954,
+    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.17.0/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.17.0/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.17.0/latest.zip",
+    "LastUpdate": 1791073699,
     "DownloadCount": 0,
     "IsHide": false,
     "IsTestingExclusive": false,
-    "Changelog": "Added\n- **Themes** (new Settings › Themes page). Pick from Menphina's Medallion, **Ishgard Glass** (stained glass in lead and stone), **Aether Crystal** (cut moonstone in a silver setting) or Classic.\n  - Each card shows the theme's moons; hover a card to preview it, click to use it, and Undo follows.\n  - Theme moon art loads only for the themes you use.\n- **Ishgard Snow,** a new light palette:\n  - navy ink, deep-gold \"act now\" words and lead frames;\n  - a still dawn sky with no stars;\n  - banners in a soft daylight grade, and portraits in their natural colour.\n- **High contrast** has designed forms for both Night and Ishgard Snow, with every text colour at 7:1 or better.\n- **Reset appearance** returns to Menphina's Medallion on Night in one click, with Undo.\n\nChanged\n- **Moon style, Moon colours and Follow Dalamud colours** moved from General › Look to Settings › Themes; search still finds them. Your settings carry over unchanged, and older versions still read them.\n- **Every colour in the windows now comes from the chosen palette.** \"Follow Dalamud colours\" applies to every text colour, the tutorial card included, so light Dalamud styles stay readable throughout.\n- **Night's faint captions and divider lines** are a touch brighter, so they read on cards and on hover.\n- **The banner's location line always fits on one line.** It drops the \"Main Scenario (…) ›\" prefix first, and never cuts words off.\n\nFixed\n- Locked out, Not checked and Blocked status words, and the catalog error message, are easier to read.\n- With Follow Dalamud colours on a light Dalamud style, the danger button's text, the tree's progress ring and the state stripes are readable."
+    "Changelog": "Added\n- **Mix moons by state** (Settings › Themes):\n  - Pick each state's moon from any theme.\n  - A plain note says when two moons look alike in a list, or when Ready stops being the loudest, and each option warns before you pick it.\n  - \"Fix it\" suggests one change that clears the warnings and never undoes the moon you just picked; Undo follows.\n  - Reset mix is press-and-hold, with Undo.\n- **Frames are a choice:** Brass, Silver, Lead came, Astrolabe or Kirikane rims and badges, for any theme or mix.\n  - Gauges and card ornament take the same metal, and moons mixed in from another theme wear your column's frames.\n  - The Frames setting says in plain words when a metal makes two moons hard to tell apart.\n- **New themes:**\n  - **Astrologian's Orrery:** moons seen through a Sharlayan astrolabe.\n  - **Sumi to Kinpaku:** tsukimi crests in black lacquer, shell-white and cut gold leaf, with its own Kirikane frames, gold-leaf heading crests and card corners, and its own flat moons at Decoration Plain.\n- **New palettes:** Dawn (plum night with a rose horizon) and Kugane Lacquer (black lacquer at dusk, with a hazier, warmer sky).\n  - Each has a high-contrast form.\n  - On both, Ready quests get a soft gold halo.\n- **Share your look:**\n  - Settings › Themes › Share shows your look as a short code (TM1-…) with a Copy button.\n  - Paste a code to see everything it would change, with sample moons, before you choose Apply; Undo follows.\n  - A code from a newer Tsukimichi still works: what this version doesn't have is named and left out.\n  - A mistyped code changes nothing, and a shared look never changes your High contrast setting.\n- **`/tsuki look <code>`** opens the Themes page with that code previewed.\n- **Themes tab in the glyph window** (`/tsukimichi glyphs`): compare two looks side by side, see how alike every pair of moons is under each kind of colour vision, and check Ready's lead."
   }
 ]
