@@ -75,6 +75,12 @@ public static class WotsitOrder
             }
 
             var rewardName = RewardNames.Display(entry, quest, language);
+            if (spoilers.IsNameMasked(SpoilerKind.Reward, rewardName))
+            {
+                // A reward the story has not introduced (1.20.0 N6) is not registered: a placeholder finds nothing.
+                continue;
+            }
+
             var name = string.IsNullOrWhiteSpace(rewardName) ? kindName(entry.Kind) : rewardName;
             items.Add(new WotsitItem(quest, entry, name, name));
         }
