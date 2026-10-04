@@ -542,8 +542,10 @@ public sealed partial class MainWindow : Window, IDisposable
         {
             var panelOpen = ui.FilterPanelOpen && ui.Tab == NavTab.Journal;
             var popupOpen = popupDepthAtEnd > 0 || ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
-            RespectCloseHotkey = !popupOpen && !panelOpen;
-            if ((popupOpen || panelOpen) && Keyboard.WindowHasKeys())
+            // A quest on show is the next thing Esc closes (1.21.0 P1): back to Tonight, then the window.
+            var questShown = ui.SelectedRowId is not null;
+            RespectCloseHotkey = !popupOpen && !panelOpen && !questShown;
+            if ((popupOpen || panelOpen || questShown) && Keyboard.WindowHasKeys())
             {
                 escOwnedAt = Environment.TickCount64;
             }
@@ -652,6 +654,11 @@ public sealed partial class MainWindow : Window, IDisposable
         if (panelOpen)
         {
             ui.FilterPanelOpen = false;
+        }
+        else if (ui.SelectedRowId is not null)
+        {
+            // Nothing else open: Esc goes back to Tonight (1.21.0 P1); Back (‹) returns to the quest.
+            ui.SelectedRowId = null;
         }
     }
 

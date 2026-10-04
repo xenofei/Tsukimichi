@@ -103,6 +103,7 @@ public sealed partial class ChatNotifier : IDisposable
             AnnounceEndingSoon();
             AnnounceCappedTurnIns();
             AnnouncePayoffGates();
+            AnnounceWhatsNext();
         }
         catch (Exception ex)
         {

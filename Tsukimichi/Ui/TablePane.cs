@@ -1616,7 +1616,13 @@ public sealed class TablePane : IDisposable
             DrawGroupEnd(rowMin, rowMax);
         }
 
-        if (clicked)
+        if (clicked && selected && rowHovered && !ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+        {
+            // A second click on the selected row goes back to Tonight (1.21.0 P1).
+            ui.SelectedRowId = null;
+            lastSelection = null;
+        }
+        else if (clicked)
         {
             SelectFromTable(quest.RowId);
             // The game journal only knows accepted and completed quests; for the rest a double-click just selects.

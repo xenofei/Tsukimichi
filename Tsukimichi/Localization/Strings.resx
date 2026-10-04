@@ -7201,7 +7201,297 @@
     <value>Right-click an item to reveal the quest that rewards it.</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
-    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
+    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; msq says where you are in the main scenario and next says what to do next, both as plain sentences; go [quest name] travels to the current step of the selected or named quest, else to its giver; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
+  </data>
+  <data name="StepWhereToGo" xml:space="preserve">
+    <value>Where to go</value>
+    <comment>Detail pane section for a quest in the journal (1.21 P2).</comment>
+  </data>
+  <data name="StepAimAt" xml:space="preserve">
+    <value>Aim at</value>
+  </data>
+  <data name="StepAimCurrent" xml:space="preserve">
+    <value>Current step</value>
+  </data>
+  <data name="StepAimCurrentShort" xml:space="preserve">
+    <value>Current</value>
+    <comment>StepAimCurrent shortened to its first word when the cell is narrow.</comment>
+  </data>
+  <data name="StepAimGiver" xml:space="preserve">
+    <value>Giver</value>
+  </data>
+  <data name="StepAimCurrentTooltip" xml:space="preserve">
+    <value>Flag, Teleport and Walk aim at the step you are on, then at the next one once it is done.</value>
+  </data>
+  <data name="StepAimGiverTooltip" xml:space="preserve">
+    <value>Flag, Teleport and Walk aim at the quest's giver, for this quest until it leaves your journal.</value>
+  </data>
+  <data name="StepNumberFormat" xml:space="preserve">
+    <value>Step {0}</value>
+    <comment>{0} = the step's number.</comment>
+  </data>
+  <data name="StepMoreFormat" xml:space="preserve">
+    <value>{0} more</value>
+    <comment>{0} = how many more objectives the step has besides the one shown.</comment>
+  </data>
+  <data name="StepGiverLabel" xml:space="preserve">
+    <value>Giver</value>
+  </data>
+  <data name="StepNoObjective" xml:space="preserve">
+    <value>The game has no objective text for this step.</value>
+  </data>
+  <data name="StepAreaTarget" xml:space="preserve">
+    <value>the marked area</value>
+    <comment>What travel's status line and chat call a marked area it goes to.</comment>
+  </data>
+  <data name="StepAreaPlace" xml:space="preserve">
+    <value>The area the game marks</value>
+  </data>
+  <data name="StepNearestFormat" xml:space="preserve">
+    <value>Nearest of {0} places</value>
+    <comment>{0} = how many separate places the step has.</comment>
+  </data>
+  <data name="StepCoordinatesFormat" xml:space="preserve">
+    <value>X {0:0.0}, Y {1:0.0}</value>
+    <comment>{0}, {1} = map coordinates.</comment>
+  </data>
+  <data name="StepYoureInFormat" xml:space="preserve">
+    <value>you're in {0}</value>
+    <comment>{0} = the zone the player stands in.</comment>
+  </data>
+  <data name="StepNoPlaceFormat" xml:space="preserve">
+    <value>This step has no place in the game's data, so travel aims at the giver: {0} · {1}</value>
+    <comment>{0} = the giver, {1} = the giver's zone.</comment>
+  </data>
+  <data name="StepDutyFormat" xml:space="preserve">
+    <value>This step happens inside a duty, {0}, which you join through the Duty Finder, so travel aims at the giver: {1} · {2}</value>
+    <comment>{0} = the duty, {1} = the giver, {2} = the giver's zone.</comment>
+  </data>
+  <data name="StepDutyFinder" xml:space="preserve">
+    <value>Duty Finder</value>
+  </data>
+  <data name="StepDutyFinderTooltip" xml:space="preserve">
+    <value>Opens the Duty Finder with this duty selected. Nothing is queued.</value>
+  </data>
+  <data name="StepNoteFormat" xml:space="preserve">
+    <value>Travel follows this step until it's done, then the next one. The giver, {0} in {1}, is one click away.</value>
+    <comment>{0} = the giver, {1} = the giver's zone.</comment>
+  </data>
+  <data name="StepGiverNote" xml:space="preserve">
+    <value>Travel aims at the giver for this quest until it leaves your journal. Current step aims at the step again.</value>
+  </data>
+  <data name="StepFlag" xml:space="preserve">
+    <value>Flag</value>
+  </data>
+  <data name="StepGoTo" xml:space="preserve">
+    <value>Go to step</value>
+    <comment>The action bar's Go to pill while travel aims at the current step.</comment>
+  </data>
+  <data name="StepWalkTo" xml:space="preserve">
+    <value>Walk to step</value>
+    <comment>The action bar's Walk pill while travel aims at the current step.</comment>
+  </data>
+  <data name="StepMenuFlag" xml:space="preserve">
+    <value>Flag the current step</value>
+  </data>
+  <data name="StepMenuTeleport" xml:space="preserve">
+    <value>Teleport near the current step</value>
+  </data>
+  <data name="StepMenuWalk" xml:space="preserve">
+    <value>Walk to the current step</value>
+  </data>
+  <data name="StepMenuFlagGiver" xml:space="preserve">
+    <value>Flag the giver</value>
+  </data>
+  <data name="GuidanceNothingToGo" xml:space="preserve">
+    <value>Nothing to go to. Select a quest, or name one after go.</value>
+    <comment>/tsuki go with no quest to go to (1.21 P2).</comment>
+  </data>
+  <data name="GuidanceNoPlaceFormat" xml:space="preserve">
+    <value>There is no place on the map to go to for {0}.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="GuidanceChatHeader" xml:space="preserve">
+    <value>Chat</value>
+    <comment>Settings › In game heading (1.21 P8).</comment>
+  </data>
+  <data name="GuidanceSayNext" xml:space="preserve">
+    <value>Say what's next in chat</value>
+  </data>
+  <data name="GuidanceSayNextHint" xml:space="preserve">
+    <value>After each step or quest you finish, prints the /tsuki next line for text-to-speech, at most one every 10 s.</value>
+  </data>
+  <data name="GuidanceSayNextExampleFormat" xml:space="preserve">
+    <value>Example: {0}</value>
+    <comment>{0} = a sample line.</comment>
+  </data>
+  <data name="Core.Guidance.Coordinates" xml:space="preserve">
+    <value>X {0}, Y {1}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.North" xml:space="preserve">
+    <value>north</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NorthEast" xml:space="preserve">
+    <value>north-east</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.East" xml:space="preserve">
+    <value>east</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.SouthEast" xml:space="preserve">
+    <value>south-east</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.South" xml:space="preserve">
+    <value>south</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.SouthWest" xml:space="preserve">
+    <value>south-west</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.West" xml:space="preserve">
+    <value>west</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NorthWest" xml:space="preserve">
+    <value>north-west</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Distance" xml:space="preserve">
+    <value>about {0} yalms {1} of you</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Level" xml:space="preserve">
+    <value>level {0}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Levels" xml:space="preserve">
+    <value>levels {0} to {1}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MsqLeftLatest" xml:space="preserve">
+    <value>{0} left to the latest story, {1}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MsqLeftBoth" xml:space="preserve">
+    <value>{0} left in this expansion, and {1} to the latest story, {2}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MsqAt" xml:space="preserve">
+    <value>Main scenario: {0}, at {1}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MsqCaughtUp" xml:space="preserve">
+    <value>Main scenario: caught up. The story continues in a later patch.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.OneQuest" xml:space="preserve">
+    <value>1 quest</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Quests" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NextStep" xml:space="preserve">
+    <value>Next: {0}, step {1}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Next" xml:space="preserve">
+    <value>Next: {0}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NextNothing" xml:space="preserve">
+    <value>Next: nothing is Ready on this job.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.OtherJobOne" xml:space="preserve">
+    <value>1 quest is Ready on another job.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.OtherJobMany" xml:space="preserve">
+    <value>{0} quests are Ready on another job.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MaskedMsq" xml:space="preserve">
+    <value>Next: a main scenario quest at level {0}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MaskedQuest" xml:space="preserve">
+    <value>Next: a quest at level {0}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MaskedZone" xml:space="preserve">
+    <value>, in a zone ahead of your story.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.StepDone" xml:space="preserve">
+    <value>Step done. Next: step {0}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.QuestDone" xml:space="preserve">
+    <value>Quest done.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoStep" xml:space="preserve">
+    <value>Going to {0}, step {1}:</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoGiver" xml:space="preserve">
+    <value>Going to the giver of {0}:</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.ZoneAhead" xml:space="preserve">
+    <value>a zone ahead of your story</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoTeleportFirst" xml:space="preserve">
+    <value>Teleporting first.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoTeleport" xml:space="preserve">
+    <value>Teleporting.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoWalk" xml:space="preserve">
+    <value>Walking there.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoFlag" xml:space="preserve">
+    <value>Flagged on the map.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NoPlace" xml:space="preserve">
+    <value>This step has no place on the map.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.InZoneAhead" xml:space="preserve">
+    <value>It is in a zone ahead of your story.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.TheGiver" xml:space="preserve">
+    <value>the giver</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.TalkTo" xml:space="preserve">
+    <value>Talk to {0}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.TalkToAhead" xml:space="preserve">
+    <value>Talk to {0} in a zone ahead of your story.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.TalkToIn" xml:space="preserve">
+    <value>Talk to {0} in {1}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.YouAreIn" xml:space="preserve">
+    <value>You are in {0}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
   </data>
   <data name="CommandAliasHelp" xml:space="preserve">
     <value>Short form of /tsukimichi; every subcommand works with it.</value>
@@ -13875,5 +14165,551 @@
   <data name="Pack.Arrived" xml:space="preserve">
     <value>Portrait pack installed · {0} faces</value>
     <comment>Status bar note when the pack lands. {0} = faces.</comment>
+  </data>
+  <data name="UpNextEyebrow" xml:space="preserve">
+    <value>Up next</value>
+    <comment>Tonight's Up next block's eyebrow (1.21 P1).</comment>
+  </data>
+  <data name="UpNextLevelFormat" xml:space="preserve">
+    <value>Lv {0}</value>
+    <comment>Up next's level chip. {0} = the quest's level.</comment>
+  </data>
+  <data name="UpNextRouteFormat" xml:space="preserve">
+    <value>Your route to {0} · {1} stops left</value>
+    <comment>Up next reason (rule 1). {0} = the followed route's target, through the spoiler shield; {1} = stops left.</comment>
+  </data>
+  <data name="UpNextRouteOneFormat" xml:space="preserve">
+    <value>Your route to {0} · 1 stop left</value>
+    <comment>Up next reason (rule 1), one stop left. {0} = the route's target.</comment>
+  </data>
+  <data name="UpNextFlyingInFormat" xml:space="preserve">
+    <value>Flying in {0}</value>
+    <comment>A route to flying in a zone. {0} = the zone, or the shield's words for one ahead.</comment>
+  </data>
+  <data name="UpNextGoalFormat" xml:space="preserve">
+    <value>Your goal: {0} · {1} left</value>
+    <comment>Up next reason (rule 2). {0} = the goal as a phrase ("match Michiru's unlocks"); {1} = what is left.</comment>
+  </data>
+  <data name="UpNextMsq" xml:space="preserve">
+    <value>Next in the main scenario</value>
+    <comment>Up next reason (rule 3).</comment>
+  </data>
+  <data name="UpNextMsqInJournal" xml:space="preserve">
+    <value>Next in the main scenario · in your journal</value>
+    <comment>Up next reason (rule 3), the quest is in the journal.</comment>
+  </data>
+  <data name="UpNextGateFormat" xml:space="preserve">
+    <value>The next story quest needs Lv {0} · you're {1} {2}</value>
+    <comment>Up next reason (rule 6). {0} = level needed; {1} = job abbreviation; {2} = its level.</comment>
+  </data>
+  <data name="UpNextGateHint" xml:space="preserve">
+    <value>Levelling up opens the next story quest. Ready quests give EXP.</value>
+    <comment>Up next's place line for the level gate.</comment>
+  </data>
+  <data name="UpNextGateShow" xml:space="preserve">
+    <value>Show Ready quests</value>
+    <comment>Up next's level gate pill: the Journal on the Ready quests.</comment>
+  </data>
+  <data name="UpNextRuleRoute" xml:space="preserve">
+    <value>The next stop of the route you follow</value>
+    <comment>Up next's order, rule 1 (the reason line's hover).</comment>
+  </data>
+  <data name="UpNextRuleGoal" xml:space="preserve">
+    <value>This character's goal</value>
+    <comment>Up next's order, rule 2.</comment>
+  </data>
+  <data name="UpNextRuleMsq" xml:space="preserve">
+    <value>The next main scenario quest, when it is Ready or in your journal</value>
+    <comment>Up next's order, rule 3.</comment>
+  </data>
+  <data name="UpNextRulePinned" xml:space="preserve">
+    <value>Your first pinned quest that is Ready</value>
+    <comment>Up next's order, rule 4, and its reason line.</comment>
+  </data>
+  <data name="UpNextRuleClosest" xml:space="preserve">
+    <value>The closest Ready quest, from Next stops</value>
+    <comment>Up next's order, rule 5, and its reason line.</comment>
+  </data>
+  <data name="UpNextRuleGate" xml:space="preserve">
+    <value>The level that opens the next story quest</value>
+    <comment>Up next's order, rule 6.</comment>
+  </data>
+  <data name="UpNextWhyTitle" xml:space="preserve">
+    <value>Why this one?</value>
+    <comment>The reason line's hover title.</comment>
+  </data>
+  <data name="UpNextWhyLead" xml:space="preserve">
+    <value>Up next picks the first of these that has a quest for you:</value>
+    <comment>The reason line's hover, above the order.</comment>
+  </data>
+  <data name="UpNextStepFormat" xml:space="preserve">
+    <value>Step {0}: {1}</value>
+    <comment>Up next's place line for a quest in the journal. {0} = step number; {1} = the game's objective text.</comment>
+  </data>
+  <data name="UpNextTalkFormat" xml:space="preserve">
+    <value>Talk to {0}</value>
+    <comment>Up next's place line. {0} = the giver, through the spoiler shield.</comment>
+  </data>
+  <data name="UpNextDetails" xml:space="preserve">
+    <value>Details</value>
+    <comment>Up next's quiet button: selects the quest.</comment>
+  </data>
+  <data name="UpNextDetailsTooltip" xml:space="preserve">
+    <value>Show this quest's details.</value>
+  </data>
+  <data name="UpNextNothingFormat" xml:space="preserve">
+    <value>Nothing is Ready on {0}.</value>
+    <comment>Up next with nothing to pick. {0} = job abbreviation.</comment>
+  </data>
+  <data name="UpNextNothingOtherOneFormat" xml:space="preserve">
+    <value>Nothing is Ready on {0}. 1 quest is Ready on another job ›</value>
+    <comment>{0} = job abbreviation.</comment>
+  </data>
+  <data name="UpNextNothingOtherFormat" xml:space="preserve">
+    <value>Nothing is Ready on {0}. {1} quests are Ready on another job ›</value>
+    <comment>{0} = job abbreviation; {1} = how many quests.</comment>
+  </data>
+  <data name="UpNextNothingTooltip" xml:space="preserve">
+    <value>Show them in the Journal.</value>
+  </data>
+  <data name="UpNextMsqCatchUpFormat" xml:space="preserve">
+    <value>{0} quests to the latest story, Lv {1}–{2}</value>
+    <comment>Tonight's main scenario line when Up next already names the quest. {0} = quests left; {1}–{2} = level span.</comment>
+  </data>
+  <data name="UpNextMsqCatchUpOneFormat" xml:space="preserve">
+    <value>1 quest to the latest story, Lv {0}</value>
+    <comment>{0} = its level.</comment>
+  </data>
+  <data name="UpNextBackToTonight" xml:space="preserve">
+    <value>Tonight</value>
+    <comment>The detail pane's way back to Tonight (1.21 P1).</comment>
+  </data>
+  <data name="UpNextBackToTonightTooltip" xml:space="preserve">
+    <value>Back to Tonight. Esc or a second click on the row does the same; Back returns to this quest.</value>
+  </data>
+  <data name="RosterView" xml:space="preserve">
+    <value>All characters</value>
+    <comment>The Characters view switch's third cell (1.21 P3).</comment>
+  </data>
+  <data name="RosterCountOne" xml:space="preserve">
+    <value>1 character</value>
+    <comment>The roster's caption.</comment>
+  </data>
+  <data name="RosterCountFormat" xml:space="preserve">
+    <value>{0} characters</value>
+    <comment>The roster's caption. {0} = how many.</comment>
+  </data>
+  <data name="RosterLiveElsewhereOne" xml:space="preserve">
+    <value>1 live in another client</value>
+    <comment>The roster's caption, after the count.</comment>
+  </data>
+  <data name="RosterLiveElsewhereFormat" xml:space="preserve">
+    <value>{0} live in other clients</value>
+    <comment>{0} = how many.</comment>
+  </data>
+  <data name="RosterColumnCharacter" xml:space="preserve">
+    <value>Character</value>
+    <comment>Roster column header.</comment>
+  </data>
+  <data name="RosterColumnJob" xml:space="preserve">
+    <value>Job</value>
+    <comment>Roster column header.</comment>
+  </data>
+  <data name="RosterColumnStory" xml:space="preserve">
+    <value>Story</value>
+    <comment>Roster column header.</comment>
+  </data>
+  <data name="RosterColumnGoal" xml:space="preserve">
+    <value>Goal</value>
+    <comment>Roster column header.</comment>
+  </data>
+  <data name="RosterColumnReady" xml:space="preserve">
+    <value>Ready</value>
+    <comment>Roster column header.</comment>
+  </data>
+  <data name="RosterColumnToday" xml:space="preserve">
+    <value>Today</value>
+    <comment>Roster column header.</comment>
+  </data>
+  <data name="RosterColumnMoonlit" xml:space="preserve">
+    <value>Moonlit</value>
+    <comment>Roster column header.</comment>
+  </data>
+  <data name="RosterColumnLastSeen" xml:space="preserve">
+    <value>Last seen</value>
+    <comment>Roster column header.</comment>
+  </data>
+  <data name="RosterNarrowColumns" xml:space="preserve">
+    <value>Keep Moonlit and Today on narrow windows</value>
+    <comment>The roster header's right-click menu.</comment>
+  </data>
+  <data name="RosterNicknameFormat" xml:space="preserve">
+    <value>{0} ({1})</value>
+    <comment>A roster name with a nickname. {0} = nickname; {1} = the character's name.</comment>
+  </data>
+  <data name="RosterJobFormat" xml:space="preserve">
+    <value>{0} {1}</value>
+    <comment>The roster's Job cell. {0} = job abbreviation; {1} = level.</comment>
+  </data>
+  <data name="RosterStoryNextFormat" xml:space="preserve">
+    <value>{0} · next: {1}</value>
+    <comment>The roster's Story cell. {0} = journal part; {1} = that character's next story quest.</comment>
+  </data>
+  <data name="RosterToLatestFormat" xml:space="preserve">
+    <value>{0} to the latest</value>
+    <comment>{0} = main scenario quests left.</comment>
+  </data>
+  <data name="RosterLevelNeededFormat" xml:space="preserve">
+    <value>Lv {0} needed</value>
+    <comment>{0} = the level the next story quest needs.</comment>
+  </data>
+  <data name="RosterCaughtUp" xml:space="preserve">
+    <value>caught up</value>
+    <comment>The roster's Story cell, nothing left.</comment>
+  </data>
+  <data name="RosterBeingRead" xml:space="preserve">
+    <value>being read</value>
+    <comment>A character whose save is still being evaluated.</comment>
+  </data>
+  <data name="RosterUnreadable" xml:space="preserve">
+    <value>save unreadable</value>
+    <comment>A character whose save cannot be read.</comment>
+  </data>
+  <data name="RosterAllowanceOne" xml:space="preserve">
+    <value>1 allowance</value>
+    <comment>Allied society allowances left today.</comment>
+  </data>
+  <data name="RosterAllowancesFormat" xml:space="preserve">
+    <value>{0} allowances</value>
+    <comment>{0} = allied society allowances left today.</comment>
+  </data>
+  <data name="RosterLevesFormat" xml:space="preserve">
+    <value>{0} leve allowances</value>
+    <comment>{0} = leve allowances banked.</comment>
+  </data>
+  <data name="RosterNotRead" xml:space="preserve">
+    <value>not read</value>
+    <comment>A count the save does not hold.</comment>
+  </data>
+  <data name="RosterLive" xml:space="preserve">
+    <value>Live</value>
+    <comment>The roster's Last seen cell: logged in now.</comment>
+  </data>
+  <data name="RosterThisClient" xml:space="preserve">
+    <value>this client</value>
+  </data>
+  <data name="RosterOtherClient" xml:space="preserve">
+    <value>other client</value>
+  </data>
+  <data name="RosterOtherFolder" xml:space="preserve">
+    <value>other folder</value>
+    <comment>A character read from another launcher folder.</comment>
+  </data>
+  <data name="RosterReadOnlyClientTooltip" xml:space="preserve">
+    <value>Logged in on another client. Read only here: send it to Questionable or travel from that client.</value>
+  </data>
+  <data name="RosterReadOnlyFolderTooltipFormat" xml:space="preserve">
+    <value>Read only, from another launcher folder: {0}</value>
+    <comment>{0} = the folder.</comment>
+  </data>
+  <data name="RosterOtherFolderToastFormat" xml:space="preserve">
+    <value>{0} lives in another launcher folder: its dashboard opens in that client.</value>
+    <comment>{0} = the character.</comment>
+  </data>
+  <data name="RosterMenuStar" xml:space="preserve">
+    <value>Star</value>
+    <comment>Roster row menu.</comment>
+  </data>
+  <data name="RosterMenuUnstar" xml:space="preserve">
+    <value>Unstar</value>
+    <comment>Roster row menu.</comment>
+  </data>
+  <data name="RosterMenuRole" xml:space="preserve">
+    <value>Set role…</value>
+    <comment>Roster row menu.</comment>
+  </data>
+  <data name="RosterMenuNickname" xml:space="preserve">
+    <value>Set nickname…</value>
+    <comment>Roster row menu.</comment>
+  </data>
+  <data name="RosterRoleTitle" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="RosterRoleHint" xml:space="preserve">
+    <value>main, healer, crafter…</value>
+  </data>
+  <data name="RosterNicknameTitle" xml:space="preserve">
+    <value>Nickname</value>
+  </data>
+  <data name="RosterNicknameHint" xml:space="preserve">
+    <value>A short name</value>
+  </data>
+  <data name="RosterLabelSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="OthersLabel" xml:space="preserve">
+    <value>Your other characters</value>
+    <comment>The line under the detail hero (1.21 P3).</comment>
+  </data>
+  <data name="OthersDoneFormat" xml:space="preserve">
+    <value>Done on {0}</value>
+    <comment>{0} = how many characters completed it.</comment>
+  </data>
+  <data name="OthersCannotOne" xml:space="preserve">
+    <value>1 can't take it yet</value>
+  </data>
+  <data name="OthersCannotFormat" xml:space="preserve">
+    <value>{0} can't take it yet</value>
+    <comment>{0} = how many characters.</comment>
+  </data>
+  <data name="OthersReadingFormat" xml:space="preserve">
+    <value>{0} being read</value>
+    <comment>{0} = how many characters.</comment>
+  </data>
+  <data name="OthersTableTitleFormat" xml:space="preserve">
+    <value>{0} on every character</value>
+    <comment>The line's hover title. {0} = the quest, through the shield.</comment>
+  </data>
+  <data name="GoalSetLink" xml:space="preserve">
+    <value>Set a goal…</value>
+    <comment>The roster's Goal cell without a goal (1.21 N11).</comment>
+  </data>
+  <data name="GoalSetTooltip" xml:space="preserve">
+    <value>Catch this character up to a patch, another character's unlocks, flying or every duty roulette.</value>
+  </data>
+  <data name="GoalEditTooltip" xml:space="preserve">
+    <value>Change or clear the goal.</value>
+  </data>
+  <data name="GoalChange" xml:space="preserve">
+    <value>Change goal…</value>
+    <comment>Roster row menu.</comment>
+  </data>
+  <data name="GoalClear" xml:space="preserve">
+    <value>Clear goal</value>
+  </data>
+  <data name="GoalSetNew" xml:space="preserve">
+    <value>Set a new goal</value>
+    <comment>After Goal reached.</comment>
+  </data>
+  <data name="GoalReached" xml:space="preserve">
+    <value>Goal reached</value>
+  </data>
+  <data name="GoalBeingRead" xml:space="preserve">
+    <value>being read</value>
+  </data>
+  <data name="GoalUnknown" xml:space="preserve">
+    <value>not read yet: log in once on this character</value>
+    <comment>A goal this character's save cannot answer (no duty records).</comment>
+  </data>
+  <data name="GoalOtherUnread" xml:space="preserve">
+    <value>the other character's save is being read</value>
+  </data>
+  <data name="GoalAnotherCharacter" xml:space="preserve">
+    <value>another character</value>
+  </data>
+  <data name="GoalStoryTitleFormat" xml:space="preserve">
+    <value>Story to {0}</value>
+    <comment>{0} = a patch ("7.0").</comment>
+  </data>
+  <data name="GoalStoryPhraseFormat" xml:space="preserve">
+    <value>story to {0}</value>
+    <comment>{0} = a patch.</comment>
+  </data>
+  <data name="GoalMatchTitleFormat" xml:space="preserve">
+    <value>Match {0}'s unlocks</value>
+    <comment>{0} = the other character's first name.</comment>
+  </data>
+  <data name="GoalMatchPhraseFormat" xml:space="preserve">
+    <value>match {0}'s unlocks</value>
+    <comment>{0} = the other character's first name.</comment>
+  </data>
+  <data name="GoalFlyingTitleFormat" xml:space="preserve">
+    <value>Flying in {0}</value>
+    <comment>{0} = an expansion.</comment>
+  </data>
+  <data name="GoalFlyingPhraseFormat" xml:space="preserve">
+    <value>flying in {0}</value>
+    <comment>{0} = an expansion.</comment>
+  </data>
+  <data name="GoalRoulettesTitle" xml:space="preserve">
+    <value>All duty roulettes open</value>
+  </data>
+  <data name="GoalRoulettesPhrase" xml:space="preserve">
+    <value>every duty roulette open</value>
+  </data>
+  <data name="GoalLeftFormat" xml:space="preserve">
+    <value>{0} left</value>
+    <comment>{0} = what is left.</comment>
+  </data>
+  <data name="GoalZonesLeftOne" xml:space="preserve">
+    <value>1 zone left</value>
+  </data>
+  <data name="GoalZonesLeftFormat" xml:space="preserve">
+    <value>{0} zones left</value>
+  </data>
+  <data name="GoalDutiesLeftOne" xml:space="preserve">
+    <value>1 duty left</value>
+  </data>
+  <data name="GoalDutiesLeftFormat" xml:space="preserve">
+    <value>{0} duties left</value>
+  </data>
+  <data name="GoalReadyFormat" xml:space="preserve">
+    <value>{0} Ready</value>
+    <comment>{0} = how many can be done now.</comment>
+  </data>
+  <data name="GoalPopoverTitleFormat" xml:space="preserve">
+    <value>Goal for {0}</value>
+    <comment>{0} = the character's first name.</comment>
+  </data>
+  <data name="GoalPopoverSubtitle" xml:space="preserve">
+    <value>Catch this character up to…</value>
+  </data>
+  <data name="GoalKindStory" xml:space="preserve">
+    <value>The story, up to a patch</value>
+  </data>
+  <data name="GoalKindMatch" xml:space="preserve">
+    <value>Another character's unlocks</value>
+  </data>
+  <data name="GoalKindFlying" xml:space="preserve">
+    <value>Flying in an expansion</value>
+  </data>
+  <data name="GoalKindRoulettes" xml:space="preserve">
+    <value>Every duty roulette open</value>
+  </data>
+  <data name="GoalNoPatches" xml:space="preserve">
+    <value>The catalog has no patch data for the story.</value>
+  </data>
+  <data name="GoalNoOthers" xml:space="preserve">
+    <value>There is no other character to match.</value>
+  </data>
+  <data name="GoalNoFlying" xml:space="preserve">
+    <value>The flying zones are still being read.</value>
+  </data>
+  <data name="GoalPreviewNone" xml:space="preserve">
+    <value>Choose what to catch up to.</value>
+  </data>
+  <data name="GoalPreviewStoryFormat" xml:space="preserve">
+    <value>{0} main scenario quests to {1}</value>
+    <comment>{0} = quests left; {1} = the patch.</comment>
+  </data>
+  <data name="GoalPreviewMatchFormat" xml:space="preserve">
+    <value>{0} unlock quests {1} has done and {2} hasn't</value>
+    <comment>{0} = how many; {1} = the other character; {2} = this one.</comment>
+  </data>
+  <data name="GoalPreviewFlyingFormat" xml:space="preserve">
+    <value>{0} zones left to fly in {1}</value>
+    <comment>{0} = zones; {1} = the expansion.</comment>
+  </data>
+  <data name="GoalPreviewRoulettesFormat" xml:space="preserve">
+    <value>{0} duties left to unlock</value>
+    <comment>{0} = duties.</comment>
+  </data>
+  <data name="GoalPreviewNowFormat" xml:space="preserve">
+    <value>: {0} can be done now</value>
+    <comment>{0} = how many quests. Follows the preview's first part.</comment>
+  </data>
+  <data name="GoalPreviewWaitFormat" xml:space="preserve">
+    <value>, {0} wait for {1}'s story.</value>
+    <comment>{0} = how many; {1} = the character.</comment>
+  </data>
+  <data name="GoalPreviewReachedFormat" xml:space="preserve">
+    <value>Nothing left: {0} is there already.</value>
+    <comment>{0} = the character.</comment>
+  </data>
+  <data name="GoalPreviewNoDutiesFormat" xml:space="preserve">
+    <value>{0}'s duties have not been read yet. Log in once on {0} to read them.</value>
+    <comment>{0} = the character.</comment>
+  </data>
+  <data name="GoalPreviewOtherUnreadFormat" xml:space="preserve">
+    <value>{0}'s save is still being read.</value>
+    <comment>{0} = the other character.</comment>
+  </data>
+  <data name="GoalSetButton" xml:space="preserve">
+    <value>Set goal</value>
+  </data>
+  <data name="GoalSetToastFormat" xml:space="preserve">
+    <value>Goal set for {0}</value>
+    <comment>Undo toast. {0} = the character.</comment>
+  </data>
+  <data name="GoalClearedToastFormat" xml:space="preserve">
+    <value>Goal cleared for {0}</value>
+    <comment>Undo toast. {0} = the character.</comment>
+  </data>
+  <data name="GoalCardTitleFormat" xml:space="preserve">
+    <value>Goal: {0}</value>
+    <comment>The goal card's title. {0} = the goal as a phrase.</comment>
+  </data>
+  <data name="GoalWaitsForStoryFormat" xml:space="preserve">
+    <value>waits for {0}'s story</value>
+    <comment>{0} = the character.</comment>
+  </data>
+  <data name="GoalMoreFormat" xml:space="preserve">
+    <value>{0} more ›</value>
+    <comment>{0} = rows not shown.</comment>
+  </data>
+  <data name="GoalFewer" xml:space="preserve">
+    <value>Fewer</value>
+  </data>
+  <data name="GoalSendFormat" xml:space="preserve">
+    <value>Send {0} to Questionable</value>
+    <comment>{0} = quests that can be done now.</comment>
+  </data>
+  <data name="GoalSendNeedsFull" xml:space="preserve">
+    <value>Send to Questionable shows at Full hand-offs (Settings › Automation).</value>
+  </data>
+  <data name="GoalReadOnlyClientFormat" xml:space="preserve">
+    <value>{0} is logged in on another client, so this list is read only here. Send it to Questionable from that client.</value>
+    <comment>{0} = the character.</comment>
+  </data>
+  <data name="GoalReadOnlyStoredFormat" xml:space="preserve">
+    <value>{0} is not logged in here, so this list is read only. Log in as {0} to send it to Questionable.</value>
+    <comment>{0} = the character.</comment>
+  </data>
+  <data name="GoalRoute" xml:space="preserve">
+    <value>Route</value>
+  </data>
+  <data name="LinkedFoldersLabel" xml:space="preserve">
+    <value>Also read characters from these folders</value>
+    <comment>Settings › Data › Characters (1.21 P3).</comment>
+  </data>
+  <data name="LinkedFoldersHint" xml:space="preserve">
+    <value>Other launcher folders, one per multibox client. Their characters show on All characters, read only.</value>
+  </data>
+  <data name="LinkedFoldersPathHint" xml:space="preserve">
+    <value>Folder path</value>
+  </data>
+  <data name="LinkedFoldersAdd" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="LinkedFoldersRemove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="LinkedFoldersDetect" xml:space="preserve">
+    <value>Auto-detect</value>
+  </data>
+  <data name="LinkedFoldersNotFound" xml:space="preserve">
+    <value>No Tsukimichi characters folder there, or it is this client's own.</value>
+  </data>
+  <data name="LinkedFoldersNoneFound" xml:space="preserve">
+    <value>No other Tsukimichi folders found.</value>
+  </data>
+  <data name="LinkedFoldersReadOne" xml:space="preserve">
+    <value>1 character read from these folders.</value>
+  </data>
+  <data name="LinkedFoldersReadFormat" xml:space="preserve">
+    <value>{0} characters read from these folders.</value>
+    <comment>{0} = how many.</comment>
+  </data>
+  <data name="Core.Guidance.LevelGate" xml:space="preserve">
+    <value>Next: {0} needs level {1}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P1), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.YouAreLevel" xml:space="preserve">
+    <value>You are level {0}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P1), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.YouAreJob" xml:space="preserve">
+    <value>You are {0} {1}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P1), a plain chat sentence for text-to-speech: no symbols or brackets. {0} = job abbreviation; {1} = level.</comment>
   </data>
 </root>

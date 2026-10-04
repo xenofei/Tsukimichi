@@ -288,8 +288,13 @@ public sealed partial class DetailPane
             return;
         }
 
+        // The way back to Tonight (1.21.0 P1), on the pane's header row.
+        DrawTonightHeader();
         var detailHeight = ImGui.GetContentRegionAvail().Y;
-        PrepareTravel(session, quest);
+
+        // Travel aims at the current step of a quest in the journal (1.21.0 P2, DetailPane.Step.cs), else at the giver.
+        var travel = PrepareStep(session, quest);
+        PrepareTravel(session, travel);
         var bar = ActionBarHeight();
         using (ImRaii.PushColor(ImGuiCol.ChildBg, Vector4.Zero))
         using (var body = ImRaii.Child("##detailBody", new Vector2(0f, MathF.Max(UiMetrics.Px(40f), detailHeight - bar)), false))
@@ -301,7 +306,7 @@ public sealed partial class DetailPane
         }
 
         var barTop = ImGui.GetCursorScreenPos().Y;
-        DrawActionBar(quest, rowId);
+        DrawActionBar(quest, travel, rowId);
         DrawProvenance(session);
 
         // The bar runs to the pane's bottom edge; the floating layers sit above it.
@@ -341,6 +346,9 @@ public sealed partial class DetailPane
 
         // The game offered a quest Tsukimichi reads Blocked (1.19.0, C1): the card above Requirements, the player picks.
         DrawGameDisagreement(session, quest);
+
+        // Where to go (1.21.0 P2): for a quest in the journal, travel aims at the step it is on.
+        DrawWhereToGo(session, quest);
         Gap();
         var start = ImGui.GetCursorScreenPos();
         BeginSection("##requirements", Strings.Requirements, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.DangerText : model.CantCheckCount > 0 ? Theme.Surface.TextTertiary : Theme.Surface.TextSecondary);
@@ -543,6 +551,12 @@ public sealed partial class DetailPane
         if (model.Callout is null && Theme.HeroStyle == HeroStyle.Banner)
         {
             DrawStateLine();
+        }
+
+        // Your other characters (1.21.0 P3): one fixed-height line under the status, its hover the account table.
+        if (model.Quest is { } others)
+        {
+            DrawOtherCharacters(session, others);
         }
 
         // The journal path wraps on its "›", never inside a name (L5); the plate and the ledger carry it in their title block.
@@ -1139,10 +1153,13 @@ public sealed partial class DetailPane
     /// loaded), Link in chat, Copy coordinates, Open journal, Report, the aethernet hop in the giver's city, and "…".
     /// Disabled buttons say why on hover. All are focusable items (accessibility A6).
     /// </summary>
-    private void DrawActionBar(QuestRecord quest, uint rowId)
+    /// <param name="quest">The quest shown.</param>
+    /// <param name="travel">Where travel aims: <paramref name="quest"/>, or the same quest aimed at its current step (P2).</param>
+    /// <param name="rowId">The quest's row id.</param>
+    private void DrawActionBar(QuestRecord quest, QuestRecord travel, uint rowId)
     {
         Chrome.Hairline();
-        DrawActionRow(quest, rowId);
+        DrawActionRow(travel, rowId);
 
         var width = ImGui.GetContentRegionAvail().X;
         var used = UiMetrics.MinTarget;
@@ -1169,10 +1186,10 @@ public sealed partial class DetailPane
         {
             // Without Lifestream, or with Teleport hidden by the automation level, Flag on map leads the pills instead.
             NextRound(ref used, width);
-            var canFlag = links.CanFlagMap(quest);
+            var canFlag = links.CanFlagMap(travel);
             if (Chrome.IconButtonRound("##flagIcon", ActionIcons.FlagIcon, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable, enabled: canFlag))
             {
-                links.FlagMap(quest);
+                links.FlagMap(travel);
             }
         }
 
@@ -1208,7 +1225,7 @@ public sealed partial class DetailPane
             }
         }
 
-        DrawHopButton(quest, ref used, width);
+        DrawHopButton(travel, ref used, width);
         DrawMoreMenu(ref used, width, quest, rowId);
     }
 

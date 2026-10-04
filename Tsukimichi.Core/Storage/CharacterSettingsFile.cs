@@ -72,6 +72,26 @@ public sealed class CharacterSettings
     public List<uint> GoWithGame { get; set; } = [];
 
     /// <summary>
+    /// The character's alt goal (plan v7, 1.21.0 N11): "catch this character up to…" the story up to a patch, another
+    /// character's unlocks, flying in an expansion or every duty roulette open. Null when none is set. Any game client may
+    /// set it; progress is read from the character's own snapshot.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Characters.AltGoal? Goal { get; set; }
+
+    /// <summary>Starred on the All characters roster (1.21.0 P3): starred characters lead its default order.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Starred { get; set; }
+
+    /// <summary>The player's own word for the character on the roster ("main", "healer", "crafter"); null for none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Role { get; set; }
+
+    /// <summary>A nickname the roster shows before the character's name; null for none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Nickname { get; set; }
+
+    /// <summary>
     /// Cards the player hid for this character (feature plan v7 1.20.0, N7: <c>Plan.EvercoldPrep.CardId</c>), by id.
     /// Hiding is per character and undoable; the Characters dashboard can show the card again.
     /// </summary>
@@ -94,7 +114,8 @@ public sealed class CharacterSettings
     [JsonIgnore]
     public bool IsEmpty =>
         SpoilerShield is null && !Hidden && !DontTrack && CompareWith is null
-        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && GoWithGame.Count == 0 && CardsDismissed.Count == 0 && EvercoldTicks.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
+        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && GoWithGame.Count == 0 && CardsDismissed.Count == 0 && EvercoldTicks.Count == 0 && SeenReady is null && SeenReadyRules is null
+        && Goal is null && !Starred && Role is null && Nickname is null && (Extra is null || Extra.Count == 0);
 
     /// <summary>
     /// What outlives Forget character and "Delete all data": the player's choices about the character itself, hidden
@@ -120,10 +141,17 @@ public sealed class CharacterSettings
         EvercoldTicks = [.. EvercoldTicks],
         SeenReady = SeenReady is null ? null : [.. SeenReady],
         SeenReadyRules = SeenReadyRules,
+        Goal = Goal,
+        Starred = Starred,
+        Role = Role,
+        Nickname = Nickname,
         Extra = Extra is null ? null : new Dictionary<string, JsonElement>(Extra, StringComparer.Ordinal),
     };
 
-    /// <summary>Lists a hand-edited file left null read as empty.</summary>
+    /// <summary>
+    /// Lists a hand-edited file left null read as empty; a goal it cannot evaluate (an unknown kind, or one missing its
+    /// patch, character or expansion) and a blank role or nickname read as none.
+    /// </summary>
     internal void Normalize()
     {
         PayoffGatesNoticed ??= [];
@@ -132,6 +160,28 @@ public sealed class CharacterSettings
         GoWithGame ??= [];
         CardsDismissed ??= [];
         EvercoldTicks ??= [];
+        if (Goal is { IsValid: false })
+        {
+            Goal = null;
+        }
+
+        Role = Trimmed(Role);
+        Nickname = Trimmed(Nickname);
+    }
+
+    /// <summary>The longest role or nickname kept, in characters.</summary>
+    public const int MaxLabelLength = 24;
+
+    /// <summary>A role or nickname as kept: trimmed, cut to <see cref="MaxLabelLength"/>, null when blank.</summary>
+    public static string? Trimmed(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        var trimmed = text.Trim();
+        return trimmed.Length > MaxLabelLength ? trimmed[..MaxLabelLength].TrimEnd() : trimmed;
     }
 }
 
@@ -167,6 +217,18 @@ public enum CharacterSettingField
     /// </summary>
     GoWithGame,
 
+    /// <summary>Sets <see cref="CharacterSettings.Goal"/> to <see cref="CharacterSettingChange.Goal"/> (null clears it; 1.21.0 N11).</summary>
+    Goal,
+
+    /// <summary>Stars (<see cref="CharacterSettingChange.Flag"/> true) or unstars the character on the roster (1.21.0 P3).</summary>
+    Starred,
+
+    /// <summary>Sets <see cref="CharacterSettings.Role"/> to <see cref="CharacterSettingChange.Id"/> (null or blank clears it).</summary>
+    Role,
+
+    /// <summary>Sets <see cref="CharacterSettings.Nickname"/> to <see cref="CharacterSettingChange.Id"/> (null or blank clears it).</summary>
+    Nickname,
+
     /// <summary>
     /// Hides (<see cref="CharacterSettingChange.Flag"/> true) or shows again the card <see cref="CharacterSettingChange.Id"/>
     /// for the character (<see cref="CharacterSettings.CardsDismissed"/>).
@@ -194,8 +256,17 @@ public enum CharacterSettingField
 /// <param name="Other">The Compare target for <see cref="CharacterSettingField.CompareWith"/>.</param>
 /// <param name="Id">The gate id for <see cref="CharacterSettingField.GateNoticed"/> and <see cref="CharacterSettingField.WhyOpen"/>.</param>
 /// <param name="RowIds">The seen set for <see cref="CharacterSettingField.SeenReady"/>, ascending.</param>
-public readonly record struct CharacterSettingChange(ulong ContentId, CharacterSettingField Field, bool? Flag = null, ulong? Other = null, string? Id = null, IReadOnlyList<uint>? RowIds = null)
+/// <param name="Goal">The goal for <see cref="CharacterSettingField.Goal"/>; null clears it.</param>
+public readonly record struct CharacterSettingChange(ulong ContentId, CharacterSettingField Field, bool? Flag = null, ulong? Other = null, string? Id = null, IReadOnlyList<uint>? RowIds = null, Characters.AltGoal? Goal = null)
 {
+    public static CharacterSettingChange SetGoal(ulong contentId, Characters.AltGoal? goal) => new(contentId, CharacterSettingField.Goal, Goal: goal);
+
+    public static CharacterSettingChange Star(ulong contentId, bool starred) => new(contentId, CharacterSettingField.Starred, starred);
+
+    public static CharacterSettingChange SetRole(ulong contentId, string? role) => new(contentId, CharacterSettingField.Role, Id: role);
+
+    public static CharacterSettingChange SetNickname(ulong contentId, string? nickname) => new(contentId, CharacterSettingField.Nickname, Id: nickname);
+
     public static CharacterSettingChange Seen(ulong contentId, IReadOnlyList<uint> rowIds) => new(contentId, CharacterSettingField.SeenReady, RowIds: rowIds);
 
     public static CharacterSettingChange Spoiler(ulong contentId, bool? shield) => new(contentId, CharacterSettingField.SpoilerShield, shield);
@@ -360,6 +431,18 @@ public static class CharacterSettingsFile
                 case CharacterSettingField.SeenReady:
                     entry.SeenReady = change.RowIds is null ? null : [.. change.RowIds];
                     entry.SeenReadyRules = change.RowIds is null ? null : Query.NewlyReady.RulesVersion;
+                    break;
+                case CharacterSettingField.Goal:
+                    entry.Goal = change.Goal is { IsValid: true } goal ? goal : null;
+                    break;
+                case CharacterSettingField.Starred:
+                    entry.Starred = change.Flag == true;
+                    break;
+                case CharacterSettingField.Role:
+                    entry.Role = CharacterSettings.Trimmed(change.Id);
+                    break;
+                case CharacterSettingField.Nickname:
+                    entry.Nickname = CharacterSettings.Trimmed(change.Id);
                     break;
             }
 

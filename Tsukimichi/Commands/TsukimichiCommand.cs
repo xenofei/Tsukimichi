@@ -20,6 +20,9 @@ namespace Tsukimichi.Commands;
 /// toggles the todo overlay; <c>report [quest name]</c> copies a quest's diagnostic block; <c>export [quests|moonlit]
 /// [json|csv]</c> writes the export files; <c>stop</c> stops every hand-off Tsukimichi started (<see cref="StopCommand"/>);
 /// <c>look &lt;code&gt;</c> opens Settings › Themes with a share code pasted and previewed, never applying it;
+/// <c>msq</c> and <c>next</c> print plain sentences for text-to-speech and <c>go [quest name]</c> travels to the current
+/// step (1.21, <see cref="GuidanceCommand"/>; with text after them that would shadow a quest name they search instead,
+/// <see cref="CommandLine.RunsGuidance"/>);
 /// <c>settings</c> (or <c>config</c>) and <c>help</c> open those windows; <c>glyphs</c> opens the glyph sheet and
 /// <c>ipc</c> the IPC developer window (neither listed to players); a bare command toggles the main window.
 /// <para>
@@ -126,6 +129,24 @@ public sealed class TsukimichiCommand : IDisposable
 
     /// <summary>Opens Settings (never closes it), for <c>/tsukimichi look</c> while <see cref="Look"/> is not wired.</summary>
     public Action? OpenConfigWindow { get; set; }
+
+    /// <summary>Invoked for <c>/tsukimichi msq</c> (1.21, P8): the main scenario line. Falls back to a search for the text.</summary>
+    public Action? Msq { get; set; }
+
+    /// <summary>Invoked for <c>/tsukimichi next</c> (1.21, P8): what to do next. Falls back to a search for the text.</summary>
+    public Action? Next { get; set; }
+
+    /// <summary>
+    /// Invoked for <c>/tsukimichi go [quest name]</c> (1.21, P2) with the rest of the line: travel to the current step of
+    /// the named or selected quest. Falls back to a search for the text.
+    /// </summary>
+    public Action<string>? Go { get; set; }
+
+    /// <summary>
+    /// Whether a quest's name (as the player sees it) begins with the given text, case-insensitively: a <c>go</c> line
+    /// that begins a quest's own name ("go west", "go with the flow") stays a search (<see cref="CommandLine.RunsGuidance"/>).
+    /// </summary>
+    public Func<string, bool>? BeginsQuestName { get; set; }
 
     /// <summary>The aliases registered now: the built-in ones, then the player's, in order.</summary>
     public IReadOnlyList<string> ActiveAliases { get; private set; } = [];
@@ -430,6 +451,10 @@ public sealed class TsukimichiCommand : IDisposable
 
                 break;
 
+            case Subcommand.Msq or Subcommand.Next or Subcommand.Go:
+                RunGuidance(parsed);
+                break;
+
             case Subcommand.Todo:
                 if (ToggleTodoOverlay is { } toggleTodo)
                 {
@@ -462,6 +487,33 @@ public sealed class TsukimichiCommand : IDisposable
             && CommandLine.DidYouMean(parsed.Word) is { } meant && Print is { } print)
         {
             print(string.Format(CultureInfo.CurrentCulture, Strings.CommandDidYouMeanFormat, meant));
+        }
+    }
+
+    /// <summary>
+    /// <c>msq</c>, <c>next</c> and <c>go</c> (1.21): the line runs when <see cref="CommandLine.RunsGuidance"/> says so and
+    /// the handler is wired; otherwise it is the quest search it was before, so no quest name is shadowed.
+    /// </summary>
+    private void RunGuidance(ParsedCommand parsed)
+    {
+        Action? run = null;
+        if (CommandLine.RunsGuidance(parsed, BeginsQuestName))
+        {
+            run = parsed.Kind switch
+            {
+                Subcommand.Msq => Msq,
+                Subcommand.Next => Next,
+                _ => Go is { } go ? () => go(parsed.Rest) : null,
+            };
+        }
+
+        if (run is not null)
+        {
+            run();
+        }
+        else
+        {
+            search(parsed.Arguments);
         }
     }
 

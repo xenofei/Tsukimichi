@@ -73,6 +73,7 @@ public sealed partial class TonightCard
         }
 
         ui.RecordWindow(UiRects.Detail);
+        var appearFrom = BeginAppear();
         Refresh(session, bundle);
 
         Chrome.BeginCard("##tonight", Strings.TonightTitle, TonightIcon);
@@ -83,6 +84,8 @@ public sealed partial class TonightCard
         }
         else
         {
+            // Up next (1.21.0 P1) leads the card; the lines under it keep their places.
+            DrawUpNext(session, bundle);
             DrawReplayAndEvents(session, bundle);
             DrawReady();
             DrawMsq(bundle);
@@ -106,6 +109,8 @@ public sealed partial class TonightCard
         {
             TextFlow.Wrapped(Strings.TonightPickHint);
         }
+
+        EndAppear(appearFrom);
     }
 
     private void DrawReady()
@@ -155,10 +160,11 @@ public sealed partial class TonightCard
             return;
         }
 
-        // One row on a linear stretch; one per open route inside a branch region (ids clear of the pinned rows').
+        // One row on a linear stretch; one per open route inside a branch region (ids clear of the pinned rows'). When
+        // Up next already names the quest, the row says the catch-up instead (1.21.0 P1, spec decision 2).
         for (var i = 0; i < msq.Count; i++)
         {
-            Row(bundle, msq[i], i == 0 ? 0 : MsqRowIdBase + i);
+            Row(bundle, i == 0 && msq.Count == 1 ? MsqRowShown(msq[0]) : msq[i], i == 0 ? 0 : MsqRowIdBase + i);
         }
     }
 

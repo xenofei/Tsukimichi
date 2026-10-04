@@ -72,7 +72,7 @@ public enum JournalIndexStatus
 /// character has completed, so a search never surfaces text of a quest the character has not played. Framework
 /// thread, except the background build, which publishes through volatile fields.
 /// </summary>
-public sealed class QuestTextService : IDisposable
+public sealed partial class QuestTextService : IDisposable
 {
     private const int CacheSize = 8;
 

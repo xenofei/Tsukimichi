@@ -852,6 +852,7 @@ public sealed partial class Plugin : IDalamudPlugin
             }
         });
         // After the poller's last save: the heartbeat goes once nothing more is written for the character.
+        Unwind("linked folders", () => linkedFolders?.Dispose());
         Unwind("multibox", () =>
         {
             if (Multibox is not null)
@@ -1411,6 +1412,9 @@ public sealed partial class Plugin : IDalamudPlugin
             var nextStops = new NextStopsSource(Session, gameLinks, queryRunner, planSource, followed, Settings, () => ClientState.TerritoryType);
             mainWindow.AttachNextStops(nextStops);
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log) { QuestUnlocks = () => questUnlocks?.Current };
+
+            // Where to go and the plain chat lines (1.21.0 P2, P8): /tsuki msq, next and go, and Say what's next in chat.
+            WireGuidance(command, ui, gameLinks, followed, queryRunner, nextStops, chatNotifier);
             // "Before you continue" (P5): the dashboard and the Tonight card lines, and the once-per-character chat line.
             var payoffGates = new Game.PayoffGateSource(Session, Log);
             var payoffLines = new PayoffGateLines(payoffGates, Session, Settings, CharacterBook);
@@ -1431,6 +1435,8 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.RunNextTick = action => _ = Framework.RunOnTick(action);
             configWindow.Overrides = moonlitPane;
             configWindow.Roster = Roster;
+            // Every character (1.21.0 P1, P3, N11): Up next, the roster, alt goals and the linked launcher folders.
+            WireRoster(mainWindow, charactersPane, configWindow, followed, () => moonlit.Catalog, () => dutyRuns.Value, dutyUnlocks, flightZones);
             configWindow.QuestText = QuestText;
             configWindow.OpenAboutAutomation = () => aboutAutomationWindow?.Show();
             // The optional portrait pack (1.20, F4, decision 8): the installed one is read from the config folder off the

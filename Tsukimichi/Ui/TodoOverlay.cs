@@ -1091,12 +1091,15 @@ public sealed class TodoOverlay : Window, IDisposable
         }
 
         var quest = row.Quest;
+
+        // A quest in the journal: its current step first (1.21.0 P2), then the giver.
+        var stepped = StepTravelMenu.Draw(links, session, quest);
         if (ImGui.MenuItem(Strings.TodoRevealInTsukimichi))
         {
             reveal(quest);
         }
 
-        if (ImGui.MenuItem(Strings.FlagOnMap, enabled: links.CanFlagMap(quest)))
+        if (ImGui.MenuItem(stepped ? Strings.StepMenuFlagGiver : Strings.FlagOnMap, enabled: links.CanFlagMap(quest)))
         {
             links.FlagMap(quest);
         }

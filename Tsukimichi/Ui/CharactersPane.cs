@@ -449,7 +449,16 @@ public sealed partial class CharactersPane
 
         // The dashboard fills the centre column; the column is its own child window.
         ui.RecordWindow(UiRects.CharactersDashboard);
-        if (DrawViewSwitch())
+        var grid = DrawViewSwitch();
+        if (view == 1)
+        {
+            // All characters (1.21.0 P3, CharactersPane.Roster.cs).
+            DrawRoster(ui);
+            DrawToast();
+            return;
+        }
+
+        if (grid)
         {
             DrawCollection(ui);
             DrawToast();
@@ -490,6 +499,9 @@ public sealed partial class CharactersPane
         DrawStatusNotices(snapshot.ContentId);
         TextFlow.Wrapped(d.CountsLine);
         DrawMsqLine(ui, d);
+
+        // The character's alt goal (1.21.0 N11, CharactersPane.Goal.cs); nothing without one.
+        DrawGoalCard(ui, snapshot);
         Gap();
         DrawBeforeEvercold(ui);
 

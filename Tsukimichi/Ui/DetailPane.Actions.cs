@@ -105,7 +105,8 @@ public sealed partial class DetailPane
         {
             var go = goToCheck;
             var stop = go.Stoppable && (travelStartedBy != ActionKind.Walk || !links.WalkShown);
-            AddAction(ActionKind.GoTo, stop ? StopIcon : ActionIcons.GoTo(quest), stop ? Strings.TravelStop : Strings.TravelGoTo, stop ? Strings.TravelStop : Strings.ActionGoToShort,
+            // Aimed at the current step (1.21.0 P2) the pills say so: "Go to step", "Walk to step".
+            AddAction(ActionKind.GoTo, stop ? StopIcon : ActionIcons.GoTo(quest), stop ? Strings.TravelStop : travelAimsAtStep ? Strings.StepGoTo : Strings.TravelGoTo, stop ? Strings.TravelStop : Strings.ActionGoToShort,
                 stop ? PillTone.Danger : PillTone.Normal, stop || go.Ready, stop, waits: go.Stoppable && !stop);
         }
 
@@ -119,7 +120,7 @@ public sealed partial class DetailPane
         {
             var walk = walkCheck;
             var stop = walk.Stoppable && (travelStartedBy == ActionKind.Walk || !links.GoToShown);
-            AddAction(ActionKind.Walk, stop ? StopIcon : ActionIcons.WalkIcon, stop ? Strings.TravelStop : Strings.TravelWalk, stop ? Strings.TravelStop : Strings.TravelWalkShort,
+            AddAction(ActionKind.Walk, stop ? StopIcon : ActionIcons.WalkIcon, stop ? Strings.TravelStop : travelAimsAtStep ? Strings.StepWalkTo : Strings.TravelWalk, stop ? Strings.TravelStop : Strings.TravelWalkShort,
                 stop ? PillTone.Danger : PillTone.Normal, stop || walk.Ready, stop, waits: walk.Stoppable && !stop);
         }
 

@@ -68,6 +68,9 @@ public sealed partial class ConfigWindow
             EndSetting();
         }
 
+        // Other launcher folders' characters for the roster (1.21.0 P3, ConfigWindow.LinkedFolders.cs).
+        DrawLinkedFolders();
+
         if (Setting(Strings.AltsSettingsForget, Strings.AltsSettingsForgetHint, "forget delete old characters alts prune days not seen"))
         {
             DrawForgetNotSeen();
