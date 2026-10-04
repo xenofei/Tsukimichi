@@ -139,6 +139,15 @@ public sealed class DiscoveryWindow : Window, IDisposable
     public Action? OpenSettings { get; set; }
 
     /// <summary>
+    /// My blues' tier of an unlock quest (1.21.0, P4), which the row adds after the level ("Lv 50 · Story needs it");
+    /// set by the plugin. Null, or null for the quest, shows the level alone.
+    /// </summary>
+    public Func<QuestRecord, Core.Plan.UnlockTier?>? TierOf { get; set; }
+
+    // The widest level label the rows carry (a tier word makes it longer than "Lv 100"), for the Level column.
+    private string widestLevel = string.Empty;
+
+    /// <summary>
     /// After <see cref="Settings"/> was edited: saves them, then rebuilds the rows when <paramref name="rowsChanged"/>
     /// (which tells the server info bar entry when the lists changed) or tells the entry at once.
     /// </summary>
@@ -337,7 +346,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
         var button = UiMetrics.MinTarget;
         ImGui.TableSetupColumn(Strings.DiscoveryColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphSize * 1.2f);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnQuest, ImGuiTableColumnFlags.WidthStretch, 1f);
-        ImGui.TableSetupColumn(Strings.DiscoveryColumnLevel, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize(LevelColumnSample.Value).X);
+        ImGui.TableSetupColumn(Strings.DiscoveryColumnLevel, ImGuiTableColumnFlags.WidthFixed, MathF.Max(ImGui.CalcTextSize(LevelColumnSample.Value).X, ImGui.CalcTextSize(widestLevel).X));
         ImGui.TableSetupColumn(Strings.DiscoveryColumnJob, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("WWWW").X);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnActions, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, button);
         ImGui.TableHeadersRow();
@@ -516,6 +525,13 @@ public sealed class DiscoveryWindow : Window, IDisposable
         {
             startNow = QuestDiscovery.StartableInZone(bundle.Catalog, states, territory, settings.NearbyIncludeOtherJob);
             acceptedHere = QuestDiscovery.AcceptedInZone(bundle.Catalog, states, territory);
+
+            // Quests set aside in My blues (1.21.0, P4) leave Nearby, and with it the server info bar's count.
+            var setAside = session.ViewedSetAside;
+            if (setAside.Count > 0)
+            {
+                startNow.RemoveAll(quest => setAside.Contains(quest.RowId));
+            }
         }
         else
         {
@@ -535,6 +551,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
         rowsLanguage = Localization.Loc.Version;
         zoneName = ZoneNameFor(territory);
         zoneLabel = zoneName.Length > 0 ? zoneName : Strings.DiscoveryUnknownZone;
+        widestLevel = string.Empty;
         startable = BuildRows(startNow, states, bundle);
         accepted = BuildRows(acceptedHere, states, bundle);
         startableNames = new string[startable.Length];
@@ -596,7 +613,17 @@ public sealed class DiscoveryWindow : Window, IDisposable
                 }
             }
 
-            rows[i] = new Row(quest, state, string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, quest.DisplayLevel), job, stateText);
+            var level = string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, quest.DisplayLevel);
+            if (TierOf?.Invoke(quest) is { } tier)
+            {
+                level = string.Format(CultureInfo.CurrentCulture, Strings.BluesLevelTierFormat, level, Core.Plan.UnlockTiers.Name(tier));
+                if (level.Length > widestLevel.Length)
+                {
+                    widestLevel = level;
+                }
+            }
+
+            rows[i] = new Row(quest, state, level, job, stateText);
         }
 
         return rows;

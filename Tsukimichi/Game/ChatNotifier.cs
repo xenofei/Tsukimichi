@@ -151,6 +151,12 @@ public sealed partial class ChatNotifier : IDisposable
                 continue;
             }
 
+            // A quest set aside in My blues (1.21.0, P4) sends no notice.
+            if (session.LiveContentId is { } live && session.IsSetAside(live, rowId))
+            {
+                continue;
+            }
+
             var feature = session.FeatureQuestIds.Contains(rowId);
             var pinned = false;
             if (!feature)

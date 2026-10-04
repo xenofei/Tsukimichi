@@ -71,6 +71,20 @@ public sealed class CharacterSettings
     [OmitWhenEmpty]
     public List<uint> GoWithGame { get; set; } = [];
 
+    /// <summary>
+    /// Quest row ids the player set aside for later on this character (feature plan v7 P4, "Set aside for later"):
+    /// they leave My blues' counts, Nearby, the server info bar, the overlay and notices until brought back. Ascending.
+    /// </summary>
+    [OmitWhenEmpty]
+    public List<uint> SetAside { get; set; } = [];
+
+    /// <summary>
+    /// Quest row ids the player marked "Not for me" on this character (P4; N8's Loose ends offers it too): set aside
+    /// like <see cref="SetAside"/>, in words that say it is meant for good. Ascending.
+    /// </summary>
+    [OmitWhenEmpty]
+    public List<uint> NotForMe { get; set; } = [];
+
     /// <summary>Properties this build does not know (a newer build's), written back unchanged.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; set; }
@@ -79,7 +93,7 @@ public sealed class CharacterSettings
     [JsonIgnore]
     public bool IsEmpty =>
         SpoilerShield is null && !Hidden && !DontTrack && CompareWith is null
-        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && GoWithGame.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
+        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && GoWithGame.Count == 0 && SetAside.Count == 0 && NotForMe.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
 
     /// <summary>
     /// What outlives Forget character and "Delete all data": the player's choices about the character itself, hidden
@@ -101,6 +115,8 @@ public sealed class CharacterSettings
         PayoffWhyOpen = [.. PayoffWhyOpen],
         GatesDone = [.. GatesDone],
         GoWithGame = [.. GoWithGame],
+        SetAside = [.. SetAside],
+        NotForMe = [.. NotForMe],
         SeenReady = SeenReady is null ? null : [.. SeenReady],
         SeenReadyRules = SeenReadyRules,
         Extra = Extra is null ? null : new Dictionary<string, JsonElement>(Extra, StringComparer.Ordinal),
@@ -113,6 +129,8 @@ public sealed class CharacterSettings
         PayoffWhyOpen ??= [];
         GatesDone ??= [];
         GoWithGame ??= [];
+        SetAside ??= [];
+        NotForMe ??= [];
     }
 }
 
@@ -149,6 +167,18 @@ public enum CharacterSettingField
     GoWithGame,
 
     /// <summary>
+    /// Sets quest <see cref="CharacterSettingChange.RowIds"/>[0] aside for later (<see cref="CharacterSettingChange.Flag"/>
+    /// true) or brings it back (<see cref="CharacterSettings.SetAside"/>).
+    /// </summary>
+    SetAside,
+
+    /// <summary>
+    /// Marks quest <see cref="CharacterSettingChange.RowIds"/>[0] "Not for me" (<see cref="CharacterSettingChange.Flag"/>
+    /// true) or brings it back (<see cref="CharacterSettings.NotForMe"/>).
+    /// </summary>
+    NotForMe,
+
+    /// <summary>
     /// Forget character: drops the character's entry except <see cref="CharacterSettings.Hidden"/> and
     /// <see cref="CharacterSettings.DontTrack"/> (<see cref="CharacterSettings.Lasting"/>).
     /// </summary>
@@ -182,6 +212,10 @@ public readonly record struct CharacterSettingChange(ulong ContentId, CharacterS
     public static CharacterSettingChange GateDone(ulong contentId, uint questRowId, bool done) => new(contentId, CharacterSettingField.GateDone, done, RowIds: [questRowId]);
 
     public static CharacterSettingChange GoWithGame(ulong contentId, uint questRowId, bool withGame) => new(contentId, CharacterSettingField.GoWithGame, withGame, RowIds: [questRowId]);
+
+    public static CharacterSettingChange SetAside(ulong contentId, uint questRowId, bool aside) => new(contentId, CharacterSettingField.SetAside, aside, RowIds: [questRowId]);
+
+    public static CharacterSettingChange NotForMe(ulong contentId, uint questRowId, bool notForMe) => new(contentId, CharacterSettingField.NotForMe, notForMe, RowIds: [questRowId]);
 
     public static CharacterSettingChange Forget(ulong contentId) => new(contentId, CharacterSettingField.Forget);
 }
@@ -300,6 +334,12 @@ public static class CharacterSettingsFile
                     break;
                 case CharacterSettingField.GoWithGame:
                     SetRow(entry.GoWithGame, change);
+                    break;
+                case CharacterSettingField.SetAside:
+                    SetRow(entry.SetAside, change);
+                    break;
+                case CharacterSettingField.NotForMe:
+                    SetRow(entry.NotForMe, change);
                     break;
                 case CharacterSettingField.SeenReady:
                     entry.SeenReady = change.RowIds is null ? null : [.. change.RowIds];

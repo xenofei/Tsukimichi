@@ -81,6 +81,21 @@ public sealed class CharacterSettingsBook
     /// <summary>Whether the player chose "Go with the game" for <paramref name="questRowId"/> on the character.</summary>
     public bool IsGoWithGame(ulong contentId, uint questRowId) => Get(contentId)?.GoWithGame.Contains(questRowId) == true;
 
+    /// <summary>
+    /// Every character's set-aside quests (feature plan v7 P4: "Set aside for later" and "Not for me" together): content
+    /// id to quest row ids, ascending, characters without one left out.
+    /// </summary>
+    public Dictionary<ulong, IReadOnlyList<uint>> SetAsideByCharacter() =>
+        map.Where(kv => kv.Value.SetAside.Count > 0 || kv.Value.NotForMe.Count > 0)
+            .ToDictionary(kv => kv.Key, kv => (IReadOnlyList<uint>)[.. kv.Value.SetAside.Union(kv.Value.NotForMe).Order()]);
+
+    /// <summary>Whether the player set <paramref name="questRowId"/> aside on the character, for later or as "Not for me".</summary>
+    public bool IsSetAside(ulong contentId, uint questRowId) =>
+        Get(contentId) is { } entry && (entry.SetAside.Contains(questRowId) || entry.NotForMe.Contains(questRowId));
+
+    /// <summary>Whether the player marked <paramref name="questRowId"/> "Not for me" on the character.</summary>
+    public bool IsNotForMe(ulong contentId, uint questRowId) => Get(contentId)?.NotForMe.Contains(questRowId) == true;
+
     public bool IsWhyOpen(ulong contentId, string gateId) =>
         Get(contentId)?.PayoffWhyOpen.Contains(gateId, StringComparer.Ordinal) == true;
 
@@ -339,6 +354,8 @@ public sealed class CharacterSettingsBook
                 || !x.PayoffWhyOpen.SequenceEqual(y.PayoffWhyOpen, StringComparer.Ordinal)
                 || !x.GatesDone.SequenceEqual(y.GatesDone)
                 || !x.GoWithGame.SequenceEqual(y.GoWithGame)
+                || !x.SetAside.SequenceEqual(y.SetAside)
+                || !x.NotForMe.SequenceEqual(y.NotForMe)
                 || !SameIds(x.SeenReady, y.SeenReady)
                 || x.SeenReadyRules != y.SeenReadyRules)
             {

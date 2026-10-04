@@ -70,4 +70,22 @@ public class PlanTodoTests(PlanFixture fixture) : IClassFixture<PlanFixture>
         Assert.True(none.IsEmpty);
         Assert.Equal(1, none.EnabledSections);
     }
+
+    [Fact]
+    public void The_tier_word_follows_the_level_and_a_set_aside_quest_leaves_the_section()
+    {
+        // 1.21.0, P4: "Lv 50 · Story needs it · …" in the overlay; a quest set aside is not in the plan's entries.
+        var plan = fixture.Plan(PlanFixture.Fresh());
+        var first = plan.Expansion(0)!.Entries.First(e => e.State == QuestState.Ready);
+        var inputs = Inputs(plan, 0) with { TierOf = static _ => UnlockTier.StoryNeedsIt };
+        var row = TodoList.Build(inputs).Sections[0].Rows.First(r => r.RowId == first.Quest.RowId);
+        var level = "Lv " + first.Quest.DisplayLevel;
+        Assert.Equal(level + " · Story needs it" + TodoList.PlanHint(first)[level.Length..], row.Hint);
+        Assert.Equal("Lv 12 · giver", TodoList.WithTier(inputs with { TierOf = null }, first.Quest, "Lv 12 · giver"));
+        Assert.Equal("Blocked", TodoList.WithTier(inputs, first.Quest, "Blocked"));
+
+        var aside = UnlockPlan.Build(fixture.Tags, fixture.States(PlanFixture.Fresh()), fixture.Names, setAside: new HashSet<uint> { first.Quest.RowId });
+        var rows = TodoList.Build(Inputs(aside, 0)).Sections[0].Rows;
+        Assert.DoesNotContain(rows, r => r.RowId == first.Quest.RowId);
+    }
 }

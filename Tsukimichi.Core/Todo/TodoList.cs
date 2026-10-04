@@ -127,6 +127,8 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="ShowNextStops">Include the Next stops section.</param>
 /// <param name="EndingSoon">The events ending soon (<see cref="EventWarnings.EndingSoon"/>, 1.19.0 C10): their quests in the journal lead the seasonal section; null keeps the events' order.</param>
 /// <param name="TimeZone">The zone the end-date line prints its date in (<see cref="SeasonalNow.DateText"/>); null reads <see cref="TimeZoneInfo.Local"/>, the player's.</param>
+/// <param name="TierOf">My blues' tier of an unlock quest (1.21.0, P4), added after the level of the Nearby and Clear my blues rows ("Lv 50 · Story needs it"); null adds none.</param>
+/// <param name="SetAside">The quests the player set aside in My blues (P4): left out of the Nearby feature quests; null leaves none out.</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -154,7 +156,9 @@ public sealed record TodoInputs(
     IReadOnlyList<Stop>? Stops = null,
     bool ShowNextStops = false,
     IReadOnlyList<EndingSoonEvent>? EndingSoon = null,
-    TimeZoneInfo? TimeZone = null);
+    TimeZoneInfo? TimeZone = null,
+    Func<QuestRecord, UnlockTier?>? TierOf = null,
+    IReadOnlySet<uint>? SetAside = null);
 
 /// <summary>
 /// Pure builder for the todo overlay (V2-13). Six sections, each only when enabled and non-empty: the character's
@@ -461,12 +465,13 @@ public static class TodoList
 
         foreach (var quest in QuestDiscovery.StartableInZone(inputs.Catalog, inputs.States, inputs.TerritoryId, includeOtherJob: true))
         {
-            if (!inputs.FeatureQuestIds.Contains(quest.RowId))
+            if (!inputs.FeatureQuestIds.Contains(quest.RowId) || inputs.SetAside?.Contains(quest.RowId) == true)
             {
                 continue;
             }
 
-            rows.Add(Row(inputs, quest, StateOf(inputs.States, quest.RowId), TodoRowKind.NearbyFeature));
+            var row = Row(inputs, quest, StateOf(inputs.States, quest.RowId), TodoRowKind.NearbyFeature);
+            rows.Add(row with { Hint = WithTier(inputs, quest, row.Hint) });
             if (rows.Count >= MaxNearby)
             {
                 break;
@@ -576,7 +581,7 @@ public static class TodoList
             }
 
             var hint = entry.State == QuestState.Ready
-                ? PlanHint(entry)
+                ? WithTier(inputs, entry.Quest, PlanHint(entry))
                 : Hint(inputs, entry.Quest, entry.State);
             rows.Add(new TodoRow(entry.Quest.RowId, entry.Name, entry.State, hint, TodoRowKind.Plan));
             if (rows.Count >= MaxPlan)
@@ -600,6 +605,29 @@ public static class TodoList
         ArgumentNullException.ThrowIfNull(entry);
         var level = string.Format(System.Globalization.CultureInfo.InvariantCulture, LevelFormat, entry.Quest.DisplayLevel);
         return entry.Unlocks.Count > 0 ? level + Separator + entry.Unlocks[0].Label : level;
+    }
+
+    /// <summary>
+    /// The hint with the quest's tier word after its level (P4: "Lv 50 · Story needs it · …"), when the hint opens with
+    /// the level and the inputs know the tier; otherwise the hint as it is.
+    /// </summary>
+    public static string WithTier(TodoInputs inputs, QuestRecord quest, string hint)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
+        ArgumentNullException.ThrowIfNull(quest);
+        ArgumentNullException.ThrowIfNull(hint);
+        if (inputs.TierOf?.Invoke(quest) is not { } tier)
+        {
+            return hint;
+        }
+
+        var level = string.Format(System.Globalization.CultureInfo.InvariantCulture, LevelFormat, quest.DisplayLevel);
+        if (!hint.StartsWith(level, StringComparison.Ordinal) || (hint.Length > level.Length && !hint.AsSpan(level.Length).StartsWith(Separator, StringComparison.Ordinal)))
+        {
+            return hint;
+        }
+
+        return level + Separator + UnlockTiers.Name(tier) + hint[level.Length..];
     }
 
     private static QuestState StateOf(IReadOnlyDictionary<uint, QuestEvaluation> states, uint rowId) =>

@@ -1303,7 +1303,10 @@ public sealed class TodoOverlay : Window, IDisposable
             ShowRoute: settings.TodoShowRoute,
             Stops: settings.TodoShowNextStops ? NextStops?.Stops : null,
             ShowNextStops: settings.TodoShowNextStops,
-            EndingSoon: settings.TodoShowSeasonal ? EventWarnings?.Current : null));
+            EndingSoon: settings.TodoShowSeasonal ? EventWarnings?.Current : null,
+            // My blues (1.21.0, P4): the tier word after the level, and the quests set aside left out.
+            TierOf: Plan is { } tiers ? tiers.TierOf : null,
+            SetAside: session.ViewedSetAside));
 
         enabledSections = model.EnabledSections;
         if (model.Sections.Count == 0)

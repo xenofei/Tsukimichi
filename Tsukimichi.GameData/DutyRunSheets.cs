@@ -118,7 +118,7 @@ public static class DutyRunSheets
     /// depend on the client's language. The current tier's flag (<c>HighEndDuty</c>) and the Ultimate and Chaotic
     /// content types cover the rest.
     /// </summary>
-    private static HashSet<uint> HighEndCategories(ExcelModule excel)
+    internal static HashSet<uint> HighEndCategories(ExcelModule excel)
     {
         var ids = new HashSet<uint>();
         foreach (var category in excel.GetSheet<ContentUICategory>(Language.English))

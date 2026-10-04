@@ -16,6 +16,9 @@ public sealed record PlanUnlock(UnlockKind Kind, string Name, bool Inherited = f
 {
     /// <summary>"Dungeon: The Tam-Tara Deepcroft", or the kind alone when no name is known or the kind is inherited.</summary>
     public string Label => Inherited || Name.Length == 0 ? UnlockKinds.Name(Kind) : UnlockKinds.Name(Kind) + ": " + Name;
+
+    /// <summary>A duty unlock of high-end content (Extreme, Savage, Unreal, Ultimate, Chaotic; <see cref="PlanDuty.HighEnd"/>), for the P4 tiers.</summary>
+    public bool HighEnd { get; init; }
 }
 
 /// <summary>
@@ -269,7 +272,7 @@ public sealed class UnlockTags
         }
     }
 
-    private static PlanUnlock DutyUnlock(PlanDuty duty) => new(duty.Kind, Capitalize(ContentName(duty.Name)));
+    private static PlanUnlock DutyUnlock(PlanDuty duty) => new(duty.Kind, Capitalize(ContentName(duty.Name))) { HighEnd = duty.HighEnd };
 
     /// <summary>
     /// A deep dungeon's floor sets are one piece of content to the plan: "the Palace of the Dead (Floors 51-60)" and

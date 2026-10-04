@@ -59,6 +59,35 @@ public class DutyIndexTests(GameDataFixture game) : IClassFixture<GameDataFixtur
     }
 
     [GameDataFact]
+    public void Over_the_live_sheets_high_end_duties_are_marked_and_their_quests_tiered_high_end()
+    {
+        // 1.21.0, P4: the tiers keep Extreme, Savage, Unreal, Ultimate and Chaotic apart; the story's hard primals are not.
+        var duties = DutyIndex.Build(game.Game.Excel, Language.English);
+        Assert.True(duties.TryGetCondition(1010, out var chaotic) && chaotic.HighEnd, "the Cloud of Darkness (Chaotic) is high-end");
+        Assert.True(duties.TryGetCondition(56, out var embers) && !embers.HighEnd, "the Bowl of Embers is not high-end");
+        Assert.True(duties.TryGetCondition(93, out var coil) && !coil.HighEnd, "the Binding Coil of Bahamut - Turn 1 is not high-end");
+
+        var bundle = game.Bundle;
+        var curated = CuratedData.Load(FixtureCatalog.CuratedDir());
+        var unique = UniqueRewardsFile.Load(Path.Combine(FixtureCatalog.ShippedDataDir(), "unique_quests.json"));
+        var features = FeaturePresets.Derive(bundle.Catalog, curated, unique.Entries);
+        var rewards = UniqueRewardCatalog.Build(unique, new Dictionary<uint, UniqueOverride>(), curated);
+        var tags = UnlockTags.Build(bundle.Catalog, features, rewards, duties, bundle.BlockerNames().Tribe);
+        var context = UnlockTierContext.For(Tsukimichi.Tests.Evaluation.Fixture.Paladin, bundle.JobParents(), bundle.Jobs, new Dictionary<byte, Tsukimichi.Core.Model.TribeStanding>(), StoryRequirements.For(bundle.Catalog, null).SideQuests);
+
+        var highEnd = tags.Quests.Where(q => UnlockTiers.Classify(q, tags.For(q.RowId), context) == UnlockTier.HighEnd).ToList();
+        Assert.True(highEnd.Count >= 20, $"only {highEnd.Count} high-end unlock quests");
+        var marks = new[] { "(Extreme)", "(Savage)", "(Unreal)", "(Ultimate)", "(Chaotic)", "Minstrel's Ballad" };
+        var named = highEnd.Count(q => tags.For(q.RowId).Any(u => marks.Any(m => u.Name.Contains(m, StringComparison.OrdinalIgnoreCase))));
+        Assert.True(named * 10 >= highEnd.Count * 8, $"{highEnd.Count - named} of {highEnd.Count} high-end quests name no high-end duty");
+
+        // Legacy of Allag (the Crystal Tower) is what the story needs.
+        var legacy = bundle.Catalog.ByRowId[67245];
+        Assert.Equal("Legacy of Allag", legacy.Name);
+        Assert.Equal(UnlockTier.StoryNeedsIt, UnlockTiers.Classify(legacy, tags.For(legacy.RowId), context));
+    }
+
+    [GameDataFact]
     public void Over_the_live_sheets_a_fresh_characters_first_dungeon_is_Halatali()
     {
         var bundle = game.Bundle;
