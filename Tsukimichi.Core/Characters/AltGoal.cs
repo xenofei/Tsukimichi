@@ -115,8 +115,14 @@ public sealed record AltGoalProgress(AltGoalKind Kind, int Left, IReadOnlyList<Q
 {
     public static AltGoalProgress Unknown(AltGoalKind kind) => new(kind, 0, [], 0, Known: false);
 
+    /// <summary>
+    /// For the roulettes goal: the highest level a closed roulette still asks of the character's best job (0 for none).
+    /// A level is not a duty, so it is never counted in <see cref="Left"/>; the goal is not reached while one is needed.
+    /// </summary>
+    public int LevelNeeded { get; init; }
+
     /// <summary>Nothing is left: "Goal reached".</summary>
-    public bool Reached => Known && Left == 0;
+    public bool Reached => Known && Left == 0 && LevelNeeded == 0;
 
     /// <summary>The quests left that wait on something (the story, a level): "4 wait for Kiri's story".</summary>
     public int Waiting => Quests.Count - Doable;
@@ -128,12 +134,15 @@ public sealed record AltGoalProgress(AltGoalKind Kind, int Left, IReadOnlyList<Q
 /// <list type="bullet">
 /// <item><b>The story up to a patch:</b> the main scenario quests (<see cref="MsqGraph.Story"/>) up to the last one added
 /// in that patch or before (<see cref="QuestRecord.AddedIn"/>; a quest with no known patch takes the one before it),
-/// not completed and not locked out.</item>
+/// not completed, as the story's own count leaves them (<see cref="MsqCatchUp"/>): not out of the totals (locked out,
+/// another Grand Company's, a spare alternative of a choice not made yet) and not a leftover of a met join.</item>
 /// <item><b>Another character's unlocks:</b> the unlock quests (<see cref="FeaturePresets"/>) the other character has done
 /// and this one has not, as Compare's diff finds them (<see cref="CharacterDiff"/>).</item>
 /// <item><b>Flying in an expansion:</b> its zones with an aether current quest not done.</item>
 /// <item><b>Every duty roulette open:</b> the duties left to unlock before each closed roulette opens
-/// (<see cref="DutyBoard"/>); a roulette the account cannot buy into, or one the capture cannot judge, is not counted.</item>
+/// (<see cref="DutyBoard"/>), each duty once however many roulettes it opens, and the level a roulette still needs
+/// (<see cref="AltGoalProgress.LevelNeeded"/>, never counted as a duty); a roulette the account cannot buy into, or one
+/// the capture cannot judge, is not counted.</item>
 /// </list>
 /// </summary>
 public static class AltGoals
@@ -143,16 +152,22 @@ public static class AltGoals
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(states);
-        var story = MsqGraph.For(catalog).Story;
+        var graph = MsqGraph.For(catalog);
+        var story = graph.Story;
+        var joins = graph.Joins(new EvaluationSource(states));
         var end = StoryEnd(story, patch);
         var left = new List<QuestRecord>();
         for (var i = 0; i <= end; i++)
         {
             var quest = story[i];
-            if (!IsDone(states, quest.RowId))
+            // As MsqCatchUp counts the story: a quest out of the totals (another Grand Company's, a spare alternative) or
+            // a leftover of a join the character met is not left to do.
+            if (IsDone(states, quest.RowId) || states.GetValueOrDefault(quest.RowId) is { LeavesTotals: true } || joins.IsLeftover(quest.RowId))
             {
-                left.Add(quest);
+                continue;
             }
+
+            left.Add(quest);
         }
 
         return Progress(AltGoalKind.Story, left.Count, left, states);
@@ -236,17 +251,32 @@ public static class AltGoals
             return AltGoalProgress.Unknown(AltGoalKind.Roulettes);
         }
 
-        var dutiesLeft = 0;
+        var closed = board.Roulettes.Where(static l => l.Lock is RouletteLock.NeedsDuties or RouletteLock.NeedsLevel).ToList();
+        var level = closed.Where(static l => l.Lock == RouletteLock.NeedsLevel).Select(static l => (int)l.Roulette.RequiredLevel).DefaultIfEmpty(0).Max();
+
+        // Each duty once: a roulette that needs every duty in it needs each one missing, and those count toward a
+        // roulette that needs only some (a duty in two roulettes opens both); such a roulette then adds only what it
+        // still lacks after them.
+        var every = new HashSet<uint>();
+        foreach (var line in closed.Where(static l => l.NeedsEvery && l.Left > 0))
+        {
+            foreach (var missing in line.Missing)
+            {
+                every.Add(missing.Duty.ContentFinderConditionId);
+            }
+        }
+
+        var dutiesLeft = every.Count;
+        foreach (var line in closed.Where(static l => !l.NeedsEvery && l.Left > 0))
+        {
+            var covered = line.Missing.Count(m => every.Contains(m.Duty.ContentFinderConditionId));
+            dutiesLeft += Math.Max(0, line.Left - covered);
+        }
+
         var left = new List<QuestRecord>();
         var seen = new HashSet<uint>();
-        foreach (var line in board.Roulettes)
+        foreach (var line in closed)
         {
-            if (line.Lock is not (RouletteLock.NeedsDuties or RouletteLock.NeedsLevel))
-            {
-                continue;
-            }
-
-            dutiesLeft += line.Lock == RouletteLock.NeedsLevel ? Math.Max(1, line.Left) : line.Left;
             foreach (var missing in line.Missing)
             {
                 if (missing.UnlockQuests.Count > 0 && seen.Add(missing.UnlockQuests[0].RowId))
@@ -257,7 +287,7 @@ public static class AltGoals
         }
 
         left.Sort(static (a, b) => a.RowId.CompareTo(b.RowId));
-        return Progress(AltGoalKind.Roulettes, dutiesLeft, left, states);
+        return Progress(AltGoalKind.Roulettes, dutiesLeft, left, states) with { LevelNeeded = level };
     }
 
     /// <summary>

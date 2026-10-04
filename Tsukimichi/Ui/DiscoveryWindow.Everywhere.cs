@@ -23,7 +23,9 @@ namespace Tsukimichi.Ui;
 /// since 7.4"; then what is left in words) with Teleport and "…" (Go to the nearest Ready giver, Show in Journal, and
 /// at Full hand-offs Send zone to Questionable) in a reserved slot; zones with nothing left fold per expansion. An
 /// expansion past the story point is one line ("Dawntrail · 6 zones past Kiri's story · names hidden"), a zone past it
-/// "A zone ahead" with its level span. The view, the chips and the sort are saved with Nearby's settings.
+/// "A zone ahead" with its level span and the shield's hover and right-click. Quests set aside (P4) count nowhere and
+/// "…" never goes to, shows or hands them off; travel and hand-offs are offered only for the character logged in here
+/// (spec-1.21 decision 5). The view, the chips and the sort are saved with Nearby's settings.
 /// </summary>
 public sealed partial class DiscoveryWindow
 {
@@ -35,6 +37,9 @@ public sealed partial class DiscoveryWindow
     private const string NearbyQuestionableHost = "nearby";
 
     private static readonly ZoneKinds[] KindOrder = [ZoneKinds.Ready, ZoneKinds.Blues, ZoneKinds.SideStories, ZoneKinds.Rewards];
+
+    // The chips' ids, one per kind, so drawing them allocates nothing.
+    private static readonly string[] KindIds = ["##kind0", "##kind1", "##kind2", "##kind3"];
 
     private readonly HashSet<byte> toggledGroups = [];
     private readonly HashSet<byte> openEmpty = [];
@@ -91,7 +96,7 @@ public sealed partial class DiscoveryWindow
             }
 
             var kind = KindOrder[i];
-            if (BoardChips.Chip("##kind" + i.ToString(CultureInfo.InvariantCulture), names[i], (kinds & kind) != 0, tips[i]))
+            if (BoardChips.Chip(KindIds[i], names[i], (kinds & kind) != 0, tips[i]))
             {
                 settings.NearbyKinds = kinds ^ kind;
                 SaveSettings();
@@ -222,6 +227,10 @@ public sealed partial class DiscoveryWindow
         firstName = name.IndexOf(' ', StringComparison.Ordinal) is > 0 and var space ? name[..space] : name;
         var patches = PatchIndex.For(catalog);
         newSince = patches.Series.Count > 1 ? string.Format(CultureInfo.CurrentCulture, Strings.ZoneNewSinceFormat, patches.Series[1].Series) : string.Empty;
+
+        // Quests set aside in My blues (P4) leave Nearby: Everywhere's counts and its "…" as Here's list (the session's
+        // version moves with the list, so the key above catches a change).
+        var setAside = session.ViewedSetAside;
         board = ZoneBoard.Build(
             zones,
             catalog,
@@ -233,13 +242,14 @@ public sealed partial class DiscoveryWindow
             settings.NearbyIncludeOtherJob,
             spoilers.ReachExpansion,
             zone => spoilers.IsNameMasked(SpoilerKind.Area, zone),
-            newSince.Length > 0 ? patches.IsNew : null);
+            newSince.Length > 0 ? patches.IsNew : null,
+            setAside);
 
         // Each zone's quests left, Ready first then lowest level: what "…" goes to, shows and hands off.
         foreach (var quest in catalog.All)
         {
             if (quest.IsRemoved || quest.IsRepeatable || quest.Issuer is not { } issuer || !states.TryGetValue(quest.RowId, out var evaluation)
-                || evaluation.State is QuestState.Completed or QuestState.DoneThisCycle || evaluation.LeavesTotals)
+                || evaluation.State is QuestState.Completed or QuestState.DoneThisCycle || evaluation.LeavesTotals || setAside.Contains(quest.RowId))
             {
                 continue;
             }
@@ -262,6 +272,9 @@ public sealed partial class DiscoveryWindow
             });
         }
     }
+
+    /// <summary>The character on view is the one logged in on this client: the only one travel and hand-offs act for (spec-1.21 decision 5).</summary>
+    private bool ViewedLiveHere => session.ViewedContentId is { } viewed && viewed == session.LiveContentId;
 
     private bool IsReady(QuestRecord quest) =>
         session.States.TryGetValue(quest.RowId, out var evaluation)
@@ -410,8 +423,10 @@ public sealed partial class DiscoveryWindow
             : string.Format(CultureInfo.CurrentCulture, Strings.ZoneLevelSpanFormat, zone.MinLevel, zone.MaxLevel);
         if (zone.Masked)
         {
+            // "A zone ahead": the shield's hover and right-click ("Reveal this name" reveals the zone for the session).
             BoardRow.Draw("##zone", Motion.Key(ZoneHoverTag, zone.Zone.TerritoryId), width, 0, null, Strings.ZoneAhead, span, factAfterName: true, chip: null,
-                [new BoardRun(Strings.ZoneWaitsForStory)], null, Strings.TeleportToGiver, string.Empty, slot: false);
+                [new BoardRun(Strings.ZoneWaitsForStory)], null, Strings.TeleportToGiver, string.Empty, slot: false,
+                shield: new BoardShield(session, SpoilerKind.Area, zone.Zone.Name, Links: links));
             return;
         }
 
@@ -419,7 +434,8 @@ public sealed partial class DiscoveryWindow
         var line2 = empty ? Strings.ZoneNothingLeftLine : LeftLine(zone);
         var aetheryte = zone.Zone.AetheryteId;
         var aetheryteName = aetheryte != 0 && links.Aetherytes.Find(aetheryte) is { } info ? info.Name : name;
-        bool? teleport = links.TeleportShown ? aetheryte != 0 && links.CanTeleportTo(aetheryte) : null;
+        // Travel only for the character logged in here (spec-1.21 decision 5).
+        bool? teleport = links.TeleportShown && ViewedLiveHere ? aetheryte != 0 && links.CanTeleportTo(aetheryte) : null;
         var tip = aetheryte == 0 ? Strings.ZoneNoAetheryte : links.TeleportToBlocked(aetheryte) ?? string.Format(CultureInfo.CurrentCulture, Strings.ZoneTeleportFormat, aetheryteName);
         var result = BoardRow.Draw("##zone", Motion.Key(ZoneHoverTag, zone.Zone.TerritoryId), width, 0, null, name, span, factAfterName: true,
             zone.IsNew && newSince.Length > 0 ? newSince : null, [new BoardRun(line2)], teleport, Strings.TeleportToGiver, tip, slot: true);
@@ -490,8 +506,9 @@ public sealed partial class DiscoveryWindow
         }
 
         var quests = zoneQuests.GetValueOrDefault(zone.Zone.TerritoryId) ?? [];
+        var live = ViewedLiveHere;
         var nearest = NearestReady(zone, quests);
-        if (links.GoToShown)
+        if (links.GoToShown && live)
         {
             var go = nearest is null ? default : links.CheckGoTo(nearest);
             if (ImGui.MenuItem(Strings.ZoneMenuNearestReady, string.Empty, false, nearest is not null && go.Ready) && nearest is not null)
@@ -515,7 +532,7 @@ public sealed partial class DiscoveryWindow
             UiMetrics.Tooltip(Strings.ZoneMenuShowInJournalTip);
         }
 
-        if (quests.Count > 0)
+        if (quests.Count > 0 && live)
         {
             var rowIds = new uint[quests.Count];
             for (var i = 0; i < rowIds.Length; i++)

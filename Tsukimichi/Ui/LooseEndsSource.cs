@@ -16,8 +16,8 @@ namespace Tsukimichi.Ui;
 /// Loose ends for the panes (feature plan v7 N8; spec-1.21 N8; <see cref="LooseEnds"/>): the storylines over the
 /// session's catalog and chains, each line's icon (the job's for a job line, the role's for a role line, the side-quest
 /// icon otherwise), and the loose ends of the viewed and of the logged-in character, rebuilt when the session version
-/// moves. The Characters dashboard's card, the Tonight line, the overlay section and the finale chat line all read it,
-/// so they agree. Framework thread only.
+/// moves. A line whose next quest is set aside ("Not for me" on the card, P4) is left out. The Characters dashboard's
+/// card, the Tonight line, the overlay section and the finale chat line all read it, so they agree. Framework thread only.
 /// </summary>
 public sealed class LooseEndsSource
 {
@@ -50,7 +50,7 @@ public sealed class LooseEndsSource
             if (key != viewedKey)
             {
                 viewedKey = key;
-                viewed = Find(all, session.States);
+                viewed = Find(all, session.States, session.ViewedSetAside);
             }
 
             return viewed;
@@ -67,7 +67,7 @@ public sealed class LooseEndsSource
             if (key != liveKey)
             {
                 liveKey = key;
-                live = session.LiveContentId is null ? None : Find(all, session.LiveStates);
+                live = session.LiveContentId is null ? None : Find(all, session.LiveStates, session.SetAsideOf(session.LiveContentId));
             }
 
             return live;
@@ -107,14 +107,15 @@ public sealed class LooseEndsSource
             end.Next.DisplayLevel);
     }
 
-    private IReadOnlyList<LooseEnd> Find(IReadOnlyList<StoryLine> all, IReadOnlyDictionary<uint, QuestEvaluation> states)
+    /// <summary>The loose ends over <paramref name="states"/>, leaving out lines whose next quest is set aside ("Not for me", P4).</summary>
+    private IReadOnlyList<LooseEnd> Find(IReadOnlyList<StoryLine> all, IReadOnlyDictionary<uint, QuestEvaluation> states, IReadOnlySet<uint> setAside)
     {
         if (session.Bundle is not { } bundle || states.Count == 0 || all.Count == 0)
         {
             return None;
         }
 
-        return LooseEnds.Find(all, states, bundle.Catalog);
+        return LooseEnds.Find(all, states, bundle.Catalog, setAside);
     }
 
     private IReadOnlyList<StoryLine> Lines()

@@ -25,10 +25,12 @@ namespace Tsukimichi.Ui;
 /// <b>What it reads.</b> The character on view and the one logged in here come from the session as they are. The
 /// others come from their last save: this config folder's (<c>characters\&lt;id&gt;.json</c>, kept current by the multibox
 /// watcher, D11, within a few seconds of another client's save) and the linked launcher folders'
-/// (<see cref="LinkedFolderService"/>, read only, every 5 seconds). A save is loaded again only when its capture time
-/// moved, and its whole catalog is resolved on a worker (15 to 40 ms a character) once per save, catalog, reset cycle
-/// and server festivals; the rows show what they had meanwhile. Rows, goals and their strings are rebuilt when an input
-/// changes, never per frame. Framework thread only.
+/// (<see cref="LinkedFolderService"/>, read only, every 5 seconds). A save is read (a file read and a JSON parse) and its
+/// whole catalog resolved (15 to 40 ms a character) on a worker, once per capture time, catalog, reset cycle and server
+/// festivals; the rows show what they had meanwhile, and a row not read yet keeps its height and says "being read". The
+/// facts of the character on view and the one logged in (its story, Ready count, allowances, Moonlit left and level
+/// gate) are worked out on a worker too, once per state map, never on the frame. Rows, goals and their strings are
+/// rebuilt when an input changes, never per frame. Framework thread only.
 /// </para>
 /// </summary>
 public sealed class RosterSource
@@ -39,12 +41,10 @@ public sealed class RosterSource
     private readonly LinkedFolderService? linked;
     private readonly IPluginLog log;
 
-    // Stored saves loaded here, by capture time (null when unreadable).
-    private readonly Dictionary<ulong, (DateTime Taken, CharacterSnapshot? Snapshot)> loaded = [];
-
-    // Resolved states and facts per character, by the save instance, catalog, festivals and cycle they were made with.
+    // Read and resolved saves per character (Facts null: unreadable), by the capture time, save, states, catalog,
+    // festivals and rewards they were made with; a reset cycle clears them.
     private readonly Dictionary<ulong, Resolved> resolved = [];
-    private readonly Dictionary<ulong, (ResolveKey Key, Task<Facts> Task)> resolving = [];
+    private readonly Dictionary<ulong, (ResolveKey Key, Task<Facts?> Task)> resolving = [];
 
     // Goals' progress, by the inputs they were evaluated with.
     private readonly Dictionary<ulong, (GoalKey Key, AltGoalProgress? Progress)> goals = [];
@@ -175,6 +175,34 @@ public sealed class RosterSource
     /// <summary>The characters a goal can match (every roster character but <paramref name="contentId"/>), as rows.</summary>
     public IEnumerable<RosterRow> Others(ulong contentId) => Rows.Where(r => r.ContentId != contentId);
 
+    /// <summary>
+    /// Whether no list knows the character any more (forgotten here, and in no linked folder): a goal matching it can
+    /// never be read again. A hidden character is still known.
+    /// </summary>
+    public bool IsForgotten(ulong contentId)
+    {
+        foreach (var entry in roster.All)
+        {
+            if (entry.ContentId == contentId)
+            {
+                return false;
+            }
+        }
+
+        if (linked is not null)
+        {
+            foreach (var other in linked.Characters)
+            {
+                if (other.ContentId == contentId)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     // ------------------------------------------------------------------ refresh
 
     private void Refresh()
@@ -201,7 +229,8 @@ public sealed class RosterSource
             DutyRuns?.Invoke(),
             zonesFrom,
             Rewards?.Invoke(),
-            Localization.Loc.Version);
+            Localization.Loc.Version,
+            cycle);
         if (key == builtKey)
         {
             return;
@@ -257,40 +286,94 @@ public sealed class RosterSource
         rows = built;
     }
 
-    /// <summary>Gives a member its save, states and facts: the session's, or a resolved one (scheduling a resolve when needed).</summary>
+    /// <summary>
+    /// Gives a member its save, states and facts: the session's states with their facts, or a stored save read and
+    /// resolved; whatever is not worked out yet is scheduled on a worker (<see cref="Schedule"/>), and the last result
+    /// stands in meanwhile. Nothing here reads a file or walks the catalog.
+    /// </summary>
     private void Attach(Member member, CatalogBundle bundle, IReadOnlyList<UniqueRewardEntry>? rewards)
     {
         var id = member.ContentId;
-        if (id == session.ViewedContentId && session.ViewedSnapshot is { } viewedSnapshot && session.States.Count > 0)
+        var catalog = bundle.Catalog;
+        if (SessionStates(id) is { } own)
         {
-            member.Snapshot = viewedSnapshot;
-            member.States = session.States;
-            member.Facts = FactsFor(bundle.Catalog, session.States, viewedSnapshot, session.Context, rewards, DateTime.UtcNow);
+            // The character on view or the one logged in: the session's states as they are; their facts (a catalog pass,
+            // the level gate, the allied board, Moonlit left) once per state map, on a worker.
+            var (snapshot, states, context) = own;
+            member.Snapshot = snapshot;
+            member.States = states;
+            var ownKey = new ResolveKey(snapshot.TakenUtc, snapshot, states, bundle, 0, 0, rewards);
+            Schedule(member, ownKey, () => FactsFor(catalog, states, snapshot, context, rewards, DateTime.UtcNow));
             return;
         }
 
-        if (id == session.LiveContentId && session.LiveSnapshot is { } liveSnapshot && session.LiveStates.Count > 0)
-        {
-            member.Snapshot = liveSnapshot;
-            member.States = session.LiveStates;
-            member.Facts = FactsFor(bundle.Catalog, session.LiveStates, liveSnapshot, session.Context, rewards, DateTime.UtcNow);
-            return;
-        }
-
-        var snapshot = member.Linked ?? Load(id, member.TakenUtc);
-        member.Snapshot = snapshot;
-        if (snapshot is null)
-        {
-            return;
-        }
-
+        // Another character: its last save, read and resolved on a worker once per capture time (keyed on TakenUtc, so
+        // another client's newer save is read again), catalog, festivals and rewards.
         var live = session.LiveSnapshot is { } logged ? ServerFestivals.Of(logged) : null;
-        var key = new ResolveKey(snapshot, bundle, live?.Ids.Count ?? -1, live is null ? 0 : string.Join(',', live.Ids).GetHashCode(StringComparison.Ordinal), rewards);
+        var linkedSave = member.Linked;
+        member.Snapshot = linkedSave;
+        var key = new ResolveKey(member.TakenUtc, linkedSave, null, bundle, live?.Ids.Count ?? -1, live is null ? 0 : string.Join(',', live.Ids).GetHashCode(StringComparison.Ordinal), rewards);
+        var load = loadSnapshot;
+        var contextFor = session.StoredContextFactory();
+        var warn = log;
+        Schedule(member, key, () =>
+        {
+            CharacterSnapshot? snapshot = linkedSave;
+            if (snapshot is null)
+            {
+                try
+                {
+                    snapshot = load(id);
+                }
+                catch (Exception ex)
+                {
+                    warn.Warning(ex, "Could not load the snapshot of character {ContentId} for the roster", id);
+                }
+            }
+
+            if (snapshot is null)
+            {
+                return null;
+            }
+
+            var context = contextFor(snapshot);
+            var states = (IReadOnlyDictionary<uint, QuestEvaluation>)StateResolver.ResolveAll(catalog, snapshot, context);
+            return FactsFor(catalog, states, snapshot, context, rewards, DateTime.UtcNow);
+        });
+    }
+
+    /// <summary>The session's own save, states and context for the character on view or the one logged in; null for another.</summary>
+    private (CharacterSnapshot Snapshot, IReadOnlyDictionary<uint, QuestEvaluation> States, EvalContext Context)? SessionStates(ulong id)
+    {
+        if (id == session.ViewedContentId && session.ViewedSnapshot is { } viewed && session.States.Count > 0)
+        {
+            return (viewed, session.States, session.Context);
+        }
+
+        if (id == session.LiveContentId && session.LiveSnapshot is { } live && session.LiveStates.Count > 0)
+        {
+            return (live, session.LiveStates, session.Context);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The member's facts for <paramref name="key"/>: the resolved ones when they match; else the last ones stand in
+    /// (states included, unless the member has its own) while <paramref name="work"/> runs on a worker, once per key.
+    /// </summary>
+    private void Schedule(Member member, ResolveKey key, Func<Facts?> work)
+    {
+        var id = member.ContentId;
         if (resolved.TryGetValue(id, out var done))
         {
-            // The last result stands in while a newer save (another client's) resolves.
-            member.States = done.Facts.States;
-            member.Facts = done.Facts;
+            if (done.Facts is { } facts)
+            {
+                member.Snapshot ??= facts.Snapshot;
+                member.States ??= facts.States;
+                member.Facts = facts;
+            }
+
             if (done.Key == key)
             {
                 return;
@@ -302,13 +385,7 @@ public sealed class RosterSource
             return;
         }
 
-        var context = session.ContextForStored(snapshot);
-        var catalog = bundle.Catalog;
-        resolving[id] = (key, Task.Run(() =>
-        {
-            var states = (IReadOnlyDictionary<uint, QuestEvaluation>)StateResolver.ResolveAll(catalog, snapshot, context);
-            return FactsFor(catalog, states, snapshot, context, rewards, DateTime.UtcNow);
-        }));
+        resolving[id] = (key, Task.Run(work));
     }
 
     /// <summary>Takes the resolves that finished; each one landing rebuilds the rows.</summary>
@@ -339,6 +416,7 @@ public sealed class RosterSource
             resolving.Remove(id);
             if (running.Task.IsCompletedSuccessfully)
             {
+                // An unreadable save lands as null facts: kept, so it is not read again until its capture time moves.
                 resolved[id] = new Resolved(running.Key, running.Task.Result);
             }
             else
@@ -350,28 +428,7 @@ public sealed class RosterSource
         landedCount++;
     }
 
-    private CharacterSnapshot? Load(ulong contentId, DateTime taken)
-    {
-        if (loaded.TryGetValue(contentId, out var cached) && cached.Taken == taken)
-        {
-            return cached.Snapshot;
-        }
-
-        CharacterSnapshot? snapshot = null;
-        try
-        {
-            snapshot = loadSnapshot(contentId);
-        }
-        catch (Exception ex)
-        {
-            log.Warning(ex, "Could not load the snapshot of character {ContentId} for the roster", contentId);
-        }
-
-        loaded[contentId] = (taken, snapshot);
-        return snapshot;
-    }
-
-    /// <summary>The roster's facts of one character: its story, Ready count, today's allowances, Moonlit left and level gate. Pure; runs on a worker for a stored save.</summary>
+    /// <summary>The roster's facts of one character: its save, story, Ready count, today's allowances, Moonlit left and level gate. Pure; runs on a worker.</summary>
     private static Facts FactsFor(
         QuestCatalog catalog,
         IReadOnlyDictionary<uint, QuestEvaluation> states,
@@ -388,6 +445,7 @@ public sealed class RosterSource
         }
 
         return new Facts(
+            snapshot,
             states,
             RosterBoard.StoryOf(catalog, states, gate?.Level ?? 0),
             RosterBoard.ReadyCount(catalog, states),
@@ -548,6 +606,7 @@ public sealed class RosterSource
     }
 
     private sealed record Facts(
+        CharacterSnapshot Snapshot,
         IReadOnlyDictionary<uint, QuestEvaluation> States,
         RosterStory? Story,
         int Ready,
@@ -556,9 +615,21 @@ public sealed class RosterSource
         int? MoonlitLeft,
         MsqLevelGate? LevelGate);
 
-    private sealed record Resolved(ResolveKey Key, Facts Facts);
+    private sealed record Resolved(ResolveKey Key, Facts? Facts);
 
-    private sealed record ResolveKey(CharacterSnapshot Snapshot, CatalogBundle Bundle, int FestivalCount, int FestivalHash, IReadOnlyList<UniqueRewardEntry>? Rewards);
+    /// <summary>
+    /// What a member's facts were made from: its capture time, the save itself when it was handed in (a linked folder's,
+    /// or the session's), the session's states for the character on view or logged in, the catalog, the festivals a
+    /// stored save was resolved with, and the rewards.
+    /// </summary>
+    private sealed record ResolveKey(
+        DateTime Taken,
+        CharacterSnapshot? Snapshot,
+        IReadOnlyDictionary<uint, QuestEvaluation>? States,
+        CatalogBundle Bundle,
+        int FestivalCount,
+        int FestivalHash,
+        IReadOnlyList<UniqueRewardEntry>? Rewards);
 
     private readonly record struct BuildKey(
         int RosterVersion,
@@ -570,7 +641,8 @@ public sealed class RosterSource
         DutyRunIndex? DutyRuns,
         FlightIndex? Flight,
         UniqueRewardCatalog? Rewards,
-        int Language);
+        int Language,
+        (DateTime Daily, DateTime Weekly) Cycle);
 
     private sealed record GoalKey(
         AltGoal Goal,

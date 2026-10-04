@@ -3,7 +3,9 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
 
@@ -16,10 +18,24 @@ public readonly record struct BoardRun(string Text, QuestState? Moon = null);
 internal readonly record struct BoardRowResult(bool Hovered, bool Teleport, bool MenuRequested);
 
 /// <summary>
+/// What the spoiler shield hides behind a masked board row ("An opponent ahead", "A zone ahead"), for the
+/// placeholder's hover and right-click (<see cref="ShieldText.Interact"/>, spec-1.20 N6).
+/// </summary>
+/// <param name="Session">The session whose reveals the menu adds to.</param>
+/// <param name="Kind">The hidden name's kind.</param>
+/// <param name="Name">The hidden name itself, never shown.</param>
+/// <param name="Quest">The quest whose context the row sits in; null for none.</param>
+/// <param name="Links">For "Reveal names in this quest" and "Open on…"; null for neither.</param>
+/// <param name="StandIn">The row is hidden because <paramref name="Quest"/> is: "Reveal this name" reveals the quest's names.</param>
+internal readonly record struct BoardShield(SessionState Session, SpoilerKind Kind, string Name, QuestRecord? Quest = null, GameLinks? Links = null, bool StandIn = false);
+
+/// <summary>
 /// The two-line board rows of 1.21 (spec-1.21 decision 17: the Triple Triad card, the zones board): 44 px at 100 %,
 /// scaled with the body text; an optional game icon; line 1 the name in Text with its fact (a place or a level span)
 /// and an optional neutral chip; line 2 what is left, in Secondary words; a reserved slot at the trailing end holding
-/// Teleport and "…", shown while the row is hovered or focused, so a hover never covers text and nothing moves.
+/// Teleport and "…", shown while the row is hovered, its menu is open or one of them holds keyboard focus (they are
+/// always submitted, so Tab reaches them), so a hover never covers text and nothing moves. A masked row's placeholder
+/// answers the shield's hover and right-click (<see cref="BoardShield"/>).
 /// </summary>
 internal static class BoardRow
 {
@@ -30,6 +46,9 @@ internal static class BoardRow
     private const float GapLogical = 8f;
 
     private static readonly string MoreGlyph = Chrome.Icon(Dalamud.Interface.FontAwesomeIcon.EllipsisH);
+
+    // The row (by its hover key) whose slot holds keyboard focus: its buttons stay shown while focus is in them.
+    private static ulong focusedRow;
 
     /// <summary>The row's height: 44 px at 100 %, never under two body lines and their air.</summary>
     public static float Height => MathF.Round(MathF.Max(UiMetrics.Px(RowLogical), (2f * ImGui.GetTextLineHeight()) + UiMetrics.Px(8f)));
@@ -50,6 +69,7 @@ internal static class BoardRow
     /// <param name="teleport">Teleport in the slot: null hides it; false shows it disabled.</param>
     /// <param name="teleportTooltip">Teleport's hover text (why it cannot run, or where it goes).</param>
     /// <param name="slot">Whether the slot holds anything at all (a masked row has no actions).</param>
+    /// <param name="shield">For a masked row, what its placeholder hides: the text column takes the shield's hover and right-click; null for none.</param>
     public static BoardRowResult Draw(
         string id,
         ulong hoverKey,
@@ -64,7 +84,8 @@ internal static class BoardRow
         bool? teleport,
         string teleportLabel,
         string teleportTooltip,
-        bool slot)
+        bool slot,
+        BoardShield? shield = null)
     {
         var s = Theme.Surface;
         var dl = ImGui.GetWindowDrawList();
@@ -148,19 +169,32 @@ internal static class BoardRow
             // Line 2: Secondary words; a quest's moon and its name in semibold Text.
             var cut2 = DrawRuns(dl, new Vector2(x, second), textRight, line, line2);
 
-            // The reserved slot: Teleport and "…", painted while the row is hovered (or one of them has focus).
-            var result = new BoardRowResult(rowHovered, false, rowHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Right));
+            // A masked row's placeholder: the shield's hover and right-click over the text column.
+            var shieldHovered = shield is { } hidden
+                && ShieldText.Interact(min, new Vector2(textRight, max.Y), hidden.Session, hidden.Kind, hidden.Name, name, hidden.Quest, hidden.Links, lead: nameCut ? name : null, standIn: hidden.StandIn);
+
+            // The reserved slot: Teleport and "…", shown while the row is hovered, its menu is open or one of them holds
+            // keyboard focus. They are submitted either way (painted nowhere while hidden), so Tab reaches them as it
+            // reaches P4's Do first rows.
+            var result = new BoardRowResult(rowHovered, false, rowHovered && !shieldHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Right));
             if (slot)
             {
                 var slotX = max.X - slotWidth;
                 var frame = ImGui.GetFrameHeight();
                 var buttonY = MathF.Round(min.Y + ((height - frame) * 0.5f));
-                var shown = rowHovered || menuOpen;
-                if (shown && teleport is { } canTeleport)
+                var shown = rowHovered || menuOpen || focusedRow == hoverKey;
+                var focused = false;
+                if (!shown)
+                {
+                    dl.PushClipRect(min, min, false);
+                }
+
+                if (teleport is { } canTeleport)
                 {
                     ImGui.SetCursorScreenPos(new Vector2(slotX, buttonY));
                     var clicked = Chrome.ActionPill("##teleport", ActionIcons.TeleportIcon, teleportLabel, PillTone.Normal, canTeleport, size: PillLayout.Row);
-                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) && teleportTooltip.Length > 0)
+                    focused |= ImGui.IsItemFocused();
+                    if (shown && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) && teleportTooltip.Length > 0)
                     {
                         UiMetrics.Tooltip(teleportTooltip);
                     }
@@ -168,18 +202,30 @@ internal static class BoardRow
                     result = result with { Teleport = clicked && canTeleport };
                 }
 
-                if (shown)
+                var more = UiMetrics.MinTarget;
+                ImGui.SetCursorScreenPos(new Vector2(max.X - more, MathF.Round(min.Y + ((height - more) * 0.5f))));
+                if (Chrome.IconButtonRound("##more", MoreGlyph, shown ? Strings.BoardRowMoreTooltip : null))
                 {
-                    var more = UiMetrics.MinTarget;
-                    ImGui.SetCursorScreenPos(new Vector2(max.X - more, MathF.Round(min.Y + ((height - more) * 0.5f))));
-                    if (Chrome.IconButtonRound("##more", MoreGlyph, Strings.BoardRowMoreTooltip))
-                    {
-                        result = result with { MenuRequested = true };
-                    }
+                    result = result with { MenuRequested = true };
+                }
+
+                focused |= ImGui.IsItemFocused();
+                if (!shown)
+                {
+                    dl.PopClipRect();
+                }
+
+                if (focused)
+                {
+                    focusedRow = hoverKey;
+                }
+                else if (focusedRow == hoverKey && !rowHovered)
+                {
+                    focusedRow = 0;
                 }
             }
 
-            if (rowHovered && !ImGui.IsAnyItemHovered() && (nameCut || cut2))
+            if (rowHovered && !shieldHovered && !ImGui.IsAnyItemHovered() && (nameCut || cut2))
             {
                 UiMetrics.Tooltip(name, Joined(line2));
             }

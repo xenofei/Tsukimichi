@@ -39,6 +39,14 @@ public sealed partial class CharactersPane
     // The goal card's "N more" toggle, per character.
     private ulong goalCardAll;
 
+    // The popover's pickers: the other characters and every picker's labels, built when the rows, the character or the
+    // language change, not per frame.
+    private (int Revision, ulong For, int Language) goalPickersKey = (-1, 0, -1);
+    private RosterRow[] goalOthers = [];
+    private string[] goalPatchLabels = [];
+    private string[] goalOtherLabels = [];
+    private string[] goalExpansionLabels = [];
+
     private void OpenGoal(RosterSource board, RosterRow row)
     {
         goalFor = row.ContentId;
@@ -93,14 +101,31 @@ public sealed partial class CharactersPane
                 var patches = board.StoryPatches;
                 return patches.Count == 0 ? null : AltGoal.Story(patches[Math.Clamp(goalPatch, 0, patches.Count - 1)].Patch);
             case 1:
-                var others = board.Others(goalFor).ToList();
-                return others.Count == 0 ? null : AltGoal.Match(others[Math.Clamp(goalOther, 0, others.Count - 1)].ContentId);
+                RefreshGoalPickers(board);
+                var others = goalOthers;
+                return others.Length == 0 ? null : AltGoal.Match(others[Math.Clamp(goalOther, 0, others.Length - 1)].ContentId);
             case 2:
                 var expansions = board.FlyingExpansions;
                 return expansions.Count == 0 ? null : AltGoal.Flying(expansions[Math.Clamp(goalExpansion, 0, expansions.Count - 1)].Expansion);
             default:
                 return AltGoal.Roulettes();
         }
+    }
+
+    /// <summary>The popover's picker lists, rebuilt when the roster's rows, the character or the language change.</summary>
+    private void RefreshGoalPickers(RosterSource board)
+    {
+        var key = (board.Revision, goalFor, Localization.Loc.Version);
+        if (key == goalPickersKey)
+        {
+            return;
+        }
+
+        goalPickersKey = key;
+        goalOthers = [.. board.Others(goalFor)];
+        goalPatchLabels = [.. board.StoryPatches.Select(static p => p.Patch + " " + p.Part)];
+        goalOtherLabels = [.. goalOthers.Select(static r => r.Name)];
+        goalExpansionLabels = [.. board.FlyingExpansions.Select(static e => e.Name)];
     }
 
     /// <summary>The Set a goal popover (opened by <see cref="OpenGoal"/>).</summary>
@@ -124,18 +149,16 @@ public sealed partial class CharactersPane
         ImGui.Spacing();
         var picker = UiMetrics.Px(170f);
         var labelRoom = UiMetrics.Px(220f);
+        RefreshGoalPickers(board);
 
-        var patches = board.StoryPatches;
-        GoalRadio(0, Strings.GoalKindStory, patches.Count > 0, Strings.GoalNoPatches, labelRoom);
-        PickerCombo("##goalPatch", ref goalPatch, patches.Select(static p => p.Patch + " " + p.Part).ToArray(), picker);
+        GoalRadio(0, Strings.GoalKindStory, goalPatchLabels.Length > 0, Strings.GoalNoPatches, labelRoom);
+        PickerCombo("##goalPatch", ref goalPatch, goalPatchLabels, picker);
 
-        var others = board.Others(goalFor).ToList();
-        GoalRadio(1, Strings.GoalKindMatch, others.Count > 0, Strings.GoalNoOthers, labelRoom);
-        PickerCombo("##goalOther", ref goalOther, others.Select(static r => r.Name).ToArray(), picker);
+        GoalRadio(1, Strings.GoalKindMatch, goalOtherLabels.Length > 0, Strings.GoalNoOthers, labelRoom);
+        PickerCombo("##goalOther", ref goalOther, goalOtherLabels, picker);
 
-        var expansions = board.FlyingExpansions;
-        GoalRadio(2, Strings.GoalKindFlying, expansions.Count > 0, Strings.GoalNoFlying, labelRoom);
-        PickerCombo("##goalExpansion", ref goalExpansion, expansions.Select(static e => e.Name).ToArray(), picker);
+        GoalRadio(2, Strings.GoalKindFlying, goalExpansionLabels.Length > 0, Strings.GoalNoFlying, labelRoom);
+        PickerCombo("##goalExpansion", ref goalExpansion, goalExpansionLabels, picker);
 
         GoalRadio(3, Strings.GoalKindRoulettes, true, string.Empty, labelRoom);
         ImGui.NewLine();
@@ -175,9 +198,10 @@ public sealed partial class CharactersPane
     /// <summary>One radio row; disabled with its reason when its picker has nothing to choose.</summary>
     private void GoalRadio(int index, string label, bool enabled, string disabledWhy, float room)
     {
+        using (ImRaii.PushId(index))
         using (ImRaii.Disabled(!enabled))
         {
-            ImGui.RadioButton(label + "##goalKind" + index.ToString(CultureInfo.InvariantCulture), ref goalKind, index);
+            ImGui.RadioButton(label, ref goalKind, index);
         }
 
         if (!enabled && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
@@ -234,6 +258,8 @@ public sealed partial class CharactersPane
             AltGoalKind.Story => string.Format(CultureInfo.CurrentCulture, Strings.GoalPreviewStoryFormat, progress.Left, goal.Patch),
             AltGoalKind.MatchCharacter => string.Format(CultureInfo.CurrentCulture, Strings.GoalPreviewMatchFormat, progress.Left, GoalText.OtherName(goal, board), goalForName),
             AltGoalKind.Flying => string.Format(CultureInfo.CurrentCulture, Strings.GoalPreviewFlyingFormat, progress.Left, board.FlyingExpansions.FirstOrDefault(e => e.Expansion == goal.Expansion).Name ?? string.Empty),
+            // A roulette closed by level: the level, never "0 duties".
+            _ when progress.LevelNeeded > 0 => GoalText.RoulettesLeft(progress),
             _ => string.Format(CultureInfo.CurrentCulture, Strings.GoalPreviewRoulettesFormat, progress.Left),
         };
         var now = string.Format(CultureInfo.CurrentCulture, Strings.GoalPreviewNowFormat, progress.Doable);
@@ -283,7 +309,7 @@ public sealed partial class CharactersPane
         var cardRight = cardTop.X + ImGui.GetContentRegionAvail().X;
         Chrome.BeginCard("##goalCard", title, null, eyebrow: true);
         var caption = row.GoalProgress is { Known: true } known && !known.Reached
-            ? string.Format(CultureInfo.CurrentCulture, Strings.GoalLeftFormat, known.Left)
+            ? known.Kind == AltGoalKind.Roulettes ? GoalText.RoulettesLeft(known) : string.Format(CultureInfo.CurrentCulture, Strings.GoalLeftFormat, known.Left)
             : GoalText.Left(row.GoalProgress);
         var heading = ImGui.GetItemRectMin();
         var captionWidth = ImGui.CalcTextSize(caption).X;
@@ -294,7 +320,14 @@ public sealed partial class CharactersPane
         }
 
         var progress = row.GoalProgress;
-        if (progress is null || !progress.Known)
+        var otherGone = goal is { Kind: AltGoalKind.MatchCharacter, Other: { } other } && board.IsForgotten(other);
+        if (otherGone)
+        {
+            // The other character was forgotten: the goal can never be read again, so the card says so and offers Clear
+            // from any client (it is a setting, not a hand-off).
+            TextFlow.Wrapped(Strings.GoalOtherGone, Chrome.RoomX(), Theme.U32(s.TextSecondary));
+        }
+        else if (progress is null || !progress.Known)
         {
             TextFlow.Wrapped(GoalText.Left(progress), Chrome.RoomX(), Theme.U32(s.TextSecondary));
         }
@@ -308,7 +341,18 @@ public sealed partial class CharactersPane
         }
 
         ImGui.Spacing();
-        DrawGoalActions(ui, board, row, goal, first, title);
+        if (otherGone)
+        {
+            if (Chrome.ActionChip("##goalClearGone", Strings.GoalClear))
+            {
+                ClearGoal(board, row.ContentId, row.Name, goal);
+            }
+        }
+        else
+        {
+            DrawGoalActions(ui, board, row, goal, first, title);
+        }
+
         Chrome.EndCard();
     }
 
@@ -349,7 +393,12 @@ public sealed partial class CharactersPane
                     ui.Reveal(quest);
                 }
 
-                if (ImGui.IsItemHovered())
+                if (masked)
+                {
+                    // The placeholder's hover and right-click (spec-1.20 N6): its reveal is the quest's names.
+                    ShieldText.InteractItem(session, Core.Query.SpoilerKind.Reward, quest.Name, name, quest, Links, lead: cut ? text : null, standIn: true);
+                }
+                else if (ImGui.IsItemHovered())
                 {
                     UiMetrics.Tooltip(cut ? text : name, Strings.TonightRowTooltip);
                 }

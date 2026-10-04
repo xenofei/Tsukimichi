@@ -13,7 +13,8 @@ namespace Tsukimichi.Ui;
 /// finished". Two-line rows (<see cref="DrawStoryRows"/>): line 1 the line's icon and name; line 2 a neutral Finale chip
 /// when the next quest ends the line, then one order for every row, "1 left · Lv 80 · ◑ A Harmony from the Heavens"
 /// (the approval record's note). A next quest past the story point names neither itself nor its zone: "1 left · ○ Job
-/// quest ahead (Lv 80)", with the moon disc and no actions.
+/// quest ahead (Lv 80)", with the moon disc and no actions; the placeholder takes the shield's hover and right-click.
+/// The "…" offers Not for me (P4's set-aside list, with Undo): the line leaves the card.
 /// </summary>
 public sealed partial class CharactersPane
 {
@@ -86,7 +87,12 @@ public sealed partial class CharactersPane
                 ahead,
                 string.Empty,
                 end.Line.Chain.RowIds,
-                end.Line.Kind is StoryLineKind.Chain or StoryLineKind.Story ? RecapQuestOf(session.Chains, end.Line.Chain, session.States) : 0);
+                end.Line.Kind is StoryLineKind.Chain or StoryLineKind.Story ? RecapQuestOf(session.Chains, end.Line.Chain, session.States) : 0)
+            {
+                // "Job quest ahead (Lv 80)" answers the shield's hover and right-click; its reveal is the quest's.
+                Shield = ahead ? new StoryShield(end.Next.Name, end.Next, OnName: false) : null,
+                NotForMe = true,
+            };
         }
 
         looseRows = rows;

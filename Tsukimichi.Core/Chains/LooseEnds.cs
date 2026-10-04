@@ -138,7 +138,11 @@ public static class LooseEnds
     }
 
     /// <summary>The loose ends among <paramref name="lines"/> for one character, in display order.</summary>
-    public static IReadOnlyList<LooseEnd> Find(IReadOnlyList<StoryLine> lines, IReadOnlyDictionary<uint, QuestEvaluation> states, QuestCatalog catalog)
+    /// <param name="setAside">
+    /// The character's set-aside quests (P4: "Not for me" from the card's menu, or "Set aside for later" in My blues): a
+    /// line whose next quest is one of them leaves the card, the overlay and the finale notice. Null sets none aside.
+    /// </param>
+    public static IReadOnlyList<LooseEnd> Find(IReadOnlyList<StoryLine> lines, IReadOnlyDictionary<uint, QuestEvaluation> states, QuestCatalog catalog, IReadOnlySet<uint>? setAside = null)
     {
         ArgumentNullException.ThrowIfNull(lines);
         ArgumentNullException.ThrowIfNull(states);
@@ -150,7 +154,7 @@ public static class LooseEnds
             var line = lines[i];
             var progress = ChainCatalog.Progress(line.Chain, states);
             if (progress.IsEmpty || progress.IsComplete || !IsStarted(progress.Done, progress.Total)
-                || progress.NextRowId is not { } nextRowId || catalog.GetByRowId(nextRowId) is not { } next)
+                || progress.NextRowId is not { } nextRowId || setAside?.Contains(nextRowId) == true || catalog.GetByRowId(nextRowId) is not { } next)
             {
                 continue;
             }

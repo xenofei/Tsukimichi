@@ -187,10 +187,19 @@ public sealed class CharacterSettings
         Nickname = Trimmed(Nickname);
     }
 
-    /// <summary>The longest role or nickname kept, in characters.</summary>
+    /// <summary>The longest role or nickname kept, in characters (text elements: what a reader counts as one).</summary>
     public const int MaxLabelLength = 24;
 
-    /// <summary>A role or nickname as kept: trimmed, cut to <see cref="MaxLabelLength"/>, null when blank.</summary>
+    /// <summary>
+    /// The text field's buffer for a role or nickname, in UTF-8 bytes (ImGui counts bytes, not characters): room for
+    /// <see cref="MaxLabelLength"/> characters of up to four bytes each, so a Japanese nickname is not cut at eight.
+    /// </summary>
+    public const int MaxLabelBytes = MaxLabelLength * 4;
+
+    /// <summary>
+    /// A role or nickname as kept: trimmed, cut to <see cref="MaxLabelLength"/> characters on a character boundary
+    /// (never inside a surrogate pair or a combined emoji), null when blank.
+    /// </summary>
     public static string? Trimmed(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -199,7 +208,13 @@ public sealed class CharacterSettings
         }
 
         var trimmed = text.Trim();
-        return trimmed.Length > MaxLabelLength ? trimmed[..MaxLabelLength].TrimEnd() : trimmed;
+        if (trimmed.Length <= MaxLabelLength)
+        {
+            return trimmed;
+        }
+
+        var elements = new System.Globalization.StringInfo(trimmed);
+        return elements.LengthInTextElements > MaxLabelLength ? elements.SubstringByTextElements(0, MaxLabelLength).TrimEnd() : trimmed;
     }
 }
 

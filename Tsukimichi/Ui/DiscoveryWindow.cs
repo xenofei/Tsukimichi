@@ -213,6 +213,9 @@ public sealed partial class DiscoveryWindow : Window, IDisposable
         {
             DrawContent();
             DrawNearbyModals();
+
+            // The menu of Everywhere's placeholders ("A zone ahead"), at the window's root (spec-1.20 N6).
+            ShieldText.DrawMenu(nameof(DiscoveryWindow), session);
         }
         finally
         {

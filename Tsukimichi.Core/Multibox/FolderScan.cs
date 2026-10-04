@@ -101,6 +101,17 @@ public static class FolderScan
 
                     // Another client's file: read without quarantining anything, whatever it holds.
                     var read = store.LoadShared(contentId);
+                    if (read is { Status: SharedLoad.Loaded, Value: { } inner } && inner.ContentId != contentId)
+                    {
+                        // A file naming another character than its own name says (copied or renamed by hand): keyed by
+                        // its file name everywhere (stamps, removal), so it is not taken in under the other id, where
+                        // nothing would ever drop it. The heartbeats follow the same rule (Heartbeat.ReadAll).
+                        read = new SharedRead<CharacterSnapshot>(
+                            SharedLoad.Invalid,
+                            null,
+                            $"Snapshot {Path.GetFileName(path)} holds character {inner.ContentId.ToString(CultureInfo.InvariantCulture)}, not the one its name says; it is skipped and left in place.");
+                    }
+
                     switch (read.Status)
                     {
                         case SharedLoad.Loaded:

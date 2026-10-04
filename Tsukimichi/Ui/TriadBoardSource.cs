@@ -56,6 +56,13 @@ public sealed class TriadBoardSource
         public TriadOpponent Opponent => Model.Opponent;
 
         public bool Masked => Model.Masked;
+
+        /// <summary>
+        /// For a masked row, what its placeholder hides (the shield's hover and right-click): the quest past the story
+        /// point it waits on, revealed with its names ("Reveal this name" stands for that quest), or the hidden zone it
+        /// stands in. Null for a row the shield does not mask.
+        /// </summary>
+        public (SpoilerKind Kind, string Name, QuestRecord? Quest, bool StandIn)? Shield { get; init; }
     }
 
     /// <summary>Whether the card has anything to show: the opponents are read and a character is viewed.</summary>
@@ -219,11 +226,13 @@ public sealed class TriadBoardSource
             BoardRun[] runs = row.Quest is { } hidden
                 ? [new BoardRun(Strings.TriadAfter), new BoardRun(session.Spoilers.DisplayName(hidden))]
                 : [new BoardRun(Strings.TriadWaitsForStory)];
-            return new Row(row, Strings.TriadOpponentAhead, Strings.TriadZoneAhead, runs, null, 0, string.Empty);
+            return new Row(row, Strings.TriadOpponentAhead, Strings.TriadZoneAhead, runs, null, 0, string.Empty) { Shield = ShieldOf(row) };
         }
 
-        var name = Capitalize(opponent.Name);
-        var place = opponent.Zone;
+        // The people and places through the wider shield (1.20 N6), as every other name on the card.
+        var spoilers = session.Spoilers;
+        var name = Capitalize(spoilers.Name(SpoilerKind.Npc, opponent.Name));
+        var place = spoilers.Name(SpoilerKind.Area, opponent.Zone);
         var near = opponent.Spot is { } spot ? links.Aetherytes.Nearest(spot.TerritoryId, spot.X, spot.Z) : null;
         var aetheryteName = near is null ? string.Empty : session.Spoilers.Name(SpoilerKind.Area, near.Name);
         BoardRun[] line2;
@@ -248,6 +257,27 @@ public sealed class TriadBoardSource
         }
 
         return new Row(row, name, place, line2, row.Quest, near?.RowId ?? 0, aetheryteName);
+    }
+
+    /// <summary>
+    /// What a masked row's placeholder hides: the first quest of its gate the shield masks (its reveal is that quest's,
+    /// which unmasks the row), else the zone it stands in when that is the hidden name.
+    /// </summary>
+    private (SpoilerKind Kind, string Name, QuestRecord? Quest, bool StandIn)? ShieldOf(TriadRow row)
+    {
+        var spoilers = session.Spoilers;
+        var opponent = row.Opponent;
+        foreach (var rowId in opponent.Gate.QuestIds)
+        {
+            if (spoilers.IsMasked(rowId) && session.Bundle?.Catalog.GetByRowId(rowId) is { } quest)
+            {
+                return (SpoilerKind.Npc, opponent.Name, quest, true);
+            }
+        }
+
+        return opponent.Zone.Length > 0 && spoilers.IsNameMasked(SpoilerKind.Area, opponent.Zone)
+            ? (SpoilerKind.Area, opponent.Zone, row.Quest, false)
+            : null;
     }
 
     /// <summary>"3 cards you don't have", "beaten · 2 cards left", "not beaten yet · every card yours".</summary>

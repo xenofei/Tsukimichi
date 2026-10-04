@@ -166,5 +166,12 @@ public class StorylinesFixtureTests(FixtureCatalog fixture, ITestOutputHelper ou
         var rows = SideStories.Build(Chains, Evaluations(states.Select(kv => (kv.Key, kv.Value))), mask.IsAhead);
         Assert.True(rows.Single(r => r.Chain.Name == "Tataru's Grand Endeavor").Ahead);
         Assert.False(rows.Single(r => r.Chain.Name == "Scholasticate Quests").Ahead);
+
+        // "Reveal this name" on its placeholder ("A side story ahead", "Sidequest (Lv 90)") reveals the quest for the
+        // session: it no longer reads as ahead, though its anchor stays masked, and the mask's fingerprint moves.
+        var revealed = SpoilerMask.Build(Catalog, states, SpoilerOptions.Default, revealed: new HashSet<uint> { SmallBusinessBigDreams }, names: SpoilerNames.Build(Catalog, QuestUnlocks.Empty));
+        Assert.False(revealed.IsAhead(SmallBusinessBigDreams));
+        Assert.NotEqual(mask.Fingerprint, revealed.Fingerprint);
+        Assert.Equal(mask.MaskedCount, revealed.MaskedCount);
     }
 }

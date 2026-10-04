@@ -79,7 +79,7 @@ public sealed class SpoilerMask
     public static string PlaceholderFormat => CoreText.T("Core.Spoiler.Placeholder", "Main scenario quest (Lv {0})");
 
     /// <summary>Masks nothing and shows every banner: no catalog yet, or the shield turned off.</summary>
-    public static readonly SpoilerMask None = new(SpoilerOptions.Off, FrozenDictionary<uint, byte>.Empty, FrozenSet<uint>.Empty, byte.MaxValue, 0, SpoilerNames.Empty, FrozenSet<(SpoilerKind Kind, string Name)>.Empty);
+    public static readonly SpoilerMask None = new(SpoilerOptions.Off, FrozenDictionary<uint, byte>.Empty, FrozenSet<uint>.Empty, byte.MaxValue, 0, SpoilerNames.Empty, FrozenSet<(SpoilerKind Kind, string Name)>.Empty, FrozenSet<uint>.Empty);
 
     // One placeholder (and its lowercased search form) per display level and language, shared by every mask: a
     // rebuild per session version allocates no strings. Written racily at worst with equal values.
@@ -112,9 +112,15 @@ public sealed class SpoilerMask
     /// <summary>The names revealed for the session ("Reveal this name", "Reveal names in this quest").</summary>
     private readonly FrozenSet<(SpoilerKind Kind, string Name)> reveals;
 
+    /// <summary>
+    /// Quests of any kind past the story point by their anchor (<see cref="IsAhead"/>) that were revealed for the session
+    /// ("Reveal this name" on "Sidequest (Lv 90)"): they read as reached, though their anchor stays masked.
+    /// </summary>
+    private readonly FrozenSet<uint> revealedAhead;
+
     private int maskedNameCount = -1;
 
-    private SpoilerMask(SpoilerOptions options, IReadOnlyDictionary<uint, byte> masked, IReadOnlySet<uint> ahead, byte reachExpansion, int fingerprint, SpoilerNames names, FrozenSet<(SpoilerKind Kind, string Name)> reveals)
+    private SpoilerMask(SpoilerOptions options, IReadOnlyDictionary<uint, byte> masked, IReadOnlySet<uint> ahead, byte reachExpansion, int fingerprint, SpoilerNames names, FrozenSet<(SpoilerKind Kind, string Name)> reveals, FrozenSet<uint> revealedAhead)
     {
         Options = options;
         this.masked = masked;
@@ -123,6 +129,7 @@ public sealed class SpoilerMask
         Fingerprint = fingerprint;
         this.names = names;
         this.reveals = reveals;
+        this.revealedAhead = revealedAhead;
     }
 
     /// <summary>The options the mask was built with.</summary>
@@ -607,11 +614,11 @@ public sealed class SpoilerMask
     /// <summary>
     /// Whether a quest of any kind lies past the story point (plan v7, 1.21.0 P5, N8): it is a masked main scenario
     /// quest, or, with the wider shield on, its story anchor (<see cref="SpoilerNames.AnchorOf"/>: the latest main
-    /// scenario quest it needs) is. A side story or a job quest past the point names neither itself nor its zone.
-    /// Allocates nothing.
+    /// scenario quest it needs) is. A side story or a job quest past the point names neither itself nor its zone. A
+    /// quest revealed for the session ("Reveal this name") is not ahead. Allocates nothing.
     /// </summary>
     public bool IsAhead(uint rowId) =>
-        masked.ContainsKey(rowId) || (names.AnchorOf(rowId) is var anchor and not 0 && masked.ContainsKey(anchor));
+        masked.ContainsKey(rowId) || (names.AnchorOf(rowId) is var anchor and not 0 && masked.ContainsKey(anchor) && !revealedAhead.Contains(rowId));
 
     /// <summary>
     /// Whether a duty's name is hidden behind "A duty further along the story": every quest it is shown through (the
@@ -922,7 +929,24 @@ public sealed class SpoilerMask
 
         var reachExpansion = msq is null ? byte.MaxValue : noStates ? (byte)0 : msq.Next?.Expansion ?? byte.MaxValue;
         hash.Add(reachExpansion);
-        return new SpoilerMask(options, masked, ahead, reachExpansion, hash.ToHashCode(), related, reveals);
+
+        // Quests ahead only by their anchor that were revealed: they change what IsAhead answers, so the fingerprint too.
+        var revealedAhead = FrozenSet<uint>.Empty;
+        if (revealed is { Count: > 0 } && masked.Count > 0)
+        {
+            var found = revealed.Where(r => !masked.ContainsKey(r) && related.AnchorOf(r) is var anchor and not 0 && masked.ContainsKey(anchor)).ToFrozenSet();
+            var sum = 0u;
+            foreach (var rowId in found)
+            {
+                sum = unchecked(sum + rowId);
+            }
+
+            hash.Add(found.Count);
+            hash.Add(sum);
+            revealedAhead = found;
+        }
+
+        return new SpoilerMask(options, masked, ahead, reachExpansion, hash.ToHashCode(), related, reveals, revealedAhead);
     }
 
     /// <summary>

@@ -30,6 +30,9 @@ public sealed partial class CharactersPane
     private const uint TriadHoverTag = 0x5454_5244; // "TTRD"
 
     private TriadChips triadChips = TriadChips.All;
+
+    // The locked rows the chips keep this frame: one list, cleared and refilled, never allocated per frame.
+    private readonly List<TriadBoardSource.Row> triadKept = [];
     private bool triadPlaysOpen;
     private bool triadLockedOpen;
 
@@ -71,7 +74,8 @@ public sealed partial class CharactersPane
             }
         }
 
-        var kept = new List<TriadBoardSource.Row>(board.Named.Count);
+        var kept = triadKept;
+        kept.Clear();
         if (triadChips.Locked || triadChips.CardsLeft)
         {
             foreach (var row in board.Named)
@@ -180,7 +184,8 @@ public sealed partial class CharactersPane
     {
         var links = TriadLinks;
         var actions = !row.Masked && links is not null;
-        bool? teleport = actions && links!.TeleportShown ? row.AetheryteId != 0 && links.CanTeleportTo(row.AetheryteId) : null;
+        // Travel only for the character logged in here (spec-1.21 decision 5).
+        bool? teleport = actions && ViewedLiveHere && links!.TeleportShown ? row.AetheryteId != 0 && links.CanTeleportTo(row.AetheryteId) : null;
         var tip = !actions || row.AetheryteId == 0 ? Strings.TriadNoAetheryte
             : links!.TeleportToBlocked(row.AetheryteId) ?? string.Format(CultureInfo.CurrentCulture, Strings.TriadTeleportFormat, row.AetheryteName);
         var result = BoardRow.Draw(
@@ -197,7 +202,8 @@ public sealed partial class CharactersPane
             teleport,
             Strings.PlanTeleport,
             tip,
-            slot: actions);
+            slot: actions,
+            shield: row.Shield is { } hidden ? new BoardShield(session, hidden.Kind, hidden.Name, hidden.Quest, links, hidden.StandIn) : null);
         if (result.Teleport && links is not null)
         {
             links.TeleportTo(row.AetheryteId, row.AetheryteName);
@@ -237,7 +243,11 @@ public sealed partial class CharactersPane
                 ui.Reveal(quest);
             }
 
-            AutomationGate.Questionable(Questionable)?.DrawSubmenu(MainWindow.QuestionableHost, Strings.QuestionableSendButton, new[] { quest.RowId }, static rows => rows);
+            // Hand-offs only for the character logged in here (spec-1.21 decision 5).
+            if (ViewedLiveHere)
+            {
+                AutomationGate.Questionable(Questionable)?.DrawSubmenu(MainWindow.QuestionableHost, Strings.QuestionableSendButton, new[] { quest.RowId }, static rows => rows);
+            }
         }
     }
 

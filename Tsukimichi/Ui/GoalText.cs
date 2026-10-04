@@ -53,10 +53,28 @@ internal static class GoalText
         var left = progress.Kind switch
         {
             AltGoalKind.Flying => progress.Left == 1 ? Strings.GoalZonesLeftOne : Format(Strings.GoalZonesLeftFormat, progress.Left),
-            AltGoalKind.Roulettes => progress.Left == 1 ? Strings.GoalDutiesLeftOne : Format(Strings.GoalDutiesLeftFormat, progress.Left),
+            AltGoalKind.Roulettes => RoulettesLeft(progress),
             _ => Format(Strings.GoalLeftFormat, progress.Left),
         };
         return progress.Doable > 0 ? left + Strings.GoalSeparator + Format(Strings.GoalReadyFormat, progress.Doable) : left;
+    }
+
+    /// <summary>"2 duties left", "Lv 50 needed", or both: a roulette's level is never counted as a duty.</summary>
+    public static string RoulettesLeft(AltGoalProgress progress)
+    {
+        var duties = progress.Left switch
+        {
+            0 => string.Empty,
+            1 => Strings.GoalDutiesLeftOne,
+            _ => Format(Strings.GoalDutiesLeftFormat, progress.Left),
+        };
+        if (progress.LevelNeeded <= 0)
+        {
+            return duties;
+        }
+
+        var level = Format(Strings.RosterLevelNeededFormat, progress.LevelNeeded);
+        return duties.Length == 0 ? level : duties + Strings.GoalSeparator + level;
     }
 
     /// <summary>The other character's first name, or the words for one no list has.</summary>

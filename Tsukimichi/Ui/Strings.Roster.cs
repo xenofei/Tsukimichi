@@ -175,6 +175,7 @@ static partial class Strings
     /// <summary>A goal this character's save cannot answer (no duty records).</summary>
     public static string GoalUnknown => Loc.Get("GoalUnknown");
     public static string GoalOtherUnread => Loc.Get("GoalOtherUnread");
+    public static string GoalOtherGone => Loc.Get("GoalOtherGone");
     public static string GoalAnotherCharacter => Loc.Get("GoalAnotherCharacter");
     /// <summary>{0} = a patch ("7.0").</summary>
     public static string GoalStoryTitleFormat => Loc.Get("GoalStoryTitleFormat");
@@ -253,6 +254,8 @@ static partial class Strings
     public static string LinkedFoldersPathHint => Loc.Get("LinkedFoldersPathHint");
     public static string LinkedFoldersAdd => Loc.Get("LinkedFoldersAdd");
     public static string LinkedFoldersRemove => Loc.Get("LinkedFoldersRemove");
+    /// <summary>{0} = the folder's path.</summary>
+    public static string LinkedFoldersRemovedToastFormat => Loc.Get("LinkedFoldersRemovedToastFormat");
     public static string LinkedFoldersDetect => Loc.Get("LinkedFoldersDetect");
     public static string LinkedFoldersNotFound => Loc.Get("LinkedFoldersNotFound");
     public static string LinkedFoldersNoneFound => Loc.Get("LinkedFoldersNoneFound");

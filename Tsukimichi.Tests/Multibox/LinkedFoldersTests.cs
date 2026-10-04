@@ -103,6 +103,30 @@ public sealed class LinkedFoldersTests : IDisposable
     }
 
     [Fact]
+    public void A_folder_that_fails_loses_its_live_flags_and_one_that_is_gone_its_characters()
+    {
+        // 1.21 Core review: one throwing folder aborted the whole pass, so every linked row kept its last "Live" for
+        // good; a folder that disappeared kept its characters on the roster for good.
+        var a = Roaming("A", 10);
+        var b = Roaming("B", 20);
+        var now = DateTime.UtcNow;
+        HeartbeatFile.Write(Path.Combine(a, LinkedFolders.CharactersFolder), new Heartbeat(10, "Character 10", 74, 2000, "other", now, now));
+        var folders = new LinkedFolders();
+        folders.ScanAll([a, b], f => Scan(folders, f));
+        Assert.True(folders.Characters([a, b], new HashSet<ulong>(), Me, now).Single(static c => c.ContentId == 10).Live);
+
+        var failed = new List<string>();
+        folders.ScanAll([a, b], f => f == a ? throw new InvalidOperationException("bad file") : Scan(folders, f), (f, _) => failed.Add(f));
+        var shown = folders.Characters([a, b], new HashSet<ulong>(), Me, now);
+        Assert.Equal([a], failed);
+        Assert.Equal([10UL, 20UL], shown.Select(static c => c.ContentId));
+        Assert.False(shown.Single(static c => c.ContentId == 10).Live);
+
+        folders.ScanAll([a, b], f => f == b ? null : Scan(folders, f));
+        Assert.Equal([10UL], folders.Characters([a, b], new HashSet<ulong>(), Me, now).Select(static c => c.ContentId));
+    }
+
+    [Fact]
     public void Reading_a_linked_folder_never_writes_or_moves_anything_there()
     {
         var folder = Roaming("A", 10);

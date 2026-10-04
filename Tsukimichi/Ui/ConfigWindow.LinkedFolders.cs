@@ -12,8 +12,8 @@ namespace Tsukimichi.Ui;
 /// Settings › Characters &amp; data › Characters › "Also read characters from these folders" (plan v7, 1.21.0 P3): other
 /// XIVLauncher roaming folders whose Tsukimichi characters the All characters roster lists, read only, marked "other
 /// folder" (the standard multibox setup gives each client its own roaming folder). Auto-detect lists the Tsukimichi
-/// folders beside this client's and under %AppData%; a folder is added by its path. Nothing in a linked folder is ever
-/// written.
+/// folders beside this client's and under %AppData%; a folder is added by its path, and Remove has the 8-second Undo.
+/// Nothing in a linked folder is ever written.
 /// </summary>
 public sealed partial class ConfigWindow
 {
@@ -52,8 +52,12 @@ public sealed partial class ConfigWindow
 
         if (remove >= 0)
         {
-            linked.Unlink(folders[remove]);
+            // No confirm: one click removes it, and the floating Undo (8 s) puts it back where it was.
+            var folder = folders[remove];
+            var at = remove;
+            linked.Unlink(folder);
             Save();
+            UndoToast.Show(string.Format(CultureInfo.CurrentCulture, Strings.LinkedFoldersRemovedToastFormat, folder), () => Relink(linked, folder, at));
         }
 
         ImGui.SetNextItemWidth(UiMetrics.Px(320f));
@@ -111,5 +115,19 @@ public sealed partial class ConfigWindow
         }
 
         EndSetting();
+    }
+
+    /// <summary>Undo of Remove: the folder back at its place in the list (even if it cannot be read just now), read again.</summary>
+    private void Relink(LinkedFolderService linked, string folder, int at)
+    {
+        var folders = settings.LinkedCharacterFolders;
+        if (folders.Contains(folder, StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        folders.Insert(Math.Clamp(at, 0, folders.Count), folder);
+        linked.Refresh();
+        Save();
     }
 }

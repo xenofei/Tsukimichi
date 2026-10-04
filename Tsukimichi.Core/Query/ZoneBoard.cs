@@ -101,7 +101,9 @@ public sealed record ZoneExpansion(byte Expansion, byte MinLevel, byte MaxLevel,
 /// <para>
 /// <b>A zone's quests</b> are those whose giver stands there, still in the game and counted in totals (not
 /// repeatables). Its level span is theirs, done or not. A quest is left when it is not done (Completed, done this
-/// cycle) and not out of the totals (locked out, out of season, a spare alternative).
+/// cycle), not out of the totals (locked out, out of season, a spare alternative) and not set aside (P4: "Set aside
+/// for later" and "Not for me" leave Nearby, so a set-aside quest counts for no kind, though it keeps its level in
+/// the span).
 /// </para>
 /// <para>
 /// <b>Order.</b> The group whose level span holds the job's level comes first (the highest such; above every span, the
@@ -125,6 +127,7 @@ public static class ZoneBoard
     /// <param name="reachExpansion">The expansion the story has reached (<see cref="SpoilerMask.ReachExpansion"/>); 255 reveals all.</param>
     /// <param name="zoneMasked">Whether the shield hides a zone name; null hides none.</param>
     /// <param name="isNew">Whether a quest came with the newest patch series; null marks none.</param>
+    /// <param name="setAside">The character's set-aside quests (<c>SessionState.ViewedSetAside</c>): counted for no kind; null sets none aside.</param>
     public static IReadOnlyList<ZoneExpansion> Build(
         IReadOnlyList<UnlockZone> zones,
         QuestCatalog catalog,
@@ -136,7 +139,8 @@ public static class ZoneBoard
         bool includeOtherJob = true,
         byte reachExpansion = byte.MaxValue,
         Func<string, bool>? zoneMasked = null,
-        Func<QuestRecord, bool>? isNew = null)
+        Func<QuestRecord, bool>? isNew = null,
+        IReadOnlySet<uint>? setAside = null)
     {
         ArgumentNullException.ThrowIfNull(zones);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -169,7 +173,7 @@ public static class ZoneBoard
             tally.IsNew |= isNew?.Invoke(quest) == true;
             var evaluation = states.GetValueOrDefault(quest.RowId);
             var state = evaluation?.State ?? QuestState.Unknown;
-            if (state is QuestState.Completed or QuestState.DoneThisCycle || evaluation is { LeavesTotals: true })
+            if (state is QuestState.Completed or QuestState.DoneThisCycle || evaluation is { LeavesTotals: true } || setAside?.Contains(quest.RowId) == true)
             {
                 continue;
             }

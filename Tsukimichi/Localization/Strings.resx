@@ -1483,6 +1483,10 @@
   <data name="LooseEndsFinaleTooltip" xml:space="preserve">
     <value>The next quest ends this storyline.</value>
   </data>
+  <data name="LooseEndsNotForMeTooltip" xml:space="preserve">
+    <value>Set this storyline aside for good: it leaves Loose ends, the overlay and the finale notice. Undo brings it back.</value>
+    <comment>The Loose ends row's "Not for me" (1.21 P4's set-aside list).</comment>
+  </data>
   <data name="LooseEndsLeftFormat" xml:space="preserve">
     <value>{0} left · </value>
     <comment>{0} = quests left; a quest past the story point follows. Keep the trailing space.</comment>
@@ -15293,6 +15297,10 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="GoalOtherUnread" xml:space="preserve">
     <value>the other character's save is being read</value>
   </data>
+  <data name="GoalOtherGone" xml:space="preserve">
+    <value>The character this goal matches is no longer on your roster, so it can't be read. Clear it, or set a new one.</value>
+    <comment>The goal card of a "match another character" goal whose other character was forgotten.</comment>
+  </data>
   <data name="GoalAnotherCharacter" xml:space="preserve">
     <value>another character</value>
   </data>
@@ -15472,6 +15480,10 @@ Another job or society: a job, class or allied society you don't play now.</valu
   </data>
   <data name="LinkedFoldersRemove" xml:space="preserve">
     <value>Remove</value>
+  </data>
+  <data name="LinkedFoldersRemovedToastFormat" xml:space="preserve">
+    <value>Stopped reading {0}</value>
+    <comment>The Undo toast after removing a linked folder. {0} = the folder's path.</comment>
   </data>
   <data name="LinkedFoldersDetect" xml:space="preserve">
     <value>Auto-detect</value>

@@ -11,7 +11,10 @@ namespace Tsukimichi.Core.Model;
 /// <param name="Cards">The watched cards (<c>TripleTriadCard</c> row ids) the character owns.</param>
 public sealed record TriadRecordCapture(uint Watch, IReadOnlyList<uint> Beaten, IReadOnlyList<uint> Cards)
 {
-    /// <summary>Same watch list and the same records; the lists compare in order (captures write them sorted).</summary>
+    /// <summary>
+    /// Same watch list and the same records; the lists compare in order (captures write them sorted). A list a
+    /// hand-edited or damaged file left null reads as empty.
+    /// </summary>
     public static bool Same(TriadRecordCapture? a, TriadRecordCapture? b)
     {
         if (ReferenceEquals(a, b))
@@ -24,6 +27,10 @@ public sealed record TriadRecordCapture(uint Watch, IReadOnlyList<uint> Beaten, 
             return false;
         }
 
-        return a.Beaten.SequenceEqual(b.Beaten) && a.Cards.SequenceEqual(b.Cards);
+        return (a.Beaten ?? []).SequenceEqual(b.Beaten ?? []) && (a.Cards ?? []).SequenceEqual(b.Cards ?? []);
     }
+
+    /// <summary>This capture with a null list (a hand-edited or damaged file's <c>"beaten": null</c>) read as empty; this instance when none is.</summary>
+    public TriadRecordCapture Normalized() =>
+        Beaten is null || Cards is null ? this with { Beaten = Beaten ?? [], Cards = Cards ?? [] } : this;
 }
