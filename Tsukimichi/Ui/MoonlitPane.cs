@@ -299,6 +299,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     // "Also opens: …" per quest, composed once per index revision, reach and Moonlit catalog.
     private readonly Dictionary<uint, string> alsoOpens = [];
     private int alsoOpensRevision = -1;
+    private int alsoOpensShield;
     private byte alsoOpensReach = byte.MaxValue;
     private UniqueRewardCatalog? alsoOpensCatalog;
 
@@ -316,8 +317,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         var reach = UnlockReach?.Invoke() ?? byte.MaxValue;
         var moonlit = Catalog;
-        if (alsoOpensRevision != unlocks.Revision || alsoOpensReach != reach || !ReferenceEquals(alsoOpensCatalog, moonlit))
+        var shield = session.Spoilers.Fingerprint;
+        if (alsoOpensRevision != unlocks.Revision || alsoOpensReach != reach || !ReferenceEquals(alsoOpensCatalog, moonlit) || alsoOpensShield != shield)
         {
+            alsoOpensShield = shield;
             alsoOpensRevision = unlocks.Revision;
             alsoOpensReach = reach;
             alsoOpensCatalog = moonlit;
@@ -328,11 +331,17 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             var uniques = moonlit.ForQuest(quest.RowId);
             var entries = new List<Core.Unlocks.UnlockEntry>();
-            foreach (var entry in Core.Unlocks.UnlockView.Visible(unlocks.For(quest.RowId), masked: false, reach))
+            // Matched against the Moonlit rows as they are; printed as the shield shows them (1.20.0 N6). Both lists
+            // keep the same rows in the same order.
+            var rows = unlocks.For(quest.RowId);
+            var plain = Core.Unlocks.UnlockView.Visible(rows, masked: false, reach);
+            var shown = Core.Unlocks.UnlockView.Visible(rows, masked: false, reach, session.Spoilers);
+            for (var i = 0; i < plain.Count; i++)
             {
-                if (!uniques.Any(unique => Core.Unlocks.UnlockRewards.Same(unique, entry)))
+                var own = plain[i];
+                if (!uniques.Any(unique => Core.Unlocks.UnlockRewards.Same(unique, own)))
                 {
-                    entries.Add(entry);
+                    entries.Add(shown[i]);
                 }
             }
 
@@ -2581,9 +2590,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             Index = index;
             Group = group;
-            var icon = art.Icon;
+
+            // The wider shield (1.20.0 N6): a reward the story has not introduced is its placeholder, with the kind's
+            // icon only (no art of its own, no gallery picture, no item tooltip).
+            var primaryQuest = questOf(entry.QuestRowId);
+            var rewardName = RewardNames.Display(entry, primaryQuest, catalogLanguage);
+            var shielded = spoilers.IsNameMasked(SpoilerKind.Reward, rewardName);
+            var icon = shielded ? 0u : art.Icon;
             Icon = icon;
-            Picture = art.Picture;
+            Picture = shielded ? 0u : art.Picture;
             KindIcon = art.Fallback;
             Hidden = hidden;
             IReadOnlyList<uint> ids = group is null ? [entry.QuestRowId] : group.Quests;
@@ -2600,12 +2615,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 questEntries[i] = group?.FirstOf(ids[i]) ?? entry;
             }
 
-            var primaryQuest = questOf(entry.QuestRowId);
             KindName = Strings.MoonlitKindName(entry.Kind);
-            var rewardName = RewardNames.Display(entry, primaryQuest, catalogLanguage);
             var baseName = string.IsNullOrWhiteSpace(rewardName)
                 ? KindName + " #" + entry.RewardId.ToString(CultureInfo.InvariantCulture)
-                : rewardName;
+                : shielded ? spoilers.Name(SpoilerKind.Reward, rewardName) : rewardName;
             var search = new List<string> { baseName };
             if (group is { IsChoice: true })
             {
@@ -2617,7 +2630,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 {
                     if (seen.Add(RewardKey.Of(item)))
                     {
-                        var itemName = RewardNames.Display(item, questOf(item.QuestRowId), catalogLanguage);
+                        var itemName = spoilers.Name(SpoilerKind.Reward, RewardNames.Display(item, questOf(item.QuestRowId), catalogLanguage));
                         items.Add(itemName);
                         search.Add(itemName);
                     }
@@ -2652,7 +2665,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
 
             DropsInDuty = drop is not null;
-            DropTooltip = drop is null ? string.Empty : Strings.MoonlitAlsoDropsTooltip(drop.DropWhere);
+            DropTooltip = drop is null ? string.Empty : Strings.MoonlitAlsoDropsTooltip(spoilers.Name(SpoilerKind.Duty, drop.DropWhere));
             Reward = icon == 0 ? null : RewardFor(primaryQuest, entry, icon, baseName);
         }
 
