@@ -18,6 +18,26 @@ public enum JournalRoom : byte
 }
 
 /// <summary>
+/// How the status bar shows the journal count (spec-1.19 C9, "In the status bar"): nothing below
+/// <see cref="JournalSlots.ShowFrom"/>, then the count in Secondary, in Text once <see cref="JournalRoom.Near"/>, and
+/// "Journal full" with the copper dot and Make room at the cap.
+/// </summary>
+public enum JournalBar : byte
+{
+    /// <summary>Fewer than <see cref="JournalSlots.ShowFrom"/> slots used: nothing shows.</summary>
+    Hidden,
+
+    /// <summary>"Journal 25/30" in Secondary.</summary>
+    Quiet,
+
+    /// <summary>"Journal 28/30" in Text: <see cref="JournalRoom.Near"/>.</summary>
+    Near,
+
+    /// <summary>"Journal full · 30/30" in Text with the copper dot, and Make room.</summary>
+    Full,
+}
+
+/// <summary>
 /// The quest journal's slots (feature plan v7, C9): the game holds at most <see cref="GameCap"/> accepted quests
 /// (<c>QuestManager.NormalQuests</c> has that many slots; allied society dailies and levequests are kept apart). Said
 /// as what is left ("3 journal slots left", "Journal full"), never as a tally. Pure.
@@ -32,10 +52,27 @@ public readonly record struct JournalSlots(int Used, int Cap)
     /// <summary>At this many free slots or fewer the journal reads <see cref="JournalRoom.Near"/>.</summary>
     public const int NearLeft = 3;
 
+    /// <summary>The status bar (and the Todo overlay, when asked) shows the count from this many slots used.</summary>
+    public const int ShowFrom = 25;
+
     /// <summary>Free slots, never below 0.</summary>
     public int Left => Math.Max(0, Cap - Used);
 
     public JournalRoom Room => Left == 0 ? JournalRoom.Full : Left <= NearLeft ? JournalRoom.Near : JournalRoom.Room;
+
+    /// <summary>How the status bar shows the count (spec-1.19 C9): hidden below <see cref="ShowFrom"/>, then by <see cref="Room"/>.</summary>
+    public JournalBar Bar => Room switch
+    {
+        JournalRoom.Full => JournalBar.Full,
+        JournalRoom.Near => JournalBar.Near,
+        _ => Used >= ShowFrom ? JournalBar.Quiet : JournalBar.Hidden,
+    };
+
+    /// <summary>
+    /// Whether a quest in <paramref name="state"/> reads "journal full" (spec-1.19 C9, "In rows and the hero"): the
+    /// journal is full and the quest could otherwise be taken (Ready, on this job or another).
+    /// </summary>
+    public bool KeepsOut(QuestState state) => Room == JournalRoom.Full && state is QuestState.Ready or QuestState.ReadyOnOtherJob;
 
     /// <summary>
     /// The character's slots: the client's own count when the capture has it (<see cref="CharacterSnapshot.JournalSlotsUsed"/>),

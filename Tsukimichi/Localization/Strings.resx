@@ -7708,12 +7708,6 @@
     <value>Route: {0}</value>
     <comment>Core: TodoList.cs. The overlay's route section caption. {0} = the route's target.</comment>
   </data>
-  <data name="GameOfferTooltip" xml:space="preserve">
-    <value>What the game itself showed: its map's available-quest markers and the quest offer window. Tsukimichi records them for the logged-in character and checks its own answer against them; they never change a state.</value>
-  </data>
-  <data name="GameOfferDisagreesTooltip" xml:space="preserve">
-    <value>The game showed this quest as available in the last hour, but Tsukimichi's data says it is not. One of the two is wrong: Report this quest (the round bug button) copies a block that includes what the game showed.</value>
-  </data>
   <data name="GameOffersNotLive" xml:space="preserve">
     <value>The game's own offers: log in to compare them with Tsukimichi.</value>
   </data>
@@ -7725,7 +7719,7 @@
     <comment>{0} = quests the game showed that Tsukimichi reads as not available, {1} = Not checked quests the game showed, {2} = Ready quests the game did not show.</comment>
   </data>
   <data name="GameOffersTooltip" xml:space="preserve">
-    <value>Tsukimichi reads the game's available-quest markers and quest offers for the logged-in character and compares them with its own states. A disagreement is worth a bug report; a missing marker is only a hint, since the game hides some markers.</value>
+    <value>Tsukimichi reads the game's available-quest markers and quest offers for the logged-in character and compares them with its own states. A Not checked quest the game shows reads Ready; a disagreement is worth a bug report, and Go with the game is yours to pick. A missing marker is only a hint, since the game hides some markers.</value>
   </data>
   <data name="GameOffersCopy" xml:space="preserve">
     <value>Copy game checks</value>
@@ -7793,40 +7787,8 @@
   <data name="GearsetSwitchLoggedOut" xml:space="preserve">
     <value>no character is logged in</value>
   </data>
-  <data name="JournalFullReadyLine" xml:space="preserve">
-    <value>Your journal is full: hand in or drop a quest before you can take this one.</value>
-  </data>
-  <data name="JournalFullReadyTooltip" xml:space="preserve">
-    <value>The game holds 30 quests at a time. Characters › Make room lists the quests in your journal by what dropping them costs.</value>
-  </data>
   <data name="JournalRoomTooltip" xml:space="preserve">
-    <value>The game holds 30 quests at a time; allied society quests and levequests are kept apart. Make room lists your journal's quests by what freeing their slot costs.</value>
-  </data>
-  <data name="JournalRoomEmpty" xml:space="preserve">
-    <value>No quests in the journal.</value>
-  </data>
-  <data name="JournalRoomNote" xml:space="preserve">
-    <value>Make room: hand in quests at their last step first. Tsukimichi never abandons a quest; to drop one, open the game's Journal, select it and choose Abandon. The Abandoned list keeps it with the step it had reached.</value>
-  </data>
-  <data name="JournalRoomColumnAdvice" xml:space="preserve">
-    <value>Make room</value>
-  </data>
-  <data name="JournalRoomHandIn" xml:space="preserve">
-    <value>Hand in</value>
-  </data>
-  <data name="JournalRoomSafeToDrop" xml:space="preserve">
-    <value>Safe to drop</value>
-  </data>
-  <data name="JournalRoomKeep" xml:space="preserve">
-    <value>Keep</value>
-  </data>
-  <data name="Core.GameOffer.Confirms" xml:space="preserve">
-    <value>The game offers this quest (seen {0}), so the gate Tsukimichi cannot read is met.</value>
-    <comment>Core: GameOfferChecks.cs. {0} = age ("2 days ago").</comment>
-  </data>
-  <data name="Core.GameOffer.Disagrees" xml:space="preserve">
-    <value>The game offered this quest {0}, but Tsukimichi reads it as not available. Report this quest so it can be fixed.</value>
-    <comment>Core: GameOfferChecks.cs. {0} = age ("5 min ago").</comment>
+    <value>The game holds 30 quests at a time; allied society dailies and levequests are kept apart. Make room groups your journal's quests by what finishing them takes, and marks the ones safe to drop.</value>
   </data>
   <data name="Core.GameOffer.WhyOffer" xml:space="preserve">
     <value>Game: offered to you {0}.</value>
@@ -7851,38 +7813,6 @@
   <data name="Core.Journal.Left" xml:space="preserve">
     <value>{0} journal slots left</value>
     <comment>Core: JournalSlots.cs. {0} = free slots.</comment>
-  </data>
-  <data name="Core.MakeRoom.Unknown" xml:space="preserve">
-    <value>Not in Tsukimichi's quest list, so it can't say what dropping it costs.</value>
-    <comment>Core: MakeRoom.cs.</comment>
-  </data>
-  <data name="Core.MakeRoom.MainScenario" xml:space="preserve">
-    <value>Main scenario: the game won't let you abandon it.</value>
-    <comment>Core: MakeRoom.cs.</comment>
-  </data>
-  <data name="Core.MakeRoom.HandIn" xml:space="preserve">
-    <value>At its last step: hand it in to free the slot.</value>
-    <comment>Core: MakeRoom.cs.</comment>
-  </data>
-  <data name="Core.MakeRoom.Repeatable" xml:space="preserve">
-    <value>Repeatable: dropping it doesn't give back today's allowance.</value>
-    <comment>Core: MakeRoom.cs.</comment>
-  </data>
-  <data name="Core.MakeRoom.Seasonal" xml:space="preserve">
-    <value>Seasonal: the event may end before you can take it again.</value>
-    <comment>Core: MakeRoom.cs.</comment>
-  </data>
-  <data name="Core.MakeRoom.Started" xml:space="preserve">
-    <value>Started ({0}): you'd do those steps again.</value>
-    <comment>Core: MakeRoom.cs. {0} = "step 3 of 5".</comment>
-  </data>
-  <data name="Core.MakeRoom.NoGiver" xml:space="preserve">
-    <value>No known giver to take it from again.</value>
-    <comment>Core: MakeRoom.cs.</comment>
-  </data>
-  <data name="Core.MakeRoom.SafeToDrop" xml:space="preserve">
-    <value>Not started: take it again from {0} any time.</value>
-    <comment>Core: MakeRoom.cs. {0} = the quest giver's name.</comment>
   </data>
   <data name="Core.Age.JustNow" xml:space="preserve">
     <value>just now</value>
@@ -13004,5 +12934,217 @@
   <data name="HandInMisplacedArmoury" xml:space="preserve">
     <value>The game counts your inventory only: take it out of the armoury chest.</value>
     <comment>Hand in line (1.19, N5).</comment>
+  </data>
+  <data name="GameOfferedFormat" xml:space="preserve">
+    <value>Offered by the game · {0}</value>
+    <comment>Detail pane hero, after the state (1.19 C1). {0} = the date the game first offered it (short, no year unless another year).</comment>
+  </data>
+  <data name="GameOfferedTooltip" xml:space="preserve">
+    <value>The game itself showed you this quest as available: a quest marker on the map, or its offer window. Tsukimichi takes the game's word for what it can't check.</value>
+  </data>
+  <data name="GameOfferedOverrideTooltip" xml:space="preserve">
+    <value>You chose Go with the game: Tsukimichi shows this quest as Ready on this character because the game offered it. Use Tsukimichi's answer in the quest's "…" takes that back.</value>
+  </data>
+  <data name="SeenInGameChip" xml:space="preserve">
+    <value>seen in game</value>
+    <comment>Journal row, trailing (1.19 C1).</comment>
+  </data>
+  <data name="SeenInGameTooltipFormat" xml:space="preserve">
+    <value>The game offered this quest on {0}.</value>
+    <comment>{0} = date.</comment>
+  </data>
+  <data name="SeenInGameOverrideTooltipFormat" xml:space="preserve">
+    <value>The game offered this quest on {0}. You chose to go with the game.</value>
+    <comment>{0} = date.</comment>
+  </data>
+  <data name="GameDisagreesChip" xml:space="preserve">
+    <value>game disagrees</value>
+    <comment>Journal row, trailing (1.19 C1).</comment>
+  </data>
+  <data name="GameDisagreesTooltipFormat" xml:space="preserve">
+    <value>The game offered it; Tsukimichi expects {0} first.</value>
+    <comment>{0} = the quest Tsukimichi expects first (through the spoiler shield).</comment>
+  </data>
+  <data name="GameDisagreesReasonTooltipFormat" xml:space="preserve">
+    <value>The game offered it; Tsukimichi has it as {0}: {1}.</value>
+    <comment>{0} = Tsukimichi's state, {1} = its reason.</comment>
+  </data>
+  <data name="GameCardTitle" xml:space="preserve">
+    <value>The game and Tsukimichi disagree</value>
+  </data>
+  <data name="GameCardWhyFormat" xml:space="preserve">
+    <value>The game offered {0} on {1}, but Tsukimichi has it as {2}: it expects {3} first.</value>
+    <comment>{0} = the quest, {1} = date, {2} = Tsukimichi's state, {3} = the quest it expects first.</comment>
+  </data>
+  <data name="GameCardWhyReasonFormat" xml:space="preserve">
+    <value>The game offered {0} on {1}, but Tsukimichi has it as {2}: {3}.</value>
+    <comment>{0} = the quest, {1} = date, {2} = Tsukimichi's state, {3} = its reason.</comment>
+  </data>
+  <data name="GameCardContext" xml:space="preserve">
+    <value>One of us is wrong. The game sees your character; Tsukimichi's data may be out of date.</value>
+  </data>
+  <data name="GoWithGame" xml:space="preserve">
+    <value>Go with the game</value>
+  </data>
+  <data name="GoWithGameTooltip" xml:space="preserve">
+    <value>Shows this quest as Ready on this character, as the game does. The disagreement stays in the report either way.</value>
+  </data>
+  <data name="GameCardHint" xml:space="preserve">
+    <value>Shows it as Ready on this character until the data agrees. Undo any time from the quest's "…".</value>
+  </data>
+  <data name="GameCardCopyReport" xml:space="preserve">
+    <value>Copy report</value>
+  </data>
+  <data name="GameCardCopied" xml:space="preserve">
+    <value>Copied</value>
+  </data>
+  <data name="GameCardCopyReportTooltip" xml:space="preserve">
+    <value>Copies the quest's report block, with what the game showed and Tsukimichi's own answer, for a bug report.</value>
+  </data>
+  <data name="GoWithGameToastFormat" xml:space="preserve">
+    <value>{0} reads Ready on this character: the game's answer.</value>
+    <comment>Undo toast. {0} = the quest (through the spoiler shield).</comment>
+  </data>
+  <data name="UseOwnAnswer" xml:space="preserve">
+    <value>Use Tsukimichi's answer</value>
+    <comment>The quest's "…" menu (1.19 C1).</comment>
+  </data>
+  <data name="UseOwnAnswerTooltip" xml:space="preserve">
+    <value>You went with the game for this quest on this character. This shows Tsukimichi's own answer again.</value>
+  </data>
+  <data name="UseOwnAnswerToastFormat" xml:space="preserve">
+    <value>{0}: back to Tsukimichi's answer.</value>
+    <comment>Undo toast. {0} = the quest (through the spoiler shield).</comment>
+  </data>
+  <data name="JournalBarFormat" xml:space="preserve">
+    <value>Journal {0}/{1}</value>
+    <comment>Status bar (1.19 C9). {0} = slots used, {1} = slots the journal has.</comment>
+  </data>
+  <data name="JournalBarFullFormat" xml:space="preserve">
+    <value>Journal full · {0}/{1}</value>
+    <comment>Status bar (1.19 C9). {0} = slots used, {1} = slots the journal has.</comment>
+  </data>
+  <data name="JournalBarLeftOne" xml:space="preserve">
+    <value>1 slot left</value>
+  </data>
+  <data name="JournalBarLeftFormat" xml:space="preserve">
+    <value>{0} slots left</value>
+    <comment>{0} = free journal slots.</comment>
+  </data>
+  <data name="JournalBarFullTooltip" xml:space="preserve">
+    <value>Ready quests can't be accepted until you finish or drop one</value>
+  </data>
+  <data name="JournalFullWords" xml:space="preserve">
+    <value>journal full</value>
+    <comment>Journal row and hero, after Ready (1.19 C9).</comment>
+  </data>
+  <data name="JournalFullRowTooltip" xml:space="preserve">
+    <value>Your journal is full: the game won't let you accept this quest until you finish or drop one. Make room in the status bar shows which.</value>
+  </data>
+  <data name="MakeRoom" xml:space="preserve">
+    <value>Make room</value>
+  </data>
+  <data name="MakeRoomTooltip" xml:space="preserve">
+    <value>Your journal's quests by what finishing them takes, and the ones safe to drop. Tsukimichi never abandons a quest.</value>
+  </data>
+  <data name="MakeRoomToAccept" xml:space="preserve">
+    <value>Make room to accept it</value>
+    <comment>Detail pane hero link (1.19 C9).</comment>
+  </data>
+  <data name="MakeRoomSubtitleFormat" xml:space="preserve">
+    <value>{0} of {1} slots. Finish one, or drop one in the game's journal.</value>
+    <comment>{0} = slots used, {1} = slots the journal has.</comment>
+  </data>
+  <data name="MakeRoomFinishNow" xml:space="preserve">
+    <value>Finish now</value>
+  </data>
+  <data name="MakeRoomFinishNowSub" xml:space="preserve">
+    <value>one talk or delivery left</value>
+  </data>
+  <data name="MakeRoomNeedsDuty" xml:space="preserve">
+    <value>Needs a duty</value>
+  </data>
+  <data name="MakeRoomNeedsDutySub" xml:space="preserve">
+    <value>solo or with NPCs</value>
+  </data>
+  <data name="MakeRoomNeedsItem" xml:space="preserve">
+    <value>Needs an item</value>
+  </data>
+  <data name="MakeRoomNeedsItemSub" xml:space="preserve">
+    <value>to hand in</value>
+  </data>
+  <data name="MakeRoomNeedsGroup" xml:space="preserve">
+    <value>Needs a group</value>
+  </data>
+  <data name="MakeRoomNeedsGroupSub" xml:space="preserve">
+    <value>other players</value>
+  </data>
+  <data name="MakeRoomSafeToDrop" xml:space="preserve">
+    <value>Safe to drop</value>
+  </data>
+  <data name="MakeRoomSafeToDropSub" xml:space="preserve">
+    <value>still on step 1: nothing to redo if you take it again</value>
+  </data>
+  <data name="MakeRoomTalk" xml:space="preserve">
+    <value>a talk</value>
+  </data>
+  <data name="MakeRoomDelivery" xml:space="preserve">
+    <value>a delivery</value>
+  </data>
+  <data name="MakeRoomSoloDutyFormat" xml:space="preserve">
+    <value>a solo duty · {0}</value>
+    <comment>{0} = the duty.</comment>
+  </data>
+  <data name="MakeRoomNpcDutyFormat" xml:space="preserve">
+    <value>with NPCs · {0}</value>
+    <comment>{0} = the duty (Duty Support or Trust).</comment>
+  </data>
+  <data name="MakeRoomGroupFormat" xml:space="preserve">
+    <value>{0} · {1} players</value>
+    <comment>{0} = the duty, {1} = players it seats.</comment>
+  </data>
+  <data name="MakeRoomGroupUnknownFormat" xml:space="preserve">
+    <value>{0} · with other players</value>
+    <comment>{0} = the duty, party size unknown.</comment>
+  </data>
+  <data name="MakeRoomItemFormat" xml:space="preserve">
+    <value>{0} · {1} in your inventory</value>
+    <comment>{0} = the item, {1} = how many count toward the hand-in.</comment>
+  </data>
+  <data name="MakeRoomStepOneFormat" xml:space="preserve">
+    <value>step 1 · {0}</value>
+    <comment>{0} = where the giver stands.</comment>
+  </data>
+  <data name="MakeRoomStepOne" xml:space="preserve">
+    <value>step 1</value>
+  </data>
+  <data name="MakeRoomSafeChip" xml:space="preserve">
+    <value>safe to drop</value>
+  </data>
+  <data name="MakeRoomSafeChipTooltipFormat" xml:space="preserve">
+    <value>On its first step: dropping it loses nothing, and {0} offers it again.</value>
+    <comment>{0} = the giver.</comment>
+  </data>
+  <data name="MakeRoomOpenInJournal" xml:space="preserve">
+    <value>Open in journal</value>
+  </data>
+  <data name="MakeRoomOpenInJournalTooltip" xml:space="preserve">
+    <value>Shows the quest in the game's journal. To drop it, choose Abandon there: the game asks first.</value>
+  </data>
+  <data name="MakeRoomOpenInJournalStored" xml:space="preserve">
+    <value>Log in as this character to open the game's journal.</value>
+  </data>
+  <data name="MakeRoomFooter" xml:space="preserve">
+    <value>Tsukimichi never abandons a quest. Open in journal shows it in the game, where you drop it and the game asks first. Tsukimichi notes the step you had reached.</value>
+  </data>
+  <data name="MakeRoomNothing" xml:space="preserve">
+    <value>Nothing in the journal is quick to finish or safe to drop right now.</value>
+  </data>
+  <data name="TodoJournalCount" xml:space="preserve">
+    <value>Journal count</value>
+    <comment>Settings › Todo overlay (1.19 C9).</comment>
+  </data>
+  <data name="TodoJournalCountTooltip" xml:space="preserve">
+    <value>Shows how full the journal is once 25 of its 30 slots are used, as the status bar does.</value>
   </data>
 </root>

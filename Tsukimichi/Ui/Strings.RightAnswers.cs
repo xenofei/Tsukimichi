@@ -10,8 +10,38 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     // ---- C1: the game confirms it ----
-    public static string GameOfferTooltip => Loc.Get("GameOfferTooltip");
-    public static string GameOfferDisagreesTooltip => Loc.Get("GameOfferDisagreesTooltip");
+    /// <summary>{0} = the date the game first offered it.</summary>
+    public static string GameOfferedFormat => Loc.Get("GameOfferedFormat");
+    public static string GameOfferedTooltip => Loc.Get("GameOfferedTooltip");
+    public static string GameOfferedOverrideTooltip => Loc.Get("GameOfferedOverrideTooltip");
+    public static string SeenInGameChip => Loc.Get("SeenInGameChip");
+    /// <summary>{0} = date.</summary>
+    public static string SeenInGameTooltipFormat => Loc.Get("SeenInGameTooltipFormat");
+    /// <summary>{0} = date.</summary>
+    public static string SeenInGameOverrideTooltipFormat => Loc.Get("SeenInGameOverrideTooltipFormat");
+    public static string GameDisagreesChip => Loc.Get("GameDisagreesChip");
+    /// <summary>{0} = the quest Tsukimichi expects first.</summary>
+    public static string GameDisagreesTooltipFormat => Loc.Get("GameDisagreesTooltipFormat");
+    /// <summary>{0} = Tsukimichi's state, {1} = its reason.</summary>
+    public static string GameDisagreesReasonTooltipFormat => Loc.Get("GameDisagreesReasonTooltipFormat");
+    public static string GameCardTitle => Loc.Get("GameCardTitle");
+    /// <summary>{0} = the quest, {1} = date, {2} = Tsukimichi's state, {3} = the quest it expects first.</summary>
+    public static string GameCardWhyFormat => Loc.Get("GameCardWhyFormat");
+    /// <summary>{0} = the quest, {1} = date, {2} = Tsukimichi's state, {3} = its reason.</summary>
+    public static string GameCardWhyReasonFormat => Loc.Get("GameCardWhyReasonFormat");
+    public static string GameCardContext => Loc.Get("GameCardContext");
+    public static string GoWithGame => Loc.Get("GoWithGame");
+    public static string GoWithGameTooltip => Loc.Get("GoWithGameTooltip");
+    public static string GameCardHint => Loc.Get("GameCardHint");
+    public static string GameCardCopyReport => Loc.Get("GameCardCopyReport");
+    public static string GameCardCopied => Loc.Get("GameCardCopied");
+    public static string GameCardCopyReportTooltip => Loc.Get("GameCardCopyReportTooltip");
+    /// <summary>{0} = the quest.</summary>
+    public static string GoWithGameToastFormat => Loc.Get("GoWithGameToastFormat");
+    public static string UseOwnAnswer => Loc.Get("UseOwnAnswer");
+    public static string UseOwnAnswerTooltip => Loc.Get("UseOwnAnswerTooltip");
+    /// <summary>{0} = the quest.</summary>
+    public static string UseOwnAnswerToastFormat => Loc.Get("UseOwnAnswerToastFormat");
     public static string GameOffersNotLive => Loc.Get("GameOffersNotLive");
     public static string GameOffersNone => Loc.Get("GameOffersNone");
     /// <summary>{0} = disagreements, {1} = confirmed, {2} = Ready quests the game did not show.</summary>
@@ -50,15 +80,57 @@ static partial class Strings
     public static string GearsetSwitchLoggedOut => Loc.Get("GearsetSwitchLoggedOut");
 
     // ---- C9: journal slots and Make room ----
-    public static string JournalFullReadyLine => Loc.Get("JournalFullReadyLine");
-    public static string JournalFullReadyTooltip => Loc.Get("JournalFullReadyTooltip");
     public static string JournalRoomTooltip => Loc.Get("JournalRoomTooltip");
-    public static string JournalRoomEmpty => Loc.Get("JournalRoomEmpty");
-    public static string JournalRoomNote => Loc.Get("JournalRoomNote");
-    public static string JournalRoomColumnAdvice => Loc.Get("JournalRoomColumnAdvice");
-    public static string JournalRoomHandIn => Loc.Get("JournalRoomHandIn");
-    public static string JournalRoomSafeToDrop => Loc.Get("JournalRoomSafeToDrop");
-    public static string JournalRoomKeep => Loc.Get("JournalRoomKeep");
+    /// <summary>{0} = slots used, {1} = slots the journal has.</summary>
+    public static string JournalBarFormat => Loc.Get("JournalBarFormat");
+    /// <summary>{0} = slots used, {1} = slots the journal has.</summary>
+    public static string JournalBarFullFormat => Loc.Get("JournalBarFullFormat");
+    public static string JournalBarLeftOne => Loc.Get("JournalBarLeftOne");
+    /// <summary>{0} = free slots.</summary>
+    public static string JournalBarLeftFormat => Loc.Get("JournalBarLeftFormat");
+    public static string JournalBarFullTooltip => Loc.Get("JournalBarFullTooltip");
+    public static string JournalFullWords => Loc.Get("JournalFullWords");
+    public static string JournalFullRowTooltip => Loc.Get("JournalFullRowTooltip");
+    public static string MakeRoom => Loc.Get("MakeRoom");
+    public static string MakeRoomTooltip => Loc.Get("MakeRoomTooltip");
+    public static string MakeRoomToAccept => Loc.Get("MakeRoomToAccept");
+    /// <summary>{0} = slots used, {1} = slots the journal has.</summary>
+    public static string MakeRoomSubtitleFormat => Loc.Get("MakeRoomSubtitleFormat");
+    public static string MakeRoomFinishNow => Loc.Get("MakeRoomFinishNow");
+    public static string MakeRoomFinishNowSub => Loc.Get("MakeRoomFinishNowSub");
+    public static string MakeRoomNeedsDuty => Loc.Get("MakeRoomNeedsDuty");
+    public static string MakeRoomNeedsDutySub => Loc.Get("MakeRoomNeedsDutySub");
+    public static string MakeRoomNeedsItem => Loc.Get("MakeRoomNeedsItem");
+    public static string MakeRoomNeedsItemSub => Loc.Get("MakeRoomNeedsItemSub");
+    public static string MakeRoomNeedsGroup => Loc.Get("MakeRoomNeedsGroup");
+    public static string MakeRoomNeedsGroupSub => Loc.Get("MakeRoomNeedsGroupSub");
+    public static string MakeRoomSafeToDrop => Loc.Get("MakeRoomSafeToDrop");
+    public static string MakeRoomSafeToDropSub => Loc.Get("MakeRoomSafeToDropSub");
+    public static string MakeRoomTalk => Loc.Get("MakeRoomTalk");
+    public static string MakeRoomDelivery => Loc.Get("MakeRoomDelivery");
+    /// <summary>{0} = the duty.</summary>
+    public static string MakeRoomSoloDutyFormat => Loc.Get("MakeRoomSoloDutyFormat");
+    /// <summary>{0} = the duty.</summary>
+    public static string MakeRoomNpcDutyFormat => Loc.Get("MakeRoomNpcDutyFormat");
+    /// <summary>{0} = the duty, {1} = players it seats.</summary>
+    public static string MakeRoomGroupFormat => Loc.Get("MakeRoomGroupFormat");
+    /// <summary>{0} = the duty.</summary>
+    public static string MakeRoomGroupUnknownFormat => Loc.Get("MakeRoomGroupUnknownFormat");
+    /// <summary>{0} = the item, {1} = how many count.</summary>
+    public static string MakeRoomItemFormat => Loc.Get("MakeRoomItemFormat");
+    /// <summary>{0} = where the giver stands.</summary>
+    public static string MakeRoomStepOneFormat => Loc.Get("MakeRoomStepOneFormat");
+    public static string MakeRoomStepOne => Loc.Get("MakeRoomStepOne");
+    public static string MakeRoomSafeChip => Loc.Get("MakeRoomSafeChip");
+    /// <summary>{0} = the giver.</summary>
+    public static string MakeRoomSafeChipTooltipFormat => Loc.Get("MakeRoomSafeChipTooltipFormat");
+    public static string MakeRoomOpenInJournal => Loc.Get("MakeRoomOpenInJournal");
+    public static string MakeRoomOpenInJournalTooltip => Loc.Get("MakeRoomOpenInJournalTooltip");
+    public static string MakeRoomOpenInJournalStored => Loc.Get("MakeRoomOpenInJournalStored");
+    public static string MakeRoomFooter => Loc.Get("MakeRoomFooter");
+    public static string MakeRoomNothing => Loc.Get("MakeRoomNothing");
+    public static string TodoJournalCount => Loc.Get("TodoJournalCount");
+    public static string TodoJournalCountTooltip => Loc.Get("TodoJournalCountTooltip");
 
     // ---- C3: gates Tsukimichi can't check ----
     public static string GateCantCheck => Loc.Get("GateCantCheck");

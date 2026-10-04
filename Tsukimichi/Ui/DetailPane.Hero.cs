@@ -388,6 +388,9 @@ public sealed partial class DetailPane
             TextFlow.Wrapped(model.StatusReason, textRoom, Theme.U32(Theme.Surface.TextSecondary));
         }
 
+        // 1.19.0: "Offered by the game · 3 Oct" or "Make room to accept it" after the state (DetailPane.GameAnswers.cs).
+        DrawStateExtra(quest, bodyRight, inline: true);
+
         if (model.Callout is null && model.StateNote is { } note)
         {
             TextFlow.Wrapped(note, textRoom, Theme.U32(Theme.Surface.TextDisabled));
@@ -460,6 +463,13 @@ public sealed partial class DetailPane
         {
             ImGui.SetCursorScreenPos(new Vector2(valueX, ImGui.GetCursorScreenPos().Y));
             TextFlow.Wrapped(note, valueRoom, Theme.U32(Theme.Surface.TextDisabled));
+        }
+
+        // 1.19.0: the item after the state, on its own line in the value column (DetailPane.GameAnswers.cs).
+        if (HasStateExtra(quest))
+        {
+            ImGui.SetCursorScreenPos(new Vector2(valueX, ImGui.GetCursorScreenPos().Y));
+            DrawStateExtra(quest, bodyRight, inline: false);
         }
 
         // Level: the header line (expansion · level · job).
@@ -707,6 +717,11 @@ public sealed partial class DetailPane
                 TextFlow.Wrapped(model.StatusReason, RoomTo(bodyRight), Theme.U32(Theme.Surface.Text));
             }
 
+            if (model.Quest is { } titled)
+            {
+                DrawStateExtra(titled, bodyRight, inline: model.StatusReason.Length > 0);
+            }
+
             if (model.StateNote is { } stateNote)
             {
                 TextFlow.Wrapped(stateNote, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextDisabled));
@@ -728,6 +743,11 @@ public sealed partial class DetailPane
             {
                 TextFlow.Wrapped(model.StatusReason, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextSecondary));
             }
+        }
+
+        if (model.Quest is { } shown)
+        {
+            DrawStateExtra(shown, bodyRight, inline: true);
         }
 
         if (model.StateNote is { } note)
