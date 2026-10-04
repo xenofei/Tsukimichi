@@ -174,6 +174,15 @@ public sealed record CharacterSnapshot
     public DutyRecordCapture? DutyRecords { get; init; }
 
     /// <summary>
+    /// Which Triple Triad opponents the character has beaten and which of their cards it owns (1.21.0 P6), from the
+    /// game's own records (<c>UIState.IsTripleTriadNpcBeaten</c> and <c>IsTripleTriadCardUnlocked</c>), so a stored
+    /// character keeps its Triple Triad card. Additive at schema v1: null when not read (files written before 1.21, the
+    /// game hooks paused), which the card shows as "log in to read"; null is not written.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public TriadRecordCapture? TriadRecords { get; init; }
+
+    /// <summary>
     /// The collectible rewards of the unique-reward data the character owns, per kind (keyed by <see cref="RewardKind"/>
     /// name: Mount, Emote, …; see <see cref="Unique.Collectibles"/>), read from the client's unlock flags at capture, so
     /// a stored character, or one live in another game client, still answers "owned?" (decision 9). Keys are names

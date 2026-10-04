@@ -29,7 +29,8 @@ namespace Tsukimichi.Core.Runtime;
 /// </param>
 /// <param name="RecordsChanged">
 /// The item levels (<see cref="CharacterSnapshot.ItemLevel"/>, <see cref="CharacterSnapshot.JobItemLevels"/>) or the
-/// Duties board's records (<see cref="CharacterSnapshot.DutyRecords"/>) changed (1.19.0, C7 and N4). The capture is
+/// Duties board's records (<see cref="CharacterSnapshot.DutyRecords"/>) changed (1.19.0, C7 and N4), or the Triple
+/// Triad records (<see cref="CharacterSnapshot.TriadRecords"/>, 1.21.0 P6). The capture is
 /// saved and published; no quest's state reads them, so nothing is resolved.
 /// </param>
 public sealed record SnapshotDiff(
@@ -98,11 +99,12 @@ public sealed record SnapshotDiff(
         return new SnapshotDiff([.. quests], [.. jobs], [.. festivals], other, collectibles, mounts, records);
     }
 
-    /// <summary>The records no quest's state reads: the item levels and the Duties board's duty records.</summary>
+    /// <summary>The records no quest's state reads: the item levels, the Duties board's duty records and the Triple Triad records.</summary>
     private static bool RecordInputsChanged(CharacterSnapshot old, CharacterSnapshot @new) =>
         old.ItemLevel != @new.ItemLevel
         || !SameEntries(old.JobItemLevels, @new.JobItemLevels)
-        || !DutyRecordCapture.Same(old.DutyRecords, @new.DutyRecords);
+        || !DutyRecordCapture.Same(old.DutyRecords, @new.DutyRecords)
+        || !TriadRecordCapture.Same(old.TriadRecords, @new.TriadRecords);
 
     /// <summary>The same owned and missing mounts in both captures; a capture that read none is a value of its own.</summary>
     private static bool SameMounts(CharacterSnapshot old, CharacterSnapshot @new)

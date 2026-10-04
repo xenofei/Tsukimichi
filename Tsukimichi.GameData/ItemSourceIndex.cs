@@ -575,7 +575,7 @@ public sealed class ItemSourceIndex
     }
 
     /// <summary>Where each of <paramref name="npcIds"/> stands: its first <c>Level</c> row, else the first event layout that places it.</summary>
-    private static Dictionary<uint, WorldSpot> NpcSpots(ExcelModule excel, Language? language, HashSet<uint> npcIds, Places places, Func<string, LgbFile?>? readLayout)
+    internal static Dictionary<uint, WorldSpot> NpcSpots(ExcelModule excel, Language? language, HashSet<uint> npcIds, Places places, Func<string, LgbFile?>? readLayout)
     {
         var result = new Dictionary<uint, WorldSpot>();
         foreach (var level in excel.GetSheet<Level>(language))
@@ -667,7 +667,7 @@ public sealed class ItemSourceIndex
     }
 
     /// <summary>Zone names and the maps that turn world positions into the coordinates the game prints, per territory.</summary>
-    private sealed class Places(ExcelModule excel, Language? language)
+    internal sealed class Places(ExcelModule excel, Language? language)
     {
         private readonly ExcelSheet<TerritoryType> territories = excel.GetSheet<TerritoryType>(language);
         private readonly Dictionary<uint, (string Zone, Map Map)?> cache = [];
