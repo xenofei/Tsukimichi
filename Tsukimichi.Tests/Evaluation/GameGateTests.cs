@@ -62,7 +62,7 @@ public class GameGateTests
         Assert.Equal(Nexus, gate.Gate);
         Assert.False(result.NextStep.Met);
         Assert.Equal("needs a relic weapon nexus equipped, not checked", result.NextStep.Detail);
-        Assert.Equal(StateNames.Name(QuestState.Unknown, quest) + " · " + Nexus, BlockerText.StatusText(result, quest, Names with { Catalog = catalog }));
+        Assert.Equal("Can't check · " + Nexus, BlockerText.StatusText(result, quest, Names with { Catalog = catalog }));
         Assert.Equal("Not checked: " + Nexus, BlockerText.For(result, quest, Names with { Catalog = catalog }));
         Assert.Equal("needs a relic weapon nexus equipped, not checked", RequirementDetail.Text(result.NextStep, Names with { Catalog = catalog }));
         Assert.Equal(new IpcBlocker(IpcBlockerKinds.Unchecked, 0, 0, 0), IpcBlocker.Of(result, catalog, null));
@@ -302,7 +302,7 @@ public class GameGateTests
         var stored = StateResolver.Resolve(quest, Snapshot(), catalog, Named);
         Assert.Equal(QuestState.Unknown, stored.State);
         Assert.Equal("needs a relic weapon nexus equipped, not checked", stored.NextStep!.Detail);
-        Assert.Equal(StateNames.Name(QuestState.Unknown, quest) + " · " + Nexus, BlockerText.StatusText(stored, quest, Names with { Catalog = catalog }));
+        Assert.Equal("Can't check · " + Nexus, BlockerText.StatusText(stored, quest, Names with { Catalog = catalog }));
         Assert.Equal(new IpcBlocker(IpcBlockerKinds.Unchecked, 0, 0, 0), IpcBlocker.Of(stored, catalog, null));
 
         // A capture made against an older weapon list never looked for this gate's weapons: not judged.

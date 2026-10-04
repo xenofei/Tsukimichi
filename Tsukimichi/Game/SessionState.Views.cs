@@ -155,7 +155,7 @@ public sealed partial class SessionState
             jobRoles: bundle.JobRoles());
 
         // 8.0 readiness: requirement details name an expansion from the ExVersion sheet, as every other text does.
-        context = context with { ExpansionName = names.Expansion, ItemName = bundle.GateItemName, ItemJobCategory = bundle.GateItemJobCategory, MountName = bundle.MountName };
+        context = context with { ExpansionName = names.Expansion, ItemName = bundle.GateItemName, ItemJobCategory = bundle.GateItemJobCategory, MountName = bundle.MountName, GateMarkedDone = IsGateMarkedDone };
 
         StoredView? view = null;
         if (resolveView && viewHint is { } hint)

@@ -67,6 +67,21 @@ public sealed partial class DetailPane
     {
         /// <summary>The game icon after the check or cross (UI-5e, I17): the job's, the previous quest's marker, the society's emblem; none for most others.</summary>
         public GameIconRef Icon { get; init; }
+
+        /// <summary>A game gate Tsukimichi can't check (1.19 C3): the hollow ring, "can't check", its source line and actions.</summary>
+        public bool CantCheck { get; init; }
+
+        /// <summary>Where the can't-check gate was confirmed ("The game doesn't show plugins this. From the wiki, …"); null for other lines.</summary>
+        public string? Source { get; init; }
+
+        /// <summary>The quest whose gate "I've done this" marks for the character on view; 0 when nothing can be marked.</summary>
+        public uint MarkRowId { get; init; }
+
+        /// <summary>"Where to start": the quest that opens what the gate needs, not done yet; 0 when Tsukimichi knows none.</summary>
+        public uint StartRowId { get; init; }
+
+        /// <summary>"Where to start"'s tooltip, the quest's name through the spoiler shield.</summary>
+        public string? StartTooltip { get; init; }
     }
 
     /// <summary>A reward tile: unique rewards wear the gold ring and crescent; a mark says when the store sells it or a duty drops it.</summary>
@@ -114,6 +129,9 @@ public sealed partial class DetailPane
 
         /// <summary>How many requirements are unmet; the Requirements caption turns to the unmet tone above 0.</summary>
         public int UnmetCount;
+
+        /// <summary>Gates on the Requirements card Tsukimichi can't check (1.19 C3); never counted as unmet.</summary>
+        public int CantCheckCount;
         public string StateName = string.Empty;
 
         /// <summary>What the state pill cannot say: the blocker, the step, the date; empty when the state says it all.</summary>
@@ -283,7 +301,7 @@ public sealed partial class DetailPane
 
         Gap();
         var start = ImGui.GetCursorScreenPos();
-        BeginSection("##requirements", Strings.Requirements, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.DangerText : Theme.Surface.TextSecondary);
+        BeginSection("##requirements", Strings.Requirements, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.DangerText : model.CantCheckCount > 0 ? Theme.Surface.TextTertiary : Theme.Surface.TextSecondary);
         DrawRequirements(start.X);
         EndSection();
         ui.RecordItem(UiRects.DetailRequirements);
@@ -1227,9 +1245,11 @@ public sealed partial class DetailPane
         model.Callout = null;
         model.CalloutDetail = null;
         model.UnmetCount = 0;
+        model.CantCheckCount = 0;
         model.HeaderSegments = [];
         model.JournalSegments = [];
         lastNames = session.Names;
+        lastViewed = session.ViewedContentId;
         lastStates = session.States;
         lastSpoilers = session.Spoilers;
         lastCatalog = bundle.Catalog;
@@ -1304,6 +1324,7 @@ public sealed partial class DetailPane
             model.CalloutDetail = model.Callout is not null && evaluation.OtherPath is not null ? model.StateNote : null;
 
             var unmet = 0;
+            var cantCheck = 0;
             var levelJob = LevelJobOf(shown.Requirements);
             foreach (var result in shown.Requirements)
             {
@@ -1316,19 +1337,42 @@ public sealed partial class DetailPane
                     ForeclosureRequirement f => spoilers.MaskNamesIn(clause, bundle.Catalog, f.CompletedLockIds),
                     _ => clause,
                 };
-                model.Requirements.Add(UnmetLine(session, bundle, quest, result, ReferenceEquals(result, shown.NextStep), detail) with
+                var line = UnmetLine(session, bundle, quest, result, ReferenceEquals(result, shown.NextStep), detail) with
                 {
                     Icon = RequirementIcon(bundle, result.Req, levelJob, iconSheets),
-                });
-                unmet += result.Met ? 0 : 1;
+                };
+                if (result.Req is GameGateRequirement { IsNotChecked: true } or GameGateRequirement { MarkedByYou: true })
+                {
+                    line = GateLine(session, bundle, quest, (GameGateRequirement)result.Req, line);
+                    cantCheck += line.CantCheck ? 1 : 0;
+                }
+                else
+                {
+                    unmet += result.Met ? 0 : 1;
+                }
+
+                model.Requirements.Add(line);
             }
 
             model.UnmetCount = unmet;
+            model.CantCheckCount = cantCheck;
             if (model.Requirements.Count > 0)
             {
-                model.RequirementsCaption = unmet == 0
-                    ? Strings.DetailRequirementsAllMet
-                    : string.Format(CultureInfo.CurrentCulture, Strings.DetailRequirementsUnmetFormat, unmet, model.Requirements.Count);
+                model.RequirementsCaption = (unmet, cantCheck) switch
+                {
+                    (0, 0) => Strings.DetailRequirementsAllMet,
+                    (0, _) => string.Format(CultureInfo.CurrentCulture, Strings.DetailRequirementsCantCheckFormat, cantCheck),
+                    (_, 0) => string.Format(CultureInfo.CurrentCulture, Strings.DetailRequirementsUnmetFormat, unmet, model.Requirements.Count),
+                    _ => string.Format(CultureInfo.CurrentCulture, Strings.DetailRequirementsUnmetCantCheckFormat, unmet, cantCheck),
+                };
+            }
+
+            // Only gates Tsukimichi can't check keep the quest from Ready: "Can't check · 1 gate" in the hero (1.19 C3).
+            if (model.State == QuestState.Unknown && cantCheck > 0)
+            {
+                model.StateName = cantCheck == 1 ? Strings.HeroCantCheckOne : string.Format(CultureInfo.CurrentCulture, Strings.HeroCantCheckFormat, cantCheck);
+                model.StatusReason = string.Empty;
+                model.StatusTail = string.Empty;
             }
         }
 

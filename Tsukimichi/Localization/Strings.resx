@@ -12056,4 +12056,61 @@
     <value>Artisan: crafting {0}</value>
     <comment>Status bar line while an Artisan craft Tsukimichi handed off runs. {0} = the item.</comment>
   </data>
+  <data name="GateCantCheck" xml:space="preserve">
+    <value>can't check</value>
+  </data>
+  <data name="GateCantCheckTooltip" xml:space="preserve">
+    <value>Tsukimichi can't check this gate: the game doesn't show it to plugins. It never counts as unmet, and the quest stays Not checked until you say you've done it.</value>
+  </data>
+  <data name="GateYouSaidSo" xml:space="preserve">
+    <value>you said so</value>
+  </data>
+  <data name="GateSourceFormat" xml:space="preserve">
+    <value>The game doesn't show plugins this. From {0}, confirmed by {1} sources.</value>
+    <comment>{0} = where the gate is stated (the wiki, the game's quest text), {1} = how many sources confirm it.</comment>
+  </data>
+  <data name="GateSourceWiki" xml:space="preserve">
+    <value>the wiki</value>
+  </data>
+  <data name="GateSourceGameText" xml:space="preserve">
+    <value>the game's quest text</value>
+  </data>
+  <data name="GateSourceSheets" xml:space="preserve">
+    <value>the game's data</value>
+  </data>
+  <data name="GateMarkDone" xml:space="preserve">
+    <value>I've done this</value>
+  </data>
+  <data name="GateMarkDoneTooltip" xml:space="preserve">
+    <value>Mark this gate as passed for this character. The quest then reads as the rest of its requirements say.</value>
+  </data>
+  <data name="GateMarkedToastFormat" xml:space="preserve">
+    <value>Marked as done: {0}</value>
+    <comment>{0} = the gate.</comment>
+  </data>
+  <data name="GateWhereToStart" xml:space="preserve">
+    <value>Where to start</value>
+  </data>
+  <data name="GateWhereToStartTooltipFormat" xml:space="preserve">
+    <value>Select {0}, the quest that opens this</value>
+    <comment>{0} = the quest to start with.</comment>
+  </data>
+  <data name="DetailRequirementsCantCheckFormat" xml:space="preserve">
+    <value>{0} can't be checked</value>
+    <comment>{0} = gates that can't be checked.</comment>
+  </data>
+  <data name="DetailRequirementsUnmetCantCheckFormat" xml:space="preserve">
+    <value>{0} unmet · {1} can't be checked</value>
+    <comment>{0} = unmet requirements, {1} = gates that can't be checked.</comment>
+  </data>
+  <data name="HeroCantCheckOne" xml:space="preserve">
+    <value>Can't check · 1 gate</value>
+  </data>
+  <data name="HeroCantCheckFormat" xml:space="preserve">
+    <value>Can't check · {0} gates</value>
+    <comment>{0} = gates that can't be checked (two or more).</comment>
+  </data>
+  <data name="Core.Blocker.CantCheck" xml:space="preserve">
+    <value>Can't check</value>
+  </data>
 </root>

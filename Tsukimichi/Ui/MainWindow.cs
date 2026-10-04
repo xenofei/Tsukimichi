@@ -330,6 +330,13 @@ public sealed partial class MainWindow : Window, IDisposable
     }
 
     /// <summary>
+    /// "I've done this" on a game gate Tsukimichi can't check (1.19.0, C3): the per-character settings the marks are kept
+    /// in. Until this is called the detail pane shows no such button.
+    /// </summary>
+    public void AttachGateMarks(Core.Storage.CharacterSettingsBook characters) =>
+        detailPane.Characters = characters ?? throw new ArgumentNullException(nameof(characters));
+
+    /// <summary>
     /// The detail pane's Hand in section (1.6.0): live item counts, and the Artisan and GatherBuddy hand-offs. Until this
     /// is called the section lists the items without counts and its buttons name the plugins as missing.
     /// </summary>

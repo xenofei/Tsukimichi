@@ -54,4 +54,28 @@ static partial class Strings
     public static string JournalRoomHandIn => Loc.Get("JournalRoomHandIn");
     public static string JournalRoomSafeToDrop => Loc.Get("JournalRoomSafeToDrop");
     public static string JournalRoomKeep => Loc.Get("JournalRoomKeep");
+
+    // ---- C3: gates Tsukimichi can't check ----
+    public static string GateCantCheck => Loc.Get("GateCantCheck");
+    public static string GateCantCheckTooltip => Loc.Get("GateCantCheckTooltip");
+    public static string GateYouSaidSo => Loc.Get("GateYouSaidSo");
+    /// <summary>{0} = where the gate is stated ("the wiki"), {1} = how many sources confirm it.</summary>
+    public static string GateSourceFormat => Loc.Get("GateSourceFormat");
+    public static string GateSourceWiki => Loc.Get("GateSourceWiki");
+    public static string GateSourceGameText => Loc.Get("GateSourceGameText");
+    public static string GateSourceSheets => Loc.Get("GateSourceSheets");
+    public static string GateMarkDone => Loc.Get("GateMarkDone");
+    public static string GateMarkDoneTooltip => Loc.Get("GateMarkDoneTooltip");
+    /// <summary>{0} = the gate.</summary>
+    public static string GateMarkedToastFormat => Loc.Get("GateMarkedToastFormat");
+    public static string GateWhereToStart => Loc.Get("GateWhereToStart");
+    /// <summary>{0} = the quest to start with (through the spoiler shield).</summary>
+    public static string GateWhereToStartTooltipFormat => Loc.Get("GateWhereToStartTooltipFormat");
+    /// <summary>{0} = gates that can't be checked.</summary>
+    public static string DetailRequirementsCantCheckFormat => Loc.Get("DetailRequirementsCantCheckFormat");
+    /// <summary>{0} = unmet requirements, {1} = gates that can't be checked.</summary>
+    public static string DetailRequirementsUnmetCantCheckFormat => Loc.Get("DetailRequirementsUnmetCantCheckFormat");
+    public static string HeroCantCheckOne => Loc.Get("HeroCantCheckOne");
+    /// <summary>{0} = gates that can't be checked (two or more).</summary>
+    public static string HeroCantCheckFormat => Loc.Get("HeroCantCheckFormat");
 }
