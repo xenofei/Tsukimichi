@@ -100,9 +100,10 @@ public sealed class GameStateReader
     // The last unlock-link read of the game gates, reused while unchanged.
     private CollectibleSet? gateUnlockLinks;
     private bool gateUnlockLinksWarned;
-    // The equipped gear's item levels by slot (ReadItemLevels), the best level per job, and whether a failed read was logged.
+    // The equipped gear's item levels by slot (ReadItemLevels), the best level per job and whose it is, and whether a
+    // failed read was logged.
     private readonly ushort[] slotLevelScratch = new ushort[EquippedItemLevel.SoulCrystal + 1];
-    private IReadOnlyDictionary<byte, ushort> jobItemLevels = new Dictionary<byte, ushort>();
+    private readonly JobItemLevelMemory jobItemLevels = new();
     private bool itemLevelsWarned;
 
     // The duties the Duties board reads (DutyBoard.Watched over the index), the index they came from, and the last
@@ -375,7 +376,7 @@ public sealed class GameStateReader
             LogFestivalProbe(ps);
         }
 
-        var itemLevel = ReadItemLevels(ps->CurrentClassJobId);
+        var (itemLevel, jobItemLevelTable) = ReadItemLevels(contentId, ps->CurrentClassJobId);
         var snapshot = new CharacterSnapshot
         {
             ContentId = contentId,
@@ -414,7 +415,7 @@ public sealed class GameStateReader
             GateItems = ReadGateItems(ids),
             GateUnlockLinks = ReadGateUnlockLinks(ui, ids),
             ItemLevel = itemLevel,
-            JobItemLevels = jobItemLevels,
+            JobItemLevels = jobItemLevelTable,
             DutyRecords = ReadDutyRecords(contentId, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
         };
 
@@ -622,18 +623,19 @@ public sealed class GameStateReader
 
     /// <summary>
     /// The equipped gear's average item level (<see cref="EquippedItemLevel.Average"/>, from each slot's
-    /// <c>Item.LevelItem</c>) and, in <see cref="jobItemLevels"/>, the best item level known per job: every saved
-    /// gearset's (<c>RaptureGearsetModule.GearsetEntry.ItemLevel</c>, as the game keeps it) and the equipped gear's for
+    /// <c>Item.LevelItem</c>) and the best item level known per job: every saved gearset's
+    /// (<c>RaptureGearsetModule.GearsetEntry.ItemLevel</c>, as the game keeps it) and the equipped gear's for
     /// <paramref name="currentJob"/> (feature plan v7 C7). Both are fetched through the game, so the read follows the
     /// <see cref="Gate"/>: while it holds the hooks, or while the equipped container is not loaded, the item level
-    /// reads 0 (not judged) and the job levels stay as last read. An unchanged job table keeps its instance, so the
-    /// diff sees it unchanged by reference.
+    /// reads 0 (not judged) and the job table stays as last read only for the character it was read for; another
+    /// character gets an empty table, which also reads as not judged (<see cref="JobItemLevelMemory"/>). An unchanged
+    /// job table keeps its instance, so the diff sees it unchanged by reference.
     /// </summary>
-    private unsafe ushort ReadItemLevels(byte currentJob)
+    private unsafe (ushort ItemLevel, IReadOnlyDictionary<byte, ushort> Jobs) ReadItemLevels(ulong contentId, byte currentJob)
     {
         if (Gate is not { HooksAllowed: true })
         {
-            return 0;
+            return (0, jobItemLevels.Skipped(contentId));
         }
 
         try
@@ -642,7 +644,7 @@ public sealed class GameStateReader
             var container = inventory == null ? null : inventory->GetInventoryContainer(InventoryType.EquippedItems);
             if (container == null || !container->IsLoaded)
             {
-                return 0;
+                return (0, jobItemLevels.Skipped(contentId));
             }
 
             var items = data.GetExcelSheet<Item>();
@@ -682,12 +684,7 @@ public sealed class GameStateReader
                 levels[currentJob] = equipped;
             }
 
-            if (!SameLevels(jobItemLevels, levels))
-            {
-                jobItemLevels = levels;
-            }
-
-            return equipped;
+            return (equipped, jobItemLevels.Read(contentId, levels));
         }
         catch (Exception ex)
         {
@@ -697,26 +694,8 @@ public sealed class GameStateReader
                 log.Warning(ex, "The item levels could not be read; item-level walls read as not checked");
             }
 
-            return 0;
+            return (0, jobItemLevels.Skipped(contentId));
         }
-    }
-
-    private static bool SameLevels(IReadOnlyDictionary<byte, ushort> a, Dictionary<byte, ushort> b)
-    {
-        if (a.Count != b.Count)
-        {
-            return false;
-        }
-
-        foreach (var (job, level) in b)
-        {
-            if (!a.TryGetValue(job, out var other) || other != level)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /// <summary>

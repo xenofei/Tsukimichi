@@ -100,6 +100,27 @@ public static class AlliedCarryover
     /// </summary>
     public static bool RankUpOpensBonus(byte tribe, byte rank) => rank + 1 != SwornRank || BonusAtSworn.Contains(tribe);
 
+    /// <summary>
+    /// What a board row's one line says (spec-1.19 "C5. Allied societies"): the logged-in character's carried-over
+    /// daily (<see cref="AlliedLine.Carried"/>), a stored alt's (<see cref="AlliedLine.StoredHolds"/>), the rank-up hint
+    /// or today. A stored alt's old daily is a note, not a task: Flag and Teleport would act on the logged-in character.
+    /// </summary>
+    /// <param name="row">The board row.</param>
+    /// <param name="live">The board is the logged-in character's.</param>
+    public static AlliedLine LineFor(AlliedSocietyRow row, bool live)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return row.Carried is not null ? live ? AlliedLine.Carried : AlliedLine.StoredHolds
+            : row.RankUpBonus ? AlliedLine.RankUpReady
+            : AlliedLine.Today;
+    }
+
+    /// <summary>The line needs the player (a copper dot beside the words, in Text): only the logged-in character's carried daily.</summary>
+    public static bool NeedsYou(AlliedLine line) => line == AlliedLine.Carried;
+
+    /// <summary>The row carries Flag and Teleport to the carried daily's giver: only the logged-in character's.</summary>
+    public static bool HasCarriedActions(AlliedLine line) => line == AlliedLine.Carried;
+
     /// <summary>The Sworn rank's BeastReputationRank row id.</summary>
     public const byte SwornRank = 7;
 
@@ -112,4 +133,20 @@ public static class AlliedCarryover
         DateTimeKind.Unspecified => DateTime.SpecifyKind(value, DateTimeKind.Utc),
         _ => value,
     };
+}
+
+/// <summary>What an allied board row's one line says (<see cref="AlliedCarryover.LineFor"/>).</summary>
+public enum AlliedLine
+{
+    /// <summary>What is left today.</summary>
+    Today,
+
+    /// <summary>"Rank-up ready: keep 3 allowances for the bonus dailies", in Secondary.</summary>
+    RankUpReady,
+
+    /// <summary>The logged-in character holds a daily from before the reset: "0 allowances until you turn in …", a copper dot, Text, Flag and Teleport.</summary>
+    Carried,
+
+    /// <summary>A stored alt held a daily from before the reset at its last login: "0 allowances today: holds a daily …", in Secondary, no actions.</summary>
+    StoredHolds,
 }

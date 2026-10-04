@@ -259,13 +259,17 @@ public sealed class MakeRoomView
         var buttonHovered = ImGui.IsItemHovered();
         if (rowHovered || focused)
         {
-            DrawOpenInJournal(dl, slotMin, slotSize, buttonHovered);
+            // Dimmed, with the reason on hover, for a stored character or while game calls are paused (the kill switch).
+            var canOpen = session.IsLive && links.CanOpenJournalNow;
+            DrawOpenInJournal(dl, slotMin, slotSize, buttonHovered, canOpen);
             if (buttonHovered)
             {
-                UiMetrics.Tooltip(session.IsLive ? Strings.MakeRoomOpenInJournalTooltip : Strings.MakeRoomOpenInJournalStored);
+                UiMetrics.Tooltip(!session.IsLive ? Strings.MakeRoomOpenInJournalStored
+                    : canOpen ? Strings.MakeRoomOpenInJournalTooltip
+                    : Strings.MakeRoomOpenInJournalTooltip + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.GearsetSwitchBlockedFormat, Strings.GearsetSwitchPaused));
             }
 
-            if (clicked && session.IsLive)
+            if (clicked && canOpen)
             {
                 links.OpenJournal(row.Quest);
             }
@@ -275,22 +279,24 @@ public sealed class MakeRoomView
         ImGui.Dummy(new Vector2(width, 0f));
     }
 
-    /// <summary>Open in journal: the quiet button in its primary form (Text in a <c>--vline</c> outline), the focus ring, dimmed for a stored character.</summary>
-    private void DrawOpenInJournal(ImDrawListPtr dl, Vector2 min, Vector2 size, bool hovered)
+    /// <summary>
+    /// Open in journal: the quiet button in its primary form (Text in a <c>--vline</c> outline), the focus ring, dimmed
+    /// when it cannot open (a stored character, or game calls paused).
+    /// </summary>
+    private static void DrawOpenInJournal(ImDrawListPtr dl, Vector2 min, Vector2 size, bool hovered, bool enabled)
     {
         var s = Theme.Surface;
-        var live = session.IsLive;
         var rounding = Theme.Flair == Flair.Plain ? UiMetrics.Px(2f) : size.Y * 0.5f;
-        if (hovered && live)
+        if (hovered && enabled)
         {
             dl.AddRectFilled(min, min + size, Theme.U32(s.Hover), rounding);
         }
 
-        dl.AddRect(min, min + size, Theme.U32(live ? s.StrongLine : s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        dl.AddRect(min, min + size, Theme.U32(enabled ? s.StrongLine : s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         using (Typography.Caption())
         {
             var text = ImGui.CalcTextSize(Strings.MakeRoomOpenInJournal);
-            dl.AddText(min + ((size - text) * 0.5f), Theme.U32(live ? s.Text : s.TextTertiary), Strings.MakeRoomOpenInJournal);
+            dl.AddText(min + ((size - text) * 0.5f), Theme.U32(enabled ? s.Text : s.TextTertiary), Strings.MakeRoomOpenInJournal);
         }
 
         Chrome.FocusRing(rounding);

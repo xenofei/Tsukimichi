@@ -78,7 +78,10 @@ public sealed partial class DetailPane
         /// <summary>Where the can't-check gate was confirmed ("The game doesn't show plugins this. From the wiki, …"); null for other lines.</summary>
         public string? Source { get; init; }
 
-        /// <summary>The quest whose gate "I've done this" marks for the character on view; 0 when nothing can be marked.</summary>
+        /// <summary>A game gate the player marked passed (1.19 C3): "you said so", with Take back under it.</summary>
+        public bool MarkedByYou { get; init; }
+
+        /// <summary>The quest whose gate "I've done this" marks (or Take back unmarks) for the character on view; 0 when nothing can be marked.</summary>
         public uint MarkRowId { get; init; }
 
         /// <summary>"Where to start": the quest that opens what the gate needs, not done yet; 0 when Tsukimichi knows none.</summary>
@@ -1381,7 +1384,7 @@ public sealed partial class DetailPane
         var prefix = model.StateName + BlockerText.Separator;
         model.StatusReason = status.StartsWith(prefix, StringComparison.Ordinal) ? status[prefix.Length..] : status == model.StateName ? string.Empty : status;
         model.StatusTail = model.StatusReason.Length > 0 ? BlockerText.Separator + model.StatusReason : string.Empty;
-        ApplyJournalFull(session, bundle, evaluation);
+        ApplyJournalFull(session, bundle, quest, evaluation);
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
         // A journal genre named after a place the story has not reached reads as its placeholder (1.20.0 N6).

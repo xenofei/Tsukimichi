@@ -52,6 +52,7 @@ public sealed class PlanningSource
     private AlliedSocietyBoardModel board = AlliedSocietyBoardModel.Empty;
     private BoardLine[] boardLines = [];
     private string boardHeader = string.Empty;
+    private string boardAge = string.Empty;
 
     /// <param name="links">Map names and Teleport for the board; null leaves the zone column empty.</param>
     /// <param name="duties">The duties the main scenario quests unlock (<see cref="DutySource"/>); null counts the required ones only.</param>
@@ -103,12 +104,19 @@ public sealed class PlanningSource
     {
         /// <summary>
         /// The line under the society (1.19.0, C5; spec-1.19 "C5. Allied societies"): a carried-over daily ("0
-        /// allowances until you turn in …"), the rank-up hint, or what is left today.
+        /// allowances until you turn in …"; a stored alt's "0 allowances today: holds a daily …"), the rank-up hint, or
+        /// what is left today (<see cref="AlliedCarryover.LineFor"/>).
         /// </summary>
         public string Line { get; init; } = string.Empty;
 
-        /// <summary>The line needs the player: a daily carried over the reset (a copper dot beside the words, which say the same).</summary>
+        /// <summary>
+        /// The line needs the player: the logged-in character's daily carried over the reset (a copper dot beside the
+        /// words, which say the same). A stored alt's never does (<see cref="AlliedCarryover.NeedsYou"/>).
+        /// </summary>
         public bool NeedsYou { get; init; }
+
+        /// <summary>Flag and Teleport to the carried daily's giver: the logged-in character's only (<see cref="AlliedCarryover.HasCarriedActions"/>).</summary>
+        public bool CarriedActions { get; init; }
 
         /// <summary>The line's hover.</summary>
         public string LineTooltip { get; init; } = string.Empty;
@@ -597,18 +605,22 @@ public sealed class PlanningSource
             : AlliedSocietyBoard.Build(bundle.Catalog, snapshot, null, null, now, session.AcceptedSince);
         // A stored character's allowances are projected from its last login (1.19.0, C5): the header says so, and says
         // when a daily it held then carries over the reset.
+        var age = UiFormat.Age(built.TakenUtc, now);
         boardHeader = !session.IsLive && built.Projected
             ? built.Carried.Count > 0
-                ? string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredHoldsFormat, UiFormat.Age(built.TakenUtc, now))
-                : string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredProjectedFormat, built.AllowancesLeft, UiFormat.Age(built.TakenUtc, now))
+                ? string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredHoldsFormat, age)
+                : string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredProjectedFormat, built.AllowancesLeft, age)
             : string.Format(CultureInfo.CurrentCulture, Strings.PlanningBoardAllowancesFormat, built.AllowancesLeft, GameResets.ResetsIn(built.NextReset - now));
-        if (ReferenceEquals(board, built) || SameRows(board, built))
+        // A stored alt's held daily says how long ago it logged in, so its lines follow the age too.
+        var ageMoved = !session.IsLive && built.Carried.Count > 0 && age != boardAge;
+        if (!ageMoved && (ReferenceEquals(board, built) || SameRows(board, built)))
         {
             board = built;
             return;
         }
 
         board = built;
+        boardAge = age;
         var lines = new BoardLine[built.Rows.Count];
         for (var i = 0; i < lines.Length; i++)
         {
@@ -625,6 +637,7 @@ public sealed class PlanningSource
             // A zone the story has not reached reads as its placeholder (1.20.0 N6).
             var zone = row.Giver?.Issuer is { } issuer && links?.Map(issuer.MapId) is { } map ? session.Spoilers.Name(Core.Query.SpoilerKind.Area, map.PlaceName) : string.Empty;
             var todayTooltip = row.OfferedToday is { } shown ? Core.Ui.LeftText.Tally(row.DoneToday, shown) : Strings.PlanningBoardTodayUnknownTooltip;
+            var kind = AlliedCarryover.LineFor(row, session.IsLive);
             lines[i] = new BoardLine(
                 row,
                 society,
@@ -634,14 +647,24 @@ public sealed class PlanningSource
                 todayTooltip,
                 zone)
             {
-                // What the row says first (spec-1.19 C5): a daily carried over the reset, the rank-up hint, or today.
-                Line = row.Carried is { } carried
-                    ? string.Format(CultureInfo.CurrentCulture, Strings.AlliedCarriedFormat, session.Spoilers.DisplayName(carried))
-                    : row.RankUpBonus ? Strings.AlliedRankUpReady : today,
-                NeedsYou = row.Carried is not null,
-                LineTooltip = row.Carried is not null ? Strings.AlliedCarriedTooltip
-                    : row.RankUpBonus ? Strings.AlliedRankUpReadyTooltip : todayTooltip,
-                AltNote = row.Carried is not null && !session.IsLive ? string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredAltFormat, snapshot.Name) : string.Empty,
+                // What the row says first (spec-1.19 C5): a daily carried over the reset (the logged-in character's
+                // needs you; a stored alt's is a note in Secondary, with no actions), the rank-up hint, or today.
+                Line = kind switch
+                {
+                    AlliedLine.Carried when row.Carried is { } carried => string.Format(CultureInfo.CurrentCulture, Strings.AlliedCarriedFormat, session.Spoilers.DisplayName(carried)),
+                    AlliedLine.StoredHolds => string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredHoldsFormat, age),
+                    AlliedLine.RankUpReady => Strings.AlliedRankUpReady,
+                    _ => today,
+                },
+                NeedsYou = AlliedCarryover.NeedsYou(kind),
+                CarriedActions = AlliedCarryover.HasCarriedActions(kind),
+                LineTooltip = kind switch
+                {
+                    AlliedLine.Carried or AlliedLine.StoredHolds => Strings.AlliedCarriedTooltip,
+                    AlliedLine.RankUpReady => Strings.AlliedRankUpReadyTooltip,
+                    _ => todayTooltip,
+                },
+                AltNote = kind == AlliedLine.StoredHolds ? string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredAltFormat, snapshot.Name) : string.Empty,
             };
         }
 

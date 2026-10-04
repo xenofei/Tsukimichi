@@ -12814,6 +12814,10 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <value>Aether current · in the field</value>
     <comment>A field aether current the game's layouts do not place.</comment>
   </data>
+  <data name="RouteFieldCurrentReading" xml:space="preserve">
+    <value>Aether current · finding where it stands</value>
+    <comment>A field aether current while the game's layouts are read for where it stands (a moment, off the frame).</comment>
+  </data>
   <data name="RouteFieldMark" xml:space="preserve">
     <value>field</value>
     <comment>The mark at the end of a field aether current's line on a route to flying.</comment>
@@ -13593,5 +13597,20 @@ Another job or society: a job, class or allied society you don't play now.</valu
   </data>
   <data name="TodoJournalCountTooltip" xml:space="preserve">
     <value>Shows how full the journal is once 25 of its 30 slots are used, as the status bar does.</value>
+  </data>
+  <data name="GateTakeBack" xml:space="preserve">
+    <value>Take back</value>
+    <comment>Under a gate the player marked "I've done this" (1.19 C3).</comment>
+  </data>
+  <data name="GateTakeBackTooltip" xml:space="preserve">
+    <value>Unmark this gate for this character. It reads as can't check again.</value>
+  </data>
+  <data name="GateTakeBackMenu" xml:space="preserve">
+    <value>Take back "I've done this"</value>
+    <comment>The quest's "…" menu (1.19 C3), while its gate is marked done.</comment>
+  </data>
+  <data name="GateTakenBackToastFormat" xml:space="preserve">
+    <value>Taken back: {0}</value>
+    <comment>Undo toast. {0} = the gate.</comment>
   </data>
 </root>

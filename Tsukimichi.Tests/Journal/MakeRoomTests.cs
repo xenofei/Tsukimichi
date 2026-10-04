@@ -92,13 +92,31 @@ public class MakeRoomTests
     [Fact]
     public void Only_a_ready_quest_reads_journal_full_and_only_while_the_journal_is_full()
     {
+        var quest = SideQuest(A, "Fresh");
         var full = new JournalSlots(30, 30);
-        Assert.True(full.KeepsOut(QuestState.Ready));
-        Assert.True(full.KeepsOut(QuestState.ReadyOnOtherJob));
+        Assert.True(full.KeepsOut(quest, QuestState.Ready));
+        Assert.True(full.KeepsOut(quest, QuestState.ReadyOnOtherJob));
         Assert.All(
             [QuestState.Accepted, QuestState.Blocked, QuestState.Unknown, QuestState.Completed, QuestState.Foreclosed, QuestState.DoneThisCycle],
-            state => Assert.False(full.KeepsOut(state)));
-        Assert.False(new JournalSlots(29, 30).KeepsOut(QuestState.Ready));
+            state => Assert.False(full.KeepsOut(quest, state)));
+        Assert.False(new JournalSlots(29, 30).KeepsOut(quest, QuestState.Ready));
+    }
+
+    [Fact]
+    public void An_allied_society_daily_never_reads_journal_full_since_it_takes_no_slot()
+    {
+        // 1.19.0 review: the game keeps allied society dailies apart, so a full journal does not keep one out.
+        var catalog = JournalCatalog();
+        var daily = catalog.GetByRowId(Daily)!;
+        var full = new JournalSlots(30, 30);
+
+        Assert.False(JournalSlots.UsesSlot(daily));
+        Assert.False(full.KeepsOut(daily, QuestState.Ready));
+        Assert.False(full.KeepsOut(daily, QuestState.ReadyOnOtherJob));
+
+        // An allied society story quest (not repeatable) and a plain repeatable still take a slot.
+        Assert.True(full.KeepsOut(catalog.GetByRowId(Tribal)!, QuestState.Ready));
+        Assert.True(full.KeepsOut(catalog.GetByRowId(Weekly)!, QuestState.Ready));
     }
 
     [Fact]

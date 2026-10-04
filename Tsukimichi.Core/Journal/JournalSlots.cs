@@ -69,10 +69,22 @@ public readonly record struct JournalSlots(int Used, int Cap)
     };
 
     /// <summary>
-    /// Whether a quest in <paramref name="state"/> reads "journal full" (spec-1.19 C9, "In rows and the hero"): the
-    /// journal is full and the quest could otherwise be taken (Ready, on this job or another).
+    /// Whether <paramref name="quest"/> in <paramref name="state"/> reads "journal full" (spec-1.19 C9, "In rows and the
+    /// hero"): the journal is full, the quest could otherwise be taken (Ready, on this job or another) and taking it
+    /// would need a slot (<see cref="UsesSlot"/>). The one predicate the table's rows, the hero and Make room read.
     /// </summary>
-    public bool KeepsOut(QuestState state) => Room == JournalRoom.Full && state is QuestState.Ready or QuestState.ReadyOnOtherJob;
+    public bool KeepsOut(QuestRecord quest, QuestState state) =>
+        Room == JournalRoom.Full && state is (QuestState.Ready or QuestState.ReadyOnOtherJob) && UsesSlot(quest);
+
+    /// <summary>
+    /// Whether the quest takes one of the journal's <see cref="GameCap"/> slots once accepted: every quest but an allied
+    /// society daily, which the game keeps in an array of its own (levequests are no catalog quests).
+    /// </summary>
+    public static bool UsesSlot(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        return !quest.IsAlliedSocietyDaily;
+    }
 
     /// <summary>
     /// The character's slots: the client's own count when the capture has it (<see cref="CharacterSnapshot.JournalSlotsUsed"/>),
@@ -90,7 +102,7 @@ public readonly record struct JournalSlots(int Used, int Cap)
         var count = 0;
         foreach (var accepted in snapshot.Accepted)
         {
-            if (catalog.GetByRowId(0x10000u | accepted.QuestId) is not { IsAlliedSocietyDaily: true })
+            if (catalog.GetByRowId(0x10000u | accepted.QuestId) is not { } quest || UsesSlot(quest))
             {
                 count++;
             }

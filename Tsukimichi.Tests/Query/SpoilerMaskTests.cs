@@ -359,6 +359,24 @@ public class SpoilerMaskTests
     }
 
     [Fact]
+    public void A_duty_is_hidden_only_when_every_quest_it_is_shown_through_is_masked()
+    {
+        // 1.19.0 review: "How you'll clear it" printed a masked quest's duties by name; the detail pane asks for the
+        // quest on view, the Duties board for every quest that unlocks the duty.
+        var states = States((1, QuestState.Ready), (2, QuestState.Blocked), (3, QuestState.Blocked), (4, QuestState.Blocked), (5, QuestState.Blocked), (6, QuestState.Blocked), (7, QuestState.Blocked));
+        var mask = SpoilerMask.Build(Catalog, states, SpoilerOptions.Default with { Ahead = 0 });
+        var q = (uint id) => Catalog.GetByRowId(id)!;
+        Assert.True(mask.IsMasked(7) && mask.IsMasked(6) && !mask.IsMasked(1));
+
+        Assert.True(mask.HidesDuty([q(7)]));
+        Assert.True(mask.HidesDuty([q(6), q(7)]));
+        Assert.False(mask.HidesDuty([q(1)]));
+        Assert.False(mask.HidesDuty([q(7), q(20)]), "one quest the player may see names the duty");
+        Assert.False(mask.HidesDuty([]), "a duty no quest leads to keeps its name");
+        Assert.False(SpoilerMask.Build(Catalog, states, SpoilerOptions.Off).HidesDuty([q(7)]));
+    }
+
+    [Fact]
     public void Blocker_names_route_quest_names_through_the_mask()
     {
         var states = States((1, QuestState.Ready));
