@@ -62,6 +62,9 @@ public enum SettingsAnchor
 
     /// <summary>Settings › Automation › Automation buttons (1.18, A10; the Set up your road card's "Choose a level").</summary>
     AutomationLevel,
+
+    /// <summary>Settings › In game › Moon icon (1.22, H1; the icon's right-click menu opens it).</summary>
+    MoonIcon,
 }
 
 /// <summary>The order of the Settings window's section index and of the search results, and the remembered page.</summary>

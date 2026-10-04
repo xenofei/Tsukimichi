@@ -17,7 +17,8 @@ namespace Tsukimichi.Commands;
 /// <c>journal</c>, <c>moonlit</c>, <c>characters</c>, <c>flight</c> and <c>blues</c> open those tabs; <c>tour</c>
 /// starts the tour; <c>zone</c> and <c>which</c> print discovery lists; <c>why [quest name]</c> prints what blocks a
 /// quest; <c>route [quest name]</c> opens its unlock route; <c>recap [quest name]</c> opens the story recap; <c>nearby</c> toggles the Nearby quests window; <c>todo</c>
-/// toggles the todo overlay; <c>report [quest name]</c> copies a quest's diagnostic block; <c>export [quests|moonlit]
+/// toggles the todo overlay; <c>icon</c> shows or hides the moon icon (1.22, alone: with text after it the line searches);
+/// <c>report [quest name]</c> copies a quest's diagnostic block; <c>export [quests|moonlit]
 /// [json|csv]</c> writes the export files; <c>stop</c> stops every hand-off Tsukimichi started (<see cref="StopCommand"/>);
 /// <c>look &lt;code&gt;</c> opens Settings › Themes with a share code pasted and previewed, never applying it;
 /// <c>msq</c> and <c>next</c> print plain sentences for text-to-speech and <c>go [quest name]</c> travels to the current
@@ -91,6 +92,12 @@ public sealed class TsukimichiCommand : IDisposable
 
     /// <summary>Invoked for <c>/tsukimichi todo</c>: toggles the todo overlay setting. Falls back to the config window, then the main window.</summary>
     public Action? ToggleTodoOverlay { get; set; }
+
+    /// <summary>
+    /// Invoked for <c>/tsukimichi icon</c> (1.22, H1): shows or hides the moon icon. With text after <c>icon</c>, or
+    /// while it is not wired, the whole line searches (<see cref="CommandLine.RunsIcon"/>).
+    /// </summary>
+    public Action? ToggleMoonIcon { get; set; }
 
     /// <summary>
     /// Invoked for <c>/tsukimichi report [quest name]</c> with the rest of the line (empty for the selected quest):
@@ -463,6 +470,18 @@ public sealed class TsukimichiCommand : IDisposable
                 else
                 {
                     Run(ToggleConfigWindow);
+                }
+
+                break;
+
+            case Subcommand.Icon:
+                if (CommandLine.RunsIcon(parsed) && ToggleMoonIcon is { } toggleIcon)
+                {
+                    toggleIcon();
+                }
+                else
+                {
+                    search(args);
                 }
 
                 break;
