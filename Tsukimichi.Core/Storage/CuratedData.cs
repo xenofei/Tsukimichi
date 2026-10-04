@@ -16,6 +16,16 @@ public sealed record SystemUnlock(string Label, string Kind, string? Note);
 /// <param name="Quests">Quest row ids that open it; several for one reached on different paths.</param>
 public sealed record AetheryteUnlock(string Name, IReadOnlyList<uint> Quests, string Note, string Evidence);
 
+/// <summary>
+/// Side quests a main scenario quest needs that neither the sheets' previous quests nor its required duties record,
+/// from <c>curated/story_required.json</c> (feature plan v7 N3): the Shadowbringers role quests The Light of
+/// Inspiration asks for, say. The story meter and the catch-up count them with the quests the sheets give
+/// (<c>Query.StoryRequirements</c>).
+/// </summary>
+/// <param name="Quests">The quests named: each brings the side quests before it on its line.</param>
+/// <param name="Join"><see cref="JoinKind.All"/> (<c>allOf</c>): every one; <see cref="JoinKind.Any"/> (<c>anyOf</c>): one line will do.</param>
+public sealed record StoryRequiredEntry(IReadOnlyList<uint> Quests, JoinKind Join, string Note, string Evidence);
+
 /// <summary>A quest that unlocks duties, from <c>curated/duty_unlocks.json</c>.</summary>
 public sealed record DutyUnlock(IReadOnlyList<uint> ContentFinderConditionIds, string? Note);
 
@@ -178,6 +188,7 @@ public sealed record PayoffGate(
 /// path_choices.json    { "schema": 1, "cities": { "65575": { "label": "Gridania", "note": "..." } },
 ///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
 ///                        "grandCompanies": { "66216": { "grandCompany": 2, "note": "..." } } }   (classes keyed by ClassJob row id)
+/// story_required.json { "schema": 1, "entries": { "69186": { "anyOf": [ 68784, 68808 ], "evidence": "https://...", "note": "..." } } }   ("allOf" for every one; keyed by the main scenario quest)
 /// aetheryte_unlocks.json { "schema": 1, "entries": { "75": { "name": "Idyllshire", "quests": [ 67116 ], "evidence": "https://...", "note": "..." } } }   (keyed by Aetheryte row id)
 /// giver_portraits.json { "schema": 1, "crops": { .. }, "iconCrops": { .. }, "faces": { .. }, "aliases": { .. }, "blocks": { .. }, "pins": { .. } }   (see <see cref="Portraits.PortraitCuration"/>)
 /// VERSION.json        { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
@@ -202,6 +213,7 @@ public sealed class CuratedData
     public const string GameGatesFileName = "game_gates.json";
     public const string AetheryteUnlocksFileName = "aetheryte_unlocks.json";
     public const string GiverPortraitsFileName = "giver_portraits.json";
+    public const string StoryRequiredFileName = "story_required.json";
 
     /// <summary>The sources an <see cref="ExtraPrerequisitesFileName"/> entry may cite; each entry needs two of them.</summary>
     public static readonly IReadOnlyList<string> ExtraPrerequisiteSources = [GameTextSource, QuestionableSource, WikiSource];
@@ -329,6 +341,12 @@ public sealed class CuratedData
     public IReadOnlyDictionary<uint, AetheryteUnlock> AetheryteUnlocks { get; private init; } = new Dictionary<uint, AetheryteUnlock>();
 
     /// <summary>
+    /// Side quests main scenario quests need that the sheets do not record, by the main scenario quest's row id
+    /// (<see cref="StoryRequiredEntry"/>); ids not checked against the catalog here.
+    /// </summary>
+    public IReadOnlyDictionary<uint, StoryRequiredEntry> StoryRequired { get; private init; } = new Dictionary<uint, StoryRequiredEntry>();
+
+    /// <summary>
     /// The giver portrait overlay (feature plan v7 F3): crops, names for unnamed faces, aliases, blocked matches and
     /// pins, which <c>GiverPortraitSources</c> applies when it builds the <see cref="Portraits.PortraitIndex"/>.
     /// </summary>
@@ -353,7 +371,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks, GiverPortraits = GiverPortraits };
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks, GiverPortraits = GiverPortraits, StoryRequired = StoryRequired };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -681,6 +699,7 @@ public sealed class CuratedData
         var gameGates = LoadGameGates(Path.Combine(dir, GameGatesFileName), warnings);
         var aetheryteUnlocks = LoadAetheryteUnlocks(Path.Combine(dir, AetheryteUnlocksFileName), warnings);
         var giverPortraits = Portraits.PortraitCuration.Load(Path.Combine(dir, GiverPortraitsFileName), warnings);
+        var storyRequired = LoadStoryRequired(Path.Combine(dir, StoryRequiredFileName), warnings);
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
@@ -692,7 +711,67 @@ public sealed class CuratedData
             GameGates = gameGates,
             AetheryteUnlocks = aetheryteUnlocks,
             GiverPortraits = giverPortraits,
+            StoryRequired = storyRequired,
         };
+    }
+
+    /// <summary>
+    /// story_required.json: entries keyed by a main scenario quest's row id, each with exactly one of <c>allOf</c> and
+    /// <c>anyOf</c> (a non-empty array of quest row ids without repeats), an https <c>evidence</c> URL and a
+    /// <c>note</c>. An entry missing any of them, or with a malformed one, is skipped with a warning.
+    /// </summary>
+    private static Dictionary<uint, StoryRequiredEntry> LoadStoryRequired(string path, List<string> warnings)
+    {
+        var entries = new Dictionary<uint, StoryRequiredEntry>();
+        ForEachEntry(path, warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint rowId) || rowId == 0)
+            {
+                warn("key is not a quest row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            var hasAll = obj.TryGetPropertyValue("allOf", out var allNode);
+            var hasAny = obj.TryGetPropertyValue("anyOf", out var anyNode);
+            if (hasAll == hasAny || (hasAll ? allNode : anyNode) is not JsonArray array || array.Count == 0)
+            {
+                warn("needs exactly one of allOf and anyOf, a non-empty array of quest row ids");
+                return;
+            }
+
+            var quests = new List<uint>(array.Count);
+            foreach (var element in array)
+            {
+                if (!StorageJson.TryReadId(element, out var id) || id == 0 || id == rowId || quests.Contains(id))
+                {
+                    warn($"quest '{element}' is not a quest row id, repeats or names the entry's own quest");
+                    return;
+                }
+
+                quests.Add(id);
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            if (!evidence.StartsWith("https://", StringComparison.Ordinal))
+            {
+                warn("evidence is not an https URL");
+                return;
+            }
+
+            entries[rowId] = new StoryRequiredEntry(quests, hasAll ? JoinKind.All : JoinKind.Any, note, evidence);
+        });
+
+        return entries;
     }
 
     /// <summary>

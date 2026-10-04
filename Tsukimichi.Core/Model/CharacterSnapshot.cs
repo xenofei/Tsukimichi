@@ -138,6 +138,32 @@ public sealed record CharacterSnapshot
     public byte CurrentJob { get; init; }
 
     /// <summary>
+    /// The average item level of the gear equipped at capture, on <see cref="CurrentJob"/> (feature plan v7 C7; see
+    /// <see cref="Runtime.EquippedItemLevel"/>). Additive at schema v1: 0 when not read (files written before 1.19, the
+    /// game hooks paused, the armoury not loaded yet), which leaves every item-level wall unjudged; 0 is not written.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public ushort ItemLevel { get; init; }
+
+    /// <summary>
+    /// The highest item level known per ClassJob row id: each saved gearset's item level as the game keeps it, and the
+    /// equipped gear's for <see cref="CurrentJob"/> (C7: "WAR gearset i692"; from Patch 8.0 the item-level wall reads
+    /// the best of them, <see cref="Companions.ItemLevelRule"/>). Additive at schema v1: empty when not read; not
+    /// written while empty.
+    /// </summary>
+    [OmitWhenEmpty]
+    public IReadOnlyDictionary<byte, ushort> JobItemLevels { get; init; } = new Dictionary<byte, ushort>();
+
+    /// <summary>
+    /// Which duties of the Duties board (N4) the character has unlocked and cleared, from the game's own duty records
+    /// (<c>UIState.IsInstanceContentUnlocked</c> and <c>IsInstanceContentCompleted</c>), so a stored character keeps
+    /// its board. Additive at schema v1: null when not read (files written before 1.19, the game hooks paused), which
+    /// the board shows as "log in to read"; null is not written.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DutyRecordCapture? DutyRecords { get; init; }
+
+    /// <summary>
     /// The collectible rewards of the unique-reward data the character owns, per kind (keyed by <see cref="RewardKind"/>
     /// name: Mount, Emote, …; see <see cref="Unique.Collectibles"/>), read from the client's unlock flags at capture, so
     /// a stored character, or one live in another game client, still answers "owned?" (decision 9). Keys are names
@@ -310,6 +336,32 @@ public sealed record GateItemCapture(uint Watch, IReadOnlyList<uint> Equipped, I
         }
 
         return a.Equipped.SequenceEqual(b.Equipped) && a.Held.SequenceEqual(b.Held);
+    }
+}
+
+/// <summary>
+/// The duty records a capture read for the Duties board (<see cref="CharacterSnapshot.DutyRecords"/>): InstanceContent
+/// row ids, each list ascending and distinct.
+/// </summary>
+/// <param name="Watch"><see cref="GateItemCapture.Fingerprint"/> of the duty list the capture read; a board judges a duty only when it was on the list.</param>
+/// <param name="Unlocked">The listed duties the character has unlocked in the Duty Finder.</param>
+/// <param name="Cleared">The listed duties the character has cleared at least once.</param>
+public sealed record DutyRecordCapture(uint Watch, IReadOnlyList<uint> Unlocked, IReadOnlyList<uint> Cleared)
+{
+    /// <summary>Same watch list and the same records; the lists compare in order (captures write them sorted).</summary>
+    public static bool Same(DutyRecordCapture? a, DutyRecordCapture? b)
+    {
+        if (ReferenceEquals(a, b))
+        {
+            return true;
+        }
+
+        if (a is null || b is null || a.Watch != b.Watch)
+        {
+            return false;
+        }
+
+        return a.Unlocked.SequenceEqual(b.Unlocked) && a.Cleared.SequenceEqual(b.Cleared);
     }
 }
 

@@ -28,11 +28,27 @@ public readonly record struct CatchUpDuty(uint ContentFinderConditionId, uint In
 /// <param name="ConditionOf">InstanceContent id to its ContentFinderCondition id; 0 when unknown. Null knows none.</param>
 public sealed record CatchUpDutySource(Func<uint, IReadOnlyList<uint>> UnlocksOf, Func<uint, uint>? ConditionOf = null)
 {
+    /// <summary>
+    /// ContentFinderCondition id to the quests that unlock it (<see cref="DutyUnlockIndex.QuestsFor"/>), for the side
+    /// quests the story needs (<see cref="StoryRequirements"/>: a duty to clear only a side quest opens); null knows none.
+    /// </summary>
+    public Func<uint, IReadOnlyList<uint>>? QuestsUnlocking { get; init; }
+
+    /// <summary>The curated side quests the story needs (<see cref="CuratedData.StoryRequired"/>); null for none.</summary>
+    public IReadOnlyDictionary<uint, StoryRequiredEntry>? StoryRequired { get; init; }
+
+    /// <summary>
+    /// ContentFinderCondition id to its Duty Finder entry (the plugin's duty index), for how a duty can be cleared and
+    /// the item level it asks (feature plan v7 C7); null knows none.
+    /// </summary>
+    public Func<uint, Companions.DutyRunInfo?>? DutyOf { get; init; }
+
     /// <summary>Builds the source from the curated overlay and the merged reward catalog (shown and hidden entries alike).</summary>
     public static CatchUpDutySource From(CuratedData curated, UniqueRewardCatalog rewards, Func<uint, uint>? conditionOf = null)
     {
         ArgumentNullException.ThrowIfNull(curated);
         ArgumentNullException.ThrowIfNull(rewards);
+        var unlocks = DutyUnlockIndex.Build(curated, rewards);
         return new CatchUpDutySource(
             rowId =>
             {
@@ -52,7 +68,11 @@ public sealed record CatchUpDutySource(Func<uint, IReadOnlyList<uint>> UnlocksOf
 
                 return list;
             },
-            conditionOf);
+            conditionOf)
+        {
+            QuestsUnlocking = unlocks.QuestsFor,
+            StoryRequired = curated.StoryRequired,
+        };
     }
 }
 
@@ -65,7 +85,18 @@ public sealed record CatchUpDutySource(Func<uint, IReadOnlyList<uint>> UnlocksOf
 /// <param name="MinLevel">Lowest level among them.</param>
 /// <param name="MaxLevel">Highest level among them.</param>
 /// <param name="Duties">The duties those quests ask to have cleared that the character has not, and the ones they unlock, in story order.</param>
-public sealed record CatchUpExpansion(byte Expansion, int Quests, byte MinLevel, byte MaxLevel, IReadOnlyList<CatchUpDuty> Duties);
+public sealed record CatchUpExpansion(byte Expansion, int Quests, byte MinLevel, byte MaxLevel, IReadOnlyList<CatchUpDuty> Duties)
+{
+    /// <summary>
+    /// Side quests the story needs before its quests left here (<see cref="StoryRequirements"/>: the Crystal Tower
+    /// series, the hard primals, a Shadowbringers role quest line), not yet done; not among <see cref="Quests"/>. Their
+    /// levels are in the span.
+    /// </summary>
+    public int SideQuests { get; init; }
+
+    /// <summary>Main scenario and side quests left.</summary>
+    public int AllQuests => Quests + SideQuests;
+}
 
 /// <summary>
 /// "To reach the latest story: 143 quests, Lv 90–100, 6 duties" (feature plan v5 "Planning extras", R6 F): the main
@@ -75,6 +106,12 @@ public sealed record MsqCatchUpSummary(IReadOnlyList<CatchUpExpansion> Expansion
 {
     /// <summary>Main scenario quests left in every expansion.</summary>
     public int Quests => Expansions.Sum(static e => e.Quests);
+
+    /// <summary>Side quests the story still needs, in every expansion (<see cref="CatchUpExpansion.SideQuests"/>).</summary>
+    public int SideQuests => Expansions.Sum(static e => e.SideQuests);
+
+    /// <summary>Everything left to reach the latest story: <see cref="Quests"/> and <see cref="SideQuests"/>.</summary>
+    public int AllQuests => Quests + SideQuests;
 
     /// <summary>Lowest level left; 0 when nothing is.</summary>
     public byte MinLevel => Expansions.Count == 0 ? (byte)0 : Expansions.Min(static e => e.MinLevel);
@@ -114,7 +151,9 @@ public sealed record MsqCatchUpSummary(IReadOnlyList<CatchUpExpansion> Expansion
 /// <see cref="QuestRecord.InstanceContentRequired"/> rows the character has not cleared
 /// (<see cref="CharacterSnapshot.UnlockedInstances"/>, as the evaluator reads them; for an Any join, none once one is
 /// cleared and else one), the instance it opens (<see cref="RewardKind.Instance"/>) unless already cleared and, with a <see cref="CatchUpDutySource"/>, the duties it unlocks: the story's
-/// dungeons and trials, not done while the quest that opens them is not. Pure.
+/// dungeons and trials, not done while the quest that opens them is not. The side quests the story needs before a
+/// quest left (<see cref="StoryRequirements"/>, feature plan v7 N3: the Crystal Tower series, the hard primals, a
+/// Shadowbringers role quest line) are counted apart, as <see cref="CatchUpExpansion.SideQuests"/>. Pure.
 /// </summary>
 public static class MsqCatchUp
 {
@@ -136,6 +175,7 @@ public static class MsqCatchUp
         var cleared = snapshot is null ? new HashSet<uint>() : new HashSet<uint>(snapshot.UnlockedInstances);
         var joins = graph.Joins(new EvaluationSource(states));
         var parts = new SortedDictionary<byte, (int Quests, byte Min, byte Max, List<CatchUpDuty> Duties)>();
+        var remaining = new List<QuestRecord>();
         foreach (var quest in graph.Story)
         {
             var evaluation = states.GetValueOrDefault(quest.RowId);
@@ -151,6 +191,7 @@ public static class MsqCatchUp
                 continue;
             }
 
+            remaining.Add(quest);
             var level = quest.DisplayLevel;
             if (!parts.TryGetValue(quest.Expansion, out var part))
             {
@@ -181,10 +222,43 @@ public static class MsqCatchUp
             parts[quest.Expansion] = part;
         }
 
+        // The side quests the story needs before a quest still left, filed under that quest's expansion, each once.
+        var sides = new Dictionary<byte, int>();
+        var progress = StoryRequirements.For(catalog, duties).Progress(states);
+        if (progress.LeftFor.Count > 0)
+        {
+            var seen = new HashSet<uint>();
+            foreach (var quest in remaining)
+            {
+                if (!progress.LeftFor.TryGetValue(quest.RowId, out var left))
+                {
+                    continue;
+                }
+
+                var part = parts[quest.Expansion];
+                foreach (var id in left)
+                {
+                    if (!seen.Add(id))
+                    {
+                        continue;
+                    }
+
+                    sides[quest.Expansion] = sides.GetValueOrDefault(quest.Expansion) + 1;
+                    if (catalog.GetByRowId(id) is { } side)
+                    {
+                        part.Min = Math.Min(part.Min, side.DisplayLevel);
+                        part.Max = Math.Max(part.Max, side.DisplayLevel);
+                    }
+                }
+
+                parts[quest.Expansion] = part;
+            }
+        }
+
         var list = new List<CatchUpExpansion>(parts.Count);
         foreach (var (expansion, part) in parts)
         {
-            list.Add(new CatchUpExpansion(expansion, part.Quests, part.Min, part.Max, part.Duties));
+            list.Add(new CatchUpExpansion(expansion, part.Quests, part.Min, part.Max, part.Duties) { SideQuests = sides.GetValueOrDefault(expansion) });
         }
 
         return new MsqCatchUpSummary(list);
