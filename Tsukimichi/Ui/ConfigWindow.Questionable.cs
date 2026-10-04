@@ -1,6 +1,8 @@
 using System;
 using System.Globalization;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Game;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -8,9 +10,10 @@ namespace Tsukimichi.Ui;
 /// Settings › Automation › Questionable (feature plan v5, 1.6.0, decision 1): whether Questionable is loaded with the
 /// plugins it needs to run (vnavmesh, TextAdvance, Lifestream), "Add to priority list" (the detail pane's "Add to
 /// Questionable priority"), "Allow starting Questionable" (on by default) and, under it, "Ask before starting" (on
-/// until the player ticks "Don't ask again" in the confirmation). Send to Questionable itself needs no setting: it is a
-/// button the player presses, disabled without Questionable. "Confirm Stop" lives in Advanced. Since 1.18.0 (feature
-/// plan v7 A4) "Recent runs" lists the run receipts.
+/// until the player ticks "Don't ask again" in the confirmation), and "Before a duty with other players" (1.18.0, A3:
+/// Stop, Warn or Do nothing). Send to Questionable itself needs no setting: it is a button the player presses, disabled
+/// without Questionable. "Confirm Stop" lives in Advanced. Since 1.18.0 (feature plan v7 A4) "Recent runs" lists the
+/// run receipts.
 /// </summary>
 public sealed partial class ConfigWindow
 {
@@ -70,6 +73,14 @@ public sealed partial class ConfigWindow
             Save();
         }
 
+        // 1.18.0 (A3): what happens before a duty with no Duty Support or Trust; read each frame by Game.RunWatch.
+        var guard = Enum.IsDefined(settings.QuestionableDutyGuard) ? (int)settings.QuestionableDutyGuard : 0;
+        if (Choice(Strings.ConfigQuestionableDutyGuard, Strings.ConfigQuestionableDutyGuardHint, ref guard, DutyGuardOptions.Value, "questionable duty support trust duty finder other players party stop warn guard queue"))
+        {
+            settings.QuestionableDutyGuard = (DutyGuardMode)guard;
+            Save();
+        }
+
         if (QuestionableRuns is { } runs)
         {
             Note(Strings.SettingsQuestionableRuns, RunsText(runs), "questionable runs receipt history stopped why quests done");
@@ -104,6 +115,10 @@ public sealed partial class ConfigWindow
         runsText = string.Join("\n", lines);
         return runsText;
     }
+
+    /// <summary>The duty guard's choices, in <see cref="DutyGuardMode"/> order.</summary>
+    private static readonly LocArray DutyGuardOptions = new(static () =>
+        [Strings.DutyGuardOptionStop, Strings.DutyGuardOptionWarn, Strings.DutyGuardOptionNothing]);
 
     /// <summary>Settings › Advanced › Questionable: ask before Stop when Questionable runs a command after being stopped.</summary>
     private void DrawQuestionableStopConfirm()

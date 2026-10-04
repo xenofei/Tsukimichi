@@ -301,6 +301,20 @@ public class QuestionableRunGuardTests
     }
 
     [Fact]
+    public void The_duty_guards_stop_is_its_own_reason_and_the_first_reason_stands()
+    {
+        var guard = new QuestionableRunGuard();
+        guard.NoteStarted(QuestionableRunOrigin.KeepGoing, QuestA, T0);
+        Observe(guard, true, 1, QuestA);
+
+        // Plan v7 A3: stopped before a duty with other players; a later Stop press does not rename it.
+        guard.NoteStopAsked(QuestionableRunEnd.BeforeDutyWithPlayers);
+        guard.NoteStopAsked();
+
+        Assert.Equal(QuestionableRunEnd.BeforeDutyWithPlayers, End(guard, 2).End);
+    }
+
+    [Fact]
     public void Tsukimichis_stop_is_the_reason_and_wins_over_a_condition_met_later()
     {
         var guard = new QuestionableRunGuard();
