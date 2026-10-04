@@ -1,0 +1,94 @@
+{
+  "release": "1.18.0",
+  "name": "Runs you can trust",
+  "painter": "paint_option_b3.runs",
+  "horizon": 0.535,
+  "sun_glow": [
+    0.78,
+    0.17
+  ],
+  "dawn": 0.3,
+  "dawn_lines": false,
+  "moon": [
+    0.78,
+    0.17,
+    19.0
+  ],
+  "figure_zone": [
+    515,
+    775
+  ],
+  "figure_split": 2000,
+  "bluff_split": 1.0,
+  "glass_bars": [
+    30,
+    432
+  ],
+  "aether_domes": [
+    [
+      0.12,
+      0.12
+    ],
+    [
+      0.36,
+      0.09
+    ],
+    [
+      0.56,
+      0.14
+    ]
+  ],
+  "sumi_bands": [
+    [
+      0.08,
+      0.46,
+      0.12,
+      0.035
+    ],
+    [
+      0.3,
+      0.44,
+      0.8,
+      0.025
+    ]
+  ],
+  "glass_palette": {
+    "0": [
+      "#0E1846",
+      "#14225A",
+      "#1B2D70",
+      "#26408E",
+      "#3E5AA8",
+      "#7E96D0"
+    ],
+    "1": [
+      "#2A3866",
+      "#3E4E80",
+      "#6A7CA8",
+      "#A8B6DA"
+    ],
+    "4": [
+      "#22305C",
+      "#2C3E6E",
+      "#3A4E80",
+      "#5068A0",
+      "#B4BED8"
+    ],
+    "5": [
+      "#0C101C",
+      "#141A2A",
+      "#1E2638"
+    ]
+  },
+  "orrery_moon": "engraved",
+  "far_layers": [
+    "far_a",
+    "far_b"
+  ],
+  "lines": [
+    "rope"
+  ],
+  "field_flat": true,
+  "orrery_crisp": true,
+  "aether_clear_ground": true
+}

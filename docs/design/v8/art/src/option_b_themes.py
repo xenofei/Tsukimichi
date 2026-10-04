@@ -101,6 +101,52 @@ def top_row(m):
     return np.where(on.any(0), on.argmax(0), m.shape[0]).astype(np.float32)
 
 
+# Optional per-release keys added for the 1.14-1.18 backfill (absent: every treatment behaves exactly as before):
+#   far_layers  mask names in <key>-masks.npz, farthest first, whose union is `far`: each range is cut, engraved,
+#               inked and brushed along its own ridgeline, not only the top one
+#   fig_splits  x values (px at 1120) where the glass cuts the figures' mask into pieces (one piece per stone)
+#   fig_tones   the figures differ in value (stones of different stone): engraved and inked by value, not solid
+#   glass_true_colour  glass region ids (6 = the figures) whose pieces keep their own painted colour, not a palette
+#   lines       mask names of thin linear things (a guide rope, rigging) that every treatment keeps as a line
+#   field_flat  the field is a flat sea or river: its strips, lines and strokes run from the horizon in every column,
+#               and only its dark marks are drawn (glass and ink), so a moon's glitter path stays light
+#   orrery_crisp  the engraving's lines are cut crisp, unblurred, so fine hatching on dark night masses still reads
+#   glass_far_strips  with far_layers, each range is cut in strips along its own ridgeline, with no vertical joins
+#   aether_clear_ground  no facets on the field or the ridge, and they fade out just above the horizon
+#   orrery_moon "engraved": the moon is a brass ring with its seas engraved and the unlit part in dark enamel,
+#               for a near-full moon (a flat brass disc reads as the sun or a coin)
+def far_tops(M):
+    """(layer mask, its top row) for each far range: the json's far_layers, or `far` alone."""
+    names = CFG.get("far_layers")
+    if not names:
+        return [(M["far"], top_row(M["far"]))]
+    return [(M[n], top_row(M[n])) for n in names]
+
+
+def far_phase(M, yy):
+    """yy minus the ridgeline of the range each pixel belongs to (the nearest range wins)."""
+    v = yy - top_row(M["far"])[None, :]
+    if CFG.get("far_layers"):
+        for m, t in far_tops(M):
+            v = np.where(m > 0.5, yy - t[None, :], v)
+    return v
+
+
+def field_top(M):
+    """The field's top row; with field_flat, the horizon in every column (a flat sea or river, so a boat or a
+    boathouse standing in it never restarts its strips, lines or strokes)."""
+    if CFG.get("field_flat"):
+        return np.full(M["field"].shape[1], CFG["horizon"] * M["field"].shape[0], np.float32)
+    return top_row(M["field"])
+
+
+def lines_mask(M):
+    out = np.zeros_like(M["far"])
+    for n in CFG.get("lines", []):
+        out = np.maximum(out, M[n])
+    return out
+
+
 def grid(h, w):
     return np.mgrid[0:h, 0:w].astype(np.float32)
 
@@ -118,6 +164,8 @@ def medallion(px):
     L0 = lum(px)
     mz = np.clip(blur(M["moon"], 2) * 2.5, 0, 1)
     sil = np.maximum(blur(np.maximum(M["figs"], M["city"] * (yy < h * CFG["bluff_split"])), 2), mz)
+    if CFG.get("lines"):
+        sil = np.maximum(sil, blur(lines_mask(M), 1.5) * 2).clip(0, 1)
     p = kuwahara(px, 3) * (1 - sil[..., None]) + px * sil[..., None]
     L = lum(p)[..., None]
     p = p * np.array([1.06, 1.0, 0.84], np.float32)
@@ -125,9 +173,9 @@ def medallion(px):
     Lv = lum(p)[..., None]
     p = np.clip(Lv + (p - Lv) * 1.10, 0, 1)
     # brush coordinates that follow the forms: v runs across a form's contour, u along it
-    rt, ft, at = top_row(M["ridge"]), top_row(M["field"]), top_row(M["far"])
+    rt, ft, at = top_row(M["ridge"]), field_top(M), top_row(M["far"])
     v = yy.copy()
-    v = np.where(M["far"] > 0.5, yy - at[None, :], v)
+    v = np.where(M["far"] > 0.5, far_phase(M, yy) if CFG.get("far_layers") else yy - at[None, :], v)
     v = np.where(M["field"] > 0.5, yy - ft[None, :], v)
     v = np.where(M["ridge"] > 0.5, yy - rt[None, :], v)
     u = xx.copy()
@@ -254,9 +302,18 @@ def ishgard(px):
     cl_l, _ = jitter_labels(h, w, 44, 902)
     far_l = np.floor((no_cut_x(xx) + 18 * np.sin(yy / 41.0)) / 150).astype(np.int64)   # gently curved joins, never loops
     city_l = np.where(yy > h * CFG["bluff_split"], np.floor(xx / 90).astype(np.int64), 100 + np.floor(xx / 70).astype(np.int64))
+    if CFG.get("far_layers"):                                       # each range its own pieces, the lead on its ridgeline
+        for i, (m, _t) in enumerate(far_tops(M)):
+            if CFG.get("glass_far_strips"):                       # strips along each ridgeline, no vertical joins
+                far_l = np.where(m > 0.5, (i + 1) * 1_000_000 + contour_strips(h, w, _t, 907 + i, 0.9, 240, 40), far_l)
+            else:
+                far_l = np.where(m > 0.5, (i + 1) * 1000 + far_l, far_l)
+    fig_l = (xx > CFG["figure_split"]).astype(np.int64)
+    if CFG.get("fig_splits"):                                       # one piece per stone
+        fig_l = np.digitize(xx, CFG["fig_splits"]).astype(np.int64)
     parts = {0: sky_l, 1: cl_l, 2: far_l, 3: city_l,
-             4: contour_strips(h, w, top_row(M["field"]), 904, 1.0, 150, 30), 5: contour_strips(h, w, top_row(M["ridge"]), 905, 0.8, 230, 40),
-             6: (xx > CFG["figure_split"]).astype(np.int64)}
+             4: contour_strips(h, w, field_top(M), 904, 1.0, 150, 30), 5: contour_strips(h, w, top_row(M["ridge"]), 905, 0.8, 230, 40),
+             6: fig_l}
     lab = reg * 10_000_000
     for rid, l in parts.items():
         lab = np.where(reg == rid, rid * 10_000_000 + l, lab)
@@ -273,6 +330,8 @@ def ishgard(px):
     sub = dict(SUB)
     sub.update({int(k): v for k, v in CFG.get("glass_palette", {}).items()})   # per-release ground glass
     for rid, hexes in sub.items():
+        if rid in CFG.get("glass_true_colour", []):                 # each piece keeps its own stone's colour
+            continue
         pal = np.stack([hexc(x) for x in hexes])
         sel = (regc == rid) & (cnt > 0)
         if sel.any():
@@ -291,10 +350,14 @@ def ishgard(px):
     L = lum(px)
     gris = np.clip(-highpass(L, 2.0) * 3.5, 0, 0.75) * (np.maximum(M["city"], M["figs"]) > 0.3)
     ground = np.maximum(M["field"], M["ridge"]) * (1 - M["figs"])                 # paths and roads, painted lightly on the ground glass
-    gris = np.maximum(gris, np.clip(np.abs(highpass(L, 3.0)) * 5 - 0.08, 0, 0.55) * ground)
+    gl = -highpass(L, 3.0) if CFG.get("field_flat") else np.abs(highpass(L, 3.0))   # on water, only dark marks: glitter stays light
+    gris = np.maximum(gris, np.clip(gl * 5 - 0.08, 0, 0.55) * ground)
     glass = glass * (1 - gris[..., None] * 0.8)
     came = np.clip(blur(edges(lab).astype(np.float32), 0.6) * 2.2, 0, 1)
     glass = glass * (1 - came[..., None]) + hexc("#202430") * came[..., None]
+    if CFG.get("lines"):                                            # a rope or rigging as a came of its own
+        came = np.maximum(came, np.clip(blur(lines_mask(M), 0.5) * 2.5, 0, 1))
+        glass = glass * (1 - came[..., None]) + hexc("#202430") * came[..., None]
     hl = np.clip(came - np.roll(np.roll(came, 1, 0), 1, 1), 0, 1)
     glass = glass + (hexc("#8C95B0") - glass) * (hl * 0.30)[..., None]
     for y in CFG["glass_bars"]:
@@ -335,10 +398,15 @@ def aether(px):
     nrm = ((cents[:, None, :] - domes[None, :, :]) * wts[..., None]).sum(1) / (w * 0.18)
     shade = np.clip(-(nrm[:, 0] * 0.7071 + nrm[:, 1] * 0.7071), -1, 1)
     area = np.clip(np.maximum(M["sky"], M["far"] * (1 - M["field"])) - np.maximum(M["city"], M["figs"]), 0, 1)
+    if CFG.get("aether_clear_ground"):                                           # no facets on the ground, nor along the horizon
+        area = area * (1 - np.clip(np.maximum(M["field"], M["ridge"]) * 2, 0, 1))
+        area = area * np.clip((CFG["horizon"] * h - yy) / (0.07 * h), 0, 1)
     mx, my, mr = CFG["moon"][0] * w, CFG["moon"][1] * h, CFG["moon"][2]
     dm = np.sqrt((xx - mx) ** 2 + (yy - my) ** 2)
     fade = np.clip((dm - mr * 1.2) / (mr * 3.0), 0, 1)
     near_figs = np.clip(blur(M["figs"], 12) * 5, 0, 1)                          # and within about 30 px of the figures
+    if CFG.get("lines"):
+        near_figs = np.maximum(near_figs, np.clip(blur(lines_mask(M), 4) * 5, 0, 1))
     area = blur(area, 1.0) * (fade * fade * (3 - 2 * fade)) * (1 - near_figs)
     mix = (0.6 * area)[..., None]
     p = px * (1 - mix) + col[lab] * mix
@@ -371,29 +439,41 @@ def orrery(px):
 
     def lines(phase, spacing, weight):
         f = np.abs((phase / spacing) % 1.0 - 0.5) * 2
-        return blur(((1 - f) < np.minimum(weight, 0.55) * 0.9).astype(np.float32), 0.45)  # never so wide they merge
+        cutl = ((1 - f) < np.minimum(weight, 0.55) * 0.9).astype(np.float32)          # never so wide they merge
+        return cutl if CFG.get("orrery_crisp") else blur(cutl, 0.45)
 
     cut = np.zeros((h, w), np.float32)
     ridge, field, far = M["ridge"], M["field"] * (1 - M["ridge"]), M["far"] * (1 - M["field"]) * (1 - M["city"])
     cliff = M["city"] * (yy > h * CFG["bluff_split"])
     bld = M["city"] * (yy <= h * CFG["bluff_split"])
-    rt, ft, at = top_row(M["ridge"]), top_row(M["field"]), top_row(M["far"])
+    rt, ft, at = top_row(M["ridge"]), field_top(M), top_row(M["far"])
     cut += ridge * lines(yy - rt[None, :], 5.0, 0.25 + 0.6 * dark)
     cut += field * lines(np.sqrt(np.clip(yy - ft[None, :], 0, None)) * 6.0, 1.6, 0.20 + 0.6 * dark)
-    cut += far * lines(yy - at[None, :], 4.0, 0.25 + 0.5 * dark)
+    cut += far * lines(far_phase(M, yy) if CFG.get("far_layers") else yy - at[None, :], 4.0, 0.25 + 0.5 * dark)
     cut += cliff * np.maximum(lines(xx + 3 * np.sin(yy / 9), 4.0, 0.5 + 0.45 * dark), lines(yy, 11.0, 0.15))
     dense = lambda ph: blur((np.abs((ph / 3.0) % 1.0 - 0.5) * 2 > 0.25).astype(np.float32), 0.45)
     cut += bld * np.maximum(dense(xx + yy), dense(xx - yy))                       # the backlit city: dense cross-hatching
     shadow = np.clip((0.42 - L) * 3, 0, 1) * (ridge + field + far) * (1 - M["figs"])
     cut += shadow * lines(xx - yy, 4.0, 0.35)                                     # every shadow as cross-hatching
     cut = np.clip(cut, 0, 1) * (1 - sky)
-    cut = np.maximum(cut, M["figs"])
+    if CFG.get("fig_tones"):                                                       # stones of different stone: hatched by value
+        tone = np.clip((0.66 - L) * 2.2, 0, 1)
+        crisp = lambda ph, wdt: (np.abs((ph / 5.0) % 1.0 - 0.5) * 2 < wdt).astype(np.float32)   # unblurred, so a 5 px hatch stays a hatch
+        fh = np.maximum(crisp(xx - yy, 0.12 + 0.30 * tone), crisp(xx + yy, 0.30 * np.clip(tone * 1.6 - 0.6, 0, 1)) * (tone > 0.4)) * 0.85
+        cut = cut * (1 - M["figs"]) + M["figs"] * fh
+    else:
+        cut = np.maximum(cut, M["figs"])
+    if CFG.get("lines"):
+        cut = np.maximum(cut, np.clip(lines_mask(M) * 1.6, 0, 1))
     plate = plate * (1 - cut[..., None]) + hexc("#2A2E3B") * cut[..., None]
     lip = np.clip(cut - np.roll(cut, 1, 0), 0, 1) * (1 - M["figs"])
     lip[0] = 0
     plate = plate + (hexc("#F4F6FA") - plate) * (lip * 0.25)[..., None]
     for k in ("far", "ridge", "field", "figs", "city"):
         plate = plate * (1 - (outline(M[k]) * 0.6)[..., None])
+    if CFG.get("far_layers"):                                                      # each range's own ridgeline
+        for m, _t in far_tops(M):
+            plate = plate * (1 - (outline(m) * (1 - M["figs"]) * (1 - M["city"]) * 0.6)[..., None])
     # the clouds: a few large shapes, each one clean silver outline, a few parallel lines along its lit underside
     cs = opening((blur(M["clouds"], 10) > 0.33).astype(np.float32) * sky, 20)   # no cloud under about 40 px across
     # a flat, lit base: each column's lowest cloud row, levelled over a wide span, cuts the shape off below it
@@ -416,7 +496,21 @@ def orrery(px):
     dl_ = dl_ * (1.0 if CFG.get("dawn_lines", True) else 0.0)                      # no dawn lines in a moonlit night
     plate = plate + (hexc("#D9B86E") - plate) * (dl_ * 0.55)[..., None]
     plate = plate * (1 - M["moon"][..., None]) + hexc("#1E2D66") * M["moon"][..., None]
-    plate = plate * (1 - M["moonlit"][..., None]) + hexc("#E6CC90") * M["moonlit"][..., None]
+    if CFG.get("orrery_moon") == "engraved":
+        # a near-full moon: a silver face with its seas engraved as hatching, the unlit sliver left in dark enamel, and
+        # a brass ring round the whole disc (a flat brass disc would read as the sun or a coin)
+        lit = M["moonlit"]
+        Lm = np.where(lit > 0.5, L, np.nan)
+        hi_ = np.nanpercentile(Lm, 92) if np.isfinite(Lm).any() else 1.0
+        sea = np.clip((hi_ - L) / 0.22, 0, 1) * (lit > 0.5)
+        face = hexc("#DCDFE6") * (1 - sea[..., None] * 0.15)
+        plate = plate * (1 - lit[..., None]) + face * lit[..., None]
+        hatch = (np.abs(((xx - yy) / 3.0) % 1.0 - 0.5) * 2 < 0.25 + 0.35 * sea).astype(np.float32) * np.clip(sea * 3 - 0.3, 0, 1) * lit
+        plate = plate * (1 - (hatch * 0.75)[..., None]) + hexc("#4A5066") * (hatch * 0.75)[..., None]
+        ring = np.clip(blur(outline(M["moon"]), 0.6) * 1.8, 0, 1)
+        plate = plate * (1 - ring[..., None]) + hexc("#D9B86E") * ring[..., None]
+    else:
+        plate = plate * (1 - M["moonlit"][..., None]) + hexc("#E6CC90") * M["moonlit"][..., None]
     im = Image.new("L", (w * 2, h * 2), 0)
     dr = ImageDraw.Draw(im)
     cx, cy = w * 1.0, h * 2.8
@@ -472,8 +566,15 @@ def sumi(px):
     ink += sky * (0.30 * np.clip(1 - yy / (h * hz), 0, 1) ** 1.4 + 0.05)
     ink = np.maximum(ink, M["clouds"] * sky * (0.22 + 0.10 * noise))
     farw = M["far"] * (1 - M["field"]) * (1 - M["city"])
-    ink = np.maximum(ink, farw * (0.30 + 0.08 * noise))
-    ink = np.maximum(ink, blur(outline(M["far"]) * (yy < h * hz), 0.8) * 0.55)
+    if CFG.get("far_layers"):                                                     # washes by depth: paler with distance
+        tops = far_tops(M)
+        for i, (m, t) in enumerate(tops):
+            k = 0.12 + 0.30 * i / max(1, len(tops) - 1)
+            ink = np.where(m * (1 - M["field"]) * (1 - M["city"]) > 0.5, k + 0.06 * noise, ink)
+            ink = np.maximum(ink, blur(((np.abs(yy - t[None, :]) < 1.0) & (t[None, :] < h)).astype(np.float32), 0.6) * (k + 0.25))
+    else:
+        ink = np.maximum(ink, farw * (0.30 + 0.08 * noise))
+        ink = np.maximum(ink, blur(outline(M["far"]) * (yy < h * hz), 0.8) * 0.55)
     ink = np.maximum(ink, M["city"] * (0.50 + 0.30 * np.clip((0.35 - L) * 3, 0, 1) + 0.06 * noise))
     ink = ink * (1 - M["field"] * (1 - M["figs"])) + M["field"] * np.exp(-((yy - h * (hz + 0.075)) / 6) ** 2) * 0.18
     ink = blur(ink, 1.0)
@@ -493,10 +594,17 @@ def sumi(px):
     # the figures' shadows: a light, separate wash below the stroke
     shadow = np.clip((0.45 - L) * 2, 0, 1) * rid * (1 - M["figs"]) * (dd > th + 4)
     ink = np.maximum(ink, blur(shadow, 1.5) * 0.18)
-    ink = np.maximum(ink, M["figs"] * 0.95)
+    if CFG.get("fig_tones"):                                                      # each stone in its own ink tone
+        ink = ink * (1 - M["figs"]) + M["figs"] * np.clip(0.30 + 0.75 * np.clip(1.0 - L * 1.6, 0, 1), 0, 0.95)
+        ink = np.maximum(ink, blur(outline(M["figs"]), 0.5) * 0.85)
+    else:
+        ink = np.maximum(ink, M["figs"] * 0.95)
+    if CFG.get("lines"):
+        ink = np.maximum(ink, np.clip(lines_mask(M) * 1.5, 0, 0.85))
     # paths and roads: light brush lines where the painting has a clear edge on the ground
     ground = np.maximum(M["field"], M["ridge"]) * (1 - M["figs"])
-    ink = np.maximum(ink, blur(np.clip(np.abs(highpass(L, 3.0)) * 7 - 0.12, 0, 1), 0.6) * ground * 0.5)
+    gl = -highpass(L, 3.0) if CFG.get("field_flat") else np.abs(highpass(L, 3.0))   # on water, a light path stays bare paper
+    ink = np.maximum(ink, blur(np.clip(gl * 7 - 0.12, 0, 1), 0.6) * ground * 0.5)
     p = paper * (1 - ink[..., None] * 0.93) + hexc("#16130F") * (ink[..., None] * 0.07)
     leaf = hexc("#C9A24E")[None, None, :] * (0.9 + 0.2 * fbm(h, w, 4, 2, 1105))[..., None]
     band = np.zeros((h, w), np.float32)

@@ -1,0 +1,97 @@
+{
+  "release": "1.15.0",
+  "name": "Faces and icons",
+  "painter": "paint_option_b3.faces",
+  "horizon": 0.63,
+  "sun_glow": [
+    0.16,
+    0.17
+  ],
+  "dawn": 0.3,
+  "dawn_lines": false,
+  "moon": [
+    0.16,
+    0.17,
+    18.0
+  ],
+  "figure_zone": [
+    540,
+    915
+  ],
+  "figure_split": 2000,
+  "bluff_split": 0.59,
+  "glass_bars": [
+    30,
+    430
+  ],
+  "aether_domes": [
+    [
+      0.08,
+      0.1
+    ],
+    [
+      0.33,
+      0.12
+    ],
+    [
+      0.55,
+      0.08
+    ]
+  ],
+  "sumi_bands": [
+    [
+      0.27,
+      0.52,
+      0.13,
+      0.03
+    ],
+    [
+      0.2,
+      0.42,
+      0.765,
+      0.022
+    ]
+  ],
+  "glass_palette": {
+    "0": [
+      "#081834",
+      "#0E2244",
+      "#163056",
+      "#22445E",
+      "#3A6070",
+      "#7EA0B4"
+    ],
+    "2": [
+      "#14262E",
+      "#1C343C",
+      "#28464C",
+      "#3A5A5E"
+    ],
+    "3": [
+      "#0E1416",
+      "#182022",
+      "#2A3432",
+      "#3E4A42"
+    ],
+    "4": [
+      "#0E1C1E",
+      "#16282A",
+      "#203834",
+      "#2E4A40",
+      "#5A6A48"
+    ],
+    "5": [
+      "#0A1414",
+      "#122020",
+      "#1A2C2A"
+    ]
+  },
+  "sumi_light": "#E2BE68",
+  "far_layers": [
+    "far_a",
+    "far_b"
+  ],
+  "field_flat": true,
+  "orrery_crisp": true,
+  "aether_clear_ground": true
+}

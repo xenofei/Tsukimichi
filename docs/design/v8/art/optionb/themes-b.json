@@ -1,0 +1,97 @@
+{
+  "release": "1.16.0",
+  "name": "Themes",
+  "painter": "paint_option_b3.themes",
+  "horizon": 0.44,
+  "sun_glow": [
+    0.7,
+    0.16
+  ],
+  "dawn": 0.3,
+  "dawn_lines": false,
+  "moon": [
+    0.7,
+    0.16,
+    22.0
+  ],
+  "figure_zone": [
+    770,
+    870
+  ],
+  "figure_split": 2000,
+  "bluff_split": 1.0,
+  "glass_bars": [
+    30,
+    432
+  ],
+  "aether_domes": [
+    [
+      0.15,
+      0.15
+    ],
+    [
+      0.4,
+      0.1
+    ],
+    [
+      0.9,
+      0.18
+    ]
+  ],
+  "sumi_bands": [
+    [
+      0.38,
+      0.62,
+      0.1,
+      0.032
+    ],
+    [
+      -0.06,
+      0.26,
+      0.955,
+      0.025
+    ]
+  ],
+  "glass_palette": {
+    "0": [
+      "#0E1846",
+      "#14225A",
+      "#1B2D70",
+      "#26408E",
+      "#3E5AA8",
+      "#7E96D0"
+    ],
+    "2": [
+      "#1A2248",
+      "#26305E",
+      "#36427A",
+      "#4E5C96",
+      "#7482B8",
+      "#A6B4DE"
+    ],
+    "3": [
+      "#2A3A68",
+      "#5A72A8",
+      "#9AAED4",
+      "#C8D4EE"
+    ],
+    "5": [
+      "#10162A",
+      "#182038",
+      "#222C4A"
+    ],
+    "6": [
+      "#06080F"
+    ]
+  },
+  "orrery_moon": "engraved",
+  "far_layers": [
+    "far_a",
+    "far_b",
+    "far_c",
+    "far_d"
+  ],
+  "glass_far_strips": true,
+  "aether_clear_ground": true,
+  "orrery_crisp": true
+}

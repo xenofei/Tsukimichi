@@ -1,0 +1,98 @@
+{
+  "release": "1.14.0",
+  "name": "The polish you asked for",
+  "painter": "paint_option_b3.polish",
+  "horizon": 0.585,
+  "sun_glow": [
+    0.26,
+    0.36
+  ],
+  "dawn": 0.35,
+  "dawn_lines": false,
+  "moon": [
+    0.26,
+    0.36,
+    20.0
+  ],
+  "figure_zone": [
+    400,
+    570
+  ],
+  "figure_split": 2000,
+  "bluff_split": 1.0,
+  "glass_bars": [
+    30,
+    428
+  ],
+  "aether_domes": [
+    [
+      0.12,
+      0.14
+    ],
+    [
+      0.55,
+      0.12
+    ],
+    [
+      0.86,
+      0.16
+    ]
+  ],
+  "sumi_bands": [
+    [
+      0.4,
+      0.7,
+      0.13,
+      0.035
+    ],
+    [
+      -0.06,
+      0.17,
+      0.87,
+      0.032
+    ]
+  ],
+  "glass_palette": {
+    "0": [
+      "#0E1846",
+      "#14225A",
+      "#1B2D70",
+      "#26408E",
+      "#3E5AA8",
+      "#7E96D0"
+    ],
+    "1": [
+      "#2A3866",
+      "#3E4E80",
+      "#6A7CA8",
+      "#A8B6DA"
+    ],
+    "2": [
+      "#161A34",
+      "#1C2240",
+      "#242C50",
+      "#303A62"
+    ],
+    "3": [
+      "#12162A",
+      "#1A2036",
+      "#2A3454",
+      "#4C5888"
+    ],
+    "4": [
+      "#0C1638",
+      "#14214E",
+      "#1E3068",
+      "#2E4684",
+      "#C8C4B0"
+    ]
+  },
+  "sumi_light": "#E2BE68",
+  "orrery_moon": "engraved",
+  "lines": [
+    "rigging"
+  ],
+  "field_flat": true,
+  "orrery_crisp": true,
+  "aether_clear_ground": true
+}
