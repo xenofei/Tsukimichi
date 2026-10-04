@@ -790,6 +790,17 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>Settings › Data "Forget characters not seen in N days": N, clamped to 7–3650 on load. 180 by default.</summary>
     public int ForgetNotSeenDays { get; set; } = DefaultForgetDays;
 
+    // ---- 1.21.0: the roster (plan v7 P3, N11) ----
+    /// <summary>
+    /// Settings › Data › Characters "Also read characters from these folders": other launcher folders' Tsukimichi config
+    /// folders (<c>…\pluginConfigs\Tsukimichi</c>), read only, whose characters the All characters roster lists marked
+    /// "other folder" (multibox with one roaming folder per client). Empty by default.
+    /// </summary>
+    public List<string> LinkedCharacterFolders { get; set; } = [];
+
+    /// <summary>The All characters roster's Moonlit and Today columns stay on below 1,000 px (its header's menu turns them back on).</summary>
+    public bool RosterNarrowColumns { get; set; }
+
     // ---- 1.1: journal text (P9) ----
     /// <summary>
     /// Settings › Journal text › "Search journal text of completed quests": the search box also matches the words of

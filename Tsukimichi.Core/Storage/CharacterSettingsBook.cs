@@ -81,6 +81,18 @@ public sealed class CharacterSettingsBook
     /// <summary>Whether the player chose "Go with the game" for <paramref name="questRowId"/> on the character.</summary>
     public bool IsGoWithGame(ulong contentId, uint questRowId) => Get(contentId)?.GoWithGame.Contains(questRowId) == true;
 
+    /// <summary>The character's alt goal (1.21.0 N11); null when none is set.</summary>
+    public Characters.AltGoal? Goal(ulong contentId) => Get(contentId)?.Goal;
+
+    /// <summary>Starred on the All characters roster (1.21.0 P3).</summary>
+    public bool IsStarred(ulong contentId) => Get(contentId)?.Starred == true;
+
+    /// <summary>The player's own word for the character ("main", "healer"); null for none.</summary>
+    public string? Role(ulong contentId) => Get(contentId)?.Role;
+
+    /// <summary>The character's nickname on the roster; null for none.</summary>
+    public string? Nickname(ulong contentId) => Get(contentId)?.Nickname;
+
     public bool IsWhyOpen(ulong contentId, string gateId) =>
         Get(contentId)?.PayoffWhyOpen.Contains(gateId, StringComparer.Ordinal) == true;
 
@@ -340,7 +352,11 @@ public sealed class CharacterSettingsBook
                 || !x.GatesDone.SequenceEqual(y.GatesDone)
                 || !x.GoWithGame.SequenceEqual(y.GoWithGame)
                 || !SameIds(x.SeenReady, y.SeenReady)
-                || x.SeenReadyRules != y.SeenReadyRules)
+                || x.SeenReadyRules != y.SeenReadyRules
+                || x.Goal != y.Goal
+                || x.Starred != y.Starred
+                || !string.Equals(x.Role, y.Role, StringComparison.Ordinal)
+                || !string.Equals(x.Nickname, y.Nickname, StringComparison.Ordinal))
             {
                 return false;
             }

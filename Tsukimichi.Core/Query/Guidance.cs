@@ -88,33 +88,16 @@ public static class GuidancePick
         ArgumentNullException.ThrowIfNull(states);
         ArgumentNullException.ThrowIfNull(pins);
         ArgumentNullException.ThrowIfNull(closest);
-        if (routeNext is { } route && Actionable(states, route))
-        {
-            return (route, GuidanceReason.Route);
-        }
 
-        if (msqNext is { } msq && Actionable(states, msq))
+        // Up next's picker (1.21.0 P1) holds the order; without a goal or a level gate its rules map one to one.
+        return Todo.UpNextPicker.Pick(states, routeNext, [], msqNext, pins, closest, levelGate: null) switch
         {
-            return (msq, GuidanceReason.MainScenario);
-        }
-
-        foreach (var pin in pins)
-        {
-            if (Is(states, pin, QuestState.Ready))
-            {
-                return (pin, GuidanceReason.Pinned);
-            }
-        }
-
-        foreach (var stop in closest)
-        {
-            if (Is(states, stop, QuestState.Ready))
-            {
-                return (stop, GuidanceReason.ClosestStop);
-            }
-        }
-
-        return null;
+            { Rule: Todo.UpNextRule.Route } pick => (pick.RowId, GuidanceReason.Route),
+            { Rule: Todo.UpNextRule.MainScenario } pick => (pick.RowId, GuidanceReason.MainScenario),
+            { Rule: Todo.UpNextRule.Pinned } pick => (pick.RowId, GuidanceReason.Pinned),
+            { Rule: Todo.UpNextRule.ClosestStop } pick => (pick.RowId, GuidanceReason.ClosestStop),
+            _ => null,
+        };
     }
 
     /// <summary>How many quests are Ready on another job (the "nothing is Ready on this job" line).</summary>
@@ -132,10 +115,4 @@ public static class GuidancePick
 
         return count;
     }
-
-    private static bool Actionable(IReadOnlyDictionary<uint, QuestEvaluation> states, uint rowId) =>
-        Is(states, rowId, QuestState.Ready) || Is(states, rowId, QuestState.Accepted);
-
-    private static bool Is(IReadOnlyDictionary<uint, QuestEvaluation> states, uint rowId, QuestState state) =>
-        states.TryGetValue(rowId, out var evaluation) && evaluation.State == state;
 }

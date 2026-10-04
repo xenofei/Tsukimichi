@@ -8,6 +8,7 @@ using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Text;
 using Tsukimichi.Core.Travel;
 using Tsukimichi.Game;
+using Tsukimichi.GameData;
 using Tsukimichi.Ui;
 
 namespace Tsukimichi.Commands;
@@ -18,7 +19,8 @@ namespace Tsukimichi.Commands;
 /// character (the viewed one while nobody is logged in), every name through its spoiler shield.
 /// <list type="bullet">
 /// <item><c>msq</c>: where the character stands in the main scenario and what is left (<see cref="MsqLeft"/>).</item>
-/// <item><c>next</c>: the one quest to do next (<see cref="GuidancePick"/>, Up next's order) with, for a quest in the
+/// <item><c>next</c>: the one quest to do next (<see cref="Core.Todo.UpNextPicker"/>, Up next's own pick: route, goal,
+/// main scenario, pin, closest stop, level gate) with, for a quest in the
 /// journal, its current step in the game's words and where it is (<see cref="GameLinks.CurrentStep"/>).</item>
 /// <item><c>go</c>: travels to the current step of the named or selected quest in the journal, else to its giver (with no
 /// name and no selection, to <c>next</c>'s quest), at the player's automation level and never above it: Go to (teleport
@@ -36,6 +38,15 @@ public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks 
 
     /// <summary>Next stops' quests, closest stop first.</summary>
     public Func<IEnumerable<uint>>? Closest { get; set; }
+
+    /// <summary>
+    /// The goal's quests left for a character (Up next rule 2, 1.21.0 N11), the ones it can do now first; empty without a
+    /// goal. Set with the roster (<c>Plugin.Roster.cs</c>).
+    /// </summary>
+    public Func<ulong, IEnumerable<uint>>? Goal { get; set; }
+
+    /// <summary>The level gate (Up next rule 6) for a character: the next story quest when it waits for a level, the level and the job; null otherwise.</summary>
+    public Func<ulong, Core.Jobs.MsqLevelGate?>? LevelGate { get; set; }
 
     private IReadOnlyDictionary<uint, QuestEvaluation> States => session.LiveContentId is not null ? session.LiveStates : session.States;
 
@@ -82,8 +93,21 @@ public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks 
         }
 
         var states = States;
-        return Pick(bundle.Catalog, states) is { } quest ? LineFor(quest, states) : GuidanceText.NextNothing(GuidancePick.ReadyOnOtherJob(states));
+        if (PickWithRule(bundle.Catalog, states) is not { } picked)
+        {
+            return GuidanceText.NextNothing(GuidancePick.ReadyOnOtherJob(states));
+        }
+
+        // The level gate (Up next rule 6) is not a quest to go to yet: the line says the level it waits for.
+        if (picked.Rule == Core.Todo.UpNextRule.LevelGate && LevelGate?.Invoke(ContentId) is { } gate && !Spoilers.IsMasked(picked.Quest))
+        {
+            return GuidanceText.NextLevelGate(Spoilers.DisplayName(picked.Quest), picked.Quest.RowId, gate.Level, JobAbbreviation(bundle, gate.Job), gate.JobLevel);
+        }
+
+        return LineFor(picked.Quest, states);
     }
+
+    private static string? JobAbbreviation(CatalogBundle bundle, byte job) => job == 0 ? null : bundle.Names.ClassJobAbbreviation(job);
 
     /// <summary>
     /// "Step done. Next: step 4. …" for the quest whose step just finished; null when it is not in the journal any more
@@ -174,11 +198,22 @@ public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks 
         return null;
     }
 
-    private QuestRecord? Pick(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states)
+    private QuestRecord? Pick(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states) => PickWithRule(catalog, states)?.Quest;
+
+    /// <summary>Up next's pick (1.21.0 P1, <see cref="Core.Todo.UpNextPicker"/>), so the chat and Tonight always agree.</summary>
+    private (QuestRecord Quest, Core.Todo.UpNextRule Rule)? PickWithRule(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states)
     {
         var msq = MsqProgress.Compute(catalog, states)?.Next?.RowId;
-        var pick = GuidancePick.Pick(states, RouteNext?.Invoke()?.RowId, msq, Pins?.Invoke() ?? [], Closest?.Invoke() ?? []);
-        return pick is { } chosen ? catalog.GetByRowId(chosen.RowId) : null;
+        var id = ContentId;
+        var pick = Core.Todo.UpNextPicker.Pick(
+            states,
+            RouteNext?.Invoke()?.RowId,
+            Goal?.Invoke(id) ?? [],
+            msq,
+            Pins?.Invoke() ?? [],
+            Closest?.Invoke() ?? [],
+            LevelGate?.Invoke(id)?.Quest.RowId);
+        return pick is { } chosen && catalog.GetByRowId(chosen.RowId) is { } quest ? (quest, chosen.Rule) : null;
     }
 
     private GuidanceLine LineFor(QuestRecord quest, IReadOnlyDictionary<uint, QuestEvaluation> states)

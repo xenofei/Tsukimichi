@@ -205,6 +205,19 @@ public static class GuidanceText
         return Linked(Join(text, TalkSentence(giver, place, playerZone)), questName, questRowId);
     }
 
+    /// <summary>
+    /// Up next's level gate (1.21.0 P1, rule 6): "Next: The Darkness Below needs level 70. You are DRK 69." The job is
+    /// its abbreviation as the game prints it; an empty one leaves "You are level 69."
+    /// </summary>
+    public static GuidanceLine NextLevelGate(string questName, uint questRowId, int level, string? job, int jobLevel)
+    {
+        var text = F("Core.Guidance.LevelGate", "Next: {0} needs level {1}.", NameMark, level);
+        var you = string.IsNullOrWhiteSpace(job)
+            ? F("Core.Guidance.YouAreLevel", "You are level {0}.", jobLevel)
+            : F("Core.Guidance.YouAreJob", "You are {0} {1}.", Speakable(job), jobLevel);
+        return Linked(Join(text, you), questName, questRowId);
+    }
+
     /// <summary>"Next: nothing is Ready on this job. 4 quests are Ready on another job."</summary>
     public static GuidanceLine NextNothing(int readyOnOtherJob)
     {
