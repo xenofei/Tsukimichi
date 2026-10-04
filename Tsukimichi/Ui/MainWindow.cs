@@ -137,6 +137,7 @@ public sealed partial class MainWindow : Window, IDisposable
     // Main scenario position, memoized per session version and catalog; empty strings hide it.
     private int msqVersion = -1;
     private CatalogBundle? msqBundle;
+    private StoryMeter? msqMeter;
     private MsqPosition? msq;
     private string msqStatus = string.Empty;
     private string msqTooltip = string.Empty;
@@ -2071,13 +2072,16 @@ public sealed partial class MainWindow : Window, IDisposable
     /// </summary>
     private void RefreshMsq(SessionState session, CatalogBundle bundle)
     {
-        if (msqVersion == session.Version && ReferenceEquals(msqBundle, bundle))
+        // The story meter (N3) lands with the duty index, after the session version it was first asked under.
+        var meter = tonightCard.Planning?.StoryMeter;
+        if (msqVersion == session.Version && ReferenceEquals(msqBundle, bundle) && ReferenceEquals(msqMeter, meter))
         {
             return;
         }
 
         msqVersion = session.Version;
         msqBundle = bundle;
+        msqMeter = meter;
         msq = session.ViewedSnapshot is null || session.States.Count == 0 ? null : MsqProgress.Compute(bundle.Catalog, session.States);
         if (msq is not { } position)
         {
@@ -2089,13 +2093,13 @@ public sealed partial class MainWindow : Window, IDisposable
         if (position.Next is not { } next)
         {
             msqStatus = Strings.StatusMsqComplete;
-            msqTooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqCompleteFormat, position.Done, position.Total);
+            msqTooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqCompleteFormat, position.Done, position.Total) + MeterLine(meter);
             return;
         }
 
         var spoilers = session.Spoilers;
         var expansion = bundle.Names.Expansion(next.Expansion) is { Length: > 0 } named ? named : Expansions.Name(next.Expansion);
-        var tooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqProgressFormat, expansion, position.Done, position.Total);
+        var tooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqProgressFormat, expansion, position.Done, position.Total) + MeterLine(meter);
         if (position.IsBranched)
         {
             // Inside a branch region: every route with its progress; a click selects the first route's next quest.
@@ -2114,6 +2118,15 @@ public sealed partial class MainWindow : Window, IDisposable
 
         msqTooltip = tooltip + "\n" + Strings.StateName(position.State, next) + "\n" + Strings.MsqClickHint;
     }
+
+    /// <summary>
+    /// "Story meter: 94% · 1,032 of 1,100, counting the 26 side quests the story needs" on its own line (feature plan v7
+    /// N3), only when the story needs side quests; empty otherwise.
+    /// </summary>
+    private static string MeterLine(StoryMeter? meter) =>
+        meter is { SideTotal: > 0 } m
+            ? "\n" + string.Format(CultureInfo.CurrentCulture, Strings.MsqStoryMeterFormat, m.Percent, m.Done, m.Total, m.SideTotal)
+            : string.Empty;
 
     /// <summary>Selects the next main scenario quest in the Journal tab; an active preset would hide it, so it is cleared first.</summary>
     private void SelectMsq(QuestRecord quest)

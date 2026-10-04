@@ -6,7 +6,9 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Unique;
@@ -95,6 +97,21 @@ public sealed class GameStateReader
     private readonly List<uint> gateHeldScratch = new(8);
     private bool gateItemsWarned;
 
+    // The equipped gear's item levels by slot (ReadItemLevels), the best level per job, and whether a failed read was logged.
+    private readonly ushort[] slotLevelScratch = new ushort[EquippedItemLevel.SoulCrystal + 1];
+    private IReadOnlyDictionary<byte, ushort> jobItemLevels = new Dictionary<byte, ushort>();
+    private bool itemLevelsWarned;
+
+    // The duties the Duties board reads (DutyBoard.Watched over the index), the index they came from, and the last
+    // duty-record read: whose, under which list, how many captures ago. Reused until one of them moves.
+    private DutyRunIndex? dutyWatchIndex;
+    private uint[] dutyWatch = [];
+    private uint dutyWatchFingerprint;
+    private DutyRecordCapture? dutyRecords;
+    private ulong dutyRecordsContentId;
+    private int dutyRecordsAge;
+    private bool dutyRecordsWarned;
+
     public GameStateReader(IFramework framework, IPlayerState playerState, IDataManager data, IPluginLog log)
     {
         this.framework = framework ?? throw new ArgumentNullException(nameof(framework));
@@ -125,6 +142,12 @@ public sealed class GameStateReader
     /// this cycle by their flag) rather than from a call into an untested game version.
     /// </summary>
     public HookGate? Gate { get; set; }
+
+    /// <summary>
+    /// The duty index (built once from the sheets) whose duties the Duties board reads the character's records of
+    /// (feature plan v7 N4, <see cref="DutyBoard.Watched"/>); null, or an index not built yet, reads none.
+    /// </summary>
+    public Func<DutyRunIndex?>? DutyIndex { get; set; }
 
     /// <summary>
     /// A capture reads the collectible flags again at least this often (in captures) even when nothing says they
@@ -345,6 +368,7 @@ public sealed class GameStateReader
             LogFestivalProbe(ps);
         }
 
+        var itemLevel = ReadItemLevels(ps->CurrentClassJobId);
         var snapshot = new CharacterSnapshot
         {
             ContentId = contentId,
@@ -380,6 +404,9 @@ public sealed class GameStateReader
             // A quest turned in is when most collectibles arrive, so a changed completion mask reads them again too.
             Collectibles = ReadCollectibles(contentId, catalog, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
             GateItems = ReadGateItems(ids),
+            ItemLevel = itemLevel,
+            JobItemLevels = jobItemLevels,
+            DutyRecords = ReadDutyRecords(contentId, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
         };
 
         if (stopwatch is not null)
@@ -539,6 +566,177 @@ public sealed class GameStateReader
             }
 
             return gateItems = null;
+        }
+    }
+
+    /// <summary>
+    /// The equipped gear's average item level (<see cref="EquippedItemLevel.Average"/>, from each slot's
+    /// <c>Item.LevelItem</c>) and, in <see cref="jobItemLevels"/>, the best item level known per job: every saved
+    /// gearset's (<c>RaptureGearsetModule.GearsetEntry.ItemLevel</c>, as the game keeps it) and the equipped gear's for
+    /// <paramref name="currentJob"/> (feature plan v7 C7). Both are fetched through the game, so the read follows the
+    /// <see cref="Gate"/>: while it holds the hooks, or while the equipped container is not loaded, the item level
+    /// reads 0 (not judged) and the job levels stay as last read. An unchanged job table keeps its instance, so the
+    /// diff sees it unchanged by reference.
+    /// </summary>
+    private unsafe ushort ReadItemLevels(byte currentJob)
+    {
+        if (Gate is not { HooksAllowed: true })
+        {
+            return 0;
+        }
+
+        try
+        {
+            var inventory = InventoryManager.Instance();
+            var container = inventory == null ? null : inventory->GetInventoryContainer(InventoryType.EquippedItems);
+            if (container == null || !container->IsLoaded)
+            {
+                return 0;
+            }
+
+            var items = data.GetExcelSheet<Item>();
+            Array.Clear(slotLevelScratch);
+            var slots = Math.Min((int)container->Size, slotLevelScratch.Length);
+            for (var i = 0; i < slots; i++)
+            {
+                var slot = container->GetInventorySlot(i);
+                if (slot != null && slot->ItemId != 0 && items.GetRowOrDefault(slot->ItemId) is { } item)
+                {
+                    slotLevelScratch[i] = (ushort)Math.Min(item.LevelItem.RowId, ushort.MaxValue);
+                }
+            }
+
+            var equipped = EquippedItemLevel.Average(slotLevelScratch);
+            var levels = new Dictionary<byte, ushort>();
+            var gearsets = RaptureGearsetModule.Instance();
+            if (gearsets != null)
+            {
+                foreach (ref var entry in gearsets->Entries)
+                {
+                    if (!entry.Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists) || entry.ClassJob == 0 || entry.ItemLevel <= 0)
+                    {
+                        continue;
+                    }
+
+                    var level = (ushort)entry.ItemLevel;
+                    if (level > levels.GetValueOrDefault(entry.ClassJob))
+                    {
+                        levels[entry.ClassJob] = level;
+                    }
+                }
+            }
+
+            if (currentJob != 0 && equipped > levels.GetValueOrDefault(currentJob))
+            {
+                levels[currentJob] = equipped;
+            }
+
+            if (!SameLevels(jobItemLevels, levels))
+            {
+                jobItemLevels = levels;
+            }
+
+            return equipped;
+        }
+        catch (Exception ex)
+        {
+            if (!itemLevelsWarned)
+            {
+                itemLevelsWarned = true;
+                log.Warning(ex, "The item levels could not be read; item-level walls read as not checked");
+            }
+
+            return 0;
+        }
+    }
+
+    private static bool SameLevels(IReadOnlyDictionary<byte, ushort> a, Dictionary<byte, ushort> b)
+    {
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+
+        foreach (var (job, level) in b)
+        {
+            if (!a.TryGetValue(job, out var other) || other != level)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// The Duties board's records (feature plan v7 N4): of the duties <see cref="DutyBoard.Watched"/> lists, those the
+    /// character has unlocked (<c>UIState.IsInstanceContentUnlocked</c>) and cleared
+    /// (<c>UIState.IsInstanceContentCompleted</c>). Up to two game calls per duty, so, like the collectibles, they are
+    /// read only when something may have changed them: another character, a quest just completed (most duties open on
+    /// a quest), another list, or <see cref="CollectibleRefreshCaptures"/> captures since the last read; otherwise the
+    /// last read is reused as is. Null, so the board says "log in to read", while the <see cref="Gate"/> holds the
+    /// hooks or the duty index has not landed.
+    /// </summary>
+    private DutyRecordCapture? ReadDutyRecords(ulong contentId, bool completedChanged)
+    {
+        if (Gate is not { HooksAllowed: true } || DutyIndex?.Invoke() is not { Count: > 0 } index)
+        {
+            return dutyRecords = null;
+        }
+
+        if (!ReferenceEquals(index, dutyWatchIndex))
+        {
+            dutyWatchIndex = index;
+            dutyWatch = DutyBoard.Watched(index);
+            dutyWatchFingerprint = GateItemCapture.Fingerprint(dutyWatch);
+        }
+
+        dutyRecordsAge++;
+        if (dutyRecords is { } last
+            && contentId == dutyRecordsContentId
+            && last.Watch == dutyWatchFingerprint
+            && !completedChanged
+            && dutyRecordsAge < CollectibleRefreshCaptures)
+        {
+            return last;
+        }
+
+        try
+        {
+            var unlocked = new List<uint>();
+            var cleared = new List<uint>();
+            foreach (var id in dutyWatch)
+            {
+                if (UIState.IsInstanceContentCompleted(id))
+                {
+                    cleared.Add(id);
+                    unlocked.Add(id);
+                }
+                else if (UIState.IsInstanceContentUnlocked(id))
+                {
+                    unlocked.Add(id);
+                }
+            }
+
+            dutyRecordsAge = 0;
+            var read = new DutyRecordCapture(dutyWatchFingerprint, unlocked, cleared);
+            if (contentId != dutyRecordsContentId || !DutyRecordCapture.Same(dutyRecords, read))
+            {
+                dutyRecords = read;
+            }
+
+            dutyRecordsContentId = contentId;
+            return dutyRecords;
+        }
+        catch (Exception ex)
+        {
+            if (!dutyRecordsWarned)
+            {
+                dutyRecordsWarned = true;
+                log.Warning(ex, "The duty records could not be read; the Duties board waits for the next read");
+            }
+
+            return dutyRecords = null;
         }
     }
 

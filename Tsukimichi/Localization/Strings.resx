@@ -4786,7 +4786,7 @@
     <value>You have reached the latest story.</value>
   </data>
   <data name="PlanningCatchUpTooltip" xml:space="preserve">
-    <value>Main scenario quests left on your path, per expansion, with the duties they ask you to have cleared that you have not. Counts only.</value>
+    <value>Quests left on your path to the latest story, per expansion: the main scenario, and the side quests it needs (the Crystal Tower series, the hard primals, a Shadowbringers role quest line), with the duties they ask you to have cleared that you have not. Counts only.</value>
   </data>
   <data name="PlanningBoardHeading" xml:space="preserve">
     <value>Allied society board</value>
@@ -11891,5 +11891,149 @@
   <data name="ArtisanCraftingFormat" xml:space="preserve">
     <value>Artisan: crafting {0}</value>
     <comment>Status bar line while an Artisan craft Tsukimichi handed off runs. {0} = the item.</comment>
+  </data>
+  <data name="DutyClearSolo" xml:space="preserve">
+    <value>Solo</value>
+  </data>
+  <data name="DutyClearSupport" xml:space="preserve">
+    <value>Duty Support</value>
+  </data>
+  <data name="DutyClearTrust" xml:space="preserve">
+    <value>Trust</value>
+  </data>
+  <data name="DutyClearFinder" xml:space="preserve">
+    <value>Duty Finder</value>
+  </data>
+  <data name="DutyClearParty" xml:space="preserve">
+    <value>Party only</value>
+  </data>
+  <data name="DutyClearSoloTip" xml:space="preserve">
+    <value>A solo duty: you go in alone.</value>
+  </data>
+  <data name="DutyClearSupportTip" xml:space="preserve">
+    <value>Duty Support lists it: NPCs fill your party, no other players needed.</value>
+  </data>
+  <data name="DutyClearTrustTip" xml:space="preserve">
+    <value>Trust lists it: NPCs fill your party and level up with you.</value>
+  </data>
+  <data name="DutyClearFinderTip" xml:space="preserve">
+    <value>The Duty Finder matches you with other players.</value>
+  </data>
+  <data name="DutyClearPartyTip" xml:space="preserve">
+    <value>The Duty Finder does not match it: you form the full party yourself (the Party Finder, friends, a static).</value>
+  </data>
+  <data name="DutyWallNeedsFormat" xml:space="preserve">
+    <value>Needs i{0} · you: i{1}</value>
+    <comment>The item-level wall, not met. {0} = the duty's item level, {1} = the character's.</comment>
+  </data>
+  <data name="DutyWallMetFormat" xml:space="preserve">
+    <value>i{0} needed · you: i{1}</value>
+    <comment>The item-level wall, met. {0} = the duty's item level, {1} = the character's.</comment>
+  </data>
+  <data name="DutyWallGearsetFormat" xml:space="preserve">
+    <value>Your {0} gearset is i{1}: switch to it to queue.</value>
+    <comment>{0} = the job's abbreviation (WAR), {1} = its gearset's item level.</comment>
+  </data>
+  <data name="DutyWallCurrentTipFormat" xml:space="preserve">
+    <value>The game checks the average item level of the job you queue on ({0}).</value>
+    <comment>{0} = the current job's abbreviation.</comment>
+  </data>
+  <data name="DutyWallBestTipFormat" xml:space="preserve">
+    <value>From Patch 8.0 your highest item level counts for every job: your best is {0} at i{1}.</value>
+    <comment>{0} = the best job's abbreviation, {1} = its item level.</comment>
+  </data>
+  <data name="PlanningCatchUpSideFormat" xml:space="preserve">
+    <value>{0}, {1} of them side quests the story needs</value>
+    <comment>{0} = every quest left ("151 quests"), {1} = how many of them are side quests the story needs.</comment>
+  </data>
+  <data name="PlanningSideQuestsOne" xml:space="preserve">
+    <value>1 side quest</value>
+  </data>
+  <data name="PlanningSideQuestsFormat" xml:space="preserve">
+    <value>{0} side quests</value>
+    <comment>{0} = the count.</comment>
+  </data>
+  <data name="PlanningCatchUpSideBeforeFormat" xml:space="preserve">
+    <value>{0} the story needs before {1}</value>
+    <comment>{0} = "8 side quests", {1} = the main scenario quest that needs them (spoiler-masked).</comment>
+  </data>
+  <data name="PlanningCatchUpExpansionSideFormat" xml:space="preserve">
+    <value>{0} (and {1})</value>
+    <comment>An expansion's catch-up line with its side quests. {0} = the line, {1} = "8 side quests".</comment>
+  </data>
+  <data name="PlanningCatchUpOthersOne" xml:space="preserve">
+    <value>Ahead: 1 story duty needs other players</value>
+  </data>
+  <data name="PlanningCatchUpOthersFormat" xml:space="preserve">
+    <value>Ahead: {0} story duties need other players</value>
+    <comment>{0} = how many duties left on the story path have no Duty Support or Trust.</comment>
+  </data>
+  <data name="PlanningCatchUpWallFormat" xml:space="preserve">
+    <value>The story's duties ahead ask up to i{0} (you: i{1})</value>
+    <comment>{0} = the highest item level a story duty left asks, {1} = the character's.</comment>
+  </data>
+  <data name="MsqStoryMeterFormat" xml:space="preserve">
+    <value>Story meter: {0}% · {1:N0} of {2:N0}, counting the {3:N0} side quests the story needs</value>
+    <comment>{0} = whole percent, {1} = done, {2} = in all, {3} = the side quests the story needs.</comment>
+  </data>
+  <data name="DutyBoardHeading" xml:space="preserve">
+    <value>Duty roulettes</value>
+  </data>
+  <data name="DutyBoardNotRead" xml:space="preserve">
+    <value>Log in on this character to read its duty records.</value>
+  </data>
+  <data name="DutyBoardOpenFormat" xml:space="preserve">
+    <value>Open: {0}</value>
+    <comment>{0} = the open roulettes' short names.</comment>
+  </data>
+  <data name="DutyBoardNeedsLevelFormat" xml:space="preserve">
+    <value>Needs level {0}</value>
+    <comment>{0} = the roulette's level.</comment>
+  </data>
+  <data name="DutyBoardNeedsExpansion" xml:space="preserve">
+    <value>Needs an expansion your account does not own yet</value>
+  </data>
+  <data name="DutyBoardNeedsEveryFormat" xml:space="preserve">
+    <value>Opens once every duty in it is unlocked: {0} still locked</value>
+    <comment>{0} = how many.</comment>
+  </data>
+  <data name="DutyBoardNeedsSomeFormat" xml:space="preserve">
+    <value>Opens once {0} of its duties are unlocked: unlock {1} more</value>
+    <comment>{0} = how many open it, {1} = how many are still needed.</comment>
+  </data>
+  <data name="DutyBoardFromFormat" xml:space="preserve">
+    <value>from {0} ({1})</value>
+    <comment>{0} = the unlock quest (spoiler-masked), {1} = its state.</comment>
+  </data>
+  <data name="DutyBoardNoQuest" xml:space="preserve">
+    <value>no unlock quest known</value>
+  </data>
+  <data name="DutyBoardHiddenDutyFormat" xml:space="preserve">
+    <value>A duty further along the story (Lv {0})</value>
+    <comment>{0} = the duty's level. Shown when every quest that unlocks it is hidden by the spoiler shield.</comment>
+  </data>
+  <data name="DutyBoardQuestTip" xml:space="preserve">
+    <value>Click to show the quest.</value>
+  </data>
+  <data name="DutyBoardNeverHeading" xml:space="preserve">
+    <value>Unlocked, never cleared</value>
+  </data>
+  <data name="DutyBoardNeverNone" xml:space="preserve">
+    <value>Every duty you have unlocked is cleared.</value>
+  </data>
+  <data name="DutyBoardKindDungeons" xml:space="preserve">
+    <value>Dungeons</value>
+  </data>
+  <data name="DutyBoardKindTrials" xml:space="preserve">
+    <value>Trials</value>
+  </data>
+  <data name="DutyBoardKindRaids" xml:space="preserve">
+    <value>Raids</value>
+  </data>
+  <data name="DutyBoardKindGuildhests" xml:space="preserve">
+    <value>Guildhests</value>
+  </data>
+  <data name="DutyBoardTooltip" xml:space="preserve">
+    <value>Why each Duty Roulette is closed, read from this character's own duty records: the duties still to unlock and the quests that unlock them. Mentor is left out: mentor status opens it, not duties.</value>
   </data>
 </root>
