@@ -20,6 +20,9 @@ public sealed class SetAsideActions
     private readonly SessionState session;
     private readonly CharacterSettingsBook book;
 
+    // Where each quest moved this session stood before its last move, per character, for a kept row's Undo.
+    private readonly Dictionary<(ulong ContentId, uint RowId), SetAsideEdits.Before> lastBefore = [];
+
     public SetAsideActions(SessionState session, CharacterSettingsBook book)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
@@ -40,57 +43,55 @@ public sealed class SetAsideActions
     {
         ArgumentNullException.ThrowIfNull(quest);
         var format = notForMe ? Strings.BluesNotForMeToastFormat : Strings.BluesSetAsideToastFormat;
-        Apply([quest.RowId], aside: true, notForMe, string.Format(CultureInfo.CurrentCulture, format, session.Spoilers.DisplayName(quest)));
+        Apply(session.ViewedContentId, [quest.RowId], aside: true, notForMe, keepSetAside: false, string.Format(CultureInfo.CurrentCulture, format, session.Spoilers.DisplayName(quest)));
     }
 
-    /// <summary>Sets a whole group aside for later (the pane asked first), with Undo.</summary>
-    public void SetAside(IReadOnlyList<uint> questRowIds)
+    /// <summary>
+    /// Sets a whole group aside for later (the pane asked first), with Undo, for <paramref name="contentId"/>: the
+    /// character the pane asked about. A quest already set aside, for later or as "Not for me", stays as it is.
+    /// </summary>
+    public void SetAside(ulong contentId, IReadOnlyList<uint> questRowIds)
     {
         ArgumentNullException.ThrowIfNull(questRowIds);
-        Apply(questRowIds, aside: true, notForMe: false, string.Format(CultureInfo.CurrentCulture, Strings.BluesSetAsideGroupToastFormat, questRowIds.Count));
+        Apply(contentId, questRowIds, aside: true, notForMe: false, keepSetAside: true, string.Format(CultureInfo.CurrentCulture, Strings.BluesSetAsideGroupToastFormat, questRowIds.Count));
     }
 
     /// <summary>Brings a set-aside quest back into the counts, with Undo (which sets it aside as it was).</summary>
     public void BringBack(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        if (session.ViewedContentId is not { } contentId)
-        {
-            return;
-        }
-
-        var rowId = quest.RowId;
-        var notForMe = book.IsNotForMe(contentId, rowId);
-        book.Edit(Changes(contentId, [rowId], aside: false, notForMe: false));
-        UndoToast.Show(
-            string.Format(CultureInfo.CurrentCulture, Strings.BluesBroughtBackToastFormat, session.Spoilers.DisplayName(quest)),
-            () => book.Edit(Changes(contentId, [rowId], aside: true, notForMe)));
+        Apply(session.ViewedContentId, [quest.RowId], aside: false, notForMe: false, keepSetAside: false, string.Format(CultureInfo.CurrentCulture, Strings.BluesBroughtBackToastFormat, session.Spoilers.DisplayName(quest)));
     }
 
-    private void Apply(IReadOnlyList<uint> rowIds, bool aside, bool notForMe, string toast)
+    /// <summary>The edit, then an Undo that puts every quest back exactly as it was (<see cref="SetAsideEdits.Restore"/>).</summary>
+    private void Apply(ulong? owner, IReadOnlyList<uint> rowIds, bool aside, bool notForMe, bool keepSetAside, string toast)
     {
-        if (session.ViewedContentId is not { } contentId || rowIds.Count == 0)
+        if (owner is not { } contentId || rowIds.Count == 0)
         {
             return;
         }
 
-        var ids = new List<uint>(rowIds);
-        book.Edit(Changes(contentId, ids, aside, notForMe));
-        UndoToast.Show(toast, () => book.Edit(Changes(contentId, ids, aside: false, notForMe: false)));
+        var before = SetAsideEdits.Capture(book, contentId, rowIds);
+        foreach (var quest in before)
+        {
+            lastBefore[(contentId, quest.RowId)] = quest;
+        }
+
+        book.Edit(SetAsideEdits.Changes(before, contentId, aside, notForMe, keepSetAside));
+        UndoToast.Show(toast, () => book.Edit(SetAsideEdits.Restore(before, contentId)));
     }
 
     /// <summary>
-    /// The edits that set <paramref name="rowIds"/> aside (in one list, out of the other) or bring them back (out of both).
+    /// The Undo of a row kept in place (My blues' quiet line): the quest back where it stood before its last move on
+    /// the character on view, exactly ("Not for me" stays "Not for me"). Nothing when this session did not move it.
     /// </summary>
-    private static List<CharacterSettingChange> Changes(ulong contentId, IReadOnlyList<uint> rowIds, bool aside, bool notForMe)
+    public void Undo(uint questRowId)
     {
-        var changes = new List<CharacterSettingChange>(rowIds.Count * 2);
-        foreach (var rowId in rowIds)
+        if (session.ViewedContentId is not { } contentId || !lastBefore.Remove((contentId, questRowId), out var before))
         {
-            changes.Add(CharacterSettingChange.SetAside(contentId, rowId, aside && !notForMe));
-            changes.Add(CharacterSettingChange.NotForMe(contentId, rowId, aside && notForMe));
+            return;
         }
 
-        return changes;
+        book.Edit(SetAsideEdits.Restore([before], contentId));
     }
 }

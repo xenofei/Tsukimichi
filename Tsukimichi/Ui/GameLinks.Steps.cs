@@ -42,6 +42,8 @@ public sealed partial class GameLinks
     private readonly Dictionary<uint, QuestSteps> questSteps = [];
     private readonly HashSet<uint> giverAims = [];
     private readonly List<(StepViewKey Key, StepView View)> stepViews = [];
+    private readonly Dictionary<(uint RowId, byte Sequence), StepChoices?> stepChoices = [];
+    private const int StepChoicesCacheSize = 256;
 
     private readonly record struct StepViewKey(uint RowId, byte Sequence, uint LevelId, bool Live, ulong ContentId, int Spoilers, int Language);
 
@@ -115,11 +117,13 @@ public sealed partial class GameLinks
             (x, z) = at;
         }
 
-        if (CurrentStepResolver.Resolve(StepsOf(quest.RowId), sequence, quest.StepCount, territory, x, z) is not { } step)
+        // The sequence's places and step records are built once; only the nearest is chosen per call (per frame).
+        if (ChoicesOf(quest, sequence) is not { } choices)
         {
             return null;
         }
 
+        var step = choices.Pick(territory, x, z);
         var spoilers = Spoilers?.Invoke();
         var key = new StepViewKey(quest.RowId, sequence, step.Place?.LevelId ?? 0, live, contentId, spoilers?.Fingerprint ?? 0, Localization.Loc.Version);
         for (var i = stepViews.Count - 1; i >= 0; i--)
@@ -138,6 +142,24 @@ public sealed partial class GameLinks
         }
 
         return view;
+    }
+
+    /// <summary>The step choices of a quest's sequence (<see cref="CurrentStepResolver.Choices"/>), built once per quest and sequence.</summary>
+    private StepChoices? ChoicesOf(QuestRecord quest, byte sequence)
+    {
+        var key = (quest.RowId, sequence);
+        if (!stepChoices.TryGetValue(key, out var choices))
+        {
+            choices = CurrentStepResolver.Choices(StepsOf(quest.RowId), sequence, quest.StepCount);
+            if (stepChoices.Count >= StepChoicesCacheSize)
+            {
+                stepChoices.Clear();
+            }
+
+            stepChoices[key] = choices;
+        }
+
+        return choices;
     }
 
     /// <summary>
@@ -190,6 +212,28 @@ public sealed partial class GameLinks
 
     /// <summary>A territory's zone name through the shield ("you're in Tuliyollal"); empty when unknown.</summary>
     public string TerritoryNameOf(uint territoryId) => territoryId == 0 ? string.Empty : TerritoryName(territoryId);
+
+    /// <summary>
+    /// A territory's own zone name, never through the shield: what a placeholder's "Reveal this name" reveals. Never
+    /// print it; empty when unknown.
+    /// </summary>
+    public string TerritoryHiddenName(uint territoryId)
+    {
+        if (territoryId == 0)
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            return data.GetExcelSheet<TerritoryType>().GetRowOrDefault(territoryId)?.PlaceName.ValueNullable?.Name.ExtractText() ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            log.Debug(ex, "Territory name unavailable");
+            return string.Empty;
+        }
+    }
 
     /// <summary>
     /// Prints a <c>/tsuki msq</c>, <c>next</c> or <c>go</c> line (P8) to the plugin's own echo channel, after the gold

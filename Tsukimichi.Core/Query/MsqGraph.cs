@@ -336,6 +336,32 @@ public sealed class MsqGraph
         where TSource : struct, IStateSource => new(this, source);
 
     /// <summary>
+    /// The main scenario quests left for a character, in story order, by the rule every count of what is left shares
+    /// with the position (<see cref="MsqPosition.Total"/> less <see cref="MsqPosition.Done"/>, Your story,
+    /// <c>/tsuki msq</c>, an alt's story goal): not completed or done this cycle, not leaving the totals
+    /// (<see cref="QuestEvaluation.LeavesTotals"/>: another city's or Grand Company's quest, a spare alternative, out of
+    /// season), and not an optional leftover of a met join (<see cref="JoinState{TSource}.IsLeftover"/>).
+    /// </summary>
+    public IReadOnlyList<QuestRecord> QuestsLeft(IReadOnlyDictionary<uint, QuestEvaluation> states)
+    {
+        ArgumentNullException.ThrowIfNull(states);
+        var joins = Joins(new EvaluationSource(states));
+        var left = new List<QuestRecord>();
+        foreach (var quest in Story)
+        {
+            var evaluation = states.GetValueOrDefault(quest.RowId);
+            if (evaluation is { LeavesTotals: true } || evaluation?.State is QuestState.Completed or QuestState.DoneThisCycle || joins.IsLeftover(quest.RowId))
+            {
+                continue;
+            }
+
+            left.Add(quest);
+        }
+
+        return left;
+    }
+
+    /// <summary>
     /// The routed regions' join state over one state source (none exist before 8.0 data), each region's worked out on
     /// first use (<see cref="IsJoinMet{TSource}"/>).
     /// </summary>

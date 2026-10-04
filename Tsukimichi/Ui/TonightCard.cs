@@ -161,11 +161,11 @@ public sealed partial class TonightCard
             return;
         }
 
-        // One row on a linear stretch; one per open route inside a branch region (ids clear of the pinned rows'). When
-        // Up next already names the quest, the row says the catch-up instead (1.21.0 P1, spec decision 2).
+        // One row on a linear stretch; one per open route inside a branch region (ids clear of the pinned rows'). The row
+        // whose quest Up next already names, on a branch too, says the catch-up instead (1.21.0 P1, spec decision 2).
         for (var i = 0; i < msq.Count; i++)
         {
-            Row(bundle, i == 0 && msq.Count == 1 ? MsqRowShown(msq[0]) : msq[i], i == 0 ? 0 : MsqRowIdBase + i);
+            Row(bundle, MsqRowShown(msq[i]), i == 0 ? 0 : MsqRowIdBase + i);
         }
     }
 

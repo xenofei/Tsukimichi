@@ -233,4 +233,27 @@ public sealed class GuidanceTextTests
         Assert.Null(StepProgress.Finished(before, [new(10, 2), new(12, 1)], _ => false));
         Assert.Null(StepProgress.Finished([], [new(12, 1)], _ => false));
     }
+
+    [Fact]
+    public void A_masked_name_is_never_a_quest_link()
+    {
+        // The game's quest link names the quest the shield hides (1.21.0 review): a placeholder gets plain text only.
+        var masked = Core.Query.SpoilerMask.Placeholder(Tsukimichi.Tests.Evaluation.Fixture.Quest(70448) with { Level = 97 });
+        var lines = new[]
+        {
+            GuidanceText.Go(masked, 70448, 0, null, null, GuidanceText.GoAction.Flag),
+            GuidanceText.NextReady(masked, 70448, null, null, null),
+            GuidanceText.NextInJournal(masked, 70448, 2, null, null, null),
+            GuidanceText.NextLevelGate(masked, 70448, 97, "DRK", 96),
+            GuidanceText.Msq("Dawntrail", masked, 70448, 3, 3, 97, 97),
+        };
+
+        foreach (var line in lines)
+        {
+            Assert.Equal(0u, line.QuestRowId);
+            Assert.Contains("97", line.QuestName, StringComparison.Ordinal);
+        }
+
+        Assert.Equal(70448u, GuidanceText.Go("The Long Road to Xak Tural", 70448, 0, null, null, GuidanceText.GoAction.Flag).QuestRowId);
+    }
 }

@@ -23,7 +23,8 @@ internal static class ShieldText
     private const string MenuId = "##shieldMenu";
 
     /// <summary>What the open menu acts on: the hidden name, its placeholder, its quest with that quest's duties, the links, a page.</summary>
-    private sealed record MenuTarget(SpoilerKind Kind, string Name, string Shown, QuestRecord? Quest, GameLinks? Links, string? Link, string[] Duties, bool StandIn);
+    /// <paramref name="QuestName"/>: the placeholder stands for <paramref name="Quest"/>'s own name, which "Reveal this name" reveals.
+    private sealed record MenuTarget(SpoilerKind Kind, string Name, string Shown, QuestRecord? Quest, GameLinks? Links, string? Link, string[] Duties, bool StandIn, bool QuestName = false);
 
     // The one menu: placeholders ask for it, the window that hosts them draws it (DrawMenu).
     private static readonly PlaceholderMenu<MenuTarget> Menu = new();
@@ -114,6 +115,34 @@ internal static class ShieldText
         return hovered;
     }
 
+    /// <summary>
+    /// The hover and the right-click of a quest's own placeholder ("Main scenario quest (Lv 50)", "A side story ahead",
+    /// "Sidequest (Lv 90)") drawn over <paramref name="min"/>–<paramref name="max"/>: "Reveal this name" reveals the
+    /// quest's name for the session (a side quest past the story point then shows too, <see cref="SpoilerMask.IsAhead"/>),
+    /// and "Reveal names in this quest" its names. As <see cref="Interact(Vector2, Vector2, SessionState, SpoilerKind, string, string, QuestRecord?, GameLinks?, string?, string?, IEnumerable{string}?, bool)"/> otherwise.
+    /// </summary>
+    public static bool InteractQuest(Vector2 min, Vector2 max, SessionState session, QuestRecord quest, string shown, GameLinks? links = null, string? lead = null)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(quest);
+        var hovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup) && ImGui.IsMouseHoveringRect(min, max);
+        if (hovered && !ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel))
+        {
+            Hover(lead);
+        }
+
+        if (PlaceholderMenu<MenuTarget>.Opens(hovered, ImGui.IsMouseReleased(ImGuiMouseButton.Right)))
+        {
+            Menu.Request(new MenuTarget(SpoilerKind.Area, string.Empty, shown, quest, links, null, [], false, QuestName: true));
+        }
+
+        return hovered;
+    }
+
+    /// <summary>As <see cref="InteractQuest(Vector2, Vector2, SessionState, QuestRecord, string, GameLinks?, string?)"/>, for the last item.</summary>
+    public static bool InteractQuestItem(SessionState session, QuestRecord quest, string shown, GameLinks? links = null, string? lead = null) =>
+        InteractQuest(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), session, quest, shown, links, lead);
+
     /// <summary>As <see cref="Interact(Vector2, Vector2, SessionState, SpoilerKind, string, string, QuestRecord?, GameLinks?, string?, string?, IEnumerable{string}?, bool)"/>, for the last item.</summary>
     public static bool InteractItem(SessionState session, SpoilerKind kind, string name, string shown, QuestRecord? quest = null, GameLinks? links = null, string? link = null, string? lead = null, IEnumerable<string>? duties = null, bool standIn = false) =>
         Interact(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), session, kind, name, shown, quest, links, link, lead, duties, standIn);
@@ -145,7 +174,15 @@ internal static class ShieldText
         }
 
         UiMetrics.ApplyFontScale();
-        RevealItems(session, target.Links, target.Kind, target.Name, target.Quest, target.Duties, target.StandIn);
+        if (target.QuestName && target.Quest is { } named)
+        {
+            RevealQuestItems(session, target.Links, named);
+        }
+        else
+        {
+            RevealItems(session, target.Links, target.Kind, target.Name, target.Quest, target.Duties, target.StandIn);
+        }
+
         if (target.Link is { } url && target.Links is { } links)
         {
             ImGui.Separator();
@@ -186,6 +223,25 @@ internal static class ShieldText
         if (ImGui.MenuItem(Strings.SpoilerRevealQuestNames))
         {
             RevealQuest(session, links, quest, duties);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.SpoilerRevealQuestNamesTooltip);
+        }
+    }
+
+    /// <summary>A quest's own placeholder's reveal items: "Reveal this name" (the quest's name), then "Reveal names in this quest".</summary>
+    private static void RevealQuestItems(SessionState session, GameLinks? links, QuestRecord quest)
+    {
+        if (ImGui.MenuItem(Strings.SpoilerRevealName, Strings.SpoilerRevealThisSession))
+        {
+            session.RevealName(quest.RowId);
+        }
+
+        if (ImGui.MenuItem(Strings.SpoilerRevealQuestNames))
+        {
+            RevealQuest(session, links, quest);
         }
 
         if (ImGui.IsItemHovered())

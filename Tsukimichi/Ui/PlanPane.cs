@@ -546,12 +546,8 @@ public sealed partial class PlanPane
             {
                 var zone = block.Zones[z];
                 ImGui.Spacing();
+                // A zone the story has not reached: its placeholder's hover and right-click (spec-1.20 N6), on its text.
                 DrawZoneLabel(zone);
-                if (HiddenZone(zone) is { } hidden)
-                {
-                    // A zone the story has not reached: its placeholder's hover and right-click (spec-1.20 N6).
-                    ShieldText.InteractItem(session, Core.Query.SpoilerKind.Area, hidden, ZoneLabel(zone), links: links);
-                }
 
                 for (var i = 0; i < zone.Entries.Count; i++)
                 {
@@ -1100,6 +1096,15 @@ public sealed partial class PlanPane
     private string? HiddenZone(PlanZone zone) =>
         zone.MapId != 0 && zoneNames.TryGetValue(zone.MapId, out var name) && session.Spoilers.IsNameMasked(Core.Query.SpoilerKind.Area, name) ? name : null;
 
+    /// <summary>A hidden zone's placeholder: the shield's hover and right-click over the label's text.</summary>
+    private void ShieldZoneLabel(PlanZone zone, string label, Vector2 start, float width, float height, bool cut)
+    {
+        if (HiddenZone(zone) is { } hidden)
+        {
+            ShieldText.Interact(start, start + new Vector2(MathF.Max(1f, width), height), session, Core.Query.SpoilerKind.Area, hidden, label, links: links, lead: cut ? label : null);
+        }
+    }
+
     private string ZoneLabel(PlanZone zone)
     {
         var name = ZoneName(zone);
@@ -1166,6 +1171,9 @@ public sealed partial class PlanPane
             showSetAside = false;
         }
 
+        // Rows kept in place belong to the character they were moved for (P4): another one on view drops them.
+        kept.Follow(session.ViewedContentId);
+
         var plan = source.Plan;
         var maxExpansion = sprout ? source.Reach : byte.MaxValue;
 
@@ -1176,7 +1184,7 @@ public sealed partial class PlanPane
             maxExpansion = Math.Min(maxExpansion, FreeTrial.LastExpansion);
         }
 
-        var key = (source.Revision, kinds, readyOnly, (int)maxExpansion, showSetAside, keepVersion);
+        var key = (source.Revision, kinds, readyOnly, (int)maxExpansion, showSetAside, kept.Version);
         if (key == viewKey && trial == viewTrial)
         {
             return;
@@ -1185,13 +1193,14 @@ public sealed partial class PlanPane
         viewKey = key;
         viewTrial = trial;
         tierLines.Clear();
+        groupRows.Clear();
 
         // The Set aside filter (P4) lists the quests set aside instead; either view keeps the rows of the other side
-        // that were moved since it was built in place (keepInPlace).
+        // that were moved since it was built in place (kept).
         var basePlan = showSetAside ? plan.SetAside : plan;
         var reachFilter = new PlanFilter(UnlockKinds.AllMask, readyOnly, sprout || trial ? maxExpansion : null);
         var reached = basePlan.Filter(reachFilter);
-        view = basePlan.Filter(reachFilter with { Kinds = kinds }, keepInPlace);
+        view = basePlan.Filter(reachFilter with { Kinds = kinds }, kept.Rows);
 
         Array.Clear(kindCounts);
         foreach (var entry in reached.Entries)

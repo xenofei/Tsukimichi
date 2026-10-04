@@ -14,7 +14,11 @@ namespace Tsukimichi.Core.Plan;
 /// <param name="Left">Quests left (<see cref="ChainCatalog.Progress"/>); 0 once done.</param>
 /// <param name="Next">The next quest to do; null once done.</param>
 /// <param name="NextState">The next quest's state (Completed once done).</param>
-public sealed record StoryLine(Chain Chain, string Name, bool StoryNeedsIt, int Left, QuestRecord? Next, QuestState NextState)
+/// <param name="NextAhead">
+/// The next quest lies past the story point (<see cref="StoryPageInputs.IsAhead"/>): the page names it by the shield's
+/// words, never by its name.
+/// </param>
+public sealed record StoryLine(Chain Chain, string Name, bool StoryNeedsIt, int Left, QuestRecord? Next, QuestState NextState, bool NextAhead = false)
 {
     /// <summary>Every counted quest is done.</summary>
     public bool IsDone => Next is null;
@@ -72,6 +76,11 @@ public sealed record StoryBand(
 /// <param name="QuestName">A quest's name through the shield.</param>
 /// <param name="ExpansionName">An expansion's name.</param>
 /// <param name="StoryRequired">The side quests the story needs (<see cref="StoryRequirements.SideQuests"/>); null knows none.</param>
+/// <param name="IsAhead">
+/// Whether a quest of any kind lies past the story point (<see cref="SpoilerMask.IsAhead"/>): a line whose first quest
+/// does is not named, and a line's next quest that does is flagged (<see cref="StoryLine.NextAhead"/>). Null reads
+/// <paramref name="IsMasked"/>, which covers main scenario quests only.
+/// </param>
 public sealed record StoryPageInputs(
     QuestCatalog Catalog,
     ChainCatalog Chains,
@@ -79,7 +88,8 @@ public sealed record StoryPageInputs(
     Func<QuestRecord, bool> IsMasked,
     Func<QuestRecord, string> QuestName,
     Func<byte, string> ExpansionName,
-    IReadOnlySet<uint>? StoryRequired = null);
+    IReadOnlySet<uint>? StoryRequired = null,
+    Func<uint, bool>? IsAhead = null);
 
 /// <summary>
 /// Your story on one page (feature plan v7 N9, spec-1.21): the main scenario by patch band (one band per main scenario
@@ -94,8 +104,10 @@ public sealed record StoryPageInputs(
 /// </para>
 /// <para>
 /// <b>Spoilers.</b> A band whose first quest the shield masks is past the story point and shows counts only; inside a
-/// band, a group whose gate the shield masks names neither the gate (its placeholder) nor its lines. With the shield
-/// off nothing is masked.
+/// band, a group whose gate the shield masks names neither the gate (its placeholder) nor its lines, a line whose first
+/// quest lies past the story point (<see cref="StoryPageInputs.IsAhead"/>: a side quest too, not only the main scenario)
+/// is not named, and a line's next quest past it is flagged so the page never prints its name. With the shield off
+/// nothing is masked.
 /// </para>
 /// </summary>
 public sealed class StoryPage
@@ -172,7 +184,7 @@ public sealed class StoryPage
                     }
 
                     var first = inputs.Catalog.GetByRowId(chain.RowIds[0]);
-                    var nameHidden = hidden || (first is not null && inputs.IsMasked(first));
+                    var nameHidden = hidden || (first is not null && Ahead(inputs, first));
                     var nextQuest = progress.NextRowId is { } id ? inputs.Catalog.GetByRowId(id) : null;
                     var nextState = nextQuest is null ? QuestState.Completed : states.GetValueOrDefault(nextQuest.RowId)?.State ?? QuestState.Unknown;
                     var needed = inputs.StoryRequired is { } required && chain.RowIds.Any(required.Contains);
@@ -182,7 +194,8 @@ public sealed class StoryPage
                         needed,
                         progress.Total - progress.Done,
                         nextQuest,
-                        nextState));
+                        nextState,
+                        nextQuest is not null && Ahead(inputs, nextQuest)));
                 }
 
                 if (lines.Count > 0)
@@ -207,6 +220,10 @@ public sealed class StoryPage
 
         return new StoryPage(bands, storyLeft, min, max);
     }
+
+    /// <summary>Whether the quest lies past the story point: <see cref="StoryPageInputs.IsAhead"/>, else masked.</summary>
+    private static bool Ahead(StoryPageInputs inputs, QuestRecord quest) =>
+        inputs.IsAhead is { } ahead ? ahead(quest.RowId) : inputs.IsMasked(quest);
 
     /// <summary>
     /// The main scenario quest index (in <see cref="MsqGraph.Story"/>) a quest waits for: itself for a story quest, else

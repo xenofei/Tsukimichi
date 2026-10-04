@@ -470,9 +470,10 @@ public static partial class Chrome
 
     /// <summary>
     /// <paramref name="text"/> filling the room left on the line (a table cell, a card row), ending in an ellipsis
-    /// when it is longer, with the whole text as the tooltip then. Returns whether it was cut.
+    /// when it is longer, with the whole text as the tooltip then (unless <paramref name="tooltip"/> is false: a
+    /// placeholder's own hover carries it). Returns whether it was cut.
     /// </summary>
-    public static bool FitText(string text, uint color)
+    public static bool FitText(string text, uint color, bool tooltip = true)
     {
         ArgumentNullException.ThrowIfNull(text);
         var room = RoomX();
@@ -484,7 +485,7 @@ public static partial class Chrome
         }
 
         EllipsisText(text, room, color, width);
-        if (ImGui.IsItemHovered())
+        if (tooltip && ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(text);
         }
@@ -492,8 +493,8 @@ public static partial class Chrome
         return true;
     }
 
-    /// <inheritdoc cref="FitText(string, uint)"/>
-    public static bool FitText(string text, Vector4 color) => FitText(text, ImGui.GetColorU32(color));
+    /// <inheritdoc cref="FitText(string, uint, bool)"/>
+    public static bool FitText(string text, Vector4 color, bool tooltip = true) => FitText(text, ImGui.GetColorU32(color), tooltip);
 
     /// <summary>
     /// A selectable <paramref name="width"/> wide whose <paramref name="text"/> ends in an ellipsis when it is longer

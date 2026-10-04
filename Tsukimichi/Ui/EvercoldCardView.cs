@@ -320,8 +320,13 @@ public static class EvercoldCardView
             TextFlow.Wrapped(line.Detail, textWidth, Theme.U32(done ? s.TextTertiary : s.TextSecondary));
         }
 
+        var detailMin = new Vector2(textX, ImGui.GetItemRectMin().Y);
         bottom = ImGui.GetItemRectMax().Y;
-        if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(textMin, new Vector2(textRight, bottom)))
+
+        // A placeholder in the detail ("Flying in a zone ahead") has the shield's own hover and right-click there.
+        var onPlaceholder = line.Hidden is { } hidden && interactive
+            && ShieldText.Interact(detailMin, new Vector2(textRight, bottom), model.Session, hidden.Kind, hidden.Name, hidden.Shown);
+        if (!onPlaceholder && ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(textMin, new Vector2(textRight, bottom)))
         {
             Hover(line);
         }

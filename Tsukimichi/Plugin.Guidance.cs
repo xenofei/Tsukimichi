@@ -22,11 +22,13 @@ public sealed partial class Plugin
         Game.ChatNotifier notifier)
     {
         links.QuestText = QuestText;
+        // Each input for the one character the line is about (the logged-in one, else the viewed one): its own route,
+        // pins and Next stops, never the viewed character's while another is logged in.
         var guidance = new GuidanceCommand(Session, ui, links)
         {
-            RouteNext = () => routes.NextStopQuest(routes.ViewedRoute),
-            Pins = () => runner.PinnedInOrder,
-            Closest = () => nextStops.Stops.SelectMany(static stop => stop.Quests).Select(static q => q.Quest.RowId),
+            RouteNext = id => routes.NextStopQuest(routes.RouteOf(id)),
+            Pins = id => id == Session.ViewedContentId ? runner.PinnedInOrder : runner.PinsOf(id),
+            Closest = id => nextStops.StopsFor(id).SelectMany(static stop => stop.Quests).Select(static q => q.Quest.RowId),
         };
         guidanceCommand = guidance;
         command.Msq = guidance.Msq;

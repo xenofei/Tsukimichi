@@ -50,7 +50,8 @@ public sealed partial class PlanPane
         storyKey = key;
         var spoilers = session.Spoilers;
         var names = session.Names;
-        storyPage = StoryPage.Build(new StoryPageInputs(bundle.Catalog, session.Chains, session.States, spoilers.IsMasked, names.QuestName, names.Expansion, story));
+        // Lines are named and their next quests printed through IsAhead, which covers side quests past the story point.
+        storyPage = StoryPage.Build(new StoryPageInputs(bundle.Catalog, session.Chains, session.States, spoilers.IsMasked, names.QuestName, names.Expansion, story, spoilers.IsAhead));
         var dated = StoryPace.DatedStoryQuests(MsqGraph.For(bundle.Catalog).Story, session.ViewedSnapshot);
         storyPace = StoryPace.Compute(dated, TimeZoneInfo.Local);
         paceText = PaceText(storyPage, storyPace, session.ViewedSnapshot is not null);
@@ -249,7 +250,13 @@ public sealed partial class PlanPane
         var opens = group.OpensAfter is null ? Strings.StoryOpenFromStart : string.Format(CultureInfo.CurrentCulture, Strings.StoryOpensAfterFormat, group.OpensAfterName);
         using (Typography.Caption())
         {
-            Chrome.FitText(opens, Theme.U32(Theme.Surface.TextSecondary));
+            var gateMasked = group.OpensAfter is { } masked && session.Spoilers.IsMasked(masked);
+            var cut = Chrome.FitText(opens, Theme.U32(Theme.Surface.TextSecondary), tooltip: !gateMasked);
+            if (gateMasked && group.OpensAfter is { } gate)
+            {
+                // "Opens after Main scenario quest (Lv 50)": the placeholder's hover and right-click (spec-1.20 N6).
+                ShieldText.InteractQuestItem(session, gate, group.OpensAfterName, links, lead: cut ? opens : null);
+            }
         }
 
         if (group.Hidden)
@@ -270,6 +277,28 @@ public sealed partial class PlanPane
 
     private static string HiddenLines(int count) =>
         count == 1 ? Strings.StoryHiddenLineOne : string.Format(CultureInfo.CurrentCulture, Strings.StoryHiddenLinesFormat, count);
+
+    /// <summary>
+    /// The next quest's name on a line: a quest past the story point by the shield's words (a masked main scenario
+    /// quest's placeholder, any other "Sidequest (Lv 90)"), never its name.
+    /// </summary>
+    private string NextName(StoryLine storyLine)
+    {
+        if (storyLine.Next is not { } next)
+        {
+            return string.Empty;
+        }
+
+        if (!storyLine.NextAhead || session.Spoilers.IsMasked(next))
+        {
+            return session.Names.QuestName(next);
+        }
+
+        return string.Format(CultureInfo.CurrentCulture, Strings.StoriesSideAheadFormat, next.DisplayLevel);
+    }
+
+    /// <summary>A line's name: "A side story ahead" for one that starts past the story point.</summary>
+    private static string LineName(StoryLine storyLine) => storyLine.Name.Length > 0 ? storyLine.Name : Strings.StoriesAhead;
 
     private static string LineState(StoryLine storyLine, string nextName) =>
         storyLine.IsDone ? Strings.StoryLineDone
@@ -293,14 +322,17 @@ public sealed partial class PlanPane
         }
 
         var target = storyLine.Next ?? (session.Bundle?.Catalog.GetByRowId(storyLine.Chain.RowIds[0]));
-        using var id = ImRaii.PushId((int)(target?.RowId ?? 0));
+
+        // Keyed by the line itself, never by its next quest: two lines can share one.
+        using var id = ImRaii.PushId(storyLine.Chain.Name);
+        using var firstId = ImRaii.PushId((int)(storyLine.Chain.RowIds.Count > 0 ? storyLine.Chain.RowIds[0] : 0));
         var gap = UiMetrics.Px(8f);
         var textY = start.Y + ((height - line) * 0.5f);
         var dl = ImGui.GetWindowDrawList();
         ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + ((height - glyph) * 0.5f)));
         MoonGlyph.DrawInline(storyLine.IsDone ? QuestState.Completed : storyLine.NextState, glyph);
 
-        var nextName = storyLine.Next is { } next ? session.Names.QuestName(next) : string.Empty;
+        var nextName = NextName(storyLine);
         var state = LineState(storyLine, nextName);
         var stateWidth = ImGui.CalcTextSize(state).X;
         var stateRoom = MathF.Min(stateWidth, width * 0.5f);
@@ -312,17 +344,24 @@ public sealed partial class PlanPane
             chipWidth = storyLine.StoryNeedsIt ? TierChipSize(chipLabel).X + gap : 0f;
         }
 
-        var nameWidth = ImGui.CalcTextSize(storyLine.Name).X;
+        var name = LineName(storyLine);
+        var nameWidth = ImGui.CalcTextSize(name).X;
         var nameRoom = MathF.Max(1f, MathF.Min(nameWidth, right - stateRoom - gap - chipWidth - nameX));
         ImGui.SetCursorScreenPos(new Vector2(nameX, textY));
-        if (Chrome.EllipsisSelectable(storyLine.Name, target is not null && ui.SelectedRowId == target.RowId, nameRoom, out _) && target is not null)
+        if (Chrome.EllipsisSelectable(name, target is not null && ui.SelectedRowId == target.RowId, nameRoom, out var nameCut) && target is not null)
         {
             ui.SelectedRowId = target.RowId;
         }
 
-        if (ImGui.IsItemHovered())
+        var first = storyLine.Name.Length == 0 && storyLine.Chain.RowIds.Count > 0 ? session.Bundle?.Catalog.GetByRowId(storyLine.Chain.RowIds[0]) : null;
+        if (first is not null)
         {
-            UiMetrics.Tooltip(storyLine.Name, state);
+            // "A side story ahead": the placeholder's hover and right-click, which reveal the line's first quest.
+            ShieldText.InteractQuestItem(session, first, name, links, lead: nameCut ? name : null);
+        }
+        else if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(name, state);
         }
 
         if (storyLine.StoryNeedsIt)
@@ -330,7 +369,14 @@ public sealed partial class PlanPane
             DrawTierChip(dl, chipLabel, nameX + nameRoom + chipWidth, start.Y, height);
         }
 
-        Chrome.EllipsisTextAt(dl, new Vector2(right - stateRoom, textY), stateRoom, state, Theme.U32(Theme.Surface.TextSecondary), stateWidth);
+        var stateMin = new Vector2(right - stateRoom, textY);
+        var stateCut = Chrome.EllipsisTextAt(dl, stateMin, stateRoom, state, Theme.U32(Theme.Surface.TextSecondary), stateWidth);
+        if (storyLine is { NextAhead: true, Next: { } aheadQuest })
+        {
+            // "N left · next: Sidequest (Lv 90)": the next quest's placeholder takes the shield's hover and right-click.
+            ShieldText.InteractQuest(stateMin, stateMin + new Vector2(stateRoom, line), session, aheadQuest, nextName, links, lead: stateCut ? state : null);
+        }
+
         ImGui.SetCursorScreenPos(start);
         ImGui.Dummy(size);
     }
@@ -363,8 +409,8 @@ public sealed partial class PlanPane
 
                 foreach (var storyLine in group.Lines)
                 {
-                    var nextName = storyLine.Next is { } next ? session.Names.QuestName(next) : string.Empty;
-                    text.Append("    ").Append(storyLine.IsDone ? "- [x] " : "- [ ] ").Append(storyLine.Name);
+                    var nextName = NextName(storyLine);
+                    text.Append("    ").Append(storyLine.IsDone ? "- [x] " : "- [ ] ").Append(LineName(storyLine));
                     if (storyLine.StoryNeedsIt)
                     {
                         text.Append(Core.Evaluation.BlockerText.Separator).Append(UnlockTiers.Name(UnlockTier.StoryNeedsIt));

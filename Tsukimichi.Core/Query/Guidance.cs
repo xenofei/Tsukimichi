@@ -12,7 +12,8 @@ public sealed record MsqLeft(QuestRecord Next, string Part, int LeftInPart, int 
 {
     /// <summary>
     /// The summary for a character's states; null once the story is caught up (or the catalog has no main scenario).
-    /// Quests completed, done this cycle or foreclosed (the other Grand Companies' choices) are not left.
+    /// What is left follows <see cref="MsqGraph.QuestsLeft"/>, the position's own rule: a spare alternative (the Grand
+    /// Companies' choices before one is made), a foreclosed quest or an optional leftover of a met join is not left.
     /// </summary>
     public static MsqLeft? For(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states)
     {
@@ -27,14 +28,8 @@ public sealed record MsqLeft(QuestRecord Next, string Part, int LeftInPart, int 
         var left = 0;
         var min = int.MaxValue;
         var max = 0;
-        foreach (var quest in MsqGraph.For(catalog).Story)
+        foreach (var quest in MsqGraph.For(catalog).QuestsLeft(states))
         {
-            var state = states.TryGetValue(quest.RowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-            if (state is QuestState.Completed or QuestState.DoneThisCycle or QuestState.Foreclosed)
-            {
-                continue;
-            }
-
             left++;
             if (quest.Journal.GenreId == next.Journal.GenreId)
             {

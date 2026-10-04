@@ -289,6 +289,10 @@ public sealed class TablePane : IDisposable
     private uint? lastSelection;
     private bool tableInitialized;
 
+    // A single click on the selected row goes back to Tonight once no second click follows within the double-click
+    // time, so a double-click (open the journal) never flashes Tonight in between (1.21.0 P1).
+    private readonly Core.Ui.SecondClickDeselect secondClick = new();
+
     // Hover lift (dalamud-developer panel §4: no TableGetHoveredRow in the binding): the quest hovered on the previous
     // frame gets the fill and the lift this frame; hoveredNext collects this frame's for the next.
     private uint? hoveredRow;
@@ -404,6 +408,13 @@ public sealed class TablePane : IDisposable
         }
 
         SelectedRowRect = default;
+        if (secondClick.Due(ImGui.GetTime(), ImGui.GetIO().MouseDoubleClickTime, ui.SelectedRowId) != 0)
+        {
+            // A second click on the selected row goes back to Tonight (1.21.0 P1).
+            ui.SelectedRowId = null;
+            lastSelection = null;
+        }
+
         var rows = runner.Rows;
         var scopeChanged = false;
         if (!ReferenceEquals(rows, indexedRows))
@@ -1616,14 +1627,15 @@ public sealed class TablePane : IDisposable
             DrawGroupEnd(rowMin, rowMax);
         }
 
-        if (clicked && selected && rowHovered && !ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+        var doubleClicked = ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left);
+        if (clicked && selected && rowHovered && !doubleClicked)
         {
-            // A second click on the selected row goes back to Tonight (1.21.0 P1).
-            ui.SelectedRowId = null;
-            lastSelection = null;
+            // A click on the selected row: back to Tonight unless a second click makes it a double-click.
+            secondClick.Click(quest.RowId, ImGui.GetTime());
         }
         else if (clicked)
         {
+            secondClick.DoubleClick();
             SelectFromTable(quest.RowId);
             // The game journal only knows accepted and completed quests; for the rest a double-click just selects.
             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && GameLinks.CanOpenJournal(quest, row.State))

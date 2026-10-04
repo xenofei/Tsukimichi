@@ -48,6 +48,16 @@ public sealed partial class DetailPane
     private readonly List<string> stepPlace = [];
     private string stepNote = string.Empty;
 
+    // The part of each line that prints a placeholder (spec-1.20 N6), and the hidden name its right-click reveals; -1 for none.
+    private DotShield stepHeadShield = DotShield.None;
+    private DotShield stepPlaceShield = DotShield.None;
+
+    /// <summary>A placeholder among a dot line's parts: the part's index, the name's kind and the hidden name.</summary>
+    private readonly record struct DotShield(int Index, SpoilerKind Kind, string Name)
+    {
+        public static readonly DotShield None = new(-1, SpoilerKind.Area, string.Empty);
+    }
+
     /// <summary>
     /// Reads the current step of the quest shown, once per frame before the travel checks, and returns the quest travel
     /// aims at: the step's place, or the giver (not in the journal, Giver chosen, or no place for the step).
@@ -100,8 +110,8 @@ public sealed partial class DetailPane
             }
         }
 
-        DrawDotLine(stepHead, right, Theme.Surface.TextSecondary, Theme.Surface.Text);
-        DrawDotLine(stepPlace, right, Theme.Surface.TextSecondary, Theme.Surface.TextSecondary);
+        DrawDotLine(stepHead, right, Theme.Surface.TextSecondary, Theme.Surface.Text, stepHeadShield);
+        DrawDotLine(stepPlace, right, Theme.Surface.TextSecondary, Theme.Surface.TextSecondary, stepPlaceShield);
         DrawStepPills(view, links.TravelTarget(quest, view));
         if (stepNote.Length > 0)
         {
@@ -161,13 +171,21 @@ public sealed partial class DetailPane
         stepLinesKey = key;
         stepHead.Clear();
         stepPlace.Clear();
+        stepHeadShield = DotShield.None;
+        stepPlaceShield = DotShield.None;
         var (giverName, giverZone, giverCoordinates) = GiverPlace(session, quest);
+        var giverZoneHidden = HiddenArea(session, quest.Issuer?.MapId ?? 0);
         var step = view.Step;
         if (giver && step.HasPlace)
         {
             stepHead.Add(Strings.StepGiverLabel);
+            if (quest.Issuer is { Name.Length: > 0 } issuer && session.Spoilers.IsNameMasked(SpoilerKind.Npc, issuer.Name))
+            {
+                stepHeadShield = new DotShield(stepHead.Count, SpoilerKind.Npc, issuer.Name);
+            }
+
             stepHead.Add(giverName);
-            AddPlace(giverZone, giverCoordinates, quest.Issuer?.TerritoryId ?? 0, territory);
+            AddPlace(giverZone, giverZoneHidden, giverCoordinates, quest.Issuer?.TerritoryId ?? 0, territory);
             stepNote = Strings.StepGiverNote;
             return;
         }
@@ -182,10 +200,12 @@ public sealed partial class DetailPane
         switch (step.Kind)
         {
             case StepPlaceKind.Duty:
+                ShieldGiverZone(giverZoneHidden);
                 stepPlace.Add(string.Format(CultureInfo.CurrentCulture, Strings.StepDutyFormat, view.DutyName, giverName, giverZone));
                 stepNote = string.Empty;
                 return;
             case StepPlaceKind.NoPlace:
+                ShieldGiverZone(giverZoneHidden);
                 stepPlace.Add(string.Format(CultureInfo.CurrentCulture, Strings.StepNoPlaceFormat, giverName, giverZone));
                 stepNote = string.Empty;
                 return;
@@ -197,15 +217,33 @@ public sealed partial class DetailPane
                 break;
         }
 
-        AddPlace(view.Zone, view.Coordinates, step.Place?.TerritoryId ?? 0, territory);
+        AddPlace(view.Zone, view.ZoneHidden ? HiddenArea(session, step.Place?.MapId ?? 0) : null, view.Coordinates, step.Place?.TerritoryId ?? 0, territory);
         stepNote = string.Format(CultureInfo.CurrentCulture, Strings.StepNoteFormat, giverName, giverZone);
     }
 
+    /// <summary>The next place line's part names the giver's zone, which the story has not reached: its placeholder answers.</summary>
+    private void ShieldGiverZone(string? hidden)
+    {
+        if (hidden is not null)
+        {
+            stepPlaceShield = new DotShield(stepPlace.Count, SpoilerKind.Area, hidden);
+        }
+    }
+
+    /// <summary>A map's zone name when the shield hides it (what the placeholder's reveal reveals); null otherwise.</summary>
+    private string? HiddenArea(SessionState session, uint mapId) =>
+        mapId != 0 && links.Map(mapId)?.PlaceName is { Length: > 0 } name && session.Spoilers.IsNameMasked(SpoilerKind.Area, name) ? name : null;
+
     /// <summary>"Shaaloani · X 27.0, Y 34.8 · you're in Tuliyollal" (the last part only while the player is elsewhere).</summary>
-    private void AddPlace(string zone, Vector2? coordinates, uint placeTerritory, uint playerTerritory)
+    private void AddPlace(string zone, string? hiddenZone, Vector2? coordinates, uint placeTerritory, uint playerTerritory)
     {
         if (zone.Length > 0)
         {
+            if (hiddenZone is not null)
+            {
+                stepPlaceShield = new DotShield(stepPlace.Count, SpoilerKind.Area, hiddenZone);
+            }
+
             stepPlace.Add(zone);
         }
 
@@ -238,7 +276,7 @@ public sealed partial class DetailPane
     /// inside, and a wrapped line never starts with the separator); a part wider than the room wraps between words. The
     /// first part in <paramref name="first"/>, the rest in <paramref name="rest"/>.
     /// </summary>
-    private static void DrawDotLine(List<string> parts, float right, Vector4 first, Vector4 rest)
+    private void DrawDotLine(List<string> parts, float right, Vector4 first, Vector4 rest, DotShield shield)
     {
         if (parts.Count == 0)
         {
@@ -283,6 +321,12 @@ public sealed partial class DetailPane
             {
                 TextFlow.Wrapped(part, MathF.Max(1f, right - left), Theme.U32(color));
                 x = right;
+            }
+
+            if (i == shield.Index)
+            {
+                // A placeholder ("a zone ahead"): the shield's hover and right-click, in the quest's own context.
+                ShieldItem(shield.Kind, shield.Name, part);
             }
         }
     }
