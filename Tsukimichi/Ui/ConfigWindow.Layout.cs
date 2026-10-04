@@ -141,6 +141,7 @@ public sealed partial class ConfigWindow
         new(SettingsSection.TodoOverlay, DrawRoutes),
         new(SettingsSection.Alerts, DrawNotices),
         new(SettingsSection.Alerts, DrawChatActions),
+        new(SettingsSection.Alerts, DrawNeedsYou),
         new(SettingsSection.Alerts, DrawWelcomeBack),
         new(SettingsSection.Spoilers, DrawSpoilers),
         new(SettingsSection.InGame, DrawGamePanels),

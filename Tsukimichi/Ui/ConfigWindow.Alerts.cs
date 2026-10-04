@@ -6,7 +6,7 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Settings › Alerts (feature plan v6 U7): the chat lines (newly available quests with the main scenario under it, job
 /// quests after a level-up, abandoned quests, seasonal events at login, "Before you continue"), the chat extras
-/// (<c>ConfigWindow.InGame.cs</c>) and the welcome-back card.
+/// (<c>ConfigWindow.InGame.cs</c>), the "Needs you" alerts while automation runs (1.18.0, A5) and the welcome-back card.
 /// </summary>
 public sealed partial class ConfigWindow
 {
@@ -52,6 +52,58 @@ public sealed partial class ConfigWindow
         if (Toggle(Strings.PayoffConfigNotice, Strings.PayoffConfigNoticeHint, ref payoff, "chat notice before you continue optional", settings.ShowPayoffGates, reason: Strings.SettingsPayoffOffReason))
         {
             settings.ChatNoticePayoffGates = payoff;
+            Save();
+        }
+    }
+
+    /// <summary>
+    /// Settings › Alerts › While automation runs (1.18.0, A5): which "Needs you" alerts sound while a hand-off runs, and
+    /// whether they play a sound and show a toast besides their chat line. Read each frame by <c>Game.RunWatch</c>.
+    /// </summary>
+    private void DrawNeedsYou()
+    {
+        Header(Strings.ConfigSectionNeedsYou);
+        Note(Strings.ConfigNeedsYouScope, Strings.ConfigNeedsYouScopeHint, "needs you alert automation hand-off run questionable autoduty");
+
+        var death = settings.NeedsYouDeath;
+        if (Toggle(Strings.ConfigNeedsYouDeath, Strings.ConfigNeedsYouDeathHint, ref death, "needs you alert death died dead automation"))
+        {
+            settings.NeedsYouDeath = death;
+            Save();
+        }
+
+        var stuck = settings.NeedsYouStuck;
+        if (Toggle(Strings.ConfigNeedsYouStuck, Strings.ConfigNeedsYouStuckHint, ref stuck, "needs you alert stuck vnavmesh walking automation"))
+        {
+            settings.NeedsYouStuck = stuck;
+            Save();
+        }
+
+        var pop = settings.NeedsYouDutyPop;
+        if (Toggle(Strings.ConfigNeedsYouDutyPop, Strings.ConfigNeedsYouDutyPopHint, ref pop, "needs you alert duty pop ready duty finder queue automation"))
+        {
+            settings.NeedsYouDutyPop = pop;
+            Save();
+        }
+
+        var tell = settings.NeedsYouTell;
+        if (Toggle(Strings.ConfigNeedsYouTell, Strings.ConfigNeedsYouTellHint, ref tell, "needs you alert tell whisper message automation"))
+        {
+            settings.NeedsYouTell = tell;
+            Save();
+        }
+
+        var sound = settings.NeedsYouSound;
+        if (Toggle(Strings.ConfigNeedsYouSound, Strings.ConfigNeedsYouSoundHint, ref sound, "needs you alert sound ping automation"))
+        {
+            settings.NeedsYouSound = sound;
+            Save();
+        }
+
+        var toast = settings.NeedsYouToast;
+        if (Toggle(Strings.ConfigNeedsYouToast, Strings.ConfigNeedsYouToastHint, ref toast, "needs you alert toast screen automation"))
+        {
+            settings.NeedsYouToast = toast;
             Save();
         }
     }

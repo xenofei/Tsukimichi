@@ -2415,6 +2415,170 @@
     <value>Duties with no Duty Support or Trust may queue with other players.</value>
     <comment>Tooltip of the AutoDuty Duty Finder checkbox.</comment>
   </data>
+  <data name="ConfigQuestionableDutyGuard" xml:space="preserve">
+    <value>Before a duty with other players</value>
+    <comment>Settings › Automation › Questionable: what happens when a Questionable run reaches a duty with no Duty Support or Trust (1.18, A3).</comment>
+  </data>
+  <data name="ConfigQuestionableDutyGuardHint" xml:space="preserve">
+    <value>A duty with no Duty Support or Trust puts you with other players. Stop halts Questionable first.</value>
+    <comment>Hint of the duty guard setting.</comment>
+  </data>
+  <data name="DutyGuardOptionStop" xml:space="preserve">
+    <value>Stop</value>
+    <comment>Duty guard option: stop Questionable.</comment>
+  </data>
+  <data name="DutyGuardOptionWarn" xml:space="preserve">
+    <value>Warn</value>
+    <comment>Duty guard option: a chat line and alert, Questionable keeps going.</comment>
+  </data>
+  <data name="DutyGuardOptionNothing" xml:space="preserve">
+    <value>Do nothing</value>
+    <comment>Duty guard option: off.</comment>
+  </data>
+  <data name="DutyGuardStopFormat" xml:space="preserve">
+    <value>Stopped Questionable before {0}: it has no Duty Support or Trust, so it would put you in a party with other players. Run it yourself, or start Questionable again to let it go ahead.</value>
+    <comment>Chat line when the duty guard stops Questionable: {0} = the duty ("the Final Day").</comment>
+  </data>
+  <data name="DutyGuardStopMaybeFormat" xml:space="preserve">
+    <value>Stopped Questionable at a duty of {1}: it may be {0}, which has no Duty Support or Trust and would put you in a party with other players. Start Questionable again to let it go ahead.</value>
+    <comment>Chat line when the duty guard stops Questionable at a quest naming several duties: {0} = the duty with other players; {1} = the quest.</comment>
+  </data>
+  <data name="DutyGuardWarnFormat" xml:space="preserve">
+    <value>Questionable is heading into {0}: it has no Duty Support or Trust, so you'll be in a party with other players. Stay at the keyboard, or type /tsuki stop.</value>
+    <comment>Chat line of the duty guard set to Warn: {0} = the duty.</comment>
+  </data>
+  <data name="DutyGuardWarnMaybeFormat" xml:space="preserve">
+    <value>Questionable is heading into a duty of {1}: it may be {0}, which has no Duty Support or Trust. Stay at the keyboard, or type /tsuki stop.</value>
+    <comment>Chat line of the duty guard set to Warn, at a quest naming several duties: {0} = the duty; {1} = the quest.</comment>
+  </data>
+  <data name="DutyGuardUnsureFormat" xml:space="preserve">
+    <value>Questionable is heading into a duty of {0}, and Tsukimichi can't tell whether it has Duty Support or Trust. Check before it queues you.</value>
+    <comment>Chat line when the duty step's duty is unknown: {0} = the quest.</comment>
+  </data>
+  <data name="DutyGuardNoStopFormat" xml:space="preserve">
+    <value>Questionable is heading into {0}, which has no Duty Support or Trust, and Tsukimichi couldn't stop it. Stop it in Questionable's own window.</value>
+    <comment>Chat line when the duty guard could not stop Questionable (no Stop gate, or it refused): {0} = the duty.</comment>
+  </data>
+  <data name="DutyGuardStillQueued" xml:space="preserve">
+    <value>You're still in the Duty Finder queue. Withdraw if you don't want to go with other players.</value>
+    <comment>Chat line a few seconds after the duty guard stopped Questionable, while the character is still queued.</comment>
+  </data>
+  <data name="DutyGuardHiddenDuty" xml:space="preserve">
+    <value>the next duty</value>
+    <comment>Stands for the duty's name in the duty guard's lines while the spoiler shield hides the quest.</comment>
+  </data>
+  <data name="DutyGuardToastStop" xml:space="preserve">
+    <value>Questionable stopped before a duty with other players</value>
+    <comment>Toast when the duty guard stops Questionable.</comment>
+  </data>
+  <data name="QuestionableRunWhyDutyGuard" xml:space="preserve">
+    <value>Stopped before a duty with other players.</value>
+    <comment>Run receipt reason when the duty guard (1.18, A3) stopped Questionable.</comment>
+  </data>
+  <data name="DutyGuardToastWarn" xml:space="preserve">
+    <value>Needs you: a duty with other players is next</value>
+    <comment>Toast of the duty guard set to Warn, or unsure.</comment>
+  </data>
+  <data name="ConfigSectionNeedsYou" xml:space="preserve">
+    <value>While automation runs</value>
+    <comment>Settings › Alerts heading of the "Needs you" alerts (1.18, A5).</comment>
+  </data>
+  <data name="ConfigNeedsYouScope" xml:space="preserve">
+    <value>Only during runs</value>
+    <comment>Label of the note that says when the "Needs you" alerts can sound.</comment>
+  </data>
+  <data name="ConfigNeedsYouScopeHint" xml:space="preserve">
+    <value>While Questionable or a hand-off Tsukimichi started runs. Each kind speaks at most once a minute.</value>
+    <comment>Hint of the "Only during runs" note.</comment>
+  </data>
+  <data name="ConfigNeedsYouDeath" xml:space="preserve">
+    <value>When you die</value>
+    <comment>Settings › Alerts › While automation runs toggle.</comment>
+  </data>
+  <data name="ConfigNeedsYouDeathHint" xml:space="preserve">
+    <value>A chat line when your character dies during a run.</value>
+    <comment>Hint of When you die.</comment>
+  </data>
+  <data name="ConfigNeedsYouStuck" xml:space="preserve">
+    <value>When you're stuck</value>
+    <comment>Settings › Alerts › While automation runs toggle.</comment>
+  </data>
+  <data name="ConfigNeedsYouStuckHint" xml:space="preserve">
+    <value>When vnavmesh is moving your character and it hasn't moved for 30 seconds.</value>
+    <comment>Hint of When you're stuck.</comment>
+  </data>
+  <data name="ConfigNeedsYouDutyPop" xml:space="preserve">
+    <value>When a duty is ready</value>
+    <comment>Settings › Alerts › While automation runs toggle.</comment>
+  </data>
+  <data name="ConfigNeedsYouDutyPopHint" xml:space="preserve">
+    <value>When the Duty Finder pops during a run.</value>
+    <comment>Hint of When a duty is ready.</comment>
+  </data>
+  <data name="ConfigNeedsYouTell" xml:space="preserve">
+    <value>When you get a tell</value>
+    <comment>Settings › Alerts › While automation runs toggle.</comment>
+  </data>
+  <data name="ConfigNeedsYouTellHint" xml:space="preserve">
+    <value>Tsukimichi never answers it.</value>
+    <comment>Hint of When you get a tell.</comment>
+  </data>
+  <data name="ConfigNeedsYouSound" xml:space="preserve">
+    <value>Play a sound</value>
+    <comment>Settings › Alerts › While automation runs toggle.</comment>
+  </data>
+  <data name="ConfigNeedsYouSoundHint" xml:space="preserve">
+    <value>A chat sound effect, at most once every 10 seconds.</value>
+    <comment>Hint of Play a sound.</comment>
+  </data>
+  <data name="ConfigNeedsYouToast" xml:space="preserve">
+    <value>Show a toast</value>
+    <comment>Settings › Alerts › While automation runs toggle.</comment>
+  </data>
+  <data name="ConfigNeedsYouToastHint" xml:space="preserve">
+    <value>The alert also shows in the middle of the screen.</value>
+    <comment>Hint of Show a toast.</comment>
+  </data>
+  <data name="NeedsYouDeathLine" xml:space="preserve">
+    <value>Needs you: your character died during a run. Type /tsuki stop to stop every run.</value>
+    <comment>"Needs you" chat line (1.18, A5).</comment>
+  </data>
+  <data name="NeedsYouStuckFormat" xml:space="preserve">
+    <value>Needs you: your character hasn't moved for {0} seconds while it should be walking. Type /tsuki stop to stop every run.</value>
+    <comment>"Needs you" chat line: {0} = seconds.</comment>
+  </data>
+  <data name="NeedsYouDutyPopFormat" xml:space="preserve">
+    <value>Needs you: {0} is ready in the Duty Finder.</value>
+    <comment>"Needs you" chat line: {0} = the duty.</comment>
+  </data>
+  <data name="NeedsYouDutyPopUnnamed" xml:space="preserve">
+    <value>Needs you: a duty is ready in the Duty Finder.</value>
+    <comment>"Needs you" chat line when the duty has no name.</comment>
+  </data>
+  <data name="NeedsYouTellFormat" xml:space="preserve">
+    <value>Needs you: {0} sent you a tell.</value>
+    <comment>"Needs you" chat line: {0} = the sender.</comment>
+  </data>
+  <data name="NeedsYouTellUnnamed" xml:space="preserve">
+    <value>Needs you: you got a tell.</value>
+    <comment>"Needs you" chat line when the sender has no name.</comment>
+  </data>
+  <data name="NeedsYouToastDeath" xml:space="preserve">
+    <value>Needs you: your character died</value>
+    <comment>"Needs you" toast.</comment>
+  </data>
+  <data name="NeedsYouToastStuck" xml:space="preserve">
+    <value>Needs you: your character is stuck</value>
+    <comment>"Needs you" toast.</comment>
+  </data>
+  <data name="NeedsYouToastDutyPop" xml:space="preserve">
+    <value>Needs you: a duty is ready</value>
+    <comment>"Needs you" toast.</comment>
+  </data>
+  <data name="NeedsYouToastTell" xml:space="preserve">
+    <value>Needs you: you got a tell</value>
+    <comment>"Needs you" toast.</comment>
+  </data>
   <data name="CompanionUnlocks.Lifestream" xml:space="preserve">
     <value>Teleport and aethernet travel to quest givers</value>
     <comment>What Lifestream unlocks in Tsukimichi, one line.</comment>

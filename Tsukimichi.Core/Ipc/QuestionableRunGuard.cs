@@ -54,6 +54,9 @@ public enum QuestionableRunEnd
 
     /// <summary>Ended some other way: Questionable stopped itself, or was stopped from its own window.</summary>
     Ended,
+
+    /// <summary>Stopped by Tsukimichi's duty guard (plan v7 A3) before a duty with no Duty Support or Trust.</summary>
+    BeforeDutyWithPlayers,
 }
 
 /// <summary>A stop condition and what it needs: a count, a time (UTC) or the quest under way (0 when unknown: the next quest done).</summary>
@@ -199,11 +202,18 @@ public sealed class QuestionableRunGuard
     }
 
     /// <summary>Tsukimichi's Stop (a button, <c>/tsuki stop</c>) was taken by Questionable.</summary>
-    public void NoteStopAsked()
+    public void NoteStopAsked() => NoteStopAsked(QuestionableRunEnd.StoppedFromTsukimichi);
+
+    /// <summary>
+    /// A stop of Tsukimichi's was taken by Questionable, for <paramref name="reason"/>: a Stop
+    /// (<see cref="QuestionableRunEnd.StoppedFromTsukimichi"/>) or the duty guard
+    /// (<see cref="QuestionableRunEnd.BeforeDutyWithPlayers"/>). The first reason noted stands.
+    /// </summary>
+    public void NoteStopAsked(QuestionableRunEnd reason)
     {
         if (Tracking)
         {
-            stopReason ??= QuestionableRunEnd.StoppedFromTsukimichi;
+            stopReason ??= reason;
         }
     }
 

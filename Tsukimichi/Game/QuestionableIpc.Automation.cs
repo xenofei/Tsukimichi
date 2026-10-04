@@ -381,7 +381,8 @@ public sealed partial class QuestionableIpc
 
     /// <summary>
     /// Questionable's live status, read at most once a second (<see cref="StatusIntervalSeconds"/>); call it only from
-    /// code that draws it, so nothing is asked while no Tsukimichi window is visible. Idle when Questionable is absent
+    /// code that draws it, or from <see cref="RunWatch"/> while the duty guard or a "Needs you" alert is on, so nothing
+    /// is asked otherwise while no Tsukimichi window is visible. Idle when Questionable is absent
     /// or its status gates are missing; a gate of another shape turns the status off (logged once) until Dalamud's plugin
     /// list changes.
     /// </summary>
@@ -433,7 +434,7 @@ public sealed partial class QuestionableIpc
         {
             if (getCurrentStepData.InvokeFunc() is { } step)
             {
-                status = QuestionableStatus.From(true, questId, step.QuestId, step.Sequence, step.Step, step.TerritoryId);
+                status = QuestionableStatus.From(true, questId, step.QuestId, step.Sequence, step.Step, step.TerritoryId, step.InteractionType);
             }
         }
         catch (IpcNotReadyError)

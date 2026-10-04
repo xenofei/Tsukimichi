@@ -76,6 +76,7 @@ public sealed partial class Plugin : IDalamudPlugin
     private readonly GlyphDebugWindow glyphDebugWindow;
     private readonly TsukimichiCommand command;
     private StopCommand? stopCommand;
+    private Game.RunWatch? runWatch;
     private readonly UiState ui;
     private readonly GameLinks gameLinks;
     private readonly Game.LifestreamIpc lifestream;
@@ -1173,6 +1174,12 @@ public sealed partial class Plugin : IDalamudPlugin
             // button's own call; one chat line says what stopped.
             stopCommand = new StopCommand(Framework, travel, lifestream, autoDuty, artisan, questionableActions, () => questionableIpc.PollStatus().Running, gameLinks.PrintText, Log);
             command.Stop = stopCommand.Run;
+            // Runs you can trust (1.18.0, A3 and A5): the duty guard stops (or warns about) a Questionable run before a
+            // duty with no Duty Support or Trust, and "Needs you" alerts while a hand-off runs.
+            runWatch = new Game.RunWatch(Framework, ClientState, Condition, ObjectTable, ChatGui, ToastGui, DataManager, Settings, Session, questionableIpc, travel, lifestream, autoDuty, artisan, () => dutyRuns.Value, gate, Log)
+            {
+                Runs = questionableRuns,
+            };
             mainWindow.AttachDiagnostics(diagnostics);
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
@@ -1592,6 +1599,7 @@ public sealed partial class Plugin : IDalamudPlugin
         });
         Unwind("command", () => command?.Dispose());
         Unwind("stop command", () => stopCommand?.Dispose());
+        Unwind("run watch", () => runWatch?.Dispose());
         Unwind("questionable runs", () => questionableRuns?.Dispose());
         Unwind("draw hook", () =>
         {
