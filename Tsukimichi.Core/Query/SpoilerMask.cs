@@ -112,10 +112,17 @@ public sealed class SpoilerMask
     /// <summary>The names revealed for the session ("Reveal this name", "Reveal names in this quest").</summary>
     private readonly FrozenSet<(SpoilerKind Kind, string Name)> reveals;
 
+    /// <summary>
+    /// The quests whose names the player revealed for the session ("Reveal this name", "Reveal names in this quest"):
+    /// a side quest among them no longer lies ahead (<see cref="IsAhead"/>), so its placeholder's reveal shows it.
+    /// </summary>
+    private readonly FrozenSet<uint> revealedQuests;
+
     private int maskedNameCount = -1;
 
-    private SpoilerMask(SpoilerOptions options, IReadOnlyDictionary<uint, byte> masked, IReadOnlySet<uint> ahead, byte reachExpansion, int fingerprint, SpoilerNames names, FrozenSet<(SpoilerKind Kind, string Name)> reveals)
+    private SpoilerMask(SpoilerOptions options, IReadOnlyDictionary<uint, byte> masked, IReadOnlySet<uint> ahead, byte reachExpansion, int fingerprint, SpoilerNames names, FrozenSet<(SpoilerKind Kind, string Name)> reveals, FrozenSet<uint>? revealedQuests = null)
     {
+        this.revealedQuests = revealedQuests ?? FrozenSet<uint>.Empty;
         Options = options;
         this.masked = masked;
         this.ahead = ahead;
@@ -608,10 +615,11 @@ public sealed class SpoilerMask
     /// Whether a quest of any kind lies past the story point (plan v7, 1.21.0 P5, N8): it is a masked main scenario
     /// quest, or, with the wider shield on, its story anchor (<see cref="SpoilerNames.AnchorOf"/>: the latest main
     /// scenario quest it needs) is. A side story or a job quest past the point names neither itself nor its zone.
-    /// Allocates nothing.
+    /// A side quest whose name the player revealed for the session no longer lies ahead. Allocates nothing.
     /// </summary>
     public bool IsAhead(uint rowId) =>
-        masked.ContainsKey(rowId) || (names.AnchorOf(rowId) is var anchor and not 0 && masked.ContainsKey(anchor));
+        masked.ContainsKey(rowId)
+        || (!revealedQuests.Contains(rowId) && names.AnchorOf(rowId) is var anchor and not 0 && masked.ContainsKey(anchor));
 
     /// <summary>
     /// Whether a duty's name is hidden behind "A duty further along the story": every quest it is shown through (the
@@ -922,7 +930,17 @@ public sealed class SpoilerMask
 
         var reachExpansion = msq is null ? byte.MaxValue : noStates ? (byte)0 : msq.Next?.Expansion ?? byte.MaxValue;
         hash.Add(reachExpansion);
-        return new SpoilerMask(options, masked, ahead, reachExpansion, hash.ToHashCode(), related, reveals);
+        // A side quest revealed by its row id no longer lies ahead (IsAhead); the reveal counts in the fingerprint.
+        var revealedQuests = related.Count > 0 && revealed is { Count: > 0 } ? revealed.ToFrozenSet() : FrozenSet<uint>.Empty;
+        var revealedQuestHash = 0;
+        foreach (var rowId in revealedQuests)
+        {
+            revealedQuestHash = unchecked(revealedQuestHash + (int)rowId);
+        }
+
+        hash.Add(revealedQuests.Count);
+        hash.Add(revealedQuestHash);
+        return new SpoilerMask(options, masked, ahead, reachExpansion, hash.ToHashCode(), related, reveals, revealedQuests);
     }
 
     /// <summary>

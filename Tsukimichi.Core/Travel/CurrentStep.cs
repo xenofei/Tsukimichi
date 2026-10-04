@@ -92,6 +92,29 @@ public sealed record CurrentStep(int Step, byte Sequence, IReadOnlyList<StepObje
 }
 
 /// <summary>
+/// What one sequence of a quest can resolve to (<see cref="CurrentStepResolver.Choices"/>): its open-world places and
+/// the <see cref="CurrentStep"/> each would aim at, built once per quest and sequence. <see cref="Pick"/> chooses by the
+/// player's position and allocates nothing, so a caller can keep the choices and ask every frame.
+/// </summary>
+public sealed class StepChoices
+{
+    private readonly CurrentStep[] steps;
+
+    internal StepChoices(IReadOnlyList<StepPlace> places, CurrentStep[] steps)
+    {
+        Places = places;
+        this.steps = steps;
+    }
+
+    /// <summary>The sequence's open-world places, each once, in data order; empty for a duty step or one with no place.</summary>
+    public IReadOnlyList<StepPlace> Places { get; }
+
+    /// <summary>The step aimed at the place nearest the player in the player's zone, else at the first (see <see cref="CurrentStepResolver.Nearest"/>).</summary>
+    public CurrentStep Pick(uint playerTerritory = 0, float playerX = 0f, float playerZ = 0f) =>
+        steps.Length == 1 ? steps[0] : steps[CurrentStepResolver.NearestIndex(Places, playerTerritory, playerX, playerZ)];
+}
+
+/// <summary>
 /// Resolves the current step of a quest in the journal from its sequence (P2). Only the objectives completed in the
 /// current sequence are read, so a later step is never named and its place is never aimed at. Places inside a duty's
 /// territory are not travelled to (the duty is joined through the Duty Finder); several open-world places aim at the
@@ -105,7 +128,14 @@ public static class CurrentStepResolver
     /// <param name="playerTerritory">The zone the player stands in; 0 when unknown (no nearest is picked).</param>
     /// <param name="playerX">The player's raw world x.</param>
     /// <param name="playerZ">The player's raw world z.</param>
-    public static CurrentStep? Resolve(QuestSteps steps, byte? sequence, byte stepCount, uint playerTerritory = 0, float playerX = 0f, float playerZ = 0f)
+    public static CurrentStep? Resolve(QuestSteps steps, byte? sequence, byte stepCount, uint playerTerritory = 0, float playerX = 0f, float playerZ = 0f) =>
+        Choices(steps, sequence, stepCount)?.Pick(playerTerritory, playerX, playerZ);
+
+    /// <summary>
+    /// Everything <see cref="Resolve"/> can answer for one sequence, built once (lists, records); then
+    /// <see cref="StepChoices.Pick"/> per position. Null for no sequence.
+    /// </summary>
+    public static StepChoices? Choices(QuestSteps steps, byte? sequence, byte stepCount)
     {
         ArgumentNullException.ThrowIfNull(steps);
         if (sequence is not { } seq || seq == 0)
@@ -147,42 +177,57 @@ public static class CurrentStepResolver
         var step = JournalVisibility.CurrentStep(seq, stepCount);
         if (places.Count == 0)
         {
-            return new CurrentStep(step, seq, objectives, dutyId != 0 ? StepPlaceKind.Duty : StepPlaceKind.NoPlace, null, 0, dutyId);
+            return new StepChoices(places, [new CurrentStep(step, seq, objectives, dutyId != 0 ? StepPlaceKind.Duty : StepPlaceKind.NoPlace, null, 0, dutyId)]);
         }
 
         if (places.Count == 1)
         {
             var only = places[0];
-            return new CurrentStep(step, seq, objectives, only.IsArea ? StepPlaceKind.Area : StepPlaceKind.OnePlace, only, 1, dutyId);
+            return new StepChoices(places, [new CurrentStep(step, seq, objectives, only.IsArea ? StepPlaceKind.Area : StepPlaceKind.OnePlace, only, 1, dutyId)]);
         }
 
-        return new CurrentStep(step, seq, objectives, StepPlaceKind.SeveralPlaces, Nearest(places, playerTerritory, playerX, playerZ), places.Count, dutyId);
+        var each = new CurrentStep[places.Count];
+        for (var i = 0; i < each.Length; i++)
+        {
+            each[i] = new CurrentStep(step, seq, objectives, StepPlaceKind.SeveralPlaces, places[i], places.Count, dutyId);
+        }
+
+        return new StepChoices(places, each);
     }
 
     /// <summary>The place nearest the player in the player's zone; the first in data order when none is in it.</summary>
     public static StepPlace Nearest(IReadOnlyList<StepPlace> places, uint playerTerritory, float playerX, float playerZ)
     {
         ArgumentNullException.ThrowIfNull(places);
-        StepPlace? best = null;
+        return places[NearestIndex(places, playerTerritory, playerX, playerZ)];
+    }
+
+    /// <summary>The index of <see cref="Nearest"/>'s place. Allocates nothing.</summary>
+    internal static int NearestIndex(IReadOnlyList<StepPlace> places, uint playerTerritory, float playerX, float playerZ)
+    {
+        var best = 0;
         var bestDistance = float.MaxValue;
+        var found = false;
         if (playerTerritory != 0)
         {
-            foreach (var place in places)
+            for (var i = 0; i < places.Count; i++)
             {
+                var place = places[i];
                 if (place.TerritoryId != playerTerritory)
                 {
                     continue;
                 }
 
                 var distance = TravelPlanner.Distance(place.X, place.Z, playerX, playerZ);
-                if (distance < bestDistance)
+                if (!found || distance < bestDistance)
                 {
-                    best = place;
+                    best = i;
                     bestDistance = distance;
+                    found = true;
                 }
             }
         }
 
-        return best ?? places[0];
+        return best;
     }
 }

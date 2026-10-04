@@ -9,6 +9,7 @@ using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Game;
+using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
 
@@ -26,7 +27,14 @@ public sealed class NewChaptersSource
 
     // Characters this load showed the line to (it stays while the card does), and the lines composed for each.
     private readonly Dictionary<ulong, Line[]> shown = [];
-    private (int Version, int Shield, int Language, ulong Character) builtKey = (-1, 0, -1, 0);
+
+    // The answer for the view key, kept whatever it is (none included), so a character with no new chapters costs
+    // nothing per frame.
+    private (int Version, int Shield, int Language, ulong Character) builtKey;
+    private object? builtBundle;
+    private object? builtBook;
+    private Line[]? built;
+    private bool hasBuilt;
 
     public NewChaptersSource(SessionState session, UiState ui)
     {
@@ -40,7 +48,8 @@ public sealed class NewChaptersSource
     /// <summary>The settings book the once-per-patch record lives in; set by the plugin. Null shows nothing.</summary>
     public CharacterSettingsBook? CharacterSettings { get; set; }
 
-    private sealed record Line(string Name, string Count, QuestRecord First);
+    /// <param name="Ahead">The line lies past the story point: <see cref="Name"/> is the shield's words for it.</param>
+    private sealed record Line(string Name, string Count, QuestRecord First, bool Ahead = false);
 
     /// <summary>Draws the line inside the What's new card, when there is something to say for the viewed character.</summary>
     public void Draw()
@@ -60,7 +69,13 @@ public sealed class NewChaptersSource
         {
             using var row = ImRaii.PushId(i);
             var line = lines[i];
-            Chrome.FitText(line.Name, Theme.Surface.Text);
+            var cut = Chrome.FitText(line.Name, line.Ahead ? Theme.Surface.TextSecondary : ShieldText.Tone(line.Name, Theme.Surface.Text), tooltip: !line.Ahead);
+            if (line.Ahead)
+            {
+                // "A side story ahead": the placeholder's hover and right-click (spec-1.20 N6), which reveal the quest.
+                ShieldText.InteractQuestItem(session, line.First, line.Name, lead: cut ? line.Name : null);
+            }
+
             ImGui.SameLine();
             ImGui.TextColored(Theme.Surface.TextSecondary, line.Count);
             Chrome.SameLineRightOrWrap(ImGui.CalcTextSize(Strings.NewChaptersShow).X + (ImGui.GetStyle().FramePadding.X * 2f));
@@ -78,6 +93,7 @@ public sealed class NewChaptersSource
         ImGui.Spacing();
     }
 
+    /// <summary>The lines for the viewed character, worked out once per view key (an empty answer too).</summary>
     private Line[]? Lines()
     {
         if (session.ViewedContentId is not { } character || session.Bundle is not { } bundle || session.States.Count == 0 || CharacterSettings is not { } book)
@@ -86,11 +102,21 @@ public sealed class NewChaptersSource
         }
 
         var key = (session.Version, session.Spoilers.Fingerprint, Localization.Loc.Version, character);
-        if (shown.TryGetValue(character, out var known) && key == builtKey)
+        if (hasBuilt && key == builtKey && ReferenceEquals(bundle, builtBundle) && ReferenceEquals(book, builtBook))
         {
-            return known;
+            return built;
         }
 
+        builtKey = key;
+        builtBundle = bundle;
+        builtBook = book;
+        hasBuilt = true;
+        built = Build(character, bundle, book);
+        return built;
+    }
+
+    private Line[]? Build(ulong character, CatalogBundle bundle, CharacterSettingsBook book)
+    {
         var series = PatchIndex.For(bundle.Catalog).NewestSeries;
         if (series.Length == 0)
         {
@@ -104,7 +130,6 @@ public sealed class NewChaptersSource
             return null;
         }
 
-        builtKey = key;
         var chapters = SideStories.NewChapters(session.Chains, bundle.Catalog, session.States);
         var lines = new List<Line>(chapters.Count);
         var spoilers = session.Spoilers;
@@ -118,7 +143,7 @@ public sealed class NewChaptersSource
             var count = chapter.NewQuests.Count == 1 ? Strings.NewChaptersQuestOne : string.Format(CultureInfo.CurrentCulture, Strings.NewChaptersQuestsFormat, chapter.NewQuests.Count);
             if (spoilers.IsAhead(quest.RowId))
             {
-                lines.Add(new Line(Strings.StoriesAhead, count + Strings.StateReasonSeparator + Strings.NewChaptersNameHidden, quest));
+                lines.Add(new Line(Strings.StoriesAhead, count + Strings.StateReasonSeparator + Strings.NewChaptersNameHidden, quest, Ahead: true));
                 continue;
             }
 

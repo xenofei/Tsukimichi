@@ -89,7 +89,11 @@ public sealed class EvercoldCardModel
 
     internal sealed record ButtonView(Act Act, string Label, string Tooltip);
 
-    /// <summary>One open line as drawn: its icon, words, hover (why, then "Tick it yourself if …") and buttons.</summary>
+    /// <summary>
+    /// One open line as drawn: its icon, words, hover (why, then "Tick it yourself if …") and buttons.
+    /// <paramref name="Hidden"/>: an area of the detail the story has not reached, whose placeholder takes the shield's
+    /// hover and right-click (the flying line's "a zone ahead"); null for none.
+    /// </summary>
     internal sealed record LineView(
         PrepLineKind Kind,
         PillIcon Icon,
@@ -99,7 +103,11 @@ public sealed class EvercoldCardModel
         string Tick,
         ButtonView[] Buttons,
         QuestRecord? Target,
-        RouteTarget? Route);
+        RouteTarget? Route,
+        (SpoilerKind Kind, string Name, string Shown)? Hidden = null);
+
+    /// <summary>The session the card's names are shielded for, whose reveals a placeholder's menu adds to.</summary>
+    internal SessionState Session => session;
 
     /// <summary>The character the card is for, by first name ("Michiru").</summary>
     internal string Name { get; private set; } = string.Empty;
@@ -416,8 +424,19 @@ public sealed class EvercoldCardModel
                     : string.Format(culture, Strings.PrepFlyingDetailFormat, names.Length, List(names));
                 var route = FlyingRoute(line, names, title);
                 ButtonView[] buttons = route is null ? [] : [new ButtonView(Act.FlyingRoute, Strings.PrepRoute, Strings.PrepFlyingRouteTooltip)];
+
+                // The first area the story has not reached: the detail's placeholder answers for it (spec-1.20 N6).
+                (SpoilerKind Kind, string Name, string Shown)? hidden = null;
+                for (var i = 0; i < line.Zones.Count && hidden is null; i++)
+                {
+                    if (session.Spoilers.IsNameMasked(SpoilerKind.Area, line.Zones[i].Name))
+                    {
+                        hidden = (SpoilerKind.Area, line.Zones[i].Name, names[i]);
+                    }
+                }
+
                 return new LineView(line.Kind, GameIconRef.Tile(ActionIcons.Fly), title, detail,
-                    string.Format(culture, Strings.PrepFlyingWhyFormat, expansion), Strings.PrepFlyingTick, buttons, null, route);
+                    string.Format(culture, Strings.PrepFlyingWhyFormat, expansion), Strings.PrepFlyingTick, buttons, null, route, hidden);
             }
         }
     }

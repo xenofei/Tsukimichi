@@ -382,14 +382,19 @@ public static class GuidanceText
     private static string Join(params string[] sentences) =>
         string.Join(" ", sentences.Where(static s => s.Length > 0));
 
-    /// <summary>Splits a composed line at the name mark into the text before and after the quest's name.</summary>
+    /// <summary>
+    /// Splits a composed line at the name mark into the text before and after the quest's name. A name that is or holds
+    /// a spoiler shield placeholder (<see cref="Query.SpoilerMask.HoldsPlaceholder"/>) gets no quest link: the game's
+    /// link would name the quest the shield hides.
+    /// </summary>
     private static GuidanceLine Linked(string composed, string questName, uint questRowId)
     {
         var at = composed.IndexOf(NameMark, StringComparison.Ordinal);
         var name = Speakable(questName);
+        var linked = Query.SpoilerMask.HoldsPlaceholder(questName) ? 0u : questRowId;
         return at < 0
             ? new GuidanceLine(composed, string.Empty, string.Empty, 0)
-            : new GuidanceLine(composed[..at], name, composed[(at + 1)..], questRowId);
+            : new GuidanceLine(composed[..at], name, composed[(at + 1)..], linked);
     }
 
     private static string T(string key, string english) => CoreText.T(key, english);

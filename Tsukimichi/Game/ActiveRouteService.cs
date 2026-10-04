@@ -78,6 +78,16 @@ public sealed class ActiveRouteService : IDisposable
         }
     }
 
+    /// <summary>
+    /// The followed route built for <paramref name="contentId"/>: the viewed character's (<see cref="ViewedRoute"/>) or
+    /// the logged-in one's; null when that character follows none or is neither.
+    /// </summary>
+    public UnlockRoute? RouteOf(ulong contentId)
+    {
+        Refresh();
+        return contentId == session.ViewedContentId ? viewedRoute : contentId == session.LiveContentId ? liveRoute : null;
+    }
+
     /// <summary>Follows <paramref name="routeTarget"/> for <paramref name="owner"/>, in place of any route followed before.</summary>
     public void Follow(RouteTarget routeTarget, ulong owner)
     {

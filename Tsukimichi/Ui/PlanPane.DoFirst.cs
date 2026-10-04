@@ -36,7 +36,20 @@ public sealed partial class PlanPane
     private readonly HashSet<UnlockTier> expandedTiers = [];
 
     // Line 2 of each row, built when first drawn for the current view.
-    private readonly Dictionary<uint, string> tierLines = [];
+    private readonly Dictionary<uint, TierLineView> tierLines = [];
+
+    // The folded tiers of this frame, reused.
+    private readonly List<PlanTierGroup> foldedTiers = new(2);
+
+    /// <summary>
+    /// Line 2 of a Do first row and where its placeholders sit: the zone the story has not reached (its own name in
+    /// <see cref="HiddenZone"/>, the text before it in <see cref="ZonePrefix"/>) and the story quest that "needs it"
+    /// while the shield masks it (<see cref="NeedsQuest"/>, after <see cref="NeedsPrefix"/>).
+    /// </summary>
+    private sealed record TierLineView(string Text, string ZonePrefix, string Zone, string? HiddenZone, string NeedsPrefix, string Needs, QuestRecord? NeedsQuest)
+    {
+        public static readonly TierLineView Empty = new(string.Empty, string.Empty, string.Empty, null, string.Empty, string.Empty, null);
+    }
 
     // The row whose slot holds keyboard focus (its buttons stay shown while focus is in them).
     private uint focusedTierRow;
@@ -46,7 +59,8 @@ public sealed partial class PlanPane
     private void DrawDoFirst(UiState ui)
     {
         var groups = view.TierGroups;
-        var folded = new List<PlanTierGroup>(2);
+        var folded = foldedTiers;
+        folded.Clear();
         foreach (var group in groups)
         {
             if (FoldsByDefault(group.Tier) && !openedTiers.Contains(group.Tier))
@@ -271,14 +285,25 @@ public sealed partial class PlanPane
             DutyBadges.DrawRun(badges, pillsEnd + (kindCount == 0 ? gap : DutyBadges.RunGap), start.Y, firstLine, pillEnd, Textures);
         }
 
-        // Line 2: the state word, the zone and why it is in this tier.
+        // Line 2: the state word, the zone and why it is in this tier; each placeholder with the shield's hover.
         var status = TierLine(entry);
-        if (status.Length > 0)
+        if (status.Text.Length > 0)
         {
             var s = Theme.Surface;
             var live = session.ViewedSnapshot is not null;
-            ImGui.SetCursorScreenPos(new Vector2(nameX, start.Y + firstLine + UiMetrics.Px(1f)));
-            Chrome.StatusText(status, MathF.Max(1f, textRight - nameX), live ? s.Text : s.TextSecondary, s.TextSecondary);
+            var lineMin = new Vector2(nameX, start.Y + firstLine + UiMetrics.Px(1f));
+            var shielded = status.HiddenZone is not null || status.NeedsQuest is not null;
+            ImGui.SetCursorScreenPos(lineMin);
+            Chrome.StatusText(status.Text, MathF.Max(1f, textRight - nameX), live ? s.Text : s.TextSecondary, s.TextSecondary, tooltip: !shielded);
+            if (status.HiddenZone is { } hidden && SpanRect(lineMin, textRight, status.ZonePrefix, status.Zone, out var zoneMin, out var zoneMax))
+            {
+                ShieldText.Interact(zoneMin, zoneMax, session, Core.Query.SpoilerKind.Area, hidden, status.Zone, quest, links);
+            }
+
+            if (status.NeedsQuest is { } story && SpanRect(lineMin, textRight, status.NeedsPrefix, status.Needs, out var needsMin, out var needsMax))
+            {
+                ShieldText.InteractQuest(needsMin, needsMax, session, story, status.Needs, links);
+            }
         }
 
         // The reserved slot: Teleport and "…", shown on hover or while one of them holds keyboard focus.
@@ -352,42 +377,79 @@ public sealed partial class PlanPane
     }
 
     /// <summary>
-    /// Line 2 of a Do first row, memoized for the view: the status ("Ready", or the state and its blocker), the zone,
-    /// and why: "Good Intentions needs it" for the story's quests, else what the quest opens.
+    /// Where <paramref name="text"/> sits on a line drawn from <paramref name="lineMin"/> after <paramref name="prefix"/>,
+    /// cut at <paramref name="right"/>; false when none of it shows.
     /// </summary>
-    private string TierLine(PlanEntry entry)
+    private static bool SpanRect(Vector2 lineMin, float right, string prefix, string text, out Vector2 min, out Vector2 max)
     {
-        if (tierLines.TryGetValue(entry.Quest.RowId, out var text))
+        var x = lineMin.X + ImGui.CalcTextSize(prefix).X;
+        var size = ImGui.CalcTextSize(text);
+        min = new Vector2(x, lineMin.Y);
+        max = new Vector2(MathF.Min(right, x + size.X), lineMin.Y + size.Y);
+        return max.X > min.X + 1f;
+    }
+
+    /// <summary>
+    /// Line 2 of a Do first row, memoized for the view: the status ("Ready", or the state and its blocker), the zone,
+    /// and why: "Good Intentions needs it" for the story's quests, else what the quest opens. A zone or story quest the
+    /// shield hides prints its placeholder, and the view says where it sits for its hover.
+    /// </summary>
+    private TierLineView TierLine(PlanEntry entry)
+    {
+        if (tierLines.TryGetValue(entry.Quest.RowId, out var known))
         {
-            return text;
+            return known;
         }
 
-        var parts = new List<string>(3);
+        var separator = BlockerText.Separator;
+        var text = new System.Text.StringBuilder();
+        void Append(string part)
+        {
+            if (text.Length > 0)
+            {
+                text.Append(separator);
+            }
+
+            text.Append(part);
+        }
+
         if (entry.StatusText.Length > 0)
         {
-            parts.Add(entry.StatusText);
+            Append(entry.StatusText);
         }
 
+        string zonePrefix = string.Empty, zone = string.Empty;
+        string? hiddenZone = null;
         if (entry.Quest.Issuer is { MapId: > 0 } issuer)
         {
-            var zone = ZoneName(new PlanZone(issuer.TerritoryId, issuer.MapId, []));
+            var planZone = new PlanZone(issuer.TerritoryId, issuer.MapId, []);
+            zone = ZoneName(planZone);
             if (zone.Length > 0)
             {
-                parts.Add(zone);
+                Append(string.Empty);
+                zonePrefix = text.ToString();
+                text.Append(zone);
+                hiddenZone = HiddenZone(planZone);
             }
         }
 
+        string needsPrefix = string.Empty, needs = string.Empty;
+        QuestRecord? needsQuest = null;
         if (entry.Tier == UnlockTier.StoryNeedsIt && source.StoryQuestNeeding(entry.Quest.RowId) is { } story)
         {
-            parts.Add(string.Format(CultureInfo.CurrentCulture, Strings.BluesNeedsItFormat, session.Names.QuestName(story)));
+            Append(string.Empty);
+            needsPrefix = text.ToString();
+            needs = string.Format(CultureInfo.CurrentCulture, Strings.BluesNeedsItFormat, session.Names.QuestName(story));
+            text.Append(needs);
+            needsQuest = session.Spoilers.IsMasked(story) ? story : null;
         }
         else if (entry.Unlocks.Count > 0 && entry.Unlocks[0] is { Name.Length: > 0, Inherited: false } unlock)
         {
-            parts.Add(unlock.Name);
+            Append(unlock.Name);
         }
 
-        text = string.Join(BlockerText.Separator, parts);
-        tierLines[entry.Quest.RowId] = text;
-        return text;
+        var line = text.Length == 0 ? TierLineView.Empty : new TierLineView(text.ToString(), zonePrefix, zone, hiddenZone, needsPrefix, needs, needsQuest);
+        tierLines[entry.Quest.RowId] = line;
+        return line;
     }
 }

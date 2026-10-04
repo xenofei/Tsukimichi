@@ -18,7 +18,7 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed partial class DetailPane
 {
-    private readonly List<(string Name, string Place, bool Masked)> triadLines = [];
+    private readonly List<(string Name, string Place, bool Masked, string? HiddenZone)> triadLines = [];
     private uint triadRowId = uint.MaxValue;
     private int triadVersion = -1;
     private TriadOpponents? triadIndex;
@@ -27,7 +27,7 @@ public sealed partial class DetailPane
     public Func<TriadOpponents?>? TriadOpponents { get; set; }
 
     /// <summary>The opponents <paramref name="quest"/> opens, composed once per quest, session and index.</summary>
-    private List<(string Name, string Place, bool Masked)> TriadUnlockLines(SessionState session, QuestRecord quest)
+    private List<(string Name, string Place, bool Masked, string? HiddenZone)> TriadUnlockLines(SessionState session, QuestRecord quest)
     {
         var index = TriadOpponents?.Invoke();
         if (triadRowId == quest.RowId && triadVersion == session.Version && ReferenceEquals(index, triadIndex))
@@ -51,15 +51,16 @@ public sealed partial class DetailPane
                 continue;
             }
 
-            var masked = session.Spoilers.IsMasked(quest) || (opponent.Zone.Length > 0 && session.Spoilers.IsNameMasked(SpoilerKind.Area, opponent.Zone));
-            triadLines.Add((TriadBoardSource.Capitalize(opponent.Name), opponent.Zone, masked));
+            var zoneHidden = opponent.Zone.Length > 0 && session.Spoilers.IsNameMasked(SpoilerKind.Area, opponent.Zone);
+            var masked = session.Spoilers.IsMasked(quest) || zoneHidden;
+            triadLines.Add((TriadBoardSource.Capitalize(opponent.Name), opponent.Zone, masked, zoneHidden ? opponent.Zone : null));
         }
 
         return triadLines;
     }
 
     /// <summary>One line per opponent the quest opens: the card icon, the kind, the name in semibold and the place.</summary>
-    private void DrawTriadUnlockLines(List<(string Name, string Place, bool Masked)> lines)
+    private void DrawTriadUnlockLines(List<(string Name, string Place, bool Masked, string? HiddenZone)> lines)
     {
         if (lines.Count == 0)
         {
@@ -68,7 +69,7 @@ public sealed partial class DetailPane
 
         var s = Theme.Surface;
         var line = ImGui.GetTextLineHeight();
-        foreach (var (name, place, masked) in lines)
+        foreach (var (name, place, masked, hiddenZone) in lines)
         {
             var dl = ImGui.GetWindowDrawList();
             var min = ImGui.GetCursorScreenPos();
@@ -89,9 +90,21 @@ public sealed partial class DetailPane
             var prefix = Strings.TriadUnlockPrefix;
             dl.AddText(new Vector2(x, y), Theme.U32(s.TextSecondary), prefix);
             x += ImGui.CalcTextSize(prefix).X;
+            var onPlaceholder = false;
             if (masked)
             {
-                Chrome.EllipsisTextAt(dl, new Vector2(x, y), MathF.Max(1f, right - x), Strings.TriadUnlockMasked, Theme.U32(s.TextSecondary));
+                var shown = Strings.TriadUnlockMasked;
+                var cut = Chrome.EllipsisTextAt(dl, new Vector2(x, y), MathF.Max(1f, right - x), shown, Theme.U32(s.TextSecondary));
+
+                // "An opponent ahead, a zone ahead": the shield's hover and right-click (spec-1.20 N6). A zone ahead
+                // reveals the zone; a quest the shield hides reveals the quest's names (the opponent shows with them).
+                if (shieldSession is { } shieldFor)
+                {
+                    var textMax = new Vector2(MathF.Min(right, x + ImGui.CalcTextSize(shown).X), y + line);
+                    onPlaceholder = hiddenZone is not null
+                        ? ShieldText.Interact(new Vector2(x, y), textMax, shieldFor, SpoilerKind.Area, hiddenZone, shown, model.Quest, links, lead: cut ? shown : null, duties: model.DutyNames)
+                        : model.Quest is { } hiddenQuest && ShieldText.InteractQuest(new Vector2(x, y), textMax, shieldFor, hiddenQuest, shown, links, lead: cut ? shown : null);
+                }
             }
             else
             {
@@ -107,7 +120,7 @@ public sealed partial class DetailPane
                 }
             }
 
-            if (hovered)
+            if (hovered && !onPlaceholder)
             {
                 UiMetrics.Tooltip(Strings.TriadUnlockTip);
             }

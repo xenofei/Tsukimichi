@@ -148,4 +148,30 @@ public class StoryPageTests(StoryPageFixture fixture) : IClassFixture<StoryPageF
         Assert.All(astral.Groups.SelectMany(static g => g.Lines), static l => Assert.Equal(string.Empty, l.Name));
         Assert.All(astral.Groups.Where(static g => g.OpensAfter is not null), static g => Assert.StartsWith("Main scenario quest (Lv", g.OpensAfterName, StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void A_side_quest_past_the_story_point_is_never_named_by_a_started_line()
+    {
+        // 1.21.0 review: an A Realm Reborn character who finished the ARR Hildibrand quests read "N left · next: <the
+        // Heavensward Hildibrand quest>", since only main scenario quests were masked. The shield's IsAhead covers side
+        // quests too; here everything past A Realm Reborn lies ahead.
+        var hildibrand = fixture.Chains.Chains.First(c =>
+            c.Name.Contains("Hildibrand", StringComparison.Ordinal)
+            && c.RowIds.Select(id => Catalog.ByRowId[id].Expansion).Distinct().Count() > 1
+            && Catalog.ByRowId[c.RowIds[0]].Expansion == 0);
+        var states = Done(hildibrand.RowIds.Select(id => Catalog.ByRowId[id]).Where(static q => q.Expansion == 0));
+        bool Ahead(uint rowId) => Catalog.ByRowId[rowId].Expansion > 0;
+        var page = StoryPage.Build(new StoryPageInputs(Catalog, fixture.Chains, states, static _ => false, static q => q.Name, Expansions.Name, null, Ahead));
+
+        var lines = page.Bands.SelectMany(static b => b.Groups).SelectMany(static g => g.Lines).ToList();
+        var line = lines.Single(l => ReferenceEquals(l.Chain, hildibrand));
+        Assert.NotNull(line.Next);
+        Assert.True(line.Next.Expansion > 0);
+        Assert.True(line.NextAhead);
+        Assert.NotEqual(string.Empty, line.Name);
+
+        // A line that starts past the story point is not named, though no main scenario quest is masked.
+        var later = lines.First(l => Catalog.ByRowId[l.Chain.RowIds[0]].Expansion > 0);
+        Assert.Equal(string.Empty, later.Name);
+    }
 }

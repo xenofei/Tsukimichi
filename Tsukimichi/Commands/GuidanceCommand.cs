@@ -27,17 +27,20 @@ namespace Tsukimichi.Commands;
 /// then walk), else Teleport, else Walk, else the map flag; one line says what started. <c>/tsuki stop</c> stops it.</item>
 /// </list>
 /// "Say what's next in chat" prints <see cref="NextLine"/> and <see cref="StepDoneLine"/> (ChatNotifier.WhatsNext.cs).
+/// Every input of the pick (route, goal, pins, Next stops, level gate) is read for that one character by its content id,
+/// so a line never mixes the logged-in character's states with the viewed one's route or pins; while they are the same
+/// character it is Up next's own pick.
 /// </summary>
 public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks links)
 {
-    /// <summary>The followed route's next quest (Up next rule 1); null when no route is followed.</summary>
-    public Func<QuestRecord?>? RouteNext { get; set; }
+    /// <summary>A character's followed route's next quest (Up next rule 1); null when it follows none.</summary>
+    public Func<ulong, QuestRecord?>? RouteNext { get; set; }
 
-    /// <summary>The pinned quests in pin order.</summary>
-    public Func<IReadOnlyList<uint>>? Pins { get; set; }
+    /// <summary>A character's pinned quests in pin order.</summary>
+    public Func<ulong, IReadOnlyList<uint>>? Pins { get; set; }
 
-    /// <summary>Next stops' quests, closest stop first.</summary>
-    public Func<IEnumerable<uint>>? Closest { get; set; }
+    /// <summary>A character's Next stops' quests, closest stop first.</summary>
+    public Func<ulong, IEnumerable<uint>>? Closest { get; set; }
 
     /// <summary>
     /// The goal's quests left for a character (Up next rule 2, 1.21.0 N11), the ones it can do now first; empty without a
@@ -159,7 +162,11 @@ public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks 
         var view = links.CurrentStep(quest, evaluation, Live, null, ContentId);
         var target = links.TravelTarget(quest, view);
         var atStep = !ReferenceEquals(target, quest);
-        if (Start(target) is not { } action)
+
+        // A quest the shield hides, or a place the story has not reached, is never travelled to or flagged (the game's
+        // map would name it), as the travel pill and the Flag button stay hidden for it.
+        var masked = Spoilers.IsMasked(quest);
+        if (masked || links.GiverPlaceHidden(target) || Start(target) is not { } action)
         {
             links.PrintText(string.Format(CultureInfo.CurrentCulture, Strings.GuidanceNoPlaceFormat, GuidanceText.Speakable(Spoilers.DisplayName(quest))));
             return;
@@ -207,11 +214,11 @@ public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks 
         var id = ContentId;
         var pick = Core.Todo.UpNextPicker.Pick(
             states,
-            RouteNext?.Invoke()?.RowId,
+            RouteNext?.Invoke(id)?.RowId,
             Goal?.Invoke(id) ?? [],
             msq,
-            Pins?.Invoke() ?? [],
-            Closest?.Invoke() ?? [],
+            Pins?.Invoke(id) ?? [],
+            Closest?.Invoke(id) ?? [],
             LevelGate?.Invoke(id)?.Quest.RowId);
         return pick is { } chosen && catalog.GetByRowId(chosen.RowId) is { } quest ? (quest, chosen.Rule) : null;
     }

@@ -29,12 +29,22 @@ public sealed class SavedRoute
     /// <summary>A route to Triple Triad opponents: the opponents after the quests (<see cref="RouteTarget.TriadStops"/>); empty otherwise, and in a file written before 1.21.</summary>
     public List<SavedTriadStop> TriadStops { get; set; } = [];
 
+    /// <summary>
+    /// The kind of the name the wider spoiler shield places the target by (<see cref="RouteTarget.Placed"/>, "The Ruby
+    /// Sea" for "Flying in The Ruby Sea"); null when the label is read by the target's kind, and in a file written before 1.21.1.
+    /// </summary>
+    public Query.SpoilerKind? PlacedKind { get; set; }
+
+    /// <summary>The name of <see cref="PlacedKind"/>; null with it.</summary>
+    public string? PlacedName { get; set; }
+
     /// <summary>The target to build the route from; a part or list the file left null reads as empty.</summary>
     public RouteTarget ToTarget()
     {
         var quests = QuestRowIds ?? [];
         var stops = (TriadStops ?? []).Where(static s => s is not null).Select(static s => new TriadStop(s.ResidentId, s.Name ?? string.Empty, s.Zone ?? string.Empty, s.TerritoryId, s.X, s.Z)).ToArray();
-        var target = new RouteTarget(Kind, Label ?? string.Empty, quests.ToArray()) { Icon = Icon, FlyingTerritory = FlyingTerritory, TriadStops = stops };
+        (Query.SpoilerKind Kind, string Name)? placed = PlacedKind is { } kind && PlacedName is { Length: > 0 } name ? (kind, name) : null;
+        var target = new RouteTarget(Kind, Label ?? string.Empty, quests.ToArray()) { Icon = Icon, FlyingTerritory = FlyingTerritory, TriadStops = stops, Placed = placed };
         if (Parts is not { Count: > 0 } parts)
         {
             return target;
@@ -49,7 +59,7 @@ public sealed class SavedRoute
             }
         }
 
-        return RouteTarget.Union(Kind, Label ?? string.Empty, list) with { Icon = Icon, FlyingTerritory = FlyingTerritory, TriadStops = stops };
+        return RouteTarget.Union(Kind, Label ?? string.Empty, list) with { Icon = Icon, FlyingTerritory = FlyingTerritory, TriadStops = stops, Placed = placed };
     }
 
     /// <summary>What to store for <paramref name="target"/> followed by <paramref name="ownerContentId"/>.</summary>
@@ -64,6 +74,8 @@ public sealed class SavedRoute
             QuestRowIds = [.. target.QuestRowIds],
             Icon = target.Icon,
             FlyingTerritory = target.FlyingTerritory,
+            PlacedKind = target.Placed?.Kind,
+            PlacedName = target.Placed?.Name,
         };
         foreach (var part in target.Parts)
         {

@@ -35,15 +35,17 @@ public sealed partial class PlanPane
     private int sort = SortStory;
     private bool showSetAside;
 
-    // Rows moved to the other side (set aside, or brought back) since the view was built: they keep their place as a
-    // quiet line until the list is rebuilt (P4), with the "Not for me" choice of a row brought back, for its Undo.
-    private readonly HashSet<uint> keepInPlace = [];
-    private readonly Dictionary<uint, bool> broughtBackNotForMe = [];
-    private int keepVersion;
+    // Rows moved to the other side (set aside, or brought back) since the view was built, for the character on view:
+    // they keep their place as a quiet line until the list is rebuilt or another character is viewed (P4).
+    private readonly KeptInPlace kept = new();
     private string setAsideLink = string.Empty;
 
-    // The group "Set aside these N…" is asking about.
+    // Per frame, a group's rows that can still be set aside, by the group's entries; built once per view.
+    private readonly Dictionary<IReadOnlyList<PlanEntry>, uint[]> groupRows = new(ReferenceEqualityComparer.Instance);
+
+    // The group "Set aside these N…" is asking about, and the character it was asked for.
     private uint[] confirmRows = [];
+    private ulong? confirmOwner;
     private string confirmTitle = string.Empty;
     private string confirmBody = string.Empty;
     private string confirmButton = string.Empty;
@@ -58,25 +60,9 @@ public sealed partial class PlanPane
     }
 
     /// <summary>The list is rebuilt: rows kept in place go.</summary>
-    private void ClearKeep()
-    {
-        if (keepInPlace.Count == 0)
-        {
-            return;
-        }
+    private void ClearKeep() => kept.Clear();
 
-        keepInPlace.Clear();
-        broughtBackNotForMe.Clear();
-        keepVersion++;
-    }
-
-    private void KeepInPlace(uint rowId)
-    {
-        if (keepInPlace.Add(rowId))
-        {
-            keepVersion++;
-        }
-    }
+    private void KeepInPlace(uint rowId) => kept.Keep(rowId);
 
     /// <summary>"42 left · 18 Ready", then "· 6 set aside ›", a link that turns the Set aside filter on.</summary>
     private void DrawSummary()
@@ -176,7 +162,6 @@ public sealed partial class PlanPane
 
     private void BringBack(SetAsideActions actions, PlanEntry entry)
     {
-        broughtBackNotForMe[entry.Quest.RowId] = actions.IsNotForMe(entry.Quest.RowId);
         actions.BringBack(entry.Quest);
         KeepInPlace(entry.Quest.RowId);
     }
@@ -196,7 +181,7 @@ public sealed partial class PlanPane
         var dl = ImGui.GetWindowDrawList();
 
         // What the row says, and its action: Undo for a row just moved, Bring back for a set-aside row in its view.
-        var moved = keepInPlace.Contains(quest.RowId);
+        var moved = kept.Contains(quest.RowId);
         var notForMe = SetAside?.IsNotForMe(quest.RowId) == true;
         var words = !entry.IsSetAside ? Strings.BluesBroughtBackLine : notForMe ? Strings.BluesNotForMeLine : Strings.BluesSetAsideLine;
         var action = moved ? Strings.BluesUndo : Strings.BluesBringBack;
@@ -241,14 +226,10 @@ public sealed partial class PlanPane
             {
                 BringBack(actions, entry);
             }
-            else if (entry.IsSetAside)
-            {
-                // Undo of "Set aside": back in the counts, the row as it was once the view rebuilds.
-                actions.BringBack(quest);
-            }
             else
             {
-                actions.SetAside(quest, broughtBackNotForMe.GetValueOrDefault(quest.RowId));
+                // Undo of the move: the quest back exactly as it was before it (SetAsideEdits.Restore).
+                actions.Undo(quest.RowId);
             }
         }
 
@@ -256,22 +237,30 @@ public sealed partial class PlanPane
         ImGui.Dummy(new Vector2(width, height));
     }
 
-    /// <summary>A zone's label in Story order, with the group's "…" (Set aside these N…) at the right.</summary>
+    /// <summary>
+    /// A zone's label in Story order, with the group's "…" (Set aside these N…) at the right. A zone the story has not
+    /// reached reads as its placeholder, whose hover and right-click (spec-1.20 N6) cover the label's own text only,
+    /// never the "…".
+    /// </summary>
     private void DrawZoneLabel(PlanZone zone)
     {
         var label = ZoneLabel(zone);
         var rows = GroupRows(zone.Entries);
+        var start = ImGui.GetCursorScreenPos();
+        var labelSize = ImGui.CalcTextSize(label);
         if (rows.Length < 2 || showSetAside || SetAside is not { CanSetAside: true })
         {
-            Chrome.FitText(label, Theme.U32(Theme.Surface.TextTertiary));
+            var cut = Chrome.FitText(label, Theme.U32(Theme.Surface.TextTertiary), tooltip: HiddenZone(zone) is null);
+            ShieldZoneLabel(zone, label, start, MathF.Min(labelSize.X, ImGui.GetItemRectMax().X - start.X), labelSize.Y, cut);
             return;
         }
 
-        var start = ImGui.GetCursorScreenPos();
         var size = MathF.Round(ImGui.GetTextLineHeight() + UiMetrics.Px(2f));
         var right = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X - UiMetrics.Px(10f);
         var dl = ImGui.GetWindowDrawList();
-        Chrome.EllipsisTextAt(dl, start, MathF.Max(1f, right - size - UiMetrics.Px(8f) - start.X), label, Theme.U32(Theme.Surface.TextTertiary));
+        var room = MathF.Max(1f, right - size - UiMetrics.Px(8f) - start.X);
+        var labelCut = Chrome.EllipsisTextAt(dl, start, room, label, Theme.U32(Theme.Surface.TextTertiary));
+        ShieldZoneLabel(zone, label, start, MathF.Min(labelSize.X, room), labelSize.Y, labelCut);
         using (ImRaii.PushId((int)zone.TerritoryId))
         {
             DrawGroupMenu(new Vector2(right - size, start.Y - UiMetrics.Px(1f)), size, rows, label);
@@ -281,9 +270,33 @@ public sealed partial class PlanPane
         ImGui.Dummy(new Vector2(MathF.Max(1f, right - start.X), size));
     }
 
-    /// <summary>The quests of a group that can still be set aside (not already set aside).</summary>
-    private static uint[] GroupRows(IReadOnlyList<PlanEntry> entries) =>
-        [.. entries.Where(static e => !e.IsSetAside).Select(static e => e.Quest.RowId)];
+    /// <summary>The quests of a group that can still be set aside (not already set aside), built once per view.</summary>
+    private uint[] GroupRows(IReadOnlyList<PlanEntry> entries)
+    {
+        if (groupRows.TryGetValue(entries, out var known))
+        {
+            return known;
+        }
+
+        var count = 0;
+        foreach (var entry in entries)
+        {
+            count += entry.IsSetAside ? 0 : 1;
+        }
+
+        var rows = new uint[count];
+        var i = 0;
+        foreach (var entry in entries)
+        {
+            if (!entry.IsSetAside)
+            {
+                rows[i++] = entry.Quest.RowId;
+            }
+        }
+
+        groupRows[entries] = rows;
+        return rows;
+    }
 
     /// <summary>A group's "…" and its menu: "Set aside these N…", which asks first (<see cref="DrawGroupConfirm"/>).</summary>
     private void DrawGroupMenu(Vector2 min, float size, uint[] rows, string groupName)
@@ -304,6 +317,7 @@ public sealed partial class PlanPane
         if (ImGui.MenuItem(string.Format(CultureInfo.CurrentCulture, Strings.BluesSetAsideGroupFormat, rows.Length)))
         {
             confirmRows = rows;
+            confirmOwner = session.ViewedContentId;
             confirmTitle = string.Format(CultureInfo.CurrentCulture, Strings.BluesSetAsideConfirmTitleFormat, rows.Length);
             confirmBody = string.Format(CultureInfo.CurrentCulture, Strings.BluesSetAsideConfirmBodyFormat, groupName);
             confirmButton = string.Format(CultureInfo.CurrentCulture, Strings.BluesSetAsideConfirmButtonFormat, rows.Length);
@@ -329,6 +343,13 @@ public sealed partial class PlanPane
             return;
         }
 
+        // Asked for one character: another on view closes the question rather than act on its list.
+        if (confirmOwner != session.ViewedContentId || confirmOwner is not { } owner)
+        {
+            ImGui.CloseCurrentPopup();
+            return;
+        }
+
         UiMetrics.ApplyFontScale();
         ImGui.TextUnformatted(confirmTitle);
         using (Typography.Caption())
@@ -342,7 +363,7 @@ public sealed partial class PlanPane
         ImGui.Spacing();
         if (ImGui.Button(confirmButton))
         {
-            SetAside?.SetAside(confirmRows);
+            SetAside?.SetAside(owner, confirmRows);
             foreach (var row in confirmRows)
             {
                 KeepInPlace(row);

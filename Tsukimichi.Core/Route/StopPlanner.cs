@@ -74,6 +74,10 @@ public sealed record Stop(StopPlace Place, bool IsHere, IReadOnlyList<StopQuest>
 /// <param name="Level">The character's level on its current job; 0 leaves the other quests out.</param>
 /// <param name="LevelRange">How far below <paramref name="Level"/> another quest may be and still count (it is Ready, so never above).</param>
 /// <param name="TerritoryId">The zone the character stands in; 0 when unknown.</param>
+/// <param name="SetAside">
+/// The quests the player set aside for the character (feature plan v7 P4): they leave Next stops as a pin, a blue or a
+/// quest near the character's level; only the followed route's own next stop stays. Null sets none aside.
+/// </param>
 public sealed record StopInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -84,7 +88,8 @@ public sealed record StopInputs(
     IReadOnlySet<uint> UnlockQuestIds,
     short Level,
     int LevelRange = StopPlanner.DefaultLevelRange,
-    uint TerritoryId = 0);
+    uint TerritoryId = 0,
+    IReadOnlySet<uint>? SetAside = null);
 
 /// <summary>
 /// "Next stops" (1.6.0, R6 B): the quests the character can pick up right now, batched by where to teleport. The
@@ -117,7 +122,7 @@ public static class StopPlanner
         var reasons = new Dictionary<uint, StopReason>();
         void Add(uint rowId, StopReason reason)
         {
-            if (!IsReady(inputs, rowId))
+            if (!IsReady(inputs, rowId) || (reason != StopReason.Route && inputs.SetAside is { } aside && aside.Contains(rowId)))
             {
                 return;
             }

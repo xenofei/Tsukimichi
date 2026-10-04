@@ -121,4 +121,21 @@ public class StopPlannerTests
         Assert.Equal([B, A, C], stop.Quests.Select(q => q.Quest.RowId));
         Assert.Equal([StopReason.Route, StopReason.Pin, StopReason.Blue], stop.Quests.Select(q => q.Reason));
     }
+
+    [Fact]
+    public void A_set_aside_quest_leaves_next_stops_unless_it_is_the_routes_own_stop()
+    {
+        // 1.21.0 P4: a set-aside quest leaves counts, Nearby, the overlay and notices, so Up next's closest stop and
+        // /tsuki next never pick it; the followed route's own next stop is the player's choice and stays.
+        var catalog = Catalog(Side(A, 50), Side(B, 50), Side(C, 50), Side(D, 50));
+        var places = new Dictionary<uint, StopPlace> { [A] = Camp, [B] = Camp, [C] = Camp, [D] = Camp };
+        var inputs = Inputs(catalog, Ready(catalog, A, B, C, D), places, pins: [A], routeStop: D, blues: [B], level: 50) with
+        {
+            SetAside = new HashSet<uint> { A, B, C, D },
+        };
+
+        var stop = Assert.Single(StopPlanner.Plan(inputs));
+        Assert.Equal([D], stop.Quests.Select(q => q.Quest.RowId));
+        Assert.Equal(StopReason.Route, stop.Quests[0].Reason);
+    }
 }

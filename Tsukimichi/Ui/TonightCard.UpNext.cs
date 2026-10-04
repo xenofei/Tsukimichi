@@ -53,7 +53,7 @@ public sealed partial class TonightCard
 
     private readonly record struct UpNextKey(int Version, int Pins, int Route, int Stops, int Roster, int Language, int Spoilers, CatalogBundle? Bundle);
 
-    /// <summary>What the block shows, built when an input changes.</summary>
+    /// <summary>What the block shows, built when an input changes; <see cref="Step"/> and <see cref="Place"/> follow the player each frame.</summary>
     private sealed record UpNextView(
         QuestRecord Quest,
         UpNextRule Rule,
@@ -64,7 +64,17 @@ public sealed partial class TonightCard
         string Place,
         QuestState State,
         byte ReadyOnJob,
-        StepView? Step);
+        StepView? Step,
+        ReasonShield Shield);
+
+    /// <summary>
+    /// A placeholder inside the reason line ("Your route to Flying in a zone ahead · 31 stops left"): the text before it,
+    /// the placeholder as printed and the hidden name its right-click reveals. <see cref="Shown"/> is empty for none.
+    /// </summary>
+    private readonly record struct ReasonShield(string Prefix, string Shown, SpoilerKind Kind, string Name)
+    {
+        public static readonly ReasonShield None = new(string.Empty, string.Empty, SpoilerKind.Area, string.Empty);
+    }
 
     /// <summary>The rule Up next picked by, for the main scenario line's swap; null with no pick.</summary>
     private UpNextRule? UpNextRuleShown => upNext?.Rule;
@@ -129,9 +139,10 @@ public sealed partial class TonightCard
         var spoilers = session.Spoilers;
         states.TryGetValue(quest.RowId, out var evaluation);
         var step = Links?.CurrentStep(quest, evaluation, session.IsLive, session.IsLive ? null : snapshot.Name, id);
+        var shield = ReasonShield.None;
         var reason = chosen.Rule switch
         {
-            UpNextRule.Route => RouteReason(bundle, spoilers, route!),
+            UpNextRule.Route => RouteReason(bundle, spoilers, route!, out shield),
             UpNextRule.Goal => Roster?.Settings.Goal(id) is { } goal
                 ? string.Format(CultureInfo.CurrentCulture, Strings.UpNextGoalFormat, GoalText.Phrase(goal, Roster, e => bundle.Names.Expansion(e)), goalProgress?.Left ?? 0)
                 : RuleWords(UpNextRule.Goal),
@@ -140,6 +151,25 @@ public sealed partial class TonightCard
             _ => RuleWords(chosen.Rule),
         };
 
+        var place = PlaceLine(quest, chosen.Rule, step, spoilers);
+        upNextMsqLine = chosen.Rule == UpNextRule.MainScenario ? MsqCatchUpLine(session, bundle) : string.Empty;
+        upNext = new UpNextView(
+            quest,
+            chosen.Rule,
+            spoilers.DisplayName(quest),
+            spoilers.IsMasked(quest),
+            string.Format(CultureInfo.CurrentCulture, Strings.UpNextLevelFormat, quest.DisplayLevel),
+            reason,
+            place,
+            evaluation?.State ?? QuestState.Unknown,
+            evaluation?.ReadyOnJob ?? 0,
+            step,
+            shield);
+    }
+
+    /// <summary>"Talk to … · place", or "Step 3: … · zone" for a quest in the journal, or the level gate's hint.</summary>
+    private static string PlaceLine(QuestRecord quest, UpNextRule rule, StepView? step, SpoilerMask spoilers)
+    {
         string place;
         if (step is not null)
         {
@@ -150,7 +180,7 @@ public sealed partial class TonightCard
                 place += Strings.UpNextSeparator + step.Zone;
             }
         }
-        else if (chosen.Rule == UpNextRule.LevelGate)
+        else if (rule == UpNextRule.LevelGate)
         {
             place = Strings.UpNextGateHint;
         }
@@ -163,39 +193,74 @@ public sealed partial class TonightCard
             }
         }
 
-        upNextMsqLine = chosen.Rule == UpNextRule.MainScenario ? MsqCatchUpLine(session, bundle) : string.Empty;
-        upNext = new UpNextView(
-            quest,
-            chosen.Rule,
-            spoilers.DisplayName(quest),
-            spoilers.IsMasked(quest),
-            string.Format(CultureInfo.CurrentCulture, Strings.UpNextLevelFormat, quest.DisplayLevel),
-            reason,
-            place,
-            evaluation?.State ?? QuestState.Unknown,
-            evaluation?.ReadyOnJob ?? 0,
-            step);
+        return place;
     }
 
-    /// <summary>"Your route to Flying in Thavnair · 8 stops left"; a target past the story point in the shield's words.</summary>
-    private string RouteReason(CatalogBundle bundle, SpoilerMask spoilers, Core.Route.UnlockRoute route)
+    /// <summary>
+    /// The current step of the quest shown, read every frame as the detail pane does: the step's nearest place follows
+    /// the player, and travel aims there. The view changes (and its place line with it) only when the step does.
+    /// </summary>
+    private void FollowStep(SessionState session)
+    {
+        if (upNext is not { Rule: not UpNextRule.LevelGate } view || Links is not { } links || session.ViewedContentId is not { } id)
+        {
+            return;
+        }
+
+        session.States.TryGetValue(view.Quest.RowId, out var evaluation);
+        var step = links.CurrentStep(view.Quest, evaluation, session.IsLive, session.IsLive ? null : session.ViewedSnapshot?.Name, id);
+        if (!ReferenceEquals(step, view.Step))
+        {
+            upNext = view with { Step = step, Place = PlaceLine(view.Quest, view.Rule, step, session.Spoilers) };
+        }
+    }
+
+    /// <summary>
+    /// "Your route to Flying in Thavnair · 8 stops left"; a target past the story point in the wider shield's words (a
+    /// place, duty, reward or masked quest by its placeholder), with where that placeholder sits for its hover.
+    /// </summary>
+    private string RouteReason(CatalogBundle bundle, SpoilerMask spoilers, Core.Route.UnlockRoute route, out ReasonShield shield)
     {
         var saved = Routes?.Saved;
         string label;
+        (SpoilerKind Kind, string Name)? hidden = null;
+        string shown = string.Empty;
         if (saved is { FlyingTerritory: > 0 } && Links is { } links)
         {
             // The zone through the shield ("a zone ahead"), never its name past the story point.
-            label = string.Format(CultureInfo.CurrentCulture, Strings.UpNextFlyingInFormat, links.TerritoryNameOf(saved.FlyingTerritory));
+            var zone = links.TerritoryNameOf(saved.FlyingTerritory);
+            label = string.Format(CultureInfo.CurrentCulture, Strings.UpNextFlyingInFormat, zone);
+            var name = links.TerritoryHiddenName(saved.FlyingTerritory);
+            if (name.Length > 0 && spoilers.IsNameMasked(SpoilerKind.Area, name))
+            {
+                hidden = (SpoilerKind.Area, name);
+                shown = zone;
+            }
         }
         else
         {
-            label = spoilers.MaskNamesIn(Routes?.Label ?? string.Empty, bundle.Catalog, saved?.QuestRowIds ?? []);
+            var target = route.Target;
+            label = target.ShownLabel(spoilers, bundle.Catalog);
+            (SpoilerKind Kind, string Name)? placed = target.Placed ?? target.Kind switch
+            {
+                Core.Route.RouteTargetKind.Duty => (SpoilerKind.Duty, target.Label),
+                Core.Route.RouteTargetKind.Reward or Core.Route.RouteTargetKind.System or Core.Route.RouteTargetKind.Job => (SpoilerKind.Reward, target.Label),
+                _ => null,
+            };
+            if (placed is { } p && spoilers.IsNameMasked(p.Kind, p.Name))
+            {
+                hidden = p;
+                shown = spoilers.Name(p.Kind, p.Name);
+            }
         }
 
         var stops = route.Steps.Count;
-        return stops == 1
+        var reason = stops == 1
             ? string.Format(CultureInfo.CurrentCulture, Strings.UpNextRouteOneFormat, label)
             : string.Format(CultureInfo.CurrentCulture, Strings.UpNextRouteFormat, label, stops);
+        var at = hidden is null || shown.Length == 0 ? -1 : reason.IndexOf(shown, StringComparison.Ordinal);
+        shield = at < 0 || hidden is not { } h ? ReasonShield.None : new ReasonShield(reason[..at], shown, h.Kind, h.Name);
+        return reason;
     }
 
     /// <summary>The rule in words, as the hover lists it and as a reason line falls back to.</summary>
@@ -213,6 +278,7 @@ public sealed partial class TonightCard
     private void DrawUpNext(SessionState session, CatalogBundle bundle)
     {
         RefreshUpNext(session, bundle);
+        FollowStep(session);
         var flair = Theme.Flair;
         var dl = ImGui.GetWindowDrawList();
         var s = Theme.Surface;
@@ -343,12 +409,23 @@ public sealed partial class TonightCard
             Chrome.PillAt(dl, chipMin, chip, view.Level, Theme.U32(s.Raised), Theme.U32(s.Line), Theme.U32(s.TextSecondary));
         }
 
-        // The reason, one line in Text; its hover is the order in words.
+        // The reason, one line in Text; its hover is the order in words, and a placeholder in it has the shield's own.
         var reasonY = y + titleLine;
         var reasonCut = Chrome.EllipsisTextAt(dl, new Vector2(textLeft, reasonY), room, view.Reason, Theme.U32(s.Text));
         ImGui.SetCursorScreenPos(new Vector2(textLeft, reasonY));
         ImGui.InvisibleButton("##upNextWhy", new Vector2(room, body));
-        if (ImGui.IsItemHovered())
+        var onPlaceholder = false;
+        if (view.Shield.Shown.Length > 0)
+        {
+            var x0 = textLeft + ImGui.CalcTextSize(view.Shield.Prefix).X;
+            var x1 = MathF.Min(textLeft + room, x0 + ImGui.CalcTextSize(view.Shield.Shown).X);
+            if (x1 > x0 + 1f)
+            {
+                onPlaceholder = ShieldText.Interact(new Vector2(x0, reasonY), new Vector2(x1, reasonY + body), session, view.Shield.Kind, view.Shield.Name, view.Shield.Shown, links: Links, lead: reasonCut ? view.Reason : null);
+            }
+        }
+
+        if (!onPlaceholder && ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(reasonCut ? view.Reason + "\n\n" + Strings.UpNextWhyTitle : Strings.UpNextWhyTitle, Strings.UpNextWhyLead + "\n" + upNextOrder);
         }

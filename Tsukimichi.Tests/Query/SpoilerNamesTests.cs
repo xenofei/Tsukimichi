@@ -640,4 +640,37 @@ public class SpoilerNamesTests
         Assert.False(SpoilerNames.Empty.TryGet(SpoilerKind.Area, "Kugane", out _));
         Assert.Equal(0u, SpoilerNames.Empty.AnchorOf(Opener));
     }
+
+    [Fact]
+    public void A_side_quest_revealed_for_the_session_no_longer_lies_ahead()
+    {
+        // 1.21.0 review: "A side story ahead" and "Sidequest (Lv 90)" offer "Reveal this name", which reveals the quest's
+        // row id; the quest stops lying ahead then, though its anchor (the main scenario quest it needs) stays masked.
+        var before = At(Path);
+        Assert.True(before.IsAhead(LateSide));
+
+        var revealed = At(Path, revealedQuests: new HashSet<uint> { LateSide });
+        Assert.False(revealed.IsAhead(LateSide));
+        Assert.True(revealed.IsAhead(Far));
+        Assert.True(revealed.IsMasked(Far));
+        Assert.NotEqual(before.Fingerprint, revealed.Fingerprint);
+    }
+
+    [Fact]
+    public void A_followed_route_keeps_what_places_its_target_through_a_save()
+    {
+        // 1.21.0 review: Up next's "Your route to …" and the overlay read the stored route; a target composed from a
+        // name ("The Ruby Sea") lost what placed it, so its label printed past the story point.
+        var ruby = Core.Route.RouteTarget.ForUnlock(Index.Finds.Single(f => f.Name == "The Ruby Sea"));
+        var stored = Core.Route.SavedRoute.From(ruby, 1).ToTarget();
+
+        Assert.Equal(ruby.Placed, stored.Placed);
+        Assert.Equal("Stormblood area" + Nbsp + "1", stored.Through(At(Path)).Label);
+        Assert.Equal("Stormblood area" + Nbsp + "1", stored.ShownLabel(At(Path), Catalog));
+        Assert.Equal("The Ruby Sea", stored.ShownLabel(At(Far), Catalog));
+
+        // A route to a quest is titled by its name, a masked one by its placeholder.
+        var quest = new Core.Route.RouteTarget(Core.Route.RouteTargetKind.Quest, "The Far Edge", [Far]);
+        Assert.Equal(SpoilerMask.Placeholder(Catalog.ByRowId[Far]), quest.ShownLabel(At(Path), Catalog));
+    }
 }

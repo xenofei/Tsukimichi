@@ -147,6 +147,18 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
         return this with { Label = label, Parts = parts ?? Parts, Icon = icon };
     }
 
+    /// <summary>
+    /// The target's label as a line of words names it ("Your route to …", the overlay's "Route: …"): through the wider
+    /// shield (<see cref="Through"/>: a place, duty, reward or system past the story point by its placeholder), then
+    /// every masked quest name among its quests by its placeholder (<see cref="SpoilerMask.MaskNamesIn"/>).
+    /// </summary>
+    public string ShownLabel(SpoilerMask spoilers, QuestCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(spoilers);
+        ArgumentNullException.ThrowIfNull(catalog);
+        return spoilers.MaskNamesIn(LabelThrough(spoilers), catalog, QuestRowIds);
+    }
+
     private string LabelThrough(SpoilerMask spoilers)
     {
         if (Placed is { } placed)

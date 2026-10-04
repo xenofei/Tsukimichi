@@ -156,4 +156,33 @@ public sealed class GuidanceRoutingTests(FixtureCatalog fixture) : IClassFixture
 
         Assert.Null(MsqLeft.For(catalog, states));
     }
+
+    [Fact]
+    public void Msq_left_leaves_out_the_grand_companies_spare_alternatives()
+    {
+        // 1.21.0 review: before choosing a Grand Company, "The Company You Keep" stands three times in the story; the
+        // two the character will not take are spare alternatives and leave the totals, as Your story counts them.
+        uint[] companies = [66216, 66217, 66218];
+        var catalog = fixture.Bundle.Catalog;
+        var story = MsqGraph.For(catalog).Story;
+        var at = story.ToList().FindIndex(q => companies.Contains(q.RowId));
+        Assert.True(at > 0);
+        var states = new Dictionary<uint, QuestEvaluation>();
+        for (var i = 0; i < story.Count; i++)
+        {
+            states[story[i].RowId] = State(i < at ? QuestState.Completed : QuestState.Blocked);
+        }
+
+        states[companies[0]] = State(QuestState.Ready);
+        states[companies[1]] = State(QuestState.Ready) with { IsSpareAlternative = true };
+        states[companies[2]] = State(QuestState.Ready) with { IsSpareAlternative = true };
+
+        var position = MsqProgress.Compute(catalog, states);
+        var left = MsqLeft.For(catalog, states);
+        Assert.NotNull(position);
+        Assert.NotNull(left);
+        Assert.Equal(position.Total - position.Done, left.LeftToLatest);
+        Assert.Equal(MsqGraph.For(catalog).QuestsLeft(states).Count, left.LeftToLatest);
+        Assert.DoesNotContain(MsqGraph.For(catalog).QuestsLeft(states), q => q.RowId is 66217 or 66218);
+    }
 }

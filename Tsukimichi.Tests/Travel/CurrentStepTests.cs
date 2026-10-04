@@ -105,6 +105,37 @@ public sealed class CurrentStepTests
     }
 
     [Fact]
+    public void Choices_are_built_once_and_the_nearest_is_picked_without_allocating()
+    {
+        // 1.21.0 review: the detail pane and Up next re-aim at the nearest place every frame; the lists, the set and the
+        // step records are built once per quest and sequence, and the per-frame pick allocates nothing.
+        var steps = new QuestSteps(1,
+        [
+            new StepObjective(0, 2, 1, [Npc(10, Shaaloani, 0f, 0f, "A")]),
+            new StepObjective(1, 2, 1, [Npc(11, Shaaloani, 200f, 0f, "B")]),
+            new StepObjective(2, 2, 1, [Npc(12, Tuliyollal, 5f, 5f, "C")]),
+        ]);
+
+        var choices = CurrentStepResolver.Choices(steps, 2, 3);
+        Assert.NotNull(choices);
+        Assert.Equal(3, choices.Places.Count);
+        Assert.Equal(CurrentStepResolver.Resolve(steps, 2, 3, Shaaloani, 190f, 10f)?.Place, choices.Pick(Shaaloani, 190f, 10f).Place);
+        Assert.Equal(11u, choices.Pick(Shaaloani, 190f, 10f).Place?.LevelId);
+        Assert.Same(choices.Pick(Shaaloani, 190f, 10f), choices.Pick(Shaaloani, 180f, 0f));
+        Assert.Equal(10u, choices.Pick().Place?.LevelId);
+
+        choices.Pick(Shaaloani, 1f, 1f);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 100; i++)
+        {
+            choices.Pick(Shaaloani, i * 2f, 0f);
+        }
+
+        Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+        Assert.Null(CurrentStepResolver.Choices(steps, 0, 3));
+    }
+
+    [Fact]
     public void A_step_inside_a_duty_is_a_duty_with_no_place()
     {
         var steps = new QuestSteps(67170,
