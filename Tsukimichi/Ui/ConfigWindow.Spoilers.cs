@@ -57,10 +57,10 @@ public sealed partial class ConfigWindow
         }
 
         // The wider shield (1.20.0 N6) hangs off the same switch: it hides what the masked quests introduce.
-        var hideRelated = settings.SpoilerHideRelatedNames;
-        if (Toggle(Strings.SpoilerHideRelated, Strings.SpoilerHideRelatedHelp, ref hideRelated, "spoiler shield zone area duty reward npc giver people places", enabled: effectiveHide, sub: true, reason: Strings.SettingsSpoilerAheadOffReason))
+        var hideRelated = settings.HideOtherNames;
+        if (Toggle(Strings.SpoilerHideRelated, Strings.SpoilerHideRelatedHelp, ref hideRelated, "spoiler shield zone area aetheryte duty reward npc giver people places character", enabled: effectiveHide, sub: true, reason: Strings.SettingsSpoilerAheadOffReason))
         {
-            settings.SpoilerHideRelatedNames = hideRelated;
+            settings.HideOtherNames = hideRelated;
             SpoilersChanged();
         }
 
@@ -115,9 +115,7 @@ public sealed partial class ConfigWindow
         if (spoilerCountVersion != session.Version)
         {
             spoilerCountVersion = session.Version;
-            spoilerCountLine = session.Bundle is null
-                ? string.Empty
-                : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountFormat, session.Spoilers.MaskedCount);
+            spoilerCountLine = session.Bundle is null ? string.Empty : SpoilerCountLine(session.Spoilers, name);
         }
 
         if (spoilerCountLine.Length > 0)
@@ -127,6 +125,11 @@ public sealed partial class ConfigWindow
 
         EndSetting();
     }
+
+    /// <summary>"212 story names and 486 other names hidden for Michiru." (spec-1.20 N6): the quest names and the wider shield's names.</summary>
+    internal static string SpoilerCountLine(SpoilerMask spoilers, string? characterName) => string.IsNullOrEmpty(characterName)
+        ? string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountUnnamed, spoilers.MaskedCount, spoilers.MaskedNameCount)
+        : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountFormat, spoilers.MaskedCount, spoilers.MaskedNameCount, characterName);
 
     /// <summary>Saves a spoiler setting and makes every surface re-read the mask.</summary>
     private void SpoilersChanged()

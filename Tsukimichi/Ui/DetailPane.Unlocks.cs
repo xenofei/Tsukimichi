@@ -293,7 +293,13 @@ public sealed partial class DetailPane
         dl.AddRect(tileMin, tileMax, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         var center = (tileMin + tileMax) * 0.5f;
         var iconMin = center - new Vector2(iconSize * 0.5f);
-        if (row.Icon == 0 || !GameIcon.DrawAt(dl, textures, row.Icon, iconMin, iconMin + new Vector2(iconSize), UiMetrics.Px(4f)))
+        if (row.Shielded && row.Icon == 0)
+        {
+            // A hidden thing's own art would name it: the moon-disc tile (spec-1.20 N6); generic markers stay.
+            var hiddenSide = MathF.Min(iconSize, MathF.Round(UiMetrics.Px(22f)));
+            Chrome.HiddenRewardTile(dl, center - new Vector2(hiddenSide * 0.5f), hiddenSide);
+        }
+        else if (row.Icon == 0 || !GameIcon.DrawAt(dl, textures, row.Icon, iconMin, iconMin + new Vector2(iconSize), UiMetrics.Px(4f)))
         {
             MoonGlyph.DrawVeiled(dl, center, iconSize * 0.32f, 0.6f);
         }
@@ -311,20 +317,26 @@ public sealed partial class DetailPane
         var nameX = tileMax.X + gap;
         var room = MathF.Max(1f, checkMin.X - UiMetrics.Px(4f) - nameX);
         var nameY = min.Y + ((height - (2f * lineHeight)) * 0.5f);
-        Chrome.EllipsisTextAt(dl, new Vector2(nameX, nameY), room, row.Name, Theme.U32(Theme.Surface.Text));
+        Chrome.EllipsisTextAt(dl, new Vector2(nameX, nameY), room, row.Name, ShieldText.U32(row.Name, Theme.Surface.Text));
         Chrome.EllipsisTextAt(dl, new Vector2(nameX, nameY + lineHeight), room, row.Caption, Theme.U32(Theme.Surface.TextTertiary));
 
-        if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
+        if (row.Shielded && hovered && !ImGui.IsPopupOpen(UnlockMenuId))
+        {
+            // A placeholder's hover (spec-1.20 N6); its right-click is the row's menu below.
+            ShieldText.Hover(row.Name);
+        }
+        else if (!row.Shielded && (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused())))
         {
             UnlockTooltip(row);
         }
 
-        if (clicked)
+        // A hidden place is no destination: its row neither teleports nor opens the map (spec-1.20, "Travel buttons").
+        if (clicked && !row.Shielded)
         {
             UnlockClick(row);
         }
 
-        DrawUnlockMenu(row);
+        DrawUnlockMenu(quest, row);
     }
 
     /// <summary>The row's tooltip: the name, the caption, how sure, the check and the click.</summary>
@@ -389,7 +401,7 @@ public sealed partial class DetailPane
     }
 
     /// <summary>The row's right-click menu: what the click does, and the rest (the Duty Finder, the map, coordinates).</summary>
-    private void DrawUnlockMenu(UnlockRowView row)
+    private void DrawUnlockMenu(QuestRecord quest, UnlockRowView row)
     {
         using var menu = ImRaii.ContextPopupItem(UnlockMenuId);
         if (!menu)
@@ -398,6 +410,22 @@ public sealed partial class DetailPane
         }
 
         var entry = row.Entry;
+        if (row.Shielded)
+        {
+            // A placeholder: reveal it, or the quest's names; no travel, map or Duty Finder that would name it.
+            if (shieldSession is { } session && Core.Query.SpoilerNames.KindOf(entry.Target) is { } kind)
+            {
+                ShieldText.RevealItems(session, links, kind, entry.Name, quest, model.DutyNames);
+            }
+
+            if (ImGui.MenuItem(Strings.UnlocksMenuCopyName))
+            {
+                ImGui.SetClipboardText(row.Name);
+            }
+
+            return;
+        }
+
         switch (entry.Target)
         {
             case UnlockTarget.Aetheryte:
@@ -437,7 +465,7 @@ public sealed partial class DetailPane
 
                 if (links.TeleportShown && links.ZoneAetheryte(entry.PlaceId) is { } home)
                 {
-                    var homeName = runner.Spoilers.Name(SpoilerKind.Area, home.Name);
+                    var homeName = runner.Spoilers.Name(SpoilerKind.Aetheryte, home.Name);
                     var teleport = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, homeName);
                     if (ImGui.MenuItem(teleport, string.Empty, false, links.CanTeleportTo(home.RowId)))
                     {

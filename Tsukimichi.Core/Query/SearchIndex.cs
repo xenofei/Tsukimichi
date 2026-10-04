@@ -157,23 +157,22 @@ public sealed class SearchIndex
                 || internalId.AsSpan().Contains(term, StringComparison.Ordinal);
         }
 
-        /// <summary>Whether the term is part of the name of a reward the shield shows; one scan of the joined names when it masks none.</summary>
+        /// <summary>
+        /// Whether the term is part of a reward's name, or for a reward the shield hides of its placeholder ("an item");
+        /// one scan of the joined names when it masks none.
+        /// </summary>
         private bool MatchesReward(ReadOnlySpan<char> term, SpoilerMask? spoilers)
         {
-            if (!rewards.AsSpan().Contains(term, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
             if (spoilers is not { MasksNames: true })
             {
-                return true;
+                return rewards.AsSpan().Contains(term, StringComparison.Ordinal);
             }
 
             foreach (var reward in rewardNames)
             {
                 // The term is lowercased; the reward's own name is what the shield places, matched ignoring case.
-                if (reward.AsSpan().Contains(term, StringComparison.OrdinalIgnoreCase) && !spoilers.IsNameMasked(SpoilerKind.Reward, reward))
+                var hidden = spoilers.SearchName(SpoilerKind.Reward, reward);
+                if (hidden is null ? reward.AsSpan().Contains(term, StringComparison.OrdinalIgnoreCase) : hidden.AsSpan().Contains(term, StringComparison.Ordinal))
                 {
                     return true;
                 }

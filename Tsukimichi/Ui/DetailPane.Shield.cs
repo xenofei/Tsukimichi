@@ -1,0 +1,24 @@
+using Tsukimichi.Core.Query;
+
+namespace Tsukimichi.Ui;
+
+/// <summary>
+/// The detail pane's placeholders (spec-1.20 N6): each hidden name it prints, in the hero, the Giver card, How you'll
+/// clear it, Rewards and Unlocks, takes the shield's hover and right-click (<see cref="ShieldText"/>) within the
+/// quest's own context, so "Reveal names in this quest" is offered beside "Reveal this name".
+/// </summary>
+public sealed partial class DetailPane
+{
+    /// <summary>The hover and right-click of a placeholder that is the last item drawn.</summary>
+    /// <param name="kind">The hidden name's kind.</param>
+    /// <param name="name">The hidden name itself.</param>
+    /// <param name="shown">The placeholder as printed.</param>
+    /// <param name="lead">The placeholder over the hover's lines when the slot cut it short; null for none.</param>
+    private void ShieldItem(SpoilerKind kind, string name, string shown, string? lead = null)
+    {
+        if (shieldSession is { } session)
+        {
+            ShieldText.InteractItem(session, kind, name, shown, model.Quest, links, lead: lead);
+        }
+    }
+}

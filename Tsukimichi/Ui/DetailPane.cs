@@ -89,7 +89,8 @@ public sealed partial class DetailPane
     }
 
     /// <summary>A reward tile: unique rewards wear the gold ring and crescent; a mark says when the store sells it or a duty drops it.</summary>
-    private sealed record RewardTile(RewardRef Reward, bool Unique, string? Mark);
+    /// <param name="HiddenName">The reward's own name while the spoiler shield hides it (1.20.0 N6): the tile shows the moon-disc tile and the placeholder; null when shown.</param>
+    private sealed record RewardTile(RewardRef Reward, bool Unique, string? Mark, string? HiddenName = null);
 
     private sealed class Model
     {
@@ -182,6 +183,27 @@ public sealed partial class DetailPane
 
         /// <summary>"Region › Place (x, y)" for the Giver card; null when the giver's map is unknown.</summary>
         public string? PlaceLine;
+
+        /// <summary>The place cut to its locator ("area 6") for a single-line slot that holds the giver too (1.20.0 N6); null when the place shows.</summary>
+        public string? PlaceShort;
+
+        /// <summary>
+        /// The place line as it reads once revealed, while it is hidden: the Giver card wraps for the longer of the two,
+        /// so a reveal never changes its height (spec-1.20 N6). Measured, never drawn; null when the place shows.
+        /// </summary>
+        public string? PlaceRevealed;
+
+        /// <summary>The giver's own name while the spoiler shield hides it (1.20.0 N6); null when shown.</summary>
+        public (SpoilerKind Kind, string Name)? GiverHidden;
+
+        /// <summary>The giver's zone while the spoiler shield hides it (1.20.0 N6); null when shown.</summary>
+        public (SpoilerKind Kind, string Name)? PlaceHidden;
+
+        /// <summary>The shield hides a name of the quest besides its title (1.20.0 N6): the note under the hero shows.</summary>
+        public bool NamesHidden;
+
+        /// <summary>The duties "How you'll clear it" names, by their own names, for "Reveal names in this quest".</summary>
+        public readonly List<string> DutyNames = [];
     }
 
     private readonly UiState ui;
@@ -192,6 +214,9 @@ public sealed partial class DetailPane
     private readonly PathChart chart;
 
     private readonly Model model = new() { RowId = uint.MaxValue, Version = -1 };
+
+    // The session as of the last draw: what a placeholder's right-click reveals through (1.20.0 N6).
+    private SessionState? shieldSession;
     private bool pinnedShown;
 
     // Quests with shipped unique-reward entries (and the entries per quest), rebuilt when the shipped data instance changes.
@@ -234,6 +259,7 @@ public sealed partial class DetailPane
         }
 
         ui.RecordWindow(UiRects.Detail);
+        shieldSession = session;
         tier = DetailTiers.For(MathF.Round(ImGui.GetWindowWidth() / MathF.Max(0.01f, UiMetrics.Scale)));
         if (ui.SelectedRowId is not { } rowId)
         {
@@ -478,18 +504,30 @@ public sealed partial class DetailPane
     /// </summary>
     private void DrawUnderHero(SessionState session, uint rowId)
     {
-        if (model.NameMasked)
+        if (model.NameMasked || model.NamesHidden)
         {
-            TextFlow.Wrapped(Strings.SpoilerMaskedNote, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextDisabled));
-            SameLineOrWrap(SmallButtonWidth(Strings.SpoilerRevealName), bodyRight);
-            if (ImGui.SmallButton(Strings.SpoilerRevealName))
+            // The note keeps its place; its button reveals the quest's name, giver, place, duties, rewards and unlocks
+            // for the session (spec-1.20 N6). Without the wider shield it is the quest's name alone, as before.
+            var wider = session.Spoilers.MasksNames;
+            var note = model.NamesHidden || wider ? Strings.SpoilerMaskedNamesNote : Strings.SpoilerMaskedNote;
+            var button = wider ? Strings.SpoilerRevealQuestNames : Strings.SpoilerRevealName;
+            TextFlow.Wrapped(note, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextDisabled));
+            SameLineOrWrap(SmallButtonWidth(button), bodyRight);
+            if (ImGui.SmallButton(button))
             {
-                session.RevealName(rowId);
+                if (wider && model.Quest is { } shown)
+                {
+                    ShieldText.RevealQuest(session, links, shown, model.DutyNames);
+                }
+                else
+                {
+                    session.RevealName(rowId);
+                }
             }
 
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.SpoilerRevealNameTooltip);
+                UiMetrics.Tooltip(wider ? Strings.SpoilerRevealQuestNamesTooltip : Strings.SpoilerRevealNameTooltip);
             }
         }
 
@@ -627,7 +665,13 @@ public sealed partial class DetailPane
             var rounding = UiMetrics.Px(6f);
             dl.AddRectFilled(min, max, Theme.U32(hovered ? Theme.Surface.Hover : Theme.Surface.Sunken), rounding);
             var iconMin = min + new Vector2((tile - iconSize) * 0.5f);
-            if (reward.Reward.Icon == 0 || !GameIcon.DrawAt(dl, textures, reward.Reward.Icon, iconMin, iconMin + new Vector2(iconSize), UiMetrics.Px(4f)))
+            if (reward.HiddenName is not null)
+            {
+                // A reward the shield hides: its own icon would name it, so the 22 px moon-disc tile (spec-1.20 N6).
+                var hiddenSide = MathF.Min(iconSize, MathF.Round(UiMetrics.Px(22f)));
+                Chrome.HiddenRewardTile(dl, min + new Vector2(MathF.Round((tile - hiddenSide) * 0.5f)), hiddenSide);
+            }
+            else if (reward.Reward.Icon == 0 || !GameIcon.DrawAt(dl, textures, reward.Reward.Icon, iconMin, iconMin + new Vector2(iconSize), UiMetrics.Px(4f)))
             {
                 // No icon known (a title): the veiled moon, as an Unlocks row draws it.
                 MoonGlyph.DrawVeiled(dl, (min + max) * 0.5f, iconSize * 0.32f, 0.6f);
@@ -649,7 +693,12 @@ public sealed partial class DetailPane
             }
 
             Chrome.FocusRing(rounding);
-            if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
+            if (reward.HiddenName is { } hiddenName && shieldSession is { } shieldFor)
+            {
+                // The placeholder's own hover (its name first) and right-click.
+                ShieldText.Interact(min, max, shieldFor, SpoilerKind.Reward, hiddenName, reward.Reward.Name, model.Quest, links, lead: reward.Reward.Name);
+            }
+            else if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
             {
                 RewardTooltip.Draw(reward.Reward, links, textures, reward.Unique ? Strings.DetailUniqueRewardTooltip : null, model.RowId, runner.Spoilers);
             }
@@ -869,12 +918,8 @@ public sealed partial class DetailPane
         if (!GiverPortraits.Enabled || model.Quest is not { } quest || flair == Flair.Plain)
         {
             // The giver's name ends in an ellipsis when it is too long for the card, with the whole name on hover (L5).
-            if (Chrome.EllipsisText(giver, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(giver);
-            }
-
-            TextFlow.Wrapped(place, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
+            DrawGiverName(giver, RoomTo(cardRight));
+            DrawGiverPlace(place, RoomTo(cardRight));
             return;
         }
 
@@ -888,7 +933,7 @@ public sealed partial class DetailPane
         var x = start.X + plate + gap;
         var room = MathF.Max(1f, cardRight - x);
         var spacing = ImGui.GetStyle().ItemSpacing.Y;
-        var block = line + spacing + TextFlow.Height(place, room);
+        var block = line + spacing + PlaceHeight(place, room);
         var height = MathF.Max(plate, block);
         ImGui.Dummy(new Vector2(plate, height));
         var after = ImGui.GetCursorScreenPos();
@@ -906,17 +951,57 @@ public sealed partial class DetailPane
         }
 
         ImGui.SetCursorScreenPos(new Vector2(x, start.Y + MathF.Floor(MathF.Max(0f, height - block) * 0.5f)));
-        if (Chrome.EllipsisText(giver, room, Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(giver);
-        }
+        DrawGiverName(giver, room);
 
         ImGui.SetCursorScreenPos(new Vector2(x, ImGui.GetCursorScreenPos().Y));
-        TextFlow.Wrapped(place, room, Theme.U32(Theme.Surface.TextSecondary));
+        DrawGiverPlace(place, room);
 
         // Back under the taller of the plate and the text, where the plate's item left the cursor.
         ImGui.SetCursorScreenPos(new Vector2(after.X, MathF.Max(after.Y, ImGui.GetCursorScreenPos().Y)));
     }
+
+    /// <summary>
+    /// The Giver card's name line: Text, or Secondary for a person the shield hides (spec-1.20 N6), with the
+    /// placeholder's hover and right-click; ellipsised with the whole name on hover.
+    /// </summary>
+    private void DrawGiverName(string giver, float room)
+    {
+        var cut = Chrome.EllipsisText(giver, room, ShieldText.U32(giver, Theme.Surface.Text));
+        if (model.GiverHidden is { } hidden)
+        {
+            ShieldItem(hidden.Kind, hidden.Name, giver, cut ? giver : null);
+        }
+        else if (cut && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(giver);
+        }
+    }
+
+    /// <summary>
+    /// The Giver card's place, wrapped (a multi-line slot), Secondary either way; a hidden place takes the shield's
+    /// hover and right-click.
+    /// </summary>
+    private void DrawGiverPlace(string place, float room)
+    {
+        var top = ImGui.GetCursorScreenPos();
+        TextFlow.Wrapped(place, room, Theme.U32(Theme.Surface.TextSecondary));
+        if (model.PlaceHidden is { } hidden && shieldSession is { } session)
+        {
+            var bottom = ImGui.GetCursorScreenPos().Y - ImGui.GetStyle().ItemSpacing.Y;
+            ShieldText.Interact(top, new Vector2(top.X + room, MathF.Max(top.Y + 1f, bottom)), session, hidden.Kind, hidden.Name, place, model.Quest, links);
+
+            // Held at the revealed line's height, so the card keeps its size when the name shows.
+            var extra = PlaceHeight(place, room) - TextFlow.Height(place, room);
+            if (extra > 0.5f)
+            {
+                ImGui.Dummy(new Vector2(1f, extra - ImGui.GetStyle().ItemSpacing.Y));
+            }
+        }
+    }
+
+    /// <summary>The place's wrapped height: the taller of it and, while it is hidden, its revealed form.</summary>
+    private float PlaceHeight(string place, float room) =>
+        model.PlaceRevealed is { } revealed ? MathF.Max(TextFlow.Height(place, room), TextFlow.Height(revealed, room)) : TextFlow.Height(place, room);
 
     /// <summary>
     /// The Giver card face's opacity this frame (spec A7): it fades in over <see cref="MotionTokens.ArtFade"/>, ease-out,
@@ -1073,7 +1158,7 @@ public sealed partial class DetailPane
             ui.OpenRoute(Core.Route.RouteTarget.ForQuest(rowId, model.DisplayName));
         }
 
-        if (!links.FlagLeads)
+        if (!links.FlagLeads && !links.GiverPlaceHidden(quest))
         {
             // Without Lifestream, or with Teleport hidden by the automation level, Flag on map leads the pills instead.
             NextRound(ref used, width);
@@ -1253,6 +1338,11 @@ public sealed partial class DetailPane
         model.ChainTooltip = string.Empty;
         model.GiverName = null;
         model.PlaceLine = null;
+        model.PlaceShort = null;
+        model.PlaceRevealed = null;
+        model.GiverHidden = null;
+        model.PlaceHidden = null;
+        model.NamesHidden = false;
         model.CoordinateText = null;
         model.StatusReason = string.Empty;
         model.StatusTail = string.Empty;
@@ -1407,12 +1497,36 @@ public sealed partial class DetailPane
                 model.CoordinateText = string.Format(CultureInfo.CurrentCulture, Strings.CoordinatesFormat, coords.X, coords.Y);
             }
 
+            if (issuer.Name.Length > 0 && session.Spoilers.IsNameMasked(SpoilerKind.Npc, issuer.Name))
+            {
+                model.GiverHidden = (SpoilerKind.Npc, issuer.Name);
+            }
+
             if (links.Map(issuer.MapId) is { } map)
             {
                 var place = session.Spoilers.Place(map.Region, map.PlaceName, Strings.JournalPathFormat);
-                model.PlaceLine = model.CoordinateText is { } text ? place + " " + text : place;
+                if (session.Spoilers.IsNameMasked(SpoilerKind.Area, map.PlaceName))
+                {
+                    // A hidden place has no coordinates to give away, and a short form for a crowded line.
+                    model.PlaceHidden = (SpoilerKind.Area, map.PlaceName);
+                    model.PlaceShort = session.Spoilers.Locator(SpoilerKind.Area, map.PlaceName);
+                    model.PlaceLine = place;
+                    var revealed = map.Region.Length > 0 && map.Region != map.PlaceName
+                        ? string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, map.Region, map.PlaceName)
+                        : map.PlaceName;
+                    model.PlaceRevealed = model.CoordinateText is { } coordinates ? revealed + " " + coordinates : revealed;
+                    model.CoordinateText = null;
+                }
+                else
+                {
+                    model.PlaceLine = model.CoordinateText is { } text ? place + " " + text : place;
+                }
             }
         }
+
+        // Whether the note under the hero offers "Reveal names in this quest" (1.20.0 N6).
+        model.NamesHidden = session.Spoilers.MasksNames
+            && ShieldText.HidesAny(session.Spoilers, quest, ShieldText.QuestNames(links, session.Unlocks, quest, model.DutyNames));
     }
 
     /// <summary>
@@ -1442,7 +1556,7 @@ public sealed partial class DetailPane
             if (session.Spoilers.IsNameMasked(SpoilerKind.Reward, reward.Name))
             {
                 unique += isUnique ? 1 : 0;
-                model.Rewards.Add(new RewardTile(ShieldedReward(session.Spoilers, reward), isUnique, null));
+                model.Rewards.Add(new RewardTile(ShieldedReward(session.Spoilers, reward), isUnique, null, reward.Name));
                 continue;
             }
 
@@ -1479,7 +1593,9 @@ public sealed partial class DetailPane
                 var isUnique = IsUniqueReward(entries, kind, extra.TargetId, extra.ItemId);
                 unique += isUnique ? 1 : 0;
                 var tile = new RewardRef(kind, extra.TargetId, extra.ItemId, 1, extra.Name, icon);
-                model.Rewards.Add(new RewardTile(session.Spoilers.IsNameMasked(SpoilerKind.Reward, extra.Name) ? ShieldedReward(session.Spoilers, tile) : tile, isUnique, null));
+                model.Rewards.Add(session.Spoilers.IsNameMasked(SpoilerKind.Reward, extra.Name)
+                    ? new RewardTile(ShieldedReward(session.Spoilers, tile), isUnique, null, extra.Name)
+                    : new RewardTile(tile, isUnique, null));
             }
         }
 
