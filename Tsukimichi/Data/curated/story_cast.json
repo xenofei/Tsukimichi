@@ -1,0 +1,7 @@
+{
+  "$schema_note": "Who's in it (feature plan v7 N10). The plugin reads each quest's script actors and listeners (Quest.QuestParams ACTORn and LOC_* constants naming an ENpcResident row, and Quest.QuestListenerParams) and counts a name as a recurring story character when at least 8 main scenario quests name it; generic names (lower-case words) never count. aliases join a name the game uses onto the character's own name (keys and names are English ENpcResident names); blocks keep a wrong match out. Never join an era name (the Crystal Exarch) onto the name the story reveals later: that is a spoiler.",
+  "aliases": {
+    "Nero tol Scaeva": { "name": "Nero", "note": "The same Garlean engineer: the main scenario's scripts write his full name, the Omega and Ironworks quests the short one." }
+  },
+  "blocks": {}
+}

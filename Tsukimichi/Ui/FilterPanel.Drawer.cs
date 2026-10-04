@@ -133,6 +133,14 @@ public sealed partial class FilterPanel
         SectionHead(Strings.Presets, null);
         StalledRow(settings);
 
+        // With story characters (1.21.0 N10): a quick view of its own here, beside the toolbar's.
+        var withCast = f.Preset == Preset.WithStoryCharacters;
+        if (ToggleRow("##withStoryCharacters", Strings.PresetWithStoryCharacters, Strings.PresetWithStoryCharactersCaption, null, ref withCast, true, Strings.PresetWithStoryCharactersTooltip, metrics.ToggleRow, null))
+        {
+            f.Preset = withCast ? Preset.WithStoryCharacters : Preset.None;
+            changed();
+        }
+
         // Advanced
         var setCount = FilterSummary.SetCount(f);
         if (SectionHead(Strings.Advanced, setCount > 0 ? setPill.For(setCount) : null, chevron: true, open: advancedOpen))

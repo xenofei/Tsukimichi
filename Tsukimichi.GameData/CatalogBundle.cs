@@ -66,6 +66,13 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
     /// </summary>
     public IReadOnlyDictionary<uint, string> MountNames { get; init; } = new Dictionary<uint, string>();
 
+    /// <summary>
+    /// Who's in it (feature plan v7 N10): the recurring story characters each quest's script names
+    /// (<see cref="QuestCastReader"/>, read at catalog build); empty for a bundle from the frozen fixture, which hides the
+    /// Cast line, the hover line and the quick view's quests.
+    /// </summary>
+    public Core.Chains.StoryCast Cast { get; init; } = Core.Chains.StoryCast.Empty;
+
     /// <summary>A mount's name from <see cref="MountNames"/>; empty for one no quest needs.</summary>
     public string MountName(uint mountId) => MountNames.GetValueOrDefault(mountId, string.Empty);
 

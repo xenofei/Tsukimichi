@@ -56,6 +56,10 @@ namespace Tsukimichi.Core.Query;
 /// What every quest opens (plan v7, 1.19.0 K3): the search also matches it ("kugane"), and the Unlocks filter
 /// (<see cref="FilterSet.UnlockKinds"/>) reads its kinds; null matches no unlock name and keeps nothing under that filter.
 /// </param>
+/// <param name="Cast">
+/// Who's in each quest (plan v7, 1.21.0 N10): the With story characters quick view (<see cref="Preset.WithStoryCharacters"/>)
+/// keeps the side quests that feature a recurring story character; null keeps none.
+/// </param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
@@ -78,7 +82,8 @@ public sealed record QueryContext(
     ChainCatalog? Chains = null,
     bool FreeTrial = false,
     IReadOnlySet<uint>? NewlyReady = null,
-    Unlocks.QuestUnlocks? Unlocks = null)
+    Unlocks.QuestUnlocks? Unlocks = null,
+    Chains.StoryCast? Cast = null)
 {
     public const int DefaultStalledDays = 7;
 

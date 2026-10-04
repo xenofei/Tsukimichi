@@ -459,7 +459,12 @@ public sealed class TodoOverlay : Window, IDisposable
 
             if (section.MoreText is { } moreText)
             {
-                DrawMoreLine(moreText, layout, section.Section == TodoSection.Route ? ShowFollowedRoute : ShowPins);
+                DrawMoreLine(moreText, layout, section.Section switch
+                {
+                    TodoSection.Route => ShowFollowedRoute,
+                    TodoSection.LooseEnds => null,
+                    _ => ShowPins,
+                });
             }
         }
     }
@@ -1194,7 +1199,40 @@ public sealed class TodoOverlay : Window, IDisposable
     private int SettingsSignature() =>
         (settings.TodoShowPins ? 1 : 0) | (settings.TodoShowNearbyFeature ? 2 : 0) | (settings.TodoShowMsq ? 4 : 0) | (settings.TodoShowJobQuests ? 8 : 0)
         | (settings.TodoShowSeasonal ? 16 : 0) | (settings.TodoShowPlan ? 32 : 0) | ((settings.TodoPlanExpansion + 1) << 6)
-        | (settings.TodoShowRoute ? 1 << 20 : 0) | (settings.TodoShowNextStops ? 1 << 21 : 0);
+        | (settings.TodoShowRoute ? 1 << 20 : 0) | (settings.TodoShowNextStops ? 1 << 21 : 0) | (settings.TodoShowLooseEnds ? 1 << 22 : 0);
+
+    /// <summary>The Loose ends section's lines (1.21.0 N8); set by the plugin. Null leaves the section out.</summary>
+    public LooseEndsSource? LooseEnds { get; set; }
+
+    /// <summary>
+    /// The Loose ends rows for the viewed character: the line's name, standing on its next quest, with "Finale · 1 left ·
+    /// Lv 80 · quest" (one order for every row) as the hint; a next quest past the story point by the shield's words.
+    /// </summary>
+    private List<Core.Todo.TodoRow>? LooseEndRows()
+    {
+        if (!settings.TodoShowLooseEnds || LooseEnds is not { } source)
+        {
+            return null;
+        }
+
+        var spoilers = session.Spoilers;
+        var rows = new List<Core.Todo.TodoRow>();
+        foreach (var end in source.Viewed)
+        {
+            var name = LooseEndsSource.NextName(end, spoilers, out var ahead);
+            var hint = ahead
+                ? string.Format(CultureInfo.CurrentCulture, Strings.LooseEndsLeftFormat, end.Left) + name
+                : string.Format(CultureInfo.CurrentCulture, Strings.LooseEndsLeftLevelFormat, end.Left, end.Next.DisplayLevel) + name;
+            if (end.IsFinale)
+            {
+                hint = Strings.LooseEndsFinale + Strings.StateReasonSeparator + hint;
+            }
+
+            rows.Add(new Core.Todo.TodoRow(end.Next.RowId, source.NameOf(end.Line, spoilers), end.NextState, hint, Core.Todo.TodoRowKind.LooseEnd));
+        }
+
+        return rows;
+    }
 
     /// <summary>
     /// The followed route's, Next stops' and the unlock index's revisions (each read through its source, which rebuilds
@@ -1253,7 +1291,8 @@ public sealed class TodoOverlay : Window, IDisposable
         catalogReady = bundle is not null;
         enabledSections = (settings.TodoShowPins ? 1 : 0) + (settings.TodoShowNearbyFeature ? 1 : 0) + (settings.TodoShowMsq ? 1 : 0) + (settings.TodoShowJobQuests ? 1 : 0)
                           + (settings.TodoShowSeasonal ? 1 : 0) + (settings.TodoShowPlan && settings.TodoPlanExpansion >= 0 && Plan is not null ? 1 : 0)
-                          + (settings.TodoShowNextStops && NextStops is not null ? 1 : 0);
+                          + (settings.TodoShowNextStops && NextStops is not null ? 1 : 0)
+                          + (settings.TodoShowLooseEnds && LooseEnds is not null ? 1 : 0);
 
         if (bundle is null || session.ViewedSnapshot is not { } snapshot)
         {
@@ -1303,7 +1342,9 @@ public sealed class TodoOverlay : Window, IDisposable
             ShowRoute: settings.TodoShowRoute,
             Stops: settings.TodoShowNextStops ? NextStops?.Stops : null,
             ShowNextStops: settings.TodoShowNextStops,
-            EndingSoon: settings.TodoShowSeasonal ? EventWarnings?.Current : null));
+            EndingSoon: settings.TodoShowSeasonal ? EventWarnings?.Current : null,
+            LooseEnds: LooseEndRows(),
+            ShowLooseEnds: settings.TodoShowLooseEnds));
 
         enabledSections = model.EnabledSections;
         if (model.Sections.Count == 0)

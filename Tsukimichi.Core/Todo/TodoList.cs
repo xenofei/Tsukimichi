@@ -32,6 +32,9 @@ public enum TodoSection : byte
 
     /// <summary>"Next stops" (1.6.0, R6 B): Ready quests batched by aetheryte, one row per stop.</summary>
     NextStops,
+
+    /// <summary>"Loose ends" (1.21.0 N8): storylines started and never finished, finales first; one row per line.</summary>
+    LooseEnds,
 }
 
 /// <summary>Why a quest is on the list; one kind per section except job quests, which tell a job's own line from its role's.</summary>
@@ -50,6 +53,9 @@ public enum TodoRowKind : byte
 
     /// <summary>A stop of Next stops: the row names the place and stands on its first quest.</summary>
     Stop,
+
+    /// <summary>A loose end: the row names the storyline and stands on its next quest.</summary>
+    LooseEnd,
 }
 
 /// <summary>One line of the overlay: the quest, its state for the character and a short hint (the next step, or where to start it).</summary>
@@ -127,6 +133,8 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="ShowNextStops">Include the Next stops section.</param>
 /// <param name="EndingSoon">The events ending soon (<see cref="EventWarnings.EndingSoon"/>, 1.19.0 C10): their quests in the journal lead the seasonal section; null keeps the events' order.</param>
 /// <param name="TimeZone">The zone the end-date line prints its date in (<see cref="SeasonalNow.DateText"/>); null reads <see cref="TimeZoneInfo.Local"/>, the player's.</param>
+/// <param name="LooseEnds">The Loose ends rows (1.21.0 N8), built by the caller in display order (finales first), each standing on its line's next quest; null leaves the section out.</param>
+/// <param name="ShowLooseEnds">Include the Loose ends section (off by default).</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -154,7 +162,9 @@ public sealed record TodoInputs(
     IReadOnlyList<Stop>? Stops = null,
     bool ShowNextStops = false,
     IReadOnlyList<EndingSoonEvent>? EndingSoon = null,
-    TimeZoneInfo? TimeZone = null);
+    TimeZoneInfo? TimeZone = null,
+    IReadOnlyList<TodoRow>? LooseEnds = null,
+    bool ShowLooseEnds = false);
 
 /// <summary>
 /// Pure builder for the todo overlay (V2-13). Six sections, each only when enabled and non-empty: the character's
@@ -246,11 +256,37 @@ public static class TodoList
             Add(sections, TodoSection.JobQuests, BuildJobQuests(inputs));
         }
 
+        if (inputs.ShowLooseEnds && inputs.LooseEnds is { } looseEnds)
+        {
+            enabled++;
+            AddLooseEnds(sections, looseEnds);
+        }
+
         return sections.Count == 0 && enabled == 0 ? TodoModel.Empty : new TodoModel(sections, enabled);
     }
 
     /// <summary>Most stops the Next stops section lists.</summary>
     public const int MaxStops = 3;
+
+    /// <summary>Most lines the Loose ends section lists; the rest are one "+N more" line.</summary>
+    public const int MaxLooseEnds = 3;
+
+    /// <summary>"Loose ends": the first <see cref="MaxLooseEnds"/> rows as given (finales first), the rest counted in <see cref="TodoSectionModel.More"/>.</summary>
+    private static void AddLooseEnds(List<TodoSectionModel> sections, IReadOnlyList<TodoRow> rows)
+    {
+        if (rows.Count == 0)
+        {
+            return;
+        }
+
+        var shown = new List<TodoRow>(Math.Min(MaxLooseEnds, rows.Count));
+        for (var i = 0; i < rows.Count && shown.Count < MaxLooseEnds; i++)
+        {
+            shown.Add(rows[i]);
+        }
+
+        sections.Add(new TodoSectionModel(TodoSection.LooseEnds, shown) { More = rows.Count - shown.Count });
+    }
 
     /// <summary>
     /// "Route: everything for Dragoon": the followed route's next <see cref="ActiveRoute.Shown"/> steps in route order,

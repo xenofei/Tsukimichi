@@ -1,7 +1,7 @@
 {
-  "$schema_note": "Named quest chains. Each chain concatenates the listed JournalGenre row ids in order; quests keep their journal order inside a genre. Genres not listed here still become chains on their own when their quests form a single previous-quest line.",
+  "$schema_note": "Named quest chains, each in one of three forms: genreIds (JournalGenre row ids concatenated in order; quests keep their journal order inside a genre), questIds (Quest row ids in play order) or startQuest (a Quest row id: the line is that quest and every side quest of its journal section that requires a quest of the line). ongoing: true marks a series the game still adds to, which reads Caught up once every released quest is done. Genres not listed here still become chains on their own when their quests form a single previous-quest line.",
   "chains": [
-    { "name": "Hildibrand", "genreIds": [82, 83, 84, 85, 87], "note": "Hildibrand Adventures (ARR) through Inconceivably Further Hildibrand Adventures (EW); 57 quests. Manderville Weapons is its own chain." },
+    { "name": "Hildibrand", "genreIds": [82, 83, 84, 85, 87], "ongoing": true, "note": "Hildibrand Adventures (ARR) through Inconceivably Further Hildibrand Adventures (DT); 57 quests. Manderville Weapons is its own chain. Ongoing: Dawntrail adds a chapter in its patches." },
     { "name": "Zodiac Weapons", "genreIds": [88], "note": "ARR relic line; branches per step in the sheet." },
     { "name": "Anima Weapons", "genreIds": [89], "note": "HW relic line." },
     { "name": "Resistance Weapons", "genreIds": [91], "note": "ShB relic line including the Bozjan Southern Front and Zadnor story." },
@@ -21,6 +21,18 @@
     { "name": "Pandæmonium", "genreIds": [29, 30], "note": "Pandæmonium then Pandæmonium: Epilogue." },
     { "name": "Myths of the Realm", "genreIds": [31], "note": "Chronicles of a New Era - Myths of the Realm." },
     { "name": "The Arcadion", "genreIds": [32], "note": "Chronicles of a New Era - The Arcadion." },
-    { "name": "Echoes of Vana'diel", "genreIds": [33], "note": "Chronicles of a New Era - Echoes of Vana'diel." }
+    { "name": "Echoes of Vana'diel", "genreIds": [33], "note": "Chronicles of a New Era - Echoes of Vana'diel." },
+    { "name": "Tataru's Grand Endeavor", "genreIds": [97], "note": "Side Story Quests - Tataru's Grand Endeavor (EW, 7 quests)." },
+    { "name": "Tales of the Dragonsong War", "genreIds": [79], "note": "Chronicles of Light - Tales of the Dragonsong War (HW, 5 quests)." },
+    { "name": "Tales from the Shadows", "genreIds": [80], "note": "Chronicles of Light - Tales from the Shadows (ShB): One Final Journey, which needs only the main scenario (wiki: One_Final_Journey)." },
+    { "name": "Tales of Newfound Adventure", "genreIds": [81], "note": "Chronicles of Light - Tales of Newfound Adventure (EW, 2 quests)." },
+    { "name": "Tales from the Calamity", "genreIds": [93], "note": "Side Story Quests - Tales from the Calamity (2 quests after The Ultimate Weapon)." },
+    { "name": "Delivery Moogle Quests", "genreIds": [94], "note": "Side Story Quests - Delivery Moogle Quests (ARR, 25 quests; most stand alone)." },
+    { "name": "Scholasticate Quests", "genreIds": [95], "note": "Side Story Quests - Scholasticate Quests (HW, 13 quests)." },
+    { "name": "Void Quests", "genreIds": [96], "note": "Side Story Quests - Void Quests (ShB, 3 quests from The Hero's Journey)." },
+    { "name": "Ishgardian Restoration Main Quests", "genreIds": [100], "note": "Records of Unusual Endeavors - Ishgardian Restoration Main Quests (13 quests)." },
+    { "name": "Cosmic Exploration Main Quests", "genreIds": [109], "ongoing": true, "note": "Records of Unusual Endeavors - Cosmic Exploration Main Quests; Dawntrail adds to it patch by patch." },
+    { "name": "The Occult Crescent", "genreIds": [111], "ongoing": true, "note": "Records of Unusual Endeavors - The Occult Crescent main line; Dawntrail adds to it patch by patch." },
+    { "name": "Cornservant", "startQuest": 70556, "note": "Dawntrail's curious corn line across the Tural sidequest genres: Corn of Necessity (Tuliyollal) through When Death Comes to Dinner; every later quest is given by the Cornservant." }
   ]
 }

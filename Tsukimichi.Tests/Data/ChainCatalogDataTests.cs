@@ -57,8 +57,13 @@ public class ChainCatalogDataTests(GameDataFixture fixture, ITestOutputHelper ou
         {
             var chain = chains.Chains.First(c => c.Name == entry.Name);
             output.WriteLine($"{chain.Name}: genres [{string.Join(", ", entry.GenreIds)}], {chain.RowIds.Count} quests");
-            Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count(q => !q.IsRetired && !q.IsProgressTracker)), chain.RowIds.Count);
             Assert.All(chain.RowIds, id => Assert.Same(chain, chains.ForQuest(id)));
+
+            // A line listed by quest or grown from its first quest (1.21.0 P5) is checked by StorylinesFixtureTests.
+            if (entry.GenreIds.Count > 0)
+            {
+                Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count(q => !q.IsRetired && !q.IsProgressTracker)), chain.RowIds.Count);
+            }
         }
 
         // Hildibrand: the 57-quest chain from ARR to Endwalker, first quest first.

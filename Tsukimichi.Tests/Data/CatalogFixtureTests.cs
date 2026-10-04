@@ -148,8 +148,13 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
         foreach (var entry in curated.Chains)
         {
             var chain = chains.Chains.First(c => c.Name == entry.Name);
-            Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count(q => !q.IsRetired && !q.IsProgressTracker)), chain.RowIds.Count);
             Assert.All(chain.RowIds, id => Assert.Same(chain, chains.ForQuest(id)));
+
+            // A line listed by quest or grown from its first quest (1.21.0 P5) is checked by StorylinesFixtureTests.
+            if (entry.GenreIds.Count > 0)
+            {
+                Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count(q => !q.IsRetired && !q.IsProgressTracker)), chain.RowIds.Count);
+            }
         }
 
         var hildibrand = chains.Chains.First(c => c.Name == "Hildibrand");

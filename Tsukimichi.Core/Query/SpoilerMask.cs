@@ -223,6 +223,15 @@ public sealed class SpoilerMask
     /// <summary>Whether the quest with this row id has its name hidden.</summary>
     public bool IsMasked(uint rowId) => masked.ContainsKey(rowId);
 
+    /// <summary>
+    /// Whether a quest of any kind lies past the story point (plan v7, 1.21.0 P5, N8): it is a masked main scenario
+    /// quest, or, with the wider shield on, its story anchor (<see cref="SpoilerNames.AnchorOf"/>: the latest main
+    /// scenario quest it needs) is. A side story or a job quest past the point names neither itself nor its zone.
+    /// Allocates nothing.
+    /// </summary>
+    public bool IsAhead(uint rowId) =>
+        masked.ContainsKey(rowId) || (names.AnchorOf(rowId) is var anchor and not 0 && masked.ContainsKey(anchor));
+
     /// <summary>The name to print: <see cref="Placeholder"/> for a masked quest, the quest's own name otherwise.</summary>
     public string DisplayName(QuestRecord quest)
     {

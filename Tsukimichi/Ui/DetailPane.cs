@@ -513,6 +513,7 @@ public sealed partial class DetailPane
 
         if (model.Quest is { } quest)
         {
+            DrawCast(session, quest);
             DrawQuestionableLine(session, quest);
             DrawRightAnswers(session, quest);
         }
@@ -1537,6 +1538,8 @@ public sealed partial class DetailPane
             model.ChainNextRowId = next;
             model.ChainNextName = session.Spoilers.DisplayName(bundle.Catalog, next, next.ToString(CultureInfo.InvariantCulture));
         }
+
+        ShieldChainLine(session, bundle, chain);
     }
 
     /// <summary>

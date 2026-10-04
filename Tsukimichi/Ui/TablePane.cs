@@ -2341,6 +2341,12 @@ public sealed class TablePane : IDisposable
         {
             ImGui.TextWrapped(opens);
         }
+
+        // Who's in it (1.21.0 N10): only characters met in the story are named; nothing for a quest the shield masks.
+        if (!spoilers.IsMasked(quest) && CastText.Hover(runner.Session, quest.RowId) is { Length: > 0 } cast)
+        {
+            ImGui.TextWrapped(cast);
+        }
     }
 
     /// <summary>

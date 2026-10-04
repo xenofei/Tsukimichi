@@ -60,6 +60,14 @@ public sealed partial class ConfigWindow
             settings.ChatNoticePayoffGates = payoff;
             Save();
         }
+
+        // Loose ends (1.21.0 N8): a storyline's finale Ready, once per finale; off by default.
+        var finale = settings.ChatNoticeStorylineFinale;
+        if (Toggle(Strings.LooseEndsFinaleConfig, Strings.LooseEndsFinaleConfigHint, ref finale, "chat notice storyline finale loose ends job role quest"))
+        {
+            settings.ChatNoticeStorylineFinale = finale;
+            Save();
+        }
     }
 
     /// <summary>Settings' Test: plays a chat sound effect through the game (1–16); false while game calls are paused. Set by the plugin.</summary>
