@@ -397,6 +397,12 @@ public sealed partial class Configuration : IPluginConfiguration
     public bool SpoilerHideArtwork { get; set; } = true;
 
     /// <summary>
+    /// 1.20.0 (N6): with <see cref="SpoilerHideMsqNames"/>, also print the zone, duty, reward and NPC names the masked
+    /// story introduces as "Area ahead (Lv 61)" and the like. On by default.
+    /// </summary>
+    public bool SpoilerHideRelatedNames { get; set; } = true;
+
+    /// <summary>
     /// Legacy (1.7 and earlier): the per-character override of the shield, by content id. Since 1.8.0 it lives in
     /// <c>user/characters.json</c> (<see cref="Core.Storage.CharacterSettingsBook"/>), shared by every game client; this
     /// is read once at load, moved there, and emptied (<see cref="TakeLegacyCharacterSettings"/>).
@@ -412,10 +418,10 @@ public sealed partial class Configuration : IPluginConfiguration
         var ahead = Math.Clamp(SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
         if (contentId is not null && shield is { } shielded)
         {
-            return shielded ? new SpoilerOptions(true, ahead, true) : SpoilerOptions.Off with { Ahead = ahead };
+            return shielded ? new SpoilerOptions(true, ahead, true, true) : SpoilerOptions.Off with { Ahead = ahead };
         }
 
-        return new SpoilerOptions(SpoilerHideMsqNames, ahead, SpoilerHideArtwork);
+        return new SpoilerOptions(SpoilerHideMsqNames, ahead, SpoilerHideArtwork, SpoilerHideRelatedNames);
     }
 
     /// <summary>Last table filters, restored on load.</summary>

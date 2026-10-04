@@ -3,6 +3,7 @@ using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Plan;
+using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Core.Route;
 
@@ -75,6 +76,68 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
 
     /// <summary>True for a route to several targets (<see cref="Parts"/>).</summary>
     public bool IsUnion => Parts.Count > 0;
+
+    /// <summary>
+    /// The name the wider spoiler shield places the target by when its <see cref="Label"/> is composed ("Flying in
+    /// Thavnair" is placed by "Thavnair", an area): set by <see cref="ForUnlock"/>; null reads the label by the kind.
+    /// </summary>
+    public (SpoilerKind Kind, string Name)? Placed { get; init; }
+
+    /// <summary>
+    /// The target as <paramref name="spoilers"/> shows it (plan v7, 1.20.0 N6): a duty, a reward, a job, a system or a
+    /// thing a quest opens that the story has not introduced is titled by its placeholder ("Duty ahead (Lv 61)"), and
+    /// so is each part. The target itself when nothing is masked; the quests are never changed.
+    /// </summary>
+    public RouteTarget Through(SpoilerMask spoilers)
+    {
+        ArgumentNullException.ThrowIfNull(spoilers);
+        if (!spoilers.MasksNames)
+        {
+            return this;
+        }
+
+        var label = LabelThrough(spoilers);
+        List<RouteTarget>? parts = null;
+        for (var i = 0; i < Parts.Count; i++)
+        {
+            var part = Parts[i].Through(spoilers);
+            if (parts is null && !ReferenceEquals(part, Parts[i]))
+            {
+                parts = new List<RouteTarget>(Parts.Count);
+                for (var j = 0; j < i; j++)
+                {
+                    parts.Add(Parts[j]);
+                }
+            }
+
+            parts?.Add(part);
+        }
+
+        if (ReferenceEquals(label, Label))
+        {
+            return parts is null ? this : this with { Parts = parts };
+        }
+
+        // The target's own art (a mount's, a duty's) would name it; a place keeps the generic map marker.
+        var icon = Placed is { Kind: SpoilerKind.Area } ? Icon : 0;
+        return this with { Label = label, Parts = parts ?? Parts, Icon = icon };
+    }
+
+    private string LabelThrough(SpoilerMask spoilers)
+    {
+        if (Placed is { } placed)
+        {
+            return spoilers.IsNameMasked(placed.Kind, placed.Name) ? spoilers.Name(placed.Kind, placed.Name) : Label;
+        }
+
+        SpoilerKind? kind = Kind switch
+        {
+            RouteTargetKind.Duty => SpoilerKind.Duty,
+            RouteTargetKind.Reward or RouteTargetKind.System or RouteTargetKind.Job => SpoilerKind.Reward,
+            _ => null,
+        };
+        return kind is { } k ? spoilers.Name(k, Label) : Label;
+    }
 
     /// <summary>
     /// A target made of <paramref name="parts"/> (see <see cref="Parts"/>); parts with no quest are dropped, and
@@ -234,9 +297,10 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
     public static RouteTarget ForUnlock(Unlocks.UnlockFind find, uint flyingTerritory = 0)
     {
         ArgumentNullException.ThrowIfNull(find);
+        var placed = SpoilerNames.KindOf(find.Target) is { } kind ? (kind, find.Name) : ((SpoilerKind, string)?)null;
         if (!find.NeedsAll)
         {
-            return new RouteTarget(RouteTargetKind.Unlock, find.Label, find.Quests) { Icon = find.Icon };
+            return new RouteTarget(RouteTargetKind.Unlock, find.Label, find.Quests) { Icon = find.Icon, Placed = placed };
         }
 
         var parts = new List<RouteTarget>(find.Quests.Count);
@@ -245,7 +309,7 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
             parts.Add(new RouteTarget(RouteTargetKind.Quest, string.Empty, [rowId]));
         }
 
-        return Union(RouteTargetKind.Unlock, find.Label, parts) with { Icon = find.Icon, FlyingTerritory = flyingTerritory };
+        return Union(RouteTargetKind.Unlock, find.Label, parts) with { Icon = find.Icon, FlyingTerritory = flyingTerritory, Placed = placed };
     }
 
     private static string F(string key, string english, string value) =>

@@ -24,6 +24,8 @@ static partial class Strings
     public static string SpoilerHideNamesHelp => Loc.Get("SpoilerHideNamesHelp");
     public static string SpoilerAhead => Loc.Get("SpoilerAhead");
     public static string SpoilerAheadHelp => Loc.Get("SpoilerAheadHelp");
+    public static string SpoilerHideRelated => Loc.Get("SpoilerHideRelated");
+    public static string SpoilerHideRelatedHelp => Loc.Get("SpoilerHideRelatedHelp");
     public static string SpoilerHideArtwork => Loc.Get("SpoilerHideArtwork");
     public static string SpoilerHideArtworkHelp => Loc.Get("SpoilerHideArtworkHelp");
     public static string SpoilerCharacterLabel => Loc.Get("SpoilerCharacterLabel");

@@ -49,4 +49,22 @@ public sealed record BlockerNames
 
     /// <summary>Custom delivery client name by SatisfactionNpc row id ("M'naago"); empty drops the "with M'naago" clause.</summary>
     public Func<byte, string> SatisfactionNpc { get; init; } = static _ => string.Empty;
+
+    /// <summary>
+    /// These names through a spoiler shield: quests by <see cref="Query.SpoilerMask.DisplayName(QuestRecord)"/>, duties
+    /// and custom delivery clients past the story point by their placeholders (plan v7, 1.20.0 N6). The mask is
+    /// immutable, so the result is as safe to read from any thread as this record.
+    /// </summary>
+    public BlockerNames Through(Query.SpoilerMask spoilers)
+    {
+        ArgumentNullException.ThrowIfNull(spoilers);
+        var duty = Duty;
+        var client = SatisfactionNpc;
+        return this with
+        {
+            QuestName = spoilers.DisplayName,
+            Duty = id => spoilers.Name(Query.SpoilerKind.Duty, duty(id)),
+            SatisfactionNpc = id => spoilers.Name(Query.SpoilerKind.Npc, client(id)),
+        };
+    }
 }

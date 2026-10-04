@@ -8,8 +8,9 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// Settings › Spoilers (T19): hide main scenario names ahead of the character, how many quests ahead keep their names
-/// (saved once the slider is still), hide journal artwork until a quest is in the journal, whether "Before you
-/// continue" notes show (P5), and an override for the character shown. Every change bumps the session so each surface
+/// (saved once the slider is still), whether the places, duties, rewards and people the story ahead introduces hide too
+/// (1.20.0 N6), hide journal artwork until a quest is in the journal, whether "Before you continue" notes show (P5),
+/// and an override for the character shown. Every change bumps the session so each surface
 /// re-reads the mask at once.
 /// </summary>
 public sealed partial class ConfigWindow
@@ -53,6 +54,14 @@ public sealed partial class ConfigWindow
             }
 
             EndSetting();
+        }
+
+        // The wider shield (1.20.0 N6) hangs off the same switch: it hides what the masked quests introduce.
+        var hideRelated = settings.SpoilerHideRelatedNames;
+        if (Toggle(Strings.SpoilerHideRelated, Strings.SpoilerHideRelatedHelp, ref hideRelated, "spoiler shield zone area duty reward npc giver people places", enabled: effectiveHide, sub: true, reason: Strings.SettingsSpoilerAheadOffReason))
+        {
+            settings.SpoilerHideRelatedNames = hideRelated;
+            SpoilersChanged();
         }
 
         var hideArtwork = settings.SpoilerHideArtwork;

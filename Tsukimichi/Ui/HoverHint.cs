@@ -215,7 +215,8 @@ public sealed class HoverHint
             var done = state == QuestState.Completed;
             var status = done ? Strings.ItemsDone : BlockerText.StatusText(evaluation, quest, names, states);
             var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, session.LiveSpoilers.DisplayName(quest)), status, done, entry.SoldOnOnlineStore,
-                entry.DropsInDuty ? Strings.AlsoDropsLine(entry.DropWhere) : string.Empty)
+                // A duty the story has not introduced reads as its placeholder (1.20.0 N6).
+                entry.DropsInDuty ? Strings.AlsoDropsLine(session.LiveSpoilers.Name(Core.Query.SpoilerKind.Duty, entry.DropWhere)) : string.Empty)
             {
                 // Safe to discard? A shop sells it back once the quest is done (1.19, C6).
                 BuyBackLine = BuyBack?.Invoke(itemId, quest.RowId) ?? string.Empty,
