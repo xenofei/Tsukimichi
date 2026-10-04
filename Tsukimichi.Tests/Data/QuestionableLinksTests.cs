@@ -38,9 +38,11 @@ public sealed class QuestionableLinksTests(FixtureCatalog fixture) : IClassFixtu
     public void Every_Questionable_link_is_implied_by_the_catalog_or_allowlisted()
     {
         var current = VerificationAllowlistTests.PluginVersion();
+        // A settled entry excuses a link only when it settles sourceWrong (Questionable is wrong, the catalog right).
         var excuses = VerificationAllowlistTests.Entries()
             .Where(e => (string?)e["fact"] == "prereqs" && (string?)e["source"] == "questionable")
             .Where(e => !VerificationAllowlistTests.Expired(e, current))
+            .Where(e => (string?)e["verdict"] != VerificationAllowlistTests.Settled || VerificationAllowlistTests.Covers(e, "sourceWrong"))
             .Select(e => (Quest: uint.Parse((string)e["rowId"]!, CultureInfo.InvariantCulture), Required: (string?)e["prereqId"]))
             .ToList();
         var catalog = fixture.Bundle.Catalog;
@@ -140,8 +142,27 @@ public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) :
     /// <summary>The verdict of an entry that records a decision on the evidence and never expires (1.22.0).</summary>
     internal const string Settled = "settled";
 
+    /// <summary>The verdicts a report row can read, which a settled entry's <c>settles</c> names.</summary>
+    private static readonly string[] Verdicts = ["match", "catalogWrong", "sourceWrong", "sourceLagging", "notModeled", "notListed", "ambiguous", "unresolved"];
+
     /// <summary>Whether an entry no longer applies at <paramref name="current"/> (the verifier's rule: <c>until</c> at or below the version; a settled entry never).</summary>
     internal static bool Expired(JsonObject entry, Version current) => (string?)entry["verdict"] != Settled && Pad((string?)entry["until"]) is { } until && current >= until;
+
+    /// <summary>The verdicts a settled entry was settled on (its <c>settles</c>); empty for any other entry.</summary>
+    internal static List<string> SettledVerdicts(JsonObject entry)
+        => (string?)entry["verdict"] == Settled && entry["settles"] is JsonArray settles ? settles.Select(v => v is JsonValue value && value.TryGetValue<string>(out var s) ? s : string.Empty).ToList() : [];
+
+    /// <summary>
+    /// Whether <paramref name="entry"/> excuses a row that reads <paramref name="verdict"/> (the verifier's rule): an
+    /// entry of that verdict or <c>"*"</c>, or a settled one that was settled on it. A settled entry covers no other
+    /// verdict, so a settled unresolved row that turns catalogWrong fails again.
+    /// </summary>
+    internal static bool Covers(JsonObject entry, string verdict) => (string?)entry["verdict"] switch
+    {
+        Settled => SettledVerdicts(entry).Contains(verdict),
+        "*" => true,
+        var v => v == verdict,
+    };
 
     [Fact]
     public void No_allowlist_entry_is_at_or_past_its_until_release()
@@ -170,6 +191,23 @@ public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) :
                 if (e.ContainsKey("until"))
                 {
                     problems.Add($"{label} is settled, so it never expires; remove its until");
+                }
+
+                // A decision is about one row: never every quest or every fact.
+                if ((string?)e["rowId"] is null or "*" || (string?)e["fact"] is null or "*")
+                {
+                    problems.Add($"{label} is settled, so it names one quest row and one fact, never \"*\"");
+                }
+
+                // It covers only the verdicts it was settled on.
+                var settles = SettledVerdicts(e);
+                if (settles.Count == 0 || settles.Any(v => !Verdicts.Contains(v)) || settles.Count != settles.Distinct().Count())
+                {
+                    problems.Add($"{label} is settled, so settles lists the verdicts it was settled on ({string.Join(", ", Verdicts)}), each once");
+                }
+                else if ((string?)e["source"] == "questionable" && !settles.SequenceEqual(["sourceWrong"]))
+                {
+                    problems.Add($"{label} is a settled Questionable link, which stands for sourceWrong only (the catalog is right); settles must be [\"sourceWrong\"]");
                 }
             }
             else if (Pad((string?)e["until"]) is not { } until)
@@ -207,6 +245,11 @@ public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) :
                 e["until"] = until;
             }
 
+            if (verdict == Settled)
+            {
+                e["settles"] = new JsonArray("unresolved");
+            }
+
             return e;
         }
 
@@ -222,6 +265,46 @@ public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) :
         Assert.True(Expired(unsettled, current));
         Assert.Contains("expired", Assert.Single(Problems([unsettled], current)), StringComparison.Ordinal);
         Assert.Contains("no until", Assert.Single(Problems([Entry("sourceWrong", "https://e.org/a", null)], current)), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A settled entry is a decision about one row: it names one quest row and one fact (never <c>"*"</c>) and the
+    /// verdicts it was settled on, and covers no other verdict, so a settled unresolved row that turns catalogWrong fails.
+    /// </summary>
+    [Theory]
+    [InlineData("""{ "rowId": "*", "fact": "prereqs", "verdict": "settled", "settles": ["unresolved"], "reason": "r", "evidence": "https://e.org/a" }""", "never \"*\"")]
+    [InlineData("""{ "rowId": "1", "fact": "*", "verdict": "settled", "settles": ["unresolved"], "reason": "r", "evidence": "https://e.org/a" }""", "never \"*\"")]
+    [InlineData("""{ "fact": "prereqs", "verdict": "settled", "settles": ["unresolved"], "reason": "r", "evidence": "https://e.org/a" }""", "never \"*\"")]
+    [InlineData("""{ "rowId": "1", "fact": "prereqs", "verdict": "settled", "reason": "r", "evidence": "https://e.org/a" }""", "settles lists")]
+    [InlineData("""{ "rowId": "1", "fact": "prereqs", "verdict": "settled", "settles": [], "reason": "r", "evidence": "https://e.org/a" }""", "settles lists")]
+    [InlineData("""{ "rowId": "1", "fact": "prereqs", "verdict": "settled", "settles": ["*"], "reason": "r", "evidence": "https://e.org/a" }""", "settles lists")]
+    [InlineData("""{ "rowId": "1", "fact": "prereqs", "verdict": "settled", "settles": ["settled"], "reason": "r", "evidence": "https://e.org/a" }""", "settles lists")]
+    [InlineData("""{ "rowId": "1", "fact": "prereqs", "verdict": "settled", "settles": ["unresolved", "unresolved"], "reason": "r", "evidence": "https://e.org/a" }""", "settles lists")]
+    [InlineData("""{ "rowId": "1", "fact": "prereqs", "source": "questionable", "prereqId": "2", "verdict": "settled", "settles": ["unresolved"], "reason": "r", "evidence": "https://e.org/a" }""", "[\"sourceWrong\"]")]
+    public void A_settled_entry_must_be_scoped_to_one_row_and_the_verdicts_it_settles(string json, string problem)
+    {
+        var entry = JsonNode.Parse(json)!.AsObject();
+        Assert.Contains(problem, Assert.Single(Problems([entry], Pad("1.0.0")!)), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_settled_entry_covers_only_the_verdicts_it_was_settled_on()
+    {
+        var cake = new JsonObject { ["rowId"] = "67114", ["fact"] = "reward:Item", ["verdict"] = Settled, ["settles"] = new JsonArray("unresolved"), ["reason"] = "r", ["evidence"] = "https://e.org/a" };
+        Assert.Empty(Problems([cake], Pad("99.0.0")!));
+        Assert.True(Covers(cake, "unresolved"));
+        Assert.False(Covers(cake, "catalogWrong"));
+        Assert.False(Covers(cake, "sourceWrong"));
+
+        // An ordinary entry covers its own verdict, "*" every verdict.
+        Assert.True(Covers(new JsonObject { ["verdict"] = "unresolved" }, "unresolved"));
+        Assert.False(Covers(new JsonObject { ["verdict"] = "unresolved" }, "catalogWrong"));
+        Assert.True(Covers(new JsonObject { ["verdict"] = "*" }, "catalogWrong"));
+
+        // The committed settled entries settle what their rows read: the cake unresolved, the spearfishing link sourceWrong.
+        var settled = Entries().Where(e => (string?)e["verdict"] == Settled).ToDictionary(e => (string)e["rowId"]!, SettledVerdicts);
+        Assert.Equal(["unresolved"], settled["67114"]);
+        Assert.Equal(["sourceWrong"], settled["68434"]);
     }
 
     /// <summary>
@@ -256,7 +339,7 @@ public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) :
                 ((string?)e["rowId"] == "*" || r.RowId == (string?)e["rowId"])
                 && (fact == "*" || r.Fact == fact)
                 && ((string?)e["source"] is not { } source || r.Source == source)
-                && ((string?)e["verdict"] == "*" || r.Verdict == (string?)e["verdict"] || ((string?)e["verdict"] == Settled && r.Verdict is "unresolved" or "catalogWrong"))
+                && Covers(e, r.Verdict)
                 && ((string?)e["rewardId"] is not { } rewardId || r.RewardId == rewardId));
             if (!excuses)
             {
