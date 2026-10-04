@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.18.0 are released; 1.19.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.19.0 are released; 1.20.0 is built on branches and waits its turn; 1.21.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -143,7 +143,7 @@ Carried from plan v6 (was 1.14). Automation, built on what the community accepts
 | A9 | A travel preflight in Setup | S |
 | A10 | An automation level switch with Full hand-offs as a first-class choice, and an "About automation" card | S |
 
-### 1.19.0 · Right answers
+### 1.19.0 · Right answers (released 2026-10-04)
 
 Carried from plan v6 (was 1.15), adjusted for Evercold, plus new correctness features.
 
@@ -388,6 +388,55 @@ Your notes, and what happens with each:
   - Your High contrast setting is never changed by a code.
 - **Glyph window:** the Themes tab compares two looks, with a heat table and Ready's lead.
 - **Plain:** after the window has been closed for over 30 s, there is no flash of Medallion.
+
+### 1.19.0 (released 2026-10-04)
+
+- **The game confirms it:**
+  - A Not checked quest whose "!" you see turns Ready with the right date.
+  - A fresh disagreement: the card, Go with the game, Undo, and "Use Tsukimichi's answer" from both "…" menus; then re-log on that character and an alt.
+  - The "unseen marker" report may be noisy for low-level quests the game hides.
+- **Gates:**
+  - The game reports the Occult Record, Forked Tower, blue magic and chocobo unlocks correctly on a live character.
+  - Accept conditions 226 and 566 really are Heaven-on-High floor 30 and Pilgrim's Traverse stone 30.
+  - What Lies Beneath is offered only after Palace of the Dead floor 50.
+  - The can't-check row, I've done this, Take back (row and "…" menu) and their Undo at Full, Quiet and Plain.
+- **New Game+:**
+  - The HUD read (state values, offsets +44/+46 on 2026.09.15).
+  - Whether the game clears a chapter's completion bits while replaying.
+  - The status bar, End session and Replaying chips; a stored alt on view shows the normal bar.
+  - "Quest N of M" may be slightly off for some starting cities.
+- **How you'll clear it and Duties:**
+  - Item level and gearset levels against the Character window, on a two-handed job and a shield job.
+  - The Duties card against the game: Level Cap and Expert locks, open roulettes, the never-cleared list. A crafter at 100 with combat jobs under 100 reads Level Cap locked.
+  - A stored alt captured before the duty list changed reads "not read · log in".
+  - Badges in My blues, on route steps and under a locked duty in the Duty Finder. Selecting a closed roulette shows its panel.
+  - A masked main scenario quest with a duty, with AutoDuty loaded: both duty sections show the placeholder.
+  - How long the duty-record read takes.
+- **EXP and gearsets:**
+  - "(N% of a level)" against the game's EXP bar; the capped-job clause; a Lv 100 character.
+  - A Culinarian quest on a combat job: the pill, its disabled reason in combat, and "No Culinarian gearset saved".
+  - The capped turn-in Todo row appears, selects the quest, and leaves after a job switch. The chat notice says it once per quest.
+  - Switching characters with hooks paused leaves walls "not judged".
+- **Journal room:**
+  - Does the main scenario quest count toward the 30? The status bar should read 30/30 exactly when the game refuses.
+  - Make room from the status bar and the hero: position, scrolling, the rise, Open in journal at the right quest, and dimmed while hooks are paused.
+  - A Ready allied society daily at 30/30 shows no "journal full".
+  - The Characters journal section opens at 27 or more and stays closed if you close it.
+- **Rewards and hand-ins:**
+  - The game's inventory, worn and armoury counts. Does the hand-in window take items straight from the armoury chest?
+  - Flag and Teleport from a Where line and a buy-back line; Open Gathering Log.
+  - A reward only in an unopened saddlebag reads "If you no longer have it"; after opening, "In your saddlebag".
+- **Find by unlock:**
+  - The Unlocks group under the search stays on top, typing keeps working, and Route to unlock registers.
+  - Field currents already attuned drop off; Flag lands on the spot; the route's "finding where it stands" lines fill in without a jump.
+- **Allied societies:**
+  - The game's own allowance count while a daily is carried over; Flag and Teleport go to the giver (maybe not the turn-in NPC).
+  - The Sworn bonus-dailies rule for Moogles and Namazu.
+  - A stored alt with a carried daily shows the quiet note with no buttons.
+- **Events:**
+  - Tonight's ending-soon card at Full, Quiet and Plain, steady across a minute change.
+  - The trailing row chips at narrow widths, Set end date, and the ending-soon notice.
+  - End dates in Characters › Seasonal and the Todo overlay match Tonight's local date.
 
 ### 1.18.0 (released 2026-10-03)
 
