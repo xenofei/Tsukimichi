@@ -134,7 +134,7 @@ def welcome():
 
     stars(c, 200, 131, hz * 0.95, sky_lum, near_moon=(mx, my, mr), warm=0.08)
     cloud_band(c, M, 501, 0.10 * H, 0.42 * H, (mx, my), dens_k=0.58)
-    moon_disc(c, mx, my, mr, seed=5)
+    moon_disc(c, mx, my, mr, seed=5, centre=True)
     M["moon"], M["moonlit"] = moon_masks(c, mx, my, mr)
     xs = np.arange(W, dtype=np.float32)
     ridge_layer(c, M, xs, hz + 4, 0.065, W / 2.0, 61, "#25355E", "#2C3F6C", mx, "#5F78AE", haze=0.45)
@@ -337,7 +337,7 @@ def answers():
         return 0.03 + 0.22 * min(1.0, max(0.0, y / hz)) ** 2
 
     stars(c, 220, 23, hz * 0.97, sky_lum, near_moon=(mx, my, mr), warm=0.08)
-    moon_disc(c, mx, my, mr)
+    moon_disc(c, mx, my, mr, centre=True)
     M["moon"], M["moonlit"] = moon_masks(c, mx, my, mr)
     xs = np.arange(W, dtype=np.float32)
     for i, (yb, amp, top, bot, seed, haze, f) in enumerate([(hz + 4, 0.075, "#2A3A66", "#304373", 4, 0.50, 1.8), (hz + 0.040 * H, 0.070, "#1F2D4C", "#27385A", 5, 0.40, 2.6),
@@ -360,7 +360,7 @@ def answers():
     main = bezier(fork, (0.535 * W, 0.71 * H), (0.575 * W, 0.68 * H), (mx + 4, gtop - 1))
     side = bezier(fork, (0.47 * W, 0.725 * H), (0.38 * W, 0.70 * H), (0.30 * W, gtop + 4))
     rm = np.maximum(band(c, near, 300, 46, 1.2), np.maximum(band(c, main, 46, 7, 1.0), band(c, side, 40, 10, 1.0))) * field
-    rm *= np.clip((c.yy - gtop) / 26, 0, 1) ** 0.8
+    rm *= np.clip((c.yy - gtop + 4) / 10, 0, 1) ** 0.8
     far_f = np.clip(1 - (c.yy - gtop) / (0.30 * H), 0, 1) ** 1.5
     toward = np.exp(-((c.xx - mx) / (0.06 * W + (c.yy - gtop) * 0.7)) ** 2) * far_f
     side_m = band(c, side, 40, 10, 1.0) * (1 - band(c, main, 46, 7, 1.0))
@@ -399,7 +399,7 @@ def answers():
                      (sx - sr * 0.5, sy - sr * 1.2), (sx - sr * 1.05, sy - sr * 0.8)], 0.6)
         stones_m = np.maximum(stones_m, st)
         stone_tops = np.maximum(stone_tops, top_edge(st, 3))
-    trx, try_ = 0.576 * W, 0.676 * H
+    trx, try_ = 0.5705 * W, 0.693 * H
     contact_shadow(c, trx, try_, 14, -16, 26, 0.55)
     trav = figure(c, trx, try_, 0.36, facing=1)
     c.over(hexc("#0B1322"), tree)

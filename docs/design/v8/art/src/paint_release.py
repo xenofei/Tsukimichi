@@ -303,7 +303,7 @@ def evercold():
 # ======================================================================================================
 # 1.19.0 Right answers
 # ======================================================================================================
-def moon_disc(c, mx, my, mr, seed=3):
+def moon_disc(c, mx, my, mr, seed=3, centre=False):
     """A near-full moon: soft basalt seas in the real layout, gentle limb darkening, a cool halo. No holes."""
     d = c.radial(mx, my, mr)
     disc = np.clip((1 - d) * mr / 1.2 + 0.5, 0, 1)
@@ -314,6 +314,8 @@ def moon_disc(c, mx, my, mr, seed=3):
     chains = [[(-0.42, -0.18, 0.20, 0.26), (-0.50, 0.10, 0.18, 0.28), (-0.38, 0.32, 0.16, 0.16), (-0.24, -0.32, 0.22, 0.17), (-0.10, -0.24, 0.12, 0.10)],
               [(0.04, -0.34, 0.17, 0.14), (0.18, -0.16, 0.16, 0.15), (0.30, 0.04, 0.18, 0.14), (0.40, 0.24, 0.12, 0.13), (0.50, -0.30, 0.09, 0.08)],
               [(-0.16, 0.30, 0.15, 0.10), (-0.02, 0.36, 0.10, 0.08)]]
+    if centre:   # Insularum and Vaporum join the chains across the middle, so the seas never read as a ring or a "C"
+        chains.append([(-0.24, 0.02, 0.15, 0.11), (-0.04, -0.06, 0.12, 0.09), (0.12, 0.06, 0.10, 0.08)])
     for chain in chains:
         for (sx, sy, rx, ry) in chain:
             seas = np.maximum(seas, c.ellipse(mx + sx * mr, my + sy * mr, rx * mr, ry * mr, 0.6))

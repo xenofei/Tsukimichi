@@ -86,6 +86,27 @@ def tex(T, u, v):
     return (T[v0, u0] * (1 - fu) + T[v0, u0 + 1] * fu) * (1 - fv) + (T[v0 + 1, u0] * (1 - fu) + T[v0 + 1, u0 + 1] * fu) * fv
 
 
+# the maria of the approved near-full moon (paint_release.moon_disc), in units of the moon's radius:
+# Procellarum and Imbrium on the left, Serenitatis to Fecunditatis down the right, Nubium below
+MARIA = [(-0.42, -0.18, 0.20, 0.26), (-0.50, 0.10, 0.18, 0.28), (-0.38, 0.32, 0.16, 0.16), (-0.24, -0.32, 0.22, 0.17), (-0.10, -0.24, 0.12, 0.10),
+         (0.04, -0.34, 0.17, 0.14), (0.18, -0.16, 0.16, 0.15), (0.30, 0.04, 0.18, 0.14), (0.40, 0.24, 0.12, 0.13), (0.50, -0.30, 0.09, 0.08),
+         (-0.16, 0.30, 0.15, 0.10), (-0.02, 0.36, 0.10, 0.08),
+         (-0.24, 0.02, 0.15, 0.11), (-0.04, -0.06, 0.12, 0.09), (0.12, 0.06, 0.10, 0.08)]   # Insularum, Vaporum: across the middle
+
+
+def moon_seas(L, M):
+    """The near-full moon's maria as a soft 0..1 weight, laid out as the approved moon's joined chains (from the
+    release's moon place and radius), soft-edged, inside the lit disc only."""
+    h, w = L.shape
+    mx, my, mr = CFG["moon"][0] * w, CFG["moon"][1] * h, CFG["moon"][2]
+    yy, xx = grid(h, w)
+    m = np.zeros((h, w), np.float32)
+    for sx, sy, rx, ry in MARIA:
+        d = ((xx - (mx + sx * mr)) / (rx * mr)) ** 2 + ((yy - (my + sy * mr)) / (ry * mr)) ** 2
+        m = np.maximum(m, np.clip(1.6 - d * 1.2, 0, 1))
+    return blur(m, 0.8) * (M["moonlit"] > 0.5)
+
+
 def masks():
     M = dict(np.load(OUT / f"{CFG['key']}-masks.npz"))
     M["below"] = np.maximum(M["far"], M["city"])
@@ -146,10 +167,8 @@ def medallion(px):
     rad = np.sqrt(((xx - w / 2) / (w * 0.62)) ** 2 + ((yy - h / 2) / (h * 0.75)) ** 2)
     p = p * (1 - 0.30 * np.clip(rad - 0.55, 0, 1) ** 1.5 - 0.14 * np.clip(1 - ex / 40, 0, 1) ** 2)[..., None]
     # the moon after the pass: the painting's own disc, with at most a light share of the varnish, and the crescent in cream
-    moon_col = px * 0.88 + p * 0.12
+    moon_col = px * 0.90 + p * 0.10                                               # the painting's own moon, 10 % varnish
     p = p * (1 - mz[..., None]) + moon_col * mz[..., None]
-    lit = blur(M["moonlit"], 0.5)[..., None]
-    p = p * (1 - lit) + (hexc("#F3EAD3") * 0.9 + hexc("#E9C98C") * 0.1) * lit
     inset, wdt = 5, 4
     slip = (ex >= inset) & (ex < inset + wdt)
     litside = np.stack([yy, xx, h - 1 - yy, w - 1 - xx]).argmin(0) < 2
@@ -286,6 +305,8 @@ def ishgard(px):
     mx, my, mr = CFG["moon"][0] * w, CFG["moon"][1] * h, CFG["moon"][2]
     toward = np.clip(((mx - xx) * 0.7 + (yy - my) * 0.7) / mr * 0.5 + 0.5, 0, 1)
     glass = np.where((reg == 8)[..., None], hexc("#E8E2CC") + (hexc("#FFFBEE") - hexc("#E8E2CC")) * toward[..., None], glass)
+    if (reg == 8).sum() > 400:                                                     # faint grisaille seas on a big moon
+        glass = glass * (1 - (moon_seas(lum(px), M) * 0.14 * (reg == 8))[..., None])
     glass = 1 - (1 - glass) * 0.9
     glass = 1 - (1 - glass) * (1 - np.array([1.0, 0.92, 0.84], np.float32) * (blur(np.clip(lum(glass) - 0.6, 0, 1), 4) * 0.25)[..., None])
     L = lum(px)
@@ -428,11 +449,10 @@ def orrery(px):
     plate = plate * (1 - M["moonlit"][..., None]) + hexc("#E6CC90") * M["moonlit"][..., None]
     lit_m = M["moonlit"] > 0.5
     if lit_m.sum() > 400:                                                          # a big moon: engrave its seas
-        Lm = blur(L, 1.0)
-        mean_l = Lm[lit_m].mean()
-        seas = (Lm < mean_l - 0.03) & lit_m
-        hatch = blur(((np.abs(((xx - yy) / 2.5) % 1.0 - 0.5) * 2) > 0.55).astype(np.float32), 0.4) * seas
-        plate = plate * (1 - (hatch * 0.55)[..., None]) + hexc("#8A6A3A") * (hatch * 0.55)[..., None]
+        seas = moon_seas(L, M)
+        lines_ = (np.abs(((xx - yy) / 2.2) % 1.0 - 0.5) * 2 > 0.6).astype(np.float32)   # fine parallel cuts
+        hatch = lines_ * seas * 0.5
+        plate = plate * (1 - hatch[..., None]) + hexc("#7A5A2E") * hatch[..., None]
     ring = outline(M["moon"]) * (M["moon"].sum() > 400)
     plate = plate * (1 - blur(ring, 0.5)[..., None]) + hexc("#B8924E") * blur(ring, 0.5)[..., None]
     im = Image.new("L", (w * 2, h * 2), 0)
