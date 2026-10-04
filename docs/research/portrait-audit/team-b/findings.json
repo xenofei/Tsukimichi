@@ -1,0 +1,3279 @@
+[
+ {
+  "character": "Alphinaud",
+  "era": "2.0-2.55 (A Realm Reborn)",
+  "lookDescription": "ARR 'Sharlayan Prodigy' outfit: dark blue coat, blue ponytail knot, delta earring on the left ear, black grimoire.",
+  "npcIds": [
+   1006467,
+   1006730,
+   1008623,
+   1009021,
+   1009057,
+   1009976,
+   1009977,
+   1009996,
+   1010063,
+   1010078,
+   1010191,
+   1010858,
+   1010930,
+   1010951,
+   1010953
+  ],
+  "quests": 20,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 20
+   },
+   "packPhotos": {
+    "1006368": 20
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK (face sits low)"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack photo 1006368 already shows the right look (optional pack only).",
+   "No ARR-look game art is offered: the twins' card 87059 is blocked (faces turned down). Re-measure a per-face crop on 87059 (Alphinaud on the left) before ruling it out.",
+   "Never fill this arc with 73034 (the HW coat)."
+  ],
+  "faceNote": "Pack 1006368: eyes at about 55%, chin at about 90%.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alphinaud_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alphinaud",
+   "https://ffxiv.consolegameswiki.com/wiki/The_Parting_Glass",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alphinaud",
+  "era": "3.0 before \"In Search of Iceheart\"",
+  "lookDescription": "Still the ARR outfit until In Search of Iceheart (3.0, lv51); game data: these rows use the ARR body 74595.",
+  "npcIds": [
+   1010925,
+   1012387,
+   1012579,
+   1012588,
+   1013036,
+   1013038
+  ],
+  "quests": 6,
+  "current": {
+   "gameArt": {
+    "73034 (BattleTalk, era 1)": 6
+   },
+   "packPhotos": {
+    "1010925": 1,
+    "1006368": 5
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Block 73034 for these ENpc ids (they fall back to initials, or the pack photo 1006368); 73034 shows the HW coat he has not been given yet."
+  ],
+  "faceNote": "73034's crop is fine (curated).",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alphinaud_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alphinaud",
+   "https://ffxiv.consolegameswiki.com/wiki/In_Search_of_Iceheart",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alphinaud",
+  "era": "3.0-4.x (Heavensward, Stormblood)",
+  "lookDescription": "Tataru's HW outfit: blue coat with a black hood over a white tunic, black gloves.",
+  "npcIds": [
+   1012394,
+   1012395,
+   1012430,
+   1012600,
+   1012629,
+   1012661,
+   1012664,
+   1012694,
+   1012729,
+   1012731,
+   1012733,
+   1012751,
+   1012765,
+   1012857,
+   1013085,
+   1013096,
+   1013112,
+   1013227,
+   1013260,
+   1013332,
+   1013385,
+   1013582,
+   1013584,
+   1014570,
+   1014575,
+   1015979,
+   1015983,
+   1015998,
+   1016000,
+   1016534,
+   1016560,
+   1016589,
+   1016590,
+   1016818,
+   1016819,
+   1017721,
+   1017724,
+   1017744,
+   1017750,
+   1017762,
+   1017767,
+   1018029,
+   1018048,
+   1018330,
+   1020248,
+   1020267,
+   1020332,
+   1020434,
+   1020439,
+   1020450,
+   1020465,
+   1020519,
+   1020580,
+   1020596,
+   1020601,
+   1020611,
+   1020629,
+   1021704,
+   1021717,
+   1023606,
+   1024051,
+   1024104,
+   1024120,
+   1024137,
+   1024727,
+   1025023
+  ],
+  "quests": 69,
+  "current": {
+   "gameArt": {
+    "73034 (BattleTalk, era 1)": 69
+   },
+   "packPhotos": {
+    "1011887": 68,
+    "1017697": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "73034 curated box.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alphinaud_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alphinaud",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alphinaud",
+  "era": "5.0-5.3 (Shadowbringers)",
+  "lookDescription": "Crystarium Prodigy's attire (a simplified, more armoured HW outfit; serge poncho at first).",
+  "npcIds": [
+   1028990,
+   1029809,
+   1029814,
+   1029822,
+   1029832,
+   1029837,
+   1030196,
+   1030238,
+   1030554,
+   1031722,
+   1031742,
+   1031746,
+   1031777,
+   1032451,
+   1033868
+  ],
+  "quests": 15,
+  "current": {
+   "gameArt": {
+    "72621 (TrustBust, era 3)": 15
+   },
+   "packPhotos": {
+    "1028990": 1,
+    "1028361": 4,
+    "1026568": 10
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "72621 curated box.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alphinaud_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alphinaud",
+   "https://ffxiv.consolegameswiki.com/wiki/A_Taste_of_Honey",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alphinaud",
+  "era": "5.4-6.0 before \"Estate Visitor\"",
+  "lookDescription": "Back in his Source body's HW outfit from Reflections in Crystal (5.3) until Estate Visitor (6.0). Game data agrees: these ENpcBase rows use the HW body model 74639.",
+  "npcIds": [
+   1035381,
+   1035386,
+   1035391,
+   1035398,
+   1036330,
+   1036376,
+   1036426,
+   1036452,
+   1038702
+  ],
+  "quests": 9,
+  "current": {
+   "gameArt": {
+    "72621 (TrustBust, era 3)": 7,
+    "72638 (TrustBust, era 4)": 2
+   },
+   "packPhotos": {
+    "1011887": 9
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Pin these 9 ENpc ids to 72630 (Trust 'outfit 2' bust, the HW coat; it is in the index at era 3 but never picked) or to 73034.",
+   "Structural: key looks by the ENpcBase body model instead of by expansion (see report)."
+  ],
+  "faceNote": "72630 measured: eyes (0.55, 0.33), chin 0.44.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alphinaud_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alphinaud",
+   "https://ffxiv.consolegameswiki.com/wiki/Reflections_in_Crystal",
+   "https://ffxiv.consolegameswiki.com/wiki/Estate_Visitor",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alphinaud",
+  "era": "6.0-6.x (Endwalker)",
+  "lookDescription": "Sage outfit (a dyed Didact's Attire) from Estate Visitor (6.0); cold-weather gear in Garlemald.",
+  "npcIds": [
+   1038868,
+   1039020,
+   1039733,
+   1039853,
+   1040261,
+   1040307,
+   1041161,
+   1042216,
+   1044239,
+   1044260
+  ],
+  "quests": 10,
+  "current": {
+   "gameArt": {
+    "72638 (TrustBust, era 4)": 10
+   },
+   "packPhotos": {
+    "1038049": 2,
+    "1036118": 8
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72638: eyes [0.50, 0.305], chin 0.42. Mild: the default box puts the face 13% right of centre (eyes 43%, chin 83%)."
+  ],
+  "faceNote": "Default box (6,86,140).",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alphinaud_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alphinaud",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alphinaud",
+  "era": "7.0-7.x (Dawntrail)",
+  "lookDescription": "Story look is still the EW Sage outfit (lore: no new story outfit; game data: body 131768, as in 6.x). The summer outfit (72652) is Trust-only.",
+  "npcIds": [
+   1046864,
+   1046933,
+   1047063,
+   1047507,
+   1047561,
+   1047636,
+   1056011,
+   1058834,
+   1058879
+  ],
+  "quests": 9,
+  "current": {
+   "gameArt": {
+    "72638 (TrustBust, era 4)": 9
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 9,
+   "packStatus": "none (no DT photos)"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "Same 72638 crop fix.",
+   "Do not use 72652 (the Trust summer outfit) for story quests."
+  ],
+  "faceNote": "Default box (6,86,140).",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alphinaud_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alphinaud",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alisaie",
+  "era": "2.x (Binding Coil)",
+  "lookDescription": "ARR outfit mirroring her brother's: dark blue, red ponytail knot, white grimoire.",
+  "npcIds": [
+   1008540,
+   1009777
+  ],
+  "quests": 2,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 2
+   },
+   "packPhotos": {
+    "1004146": 1,
+    "1009777": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack 1004146/1009777 only. No ARR-look game art (87059 twins card blocked)."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alisaie_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alisaie",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alisaie",
+  "era": "3.4-3.x",
+  "lookDescription": "Tataru's HW outfit from Two Sides of a Coin (3.4): tan trench coat, grey cloak from the waist, silver pendant.",
+  "npcIds": [
+   1017749,
+   1018020
+  ],
+  "quests": 2,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 2
+   },
+   "packPhotos": {
+    "1013178": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "faces: 73036 (SB battle-talk, the same trench coat) with era 1, or 72631 (Trust outfit-2 bust, the HW coat) with era 1."
+  ],
+  "faceNote": "73036 already has a curated crop.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alisaie_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alisaie",
+   "https://ffxiv.consolegameswiki.com/wiki/Two_Sides_of_a_Coin",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alisaie",
+  "era": "4.0-4.x (Stormblood)",
+  "lookDescription": "HW trench coat continues; rapier from Urianger.",
+  "npcIds": [
+   1019929,
+   1019961,
+   1019971,
+   1019978,
+   1019985,
+   1020341,
+   1020520,
+   1020526,
+   1020608,
+   1020630,
+   1024971,
+   1025009,
+   1025549,
+   1026242,
+   1026781
+  ],
+  "quests": 17,
+  "current": {
+   "gameArt": {
+    "73036 (BattleTalk, era 2)": 17
+   },
+   "packPhotos": {
+    "1019541": 15,
+    "1013178": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "73036 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alisaie_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alisaie",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alisaie",
+  "era": "5.0-5.3 (Shadowbringers)",
+  "lookDescription": "Red Mage outfit: red dress, white thigh boots, short tan coat.",
+  "npcIds": [
+   1029002,
+   1029010,
+   1029601,
+   1030213,
+   1030216,
+   1030341,
+   1030557
+  ],
+  "quests": 7,
+  "current": {
+   "gameArt": {
+    "72622 (TrustBust, era 3)": 7
+   },
+   "packPhotos": {
+    "1026567": 7
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72622: eyes [0.60, 0.305], chin 0.42. The default box puts her face 26% right of centre."
+  ],
+  "faceNote": "Default box (6,86,140).",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alisaie_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alisaie",
+   "https://ffxiv.consolegameswiki.com/wiki/Following_in_Her_Footprints",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alisaie",
+  "era": "5.4-6.0 before \"Estate Visitor\"",
+  "lookDescription": "HW trench coat again, from Reflections in Crystal (5.3) to Estate Visitor (6.0); game data: body 74650, as in HW/SB.",
+  "npcIds": [
+   1035354,
+   1035613,
+   1036400,
+   1038681,
+   1038684,
+   1038719,
+   1038731,
+   1038741,
+   1038746
+  ],
+  "quests": 9,
+  "current": {
+   "gameArt": {
+    "72622 (TrustBust, era 3)": 3,
+    "72639 (TrustBust, era 4)": 6
+   },
+   "packPhotos": {
+    "1019541": 9
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Pin these 9 ENpc ids to 72631 (the HW-coat bust) or to 73036."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alisaie_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alisaie",
+   "https://ffxiv.consolegameswiki.com/wiki/Reflections_in_Crystal",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alisaie",
+  "era": "6.0-7.x (Endwalker, Dawntrail)",
+  "lookDescription": "EW outfit: white short jumpsuit, cropped leather jacket with a long back trail, red gloves; game data keeps it in 7.0.",
+  "npcIds": [
+   1039047,
+   1041168,
+   1047034,
+   1047395
+  ],
+  "quests": 4,
+  "current": {
+   "gameArt": {
+    "72639 (TrustBust, era 4)": 4
+   },
+   "packPhotos": {
+    "1036119": 2
+   },
+   "packGiversWithoutPhoto": 2,
+   "packStatus": "OK (6.0); none (DT)"
+  },
+  "status": "OK",
+  "fixOptions": [
+   "Optional: iconCrops 72639 eyes [0.47, 0.30], chin 0.41 (the default box is within tolerance: eyes 41%, chin 79%)."
+  ],
+  "faceNote": "Default box, acceptable.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alisaie_Leveilleur",
+   "https://ffxiv.consolegameswiki.com/wiki/Alisaie",
+   "https://ffxiv.consolegameswiki.com/wiki/Estate_Visitor",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Y'shtola",
+  "era": "2.0-2.x",
+  "lookDescription": "White dalmatica, two front pigtails with rings, teal eyes.",
+  "npcIds": [
+   1006343,
+   1006676,
+   1007473,
+   1007533
+  ],
+  "quests": 4,
+  "current": {
+   "gameArt": {
+    "87049 (TripleTriadCard, era 0)": 4
+   },
+   "packPhotos": {
+    "1003782": 3,
+    "1005126": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87049 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Y%27shtola_Rhul",
+   "https://ffxiv.consolegameswiki.com/wiki/Y%27shtola",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Y'shtola",
+  "era": "3.0-4.x",
+  "lookDescription": "Scion Healer's attire from Tataru's Surprise (3.0); her eyes turn pale white (blind).",
+  "npcIds": [
+   1012400,
+   1012406,
+   1012421,
+   1026284
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "87166 (TripleTriadCard, era 1)": 5
+   },
+   "packPhotos": {
+    "1011889": 5
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87166 curated. 72634 (Trust outfit-2 bust, HW look) is an unread alternative.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Y%27shtola_Rhul",
+   "https://ffxiv.consolegameswiki.com/wiki/Y%27shtola",
+   "https://ffxiv.consolegameswiki.com/wiki/Tataru%27s_Surprise",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Y'shtola",
+  "era": "5.0-7.x",
+  "lookDescription": "Black robes with grey fur, Nightseeker cane (ShB), kept through EW; game data keeps body 74692 in 7.x.",
+  "npcIds": [
+   1029011,
+   1029194,
+   1029216,
+   1029221,
+   1029223,
+   1029234,
+   1029557,
+   1030225,
+   1030517,
+   1032518,
+   1033829,
+   1033860,
+   1035367,
+   1038953,
+   1039586,
+   1039591,
+   1039624,
+   1039633,
+   1043848,
+   1045681,
+   1045758,
+   1054569
+  ],
+  "quests": 23,
+  "current": {
+   "gameArt": {
+    "72626 (TrustBust, era 3)": 23
+   },
+   "packPhotos": {
+    "1026571": 22
+   },
+   "packGiversWithoutPhoto": 1,
+   "packStatus": "wrong (staff, no face)"
+  },
+  "status": "OK",
+  "fixOptions": [
+   "Pack 1026571 frames her staff, not her face: skip it when building the pack (--skip), or rank curated game art above the pack."
+  ],
+  "faceNote": "72626 curated (clamped at the left edge).",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Y%27shtola_Rhul",
+   "https://ffxiv.consolegameswiki.com/wiki/Y%27shtola",
+   "https://ffxiv.consolegameswiki.com/wiki/Into_the_Dark",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Thancred",
+  "era": "2.x",
+  "lookDescription": "Short ash-blond hair, white shirt, black tunic, shoulder belts.",
+  "npcIds": [
+   1007534,
+   1008597
+  ],
+  "quests": 3,
+  "current": {
+   "gameArt": {
+    "87046 (TripleTriadCard, era 0)": 3
+   },
+   "packPhotos": {
+    "1003781": 3
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87046 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Thancred_Waters",
+   "https://ffxiv.consolegameswiki.com/wiki/Thancred",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Thancred",
+  "era": "3.1-4.x",
+  "lookDescription": "Longer hair, eyepatch over the left eye, tan, goatee (from A Little Slow, a Little Late, 3.1).",
+  "npcIds": [
+   1016579,
+   1016580
+  ],
+  "quests": 2,
+  "current": {
+   "gameArt": {
+    "87165 (TripleTriadCard, era 1)": 2
+   },
+   "packPhotos": {
+    "1015842": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87165 curated. 72632 (outfit-2 bust, eyepatch) is an unread alternative.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Thancred_Waters",
+   "https://ffxiv.consolegameswiki.com/wiki/Thancred",
+   "https://ffxiv.consolegameswiki.com/wiki/A_Little_Slow,_a_Little_Late",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Thancred",
+  "era": "5.0-7.x",
+  "lookDescription": "Short haircut, no eyepatch, white Gunbreaker gear; game data keeps body 131614 into 7.x.",
+  "npcIds": [
+   1028956,
+   1028981,
+   1029584,
+   1029615,
+   1029755,
+   1029853,
+   1030184,
+   1030336,
+   1032604,
+   1033823,
+   1038600,
+   1038653,
+   1038894,
+   1038931,
+   1040252,
+   1041250,
+   1046914,
+   1058804
+  ],
+  "quests": 18,
+  "current": {
+   "gameArt": {
+    "72623 (TrustBust, era 3)": 18
+   },
+   "packPhotos": {
+    "1026569": 13,
+    "1028975": 3
+   },
+   "packGiversWithoutPhoto": 2,
+   "packStatus": "off-centre (gunblade beside the face)"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "72623 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Thancred_Waters",
+   "https://ffxiv.consolegameswiki.com/wiki/Thancred",
+   "https://ffxiv.consolegameswiki.com/wiki/The_Oracle_of_Light",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Urianger",
+  "era": "2.x",
+  "lookDescription": "Hooded black-and-white cloak, goggles over his eyes.",
+  "npcIds": [
+   1007478
+  ],
+  "quests": 12,
+  "current": {
+   "gameArt": {
+    "87050 (TripleTriadCard, era 0)": 12
+   },
+   "packPhotos": {
+    "1006579": 12
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87050 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Urianger_Augurelt",
+   "https://ffxiv.consolegameswiki.com/wiki/Urianger",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Urianger",
+  "era": "5.0-6.x",
+  "lookDescription": "No hood, face shown, Astrologian chiton (from Unto the Truth, 5.0).",
+  "npcIds": [
+   1029017,
+   1029162,
+   1029167,
+   1029195,
+   1029249,
+   1029577,
+   1030172,
+   1030197,
+   1030327,
+   1030889,
+   1032526,
+   1032539,
+   1032555,
+   1032605,
+   1033872,
+   1038935,
+   1039760,
+   1039762,
+   1039772,
+   1040401,
+   1040436,
+   1045397,
+   1045420,
+   1045448,
+   1045611
+  ],
+  "quests": 25,
+  "current": {
+   "gameArt": {
+    "72625 (TrustBust, era 3)": 25
+   },
+   "packPhotos": {
+    "1026570": 24,
+    "1038075": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "off-centre (globe; face pushed right)"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "72625 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Urianger_Augurelt",
+   "https://ffxiv.consolegameswiki.com/wiki/Urianger",
+   "https://ffxiv.consolegameswiki.com/wiki/Unto_the_Truth",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Minfilia",
+  "era": "2.0-2.x",
+  "lookDescription": "Blonde ponytail with long side bangs, bare midriff.",
+  "npcIds": [
+   1003783,
+   1005116,
+   1005128,
+   1006573,
+   1006688,
+   1006690,
+   1006693,
+   1007724,
+   1008542,
+   1008579,
+   1008969,
+   1010147,
+   1010896,
+   1010897,
+   1010992,
+   1011000
+  ],
+  "quests": 36,
+  "current": {
+   "gameArt": {
+    "87056 (TripleTriadCard, era 0)": 36
+   },
+   "packPhotos": {
+    "1003783": 36
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87056 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Minfilia_Warde",
+   "https://ffxiv.consolegameswiki.com/wiki/Minfilia_Warde",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Minfilia (Ryne)",
+  "era": "5.0 (the girl called Minfilia)",
+  "lookDescription": "Ryne as 'Minfilia': long blonde hair, glowing sapphire eyes, white dress.",
+  "npcIds": [
+   1029637,
+   1029775
+  ],
+  "quests": 2,
+  "current": {
+   "gameArt": {
+    "72624 (TrustBust, era 3)": 2
+   },
+   "packPhotos": {
+    "1029560": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72624: eyes [0.43, 0.345], chin 0.46 (the eyes sit at 57% and the chin at 96% today)."
+  ],
+  "faceNote": "Default box.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Ryne_Waters",
+   "https://ffxiv.consolegameswiki.com/wiki/Ryne",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Ryne",
+  "era": "5.0-6.x",
+  "lookDescription": "Red hair and normal blue eyes after she takes the name Ryne (late 5.0).",
+  "npcIds": [
+   1029783,
+   1029786,
+   1030095,
+   1030110,
+   1030113,
+   1030118,
+   1032602,
+   1033812,
+   1033887,
+   1034519,
+   1034522,
+   1039992,
+   1045649
+  ],
+  "quests": 15,
+  "current": {
+   "gameArt": {
+    "72627 (TrustBust, era 3)": 15
+   },
+   "packPhotos": {
+    "1027137": 15
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72627: eyes [0.40, 0.335], chin 0.45 (the eyes sit at 53% and the chin at 93% today)."
+  ],
+  "faceNote": "Mild.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Ryne_Waters",
+   "https://ffxiv.consolegameswiki.com/wiki/Ryne",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Tataru",
+  "era": "2.x-3.x (ARR outfit)",
+  "lookDescription": "Lilac hair, red-orange beret, pink top.",
+  "npcIds": [
+   1010891,
+   1010961,
+   1011020,
+   1012580,
+   1017788
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "87019 (TripleTriadCard, era 0)": 5
+   },
+   "packPhotos": {
+    "1001501": 4,
+    "1010980": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87019 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Tataru_Taru",
+   "https://ffxiv.consolegameswiki.com/wiki/Tataru",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Tataru",
+  "era": "3.0 Ishgard",
+  "lookDescription": "Special Ishgard outfits in 3.0 (ENpcBase bodies 2621444 and 1507358).",
+  "npcIds": [
+   1012398,
+   1012721,
+   1013162
+  ],
+  "quests": 3,
+  "current": {
+   "gameArt": {
+    "87019 (TripleTriadCard, era 0)": 3
+   },
+   "packPhotos": {
+    "1012393": 2,
+    "1012184": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Low priority: the ARR card is close (the same hat). The pack photos 1012393/1012184 show the 3.0 look."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Tataru_Taru",
+   "https://ffxiv.consolegameswiki.com/wiki/Tataru",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Tataru",
+  "era": "4.0 Hingan stay",
+  "lookDescription": "Stormblood outfit from The Room Where It Happened (4.0); this giver row is her pink-haired disguise.",
+  "npcIds": [
+   1023084
+  ],
+  "quests": 1,
+  "current": {
+   "gameArt": {
+    "87241 (TripleTriadCard, era 2)": 1
+   },
+   "packPhotos": {
+    "1019722": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87241 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Tataru_Taru",
+   "https://ffxiv.consolegameswiki.com/wiki/Tataru",
+   "https://ffxiv.consolegameswiki.com/wiki/The_Room_Where_It_Happened",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Tataru",
+  "era": "4.56-5.x (ARR look again)",
+  "lookDescription": "Back to the ARR look from A Requiem for Heroes (4.56) (CGW). Game data agrees: body 393247, the ARR model.",
+  "npcIds": [
+   1026990,
+   1031257,
+   1032081
+  ],
+  "quests": 3,
+  "current": {
+   "gameArt": {
+    "87241 (TripleTriadCard, era 2)": 3
+   },
+   "packPhotos": {
+    "1001501": 2,
+    "1031257": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Pin 1026990, 1031257 and 1032081 to 87019 (the ARR card). Today they wear the SB kimono card 87241, because era 2 is the latest card face that is not after era 3."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Tataru_Taru",
+   "https://ffxiv.consolegameswiki.com/wiki/Tataru",
+   "https://ffxiv.consolegameswiki.com/wiki/A_Requiem_for_Heroes",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Tataru",
+  "era": "6.0-7.x (Endwalker outfit)",
+  "lookDescription": "Endwalker outfit from Returning Home (6.0); body 66084, kept into 7.x.",
+  "npcIds": [
+   1038824,
+   1038969,
+   1039570,
+   1039818,
+   1041232,
+   1058995
+  ],
+  "quests": 6,
+  "current": {
+   "gameArt": {
+    "87241 (TripleTriadCard, era 2)": 6
+   },
+   "packPhotos": {
+    "1035457": 5
+   },
+   "packGiversWithoutPhoto": 1,
+   "packStatus": "OK (6.x); none (7.x)"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Use 73072 (EW battle-talk, which already has a curated crop). The family order (card before battle-talk) hides it behind the SB card. Pin the 6 ENpc ids, or pick the latest era across families before family rank."
+  ],
+  "faceNote": "73072 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Tataru_Taru",
+   "https://ffxiv.consolegameswiki.com/wiki/Tataru",
+   "https://ffxiv.consolegameswiki.com/wiki/Returning_Home",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Krile",
+  "era": "3.1-3.x",
+  "lookDescription": "Cloak of Nine Lives: yellow hooded robe with big animal ears (unchanged 3.1-6.5).",
+  "npcIds": [
+   1015992
+  ],
+  "quests": 1,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 1
+   },
+   "packPhotos": {
+    "1015992": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "faces: 87199 with era 1. Her card is numbered among the SB cards but shows the 3.1 look."
+  ],
+  "faceNote": "87199 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Krile_Maya_Baldesion",
+   "https://ffxiv.consolegameswiki.com/wiki/Krile",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Krile",
+  "era": "5.x-6.x",
+  "lookDescription": "The same hooded robe.",
+  "npcIds": [
+   1031783,
+   1032494,
+   1032694,
+   1038578,
+   1038670,
+   1038695,
+   1038769,
+   1038781,
+   1040161,
+   1040276,
+   1040291,
+   1042278
+  ],
+  "quests": 12,
+  "current": {
+   "gameArt": {
+    "87199 (TripleTriadCard, era 2)": 12
+   },
+   "packPhotos": {
+    "1016760": 1,
+    "1012813": 11
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87199 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Krile_Maya_Baldesion",
+   "https://ffxiv.consolegameswiki.com/wiki/Krile",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Krile",
+  "era": "7.0-7.x",
+  "lookDescription": "Pictomancer look from The Game Is Afoot (6.55).",
+  "npcIds": [
+   1046511,
+   1047726,
+   1047929,
+   1047947,
+   1052217,
+   1052483,
+   1056126,
+   1056141,
+   1056168,
+   1056175,
+   1056202
+  ],
+  "quests": 11,
+  "current": {
+   "gameArt": {
+    "72659 (TrustBust, era 5)": 11
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 11,
+   "packStatus": "none (no DT photos)"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "72659 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Krile_Maya_Baldesion",
+   "https://ffxiv.consolegameswiki.com/wiki/Krile",
+   "https://ffxiv.consolegameswiki.com/wiki/The_Game_Is_Afoot",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "G'raha Tia",
+  "era": "2.1-2.3 (Crystal Tower)",
+  "lookDescription": "Young red-haired Allagan archer with heterochromia.",
+  "npcIds": [
+   1007763
+  ],
+  "quests": 2,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 2
+   },
+   "packPhotos": {
+    "1005518": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "By design (block 1007763), no later face shows. The pack photo 1005518 is era-correct. No Crystal Tower game art found."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/G%27raha_Tia",
+   "https://ffxiv.consolegameswiki.com/wiki/G%27raha_Tia",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Crystal Exarch",
+  "era": "5.0 (hooded)",
+  "lookDescription": "Hooded black robe with a red-and-white toga, golden staff.",
+  "npcIds": [
+   1028923,
+   1028924,
+   1028925,
+   1028943,
+   1029846,
+   1030375
+  ],
+  "quests": 8,
+  "current": {
+   "gameArt": {
+    "72629 (TrustBust, era 3)": 8
+   },
+   "packPhotos": {
+    "1028108": 8
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "off-centre (staff)"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72629: eyes [0.33, 0.255], chin 0.36 (the eyes sit at 26% and the chin at 62% today)."
+  ],
+  "faceNote": "The eyes are in the hood's shadow; framed on the mouth and chin.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/G%27raha_Tia",
+   "https://ffxiv.consolegameswiki.com/wiki/G%27raha_Tia",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Crystal Exarch",
+  "era": "5.1-5.3 (unhooded)",
+  "lookDescription": "Unhooded after the 5.0 reveal (game data: new bodies 140231/205789).",
+  "npcIds": [
+   1032121,
+   1033854
+  ],
+  "quests": 3,
+  "current": {
+   "gameArt": {
+    "72629 (TrustBust, era 3)": 3
+   },
+   "packPhotos": {
+    "1028166": 2,
+    "1032776": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "off-centre (staff)"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Low priority. 72643 and 72637 show G'raha unhooded, but in later clothes. The pack photos 1028166/1032776 have the right look, but the staff dominates."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/G%27raha_Tia",
+   "https://ffxiv.consolegameswiki.com/wiki/G%27raha_Tia",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "G'raha Tia",
+  "era": "5.4-7.x",
+  "lookDescription": "Travel outfit with Exarch details, from Reflections in Crystal (5.3).",
+  "npcIds": [
+   1035345,
+   1035350,
+   1036352,
+   1039004,
+   1039782,
+   1039974,
+   1040340,
+   1040386,
+   1040451,
+   1041158,
+   1042275,
+   1045692,
+   1045700,
+   1047084,
+   1047869,
+   1052202,
+   1058790
+  ],
+  "quests": 17,
+  "current": {
+   "gameArt": {
+    "72637 (TrustBust, era 3)": 17
+   },
+   "packPhotos": {
+    "1032779": 13
+   },
+   "packGiversWithoutPhoto": 4,
+   "packStatus": "off-centre (crystal staff; face pushed right)"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "72637 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/G%27raha_Tia",
+   "https://ffxiv.consolegameswiki.com/wiki/G%27raha_Tia",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Estinien",
+  "era": "3.0 (Heavensward)",
+  "lookDescription": "Helmeted black Drachen (Azure Dragoon) armour; crimson-stained after Into the Aery.",
+  "npcIds": [
+   1012589,
+   1012698,
+   1012746,
+   1012764,
+   1014110
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "87088 (TripleTriadCard, era 1)": 5
+   },
+   "packPhotos": {
+    "1007115": 3,
+    "1012111": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "wrong (weapon, no face)"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 87088: centre the helmet (measure on the focus sheet; the helmet sits right of centre and high).",
+   "Alternative: 72645 (Trust outfit-2 bust, HW armour), which the index does not read today.",
+   "Pack: skip 1007115 and 1012111 (the head crop frames his lance)."
+  ],
+  "faceNote": "The helmet sits right of centre and high in the default box.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Estinien_Varlineau",
+   "https://ffxiv.consolegameswiki.com/wiki/Estinien",
+   "https://ffxiv.consolegameswiki.com/wiki/Into_the_Aery",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Estinien",
+  "era": "5.4-5.55",
+  "lookDescription": "Travel outfit with Gaius; game data: body 262465, the same as in EW.",
+  "npcIds": [
+   1036346
+  ],
+  "quests": 1,
+  "current": {
+   "gameArt": {
+    "87088 (TripleTriadCard, era 1)": 1
+   },
+   "packPhotos": {
+    "1029535": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "wrong (weapon)"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Pin 1036346 to 72644 with era 3."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Estinien_Varlineau",
+   "https://ffxiv.consolegameswiki.com/wiki/Estinien",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Estinien",
+  "era": "6.0-7.x (Endwalker on)",
+  "lookDescription": "Dark armoured travel outfit, long white hair tied back from Thavnair on (body 262465).",
+  "npcIds": [
+   1038611,
+   1039058,
+   1039579,
+   1041214,
+   1043815,
+   1044229,
+   1058863
+  ],
+  "quests": 7,
+  "current": {
+   "gameArt": {
+    "72644 (TrustBust, era 4)": 7
+   },
+   "packPhotos": {
+    "1036120": 6
+   },
+   "packGiversWithoutPhoto": 1,
+   "packStatus": "wrong (weapon in frame, face in the corner)"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72644: eyes [0.31, 0.259], chin 0.339 (clamps at the bust's left edge). Today the eyes sit at 27%, the chin at 55% and the face 13% left of centre.",
+   "Pack: skip 1036120."
+  ],
+  "faceNote": "Owner complaint confirmed.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Estinien_Varlineau",
+   "https://ffxiv.consolegameswiki.com/wiki/Estinien",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Varshahn",
+  "era": "6.2-6.5",
+  "lookDescription": "Adult Auri vessel (the Duty Support look). The child simulacrum appears in 6.0 only and gives no quests.",
+  "npcIds": [
+   1039600,
+   1039645,
+   1042064,
+   1043841,
+   1043858,
+   1044271,
+   1045662
+  ],
+  "quests": 11,
+  "current": {
+   "gameArt": {
+    "72650 (TrustBust, era 4)": 11
+   },
+   "packPhotos": {
+    "1038053": 7,
+    "1039663": 4
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "off-centre (face low, chin past the plate)"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72650: eyes [0.44, 0.19], chin 0.33. Today the eyes sit at 4% and the chin at 52%: the plate shows his hair and forehead."
+  ],
+  "faceNote": "Owner complaint confirmed.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Vrtra_(Final_Fantasy_XIV)",
+   "https://ffxiv.consolegameswiki.com/wiki/Varshahn",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Wuk Lamat",
+  "era": "7.0-7.x",
+  "lookDescription": "Cream fur, long brown hair with Turali wraps and feathers, gold head wrap.",
+  "npcIds": [
+   1046504,
+   1046509,
+   1046537,
+   1046552,
+   1046619,
+   1046628,
+   1046667,
+   1046695,
+   1046702,
+   1046735,
+   1046762,
+   1046792,
+   1046851,
+   1046993,
+   1047002,
+   1047037,
+   1047521,
+   1047572,
+   1047588,
+   1047622,
+   1047649,
+   1047746,
+   1047776,
+   1047804,
+   1047810,
+   1047842,
+   1047898,
+   1048011,
+   1048075,
+   1048120,
+   1048124,
+   1048158,
+   1051347,
+   1051412,
+   1052261,
+   1054551
+  ],
+  "quests": 36,
+  "current": {
+   "gameArt": {
+    "72661 (TrustBust, era 5)": 36
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 36,
+   "packStatus": "none (no DT photos)"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72661: eyes [0.57, 0.198], chin 0.324. Today the eyes sit at 6%, the chin at 50%, and the face 22% right of centre. She is the most-shown Dawntrail face (36 quests)."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Wuk_Lamat",
+   "https://ffxiv.consolegameswiki.com/wiki/Wuk_Lamat",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Koana",
+  "era": "7.0-7.x",
+  "lookDescription": "Dark green hair, glasses, Pioneer gear in pastel green.",
+  "npcIds": [
+   1046617,
+   1046642,
+   1046661,
+   1046664,
+   1046878,
+   1047545,
+   1047764,
+   1052248
+  ],
+  "quests": 8,
+  "current": {
+   "gameArt": {
+    "72663 (TrustBust, era 5)": 8
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 8,
+   "packStatus": "none"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72663: eyes [0.42, 0.29], chin 0.40."
+  ],
+  "faceNote": "Mild (eyes 38%, chin 76%).",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Koana",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Erenville",
+  "era": "7.0",
+  "lookDescription": "Sharlayan gleaner coat (Turali clothes only from 7.1).",
+  "npcIds": [
+   1046522,
+   1046570,
+   1046785,
+   1046881,
+   1046893,
+   1046918,
+   1046952,
+   1046965,
+   1046967,
+   1046973,
+   1046975,
+   1046982,
+   1046995,
+   1047375,
+   1047438,
+   1047742
+  ],
+  "quests": 16,
+  "current": {
+   "gameArt": {
+    "73275 (BattleTalk, era 5)": 16
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 16,
+   "packStatus": "none"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "73275 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Erenville",
+   "https://ffxiv.consolegameswiki.com/wiki/Erenville",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Sphene",
+  "era": "7.0 (Queen of Alexandria)",
+  "lookDescription": "Queen of Alexandria in a veil and tiara (game data: model 4072).",
+  "npcIds": [
+   1047403,
+   1047406,
+   1048062,
+   1048067
+  ],
+  "quests": 4,
+  "current": {
+   "gameArt": {
+    "72664 (TrustBust, era 5)": 4
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 4,
+   "packStatus": "none"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Pin 1047403, 1047406, 1048062 and 1048067 to 87425 (her card: the queen in a veil) or to 73270 (battle-talk, curated name). Today they wear 72664, the restored 7.2 Sphene, which is also a within-expansion spoiler."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Sphene_Alexandros_XIV",
+   "https://ffxiv.consolegameswiki.com/wiki/Sphene_(NPC)",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Sphene",
+  "era": "7.2+",
+  "lookDescription": "Restored Sphene: hooded black-and-beige coat (from Memories of a Bygone Age, 7.2).",
+  "npcIds": [
+   1053830,
+   1053845,
+   1053857,
+   1053873,
+   1053878,
+   1054140,
+   1054529,
+   1054555,
+   1054604
+  ],
+  "quests": 9,
+  "current": {
+   "gameArt": {
+    "72664 (TrustBust, era 5)": 9
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 9,
+   "packStatus": "none"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "72664 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Sphene_Alexandros_XIV",
+   "https://ffxiv.consolegameswiki.com/wiki/Sphene_(NPC)",
+   "https://ffxiv.consolegameswiki.com/wiki/Memories_of_a_Bygone_Age",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Cahciua",
+  "era": "7.0",
+  "lookDescription": "Drone form; her Shetona look appears only in Living Memory.",
+  "npcIds": [
+   1047465,
+   1047883,
+   1047915,
+   1047970,
+   1047986,
+   1047999,
+   1048132,
+   1048135
+  ],
+  "quests": 8,
+  "current": {
+   "gameArt": {
+    "87423 (TripleTriadCard, era 5)": 8
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 8,
+   "packStatus": "none"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "87423 curated.",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Cahciua",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Zero",
+  "era": "6.2-6.5",
+  "lookDescription": "Reaper look: violet-black clothes, feathered three-pointed hat, scythe.",
+  "npcIds": [
+   1043822,
+   1043839,
+   1044289,
+   1044291,
+   1045482,
+   1045631
+  ],
+  "quests": 6,
+  "current": {
+   "gameArt": {
+    "72651 (TrustBust, era 4)": 6
+   },
+   "packPhotos": {
+    "1042980": 6
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "wrong (armour, no face)"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72651: eyes [0.45, 0.26], chin 0.37 (the eyes sit at 28% and the chin at 65% today).",
+   "Pack: skip 1042980."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Zero_(Final_Fantasy_XIV)",
+   "https://ffxiv.consolegameswiki.com/wiki/Zero",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Zero",
+  "era": "7.x",
+  "lookDescription": "Armoured knight look from Down in the Dark (6.5); a new model (3717) in Winter's Prelude.",
+  "npcIds": [
+   1058818
+  ],
+  "quests": 1,
+  "current": {
+   "gameArt": {
+    "72651 (TrustBust, era 4)": 1
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 1,
+   "packStatus": "none"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Pin 1058818 to 73274 (DT battle-talk, no hat) or to 87467 (her card, armour)."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Zero_(Final_Fantasy_XIV)",
+   "https://ffxiv.consolegameswiki.com/wiki/Zero",
+   "https://ffxiv.consolegameswiki.com/wiki/Down_in_the_Dark",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Venat",
+  "era": "6.0",
+  "lookDescription": "Long silver-white hair, half-mask, white robe.",
+  "npcIds": [
+   1040109,
+   1040115,
+   1040128,
+   1040129,
+   1040159
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "72647 (TrustBust, era 4)": 5
+   },
+   "packPhotos": {
+    "1039189": 5
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72647: eyes [0.27, 0.236], chin 0.364 (the eyes sit at 19%, the chin at 63%, the face 18% left)."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Venat_(Final_Fantasy_XIV)",
+   "https://ffxiv.consolegameswiki.com/wiki/Venat",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Lyna",
+  "era": "5.0-5.x",
+  "lookDescription": "Viis with light blue hair, Crystarium armour.",
+  "npcIds": [
+   1028947,
+   1030369,
+   1030587,
+   1032502
+  ],
+  "quests": 4,
+  "current": {
+   "gameArt": {
+    "72628 (TrustBust, era 3)": 4
+   },
+   "packPhotos": {
+    "1028865": 4
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "wrong (ears only)"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "iconCrops 72628: eyes [0.30, 0.283], chin 0.40 (the eyes sit at 36%, the chin at 76%, the face 14% left).",
+   "Pack: skip 1028865."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Lyna",
+   "https://ffxiv.consolegameswiki.com/wiki/Lyna",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Jullus",
+  "era": "6.0-6.x",
+  "lookDescription": "Blue-haired Garlean in a fur-collared coat.",
+  "npcIds": [
+   1038789,
+   1039883,
+   1039896,
+   1039913,
+   1045431,
+   1045445
+  ],
+  "quests": 7,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 7
+   },
+   "packPhotos": {
+    "1038047": 7
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "faces: 87466 (card, curated crop) with era 4. The card is numbered among the DT cards but shows his EW look (it matches pack 1038047)."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Jullus",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Hien",
+  "era": "4.0-4.x",
+  "lookDescription": "Black topknot, cross scar, yellow fur-trimmed dogi.",
+  "npcIds": [
+   1020239,
+   1020524,
+   1020540,
+   1020543,
+   1020544,
+   1020679,
+   1021633,
+   1021647,
+   1021730,
+   1024999,
+   1025008,
+   1025095,
+   1025557,
+   1025597,
+   1026268,
+   1026784
+  ],
+  "quests": 20,
+  "current": {
+   "gameArt": {
+    "87202 (TripleTriadCard, era 2)": 20
+   },
+   "packPhotos": {
+    "1019544": 20
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Hien_Rijin",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Gosetsu",
+  "era": "4.0",
+  "lookDescription": "Silver hair, beard, samurai garb (shaved head only from 4.3).",
+  "npcIds": [
+   1019997,
+   1020052,
+   1020186,
+   1020484,
+   1021615,
+   1021625,
+   1021628
+  ],
+  "quests": 7,
+  "current": {
+   "gameArt": {
+    "87230 (TripleTriadCard, era 2)": 7
+   },
+   "packPhotos": {
+    "1019710": 7
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Gosetsu_Daito",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Lyse",
+  "era": "4.0-4.x",
+  "lookDescription": "Long blonde hair; Tataru's red-vest outfit, then Yda's red Ala Mhigan dress.",
+  "npcIds": [
+   1019468,
+   1019970,
+   1019988,
+   1020234,
+   1020382,
+   1020436,
+   1020472,
+   1020476,
+   1020527,
+   1020631,
+   1020633,
+   1020661,
+   1020665,
+   1020682,
+   1021710,
+   1022344,
+   1024125,
+   1026823
+  ],
+  "quests": 19,
+  "current": {
+   "gameArt": {
+    "87200 (TripleTriadCard, era 2)": 19
+   },
+   "packPhotos": {
+    "1019468": 6,
+    "1018509": 13
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Lyse_Hext",
+   "https://ffxiv.consolegameswiki.com/wiki/Lyse",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Yda",
+  "era": "2.x-3.x",
+  "lookDescription": "Turban with a half-face mask, white jacket, red sash.",
+  "npcIds": [
+   1006674,
+   1018043
+  ],
+  "quests": 2,
+  "current": {
+   "gameArt": {
+    "73156 (BattleTalk, era 0)": 2
+   },
+   "packPhotos": {
+    "1002275": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "Measure an iconCrop for 73156 (the masked face turns right and is cut)."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Yda_Hext",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Papalymo",
+  "era": "2.x",
+  "lookDescription": "Dark robe, monocle on the right eye.",
+  "npcIds": [
+   1006675,
+   1007531
+  ],
+  "quests": 2,
+  "current": {
+   "gameArt": {
+    "87048 (TripleTriadCard, era 0)": 2
+   },
+   "packPhotos": {
+    "1002276": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Papalymo_Totolymo",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Papalymo",
+  "era": "3.x",
+  "lookDescription": "In hiding with the Resistance: dark cowl, no monocle (body 2359325).",
+  "npcIds": [
+   1017759
+  ],
+  "quests": 1,
+  "current": {
+   "gameArt": {
+    "87048 (TripleTriadCard, era 0)": 1
+   },
+   "packPhotos": {
+    "1015883": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Low priority (1 quest); pack 1015883 has the look."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Papalymo_Totolymo",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Yugiri",
+  "era": "2.55",
+  "lookDescription": "Masked shinobi garb.",
+  "npcIds": [
+   1008696
+  ],
+  "quests": 1,
+  "current": {
+   "gameArt": {
+    "73167 (BattleTalk, era 0)": 1
+   },
+   "packPhotos": {
+    "1007097": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Yugiri_Mistwalker",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Yugiri",
+  "era": "4.0-6.x",
+  "lookDescription": "Ninja relic gear with light chainmail.",
+  "npcIds": [
+   1020011,
+   1020012,
+   1020020,
+   1020046,
+   1020055,
+   1020068,
+   1020079,
+   1023780,
+   1024738,
+   1024837,
+   1038458
+  ],
+  "quests": 15,
+  "current": {
+   "gameArt": {
+    "87084 (TripleTriadCard, era 1)": 15
+   },
+   "packPhotos": {
+    "1019096": 13,
+    "1019713": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Yugiri_Mistwalker",
+   "https://ffxiv.consolegameswiki.com/wiki/Life_after_Doma",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Cid",
+  "era": "2.0",
+  "lookDescription": "White vest over a black sleeveless top, goggles over his third eye.",
+  "npcIds": [
+   1006461,
+   1006492,
+   1006528,
+   1006535,
+   1006555
+  ],
+  "quests": 8,
+  "current": {
+   "gameArt": {
+    "87058 (TripleTriadCard, era 0)": 8
+   },
+   "packPhotos": {
+    "1003855": 8
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Cid_Garlond",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Cid",
+  "era": "3.0 on",
+  "lookDescription": "Long-sleeved white-and-black jacket from HW on (body 74636).",
+  "npcIds": [
+   1012792,
+   1013386,
+   1021942,
+   1021949,
+   1024788,
+   1026450,
+   1026452
+  ],
+  "quests": 11,
+  "current": {
+   "gameArt": {
+    "87058 (TripleTriadCard, era 0)": 11
+   },
+   "packPhotos": {
+    "1012195": 10
+   },
+   "packGiversWithoutPhoto": 1,
+   "packStatus": "OK"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Low priority: only the sleeves differ inside the crop. No HW-look Cid art found; pack 1012195 has the look."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Cid_Garlond",
+   "https://ffxiv.consolegameswiki.com/wiki/A_Series_of_Unfortunate_Events",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Raubahn",
+  "era": "2.0-2.x",
+  "lookDescription": "Braids, beard, two swords and a shield.",
+  "npcIds": [
+   1004004,
+   1006657,
+   1008616
+  ],
+  "quests": 3,
+  "current": {
+   "gameArt": {
+    "87067 (TripleTriadCard, era 0)": 3
+   },
+   "packPhotos": {
+    "1003787": 3
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Raubahn_Aldynn",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Raubahn",
+  "era": "4.0-4.x",
+  "lookDescription": "Left arm lost at the 2.55 banquet; the stump under a black cloak and bull pauldron (body 74631).",
+  "npcIds": [
+   1020304,
+   1020400,
+   1020648,
+   1020656,
+   1021698,
+   1024063
+  ],
+  "quests": 7,
+  "current": {
+   "gameArt": {
+    "87067 (TripleTriadCard, era 0)": 7
+   },
+   "packPhotos": {
+    "1020304": 6,
+    "1020400": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK (one photo, 1020400, is a helmet)"
+  },
+  "status": "OK",
+  "fixOptions": [
+   "Keep the ARR card: the face is unchanged, and the SB battle-talk 73031 is helmeted. Skip pack photo 1020400."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Raubahn_Aldynn",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Momodi",
+  "era": "2.0-2.x",
+  "lookDescription": "Red hair, red eyes, woollen shirt.",
+  "npcIds": [
+   1001353,
+   1003988
+  ],
+  "quests": 10,
+  "current": {
+   "gameArt": {
+    "87028 (TripleTriadCard, era 0)": 10
+   },
+   "packPhotos": {
+    "1001353": 10
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Momodi_Modi",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Mother Miounne",
+  "era": "2.0",
+  "lookDescription": "Elezen proprietress.",
+  "npcIds": [
+   1000100,
+   1001140
+  ],
+  "quests": 9,
+  "current": {
+   "gameArt": {
+    "87030 (TripleTriadCard, era 0)": 9
+   },
+   "packPhotos": {
+    "1000100": 9
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Mother_Miounne",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Baderon",
+  "era": "2.0",
+  "lookDescription": "Roegadyn innkeeper.",
+  "npcIds": [
+   1000972,
+   1002697
+  ],
+  "quests": 8,
+  "current": {
+   "gameArt": {
+    "87029 (TripleTriadCard, era 0)": 8
+   },
+   "packPhotos": {
+    "1000972": 8
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Baderon_Tenfingers",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Merlwyb",
+  "era": "2.x-5.x",
+  "lookDescription": "Short swept-back white hair, long black coat.",
+  "npcIds": [
+   1002694,
+   1008803
+  ],
+  "quests": 3,
+  "current": {
+   "gameArt": {
+    "87065 (TripleTriadCard, era 0)": 3
+   },
+   "packPhotos": {
+    "1002441": 3
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Merlwyb_Bloefhiswyn",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Kan-E-Senna",
+  "era": "2.0-5.x",
+  "lookDescription": "White dress with a fur collar, blonde bun.",
+  "npcIds": [
+   1003027
+  ],
+  "quests": 2,
+  "current": {
+   "gameArt": {
+    "87066 (TripleTriadCard, era 0)": 2
+   },
+   "packPhotos": {
+    "1003027": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Kan-E-Senna",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Nanamo Ul Namo",
+  "era": "4.x",
+  "lookDescription": "Pale Dunesfolk with green eyes.",
+  "npcIds": [
+   1024043,
+   1024045,
+   1024102
+  ],
+  "quests": 3,
+  "current": {
+   "gameArt": {
+    "87063 (TripleTriadCard, era 0)": 3
+   },
+   "packPhotos": {
+    "1003871": 3
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Nanamo_Ul_Namo",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Aymeric",
+  "era": "3.x",
+  "lookDescription": "Short black hair, black-and-gold armour.",
+  "npcIds": [
+   1012380,
+   1016074,
+   1016813,
+   1018015
+  ],
+  "quests": 4,
+  "current": {
+   "gameArt": {
+    "87096 (TripleTriadCard, era 1)": 4
+   },
+   "packPhotos": {
+    "1009751": 4
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Aymeric_de_Borel",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Lucia",
+  "era": "3.0-6.0",
+  "lookDescription": "Platinum blonde, grey plate armour, a headband over her third eye.",
+  "npcIds": [
+   1013384,
+   1015978,
+   1016008,
+   1016564,
+   1039681,
+   1039915,
+   1039931,
+   1039940
+  ],
+  "quests": 10,
+  "current": {
+   "gameArt": {
+    "87089 (TripleTriadCard, era 1)": 10
+   },
+   "packPhotos": {
+    "1012104": 1,
+    "1008193": 9
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Lucia_Junius",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Haurchefant",
+  "era": "2.0-3.0",
+  "lookDescription": "Silver-blue hair, chainmail.",
+  "npcIds": [
+   1006384,
+   1012381,
+   1012750
+  ],
+  "quests": 9,
+  "current": {
+   "gameArt": {
+    "73124 (BattleTalk, era 0)": 7,
+    "87095 (TripleTriadCard, era 1)": 2
+   },
+   "packPhotos": {
+    "1006384": 9
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Haurchefant_Greystone",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Ysayle",
+  "era": "3.0",
+  "lookDescription": "Iceheart.",
+  "npcIds": [
+   1012609,
+   1012619,
+   1012628,
+   1012636,
+   1012638
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "87090 (TripleTriadCard, era 1)": 5
+   },
+   "packPhotos": {
+    "1008966": 5
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Ysayle",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Ilberd",
+  "era": "2.x",
+  "lookDescription": "Ala Mhigan Crystal Brave captain.",
+  "npcIds": [
+   1009961,
+   1010010,
+   1010018,
+   1010845,
+   1010849
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "73132 (BattleTalk, era 0)": 5
+   },
+   "packPhotos": {
+    "1008192": 5
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "Measure an iconCrop for 73132 (his face turns right and is cut at the edge)."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Ilberd_Feare",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Conrad",
+  "era": "4.0",
+  "lookDescription": "Resistance commander.",
+  "npcIds": [
+   1019466,
+   1020329,
+   1020431,
+   1020568
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "73109 (BattleTalk, era 2)": 5
+   },
+   "packPhotos": {
+    "1019082": 5
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "off-centre",
+  "fixOptions": [
+   "Measure an iconCrop for 73109 (the face sits right and is cut)."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Conrad",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Emet-Selch",
+  "era": "6.0 (Elpis)",
+  "lookDescription": "Ancient look: white hair, grey robe (from Hope Upon a Flower).",
+  "npcIds": [
+   1040050,
+   1040140
+  ],
+  "quests": 2,
+  "current": {
+   "gameArt": {
+    "72648 (TrustBust, era 4)": 2
+   },
+   "packPhotos": {
+    "1039997": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Emet-Selch",
+   "https://ffxiv.consolegameswiki.com/wiki/Hope_Upon_a_Flower",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Hythlodaeus",
+  "era": "6.0 (Elpis)",
+  "lookDescription": "Pale purple hair in a braid.",
+  "npcIds": [
+   1039996,
+   1039998,
+   1040101,
+   1040136,
+   1040148,
+   1040152
+  ],
+  "quests": 6,
+  "current": {
+   "gameArt": {
+    "72649 (TrustBust, era 4)": 6
+   },
+   "packPhotos": {
+    "1039996": 6
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Hythlodaeus",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Fourchenault",
+  "era": "6.0",
+  "lookDescription": "Forum uniform, or a field coat.",
+  "npcIds": [
+   1039701,
+   1040478,
+   1042746,
+   1042765
+  ],
+  "quests": 4,
+  "current": {
+   "gameArt": {
+    "87338 (TripleTriadCard, era 4)": 4
+   },
+   "packPhotos": {
+    "1039161": 2,
+    "1034125": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Fourchenault_Leveilleur",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Lahabrea",
+  "era": "6.x (Pandaemonium)",
+  "lookDescription": "Unmasked Keyward of Pandaemonium.",
+  "npcIds": [
+   1043495,
+   1043497,
+   1045335,
+   1045347,
+   1045356,
+   1045383
+  ],
+  "quests": 6,
+  "current": {
+   "gameArt": {
+    "87366 (TripleTriadCard, era 4)": 6
+   },
+   "packPhotos": {
+    "1043481": 6
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Lahabrea",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Runar",
+  "era": "5.0",
+  "lookDescription": "Ronso.",
+  "npcIds": [
+   1029197,
+   1029198
+  ],
+  "quests": 3,
+  "current": {
+   "gameArt": {
+    "87258 (TripleTriadCard, era 3)": 3
+   },
+   "packPhotos": {
+    "1028142": 3
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Runar",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Gerolt",
+  "era": "every arc",
+  "lookDescription": "Bald Highlander smith.",
+  "npcIds": [
+   1003075,
+   1032879,
+   1032903,
+   1043890
+  ],
+  "quests": 20,
+  "current": {
+   "gameArt": {
+    "87034 (TripleTriadCard, era 0)": 20
+   },
+   "packPhotos": {
+    "1003075": 20
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Gerolt_Blackthorn",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Hildibrand",
+  "era": "every arc",
+  "lookDescription": "Coatee, rose, monocle.",
+  "npcIds": [
+   1005711,
+   1008716,
+   1008722,
+   1008736,
+   1009341,
+   1010279,
+   1010290,
+   1011677,
+   1011691,
+   1016608,
+   1017983,
+   1018463,
+   1025885,
+   1026351,
+   1042499,
+   1042544,
+   1042573,
+   1044783,
+   1054773,
+   1058144
+  ],
+  "quests": 20,
+  "current": {
+   "gameArt": {
+    "87062 (TripleTriadCard, era 0)": 20
+   },
+   "packPhotos": {
+    "1005512": 4,
+    "1008264": 12,
+    "1018460": 1,
+    "1044783": 1
+   },
+   "packGiversWithoutPhoto": 2,
+   "packStatus": "OK"
+  },
+  "status": "OK",
+  "fixOptions": [],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Hildibrand_Manderville",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Nashu Mhakaracca",
+  "era": "3.x-7.x",
+  "lookDescription": "Hildibrand's partner.",
+  "npcIds": [
+   1016597,
+   1024351,
+   1024355,
+   1042512,
+   1051694,
+   1051709
+  ],
+  "quests": 6,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 6
+   },
+   "packPhotos": {
+    "1005501": 1,
+    "1009322": 3
+   },
+   "packGiversWithoutPhoto": 2,
+   "packStatus": "OK (low framing)"
+  },
+  "status": "none",
+  "fixOptions": [
+   "She is on the left of the 'Hildibrand & Nashu' card (87062), but the first-word rule cannot match her, and iconCrops hold one box per icon (Hildibrand's). She needs a per-name crop on a shared card."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Nashu_Mhakaracca",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Gaius",
+  "era": "6.x side",
+  "lookDescription": "Unarmoured Gaius (5.x/6.x).",
+  "npcIds": [
+   1033629
+  ],
+  "quests": 1,
+  "current": {
+   "gameArt": {
+    "87064 (TripleTriadCard, era 0)": 1
+   },
+   "packPhotos": {
+    "1027649": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "wrong look/era",
+  "fixOptions": [
+   "Low priority (1 quest): the card 87064 shows his ARR armour; pack 1027649 is right."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Gaius_van_Baelsar",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Severian",
+  "era": "2 side / 3 side / 4 side",
+  "lookDescription": "No game face exists for this character.",
+  "npcIds": [
+   1002299
+  ],
+  "quests": 15,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 15
+   },
+   "packPhotos": {
+    "1002299": 15
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack photo only."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Severian_Lyctor",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Alka Zolka",
+  "era": "2 side / 3 side / 4 side / 5 side",
+  "lookDescription": "No game face exists for this character.",
+  "npcIds": [
+   1006757,
+   1021911
+  ],
+  "quests": 11,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 11
+   },
+   "packPhotos": {
+    "1006757": 11
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "off-centre (axe beside the face)"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack photo only."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Alka_Zolka",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Meffrid",
+  "era": "2.0 / 4.0",
+  "lookDescription": "No game face exists for this character.",
+  "npcIds": [
+   1000332,
+   1020338,
+   1020372,
+   1020376,
+   1020379,
+   1020387
+  ],
+  "quests": 9,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 9
+   },
+   "packPhotos": {
+    "1000332": 4,
+    "1019543": 5
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack photo only."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Meffrid",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Isembard",
+  "era": "2.0",
+  "lookDescription": "No game face exists for this character.",
+  "npcIds": [
+   1003929
+  ],
+  "quests": 6,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 6
+   },
+   "packPhotos": {
+    "1003929": 6
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack photo only."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Isembard",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Moenbryda",
+  "era": "2.x",
+  "lookDescription": "No game face exists for this character.",
+  "npcIds": [
+   1010042
+  ],
+  "quests": 1,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 1
+   },
+   "packPhotos": {
+    "1009780": 1
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack photo only."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Moenbryda_Wilfsunnwyn",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Mikoto",
+  "era": "5 side",
+  "lookDescription": "No game face exists for this character.",
+  "npcIds": [
+   1034004,
+   1034461,
+   1034462,
+   1036656,
+   1036752
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 5
+   },
+   "packPhotos": {
+    "1032768": 5
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack photo only."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Mikoto_Jinba",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Hermes",
+  "era": "6.0",
+  "lookDescription": "No game face exists for this character.",
+  "npcIds": [
+   1040014,
+   1040027,
+   1040071,
+   1040083,
+   1040088
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 5
+   },
+   "packPhotos": {
+    "1038060": 5
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack photo only."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Hermes",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Chai-Nuzz",
+  "era": "5.0 / 5.x",
+  "lookDescription": "No game face exists for this character.",
+  "npcIds": [
+   1030253,
+   1030295,
+   1031760,
+   1031770
+  ],
+  "quests": 4,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 4
+   },
+   "packPhotos": {
+    "1030253": 1,
+    "1028120": 3
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "OK"
+  },
+  "status": "none",
+  "fixOptions": [
+   "Pack photo only."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://ffxiv.consolegameswiki.com/wiki/Chai-Nuzz",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Unukalhai",
+  "era": "3.x (masked) and 5.x",
+  "lookDescription": "Masked white robe in 3.x; unmasked, in green-and-white robes, on the First.",
+  "npcIds": [
+   1014565,
+   1035281,
+   1035283
+  ],
+  "quests": 11,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 11
+   },
+   "packPhotos": {
+    "1014565": 9,
+    "1035057": 2
+   },
+   "packGiversWithoutPhoto": 0,
+   "packStatus": "wrong (no face: 1014565 is a white blob, 1035057 a weapon)"
+  },
+  "status": "none",
+  "fixOptions": [
+   "No game face; skip both pack photos."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Unukalhai",
+   "https://ffxiv.consolegameswiki.com/wiki/Unukalhai",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Ketenramm",
+  "era": "7.0-7.x",
+  "lookDescription": "Dawntrail cast.",
+  "npcIds": [
+   1047695,
+   1052330,
+   1053798,
+   1053801,
+   1053803,
+   1059627,
+   1059640
+  ],
+  "quests": 10,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 10
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 7,
+   "packStatus": "none (no DT photos)"
+  },
+  "status": "none",
+  "fixOptions": [
+   "No game face found."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Ketenramm",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Shale",
+  "era": "7.0-7.x",
+  "lookDescription": "Dawntrail cast.",
+  "npcIds": [
+   1048161,
+   1054545,
+   1054616,
+   1054916
+  ],
+  "quests": 5,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 5
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 4,
+   "packStatus": "none (no DT photos)"
+  },
+  "status": "none",
+  "fixOptions": [
+   "No game face found."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Shale",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ },
+ {
+  "character": "Bakool Ja Ja",
+  "era": "7.0-7.x",
+  "lookDescription": "Dawntrail cast.",
+  "npcIds": [
+   1051974,
+   1054311,
+   1054336
+  ],
+  "quests": 3,
+  "current": {
+   "gameArt": {
+    "none (fallback)": 3
+   },
+   "packPhotos": {},
+   "packGiversWithoutPhoto": 3,
+   "packStatus": "none (no DT photos)"
+  },
+  "status": "none",
+  "fixOptions": [
+   "No game face found. The unnamed Mamool Ja battle-talk faces 73259-73264 may include him (unsure)."
+  ],
+  "faceNote": "",
+  "sources": [
+   "https://finalfantasy.fandom.com/wiki/Bakool_Ja_Ja",
+   "game data: Quest.IssuerStart -> ENpcResident/ENpcBase (body model), 2026.09.15 install"
+  ]
+ }
+]

@@ -8,3 +8,7 @@ obj/
 assets/icons/__pycache__/
 .claude/worktrees/
 __pycache__/
+
+# Portrait audit sheets and review images hold Square Enix art: keep them local
+docs/research/portrait-audit/*/sheets/
+docs/research/portrait-audit/**/*.png
