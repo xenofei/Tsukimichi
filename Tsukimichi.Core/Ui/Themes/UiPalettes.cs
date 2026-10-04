@@ -120,6 +120,16 @@ public static class UiPalettes
     public const uint NightHighContrastNotCheckedHex = 0x97A0BA;
 
     /// <summary>
+    /// #D08654 – copper, "it needs you" (spec-1.18): Night, Dawn and Kugane Lacquer (5.3 : 1 on Night's cards, 5.4 on
+    /// Dawn's, 5.9 on Kugane's). A new hue in the brass family, apart from gold (act now), plum (Locked out) and the
+    /// Settings hint's amber.
+    /// </summary>
+    public const uint CopperHex = 0xD08654;
+
+    /// <summary>#A8582A – Ishgard Snow's copper, deep enough to read at 4.5 : 1 on snow.</summary>
+    public const uint SnowCopperHex = 0xA8582A;
+
+    /// <summary>
     /// Night (ui-revamp §4.3, the Moon Road, flair-v13): the default palette, and the colours every release up to 1.15
     /// drew with, but for spec-1.16 §A2's two contrast fixes. Its high-contrast form is the spec's (§A3, §A8):
     /// <see cref="NightHighContrast"/>.
@@ -133,6 +143,7 @@ public static class UiPalettes
         Accent = GlyphTokens.Moon,
         AccentDim = GlyphTokens.MoonDim,
         OrnamentLight = SurfaceColors.Night.OrnamentLight,
+        Copper = ColorMath.FromHex(CopperHex),
         Inks = NightInks,
         States = StateInks.Compose(GlyphTokens.Moon, GlyphTokens.MoonDim, GlyphTokens.Moon, GlyphTokens.Silver, GlyphTokens.Dusk, GlyphTokens.Mist, GlyphTokens.Eclipse, GlyphTokens.EclipseText, GlyphTokens.Veil, GlyphTokens.VeilText),
         Scene = NightScene,
@@ -415,6 +426,7 @@ public static class UiPalettes
         Accent = ColorMath.FromHex(SnowAccentHex),
         AccentDim = ColorMath.FromHex(0x6B5420),
         OrnamentLight = ColorMath.FromHex(0x3F4862),
+        Copper = ColorMath.FromHex(SnowCopperHex),
         Inks = SnowInks,
         States = SnowStates,
         Scene = SnowScene,
@@ -678,6 +690,7 @@ public static class UiPalettes
             Accent = gold,
             AccentDim = ColorMath.FromHex(0xB99A6A),
             OrnamentLight = ColorMath.FromHex(0xEDCBAA),
+            Copper = ColorMath.FromHex(CopperHex),
 
             // The danger button #9A5577 under Dawn's pearl text is 4.4 : 1; white reads at 5.3.
             Inks = DarkInks(gold, 0xFFE6B8, 0xD9A55E, 0xB99A6A, s.Window, 0xC46A92, 0xE68FB4, Vector4.One, 0xA595AE),
@@ -799,6 +812,7 @@ public static class UiPalettes
             Accent = gold,
             AccentDim = ColorMath.FromHex(0xB79A5E),
             OrnamentLight = ColorMath.FromHex(0xECD08A),
+            Copper = ColorMath.FromHex(CopperHex),
             Inks = DarkInks(gold, 0xFFE9B0, 0xD4AE55, 0xB79A5E, s.Window, 0xC25E92, 0xE58AC0, s.Text, 0xA89888),
             States = DarkStates(gold, 0xB79A5E, s.Text, s, 0xC25E92, 0xE58AC0, 0xA89888, 0x7A6458),
             Scene = DarkScene(KuganeSky, 0x1E1513, 0x120D0C, s.Deep, s.Window, gold, ColorMath.FromHex(0xFFE9B0), KuganeReadyHaloAlpha) with
@@ -911,6 +925,7 @@ public static class UiPalettes
             Accent = accent,
             AccentDim = Read(GlyphTokens.MoonDim),
             OrnamentLight = s.OrnamentLight,
+            Copper = Read(ColorMath.FromHex(CopperHex)),
             Inks = inks,
             States = states,
             Scene = SceneTokens.Derived(s),

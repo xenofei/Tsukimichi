@@ -38,10 +38,10 @@ public sealed partial class ConfigWindow
     public TravelPreflightService? TravelPreflight { get; set; }
 
     /// <summary>
-    /// The "needs a change" cue. spec-1.18 makes it the new copper role; until the palette carries it, the danger ink,
-    /// which the dot never carries alone (the words beside it say the same).
+    /// The "needs a change" cue: copper (spec-1.18, <see cref="Theme.Copper"/>), which the dot never carries alone (the
+    /// status word and the fix beside it say the same).
     /// </summary>
-    private static Vector4 PreflightAttention => Theme.DangerText;
+    private static Vector4 PreflightAttention => Theme.Copper;
 
     private void DrawTravelPreflight()
     {
@@ -106,7 +106,7 @@ public sealed partial class ConfigWindow
             ? string.Format(CultureInfo.CurrentCulture, Strings.TravelPreflightConflictFormat, Strings.TravelPreflightConflict(result.Conflicts[0].Key))
             : Strings.TravelPreflightStatus(result.Item, result.State);
         DrawPreflightDot(result.State);
-        ImGui.TextWrapped(head);
+        Chrome.SemiboldTextWrapped(head, Theme.Surface.Text);
         var hovered = ImGui.IsItemHovered();
         using (Typography.Caption())
         using (Theme.PushText(Theme.Surface.TextSecondary))

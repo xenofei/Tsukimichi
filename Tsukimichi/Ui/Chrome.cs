@@ -859,6 +859,42 @@ public static partial class Chrome
             MathF.Max(1.5f, UiMetrics.Px(FocusThickness)));
     }
 
+    // ------------------------------------------------------------------ semibold
+
+    /// <summary>
+    /// <paramref name="text"/> as an item in <paramref name="color"/>, a weight heavier than the body (spec-1.18: the
+    /// "Needs you" eyebrow at Quiet and Plain, a card's title at Quiet, a preflight status word). Dalamud ships no bold
+    /// face, so it is drawn twice, a scaled half pixel apart (the reward tooltip draws its name the same way, a whole
+    /// pixel apart, for bold). One line; no wrap.
+    /// </summary>
+    public static void SemiboldText(string text, Vector4 color)
+    {
+        var pos = ImGui.GetCursorScreenPos();
+        var size = ImGui.CalcTextSize(text);
+        var shift = SemiboldShift;
+        var ink = Theme.U32(color);
+        var dl = ImGui.GetWindowDrawList();
+        dl.AddText(pos, ink, text);
+        dl.AddText(pos + new Vector2(shift, 0f), ink, text);
+        ImGui.Dummy(new Vector2(size.X + shift, size.Y));
+    }
+
+    /// <summary><see cref="SemiboldText"/> wrapped at the content region's edge: each wrapped line drawn twice.</summary>
+    public static void SemiboldTextWrapped(string text, Vector4 color)
+    {
+        var pos = ImGui.GetCursorScreenPos();
+        var wrap = MathF.Max(1f, ImGui.GetContentRegionAvail().X - SemiboldShift);
+        var size = ImGui.CalcTextSize(text, false, wrap);
+        var ink = Theme.U32(color);
+        var dl = ImGui.GetWindowDrawList();
+        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), pos, ink, text, wrap);
+        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), pos + new Vector2(SemiboldShift, 0f), ink, text, wrap);
+        ImGui.Dummy(new Vector2(size.X + SemiboldShift, size.Y));
+    }
+
+    /// <summary>How far the second pass of <see cref="SemiboldText"/> sits: half a scaled pixel, never under half a pixel.</summary>
+    private static float SemiboldShift => MathF.Max(0.5f, UiMetrics.Px(0.5f));
+
     // ------------------------------------------------------------------ text over game scenes
 
     /// <summary>

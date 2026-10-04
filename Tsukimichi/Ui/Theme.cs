@@ -174,6 +174,12 @@ public static class Theme
     /// </summary>
     public static SurfaceColors Surface { get; private set; } = NightSurface;
 
+    /// <summary>
+    /// Copper, "it needs you" (spec-1.18; <see cref="UiPalette.Copper"/>): only ever a 3 px bar or a status dot beside
+    /// words that say the same, and the "Needs you" eyebrow at Quiet and Plain. Never a glyph, never alone.
+    /// </summary>
+    public static Vector4 Copper => Palette.Copper;
+
     /// <summary>Whether <see cref="Surface"/> is mapped from the user's Dalamud style this frame.</summary>
     public static bool FollowingDalamud { get; private set; }
 

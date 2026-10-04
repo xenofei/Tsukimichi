@@ -40,10 +40,6 @@ public static partial class Strings
 
     public static string DutyGuardHiddenDuty => Loc.Get("DutyGuardHiddenDuty");
 
-    public static string DutyGuardToastStop => Loc.Get("DutyGuardToastStop");
-
-    public static string DutyGuardToastWarn => Loc.Get("DutyGuardToastWarn");
-
     /// <summary>A run receipt's reason (A4) when the duty guard stopped the run.</summary>
     public static string QuestionableRunWhyDutyGuard => Loc.Get("QuestionableRunWhyDutyGuard");
 
@@ -68,35 +64,4 @@ public static partial class Strings
     public static string ConfigNeedsYouTell => Loc.Get("ConfigNeedsYouTell");
 
     public static string ConfigNeedsYouTellHint => Loc.Get("ConfigNeedsYouTellHint");
-
-    public static string ConfigNeedsYouSound => Loc.Get("ConfigNeedsYouSound");
-
-    public static string ConfigNeedsYouSoundHint => Loc.Get("ConfigNeedsYouSoundHint");
-
-    public static string ConfigNeedsYouToast => Loc.Get("ConfigNeedsYouToast");
-
-    public static string ConfigNeedsYouToastHint => Loc.Get("ConfigNeedsYouToastHint");
-
-    public static string NeedsYouDeathLine => Loc.Get("NeedsYouDeathLine");
-
-    /// <summary>{0} = seconds.</summary>
-    public static string NeedsYouStuckFormat => Loc.Get("NeedsYouStuckFormat");
-
-    /// <summary>{0} = the duty.</summary>
-    public static string NeedsYouDutyPopFormat => Loc.Get("NeedsYouDutyPopFormat");
-
-    public static string NeedsYouDutyPopUnnamed => Loc.Get("NeedsYouDutyPopUnnamed");
-
-    /// <summary>{0} = the sender.</summary>
-    public static string NeedsYouTellFormat => Loc.Get("NeedsYouTellFormat");
-
-    public static string NeedsYouTellUnnamed => Loc.Get("NeedsYouTellUnnamed");
-
-    public static string NeedsYouToastDeath => Loc.Get("NeedsYouToastDeath");
-
-    public static string NeedsYouToastStuck => Loc.Get("NeedsYouToastStuck");
-
-    public static string NeedsYouToastDutyPop => Loc.Get("NeedsYouToastDutyPop");
-
-    public static string NeedsYouToastTell => Loc.Get("NeedsYouToastTell");
 }
