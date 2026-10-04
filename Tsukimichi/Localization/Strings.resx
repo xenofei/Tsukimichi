@@ -462,6 +462,13 @@
   <data name="DutyHintNoGiver" xml:space="preserve">
     <value>The quest giver has no map position to flag.</value>
   </data>
+  <data name="DutyHintRouletteCaption" xml:space="preserve">
+    <value>Duty Roulette</value>
+    <comment>Duty Finder hint caption for a selected roulette.</comment>
+  </data>
+  <data name="DutyHintRouletteRouteTooltip" xml:space="preserve">
+    <value>Open the route: the quests that unlock the duties still locked in this roulette</value>
+  </data>
   <data name="DutyHintMoreFormat" xml:space="preserve">
     <value>and {0} more</value>
     <comment>Folded quest count: {0} is how many more quests also unlock the duty.</comment>
@@ -7729,36 +7736,48 @@
   <data name="ExpAdviceTooltip" xml:space="preserve">
     <value>The game gives a quest's EXP to the job you are on when you hand it in. Under Quest Sync the amount follows that job's level; a job at the level cap gets nothing. Class, job and role quests are handed in on a job they take.</value>
   </data>
-  <data name="ExpAdviceGoesToFormat" xml:space="preserve">
-    <value>Goes to your {0} (Lv {1}).</value>
-    <comment>{0} = job abbreviation, {1} = its level.</comment>
-  </data>
-  <data name="ExpAdviceGoesToAmountFormat" xml:space="preserve">
-    <value>Goes to your {0} (Lv {1}): {2} EXP.</value>
-    <comment>{0} = job abbreviation, {1} = its level, {2} = EXP at that level.</comment>
-  </data>
-  <data name="ExpAdviceCappedFormat" xml:space="preserve">
-    <value>Your {0} is at the level cap, so this EXP would be lost. Hand it in on {1} (Lv {2}) for {3} EXP.</value>
-    <comment>{0} = current job, {1} = better job, {2} = its level, {3} = its EXP.</comment>
-  </data>
   <data name="ExpAdviceAllCappedFormat" xml:space="preserve">
     <value>Your {0} is at the level cap, and no other job of yours that can take this quest would get its EXP.</value>
     <comment>{0} = current job.</comment>
   </data>
-  <data name="ExpAdviceLessFormat" xml:space="preserve">
-    <value>Your {0} (Lv {1}) would get {2} EXP; {3} (Lv {4}) would get {5}.</value>
-    <comment>{0} = current job, {1} = its level, {2} = its EXP, {3} = better job, {4} = its level, {5} = its EXP.</comment>
-  </data>
-  <data name="ExpAdviceNeedsJobFormat" xml:space="preserve">
-    <value>This quest needs another job: {0} (Lv {1}) would get {2} EXP.</value>
-    <comment>{0} = job that takes the quest, {1} = its level, {2} = its EXP.</comment>
-  </data>
   <data name="ExpAdviceNeedsJobNone" xml:space="preserve">
     <value>This quest needs another job, and none of yours that takes it is at its level yet.</value>
   </data>
-  <data name="GearsetSwitchFormat" xml:space="preserve">
-    <value>Switch to {0}</value>
-    <comment>Detail pane button. {0} = job abbreviation, or the gearset's name.</comment>
+  <data name="ExpLineFormat" xml:space="preserve">
+    <value>Hand in on {0} Lv {1}: {2} EXP</value>
+    <comment>Detail pane, under the EXP amount. {0} = job abbreviation, {1} = its level, {2} = the EXP it gets.</comment>
+  </data>
+  <data name="ExpLineNoLevelFormat" xml:space="preserve">
+    <value>Hand in on {0}: {1} EXP</value>
+    <comment>The job's level is not known. {0} = job abbreviation, {1} = the EXP it gets.</comment>
+  </data>
+  <data name="ExpShareFormat" xml:space="preserve">
+    <value>({0}% of a level)</value>
+    <comment>After the EXP. {0} = whole percent of what the job's level needs to level up.</comment>
+  </data>
+  <data name="ExpShareUnderOne" xml:space="preserve">
+    <value>(&lt;1% of a level)</value>
+    <comment>After the EXP, when it is under 1% of what the level needs.</comment>
+  </data>
+  <data name="ExpCappedClauseFormat" xml:space="preserve">
+    <value>your {0} is capped, 0</value>
+    <comment>{0} = a job at the level cap (abbreviation); it would get 0 EXP.</comment>
+  </data>
+  <data name="ExpLessClauseFormat" xml:space="preserve">
+    <value>your {0} Lv {1} gets {2}</value>
+    <comment>{0} = the current job, {1} = its level, {2} = the EXP it would get.</comment>
+  </data>
+  <data name="GearsetSwitchJobFormat" xml:space="preserve">
+    <value>Switch gearset: {0}</value>
+    <comment>Pill under the unmet Job requirement. {0} = the job's full name (Culinarian).</comment>
+  </data>
+  <data name="GearsetNoneFormat" xml:space="preserve">
+    <value>No {0} gearset saved</value>
+    <comment>In place of Switch gearset. {0} = the job's full name (Culinarian).</comment>
+  </data>
+  <data name="JobRequirementDetailFormat" xml:space="preserve">
+    <value>{0} · you're on {1}</value>
+    <comment>The unmet Job requirement. {0} = the job the quest requires, {1} = the job you are on (full names).</comment>
   </data>
   <data name="GearsetSwitchTooltipFormat" xml:space="preserve">
     <value>Equips your gearset {0}, "{1}" (item level {2}), as /gearset change {0} would. Offered only for quests that need a job you are not on.</value>
@@ -12606,6 +12625,10 @@
   </data>
   <data name="DutyBoardNotRead" xml:space="preserve">
     <value>Log in on this character to read its duty records.</value>
+  </data>
+  <data name="DutyBoardUnknownState" xml:space="preserve">
+    <value>not read · log in on this character to read it</value>
+    <comment>Duties card: a roulette whose duties a stored capture of an older duty list cannot judge.</comment>
   </data>
   <data name="DutyBoardRouletteFormat" xml:space="preserve">
     <value>{0} roulette</value>

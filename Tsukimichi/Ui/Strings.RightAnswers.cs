@@ -22,21 +22,26 @@ static partial class Strings
 
     // ---- C8: EXP to the right job ----
     public static string ExpAdviceTooltip => Loc.Get("ExpAdviceTooltip");
-    /// <summary>{0} = job, {1} = its level.</summary>
-    public static string ExpAdviceGoesToFormat => Loc.Get("ExpAdviceGoesToFormat");
-    /// <summary>{0} = job, {1} = its level, {2} = EXP.</summary>
-    public static string ExpAdviceGoesToAmountFormat => Loc.Get("ExpAdviceGoesToAmountFormat");
-    /// <summary>{0} = the current job, {1} = the better job, {2} = its level, {3} = its EXP.</summary>
-    public static string ExpAdviceCappedFormat => Loc.Get("ExpAdviceCappedFormat");
+    /// <summary>{0} = job abbreviation, {1} = its level, {2} = the EXP it gets.</summary>
+    public static string ExpLineFormat => Loc.Get("ExpLineFormat");
+    /// <summary>The job's level unknown. {0} = job abbreviation, {1} = the EXP it gets.</summary>
+    public static string ExpLineNoLevelFormat => Loc.Get("ExpLineNoLevelFormat");
+    /// <summary>{0} = whole percent of the EXP the level needs.</summary>
+    public static string ExpShareFormat => Loc.Get("ExpShareFormat");
+    public static string ExpShareUnderOne => Loc.Get("ExpShareUnderOne");
+    /// <summary>{0} = a job at the level cap (abbreviation).</summary>
+    public static string ExpCappedClauseFormat => Loc.Get("ExpCappedClauseFormat");
+    /// <summary>{0} = the current job, {1} = its level, {2} = the EXP it gets.</summary>
+    public static string ExpLessClauseFormat => Loc.Get("ExpLessClauseFormat");
     /// <summary>{0} = the current job.</summary>
     public static string ExpAdviceAllCappedFormat => Loc.Get("ExpAdviceAllCappedFormat");
-    /// <summary>{0} = the current job, {1} = its level, {2} = its EXP, {3} = the better job, {4} = its level, {5} = its EXP.</summary>
-    public static string ExpAdviceLessFormat => Loc.Get("ExpAdviceLessFormat");
-    /// <summary>{0} = the job that takes the quest, {1} = its level, {2} = its EXP.</summary>
-    public static string ExpAdviceNeedsJobFormat => Loc.Get("ExpAdviceNeedsJobFormat");
     public static string ExpAdviceNeedsJobNone => Loc.Get("ExpAdviceNeedsJobNone");
-    /// <summary>{0} = job abbreviation (or the gearset's name).</summary>
-    public static string GearsetSwitchFormat => Loc.Get("GearsetSwitchFormat");
+    /// <summary>{0} = the job's full name (Culinarian).</summary>
+    public static string GearsetSwitchJobFormat => Loc.Get("GearsetSwitchJobFormat");
+    /// <summary>{0} = the job's full name (Culinarian).</summary>
+    public static string GearsetNoneFormat => Loc.Get("GearsetNoneFormat");
+    /// <summary>The unmet Job requirement. {0} = the job required, {1} = the job you are on (full names).</summary>
+    public static string JobRequirementDetailFormat => Loc.Get("JobRequirementDetailFormat");
     /// <summary>{0} = gearset number, {1} = its name, {2} = its item level.</summary>
     public static string GearsetSwitchTooltipFormat => Loc.Get("GearsetSwitchTooltipFormat");
     /// <summary>{0} = why not now ("you are in combat").</summary>

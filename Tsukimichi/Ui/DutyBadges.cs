@@ -12,7 +12,9 @@ namespace Tsukimichi.Ui;
 /// The badges of "How you'll clear it" (feature plan v7 C7; spec-1.19 C7, "Badges"): the 1.14 chip, 20 px tall, with
 /// a 14 px game icon when the badge has one, the label in Text (Story-required and Optional in Secondary) and the
 /// palette's Line as the outline (1.5 px under high contrast). Each explains itself on hover. Worn in the detail pane's
-/// section and the Duties board's rows (<see cref="DutyBadgeRules"/> picks them). Draw thread only.
+/// section, the Duties board's rows, My blues, the Route window's steps and the Duty Finder hint
+/// (<see cref="DutyBadgeRules"/> picks them per <see cref="DutyBadgeSurface"/>; <see cref="ClearBadgeSource"/> builds
+/// them for the last three). Draw thread only.
 /// </summary>
 public static class DutyBadges
 {
@@ -83,6 +85,54 @@ public static class DutyBadges
         using var caption = Typography.Caption();
         var icon = look.Icon != 0 ? UiMetrics.Px(IconLogical) + UiMetrics.Px(GapLogical) : 0f;
         return (2f * UiMetrics.Px(PadLogical)) + icon + ImGui.CalcTextSize(look.Label).X;
+    }
+
+    /// <summary>The badge's height at the current scale.</summary>
+    public static float Height => MathF.Round(UiMetrics.Px(HeightLogical));
+
+    /// <summary>The gap between two badges in a run, and between a run and the text before it.</summary>
+    public static float RunGap => UiMetrics.Px(4f);
+
+    /// <summary>The width of <paramref name="looks"/> side by side, <see cref="RunGap"/> between them; 0 for none.</summary>
+    public static float RunWidth(IReadOnlyList<Look> looks)
+    {
+        ArgumentNullException.ThrowIfNull(looks);
+        var width = 0f;
+        for (var i = 0; i < looks.Count; i++)
+        {
+            width += Width(looks[i]) + (i > 0 ? RunGap : 0f);
+        }
+
+        return width;
+    }
+
+    /// <summary>
+    /// <paramref name="looks"/> left to right from <paramref name="x"/>, centred on a line <paramref name="lineHeight"/>
+    /// tall from <paramref name="top"/>, each only while it ends by <paramref name="right"/> (the first that does not
+    /// fit ends the run, so a row never shows a later badge without an earlier one). Returns the x after the last drawn,
+    /// <paramref name="x"/> when none fits. The cursor is left where it was.
+    /// </summary>
+    public static float DrawRun(IReadOnlyList<Look> looks, float x, float top, float lineHeight, float right, ITextureProvider? textures)
+    {
+        ArgumentNullException.ThrowIfNull(looks);
+        var cursor = ImGui.GetCursorScreenPos();
+        var y = MathF.Round(top + ((lineHeight - Height) * 0.5f));
+        var end = x;
+        for (var i = 0; i < looks.Count; i++)
+        {
+            var left = end + (i > 0 ? RunGap : 0f);
+            if (left + Width(looks[i]) > right + 0.5f)
+            {
+                break;
+            }
+
+            ImGui.SetCursorScreenPos(new Vector2(left, y));
+            Draw(looks[i], textures);
+            end = ImGui.GetItemRectMax().X;
+        }
+
+        ImGui.SetCursorScreenPos(cursor);
+        return end;
     }
 
     /// <summary>The badge as an item at the cursor; its hover shows <see cref="Look.Tooltip"/>.</summary>

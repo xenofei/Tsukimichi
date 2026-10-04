@@ -71,6 +71,9 @@ public sealed partial class DetailPane
         /// <summary>A game gate Tsukimichi can't check (1.19 C3): the hollow ring, "can't check", its source line and actions.</summary>
         public bool CantCheck { get; init; }
 
+        /// <summary>The Job requirement (1.19 C8): when unmet, Switch gearset sits under it.</summary>
+        public bool IsClassJob { get; init; }
+
         /// <summary>Where the can't-check gate was confirmed ("The game doesn't show plugins this. From the wiki, …"); null for other lines.</summary>
         public string? Source { get; init; }
 
