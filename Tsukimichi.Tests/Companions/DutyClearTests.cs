@@ -168,4 +168,38 @@ public class DutyClearTests
         // A duty row carries its own requirement.
         Assert.Equal(690, ItemLevelWall.For(Duty(itemLevel: 690), snapshot, ItemLevelRule.PerJob)!.Required);
     }
+
+    [Fact]
+    public void The_jobs_that_qualify_are_listed_best_first()
+    {
+        const byte Sage = 40, WhiteMage = 24, Bard = 23;
+        var snapshot = Geared(677, (Dragoon, 677), (Warrior, 692), (Sage, 705), (WhiteMage, 692), (Bard, 650));
+        var wall = ItemLevelWall.For(690, snapshot, ItemLevelRule.PerJob);
+        Assert.NotNull(wall);
+
+        // Sage first, then the two at i692 by job id; the bard falls short and the current job is never listed.
+        Assert.Equal([(Sage, (ushort)705), (Warrior, (ushort)692), (WhiteMage, (ushort)692)], wall.Qualifying);
+        Assert.Equal(Sage, wall.BestJob);
+        Assert.True(wall.OtherGearsetPasses);
+    }
+
+    [Fact]
+    public void The_badges_read_size_then_high_end_then_story()
+    {
+        // Duty Support: Solo with NPCs, whatever the size.
+        Assert.Equal(
+            [new DutyBadge(DutyBadgeKind.SoloWithNpcs), new DutyBadge(DutyBadgeKind.StoryRequired)],
+            DutyBadgeRules.For(Duty(support: true), storyRequired: true));
+
+        // Players only: a group of its size; an alliance raid seats 24.
+        Assert.Equal([new DutyBadge(DutyBadgeKind.Group, 24), new DutyBadge(DutyBadgeKind.Optional)], DutyBadgeRules.For(Duty(players: 24), storyRequired: false));
+
+        // High-end follows the size; the story badge is left out when unknown.
+        var savage = Duty(players: 8) with { HighEnd = true };
+        Assert.Equal([new DutyBadge(DutyBadgeKind.Group, 8), new DutyBadge(DutyBadgeKind.HighEnd)], DutyBadgeRules.For(savage, storyRequired: null));
+
+        // A solo duty is Solo; an unknown size wears no size badge.
+        Assert.Equal(new DutyBadge(DutyBadgeKind.Solo, 1), DutyBadgeRules.Size(Duty(players: 1)));
+        Assert.Null(DutyBadgeRules.Size(Duty(players: 0)));
+    }
 }

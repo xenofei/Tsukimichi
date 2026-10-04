@@ -56,6 +56,12 @@ public sealed record DutyRunInfo(
 
     /// <summary>The Duty Finder's own order within its category (<c>ContentFinderCondition.SortKey</c>).</summary>
     public ushort SortKey { get; init; }
+
+    /// <summary>
+    /// High-end content: Savage, Extreme, Unreal, Ultimate and Chaotic (the sheet's <c>HighEndDuty</c> for the current
+    /// tier, and the Duty Finder's "High-end Trials" and "Savage Raids" categories for the rest; C7's "High-end" badge).
+    /// </summary>
+    public bool HighEnd { get; init; }
 }
 
 /// <summary>

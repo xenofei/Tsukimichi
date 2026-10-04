@@ -121,6 +121,18 @@ public sealed class DutyRunSheetsTests(DutyRunFixture fixture, ITestOutputHelper
         Assert.Equal(DutyClearWays.PartyOnly, DutyClear.Ways(ucob));
         Assert.Equal(8, ucob.Players);
 
+        // High-end: the old Extreme trials and Savage raids by their Duty Finder category, the current tier and the
+        // Ultimates by the sheet; a normal raid and a dungeon are not.
+        bool HighEnd(string name) => Assert.Single(fixture.Index.All, d => d.Name == name).HighEnd;
+        Assert.True(HighEnd("the Bowl of Embers (Extreme)"));
+        Assert.True(HighEnd("Alexander - The Fist of the Father (Savage)"));
+        Assert.True(HighEnd("the Unending Coil of Bahamut (Ultimate)"));
+        Assert.True(HighEnd("the Cloud of Darkness (Chaotic)"));
+        Assert.False(HighEnd("Alexander - The Fist of the Father"));
+        Assert.False(sastasha.HighEnd);
+        Assert.Equal([new DutyBadge(DutyBadgeKind.Group, 8), new DutyBadge(DutyBadgeKind.HighEnd)], DutyBadgeRules.For(ucob, storyRequired: null));
+        Assert.Equal(new DutyBadge(DutyBadgeKind.Group, 24), DutyBadgeRules.Size(Assert.Single(fixture.Index.All, d => d.Name == "the Labyrinth of the Ancients")));
+
         // Dawntrail's level-cap dungeons ask an item level.
         var cap = fixture.Index.All.Where(d => d.Roulettes.HasFlag(DutyRoulettes.LevelCap)).ToArray();
         Assert.NotEmpty(cap);

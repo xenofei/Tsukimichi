@@ -110,7 +110,15 @@ public sealed class StoryRequiredDataTests(FixtureCatalog fixture, DutyRunFixtur
         var names = primals.Select(r => Catalog.ByRowId[Assert.Single(r.Options)[^1]].Name).Order().ToArray();
         output.WriteLine(string.Join(", ", names));
         Assert.Equal(["Ifrit Bleeds, We Can Kill It", "In a Titan Spot", "In for Garuda Awakening"], names);
-        Assert.Equal(4, primals.Sum(r => r.Options[0].Count));
+        // The lines share their start (A Recurring Problem, then Ifrit Bleeds): four quests in all.
+        Assert.Equal(4, primals.SelectMany(r => r.Options[0]).Distinct().Count());
+
+        // The hard primals and the Crystal Tower raids wear Story-required; the Extreme trials do not.
+        bool Story(string name) => required.IsStoryDuty(Assert.Single(duties.Index.All, d => d.Name == name).ContentFinderConditionId, Assert.Single(duties.Index.All, d => d.Name == name).InstanceContentId);
+        Assert.True(Story("the Bowl of Embers (Hard)"));
+        Assert.True(Story("Syrcus Tower"));
+        Assert.True(Story("Sastasha"));
+        Assert.False(Story("the Bowl of Embers (Extreme)"));
     }
 
     [GameDataFact]
@@ -126,10 +134,10 @@ public sealed class StoryRequiredDataTests(FixtureCatalog fixture, DutyRunFixtur
             output.WriteLine($"expansion {part.Expansion}: {part.Quests} story quests, {part.SideQuests} side quests");
         }
 
-        // A Realm Reborn: the Crystal Tower's eight and the three hard primal quests (the wiki's "92 if mandatory
-        // sidequests are included" over 80 counts twelve). Shadowbringers: one role quest line, six.
+        // A Realm Reborn: the Crystal Tower's eight and the four hard primal quests (Ifrit's line is two), the twelve of the
+        // wiki's "92 quests if mandatory sidequests are included" over 80. Shadowbringers: one role quest line, six.
         var arr = summary.Expansions.Single(e => e.Expansion == 0);
-        Assert.True(arr.SideQuests >= 11, $"A Realm Reborn needs {arr.SideQuests} side quests");
+        Assert.Equal(12, arr.SideQuests);
         Assert.Equal(6, summary.Expansions.Single(e => e.Expansion == 3).SideQuests);
 
         var meter = StoryMeter.Compute(Catalog, states, source);

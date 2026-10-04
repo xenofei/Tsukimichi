@@ -15,9 +15,7 @@ namespace Tsukimichi.Ui;
 /// The detail pane's companion plugin pieces (feature plan v5, decision 1).
 /// <para>
 /// <b>Duties</b>, a section after the Path for a quest that requires or unlocks a duty (<see cref="QuestDuties"/>): each
-/// duty's icon (<see cref="Core.Unlocks.DutyArt"/>'s chain) on a small well, its name and how it relates to the quest, "AutoDuty has a path" when AutoDuty says so (read only),
-/// how it can be cleared (1.19.0, C7: Solo, Duty Support, Trust, Duty Finder or Party only, <see cref="DutyClear"/>), its
-/// item-level wall against the character's ("Needs i690 · you: i677", <see cref="ItemLevelWall"/>), and "Run with
+/// duty's icon (<see cref="Core.Unlocks.DutyArt"/>'s chain) on a small well, its name and how it relates to the quest, "AutoDuty has a path" when AutoDuty says so (read only), and "Run with
 /// AutoDuty", which hands the duty to AutoDuty for one clear in Duty Support, else Trust, else (with Settings ›
 /// Integrations › "Allow AutoDuty to queue in the regular Duty Finder") the Duty Finder. The button is always shown;
 /// disabled, its tooltip says why (<see cref="AutoDutyPlan.Choose"/>: AutoDuty or what it needs is missing, a stored
@@ -38,20 +36,7 @@ public sealed partial class DetailPane
     private static readonly Localization.LocText QuestMapLabel = new(static () => Strings.QuestMapOpen + "##questMap");
 
     /// <summary>One duty row as of the last refresh.</summary>
-    private sealed record DutyRow(QuestDuty Duty, string Caption, bool? HasPath, bool? Unlocked, string RunId)
-    {
-        /// <summary>How the duty can be cleared (C7).</summary>
-        public DutyClearWays Ways { get; init; }
-
-        /// <summary>"Needs i690 · you: i677"; empty when the duty asks no item level or the capture holds none.</summary>
-        public string Wall { get; init; } = string.Empty;
-
-        /// <summary>Whether the character falls short of the wall.</summary>
-        public bool WallShort { get; init; }
-
-        /// <summary>The wall's hover: which item level the game checks, and the gearset that clears it.</summary>
-        public string WallTooltip { get; init; } = string.Empty;
-    }
+    private sealed record DutyRow(QuestDuty Duty, string Caption, bool? HasPath, bool? Unlocked, string RunId);
 
     private readonly List<DutyRow> dutyRows = [];
     private uint dutyRowId = uint.MaxValue;
@@ -114,37 +99,8 @@ public sealed partial class DetailPane
                 false => relation + Strings.AutoDutyCaptionSeparator + Strings.AutoDutyNoPath,
                 _ => relation,
             };
-            var row = new DutyRow(duty, caption, hasPath, unlocked, "##autoDuty" + info.ContentFinderConditionId.ToString(CultureInfo.InvariantCulture))
-            {
-                Ways = DutyClear.Ways(info),
-            };
-            dutyRows.Add(WithWall(row, session));
+            dutyRows.Add(new DutyRow(duty, caption, hasPath, unlocked, "##autoDuty" + info.ContentFinderConditionId.ToString(CultureInfo.InvariantCulture)));
         }
-    }
-
-    /// <summary>
-    /// The row with its item-level wall (C7) for the viewed character: compared with the current job's equipped gear
-    /// before Patch 8.0, with the best job's from 8.0 (<see cref="ItemLevelRule.For"/> reads which from the game data).
-    /// </summary>
-    private static DutyRow WithWall(DutyRow row, SessionState session)
-    {
-        if (session.Bundle is not { } bundle
-            || ItemLevelWall.For(row.Duty.Duty, session.ViewedSnapshot, ItemLevelRule.For(bundle.Catalog)) is not { } wall)
-        {
-            return row;
-        }
-
-        var names = bundle.Names;
-        var text = string.Format(CultureInfo.CurrentCulture, wall.Met ? Strings.DutyWallMetFormat : Strings.DutyWallNeedsFormat, wall.Required, wall.Have);
-        var tooltip = wall.Basis == ItemLevelBasis.BestJob
-            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyWallBestTipFormat, names.ClassJobAbbreviation(wall.BestJob), wall.BestItemLevel)
-            : string.Format(CultureInfo.CurrentCulture, Strings.DutyWallCurrentTipFormat, names.ClassJobAbbreviation(wall.CurrentJob));
-        if (wall.OtherGearsetPasses)
-        {
-            tooltip += "\n" + string.Format(CultureInfo.CurrentCulture, Strings.DutyWallGearsetFormat, names.ClassJobAbbreviation(wall.BestJob), wall.BestItemLevel);
-        }
-
-        return row with { Wall = text, WallShort = !wall.Met, WallTooltip = tooltip };
     }
 
     /// <summary>The Duties section; nothing for a quest that requires and unlocks no duty AutoDuty could know.</summary>
@@ -172,7 +128,6 @@ public sealed partial class DetailPane
             var row = dutyRows[i];
             anyPath |= row.HasPath == true;
             DrawDutyIdentity(row);
-            DrawDutyClear(row);
             if (!showRun)
             {
                 // Run with AutoDuty is above the automation level (1.18, A10): the duty is listed without its button.
@@ -255,55 +210,6 @@ public sealed partial class DetailPane
         var bottom = MathF.Max(ImGui.GetItemRectMax().Y, wellMax.Y);
         ImGui.SetCursorScreenPos(new Vector2(start.X, bottom + ImGui.GetStyle().ItemSpacing.Y));
     }
-
-    /// <summary>
-    /// How the duty can be cleared (C7): one caption pill per way, those that need nobody in the accent, then the item-level
-    /// wall, in the danger tone while the character falls short. Pills wrap at the card's edge; each explains itself on hover.
-    /// </summary>
-    private void DrawDutyClear(DutyRow row)
-    {
-        var first = true;
-        foreach (var way in DutyClear.Order)
-        {
-            if ((row.Ways & way) == 0)
-            {
-                continue;
-            }
-
-            var (label, tip) = ClearBadge(way);
-            if (!first)
-            {
-                Chrome.SameLineOrWrap(Chrome.PillSize(label).X, cardRight);
-            }
-
-            first = false;
-            var tone = DutyClear.WithoutOthers(way) ? Theme.Accent : way == DutyClearWays.PartyOnly ? Theme.Surface.TextTertiary : Theme.Surface.TextSecondary;
-            Chrome.Pill(label, tone);
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(tip);
-            }
-        }
-
-        if (row.Wall.Length > 0)
-        {
-            TextFlow.Wrapped(row.Wall, RoomTo(cardRight), Theme.U32(row.WallShort ? Theme.DangerText : Theme.Surface.TextSecondary));
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(row.WallTooltip);
-            }
-        }
-    }
-
-    /// <summary>A clear way's badge label and hover text.</summary>
-    private static (string Label, string Tooltip) ClearBadge(DutyClearWays way) => way switch
-    {
-        DutyClearWays.Solo => (Strings.DutyClearSolo, Strings.DutyClearSoloTip),
-        DutyClearWays.DutySupport => (Strings.DutyClearSupport, Strings.DutyClearSupportTip),
-        DutyClearWays.Trust => (Strings.DutyClearTrust, Strings.DutyClearTrustTip),
-        DutyClearWays.DutyFinder => (Strings.DutyClearFinder, Strings.DutyClearFinderTip),
-        _ => (Strings.DutyClearParty, Strings.DutyClearPartyTip),
-    };
 
     /// <summary>
     /// AutoDuty's inputs for a run as of now, before the duty's own path and unlock answers. A trip of Tsukimichi's

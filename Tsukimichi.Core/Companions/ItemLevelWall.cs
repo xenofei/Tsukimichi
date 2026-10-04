@@ -91,6 +91,13 @@ public sealed record ItemLevelWall(
     public int Short => Met ? 0 : Required - Have;
 
     /// <summary>
+    /// The other jobs whose item level clears the wall, highest first (the job id breaks a tie): the first is
+    /// <paramref name="BestJob"/> when it qualifies, the rest "also qualify" (spec-1.19 C7: "Your SGE (i705) also
+    /// qualifies"). Empty when none does.
+    /// </summary>
+    public IReadOnlyList<(byte Job, ushort ItemLevel)> Qualifying { get; init; } = [];
+
+    /// <summary>
     /// The wall for a duty asking <paramref name="required"/>; null when the duty asks none or the capture holds no item
     /// level (a stored character from an older build, the hooks paused).
     /// </summary>
@@ -126,12 +133,18 @@ public sealed record ItemLevelWall(
             }
         }
 
+        var qualifying = snapshot.JobItemLevels
+            .Where(kv => kv.Key != snapshot.CurrentJob && kv.Value >= required)
+            .OrderByDescending(static kv => kv.Value)
+            .ThenBy(static kv => kv.Key)
+            .Select(static kv => (kv.Key, kv.Value))
+            .ToArray();
         if (rule.SharedAcrossJobs)
         {
-            return new ItemLevelWall(required, best, ItemLevelBasis.BestJob, snapshot.CurrentJob, current, bestJob, best);
+            return new ItemLevelWall(required, best, ItemLevelBasis.BestJob, snapshot.CurrentJob, current, bestJob, best) { Qualifying = qualifying };
         }
 
-        return current == 0 ? null : new ItemLevelWall(required, current, ItemLevelBasis.CurrentJob, snapshot.CurrentJob, current, bestJob, best);
+        return current == 0 ? null : new ItemLevelWall(required, current, ItemLevelBasis.CurrentJob, snapshot.CurrentJob, current, bestJob, best) { Qualifying = qualifying };
     }
 
     /// <inheritdoc cref="For(ushort, CharacterSnapshot?, ItemLevelRule)"/>

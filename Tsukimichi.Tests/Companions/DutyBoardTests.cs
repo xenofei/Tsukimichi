@@ -72,19 +72,25 @@ public class DutyBoardTests
         var open = DutyBoard.Build(Index, With(100, 5, [100, 101], []));
         Assert.Equal(RouletteLock.Open, Line(open, LevelCap).Lock);
         Assert.Empty(Line(open, LevelCap).Missing);
+        Assert.DoesNotContain(Line(open, LevelCap), open.WithSomethingLeft);
     }
 
     [Fact]
-    public void Leveling_opens_with_two_dungeons_and_names_the_lowest_still_needed()
+    public void Leveling_opens_with_two_dungeons_and_lists_every_one_left()
     {
         var one = Line(DutyBoard.Build(Index, With(20, 5, [4], [4])), Leveling);
         Assert.Equal(RouletteLock.NeedsDuties, one.Lock);
         Assert.False(one.NeedsEvery);
         Assert.Equal(2, one.Needed);
         Assert.Equal(1, one.Left);
-        Assert.Same(TamTara, Assert.Single(one.Missing).Duty);
+        Assert.Equal([TamTara, Copperbell], one.Missing.Select(m => m.Duty));
 
-        Assert.Equal(RouletteLock.Open, Line(DutyBoard.Build(Index, With(20, 5, [4, 3], [])), Leveling).Lock);
+        // Open, with one dungeon still not unlocked: what is left in it.
+        var open = DutyBoard.Build(Index, With(20, 5, [4, 3], []));
+        Assert.Equal(RouletteLock.Open, Line(open, Leveling).Lock);
+        Assert.Same(TamTara, Assert.Single(Line(open, Leveling).Missing).Duty);
+        Assert.Contains(Line(open, Leveling), open.WithSomethingLeft);
+        Assert.DoesNotContain(Line(open, Leveling), open.Locked);
     }
 
     [Fact]
@@ -104,7 +110,7 @@ public class DutyBoardTests
     {
         var low = DutyBoard.Build(Index, With(15, 5, [], []));
         Assert.Equal(RouletteLock.NeedsLevel, Line(low, Leveling).Lock);
-        Assert.Empty(Line(low, Leveling).Missing);
+        Assert.Equal(3, Line(low, Leveling).Missing.Count);
 
         var trial = DutyBoard.Build(Index, With(100, 4, [], []));
         Assert.Equal(RouletteLock.NeedsExpansion, Line(trial, LevelCap).Lock);

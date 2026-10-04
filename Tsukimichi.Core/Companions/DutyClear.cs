@@ -67,3 +67,76 @@ public static class DutyClear
     /// <inheritdoc cref="WithoutOthers(DutyClearWays)"/>
     public static bool WithoutOthers(DutyRunInfo duty) => WithoutOthers(Ways(duty));
 }
+
+/// <summary>A badge of "How you'll clear it" (feature plan v7 C7; spec-1.19 C7, "Badges").</summary>
+public enum DutyBadgeKind : byte
+{
+    /// <summary>"Solo with NPCs": Duty Support or Trust lists it.</summary>
+    SoloWithNpcs,
+
+    /// <summary>"Solo": a duty that seats one player (a quest battle).</summary>
+    Solo,
+
+    /// <summary>"Group of 4 / 8 / 24": players only, <see cref="DutyBadge.Players"/> of them.</summary>
+    Group,
+
+    /// <summary>"High-end": Savage, Extreme, Unreal, Ultimate and Chaotic.</summary>
+    HighEnd,
+
+    /// <summary>"Story-required": the main scenario needs it.</summary>
+    StoryRequired,
+
+    /// <summary>"Optional": the main scenario does not need it.</summary>
+    Optional,
+}
+
+/// <summary>One badge, with the party size for <see cref="DutyBadgeKind.Group"/>.</summary>
+public readonly record struct DutyBadge(DutyBadgeKind Kind, int Players = 0);
+
+/// <summary>
+/// The badges a duty wears wherever duties appear (spec-1.19 C7): first its size (Solo with NPCs, Solo, or Group of
+/// N), then High-end when it is, then Story-required or Optional when that is known. Pure.
+/// </summary>
+public static class DutyBadgeRules
+{
+    /// <summary>The badges in order; <paramref name="storyRequired"/> null leaves the story badge out.</summary>
+    public static IReadOnlyList<DutyBadge> For(DutyRunInfo duty, bool? storyRequired)
+    {
+        ArgumentNullException.ThrowIfNull(duty);
+        var badges = new List<DutyBadge>(3);
+        if (Size(duty) is { } size)
+        {
+            badges.Add(size);
+        }
+
+        if (duty.HighEnd)
+        {
+            badges.Add(new DutyBadge(DutyBadgeKind.HighEnd));
+        }
+
+        if (storyRequired is { } story)
+        {
+            badges.Add(new DutyBadge(story ? DutyBadgeKind.StoryRequired : DutyBadgeKind.Optional));
+        }
+
+        return badges;
+    }
+
+    /// <summary>The size badge alone (the Duties board's rows wear only this one); null when the party size is unknown.</summary>
+    public static DutyBadge? Size(DutyRunInfo duty)
+    {
+        ArgumentNullException.ThrowIfNull(duty);
+        var ways = DutyClear.Ways(duty);
+        if ((ways & (DutyClearWays.DutySupport | DutyClearWays.Trust)) != 0)
+        {
+            return new DutyBadge(DutyBadgeKind.SoloWithNpcs);
+        }
+
+        if (ways == DutyClearWays.Solo)
+        {
+            return new DutyBadge(DutyBadgeKind.Solo, 1);
+        }
+
+        return duty.Players > 1 ? new DutyBadge(DutyBadgeKind.Group, duty.Players) : null;
+    }
+}

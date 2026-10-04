@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Evaluation;
@@ -42,7 +43,9 @@ public sealed class PlanningSource
     private MsqCatchUpSummary? catchUp;
     private string catchUpLine = string.Empty;
     private string catchUpTooltip = string.Empty;
+    private string catchUpOthers = string.Empty;
     private StoryMeter? storyMeter;
+    private StoryMeterHover? storyMeterLines;
     private readonly Dictionary<byte, AdviceText> advice = [];
     private MsqLevelGate? msqGate;
     private string msqGateLine = string.Empty;
@@ -86,6 +89,12 @@ public sealed class PlanningSource
         };
     }
 
+    /// <summary>
+    /// The catch-up's duty source as of now (the duty unlocks, the duty index and the curated story requirements);
+    /// null until the duty index lands. The detail pane's "How you'll clear it" reads which duties the story needs from it.
+    /// </summary>
+    public CatchUpDutySource? DutySourceNow => duties?.Invoke();
+
     /// <summary>One job's advice as drawn: the row text ("52→56 opens 7 quests (2 unlock quests, MSQ)"), the headline naming the job, the tooltip (the headline, then every level with its quests) and the first quest.</summary>
     public sealed record AdviceText(JobLevelAdvice Advice, string Row, string Headline, string Tooltip, QuestRecord? First);
 
@@ -112,6 +121,16 @@ public sealed class PlanningSource
         }
     }
 
+    /// <summary>"Ahead: 3 story duties need other players" (C7), under the catch-up line; empty when none does.</summary>
+    public string CatchUpOthersLine
+    {
+        get
+        {
+            Refresh();
+            return catchUpOthers;
+        }
+    }
+
     /// <summary>The catch-up per expansion, one line each, after the explanation.</summary>
     public string CatchUpTooltip
     {
@@ -134,6 +153,23 @@ public sealed class PlanningSource
             return storyMeter;
         }
     }
+
+    /// <summary>The story meter as the MSQ pill's hover reads it; null without a meter.</summary>
+    public StoryMeterHover? StoryMeterLines
+    {
+        get
+        {
+            Refresh();
+            return storyMeterLines;
+        }
+    }
+
+    /// <summary>
+    /// The MSQ pill's hover (spec-1.19 N3): the title ("Main scenario · 742 of 1,038 (71%)"), the lines under it in
+    /// Secondary (what the meter counts, the next milestone) and the "Still to do from earlier" line (empty when nothing
+    /// was skipped). Counts and milestones only past the story point; the skipped side quests it names are below it.
+    /// </summary>
+    public sealed record StoryMeterHover(string Title, string[] Lines, string Earlier);
 
     /// <summary>The next main scenario quest when it waits for a level only; null otherwise.</summary>
     public MsqLevelGate? MsqGate
@@ -266,7 +302,8 @@ public sealed class PlanningSource
         builtKey = key;
         catchUp = null;
         storyMeter = null;
-        catchUpLine = catchUpTooltip = msqGateLine = string.Empty;
+        storyMeterLines = null;
+        catchUpLine = catchUpTooltip = catchUpOthers = msqGateLine = string.Empty;
         advice.Clear();
         msqGate = null;
         if (bundle is null || session.ViewedSnapshot is not { } snapshot || session.States.Count == 0)
@@ -290,6 +327,7 @@ public sealed class PlanningSource
     {
         catchUp = MsqCatchUp.Compute(bundle.Catalog, session.States, snapshot, dutySource);
         storyMeter = StoryMeter.Compute(bundle.Catalog, session.States, dutySource);
+        storyMeterLines = storyMeter is { } meter ? Hover(meter, bundle) : null;
         if (catchUp is not { } summary)
         {
             return;
@@ -315,8 +353,41 @@ public sealed class PlanningSource
         }
 
         AppendSideQuests(text, bundle, dutySource);
-        AppendDutyNotes(text, summary, snapshot, bundle, dutySource);
+        catchUpOthers = AppendDutyNotes(text, summary, snapshot, bundle, dutySource);
         catchUpTooltip = text.ToString();
+    }
+
+    /// <summary>The meter's hover lines (N3); the side quests skipped are named by their journal genre, or their one quest.</summary>
+    private StoryMeterHover Hover(StoryMeter meter, CatalogBundle bundle)
+    {
+        var title = string.Format(CultureInfo.CurrentCulture, Strings.MsqMeterTitleFormat, meter.Done, meter.Total, meter.Percent);
+        var lines = new List<string>(2);
+        if (meter.SideTotal > 0)
+        {
+            lines.Add(Strings.MsqMeterCounts);
+        }
+
+        if (meter.ToMilestone > 0)
+        {
+            lines.Add(meter.ToMilestone == 1 ? Strings.MsqMeterMilestoneOne : string.Format(CultureInfo.CurrentCulture, Strings.MsqMeterMilestoneFormat, meter.ToMilestone));
+        }
+
+        var items = new List<string>(meter.Earlier.Count);
+        foreach (var line in meter.Earlier)
+        {
+            var quests = line.Select(id => bundle.Catalog.GetByRowId(id)).OfType<QuestRecord>().ToArray();
+            if (quests.Length == 0)
+            {
+                continue;
+            }
+
+            var genre = quests[0].Journal.GenreName;
+            var name = quests.Length > 1 && genre.Length > 0 && quests.All(q => q.Journal.GenreName == genre) ? genre : session.Spoilers.DisplayName(quests[^1]);
+            items.Add(string.Format(CultureInfo.CurrentCulture, Strings.MsqMeterEarlierItemFormat, name, Quests(quests.Length), quests.Max(static q => q.DisplayLevel)));
+        }
+
+        var earlier = items.Count == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.MsqMeterEarlierFormat, string.Join(Strings.PlanningListSeparator, items));
+        return new StoryMeterHover(title, [.. lines], earlier);
     }
 
     /// <summary>
@@ -355,11 +426,11 @@ public sealed class PlanningSource
     /// Duty Support, Trust or solo entry, and the item-level wall of the highest one when the character falls short
     /// ("The story's duties ahead ask up to i690 (you: i677)").
     /// </summary>
-    private static void AppendDutyNotes(StringBuilder text, MsqCatchUpSummary summary, CharacterSnapshot snapshot, CatalogBundle bundle, CatchUpDutySource? dutySource)
+    private static string AppendDutyNotes(StringBuilder text, MsqCatchUpSummary summary, CharacterSnapshot snapshot, CatalogBundle bundle, CatchUpDutySource? dutySource)
     {
         if (dutySource?.DutyOf is not { } dutyOf)
         {
-            return;
+            return string.Empty;
         }
 
         var others = 0;
@@ -384,15 +455,23 @@ public sealed class PlanningSource
             }
         }
 
-        if (others > 0)
+        var othersLine = others switch
         {
-            text.Append('\n').Append(others == 1 ? Strings.PlanningCatchUpOthersOne : string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpOthersFormat, others));
+            0 => string.Empty,
+            1 => Strings.PlanningCatchUpOthersOne,
+            _ => string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpOthersFormat, others),
+        };
+        if (othersLine.Length > 0)
+        {
+            text.Append('\n').Append(othersLine);
         }
 
         if (ItemLevelWall.For(highest, snapshot, ItemLevelRule.For(bundle.Catalog)) is { Met: false } wall)
         {
             text.Append('\n').Append(string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpWallFormat, wall.Required, wall.Have));
         }
+
+        return othersLine;
     }
 
     private void BuildAdvice(CatalogBundle bundle, CharacterSnapshot snapshot)

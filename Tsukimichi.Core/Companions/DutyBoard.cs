@@ -27,8 +27,8 @@ public sealed record BoardDuty(DutyRunInfo Duty, IReadOnlyList<QuestRecord> Unlo
 /// <param name="Unlocked">How many of its duties the character has unlocked.</param>
 /// <param name="Needed">How many unlocked duties open it (every one, or <see cref="DutyBoard.MinimumUnlocked"/>).</param>
 /// <param name="Missing">
-/// The duties still to unlock, lowest level first: every locked one for a roulette that asks for all of them, else as
-/// many as are still needed. Empty unless <paramref name="Lock"/> is <see cref="RouletteLock.NeedsDuties"/>.
+/// Every duty in the roulette the character has not unlocked, lowest level first, whatever the lock: a closed
+/// roulette's are what opens it, an open one's what is left in it ("open · 1 raid not unlocked").
 /// </param>
 public sealed record RouletteLine(RouletteInfo Roulette, RouletteLock Lock, int Unlocked, int Needed, IReadOnlyList<BoardDuty> Missing)
 {
@@ -53,6 +53,9 @@ public sealed record DutyBoardModel(IReadOnlyList<RouletteLine> Roulettes, IRead
 
     /// <summary>The roulettes still closed.</summary>
     public IEnumerable<RouletteLine> Locked => Roulettes.Where(static r => r.Lock != RouletteLock.Open);
+
+    /// <summary>The roulettes with something left: closed, or open with duties in them not unlocked.</summary>
+    public IEnumerable<RouletteLine> WithSomethingLeft => Roulettes.Where(static r => r.Lock != RouletteLock.Open || r.Missing.Count > 0);
 }
 
 /// <summary>
@@ -179,20 +182,11 @@ public static class DutyBoard
                 : have < needed ? RouletteLock.NeedsDuties
                 : RouletteLock.Open;
             var missing = new List<BoardDuty>();
-            if (state == RouletteLock.NeedsDuties)
+            foreach (var duty in duties)
             {
-                var take = roulette.RequiresEveryDuty ? int.MaxValue : needed - have;
-                foreach (var duty in duties)
+                if (!unlocked.Contains(duty.InstanceContentId))
                 {
-                    if (missing.Count >= take)
-                    {
-                        break;
-                    }
-
-                    if (!unlocked.Contains(duty.InstanceContentId))
-                    {
-                        missing.Add(new BoardDuty(duty, unlockQuests?.Invoke(duty.ContentFinderConditionId) ?? []));
-                    }
+                    missing.Add(new BoardDuty(duty, unlockQuests?.Invoke(duty.ContentFinderConditionId) ?? []));
                 }
             }
 

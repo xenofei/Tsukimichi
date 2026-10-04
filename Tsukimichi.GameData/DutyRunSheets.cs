@@ -75,6 +75,7 @@ public static class DutyRunSheets
 
         var duties = new List<DutyRunInfo>();
         var art = DutyArtReader.Shared.Read(excel, language);
+        var highEndCategories = HighEndCategories(excel);
         foreach (var row in excel.GetSheet<ContentFinderCondition>(language))
         {
             var name = row.Name.ExtractText().Trim();
@@ -102,10 +103,34 @@ public static class DutyRunSheets
                 Players = members is { } m ? m.MembersPerParty * Math.Max(1, (int)m.PartyCount) : 0,
                 Roulettes = RoulettesOf(in row),
                 SortKey = row.SortKey,
+                HighEnd = row.HighEndDuty
+                    || row.ContentType.RowId is DutyRunInfo.UltimateRaids or DutyRunInfo.ChaoticAllianceRaid
+                    || highEndCategories.Contains(row.ContentUICategory.RowId),
             });
         }
 
         return DutyRunIndex.From(duties, Roulettes(excel, language));
+    }
+
+    /// <summary>
+    /// The Duty Finder categories (<c>ContentUICategory</c>) of high-end content: "High-end Trials (…)" and "Savage
+    /// Raids (…)", one per expansion, read by their English names so the list grows with each expansion and does not
+    /// depend on the client's language. The current tier's flag (<c>HighEndDuty</c>) and the Ultimate and Chaotic
+    /// content types cover the rest.
+    /// </summary>
+    private static HashSet<uint> HighEndCategories(ExcelModule excel)
+    {
+        var ids = new HashSet<uint>();
+        foreach (var category in excel.GetSheet<ContentUICategory>(Language.English))
+        {
+            var name = category.Name.ExtractText();
+            if (name.StartsWith("High-end", StringComparison.Ordinal) || name.StartsWith("Savage", StringComparison.Ordinal))
+            {
+                ids.Add(category.RowId);
+            }
+        }
+
+        return ids;
     }
 
     /// <summary>The roulette columns a duty is ticked in.</summary>

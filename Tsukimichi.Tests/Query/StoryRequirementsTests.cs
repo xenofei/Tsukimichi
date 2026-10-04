@@ -196,6 +196,81 @@ public class StoryRequirementsTests
     }
 
     [Fact]
+    public void The_story_duties_are_those_it_asks_for_opens_or_its_side_quests_unlock()
+    {
+        var catalog = Catalog(Story(65804, 5, 1, 80) with { PreviousQuests = new Prereq([S4], JoinKind.All), Rewards = [new RewardRef(RewardKind.Instance, 40, 0, 0, "Duty 40", 0)] });
+        var duties = Duties() with
+        {
+            UnlocksOf = id => id switch
+            {
+                S3 => [30u],
+                LineA2 => [50u],
+                _ => [],
+            },
+        };
+        var required = StoryRequirements.For(catalog, duties);
+
+        // Asked for by S3 (instance 10, Duty Finder entry 20), opened by a story quest (30, and instance 40), unlocked
+        // by a side quest the story needs (50).
+        Assert.True(required.IsStoryDuty(0, Instance));
+        Assert.True(required.IsStoryDuty(Condition, 0));
+        Assert.True(required.IsStoryDuty(30, 0));
+        Assert.True(required.IsStoryDuty(0, 40));
+        Assert.True(required.IsStoryDuty(50, 0));
+        Assert.False(required.IsStoryDuty(60, 61));
+        Assert.False(required.IsStoryDuty(0, 0));
+    }
+
+    [Fact]
+    public void A_story_quest_that_starts_the_story_needs_no_side_quest()
+    {
+        // Close to Home after a city's Coming to …: the story's first quest follows only a side quest.
+        var catalog = Fixture.Catalog(
+            Story(S1, 1, 0, 1) with { PreviousQuests = new Prereq([Side1], JoinKind.Any) },
+            Story(S2, 2, 0, 1) with { PreviousQuests = new Prereq([Side2], JoinKind.All) },
+            SideQuest(Side1, 1),
+            SideQuest(Side2, 1));
+        Assert.Empty(StoryRequirements.Build(catalog, null, null, null).All);
+    }
+
+    [Fact]
+    public void The_meter_counts_to_the_next_milestone_and_names_what_was_skipped()
+    {
+        // S1 to S3 came with 2.0, S4 with 2.1; the side line before S2 sits at levels 30 to 34, below S2's 50.
+        var catalog = Fixture.Catalog(
+        [
+            Story(S1, 1, 0, 50) with { AddedIn = "2.0" },
+            Story(S2, 2, 0, 50) with { AddedIn = "2.0", PreviousQuests = new Prereq([S1, Side3], JoinKind.All) },
+            Story(S3, 3, 0, 50) with { AddedIn = "2.0", PreviousQuests = new Prereq([S2], JoinKind.All) },
+            Story(S4, 4, 1, 79) with { AddedIn = "2.1", PreviousQuests = new Prereq([S3], JoinKind.All) },
+            SideQuest(Side1, 30),
+            SideQuest(Side2, 32, Side1),
+            SideQuest(Side3, 34, Side2, S1),
+            SideQuest(LineA1, 70, S1),
+            SideQuest(LineA2, 72, LineA1),
+        ]);
+        var duties = new CatchUpDutySource(_ => [])
+        {
+            StoryRequired = new Dictionary<uint, StoryRequiredEntry> { [S4] = new([LineA2], JoinKind.All, "n", "https://e.invalid/") },
+        };
+        var meter = StoryMeter.Compute(catalog, States(catalog, S1), duties);
+        Assert.NotNull(meter);
+
+        // S2 and S3 are left in 2.0.
+        Assert.Equal(2, meter.ToMilestone);
+
+        // The side line before S2 (Lv 30 to 34) is skipped; the role line before S4 (Lv 70+) is not "earlier" yet.
+        Assert.Equal([[Side1, Side2, Side3]], meter.Earlier);
+
+        // Done with 2.0: S4's milestone is its own patch, and at S4's level 79 the role line (Lv 70 to 72) is now one the
+        // character could have done.
+        var later = StoryMeter.Compute(catalog, States(catalog, S1, S2, S3, Side1, Side2, Side3), duties);
+        Assert.NotNull(later);
+        Assert.Equal(1, later.ToMilestone);
+        Assert.Equal([[LineA1, LineA2]], later.Earlier);
+    }
+
+    [Fact]
     public void The_requirements_are_cached_per_catalog_and_source()
     {
         var catalog = Catalog();

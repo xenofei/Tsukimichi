@@ -53,13 +53,18 @@ public sealed record StoryRequirementsProgress(int Done, int Total, IReadOnlyDic
 /// </summary>
 public sealed class StoryRequirements
 {
-    public static readonly StoryRequirements Empty = new([]);
+    public static readonly StoryRequirements Empty = new([], [], []);
 
     private static readonly ConditionalWeakTable<QuestCatalog, Holder> Cache = [];
 
-    private StoryRequirements(IReadOnlyList<StoryRequirement> all)
+    private readonly HashSet<uint> storyInstances;
+    private readonly HashSet<uint> storyConditions;
+
+    private StoryRequirements(IReadOnlyList<StoryRequirement> all, HashSet<uint> storyInstances, HashSet<uint> storyConditions)
     {
         All = all;
+        this.storyInstances = storyInstances;
+        this.storyConditions = storyConditions;
         var quests = new HashSet<uint>();
         foreach (var requirement in all)
         {
@@ -79,6 +84,15 @@ public sealed class StoryRequirements
     public IReadOnlySet<uint> SideQuests { get; }
 
     /// <summary>
+    /// Whether the main scenario needs the duty (C7's "Story-required" badge): a main scenario quest asks to have it
+    /// cleared or opens it (<see cref="RewardKind.Instance"/>, or the duty unlock data), or a side quest the story needs
+    /// unlocks it. Either id may be 0.
+    /// </summary>
+    public bool IsStoryDuty(uint contentFinderConditionId, uint instanceContentId) =>
+        (instanceContentId != 0 && storyInstances.Contains(instanceContentId))
+        || (contentFinderConditionId != 0 && storyConditions.Contains(contentFinderConditionId));
+
+    /// <summary>
     /// The requirements for <paramref name="catalog"/> with <paramref name="duties"/>' unlock data and curated entries;
     /// without a duty source only the previous quests count. Cached per catalog for the last duty source.
     /// </summary>
@@ -91,7 +105,7 @@ public sealed class StoryRequirements
             if (holder.Value is null || !ReferenceEquals(holder.Duties, duties))
             {
                 holder.Duties = duties;
-                holder.Value = Build(catalog, duties?.ConditionOf, duties?.QuestsUnlocking, duties?.StoryRequired);
+                holder.Value = Build(catalog, duties?.ConditionOf, duties?.QuestsUnlocking, duties?.StoryRequired, duties?.UnlocksOf);
             }
 
             return holder.Value;
@@ -104,11 +118,13 @@ public sealed class StoryRequirements
     /// <param name="conditionOf">InstanceContent id to its ContentFinderCondition id; null leaves the duty source out.</param>
     /// <param name="questsUnlocking">ContentFinderCondition id to the quests that unlock it; null leaves the duty source out.</param>
     /// <param name="curated">Curated entries by main scenario quest; null for none.</param>
+    /// <param name="unlocksOf">Quest row id to the ContentFinderCondition ids it unlocks, for the story duties; null knows none.</param>
     public static StoryRequirements Build(
         QuestCatalog catalog,
         Func<uint, uint>? conditionOf,
         Func<uint, IReadOnlyList<uint>>? questsUnlocking,
-        IReadOnlyDictionary<uint, StoryRequiredEntry>? curated)
+        IReadOnlyDictionary<uint, StoryRequiredEntry>? curated,
+        Func<uint, IReadOnlyList<uint>>? unlocksOf = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var graph = MsqGraph.For(catalog);
@@ -124,8 +140,25 @@ public sealed class StoryRequirements
         }
 
         var list = new List<StoryRequirement>();
+        var instances = new HashSet<uint>();
+        var conditions = new HashSet<uint>();
         foreach (var quest in graph.Story)
         {
+            // The duties the story asks for or opens.
+            instances.UnionWith(quest.InstanceContentRequired.Where(static id => id != 0));
+            foreach (var reward in quest.Rewards)
+            {
+                if (reward.Kind == RewardKind.Instance && reward.Id != 0)
+                {
+                    instances.Add(reward.Id);
+                }
+            }
+
+            if (unlocksOf is not null)
+            {
+                conditions.UnionWith(unlocksOf(quest.RowId).Where(static id => id != 0));
+            }
+
             // 1. Previous quests outside the story. A story quest none of whose previous quests is a story quest starts
             // the story (Close to Home after a city's Coming to …): what comes before it is the character's start, not a
             // side quest the story asks for on the way. An Any join a story quest meets needs no side quest either.
@@ -186,7 +219,34 @@ public sealed class StoryRequirements
             }
         }
 
-        return list.Count == 0 ? Empty : new StoryRequirements(list);
+        // A duty a side quest the story needs unlocks is the story's too (the hard primals, the Crystal Tower raids).
+        if (unlocksOf is not null)
+        {
+            foreach (var requirement in list)
+            {
+                foreach (var option in requirement.Options)
+                {
+                    foreach (var id in option)
+                    {
+                        conditions.UnionWith(unlocksOf(id).Where(static c => c != 0));
+                    }
+                }
+            }
+        }
+
+        if (conditionOf is not null)
+        {
+            foreach (var instance in instances)
+            {
+                var condition = conditionOf(instance);
+                if (condition != 0)
+                {
+                    conditions.Add(condition);
+                }
+            }
+        }
+
+        return new StoryRequirements(list, instances, conditions);
     }
 
     /// <summary>
@@ -354,6 +414,20 @@ public sealed record StoryMeter(int StoryDone, int StoryTotal, int SideDone, int
     /// <summary>Whole percent done, rounded down, so it reads 100 only when nothing is left.</summary>
     public int Percent => Total == 0 ? 100 : (int)(100L * Done / Total);
 
+    /// <summary>
+    /// Main scenario quests left to the next milestone, the last quest of the patch the next quest came with
+    /// (<see cref="QuestRecord.AddedIn"/>), that one included; 0 when the story is done or the patch is unknown. A count,
+    /// never a name: it is spoiler-safe.
+    /// </summary>
+    public int ToMilestone { get; init; }
+
+    /// <summary>
+    /// Side quests the story needs later that the character could do now and has not (spec-1.19 N3, "Still to do from
+    /// earlier"): per main scenario quest still ahead, its side quests left, when none is above the level of the next
+    /// main scenario quest. In story order.
+    /// </summary>
+    public IReadOnlyList<IReadOnlyList<uint>> Earlier { get; init; } = [];
+
     /// <summary>The meter for a character; null when the catalog has no main scenario.</summary>
     public static StoryMeter? Compute(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states, CatchUpDutySource? duties)
     {
@@ -365,6 +439,62 @@ public sealed record StoryMeter(int StoryDone, int StoryTotal, int SideDone, int
         }
 
         var side = StoryRequirements.For(catalog, duties).Progress(states);
-        return new StoryMeter(position.Done, position.Total, side.Done, side.Total);
+        return new StoryMeter(position.Done, position.Total, side.Done, side.Total)
+        {
+            ToMilestone = Milestone(catalog, states, position),
+            Earlier = SkippedEarlier(catalog, states, position, side),
+        };
+    }
+
+    private static int Milestone(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states, MsqPosition position)
+    {
+        if (position.Next is not { AddedIn.Length: > 0 } next)
+        {
+            return 0;
+        }
+
+        var count = 0;
+        var started = false;
+        foreach (var quest in MsqGraph.For(catalog).Story)
+        {
+            started |= quest.RowId == next.RowId;
+            if (!started || quest.AddedIn != next.AddedIn)
+            {
+                continue;
+            }
+
+            if (states.GetValueOrDefault(quest.RowId) is not ({ LeavesTotals: true } or { State: QuestState.Completed }))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static IReadOnlyList<IReadOnlyList<uint>> SkippedEarlier(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states, MsqPosition position, StoryRequirementsProgress side)
+    {
+        if (position.Next is not { } next || side.LeftFor.Count == 0)
+        {
+            return [];
+        }
+
+        var list = new List<IReadOnlyList<uint>>();
+        var seen = new HashSet<uint>();
+        foreach (var quest in MsqGraph.For(catalog).Story)
+        {
+            if (!side.LeftFor.TryGetValue(quest.RowId, out var left) || states.GetValueOrDefault(quest.RowId)?.State == QuestState.Completed)
+            {
+                continue;
+            }
+
+            var fresh = left.Where(seen.Add).ToArray();
+            if (fresh.Length > 0 && fresh.All(id => catalog.GetByRowId(id) is { } q && q.DisplayLevel <= next.DisplayLevel))
+            {
+                list.Add(fresh);
+            }
+        }
+
+        return list;
     }
 }

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Route;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Game;
@@ -12,17 +13,19 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The Duties board's lines for the viewed character (feature plan v7 N4; <see cref="DutyBoard"/>): the open roulettes
-/// on one line, each closed one with its reason and the duties still to unlock (each with the quest that unlocks it
-/// and that quest's state), and the duties unlocked but never cleared, per category. Built when the session version,
-/// the catalog, the language, the viewed character, the duty index or the unlock data changes; drawing allocates
-/// nothing. Quest names go through the spoiler shield, and a duty whose every unlock quest the shield hides is named
-/// "A duty further along the story". Framework thread only.
+/// The Duties card's lines for the viewed character (feature plan v7 N4; spec-1.19 N4; <see cref="DutyBoard"/>): the
+/// caption ("1 roulette locked"), one block per roulette with something left (closed, or open with duties in it not
+/// unlocked) with its state ("locked · needs a Lv 100 job · best is BLM 98", "open · 1 raid not unlocked"), a row per
+/// duty not unlocked (its name, its C7 size badge, "not unlocked · with" the quest that unlocks it), and the route and
+/// pins over those quests; then the duties unlocked but never cleared. Lists show what is left, never a tally of what
+/// is done. Built when the session version, the catalog, the language, the viewed character, the duty index, the
+/// unlock data or the spoiler shield changes; drawing allocates nothing. Quest names go through the spoiler shield, and
+/// a duty whose every unlock quest the shield hides is named "A duty further along the story". Framework thread only.
 /// </summary>
 public sealed class DutyBoardSource
 {
-    private static readonly IReadOnlyList<LockedLine> NoLocked = [];
-    private static readonly IReadOnlyList<NeverLine> NoNever = [];
+    private static readonly IReadOnlyList<Block> NoBlocks = [];
+    private static readonly IReadOnlyList<Row> NoRows = [];
 
     private readonly SessionState session;
     private readonly Func<DutyRunIndex?> runs;
@@ -33,9 +36,9 @@ public sealed class DutyBoardSource
 
     private bool visible;
     private bool hasRecords;
-    private string openLine = string.Empty;
-    private IReadOnlyList<LockedLine> locked = NoLocked;
-    private IReadOnlyList<NeverLine> never = NoNever;
+    private string caption = string.Empty;
+    private IReadOnlyList<Block> blocks = NoBlocks;
+    private IReadOnlyList<Row> never = NoRows;
 
     public DutyBoardSource(SessionState session, Func<DutyRunIndex?> runs, DutyUnlockIndexSource unlocks)
     {
@@ -44,16 +47,19 @@ public sealed class DutyBoardSource
         this.unlocks = unlocks ?? throw new ArgumentNullException(nameof(unlocks));
     }
 
-    /// <summary>A duty still to unlock: its name (or the shield's stand-in), "Lv 50", the line naming its unlock quest, that quest, its icon.</summary>
-    public sealed record MissingLine(string Duty, string Level, string From, QuestRecord? Quest, uint Icon);
+    /// <summary>
+    /// One duty row: its name (or the shield's stand-in), its size badge (none when unknown), the words before the unlock
+    /// quest ("not unlocked · with "), that quest's name and the quest itself (null when none is known).
+    /// </summary>
+    public sealed record Row(string Duty, DutyBadges.Look? Badge, string Trailing, string QuestName, QuestRecord? Quest);
 
-    /// <summary>A closed roulette: its short name, why it is closed, and the duties still to unlock.</summary>
-    public sealed record LockedLine(string Name, string Reason, IReadOnlyList<MissingLine> Missing);
+    /// <summary>
+    /// One roulette: its id (for the card's "more" toggle), header ("Level Cap Dungeons roulette"), state, rows, the
+    /// route over the unlock quests (null without one) and the quests "Pin all" pins.
+    /// </summary>
+    public sealed record Block(uint Id, string Header, string State, bool Locked, IReadOnlyList<Row> Rows, RouteTarget? Route, IReadOnlyList<QuestRecord> PinQuests);
 
-    /// <summary>One category of the never-cleared list: its name and the duties, comma-joined.</summary>
-    public sealed record NeverLine(string Kind, string Duties);
-
-    /// <summary>Whether the board has anything to show: the duty index holds roulettes and a character is viewed.</summary>
+    /// <summary>Whether the card has anything to show: the duty index holds roulettes and a character is viewed.</summary>
     public bool Visible
     {
         get
@@ -73,28 +79,28 @@ public sealed class DutyBoardSource
         }
     }
 
-    /// <summary>"Open: Leveling · Trials · …"; empty when none is.</summary>
-    public string OpenLine
+    /// <summary>"1 roulette locked", "3 roulettes locked", or empty when every roulette is open.</summary>
+    public string Caption
     {
         get
         {
             Refresh();
-            return openLine;
+            return caption;
         }
     }
 
-    /// <summary>The closed roulettes, in the Duty Finder's order.</summary>
-    public IReadOnlyList<LockedLine> Locked
+    /// <summary>The roulettes with something left, in the Duty Finder's order.</summary>
+    public IReadOnlyList<Block> Blocks
     {
         get
         {
             Refresh();
-            return locked;
+            return blocks;
         }
     }
 
-    /// <summary>The duties unlocked and never cleared, per category; empty when every unlocked duty is cleared.</summary>
-    public IReadOnlyList<NeverLine> Never
+    /// <summary>The duties unlocked and never cleared: dungeons, trials, raids, guildhests, each lowest level first.</summary>
+    public IReadOnlyList<Row> Never
     {
         get
         {
@@ -116,9 +122,9 @@ public sealed class DutyBoardSource
 
         builtKey = key;
         visible = hasRecords = false;
-        openLine = string.Empty;
-        locked = NoLocked;
-        never = NoNever;
+        caption = string.Empty;
+        blocks = NoBlocks;
+        never = NoRows;
         if (bundle is null || index is not { Roulettes.Count: > 0 } || session.ViewedSnapshot is not { } snapshot)
         {
             return;
@@ -134,29 +140,89 @@ public sealed class DutyBoardSource
         var catalog = bundle.Catalog;
         var states = session.States;
         var model = DutyBoard.Build(index, snapshot, condition => UnlockQuests(unlockIndex, condition, catalog, states));
-        var open = model.Roulettes.Where(static r => r.Lock == RouletteLock.Open).Select(static r => r.Roulette.ShortName).ToArray();
-        openLine = open.Length == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardOpenFormat, string.Join(Core.Ui.MsqText.Separator, open));
-
-        var lockedLines = new List<LockedLine>();
-        foreach (var line in model.Locked)
+        var locked = model.Locked.Count();
+        caption = locked switch
         {
-            var reason = line.Lock switch
-            {
-                RouletteLock.NeedsExpansion => Strings.DutyBoardNeedsExpansion,
-                RouletteLock.NeedsLevel => string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardNeedsLevelFormat, line.Roulette.RequiredLevel),
-                _ when line.NeedsEvery => string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardNeedsEveryFormat, line.Left),
-                _ => string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardNeedsSomeFormat, line.Needed, line.Left),
-            };
-            lockedLines.Add(new LockedLine(line.Roulette.ShortName, reason, line.Missing.Select(Missing).ToArray()));
+            0 => string.Empty,
+            1 => Strings.DutyBoardLockedOne,
+            _ => string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardLockedFormat, locked),
+        };
+
+        var list = new List<Block>();
+        foreach (var line in model.WithSomethingLeft)
+        {
+            var rows = line.Missing.Select(m => MissingRow(m, index)).ToArray();
+            var withQuest = line.Missing.Where(static m => m.UnlockQuests.Count > 0).ToArray();
+            var quests = withQuest.Select(static m => m.UnlockQuests[0]).DistinctBy(static q => q.RowId).ToArray();
+            var route = quests.Length == 0
+                ? null
+                : RouteTarget.Union(RouteTargetKind.Duty, line.Roulette.ShortName, withQuest.Select(m => new RouteTarget(RouteTargetKind.Duty, DutyName(m), [m.UnlockQuests[0].RowId])));
+            list.Add(new Block(
+                line.Roulette.Id,
+                string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardRouletteFormat, line.Roulette.ShortName),
+                State(line, snapshot, bundle),
+                line.Lock != RouletteLock.Open,
+                rows,
+                route,
+                quests));
         }
 
-        locked = lockedLines;
-        never = model.NeverCleared.Select(static g => new NeverLine(KindName(g.ContentType), string.Join(Strings.PlanningListSeparator, g.Duties.Select(static d => d.Name)))).ToArray();
+        blocks = list;
+        never = model.NeverCleared.SelectMany(static g => g.Duties).Select(d => new Row(d.Name, SizeBadge(d, index), string.Empty, string.Empty, null)).ToArray();
     }
 
+    /// <summary>"locked · needs a Lv 100 job · best is BLM 98", "locked · 2 dungeons not unlocked", "open · 1 raid not unlocked".</summary>
+    private static string State(RouletteLine line, CharacterSnapshot snapshot, CatalogBundle bundle)
+    {
+        switch (line.Lock)
+        {
+            case RouletteLock.NeedsExpansion:
+                var expansion = bundle.Names.Expansion(line.Roulette.RequiredExpansion) is { Length: > 0 } named ? named : Core.Evaluation.Expansions.Name(line.Roulette.RequiredExpansion);
+                return string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardLockedExpansionFormat, expansion);
+            case RouletteLock.NeedsLevel:
+                byte job = 0;
+                short level = 0;
+                foreach (var (id, jobLevel) in snapshot.JobLevels)
+                {
+                    if (jobLevel > level || (jobLevel == level && id < job))
+                    {
+                        job = id;
+                        level = jobLevel;
+                    }
+                }
+
+                return string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardLockedLevelFormat, line.Roulette.RequiredLevel, bundle.Names.ClassJobAbbreviation(job), level);
+            case RouletteLock.NeedsDuties when !line.NeedsEvery:
+                return string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardLockedSomeFormat, line.Left);
+            case RouletteLock.NeedsDuties:
+                return string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardLockedEveryFormat, NotUnlocked(line.Missing));
+            default:
+                return string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardOpenLeftFormat, NotUnlocked(line.Missing));
+        }
+    }
+
+    /// <summary>"2 dungeons not unlocked", by the duties' one category, or "duties" when they mix.</summary>
+    private static string NotUnlocked(IReadOnlyList<BoardDuty> missing)
+    {
+        var categories = missing.Select(static m => DutyBoard.CategoryOf(m.Duty)).Distinct().ToArray();
+        var category = categories.Length == 1 ? categories[0] : 0u;
+        var (one, many) = category switch
+        {
+            DutyRunInfo.Dungeons => (Strings.DutyBoardDungeonsOne, Strings.DutyBoardDungeonsFormat),
+            DutyRunInfo.Trials => (Strings.DutyBoardTrialsOne, Strings.DutyBoardTrialsFormat),
+            DutyRunInfo.Raids => (Strings.DutyBoardRaidsOne, Strings.DutyBoardRaidsFormat),
+            DutyRunInfo.Guildhests => (Strings.DutyBoardGuildhestsOne, Strings.DutyBoardGuildhestsFormat),
+            _ => (Strings.DutyBoardDutiesOne, Strings.DutyBoardDutiesFormat),
+        };
+        return missing.Count == 1 ? one : string.Format(CultureInfo.CurrentCulture, many, missing.Count);
+    }
+
+    private static DutyBadges.Look? SizeBadge(DutyRunInfo duty, DutyRunIndex index) =>
+        DutyBadgeRules.Size(duty) is { } badge ? DutyBadges.Describe(badge, duty, index.Roulettes) : null;
+
     /// <summary>
-    /// The quests that unlock a duty, those still to do first (Ready, then accepted, then the rest), completed ones last:
-    /// a duty some quest of which is done is not missing for that reason.
+    /// The quests that unlock a duty, those still to do first (Ready, then accepted, then the rest), completed ones last,
+    /// leaving out another path's (another city's, Grand Company's).
     /// </summary>
     private static IReadOnlyList<QuestRecord> UnlockQuests(DutyUnlockIndex index, uint condition, QuestCatalog catalog, IReadOnlyDictionary<uint, Core.Evaluation.QuestEvaluation> states)
     {
@@ -182,24 +248,19 @@ public sealed class DutyBoardSource
         _ => 4,
     };
 
-    private MissingLine Missing(BoardDuty duty)
+    /// <summary>The duty's name, or the shield's stand-in when every quest that unlocks it is hidden.</summary>
+    private string DutyName(BoardDuty duty) =>
+        duty.UnlockQuests.Count > 0 && duty.UnlockQuests.All(session.Spoilers.IsMasked)
+            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.Duty.LevelRequired)
+            : duty.Duty.Name;
+
+    private Row MissingRow(BoardDuty duty, DutyRunIndex index)
     {
         var info = duty.Duty;
-        var level = info.LevelRequired == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.RouteLevelFormat, info.LevelRequired);
         var quest = duty.UnlockQuests.Count > 0 ? duty.UnlockQuests[0] : null;
-        var hidden = duty.UnlockQuests.Count > 0 && duty.UnlockQuests.All(session.Spoilers.IsMasked);
-        var name = hidden ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, info.LevelRequired) : info.Name;
-        var from = quest is null
-            ? Strings.DutyBoardNoQuest
-            : string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardFromFormat, session.Spoilers.DisplayName(quest), Strings.StateName(session.States.GetValueOrDefault(quest.RowId)?.State ?? QuestState.Unknown, quest));
-        return new MissingLine(name, level, from, quest, hidden ? 0 : info.Icon);
+        var name = DutyName(duty);
+        return quest is null
+            ? new Row(name, SizeBadge(info, index), Strings.DutyBoardNoQuest, string.Empty, null)
+            : new Row(name, SizeBadge(info, index), Strings.DutyBoardWith, session.Spoilers.DisplayName(quest), quest);
     }
-
-    private static string KindName(uint contentType) => contentType switch
-    {
-        DutyRunInfo.Dungeons => Strings.DutyBoardKindDungeons,
-        DutyRunInfo.Trials => Strings.DutyBoardKindTrials,
-        DutyRunInfo.Guildhests => Strings.DutyBoardKindGuildhests,
-        _ => Strings.DutyBoardKindRaids,
-    };
 }
