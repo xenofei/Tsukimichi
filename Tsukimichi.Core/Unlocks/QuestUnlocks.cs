@@ -91,6 +91,9 @@ public sealed class QuestUnlocks
     /// </summary>
     public SpoilerNames Names { get; private set; } = SpoilerNames.Empty;
 
+    /// <summary>Every town and field zone the index was built with (<see cref="UnlockLinks.Zones"/>): the zones board's rows (1.21.0 P7).</summary>
+    public IReadOnlyList<UnlockZone> Zones { get; private set; } = [];
+
     /// <summary>How many quests open anything, counting what their Rewards already show.</summary>
     public int Count => withRewards.Count;
 
@@ -334,6 +337,7 @@ public sealed class QuestUnlocks
         if (!ReferenceEquals(index, Empty))
         {
             index.Names = SpoilerNames.Build(catalog, index, links.Zones);
+            index.Zones = links.Zones;
         }
 
         return index;

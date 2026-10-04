@@ -39,7 +39,25 @@ public enum RouteTargetKind : byte
     /// feature, a job, a mount or an emote through any one of its quests, or flying in a zone through every quest current.
     /// </summary>
     Unlock,
+
+    /// <summary>
+    /// Triple Triad opponents (plan v7, 1.21.0 P6, <see cref="ForTriad"/>): the quests that open each one, honouring
+    /// its any or all join, then the opponents themselves as stops (<see cref="RouteTarget.TriadStops"/>).
+    /// </summary>
+    TriadNpc,
 }
+
+/// <summary>
+/// A Triple Triad opponent as a stop after the quests of a <see cref="RouteTargetKind.TriadNpc"/> route (1.21.0 P6):
+/// "Elaisse · Triple Triad", flagged where the NPC stands.
+/// </summary>
+/// <param name="ResidentId">The opponent's <c>TripleTriad</c> row id.</param>
+/// <param name="Name">The NPC's name.</param>
+/// <param name="Zone">The zone the NPC stands in.</param>
+/// <param name="TerritoryId">Its territory, for the map flag.</param>
+/// <param name="X">World X.</param>
+/// <param name="Z">World Z.</param>
+public sealed record TriadStop(uint ResidentId, string Name, string Zone, uint TerritoryId, float X, float Z);
 
 /// <summary>
 /// The thing a player wants and the quest or quests that give it (feature plan v3 P6). Several quests stand for one
@@ -73,6 +91,12 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
     /// window adds after the quests (plan v7, 1.19.0 K3); 0 for any other target.
     /// </summary>
     public uint FlyingTerritory { get; init; }
+
+    /// <summary>
+    /// For a route to Triple Triad opponents (<see cref="ForTriad"/>): the opponents, after the quests, in the order
+    /// given; empty for any other target. The Route window lists each one as a stop of its own.
+    /// </summary>
+    public IReadOnlyList<TriadStop> TriadStops { get; init; } = [];
 
     /// <summary>True for a route to several targets (<see cref="Parts"/>).</summary>
     public bool IsUnion => Parts.Count > 0;
@@ -311,6 +335,54 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
 
         return Union(RouteTargetKind.Unlock, find.Label, parts) with { Icon = find.Icon, FlyingTerritory = flyingTerritory, Placed = placed };
     }
+
+    /// <summary>
+    /// Route to Triple Triad opponents (1.21.0 P6): for each opponent with a quest gate, an any join is one part whose
+    /// quests are variants (Swift plays after any one of the three Grand Company quests: the route takes the one with
+    /// the fewest left), an all join one part per quest sharing the opponent's name (its milestone comes with the last).
+    /// Every opponent with a place is a stop after the quests (<see cref="TriadStops"/>), in the order given, even one
+    /// whose gate is already open. The route wears the Triple Triad card icon.
+    /// </summary>
+    /// <param name="label">The route's title ("3 Triple Triad opponents").</param>
+    public static RouteTarget ForTriad(IEnumerable<Triad.TriadOpponent> opponents, string label)
+    {
+        ArgumentNullException.ThrowIfNull(opponents);
+        var parts = new List<RouteTarget>();
+        var stops = new List<TriadStop>();
+        foreach (var opponent in opponents)
+        {
+            if (opponent is null)
+            {
+                continue;
+            }
+
+            var gate = opponent.Gate;
+            if (gate.Join == JoinKind.Any || gate.QuestIds.Length == 1)
+            {
+                if (!gate.IsEmpty)
+                {
+                    parts.Add(new RouteTarget(RouteTargetKind.TriadNpc, opponent.Name, gate.QuestIds.Distinct().ToArray()));
+                }
+            }
+            else
+            {
+                foreach (var quest in gate.QuestIds.Distinct())
+                {
+                    parts.Add(new RouteTarget(RouteTargetKind.TriadNpc, opponent.Name, [quest]));
+                }
+            }
+
+            if (opponent.Spot is { } spot)
+            {
+                stops.Add(new TriadStop(opponent.ResidentId, opponent.Name, spot.Zone, spot.TerritoryId, spot.X, spot.Z));
+            }
+        }
+
+        return Union(RouteTargetKind.TriadNpc, label ?? string.Empty, parts) with { TriadStops = stops, Icon = TriadCardIcon };
+    }
+
+    /// <summary>The game's Triple Triad card icon (060156), the route header's and the card rows' icon.</summary>
+    public const uint TriadCardIcon = 60156;
 
     private static string F(string key, string english, string value) =>
         string.Format(CultureInfo.CurrentCulture, CoreText.T(key, english), value);

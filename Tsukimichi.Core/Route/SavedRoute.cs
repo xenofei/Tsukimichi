@@ -26,11 +26,15 @@ public sealed class SavedRoute
     /// <summary>The parts of a route to several targets; empty for a single target.</summary>
     public List<SavedRoutePart> Parts { get; set; } = [];
 
+    /// <summary>A route to Triple Triad opponents: the opponents after the quests (<see cref="RouteTarget.TriadStops"/>); empty otherwise, and in a file written before 1.21.</summary>
+    public List<SavedTriadStop> TriadStops { get; set; } = [];
+
     /// <summary>The target to build the route from; a part or list the file left null reads as empty.</summary>
     public RouteTarget ToTarget()
     {
         var quests = QuestRowIds ?? [];
-        var target = new RouteTarget(Kind, Label ?? string.Empty, quests.ToArray()) { Icon = Icon, FlyingTerritory = FlyingTerritory };
+        var stops = (TriadStops ?? []).Where(static s => s is not null).Select(static s => new TriadStop(s.ResidentId, s.Name ?? string.Empty, s.Zone ?? string.Empty, s.TerritoryId, s.X, s.Z)).ToArray();
+        var target = new RouteTarget(Kind, Label ?? string.Empty, quests.ToArray()) { Icon = Icon, FlyingTerritory = FlyingTerritory, TriadStops = stops };
         if (Parts is not { Count: > 0 } parts)
         {
             return target;
@@ -45,7 +49,7 @@ public sealed class SavedRoute
             }
         }
 
-        return RouteTarget.Union(Kind, Label ?? string.Empty, list) with { Icon = Icon, FlyingTerritory = FlyingTerritory };
+        return RouteTarget.Union(Kind, Label ?? string.Empty, list) with { Icon = Icon, FlyingTerritory = FlyingTerritory, TriadStops = stops };
     }
 
     /// <summary>What to store for <paramref name="target"/> followed by <paramref name="ownerContentId"/>.</summary>
@@ -64,6 +68,11 @@ public sealed class SavedRoute
         foreach (var part in target.Parts)
         {
             saved.Parts.Add(new SavedRoutePart { Kind = part.Kind, Label = part.Label, QuestRowIds = [.. part.QuestRowIds], Icon = part.Icon });
+        }
+
+        foreach (var stop in target.TriadStops)
+        {
+            saved.TriadStops.Add(new SavedTriadStop { ResidentId = stop.ResidentId, Name = stop.Name, Zone = stop.Zone, TerritoryId = stop.TerritoryId, X = stop.X, Z = stop.Z });
         }
 
         return saved;
@@ -109,4 +118,20 @@ public sealed class SavedRoutePart
 
     /// <summary>The part's own game icon (<see cref="RouteTarget.Icon"/>); 0 when it has none.</summary>
     public uint Icon { get; set; }
+}
+
+/// <summary>One Triple Triad opponent of a stored route to opponents (<see cref="TriadStop"/>).</summary>
+public sealed class SavedTriadStop
+{
+    public uint ResidentId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string Zone { get; set; } = string.Empty;
+
+    public uint TerritoryId { get; set; }
+
+    public float X { get; set; }
+
+    public float Z { get; set; }
 }
