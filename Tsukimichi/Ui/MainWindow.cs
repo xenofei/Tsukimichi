@@ -799,7 +799,7 @@ public sealed partial class MainWindow : Window, IDisposable
             if (count < MaxChatMatches)
             {
                 // What it opens after the link (feature plan v6 K4), never for a quest the shield masks.
-                var opens = runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) ? Core.Unlocks.UnlockText.Opens(unlocks.Places(quest.RowId, reach)) : string.Empty;
+                var opens = runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) ? Core.Unlocks.UnlockText.Opens(unlocks.Places(quest.RowId, reach, spoilers)) : string.Empty;
                 links.PrintQuestLink(quest, opens.Length > 0 ? opens : null);
             }
 

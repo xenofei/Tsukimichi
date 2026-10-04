@@ -211,7 +211,7 @@ public sealed partial class DetailPane
         this.links = links ?? throw new ArgumentNullException(nameof(links));
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
         this.log = log;
-        chart = new PathChart(RevealRow) { OpensOf = id => runner.Unlocks?.Places(id, runner.UnlockReach) ?? string.Empty };
+        chart = new PathChart(RevealRow) { OpensOf = id => runner.Unlocks?.Places(id, runner.UnlockReach, runner.Spoilers) ?? string.Empty };
     }
 
     /// <summary>The user's unique-reward verdicts; null until the plugin attaches them, which hides the Moonlit card.</summary>

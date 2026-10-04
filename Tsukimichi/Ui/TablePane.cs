@@ -2290,7 +2290,7 @@ public sealed class TablePane : IDisposable
         ImGui.TextDisabled(runner.LevelText(quest.DisplayLevel));
 
         // What it opens (feature plan v6 K4), never for a quest the shield masks.
-        if (runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) && unlocks.OpensLine(quest.RowId, runner.UnlockReach) is { Length: > 0 } opens)
+        if (runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) && unlocks.OpensLine(quest.RowId, runner.UnlockReach, spoilers) is { Length: > 0 } opens)
         {
             ImGui.TextWrapped(opens);
         }

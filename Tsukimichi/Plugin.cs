@@ -752,6 +752,11 @@ public sealed partial class Plugin : IDalamudPlugin
             // The unlock index starts building as soon as a catalog loads and is collected here, so the first chat
             // "Unlocked:" line and the first Unlocks section read a built index, not the empty one a lazy start gives.
             questUnlocks?.Poll();
+            if (questUnlocks is { } unlocks)
+            {
+                // The wider spoiler shield places names from the index (plan v7, 1.20.0 N6).
+                Session?.UseSpoilerNames(unlocks.Latest.Names);
+            }
         }
         catch (Exception ex)
         {

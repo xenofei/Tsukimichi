@@ -61,6 +61,10 @@ public sealed partial class SessionState
     private int liveSpoilersVersion = -1;
     private readonly HashSet<uint> revealedNames = [];
 
+    // The wider shield (plan v7, 1.20.0 N6): where zone, duty, reward and NPC names sit in the story, from the unlock
+    // index of the loaded catalog (UseSpoilerNames).
+    private SpoilerNames spoilerNames = SpoilerNames.Empty;
+
     public SessionState(SnapshotService snapshots, PluginPaths paths, UniqueRewardsData uniqueRewards, CuratedData curated, IPluginLog? log = null)
     {
         this.snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
@@ -236,7 +240,7 @@ public sealed partial class SessionState
             {
                 spoilersVersion = Version;
                 spoilers = Bundle is { } bundle
-                    ? SpoilerMask.Build(bundle.Catalog, States, SpoilerOptionsFor(ViewedContentId), revealedNames, Abandoned)
+                    ? SpoilerMask.Build(bundle.Catalog, States, SpoilerOptionsFor(ViewedContentId), revealedNames, Abandoned, spoilerNames)
                     : SpoilerMask.None;
             }
 
@@ -261,7 +265,7 @@ public sealed partial class SessionState
             if (liveSpoilersVersion != Version)
             {
                 liveSpoilersVersion = Version;
-                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames, liveAbandoned);
+                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames, liveAbandoned, spoilerNames);
             }
 
             return liveSpoilers;
@@ -279,6 +283,23 @@ public sealed partial class SessionState
 
     /// <summary>A spoiler setting changed: every surface re-reads the mask.</summary>
     public void RefreshSpoilers() => Bump();
+
+    /// <summary>
+    /// Where zone, duty, reward and NPC names sit in the story (plan v7, 1.20.0 N6), from the unlock index of the loaded
+    /// catalog: the plugin hands it over each frame, and a new one (the index of a new catalog landing) makes every
+    /// surface re-read the mask.
+    /// </summary>
+    public void UseSpoilerNames(SpoilerNames names)
+    {
+        ArgumentNullException.ThrowIfNull(names);
+        if (ReferenceEquals(spoilerNames, names))
+        {
+            return;
+        }
+
+        spoilerNames = names;
+        Bump();
+    }
 
     /// <summary>
     /// The end dates the player entered for running events with no known end (1.19.0, C10: Characters › Seasonal

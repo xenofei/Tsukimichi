@@ -5611,6 +5611,13 @@
   <data name="SpoilerAheadHelp" xml:space="preserve">
     <value>How many main scenario quests past your current one keep their names.</value>
   </data>
+  <data name="SpoilerHideRelated" xml:space="preserve">
+    <value>Also hide places, duties, rewards and people</value>
+    <comment>Settings › Spoilers, under "Hide story names ahead" (1.20 N6).</comment>
+  </data>
+  <data name="SpoilerHideRelatedHelp" xml:space="preserve">
+    <value>Areas, duties, rewards and givers your story has not reached read Area ahead (Lv 61) and the like, in lists, tooltips, search, chat and copies.</value>
+  </data>
   <data name="SpoilerHideArtwork" xml:space="preserve">
     <value>Hide journal artwork</value>
   </data>
@@ -7568,6 +7575,22 @@
   <data name="Core.Spoiler.Placeholder" xml:space="preserve">
     <value>Main scenario quest (Lv {0})</value>
     <comment>Core: SpoilerMask.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.AreaPlaceholder" xml:space="preserve">
+    <value>Area ahead (Lv {0})</value>
+    <comment>Core: SpoilerMask.cs. A zone, region or aetheryte past the character's story point (1.20 N6); {0} is the level of the story quest that introduces it.</comment>
+  </data>
+  <data name="Core.Spoiler.DutyPlaceholder" xml:space="preserve">
+    <value>Duty ahead (Lv {0})</value>
+    <comment>Core: SpoilerMask.cs. A duty past the character's story point (1.20 N6).</comment>
+  </data>
+  <data name="Core.Spoiler.RewardPlaceholder" xml:space="preserve">
+    <value>Reward ahead (Lv {0})</value>
+    <comment>Core: SpoilerMask.cs. A reward or other unlock (a mount, an emote, a job, a feature) past the character's story point (1.20 N6).</comment>
+  </data>
+  <data name="Core.Spoiler.NpcPlaceholder" xml:space="preserve">
+    <value>Someone ahead (Lv {0})</value>
+    <comment>Core: SpoilerMask.cs. A person (a quest giver) past the character's story point (1.20 N6).</comment>
   </data>
   <data name="Core.Route.QuestFallback" xml:space="preserve">
     <value>quest</value>
