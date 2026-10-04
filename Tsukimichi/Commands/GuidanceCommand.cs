@@ -205,6 +205,13 @@ public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks 
         return null;
     }
 
+    /// <summary>
+    /// Up next's pick for the character these lines are about (the logged-in one, else the viewed one), for the moon
+    /// icon's quick card (1.22, H1); null while the catalog is not ready or nothing is picked.
+    /// </summary>
+    public (QuestRecord Quest, Core.Todo.UpNextRule Rule)? UpNext() =>
+        session.Bundle is { } bundle ? PickWithRule(bundle.Catalog, States) : null;
+
     private QuestRecord? Pick(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states) => PickWithRule(catalog, states)?.Quest;
 
     /// <summary>

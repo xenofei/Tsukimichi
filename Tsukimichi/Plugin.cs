@@ -1547,6 +1547,9 @@ public sealed partial class Plugin : IDalamudPlugin
             command.ToggleTodoOverlay = todoOverlay.ToggleEnabled;
             configWindow.ResetTodoPosition = todoOverlay.ResetPosition;
 
+            // The moon icon (1.22.0, H1 and H2): over the game, with its quick card, menu and /tsuki icon.
+            InitializeMoonIcon();
+
             // The tutorial draws over the main window (ITutorial.Draw at the end of MainWindow.Draw) and offers itself
             // the first time the main window opens (CheckFirstRun on UiBuilder.Draw).
             TutorialOverlay tutorial = new(Settings, PluginInterface, ui);
@@ -1846,6 +1849,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());
         Unwind("since you were away", () => welcomeBack?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
+        Unwind("moon icon", DisposeMoonIcon);
         Unwind("followed route", () => activeRoutes?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
         Unwind("welcome home", TearDownWelcomeHome);

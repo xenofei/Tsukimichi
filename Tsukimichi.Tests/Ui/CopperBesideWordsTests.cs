@@ -30,6 +30,10 @@ public class CopperBesideWordsTests
         ("MainWindow.Journal.cs", ["Strings.JournalBarFullFormat"]),
         ("DetailPane.GameAnswers.cs", ["Strings.MakeRoomToAccept"]),
         ("TodoOverlay.cs", ["Strings.JournalBarFullFormat"]),
+        // 1.22.0, H1 (spec-1.22 "Colour language": "Each dot also has its words: in the quick card"): the quick card draws
+        // the Needs you title beside its copper dot, and the icon's dot is said in words by that card, which its hover opens.
+        ("MoonIconCard.cs", ["NeedsYou.Current?.Title", "Theme.Copper, needsYou"]),
+        ("MoonIconWindow.cs", ["card.Draw(", "NeedsYou.Current?.Title"]),
         ("Theme.cs", []),
     ];
 

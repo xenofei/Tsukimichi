@@ -147,6 +147,7 @@ public sealed partial class ConfigWindow
         new(SettingsSection.Alerts, DrawNeedsYou),
         new(SettingsSection.Alerts, DrawWelcomeBack),
         new(SettingsSection.Spoilers, DrawSpoilers),
+        new(SettingsSection.InGame, DrawMoonIcon, anchor: SettingsAnchor.MoonIcon),
         new(SettingsSection.InGame, DrawGamePanels),
         new(SettingsSection.InGame, DrawMenusAndTooltips),
         new(SettingsSection.InGame, DrawSayWhatsNext),

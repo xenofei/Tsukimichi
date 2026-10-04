@@ -17,7 +17,6 @@ public sealed partial class Plugin
     private Game.UpdateWatcher? updateWatcher;
     private Game.UmbraProbe? umbraProbe;
     private SummarySource? summarySource;
-    private EventWarningSource? eventWarningSource;
 
     /// <summary>What is known about an update (U1): the moon icon shows its dot while <c>Current.ShowsNote</c>. Null before load.</summary>
     internal Game.UpdateWatcher? Updates => updateWatcher;
@@ -50,7 +49,7 @@ public sealed partial class Plugin
         }
 
         // M1 and M2: tonight in a few lines, the server info bar entry and the summary gates.
-        var summary = new SummarySource(Session, guidance, () => nearby.StartableCount, eventWarningSource);
+        var summary = new SummarySource(Session, guidance, () => nearby.StartableCount, eventWarnings);
         summarySource = summary;
         dtrEntry = new Game.DtrEntry(DtrBar, DataManager, nearby, nearby.Settings, gate, summary, umbra, () => OpenWelcomePlace(IpcPlaces.Main), () => OpenWelcomePlace(IpcPlaces.Tonight), Log);
         if (ipcProvider is { } ipc)
