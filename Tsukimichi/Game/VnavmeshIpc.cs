@@ -304,19 +304,20 @@ public sealed class VnavmeshIpc : IDisposable
     }
 
     /// <summary>
-    /// Turns vnavmesh's "movement allowed" switch back on (a runtime switch: vnavmesh does not save it). Only from
-    /// Setup's explicit button. False when vnavmesh is absent, lacks the gate or threw.
+    /// Sets vnavmesh's "movement allowed" switch (a runtime switch: vnavmesh does not save it). Only from Setup's
+    /// explicit buttons: "Allow movement" (true) and its Undo (false). False when vnavmesh is absent, lacks the gate or
+    /// threw.
     /// </summary>
-    public bool AllowMovement()
+    public bool SetMovementAllowed(bool allowed)
     {
         if (!Available || setMovementAllowed is null || gates.IsMissing(SetMovementAllowedGate))
         {
             return false;
         }
 
-        return Invoke(setMovementAllowed, SetMovementAllowedGate, static gate =>
+        return Invoke(setMovementAllowed, SetMovementAllowedGate, gate =>
         {
-            gate.InvokeAction(true);
+            gate.InvokeAction(allowed);
             return true;
         }, false);
     }

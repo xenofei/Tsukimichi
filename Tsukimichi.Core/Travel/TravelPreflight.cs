@@ -37,8 +37,11 @@ public enum PreflightFix
     /// <summary>Set the game's movement type to Standard (with Undo).</summary>
     StandardMovement,
 
-    /// <summary>Turn vnavmesh's "movement allowed" back on (a runtime switch of vnavmesh's, not saved by it).</summary>
+    /// <summary>Turn vnavmesh's "movement allowed" back on (a runtime switch of vnavmesh's, not saved by it; with Undo).</summary>
     AllowVnavmeshMovement,
+
+    /// <summary>Open Dalamud's plugin installer at the installed plugins: Tsukimichi never turns another plugin off itself.</summary>
+    OpenPluginInstaller,
 }
 
 /// <summary>A plugin known to break travel while loaded: its internal name and the strings key of what it breaks.</summary>
@@ -125,7 +128,7 @@ public static class TravelPreflight
                 true => PreflightState.Ok,
                 false => PreflightState.Warn,
             }, reading.VnavmeshMovementAllowed == false ? PreflightFix.AllowVnavmeshMovement : PreflightFix.None, []),
-            new(PreflightItem.Conflicts, reading.Conflicts.Count > 0 ? PreflightState.Warn : PreflightState.Ok, PreflightFix.None, reading.Conflicts),
+            new(PreflightItem.Conflicts, reading.Conflicts.Count > 0 ? PreflightState.Warn : PreflightState.Ok, reading.Conflicts.Count > 0 ? PreflightFix.OpenPluginInstaller : PreflightFix.None, reading.Conflicts),
         ];
     }
 

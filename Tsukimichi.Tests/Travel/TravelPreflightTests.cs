@@ -68,6 +68,7 @@ public sealed class TravelPreflightTests
 
         var row = Of(results, PreflightItem.Conflicts);
         Assert.Equal(PreflightState.Warn, row.State);
+        Assert.Equal(PreflightFix.OpenPluginInstaller, row.Fix);
         Assert.Equal("WrongWarpFinder", Assert.Single(row.Conflicts).InternalName);
         Assert.Equal(1, TravelPreflight.Warnings(results));
         Assert.Empty(TravelPreflight.WalkWarnings(results));
@@ -91,5 +92,10 @@ public sealed class TravelPreflightTests
         Assert.False(change.CanUndo(TravelPreflight.LegacyMoveMode));
         Assert.False(change.CanUndo(null));
         Assert.False(new PreflightChange(PreflightItem.MovementType, 0, 0).CanUndo(0));
+
+        // vnavmesh's switch as 0 (paused) and 1 (allowed): Undo pauses it again only while it is still allowed.
+        var vnav = new PreflightChange(PreflightItem.VnavmeshMovement, 0, 1);
+        Assert.True(vnav.CanUndo(1));
+        Assert.False(vnav.CanUndo(0));
     }
 }

@@ -8,12 +8,13 @@ using Tsukimichi.Game;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Automation › Travel › "Before a walk" (feature plan v7 A9): the travel preflight, one line per check in
-/// the companion Setup list's pattern (check mark, cross or question mark, the check's name, a plain status under it,
-/// why it matters in the tooltip). A fix runs only from its own button: "Switch to Standard" changes the game's movement
-/// type and offers Undo, which puts the old value back while the game still reads Standard; "Let vnavmesh move" turns
-/// vnavmesh's runtime switch back on. The camera and the conflicts have no fix Tsukimichi may make; their lines say
-/// what to do. Read live (cached briefly by the service), so there is no Check again.
+/// Setup's "Before a walk" (feature plan v7 A9; Settings › Automation, the row under the companion plugins, as
+/// spec-1.18 places it): the travel preflight, one line per check in the companion Setup list's pattern (check mark, cross or question mark, the check's name, a plain status under it,
+/// why it matters in the tooltip). A fix runs only from its own button and changes one setting, with Undo while the
+/// setting still reads what the fix set: "Switch to Standard" (the game's movement type; Undo reads "Restore Legacy"),
+/// "Allow movement" (vnavmesh's runtime switch). A conflict's button opens Dalamud's plugin installer: Tsukimichi never
+/// turns another plugin off. The camera has no fix; its line says what to do. Read live (cached briefly by the
+/// service), so there is no Check again. The designer's styling (dots, columns) is left to the 1.18 UI pass.
 /// </summary>
 public sealed partial class ConfigWindow
 {
@@ -94,48 +95,44 @@ public sealed partial class ConfigWindow
         }
     }
 
-    /// <summary>The line's fix button, and Undo after the movement type was switched.</summary>
+    /// <summary>The line's fix button, and Undo while what the fix changed still reads as the fix set it.</summary>
     private void DrawPreflightFix(TravelPreflightService preflight, PreflightResult result)
     {
-        switch (result.Fix)
+        if (result.Fix != PreflightFix.None)
         {
-            case PreflightFix.StandardMovement:
-                if (ImGui.SmallButton(Strings.TravelPreflightSwitchStandard))
-                {
-                    ShowPreflightNote(preflight.SwitchToStandardMovement() ? Strings.TravelPreflightSwitched : Strings.TravelPreflightFixFailed);
-                }
-
-                if (ImGui.IsItemHovered())
-                {
-                    UiMetrics.Tooltip(Strings.TravelPreflightSwitchStandardTooltip);
-                }
-
-                break;
-            case PreflightFix.AllowVnavmeshMovement:
-                if (ImGui.SmallButton(Strings.TravelPreflightAllowVnavmesh) && !preflight.AllowVnavmeshMovement())
-                {
-                    ShowPreflightNote(Strings.TravelPreflightFixFailed);
-                }
-
-                if (ImGui.IsItemHovered())
-                {
-                    UiMetrics.Tooltip(Strings.TravelPreflightAllowVnavmeshTooltip);
-                }
-
-                break;
-        }
-
-        if (result.Item == PreflightItem.MovementType && preflight.CanUndo)
-        {
-            if (ImGui.SmallButton(Strings.TravelPreflightUndo))
+            if (ImGui.SmallButton(Strings.TravelPreflightFixLabel(result.Fix)))
             {
-                ShowPreflightNote(preflight.UndoMovement() ? Strings.TravelPreflightUndone : Strings.TravelPreflightFixFailed);
+                var done = preflight.Fix(result.Item);
+                if (result.Fix != PreflightFix.OpenPluginInstaller || !done)
+                {
+                    ShowPreflightNote(done ? Strings.TravelPreflightFixed(result.Item) : Strings.TravelPreflightFixFailed);
+                }
             }
 
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.TravelPreflightUndoTooltip);
+                UiMetrics.Tooltip(Strings.TravelPreflightFixTooltip(result.Fix));
             }
+        }
+
+        if (!preflight.CanUndo(result.Item))
+        {
+            return;
+        }
+
+        if (result.Fix != PreflightFix.None)
+        {
+            ImGui.SameLine();
+        }
+
+        if (ImGui.SmallButton(Strings.TravelPreflightUndoLabel(result.Item)))
+        {
+            ShowPreflightNote(preflight.Undo(result.Item) ? Strings.TravelPreflightUndone : Strings.TravelPreflightFixFailed);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.TravelPreflightUndoTooltip);
         }
     }
 

@@ -5,7 +5,7 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// UI strings for runs you can trust (feature plan v7, 1.18.0): travel recovery (A8: the navmesh reload, the walk to the
-/// aetheryte before a hop) and the travel preflight in Settings › Automation › Travel (A9). Keys carry the
+/// aetheryte before a hop) and the travel preflight in Setup (A9). Keys carry the
 /// <c>Travel</c>, <c>ActionTravel</c> or <c>TravelPreflight</c> prefix.
 /// </summary>
 static partial class Strings
@@ -58,21 +58,21 @@ static partial class Strings
     /// <summary>What a known conflict breaks; <paramref name="key"/> is <see cref="KnownConflict.Key"/>.</summary>
     public static string TravelPreflightConflict(string key) => Loc.Get("TravelPreflightConflict." + key);
 
-    public static string TravelPreflightSwitchStandard => Loc.Get("TravelPreflightSwitchStandard");
+    /// <summary>The fix button's label.</summary>
+    public static string TravelPreflightFixLabel(PreflightFix fix) => Loc.Get("TravelPreflightFix." + fix);
 
-    public static string TravelPreflightSwitchStandardTooltip => Loc.Get("TravelPreflightSwitchStandardTooltip");
+    /// <summary>The fix button's tooltip.</summary>
+    public static string TravelPreflightFixTooltip(PreflightFix fix) => Loc.Get("TravelPreflightFixTooltip." + fix);
 
-    public static string TravelPreflightSwitched => Loc.Get("TravelPreflightSwitched");
+    /// <summary>The note after a fix went through.</summary>
+    public static string TravelPreflightFixed(PreflightItem item) => Loc.Get("TravelPreflightFixed." + item);
 
-    public static string TravelPreflightUndo => Loc.Get("TravelPreflightUndo");
+    /// <summary>The Undo button's label after a fix ("Restore Legacy").</summary>
+    public static string TravelPreflightUndoLabel(PreflightItem item) => Loc.Get("TravelPreflightUndo." + item);
 
     public static string TravelPreflightUndoTooltip => Loc.Get("TravelPreflightUndoTooltip");
 
     public static string TravelPreflightUndone => Loc.Get("TravelPreflightUndone");
-
-    public static string TravelPreflightAllowVnavmesh => Loc.Get("TravelPreflightAllowVnavmesh");
-
-    public static string TravelPreflightAllowVnavmeshTooltip => Loc.Get("TravelPreflightAllowVnavmeshTooltip");
 
     public static string TravelPreflightFixFailed => Loc.Get("TravelPreflightFixFailed");
 }
