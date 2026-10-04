@@ -26,6 +26,14 @@ public sealed record DutyUnlock(IReadOnlyList<uint> ContentFinderConditionIds, s
 /// </summary>
 public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, bool MogStation, string? Evidence = null, string? Note = null)
 {
+    /// <summary>
+    /// A collaboration's dated runs (1.19.0, C10): the game reruns a collaboration under the same Festival id, so its
+    /// entry keeps <see cref="End"/> null (it never reads as past between runs) and lists each run with its own
+    /// announcement here, oldest first. The run under way gives the running event its end date
+    /// (<see cref="Seasonal.SeasonalNow.AnnouncedEnd"/>). Empty for every other entry.
+    /// </summary>
+    public IReadOnlyList<FestivalRun> Runs { get; init; } = [];
+
     /// <summary>"Moonfire Faire (2014)": the edition year closing a curated name.</summary>
     private static readonly Regex EditionYear = new(@"\(\d{4}\)\s*$", RegexOptions.CultureInvariant);
 
@@ -36,6 +44,12 @@ public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, b
     /// </summary>
     public bool IsRerun => End is null && Name.Length > 0 && !EditionYear.IsMatch(Name);
 }
+
+/// <summary>
+/// One dated run of a collaboration event (<see cref="FestivalInfo.Runs"/>): its window (UTC; the close of the last day
+/// when the announcement gives dates only) and the announcement or event page it was read from (https).
+/// </summary>
+public sealed record FestivalRun(DateTime Start, DateTime End, string Evidence);
 
 /// <summary>A named quest chain assembled from journal genres in the listed order, from <c>curated/chains.json</c>.</summary>
 public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, string? Note);
@@ -505,13 +519,22 @@ public sealed class CuratedData
 
             var evidence = StorageJson.ReadString(obj, "evidence");
             var note = StorageJson.ReadString(obj, "note");
+            if (!TryReadRuns(obj, out var runs, out var runError))
+            {
+                warn(runError);
+                return;
+            }
+
             festivals[festivalId] = new FestivalInfo(
                 name,
                 start,
                 end,
                 mogStation,
                 string.IsNullOrWhiteSpace(evidence) ? null : evidence,
-                string.IsNullOrWhiteSpace(note) ? null : note);
+                string.IsNullOrWhiteSpace(note) ? null : note)
+            {
+                Runs = runs,
+            };
         });
 
         LoadChains(Path.Combine(dir, ChainsFileName), chains, warnings);
@@ -700,6 +723,57 @@ public sealed class CuratedData
     /// array of quest row ids without repeats, an https <c>evidence</c> URL and a <c>note</c>. An entry missing any of
     /// them, or with a malformed one, is skipped with a warning.
     /// </summary>
+    /// <summary>
+    /// A festival entry's "runs" (1.19.0, C10): an array of { start, end, evidence }, each window UTC with its start
+    /// before its end and an https evidence URL. A missing key reads as no runs; anything malformed rejects the entry
+    /// with <paramref name="error"/> saying why. The runs come back oldest first.
+    /// </summary>
+    private static bool TryReadRuns(JsonObject obj, out IReadOnlyList<FestivalRun> runs, out string error)
+    {
+        runs = [];
+        error = string.Empty;
+        if (!obj.TryGetPropertyValue("runs", out var node) || node is null)
+        {
+            return true;
+        }
+
+        if (node is not JsonArray array)
+        {
+            error = "runs is not an array";
+            return false;
+        }
+
+        var list = new List<FestivalRun>(array.Count);
+        foreach (var item in array)
+        {
+            if (item is not JsonObject run)
+            {
+                error = "a run is not an object";
+                return false;
+            }
+
+            if (!StorageJson.TryReadUtc(run, "start", out var start) || start is not { } from
+                || !StorageJson.TryReadUtc(run, "end", out var end) || end is not { } to || to <= from)
+            {
+                error = "a run needs a start before its end";
+                return false;
+            }
+
+            var evidence = StorageJson.ReadString(run, "evidence");
+            if (!Uri.TryCreate(evidence, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+            {
+                error = "a run's evidence is not an https URL";
+                return false;
+            }
+
+            list.Add(new FestivalRun(from, to, evidence));
+        }
+
+        list.Sort(static (a, b) => a.Start.CompareTo(b.Start));
+        runs = list;
+        return true;
+    }
+
     private static Dictionary<uint, AetheryteUnlock> LoadAetheryteUnlocks(string path, List<string> warnings)
     {
         var entries = new Dictionary<uint, AetheryteUnlock>();

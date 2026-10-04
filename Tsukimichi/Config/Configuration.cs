@@ -269,6 +269,22 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>Print "Moonfire Faire is running: 2 quests ready (ends Aug 28)" once per login (see <c>Game.ChatNotifier</c>). On by default.</summary>
     public bool ChatNoticeSeasonal { get; set; } = true;
 
+    // ---- 1.19.0: seasonal events ending soon (C10) ----
+    /// <summary>
+    /// Days before a running event's known end that Tonight, the Todo overlay and the Journal rows warn (0 turns the
+    /// warnings off; clamped to 0–7 when read). 3 by default (the coordinator's decision).
+    /// </summary>
+    public int SeasonalWarnDays { get; set; } = Core.Seasonal.EventWarnings.DefaultWarnDays;
+
+    /// <summary>Also print one chat line per event when it starts ending soon, once per login. Off by default: notices stay off until the player turns them on.</summary>
+    public bool ChatNoticeSeasonalEnding { get; set; }
+
+    /// <summary>
+    /// End dates the player entered for running events with no known end (Characters › Seasonal events › Set end
+    /// date…), Festival id to UTC end. Curated data replaces an entry when it gives one; a passed date is ignored.
+    /// </summary>
+    public Dictionary<ushort, DateTime> SeasonalEndDates { get; set; } = [];
+
     // ---- 0.9.0: Clear my blues (P3) ----
     /// <summary>The todo overlay's "Clear my blues" section: the pinned expansion's Ready unlock quests. On by default; empty until an expansion is pinned.</summary>
     public bool TodoShowPlan { get; set; } = true;

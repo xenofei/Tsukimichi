@@ -1829,8 +1829,11 @@ public sealed partial class MainWindow : Window, IDisposable
         var separatorWidth = ImGui.CalcTextSize(separator).X + 2f * gap;
         var x = origin.X;
 
+        // While a New Game+ session runs, its line takes the bar's left side (1.19.0, C4; DrawNewGamePlus).
+        var replay = session.NewGamePlus.Active;
+
         // The overall gauge with its percentage (Full and Quiet), or the percentage alone (Plain), before the counts.
-        if (runner.Counts is { } counts && counts.Overall.Total > 0)
+        if (!replay && runner.Counts is { } counts && counts.Overall.Total > 0)
         {
             x = DrawStatusGauge(dl, x, textY, line, counts.Overall.Fraction, barStyle, separator, gap);
         }
@@ -1865,7 +1868,11 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         // The counts open the bar, so no separator comes before them.
-        if (statusRoom > 0f)
+        if (replay)
+        {
+            x = DrawNewGamePlus(session, bundle, dl, x, textY, line, gap, versionX);
+        }
+        else if (statusRoom > 0f)
         {
             ImGui.SetCursorScreenPos(new Vector2(x, textY));
             Chrome.EllipsisText(status, statusRoom, ImGui.GetColorU32(ImGuiCol.TextDisabled), statusWidth);
@@ -1877,7 +1884,7 @@ public sealed partial class MainWindow : Window, IDisposable
             x += statusRoom;
         }
 
-        if (x + separatorWidth + modeWidth <= versionX)
+        if (!replay && x + separatorWidth + modeWidth <= versionX)
         {
             // Static pip (accessibility B5: nothing here moves) and the live / snapshot words.
             x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap, separator) : x;
@@ -1904,7 +1911,7 @@ public sealed partial class MainWindow : Window, IDisposable
             }
         }
 
-        if (msqWidth > 0f && msqRoom > 2f * pillPad && x + separatorWidth + msqRoom <= versionX + 0.5f)
+        if (!replay && msqWidth > 0f && msqRoom > 2f * pillPad && x + separatorWidth + msqRoom <= versionX + 0.5f)
         {
             x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap, separator) : x;
             var pillMin = new Vector2(x, textY - UiMetrics.Px(1f));

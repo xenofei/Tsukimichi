@@ -393,6 +393,12 @@ public sealed class TodoOverlay : Window, IDisposable
             return;
         }
 
+        // A New Game+ session runs (1.19.0, C4): the status bar's line, above the sections.
+        if (session.Bundle is { } replayBundle && session.NewGamePlus.Active && session.ViewedContentId == session.NewGamePlus.ContentId)
+        {
+            Chrome.OutlinedText(newGamePlusText.Line(session, replayBundle), Theme.Surface.Text);
+        }
+
         if (sections.Length == 0)
         {
             Chrome.OutlinedText(enabledSections > 0 ? Strings.TodoEmpty : Strings.TodoNoSections, Theme.Surface.TextSecondary);
@@ -1104,6 +1110,11 @@ public sealed class TodoOverlay : Window, IDisposable
     /// <summary>The "Clear my blues" plan (P3) the pinned-expansion section reads; null leaves the section out.</summary>
     public PlanSource? Plan { get; set; }
 
+    /// <summary>The events ending soon (1.19.0, C10): their quests in the journal lead the seasonal section. Null keeps the events' order.</summary>
+    public EventWarningSource? EventWarnings { get; set; }
+
+    private readonly NewGamePlusText newGamePlusText = new();
+
     /// <summary>Opens the main window on every pin (the Journal filtered to Pinned); the Pinned section's "+N more" line calls it.</summary>
     public Action? ShowPins { get; set; }
 
@@ -1212,7 +1223,7 @@ public sealed class TodoOverlay : Window, IDisposable
         // less those a passed curated end shows to be stale, the set the states were resolved with); ends from curated data only.
         var now = DateTime.UtcNow;
         IReadOnlyList<RunningFestival> running = settings.TodoShowSeasonal
-            ? SeasonalNow.Running(bundle.Catalog, session.ServerFestivals, session.States, session.Curated.Festivals, now)
+            ? SeasonalNow.Running(bundle.Catalog, session.ServerFestivals, session.States, session.Curated.Festivals, now, session.EnteredFestivalEnds)
             : [];
         var model = TodoList.Build(new TodoInputs(
             bundle.Catalog,
@@ -1241,7 +1252,8 @@ public sealed class TodoOverlay : Window, IDisposable
             Route: settings.TodoShowRoute ? ActiveRoutes?.ViewedRoute : null,
             ShowRoute: settings.TodoShowRoute,
             Stops: settings.TodoShowNextStops ? NextStops?.Stops : null,
-            ShowNextStops: settings.TodoShowNextStops));
+            ShowNextStops: settings.TodoShowNextStops,
+            EndingSoon: settings.TodoShowSeasonal ? EventWarnings?.Current : null));
 
         enabledSections = model.EnabledSections;
         if (model.Sections.Count == 0)

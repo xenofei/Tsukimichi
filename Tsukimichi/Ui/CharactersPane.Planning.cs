@@ -118,19 +118,21 @@ public sealed partial class CharactersPane
         }
 
         TextFlow.Wrapped(header, 0f, ImGui.GetColorU32(ImGuiCol.TextDisabled));
-        using var table = ImRaii.Table("##alliedBoard", 4, ImGuiTableFlags.SizingStretchProp | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
+
+        // One row per society (spec-1.19 "C5. Allied societies"): its emblem on a 22 px tile, "Name · Rank", one line
+        // under it, and the row's actions at its end (the giver's zone and Teleport; Flag as well for a daily carried
+        // over the reset, which the giver takes back).
+        using var table = ImRaii.Table("##alliedBoard", 3, ImGuiTableFlags.SizingStretchProp | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
         if (!table)
         {
             return;
         }
 
-        ImGui.TableSetupColumn(Strings.PlanningBoardColumnSociety, ImGuiTableColumnFlags.WidthStretch, 3f);
-        ImGui.TableSetupColumn(Strings.PlanningBoardColumnRank, ImGuiTableColumnFlags.WidthStretch, 3f);
-        ImGui.TableSetupColumn(Strings.PlanningBoardColumnToday, ImGuiTableColumnFlags.WidthStretch, 3f);
+        var tile = MathF.Round(UiMetrics.Px(22f));
+        ImGui.TableSetupColumn("##emblem", ImGuiTableColumnFlags.WidthFixed, tile);
+        ImGui.TableSetupColumn(Strings.PlanningBoardColumnSociety, ImGuiTableColumnFlags.WidthStretch, 6f);
         ImGui.TableSetupColumn(Strings.PlanningBoardColumnWhere, ImGuiTableColumnFlags.WidthStretch, 3f);
-        ImGui.TableHeadersRow();
         var sheets = IconSheets;
-        var iconSize = MathF.Round(UiMetrics.JobIconSize);
         for (var i = 0; i < lines.Count; i++)
         {
             var line = lines[i];
@@ -138,41 +140,97 @@ public sealed partial class CharactersPane
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
 
-            // The society's emblem leads its name, as on the dashboard's allied societies table (UI-5d).
+            // The society's emblem leads the row, as on the dashboard's allied societies table (UI-5d).
             var emblem = PaneIcons.Tribe(line.Row.Tribe, sheets);
             if (emblem != 0)
             {
-                DrawLeadIcon(NodeIcon.Game(emblem), iconSize);
-            }
-
-            if (!Chrome.FitText(line.Society, ImGui.GetColorU32(ImGuiCol.Text)) && ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(line.Society);
+                DrawLeadIcon(NodeIcon.Game(emblem), tile);
             }
 
             ImGui.TableNextColumn();
-            var rankColor = line.Row.Maxed ? Theme.U32(Theme.Accent) : ImGui.GetColorU32(ImGuiCol.Text);
-            var rankFits = Chrome.FitText(line.Rank, rankColor);
-            if (ImGui.IsItemHovered() && (!rankFits || line.RankTooltip.Length > 0))
-            {
-                UiMetrics.Tooltip(line.Rank, line.RankTooltip.Length > 0 ? line.RankTooltip : null);
-            }
-
-            ImGui.TableNextColumn();
-            var todayFits = Chrome.FitText(line.Today, ImGui.GetColorU32(line.Row.OfferedToday is null ? ImGuiCol.TextDisabled : ImGuiCol.Text));
-            if (ImGui.IsItemHovered() && (!todayFits || line.TodayTooltip.Length > 0))
-            {
-                UiMetrics.Tooltip(line.Today, line.TodayTooltip.Length > 0 ? line.TodayTooltip : null);
-            }
-
+            DrawBoardSociety(line);
             ImGui.TableNextColumn();
             DrawBoardWhere(line);
+        }
+    }
+
+    /// <summary>
+    /// "Moogles · Rank 6" (the rank's reputation in its words, gold once full), the alt's name on a stored character's
+    /// carried row, and the one line under it: a carried-over daily (a copper dot, Text), the rank-up hint or today.
+    /// </summary>
+    private static void DrawBoardSociety(PlanningSource.BoardLine line)
+    {
+        var s = Theme.Surface;
+        Chrome.FitText(line.Society, Theme.U32(s.Text));
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(line.Society);
+        }
+
+        ImGui.SameLine(0f, 0f);
+        Chrome.FitText(Strings.StateReasonSeparator, Theme.U32(s.TextTertiary));
+        ImGui.SameLine(0f, 0f);
+        var rankFits = Chrome.FitText(line.Rank, line.Row.Maxed ? Theme.U32(Theme.Accent) : Theme.U32(s.Text));
+        if (ImGui.IsItemHovered() && (!rankFits || line.RankTooltip.Length > 0))
+        {
+            UiMetrics.Tooltip(line.Rank, line.RankTooltip.Length > 0 ? line.RankTooltip : null);
+        }
+
+        if (line.AltNote.Length > 0)
+        {
+            ImGui.SameLine(0f, 0f);
+            Chrome.FitText(line.AltNote, Theme.U32(s.TextTertiary));
+        }
+
+        if (line.Line.Length == 0)
+        {
+            return;
+        }
+
+        if (line.NeedsYou)
+        {
+            // The copper dot (6 px) beside words that say the same thing; never the only carrier.
+            var dot = UiMetrics.Px(6f);
+            var at = ImGui.GetCursorScreenPos();
+            var lineHeight = ImGui.GetTextLineHeight();
+            ImGui.Dummy(new System.Numerics.Vector2(dot, lineHeight));
+            ImGui.GetWindowDrawList().AddCircleFilled(new System.Numerics.Vector2(at.X + (dot * 0.5f), at.Y + (lineHeight * 0.5f)), dot * 0.5f, Theme.U32(Theme.Copper), 12);
+            ImGui.SameLine(0f, UiMetrics.Px(6f));
+        }
+
+        TextFlow.Wrapped(line.Line, 0f, Theme.U32(line.NeedsYou ? s.Text : s.TextSecondary));
+        if (ImGui.IsItemHovered() && line.LineTooltip.Length > 0)
+        {
+            UiMetrics.Tooltip(line.Line, line.LineTooltip);
         }
     }
 
     /// <summary>The giver's zone and, when there is a giver, Teleport (through Lifestream; greyed with the reason when it cannot).</summary>
     private void DrawBoardWhere(PlanningSource.BoardLine line)
     {
+        // A daily carried over the reset (1.19.0, C5): Flag its giver, where it is turned in, and Teleport there (Flag
+        // at every automation level, Teleport from Travel).
+        if (line.Row.Carried is { } carried && Links is { } carriedLinks)
+        {
+            if (TravelControls.FlagButton(Strings.AlliedFlag, carriedLinks.CanFlagMap(carried), "##carriedFlag"))
+            {
+                carriedLinks.FlagMap(carried);
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.AlliedFlagTooltip);
+            }
+
+            if (carriedLinks.TeleportShown)
+            {
+                Chrome.SameLineOrWrap(Chrome.ActionPillWidth(ActionIcons.TeleportIcon, Strings.PlanningBoardTeleport, PillLayout.Row));
+                TravelControls.TeleportButton(carriedLinks, carried, Strings.PlanningBoardTeleport);
+            }
+
+            return;
+        }
+
         if (line.Row.Giver is not { } giver || Links is not { TeleportShown: true } links)
         {
             ImGui.TextDisabled(line.Zone);

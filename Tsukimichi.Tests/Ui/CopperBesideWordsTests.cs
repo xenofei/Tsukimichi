@@ -20,6 +20,9 @@ public class CopperBesideWordsTests
         ("NeedsYouOverlay.cs", ["Strings.NeedsYouEyebrow", "alert.Title", "alert.Line"]),
         ("ConfigWindow.TravelPreflight.cs", ["SemiboldTextWrapped(head", "DrawPreflightDot"]),
         ("MainWindow.RunStops.cs", ["card.Title"]),
+        // 1.19.0: the allied board's carried-over daily (C5) and the ending-soon card (C10).
+        ("CharactersPane.Planning.cs", ["line.NeedsYou", "line.Line"]),
+        ("TonightCard.Events.cs", ["card.Title", "card.Why"]),
         ("Theme.cs", []),
     ];
 

@@ -455,6 +455,39 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         }
     }
 
+    [Fact]
+    public void Dated_runs_belong_to_reruns_and_cite_the_official_page_for_each_run()
+    {
+        // 1.19.0, C10: a collaboration's runs give the running rerun its end without ever dating the entry itself.
+        var curated = Curated();
+        Assert.Empty(curated.Warnings);
+        foreach (var (id, info) in curated.Festivals)
+        {
+            if (info.Runs.Count == 0)
+            {
+                continue;
+            }
+
+            Assert.True(info.IsRerun, $"festival {id} ({info.Name}) has dated runs but is not an undated collaboration");
+            FestivalRun? previous = null;
+            foreach (var run in info.Runs)
+            {
+                Assert.True(Uri.TryCreate(run.Evidence, UriKind.Absolute, out var uri) && uri.Host.EndsWith(".finalfantasyxiv.com", StringComparison.Ordinal),
+                    $"festival {id} run from {run.Start:yyyy-MM-dd} does not cite an official page: {run.Evidence}");
+                Assert.True(run.Start < run.End, $"festival {id} run from {run.Start:yyyy-MM-dd} runs backwards");
+                Assert.True(previous is null || previous.End < run.Start, $"festival {id} runs overlap at {run.Start:yyyy-MM-dd}");
+                previous = run;
+            }
+        }
+
+        // The runs under way when 1.19.0 shipped: Yo-kai Watch until 5 Oct 2026 and A Nocturne for Heroes until 13 Oct
+        // 2026, both 7:59 a.m. PDT.
+        var during = new DateTime(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc);
+        Assert.Equal(new DateTime(2026, 10, 5, 14, 59, 0, DateTimeKind.Utc), Core.Seasonal.SeasonalNow.AnnouncedEnd(curated.Festivals[39], during));
+        Assert.Equal(new DateTime(2026, 10, 13, 14, 59, 0, DateTimeKind.Utc), Core.Seasonal.SeasonalNow.AnnouncedEnd(curated.Festivals[84], during));
+        Assert.Null(Core.Seasonal.SeasonalNow.AnnouncedEnd(curated.Festivals[148], during));
+    }
+
     /// <summary>The event names a journal genre gives right ("Moonfire Faire Events" is Moonfire Faire).</summary>
     private static readonly string[] GenreNamesThatAreEventNames =
         ["Heavensturn", "Valentione's Day", "Little Ladies' Day", "Hatching-tide", "Moonfire Faire", "All Saints' Wake", "Starlight Celebration"];

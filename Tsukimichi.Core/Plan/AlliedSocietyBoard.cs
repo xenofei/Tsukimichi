@@ -34,6 +34,18 @@ public sealed record AlliedSocietyRow(
     int? OfferedToday,
     QuestRecord? Giver)
 {
+    /// <summary>
+    /// A daily of this society still in the journal from before the last reset (1.19.0, C5,
+    /// <see cref="AlliedCarryover"/>): no daily can be accepted until it is turned in. Null when none.
+    /// </summary>
+    public QuestRecord? Carried { get; init; }
+
+    /// <summary>
+    /// The rank-up quest waits and ranking up opens the 3 bonus dailies that day (<see cref="AlliedCarryover.RankUpReady"/>,
+    /// <see cref="AlliedCarryover.RankUpOpensBonus"/>): worth keeping 3 allowances for.
+    /// </summary>
+    public bool RankUpBonus { get; init; }
+
     /// <summary>The rank's reputation is full: the rank-up quest (or the next rank) waits.</summary>
     public bool Maxed => RankMax is > 0 && Reputation >= RankMax;
 
@@ -56,6 +68,21 @@ public sealed record AlliedSocietyRow(
 public sealed record AlliedSocietyBoardModel(IReadOnlyList<AlliedSocietyRow> Rows, byte AllowancesLeft, DateTime NextReset)
 {
     public static readonly AlliedSocietyBoardModel Empty = new([], 0, DateTime.MinValue);
+
+    /// <summary>
+    /// The dailies carried over the last reset (1.19.0, C5): while any is in the journal the day's allowances read 0
+    /// (<see cref="AllowancesLeft"/> says so).
+    /// </summary>
+    public IReadOnlyList<CarriedDaily> Carried { get; init; } = [];
+
+    /// <summary>
+    /// The snapshot predates the last daily reset (a stored character): the allowances are projected from it, not read
+    /// (<see cref="GameResets.AsOf"/>). <see cref="TakenUtc"/> says from when.
+    /// </summary>
+    public bool Projected { get; init; }
+
+    /// <summary>When the snapshot the board was built from was captured, UTC.</summary>
+    public DateTime TakenUtc { get; init; }
 }
 
 /// <summary>
@@ -68,16 +95,19 @@ public static class AlliedSocietyBoard
     /// <summary>Builds the board.</summary>
     /// <param name="offered">Today's offered dailies (<see cref="EvalContext.TodaysDailyOffer"/>); null when unknown.</param>
     /// <param name="offerTribes">The societies <paramref name="offered"/> speaks for (<see cref="EvalContext.DailyOfferTribes"/>); null with a known offer means every society.</param>
+    /// <param name="acceptedSince">The character's accepted times (<see cref="AcceptedSince"/>), for the carried-over dailies (<see cref="AlliedCarryover.Find"/>); null reads each from the capture's time.</param>
     public static AlliedSocietyBoardModel Build(
         QuestCatalog catalog,
         CharacterSnapshot snapshot,
         IReadOnlySet<ushort>? offered,
         IReadOnlySet<byte>? offerTribes,
-        DateTime nowUtc)
+        DateTime nowUtc,
+        IReadOnlyDictionary<ushort, DateTime>? acceptedSince = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(snapshot);
         var now = GameResets.AsOf(snapshot, catalog, nowUtc);
+        var carried = AlliedCarryover.Find(catalog, snapshot, acceptedSince, nowUtc);
         var dailies = DailiesByTribe(catalog);
         var rows = new List<AlliedSocietyRow>();
         foreach (var (tribe, raw) in now.Tribes.OrderBy(static kv => kv.Key))
@@ -98,7 +128,7 @@ public static class AlliedSocietyBoard
             }
 
             var known = offered is not null && (offerTribes is null || offerTribes.Contains(tribe));
-            rows.Add(new AlliedSocietyRow(
+            var row = new AlliedSocietyRow(
                 tribe,
                 standing.Rank,
                 standing.Value,
@@ -106,10 +136,24 @@ public static class AlliedSocietyBoard
                 standing.RankedUpToday,
                 done,
                 known ? offeredCount : null,
-                MainGiver(own, standing.Rank, offered)));
+                MainGiver(own, standing.Rank, offered))
+            {
+                Carried = carried.FirstOrDefault(c => c.Quest.BeastTribe == tribe)?.Quest,
+            };
+            rows.Add(row with
+            {
+                RankUpBonus = AlliedCarryover.RankUpReady(catalog, now, row) && AlliedCarryover.RankUpOpensBonus(tribe, standing.Rank),
+            });
         }
 
-        return new AlliedSocietyBoardModel(rows, now.TribeAllowance, GameResets.NextDaily(nowUtc));
+        // A daily carried over the reset holds every allowance back until it is turned in, whatever the game's count says.
+        var allowances = carried.Count > 0 ? (byte)0 : now.TribeAllowance;
+        return new AlliedSocietyBoardModel(rows, allowances, GameResets.NextDaily(nowUtc))
+        {
+            Carried = carried,
+            Projected = snapshot.TakenUtc < GameResets.LastDaily(nowUtc),
+            TakenUtc = snapshot.TakenUtc,
+        };
     }
 
     /// <summary>

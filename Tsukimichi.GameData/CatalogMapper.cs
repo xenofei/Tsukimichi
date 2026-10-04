@@ -121,6 +121,7 @@ public static class CatalogMapper
         return new CatalogBundle(catalog, names, jobs, language.ToString())
         {
             NewGamePlus = newGamePlus,
+            NewGamePlusChapters = ReadOptional(() => NewGamePlusQuests.ReadChapters(excel, language), Core.Query.NewGamePlusChapters.Empty, "New Game+ chapter parts", log),
             AchievementLadders = ladders,
             ExpTable = ReadOptional(() => ReadExpTable(excel), Core.Rewards.QuestExpTable.Empty, "quest EXP table", log),
             GateItemNames = GateItemNames(catalog, context.Items),

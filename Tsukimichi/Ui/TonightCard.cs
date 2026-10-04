@@ -83,6 +83,7 @@ public sealed partial class TonightCard
         }
         else
         {
+            DrawReplayAndEvents(session, bundle);
             DrawReady();
             DrawMsq(bundle);
             DrawPlanning();

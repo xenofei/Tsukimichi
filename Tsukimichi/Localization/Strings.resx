@@ -5373,6 +5373,217 @@
   <data name="SeasonalConfigNoticeHint" xml:space="preserve">
     <value>A chat line when an event has quests ready, with a link to the first.</value>
   </data>
+  <data name="NewGamePlusStatusFormat" xml:space="preserve">
+    <value>New Game+ · {0} · quest {1} of {2}</value>
+    <comment>{0} = chapter, {1} = the quest's place in it, {2} = the chapter's quests.</comment>
+  </data>
+  <data name="NewGamePlusStatus" xml:space="preserve">
+    <value>New Game+</value>
+  </data>
+  <data name="NewGamePlusKept" xml:space="preserve">
+    <value>Your saved progress is kept</value>
+  </data>
+  <data name="NewGamePlusTooltip" xml:space="preserve">
+    <value>The game says a New Game+ chapter is running. The quests you replay keep their real completion and dates, and replays send no notices.</value>
+  </data>
+  <data name="NewGamePlusTooltipReplay" xml:space="preserve">
+    <value>Recognised from your quests: the game reads some completed quests as not done, every one of them a New Game+ quest. They keep their real completion and dates, and replays send no notices.</value>
+  </data>
+  <data name="NewGamePlusEnd" xml:space="preserve">
+    <value>End session</value>
+  </data>
+  <data name="NewGamePlusEndTooltip" xml:space="preserve">
+    <value>Stops Tsukimichi's replay mode. Asks first.</value>
+  </data>
+  <data name="NewGamePlusEndBody" xml:space="preserve">
+    <value>Leave New Game+ in the game first. This only stops Tsukimichi's replay mode.</value>
+  </data>
+  <data name="NewGamePlusEndConfirm" xml:space="preserve">
+    <value>End session</value>
+  </data>
+  <data name="NewGamePlusEndKeep" xml:space="preserve">
+    <value>Keep it</value>
+  </data>
+  <data name="ReplayingChip" xml:space="preserve">
+    <value>Replaying</value>
+  </data>
+  <data name="ReplayingChipTooltip" xml:space="preserve">
+    <value>Replayed in New Game+. It stays Completed, with its first date.</value>
+  </data>
+  <data name="AlliedCarriedFormat" xml:space="preserve">
+    <value>0 allowances until you turn in {0} (accepted before the reset)</value>
+    <comment>{0} = the allied society daily's name.</comment>
+  </data>
+  <data name="AlliedCarriedTooltip" xml:space="preserve">
+    <value>A daily accepted before the daily reset holds every allowance back until you turn it in or abandon it.</value>
+  </data>
+  <data name="AlliedRankUpReady" xml:space="preserve">
+    <value>Rank-up ready: keep 3 allowances for the bonus dailies</value>
+  </data>
+  <data name="AlliedRankUpReadyTooltip" xml:space="preserve">
+    <value>On the day the society ranks up, it offers 3 more dailies, which use allowances.</value>
+  </data>
+  <data name="AlliedStoredHoldsFormat" xml:space="preserve">
+    <value>0 allowances today: holds a daily from before the reset (last login {0})</value>
+    <comment>{0} = how long ago, "2 d ago".</comment>
+  </data>
+  <data name="AlliedStoredProjectedFormat" xml:space="preserve">
+    <value>{0} allowances today (projected from the last login, {1})</value>
+    <comment>{0} = allowances, {1} = how long ago, "2 d ago".</comment>
+  </data>
+  <data name="AlliedStoredAltFormat" xml:space="preserve">
+    <value> · stored alt {0}</value>
+    <comment>{0} = the character's name.</comment>
+  </data>
+  <data name="AlliedFlag" xml:space="preserve">
+    <value>Flag</value>
+  </data>
+  <data name="AlliedFlagTooltip" xml:space="preserve">
+    <value>Flag the daily's giver on the map.</value>
+  </data>
+  <data name="EventEndsToday" xml:space="preserve">
+    <value>Ends today</value>
+  </data>
+  <data name="EventEndsTomorrow" xml:space="preserve">
+    <value>Ends tomorrow</value>
+  </data>
+  <data name="EventEndsInDaysFormat" xml:space="preserve">
+    <value>Ends in {0} days</value>
+    <comment>{0} = days left.</comment>
+  </data>
+  <data name="EventEndsChipTooltip" xml:space="preserve">
+    <value>The game takes this quest out of your journal when the event ends.</value>
+  </data>
+  <data name="EventCardTitleFormat" xml:space="preserve">
+    <value>{0} ends in {1} days</value>
+    <comment>{0} = event, {1} = days left.</comment>
+  </data>
+  <data name="EventCardTitleTomorrowFormat" xml:space="preserve">
+    <value>{0} ends tomorrow</value>
+    <comment>{0} = event.</comment>
+  </data>
+  <data name="EventCardTitleTodayFormat" xml:space="preserve">
+    <value>{0} ends today, {1}</value>
+    <comment>{0} = event, {1} = local time.</comment>
+  </data>
+  <data name="EventCardJournalOne" xml:space="preserve">
+    <value>1 quest in your journal</value>
+  </data>
+  <data name="EventCardJournalFormat" xml:space="preserve">
+    <value>{0} quests in your journal</value>
+    <comment>{0} = quests.</comment>
+  </data>
+  <data name="EventCardLeftOne" xml:space="preserve">
+    <value>1 quest to take</value>
+  </data>
+  <data name="EventCardLeftFormat" xml:space="preserve">
+    <value>{0} quests to take</value>
+    <comment>{0} = quests.</comment>
+  </data>
+  <data name="EventCardRewardsOne" xml:space="preserve">
+    <value>1 reward you don't have</value>
+  </data>
+  <data name="EventCardRewardsFormat" xml:space="preserve">
+    <value>{0} rewards you don't have</value>
+    <comment>{0} = rewards.</comment>
+  </data>
+  <data name="EventCardWhyFormat" xml:space="preserve">
+    <value>{0}.</value>
+    <comment>{0} = what is left.</comment>
+  </data>
+  <data name="EventCardListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="EventCardEndsFormat" xml:space="preserve">
+    <value>Ends {0}, {1} local</value>
+    <comment>{0} = date, {1} = time.</comment>
+  </data>
+  <data name="EventCardYouEntered" xml:space="preserve">
+    <value>you entered this</value>
+  </data>
+  <data name="EventCardUsuallyFormat" xml:space="preserve">
+    <value>usually {0}</value>
+    <comment>{0} = month.</comment>
+  </data>
+  <data name="EventCardShow" xml:space="preserve">
+    <value>Show the event</value>
+  </data>
+  <data name="EventCardShowTooltip" xml:space="preserve">
+    <value>Selects the event's quest in the Journal.</value>
+  </data>
+  <data name="EventChatFormat" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>{0} = "All Saints' Wake ends in 2 days", {1} = what is left.</comment>
+  </data>
+  <data name="EventWarnConfig" xml:space="preserve">
+    <value>Warn before an event ends</value>
+  </data>
+  <data name="EventWarnConfigHint" xml:space="preserve">
+    <value>Days before an event's known end (the Lodestone's, or your date) that Tonight and the Journal warn.</value>
+  </data>
+  <data name="EventWarnChatConfig" xml:space="preserve">
+    <value>Chat line when an event ends soon</value>
+  </data>
+  <data name="EventWarnChatConfigHint" xml:space="preserve">
+    <value>Once per event per login, and again on its last day.</value>
+  </data>
+  <data name="EventWarnOffReason" xml:space="preserve">
+    <value>Turn on the warning first.</value>
+  </data>
+  <data name="SeasonalEndNotAnnounced" xml:space="preserve">
+    <value>running · end not announced</value>
+  </data>
+  <data name="SeasonalEnteredTooltip" xml:space="preserve">
+    <value>You entered this date. An update that ships the Lodestone's date replaces it.</value>
+  </data>
+  <data name="SeasonalSetEndDate" xml:space="preserve">
+    <value>Set end date…</value>
+  </data>
+  <data name="SeasonalChangeEndDate" xml:space="preserve">
+    <value>Change end date…</value>
+  </data>
+  <data name="SeasonalSetEndDateTooltip" xml:space="preserve">
+    <value>Enter the end from the Lodestone so Tsukimichi can warn before it ends.</value>
+  </data>
+  <data name="SeasonalEndDateLabel" xml:space="preserve">
+    <value>Ends (your local date and time)</value>
+  </data>
+  <data name="SeasonalEndDateHint" xml:space="preserve">
+    <value>yyyy-mm-dd and hh:mm. Shown as "you entered this".</value>
+  </data>
+  <data name="SeasonalEndDateInvalid" xml:space="preserve">
+    <value>Enter a date and time still ahead, as yyyy-mm-dd and hh:mm.</value>
+  </data>
+  <data name="SeasonalEndDateSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SeasonalEndDateRemove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="SeasonalEndDateCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="SeasonalCalendarLabel" xml:space="preserve">
+    <value>When the other events come</value>
+  </data>
+  <data name="SeasonalCalendarTooltip" xml:space="preserve">
+    <value>From the dated editions and runs in Tsukimichi's data. Hover an event for its dates.</value>
+  </data>
+  <data name="SeasonalEndedFormat" xml:space="preserve">
+    <value>ended · usually {0} · last ran {1}</value>
+    <comment>{0} = month, {1} = year.</comment>
+  </data>
+  <data name="SeasonalUsuallyFormat" xml:space="preserve">
+    <value>usually {0} · last ran {1}</value>
+    <comment>{0} = month, {1} = year.</comment>
+  </data>
+  <data name="SeasonalUsuallyOnlyFormat" xml:space="preserve">
+    <value>usually {0}</value>
+    <comment>{0} = month.</comment>
+  </data>
+  <data name="SeasonalRunsTooltipHeading" xml:space="preserve">
+    <value>Dated runs:</value>
+  </data>
   <data name="ArtworkHidden" xml:space="preserve">
     <value>Artwork appears once the quest is in your journal</value>
   </data>
@@ -7716,6 +7927,30 @@
   </data>
   <data name="Core.Seasonal.EventId" xml:space="preserve">
     <value>Seasonal event {0}</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.EndsFrom" xml:space="preserve">
+    <value>Ends {0} ({1})</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.NamedEndsFrom" xml:space="preserve">
+    <value>{0}: ends {1} ({2})</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.AnnouncedFrom" xml:space="preserve">
+    <value>ends {0} ({1})</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.Entered" xml:space="preserve">
+    <value>ends {0} · you entered this</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.SourceWiki" xml:space="preserve">
+    <value>wiki</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.SourceEntered" xml:space="preserve">
+    <value>you entered</value>
     <comment>Core: SeasonalNow.cs.</comment>
   </data>
   <data name="Core.Todo.ReadyOnJob" xml:space="preserve">

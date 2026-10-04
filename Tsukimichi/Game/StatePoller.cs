@@ -525,6 +525,8 @@ public sealed class StatePoller : IDisposable
         var diff = SnapshotDiff.Compute(last, snapshot);
         if (diff.IsEmpty && !offerChanged)
         {
+            // The game reads every quest the record has as completed: no New Game+ replay shows (1.19.0, C4).
+            session.NewGamePlus.ObserveCapture(snapshot.ContentId, []);
             return null;
         }
 
@@ -536,6 +538,9 @@ public sealed class StatePoller : IDisposable
         // A New Game+ replay (1.11.0, C4a) is not held back: the replayed quests keep their completion from the last
         // capture and the rest of the capture is judged and committed as usual, so a chapter never freezes tracking.
         var (judged, plausibility) = CapturePlausibility.Judge(last, snapshot, catalog, bundle.NewGamePlus);
+        // The quests a New Game+ replay cleared and the guard put back are the session's record (1.19.0, C4), kept
+        // apart from the character's real progress, which the committed capture goes on holding.
+        session.NewGamePlus.ObserveCapture(snapshot.ContentId, NewGamePlusSession.Restored(snapshot, judged));
         if (!ReferenceEquals(judged, snapshot))
         {
             snapshot = judged;
@@ -791,6 +796,8 @@ public sealed class StatePoller : IDisposable
             heldBack.Reset();
         }
 
+        // A login mid-chapter of New Game+ (1.19.0, C4): the quests the guard put back start the session.
+        session.NewGamePlus.ObserveCapture(snapshot.ContentId, NewGamePlusSession.Restored(pending.Snapshot, snapshot));
         var dirty = AcceptedSince.Reconcile(result.AcceptedSince, snapshot, now);
         memory.Commit(snapshot, result.States, pending.Bundle);
         lastOffer = pending.Offer;
@@ -956,7 +963,9 @@ public sealed class StatePoller : IDisposable
     private void Publish(PollResult result)
     {
         session.SetLive(result.Snapshot, result.States, result.Context, memory.AcceptedSince, memory.Abandoned);
-        session.AddEvents(result.Snapshot.ContentId, result.Events);
+        // A New Game+ replay announces nothing: its quests entering, leaving and re-completing are not news (1.19.0, C4).
+        var events = session.Bundle is { } bundle ? session.NewGamePlus.Filter(result.Events, bundle.Catalog, result.Snapshot) : result.Events;
+        session.AddEvents(result.Snapshot.ContentId, events);
     }
 
     /// <summary>

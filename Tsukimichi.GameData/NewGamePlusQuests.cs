@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using Lumina.Data;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 
@@ -33,5 +34,50 @@ public static class NewGamePlusQuests
         }
 
         return ids.ToFrozenSet();
+    }
+
+    /// <summary>
+    /// The chapters as parts (feature plan v7, 1.19.0, C4): each <c>QuestRedo</c> row with its chapter, the row that
+    /// follows it (the sheet's link column, unnamed in Lumina 7.5.0 as <c>Unknown1</c>; 0 at a chapter's end) and its
+    /// quests in order with their variant masks, and each <c>QuestRedoChapterUI</c> name in
+    /// <paramref name="language"/>. <see cref="Core.Query.NewGamePlusChapters"/> interprets them.
+    /// </summary>
+    public static Core.Query.NewGamePlusChapters ReadChapters(ExcelModule excel, Language language)
+    {
+        ArgumentNullException.ThrowIfNull(excel);
+        var parts = new List<Core.Query.NewGamePlusPart>();
+        foreach (var row in excel.GetSheet<QuestRedo>())
+        {
+            if (row.Chapter.RowId == 0)
+            {
+                continue;
+            }
+
+            var quests = new List<Core.Query.NewGamePlusStep>();
+            foreach (var param in row.QuestRedoParam)
+            {
+                if (param.Quest.RowId != 0)
+                {
+                    quests.Add(new Core.Query.NewGamePlusStep(param.Quest.RowId, param.UnknownParam));
+                }
+            }
+
+            if (quests.Count > 0)
+            {
+                parts.Add(new Core.Query.NewGamePlusPart(row.RowId, row.Chapter.RowId, row.Unknown1, quests));
+            }
+        }
+
+        var names = new Dictionary<uint, string>();
+        foreach (var chapter in excel.GetSheet<QuestRedoChapterUI>(language))
+        {
+            var name = chapter.ChapterName.ExtractText();
+            if (name.Length > 0)
+            {
+                names[chapter.RowId] = name;
+            }
+        }
+
+        return new Core.Query.NewGamePlusChapters(parts, names);
     }
 }

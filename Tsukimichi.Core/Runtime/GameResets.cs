@@ -113,7 +113,9 @@ public static class GameResets
     /// <summary>
     /// A stored snapshot as it stands at <paramref name="nowUtc"/>: when it was taken before the last daily reset, the
     /// allied society dailies done (<see cref="CharacterSnapshot.DailyDone"/>), the daily repeat flags and the
-    /// ranked-up-today marks are cleared and the allowances are full (<see cref="FullTribeAllowance"/>); when taken
+    /// ranked-up-today marks are cleared and the allowances are full (<see cref="FullTribeAllowance"/>), or 0 when the
+    /// journal held an allied society daily, which then carries over the reset and holds every allowance back until it
+    /// is turned in (1.19.0, C5, <see cref="Plan.AlliedCarryover"/>); when taken
     /// before the last weekly reset, the weekly repeat flags are cleared too. A flag no quest of
     /// <paramref name="catalog"/> carries is kept. Returns the same instance when nothing predates a reset; the
     /// snapshot itself, and the file it came from, are never changed.
@@ -177,9 +179,23 @@ public static class GameResets
         {
             DailyDone = snapshot.DailyDone.Count == 0 ? snapshot.DailyDone : new Dictionary<ushort, byte>(),
             RepeatFlags = flags,
-            TribeAllowance = FullTribeAllowance,
+            TribeAllowance = HoldsAlliedDaily(snapshot, catalog) ? (byte)0 : FullTribeAllowance,
             Tribes = tribes,
         };
+    }
+
+    /// <summary>Whether the journal holds an allied society daily (one accepted before a reset carries over it).</summary>
+    private static bool HoldsAlliedDaily(CharacterSnapshot snapshot, QuestCatalog catalog)
+    {
+        foreach (var accepted in snapshot.Accepted)
+        {
+            if (catalog.TryGetByQuestId(accepted.QuestId, out var quest) && quest.IsAlliedSocietyDaily)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static byte[] BuildFlagIntervals(QuestCatalog catalog)

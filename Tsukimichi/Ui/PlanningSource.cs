@@ -88,7 +88,23 @@ public sealed class PlanningSource
     public sealed record AdviceText(JobLevelAdvice Advice, string Row, string Headline, string Tooltip, QuestRecord? First);
 
     /// <summary>One society on the board, as drawn.</summary>
-    public sealed record BoardLine(AlliedSocietyRow Row, string Society, string Rank, string RankTooltip, string Today, string TodayTooltip, string Zone);
+    public sealed record BoardLine(AlliedSocietyRow Row, string Society, string Rank, string RankTooltip, string Today, string TodayTooltip, string Zone)
+    {
+        /// <summary>
+        /// The line under the society (1.19.0, C5; spec-1.19 "C5. Allied societies"): a carried-over daily ("0
+        /// allowances until you turn in …"), the rank-up hint, or what is left today.
+        /// </summary>
+        public string Line { get; init; } = string.Empty;
+
+        /// <summary>The line needs the player: a daily carried over the reset (a copper dot beside the words, which say the same).</summary>
+        public bool NeedsYou { get; init; }
+
+        /// <summary>The line's hover.</summary>
+        public string LineTooltip { get; init; } = string.Empty;
+
+        /// <summary>"· stored alt Kiri Tsukikage" after the rank on a stored character's carried row; empty otherwise.</summary>
+        public string AltNote { get; init; } = string.Empty;
+    }
 
     /// <summary>The catch-up summary; null without a catalog, states or main scenario.</summary>
     public MsqCatchUpSummary? CatchUp
@@ -392,9 +408,15 @@ public sealed class PlanningSource
         var context = session.Context;
         var now = DateTime.UtcNow;
         var built = session.IsLive
-            ? AlliedSocietyBoard.Build(bundle.Catalog, snapshot, context.TodaysDailyOffer, context.DailyOfferTribes, now)
-            : AlliedSocietyBoard.Build(bundle.Catalog, snapshot, null, null, now);
-        boardHeader = string.Format(CultureInfo.CurrentCulture, Strings.PlanningBoardAllowancesFormat, built.AllowancesLeft, GameResets.ResetsIn(built.NextReset - now));
+            ? AlliedSocietyBoard.Build(bundle.Catalog, snapshot, context.TodaysDailyOffer, context.DailyOfferTribes, now, session.AcceptedSince)
+            : AlliedSocietyBoard.Build(bundle.Catalog, snapshot, null, null, now, session.AcceptedSince);
+        // A stored character's allowances are projected from its last login (1.19.0, C5): the header says so, and says
+        // when a daily it held then carries over the reset.
+        boardHeader = !session.IsLive && built.Projected
+            ? built.Carried.Count > 0
+                ? string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredHoldsFormat, UiFormat.Age(built.TakenUtc, now))
+                : string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredProjectedFormat, built.AllowancesLeft, UiFormat.Age(built.TakenUtc, now))
+            : string.Format(CultureInfo.CurrentCulture, Strings.PlanningBoardAllowancesFormat, built.AllowancesLeft, GameResets.ResetsIn(built.NextReset - now));
         if (ReferenceEquals(board, built) || SameRows(board, built))
         {
             board = built;
@@ -416,14 +438,25 @@ public sealed class PlanningSource
                 ? Core.Ui.LeftText.LeftOrDone(row.DoneToday, offered)
                 : string.Format(CultureInfo.CurrentCulture, Strings.PlanningBoardTodayUnknownFormat, row.DoneToday);
             var zone = row.Giver?.Issuer is { } issuer && links?.Map(issuer.MapId) is { } map ? map.PlaceName : string.Empty;
+            var todayTooltip = row.OfferedToday is { } shown ? Core.Ui.LeftText.Tally(row.DoneToday, shown) : Strings.PlanningBoardTodayUnknownTooltip;
             lines[i] = new BoardLine(
                 row,
                 society,
                 rank,
                 row.RankedUpToday ? Strings.PlanningBoardRankedUpToday : string.Empty,
                 today,
-                row.OfferedToday is { } shown ? Core.Ui.LeftText.Tally(row.DoneToday, shown) : Strings.PlanningBoardTodayUnknownTooltip,
-                zone);
+                todayTooltip,
+                zone)
+            {
+                // What the row says first (spec-1.19 C5): a daily carried over the reset, the rank-up hint, or today.
+                Line = row.Carried is { } carried
+                    ? string.Format(CultureInfo.CurrentCulture, Strings.AlliedCarriedFormat, session.Spoilers.DisplayName(carried))
+                    : row.RankUpBonus ? Strings.AlliedRankUpReady : today,
+                NeedsYou = row.Carried is not null,
+                LineTooltip = row.Carried is not null ? Strings.AlliedCarriedTooltip
+                    : row.RankUpBonus ? Strings.AlliedRankUpReadyTooltip : todayTooltip,
+                AltNote = row.Carried is not null && !session.IsLive ? string.Format(CultureInfo.CurrentCulture, Strings.AlliedStoredAltFormat, snapshot.Name) : string.Empty,
+            };
         }
 
         boardLines = lines;

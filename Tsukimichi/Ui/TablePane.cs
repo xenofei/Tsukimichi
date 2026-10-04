@@ -118,6 +118,13 @@ public sealed class TablePane : IDisposable
     /// <summary>Settings › Display › Planning: whether the EXP column (1.9.0, R6 G) is offered; null or false keeps it off.</summary>
     public Func<bool>? ShowExp { get; set; }
 
+    /// <summary>
+    /// The chip at the trailing end of a row's status (1.19.0; spec-1.19 C4 and C10): "Replaying" for a quest a New
+    /// Game+ session replays, "Ends in 2 days" for an ending event's quest in the journal; null for none. Its text and
+    /// tooltip are the provider's cached strings, so a row allocates nothing. Null draws no chip.
+    /// </summary>
+    public Func<QuestRecord, QuestState, RowChip?>? RowChips { get; set; }
+
     /// <summary>Settings › Display › Planning: whether the Opens column (feature plan v6 K4) is offered; null or false keeps it off.</summary>
     public Func<bool>? ShowOpens { get; set; }
 
@@ -1647,7 +1654,14 @@ public sealed class TablePane : IDisposable
             var gap = UiMetrics.Px(StoryBadgeGap);
             ImGui.SetCursorScreenPos(new Vector2(nameCellMin.X, secondLineY));
             using var caption = Typography.Caption();
-            statusCut = DrawStatus(row.Status, row.State, hasSnapshot, nameCellWidth - (moreShown ? moreSize + gap : 0f));
+            var lineWidth = nameCellWidth - (moreShown ? moreSize + gap : 0f);
+            var lineChip = hasSnapshot ? RowChips?.Invoke(quest, row.State) : null;
+            var lineChipRoom = lineChip is { } shownChip ? RowChipView.Width(shownChip.Text) + UiMetrics.Px(6f) : 0f;
+            statusCut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, lineWidth - lineChipRoom));
+            if (lineChip is { } trailingChip && lineChipRoom < lineWidth)
+            {
+                RowChipView.Draw(trailingChip, new Vector2(nameCellMin.X + lineWidth - RowChipView.Width(trailingChip.Text), secondLineY), rowHovered);
+            }
         }
 
         // The selectable spans every column; the banner tooltip belongs to the name cell only, the stripe's to the
@@ -1691,7 +1705,13 @@ public sealed class TablePane : IDisposable
             CenterText(in layout);
             var statusCellMin = ImGui.GetCursorScreenPos();
             var statusCellWidth = ImGui.GetContentRegionAvail().X;
-            var cut = DrawStatus(row.Status, row.State, hasSnapshot, statusCellWidth);
+            var chip = hasSnapshot ? RowChips?.Invoke(quest, row.State) : null;
+            var chipRoom = chip is { } shown ? RowChipView.Width(shown.Text) + UiMetrics.Px(6f) : 0f;
+            var cut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, statusCellWidth - chipRoom));
+            if (chip is { } trailing && chipRoom < statusCellWidth)
+            {
+                RowChipView.Draw(trailing, new Vector2(statusCellMin.X + statusCellWidth - RowChipView.Width(trailing.Text), statusCellMin.Y), rowHovered);
+            }
 
             // The state word is never cut; when the reason after it was ellipsised, the whole line is the cell's tooltip.
             if (cut && rowHovered && mouseX >= statusCellMin.X && mouseX <= statusCellMin.X + statusCellWidth)

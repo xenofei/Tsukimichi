@@ -100,6 +100,7 @@ public sealed partial class ChatNotifier : IDisposable
             Announce();
             Nudge();
             AnnounceSeasonal();
+            AnnounceEndingSoon();
             AnnouncePayoffGates();
         }
         catch (Exception ex)
@@ -236,7 +237,7 @@ public sealed partial class ChatNotifier : IDisposable
         }
 
         var now = DateTime.UtcNow;
-        var running = SeasonalNow.Running(bundle.Catalog, snapshot, session.LiveStates, session.Curated.Festivals, now);
+        var running = SeasonalNow.Running(bundle.Catalog, snapshot, session.LiveStates, session.Curated.Festivals, now, session.EnteredFestivalEnds);
         foreach (var festival in tracker.TakeSeasonalNotices(running))
         {
             foreach (var entry in festival.Quests)
