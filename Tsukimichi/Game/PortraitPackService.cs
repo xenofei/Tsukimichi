@@ -27,7 +27,7 @@ public enum PortraitPackPhase : byte
 public sealed class PortraitPackService : IDisposable
 {
     private readonly PortraitPackStore store;
-    private readonly Func<IPortraitPackTransport> transport;
+    private readonly Func<PortraitPackOffer, IPortraitPackTransport> transport;
     private readonly IPluginLog log;
     private readonly object gate = new();
     private CancellationTokenSource? running;
@@ -36,10 +36,11 @@ public sealed class PortraitPackService : IDisposable
     private volatile int phase;
     private long received;
     private volatile bool disposed;
+    private Task? work;
 
-    /// <param name="transport">Makes the network client when a confirmed download starts (never before).</param>
+    /// <param name="transport">Makes the network client for the offer when a confirmed download starts (never before).</param>
     /// <param name="installedChanged">Called on a worker after a pack is installed (true) or removed (false).</param>
-    public PortraitPackService(PluginPaths paths, string clientGameVersion, Func<IPortraitPackTransport> transport, IPluginLog log, Action<bool>? installedChanged = null)
+    public PortraitPackService(PluginPaths paths, string clientGameVersion, Func<PortraitPackOffer, IPortraitPackTransport> transport, IPluginLog log, Action<bool>? installedChanged = null)
     {
         ArgumentNullException.ThrowIfNull(paths);
         this.transport = transport ?? throw new ArgumentNullException(nameof(transport));
@@ -137,7 +138,7 @@ public sealed class PortraitPackService : IDisposable
             phase = (int)PortraitPackPhase.Downloading;
         }
 
-        _ = Task.Run(() => DownloadAndInstall(offer, cts.Token));
+        work = Task.Run(() => DownloadAndInstall(offer, cts.Token));
         return true;
     }
 
@@ -163,7 +164,7 @@ public sealed class PortraitPackService : IDisposable
             phase = (int)PortraitPackPhase.Removing;
         }
 
-        _ = Task.Run(() =>
+        work = Task.Run(() =>
         {
             var removed = false;
             try
@@ -182,7 +183,7 @@ public sealed class PortraitPackService : IDisposable
                 Finish(removed ? PortraitPackFailure.None : PortraitPackFailure.DiskError, removal: true);
             }
 
-            if (removed)
+            if (removed && !disposed)
             {
                 InstalledChanged?.Invoke(false);
             }
@@ -194,16 +195,17 @@ public sealed class PortraitPackService : IDisposable
     {
         var result = PortraitPackFailure.DiskError;
         IPortraitPackTransport? source = null;
+        var download = store.NewDownloadFile();
         try
         {
-            source = transport();
+            source = transport(offer);
             var progress = new Reporter(this);
             log.Information("Portrait pack: downloading {Size} from {Uri} (the player confirmed)", PortraitPackOffer.SizeText(offer.Size), offer.DownloadUri);
-            result = await PortraitPackDownload.RunAsync(source, offer, store.DownloadFile, progress, cancellation).ConfigureAwait(false);
+            result = await PortraitPackDownload.RunAsync(source, offer, download, progress, cancellation).ConfigureAwait(false);
             if (result == PortraitPackFailure.None)
             {
                 phase = (int)PortraitPackPhase.Installing;
-                result = store.Install(store.DownloadFile, offer, cancellation, out var pack, out var detail);
+                result = store.Install(download, offer, cancellation, out var pack, out var detail);
                 if (result == PortraitPackFailure.None && pack is not null)
                 {
                     installed = pack;
@@ -228,7 +230,7 @@ public sealed class PortraitPackService : IDisposable
         finally
         {
             (source as IDisposable)?.Dispose();
-            PortraitPackStore.TryDelete(store.DownloadFile);
+            PortraitPackStore.TryDelete(download);
             lock (gate)
             {
                 running?.Dispose();
@@ -238,7 +240,7 @@ public sealed class PortraitPackService : IDisposable
             Finish(result, removal: false);
         }
 
-        if (result == PortraitPackFailure.None)
+        if (result == PortraitPackFailure.None && !disposed)
         {
             InstalledChanged?.Invoke(true);
         }
@@ -252,10 +254,19 @@ public sealed class PortraitPackService : IDisposable
         phase = (int)PortraitPackPhase.Idle;
     }
 
+    /// <summary>Cancels a running download and waits a moment for its worker, so nothing of it runs on after unload.</summary>
     public void Dispose()
     {
         disposed = true;
         Cancel();
+        try
+        {
+            work?.Wait(TimeSpan.FromSeconds(2));
+        }
+        catch (AggregateException)
+        {
+            // Logged by the worker.
+        }
     }
 
     /// <summary>Writes progress where the Settings row reads it (no synchronisation context: the worker reports straight in).</summary>

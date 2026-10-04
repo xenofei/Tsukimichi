@@ -164,6 +164,33 @@ public sealed class PortraitPackTests
         Assert.False(PackPng.TryDecode([], out _, out _, out _));
     }
 
+    [Fact]
+    public void A_pack_image_may_hold_only_the_chunks_the_pack_writes()
+    {
+        var png = PackPng.EncodeRgba(Gradient(16, 16), 16, 16);
+        Assert.True(PackPng.TryDecode(png, out _, out _, out _, strict: true));
+
+        // Bytes after IEND: fine for a photo, refused for a pack image.
+        var trailing = png.Concat(Encoding.ASCII.GetBytes("<script>")).ToArray();
+        Assert.True(PackPng.TryDecode(trailing, out _, out _, out _));
+        Assert.False(PackPng.TryDecode(trailing, out _, out _, out _, strict: true));
+
+        // An ancillary chunk (a text chunk, say) after the header: refused strictly.
+        var text = Chunk("tEXt", Encoding.ASCII.GetBytes("Comment\0hello"));
+        var withText = png[..33].Concat(text).Concat(png[33..]).ToArray();
+        Assert.True(PackPng.TryDecode(withText, out _, out _, out _));
+        Assert.False(PackPng.TryDecode(withText, out _, out _, out _, strict: true));
+    }
+
+    [Fact]
+    public void A_manifest_that_repeats_a_key_is_refused_not_thrown()
+    {
+        var sha = new string('a', 64);
+        var json = $$"""{ "format": 1, "files": { "a.png": "{{sha}}", "a.png": "{{sha}}" }, "entries": { "1": "a.png" } }""";
+        Assert.Null(PortraitPackManifest.TryParse(Encoding.UTF8.GetBytes(json), out var error));
+        Assert.NotNull(error);
+    }
+
     // ------------------------------------------------------------------ where the pack stands
 
     [Fact]
@@ -324,6 +351,16 @@ public sealed class PortraitPackTests
             new PortraitQuest(70020, GrahaTia, 3, 0),
         ],
         new Dictionary<byte, uint>()));
+
+    private static byte[] Chunk(string type, byte[] body)
+    {
+        var typed = Encoding.ASCII.GetBytes(type).Concat(body).ToArray();
+        var length = new byte[4];
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(length, body.Length);
+        var crc = new byte[4];
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(crc, PortraitMaskFile.Crc32(typed));
+        return length.Concat(typed).Concat(crc).ToArray();
+    }
 
     internal static byte[] Gradient(int width, int height)
     {

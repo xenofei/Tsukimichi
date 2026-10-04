@@ -50,7 +50,7 @@ Giver portraits come from your own game install. For more faces, Settings › Ge
 
 - **What is fetched:** one file, `Tsukimichi-portraits.zip`, from Tsukimichi's own GitHub release (`https://github.com/xenofei/Tsukimichi/releases/download/<version>/Tsukimichi-portraits.zip`). GitHub redirects the download to its own file servers (`objects.githubusercontent.com` or `release-assets.githubusercontent.com`); a redirect anywhere else stops it. The request carries a User-Agent naming Tsukimichi's version, and nothing about you, your characters or your settings.
 - **What is checked:** the file must be exactly the size and SHA-256 the plugin ships with (`Data/portrait_pack.json`), or it is deleted. Inside, only the pack's own images and manifest are accepted: no folders, no programs, nothing outside the pack's folder. Every image must match its own SHA-256 and decode as a picture before anything is installed.
-- **Where it goes:** `pluginConfigs\Tsukimichi\portraits\` (`current.json` names the pack in use; `download.part` exists only while it downloads).
+- **Where it goes:** `pluginConfigs\Tsukimichi\portraits\` (`current.json` names the pack in use; a `download-<id>.part` file exists only while it downloads).
 - **When:** only on that click. A plugin update with a newer pack says so in Settings and waits for you to click **Update…**; nothing downloads on its own. **Remove…** deletes the pack again.
 - **Credit and source:** the photos are Garland Tools' NPC renders (garlandtools.org, photos by Celes) of Square Enix's game art. FINAL FANTASY XIV © SQUARE ENIX.
 

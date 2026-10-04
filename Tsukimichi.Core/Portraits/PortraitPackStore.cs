@@ -1,6 +1,8 @@
 using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -54,7 +56,7 @@ public sealed class PortraitPack
 /// <summary>
 /// The portrait pack's folder in the plugin's config directory (feature plan v7 F4): <c>portraits/</c> holds one folder
 /// per installed pack, named by its zip's hash (<c>portraits/3fa2c1d0e9b8/</c>, so a new pack never shares a texture
-/// path with the old one), the download while it runs (<c>download.part</c>), and <c>current.json</c>, which names the
+/// path with the old one), each download while it runs (<c>download-&lt;id&gt;.part</c>), and <c>current.json</c>, which names the
 /// pack in use and is written last. Each step leaves either the old pack or the new one in use, never half of one: a
 /// pack is extracted into a staging folder, renamed into place, and only then named in <c>current.json</c>. Folders
 /// <c>current.json</c> does not name (a crash mid-extract, an old pack) are deleted by <see cref="CleanUp"/>.
@@ -75,8 +77,8 @@ public sealed partial class PortraitPackStore
     /// <summary>The <c>portraits</c> folder (full path).</summary>
     public string Root { get; }
 
-    /// <summary>Where a download is written while it runs.</summary>
-    public string DownloadFile => Path.Combine(Root, "download.part");
+    /// <summary>A file of its own for one download while it runs (<c>download-&lt;id&gt;.part</c>), so two game clients never share one.</summary>
+    public string NewDownloadFile() => Path.Combine(Root, "download-" + Guid.NewGuid().ToString("N")[..12] + ".part");
 
     private string CurrentFile => Path.Combine(Root, CurrentFileName);
 
@@ -122,7 +124,7 @@ public sealed partial class PortraitPackStore
 
             return new PortraitPack(path, manifest, sha, tag);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException or InvalidOperationException)
         {
             damaged = true;
             return null;
@@ -130,10 +132,11 @@ public sealed partial class PortraitPackStore
     }
 
     /// <summary>
-    /// Installs the downloaded zip at <paramref name="zipPath"/>, already checked against <paramref name="offer"/>:
-    /// extracts it into a staging folder (<see cref="PortraitPackArchive.Extract(string, string, CancellationToken, out PortraitPackManifest?, out string?)"/>),
-    /// renames that into place and names it in <c>current.json</c>. On any failure the pack in use stays as it was and the
-    /// staging folder is deleted.
+    /// Installs the downloaded zip at <paramref name="zipPath"/>: opens it once, with writes shut out, checks its size and
+    /// SHA-256 against <paramref name="offer"/> on that same handle, extracts it from that handle into a staging folder
+    /// (<see cref="PortraitPackArchive.Extract(ZipArchive, string, CancellationToken, out PortraitPackManifest?, out string?)"/>),
+    /// renames that into place and names it in <c>current.json</c>. So the bytes extracted are the bytes checked. On any
+    /// failure the pack in use stays as it was and the staging folder is deleted.
     /// </summary>
     public PortraitPackFailure Install(string zipPath, PortraitPackOffer offer, CancellationToken cancellation, out PortraitPack? pack, out string? detail)
     {
@@ -145,7 +148,31 @@ public sealed partial class PortraitPackStore
         try
         {
             Directory.CreateDirectory(Root);
-            var result = PortraitPackArchive.Extract(zipPath, staging, cancellation, out var manifest, out detail);
+            using var file = new FileStream(zipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (file.Length != offer.Size)
+            {
+                return PortraitPackFailure.SizeMismatch;
+            }
+
+            if (!string.Equals(Convert.ToHexStringLower(SHA256.HashData(file)), offer.Sha256, StringComparison.Ordinal))
+            {
+                return PortraitPackFailure.HashMismatch;
+            }
+
+            file.Position = 0;
+            PortraitPackFailure result;
+            PortraitPackManifest? manifest;
+            try
+            {
+                using var zip = new ZipArchive(file, ZipArchiveMode.Read, leaveOpen: true);
+                result = PortraitPackArchive.Extract(zip, staging, cancellation, out manifest, out detail);
+            }
+            catch (InvalidDataException ex)
+            {
+                detail = ex.Message;
+                return PortraitPackFailure.BadArchive;
+            }
+
             if (result != PortraitPackFailure.None || manifest is null)
             {
                 return result == PortraitPackFailure.None ? PortraitPackFailure.BadManifest : result;
@@ -201,7 +228,7 @@ public sealed partial class PortraitPackStore
                 folder = Text(root["folder"]);
             }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException or InvalidOperationException)
         {
             folder = null;
         }
@@ -225,7 +252,7 @@ public sealed partial class PortraitPackStore
     }
 
     /// <summary>
-    /// Deletes what an interrupted download or install left (<c>download.part</c>, staging folders) and old packs'
+    /// Deletes what an interrupted download or install left (<c>download-*.part</c>, staging folders) and old packs'
     /// folders: every folder under <see cref="Root"/> that <c>current.json</c> does not name. A folder changed in the
     /// last ten minutes is left (another game client may be installing into it) unless <paramref name="ignoreAge"/>.
     /// Never throws.
@@ -260,12 +287,15 @@ public sealed partial class PortraitPackStore
                 }
             }
 
-            if (File.Exists(DownloadFile) && (ignoreAge || now - File.GetLastWriteTimeUtc(DownloadFile) > BusyFolderAge))
+            foreach (var part in Directory.EnumerateFiles(Root, "download*.part"))
             {
-                TryDelete(DownloadFile);
+                if (ignoreAge || now - File.GetLastWriteTimeUtc(part) > BusyFolderAge)
+                {
+                    TryDelete(part);
+                }
             }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException or InvalidOperationException)
         {
             // Left for the next start.
         }

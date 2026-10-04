@@ -281,6 +281,20 @@ public sealed class PortraitPackInstallTests : IDisposable
     }
 
     [Fact]
+    public void The_install_checks_the_file_it_extracts_against_the_offer_again()
+    {
+        // A download.part rewritten after the download's own check (another program, another game client): refused.
+        var store = new PortraitPackStore(Path.Combine(root, "portraits"));
+        var good = PackZip();
+        var other = (byte[])good.Clone();
+        other[good.Length / 2] ^= 0x01;
+        Assert.Equal(PortraitPackFailure.HashMismatch, store.Install(SaveZip(other), OfferFor(good), CancellationToken.None, out var pack, out _));
+        Assert.Null(pack);
+        Assert.Equal(PortraitPackFailure.SizeMismatch, store.Install(SaveZip(good[..^1], "short.zip"), OfferFor(good), CancellationToken.None, out _, out _));
+        Assert.Null(store.Load(out _));
+    }
+
+    [Fact]
     public void A_failed_install_keeps_the_pack_in_use()
     {
         var store = new PortraitPackStore(Path.Combine(root, "portraits"));
@@ -320,13 +334,14 @@ public sealed class PortraitPackInstallTests : IDisposable
         // A crash mid-extract: a staging folder and no current.json.
         Directory.CreateDirectory(Path.Combine(store.Root, "0123456789ab.staging-deadbeef"));
         File.WriteAllBytes(Path.Combine(store.Root, "0123456789ab.staging-deadbeef", "1001000.png"), Image(1));
-        File.WriteAllBytes(store.DownloadFile, [1, 2, 3]);
+        var part = store.NewDownloadFile();
+        File.WriteAllBytes(part, [1, 2, 3]);
         Assert.Null(store.Load(out var damaged));
         Assert.False(damaged);
 
         store.CleanUp(ignoreAge: true);
         Assert.Empty(Directory.GetDirectories(store.Root));
-        Assert.False(File.Exists(store.DownloadFile));
+        Assert.False(File.Exists(part));
     }
 
     [Fact]

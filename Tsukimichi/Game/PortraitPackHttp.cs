@@ -16,9 +16,12 @@ namespace Tsukimichi.Game;
 internal sealed class PortraitPackHttp : IPortraitPackTransport, IDisposable
 {
     private readonly HttpClient http;
+    private readonly PortraitPackOffer offer;
 
-    public PortraitPackHttp(string pluginVersion)
+    /// <param name="offer">The pack this client fetches: it refuses any address the offer does not allow, whoever asks.</param>
+    public PortraitPackHttp(PortraitPackOffer offer, string pluginVersion)
     {
+        this.offer = offer ?? throw new ArgumentNullException(nameof(offer));
         var handler = new SocketsHttpHandler
         {
             AllowAutoRedirect = false,
@@ -34,6 +37,13 @@ internal sealed class PortraitPackHttp : IPortraitPackTransport, IDisposable
     /// <inheritdoc/>
     public async Task<PortraitPackResponse> GetAsync(Uri uri, CancellationToken cancellation)
     {
+        ArgumentNullException.ThrowIfNull(uri);
+        if (!offer.Allows(uri))
+        {
+            // Checked by the download already; checked here too, so this client can never fetch anything else.
+            return PortraitPackResponse.Failed(403);
+        }
+
         HttpResponseMessage? response = null;
         try
         {

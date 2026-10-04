@@ -94,7 +94,7 @@ public sealed partial record PortraitPackOffer(string Tag, string Asset, long Si
         {
             root = JsonNode.Parse(json, documentOptions: new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true }) as JsonObject;
         }
-        catch (JsonException ex)
+        catch (Exception ex) when (ex is JsonException or ArgumentException or InvalidOperationException)
         {
             warning = "portrait pack offer is not JSON: " + ex.Message;
             return null;

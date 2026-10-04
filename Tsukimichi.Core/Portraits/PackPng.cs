@@ -12,6 +12,8 @@ namespace Tsukimichi.Core.Portraits;
 /// <see cref="TryDecode"/> is strict: the signature, every chunk's CRC, a header first, bit depth 8 or 16 (8 for a
 /// palette), no interlace, the image data inflating to exactly the rows the header promises, valid row filters and
 /// palette indices, and a closing IEND. Anything else is refused. The output is straight-alpha RGBA, 8 bits a channel.
+/// With <c>strict</c> (how the plugin checks a pack image) it also refuses any chunk but IHDR, PLTE, tRNS, IDAT and IEND
+/// and any byte after IEND, so the file the game's loader later reads holds nothing this decoder did not check.
 /// </para>
 /// </summary>
 public static class PackPng
@@ -27,9 +29,9 @@ public static class PackPng
     /// <summary>
     /// Decodes <paramref name="png"/> into straight-alpha RGBA (<paramref name="rgba"/>, row-major, 4 bytes a pixel);
     /// false, with nothing out, when it is not a well-formed PNG this decoder takes or a side is over
-    /// <paramref name="maxSide"/>.
+    /// <paramref name="maxSide"/>. <paramref name="strict"/> refuses every other chunk and trailing bytes too.
     /// </summary>
-    public static bool TryDecode(ReadOnlySpan<byte> png, out int width, out int height, out byte[] rgba, int maxSide = DefaultMaxSide)
+    public static bool TryDecode(ReadOnlySpan<byte> png, out int width, out int height, out byte[] rgba, int maxSide = DefaultMaxSide, bool strict = false)
     {
         width = height = 0;
         rgba = [];
@@ -116,11 +118,16 @@ public static class PackPng
             else if (type.SequenceEqual("IEND"u8))
             {
                 ended = true;
+                if (strict && at + 12 + length != png.Length)
+                {
+                    return false;
+                }
+
                 break;
             }
-            else if ((type[0] & 0x20) == 0)
+            else if (strict || (type[0] & 0x20) == 0)
             {
-                // An unknown critical chunk: the image cannot be read safely.
+                // An unknown critical chunk: the image cannot be read safely. Strict: no ancillary chunk either.
                 return false;
             }
 

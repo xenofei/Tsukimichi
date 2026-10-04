@@ -87,6 +87,7 @@ public class NoNetworkTests
         Assert.Contains("class PortraitPackHttp : IPortraitPackTransport", source, StringComparison.Ordinal);
         Assert.Contains("AllowAutoRedirect = false", source, StringComparison.Ordinal);
         Assert.Contains("UseCookies = false", source, StringComparison.Ordinal);
+        Assert.Contains("if (!offer.Allows(uri))", source, StringComparison.Ordinal);
 
         // It names no address of its own: every one comes from the offer, checked hop by hop (PortraitPackOffer.Allows).
         Assert.DoesNotContain("://", source, StringComparison.Ordinal);

@@ -126,6 +126,9 @@ public static class PortraitPackDownload
 
     private const int BufferSize = 81_920;
 
+    /// <summary>How long one read of the body may stall before the download counts as offline.</summary>
+    public static readonly TimeSpan ReadStall = TimeSpan.FromSeconds(60);
+
     /// <summary>
     /// Fetches <paramref name="offer"/>'s pack into <paramref name="destination"/> (created or replaced). Returns
     /// <see cref="PortraitPackFailure.None"/> when the file is exactly the offered pack; otherwise the reason, with the
@@ -241,14 +244,23 @@ public static class PortraitPackDownload
             while (true)
             {
                 int read;
-                try
+                using (var stall = CancellationTokenSource.CreateLinkedTokenSource(cancellation))
                 {
-                    read = await body.ReadAsync(buffer, cancellation).ConfigureAwait(false);
-                }
-                catch (IOException)
-                {
-                    // The connection dropped mid-download (a disk error is the write's, below).
-                    return PortraitPackFailure.Offline;
+                    stall.CancelAfter(ReadStall);
+                    try
+                    {
+                        read = await body.ReadAsync(buffer, stall.Token).ConfigureAwait(false);
+                    }
+                    catch (IOException)
+                    {
+                        // The connection dropped mid-download (a disk error is the write's, below).
+                        return PortraitPackFailure.Offline;
+                    }
+                    catch (OperationCanceledException) when (!cancellation.IsCancellationRequested)
+                    {
+                        // The connection stalled.
+                        return PortraitPackFailure.Offline;
+                    }
                 }
 
                 if (read <= 0)

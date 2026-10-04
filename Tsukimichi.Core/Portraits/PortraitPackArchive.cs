@@ -8,8 +8,8 @@ namespace Tsukimichi.Core.Portraits;
 /// exactly <c>manifest.json</c> and <c>portraits/&lt;name&gt;.png</c> images (an optional <c>portraits/</c> folder entry),
 /// each name flat and safe (<see cref="PortraitPackManifest.IsSafeFileName"/>): any other entry (a path that climbs out,
 /// an absolute path, a nested folder, a program, a duplicate) refuses the whole pack before a byte is written. Every
-/// image must be listed in the manifest with its SHA-256, match it, decode as a PNG of the manifest's side
-/// (<see cref="PackPng.TryDecode"/>) and stay under <see cref="MaxImageBytes"/>; every listed image must be present.
+/// image must be listed in the manifest with its SHA-256, match it, decode as a PNG of the manifest's side holding only
+/// the chunks the pack writes (<see cref="PackPng.TryDecode"/>, strict) and stay under <see cref="MaxImageBytes"/>; every listed image must be present.
 /// Files are written only inside the target folder, each path checked again after it is made.
 /// </summary>
 public static class PortraitPackArchive
@@ -151,11 +151,15 @@ public static class PortraitPackArchive
         Directory.CreateDirectory(target);
         var root = Path.GetFullPath(target);
         var rootWithSeparator = root.EndsWith(Path.DirectorySeparatorChar) ? root : root + Path.DirectorySeparatorChar;
+        long unpacked = manifestBytes.Length;
         foreach (var (name, entry) in images.OrderBy(kv => kv.Key, StringComparer.Ordinal))
         {
             cancellation.ThrowIfCancellationRequested();
             var bytes = ReadBounded(entry, MaxImageBytes);
-            if (bytes is null)
+
+            // What was read, not what the headers say, counts toward the cap.
+            unpacked += bytes?.Length ?? 0;
+            if (bytes is null || unpacked > MaxTotalBytes)
             {
                 detail = Clip(name);
                 return PortraitPackFailure.UnsafeEntry;
@@ -167,7 +171,7 @@ public static class PortraitPackArchive
                 return PortraitPackFailure.BadImage;
             }
 
-            if (!PackPng.TryDecode(bytes, out var width, out var height, out _, maxSide: 512) || width != read.Side || height != read.Side)
+            if (!PackPng.TryDecode(bytes, out var width, out var height, out _, maxSide: 512, strict: true) || width != read.Side || height != read.Side)
             {
                 detail = "does not decode: " + Clip(name);
                 return PortraitPackFailure.BadImage;

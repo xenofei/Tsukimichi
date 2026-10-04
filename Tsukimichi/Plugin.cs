@@ -1428,7 +1428,7 @@ public sealed partial class Plugin : IDalamudPlugin
             var pack = new Game.PortraitPackService(
                 Paths,
                 clientGameVersion,
-                () => new Game.PortraitPackHttp(diagnostics.PluginVersion),
+                offer => new Game.PortraitPackHttp(offer, diagnostics.PluginVersion),
                 Log,
                 installed => _ = Framework.RunOnFrameworkThread(() =>
                 {

@@ -103,7 +103,7 @@ public sealed partial class PortraitPackManifest
         {
             root = JsonNode.Parse(json, documentOptions: new JsonDocumentOptions { MaxDepth = 8 }) as JsonObject;
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or ArgumentException or InvalidOperationException)
         {
             root = null;
         }
@@ -114,6 +114,20 @@ public sealed partial class PortraitPackManifest
             return null;
         }
 
+        try
+        {
+            return Read(root, out error);
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            error = "the manifest repeats a key";
+            return null;
+        }
+    }
+
+    private static PortraitPackManifest? Read(JsonObject root, out string? error)
+    {
+        error = null;
         if (!TryInt(root["format"], out var format))
         {
             error = "the manifest has no format";
