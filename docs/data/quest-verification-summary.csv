@@ -346,9 +346,9 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 65892,"Wherefore Art Thou, Zodiac",lodestone;wiki,notModeled,prereqs,20,0
 65893,A Ponze of Flesh,lodestone;wiki,notModeled,prereqs,20,0
 65894,Labor of Love,lodestone;wiki,notModeled,prereqs,20,0
-65895,Method in His Malice,lodestone;wiki,unresolved,prereqs,20,1
+65895,Method in His Malice,lodestone;wiki,sourceWrong,prereqs,20,0
 65896,A Treasured Mother,lodestone;wiki,notModeled,prereqs,20,0
-65897,His Dark Materia,lodestone;wiki,unresolved,prereqs,20,1
+65897,His Dark Materia,lodestone;wiki,sourceWrong,prereqs,20,0
 65898,The Little Postmoogle That Could,lodestone;wiki,notModeled,prereqs,20,0
 65899,Good Intentions,lodestone;wiki,notModeled,prereqs,21,0
 65900,Bait and Switch,lodestone;wiki,notModeled,prereqs,20,0
@@ -404,7 +404,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 65950,Victory in Peril,lodestone;wiki,notModeled,prereqs,20,0
 65951,Righting the Shipwright,lodestone;wiki,notModeled,prereqs,20,0
 65952,Forbidden Island,lodestone;wiki,notModeled,prereqs,20,0
-65953,Say It with Flowers,lodestone;wiki,unresolved,prereqs,20,1
+65953,Say It with Flowers,lodestone;wiki,sourceWrong,prereqs,20,0
 65954,An Allied Perspective,lodestone;wiki,notModeled,prereqs,20,0
 65955,The Steps of Faith,lodestone;wiki,ambiguous,listed,2,0
 65956,Administrative Decision,lodestone;wiki,notModeled,prereqs,20,0
@@ -2269,7 +2269,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 67876,"Who Lives, Who Dies, Who Retells Your Story",garland;lodestone;wiki,sourceWrong,dutyUnlock,22,0
 67877,Promises Kept,lodestone;wiki,notModeled,prereqs,20,0
 67878,Shadows of the First,garland;lodestone;wiki,notModeled,prereqs,22,0
-67879,Two Sides of a Coin,lodestone;wiki,unresolved,prereqs,20,1
+67879,Two Sides of a Coin,lodestone;wiki,sourceWrong,prereqs,20,0
 67880,Unlikely Allies,lodestone;wiki,notModeled,prereqs,20,0
 67881,The Beast That Mourned at the Heart of the Mountain,lodestone;wiki,sourceWrong,duties,21,0
 67882,Beneath a Star-filled Sky,lodestone;wiki,notModeled,prereqs,20,0
@@ -2304,12 +2304,12 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 67915, Future Proof,lodestone;wiki,notModeled,prereqs,20,0
 67916,Seeking Inspiration,lodestone;wiki,notModeled,prereqs,20,0
 67917,Cut from a Different Cloth,lodestone;wiki,notModeled,prereqs,20,0
-67918,When Good Dragons Go Bad,lodestone;wiki,unresolved,prereqs,20,1
+67918,When Good Dragons Go Bad,lodestone;wiki,sourceWrong,prereqs,20,0
 67919,Who Was That Masked Man,lodestone;wiki,notModeled,prereqs,20,0
 67920,Lift Me to the Moon,lodestone;wiki,notModeled,prereqs,20,0
 67921,"Eternity, Loyalty, Honesty",lodestone;wiki,notModeled,prereqs,20,0
 67922,Let Me Gubal That for You,garland;lodestone;wiki,notModeled,prereqs,22,0
-67923,What Lies Beneath,lodestone;wiki,unresolved,prereqs,10,1
+67923,What Lies Beneath,lodestone;wiki,sourceWrong,prereqs,10,0
 67924,Dead but Not Gone,lodestone;wiki,notModeled,prereqs,20,0
 67925,Squadron and Commander (Twin Adder),lodestone;wiki,notModeled,expansion,9,0
 67926,Squadron and Commander (Maelstrom),lodestone;wiki,notModeled,expansion,9,0
@@ -3161,7 +3161,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 68775,Well Eel Be Damned,lodestone;wiki,notModeled,prereqs,20,0
 68776,Fishing for Confidence,lodestone;wiki,notModeled,prereqs,20,0
 68777,Morsel of the Deep,lodestone;wiki,notModeled,prereqs,20,0
-68778,For Every Child a Star,lodestone;wiki,unresolved,prereqs,20,1
+68778,For Every Child a Star,lodestone;wiki,sourceWrong,prereqs,20,0
 68779,The Man with Too Many Scars,lodestone;wiki,notModeled,prereqs,20,0
 68780,Shaped by Tragedy,lodestone;wiki,notModeled,prereqs,20,0
 68781,Defined by Loss,lodestone;wiki,notModeled,prereqs,20,0
@@ -3944,8 +3944,8 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 69584,Stranger Glagg,lodestone;wiki,notListed,listed,2,0
 69585,All's Well That Ends with Ale,lodestone;wiki,notListed,listed,2,0
 69586,All That Grinds Is Not Gloom,lodestone;wiki,notModeled,prereqs,20,0
-69587,The Merchant of Komra,lodestone;wiki,unresolved,prereqs,20,1
-69588,How to Catch an Automaton,lodestone;wiki,unresolved,prereqs,20,1
+69587,The Merchant of Komra,lodestone;wiki,sourceWrong,prereqs,20,0
+69588,How to Catch an Automaton,lodestone;wiki,sourceWrong,prereqs,20,0
 69589,Whence the Heart Leads,lodestone;wiki,notModeled,prereqs,20,0
 69590,The Great Horn Heist,lodestone;wiki,notModeled,expansion,20,0
 69591,A Token of Thanks,lodestone;wiki,notModeled,expansion,20,0
@@ -4892,7 +4892,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 70536,Donuhanu's Devotion,lodestone;wiki,notModeled,prereqs,20,0
 70537,Catching Breath,lodestone;wiki,notModeled,prereqs,20,0
 70538,An Odd Fish Odyssey,lodestone;wiki,notModeled,prereqs,20,0
-70539,Leves of Tuliyollal,lodestone;wiki,unresolved,prereqs,9,1
+70539,Leves of Tuliyollal,lodestone;wiki,sourceWrong,prereqs,9,0
 70540,How the West Was Sung,garland;lodestone;wiki,notModeled,displayLevel,11,0
 70541,Trial by Spire,lodestone;wiki,notModeled,prereqs,20,0
 70542,Sights of the West,lodestone;wiki,notModeled,listed,9,0
@@ -5313,7 +5313,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 70992, A Phantom Reborn,lodestone;wiki,notModeled,prereqs,20,0
 70993,Earning Your Water Wings,lodestone;wiki,sourceLagging,listed,9,0
 70994,Whoever Floats Your Raft,lodestone;wiki,sourceLagging,listed,9,0
-70995,Abridged Too Far,lodestone;wiki,unresolved,duties,11,1
+70995,Abridged Too Far,lodestone;wiki,notModeled,duties,11,0
 70996,Taco Time,lodestone;wiki,notModeled,prereqs,20,0
 70997,A Dream Realized,lodestone;wiki,notModeled,prereqs,20,0
 70998,Touring Tural,lodestone;wiki,notModeled,prereqs,20,0

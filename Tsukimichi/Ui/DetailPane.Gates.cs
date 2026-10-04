@@ -63,10 +63,13 @@ public sealed partial class DetailPane
     private static string GateLabel(string gate, string fallback) =>
         gate.Length == 0 ? fallback : char.ToUpper(gate[0], CultureInfo.CurrentCulture) + gate[1..];
 
-    /// <summary>"The game doesn't show plugins this. From the wiki, confirmed by 2 sources."; null without sources.</summary>
+    /// <summary>"The game doesn't show plugins this. From the wiki, confirmed by 2 sources."; null with fewer than two sources besides the player.</summary>
     private static string? SourceLine(GameGateRequirement gate)
     {
-        if (gate.Sources.Count == 0)
+        // The player's own confirmation (a gate the wiki alone states, 1.22.0) is no source the gate was confirmed by, so
+        // such a gate shows no source line rather than "confirmed by 1 sources".
+        var confirmedBy = gate.Sources.Count(s => s != QuestGate.PlayerSource);
+        if (confirmedBy < 2)
         {
             return null;
         }
@@ -74,7 +77,7 @@ public sealed partial class DetailPane
         var from = gate.Sources.Contains(QuestGate.WikiSource) ? Strings.GateSourceWiki
             : gate.Sources.Contains(QuestGate.GameTextSource) ? Strings.GateSourceGameText
             : Strings.GateSourceSheets;
-        return string.Format(CultureInfo.CurrentCulture, Strings.GateSourceFormat, from, gate.Sources.Count);
+        return string.Format(CultureInfo.CurrentCulture, Strings.GateSourceFormat, from, confirmedBy);
     }
 
     /// <summary>The first quest the gate cannot be passed before (<see cref="QuestGate.After"/>) not done yet; 0 for none.</summary>

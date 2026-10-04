@@ -71,6 +71,14 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
     internal static readonly uint[] UnreadGates = [68667, 68668, 70199, 70941, 70942, 69481, 69482, 69483, 69484, 69485, 69486, 69487, 69563, 69564, 67016, 71036, 71037];
 
     /// <summary>
+    /// The 1.22.0 gates (owner rulings of 2026-10-04), never judged, so each quest reads Not checked until the player says
+    /// it is done: the Eureka Orthos, Pilgrim's Traverse and variant-dungeon record gates the Lodestone's requirement
+    /// line confirms, The Adventurer with All the Cards that Questionable confirms, the Island Sanctuary ranks the wiki
+    /// alone states (player-confirmed), and Abridged Too Far, which A Spellbinding Read's own text confirms.
+    /// </summary>
+    internal static readonly uint[] ConfirmGates = [70200, 70201, 70943, 70185, 70270, 70326, 70978, 69617, 70181, 70265, 70299, 70995];
+
+    /// <summary>
     /// The mount-collection quests (1.11.0, C2), each offered only once the seven extreme-trial mounts of its expansion
     /// are owned: Fiery Wings, Fiery Hearts (Firebird), A Lone Wolf No More (Kamuy of the Nine Tails), The Dragon Made
     /// (Landerwaffe), Wings of Hope (apocryphal Bahamut) and The Wing Spirit Cometh (wings of legacy).
@@ -141,12 +149,14 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
         var keys = root["entries"]!.AsObject().Select(kv => uint.Parse(kv.Key, CultureInfo.InvariantCulture)).ToList();
         Assert.Equal(keys.Order().Distinct(), keys);
         Assert.Equal(keys.Count, Gates.Count);
-        Assert.Equal(GearGates.Concat(MountGates).Concat(UnlockLinkGates).Concat(UnreadGates).Concat([Pyros, Hydatos, Pagos, LightingTheWay]).Order(), Gates.Keys.Order());
+        Assert.Equal(GearGates.Concat(MountGates).Concat(UnlockLinkGates).Concat(UnreadGates).Concat(ConfirmGates).Concat([Pyros, Hydatos, Pagos, LightingTheWay]).Order(), Gates.Keys.Order());
         Assert.Equal(UnlockLinkGates.Order(), Gates.Where(kv => kv.Value.UnlockLinks is not null).Select(kv => kv.Key).Order());
         Assert.Equal(GearGates.Order(), Gates.Where(kv => kv.Value.Items is not null).Select(kv => kv.Key).Order());
         Assert.Equal(MountGates.Order(), Gates.Where(kv => kv.Value.Mounts is not null).Select(kv => kv.Key).Order());
 
         var byScript = Catalog.All.Where(q => q.InternalId.Length > 0).GroupBy(q => q.InternalId.ToUpperInvariant()).ToDictionary(g => g.Key, g => g.First().RowId);
+        var lodestoneHashes = LodestoneHashes();
+        var locks = QuestionableLocks.Load(Path.Combine(ExtraPrerequisitesDataTests.DocsDataDir(), QuestionableLocks.FileName));
         var problems = new List<string>();
         foreach (var (rowId, gate) in Gates)
         {
@@ -197,10 +207,37 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
                 problems.Add($"{rowId} evidence is not an https URL");
             }
 
-            // Two sources of three (the C3 rule): the game's text, the sheets, the wiki.
+            if (gate.RequiredTextKey is { } requiredKey
+                && (ExtraPrerequisitesGameTextTests.ScriptOf(requiredKey) is not { } requiredScript
+                    || byScript.GetValueOrDefault(requiredScript) is not (> 0 and var owner)
+                    || !(quest.PreviousQuests.QuestIds.Contains(owner) || quest.AcceptConditions.Contains(owner))))
+            {
+                problems.Add($"{rowId} requiredTextKey {requiredKey} is not a row of a quest the sheet requires");
+            }
+
+            // Two sources (the C3 rule, 1.22.0 sources added): the game's text, the sheets, the wiki, the Lodestone,
+            // Questionable; the player only where the wiki alone states a gate that is never judged.
             if (gate.SourceKinds.Count < 2)
             {
-                problems.Add($"{rowId} is confirmed by {gate.SourceKinds.Count} source(s) ({string.Join(", ", gate.SourceKinds)}); every gate needs two of the game's text, the sheets and the wiki");
+                problems.Add($"{rowId} is confirmed by {gate.SourceKinds.Count} source(s) ({string.Join(", ", gate.SourceKinds)}); every gate needs two of the game's text, the sheets, the wiki, the Lodestone and Questionable");
+            }
+
+            // The Lodestone source is the quest's own Lodestone page, as the verifier matched it (external_ids.json).
+            if (gate.Lodestone is { } page && (!lodestoneHashes.TryGetValue(rowId, out var hash) || page != CuratedData.LodestoneQuestPrefix + hash + "/"))
+            {
+                problems.Add($"{rowId} lodestone {page} is not the quest's own Lodestone page ({(lodestoneHashes.TryGetValue(rowId, out var known) ? known : "none known")})");
+            }
+
+            // The Questionable source holds only for a quest Questionable holds back on a check of its own.
+            if (gate.Questionable && locks.Of(rowId) is null)
+            {
+                problems.Add($"{rowId} cites Questionable, but docs/data/questionable-locks.json lists no lock for it");
+            }
+
+            // The player stands in for a second source only where the wiki alone states a gate Tsukimichi never judges.
+            if (gate.PlayerConfirmed is not null && (!gate.NeverJudged || !gate.SourceKinds.SequenceEqual([QuestGate.WikiSource, QuestGate.PlayerSource])))
+            {
+                problems.Add($"{rowId} is player-confirmed, but it is judged or has a source besides the wiki ({string.Join(", ", gate.SourceKinds)})");
             }
 
             if (!Catalog.GameGateOf(rowId)!.Sources.SequenceEqual(gate.SourceKinds))
@@ -233,6 +270,35 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
         }
 
         Assert.True(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    /// <summary>
+    /// The 1.22.0 gates never read Ready: each is never judged, so the quest reads Not checked (with "I've done this")
+    /// until the player confirms it, and every one is confirmed by the source its ruling names.
+    /// </summary>
+    [Fact]
+    public void The_1_22_gates_are_never_judged_and_carry_the_ruled_sources()
+    {
+        foreach (var rowId in ConfirmGates)
+        {
+            var gate = Gates[rowId];
+            Assert.True(gate.NeverJudged, $"{rowId} is judged");
+            Assert.Contains(QuestGate.WikiSource, gate.SourceKinds);
+        }
+
+        Assert.Equal([70185u, 70200, 70201, 70270, 70326, 70943, 70978], Gates.Where(kv => kv.Value.Lodestone is not null).Select(kv => kv.Key).Order().ToArray());
+        Assert.Equal([69617u], Gates.Where(kv => kv.Value.Questionable).Select(kv => kv.Key).Order().ToArray());
+        Assert.Equal([70181u, 70265, 70299], Gates.Where(kv => kv.Value.PlayerConfirmed is not null).Select(kv => kv.Key).Order().ToArray());
+        Assert.Equal([70995u], Gates.Where(kv => kv.Value.RequiredTextKey is not null).Select(kv => kv.Key).Order().ToArray());
+    }
+
+    /// <summary>Quest row id to its Lodestone page hash, from <c>Tsukimichi/Data/external_ids.json</c> (the verifier's match).</summary>
+    private static Dictionary<uint, string> LodestoneHashes()
+    {
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(FixtureCatalog.ShippedDataDir(), "external_ids.json")))!.AsObject();
+        return root["quests"]!.AsObject()
+            .Where(kv => kv.Value is JsonArray { Count: > 0 } a && ((string?)a[0])?.Length > 0)
+            .ToDictionary(kv => uint.Parse(kv.Key, CultureInfo.InvariantCulture), kv => (string)kv.Value!.AsArray()[0]!);
     }
 
     [Fact]
@@ -495,7 +561,7 @@ public sealed class GameGatesGameTextTests(GameDataFixture game) : IClassFixture
         var checkedCount = 0;
         foreach (var (rowId, gate) in curated.GameGates)
         {
-            foreach (var key in new[] { gate.GameTextKey, gate.AfterTextKey }.OfType<string>())
+            foreach (var key in new[] { gate.GameTextKey, gate.AfterTextKey, gate.RequiredTextKey }.OfType<string>())
             {
                 if (ExtraPrerequisitesGameTextTests.ScriptOf(key) is not { } script || !byScript.TryGetValue(script, out var owner) || QuestTextReader.SheetName(owner.InternalId) is not { } sheetName)
                 {

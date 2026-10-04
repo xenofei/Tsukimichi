@@ -114,7 +114,9 @@ public sealed class QuestionableLinksTests(FixtureCatalog fixture) : IClassFixtu
 /// <summary>
 /// <c>docs/data/verification-allowlist.json</c> entries excuse a known row only until the release named in <c>until</c>
 /// (R10): CI fails as soon as the plugin's csproj <c>&lt;Version&gt;</c> reaches it, so an excuse cannot silently
-/// outlive the release that was meant to resolve it. Resolve the row, or extend <c>until</c> with a reason.
+/// outlive the release that was meant to resolve it. Resolve the row, or extend <c>until</c> with a reason. A settled
+/// entry (verdict <c>settled</c>, 1.22.0) records a decision on the evidence that no release changes: it carries
+/// evidence and a reason, no <c>until</c>, and never expires.
 /// </summary>
 [Trait("Category", "Curated")]
 public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) : IClassFixture<FixtureCatalog>
@@ -135,18 +137,42 @@ public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) :
         return root["entries"]!.AsArray().Select(e => e!.AsObject()).ToList();
     }
 
-    /// <summary>Whether an entry no longer applies at <paramref name="current"/> (the verifier's rule: <c>until</c> at or below the version).</summary>
-    internal static bool Expired(JsonObject entry, Version current) => Pad((string?)entry["until"]) is { } until && current >= until;
+    /// <summary>The verdict of an entry that records a decision on the evidence and never expires (1.22.0).</summary>
+    internal const string Settled = "settled";
+
+    /// <summary>Whether an entry no longer applies at <paramref name="current"/> (the verifier's rule: <c>until</c> at or below the version; a settled entry never).</summary>
+    internal static bool Expired(JsonObject entry, Version current) => (string?)entry["verdict"] != Settled && Pad((string?)entry["until"]) is { } until && current >= until;
 
     [Fact]
     public void No_allowlist_entry_is_at_or_past_its_until_release()
     {
-        var current = PluginVersion();
+        var problems = Problems(Entries(), PluginVersion());
+        Assert.True(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    /// <summary>
+    /// What the expiry rule finds wrong with <paramref name="entries"/> at <paramref name="current"/>: an entry with no
+    /// until, one at or past its until, one with no reason; a settled entry with no evidence or with an until.
+    /// </summary>
+    internal static List<string> Problems(IEnumerable<JsonObject> entries, Version current)
+    {
         var problems = new List<string>();
-        foreach (var e in Entries())
+        foreach (var e in entries)
         {
             var label = $"verification-allowlist.json {(string?)e["rowId"]} {(string?)e["fact"]}{((string?)e["source"] is { } s ? "/" + s : string.Empty)}";
-            if (Pad((string?)e["until"]) is not { } until)
+            if ((string?)e["verdict"] == Settled)
+            {
+                if (string.IsNullOrWhiteSpace((string?)e["evidence"]))
+                {
+                    problems.Add($"{label} is settled but names no evidence (a URL or game reference)");
+                }
+
+                if (e.ContainsKey("until"))
+                {
+                    problems.Add($"{label} is settled, so it never expires; remove its until");
+                }
+            }
+            else if (Pad((string?)e["until"]) is not { } until)
             {
                 problems.Add($"{label} has no until release (major.minor.patch)");
             }
@@ -161,7 +187,41 @@ public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) :
             }
         }
 
-        Assert.True(problems.Count == 0, string.Join("\n", problems));
+        return problems;
+    }
+
+    [Fact]
+    public void A_settled_entry_never_expires_but_needs_evidence_and_an_unsettled_one_still_expires()
+    {
+        var current = Pad("99.0.0")!;
+        JsonObject Entry(string verdict, string? evidence, string? until)
+        {
+            var e = new JsonObject { ["rowId"] = "1", ["fact"] = "prereqs", ["verdict"] = verdict, ["reason"] = "r" };
+            if (evidence is not null)
+            {
+                e["evidence"] = evidence;
+            }
+
+            if (until is not null)
+            {
+                e["until"] = until;
+            }
+
+            return e;
+        }
+
+        var settled = Entry(Settled, "https://e.org/a", null);
+        Assert.False(Expired(settled, current));
+        Assert.Empty(Problems([settled], current));
+
+        Assert.Contains("no evidence", Assert.Single(Problems([Entry(Settled, null, null)], current)), StringComparison.Ordinal);
+        Assert.Contains("no evidence", Assert.Single(Problems([Entry(Settled, " ", null)], current)), StringComparison.Ordinal);
+        Assert.Contains("never expires", Assert.Single(Problems([Entry(Settled, "TEXT_A_SYSTEM_000_001", "1.22.0")], current)), StringComparison.Ordinal);
+
+        var unsettled = Entry("unresolved", "https://e.org/a", "1.22.0");
+        Assert.True(Expired(unsettled, current));
+        Assert.Contains("expired", Assert.Single(Problems([unsettled], current)), StringComparison.Ordinal);
+        Assert.Contains("no until", Assert.Single(Problems([Entry("sourceWrong", "https://e.org/a", null)], current)), StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -196,7 +256,7 @@ public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) :
                 ((string?)e["rowId"] == "*" || r.RowId == (string?)e["rowId"])
                 && (fact == "*" || r.Fact == fact)
                 && ((string?)e["source"] is not { } source || r.Source == source)
-                && ((string?)e["verdict"] == "*" || r.Verdict == (string?)e["verdict"])
+                && ((string?)e["verdict"] == "*" || r.Verdict == (string?)e["verdict"] || ((string?)e["verdict"] == Settled && r.Verdict is "unresolved" or "catalogWrong"))
                 && ((string?)e["rewardId"] is not { } rewardId || r.RewardId == rewardId));
             if (!excuses)
             {
@@ -264,7 +324,7 @@ public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) :
     }
 
     /// <summary>The data lines of a committed report, split on commas outside double quotes ("" is a quote).</summary>
-    private static List<string[]> ReadCsv(string path)
+    internal static List<string[]> ReadCsv(string path)
     {
         var rows = new List<string[]>();
         foreach (var line in File.ReadLines(path).Skip(1))

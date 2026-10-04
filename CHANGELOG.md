@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- **Quest gates:** twelve late-game quests that need a dungeon floor, a variant dungeon record, an Island Sanctuary rank or a Triple Triad achievement now ask you to confirm ("I've done this") instead of showing Ready too early.
+
 ## [1.21.0] - 2026-10-04
 
 ### Added

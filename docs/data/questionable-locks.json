@@ -1,0 +1,20 @@
+{
+  "$schema_note": "locks: [quest row id, kind, [ids]], one per arm of the questPrereqs switch in IsQuestLocked at the commit, the runtime quest id converted to a Quest sheet row id (+65536). kind is the check the arm calls: achievement (IsAchievementComplete), mounts (AllMountsUnlocked, every mount), unlockLink (IsUnlockLinkUnlocked) or raceChocoboRank (RaceChocoboRankN, the rank). Ids only: no code or text of the source is copied. A curated/game_gates.json entry may cite Questionable (\"questionable\": true) only for a quest listed here; GameGatesDataTests checks it.",
+  "source": "https://github.com/PunishXIV/Questionable",
+  "ref": "new-main",
+  "commit": "db49ec12fc19a1c25a57569c2cff0018f90074b3",
+  "file": "Questionable/Functions/QuestFunctions.cs",
+  "extracted": "2026-10-04",
+  "locks": [
+    [65968, "mounts", [28, 29, 30, 31, 40, 43]],
+    [66112, "raceChocoboRank", [40]],
+    [67086, "mounts", [75, 76, 77, 78, 90, 98, 104]],
+    [67923, "achievement", [1580]],
+    [68731, "unlockLink", [113]],
+    [68736, "mounts", [115, 116, 133, 144, 158, 172, 182]],
+    [69593, "mounts", [189, 192, 205, 217, 226, 238, 249]],
+    [69617, "achievement", [2819]],
+    [70331, "mounts", [261, 262, 293, 306, 315, 325, 332]],
+    [71005, "mounts", [345, 346, 363, 389, 407, 422, 444]]
+  ]
+}

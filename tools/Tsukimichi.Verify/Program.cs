@@ -21,7 +21,7 @@ namespace Tsukimichi.Verify;
 /// Tsukimichi.Verify rewards [same options]
 /// Tsukimichi.Verify summary [--out &lt;dir&gt;]       exits 1 when any row is unresolved or catalogWrong outside the allowlist
 /// Tsukimichi.Verify patches [--game, --cache, --offline, --rate, --limit N, --out] [--patches &lt;file&gt;] [--patch-corrections &lt;file&gt;] [--no-quest-documents]
-/// Tsukimichi.Verify questionable [--game, --out, --curated] [--links &lt;file&gt;] [--extract &lt;QuestData.cs&gt; --commit &lt;hash&gt;]   exits 1 on a link the catalog misses outside the allowlist
+/// Tsukimichi.Verify questionable [--game, --out, --curated] [--links &lt;file&gt;] [--extract &lt;QuestData.cs&gt; --commit &lt;hash&gt;] [--locks &lt;file&gt;] [--extract-locks &lt;QuestFunctions.cs&gt; --commit &lt;hash&gt;]   exits 1 on a link the catalog misses outside the allowlist
 /// Tsukimichi.Verify links [--out &lt;dir&gt;]   offline: writes Tsukimichi/Data/external_ids.json from the committed CSVs
 /// </code>
 /// </summary>
@@ -112,6 +112,8 @@ public static class Program
         Console.Error.WriteLine("  questionable only:");
         Console.Error.WriteLine("  --links <file>     Questionable's links (default: <repo>/docs/data/questionable-prerequisites.json)");
         Console.Error.WriteLine("  --extract <file>   first rewrite --links from a local copy of Questionable/Data/QuestData.cs (needs --commit)");
+        Console.Error.WriteLine("  --locks <file>     Questionable's own quest locks (default: <repo>/docs/data/questionable-locks.json)");
+        Console.Error.WriteLine("  --extract-locks <file>  first rewrite --locks from a local copy of Questionable/Functions/QuestFunctions.cs (needs --commit)");
         Console.Error.WriteLine("  --commit <hash>    the full commit hash that copy was read at");
     }
 
@@ -325,6 +327,19 @@ public static class Program
             log.WriteLine($"questionable: {extracted.Count} links read from {source}, written to {opts.LinksFile}");
         }
 
+        if (opts.ExtractLocks is { } lockSource)
+        {
+            if (opts.Commit is not { Length: 40 } commit)
+            {
+                throw new ArgumentException("--extract-locks needs --commit <the full 40-character hash the copy was read at>");
+            }
+
+            var locks = QuestionableLocks.Extract(File.ReadAllText(lockSource));
+            new QuestionableLocks("https://github.com/PunishXIV/Questionable", "new-main", commit, "Questionable/Functions/QuestFunctions.cs", DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), locks)
+                .Write(opts.LocksFile);
+            log.WriteLine($"questionable: {locks.Count} locks read from {lockSource}, written to {opts.LocksFile}");
+        }
+
         var links = PrerequisiteLinks.Load(opts.LinksFile);
         var game = opts.Game ?? DefaultGame;
         if (!Directory.Exists(game))
@@ -375,7 +390,7 @@ public static class Program
             if (allowlist.CoveringLink(gap.QuestRowId, gap.RequiredRowId, current) is { } entry)
             {
                 used.Add(entry);
-                log.WriteLine($"  allowlisted until {entry.Until}: {line}");
+                log.WriteLine($"  allowlisted ({Allowlist.Label(entry)}): {line}");
             }
             else
             {
@@ -784,6 +799,8 @@ internal sealed record VerifyOptions
     public bool FetchQuestDocuments { get; init; } = true;
     public string LinksFile { get; init; } = Path.Combine(FindRepoRoot(), "docs", "data", PrerequisiteLinks.FileName);
     public string? Extract { get; init; }
+    public string LocksFile { get; init; } = Path.Combine(FindRepoRoot(), "docs", "data", QuestionableLocks.FileName);
+    public string? ExtractLocks { get; init; }
     public string? Commit { get; init; }
 
     public static VerifyOptions Parse(string[] args)
@@ -835,6 +852,12 @@ internal sealed record VerifyOptions
                     break;
                 case "--extract":
                     o = o with { Extract = Path.GetFullPath(Next()) };
+                    break;
+                case "--locks":
+                    o = o with { LocksFile = Path.GetFullPath(Next()) };
+                    break;
+                case "--extract-locks":
+                    o = o with { ExtractLocks = Path.GetFullPath(Next()) };
                     break;
                 case "--commit":
                     o = o with { Commit = Next() };
