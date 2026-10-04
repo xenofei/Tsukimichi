@@ -102,10 +102,24 @@ public sealed class CharacterSettingsBookTests : IDisposable
     }
 
     [Fact]
+    public void Gate_marks_save_on_a_character_that_already_has_settings()
+    {
+        // The book skips an edit that leaves the map the same; a character with another setting already has an entry,
+        // so only comparing the list itself tells this edit apart.
+        var book = new CharacterSettingsBook(Path);
+        book.Edit(CharacterSettingChange.Spoiler(Main, true));
+
+        book.Edit(CharacterSettingChange.GateDone(Main, 68667, true));
+
+        Assert.True(book.IsGateDone(Main, 68667));
+        Assert.Equal([68667u], CharacterSettingsFile.Load(Path)[Main].GatesDone);
+    }
+
+    [Fact]
     public void A_mark_or_a_choice_reaches_a_character_that_already_has_settings()
     {
-        // Regression: the book compared every field but the gate marks, so marking a gate on a character with any other
-        // setting (a seen list, a spoiler override) changed nothing and was never saved.
+        // The book skips an edit that leaves the map the same: a "Go with the game" choice, like a gate mark, must tell
+        // a character that already has an entry (a spoiler override) apart.
         var book = new CharacterSettingsBook(Path);
         book.Edit(CharacterSettingChange.Spoiler(Main, true));
         var raised = 0;

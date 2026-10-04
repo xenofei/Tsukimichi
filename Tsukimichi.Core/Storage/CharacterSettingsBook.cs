@@ -337,9 +337,9 @@ public sealed class CharacterSettingsBook
                 || x.CompareWith != y.CompareWith
                 || !x.PayoffGatesNoticed.SequenceEqual(y.PayoffGatesNoticed, StringComparer.Ordinal)
                 || !x.PayoffWhyOpen.SequenceEqual(y.PayoffWhyOpen, StringComparer.Ordinal)
+                || !x.GatesDone.SequenceEqual(y.GatesDone)
+                || !x.GoWithGame.SequenceEqual(y.GoWithGame)
                 || !SameIds(x.SeenReady, y.SeenReady)
-                || !SameIds(x.GatesDone, y.GatesDone)
-                || !SameIds(x.GoWithGame, y.GoWithGame)
                 || x.SeenReadyRules != y.SeenReadyRules)
             {
                 return false;
