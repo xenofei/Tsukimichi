@@ -19,6 +19,8 @@
     mix: "1.17: the per-state mix, its warnings and Fix it.", frames: "1.17: four frame kits on four palettes.", share: "1.17: share codes.",
     glyphwin: "1.17: the glyph window's Themes tab.", palettes17: "1.17: Dawn and Kugane Lacquer with their high-contrast forms.",
     "dawn-full": "1.17: Dawn, Full, with Astrologian's Orrery.", "dawn-quiet": "1.17: Dawn, Quiet.", "kugane-full": "1.17: Kugane Lacquer, Full, with Menphina's Medallion.", "kugane-quiet": "1.17: Kugane Lacquer, Quiet.",
+    stop: "1.18: Why it stopped, every reason.", stoplooks: "1.18: Why it stopped at every level and palette.", needs: "1.18: Needs you.",
+    preflight: "1.18: the travel preflight.", auto: "1.18: the automation level and About automation.", run: "1.18: stop controls, the receipt, the … menu.",
     giver: "1.15: giver portraits from the game's own art, night-graded, on the medal plate; avatars in Next stops, Route and the Journal.",
     fallbacks: "1.15: the 16 race silhouettes, the moon disc, society emblems and initials, on the same plate.",
     buttons: "1.15: icon-and-label buttons with the game's own icons, per level, and how they shrink.",
@@ -798,6 +800,12 @@
     else if (v === "snow-plain") host.innerHTML = snowWin("plain", { drawer: "e", dopt: { to: "adv" } });
     else if (v === "palettes") { host.innerHTML = boardPalettes(); renderContrast(); }
     else if (v === "themes") host.innerHTML = boardThemes();
+    else if (v === "stop") host.innerHTML = boardStop();
+    else if (v === "stoplooks") host.innerHTML = boardStopLooks();
+    else if (v === "needs") host.innerHTML = boardNeeds();
+    else if (v === "preflight") host.innerHTML = boardPreflight();
+    else if (v === "auto") host.innerHTML = boardAuto();
+    else if (v === "run") host.innerHTML = boardRun();
     else if (v === "mix") host.innerHTML = boardMix();
     else if (v === "frames") host.innerHTML = boardFrames();
     else if (v === "share") host.innerHTML = boardShare();

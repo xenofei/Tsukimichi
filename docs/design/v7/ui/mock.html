@@ -1434,6 +1434,173 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 .lg7{flex-direction:column;align-items:flex-start}
 .lg7 span{display:flex;align-items:center;gap:6px;color:#A9B2CC;line-height:1.4}
 
+/* ======================================================================================================
+   1.18 "Runs you can trust" (spec-1.18.md)
+   ====================================================================================================== */
+.mk{--attn:#D08654;--goldtx:var(--moon);--youbar:#A9B2CC}
+.mk.snow{--attn:#A8582A;--goldtx:#755308;--youbar:#59627A}
+.mk.dawn{--youbar:#C4B4C0}
+.mk.kugane{--youbar:#C6B6A2}
+.mk.look18{flex:none;background:var(--night);border-radius:7px;box-shadow:0 0 0 1px rgba(128,128,150,.25)}
+.mk.full.look18{background:linear-gradient(180deg,var(--top),var(--night) 60%)}
+.mk.full.snow.look18{background:linear-gradient(180deg,#E7ECF4,#EEF1F6 60%)}
+.mk.look18 .lk{padding:12px}
+.mk.plain.look18 .lk{padding:6px 8px}
+/* the stop card */
+.mk .sc18{position:relative}
+.mk .sc18 .card{padding-left:18px}
+.mk .sc18 .card::before,.mk .sc18.plain::before{content:"";position:absolute;left:6px;top:12px;bottom:12px;width:3px;border-radius:2px;background:var(--attn)}
+.mk .sc18.plain{padding-left:12px}
+.mk .sc18.plain::before{left:0;top:2px;bottom:2px;width:2px;border-radius:0}
+.mk .sc18.tone-done .card::before,.mk .sc18.plain.tone-done::before{background:var(--moon)}
+.mk.snow .sc18.tone-done .card::before{background:#A07B25}
+.mk .sc18.tone-you .card::before,.mk .sc18.plain.tone-you::before{background:var(--youbar)}
+.mk .sch{display:flex;align-items:center;gap:9px}
+.mk .sch .gi{align-self:flex-start;margin-top:2px}
+.mk .sch b{font-weight:600;font-size:13.5px;color:var(--silver)}
+.mk.full .sch b{font:400 16px/1.2 Marcellus,Georgia,serif;letter-spacing:.01em}
+.mk .sch .when{margin-left:auto;font-size:11px;color:var(--dusk);white-space:nowrap;align-self:flex-start;padding-top:3px}
+.mk .sch .x{display:flex;color:var(--dusk);padding:3px;align-self:flex-start}
+.mk .sc18 .why{margin:8px 0 2px;font-size:12.5px;line-height:1.45;color:var(--silver)}
+.mk .sc18 .ctx{margin:0;font-size:11.5px;color:var(--mist)}
+.mk .sc18 .hint{margin:6px 0 0;font-size:11px;color:var(--dusk)}
+.mk .sc18 .rcp{margin-top:8px;font-size:11.5px;color:var(--mist);display:flex;gap:8px}
+.mk .sc18 .rcp .rq{margin-left:auto;color:var(--goldtx)}
+.mk .a18{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.mk .a18 .cr{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--mist);height:28px;padding:0 10px;border-radius:14px}
+.mk .a18 .cr svg{width:12px;height:12px}
+.mk .a18 .cr.pri{color:var(--silver);box-shadow:inset 0 0 0 1px var(--vline)}
+.mk .sc18.plain .ps{display:flex;align-items:center;gap:6px;height:22px;margin:0 -8px 0 -12px;padding:0 8px 0 12px;background:var(--p-band,#1A1F2C);border-bottom:1px solid var(--p-line,#262B38);font:500 12.5px/1 "Noto Sans",sans-serif;color:var(--silver)}
+.mk.snow .sc18.plain .ps{background:#E3E8F0;border-color:#D3DAE5}
+.mk.dawn .sc18.plain .ps{background:#241D31;border-color:#352D46}
+.mk.kugane .sc18.plain .ps{background:#21181B;border-color:#342620}
+.mk .sc18.plain .ps span{margin-left:auto;font-size:11px;color:var(--dusk);font-weight:400}
+.mk .sc18.plain .why{margin-top:6px}
+/* pills (the action pill tokens of v13, per level) */
+.mk .p18{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;color:var(--silver)}
+.mk .p18.full{height:30px;border-radius:15px;padding:0 13px;background:linear-gradient(180deg,var(--hover),var(--raised));border:1px solid rgba(168,139,82,.6);box-shadow:inset 0 1px 0 rgba(255,240,190,.06)}
+.mk .p18.quiet{height:28px;border-radius:14px;padding:0 12px;background:var(--q-card,#1F273C);border:1px solid var(--line)}
+.mk .p18.plain{height:22px;border-radius:3px;padding:0 8px;background:var(--raised);border:1px solid var(--line);font-size:11.5px}
+.mk .p18.pri{color:#1A1406}
+.mk .p18.full.pri{background:linear-gradient(180deg,#FFE6A3,#F2D27A 45%,#D9B65F);border-color:#F6DFA0}
+.mk .p18.quiet.pri{background:var(--moon);border-color:var(--moon)}
+.mk .p18.plain.pri{background:var(--raised);color:var(--goldtx);border-color:#4A4636}
+.mk.snow .p18.full{background:linear-gradient(180deg,#FFFFFF,#EEF1F6);border-color:#9AA2B6;box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(26,33,54,.1)}
+.mk.snow .p18.full.pri{background:linear-gradient(180deg,#F8DE96,#EBC66C 50%,#D6AE52);border-color:#A88437;color:#2A1E05}
+.mk.snow .p18.quiet{background:#FAFBFD;border-color:#C3CBDA}
+.mk.snow .p18.quiet.pri{background:#F2D27A;border-color:#C9A65C;color:#2A1E05}
+.mk.dawn .p18.full.pri{background:linear-gradient(180deg,#FFE2AE,#F5C47C 45%,#D9A55E);border-color:#F8D9A4}
+.mk .p18.dis{opacity:.45}
+.mk .p18.stop{border-color:var(--vline)}
+.mk .p18.sm{height:26px;padding:0 10px;font-size:11.5px}
+.mk .p18 svg{width:13px;height:13px}
+.mk .p18 .gi{width:14px;height:14px}
+/* boards */
+.sg18{display:grid;grid-template-columns:repeat(4,400px);gap:14px 16px}
+.lg18{display:grid;grid-template-columns:70px repeat(4,400px);gap:12px 14px;align-items:start}
+.lg18 .lh{font:400 15px/1.2 Marcellus,Georgia,serif;color:#F4F1E8}
+.lg18 .lr{font:400 15px/1.2 Marcellus,Georgia,serif;color:#F4F1E8;padding-top:14px}
+.pre18{margin:8px 0 0;padding:10px 12px;border-radius:6px;background:#0B0F1C;color:#C3CBDF;font:11.5px/1.55 ui-monospace,Consolas,monospace;white-space:pre}
+/* needs you */
+.gm18{position:relative;width:1500px;height:430px;border-radius:7px;background-size:cover;background-position:50% 40%;box-shadow:0 0 0 1px #232A42;overflow:hidden}
+.gm18 .gmc{position:absolute;left:50%;top:18%;transform:translateX(-50%)}
+.gms{position:relative;width:440px;height:170px;border-radius:7px;background-size:cover;background-position:50% 40%;box-shadow:0 0 0 1px #232A42;display:flex;align-items:center;justify-content:center}
+.mk .nt18{position:relative;display:flex;width:400px;border-radius:6px;overflow:hidden;background:var(--raised);box-shadow:0 0 0 1px var(--line),0 10px 26px rgba(0,0,0,.5);color:var(--silver)}
+.mk.full .nt18{background:linear-gradient(180deg,var(--hover),var(--raised)) padding-box,linear-gradient(160deg,#E2C78C,#8A6F3E 50%,#5A4729) border-box;border:1px solid transparent;box-shadow:0 10px 26px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,240,190,.06)}
+.mk.full.snow .nt18{background:linear-gradient(180deg,#FFFFFF,#F4F6FA) padding-box,linear-gradient(160deg,#B8C0D0,#7C8498 50%,#4A5268) border-box;box-shadow:0 8px 22px rgba(26,33,54,.22),inset 0 1px 0 #fff}
+.mk.plain .nt18{border-radius:2px;box-shadow:0 0 0 1px var(--vline)}
+.mk .nt18 .bar{width:3px;flex:none;background:var(--attn)}
+.mk .nt18 .ntb{flex:1;padding:10px 12px 10px}
+.mk .nt18 .ntt{display:flex;align-items:baseline;gap:8px}
+.mk .nt18 .ntt b{font:500 15px/1 "Barlow Condensed",sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--gilthi)}
+.mk.snow .nt18 .ntt b{color:#3F4862}
+.mk .nt18 .ntt span{font:400 15px/1.2 Marcellus,Georgia,serif;color:var(--silver)}
+.mk.quiet .nt18 .ntt b,.mk.plain .nt18 .ntt b{font:600 12.5px/1 "Noto Sans",sans-serif;letter-spacing:0;text-transform:none;color:var(--attn)}
+.mk.quiet .nt18 .ntt span,.mk.plain .nt18 .ntt span{font:600 12.5px/1.2 "Noto Sans",sans-serif}
+.mk .nt18 p{margin:5px 0 8px;font-size:12px;color:var(--mist);line-height:1.4}
+.mk .nt18 .nta{display:flex;align-items:center;gap:8px}
+.mk .nt18 .nta .p18.full{height:26px;font-size:11.5px}
+.mk .nt18 .nd{font-size:11.5px;color:var(--mist);padding:0 6px}
+.mk .nt18 .nm{margin-left:auto;font-size:11px;color:var(--dusk)}
+.chat18{position:absolute;left:16px;bottom:16px;width:640px;padding:8px 10px;background:rgba(0,0,0,.45);border-radius:4px;font:13px/1.5 "Noto Sans",sans-serif;color:#EDEDED;text-shadow:0 1px 1px #000}
+.chat18 .ts{color:#BBBBBB}
+.chat18 .tag{color:#F2D27A}
+.chat18 b{font-weight:600;color:#FFFFFF}
+/* preflight */
+.mk .pf18 .pfh{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.mk .pf18 .pfh b{font:500 18px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--gilthi)}
+.mk.quiet .pf18 .pfh b,.mk.plain .pf18 .pfh b{font:500 14px/1 "Noto Sans",sans-serif;letter-spacing:0;text-transform:none;color:var(--silver)}
+.mk .pf18 .pfh span{font-size:11.5px;color:var(--dusk)}
+.mk .pr18{display:grid;grid-template-columns:110px 1fr 280px;align-items:center;gap:14px;min-height:58px;border-bottom:1px solid var(--line);padding:6px 0}
+.mk.plain .pr18{min-height:40px;gap:10px;grid-template-columns:90px 1fr 230px}
+.mk .pr18:last-child{border-bottom:0}
+.mk .pr18 .pl{font-size:12.5px;color:var(--mist)}
+.mk .pr18 .pm{display:flex;flex-direction:column;gap:3px}
+.mk .pr18 .pst{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--silver);font-weight:500}
+.mk .pr18 .pst i{width:7px;height:7px;border-radius:50%;background:var(--mist);flex:none}
+.mk .pr18.warn .pst i{background:var(--attn)}
+.mk .pr18.info .pst i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--dusk)}
+.mk .pr18 .pli{font-size:11.5px;color:var(--mist);line-height:1.4}
+.mk .pr18 .pfx{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.mk .pr18 .pa{font-size:10.5px;color:var(--dusk)}
+.mk .pr18 .p18{color:var(--silver)}
+.ut18{display:flex;align-items:center;gap:12px;height:38px;padding:0 14px;border-radius:8px;background:linear-gradient(180deg,rgba(26,31,52,.97),rgba(17,21,38,.97));border:1px solid #6E5732;font-size:12.5px;color:#DDE3F0;box-shadow:0 10px 26px rgba(0,0,0,.6)}
+.ut18 .u{margin-left:auto;color:#F2D27A}
+/* automation level */
+.mk .ah18 h4,.mk .ab18 h4{margin:0 0 6px;font:500 18px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--gilthi)}
+.mk.quiet .ah18 h4,.mk.plain .ah18 h4{font:500 14px/1 "Noto Sans",sans-serif;letter-spacing:0;text-transform:none;color:var(--silver)}
+.mk .ah18>p{margin:0 0 12px;font-size:12px;color:var(--mist)}
+.mk .lv18{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mk .lv18 .lc{border-radius:7px;padding:10px 12px 12px;background:var(--raised);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;gap:6px;min-height:150px}
+.mk .lv18 .lc.on{box-shadow:inset 0 0 0 2px #D9BE82}
+.mk.snow .lv18 .lc.on{box-shadow:inset 0 0 0 2px #A07B25}
+.mk.plain .lv18 .lc{border-radius:0;min-height:120px}
+.mk.plain .lv18 .lc.on{box-shadow:inset 0 0 0 1px var(--silver)}
+.mk .lv18 .lt{display:flex;align-items:center;gap:8px}
+.mk .lv18 .lt b{font-weight:500;font-size:13px;color:var(--silver)}
+.mk .lv18 .rd{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--vline);flex:none}
+.mk .lv18 .on .rd{box-shadow:inset 0 0 0 1.5px var(--moon);background:radial-gradient(circle,var(--moon) 3.5px,transparent 4px)}
+.mk.snow .lv18 .on .rd{box-shadow:inset 0 0 0 1.5px #A07B25;background:radial-gradient(circle,#A07B25 3.5px,transparent 4px)}
+.mk .lv18 p{margin:0;font-size:11.5px;color:var(--mist);line-height:1.4}
+.mk .lv18 .lp{margin-top:auto;display:flex;flex-wrap:wrap;gap:5px}
+.mk .lv18 .p18.full.sm,.mk .lv18 .p18.sm{height:24px;font-size:11px;padding:0 8px}
+.mk .ov18{display:flex;align-items:center;margin-top:12px;height:34px;border-top:1px solid var(--line);font-size:12px;color:var(--mist)}
+.mk .ov18 i{margin-left:auto;font-style:normal}
+.mk .ab18 h5{margin:12px 0 3px;font-weight:600;font-size:12.5px;color:var(--silver)}
+.mk .ab18 p{margin:0;font-size:12px;line-height:1.5;color:var(--mist)}
+.mk .abf{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+/* run controls */
+.mk .bar18{display:flex;gap:6px;align-items:center}
+.mk .dots{width:36px;justify-content:center;padding:0}
+.mk .mn18{margin-top:6px;margin-left:40px;width:320px;background:linear-gradient(180deg,rgba(26,31,52,.98),rgba(17,21,38,.98));border:1px solid #4A4130;border-radius:6px;padding:4px;box-shadow:0 10px 26px rgba(0,0,0,.6)}
+.mk.dawn .mn18{background:linear-gradient(180deg,rgba(38,32,54,.98),rgba(26,21,38,.98))}
+.mk .mn18 .mi{display:flex;flex-direction:column;gap:1px;padding:7px 10px;border-radius:4px;font-size:12.5px;color:#DDE3F0}
+.mk .mn18 .mi em{font-style:normal;font-size:11px;color:#8B94B3}
+.mk .mn18 .mi.on{background:rgba(242,210,122,.08)}
+.mk .mn18 .mi.on span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#F2D27A;margin-right:7px;vertical-align:middle}
+.mk .mn18 .mi.dis span{color:#6A7290}
+.mk .mn18 .mi.dis em{color:#8B94B3}
+.mk .mn18 hr{border:0;border-top:1px solid #2A3149;margin:4px 6px}
+.mk .pop18{display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--mist)}
+.mk .pop18 b{font-weight:500;color:var(--silver)}
+.mk .stp18{display:flex;align-items:center;height:28px;border-radius:14px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);width:160px}
+.mk .stp18 i{width:22px;height:22px;margin:3px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;color:var(--mist);background:var(--raised)}
+.mk .stp18 span{flex:1;text-align:center;color:var(--silver)}
+.mk .stp18.t{width:100px}
+.mk .stb18{display:flex;align-items:center;gap:8px;height:30px;padding:0 12px;border-radius:6px;background:linear-gradient(180deg,#0E1329,#0A0E1C);font-size:11.5px;color:var(--mist);box-shadow:inset 0 1px 0 rgba(217,190,130,.6);margin-bottom:10px}
+.mk .stb18 .g{color:var(--moon)}
+.mk .stb18 .d{color:var(--veil)}
+.mk .stb18 .p18{margin-left:auto}
+.mk .rc18{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.mk .rc18 div{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:6px;background:var(--sunk)}
+.mk .rc18 b{font:400 17px/1.1 Marcellus,Georgia,serif;color:var(--silver)}
+.mk .rc18 span{font-size:11px;color:var(--dusk)}
+.mk .pf18.nar .pr18{grid-template-columns:84px 1fr 168px;gap:10px}
+.mk .pf18.nar .pfh span{display:none}
+.mk .pop18 .qa,.mk .ab18 .qa{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:14px;font-size:12px;color:var(--mist)}
+.mk .pop18 .qa.pri7{color:var(--goldtx);box-shadow:inset 0 0 0 1px rgba(242,210,122,.45)}
+.mk .rc18 b{font:600 16px/1.1 "Noto Sans",sans-serif;font-variant-numeric:tabular-nums}
+
 </style>
 </head>
 <body>
@@ -1441,7 +1608,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   <div class="pbar">
     <span class="pt"><b>Tsukimichi plan v7</b> · UI</span>
     <div class="seg" id="seg" role="group" aria-label="View">
-      <button type="button" data-v="full">Full</button><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="plain">Plain</button><button type="button" data-v="drawer">Filter drawer</button><button type="button" data-v="rail">Rail</button><button type="button" data-v="stars">Stars</button><button type="button" data-v="ba">Before / after</button><button type="button" data-v="sky">Sky</button><button type="button" data-v="giver">1.15 Givers</button><button type="button" data-v="fallbacks">Fallbacks</button><button type="button" data-v="buttons">Buttons</button><button type="button" data-v="snow-full">1.16 Snow</button><button type="button" data-v="palettes">Palettes</button><button type="button" data-v="themes">Themes page</button><button type="button" data-v="mix">1.17 Mix</button><button type="button" data-v="frames">Frames</button><button type="button" data-v="share">Share</button><button type="button" data-v="glyphwin">Glyph window</button><button type="button" data-v="palettes17">Dawn · Kugane</button>
+      <button type="button" data-v="full">Full</button><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="plain">Plain</button><button type="button" data-v="drawer">Filter drawer</button><button type="button" data-v="rail">Rail</button><button type="button" data-v="stars">Stars</button><button type="button" data-v="ba">Before / after</button><button type="button" data-v="sky">Sky</button><button type="button" data-v="giver">1.15 Givers</button><button type="button" data-v="fallbacks">Fallbacks</button><button type="button" data-v="buttons">Buttons</button><button type="button" data-v="snow-full">1.16 Snow</button><button type="button" data-v="palettes">Palettes</button><button type="button" data-v="themes">Themes page</button><button type="button" data-v="mix">1.17 Mix</button><button type="button" data-v="frames">Frames</button><button type="button" data-v="share">Share</button><button type="button" data-v="glyphwin">Glyph window</button><button type="button" data-v="palettes17">Dawn · Kugane</button><button type="button" data-v="stop">1.18 Stopped</button><button type="button" data-v="needs">Needs you</button><button type="button" data-v="preflight">Preflight</button><button type="button" data-v="auto">Automation</button><button type="button" data-v="run">Run</button>
     </div>
     <div class="seg" id="ver" role="group" aria-label="Version">
       <button type="button" data-w="before">1.13</button><button type="button" data-w="">v7</button><button type="button" data-w="open">v7 + Filters</button><button type="button" data-w="open-adv">+ Advanced</button>
@@ -1474,6 +1641,8 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     mix: "1.17: the per-state mix, its warnings and Fix it.", frames: "1.17: four frame kits on four palettes.", share: "1.17: share codes.",
     glyphwin: "1.17: the glyph window's Themes tab.", palettes17: "1.17: Dawn and Kugane Lacquer with their high-contrast forms.",
     "dawn-full": "1.17: Dawn, Full, with Astrologian's Orrery.", "dawn-quiet": "1.17: Dawn, Quiet.", "kugane-full": "1.17: Kugane Lacquer, Full, with Menphina's Medallion.", "kugane-quiet": "1.17: Kugane Lacquer, Quiet.",
+    stop: "1.18: Why it stopped, every reason.", stoplooks: "1.18: Why it stopped at every level and palette.", needs: "1.18: Needs you.",
+    preflight: "1.18: the travel preflight.", auto: "1.18: the automation level and About automation.", run: "1.18: stop controls, the receipt, the … menu.",
     giver: "1.15: giver portraits from the game's own art, night-graded, on the medal plate; avatars in Next stops, Route and the Journal.",
     fallbacks: "1.15: the 16 race silhouettes, the moon disc, society emblems and initials, on the same plate.",
     buttons: "1.15: icon-and-label buttons with the game's own icons, per level, and how they shrink.",
@@ -4144,6 +4313,164 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     }).join("") + "</table>";
   }
   function palWin(pal, lv, theme) { return win(lv, { v7: true, palette: pal, theme: theme, tips: false, h: 790 }).replace("v1.14.0", "v1.17.0"); }
+  // ======================================================================================================
+  // 1.18 "Runs you can trust": Why it stopped (A2), Needs you (A5), travel preflight (A9), automation level (A10),
+  // the run receipt and stop controls (A4), and the "…" menu items (A6). spec-1.18.md.
+  // ======================================================================================================
+  var SRC18 = {
+    questionable: { icon: "071221", cls: "marker", name: "Questionable" },
+    autoduty: { icon: "000046", cls: "tile", name: "AutoDuty" },
+    travel: { icon: "000104", cls: "tile", name: "Travel" },
+    artisan: { icon: "000022", cls: "tile", name: "Artisan" }
+  };
+  // Every stop reason: tone (done | you | attn), the hand-off, title, the reason in plain words, context, fixes.
+  var STOPS = [
+    { k: "finished", tone: "done", src: "questionable", title: "Questionable finished", why: "It finished Close to Home and stopped, as asked.",
+      ctx: "1 quest · 6 min · Ul'dah - Steps of Nald", fixes: [["Start the next one", "Questionable does Way of the Archer, then stops"]], receipt: true },
+    { k: "you", tone: "you", src: "questionable", title: "You stopped Questionable", why: "Stopped from Tsukimichi's Stop, partway through Into the Aery.",
+      ctx: "Step 3 of 6 · Coerthas Central Highlands", fixes: [["Start again", "Picks up Into the Aery at step 3"]] },
+    { k: "guard", tone: "attn", src: "questionable", title: "Stopped before a duty with other players", why: "The next step is Castrum Meridianum, which has no Duty Support or Trust. It would queue you with real players.",
+      ctx: "The Ultimate Weapon · step 2 of 5 · your setting: stop before such duties", fixes: [["Show the duty", "Opens Castrum Meridianum in the detail pane"], ["Keep going after it", "When you clear it yourself, Questionable starts again"]] },
+    { k: "death", tone: "attn", src: "questionable", title: "Stopped: you were knocked out", why: "You were knocked out during Into the Aery. Tsukimichi stopped its own travel; Questionable is stopped.",
+      ctx: "Step 3 of 6 · Coerthas Central Highlands · 21:42", fixes: [["Try again", "Ready when you're back on your feet", true]] },
+    { k: "stuck", tone: "attn", src: "travel", title: "Travel got stuck", why: "No progress for 20 seconds near Camp Dragonhead. This is usually a gap in the navmesh.",
+      ctx: "Walking to Ser Aymeric · 46 yalms left", fixes: [["Reload navmesh and retry", "vnavmesh rebuilds the mesh, then the same walk starts again"], ["Flag the spot", "Puts a flag on the map where it stuck"]] },
+    { k: "path", tone: "attn", src: "travel", title: "No path to the giver", why: "vnavmesh found no path to Hihibaru: the giver stands where the mesh doesn't reach.",
+      ctx: "Ul'dah - Steps of Thal · Hihibaru", fixes: [["Reload navmesh and retry", "Rebuilds the mesh, then tries once more"], ["Teleport closer", "Lifestream to the Adventurers' Guild aethernet"]] },
+    { k: "missing", tone: "attn", src: "autoduty", title: "AutoDuty isn't loaded", why: "The next step is a Duty Support run, and AutoDuty is installed but turned off.",
+      ctx: "The Stone Vigil · Duty Support", fixes: [["Open Setup", "Settings › Companions shows what to turn on"]] },
+    { k: "error", tone: "attn", src: "questionable", title: "Questionable stopped with an error", why: "It has no path for step 3 of Into the Aery (missing sequence). That's in Questionable's quest data, not your game.",
+      ctx: "Questionable 7.4.12 · Into the Aery (#67187) · step 3", fixes: [["Flag the objective", "So you can do this step yourself"]], report: "primary" }
+  ];
+  function pill18(lv, label, pri, dis) { return '<span class="p18 ' + lv + (pri ? " pri" : "") + (dis ? " dis" : "") + '">' + label + "</span>"; }
+  function stopCard(lv, S, o) {
+    o = o || {};
+    var src = SRC18[S.src];
+    var head = '<div class="sch">' + ic15(src.icon, lv === "plain" ? 14 : 18, src.cls) + "<b>" + S.title + '</b><span class="when">2 min ago</span><span class="x" title="Dismiss">' + ICON.x + "</span></div>";
+    var body = '<p class="why">' + S.why + '</p><p class="ctx">' + S.ctx + "</p>";
+    if (S.receipt) body += '<div class="rcp">Ran 6 min · 1 quest · stopped as asked<span class="rq">Close to Home</span></div>';
+    var acts = '<div class="a18">' + S.fixes.map(function (f, i) { return pill18(lv, f[0], i === 0 && S.report !== "primary", f[2]); }).join("") +
+      '<span class="cr' + (S.report === "primary" ? " pri" : "") + '">' + (lv === "plain" ? "" : ICON.copy) + "Copy report</span></div>";
+    var hint = S.fixes[0] && S.fixes[0][2] ? '<p class="hint">' + S.fixes[0][1] + "</p>" : "";
+    var inner = head + body + acts + hint;
+    if (lv === "plain") return '<div class="sc18 plain tone-' + S.tone + '"><div class="ps">' + ic15(src.icon, 14, src.cls) + S.title + '<span>2 min ago</span></div>' + body + acts + hint + "</div>";
+    return '<div class="sc18 tone-' + S.tone + '">' + card(lv, inner) + "</div>";
+  }
+  function look18(lv, pal, inner, w, extra) {
+    return '<div class="mk ' + lv + " v7" + (pal && pal !== "night" ? " " + pal : "") + ' look18" style="width:' + w + 'px' + (extra || "") + '"><div class="lk">' + inner + "</div></div>";
+  }
+  function boardStop() {
+    var h = '<div class="board b15 b16"><h2>1.18 · Why it stopped<small>A card in the notice dock above the detail pane\'s action bar (and in the Todo overlay), when a hand-off Tsukimichi started stops. Plain words, the safe fixes, Copy report. Full on Night; the bar on the left is the only colour cue: gold finished, silver you stopped it, amber it needs you.</small></h2><div class="sg18">';
+    STOPS.forEach(function (S) { h += fig(look18("full", "night", stopCard("full", S), 400), "<b>" + { finished: "Finished", you: "You stopped it", guard: "Duty guard (A3)", death: "Knocked out", stuck: "Stuck", path: "No path", missing: "Missing plugin", error: "Error" }[S.k] + "</b>"); });
+    h += "</div>";
+    h += '<div class="row"><div class="spec" style="width:860px"><b>Copy report</b> puts plain text on the clipboard, ready for a GitHub issue. It never includes the character\'s name, world or chat.<pre class="pre18">Tsukimichi 1.18.0 · Dalamud API 15 · game 2026.09.15\nHand-off: Questionable 7.4.12 (started by Tsukimichi, "this quest only")\nStopped: error · missing sequence\nQuest: Into the Aery (#67187) · step 3 of 6 · sequence 3\nJob: PLD 57 · Zone: Coerthas Central Highlands (155) · at 18.2, 24.7\nTravel: vnavmesh 0.4.3 · Lifestream 2.5.1 · movement Standard\nLast Questionable lines:\n  [QST v7.4.12] Step 3: no path data for sequence 3\nStops at this step on this computer: 2</pre></div></div>';
+    return h + "</div>";
+  }
+  function boardStopLooks() {
+    var S = STOPS[4], h = '<div class="board b15 b16"><h2>1.18 · Why it stopped, every look<small>The Stuck card at each Decoration level on Night, Ishgard Snow, Dawn and Kugane Lacquer. Only the palette moves; layout, words and buttons are the same everywhere.</small></h2><div class="lg18">';
+    h += '<div></div>' + ["Night", "Ishgard Snow", "Dawn", "Kugane Lacquer"].map(function (n) { return '<div class="lh">' + n + "</div>"; }).join("");
+    ["full", "quiet", "plain"].forEach(function (lv) {
+      h += '<div class="lr">' + lv.charAt(0).toUpperCase() + lv.slice(1) + "</div>";
+      ["night", "snow", "dawn", "kugane"].forEach(function (p) { h += look18(lv, p, stopCard(lv, S), 400); });
+    });
+    return h + "</div></div>";
+  }
+
+  // ---------- A5: Needs you ----------
+  var NEEDS = [
+    { k: "death", title: "You were knocked out", line: "Questionable is stopped. Tsukimichi stopped its own travel.", acts: [["Stop all", 1]] },
+    { k: "stuck", title: "Travel is stuck", line: "No progress for 20 s near Camp Dragonhead.", acts: [["Reload navmesh and retry", 0], ["Stop all", 1]] },
+    { k: "pop", title: "Your duty is ready", line: "The Stone Vigil (Duty Support). Tsukimichi never commences for you.", acts: [["Stop all", 1]] },
+    { k: "tell", title: "A tell arrived", line: "Someone is talking to you. Tsukimichi never answers.", acts: [["Stop all", 1]] }
+  ];
+  function needsToast(N, pal, more, lv) {
+    lv = lv || "full";
+    return '<div class="mk ' + lv + " v7 " + (pal || "") + '" style="background:transparent"><div class="nt18"><i class="bar"></i><div class="ntb"><div class="ntt"><b>Needs you</b><span>' + N.title + '</span></div><p>' + N.line + '</p><div class="nta">' +
+      N.acts.map(function (a) { return '<span class="p18 ' + lv + (a[1] ? " stop" : "") + '">' + a[0] + "</span>"; }).join("") + '<span class="nd">Dismiss</span>' + (more ? '<span class="nm">+1 more</span>' : "") + "</div></div></div></div>";
+  }
+  function boardNeeds() {
+    var h = '<div class="board b15 b16"><h2>1.18 · Needs you<small>Only while a hand-off Tsukimichi started is running. One panel over the game, top centre, at most one at a time (the rest wait behind "+1 more"); a chat line; an optional sound; the taskbar flashes when the game isn\'t focused. It rises 4 px and fades in over 0.16 s and stays until dismissed or the cause clears.</small></h2>';
+    h += '<div class="gm18" style="background-image:url(\'../../../plan-site/mock/scene-night.jpg\')"><div class="gmc">' + needsToast(NEEDS[0], "", true, "full") + "</div>" +
+      '<div class="chat18"><div><span class="ts">[21:42]</span> <span class="tag">[Tsukimichi]</span> <b>Needs you:</b> you were knocked out during Into the Aery (step 3). Questionable is stopped.</div>' +
+      '<div><span class="ts">[21:43]</span> <span class="tag">[Tsukimichi]</span> <b>Needs you:</b> your duty is ready: The Stone Vigil (Duty Support).</div>' +
+      '<div><span class="ts">[22:05]</span> <span class="tag">[Tsukimichi]</span> Questionable ran 1 h 12 m: 14 quests, then stopped after 14 as you asked.</div></div></div>';
+    h += '<div class="row" style="align-items:flex-start">';
+    [[1, "night", "full", "Full, Night"], [2, "dawn", "quiet", "Quiet, Dawn"], [3, "snow", "full", "Full, Ishgard Snow, over a daylight scene"], [1, "kugane", "plain", "Plain, Kugane Lacquer"]].forEach(function (x) {
+      var N = NEEDS[x[0]];
+      h += fig('<div class="gms" style="background-image:url(\'../../../plan-site/mock/scene-' + (x[1] === "snow" ? "day" : "night") + '.jpg\')">' + needsToast(N, x[1], false, x[2]) + "</div>", "<b>" + N.title + "</b> · " + x[3]);
+    });
+    h += '<div class="spec" style="width:420px"><b>Sound</b>: one of the game\'s own chat sound effects (&lt;se.1&gt; to &lt;se.16&gt;), played once per alert at the game\'s system-sound volume; never a loop. Default: on, &lt;se.7&gt;, the same for all four; each alert can pick its own or none, with a Test button.<br><br><b>Settings › Alerts › While automation runs</b>: Knocked out · Stuck · Duty ready · Tells and party invites (each on/off) · Sound · Flash the taskbar · Stop my hand-offs on knock-out or stuck (on) · Also stop Questionable (off).</div></div>';
+    return h + "</div>";
+  }
+
+  // ---------- A9: travel preflight ----------
+  var PRE = [
+    { k: "ok", label: "Movement", status: "Standard", line: "vnavmesh steers with Standard movement.", fix: null },
+    { k: "warn", label: "Movement", status: "Legacy", line: "With Legacy movement the character can run the wrong way while vnavmesh walks.", fix: "Switch to Standard", after: "Undo for 8 s; Restore Legacy stays here" },
+    { k: "info", label: "Camera", status: "First person", line: "Walking turns the camera as it goes. Tsukimichi reminds you when a walk starts.", fix: null },
+    { k: "warn", label: "vnavmesh", status: "Movement paused by another plugin", line: "Another plugin turned off vnavmesh movement, so walks start and then stand still.", fix: "Allow movement", after: "Undo for 8 s" },
+    { k: "warn", label: "Conflicts", status: "WrongWarpFinder is loaded", line: "It can send Lifestream to the wrong aetheryte. Tsukimichi can't turn other plugins off.", fix: "Open the plugin installer", after: "Opens Dalamud's installer at the plugin" },
+    { k: "ok", label: "Conflicts", status: "None found", line: "No plugin known to clash with travel is loaded.", fix: null }
+  ];
+  function preRow(lv, R) {
+    return '<div class="pr18 ' + R.k + '"><span class="pl">' + R.label + '</span><div class="pm"><span class="pst"><i></i>' + R.status + '</span><span class="pli">' + R.line + "</span></div>" +
+      (R.fix ? '<div class="pfx">' + pill18(lv, R.fix) + '<span class="pa">' + R.after + "</span></div>" : '<div class="pfx"></div>') + "</div>";
+  }
+  function preflight(lv, pal, rows, w) {
+    return look18(lv, pal, '<div class="pf18' + (w < 700 ? " nar" : "") + '"><div class="pfh"><b>Travel preflight</b><span>Checked when you open Setup and before a walk starts</span></div>' + rows.map(function (R) { return preRow(lv, R); }).join("") + "</div>", w);
+  }
+  function boardPreflight() {
+    var h = '<div class="board b15 b16"><h2>1.18 · Travel preflight in Setup<small>Three checks in Settings › Companions › Setup, with the plugin rows. Each has a status in words and one safe fix with Undo. Nothing changes until you press the fix.</small></h2>';
+    h += '<div class="row">' + fig(preflight("full", "night", [PRE[1], PRE[2], PRE[3], PRE[4]], 860), "<b>Full, Night</b>: three things need a change") + fig(preflight("full", "night", [PRE[0], PRE[2], PRE[5]], 860), "<b>All clear</b>: the same rows; the fix column stays reserved, empty") + "</div>";
+    h += '<div class="row">' + fig(preflight("quiet", "snow", [PRE[1], PRE[3]], 560), "<b>Quiet, Ishgard Snow</b>") + fig(preflight("plain", "dawn", [PRE[1], PRE[3]], 560), "<b>Plain, Dawn</b>") + fig(preflight("full", "kugane", [PRE[1], PRE[3]], 560), "<b>Full, Kugane Lacquer</b>") + "</div>";
+    h += '<div class="row">' + fig(look18("full", "night", '<div class="ut18">Movement: Standard<span class="u">Undo</span></div>', 300, ";background:transparent"), "<b>After a fix</b>: the Undo toast") + "</div>";
+    return h + "</div>";
+  }
+
+  // ---------- A10: automation level ----------
+  var LEVELS = [
+    { k: "Tracker only", sub: "Tsukimichi tracks; it never presses anything for you.", pills: [["060561", "Flag"], ["000007", "Map"]] },
+    { k: "Travel", sub: "Adds Teleport and the aethernet, through Lifestream.", pills: [["060453", "Teleport"], ["060430", "Aethernet"]] },
+    { k: "Travel and walking", sub: "Adds Walk to giver, through vnavmesh.", pills: [["060453", "Teleport"], ["000104", "Walk to giver"]] },
+    { k: "Full hand-offs", sub: "Adds Questionable, AutoDuty and Artisan: they play the quest, the duty or the craft for you.", pills: [["071221", "Start (this quest)"], ["000046", "Run with AutoDuty"], ["000022", "Craft"]] }
+  ];
+  function levelSwitch(on) {
+    return '<div class="lv18">' + LEVELS.map(function (L, i) {
+      return '<div class="lc' + (i === on ? " on" : "") + '"><div class="lt"><i class="rd"></i><b>' + L.k + '</b></div><p>' + L.sub + '</p><div class="lp">' + L.pills.map(function (p) { return '<span class="p18 full sm">' + ic15(p[0], 14, "tile") + p[1] + "</span>"; }).join("") + "</div></div>";
+    }).join("") + "</div>";
+  }
+  var ABOUT = [
+    ["What Tsukimichi does itself", "It reads your game to track quests. It never moves, fights or talks for you. Every button that does sends the job to another plugin you installed, and only when you press it."],
+    ["What the other plugins do", "Lifestream teleports, vnavmesh walks, Questionable plays quests, AutoDuty runs duties with Duty Support or Trust, Artisan crafts."],
+    ["What the rules say", "Third-party tools are against the FINAL FANTASY XIV User Agreement. Square Enix has said it acts on what affects other players, and it can act on any account. No setting here makes automation safe."],
+    ["Where players draw the line", "Most players accept automation in solo content and with NPCs (Duty Support, Trust). They object when it runs in content with other players, or unattended for hours. Tsukimichi stops before a duty with other players unless you change that."],
+    ["Good manners", "Stay at the keyboard. Answer tells yourself. Keep runs short: Start does one quest unless you choose otherwise."],
+    ["Local only", "Tsukimichi has no network code. Nothing you do here leaves your computer."]
+  ];
+  function boardAuto() {
+    var h = '<div class="board b15 b16"><h2>1.18 · Automation level and About automation<small>Settings › Automation. Four levels, one click each; Full hand-offs is a first-class choice, shown and described like the others, with no warning icon. Buttons above your level are hidden, not greyed. The About card is linked from every first-start confirmation.</small></h2><div class="row" style="align-items:flex-start">';
+    h += fig(look18("full", "night", '<div class="ah18"><h4>Automation buttons</h4><p>Which buttons Tsukimichi shows. Higher levels add buttons that hand the game to another plugin.</p>' + levelSwitch(3) + '<div class="ov18"><span>Fine-tune each button</span><i>›</i></div></div>', 880), "<b>Full, Night</b>: Full hand-offs chosen");
+    h += fig(look18("full", "night", '<div class="ab18"><h4>About automation</h4>' + ABOUT.map(function (a) { return "<h5>" + a[0] + "</h5><p>" + a[1] + "</p>"; }).join("") + '<div class="abf"><span class="qa">Read the User Agreement</span><span class="qa">Close</span></div></div>', 560), "<b>About automation</b>: factual, short, no promise of safety");
+    h += "</div><div class=\"row\" style=\"align-items:flex-start\">";
+    h += fig(look18("quiet", "snow", '<div class="ah18"><h4>Automation buttons</h4>' + levelSwitch(1) + "</div>", 880), "<b>Quiet, Ishgard Snow</b>: Travel");
+    h += fig(look18("plain", "kugane", '<div class="ah18"><h4>Automation buttons</h4>' + levelSwitch(0) + "</div>", 880), "<b>Plain, Kugane Lacquer</b>: Tracker only");
+    return h + "</div></div>";
+  }
+
+  // ---------- A4 receipt and stop controls; A6 menu ----------
+  function boardRun() {
+    var h = '<div class="board b15 b16"><h2>1.18 · Stop when, the receipt, and the "…" menu<small>Stop conditions live in the Stop pill\'s own "…" menu while a run is going; the status bar says the condition. When the run ends, the Finished card carries the receipt and chat gets one line.</small></h2><div class="row" style="align-items:flex-start">';
+    var menu = function (items) { return '<div class="mn18">' + items.map(function (it) { return it === "-" ? "<hr>" : '<div class="mi' + (it[2] ? " dis" : "") + (it[3] ? " on" : "") + '"><span>' + it[0] + "</span><em>" + (it[1] || "") + "</em></div>"; }).join("") + "</div>"; };
+    h += fig(look18("full", "night", '<div class="bar18"><span class="p18 full stop">Stop</span><span class="p18 full sm dots">' + ICON.more + "</span></div>" + menu([["Stop now", "", 0], ["Stop after this quest", "Close to Home", 0, 1], ["Stop after…", "3 quests", 0], ["Stop at…", "22:30", 0], "-", ["Remind me after 2 hours", "a reminder, not a stop", 0]]), 360), "<b>While running</b>: the Stop pill\'s menu");
+    h += fig(look18("full", "night", '<div class="pop18"><b>Stop after</b><div class="stp18"><i>−</i><span>3 quests</span><i>+</i></div><b>or at</b><div class="stp18 t"><span>22:30</span></div><div class="abf"><span class="qa">Cancel</span><span class="qa pri7">Set</span></div></div>', 300), "<b>Stop after… / Stop at…</b>: a small popover; the condition can be changed or cleared any time");
+    h += fig(look18("full", "night", '<div class="stb18"><span class="g">Questionable: Close to Home</span><span class="d">·</span><span>stops after 3 more</span><span class="p18 full sm stop">Stop</span></div>', 440, ";background:transparent") +
+      look18("full", "night", stopCard("full", { tone: "done", src: "questionable", title: "Questionable finished", why: "It stopped after 14 quests, as you asked.", ctx: "1 h 12 m · from The Rising Chorus to Close to Home", fixes: [["Show the 14 quests", ""]], receipt: false }) + '<div class="rc18"><div><b>14</b><span>quests</span></div><div><b>1 h 12 m</b><span>time</span></div><div><b>after 14</b><span>why it stopped</span></div></div>', 440), "<b>The status bar and the receipt</b>");
+    h += "</div><div class=\"row\" style=\"align-items:flex-start\">";
+    h += fig(look18("full", "night", '<div class="bar18"><span class="p18 full pri">' + ic15("071221", 16, "marker") + 'Start (this quest)</span><span class="p18 full sm dots">' + ICON.more + "</span></div>" + menu([["Start here and keep going", "Questionable continues after this quest", 0], ["Do this next", "#1 on Questionable\'s list", 0], "-", ["Copy quest link", "", 0], ["Report a data problem", "", 0]]), 400), "<b>A6, the detail pane\'s \"…\"</b>: Start does one quest; the old behaviour and Do this next are here");
+    h += fig(look18("full", "night", menu([["Start here and keep going", "", 0], ["Do this next", "Not while Questionable runs", 1]]), 400), "<b>Do this next, disabled</b>: only while Questionable runs, and only if Questionable#45 reproduces in testing; the reason is in the item");
+    h += fig(look18("quiet", "dawn", '<div class="bar18"><span class="p18 quiet pri">Start (this quest)</span><span class="p18 quiet sm dots">' + ICON.more + "</span></div>" + menu([["Start here and keep going", "", 0], ["Do this next", "", 0]]), 400), "<b>Quiet, Dawn</b>");
+    return h + "</div></div>";
+  }
   // ---------- Page ----------
   var host = document.getElementById("host"), seg = document.getElementById("seg"), ver = document.getElementById("ver"), pn = document.getElementById("pn");
   function show(hash) {
@@ -4163,6 +4490,12 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     else if (v === "snow-plain") host.innerHTML = snowWin("plain", { drawer: "e", dopt: { to: "adv" } });
     else if (v === "palettes") { host.innerHTML = boardPalettes(); renderContrast(); }
     else if (v === "themes") host.innerHTML = boardThemes();
+    else if (v === "stop") host.innerHTML = boardStop();
+    else if (v === "stoplooks") host.innerHTML = boardStopLooks();
+    else if (v === "needs") host.innerHTML = boardNeeds();
+    else if (v === "preflight") host.innerHTML = boardPreflight();
+    else if (v === "auto") host.innerHTML = boardAuto();
+    else if (v === "run") host.innerHTML = boardRun();
     else if (v === "mix") host.innerHTML = boardMix();
     else if (v === "frames") host.innerHTML = boardFrames();
     else if (v === "share") host.innerHTML = boardShare();
