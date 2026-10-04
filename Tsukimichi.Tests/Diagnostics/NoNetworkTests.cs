@@ -14,16 +14,27 @@ namespace Tsukimichi.Tests.Diagnostics;
 /// for it (spec-1.20 F4, open question 1), and these keep it exactly that narrow:
 /// <list type="bullet">
 /// <item>one named file: no source of the shipped projects (the plugin, Core and GameData; the tools are not shipped)
-/// names an HTTP client, a web request, a socket or a DNS lookup, except the pack's downloader (<see cref="NetworkFile"/>);</item>
+/// names an HTTP client, a web request, a socket or a DNS lookup, except the pack's downloader (<see cref="NetworkFile"/>);
+/// nor any API that fetches a URL it is given without a network type in its name (the XML readers and resolvers, such as
+/// <c>XDocument.Load("https://…")</c> and <c>XmlReader.Create(url)</c>; <c>DataSet.ReadXml</c>; remote named pipes; the
+/// WinINet, WinHTTP, Winsock and URL Moniker DLLs; COM by ProgID or CLSID, such as <c>MSXML2.XMLHTTP</c>);</item>
 /// <item>one host and path prefix: every address the downloader or the pack's offer names starts with
-/// <see cref="AllowedPrefix"/>, and the offer allows nothing else to be asked for first;</item>
+/// <see cref="AllowedPrefix"/>, and the offer allows nothing else to be asked for first. GitHub redirects a release
+/// download; the hosts it may go to are pinned to exactly its two asset hosts (<see cref="GitHubAssetHosts"/>);</item>
 /// <item>one pinned URL per release: the shipped <c>portrait_pack.json</c> names one release asset under that prefix.</item>
 /// </list>
 /// <see cref="Offenders"/> fails on any other file, host or address pattern (proved by
-/// <see cref="Any_other_network_file_host_or_address_fails"/>). Core and GameData reference no networking assembly and
-/// the plugin only <c>System.Net.Http</c> (and <c>System.Net.Primitives</c>, for the status code); the transport is
-/// made in one place and a download starts only from the Settings confirmation. The other way out is a page the player
-/// clicks to open in their browser, through Dalamud's <c>Util.OpenLink</c>, which the statement lists.
+/// <see cref="Any_other_network_file_host_or_address_fails"/>). Core and GameData reference no networking, XML, data or
+/// pipes assembly, and the plugin only <c>System.Net.Http</c> (and <c>System.Net.Primitives</c>, for the status code);
+/// the transport is made in one place and a download starts only from the Settings confirmation. The other way out is a
+/// page the player clicks to open in their browser, through Dalamud's <c>Util.OpenLink</c>, which the statement lists.
+/// <para>
+/// What a scan of names cannot catch, so review must: a file path that is a network share (<c>\\server\share</c>, which
+/// Windows reaches over SMB through ordinary file APIs; no shipped path is built from anything but the plugin's own
+/// folders and the game install); another program started with a URL (the one <c>Process.Start</c> opens the export
+/// folder in Explorer); a type or DLL named by a string built at run time ("Http" + "Client"); and Dalamud or another
+/// plugin fetching on the plugin's behalf through an API of theirs.
+/// </para>
 /// </summary>
 public class NoNetworkTests
 {
@@ -35,6 +46,9 @@ public class NoNetworkTests
     /// <summary>The one host and path prefix the exception covers.</summary>
     private const string AllowedPrefix = "https://github.com/xenofei/Tsukimichi/releases/download/";
 
+    /// <summary>The hosts a release download may be redirected to: GitHub's own asset hosts, exactly these two.</summary>
+    private static readonly string[] GitHubAssetHosts = ["objects.githubusercontent.com", "release-assets.githubusercontent.com"];
+
     /// <summary>The files whose addresses must all sit under <see cref="AllowedPrefix"/>: the downloader and the offer that pins its URL.</summary>
     private static readonly string[] PinnedFiles = [NetworkFile, Path.Combine("Tsukimichi.Core", "Portraits", "PortraitPackOffer.cs")];
 
@@ -44,10 +58,19 @@ public class NoNetworkTests
     /// <summary>What the plugin's assembly alone may reference for that file: HttpClient and its status code.</summary>
     private static readonly HashSet<string> PluginNetworkAssemblies = new(StringComparer.Ordinal) { "System.Net.Http", "System.Net.Primitives" };
 
+    /// <summary>
+    /// Assemblies no shipped assembly references: networking (but the plugin's two above), and those whose APIs fetch a
+    /// URL they are given (the XML readers and resolvers, <c>DataSet.ReadXml</c>, remote named pipes).
+    /// </summary>
+    private static readonly string[] BlockedAssemblyPrefixes = ["System.Net", "System.Xml", "System.Private.Xml", "System.Data", "System.IO.Pipes"];
+
     // Any identifier that contains a network type's name (HttpClientHandler, SocketsHttpHandler, IHttpClientFactory,
-    // DnsEndPoint, ...), or a System.Net namespace.
+    // DnsEndPoint, ...), or a System.Net namespace; and the APIs that fetch a URL without a network type in their name:
+    // the XML readers, documents and resolvers (XDocument.Load(url), XmlReader.Create(url), an XmlUrlResolver),
+    // DataSet.ReadXml, named pipes (a remote one goes over the network), the System.Xml and System.IO.Pipes namespaces,
+    // the WinINet, WinHTTP, Winsock and URL Moniker DLLs (URLDownloadToFile), and COM by ProgID or CLSID (MSXML2.XMLHTTP).
     private static readonly Regex Network = new(
-        @"\w*(HttpClient|HttpMessageHandler|HttpHandler|HttpWebRequest|WebRequest|WebClient|WebSocket|TcpClient|TcpListener|UdpClient|Socket|Dns|NetworkStream|SmtpClient|FtpWebRequest|HttpListener)\w*|using\s+System\.Net\b|System\.Net\.(Http|Sockets|WebSockets|Mail|NetworkInformation|Security|Quic)\b",
+        @"\w*(HttpClient|HttpMessageHandler|HttpHandler|HttpWebRequest|WebRequest|WebClient|WebSocket|TcpClient|TcpListener|UdpClient|Socket|Dns|NetworkStream|SmtpClient|FtpWebRequest|HttpListener|XDocument|XElement|XStreamingElement|XmlReader|XmlTextReader|XmlDocument|XmlDataDocument|XPathDocument|XslCompiledTransform|XslTransform|Xml\w*Resolver|XmlSchemaSet|XmlSerializer|ReadXml|NamedPipe|URLDownload|InternetOpen|WinHttp|GetTypeFromProgID|GetTypeFromCLSID)\w*|using\s+(static\s+)?System\.(Net|Xml|IO\.Pipes)\b|System\.Net\.(Http|Sockets|WebSockets|Mail|NetworkInformation|Security|Quic)\b|System\.Xml\.|System\.IO\.Pipes\.|(?i:\b(wininet|winhttp|ws2_32|urlmon|msxml\d*)(\.dll)?\b)",
         RegexOptions.Compiled);
 
     // Names that contain a network word but are not network code: the medal's Dalamud-blue gem socket (art).
@@ -145,6 +168,22 @@ public class NoNetworkTests
     }
 
     [Fact]
+    public void A_download_may_be_redirected_only_to_githubs_two_asset_hosts()
+    {
+        // The hosts list is the exception's one other address: pinned, so a third host fails here, not in review.
+        Assert.Equal(GitHubAssetHosts, Core.Portraits.PortraitPackOffer.AssetHosts);
+        var offer = new Core.Portraits.PortraitPackOffer("portraits-1", "Tsukimichi-portraits.zip", 1, new string('a', 64), 1, string.Empty, 1);
+        foreach (var host in GitHubAssetHosts)
+        {
+            Assert.True(offer.Allows(new Uri("https://" + host + "/x")));
+        }
+
+        Assert.False(offer.Allows(new Uri("https://githubusercontent.com/x")));
+        Assert.False(offer.Allows(new Uri("https://raw.githubusercontent.com/x")));
+        Assert.False(offer.Allows(new Uri("https://github.com/x")));
+    }
+
+    [Fact]
     public void The_shipped_offer_names_one_release_asset_under_the_prefix()
     {
         Assert.Equal(AllowedPrefix, Core.Portraits.PortraitPackOffer.ReleaseBase);
@@ -197,7 +236,7 @@ public class NoNetworkTests
                 made.Add(name);
             }
 
-            if (source.Contains(".StartDownload()", StringComparison.Ordinal))
+            if (source.Contains(".StartDownload(", StringComparison.Ordinal))
             {
                 started.Add(name);
             }
@@ -226,6 +265,23 @@ public class NoNetworkTests
     [InlineData("/* HttpClient */ var x = 1;", false)]
     [InlineData("var x = 1; // new HttpClient()", false)]
     [InlineData("var link = \"https://github.com\"; Util.OpenLink(link);", false)]
+    [InlineData("var doc = XDocument.Load(\"https://example.com/feed.xml\");", true)]
+    [InlineData("var e = XElement.Load(url);", true)]
+    [InlineData("using var r = XmlReader.Create(url);", true)]
+    [InlineData("var d = new XmlDocument(); d.Load(url);", true)]
+    [InlineData("var p = new XPathDocument(url);", true)]
+    [InlineData("settings.XmlResolver = new XmlUrlResolver();", true)]
+    [InlineData("var t = new XslCompiledTransform(); t.Load(url);", true)]
+    [InlineData("new DataSet().ReadXml(url);", true)]
+    [InlineData("using System.Xml.Linq;", true)]
+    [InlineData("var x = System.Xml.Linq.XName.Get(\"a\");", true)]
+    [InlineData("using var pipe = new NamedPipeClientStream(\"server\", \"pipe\");", true)]
+    [InlineData("[LibraryImport(\"urlmon.dll\")] private static partial int Fetch();", true)]
+    [InlineData("[DllImport(\"wininet.dll\")] static extern IntPtr Open();", true)]
+    [InlineData("NativeLibrary.Load(\"WinHttp\");", true)]
+    [InlineData("var t = Type.GetTypeFromProgID(\"MSXML2.XMLHTTP\");", true)]
+    [InlineData("var json = JsonNode.Parse(File.ReadAllBytes(path));", false)]
+    [InlineData("var name = \"Xmlrpc\"; var count = 1;", false)]
     public void The_scan_reads_past_strings_and_sees_wrapped_names(string line, bool flagged)
     {
         Assert.Equal(flagged, Network.Matches(StripComments(line)).Any(match => !NotNetwork.Contains(match.Value)));
@@ -257,7 +313,7 @@ public class NoNetworkTests
             {
                 // Core and GameData reference no networking assembly at all; the plugin only what the portrait pack's
                 // transport needs (HttpClient, and its status code from System.Net.Primitives).
-                if (reference.StartsWith("System.Net", StringComparison.Ordinal) && !(isPlugin && PluginNetworkAssemblies.Contains(reference)))
+                if (BlockedAssemblyPrefixes.Any(prefix => reference.StartsWith(prefix, StringComparison.Ordinal)) && !(isPlugin && PluginNetworkAssemblies.Contains(reference)))
                 {
                     offenders.Add($"{Path.GetFileName(path)} references {reference}");
                 }

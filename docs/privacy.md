@@ -37,7 +37,7 @@ Besides files, Tsukimichi writes to the **clipboard** when you click a Copy or R
 
 **Nothing.** Tsukimichi never uploads or checks anything online. The quest data it needs ships inside the plugin, and Dalamud installs its updates. Its one download is the optional portrait pack (below), and only when you ask for it.
 
-A test (`Tsukimichi.Tests/Diagnostics/NoNetworkTests.cs`) fails the build if any shipped source names an HTTP client, a web request, a socket or a DNS lookup, except the portrait pack's one file (`Tsukimichi/Game/PortraitPackHttp.cs`), so this stays true. The exceptions are things you start yourself, with a click:
+A test (`Tsukimichi.Tests/Diagnostics/NoNetworkTests.cs`) fails the build if any shipped source names an HTTP client, a web request, a socket, a DNS lookup or another way to fetch an address (an XML reader, a named pipe, the Windows download libraries), except the portrait pack's one file (`Tsukimichi/Game/PortraitPackHttp.cs`), so this stays true. The exceptions are things you start yourself, with a click:
 
 - **Links open in your browser.** "Open on…" (Lodestone, Garland Tools, the Console Games Wiki, Teamcraft, FFXIV Collect) and Settings › Advanced › Privacy & trust › "The full statement" are handed to your browser through Dalamud when you click them. Tsukimichi itself fetches nothing.
 - **"Open folder"** after an export opens the folder in Windows Explorer.

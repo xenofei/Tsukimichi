@@ -158,6 +158,31 @@ public sealed class PortraitPackInstallTests : IDisposable
         Assert.False(File.Exists(Path.Combine(root, "download.part")));
     }
 
+    [Fact]
+    public async Task A_download_stops_at_the_offered_size_when_the_body_never_ends()
+    {
+        // A chunked response that never sends its terminator: the whole pack arrived, then nothing more ever comes.
+        var zip = PackZip();
+        var offer = OfferFor(zip);
+        var transport = new FakeTransport(_ => PortraitPackResponse.Ok(new EndlessStream(zip), null));
+
+        var result = await Run(transport, offer).WaitAsync(TimeSpan.FromSeconds(20));
+        Assert.Equal(PortraitPackFailure.None, result);
+        Assert.Equal(zip, File.ReadAllBytes(Path.Combine(root, "download.part")));
+    }
+
+    [Fact]
+    public async Task Bytes_past_the_offered_size_in_a_later_read_are_a_mismatch()
+    {
+        // Exactly the pack in the first read, then more: not the offered file.
+        var zip = PackZip();
+        var offer = OfferFor(zip);
+        var transport = new FakeTransport(_ => PortraitPackResponse.Ok(new ChunkedStream([zip, [0x50, 0x4B]]), null));
+
+        Assert.Equal(PortraitPackFailure.TooLarge, await Run(transport, offer).WaitAsync(TimeSpan.FromSeconds(20)));
+        Assert.False(File.Exists(Path.Combine(root, "download.part")));
+    }
+
     // ------------------------------------------------------------------ the archive
 
     [Fact]
@@ -251,6 +276,46 @@ public sealed class PortraitPackInstallTests : IDisposable
     public void The_same_images_make_the_same_zip()
     {
         Assert.Equal(PackZip(), PackZip());
+    }
+
+    [Fact]
+    public void The_zip_holds_nothing_that_depends_on_the_machine_that_built_it()
+    {
+        // Every entry stored (no compressor whose output varies by runtime), the "version made by" platform byte
+        // pinned to 0 (MS-DOS/Windows, whatever OS built it) and no external attributes (Unix permissions).
+        var zip = PackZip();
+        var headers = CentralDirectory(zip);
+        Assert.Equal(3, headers.Count);
+        Assert.All(headers, h =>
+        {
+            Assert.Equal(0, h.Method);
+            Assert.Equal(0, h.Platform);
+            Assert.Equal(0u, h.ExternalAttributes);
+        });
+
+        // And it still installs as before.
+        Assert.Equal(PortraitPackFailure.None, Extract(zip, Path.Combine(root, "pack"), out var manifest));
+        Assert.NotNull(manifest);
+    }
+
+    [Fact]
+    public void The_zip_writer_makes_these_exact_bytes()
+    {
+        // A pin on the writer's whole output for fixed bytes (not PNGs, whose deflate comes from the runtime's zlib): if
+        // this changes (a .NET update to its zip writer, a change to the writer or the manifest's JSON), the next pack
+        // build is not byte-identical to the last one from the same photos; docs/data/portrait-pack.md says what else is.
+        var images = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["1001000.png"] = Encoding.ASCII.GetBytes("first image"),
+            ["1002000.png"] = Encoding.ASCII.GetBytes("second image"),
+        };
+        var files = images.ToDictionary(kv => kv.Key, kv => Convert.ToHexStringLower(SHA256.HashData(kv.Value)), StringComparer.Ordinal);
+        var manifest = PortraitPackManifest.Create("2026.09.15.0000.0000", PortraitPackManifest.BuiltDateOf("2026.09.15.0000.0000"), "test", files, new Dictionary<uint, string> { [1001000] = "1001000.png", [1002000] = "1002000.png" });
+        using var zip = new MemoryStream();
+        PortraitPackArchive.Write(zip, manifest, images);
+
+        var hash = Convert.ToHexStringLower(SHA256.HashData(zip.ToArray()));
+        Assert.True(hash == "f36b59077292501f9a7b03385e3c22667a26f7796bef901b7e600676d0408ecb", "the pack zip writer now writes " + hash);
     }
 
     // ------------------------------------------------------------------ the installed pack
@@ -361,6 +426,24 @@ public sealed class PortraitPackInstallTests : IDisposable
         Assert.True(damaged);
 
         // Download again: the same pack over its broken copy.
+        Assert.Equal(PortraitPackFailure.None, store.Install(SaveZip(zip), OfferFor(zip), CancellationToken.None, out pack, out _));
+        Assert.NotNull(store.Load(out damaged));
+        Assert.False(damaged);
+
+        // An image gone with the manifest still there (spec-1.20 F4: "Some of the pack's files are missing"): damaged too.
+        Assert.NotNull(pack);
+        File.Delete(Path.Combine(pack.Folder, "1002000.png"));
+        Assert.Null(store.Load(out damaged));
+        Assert.True(damaged);
+
+        // An image cut to nothing (a disk error, an antivirus quarantine): damaged.
+        Assert.Equal(PortraitPackFailure.None, store.Install(SaveZip(zip), OfferFor(zip), CancellationToken.None, out pack, out _));
+        Assert.NotNull(pack);
+        File.WriteAllBytes(Path.Combine(pack.Folder, "1001000.png"), []);
+        Assert.Null(store.Load(out damaged));
+        Assert.True(damaged);
+
+        // Download again repairs that as well.
         Assert.Equal(PortraitPackFailure.None, store.Install(SaveZip(zip), OfferFor(zip), CancellationToken.None, out _, out _));
         Assert.NotNull(store.Load(out damaged));
         Assert.False(damaged);
@@ -370,6 +453,61 @@ public sealed class PortraitPackInstallTests : IDisposable
         Assert.Null(store.Load(out damaged));
         Assert.False(damaged);
         Assert.Empty(Directory.GetDirectories(store.Root));
+    }
+
+    [Fact]
+    public void Two_game_clients_installing_the_same_pack_at_once_both_succeed()
+    {
+        // Both clients saw no pack folder; the other one renamed its copy into place first.
+        var zip = PackZip();
+        var offer = OfferFor(zip);
+        var store = new PortraitPackStore(Path.Combine(root, "portraits"));
+        var other = new PortraitPackStore(Path.Combine(root, "portraits"));
+        store.BeforeSwap = () => Assert.Equal(PortraitPackFailure.None, other.Install(SaveZip(zip, "other.zip"), offer, CancellationToken.None, out _, out _));
+
+        Assert.Equal(PortraitPackFailure.None, store.Install(SaveZip(zip), offer, CancellationToken.None, out var pack, out var detail));
+        Assert.Null(detail);
+        Assert.NotNull(pack);
+        Assert.Equal(offer.Sha256, pack.Sha256);
+        Assert.True(pack.TryGetPath(1012527, out var image) && File.Exists(image));
+
+        // One pack folder, in use, whole; no staging folder left behind.
+        var loaded = store.Load(out var damaged);
+        Assert.False(damaged);
+        Assert.Equal(offer.Sha256, loaded?.Sha256);
+        Assert.Equal([pack.Folder], Directory.GetDirectories(store.Root));
+    }
+
+    [Fact]
+    public void A_folder_in_the_packs_place_that_is_not_the_same_pack_still_fails_the_install()
+    {
+        var zip = PackZip();
+        var offer = OfferFor(zip);
+        var store = new PortraitPackStore(Path.Combine(root, "portraits"));
+        store.BeforeSwap = () =>
+        {
+            var final = Path.Combine(store.Root, offer.Sha256[..12]);
+            Directory.CreateDirectory(final);
+            File.WriteAllText(Path.Combine(final, PortraitPackManifest.FileName), "{}");
+        };
+
+        Assert.Equal(PortraitPackFailure.DiskError, store.Install(SaveZip(zip), offer, CancellationToken.None, out var pack, out _));
+        Assert.Null(pack);
+        Assert.Null(store.Load(out _));
+        Assert.Single(Directory.GetDirectories(store.Root));
+    }
+
+    [Fact]
+    public void Reading_the_installed_pack_stops_when_the_plugin_unloads()
+    {
+        var store = new PortraitPackStore(Path.Combine(root, "portraits"));
+        var zip = PackZip();
+        Assert.Equal(PortraitPackFailure.None, store.Install(SaveZip(zip), OfferFor(zip), CancellationToken.None, out _, out _));
+
+        using var unload = new CancellationTokenSource();
+        unload.Cancel();
+        Assert.Throws<OperationCanceledException>(() => store.Load(out _, unload.Token));
+        Assert.NotNull(store.Load(out _, CancellationToken.None));
     }
 
     [Fact]
@@ -506,6 +644,67 @@ public sealed class PortraitPackInstallTests : IDisposable
         {
             var n = Read(buffer.Span);
             Served += n;
+            return ValueTask.FromResult(n);
+        }
+    }
+
+    /// <summary>The zip's central directory, header by header: compression method, "version made by" platform, external attributes.</summary>
+    private static List<(int Method, int Platform, uint ExternalAttributes)> CentralDirectory(byte[] zip)
+    {
+        var end = zip.Length - 22;
+        Assert.Equal(0x06054b50u, BitConverter.ToUInt32(zip, end));
+        int count = BitConverter.ToUInt16(zip, end + 10);
+        var at = (int)BitConverter.ToUInt32(zip, end + 16);
+        var headers = new List<(int, int, uint)>();
+        for (var i = 0; i < count; i++)
+        {
+            Assert.Equal(0x02014b50u, BitConverter.ToUInt32(zip, at));
+            headers.Add((BitConverter.ToUInt16(zip, at + 10), zip[at + 5], BitConverter.ToUInt32(zip, at + 38)));
+            at += 46 + BitConverter.ToUInt16(zip, at + 28) + BitConverter.ToUInt16(zip, at + 30) + BitConverter.ToUInt16(zip, at + 32);
+        }
+
+        return headers;
+    }
+
+    /// <summary>A body that serves its bytes, then never ends (a chunked response without its terminator) until cancelled.</summary>
+    private sealed class EndlessStream(byte[] bytes) : MemoryStream(bytes)
+    {
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            var n = Read(buffer.Span);
+            if (n > 0)
+            {
+                return n;
+            }
+
+            await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            return 0;
+        }
+    }
+
+    /// <summary>A body served as the given chunks: a read never spans two of them.</summary>
+    private sealed class ChunkedStream(byte[][] chunks) : MemoryStream
+    {
+        private int next;
+        private int offset;
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            if (next >= chunks.Length)
+            {
+                return ValueTask.FromResult(0);
+            }
+
+            var chunk = chunks[next];
+            var n = Math.Min(buffer.Length, chunk.Length - offset);
+            chunk.AsSpan(offset, n).CopyTo(buffer.Span);
+            offset += n;
+            if (offset == chunk.Length)
+            {
+                next++;
+                offset = 0;
+            }
+
             return ValueTask.FromResult(n);
         }
     }

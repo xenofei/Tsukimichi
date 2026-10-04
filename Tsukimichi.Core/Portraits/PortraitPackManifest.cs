@@ -82,6 +82,18 @@ public sealed partial class PortraitPackManifest
     /// <summary>Whether <paramref name="text"/> is a SHA-256 as the pack writes it: 64 lower-case hex digits.</summary>
     public static bool IsSha256(string? text) => text is not null && Sha256Hex().IsMatch(text);
 
+    /// <summary>
+    /// The build date a pack built from the game install <paramref name="gameVersion"/> is stamped with when the builder
+    /// is not given one: the date in the version ("2026.09.15.0000.0000" is 15 September 2026, UTC). An input, never the
+    /// clock, so the same photos and the same install make the same manifest and the same zip on any day. Default when
+    /// the version holds no date.
+    /// </summary>
+    public static DateTime BuiltDateOf(string? gameVersion) =>
+        gameVersion is { Length: >= 10 }
+        && DateTime.TryParseExact(gameVersion.AsSpan(0, 10), "yyyy.MM.dd", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var day)
+            ? DateTime.SpecifyKind(day.Date, DateTimeKind.Utc)
+            : default;
+
     /// <summary>Makes a manifest, checked as <see cref="TryParse"/> checks one; throws when it would not read back.</summary>
     public static PortraitPackManifest Create(string gameVersion, DateTime builtUtc, string source, IReadOnlyDictionary<string, string> files, IReadOnlyDictionary<uint, string> entries, int side = ImageSide, IReadOnlyDictionary<string, int>? boxes = null)
     {

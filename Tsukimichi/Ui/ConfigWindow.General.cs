@@ -152,7 +152,7 @@ public sealed partial class ConfigWindow
             {
                 if (pack.Offer is not null && !pack.Busy)
                 {
-                    OpenPackDialog();
+                    OpenPackDialog(askedForPack: true);
                 }
             }
             else

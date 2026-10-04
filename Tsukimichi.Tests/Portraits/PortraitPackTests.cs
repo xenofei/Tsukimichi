@@ -1,5 +1,6 @@
 using System.Text;
 using Tsukimichi.Core.Portraits;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Tests.Portraits;
 
@@ -194,7 +195,94 @@ public sealed class PortraitPackTests
         Assert.NotNull(error);
     }
 
+    [Fact]
+    public void An_offer_that_repeats_a_key_offers_nothing_with_a_warning_and_never_throws()
+    {
+        // The plugin reads the offer in the portrait pack service's constructor: a throw there would stop the plugin loading.
+        var json = $$"""{ "tag": "portraits-1", "tag": "portraits-2", "asset": "a.zip", "size": 5, "sha256": "{{new string('a', 64)}}", "format": 1 }""";
+        Assert.Null(PortraitPackOffer.Parse(Encoding.UTF8.GetBytes(json), out var warning));
+        Assert.NotNull(warning);
+
+        var path = Path.Combine(Path.GetTempPath(), "tsukimichi-offer-" + Guid.NewGuid().ToString("N")[..8] + ".json");
+        try
+        {
+            File.WriteAllText(path, json);
+            Assert.Null(PortraitPackOffer.Load(path, out warning));
+            Assert.NotNull(warning);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Theory]
+    [InlineData("2026.09.15.0000.0000", 2026, 9, 15)]
+    [InlineData("2027.01.20.0000.0001", 2027, 1, 20)]
+    public void A_pack_is_stamped_with_its_game_versions_date_so_a_rebuild_is_the_same(string gameVersion, int year, int month, int day)
+    {
+        var built = PortraitPackManifest.BuiltDateOf(gameVersion);
+        Assert.Equal(new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc), built);
+        Assert.Equal(DateTimeKind.Utc, built.Kind);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData("unknown")]
+    [InlineData("2026.13.40.0000.0000")]
+    public void A_game_version_without_a_date_gives_no_stamp(string? gameVersion) =>
+        Assert.Equal(default, PortraitPackManifest.BuiltDateOf(gameVersion));
+
     // ------------------------------------------------------------------ where the pack stands
+
+    [Fact]
+    public void Giver_portraits_switch_to_the_pack_on_a_first_install_and_back_to_game_art_on_remove()
+    {
+        // The player asked for the pack (spec-1.20 F4): a first install switches Giver portraits to Game art + pack.
+        Assert.Equal(PortraitPackChange.FirstInstall, PortraitPackStatus.ChangeOf(hadPack: false, wasDamaged: false));
+        Assert.Equal(GiverPortraitMode.GameArtAndPack, PortraitPackStatus.ModeAfter(PortraitPackChange.FirstInstall, GiverPortraitMode.GameArt, askedForPack: false));
+        Assert.Equal(GiverPortraitMode.GameArtAndPack, PortraitPackStatus.ModeAfter(PortraitPackChange.FirstInstall, GiverPortraitMode.Off, askedForPack: false));
+
+        // An update or a repair keeps what the player chose, unless they picked Game art + pack to start it.
+        Assert.Equal(PortraitPackChange.Update, PortraitPackStatus.ChangeOf(hadPack: true, wasDamaged: false));
+        Assert.Equal(PortraitPackChange.Repair, PortraitPackStatus.ChangeOf(hadPack: false, wasDamaged: true));
+        Assert.Equal(GiverPortraitMode.GameArt, PortraitPackStatus.ModeAfter(PortraitPackChange.Update, GiverPortraitMode.GameArt, askedForPack: false));
+        Assert.Equal(GiverPortraitMode.Off, PortraitPackStatus.ModeAfter(PortraitPackChange.Repair, GiverPortraitMode.Off, askedForPack: false));
+        Assert.Equal(GiverPortraitMode.GameArtAndPack, PortraitPackStatus.ModeAfter(PortraitPackChange.Update, GiverPortraitMode.GameArtAndPack, askedForPack: false));
+        Assert.Equal(GiverPortraitMode.GameArtAndPack, PortraitPackStatus.ModeAfter(PortraitPackChange.Repair, GiverPortraitMode.GameArt, askedForPack: true));
+
+        // Remove: Game art + pack goes back to Game art; Off stays off.
+        Assert.Equal(GiverPortraitMode.GameArt, PortraitPackStatus.ModeAfter(PortraitPackChange.Removed, GiverPortraitMode.GameArtAndPack, askedForPack: false));
+        Assert.Equal(GiverPortraitMode.Off, PortraitPackStatus.ModeAfter(PortraitPackChange.Removed, GiverPortraitMode.Off, askedForPack: false));
+        Assert.Equal(GiverPortraitMode.GameArt, PortraitPackStatus.ModeAfter(PortraitPackChange.Removed, GiverPortraitMode.GameArt, askedForPack: false));
+    }
+
+    [Fact]
+    public void A_failed_download_update_or_removal_each_shows_its_error()
+    {
+        const PortraitPackFailure Hash = PortraitPackFailure.HashMismatch;
+
+        // A first download (or Download again) that failed: the download's error.
+        Assert.Equal(PortraitPackFailureRow.Download, PortraitPackStatus.FailureRowOf(PortraitPackState.Available, offered: true, Hash, lastWasRemoval: false, finished: true));
+        Assert.Equal(PortraitPackFailureRow.Download, PortraitPackStatus.FailureRowOf(PortraitPackState.Damaged, offered: true, Hash, lastWasRemoval: false, finished: true));
+
+        // An update that failed: its own error, though a pack is installed (it stays in use).
+        Assert.Equal(PortraitPackFailureRow.Update, PortraitPackStatus.FailureRowOf(PortraitPackState.UpdateAvailable, offered: true, Hash, lastWasRemoval: false, finished: true));
+
+        // A removal that failed: its own error, never "Not downloaded".
+        Assert.Equal(PortraitPackFailureRow.Removal, PortraitPackStatus.FailureRowOf(PortraitPackState.Installed, offered: true, PortraitPackFailure.DiskError, lastWasRemoval: true, finished: true));
+        Assert.Equal(PortraitPackFailureRow.Removal, PortraitPackStatus.FailureRowOf(PortraitPackState.UpdateAvailable, offered: false, PortraitPackFailure.DiskError, lastWasRemoval: true, finished: true));
+
+        // Nothing failed, nothing ran, or nothing offered to try again: the state's own row.
+        Assert.Equal(PortraitPackFailureRow.None, PortraitPackStatus.FailureRowOf(PortraitPackState.Installed, offered: true, PortraitPackFailure.None, lastWasRemoval: false, finished: true));
+        Assert.Equal(PortraitPackFailureRow.None, PortraitPackStatus.FailureRowOf(PortraitPackState.Available, offered: true, Hash, lastWasRemoval: false, finished: false));
+        Assert.Equal(PortraitPackFailureRow.None, PortraitPackStatus.FailureRowOf(PortraitPackState.Available, offered: true, PortraitPackFailure.None, lastWasRemoval: true, finished: true));
+        Assert.Equal(PortraitPackFailureRow.None, PortraitPackStatus.FailureRowOf(PortraitPackState.NotOffered, offered: false, Hash, lastWasRemoval: false, finished: true));
+
+        // A download that failed before the pack in use was the offered one already (back on an older plugin): no error row.
+        Assert.Equal(PortraitPackFailureRow.None, PortraitPackStatus.FailureRowOf(PortraitPackState.Installed, offered: true, Hash, lastWasRemoval: false, finished: true));
+    }
 
     [Fact]
     public void The_row_offers_download_update_or_remove_by_what_is_installed()

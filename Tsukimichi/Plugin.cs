@@ -1437,12 +1437,14 @@ public sealed partial class Plugin : IDalamudPlugin
                 clientGameVersion,
                 offer => new Game.PortraitPackHttp(offer, diagnostics.PluginVersion),
                 Log,
-                installed => _ = Framework.RunOnFrameworkThread(() =>
+                (change, askedForPack) => _ = Framework.RunOnFrameworkThread(() =>
                 {
-                    // The player asked for the pack: Giver portraits switches to Game art + pack by itself (spec-1.20 F4).
-                    if (installed && Settings.GiverPortraits != Core.Ui.GiverPortraitMode.GameArtAndPack)
+                    // spec-1.20 F4: a first install switches Giver portraits to Game art + pack (the player asked for the
+                    // pack); an update keeps their choice; Remove takes Game art + pack back to Game art.
+                    var mode = Core.Portraits.PortraitPackStatus.ModeAfter(change, Settings.GiverPortraits, askedForPack);
+                    if (mode != Settings.GiverPortraits)
                     {
-                        Settings.GiverPortraits = Core.Ui.GiverPortraitMode.GameArtAndPack;
+                        Settings.GiverPortraits = mode;
                         Settings.Save(PluginInterface);
                     }
                 }));

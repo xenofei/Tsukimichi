@@ -30,6 +30,9 @@ public sealed class PortraitPackService : IDisposable
     private readonly Func<PortraitPackOffer, IPortraitPackTransport> transport;
     private readonly IPluginLog log;
     private readonly object gate = new();
+
+    /// <summary>Cancelled when the plugin unloads: stops the load worker.</summary>
+    private readonly CancellationTokenSource lifetime = new();
     private CancellationTokenSource? running;
     private volatile PortraitPack? installed;
     private volatile bool damaged;
@@ -37,12 +40,16 @@ public sealed class PortraitPackService : IDisposable
     private long received;
     private volatile bool disposed;
     private Task? work;
+    private Task? loading;
     private long startedTicks;
     private int arrival;
 
     /// <param name="transport">Makes the network client for the offer when a confirmed download starts (never before).</param>
-    /// <param name="installedChanged">Called on a worker after a pack is installed (true) or removed (false).</param>
-    public PortraitPackService(PluginPaths paths, string clientGameVersion, Func<PortraitPackOffer, IPortraitPackTransport> transport, IPluginLog log, Action<bool>? installedChanged = null)
+    /// <param name="installedChanged">
+    /// Called on a worker after the pack changed: installed (a first install, an update or a repair) or removed, and
+    /// whether the player started it by picking Game art + pack (<see cref="PortraitPackStatus.ModeAfter"/>).
+    /// </param>
+    public PortraitPackService(PluginPaths paths, string clientGameVersion, Func<PortraitPackOffer, IPortraitPackTransport> transport, IPluginLog log, Action<PortraitPackChange, bool>? installedChanged = null)
     {
         ArgumentNullException.ThrowIfNull(paths);
         this.transport = transport ?? throw new ArgumentNullException(nameof(transport));
@@ -57,7 +64,7 @@ public sealed class PortraitPackService : IDisposable
         }
     }
 
-    private Action<bool>? InstalledChanged { get; }
+    private Action<PortraitPackChange, bool>? InstalledChanged { get; }
 
     /// <summary>The pack this build offers; null when it offers none.</summary>
     public PortraitPackOffer? Offer { get; }
@@ -113,34 +120,60 @@ public sealed class PortraitPackService : IDisposable
     /// <summary>Whether the installed pack was built for an older game version than the client runs (still used).</summary>
     public bool ForOlderGame => installed is { } pack && PortraitPackStatus.ForOlderGame(pack.GameVersion, ClientGameVersion);
 
-    /// <summary>Reads the installed pack and cleans up after an interrupted run, on a worker.</summary>
-    public Task LoadAsync() => Task.Run(() =>
+    /// <summary>
+    /// Reads the installed pack and cleans up after an interrupted run, on a worker. <see cref="Dispose"/> cancels it
+    /// and waits for it, so none of it runs on after unload.
+    /// </summary>
+    public Task LoadAsync()
     {
-        try
-        {
-            store.CleanUp();
-            installed = store.Load(out var broken);
-            damaged = broken;
-            if (broken)
+        var cancellation = lifetime.Token;
+        var task = Task.Run(
+            () =>
             {
-                log.Warning("Portrait pack: the installed pack is incomplete; Settings offers to download it again or remove it");
-            }
-            else if (installed is { } pack)
-            {
-                log.Information("Portrait pack {Tag}: {Givers} givers, built for game {Game}", pack.Tag, pack.Givers, pack.GameVersion);
-            }
-        }
-        catch (Exception ex)
-        {
-            log.Warning(ex, "Portrait pack could not be read; givers show game art and fallbacks");
-        }
-    });
+                try
+                {
+                    store.CleanUp();
+                    var pack = store.Load(out var broken, cancellation);
+                    if (disposed)
+                    {
+                        return;
+                    }
+
+                    installed = pack;
+                    damaged = broken;
+                    if (broken)
+                    {
+                        log.Warning("Portrait pack: the installed pack is incomplete; Settings offers to download it again or remove it");
+                    }
+                    else if (pack is not null)
+                    {
+                        log.Information("Portrait pack {Tag}: {Givers} givers, built for game {Game}", pack.Tag, pack.Givers, pack.GameVersion);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // The plugin is unloading.
+                }
+                catch (Exception ex)
+                {
+                    if (!disposed)
+                    {
+                        log.Warning(ex, "Portrait pack could not be read; givers show game art and fallbacks");
+                    }
+                }
+            },
+            cancellation);
+        loading = task;
+        return task;
+    }
 
     /// <summary>
     /// Downloads, checks and installs the offered pack on a worker. The one place the plugin goes online: call it only
     /// from the player's confirmation. False when nothing is offered or a run is already going.
+    /// <paramref name="askedForPack"/>: the player opened the confirmation by picking Game art + pack, so Giver portraits
+    /// switches to it once the pack is in, even over an installed or damaged one.
     /// </summary>
-    public bool StartDownload()
+    public bool StartDownload(bool askedForPack = false)
     {
         var offer = Offer;
         if (offer is null || disposed)
@@ -164,7 +197,7 @@ public sealed class PortraitPackService : IDisposable
             phase = (int)PortraitPackPhase.Downloading;
         }
 
-        work = Task.Run(() => DownloadAndInstall(offer, cts.Token));
+        work = Task.Run(() => DownloadAndInstall(offer, askedForPack, cts.Token));
         return true;
     }
 
@@ -195,13 +228,24 @@ public sealed class PortraitPackService : IDisposable
             var removed = false;
             try
             {
+                // Out of use first, so no texture is loading from the folder as it goes.
                 installed = null;
                 removed = store.Remove();
-                damaged = !removed && damaged;
-                log.Information("Portrait pack removed");
+                if (removed)
+                {
+                    damaged = false;
+                    log.Information("Portrait pack removed");
+                }
+                else
+                {
+                    // current.json could not be deleted: nothing was removed, and the pack stays in use.
+                    RestoreAfterFailedRemove();
+                    log.Warning("Portrait pack could not be removed: its files are in use or read-only; the pack stays installed");
+                }
             }
             catch (Exception ex)
             {
+                RestoreAfterFailedRemove();
                 log.Warning(ex, "Portrait pack could not be removed completely; the rest goes at the next start");
             }
             finally
@@ -211,14 +255,30 @@ public sealed class PortraitPackService : IDisposable
 
             if (removed && !disposed)
             {
-                InstalledChanged?.Invoke(false);
+                InstalledChanged?.Invoke(PortraitPackChange.Removed, false);
             }
         });
         return true;
     }
 
-    private async Task DownloadAndInstall(PortraitPackOffer offer, CancellationToken cancellation)
+    /// <summary>After a removal that failed: whatever is still installed is read back, so the row and the plates show it.</summary>
+    private void RestoreAfterFailedRemove()
     {
+        try
+        {
+            installed = store.Load(out var broken);
+            damaged = broken;
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or System.IO.IOException or UnauthorizedAccessException)
+        {
+            installed = null;
+        }
+    }
+
+    private async Task DownloadAndInstall(PortraitPackOffer offer, bool askedForPack, CancellationToken cancellation)
+    {
+        // What this install will be, for Giver portraits: read before the pack in use changes.
+        var change = PortraitPackStatus.ChangeOf(installed is not null, damaged);
         var result = PortraitPackFailure.DiskError;
         IPortraitPackTransport? source = null;
         var download = store.NewDownloadFile();
@@ -271,7 +331,7 @@ public sealed class PortraitPackService : IDisposable
 
         if (result == PortraitPackFailure.None && !disposed)
         {
-            InstalledChanged?.Invoke(true);
+            InstalledChanged?.Invoke(change, askedForPack);
         }
     }
 
@@ -283,19 +343,34 @@ public sealed class PortraitPackService : IDisposable
         phase = (int)PortraitPackPhase.Idle;
     }
 
-    /// <summary>Cancels a running download and waits a moment for its worker, so nothing of it runs on after unload.</summary>
+    /// <summary>
+    /// Cancels a running download and the load worker and waits a moment (two seconds at most, together) for both, so
+    /// nothing of them runs on after unload.
+    /// </summary>
     public void Dispose()
     {
         disposed = true;
         Cancel();
-        try
+        lifetime.Cancel();
+        var deadline = Environment.TickCount64 + 2000;
+        foreach (var task in new[] { work, loading })
         {
-            work?.Wait(TimeSpan.FromSeconds(2));
+            if (task is null)
+            {
+                continue;
+            }
+
+            try
+            {
+                task.Wait(TimeSpan.FromMilliseconds(Math.Max(0, deadline - Environment.TickCount64)));
+            }
+            catch (AggregateException)
+            {
+                // Logged by the worker, or cancelled before it started.
+            }
         }
-        catch (AggregateException)
-        {
-            // Logged by the worker.
-        }
+
+        lifetime.Dispose();
     }
 
     /// <summary>Writes progress where the Settings row reads it (no synchronisation context: the worker reports straight in).</summary>

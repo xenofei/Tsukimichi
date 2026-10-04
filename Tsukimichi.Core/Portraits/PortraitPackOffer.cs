@@ -96,7 +96,8 @@ public sealed partial record PortraitPackOffer(string Tag, string Asset, long Si
     /// <summary>
     /// Reads an offer; null when the file offers no pack (no tag yet), and null with <paramref name="warning"/> when a
     /// field is not what a release writes: a tag other than <c>portraits-N</c>, an asset name other than a plain <c>.zip</c>
-    /// name, a size outside 1 byte to <see cref="MaxSize"/>, or a hash that is not SHA-256.
+    /// name, a size outside 1 byte to <see cref="MaxSize"/>, a hash that is not SHA-256, or a key given twice. Never throws
+    /// on what the file holds: the plugin reads it while it loads.
     /// </summary>
     public static PortraitPackOffer? Parse(ReadOnlySpan<byte> json, out string? warning)
     {
@@ -118,6 +119,21 @@ public sealed partial record PortraitPackOffer(string Tag, string Asset, long Si
             return null;
         }
 
+        try
+        {
+            return Read(root, out warning);
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            // JsonObject builds its key lookup on the first read and throws on a repeated key ("tag" twice).
+            warning = "portrait pack offer repeats a key";
+            return null;
+        }
+    }
+
+    private static PortraitPackOffer? Read(JsonObject root, out string? warning)
+    {
+        warning = null;
         var tag = Text(root["tag"]);
         if (string.IsNullOrEmpty(tag))
         {

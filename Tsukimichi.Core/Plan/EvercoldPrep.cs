@@ -196,13 +196,27 @@ public static class EvercoldPrep
     }
 
     /// <summary>
-    /// The card is over: the game data holds the launching expansion (8.0 data), or <paramref name="nowUtc"/> is on or
-    /// past its early access day.
+    /// The card is over: the game data holds the launching expansion (8.0 data), or the player's own date in
+    /// <paramref name="zone"/> (<see cref="TimeZoneInfo.Local"/> in the plugin) has reached the early access day the card
+    /// names (<see cref="EarlyAccessDay"/>). So "early access 22 Jan" shows through the player's 21 January wherever
+    /// they are, never going at 16:00 on the 21st in UTC-8.
     /// </summary>
-    public static bool IsRetired(QuestCatalog catalog, ExpansionLaunch launch, DateTime nowUtc)
+    public static bool IsRetired(QuestCatalog catalog, ExpansionLaunch launch, DateTime nowUtc, TimeZoneInfo zone)
     {
         ArgumentNullException.ThrowIfNull(launch);
-        return LatestExpansion(catalog) >= launch.Expansion || Utc(nowUtc) >= Utc(launch.EarlyAccessUtc);
+        ArgumentNullException.ThrowIfNull(zone);
+        return LatestExpansion(catalog) >= launch.Expansion
+            || TimeZoneInfo.ConvertTimeFromUtc(Utc(nowUtc), zone).Date >= EarlyAccessDay(launch);
+    }
+
+    /// <summary>
+    /// The early access day as a calendar day (<see cref="DateTimeKind.Unspecified"/>): the day the card prints and
+    /// retires on, read in the player's own zone and never converted (curated data stores it as that day's UTC midnight).
+    /// </summary>
+    public static DateTime EarlyAccessDay(ExpansionLaunch launch)
+    {
+        ArgumentNullException.ThrowIfNull(launch);
+        return DateTime.SpecifyKind(launch.EarlyAccessUtc.Date, DateTimeKind.Unspecified);
     }
 
     /// <summary>
@@ -445,7 +459,8 @@ public sealed record PrepCardLine(PrepLine Line, PrepCheck Check);
 /// The Before Evercold card's shape (spec-1.20 N7, "Check-offs"): the lines left open when it was built, each with its
 /// check, and the done lines folded into one "Done: …" line in the table's order. Nothing moves while the player looks:
 /// <see cref="Update"/> changes only the checks of the open lines (a tick reads "you said so", a line the game says is
-/// done reads checked without it); only <see cref="Build"/> (a new selection, session or character) folds what is done.
+/// done reads checked without it); only <see cref="Build"/> (a new selection, session or character) folds what the game
+/// says is done. A ticked line never folds: it stays open, checked, so it can be unticked.
 /// No tallies. Immutable.
 /// </summary>
 public sealed class PrepCard
@@ -458,16 +473,19 @@ public sealed class PrepCard
         Done = done;
     }
 
-    /// <summary>The lines left to do when the card was built, in the table's order.</summary>
+    /// <summary>The lines not done by the game when the card was built (ticked ones included), in the table's order.</summary>
     public IReadOnlyList<PrepCardLine> Open { get; }
 
-    /// <summary>The lines done when the card was built (by the game or a tick), in the table's order: the fold line.</summary>
+    /// <summary>The lines the game said were done when the card was built, in the table's order: the fold line.</summary>
     public IReadOnlyList<PrepLineKind> Done { get; }
 
     /// <summary>Nothing left when the card was built: "Ready for Evercold. Nothing left on Michiru."</summary>
     public bool AllDone => Open.Count == 0;
 
-    /// <summary>Builds the card: a line done by the game or ticked by the player folds; the rest stay open.</summary>
+    /// <summary>
+    /// Builds the card: a line the game says is done folds; the rest stay open, a ticked one checked "you said so". A
+    /// tick never folds, so a mis-tick can always be unticked where it is (spec-1.20 N7: "Clicking again unticks it").
+    /// </summary>
     public static PrepCard Build(IReadOnlyList<PrepLine> lines, IReadOnlySet<PrepLineKind> ticked)
     {
         ArgumentNullException.ThrowIfNull(lines);
@@ -476,13 +494,13 @@ public sealed class PrepCard
         var done = new List<PrepLineKind>();
         foreach (var line in lines.OrderBy(static l => l.Kind))
         {
-            if (line.Done || ticked.Contains(line.Kind))
+            if (line.Done)
             {
                 done.Add(line.Kind);
             }
             else
             {
-                open.Add(new PrepCardLine(line, PrepCheck.Open));
+                open.Add(new PrepCardLine(line, ticked.Contains(line.Kind) ? PrepCheck.You : PrepCheck.Open));
             }
         }
 

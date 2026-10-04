@@ -15,7 +15,8 @@ public sealed partial class TonightCard
 
     private void DrawBeforeEvercold()
     {
-        if (Evercold is not { } card)
+        // The Characters tab already shows the card on its dashboard this frame: one copy, so × leaves as one card.
+        if (Evercold is not { } card || card.DashboardFrame == ImGui.GetFrameCount())
         {
             return;
         }

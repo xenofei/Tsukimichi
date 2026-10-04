@@ -93,6 +93,9 @@ public sealed partial class PortraitPackStore
         Root = Path.GetFullPath(root);
     }
 
+    /// <summary>A test's hook: runs just before the extracted pack is renamed into place (another game client racing it).</summary>
+    internal Action? BeforeSwap { get; set; }
+
     /// <summary>The <c>portraits</c> folder (full path).</summary>
     public string Root { get; }
 
@@ -103,12 +106,15 @@ public sealed partial class PortraitPackStore
 
     /// <summary>
     /// The installed pack, or null. <paramref name="damaged"/> is true when <c>current.json</c> names a pack that is not
-    /// whole (its folder or manifest gone or unreadable, or a manifest this build cannot read): the Settings row then
-    /// offers to download it again or remove it.
+    /// whole (its folder or manifest gone or unreadable, a manifest this build cannot read, or an image the manifest
+    /// lists missing or empty): the Settings row then offers to download it again or remove it. Reads one directory
+    /// listing, not every file, so it is quick on the load worker; <paramref name="cancellation"/> (the plugin
+    /// unloading) stops it with <see cref="OperationCanceledException"/>.
     /// </summary>
-    public PortraitPack? Load(out bool damaged)
+    public PortraitPack? Load(out bool damaged, CancellationToken cancellation = default)
     {
         damaged = false;
+        cancellation.ThrowIfCancellationRequested();
         try
         {
             if (!File.Exists(CurrentFile))
@@ -142,7 +148,27 @@ public sealed partial class PortraitPackStore
                 return null;
             }
 
-            return new PortraitPack(path, manifest, sha, tag, installed, FolderBytes(path));
+            // Every image the manifest lists is there and not empty (the manifest records hashes, not sizes; the
+            // hashes were checked at install, and a hash of every image here would read the whole pack at each start).
+            var sizes = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+            long bytes = 0;
+            foreach (var file in new DirectoryInfo(path).EnumerateFiles())
+            {
+                cancellation.ThrowIfCancellationRequested();
+                sizes[file.Name] = file.Length;
+                bytes += file.Length;
+            }
+
+            foreach (var name in manifest.Files.Keys)
+            {
+                if (!sizes.TryGetValue(name, out var size) || size <= 0)
+                {
+                    damaged = true;
+                    return null;
+                }
+            }
+
+            return new PortraitPack(path, manifest, sha, tag, installed, bytes);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException or InvalidOperationException)
         {
@@ -156,7 +182,8 @@ public sealed partial class PortraitPackStore
     /// SHA-256 against <paramref name="offer"/> on that same handle, extracts it from that handle into a staging folder
     /// (<see cref="PortraitPackArchive.Extract(ZipArchive, string, CancellationToken, out PortraitPackManifest?, out string?)"/>),
     /// renames that into place and names it in <c>current.json</c>. So the bytes extracted are the bytes checked. On any
-    /// failure the pack in use stays as it was and the staging folder is deleted.
+    /// failure the pack in use stays as it was and the staging folder is deleted. Another game client that renamed the
+    /// same pack into place first is not a failure: its folder is used.
     /// </summary>
     public PortraitPackFailure Install(string zipPath, PortraitPackOffer offer, CancellationToken cancellation, out PortraitPack? pack, out string? detail)
     {
@@ -208,7 +235,17 @@ public sealed partial class PortraitPackStore
                 TryDeleteFolder(aside);
             }
 
-            Directory.Move(staging, final);
+            BeforeSwap?.Invoke();
+            try
+            {
+                Directory.Move(staging, final);
+            }
+            catch (IOException) when (SamePack(final, staging, manifest))
+            {
+                // Another game client installed this same pack in the moment since the check above: it is in place,
+                // whole and byte for byte what was just checked, so this install is done (staging goes below).
+            }
+
             var now = DateTime.UtcNow;
             WriteCurrent(folder, offer.Sha256, offer.Tag, now);
             pack = new PortraitPack(final, manifest, offer.Sha256, offer.Tag, now, FolderBytes(final));
@@ -358,6 +395,38 @@ public sealed partial class PortraitPackStore
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             // Left for the next clean-up.
+        }
+    }
+
+    /// <summary>
+    /// Whether <paramref name="final"/> holds the very pack extracted into <paramref name="staging"/>: the same manifest
+    /// bytes (so the same zip, its folder named by that zip's hash) and every image it lists, each the same size.
+    /// </summary>
+    private static bool SamePack(string final, string staging, PortraitPackManifest manifest)
+    {
+        try
+        {
+            var manifestFile = Path.Combine(final, PortraitPackManifest.FileName);
+            if (!File.Exists(manifestFile)
+                || !File.ReadAllBytes(manifestFile).AsSpan().SequenceEqual(File.ReadAllBytes(Path.Combine(staging, PortraitPackManifest.FileName))))
+            {
+                return false;
+            }
+
+            foreach (var name in manifest.Files.Keys)
+            {
+                var installed = new FileInfo(Path.Combine(final, name));
+                if (!installed.Exists || installed.Length != new FileInfo(Path.Combine(staging, name)).Length)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
         }
     }
 

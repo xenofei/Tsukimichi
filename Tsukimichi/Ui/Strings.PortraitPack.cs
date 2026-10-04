@@ -66,6 +66,14 @@ static partial class Strings
 
     public static string PackFailedDisk => Loc.Get("Pack.FailedDisk");
 
+    public static string PackStatusUpdateFailed => Loc.Get("Pack.StatusUpdateFailed");
+
+    public static string PackUpdateKeepsWorking => Loc.Get("Pack.UpdateKeepsWorking");
+
+    public static string PackStatusRemoveFailed => Loc.Get("Pack.StatusRemoveFailed");
+
+    public static string PackLineRemoveFailed => Loc.Get("Pack.LineRemoveFailed");
+
     public static string PackStatusDamaged => Loc.Get("Pack.StatusDamaged");
 
     public static string PackLineDamaged => Loc.Get("Pack.LineDamaged");
