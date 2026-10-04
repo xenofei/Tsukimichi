@@ -20,7 +20,8 @@ public enum PortraitPackPhase : byte
 /// The optional portrait pack (feature plan v7 F4, decision 8): what this build offers
 /// (<see cref="PortraitPackOffer"/>, shipped in <c>Data/portrait_pack.json</c>), the installed pack, and the download,
 /// install and removal, each on a worker so the framework thread never waits. Nothing here touches the network until
-/// <see cref="StartDownload"/>, which only the Settings confirmation calls. At load the installed pack is read and what an
+/// <see cref="StartDownload"/>, which only the player's click calls: Download in the Settings confirmation, or Download
+/// portraits in the first-run offer (<c>Ui/PortraitPackOfferWindow.cs</c>). At load the installed pack is read and what an
 /// interrupted run left is cleaned up, off the frame. State is read by the Settings row every frame; it is written by
 /// the worker, so every field is volatile or swapped whole.
 /// </summary>
@@ -36,6 +37,7 @@ public sealed class PortraitPackService : IDisposable
     private CancellationTokenSource? running;
     private volatile PortraitPack? installed;
     private volatile bool damaged;
+    private volatile bool loaded;
     private volatile int phase;
     private long received;
     private volatile bool disposed;
@@ -74,6 +76,9 @@ public sealed class PortraitPackService : IDisposable
 
     /// <summary>The installed pack; null while none is (or while it loads at start).</summary>
     public PortraitPack? Installed => installed;
+
+    /// <summary>The installed pack has been read at start (<see cref="LoadAsync"/>): only then does no pack mean none is installed.</summary>
+    public bool Loaded => loaded;
 
     /// <summary>Where things stand for the Settings row.</summary>
     public PortraitPackState State => PortraitPackStatus.Of(Offer, installed, damaged);
@@ -141,6 +146,7 @@ public sealed class PortraitPackService : IDisposable
 
                     installed = pack;
                     damaged = broken;
+                    loaded = true;
                     if (broken)
                     {
                         log.Warning("Portrait pack: the installed pack is incomplete; Settings offers to download it again or remove it");
@@ -169,7 +175,7 @@ public sealed class PortraitPackService : IDisposable
 
     /// <summary>
     /// Downloads, checks and installs the offered pack on a worker. The one place the plugin goes online: call it only
-    /// from the player's confirmation. False when nothing is offered or a run is already going.
+    /// from the player's click (the Settings confirmation, or the first-run offer). False when nothing is offered or a run is already going.
     /// <paramref name="askedForPack"/>: the player opened the confirmation by picking Game art + pack, so Giver portraits
     /// switches to it once the pack is in, even over an installed or damaged one.
     /// </summary>

@@ -18,7 +18,7 @@ namespace Tsukimichi.Ui;
 public sealed partial class ConfigWindow
 {
     /// <summary>The whole statement, on the repository's main branch.</summary>
-    private const string PrivacyStatementUrl = "https://github.com/xenofei/Tsukimichi/blob/main/docs/privacy.md";
+    internal const string PrivacyStatementUrl = "https://github.com/xenofei/Tsukimichi/blob/main/docs/privacy.md";
 
     private const double FingerprintCopiedSeconds = 3.0;
 

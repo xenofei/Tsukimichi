@@ -25,6 +25,9 @@ public sealed partial class ConfigWindow
     /// <summary>The portrait pack service; set by the plugin. Null hides the row.</summary>
     public PortraitPackService? PortraitPack { get; set; }
 
+    /// <summary>Settings' download confirmation is open: the first-run offer waits until it is gone.</summary>
+    internal bool PackDialogShowing => packDialogOpen && IsOpen;
+
     private const float PackActionsLogical = 210f;
     private const float PackDialogWidthLogical = 470f;
     private const float PackNarrowLogical = 400f;
@@ -47,7 +50,7 @@ public sealed partial class ConfigWindow
     private static readonly Localization.LocText packRemoveHoldText = new(static () => Strings.PackRemoveHold + Chrome.HoldIdSuffix);
 
     /// <summary>The 1.17 Settings hint's dot: amber, and a darker one on Ishgard Snow for 3:1 (spec-1.20 F4, "--hint").</summary>
-    private static Vector4 PackHintDot => Theme.IsLight ? new Vector4(0x8E / 255f, 0x6A / 255f, 0x1E / 255f, 1f) : new Vector4(0xC9 / 255f, 0xA8 / 255f, 0x66 / 255f, 1f);
+    internal static Vector4 PackHintDot => Theme.IsLight ? new Vector4(0x8E / 255f, 0x6A / 255f, 0x1E / 255f, 1f) : new Vector4(0xC9 / 255f, 0xA8 / 255f, 0x66 / 255f, 1f);
 
     /// <summary>
     /// Opens the download confirmation (Download…, Update…, Download again…, or Game art + pack without the pack:
@@ -259,18 +262,7 @@ public sealed partial class ConfigWindow
                     : new PackRow(Strings.PackStatusCancelled, Strings.PackLineCancelled, null, null, false, Strings.PackDownload, PackAct.Confirm, null, PackAct.None);
             }
 
-            var reason = failure switch
-            {
-                PortraitPackFailure.Offline => Strings.PackFailedOffline,
-                PortraitPackFailure.HashMismatch => Strings.PackFailedHash,
-                PortraitPackFailure.DiskFull => string.Format(c, Strings.PackFailedDiskFull, Size(offer.Size)),
-                PortraitPackFailure.NotFound => Strings.PackFailedNotFound,
-                PortraitPackFailure.Redirected => Strings.PackFailedRedirected,
-                PortraitPackFailure.TooLarge or PortraitPackFailure.SizeMismatch => Strings.PackFailedSize,
-                PortraitPackFailure.BadArchive or PortraitPackFailure.UnsafeEntry or PortraitPackFailure.BadManifest or PortraitPackFailure.BadImage => Strings.PackFailedChecks,
-                PortraitPackFailure.DiskError => Strings.PackFailedDisk,
-                _ => Strings.PackFailedHttp,
-            };
+            var reason = PackFailureReason(failure, offer);
             var copy = failure is PortraitPackFailure.HashMismatch or PortraitPackFailure.SizeMismatch or PortraitPackFailure.TooLarge;
             return new PackRow(update ? Strings.PackStatusUpdateFailed : Strings.PackStatusFailed, reason, keeps, null, true, Strings.PackTryAgain, PackAct.Retry, copy ? Strings.PackCopyReport : null, copy ? PackAct.CopyReport : PackAct.None);
         }
@@ -302,6 +294,20 @@ public sealed partial class ConfigWindow
                 return new PackRow(Strings.PackStatusNotOffered, Strings.PackLineNotOffered, null, null, false, null, PackAct.None, null, PackAct.None);
         }
     }
+
+    /// <summary>Why a download failed, with what was kept (spec-1.20 F4's error table); the first-run offer says the same.</summary>
+    internal static string PackFailureReason(PortraitPackFailure failure, PortraitPackOffer offer) => failure switch
+    {
+        PortraitPackFailure.Offline => Strings.PackFailedOffline,
+        PortraitPackFailure.HashMismatch => Strings.PackFailedHash,
+        PortraitPackFailure.DiskFull => string.Format(CultureInfo.CurrentCulture, Strings.PackFailedDiskFull, PortraitPackOffer.SizeText(offer.Size)),
+        PortraitPackFailure.NotFound => Strings.PackFailedNotFound,
+        PortraitPackFailure.Redirected => Strings.PackFailedRedirected,
+        PortraitPackFailure.TooLarge or PortraitPackFailure.SizeMismatch => Strings.PackFailedSize,
+        PortraitPackFailure.BadArchive or PortraitPackFailure.UnsafeEntry or PortraitPackFailure.BadManifest or PortraitPackFailure.BadImage => Strings.PackFailedChecks,
+        PortraitPackFailure.DiskError => Strings.PackFailedDisk,
+        _ => Strings.PackFailedHttp,
+    };
 
     /// <summary>The installed row's Tertiary slot: not in use, or built for an older game (it still works).</summary>
     private string? InstalledNote(PortraitPackService service, PortraitPack installed)
@@ -506,8 +512,8 @@ public sealed partial class ConfigWindow
         }
     }
 
-    /// <summary>One fact of the confirmation: the key in Tertiary, the value in Text, the aside in Secondary.</summary>
-    private static void Fact(string key, string value, string aside, float keyWidth, SurfaceColors s)
+    /// <summary>One fact of the confirmation (and the first-run offer): the key in Tertiary, the value in Text, the aside in Secondary.</summary>
+    internal static void Fact(string key, string value, string aside, float keyWidth, SurfaceColors s)
     {
         var start = ImGui.GetCursorPosX();
         using (Theme.PushText(s.TextTertiary))
