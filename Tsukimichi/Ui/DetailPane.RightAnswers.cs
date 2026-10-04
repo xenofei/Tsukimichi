@@ -16,19 +16,18 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// "Right answers" (feature plan v7, 1.19.0) in the detail pane. Under the hero: what the game's own offers say when it
-/// matters (C1: the game confirms a quest Tsukimichi could not check, or offered one Tsukimichi reads as not
-/// available) and "Your journal is full" on a quest that could be taken (C9). Under the unmet Job requirement (spec-1.19
-/// C8): "Switch gearset: Culinarian" for a quest that requires one class or job the current one is not, an explicit pill
+/// "Right answers" (feature plan v7, 1.19.0) in the detail pane. Under the unmet Job requirement (spec-1.19 C8):
+/// "Switch gearset: Culinarian" for a quest that requires one class or job the current one is not, an explicit pill
 /// running the game's gearset change, or "No Culinarian gearset saved". Under the EXP amount, with the job's icon:
-/// "Hand in on DRG Lv 56: 50,700 EXP (5% of a level) · your SGE is capped, 0" (C8). Each line is rebuilt when the
-/// quest, the session, the offers or the language change, so drawing allocates nothing.
+/// "Hand in on DRG Lv 56: 50,700 EXP (5% of a level) · your SGE is capped, 0" (C8). What the game's own offers say (C1)
+/// and the full journal (C9) are in the hero and the disagreement card (DetailPane.GameAnswers.cs). Each line is rebuilt
+/// when the quest, the session, the offers or the language change, so drawing allocates nothing.
 /// </summary>
 public sealed partial class DetailPane
 {
     private static readonly string GearsetIcon = FontAwesomeIcon.Tshirt.ToIconString();
 
-    /// <summary>The game's own offers (C1); null leaves the line out.</summary>
+    /// <summary>The game's own offers (C1); their version moves the lines' key.</summary>
     public OfferObserver? Offers { get; set; }
 
     /// <summary>The gearset switch (C8); null leaves the button out.</summary>
@@ -41,9 +40,6 @@ public sealed partial class DetailPane
     private int rightLanguage = -1;
     private long rightMinute = -1;
 
-    private string? gameOfferLine;
-    private bool gameOfferDisagrees;
-    private string? journalFullLine;
     private string expAdviceLine = string.Empty;
     private bool expAdviceWarns;
     private byte expAdviceJob;
@@ -76,11 +72,6 @@ public sealed partial class DetailPane
         rightQuest = quest;
 
         session.States.TryGetValue(quest.RowId, out var evaluation);
-        var check = Offers?.Check(quest, evaluation) ?? GameOfferCheck.Nothing;
-        gameOfferLine = GameOfferChecks.DetailLine(check, DateTime.UtcNow);
-        gameOfferDisagrees = check.Verdict == GameOfferVerdict.Disagrees;
-
-        journalFullLine = null;
         expAdviceLine = string.Empty;
         expAdviceWarns = false;
         expAdviceJob = 0;
@@ -89,12 +80,6 @@ public sealed partial class DetailPane
         if (session.ViewedSnapshot is not { } snapshot || session.Bundle is not { } bundle || evaluation is null)
         {
             return;
-        }
-
-        if (evaluation.State is QuestState.Ready or QuestState.ReadyOnOtherJob
-            && JournalSlots.Of(snapshot, bundle.Catalog).Room == JournalRoom.Full)
-        {
-            journalFullLine = Strings.JournalFullReadyLine;
         }
 
         gearsetNeeded = session.IsLive && GearsetChoice.Needed(quest, snapshot, session.Context, evaluation.State);
@@ -106,35 +91,14 @@ public sealed partial class DetailPane
         }
     }
 
-    /// <summary>Under the hero: the game's word on the quest, the full journal, and Switch gearset.</summary>
+    /// <summary>
+    /// Refreshes the C8 lines for the quest on view. Switch gearset draws under the Job requirement; what the game's
+    /// offers say and the full journal are in the hero and the disagreement card (spec-1.19 C1 and C9,
+    /// DetailPane.GameAnswers.cs).
+    /// </summary>
     private void DrawRightAnswers(SessionState session, QuestRecord quest)
     {
         RefreshRightAnswers(session, quest);
-        if (gameOfferLine is { } offer)
-        {
-            using (Theme.PushText(gameOfferDisagrees ? Theme.Surface.Text : Theme.Surface.TextSecondary))
-            {
-                TextFlow.Wrapped(offer, RoomTo(bodyRight));
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(gameOfferDisagrees ? Strings.GameOfferDisagreesTooltip : Strings.GameOfferTooltip);
-            }
-        }
-
-        if (journalFullLine is { } full)
-        {
-            using (Theme.PushText(Theme.Surface.Text))
-            {
-                TextFlow.Wrapped(full, RoomTo(bodyRight));
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.JournalFullReadyTooltip);
-            }
-        }
     }
 
     /// <summary>

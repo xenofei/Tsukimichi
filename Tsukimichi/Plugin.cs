@@ -475,6 +475,7 @@ public sealed partial class Plugin : IDalamudPlugin
         MigrateCharacterSettings();
         CharacterBook.Changed += OnCharacterSettingsChanged;
         Session.SetGateMarks(CharacterBook.GatesDoneByCharacter());
+        Session.SetGoWithGame(CharacterBook.GoWithGameByCharacter());
         Roster = new Game.CharacterRoster(Session, CharacterBook, DataManager, Log);
         // "Don't track this character": nothing of it is written while it is logged in.
         Snapshots.IsTracked = CharacterBook.IsTracked;
@@ -684,8 +685,8 @@ public sealed partial class Plugin : IDalamudPlugin
         }
 
         Session?.SetGateMarks(CharacterBook.GatesDoneByCharacter());
+        Session?.SetGoWithGame(CharacterBook.GoWithGameByCharacter());
     }
-
 
     /// <summary>
     /// A forgotten character takes its own settings with it (spoiler override, notices, Compare), except hidden and not

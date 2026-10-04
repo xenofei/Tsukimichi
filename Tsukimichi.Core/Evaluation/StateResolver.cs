@@ -190,7 +190,34 @@ public static class StateResolver
             evaluation = evaluation with { RepeatableDoneBefore = true };
         }
 
-        return evaluation;
+        return WithGameAnswer(q, s, ctx, evaluation);
+    }
+
+    /// <summary>
+    /// The game's answer over Tsukimichi's (feature plan v7 C1): the player's "Go with the game" turns a quest Tsukimichi
+    /// reads Blocked, Locked out or Not checked Ready; the game's own offer turns a Not checked one Ready. Never a
+    /// completed quest, one in the journal or a repeatable one (whose offer moves with the cycle). Tsukimichi's own
+    /// answer is kept in <see cref="QuestEvaluation.Own"/>, so the disagreement can still be told.
+    /// </summary>
+    private static QuestEvaluation WithGameAnswer(QuestRecord q, CharacterSnapshot s, EvalContext ctx, QuestEvaluation evaluation)
+    {
+        if (q.IsRepeatable || evaluation.State is not (QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown))
+        {
+            return evaluation;
+        }
+
+        var answer = ctx.GoWithGame(s.ContentId, q.RowId) ? GameAnswer.Override
+            : evaluation.State == QuestState.Unknown && ctx.GameOffered(s.ContentId, q.RowId) ? GameAnswer.Offered
+            : GameAnswer.None;
+        return answer == GameAnswer.None
+            ? evaluation
+            : new QuestEvaluation(QuestState.Ready, evaluation.Requirements, null, null, null)
+            {
+                IsSpareAlternative = evaluation.IsSpareAlternative,
+                ChoiceOf = evaluation.ChoiceOf,
+                ByGame = answer,
+                Own = evaluation,
+            };
     }
 
     private static QuestEvaluation ResolveRules(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast, PathChoice paths)

@@ -305,6 +305,8 @@ public sealed partial class DetailPane
             MoonRoadDivider();
         }
 
+        // The game offered a quest Tsukimichi reads Blocked (1.19.0, C1): the card above Requirements, the player picks.
+        DrawGameDisagreement(session, quest);
         Gap();
         var start = ImGui.GetCursorScreenPos();
         BeginSection("##requirements", Strings.Requirements, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.DangerText : model.CantCheckCount > 0 ? Theme.Surface.TextTertiary : Theme.Surface.TextSecondary);
@@ -1288,6 +1290,7 @@ public sealed partial class DetailPane
         var prefix = model.StateName + BlockerText.Separator;
         model.StatusReason = status.StartsWith(prefix, StringComparison.Ordinal) ? status[prefix.Length..] : status == model.StateName ? string.Empty : status;
         model.StatusTail = model.StatusReason.Length > 0 ? BlockerText.Separator + model.StatusReason : string.Empty;
+        ApplyJournalFull(session, bundle, evaluation);
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
         model.JournalSegments = quest.IsUnlisted ? [Strings.RemovedFromGame] : [quest.Journal.GenreName, quest.Journal.CategoryName];
