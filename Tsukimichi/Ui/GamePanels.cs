@@ -59,6 +59,13 @@ public sealed class GamePanels : IDisposable
         uiBuilder.Draw += journalPanel.Draw;
     }
 
+    /// <summary>Each quest the quest offer window was found to offer (<see cref="QuestOfferHint.Identified"/>).</summary>
+    public Action<uint>? OfferIdentified
+    {
+        get => offer.Identified;
+        set => offer.Identified = value;
+    }
+
     /// <summary>Hands Settings › Integrations the three toggles.</summary>
     public void Attach(ConfigWindow config)
     {

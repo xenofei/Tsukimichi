@@ -244,6 +244,10 @@ public sealed class GameStateReader
             }
         }
 
+        // The journal's slots in use (feature plan v7, C9): every quest in NormalQuests takes one, the dailies' own
+        // array does not.
+        var journalSlots = (byte)Math.Min(accepted.Count, byte.MaxValue);
+
         // Allied society dailies live in their own 12-slot array (DailyQuestWork: QuestId and Flags only, no step),
         // which holds the dailies accepted today, not the day's offer. One still in progress is in the journal and
         // joins Accepted with step 0; one already turned in keeps its slot with the completed flag and is done this cycle.
@@ -357,6 +361,7 @@ public sealed class GameStateReader
             TakenUtc = DateTime.UtcNow,
             CompletedBits = completedBits,
             Accepted = accepted,
+            JournalSlotsUsed = journalSlots,
             DailyDone = dailyDone,
             RepeatFlags = repeatFlags,
             JobLevels = jobLevels,
