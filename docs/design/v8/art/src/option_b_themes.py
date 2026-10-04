@@ -252,7 +252,7 @@ def ishgard(px):
     reg[blur(M["lantern"], 1.5) > 0.25] = 9
     sky_l, _ = jitter_labels(h, w, 48, 901)
     cl_l, _ = jitter_labels(h, w, 44, 902)
-    far_l = np.floor((no_cut_x(xx) + 50 * fbm(h, w, 80, 2, 903)) / 150).astype(np.int64)
+    far_l = np.floor((no_cut_x(xx) + 18 * np.sin(yy / 41.0)) / 150).astype(np.int64)   # gently curved joins, never loops
     city_l = np.where(yy > h * CFG["bluff_split"], np.floor(xx / 90).astype(np.int64), 100 + np.floor(xx / 70).astype(np.int64))
     parts = {0: sky_l, 1: cl_l, 2: far_l, 3: city_l,
              4: contour_strips(h, w, top_row(M["field"]), 904, 1.0, 150, 30), 5: contour_strips(h, w, top_row(M["ridge"]), 905, 0.8, 230, 40),
@@ -270,7 +270,9 @@ def ishgard(px):
     regc = (uniq[uniq2] // 10_000_000).astype(int)
     col, cnt = label_mean(px, lab, len(uniq2))
     cl = col @ LUM
-    for rid, hexes in SUB.items():
+    sub = dict(SUB)
+    sub.update({int(k): v for k, v in CFG.get("glass_palette", {}).items()})   # per-release ground glass
+    for rid, hexes in sub.items():
         pal = np.stack([hexc(x) for x in hexes])
         sel = (regc == rid) & (cnt > 0)
         if sel.any():
@@ -288,6 +290,8 @@ def ishgard(px):
     glass = 1 - (1 - glass) * (1 - np.array([1.0, 0.92, 0.84], np.float32) * (blur(np.clip(lum(glass) - 0.6, 0, 1), 4) * 0.25)[..., None])
     L = lum(px)
     gris = np.clip(-highpass(L, 2.0) * 3.5, 0, 0.75) * (np.maximum(M["city"], M["figs"]) > 0.3)
+    ground = np.maximum(M["field"], M["ridge"]) * (1 - M["figs"])                 # paths and roads, painted lightly on the ground glass
+    gris = np.maximum(gris, np.clip(np.abs(highpass(L, 3.0)) * 5 - 0.08, 0, 0.55) * ground)
     glass = glass * (1 - gris[..., None] * 0.8)
     came = np.clip(blur(edges(lab).astype(np.float32), 0.6) * 2.2, 0, 1)
     glass = glass * (1 - came[..., None]) + hexc("#202430") * came[..., None]
@@ -361,7 +365,7 @@ def orrery(px):
     # the dawn: the enamel lightens low behind the city, toward the sun's glow
     gx, gy = CFG["sun_glow"][0] * w, CFG["sun_glow"][1] * h
     dawn = np.exp(-((yy - gy) / (0.11 * h)) ** 2) * np.exp(-((xx - gx) / (0.30 * w)) ** 2)
-    enamel = enamel + (hexc("#7A86C0") - enamel) * (dawn * 0.75)[..., None]
+    enamel = enamel + (hexc("#7A86C0") - enamel) * (dawn * CFG.get("dawn", 0.75))[..., None]
     plate = silver * (1 - sky[..., None]) + enamel * sky[..., None]
     dark = np.clip(1.05 - L * 1.9, 0, 1)
 
@@ -409,6 +413,7 @@ def orrery(px):
     plate = plate + (hexc("#E4E7EE") - plate) * (stars * 0.9)[..., None]
     # brass inlay: the dawn as three short brass lines low behind the city, the crescent, the rete and the limb
     dl_ = lines(yy - gy, 5.0, 0.3) * (np.abs(yy - gy - 0.02 * h) < 0.05 * h) * np.exp(-((xx - gx) / (0.22 * w)) ** 2) * sky
+    dl_ = dl_ * (1.0 if CFG.get("dawn_lines", True) else 0.0)                      # no dawn lines in a moonlit night
     plate = plate + (hexc("#D9B86E") - plate) * (dl_ * 0.55)[..., None]
     plate = plate * (1 - M["moon"][..., None]) + hexc("#1E2D66") * M["moon"][..., None]
     plate = plate * (1 - M["moonlit"][..., None]) + hexc("#E6CC90") * M["moonlit"][..., None]
@@ -434,7 +439,8 @@ def orrery(px):
     dl.line([(0, 26), (w * 2, 26)], fill=255, width=2)
     limb = np.asarray(limb.resize((w, h), Image.LANCZOS), np.float32) / 255.0
     plate = plate * (1 - limb[..., None] * 0.8) + hexc("#D9B86E") * (limb[..., None] * 0.8)
-    plate = 1 - (1 - plate) * (1 - hexc("#FFD48E") * (blur(M["lantern"], 1.5) * 1.3).clip(0, 1)[..., None])
+    lan = blur(M["lantern"], 0.8)[..., None]                                      # the practical light, a warm brass inlay
+    plate = plate * (1 - lan) + hexc("#E8C47A") * lan
     return plate
 
 
@@ -488,6 +494,9 @@ def sumi(px):
     shadow = np.clip((0.45 - L) * 2, 0, 1) * rid * (1 - M["figs"]) * (dd > th + 4)
     ink = np.maximum(ink, blur(shadow, 1.5) * 0.18)
     ink = np.maximum(ink, M["figs"] * 0.95)
+    # paths and roads: light brush lines where the painting has a clear edge on the ground
+    ground = np.maximum(M["field"], M["ridge"]) * (1 - M["figs"])
+    ink = np.maximum(ink, blur(np.clip(np.abs(highpass(L, 3.0)) * 7 - 0.12, 0, 1), 0.6) * ground * 0.5)
     p = paper * (1 - ink[..., None] * 0.93) + hexc("#16130F") * (ink[..., None] * 0.07)
     leaf = hexc("#C9A24E")[None, None, :] * (0.9 + 0.2 * fbm(h, w, 4, 2, 1105))[..., None]
     band = np.zeros((h, w), np.float32)
@@ -515,7 +524,7 @@ def sumi(px):
     p = p * (1 - kiri[..., None]) + hexc("#E2BE68") * kiri[..., None]
     p = p * (1 - M["moonlit"][..., None]) + hexc("#E6C878") * M["moonlit"][..., None]
     lan = blur(M["lantern"], 1.0)
-    p = p * (1 - lan[..., None]) + hexc("#D2562E") * lan[..., None]
+    p = p * (1 - lan[..., None]) + hexc(CFG.get("sumi_light", "#D2562E")) * lan[..., None]   # one touch for the practical light
     ly_, lx_ = np.where(M["lantern"] > 0.5)
     if len(lx_):                                                                  # a 1 px ink bail up to her hand
         cx_, top_ = int(round(lx_.mean())), int(ly_.min())

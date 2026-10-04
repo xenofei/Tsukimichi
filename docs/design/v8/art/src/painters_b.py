@@ -22,8 +22,18 @@ def _evercold():
     return paint()
 
 
+def _b2(name):
+    def run_():
+        import paint_option_b2
+        return getattr(paint_option_b2, name)()
+    return run_
+
+
 PAINTERS = {
-    "evercold-b": _evercold,     # 1.20.0 Before Evercold
+    "evercold-b": _evercold,       # 1.20.0 Before Evercold
+    "welcome-b": _b2("welcome"),   # 1.22.0 Welcome home
+    "whatnext-b": _b2("whatnext"),  # 1.21.0 What next, for every character
+    "answers-b": _b2("answers"),   # 1.19.0 Right answers
 }
 
 

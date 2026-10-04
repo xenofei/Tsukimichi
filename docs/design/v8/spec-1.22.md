@@ -39,8 +39,8 @@ Everything is under `docs/design/v8/`.
 | `whatsnew-answers-1.22.png` | W1/W2: the popup on page 4 of 4, 1.19.0 Right answers, in all six themes |
 | `whatsnew-states-1.22.png` | W1: page 1 of 4 (1.22.0 Welcome home) at Full, Quiet, Plain, one release (no pager), Text size 150 % on a page that fits and on one that scrolls, and the size and timing table |
 | `release-art-1.22.png` | W2: the four paintings with their six restyles each, and the grade and motif table |
-| `release-art-option-b-1.22.png` | Decision 1: 1.20.0 in Option A and Option B side by side for all six themes, Option B's painting, and the cost table |
-| `art/optionb/` | Option B: the painting (`evercold-b-base.png`), its region masks (`evercold-b-masks.npz`), its placement data (`evercold-b.json`), the six lossless treatments (`evercold-b-<theme>.png`) and the shipped JPEGs (`ship/`); made by `art/src/painters_b.py` (the registry; 1.20.0's painter is `paint_option_b.py`), `option_b_themes.py` and `ship_option_b.py` |
+| `release-art-option-b-1.22.png` | Decision 1: 1.20.0 in Option A and Option B side by side for all six themes, Option B's painting, and the cost table. The What's new, states and About boards now show the Option B art, and say so in their titles; `release-art-1.22.png` stays Option A, the approved fallback, and says so. |
+| `art/optionb/` | Option B for 1.22.0, 1.21.0, 1.20.0 and 1.19.0 (`welcome-b`, `whatnext-b`, `evercold-b`, `answers-b`), each as described for 1.20.0 here: the painting (`evercold-b-base.png`), its region masks (`evercold-b-masks.npz`), its placement data (`evercold-b.json`), the six lossless treatments (`evercold-b-<theme>.png`) and the shipped JPEGs (`ship/`); made by `art/src/painters_b.py` (the registry; 1.20.0's painter is `paint_option_b.py`), `option_b_themes.py` and `ship_option_b.py` |
 | `about-history-1.22.png` | W3, U1, M3: Settings › About with Updates, What's new (backfilled) and Umbra, and the popup opened from the list |
 | `update-ready-1.22.png` | U1: the status-bar note at each level, its hover, the dot on the icon with the quick card, Dalamud's installer, and the flow |
 | `moon-icon-1.22.png` | H1: rest, hover with the quick card, the right-click menu, locked, first run, hide with Undo, the dots, Needs you, the three levels, and the behaviour table |
@@ -240,7 +240,7 @@ The owner asked for "beautiful, theme specific custom art". Option A (above) giv
 
 | Theme | Treatment |
 |---|---|
-| Medallion | Visibly oil, not the plain painting: heavier impasto (the silhouettes kept sharp), an aged amber varnish grade, brush strokes laid along the forms whose ridges catch the upper-left light (visible at 1x), faint craquelure only in the thick, light paint, a deeper vignette, and a slim gilt slip lit from the upper left and shaded on the lower right. It sits inside the popup's own brass frame, and **the popup drops its art keyline for this theme**, since the slip is the edge. No oval, so the moon stays in view. |
+| Medallion | Visibly oil, not the plain painting (strokes follow the forms; the moon is left out of the pass and redrawn in cream): heavier impasto (the silhouettes kept sharp), an aged amber varnish grade, brush strokes laid along the forms whose ridges catch the upper-left light (visible at 1x), faint craquelure only in the thick, light paint, a deeper vignette, and a slim gilt slip lit from the upper left and shaded on the lower right. It sits inside the popup's own brass frame, and **the popup drops its art keyline for this theme**, since the slip is the edge. No oval, so the moon stays in view. |
 | Classic | The painting as painted |
 | Ishgard Glass | A stained-glass window whose lead follows the drawing. Large sky pieces (cells only in the sky, sparingly), clouds cut along their own edges, the far hills and the bluff as a few large pieces, and the snow and the ridge as long strips cut parallel to their contours, never paving. The figures and spires are painted in grisaille on a few pieces. No vertical join falls inside the figures' zone, and the cloud shapes are smoothed first, so there are no tiny islands or loops. The crescent is one white piece, brighter on its lower left, with the earthshine as a separate deep-blue piece; the lantern is one amber piece. The bright pieces bloom past the lead, and two saddle bars run above the spires and below the figures. |
 | Aether Crystal | Cut moonstone over the sky and the far range only: facets shaded consistently, as on broad domed gems lit from the upper left, with the domes blended so no straight seam crosses the sky, bright edges on the lit side, and a faint blue adularescent sheen across the upper sky. The facets fade out smoothly over about 3 moon radii round the moon. The ground, the city and the figures stay clear. |
@@ -261,6 +261,13 @@ No treatment adds a light of its own. Quiet would show the Classic painting grad
 
 **Decided:** Option B for every release, 1.14.0 to 1.22.0 and every release after.
 
+**Made so far with the recipe below:** 1.22.0 Welcome home (`welcome-b`), 1.21.0 What next (`whatnext-b`), 1.20.0 Before Evercold (`evercold-b`) and 1.19.0 Right answers (`answers-b`): every page of the first popup a player on 1.18.0 or later can get. Each keeps the supervised scene brief of its Option A painting and adds depth, atmosphere and a figure where it fits:
+- **Welcome home:** a traveller on the path, coming home. The moon backlights the house, and the hall's light (the door and two windows) is the one practical light; it warms her front and the path.
+- **What next:** a traveller reading the waystone by the lantern, the afterglow low on the right, and five dim distant windows where the paths lead.
+- **Right answers:** a small traveller on the lit branch of the road, walking toward the moon. There is no practical light.
+
+Their files are in `art/optionb/`: `<key>-base.png`, `<key>-masks.npz`, `<key>.json`, `<key>-<theme>.png` and `ship/<key>-<theme>.jpg`. The painters are in `art/src/paint_option_b2.py`. 1.14.0 to 1.18.0 are left to their own artist, on the same recipe.
+
 ### Production recipe (Option B, every release)
 
 Implementers turn each release into Option B with the same pipeline. Everything runs with `py -3` from `docs/design/v8/art/src/` and needs only numpy and Pillow.
@@ -271,7 +278,13 @@ Implementers turn each release into Option B with the same pipeline. Everything 
 |---|---|
 | The painting brief | One night or twilight landscape for the release's theme, with **one natural light plus at most one warm practical light**. The subject sits right of centre, the sky has room for the moon, and the figures (if any) are small, on the near ground, kept out of the sky. Every brief goes through realism supervision before painting. |
 | The painter | One Python function per release, written in the style of `paint_option_b.paint()` and **registered by its key in `painters_b.PAINTERS`**, that returns the canvas (2240 × 880) and its **region masks** with these keys: `clouds`, `under` (the clouds' lit undersides), `moon`, `moonlit`, `far`, `city`, `cliff`, `field`, `ridge`, `figs` and `lantern`. A region a scene doesn't have is an all-zero mask: a scene with no city has a zero `city`. |
-| `<key>.json` | Placement data the treatments need, beside the painting in `art/optionb/`: `horizon`, `sun_glow` (x, y), `moon` (x, y as fractions; r in px at 1120), `figure_zone` (the x range where no glass join may fall), `figure_split` (the x between two figures), `bluff_split` (the y between buildings and cliff), `glass_bars` (two y values clear of the subject), `aether_domes` (gem centres), `sumi_bands` (x0, x1, y and half-height of each gold band, placed in empty sky and empty ground). `evercold-b.json` is the worked example. |
+| `<key>.json` | Placement data the treatments need, beside the painting in `art/optionb/`: `horizon`, `sun_glow` (x, y), `moon` (x, y as fractions; r in px at 1120), `figure_zone` (the x range where no glass join may fall), `figure_split` (the x between two figures), `bluff_split` (the y between buildings and cliff), `glass_bars` (two y values clear of the subject), `aether_domes` (gem centres), `sumi_bands` (x0, x1, y and half-height of each gold band, placed in empty sky and empty ground). Optional keys:
+- `dawn`: how much the Orrery's enamel lightens at `sun_glow`;
+- `dawn_lines`: false for a moonlit night, so there are no brass dawn lines;
+- `glass_palette`: per-region pot-metal colours (for example a moonlit sky, or night-meadow ground in place of snow);
+- `sumi_light`: the colour of Sumi's one touch for the practical light (gold for a lit door, vermilion for a lantern).
+
+`evercold-b.json` is the worked example. |
 
 **Commands:**
 
@@ -285,7 +298,7 @@ Every file is keyed by the release, so releases never overwrite each other's pai
 
 **Output and budget:**
 - **Shipped format:** six files per release, one per theme, each 1120 × 440 sRGB with no alpha (the art band's 2x tier; the 1x tier draws it at half size). JPEG quality 88, 4:4:4 chroma (no subsampling, so lead lines, engraving and gold edges stay clean), progressive. `ship_option_b.py` keeps PNG only if it is ever smaller, which it isn't for these paintings.
-- **Measured for 1.20.0:**
+- **Measured:** 1.22.0 347 KB, 1.21.0 344 KB, 1.19.0 352 KB. For 1.20.0:
 
   | Theme | Size |
   |---|---|
@@ -677,3 +690,4 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
   - **P6:** the figures' zone is derived from the `figs` mask plus 24 px, and no join is forced at its edges; pieces under 300 px² merge into a neighbour.
   - **P7:** Medallion's strokes follow the ridge, the plain, the far range, the cliff faces and the cloud edges.
   - **Nits:** Aether fades within about 30 px of the figures; the 4 MB assumption and the 5.4 MB cap are stated; Sumi's lantern has a 1 px ink bail.
+- **After round 5, step 2:** Option B made with the recipe for 1.22.0, 1.21.0 and 1.19.0 (`paint_option_b2.py`), each with its painting, masks, `<key>.json`, six treatments and shipped JPEGs. The treatments gained a few per-release keys (`dawn`, `dawn_lines`, `glass_palette`, `sumi_light`), and light brush or grisaille lines on the ground, so roads and paths read in glass and ink. The What's new, states and About boards were re-rendered with the Option B art and labelled.
