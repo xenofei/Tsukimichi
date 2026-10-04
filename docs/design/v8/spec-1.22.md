@@ -192,7 +192,12 @@ The recipe and its numbers are in `art/src/grade_release.py`, which made every t
 
 ### Art direction
 
-Every painting is **a night or twilight landscape with one natural light, plus at most one warm practical light** (a lantern, a lit door or window), wide and calm. Its subject sits right of centre. The title is printed under the art, never over it.
+Every painting is **a night or twilight landscape with one natural light, plus at most one warm practical light** (a lantern, a lit door or window), wide and calm.
+
+**The lights rule, defined:**
+- A **practical light** lights the scene: it throws a pool, warms the faces that turn to it, and casts its own shadows. At most one per painting; a lit hall seen through its door and windows is one light.
+- **Distant pinpoints** that light nothing (far windows on the horizon) are allowed. There are at most about five, each dimmer than the practical light, with no pool and no shadows.
+- **Moons** follow the approved Option A recipe: a near-full moon has its maria as joined grey chains (Procellarum and Imbrium on the left, Serenitatis to Fecunditatis down the right) and a thin unlit sliver on the side away from the sun; a crescent has a true elliptical terminator. The moon is kept out of the painterly pass, so its seas never smear into a single mark. Its subject sits right of centre. The title is printed under the art, never over it.
 
 **1.22.0 Welcome home: a door left open on a lit hall** (`art/welcome-base.png`). The first page anyone sees in 1.22.
 - **Two lights.** The near-full moon stands high on the left, in front of the viewer, so it backlights the house: the facade is in shadow, the roof's left slope and the chimney top carry a cool rim, and the house's moon shadow falls toward the viewer and right.
@@ -244,7 +249,7 @@ The owner asked for "beautiful, theme specific custom art". Option A (above) giv
 | Classic | The painting as painted |
 | Ishgard Glass | A stained-glass window whose lead follows the drawing. Large sky pieces (cells only in the sky, sparingly), clouds cut along their own edges, the far hills and the bluff as a few large pieces, and the snow and the ridge as long strips cut parallel to their contours, never paving. The figures and spires are painted in grisaille on a few pieces. No vertical join falls inside the figures' zone, and the cloud shapes are smoothed first, so there are no tiny islands or loops. The crescent is one white piece, brighter on its lower left, with the earthshine as a separate deep-blue piece; the lantern is one amber piece. The bright pieces bloom past the lead, and two saddle bars run above the spires and below the figures. |
 | Aether Crystal | Cut moonstone over the sky and the far range only: facets shaded consistently, as on broad domed gems lit from the upper left, with the domes blended so no straight seam crosses the sky, bright edges on the lit side, and a faint blue adularescent sheen across the upper sky. The facets fade out smoothly over about 3 moon radii round the moon. The ground, the city and the figures stay clear. |
-| Astrologian's Orrery | An engraved plate: a silver ground and a lapis enamel sky. Dark line engraving follows each contour: parallel to the ridge, to the plain in perspective and to the far ridgeline, and down the cliff faces with their strata. The lines never grow wide enough to merge; every shadow, the far hills' included, is cross-hatched. The backlit city is densely cross-hatched and the figures are solid. The clouds are a few large shapes, each with one clean silver outline, a lighter enamel inside, and a few parallel lines along its lit underside. The enamel lightens low behind the city for the dawn. Brass is used only as inlay: the crescent, three short dawn lines, the graduated limb, and the rete at .20. |
+| Astrologian's Orrery | An engraved plate: a silver ground and a lapis enamel sky. Dark line engraving follows each contour: parallel to the ridge, to the plain in perspective and to the far ridgeline, and down the cliff faces with their strata. The lines never grow wide enough to merge; every shadow, the far hills' included, is cross-hatched. A near-full moon is a brass inlay inside a brass ring, with its seas engraved as hatched patches and the unlit sliver in dark enamel. The backlit city is densely cross-hatched and the figures are solid. The clouds are a few large shapes with one base level each, each with one clean silver outline, a lighter enamel inside, and a few parallel lines along its lit underside. The enamel lightens low behind the city for the dawn. Brass is used only as inlay: the crescent, three short dawn lines, the graduated limb, and the rete at .20. |
 | Sumi to Kinpaku | Sumi-e on toned washi: ink washes by depth, bare-paper snow, and the ridge as one continuous tapered dry-brush stroke along the crest (wide and dark where the brush lands on the left, thinning toward the right, broken only by thin dry streaks along it). The figures' shadow is a light, separate wash. Solid ink figures, a gold-leaf crescent, two genji-gumo gold bands whose ends step down in three stacked rounded tiers (the top tier inset most) with gold-dust edges, kirigane only inside the bands and in the top corners, one vermilion touch for the lantern, and a vermilion seal carved with a crescent. |
 
 No treatment adds a light of its own. Quiet would show the Classic painting graded to the palette; Plain shows no art in either option.
@@ -262,9 +267,9 @@ No treatment adds a light of its own. Quiet would show the Classic painting grad
 **Decided:** Option B for every release, 1.14.0 to 1.22.0 and every release after.
 
 **Made so far with the recipe below:** 1.22.0 Welcome home (`welcome-b`), 1.21.0 What next (`whatnext-b`), 1.20.0 Before Evercold (`evercold-b`) and 1.19.0 Right answers (`answers-b`): every page of the first popup a player on 1.18.0 or later can get. Each keeps the supervised scene brief of its Option A painting and adds depth, atmosphere and a figure where it fits:
-- **Welcome home:** a traveller on the path, coming home. The moon backlights the house, and the hall's light (the door and two windows) is the one practical light; it warms her front and the path.
+- **Welcome home:** a traveller on the path, coming home, and a soft plume drifting from the chimney. The moon backlights the house, and the hall's light (the door and two windows) is the one practical light; it warms her front and the path.
 - **What next:** a traveller reading the waystone by the lantern, the afterglow low on the right, and five dim distant windows where the paths lead.
-- **Right answers:** a small traveller on the lit branch of the road, walking toward the moon. There is no practical light.
+- **Right answers:** a small traveller on the lit branch of the road, past the signpost, walking toward the moon. Her short shadow falls toward the viewer and left. The squat waystones have lit tops and shaded faces in contact shadows. The near-full moon keeps its thin unlit sliver on the upper left, as in the brief. There is no practical light.
 
 Their files are in `art/optionb/`: `<key>-base.png`, `<key>-masks.npz`, `<key>.json`, `<key>-<theme>.png` and `ship/<key>-<theme>.jpg`. The painters are in `art/src/paint_option_b2.py`. 1.14.0 to 1.18.0 are left to their own artist, on the same recipe.
 
@@ -691,3 +696,16 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
   - **P7:** Medallion's strokes follow the ridge, the plain, the far range, the cliff faces and the cloud edges.
   - **Nits:** Aether fades within about 30 px of the figures; the 4 MB assumption and the 5.4 MB cap are stated; Sumi's lantern has a 1 px ink bail.
 - **After round 5, step 2:** Option B made with the recipe for 1.22.0, 1.21.0 and 1.19.0 (`paint_option_b2.py`), each with its painting, masks, `<key>.json`, six treatments and shipped JPEGs. The treatments gained a few per-release keys (`dawn`, `dawn_lines`, `glass_palette`, `sumi_light`), and light brush or grisaille lines on the ground, so roads and paths read in glass and ink. The What's new, states and About boards were re-rendered with the Option B art and labelled.
+- **Round 6: Option B CHANGES.** All round 5 fixes held.
+  - **Major (Q1):** the near-full moons in `welcome-b` and `answers-b` showed one grey hook-shaped sea that read as "?". The paint pass had smeared the approved Option A maria.
+  - **Minors:**
+    - Q2: the Orrery's full moons were plain brass discs;
+    - Q3: the `answers-b` traveller merged with the signpost;
+    - Q4: the `answers-b` waystones were white spheres.
+  - **Nits:** the chimney smoke was a straight beam; the windows rule wasn't defined; the `answers-b` brief needed its sliver; and the Orrery cloud bases stepped.
+- **After round 6:**
+  - **Q1:** the moon is kept out of the painterly pass, so Option A's approved moon (joined chains and the unlit sliver) stays intact. The masks exclude the sliver from `moonlit`.
+  - **Q2:** the Orrery's near-full moon has its seas engraved as hatched patches inside a brass ring, with the sliver in dark enamel.
+  - **Q3:** the traveller is moved up the lit branch, clear of the post, with a short shadow toward the viewer and left.
+  - **Q4:** the waystones are squat stones with lit tops, shaded faces and contact shadows.
+  - **Nits:** the smoke is a widening, fading plume; the lights rule is defined in W2; the brief is updated; the Orrery has one base level per cloud.

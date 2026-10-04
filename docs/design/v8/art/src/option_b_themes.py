@@ -399,9 +399,18 @@ def orrery(px):
     # a flat, lit base: each column's lowest cloud row, levelled over a wide span, cuts the shape off below it
     on = cs > 0.5
     bottom = np.where(on.any(0), h - 1 - np.argmax(on[::-1], 0), -1).astype(np.float32)
-    span = 70
-    lv = np.array([bottom[max(0, i - span):i + span][bottom[max(0, i - span):i + span] >= 0].min() if (bottom[max(0, i - span):i + span] >= 0).any() else -1 for i in range(w)], np.float32)
-    lv = np.where(bottom >= 0, np.minimum(bottom, lv + 4), -1)
+    lv = np.full(w, -1.0, np.float32)
+    has = bottom >= 0
+    i = 0
+    while i < w:                                                                  # each run of cloud columns is one cloud
+        if not has[i]:
+            i += 1
+            continue
+        j = i
+        while j < w and has[j]:
+            j += 1
+        lv[i:j] = np.percentile(bottom[i:j], 30)
+        i = j
     cs = (on & (yy <= lv[None, :])).astype(np.float32)
     plate = plate + (hexc("#4A5A98") - plate) * (cs * 0.45)[..., None]            # a lighter enamel inside each shape
     co = outline(cs)
@@ -417,6 +426,15 @@ def orrery(px):
     plate = plate + (hexc("#D9B86E") - plate) * (dl_ * 0.55)[..., None]
     plate = plate * (1 - M["moon"][..., None]) + hexc("#1E2D66") * M["moon"][..., None]
     plate = plate * (1 - M["moonlit"][..., None]) + hexc("#E6CC90") * M["moonlit"][..., None]
+    lit_m = M["moonlit"] > 0.5
+    if lit_m.sum() > 400:                                                          # a big moon: engrave its seas
+        Lm = blur(L, 1.0)
+        mean_l = Lm[lit_m].mean()
+        seas = (Lm < mean_l - 0.03) & lit_m
+        hatch = blur(((np.abs(((xx - yy) / 2.5) % 1.0 - 0.5) * 2) > 0.55).astype(np.float32), 0.4) * seas
+        plate = plate * (1 - (hatch * 0.55)[..., None]) + hexc("#8A6A3A") * (hatch * 0.55)[..., None]
+    ring = outline(M["moon"]) * (M["moon"].sum() > 400)
+    plate = plate * (1 - blur(ring, 0.5)[..., None]) + hexc("#B8924E") * blur(ring, 0.5)[..., None]
     im = Image.new("L", (w * 2, h * 2), 0)
     dr = ImageDraw.Draw(im)
     cx, cy = w * 1.0, h * 2.8
