@@ -27,11 +27,36 @@ public enum PortraitPackWelcomeAnswer : byte
     /// <summary>Not answered this frame.</summary>
     None,
 
-    /// <summary>"Download portraits", or Enter: the existing download starts.</summary>
+    /// <summary>"Download portraits", or Enter once the player is engaged with the offer: the existing download starts.</summary>
     Download,
 
-    /// <summary>"Not now", Esc, or the window closed: nothing downloads.</summary>
+    /// <summary>"Not now", or Esc once the player is engaged with the offer: nothing downloads.</summary>
     NotNow,
+}
+
+/// <summary>What the offer's window shows once the player chose Download (<see cref="PortraitPackWelcome.ViewAfterDownload"/>).</summary>
+public enum PortraitPackOfferView : byte
+{
+    /// <summary>The download runs: progress.</summary>
+    Downloading,
+
+    /// <summary>The file is checked and unpacked.</summary>
+    Checking,
+
+    /// <summary>The pack is in.</summary>
+    Installed,
+
+    /// <summary>The player cancelled it: nothing was saved.</summary>
+    Cancelled,
+
+    /// <summary>The download failed: the reason, and Try again.</summary>
+    Failed,
+
+    /// <summary>
+    /// Nothing of the offer's to show: the pack was removed (in Settings) since, a removal runs, or nothing ran. The
+    /// window closes rather than calling a removal a failed download.
+    /// </summary>
+    Gone,
 }
 
 /// <summary>Where the offer stands, as far as <see cref="PortraitPackWelcome.Next"/> cares.</summary>
@@ -56,10 +81,15 @@ public readonly record struct PortraitPackWelcomeState(bool Answered, bool Loade
 /// download the player started in Settings. A build that offers no pack never shows it (and records nothing, so a later
 /// build that offers one still may).</item>
 /// <item><b>At the first quiet moment</b> (<see cref="WhatsNew.IsQuietMoment"/>), and after What's new: when both are
-/// due, What's new shows first and the offer at the next quiet moment after it closes.</item>
-/// <item><b>Yes by default.</b> "Download portraits" has the keyboard focus and Enter accepts; "Not now", Esc and
-/// closing the window decline. Enter counts only on the offer's focused window, on a fresh press, and not before
-/// <see cref="KeySettleSeconds"/>: the offer opens unasked, so an Enter meant for the game's chat never downloads.</item>
+/// due, What's new shows first and the offer at the next quiet moment after it closes. Once open, it steps aside
+/// (<see cref="Visible"/>) whenever it is not in the world, a fight or a scene starts, or something that goes first
+/// opens, and comes back after; stepping aside answers nothing.</item>
+/// <item><b>Yes by default, and keys only by choice.</b> "Download portraits" is the primary pill, and a click on it
+/// is the main way to say yes. Dalamud hands every key to the game and to ImGui alike, so a focused window is no sign
+/// that a key was meant for it: the offer opens without taking the focus, and Enter (accept) and Esc (decline) count
+/// only once the player is <i>engaged</i>, having clicked inside the offer since it last appeared and kept its focus;
+/// Enter not before <see cref="KeySettleSeconds"/> either. An Enter or Esc meant for the game's chat or menu never
+/// answers it.</item>
 /// </list>
 /// The privacy promise holds: nothing goes online unless the player chooses Download.
 /// </summary>
@@ -99,16 +129,26 @@ public static class PortraitPackWelcome
     }
 
     /// <summary>
-    /// The player's answer this frame. A click answers at once; a key only on the offer's focused window: Esc declines,
-    /// Enter accepts once the offer has been up <see cref="KeySettleSeconds"/>. Esc wins over Enter in the same frame.
+    /// Whether the open offer draws this frame: in the world (not the title or character select), not in a fight, a
+    /// cutscene, group pose or a loading screen, and with nothing that goes first on screen (<paramref name="otherFirst"/>:
+    /// What's new, the tour, Settings' own confirmation). Hidden, it stays open and unanswered and comes back after.
     /// </summary>
-    /// <param name="downloadClicked">"Download portraits" was clicked (or activated by the keyboard).</param>
+    public static bool Visible(in WhatsNewMoment moment, bool otherFirst) =>
+        moment.InWorld && !moment.InCombat && !moment.InCutscene && !moment.GroupPose && !moment.Loading && !otherFirst;
+
+    /// <summary>
+    /// The player's answer this frame. A click answers at once. A key only once the player is
+    /// <paramref name="engaged"/> with the offer (clicked inside it since it last appeared, and it still has the focus):
+    /// Esc declines, Enter accepts once the offer has been up <see cref="KeySettleSeconds"/>. Not now wins over a Download
+    /// click, and Esc over Enter, in the same frame.
+    /// </summary>
+    /// <param name="downloadClicked">"Download portraits" was clicked (or activated by the keyboard once focused).</param>
     /// <param name="notNowClicked">"Not now" was clicked.</param>
     /// <param name="enter">Enter was pressed this frame (a fresh press, not a repeat).</param>
     /// <param name="escape">Esc was pressed this frame.</param>
-    /// <param name="focused">The offer's window has the keyboard.</param>
+    /// <param name="engaged">The player clicked inside the offer since it last appeared, and it kept the focus.</param>
     /// <param name="sinceOpen">Seconds since the offer appeared.</param>
-    public static PortraitPackWelcomeAnswer AnswerOf(bool downloadClicked, bool notNowClicked, bool enter, bool escape, bool focused, double sinceOpen)
+    public static PortraitPackWelcomeAnswer AnswerOf(bool downloadClicked, bool notNowClicked, bool enter, bool escape, bool engaged, double sinceOpen)
     {
         if (notNowClicked)
         {
@@ -120,7 +160,7 @@ public static class PortraitPackWelcome
             return PortraitPackWelcomeAnswer.Download;
         }
 
-        if (!focused)
+        if (!engaged)
         {
             return PortraitPackWelcomeAnswer.None;
         }
@@ -131,5 +171,48 @@ public static class PortraitPackWelcome
         }
 
         return enter && sinceOpen >= KeySettleSeconds ? PortraitPackWelcomeAnswer.Download : PortraitPackWelcomeAnswer.None;
+    }
+
+    /// <summary>
+    /// Whether the keys belong to the offer (Enter to accept, Esc to decline, and the keyboard focus on Download
+    /// portraits): only once the player is engaged, the offer has settled, and it still asks.
+    /// </summary>
+    public static bool OwnsKeys(bool engaged, double sinceOpen, bool asking) => asking && engaged && sinceOpen >= KeySettleSeconds;
+
+    /// <summary>
+    /// What the window shows after the player chose Download, from the service's phase and its last run: progress,
+    /// checking, installed, cancelled or failed; and <see cref="PortraitPackOfferView.Gone"/> when the pack was removed
+    /// since (or a removal runs), or nothing has run, so a removal in Settings never reads as a failed download.
+    /// </summary>
+    /// <param name="downloading">The service is downloading.</param>
+    /// <param name="installing">The service is checking and unpacking.</param>
+    /// <param name="removing">The service is removing the pack.</param>
+    /// <param name="finished">A run finished since load.</param>
+    /// <param name="lastWasRemoval">The last run was a removal.</param>
+    /// <param name="last">The last run's result.</param>
+    /// <param name="installed">A pack is installed now.</param>
+    public static PortraitPackOfferView ViewAfterDownload(bool downloading, bool installing, bool removing, bool finished, bool lastWasRemoval, PortraitPackFailure last, bool installed)
+    {
+        if (downloading)
+        {
+            return PortraitPackOfferView.Downloading;
+        }
+
+        if (installing)
+        {
+            return PortraitPackOfferView.Checking;
+        }
+
+        if (removing || lastWasRemoval || !finished)
+        {
+            return PortraitPackOfferView.Gone;
+        }
+
+        return last switch
+        {
+            PortraitPackFailure.None => installed ? PortraitPackOfferView.Installed : PortraitPackOfferView.Gone,
+            PortraitPackFailure.Cancelled => PortraitPackOfferView.Cancelled,
+            _ => PortraitPackOfferView.Failed,
+        };
     }
 }

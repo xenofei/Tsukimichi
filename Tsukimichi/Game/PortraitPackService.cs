@@ -164,7 +164,8 @@ public sealed class PortraitPackService : IDisposable
                 {
                     if (!disposed)
                     {
-                        log.Warning(ex, "Portrait pack could not be read; givers show game art and fallbacks");
+                        // Loaded stays false: the first-run offer cannot tell "no pack" from "unread", so it waits until next start.
+                        log.Warning(ex, "Portrait pack could not be read; givers show game art and fallbacks, and the first-run pack offer waits until the next start");
                     }
                 }
             },

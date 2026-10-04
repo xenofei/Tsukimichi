@@ -1835,6 +1835,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("automation level", Ui.AutomationGate.Detach);
         Unwind("settings window", () => configWindow?.Dispose());
         Unwind("whats new", () => whatsNewPopup?.Dispose());
+        Unwind("portrait pack offer", TearDownPortraitPackOffer);
         Unwind("fonts", Ui.Typography.Dispose);
         Unwind("banner grades", Ui.BannerGrading.Dispose);
         Unwind("portrait grades", Ui.PortraitGrading.Dispose);

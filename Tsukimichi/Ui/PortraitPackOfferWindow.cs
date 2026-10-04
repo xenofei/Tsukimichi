@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
@@ -22,15 +23,23 @@ namespace Tsukimichi.Ui;
 /// the title, what the pack does and that faces show in quest details, the facts (size, the source on Tsukimichi's GitHub
 /// release, the Garland Tools credit, the fingerprint check), the promise in a sunk inset, the spoiler line, and where the
 /// pack is later ("Settings › Look"). Unlike that confirmation it has no scrim (it opens over the game, not over
-/// Settings; the game keeps its input) and its default is yes: "Download portraits" is the primary pill and takes the
-/// keyboard focus, and Enter accepts (<see cref="PortraitPackWelcome.AnswerOf"/>, not before
-/// <see cref="PortraitPackWelcome.KeySettleSeconds"/>). "Not now", Esc and closing it decline. Any answer is kept
-/// (<see cref="Configuration.PortraitPackOfferAnswered"/>), so it never shows again.
+/// Settings; the game keeps its input), and its default is yes: "Download portraits" is the primary pill.
+/// <para>
+/// <b>Keys only by choice.</b> Dalamud hands every key to the game and to ImGui alike, so the offer opens without taking
+/// the focus (<c>NoFocusOnAppearing</c>), and its keys wait until the player is engaged: has clicked inside it since it
+/// last appeared and kept its focus (<see cref="PortraitPackWelcome.AnswerOf"/>, <see cref="PortraitPackWelcome.OwnsKeys"/>).
+/// Then, after <see cref="PortraitPackWelcome.KeySettleSeconds"/>, Download portraits takes the keyboard focus, Enter
+/// accepts, Esc and the close hotkey decline, and Enter and Esc are kept from the game (<see cref="ConsumeKeys"/>). Before
+/// that, an Enter or Esc meant for the chat or the game's menu answers nothing; the mouse is the way to say yes or no.
+/// "Not now" declines. Any answer is kept (<see cref="Configuration.PortraitPackOfferAnswered"/>), so it never shows again.
+/// It steps aside, unanswered, outside the world, in a fight or a scene, and while something that goes first is on screen
+/// (<see cref="PortraitPackWelcome.Visible"/>).
+/// </para>
 /// <para>
 /// Download starts the existing download (<see cref="PortraitPackService.StartDownload"/>): nothing went online before
 /// that click. The window then shows the download in place of the offer at the same size (progress with the Settings
-/// row's bar, checking, installed, or the row's error words with Try again); closing it leaves the download running, and
-/// Settings › Look shows it too.
+/// row's bar, checking, installed, or the row's error words with Try again; <see cref="PortraitPackWelcome.ViewAfterDownload"/>);
+/// closing it leaves the download running, and Settings › Look shows it too.
 /// </para>
 /// </summary>
 public sealed class PortraitPackOfferWindow : Window
@@ -38,9 +47,14 @@ public sealed class PortraitPackOfferWindow : Window
     private const string Id = "###TsukimichiPortraitPackOffer";
     private const float WidthLogical = 470f;
 
+    /// <summary>How long a draw's key ownership stays good for <see cref="ConsumeKeys"/>, as the tour's.</summary>
+    private const long KeysOwnedGraceMs = 250;
+
     private const ImGuiWindowFlags OfferFlags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove
         | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoDocking
-        | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse;
+        | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoFocusOnAppearing;
+
+    private static readonly VirtualKey[] OfferKeys = [VirtualKey.RETURN, VirtualKey.ESCAPE];
 
     private readonly Configuration settings;
     private readonly IDalamudPluginInterface pluginInterface;
@@ -51,12 +65,18 @@ public sealed class PortraitPackOfferWindow : Window
     // The player chose Download here: the window shows the download in place of the offer.
     private bool downloading;
 
-    // When the window appeared (or came back after a cutscene or a fight hid it), and the last frame it drew.
+    // When the window appeared (or came back after it stepped aside), and the last frame it drew.
     private double appearedAt;
     private int drawnFrame = -10;
 
-    // The keyboard focus goes to Download portraits once Enter may accept (PortraitPackWelcome.KeySettleSeconds).
+    // The player clicked inside the offer since it appeared and it kept the focus: only then do keys answer it.
+    private bool engaged;
+
+    // The keyboard focus goes to Download portraits once the offer owns the keys (engaged and settled).
     private bool focusPending;
+
+    // Until when (Environment.TickCount64) Enter and Esc are kept from the game: refreshed by each draw that owns them.
+    private long keysOwnedUntil;
 
     // The footer row's top in the offer (window-local), held by the download's states so the window keeps its size.
     private float footerY;
@@ -74,7 +94,9 @@ public sealed class PortraitPackOfferWindow : Window
         this.service = service ?? throw new ArgumentNullException(nameof(service));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         this.pluginVersion = pluginVersion ?? string.Empty;
-        RespectCloseHotkey = true;
+
+        // The close hotkey (Esc) counts only once the player is engaged (Draw turns it on then).
+        RespectCloseHotkey = false;
         DisableFadeInFadeOut = true;
         AllowPinning = false;
         AllowClickthrough = false;
@@ -85,6 +107,30 @@ public sealed class PortraitPackOfferWindow : Window
 
     /// <summary>Something goes first (What's new, the tour or its offer, Settings' own confirmation); set by the plugin.</summary>
     public Func<bool>? OtherFirst { get; set; }
+
+    /// <summary>The game's key state, for <see cref="ConsumeKeys"/>; null leaves the game's keys alone.</summary>
+    public IKeyState? KeyState { get; set; }
+
+    /// <summary>
+    /// <c>Framework.Update</c> handler: while the offer owns the keys (engaged and settled, decided on the last draw, and
+    /// for a moment after an Enter that downloaded), clears Enter and Esc from the game's key state before the game reads
+    /// them, so an Enter that accepts does not also open the chat box, nor an Esc the system menu.
+    /// </summary>
+    public void ConsumeKeys(IFramework framework)
+    {
+        if (Environment.TickCount64 > keysOwnedUntil || KeyState is not { } keys)
+        {
+            return;
+        }
+
+        foreach (var key in OfferKeys)
+        {
+            if (keys[key])
+            {
+                keys[key] = false;
+            }
+        }
+    }
 
     /// <summary>Every frame, open or not: while the offer is owed, shows it at the first quiet moment, or retires it.</summary>
     public override void PreOpenCheck()
@@ -102,30 +148,32 @@ public sealed class PortraitPackOfferWindow : Window
                 Record();
                 break;
             case PortraitPackWelcomeStep.Show:
+                // Opened without the focus (NoFocusOnAppearing, and never raised to the front with it): keys stay the
+                // game's until the player clicks inside the offer.
                 WindowName = Strings.PackConfirmTitle + Id;
                 downloading = false;
                 IsOpen = true;
-                BringToFront();
                 break;
         }
     }
 
-    /// <summary>Never over a cutscene, group pose, a loading screen or a fight; it comes back after them.</summary>
+    /// <summary>Steps aside, unanswered, outside the world, in a fight or a scene, and while something that goes first is on screen.</summary>
     public override bool DrawConditions() =>
-        Moment?.Invoke() is not { } moment || (!moment.InCutscene && !moment.GroupPose && !moment.Loading && !moment.InCombat);
+        Moment?.Invoke() is not { } moment || PortraitPackWelcome.Visible(moment, OtherFirst?.Invoke() ?? false);
 
     public override void PreDraw()
     {
         nightChrome = Theme.PushNightWindow();
 
-        // Rise (0.16 s, 4 px) with a fade, as Settings' confirmation; instant under Reduce motion.
+        // Back after stepping aside (or opened): the rise plays again, and the player must click inside it again.
         var frame = ImGui.GetFrameCount();
         if (drawnFrame != frame - 1)
         {
             appearedAt = ImGui.GetTime();
-            focusPending = !downloading;
+            Disengage();
         }
 
+        // Rise (0.16 s, 4 px) with a fade, as Settings' confirmation; instant under Reduce motion.
         var t = UiMetrics.ReduceMotion ? 1f : (float)Math.Clamp((ImGui.GetTime() - appearedAt) / MotionTokens.Rise, 0d, 1d);
         var ease = 1f - ((1f - t) * (1f - t) * (1f - t));
         ImGui.PushStyleVar(ImGuiStyleVar.Alpha, ease);
@@ -159,6 +207,21 @@ public sealed class PortraitPackOfferWindow : Window
             return;
         }
 
+        // Engaged: a click inside the offer since it appeared, and it kept the focus. A click lands as focus only at the
+        // end of the frame, so the click's own frame counts before the focus does.
+        var clickedInside = ImGui.IsWindowHovered(ImGuiHoveredFlags.RootAndChildWindows | ImGuiHoveredFlags.AllowWhenBlockedByActiveItem)
+            && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right));
+        if (clickedInside)
+        {
+            engaged = true;
+        }
+        else if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows))
+        {
+            Disengage();
+        }
+
+        RespectCloseHotkey = engaged;
+
         UiMetrics.ApplyFontScale();
         var wrap = UiMetrics.Px(WidthLogical - 36f);
         ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + wrap);
@@ -180,7 +243,11 @@ public sealed class PortraitPackOfferWindow : Window
         }
     }
 
-    /// <summary>Closed by Not now, Esc or anything else before Download: the offer counts as answered.</summary>
+    /// <summary>
+    /// Closed before Download (Not now, or Esc once engaged): the offer counts as answered. An unload or a game exit
+    /// while it is open, unanswered, closes no window and records nothing, deliberately: the player never got to answer,
+    /// so it shows again next session.
+    /// </summary>
     public override void OnClose()
     {
         if (!downloading)
@@ -190,6 +257,16 @@ public sealed class PortraitPackOfferWindow : Window
 
         downloading = false;
         drawnFrame = -10;
+        keysOwnedUntil = 0;
+        Disengage();
+    }
+
+    /// <summary>Keys go back to the game until the player clicks inside the offer again.</summary>
+    private void Disengage()
+    {
+        engaged = false;
+        focusPending = true;
+        RespectCloseHotkey = false;
     }
 
     // ------------------------------------------------------------------ the offer
@@ -251,9 +328,15 @@ public sealed class PortraitPackOfferWindow : Window
         ImGui.Spacing();
         footerY = ImGui.GetCursorPosY();
 
-        // Read before any button: Esc declines, Enter accepts once the offer has settled, and only on this window.
+        // Read before any button. Keys answer only once the player is engaged: Esc declines, and Enter accepts once the
+        // offer has settled. Until then they are the game's.
         var sinceOpen = ImGui.GetTime() - appearedAt;
-        var focused = ImGui.IsWindowFocused();
+        var ownsKeys = PortraitPackWelcome.OwnsKeys(engaged, sinceOpen, asking: true);
+        if (ownsKeys)
+        {
+            keysOwnedUntil = Environment.TickCount64 + KeysOwnedGraceMs;
+        }
+
         var enter = ImGui.IsKeyPressed(ImGuiKey.Enter, false) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter, false);
         var escape = ImGui.IsKeyPressed(ImGuiKey.Escape, false);
 
@@ -276,11 +359,12 @@ public sealed class PortraitPackOfferWindow : Window
             Util.OpenLink(ConfigWindow.PrivacyStatementUrl);
         }
 
+        // The primary pill from the first frame (yes by default); the keyboard focus only once the offer owns the keys,
+        // so Space or a gamepad's confirm cannot press it before the player engaged.
         ImGui.SameLine(0f, UiMetrics.Px(14f));
         var download = Chrome.ActionPill("##packOfferDownload", FontAwesomeIcon.Download.ToIconString(), Strings.PackOfferDownload, PillTone.Primary, !service.Busy, null, PillLayout.Frame);
-        if (focusPending && sinceOpen >= PortraitPackWelcome.KeySettleSeconds)
+        if (focusPending && ownsKeys)
         {
-            // Yes by default: the keyboard focus rests on Download portraits (not before Enter may accept it).
             ImGui.SetItemDefaultFocus();
             ImGui.SetKeyboardFocusHere(-1);
             focusPending = false;
@@ -289,10 +373,16 @@ public sealed class PortraitPackOfferWindow : Window
         ImGui.SameLine();
         var notNow = ImGui.Button(Strings.PackOfferNotNow);
 
-        switch (PortraitPackWelcome.AnswerOf(download, notNow, enter, escape, focused, sinceOpen))
+        switch (PortraitPackWelcome.AnswerOf(download, notNow, enter, escape, engaged, sinceOpen))
         {
             case PortraitPackWelcomeAnswer.Download:
                 Record();
+                if (enter)
+                {
+                    // An accepted Enter (on its own, or pressing the focused pill): kept from the game now and for a
+                    // moment, so it does not also open the chat box.
+                    ConsumeEnter();
+                }
 
                 // The other place a download starts from the player's click: Download portraits (or Enter on it).
                 if (service.StartDownload())
@@ -314,26 +404,43 @@ public sealed class PortraitPackOfferWindow : Window
         }
     }
 
+    /// <summary>Clears Enter from the game's key state now, and keeps doing so in <see cref="ConsumeKeys"/> for a moment.</summary>
+    private void ConsumeEnter()
+    {
+        keysOwnedUntil = Environment.TickCount64 + KeysOwnedGraceMs;
+        if (KeyState is { } keys && keys[VirtualKey.RETURN])
+        {
+            keys[VirtualKey.RETURN] = false;
+        }
+    }
+
     // ------------------------------------------------------------------ after Download
 
     /// <summary>
     /// The download in place of the offer, at the offer's size: progress with the Settings row's bar, checking, installed,
-    /// or what went wrong. Close leaves a running download running; Cancel stops it.
+    /// or what went wrong. Close leaves a running download running; Cancel stops it. A removal since (in Settings) closes
+    /// the window rather than reading as a failed download.
     /// </summary>
     private void DrawDownload(PortraitPackOffer offer, float wrap)
     {
         var s = Theme.Surface;
         var c = CultureInfo.CurrentCulture;
         var phase = service.Phase;
+        var view = PortraitPackWelcome.ViewAfterDownload(
+            phase == PortraitPackPhase.Downloading,
+            phase == PortraitPackPhase.Installing,
+            phase == PortraitPackPhase.Removing,
+            service.LastFinishedUtc != default,
+            service.LastWasRemoval,
+            service.LastResult,
+            service.Installed is not null);
         string title;
         string line;
         string? note = null;
         float? target = null;
-        var failed = false;
-        var retry = false;
-        switch (phase)
+        switch (view)
         {
-            case PortraitPackPhase.Downloading:
+            case PortraitPackOfferView.Downloading:
                 var progress = service.Progress;
                 title = Strings.PackOfferDownloading;
                 line = service.SecondsLeft is { } left
@@ -342,38 +449,34 @@ public sealed class PortraitPackOfferWindow : Window
                 target = progress.Fraction;
                 note = Strings.PackOfferKeepsGoing;
                 break;
-            case PortraitPackPhase.Installing:
+            case PortraitPackOfferView.Checking:
                 title = Strings.PackOfferChecking;
                 line = string.Format(c, Strings.PackLineChecking, pluginVersion);
                 target = 1f;
                 note = Strings.PackOfferKeepsGoing;
                 break;
-            default:
-                if (service.LastResult == PortraitPackFailure.None && service.Installed is { } pack)
-                {
-                    title = Strings.PackOfferInstalled;
-                    line = string.Format(c, Strings.PackOfferInstalledLine, pack.Faces.ToString("N0", c));
-                }
-                else if (service.LastResult == PortraitPackFailure.Cancelled)
-                {
-                    title = Strings.PackStatusCancelled;
-                    line = Strings.PackLineCancelled;
-                    note = Strings.PackOfferLater;
-                }
-                else
-                {
-                    title = Strings.PackStatusFailed;
-                    line = ConfigWindow.PackFailureReason(service.LastResult, offer);
-                    note = Strings.PackOfferLater;
-                    failed = true;
-                    retry = true;
-                }
-
+            case PortraitPackOfferView.Installed:
+                title = Strings.PackOfferInstalled;
+                line = string.Format(c, Strings.PackOfferInstalledLine, (service.Installed?.Faces ?? 0).ToString("N0", c));
                 break;
+            case PortraitPackOfferView.Cancelled:
+                title = Strings.PackStatusCancelled;
+                line = Strings.PackLineCancelled;
+                note = Strings.PackOfferLater;
+                break;
+            case PortraitPackOfferView.Failed:
+                title = Strings.PackStatusFailed;
+                line = ConfigWindow.PackFailureReason(service.LastResult, offer);
+                note = Strings.PackOfferLater;
+                break;
+            default:
+                IsOpen = false;
+                return;
         }
 
         // The title, with the 1.17 Settings hint's dot beside it on an error.
         var dl = ImGui.GetWindowDrawList();
+        var failed = view == PortraitPackOfferView.Failed;
         if (failed)
         {
             var dot = UiMetrics.Px(6f);
@@ -424,9 +527,10 @@ public sealed class PortraitPackOfferWindow : Window
 
         // The buttons on the offer's footer row, so the window keeps its size.
         ImGui.SetCursorPosY(MathF.Max(ImGui.GetCursorPosY(), footerY));
-        if (retry)
+        if (failed)
         {
-            if (Chrome.ActionPill("##packOfferRetry", FontAwesomeIcon.Download.ToIconString(), Strings.PackTryAgain, PillTone.Primary, !service.Busy, null, PillLayout.Frame))
+            var retry = Chrome.ActionPill("##packOfferRetry", FontAwesomeIcon.Download.ToIconString(), Strings.PackTryAgain, PillTone.Primary, !service.Busy, null, PillLayout.Frame);
+            if (retry)
             {
                 // Try again: the player clicks it, as they chose Download before.
                 service.StartDownload();
@@ -440,7 +544,7 @@ public sealed class PortraitPackOfferWindow : Window
             IsOpen = false;
         }
 
-        if (phase == PortraitPackPhase.Downloading)
+        if (view == PortraitPackOfferView.Downloading)
         {
             ImGui.SameLine();
             if (ImGui.Button(Strings.PackCancel))

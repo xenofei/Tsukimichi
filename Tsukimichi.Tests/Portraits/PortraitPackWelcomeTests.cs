@@ -6,7 +6,9 @@ namespace Tsukimichi.Tests.Portraits;
 /// <summary>
 /// The first-run portrait pack offer (1.22.0, <see cref="PortraitPackWelcome"/>): once on a fresh install and once for a
 /// player who updated without ever answering it; never with the pack installed, once answered, or with nothing offered;
-/// after What's new when both are due; and yes by default, Enter and Download downloading, Esc and Not now declining.
+/// after What's new when both are due; stepping aside, unanswered, outside the world or while something goes first; yes by
+/// default, Download downloading, Not now declining, and Enter and Esc answering only once the player clicked inside
+/// the offer; and after Download, a removal in Settings never read as a failed download.
 /// </summary>
 public sealed class PortraitPackWelcomeTests
 {
@@ -167,43 +169,140 @@ public sealed class PortraitPackWelcomeTests
         Assert.Equal(PortraitPackWelcomeStep.Show, PortraitPackWelcome.Next(Owed(), Quiet));
     }
 
+
+    // ------------------------------------------------------------------ once open: stepping aside
+
+    [Fact]
+    public void Once_open_it_steps_aside_outside_the_world_and_answers_nothing()
+    {
+        Assert.True(PortraitPackWelcome.Visible(Quiet, otherFirst: false));
+
+        // The title screen or character select: hidden, still open, still unanswered.
+        Assert.False(PortraitPackWelcome.Visible(Quiet with { InWorld = false }, otherFirst: false));
+        Assert.False(PortraitPackWelcome.Visible(Quiet with { InCombat = true }, otherFirst: false));
+        Assert.False(PortraitPackWelcome.Visible(Quiet with { InCutscene = true }, otherFirst: false));
+        Assert.False(PortraitPackWelcome.Visible(Quiet with { GroupPose = true }, otherFirst: false));
+        Assert.False(PortraitPackWelcome.Visible(Quiet with { Loading = true }, otherFirst: false));
+
+        // Stepping aside is not an answer: the rule still owes the offer, and it comes back in the world.
+        Assert.Equal(PortraitPackWelcomeStep.Show, PortraitPackWelcome.Next(Owed(), Quiet));
+        Assert.True(PortraitPackWelcome.Visible(Quiet with { InWorld = true }, otherFirst: false));
+    }
+
+    [Fact]
+    public void Once_open_it_steps_aside_while_something_that_goes_first_appears_and_comes_back_after()
+    {
+        // What's new from the history, the tour card or Settings' confirmation opens over the shown offer.
+        Assert.False(PortraitPackWelcome.Visible(Quiet, otherFirst: true));
+        Assert.Equal(PortraitPackWelcomeStep.Wait, PortraitPackWelcome.Next(Owed(otherFirst: true), Quiet));
+
+        // Gone again: the offer is back, still unanswered.
+        Assert.True(PortraitPackWelcome.Visible(Quiet, otherFirst: false));
+        Assert.Equal(PortraitPackWelcomeStep.Show, PortraitPackWelcome.Next(Owed(), Quiet));
+    }
+
     // ------------------------------------------------------------------ the answer
 
     [Fact]
-    public void Download_and_enter_start_the_download()
+    public void A_click_on_download_starts_the_download_engaged_or_not()
+    {
+        // The mouse is the main way to say yes: a click is a choice whatever the focus.
+        Assert.Equal(PortraitPackWelcomeAnswer.Download, PortraitPackWelcome.AnswerOf(downloadClicked: true, notNowClicked: false, enter: false, escape: false, engaged: false, sinceOpen: 0));
+        Assert.Equal(PortraitPackWelcomeAnswer.Download, PortraitPackWelcome.AnswerOf(downloadClicked: true, notNowClicked: false, enter: false, escape: false, engaged: true, sinceOpen: 30));
+    }
+
+    [Fact]
+    public void Enter_downloads_once_engaged_and_settled()
     {
         var settled = PortraitPackWelcome.KeySettleSeconds;
-        Assert.Equal(PortraitPackWelcomeAnswer.Download, PortraitPackWelcome.AnswerOf(downloadClicked: true, notNowClicked: false, enter: false, escape: false, focused: false, sinceOpen: 0));
-        Assert.Equal(PortraitPackWelcomeAnswer.Download, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, focused: true, sinceOpen: settled));
-        Assert.Equal(PortraitPackWelcomeAnswer.Download, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, focused: true, sinceOpen: 30));
+        Assert.Equal(PortraitPackWelcomeAnswer.Download, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, engaged: true, sinceOpen: settled));
+        Assert.Equal(PortraitPackWelcomeAnswer.Download, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, engaged: true, sinceOpen: 30));
+
+        // Engaged but not settled: not yet.
+        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, engaged: true, sinceOpen: 0));
+        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, engaged: true, sinceOpen: settled - 0.01));
     }
 
     [Fact]
-    public void Enter_never_downloads_before_the_offer_settles_or_off_its_window()
+    public void Enter_never_downloads_before_the_player_engaged_however_long_it_is_up()
     {
-        // The offer opens unasked: an Enter meant for the game's chat must not download.
-        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, focused: true, sinceOpen: 0));
-        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, focused: true, sinceOpen: PortraitPackWelcome.KeySettleSeconds - 0.01));
-        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, focused: false, sinceOpen: 30));
+        // The offer opens unasked and Dalamud gives the game and ImGui every key: an Enter meant for the game's chat,
+        // however long after the offer appeared, is no answer until the player clicked inside the offer.
+        foreach (var sinceOpen in new[] { 0, PortraitPackWelcome.KeySettleSeconds - 0.01, PortraitPackWelcome.KeySettleSeconds, 30, 3600 })
+        {
+            Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: false, engaged: false, sinceOpen: sinceOpen));
+        }
     }
 
     [Fact]
-    public void Esc_and_not_now_decline()
+    public void Esc_is_ignored_before_engagement_and_declines_after()
     {
-        Assert.Equal(PortraitPackWelcomeAnswer.NotNow, PortraitPackWelcome.AnswerOf(false, false, enter: false, escape: true, focused: true, sinceOpen: 0));
-        Assert.Equal(PortraitPackWelcomeAnswer.NotNow, PortraitPackWelcome.AnswerOf(false, notNowClicked: true, enter: false, escape: false, focused: false, sinceOpen: 0));
+        // An Esc meant for the game's menu never declines the offer for good.
+        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, enter: false, escape: true, engaged: false, sinceOpen: 30));
+
+        // Engaged: Esc declines at once (no settle needed to say no).
+        Assert.Equal(PortraitPackWelcomeAnswer.NotNow, PortraitPackWelcome.AnswerOf(false, false, enter: false, escape: true, engaged: true, sinceOpen: 0));
+        Assert.Equal(PortraitPackWelcomeAnswer.NotNow, PortraitPackWelcome.AnswerOf(false, false, enter: false, escape: true, engaged: true, sinceOpen: 30));
+    }
+
+    [Fact]
+    public void Not_now_declines_and_declining_wins_a_tie()
+    {
+        Assert.Equal(PortraitPackWelcomeAnswer.NotNow, PortraitPackWelcome.AnswerOf(false, notNowClicked: true, enter: false, escape: false, engaged: false, sinceOpen: 0));
 
         // Esc wins over Enter in the same frame, and Not now over a Download click: declining is the safe side.
-        Assert.Equal(PortraitPackWelcomeAnswer.NotNow, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: true, focused: true, sinceOpen: 30));
-        Assert.Equal(PortraitPackWelcomeAnswer.NotNow, PortraitPackWelcome.AnswerOf(true, true, enter: false, escape: false, focused: true, sinceOpen: 30));
-
-        // Esc on another window is not an answer.
-        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, enter: false, escape: true, focused: false, sinceOpen: 30));
+        Assert.Equal(PortraitPackWelcomeAnswer.NotNow, PortraitPackWelcome.AnswerOf(false, false, enter: true, escape: true, engaged: true, sinceOpen: 30));
+        Assert.Equal(PortraitPackWelcomeAnswer.NotNow, PortraitPackWelcome.AnswerOf(true, true, enter: false, escape: false, engaged: true, sinceOpen: 30));
     }
 
     [Fact]
     public void Nothing_pressed_is_no_answer()
     {
-        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, false, false, focused: true, sinceOpen: 30));
+        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, false, false, engaged: true, sinceOpen: 30));
+        Assert.Equal(PortraitPackWelcomeAnswer.None, PortraitPackWelcome.AnswerOf(false, false, false, false, engaged: false, sinceOpen: 30));
+    }
+
+    [Fact]
+    public void The_keys_and_the_focus_belong_to_the_offer_only_once_engaged_and_settled()
+    {
+        var settled = PortraitPackWelcome.KeySettleSeconds;
+        Assert.False(PortraitPackWelcome.OwnsKeys(engaged: false, sinceOpen: 30, asking: true));
+        Assert.False(PortraitPackWelcome.OwnsKeys(engaged: true, sinceOpen: settled - 0.01, asking: true));
+        Assert.True(PortraitPackWelcome.OwnsKeys(engaged: true, sinceOpen: settled, asking: true));
+
+        // After Download the window shows progress: the keys go back to the game.
+        Assert.False(PortraitPackWelcome.OwnsKeys(engaged: true, sinceOpen: 30, asking: false));
+    }
+
+    // ------------------------------------------------------------------ after Download
+
+    [Fact]
+    public void After_download_the_window_follows_the_run()
+    {
+        static PortraitPackOfferView View(bool downloading = false, bool installing = false, bool removing = false, bool finished = true, bool removal = false, PortraitPackFailure last = PortraitPackFailure.None, bool installed = false) =>
+            PortraitPackWelcome.ViewAfterDownload(downloading, installing, removing, finished, removal, last, installed);
+
+        Assert.Equal(PortraitPackOfferView.Downloading, View(downloading: true, finished: false));
+        Assert.Equal(PortraitPackOfferView.Checking, View(installing: true, finished: false));
+        Assert.Equal(PortraitPackOfferView.Installed, View(installed: true));
+        Assert.Equal(PortraitPackOfferView.Cancelled, View(last: PortraitPackFailure.Cancelled));
+        Assert.Equal(PortraitPackOfferView.Failed, View(last: PortraitPackFailure.Offline));
+        Assert.Equal(PortraitPackOfferView.Failed, View(last: PortraitPackFailure.HashMismatch));
+    }
+
+    [Fact]
+    public void A_removal_since_never_reads_as_a_failed_download()
+    {
+        static PortraitPackOfferView View(bool removing, bool removal, PortraitPackFailure last, bool installed) =>
+            PortraitPackWelcome.ViewAfterDownload(downloading: false, installing: false, removing, finished: true, removal, last, installed);
+
+        // Left on "Installed", then Remove pack in Settings: a removal running, done, or failed (the pack stays).
+        Assert.Equal(PortraitPackOfferView.Gone, View(removing: true, removal: false, PortraitPackFailure.None, installed: true));
+        Assert.Equal(PortraitPackOfferView.Gone, View(removing: false, removal: true, PortraitPackFailure.None, installed: false));
+        Assert.Equal(PortraitPackOfferView.Gone, View(removing: false, removal: true, PortraitPackFailure.DiskError, installed: true));
+
+        // A run that succeeded but left no pack, or no run at all: nothing to show either.
+        Assert.Equal(PortraitPackOfferView.Gone, View(removing: false, removal: false, PortraitPackFailure.None, installed: false));
+        Assert.Equal(PortraitPackOfferView.Gone, PortraitPackWelcome.ViewAfterDownload(false, false, false, finished: false, false, PortraitPackFailure.None, false));
     }
 }
