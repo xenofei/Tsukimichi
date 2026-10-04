@@ -1,6 +1,6 @@
 {
  "heading": "Designs for plan 8",
- "intro": "<p>The designs below show 1.22.0 and the Umbra add-on before anything is built. A designer made every board and painting, and the realism supervisor reviewed each one for light, shadow, reflection, colour and contrast. <strong>You chose Option B</strong> for the release art. Its last round of small fixes (window lights, Medallion's oil finish, a few rendering artefacts) is being made now. The rest of the design set is approved. Nothing here is in the plugin yet.</p>",
+ "intro": "<p>The designs below show 1.22.0 and the Umbra add-on before anything is built. A designer made every board and painting, and the realism supervisor reviewed each one for light, shadow, reflection, colour and contrast. <strong>You chose Option B.</strong> It was approved after eight rounds, and four releases are finished in it: 1.22.0, 1.21.0, 1.20.0 and 1.19.0. The other five (1.14 to 1.18) are being painted now, each reviewed the same way.</p>",
  "groups": [
   {
    "key": "whatsnew",
@@ -39,7 +39,7 @@
     {
      "id": "wn-art",
      "tag": "W2 · Option A",
-     "name": "Release art: one painting, six looks",
+     "name": "Release art, Option A (not chosen)",
      "for": [
       "Request 2",
       "Decision 1"
@@ -56,12 +56,12 @@
      "watch": [
       "Medallion and Classic look almost the same; the themes differ mostly by colour"
      ],
-     "verdict": "Supervisor: approved"
+     "verdict": "Supervisor: approved · not chosen"
     },
     {
      "id": "wn-optionb",
      "tag": "W2 · Option B",
-     "name": "Release art, Option B: a richer painting, each theme its own craft",
+     "name": "Release art, Option B (your choice): a richer painting, each theme its own craft",
      "for": [
       "Decision 1"
      ],
@@ -75,10 +75,8 @@
       "Orrery: an engraved astrolabe plate",
       "Sumi to Kinpaku: ink on washi with gold leaf"
      ],
-     "watch": [
-      "The supervisor asked for changes. Medallion's oval crops out the moon. The glass loses the moon and reads as mosaic. The Orrery's brass turns the snow to desert. Smaller fixes to the shadows, the gold bands and the facets. All are being fixed now."
-     ],
-     "verdict": "Supervisor: changes in progress"
+     "watch": [],
+     "verdict": "Supervisor: approved"
     },
     {
      "id": "wn-history",
@@ -217,6 +215,6 @@
   }
  ],
  "supervisor": {
-  "summary": "<p><strong>Option A design set: approved after three rounds.</strong> Round 1 found 4 Major issues: contrast, a footer that moved, shards above the moon, and missing paintings. Round 2 found the lantern pool cut by a hard edge, a detached shadow, and a shard on the moon's face. All are fixed.</p><p><strong>Option B: changes in progress.</strong> The moon is cropped or lost in two looks, the glass reads as mosaic, and the Orrery's snow became desert. The page will be updated when it's approved.</p>"
+  "summary": "<p><strong>All designs are approved.</strong> Option A was approved after three rounds. Option B, your choice, was approved after eight: moons that read as \"?\" or as a cheese, a desert in place of snow, glass that looked like mosaic, and a mangled varnished moon were all fixed.</p>"
  }
 }
