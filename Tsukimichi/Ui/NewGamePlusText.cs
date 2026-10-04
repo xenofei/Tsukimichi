@@ -13,18 +13,22 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed class NewGamePlusText
 {
-    private (int Version, int Language, CatalogBundle? Bundle) key = (-1, -1, null);
+    private (int Version, int Language, CatalogBundle? Bundle, bool Shows) key = (-1, -1, null, false);
     private string line = string.Empty;
 
-    /// <summary>The line for <paramref name="session"/>'s running New Game+ session; empty when none runs or it belongs to another character than the one viewed.</summary>
+    /// <summary>
+    /// The line for <paramref name="session"/>'s running New Game+ session; empty when none runs or it belongs to another
+    /// character than the one viewed (<see cref="NewGamePlusSession.IsFor"/>).
+    /// </summary>
     public string Line(SessionState session, CatalogBundle bundle)
     {
         var replay = session.NewGamePlus;
-        var next = (replay.Version, Localization.Loc.Version, bundle);
+        var shows = replay.IsFor(session.ViewedContentId);
+        var next = (replay.Version, Localization.Loc.Version, bundle, shows);
         if (next != key)
         {
             key = next;
-            line = replay.Active ? For(replay, bundle) : string.Empty;
+            line = shows ? For(replay, bundle) : string.Empty;
         }
 
         return line;

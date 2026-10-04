@@ -86,6 +86,9 @@ public sealed class PlanPane
     /// <summary>The Duty Finder tiles the kind chips wear (UI-5d), once read off the frame; null or unread: the slot stays empty.</summary>
     public Func<IPaneIconSheets?>? IconSheets { get; init; }
 
+    /// <summary>The C7 clear badges (1.19.0): a row whose quest unlocks a duty wears its badges after the kind pills; null wears none.</summary>
+    public ClearBadgeSource? Badges { get; init; }
+
     /// <summary>The gap between an icon and the text after it, logical px.</summary>
     private const float IconGapLogical = 5f;
 
@@ -579,16 +582,25 @@ public sealed class PlanPane
         }
 
         // Kind pills, sized to their text: every distinct kind, or the primary one alone once two-line and narrow.
+        // The clear badges (1.19.0, C7) of the duty the quest unlocks follow the pills, as one last part: a narrow row
+        // drops them before any kind pill.
         Span<UnlockKind> kinds = stackalloc UnlockKind[MaxKinds];
-        Span<float> parts = stackalloc float[MaxKinds];
-        Span<bool> shown = stackalloc bool[MaxKinds];
+        Span<float> parts = stackalloc float[MaxKinds + 1];
+        Span<bool> shown = stackalloc bool[MaxKinds + 1];
         var kindCount = Kinds(entry, tier == PlanRowTier.OneLine || PaneFit.PlanAllKinds(logical) ? MaxKinds : 1, kinds);
+        var badges = Badges?.ForQuest(quest, Core.Companions.DutyBadgeSurface.MyBlues);
+        var partCount = kindCount;
         using (Typography.Caption())
         {
             for (var i = 0; i < kindCount; i++)
             {
                 parts[i] = PillSize(kinds[i], Strings.PlanKindName(kinds[i])).X + (i == 0 ? gap : UiMetrics.Px(4f));
             }
+        }
+
+        if (badges is { Length: > 0 })
+        {
+            parts[partCount++] = DutyBadges.RunWidth(badges) + (kindCount == 0 ? gap : DutyBadges.RunGap);
         }
 
         float nameRoom, pillEnd, statusX, statusY, statusWidth;
@@ -609,7 +621,7 @@ public sealed class PlanPane
             // The name and the pills after it share the first line (RowFit drops pills before the name gets short);
             // the status has the second line, up to the buttons.
             var nameWidth = ImGui.CalcTextSize(entry.Name).X;
-            var fit = RowFit.Fit(actionsX - gap - nameX, nameWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), parts[..kindCount], shown);
+            var fit = RowFit.Fit(actionsX - gap - nameX, nameWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), parts[..partCount], shown);
             nameRoom = MathF.Min(nameWidth, fit.NameRoom);
             pillEnd = nameX + nameRoom + fit.PartsWidth;
             statusX = nameX;
@@ -665,6 +677,18 @@ public sealed class PlanPane
             {
                 UiMetrics.Tooltip(UnlocksTooltip(entry));
             }
+        }
+
+        // The badges only after every kind pill, while they fit the pills' room; each explains itself on hover.
+        var kindsWidth = 0f;
+        for (var i = 0; i < kindCount; i++)
+        {
+            kindsWidth += parts[i];
+        }
+
+        if (badges is { Length: > 0 } && pillsEnd >= pillX + kindsWidth - 0.5f)
+        {
+            DutyBadges.DrawRun(badges, pillsEnd + (kindCount == 0 ? gap : DutyBadges.RunGap), start.Y, firstLine, pillEnd, Textures);
         }
 
         // Status: the state word never cut, the reason ellipsised, the whole line on hover when cut.

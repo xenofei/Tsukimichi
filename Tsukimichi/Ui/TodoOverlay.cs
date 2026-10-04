@@ -394,9 +394,9 @@ public sealed class TodoOverlay : Window, IDisposable
         }
 
         // A New Game+ session runs (1.19.0, C4): the status bar's line, above the sections.
-        if (session.Bundle is { } replayBundle && session.NewGamePlus.Active && session.ViewedContentId == session.NewGamePlus.ContentId)
+        if (session.Bundle is { } replayBundle && newGamePlusText.Line(session, replayBundle) is { Length: > 0 } replayLine)
         {
-            Chrome.OutlinedText(newGamePlusText.Line(session, replayBundle), Theme.Surface.Text);
+            Chrome.OutlinedText(replayLine, Theme.Surface.Text);
         }
 
         if (sections.Length == 0)

@@ -3,23 +3,26 @@ using Tsukimichi.Core.Model;
 namespace Tsukimichi.Core.Rewards;
 
 /// <summary>
-/// The two <c>ParamGrow</c> columns the quest EXP formula reads, by level (the sheet's row id is the level):
-/// <c>QuestExpModifier</c> and <c>ScaledQuestXP</c>. The plugin reads them from the game at catalog build
-/// (<c>CatalogMapper</c>); Core cannot read the sheets, so a catalog built without them (the test fixture) has
-/// <see cref="Empty"/>, and every quest's EXP is then unknown rather than guessed. Immutable.
+/// The <c>ParamGrow</c> columns Tsukimichi reads, by level (the sheet's row id is the level): <c>QuestExpModifier</c>
+/// and <c>ScaledQuestXP</c> for the quest EXP formula, and <c>ExpToNext</c> for "5% of a level" (feature plan v7, C8).
+/// The plugin reads them from the game at catalog build (<c>CatalogMapper</c>); Core cannot read the sheets, so a
+/// catalog built without them (the test fixture) has <see cref="Empty"/>, and every quest's EXP is then unknown rather
+/// than guessed. Immutable.
 /// </summary>
 public sealed class QuestExpTable
 {
     /// <summary>No rows: every EXP reads <see cref="ExpKind.Unknown"/>.</summary>
-    public static readonly QuestExpTable Empty = new([], []);
+    public static readonly QuestExpTable Empty = new([], [], []);
 
     private readonly uint[] modifiers;
     private readonly uint[] scales;
+    private readonly int[] toNext;
 
-    private QuestExpTable(uint[] modifiers, uint[] scales)
+    private QuestExpTable(uint[] modifiers, uint[] scales, int[] toNext)
     {
         this.modifiers = modifiers;
         this.scales = scales;
+        this.toNext = toNext;
     }
 
     /// <summary>Whether the table has no level at all.</summary>
@@ -36,6 +39,17 @@ public sealed class QuestExpTable
     public static QuestExpTable From(IEnumerable<(int Level, uint Modifier, uint Scale)> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
+        return From(rows.Select(static r => (r.Level, r.Modifier, r.Scale, 0)));
+    }
+
+    /// <summary>
+    /// Builds the table from (level, <c>QuestExpModifier</c>, <c>ScaledQuestXP</c>, <c>ExpToNext</c>) rows, as
+    /// <see cref="From(IEnumerable{ValueTuple{int, uint, uint}})"/> does; a level whose <c>ExpToNext</c> is 0 (the
+    /// level cap, or a row past it) has no "share of a level" (<see cref="ExpToNext"/>).
+    /// </summary>
+    public static QuestExpTable From(IEnumerable<(int Level, uint Modifier, uint Scale, int ExpToNext)> rows)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
         var list = rows.Where(static r => r.Level is >= 0 and <= byte.MaxValue).ToList();
         if (list.Count == 0)
         {
@@ -45,14 +59,23 @@ public sealed class QuestExpTable
         var size = list.Max(static r => r.Level) + 1;
         var modifiers = new uint[size];
         var scales = new uint[size];
-        foreach (var (level, modifier, scale) in list)
+        var toNext = new int[size];
+        foreach (var (level, modifier, scale, next) in list)
         {
             modifiers[level] = modifier;
             scales[level] = scale;
+            toNext[level] = Math.Max(0, next);
         }
 
-        return new QuestExpTable(modifiers, scales);
+        return new QuestExpTable(modifiers, scales, toNext);
     }
+
+    /// <summary>
+    /// The EXP a job at <paramref name="level"/> needs to reach the next level (<c>ParamGrow.ExpToNext</c>); null when
+    /// the level is unknown (0 or outside the table) or the row has none (the level cap: there is no next level).
+    /// </summary>
+    public int? ExpToNext(int level) =>
+        level > 0 && level < toNext.Length && toNext[level] > 0 ? toNext[level] : null;
 
     /// <summary>
     /// The EXP a quest of <paramref name="expFactor"/> gives at <paramref name="level"/>:
@@ -69,6 +92,13 @@ public sealed class QuestExpTable
         return (ulong)expFactor * modifiers[level] * scales[level] / 100UL;
     }
 }
+
+/// <summary>
+/// An amount of EXP as a share of the level it is earned at (feature plan v7, C8: "50,700 EXP (5% of a level)"):
+/// <paramref name="Percent"/> rounded to a whole percent, or <paramref name="UnderOne"/> when it is less than 1%
+/// (shown as "&lt;1%"; <paramref name="Percent"/> is then 0).
+/// </summary>
+public readonly record struct LevelShare(int Percent, bool UnderOne);
 
 /// <summary>What is known about a quest's EXP reward (<see cref="QuestExp.For"/>).</summary>
 public enum ExpKind : byte
@@ -173,5 +203,29 @@ public static class QuestExp
 
         var level = Math.Clamp(jobLevel, quest.DisplayLevel, quest.LevelMax);
         return table.At(level, quest.ExpFactor) is { } amount ? Math.Clamp(amount, reward.Min, reward.Max) : reward.Min;
+    }
+
+    /// <summary>
+    /// <paramref name="exp"/> as a share of what a job at <paramref name="level"/> needs to level up
+    /// (<c>ParamGrow[level].ExpToNext</c>), rounded to a whole percent, half away from zero; under 1% reads
+    /// <see cref="LevelShare.UnderOne"/>. Null when there is nothing to say: no EXP, an unknown level, or a level with no
+    /// next one (the level cap) or no row (<see cref="QuestExpTable.ExpToNext"/>).
+    /// </summary>
+    public static LevelShare? ShareOfLevel(ulong exp, int level, QuestExpTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (exp == 0 || table.ExpToNext(level) is not { } next)
+        {
+            return null;
+        }
+
+        var hundredfold = (decimal)exp * 100m;
+        if (hundredfold < next)
+        {
+            return new LevelShare(0, true);
+        }
+
+        var percent = Math.Round(hundredfold / next, MidpointRounding.AwayFromZero);
+        return new LevelShare(percent >= int.MaxValue ? int.MaxValue : (int)percent, false);
     }
 }

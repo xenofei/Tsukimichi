@@ -194,17 +194,18 @@ public static class CatalogMapper
 
     /// <summary>
     /// <c>ParamGrow</c>'s <c>QuestExpModifier</c> and <c>ScaledQuestXP</c> by level (the row id), for the quest EXP
-    /// formula; empty when the sheet cannot be read, which leaves every quest's EXP unknown rather than wrong.
+    /// formula, and its <c>ExpToNext</c>, for the EXP line's "5% of a level" (feature plan v7, C8); empty when the sheet
+    /// cannot be read, which leaves every quest's EXP unknown rather than wrong.
     /// </summary>
     public static Core.Rewards.QuestExpTable ReadExpTable(ExcelModule excel)
     {
         ArgumentNullException.ThrowIfNull(excel);
-        var rows = new List<(int, uint, uint)>();
+        var rows = new List<(int, uint, uint, int)>();
         foreach (var row in excel.GetSheet<ParamGrow>())
         {
             if (row.RowId <= byte.MaxValue)
             {
-                rows.Add(((int)row.RowId, row.QuestExpModifier, row.ScaledQuestXP));
+                rows.Add(((int)row.RowId, row.QuestExpModifier, row.ScaledQuestXP, row.ExpToNext));
             }
         }
 

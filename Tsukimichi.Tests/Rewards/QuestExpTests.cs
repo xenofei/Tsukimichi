@@ -126,6 +126,63 @@ public sealed class QuestExpTests(FixtureCatalog fixture) : IClassFixture<Fixtur
         Assert.Equal(ExpKind.Unknown, QuestExp.For(quest, Table).Kind);
     }
 
+    [Fact]
+    public void The_share_of_a_level_rounds_to_a_whole_percent_and_says_under_one()
+    {
+        // ParamGrow's ExpToNext: Lv 56 needs 927,000 (spec-1.19 C8); Lv 100 is the cap, with no next level (0).
+        var table = QuestExpTable.From([(56, 39, 330, 927_000), (99, 168, 1660, 4_000_000), (100, 168, 1680, 0)]);
+        Assert.Equal(927_000, table.ExpToNext(56));
+
+        // Into the Aery: 50,700 is 5.47%, so 5%.
+        Assert.Equal(new LevelShare(5, false), QuestExp.ShareOfLevel(50_700, 56, table));
+
+        // Half a percent rounds away from zero; under 1% says so rather than "0%"; exactly 1% is 1%.
+        Assert.Equal(new LevelShare(2, false), QuestExp.ShareOfLevel(13_905, 56, table));
+        Assert.Equal(new LevelShare(0, true), QuestExp.ShareOfLevel(9_269, 56, table));
+        Assert.Equal(new LevelShare(1, false), QuestExp.ShareOfLevel(9_270, 56, table));
+
+        // More than a level is more than 100%.
+        Assert.Equal(new LevelShare(200, false), QuestExp.ShareOfLevel(1_854_000, 56, table));
+    }
+
+    [Fact]
+    public void No_share_at_the_level_cap_an_unknown_level_or_no_exp()
+    {
+        var table = QuestExpTable.From([(56, 39, 330, 927_000), (100, 168, 1680, 0)]);
+
+        // The cap has no next level; a level outside the table, level 0 and no EXP say nothing.
+        Assert.Null(table.ExpToNext(100));
+        Assert.Null(QuestExp.ShareOfLevel(50_700, 100, table));
+        Assert.Null(QuestExp.ShareOfLevel(50_700, 0, table));
+        Assert.Null(QuestExp.ShareOfLevel(50_700, 57, table));
+        Assert.Null(QuestExp.ShareOfLevel(50_700, 120, table));
+        Assert.Null(QuestExp.ShareOfLevel(0, 56, table));
+
+        // A table built without the column (the 1.9 shape) and the empty table know no share.
+        Assert.Null(Table.ExpToNext(58));
+        Assert.Null(QuestExp.ShareOfLevel(100, 58, Table));
+        Assert.Null(QuestExp.ShareOfLevel(100, 56, QuestExpTable.Empty));
+    }
+
+    [GameDataFact]
+    public void The_live_param_grow_has_the_exp_each_level_needs_and_none_at_the_cap()
+    {
+        using var game = new GameDataFixture();
+        var table = game.Bundle.ExpTable;
+
+        // Every level from 1 to 99 needs EXP to the next one; the spec's example: Lv 56 needs 927,000.
+        for (var level = 1; level < 100; level++)
+        {
+            Assert.True(table.ExpToNext(level) > 0, $"Lv {level}");
+        }
+
+        Assert.Equal(927_000, table.ExpToNext(56));
+        Assert.Equal(new LevelShare(5, false), QuestExp.ShareOfLevel(50_700, 56, table));
+
+        // Nothing past the last row the game fills.
+        Assert.Null(table.ExpToNext(table.MaxLevel + 1));
+    }
+
     [GameDataFact]
     public void The_live_param_grow_rows_give_the_reward_windows()
     {

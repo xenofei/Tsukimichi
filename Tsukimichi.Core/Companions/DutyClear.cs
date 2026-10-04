@@ -90,6 +90,31 @@ public enum DutyBadgeKind : byte
     Optional,
 }
 
+/// <summary>
+/// Where a duty wears its badges (spec-1.19 C7: "the same badges appear wherever duties appear"). Each surface keeps
+/// the badges' order (size, then High-end, then the story badge) and drops what it has no room or use for.
+/// </summary>
+public enum DutyBadgeSurface : byte
+{
+    /// <summary>The detail pane's "How you'll clear it": every badge.</summary>
+    Detail,
+
+    /// <summary>The Duty Finder hint beside the game's window, for a locked duty: every badge, as the detail pane.</summary>
+    DutyFinder,
+
+    /// <summary>
+    /// A My blues row: the size, High-end, and Story-required when the story needs the duty. "Optional" is left out:
+    /// it is what almost every blue unlock is, so on a list of them it says nothing.
+    /// </summary>
+    MyBlues,
+
+    /// <summary>A route step that involves a duty: the size and High-end; the step's own MSQ mark speaks for the story.</summary>
+    Route,
+
+    /// <summary>A Duties board row and the roulette hint's duty rows: the size alone (spec-1.19 N4).</summary>
+    Board,
+}
+
 /// <summary>One badge, with the party size for <see cref="DutyBadgeKind.Group"/>.</summary>
 public readonly record struct DutyBadge(DutyBadgeKind Kind, int Players = 0);
 
@@ -121,6 +146,19 @@ public static class DutyBadgeRules
 
         return badges;
     }
+
+    /// <summary>
+    /// The badges <paramref name="surface"/> shows, in <see cref="For(DutyRunInfo, bool?)"/>'s order
+    /// (<see cref="DutyBadgeSurface"/> says which each keeps); <paramref name="storyRequired"/> null leaves the story
+    /// badge out.
+    /// </summary>
+    public static IReadOnlyList<DutyBadge> For(DutyRunInfo duty, bool? storyRequired, DutyBadgeSurface surface) => surface switch
+    {
+        DutyBadgeSurface.Board => Size(duty) is { } size ? [size] : [],
+        DutyBadgeSurface.Route => For(duty, storyRequired: null),
+        DutyBadgeSurface.MyBlues => For(duty, storyRequired == true ? true : null),
+        _ => For(duty, storyRequired),
+    };
 
     /// <summary>The size badge alone (the Duties board's rows wear only this one); null when the party size is unknown.</summary>
     public static DutyBadge? Size(DutyRunInfo duty)

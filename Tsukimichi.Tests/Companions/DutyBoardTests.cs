@@ -37,12 +37,15 @@ public class DutyBoardTests
         [Sastasha, TamTara, Copperbell, CapA, CapB, Castrum, Praetorium, Porta, Labyrinth, Ifrit, Ultimate, Hunt],
         [LevelCap, Leveling, MainScenario, Alliance, Mentor]);
 
-    private static CharacterSnapshot With(short level, byte expansion, uint[] unlocked, uint[] cleared) =>
+    /// <summary>The fingerprint a capture over <see cref="Index"/>'s watched duties carries, as the game state reader writes it.</summary>
+    private static readonly uint Watch = GateItemCapture.Fingerprint(DutyBoard.Watched(Index));
+
+    private static CharacterSnapshot With(short level, byte expansion, uint[] unlocked, uint[] cleared, uint? watch = null) =>
         Fixture.Snapshot() with
         {
             JobLevels = Fixture.Levels((Fixture.Gladiator, level)),
             MaxExpansion = expansion,
-            DutyRecords = new DutyRecordCapture(0, unlocked.Select(d => d + 1000).Order().ToArray(), cleared.Select(d => d + 1000).Order().ToArray()),
+            DutyRecords = new DutyRecordCapture(watch ?? Watch, unlocked.Select(d => d + 1000).Order().ToArray(), cleared.Select(d => d + 1000).Order().ToArray()),
         };
 
     private static RouletteLine Line(DutyBoardModel board, RouletteInfo roulette) => Assert.Single(board.Roulettes, r => r.Roulette == roulette);
@@ -117,6 +120,68 @@ public class DutyBoardTests
 
         // An entitlement the capture did not read (0) never blocks.
         Assert.Equal(RouletteLock.NeedsDuties, Line(DutyBoard.Build(Index, With(100, 0, [], [])), LevelCap).Lock);
+    }
+
+    [Fact]
+    public void The_roulette_level_reads_combat_jobs_only()
+    {
+        // Review fix: a Carpenter at 100 does not open Level Cap Dungeons for a Paladin at 99, nor does a Blue Mage.
+        const byte Carpenter = 8, BlueMage = 36;
+        var crafter = With(100, 5, [100, 101], []) with { JobLevels = Fixture.Levels((Fixture.Paladin, 99), (Carpenter, 100), (BlueMage, 100)) };
+        Assert.Equal(RouletteLock.NeedsLevel, Line(DutyBoard.Build(Index, crafter), LevelCap).Lock);
+
+        var paladin = crafter with { JobLevels = Fixture.Levels((Fixture.Paladin, 100), (Carpenter, 100)) };
+        Assert.Equal(RouletteLock.Open, Line(DutyBoard.Build(Index, paladin), LevelCap).Lock);
+
+        // The sheet's rule, when the caller passes it, decides instead of the row ids (here only Gladiator enters duties).
+        Assert.Equal(RouletteLock.NeedsLevel, Line(DutyBoard.Build(Index, paladin, queues: static job => job == Fixture.Gladiator), LevelCap).Lock);
+    }
+
+    [Fact]
+    public void A_capture_of_another_duty_list_reads_unknown_not_locked()
+    {
+        // Review fix: the stored capture read an older (narrower) list. A duty missing from its records may simply not
+        // have been read, so the board never calls it locked: what the records prove still counts.
+        var stale = DutyBoard.Build(Index, With(100, 5, [4, 2, 100], [2], watch: Watch + 1));
+        Assert.True(stale.Stale);
+
+        var cap = Line(stale, LevelCap);
+        Assert.Equal(RouletteLock.Unknown, cap.Lock);
+        Assert.Empty(cap.Missing);
+        Assert.DoesNotContain(cap, stale.Locked);
+        Assert.Contains(cap, stale.WithSomethingLeft);
+
+        // Two Leveling dungeons unlocked open it, whatever else the list missed; level and expansion still decide.
+        Assert.Equal(RouletteLock.Open, Line(stale, Leveling).Lock);
+        Assert.Empty(Line(stale, Leveling).Missing);
+        Assert.Equal(RouletteLock.NeedsLevel, Line(DutyBoard.Build(Index, With(15, 5, [], [], watch: Watch + 1)), Leveling).Lock);
+
+        // Unlocked and never cleared still reads from the records.
+        Assert.Equal([Sastasha, CapA], stale.NeverCleared[0].Duties);
+
+        // The same capture over this list judges every duty.
+        var fresh = DutyBoard.Build(Index, With(100, 5, [4, 2, 100], [2]));
+        Assert.False(fresh.Stale);
+        Assert.Equal(RouletteLock.NeedsDuties, Line(fresh, LevelCap).Lock);
+    }
+
+    [Fact]
+    public void The_hint_answers_a_roulette_with_something_left()
+    {
+        var board = DutyBoard.Build(Index, With(100, 5, [4, 2, 100], []));
+
+        // Level Cap is locked (Cap B left): the hint is its line.
+        Assert.Same(Line(board, LevelCap), DutyBoard.HintFor(board, LevelCap.Id));
+
+        // Leveling is open with Copperbell not unlocked: still something to say.
+        Assert.Same(Line(board, Leveling), DutyBoard.HintFor(board, Leveling.Id));
+
+        // Open with nothing left, Mentor (left off the board), an unknown roulette and no selection: nothing.
+        var all = DutyBoard.Build(Index, With(100, 5, [4, 2, 3, 100, 101, 15, 16, 17, 92], []));
+        Assert.Null(DutyBoard.HintFor(all, Leveling.Id));
+        Assert.Null(DutyBoard.HintFor(board, Mentor.Id));
+        Assert.Null(DutyBoard.HintFor(board, 999));
+        Assert.Null(DutyBoard.HintFor(board, 0));
     }
 
     [Fact]

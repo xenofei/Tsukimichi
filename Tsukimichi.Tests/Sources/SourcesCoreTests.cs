@@ -131,9 +131,15 @@ public class SourcesCoreTests
         Assert.Equal("In your saddlebag", RewardStates.For(false, null, RewardWhereabouts.InSaddlebag, salvager, true)!.Text);
         Assert.Equal("With your retainers", RewardStates.For(false, null, RewardWhereabouts.WithRetainers, null, true)!.Text);
 
-        // Another character on view: the buy-back fact without "Not on you".
-        Assert.Equal("Buy it back from a Calamity salvager, 100 gil", RewardStates.For(false, null, RewardWhereabouts.Unknown, salvager, true)!.Text);
-        Assert.Equal("Also sold by Kurogai, 1,053 gil", RewardStates.For(false, null, RewardWhereabouts.Unknown, new BuyBack(BuyBackKind.Sold, GilShop(1053, Person("Kurogai"))), false)!.Text);
+        // Another character on view, or a place not read: the buy-back fact without "Not on you", the gold dot or the actions.
+        var unsure = RewardStates.For(false, null, RewardWhereabouts.Unknown, salvager, true)!;
+        Assert.Equal("If you no longer have it · buy it back from a Calamity salvager, 100 gil", unsure.Text);
+        Assert.False(unsure.IsBuyBack);
+        Assert.True(unsure.IfGone);
+        Assert.Same(salvager, unsure.BuyBack);
+        var sold = RewardStates.For(false, null, RewardWhereabouts.Unknown, new BuyBack(BuyBackKind.Sold, GilShop(1053, Person("Kurogai"))), false)!;
+        Assert.Equal("Also sold by Kurogai, 1,053 gil", sold.Text);
+        Assert.False(sold.IsBuyBack);
 
         // No shop sells it back: said only for a reward the quest alone gives.
         Assert.Equal("Not offered by the Salvager", RewardStates.For(false, null, RewardWhereabouts.NotHeld, null, true)!.Text);
@@ -149,11 +155,32 @@ public class SourcesCoreTests
         Assert.Equal(RewardWhereabouts.InArmoury, RewardStates.WhereaboutsOf(new HandInCount(0, 0, null, 0, 1, 0)));
         Assert.Equal(RewardWhereabouts.InSaddlebag, RewardStates.WhereaboutsOf(new HandInCount(0, 0, null, 2, 0, 0)));
         Assert.Equal(RewardWhereabouts.WithRetainers, RewardStates.WhereaboutsOf(new HandInCount(0, 0, 3, 0, 0, 0)));
-        Assert.Equal(RewardWhereabouts.NotHeld, RewardStates.WhereaboutsOf(new HandInCount(0, 0, null, 0, 0, 0)));
+        Assert.Equal(RewardWhereabouts.NotHeld, RewardStates.WhereaboutsOf(new HandInCount(0, 0, 0, 0, 0, 0)));
         Assert.Equal(RewardWhereabouts.Unknown, RewardStates.WhereaboutsOf(default));
 
         // The game read paused: Allagan Tools' count of the character stands in.
         Assert.Equal(RewardWhereabouts.OnYou, RewardStates.WhereaboutsOf(new HandInCount(2, null, 0)));
+    }
+
+    [Fact]
+    public void A_place_not_read_is_never_read_as_not_held()
+    {
+        // The saddlebag not opened this session reads null, not 0: the reward may be in it, so no "Not on you".
+        var saddlebagUnread = new HandInCount(0, 0, Retainers: 0, Saddlebag: null, Armoury: 0, Equipped: 0);
+        Assert.Equal(RewardWhereabouts.Unknown, RewardStates.WhereaboutsOf(saddlebagUnread));
+
+        // No Allagan Tools: the retainers are not counted, so the same holds.
+        var retainersUnread = new HandInCount(0, 0, Retainers: null, Saddlebag: 0, Armoury: 0, Equipped: 0);
+        Assert.Equal(RewardWhereabouts.Unknown, RewardStates.WhereaboutsOf(retainersUnread));
+
+        // What was read still places it.
+        Assert.Equal(RewardWhereabouts.InArmoury, RewardStates.WhereaboutsOf(new HandInCount(0, 0, null, null, 1, 0)));
+        Assert.Equal(RewardWhereabouts.WithRetainers, RewardStates.WhereaboutsOf(new HandInCount(0, 0, 2, null, 0, 0)));
+
+        // The hand-in side reads a saddlebag not read as holding nothing to name.
+        var soup = new HandInItem { ItemId = 4733, Name = "Beet Soup", Amount = 1 };
+        Assert.Equal(HandInPlace.None, saddlebagUnread.MisplacedIn(soup));
+        Assert.Equal(0, saddlebagUnread.CountIn(HandInPlace.Saddlebag));
     }
 
     // ---- HandInCount places (N5) ----

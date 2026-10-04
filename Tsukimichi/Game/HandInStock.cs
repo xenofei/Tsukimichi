@@ -14,8 +14,9 @@ namespace Tsukimichi.Game;
 /// <para>
 /// The game read is <c>InventoryManager.GetInventoryItemCount</c> three ways (the four bags alone, with what is worn,
 /// with the armoury chest) and <c>GetItemCountInContainer</c> for the saddlebag pages (the game fills those once the
-/// saddlebag was opened this session), each for NQ and HQ, kept apart so an item a quest wants high quality counts only
-/// its HQ (<see cref="HandInCount"/>; Allagan Tools' counts cannot be split). Since 1.19 (N5) the count is the inventory
+/// saddlebag was opened this session, so until then the saddlebag reads as not read, never as empty), each for NQ and
+/// HQ, kept apart so an item a quest wants high quality counts only its HQ (<see cref="HandInCount"/>; Allagan Tools'
+/// counts cannot be split). Since 1.19 (N5) the count is the inventory
 /// alone, what the game takes at the hand-in; the saddlebag and the armoury chest are kept apart so the pane can say
 /// where the rest is. It calls into the game, so it follows the shared <see cref="HookGate"/> as the other
 /// game reads do: while the gate pauses them, only Allagan Tools' numbers show. It runs on the framework thread only
@@ -82,7 +83,8 @@ public sealed class HandInStock
     }
 
     /// <summary>One game read: the inventory (what a hand-in counts, 1.19 N5) with its HQ part, and the other containers apart.</summary>
-    private readonly record struct GameRead(int Inventory, int InventoryHq, int Saddlebag, int Armoury, int Equipped);
+    /// <param name="Saddlebag">Null until the game has loaded the saddlebag this session.</param>
+    private readonly record struct GameRead(int Inventory, int InventoryHq, int? Saddlebag, int Armoury, int Equipped);
 
     private GameRead? GameCount(uint itemId)
     {
@@ -112,7 +114,11 @@ public sealed class HandInStock
                 return null;
             }
 
-            int bags = 0, bagsHq = 0, saddlebag = 0, armoury = 0, equipped = 0;
+            // The saddlebag is read only once the game has loaded it (opened this session); the premium pages count
+            // when loaded too (a subscription), else they hold nothing.
+            var firstPage = inventory->GetInventoryContainer(InventoryType.SaddleBag1);
+            int? saddlebag = firstPage != null && firstPage->IsLoaded ? 0 : null;
+            int bags = 0, bagsHq = 0, armoury = 0, equipped = 0;
             foreach (var hq in (ReadOnlySpan<bool>)[false, true])
             {
                 // The four bags alone, then with what is worn, then with the armoury chest: the differences are each part.
@@ -125,7 +131,11 @@ public sealed class HandInStock
                 armoury += withArmoury - withWorn;
                 foreach (var bag in SaddleBags)
                 {
-                    saddlebag += Math.Max(0, inventory->GetItemCountInContainer(itemId, bag, hq));
+                    var container = inventory->GetInventoryContainer(bag);
+                    if (saddlebag is not null && container != null && container->IsLoaded)
+                    {
+                        saddlebag += Math.Max(0, inventory->GetItemCountInContainer(itemId, bag, hq));
+                    }
                 }
             }
 
