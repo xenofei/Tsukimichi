@@ -1011,6 +1011,7 @@ public sealed partial class GameLinks
         }
 
         travel.Start(plan, target, note);
+        JourneyQuestRowId = quest.RowId;
         if (travel.JourneyActive)
         {
             MarkStarted();

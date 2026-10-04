@@ -43,6 +43,15 @@ public sealed record UiPalette
     /// </summary>
     public required Vector4 OrnamentLight { get; init; }
 
+    /// <summary>
+    /// Copper, "it needs you" (spec-1.18, "Colour language"; plan v7 1.18.0 A2, A5, A9): the 3 px bar of a "Why it
+    /// stopped" card or the "Needs you" panel, a preflight row's dot, and the "Needs you" eyebrow at Quiet and Plain.
+    /// #D08654 on the dark palettes, #A8582A on Ishgard Snow. It is never the only carrier: every copper bar or dot sits
+    /// beside words that say the same (the supervisor's ruling). Reads at 4.5 : 1 on the window and on cards, and at 3 : 1
+    /// as a mark on every surface.
+    /// </summary>
+    public required Vector4 Copper { get; init; }
+
     /// <summary>The chrome inks beyond the surface roles: gold fills and lines, the danger tone, the Unknown text, the gauges and toggles.</summary>
     public required PaletteInks Inks { get; init; }
 
@@ -142,6 +151,7 @@ public sealed record UiPalette
         var form = this with
         {
             Key = Key + "-hc",
+            Copper = ColorMath.EnsureContrast(Copper, surface.Text, surface.Window, SurfaceColors.TextMinContrast),
             Surface = surface,
             Scene = scene,
             QuietTones = null,
@@ -206,6 +216,9 @@ public sealed record UiPalette
             }
         }
 
+        // Copper is text only on the window and on cards (the "Needs you" eyebrow at Quiet and Plain).
+        yield return ("Copper on Window", Copper, s.Window);
+        yield return ("Copper on Raised", Copper, s.Raised);
         yield return ("Text on Deep", s.Text, s.Deep);
         yield return ("Text on Top", s.Text, s.Top);
         yield return ("OnGold on Gold", Inks.OnGold, Inks.Gold);
@@ -237,6 +250,11 @@ public sealed record UiPalette
         yield return ("OrnamentLight on Raised", OrnamentLight, s.Raised);
         yield return ("Ready stripe on Window", States.Stripe(Model.QuestState.Ready), s.Window);
         yield return ("Locked out stripe on Window", States.Stripe(Model.QuestState.Foreclosed), s.Window);
+        foreach (var (name, ground) in Surfaces())
+        {
+            yield return ($"Copper mark on {name}", Copper, ground);
+        }
+
         if (IsHighContrast)
         {
             yield return ("Ornament on Window", s.Ornament, s.Window);

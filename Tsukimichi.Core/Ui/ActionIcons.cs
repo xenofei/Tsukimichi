@@ -77,6 +77,9 @@ public static class ActionIcons
     /// <summary>MainCommand 33, the Duty Finder: a duty without a category tile of its own.</summary>
     public const uint DutyFinder = 46;
 
+    /// <summary>MainCommand's Crafting Log: an Artisan craft (the "Why it stopped" card's icon for it, spec-1.18).</summary>
+    public const uint CraftingLog = 22;
+
     /// <summary>The job icons (062101 Gladiator …): 062100 plus the ClassJob row.</summary>
     public const uint JobIconBase = 62100;
 

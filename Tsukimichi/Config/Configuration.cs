@@ -200,11 +200,42 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>"Needs you" when someone sends a tell. On by default; Tsukimichi never answers it.</summary>
     public bool NeedsYouTell { get; set; } = true;
 
-    /// <summary>A "Needs you" alert plays a chat sound effect (at most once every 10 seconds). On by default.</summary>
-    public bool NeedsYouSound { get; set; } = true;
+    /// <summary>
+    /// The chat sound effect a knock-out alert plays (<c>&lt;se.1&gt;</c> to <c>&lt;se.16&gt;</c>, through the game, so it
+    /// follows the system-sound volume), 0 for none. <c>&lt;se.7&gt;</c> by default (spec-1.18 A5, the coordinator's
+    /// default: on). At most once every 10 seconds whatever the kind.
+    /// </summary>
+    public int NeedsYouSoundDeath { get; set; } = DefaultNeedsYouSound;
 
-    /// <summary>A "Needs you" alert also shows as a toast in the middle of the screen. On by default.</summary>
-    public bool NeedsYouToast { get; set; } = true;
+    /// <summary>The sound of a stuck alert; see <see cref="NeedsYouSoundDeath"/>.</summary>
+    public int NeedsYouSoundStuck { get; set; } = DefaultNeedsYouSound;
+
+    /// <summary>The sound of a duty-ready alert; see <see cref="NeedsYouSoundDeath"/>.</summary>
+    public int NeedsYouSoundDutyPop { get; set; } = DefaultNeedsYouSound;
+
+    /// <summary>The sound of a tell alert; see <see cref="NeedsYouSoundDeath"/>.</summary>
+    public int NeedsYouSoundTell { get; set; } = DefaultNeedsYouSound;
+
+    /// <summary>The chat sound effect every "Needs you" alert plays until the player picks another (<c>&lt;se.7&gt;</c>).</summary>
+    public const int DefaultNeedsYouSound = 7;
+
+    /// <summary>The highest chat sound effect (<c>&lt;se.16&gt;</c>).</summary>
+    public const int MaxNeedsYouSound = 16;
+
+    /// <summary>A "Needs you" alert flashes the game's taskbar button once while the game is not the foreground window. On by default.</summary>
+    public bool NeedsYouFlash { get; set; } = true;
+
+    /// <summary>On a knock-out or a stall during a run, Tsukimichi stops its own hand-offs (travel, AutoDuty, Artisan). On by default.</summary>
+    public bool NeedsYouStopHandOffs { get; set; } = true;
+
+    /// <summary>With <see cref="NeedsYouStopHandOffs"/>, Questionable is stopped too. Off by default (opt-in, spec-1.18 A5).</summary>
+    public bool NeedsYouStopQuestionable { get; set; }
+
+    /// <summary>
+    /// How often a hand-off stopped at a quest's step on this computer ("rowId:sequence" to a count; feature plan v7
+    /// A2), for the "Why it stopped" report. Capped by <see cref="Core.Companions.RunStopCounts.Max"/>.
+    /// </summary>
+    public Dictionary<string, int> RunStopCounts { get; set; } = [];
 
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
@@ -782,6 +813,12 @@ public sealed partial class Configuration : IPluginConfiguration
         {
             receipt.Completed ??= [];
         }
+
+        config.RunStopCounts ??= [];
+        config.NeedsYouSoundDeath = Math.Clamp(config.NeedsYouSoundDeath, 0, MaxNeedsYouSound);
+        config.NeedsYouSoundStuck = Math.Clamp(config.NeedsYouSoundStuck, 0, MaxNeedsYouSound);
+        config.NeedsYouSoundDutyPop = Math.Clamp(config.NeedsYouSoundDutyPop, 0, MaxNeedsYouSound);
+        config.NeedsYouSoundTell = Math.Clamp(config.NeedsYouSoundTell, 0, MaxNeedsYouSound);
 
         config.ExportFolder ??= string.Empty;
         config.CommandAliases ??= string.Empty;

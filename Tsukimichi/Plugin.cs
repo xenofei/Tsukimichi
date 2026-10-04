@@ -77,6 +77,8 @@ public sealed partial class Plugin : IDalamudPlugin
     private readonly TsukimichiCommand command;
     private StopCommand? stopCommand;
     private Game.RunWatch? runWatch;
+    private Game.RunStops? runStops;
+    private NeedsYouOverlay? needsYouOverlay;
     private readonly UiState ui;
     private readonly GameLinks gameLinks;
     private readonly Game.LifestreamIpc lifestream;
@@ -1186,10 +1188,26 @@ public sealed partial class Plugin : IDalamudPlugin
             command.Stop = stopCommand.Run;
             // Runs you can trust (1.18.0, A3 and A5): the duty guard stops (or warns about) a Questionable run before a
             // duty with no Duty Support or Trust, and "Needs you" alerts while a hand-off runs.
-            runWatch = new Game.RunWatch(Framework, ClientState, Condition, ObjectTable, ChatGui, ToastGui, DataManager, Settings, Session, questionableIpc, travel, lifestream, autoDuty, artisan, () => dutyRuns.Value, gate, Log)
+            runWatch = new Game.RunWatch(Framework, ClientState, Condition, ObjectTable, ChatGui, DataManager, Settings, Session, questionableIpc, travel, lifestream, autoDuty, artisan, () => dutyRuns.Value, gate, Log)
             {
                 Runs = questionableRuns,
             };
+
+            // Why it stopped (1.18.0, A2) and the Needs you panel (A5): one card in the notice dock and the Todo overlay,
+            // one calm panel over the game. Travel recovery's give-up (A8) raises the card through TravelService.GaveUp.
+            runStops = new Game.RunStops(Framework, ClientState, Condition, ObjectTable, DataManager, PluginInterface, Settings, () => Settings.Save(PluginInterface), Session, questionableIpc, travel, autoDuty, artisan, gate, line => ChatGui.Print(line, Ui.Strings.ChatTag), Log)
+            {
+                Runs = questionableRuns,
+                Actions = questionableActions,
+                Links = gameLinks,
+                StopAll = stopCommand.Run,
+                Preflight = travelPreflight,
+                GameVersion = clientGameVersion,
+            };
+            runWatch.Stops = runStops;
+            mainWindow.AttachRunStops(runStops);
+            needsYouOverlay = new NeedsYouOverlay(runStops);
+            PluginInterface.UiBuilder.Draw += needsYouOverlay.Draw;
             mainWindow.AttachDiagnostics(diagnostics);
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
@@ -1354,10 +1372,12 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.Companions = companions;
             configWindow.CompanionSetup = companionSetup;
             configWindow.TravelPreflight = travelPreflight;
+            configWindow.TestNeedsYouSound = runWatch.TestSound;
             configWindow.Questionable = questionableIpc;
             configWindow.QuestionableRuns = questionableRuns;
             configWindow.Nearby = discoveryWindow;
             var settingsWindow = configWindow;
+            runStops.OpenSetup = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Automation, Core.Ui.SettingsAnchor.CompanionPlugins);
             discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.InGame, Core.Ui.SettingsAnchor.Nearby);
             InitializeInGame(gate, rewardLookup, handIns, moonlit);
             InitializeCollector(unlockReader);
@@ -1382,6 +1402,7 @@ public sealed partial class Plugin : IDalamudPlugin
             todoOverlay.NextStops = nextStops;
             todoOverlay.OpenRoute = ui.OpenRoute;
             todoOverlay.ShowFollowedRoute = () => routes.ShowFollowed();
+            todoOverlay.RunStops = runStops;
             windowSystem.AddWindow(todoOverlay);
             // 0.8.0: Locked became click-through; a player who upgraded with it on is told once in chat.
             todoLockNotice = new Game.TodoLockNotice(Settings, ClientState, ChatGui, PluginInterface, Log);
@@ -1617,6 +1638,15 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("command", () => command?.Dispose());
         Unwind("stop command", () => stopCommand?.Dispose());
         Unwind("run watch", () => runWatch?.Dispose());
+        Unwind("run stops", () =>
+        {
+            if (needsYouOverlay is not null)
+            {
+                PluginInterface.UiBuilder.Draw -= needsYouOverlay.Draw;
+            }
+
+            runStops?.Dispose();
+        });
         Unwind("questionable runs", () => questionableRuns?.Dispose());
         Unwind("draw hook", () =>
         {

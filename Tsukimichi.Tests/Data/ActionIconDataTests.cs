@@ -66,6 +66,7 @@ public sealed class ActionIconDataTests(ITestOutputHelper output) : IDisposable
         var commands = excel.GetSheet<MainCommand>(Language.English);
         Assert.Equal(ActionIcons.Map, (uint)commands.GetRow(16).Icon);
         Assert.Equal(ActionIcons.DutyFinder, (uint)commands.GetRow(33).Icon);
+        Assert.Contains(commands, command => (uint)command.Icon == ActionIcons.CraftingLog && command.Name.ExtractText() == "Crafting Log");
 
         var symbols = excel.GetSheet<MapSymbol>();
         Assert.Equal(ActionIcons.Teleport, (uint)symbols.GetRow(1).Icon);

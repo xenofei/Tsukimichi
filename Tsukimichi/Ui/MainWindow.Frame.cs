@@ -88,12 +88,14 @@ public sealed partial class MainWindow
             FloatingLayers.Want(FloatingLayer.Dock, dockSize);
         }
 
+        WantStopCard(in body);
         UndoToast.WantSlot();
         // The detail pane's sticky action bar is kept clear too: the dock and the Undo toast sit above it.
         FloatingLayers.Frame(in body, ui.Tab == NavTab.Journal ? tablePane.SelectedRowRect : default, ui.SelectedRowId is not null ? detailPane.ActionBarRect : default);
 
         DrawDrawer(session, bundle, right);
         DrawDock(session);
+        DrawStopCard();
     }
 
     // ------------------------------------------------------------------ notice dock

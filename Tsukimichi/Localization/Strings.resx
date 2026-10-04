@@ -2467,17 +2467,9 @@
     <value>the next duty</value>
     <comment>Stands for the duty's name in the duty guard's lines while the spoiler shield hides the quest.</comment>
   </data>
-  <data name="DutyGuardToastStop" xml:space="preserve">
-    <value>Questionable stopped before a duty with other players</value>
-    <comment>Toast when the duty guard stops Questionable.</comment>
-  </data>
   <data name="QuestionableRunWhyDutyGuard" xml:space="preserve">
     <value>Stopped before a duty with other players.</value>
     <comment>Run receipt reason when the duty guard (1.18, A3) stopped Questionable.</comment>
-  </data>
-  <data name="DutyGuardToastWarn" xml:space="preserve">
-    <value>Needs you: a duty with other players is next</value>
-    <comment>Toast of the duty guard set to Warn, or unsure.</comment>
   </data>
   <data name="ConfigSectionNeedsYou" xml:space="preserve">
     <value>While automation runs</value>
@@ -2492,15 +2484,15 @@
     <comment>Hint of the "Only during runs" note.</comment>
   </data>
   <data name="ConfigNeedsYouDeath" xml:space="preserve">
-    <value>When you die</value>
+    <value>Knocked out</value>
     <comment>Settings › Alerts › While automation runs toggle.</comment>
   </data>
   <data name="ConfigNeedsYouDeathHint" xml:space="preserve">
-    <value>A chat line when your character dies during a run.</value>
-    <comment>Hint of When you die.</comment>
+    <value>When your character is knocked out during a run.</value>
+    <comment>Hint of Knocked out.</comment>
   </data>
   <data name="ConfigNeedsYouStuck" xml:space="preserve">
-    <value>When you're stuck</value>
+    <value>Stuck</value>
     <comment>Settings › Alerts › While automation runs toggle.</comment>
   </data>
   <data name="ConfigNeedsYouStuckHint" xml:space="preserve">
@@ -2508,7 +2500,7 @@
     <comment>Hint of When you're stuck.</comment>
   </data>
   <data name="ConfigNeedsYouDutyPop" xml:space="preserve">
-    <value>When a duty is ready</value>
+    <value>Duty ready</value>
     <comment>Settings › Alerts › While automation runs toggle.</comment>
   </data>
   <data name="ConfigNeedsYouDutyPopHint" xml:space="preserve">
@@ -2516,72 +2508,16 @@
     <comment>Hint of When a duty is ready.</comment>
   </data>
   <data name="ConfigNeedsYouTell" xml:space="preserve">
-    <value>When you get a tell</value>
+    <value>Tells</value>
     <comment>Settings › Alerts › While automation runs toggle.</comment>
   </data>
   <data name="ConfigNeedsYouTellHint" xml:space="preserve">
-    <value>Tsukimichi never answers it.</value>
-    <comment>Hint of When you get a tell.</comment>
-  </data>
-  <data name="ConfigNeedsYouSound" xml:space="preserve">
-    <value>Play a sound</value>
-    <comment>Settings › Alerts › While automation runs toggle.</comment>
-  </data>
-  <data name="ConfigNeedsYouSoundHint" xml:space="preserve">
-    <value>A chat sound effect, at most once every 10 seconds.</value>
-    <comment>Hint of Play a sound.</comment>
-  </data>
-  <data name="ConfigNeedsYouToast" xml:space="preserve">
-    <value>Show a toast</value>
-    <comment>Settings › Alerts › While automation runs toggle.</comment>
-  </data>
-  <data name="ConfigNeedsYouToastHint" xml:space="preserve">
-    <value>The alert also shows in the middle of the screen.</value>
-    <comment>Hint of Show a toast.</comment>
-  </data>
-  <data name="NeedsYouDeathLine" xml:space="preserve">
-    <value>Needs you: your character died during a run. Type /tsuki stop to stop every run.</value>
-    <comment>"Needs you" chat line (1.18, A5).</comment>
-  </data>
-  <data name="NeedsYouStuckFormat" xml:space="preserve">
-    <value>Needs you: your character hasn't moved for {0} seconds while it should be walking. Type /tsuki stop to stop every run.</value>
-    <comment>"Needs you" chat line: {0} = seconds.</comment>
-  </data>
-  <data name="NeedsYouDutyPopFormat" xml:space="preserve">
-    <value>Needs you: {0} is ready in the Duty Finder.</value>
-    <comment>"Needs you" chat line: {0} = the duty.</comment>
-  </data>
-  <data name="NeedsYouDutyPopUnnamed" xml:space="preserve">
-    <value>Needs you: a duty is ready in the Duty Finder.</value>
-    <comment>"Needs you" chat line when the duty has no name.</comment>
-  </data>
-  <data name="NeedsYouTellFormat" xml:space="preserve">
-    <value>Needs you: {0} sent you a tell.</value>
-    <comment>"Needs you" chat line: {0} = the sender.</comment>
-  </data>
-  <data name="NeedsYouTellUnnamed" xml:space="preserve">
-    <value>Needs you: you got a tell.</value>
-    <comment>"Needs you" chat line when the sender has no name.</comment>
-  </data>
-  <data name="NeedsYouToastDeath" xml:space="preserve">
-    <value>Needs you: your character died</value>
-    <comment>"Needs you" toast.</comment>
+    <value>Tsukimichi never answers, and never repeats who sent it or what it said.</value>
+    <comment>Hint of Tells.</comment>
   </data>
   <data name="NeedsYouTravelGaveUp" xml:space="preserve">
-    <value>Needs you: the walk got stuck and reloading the navmesh did not help. Walk a few steps yourself, then try again.</value>
-    <comment>"Needs you" chat line after a Walk or Go to giver gave up recovering (the travel chat line before it says why).</comment>
-  </data>
-  <data name="NeedsYouToastStuck" xml:space="preserve">
-    <value>Needs you: your character is stuck</value>
-    <comment>"Needs you" toast.</comment>
-  </data>
-  <data name="NeedsYouToastDutyPop" xml:space="preserve">
-    <value>Needs you: a duty is ready</value>
-    <comment>"Needs you" toast.</comment>
-  </data>
-  <data name="NeedsYouToastTell" xml:space="preserve">
-    <value>Needs you: you got a tell</value>
-    <comment>"Needs you" toast.</comment>
+    <value>the walk got stuck and reloading the navmesh did not help. Walk a few steps yourself, then try again.</value>
+    <comment>Chat after "Needs you:" when a Walk or Go to giver gave up recovering (the travel chat line before it says why).</comment>
   </data>
   <data name="CompanionUnlocks.Lifestream" xml:space="preserve">
     <value>Teleport and aethernet travel to quest givers</value>
@@ -11389,6 +11325,394 @@
   <data name="SettingsQuestionableRunRowFormat" xml:space="preserve">
     <value>{0} · {1}</value>
     <comment>{0} = when the run ended, {1} = the receipt.</comment>
+  </data>
+  <data name="StopCardTitleFinished" xml:space="preserve">
+    <value>{0} finished</value>
+    <comment>Why it stopped card title (1.18, A2): {0} = the hand-off ("Questionable").</comment>
+  </data>
+  <data name="StopCardTitlePlayer" xml:space="preserve">
+    <value>You stopped {0}</value>
+    <comment>Card title: {0} = the hand-off.</comment>
+  </data>
+  <data name="StopCardTitleDutyGuard" xml:space="preserve">
+    <value>Stopped before a duty with other players</value>
+    <comment>Card title of the duty guard's stop (A3).</comment>
+  </data>
+  <data name="StopCardTitleKnockedOut" xml:space="preserve">
+    <value>Stopped: you were knocked out</value>
+    <comment>Card title.</comment>
+  </data>
+  <data name="StopCardTitleStuck" xml:space="preserve">
+    <value>Travel got stuck</value>
+    <comment>Card title.</comment>
+  </data>
+  <data name="StopCardTitleNoPath" xml:space="preserve">
+    <value>No path to the giver</value>
+    <comment>Card title.</comment>
+  </data>
+  <data name="StopCardTitleMissingPlugin" xml:space="preserve">
+    <value>{0} isn't loaded</value>
+    <comment>Card title: {0} = the plugin ("AutoDuty").</comment>
+  </data>
+  <data name="StopCardTitleError" xml:space="preserve">
+    <value>{0} stopped before it was done</value>
+    <comment>Card title: {0} = the hand-off.</comment>
+  </data>
+  <data name="StopHandOffTravel" xml:space="preserve">
+    <value>Travel</value>
+    <comment>The hand-off name of a Walk or Go to giver in the card's titles.</comment>
+  </data>
+  <data name="StopCardSeparator" xml:space="preserve">
+    <value> · </value>
+    <comment>Joins the parts of the card's context line.</comment>
+  </data>
+  <data name="StopWhyPlayerFormat" xml:space="preserve">
+    <value>Stopped from Tsukimichi's Stop, partway through {0}.</value>
+    <comment>{0} = the quest.</comment>
+  </data>
+  <data name="StopWhyPlayer" xml:space="preserve">
+    <value>Stopped from Tsukimichi's Stop.</value>
+    <comment>Card reason with no quest known.</comment>
+  </data>
+  <data name="StopWhyDutyGuardFormat" xml:space="preserve">
+    <value>Questionable was about to queue for {0}, which has no Duty Support or Trust. It would put you with real players.</value>
+    <comment>{0} = the duty.</comment>
+  </data>
+  <data name="StopWhyDutyGuard" xml:space="preserve">
+    <value>Questionable reached a duty with no Duty Support or Trust. It would queue you with real players.</value>
+    <comment>Card reason with no duty known.</comment>
+  </data>
+  <data name="StopContextGuardSetting" xml:space="preserve">
+    <value>your setting: stop before such duties</value>
+    <comment>Context part of the duty guard card.</comment>
+  </data>
+  <data name="StopWaitingDutyFormat" xml:space="preserve">
+    <value>Waiting: Questionable starts again once you have cleared {0} yourself.</value>
+    <comment>Line on the duty guard card while Keep going after it waits: {0} = the duty.</comment>
+  </data>
+  <data name="StopWhyKnockedOutFormat" xml:space="preserve">
+    <value>You were knocked out during {0}. {1}</value>
+    <comment>{0} = the quest, {1} = what Tsukimichi stopped (NeedsYouDid*).</comment>
+  </data>
+  <data name="StopWhyKnockedOut" xml:space="preserve">
+    <value>You were knocked out. {0}</value>
+    <comment>{0} = what Tsukimichi stopped (NeedsYouDid*).</comment>
+  </data>
+  <data name="StopWhyStuckFormat" xml:space="preserve">
+    <value>No progress near {0}, even after reloading the navmesh. This is usually a gap in the navmesh.</value>
+    <comment>{0} = the zone.</comment>
+  </data>
+  <data name="StopWhyStuck" xml:space="preserve">
+    <value>Your character stopped moving while it should be walking. This is usually a gap in the navmesh.</value>
+    <comment>Card reason of a stall Tsukimichi saw (not its own walk).</comment>
+  </data>
+  <data name="StopWhyNoPathFormat" xml:space="preserve">
+    <value>vnavmesh found no way to {0}, even after reloading the navmesh: the spot may be where the mesh doesn't reach.</value>
+    <comment>{0} = the target ("Ser Aymeric").</comment>
+  </data>
+  <data name="StopWhyNoPath" xml:space="preserve">
+    <value>vnavmesh found no way there, even after reloading the navmesh: the spot may be where the mesh doesn't reach.</value>
+    <comment>Card reason with no target known.</comment>
+  </data>
+  <data name="StopWhyMissingDutyFormat" xml:space="preserve">
+    <value>The step was a duty run, and AutoDuty isn't loaded. {0}</value>
+    <comment>{0} = why (installed but off, or not installed).</comment>
+  </data>
+  <data name="StopWhyMissing" xml:space="preserve">
+    <value>Turn it on in the plugin installer, or install it.</value>
+    <comment>Card reason of a missing plugin when the registry says nothing more.</comment>
+  </data>
+  <data name="StopWhyErrorFormat" xml:space="preserve">
+    <value>It stopped on its own or from its own window, before {0} was done. If it stopped by itself, Copy report has what its author needs.</value>
+    <comment>{0} = the quest.</comment>
+  </data>
+  <data name="StopWhyError" xml:space="preserve">
+    <value>It stopped on its own or from its own window before its work was done. If it stopped by itself, Copy report has what its author needs.</value>
+    <comment>Card reason with no quest known.</comment>
+  </data>
+  <data name="StopWhyTravelErrorFormat" xml:space="preserve">
+    <value>The walk ended: {0}</value>
+    <comment>{0} = the travel failure (TravelFail*).</comment>
+  </data>
+  <data name="StopContextStepFormat" xml:space="preserve">
+    <value>{0} · step {1}</value>
+    <comment>{0} = the quest, {1} = Questionable's step, from 1.</comment>
+  </data>
+  <data name="StopContextTravelFormat" xml:space="preserve">
+    <value>Walking to {0}</value>
+    <comment>{0} = the target.</comment>
+  </data>
+  <data name="StopReceiptFormat" xml:space="preserve">
+    <value>Ran {0} · {1}</value>
+    <comment>The Finished card's receipt line: {0} = how long ("1 h 12 min"), {1} = the quests done.</comment>
+  </data>
+  <data name="StopReceiptOneQuest" xml:space="preserve">
+    <value>1 quest done</value>
+    <comment>The quests done in StopReceiptFormat.</comment>
+  </data>
+  <data name="StopAgoNow" xml:space="preserve">
+    <value>just now</value>
+    <comment>When the card was raised.</comment>
+  </data>
+  <data name="StopAgoMinutesFormat" xml:space="preserve">
+    <value>{0} min ago</value>
+    <comment>{0} = minutes.</comment>
+  </data>
+  <data name="StopAgoHoursFormat" xml:space="preserve">
+    <value>{0} h ago</value>
+    <comment>{0} = hours.</comment>
+  </data>
+  <data name="StopFixStartNext" xml:space="preserve">
+    <value>Start the next one</value>
+    <comment>Fix on the Finished card.</comment>
+  </data>
+  <data name="StopFixStartNextTooltipFormat" xml:space="preserve">
+    <value>Questionable does {0}, then stops.</value>
+    <comment>{0} = the quest.</comment>
+  </data>
+  <data name="StopFixStartAgain" xml:space="preserve">
+    <value>Start again</value>
+    <comment>Fix on the You stopped it card.</comment>
+  </data>
+  <data name="StopFixStartAgainTooltipFormat" xml:space="preserve">
+    <value>Questionable starts again on {0}, at the step it stopped.</value>
+    <comment>{0} = the quest.</comment>
+  </data>
+  <data name="StopFixShowDuty" xml:space="preserve">
+    <value>Show the duty</value>
+    <comment>Fix on the duty guard card.</comment>
+  </data>
+  <data name="StopFixShowDutyTooltip" xml:space="preserve">
+    <value>Opens the Duty Finder on the duty. Tsukimichi never queues you.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="StopFixKeepGoing" xml:space="preserve">
+    <value>Keep going after it</value>
+    <comment>Fix on the duty guard card.</comment>
+  </data>
+  <data name="StopFixKeepGoingTooltip" xml:space="preserve">
+    <value>Questionable starts again, once, after you have cleared the duty yourself. Tsukimichi never queues you or commences a duty.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="StopFixKeepGoingCancel" xml:space="preserve">
+    <value>Stop waiting</value>
+    <comment>The Keep going after it pill while it waits.</comment>
+  </data>
+  <data name="StopFixTryAgain" xml:space="preserve">
+    <value>Try again</value>
+    <comment>Fix on the knocked out card.</comment>
+  </data>
+  <data name="StopFixTryAgainTooltip" xml:space="preserve">
+    <value>Starts the same hand-off again.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="StopTryAgainWaitUp" xml:space="preserve">
+    <value>Ready when you're back on your feet</value>
+    <comment>Under the disabled Try again.</comment>
+  </data>
+  <data name="StopTryAgainWaitCombat" xml:space="preserve">
+    <value>Ready once you're out of combat</value>
+    <comment>Under the disabled Try again.</comment>
+  </data>
+  <data name="StopFixReloadRetry" xml:space="preserve">
+    <value>Reload navmesh and retry</value>
+    <comment>Fix on the stuck and no-path cards.</comment>
+  </data>
+  <data name="StopFixReloadRetryTooltip" xml:space="preserve">
+    <value>Reloads vnavmesh's navmesh for this zone, then starts the same way again.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="StopFixReloading" xml:space="preserve">
+    <value>Reloading the navmesh…</value>
+    <comment>Label of the reload pill while it waits.</comment>
+  </data>
+  <data name="StopReloadNoVnav" xml:space="preserve">
+    <value>vnavmesh isn't loaded.</value>
+    <comment>Why Reload navmesh and retry is unavailable.</comment>
+  </data>
+  <data name="StopReloadFailed" xml:space="preserve">
+    <value>The navmesh didn't finish reloading in time, so nothing was started.</value>
+    <comment>Chat line when the retry gave up waiting.</comment>
+  </data>
+  <data name="StopFixFlagSpot" xml:space="preserve">
+    <value>Flag the spot</value>
+    <comment>Fix on the stuck card.</comment>
+  </data>
+  <data name="StopFixFlagSpotTooltip" xml:space="preserve">
+    <value>Opens the map with a flag where your character stood.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="StopFixTeleport" xml:space="preserve">
+    <value>Teleport closer</value>
+    <comment>Fix on the no-path card.</comment>
+  </data>
+  <data name="StopFixOpenSetup" xml:space="preserve">
+    <value>Open Setup</value>
+    <comment>Fix on the missing-plugin card.</comment>
+  </data>
+  <data name="StopFixOpenSetupTooltip" xml:space="preserve">
+    <value>Opens Settings › Companions › Setup, which says what each plugin needs.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="StopFixOpenJournal" xml:space="preserve">
+    <value>Open in journal</value>
+    <comment>Fix on the error card: the quest's objective and map are in the game's journal.</comment>
+  </data>
+  <data name="StopCopyReport" xml:space="preserve">
+    <value>Copy report</value>
+    <comment>Quiet action on every card.</comment>
+  </data>
+  <data name="StopCopyReportTooltip" xml:space="preserve">
+    <value>Plain text for a bug report. It never includes your character's name, world or chat.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="StopReportCopied" xml:space="preserve">
+    <value>Report copied</value>
+    <comment>Status-bar note after Copy report.</comment>
+  </data>
+  <data name="StopDismissTooltip" xml:space="preserve">
+    <value>Dismiss</value>
+    <comment>The card's close button.</comment>
+  </data>
+  <data name="StopFoldedTooltip" xml:space="preserve">
+    <value>Show the card again</value>
+    <comment>Tooltip of a folded card's status-bar note.</comment>
+  </data>
+  <data name="NeedsYouEyebrow" xml:space="preserve">
+    <value>Needs you</value>
+    <comment>The Needs you panel's eyebrow (1.18, A5); upper-cased at Full.</comment>
+  </data>
+  <data name="NeedsYouLead" xml:space="preserve">
+    <value>Needs you:</value>
+    <comment>Bold start of every Needs you chat line.</comment>
+  </data>
+  <data name="NeedsYouTitleDeath" xml:space="preserve">
+    <value>You were knocked out</value>
+    <comment>Needs you panel title.</comment>
+  </data>
+  <data name="NeedsYouTitleStuck" xml:space="preserve">
+    <value>Travel is stuck</value>
+    <comment>Needs you panel title.</comment>
+  </data>
+  <data name="NeedsYouTitleDutyPop" xml:space="preserve">
+    <value>Your duty is ready</value>
+    <comment>Needs you panel title.</comment>
+  </data>
+  <data name="NeedsYouTitleTell" xml:space="preserve">
+    <value>A tell arrived</value>
+    <comment>Needs you panel title.</comment>
+  </data>
+  <data name="NeedsYouDidStoppedFormat" xml:space="preserve">
+    <value>Tsukimichi stopped {0}.</value>
+    <comment>What Tsukimichi did: {0} = the hand-offs stopped ("Go to giver, AutoDuty").</comment>
+  </data>
+  <data name="NeedsYouDidNothing" xml:space="preserve">
+    <value>Tsukimichi stopped nothing.</value>
+    <comment>What Tsukimichi did when nothing was stopped.</comment>
+  </data>
+  <data name="NeedsYouDidQuestionableRuns" xml:space="preserve">
+    <value>Questionable keeps going.</value>
+    <comment>Added when Questionable was left running (stopping it is opt-in).</comment>
+  </data>
+  <data name="NeedsYouDeathDuringChatFormat" xml:space="preserve">
+    <value>you were knocked out during {0}. {1}</value>
+    <comment>Chat after "Needs you:": {0} = the quest, {1} = what Tsukimichi did.</comment>
+  </data>
+  <data name="NeedsYouDeathChatFormat" xml:space="preserve">
+    <value>you were knocked out. {0}</value>
+    <comment>Chat after "Needs you:": {0} = what Tsukimichi did.</comment>
+  </data>
+  <data name="NeedsYouStuckChatFormat" xml:space="preserve">
+    <value>your character hasn't moved for {0} seconds while it should be walking. {1}</value>
+    <comment>Chat after "Needs you:": {0} = seconds, {1} = what Tsukimichi did.</comment>
+  </data>
+  <data name="NeedsYouStuckLineFormat" xml:space="preserve">
+    <value>No progress for {0} s. {1}</value>
+    <comment>Panel line: {0} = seconds, {1} = what Tsukimichi did.</comment>
+  </data>
+  <data name="NeedsYouDutyPopChatFormat" xml:space="preserve">
+    <value>your duty is ready: {0}.</value>
+    <comment>Chat after "Needs you:": {0} = the duty.</comment>
+  </data>
+  <data name="NeedsYouDutyPopChat" xml:space="preserve">
+    <value>a duty is ready.</value>
+    <comment>Chat after "Needs you:" with no duty name.</comment>
+  </data>
+  <data name="NeedsYouDutyPopLineFormat" xml:space="preserve">
+    <value>{0}. Tsukimichi never commences for you.</value>
+    <comment>Panel line: {0} = the duty.</comment>
+  </data>
+  <data name="NeedsYouDutyPopLine" xml:space="preserve">
+    <value>Tsukimichi never commences a duty for you.</value>
+    <comment>Panel line with no duty name.</comment>
+  </data>
+  <data name="NeedsYouTellChat" xml:space="preserve">
+    <value>a tell arrived.</value>
+    <comment>Chat after "Needs you:". Never names the sender or repeats the text.</comment>
+  </data>
+  <data name="NeedsYouTellLine" xml:space="preserve">
+    <value>Someone is talking to you. Tsukimichi never answers.</value>
+    <comment>Panel line.</comment>
+  </data>
+  <data name="NeedsYouTravelGaveUpLine" xml:space="preserve">
+    <value>Reloading the navmesh did not help.</value>
+    <comment>Panel line after a walk's recovery gave up.</comment>
+  </data>
+  <data name="NeedsYouStopAll" xml:space="preserve">
+    <value>Stop all</value>
+    <comment>Panel button: /tsuki stop.</comment>
+  </data>
+  <data name="NeedsYouStopAllTooltip" xml:space="preserve">
+    <value>Stops every hand-off that runs, as /tsuki stop does.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="NeedsYouDismiss" xml:space="preserve">
+    <value>Dismiss</value>
+    <comment>Panel button.</comment>
+  </data>
+  <data name="NeedsYouMoreFormat" xml:space="preserve">
+    <value>+{0} more</value>
+    <comment>{0} = alerts waiting behind this one.</comment>
+  </data>
+  <data name="ConfigNeedsYouSoundRow" xml:space="preserve">
+    <value>Sound</value>
+    <comment>Sub-row under each Needs you kind: the chat sound effect.</comment>
+  </data>
+  <data name="ConfigNeedsYouSoundRowHint" xml:space="preserve">
+    <value>One of the game's chat sounds, at its system-sound volume; at most once every 10 seconds.</value>
+    <comment>Hint.</comment>
+  </data>
+  <data name="ConfigNeedsYouSoundNone" xml:space="preserve">
+    <value>None</value>
+    <comment>Sound choice: no sound.</comment>
+  </data>
+  <data name="ConfigNeedsYouSoundTest" xml:space="preserve">
+    <value>Test</value>
+    <comment>Plays the chosen sound.</comment>
+  </data>
+  <data name="ConfigNeedsYouFlash" xml:space="preserve">
+    <value>Flash the taskbar</value>
+    <comment>Toggle.</comment>
+  </data>
+  <data name="ConfigNeedsYouFlashHint" xml:space="preserve">
+    <value>Once, when the game isn't the window in front.</value>
+    <comment>Hint.</comment>
+  </data>
+  <data name="ConfigNeedsYouStopHandOffs" xml:space="preserve">
+    <value>Stop my hand-offs on knock-out or stuck</value>
+    <comment>Toggle.</comment>
+  </data>
+  <data name="ConfigNeedsYouStopHandOffsHint" xml:space="preserve">
+    <value>Stops the walks, AutoDuty runs and Artisan crafts Tsukimichi started.</value>
+    <comment>Hint.</comment>
+  </data>
+  <data name="ConfigNeedsYouStopQuestionable" xml:space="preserve">
+    <value>Also stop Questionable</value>
+    <comment>Sub-toggle.</comment>
+  </data>
+  <data name="ConfigNeedsYouStopQuestionableHint" xml:space="preserve">
+    <value>Off by default: Questionable is yours to stop.</value>
+    <comment>Hint.</comment>
   </data>
   <data name="AutomationButtonsHeading" xml:space="preserve">
     <value>Automation buttons</value>
