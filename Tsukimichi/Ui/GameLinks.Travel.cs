@@ -392,6 +392,8 @@ public sealed partial class GameLinks
             GoToGiverStep.PreparingPath => Strings.TravelStepPreparing,
             GoToGiverStep.Mounting => Strings.TravelStepMounting,
             GoToGiverStep.Landing => Strings.TravelStepLanding,
+            GoToGiverStep.ReloadingNav => Strings.TravelStepReloading,
+            GoToGiverStep.ToAetheryte => Strings.TravelStepToAetheryte,
             _ when travel.JourneyFlying => Strings.TravelStepFlying,
             _ => Strings.TravelStepWalking,
         };
@@ -432,6 +434,8 @@ public sealed partial class GameLinks
             GoToGiverStep.PreparingPath => Strings.ActionTravelStepPreparing,
             GoToGiverStep.Mounting => Strings.ActionTravelStepMounting,
             GoToGiverStep.Landing => Strings.ActionTravelStepLanding,
+            GoToGiverStep.ReloadingNav => Strings.ActionTravelStepReloading,
+            GoToGiverStep.ToAetheryte => Strings.ActionTravelStepToAetheryte,
             _ when target.Length == 0 => Strings.ActionTravelStepWalking,
             _ => string.Format(
                 CultureInfo.CurrentCulture,
@@ -1144,9 +1148,14 @@ public sealed partial class GameLinks
             return new GoToCheck(block, null, false);
         }
 
-        // Standing at the city's aetheryte (or already in the goal's zone and closer than any aetheryte there).
+        // Standing at the city's aetheryte (or already in the goal's zone and closer than any aetheryte there). Elsewhere
+        // in the city, the chain walks to the network's nearest aetheryte or shard first (feature plan v7 A8) when that
+        // walk and the hop beat walking straight to the goal.
         var hop = CheckHop(quest);
-        TravelLeg? hopLeg = hop.Ready && LifestreamReason() is null ? HopLeg(hop) : null;
+        TravelLeg? hopLeg = LifestreamReason() is not null ? null
+            : hop.Ready ? HopLeg(hop)
+            : hop.Block == HopBlock.NotAtAetheryte && WalkThenHopPays(travel, hop, goal) ? HopLeg(hop)
+            : null;
         if (teleport.AlreadyHere || hopLeg is not null)
         {
             var end = hopLeg?.TerritoryId ?? travel.Territory;
@@ -1188,6 +1197,36 @@ public sealed partial class GameLinks
 
         var leg = new TravelLeg(target.RowId, target.TerritoryId);
         return new GoToCheck(GoToBlock.None, Plan(goal, leg, arrivalHop, arrivalHop?.TerritoryId ?? target.TerritoryId, travel.CurrentOptions), false);
+    }
+
+    /// <summary>
+    /// True when walking from where the player stands to the network's nearest attuned aetheryte or shard, then
+    /// hopping, beats walking to the goal (<see cref="TravelPlanner.WalkThenHopPays"/>). The Firmament can only be
+    /// reached by the hop, so the walk to the Foundation's aetheryte always pays.
+    /// </summary>
+    private bool WalkThenHopPays(TravelService travel, HopCheck hop, TravelGoal goal)
+    {
+        if (hop.Firmament)
+        {
+            return true;
+        }
+
+        if (travel.Position is not { } at || hop.Shard is not { } shard || hop.City is not { } city)
+        {
+            return false;
+        }
+
+        var nodes = new List<TravelNode>(Aetherytes.ShardNodesInGroup(city.Group)) { city.Node };
+        if (TravelPlanner.NearestNode(nodes, travel.Territory, at.X, at.Z, id => id != shard.RowId && (IsShardAttuned(id) || IsAttuned(id))) is not { } node)
+        {
+            return false;
+        }
+
+        var toGoal = travel.Territory == goal.Place.TerritoryId ? TravelPlanner.Distance(at.X, at.Z, goal.Place.X, goal.Place.Z) : float.PositiveInfinity;
+        return TravelPlanner.WalkThenHopPays(
+            TravelPlanner.Distance(at.X, at.Z, node.X, node.Z),
+            TravelPlanner.Distance(shard.X, shard.Z, goal.Place.X, goal.Place.Z),
+            toGoal);
     }
 
     private static TravelLeg? HopLeg(HopCheck hop) =>
@@ -1292,6 +1331,11 @@ public sealed partial class GameLinks
 
         if (plan.Hop is { } hop)
         {
+            if (plan.Teleport is null && CheckHop(quest).Block == HopBlock.NotAtAetheryte)
+            {
+                lines.Add(Strings.TravelGoToStepToAetheryte);
+            }
+
             var name = hop.Id == GoToGiverPlan.FirmamentHop ? Strings.TravelFirmament : Aetherytes.Find(hop.Id)?.Name ?? string.Empty;
             lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToStepHopFormat, name));
         }

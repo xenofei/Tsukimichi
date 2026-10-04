@@ -262,4 +262,35 @@ public sealed class TravelPlannerTests
         Assert.True(TravelPlanner.IsAlreadyHere(Thavnair, -250f, 580f, Thavnair, -270f, 606f, Yedlihmad));
         Assert.False(TravelPlanner.IsAlreadyHere(Thavnair, 400f, -200f, Thavnair, -270f, 606f, Yedlihmad));
     }
+
+    // ------------------------------------------------------------------ walk to the aetheryte before a hop (v7 A8)
+
+    [Fact]
+    public void The_nearest_node_is_in_the_players_zone_and_allowed()
+    {
+        TravelNode[] network = [GridaniaPlaza, ArchersGuild, ConjurersGuild, LancersGuild];
+
+        // In New Gridania, by the Archers' Guild: that shard, not the plaza.
+        Assert.Equal(ArchersGuild, TravelPlanner.NearestNode(network, NewGridania, 150f, 80f, All));
+
+        // Its shard not attuned: the plaza's aetheryte.
+        Assert.Equal(GridaniaPlaza, TravelPlanner.NearestNode(network, NewGridania, 150f, 80f, id => id != ArchersGuild.RowId));
+
+        // Old Gridania's shards only count in Old Gridania; none in the field.
+        Assert.Equal(ConjurersGuild, TravelPlanner.NearestNode(network, OldGridania, -100f, 0f, All));
+        Assert.Null(TravelPlanner.NearestNode(network, Field, 0f, 0f, All));
+    }
+
+    [Fact]
+    public void Walking_to_the_aetheryte_and_hopping_must_beat_walking_straight_there()
+    {
+        // 20 to the shard, the hop lands 10 from the goal, the goal is 200 away: worth it.
+        Assert.True(TravelPlanner.WalkThenHopPays(20f, 10f, 200f));
+
+        // The aetheryte is the other way (150) and the goal only 160 away: walk.
+        Assert.False(TravelPlanner.WalkThenHopPays(150f, 10f, 160f));
+
+        // Within the margin is not enough.
+        Assert.False(TravelPlanner.WalkThenHopPays(20f, 10f, 20f + 10f + TravelPlanner.HopMargin));
+    }
 }

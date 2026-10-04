@@ -2567,6 +2567,10 @@
     <value>Needs you: your character died</value>
     <comment>"Needs you" toast.</comment>
   </data>
+  <data name="NeedsYouTravelGaveUp" xml:space="preserve">
+    <value>Needs you: the walk got stuck and reloading the navmesh did not help. Walk a few steps yourself, then try again.</value>
+    <comment>"Needs you" chat line after a Walk or Go to giver gave up recovering (the travel chat line before it says why).</comment>
+  </data>
   <data name="NeedsYouToastStuck" xml:space="preserve">
     <value>Needs you: your character is stuck</value>
     <comment>"Needs you" toast.</comment>
@@ -9563,6 +9567,278 @@
   </data>
   <data name="ActionTravelStepLanding" xml:space="preserve">
     <value>Landing…</value>
+  </data>
+  <data name="TravelReloadingFormat" xml:space="preserve">
+    <value>{0}: {1}. Reloading vnavmesh's navmesh and trying once more.</value>
+    <comment>Chat line when Walk or Go to giver starts its one recovery. {0} = "Walk to giver" or "Go to giver", {1} = reason (TravelFail*).</comment>
+  </data>
+  <data name="TravelFailAfterReloadFormat" xml:space="preserve">
+    <value>{0}, even after reloading vnavmesh's navmesh (try another aetheryte, or walk a few steps by hand)</value>
+    <comment>Reason in TravelGoToStoppedFormat when the reload did not help. {0} = reason (TravelFail*).</comment>
+  </data>
+  <data name="TravelStepReloading" xml:space="preserve">
+    <value>reloading the navmesh</value>
+    <comment>Step in TravelGoToStopTooltipFormat.</comment>
+  </data>
+  <data name="TravelStepToAetheryte" xml:space="preserve">
+    <value>walking to the aetheryte</value>
+    <comment>Step in TravelGoToStopTooltipFormat.</comment>
+  </data>
+  <data name="ActionTravelStepReloading" xml:space="preserve">
+    <value>Reloading the navmesh…</value>
+    <comment>Status line step while vnavmesh reloads the zone's navmesh before a second try.</comment>
+  </data>
+  <data name="ActionTravelStepToAetheryte" xml:space="preserve">
+    <value>Walking to the aetheryte…</value>
+    <comment>Status line step: walking to the nearest aetheryte or shard before an aethernet hop.</comment>
+  </data>
+  <data name="TravelGoToStepToAetheryte" xml:space="preserve">
+    <value>Walk to the nearest aetheryte or shard</value>
+    <comment>Go to giver tooltip step, before the aethernet step.</comment>
+  </data>
+  <data name="TravelPreflightWalkWarningFormat" xml:space="preserve">
+    <value>Before this walk: {0}. See Setup in Settings › Automation.</value>
+    <comment>Chat line when a walk starts while the travel preflight finds something. {0} = findings (TravelPreflightWalk.*), joined.</comment>
+  </data>
+  <data name="TravelPreflightClauseSeparator" xml:space="preserve">
+    <value>; </value>
+    <comment>Joins the findings in TravelPreflightWalkWarningFormat.</comment>
+  </data>
+  <data name="TravelPreflightWalk.MovementType" xml:space="preserve">
+    <value>Legacy movement can make your character run the wrong way</value>
+    <comment>Finding in TravelPreflightWalkWarningFormat.</comment>
+  </data>
+  <data name="TravelPreflightWalk.Camera" xml:space="preserve">
+    <value>first-person view can make your character run backwards</value>
+    <comment>Finding in TravelPreflightWalkWarningFormat.</comment>
+  </data>
+  <data name="TravelPreflightWalk.VnavmeshMovement" xml:space="preserve">
+    <value>another plugin has paused vnavmesh's movement, so your character may not move</value>
+    <comment>Finding in TravelPreflightWalkWarningFormat.</comment>
+  </data>
+  <data name="ConfigTravelPreflight" xml:space="preserve">
+    <value>Before a walk</value>
+    <comment>Settings › Automation › Travel: the travel preflight row.</comment>
+  </data>
+  <data name="ConfigTravelPreflightHint" xml:space="preserve">
+    <value>Game settings and plugins that make a walk run the wrong way or stand still. Checked again as a walk starts.</value>
+    <comment>Hint under ConfigTravelPreflight.</comment>
+  </data>
+  <data name="TravelPreflightLabel.MovementType" xml:space="preserve">
+    <value>Movement type</value>
+    <comment>Preflight check name.</comment>
+  </data>
+  <data name="TravelPreflightLabel.Camera" xml:space="preserve">
+    <value>Camera</value>
+    <comment>Preflight check name.</comment>
+  </data>
+  <data name="TravelPreflightLabel.VnavmeshMovement" xml:space="preserve">
+    <value>vnavmesh movement</value>
+    <comment>Preflight check name.</comment>
+  </data>
+  <data name="TravelPreflightLabel.Conflicts" xml:space="preserve">
+    <value>Plugins that break travel</value>
+    <comment>Preflight check name.</comment>
+  </data>
+  <data name="TravelPreflightStatus.Camera.Info" xml:space="preserve">
+    <value>Auto-movement can run backwards in first person. Tsukimichi reminds you when a walk starts.</value>
+    <comment>Preflight status line (information).</comment>
+  </data>
+  <data name="TravelPreflightWord.Info" xml:space="preserve">
+    <value>For your information</value>
+    <comment>Preflight tooltip title.</comment>
+  </data>
+  <data name="TravelPreflightHead.MovementType.Ok" xml:space="preserve">
+    <value>Standard</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.MovementType.Warn" xml:space="preserve">
+    <value>Legacy</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.MovementType.Unread" xml:space="preserve">
+    <value>Not read</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.Camera.Ok" xml:space="preserve">
+    <value>Third person</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.Camera.Info" xml:space="preserve">
+    <value>First person</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.Camera.Unread" xml:space="preserve">
+    <value>Not read</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.VnavmeshMovement.Ok" xml:space="preserve">
+    <value>Free to move</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.VnavmeshMovement.Warn" xml:space="preserve">
+    <value>Movement paused by another plugin</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.VnavmeshMovement.Unread" xml:space="preserve">
+    <value>Not read</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.Conflicts.Ok" xml:space="preserve">
+    <value>None found</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightHead.Conflicts.Unread" xml:space="preserve">
+    <value>Not read</value>
+    <comment>Preflight status in words.</comment>
+  </data>
+  <data name="TravelPreflightConflictHeadFormat" xml:space="preserve">
+    <value>{0} is loaded</value>
+    <comment>Preflight status in words for a loaded conflict. {0} = plugin name.</comment>
+  </data>
+  <data name="TravelPreflightSafety.StandardMovement" xml:space="preserve">
+    <value>Undo for 8 s; Restore Legacy stays here</value>
+    <comment>Safety line under Switch to Standard.</comment>
+  </data>
+  <data name="TravelPreflightSafety.AllowVnavmeshMovement" xml:space="preserve">
+    <value>Undo for 8 s</value>
+    <comment>Safety line under Allow movement.</comment>
+  </data>
+  <data name="TravelPreflightSafety.OpenPluginInstaller" xml:space="preserve">
+    <value>Opens Dalamud's installer at the plugin</value>
+    <comment>Safety line under Open the plugin installer.</comment>
+  </data>
+  <data name="TravelPreflightStatus.MovementType.Ok" xml:space="preserve">
+    <value>vnavmesh steers with Standard movement.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightStatus.MovementType.Warn" xml:space="preserve">
+    <value>With Legacy movement your character can run the wrong way while vnavmesh walks.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightStatus.MovementType.Unread" xml:space="preserve">
+    <value>Log in to check.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightStatus.Camera.Ok" xml:space="preserve">
+    <value>Walks steer as they should.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightStatus.Camera.Unread" xml:space="preserve">
+    <value>Log in, and leave game reads on, to check.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightStatus.VnavmeshMovement.Ok" xml:space="preserve">
+    <value>No plugin has paused vnavmesh.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightStatus.VnavmeshMovement.Warn" xml:space="preserve">
+    <value>Another plugin turned off vnavmesh movement, so walks start and then stand still.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightStatus.VnavmeshMovement.Unread" xml:space="preserve">
+    <value>vnavmesh is not loaded.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightStatus.Conflicts.Ok" xml:space="preserve">
+    <value>No plugin known to clash with travel is loaded.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightStatus.Conflicts.Unread" xml:space="preserve">
+    <value>Not read right now.</value>
+    <comment>Preflight status.</comment>
+  </data>
+  <data name="TravelPreflightWord.Ok" xml:space="preserve">
+    <value>Fine for a walk</value>
+    <comment>Preflight tooltip title.</comment>
+  </data>
+  <data name="TravelPreflightWord.Warn" xml:space="preserve">
+    <value>Worth fixing</value>
+    <comment>Preflight tooltip title.</comment>
+  </data>
+  <data name="TravelPreflightWord.Unread" xml:space="preserve">
+    <value>Not read</value>
+    <comment>Preflight tooltip title.</comment>
+  </data>
+  <data name="TravelPreflightWhy.MovementType" xml:space="preserve">
+    <value>Character Configuration › Control Settings › Movement Type. vnavmesh and Lifestream steer as Standard movement does; with Legacy (often set for a controller) the character can run the wrong way over and over.</value>
+    <comment>Preflight tooltip.</comment>
+  </data>
+  <data name="TravelPreflightWhy.Camera" xml:space="preserve">
+    <value>In first-person view, auto-movement can run at 180 degrees from the path. Tsukimichi cannot change the view for you: scroll the camera out.</value>
+    <comment>Preflight tooltip.</comment>
+  </data>
+  <data name="TravelPreflightWhy.VnavmeshMovement" xml:space="preserve">
+    <value>vnavmesh has a switch other plugins can turn off to pause its movement. While it is off, Walk to giver finds a path and stands still.</value>
+    <comment>Preflight tooltip.</comment>
+  </data>
+  <data name="TravelPreflightWhy.Conflicts" xml:space="preserve">
+    <value>Plugins with a public report of breaking Lifestream or vnavmesh while loaded.</value>
+    <comment>Preflight tooltip.</comment>
+  </data>
+  <data name="TravelPreflightConflictFormat" xml:space="preserve">
+    <value>{0}. Tsukimichi can't turn other plugins off.</value>
+    <comment>Line under a loaded conflict. {0} = what it breaks (TravelPreflightConflict.*).</comment>
+  </data>
+  <data name="TravelPreflightConflict.wrongwarpfinder" xml:space="preserve">
+    <value>It can stop Lifestream working until the game restarts</value>
+    <comment>What WrongWarpFinder breaks (Lifestream#150).</comment>
+  </data>
+  <data name="TravelPreflightFix.StandardMovement" xml:space="preserve">
+    <value>Switch to Standard</value>
+    <comment>Preflight fix button.</comment>
+  </data>
+  <data name="TravelPreflightFix.AllowVnavmeshMovement" xml:space="preserve">
+    <value>Allow movement</value>
+    <comment>Preflight fix button (vnavmesh).</comment>
+  </data>
+  <data name="TravelPreflightFix.OpenPluginInstaller" xml:space="preserve">
+    <value>Open the plugin installer</value>
+    <comment>Preflight button for a loaded conflict.</comment>
+  </data>
+  <data name="TravelPreflightFixTooltip.StandardMovement" xml:space="preserve">
+    <value>Sets the game's Movement Type (Character Configuration › Control Settings) to Standard. Restore Legacy puts it back.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="TravelPreflightFixTooltip.AllowVnavmeshMovement" xml:space="preserve">
+    <value>Turns vnavmesh's movement back on. The plugin that paused it may pause it again; Undo pauses it again.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="TravelPreflightFixTooltip.OpenPluginInstaller" xml:space="preserve">
+    <value>Opens Dalamud's installed plugins at it, so you can turn it off. Tsukimichi never turns other plugins off.</value>
+    <comment>Tooltip.</comment>
+  </data>
+  <data name="TravelPreflightFixed.MovementType" xml:space="preserve">
+    <value>Movement type is now Standard.</value>
+    <comment>Note after the fix.</comment>
+  </data>
+  <data name="TravelPreflightFixed.VnavmeshMovement" xml:space="preserve">
+    <value>vnavmesh may move again.</value>
+    <comment>Note after the fix.</comment>
+  </data>
+  <data name="TravelPreflightFixed.Conflicts" xml:space="preserve">
+    <value>Opened the plugin installer.</value>
+    <comment>Note after the fix (not shown on success).</comment>
+  </data>
+  <data name="TravelPreflightUndo.MovementType" xml:space="preserve">
+    <value>Restore Legacy</value>
+    <comment>Undo button after Switch to Standard.</comment>
+  </data>
+  <data name="TravelPreflightUndo.VnavmeshMovement" xml:space="preserve">
+    <value>Undo</value>
+    <comment>Undo button after Allow movement.</comment>
+  </data>
+  <data name="TravelPreflightUndoTooltip" xml:space="preserve">
+    <value>Puts the setting back as it was before the fix.</value>
+    <comment>Tooltip of TravelPreflightUndo.</comment>
+  </data>
+  <data name="TravelPreflightUndone" xml:space="preserve">
+    <value>Put back.</value>
+    <comment>Note after Undo.</comment>
+  </data>
+  <data name="TravelPreflightFixFailed" xml:space="preserve">
+    <value>That did not take. Try again, or change it in the game.</value>
+    <comment>Note when a preflight fix failed.</comment>
   </data>
   <data name="ConfigTravelMountDistance" xml:space="preserve">
     <value>Mount for walks over</value>

@@ -73,8 +73,12 @@ public interface ITravelPorts
     /// <summary>Asks Lifestream for an aethernet hop (<see cref="GoToGiverPlan.FirmamentHop"/> for the Firmament); false when it refused.</summary>
     bool StartHop(uint shardId);
 
-    /// <summary>Asks vnavmesh to walk (or, <paramref name="fly"/>, fly) close to the plan's goal; false when it refused.</summary>
-    bool StartWalk(GoToGiverPlan plan, bool fly);
+    /// <summary>
+    /// Asks vnavmesh to walk (or, <paramref name="fly"/>, fly) close to the world position (<paramref name="x"/>,
+    /// <paramref name="y"/> the height, <paramref name="z"/>): the plan's goal, a landing spot beside it, or an
+    /// aetheryte before a hop. False when it refused.
+    /// </summary>
+    bool StartWalk(float x, float y, float z, bool fly);
 
     /// <summary>Asks the game to mount (the chosen mount or Mount Roulette); false when it refused.</summary>
     bool StartMount();
@@ -90,6 +94,32 @@ public interface ITravelPorts
 
     /// <summary>Stops Lifestream's running task.</summary>
     void AbortLifestream();
+
+    /// <summary>
+    /// The aetheryte or aethernet shard (Aetheryte sheet row) the player stands at as Lifestream sees it, 0 at none;
+    /// null when Lifestream cannot say (absent, or a build without <c>GetActiveAetheryte</c>).
+    /// </summary>
+    uint? ActiveAetheryte { get; }
+
+    /// <summary>
+    /// Where an aethernet hop to <paramref name="hopId"/> (<see cref="GoToGiverPlan.FirmamentHop"/> for the Firmament)
+    /// leaves from: the nearest attuned aetheryte or shard of that network in the player's zone, as a world position
+    /// (y the height); null when none is known.
+    /// </summary>
+    (float X, float Y, float Z)? HopStart(uint hopId);
+
+    /// <summary>
+    /// A floor point near the world position (<paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>) where
+    /// a flying mount can come down and the character stand: on vnavmesh's mesh, reachable on foot. Null when vnavmesh
+    /// cannot say.
+    /// </summary>
+    (float X, float Y, float Z)? LandingSpot(float x, float y, float z);
+
+    /// <summary>
+    /// Asks vnavmesh to reload the zone's navmesh, the fix its developers prescribe for a walk gone bad (a stale mesh
+    /// after a long session, a new seed point). False when it refused or is absent.
+    /// </summary>
+    bool StartNavReload();
 }
 
 /// <summary>Where a <see cref="GoToGiver"/> run stands.</summary>
@@ -109,6 +139,12 @@ public enum GoToGiverStep
 
     /// <summary>The flying mount is coming down near the goal.</summary>
     Landing,
+
+    /// <summary>A walk went bad: vnavmesh reloads the zone's navmesh before the walk is tried once more.</summary>
+    ReloadingNav,
+
+    /// <summary>Walking to the nearest aetheryte or shard first: Lifestream hops only from within one's range.</summary>
+    ToAetheryte,
 }
 
 /// <summary>Why a <see cref="GoToGiver"/> run failed.</summary>
@@ -163,6 +199,16 @@ public readonly record struct GoToGiverOutcome(GoToGiverStep Step, GoToGiverFail
 /// around a wall moves away from it for a while), and a pathfind still running is progress too (no new path is asked
 /// for while one is pending). The character is never dismounted: Dismount is pressed once in the air and again only
 /// when the mount has not come down at all.
+/// <para>
+/// Recovery (feature plan v7 A8), each at most once per run so a run never loops: a walk that got stuck, ended short
+/// of the goal on its own, never started or waited too long for a navmesh has vnavmesh reload the zone's navmesh
+/// (<see cref="GoToGiverStep.ReloadingNav"/>) and is tried once more from where the character stands; a walk the
+/// player stopped by hand (vnavmesh's path still had waypoints left) is not retried. Before an aethernet hop, a player
+/// Lifestream says stands at no aetheryte walks to the nearest one of the network first
+/// (<see cref="GoToGiverStep.ToAetheryte"/>), and a hop that never started is asked for once more. A flight aims for a
+/// landing spot on the floor beside the goal (<see cref="ITravelPorts.LandingSpot"/>), and a landing farther than
+/// <see cref="TalkRange"/> from the goal closes the gap on foot, still mounted.
+/// </para>
 /// </summary>
 public sealed class GoToGiver
 {
@@ -175,6 +221,12 @@ public sealed class GoToGiver
     /// <summary>After Lifestream went idle without a loading screen, the hop is taken as not started.</summary>
     public const long HopIdleGraceMs = 3_000;
 
+    /// <summary>
+    /// The pause before a hop that never started is asked for again: Lifestream checks whether it can teleport once,
+    /// and right after a zone change or a dismount it cannot yet (Lifestream#163).
+    /// </summary>
+    public const long HopRetryMs = 1_000;
+
     /// <summary>The longest a teleport or hop may take from the request to standing in the new zone.</summary>
     public const long ArriveTimeoutMs = 90_000;
 
@@ -184,6 +236,12 @@ public sealed class GoToGiver
     /// <summary>The longest vnavmesh may take to have a navmesh for the zone (a first build is slow).</summary>
     public const long PathReadyTimeoutMs = 120_000;
 
+    /// <summary>
+    /// After a reload is asked for, how long the old "ready" answer is not trusted: vnavmesh drops the mesh at once and
+    /// loads it again from its cache, while its answer is cached for a moment on this side.
+    /// </summary>
+    public const long ReloadSettleMs = 2_000;
+
     /// <summary>vnavmesh reports pathfinding at once; without it by then the walk did not start.</summary>
     public const long WalkStartTimeoutMs = 5_000;
 
@@ -192,6 +250,15 @@ public sealed class GoToGiver
 
     /// <summary>Distance (raw units) within which a finished walk counts as arrived: the walk stops about 3 away.</summary>
     public const float ArriveRange = 8f;
+
+    /// <summary>
+    /// Distance (raw units, about yalms) from the goal within which the character can talk to the giver; a landing
+    /// farther away closes the gap on foot.
+    /// </summary>
+    public const float TalkRange = 4.5f;
+
+    /// <summary>Distance (raw units) from the hop's aetheryte or shard within which no walk to it is asked for.</summary>
+    public const float AetheryteReach = 4f;
 
     /// <summary>The mount cast is about a second; without the mount by then it is asked for once more.</summary>
     public const long MountRetryMs = 3_000;
@@ -229,9 +296,23 @@ public sealed class GoToGiver
     private float? landHeight;
     private bool repathed;
 
+    /// <summary>Which walk is under way: to the goal, to the aetheryte before a hop, or the last yalms after a landing.</summary>
+    private WalkLeg leg;
+    private (float X, float Y, float Z) walkTarget;
+    private uint hopFromTerritory;
+    private long? hopAt;
+    private int? lastWaypoints;
+
     public GoToGiver(ITravelPorts ports)
     {
         this.ports = ports ?? throw new ArgumentNullException(nameof(ports));
+    }
+
+    private enum WalkLeg
+    {
+        Goal,
+        Aetheryte,
+        Approach,
     }
 
     public GoToGiverStep Step { get; private set; } = GoToGiverStep.Idle;
@@ -253,9 +334,28 @@ public sealed class GoToGiver
     /// <summary>True once the walk was given a new path after it stopped making progress.</summary>
     public bool Repathed => repathed;
 
+    /// <summary>True once the run had vnavmesh reload the navmesh and tried the walk again (once per run).</summary>
+    public bool Reloaded { get; private set; }
+
+    /// <summary>What the reload under way (or the last one) recovers from; <see cref="GoToGiverFailure.None"/> before one.</summary>
+    public GoToGiverFailure RecoveringFrom { get; private set; }
+
+    /// <summary>True once the run walked to an aetheryte before its hop (once per run).</summary>
+    public bool WalkedToAetheryte { get; private set; }
+
+    /// <summary>True once the run asked for its hop a second time.</summary>
+    public bool HopRetried { get; private set; }
+
+    /// <summary>True once the run closed the gap to the goal on foot after landing.</summary>
+    public bool Approached { get; private set; }
+
     /// <summary>True from <see cref="Start"/> until the run is done, cancelled or failed.</summary>
     public bool IsActive => Step is GoToGiverStep.Teleporting or GoToGiverStep.Hopping or GoToGiverStep.PreparingPath
-        or GoToGiverStep.Mounting or GoToGiverStep.Walking or GoToGiverStep.Landing;
+        or GoToGiverStep.Mounting or GoToGiverStep.Walking or GoToGiverStep.Landing or GoToGiverStep.ReloadingNav
+        or GoToGiverStep.ToAetheryte;
+
+    /// <summary>True while a walk this run asked vnavmesh for may be moving the character.</summary>
+    private bool WalkUnderWay => Step is GoToGiverStep.Walking or GoToGiverStep.ToAetheryte;
 
     /// <summary>
     /// Starts a run (cancelling one in progress) and takes its first step now. Returns the ending when the run ends
@@ -275,6 +375,15 @@ public sealed class GoToGiver
         Flying = false;
         MountGaveUp = false;
         repathed = false;
+        Reloaded = false;
+        RecoveringFrom = GoToGiverFailure.None;
+        WalkedToAetheryte = false;
+        HopRetried = false;
+        Approached = false;
+        leg = WalkLeg.Goal;
+        walkTarget = (plan.GoalX, plan.GoalY, plan.GoalZ);
+        hopAt = null;
+        lastWaypoints = null;
         if (plan.Teleport is { } teleport)
         {
             return BeginTeleport(teleport, now);
@@ -293,8 +402,9 @@ public sealed class GoToGiver
     /// <summary>
     /// Stops the run: the walk this run started is stopped and Lifestream's task aborted. Nothing else is touched: while
     /// the path is still being prepared vnavmesh has no walk of this run's, so a walk another plugin started goes on;
-    /// a mount being summoned or landing finishes on its own. The ending, or null when nothing ran. A cancelled run
-    /// never ticks again, so a teleport cast that was under way lands without a hop or a walk after it.
+    /// a mount being summoned or landing finishes on its own, and so does a navmesh reload. The ending, or null when
+    /// nothing ran. A cancelled run never ticks again, so a teleport cast that was under way lands without a hop or a
+    /// walk after it.
     /// </summary>
     public GoToGiverOutcome? Cancel()
     {
@@ -303,7 +413,7 @@ public sealed class GoToGiver
             return null;
         }
 
-        if (Step == GoToGiverStep.Walking)
+        if (WalkUnderWay)
         {
             ports.StopWalk();
         }
@@ -346,15 +456,16 @@ public sealed class GoToGiver
             GoToGiverStep.Hopping => TickHop(plan, now),
             GoToGiverStep.PreparingPath => TickPreparing(plan, now),
             GoToGiverStep.Mounting => TickMounting(plan, now),
-            GoToGiverStep.Walking => TickWalking(plan, now),
+            GoToGiverStep.Walking or GoToGiverStep.ToAetheryte => TickWalking(plan, now),
             GoToGiverStep.Landing => TickLanding(plan, now),
+            GoToGiverStep.ReloadingNav => TickReloading(plan, now),
             _ => null,
         };
     }
 
-    private GoToGiverOutcome? BeginTeleport(TravelLeg leg, long now)
+    private GoToGiverOutcome? BeginTeleport(TravelLeg teleport, long now)
     {
-        if (!ports.StartTeleport(leg.Id))
+        if (!ports.StartTeleport(teleport.Id))
         {
             return Fail(GoToGiverFailure.TeleportRefused);
         }
@@ -367,16 +478,56 @@ public sealed class GoToGiver
     {
         if (plan.Hop is { } hop)
         {
-            if (!ports.StartHop(hop.Id))
-            {
-                return Fail(GoToGiverFailure.HopRefused);
-            }
-
-            Enter(GoToGiverStep.Hopping, now);
-            return null;
+            return BeginHop(plan, hop, now);
         }
 
         return AfterHop(plan, now);
+    }
+
+    /// <summary>
+    /// The hop, or first the walk to the network's nearest aetheryte or shard when Lifestream says the player stands at
+    /// none (a teleport that lands outside the aetheryte's range, a player elsewhere in the city). The walk is taken once
+    /// per run; a Lifestream that cannot say leaves the hop to it, as before.
+    /// </summary>
+    private GoToGiverOutcome? BeginHop(GoToGiverPlan plan, TravelLeg hop, long now)
+    {
+        if (!WalkedToAetheryte && ports.ActiveAetheryte == 0 && ports.HopStart(hop.Id) is { } start
+            && ports.Position is { } at && TravelPlanner.Distance(at.X, at.Z, start.X, start.Z) > AetheryteReach)
+        {
+            WalkedToAetheryte = true;
+            leg = WalkLeg.Aetheryte;
+            walkTarget = start;
+            hopFromTerritory = ports.Territory;
+            Enter(GoToGiverStep.PreparingPath, now);
+            return TickPreparing(plan, now);
+        }
+
+        return AskHop(hop, now);
+    }
+
+    private GoToGiverOutcome? AskHop(TravelLeg hop, long now)
+    {
+        if (!ports.StartHop(hop.Id))
+        {
+            return Fail(GoToGiverFailure.HopRefused);
+        }
+
+        Enter(GoToGiverStep.Hopping, now);
+        return null;
+    }
+
+    /// <summary>The walk to the aetheryte is over, however it went: the hop is asked for now, and Lifestream decides.</summary>
+    private GoToGiverOutcome? AfterAetheryteWalk(GoToGiverPlan plan, long now)
+    {
+        if (Step == GoToGiverStep.ToAetheryte && ports.Walking)
+        {
+            ports.StopWalk();
+        }
+
+        leg = WalkLeg.Goal;
+        walkTarget = (plan.GoalX, plan.GoalY, plan.GoalZ);
+        repathed = false;
+        return AskHop(plan.Hop!.Value, now);
     }
 
     private GoToGiverOutcome? AfterHop(GoToGiverPlan plan, long now)
@@ -397,7 +548,7 @@ public sealed class GoToGiver
 
     private GoToGiverOutcome? TickTeleport(GoToGiverPlan plan, long now)
     {
-        var leg = plan.Teleport!.Value;
+        var teleport = plan.Teleport!.Value;
         if (ports.BetweenAreas)
         {
             sawLoading = true;
@@ -410,7 +561,7 @@ public sealed class GoToGiver
             return now - stepStarted > TeleportDepartMs ? Fail(GoToGiverFailure.TeleportDidNotStart) : null;
         }
 
-        if (Settled(leg.TerritoryId, now))
+        if (Settled(teleport.TerritoryId, now))
         {
             return AfterTeleport(plan, now);
         }
@@ -420,7 +571,25 @@ public sealed class GoToGiver
 
     private GoToGiverOutcome? TickHop(GoToGiverPlan plan, long now)
     {
-        var leg = plan.Hop!.Value;
+        var hop = plan.Hop!.Value;
+        if (hopAt is { } askAt)
+        {
+            // The pause before the hop is asked for again.
+            if (now < askAt)
+            {
+                return null;
+            }
+
+            hopAt = null;
+            if (!ports.StartHop(hop.Id))
+            {
+                return Fail(GoToGiverFailure.HopRefused);
+            }
+
+            stepStarted = now;
+            return null;
+        }
+
         var busy = ports.LifestreamBusy;
         if (busy)
         {
@@ -442,19 +611,41 @@ public sealed class GoToGiver
                 idleSince ??= now;
                 if (now - idleSince.Value > HopIdleGraceMs)
                 {
-                    return Fail(GoToGiverFailure.HopDidNotStart);
+                    return HopNotStarted(plan, hop, now);
                 }
             }
 
-            return now - stepStarted > HopDepartMs ? Fail(GoToGiverFailure.HopDidNotStart) : null;
+            return now - stepStarted > HopDepartMs ? HopNotStarted(plan, hop, now) : null;
         }
 
-        if (Settled(leg.TerritoryId, now))
+        if (Settled(hop.TerritoryId, now))
         {
             return AfterHop(plan, now);
         }
 
         return now - stepStarted > ArriveTimeoutMs ? Fail(GoToGiverFailure.HopTimedOut) : null;
+    }
+
+    /// <summary>
+    /// A hop that never started gets one more try: after the walk to the aetheryte when the player stands at none and
+    /// has not walked there yet, else after <see cref="HopRetryMs"/>. A second one that never starts fails.
+    /// </summary>
+    private GoToGiverOutcome? HopNotStarted(GoToGiverPlan plan, TravelLeg hop, long now)
+    {
+        if (HopRetried)
+        {
+            return Fail(GoToGiverFailure.HopDidNotStart);
+        }
+
+        HopRetried = true;
+        if (!WalkedToAetheryte && ports.ActiveAetheryte == 0 && ports.HopStart(hop.Id) is not null)
+        {
+            return BeginHop(plan, hop, now);
+        }
+
+        Enter(GoToGiverStep.Hopping, now);
+        hopAt = now + HopRetryMs;
+        return null;
     }
 
     /// <summary>True once the player has stood in <paramref name="territory"/>, out of loading and with Lifestream idle, for <see cref="SettleMs"/>.</summary>
@@ -470,8 +661,9 @@ public sealed class GoToGiver
         return now - arrivedAt.Value >= SettleMs;
     }
 
-    /// <summary>True while the player is still in the goal's territory and out of loading.</summary>
-    private bool InGoalZone(GoToGiverPlan plan) => ports.Territory == plan.GoalTerritory && !ports.BetweenAreas;
+    /// <summary>True while the player is still in the zone of the walk under way (the goal's, or the hop's start) and out of loading.</summary>
+    private bool InWalkZone(GoToGiverPlan plan) =>
+        ports.Territory == (leg == WalkLeg.Aetheryte ? hopFromTerritory : plan.GoalTerritory) && !ports.BetweenAreas;
 
     /// <summary>Distance on the ground plane from the player to the goal; NaN without a player position.</summary>
     private float GoalDistance(GoToGiverPlan plan) =>
@@ -479,14 +671,26 @@ public sealed class GoToGiver
 
     private GoToGiverOutcome? TickPreparing(GoToGiverPlan plan, long now)
     {
-        if (!InGoalZone(plan))
+        if (!InWalkZone(plan))
         {
             return Fail(GoToGiverFailure.LeftZone);
         }
 
         if (!ports.NavReady)
         {
-            return now - stepStarted > PathReadyTimeoutMs ? Fail(GoToGiverFailure.PathNotReady) : null;
+            if (now - stepStarted <= PathReadyTimeoutMs)
+            {
+                return null;
+            }
+
+            return leg == WalkLeg.Aetheryte ? AfterAetheryteWalk(plan, now) : Recover(GoToGiverFailure.PathNotReady, now);
+        }
+
+        if (leg != WalkLeg.Goal)
+        {
+            // The few steps to the aetheryte, or the last yalms after a landing: plainly on foot (or on the landed mount).
+            Move = TravelMove.Walk;
+            return BeginWalk(plan, now);
         }
 
         // The path is ready: decide how to cover the distance, then mount first when the walk is long.
@@ -517,7 +721,7 @@ public sealed class GoToGiver
 
     private GoToGiverOutcome? TickMounting(GoToGiverPlan plan, long now)
     {
-        if (!InGoalZone(plan))
+        if (!InWalkZone(plan))
         {
             return Fail(GoToGiverFailure.LeftZone);
         }
@@ -546,18 +750,26 @@ public sealed class GoToGiver
     private GoToGiverOutcome? BeginWalk(GoToGiverPlan plan, long now)
     {
         // A flight needs the mount under the character: vnavmesh takes off from a mount, never on foot.
-        Flying = Move.Fly && ports.Mounted;
+        Flying = leg == WalkLeg.Goal && Move.Fly && ports.Mounted;
         if (!Flying && !ports.Mounted && Move.Sprint)
         {
             ports.StartSprint();
         }
 
-        if (!ports.StartWalk(plan, Flying))
+        if (leg == WalkLeg.Goal)
         {
-            return Fail(GoToGiverFailure.WalkRefused);
+            // A flight aims for a spot on the floor beside the goal, where the mount can come down and the character
+            // stand and talk, rather than for the air over the giver's head.
+            walkTarget = Flying && ports.LandingSpot(plan.GoalX, plan.GoalY, plan.GoalZ) is { } spot ? spot : (plan.GoalX, plan.GoalY, plan.GoalZ);
         }
 
-        Enter(GoToGiverStep.Walking, now);
+        if (!ports.StartWalk(walkTarget.X, walkTarget.Y, walkTarget.Z, Flying))
+        {
+            return leg == WalkLeg.Aetheryte ? AfterAetheryteWalk(plan, now) : Fail(GoToGiverFailure.WalkRefused);
+        }
+
+        Enter(leg == WalkLeg.Aetheryte ? GoToGiverStep.ToAetheryte : GoToGiverStep.Walking, now);
+        lastWaypoints = null;
         MarkProgress(now);
         return null;
     }
@@ -576,7 +788,7 @@ public sealed class GoToGiver
 
     private GoToGiverOutcome? TickWalking(GoToGiverPlan plan, long now)
     {
-        if (!InGoalZone(plan))
+        if (!InWalkZone(plan))
         {
             return Fail(GoToGiverFailure.LeftZone);
         }
@@ -584,9 +796,14 @@ public sealed class GoToGiver
         if (ports.Walking)
         {
             sawWalking = true;
+            if (ports.Waypoints is { } left)
+            {
+                lastWaypoints = left;
+            }
+
             if (now - stepStarted > WalkTimeoutMs)
             {
-                return Fail(GoToGiverFailure.WalkTimedOut);
+                return leg == WalkLeg.Aetheryte ? AfterAetheryteWalk(plan, now) : Fail(GoToGiverFailure.WalkTimedOut);
             }
 
             return CheckProgress(plan, now);
@@ -594,7 +811,17 @@ public sealed class GoToGiver
 
         if (!sawWalking)
         {
-            return now - stepStarted > WalkStartTimeoutMs ? Fail(GoToGiverFailure.WalkDidNotStart) : null;
+            if (now - stepStarted <= WalkStartTimeoutMs)
+            {
+                return null;
+            }
+
+            return leg == WalkLeg.Aetheryte ? AfterAetheryteWalk(plan, now) : Recover(GoToGiverFailure.WalkDidNotStart, now);
+        }
+
+        if (leg == WalkLeg.Aetheryte)
+        {
+            return AfterAetheryteWalk(plan, now);
         }
 
         // The walk ended: still in the air, come down first; then arrived, or stopped short (no path, stopped by hand).
@@ -607,7 +834,7 @@ public sealed class GoToGiver
             return null;
         }
 
-        return Arrive(plan);
+        return Flying ? AfterLanding(plan, now) : Arrive(plan, now);
     }
 
     /// <summary>
@@ -615,7 +842,8 @@ public sealed class GoToGiver
     /// made progress (height included: a take-off counts), vnavmesh's path having fewer waypoints left, or a pathfind
     /// still running; the straight line to the goal plays no part, as a path around an obstacle moves away from it. No
     /// progress for <see cref="StuckMs"/> gets one new path (never while a pathfind is pending: vnavmesh would refuse
-    /// it, and the pending one would still move the character); stuck again fails.
+    /// it, and the pending one would still move the character); stuck again reloads the navmesh once
+    /// (<see cref="Recover"/>), and stuck after that fails. A walk to the aetheryte that sticks goes on to the hop.
     /// </summary>
     private GoToGiverOutcome? CheckProgress(GoToGiverPlan plan, long now)
     {
@@ -647,17 +875,17 @@ public sealed class GoToGiver
 
         if (repathed)
         {
-            return Fail(GoToGiverFailure.Stuck);
+            return leg == WalkLeg.Aetheryte ? AfterAetheryteWalk(plan, now) : Recover(GoToGiverFailure.Stuck, now);
         }
 
         repathed = true;
         ports.StopWalk();
-        if (!ports.StartWalk(plan, Flying))
+        if (!ports.StartWalk(walkTarget.X, walkTarget.Y, walkTarget.Z, Flying))
         {
-            return Fail(GoToGiverFailure.WalkRefused);
+            return leg == WalkLeg.Aetheryte ? AfterAetheryteWalk(plan, now) : Fail(GoToGiverFailure.WalkRefused);
         }
 
-        Enter(GoToGiverStep.Walking, now);
+        Enter(Step, now);
         MarkProgress(now);
         return null;
     }
@@ -672,14 +900,14 @@ public sealed class GoToGiver
 
     private GoToGiverOutcome? TickLanding(GoToGiverPlan plan, long now)
     {
-        if (!InGoalZone(plan))
+        if (!InWalkZone(plan))
         {
             return Fail(GoToGiverFailure.LeftZone);
         }
 
         if (!ports.InFlight)
         {
-            return Arrive(plan);
+            return AfterLanding(plan, now);
         }
 
         if (now - stepStarted > LandTimeoutMs)
@@ -707,15 +935,97 @@ public sealed class GoToGiver
         return null;
     }
 
-    private GoToGiverOutcome Arrive(GoToGiverPlan plan)
+    /// <summary>
+    /// Down from a flight: farther than <see cref="TalkRange"/> from the goal, walk the last yalms (on the landed
+    /// mount, never dismounted), once; then arrived or stopped short.
+    /// </summary>
+    private GoToGiverOutcome? AfterLanding(GoToGiverPlan plan, long now)
+    {
+        Flying = false;
+        var distance = GoalDistance(plan);
+        if (!Approached && !float.IsNaN(distance) && distance > TalkRange)
+        {
+            Approached = true;
+            leg = WalkLeg.Approach;
+            walkTarget = (plan.GoalX, plan.GoalY, plan.GoalZ);
+            if (ports.StartWalk(walkTarget.X, walkTarget.Y, walkTarget.Z, false))
+            {
+                Enter(GoToGiverStep.Walking, now);
+                lastWaypoints = null;
+                MarkProgress(now);
+                return null;
+            }
+        }
+
+        return Arrive(plan, now);
+    }
+
+    /// <summary>
+    /// The walk ended: within <see cref="ArriveRange"/> of the goal it arrived. Farther away it stopped short: stopped by
+    /// hand (vnavmesh's path still had waypoints to follow) it fails, else (no path, a path that ends short, a mesh gone
+    /// bad) it gets the one reload.
+    /// </summary>
+    private GoToGiverOutcome? Arrive(GoToGiverPlan plan, long now)
     {
         var distance = GoalDistance(plan);
         if (!float.IsNaN(distance) && distance > ArriveRange)
         {
-            return Fail(GoToGiverFailure.WalkStoppedShort);
+            var stoppedByHand = lastWaypoints is > 1;
+            return stoppedByHand ? Fail(GoToGiverFailure.WalkStoppedShort) : Recover(GoToGiverFailure.WalkStoppedShort, now);
         }
 
         return Finish();
+    }
+
+    /// <summary>
+    /// The one recovery of a run (feature plan v7 A8): the walk under way is stopped, vnavmesh reloads the zone's
+    /// navmesh, and the walk is tried once more from where the character stands. A second failure, or a vnavmesh that
+    /// declines the reload, fails with <paramref name="failure"/>.
+    /// </summary>
+    private GoToGiverOutcome? Recover(GoToGiverFailure failure, long now)
+    {
+        if (Reloaded)
+        {
+            return Fail(failure);
+        }
+
+        Reloaded = true;
+        if (WalkUnderWay)
+        {
+            ports.StopWalk();
+        }
+
+        if (!ports.StartNavReload())
+        {
+            return Fail(failure, stopWalk: false);
+        }
+
+        RecoveringFrom = failure;
+        Enter(GoToGiverStep.ReloadingNav, now);
+        return null;
+    }
+
+    private GoToGiverOutcome? TickReloading(GoToGiverPlan plan, long now)
+    {
+        if (!InWalkZone(plan))
+        {
+            return Fail(GoToGiverFailure.LeftZone);
+        }
+
+        var waited = now - stepStarted;
+        if (waited < ReloadSettleMs)
+        {
+            return null;
+        }
+
+        if (!ports.NavReady)
+        {
+            return waited > PathReadyTimeoutMs ? Fail(RecoveringFrom) : null;
+        }
+
+        // The navmesh is back: the same walk (to the goal, or the last yalms) from where the character stands now.
+        Enter(GoToGiverStep.PreparingPath, now);
+        return TickPreparing(plan, now);
     }
 
     private void Enter(GoToGiverStep step, long now)
@@ -728,6 +1038,7 @@ public sealed class GoToGiver
         sawBusy = false;
         sawWalking = false;
         pressedAgain = false;
+        hopAt = null;
     }
 
     private GoToGiverOutcome Finish()
@@ -736,11 +1047,11 @@ public sealed class GoToGiver
         return new GoToGiverOutcome(Step, GoToGiverFailure.None);
     }
 
-    private GoToGiverOutcome Fail(GoToGiverFailure failure)
+    private GoToGiverOutcome Fail(GoToGiverFailure failure, bool stopWalk = true)
     {
         // A failure while this run's walk may be moving (left the zone, timed out, stuck) stops it; nothing keeps
         // walking unattended. Before the walk was asked for, vnavmesh's movement is not this run's to stop.
-        if (Step == GoToGiverStep.Walking)
+        if (stopWalk && WalkUnderWay)
         {
             ports.StopWalk();
         }

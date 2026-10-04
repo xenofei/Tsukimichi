@@ -238,4 +238,41 @@ public static class TravelPlanner
 
         return best is not null && bestDistance + margin < baseline ? best : null;
     }
+
+    /// <summary>
+    /// The node nearest (<paramref name="x"/>, <paramref name="z"/>) among <paramref name="nodes"/> standing in
+    /// <paramref name="territory"/> and passing <paramref name="allowed"/>: where a walk to the aetheryte before an
+    /// aethernet hop heads (feature plan v7 A8). Null when none does.
+    /// </summary>
+    public static TravelNode? NearestNode(IEnumerable<TravelNode> nodes, uint territory, float x, float z, Func<uint, bool> allowed)
+    {
+        ArgumentNullException.ThrowIfNull(nodes);
+        ArgumentNullException.ThrowIfNull(allowed);
+        TravelNode? best = null;
+        var bestDistance = float.MaxValue;
+        foreach (var node in nodes)
+        {
+            if (node.TerritoryId != territory || !allowed(node.RowId))
+            {
+                continue;
+            }
+
+            var distance = Distance(node.X, node.Z, x, z);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                best = node;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>
+    /// True when walking to the network's nearest node and hopping beats walking straight to the goal: the walk to the
+    /// node (<paramref name="toNode"/>) plus the shard's distance to the goal (<paramref name="shardToGoal"/>) is shorter
+    /// than the player's own distance to the goal (<paramref name="toGoal"/>) by more than <paramref name="margin"/>.
+    /// </summary>
+    public static bool WalkThenHopPays(float toNode, float shardToGoal, float toGoal, float margin = HopMargin) =>
+        toNode + shardToGoal + margin < toGoal;
 }
