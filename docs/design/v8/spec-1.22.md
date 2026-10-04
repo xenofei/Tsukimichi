@@ -956,3 +956,10 @@ The five backfill releases (`polish-b`, `faces-b`, `themes-b`, `mixmatch-b`, `ru
   - Everything else holds.
   - **Nits:** in the Orrery, the waystone's two bright specks look like a toy car's wheels at 6x; in Glass, the waystone has no lit top piece; and the earlier optional Nits remain.
 - **After the re-check, at the coordinator's request:** evercold-b's and whatnext-b's Orrery crescents are keyed (`orrery_moon: "engraved"`). Each has a silver lit part, enamel and earthshine for the rest, and the brass ring kept. Only their Orrery files changed (PNG and JPEG). Totals: evercold-b 445 KB, whatnext-b 344 KB.
+- **Short round on those two crescents (14c04352): APPROVED.**
+  - Each crescent is lit toward its sun, with true terminators and opposite horns.
+  - The lit part is silver, with enamel for the rest and a brass ring outside the disc.
+  - They match mixmatch-b's crescent, so the series has one Orrery moon throughout.
+  - At 560 × 220 none reads as a coin, a hole or a glyph.
+  - **Nit:** drawn smaller than popup size, as on the boards, the ring outweighs a thin crescent a little. No change is needed.
+- **Final state:** the backfill and all nine moons are approved by the backfill supervisor, after the merge with main.
