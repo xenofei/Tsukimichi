@@ -148,6 +148,9 @@ public sealed class WhatsNewPopup : Window, IDisposable
     /// <summary>Every release up to the running one, newest first: Settings' list.</summary>
     public IReadOnlyList<ReleaseNote> History { get; }
 
+    /// <summary>The update's popup waits for its quiet moment, or the popup is open: the first-run portrait pack offer goes after it.</summary>
+    public bool Due => pending is not null || IsOpen;
+
     /// <summary>
     /// Once at load: decides whether the update's popup is due (it then waits for the first quiet moment), or records
     /// the version silently (a fresh install, nothing to show, or the setting off).

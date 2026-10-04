@@ -1,6 +1,6 @@
 # What Tsukimichi reads and sends
 
-A plain statement of what the plugin looks at, what it writes, and what leaves your PC. In short: **it reads your game on this PC, keeps its files on this PC, and sends nothing anywhere. It goes online for one thing only: the optional portrait pack, when you click Download and confirm.** Settings › Advanced › Privacy & trust shows this summary in game, with the fingerprint of the build you are running.
+A plain statement of what the plugin looks at, what it writes, and what leaves your PC. In short: **it reads your game on this PC, keeps its files on this PC, and sends nothing anywhere. It goes online for one thing only: the optional portrait pack, when you click Download and confirm.** After you install, Tsukimichi offers the pack once and asks first; nothing downloads unless you choose Download. Settings › Advanced › Privacy & trust shows this summary in game, with the fingerprint of the build you are running.
 
 ## What it reads
 
@@ -48,10 +48,12 @@ A test (`Tsukimichi.Tests/Diagnostics/NoNetworkTests.cs`) fails the build if any
 
 Giver portraits come from your own game install. For more faces, Settings › General › Look › Portrait pack offers an optional pack of NPC photos (renders by Garland Tools, credit Celes). Exactly this happens, and only after you click **Download…** and confirm a dialog that names the size, the release and the address:
 
+- **The first-run offer (since 1.22):** once after you install (or, if you already use Tsukimichi, once after the update to 1.22), at a quiet moment and after What's new, a window asks whether to download the pack. It states the size, the source (Tsukimichi's GitHub release), the Garland Tools credit and the fingerprint check. "Download portraits" is the default button; nothing has gone online at that point, and nothing downloads unless you choose it: click it, or, once you have clicked into the offer, press Enter. A key meant for the game (Enter for chat, Esc for the menu) never answers it. "Not now" (or Esc, once you have clicked into the offer) declines, and the offer never comes back; Settings › General › Look › Portrait pack keeps the Download button. It is never shown if the pack is already installed.
+
 - **What is fetched:** one file, `Tsukimichi-portraits.zip`, from Tsukimichi's own GitHub release (`https://github.com/xenofei/Tsukimichi/releases/download/<version>/Tsukimichi-portraits.zip`). GitHub redirects the download to its own file servers (`objects.githubusercontent.com` or `release-assets.githubusercontent.com`); a redirect anywhere else stops it. The request carries a User-Agent naming Tsukimichi's version, and nothing about you, your characters or your settings.
 - **What is checked:** the file must be exactly the size and SHA-256 the plugin ships with (`Data/portrait_pack.json`), or it is deleted. Inside, only the pack's own images and manifest are accepted: no folders, no programs, nothing outside the pack's folder. Every image must match its own SHA-256 and decode as a picture before anything is installed.
 - **Where it goes:** `pluginConfigs\Tsukimichi\portraits\` (`current.json` names the pack in use; a `download-<id>.part` file exists only while it downloads).
-- **When:** only on that click. A plugin update with a newer pack says so in Settings and waits for you to click **Update…**; nothing downloads on its own. **Remove…** deletes the pack again.
+- **When:** only on that click (in Settings, or Download portraits in the first-run offer). A plugin update with a newer pack says so in Settings and waits for you to click **Update…**; nothing downloads on its own. **Remove…** deletes the pack again.
 - **Credit and source:** the photos are Garland Tools' NPC renders (garlandtools.org, photos by Celes) of Square Enix's game art. FINAL FANTASY XIV © SQUARE ENIX.
 
 ## Check the build you run

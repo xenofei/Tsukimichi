@@ -1457,7 +1457,8 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.QuestText = QuestText;
             configWindow.OpenAboutAutomation = () => aboutAutomationWindow?.Show();
             // The optional portrait pack (1.20, F4, decision 8): the installed one is read from the config folder off the
-            // frame; the network is touched only when the player confirms a download in Settings › Look › Portrait pack.
+            // frame; the network is touched only when the player confirms a download in Settings › Look › Portrait pack,
+            // or chooses Download portraits in the first-run offer (1.22, Plugin.PortraitPackOffer.cs).
             var pack = new Game.PortraitPackService(
                 Paths,
                 clientGameVersion,
@@ -1619,6 +1620,9 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // What's new after an update (1.22, W1): a popup at the first quiet moment; the history is in Settings.
             InitializeWhatsNew(mainWindow, settingsWindow);
+
+            // The portrait pack offer (1.22): once, to a player without the pack, after What's new; Download asks first.
+            InitializePortraitPackOffer(settingsWindow, diagnostics.PluginVersion);
 
             // New chapters of the side stories the character started (1.21.0 P5), once per patch, in the Tonight card (W4).
             mainWindow.AttachNewChapters(new NewChaptersSource(Session, ui) { CharacterSettings = CharacterBook });
@@ -1831,6 +1835,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("automation level", Ui.AutomationGate.Detach);
         Unwind("settings window", () => configWindow?.Dispose());
         Unwind("whats new", () => whatsNewPopup?.Dispose());
+        Unwind("portrait pack offer", TearDownPortraitPackOffer);
         Unwind("fonts", Ui.Typography.Dispose);
         Unwind("banner grades", Ui.BannerGrading.Dispose);
         Unwind("portrait grades", Ui.PortraitGrading.Dispose);

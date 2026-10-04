@@ -3838,7 +3838,7 @@
     <value>Keeps: its settings and a few files per character in Dalamud's pluginConfigs folder, and exports only when you ask.</value>
   </data>
   <data name="ConfigPrivacySends" xml:space="preserve">
-    <value>Sends: nothing, except the portrait pack when you click Download: one file from Tsukimichi's GitHub release. Photos: Garland Tools NPC renders, credit Celes.</value>
+    <value>Sends: nothing, except the portrait pack when you click Download: one file from Tsukimichi's GitHub release. Tsukimichi offers it once after you install and asks first; nothing downloads unless you choose Download. Photos: Garland Tools NPC renders, credit Celes.</value>
   </data>
   <data name="ConfigPrivacyFull" xml:space="preserve">
     <value>The full statement</value>
@@ -15370,6 +15370,54 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="Pack.Arrived" xml:space="preserve">
     <value>Portrait pack installed · {0} faces</value>
     <comment>Status bar note when the pack lands. {0} = faces.</comment>
+  </data>
+  <data name="PackOffer.What" xml:space="preserve">
+    <value>Adds about {0} giver faces, shown in quest details, so roughly 4 in 5 quests show who gives them. The rest keep a silhouette, an emblem or initials.</value>
+    <comment>First-run portrait pack offer (1.22): what the pack does. {0} = faces.</comment>
+  </data>
+  <data name="PackOffer.PromiseLead" xml:space="preserve">
+    <value>Only if you choose Download.</value>
+    <comment>First-run offer promise, bold lead.</comment>
+  </data>
+  <data name="PackOffer.Promise" xml:space="preserve">
+    <value>Nothing has gone online yet. Download is the one time Tsukimichi goes online: it sends nothing about you or your characters, and GitHub sees an ordinary file download from this PC.</value>
+    <comment>First-run offer promise, after the lead.</comment>
+  </data>
+  <data name="PackOffer.Later" xml:space="preserve">
+    <value>You can add it any time in Settings › Look.</value>
+    <comment>First-run offer: where the pack is later (small Tertiary line).</comment>
+  </data>
+  <data name="PackOffer.Download" xml:space="preserve">
+    <value>Download portraits</value>
+    <comment>First-run offer primary button, the default (Enter).</comment>
+  </data>
+  <data name="PackOffer.NotNow" xml:space="preserve">
+    <value>Not now</value>
+    <comment>First-run offer secondary button (Esc): nothing downloads, and the offer does not come back.</comment>
+  </data>
+  <data name="PackOffer.Downloading" xml:space="preserve">
+    <value>Downloading the portrait pack</value>
+    <comment>First-run offer title while the pack downloads.</comment>
+  </data>
+  <data name="PackOffer.Checking" xml:space="preserve">
+    <value>Checking the portrait pack</value>
+    <comment>First-run offer title while the file is checked and unpacked.</comment>
+  </data>
+  <data name="PackOffer.Installed" xml:space="preserve">
+    <value>Portrait pack installed</value>
+    <comment>First-run offer title once the pack is in.</comment>
+  </data>
+  <data name="PackOffer.InstalledLine" xml:space="preserve">
+    <value>{0} faces. They show in quest details from now on.</value>
+    <comment>First-run offer line once the pack is in. {0} = faces.</comment>
+  </data>
+  <data name="PackOffer.KeepsGoing" xml:space="preserve">
+    <value>Keeps going if you close this. Settings › Look shows it too.</value>
+    <comment>First-run offer note while the pack downloads.</comment>
+  </data>
+  <data name="PackOffer.Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>First-run offer button after Download: hides the window; a running download keeps going.</comment>
   </data>
   <data name="UpNextEyebrow" xml:space="preserve">
     <value>Up next</value>

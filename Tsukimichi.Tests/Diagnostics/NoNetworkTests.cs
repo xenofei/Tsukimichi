@@ -243,7 +243,7 @@ public class NoNetworkTests
         }
 
         Assert.Equal([Path.Combine("Tsukimichi", "Plugin.cs")], made);
-        Assert.Equal([Path.Combine("Tsukimichi", "Ui", "ConfigWindow.PortraitPack.cs")], started);
+        Assert.Equal([Path.Combine("Tsukimichi", "Ui", "ConfigWindow.PortraitPack.cs"), Path.Combine("Tsukimichi", "Ui", "PortraitPackOfferWindow.cs")], started);
     }
 
     [Fact]
