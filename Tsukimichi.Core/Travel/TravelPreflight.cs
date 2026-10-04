@@ -22,8 +22,14 @@ public enum PreflightState
     /// <summary>Fine for a walk.</summary>
     Ok,
 
-    /// <summary>Can make a walk run the wrong way, or not move at all.</summary>
+    /// <summary>Can make a walk run the wrong way, or not move at all, and has a fix: needs a change.</summary>
     Warn,
+
+    /// <summary>
+    /// Worth knowing, with nothing Tsukimichi may change (first-person view): said again when a walk starts. Setup shows
+    /// it with a hollow dot, apart from what needs a change.
+    /// </summary>
+    Info,
 
     /// <summary>Could not be read (logged out, vnavmesh not loaded, game reads off).</summary>
     Unread,
@@ -119,7 +125,7 @@ public static class TravelPreflight
             new(PreflightItem.Camera, reading.FirstPerson switch
             {
                 null => PreflightState.Unread,
-                true => PreflightState.Warn,
+                true => PreflightState.Info,
                 false => PreflightState.Ok,
             }, PreflightFix.None, []),
             new(PreflightItem.VnavmeshMovement, reading.VnavmeshMovementAllowed switch
@@ -148,7 +154,7 @@ public static class TravelPreflight
     {
         ArgumentNullException.ThrowIfNull(results);
         return results
-            .Where(static r => r.State == PreflightState.Warn && r.Item != PreflightItem.Conflicts)
+            .Where(static r => r.State is PreflightState.Warn or PreflightState.Info && r.Item != PreflightItem.Conflicts)
             .Select(static r => r.Item)
             .ToList();
     }

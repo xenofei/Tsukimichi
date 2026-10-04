@@ -16,6 +16,9 @@ static partial class Strings
     /// <summary>Reason in TravelGoToStoppedFormat after the reload did not help. {0} = reason (TravelFail*).</summary>
     public static string TravelFailAfterReloadFormat => Loc.Get("TravelFailAfterReloadFormat");
 
+    /// <summary>"Needs you" chat line when a walk's recovery gave up.</summary>
+    public static string NeedsYouTravelGaveUp => Loc.Get("NeedsYouTravelGaveUp");
+
     public static string TravelStepReloading => Loc.Get("TravelStepReloading");
 
     public static string TravelStepToAetheryte => Loc.Get("TravelStepToAetheryte");
@@ -43,7 +46,16 @@ static partial class Strings
     /// <summary>The check's name in Setup ("Movement type").</summary>
     public static string TravelPreflightLabel(PreflightItem item) => Loc.Get("TravelPreflightLabel." + item);
 
-    /// <summary>What the check found, in a short plain sentence.</summary>
+    /// <summary>The status in words, beside the dot ("Legacy", "First person").</summary>
+    public static string TravelPreflightHead(PreflightItem item, PreflightState state) => Loc.Get("TravelPreflightHead." + item + "." + state);
+
+    /// <summary>A loaded conflict's status in words. {0} = the plugin's name.</summary>
+    public static string TravelPreflightConflictHeadFormat => Loc.Get("TravelPreflightConflictHeadFormat");
+
+    /// <summary>The safety line under a fix pill ("Undo for 8 s; Restore Legacy stays here").</summary>
+    public static string TravelPreflightSafety(PreflightFix fix) => Loc.Get("TravelPreflightSafety." + fix);
+
+    /// <summary>The line under the status: what it means for a walk.</summary>
     public static string TravelPreflightStatus(PreflightItem item, PreflightState state) => Loc.Get("TravelPreflightStatus." + item + "." + state);
 
     /// <summary>The word for a check's state in its tooltip.</summary>
@@ -52,7 +64,7 @@ static partial class Strings
     /// <summary>Why the check matters, for its tooltip.</summary>
     public static string TravelPreflightWhy(PreflightItem item) => Loc.Get("TravelPreflightWhy." + item);
 
-    /// <summary>{0} = the plugin's name, {1} = what it breaks (TravelPreflightConflict.*).</summary>
+    /// <summary>The line under a loaded conflict's status. {0} = what it breaks (TravelPreflightConflict.*).</summary>
     public static string TravelPreflightConflictFormat => Loc.Get("TravelPreflightConflictFormat");
 
     /// <summary>What a known conflict breaks; <paramref name="key"/> is <see cref="KnownConflict.Key"/>.</summary>

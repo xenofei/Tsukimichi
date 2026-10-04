@@ -41,6 +41,9 @@ public sealed class TravelPreflightService : IDisposable
 
     private const uint Allowed = 1;
 
+    /// <summary>How long Undo is offered after "Allow movement" (spec-1.18: "Undo for 8 s"); "Restore Legacy" stays.</summary>
+    public const long UndoWindowMs = 8_000;
+
     private readonly IGameConfig gameConfig;
     private readonly IFramework framework;
     private readonly IClientState clientState;
@@ -49,6 +52,7 @@ public sealed class TravelPreflightService : IDisposable
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly PluginPresence[] conflicts;
     private readonly Dictionary<PreflightItem, PreflightChange> changes = [];
+    private readonly Dictionary<PreflightItem, long> changedAt = [];
     private IReadOnlyList<PreflightResult> results = TravelPreflight.Evaluate(TravelPreflightReading.Unread);
     private TravelPreflightReading reading = TravelPreflightReading.Unread;
     private long? readAt;
@@ -92,7 +96,14 @@ public sealed class TravelPreflightService : IDisposable
     public bool CanUndo(PreflightItem item)
     {
         Refresh();
-        return changes.TryGetValue(item, out var change) && change.CanUndo(Current(item));
+        if (!changes.TryGetValue(item, out var change) || !change.CanUndo(Current(item)))
+        {
+            return false;
+        }
+
+        // The movement type's "Restore Legacy" stays until the plugin restarts; vnavmesh's Undo lasts a few seconds.
+        return item == PreflightItem.MovementType
+            || (changedAt.TryGetValue(item, out var at) && Environment.TickCount64 - at < UndoWindowMs);
     }
 
     /// <summary>Runs the fix of <paramref name="item"/>, from its button; false when it did nothing.</summary>
@@ -128,6 +139,7 @@ public sealed class TravelPreflightService : IDisposable
         }
 
         changes.Remove(item);
+        changedAt.Remove(item);
         log.Information("Travel preflight: {Item} put back to {Before}", item, change.Before);
         return true;
     }
@@ -140,6 +152,7 @@ public sealed class TravelPreflightService : IDisposable
         }
 
         changes[item] = new PreflightChange(item, before, after);
+        changedAt[item] = Environment.TickCount64;
         log.Information("Travel preflight: {Item} changed from {Before} to {After}", item, before, after);
         return true;
     }

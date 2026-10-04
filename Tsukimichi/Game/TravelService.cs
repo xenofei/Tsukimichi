@@ -17,6 +17,15 @@ using Tsukimichi.Ui;
 namespace Tsukimichi.Game;
 
 /// <summary>
+/// A Walk or Go to giver that ended because its walk failed and its one recovery (the navmesh reload, feature plan v7
+/// A8) did not save it: <see cref="TravelService.GaveUp"/>.
+/// </summary>
+/// <param name="Failure">Why the walk failed in the end.</param>
+/// <param name="WalkOnly">A lone Walk to giver rather than a Go to giver chain.</param>
+/// <param name="Target">Who or what the run headed for (the status line's target), possibly empty.</param>
+public readonly record struct TravelGaveUp(GoToGiverFailure Failure, bool WalkOnly, string Target);
+
+/// <summary>
 /// The game side of travel (feature plan v5, 1.6.0): which aetherytes the player has attuned (from Dalamud's
 /// <see cref="IAetheryteList"/>, with each one's gil cost and favourite flag) and which aethernet shards
 /// (<c>UIState.IsAetheryteUnlocked</c>, a game call, so only while the shared <see cref="HookGate"/> allows), where the
@@ -144,6 +153,14 @@ public sealed class TravelService : ITravelPorts, IDisposable
     /// chat line when a walk starts. Unset reads as nothing.
     /// </summary>
     public Func<IReadOnlyList<PreflightItem>>? WalkWarnings { get; set; }
+
+    /// <summary>
+    /// Raised once, after the chat line, when a run ends because its walk failed (stuck, ended short, never started, no
+    /// navmesh) after the run's one recovery was tried. RunWatch raises its "Needs you" stuck alert from here, not while
+    /// the recovery runs. Also the hook for the "Why it stopped" card (A2): subscribe to show the card for a path
+    /// failure or a stall the recovery could not fix.
+    /// </summary>
+    public event Action<TravelGaveUp>? GaveUp;
 
     /// <summary>The settings' movement options now (<see cref="TravelOptions.OnFoot"/> when unset); every new plan carries them.</summary>
     public TravelOptions CurrentOptions => Options?.Invoke() ?? TravelOptions.OnFoot;
@@ -542,6 +559,22 @@ public sealed class TravelService : ITravelPorts, IDisposable
 
         var format = journeyIsWalkOnly ? Strings.TravelWalkStoppedFormat : Strings.TravelGoToStoppedFormat;
         PrintLine(string.Format(CultureInfo.CurrentCulture, format, reason));
+        if (journey.Reloaded && failed.Failure is GoToGiverFailure.Stuck or GoToGiverFailure.WalkStoppedShort or GoToGiverFailure.PathNotReady or GoToGiverFailure.WalkDidNotStart)
+        {
+            RaiseGaveUp(new TravelGaveUp(failed.Failure, journeyIsWalkOnly, JourneyTarget));
+        }
+    }
+
+    private void RaiseGaveUp(TravelGaveUp gaveUp)
+    {
+        try
+        {
+            GaveUp?.Invoke(gaveUp);
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, "Travel gave-up handler failed");
+        }
     }
 
     /// <summary>The reason clause for a failure, as the chat lines say it.</summary>

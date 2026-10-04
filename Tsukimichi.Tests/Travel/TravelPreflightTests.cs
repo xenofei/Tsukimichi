@@ -30,12 +30,15 @@ public sealed class TravelPreflightTests
     }
 
     [Fact]
-    public void First_person_warns_without_a_fix()
+    public void First_person_is_information_without_a_fix_and_is_named_when_a_walk_starts()
     {
-        var camera = Of(TravelPreflight.Evaluate(new TravelPreflightReading(0, true, true, [])), PreflightItem.Camera);
+        var results = TravelPreflight.Evaluate(new TravelPreflightReading(0, true, true, []));
+        var camera = Of(results, PreflightItem.Camera);
 
-        Assert.Equal(PreflightState.Warn, camera.State);
+        Assert.Equal(PreflightState.Info, camera.State);
         Assert.Equal(PreflightFix.None, camera.Fix);
+        Assert.Equal(0, TravelPreflight.Warnings(results));
+        Assert.Equal([PreflightItem.Camera], TravelPreflight.WalkWarnings(results));
     }
 
     [Fact]
