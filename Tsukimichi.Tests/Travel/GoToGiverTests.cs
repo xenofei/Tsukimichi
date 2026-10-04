@@ -64,10 +64,32 @@ public sealed class GoToGiverTests
 
         public bool AcceptLanding { get; set; } = true;
 
-        public bool StartWalk(GoToGiverPlan plan, bool fly)
+        public bool StartWalk(float x, float y, float z, bool fly)
         {
-            Calls.Add($"{(fly ? "fly" : "walk")} {plan.GoalX},{plan.GoalY},{plan.GoalZ}");
+            Calls.Add($"{(fly ? "fly" : "walk")} {x},{y},{z}");
             return AcceptWalk;
+        }
+
+        /// <summary>Lifestream's answer; null (cannot say) by default, so a hop is left to Lifestream as before.</summary>
+        public uint? ActiveAetheryte { get; set; }
+
+        /// <summary>The hop's nearest aetheryte or shard; none by default.</summary>
+        public (float X, float Y, float Z)? HopStartPoint { get; set; }
+
+        public (float X, float Y, float Z)? HopStart(uint hopId) => HopStartPoint;
+
+        /// <summary>vnavmesh's floor point beside the goal; none by default (the flight aims at the goal).</summary>
+        public (float X, float Y, float Z)? Landing { get; set; }
+
+        public (float X, float Y, float Z)? LandingSpot(float x, float y, float z) => Landing;
+
+        /// <summary>Whether vnavmesh takes a reload; declined by default, so a failure ends the run as before.</summary>
+        public bool AcceptReload { get; set; }
+
+        public bool StartNavReload()
+        {
+            Calls.Add("reload");
+            return AcceptReload;
         }
 
         public bool StartMount()
@@ -262,7 +284,25 @@ public sealed class GoToGiverTests
         ports.LifestreamBusy = false;
         Assert.Null(machine.Tick(1_000));
         Assert.Null(machine.Tick(1_000 + GoToGiver.HopIdleGraceMs));
-        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.HopDidNotStart), machine.Tick(1_100 + GoToGiver.HopIdleGraceMs));
+
+        // Not started: asked for once more after a pause (Lifestream checks too soon after zoning), not at once.
+        var gaveUp = 1_100 + GoToGiver.HopIdleGraceMs;
+        Assert.Null(machine.Tick(gaveUp));
+        Assert.True(machine.HopRetried);
+        Assert.Equal(GoToGiverStep.Hopping, machine.Step);
+        Assert.Null(machine.Tick(gaveUp + GoToGiver.HopRetryMs - 100));
+        Assert.Single(ports.Calls, c => c == "hop 28");
+        Assert.Null(machine.Tick(gaveUp + GoToGiver.HopRetryMs));
+        Assert.Equal(2, ports.Calls.Count(c => c == "hop 28"));
+
+        // The second one goes the same way: the run fails.
+        var again = gaveUp + GoToGiver.HopRetryMs;
+        ports.LifestreamBusy = true;
+        machine.Tick(again + 500);
+        ports.LifestreamBusy = false;
+        Assert.Null(machine.Tick(again + 1_000));
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.HopDidNotStart), machine.Tick(again + 1_100 + GoToGiver.HopIdleGraceMs));
+        Assert.Equal(2, ports.Calls.Count(c => c == "hop 28"));
     }
 
     [Fact]
@@ -272,7 +312,12 @@ public sealed class GoToGiverTests
         var machine = new GoToGiver(ports);
         machine.Start(Full with { Teleport = null }, 0);
 
-        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.HopDidNotStart), Run(machine, 0, GoToGiver.HopDepartMs + 1_000));
+        // Two tries, each waiting its full departure time, with the pause between them.
+        Assert.Null(Run(machine, 0, GoToGiver.HopDepartMs + GoToGiver.HopRetryMs + 1_000));
+        Assert.Equal(2, ports.Calls.Count(c => c == "hop 28"));
+        Assert.Equal(
+            new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.HopDidNotStart),
+            Run(machine, GoToGiver.HopDepartMs + GoToGiver.HopRetryMs + 1_100, (2 * GoToGiver.HopDepartMs) + GoToGiver.HopRetryMs + 1_000));
     }
 
     [Fact]
@@ -730,7 +775,9 @@ public sealed class GoToGiverTests
         Assert.Equal(
             new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.Stuck),
             Run(machine, 2_100 + GoToGiver.StuckMs, 4_000 + (2 * GoToGiver.StuckMs)));
-        Assert.Equal("stop walk", ports.Calls[^1]);
+
+        // The walk is stopped, then the reload is asked for (and declined here): nothing keeps walking.
+        Assert.Equal(["walk 200,5,0", "stop walk", "walk 200,5,0", "stop walk", "reload"], ports.Calls);
     }
 
     [Fact]
@@ -881,5 +928,321 @@ public sealed class GoToGiverTests
 
         ports.Load(City);
         Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.LeftZone), machine.Tick(500));
+    }
+
+    // ------------------------------------------------------------------ recovery (feature plan v7 A8)
+
+    /// <summary>A walk to (200, 5, 0) that makes some progress, then sticks twice; returns the time of the second stick.</summary>
+    private static long StickTwice(FakePorts ports, GoToGiver machine)
+    {
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f), 0);
+        ports.Position = (50f, 0f);
+        machine.Tick(1_000);
+        Assert.Null(Run(machine, 1_100, 1_000 + GoToGiver.StuckMs));
+        Assert.True(machine.Repathed);
+        var second = 1_000 + (2 * GoToGiver.StuckMs);
+        Assert.Null(Run(machine, 1_100 + GoToGiver.StuckMs, second));
+        return second;
+    }
+
+    [Fact]
+    public void A_walk_stuck_on_its_new_path_reloads_the_navmesh_and_walks_again()
+    {
+        var ports = new FakePorts { Territory = SubZone, Walking = true, AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        var stuck = StickTwice(ports, machine);
+
+        // The walk is stopped and vnavmesh reloads; the old "ready" is not trusted for a moment.
+        Assert.Equal(GoToGiverStep.ReloadingNav, machine.Step);
+        Assert.True(machine.Reloaded);
+        Assert.Equal(GoToGiverFailure.Stuck, machine.RecoveringFrom);
+        Assert.Equal(["walk 200,5,0", "stop walk", "walk 200,5,0", "stop walk", "reload"], ports.Calls);
+        Assert.Null(Run(machine, stuck + 100, stuck + GoToGiver.ReloadSettleMs - 100));
+        Assert.Equal(GoToGiverStep.ReloadingNav, machine.Step);
+
+        // Ready again: the same walk from where the character stands, and it arrives.
+        Assert.Null(machine.Tick(stuck + GoToGiver.ReloadSettleMs));
+        Assert.Equal(GoToGiverStep.Walking, machine.Step);
+        Assert.Equal("walk 200,5,0", ports.Calls[^1]);
+        machine.Tick(stuck + GoToGiver.ReloadSettleMs + 1_000);
+        ports.Position = (198f, 0f);
+        ports.Walking = false;
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Done, GoToGiverFailure.None), machine.Tick(stuck + GoToGiver.ReloadSettleMs + 2_000));
+    }
+
+    [Fact]
+    public void A_walk_stuck_again_after_the_reload_fails_without_a_second_reload()
+    {
+        var ports = new FakePorts { Territory = SubZone, Walking = true, AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        var stuck = StickTwice(ports, machine);
+        var resumed = stuck + GoToGiver.ReloadSettleMs;
+        machine.Tick(resumed);
+        Assert.Equal(GoToGiverStep.Walking, machine.Step);
+
+        // The new path had its one new path already: stuck once more ends the run, and the walk is stopped.
+        Assert.Equal(
+            new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.Stuck),
+            Run(machine, resumed + 100, resumed + GoToGiver.StuckMs + 100));
+        Assert.Single(ports.Calls, c => c == "reload");
+        Assert.Equal("stop walk", ports.Calls[^1]);
+    }
+
+    [Fact]
+    public void The_reload_waits_for_the_navmesh_and_fails_when_it_never_comes_back()
+    {
+        var ports = new FakePorts { Territory = SubZone, Walking = true, AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        var stuck = StickTwice(ports, machine);
+        ports.NavReady = false;
+
+        Assert.Null(Run(machine, stuck + 100, stuck + GoToGiver.PathReadyTimeoutMs));
+        Assert.Equal(GoToGiverStep.ReloadingNav, machine.Step);
+        Assert.Equal(
+            new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.Stuck),
+            Run(machine, stuck + GoToGiver.PathReadyTimeoutMs + 100, stuck + GoToGiver.PathReadyTimeoutMs + 1_000));
+        Assert.Equal("reload", ports.Calls[^1]);
+    }
+
+    [Fact]
+    public void A_walk_stopped_by_hand_is_not_retried()
+    {
+        // vnavmesh's path still had twelve waypoints when the walk ended: someone stopped it.
+        var ports = new FakePorts { Territory = SubZone, Walking = true, Waypoints = 12, Position = (500f, 500f), AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
+        machine.Tick(1_000);
+
+        ports.Walking = false;
+        ports.Waypoints = null;
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.WalkStoppedShort), machine.Tick(2_000));
+        Assert.DoesNotContain("reload", ports.Calls);
+        Assert.False(machine.Reloaded);
+    }
+
+    [Fact]
+    public void A_path_that_ends_short_reloads_once_then_fails()
+    {
+        // The path ran to its last waypoint far from the giver (a bad mesh spot): reload and try again, once.
+        var ports = new FakePorts { Territory = SubZone, Walking = true, Waypoints = 1, Position = (500f, 500f), AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
+        machine.Tick(1_000);
+        ports.Walking = false;
+        Assert.Null(machine.Tick(2_000));
+        Assert.Equal(GoToGiverStep.ReloadingNav, machine.Step);
+        Assert.Equal(GoToGiverFailure.WalkStoppedShort, machine.RecoveringFrom);
+
+        Assert.Null(machine.Tick(2_000 + GoToGiver.ReloadSettleMs));
+        ports.Walking = true;
+        machine.Tick(5_000);
+        ports.Walking = false;
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.WalkStoppedShort), machine.Tick(6_000));
+        Assert.Equal(["walk 1,2,3", "stop walk", "reload", "walk 1,2,3", "stop walk"], ports.Calls);
+    }
+
+    [Fact]
+    public void A_walk_that_never_starts_reloads_and_tries_again()
+    {
+        var ports = new FakePorts { Territory = SubZone, AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
+
+        Assert.Null(Run(machine, 0, GoToGiver.WalkStartTimeoutMs + 100));
+        Assert.Equal(GoToGiverStep.ReloadingNav, machine.Step);
+        Assert.Equal(GoToGiverFailure.WalkDidNotStart, machine.RecoveringFrom);
+        var resume = GoToGiver.WalkStartTimeoutMs + 100 + GoToGiver.ReloadSettleMs;
+        Assert.Null(machine.Tick(resume));
+        Assert.Equal(2, ports.Calls.Count(c => c == "walk 1,2,3"));
+
+        // Still nothing: the run fails, with no second reload.
+        Assert.Equal(
+            new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.WalkDidNotStart),
+            Run(machine, resume + 100, resume + GoToGiver.WalkStartTimeoutMs + 200));
+        Assert.Single(ports.Calls, c => c == "reload");
+    }
+
+    [Fact]
+    public void A_navmesh_that_never_gets_ready_is_reloaded_once()
+    {
+        var ports = new FakePorts { Territory = SubZone, NavReady = false, AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
+
+        Assert.Null(Run(machine, 0, GoToGiver.PathReadyTimeoutMs + 100));
+        Assert.Equal(GoToGiverStep.ReloadingNav, machine.Step);
+        Assert.Equal(["reload"], ports.Calls);
+
+        ports.NavReady = true;
+        Assert.Null(machine.Tick(GoToGiver.PathReadyTimeoutMs + 100 + GoToGiver.ReloadSettleMs));
+        Assert.Equal(["reload", "walk 1,2,3"], ports.Calls);
+    }
+
+    [Fact]
+    public void Cancel_while_the_navmesh_reloads_ends_the_run_and_stops_nothing_more()
+    {
+        var ports = new FakePorts { Territory = SubZone, Walking = true, AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        var stuck = StickTwice(ports, machine);
+        var before = ports.Calls.Count;
+
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Cancelled, GoToGiverFailure.None), machine.Cancel());
+        Assert.Equal(before, ports.Calls.Count);
+        Assert.Null(Run(machine, stuck + 100, stuck + (2 * GoToGiver.ReloadSettleMs)));
+        Assert.Equal(before, ports.Calls.Count);
+    }
+
+    [Fact]
+    public void Leaving_the_zone_while_the_navmesh_reloads_fails()
+    {
+        var ports = new FakePorts { Territory = SubZone, Walking = true, AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        var stuck = StickTwice(ports, machine);
+
+        ports.Load(City);
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.LeftZone), machine.Tick(stuck + 100));
+    }
+
+    [Fact]
+    public void Away_from_the_aetheryte_the_hop_walks_there_first()
+    {
+        // Lifestream says the player stands at no aetheryte; the network's nearest is 50 away.
+        var ports = new FakePorts { Territory = City, ActiveAetheryte = 0, HopStartPoint = (30f, 1f, 40f), Position = (0f, 0f) };
+        var machine = new GoToGiver(ports);
+
+        Assert.Null(machine.Start(Full with { Teleport = null }, 0));
+        Assert.Equal(GoToGiverStep.ToAetheryte, machine.Step);
+        Assert.True(machine.WalkedToAetheryte);
+        Assert.Equal(["walk 30,1,40"], ports.Calls);
+
+        // There: the hop, then the walk to the giver as before.
+        ports.Walking = true;
+        machine.Tick(1_000);
+        ports.Walking = false;
+        ports.Position = (29f, 38f);
+        Assert.Null(machine.Tick(2_000));
+        Assert.Equal(GoToGiverStep.Hopping, machine.Step);
+        Assert.Equal(["walk 30,1,40", "hop 28"], ports.Calls);
+
+        ports.LifestreamBusy = true;
+        ports.Load(SubZone);
+        machine.Tick(3_000);
+        ports.Arrive();
+        machine.Tick(4_000);
+        Assert.Null(machine.Tick(4_000 + GoToGiver.SettleMs));
+        Assert.Equal("walk -150,5,-15", ports.Calls[^1]);
+    }
+
+    [Fact]
+    public void Within_reach_of_the_aetheryte_or_when_lifestream_cannot_say_the_hop_is_asked_for_at_once()
+    {
+        var near = new FakePorts { Territory = City, ActiveAetheryte = 0, HopStartPoint = (30f, 1f, 40f), Position = (31f, 41f) };
+        new GoToGiver(near).Start(Full with { Teleport = null }, 0);
+        Assert.Equal(["hop 28"], near.Calls);
+
+        var unknown = new FakePorts { Territory = City, ActiveAetheryte = null, HopStartPoint = (30f, 1f, 40f) };
+        new GoToGiver(unknown).Start(Full with { Teleport = null }, 0);
+        Assert.Equal(["hop 28"], unknown.Calls);
+
+        var atOne = new FakePorts { Territory = City, ActiveAetheryte = Aetheryte, HopStartPoint = (30f, 1f, 40f) };
+        new GoToGiver(atOne).Start(Full with { Teleport = null }, 0);
+        Assert.Equal(["hop 28"], atOne.Calls);
+    }
+
+    [Fact]
+    public void A_hop_that_did_not_start_away_from_the_aetheryte_walks_there_and_hops_again()
+    {
+        var ports = new FakePorts { Territory = City, ActiveAetheryte = Aetheryte, HopStartPoint = (30f, 1f, 40f) };
+        var machine = new GoToGiver(ports);
+        machine.Start(Full with { Teleport = null }, 0);
+
+        // Lifestream took it and gave up; meanwhile the player drifted off the aetheryte.
+        ports.LifestreamBusy = true;
+        machine.Tick(500);
+        ports.LifestreamBusy = false;
+        ports.ActiveAetheryte = 0;
+        machine.Tick(1_000);
+        Assert.Null(machine.Tick(1_100 + GoToGiver.HopIdleGraceMs));
+        Assert.Equal(GoToGiverStep.ToAetheryte, machine.Step);
+
+        ports.Walking = true;
+        machine.Tick(5_000);
+        ports.Walking = false;
+        Assert.Null(machine.Tick(6_000));
+        Assert.Equal(["hop 28", "walk 30,1,40", "hop 28"], ports.Calls);
+        Assert.True(machine.HopRetried);
+    }
+
+    [Fact]
+    public void A_walk_to_the_aetheryte_that_goes_nowhere_hops_anyway_and_never_reloads()
+    {
+        var ports = new FakePorts { Territory = City, ActiveAetheryte = 0, HopStartPoint = (30f, 1f, 40f), AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(Full with { Teleport = null }, 0);
+
+        // vnavmesh never reports walking: Lifestream gets the hop and decides.
+        Assert.Null(Run(machine, 100, GoToGiver.WalkStartTimeoutMs + 100));
+        Assert.Equal(GoToGiverStep.Hopping, machine.Step);
+        Assert.Equal(["walk 30,1,40", "hop 28"], ports.Calls);
+        Assert.False(machine.Reloaded);
+    }
+
+    [Fact]
+    public void Cancel_while_walking_to_the_aetheryte_stops_the_walk()
+    {
+        var ports = new FakePorts { Territory = City, ActiveAetheryte = 0, HopStartPoint = (30f, 1f, 40f), Walking = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(Full with { Teleport = null }, 0);
+
+        Assert.Equal(GoToGiverStep.Cancelled, machine.Cancel()?.Step);
+        Assert.Equal(["walk 30,1,40", "stop walk"], ports.Calls);
+    }
+
+    [Fact]
+    public void A_flight_aims_for_the_landing_spot_and_walks_the_last_yalms()
+    {
+        // vnavmesh offers a floor point ten yalms short of the giver at (200, 5, 0).
+        var ports = new FakePorts { Territory = SubZone, Mounted = true, MoveContext = Field with { Mounted = true }, Height = 60f, Landing = (190f, 4f, 3f) };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+        Assert.Equal(["fly 190,4,3"], ports.Calls);
+
+        ports.Walking = true;
+        ports.InFlight = true;
+        machine.Tick(100);
+        ports.Walking = false;
+        ports.Position = (190f, 3f);
+        machine.Tick(200);
+        Assert.Equal(GoToGiverStep.Landing, machine.Step);
+
+        // Down, but beyond talking range: the last yalms on foot, still mounted.
+        ports.InFlight = false;
+        Assert.Null(machine.Tick(1_000));
+        Assert.Equal(GoToGiverStep.Walking, machine.Step);
+        Assert.True(machine.Approached);
+        Assert.False(machine.Flying);
+        Assert.Equal(["fly 190,4,3", "land", "walk 200,5,0"], ports.Calls);
+
+        ports.Walking = true;
+        machine.Tick(2_000);
+        ports.Walking = false;
+        ports.Position = (197f, 0f);
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Done, GoToGiverFailure.None), machine.Tick(3_000));
+        Assert.DoesNotContain("stop walk", ports.Calls);
+    }
+
+    [Fact]
+    public void A_landing_within_talking_range_needs_no_last_walk()
+    {
+        var ports = new FakePorts { Territory = SubZone, Mounted = true, MoveContext = Field with { Mounted = true }, Landing = (199f, 5f, 0f) };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+        ports.Walking = true;
+        machine.Tick(100);
+        ports.Walking = false;
+        ports.Position = (199f, 1f);
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Done, GoToGiverFailure.None), machine.Tick(200));
+        Assert.False(machine.Approached);
+        Assert.Equal(["fly 199,5,0"], ports.Calls);
     }
 }
