@@ -26,9 +26,11 @@ public static class RewardTooltip
 
     /// <summary>
     /// Draws the tooltip; call only while the reward's item is hovered. <paramref name="source"/>, when given, closes
-    /// the tooltip as a disabled line (Moonlit passes where its unique verdict came from).
+    /// the tooltip as a disabled line (Moonlit passes where its unique verdict came from). <paramref name="questRowId"/>
+    /// is the quest that rewards it, for the buy-back line (1.19, C6: a reclaim row counts for its own quest); 0 lets any
+    /// quest's count.
     /// </summary>
-    public static void Draw(RewardRef reward, GameLinks links, ITextureProvider textures, string? source = null)
+    public static void Draw(RewardRef reward, GameLinks links, ITextureProvider textures, string? source = null, uint questRowId = 0)
     {
         ArgumentNullException.ThrowIfNull(reward);
         ArgumentNullException.ThrowIfNull(links);
@@ -67,6 +69,15 @@ public static class RewardTooltip
             using (Theme.PushText(Theme.Surface.TextTertiary))
             {
                 ImGui.TextUnformatted(DropLine(where));
+            }
+        }
+
+        if (links.BuyBackOf(reward.ItemId, questRowId) is { } buyBack)
+        {
+            // A shop sells it back once the quest is done, or to anyone (1.19, C6): composed once per item and quest.
+            using (Theme.PushText(Theme.Surface.TextTertiary))
+            {
+                ImGui.TextUnformatted(buyBack.Line);
             }
         }
 

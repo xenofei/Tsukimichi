@@ -9,7 +9,9 @@ using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.HandIn;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Sources;
 using Tsukimichi.Game;
+using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
 
@@ -20,7 +22,10 @@ namespace Tsukimichi.Ui;
 /// the game, retainers through Allagan Tools; an item asked for high quality counts only the game's HQ, Allagan Tools'
 /// numbers are labelled "NQ+HQ" and never make it enough). Each row ends in two hand-off buttons (decision 1): Craft with Artisan
 /// and, for an item a node or fishing hole yields, Gather with GatherBuddy; a button whose plugin is missing stays,
-/// disabled, naming it. Under the rows, "Copy missing items" puts a Teamcraft import link or a "3x Item" list on the
+/// disabled, naming it. Under each item's name, its "Where" lines (1.19, N5; <see cref="WhereToGet"/>) say where the game
+/// data gets it: the cheapest vendor with its place and price, the crafters and levels, the lowest node or fishing hole,
+/// a quartermaster, an exchange, the duties it drops in, or "Market board only"; a placed line flags its place on click.
+/// Under the rows, "Copy missing items" puts a Teamcraft import link or a "3x Item" list on the
 /// clipboard, for this quest or for every pinned quest. Display only: the quest's state never reads any of it.
 /// <para>
 /// Spoiler-aware like the quest's name: while the shield masks the name, the section says so and shows no item (the
@@ -31,6 +36,14 @@ namespace Tsukimichi.Ui;
 public sealed partial class DetailPane
 {
     private const string HandInCopyMenuId = "##handInCopy";
+
+    private const string WhereMenuId = "##whereMenu";
+
+    /// <summary>At most this many other shops or spots a "Where" line's tooltip lists before "+N more".</summary>
+    private const int WhereOthersShown = 6;
+
+    /// <summary>The most lines one "Where" line wraps to before it ends in an ellipsis (its tooltip has it whole).</summary>
+    private const int WhereMaxLines = 3;
 
     /// <summary>The least room a hand-in row keeps for the item's name before its pills drop their labels, logical pixels.</summary>
     private const float HandInNameRoomLogical = 120f;
@@ -60,9 +73,26 @@ public sealed partial class DetailPane
     /// <summary>GatherBuddy's commands; null until the plugin attaches it (the Gather button then names GatherBuddy as missing).</summary>
     public GatherBuddyCommands? GatherBuddy { get; set; }
 
+    /// <summary>One "Where" line as the row draws it (1.19, N5): the line, its text with "+N more", and its tooltip's body.</summary>
+    private sealed class WhereRow(WhereLine line, string text, string detail)
+    {
+        public WhereLine Line { get; } = line;
+
+        public string Text { get; } = text;
+
+        /// <summary>The other shops or spots of its kind, then what a click does; empty when neither.</summary>
+        public string Detail { get; } = detail;
+    }
+
     private sealed class HandInRow(HandInItem item, string name, string detail)
     {
         public HandInItem Item { get; } = item;
+
+        /// <summary>The item sources <see cref="Where"/> was read from; it is read again when they land.</summary>
+        public ItemSourceIndex? WhereSources { get; set; }
+
+        /// <summary>Where to get the item (1.19, N5), one line per kind of source; empty while the sources are read.</summary>
+        public List<WhereRow> Where { get; } = [];
 
         /// <summary>The item's name.</summary>
         public string Name { get; } = name;
@@ -217,13 +247,21 @@ public sealed partial class DetailPane
             ImGui.SameLine();
             using (ImRaii.Group())
             {
-                TextFlow.Wrapped(row.Line, MathF.Max(1f, RoomTo(cardRight) - buttons - UiMetrics.Px(8f)));
+                var textRoom = MathF.Max(1f, RoomTo(cardRight) - buttons - UiMetrics.Px(8f));
+                TextFlow.Wrapped(row.Line, textRoom);
                 if (live && row.CountText.Length > 0)
                 {
                     using (Theme.PushText(row.Enough ? Theme.Accent : Theme.Surface.TextSecondary))
                     {
                         ImGui.TextUnformatted(row.CountText);
                     }
+                }
+
+                var where = WhereOf(row);
+                for (var w = 0; w < where.Count; w++)
+                {
+                    using var whereId = ImRaii.PushId(w);
+                    DrawWhereLine(where[w], textRoom);
                 }
             }
 
@@ -264,6 +302,131 @@ public sealed partial class DetailPane
         if (handInAmountUnknown)
         {
             TextFlow.Wrapped(Strings.HandInAmountUnknownNote, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
+        }
+    }
+
+    /// <summary>
+    /// The row's "Where" lines (1.19, N5), composed once per item source index (<see cref="WhereToGet.Lines"/>): empty
+    /// until the index lands, then one per kind of source, best first.
+    /// </summary>
+    private List<WhereRow> WhereOf(HandInRow row)
+    {
+        var sources = links.ItemSources;
+        if (ReferenceEquals(row.WhereSources, sources))
+        {
+            return row.Where;
+        }
+
+        row.WhereSources = sources;
+        row.Where.Clear();
+        if (sources is null)
+        {
+            return row.Where;
+        }
+
+        foreach (var line in WhereToGet.Lines(sources.For(row.Item.ItemId)))
+        {
+            var text = line.More > 0 ? line.Text + Core.Evaluation.BlockerText.Separator + WhereToGet.MoreText(line.More) : line.Text;
+            var detail = new List<string>(WhereOthersShown + 2);
+            for (var i = 0; i < line.Others.Count && i < WhereOthersShown; i++)
+            {
+                detail.Add(line.Others[i]);
+            }
+
+            if (line.Others.Count > WhereOthersShown)
+            {
+                detail.Add(WhereToGet.MoreText(line.Others.Count - WhereOthersShown));
+            }
+
+            if (line.Spot is not null)
+            {
+                detail.Add(Strings.HandInWhereClickHint);
+            }
+
+            row.Where.Add(new WhereRow(line, text, string.Join("\n", detail)));
+        }
+
+        return row.Where;
+    }
+
+    /// <summary>
+    /// One "Where" line, in the caption size: a click (or Enter) flags its place on the map, the right-click menu (or
+    /// the Menu key) offers Flag, Teleport to the nearest aetheryte while the automation level shows Teleport, and Copy
+    /// coordinates; the tooltip lists the other shops or spots of its kind. A line with no place is text alone. The
+    /// line's height never changes on hover.
+    /// </summary>
+    private void DrawWhereLine(WhereRow where, float width)
+    {
+        using var caption = Typography.Caption();
+        var dl = ImGui.GetWindowDrawList();
+        var start = ImGui.GetCursorScreenPos();
+        var size = new Vector2(width, TextFlow.Height(where.Text, width));
+        ImGui.InvisibleButton("##where", size);
+        var hovered = ImGui.IsItemHovered();
+        var spot = where.Line.Spot;
+        var clicked = spot is not null && (ImGui.IsItemClicked(ImGuiMouseButton.Left) || (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter, false)));
+        if (spot is not null)
+        {
+            Keyboard.OpenMenuOnKey(WhereMenuId);
+        }
+
+        var rounding = UiMetrics.Px(4f);
+        if (hovered && spot is not null)
+        {
+            dl.AddRectFilled(start, start + size, Theme.U32(Theme.Surface.Hover), rounding);
+        }
+
+        Chrome.FocusRing(rounding);
+        TextFlow.DrawClamped(dl, start, where.Text, width, WhereMaxLines, Theme.U32(Theme.Surface.TextSecondary));
+        if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
+        {
+            UiMetrics.Tooltip(where.Line.Text, where.Detail);
+        }
+
+        if (spot is null)
+        {
+            return;
+        }
+
+        if (clicked && !links.FlagWorldSpot(spot))
+        {
+            ShowHandInNote(Strings.HandInWhereFlagFailed);
+        }
+
+        DrawWhereMenu(spot);
+    }
+
+    /// <summary>A "Where" line's menu: Flag on map, Teleport to the aetheryte nearest the place (automation level), Copy coordinates.</summary>
+    private void DrawWhereMenu(Core.Sources.WorldSpot spot)
+    {
+        using var menu = ImRaii.ContextPopupItem(WhereMenuId);
+        if (!menu)
+        {
+            return;
+        }
+
+        if (ImGui.MenuItem(Strings.FlagOnMap, string.Empty, false, links.CanFlagWorldSpot(spot)) && !links.FlagWorldSpot(spot))
+        {
+            ShowHandInNote(Strings.HandInWhereFlagFailed);
+        }
+
+        if (links.TeleportShown && links.AetheryteNear(spot) is { } aetheryte)
+        {
+            var teleport = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, aetheryte.Name);
+            if (ImGui.MenuItem(teleport, string.Empty, false, links.CanTeleportTo(aetheryte.RowId)))
+            {
+                links.TeleportTo(aetheryte.RowId, aetheryte.Name);
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) && links.TeleportToBlocked(aetheryte.RowId) is { } why)
+            {
+                UiMetrics.Tooltip(why);
+            }
+        }
+
+        if (ImGui.MenuItem(Strings.UnlocksMenuCopyCoordinates))
+        {
+            ImGui.SetClipboardText(Core.Sources.SourceText.Spot(spot));
         }
     }
 

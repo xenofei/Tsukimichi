@@ -11892,4 +11892,132 @@
     <value>Artisan: crafting {0}</value>
     <comment>Status bar line while an Artisan craft Tsukimichi handed off runs. {0} = the item.</comment>
   </data>
+  <data name="HandInWhereClickHint" xml:space="preserve">
+    <value>Click to flag it on the map; right-click to teleport or copy the coordinates.</value>
+    <comment>Last line of a hand-in item's Where line tooltip (1.19, N5).</comment>
+  </data>
+  <data name="HandInWhereFlagFailed" xml:space="preserve">
+    <value>The map could not be opened there.</value>
+    <comment>Status note when Flag on a Where line fails.</comment>
+  </data>
+  <data name="Core.Sources.VendorAt" xml:space="preserve">
+    <value>{0}, {1}</value>
+    <comment>Core: SourceText.cs. {0} = NPC name, {1} = zone and coordinates.</comment>
+  </data>
+  <data name="Core.Sources.Spot" xml:space="preserve">
+    <value>{0} ({1:0.0}, {2:0.0})</value>
+    <comment>Core: SourceText.cs. {0} = zone, {1} {2} = map coordinates.</comment>
+  </data>
+  <data name="Core.Sources.CostJoin" xml:space="preserve">
+    <value> + </value>
+    <comment>Core: SourceText.cs. Between two costs of one purchase.</comment>
+  </data>
+  <data name="Core.Sources.Gil" xml:space="preserve">
+    <value>{0:N0} gil</value>
+    <comment>Core: SourceText.cs. {0} = amount.</comment>
+  </data>
+  <data name="Core.Sources.Currency" xml:space="preserve">
+    <value>{0:N0} {1}</value>
+    <comment>Core: SourceText.cs. {0} = amount, {1} = currency name as the game writes it.</comment>
+  </data>
+  <data name="Core.BuyBack.Mark" xml:space="preserve">
+    <value>Re-buyable</value>
+    <comment>Core: BuyBacks.cs. Small mark under a reward a shop sells back (1.19, C6).</comment>
+  </data>
+  <data name="Core.BuyBack.BuyBackFor" xml:space="preserve">
+    <value>Can be bought back from {0} for {1}</value>
+    <comment>Core: BuyBacks.cs. {0} = vendor (and place), {1} = price.</comment>
+  </data>
+  <data name="Core.BuyBack.BuyBack" xml:space="preserve">
+    <value>Can be bought back from {0}</value>
+    <comment>Core: BuyBacks.cs. {0} = vendor (and place).</comment>
+  </data>
+  <data name="Core.BuyBack.SoldFor" xml:space="preserve">
+    <value>Also sold by {0} for {1}</value>
+    <comment>Core: BuyBacks.cs. {0} = vendor (and place), {1} = price.</comment>
+  </data>
+  <data name="Core.BuyBack.Sold" xml:space="preserve">
+    <value>Also sold by {0}</value>
+    <comment>Core: BuyBacks.cs. {0} = vendor (and place).</comment>
+  </data>
+  <data name="Core.BuyBack.BuyBackNote" xml:space="preserve">
+    <value>Once the quest is done, a reward you sold or discarded can be had again.</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.SoldNote" xml:space="preserve">
+    <value>Anyone can buy it, so the quest is not the only way to get it.</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.Where.Drops" xml:space="preserve">
+    <value>Drops in {0}</value>
+    <comment>Core: WhereToGet.cs. {0} = the duties.</comment>
+  </data>
+  <data name="Core.Where.MarketOnly" xml:space="preserve">
+    <value>Market board only</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.ListJoin" xml:space="preserve">
+    <value>, </value>
+    <comment>Core: WhereToGet.cs. Between two crafters.</comment>
+  </data>
+  <data name="Core.Where.JobLevelStars" xml:space="preserve">
+    <value>{0} Lv. {1} ({2}-star)</value>
+    <comment>Core: WhereToGet.cs. {0} = crafter, {1} = level, {2} = recipe stars.</comment>
+  </data>
+  <data name="Core.Where.JobLevel" xml:space="preserve">
+    <value>{0} Lv. {1}</value>
+    <comment>Core: WhereToGet.cs. {0} = crafter, {1} = level.</comment>
+  </data>
+  <data name="Core.Where.Crafted" xml:space="preserve">
+    <value>Crafted: {0}</value>
+    <comment>Core: WhereToGet.cs. {0} = crafters and levels.</comment>
+  </data>
+  <data name="Core.Where.GrandCompany" xml:space="preserve">
+    <value>Grand Company: {0}</value>
+    <comment>Core: WhereToGet.cs. {0} = quartermaster (and place).</comment>
+  </data>
+  <data name="Core.Where.Exchange" xml:space="preserve">
+    <value>Exchange: {0}</value>
+    <comment>Core: WhereToGet.cs. {0} = vendor (and place).</comment>
+  </data>
+  <data name="Core.Where.SoldBy" xml:space="preserve">
+    <value>Sold by {0}</value>
+    <comment>Core: WhereToGet.cs. {0} = vendor (and place).</comment>
+  </data>
+  <data name="Core.Where.WithCost" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>Core: WhereToGet.cs. {0} = the shop line, {1} = price.</comment>
+  </data>
+  <data name="Core.Where.Gated" xml:space="preserve">
+    <value>{0} (after a quest or achievement)</value>
+    <comment>Core: WhereToGet.cs. {0} = the shop line.</comment>
+  </data>
+  <data name="Core.Where.FishedUnplaced" xml:space="preserve">
+    <value>Fished: Lv. {0}</value>
+    <comment>Core: WhereToGet.cs. {0} = level.</comment>
+  </data>
+  <data name="Core.Where.GatheredUnplaced" xml:space="preserve">
+    <value>Gathered: {0} Lv. {1}</value>
+    <comment>Core: WhereToGet.cs. {0} = gatherer, {1} = level.</comment>
+  </data>
+  <data name="Core.Where.PlaceInZone" xml:space="preserve">
+    <value>{0}, {1}</value>
+    <comment>Core: WhereToGet.cs. {0} = the spot's place name, {1} = zone and coordinates.</comment>
+  </data>
+  <data name="Core.Where.Fished" xml:space="preserve">
+    <value>Fished: Lv. {0} · {1}</value>
+    <comment>Core: WhereToGet.cs. {0} = level, {1} = place.</comment>
+  </data>
+  <data name="Core.Where.Gathered" xml:space="preserve">
+    <value>Gathered: {0} Lv. {1} · {2}</value>
+    <comment>Core: WhereToGet.cs. {0} = gatherer, {1} = level, {2} = place.</comment>
+  </data>
+  <data name="Core.Where.Timed" xml:space="preserve">
+    <value>{0} (timed)</value>
+    <comment>Core: WhereToGet.cs. {0} = a gathering line whose node is up only at set times.</comment>
+  </data>
+  <data name="Core.Where.More" xml:space="preserve">
+    <value>+{0} more</value>
+    <comment>Core: WhereToGet.cs. {0} = how many more shops or spots.</comment>
+  </data>
 </root>

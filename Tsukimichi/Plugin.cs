@@ -971,6 +971,9 @@ public sealed partial class Plugin : IDalamudPlugin
             var warmer = new Game.IndexWarmer(DataManager, Session, Strings.FlightAllZonesFormat, Log);
             _ = warmer.Start();
             gameLinks.AetheryteWarmup = warmer.Aetherytes;
+            // Where items come from (1.19, C6 and N5): the rewards' buy-back mark and the hand-in "Where" lines appear
+            // once it lands.
+            gameLinks.ItemSourceIndex = () => warmer.ItemSources.Value;
             queryRunner.IconSheets = () => warmer.PaneIcons.Value;
             queryRunner.IconSheetsSettled = () => warmer.PaneIcons.IsDone;
 
@@ -1071,6 +1074,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 Enabled = Settings.ItemHintsEnabled,
                 HandIns = handIns,
                 NeededForEnabled = () => Settings.ItemNeededForEnabled,
+                BuyBack = (item, quest) => gameLinks.BuyBackOf(item, quest)?.Line,
             };
             PluginInterface.UiBuilder.Draw += DrawHoverHint;
             itemHooks = new Game.ItemHooks(ContextMenu, rewardLookup, quest =>

@@ -109,6 +109,13 @@ static partial class Strings
     public static string HandInNothingMissing => Loc.Get("HandInNothingMissing");
     public static string HandInCopied => Loc.Get("HandInCopied");
 
+    // ---- Where to get it (1.19, N5; the lines themselves are Core's WhereToGet) ----
+    /// <summary>The last line of a placed "Where" line's tooltip.</summary>
+    public static string HandInWhereClickHint => Loc.Get("HandInWhereClickHint");
+
+    /// <summary>Status note when the map could not be opened on a "Where" line's place.</summary>
+    public static string HandInWhereFlagFailed => Loc.Get("HandInWhereFlagFailed");
+
     // ---- Moonlit ----
     /// <summary>The obtained line of a relic or special weapon Allagan Tools counts.</summary>
     public static string HandInOwnedPerAllagan => Loc.Get("HandInOwnedPerAllagan");
