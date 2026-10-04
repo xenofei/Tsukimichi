@@ -18,6 +18,8 @@ The behaviour follows ideas 3 and 4 of `docs/research/plan-v7/feature-ideas.md` 
 5. Placeholders get a layout rule: non-breaking locators, single-line slots with an ellipsis, multi-line slots sized for the longer string, and composite strings in Secondary as a whole (N6).
 6. A second looks board covers every new part on every palette (`looks-new-1.20.png`).
 
+**Revision 3** applies the second review (CHANGES: one major finding). The confirmation no longer uses ImGui's modal dim, which covers the whole game screen, fades on its own clock and ignores the plugin's colours. Tsukimichi draws its own scrim over the Settings window only and blocks Settings' input itself (F4, "The confirmation"). Five minor findings and the nits are fixed in the same pass.
+
 **The principles:**
 - **Nothing new floats.** The shield changes words, not layout. The prep card is a card inside Tonight and the Characters dashboard. The pack is one Settings row, plus a confirmation window that opens only on a click.
 - **Static layout.** A placeholder takes the place of the name it hides, at the same size. The prep card never reorders while you look at it. The pack row keeps its height through every state.
@@ -32,14 +34,14 @@ The behaviour follows ideas 3 and 4 of `docs/research/plan-v7/feature-ideas.md` 
 | `spec-1.20.md` | This spec |
 | `1.20/mock-1.20.html` | The 1.20 boards: `#shield20`, `#prep20`, `#pack20`, `#looks20`, `#looks20b`. Built by `1.20/mock-src/build.py` from the shared `mock.html` plus `1.20/mock-src/v720.css` and `v720.js`. No shared `mock-src` file changes. |
 | `1.20/shield-1.20.png` | N6: a masked quest in the detail pane, table rows before and after, Settings › Spoilers, the hover and right-click, Route, Find by unlock, and the placeholder vocabulary |
-| `1.20/prep-card-1.20.png` | N7: the card in Tonight, a stored alt in the Characters dashboard, all done, the Undo toast, the way back, the line hover and the five lines' rules |
-| `1.20/portrait-pack-1.20.png` | F4: the confirmation over Settings › General › Look, downloading, checking, installed, the update offer, four errors and Cancelled, Remove pack, the pack faces at 72, 64 and 18 px, the hover, the status-bar note and the Privacy & trust line |
+| `1.20/prep-card-1.20.png` | N7: the card in Tonight, a stored alt in the Characters dashboard, a tick before and after, all done, the Undo toast, the way back, the line hover and the five lines' rules |
+| `1.20/portrait-pack-1.20.png` | F4: the confirmation over Settings › General › Look, downloading, checking, installed, the update offer, three errors and Cancelled, Remove pack (mid-hold, and the Reduce-motion countdown), two pack faces beside Alphinaud's game-art face at 72 px, the hover, the status-bar note and the Privacy & trust line |
 | `1.20/looks-1.20.png` | Every look (1 of 2): the prep card, a masked giver and the pack row at Full, Quiet and Plain on Night, Ishgard Snow, Dawn and Kugane Lacquer |
 | `1.20/looks-new-1.20.png` | Every look (2 of 2), on all four palettes: pack photos beside a game-art face at 72, 64, 24 and 18 px; the hidden-reward tile; a pack error with the hint dot; the Remove pack popover at Plain; the compact confirmation over its dim at Quiet |
 | `1.20/mock-src/render.py` | Renders the five PNGs with headless Chrome at 1560 px wide (long edge ≤ 1568) |
 | `1.20/art/Enpc_1000590.png`, `Enpc_1003929.png` | Two Garland Tools NPC photos (Buscarron, Isembard; photos by Celes), for the mock only, to show what pack faces look like on the 1.15 plate |
 
-**The mock's data.** The Dawntrail zone names (Heritage Found, Living Memory, Kozama'uka, Shaaloani), duty names and levels (Vanguard 97, Origenics 99, Alexandria 100, The Interphos 100) are real. Which quest unlocks which, the area numbers and the character's counts are illustrative. The two pack photos are real Garland Tools renders, cropped by the 1.15 framing rule (Buscarron: box 146, 107, 92; Isembard: 150, 113, 84, measured on a 4× zoom).
+**The mock's data.** The Dawntrail zone names (Heritage Found, Living Memory, Kozama'uka, Shaaloani), duty names and levels (Vanguard 97, Origenics 99, Alexandria 100, The Interphos 100) are real. Which quest unlocks which, the area numbers and the character's counts are illustrative. The two pack photos are real Garland Tools renders, cropped by the 1.15 framing rule (Buscarron: box 150, 113, 82; Isembard: 154, 117, 76, measured on a 4× zoom; eye line at 43%, chin at 82–83%).
 
 ---
 
@@ -91,8 +93,9 @@ Today the shield hides main scenario quest names past your position (plus a few 
 - **The same size, weight and slot as the name.** Only the colour changes: Secondary instead of Text. That includes masked main scenario titles, which move from Text to Secondary in the hero, the table and every list.
 - **Locators never break:** "area 6", "Lv 97" and "Patch 7.5" keep a non-breaking space.
 - **Nothing moves when a name is revealed or hidden.** Placeholders are often longer than the names they hide ("Dawntrail area 6" for "Shaaloani"), so:
-  - single-line slots (table cells, search results, Route and Next stops, the Plain giver line) never wrap: they end in an ellipsis, and the hover shows the whole string;
+  - single-line slots (table cells, search results, Route and Next stops, the Plain giver line) never wrap: they end in a real "…", and the hover shows the whole string. Where a slot holds a name and a place, the place is shortened first to its locator ("area 6", as Route does), then the name is truncated, so the locator is never the part cut off;
   - multi-line slots (the prep card's details, tooltips, the Unlocks section) are wrapped for the longer of the name and its placeholder, so a reveal never changes their line count.
+- **A placeholder keeps the weight of the name it replaces** (medium in search results and titles, regular in lines).
 - **A string that holds a placeholder is Secondary as a whole:** "Flying in Dawntrail area 6", not "Flying in" in Text and the rest in Secondary.
 - **No glyph, no blur, no redaction bar, no italics** (the game fonts have none). The word is the signal.
 - **Kind icons stay** where they are generic: the aetheryte symbol (060453), the Duty Finder tile (000046), the duty badges (C7). They say what kind of thing it is, not which.
@@ -160,7 +163,7 @@ It shows from the day 1.20 installs until Evercold's launch day. The plugin know
 | Title | "Before Evercold" in the Title face (16 px), × at the trailing end | semibold 13.5 px | 12.5 px in the band |
 | Sub-line | "For Michiru · early access 22 Jan (expected)", 11.5 px Secondary | the same | the same |
 | Line | a 14 px checkbox, an 18 px icon, the label (12.5 px Text, medium) over the detail (11.5 px Secondary), and quiet buttons | the same | the same |
-| Fold | "Done: Flying in Dawntrail", 11 px Tertiary, one line under a hairline | the same | the same |
+| Fold | "Done: Job and role quests", 11 px Tertiary, one line under a hairline | the same | the same |
 
 **The buttons sit at the trailing end in a card of 460 px or more,** in a fixed 150 px column, and under the line's words in a narrower card, in a fixed 24 px row (the looks matrices show the narrow form). The choice is made per card width, never per line, so lines never differ.
 
@@ -231,7 +234,11 @@ Sizes, counts and the release name come from a manifest compiled into the plugin
 
 ### The confirmation
 
-A modal popup of the Settings window (`BeginPopupModal`), 470 px wide and centred on it. ImGui's modal dim is the scrim, set from the palette: `rgba(5,7,14,.55)` on the dark palettes, `rgba(26,33,54,.30)` on Ishgard Snow. It is the only dimming: Settings is not faded or desaturated as well. While it is open Settings ignores input, and clicking Settings leaves the modal in front. (`LinkConfirmWindow` is a plain window with no scrim; this one asks about a network action, so it blocks.)
+A small window of its own, 470 px wide, centred on the Settings window and kept in front of it. **It does not use ImGui's modal popup:** `BeginPopupModal`'s dim covers the whole game screen, fades in on ImGui's own clock (about 0.17 s, ignoring Reduce motion), and is drawn after the plugin's style colours are popped, so it would take Dalamud's colour, not the palette's. Instead:
+- **The scrim is Tsukimichi's own:** a filled rect over the Settings window's rect only (the dialog window's draw list, its clip rect pushed to the Settings rect), in `rgba(5,7,14,.55)` on the dark palettes and `rgba(26,33,54,.30)` on Ishgard Snow. The game and other windows stay as they are. It is the only dimming: Settings is not faded or desaturated as well.
+- **Settings ignores input** while the dialog is open (it draws inside `BeginDisabled` without the dimmed alpha, so only the scrim dims it), and a click on Settings brings the dialog back to the front (`SetNextWindowFocus`).
+- **It goes when** the player cancels, downloads, closes Settings or the plugin unloads.
+- `LinkConfirmWindow` stays as it is; this one blocks because it asks about the one network action.
 
 1. **Title** in the Title face at Full (semibold at Quiet and Plain): "Download the portrait pack?"
 2. **What:** "Adds about 2,300 giver faces, so roughly 4 in 5 quests show who gives them. The rest keep a silhouette, an emblem or initials."
@@ -246,7 +253,7 @@ A modal popup of the Settings window (`BeginPopupModal`), 470 px wide and centre
 
 **Keyboard focus starts on Cancel** (`SetItemDefaultFocus`), and Enter is handled as Cancel explicitly, so Enter never downloads by accident. Esc cancels too. The focus ring is TextSecondary (6:1 or better on the dialog), not the Line tone. The update uses the same window with "Download pack 2?", "Adds 140 faces and replaces pack 1 when it's checked." and the new size.
 
-**Motion:** the window and scrim use `Rise` (0.16 s, 4 px) and `Leave` (0.12 s), through `PopupFade`. Instant under Reduce motion.
+**Motion:** the dialog uses `Rise` (0.16 s, 4 px) and `Leave` (0.12 s), and the scrim fades with it over the same times, through `PopupFade` and the plugin's own clock. Both are instant under Reduce motion.
 
 ### Progress and arrival
 
@@ -285,6 +292,7 @@ The plugin never asks GitHub whether a newer pack exists. Each Tsukimichi releas
 
 - The pack's photos are full-body renders, cut to a square box per photo by the 1.15 framing rule (crown 8–12%, eye line 42–46%, chin 78–84%) at DataGen time, with the contact sheet's guide bands for a spot check.
 - They are graded as a colour family (A3), so a pack face sits beside a Duty Support bust without looking like a different feature.
+- **Pack crops sit high in the bands:** the eye line at 42–44% and the chin at 82–84%, so a pack head fills the plate as fully as a Duty Support bust beside it. The DataGen contact sheet checks this side by side with a game-art face.
 - **A pack photo is never drawn above its own box** (its source pixels, 1.0×): the hover shows it at min(128, box), so a 92 px box shows at 92 px. Its source line is "Portrait: Garland Tools photo · credit Celes".
 - **DataGen keeps only photos whose head box is at least 72 px,** so the 72 px plate never upscales at 100% UI scale; a smaller photo falls through to the next source (A1). Above 100%, a pack face may upscale by up to the scale factor, as game art does.
 - **The crown band applies to the skull,** not to a hat or turban (Isembard's turban top sits above it).
@@ -324,7 +332,7 @@ The second matrix shows every part new in 1.20 on all four palettes:
 
 **High-contrast forms:** placeholders move to Text with a 1 px dotted underline (Secondary is too close to Text to matter there, and the underline keeps them distinct). The moon-disc tile gets a 1.5 px outline. The progress bar's track gets a 1 px outline.
 
-**Text size and UI scale:** every size above is at 100%. The card's line height, the pack row's height and the dialog's width scale with them. The prep card's buttons drop under the words when the card is under 400 px wide at the current scale.
+**Text size and UI scale:** every size above is at 100%. The card's line height, the pack row's height and the dialog's width scale with them. The prep card's buttons drop under the words when the card is under 460 px wide at the current scale; the pack row's actions do so under 400 px.
 
 ---
 
@@ -345,7 +353,7 @@ The second matrix shows every part new in 1.20 on all four palettes:
 | The launch date | curated data beside `festivals.json` (one date, rechecked after Tokyo) |
 | Giver portraits choice | `ConfigWindow.General.cs` (`DrawLook`), `GiverPortraitMode.GameArtAndPack` in `Tsukimichi.Core/Ui/PortraitPlate.cs`, `Strings.Portraits.cs` |
 | The pack row | a new `ConfigWindow.PortraitPack.cs` |
-| The confirmation | a modal popup drawn by `ConfigWindow.PortraitPack.cs` (`BeginPopupModal`, `ModalWindowDimBg` from the palette), faded through `PopupFade` |
+| The confirmation | a new `PortraitPackWindow.cs` (a `Window` kept in front of Settings), with its own scrim clipped to the Settings rect; `ConfigWindow` draws inside `BeginDisabled` while it is open; faded through `PopupFade` |
 | Manifest, download, check, install, remove | a new `Tsukimichi.Core/Portraits/PortraitPackManifest.cs` (compiled-in name, size, SHA-256, URL) and `PortraitPackStore.cs` (verify, swap in, remove); the one download call in a new `Tsukimichi/Portraits/PortraitPackDownload.cs` |
 | Pack faces | `PortraitSource.PackPhoto` first in `PortraitIndex`; `GiverPortraits.cs`, `PortraitGrading.cs` (colour family) |
 | Remove at the Hold tier | `SafetyRules.cs` (`GuardedAction.RemovePortraitPack`, `SafetyTier.Hold`), `Chrome.HoldButton` in `Chrome.cs` (unchanged) |
@@ -373,7 +381,7 @@ The second matrix shows every part new in 1.20 on all four palettes:
 14. **Remove pack is at the Hold tier with no Undo,** because getting it back takes a download. It uses the shipped Hold button unchanged; no destructive colour variant is added.
 15. **Installing switches Giver portraits to Game art + pack;** picking that choice without the pack opens the confirmation.
 16. **Every placeholder slot is either single-line with an ellipsis or sized for the longer string,** so a reveal never reflows anything.
-17. **The confirmation is a modal** with ImGui's dim as its scrim, because it asks about the one network action.
+17. **The confirmation blocks Settings, not the game.** Its scrim is Tsukimichi's own, over Settings only, in the palette's colour, and it follows Reduce motion. ImGui's modal dim is not used.
 
 ## Open questions
 

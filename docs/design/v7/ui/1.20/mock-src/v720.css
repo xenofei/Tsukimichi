@@ -66,7 +66,7 @@
 .mk .sr20 .sm .tt20{text-align:left;font-size:11px;color:var(--dusk);line-height:1.45;margin-top:3px}
 .mk .sr20 .sa{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
 .mk .sr20 .sa .p18{min-width:0}
-.mk .sr20 .sa small{font-size:10.5px;color:var(--dusk);text-align:right}
+.mk .sr20 .sa small{font-size:11px;color:var(--dusk);text-align:right}
 .mk .sr20.dis .sl,.mk .sr20.dis .sn{opacity:.55}
 .mk.plain .sr20{padding:7px 0}
 .mk .hd20dot{width:6px;height:6px;border-radius:50%;background:var(--hint);flex:none}
@@ -219,7 +219,7 @@
 .mk.plain .sr20.pk.nar{height:130px}
 /* placeholders in single-line slots */
 .mk .se20 .sres b,.mk .se20 .sres .via{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mk .se20 .sres b.ph20{color:var(--mist);font-weight:500}
+.mk .se20 .sres b.ph20,.mk .se20 .sres b.ph20 *{color:var(--mist);font-weight:500}
 .mk .ro20 .rr{gap:10px}
 /* Chrome.HoldButton */
 .mk .hb20{position:relative;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--silver);background:var(--raised)}
@@ -230,7 +230,7 @@
 .mk .hb20 svg{position:absolute;inset:0}
 .mk .hb20>span{position:relative}
 .mk.plain .hb20{font-size:11.5px}
-.mk .pop20 .hn{margin:6px 0 0;font-size:10.5px;color:var(--dusk);text-align:right}
+.mk .pop20 .hn{margin:6px 0 0;font-size:11px;color:var(--dusk);text-align:right}
 .mk .hbrow{display:flex;align-items:center;gap:10px}
 .mk .hbrow small{font-size:11px;color:var(--dusk)}
 .mk .pop20{box-sizing:border-box}
@@ -253,3 +253,7 @@
 .mk .be20.nar .ba .ys{padding-left:2px}
 .lg20 .be20 .bl{padding:6px 0}
 .lg20 .be20 .bs{margin-bottom:3px}
+/* round 3: the Plain giver line ellipsises; the error row's cell keeps its fixed height */
+.mk.plain .kv dd{overflow:hidden}
+.mk.plain .kv dd .mu,.mk.plain .kv dd .ph20{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lg20 .set20 .sr20.pk{border-top:0;padding-top:4px}

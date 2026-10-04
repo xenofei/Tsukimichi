@@ -1844,7 +1844,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 .mk .sr20 .sm .tt20{text-align:left;font-size:11px;color:var(--dusk);line-height:1.45;margin-top:3px}
 .mk .sr20 .sa{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
 .mk .sr20 .sa .p18{min-width:0}
-.mk .sr20 .sa small{font-size:10.5px;color:var(--dusk);text-align:right}
+.mk .sr20 .sa small{font-size:11px;color:var(--dusk);text-align:right}
 .mk .sr20.dis .sl,.mk .sr20.dis .sn{opacity:.55}
 .mk.plain .sr20{padding:7px 0}
 .mk .hd20dot{width:6px;height:6px;border-radius:50%;background:var(--hint);flex:none}
@@ -1997,7 +1997,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 .mk.plain .sr20.pk.nar{height:130px}
 /* placeholders in single-line slots */
 .mk .se20 .sres b,.mk .se20 .sres .via{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mk .se20 .sres b.ph20{color:var(--mist);font-weight:500}
+.mk .se20 .sres b.ph20,.mk .se20 .sres b.ph20 *{color:var(--mist);font-weight:500}
 .mk .ro20 .rr{gap:10px}
 /* Chrome.HoldButton */
 .mk .hb20{position:relative;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--silver);background:var(--raised)}
@@ -2008,7 +2008,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 .mk .hb20 svg{position:absolute;inset:0}
 .mk .hb20>span{position:relative}
 .mk.plain .hb20{font-size:11.5px}
-.mk .pop20 .hn{margin:6px 0 0;font-size:10.5px;color:var(--dusk);text-align:right}
+.mk .pop20 .hn{margin:6px 0 0;font-size:11px;color:var(--dusk);text-align:right}
 .mk .hbrow{display:flex;align-items:center;gap:10px}
 .mk .hbrow small{font-size:11px;color:var(--dusk)}
 .mk .pop20{box-sizing:border-box}
@@ -2031,6 +2031,10 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 .mk .be20.nar .ba .ys{padding-left:2px}
 .lg20 .be20 .bl{padding:6px 0}
 .lg20 .be20 .bs{margin-bottom:3px}
+/* round 3: the Plain giver line ellipsises; the error row's cell keeps its fixed height */
+.mk.plain .kv dd{overflow:hidden}
+.mk.plain .kv dd .mu,.mk.plain .kv dd .ph20{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lg20 .set20 .sr20.pk{border-top:0;padding-top:4px}
 
 </style>
 </head>
@@ -5094,8 +5098,8 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   // The portrait pack's photos (Garland Tools NPC renders, credit Celes), head-cropped to the 1.15 framing rule:
   // crown 8–12 %, eye line 42–46 %, chin 78–84 %. 380 × 706 full-body renders on alpha.
   SRC.pack = { w: 380, h: 706, crop: [144, 106, 96, 96], fam: "colour", label: "Garland Tools photo · credit Celes" };
-  GIVERS.buscarron = { name: "Buscarron", file: "../1.20/art/Enpc_1000590", src: "pack", crop: [146, 107, 92], place: "Buscarron's Druthers · South Shroud" };
-  GIVERS.isembard = { name: "Isembard", file: "../1.20/art/Enpc_1003929", src: "pack", crop: [150, 113, 84], place: "Eastern Thanalan" };
+  GIVERS.buscarron = { name: "Buscarron", file: "../1.20/art/Enpc_1000590", src: "pack", crop: [150, 113, 82], place: "Buscarron's Druthers · South Shroud" };
+  GIVERS.isembard = { name: "Isembard", file: "../1.20/art/Enpc_1003929", src: "pack", crop: [154, 117, 76], place: "Eastern Thanalan" };
   function onPal(pal, fn) { var s = SNOW; SNOW = pal === "snow"; try { return fn(); } finally { SNOW = s; } }
   // The hidden-reward tile: the 1.15 moon disc (a .32 disc and its lit crescent), 14 px across on a 22 px tile.
   // On Ishgard Snow it takes the 1.16 fallback ink #56607C.
@@ -5132,7 +5136,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 
   // ---------- N6: the masked quest in the detail pane ----------
   function giver20(lv, size) {
-    if (lv === "plain") return '<div class="ps">Giver<span></span></div><dl class="kv"><dt>Giver</dt><dd>' + sil20(18, lv, "hyur-female") + ph("Dawntrail character") + '<span class="mu">· ' + nb("Dawntrail area 6") + "</span></dd></dl>";
+    if (lv === "plain") return '<div class="ps">Giver<span></span></div><dl class="kv"><dt>Giver</dt><dd>' + sil20(18, lv, "hyur-female") + ph("Dawntrail character") + '<span class="mu">· ' + nb("area 6") + "</span></dd></dl>";
     return sect19(lv, "Giver", "", '<div class="gv20">' + sil20(size || (lv === "quiet" ? 64 : 72), lv, "hyur-female") + '<div class="gt"><b class="ph20">Dawntrail character</b><span>' + nb("Dawntrail area 6") + "</span></div></div>");
   }
   function shieldDetail(lv) {
@@ -5204,7 +5208,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   // ---------- N7: the Before Evercold card ----------
   var BE = {
     story: { icon: ic15("071201", 18, "marker"), t: "Finish the main story", d: "14 quests left, through Patch 7.5", a: [qa19("Show next"), qa19("Route")] },
-    room: { icon: ICON.book, t: "Room in your journal", d: "27 of 30 slots used. Evercold brings new quests.", a: [qa19("Make room")] },
+    room: { icon: ICON.book, t: "Room in your journal", d: "27 of 30 slots used; Evercold adds quests.", a: [qa19("Make room")] },
     jobs: { icon: ic15("062122", 18, "tile"), t: "Job and role quests", d: "Your DRG, SGE and CUL have quests you can take now", a: [qa19("Show them")] },
     duties: { icon: ic15("000046", 18, "tile"), t: "Duties for the roulettes", d: "2 Dawntrail duties not unlocked yet", a: [qa19("Duties board")] },
     fly: { icon: ic15("000122", 18, "tile"), t: "Flying in Dawntrail", d: "2 areas left: Shaaloani, " + ph("Dawntrail area 6"), a: [qa19("Route")] }
@@ -5312,14 +5316,14 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   function boardPack() {
     var h = '<div class="board b15 b16 b20"><h2>1.20 · The portrait pack<small>F4. Opt-in, from Tsukimichi\'s own GitHub release, behind a confirmation that says size, source and the local-only promise. One row in Settings › General › Look shows every state in place, at one fixed height.</small></h2><div class="row">';
     h += '<div class="col" style="width:760px">';
-    h += fig(look18("full", "night", '<div class="scrim20"><div class="under">' + lookSettings("full", "none", 1) + '</div><div class="over">' + packDialog("full") + "</div></div>", 760), "<b>Download…</b>, or picking <b>Game art + pack</b> without the pack, opens the confirmation: a modal over Settings, its dim the only scrim. Focus starts on Cancel; Enter and Esc cancel");
+    h += fig(look18("full", "night", '<div class="scrim20"><div class="under">' + lookSettings("full", "none", 1) + '</div><div class="over">' + packDialog("full") + "</div></div>", 760), "<b>Download…</b>, or picking <b>Game art + pack</b> without the pack, opens the confirmation: a window kept in front of Settings, with its own scrim over Settings only (not ImGui's full-screen modal dim). Focus starts on Cancel; Enter and Esc cancel");
     h += fig(look18("full", "night", '<div class="set20">' + packRow("full", "dl") + packRow("full", "chk") + packRow("full", "ok") + packRow("full", "upd") + "</div>", 760), "<b>Downloading → checking → installed</b>, and the <b>update offer</b> after Dalamud updates Tsukimichi: every state the same height, slots reserved");
     h += "</div>";
     h += '<div class="col" style="width:740px">';
     h += fig(look18("full", "night", '<div class="set20">' + packRow("full", "net") + packRow("full", "hash") + packRow("full", "disk") + packRow("full", "cxl") + "</div>", 740), "<b>Errors</b>: words in Text with the Settings hint dot; the reason, what was kept, one way forward. The same fixed height");
     h += '<div class="row">';
     h += fig(look18("full", "night", removePop("full", 58) + '<div style="height:8px"></div><div class="hbrow">' + hold20("full", "Remove pack", 0, true) + "<small>Reduce motion: the countdown</small></div>", 360, ";background:transparent"), "<b>Remove pack…</b>: the confirm with the shipped Hold button, mid-hold (a Moon arc from the top centre)");
-    h += fig(look18("full", "night", '<div class="tipf20">' + pface(92, "full", "buscarron") + "<b>Buscarron</b><p class=\"src\">Portrait: Garland Tools photo · credit Celes</p><p>Buscarron's Druthers · South Shroud</p></div>", 220, ";background:transparent"), "<b>Hover</b>: a pack photo is never drawn above its own box (92 px here)");
+    h += fig(look18("full", "night", '<div class="tipf20">' + pface(82, "full", "buscarron") + "<b>Buscarron</b><p class=\"src\">Portrait: Garland Tools photo · credit Celes</p><p>Buscarron's Druthers · South Shroud</p></div>", 220, ";background:transparent"), "<b>Hover</b>: a pack photo is never drawn above its own box (82 px here)");
     h += "</div>";
     h += fig(look18("full", "night", '<div class="ba20">' + plate(72, "full", "initials", { text: "B" }) + '<span class="ar">→</span>' + pface(72, "full", "buscarron") + '<span style="width:24px"></span>' + sil20(72, "full", "hyur-male") + '<span class="ar">→</span>' + pface(72, "full", "isembard") + '<span style="width:24px"></span>' + face(72, "full", "alphinaud") + "</div>", 740), "<b>With the pack</b>: Buscarron (initials → photo), Isembard (silhouette → photo), and Alphinaud's Duty Support portrait for comparison, all graded alike; faces fade in over 0.3 s");
     h += fig(look18("full", "night", '<span class="sbn20"><b>Portrait pack installed</b>· 2,310 faces</span><div style="height:8px"></div><div class="set20"><div class="sr20" style="grid-template-columns:150px 1fr"><span class="sl">Sends</span><div class="sm"><div class="sn">Nothing, except the portrait pack when you click Download: one file from Tsukimichi\'s GitHub release.</div></div></div></div>', 740), "<b>Status-bar note</b> when it lands, and the <b>Privacy &amp; trust</b> line that changes with F4");
@@ -5348,7 +5352,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     h = lookHead(h);
     var rows = [
       ["Faces", "full", function (lv) { return '<div class="fs20">' + face(72, "full", "alphinaud") + pface(72, "full", "buscarron") + face(64, "quiet", "alphinaud") + pface(64, "quiet", "buscarron") + '<span class="sm20">' + face(24, "full", "alphinaud") + pface(24, "full", "buscarron") + face(18, "plain", "alphinaud") + pface(18, "plain", "buscarron") + "</span></div>"; }],
-      ["Full", "full", function (lv) { return sect19(lv, "Rewards", "2 items", '<div class="rwl20" style="margin-top:0">' + hid20() + ph("An item") + '<span class="k">optional</span></div><div class="rwl20">' + ic15("000046", 18, "tile") + ph("Trial (Lv 99)") + "</div>"); }],
+      ["Full", "full", function (lv) { return sect19(lv, "Rewards", "2 items", '<div class="rwl20" style="margin-top:0">' + hid20() + ph("An item") + '<span class="k">optional</span></div><div class="rwl20">' + hid20() + ph("An orchestrion roll") + "</div>"); }],
       ["Quiet", "quiet", function (lv) { return '<div class="set20">' + packRow(lv, "hash", false, true) + "</div>"; }],
       ["Plain", "plain", function (lv) { return removePop(lv, 58); }],
       ["Quiet", "quiet", function (lv) { return '<div class="dim20">' + packDialog(lv, false, "cmp") + "</div>"; }]
