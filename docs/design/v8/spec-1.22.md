@@ -34,7 +34,7 @@ Everything is under `docs/design/v8/`.
 | `mock-src/` | `v722.js` and `v722.css` (the 1.22 layer), `build22.py` (`py -3 build22.py` builds the mock), `render22.py` (`py -3 render22.py` renders the PNGs with headless Chrome), and two debugging aids, `console22.py` and `peek22.py` |
 | `art/src/` | `artlib.py` (a small numpy and Pillow painting kit), `paint_release.py` (paints the two release illustrations), `grade_release.py` (the per-theme recipe: grade and motif layer) |
 | `art/evercold-base.png`, `art/answers-base.png` | The two paintings, 1120 × 440 (the 2x tier of the 560 × 220 art band) |
-| `art/themed/` | Each painting restyled for the six themes, with and without the motif layer (`-quiet`) |
+| `art/themed/` | Each painting restyled for the six themes, plus Medallion's Quiet grade without the motif layer (`-quiet`), which the Quiet popup uses |
 | `whatsnew-evercold-1.22.png` | W1/W2: the popup on page 1 of 2, 1.20.0 Before Evercold, in all six themes |
 | `whatsnew-answers-1.22.png` | W1/W2: the popup on page 2 of 2, 1.19.0 Right answers, in all six themes |
 | `whatsnew-states-1.22.png` | W1: Full, Quiet, Plain, one release (no pager), Text size 150 %, and the size and timing table |

@@ -208,5 +208,7 @@ if __name__ == "__main__":
     for rel in RELEASES:
         for theme in GRADES:
             compose(rel, theme).save(OUT / f"{rel}-{theme}.png", optimize=True)
-            compose(rel, theme, quiet=True).save(OUT / f"{rel}-{theme}-quiet.png", optimize=True)
+            # Quiet is the same grade without the motif layer; only Medallion's is kept (the mock's Quiet popup uses it)
+            if theme == "medallion":
+                compose(rel, theme, quiet=True).save(OUT / f"{rel}-{theme}-quiet.png", optimize=True)
             print(rel, theme)
