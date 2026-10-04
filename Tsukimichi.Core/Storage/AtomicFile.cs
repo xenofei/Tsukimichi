@@ -196,8 +196,9 @@ public static class AtomicFile
 
     /// <summary>
     /// Reads the file with every share mode open, so a writer in another client is never refused the file for longer
-    /// than the read takes (<see cref="MoveOver"/> retries meanwhile). A sharing violation is retried for a moment; a
-    /// missing file is null.
+    /// than the read takes (<see cref="MoveOver"/> retries meanwhile). A sharing violation is retried for a moment, and so
+    /// is "access denied": Windows answers that while another writer's rename is replacing the file (the old file is
+    /// pending delete until its last handle closes). A missing file is null.
     /// </summary>
     private static string? ReadShared(string path)
     {
@@ -213,11 +214,24 @@ public static class AtomicFile
             {
                 return null;
             }
-            catch (IOException) when (attempt < ReadAttempts)
+            catch (Exception ex) when (ShouldRetryRead(ex, attempt))
             {
                 Pause(attempt);
             }
         }
+    }
+
+    /// <summary>
+    /// Whether a failed read (<see cref="ReadShared"/>) is tried again: a sharing violation or "access denied" (a file
+    /// another writer's rename is replacing) is, up to <see cref="ReadAttempts"/> tries; anything else, a missing file
+    /// included, is not.
+    /// </summary>
+    public static bool ShouldRetryRead(Exception error, int attempt)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        return error is not (FileNotFoundException or DirectoryNotFoundException)
+            && error is (IOException or UnauthorizedAccessException)
+            && attempt < ReadAttempts;
     }
 
     /// <summary>

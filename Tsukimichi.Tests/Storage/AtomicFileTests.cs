@@ -21,6 +21,29 @@ public sealed class AtomicFileTests : IDisposable
     }
 
     [Fact]
+    public void A_read_refused_while_another_writer_replaces_the_file_is_tried_again()
+    {
+        // Windows answers "access denied" to an open while another client's rename replaces the file (seen on the
+        // release runner in SharedFileTests); like a sharing violation, it passes in a moment.
+        Assert.True(AtomicFile.ShouldRetryRead(new UnauthorizedAccessException(), attempt: 1));
+        Assert.True(AtomicFile.ShouldRetryRead(new IOException("sharing violation"), attempt: 1));
+
+        // A missing file is an answer, not a refusal; other failures are not retried at all.
+        Assert.False(AtomicFile.ShouldRetryRead(new FileNotFoundException(), attempt: 1));
+        Assert.False(AtomicFile.ShouldRetryRead(new DirectoryNotFoundException(), attempt: 1));
+        Assert.False(AtomicFile.ShouldRetryRead(new InvalidOperationException(), attempt: 1));
+
+        // A file that stays refused fails after a short, bounded wait instead of hanging the caller.
+        var attempts = 1;
+        while (AtomicFile.ShouldRetryRead(new UnauthorizedAccessException(), attempts))
+        {
+            attempts++;
+        }
+
+        Assert.InRange(attempts, 2, 20);
+    }
+
+    [Fact]
     public void Write_overwrites_existing_file()
     {
         var path = tmp.File("file.json");
