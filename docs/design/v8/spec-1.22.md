@@ -11,7 +11,7 @@ This spec designs every visible row of `docs/feature-plan-v8.md`:
 | **U1** | "Tsukimichi 1.23.0 is ready": the status-bar note, the dot on the moon icon, Update |
 | **H1** | The moon icon: rest, hover and quick card, menu, lock, hide, dots |
 | **H2** | Theme particles and the hover |
-| **M1** | "◑ 12 Ready" in the server info bar, in the game and in Umbra |
+| **M1** | "◐ 12 Ready" in the server info bar, in the game and in Umbra (the plan's "◑", mirrored to the moons' light) |
 | **M3** | Keeping clear of Umbra's toolbar; the Umbra rows in Settings › About |
 | **A1, A2, A3** | Tsukimichi for Umbra: the widget and its popup, the small widgets, the missing state |
 
@@ -32,13 +32,13 @@ Everything is under `docs/design/v8/`.
 | `spec-1.22.md` | This spec |
 | `mock-1.22.html` | The 1.22 mock: `#wn22a`, `#wn22b`, `#wn22s`, `#art22`, `#about22`, `#upd22`, `#icon22`, `#fx22`, `#dtr22`, `#umb22`, `#clear22`. Built from the v7 mock sources (read-only) plus the 1.22 layer. |
 | `mock-src/` | `v722.js` and `v722.css` (the 1.22 layer), `build22.py` (`py -3 build22.py` builds the mock), `render22.py` (`py -3 render22.py` renders the PNGs with headless Chrome), and two debugging aids, `console22.py` and `peek22.py` |
-| `art/src/` | `artlib.py` (a small numpy and Pillow painting kit), `paint_release.py` (paints the two release illustrations), `grade_release.py` (the per-theme recipe: grade and motif layer) |
-| `art/evercold-base.png`, `art/answers-base.png` | The two paintings, 1120 × 440 (the 2x tier of the 560 × 220 art band) |
+| `art/src/` | `artlib.py` (a small numpy and Pillow painting kit), `paint_release.py` (paints the four release illustrations), `grade_release.py` (the per-theme recipe: grade and motif layer) |
+| `art/welcome-base.png`, `art/whatnext-base.png`, `art/evercold-base.png`, `art/answers-base.png` | The four paintings of the first popup a player on 1.18.0 sees (1.22.0, 1.21.0, 1.20.0, 1.19.0), 1120 × 440 (the 2x tier of the 560 × 220 art band) |
 | `art/themed/` | Each painting restyled for the six themes, plus Medallion's Quiet grade without the motif layer (`-quiet`), which the Quiet popup uses |
-| `whatsnew-evercold-1.22.png` | W1/W2: the popup on page 1 of 2, 1.20.0 Before Evercold, in all six themes |
-| `whatsnew-answers-1.22.png` | W1/W2: the popup on page 2 of 2, 1.19.0 Right answers, in all six themes |
-| `whatsnew-states-1.22.png` | W1: Full, Quiet, Plain, one release (no pager), Text size 150 %, and the size and timing table |
-| `release-art-1.22.png` | W2: both paintings with their six restyles and the grade and motif table |
+| `whatsnew-evercold-1.22.png` | W1/W2: the popup on page 3 of 4, 1.20.0 Before Evercold, in all six themes (a player updating from 1.18.0) |
+| `whatsnew-answers-1.22.png` | W1/W2: the popup on page 4 of 4, 1.19.0 Right answers, in all six themes |
+| `whatsnew-states-1.22.png` | W1: page 1 of 4 (1.22.0 Welcome home) at Full, Quiet, Plain, one release (no pager), Text size 150 % on a page that fits and on one that scrolls, and the size and timing table |
+| `release-art-1.22.png` | W2: the four paintings with their six restyles each, and the grade and motif table |
 | `about-history-1.22.png` | W3, U1, M3: Settings › About with Updates, What's new (backfilled) and Umbra, and the popup opened from the list |
 | `update-ready-1.22.png` | U1: the status-bar note at each level, its hover, the dot on the icon with the quick card, Dalamud's installer, and the flow |
 | `moon-icon-1.22.png` | H1: rest, hover with the quick card, the right-click menu, locked, first run, hide with Undo, the dots, Needs you, the three levels, and the behaviour table |
@@ -47,7 +47,7 @@ Everything is under `docs/design/v8/`.
 | `umbra-widgets-1.22.png` | A1/A2/A3: the widgets and popup on Umbra's default profile and on YoRHa Light, and the missing state |
 | `umbra-clearance-1.22.png` | M3: the icon, the Todo overlay and Needs you under Umbra's top bar in 1.21, and clear of it in 1.22 |
 
-**Sources.** The game scenes behind the UI are the official screenshots already in `docs/plan-site/mock/` (`scene-night.jpg`, `scene-day.jpg`; © Square Enix, as the plan's art rule allows). The two paintings are original, painted in code by `paint_release.py`; nothing is traced. Umbra's look comes from its source at `una-xiv/umbra` (main, read 4 October 2026):
+**Sources.** The game scenes behind the UI are the official screenshots already in `docs/plan-site/mock/` (`scene-night.jpg`, `scene-day.jpg`; © Square Enix, as the plan's art rule allows). The paintings are original, painted in code by `paint_release.py`; nothing is traced. Umbra's look comes from its source at `una-xiv/umbra` (main, read 4 October 2026):
 - `Umbra/src/Umbra.Colors.cs`: the default colours and the built-in profiles (Umbra, Metal, Clear Blue, YoRHa Dark, YoRHa Light), decoded from their stored data;
 - `Umbra/udt/umbra/widgets/_popup.xml` and `_popup_menu.xml`: the popup (radius 7, a top-anchored popup has no top border and round bottom corners, a vertical gradient) and its groups and buttons (a 12 px muted header with a rule; buttons 4 × 8 padding, 13 px text, 11 px alt text, 22 px icon);
 - `_standard.xml` and `toolbar.xml`: the 32 px toolbar and its decorated widgets (radius 5, a 1 px stroke).
@@ -65,7 +65,7 @@ There are **no new tokens**. 1.22 uses what 1.14 to 1.21 defined and gated.
 | Needs you | copper `--attn` (`#D08654`) | the needs-you dot on the moon icon (1.18 A5) |
 | Moonlight | `#E2E8F4` | the moon icon's hover glow. It is the cool in-medal glow of the v7 Completed moon, so Ready and the primary pill keep the only warm halos. |
 | Text, Secondary | `--silver`, `--mist` | everything else |
-| The theme's moon | the theme's accent | the "◑" in the server info bar (nearest UIColor row) |
+| The theme's moon | the theme's accent | the "◐" in the server info bar (nearest UIColor row) |
 
 **No colour carries meaning alone.** Each dot also has its words: in the quick card, the status bar and the menu.
 
@@ -84,20 +84,20 @@ There are **no new tokens**. 1.22 uses what 1.14 to 1.21 defined and gated.
 
 ### Several releases at once
 
-If the player skipped releases (1.18.0 to 1.20.0, say), each release is a **page**, newest first. The footer reads **‹ 1 of 2 ›**. The header says **"You were on 1.18.0"** only in that case.
+If the player skipped releases, each release is a **page**, newest first. A player on 1.18.0 who updates to 1.22.0 gets four pages: 1.22.0, 1.21.0, 1.20.0 and 1.19.0. The footer reads **‹ 1 of 4 ›**. The header says **"You were on 1.18.0"** only in that case. A player on 1.21 gets one page and no pager.
 
-**The popup keeps the height of its tallest page.** Page 1 (three points) leaves space under its notes, so the footer and ‹ › never move while you page. This is in both renders.
+**The popup keeps the height of its tallest page.** Page 3 (three points) leaves space under its notes, so the footer and ‹ › never move while you page. This is in both six-theme renders.
 
 ### Anatomy (logical px at UI scale 1.0; the mock draws at 0.8)
 
 | Part | Full | Quiet | Plain |
 |---|---|---|---|
 | Window | 560 wide. The kit's frame (Brass, Silver, Lead came, Astrolabe or Kirikane) with its corner marks. Shadow 0 22 48 at .55, straight down. | A tonal card (`--raised`), 1 px Line, radius 8 | Flat `--night`, 1 px Line, no radius |
-| Header, 48 | the theme's moon icon (28, no particles), **WHAT'S NEW** in the Eyebrow role (Trump Gothic, `OrnamentLight`), "You were on 1.18.0" in Tertiary on the right, × (26 round) | "What's new" semibold, Secondary | a 26 px band (`#1A1F2C`) |
+| Header, 48 | the theme's moon icon (28, no particles), **WHAT'S NEW** in the Eyebrow role (Trump Gothic, `OrnamentLight`), "You were on 1.18.0" in **Secondary** on the right (Tertiary is never text on a Full card: 1.21's rule), × (26 round) | the moon icon (Quiet face), "What's new" semibold, Secondary | a 26 px band (`#1A1F2C`), no icon |
 | Art, 536 × 220 | the release painting, graded **with** the motif layer, inset 12, radius 4, the kit's keyline | graded, **without** the motif layer | **none**: Plain loads no art |
 | Title | the release name in the Title face (Jupiter 23), then "Tsukimichi 1.20.0 · 4 October 2026" in Secondary | the same | semibold body × 1.15 |
-| Notes | 3 to 5 points. Each is a semibold lead and one plain sentence, 13 px, with a 5 px dot in kit ink. | the dot in Secondary | a 4 px square in Text |
-| Footer, 56 | **All releases** (opens Settings › About › What's new), **‹ 1 of 2 ›** (24 px round, disabled at the ends), **Close** (a neutral pill, not gold) | the same, flat | a 30 px band, square buttons |
+| Notes | 3 to 5 points. Each is a semibold lead and one plain sentence, 13 px, with a 5 px dot in kit ink, centred on the first line at any Text size. The block is the tallest page's height plus 14 px of room. | the dot in Secondary | a 4 px square in Text |
+| Footer, 56 | **All releases** (opens Settings › About › What's new), **‹ 1 of 4 ›** (24 px round, disabled at the ends), **Close** (a neutral pill, not gold) | the same, flat | a 30 px band, square buttons |
 
 **Theme** sets the palette, the kit and the moon icon (Ishgard Glass is a light popup on Ishgard Snow, `whatsnew-*.png` top right). Classic uses the Brass kit, as theme-system §3.1 sets, so Classic and Medallion differ in the art's grade and the header moon.
 
@@ -109,6 +109,18 @@ The notes come from a new curated `Data/whats_new.json`, one entry per release: 
 - the technical `CHANGELOG.md` is unchanged and separate.
 
 The example notes in the renders:
+
+**1.22.0 · Welcome home**
+- **What's new, in pictures.** After each update, a short note like this one shows what changed. Past notes are in Settings › About.
+- **Know when an update is ready.** A quiet note in the status bar and a dot on the moon icon tell you. Update opens Dalamud's installer.
+- **A moon on your screen.** A small moon opens Tsukimichi and shows what's next when you hover it. Move it, lock it or hide it.
+- **At home in Umbra.** Tsukimichi keeps clear of Umbra's toolbar, and an Umbra add-on puts Tonight in your Umbra bar.
+
+**1.21.0 · What next, for every character**
+- **Up next.** Tonight starts with one suggestion for the character you're on, and says why.
+- **Go to the current step.** Travel aims at the step you're on, not only at the quest giver.
+- **All your characters.** One board shows each character's story, goals and what's Ready.
+- **Loose ends.** Storylines you started and never finished, finales first.
 
 **1.20.0 · Before Evercold**
 - **Fewer spoilers.** Past where you are in the story, Tsukimichi now hides the names of places, duties, rewards and people too. Hover a hidden name to see why.
@@ -133,7 +145,7 @@ The example notes in the renders:
 ### Text size, UI scale, high contrast
 
 - **UI scale** scales everything, the art included.
-- **Text size** reflows the notes inside the fixed width. The popup takes its tallest page's height at that size, up to 80 % of the screen; past that the notes scroll and the footer stays (`whatsnew-states-1.22.png`, 150 %).
+- **Text size** reflows the notes inside the fixed width. The notes block takes the tallest page's height at that size, capped so the whole popup stays within 80 % of the screen. Past the cap that page's notes scroll (ImGui's thin scrollbar) and the footer stays. `whatsnew-states-1.22.png` shows 150 %: page 3 just fits the capped block, page 4 scrolls in it, and the footer is in the same place on both.
 - **High contrast** caps at Quiet as always: the art sits under a 1 px `VeilLine` keyline, and every text sits on the solid card, never on the art.
 
 ### W4. The card leaves
@@ -161,11 +173,14 @@ The recipe and its numbers are in `art/src/grade_release.py`, which made every t
 | Medallion | none: the reference | none; the brass frame and its corner marks carry it |
 | Classic | lift .01, gamma 1.04, saturation .82 | none |
 | Ishgard Glass | lift .07–.10, gamma .90, saturation .80, shadows toward `#2C3A64`, highlights toward `#EEF3FF` (a milky daylight print, for the light palette) | rime feathers from the two upper corners and the lower left, at .42 |
-| Aether Crystal | gain .95/1.01/1.04, saturation .95, shadows `#0E2A40`, highlights `#BFF0FF` | three small shards in the sky's corners, lit on their upper-left facets |
-| Astrologian's Orrery | gain 1.04/.98/.97, shadows `#2B1F3A` (Dawn's plum), highlights `#F5C47C` | two hairline orbits at 28° and a 12-notch scale round the release's moon, and one bead |
-| Sumi to Kinpaku | gamma 1.06, saturation .40, shadows `#16100F`, highlights `#F3E9DB` | sunago: gold-leaf flecks dusted into the upper corners, and washi fibre at 4 % |
+| Aether Crystal | gain .95/1.01/1.04, saturation .95, shadows `#0E2A40`, highlights `#BFF0FF` | up to three small shards in the sky's corners, lit on their upper-left facets, none near the moon |
+| Astrologian's Orrery | gain 1.04/.98/.97, shadows `#2B1F3A` (Dawn's plum), highlights `#F5C47C` | whole hairline orbits at 28° round the release's moon, a graduated ring, and one bead (the exception below) |
+| Sumi to Kinpaku | gamma 1.06, saturation .40, shadows `#16100F`, highlights `#F3E9DB` | sunago: gold dust and a few cut leaf pieces in the top quarter of the upper corners, and washi fibre at 4 % |
 
-**Motifs keep to the sky's corners and never cross the subject** (the road, the pass, the moon), so a theme can't hide what the painting is about. The Orrery's orbits centre on the release's moon; its place is in `whats_new.json`.
+**Motifs keep to the sky's corners and never cross the subject** (the road, the pass, the house, the moon), so a theme can't hide what the painting is about:
+- **Aether Crystal's** shards are skipped within 5 moon radii of the moon, so no crystal ever sits by a crescent (theme-system §2).
+- **Sumi's** sunago is mostly fine dust (≤ 1 px) thinning out across the top quarter of each upper corner, with 7 cut leaf pieces per corner, two of them catching the light.
+- **The Orrery is the one exception**, because an orrery is the sky's instrument: its motif centres on the release's moon, whose place is in `whats_new.json`. Its rules: whole ellipses only (no broken arcs), every point inside the art band with an 8 px margin (an orbit that doesn't fit shrinks, and is dropped if it still doesn't), never nearer the disc than 1.5 r, so no orbit crosses or hides behind the moon, and its 12 notches sit on a graduated hairline ring at 1.6 r, never as free radial ticks (which read as sun rays). Everything is at .20.
 
 ### Cost
 
@@ -177,25 +192,35 @@ The recipe and its numbers are in `art/src/grade_release.py`, which made every t
 
 Every painting is **a night or twilight landscape with one light**, wide and calm. Its subject sits right of centre. The title is printed under the art, never over it.
 
+**1.22.0 Welcome home: a door left open on a lit hall** (`art/welcome-base.png`). The first page anyone sees in 1.22.
+- **Two lights.** The near-full moon stands high on the left, in front of the viewer, so it backlights the house: the facade is in shadow, the roof's left slope and the chimney top carry a cool rim, and the house's moon shadow falls toward the viewer and right.
+- **The hall's warm light** is seen through the open door: brighter on the floor, a lamp glow on the far wall, the jamb in depth on the left and the door leaf swung in on the right. It spills down the path as a pool that widens toward the viewer and fades with distance; the two windows throw faint pools of their own.
+- **The path's stones** are warm near the door and cool and dim further out. The two shrubs by the door are warm only on the side that faces it. Smoke rises from the chimney, faintly moonlit, drifting right.
+
+**1.21.0 What next, for every character: a lantern at a crossroads** (`art/whatnext-base.png`).
+- **Late twilight.** The sun has set off to the right: a faint warm afterglow sits low on that side, and the young crescent is lit on its lower-right limb, toward it.
+- **One light on the ground:** a lantern on a post at the crossroads. Its pool is foreshortened (it is on the ground, seen at a low angle); the waystone beside it is warm on the lantern side and throws its shadow away from it.
+- **Four paths** leave the crossroads. Three run toward distant lights (a hamlet, a tower on a hill, a farm): every character's next step.
+
 **1.20.0 Before Evercold: cold, snow, a coming dawn** (`art/evercold-base.png`).
 - **The light** is the sun, still under the horizon behind a low pass. The dawn glow is warm only near it; the rest of the sky stays cold navy.
-- **The waning crescent** stands high on the east side. It is lit on its lower-left limb, the side that faces the sun, and the rest of the disc carries a faint earthshine.
-- **The far ridges** are backlit. A thin warm rim runs along the ridgeline, strongest by the pass and fading away from it. Slopes that face the sun take a lilac lift; the others stay in blue shade.
+- **The waning crescent** stands high on the east side. It is lit on its lower-left limb, the side that faces the sun, with a true elliptical terminator, so its horns are diametrically opposite. The rest of the disc carries an earthshine barely above the sky.
+- **The far ridges** are backlit: their luminance is capped at 0.9× the sky's at their ridgeline, so they are always darker than the sky behind them. A thin warm rim runs along the ridgeline, strongest by the pass and fading away from it. Only the sun-facing slopes near the pass take a lilac lift; the rest stay in blue shade.
 - **The snowfield** reflects the sky: a forward-scatter sheen leads toward the sun, and wind ripples show only up close.
 - **Shadows:** the spruces and the near drift are lit from behind, so their shadows fall toward the viewer, and the drift's face is in blue shade under a thin warm lip.
 - **The hamlet** has five warm windows and a thread of smoke. It is the only warm light on the ground: home, before the cold.
-- **Falling snow:** a few flakes, sharp far away and soft up close.
+- **Falling snow:** a few flakes, sharp far away and soft up close. None crosses the moon, and no small, sharp flake sits against the sky or the ridges, where it would read as a star.
 
 **1.19.0 Right answers: a clear moonlit road** (`art/answers-base.png`).
 - **The light** is one near-full moon above the road's far end, under a clear sky (no cloud).
-- **The moon** has soft basalt seas in their real places and no holes; it is not cheese. A thin unlit sliver sits on its upper left, because the sun is below the horizon on the lower right.
+- **The moon** has soft, neutral-grey seas joined in their real chains (Procellarum and Imbrium on the left, Serenitatis to Fecunditatis down the right) and no holes; it is not cheese. A thin unlit sliver, 0.09 r at its widest, runs horn to horn on its upper left, because the sun is below the horizon on the lower right. The stars are few: a near-full moon washes out the faint ones.
 - **The road** runs from the near left to a fork. The branch that runs on toward the moon brightens with distance (forward scatter on worn stone). The side branch turns away into shade.
 - **The signpost** at the fork is rim-lit on its top and moon-facing edges, and its shadow falls toward the viewer and left, away from the moon.
-- **The rest:** a lone tree on the rise is rim-lit the same way, mist lies low in the far valley, and tall grass frames the near corners with moonlit tips.
+- **The rest:** a lone tree on the rise is rim-lit the same way and throws a faint, foreshortened shadow toward the viewer and right. Mist lies low in the far valley, and tall grass frames the near corners, lit on the edges that face the moon (up and right on the left, up and left on the right).
 
 ### Backfill (decision 2)
 
-Settings › About lists 1.14.0 to 1.22.0. Each needs a painting and its notes. The briefs follow the release names:
+Settings › About lists 1.14.0 to 1.22.0. 1.19.0 to 1.22.0 are painted and supervised here, so every page of the first popup a player can get (from 1.18.0 or later) has its art. The five older releases appear only in the history list; their briefs follow the release names:
 
 | Release | Painting |
 |---|---|
@@ -204,10 +229,8 @@ Settings › About lists 1.14.0 to 1.22.0. Each needs a painting and its notes. 
 | 1.16.0 Themes | one moon over four horizons |
 | 1.17.0 Mix and match | stepping stones of different stone |
 | 1.18.0 Runs you can trust | a ferry on a guide rope at night |
-| 1.21.0 What next, for every character | a crossroads inn with several horses |
-| 1.22.0 Welcome home | a door left open on a lit hall |
 
-Each goes through the same realism supervision. Until it is painted, the list shows the shipped category banner of the nearest motif. `about-history-1.22.png` uses these stand-ins for the rows not yet painted.
+Each goes through the same realism supervision. Until it is painted, its row shows the shipped category banner of the nearest motif (`about-history-1.22.png`, the 1.18.0 and 1.17.0 rows).
 
 ---
 
@@ -222,7 +245,7 @@ Settings › About becomes four sections, each with the Section heading and the 
    - **Also say it in chat**, off by default (decision 6);
    - **Show what's new after an update**, on by default.
 3. **What's new (W3):**
-   - one 46 px row per release, newest first: a 76 × 30 thumbnail in the current theme, the release name, the version in Secondary, the date, and ›. The running release has an **Installed** chip;
+   - one 46 px row per release, newest first: a 76 × 30 thumbnail in the current theme, the release name, the version in Secondary, the date in one form ("5 Oct"), and ›. The running release has an **Installed** chip;
    - six rows show, then "3 earlier releases, back to 1.14.0 ›";
    - a row opens the popup on that release, with ‹ › walking the whole history ("3 of 9"). Opened this way, the popup has no "You were on" caption.
 4. **Umbra (M3):** see M3 below.
@@ -244,7 +267,7 @@ On the right of the main window's status bar: a 7 px Tide dot, **"Tsukimichi 1.2
 - **Hover** shows the new version's plain notes, when Dalamud has them, with "Dalamud installs it; Tsukimichi never downloads itself."
 - **Update** calls `OpenPluginInstallerTo(PluginInstallerOpenKind.UpdateablePlugins, "Tsukimichi")`. Dalamud's installer opens on **Can be updated**, searched for Tsukimichi, and Dalamud does the install. The render sketches Dalamud's own installer, which Tsukimichi does not draw.
 - **Later (×)** hides the note and the dot until a version newer than this one appears. Settings › About still shows it with Update. Later needs no Undo: nothing is lost.
-- **Quiet** draws the same note flat; **Plain** keeps the words and the dot.
+- **Quiet** drops the tint: a hairline pill on the flat bar. **Plain** is the ledger: no pill, a square Update, and the dot kept, so the meaning is never colour alone.
 
 ### The plain notes in Dalamud
 
@@ -289,7 +312,7 @@ In every theme the crescent is **lit on its upper-left limb**, the one light of 
 
 A tooltip, 300 px wide, that never takes focus. It opens on the side with room, never covers the icon, and closes when the pointer leaves:
 - **Tonight**, with the character and job on the right;
-- **Up next** (1.21 P1's pick: the moon, the name, the step or giver);
+- **Up next** (1.21 P1's pick: the moon, the name, then the step and the place on their own lines);
 - **"12 quests are Ready on WHM"**;
 - **"Journal 27/30 · 3 slots left"**;
 - **events ending soon** ("The Rising ends in 2 days");
@@ -300,7 +323,7 @@ At Full it is the Brass card; at Quiet a tonal card; at Plain a band and lines.
 
 ### The menu (right-click)
 
-**Lock in place** (or **Unlock**), **Hide icon** (with "/tsuki icon" as its hint), a separator, **Tonight**, **Settings**. **Hide** shows the 8 s Undo toast: "Moon icon hidden · Undo · /tsuki icon shows it again".
+**Lock in place** (or **Unlock**), **Hide icon** (with "/tsuki icon" as its hint), a separator, **Tonight**, **Settings**. Words only: a padlock would mean Blocked, and a cog adds nothing a word doesn't say. **Hide** shows the 8 s Undo toast: "Moon icon hidden · Undo · /tsuki icon shows it again".
 
 ### Placement
 
@@ -321,10 +344,10 @@ Full only, with Reduce motion off. Every effect keeps these limits:
 
 | Theme | Particles | Timing |
 |---|---|---|
-| Medallion | **Gold motes**, r 1 px `#FFE9BE` with a .12 halo | 3 motes, each 3.6 s: fade in 0.6 s, rise about 3 px/s with a slight sway, fade out 1.2 s; staggered 1.2 s |
+| Medallion | **Gold motes**, r 1 px `#FFE9BE` with a .12 halo of their own (as the v7 sky's warm stars), never a glow round the icon | 3 motes, each 3.6 s: fade in 0.6 s, rise about 3 px/s with a slight sway, fade out 1.2 s; staggered 1.2 s |
 | Classic | **A few stars**, round, never a cross | 3 fixed stars breathing on 7, 9.5 and 12 s (the 1.14 twinkle curve), .27–.49. Nothing moves. |
 | Ishgard Glass | **Frost glints** on the rim | every 6 s a 28° glint runs the lit upper-left quarter of the rim in 1.2 s, with one round sparkle at its head. Never a 4-point star. |
-| Aether Crystal | **Shards** that catch the light | 2 shards on a 16 s orbit at 1.25 R. Each turns every 3.2 s and flashes for about 0.4 s when its face meets the light. On the far side they pass behind the icon. |
+| Aether Crystal | **Shards** that catch the light | 2 shards on a 16 s orbit (rx 1.25 R, ry 0.4 R, tilted 28°, as the Orrery's). They show only on the near, lower half; on the far half they are behind the icon, so a shard is never above the crescent (theme-system §2: no crystal over a crescent). Each turns every 3.2 s and flashes for about 0.4 s when its face meets the light; the flash is additive light, never a painted disc. |
 | Astrologian's Orrery | **An orbiting dot** | one bead on a 12 s orbit (rx 1.3 R, ry 0.4 R, tilted 28°). Its far half passes behind the icon. The orbit hairline is at .14. |
 | Sumi to Kinpaku | **Gold-leaf flecks** | 2 flecks, 4.5 s each, drifting down past the right side with a flutter; a fleck flashes when it tilts toward the light |
 
@@ -342,14 +365,16 @@ Full only, with Reduce motion off. Every effect keeps these limits:
 
 ## M1. In the server info bar (`server-info-bar-1.22.png`)
 
+**The moon character.** The plan wrote "◑". That glyph is lit on the right; every Tsukimichi moon is lit from the upper left, so the renders use **"◐"** (U+25D0, lit on the left). If the game font lacks it, the entry keeps today's "☾" (open question 1).
+
 **One entry, not two.** Today's Nearby entry ("☾ 3", the quests you can start in this zone; a click toggles Nearby) becomes this entry.
 - **Settings › In game › Server info bar › "The entry counts":**
-  - **Ready quests** (default): "◑ 12 Ready". A click opens Tsukimichi; a right-click opens Tonight.
-  - **Quests in this zone:** "◑ 3 here". A click opens Nearby, as today.
+  - **Ready quests** (default): "◐ 12 Ready". A click opens Tsukimichi; a right-click opens Tonight.
+  - **Quests in this zone:** "◐ 3 here". A click opens Nearby, as today.
   - Players who had the Nearby entry on keep Quests in this zone.
 - **The tooltip** always gives both numbers.
 - **On by default** when Umbra is installed and Tsukimichi for Umbra is not; otherwise as the player set it (off on a fresh install).
-- **At zero** the entry hides. With "Show at zero" on (today's setting, kept) it reads "◑ Nothing Ready".
+- **At zero** the entry hides. With "Show at zero" on (today's setting, kept) it reads "◐ Nothing Ready".
 
 **The hover is text lines.** Dalamud gives an entry a text tooltip (`IDtrBarEntry.Tooltip`), not a window, and Umbra draws that tooltip in its own style. So it carries the quick card's content as lines:
 - the first line, "Tsukimichi", in the gold the UIColor sheet offers;
@@ -415,7 +440,7 @@ The add-on is drawn by Umbra, with Umbra's controls and the player's Umbra colou
 
 | Widget | Shows |
 |---|---|
-| Up next | the book icon and the quest name |
+| Up next | the quest's own icon (as the popup's Up next row) and its name. The book stays Journal's alone. |
 | Journal | "Journal 27/30" |
 | Story meter | two lines: the expansion over "91 to the latest story". No bar and no percentage: it says what is left. |
 | Next reset | two lines: "Next reset" over "daily in 3 h 12 m" |
@@ -426,7 +451,7 @@ Each has Umbra's usual options: icon, text, colour, and a click action (open Tsu
 
 When Tsukimichi isn't running, or is older than 1.22:
 - the bar reads "Tsukimichi" with no count;
-- the popup says so in words, with **How to install it**: "This widget needs Tsukimichi 1.22 or later. Install it from your Dalamud plugin installer."
+- the popup gives **one reason per case**, in Umbra's own text colour (it is a statement, not a disabled button): "Tsukimichi isn't running. Turn it on in Dalamud's plugin installer, or install it there." or "This widget needs Tsukimichi 1.22 or later.", then **Open the plugin installer**.
 
 ### Spoilers
 
@@ -460,8 +485,8 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
 6. **Motifs stay in the sky's corners** and never cross a painting's subject.
 7. **The update note is Tide, not gold**: news, not a call to act. Later needs no Undo, because nothing is lost; Settings › About keeps Update.
 8. **The plain notes go into the manifest changelog**, so Dalamud's installer and the hover show the same words as the popup.
-9. **The icon's rim is resting metal** and its hover glow is cool moonlight. Ready and the primary pill keep the only warm halos.
-10. **No padlock on a locked icon**, because a closed padlock means Blocked. The lock shows in words on a drag and in the menu.
+9. **The icon's rim is resting metal** and its hover glow is cool moonlight, so Ready and the primary pill keep the only warm halos round UI. Medallion's gold motes are particles with their own faint halos, as the v7 sky's warm stars are, not a glow on the icon.
+10. **No padlock on a locked icon or in its menu**, because a closed padlock means Blocked. The lock shows in words on a drag and in the menu, which has no glyphs.
 11. **Hide has Undo.** Lock and Unlock need none.
 12. **Needs you wins the dot** over Update ready; the quick card names both.
 13. **One server info bar entry.** It counts Ready by default; Quests in this zone stays as a choice, and existing users keep it.
@@ -471,19 +496,35 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
 17. **Follow Umbra lives with the palettes** in Settings › Themes, not in About.
 18. **The 1.21 "New chapters" line moves into Tonight** when the card leaves.
 19. **No new tokens.** Tide, copper and the cool moonlight glow are all existing tokens.
+20. **The server info bar's moon is "◐"**, lit on the left like every Tsukimichi moon, not the plan's "◑".
+21. **The Orrery's art motif is the one motif that centres on the subject**, under the rules in W2.
+22. **1.21.0 and 1.22.0 are painted now**, so no player can open a popup page without its art.
 
 ## Open questions for the owner
 
-1. **The moon in the server info bar.** The plan writes "◑". The game font may not draw it; the shipped entry draws "☾". If "◑" is missing in game, should it fall back to "☾", or to one of the game's own bitmap icons?
-2. **The backfill paintings.** The briefs for 1.14.0 to 1.18.0, 1.21.0 and 1.22.0 are in W2. Do they suit you, or would you like other subjects for any of them?
+1. **The moon in the server info bar.** The renders use "◐" (lit on the left) in place of the plan's "◑". The game font may draw neither; the shipped entry draws "☾". If "◐" is missing in game, should it fall back to "☾", or to one of the game's own bitmap icons?
+2. **The backfill paintings.** The briefs for 1.14.0 to 1.18.0 are in W2. Do they suit you, or would you like other subjects for any of them?
 
 ## Not verified
 
-- **Glyph coverage:** whether the game font draws "◑" (M1).
+- **Glyph coverage:** whether the game font draws "◐" (M1).
 - **Umbra's saved settings:** where Umbra keeps its toolbar side, height, auto-hide and colour profile, and whether Tsukimichi can read them, are unverified. The rule for when it can't is in M3.
 - **Fine detail in game:** the particles and the art grade are checked in the mock only, not in game at 1x and 4K.
 - **Dalamud's installer:** the sketch in `update-ready-1.22.png` is not a capture.
 
 ## Approval record (realism supervisor)
 
-_Filled in below as the rounds complete._
+- **Round 1: CHANGES.** 4 Major, 14 Minor and 14 Nit findings, no Blocker:
+  - **Major:** "You were on" used Tertiary on Full cards (3.8:1); the 150 % render let page 1 set the height, so the footer would move; the Aether particles put a shard above the crescent (a banned motif) on a face-on orbit; and 1.22.0's painting, the first page anyone sees, was a stand-in, with an impossible "1 of 2 · You were on 1.18.0" example.
+  - **Minor:** a snowflake inside the crescent's earthshine and star-like flakes in the sky; the far range brighter than the sky on the left (front-lit, not backlit); the gibbous sliver invisible; the Orrery motif crossing the subject, clipped and broken, with free radial ticks reading as sun rays; Sumi's flecks busy and outside the corners; the Aether flash painted as a dark disc; "◑" lit on the right; a black band under the game's server info bar; identical status notes at the three levels; a padlock and a sun-like gear in the menus; the Umbra missing state illegible and giving two reasons; the book meaning both Up next and Journal; page 2's last line crowding the footer.
+  - **Nits:** crescent horns not opposite; polka-dot maria; tuft rims on the wrong side; too many stars under a near-full moon; the tree without a shadow; Sumi's earthshine lifted; the motes' warm halo against Decision 9; Classic labelled "Brass rim"; the Quiet header; the bullet at 150 %; mixed dates; a dangling "·"; wrapped chips; the missing bar not rendered.
+- **After round 1**, every finding was fixed in the art, the mock and this spec:
+  - "You were on" is Secondary.
+  - The notes block is the tallest page's height plus 14 px, capped at 80 % of the screen with scrolling; the 150 % pair shows page 3 fitting and page 4 scrolling, with the footer in the same place.
+  - The Aether orbit is tilted and its far half is hidden, and the flash is additive.
+  - 1.22.0 and 1.21.0 are painted; the six-theme boards are pages 3 and 4 of 4, and the states board leads with 1.22.0, page 1 of 4.
+  - Flakes avoid the moon and the sky; the far range is capped at 0.9× the sky; the sliver and the crescent use true terminators; the maria are joined grey chains.
+  - The Orrery motif follows its exemption rules; Sumi's dust stays in the top quarter of the corners.
+  - The entry uses "◐" with no band; the status note has Quiet and Plain forms; the menu has no glyphs and the Umbra Settings icon is a real cog.
+  - The missing state is legible with one reason and renders its bar; Up next uses the quest icon; page 4 has room under its last line; and every Nit is addressed.
+

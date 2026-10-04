@@ -21,6 +21,8 @@ RELEASES = {
     # moon position and radius in the 1120 x 440 base (the orrery motif centres on it)
     "evercold": {"moon": (0.815, 0.20, 18.0)},
     "answers": {"moon": (0.585, 0.235, 25.0)},
+    "welcome": {"moon": (0.20, 0.21, 20.0)},
+    "whatnext": {"moon": (0.80, 0.22, 12.0)},
 }
 
 # Grade per theme. lift/gain are added/multiplied per channel; sat scales chroma; split tone tints shadows and
@@ -114,8 +116,11 @@ def motif_shards(px, rel):
     lit = np.zeros((h, w), np.float32)
     dark = np.zeros((h, w), np.float32)
     edge = np.zeros((h, w), np.float32)
+    mx, my, mr = RELEASES[rel]["moon"]
     for fx, fy, s, rot in shards:
         cx, cy = fx * w, fy * h
+        if math.hypot(cx - mx * w, cy - my * h) < 5 * mr:   # never near the moon (no crystal over a crescent)
+            continue
         ca, sa = math.cos(rot), math.sin(rot)
         pts = [(0, -s * 1.7), (s * 0.55, 0), (0, s * 1.2), (-s * 0.6, -0.1 * s)]
         P = [(cx + x * ca - y * sa, cy + x * sa + y * ca) for x, y in pts]
@@ -132,32 +137,51 @@ def motif_shards(px, rel):
 
 
 def motif_orrery(px, rel):
-    """Orrery: two hairline orbits about the moon at the 28-degree tilt, a 12-notch scale on the inner one, one bead."""
+    """Orrery: the one motif that centres on the subject, by its nature (an orrery is the sky's instrument). Rules:
+    whole ellipses only, every point inside the art band with an 8 px margin, never nearer the disc than 1.5 r (so no
+    orbit crosses or hides behind the moon), and the scale is a graduated hairline ring, never free radial ticks."""
     h, w, _ = px.shape
     mx, my, mr = RELEASES[rel]["moon"]
     mx, my = mx * w, my * h
     tilt = math.radians(-28)
 
-    def ell(d, ss, rx, ry, a0, a1, width):
-        pts = []
-        for i in range(181):
-            t = math.radians(a0 + (a1 - a0) * i / 180)
+    def pts_of(rx, ry):
+        out = []
+        for i in range(241):
+            t = 2 * math.pi * i / 240
             x, y = rx * math.cos(t), ry * math.sin(t)
-            pts.append(((mx + x * math.cos(tilt) - y * math.sin(tilt)) * ss, (my + x * math.sin(tilt) + y * math.cos(tilt)) * ss))
-        d.line(pts, fill=255, width=width)
+            out.append((mx + x * math.cos(tilt) - y * math.sin(tilt), my + x * math.sin(tilt) + y * math.cos(tilt)))
+        return out
+
+    def fits(pts):
+        return all(8 <= x <= w - 8 and 8 <= y <= h * 0.62 for x, y in pts)
+
+    orbits = []
+    for rx, ry in ((mr * 4.2, mr * 1.6), (mr * 6.6, mr * 2.4)):
+        p = pts_of(rx, ry)
+        while not fits(p) and rx > mr * 2.2:   # shrink to fit; never below 1.5 r from the disc
+            rx, ry = rx * 0.92, max(mr * 1.5, ry * 0.95)
+            p = pts_of(rx, ry)
+        if fits(p):
+            orbits.append((rx, ry, p))
 
     def draw(d, ss):
-        ell(d, ss, mr * 4.2, mr * 1.6, -150, 150, ss)
-        ell(d, ss, mr * 7.5, mr * 2.8, 200, 320, ss)
+        for _, _, p in orbits:
+            d.line([(x * ss, y * ss) for x, y in p], fill=255, width=ss)
+        rr = mr * 1.6
+        d.ellipse([(mx - rr) * ss, (my - rr) * ss, (mx + rr) * ss, (my + rr) * ss], outline=255, width=ss)
         for k in range(12):
             t = math.radians(k * 30)
-            r1, r2 = mr * 1.55, mr * 1.80
-            d.line([((mx + r1 * math.cos(t)) * ss, (my + r1 * math.sin(t)) * ss), ((mx + r2 * math.cos(t)) * ss, (my + r2 * math.sin(t)) * ss)], fill=200, width=ss)
+            r1, r2 = mr * 1.6, mr * 1.78
+            d.line([((mx + r1 * math.cos(t)) * ss, (my + r1 * math.sin(t)) * ss), ((mx + r2 * math.cos(t)) * ss, (my + r2 * math.sin(t)) * ss)], fill=255, width=ss)
 
     m = mask_draw(w, h, draw)
-    px = over(px, hexc("#EAD3A0"), m * 0.30)
+    px = over(px, hexc("#EAD3A0"), m * 0.20)
+    if not orbits:
+        return px
+    rx, ry, _ = orbits[0]
     t = math.radians(-35)
-    bx, by = mr * 4.2 * math.cos(t), mr * 1.6 * math.sin(t)
+    bx, by = rx * math.cos(t), ry * math.sin(t)
     bxx, byy = mx + bx * math.cos(tilt) - by * math.sin(tilt), my + bx * math.sin(tilt) + by * math.cos(tilt)
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     bead = np.exp(-((xx - bxx) ** 2 + (yy - byy) ** 2) / (2 * 1.6 ** 2))
@@ -167,22 +191,32 @@ def motif_orrery(px, rel):
 
 def motif_kinpaku(px, rel):
     """Sumi to Kinpaku: sunago, gold-leaf flecks dusted into the upper corners; cut edges, a few catching the light."""
+    # sunago is mostly dust: fine gold grains (<= 1 px) thinning out from each upper corner across its top quarter,
+    # and only 7 cut leaf pieces per corner; a couple of pieces catch the light
     h, w, _ = px.shape
     rng = np.random.default_rng(12)
     gold = np.zeros((h, w), np.float32)
     bright = np.zeros((h, w), np.float32)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     for corner_x in (0.0, 1.0):
-        for _ in range(42):
-            r = rng.random() ** 1.8
-            ang = rng.random() * math.pi / 2
-            fx = corner_x + (r * 0.30 * math.cos(ang)) * (1 if corner_x == 0 else -1)
-            fy = r * 0.62 * math.sin(ang) * 0.9
-            s = 1.2 + rng.random() ** 2 * 4.5
+        sgn = 1 if corner_x == 0 else -1
+        for i in range(110):
+            r = rng.random() ** 2.2
+            fx = corner_x + sgn * r * 0.24 * rng.random() ** 0.5
+            fy = r * 0.25 * rng.random() ** 0.6
+            cx, cy = fx * w, fy * h
+            g = np.exp(-((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * (0.35 + 0.25 * rng.random()) ** 2))
+            gold = np.maximum(gold, g * (0.85 - 0.6 * r))
+        for i in range(7):
+            r = rng.random() ** 1.5
+            fx = corner_x + sgn * (0.02 + r * 0.16)
+            fy = 0.02 + r * 0.17 * rng.random()
+            s = 1.6 + rng.random() * 2.2
             cx, cy = fx * w, fy * h
             pts = [(cx + s * math.cos(a) * (0.6 + rng.random() * 0.6), cy + s * math.sin(a) * (0.6 + rng.random() * 0.6)) for a in sorted(rng.random(4) * math.pi * 2)]
             m = mask_draw(w, h, lambda d, ss: d.polygon([(x * ss, y * ss) for x, y in pts], fill=255))
-            gold = np.maximum(gold, m * (0.55 + 0.45 * (1 - r)))
-            if rng.random() < 0.22:
+            gold = np.maximum(gold, m * (0.9 - 0.4 * r))
+            if i < 2:
                 bright = np.maximum(bright, m)
     px = over(px, hexc("#C9A24E"), gold * 0.85)
     px = over(px, hexc("#F4DA92"), bright * 0.7)

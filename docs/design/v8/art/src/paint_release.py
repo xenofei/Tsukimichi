@@ -97,6 +97,42 @@ def conifer(c, cx, base, hgt, wid, seed, tiers=10):
     return body, tiermasks
 
 
+def crescent(c, mx, my, mr, ux, uy, k):
+    """A crescent with a true (elliptical) terminator, so its horns are diametrically opposite. (ux, uy) points toward
+    the sun; k is the terminator's half-width as a fraction of the radius (0 = half moon, 1 = new moon)."""
+    dx, dy = (c.xx - mx) / mr, (c.yy - my) / mr
+    a = dx * ux + dy * uy
+    b = -dx * uy + dy * ux
+    rr = np.sqrt(dx * dx + dy * dy)
+    disc = np.clip((1 - rr) * mr + 0.5, 0, 1)
+    term = k * np.sqrt(np.clip(1 - b * b, 0, 1))
+    lit = np.clip((a - term) * mr + 0.5, 0, 1) * disc
+    return disc, lit
+
+
+def flakes(c, n, seed, avoid, sky_bottom, near_scale=1.0):
+    """Falling snow: few, slow, larger and softer the nearer they are. No flake over the moon, and no small (far,
+    sharp) flake against the sky or the ridges, where it would read as a star."""
+    rng = np.random.default_rng(seed)
+    out = np.zeros((c.h, c.w), np.float32)
+    mx, my, mr = avoid
+    for _ in range(n):
+        x, y = rng.random() * c.w, rng.random() * c.h
+        z = rng.random() ** 2
+        r = 1.3 + 6.5 * z * near_scale
+        a = 0.55 - 0.32 * z
+        if math.hypot(x - mx, y - my) < mr + 3 * r + 4:
+            continue
+        if r < 4.0 and y < sky_bottom:
+            continue
+        x0, x1 = int(max(0, x - 3 * r)), int(min(c.w, x + 3 * r + 1))
+        y0, y1 = int(max(0, y - 3 * r)), int(min(c.h, y + 3 * r + 1))
+        yy, xx = np.mgrid[y0:y1, x0:x1]
+        k = np.exp(-(((xx - x) ** 2 + (yy - y) ** 2) / (2 * (r * 0.55) ** 2)))
+        out[y0:y1, x0:x1] = np.maximum(out[y0:y1, x0:x1], k * a)
+    return out
+
+
 # ======================================================================================================
 # 1.20.0 Before Evercold
 # ======================================================================================================
@@ -122,10 +158,8 @@ def evercold():
     ux, uy = gx - mx, (gy + 0.25 * H) - my
     n = math.hypot(ux, uy)
     ux, uy = ux / n, uy / n
-    disc = c.ellipse(mx, my, mr, mr, 0.7)
-    cover = c.ellipse(mx - ux * mr * 0.58, my - uy * mr * 0.58, mr * 1.02, mr * 1.02, 0.9)
-    lit = np.clip(disc - cover, 0, 1)
-    c.over(hexc("#2B3767"), disc * 0.55)  # earthshine: the dark limb a shade over the sky
+    disc, lit = crescent(c, mx, my, mr, ux, uy, 0.62)
+    c.over(hexc("#22305E"), disc * 0.40)  # earthshine: the dark limb barely a shade over the sky
     c.add(hexc("#F6EAD2"), np.exp(-(c.radial(mx, my, mr * 3.2)) ** 2 * 1.6) * 0.07)
     c.over(hexc("#F6EDD8"), lit)
     c.over(hexc("#D9CDB6"), lit * np.clip(c.radial(mx + ux * mr * 0.7, my + uy * mr * 0.7, mr * 1.4), 0, 1) * 0.35)
@@ -142,10 +176,18 @@ def evercold():
     fslope = np.gradient(blur(np.repeat(far[None, :], 3, 0), 14)[1])
     ffacing = np.clip(np.where(xs < gx, 1, -1) * fslope * 1.4, -1, 1)
     depth = np.exp(-np.clip(c.yy - far[None, :], 0, None) / 90) * (0.6 + 0.8 * fbm(H, W, 26, 3, 23))
-    farcol = farcol + (hexc("#9E93BE") - farcol) * (np.clip(ffacing, 0, 1)[None, :] * depth * 0.45)[..., None]
+    near_pass = np.exp(-((xs - gx) / (0.25 * W)) ** 2)[None, :]
+    farcol = farcol + (hexc("#9E93BE") - farcol) * (np.clip(ffacing, 0, 1)[None, :] * near_pass * depth * 0.45)[..., None]
     farcol = farcol + (hexc("#434A7E") - farcol) * (np.clip(-ffacing, 0, 1)[None, :] * depth * 0.35)[..., None]
     snow_n = fbm(H, W, 60, 5, 21)
-    farcol = farcol + (hexc("#A7A9CF") - farcol) * (np.clip((snow_n - 0.50) * 3, 0, 1) * smooth(hz, far.min(), c.yy) * 0.30)[..., None]
+    farcol = farcol + (hexc("#A7A9CF") - farcol) * (np.clip((snow_n - 0.50) * 3, 0, 1) * smooth(hz, far.min(), c.yy) * 0.22 * (0.4 + 0.6 * near_pass))[..., None]
+    # a backlit range is never brighter than the sky behind it: cap it at 0.9x the sky's luminance at its ridgeline
+    ridge_rows = np.clip(far.astype(int) - 3, 0, H - 1)
+    sky_at = c.px[ridge_rows, np.arange(W)]
+    sky_l = blur(np.repeat((sky_at @ np.array([0.2126, 0.7152, 0.0722], np.float32))[None, :], 3, 0), 24)[1]
+    far_l = farcol @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    k = np.minimum(1.0, 0.9 * sky_l[None, :] / np.maximum(far_l, 1e-4))
+    farcol = farcol * k[..., None]
     c.over(farcol, m_far)
     rim_strength = np.exp(-((xs - gx) / (0.20 * W)) ** 2) * 0.80 + 0.03
     rim = np.clip(c.below_curve(far, 1.0) - c.below_curve(far + 2.5, 1.2), 0, 1) * rim_strength[None, :]
@@ -250,20 +292,8 @@ def evercold():
     c.add(hexc("#F4CDB4"), lip * 0.45)
     c.add(hexc("#E8BFB0"), blur(lip, 3) * 0.25)
 
-    # falling snow: few, slow, larger and softer the nearer they are
-    rng = np.random.default_rng(91)
-    flakes = np.zeros((H, W), np.float32)
-    for _ in range(70):
-        x, y = rng.random() * W, rng.random() * H
-        z = rng.random() ** 2
-        r = 1.3 + 6.5 * z
-        a = 0.55 - 0.32 * z
-        x0, x1 = int(max(0, x - 3 * r)), int(min(W, x + 3 * r + 1))
-        y0, y1 = int(max(0, y - 3 * r)), int(min(H, y + 3 * r + 1))
-        yy, xx = np.mgrid[y0:y1, x0:x1]
-        k = np.exp(-(((xx - x) ** 2 + (yy - y) ** 2) / (2 * (r * 0.55) ** 2)))
-        flakes[y0:y1, x0:x1] = np.maximum(flakes[y0:y1, x0:x1], k * a)
-    c.over(hexc("#E6EAF8"), flakes)
+    # falling snow: few, slow, larger and softer the nearer they are; never over the moon, never star-like in the sky
+    c.over(hexc("#E6EAF8"), flakes(c, 90, 91, (mx, my, mr), base + 12))
 
     v = c.radial(W * 0.55, H * 0.45, W * 0.75, H * 0.85)
     c.mul(hexc("#05070F"), np.clip(v - 0.55, 0, 1) * 0.45)
@@ -278,18 +308,26 @@ def moon_disc(c, mx, my, mr, seed=3):
     d = c.radial(mx, my, mr)
     disc = np.clip((1 - d) * mr / 1.2 + 0.5, 0, 1)
     col = np.stack([np.full((c.h, c.w), v, np.float32) for v in hexc("#F3EFE3")], -1)
+    # the seas as connected chains, as the near side shows them: Procellarum and Imbrium on the left, Serenitatis,
+    # Tranquillitatis and Fecunditatis running down the right, Nubium below; one union at one opacity, ragged edges
     seas = np.zeros((c.h, c.w), np.float32)
-    for (sx, sy, rx, ry) in [(-0.30, -0.28, 0.30, 0.24), (0.02, -0.30, 0.22, 0.18), (0.22, -0.04, 0.24, 0.20),
-                             (-0.45, 0.05, 0.22, 0.34), (-0.12, 0.10, 0.18, 0.14), (0.30, 0.30, 0.14, 0.12),
-                             (0.44, -0.30, 0.10, 0.09), (-0.20, 0.42, 0.16, 0.10)]:
-        seas = np.maximum(seas, c.ellipse(mx + sx * mr, my + sy * mr, rx * mr, ry * mr, mr * 0.10))
-    seas *= 0.75 + 0.25 * fbm(c.h, c.w, mr * 0.22, 3, seed)
-    col = col + (hexc("#9DA6BF") - col) * (seas * 0.55)[..., None]
+    chains = [[(-0.42, -0.18, 0.20, 0.26), (-0.50, 0.10, 0.18, 0.28), (-0.38, 0.32, 0.16, 0.16), (-0.24, -0.32, 0.22, 0.17), (-0.10, -0.24, 0.12, 0.10)],
+              [(0.04, -0.34, 0.17, 0.14), (0.18, -0.16, 0.16, 0.15), (0.30, 0.04, 0.18, 0.14), (0.40, 0.24, 0.12, 0.13), (0.50, -0.30, 0.09, 0.08)],
+              [(-0.16, 0.30, 0.15, 0.10), (-0.02, 0.36, 0.10, 0.08)]]
+    for chain in chains:
+        for (sx, sy, rx, ry) in chain:
+            seas = np.maximum(seas, c.ellipse(mx + sx * mr, my + sy * mr, rx * mr, ry * mr, 0.6))
+    seas = blur(seas, mr * 0.08) * (0.78 + 0.22 * fbm(c.h, c.w, mr * 0.18, 3, seed))
+    col = col + (hexc("#A3A39C") - col) * (np.clip(seas, 0, 1) * 0.50)[..., None]
     limb = np.clip(d, 0, 1) ** 3
     col = col + (hexc("#C9C3B4") - col) * (limb * 0.35)[..., None]
-    # the thin unlit sliver on the upper left (the sun is under the horizon, lower right)
-    cover = c.ellipse(mx - mr * 1.86, my - mr * 0.80, mr * 1.05, mr * 1.05, 1.0)
-    term = np.clip(cover * disc, 0, 1)
+    # the thin unlit sliver on the upper left (the sun is under the horizon, lower right): about 0.09 r deep
+    # a true terminator: an ellipse from horn to horn, 0.09 r wide at the limb's middle, nothing at the horns
+    ux, uy = 0.919, 0.395
+    dx, dy = (c.xx - mx) / mr, (c.yy - my) / mr
+    a = dx * ux + dy * uy
+    b = -dx * uy + dy * ux
+    term = np.clip((-0.91 * np.sqrt(np.clip(1 - b * b, 0, 1)) - a) * mr + 0.5, 0, 1) * disc
     c.add(hexc("#DCE6FF"), np.exp(-(c.radial(mx, my, mr * 4.5)) ** 2 * 2.2) * 0.16)
     c.add(hexc("#C8D6FF"), np.exp(-(c.radial(mx, my, mr * 12)) ** 2 * 2.0) * 0.10)
     c.over(col, disc)
@@ -309,7 +347,7 @@ def answers():
         t = min(1.0, max(0.0, y / hz))
         return 0.03 + 0.22 * t ** 2
 
-    stars(c, 420, 23, hz * 0.97, sky_lum, near_moon=(mx, my, mr), warm=0.08)
+    stars(c, 230, 23, hz * 0.97, sky_lum, near_moon=(mx, my, mr), warm=0.08)  # a near-full moon washes out the faint ones
     moon_disc(c, mx, my, mr)
 
     xs = np.arange(W, dtype=np.float32)
@@ -403,6 +441,8 @@ def answers():
     canopy = blur(np.clip(canopy, 0, 1).astype(np.float32), 0.7)
     trunk = c.poly([(tx - 4, ty), (tx + 4, ty), (tx + 2.5, ty - 70), (tx - 2.5, ty - 70)], 0.6)
     treem = np.maximum(canopy, trunk)
+    # its shadow: faint and foreshortened, toward the viewer and right, away from the moon (up and left of it)
+    c.mul(hexc("#0A1222"), c.poly([(tx - 5, ty), (tx + 5, ty), (tx + 96, ty + 30), (tx + 40, ty + 34)], 4) * 0.45)
     c.over(hexc("#0B1322"), treem)
     rimt = np.clip(treem - np.roll(np.roll(treem, 2, axis=1), 2, axis=0), 0, 1)  # edges facing up-left, toward the moon
     c.add(hexc("#8EA4D6"), rimt * 0.45)
@@ -440,7 +480,10 @@ def answers():
             w0 = 2.0 + rng.random() * 2.2
             tuft = np.maximum(tuft, c.poly([(bx - w0, H + 2), (bx + w0, H + 2), (bx + lean + 0.6, H - hgt), (bx + lean - 0.6, H - hgt)], 0.6))
     c.over(hexc("#08101B"), tuft)
-    tips = np.clip(tuft - np.roll(np.roll(tuft, 2, axis=0), -1, axis=1), 0, 1) * smooth(H, H - 0.30 * H, c.yy)
+    # rims on the edges that face the moon: up and right for the left tuft, up and left for the right one
+    rim_l = np.clip(tuft - np.roll(np.roll(tuft, 2, axis=0), -1, axis=1), 0, 1)
+    rim_r = np.clip(tuft - np.roll(np.roll(tuft, 2, axis=0), 1, axis=1), 0, 1)
+    tips = np.where(c.xx < mx, rim_l, rim_r) * smooth(H, H - 0.30 * H, c.yy) * 1.4
     c.add(hexc("#7F96C8"), tips * 0.35)
 
     v = c.radial(W * 0.55, H * 0.42, W * 0.78, H * 0.85)
@@ -448,8 +491,239 @@ def answers():
     return c
 
 
+def hills(c, hz, xs, light_x, layers):
+    """Layered far hills under a night sky: moonlit on the slopes that face light_x, haze where each meets the next."""
+    for i, (yb, amp, top, bot, seed, haze, f) in enumerate(layers):
+        n = fbm1d(c.w, c.w / f, 7, 40 + seed)
+        ridge = yb - c.h * amp * (0.30 + 2.6 * (n - 0.28).clip(0) ** 1.2)
+        m = c.below_curve(ridge, 1.3)
+        col = c.vgrad([(0, top), (1, bot)], ridge.min(), yb + 0.08 * c.h)
+        sl = np.gradient(blur(np.repeat(ridge[None, :], 3, 0), 16)[1])
+        facing = np.clip(np.where(xs < light_x, -1, 1) * sl * 2.0 + 0.2, 0, 1)
+        lit = facing[None, :] * np.exp(-np.clip(c.yy - ridge[None, :], 0, None) / (26 + 10 * i)) * (0.55 + 0.8 * fbm(c.h, c.w, 30, 3, 60 + i))
+        col = col + (hexc("#5F78AE") - col) * (lit * (0.40 - 0.1 * i))[..., None]
+        c.over(col, m)
+        c.add(hexc("#6E86C0"), np.exp(-((c.yy - yb) / 16) ** 2) * haze * 0.30 * m)
+
+
+def bezier(p0, p1, p2, p3, n=60):
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, cc, dd = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+        pts.append((a * p0[0] + b * p1[0] + cc * p2[0] + dd * p3[0], a * p0[1] + b * p1[1] + cc * p2[1] + dd * p3[1]))
+    return pts
+
+
+def band(c, path, w0, w1, soft):
+    left, right = [], []
+    for i, (x, y) in enumerate(path):
+        w = w0 + (w1 - w0) * i / (len(path) - 1)
+        left.append((x - w / 2, y))
+        right.append((x + w / 2, y))
+    return c.poly(left + right[::-1], soft)
+
+
+# ======================================================================================================
+# 1.22.0 Welcome home: a door left open on a lit hall
+# ======================================================================================================
+def welcome():
+    """Two lights: the near-full moon high on the left, in front of the viewer, so it backlights the house (the front
+    is in shadow, the roof and the left wall carry a cool rim, and the house's moon shadow falls toward the viewer and
+    right); and the warm hall seen through the open door, which spills a widening pool down the path toward you."""
+    c = Canvas(W, H)
+    hz = 0.64 * H
+    c.px = c.vgrad([(0, "#060B20"), (0.40, "#0E1A3C"), (0.80, "#1E2E5C"), (1.0, "#2E4278")], 0, hz)
+    c.px[int(hz):] = hexc("#2E4278")
+    mx, my, mr = 0.20 * W, 0.21 * H, 40.0
+    c.add(hexc("#5D78B8"), np.exp(-(c.radial(mx, my, 0.45 * W, 0.6 * H)) ** 2 * 2.0) * 0.28)
+
+    def sky_lum(y):
+        t = min(1.0, max(0.0, y / hz))
+        return 0.03 + 0.22 * t ** 2
+
+    stars(c, 220, 31, hz * 0.97, sky_lum, near_moon=(mx, my, mr), warm=0.08)
+    moon_disc(c, mx, my, mr, seed=5)
+    xs = np.arange(W, dtype=np.float32)
+    hills(c, hz, xs, mx, [(hz + 4, 0.060, "#283863", "#2E4070", 7, 0.45, 2.0), (hz + 0.045 * H, 0.050, "#1C2A47", "#243552", 8, 0.35, 3.0)])
+    gtop = hz + 0.085 * H
+    ground = c.below_curve(np.full(W, gtop, np.float32) - 5 * fbm1d(W, 240, 4, 19), 1.5)
+    gcol = c.vgrad([(0, "#24364F"), (0.35, "#192839"), (1, "#0B1420")], gtop, H)
+    blades = fbm(H, W, 2.5, 2, 22)
+    gcol = gcol + (hexc("#5C7394") - gcol) * (np.clip((blades - 0.62) * 3, 0, 1) * 0.12 * smooth(gtop + 0.1 * H, H, c.yy))[..., None]
+    c.over(gcol, ground)
+
+    # the house, right of centre: facade in the moon's shadow, a cool rim on the roof's left slope and the left wall
+    x0, yb = 0.565 * W, 0.80 * H
+    x1 = 0.795 * W
+    wall_top = yb - 0.20 * H
+    peak = (0.5 * (x0 + x1), wall_top - 0.15 * H)
+    # its moon shadow first: toward the viewer and right, soft, over the ground
+    c.mul(hexc("#0A1220"), c.poly([(x0, yb), (x1, yb), (x1 + 0.17 * W, H + 20), (x0 + 0.08 * W, H + 20)], 14) * 0.45)
+    facade = c.poly([(x0, yb), (x1, yb), (x1, wall_top), (x0, wall_top)], 0.6)
+    roof = c.poly([(x0 - 18, wall_top + 4), peak, (x1 + 18, wall_top + 4)], 0.6)
+    chim = c.poly([(x1 - 92, wall_top - 0.10 * H), (x1 - 66, wall_top - 0.10 * H), (x1 - 66, wall_top - 0.02 * H), (x1 - 92, wall_top - 0.02 * H)], 0.6)
+    body = np.maximum(np.maximum(facade, roof), chim)
+    fcol = c.vgrad([(0, "#1B2234"), (1, "#141A29")], wall_top, yb)
+    stonew = fbm(H, W, 5, 2, 37)
+    fcol = fcol * (0.92 + 0.14 * stonew)[..., None]
+    c.over(fcol, facade)
+    c.over(hexc("#121826"), np.maximum(roof, chim))
+    # cool rim: the roof's left slope and the chimney top face the moon
+    rim = np.clip(body - np.roll(np.roll(body, 2, axis=0), 2, axis=1), 0, 1) * (c.xx < peak[0] + 30)
+    rim = np.maximum(rim, np.clip(chim - np.roll(chim, 2, axis=0), 0, 1))
+    c.add(hexc("#9FB2E0"), rim * 0.55)
+    # smoke from the chimney, lit faintly by the moon, drifting right
+    cx_ = x1 - 79
+    sy0 = wall_top - 0.10 * H
+    up = np.clip(sy0 - c.yy, 0, None)
+    smoke = np.exp(-((c.xx - (cx_ + up * 0.6)) / (5 + up * 0.10)) ** 2) * np.clip(up / 18, 0, 1) * np.clip(1 - up / 210, 0, 1) * fbm(H, W, 20, 3, 71)
+    c.add(hexc("#8A96C0"), blur(smoke, 3) * 0.20)
+
+    # the open door: a warm hall inside, its jamb in depth on the left, the door leaf swung in on the right
+    dx0, dx1, dy0 = 0.655 * W, 0.700 * W, yb - 0.125 * H
+    door = c.poly([(dx0, yb), (dx1, yb), (dx1, dy0), (dx0, dy0)], 0.5)
+    hall = c.vgrad([(0, "#E59A55"), (0.55, "#FFC27E"), (1, "#FFD9A0")], dy0, yb)
+    lamp = np.exp(-((c.xx - (dx0 + dx1) / 2 - 6) ** 2 + (c.yy - (dy0 + 26)) ** 2) / (2 * 14 ** 2))
+    hall = 1 - (1 - hall) * (1 - hexc("#FFF0CC") * (lamp * 0.8)[..., None])
+    c.over(hall, door)
+    jamb = c.poly([(dx0, yb), (dx0 + 9, yb - 4), (dx0 + 9, dy0 + 6), (dx0, dy0)], 0.5)
+    c.over(hexc("#7A4A26"), jamb * 0.85)
+    leaf = c.poly([(dx1, yb), (dx1 - 14, yb - 6), (dx1 - 14, dy0 + 8), (dx1, dy0)], 0.5)
+    c.over(hexc("#3A2416"), leaf)
+    c.add(hexc("#FFB466"), blur(door, 10) * 0.40 * (1 - door))
+    # two windows, warm, with mullions
+    win = np.zeros((H, W), np.float32)
+    for wx in (0.600 * W, 0.755 * W):
+        win = np.maximum(win, c.poly([(wx - 22, yb - 0.115 * H), (wx + 22, yb - 0.115 * H), (wx + 22, yb - 0.065 * H), (wx - 22, yb - 0.065 * H)], 0.5))
+    mull = ((np.abs(c.xx - 0.600 * W) < 1.6) | (np.abs(c.xx - 0.755 * W) < 1.6) | (np.abs(c.yy - (yb - 0.09 * H)) < 1.6)) * win
+    c.over(hexc("#FFC57E"), win)
+    c.over(hexc("#2A1B12"), mull)
+    c.add(hexc("#FFB466"), blur(win, 9) * 0.30 * (1 - win))
+
+    # the spill: a pool widening down the path from the door sill, fading with distance; the window pools are faint
+    dcx = (dx0 + dx1) / 2
+    dist = np.clip(c.yy - yb, 0, None)
+    wid = (dx1 - dx0) / 2 + dist * 0.9
+    spill = np.exp(-((c.xx - dcx) / np.maximum(wid, 1)) ** 4) * (c.yy > yb) / (1 + dist / 60) ** 1.4
+    for wx in (0.600 * W, 0.755 * W):
+        spill = spill + np.exp(-((c.xx - wx) / (30 + dist * 0.6)) ** 2) * (c.yy > yb) * np.exp(-dist / 40) * 0.25
+    c.add(hexc("#FFB062"), np.clip(spill, 0, 1) * 0.55)
+
+    # the stone path from the viewer to the door: stones lit warm near the door, cool and dim further out
+    path = bezier((0.47 * W, H + 30), (0.52 * W, 0.93 * H), (0.62 * W, 0.86 * H), (dcx, yb + 2))
+    pm = band(c, path, 220, 44, 1.2)
+    stones = fbm(H, W, 5, 3, 91)
+    joints = np.exp(-((stones - 0.5) / 0.05) ** 2)
+    pcol = c.vgrad([(0, "#3A4560"), (1, "#222A3C")], yb, H)
+    pcol = pcol * (0.85 + 0.25 * stones)[..., None]
+    pcol = pcol + (hexc("#0C111C") - pcol) * (joints * 0.5)[..., None]
+    pcol = 1 - (1 - pcol) * (1 - hexc("#FFB062") * (np.clip(spill, 0, 1) * 0.65)[..., None])
+    c.over(pcol, pm)
+    # two shrubs by the door, warm on the side that faces it, dark otherwise
+    for sx, sr in ((dx0 - 46, 30), (dx1 + 50, 26)):
+        top = yb - sr * 1.25 + 7 * fbm1d(W, 9, 3, int(sx)) + (((xs - sx) / (sr * 1.1)) ** 2) * sr * 1.2
+        sh = c.below_curve(top, 1.0) * (np.abs(c.xx - sx) < sr * 1.15) * (c.yy < yb + 2)
+        sh = blur(sh.astype(np.float32), 0.8)
+        c.over(hexc("#0C1420"), sh)
+        side = 1 if sx < dcx else -1
+        c.add(hexc("#FFB062"), np.clip(sh - np.roll(sh, -3 * side, axis=1), 0, 1) * 0.5)
+
+    v = c.radial(W * 0.55, H * 0.45, W * 0.78, H * 0.85)
+    c.mul(hexc("#03050C"), np.clip(v - 0.55, 0, 1) * 0.5)
+    return c
+
+
+# ======================================================================================================
+# 1.21.0 What next, for every character: a lantern at a crossroads, paths to several lights
+# ======================================================================================================
+def whatnext():
+    """Late twilight. The sun has set off to the right: a faint warm afterglow low on that side, and a young crescent
+    lit on its lower-right limb, toward it. On the ground, one local light: a lantern on a post by a waystone at a
+    crossroads. Its pool is foreshortened; the waystone is warm on the lantern side and throws its shadow away from it.
+    Four paths leave the crossroads; three run toward distant lights (a hamlet, a tower, a farm): every character's
+    next step."""
+    c = Canvas(W, H)
+    hz = 0.60 * H
+    c.px = c.vgrad([(0, "#070D25"), (0.40, "#10204A"), (0.78, "#24406E"), (1.0, "#3C5A88")], 0, hz)
+    c.px[int(hz):] = hexc("#3C5A88")
+    c.add(hexc("#D9A07A"), np.exp(-(c.radial(1.05 * W, hz + 0.02 * H, 0.45 * W, 0.22 * H)) ** 2 * 1.6) * 0.30)
+    mx, my, mr = 0.80 * W, 0.22 * H, 24.0
+
+    def sky_lum(y):
+        t = min(1.0, max(0.0, y / hz))
+        return 0.04 + 0.32 * t ** 2
+
+    stars(c, 260, 41, hz * 0.95, sky_lum, near_moon=(mx, my, mr), warm=0.06)
+    ux, uy = (1.02 * W - mx), (hz + 0.15 * H - my)
+    n = math.hypot(ux, uy)
+    disc, lit = crescent(c, mx, my, mr, ux / n, uy / n, 0.55)
+    c.over(hexc("#1E3260"), disc * 0.35)
+    c.add(hexc("#F6EAD2"), np.exp(-(c.radial(mx, my, mr * 3)) ** 2 * 1.6) * 0.06)
+    c.over(hexc("#F6EDD8"), lit)
+    xs = np.arange(W, dtype=np.float32)
+    hills(c, hz, xs, 1.0 * W, [(hz + 4, 0.065, "#263962", "#2C416E", 11, 0.45, 2.2), (hz + 0.045 * H, 0.050, "#1B2A46", "#223451", 12, 0.35, 3.2)])
+    gtop = hz + 0.085 * H
+    ground = c.below_curve(np.full(W, gtop, np.float32) - 5 * fbm1d(W, 240, 4, 29), 1.5)
+    gcol = c.vgrad([(0, "#26394F"), (0.35, "#1B2A3A"), (1, "#0C1520")], gtop, H)
+    c.over(gcol, ground)
+
+    # three distant lights where the paths lead
+    lights = [(0.17 * W, hz + 0.030 * H, 4), (0.43 * W, hz - 0.035 * H, 3), (0.71 * W, hz + 0.050 * H, 3)]
+    lm = np.zeros((H, W), np.float32)
+    for lx, ly, k in lights:
+        for j in range(k):
+            lm = np.maximum(lm, c.ellipse(lx + j * 9 - k * 4, ly + (j % 2) * 3, 2.2, 2.6, 0.5))
+    # the tower on the middle hill, a dark silhouette under its light
+    tx = 0.43 * W
+    c.over(hexc("#141E33"), c.poly([(tx - 9, hz + 0.01 * H), (tx + 9, hz + 0.01 * H), (tx + 6, hz - 0.03 * H), (tx, hz - 0.05 * H), (tx - 6, hz - 0.03 * H)], 0.6))
+    c.add(hexc("#FFC77A"), lm)
+    c.add(hexc("#FFB060"), blur(lm, 6) * 1.6)
+
+    # the paths: one toward the viewer, three out to the lights; pale dust under the sky's light
+    X = (0.52 * W, 0.80 * H)
+    paths = [bezier((0.44 * W, H + 30), (0.47 * W, 0.92 * H), (0.50 * W, 0.84 * H), X),
+             bezier(X, (0.40 * W, 0.76 * H), (0.25 * W, 0.70 * H), (lights[0][0], gtop + 2)),
+             bezier(X, (0.49 * W, 0.74 * H), (0.45 * W, 0.70 * H), (lights[1][0], gtop + 2)),
+             bezier(X, (0.60 * W, 0.75 * H), (0.68 * W, 0.71 * H), (lights[2][0], gtop + 2))]
+    pm = band(c, paths[0], 230, 40, 1.2)
+    for p in paths[1:]:
+        pm = np.maximum(pm, band(c, p, 38, 6, 1.0))
+    pm *= np.clip((c.yy - gtop) / 22, 0, 1) ** 0.8
+    dust = fbm(H, W, 6, 3, 13)
+    pcol = c.vgrad([(0, "#5F7098"), (0.4, "#45537A"), (1, "#28324C")], gtop, H) * (0.88 + 0.2 * dust)[..., None]
+    c.over(pcol, pm)
+    c.mul(hexc("#0B1220"), np.clip(blur(pm, 5) - pm, 0, 1) * 0.7)
+
+    # the lantern post and the waystone at the crossroads
+    lx, ly = X[0] + 70, X[1] - 4
+    lamp_y = ly - 0.13 * H
+    dist = np.sqrt(((c.xx - lx) / 1.0) ** 2 + ((c.yy - ly) / 0.38) ** 2)
+    pool = np.exp(-(dist / 150) ** 2) * (c.yy > ly - 30)
+    c.add(hexc("#FFB466"), pool * 0.42)
+    # the waystone, left of the lantern: its shadow falls away from the lantern, left and slightly toward the viewer
+    wx, wy, wr = X[0] - 10, X[1] + 4, 20
+    c.mul(hexc("#0A1220"), c.poly([(wx - 4, wy), (wx + 6, wy + 2), (wx - 120, wy + 26), (wx - 128, wy + 14)], 4) * 0.55)
+    stone = c.poly([(wx - wr, wy), (wx + wr, wy), (wx + wr * 0.7, wy - wr * 2.3), (wx - wr * 0.2, wy - wr * 2.8), (wx - wr * 0.9, wy - wr * 2.0)], 0.6)
+    c.over(hexc("#2C3448"), stone)
+    c.add(hexc("#FFB466"), np.clip(stone - np.roll(stone, -3, axis=1), 0, 1) * 0.7)
+    c.add(hexc("#8EA4D6"), top_edge(stone, 2) * 0.3)
+    # the post and the lantern
+    c.over(hexc("#181A24"), c.poly([(lx - 3, ly), (lx + 3, ly), (lx + 2.5, lamp_y), (lx - 2.5, lamp_y)], 0.5))
+    c.over(hexc("#181A24"), c.poly([(lx - 2, lamp_y + 2), (lx + 22, lamp_y + 2), (lx + 22, lamp_y + 6), (lx - 2, lamp_y + 6)], 0.5))
+    lan = c.poly([(lx + 14, lamp_y + 8), (lx + 30, lamp_y + 8), (lx + 28, lamp_y + 32), (lx + 16, lamp_y + 32)], 0.5)
+    c.over(hexc("#FFD08A"), lan)
+    c.add(hexc("#FFB060"), blur(lan, 8) * 1.4)
+    c.add(hexc("#FFB466"), np.exp(-((c.xx - lx - 22) ** 2 + (c.yy - lamp_y - 20) ** 2) / (2 * 60 ** 2)) * 0.18)
+
+    v = c.radial(W * 0.55, H * 0.45, W * 0.78, H * 0.85)
+    c.mul(hexc("#03050C"), np.clip(v - 0.55, 0, 1) * 0.5)
+    return c
+
+
 if __name__ == "__main__":
-    evercold().save(OUT / "evercold-base.png", OUTSIZE, grain=0.012, seed=1)
-    print("evercold-base.png")
-    answers().save(OUT / "answers-base.png", OUTSIZE, grain=0.012, seed=2)
-    print("answers-base.png")
+    import sys
+    jobs = {"evercold": evercold, "answers": answers, "welcome": welcome, "whatnext": whatnext}
+    for name in sys.argv[1:] or jobs:
+        jobs[name]().save(OUT / f"{name}-base.png", OUTSIZE, grain=0.012, seed=len(name))
+        print(f"{name}-base.png")

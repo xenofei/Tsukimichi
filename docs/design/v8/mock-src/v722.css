@@ -11,7 +11,7 @@
 .shot22 .board{flex:none;overflow:visible}
 .b22 .row{flex-wrap:wrap;gap:22px}
 .b22 figure{width:min-content}
-.b22 figure figcaption{min-width:240px}
+.b22 figure figcaption{min-width:200px}
 .b22 h3{margin:4px 0 0;font:400 15px/1.2 Marcellus,Georgia,serif;color:#F4F1E8}
 .b22 .note{font-size:12px;color:#A9B2CC;line-height:1.45;max-width:1380px}
 .b22 .note b{color:#DDE3F0;font-weight:600}
@@ -35,7 +35,7 @@
 .mk.full.wn22 .cm.d{right:-2px;bottom:-2px;border-right-width:1.5px;border-bottom-width:1.5px;border-color:#B79755}
 .wn22 .wh{display:flex;align-items:center;gap:9px;height:40px;padding:0 10px 0 14px}
 .wn22 .wh .ey{font:600 12.5px/1 "Barlow Condensed",sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--gilthi)}
-.wn22 .wh .vc{margin-left:auto;font-size:11px;color:var(--dusk)}
+.wn22 .wh .vc{margin-left:auto;font-size:11px;color:var(--mist)}
 .wn22 .wh .x{width:22px;height:22px;border-radius:11px;display:grid;place-items:center;color:var(--mist);border:1px solid transparent}
 .wn22 .wh .x svg{width:10px;height:10px}
 .wn22 .art{margin:0 12px;height:176px;border-radius:3px;overflow:hidden;position:relative;flex:none}
@@ -43,10 +43,13 @@
 .wn22 .art::after{content:"";position:absolute;inset:0;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(8,11,22,.65),inset 0 1px 0 rgba(255,240,190,.10)}
 .wn22 .wtt{margin:13px 16px 0;font:400 21px/1.2 Marcellus,Georgia,serif;color:var(--silver)}
 .wn22 .wst{margin:3px 16px 0;font-size:11.5px;color:var(--mist)}
-.wn22 .pts{margin:12px 16px 0;padding:0;list-style:none;height:236px}
+.wn22 .ptw{position:relative;margin:12px 16px 0;height:250px;overflow:hidden}
+.wn22 .pts{margin:0;padding:0 10px 0 0;list-style:none}
+.wn22 .sbar{position:absolute;right:0;top:0;bottom:0;width:5px;border-radius:3px;background:rgba(255,255,255,.06)}
+.wn22 .sbar i{position:absolute;left:0;right:0;top:0;height:64%;border-radius:3px;background:rgba(221,227,240,.38)}
 .wn22 .pts li{position:relative;padding-left:15px;margin:0 0 9px;font-size:12.5px;line-height:1.48;color:var(--mist)}
 .wn22 .pts li b{color:var(--silver);font-weight:600}
-.wn22 .pts li::before{content:"";position:absolute;left:1px;top:7px;width:5px;height:5px;border-radius:3px;background:var(--gilt)}
+.wn22 .pts li::before{content:"";position:absolute;left:1px;top:calc(.74em - 2.5px);width:5px;height:5px;border-radius:3px;background:var(--gilt)}
 .wn22 .wf{display:flex;align-items:center;height:46px;padding:0 12px 0 16px;border-top:1px solid var(--line);margin-top:4px}
 .wn22 .wf .al{font-size:12px;color:var(--mist);border-bottom:1px dotted var(--vline)}
 .wn22 .wf .pg22{margin:0 auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--silver)}
@@ -85,14 +88,14 @@
 .mk.plain.wn22 .wh .ey{font:600 12px/1 "Noto Sans",sans-serif;letter-spacing:0;text-transform:none;color:var(--silver)}
 .mk.plain.wn22 .wtt{font:600 15px/1.25 "Noto Sans",sans-serif;margin-top:10px}
 .mk.plain.wn22 .pts li::before{border-radius:0;width:4px;height:4px;background:var(--silver)}
-.mk.plain.wn22 .pts{height:212px}
+.mk.plain.wn22 .ptw{height:226px}
 .mk.plain.wn22 .wf{height:30px;background:#0D1018}
 .mk.plain.wn22 .pg22 .rb{border-radius:2px;width:20px;height:20px}
 /* text size 150 %: the same width, the notes reflow and the popup grows to its tallest page */
 .wn22.big .wtt{font-size:28px}
 .wn22.big .wst{font-size:15px}
 .wn22.big .pts li{font-size:17.5px}
-.wn22.big .pts{height:auto}
+.wn22.big .ptw{height:340px}
 
 /* ---------- the theme's moon icon (H1) ---------- */
 .mi22{display:inline-block;flex:none;overflow:visible;vertical-align:middle}
@@ -193,6 +196,9 @@
 .sb22 .up .dt{width:7px;height:7px;border-radius:4px;background:#6F8FD0}
 .sb22 .up .b{padding:2px 10px;border-radius:10px;background:var(--hover);color:var(--silver);font-weight:600}
 .sb22 .up .x{color:var(--mist);padding:0 5px}
+.mk.quiet.sb22 .up{background:none;border-color:var(--line)}
+.mk.plain.sb22 .up{background:none;border:0;border-radius:0;padding:0}
+.mk.plain.sb22 .up .b{border-radius:2px;background:var(--raised);border:1px solid var(--line);font-weight:500}
 .mk.tip22{width:300px;flex:none;padding:10px 12px;border-radius:5px;background:rgba(22,27,45,.98);border:1px solid #3A4260;box-shadow:0 10px 24px rgba(0,0,0,.5);font-size:12px;color:var(--silver);line-height:1.45}
 .tip22 b{font-weight:600}
 .tip22 ul{margin:6px 0 6px;padding-left:16px;color:var(--mist)}
@@ -218,7 +224,7 @@
 .dl22 .cl ul{margin:4px 0 0;padding-left:18px;color:#B8B8B8}
 
 /* ---------- the game's server info bar (M1) ---------- */
-.dtr22{display:flex;align-items:center;gap:16px;height:24px;padding:0 12px;background:linear-gradient(180deg,rgba(0,0,0,.0),rgba(0,0,0,.35) 30%,rgba(0,0,0,.35) 70%,rgba(0,0,0,0));font:500 13px/1 "Segoe UI","Noto Sans",sans-serif;color:#EEE9DD;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000}
+.dtr22{display:flex;align-items:center;gap:16px;height:24px;padding:0 12px;white-space:nowrap;font:500 13px/1 "Segoe UI","Noto Sans",sans-serif;color:#EEE9DD;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000}
 .dtr22 .e{display:inline-flex;align-items:center;gap:5px}
 .dtr22 .e.hv{color:#FFFFFF}
 .dtr22 .mo{font-size:13.5px}
