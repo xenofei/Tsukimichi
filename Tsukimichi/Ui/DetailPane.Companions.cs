@@ -20,7 +20,9 @@ namespace Tsukimichi.Ui;
 /// Integrations › "Allow AutoDuty to queue in the regular Duty Finder") the Duty Finder. The button is always shown;
 /// disabled, its tooltip says why (<see cref="AutoDutyPlan.Choose"/>: AutoDuty or what it needs is missing, a stored
 /// character, no path, not unlocked, no Duty Support or Trust). While AutoDuty runs, the status bar says so and offers
-/// Stop, as the action row's pill does; the section itself never grows a line for it (feature plan v6, U4).
+/// Stop, as the action row's pill does; the section itself never grows a line for it (feature plan v6, U4). For a
+/// quest the spoiler shield masks, each duty is named "A duty further along the story" and wears the veiled moon
+/// rather than its icon (<see cref="DutyBoardSource.ShownDutyName"/>).
 /// </para>
 /// <para>
 /// <b>Open in Quest Map</b>, a small button at the end of the Path section, disabled with the reason while Quest Map is
@@ -35,8 +37,8 @@ public sealed partial class DetailPane
 
     private static readonly Localization.LocText QuestMapLabel = new(static () => Strings.QuestMapOpen + "##questMap");
 
-    /// <summary>One duty row as of the last refresh.</summary>
-    private sealed record DutyRow(QuestDuty Duty, string Caption, bool? HasPath, bool? Unlocked, string RunId);
+    /// <summary>One duty row as of the last refresh; <paramref name="Name"/> through the spoiler shield, <paramref name="Masked"/> when it is the stand-in.</summary>
+    private sealed record DutyRow(QuestDuty Duty, string Name, bool Masked, string Caption, bool? HasPath, bool? Unlocked, string RunId);
 
     private readonly List<DutyRow> dutyRows = [];
     private uint dutyRowId = uint.MaxValue;
@@ -87,9 +89,12 @@ public sealed partial class DetailPane
         }
 
         var duties = QuestDuties.For(quest, index, session.Curated, RewardEntries?.Invoke(quest.RowId));
+        QuestRecord[] shownThrough = [quest];
+        var masked = session.Spoilers.HidesDuty(shownThrough);
         foreach (var duty in duties)
         {
             var info = duty.Duty;
+            var name = DutyBoardSource.ShownDutyName(info, shownThrough, session.Spoilers);
             var hasPath = autoDuty.HasPath(info.TerritoryTypeId);
             bool? unlocked = session.IsLive && info.InstanceContentId != 0 ? IsDutyUnlocked?.Invoke(info.InstanceContentId) : null;
             var relation = duty.Relation == QuestDutyRelation.Required ? Strings.AutoDutyRelationRequired : Strings.AutoDutyRelationUnlocks;
@@ -99,7 +104,7 @@ public sealed partial class DetailPane
                 false => relation + Strings.AutoDutyCaptionSeparator + Strings.AutoDutyNoPath,
                 _ => relation,
             };
-            dutyRows.Add(new DutyRow(duty, caption, hasPath, unlocked, "##autoDuty" + info.ContentFinderConditionId.ToString(CultureInfo.InvariantCulture)));
+            dutyRows.Add(new DutyRow(duty, name, masked, caption, hasPath, unlocked, "##autoDuty" + info.ContentFinderConditionId.ToString(CultureInfo.InvariantCulture)));
         }
     }
 
@@ -186,7 +191,7 @@ public sealed partial class DetailPane
         dl.AddRectFilled(start, wellMax, Theme.U32(Theme.Surface.Sunken), rounding);
         dl.AddRect(start, wellMax, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         var inset = new Vector2(UiMetrics.Px(3f));
-        var icon = row.Duty.Duty.Icon;
+        var icon = row.Masked ? 0u : row.Duty.Duty.Icon;
         if (icon == 0 || !GameIcon.DrawAt(dl, textures, icon, start + inset, wellMax - inset, UiMetrics.Px(3f)))
         {
             MoonGlyph.DrawVeiled(dl, (start + wellMax) * 0.5f, well * 0.32f, 0.6f);
@@ -194,9 +199,9 @@ public sealed partial class DetailPane
 
         var textX = wellMax.X + UiMetrics.Px(8f);
         ImGui.SetCursorScreenPos(new Vector2(textX, start.Y));
-        if (Chrome.EllipsisText(row.Duty.Duty.Name, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
+        if (Chrome.EllipsisText(row.Name, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(row.Duty.Duty.Name);
+            UiMetrics.Tooltip(row.Name);
         }
 
         ImGui.SetCursorScreenPos(new Vector2(textX, ImGui.GetCursorScreenPos().Y));
@@ -234,7 +239,7 @@ public sealed partial class DetailPane
         var result = autoDuty.Run(row.Duty.Duty.TerritoryTypeId, choice.Mode);
         ShowCompanionNote(result switch
         {
-            AutoDutyStart.Started => string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyStartedFormat, row.Duty.Duty.Name),
+            AutoDutyStart.Started => string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyStartedFormat, row.Name),
             AutoDutyStart.ModeRefused => Strings.AutoDutyModeRefused,
             AutoDutyStart.NotStarted => Strings.AutoDutyNotStarted,
             _ => Strings.AutoDutyUnreachable,

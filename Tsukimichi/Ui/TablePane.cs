@@ -126,10 +126,11 @@ public sealed class TablePane : IDisposable
     public Func<QuestRecord, QuestState, RowChip?>? RowChips { get; set; }
 
     /// <summary>
-    /// The viewed character's journal is full (1.19.0, C9; spec-1.19 "In rows and the hero"): a Ready row reads "Ready ·
-    /// ● journal full", the copper dot before the words in Text. Set by the window each frame.
+    /// The viewed character's journal slots (1.19.0, C9; spec-1.19 "In rows and the hero"): a row the full journal keeps
+    /// out (<see cref="Core.Journal.JournalSlots.KeepsOut"/>) reads "Ready · ● journal full", the copper dot before the
+    /// words in Text. Null without a capture. Set by the window each frame.
     /// </summary>
-    public bool JournalFull { get; set; }
+    public Core.Journal.JournalSlots? Journal { get; set; }
 
     /// <summary>"Use Tsukimichi's answer" in a row's "…" menu (1.19.0, C1) for a quest the player went with the game on; null leaves it out.</summary>
     public GameAnswerActions? GameAnswers { get; set; }
@@ -1653,6 +1654,7 @@ public sealed class TablePane : IDisposable
         }
 
         var nameLine = DrawNameLine(quest, name, nameInk, nameCellMin, nameCellWidth, moreShown, moreSize, in layout);
+        var keepsOut = Journal is { } journal && journal.KeepsOut(quest, row.State);
 
         // Two-line rows: the status on the second line, from the name's left edge to the cell's end (short of the "…"
         // while it shows, since the button sits on both lines).
@@ -1666,7 +1668,7 @@ public sealed class TablePane : IDisposable
             var lineWidth = nameCellWidth - (moreShown ? moreSize + gap : 0f);
             var lineChip = hasSnapshot ? RowChips?.Invoke(quest, row.State) : null;
             var lineChipRoom = lineChip is { } shownChip ? RowChipView.Width(shownChip) + UiMetrics.Px(6f) : 0f;
-            statusCut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, lineWidth - lineChipRoom), JournalFull, rowHovered);
+            statusCut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, lineWidth - lineChipRoom), keepsOut, rowHovered);
             if (lineChip is { } trailingChip && lineChipRoom < lineWidth)
             {
                 RowChipView.Draw(trailingChip, new Vector2(nameCellMin.X + lineWidth - RowChipView.Width(trailingChip), secondLineY), rowHovered);
@@ -1716,7 +1718,7 @@ public sealed class TablePane : IDisposable
             var statusCellWidth = ImGui.GetContentRegionAvail().X;
             var chip = hasSnapshot ? RowChips?.Invoke(quest, row.State) : null;
             var chipRoom = chip is { } shown ? RowChipView.Width(shown) + UiMetrics.Px(6f) : 0f;
-            var cut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, statusCellWidth - chipRoom), JournalFull, rowHovered);
+            var cut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, statusCellWidth - chipRoom), keepsOut, rowHovered);
             if (chip is { } trailing && chipRoom < statusCellWidth)
             {
                 RowChipView.Draw(trailing, new Vector2(statusCellMin.X + statusCellWidth - RowChipView.Width(trailing), statusCellMin.Y), rowHovered);
@@ -2206,10 +2208,11 @@ public sealed class TablePane : IDisposable
     /// snapshot) the whole line is in the tertiary tone. Returns whether the reason was cut. The rule is
     /// <see cref="Chrome.StatusText"/>'s, drawn with raw colour pushes so a row allocates nothing.
     /// </summary>
-    private static bool DrawStatus(string text, QuestState state, bool hasSnapshot, float cellWidth, bool journalFull = false, bool rowHovered = false)
+    private static bool DrawStatus(string text, QuestState state, bool hasSnapshot, float cellWidth, bool keepsOut = false, bool rowHovered = false)
     {
-        // A full journal keeps a Ready quest out (1.19.0, C9): "· ● journal full" closes the line, its room set aside first.
-        if (journalFull && hasSnapshot && state is QuestState.Ready or QuestState.ReadyOnOtherJob)
+        // A full journal keeps the quest out (1.19.0, C9; the caller asked JournalSlots.KeepsOut): "· ● journal full"
+        // closes the line, its room set aside first.
+        if (keepsOut && hasSnapshot)
         {
             var full = JournalFullWidth();
             var cut = DrawStatus(text, state, hasSnapshot, MathF.Max(1f, cellWidth - full));

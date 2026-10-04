@@ -18,7 +18,9 @@ namespace Tsukimichi.Ui;
 /// tone: "i110 needed · you're i108 (DRG) · WAR gearset i112" before Patch 8.0, "i110 needed · you're i108" from 8.0
 /// (<see cref="ItemLevelRule"/> reads which from the game data), with "Your SGE (i705) also qualifies. Duty Support
 /// checks item level too." under it in Tertiary. No Switch gearset button for the wall (spec decision 6). The lines
-/// are built when the selection, the session version, the duty index, the duty source or the language changes.
+/// are built when the selection, the session version, the duty index, the duty source or the language changes. For a
+/// quest the spoiler shield masks, each duty is named "A duty further along the story" (as the Duties board names it,
+/// <see cref="DutyBoardSource.ShownDutyName"/>); its badges and wall stay.
 /// </summary>
 public sealed partial class DetailPane
 {
@@ -59,13 +61,14 @@ public sealed partial class DetailPane
         var story = source is null ? null : StoryRequirements.For(bundle.Catalog, source);
         var rule = ItemLevelRule.For(bundle.Catalog);
         var queues = bundle.DutyJobs();
+        QuestRecord[] shownThrough = [quest];
         foreach (var duty in duties)
         {
             var info = duty.Duty;
             bool? storyRequired = story?.IsStoryDuty(info.ContentFinderConditionId, info.InstanceContentId);
             var badges = DutyBadgeRules.For(info, storyRequired).Select(b => DutyBadges.Describe(b, info, index.Roulettes)).ToArray();
             var (wall, note) = WallLines(ItemLevelWall.For(info, session.ViewedSnapshot, rule, queues), info, bundle.Names);
-            clearRows.Add(new ClearRow(info.Name, badges, wall, note));
+            clearRows.Add(new ClearRow(DutyBoardSource.ShownDutyName(info, shownThrough, session.Spoilers), badges, wall, note));
         }
 
         clearCaption = duties.Count == 1

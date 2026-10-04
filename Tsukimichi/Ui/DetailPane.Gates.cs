@@ -17,12 +17,15 @@ namespace Tsukimichi.Ui;
 /// gets the third verdict, a hollow Dusk ring, its plain-words label, "can't check", the line that says where the gate
 /// was confirmed, and two quiet buttons: <b>I've done this</b> (marks the gate passed for the character on view, with
 /// the floating Undo) and <b>Where to start</b> (selects the quest that opens what the gate needs). A gate the player
-/// marked reads as a check, "you said so".
+/// marked reads as a check, "you said so", with a quiet <b>Take back</b> under it (the "…" menu has it too, as it has
+/// "Use Tsukimichi's answer"), which reads the gate as can't check again, with its own Undo. The marks are per quest:
+/// the curated gates are keyed by the quest they stand before and carry no id of their own.
 /// </summary>
 public sealed partial class DetailPane
 {
     private static readonly string MarkDoneIcon = FontAwesomeIcon.Check.ToIconString();
     private static readonly string StartIcon = FontAwesomeIcon.ArrowRight.ToIconString();
+    private static readonly string TakeBackIcon = FontAwesomeIcon.Undo.ToIconString();
 
     /// <summary>The character on view when the model was built (the one "I've done this" marks); null for none.</summary>
     private ulong? lastViewed;
@@ -33,10 +36,10 @@ public sealed partial class DetailPane
     /// <summary>The Requirements line of a game gate Tsukimichi can't check, or one the player marked passed.</summary>
     private static RequirementLine GateLine(SessionState session, CatalogBundle bundle, QuestRecord quest, GameGateRequirement gate, RequirementLine line)
     {
-        var label = gate.Gate.Length == 0 ? line.Label : char.ToUpper(gate.Gate[0], CultureInfo.CurrentCulture) + gate.Gate[1..];
+        var label = GateLabel(gate.Gate, line.Label);
         if (gate.MarkedByYou)
         {
-            return line with { Label = label, Detail = Strings.GateYouSaidSo };
+            return line with { Label = label, Detail = Strings.GateYouSaidSo, MarkedByYou = true, MarkRowId = session.ViewedContentId is not null ? quest.RowId : 0 };
         }
 
         var start = StartOf(session, bundle.Catalog.GameGateOf(quest.RowId));
@@ -55,6 +58,10 @@ public sealed partial class DetailPane
             JumpRowId = 0,
         };
     }
+
+    /// <summary>The gate's phrase with its first letter raised ("Floor 50 of the Palace of the Dead cleared"); <paramref name="fallback"/> when it has none.</summary>
+    private static string GateLabel(string gate, string fallback) =>
+        gate.Length == 0 ? fallback : char.ToUpper(gate[0], CultureInfo.CurrentCulture) + gate[1..];
 
     /// <summary>"The game doesn't show plugins this. From the wiki, confirmed by 2 sources."; null without sources.</summary>
     private static string? SourceLine(GameGateRequirement gate)
@@ -90,11 +97,28 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// Under a can't-check line: the source line (caption size, Dusk) and the quiet buttons. Returns the new bottom.
+    /// Under a can't-check line: the source line (caption size, Dusk) and the quiet buttons; under a "you said so" line,
+    /// Take back. Returns the new bottom.
     /// </summary>
     private float DrawGateExtras(RequirementLine line, float left, float top, float room)
     {
         var bottom = top;
+        if (line.MarkedByYou)
+        {
+            if (line.MarkRowId == 0 || Characters is null || lastViewed is null)
+            {
+                return bottom;
+            }
+
+            ImGui.SetCursorScreenPos(new Vector2(left, bottom + UiMetrics.Px(4f)));
+            if (Chrome.ActionPill("##gateTakeBack", TakeBackIcon, Strings.GateTakeBack, PillTone.Quiet, enabled: true, Strings.GateTakeBackTooltip, PillLayout.Row))
+            {
+                SetGateDone(line.MarkRowId, line.Label, done: false);
+            }
+
+            return MathF.Max(bottom, ImGui.GetItemRectMax().Y);
+        }
+
         if (line.Source is { } source)
         {
             ImGui.SetCursorScreenPos(new Vector2(left, top + UiMetrics.Px(2f)));
@@ -120,7 +144,7 @@ public sealed partial class DetailPane
         var any = false;
         if (canMark && Chrome.ActionPill("##gateDone", MarkDoneIcon, Strings.GateMarkDone, PillTone.Quiet, enabled: true, Strings.GateMarkDoneTooltip, PillLayout.Row))
         {
-            MarkGateDone(line);
+            SetGateDone(line.MarkRowId, line.Label, done: true);
         }
 
         any |= canMark;
@@ -140,18 +164,43 @@ public sealed partial class DetailPane
         return MathF.Max(bottom, ImGui.GetItemRectMax().Y);
     }
 
-    /// <summary>"I've done this": marks the gate for the character on view, with the floating Undo (8 s).</summary>
-    private void MarkGateDone(RequirementLine line)
+    /// <summary>
+    /// "I've done this" (<paramref name="done"/>) or Take back: marks or unmarks the gate of <paramref name="rowId"/> for
+    /// the character on view, with the floating Undo (8 s) that puts it back.
+    /// </summary>
+    private void SetGateDone(uint rowId, string label, bool done)
     {
-        if (Characters is not { } book || lastViewed is not { } contentId)
+        if (Characters is not { } book || lastViewed is not { } contentId || rowId == 0)
         {
             return;
         }
 
-        var rowId = line.MarkRowId;
-        book.Edit(CharacterSettingChange.GateDone(contentId, rowId, true));
+        book.Edit(CharacterSettingChange.GateDone(contentId, rowId, done));
         UndoToast.Show(
-            string.Format(CultureInfo.CurrentCulture, Strings.GateMarkedToastFormat, line.Label),
-            () => book.Edit(CharacterSettingChange.GateDone(contentId, rowId, false)));
+            string.Format(CultureInfo.CurrentCulture, done ? Strings.GateMarkedToastFormat : Strings.GateTakenBackToastFormat, label),
+            () => book.Edit(CharacterSettingChange.GateDone(contentId, rowId, !done)));
+    }
+
+    /// <summary>
+    /// Take back "I've done this" in the quest's "…" menu, while the player marked its gate passed for the character on
+    /// view (as C1's "Use Tsukimichi's answer" sits there).
+    /// </summary>
+    private void DrawGateTakeBackMenuItem(QuestRecord quest)
+    {
+        if (Characters is not { } book || lastViewed is not { } contentId || !book.IsGateDone(contentId, quest.RowId))
+        {
+            return;
+        }
+
+        if (ImGui.MenuItem(Strings.GateTakeBackMenu))
+        {
+            var gate = model.Bundle?.Catalog.GameGateOf(quest.RowId)?.Gate ?? string.Empty;
+            SetGateDone(quest.RowId, GateLabel(gate, Strings.GateTakeBackMenu), done: false);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.GateTakeBackTooltip);
+        }
     }
 }
