@@ -1601,6 +1601,180 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
 .mk .pop18 .qa.pri7{color:var(--goldtx);box-shadow:inset 0 0 0 1px rgba(242,210,122,.45)}
 .mk .rc18 b{font:600 16px/1.1 "Noto Sans",sans-serif;font-variant-numeric:tabular-nums}
 
+/* ======================================================================================================
+   1.19 "Right answers" (spec-1.19.md)
+   ====================================================================================================== */
+.mk .dp19{display:flex;flex-direction:column;gap:var(--gap,10px)}
+.mk .hd19 .n{font:400 19px/1.2 Marcellus,Georgia,serif;color:var(--silver)}
+.mk.quiet .hd19 .n,.mk.plain .hd19 .n{font:600 15px/1.25 "Noto Sans",sans-serif}
+.mk .hd19 .m{font-size:11.5px;color:var(--dusk);margin-top:2px}
+.mk .st19{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:12.5px}
+.mk .st19 .sw{color:var(--goldtx);font-weight:600}
+.mk .cf19{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--mist)}
+.mk .cf19 .gi{opacity:.85}
+.mk .cf19.cu{color:var(--silver)}
+.mk .cf19.cu::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--attn)}
+/* requirements */
+.mk .rq19{display:flex;gap:8px;padding:5px 0;font-size:12.5px}
+.mk .rq19 .mk19{width:14px;flex:none;display:flex;justify-content:center;padding-top:3px}
+.mk .rq19 .mk19 svg{width:11px;height:11px}
+.mk .unk19{display:block;width:9px;height:9px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--dusk);margin-top:1px}
+.mk .rq19 .rqb{flex:1;min-width:0}
+.mk .rq19 .rqt{display:flex;gap:8px}
+.mk .rq19 .l{color:var(--silver)}
+.mk .rq19 .d{margin-left:auto;font-size:11.5px;color:var(--mist);text-align:right}
+.mk .rq19.no .d{color:var(--etext)}
+.mk .rq19.unk .d{color:var(--dusk);font-style:normal}
+.mk .rq19 .rqs{font-size:11px;color:var(--dusk);margin-top:2px;line-height:1.4}
+.mk .rq19 .rqa{display:flex;gap:6px;margin-top:5px}
+.mk .card h4 .r.unk,.mk .ps span.unk{color:var(--dusk)}
+.mk .qa19{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:12px;font-size:11.5px;color:var(--mist);box-shadow:inset 0 0 0 1px var(--line)}
+.mk.plain .qa19{border-radius:2px;height:20px}
+.mk .qa19.pri{color:var(--silver);box-shadow:inset 0 0 0 1px var(--vline)}
+/* duty badges (C7) */
+.mk .dt19{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mk .dt19 .dn{font-size:12.5px;color:var(--silver)}
+.mk .bgs{display:flex;gap:6px;flex-wrap:wrap}
+.mk .bg19{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px 0 4px;border-radius:11px;font-size:11px;color:var(--silver);background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line)}
+.mk .bg19.q{padding:0 8px;color:var(--mist)}
+.mk.plain .bg19{border-radius:2px;height:18px}
+.mk .bg19 .gi{width:14px;height:14px}
+.mk .ln19{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--mist);line-height:1.4}
+.mk .ln19 b{color:var(--silver);font-weight:500}
+.mk .ln19.wall{color:var(--etext)}
+/* rewards (C6, C8) */
+.mk .rw19{font-size:12.5px;color:var(--silver)}
+.mk .rw19.it{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-top:8px;align-items:center}
+.mk .rw19 .rbb{font-size:11.5px;color:var(--mist)}
+.mk .rw19 .rbb b{color:var(--silver);font-weight:500}
+.mk .rw19 .rwa{grid-column:2;display:flex;gap:6px}
+/* hand in (N5) */
+.mk .hi19{padding:7px 0;border-bottom:1px solid var(--line)}
+.mk .hi19:last-child{border-bottom:0}
+.mk .hi19 .hin{display:flex;gap:8px;font-size:12.5px}
+.mk .hi19 .hin b{font-weight:500;color:var(--silver)}
+.mk .hi19 .hin span{margin-left:auto;font-size:11.5px;color:var(--mist)}
+.mk .hi19 .hiw{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:11.5px;color:var(--mist)}
+.mk .hi19 .hiw b{color:var(--silver);font-weight:500}
+.mk .hi19 .hia{display:flex;gap:6px;margin-top:6px}
+.mk .lvls19{display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--silver)}
+.mk .lvls19>div{display:flex;align-items:center;gap:6px}
+.mk .lvls19>div>span:first-child{width:110px;color:var(--mist)}
+/* rows */
+.mk .rl19{display:flex;flex-direction:column}
+.mk .r19{display:grid;grid-template-columns:30px 220px 1fr 130px;align-items:center;height:34px;border-bottom:1px solid rgba(42,49,73,.4);font-size:12.5px;position:relative}
+.mk .r19::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line)}
+.mk .r19 .g{display:flex;justify-content:center}
+.mk .r19 .nm{color:var(--silver)}
+.mk .r19 .sx{color:var(--mist)}
+.mk .r19 .rd{color:var(--goldtx);font-weight:500}
+.mk .r19 .ex{text-align:right;font-size:11px}
+.mk .r19 .cf{color:var(--dusk)}
+.mk .r19 .dg{color:var(--mist);text-decoration:underline dotted;text-underline-offset:3px}
+.mk .r19.full19 .jd{color:var(--silver)}
+.mk .r19.full19 .jd::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--attn);margin-right:6px;vertical-align:1px}
+.mk .ch19{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:10px;font-size:11px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);color:var(--silver)}
+.mk .ch19.ng{color:var(--mist)}
+/* status bar */
+.mk .sb19{display:flex;align-items:center;gap:8px;height:30px;padding:0 12px;border-radius:5px;background:linear-gradient(180deg,#0E1329,#0A0E1C);box-shadow:inset 0 1px 0 rgba(217,190,130,.6);font-size:11.5px;color:var(--mist);white-space:nowrap}
+.mk .sb19 .d{color:var(--veil)}
+.mk .sb19 .msq{height:20px;border-radius:10px;background:linear-gradient(rgba(242,210,122,.16),rgba(242,210,122,.08));border:1px solid rgba(242,210,122,.35);color:var(--moon);display:inline-flex;align-items:center;gap:5px;padding:0 9px 0 3px}
+.mk .sb19 .msq img{width:16px;height:16px}
+.mk .sb19 .jt{color:var(--silver)}
+.mk .sb19 .jf{display:inline-flex;align-items:center;gap:6px;color:var(--silver)}
+.mk .sb19 .jf i{width:6px;height:6px;border-radius:50%;background:var(--attn)}
+.mk .sb19 .mr{color:var(--silver);box-shadow:inset 0 0 0 1px var(--vline);border-radius:10px;padding:0 8px;height:20px;display:inline-flex;align-items:center}
+.mk .sb19 .ng19{display:inline-flex;align-items:center;gap:6px;color:var(--silver)}
+.mk .sb19 .ver{margin-left:auto;color:var(--veil)}
+.mk .tt19{font-size:12px;color:var(--mist);line-height:1.5}
+.mk .tt19 b{color:var(--silver);font-weight:500}
+.mk .tt19 p{margin:4px 0 0}
+.mk .tt19 .hd{color:var(--silver)}
+/* make room */
+.mk .mr19 .mrh{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.mk .mr19 .mrh b{font:500 18px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--gilthi)}
+.mk.quiet .mr19 .mrh b,.mk.plain .mr19 .mrh b{font:600 14px/1 "Noto Sans",sans-serif;letter-spacing:0;text-transform:none;color:var(--silver)}
+.mk .mr19 .mrh span{font-size:12px;color:var(--mist)}
+.mk .mg19{margin-top:8px}
+.mk .mg19 .mgh{display:flex;align-items:baseline;gap:8px;font-size:12px;color:var(--silver);padding-bottom:3px;border-bottom:1px solid var(--line)}
+.mk .mg19 .mgh b{font-weight:600}
+.mk .mg19 .mgh span{font-size:11px;color:var(--dusk)}
+.mk .mi19{display:grid;grid-template-columns:24px 1fr auto auto;align-items:center;gap:8px;height:30px;font-size:12.5px}
+.mk .mi19 .nm{color:var(--silver)}
+.mk .mi19 .sx{font-size:11px;color:var(--mist)}
+.mk .mi19 .sf{font-size:11px;color:var(--silver);box-shadow:inset 0 0 0 1px var(--line);border-radius:9px;padding:1px 7px}
+.mk .mi19 .g img,.mk .mi19 .g svg{width:16px;height:16px}
+.mk .mrf{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.mk .mrf .nt{flex:1;font-size:11.5px;color:var(--mist);line-height:1.4}
+.mk .mrf .nt b{color:var(--silver);font-weight:500}
+/* duties board */
+.mk .du19{padding:6px 0 8px;border-bottom:1px solid var(--line)}
+.mk .du19:last-child{border-bottom:0}
+.mk .du19 .duh{display:flex;align-items:baseline;gap:8px;font-size:12.5px}
+.mk .du19 .duh b{color:var(--silver);font-weight:600}
+.mk .du19 .duh span{margin-left:auto;font-size:11.5px;color:var(--mist)}
+.mk .du19 .dur{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:12px;color:var(--silver)}
+.mk .du19 .dur .dq{margin-left:auto;font-size:11px;color:var(--mist)}
+.mk .du19 .dur .dq b{color:var(--silver);font-weight:500}
+.mk .du19 .dua{display:flex;gap:6px;margin-top:6px}
+.mk .du19 .more{font-size:11.5px;color:var(--mist);margin-top:5px}
+/* allied */
+.mk .al19{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.mk .al19:last-child{border-bottom:0}
+.mk .al19 b{color:var(--silver);font-weight:500}
+.mk .al19 .a{display:flex;gap:6px}
+.mk .al19 .altn{font-size:11.5px;color:var(--dusk)}
+.mk .cu19{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:11.5px;color:var(--silver)}
+.mk .cu19 i{width:6px;height:6px;border-radius:50%;background:var(--attn);flex:none}
+.mk .cu19 b{font-weight:500}
+/* events */
+.mk .ev19{display:flex;align-items:center;gap:10px;min-height:30px;font-size:12.5px;border-bottom:1px solid var(--line)}
+.mk .ev19:last-child{border-bottom:0}
+.mk .ev19 b{color:var(--silver);font-weight:500}
+.mk .ev19 span{font-size:11.5px;color:var(--mist)}
+.mk .ev19 .qa19{margin-left:auto}
+.mk .sc18 + .card,.mk .sc18 + div{margin-top:10px}
+/* search, filter, route (K3) */
+.mk .se19 .sin{display:flex;align-items:center;gap:8px;height:30px;border-radius:15px;background:var(--sunk);box-shadow:inset 0 0 0 1px #7C86A8;padding:0 12px;color:var(--silver);font-size:12.5px}
+.mk .se19 .sgh{margin:10px 0 4px;font:500 13px/1 "Barlow Condensed",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--gilthi)}
+.mk .se19 .sres{display:grid;grid-template-columns:60px auto 1fr auto;align-items:center;gap:8px;height:34px;font-size:12.5px;border-bottom:1px solid var(--line)}
+.mk .se19 .sres.q{grid-template-columns:auto 1fr}
+.mk .se19 .sres b{color:var(--silver);font-weight:500}
+.mk .se19 .sres .k{font-size:11px;color:var(--mist);background:var(--sunk);border-radius:9px;text-align:center;padding:2px 0}
+.mk .se19 .sres .via{font-size:11.5px;color:var(--mist)}
+.mk .se19 .sres .via b{font-weight:500}
+.mk .fu19 .gh{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;font-size:12px;color:var(--silver);font-weight:500}
+.mk .fu19 .gh span{margin-left:auto;font-size:11px;color:var(--silver)}
+.mk .fu19 .sch{display:flex;flex-wrap:wrap;gap:5px}
+.mk .fu19 .sc{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:13px;font-size:11.5px;border:1px solid var(--line);background:var(--sunk);color:var(--mist)}
+.mk .fu19 .sc.on{color:var(--silver);background:linear-gradient(#262D47,#1E2439);border-color:rgba(124,134,168,.55)}
+.mk .fu19 .sc.off{border-style:dashed;color:var(--dusk)}
+.mk .ro19 .rh{display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid rgba(168,139,82,.4);margin-bottom:4px}
+.mk .ro19 .rh b{font:400 16px/1.2 Marcellus,Georgia,serif;color:var(--silver)}
+.mk .ro19 .rh span{margin-left:auto;font-size:11.5px;color:var(--mist)}
+.mk .ro19 .rr{display:flex;align-items:center;gap:10px;height:34px;font-size:12.5px;color:var(--silver)}
+.mk .ro19 .rr .n{width:18px;height:18px;border-radius:50%;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);color:var(--mist);font-size:10.5px;display:flex;align-items:center;justify-content:center}
+.mk .ro19 .rr .m{margin-left:auto;font-size:11.5px;color:var(--mist)}
+.mk .ln19,.mk .hi19 .hiw{display:block}
+.mk .ln19 .gi,.mk .hi19 .hiw .gi{display:inline-block;vertical-align:-3px;margin-right:6px}
+.mk .rw19.it .rwc{white-space:nowrap}
+.mk .st19 .sw.dim{color:var(--dusk)}
+.mk .st19 .sv{color:var(--silver);font-weight:600}
+.mk .rqs19{font-size:11px;color:var(--dusk);margin-top:3px;line-height:1.4}
+.mk .cu19{display:block}
+.mk .cu19 i{display:inline-block;vertical-align:1px;margin-right:6px}
+.mk .mi19.hov{background:var(--hover,rgba(255,255,255,.05));border-radius:6px}
+.mk .mi19{grid-template-columns:24px 1fr auto auto 112px}
+.mk .mi19 .qa19{grid-column:5;justify-self:end;white-space:nowrap}
+.mk .mi19 .sf{grid-column:4}
+.mk .mi19.hov{margin:0 -6px;padding:0 6px}
+.mk .sb19{background:var(--sunk);box-shadow:inset 0 1px 0 var(--line)}
+.mk.full .sb19{box-shadow:inset 0 1px 0 rgba(217,190,130,.6)}
+.mk.night .sb19{background:linear-gradient(180deg,#0E1329,#0A0E1C)}
+.mk.snow .sb19 .msq{color:var(--goldtx);background:none;border-color:var(--goldtx)}
+.mk.snow.full .sb19{box-shadow:inset 0 1px 0 var(--goldtx)}
+.mk .st19 .ij{color:var(--silver);font-weight:500}
+
 </style>
 </head>
 <body>
@@ -1608,7 +1782,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
   <div class="pbar">
     <span class="pt"><b>Tsukimichi plan v7</b> · UI</span>
     <div class="seg" id="seg" role="group" aria-label="View">
-      <button type="button" data-v="full">Full</button><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="plain">Plain</button><button type="button" data-v="drawer">Filter drawer</button><button type="button" data-v="rail">Rail</button><button type="button" data-v="stars">Stars</button><button type="button" data-v="ba">Before / after</button><button type="button" data-v="sky">Sky</button><button type="button" data-v="giver">1.15 Givers</button><button type="button" data-v="fallbacks">Fallbacks</button><button type="button" data-v="buttons">Buttons</button><button type="button" data-v="snow-full">1.16 Snow</button><button type="button" data-v="palettes">Palettes</button><button type="button" data-v="themes">Themes page</button><button type="button" data-v="mix">1.17 Mix</button><button type="button" data-v="frames">Frames</button><button type="button" data-v="share">Share</button><button type="button" data-v="glyphwin">Glyph window</button><button type="button" data-v="palettes17">Dawn · Kugane</button><button type="button" data-v="stop">1.18 Stopped</button><button type="button" data-v="needs">Needs you</button><button type="button" data-v="preflight">Preflight</button><button type="button" data-v="auto">Automation</button><button type="button" data-v="run">Run</button>
+      <button type="button" data-v="full">Full</button><button type="button" data-v="quiet">Quiet</button><button type="button" data-v="plain">Plain</button><button type="button" data-v="drawer">Filter drawer</button><button type="button" data-v="rail">Rail</button><button type="button" data-v="stars">Stars</button><button type="button" data-v="ba">Before / after</button><button type="button" data-v="sky">Sky</button><button type="button" data-v="giver">1.15 Givers</button><button type="button" data-v="fallbacks">Fallbacks</button><button type="button" data-v="buttons">Buttons</button><button type="button" data-v="snow-full">1.16 Snow</button><button type="button" data-v="palettes">Palettes</button><button type="button" data-v="themes">Themes page</button><button type="button" data-v="mix">1.17 Mix</button><button type="button" data-v="frames">Frames</button><button type="button" data-v="share">Share</button><button type="button" data-v="glyphwin">Glyph window</button><button type="button" data-v="palettes17">Dawn · Kugane</button><button type="button" data-v="stop">1.18 Stopped</button><button type="button" data-v="needs">Needs you</button><button type="button" data-v="preflight">Preflight</button><button type="button" data-v="auto">Automation</button><button type="button" data-v="run">Run</button><button type="button" data-v="detail19">1.19 Detail</button><button type="button" data-v="rows19">Rows</button><button type="button" data-v="makeroom">Make room</button><button type="button" data-v="boards19">Boards</button><button type="button" data-v="looks19">Looks</button>
     </div>
     <div class="seg" id="ver" role="group" aria-label="Version">
       <button type="button" data-w="before">1.13</button><button type="button" data-w="">v7</button><button type="button" data-w="open">v7 + Filters</button><button type="button" data-w="open-adv">+ Advanced</button>
@@ -1643,6 +1817,7 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     "dawn-full": "1.17: Dawn, Full, with Astrologian's Orrery.", "dawn-quiet": "1.17: Dawn, Quiet.", "kugane-full": "1.17: Kugane Lacquer, Full, with Menphina's Medallion.", "kugane-quiet": "1.17: Kugane Lacquer, Quiet.",
     stop: "1.18: Why it stopped, every reason.", stoplooks: "1.18: Why it stopped at every level and palette.", needs: "1.18: Needs you.",
     preflight: "1.18: the travel preflight.", auto: "1.18: the automation level and About automation.", run: "1.18: stop controls, the receipt, the … menu.",
+    detail19: "1.19: the detail pane's right answers.", rows19: "1.19: rows, chips and the status bar.", makeroom: "1.19: Make room.", boards19: "1.19: duties, allied societies, events, unlocks.", looks19: "1.19: every look.",
     giver: "1.15: giver portraits from the game's own art, night-graded, on the medal plate; avatars in Next stops, Route and the Journal.",
     fallbacks: "1.15: the 16 race silhouettes, the moon disc, society emblems and initials, on the same plate.",
     buttons: "1.15: icon-and-label buttons with the game's own icons, per level, and how they shrink.",
@@ -4471,6 +4646,187 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     h += fig(look18("quiet", "dawn", '<div class="bar18"><span class="p18 quiet pri">Start (this quest)</span><span class="p18 quiet sm dots">' + ICON.more + "</span></div>" + menu([["Start here and keep going", "", 0], ["Do this next", "", 0]]), 400), "<b>Quiet, Dawn</b>");
     return h + "</div></div>";
   }
+  // ======================================================================================================
+  // 1.19 "Right answers": C1, C3–C10, K3, N3–N5 (spec-1.19.md). Built from the 1.15–1.18 parts: card(), the Section
+  // heading, chips, pills (p18), game icons (ic15), look18 wrappers, the colour language of 1.18.
+  // ======================================================================================================
+  function sect19(lv, title, cap, body, capCls) {
+    if (lv === "plain") return '<div class="ps">' + title + '<span class="' + (capCls || "") + '">' + (cap || "") + "</span></div>" + body;
+    return card(lv, "<h4>" + title + (cap ? '<span class="r ' + (capCls || "") + '">' + cap + "</span>" : "") + "</h4>" + body);
+  }
+  // A requirement line: verdict mark (check, cross or the hollow "can't check" ring), label, detail, optional source line.
+  function req19(kind, label, detail, sub, acts) {
+    var mark = kind === "ok" ? ICON.check : kind === "no" ? ICON.xmark : '<i class="unk19"></i>';
+    return '<div class="rq19 ' + kind + '"><span class="mk19">' + mark + '</span><div class="rqb"><div class="rqt"><span class="l">' + label + '</span><span class="d">' + detail + "</span></div>" +
+      (sub ? '<div class="rqs">' + sub + "</div>" : "") + (acts ? '<div class="rqa">' + acts + "</div>" : "") + "</div></div>";
+  }
+  function badge19(icon, label, kind) { return '<span class="bg19 ' + (kind || "") + '">' + (icon ? ic15(icon, 14, "tile") : "") + label + "</span>"; }
+  function line19(text, cls) { return '<div class="ln19 ' + (cls || "") + '">' + text + "</div>"; }
+  function qa19(label, pri) { return '<span class="qa19' + (pri ? " pri" : "") + '">' + label + "</span>"; }
+
+  // ---------- the detail pane, every 1.19 part in place (two quests) ----------
+  function detail19a(lv) {
+    // C1 (the game confirms it), C7 (badges and the item-level wall), C8 (EXP to the right job).
+    var h = "";
+    h += '<div class="hd19"><div class="n">Into the Aery</div><div class="m">Main Scenario › Heavensward · Ishgard · Lv 55</div>' +
+      '<div class="st19"><span class="sw">Ready</span><span class="cf19">' + ic15("071201", 12, "marker") + "Offered by the game · 3 Oct</span></div></div>";
+    h += sect19(lv, "Requirements", "all met",
+      req19("ok", "Level", "55, DRG is 56") + req19("ok", "Previous quest", "Ready to Fly"));
+    h += sect19(lv, "How you'll clear it", "1 duty",
+      '<div class="dt19"><div class="dn">The Aery</div><div class="bgs">' + badge19("000089", "Solo with NPCs") + badge19("", "Story-required", "q") + "</div></div>" +
+      line19("i110 needed · you're i108 (DRG) · WAR gearset i112", "wall") + '<div class="rqs19">Your SGE (i705) also qualifies. Duty Support checks item level too.</div>');
+    h += sect19(lv, "Rewards", "",
+      '<div class="rw19"><span class="rwn">50,700 EXP · 5,000 gil</span></div>' +
+      line19(ic15("062122", 14, "tile") + "Hand in on <b>DRG Lv 56</b>: 50,700 EXP (5% of a level) · your SGE is capped, 0"));
+    return h;
+  }
+  function detail19c(lv) {
+    // C3: a gate the plugin can't check.
+    var h = '<div class="hd19"><div class="n">Knocking on Heaven\'s Door</div><div class="m">Heaven-on-High · The Ruby Sea · Lv 61</div>' +
+      '<div class="st19"><span class="sw dim">Can\'t check · 1 gate</span></div></div>';
+    h += sect19(lv, "Requirements", "1 can't be checked",
+      req19("ok", "Level", "61, DRG is 100") + req19("ok", "Previous quest", "Tide Goes in, Imperials Go Out") +
+      req19("unk", "Palace of the Dead, floors 41–50", "can't check", "The game doesn't show plugins this. From the wiki, confirmed by 2 sources.", qa19("I've done this") + qa19("Where to start")), "unk");
+    return h;
+  }
+  function detail19d(lv) {
+    // C6: a reward you can buy back (a finished job quest).
+    var h = '<div class="hd19"><div class="n">Two Nations, One Seed</div><div class="m">Botanist Quests · Ishgard · Lv 55</div>' +
+      '<div class="st19"><span class="sv">Completed · 2024-11-08</span></div></div>';
+    h += sect19(lv, "Rewards", "you picked 1 of 5",
+      '<div class="rw19"><span class="rwn">836,550 EXP · 3,107 gil</span></div>' +
+      '<div class="rw19 it"><span class="rwc uq">Dhalmelskin Vest</span><span class="rbb">You picked this · not on you · buy it back from a <b>Calamity Salvager</b></span><span class="rwa">' + qa19("Flag") + qa19("Teleport") + "</span></div>" +
+      '<div class="rw19 it"><span class="rwc">Allagan Silver Piece</span><span class="rbb">Not offered by the Salvager</span></div>');
+    return h;
+  }
+  function detail19b(lv) {
+    // C8 Switch gearset (a job quest), N5 where to get hand-in items, C9 journal full.
+    var h = '<div class="hd19"><div class="n">Looking for Some Hot Stuff</div><div class="m">Culinarian Quests · Limsa Lominsa · Lv 55</div>' +
+      '<div class="st19"><span class="sw">Ready · journal full</span><span class="cf19 cu">Make room to accept it</span></div></div>';
+    h += sect19(lv, "Requirements", "1 unmet",
+      req19("no", "Job", "Culinarian · you're on Dragoon", "", '<span class="p18 ' + lv + ' sm">' + ic15("062115", 14, "tile") + "Switch gearset: Culinarian</span>") +
+      req19("ok", "Level", "55, CUL is 57") + req19("ok", "Previous quest", "A Spoonful Less Sugar"));
+    h += sect19(lv, "Hand in", "3 items",
+      '<div class="hi19"><div class="hin"><b>Kaiser Roll</b><span>0 / 1</span></div><div class="hiw">' + ic15("000022", 14, "tile") + 'Crafted · Culinarian Lv 55</div><div class="hia">' + '<span class="p18 ' + lv + ' sm">' + ic15("000022", 14, "tile") + "Craft with Artisan</span>" + "</div></div>" +
+      '<div class="hi19"><div class="hin"><b>Beet Soup</b><span>0 / 1 · 1 in your saddlebag</span></div><div class="hiw">The game counts your <b>inventory</b> only: take it out of the saddlebag.</div></div>' +
+      '<div class="hi19"><div class="hin"><b>Grilled Sweetfish</b><span>0 / 1</span></div><div class="hiw">' + ic15("060412", 14, "marker") + 'Sold by <b>Kurogai</b> · 1,053 gil · or crafted, Culinarian Lv 54</div><div class="hia">' + qa19("Flag") + qa19("Teleport") + "</div></div>");
+    return h;
+  }
+  function detail19e(lv) {
+    // N5: a gathered item. Tsukimichi names the source and opens the game's own log; it doesn't guess a node.
+    var h = '<div class="hd19"><div class="n">Sellspade</div><div class="m">Miner Quests · Ishgard · Lv 53</div>' +
+      '<div class="st19"><span class="ij">In journal</span></div></div>';
+    h += sect19(lv, "Hand in", "1 item",
+      '<div class="hi19"><div class="hin"><b>Mythrite Ore</b><span>none in your inventory</span></div><div class="hiw">' + ic15("000023", 14, "tile") + 'Mined · the Gathering Log shows the nodes</div><div class="hia">' + qa19("Open Gathering Log") + "</div></div>");
+    return h;
+  }
+  function pane19(lv, pal, fn, w) { return look18(lv, pal, '<div class="dp19">' + fn(lv) + "</div>", w || 420); }
+  function boardDetail19() {
+    var h = '<div class="board b15 b16"><h2>1.19 · Right answers in the detail pane<small>Full on Night. Everything new sits inside the existing cards, as a line under the row it explains. Copper only where the player must act (journal full). Buttons follow the automation level (1.18).</small></h2><div class="row" style="align-items:flex-start">';
+    var col = function (a) { return '<div style="display:flex;flex-direction:column;gap:14px;width:450px">' + a.join("") + "</div>"; };
+    h += col([fig(pane19("full", "night", detail19a, 440), "<b>Into the Aery</b>: C1 the game offered it · C7 badges and the item-level wall · C8 where the EXP goes"),
+      fig(pane19("full", "night", detail19c, 440), "<b>Knocking on Heaven\'s Door</b>: C3 a gate Tsukimichi can\'t check")]);
+    h += col([fig(pane19("full", "night", detail19b, 440), "<b>Looking for Some Hot Stuff</b>: C9 journal full · C8 Switch gearset (job quests only) · N5 where to get each item"),
+      fig(pane19("full", "night", detail19d, 440), "<b>Two Nations, One Seed</b>: C6 a reward you can buy back")]);
+    h += col([fig(look18("full", "night", disagree19("full"), 420), "<b>C1, when the game disagrees</b>: said plainly, with both sides; the player picks"),
+      fig(look18("full", "night", '<div class="lvls19"><b>By automation level</b>' +
+        '<div><span>Tracker only</span>' + qa19("Flag") + "</div><div><span>Travel</span>" + qa19("Flag") + qa19("Teleport") + "</div><div><span>Travel and walking</span>" + qa19("Flag") + qa19("Teleport") + "</div><div><span>Full hand-offs</span>" + qa19("Flag") + qa19("Teleport") + '<span class="p18 full sm">' + ic15("000022", 14, "tile") + "Craft with Artisan</span></div></div>", 420), "<b>N5 actions</b> appear only up to the chosen level; never greyed"),
+      fig(pane19("full", "night", detail19e, 420), "<b>Sellspade</b>: N5 for a gathered item opens the game\'s Gathering Log")]);
+    return h + "</div></div>";
+  }
+  function disagree19(lv) {
+    return '<div class="sc18 tone-you">' + (lv === "plain" ? "" : "") + card(lv, '<div class="sch">' + ic15("071201", 18, "marker") + "<b>The game and Tsukimichi disagree</b></div>" +
+      '<p class="why">The game offered <b>Sleepless in Ishgard</b> on 3 Oct, but Tsukimichi has it as Blocked: it expects <b>The Narwhal Beckons</b> first.</p><p class="ctx">One of us is wrong. The game sees your character; Tsukimichi\'s data may be out of date.</p>' +
+      '<div class="a18">' + pill18(lv, "Go with the game", true) + '<span class="cr">' + ICON.copy + "Copy report</span></div>" + '<p class="hint">Shows it as Ready on this character until the data agrees. Undo any time from the quest\'s "…".</p>') + "</div>";
+  }
+
+  // ---------- rows, the status bar and the overlay: C1, C4, C9, C10, N3 ----------
+  function row19(lv, glyphSt, name, status, extra, cls) {
+    return '<div class="r19 ' + (cls || "") + '"><span class="g">' + rowGlyph(lv, glyphSt) + '</span><span class="nm">' + name + '</span><span class="sx">' + status + "</span>" + (extra ? '<span class="ex">' + extra + "</span>" : "") + "</div>";
+  }
+  function boardRows19() {
+    var h = '<div class="board b15 b16"><h2>1.19 · Rows, chips and the status bar<small>Signals in the list stay one muted word or chip; the explanation is in the hover and the detail pane. New Game+ and the journal count live in the fixed status bar.</small></h2><div class="row" style="align-items:flex-start">';
+    var rows = row19("full", "ready", "Into the Aery", '<b class="rd">Ready</b> · Lv 55', '<span class="cf">seen in game</span>') +
+      row19("full", "ready", "Towards the Firmament", '<b class="rd">Ready</b> · Lv 60', "") +
+      row19("full", "blocked", "Sleepless in Ishgard", "Blocked · after: The Narwhal Beckons", '<span class="dg">game disagrees</span>') +
+      row19("full", "in-journal", "Grim and Grisly Games", "In journal · All Saints\' Wake", '<span class="ch19 ev">Ends in 2 days</span>') +
+      row19("full", "not-checked", "Knocking on Heaven\'s Door", "Can\'t check · Palace of the Dead 41–50", "") +
+      row19("full", "ready", "Looking for Some Hot Stuff", '<b class="rd">Ready</b> · <span class="jd">journal full</span>', "", "full19") +
+      row19("full", "completed", "Shadowbringers", "Completed · 2025-02-21", '<span class="ch19 ng">Replaying</span>');
+    h += fig(look18("full", "night", '<div class="rl19">' + rows + "</div>", 760), "<b>Table rows</b>, Full on Night: \"seen in game\" (C1), \"game disagrees\" (C1), an event ending (C10), \"Can't check\" (C3), \"journal full\" (C9), Replaying (C4)");
+    h += '<div style="display:flex;flex-direction:column;gap:14px">';
+    var sb = function (inner) { return look18("full", "night", '<div class="sb19">' + inner + "</div>", 900, ";background:transparent"); };
+    h += fig(sb('<span>65%</span><span class="d">·</span><span class="msq">' + medalImg("in-journal", 16) + "MSQ · 742 of 1,038</span><span class=\"d\">·</span><span>Journal 22/30</span><span class=\"ver\">v1.19.0</span>"), "<b>Normal</b>: the journal count shows from 25; here it is quiet");
+    h += fig(sb('<span>65%</span><span class="d">·</span><span class="msq">' + medalImg("in-journal", 16) + 'MSQ · 742 of 1,038</span><span class="d">·</span><span class="jt">Journal 28/30</span><span class="ver">v1.19.0</span>'), "<b>27–29</b>: the count in Text, \"2 slots left\" on hover");
+    h += fig(sb('<span>65%</span><span class="d">·</span><span class="msq">' + medalImg("in-journal", 16) + 'MSQ · 742 of 1,038</span><span class="d">·</span><span class="jf"><i></i>Journal full · 30/30</span><span class="mr">Make room</span><span class="ver">v1.19.0</span>'), "<b>30</b>: a copper dot beside the words (it needs you): Ready quests can\'t be accepted; Make room opens the guide");
+    var sbp = function (lv, pal) { return look18(lv, pal, '<div class="sb19">' + '<span>65%</span><span class="d">·</span><span class="msq">' + medalImg("in-journal", 16) + 'MSQ · 742 of 1,038</span><span class="d">·</span><span class="jf"><i></i>Journal full · 30/30</span><span class="mr">Make room</span><span class="ver">v1.19.0</span></div>', 900); };
+    h += fig(sbp("quiet", "snow") + sbp("plain", "dawn") + sbp("full", "kugane"), "<b>30</b> on Quiet Ishgard Snow, Plain Dawn and Full Kugane Lacquer: the same copper dot, the palette\'s own --attn");
+    h += fig(sb('<span class="ng19">' + ic15("000084", 16, "tile") + 'New Game+ · Shadowbringers – Part 2 · quest 87 of 112</span><span class="d">·</span><span>Your saved progress is kept</span><span class="mr">End session</span><span class="ver">v1.19.0</span>'), "<b>New Game+</b> (C4): the bar says so while a replay is running; End session asks first");
+    h += fig(look18("full", "night", '<div class="tt19"><b>Main scenario · 742 of 1,038 (71%)</b><p>Counts the <b>side quests the story requires</b> too: the Crystal Tower series and the Hard primal trials.</p><p>Next milestone in 6 quests.</p><p class="hd">Still to do from earlier: the Crystal Tower series, 3 alliance raids at Lv 50. The story needs it later.</p></div>', 420), "<b>N3, the story meter</b>: the MSQ pill's hover; spoiler-safe (milestones, not names, past your story point)");
+    return h + "</div></div></div>";
+  }
+
+  // ---------- C9 Make room ----------
+  function boardMakeRoom() {
+    var grp = function (t, sub, items) { return '<div class="mg19"><div class="mgh"><b>' + t + "</b><span>" + sub + "</span></div>" + items.map(function (it) { return '<div class="mi19' + (it[3] ? " hov" : "") + '"><span class="g">' + rowGlyph("full", "in-journal") + '</span><span class="nm">' + it[0] + '</span><span class="sx">' + it[1] + "</span>" + (it[2] ? '<span class="sf">safe to drop</span>' : "") + (it[3] ? qa19("Open in journal", true) : "") + "</div>"; }).join("") + "</div>"; };
+    var body = '<div class="mr19"><div class="mrh"><b>Make room</b><span>30 of 30 slots. Finish one, or drop one in the game\'s journal.</span></div>' +
+      grp("Finish now", "one talk or delivery left", [["Small Business, Big Dreams", "a talk · Old Sharlayan"], ["Grim and Grisly Games", "a talk · Gridania"]]) +
+      grp("Needs a duty", "solo or with NPCs", [["Sworn Upon a Lance", "a solo duty · Coerthas"]]) +
+      grp("Needs an item", "to hand in", [["Sellspade", "Mythrite Ore · 0 in your inventory"]]) +
+      grp("Needs a group", "other players", [["An Otherworldly Encounter", "Jeuno: The First Walk · 24 players"]]) +
+      grp("Safe to drop", "still on step 1: nothing to redo if you take it again", [["Bird in Hand", "step 1 · Central Shroud", 1, 1], ["A Faerie Tale Come True", "step 1 · Limsa Lominsa", 1]]) +
+      '<div class="mrf"><span class="nt">Tsukimichi never abandons a quest. <b>Open in journal</b> shows it in the game, where you drop it and the game asks first. Tsukimichi notes the step you had reached.</span></div></div>';
+    return '<div class="board b15 b16"><h2>1.19 · Make room<small>A popover from "Journal full" and from a Ready quest that can\'t be accepted. It groups what is in the journal by what finishing takes; safe-to-drop quests are marked. Dropping a quest is done in the game, by the player.</small></h2><div class="row" style="align-items:flex-start">' +
+      fig(look18("full", "night", body, 560), "<b>Full, Night</b>") + fig(look18("quiet", "snow", body, 560), "<b>Quiet, Ishgard Snow</b>") + fig(look18("plain", "kugane", body, 560), "<b>Plain, Kugane Lacquer</b>") + fig(look18("quiet", "dawn", body, 560), "<b>Quiet, Dawn</b>") + "</div></div>";
+  }
+
+  // ---------- N4 Duties board, C5 allied, C10 events, K3 unlocks ----------
+  function boardBoards19() {
+    var h = '<div class="board b15 b16"><h2>1.19 · Duties, allied societies, events and unlocks<small>Each lives inside an existing card or pane: the Characters dashboard (Duties, Allied societies), Tonight (events), the toolbar search and the filter drawer (unlocks). Lists show what is left, not tallies.</small></h2><div class="row" style="align-items:flex-start">';
+    var duties = sect19("full", "Duties", "1 roulette locked",
+      '<div class="du19"><div class="duh"><b>Level Cap roulette</b><span class="lk">locked · needs a Lv 100 job · best is BLM 98</span></div>' +
+      '<div class="dur"><span class="dn">Mistwake</span>' + badge19("000046", "Group of 4") + '<span class="dq">not unlocked · with <b>Beyond the Mountains</b></span></div>' +
+      '<div class="dur"><span class="dn">The Clyteum</span>' + badge19("000046", "Group of 4") + '<span class="dq">not unlocked · with <b>Two Worlds Entwined</b></span></div>' +
+      '<div class="dua">' + qa19("Route") + qa19("Pin both") + "</div></div>" +
+      '<div class="du19"><div class="duh"><b>Alliance Raids roulette</b><span class="lk">open · 1 raid not unlocked</span></div><div class="dur"><span class="dn">Jeuno: The First Walk</span>' + badge19("000017", "Group of 24") + '<span class="dq">with <b>An Otherworldly Encounter</b></span></div></div>' +
+      '<div class="du19"><div class="duh"><b>Unlocked, never cleared</b><span>14</span></div><div class="dur"><span class="dn">Castrum Abania</span>' + badge19("000046", "Group of 4") + '</div><div class="dur"><span class="dn">The Burn</span>' + badge19("000046", "Group of 4") + '</div><div class="more">12 more ›</div></div>');
+    h += fig(look18("full", "night", duties, 480), "<b>N4, the Duties board</b> (Characters dashboard): why a roulette is locked; duties unlocked but never cleared");
+    var allied = sect19("full", "Allied societies", "",
+      '<div class="al19"><span class="em">' + ic15("065039", 22, "tile") + '</span><div><b>Moogles · Rank 6</b><div class="cu19"><i></i>0 allowances until you turn in <b>Moogle on the Wall</b> (accepted before the reset)</div></div><span class="a">' + qa19("Flag") + qa19("Teleport") + "</span></div>" +
+      '<div class="al19"><span class="em">' + ic15("065020", 22, "tile") + '</span><div><b>Sahagin · Rank 3</b><div class="ln19">Rank-up ready: keep 3 allowances for the bonus dailies</div></div></div>' +
+      '<div class="al19 alt"><span class="em">' + ic15("065016", 22, "tile") + '</span><div><b>Amalj\'aa · Rank 4</b> <span class="altn">· stored alt Kiri Tsukikage</span><div class="ln19">0 allowances today: holds a daily from before the reset (last login 2 days ago)</div></div></div>');
+    h += fig(look18("full", "night", allied, 480), "<b>C5, allied societies</b>: a carried-over daily (copper: it blocks today), a rank-up hint, a stored alt projected honestly");
+    var ev = '<div class="sc18 tone-attn">' + card("full", '<div class="sch">' + ic15("071341", 18, "marker") + "<b>All Saints\' Wake ends in 2 days</b></div>" +
+      '<p class="why">1 quest in your journal, 4 rewards you don\'t have.</p><p class="ctx">Ends 3 Nov, 07:59 local · runs every October</p><div class="a18">' + pill18("full", "Show the event", true) + "</div>") + "</div>";
+    var ev2 = sect19("full", "Seasonal events", "", '<div class="ev19"><b>Make It Rain Campaign</b><span>running · end not announced</span><span class="qa19">Set end date…</span></div><div class="ev19"><b>Moonfire Faire</b><span>ended · usually August · last ran 2026</span></div><div class="ev19"><b>Little Ladies\' Day</b><span>usually March · last ran 2026</span></div>');
+    h += fig(look18("full", "night", ev + ev2, 480), "<b>C10, events</b>: ending-soon only when the end is known (copper only with an event quest in your journal); dated reruns; an end date you entered says so");
+    h += "</div><div class=\"row\" style=\"align-items:flex-start\">";
+    var srch = '<div class="se19"><div class="sin">' + ICON.search + '<span>flying thav</span></div><div class="sgh">Unlocks</div>' +
+      '<div class="sres"><span class="k">Flying</span><b>Flying in Thavnair</b><span class="via">10 aether currents, 4 from quests</span><span class="rt">' + qa19("Route to unlock") + "</span></div>" +
+      '<div class="sres"><span class="k">Area</span><b>Thavnair</b><span class="via">via <b>For Thavnair Bound</b></span><span class="rt">' + qa19("Route to unlock") + "</span></div>" +
+      '<div class="sgh">Quests</div><div class="sres q"><b>The Jewel of Thavnair</b><span class="via">Ready · Lv 81</span></div></div>';
+    h += fig(look18("full", "night", srch, 560), "<b>K3, find by unlock</b>: the toolbar search gets an Unlocks group; each result has Route to unlock");
+    var flt = '<div class="fu19"><div class="gh">Unlocks<span class="set">2 kinds</span></div><div class="sch">' + ["Mount", "Flying", "Duty", "Feature", "Job", "Area", "Emote", "Orchestrion"].map(function (k, i) { return '<span class="sc ' + (i < 2 ? "on" : "off") + '">' + k + "</span>"; }).join("") + '</div><div class="ln19">Keeps quests that unlock one of these. Off: every quest.</div></div>';
+    h += fig(look18("full", "night", '<div class="drw19">' + flt + "</div>", 340), "<b>K3, the Unlocks filter</b>: a group in the filter drawer's Advanced (1.14 chips)");
+    h += fig(look18("full", "night", '<div class="ro19"><div class="rh">' + ic15("060959", 22, "marker") + '<b>Route to Flying in Thavnair</b><span>10 stops</span></div><div class="rr"><span class="n">1</span>The Jewel of Thavnair<span class="m">MSQ · Ready</span></div><div class="rr"><span class="n">2</span>Aether current · Yedlihmad<span class="m">field</span></div><div class="rr"><span class="n">…</span>8 more: 3 quests, 5 in the field<span class="m"></span></div></div>', 420), "<b>K3, Route to unlock</b>: the Route window with the unlock as its header");
+    return h + "</div></div>";
+  }
+
+  // ---------- every look ----------
+  function boardLooks19() {
+    var h = '<div class="board b15 b16"><h2>1.19 · Every look<small>Requirements (Knocking on Heaven\'s Door: met, unmet, can\'t check) and How you\'ll clear it (Into the Aery: badges, the item-level wall), at each Decoration level on Night, Ishgard Snow, Dawn and Kugane Lacquer.</small></h2><div class="lg18">';
+    h += "<div></div>" + ["Night", "Ishgard Snow", "Dawn", "Kugane Lacquer"].map(function (n) { return '<div class="lh">' + n + "</div>"; }).join("");
+    var frag = function (lv) {
+      return '<div class="dp19">' + sect19(lv, "Requirements", "1 can't be checked",
+        req19("ok", "Level", "61, DRG is 100") + req19("no", "Previous quest", "Tide Goes in, Imperials Go Out") +
+        req19("unk", "Palace of the Dead, floors 41–50", "can\'t check", "The game doesn\'t show plugins this. From the wiki, 2 sources.", qa19("I\'ve done this")), "unk") + sect19(lv, "How you\'ll clear it", "", '<div class="dt19"><div class="dn">The Aery</div><div class="bgs">' + badge19("000089", "Solo with NPCs") + badge19("", "Story-required", "q") + "</div></div>" + line19("i110 needed · you're i108 (DRG) · WAR gearset i112", "wall")) + "</div>";
+    };
+    ["full", "quiet", "plain"].forEach(function (lv) {
+      h += '<div class="lr">' + lv.charAt(0).toUpperCase() + lv.slice(1) + "</div>";
+      ["night", "snow", "dawn", "kugane"].forEach(function (p) { h += look18(lv, p, frag(lv), 400); });
+    });
+    return h + "</div></div>";
+  }
   // ---------- Page ----------
   var host = document.getElementById("host"), seg = document.getElementById("seg"), ver = document.getElementById("ver"), pn = document.getElementById("pn");
   function show(hash) {
@@ -4490,6 +4846,11 @@ body{font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif;-webkit-font-smoo
     else if (v === "snow-plain") host.innerHTML = snowWin("plain", { drawer: "e", dopt: { to: "adv" } });
     else if (v === "palettes") { host.innerHTML = boardPalettes(); renderContrast(); }
     else if (v === "themes") host.innerHTML = boardThemes();
+    else if (v === "detail19") host.innerHTML = boardDetail19();
+    else if (v === "rows19") host.innerHTML = boardRows19();
+    else if (v === "makeroom") host.innerHTML = boardMakeRoom();
+    else if (v === "boards19") host.innerHTML = boardBoards19();
+    else if (v === "looks19") host.innerHTML = boardLooks19();
     else if (v === "stop") host.innerHTML = boardStop();
     else if (v === "stoplooks") host.innerHTML = boardStopLooks();
     else if (v === "needs") host.innerHTML = boardNeeds();

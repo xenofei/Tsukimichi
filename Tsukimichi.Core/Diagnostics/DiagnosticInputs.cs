@@ -92,4 +92,10 @@ public sealed record DiagnosticInputs
     /// the line out.
     /// </summary>
     public Ipc.QuestionableWider? QuestionableMore { get; init; }
+
+    /// <summary>
+    /// What the game's own offers say about the quest (feature plan v7, C1), printed as an "in game:" line; null, or a
+    /// check with nothing to say, leaves the line out.
+    /// </summary>
+    public GameOfferCheck? GameOffer { get; init; }
 }

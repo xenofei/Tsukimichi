@@ -146,4 +146,32 @@ public static class QuestExp
 
         return new ExpReward(ExpKind.Fixed, min, min);
     }
+
+    /// <summary>
+    /// The EXP a job at <paramref name="jobLevel"/> gets for handing the quest in (feature plan v7, C8): 0 at or above
+    /// <paramref name="levelCap"/> (the character's cap; 0 when unknown, which caps nothing), the fixed amount, or under
+    /// Quest Sync the formula at the job's level clamped to the quest's range. Null when the amount is not known
+    /// (<see cref="ExpReward.HasAmount"/>).
+    /// </summary>
+    public static ulong? ForLevel(QuestRecord quest, QuestExpTable table, int jobLevel, int levelCap)
+    {
+        var reward = For(quest, table);
+        if (!reward.HasAmount)
+        {
+            return null;
+        }
+
+        if (levelCap > 0 && jobLevel >= levelCap)
+        {
+            return 0;
+        }
+
+        if (reward.Kind == ExpKind.Fixed)
+        {
+            return reward.Min;
+        }
+
+        var level = Math.Clamp(jobLevel, quest.DisplayLevel, quest.LevelMax);
+        return table.At(level, quest.ExpFactor) is { } amount ? Math.Clamp(amount, reward.Min, reward.Max) : reward.Min;
+    }
 }

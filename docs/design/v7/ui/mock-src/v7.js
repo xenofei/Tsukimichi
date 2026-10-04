@@ -21,6 +21,7 @@
     "dawn-full": "1.17: Dawn, Full, with Astrologian's Orrery.", "dawn-quiet": "1.17: Dawn, Quiet.", "kugane-full": "1.17: Kugane Lacquer, Full, with Menphina's Medallion.", "kugane-quiet": "1.17: Kugane Lacquer, Quiet.",
     stop: "1.18: Why it stopped, every reason.", stoplooks: "1.18: Why it stopped at every level and palette.", needs: "1.18: Needs you.",
     preflight: "1.18: the travel preflight.", auto: "1.18: the automation level and About automation.", run: "1.18: stop controls, the receipt, the … menu.",
+    detail19: "1.19: the detail pane's right answers.", rows19: "1.19: rows, chips and the status bar.", makeroom: "1.19: Make room.", boards19: "1.19: duties, allied societies, events, unlocks.", looks19: "1.19: every look.",
     giver: "1.15: giver portraits from the game's own art, night-graded, on the medal plate; avatars in Next stops, Route and the Journal.",
     fallbacks: "1.15: the 16 race silhouettes, the moon disc, society emblems and initials, on the same plate.",
     buttons: "1.15: icon-and-label buttons with the game's own icons, per level, and how they shrink.",
@@ -800,6 +801,11 @@
     else if (v === "snow-plain") host.innerHTML = snowWin("plain", { drawer: "e", dopt: { to: "adv" } });
     else if (v === "palettes") { host.innerHTML = boardPalettes(); renderContrast(); }
     else if (v === "themes") host.innerHTML = boardThemes();
+    else if (v === "detail19") host.innerHTML = boardDetail19();
+    else if (v === "rows19") host.innerHTML = boardRows19();
+    else if (v === "makeroom") host.innerHTML = boardMakeRoom();
+    else if (v === "boards19") host.innerHTML = boardBoards19();
+    else if (v === "looks19") host.innerHTML = boardLooks19();
     else if (v === "stop") host.innerHTML = boardStop();
     else if (v === "stoplooks") host.innerHTML = boardStopLooks();
     else if (v === "needs") host.innerHTML = boardNeeds();

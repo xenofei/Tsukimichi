@@ -7490,6 +7490,170 @@
     <value>Route: {0}</value>
     <comment>Core: TodoList.cs. The overlay's route section caption. {0} = the route's target.</comment>
   </data>
+  <data name="GameOfferTooltip" xml:space="preserve">
+    <value>What the game itself showed: its map's available-quest markers and the quest offer window. Tsukimichi records them for the logged-in character and checks its own answer against them; they never change a state.</value>
+  </data>
+  <data name="GameOfferDisagreesTooltip" xml:space="preserve">
+    <value>The game showed this quest as available in the last hour, but Tsukimichi's data says it is not. One of the two is wrong: Report this quest (the round bug button) copies a block that includes what the game showed.</value>
+  </data>
+  <data name="GameOffersNotLive" xml:space="preserve">
+    <value>The game's own offers: log in to compare them with Tsukimichi.</value>
+  </data>
+  <data name="GameOffersNone" xml:space="preserve">
+    <value>The game's own offers: nothing to report. Every quest the game showed matches what Tsukimichi says.</value>
+  </data>
+  <data name="GameOffersCountFormat" xml:space="preserve">
+    <value>The game's own offers: {0} disagree with Tsukimichi, {1} settle a gate Tsukimichi could not check, {2} Ready quests had no marker in their giver's zone.</value>
+    <comment>{0} = quests the game showed that Tsukimichi reads as not available, {1} = Not checked quests the game showed, {2} = Ready quests the game did not show.</comment>
+  </data>
+  <data name="GameOffersTooltip" xml:space="preserve">
+    <value>Tsukimichi reads the game's available-quest markers and quest offers for the logged-in character and compares them with its own states. A disagreement is worth a bug report; a missing marker is only a hint, since the game hides some markers.</value>
+  </data>
+  <data name="GameOffersCopy" xml:space="preserve">
+    <value>Copy game checks</value>
+  </data>
+  <data name="GameOffersCopyTooltip" xml:space="preserve">
+    <value>Copies one line per quest where the game's markers or offers and Tsukimichi do not say the same thing, in English, for a bug report.</value>
+  </data>
+  <data name="ExpAdviceTooltip" xml:space="preserve">
+    <value>The game gives a quest's EXP to the job you are on when you hand it in. Under Quest Sync the amount follows that job's level; a job at the level cap gets nothing. Class, job and role quests are handed in on a job they take.</value>
+  </data>
+  <data name="ExpAdviceGoesToFormat" xml:space="preserve">
+    <value>Goes to your {0} (Lv {1}).</value>
+    <comment>{0} = job abbreviation, {1} = its level.</comment>
+  </data>
+  <data name="ExpAdviceGoesToAmountFormat" xml:space="preserve">
+    <value>Goes to your {0} (Lv {1}): {2} EXP.</value>
+    <comment>{0} = job abbreviation, {1} = its level, {2} = EXP at that level.</comment>
+  </data>
+  <data name="ExpAdviceCappedFormat" xml:space="preserve">
+    <value>Your {0} is at the level cap, so this EXP would be lost. Hand it in on {1} (Lv {2}) for {3} EXP.</value>
+    <comment>{0} = current job, {1} = better job, {2} = its level, {3} = its EXP.</comment>
+  </data>
+  <data name="ExpAdviceAllCappedFormat" xml:space="preserve">
+    <value>Your {0} is at the level cap, and no other job of yours that can take this quest would get its EXP.</value>
+    <comment>{0} = current job.</comment>
+  </data>
+  <data name="ExpAdviceLessFormat" xml:space="preserve">
+    <value>Your {0} (Lv {1}) would get {2} EXP; {3} (Lv {4}) would get {5}.</value>
+    <comment>{0} = current job, {1} = its level, {2} = its EXP, {3} = better job, {4} = its level, {5} = its EXP.</comment>
+  </data>
+  <data name="ExpAdviceNeedsJobFormat" xml:space="preserve">
+    <value>This quest needs another job: {0} (Lv {1}) would get {2} EXP.</value>
+    <comment>{0} = job that takes the quest, {1} = its level, {2} = its EXP.</comment>
+  </data>
+  <data name="ExpAdviceNeedsJobNone" xml:space="preserve">
+    <value>This quest needs another job, and none of yours that takes it is at its level yet.</value>
+  </data>
+  <data name="GearsetSwitchFormat" xml:space="preserve">
+    <value>Switch to {0}</value>
+    <comment>Detail pane button. {0} = job abbreviation, or the gearset's name.</comment>
+  </data>
+  <data name="GearsetSwitchTooltipFormat" xml:space="preserve">
+    <value>Equips your gearset {0}, "{1}" (item level {2}), as /gearset change {0} would. Offered only for quests that need a job you are not on.</value>
+    <comment>{0} = gearset number, {1} = its name, {2} = its item level.</comment>
+  </data>
+  <data name="GearsetSwitchBlockedFormat" xml:space="preserve">
+    <value>Not now: {0}.</value>
+    <comment>{0} = why the game would refuse (you are in combat, …).</comment>
+  </data>
+  <data name="GearsetSwitchPaused" xml:space="preserve">
+    <value>game panels and hooks are paused on this game version</value>
+  </data>
+  <data name="GearsetSwitchLoggedOut" xml:space="preserve">
+    <value>no character is logged in</value>
+  </data>
+  <data name="JournalFullReadyLine" xml:space="preserve">
+    <value>Your journal is full: hand in or drop a quest before you can take this one.</value>
+  </data>
+  <data name="JournalFullReadyTooltip" xml:space="preserve">
+    <value>The game holds 30 quests at a time. Characters › Make room lists the quests in your journal by what dropping them costs.</value>
+  </data>
+  <data name="JournalRoomTooltip" xml:space="preserve">
+    <value>The game holds 30 quests at a time; allied society quests and levequests are kept apart. Make room lists your journal's quests by what freeing their slot costs.</value>
+  </data>
+  <data name="JournalRoomEmpty" xml:space="preserve">
+    <value>No quests in the journal.</value>
+  </data>
+  <data name="JournalRoomNote" xml:space="preserve">
+    <value>Make room: hand in quests at their last step first. Tsukimichi never abandons a quest; to drop one, open the game's Journal, select it and choose Abandon. The Abandoned list keeps it with the step it had reached.</value>
+  </data>
+  <data name="JournalRoomColumnAdvice" xml:space="preserve">
+    <value>Make room</value>
+  </data>
+  <data name="JournalRoomHandIn" xml:space="preserve">
+    <value>Hand in</value>
+  </data>
+  <data name="JournalRoomSafeToDrop" xml:space="preserve">
+    <value>Safe to drop</value>
+  </data>
+  <data name="JournalRoomKeep" xml:space="preserve">
+    <value>Keep</value>
+  </data>
+  <data name="Core.GameOffer.Confirms" xml:space="preserve">
+    <value>The game offers this quest (seen {0}), so the gate Tsukimichi cannot read is met.</value>
+    <comment>Core: GameOfferChecks.cs. {0} = age ("2 days ago").</comment>
+  </data>
+  <data name="Core.GameOffer.Disagrees" xml:space="preserve">
+    <value>The game offered this quest {0}, but Tsukimichi reads it as not available. Report this quest so it can be fixed.</value>
+    <comment>Core: GameOfferChecks.cs. {0} = age ("5 min ago").</comment>
+  </data>
+  <data name="Core.GameOffer.WhyOffer" xml:space="preserve">
+    <value>Game: offered to you {0}.</value>
+    <comment>Core: GameOfferChecks.cs, /tsuki why. {0} = age.</comment>
+  </data>
+  <data name="Core.GameOffer.WhyMarker" xml:space="preserve">
+    <value>Game: shown on the map {0}.</value>
+    <comment>Core: GameOfferChecks.cs, /tsuki why. {0} = age.</comment>
+  </data>
+  <data name="Core.GameOffer.WhyDisagrees" xml:space="preserve">
+    <value>Tsukimichi disagrees: please report this quest.</value>
+    <comment>Core: GameOfferChecks.cs, /tsuki why.</comment>
+  </data>
+  <data name="Core.Journal.Full" xml:space="preserve">
+    <value>Journal full</value>
+    <comment>Core: JournalSlots.cs.</comment>
+  </data>
+  <data name="Core.Journal.OneLeft" xml:space="preserve">
+    <value>1 journal slot left</value>
+    <comment>Core: JournalSlots.cs.</comment>
+  </data>
+  <data name="Core.Journal.Left" xml:space="preserve">
+    <value>{0} journal slots left</value>
+    <comment>Core: JournalSlots.cs. {0} = free slots.</comment>
+  </data>
+  <data name="Core.MakeRoom.Unknown" xml:space="preserve">
+    <value>Not in Tsukimichi's quest list, so it can't say what dropping it costs.</value>
+    <comment>Core: MakeRoom.cs.</comment>
+  </data>
+  <data name="Core.MakeRoom.MainScenario" xml:space="preserve">
+    <value>Main scenario: the game won't let you abandon it.</value>
+    <comment>Core: MakeRoom.cs.</comment>
+  </data>
+  <data name="Core.MakeRoom.HandIn" xml:space="preserve">
+    <value>At its last step: hand it in to free the slot.</value>
+    <comment>Core: MakeRoom.cs.</comment>
+  </data>
+  <data name="Core.MakeRoom.Repeatable" xml:space="preserve">
+    <value>Repeatable: dropping it doesn't give back today's allowance.</value>
+    <comment>Core: MakeRoom.cs.</comment>
+  </data>
+  <data name="Core.MakeRoom.Seasonal" xml:space="preserve">
+    <value>Seasonal: the event may end before you can take it again.</value>
+    <comment>Core: MakeRoom.cs.</comment>
+  </data>
+  <data name="Core.MakeRoom.Started" xml:space="preserve">
+    <value>Started ({0}): you'd do those steps again.</value>
+    <comment>Core: MakeRoom.cs. {0} = "step 3 of 5".</comment>
+  </data>
+  <data name="Core.MakeRoom.NoGiver" xml:space="preserve">
+    <value>No known giver to take it from again.</value>
+    <comment>Core: MakeRoom.cs.</comment>
+  </data>
+  <data name="Core.MakeRoom.SafeToDrop" xml:space="preserve">
+    <value>Not started: take it again from {0} any time.</value>
+    <comment>Core: MakeRoom.cs. {0} = the quest giver's name.</comment>
+  </data>
   <data name="Core.Age.JustNow" xml:space="preserve">
     <value>just now</value>
     <comment>Core: AbandonedLedger.cs.</comment>

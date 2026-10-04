@@ -321,6 +321,16 @@ public sealed partial class MainWindow : Window, IDisposable
     }
 
     /// <summary>
+    /// The detail pane's "right answers" (1.19.0): what the game's own offers say about a quest (C1) and Switch gearset
+    /// for a quest that needs another job (C8). Until this is called neither shows.
+    /// </summary>
+    public void AttachRightAnswers(OfferObserver offers, GearsetSwitcher gearsets)
+    {
+        detailPane.Offers = offers ?? throw new ArgumentNullException(nameof(offers));
+        detailPane.Gearsets = gearsets ?? throw new ArgumentNullException(nameof(gearsets));
+    }
+
+    /// <summary>
     /// The detail pane's Hand in section (1.6.0): live item counts, and the Artisan and GatherBuddy hand-offs. Until this
     /// is called the section lists the items without counts and its buttons name the plugins as missing.
     /// </summary>
