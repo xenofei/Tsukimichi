@@ -49,7 +49,9 @@ public sealed class QuestUnlocks
         FrozenDictionary<uint, UnlockEntry[]>.Empty,
         FrozenDictionary<uint, UnlockEntry[]>.Empty,
         FrozenDictionary<uint, UnlockEntry[]>.Empty,
-        FrozenDictionary<(UnlockTarget, uint), uint[]>.Empty);
+        FrozenDictionary<(UnlockTarget, uint), uint[]>.Empty,
+        FrozenDictionary<uint, Indexed>.Empty,
+        []);
 
     private static readonly UnlockEntry[] NoEntries = [];
     private static readonly uint[] NoQuests = [];
@@ -58,19 +60,25 @@ public sealed class QuestUnlocks
     private readonly FrozenDictionary<uint, UnlockEntry[]> withRewards;
     private readonly FrozenDictionary<uint, UnlockEntry[]> extraRewards;
     private readonly FrozenDictionary<(UnlockTarget, uint), uint[]> byTarget;
+    private readonly FrozenDictionary<uint, Indexed> indexed;
+    private readonly UnlockFind[] finds;
 
     private QuestUnlocks(
         QuestCatalog? catalog,
         FrozenDictionary<uint, UnlockEntry[]> byQuest,
         FrozenDictionary<uint, UnlockEntry[]> withRewards,
         FrozenDictionary<uint, UnlockEntry[]> extraRewards,
-        FrozenDictionary<(UnlockTarget, uint), uint[]> byTarget)
+        FrozenDictionary<(UnlockTarget, uint), uint[]> byTarget,
+        FrozenDictionary<uint, Indexed> indexed,
+        UnlockFind[] finds)
     {
         Catalog = catalog;
         this.byQuest = byQuest;
         this.withRewards = withRewards;
         this.extraRewards = extraRewards;
         this.byTarget = byTarget;
+        this.indexed = indexed;
+        this.finds = finds;
     }
 
     /// <summary>The catalog the index was built over; null for <see cref="Empty"/>.</summary>
@@ -142,6 +150,129 @@ public sealed class QuestUnlocks
         }
 
         return likely;
+    }
+
+    /// <summary>
+    /// The kinds the quest opens, one bit each (<see cref="UnlockFindKinds.Bit"/>), counting what its Rewards already show (a
+    /// mount, an emote): what the Unlocks filter keeps a quest by (plan v7, 1.19.0 K3). 0 when none.
+    /// </summary>
+    public ushort KindMask(uint rowId) => indexed.TryGetValue(rowId, out var known) ? known.Kinds : (ushort)0;
+
+    /// <summary>
+    /// Whether one search term (lowercased) is part of the label of a thing the quest opens within
+    /// <paramref name="reach"/> (<see cref="byte.MaxValue"/> outside Sprout mode): "kugane", or "thav" for Flying in
+    /// Thavnair. Next quests never match. Allocates nothing. The caller asks only for a quest the spoiler shield shows.
+    /// </summary>
+    public bool MatchesTerm(uint rowId, ReadOnlySpan<char> term, byte reach = byte.MaxValue)
+    {
+        if (!indexed.TryGetValue(rowId, out var known))
+        {
+            return false;
+        }
+
+        foreach (var (text, expansion) in known.Search)
+        {
+            if (expansion <= reach && text.AsSpan().Contains(term, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Every thing quests open that a kind chip names, one per target, in display order (group, target, expansion, label).</summary>
+    public IReadOnlyList<UnlockFind> Finds => finds;
+
+    /// <summary>
+    /// "Find by unlock" (plan v7, 1.19.0 K3): the finds whose label holds every term of <paramref name="normalizedQuery"/>
+    /// (<see cref="Query.SearchIndex.Normalize"/>), within <paramref name="reach"/>, and opened by at least one quest
+    /// <paramref name="shown"/> lets through (the spoiler shield: what a masked quest opens is never named). A label that
+    /// starts with the first term comes first, then display order; at most <paramref name="max"/>. Empty for an empty query.
+    /// </summary>
+    /// <param name="shown">Whether the shield shows a quest; null shows every quest.</param>
+    public IReadOnlyList<UnlockMatch> Find(string normalizedQuery, Func<uint, bool>? shown = null, byte reach = byte.MaxValue, int max = 8)
+    {
+        if (string.IsNullOrEmpty(normalizedQuery) || max <= 0 || finds.Length == 0)
+        {
+            return [];
+        }
+
+        var terms = normalizedQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var leading = new List<UnlockMatch>();
+        var rest = new List<UnlockMatch>();
+        foreach (var find in finds)
+        {
+            if (find.Expansion > reach || !AllTerms(find.SearchText, terms))
+            {
+                continue;
+            }
+
+            uint via = 0;
+            foreach (var quest in find.Quests)
+            {
+                if (shown is null || shown(quest))
+                {
+                    via = quest;
+                    break;
+                }
+            }
+
+            if (via == 0)
+            {
+                continue;
+            }
+
+            (find.SearchText.StartsWith(terms[0], StringComparison.Ordinal) ? leading : rest).Add(new UnlockMatch(find, via));
+        }
+
+        leading.AddRange(rest);
+        return leading.Count > max ? leading.GetRange(0, max) : leading;
+    }
+
+    /// <summary>
+    /// The find an unlock row belongs to (Route to unlock from the detail pane's row menu): the one of the same target,
+    /// or of the same name for a row without a sheet row of its own and for an area; null for a row no chip names.
+    /// </summary>
+    public UnlockFind? FindFor(UnlockEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        if (UnlockFindKinds.Of(entry.Target) is null)
+        {
+            return null;
+        }
+
+        var key = FindKey(entry);
+        foreach (var find in finds)
+        {
+            if (FindKey(find.Target, find.TargetId, find.Name) == key)
+            {
+                return find;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>One find per sheet row of a kind of target; by name for a row without one (flying, a curated feature) and for an area.</summary>
+    private static (UnlockTarget Target, uint Id, string Name) FindKey(UnlockEntry entry) => FindKey(entry.Target, entry.TargetId, entry.Name);
+
+    private static (UnlockTarget Target, uint Id, string Name) FindKey(UnlockTarget target, uint targetId, string name) =>
+        UnlockTargets.GroupOf(target) == UnlockGroup.Area ? (UnlockTarget.Zone, 0u, PlanDuties.NameKey(name))
+            : targetId == 0 ? (target, 0u, PlanDuties.NameKey(name))
+            : (target, targetId, string.Empty);
+
+    private static bool AllTerms(string text, string[] terms)
+    {
+        foreach (var term in terms)
+        {
+            if (!text.Contains(term, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>The rows' names, lowercased, one per line, next quests left out: what a search could match.</summary>
@@ -570,6 +701,8 @@ public sealed class QuestUnlocks
             var shown = new Dictionary<uint, UnlockEntry[]>();
             var extras = new Dictionary<uint, UnlockEntry[]>();
             var reverse = new Dictionary<(UnlockTarget, uint), List<uint>>();
+            var indexed = new Dictionary<uint, Indexed>();
+            var finds = new Dictionary<(UnlockTarget Target, uint Id, string Name), FindBuilder>();
             foreach (var quest in catalog.All)
             {
                 byQuest.TryGetValue(quest.RowId, out var rows);
@@ -617,6 +750,7 @@ public sealed class QuestUnlocks
                     shown[quest.RowId] = hidden == 0 ? result[quest.RowId] : [.. ordered.Where(static e => !e.InRewards)];
                 }
 
+                IndexKinds(quest.RowId, ordered, indexed, finds);
                 foreach (var entry in ordered)
                 {
                     if (entry.TargetId == 0)
@@ -637,8 +771,92 @@ public sealed class QuestUnlocks
 
             return result.Count == 0
                 ? Empty
-                : new QuestUnlocks(catalog, shown.ToFrozenDictionary(), result.ToFrozenDictionary(), extras.ToFrozenDictionary(), reverse.ToFrozenDictionary(kv => kv.Key, kv => kv.Value.ToArray()));
+                : new QuestUnlocks(
+                    catalog,
+                    shown.ToFrozenDictionary(),
+                    result.ToFrozenDictionary(),
+                    extras.ToFrozenDictionary(),
+                    reverse.ToFrozenDictionary(kv => kv.Key, kv => kv.Value.ToArray()),
+                    indexed.ToFrozenDictionary(),
+                    OrderFinds(finds.Values));
         }
+
+        /// <summary>
+        /// The quest's kinds and search labels, and its share of the finds (plan v7, 1.19.0 K3): every row a kind chip
+        /// names, a row its Rewards show included (a mount is found by its name too). One find per sheet row of a kind of
+        /// target; by name for a row without one (flying, a curated feature) and for an area, so a zone and the world map
+        /// of its name are one find.
+        /// </summary>
+        private static void IndexKinds(uint rowId, List<UnlockEntry> rows, Dictionary<uint, Indexed> indexed, Dictionary<(UnlockTarget Target, uint Id, string Name), FindBuilder> finds)
+        {
+            ushort kinds = 0;
+            var search = new List<(string, byte)>(rows.Count);
+            foreach (var row in rows)
+            {
+                if (row.Target == UnlockTarget.NextQuest)
+                {
+                    continue;
+                }
+
+                search.Add((UnlockFindKinds.Label(row.Target, row.Name).ToLowerInvariant(), row.Expansion));
+                if (UnlockFindKinds.Of(row.Target) is not { } kind)
+                {
+                    continue;
+                }
+
+                kinds |= UnlockFindKinds.Bit(kind);
+                var key = FindKey(row);
+                if (!finds.TryGetValue(key, out var find))
+                {
+                    finds[key] = find = new FindBuilder(row);
+                }
+
+                find.Add(row, rowId);
+            }
+
+            if (kinds != 0 || search.Count > 0)
+            {
+                indexed[rowId] = new Indexed(kinds, [.. search]);
+            }
+        }
+
+        private static UnlockFind[] OrderFinds(IEnumerable<FindBuilder> builders) => builders
+            .Select(static b => b.Build())
+            .OrderBy(static f => UnlockTargets.GroupOf(f.Target))
+            .ThenBy(static f => f.Target)
+            .ThenBy(static f => f.Expansion)
+            .ThenBy(static f => f.Label, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    /// <summary>A quest's kinds (<see cref="KindMask"/>) and its rows' lowercased labels with their expansions (<see cref="MatchesTerm"/>).</summary>
+    private sealed record Indexed(ushort Kinds, (string Text, byte Expansion)[] Search);
+
+    /// <summary>
+    /// Collects one find's quests across the catalog, in catalog order: the first row's target, id, name and expansion,
+    /// except that a zone's row names the find over the world map of its name (the map opens on it).
+    /// </summary>
+    private sealed class FindBuilder(UnlockEntry first)
+    {
+        private readonly List<uint> quests = [];
+        private UnlockEntry named = first;
+        private uint icon = first.Icon;
+
+        public void Add(UnlockEntry row, uint rowId)
+        {
+            if (!quests.Contains(rowId))
+            {
+                quests.Add(rowId);
+            }
+
+            icon = icon != 0 ? icon : row.Icon;
+            if (named.Target == UnlockTarget.WorldMap && row.Target == UnlockTarget.Zone)
+            {
+                named = row;
+            }
+        }
+
+        public UnlockFind Build() => new(named.Target, named.TargetId, named.Name, icon != 0 ? icon : named.Icon, named.Expansion, [.. quests]);
     }
 
     /// <summary>One quest's rows, one per target; the most trusted claim wins and keeps the first claim's place.</summary>

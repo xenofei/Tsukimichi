@@ -105,6 +105,13 @@ public sealed record EvalContext
     /// </summary>
     public Func<uint, string> MountName { get; init; } = static _ => string.Empty;
 
+    /// <summary>
+    /// Whether the player said they passed a quest's game gate on this character ("I've done this", feature plan v7 C3):
+    /// content id and quest row id. Honoured only where Tsukimichi cannot check the gate itself; a gate it judged keeps
+    /// its own answer. The plugin reads the per-character marks of <c>user/characters.json</c>; defaults to none.
+    /// </summary>
+    public Func<ulong, uint, bool> GateMarkedDone { get; init; } = static (_, _) => false;
+
     /// <summary>Allied society rank name for requirement details; defaults to <see cref="TribeRanks.Name"/>. The plugin supplies sheet names for other languages.</summary>
     public Func<byte, string> TribeRankName { get; init; } = TribeRanks.Name;
 

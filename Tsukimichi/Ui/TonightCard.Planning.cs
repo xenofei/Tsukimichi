@@ -58,6 +58,12 @@ public sealed partial class TonightCard
             {
                 UiMetrics.Tooltip(planning.CatchUpTooltip);
             }
+
+            // How the story's duties ahead can be cleared (1.19.0, C7).
+            if (planning.CatchUpOthersLine is { Length: > 0 } others)
+            {
+                TextFlow.Wrapped(others, Chrome.RoomX(), Theme.U32(Theme.Surface.TextSecondary));
+            }
         }
     }
 }

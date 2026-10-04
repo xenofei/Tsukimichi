@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using Lumina.Data.Files;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Portraits;
@@ -27,7 +29,9 @@ namespace Tsukimichi.Game;
 /// <item><see cref="RewardArt"/>: every Moonlit reward's own game art (G6);</item>
 /// <item><see cref="PaneIcons"/>: the role, society, Grand Company, achievement and Duty Finder icons of the Characters,
 /// Journal table and Plan panes (UI-5d);</item>
-/// <item><see cref="Portraits"/>: every quest giver's portrait from the game's own art, with the curated overlay (F1, F3).</item>
+/// <item><see cref="Portraits"/>: every quest giver's portrait from the game's own art, with the curated overlay (F1, F3);</item>
+/// <item><see cref="ItemSources"/>: the shops, gathering spots and recipes behind the hand-in "Where" lines and the
+/// rewards' buy-back mark (1.19, N5, C6).</item>
 /// </list>
 /// When the last one lands, one log line gives each build's time: the cost the first open of each pane paid before.
 /// </summary>
@@ -79,6 +83,13 @@ public sealed class IndexWarmer
                 icon => data.FileExists(RewardArtIndex.IconPath(icon)),
                 message => log.Warning("{Message}", message)),
             ex => log.Warning(ex, "Giver portraits could not be read; every giver shows its fallback"));
+        ItemSources = new WarmedValue<ItemSourceIndex>(
+            () => ItemSourceIndex.Build(
+                data.Excel,
+                language,
+                session.Curated.OtherSources.Where(kv => kv.Value.Where.Length > 0).ToDictionary(kv => kv.Key, kv => kv.Value.Where),
+                path => data.GetFile<LgbFile>(path)),
+            ex => log.Warning(ex, "Item sources could not be read; hand-in items show no Where lines and rewards no buy-back"));
     }
 
     public WarmedValue<FlightIndex> Flight { get; }
@@ -96,17 +107,20 @@ public sealed class IndexWarmer
     /// <summary>Quest givers' portraits: <see cref="PortraitIndex.For(Core.Model.QuestRecord)"/> answers per quest.</summary>
     public WarmedValue<PortraitIndex> Portraits { get; }
 
+    /// <summary>Where items come from: shops, gathering, recipes (1.19, C6 buy-back and N5 hand-in "Where" lines).</summary>
+    public WarmedValue<ItemSourceIndex> ItemSources { get; }
+
     /// <summary>Whether every index has landed (or failed).</summary>
-    public bool IsDone => Flight.IsDone && Duties.IsDone && Aetherytes.IsDone && DutyRuns.IsDone && RewardArt.IsDone && PaneIcons.IsDone && Portraits.IsDone;
+    public bool IsDone => Flight.IsDone && Duties.IsDone && Aetherytes.IsDone && DutyRuns.IsDone && RewardArt.IsDone && PaneIcons.IsDone && Portraits.IsDone && ItemSources.IsDone;
 
     /// <summary>Starts every build on the thread pool, once; the returned task ends when all have landed and logged.</summary>
     public Task Start()
     {
         var started = Stopwatch.GetTimestamp();
-        var all = Task.WhenAll(Flight.Start(), Duties.Start(), Aetherytes.Start(), DutyRuns.Start(), RewardArt.Start(), PaneIcons.Start(), Portraits.Start());
+        var all = Task.WhenAll(Flight.Start(), Duties.Start(), Aetherytes.Start(), DutyRuns.Start(), RewardArt.Start(), PaneIcons.Start(), Portraits.Start(), ItemSources.Start());
         return all.ContinueWith(
             _ => log.Information(
-                "Indexes warmed off the frame in {Total:F0} ms: flight {Flight:F0} ms, duty kinds {Duties:F0} ms, aetherytes {Aetherytes:F0} ms, AutoDuty duties {DutyRuns:F0} ms, reward art {Art:F0} ms ({ArtCount} icons, {Pictures} pictures), pane icons {PaneIcons:F0} ms, giver portraits {Portraits:F0} ms ({Givers} givers with art); the first open of a pane builds none of them",
+                "Indexes warmed off the frame in {Total:F0} ms: flight {Flight:F0} ms, duty kinds {Duties:F0} ms, aetherytes {Aetherytes:F0} ms, AutoDuty duties {DutyRuns:F0} ms, reward art {Art:F0} ms ({ArtCount} icons, {Pictures} pictures), pane icons {PaneIcons:F0} ms, giver portraits {Portraits:F0} ms ({Givers} givers with art), item sources {Sources:F0} ms ({SoldItems} items sold); the first open of a pane builds none of them",
                 Stopwatch.GetElapsedTime(started).TotalMilliseconds,
                 Flight.BuildMs,
                 Duties.BuildMs,
@@ -117,7 +131,9 @@ public sealed class IndexWarmer
                 RewardArt.Value?.ArtCount ?? 0,
                 PaneIcons.BuildMs,
                 Portraits.BuildMs,
-                Portraits.Value?.GiversWithArt ?? 0),
+                Portraits.Value?.GiversWithArt ?? 0,
+                ItemSources.BuildMs,
+                ItemSources.Value?.ShopItemCount ?? 0),
             TaskScheduler.Default);
     }
 }

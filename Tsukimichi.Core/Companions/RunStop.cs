@@ -260,6 +260,15 @@ public sealed record StopCard(StopReason Reason, StopHandOff HandOff)
     /// <summary>Whether a single-quest run (A6) stopped; the restart keeps the same mode.</summary>
     public bool SingleQuest { get; init; } = true;
 
+    /// <summary>The zone's name at the moment it stopped, for the report; empty when unknown.</summary>
+    public string Zone { get; init; } = string.Empty;
+
+    /// <summary>The character's job abbreviation at the moment it stopped ("WHM"), for the report; empty when unknown.</summary>
+    public string Job { get; init; } = string.Empty;
+
+    /// <summary>The character's level at the moment it stopped, for the report; 0 when unknown.</summary>
+    public int Level { get; init; }
+
     /// <summary>The two values that make two raises the same stop.</summary>
     public (StopReason Reason, StopHandOff HandOff, uint Quest) Key => (Reason, HandOff, QuestRowId);
 
@@ -268,6 +277,28 @@ public sealed record StopCard(StopReason Reason, StopHandOff HandOff)
 
     /// <summary>Whether the card stays until dismissed.</summary>
     public bool NeedsYou => RunStopClassifier.NeedsYou(Reason);
+
+    /// <summary>
+    /// The card with the character as it is at the moment it stopped, so Copy report later says where and as what it
+    /// stopped, not where the player stands when they copy it. Fills only what the card lacks: the territory when it has
+    /// none (<paramref name="territoryId"/>), the zone's name for the card's own territory, the job and the level.
+    /// </summary>
+    /// <param name="territoryId">The territory the character is in now; 0 when unknown.</param>
+    /// <param name="zoneName">A territory's zone name (empty when unknown).</param>
+    /// <param name="job">The job abbreviation now ("WHM"); empty when unknown.</param>
+    /// <param name="level">The level now; 0 when unknown.</param>
+    public StopCard WithCharacter(uint territoryId, Func<uint, string> zoneName, string job, int level)
+    {
+        ArgumentNullException.ThrowIfNull(zoneName);
+        var territory = TerritoryId != 0 ? TerritoryId : territoryId;
+        return this with
+        {
+            TerritoryId = territory,
+            Zone = Zone.Length > 0 ? Zone : territory != 0 ? zoneName(territory) ?? string.Empty : string.Empty,
+            Job = Job.Length > 0 ? Job : job ?? string.Empty,
+            Level = Level > 0 ? Level : level,
+        };
+    }
 }
 
 /// <summary>
@@ -452,7 +483,10 @@ public sealed class StopDock
     /// <summary>Whether the card's buttons act at <paramref name="now"/>: fully in and not leaving.</summary>
     public bool Interactive(double now, bool reduceMotion) => Current is not null && !Leaving && Alpha(now, reduceMotion) >= 1f;
 
-    /// <summary>The newer card's words over the older card's, keeping what only the older one knew (the duty).</summary>
+    /// <summary>
+    /// The newer card's words over the older card's, keeping what only the older one knew (the duty) and the character as
+    /// it was when it first stopped (the job and level); the zone follows the newer card's territory.
+    /// </summary>
     private static StopCard Merge(StopCard older, StopCard newer) => newer with
     {
         Why = older.DutyId != 0 && older.Why.Length > 0 ? older.Why : newer.Why.Length > 0 ? newer.Why : older.Why,
@@ -465,6 +499,9 @@ public sealed class StopDock
         Position = newer.Position ?? older.Position,
         Sequence = newer.Sequence ?? older.Sequence,
         Step = newer.Step ?? older.Step,
+        Zone = newer.Zone.Length > 0 ? newer.Zone : older.Zone,
+        Job = older.Job.Length > 0 ? older.Job : newer.Job,
+        Level = older.Level > 0 ? older.Level : newer.Level,
     };
 }
 

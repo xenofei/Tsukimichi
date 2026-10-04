@@ -27,13 +27,19 @@ namespace Tsukimichi.Core.Runtime;
 /// <see cref="Evaluation.MountCheck"/>) are not in the reverse index, so the caller resolves everything
 /// (<see cref="FullPass.Needed"/>); a new mount is rare, so the full pass costs little.
 /// </param>
+/// <param name="RecordsChanged">
+/// The item levels (<see cref="CharacterSnapshot.ItemLevel"/>, <see cref="CharacterSnapshot.JobItemLevels"/>) or the
+/// Duties board's records (<see cref="CharacterSnapshot.DutyRecords"/>) changed (1.19.0, C7 and N4). The capture is
+/// saved and published; no quest's state reads them, so nothing is resolved.
+/// </param>
 public sealed record SnapshotDiff(
     IReadOnlyList<ushort> ChangedQuestIds,
     IReadOnlyList<byte> ChangedJobs,
     IReadOnlyList<ushort> ChangedFestivals,
     bool OtherChanged,
     bool CollectiblesChanged = false,
-    bool MountsChanged = false)
+    bool MountsChanged = false,
+    bool RecordsChanged = false)
 {
     /// <summary>The <see cref="CharacterSnapshot.Collectibles"/> key the owned mounts are saved under.</summary>
     private static readonly string MountKind = RewardKind.Mount.ToString();
@@ -43,7 +49,7 @@ public sealed record SnapshotDiff(
     /// <summary>Largest id list the order-insensitive compare sorts on the stack; longer ones borrow from the array pool.</summary>
     private const int StackSetLimit = 256;
 
-    public bool IsEmpty => ChangedQuestIds.Count == 0 && ChangedJobs.Count == 0 && ChangedFestivals.Count == 0 && !OtherChanged && !CollectiblesChanged;
+    public bool IsEmpty => ChangedQuestIds.Count == 0 && ChangedJobs.Count == 0 && ChangedFestivals.Count == 0 && !OtherChanged && !CollectiblesChanged && !RecordsChanged;
 
     /// <summary>Compares two snapshots. Either may carry a shorter completion bitmask; missing bytes read as zero.</summary>
     public static SnapshotDiff Compute(CharacterSnapshot old, CharacterSnapshot @new)
@@ -60,7 +66,8 @@ public sealed record SnapshotDiff(
             && SameSequence(old.ActiveFestivals, @new.ActiveFestivals)
             && SameSequence(old.ActiveFestivalPhases, @new.ActiveFestivalPhases)
             && !OtherInputsChanged(old, @new)
-            && Collectibles.Same(old.Collectibles, @new.Collectibles))
+            && Collectibles.Same(old.Collectibles, @new.Collectibles)
+            && !RecordInputsChanged(old, @new))
         {
             return Empty;
         }
@@ -81,14 +88,21 @@ public sealed record SnapshotDiff(
         var other = OtherInputsChanged(old, @new);
         var collectibles = !Collectibles.Same(old.Collectibles, @new.Collectibles);
         var mounts = collectibles && !SameMounts(old, @new);
+        var records = RecordInputsChanged(old, @new);
 
-        if (quests.Count == 0 && jobs.Count == 0 && festivals.Count == 0 && !other && !collectibles)
+        if (quests.Count == 0 && jobs.Count == 0 && festivals.Count == 0 && !other && !collectibles && !records)
         {
             return Empty;
         }
 
-        return new SnapshotDiff([.. quests], [.. jobs], [.. festivals], other, collectibles, mounts);
+        return new SnapshotDiff([.. quests], [.. jobs], [.. festivals], other, collectibles, mounts, records);
     }
+
+    /// <summary>The records no quest's state reads: the item levels and the Duties board's duty records.</summary>
+    private static bool RecordInputsChanged(CharacterSnapshot old, CharacterSnapshot @new) =>
+        old.ItemLevel != @new.ItemLevel
+        || !SameEntries(old.JobItemLevels, @new.JobItemLevels)
+        || !DutyRecordCapture.Same(old.DutyRecords, @new.DutyRecords);
 
     /// <summary>The same owned and missing mounts in both captures; a capture that read none is a value of its own.</summary>
     private static bool SameMounts(CharacterSnapshot old, CharacterSnapshot @new)
@@ -114,7 +128,8 @@ public sealed record SnapshotDiff(
         || old.CarrierLevel != @new.CarrierLevel
         || !SameEntries(old.SatisfactionRanks, @new.SatisfactionRanks)
         || !SameSequence(old.RepeatFlags, @new.RepeatFlags)
-        || !GateItemCapture.Same(old.GateItems, @new.GateItems);
+        || !GateItemCapture.Same(old.GateItems, @new.GateItems)
+        || !(old.GateUnlockLinks is null ? @new.GateUnlockLinks is null : old.GateUnlockLinks.SameIds(@new.GateUnlockLinks));
 
     /// <summary>Running festivals by id with their phase, −1 when the capture holds none; the first entry of a repeated id wins.</summary>
     private static Dictionary<ushort, int> FestivalPhases(CharacterSnapshot s)

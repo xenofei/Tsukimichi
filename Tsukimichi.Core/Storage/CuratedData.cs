@@ -16,6 +16,16 @@ public sealed record SystemUnlock(string Label, string Kind, string? Note);
 /// <param name="Quests">Quest row ids that open it; several for one reached on different paths.</param>
 public sealed record AetheryteUnlock(string Name, IReadOnlyList<uint> Quests, string Note, string Evidence);
 
+/// <summary>
+/// Side quests a main scenario quest needs that neither the sheets' previous quests nor its required duties record,
+/// from <c>curated/story_required.json</c> (feature plan v7 N3): the Shadowbringers role quests The Light of
+/// Inspiration asks for, say. The story meter and the catch-up count them with the quests the sheets give
+/// (<c>Query.StoryRequirements</c>).
+/// </summary>
+/// <param name="Quests">The quests named: each brings the side quests before it on its line.</param>
+/// <param name="Join"><see cref="JoinKind.All"/> (<c>allOf</c>): every one; <see cref="JoinKind.Any"/> (<c>anyOf</c>): one line will do.</param>
+public sealed record StoryRequiredEntry(IReadOnlyList<uint> Quests, JoinKind Join, string Note, string Evidence);
+
 /// <summary>A quest that unlocks duties, from <c>curated/duty_unlocks.json</c>.</summary>
 public sealed record DutyUnlock(IReadOnlyList<uint> ContentFinderConditionIds, string? Note);
 
@@ -110,11 +120,14 @@ public sealed record QuestQuirk(string Note, string Evidence);
 public sealed record ExtraPrerequisite(IReadOnlyList<uint> Requires, IReadOnlyList<string> Sources, string Evidence, string Note, string? GameTextKey);
 
 /// <summary>
-/// A gate the game checks before it offers a quest that Tsukimichi cannot read, from <c>curated/game_gates.json</c>:
-/// a relic weapon at some stage equipped, Eureka story and elemental level, Doman Enclave reconstruction progress. The
-/// catalog lists it as a requirement (<c>QuestCatalog.GameGateOf</c>): one without <paramref name="Items"/> is never judged, so the quest reads Not checked
-/// where it would otherwise read Ready, never Blocked by it, and a gear gate is judged from the captured weapons; it adds <paramref name="After"/> to
-/// <c>QuestCatalog.PrerequisitesOf</c>, the quests before which the gate cannot be passed at all.
+/// A gate the game checks before it offers a quest that no quest of the sheets records, from <c>curated/game_gates.json</c>:
+/// a relic weapon or tool at some stage equipped or held, a mount collection, unlock links (Occult Record entries, a
+/// blue magic spell, the chocobo companion), Eureka story and elemental level, a deep-dungeon floor, a Resistance rank,
+/// Doman Enclave reconstruction progress. The catalog lists it as a requirement (<c>QuestCatalog.GameGateOf</c>): a
+/// gate with weapons, mounts or unlock links is judged from what the capture read, one met by a <paramref name="MetBy"/>
+/// quest is met, and any other is never judged, so the quest reads Not checked where it would otherwise read Ready,
+/// never Blocked by it; it adds <paramref name="After"/> to <c>QuestCatalog.PrerequisitesOf</c>, the quests before
+/// which the gate cannot be passed at all.
 /// </summary>
 /// <param name="Gate">What the game wants, in English, as a phrase after "needs" ("a relic weapon nexus equipped").</param>
 /// <param name="After">Quest row ids the gate cannot be passed before (the step that makes a nexus possible); may be empty.</param>
@@ -122,7 +135,71 @@ public sealed record ExtraPrerequisite(IReadOnlyList<uint> Requires, IReadOnlyLi
 /// <param name="AfterTextKey">The text row of an <paramref name="After"/> quest that says what it opens (the soulglazing, Eureka Pagos); required with <paramref name="After"/>.</param>
 /// <param name="Items">For a gear gate (a relic weapon at a stage equipped, or held), the weapons that pass it, which make the gate one Tsukimichi can judge from the captured gear; null for any other gate.</param>
 /// <param name="Mounts">For a mount-collection gate (the seven Lanners before the Firebird), the mounts that must all be owned, judged from the owned mounts a capture reads; null for any other gate.</param>
-public sealed record GameGate(string Gate, IReadOnlyList<uint> After, string? GameTextKey, string? AfterTextKey, string Evidence, string Note, GateItemSet? Items = null, GateMountSet? Mounts = null);
+/// <param name="UnlockLinks">For a gate the game keeps as unlock links (feature plan v7 C3: Occult Record entries, a blue magic spell learned, the chocobo companion), the links that must all be set, judged from the links a capture reads; null for any other gate.</param>
+/// <param name="MetBy">Quest row ids the game gives only once the gate is passed (What Lies Beneath after floor 50 of the Palace of the Dead): one of them completed meets the gate; without one the gate is judged as it otherwise would be. Empty for most gates.</param>
+/// <param name="AcceptConditions">The sheet's accept conditions (<c>QuestAcceptAdditionCondition</c>) this gate stands for, values that are no quest: listed under the gate rather than as an accept condition not checked. Empty for most gates.</param>
+public sealed record GameGate(
+    string Gate,
+    IReadOnlyList<uint> After,
+    string? GameTextKey,
+    string? AfterTextKey,
+    string Evidence,
+    string Note,
+    GateItemSet? Items = null,
+    GateMountSet? Mounts = null,
+    GateUnlockLinkSet? UnlockLinks = null,
+    IReadOnlyList<uint>? MetBy = null,
+    IReadOnlyList<uint>? AcceptConditions = null)
+{
+    /// <summary><see cref="MetBy"/>, never null.</summary>
+    public IReadOnlyList<uint> MetByIds => MetBy ?? [];
+
+    /// <summary><see cref="AcceptConditions"/>, never null.</summary>
+    public IReadOnlyList<uint> AcceptConditionIds => AcceptConditions ?? [];
+
+    /// <summary>
+    /// Where the gate is confirmed (<see cref="QuestGate.Sources"/>): the game's text when <see cref="GameTextKey"/> or
+    /// <see cref="AfterTextKey"/> names a row, the sheets when weapons, mounts, unlock links or accept conditions are
+    /// derived from them, the wiki when <see cref="Evidence"/> is a Console Games Wiki page.
+    /// </summary>
+    public IReadOnlyList<string> SourceKinds
+    {
+        get
+        {
+            var kinds = new List<string>(3);
+            if (GameTextKey is not null || AfterTextKey is not null)
+            {
+                kinds.Add(QuestGate.GameTextSource);
+            }
+
+            if (Items is not null || Mounts is not null || UnlockLinks is not null || AcceptConditionIds.Count > 0)
+            {
+                kinds.Add(QuestGate.SheetSource);
+            }
+
+            if (Evidence.StartsWith("https://ffxiv.consolegameswiki.com/", StringComparison.Ordinal))
+            {
+                kinds.Add(QuestGate.WikiSource);
+            }
+
+            return kinds;
+        }
+    }
+}
+
+/// <summary>
+/// An unlock-link gate's links in <c>game_gates.json</c> (<c>"unlockLinks"</c>, feature plan v7 C3): every one must be
+/// set, and where they were derived from, which the game-data tests derive again and compare. An unlock link is the
+/// game's own flag for a thing a character has opened (the value space of <c>Quest.SystemReward</c>, of an accept
+/// condition that is no quest, and of <c>Action.UnlockLink</c>): <c>UIState.IsUnlockLinkUnlocked</c> reads it.
+/// </summary>
+/// <param name="Sources">
+/// The sheet rows the links come from, as <c>Sheet#row</c>: <c>QuestAcceptAdditionCondition#70852</c> (the values of
+/// the gated quest's own accept row that are no quest), <c>Action#11395</c> (the <c>UnlockLink</c> of an action, a blue
+/// magic spell learned).
+/// </param>
+/// <param name="All">Unlock link ids, each needed. Ascending, distinct, never empty, each below 65536.</param>
+public sealed record GateUnlockLinkSet(IReadOnlyList<string> Sources, uint[] All);
 
 /// <summary>
 /// A mount-collection gate's mounts in <c>game_gates.json</c> (<c>"mounts"</c>, 1.11.0): every one must be owned, and
@@ -192,6 +269,7 @@ public sealed record PayoffGate(
 /// path_choices.json    { "schema": 1, "cities": { "65575": { "label": "Gridania", "note": "..." } },
 ///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
 ///                        "grandCompanies": { "66216": { "grandCompany": 2, "note": "..." } } }   (classes keyed by ClassJob row id)
+/// story_required.json { "schema": 1, "entries": { "69186": { "anyOf": [ 68784, 68808 ], "evidence": "https://...", "note": "..." } } }   ("allOf" for every one; keyed by the main scenario quest)
 /// aetheryte_unlocks.json { "schema": 1, "entries": { "75": { "name": "Idyllshire", "quests": [ 67116 ], "evidence": "https://...", "note": "..." } } }   (keyed by Aetheryte row id)
 /// giver_portraits.json { "schema": 1, "crops": { .. }, "iconCrops": { .. }, "faces": { .. }, "aliases": { .. }, "blocks": { .. }, "pins": { .. } }   (see <see cref="Portraits.PortraitCuration"/>)
 /// VERSION.json        { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
@@ -216,6 +294,7 @@ public sealed class CuratedData
     public const string GameGatesFileName = "game_gates.json";
     public const string AetheryteUnlocksFileName = "aetheryte_unlocks.json";
     public const string GiverPortraitsFileName = "giver_portraits.json";
+    public const string StoryRequiredFileName = "story_required.json";
 
     /// <summary>The sources an <see cref="ExtraPrerequisitesFileName"/> entry may cite; each entry needs two of them.</summary>
     public static readonly IReadOnlyList<string> ExtraPrerequisiteSources = [GameTextSource, QuestionableSource, WikiSource];
@@ -343,6 +422,12 @@ public sealed class CuratedData
     public IReadOnlyDictionary<uint, AetheryteUnlock> AetheryteUnlocks { get; private init; } = new Dictionary<uint, AetheryteUnlock>();
 
     /// <summary>
+    /// Side quests main scenario quests need that the sheets do not record, by the main scenario quest's row id
+    /// (<see cref="StoryRequiredEntry"/>); ids not checked against the catalog here.
+    /// </summary>
+    public IReadOnlyDictionary<uint, StoryRequiredEntry> StoryRequired { get; private init; } = new Dictionary<uint, StoryRequiredEntry>();
+
+    /// <summary>
     /// The giver portrait overlay (feature plan v7 F3): crops, names for unnamed faces, aliases, blocked matches and
     /// pins, which <c>GiverPortraitSources</c> applies when it builds the <see cref="Portraits.PortraitIndex"/>.
     /// </summary>
@@ -351,7 +436,13 @@ public sealed class CuratedData
     /// <summary><see cref="GameGates"/> as the catalog builders take them (<c>QuestCatalog.Build</c>).</summary>
     public IReadOnlyDictionary<uint, QuestGate> GameGateIds => GameGates.ToDictionary(
         kv => kv.Key,
-        kv => new QuestGate(kv.Value.Gate, kv.Value.After.ToArray(), kv.Value.Items is { } items ? new GateItems(items.Hold, items.Groups) : null, kv.Value.Mounts?.All));
+        kv => new QuestGate(kv.Value.Gate, kv.Value.After.ToArray(), kv.Value.Items is { } items ? new GateItems(items.Hold, items.Groups) : null, kv.Value.Mounts?.All)
+        {
+            UnlockLinks = kv.Value.UnlockLinks?.All,
+            MetBy = [.. kv.Value.MetByIds],
+            AcceptConditions = [.. kv.Value.AcceptConditionIds],
+            Sources = kv.Value.SourceKinds,
+        });
 
     /// <summary>
     /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
@@ -367,7 +458,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks, GiverPortraits = GiverPortraits };
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks, GiverPortraits = GiverPortraits, StoryRequired = StoryRequired };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -704,6 +795,7 @@ public sealed class CuratedData
         var gameGates = LoadGameGates(Path.Combine(dir, GameGatesFileName), warnings);
         var aetheryteUnlocks = LoadAetheryteUnlocks(Path.Combine(dir, AetheryteUnlocksFileName), warnings);
         var giverPortraits = Portraits.PortraitCuration.Load(Path.Combine(dir, GiverPortraitsFileName), warnings);
+        var storyRequired = LoadStoryRequired(Path.Combine(dir, StoryRequiredFileName), warnings);
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
@@ -715,7 +807,67 @@ public sealed class CuratedData
             GameGates = gameGates,
             AetheryteUnlocks = aetheryteUnlocks,
             GiverPortraits = giverPortraits,
+            StoryRequired = storyRequired,
         };
+    }
+
+    /// <summary>
+    /// story_required.json: entries keyed by a main scenario quest's row id, each with exactly one of <c>allOf</c> and
+    /// <c>anyOf</c> (a non-empty array of quest row ids without repeats), an https <c>evidence</c> URL and a
+    /// <c>note</c>. An entry missing any of them, or with a malformed one, is skipped with a warning.
+    /// </summary>
+    private static Dictionary<uint, StoryRequiredEntry> LoadStoryRequired(string path, List<string> warnings)
+    {
+        var entries = new Dictionary<uint, StoryRequiredEntry>();
+        ForEachEntry(path, warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint rowId) || rowId == 0)
+            {
+                warn("key is not a quest row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            var hasAll = obj.TryGetPropertyValue("allOf", out var allNode);
+            var hasAny = obj.TryGetPropertyValue("anyOf", out var anyNode);
+            if (hasAll == hasAny || (hasAll ? allNode : anyNode) is not JsonArray array || array.Count == 0)
+            {
+                warn("needs exactly one of allOf and anyOf, a non-empty array of quest row ids");
+                return;
+            }
+
+            var quests = new List<uint>(array.Count);
+            foreach (var element in array)
+            {
+                if (!StorageJson.TryReadId(element, out var id) || id == 0 || id == rowId || quests.Contains(id))
+                {
+                    warn($"quest '{element}' is not a quest row id, repeats or names the entry's own quest");
+                    return;
+                }
+
+                quests.Add(id);
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            if (!evidence.StartsWith("https://", StringComparison.Ordinal))
+            {
+                warn("evidence is not an https URL");
+                return;
+            }
+
+            entries[rowId] = new StoryRequiredEntry(quests, hasAll ? JoinKind.All : JoinKind.Any, note, evidence);
+        });
+
+        return entries;
     }
 
     /// <summary>
@@ -838,8 +990,10 @@ public sealed class CuratedData
     /// <c>after</c> (quest row ids, none the key itself, no repeats) with <c>afterTextKey</c> (a <c>TEXT_</c> key,
     /// required with and only with <c>after</c>), an optional <c>gameTextKey</c> (a <c>TEXT_</c> key), for a gear gate
     /// either <c>equipped</c> or <c>held</c> (<see cref="ReadGateItems"/>), for a mount-collection gate <c>mounts</c>
-    /// (<see cref="ReadGateMounts"/>), an https <c>evidence</c> URL and a <c>note</c>. An entry missing any of them, or
-    /// with a malformed one, is skipped with a warning.
+    /// (<see cref="ReadGateMounts"/>), for an unlock-link gate <c>unlockLinks</c> (<see cref="ReadGateUnlockLinks"/>; one
+    /// of the three at most), optional <c>metBy</c> (quest row ids, none the key itself) and <c>acceptConditions</c>
+    /// (values below 65536), an https <c>evidence</c> URL and a <c>note</c>. An entry missing any of them, or with a
+    /// malformed one, is skipped with a warning.
     /// </summary>
     private static Dictionary<uint, GameGate> LoadGameGates(string path, List<string> warnings)
     {
@@ -939,6 +1093,36 @@ public sealed class CuratedData
                 mounts = read;
             }
 
+            GateUnlockLinkSet? links = null;
+            if (obj["unlockLinks"] is { } linksNode)
+            {
+                if (items is not null || mounts is not null)
+                {
+                    warn("a gate lists one of weapons, mounts or unlock links");
+                    return;
+                }
+
+                if (ReadGateUnlockLinks(linksNode) is not { } read)
+                {
+                    warn("unlockLinks must be { \"sources\": [\"Sheet#row\"], \"all\": [unlock link ids below 65536] } with no id twice");
+                    return;
+                }
+
+                links = read;
+            }
+
+            if (!TryReadIdList(obj, "metBy", id => id != rowId && id >= 65536, out var metBy) || (metBy.Count > 0 && mounts is not null))
+            {
+                warn("metBy must be an array of quest row ids, none the quest itself, none twice, and no part of a mount-collection gate");
+                return;
+            }
+
+            if (!TryReadIdList(obj, "acceptConditions", id => id is > 0 and < 65536, out var acceptConditions))
+            {
+                warn("acceptConditions must be an array of accept-condition values that are no quest (below 65536), none twice");
+                return;
+            }
+
             if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
             {
                 return;
@@ -950,10 +1134,77 @@ public sealed class CuratedData
                 return;
             }
 
-            entries[rowId] = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note, items, mounts);
+            entries[rowId] = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note, items, mounts, links, metBy, acceptConditions);
         });
 
         return entries;
+    }
+
+    /// <summary>
+    /// An optional array of ids under <paramref name="name"/>: absent reads empty; each must pass <paramref name="valid"/>
+    /// and none repeat. False when the value is no array or an element fails.
+    /// </summary>
+    private static bool TryReadIdList(JsonObject obj, string name, Func<uint, bool> valid, out IReadOnlyList<uint> ids)
+    {
+        var list = new List<uint>();
+        ids = list;
+        if (!obj.TryGetPropertyValue(name, out var node))
+        {
+            return true;
+        }
+
+        if (node is not JsonArray array)
+        {
+            return false;
+        }
+
+        foreach (var element in array)
+        {
+            if (!StorageJson.TryReadId(element, out var id) || !valid(id) || list.Contains(id))
+            {
+                return false;
+            }
+
+            list.Add(id);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// An unlock-link gate's <c>"unlockLinks"</c> object: a non-empty <c>sources</c> array of <c>Sheet#row</c> strings and
+    /// a non-empty <c>all</c> array of unlock link ids (1 to 65535), none twice; the ids sorted. Null when anything is off.
+    /// </summary>
+    private static GateUnlockLinkSet? ReadGateUnlockLinks(JsonNode node)
+    {
+        if (node is not JsonObject obj || obj["sources"] is not JsonArray sourcesArray || sourcesArray.Count == 0 || obj["all"] is not JsonArray allArray || allArray.Count == 0)
+        {
+            return null;
+        }
+
+        var sources = new List<string>();
+        foreach (var element in sourcesArray)
+        {
+            var source = element is JsonValue v && v.TryGetValue(out string? s) ? s.Trim() : null;
+            var hash = source?.IndexOf('#', StringComparison.Ordinal) ?? -1;
+            if (source is null || hash < 1 || !uint.TryParse(source.AsSpan(hash + 1), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var row) || row == 0)
+            {
+                return null;
+            }
+
+            sources.Add(source);
+        }
+
+        var ids = new HashSet<uint>();
+        foreach (var element in allArray)
+        {
+            if (!StorageJson.TryReadId(element, out var id) || id is 0 or > ushort.MaxValue || !ids.Add(id))
+            {
+                return null;
+            }
+        }
+
+        return new GateUnlockLinkSet(sources, [.. ids.Order()]);
     }
 
     /// <summary>

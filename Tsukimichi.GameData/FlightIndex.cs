@@ -100,6 +100,28 @@ public sealed class FlightIndex
     /// </summary>
     public FlightZone? ZoneFor(uint territoryId) => byTerritory.GetValueOrDefault(territoryId);
 
+    /// <summary>
+    /// The flying zone one of whose quest currents <paramref name="questRowIds"/> grant (plan v7, 1.19.0 K3: what "Flying
+    /// in Thavnair" is a route to), or null when none does. The first zone in order wins.
+    /// </summary>
+    public FlightZone? ZoneOfQuests(IEnumerable<uint> questRowIds)
+    {
+        ArgumentNullException.ThrowIfNull(questRowIds);
+        var quests = questRowIds as IReadOnlyCollection<uint> ?? questRowIds.ToArray();
+        foreach (var zone in Zones)
+        {
+            foreach (var current in zone.QuestCurrents)
+            {
+                if (quests.Contains(current.QuestRowId))
+                {
+                    return zone;
+                }
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>Builds an index from already-read zones; for tests and callers that read the sheets themselves. Sorts them.</summary>
     public static FlightIndex From(IEnumerable<FlightZone> zones, uint aetherCompassIcon = 0)
     {

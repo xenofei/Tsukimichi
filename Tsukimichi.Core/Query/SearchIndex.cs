@@ -9,7 +9,7 @@ namespace Tsukimichi.Core.Query;
 /// must all match: text terms match the name, reward names or internal id by substring; all-digit terms match the
 /// row id or quest id exactly, or digits inside the name. Matching allocates nothing. A quest the spoiler shield masks
 /// is matched by its placeholder ("main scenario quest (lv 83)") in place of its name, so typing a hidden name never
-/// finds the quest.
+/// finds the quest. With the unlock index, a term may also match what a shown quest opens ("kugane", plan v7 K3).
 /// </summary>
 public sealed class SearchIndex
 {
@@ -63,7 +63,16 @@ public sealed class SearchIndex
     /// <see cref="Matches(uint, string)"/> under a spoiler shield: a masked quest's name is left out of the match and
     /// its lowercased placeholder (<see cref="SpoilerMask.SearchName"/>) is matched in its place.
     /// </summary>
-    public bool Matches(uint rowId, string normalizedQuery, SpoilerMask? spoilers)
+    public bool Matches(uint rowId, string normalizedQuery, SpoilerMask? spoilers) => Matches(rowId, normalizedQuery, spoilers, null);
+
+    /// <summary>
+    /// <see cref="Matches(uint, string, SpoilerMask?)"/> where a term may also match what the quest opens (plan v7,
+    /// 1.19.0 K3, <see cref="Unlocks.QuestUnlocks.MatchesTerm"/>): typing "kugane" finds the quest that opens Kugane. A
+    /// quest the shield masks is never matched by what it opens, as it is never matched by its name.
+    /// </summary>
+    /// <param name="unlocks">The unlock index; null matches names and rewards only.</param>
+    /// <param name="unlockReach">Sprout mode's reach for the unlock labels (<see cref="byte.MaxValue"/>: every expansion).</param>
+    public bool Matches(uint rowId, string normalizedQuery, SpoilerMask? spoilers, Unlocks.QuestUnlocks? unlocks, byte unlockReach = byte.MaxValue)
     {
         if (normalizedQuery.Length == 0)
         {
@@ -88,7 +97,7 @@ public sealed class SearchIndex
                 continue;
             }
 
-            if (!entry.MatchesTerm(term, maskedName))
+            if (!entry.MatchesTerm(term, maskedName) && (maskedName is not null || unlocks?.MatchesTerm(rowId, term, unlockReach) != true))
             {
                 return false;
             }

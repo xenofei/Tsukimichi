@@ -121,6 +121,16 @@ public sealed class GameGatesFileTests : IDisposable
     [InlineData("\"67086\"", """{ "gate": "g", "mounts": { "sources": ["Mount#105"], "all": [75, 75] }, "evidence": "https://e.org", "note": "n" }""", "mounts must be")]
     [InlineData("\"67086\"", """{ "gate": "g", "mounts": { "all": [75] }, "evidence": "https://e.org", "note": "n" }""", "mounts must be")]
     [InlineData("\"67086\"", """{ "gate": "g", "held": { "sources": ["RelicItem#5"], "items": [[1]] }, "mounts": { "sources": ["Mount#105"], "all": [75] }, "evidence": "https://e.org", "note": "n" }""", "either weapons or mounts")]
+    [InlineData("\"70852\"", """{ "gate": "g", "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#70852"], "all": [] }, "evidence": "https://e.org", "note": "n" }""", "unlockLinks must be")]
+    [InlineData("\"70852\"", """{ "gate": "g", "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#70852"], "all": [510, 510] }, "evidence": "https://e.org", "note": "n" }""", "unlockLinks must be")]
+    [InlineData("\"70852\"", """{ "gate": "g", "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#70852"], "all": [65536] }, "evidence": "https://e.org", "note": "n" }""", "unlockLinks must be")]
+    [InlineData("\"70852\"", """{ "gate": "g", "unlockLinks": { "all": [510] }, "evidence": "https://e.org", "note": "n" }""", "unlockLinks must be")]
+    [InlineData("\"70852\"", """{ "gate": "g", "held": { "sources": ["RelicItem#5"], "items": [[1]] }, "unlockLinks": { "sources": ["Action#1"], "all": [5] }, "evidence": "https://e.org", "note": "n" }""", "one of weapons, mounts or unlock links")]
+    [InlineData("\"68667\"", """{ "gate": "g", "metBy": [68667], "evidence": "https://e.org", "note": "n" }""", "metBy must be")]
+    [InlineData("\"68667\"", """{ "gate": "g", "metBy": [12], "evidence": "https://e.org", "note": "n" }""", "metBy must be")]
+    [InlineData("\"67086\"", """{ "gate": "g", "mounts": { "sources": ["Mount#105"], "all": [75] }, "metBy": [67923], "evidence": "https://e.org", "note": "n" }""", "metBy must be")]
+    [InlineData("\"68668\"", """{ "gate": "g", "acceptConditions": [68667], "evidence": "https://e.org", "note": "n" }""", "acceptConditions must be")]
+    [InlineData("\"68668\"", """{ "gate": "g", "acceptConditions": 226, "evidence": "https://e.org", "note": "n" }""", "acceptConditions must be")]
     [InlineData("\"65897\"", """{ "gate": "g", "evidence": "https://e.org" }""", "note is missing")]
     [InlineData("\"65897\"", """{ "gate": "g", "note": "n" }""", "evidence is missing")]
     [InlineData("\"65897\"", """{ "gate": "g", "evidence": "http://e.org", "note": "n" }""", "is not an https URL")]
@@ -154,6 +164,40 @@ public sealed class GameGatesFileTests : IDisposable
         Assert.Equal([75u, 90u, 104u], gate.Mounts.All);
         Assert.Equal([75u, 90u, 104u], data.GameGateIds[67086].Mounts!);
         Assert.Null(data.GameGateIds[67086].Items);
+    }
+
+    [Fact]
+    public void Unlock_links_met_by_quests_and_accept_conditions_parse_and_reach_the_catalog()
+    {
+        var data = Load(
+            """
+            {
+              "schema": 1,
+              "entries": {
+                "68668": { "gate": "floor 30 of Heaven-on-High cleared", "acceptConditions": [226], "evidence": "https://ffxiv.consolegameswiki.com/wiki/On_the_Shoulders_of_Giants", "note": "n" },
+                "68667": { "gate": "floor 50 of the Palace of the Dead cleared", "after": [67092], "metBy": [67923], "gameTextKey": "TEXT_A", "afterTextKey": "TEXT_B", "evidence": "https://ffxiv.consolegameswiki.com/wiki/K", "note": "n" },
+                "70852": { "gate": "the Occult Record entries unlocked", "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#70852"], "all": [512, 510, 511] }, "gameTextKey": "TEXT_C", "evidence": "https://e.org/c", "note": "n" }
+              }
+            }
+            """);
+
+        Assert.Empty(data.Warnings);
+        var occult = data.GameGates[70852];
+        Assert.Equal(["QuestAcceptAdditionCondition#70852"], occult.UnlockLinks!.Sources);
+        Assert.Equal([510u, 511u, 512u], occult.UnlockLinks.All);
+        Assert.Equal([510u, 511u, 512u], data.GameGateIds[70852].UnlockLinks!);
+        Assert.Equal([QuestGate.GameTextSource, QuestGate.SheetSource], occult.SourceKinds);
+
+        var floor = data.GameGates[68667];
+        Assert.Equal([67923u], floor.MetByIds);
+        Assert.Equal([67923u], data.GameGateIds[68667].MetBy);
+        Assert.Null(data.GameGateIds[68667].UnlockLinks);
+        Assert.Equal([QuestGate.GameTextSource, QuestGate.WikiSource], data.GameGateIds[68667].Sources);
+
+        Assert.Equal([226u], data.GameGates[68668].AcceptConditionIds);
+        Assert.Equal([226u], data.GameGateIds[68668].AcceptConditions);
+        Assert.Equal([QuestGate.SheetSource, QuestGate.WikiSource], data.GameGates[68668].SourceKinds);
+        Assert.Empty(data.GameGates[68668].MetByIds);
     }
 
     [Fact]

@@ -17,6 +17,12 @@
     "note": "Simply the Hest; the wiki quest page lists guildhests under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Simply_the_Hest_(Gridania)"
   },
+  "65665": {
+    "label": "Guildleves and inn rooms",
+    "kind": "system",
+    "note": "Spirithold Broken (Gridania); Quest.SystemReward feature code 2, which its own text spells out as access to guildleves and inn rooms; the wiki quest page lists both under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Spirithold_Broken"
+  },
   "65688": {
     "label": "Desynthesis",
     "kind": "system",
@@ -26,6 +32,12 @@
     "label": "Sightseeing Log",
     "kind": "system",
     "note": "A Sight to Behold; unlocks the sightseeing log."
+  },
+  "65856": {
+    "label": "Guildleves and inn rooms",
+    "kind": "system",
+    "note": "Way Down in the Hole (Ul'dah); Quest.SystemReward feature code 2, guildleves and inn rooms, as the wiki quest page lists under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Way_Down_in_the_Hole"
   },
   "65970": {
     "label": "Gold Saucer",
@@ -41,6 +53,12 @@
     "label": "Triple Triad",
     "kind": "system",
     "note": "Triple Triad Trial; unlocks Triple Triad play and card collection."
+  },
+  "66005": {
+    "label": "Guildleves and inn rooms",
+    "kind": "system",
+    "note": "Just Deserts (Limsa Lominsa); Quest.SystemReward feature code 2, guildleves and inn rooms, as the wiki quest page lists under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Just_Deserts"
   },
   "66024": {
     "label": "Mini Cactpot",
@@ -704,6 +722,18 @@
     "kind": "system",
     "note": "A Cosmic Homecoming; the wiki quest page lists Cosmic Exploration and Sinus Ardorum under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Cosmic_Homecoming"
+  },
+  "70845": {
+    "label": "Occult Record",
+    "kind": "system",
+    "note": "One Last Hurrah (KinGkd001); Quest.SystemReward feature code 521: its own text says the Occult Record is now in the Duty menu's Collection, and the wiki lists it under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/One_Last_Hurrah"
+  },
+  "70848": {
+    "label": "Phantom jobs",
+    "kind": "system",
+    "note": "New Job, Old Tricks (KinGkd004); Quest.SystemReward feature code 537: its own text gives the three first phantom jobs (Phantom Knight, Phantom Monk, Phantom Bard), which the wiki lists under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/New_Job,_Old_Tricks"
   },
   "70945": {
     "label": "Cosmic Exploration: Phaenna",

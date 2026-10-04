@@ -37,6 +37,7 @@ dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll summary
 | `patches` | P8 seed: the patch every named quest was added in, from Garland Tools; writes `Tsukimichi/Data/quest_patches.json` and `docs/data/quest-patches-report.md` |
 | `questionable` | cross-checks Questionable's hand-added prerequisite links against the catalog; exits 1 on a link it misses outside the allowlist (below) |
 | `links` | offline, no game files: writes `Tsukimichi/Data/external_ids.json` (1.8.0, "Open on…") from the committed `quest-verification.csv` (each quest's Lodestone page hash and the wiki page its facts were checked against, rows whose page was not found left out) and `reward-verification.csv` (the FFXIV Collect id of each reward Collect matched); exits 1 when a quest has two different hashes or titles. Rerun it after `quests` or `rewards` |
+| `gates` | offline: every quest page the fetch cache holds (run `quests` first), its infobox `requirements` field and its System lines about the quest, sorted into gate classes (deep-dungeon floor, Resistance rank, mettle, Occult Record, blue magic, tool held, …) and compared with `curated/game_gates.json`; writes `gate-verification.csv` in the quest report's columns (fact `gates`, only the class and a short value, never the wiki's text) and exits 1 on an unresolved row the allowlist does not excuse (feature plan v7 C3) |
 
 ### questionable
 

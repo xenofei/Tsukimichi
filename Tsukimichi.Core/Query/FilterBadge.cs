@@ -23,6 +23,7 @@ public static class FilterBadge
         Add(ref count, filters.LevelRangeEngaged());
         Add(ref count, filters.ClassJobCategoryId is not null);
         Add(ref count, filters.RewardKindsEngaged());
+        Add(ref count, filters.UnlockKindsEngaged());
         Add(ref count, filters.RepeatableOnly);
         Add(ref count, filters.SeasonalActiveOnly);
         Add(ref count, filters.PinnedOnly);

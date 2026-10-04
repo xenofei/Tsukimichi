@@ -81,6 +81,9 @@ public sealed class ItemHooks : IDisposable
     /// <summary>Reads Settings › "Say which open quests need an item"; null reads as on.</summary>
     public Func<bool>? NeededForEnabled { get; set; }
 
+    /// <summary>"Re-buyable · 100 gil" for a quest reward a shop sells back (item id, quest row id); null leaves the line out (1.19, C6).</summary>
+    public Func<uint, uint, string?>? BuyBack { get; set; }
+
     /// <summary>
     /// The player's setting (default off until the plugin applies it). The handler is subscribed only while this is on
     /// and the <see cref="HookGate"/> allows game hooks on the running game version.
@@ -151,6 +154,12 @@ public sealed class ItemHooks : IDisposable
             if (quests.Count > 0)
             {
                 args.AddMenuItem(BuildMenuItem(quests));
+
+                // Safe to discard? "Re-buyable · 100 gil" when a shop sells the reward back (1.19, C6): a line, not an action.
+                if (BuyBack?.Invoke(itemId, quests[0].RowId) is { Length: > 0 } buyBack)
+                {
+                    args.AddMenuItem(new MenuItem { Name = buyBack, PrefixChar = PrefixLetter, IsEnabled = false });
+                }
             }
 
             if (NeededForEnabled?.Invoke() != false && HandIns is { } handIns && NeededStates?.Invoke() is { } states)

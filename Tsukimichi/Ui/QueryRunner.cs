@@ -182,6 +182,9 @@ public sealed class QueryRunner : IDisposable
     /// </summary>
     public Core.Unlocks.QuestUnlocksSource? Unlocks { get; set; }
 
+    // The unlock index the last query ran with (K3: the search and the Unlocks filter read it).
+    private int ranUnlocksRevision;
+
     /// <summary>
     /// The newest expansion whose unlocks a surface may name: the character's reach in Sprout mode
     /// (<see cref="SpoilerMask.ReachExpansion"/>), else <see cref="byte.MaxValue"/> (every row). Every one-line form of
@@ -507,10 +510,13 @@ public sealed class QueryRunner : IDisposable
             || stalledHour != ranStalledHour
             || journalVersion != (plugin.QuestText?.Version ?? 0)
             || ranFreeTrial != freeTrial
-            || !filtersSnapshot.Equals(ui.Filters);
+            || !filtersSnapshot.Equals(ui.Filters)
+            // What quests open arrives off the frame (K3): a search or an Unlocks filter that reads it runs again then.
+            || (ranUnlocksRevision != (Unlocks?.Revision ?? 0) && (appliedSearch.Length > 0 || ui.Filters.UnlockKindsEngaged()));
 
         if (dirty)
         {
+            ranUnlocksRevision = Unlocks?.Revision ?? 0;
             Run(session, current, nowUtc);
             ranStalledHour = stalledHour;
         }
@@ -856,7 +862,8 @@ public sealed class QueryRunner : IDisposable
             NewGamePlus: current.NewGamePlus,
             Chains: session.Chains,
             FreeTrial: plugin.Settings.FreeTrialView,
-            NewlyReady: ui.NewlyReady);
+            NewlyReady: ui.NewlyReady,
+            Unlocks: Unlocks?.Current);
         ranFreeTrial = ctx.FreeTrial;
 
         // The Unlocks quick view reads best with its unlocks from the newest patch series on top (P8), then what can be picked up

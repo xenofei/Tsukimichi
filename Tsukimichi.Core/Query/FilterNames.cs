@@ -16,6 +16,7 @@ public static class FilterNames
     public const string LevelRange = "Level range";
     public const string JobCategory = "Job category";
     public const string RewardKinds = "Reward kinds";
+    public const string UnlockKinds = "Unlock kinds";
     public const string Repeatable = "Repeatable";
     public const string SeasonalActive = "Seasonal active";
     public const string IncludeUnlisted = "Include removed";
@@ -43,6 +44,7 @@ public static class FilterNames
         LevelRange => CoreText.T("Core.Filter.LevelRange", "Level range"),
         JobCategory => CoreText.T("Core.Filter.JobCategory", "Job category"),
         RewardKinds => CoreText.T("Core.Filter.RewardKinds", "Reward kinds"),
+        UnlockKinds => CoreText.T("Core.Filter.UnlockKinds", "Unlock kinds"),
         Repeatable => CoreText.T("Core.Filter.Repeatable", "Repeatable"),
         SeasonalActive => CoreText.T("Core.Filter.SeasonalActive", "Seasonal active"),
         IncludeUnlisted => CoreText.T("Core.Filter.IncludeUnlisted", "Include removed"),

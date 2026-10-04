@@ -29,47 +29,143 @@ public sealed record DutyRunInfo(
     uint Icon = 0)
 {
     public const uint Dungeons = 2;
+    public const uint Guildhests = 3;
     public const uint Trials = 4;
     public const uint Raids = 5;
+    public const uint UltimateRaids = 28;
+    public const uint ChaoticAllianceRaid = 37;
+
+    /// <summary>The class or job level the Duty Finder asks for (<c>ContentFinderCondition.ClassJobLevelRequired</c>); 0 when unknown.</summary>
+    public byte LevelRequired { get; init; }
+
+    /// <summary>The average item level the Duty Finder asks for (<c>ContentFinderCondition.ItemLevelRequired</c>); 0 for none.</summary>
+    public ushort ItemLevelRequired { get; init; }
+
+    /// <summary>
+    /// Whether the Duty Finder matches players for it (<c>ContentFinderCondition.IsInDutyFinder</c>). False for the
+    /// Ultimate raids, the current Savage tier and the Chaotic raid, which a full party enters together, and for solo
+    /// quest battles. True by default, so an entry built without the column reads as before.
+    /// </summary>
+    public bool InDutyFinder { get; init; } = true;
+
+    /// <summary>Players the duty seats (<c>ContentMemberType</c> members per party times parties); 0 when unknown, 1 for a solo duty.</summary>
+    public int Players { get; init; }
+
+    /// <summary>The Duty Roulettes that draw from it (the <c>ContentFinderCondition</c> roulette columns).</summary>
+    public DutyRoulettes Roulettes { get; init; }
+
+    /// <summary>The Duty Finder's own order within its category (<c>ContentFinderCondition.SortKey</c>).</summary>
+    public ushort SortKey { get; init; }
+
+    /// <summary>
+    /// High-end content: Savage, Extreme, Unreal, Ultimate and Chaotic (the sheet's <c>HighEndDuty</c> for the current
+    /// tier, and the Duty Finder's "High-end Trials" and "Savage Raids" categories for the rest; C7's "High-end" badge).
+    /// </summary>
+    public bool HighEnd { get; init; }
 }
 
-/// <summary>Every <see cref="DutyRunInfo"/> by ContentFinderCondition id and by InstanceContent id. Immutable.</summary>
+/// <summary>
+/// The Duty Roulettes, as the <c>ContentFinderCondition</c> sheet's roulette columns name them; one duty can sit in
+/// several. Each maps to one <c>ContentRoulette</c> row (<see cref="RouletteInfo.Id"/>).
+/// </summary>
+[Flags]
+public enum DutyRoulettes : ushort
+{
+    None = 0,
+    Leveling = 1 << 0,
+    HighLevel = 1 << 1,
+    MainScenario = 1 << 2,
+    Guildhests = 1 << 3,
+    Expert = 1 << 4,
+    Trials = 1 << 5,
+    LevelCap = 1 << 6,
+    Mentor = 1 << 7,
+    AllianceRaids = 1 << 8,
+    NormalRaids = 1 << 9,
+}
+
+/// <summary>
+/// One Duty Roulette as the <c>ContentRoulette</c> sheet describes it: its name, the duties it draws from (the
+/// duties whose <see cref="DutyRunInfo.Roulettes"/> carry <paramref name="Flag"/>) and what opening it takes.
+/// </summary>
+/// <param name="Id">The <c>ContentRoulette</c> row id.</param>
+/// <param name="Name">The roulette's name ("Duty Roulette: Level Cap Dungeons").</param>
+/// <param name="Flag">Its column on the <c>ContentFinderCondition</c> sheet.</param>
+/// <param name="RequiresEveryDuty">
+/// The sheet's open rule asks for every duty in it (<c>ContentRouletteOpenRule.HasDutyRequirements</c>: Expert, Level
+/// Cap, Mentor); otherwise a few of its duties open it (<see cref="DutyBoard.MinimumUnlocked"/>).
+/// </param>
+/// <param name="RequiredLevel">The level the roulette asks for (<c>ContentRoulette.RequiredLevel</c>).</param>
+/// <param name="RequiredExpansion">The ExVersion row the account must own (<c>ContentRoulette.RequiredExVersion</c>).</param>
+/// <param name="ItemLevelRequired">The average item level it asks for to queue.</param>
+/// <param name="SortKey">The Duty Finder's order of the roulettes.</param>
+public sealed record RouletteInfo(
+    uint Id,
+    string Name,
+    DutyRoulettes Flag,
+    bool RequiresEveryDuty,
+    byte RequiredLevel,
+    byte RequiredExpansion,
+    ushort ItemLevelRequired,
+    byte SortKey)
+{
+    /// <summary>The roulette's short name ("Level Cap Dungeons", <c>ContentRoulette.Category</c>); <see cref="Name"/> when the sheet has none.</summary>
+    public string ShortName
+    {
+        get => string.IsNullOrEmpty(shortName) ? Name : shortName;
+        init => shortName = value;
+    }
+
+    private readonly string? shortName;
+}
+
+/// <summary>Every <see cref="DutyRunInfo"/> by ContentFinderCondition id and by InstanceContent id, and the Duty Roulettes. Immutable.</summary>
 public sealed class DutyRunIndex
 {
-    public static readonly DutyRunIndex Empty = new(FrozenDictionary<uint, DutyRunInfo>.Empty, FrozenDictionary<uint, DutyRunInfo>.Empty);
+    public static readonly DutyRunIndex Empty = new(FrozenDictionary<uint, DutyRunInfo>.Empty, FrozenDictionary<uint, DutyRunInfo>.Empty, [], []);
 
     private readonly FrozenDictionary<uint, DutyRunInfo> byCondition;
     private readonly FrozenDictionary<uint, DutyRunInfo> byInstance;
 
-    private DutyRunIndex(FrozenDictionary<uint, DutyRunInfo> byCondition, FrozenDictionary<uint, DutyRunInfo> byInstance)
+    private DutyRunIndex(FrozenDictionary<uint, DutyRunInfo> byCondition, FrozenDictionary<uint, DutyRunInfo> byInstance, DutyRunInfo[] all, RouletteInfo[] roulettes)
     {
         this.byCondition = byCondition;
         this.byInstance = byInstance;
+        All = all;
+        Roulettes = roulettes;
     }
 
     public int Count => byCondition.Count;
 
+    /// <summary>Every entry, in the order given (the sheet's).</summary>
+    public IReadOnlyList<DutyRunInfo> All { get; }
+
+    /// <summary>The Duty Roulettes in the Duty Finder's order; empty when none was read.</summary>
+    public IReadOnlyList<RouletteInfo> Roulettes { get; }
+
     /// <summary>The first entry per instance wins (an instance some Duty Finder entries share keeps its first).</summary>
-    public static DutyRunIndex From(IEnumerable<DutyRunInfo> duties)
+    public static DutyRunIndex From(IEnumerable<DutyRunInfo> duties, IEnumerable<RouletteInfo>? roulettes = null)
     {
         ArgumentNullException.ThrowIfNull(duties);
         var byCondition = new Dictionary<uint, DutyRunInfo>();
         var byInstance = new Dictionary<uint, DutyRunInfo>();
+        var all = new List<DutyRunInfo>();
         foreach (var duty in duties)
         {
-            if (duty.ContentFinderConditionId == 0)
+            if (duty.ContentFinderConditionId == 0 || !byCondition.TryAdd(duty.ContentFinderConditionId, duty))
             {
                 continue;
             }
 
-            byCondition.TryAdd(duty.ContentFinderConditionId, duty);
+            all.Add(duty);
             if (duty.InstanceContentId != 0)
             {
                 byInstance.TryAdd(duty.InstanceContentId, duty);
             }
         }
 
-        return new DutyRunIndex(byCondition.ToFrozenDictionary(), byInstance.ToFrozenDictionary());
+        var ordered = roulettes is null ? [] : roulettes.OrderBy(static r => r.SortKey).ThenBy(static r => r.Id).ToArray();
+        return new DutyRunIndex(byCondition.ToFrozenDictionary(), byInstance.ToFrozenDictionary(), [.. all], ordered);
     }
 
     public DutyRunInfo? ByCondition(uint contentFinderConditionId) => byCondition.GetValueOrDefault(contentFinderConditionId);

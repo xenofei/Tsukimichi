@@ -316,10 +316,11 @@ public sealed partial class DetailPane
             // Met is a small check, unmet an eclipse cross: a moon means a quest state or a fraction only (accessibility B2).
             ImGui.SetCursorScreenPos(new Vector2(left, textY));
             ImGui.Dummy(new Vector2(box, lineHeight));
-            Marks.Draw(dl, new Vector2(left + (box * 0.5f), textY + (lineHeight * 0.5f)), line.Met ? mark * 0.85f : mark, line.Met ? Mark.Check : Mark.Unmet);
+            // A gate Tsukimichi can't check is the third verdict: a hollow ring, never the unmet cross (1.19 C3).
+            Marks.Draw(dl, new Vector2(left + (box * 0.5f), textY + (lineHeight * 0.5f)), line.Met ? mark * 0.85f : mark, line.Met ? Mark.Check : line.CantCheck ? Mark.CantCheck : Mark.Unmet);
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(line.Met ? Strings.MetTooltip : Strings.UnmetTooltip);
+                UiMetrics.Tooltip(line.Met ? Strings.MetTooltip : line.CantCheck ? Strings.GateCantCheckTooltip : Strings.UnmetTooltip);
             }
 
             if (line.Icon.HasIcon)
@@ -343,8 +344,13 @@ public sealed partial class DetailPane
             if (line.Detail.Length > 0)
             {
                 ImGui.SetCursorScreenPos(new Vector2(valueLeft, valueTop));
-                TextFlow.Wrapped(line.Detail, valueRoom, Theme.U32(line.Met ? s.TextSecondary : Theme.DangerText));
+                TextFlow.Wrapped(line.Detail, valueRoom, Theme.U32(line.Met ? s.TextSecondary : line.CantCheck ? s.TextTertiary : Theme.DangerText));
                 bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
+            }
+
+            if (line.CantCheck)
+            {
+                bottom = DrawGateExtras(line, textLeft, bottom, MathF.Max(1f, right - textLeft));
             }
 
             if (!line.Met && line.GapText is { } gapText)

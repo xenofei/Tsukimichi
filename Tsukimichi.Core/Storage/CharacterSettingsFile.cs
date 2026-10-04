@@ -56,6 +56,13 @@ public sealed class CharacterSettings
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? SeenReadyRules { get; set; }
 
+    /// <summary>
+    /// Quest row ids whose game gate the player marked passed ("I've done this", feature plan v7 C3): a gate
+    /// Tsukimichi cannot check reads met for this character (<c>EvalContext.GateMarkedDone</c>). Ascending.
+    /// </summary>
+    [OmitWhenEmpty]
+    public List<uint> GatesDone { get; set; } = [];
+
     /// <summary>Properties this build does not know (a newer build's), written back unchanged.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; set; }
@@ -64,7 +71,7 @@ public sealed class CharacterSettings
     [JsonIgnore]
     public bool IsEmpty =>
         SpoilerShield is null && !Hidden && !DontTrack && CompareWith is null
-        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
+        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
 
     /// <summary>
     /// What outlives Forget character and "Delete all data": the player's choices about the character itself, hidden
@@ -84,6 +91,7 @@ public sealed class CharacterSettings
         CompareWith = CompareWith,
         PayoffGatesNoticed = [.. PayoffGatesNoticed],
         PayoffWhyOpen = [.. PayoffWhyOpen],
+        GatesDone = [.. GatesDone],
         SeenReady = SeenReady is null ? null : [.. SeenReady],
         SeenReadyRules = SeenReadyRules,
         Extra = Extra is null ? null : new Dictionary<string, JsonElement>(Extra, StringComparer.Ordinal),
@@ -94,6 +102,7 @@ public sealed class CharacterSettings
     {
         PayoffGatesNoticed ??= [];
         PayoffWhyOpen ??= [];
+        GatesDone ??= [];
     }
 }
 
@@ -116,6 +125,12 @@ public enum CharacterSettingField
     /// or grown in this client, which is the only one logged in as the character).
     /// </summary>
     SeenReady,
+
+    /// <summary>
+    /// Marks the game gate of quest <see cref="CharacterSettingChange.RowIds"/>[0] passed (<see cref="CharacterSettingChange.Flag"/>
+    /// true) or takes the mark back (<see cref="CharacterSettings.GatesDone"/>).
+    /// </summary>
+    GateDone,
 
     /// <summary>
     /// Forget character: drops the character's entry except <see cref="CharacterSettings.Hidden"/> and
@@ -147,6 +162,8 @@ public readonly record struct CharacterSettingChange(ulong ContentId, CharacterS
     public static CharacterSettingChange Noticed(ulong contentId, string gateId) => new(contentId, CharacterSettingField.GateNoticed, Id: gateId);
 
     public static CharacterSettingChange Why(ulong contentId, string gateId, bool open) => new(contentId, CharacterSettingField.WhyOpen, open, Id: gateId);
+
+    public static CharacterSettingChange GateDone(ulong contentId, uint questRowId, bool done) => new(contentId, CharacterSettingField.GateDone, done, RowIds: [questRowId]);
 
     public static CharacterSettingChange Forget(ulong contentId) => new(contentId, CharacterSettingField.Forget);
 }
@@ -257,6 +274,21 @@ public static class CharacterSettingsFile
                     else if (change.Id is not null)
                     {
                         entry.PayoffWhyOpen.Remove(change.Id);
+                    }
+
+                    break;
+                case CharacterSettingField.GateDone:
+                    if (change.RowIds is [var gateRow])
+                    {
+                        if (change.Flag == true && !entry.GatesDone.Contains(gateRow))
+                        {
+                            entry.GatesDone.Add(gateRow);
+                            entry.GatesDone.Sort();
+                        }
+                        else if (change.Flag != true)
+                        {
+                            entry.GatesDone.Remove(gateRow);
+                        }
                     }
 
                     break;

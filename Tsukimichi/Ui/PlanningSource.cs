@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Evaluation;
@@ -42,6 +43,9 @@ public sealed class PlanningSource
     private MsqCatchUpSummary? catchUp;
     private string catchUpLine = string.Empty;
     private string catchUpTooltip = string.Empty;
+    private string catchUpOthers = string.Empty;
+    private StoryMeter? storyMeter;
+    private StoryMeterHover? storyMeterLines;
     private readonly Dictionary<byte, AdviceText> advice = [];
     private MsqLevelGate? msqGate;
     private string msqGateLine = string.Empty;
@@ -77,12 +81,19 @@ public sealed class PlanningSource
             if (built.Source is null || !ReferenceEquals(built.Curated, c) || !ReferenceEquals(built.Rewards, r) || !ReferenceEquals(built.Runs, d))
             {
                 Func<uint, uint>? conditionOf = d is null ? null : instance => d.ByInstance(instance)?.ContentFinderConditionId ?? 0u;
-                built = (c, r, d, CatchUpDutySource.From(c, r, conditionOf));
+                // The duty index also answers how each duty can be cleared and the item level it asks (C7).
+                built = (c, r, d, CatchUpDutySource.From(c, r, conditionOf) with { DutyOf = d is null ? null : d.ByCondition });
             }
 
             return built.Source;
         };
     }
+
+    /// <summary>
+    /// The catch-up's duty source as of now (the duty unlocks, the duty index and the curated story requirements);
+    /// null until the duty index lands. The detail pane's "How you'll clear it" reads which duties the story needs from it.
+    /// </summary>
+    public CatchUpDutySource? DutySourceNow => duties?.Invoke();
 
     /// <summary>One job's advice as drawn: the row text ("52→56 opens 7 quests (2 unlock quests, MSQ)"), the headline naming the job, the tooltip (the headline, then every level with its quests) and the first quest.</summary>
     public sealed record AdviceText(JobLevelAdvice Advice, string Row, string Headline, string Tooltip, QuestRecord? First);
@@ -126,6 +137,16 @@ public sealed class PlanningSource
         }
     }
 
+    /// <summary>"Ahead: 3 story duties need other players" (C7), under the catch-up line; empty when none does.</summary>
+    public string CatchUpOthersLine
+    {
+        get
+        {
+            Refresh();
+            return catchUpOthers;
+        }
+    }
+
     /// <summary>The catch-up per expansion, one line each, after the explanation.</summary>
     public string CatchUpTooltip
     {
@@ -135,6 +156,36 @@ public sealed class PlanningSource
             return catchUpTooltip;
         }
     }
+
+    /// <summary>
+    /// The true story meter (feature plan v7 N3): the main scenario with the side quests it needs; null without a
+    /// catalog, states or main scenario.
+    /// </summary>
+    public StoryMeter? StoryMeter
+    {
+        get
+        {
+            Refresh();
+            return storyMeter;
+        }
+    }
+
+    /// <summary>The story meter as the MSQ pill's hover reads it; null without a meter.</summary>
+    public StoryMeterHover? StoryMeterLines
+    {
+        get
+        {
+            Refresh();
+            return storyMeterLines;
+        }
+    }
+
+    /// <summary>
+    /// The MSQ pill's hover (spec-1.19 N3): the title ("Main scenario · 742 of 1,038 (71%)"), the lines under it in
+    /// Secondary (what the meter counts, the next milestone) and the "Still to do from earlier" line (empty when nothing
+    /// was skipped). Counts and milestones only past the story point; the skipped side quests it names are below it.
+    /// </summary>
+    public sealed record StoryMeterHover(string Title, string[] Lines, string Earlier);
 
     /// <summary>The next main scenario quest when it waits for a level only; null otherwise.</summary>
     public MsqLevelGate? MsqGate
@@ -197,6 +248,14 @@ public sealed class PlanningSource
     public static string Quests(int count) =>
         count == 1 ? Strings.PlanningQuestsOne : string.Format(CultureInfo.CurrentCulture, Strings.PlanningQuestsFormat, count);
 
+    /// <summary>Formats "1 side quest" / "8 side quests".</summary>
+    public static string SideQuests(int count) =>
+        count == 1 ? Strings.PlanningSideQuestsOne : string.Format(CultureInfo.CurrentCulture, Strings.PlanningSideQuestsFormat, count);
+
+    /// <summary>"151 quests, 8 of them side quests the story needs", or "143 quests" when the story needs none.</summary>
+    public static string AllQuests(int all, int side) =>
+        side == 0 ? Quests(all) : string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpSideFormat, Quests(all), side);
+
     /// <summary>Formats "no duties" / "1 duty" / "6 duties".</summary>
     public static string Duties(int count) => count switch
     {
@@ -232,9 +291,11 @@ public sealed class PlanningSource
             return Strings.PlanningCatchUpDone;
         }
 
+        // The side quests the story needs count with the main scenario's (N3): "151 quests, 8 of them side quests …".
+        var quests = AllQuests(summary.AllQuests, summary.SideQuests);
         return summary.MinLevel == summary.MaxLevel
-            ? string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpOneLevelFormat, Quests(summary.Quests), summary.MinLevel, Duties(summary.Duties))
-            : string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpFormat, Quests(summary.Quests), summary.MinLevel, summary.MaxLevel, Duties(summary.Duties));
+            ? string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpOneLevelFormat, quests, summary.MinLevel, Duties(summary.Duties))
+            : string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpFormat, quests, summary.MinLevel, summary.MaxLevel, Duties(summary.Duties));
     }
 
     private void Refresh()
@@ -256,7 +317,9 @@ public sealed class PlanningSource
 
         builtKey = key;
         catchUp = null;
-        catchUpLine = catchUpTooltip = msqGateLine = string.Empty;
+        storyMeter = null;
+        storyMeterLines = null;
+        catchUpLine = catchUpTooltip = catchUpOthers = msqGateLine = string.Empty;
         advice.Clear();
         msqGate = null;
         if (bundle is null || session.ViewedSnapshot is not { } snapshot || session.States.Count == 0)
@@ -279,6 +342,8 @@ public sealed class PlanningSource
     private void BuildCatchUp(CatalogBundle bundle, CharacterSnapshot snapshot, CatchUpDutySource? dutySource)
     {
         catchUp = MsqCatchUp.Compute(bundle.Catalog, session.States, snapshot, dutySource);
+        storyMeter = StoryMeter.Compute(bundle.Catalog, session.States, dutySource);
+        storyMeterLines = storyMeter is { } meter ? Hover(meter, bundle) : null;
         if (catchUp is not { } summary)
         {
             return;
@@ -296,13 +361,133 @@ public sealed class PlanningSource
         foreach (var part in summary.Expansions)
         {
             var name = bundle.Names.Expansion(part.Expansion) is { Length: > 0 } named ? named : Expansions.Name(part.Expansion);
-            text.Append('\n');
-            text.Append(part.MinLevel == part.MaxLevel
+            var line = part.MinLevel == part.MaxLevel
                 ? string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpExpansionOneLevelFormat, name, Quests(part.Quests), part.MinLevel, Duties(part.Duties.Count))
-                : string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpExpansionFormat, name, Quests(part.Quests), part.MinLevel, part.MaxLevel, Duties(part.Duties.Count)));
+                : string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpExpansionFormat, name, Quests(part.Quests), part.MinLevel, part.MaxLevel, Duties(part.Duties.Count));
+            text.Append('\n');
+            text.Append(part.SideQuests == 0 ? line : string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpExpansionSideFormat, line, SideQuests(part.SideQuests)));
         }
 
+        AppendSideQuests(text, bundle, dutySource);
+        catchUpOthers = AppendDutyNotes(text, summary, snapshot, bundle, dutySource);
         catchUpTooltip = text.ToString();
+    }
+
+    /// <summary>The meter's hover lines (N3); the side quests skipped are named by their journal genre, or their one quest.</summary>
+    private StoryMeterHover Hover(StoryMeter meter, CatalogBundle bundle)
+    {
+        var title = string.Format(CultureInfo.CurrentCulture, Strings.MsqMeterTitleFormat, meter.Done, meter.Total, meter.Percent);
+        var lines = new List<string>(2);
+        if (meter.SideTotal > 0)
+        {
+            lines.Add(Strings.MsqMeterCounts);
+        }
+
+        if (meter.ToMilestone > 0)
+        {
+            lines.Add(meter.ToMilestone == 1 ? Strings.MsqMeterMilestoneOne : string.Format(CultureInfo.CurrentCulture, Strings.MsqMeterMilestoneFormat, meter.ToMilestone));
+        }
+
+        var items = new List<string>(meter.Earlier.Count);
+        foreach (var line in meter.Earlier)
+        {
+            var quests = line.Select(id => bundle.Catalog.GetByRowId(id)).OfType<QuestRecord>().ToArray();
+            if (quests.Length == 0)
+            {
+                continue;
+            }
+
+            var genre = quests[0].Journal.GenreName;
+            var name = quests.Length > 1 && genre.Length > 0 && quests.All(q => q.Journal.GenreName == genre) ? genre : session.Spoilers.DisplayName(quests[^1]);
+            items.Add(string.Format(CultureInfo.CurrentCulture, Strings.MsqMeterEarlierItemFormat, name, Quests(quests.Length), quests.Max(static q => q.DisplayLevel)));
+        }
+
+        var earlier = items.Count == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.MsqMeterEarlierFormat, string.Join(Strings.PlanningListSeparator, items));
+        return new StoryMeterHover(title, [.. lines], earlier);
+    }
+
+    /// <summary>
+    /// One line per main scenario quest left that needs side quests first (N3): "8 side quests the story needs before
+    /// A Time to Every Purpose", the quest's name through the spoiler shield.
+    /// </summary>
+    private void AppendSideQuests(StringBuilder text, CatalogBundle bundle, CatchUpDutySource? dutySource)
+    {
+        var progress = StoryRequirements.For(bundle.Catalog, dutySource).Progress(session.States);
+        if (progress.LeftFor.Count == 0)
+        {
+            return;
+        }
+
+        var graph = MsqGraph.For(bundle.Catalog);
+        var first = true;
+        foreach (var quest in graph.Story)
+        {
+            if (!progress.LeftFor.TryGetValue(quest.RowId, out var left) || session.States.GetValueOrDefault(quest.RowId)?.State == QuestState.Completed)
+            {
+                continue;
+            }
+
+            if (first)
+            {
+                text.Append('\n');
+                first = false;
+            }
+
+            text.Append('\n').Append(string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpSideBeforeFormat, SideQuests(left.Count), session.Spoilers.DisplayName(quest)));
+        }
+    }
+
+    /// <summary>
+    /// How the story's duties left can be cleared (C7): "Ahead: 3 story duties need other players" for those with no
+    /// Duty Support, Trust or solo entry, and the item-level wall of the highest one when the character falls short
+    /// ("The story's duties ahead ask up to i690 (you: i677)").
+    /// </summary>
+    private static string AppendDutyNotes(StringBuilder text, MsqCatchUpSummary summary, CharacterSnapshot snapshot, CatalogBundle bundle, CatchUpDutySource? dutySource)
+    {
+        if (dutySource?.DutyOf is not { } dutyOf)
+        {
+            return string.Empty;
+        }
+
+        var others = 0;
+        ushort highest = 0;
+        var seen = new HashSet<uint>();
+        foreach (var part in summary.Expansions)
+        {
+            foreach (var left in part.Duties)
+            {
+                var condition = left.ContentFinderConditionId != 0 ? left.ContentFinderConditionId : dutySource.ConditionOf?.Invoke(left.InstanceContentId) ?? 0;
+                if (condition == 0 || !seen.Add(condition) || dutyOf(condition) is not { } duty)
+                {
+                    continue;
+                }
+
+                if (!DutyClear.WithoutOthers(duty))
+                {
+                    others++;
+                }
+
+                highest = Math.Max(highest, duty.ItemLevelRequired);
+            }
+        }
+
+        var othersLine = others switch
+        {
+            0 => string.Empty,
+            1 => Strings.PlanningCatchUpOthersOne,
+            _ => string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpOthersFormat, others),
+        };
+        if (othersLine.Length > 0)
+        {
+            text.Append('\n').Append(othersLine);
+        }
+
+        if (ItemLevelWall.For(highest, snapshot, ItemLevelRule.For(bundle.Catalog)) is { Met: false } wall)
+        {
+            text.Append('\n').Append(string.Format(CultureInfo.CurrentCulture, Strings.PlanningCatchUpWallFormat, wall.Required, wall.Have));
+        }
+
+        return othersLine;
     }
 
     private void BuildAdvice(CatalogBundle bundle, CharacterSnapshot snapshot)

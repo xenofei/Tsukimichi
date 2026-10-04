@@ -182,11 +182,16 @@ public sealed partial class VerificationAllowlistTests
             .ToList();
         Assert.True(questRows.Count > 100_000, $"only {questRows.Count} quest rows; was the report truncated?");
 
+        // The gates fact (1.19 C3) has its own report, gate-verification.csv, in the quest report's columns.
+        var gateRows = ReadCsv(Path.Combine(dir, "gate-verification.csv"))
+            .Select(f => (RowId: f[0], Fact: f[2], Source: f[4], Verdict: f[7], RewardId: (string?)null))
+            .ToList();
+
         var stale = new List<string>();
         foreach (var e in Entries().Where(e => (string?)e["source"] != "questionable"))
         {
             var fact = (string)e["fact"]!;
-            var rows = fact.StartsWith("reward:", StringComparison.Ordinal) ? rewardRows : questRows;
+            var rows = fact.StartsWith("reward:", StringComparison.Ordinal) ? rewardRows : fact == "gates" ? gateRows : questRows;
             var excuses = rows.Any(r =>
                 ((string?)e["rowId"] == "*" || r.RowId == (string?)e["rowId"])
                 && (fact == "*" || r.Fact == fact)
@@ -200,6 +205,35 @@ public sealed partial class VerificationAllowlistTests
         }
 
         Assert.True(stale.Count == 0, "verification-allowlist.json entries that excuse no row of the committed report; the data settled them, remove them: " + string.Join(", ", stale));
+    }
+
+    /// <summary>
+    /// The gates fact's report (<c>gate-verification.csv</c>, 1.19 C3): every row the wiki states a gate for is matched
+    /// by a curated game gate or excused by a live entry, and every matched row names a quest the catalog gates.
+    /// </summary>
+    [Fact]
+    public void Every_gate_the_wiki_states_is_curated_or_excused()
+    {
+        var current = PluginVersion();
+        var rows = ReadCsv(Path.Combine(ExtraPrerequisitesDataTests.DocsDataDir(), "gate-verification.csv"));
+        Assert.True(rows.Count >= 70, $"only {rows.Count} gate rows; was the report truncated?");
+        var curated = Core.Storage.CuratedData.Load(FixtureCatalog.CuratedDir());
+        var excused = Entries().Where(e => (string?)e["fact"] == "gates" && !Expired(e, current)).Select(e => (string?)e["rowId"]).ToHashSet();
+        var problems = new List<string>();
+        foreach (var f in rows)
+        {
+            var rowId = uint.Parse(f[0], System.Globalization.CultureInfo.InvariantCulture);
+            if (f[7] == "match" && !curated.GameGates.ContainsKey(rowId))
+            {
+                problems.Add($"{f[0]} {f[1]}: matched, but curated/game_gates.json has no gate for it; run Tsukimichi.Verify gates");
+            }
+            else if (f[7] == "unresolved" && !excused.Contains(f[0]))
+            {
+                problems.Add($"{f[0]} {f[1]}: the wiki states {f[5]}; curate the gate (two sources) or allowlist it with a reason");
+            }
+        }
+
+        Assert.True(problems.Count == 0, string.Join("\n", problems));
     }
 
     /// <summary>The data lines of a committed report, split on commas outside double quotes ("" is a quote).</summary>

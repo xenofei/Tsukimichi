@@ -105,6 +105,11 @@ public sealed class StatePoller : IDisposable
     // The daily offer the committed evaluations were resolved with; a different one re-resolves everything.
     private DailyOffer? lastOffer;
 
+    // The players' "I've done this" gate marks (SessionState.GateMarksVersion) the committed evaluations were resolved
+    // with, and the version the poll in hand read; a different one re-resolves everything, as a new offer does.
+    private int lastGateMarks = -1;
+    private int polledGateMarks;
+
     /// <param name="writer">The background queue every snapshot and sidecar save goes through; the framework thread never writes a file.</param>
     public StatePoller(
         IFramework framework,
@@ -355,6 +360,7 @@ public sealed class StatePoller : IDisposable
                 heldBack.Reset();
                 DailyOffers?.Clear();
                 lastOffer = null;
+                lastGateMarks = -1;
                 Notify(session.ClearLive);
             }
 
@@ -483,7 +489,8 @@ public sealed class StatePoller : IDisposable
         // unknown society's dailies are not held back. A change of the offer re-resolves everything below.
         // lastOffer follows only a commit: a capture held back (or a poll that throws) leaves the change to the next one.
         var offer = DailyOffers?.Read(catalog, snapshot, now) ?? DailyOffer.None;
-        var offerChanged = !offer.SameAs(lastOffer);
+        polledGateMarks = session.GateMarksVersion;
+        var offerChanged = !offer.SameAs(lastOffer) || polledGateMarks != lastGateMarks;
         var context = session.BaseContext.WithDailyOffer(offer);
 
         var last = memory.Last;
@@ -617,6 +624,7 @@ public sealed class StatePoller : IDisposable
 
         memory.Commit(snapshot, resolved, bundle);
         lastOffer = offer;
+        lastGateMarks = polledGateMarks;
         return new PollResult(snapshot, resolved, context, events);
     }
 
@@ -801,6 +809,7 @@ public sealed class StatePoller : IDisposable
         var dirty = AcceptedSince.Reconcile(result.AcceptedSince, snapshot, now);
         memory.Commit(snapshot, result.States, pending.Bundle);
         lastOffer = pending.Offer;
+        lastGateMarks = polledGateMarks;
         handoff = null;
         memory.SetAcceptedSince(result.AcceptedSince, dirty);
         // Quests abandoned earlier and taken up again, or completed, while the plugin was not watching leave the list.

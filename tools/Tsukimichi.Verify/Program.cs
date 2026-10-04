@@ -68,6 +68,7 @@ public static class Program
                 "patches" => await PatchesAsync(opts, cts.Token),
                 "questionable" => Questionable(opts),
                 "links" => Links(opts),
+                "gates" => Gates(opts),
                 _ => Unknown(command),
             };
         }
@@ -93,7 +94,7 @@ public static class Program
 
     private static void Usage()
     {
-        Console.Error.WriteLine("usage: Tsukimichi.Verify <quests|rewards|summary|patches|questionable|links> [options]");
+        Console.Error.WriteLine("usage: Tsukimichi.Verify <quests|rewards|summary|patches|questionable|links|gates> [options]");
         Console.Error.WriteLine("  --game <sqpack>    game sqpack directory (default: the Steam install)");
         Console.Error.WriteLine("  --cache <dir>      fetch cache (default: %LOCALAPPDATA%\\Tsukimichi.Verify\\<gameVersion>); never inside the repo");
         Console.Error.WriteLine("  --offline          never fetch; a cache miss is an unresolved row");
@@ -474,6 +475,38 @@ public static class Program
             map[rowId] = value;
             return 0;
         }
+    }
+
+    /// <summary>
+    /// The <c>gates</c> fact (feature plan v7 C3) over every quest page in the fetch cache (<see cref="GateVerifier"/>):
+    /// writes <c>gate-verification.csv</c> and exits 1 on an unresolved row the allowlist does not excuse. Reads the cache
+    /// only, never the network: run <c>quests</c> first to fetch the pages.
+    /// </summary>
+    private static int Gates(VerifyOptions opts)
+    {
+        using var c = Open(opts);
+        var log = Console.Out;
+        var pages = c.Wiki.CachedPages().ToList();
+        var rows = GateVerifier.Run(c.Game, pages);
+        var path = Path.Combine(opts.OutDir, "gate-verification.csv");
+        Csv.WriteQuestRows(path, rows);
+        log.WriteLine($"gates: {pages.Count} cached wiki pages, {rows.Count} gate rows over {rows.Select(r => r.RowId).Distinct().Count()} quests; wrote {path}");
+        PrintTotals(rows.Select(r => r.Verdict), "gate rows", log);
+
+        var allowlist = Allowlist.Load(Path.Combine(opts.OutDir, "verification-allowlist.json"));
+        var current = PluginVersion(opts.RepoRoot);
+        var open = 0;
+        foreach (var r in rows.Where(r => Verdicts.FailsGate(r.Verdict)))
+        {
+            if (allowlist.Covering(r, current) is null)
+            {
+                open++;
+                log.WriteLine($"  GATE {Verdicts.Name(r.Verdict)} {r.RowId} {r.Name} source={r.SourceValue}: {r.SourceRef}");
+            }
+        }
+
+        log.WriteLine(open == 0 ? "gates: passed" : $"gates: FAILED, {open} row(s) unresolved outside the allowlist");
+        return open == 0 ? 0 : 1;
     }
 
     private static int Summary(VerifyOptions opts)

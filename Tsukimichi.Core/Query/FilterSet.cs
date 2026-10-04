@@ -56,6 +56,12 @@ public sealed class FilterSet : IEquatable<FilterSet>
     /// <summary>Per reward kind. Missing kinds are <see cref="TriState.Show"/>.</summary>
     public Dictionary<RewardKind, TriState> RewardKinds { get; set; } = [];
 
+    /// <summary>
+    /// The Unlocks filter (plan v7, 1.19.0 K3): with any kind on, keeps only quests that open one of them
+    /// (<see cref="Unlocks.QuestUnlocks.KindMask"/>); empty keeps every quest.
+    /// </summary>
+    public HashSet<Unlocks.UnlockFindKind> UnlockKinds { get; set; } = [];
+
     public bool RepeatableOnly { get; set; }
 
     /// <summary>Keeps only festival quests whose festival is active in the query context.</summary>
@@ -99,6 +105,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         || LevelRangeEngaged()
         || ClassJobCategoryId is not null
         || RewardKindsEngaged()
+        || UnlockKindsEngaged()
         || RepeatableOnly
         || SeasonalActiveOnly
         || PinnedOnly
@@ -130,6 +137,9 @@ public sealed class FilterSet : IEquatable<FilterSet>
         return false;
     }
 
+    /// <summary>Whether the Unlocks filter has a kind on; a null (a hand-edited config) reads as not engaged.</summary>
+    public bool UnlockKindsEngaged() => UnlockKinds is { Count: > 0 };
+
     /// <summary>Effective hide-completed setting for a category: its override, else the global toggle.</summary>
     public bool HideCompletedFor(uint categoryId) =>
         PerCategoryHideCompleted.TryGetValue(categoryId, out var value) ? value : HideCompleted;
@@ -151,6 +161,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         LevelMax = LevelMax,
         ClassJobCategoryId = ClassJobCategoryId,
         RewardKinds = new Dictionary<RewardKind, TriState>(RewardKinds),
+        UnlockKinds = [.. UnlockKinds ?? []],
         RepeatableOnly = RepeatableOnly,
         SeasonalActiveOnly = SeasonalActiveOnly,
         IncludeUnlisted = IncludeUnlisted,
@@ -175,6 +186,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         LevelMax = NoLevelMax;
         ClassJobCategoryId = null;
         RewardKinds.Clear();
+        UnlockKinds = [];
         RepeatableOnly = false;
         SeasonalActiveOnly = false;
         IncludeUnlisted = false;
@@ -215,7 +227,8 @@ public sealed class FilterSet : IEquatable<FilterSet>
             && Expansions.SetEquals(other.Expansions)
             && SameEntries(PerCategoryHideCompleted, other.PerCategoryHideCompleted)
             && SameEntries(PerCategoryAvailableOnly, other.PerCategoryAvailableOnly)
-            && SameEntries(RewardKinds, other.RewardKinds);
+            && SameEntries(RewardKinds, other.RewardKinds)
+            && (UnlockKinds ?? []).SetEquals(other.UnlockKinds ?? []);
     }
 
     public override bool Equals(object? obj) => Equals(obj as FilterSet);
@@ -242,6 +255,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         hash.Add(OrderInsensitiveHash(PerCategoryHideCompleted));
         hash.Add(OrderInsensitiveHash(PerCategoryAvailableOnly));
         hash.Add(OrderInsensitiveHash(RewardKinds));
+        hash.Add(OrderInsensitiveHash(UnlockKinds ?? []));
         return hash.ToHashCode();
     }
 

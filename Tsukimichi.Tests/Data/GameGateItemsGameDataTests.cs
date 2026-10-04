@@ -70,6 +70,16 @@ public sealed class GameGateItemsGameDataTests(GameDataFixture game) : IClassFix
                     problems.Add($"{rowId}: {source} is not the quest's own reward row");
                 }
 
+                // The tools a step hands out, asked for by the next: the reward row of the gated quest's previous quest.
+                if (sheet == "QuestClassJobRewardItem")
+                {
+                    var previous = game.Game.GetExcelSheet<Sheets.Quest>()!.GetRow(quest.PreviousQuest[0].RowId);
+                    if (previous.Reward[0].RowType != typeof(Sheets.QuestClassJobReward) || previous.Reward[0].RowId != row)
+                    {
+                        problems.Add($"{rowId}: {source} is not the reward row of its previous quest {previous.RowId}");
+                    }
+                }
+
                 if (sheet == "RelicItem")
                 {
                     var checks = ScriptStrings(game.Game, quest.Id.ExtractText()).Where(RelicStageRows.ContainsKey).Distinct().ToList();
@@ -191,10 +201,13 @@ public sealed class GameGateItemsGameDataTests(GameDataFixture game) : IClassFix
                     break;
                 }
 
-                case "QuestClassJobReward":
+                case "QuestClassJobReward" or "QuestClassJobRewardItem":
+                    // The weapons or tools of each subrow: RequiredItem (what the quest's turn-in takes) or RewardItem (what
+                    // it hands out); the crafting materials a tool step also takes are no part of the gate.
                     foreach (var subrow in game.GetSubrowExcelSheet<Sheets.QuestClassJobReward>()!.GetRow(row))
                     {
-                        var group = subrow.RequiredItem.Select(x => x.RowId).Where(x => x != 0).ToArray();
+                        var listed = sheetName == "QuestClassJobReward" ? subrow.RequiredItem : subrow.RewardItem;
+                        var group = listed.Select(x => x.RowId).Where(x => x != 0 && items.GetRow(x).EquipSlotCategory.RowId != 0).ToArray();
                         if (group.Length > 0)
                         {
                             groups.Add(group);
