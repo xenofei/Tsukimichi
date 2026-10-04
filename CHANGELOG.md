@@ -4,7 +4,20 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- **What's new, after an update:** once Dalamud installs a newer Tsukimichi, a popup shows what changed in a few plain points, with a painting for each release drawn in your theme. It shows once per update, never on a first install, and several releases arriving at once become pages. Past notes, back to 1.14.0, are in Settings › Advanced › What's new.
+- **Update ready:** Tsukimichi asks Dalamud at login and every few hours whether a newer version is waiting (on by default). A quiet status-bar note and a dot on the moon icon say so, and **Update** opens Dalamud's installer. Tsukimichi still makes no network request of its own.
+- **The moon icon:** a small moon on your screen that opens Tsukimichi.
+  - Hover shows Up next, your Ready count, journal room and events ending soon. Right-click offers Lock, Hide, Tonight and Settings.
+  - Drag it anywhere, lock it, or hide it from Settings or `/tsuki icon`. Its place is kept per screen size, and it can hide in cutscenes, Group Pose and duties.
+  - Each theme gives it its own subtle particles and hover glow; none under Reduce motion, and plain at Plain.
+- **Server info bar:** "12 Ready" with a moon in your theme's colour, in the game's server info bar and Umbra's. Hover for the quick card, click to open Tsukimichi, right-click for Tonight.
+- **Umbra:** the moon icon, the Todo overlay and the Needs-you panel keep clear of Umbra's toolbar. An optional **Follow Umbra** palette matches Umbra's colours. Settings shows the Umbra status and how to add the Tsukimichi for Umbra add-on.
+- **IPC:** read-only, versioned calls for other plugins (the summary, and "open Tsukimichi at…"), documented in `docs/ipc.md`. Anything that starts a run still needs your click in Tsukimichi.
+- **Portrait pack offer:** after you install Tsukimichi (or on your first login after this update, if you've never been asked), it offers the portrait pack once, at a quiet moment after What's new. "Download portraits" is the highlighted choice, and once you've clicked the offer Enter accepts it. "Not now" declines, or Esc once you've clicked the offer, and it won't ask again. Keys meant for the game never answer it, and nothing goes online unless you choose Download. The pack stays in Settings › Look.
+
 ### Changed
+- **The What's new card leaves the main window;** the popup and Settings replace it.
 - **Quest gates:** twelve late-game quests that need a dungeon floor, a variant dungeon record, an Island Sanctuary rank or a Triple Triad achievement now ask you to confirm ("I've done this") instead of showing Ready too early.
 
 ## [1.21.0] - 2026-10-04
