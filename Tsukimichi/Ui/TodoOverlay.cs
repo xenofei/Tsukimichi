@@ -1202,6 +1202,9 @@ public sealed class TodoOverlay : Window, IDisposable
     /// Section toggles and "Warn before an event ends" (which orders the seasonal section, 1.19.0 C10) as one integer,
     /// compared per frame so a change in the settings window rebuilds at once.
     /// </summary>
+    // The viewed shield's fingerprint the overlay was built against.
+    private int builtSpoilers;
+
     private int SettingsSignature() =>
         (settings.TodoShowPins ? 1 : 0) | (settings.TodoShowNearbyFeature ? 2 : 0) | (settings.TodoShowMsq ? 4 : 0) | (settings.TodoShowJobQuests ? 8 : 0)
         | (settings.TodoShowSeasonal ? 16 : 0) | (settings.TodoShowPlan ? 32 : 0) | ((settings.TodoPlanExpansion + 1) << 6)
@@ -1288,12 +1291,16 @@ public sealed class TodoOverlay : Window, IDisposable
         var territory = clientState.TerritoryType;
         var signature = SettingsSignature();
         var sources = SourceRevisions();
-        if (!dirty && version == builtVersion && pinsVersion == builtPins && territory == builtTerritory && signature == builtSettings && sources == builtSources)
+        // A reveal or a shield setting changes the route title's placeholder without moving the session's version.
+        var spoilers = session.Spoilers.Fingerprint;
+        if (!dirty && version == builtVersion && pinsVersion == builtPins && territory == builtTerritory && signature == builtSettings && sources == builtSources
+            && spoilers == builtSpoilers)
         {
             return;
         }
 
         dirty = false;
+        builtSpoilers = spoilers;
         builtVersion = version;
         builtPins = pinsVersion;
         builtTerritory = territory;
@@ -1366,7 +1373,9 @@ public sealed class TodoOverlay : Window, IDisposable
             TierOf: Plan is { } tiers ? tiers.TierOf : null,
             SetAside: session.ViewedSetAside,
             LooseEnds: LooseEndRows(),
-            ShowLooseEnds: settings.TodoShowLooseEnds));
+            ShowLooseEnds: settings.TodoShowLooseEnds,
+            // The route title names a hidden target by its placeholder (1.20.0 N6).
+            Spoilers: session.Spoilers));
 
         enabledSections = model.EnabledSections;
         if (model.Sections.Count == 0)

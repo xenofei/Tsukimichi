@@ -42,4 +42,15 @@ public sealed class TodoOverlayRebuildKeyTests
     {
         Assert.Contains("settings.SeasonalWarnDays", Between("private int SettingsSignature() =>", ";"), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void The_route_title_follows_the_viewed_shield_and_a_reveal_moves_the_key()
+    {
+        // 1.21.0 review: the overlay's "Route: {label}" named a hidden duty or reward. The title now goes through the
+        // viewed shield, and a reveal (which moves the shield's fingerprint, not the session's version) rebuilds it.
+        Assert.Contains("Spoilers: session.Spoilers", Source, StringComparison.Ordinal);
+        var refresh = Between("var sources = SourceRevisions();", "dirty = false;");
+        Assert.Contains("session.Spoilers.Fingerprint", refresh, StringComparison.Ordinal);
+        Assert.Contains("spoilers == builtSpoilers", refresh, StringComparison.Ordinal);
+    }
 }

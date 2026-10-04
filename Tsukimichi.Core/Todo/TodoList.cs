@@ -147,6 +147,7 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="SetAside">The quests the player set aside in My blues (P4): left out of the Nearby feature quests; null leaves none out.</param>
 /// <param name="LooseEnds">The Loose ends rows (1.21.0 N8), built by the caller in display order (finales first), each standing on its line's next quest; null leaves the section out.</param>
 /// <param name="ShowLooseEnds">Include the Loose ends section (off by default).</param>
+/// <param name="Spoilers">The viewed character's spoiler shield: the route section's title names its target through it (<see cref="RouteTarget.ShownLabel"/>); null prints the target's own label.</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -179,7 +180,8 @@ public sealed record TodoInputs(
     Func<QuestRecord, UnlockTier?>? TierOf = null,
     IReadOnlySet<uint>? SetAside = null,
     IReadOnlyList<TodoRow>? LooseEnds = null,
-    bool ShowLooseEnds = false);
+    bool ShowLooseEnds = false,
+    SpoilerMask? Spoilers = null);
 
 /// <summary>
 /// Pure builder for the todo overlay (V2-13). Six sections, each only when enabled and non-empty: the character's
@@ -371,7 +373,7 @@ public static class TodoList
         {
             More = glance.More,
             Notes = gate.Length > 0 ? [gate] : [],
-            Title = string.Format(System.Globalization.CultureInfo.CurrentCulture, RouteTitleFormat, route.Target.Label),
+            Title = string.Format(System.Globalization.CultureInfo.CurrentCulture, RouteTitleFormat, inputs.Spoilers is { } spoilers ? route.Target.ShownLabel(spoilers, inputs.Catalog) : route.Target.Label),
         });
     }
 
