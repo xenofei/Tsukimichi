@@ -82,7 +82,8 @@ public static class CollectionGrid
             }
 
             // A character who owns it has seen it: only a reward nobody owns can be past the story point.
-            var name = owned == 0 && spoilers is not null ? spoilers.Name(Query.SpoilerKind.Reward, entry.RewardName) : entry.RewardName;
+            // A duty or flying in a zone is placed as one, not as a reward (SpoilerMask.RewardName).
+            var name = owned == 0 && spoilers is not null ? spoilers.RewardDisplay(entry, entry.RewardName) : entry.RewardName;
             if ((missingOnAny && !anyMissing) || !HasWords(name, words))
             {
                 continue;

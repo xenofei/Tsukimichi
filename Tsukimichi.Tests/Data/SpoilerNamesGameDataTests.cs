@@ -1,5 +1,8 @@
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Unlocks;
 using Xunit.Abstractions;
 
@@ -54,8 +57,10 @@ public sealed class SpoilerNamesGameDataTests(UnlockIndexFixture fixture, ITestO
         throw new InvalidOperationException($"{rowId} is no main scenario quest");
     }
 
+    private static readonly SpoilerKind[] Kinds = [SpoilerKind.Area, SpoilerKind.Aetheryte, SpoilerKind.Duty, SpoilerKind.Reward, SpoilerKind.Npc];
+
     /// <summary>A character whose next main scenario quest is the one at <paramref name="next"/>: everything before it done, nothing else.</summary>
-    private SpoilerMask At(int next)
+    private SpoilerMask At(int next, SpoilerOptions? options = null, IReadOnlySet<uint>? revealed = null, IEnumerable<(SpoilerKind Kind, string Name)>? revealedNames = null)
     {
         var states = new Dictionary<uint, QuestState>();
         foreach (var quest in Catalog.All)
@@ -68,7 +73,141 @@ public sealed class SpoilerNamesGameDataTests(UnlockIndexFixture fixture, ITestO
             states[Story[i].RowId] = i < next ? QuestState.Completed : i == next ? QuestState.Ready : QuestState.Blocked;
         }
 
-        return SpoilerMask.Build(Catalog, states, SpoilerOptions.Default, names: Index.Names);
+        return SpoilerMask.Build(Catalog, states, options ?? SpoilerOptions.Default, revealed, names: Index.Names, revealedNames: revealedNames);
+    }
+
+    [GameDataFact]
+    public void No_wotsit_item_names_what_the_shield_hides_at_the_start_of_stormblood()
+    {
+        // A duty unlock is placed as a duty and an aether current as flying in its zone, not as a reward: Wotsit once
+        // registered Doma Castle, Ala Mhigo and "Aether Current (Yanxia)" for a character before Stormblood.
+        var before = At(FirstOf(Stormblood));
+        var items = WotsitOrder.Items(Catalog, fixture.Rewards, k => k.ToString(), "English", before);
+        var leaks = new List<string>();
+        foreach (var item in items)
+        {
+            if (item.Reward is null)
+            {
+                // A quest's own name is the quest shield's (a side quest may share a duty's name).
+                continue;
+            }
+
+            var name = item.Name;
+            var open = name.IndexOf('(', StringComparison.Ordinal);
+            var close = name.LastIndexOf(')');
+            var inner = open >= 0 && close > open ? name[(open + 1)..close].Trim() : null;
+            foreach (var kind in Kinds)
+            {
+                if (before.IsNameMasked(kind, name) || (item.Reward.Kind == Core.Model.RewardKind.AetherCurrent && before.IsNameMasked(kind, inner)))
+                {
+                    leaks.Add($"{kind}: {name} [{item.Reward.Kind}]");
+                }
+            }
+        }
+
+        output.WriteLine($"{items.Count} items; {leaks.Count} leak: {string.Join(" | ", leaks.Take(20))}");
+        Assert.Empty(leaks);
+        Assert.DoesNotContain(items, i => i.Name is "Doma Castle" or "Ala Mhigo" or "Bardam's Mettle" or "Aether Current (Yanxia)");
+        Assert.Contains(WotsitOrder.Items(Catalog, fixture.Rewards, k => k.ToString(), "English", At(FirstOf(Shadowbringers))), i => i.Name == "Doma Castle");
+    }
+
+    [GameDataFact]
+    public void Revealing_a_story_quests_names_reveals_its_own_names_and_nothing_else()
+    {
+        var at = FirstOf(Stormblood);
+        var before = At(at);
+        var quest = Story.Skip(at).First(q => before.IsMasked(q) && q.Name == "Stormblood");
+        var names = SpoilerNames.NamesIn(quest, Index);
+        var revealed = At(at, revealed: new HashSet<uint> { quest.RowId }, revealedNames: names);
+        var titleOnly = At(at, revealed: new HashSet<uint> { quest.RowId });
+
+        Assert.False(revealed.IsMasked(quest));
+        foreach (var (kind, name) in names)
+        {
+            Assert.False(revealed.IsNameMasked(kind, name), $"{kind}: {name}");
+        }
+
+        // A reveal is no story progress: what the quest's place in the story would introduce stays hidden.
+        var ownSet = names.ToHashSet(SpoilerNames.NameComparer);
+        var widened = new List<string>();
+        foreach (var kind in Kinds)
+        {
+            foreach (var (name, placed) in Index.Names.All(kind))
+            {
+                // An aetheryte follows its area: one in an area the quest names is the quest's own.
+                var own = ownSet.Contains((kind, name)) || (placed.Zone is { } zone && ownSet.Contains((SpoilerKind.Area, zone)));
+                if (before.IsNameMasked(kind, name) && !own && (!revealed.IsNameMasked(kind, name) || !titleOnly.IsNameMasked(kind, name)))
+                {
+                    widened.Add($"{kind}: {name}");
+                }
+            }
+        }
+
+        output.WriteLine($"'{quest.Name}' reveals {names.Count} names; {widened.Count} others: {string.Join(" | ", widened.Take(20))}");
+        Assert.Empty(widened);
+
+        // The names-ahead slider still moves the story: with ten quests ahead, the next ones' names show.
+        Assert.True(At(at, SpoilerOptions.Default with { Ahead = SpoilerOptions.MaxAhead }).MaskedNameCount < before.MaskedNameCount);
+    }
+
+    [GameDataFact]
+    public void A_later_expansions_place_or_duty_hides_however_early_the_quest_that_opens_it()
+    {
+        // The Boards of the Unbroken and Shinryu's Domain (Unreal) are Dawntrail duties opened by an earlier quest.
+        foreach (var at in new[] { FirstOf(Stormblood), FirstOf(Endwalker) })
+        {
+            var mask = At(at);
+            var shown = new List<string>();
+            foreach (var kind in new[] { SpoilerKind.Area, SpoilerKind.Aetheryte, SpoilerKind.Duty })
+            {
+                foreach (var (name, placed) in Index.Names.All(kind))
+                {
+                    if (placed.Expansion != byte.MaxValue && placed.Expansion > mask.ReachExpansion && !mask.IsNameMasked(kind, name))
+                    {
+                        shown.Add($"{kind}: {name} (ex {placed.Expansion})");
+                    }
+                }
+            }
+
+            output.WriteLine($"at {Story[at].Name}: {string.Join(" | ", shown)}");
+            Assert.Empty(shown);
+        }
+
+        Assert.True(At(FirstOf(Endwalker)).IsNameMasked(SpoilerKind.Duty, "First Board of the Unbroken"));
+
+        // "Names ahead" across an expansion's end still shows the next one's places: the last Endwalker quest with
+        // ten ahead shows the zone Dawntrail's first quests open.
+        var last = FirstOf(Dawntrail) - 1;
+        var opened = Story.Skip(FirstOf(Dawntrail)).Take(3).SelectMany(q => Index.For(q.RowId)).First(e => e.Target == UnlockTarget.Zone && e.Expansion == Dawntrail);
+        Assert.True(At(last, SpoilerOptions.Default with { Ahead = 0 }).IsNameMasked(SpoilerKind.Area, opened.Name));
+        Assert.False(At(last, SpoilerOptions.Default with { Ahead = SpoilerOptions.MaxAhead }).IsNameMasked(SpoilerKind.Area, opened.Name), opened.Name);
+    }
+
+    [GameDataFact]
+    public void The_plans_other_unlocks_are_shielded_as_duties_when_they_are_duties()
+    {
+        // "The Final Verse (Quantum)" is a duty the plan files as Other: it once printed in full before Stormblood.
+        var before = At(FirstOf(Stormblood));
+        var featureIds = Catalog.All.Select(q => q.RowId).ToHashSet();
+        var tags = UnlockTags.Build(Catalog, featureIds, fixture.Rewards, fixture.Duties);
+        var plan = UnlockPlan.Build(tags, new Dictionary<uint, QuestEvaluation>(), BlockerNames.Default with { Catalog = Catalog }, spoilers: before);
+        var leaks = new List<string>();
+        foreach (var entry in plan.Entries)
+        {
+            foreach (var unlock in entry.Unlocks)
+            {
+                foreach (var kind in Kinds)
+                {
+                    if (unlock.Name.Length > 0 && before.IsNameMasked(kind, unlock.Name))
+                    {
+                        leaks.Add($"{unlock.Kind} {kind}: {unlock.Name}");
+                    }
+                }
+            }
+        }
+
+        output.WriteLine(string.Join(" | ", leaks.Take(20)));
+        Assert.Empty(leaks);
     }
 
     [GameDataFact]
@@ -198,14 +337,14 @@ public sealed class SpoilerNamesGameDataTests(UnlockIndexFixture fixture, ITestO
         Assert.False(At(Story.Count).IsNameMasked(SpoilerKind.Area, city.Name));
 
         // Its number is its place among Dawntrail's zones in the game's own TerritoryType order, the expansion named
-        // from the ExVersion sheet; the same number everywhere.
-        var dawntrail = fixture.Links.Zones.Where(z => z.Expansion == Dawntrail).OrderBy(z => z.SortKey).ThenBy(z => z.TerritoryId)
-            .Select(z => z.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        output.WriteLine($"Dawntrail areas in sheet order: {string.Join(", ", dawntrail)}");
-        var number = dawntrail.FindIndex(n => string.Equals(n, city.Name, StringComparison.OrdinalIgnoreCase)) + 1;
-        Assert.True(number > 0);
-        Assert.Equal($"Dawntrail area\u00A0{number}", before.Name(SpoilerKind.Area, city.Name));
-        Assert.Equal("Dawntrail area\u00A01", before.Name(SpoilerKind.Area, dawntrail[0]));
+        // from the ExVersion sheet; the same number everywhere. The numbers the game data gives today, pinned.
+        string[] dawntrail = ["Tuliyollal", "Solution Nine", "Urqopacha", "Kozama'uka", "Yak T'el", "Shaaloani", "Heritage Found", "Living Memory", "Phantom Village"];
+        for (var i = 0; i < dawntrail.Length; i++)
+        {
+            Assert.Equal($"Dawntrail area\u00A0{i + 1}", before.Name(SpoilerKind.Area, dawntrail[i]));
+        }
+
+        Assert.Contains(city.Name, dawntrail, StringComparer.OrdinalIgnoreCase);
 
         // Every Dawntrail zone the story opens hides from a Heavensward character.
         var heavensward = At(FirstOf(Heavensward));

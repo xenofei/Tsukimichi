@@ -1624,7 +1624,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             var textX = tileMin.X + pad;
             var textWidth = MathF.Max(1f, tileSize.X - (2f * pad));
             var nameY = iconMax.Y + UiMetrics.Px(6f);
-            var nameInk = row.Hidden ? Theme.U32(Theme.Surface.TextTertiary) : Theme.U32(s.Text);
+            // A placeholder keeps the name's slot and turns Secondary (spec-1.20 N6).
+            var nameInk = row.Hidden ? Theme.U32(Theme.Surface.TextTertiary) : row.Shielded ? Theme.U32(s.TextSecondary) : Theme.U32(s.Text);
             // Hidden by the user's verdict: struck through across the name's own width, as in the table (not colour alone).
             var nameCut = TextFlow.DrawClamped(dl, new Vector2(textX, nameY), row.Name, textWidth, 2, nameInk, center: true, strike: row.Hidden);
 
@@ -1672,9 +1673,14 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 {
                     UiMetrics.Tooltip(row.Name, Strings.MoonlitHiddenTooltip);
                 }
+                else if (row.Shielded)
+                {
+                    // A placeholder's three lines (spec-1.20 N6); its reveal is on the tile's right-click menu.
+                    ShieldText.Hover(nameCut ? row.Name : null);
+                }
                 else if (row.Reward is { } reward)
                 {
-                    RewardTooltip.Draw(reward, links, textures, row.SourceText, row.BuyBack is null ? row.Entry.QuestRowId : row.BuyBackQuest);
+                    RewardTooltip.Draw(reward, links, textures, row.SourceText, row.BuyBack is null ? row.Entry.QuestRowId : row.BuyBackQuest, spoilers: session.Spoilers);
                 }
                 else
                 {
@@ -1740,8 +1746,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         DrawIcon(row, RewardIconSize);
         ImGui.SameLine();
         DropInCell(drop);
-        using (Theme.PushText(Theme.Surface.TextTertiary, row.Hidden))
+        using (Theme.PushText(row.Hidden ? Theme.Surface.TextTertiary : Theme.Surface.TextSecondary, row.Hidden || row.Shielded))
         {
+            // A placeholder turns Secondary (spec-1.20 N6).
             // The highlight follows the global selection, as in the Flight pane, so a quest picked from the detail
             // pane's path, another pane or chat lights its Moonlit row too, and an override never wipes it.
             // AllowItemOverlap lets the "…" button drawn over the cell's right end take the hover and the click.
@@ -1762,6 +1769,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             {
                 UiMetrics.Tooltip(Strings.MoonlitHiddenTooltip);
             }
+        }
+        else if (row.Shielded && ImGui.IsItemHovered())
+        {
+            // A placeholder's three lines (spec-1.20 N6); its reveal is on the row's right-click menu.
+            ShieldText.Hover();
         }
         else if (row.ChoiceTooltip.Length > 0 && ImGui.IsItemHovered())
         {
@@ -1914,7 +1926,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             GameIcon.Draw(textures, row.Icon, size, hiRes: true);
             if (ImGui.IsItemHovered())
             {
-                RewardTooltip.Draw(reward, links, textures, row.SourceText, row.BuyBack is null ? row.Entry.QuestRowId : row.BuyBackQuest);
+                RewardTooltip.Draw(reward, links, textures, row.SourceText, row.BuyBack is null ? row.Entry.QuestRowId : row.BuyBackQuest, spoilers: session.Spoilers);
             }
         }
         else
@@ -1958,6 +1970,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private void DrawContextMenu(UiState ui, Row row)
     {
         var rowId = row.Entry.QuestRowId;
+        if (row.Shielded)
+        {
+            // A placeholder's menu (spec-1.20 N6): Reveal this name, Reveal names in this quest.
+            ShieldText.RevealItems(session, links, row.HiddenKind, row.HiddenName, row.Quest);
+            ImGui.Separator();
+        }
+
         if (row.Quest is { } quest && ImGui.MenuItem(Strings.MoonlitShowInJournal))
         {
             Reveal(ui, quest);
@@ -2614,7 +2633,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             // icon only (no art of its own, no gallery picture, no item tooltip).
             var primaryQuest = questOf(entry.QuestRowId);
             var rewardName = RewardNames.Display(entry, primaryQuest, catalogLanguage);
-            var shielded = spoilers.IsNameMasked(SpoilerKind.Reward, rewardName);
+            // A duty or flying in a zone is placed as one, not as a reward (SpoilerMask.RewardName).
+            var shielded = spoilers.IsRewardMasked(entry, rewardName);
+            (HiddenKind, HiddenName) = spoilers.RewardName(entry, rewardName);
             var icon = shielded ? 0u : art.Icon;
             Shielded = shielded;
             Icon = icon;
@@ -2638,7 +2659,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             KindName = Strings.MoonlitKindName(entry.Kind);
             var baseName = string.IsNullOrWhiteSpace(rewardName)
                 ? KindName + " #" + entry.RewardId.ToString(CultureInfo.InvariantCulture)
-                : shielded ? spoilers.Name(SpoilerKind.Reward, rewardName) : rewardName;
+                : shielded ? spoilers.RewardDisplay(entry, rewardName) : rewardName;
             var search = new List<string> { baseName };
             if (group is { IsChoice: true })
             {
@@ -2650,7 +2671,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 {
                     if (seen.Add(RewardKey.Of(item)))
                     {
-                        var itemName = spoilers.Name(SpoilerKind.Reward, RewardNames.Display(item, questOf(item.QuestRowId), catalogLanguage));
+                        var itemName = spoilers.RewardDisplay(item, RewardNames.Display(item, questOf(item.QuestRowId), catalogLanguage));
                         items.Add(itemName);
                         search.Add(itemName);
                     }
@@ -2749,6 +2770,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         /// <summary>The wider spoiler shield hides the reward (1.20.0 N6): its placeholder, the moon-disc tile, no art.</summary>
         public bool Shielded { get; }
+
+        /// <summary>The kind the shield places the reward's name under (<see cref="SpoilerMask.RewardName"/>): what "Reveal this name" reveals.</summary>
+        public SpoilerKind HiddenKind { get; }
+
+        /// <summary>The reward's name as the shield places it; never shown while <see cref="Shielded"/>.</summary>
+        public string HiddenName { get; }
 
         /// <summary>The reward's large picture for a gallery tile (a mount's or minion's guide art); 0 when it has none.</summary>
         public uint Picture { get; }

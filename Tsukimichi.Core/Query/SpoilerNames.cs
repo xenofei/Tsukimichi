@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Globalization;
 using Tsukimichi.Core.Evaluation;
@@ -67,6 +68,7 @@ public sealed class SpoilerNames
     public static readonly SpoilerNames Empty = new(
         [.. Enumerable.Range(0, KindCount).Select(static _ => FrozenDictionary<string, Placed>.Empty)],
         FrozenDictionary<uint, uint>.Empty,
+        FrozenDictionary<uint, byte>.Empty,
         [],
         null);
 
@@ -75,14 +77,16 @@ public sealed class SpoilerNames
 
     private readonly FrozenDictionary<string, Placed>[] byKind;
     private readonly FrozenDictionary<uint, uint> anchors;
+    private readonly FrozenDictionary<uint, byte> storyExpansion;
     private readonly Shape[] shapes;
     private readonly Func<byte, string>? expansionName;
     private Texts? texts;
 
-    private SpoilerNames(FrozenDictionary<string, Placed>[] byKind, FrozenDictionary<uint, uint> anchors, Shape[] shapes, Func<byte, string>? expansionName)
+    private SpoilerNames(FrozenDictionary<string, Placed>[] byKind, FrozenDictionary<uint, uint> anchors, FrozenDictionary<uint, byte> storyExpansion, Shape[] shapes, Func<byte, string>? expansionName)
     {
         this.byKind = byKind;
         this.anchors = anchors;
+        this.storyExpansion = storyExpansion;
         this.shapes = shapes;
         this.expansionName = expansionName;
         foreach (var names in byKind)
@@ -116,6 +120,12 @@ public sealed class SpoilerNames
 
     /// <summary>The quest's story anchor (a main scenario quest's row id); 0 when nothing places it.</summary>
     public uint AnchorOf(uint rowId) => anchors.GetValueOrDefault(rowId);
+
+    /// <summary>
+    /// The expansion of a story anchor (a main scenario quest's row id, as <see cref="Placed.Anchors"/> hold them);
+    /// <see cref="byte.MaxValue"/> for a row the story does not hold. Allocates nothing.
+    /// </summary>
+    public byte AnchorExpansion(uint rowId) => storyExpansion.TryGetValue(rowId, out var expansion) ? expansion : byte.MaxValue;
 
     /// <summary>
     /// What a placed name prints while hidden ("Dawntrail area 6", "Dungeon (Lv 97)", "A mount"), in the UI language;
@@ -410,7 +420,13 @@ public sealed class SpoilerNames
             byKind[i] = placed.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
         }
 
-        return new SpoilerNames(byKind, anchorRows.ToFrozenDictionary(), [.. shapes], expansionName);
+        var storyExpansion = new Dictionary<uint, byte>(graph.Story.Count);
+        foreach (var quest in graph.Story)
+        {
+            storyExpansion.TryAdd(quest.RowId, quest.Expansion);
+        }
+
+        return new SpoilerNames(byKind, anchorRows.ToFrozenDictionary(), storyExpansion.ToFrozenDictionary(), [.. shapes], expansionName);
     }
 
     /// <summary>
@@ -506,9 +522,7 @@ public sealed class SpoilerNames
                 ? string.Format(culture, CoreText.T("Core.Spoiler.Aetheryte", "{0} aetheryte · area {1}"), ExpansionName(shape.Expansion), shape.Number)
                 : string.Format(culture, CoreText.T("Core.Spoiler.AetheryteUnnumbered", "{0} aetheryte"), ExpansionName(shape.Expansion)),
             Word.Person => string.Format(culture, CoreText.T("Core.Spoiler.Person", "{0} character"), ExpansionName(shape.Expansion)),
-            Word.Dungeon or Word.Trial or Word.Raid or Word.AllianceRaid or Word.FieldOperation or Word.Duty => shape.Level > 0
-                ? string.Format(culture, CoreText.T("Core.Spoiler.Duty", "{0} (Lv {1})"), DutyName(shape.Word), shape.Level)
-                : DutyName(shape.Word),
+            Word.Dungeon or Word.Trial or Word.Raid or Word.AllianceRaid or Word.FieldOperation or Word.Duty => FormatDuty(shape.Word, shape.Level),
             Word.Item => CoreText.T("Core.Spoiler.Item", "An item"),
             Word.Mount => CoreText.T("Core.Spoiler.Mount", "A mount"),
             Word.Minion => CoreText.T("Core.Spoiler.Minion", "A minion"),
@@ -530,6 +544,30 @@ public sealed class SpoilerNames
             _ => CoreText.T("Core.Spoiler.Reward", "A reward"),
         };
     }
+
+    /// <summary>"Dungeon (Lv 97)": a duty's placeholder from its kind word and level (0 for none), in the UI language.</summary>
+    private static string FormatDuty(Word word, byte level) => level > 0
+        ? string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Spoiler.Duty", "{0} (Lv {1})"), DutyName(word), level)
+        : DutyName(word);
+
+    /// <summary>
+    /// "Dungeon (Lv 90)": the placeholder of a duty from its kind (<paramref name="target"/>, a duty target) and level
+    /// alone, for a duty the names do not place; registered as a placeholder (<see cref="SpoilerMask.IsPlaceholder"/>).
+    /// Formatted once per kind, level and language; allocates nothing after that.
+    /// </summary>
+    public static string DutyPlaceholder(UnlockTarget target, byte level) =>
+        DutyTexts.Value.GetOrAdd((DutyWord(target), level), static key => SpoilerMask.Register(FormatDuty(key.Word, key.Level)));
+
+    private static readonly TextCache<ConcurrentDictionary<(Word Word, byte Level), string>> DutyTexts = new(static () => new());
+
+    /// <summary>
+    /// "A duty", "A mount": the placeholder of a reward from its kind alone, for a reward the names do not place (a
+    /// curated unlock); registered as a placeholder. Formatted once per kind and language; allocates nothing after that.
+    /// </summary>
+    public static string RewardPlaceholder(RewardKind kind) =>
+        RewardTexts.Value.GetOrAdd(RewardWord(kind), static word => SpoilerMask.Register(Empty.Format(new Shape(word, byte.MaxValue, 0, 0))));
+
+    private static readonly TextCache<ConcurrentDictionary<Word, string>> RewardTexts = new(static () => new());
 
     /// <summary>"area 6": an area's locator alone; null for a shape that has none (its placeholder is the short form).</summary>
     private static string? FormatLocator(Shape shape) => shape.Word is Word.Area or Word.Aetheryte && shape.Number > 0
