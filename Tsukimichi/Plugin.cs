@@ -1411,6 +1411,7 @@ public sealed partial class Plugin : IDalamudPlugin
             runStops.OpenSetup = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Automation, Core.Ui.SettingsAnchor.CompanionPlugins);
             discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.InGame, Core.Ui.SettingsAnchor.Nearby);
             InitializeInGame(gate, rewardLookup, handIns, moonlit);
+            InitializeRightAnswers(gate, diagnostics, why);
             InitializeCollector(unlockReader);
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
@@ -1725,6 +1726,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());
         Unwind("duty finder hint", () => dutyFinderHint?.Dispose());
+        Unwind("right answers", DisposeRightAnswers);
         Unwind("game panels", () => gamePanels?.Dispose());
         Unwind("hook gate notice", () => hookGateNotice?.Dispose());
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());

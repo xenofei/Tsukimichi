@@ -296,7 +296,11 @@ public sealed partial class DetailPane
         {
             Gap();
             BeginSection("##rewards", Strings.Rewards, RewardsIcon, model.RewardsCaption, Theme.Surface.TextSecondary);
-            DrawExpAndGil(quest);
+            if (DrawExpAndGil(quest))
+            {
+                DrawExpAdvice(session, quest);
+            }
+
             if (model.Rewards.Count > 0)
             {
                 DrawRewards(cardRight);
@@ -441,7 +445,8 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// Under the hero: the name-reveal line when the shield masks it, what the pill cannot say (the blocker, the step,
-    /// the job that can take it), the journal path and the filing line.
+    /// the job that can take it), the journal path and the filing line, the Questionable cross-check, then what the
+    /// game's offers say, a full journal and Switch gearset (1.19.0, DetailPane.RightAnswers.cs).
     /// </summary>
     private void DrawUnderHero(SessionState session, uint rowId)
     {
@@ -481,6 +486,7 @@ public sealed partial class DetailPane
         if (model.Quest is { } quest)
         {
             DrawQuestionableLine(session, quest);
+            DrawRightAnswers(session, quest);
         }
     }
 
