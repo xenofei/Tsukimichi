@@ -399,6 +399,9 @@ public sealed class TodoOverlay : Window, IDisposable
             Chrome.OutlinedText(newGamePlusText.Line(session, replayBundle), Theme.Surface.Text);
         }
 
+        // The journal count (1.19.0, C9), when asked for: the status bar's words from 25 slots used.
+        DrawJournalCount();
+
         if (sections.Length == 0)
         {
             Chrome.OutlinedText(enabledSections > 0 ? Strings.TodoEmpty : Strings.TodoNoSections, Theme.Surface.TextSecondary);
@@ -1114,6 +1117,53 @@ public sealed class TodoOverlay : Window, IDisposable
     public EventWarningSource? EventWarnings { get; set; }
 
     private readonly NewGamePlusText newGamePlusText = new();
+
+    // The journal count line (1.19.0, C9), as of the session version and language it was built for.
+    private (int Version, int Language) journalCountKey = (-1, -1);
+    private string journalCountText = string.Empty;
+    private bool journalCountFull;
+
+    /// <summary>
+    /// "Journal 25/30" (spec-1.19 C9, "The Todo overlay shows the same item from 25, if the player turns that on"): the
+    /// status bar's words, the copper dot before them when the journal is full. Off by default
+    /// (<see cref="Configuration.TodoShowJournalCount"/>).
+    /// </summary>
+    private void DrawJournalCount()
+    {
+        if (!settings.TodoShowJournalCount)
+        {
+            return;
+        }
+
+        if (journalCountKey != (session.Version, Localization.Loc.Version))
+        {
+            journalCountKey = (session.Version, Localization.Loc.Version);
+            journalCountText = string.Empty;
+            journalCountFull = false;
+            if (session.ViewedSnapshot is { } snapshot && session.Bundle is { } bundle
+                && Core.Journal.JournalSlots.Of(snapshot, bundle.Catalog) is { Bar: not Core.Journal.JournalBar.Hidden } slots)
+            {
+                journalCountFull = slots.Bar == Core.Journal.JournalBar.Full;
+                journalCountText = string.Format(CultureInfo.CurrentCulture, journalCountFull ? Strings.JournalBarFullFormat : Strings.JournalBarFormat, slots.Used, slots.Cap);
+            }
+        }
+
+        if (journalCountText.Length == 0)
+        {
+            return;
+        }
+
+        if (journalCountFull)
+        {
+            var line = ImGui.GetTextLineHeight();
+            var pos = ImGui.GetCursorScreenPos();
+            var radius = UiMetrics.Px(3f);
+            ImGui.GetWindowDrawList().AddCircleFilled(new Vector2(pos.X + radius, pos.Y + (line * 0.5f)), radius, Theme.U32(Theme.Copper), 12);
+            ImGui.SetCursorScreenPos(new Vector2(pos.X + UiMetrics.Px(12f), pos.Y));
+        }
+
+        Chrome.OutlinedText(journalCountText, Theme.Surface.Text);
+    }
 
     /// <summary>Opens the main window on every pin (the Journal filtered to Pinned); the Pinned section's "+N more" line calls it.</summary>
     public Action? ShowPins { get; set; }

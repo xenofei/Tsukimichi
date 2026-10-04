@@ -332,11 +332,17 @@ public sealed partial class MainWindow : Window, IDisposable
     }
 
     /// <summary>
-    /// "I've done this" on a game gate Tsukimichi can't check (1.19.0, C3): the per-character settings the marks are kept
-    /// in. Until this is called the detail pane shows no such button.
+    /// "I've done this" on a game gate Tsukimichi can't check (1.19.0, C3) and "Go with the game" (C1): the
+    /// per-character settings the marks and the choices are kept in. Until this is called the detail pane shows neither
+    /// button, and no "…" offers "Use Tsukimichi's answer".
     /// </summary>
-    public void AttachGateMarks(Core.Storage.CharacterSettingsBook characters) =>
+    public void AttachGateMarks(Core.Storage.CharacterSettingsBook characters, SessionState session)
+    {
         detailPane.Characters = characters ?? throw new ArgumentNullException(nameof(characters));
+        var answers = new GameAnswerActions(session ?? throw new ArgumentNullException(nameof(session)), characters);
+        detailPane.GameAnswers = answers;
+        tablePane.GameAnswers = answers;
+    }
 
     /// <summary>
     /// The detail pane's Hand in section (1.6.0): live item counts, and the Artisan and GatherBuddy hand-offs. Until this
@@ -744,9 +750,11 @@ public sealed partial class MainWindow : Window, IDisposable
 
         // The fixed frame (feature plan v6 U2): toolbar, body, status bar, and nothing between them, so the panes never
         // move under the player (ChromeBands). What used to push them down floats over the body instead.
+        PrepareJournal(session);
         DrawToolbar(session);
         DrawBody(session, bundle);
         DrawStatusBar(session, bundle);
+        DrawMakeRoomPopover();
         DrawFloating(session, bundle);
         questionableActions?.DrawModals(QuestionableHost);
 
@@ -1874,7 +1882,10 @@ public sealed partial class MainWindow : Window, IDisposable
         var msqTextWidth = msqStatus.Length > 0 ? ImGui.CalcTextSize(msqStatus).X : 0f;
         var msqWidth = msqStatus.Length > 0 ? msqTextWidth + 2f * pillPad : 0f;
         var statusWidth = ImGui.CalcTextSize(status).X;
-        var room = versionX - gap - x;
+
+        // The journal count (1.19.0, C9) keeps its room: what comes before it is fitted into the rest.
+        var segmentsEnd = MathF.Max(x, versionX - JournalSegmentWidth(separatorWidth, gap));
+        var room = segmentsEnd - gap - x;
 
         var fixedWidth = separatorWidth + modeWidth + (msqWidth > 0f ? separatorWidth : 0f);
         var statusRoom = statusWidth;
@@ -1890,7 +1901,7 @@ public sealed partial class MainWindow : Window, IDisposable
         // The counts open the bar, so no separator comes before them.
         if (replay)
         {
-            x = DrawNewGamePlus(session, bundle, dl, x, textY, line, gap, versionX);
+            x = DrawNewGamePlus(session, bundle, dl, x, textY, line, gap, segmentsEnd);
         }
         else if (statusRoom > 0f)
         {
@@ -1904,7 +1915,7 @@ public sealed partial class MainWindow : Window, IDisposable
             x += statusRoom;
         }
 
-        if (!replay && x + separatorWidth + modeWidth <= versionX)
+        if (!replay && x + separatorWidth + modeWidth <= segmentsEnd)
         {
             // Static pip (accessibility B5: nothing here moves) and the live / snapshot words.
             x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap, separator) : x;
@@ -1931,7 +1942,7 @@ public sealed partial class MainWindow : Window, IDisposable
             }
         }
 
-        if (!replay && msqWidth > 0f && msqRoom > 2f * pillPad && x + separatorWidth + msqRoom <= versionX + 0.5f)
+        if (!replay && msqWidth > 0f && msqRoom > 2f * pillPad && x + separatorWidth + msqRoom <= segmentsEnd + 0.5f)
         {
             x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap, separator) : x;
             var pillMin = new Vector2(x, textY - UiMetrics.Px(1f));
@@ -1981,6 +1992,7 @@ public sealed partial class MainWindow : Window, IDisposable
             }
         }
 
+        x = DrawJournalSegment(dl, x, origin.X, textY, line, gap, separator);
         DrawCompanionActivity(dl, ref x, textY, gap, separatorWidth, versionX, origin.X);
 
         // One item spanning the bar so the layout advances past it.

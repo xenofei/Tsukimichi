@@ -72,6 +72,16 @@ public static class GameOfferChecks
                 : GameOfferCheck.Nothing;
         }
 
+        // The game's answer stands in for Tsukimichi's own (feature plan v7 C1): an offer that turned Not checked into
+        // Ready confirmed it, and the player's "Go with the game" leaves the disagreement on record, however old.
+        switch (evaluation.ByGame)
+        {
+            case GameAnswer.Offered:
+                return new GameOfferCheck(GameOfferVerdict.Confirms, sighting, 0);
+            case GameAnswer.Override when evaluation.Own is { State: QuestState.Blocked or QuestState.Foreclosed } own && CanContradict(quest, own):
+                return new GameOfferCheck(GameOfferVerdict.Disagrees, sighting, 0);
+        }
+
         var verdict = evaluation.State switch
         {
             QuestState.Ready or QuestState.ReadyOnOtherJob => GameOfferVerdict.Agrees,
@@ -149,29 +159,12 @@ public static class GameOfferChecks
             GameOfferVerdict.Disagrees => "disagrees: tsukimichi " + StateWord(evaluation),
             _ => "earlier; tsukimichi " + StateWord(evaluation),
         });
-        return sb.ToString();
-    }
-
-    /// <summary>
-    /// The detail pane's line, for the two verdicts a player should see: "The game offers this quest (seen 2 days
-    /// ago), so the gate Tsukimichi cannot read is met." and "The game offered this quest 5 min ago, but Tsukimichi
-    /// reads it Blocked. Report this quest so it can be fixed." Null for every other verdict: an agreement is no news,
-    /// and an unseen marker is only a suspicion.
-    /// </summary>
-    public static string? DetailLine(GameOfferCheck check, DateTime nowUtc)
-    {
-        if (check.Sighting is not { } sighting)
+        if (evaluation?.ByGame == GameAnswer.Override)
         {
-            return null;
+            sb.Append("; the player went with the game");
         }
 
-        var age = AbandonedLedger.AgeText(nowUtc - sighting.LastSeenUtc);
-        return check.Verdict switch
-        {
-            GameOfferVerdict.Confirms => string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.GameOffer.Confirms", "The game offers this quest (seen {0}), so the gate Tsukimichi cannot read is met."), age),
-            GameOfferVerdict.Disagrees => string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.GameOffer.Disagrees", "The game offered this quest {0}, but Tsukimichi reads it as not available. Report this quest so it can be fixed."), age),
-            _ => null,
-        };
+        return sb.ToString();
     }
 
     /// <summary>The <c>/tsuki why</c> line: "Game: offered on the map 2 days ago." and the verdict's clause; null when nothing was seen.</summary>
@@ -192,6 +185,28 @@ public static class GameOfferChecks
     }
 
     /// <summary>
+    /// What Tsukimichi expects first for a quest the game offered against its answer (spec-1.19, "When the game
+    /// disagrees"): the nearest previous quest still to do when its decisive blocker is a quest (<c>Quest</c>, for "it
+    /// expects The Narwhal Beckons first"), and the blocker in words either way (<see cref="BlockerText.For"/>). Takes
+    /// Tsukimichi's own answer under "Go with the game" (<see cref="QuestEvaluation.Own"/>).
+    /// </summary>
+    public static (uint? Quest, string Reason) Expectation(
+        QuestEvaluation evaluation,
+        QuestRecord quest,
+        BlockerNames names,
+        IReadOnlyDictionary<uint, QuestEvaluation>? states)
+    {
+        ArgumentNullException.ThrowIfNull(evaluation);
+        ArgumentNullException.ThrowIfNull(quest);
+        ArgumentNullException.ThrowIfNull(names);
+        var own = evaluation.Own ?? evaluation;
+        var first = BlockerText.DecisiveRequirement(own) is PreviousQuestsRequirement previous
+            ? BlockerText.NearestPrerequisite(previous, names.Catalog, states)
+            : null;
+        return (first, BlockerText.For(own, quest, names, states));
+    }
+
+    /// <summary>
     /// The plain-text report Settings › Advanced › Diagnostics copies (always English): one line per quest, the
     /// disagreements first. Empty when there is none.
     /// </summary>
@@ -204,7 +219,7 @@ public static class GameOfferChecks
         foreach (var row in rows)
         {
             sb.Append(row.Quest.RowId.ToString(CultureInfo.InvariantCulture)).Append(" \"").Append(names.QuestName(row.Quest)).Append("\": ")
-                .Append(BlockerText.StatusText(row.Evaluation, row.Quest, names, states)).Append(" | game ")
+                .Append(BlockerText.StatusText(row.Evaluation.Own ?? row.Evaluation, row.Quest, names, states)).Append(" | game ")
                 .Append(DiagnosticText(row.Check, row.Evaluation) ?? "nothing").Append('\n');
         }
 
@@ -253,7 +268,8 @@ public static class GameOfferChecks
         _ => "on the map",
     };
 
-    private static string StateWord(QuestEvaluation? evaluation) => evaluation is null ? "no evaluation" : StateNames.Name(evaluation.State);
+    /// <summary>Tsukimichi's own state word: under the game's answer, the one it would read itself.</summary>
+    private static string StateWord(QuestEvaluation? evaluation) => evaluation is null ? "no evaluation" : StateNames.Name((evaluation.Own ?? evaluation).State);
 
     private static string Stamp(DateTime utc) => utc.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
 }

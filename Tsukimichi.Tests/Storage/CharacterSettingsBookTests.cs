@@ -102,6 +102,63 @@ public sealed class CharacterSettingsBookTests : IDisposable
     }
 
     [Fact]
+    public void A_mark_or_a_choice_reaches_a_character_that_already_has_settings()
+    {
+        // Regression: the book compared every field but the gate marks, so marking a gate on a character with any other
+        // setting (a seen list, a spoiler override) changed nothing and was never saved.
+        var book = new CharacterSettingsBook(Path);
+        book.Edit(CharacterSettingChange.Spoiler(Main, true));
+        var raised = 0;
+        book.Changed += _ => raised++;
+
+        book.Edit(CharacterSettingChange.GateDone(Main, 68667, true));
+        book.Edit(CharacterSettingChange.GoWithGame(Main, 68700, true));
+
+        Assert.True(book.IsGateDone(Main, 68667));
+        Assert.True(book.IsGoWithGame(Main, 68700));
+        Assert.Equal(2, raised);
+        var saved = CharacterSettingsFile.Load(Path)[Main];
+        Assert.Equal([68667u], saved.GatesDone);
+        Assert.Equal([68700u], saved.GoWithGame);
+    }
+
+    [Fact]
+    public void Go_with_the_game_is_per_character_saved_listed_and_taken_back()
+    {
+        var book = new CharacterSettingsBook(Path);
+        book.Edit([CharacterSettingChange.GoWithGame(Main, 68702, true), CharacterSettingChange.GoWithGame(Main, 68701, true)]);
+
+        Assert.True(book.IsGoWithGame(Main, 68701));
+        Assert.False(book.IsGoWithGame(Alt, 68701));
+        Assert.False(book.IsGateDone(Main, 68701));
+        Assert.Equal([68701u, 68702u], CharacterSettingsFile.Load(Path)[Main].GoWithGame);
+        Assert.Equal([68701u, 68702u], book.GoWithGameByCharacter()[Main]);
+        Assert.False(book.GoWithGameByCharacter().ContainsKey(Alt));
+
+        // "Use Tsukimichi's answer" (and Undo) takes each back; a character left with nothing set drops out of the file.
+        book.Edit([CharacterSettingChange.GoWithGame(Main, 68701, false), CharacterSettingChange.GoWithGame(Main, 68702, false)]);
+        Assert.False(book.IsGoWithGame(Main, 68702));
+        Assert.Empty(book.GoWithGameByCharacter());
+        Assert.False(CharacterSettingsFile.Load(Path).ContainsKey(Main));
+    }
+
+    [Fact]
+    public void Another_client_s_choice_merges_with_this_one_s_and_forget_drops_it()
+    {
+        var here = new CharacterSettingsBook(Path);
+        var there = new CharacterSettingsBook(Path);
+        here.Edit(CharacterSettingChange.GoWithGame(Main, 68701, true));
+        there.Edit(CharacterSettingChange.GoWithGame(Main, 68702, true));
+
+        Assert.Equal([68701u, 68702u], CharacterSettingsFile.Load(Path)[Main].GoWithGame);
+        here.ReloadFromDisk();
+        Assert.True(here.IsGoWithGame(Main, 68702));
+
+        here.Edit(CharacterSettingChange.Forget(Main));
+        Assert.False(here.IsGoWithGame(Main, 68701));
+    }
+
+    [Fact]
     public void Migration_shows_at_once_and_reports_when_saved()
     {
         var book = new CharacterSettingsBook(Path);

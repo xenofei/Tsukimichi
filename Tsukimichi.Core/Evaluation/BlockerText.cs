@@ -104,6 +104,13 @@ public static class BlockerText
         return decisive is null ? string.Empty : Phrase(decisive, evaluation.State, quest, names, states);
     }
 
+    /// <summary>The requirement <see cref="For"/> names (the decisive blocker); null for a state that needs no reason.</summary>
+    public static Requirement? DecisiveRequirement(QuestEvaluation evaluation)
+    {
+        ArgumentNullException.ThrowIfNull(evaluation);
+        return Decide(evaluation)?.Req;
+    }
+
     /// <summary>The requirement <see cref="For"/> names; null for a state that needs no reason.</summary>
     private static RequirementResult? Decide(QuestEvaluation evaluation) => evaluation.State switch
     {
