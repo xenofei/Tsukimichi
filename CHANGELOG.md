@@ -4,6 +4,67 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-10-04
+
+### Added
+- **The game confirms it:** when the game itself offers you a quest Tsukimichi couldn't check, the quest shows as Ready, "Offered by the game", with the date.
+  - Rows the game has confirmed say "seen in game".
+  - If the game offers a quest Tsukimichi reads as blocked, the row says "game disagrees" and a card explains why. **Go with the game** trusts the game for that character, with Undo; "Use Tsukimichi's answer" in the "…" menu takes it back.
+- **Gates Tsukimichi can't check:**
+  - More quests that the game holds back for things outside the quest log are now gated, so they no longer read Ready too early: Palace of the Dead floor 50, Heaven-on-High and Pilgrim's Traverse floor 30, Resistance rank and mettle, Occult Record entries, blue magic learned, Skysteel and Splendorous tools, and the chocobo companion.
+  - A gate that can't be read says "can't check" and where it was confirmed. **I've done this** marks it passed for that character (Take back undoes it), and **Where to start** selects the quest that opens it.
+- **New Game+ is recognised.** The status bar, Tonight and the Todo overlay show "New Game+ · Shadowbringers - Part 2 · quest 87 of 112".
+  - Replayed quests keep their real completion and get a "Replaying" chip, and replays send no notices.
+  - End session stops the mode if detection ever sticks.
+- **How you'll clear it:** every quest with a duty says whether NPCs can clear it with you or you need a group of 4, 8 or 24, whether it's high-end, and whether the story needs it.
+  - The same badges show in My blues, on route steps and beside the Duty Finder.
+  - An item-level warning names a gearset that would pass. From Patch 8.0 it uses your best job automatically.
+- **A Duties card** on the Characters dashboard shows:
+  - why each Duty Roulette is locked;
+  - which duties and unlock quests open it, with Route and Pin all;
+  - the duties you've unlocked but never cleared.
+  - Selecting a locked roulette in the Duty Finder shows the same.
+- **A true story meter:** the main scenario hover and the catch-up now count the side quests the story needs (the Crystal Tower series, the Hard primals, a Shadowbringers role quest line), with your next milestone and anything you skipped.
+- **Where the EXP goes:** the EXP line names the job to hand a quest in on and how much of a level it's worth ("Hand in on DRG Lv 56: 50,700 EXP (5% of a level)").
+  - It warns when a capped job would get nothing.
+  - When a quest in your journal is ready to hand in on a capped job, the Todo overlay says "Turn in on a job that isn't capped". A chat notice is in Settings › Alerts, off by default.
+- **Switch gearset** sits under the Job requirement of class and job quests. It reads "No Culinarian gearset saved" when you have none.
+- **Journal room:**
+  - The status bar shows how full your journal is from 25 quests.
+  - Ready quests say "journal full" when there's no room to accept them.
+  - **Make room** lists what you can finish now and what's safe to drop, and opens the game's journal. Tsukimichi never abandons anything for you.
+- **Rewards you can buy back:** a finished quest's rewards say whether you still have them and where to buy them back ("Not on you · buy it back from a Calamity salvager, 100 gil"), with Flag and Teleport.
+  - Moonlit now lists about 115 seasonal, collaboration and job rewards that are sold back only after their own quest.
+- **Where to get hand-in items:** each item says where it comes from (vendor and price, crafter and level, gathered or fished, quartermaster, exchange), with Flag, Teleport and Open Gathering Log.
+  - Hand-in counts show what the game will take, with a note when the rest is in the saddlebag or armoury chest.
+- **Find by unlock:** type "Kugane", "Sirensong" or "flying Thavnair" in the search. An Unlocks group under it offers **Route to unlock**.
+  - Flying routes list every aether-current quest, then the field currents left, each named by its nearest aetheryte and with a Flag button.
+  - A new Unlocks group in the filter drawer (Mount, Flying, Duty, Feature, Job, Area, Emote, Orchestrion) keeps only quests that unlock those kinds.
+- **Allied societies:**
+  - A daily left in your journal across the reset reads "0 allowances until you turn it in", with Flag and Teleport.
+  - Stored alts holding one show a quiet note instead of 12 allowances.
+  - A hint tells you to keep 3 allowances on rank-up day.
+- **Events ending soon:** seasonal events warn 3 days before a known end (adjustable in Settings › Alerts).
+  - A card shows in Tonight, quests in your journal get "Ends in 2 days", and those quests are listed first in the Todo overlay.
+  - A chat line and window notice are available, off by default.
+  - Collaboration reruns carry their dated runs. You can enter an end date yourself for an event with none announced, and the Seasonal events list shows when the other events usually come.
+- **Unlock data:** every aetheryte now names the quest that opens it. Unlocks shows guildleves and inn rooms, the Occult Record and phantom jobs.
+
+### Changed
+- Copy report on a "Why it stopped" card gives the job, level and zone from the moment it stopped.
+- Crafter, gatherer and Blue Mage gearsets no longer count toward duty item levels or roulette levels.
+- Role quests no longer offer Switch gearset. It now shows only on quests that require one class or job.
+
+### Fixed
+- "How you'll clear it" and the AutoDuty Duties section no longer name the duties of a main scenario quest the spoiler shield hides.
+- Item-level walls no longer use another character's gearsets after you switch characters.
+- "I've done this" is kept for characters that already had other per-character settings.
+- Allied society dailies are never marked "journal full"; they don't use a journal slot.
+- A reward in a saddlebag you haven't opened this session no longer reads "Not on you".
+- Event end dates print in your time zone, and an event still running past its announced end uses your own end date.
+- Tonight's ending-soon cards no longer flicker once a minute; the Todo overlay re-sorts when an event starts ending soon.
+- The second Way of the Thaumaturge shows the class it unlocks.
+
 ## [1.18.0] - 2026-10-03
 
 ### Added
