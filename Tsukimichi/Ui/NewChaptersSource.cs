@@ -124,7 +124,7 @@ public sealed class NewChaptersSource
 
             // A line made of several journal genres (Hildibrand) is named by the chapter's genre, as the journal files it.
             var several = chapter.Chain.RowIds.Count > 0 && bundle.Catalog.GetByRowId(chapter.Chain.RowIds[0]) is { } head && head.Journal.GenreId != quest.Journal.GenreId;
-            lines.Add(new Line(several && quest.Journal.GenreName.Length > 0 ? quest.Journal.GenreName : chapter.Chain.Name, count, quest));
+            lines.Add(new Line(several && quest.Journal.GenreName.Length > 0 ? ShieldRules.Genre(quest, spoilers) : chapter.Chain.Name, count, quest));
         }
 
         if (lines.Count == 0)
