@@ -435,12 +435,12 @@ public sealed partial class DetailPane
         var canTeleport = links.CanTeleportTo(aetheryte.RowId);
         if (Chrome.ActionPill("##spotTeleport", ActionIcons.TeleportIcon, Strings.ActionTeleport, PillTone.Normal, canTeleport, size: PillLayout.Row))
         {
-            links.TeleportTo(aetheryte.RowId, runner.Spoilers.Name(Core.Query.SpoilerKind.Area, aetheryte.Name));
+            links.TeleportTo(aetheryte.RowId, runner.Spoilers.Name(Core.Query.SpoilerKind.Aetheryte, aetheryte.Name));
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(links.TeleportToBlocked(aetheryte.RowId) ?? string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, runner.Spoilers.Name(Core.Query.SpoilerKind.Area, aetheryte.Name)));
+            UiMetrics.Tooltip(links.TeleportToBlocked(aetheryte.RowId) ?? string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, runner.Spoilers.Name(Core.Query.SpoilerKind.Aetheryte, aetheryte.Name)));
         }
     }
 

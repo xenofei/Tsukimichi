@@ -99,6 +99,13 @@ public sealed partial class TreePane
         /// <summary>The completion as "82 %", the count's form in the Compact tier.</summary>
         public string PercentText { get; set; } = string.Empty;
 
+        // The spoiler shield's form of the label (1.20.0 N6): the label as named, the form last shown, and the shield's
+        // fingerprint it was worked out for; Shielded while a hidden area's placeholder stands in it.
+        public string? ShieldPlain { get; set; }
+        public string? ShieldShown { get; set; }
+        public int ShieldPrint { get; set; } = int.MinValue;
+        public bool Shielded { get; set; }
+
         // Measured widths, kept for the font size they were measured at; any text change resets MeasuredAt.
         public float MeasuredAt { get; set; } = -1f;
         public float NameWidth { get; set; }
@@ -191,6 +198,9 @@ public sealed partial class TreePane
 
     private CatalogBundle? bundle;
     private readonly List<Node> sections = [];
+
+    // The viewed character's spoiler shield as of this frame, for the nodes named after a hidden area (1.20.0 N6).
+    private Core.Query.SpoilerMask spoilers = Core.Query.SpoilerMask.None;
     private readonly Node allNode = new(QuestScope.None, "##all", Strings.AllQuests, leaf: true);
     private readonly Node featureNode = new(QuestScope.VirtualFeature, "##feature", Strings.FeatureUnlocks, leaf: true);
     private readonly Node unlistedNode = new(QuestScope.VirtualUnlisted, "##unlisted", Strings.RemovedFromGame, leaf: true);
@@ -240,6 +250,7 @@ public sealed partial class TreePane
         revealing = ui.RevealPending;
         ui.RevealPending = false;
         sproutReach = ui.Filters.Preset == Preset.Sprout ? runner.Spoilers.ReachExpansion : null;
+        spoilers = runner.Spoilers;
         KeepSelectionVisible();
 
         lineHeight = ImGui.GetTextLineHeight();
@@ -474,7 +485,12 @@ public sealed partial class TreePane
         }
         if (ImGui.IsItemHovered())
         {
-            if (sproutFolded && hover is not (Hover.Halo or Hover.Progress or Hover.Ready))
+            if (node.Shielded && hover is not (Hover.Halo or Hover.Progress or Hover.Ready))
+            {
+                // Its journal path would name the hidden place: the placeholder's own hover instead.
+                ShieldText.Hover(node.Name);
+            }
+            else if (sproutFolded && hover is not (Hover.Halo or Hover.Progress or Hover.Ready))
             {
                 if (row.NameCut || node.Shortened)
                 {
@@ -535,6 +551,7 @@ public sealed partial class TreePane
         var rowCenterY = (min.Y + max.Y) * 0.5f;
         var textY = rowCenterY - lineHeight * 0.5f;
         var complete = node.Complete;
+        ShieldNode(node, spoilers);
         Measure(node);
 
         // The row's wash (U8): hover glides in and out, a new selection settles in, a held row shows at once.
@@ -741,6 +758,37 @@ public sealed partial class TreePane
     }
 
     /// <summary>
+    /// A node named after an area the story has not reached reads as that area's placeholder (spec-1.20 N6, "Journal
+    /// tree"; <see cref="Core.Query.SpoilerMask.NodeName"/>): worked out again only when the shield or the label changes.
+    /// </summary>
+    private static void ShieldNode(Node node, Core.Query.SpoilerMask spoilers)
+    {
+        if (!ReferenceEquals(node.Name, node.ShieldShown))
+        {
+            // Named (or renamed for a language) since: that is the label to shield.
+            node.ShieldPlain = node.Name;
+            node.ShieldPrint = int.MinValue;
+        }
+
+        if (node.ShieldPrint == spoilers.Fingerprint)
+        {
+            return;
+        }
+
+        node.ShieldPrint = spoilers.Fingerprint;
+        var plain = node.ShieldPlain ?? node.Name;
+        var shown = spoilers.NodeName(plain);
+        node.Shielded = !ReferenceEquals(shown, plain);
+        if (!ReferenceEquals(shown, node.Name))
+        {
+            node.Name = shown;
+            node.MeasuredAt = -1f;
+        }
+
+        node.ShieldShown = node.Name;
+    }
+
+    /// <summary>
     /// Measures the node's texts at the current font size, once: again only when the font size (the UI scale) or one
     /// of the texts changed, so a row costs no text measuring per frame.
     /// </summary>
@@ -830,6 +878,12 @@ public sealed partial class TreePane
 
                 UiMetrics.Tooltip(Strings.FillingMoonTooltip, progress);
                 return;
+        }
+
+        if (node.Shielded)
+        {
+            ShieldText.Hover(node.Name);
+            return;
         }
 
         if (node.FoldedPath is not { } path)

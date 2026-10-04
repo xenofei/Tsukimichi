@@ -119,7 +119,7 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
         }
 
         // The target's own art (a mount's, a duty's) would name it; a place keeps the generic map marker.
-        var icon = Placed is { Kind: SpoilerKind.Area } ? Icon : 0;
+        var icon = Placed is { Kind: SpoilerKind.Area or SpoilerKind.Aetheryte } ? Icon : 0;
         return this with { Label = label, Parts = parts ?? Parts, Icon = icon };
     }
 

@@ -110,7 +110,8 @@ public sealed partial class TreePane
         using var tooltip = Theme.Tooltip();
         UiMetrics.ApplyFontScale();
         using var wrap = UiMetrics.TooltipWrap();
-        ImGui.TextUnformatted(node.FullName);
+        // A node the spoiler shield names by a placeholder keeps it here too (1.20.0 N6).
+        ImGui.TextUnformatted(node.Shielded ? node.Name : node.FullName);
         var progress = node.HoverText.Length > 0 ? node.HoverText : node.ProgressText;
         if (progress.Length > 0)
         {

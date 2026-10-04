@@ -4,18 +4,23 @@ using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Core.Unlocks;
+using Tsukimichi.Tests.Localization;
 using static Tsukimichi.Tests.Query.QueryTestData;
 
 namespace Tsukimichi.Tests.Query;
 
 /// <summary>
-/// The wider spoiler shield (plan v7, 1.20.0 N6) over a small hand-built story: each quest's story anchor, the names
-/// placed from the unlock index, the rewards and the givers, the placeholders, the setting, search, find by unlock and
-/// the unlock rows' shielded form.
+/// The wider spoiler shield (plan v7, 1.20.0 N6; spec-1.20 "A wider spoiler shield") over a small hand-built story:
+/// each quest's story anchor, the names placed from the unlock index, the rewards and the givers, the placeholders
+/// (kind words with safe locators), the expansion rule, session reveals, the setting and its upgrade, search, find by
+/// unlock, the count line and the unlock rows' shielded form.
 /// </summary>
 public class SpoilerNamesTests
 {
-    // The story: 1 → 2 → 3 (opens Kugane, gives the Lunar Whale) → 4 (opens the Sirensong Sea) → 5.
+    private const string Nbsp = " ";
+
+    // The story: 1 → 2 (A Realm Reborn) → 3 (Stormblood; opens Kugane, gives the Lunar Whale) → 4 (opens the
+    // Sirensong Sea) → 5.
     private const uint Start = 1;
     private const uint Path = 2;
     private const uint Opener = 3;
@@ -30,10 +35,12 @@ public class SpoilerNamesTests
     private const uint Kugane = 628;
     private const uint RubySea = 613;
     private const uint Uldah = 130;
+    private const uint Tuliyollal = 1185;
     private const uint Sirensong = 238;
+    private const uint Markets = 9001;
 
-    private static QuestRecord Msq(uint rowId, string name, byte level, uint previous, string giver, params RewardRef[] rewards) =>
-        Quest(rowId, name, section: 0, category: 1, genre: 1, sortKey: (int)rowId, level: level, rewards: rewards) with
+    private static QuestRecord Msq(uint rowId, string name, byte level, byte expansion, uint previous, string giver, params RewardRef[] rewards) =>
+        Quest(rowId, name, section: 0, category: 1, genre: 1, sortKey: (int)rowId, level: level, expansion: expansion, rewards: rewards) with
         {
             PreviousQuests = previous == 0 ? Prereq.None : new Prereq([previous], JoinKind.All),
             Issuer = new Issuer(rowId, giver, Uldah, 0, 0f, 0f, 0f),
@@ -48,11 +55,11 @@ public class SpoilerNamesTests
 
     private static readonly QuestCatalog Catalog = QuestCatalog.Build(
     [
-        Msq(Start, "Coming to Ul'dah", 1, 0, "Momodi", Reward(RewardKind.Item, "Potion", 4551)),
-        Msq(Path, "The Path", 50, Start, "Alphinaud"),
-        Msq(Opener, "Not without Incident", 61, Path, "Alphinaud", Reward(RewardKind.Mount, "Lunar Whale", 7), Reward(RewardKind.Item, "Potion", 4551)),
-        Msq(Dungeon, "Once More to the Ruby Sea", 62, Opener, "Hancock"),
-        Msq(Far, "The Far Edge", 70, Dungeon, "Alphinaud"),
+        Msq(Start, "Coming to Ul'dah", 1, 0, 0, "Momodi", Reward(RewardKind.Item, "Potion", 4551)),
+        Msq(Path, "The Path", 50, 0, Start, "Alphinaud"),
+        Msq(Opener, "Not without Incident", 61, 2, Path, "Alphinaud", Reward(RewardKind.Mount, "Lunar Whale", 7), Reward(RewardKind.Item, "Potion", 4551)),
+        Msq(Dungeon, "Once More to the Ruby Sea", 62, 2, Opener, "Hancock", Reward(RewardKind.Orchestrion, "Ruby Tide", 8)),
+        Msq(Far, "The Far Edge", 70, 2, Dungeon, "Alphinaud"),
         Side(KuganeSide, "Leves of the East", 0, "Hancock", Kugane, Reward(RewardKind.Item, "Kojin Blade", 9001)),
         Side(EarlySide, "A Thirst for Water", Start, "Momodi", Uldah, Reward(RewardKind.Item, "Potion", 4551)),
         Side(LateSide, "After It All", Far, "Somebody Late", Uldah),
@@ -65,7 +72,11 @@ public class SpoilerNamesTests
             new UnlockZone(Kugane, "Kugane", "Hingashi", 371, 2, 111, 628),
             new UnlockZone(RubySea, "The Ruby Sea", "Othard", 372, 2, 0, 613),
             new UnlockZone(Uldah, "Ul'dah - Steps of Nald", "Thanalan", 1, 0, 9, 130),
+            // A zone of an expansion past the whole story, which no quest opens.
+            new UnlockZone(Tuliyollal, "Tuliyollal", "Yok Tural", 900, 5, 0, 1185),
         ],
+        Aetherytes = [new UnlockAetheryte(Markets, Kugane, "Kogane Dori Markets", 0f, 0f, IsAetheryte: false)],
+        GatedAethernet = [new UnlockGatedAethernet(Opener, Markets)],
         Warps = [new UnlockWarp(Opener, Kugane), new UnlockWarp(KuganeSide, RubySea)],
         Duties = [new UnlockDuty(Sirensong, 61801, 61, 2)],
         AreaIcon = 7,
@@ -82,8 +93,7 @@ public class SpoilerNamesTests
         Duties,
         Links());
 
-    /// <summary>The character whose next main scenario quest is <paramref name="next"/>, with nothing revealed ahead.</summary>
-    private static SpoilerMask At(uint next, SpoilerOptions? options = null)
+    private static Dictionary<uint, QuestState> StatesAt(uint next)
     {
         var states = new Dictionary<uint, QuestState>();
         foreach (var quest in Catalog.All)
@@ -93,8 +103,12 @@ public class SpoilerNamesTests
                 : QuestState.Blocked;
         }
 
-        return SpoilerMask.Build(Catalog, states, options ?? SpoilerOptions.Default with { Ahead = 0 }, names: Index.Names);
+        return states;
     }
+
+    /// <summary>The character whose next main scenario quest is <paramref name="next"/>, with nothing revealed ahead.</summary>
+    private static SpoilerMask At(uint next, SpoilerOptions? options = null, IEnumerable<(SpoilerKind, string)>? revealed = null, IReadOnlySet<uint>? revealedQuests = null) =>
+        SpoilerMask.Build(Catalog, StatesAt(next), options ?? SpoilerOptions.Default with { Ahead = 0 }, revealedQuests, names: Index.Names, revealedNames: revealed);
 
     [Fact]
     public void Each_quest_is_anchored_at_the_latest_story_quest_it_needs()
@@ -109,21 +123,18 @@ public class SpoilerNamesTests
     }
 
     [Fact]
-    public void Before_the_opener_its_zone_region_duty_reward_and_people_are_masked()
+    public void Before_the_opener_its_zone_region_aetheryte_duty_rewards_and_people_are_masked()
     {
         var mask = At(Path);
 
         Assert.True(mask.IsNameMasked(SpoilerKind.Area, "Kugane"));
         Assert.True(mask.IsNameMasked(SpoilerKind.Area, "Hingashi"));
+        Assert.True(mask.IsNameMasked(SpoilerKind.Aetheryte, "Kogane Dori Markets"));
         Assert.True(mask.IsNameMasked(SpoilerKind.Duty, "The Sirensong Sea"));
         Assert.True(mask.IsNameMasked(SpoilerKind.Reward, "Lunar Whale"));
         Assert.True(mask.IsNameMasked(SpoilerKind.Reward, "Kojin Blade"));
         Assert.True(mask.IsNameMasked(SpoilerKind.Npc, "Hancock"));
         Assert.True(mask.IsNameMasked(SpoilerKind.Npc, "Somebody Late"));
-        Assert.Equal("Area ahead (Lv 61)", mask.Name(SpoilerKind.Area, "Kugane"));
-        Assert.Equal("Duty ahead (Lv 62)", mask.Name(SpoilerKind.Duty, "The Sirensong Sea"));
-        Assert.Equal("Reward ahead (Lv 61)", mask.Name(SpoilerKind.Reward, "Lunar Whale"));
-        Assert.Equal("Someone ahead (Lv 61)", mask.Name(SpoilerKind.Npc, "Hancock"));
 
         // What the story has already introduced stays: a potion the first quest gives, its givers and its city.
         Assert.False(mask.IsNameMasked(SpoilerKind.Reward, "Potion"));
@@ -134,10 +145,86 @@ public class SpoilerNamesTests
     }
 
     [Fact]
+    public void Each_kind_prints_a_kind_word_with_a_safe_locator()
+    {
+        var mask = At(Path);
+
+        // An area: the expansion and its place among that expansion's zones in sheet order (the Ruby Sea, 613, is
+        // first; Kugane, 628, second); the same number on every surface.
+        Assert.Equal("Stormblood area" + Nbsp + "2", mask.Name(SpoilerKind.Area, "Kugane"));
+        Assert.Equal("Stormblood area" + Nbsp + "1", mask.Name(SpoilerKind.Area, "The Ruby Sea"));
+        Assert.Equal("Stormblood region", mask.Name(SpoilerKind.Area, "Hingashi"));
+        // An aetheryte names its area's number.
+        Assert.Equal("Stormblood aetheryte · area" + Nbsp + "2", mask.Name(SpoilerKind.Aetheryte, "Kogane Dori Markets"));
+        // A duty by its content type and level.
+        Assert.Equal("Dungeon (Lv" + Nbsp + "61)", mask.Name(SpoilerKind.Duty, "The Sirensong Sea"));
+        // Rewards by kind.
+        Assert.Equal("A mount", mask.Name(SpoilerKind.Reward, "Lunar Whale"));
+        Assert.Equal("An item", mask.Name(SpoilerKind.Reward, "Kojin Blade"));
+        Assert.Equal("An orchestrion roll", mask.Name(SpoilerKind.Reward, "Ruby Tide"));
+        // People by the expansion that introduces them.
+        Assert.Equal("Stormblood character", mask.Name(SpoilerKind.Npc, "Hancock"));
+        // A masked main scenario quest keeps its non-breaking locator too.
+        Assert.Equal("Main scenario quest (Lv" + Nbsp + "61)", mask.DisplayName(Catalog.GetByRowId(Opener)!));
+
+        // A slot that holds a name and a place shortens the place to its locator first.
+        Assert.Equal("area" + Nbsp + "2", mask.Locator(SpoilerKind.Area, "Kugane"));
+        Assert.Equal("area" + Nbsp + "2", mask.Locator(SpoilerKind.Aetheryte, "Kogane Dori Markets"));
+        Assert.Equal("Ul'dah - Steps of Nald", mask.Locator(SpoilerKind.Area, "Ul'dah - Steps of Nald"));
+    }
+
+    [Fact]
+    public void Expansion_names_come_from_the_game_data()
+    {
+        var index = QuestUnlocks.Build(Catalog, UniqueRewardCatalog.Empty, Duties, Links(), expansionName: id => id == 2 ? "紅蓮" : string.Empty);
+        var mask = SpoilerMask.Build(Catalog, StatesAt(Path), SpoilerOptions.Default with { Ahead = 0 }, names: index.Names);
+
+        Assert.Equal("紅蓮 area" + Nbsp + "2", mask.Name(SpoilerKind.Area, "Kugane"));
+        // An expansion the data does not name falls back to the built-in English name.
+        Assert.Equal("Dawntrail area" + Nbsp + "1", mask.Name(SpoilerKind.Area, "Tuliyollal"));
+    }
+
+    [Fact]
+    public void Area_numbers_follow_the_sheet_order_within_each_expansion()
+    {
+        var numbers = SpoilerNames.AreaNumbers(
+        [
+            new UnlockZone(1190, "Shaaloani", string.Empty, 0, 5, 0, 1190),
+            new UnlockZone(1185, "Tuliyollal", string.Empty, 0, 5, 0, 1185),
+            new UnlockZone(1191, "Heritage Found", string.Empty, 0, 5, 0, 1191),
+            // A second row of a zone keeps the first one's number.
+            new UnlockZone(1300, "Tuliyollal", string.Empty, 0, 5, 0, 1300),
+            new UnlockZone(628, "Kugane", string.Empty, 0, 2, 0, 628),
+        ]);
+
+        Assert.Equal((byte)5, numbers["Tuliyollal"].Expansion);
+        Assert.Equal(1, numbers["Tuliyollal"].Number);
+        Assert.Equal(2, numbers["Shaaloani"].Number);
+        Assert.Equal(3, numbers["Heritage Found"].Number);
+        Assert.Equal(1, numbers["Kugane"].Number);
+    }
+
+    [Fact]
+    public void A_place_of_an_expansion_past_the_story_hides_though_no_quest_introduces_it()
+    {
+        // Tuliyollal: Dawntrail, opened by nothing in this catalog.
+        Assert.True(At(Path).IsNameMasked(SpoilerKind.Area, "Tuliyollal"));
+        Assert.True(At(Dungeon).IsNameMasked(SpoilerKind.Area, "Tuliyollal"));
+        Assert.Equal("Dawntrail area" + Nbsp + "1", At(Dungeon).Name(SpoilerKind.Area, "Tuliyollal"));
+        Assert.Equal("Dawntrail region", At(Dungeon).Name(SpoilerKind.Area, "Yok Tural"));
+
+        // A Realm Reborn's own city never hides, and nothing does once the story is done.
+        Assert.False(At(Path).IsNameMasked(SpoilerKind.Area, "Ul'dah - Steps of Nald"));
+        var done = SpoilerMask.Build(Catalog, States(Catalog, QuestState.Completed), SpoilerOptions.Default, names: Index.Names);
+        Assert.False(done.IsNameMasked(SpoilerKind.Area, "Tuliyollal"));
+    }
+
+    [Fact]
     public void Names_unlock_as_the_story_reaches_them()
     {
         var atOpener = At(Opener);
         Assert.False(atOpener.IsNameMasked(SpoilerKind.Area, "Kugane"));
+        Assert.False(atOpener.IsNameMasked(SpoilerKind.Aetheryte, "Kogane Dori Markets"));
         Assert.False(atOpener.IsNameMasked(SpoilerKind.Reward, "Lunar Whale"));
         Assert.True(atOpener.IsNameMasked(SpoilerKind.Duty, "The Sirensong Sea"));
 
@@ -146,7 +233,7 @@ public class SpoilerNamesTests
         Assert.False(atDungeon.IsNameMasked(SpoilerKind.Npc, "Hancock"));
         Assert.True(atDungeon.IsNameMasked(SpoilerKind.Npc, "Somebody Late"));
 
-        // "Quests ahead to reveal" reveals what those quests introduce too.
+        // "Quests ahead to reveal" reveals what those quests introduce too, even an area of a later expansion.
         Assert.False(At(Path, SpoilerOptions.Default with { Ahead = 1 }).IsNameMasked(SpoilerKind.Area, "Kugane"));
     }
 
@@ -163,6 +250,84 @@ public class SpoilerNamesTests
         // The kinds are apart: a person named like a zone is not the zone.
         Assert.False(mask.IsNameMasked(SpoilerKind.Npc, "Kugane"));
         Assert.Same(mask.Name(SpoilerKind.Area, "Kugane"), mask.Name(SpoilerKind.Area, "Kugane"));
+    }
+
+    [Fact]
+    public void A_placeholder_and_a_string_that_holds_one_are_told_apart_from_names()
+    {
+        var mask = At(Path);
+        var area = mask.Name(SpoilerKind.Area, "Kugane");
+        var quest = mask.DisplayName(Catalog.GetByRowId(Opener)!);
+
+        // Either is Secondary as a whole wherever it prints (spec-1.20, "How a placeholder looks").
+        Assert.True(SpoilerMask.IsPlaceholder(area));
+        Assert.True(SpoilerMask.IsPlaceholder(quest));
+        Assert.True(SpoilerMask.HoldsPlaceholder(area));
+        var composed = UnlockFindKinds.Label(UnlockTarget.Flying, area);
+        Assert.Equal("Flying in Stormblood area" + Nbsp + "2", composed);
+        Assert.False(SpoilerMask.IsPlaceholder(composed));
+        Assert.True(SpoilerMask.HoldsPlaceholder(composed));
+        Assert.True(SpoilerMask.HoldsPlaceholder(composed));
+
+        Assert.False(SpoilerMask.HoldsPlaceholder("Kugane"));
+        Assert.False(SpoilerMask.HoldsPlaceholder("Flying in Kugane"));
+        Assert.False(SpoilerMask.HoldsPlaceholder(null));
+        Assert.False(SpoilerMask.IsPlaceholder(string.Empty));
+    }
+
+    [Fact]
+    public void A_journal_node_named_after_a_hidden_area_takes_its_placeholder()
+    {
+        var mask = At(Path);
+
+        Assert.Equal("Stormblood area" + Nbsp + "2", mask.NodeName("Kugane"));
+        Assert.Equal("Stormblood area" + Nbsp + "2 Sidequests", mask.NodeName("Kugane Sidequests"));
+        Assert.Same("Ul'dah Sidequests", mask.NodeName("Ul'dah Sidequests"));
+        Assert.Equal("Kugane Sidequests", At(Opener).NodeName("Kugane Sidequests"));
+    }
+
+    [Fact]
+    public void Reveal_this_name_shows_one_name_for_the_session()
+    {
+        var plain = At(Path);
+        var revealed = At(Path, revealed: [(SpoilerKind.Area, "kugane")]);
+
+        Assert.False(revealed.IsNameMasked(SpoilerKind.Area, "Kugane"));
+        Assert.Equal("Kugane", revealed.Name(SpoilerKind.Area, "Kugane"));
+        // The aetheryte follows its area; everything else stays hidden.
+        Assert.False(revealed.IsNameMasked(SpoilerKind.Aetheryte, "Kogane Dori Markets"));
+        Assert.True(revealed.IsNameMasked(SpoilerKind.Duty, "The Sirensong Sea"));
+        Assert.True(revealed.IsNameMasked(SpoilerKind.Npc, "Hancock"));
+        // The integrations re-register when it changes.
+        Assert.NotEqual(plain.Fingerprint, revealed.Fingerprint);
+        Assert.Equal(revealed.Fingerprint, At(Path, revealed: [(SpoilerKind.Area, "Kugane")]).Fingerprint);
+    }
+
+    [Fact]
+    public void Reveal_names_in_this_quest_shows_its_name_giver_place_duty_rewards_and_unlocks()
+    {
+        var quest = Catalog.GetByRowId(Dungeon)!;
+        var names = SpoilerNames.NamesIn(quest, Index, place: "Kugane", region: "Hingashi", duties: ["The Sirensong Sea"]);
+
+        Assert.Contains((SpoilerKind.Npc, "Hancock"), names);
+        Assert.Contains((SpoilerKind.Area, "Kugane"), names);
+        Assert.Contains((SpoilerKind.Area, "Hingashi"), names);
+        Assert.Contains((SpoilerKind.Duty, "The Sirensong Sea"), names);
+        Assert.Contains((SpoilerKind.Reward, "Ruby Tide"), names);
+
+        var before = At(Path);
+        var revealed = At(Path, revealed: names, revealedQuests: new HashSet<uint> { Dungeon });
+        Assert.True(before.IsMasked(Dungeon));
+        Assert.False(revealed.IsMasked(Dungeon));
+        foreach (var (kind, name) in names)
+        {
+            Assert.True(before.IsNameMasked(kind, name), name);
+            Assert.False(revealed.IsNameMasked(kind, name), name);
+        }
+
+        // Another quest's names stay hidden.
+        Assert.True(revealed.IsNameMasked(SpoilerKind.Reward, "Lunar Whale"));
+        Assert.True(revealed.IsNameMasked(SpoilerKind.Reward, "Kojin Blade"));
     }
 
     [Fact]
@@ -186,6 +351,14 @@ public class SpoilerNamesTests
         Assert.NotEqual(related.Fingerprint, off.Fingerprint);
     }
 
+    [Theory]
+    [InlineData(null, true, true)]
+    [InlineData(null, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, true)]
+    public void On_upgrade_the_switch_takes_the_value_of_hide_story_names_ahead(bool? saved, bool hideNames, bool expected) =>
+        Assert.Equal(expected, SpoilerOptions.HideRelatedOnLoad(saved, hideNames));
+
     [Fact]
     public void A_completed_story_masks_no_name()
     {
@@ -193,10 +366,31 @@ public class SpoilerNamesTests
 
         Assert.False(mask.IsNameMasked(SpoilerKind.Npc, "Somebody Late"));
         Assert.False(mask.IsNameMasked(SpoilerKind.Area, "Kugane"));
+        Assert.Equal(0, mask.MaskedNameCount);
     }
 
     [Fact]
-    public void Search_never_finds_a_quest_by_a_masked_reward_or_unlock()
+    public void The_count_line_counts_story_names_and_other_names()
+    {
+        var mask = At(Path);
+        var hidden = 0;
+        foreach (var kind in new[] { SpoilerKind.Area, SpoilerKind.Aetheryte, SpoilerKind.Duty, SpoilerKind.Reward, SpoilerKind.Npc })
+        {
+            hidden += Index.Names.All(kind).Count(pair => mask.IsNameMasked(kind, pair.Key));
+        }
+
+        Assert.Equal(3, mask.MaskedCount);
+        Assert.Equal(hidden, mask.MaskedNameCount);
+        Assert.True(mask.MaskedNameCount >= 10, $"{mask.MaskedNameCount} names");
+
+        var format = ResxFiles.Load(string.Empty)["SpoilerHiddenCountFormat"];
+        Assert.Equal(
+            "212 story names and 486 other names hidden for Michiru.",
+            string.Format(System.Globalization.CultureInfo.InvariantCulture, format, 212, 486, "Michiru"));
+    }
+
+    [Fact]
+    public void Search_never_finds_a_hidden_name_and_never_hints_at_one()
     {
         var search = SearchIndex.Build(Catalog);
         var before = At(Path);
@@ -211,13 +405,25 @@ public class SpoilerNamesTests
         Assert.False(search.Matches(KuganeSide, "ruby", before, Index));
         Assert.True(search.Matches(KuganeSide, "ruby", after, Index));
 
+        // A hidden name matches only its placeholder, typed with plain spaces.
+        Assert.True(search.Matches(KuganeSide, "stormblood area 1", before, Index));
+        Assert.True(search.Matches(KuganeSide, "an item", before, Index));
+
         // A reward the story already gave is still found.
         Assert.True(search.Matches(EarlySide, "potion", before, Index));
 
-        // Find by unlock never names a masked zone, even through a quest the shield shows.
+        // Find by unlock: typing a name from ahead finds nothing, and no row says something was hidden.
         Assert.Contains(Index.Find("ruby", id => !before.IsMasked(id)), m => m.Find.Name == "The Ruby Sea");
-        Assert.DoesNotContain(Index.Find("ruby", id => !before.IsMasked(id), spoilers: before), m => m.Find.Name == "The Ruby Sea");
-        Assert.Contains(Index.Find("ruby", id => !after.IsMasked(id), spoilers: after), m => m.Find.Name == "The Ruby Sea");
+        Assert.Empty(Index.Find("ruby", id => !before.IsMasked(id), spoilers: before));
+        var shown = Assert.Single(Index.Find("ruby", id => !after.IsMasked(id), spoilers: after), m => m.Find.Name == "The Ruby Sea");
+        Assert.False(shown.Hidden);
+        Assert.Equal("The Ruby Sea", shown.Label);
+
+        // Its placeholder finds it, listed under the placeholder.
+        var hidden = Assert.Single(Index.Find("stormblood area 1", id => !before.IsMasked(id), spoilers: before));
+        Assert.True(hidden.Hidden);
+        Assert.Equal("Stormblood area" + Nbsp + "1", hidden.Label);
+
         // A masked quest is never the way to a find, as before.
         Assert.DoesNotContain(Index.Find("kugane", id => !before.IsMasked(id), spoilers: before), m => m.Find.Name == "Kugane");
     }
@@ -232,12 +438,18 @@ public class SpoilerNamesTests
 
         var shown = UnlockView.Visible(rows, masked: false, spoilers: before);
         var shielded = Assert.Single(shown, e => e.Target == UnlockTarget.Zone);
-        Assert.Equal("Area ahead (Lv 61)", shielded.Name);
+        Assert.Equal("Stormblood area" + Nbsp + "1", shielded.Name);
         Assert.Equal("Area", shielded.Caption);
         Assert.Equal(ruby.TargetId, shielded.TargetId);
         Assert.Equal("Area", UnlockView.CaptionOf(ruby, before));
-        Assert.Equal("Area ahead (Lv 61)", UnlockView.NameOf(ruby, Catalog, before));
-        Assert.Equal("Area ahead (Lv 61)", UnlockText.Places(shown));
+        Assert.Equal("Stormblood area" + Nbsp + "1", UnlockView.NameOf(ruby, Catalog, before));
+        Assert.Equal("Stormblood area" + Nbsp + "1", UnlockText.Places(shown));
+
+        // An aethernet shard follows its area and keeps the generic marker.
+        var shard = Assert.Single(Index.For(Opener), e => e.Target == UnlockTarget.AethernetShard);
+        var shardShown = UnlockView.Shielded(shard, before);
+        Assert.Equal("Stormblood aetheryte · area" + Nbsp + "2", shardShown.Name);
+        Assert.Equal(shard.Icon, shardShown.Icon);
 
         // Without the shield, and once the story is there, the row is itself.
         Assert.Same(rows, UnlockView.Visible(rows, masked: false));
@@ -252,9 +464,9 @@ public class SpoilerNamesTests
         var before = At(Path);
 
         Assert.Equal("The Ruby Sea", source.Places(KuganeSide));
-        Assert.Equal("Area ahead (Lv 61)", source.Places(KuganeSide, spoilers: before));
+        Assert.Equal("Stormblood area" + Nbsp + "1", source.Places(KuganeSide, spoilers: before));
         Assert.Equal("The Ruby Sea", source.Places(KuganeSide, spoilers: At(Opener)));
-        Assert.Contains("Area ahead (Lv 61)", source.OpensLine(KuganeSide, spoilers: before), StringComparison.Ordinal);
+        Assert.Contains("Stormblood area" + Nbsp + "1", source.OpensLine(KuganeSide, spoilers: before), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -264,7 +476,7 @@ public class SpoilerNamesTests
         var after = At(Dungeon);
 
         // A place with its region: the placeholder alone for a masked place; the place alone under a masked region.
-        Assert.Equal("Area ahead (Lv 61)", before.Place("Hingashi", "Kugane", "{0} › {1}"));
+        Assert.Equal("Stormblood area" + Nbsp + "2", before.Place("Hingashi", "Kugane", "{0} › {1}"));
         Assert.Equal("Hingashi › Kugane", after.Place("Hingashi", "Kugane", "{0} › {1}"));
         Assert.Equal("Ul'dah - Steps of Nald", before.Place("Hingashi", "Ul'dah - Steps of Nald", "{0} › {1}"));
         Assert.Equal(string.Empty, before.Place("Hingashi", null, "{0} › {1}"));
@@ -272,25 +484,25 @@ public class SpoilerNamesTests
         // Where to get: a vendor the story has not introduced, standing in a zone it has not reached.
         var vendor = new Core.Sources.Vendor(1, "Hancock", new Core.Sources.WorldSpot(Kugane, "Kugane", 0f, 0f, 10f, 11f));
         Assert.True(Core.Sources.SourceText.Shielded(vendor, before));
-        Assert.Equal("Someone ahead (Lv 61), Area ahead (Lv 61)", Core.Sources.SourceText.VendorWithPlace(vendor, before));
+        Assert.Equal("Stormblood character, Stormblood area" + Nbsp + "2", Core.Sources.SourceText.VendorWithPlace(vendor, before));
         Assert.Equal("Hancock, Kugane (10.0, 11.0)", Core.Sources.SourceText.VendorWithPlace(vendor, after));
         Assert.False(Core.Sources.SourceText.Shielded(vendor, after));
 
         // A route to a duty is titled by its placeholder, and so is each part; the quests stay.
         var duty = new Core.Route.RouteTarget(Core.Route.RouteTargetKind.Duty, "The Sirensong Sea", [Dungeon]) { Icon = 61801 };
         var shown = duty.Through(before);
-        Assert.Equal("Duty ahead (Lv 62)", shown.Label);
+        Assert.Equal("Dungeon (Lv" + Nbsp + "61)", shown.Label);
         Assert.Equal(0u, shown.Icon);
         Assert.Equal(duty.QuestRowIds, shown.QuestRowIds);
         Assert.Same(duty, duty.Through(after));
         var union = Core.Route.RouteTarget.Union(Core.Route.RouteTargetKind.Duty, "Roulette", [duty]);
-        Assert.Equal("Duty ahead (Lv 62)", union.Through(before).Parts[0].Label);
+        Assert.Equal("Dungeon (Lv" + Nbsp + "61)", union.Through(before).Parts[0].Label);
         var ruby = Core.Route.RouteTarget.ForUnlock(Index.Finds.Single(f => f.Name == "The Ruby Sea"));
-        Assert.Equal("Area ahead (Lv 61)", ruby.Through(before).Label);
+        Assert.Equal("Stormblood area" + Nbsp + "1", ruby.Through(before).Label);
 
         // Blockers name a duty past the story point by its placeholder.
         var names = Core.Evaluation.BlockerNames.Default with { Duty = _ => "The Sirensong Sea" };
-        Assert.Equal("Duty ahead (Lv 62)", names.Through(before).Duty(62));
+        Assert.Equal("Dungeon (Lv" + Nbsp + "61)", names.Through(before).Duty(62));
         Assert.Equal("The Sirensong Sea", names.Through(after).Duty(62));
     }
 

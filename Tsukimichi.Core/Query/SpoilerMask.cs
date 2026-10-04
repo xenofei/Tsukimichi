@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Globalization;
 using System.Text;
@@ -13,8 +14,8 @@ namespace Tsukimichi.Core.Query;
 /// <param name="Ahead">Main scenario quests past the position whose names stay visible; clamped to 0–<see cref="MaxAhead"/>.</param>
 /// <param name="HideArtwork">Show journal artwork only for quests in the journal or completed.</param>
 /// <param name="HideRelated">
-/// With <paramref name="HideNames"/>, also mask the zone, duty, reward and NPC names the masked story introduces
-/// (plan v7, 1.20.0 N6; <see cref="SpoilerNames"/>).
+/// With <paramref name="HideNames"/>, also mask the names of places, duties, rewards and people from the story past
+/// the character's (plan v7, 1.20.0 N6, "Also hide places, duties, rewards and people"; <see cref="SpoilerNames"/>).
 /// </param>
 public sealed record SpoilerOptions(bool HideNames = true, int Ahead = SpoilerOptions.DefaultAhead, bool HideArtwork = true, bool HideRelated = true)
 {
@@ -29,6 +30,13 @@ public sealed record SpoilerOptions(bool HideNames = true, int Ahead = SpoilerOp
 
     /// <summary><see cref="Ahead"/> within 0–<see cref="MaxAhead"/>.</summary>
     public int AheadClamped => Math.Clamp(Ahead, 0, MaxAhead);
+
+    /// <summary>
+    /// "Also hide places, duties, rewards and people" as a configuration loads (spec-1.20 N6): its saved value, or, in a
+    /// configuration saved before the switch existed (null), the value of "Hide story names ahead", so a player who
+    /// turned the shield off keeps everything shown and everyone else gets the wider shield.
+    /// </summary>
+    public static bool HideRelatedOnLoad(bool? saved, bool hideNames) => saved ?? hideNames;
 }
 
 /// <summary>
@@ -46,31 +54,45 @@ public sealed record SpoilerOptions(bool HideNames = true, int Ahead = SpoilerOp
 /// character without states (browse mode, a stored view without data) has no position: every main scenario quest
 /// after the first is masked.
 /// <para>
-/// The wider shield (plan v7, 1.20.0 N6, <see cref="SpoilerOptions.HideRelated"/>): a zone, duty, reward or NPC name is
-/// masked when every quest that introduces it sits at a masked quest of the story (<see cref="SpoilerNames"/> holds
-/// the rule and the data); it prints as "Area ahead (Lv 61)", "Duty ahead (Lv 61)", "Reward ahead (Lv 61)" or
-/// "Someone ahead (Lv 61)" (<see cref="Name"/>), with the level of the story quest that introduces it.
+/// The wider shield (plan v7, 1.20.0 N6, <see cref="SpoilerOptions.HideRelated"/>): a place, aetheryte, duty, reward
+/// or person from the story past the character's (<see cref="SpoilerNames"/> holds the rule and the data) prints as a
+/// kind word with a safe locator (<see cref="Name"/>): "Dawntrail area 6", "Dawntrail aetheryte · area 6", "Dungeon
+/// (Lv 97)", "A mount", "Dawntrail character". A name revealed for the session (<c>revealedNames</c>) shows.
+/// </para>
+/// <para>
+/// Every placeholder, the quests' and the names', is registered as it is first formatted, so a surface can tell a
+/// placeholder (and a composed string that holds one) from a name without knowing where it came from
+/// (<see cref="IsPlaceholder"/>, <see cref="HoldsPlaceholder"/>): such a string is drawn in Secondary as a whole.
 /// </para>
 /// Immutable; <see cref="DisplayName(QuestRecord)"/> and <see cref="Name"/> allocate nothing.
 /// </summary>
 public sealed class SpoilerMask
 {
-    /// <summary>"Main scenario quest (Lv 83)": what a masked quest is called everywhere its name would print, in the UI language.</summary>
-    public static string PlaceholderFormat => CoreText.T("Core.Spoiler.Placeholder", "Main scenario quest (Lv {0})");
+    /// <summary>
+    /// "Main scenario quest (Lv 83)": what a masked quest is called everywhere its name would print, in the UI language.
+    /// The locator keeps a non-breaking space, so it never wraps apart (spec-1.20).
+    /// </summary>
+    public static string PlaceholderFormat => CoreText.T("Core.Spoiler.Placeholder", "Main scenario quest (Lv {0})");
 
     /// <summary>Masks nothing and shows every banner: no catalog yet, or the shield turned off.</summary>
-    public static readonly SpoilerMask None = new(SpoilerOptions.Off, FrozenDictionary<uint, byte>.Empty, byte.MaxValue, 0, SpoilerNames.Empty);
+    public static readonly SpoilerMask None = new(SpoilerOptions.Off, FrozenDictionary<uint, byte>.Empty, byte.MaxValue, 0, SpoilerNames.Empty, FrozenSet<(SpoilerKind Kind, string Name)>.Empty);
 
     // One placeholder (and its lowercased search form) per display level and language, shared by every mask: a
     // rebuild per session version allocates no strings. Written racily at worst with equal values.
     private static readonly TextCache<string?[]> PlaceholderByLevel = new(static () => new string?[byte.MaxValue + 1]);
     private static readonly TextCache<string?[]> SearchNameByLevel = new(static () => new string?[byte.MaxValue + 1]);
 
-    // One placeholder per kind of name and display level, likewise shared.
-    private static readonly TextCache<string?[][]> KindPlaceholderByLevel = new(static () =>
-    [
-        new string?[byte.MaxValue + 1], new string?[byte.MaxValue + 1], new string?[byte.MaxValue + 1], new string?[byte.MaxValue + 1],
-    ]);
+    // Every placeholder formatted so far, in any language: what IsPlaceholder and HoldsPlaceholder look for.
+    private static readonly ConcurrentDictionary<string, byte> Registered = new(StringComparer.Ordinal);
+
+    // HoldsPlaceholder's answers by string instance, for composed strings drawn every frame; dropped when it grows or a
+    // placeholder is registered.
+    private static readonly Dictionary<string, bool> Holds = new(ReferenceEqualityComparer.Instance);
+    private static readonly Lock HoldsLock = new();
+    private static int holdsRegistered = -1;
+    private const int MaxHolds = 4096;
+
+    private static readonly SpoilerKind[] AllKinds = [SpoilerKind.Area, SpoilerKind.Aetheryte, SpoilerKind.Duty, SpoilerKind.Reward, SpoilerKind.Npc];
 
     /// <summary>Masked row id to the display level its placeholder prints.</summary>
     private readonly IReadOnlyDictionary<uint, byte> masked;
@@ -78,13 +100,19 @@ public sealed class SpoilerMask
     /// <summary>Where each zone, duty, reward and NPC name sits in the story; <see cref="SpoilerNames.Empty"/> when the wider shield is off.</summary>
     private readonly SpoilerNames names;
 
-    private SpoilerMask(SpoilerOptions options, IReadOnlyDictionary<uint, byte> masked, byte reachExpansion, int fingerprint, SpoilerNames names)
+    /// <summary>The names revealed for the session ("Reveal this name", "Reveal names in this quest").</summary>
+    private readonly FrozenSet<(SpoilerKind Kind, string Name)> reveals;
+
+    private int maskedNameCount = -1;
+
+    private SpoilerMask(SpoilerOptions options, IReadOnlyDictionary<uint, byte> masked, byte reachExpansion, int fingerprint, SpoilerNames names, FrozenSet<(SpoilerKind Kind, string Name)> reveals)
     {
         Options = options;
         this.masked = masked;
         ReachExpansion = reachExpansion;
         Fingerprint = fingerprint;
         this.names = names;
+        this.reveals = reveals;
     }
 
     /// <summary>The options the mask was built with.</summary>
@@ -106,31 +134,49 @@ public sealed class SpoilerMask
     /// </summary>
     public int Fingerprint { get; }
 
-    /// <summary>"Area ahead (Lv 61)": what a masked zone, region or aetheryte is called, in the UI language.</summary>
-    public static string AreaPlaceholderFormat => CoreText.T("Core.Spoiler.AreaPlaceholder", "Area ahead (Lv {0})");
-
-    /// <summary>"Duty ahead (Lv 61)": what a masked duty is called.</summary>
-    public static string DutyPlaceholderFormat => CoreText.T("Core.Spoiler.DutyPlaceholder", "Duty ahead (Lv {0})");
-
-    /// <summary>"Reward ahead (Lv 61)": what a masked reward or other unlock is called.</summary>
-    public static string RewardPlaceholderFormat => CoreText.T("Core.Spoiler.RewardPlaceholder", "Reward ahead (Lv {0})");
-
-    /// <summary>"Someone ahead (Lv 61)": what a masked person is called.</summary>
-    public static string NpcPlaceholderFormat => CoreText.T("Core.Spoiler.NpcPlaceholder", "Someone ahead (Lv {0})");
-
     /// <summary>Whether the wider shield can mask anything: it is on and the names are placed.</summary>
     public bool MasksNames => names.Count > 0 && masked.Count > 0;
 
     /// <summary>
-    /// Whether the wider shield masks a name of <paramref name="kind"/>: <see cref="SpoilerOptions.HideRelated"/> is on
-    /// and every quest that introduces the name sits at a masked quest of the story (<see cref="SpoilerNames"/>). False
-    /// for a name the data does not place. Allocates nothing.
+    /// How many places, aetherytes, duties, rewards and people the wider shield hides ("486 other names" on Settings ›
+    /// Spoilers); counted once per mask, on first ask.
+    /// </summary>
+    public int MaskedNameCount
+    {
+        get
+        {
+            if (maskedNameCount >= 0)
+            {
+                return maskedNameCount;
+            }
+
+            var count = 0;
+            if (MasksNames)
+            {
+                foreach (var kind in AllKinds)
+                {
+                    foreach (var (name, _) in names.All(kind))
+                    {
+                        count += PlacedMasked(kind, name, out _) ? 1 : 0;
+                    }
+                }
+            }
+
+            maskedNameCount = count;
+            return count;
+        }
+    }
+
+    /// <summary>
+    /// Whether the wider shield masks a name of <paramref name="kind"/> (<see cref="SpoilerNames"/> holds the rule):
+    /// <see cref="SpoilerOptions.HideRelated"/> is on, the name was not revealed for the session, and the story has not
+    /// reached it. False for a name the data does not place. Allocates nothing.
     /// </summary>
     public bool IsNameMasked(SpoilerKind kind, string? name) => name is not null && PlacedMasked(kind, name, out _);
 
     /// <summary>
-    /// The name to print: its placeholder ("Area ahead (Lv 61)") when <see cref="IsNameMasked"/>, the name itself
-    /// otherwise (an empty string for null). Allocates nothing.
+    /// The name to print: its placeholder ("Dawntrail area 6", "Dungeon (Lv 97)") when <see cref="IsNameMasked"/>, the
+    /// name itself otherwise (an empty string for null). Allocates nothing.
     /// </summary>
     public string Name(SpoilerKind kind, string? name)
     {
@@ -139,7 +185,60 @@ public sealed class SpoilerMask
             return string.Empty;
         }
 
-        return PlacedMasked(kind, name, out var level) ? KindPlaceholder(kind, level) : name;
+        return PlacedMasked(kind, name, out var placed) ? names.Placeholder(placed) : name;
+    }
+
+    /// <summary>
+    /// The short form of a place in a slot that also holds a name (spec-1.20: the place is cut to its locator first):
+    /// "area 6" for a masked area or aetheryte, the whole placeholder for another masked name, the name itself when
+    /// shown. Allocates nothing.
+    /// </summary>
+    public string Locator(SpoilerKind kind, string? name)
+    {
+        if (name is null)
+        {
+            return string.Empty;
+        }
+
+        return PlacedMasked(kind, name, out var placed) ? names.Locator(placed) : name;
+    }
+
+    /// <summary>
+    /// The lowercased placeholder a masked name is searched by ("dawntrail area 6"), or null when the name is shown and
+    /// searched itself: a hidden name matches only its placeholder, as a masked quest does.
+    /// </summary>
+    public string? SearchName(SpoilerKind kind, string? name) =>
+        name is not null && PlacedMasked(kind, name, out var placed) ? names.SearchText(placed) : null;
+
+    /// <summary>
+    /// A journal node's name through the wider shield (spec-1.20 N6, "Journal tree"): a node named after an area the
+    /// story has not reached takes the area's placeholder, the whole name ("Living Memory") or its leading place
+    /// ("Tuliyollal Sidequests" reads "Dawntrail area 1 Sidequests"). The name itself otherwise. Allocates only to
+    /// compose a shielded name.
+    /// </summary>
+    public string NodeName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        if (!MasksNames || name.Length == 0)
+        {
+            return name;
+        }
+
+        if (PlacedMasked(SpoilerKind.Area, name, out var whole))
+        {
+            return names.Placeholder(whole);
+        }
+
+        // The longest leading run of words that is a hidden area.
+        for (var end = name.LastIndexOf(' '); end > 0; end = name.LastIndexOf(' ', end - 1))
+        {
+            if (PlacedMasked(SpoilerKind.Area, name[..end], out var lead))
+            {
+                return names.Placeholder(lead) + name[end..];
+            }
+        }
+
+        return name;
     }
 
     /// <summary>
@@ -155,9 +254,9 @@ public sealed class SpoilerMask
             return string.Empty;
         }
 
-        if (PlacedMasked(SpoilerKind.Area, place, out var level))
+        if (PlacedMasked(SpoilerKind.Area, place, out var placed))
         {
-            return KindPlaceholder(SpoilerKind.Area, level);
+            return names.Placeholder(placed);
         }
 
         return string.IsNullOrEmpty(region) || string.Equals(region, place, StringComparison.Ordinal) || IsNameMasked(SpoilerKind.Area, region)
@@ -165,29 +264,26 @@ public sealed class SpoilerMask
             : string.Format(CultureInfo.CurrentCulture, pathFormat, region, place);
     }
 
-    /// <summary>The placeholder a masked name of <paramref name="kind"/> prints at a display level: "Duty ahead (Lv 61)".</summary>
-    public static string KindPlaceholder(SpoilerKind kind, byte level)
+    private bool PlacedMasked(SpoilerKind kind, string name, out SpoilerNames.Placed placed)
     {
-        var byLevel = KindPlaceholderByLevel.Value[(int)kind & 3];
-        return byLevel[level] ??= string.Format(CultureInfo.InvariantCulture, KindFormat(kind), level);
-    }
-
-    private static string KindFormat(SpoilerKind kind) => kind switch
-    {
-        SpoilerKind.Area => AreaPlaceholderFormat,
-        SpoilerKind.Duty => DutyPlaceholderFormat,
-        SpoilerKind.Npc => NpcPlaceholderFormat,
-        _ => RewardPlaceholderFormat,
-    };
-
-    private bool PlacedMasked(SpoilerKind kind, string name, out byte level)
-    {
-        level = 0;
-        if (masked.Count == 0 || !names.TryGet(kind, name, out var placed))
+        placed = default;
+        if (masked.Count == 0 || !names.TryGet(kind, name, out placed))
         {
             return false;
         }
 
+        if (reveals.Count > 0 && reveals.Contains((kind, name)))
+        {
+            return false;
+        }
+
+        // An aetheryte is hidden while its area is, and prints its own placeholder.
+        if (placed.Zone is { } zone && names.TryGet(SpoilerKind.Area, zone, out _))
+        {
+            return PlacedMasked(SpoilerKind.Area, zone, out _);
+        }
+
+        // Shown once the story reaches any quest that introduces it, "names ahead" included.
         foreach (var anchor in placed.Anchors)
         {
             if (!masked.ContainsKey(anchor))
@@ -196,9 +292,79 @@ public sealed class SpoilerMask
             }
         }
 
-        level = placed.Level;
-        return true;
+        // A place or duty of an expansion past the story's own is hidden whatever introduces it.
+        if (kind is SpoilerKind.Area or SpoilerKind.Aetheryte or SpoilerKind.Duty && placed.Expansion != byte.MaxValue && placed.Expansion > ReachExpansion)
+        {
+            return true;
+        }
+
+        return !placed.Unanchored && placed.Anchors.Length > 0;
     }
+
+    /// <summary>
+    /// Whether <paramref name="text"/> is a placeholder exactly ("Main scenario quest (Lv 97)", "Dawntrail area 6"), one
+    /// any mask has formatted in this session. Allocates nothing.
+    /// </summary>
+    public static bool IsPlaceholder(string? text) => !string.IsNullOrEmpty(text) && !Registered.IsEmpty && Registered.ContainsKey(text);
+
+    /// <summary>
+    /// Whether <paramref name="text"/> is or holds a placeholder: "Flying in Dawntrail area 6", "Opens Dungeon (Lv 97)".
+    /// Such a string is drawn in Secondary as a whole (spec-1.20). Answers are kept per string instance, so a string
+    /// composed once and drawn every frame is scanned once.
+    /// </summary>
+    public static bool HoldsPlaceholder(string? text)
+    {
+        if (string.IsNullOrEmpty(text) || Registered.IsEmpty)
+        {
+            return false;
+        }
+
+        if (Registered.ContainsKey(text))
+        {
+            return true;
+        }
+
+        lock (HoldsLock)
+        {
+            if (holdsRegistered != Registered.Count || Holds.Count >= MaxHolds)
+            {
+                holdsRegistered = Registered.Count;
+                Holds.Clear();
+            }
+
+            if (Holds.TryGetValue(text, out var known))
+            {
+                return known;
+            }
+
+            var holds = false;
+            foreach (var (placeholder, _) in Registered)
+            {
+                if (placeholder.Length <= text.Length && text.Contains(placeholder, StringComparison.Ordinal))
+                {
+                    holds = true;
+                    break;
+                }
+            }
+
+            Holds[text] = holds;
+            return holds;
+        }
+    }
+
+    /// <summary>Notes a placeholder as formatted (<see cref="IsPlaceholder"/>) and returns it.</summary>
+    internal static string Register(string placeholder)
+    {
+        if (placeholder.Length > 0)
+        {
+            Registered.TryAdd(placeholder, 0);
+        }
+
+        return placeholder;
+    }
+
+    /// <summary>A placeholder as search matches it: lowercased, its non-breaking spaces plain, so "lv 97" finds "Lv 97".</summary>
+    internal static string SearchForm(string placeholder) => placeholder.ToLowerInvariant().Replace(' ', ' ');
 
     /// <summary>The placeholder a masked quest prints: "Main scenario quest (Lv 83)", with the journal's display level.</summary>
     public static string Placeholder(QuestRecord quest)
@@ -208,10 +374,10 @@ public sealed class SpoilerMask
     }
 
     private static string PlaceholderFor(byte level) =>
-        PlaceholderByLevel.Value[level] ??= string.Format(CultureInfo.InvariantCulture, PlaceholderFormat, level);
+        PlaceholderByLevel.Value[level] ??= Register(string.Format(CultureInfo.InvariantCulture, PlaceholderFormat, level));
 
     private static string SearchNameFor(byte level) =>
-        SearchNameByLevel.Value[level] ??= PlaceholderFor(level).ToLowerInvariant();
+        SearchNameByLevel.Value[level] ??= SearchForm(PlaceholderFor(level));
 
     /// <summary>Whether the quest's name is hidden.</summary>
     public bool IsMasked(QuestRecord quest)
@@ -375,32 +541,36 @@ public sealed class SpoilerMask
     /// name shown by the game, so it is never masked.
     /// </param>
     /// <param name="names">Where zone, duty, reward and NPC names sit in the story (the wider shield); null masks quest names only.</param>
+    /// <param name="revealedNames">Names the player revealed for the session ("Reveal this name", "Reveal names in this quest"); never masked.</param>
     public static SpoilerMask Build(
         QuestCatalog catalog,
         IReadOnlyDictionary<uint, QuestEvaluation> evaluations,
         SpoilerOptions options,
         IReadOnlySet<uint>? revealed = null,
         IReadOnlyDictionary<ushort, AbandonedEntry>? abandoned = null,
-        SpoilerNames? names = null)
+        SpoilerNames? names = null,
+        IEnumerable<(SpoilerKind Kind, string Name)>? revealedNames = null)
     {
         ArgumentNullException.ThrowIfNull(evaluations);
-        return Build(catalog, new EvaluationSource(evaluations), evaluations.Count == 0, options, revealed, abandoned, names);
+        return Build(catalog, new EvaluationSource(evaluations), evaluations.Count == 0, options, revealed, abandoned, names, revealedNames);
     }
 
     /// <summary>The mask over a plain state map; missing rows read as <see cref="QuestState.Unknown"/>.</summary>
     /// <param name="revealed">Row ids the player revealed for the session ("Reveal this name"); never masked.</param>
     /// <param name="abandoned">The character's abandoned ledger; an abandoned quest is never masked.</param>
     /// <param name="names">Where zone, duty, reward and NPC names sit in the story (the wider shield); null masks quest names only.</param>
+    /// <param name="revealedNames">Names the player revealed for the session; never masked.</param>
     public static SpoilerMask Build(
         QuestCatalog catalog,
         IReadOnlyDictionary<uint, QuestState> states,
         SpoilerOptions options,
         IReadOnlySet<uint>? revealed = null,
         IReadOnlyDictionary<ushort, AbandonedEntry>? abandoned = null,
-        SpoilerNames? names = null)
+        SpoilerNames? names = null,
+        IEnumerable<(SpoilerKind Kind, string Name)>? revealedNames = null)
     {
         ArgumentNullException.ThrowIfNull(states);
-        return Build(catalog, new StateMapSource(states), states.Count == 0, options, revealed, abandoned, names);
+        return Build(catalog, new StateMapSource(states), states.Count == 0, options, revealed, abandoned, names, revealedNames);
     }
 
     private static SpoilerMask Build<TSource>(
@@ -410,7 +580,8 @@ public sealed class SpoilerMask
         SpoilerOptions options,
         IReadOnlySet<uint>? revealed,
         IReadOnlyDictionary<ushort, AbandonedEntry>? abandoned,
-        SpoilerNames? names)
+        SpoilerNames? names,
+        IEnumerable<(SpoilerKind Kind, string Name)>? revealedNames)
         where TSource : struct, IStateSource
     {
         ArgumentNullException.ThrowIfNull(catalog);
@@ -424,6 +595,18 @@ public sealed class SpoilerMask
         // The wider shield: off, or on over this catalog's names (a new unlock index can mask other names).
         var related = options.HideNames && options.HideRelated && names is not null ? names : SpoilerNames.Empty;
         hash.Add(related.Count);
+        var reveals = related.Count > 0 && revealedNames is not null
+            ? revealedNames.ToFrozenSet(SpoilerNames.NameComparer)
+            : FrozenSet<(SpoilerKind Kind, string Name)>.Empty;
+        // Summed, so the set's own order does not count.
+        var revealHash = 0;
+        foreach (var reveal in reveals)
+        {
+            revealHash = unchecked(revealHash + SpoilerNames.NameComparer.GetHashCode(reveal));
+        }
+
+        hash.Add(reveals.Count);
+        hash.Add(revealHash);
         var graph = MsqGraph.For(catalog);
         var msq = graph.Position(source);
         var positionRowId = msq?.Next?.RowId;
@@ -482,7 +665,8 @@ public sealed class SpoilerMask
         }
 
         var reachExpansion = msq is null ? byte.MaxValue : noStates ? (byte)0 : msq.Next?.Expansion ?? byte.MaxValue;
-        return new SpoilerMask(options, masked, reachExpansion, hash.ToHashCode(), related);
+        hash.Add(reachExpansion);
+        return new SpoilerMask(options, masked, reachExpansion, hash.ToHashCode(), related, reveals);
     }
 
     /// <summary>

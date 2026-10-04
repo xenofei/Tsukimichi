@@ -758,7 +758,7 @@ public sealed partial class Plugin : IDalamudPlugin
             if (questUnlocks is { } unlocks)
             {
                 // The wider spoiler shield places names from the index (plan v7, 1.20.0 N6).
-                Session?.UseSpoilerNames(unlocks.Latest.Names);
+                Session?.UseUnlocks(unlocks.Latest);
             }
         }
         catch (Exception ex)

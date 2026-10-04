@@ -23,7 +23,8 @@ namespace Tsukimichi.Ui;
 public sealed partial class DetailPane
 {
     /// <summary>One duty of the section as of the last refresh.</summary>
-    private sealed record ClearRow(string Name, DutyBadges.Look[] Badges, string Wall, string WallNote);
+    /// <param name="Hidden">The duty's own name while the spoiler shield hides it (1.20.0 N6: <see cref="Name"/> is its placeholder); null when shown.</param>
+    private sealed record ClearRow(string Name, DutyBadges.Look[] Badges, string Wall, string WallNote, string? Hidden = null);
 
     private readonly List<ClearRow> clearRows = [];
     private string clearCaption = string.Empty;
@@ -44,6 +45,7 @@ public sealed partial class DetailPane
 
         clearKey = key;
         clearRows.Clear();
+        model.DutyNames.Clear();
         clearCaption = string.Empty;
         if (index is null || session.Bundle is not { } bundle)
         {
@@ -65,8 +67,10 @@ public sealed partial class DetailPane
             bool? storyRequired = story?.IsStoryDuty(info.ContentFinderConditionId, info.InstanceContentId);
             var badges = DutyBadgeRules.For(info, storyRequired).Select(b => DutyBadges.Describe(b, info, index.Roulettes)).ToArray();
             var (wall, note) = WallLines(ItemLevelWall.For(info, session.ViewedSnapshot, rule, queues), info, bundle.Names);
-            // A duty the story has not introduced reads as its placeholder (1.20.0 N6).
-            clearRows.Add(new ClearRow(session.Spoilers.Name(SpoilerKind.Duty, info.Name), badges, wall, note));
+            // A duty the story has not introduced reads as its placeholder (1.20.0 N6); the badges stay, being generic.
+            var hidden = session.Spoilers.IsNameMasked(SpoilerKind.Duty, info.Name);
+            clearRows.Add(new ClearRow(session.Spoilers.Name(SpoilerKind.Duty, info.Name), badges, wall, note, hidden ? info.Name : null));
+            model.DutyNames.Add(info.Name);
         }
 
         clearCaption = duties.Count == 1
@@ -131,7 +135,12 @@ public sealed partial class DetailPane
         BeginSection("##howClear", Strings.DutyClearHeading, DutiesIcon, clearCaption, Theme.Surface.TextSecondary);
         foreach (var row in clearRows)
         {
-            if (Chrome.EllipsisText(row.Name, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && Dalamud.Bindings.ImGui.ImGui.IsItemHovered())
+            var cut = Chrome.EllipsisText(row.Name, RoomTo(cardRight), ShieldText.U32(row.Name, Theme.Surface.Text));
+            if (row.Hidden is { } hidden)
+            {
+                ShieldItem(SpoilerKind.Duty, hidden, row.Name, cut ? row.Name : null);
+            }
+            else if (cut && Dalamud.Bindings.ImGui.ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(row.Name);
             }

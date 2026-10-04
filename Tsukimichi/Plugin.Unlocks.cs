@@ -50,7 +50,10 @@ public sealed partial class Plugin
                 // On the build's worker: waiting for a warm-up still under way never holds up a frame.
                 var duties = warmer.Duties.Wait() ?? PlanDuties.Empty;
                 var rewards = UniqueRewardCatalog.Build(session.UniqueRewards, new Dictionary<uint, UniqueOverride>(), session.Curated);
-                var index = QuestUnlocks.Build(catalog, rewards, duties, links.Value, session.Curated);
+                // The spoiler shield's placeholders name expansions as the game does ("Dawntrail area 6"), from the
+                // catalog's own sheet names, so a new expansion names itself (1.20.0 N6).
+                var names = session.Bundle is { } bundle && ReferenceEquals(bundle.Catalog, catalog) ? bundle.Names : null;
+                var index = QuestUnlocks.Build(catalog, rewards, duties, links.Value, session.Curated, names is null ? null : id => names.Expansion(id));
                 log.Debug("Quest unlocks: {Count} quests in {Elapsed:0} ms", index.Count, System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds);
                 return index;
             },

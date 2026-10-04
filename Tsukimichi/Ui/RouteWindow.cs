@@ -681,12 +681,17 @@ public sealed class RouteWindow : Window
             {
                 // "3 quests near Camp Dragonhead": one Teleport for the stop; its steps keep their own Flag.
                 var first = bundle.Catalog.GetByRowId(l.RowId);
-                var end = first is null ? min.X + width : DrawStepButtons(first, flag: false, teleport: true, walk: false, min.X + width, min.Y, rowHeight);
+                var end = first is null ? min.X + width : DrawStepButtons(first, flag: false, teleport: l.Teleport, walk: false, min.X + width, min.Y, rowHeight);
                 ImGui.SetCursorScreenPos(min);
                 ImGui.Dummy(new Vector2(MathF.Max(1f, end - min.X), rowHeight));
                 var indent = UiMetrics.Px(IndentLogical);
                 var cut = Chrome.EllipsisTextAt(dl, new Vector2(min.X + indent, textY), end - min.X - indent, l.Text, Theme.U32(Theme.Surface.TextSecondary));
-                if (ImGui.IsItemHovered())
+                if (l.Hidden is { } hiddenStop)
+                {
+                    // A stop near a place the story has not reached: the placeholder's hover and right-click (1.20.0 N6).
+                    ShieldText.InteractItem(session, hiddenStop.Kind, hiddenStop.Name, l.Text, first, links, lead: cut ? l.Text : null);
+                }
+                else if (ImGui.IsItemHovered())
                 {
                     UiMetrics.Tooltip(cut ? l.Text : Strings.RouteStopTooltip, cut ? Strings.RouteStopTooltip : null);
                 }
@@ -709,7 +714,8 @@ public sealed class RouteWindow : Window
             // Walk shows on every step (each giver is its own walk) while the window is wide enough; narrower, it and
             // Go to giver are in the step's right-click menu.
             var walk = links.WalkShown && !PaneFit.FoldActions(width / UiMetrics.Scale);
-            textEnd = DrawStepButtons(stepQuest, flag: true, teleport: l.Teleport && links.TeleportShown, walk, min.X + width, min.Y, rowHeight);
+            // A giver in a place the story has not reached gets no Flag (the map would name it; 1.20.0 N6).
+            textEnd = DrawStepButtons(stepQuest, flag: !links.GiverPlaceHidden(stepQuest), teleport: l.Teleport && links.TeleportShown, walk, min.X + width, min.Y, rowHeight);
             ImGui.SetCursorScreenPos(min);
         }
 
@@ -868,7 +874,8 @@ public sealed class RouteWindow : Window
 
             // Gold only for a target the character can act on now; a Blocked or locked-out target reads like any step.
             var gold = l.IsTarget && l.State is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted;
-            Chrome.EllipsisTextAt(dl, new Vector2(x, textY), fit.NameRoom, l.Text, Theme.U32(gold ? Theme.Accent : Theme.Surface.Text), nameWidth);
+            // A masked quest's placeholder keeps the name's slot in Secondary (spec-1.20 N6).
+            Chrome.EllipsisTextAt(dl, new Vector2(x, textY), fit.NameRoom, l.Text, Theme.U32(gold ? Theme.Accent : ShieldText.Tone(l.Text, Theme.Surface.Text)), nameWidth);
             x += fit.NameDrawn;
             if (shown[0] && markWidth > 0f)
             {
@@ -995,7 +1002,13 @@ public sealed class RouteWindow : Window
             {
                 stopEnd = i + group.Count - 1;
                 inStop = true;
-                lines.Add(new Line(LineKind.Stop, step.RowId, QuestState.Unknown, string.Format(CultureInfo.CurrentCulture, Strings.RouteStopFormat, group.Count, session.Spoilers.Name(Core.Query.SpoilerKind.Area, shared.Name))));
+                // A stop near an aetheryte the story has not reached: its placeholder, and no Teleport (1.20.0 N6).
+                var hiddenStop = session.Spoilers.IsNameMasked(Core.Query.SpoilerKind.Aetheryte, shared.Name);
+                lines.Add(new Line(LineKind.Stop, step.RowId, QuestState.Unknown, string.Format(CultureInfo.CurrentCulture, Strings.RouteStopFormat, group.Count, session.Spoilers.Name(Core.Query.SpoilerKind.Aetheryte, shared.Name)))
+                {
+                    Teleport = !hiddenStop,
+                    Hidden = hiddenStop ? (Core.Query.SpoilerKind.Aetheryte, shared.Name) : null,
+                });
             }
 
             var name = NameOf(catalog, step.RowId);
@@ -1003,9 +1016,13 @@ public sealed class RouteWindow : Window
                 : step.IsTarget ? Strings.RouteTargetMark
                 : step.IsMainScenario ? Strings.RouteMsqMark
                 : string.Empty;
-            // An aetheryte the story has not reached reads as its placeholder (1.20.0 N6).
-            var near = !inStop && place.TryGetValue(step.RowId, out var own) ? session.Spoilers.Name(Core.Query.SpoilerKind.Area, own.Name) : string.Empty;
-            var detail = near.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.RouteNearFormat, near) + Strings.RouteDetailSeparator + step.StatusText : step.StatusText;
+            // An aetheryte the story has not reached reads as its placeholder (1.20.0 N6): its locator alone ("area 6") on
+            // the crowded step line, the whole placeholder in the tooltip; and no Teleport to it.
+            var nearName = !inStop && place.TryGetValue(step.RowId, out var own) ? own.Name : string.Empty;
+            var nearHidden = nearName.Length > 0 && session.Spoilers.IsNameMasked(Core.Query.SpoilerKind.Aetheryte, nearName);
+            var near = session.Spoilers.Name(Core.Query.SpoilerKind.Aetheryte, nearName);
+            var nearShort = session.Spoilers.Locator(Core.Query.SpoilerKind.Aetheryte, nearName);
+            var detail = near.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.RouteNearFormat, nearShort) + Strings.RouteDetailSeparator + step.StatusText : step.StatusText;
             lines.Add(new Line(LineKind.Step, step.RowId, step.State, name)
             {
                 Number = (i + 1).ToString(CultureInfo.CurrentCulture) + ".",
@@ -1014,7 +1031,7 @@ public sealed class RouteWindow : Window
                 Mark = mark,
                 IsTarget = step.IsTarget,
                 InStop = inStop,
-                Teleport = !inStop,
+                Teleport = !inStop && !nearHidden,
                 Tooltip = near.Length > 0 ? name + "\n" + step.StatusText + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.RouteNearFormat, near) : name + "\n" + step.StatusText,
                 Badges = quest is not null && clearBadges is not null ? clearBadges.ForQuest(quest, Core.Companions.DutyBadgeSurface.Route) : [],
             });
@@ -1075,7 +1092,7 @@ public sealed class RouteWindow : Window
         foreach (var id in zone.FieldCurrentIds)
         {
             var nearest = placeOf.TryGetValue(id, out var at) ? links.Aetherytes.Nearest(at.TerritoryId, at.X, at.Z) : null;
-            all.Add(new FieldCurrentStop(id, nearest?.RowId ?? 0, session.Spoilers.Name(Core.Query.SpoilerKind.Area, nearest?.Name ?? string.Empty)));
+            all.Add(new FieldCurrentStop(id, nearest?.RowId ?? 0, session.Spoilers.Name(Core.Query.SpoilerKind.Aetheryte, nearest?.Name ?? string.Empty)));
         }
 
         var attuned = Attuned ?? (static _ => null);
@@ -1137,6 +1154,9 @@ public sealed class RouteWindow : Window
 
         /// <summary>The step shows its own Teleport (a stop of one step).</summary>
         public bool Teleport { get; init; }
+
+        /// <summary>The hidden name a stop line's placeholder stands for (1.20.0 N6); null when shown.</summary>
+        public (Core.Query.SpoilerKind Kind, string Name)? Hidden { get; init; }
 
         /// <summary>The C7 clear badges of the duty the step involves (1.19.0); empty for none.</summary>
         public DutyBadges.Look[] Badges { get; init; } = [];

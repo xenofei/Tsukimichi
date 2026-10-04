@@ -86,8 +86,9 @@ public static class GiverPortraits
     }
 
     /// <summary>
-    /// The giver's name as a tooltip prints it: "Hidden giver" for a quest the shield masks, a person the story has not
-    /// introduced by the wider shield's placeholder (1.20.0 N6), the name otherwise; empty for none.
+    /// The giver's name as a tooltip prints it: a person the story has not introduced by the wider shield's placeholder
+    /// ("Dawntrail character", 1.20.0 N6), someone met before by name even on a masked quest; without the wider shield
+    /// "Hidden giver" for a quest the shield masks; empty for none.
     /// </summary>
     public static string Name(QuestRecord quest, SpoilerMask spoilers)
     {
@@ -98,6 +99,6 @@ public static class GiverPortraits
             return string.Empty;
         }
 
-        return spoilers.IsMasked(quest) ? Strings.GiverHidden : spoilers.Name(SpoilerKind.Npc, issuer.Name);
+        return spoilers.IsMasked(quest) && !spoilers.MasksNames ? Strings.GiverHidden : spoilers.Name(SpoilerKind.Npc, issuer.Name);
     }
 }
