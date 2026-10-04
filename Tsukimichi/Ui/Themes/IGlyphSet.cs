@@ -62,12 +62,14 @@ internal sealed class MedallionGlyphSet : IGlyphSet
     }
 
     /// <summary>
-    /// Draws Medallion's face of <paramref name="state"/> in the appearance's kit when the appearance composes Medallion
-    /// (<see cref="ResolvedAppearance.Composes"/>: its kit is not Brass) at Full or Quiet; false when it does not, or while
-    /// the parts load. The glyph window's forced renderers and high contrast always draw the medal as shipped.
+    /// Draws Medallion's face of <paramref name="state"/> in the appearance's kit when the appearance uses and composes
+    /// Medallion (<see cref="ResolvedAppearance.Composes"/>: its kit is not Brass) at Full or Quiet; false when it does
+    /// not, or while the parts load. Standing in for another set whose atlases load, Medallion is drawn as shipped: composing
+    /// it would load its faces only to swap stand-ins twice. The glyph window's forced renderers and high contrast always
+    /// draw the medal as shipped.
     /// </summary>
     private static bool Compose(ImDrawListPtr dl, Vector2 center, float radius, QuestState state, byte job, float alpha) =>
-        MedalGlyph.Renderer == MedalRenderer.Auto && !Theme.Glyphs.HighContrast
+        MedalGlyph.Renderer == MedalRenderer.Auto && !Theme.Glyphs.HighContrast && GlyphSeam.Appearance.Uses(GlyphSetId.Medallion)
         && AtlasGlyphSet.TryCompose(dl, GlyphSetId.Medallion, center, radius, state, job, alpha);
 }
 
@@ -176,6 +178,8 @@ internal sealed class AtlasGlyphSet(GlyphSetId id) : IGlyphSet
         {
             return false;
         }
+
+        GlyphSeam.NoteComposed();
 
         if (hero && state == QuestState.ReadyOnOtherJob)
         {

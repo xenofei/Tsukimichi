@@ -927,9 +927,10 @@ public static class Theme
         ImRaii.PushColor(ImGuiCol.Text, color, condition);
 
     /// <summary>Selected rows and menu items: a neutral wash of the text colour (never gold).</summary>
-    private static Vector4 SelectionWash => WithAlphaVector(Surface.Text, 0.10f);
+    internal static Vector4 SelectionWash => WithAlphaVector(Surface.Text, 0.10f);
 
-    private static Vector4 SelectionWashActive => WithAlphaVector(Surface.Text, 0.16f);
+    /// <summary>A selected row or menu item while pressed.</summary>
+    internal static Vector4 SelectionWashActive => WithAlphaVector(Surface.Text, 0.16f);
 
     private static void Push(ImGuiCol idx, Vector4 color, ref int count)
     {

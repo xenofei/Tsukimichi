@@ -34,7 +34,8 @@ namespace Tsukimichi.Ui;
 /// luminance). Vector glyphs are simulated by rewriting the draw list's vertex colours after the panel is drawn; the
 /// atlas medals are drawn from a simulated copy of the atlas made once per mode (read back from the GPU, so it is ready a
 /// moment after the mode is picked). The game's job icons stay as they are. <see cref="Theme"/> and the renderers stay
-/// untouched.
+/// untouched. The Themes tab turns Simulate off (and says so): its theme-set and composed medals are atlas textures with
+/// no simulated copy, so only their vector neighbours would change; its Vision buttons judge the looks instead.
 /// </summary>
 public sealed partial class GlyphDebugWindow : Window, IDisposable
 {
@@ -85,6 +86,7 @@ public sealed partial class GlyphDebugWindow : Window, IDisposable
     private bool nightPanel = true;
     private bool haloOnCard;
     private bool showInstalled = true;
+    private bool themesTabOpen;
     private int simulation;
     private int palette;
     private float heroScale = 1f;
@@ -108,7 +110,18 @@ public sealed partial class GlyphDebugWindow : Window, IDisposable
         ImGui.Checkbox("Night panel", ref nightPanel);
         ImGui.SameLine();
         ImGui.SetNextItemWidth(150f * ImGuiHelpers.GlobalScale);
-        ImGui.Combo("Simulate", ref simulation, SimulationNames);
+        using (ImRaii.Disabled(themesTabOpen))
+        {
+            ImGui.Combo("Simulate", ref simulation, SimulationNames);
+        }
+
+        if (themesTabOpen && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip(SimulateOffNote);
+        }
+
+        // Set again by the Themes tab while it is the one open (the combo above reads last frame's tab).
+        themesTabOpen = false;
         ImGui.SameLine();
         ImGui.SetNextItemWidth(190f * ImGuiHelpers.GlobalScale);
         ImGui.Combo("Palette", ref palette, PaletteNames);
@@ -134,7 +147,7 @@ public sealed partial class GlyphDebugWindow : Window, IDisposable
         Tab("Hero", DrawHero);
         Tab("Gauges", DrawGauges);
         Tab("Icon", DrawIcon);
-        Tab("Themes", DrawThemes);
+        Tab("Themes", DrawThemes, simulates: false);
     }
 
     public void Dispose()
@@ -152,13 +165,22 @@ public sealed partial class GlyphDebugWindow : Window, IDisposable
         }
     }
 
-    /// <summary>One tab: a child panel drawn with the chosen palette, its vertex colours simulated afterwards.</summary>
-    private void Tab(string label, Action draw)
+    /// <summary>
+    /// One tab: a child panel drawn with the chosen palette, its vertex colours simulated afterwards unless
+    /// <paramref name="simulates"/> is false (the Themes tab, whose theme-set and composed medals are textures the vertex
+    /// pass cannot re-colour: simulating only their vector neighbours would mislead).
+    /// </summary>
+    private void Tab(string label, Action draw, bool simulates = true)
     {
         using var tab = ImRaii.TabItem(label);
         if (!tab)
         {
             return;
+        }
+
+        if (!simulates)
+        {
+            themesTabOpen = true;
         }
 
         using var panel = ImRaii.Child("##glyphPanel" + label, new Vector2(-1f, -1f), true, ImGuiWindowFlags.HorizontalScrollbar);
@@ -173,8 +195,11 @@ public sealed partial class GlyphDebugWindow : Window, IDisposable
         }
 
         // Everything the child drew this frame, background included, is in its own draw list.
-        var dl = ImGui.GetWindowDrawList();
-        ApplySimulation(dl, Mode, 0, dl.VtxBuffer.Size);
+        if (simulates)
+        {
+            var dl = ImGui.GetWindowDrawList();
+            ApplySimulation(dl, Mode, 0, dl.VtxBuffer.Size);
+        }
     }
 
     private GlyphPalette Palette() => palette switch

@@ -63,14 +63,16 @@ internal static class ThemeAtlasCache
     public static void Dispose() => ReleaseAll();
 
     /// <summary>
-    /// Once per frame, with the saved appearance: marks what it draws as wanted, requests its row strips, and releases
-    /// parts left idle; disposes the textures released a frame ago. Allocation-free once the layouts have loaded.
+    /// Once per frame, with the saved appearance, the frame's medal finish and the palette in effect: marks what it draws
+    /// as wanted (<see cref="AtlasResidency.Retain(ResolvedAppearance, MedalFinish, UiPalette)"/>), requests its row strips,
+    /// and releases parts left idle; disposes the textures released a frame ago. Allocation-free once the layouts have
+    /// loaded.
     /// </summary>
-    public static void BeginFrame(ResolvedAppearance appearance)
+    public static void BeginFrame(ResolvedAppearance appearance, MedalFinish finish, UiPalette palette)
     {
         frame++;
         FlushRetired();
-        Residency.Retain(appearance);
+        Residency.Retain(appearance, finish, palette);
         var now = Now;
         var sets = GlyphSets.All;
         for (var i = 0; i < sets.Count; i++)
@@ -270,6 +272,15 @@ internal static class ThemeAtlasCache
         dl.AddImage(wrap.Handle, min, max, new Vector2(flipX ? u1 : u0, flipY ? v1 : v0), new Vector2(flipX ? u0 : u1, flipY ? v0 : v1), tint);
         return true;
     }
+
+    /// <summary>
+    /// Whether <see cref="TryDrawOrnament"/> would draw <paramref name="kit"/>'s <paramref name="sprite"/> at
+    /// <paramref name="cell"/> px now (asking requests its strip). Once true it stays true while the strip is held, so a
+    /// caller drawing several sprites of one strip checks once and draws all or none.
+    /// </summary>
+    public static bool CanDrawOrnament(FrameKitId kit, KitOrnament sprite, int cell) =>
+        FrameKitMetals.HasOrnamentSprites(kit) && EnsureKit(kit) is { Layouts.Ornaments: { } layout } entry
+        && Texture(entry, AtlasPart.Ornaments, Now) is not null && layout.TryRect(sprite, cell, out _);
 
     /// <summary>One part at its box of the medal's 128-unit box.</summary>
     private static void Part(ImDrawListPtr dl, IDalamudTextureWrap wrap, PartAtlasLayout layout, int sprite, AtlasRect rect, Vector2 min, float size, uint tint)

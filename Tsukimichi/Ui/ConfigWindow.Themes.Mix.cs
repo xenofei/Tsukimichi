@@ -67,8 +67,7 @@ public sealed partial class ConfigWindow
     private string mixFixNone = string.Empty;
 
     // One look per offered set (every state from it, in the saved look's kit and palette), to draw a set's faces.
-    private readonly Dictionary<GlyphSetId, ResolvedAppearance> mixLooks = [];
-    private AppearanceConfig? mixLooksOf;
+    private readonly MixLooks mixLooks = new();
 
     private static readonly LocText resetMixLabelText = new(static () => Strings.ThemesMixReset + Chrome.HoldIdSuffix);
     private static readonly LocText resetAppearanceHoldLabelText = new(static () => Strings.ThemesResetButton + Chrome.HoldIdSuffix);
@@ -139,10 +138,11 @@ public sealed partial class ConfigWindow
         var rowHeight = MathF.Max(UiMetrics.Px(MixRowLogical), ImGui.GetFrameHeight() + UiMetrics.Px(10f));
         var medal = MathF.Min(UiMetrics.Px(MixMedalLogical), MixMedalRowTierPx);
         var gap = UiMetrics.Px(12f);
+        var states = AppearanceStates.All;
         var nameWidth = 0f;
-        foreach (var state in AppearanceStates.All)
+        for (var i = 0; i < states.Count; i++)
         {
-            nameWidth = MathF.Max(nameWidth, ImGui.CalcTextSize(Strings.StateName(state)).X);
+            nameWidth = MathF.Max(nameWidth, ImGui.CalcTextSize(Strings.StateName(states[i])).X);
         }
 
         nameWidth = MathF.Min(nameWidth + gap, avail * 0.3f);
@@ -150,7 +150,6 @@ public sealed partial class ConfigWindow
         var noteX = nameWidth + medal + gap + combo + gap;
         var noteWidth = MathF.Max(0f, avail - noteX);
         var line = ImGui.GetTextLineHeight();
-        var states = AppearanceStates.All;
         var top = ImGui.GetCursorScreenPos();
         for (var i = 0; i < states.Count; i++)
         {
@@ -299,7 +298,7 @@ public sealed partial class ConfigWindow
             var textWidth = MathF.Max(1f, max.X - pad - textX);
             var height = MathF.Min(TextFlow.Height(note, textWidth), caption * 2f);
             var y = mid - (height * 0.5f);
-            var amber = MixAmber(s.Window);
+            var amber = MixListAmber();
             dl.AddCircleFilled(new Vector2(noteX + dot, y + (caption * 0.5f)), dot, Theme.U32(amber), 10);
             TextFlow.DrawClamped(dl, new Vector2(textX, y), note, textWidth, 2, Theme.U32(amber));
         }
@@ -545,41 +544,32 @@ public sealed partial class ConfigWindow
     /// <summary>The section's amber, held to 4.5 : 1 on <paramref name="ground"/>.</summary>
     private static Vector4 MixAmber(Vector4 ground) => ColorMath.EnsureContrast(ShareAmber, Theme.Surface.Text, ground, SurfaceColors.TextMinContrast);
 
+    /// <summary>
+    /// The amber of a list option's note, held to 4.5 : 1 on every ground the option takes (Theme.PushPopup): the popup's
+    /// window, hovered, selected and pressed.
+    /// </summary>
+    private static Vector4 MixListAmber()
+    {
+        var s = Theme.Surface;
+        var window = s.Window with { W = 1f };
+        ReadOnlySpan<Vector4> grounds =
+        [
+            window,
+            ColorMath.Over(s.Hover, window),
+            ColorMath.Over(Theme.SelectionWash, window),
+            ColorMath.Over(Theme.SelectionWashActive, window),
+        ];
+        return ColorMath.EnsureContrast(ShareAmber, s.Text, grounds, SurfaceColors.TextMinContrast);
+    }
+
     /// <summary>What a settings card shows under its rows: the Raised surface at .55 over the window (CloseCard paints it so).</summary>
     private static Vector4 CardGround() => ColorMath.Over(Theme.Surface.Raised with { W = 0.55f }, Theme.Surface.Window with { W = 1f });
 
-    /// <summary>A look that draws every state from <paramref name="set"/>, in the saved look's kit and palette (one per set, rebuilt when the saved look changes).</summary>
-    private ResolvedAppearance MixLook(GlyphSetId set)
-    {
-        var saved = settings.Appearance;
-        if (mixLooksOf is null || !mixLooksOf.SameAs(saved))
-        {
-            mixLooks.Clear();
-            mixLooksOf = saved.Clone();
-        }
-
-        if (!mixLooks.TryGetValue(set, out var look))
-        {
-            var resolved = GlyphSeam.Appearance;
-            var key = GlyphSets.Get(set).Key;
-            var glyphs = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var state in AppearanceStates.All)
-            {
-                glyphs[AppearanceStates.Key(state)] = key;
-            }
-
-            look = AppearanceResolver.Resolve(new AppearanceConfig
-            {
-                Theme = saved.Theme,
-                Palette = saved.Palette,
-                Frames = FrameKits.Get(resolved.Frames).Key,
-                Glyphs = glyphs,
-            });
-            mixLooks[set] = look;
-        }
-
-        return look;
-    }
+    /// <summary>
+    /// A look that draws every state from <paramref name="set"/>, in the saved look's theme, palette and frames (one per
+    /// set, built from the saved look and rebuilt when it changes, so a frames pick or a theme card shows at once).
+    /// </summary>
+    private ResolvedAppearance MixLook(GlyphSetId set) => mixLooks.For(settings.Appearance, set);
 
     /// <summary>Judges the saved mix and builds every text the section shows, when the appearance, the pick to keep or the language changed.</summary>
     private MixVerdict RefreshMix(ResolvedAppearance resolved)

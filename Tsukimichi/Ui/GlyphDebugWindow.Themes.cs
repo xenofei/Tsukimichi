@@ -29,6 +29,9 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed partial class GlyphDebugWindow
 {
+    /// <summary>Why Simulate is off on this tab (its medals are textures the vertex pass cannot re-colour).</summary>
+    private const string SimulateOffNote = "Simulate is off on this tab: it cannot re-colour theme-set or composed medals (textures). Vision below judges the looks by the measured numbers.";
+
     private static readonly string[] HeatShort = ["Rdy", "RoJ", "Jrn", "Blk", "Done", "Comp", "Lock", "NotC"];
     private static readonly string[] VisionNames = ["Worst", "Grey", "Deut", "Deut (M)", "Prot", "Trit"];
     private static readonly VisionMode?[] VisionModes = [null, VisionMode.Grey, VisionMode.Deut, VisionMode.MachadoDeut, VisionMode.MachadoProt, VisionMode.MachadoTrit];
@@ -47,6 +50,23 @@ public sealed partial class GlyphDebugWindow
     private static readonly Vector4 HeatHard = new(0x8E / 255f, 0x3A / 255f, 0x5E / 255f, 1f);
     private static readonly Vector4 HeatEmpty = new(0x2A / 255f, 0x31 / 255f, 0x49 / 255f, 1f);
 
+    /// <summary>The lead box's rows: Ready's lead in rows and at 48 px and up, and Completed's share of Ready at 48 px.</summary>
+    private static readonly (string Label, Func<MixVerdict, float> Value, Func<float, bool> Misses, string Format)[] LeadRows =
+    [
+        ("Rows, 16 px", static v => v.Lead(MixTier.Row), static f => MixTable.RatioUnder(f, MixTable.ReadyLeadBar), "0.00×"),
+        ("48 px and up", static v => v.Lead(MixTier.Hero), static f => MixTable.RatioUnder(f, MixTable.ReadyLeadBar), "0.00×"),
+        ("Completed of Ready, 48 px", static v => v.CompletedOfReady(MixTier.Hero), static f => MixTable.RatioOver(f, MixTable.CompletedOfReadyBar), "0.00"),
+    ];
+
+    /// <summary>The lead box's legend: a swatch (none for the outline note) and its words.</summary>
+    private static readonly (Vector4? Swatch, string Text)[] Legend =
+    [
+        (HeatColor(new HeatCell(30f, VisionMode.Grey, PairReading.Apart, false)), "reads apart"),
+        (HeatClose, "close: under its mode's bar (12 grey and deut, 11 Machado)"),
+        (HeatHard, "hard to tell apart: under 10 in any mode"),
+        (null, "Outlined cells pair two sets. A pair within one set reads as the gates that set passed judged it."),
+    ];
+
     private readonly ThemeLook lookA = new("A");
     private readonly ThemeLook lookB = new("B");
     private int vision;
@@ -61,6 +81,7 @@ public sealed partial class GlyphDebugWindow
         lookB.Start(current);
 
         ImGui.TextDisabled("Two looks side by side. Numbers are the build's units (row tier, 16 px, Night); bars: 12 greyscale and deuteranopia, 11 Machado, 10 hard. Nothing here is saved.");
+        ImGui.TextDisabled(SimulateOffNote);
         lookA.DrawControls(current);
         lookB.DrawControls(current);
 
@@ -92,10 +113,9 @@ public sealed partial class GlyphDebugWindow
         ImGui.Dummy(new Vector2((panelWidth * 2f) + gap, MathF.Max(heightA, heightB)));
 
         ImGui.Spacing();
-        var mode = VisionModes[vision];
         var tables = ImGui.GetCursorScreenPos();
-        var tableA = DrawHeatTable(lookA, mode, tables);
-        var tableB = DrawHeatTable(lookB, mode, tables + new Vector2(tableA.X + gap, 0f));
+        var tableA = DrawHeatTable(lookA, vision, tables);
+        var tableB = DrawHeatTable(lookB, vision, tables + new Vector2(tableA.X + gap, 0f));
         var leadHeight = DrawLeadBox(tables + new Vector2(tableA.X + gap + tableB.X + gap, 0f));
         ImGui.SetCursorScreenPos(tables);
         ImGui.Dummy(new Vector2(tableA.X + gap + tableB.X + gap + (300f * scale), MathF.Max(MathF.Max(tableA.Y, tableB.Y), leadHeight)));
@@ -118,8 +138,7 @@ public sealed partial class GlyphDebugWindow
         var max = min + new Vector2(width, height);
         dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Raised), 6f * scale);
         dl.AddRect(min, max, Theme.U32(Theme.Surface.Line), 6f * scale);
-        var kit = resolved.Classic ? "Classic gauges" : resolved.HighContrast ? "High contrast: one shared set" : $"{FrameKits.Get(resolved.Frames).Name} frames (one kit for the look)";
-        dl.AddText(min + new Vector2(pad, 5f * scale), Theme.U32(Theme.Surface.Text), $"{look.Label} · {kit} · {PaletteChoices.Get(resolved.Palette).Name}");
+        dl.AddText(min + new Vector2(pad, 5f * scale), Theme.U32(Theme.Surface.Text), look.PanelTitle);
 
         var paneMin = min + new Vector2(1f, header);
         var paneMax = max - new Vector2(1f, 1f);
@@ -151,7 +170,7 @@ public sealed partial class GlyphDebugWindow
     }
 
     /// <summary>A look's heat table: the lower triangle of every pair, coloured by the bars, cross-set pairs outlined. Returns its size.</summary>
-    private static Vector2 DrawHeatTable(ThemeLook look, VisionMode? mode, Vector2 min)
+    private static Vector2 DrawHeatTable(ThemeLook look, int vision, Vector2 min)
     {
         var scale = ImGuiHelpers.GlobalScale;
         var dl = ImGui.GetWindowDrawList();
@@ -162,8 +181,8 @@ public sealed partial class GlyphDebugWindow
         var count = AppearanceStates.Count;
         var size = new Vector2(labelWidth + (count * cell.X), title + ((count + 1) * cell.Y));
         var column = look.Column;
-        var modeName = mode is null ? "worst of every vision mode" : VisionNames[Array.IndexOf(VisionModes, mode)];
-        dl.AddText(min, Theme.U32(Theme.Surface.Text), $"{look.Label} · how alike, {modeName}");
+        var mode = VisionModes[vision];
+        dl.AddText(min, Theme.U32(Theme.Surface.Text), look.HeatTitle(vision));
         if (!MixRules.Applies(look.Resolved))
         {
             dl.AddText(min + new Vector2(0f, title), Theme.U32(Theme.Surface.TextSecondary), look.Resolved.HighContrast ? "High contrast draws one shared set." : "Classic is not measured.");
@@ -200,7 +219,7 @@ public sealed partial class GlyphDebugWindow
                     dl.AddRect(cellMin, cellMax, Theme.WithAlpha(Theme.GoldLine, 0.85f), 2f * scale, ImDrawFlags.None, MathF.Max(1f, scale));
                 }
 
-                var text = heat.Value.ToString("0.0", CultureInfo.InvariantCulture);
+                var text = look.HeatText(vision, i, j, heat.Value);
                 var tw = ImGui.CalcTextSize(text).X;
                 // The palette's text or window ink, whichever reads better on the cell (dark on amber, light on slate and plum).
                 var fill = HeatColor(heat);
@@ -227,15 +246,8 @@ public sealed partial class GlyphDebugWindow
         var pad = 10f * scale;
         var width = 300f * scale;
         var rowHeight = line + (8f * scale);
-        var legend = new (Vector4? Swatch, string Text)[]
-        {
-            (HeatColor(new HeatCell(30f, VisionMode.Grey, PairReading.Apart, false)), "reads apart"),
-            (HeatClose, "close: under its mode's bar (12 grey and deut, 11 Machado)"),
-            (HeatHard, "hard to tell apart: under 10 in any mode"),
-            (null, "Outlined cells pair two sets. A pair within one set reads as the gates that set passed judged it."),
-        };
         var legendHeight = 0f;
-        foreach (var (_, text) in legend)
+        foreach (var (_, text) in Legend)
         {
             legendHeight += TextFlow.Height(text, width - (pad * 2f) - (18f * scale)) + (4f * scale);
         }
@@ -250,29 +262,20 @@ public sealed partial class GlyphDebugWindow
         y += line + (4f * scale);
         var colA = min.X + width - pad - (110f * scale);
         var colB = min.X + width - pad - (50f * scale);
-        var a = MixRules.Evaluate(lookA.Column);
-        var b = MixRules.Evaluate(lookB.Column);
         var dim = Theme.U32(Theme.Surface.TextSecondary);
         dl.AddText(new Vector2(colA, y), dim, "A");
         dl.AddText(new Vector2(colB, y), dim, "B");
         y += rowHeight;
-        var rows = new (string Label, Func<MixVerdict, float> Value, Func<float, bool> Misses, string Format)[]
+        for (var row = 0; row < LeadRows.Length; row++)
         {
-            ("Rows, 16 px", static v => v.Lead(MixTier.Row), static f => MixTable.RatioUnder(f, MixTable.ReadyLeadBar), "0.00×"),
-            ("48 px and up", static v => v.Lead(MixTier.Hero), static f => MixTable.RatioUnder(f, MixTable.ReadyLeadBar), "0.00×"),
-            ("Completed of Ready, 48 px", static v => v.CompletedOfReady(MixTier.Hero), static f => MixTable.RatioOver(f, MixTable.CompletedOfReadyBar), "0.00"),
-        };
-
-        foreach (var (label, value, misses, format) in rows)
-        {
-            dl.AddText(new Vector2(x, y), Theme.U32(Theme.Surface.Text), label);
-            DrawLeadValue(dl, new Vector2(colA, y), lookA, a, value, misses, format);
-            DrawLeadValue(dl, new Vector2(colB, y), lookB, b, value, misses, format);
+            dl.AddText(new Vector2(x, y), Theme.U32(Theme.Surface.Text), LeadRows[row].Label);
+            DrawLeadValue(dl, new Vector2(colA, y), lookA, row);
+            DrawLeadValue(dl, new Vector2(colB, y), lookB, row);
             y += rowHeight;
         }
 
         y += pad;
-        foreach (var (swatch, text) in legend)
+        foreach (var (swatch, text) in Legend)
         {
             var textX = x;
             if (swatch is { } color)
@@ -290,16 +293,16 @@ public sealed partial class GlyphDebugWindow
         return height;
     }
 
-    private static void DrawLeadValue(ImDrawListPtr dl, Vector2 at, ThemeLook look, MixVerdict verdict, Func<MixVerdict, float> value, Func<float, bool> misses, string format)
+    private static void DrawLeadValue(ImDrawListPtr dl, Vector2 at, ThemeLook look, int row)
     {
-        if (!MixRules.Applies(look.Resolved) || !verdict.Measured)
+        if (!MixRules.Applies(look.Resolved) || !look.Verdict.Measured)
         {
             dl.AddText(at, Theme.U32(Theme.Surface.TextSecondary), "–");
             return;
         }
 
-        var v = value(verdict);
-        dl.AddText(at, Theme.U32(misses(v) ? HeatClose : Theme.Surface.Text), v.ToString(format, CultureInfo.InvariantCulture));
+        var (text, missed) = look.Lead(row);
+        dl.AddText(at, Theme.U32(missed ? HeatClose : Theme.Surface.Text), text);
     }
 
     /// <summary>A cell's tooltip: the two moons, their sets, and the pair's value in every mode against its bar.</summary>
@@ -358,16 +361,91 @@ public sealed partial class GlyphDebugWindow
         private static readonly string[] SetNames = ["From theme", .. MixRules.Choices.Select(static s => s.Name)];
 
         private readonly AppearanceCache cache = new();
+        private readonly string?[] heatText = new string?[AppearanceStates.Count * AppearanceStates.Count];
+        private readonly string[] leadText = new string[LeadRows.Length];
+        private readonly bool[] leadMissed = new bool[LeadRows.Length];
+        private readonly string heading = $"Look {label}";
         private AppearanceConfig? config;
         private int mixState;
         private string code = string.Empty;
         private string codeNote = string.Empty;
 
+        // What the panel, the heat table and the lead box show, rebuilt when the look resolves anew (not every frame).
+        private ResolvedAppearance? measured;
+        private GlyphSetId[] column = [];
+        private MixVerdict? verdict;
+        private string panelTitle = string.Empty;
+        private int heatVision = -1;
+        private string heatTitle = string.Empty;
+
         public string Label { get; } = label;
 
         public ResolvedAppearance Resolved => cache.Get(config);
 
-        public GlyphSetId[] Column => MixRules.Column(Resolved);
+        public GlyphSetId[] Column => Measure().column;
+
+        public MixVerdict Verdict => Measure().verdict!;
+
+        /// <summary>The panel's heading: the look, its kit (one for the look) and its palette.</summary>
+        public string PanelTitle => Measure().panelTitle;
+
+        /// <summary>The heat table's title under vision <paramref name="vision"/> (an index of <see cref="VisionModes"/>).</summary>
+        public string HeatTitle(int vision)
+        {
+            Heat(vision);
+            return heatTitle;
+        }
+
+        /// <summary>Cell <paramref name="i"/>, <paramref name="j"/>'s value under vision <paramref name="vision"/> as text, formatted once.</summary>
+        public string HeatText(int vision, int i, int j, float value)
+        {
+            Heat(vision);
+            return heatText[(i * AppearanceStates.Count) + j] ??= value.ToString("0.0", CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>The lead box's row <paramref name="row"/> for this look: its value as text and whether it misses its bar.</summary>
+        public (string Text, bool Missed) Lead(int row)
+        {
+            Measure();
+            return (leadText[row], leadMissed[row]);
+        }
+
+        private ThemeLook Measure()
+        {
+            var resolved = Resolved;
+            if (ReferenceEquals(resolved, measured))
+            {
+                return this;
+            }
+
+            measured = resolved;
+            column = MixRules.Column(resolved);
+            verdict = MixRules.Evaluate(column);
+            var kit = resolved.Classic ? "Classic gauges" : resolved.HighContrast ? "High contrast: one shared set" : $"{FrameKits.Get(resolved.Frames).Name} frames (one kit for the look)";
+            panelTitle = $"{Label} · {kit} · {PaletteChoices.Get(resolved.Palette).Name}";
+            for (var row = 0; row < LeadRows.Length; row++)
+            {
+                var value = LeadRows[row].Value(verdict);
+                leadText[row] = value.ToString(LeadRows[row].Format, CultureInfo.InvariantCulture);
+                leadMissed[row] = LeadRows[row].Misses(value);
+            }
+
+            heatVision = -1;
+            return this;
+        }
+
+        private void Heat(int vision)
+        {
+            Measure();
+            if (heatVision == vision)
+            {
+                return;
+            }
+
+            heatVision = vision;
+            Array.Clear(heatText);
+            heatTitle = $"{Label} · how alike, {(VisionModes[vision] is null ? "worst of every vision mode" : VisionNames[vision])}";
+        }
 
         /// <summary>Starts from <paramref name="current"/> the first time the tab draws.</summary>
         public void Start(AppearanceConfig current) => config ??= current.Clone();
@@ -379,10 +457,10 @@ public sealed partial class GlyphDebugWindow
             var resolved = Resolved;
             using var id = ImRaii.PushId(Label);
             ImGui.AlignTextToFramePadding();
-            ImGui.TextUnformatted($"Look {Label}");
+            ImGui.TextUnformatted(heading);
 
             ImGui.SameLine();
-            var theme = Math.Max(0, Array.FindIndex(Themes, t => t.Id == resolved.Theme.Id));
+            var theme = Math.Max(0, IndexOf(Themes, resolved.Theme.Id, static t => t.Id));
             ImGui.SetNextItemWidth(170f * scale);
             if (ImGui.Combo("##theme", ref theme, ThemeNames))
             {
@@ -391,7 +469,7 @@ public sealed partial class GlyphDebugWindow
             }
 
             ImGui.SameLine();
-            var palette = look.Palette is null ? 0 : 1 + Math.Max(0, Array.FindIndex(Palettes, p => p.Id == resolved.Palette));
+            var palette = look.Palette is null ? 0 : 1 + Math.Max(0, IndexOf(Palettes, resolved.Palette, static p => p.Id));
             ImGui.SetNextItemWidth(130f * scale);
             if (ImGui.Combo("##palette", ref palette, PaletteNames))
             {
@@ -399,7 +477,7 @@ public sealed partial class GlyphDebugWindow
             }
 
             ImGui.SameLine();
-            var kit = look.Frames is null ? 0 : 1 + Math.Max(0, Array.FindIndex(Kits, k => k.Id == resolved.Frames));
+            var kit = look.Frames is null ? 0 : 1 + Math.Max(0, IndexOf(Kits, resolved.Frames, static k => k.Id));
             ImGui.SetNextItemWidth(110f * scale);
             if (ImGui.Combo("##frames", ref kit, KitNames))
             {
@@ -449,6 +527,21 @@ public sealed partial class GlyphDebugWindow
                 ImGui.SameLine();
                 ImGui.TextDisabled(codeNote);
             }
+        }
+
+        /// <summary>The index of the item whose id is <paramref name="id"/>, or -1; a static key, so a frame captures nothing.</summary>
+        private static int IndexOf<T, TId>(T[] items, TId id, Func<T, TId> key)
+            where TId : struct, Enum
+        {
+            for (var i = 0; i < items.Length; i++)
+            {
+                if (EqualityComparer<TId>.Default.Equals(key(items[i]), id))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private static int IndexOfChoice(GlyphSetId set)
