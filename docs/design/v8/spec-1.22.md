@@ -39,8 +39,8 @@ Everything is under `docs/design/v8/`.
 | `whatsnew-answers-1.22.png` | W1/W2: the popup on page 4 of 4, 1.19.0 Right answers, in all six themes |
 | `whatsnew-states-1.22.png` | W1: page 1 of 4 (1.22.0 Welcome home) at Full, Quiet, Plain, one release (no pager), Text size 150 % on a page that fits and on one that scrolls, and the size and timing table |
 | `release-art-1.22.png` | W2: the four paintings with their six restyles each, and the grade and motif table |
-| `release-art-option-b-1.22.png` | Decision 1: 1.20.0 in Option A and Option B side by side for all six themes, Option B's painting, and the cost table |
-| `art/optionb/` | Option B: the painting (`evercold-b-base.png`), its region masks (`src-masks.npz`) and the six treatments (`evercold-b-<theme>.png`); made by `art/src/paint_option_b.py` and `option_b_themes.py` |
+| `release-art-option-b-1.22.png` | Decision 1: 1.20.0 in Option A and Option B side by side for all six themes, Option B's painting, and the cost table. The What's new, states and About boards now show the Option B art, and say so in their titles; `release-art-1.22.png` stays Option A, the approved fallback, and says so. |
+| `art/optionb/` | Option B for 1.22.0, 1.21.0, 1.20.0 and 1.19.0 (`welcome-b`, `whatnext-b`, `evercold-b`, `answers-b`), each as described for 1.20.0 here: the painting (`evercold-b-base.png`), its region masks (`evercold-b-masks.npz`), its placement data (`evercold-b.json`), the six lossless treatments (`evercold-b-<theme>.png`) and the shipped JPEGs (`ship/`); made by `art/src/painters_b.py` (the registry; 1.20.0's painter is `paint_option_b.py`), `option_b_themes.py` and `ship_option_b.py` |
 | `about-history-1.22.png` | W3, U1, M3: Settings › About with Updates, What's new (backfilled) and Umbra, and the popup opened from the list |
 | `update-ready-1.22.png` | U1: the status-bar note at each level, its hover, the dot on the icon with the quick card, Dalamud's installer, and the flow |
 | `moon-icon-1.22.png` | H1: rest, hover with the quick card, the right-click menu, locked, first run, hide with Undo, the dots, Needs you, the three levels, and the behaviour table |
@@ -221,17 +221,17 @@ Every painting is **a night or twilight landscape with one natural light, plus a
 - **The signpost** at the fork is rim-lit on its top and moon-facing edges, and its shadow falls toward the viewer and left, away from the moon.
 - **The rest:** a lone tree on the rise is rim-lit the same way and throws a faint, foreshortened shadow toward the viewer and right. Mist lies low in the far valley, and tall grass frames the near corners, lit on the edges that face the moon (up and right on the left, up and left on the right).
 
-### Option B, for the owner's decision 1 (`release-art-option-b-1.22.png`)
+### Option B: the owner's choice for every release (decision 1; `release-art-option-b-1.22.png`)
 
-The owner asked for "beautiful, theme specific custom art". Option A (above) gives one painting per release and lets each theme restyle it; its themes differ in colour and in a few motifs, and Medallion and Classic look almost the same. So the owner can compare, **1.20.0 Before Evercold is also made as Option B**: a richer painting, rendered in a distinct art treatment per theme.
+The owner asked for "beautiful, theme specific custom art". Option A (above) gives one painting per release and lets each theme restyle it; its themes differ in colour and in a few motifs, and Medallion and Classic look almost the same. So the owner could compare, **1.20.0 Before Evercold was also made as Option B**: a richer painting, rendered in a distinct art treatment per theme. **The owner chose Option B for every release** when signing off plan 8 ("I like option B."). Option A stays documented above as the approved fallback, and its renders stay in place.
 
 **The painting** (`art/optionb/evercold-b-base.png`, by `art/src/paint_option_b.py`): dawn over Coerthas.
-- **The scene:** Ishgard stands on its bluff, backlit by the sun still under the horizon behind it. Two Ishgard cues are drawn in our own silhouette: the Vault's tall paired spires and two of the Pillars joined by an arched bridge. Broken altocumulus is lit on its undersides, warmest near the sun, and mist lies in the valley. On the near snow ridge an adventurer with a lantern looks toward the city, and her chocobo faces her.
+- **The scene:** Ishgard stands on its bluff, backlit by the sun still under the horizon behind it. Its Ishgard cue is the Vault's tall paired spires over a steep gable, in our own silhouette. The city shows no lit windows: the lantern is the one warm practical light. Broken altocumulus is lit on its undersides, warmest near the sun, and mist lies in the valley. On the near snow ridge an adventurer with a lantern looks toward the city, and her chocobo faces her.
 - **The light:** one natural light, plus the lantern as the one warm practical light.
   - The city and the far range are backlit, capped darker than the sky behind them, with a thin warm rim.
   - The ridge crest takes the dawn, and its face toward the viewer is in blue shade.
   - The figures carry a 1 px warm rim on their sun-facing (right) edges, as the spires do. Their shadows are short and soft (the sun is below the horizon): contact-dark at the feet, then fading toward the viewer and left.
-  - The lantern warms the chocobo's chest and the adventurer's arm, and lays a small foreshortened pool on the snow.
+  - The lantern hangs from the adventurer's hand by a thin bail. It warms the chocobo's chest and her arm, and lays a small foreshortened pool on the snow.
   - The crescent is lit toward the sun.
 - **The finish:** a Kuwahara pass flattens everything but the silhouettes into painted shapes. The city and the figures keep their anti-aliased edges, and their rims and the lantern are drawn after the pass. A light brush and canvas texture goes over it all.
 - **Sources:** it is original work, painted in code; no official art or screenshot is used in it. Ishgard is our own simplified silhouette of the Holy See's spires, not a trace. (The game scenes behind the mock's UI are the official screenshots listed in Files.)
@@ -240,12 +240,12 @@ The owner asked for "beautiful, theme specific custom art". Option A (above) giv
 
 | Theme | Treatment |
 |---|---|
-| Medallion | An oil painting: heavier impasto (the silhouettes kept sharp), a warm varnish, faint craquelure only in the thick, light paint and never on the dark silhouettes, and a slim gilt slip lit from the upper left and shaded on the lower right, inside the popup's own brass frame. No oval, so the moon and the whole scene stay in view and there is no double frame. |
+| Medallion | Visibly oil, not the plain painting (strokes follow the forms; the moon is left out of the pass and redrawn in cream): heavier impasto (the silhouettes kept sharp), an aged amber varnish grade, brush strokes laid along the forms whose ridges catch the upper-left light (visible at 1x), faint craquelure only in the thick, light paint, a deeper vignette, and a slim gilt slip lit from the upper left and shaded on the lower right. It sits inside the popup's own brass frame, and **the popup drops its art keyline for this theme**, since the slip is the edge. No oval, so the moon stays in view. |
 | Classic | The painting as painted |
-| Ishgard Glass | A stained-glass window whose lead follows the drawing. Large sky pieces (cells only in the sky, sparingly), clouds cut along their own edges, the far hills and the bluff as a few large pieces, and the snow and the ridge as long strips cut parallel to their contours, never paving. The figures and spires are painted in grisaille on a few pieces. The crescent is one white piece, brighter on its lower left, with the earthshine as a separate deep-blue piece; the lantern is one amber piece. The bright pieces bloom past the lead, and two saddle bars run above the spires and below the figures. |
-| Aether Crystal | Cut moonstone over the sky and the far range only: facets shaded consistently, as on three broad domed gems lit from the upper left, with bright edges on the lit side and a faint blue adularescent sheen across the upper sky. The ground, the city and the figures stay clear. |
-| Astrologian's Orrery | An engraved plate: a silver ground and a lapis enamel sky. Dark line engraving follows each contour: parallel to the ridge, to the plain in perspective and to the far ridgeline, and down the cliff faces with their strata. The backlit city is densely cross-hatched, the shadows are dense hatching, the figures are solid, and the clouds are cut in silver line. Brass is used only as inlay: the crescent, the graduated limb and the rete. |
-| Sumi to Kinpaku | Sumi-e on toned washi: ink washes by depth, bare-paper snow, and the ridge as one tapered dry-brush stroke (wide and dark where the brush lands on the left, thinning and broken by dry gaps toward the right). Solid ink figures, a gold-leaf crescent, two genji-gumo gold bands with scalloped, stepped ends and gold-dust edges, kirigane only inside the bands and in the top corners, one vermilion touch for the lantern, and a vermilion seal carved with a crescent. |
+| Ishgard Glass | A stained-glass window whose lead follows the drawing. Large sky pieces (cells only in the sky, sparingly), clouds cut along their own edges, the far hills and the bluff as a few large pieces, and the snow and the ridge as long strips cut parallel to their contours, never paving. The figures and spires are painted in grisaille on a few pieces. No vertical join falls inside the figures' zone, and the cloud shapes are smoothed first, so there are no tiny islands or loops. The crescent is one white piece, brighter on its lower left, with the earthshine as a separate deep-blue piece; the lantern is one amber piece. The bright pieces bloom past the lead, and two saddle bars run above the spires and below the figures. |
+| Aether Crystal | Cut moonstone over the sky and the far range only: facets shaded consistently, as on broad domed gems lit from the upper left, with the domes blended so no straight seam crosses the sky, bright edges on the lit side, and a faint blue adularescent sheen across the upper sky. The facets fade out smoothly over about 3 moon radii round the moon. The ground, the city and the figures stay clear. |
+| Astrologian's Orrery | An engraved plate: a silver ground and a lapis enamel sky. Dark line engraving follows each contour: parallel to the ridge, to the plain in perspective and to the far ridgeline, and down the cliff faces with their strata. The lines never grow wide enough to merge; every shadow, the far hills' included, is cross-hatched. The backlit city is densely cross-hatched and the figures are solid. The clouds are a few large shapes, each with one clean silver outline, a lighter enamel inside, and a few parallel lines along its lit underside. The enamel lightens low behind the city for the dawn. Brass is used only as inlay: the crescent, three short dawn lines, the graduated limb, and the rete at .20. |
+| Sumi to Kinpaku | Sumi-e on toned washi: ink washes by depth, bare-paper snow, and the ridge as one continuous tapered dry-brush stroke along the crest (wide and dark where the brush lands on the left, thinning toward the right, broken only by thin dry streaks along it). The figures' shadow is a light, separate wash. Solid ink figures, a gold-leaf crescent, two genji-gumo gold bands whose ends step down in three stacked rounded tiers (the top tier inset most) with gold-dust edges, kirigane only inside the bands and in the top corners, one vermilion touch for the lantern, and a vermilion seal carved with a crescent. |
 
 No treatment adds a light of its own. Quiet would show the Classic painting graded to the palette; Plain shows no art in either option.
 
@@ -254,12 +254,66 @@ No treatment adds a light of its own. Quiet would show the Classic painting grad
 | | Option A: one painting, restyled | Option B: one painting, six treatments |
 |---|---|---|
 | Art per release | 1 painting (about a day with supervision). The six restyles are automatic. | 1 richer painting (2 to 3 days) plus its region masks. The treatments are code, but each release needs all six checked, because a treatment can break a new composition (a gold band across a figure, a came line through a face). |
-| Ships | 1 base image per release (about 180 KB) and six motif sheets, once | 1 base image and 1 mask file per release (about 500 KB), or six pre-rendered images (about 2.4 MB per release) |
-| Texture | one 1120 × 440 texture while the popup is open (1.9 MB) | the same 1.9 MB. Composing is slower (about 0.3 s for glass and facets on a worker), so the theme's flat sky shows for a moment first. Pre-rendering the six avoids that. |
+| Ships | 1 base image per release (about 180 KB) and six motif sheets, once | six pre-rendered JPEGs per release: about 450 KB for 1.20.0, within a 600 KB budget; about 4 MB for all nine releases |
+| Texture | one 1120 × 440 texture while the popup is open (1.9 MB) | the same 1.9 MB; pre-rendered, so it only decodes |
 | How themes differ | in colour and a few corner motifs | in craft: oil, glass, crystal, engraving, ink and gold |
 | Risk | low: a grade can't break a picture | higher: six pictures per release to approve, and the subject must stay legible at 560 × 220 |
 
-**My recommendation stays Option A** for its cost and safety, but Option B is the one that answers "theme specific custom art" fully. The owner decides (decision 1). A middle way is possible: Option B for the major releases, and Option A for the small ones.
+**Decided:** Option B for every release, 1.14.0 to 1.22.0 and every release after.
+
+**Made so far with the recipe below:** 1.22.0 Welcome home (`welcome-b`), 1.21.0 What next (`whatnext-b`), 1.20.0 Before Evercold (`evercold-b`) and 1.19.0 Right answers (`answers-b`): every page of the first popup a player on 1.18.0 or later can get. Each keeps the supervised scene brief of its Option A painting and adds depth, atmosphere and a figure where it fits:
+- **Welcome home:** a traveller on the path, coming home. The moon backlights the house, and the hall's light (the door and two windows) is the one practical light; it warms her front and the path.
+- **What next:** a traveller reading the waystone by the lantern, the afterglow low on the right, and five dim distant windows where the paths lead.
+- **Right answers:** a small traveller on the lit branch of the road, walking toward the moon. There is no practical light.
+
+Their files are in `art/optionb/`: `<key>-base.png`, `<key>-masks.npz`, `<key>.json`, `<key>-<theme>.png` and `ship/<key>-<theme>.jpg`. The painters are in `art/src/paint_option_b2.py`. 1.14.0 to 1.18.0 are left to their own artist, on the same recipe.
+
+### Production recipe (Option B, every release)
+
+Implementers turn each release into Option B with the same pipeline. Everything runs with `py -3` from `docs/design/v8/art/src/` and needs only numpy and Pillow.
+
+**Inputs per release** (key `<name>-b`, for example `evercold-b`):
+
+| Input | What it is |
+|---|---|
+| The painting brief | One night or twilight landscape for the release's theme, with **one natural light plus at most one warm practical light**. The subject sits right of centre, the sky has room for the moon, and the figures (if any) are small, on the near ground, kept out of the sky. Every brief goes through realism supervision before painting. |
+| The painter | One Python function per release, written in the style of `paint_option_b.paint()` and **registered by its key in `painters_b.PAINTERS`**, that returns the canvas (2240 × 880) and its **region masks** with these keys: `clouds`, `under` (the clouds' lit undersides), `moon`, `moonlit`, `far`, `city`, `cliff`, `field`, `ridge`, `figs` and `lantern`. A region a scene doesn't have is an all-zero mask: a scene with no city has a zero `city`. |
+| `<key>.json` | Placement data the treatments need, beside the painting in `art/optionb/`: `horizon`, `sun_glow` (x, y), `moon` (x, y as fractions; r in px at 1120), `figure_zone` (the x range where no glass join may fall), `figure_split` (the x between two figures), `bluff_split` (the y between buildings and cliff), `glass_bars` (two y values clear of the subject), `aether_domes` (gem centres), `sumi_bands` (x0, x1, y and half-height of each gold band, placed in empty sky and empty ground). Optional keys:
+- `dawn`: how much the Orrery's enamel lightens at `sun_glow`;
+- `dawn_lines`: false for a moonlit night, so there are no brass dawn lines;
+- `glass_palette`: per-region pot-metal colours (for example a moonlit sky, or night-meadow ground in place of snow);
+- `sumi_light`: the colour of Sumi's one touch for the practical light (gold for a lit door, vermilion for a lantern).
+
+`evercold-b.json` is the worked example. |
+
+**Commands:**
+
+```
+py -3 painters_b.py <key>               # painting + masks -> art/optionb/<key>-base.png, <key>-masks.npz
+py -3 option_b_themes.py <key>          # six treatments  -> art/optionb/<key>-<theme>.png (lossless masters)
+py -3 ship_option_b.py <key>            # shipped files   -> art/optionb/ship/<key>-<theme>.jpg, with the size check
+```
+
+Every file is keyed by the release, so releases never overwrite each other's paintings or masks.
+
+**Output and budget:**
+- **Shipped format:** six files per release, one per theme, each 1120 × 440 sRGB with no alpha (the art band's 2x tier; the 1x tier draws it at half size). JPEG quality 88, 4:4:4 chroma (no subsampling, so lead lines, engraving and gold edges stay clean), progressive. `ship_option_b.py` keeps PNG only if it is ever smaller, which it isn't for these paintings.
+- **Measured:** 1.22.0 347 KB, 1.21.0 344 KB, 1.19.0 352 KB. For 1.20.0:
+
+  | Theme | Size |
+  |---|---|
+  | Classic | 56 KB |
+  | Medallion | 95 KB |
+  | Ishgard Glass | 89 KB |
+  | Aether Crystal | 63 KB |
+  | Orrery | 84 KB |
+  | Sumi to Kinpaku | 64 KB |
+  | **Total** | **about 450 KB** |
+
+- **Budget:** 600 KB per release, which the script checks. The nine releases from 1.14.0 to 1.22.0 come to about **4 MB** in the plugin zip, assuming about 450 KB per release as measured; the 600 KB cap allows at most 5.4 MB. They are stored as content files under `assets/whatsnew/<version>/<theme>.jpg` and loaded only while the popup is open.
+- **Quiet** draws the Classic file graded to the palette; **Plain** loads nothing.
+
+**Per-release review:** the supervisor checks all six treatments of every new painting. The usual fixes are moving a gold band, a saddle bar or a glass join off the subject, all of which are `<key>.json` edits, not code.
 
 ### Backfill (decision 2)
 
@@ -542,12 +596,12 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
 20. **The server info bar's moon is "◐"**, lit on the left like every Tsukimichi moon, not the plan's "◑".
 21. **The Orrery's art motif is the one motif that centres on the subject**, under the rules in W2.
 22. **1.21.0 and 1.22.0 are painted now**, so no player can open a popup page without its art.
+23. **Option B for every release** (the owner's decision 1), made with the production recipe in W2; Option A stays approved as the fallback.
 
 ## Open questions for the owner
 
 1. **The moon in the server info bar.** The renders use "◐" (lit on the left) in place of the plan's "◑". The game font may draw neither; the shipped entry draws "☾". If "◐" is missing in game, should it fall back to "☾", or to one of the game's own bitmap icons?
-2. **Decision 1, Option A or Option B.** `release-art-option-b-1.22.png` shows both for 1.20.0. A is cheaper and safe; B gives each theme its own craft. A middle way is B for major releases only.
-3. **The backfill paintings.** The briefs for 1.14.0 to 1.18.0 are in W2. Do they suit you, or would you like other subjects for any of them?
+2. **The backfill paintings.** The briefs for 1.14.0 to 1.18.0 are in W2. Do they suit you, or would you like other subjects for any of them?
 
 ## Not verified
 
@@ -596,3 +650,44 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
   - Aether Crystal: facets in the sky and the far range only, with consistent dome shading and adularescence;
   - Orrery: a silver ground with contour engraving and brass only as inlay;
   - Sumi to Kinpaku: genji-gumo bands, kirigane only in the bands and the corners, a tapered dry-brush ridge, and a carved seal.
+- **Round 4: Option A stays APPROVED; Option B CHANGES** (no Majors; 11 Minors, 3 Nits). The owner chose Option B for every release at sign-off.
+  - **Minors:**
+    - about 20 warm city windows against the one-practical-light rule;
+    - Medallion nearly identical to Classic;
+    - a light rectangular patch round the moon in Aether, and a straight dome seam;
+    - in the Orrery, a soft dark blob on the left far hill with edge artefacts, cartoon-squiggle clouds, and the lost dawn;
+    - a glass join ending on the chocobo's head, plus small cloud islands;
+    - the Sumi ridge as floating blobs merging with the shadow, and single-knob band ends;
+    - the Pillars and bridge reading as a floating goalpost.
+  - **Nits:** the lantern needed a bail; Medallion's art keyline under the slip; the Orrery rete above .20.
+- **After round 4:**
+  - **The painting:** no city windows (the rule stands), the Pillars dropped (the Vault carries Ishgard), and the lantern on a bail.
+  - **Medallion:** an amber varnish grade, visible brush relief, a deeper vignette, and no keyline under the slip.
+  - **Aether Crystal:** blended dome normals (no seam), and a smooth 3r fade round the moon.
+  - **Orrery:**
+    - line weights capped so hatching never merges, with every shadow cross-hatched;
+    - non-wrapping outlines (no edge line or chip);
+    - clouds as a few large smoothed shapes with one outline, a lighter fill and underside lines;
+    - a lighter dawn enamel with three brass dawn lines, and the rete at .20.
+  - **Ishgard Glass:** no vertical join in the figures' zone, and the cloud shapes smoothed (no islands).
+  - **Sumi to Kinpaku:** one continuous tapered stroke with thin dry streaks, a lighter separate shadow, and three-tier stepped band ends.
+  - **The pipeline** is now repeatable: per-release `<key>.json`, `option_b_themes.py <key>`, `ship_option_b.py`, and the production recipe in W2.
+- **Round 5: Option A stays APPROVED; Option B CHANGES.** The shipped JPEGs pass.
+  - **Major (P1):** only 1.20.0 existed as Option B, though the owner chose B for every release.
+  - **Minors:**
+    - P2: the painter and the treatments read and wrote one unkeyed `src-masks.npz`;
+    - P3: Medallion's crescent was ruined by the brush and varnish pass;
+    - P4: a smudge on the Orrery's left hill;
+    - P5: the Orrery clouds read as bubbles;
+    - P6: a glass join met the chocobo's tail, and small glass islands remained;
+    - P7: Medallion's strokes ran horizontally everywhere.
+  - **Nits:** the Aether facets ran up to the figures; the recipe's 4 MB needed its assumption stated; Sumi's lantern had no bail.
+- **After round 5, step 1** (the pipeline and the 1.20.0 art):
+  - **P2:** a painter registry (`painters_b.py <key>`), and `<key>-base.png` and `<key>-masks.npz` everywhere; the recipe is updated.
+  - **P3:** the moon is left out of Medallion's pass and redrawn after it in cream.
+  - **P4:** hatching weights are capped lower, so no shadow hatching merges.
+  - **P5:** clouds under about 40 px across are dropped by a morphological opening. The rest have a levelled, lit base and 2–3 cut lines along it.
+  - **P6:** the figures' zone is derived from the `figs` mask plus 24 px, and no join is forced at its edges; pieces under 300 px² merge into a neighbour.
+  - **P7:** Medallion's strokes follow the ridge, the plain, the far range, the cliff faces and the cloud edges.
+  - **Nits:** Aether fades within about 30 px of the figures; the 4 MB assumption and the 5.4 MB cap are stated; Sumi's lantern has a 1 px ink bail.
+- **After round 5, step 2:** Option B made with the recipe for 1.22.0, 1.21.0 and 1.19.0 (`paint_option_b2.py`), each with its painting, masks, `<key>.json`, six treatments and shipped JPEGs. The treatments gained a few per-release keys (`dawn`, `dawn_lines`, `glass_palette`, `sumi_light`), and light brush or grisaille lines on the ground, so roads and paths read in glass and ink. The What's new, states and About boards were re-rendered with the Option B art and labelled.
