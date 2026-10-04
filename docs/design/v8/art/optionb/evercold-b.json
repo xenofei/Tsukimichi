@@ -50,5 +50,6 @@
       0.038
     ]
   ],
-  "dawn": 0.75
+  "dawn": 0.75,
+  "orrery_moon": "engraved"
 }
