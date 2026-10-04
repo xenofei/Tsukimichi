@@ -79,5 +79,8 @@
       "#A8B6DA"
     ]
   },
-  "dawn_lines": false
+  "dawn_lines": false,
+  "orrery_moon": "engraved",
+  "glass_moon_seas": true,
+  "fig_tones": true
 }

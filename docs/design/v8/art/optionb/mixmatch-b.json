@@ -1,0 +1,121 @@
+{
+  "release": "1.17.0",
+  "name": "Mix and match",
+  "painter": "paint_option_b3.mixmatch",
+  "horizon": 0.56,
+  "sun_glow": [
+    0.24,
+    0.58
+  ],
+  "dawn": 0.75,
+  "moon": [
+    0.4,
+    0.22,
+    17.0
+  ],
+  "figure_zone": [
+    380,
+    990
+  ],
+  "figure_split": 2000,
+  "fig_splits": [
+    440,
+    545,
+    643,
+    740,
+    838,
+    936
+  ],
+  "fig_tones": true,
+  "bluff_split": 0.43,
+  "glass_bars": [
+    30,
+    434
+  ],
+  "aether_domes": [
+    [
+      0.1,
+      0.12
+    ],
+    [
+      0.62,
+      0.1
+    ],
+    [
+      0.88,
+      0.16
+    ]
+  ],
+  "sumi_bands": [
+    [
+      0.6,
+      0.98,
+      0.13,
+      0.035
+    ],
+    [
+      -0.06,
+      0.28,
+      0.8,
+      0.03
+    ]
+  ],
+  "glass_palette": {
+    "0": [
+      "#1E1236",
+      "#2E1C4A",
+      "#4A2A5E",
+      "#7A3E6A",
+      "#B4607A",
+      "#E89A88"
+    ],
+    "1": [
+      "#3A2448",
+      "#6A3A60",
+      "#B06A78",
+      "#F0A88C"
+    ],
+    "2": [
+      "#2A1C38",
+      "#3E2A4E",
+      "#5A3A62",
+      "#7A4A6A"
+    ],
+    "3": [
+      "#22162C",
+      "#30203A",
+      "#40284A"
+    ],
+    "4": [
+      "#1E1428",
+      "#2E2038",
+      "#4A3050",
+      "#8A5070",
+      "#C88890"
+    ],
+    "5": [
+      "#140E1C",
+      "#22182C",
+      "#30223A"
+    ],
+    "7": [
+      "#22163A"
+    ]
+  },
+  "glass_true_colour": [
+    6
+  ],
+  "far_layers": [
+    "far_a",
+    "far_b"
+  ],
+  "field_flat": true,
+  "orrery_crisp": true,
+  "aether_clear_ground": true,
+  "orrery_backlit": [
+    "city",
+    "far_a",
+    "far_b"
+  ],
+  "orrery_moon": "engraved"
+}

@@ -15,7 +15,7 @@ import numpy as np
 
 from artlib import Canvas, blur, fbm, fbm1d, hexc, smooth
 from paint_option_b import kuwahara
-from paint_release import bezier, crescent, moon_disc, stars, tex_sample, top_edge
+from paint_release import bezier, crescent, stars, tex_sample, top_edge
 
 W, H = 2240, 880
 LUM = np.array([0.2126, 0.7152, 0.0722], np.float32)
@@ -83,16 +83,19 @@ def moon_masks(c, mx, my, mr):
     return disc, np.clip(disc - term, 0, 1)
 
 
-def finish(c, keep, grain_seed):
+def finish(c, keep, grain_seed, plain=None):
     """The painterly pass of 1.20.0's Option B: Kuwahara flattening everywhere but the kept silhouettes, then a light
-    brush and canvas texture."""
+    brush and canvas texture. plain (optional) is a mask the texture leaves alone: the moon, so no stroke crosses it."""
     from paint_option_b import kuwahara as kw
     crisp = c.px.copy()
     k = np.clip(blur(keep, 5) * 3.0, 0, 1)
     c.px = kw(np.clip(c.px, 0, 1), 5) * (1 - k[..., None]) + crisp * k[..., None]
     strokes = tex_sample(fbm(512, 512, 5, 3, grain_seed), c.xx / 4.0, c.yy / 1.0)
     tooth = fbm(H, W, 1.6, 2, grain_seed + 1)
-    c.px = np.clip(c.px * (1 + (strokes - 0.5)[..., None] * 0.07 + (tooth - 0.5)[..., None] * 0.03), 0, 1)
+    tx_ = (strokes - 0.5) * 0.07 + (tooth - 0.5) * 0.03
+    if plain is not None:
+        tx_ = tx_ * (1 - np.clip(blur(plain, 1.0) * 1.5, 0, 1))
+    c.px = np.clip(c.px * (1 + tx_[..., None]), 0, 1)
 
 
 def figure(c, x, y, s=1.0, facing=1):
@@ -134,8 +137,8 @@ def welcome():
 
     stars(c, 200, 131, hz * 0.95, sky_lum, near_moon=(mx, my, mr), warm=0.08)
     cloud_band(c, M, 501, 0.10 * H, 0.42 * H, (mx, my), dens_k=0.58)
-    moon_disc(c, mx, my, mr, seed=5, centre=True)
-    M["moon"], M["moonlit"] = moon_masks(c, mx, my, mr)
+    from paint_option_b3 import moon_full   # the series' small-moon rule: one broad soft mass of seas, the sliver kept
+    moon_full(c, M, mx, my, mr, seed=5)
     xs = np.arange(W, dtype=np.float32)
     ridge_layer(c, M, xs, hz + 4, 0.065, W / 2.0, 61, "#25355E", "#2C3F6C", mx, "#5F78AE", haze=0.45)
     ridge_layer(c, M, xs, hz + 0.045 * H, 0.05, W / 3.0, 62, "#1A2844", "#223451", mx, "#4E6898", haze=0.35)
@@ -213,7 +216,7 @@ def welcome():
     spill = np.exp(-((c.xx - dcx) / np.maximum(wid, 1)) ** 4) * (c.yy > yb) / (1 + dist / 60) ** 1.4
     for wx in (0.600 * W, 0.755 * W):
         spill = spill + np.exp(-((c.xx - wx) / (30 + dist * 0.6)) ** 2) * (c.yy > yb) * np.exp(-dist / 40) * 0.25
-    finish(c, np.maximum(np.maximum(np.maximum(house, person), M["lantern"]), M["moon"]), 701)
+    finish(c, np.maximum.reduce([house, person, M["lantern"], M["moon"]]), 701, plain=M["moon"])   # the moon stays out of the paint pass
     c.add(hexc("#FFB062"), np.clip(spill, 0, 1) * 0.5 * (1 - person))
     c.add(hexc("#FFB466"), blur(M["lantern"], 10) * 0.45 * (1 - M["lantern"]))
     c.add(hexc("#9FB2E0"), np.clip(person - np.roll(np.roll(person, 2, 0), 2, 1), 0, 1) * 0.55)   # moon rim, upper left
@@ -337,8 +340,8 @@ def answers():
         return 0.03 + 0.22 * min(1.0, max(0.0, y / hz)) ** 2
 
     stars(c, 220, 23, hz * 0.97, sky_lum, near_moon=(mx, my, mr), warm=0.08)
-    moon_disc(c, mx, my, mr, centre=True)
-    M["moon"], M["moonlit"] = moon_masks(c, mx, my, mr)
+    from paint_option_b3 import moon_full
+    moon_full(c, M, mx, my, mr)
     xs = np.arange(W, dtype=np.float32)
     for i, (yb, amp, top, bot, seed, haze, f) in enumerate([(hz + 4, 0.075, "#2A3A66", "#304373", 4, 0.50, 1.8), (hz + 0.040 * H, 0.070, "#1F2D4C", "#27385A", 5, 0.40, 2.6),
                                                             (hz + 0.085 * H, 0.045, "#172438", "#1E2E46", 6, 0.30, 3.4)]):
@@ -394,17 +397,23 @@ def answers():
     stones_m = np.zeros((H, W), np.float32)
     stone_tops = np.zeros((H, W), np.float32)
     for sx, sy, sr in [(0.555 * W, 0.705 * H, 7), (0.405 * W, 0.86 * H, 14)]:
-        c.mul(hexc("#0A1222"), c.ellipse(sx - sr * 0.6, sy + 1, sr * 1.6, sr * 0.35, 1.5) * 0.6)    # contact shadow
-        st = c.poly([(sx - sr * 1.2, sy + 1), (sx + sr * 1.1, sy + 1), (sx + sr * 0.9, sy - sr * 0.9), (sx + sr * 0.3, sy - sr * 1.25),
-                     (sx - sr * 0.5, sy - sr * 1.2), (sx - sr * 1.05, sy - sr * 0.8)], 0.6)
+        # a squat, flat-topped stone, wider than tall: a top facet that takes the moon (up and right of it), a face
+        # toward the viewer in shade, a dark contact line where it meets the ground, and a short shadow away from the moon
+        c.mul(hexc("#0A1222"), c.ellipse(sx - sr * 0.9, sy + 1, sr * 1.9, sr * 0.32, 1.5) * 0.6)    # contact shadow
+        st = c.poly([(sx - sr * 1.45, sy + 1), (sx + sr * 1.40, sy + 1), (sx + sr * 1.30, sy - sr * 0.55), (sx + sr * 1.05, sy - sr * 0.85),
+                     (sx - sr * 1.10, sy - sr * 0.85), (sx - sr * 1.35, sy - sr * 0.55)], 0.6)
+        top = c.poly([(sx - sr * 1.10, sy - sr * 0.85), (sx + sr * 1.05, sy - sr * 0.85), (sx + sr * 1.32, sy - sr * 0.52), (sx - sr * 1.30, sy - sr * 0.52)], 0.6) * st
         stones_m = np.maximum(stones_m, st)
-        stone_tops = np.maximum(stone_tops, top_edge(st, 3))
+        stone_tops = np.maximum(stone_tops, top)
+        c.mul(hexc("#05080F"), np.clip(c.poly([(sx - sr * 1.45, sy - 1), (sx + sr * 1.40, sy - 1), (sx + sr * 1.40, sy + 2), (sx - sr * 1.45, sy + 2)], 0.6), 0, 1) * 0.7)
     trx, try_ = 0.5705 * W, 0.693 * H
     contact_shadow(c, trx, try_, 14, -16, 26, 0.55)
     trav = figure(c, trx, try_, 0.36, facing=1)
     c.over(hexc("#0B1322"), tree)
     c.over(hexc("#1A1A24"), sign)
     c.over(hexc("#1E2538"), stones_m)                                         # the face toward the viewer, in shade
+    c.over(hexc("#8898C0"), stone_tops)                                       # the flat top, moonlit
+    c.add(hexc("#9FB2E0"), stone_tops * smooth(0.0, 1.0, np.clip((c.xx - 0.40 * W) / (0.03 * W), 0, 1)) * 0.25)   # brightest toward the moon
     c.over(hexc("#101624"), trav)
     figs = np.maximum(np.maximum(tree, sign), np.maximum(stones_m, trav))
     M["figs"] = figs
@@ -419,13 +428,13 @@ def answers():
             w0 = 2.0 + rng.random() * 2.2
             tuft = np.maximum(tuft, c.poly([(bx - w0, H + 2), (bx + w0, H + 2), (bx + lean + 0.6, H - hgt), (bx + lean - 0.6, H - hgt)], 0.6))
     c.over(hexc("#08101B"), tuft)
-    finish(c, np.maximum(np.maximum(figs, tuft), M["moon"]), 721)
+    finish(c, np.maximum.reduce([figs, tuft, M["moon"]]), 721, plain=M["moon"])
     # rims after the pass: every silhouette's edges facing the moon (above and toward x = mx)
     rimmed = np.clip(figs - stones_m, 0, 1)                                     # the stones take only a lit top
     rim_l = np.clip(rimmed - np.roll(np.roll(rimmed, 2, 0), -1, 1), 0, 1)
     rim_r = np.clip(rimmed - np.roll(np.roll(rimmed, 2, 0), 1, 1), 0, 1)
     c.add(hexc("#AFC0EA"), np.where(c.xx < mx, rim_l, rim_r) * 0.6)
-    c.add(hexc("#8EA0CC"), stone_tops * 0.5)
+    c.add(hexc("#8EA0CC"), top_edge(stones_m, 2) * 0.4)                        # the top's lit edge
     rim_l = np.clip(tuft - np.roll(np.roll(tuft, 2, 0), -1, 1), 0, 1)
     rim_r = np.clip(tuft - np.roll(np.roll(tuft, 2, 0), 1, 1), 0, 1)
     c.add(hexc("#7F96C8"), np.where(c.xx < mx, rim_l, rim_r) * smooth(H, H - 0.30 * H, c.yy) * 0.45)

@@ -40,7 +40,7 @@ Everything is under `docs/design/v8/`.
 | `whatsnew-states-1.22.png` | W1: page 1 of 4 (1.22.0 Welcome home) at Full, Quiet, Plain, one release (no pager), Text size 150 % on a page that fits and on one that scrolls, and the size and timing table |
 | `release-art-1.22.png` | W2: the four paintings with their six restyles each, and the grade and motif table |
 | `release-art-option-b-1.22.png` | Decision 1: 1.20.0 in Option A and Option B side by side for all six themes, Option B's painting, and the cost table. The What's new, states and About boards now show the Option B art, and say so in their titles; `release-art-1.22.png` stays Option A, the approved fallback, and says so. |
-| `art/optionb/` | Option B for 1.22.0, 1.21.0, 1.20.0 and 1.19.0 (`welcome-b`, `whatnext-b`, `evercold-b`, `answers-b`), each as described for 1.20.0 here: the painting (`evercold-b-base.png`), its region masks (`evercold-b-masks.npz`), its placement data (`evercold-b.json`), the six lossless treatments (`evercold-b-<theme>.png`) and the shipped JPEGs (`ship/`); made by `art/src/painters_b.py` (the registry; 1.20.0's painter is `paint_option_b.py`), `option_b_themes.py` and `ship_option_b.py` |
+| `art/optionb/` | Option B for every release, 1.22.0 to 1.14.0 (`welcome-b`, `whatnext-b`, `evercold-b`, `answers-b`, and the backfill `runs-b`, `mixmatch-b`, `themes-b`, `faces-b`, `polish-b`, painted by `art/src/paint_option_b3.py`), each as described for 1.20.0 here: the painting (`evercold-b-base.png`), its region masks (`evercold-b-masks.npz`), its placement data (`evercold-b.json`), the six lossless treatments (`evercold-b-<theme>.png`) and the shipped JPEGs (`ship/`); made by `art/src/painters_b.py` (the registry; 1.20.0's painter is `paint_option_b.py`), `option_b_themes.py` and `ship_option_b.py` |
 | `about-history-1.22.png` | W3, U1, M3: Settings › About with Updates, What's new (backfilled) and Umbra, and the popup opened from the list |
 | `update-ready-1.22.png` | U1: the status-bar note at each level, its hover, the dot on the icon with the quick card, Dalamud's installer, and the flow |
 | `moon-icon-1.22.png` | H1: rest, hover with the quick card, the right-click menu, locked, first run, hide with Undo, the dots, Needs you, the three levels, and the behaviour table |
@@ -271,7 +271,29 @@ No treatment adds a light of its own. Quiet would show the Classic painting grad
 - **What next:** a traveller reading the waystone by the lantern, the afterglow low on the right, and five dim distant windows where the paths lead.
 - **Right answers:** a small traveller on the lit branch of the road, past the signpost, walking toward the moon. Her short shadow falls toward the viewer and left. The squat waystones have lit tops and shaded faces in contact shadows. The near-full moon keeps its thin unlit sliver on the upper left, as in the brief. There is no practical light.
 
-Their files are in `art/optionb/`: `<key>-base.png`, `<key>-masks.npz`, `<key>.json`, `<key>-<theme>.png` and `ship/<key>-<theme>.jpg`. The painters are in `art/src/paint_option_b2.py`. 1.14.0 to 1.18.0 are left to their own artist, on the same recipe.
+Their files are in `art/optionb/`: `<key>-base.png`, `<key>-masks.npz`, `<key>.json`, `<key>-<theme>.png` and `ship/<key>-<theme>.jpg`. The painters are in `art/src/paint_option_b2.py`.
+
+The backfill, 1.18.0 to 1.14.0, is made on the same recipe by `art/src/paint_option_b3.py`. Its briefs are under "Backfill (decision 2)" below, and its supervision is under "Backfill 1.14–1.18" in the Approval record: approved in round 5. The moons of 1.22.0 and 1.19.0 were repainted in round 3 under the moon rule in the recipe.
+- **Runs you can trust** (`runs-b`): a ferry on a guide rope under a veiled near-full moon.
+- **Mix and match** (`mixmatch-b`): six stepping stones of six stones in a Kugane garden at dawn.
+- **Themes** (`themes-b`): one moon over four horizons, from a summit.
+- **Faces and icons** (`faces-b`): a Gridanian lodge with a face in each of six windows.
+- **The polish you asked for** (`polish-b`): a boatwright's lit window over Limsa's harbour.
+
+All nine releases, shipped (six JPEGs each):
+
+| Release | Key | Shipped |
+|---|---|---|
+| 1.22.0 Welcome home | `welcome-b` | 348 KB |
+| 1.21.0 What next | `whatnext-b` | 344 KB |
+| 1.20.0 Before Evercold | `evercold-b` | 445 KB |
+| 1.19.0 Right answers | `answers-b` | 355 KB |
+| 1.18.0 Runs you can trust | `runs-b` | 456 KB |
+| 1.17.0 Mix and match | `mixmatch-b` | 456 KB |
+| 1.16.0 Themes | `themes-b` | 490 KB |
+| 1.15.0 Faces and icons | `faces-b` | 477 KB |
+| 1.14.0 The polish you asked for | `polish-b` | 427 KB |
+| **All nine** | | **about 3.7 MB** (3,798 KB), each release within its 600 KB budget. The backfill's Orrery files are the largest (141–193 KB), because their engraving covers whole night masses. |
 
 ### Production recipe (Option B, every release)
 
@@ -288,6 +310,51 @@ Implementers turn each release into Option B with the same pipeline. Everything 
 - `dawn_lines`: false for a moonlit night, so there are no brass dawn lines;
 - `glass_palette`: per-region pot-metal colours (for example a moonlit sky, or night-meadow ground in place of snow);
 - `sumi_light`: the colour of Sumi's one touch for the practical light (gold for a lit door, vermilion for a lantern).
+
+Added for the 1.14–1.18 backfill. Each is additive: absent, every treatment is byte-identical to before, which was checked by re-rendering the four earlier releases.
+- `far_layers`: mask names in `<key>-masks.npz`, farthest first, whose union is `far`. Glass cuts each range as its own pieces with the lead on its ridgeline, the Orrery engraves and outlines each range along its own ridgeline, Sumi washes each paler with distance and inks each ridgeline, and Medallion's strokes follow each.
+- `fig_splits`: x values (px at 1120) where the glass cuts the figures into pieces, one per stone (in place of the single `figure_split`).
+- `fig_tones`: the figures differ in value (stones of different stone), so the Orrery hatches them by value and Sumi inks them by value, not as solid silhouettes.
+- `glass_true_colour`: glass region ids whose pieces keep their own painted colour, not a palette (6 for six different stones).
+- `lines`: mask names of thin linear things, a guide rope or rigging. Glass leads them, the Orrery engraves them, Sumi inks them, Medallion keeps them crisp and Aether keeps its facets off them.
+- `field_flat`: the field is a flat sea or river. Its glass strips, engraved lines and brush strokes run from the horizon in every column, so a boat or a boathouse standing in the water never restarts them. Only the dark marks on it are drawn in glass and ink, so a moon's glitter path stays light.
+- `orrery_crisp`: the Orrery is engraved by value. The painting's own luminance, normalised over the land, sets each line's weight: lit snow, lit crystals and lit tops stay bare silver, and shadow takes heavier lines, cross-hatched past mid-tone. Lines are anti-aliased, follow smoothed ridgelines, and are never closer than 5 px at 1120 (2.5 px at 1x). Where they would be closer, a flat tone stands in, so no checker or moiré forms. Past mid-tone, a second, lighter hatch runs at about 35° and a 9 px pitch, so the two sets neither mesh nor beat. Each place carries one line set (the ridge isn't also engraved as a far range), and the moon's sea lines are only the mass's core, 3 to 5 short level lines.
+- `orrery_backlit`: mask names of backlit silhouettes. With `orrery_crisp`, the Orrery lays them on a dark plate ground (#181C2A) with thin silver lines over it, as evercold-b's city is, so each one averages darker than the enamel sky behind it. The ground sealed into `far` is excluded. They are Limsa, runs-b's willow bank, and mixmatch-b's keep, hills and pines. Without it, normalising over the land left them as bare silver, lighter than the enamel sky.
+- `glass_palette_bld`: a palette for the city's pieces above `bluff_split`, so a roof is apart from its walls.
+- `glass_moon_path`: the moon's path on the water as broken glints.
+  - About a third of the strips have none.
+  - The rest have one or, where the path widens, two pieces, of varied width and offset by up to a moon radius.
+  - The pieces are pale blue glass, dimmer toward the viewer.
+  - The column has ragged edges, so it reads as broken moonlight, not road markings.
+- `glass_moon_seas`: the moon's seas, from the painter's `seas` mask, as a faint grisaille (.18) on the moon's white piece. Without it, the designer's round 7 grisaille (.14, from `MARIA`) applies to any big moon.
+- `aether_keep_clear`: mask names (from the npz) that the facets fade out round, within about 30 px, as they do round the figures. polish-b keeps Limsa clear.
+- `glass_far_strips`: with `far_layers`, each range is cut in strips along its own ridgeline, with no vertical joins.
+- `aether_clear_ground`: no facets on the field or the ridge, and they fade out just above the horizon.
+- `orrery_moon: "engraved"`: the one moon rule on the designer's engraved moon (rounds 6–7, Q2 and R1).
+  - The face is silver (#DCDFE6), by the coordinator's decision after the post-merge spot check, following the owner's standing "moons never look like cheese or coins" taste. A brass face reads as a gold coin at popup size. This overrides round 8's brass face for keyed moons only.
+  - The unlit sliver stays in dark enamel. A crescent or half moon keyed into the rule has a silver lit part, with enamel for the rest. Every Orrery moon in the series is keyed: mixmatch-b, faces-b, and evercold-b and whatnext-b too, since the What's new history shows all nine releases side by side. This changes main's approved evercold-b and whatnext-b Orrery files, on purpose, for the one moon rule. Their other five treatments are unchanged.
+  - The seas come from the painter's `seas` mask, engraved as fine level cuts 2 px apart, weighted by the lobed mass. They read as engraving at 1120 and merge into a soft tone at popup size, so they are never bars, never a "≡" glyph, and never a flat blotch.
+  - The brass ring sits just outside the disc, so it never covers the sliver.
+  - Without the key, a big moon takes the designer's fine diagonal cuts from `MARIA` and a ring on its outline.
+
+**The moon rule for every release** (round 3, at the coordinator's request; it covers all nine moons, 1.22.0 and 1.19.0 included):
+- At popup size (r 25 px or less at 1120, which is every moon in the series), the seas are one broad, soft, slightly irregular mass across the upper middle of the disc: the familiar face of the full moon, with no curve, no hook and no ring. A chain of seas at this size curved into a hook that read as "?" or "C", Tsukimichi's Not checked mark.
+- The seas are neutral grey at low opacity (`SEA_A` .36): a lobed, broken mass, not a smooth lozenge.
+- A near-full moon keeps an unlit sliver, 0.2 r wide at its middle for a small moon (2 px at the popup's 1x), with a soft edge. It takes the local sky's own tone, just outside the disc on that side, so it reads as an unlit band, darker than the lit disc.
+- The paint pass's brush texture leaves the moon alone (`finish(..., plain=moon)`), so no stroke crosses the disc.
+- `paint_option_b3.sea_mask` and `moon_full` paint it, and `paint_option_b2`'s welcome-b and answers-b now call them. Every painter writes a `seas` mask.
+- Every treatment carries it:
+  - the base painting, Classic and Aether directly;
+  - Medallion through the designer's restored moon (round 7, R2: the painting's own moon under 10 % varnish), so the seas come through as painted;
+  - Glass as faint grisaille through `glass_moon_seas`;
+  - the Orrery as engraving that follows the same mass, through `orrery_moon: "engraved"`;
+  - Sumi keeps its flat gold-leaf disc.
+
+The painter's own rules, learned in the backfill:
+- `far` runs to the frame's foot, over the ground and the water, because the treatments take everything outside `far` and `city` as sky.
+- `field` and `ridge` never run under a building, because the treatments take `city` minus them.
+- Every moon stays out of the Kuwahara pass, which otherwise merges its seas into a hook.
+- A far silhouette is capped against the sky behind each of its pixels, not against the sky above its tallest point, so a tower never darkens the hill under it.
 
 `evercold-b.json` is the worked example. |
 
@@ -322,17 +389,19 @@ Every file is keyed by the release, so releases never overwrite each other's pai
 
 ### Backfill (decision 2)
 
-Settings › About lists 1.14.0 to 1.22.0. 1.19.0 to 1.22.0 are painted and supervised here, so every page of the first popup a player can get (from 1.18.0 or later) has its art. The five older releases appear only in the history list; their briefs follow the release names:
+Settings › About lists 1.14.0 to 1.22.0. 1.19.0 to 1.22.0 are painted and supervised here, so every page of the first popup a player can get (from 1.18.0 or later) has its art. The five older releases appear only in the history list. They are now painted as Option B too (`polish-b`, `faces-b`, `themes-b`, `mixmatch-b`, `runs-b`, by `art/src/paint_option_b3.py`), on the recipe above.
 
-| Release | Painting |
+The first one-line briefs were thin, and four of them repeated the four paintings already made (a lit window at night, a moonlit road). So each brief was developed to give the nine releases five different settings, five different moons and five palettes, while keeping its subject. These are the briefs as painted:
+
+| Release | Brief as painted |
 |---|---|
-| 1.14.0 The polish you asked for | a lantern-lit workshop window over a harbour |
-| 1.15.0 Faces and icons | a row of lit windows, figures in each |
-| 1.16.0 Themes | one moon over four horizons |
-| 1.17.0 Mix and match | stepping stones of different stone |
-| 1.18.0 Runs you can trust | a ferry on a guide rope at night |
+| 1.14.0 The polish you asked for | **A boatwright's lit window over Limsa's harbour.** A waning gibbous moon rises low over the open sea on the left, warm from the air it shines through, and lays a broken glitter path down the water. Across the harbour, Limsa Lominsa stands on its sea cliff with a natural arch, flat-roofed terraces, crenellated towers, a round tower and two arched bridges, lit only on the faces toward the moon. Right of centre, a boathouse workshop on piles: its gable end takes the moonlight and its front is in shade. Its one window is warm, with tools on the wall and the lamp on the bench, and its reflection breaks into dashes on the water. A moored sloop catches the window's warmth on its stern. The sky is the 1.14 sky: stars at three depths, warm and cool, and a faint Milky Way far from the moon. |
+| 1.15.0 Faces and icons | **A Gridanian lodge at the foot of a giant tree, six lit windows, a face in each.** It is early night under a first-quarter moon in a gap of the canopy, lit on its sunward (right) half. Shafts of moonlight slant down through mist over the clearing, and two walls of giant trees stand behind. The lodge has plank walls and a mossy shingled roof, against the trunk of a tree that rises out of frame. In its six arched windows stand six silhouettes, each a race by outline alone: Miqo'te, Lalafell, Elezen, Roegadyn, Au Ra and Viera (the 1.15 race silhouettes, and the six themes). The lodge's moon shadow falls toward the viewer, and the windows lay soft warm pools in it. Ferns at the near corners are rim-lit from the moon side. |
+| 1.16.0 Themes | **One moon over four horizons, seen from a summit.** A near-full moon (Menphina) stands high right of centre. Below it, four horizons recede, each paler and bluer with distance: the sea with the moon's sheen, the jagged snow peaks of Coerthas with their moon-facing slopes lit, the great crystal spires of Mor Dhona (none near the moon) and a forest ridge with a conifer edge. A watcher sits on the dark summit rock, looking up, with a short shadow toward the viewer. There is no practical light. |
+| 1.17.0 Mix and match | **Six stepping stones of six different stones across a stream in a Kugane garden, at dawn.** The sky is the 1.17 Dawn palette: a plum night with a rose horizon over the sun, still under it on the left, and the old crescent low near it, lit toward it. Kugane's keep, with tiered curved roofs on a stone base, stands backlit on the far hill with a warm rim, and black pines line the far bank. Six squat stones cross the stream on a diagonal: basalt, granite, slate, moss, sandstone and marble. Each has a lit top, a face in shade and a wet line at the water, and each is mirrored in the still stream. There is no figure: the six stones are the subject, and each reads on its own. A kasuga-dōrō on the near bank is the one warm practical light; it warms the stones' sides that face it. |
+| 1.18.0 Runs you can trust | **A ferry on a guide rope, crossing a misty river under a veiled moon.** A near-full moon stands right of centre behind thin altostratus with a soft aureole, and its broken path lies on the water between the ferry and the near post. (It sits right, not upper left, so this harbour-like layout doesn't repeat 1.14's.) The guide rope runs from a post on the far bank to a post on the near bank. The ferry hangs from it by a traveller block and bridle: a ferryman at the stern with his pole, a chocobo amidships facing the near bank, and the lantern at the bow, the one warm practical light. The lantern warms the chocobo's breast and the rail, and its column breaks on the water. River mist lies low, reeds stand at the near left, and the far bank is a line of willows under misty hills. |
 
-Each goes through the same realism supervision. Until it is painted, its row shows the shipped category banner of the nearest motif (`about-history-1.22.png`, the 1.18.0 and 1.17.0 rows).
+Each was supervised as the four before it (Approval record, "Backfill 1.14–1.18"). `about-history-1.22.png` now shows their art in the 1.18.0 and 1.17.0 rows, in place of the category banners that stood in for it.
 
 ---
 
@@ -718,3 +787,172 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
   - **R2:** Medallion brings back the painting's own approved moon after the pass, with a 10 % varnish share.
   - **Option B's maria** gain Insularum and Vaporum across the middle, so they never read as a ring or a "?". This is an option of `moon_disc` (`centre=True`), and Option A's approved paintings are unchanged.
   - **Nits:** faint grisaille seas at .14 on the glass moon; the traveller stands on the end of the pale branch.
+
+
+### Backfill 1.14–1.18
+
+The five backfill releases (`polish-b`, `faces-b`, `themes-b`, `mixmatch-b`, `runs-b`) were reviewed by their own realism supervisor, under the standards above and the round 6 rules: near-full moons with a broken chain of seas and a thin sliver, an engraved Orrery moon, at most about five dim pinpoints that light nothing, figures clear of props, and squat stones.
+
+- **Round 1: CHANGES.** 6 Major, 19 Minor and about a dozen Nits.
+  - **Major:**
+    - every rim and lantern-warm edge was on the side away from its light, in all five paintings (a sign error in the painter's edge helper);
+    - two moons read as holes: faces-b's half moon and mixmatch-b's crescent had their unlit part darker than the glow round them;
+    - in mixmatch-b's glass, the crescent was a blue ball and the traveller fused with the moss stone;
+    - faces-b's Orrery lost the lodge under the tree walls' outlines;
+    - themes-b's glass cut the crystals as sky notches, with vertical joins through the forest;
+    - themes-b's right-hand crystals were lit on the side away from the moon, and all of them were too saturated.
+  - **Minor:**
+    - mixmatch-b mirrored its far bank as sky;
+    - the Orrery's engraved moons read as flat grey;
+    - Limsa's bridges read as goalposts, and its city was a pale piece in glass;
+    - the glitter paths turned to dark speckle in glass and to a dark ink column in Sumi;
+    - Aether's facets faked a range along the sea horizon and covered the ground;
+    - the Orrery's night masses were flat silver;
+    - faces-b's ground strips broke under the lodge, and its window pools were cut off;
+    - faces-b's silhouettes read as pawns, its tree walls as hills and its ferns as grass, and its roof merged with its walls in glass;
+    - themes-b's watcher was lost on the forest;
+    - the mixmatch-b Orrery traveller merged with the stone;
+    - the runs-b bridle and ferry vanished.
+  - **Nits:**
+    - the seas read as a face;
+    - a straight canopy rim;
+    - basalt dots;
+    - an even rose horizon;
+    - ring outlines on the stones' reflections;
+    - streaks under the crystals in Medallion;
+    - a noisy conifer edge;
+    - the reeds lost in ink and engraving;
+    - a goose-like chocobo;
+    - a gold band over the ferns;
+    - runs-b's layout repeating polish-b's.
+- **After round 1:**
+  - **The painter:**
+    - the edge helper is fixed, and every rim now faces its light;
+    - each moon's unlit part is laid down before its glow, so it sits at the sky's value;
+    - the seas are joined by a fainter Vaporum, so the upper pair never reads as eyes;
+    - Limsa's bridges are two-arched with a central pier;
+    - faces-b has natural necks and shoulders, a broad Roegadyn and a large-headed Lalafell, trunks in the tree walls, bark and buttress roots, fern fronds at both corners, and pools that fade before the bank;
+    - themes-b's crystals are their own shapes, lit on the moon's side and desaturated, with pointed conifer tops and moonlit mist behind the watcher;
+    - mixmatch-b drops the traveller (the stones are the subject), has a larger crescent, mirrors its far bank as moss, and keeps the rose only toward the sun;
+    - runs-b's moon moves right of centre, with a moonlit bridle, longer chocobo legs, and the reeds kept as lines.
+  - **New optional keys** (all additive; absent, the four approved releases are byte-identical):
+    - `orrery_crisp`: unblurred engraving, so fine hatching on night masses reads;
+    - `glass_far_strips`: each range cut in strips along its ridgeline;
+    - `aether_clear_ground`: no facets on the ground or along the horizon;
+    - `field_flat` (extended): only the dark marks drawn on water, so a glitter path stays light;
+    - `glass_true_colour`;
+    - the Orrery's far outlines now stop at the city, and its engraved moon and stones use a crisp 3–5 px hatch.
+  - **Reported to the owner, not changed here:** the supervisor saw a hook-shaped sea on the approved welcome-b and answers-b moons. They are outside this task.
+- **Round 2: CHANGES.** 1 Major, 5 Minor and 3 Nits.
+  - **Fixed and holding:** every round 1 painting finding (the rims, the moons, the crystals, the bridges, the silhouettes, the forest, the bridle and the series layout). In the treatments: Sumi's glitter, faces-b's strips, themes-b's Aether ground and glass strips, and the removed traveller.
+  - **Major:** the `orrery_crisp` hatching isn't engraving, in all five releases.
+    - Its unsmoothed 1 px lines dither into a checker.
+    - It loses value: dark masses are as pale as the moonlit peaks, and the lit crystals are solid dark.
+    - faces-b's tree walls still read as clouds.
+    - It doubles the Orrery file sizes.
+    - **Fix:** anti-aliased lines at a pitch of at least 3 px at 1x, weighted by value, as on evercold-b's approved plate.
+  - **Minor:**
+    - the Orrery's engraved moons read as "eyebrows" (polish-b, themes-b) or as cheese (runs-b), with no dark-enamel sliver: hatch from the painter's sea mask instead;
+    - polish-b's Aether still veils Limsa;
+    - in polish-b's and runs-b's glass, there is no light path under the moon;
+    - in faces-b's glass, the roof is still the walls' colour;
+    - in themes-b's glass, the watcher is lost on the forest.
+  - **Nits:**
+    - a faint wedge at mixmatch-b's stream edge;
+    - faces-b's Aether earthshine is slightly light;
+    - polish-b's sloop is lost in glass.
+- **After round 2** (and the coordinator's moon request):
+  - **The Orrery (`orrery_crisp`, redefined):** engraved by value, with anti-aliased lines following smoothed ridgelines, at least 5 px apart at 1120 (a flat tone stands in where finer), and cross-hatched past mid-tone. Lit snow and crystals are bare silver, and shadow is dark.
+  - **Its moon:** engraved from the painter's `seas` mask, as level lines 4 px apart, with the sliver in dark enamel and the ring outside the disc.
+  - **polish-b, Aether:** `aether_keep_clear` keeps Limsa clear.
+  - **polish-b and runs-b, glass:** `glass_moon_path` adds a ragged column of glint pieces, lit or dark.
+  - **faces-b, glass:** `glass_palette_bld` gives the roof its own dark palette.
+  - **themes-b, glass:** a lighter forest palette behind the watcher.
+  - **All nine moons:** the small-moon rule (one broad soft mass of seas, the sliver kept), welcome-b and answers-b included, carried into Medallion, Glass and the Orrery. Both were re-shipped, and the What's new, states and About boards were re-rendered. The About board's 1.18.0 and 1.17.0 rows now show their own art.
+  - evercold-b and whatnext-b re-render byte-identical.
+- **Round 3: CHANGES.** 3 Minor and 3 Nits; the round 2 Major was downgraded.
+  - **The moon rule holds on all nine moons, in every treatment.**
+    - On welcome-b (at about 224, 92) and answers-b (at about 655, 103), there is one soft neutral-grey mass with no hook, curl or ring, and the sliver is kept.
+    - The shipped Classic JPEGs match.
+    - The four boards show the new moons, and the 1.18.0 and 1.17.0 history rows show their own art.
+  - **Fixed:** the engraved moons, polish-b's Aether, faces-b's glass roof, and themes-b's glass watcher.
+  - **Minor:**
+    - backlit silhouettes were engraved lighter than the sky (mixmatch-b's keep, hills and pines; runs-b's willows);
+    - themes-b's Orrery showed dark vertical bands across the summit;
+    - the glass moon paths read as road markings.
+  - **Nits:**
+    - the Orrery's shadow cross-hatch read as a mesh;
+    - the engraved sea lines read as a grille;
+    - round 2's Nits 7–9 remain.
+- **After round 3:**
+  - `orrery_backlit` engraves the named silhouettes dark.
+  - The summit bands came from two line sets beating, because `far` is sealed over the ground. The engraving now gives each place one set.
+  - The cross-hatch is lighter, at about 35° and a 9 px pitch, so it neither meshes nor beats.
+  - The sea lines are only the mass's core.
+  - The glass paths are broken glints, as described under `glass_moon_path`.
+  - All nine releases are re-shipped and the four boards re-rendered. evercold-b and whatnext-b are byte-identical.
+- **Round 4: CHANGES.** 1 Minor and 1 Nit.
+  - **Fixed:** the summit bands, the glass moon paths (now broken moonlight), the mesh and the grille.
+  - **The moon rule holds again on all nine moons:** welcome-b at (224, 92) and answers-b at (655, 103) show one soft grey mass, no hook or ring, with the sliver kept.
+  - **Minor:** the backlit silhouettes in the Orrery were still lighter than the sky. The hatching sat on bare silver.
+    - mixmatch-b's keep measured 115 against a sky of 65.
+    - runs-b's willows measured 131 against 66.
+    - polish-b's Limsa measured 104 against 50.
+    - For comparison, evercold-b's city measures 48 against 48.
+  - **Nit:** round 2's Nits 7–9.
+- **After round 4:** `orrery_backlit` lays those silhouettes on a dark plate ground with thin silver lines, and the sealed ground is excluded.
+  - The keep now measures 47 against 65, the hills 40 against 70 and Limsa 41 against 49. The willows read dark against the enamel.
+  - All nine releases are re-shipped. evercold-b and whatnext-b are byte-identical.
+- **Round 5: APPROVED.** The backfill supervisor approved all six treatments of polish-b, faces-b, themes-b, mixmatch-b and runs-b, and the moons of welcome-b and answers-b.
+  - The backlit silhouettes now measure darker than the sky beside them: the keep 47 against 65, the hills 40 against 69, Limsa 42 against 50.
+  - The moon rule holds on every moon in every treatment. welcome-b (224, 92) and answers-b (655, 103) are clean.
+  - Every release is within budget, and the JPEGs match their masters.
+  - **Nits left, not needed for approval:**
+    - polish-b's Orrery roof is weak against Limsa's dark plate;
+    - mixmatch-b's Orrery pines sit dark on the dark hills;
+    - runs-b's misty Orrery hills are pale, which reads as mist, as on evercold-b;
+    - round 2's Nits 7–9.
+- **Spot check of the welcome-b and answers-b moons by the original supervisor (a0db09056470943e1): not done.** The request was sent, but that agent can't be resumed, because its worktree no longer exists. The coordinator then had a fresh, independent reviewer spot-check the pre-merge moons.
+- **Fresh independent spot check of the pre-merge welcome-b and answers-b moons: CHANGES.**
+  - **Major:** the sliver couldn't be seen on Classic, Medallion and Aether. At 0.09 r it was about 0.9 px at 1x, and on welcome-b it came out lighter than the sky.
+  - **Major:** the Orrery seas read as "≡", a menu glyph.
+  - **Minor:** Medallion's seas were one smooth lozenge.
+  - **Nits:** brush streaks crossed the Classic and Aether discs; the glass sliver merges with the came, which is acceptable.
+- **Merged with main** (the designer's round 6–7 fixes, approved in round 8). Both sets of changes are kept:
+  - **From main:** the answers-b traveller clear of the signpost and on the pale stone; squat waystones with contact shadows; the welcome-b smoke plume; Medallion restoring the painting's own moon under 10 % varnish (R2); the Orrery's engraved seas, brass ring and enamel sliver for big moons (R1); faint grisaille seas on the glass moon; Insularum and Vaporum; and one base level per Orrery cloud.
+  - **Where the moons overlap,** the one moon rule applies, built on those fixes:
+    - Medallion now uses the designer's restored moon, so `medallion_moon_seas` is retired.
+    - The Orrery's `orrery_moon: "engraved"` keeps the designer's brass face and enamel sliver, and engraves the painter's own seas.
+    - The glass's `glass_moon_seas` uses the painter's seas, and the designer's grisaille applies where the key is absent.
+    - faces-b is keyed into the rule too.
+  - **The spot check's findings applied to all nine moons:**
+    - the sliver is 0.2 r, soft, in the sky's tone (on welcome-b, 1x luma steps from 234 on the disc to 149 on the sliver to 107 on the sky);
+    - the Orrery seas are fine cuts that merge into tone;
+    - the seas are a lobed mass;
+    - the brush texture leaves the moon alone.
+  - **Regenerated from the merged code, nothing taken as is:** every PNG, mask and JPEG of all nine releases, and the What's new, states, About and Option B boards.
+  - **evercold-b** is byte-identical to main.
+  - **whatnext-b** differs from main in two files, its Orrery and Medallion (PNG and JPEG). Main's own code doesn't reproduce main's committed whatnext-b files: its round 7 Medallion moon restore and Orrery ring reach whatnext-b's crescent, but whatnext-b was never re-run on main after them. The merged code's output equals main's code output exactly, so the new files are main's approved code applied.
+- **Post-merge spot check (23c50df6): CHANGES.** 2 Minor and Nits.
+  - **Held:**
+    - every moon's seas are one lobed mass, with no hook, ring or "≡";
+    - the slivers can be seen at 560 × 220;
+    - the crescents are correct;
+    - Medallion shows the painting's own moon, and Glass and Sumi are correct;
+    - answers-b's traveller is clear of the signpost;
+    - welcome-b's smoke is a plume;
+    - every release is within budget.
+  - **Minor 1:** the Orrery's near-full moons were brass again, and read as gold coins at popup size.
+  - **Minor 2:** answers-b's near waystone (about x 440–470, y 368–383) was a dark dome or "pill" in every treatment.
+  - **Nits:** faces-b's half-moon seas gather at the terminator; the boathouse roof and the pines are weak in the Orrery; and the earlier backfill Nits remain.
+- **After the post-merge spot check:**
+  - **Silver face:** keyed Orrery moons now have a silver face (the coordinator's decision above), with the fine 2 px cuts weighted by the lobed seas, the enamel sliver and the brass ring outside the face. mixmatch-b's crescent is keyed in too.
+  - **Waystones:** answers-b's waystones are squat, flat-topped stones, wider than tall, with a moonlit top facet (brightest toward the moon, up and right), a face in shade, a dark contact line and a short shadow.
+  - **answers-b's treatments:** `fig_tones` makes the Orrery hatch, and Sumi ink, its figures by value, so the stone's top is lighter than its face.
+  - **Re-shipped:** all nine releases, with the boards re-rendered.
+- **Post-merge re-check (d5603367): APPROVED.**
+  - The silver near-full Orrery moons read as engraved moons, not coins.
+  - answers-b's waystone is a squat, lit-top slab.
+  - Everything else holds.
+  - **Nits:** in the Orrery, the waystone's two bright specks look like a toy car's wheels at 6x; in Glass, the waystone has no lit top piece; and the earlier optional Nits remain.
+- **After the re-check, at the coordinator's request:** evercold-b's and whatnext-b's Orrery crescents are keyed (`orrery_moon: "engraved"`). Each has a silver lit part, enamel and earthshine for the rest, and the brass ring kept. Only their Orrery files changed (PNG and JPEG). Totals: evercold-b 445 KB, whatnext-b 344 KB.
