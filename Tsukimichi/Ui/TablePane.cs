@@ -2404,7 +2404,7 @@ public sealed class TablePane : IDisposable
             GameIcon.Draw(textures, reward.Icon, iconSize);
             if (ImGui.IsItemHovered())
             {
-                RewardTooltip.Draw(reward, links, textures);
+                RewardTooltip.Draw(reward, links, textures, questRowId: quest.RowId);
             }
 
             drawn++;

@@ -84,6 +84,9 @@ public sealed partial class DetailPane
 
         /// <summary>The sheet icons the requirement lines were built with (null while they are read).</summary>
         public IPaneIconSheets? IconSheets;
+
+        /// <summary>The item sources the reward tiles' buy-back marks were built with (null while they are read; 1.19, C6).</summary>
+        public ItemSourceIndex? ItemSources;
         public QuestRecord? Quest;
         public QuestEvaluation? Evaluation;
         public QuestState State;
@@ -304,6 +307,7 @@ public sealed partial class DetailPane
             if (model.Rewards.Count > 0)
             {
                 DrawRewards(cardRight);
+                DrawRewardStates(session, quest);
             }
 
             EndSection();
@@ -623,7 +627,7 @@ public sealed partial class DetailPane
             Chrome.FocusRing(rounding);
             if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
             {
-                RewardTooltip.Draw(reward.Reward, links, textures, reward.Unique ? Strings.DetailUniqueRewardTooltip : null);
+                RewardTooltip.Draw(reward.Reward, links, textures, reward.Unique ? Strings.DetailUniqueRewardTooltip : null, model.RowId);
             }
 
             if (reward.Mark is { } mark)
@@ -1196,13 +1200,17 @@ public sealed partial class DetailPane
         var unlocksReach = runner.UnlockReach;
         // The requirement lines' icons (UI-5e) read sheets warmed off the frame: their landing builds the lines again.
         var iconSheets = IconSheets?.Invoke();
+        // So are the item sources behind the rewards' buy-back marks.
+        var itemSources = links.ItemSources;
         if (model.RowId == rowId && model.Version == session.Version && ReferenceEquals(model.Bundle, bundle) && pinnedShown == pinned
-            && model.UnlocksRevision == unlocksRevision && model.UnlocksReach == unlocksReach && ReferenceEquals(model.IconSheets, iconSheets))
+            && model.UnlocksRevision == unlocksRevision && model.UnlocksReach == unlocksReach && ReferenceEquals(model.IconSheets, iconSheets)
+            && ReferenceEquals(model.ItemSources, itemSources))
         {
             return;
         }
 
         model.IconSheets = iconSheets;
+        model.ItemSources = itemSources;
         pinnedShown = pinned;
         model.RowId = rowId;
         model.Version = session.Version;
@@ -1365,6 +1373,9 @@ public sealed partial class DetailPane
     private void BuildRewards(SessionState session, QuestRecord quest)
     {
         uniqueByQuest.TryGetValue(quest.RowId, out var entries);
+
+        // A finished quest says it on a state line under the tiles instead (1.19, C6: DetailPane.BuyBack.cs).
+        var done = model.State is QuestState.Completed or QuestState.DoneThisCycle;
         var unique = 0;
         foreach (var reward in quest.Rewards)
         {
@@ -1376,9 +1387,11 @@ public sealed partial class DetailPane
 
             var isUnique = IsUniqueReward(entries, reward.Kind, reward.Id, reward.ItemId);
 
-            // The reward tooltip says where else it comes from; the tile's caption only names the kind of source.
+            // The reward tooltip says where else it comes from; the tile's caption only names the kind of source: the
+            // store, a duty, or a shop that sells it back once the quest is done (1.19, C6).
             var mark = session.StoreResells.Contains(reward) ? Strings.MoonlitStoreOnly
                 : session.StoreResells.DropWhere(reward) is not null ? Strings.MoonlitAlsoDrops
+                : !done && links.BuyBackOf(reward.ItemId, quest.RowId) is not null ? Core.Sources.BuyBacks.Mark
                 : null;
             unique += isUnique ? 1 : 0;
             model.Rewards.Add(new RewardTile(reward, isUnique, mark));

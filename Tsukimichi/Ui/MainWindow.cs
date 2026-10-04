@@ -403,6 +403,12 @@ public sealed partial class MainWindow : Window, IDisposable
         detailPane.AchievementEarned = earned ?? throw new ArgumentNullException(nameof(earned));
     }
 
+    /// <summary>Whether the game has learned a quest's reward (1.19, C6: "Done, not learned" under a finished quest's rewards).</summary>
+    public void AttachRewardLearned(Func<RewardRef, uint, bool?> learned)
+    {
+        detailPane.RewardLearned = learned ?? throw new ArgumentNullException(nameof(learned));
+    }
+
     /// <summary>The sheet icons the detail pane's requirement lines wear (UI-5e): societies, Grand Company ranks, mounts, achievements.</summary>
     public void AttachIconSheets(Func<Core.Ui.IPaneIconSheets?> sheets)
     {

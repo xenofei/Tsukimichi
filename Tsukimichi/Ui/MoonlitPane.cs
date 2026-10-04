@@ -1660,7 +1660,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 }
                 else if (row.Reward is { } reward)
                 {
-                    RewardTooltip.Draw(reward, links, textures, row.SourceText);
+                    RewardTooltip.Draw(reward, links, textures, row.SourceText, row.BuyBack is null ? row.Entry.QuestRowId : row.BuyBackQuest);
                 }
                 else
                 {
@@ -1783,6 +1783,17 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
+        if (!row.Hidden && BuyBackOf(row) is { } buyBack)
+        {
+            // A shop sells it back once the quest is done, or to anyone (1.19, C6): what is truly missable reads apart.
+            ImGui.SameLine();
+            SmallDuskText(Core.Sources.BuyBacks.Mark);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(buyBack.Tooltip);
+            }
+        }
+
         // The "…" button at the reward cell's right end while the mouse is over the cell or the name (or the button)
         // has keyboard focus: a left click, Enter or Space opens the same menu (accessibility A6).
         var size = MoreSize(line);
@@ -1889,7 +1900,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             GameIcon.Draw(textures, row.Icon, size, hiRes: true);
             if (ImGui.IsItemHovered())
             {
-                RewardTooltip.Draw(reward, links, textures, row.SourceText);
+                RewardTooltip.Draw(reward, links, textures, row.SourceText, row.BuyBack is null ? row.Entry.QuestRowId : row.BuyBackQuest);
             }
         }
         else
@@ -1969,6 +1980,37 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     }
 
     /// <summary>Small Dusk text vertically centred on the current line, occupying its own width; hoverable through the reserved item.</summary>
+    /// <summary>
+    /// The row's buy-back (1.19, C6): the first of its quests whose reward a shop sells back, read once per item source
+    /// index; null while the index is read or when no shop sells it back.
+    /// </summary>
+    private GameLinks.BuyBackText? BuyBackOf(Row row)
+    {
+        var sources = links.ItemSources;
+        if (sources is null)
+        {
+            return null;
+        }
+
+        if (!ReferenceEquals(row.BuyBackSources, sources))
+        {
+            row.BuyBackSources = sources;
+            row.BuyBack = null;
+            row.BuyBackQuest = row.Entry.QuestRowId;
+            for (var i = 0; i < row.QuestCount && row.BuyBack is null; i++)
+            {
+                var entry = row.EntryAt(i);
+                if (links.BuyBackOf(entry.ItemId, entry.QuestRowId) is { } found)
+                {
+                    row.BuyBack = found;
+                    row.BuyBackQuest = entry.QuestRowId;
+                }
+            }
+        }
+
+        return row.BuyBack;
+    }
+
     private static void SmallDuskText(string text)
     {
         var size = ImGui.GetFontSize() * SmallTextScale;
@@ -2700,6 +2742,21 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         /// <summary>Found outside the quest (store or drop): what "Hide rewards found elsewhere" leaves out.</summary>
         public bool FoundElsewhere => StoreResell || DropsInDuty;
+
+        /// <summary>
+        /// The item sources <see cref="BuyBack"/> was read from (1.19, C6); it is read again when they land or change.
+        /// A buy-back never hides the row: the quest still has to be done first, or the shop is one more way to it.
+        /// </summary>
+        public ItemSourceIndex? BuyBackSources { get; set; }
+
+        /// <summary>How the reward can be had again from a shop; null when none sells it back.</summary>
+        public GameLinks.BuyBackText? BuyBack { get; set; }
+
+        /// <summary>The quest whose reclaim row <see cref="BuyBack"/> found (the representative's when none did).</summary>
+        public uint BuyBackQuest { get; set; }
+
+        /// <summary>The entry the row holds for its quest at <paramref name="index"/>.</summary>
+        public UniqueRewardEntry EntryAt(int index) => questEntries[index];
 
         /// <summary>What the icon's tooltip describes; null when the row has no icon (its kind's icon stands in, faded).</summary>
         public RewardRef? Reward { get; }

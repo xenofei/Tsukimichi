@@ -98,6 +98,12 @@ public sealed class HoverHint
     public Func<bool>? NeededForEnabled { get; set; }
 
     /// <summary>
+    /// The buy-back line of an item rewarded by a quest (item id, quest row id; <see cref="GameLinks.BuyBackOf"/>), null
+    /// when no shop sells it back; null leaves the line out (1.19, C6).
+    /// </summary>
+    public Func<uint, uint, string?>? BuyBack { get; set; }
+
+    /// <summary>
     /// Whether the hint reads the hovered item and the <c>ItemDetail</c> addon this frame: the setting is on and the
     /// <see cref="HookGate"/> allows game hooks on the running game version.
     /// </summary>
@@ -209,7 +215,11 @@ public sealed class HoverHint
             var done = state == QuestState.Completed;
             var status = done ? Strings.ItemsDone : BlockerText.StatusText(evaluation, quest, names, states);
             var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, session.LiveSpoilers.DisplayName(quest)), status, done, entry.SoldOnOnlineStore,
-                entry.DropsInDuty ? Strings.AlsoDropsLine(entry.DropWhere) : string.Empty);
+                entry.DropsInDuty ? Strings.AlsoDropsLine(entry.DropWhere) : string.Empty)
+            {
+                // Safe to discard? A shop sells it back once the quest is done (1.19, C6).
+                BuyBackLine = BuyBack?.Invoke(itemId, quest.RowId) ?? string.Empty,
+            };
             if (IsUnlockable(entry.Kind))
             {
                 // The reader answers for the viewed character; while another one is viewed, the logged-in character's
@@ -397,6 +407,13 @@ public sealed class HoverHint
                 ImGui.TextDisabled(line.DropLine);
                 ImGui.Unindent(indent);
             }
+
+            if (line.BuyBackLine.Length > 0)
+            {
+                ImGui.Indent(indent);
+                ImGui.TextDisabled(line.BuyBackLine);
+                ImGui.Unindent(indent);
+            }
         }
 
         if (moreText.Length > 0)
@@ -450,6 +467,9 @@ public sealed class HoverHint
 
         /// <summary>"Also drops in …" when a duty also drops this reward (entry OtherSources carries DungeonDrop); empty otherwise.</summary>
         public string DropLine { get; } = dropLine;
+
+        /// <summary>"Can be bought back from … for …" when a shop sells the reward back (1.19, C6); empty otherwise.</summary>
+        public string BuyBackLine { get; init; } = string.Empty;
 
         public bool HasObtained { get; private set; }
         public Mark ObtainedGlyph { get; private set; } = Mark.Unknown;
