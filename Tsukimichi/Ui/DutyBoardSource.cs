@@ -247,10 +247,11 @@ public sealed class DutyBoardSource
 
     /// <summary>
     /// A duty's name through the spoiler shield: the wider shield's placeholder, "Dungeon (Lv 97)", for a duty the
-    /// story has not introduced (1.20.0 N6); "A duty further along the story (Lv 90)" when every quest it is shown
-    /// through is masked (<see cref="Core.Query.SpoilerMask.HidesDuty"/>); else its own name. The one place the
-    /// stand-in is written: the Duties board, the roulette hint and the detail pane's duty sections all name duties
-    /// through it.
+    /// story has not introduced (1.20.0 N6); when every quest it is shown through is masked
+    /// (<see cref="Core.Query.SpoilerMask.HidesDuty"/>), the same form from its own category and level while the wider
+    /// shield is on (<see cref="Core.Query.SpoilerMask.DutyPlaceholder"/>: one board never mixes two wordings), else
+    /// 1.19's "A duty further along the story (Lv 90)"; else its own name. The one place the stand-in is written: the
+    /// Duties board, the roulette hint and the detail pane's duty sections all name duties through it.
     /// </summary>
     public static string ShownDutyName(DutyRunInfo duty, IReadOnlyCollection<QuestRecord> quests, Core.Query.SpoilerMask spoilers)
     {
@@ -261,9 +262,14 @@ public sealed class DutyBoardSource
             return spoilers.Name(SpoilerKind.Duty, duty.Name);
         }
 
-        return spoilers.HidesDuty(quests)
-            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.LevelRequired)
-            : duty.Name;
+        if (!spoilers.HidesDuty(quests))
+        {
+            return duty.Name;
+        }
+
+        return spoilers.MasksNames
+            ? spoilers.DutyPlaceholder(duty)
+            : string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.LevelRequired);
     }
 
     /// <summary>The duty's name, or for one past the story point the wider shield's placeholder, "Dungeon (Lv 97)" (1.20.0 N6).</summary>

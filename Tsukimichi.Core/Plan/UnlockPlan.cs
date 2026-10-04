@@ -169,9 +169,13 @@ public sealed class UnlockPlan
         return Group(list, names.Expansion, regionOf);
     }
 
-    /// <summary>The unlocks with each name the shield masks replaced by its placeholder; the list itself when none is.</summary>
-    private static IReadOnlyList<PlanUnlock> Shield(IReadOnlyList<PlanUnlock> unlocks, Query.SpoilerMask? spoilers)
+    /// <summary>
+    /// The unlocks with each name the shield masks replaced by its placeholder; the list itself when none is. The plan's
+    /// rows and the game panels' unlock lines read them so.
+    /// </summary>
+    public static IReadOnlyList<PlanUnlock> Shield(IReadOnlyList<PlanUnlock> unlocks, Query.SpoilerMask? spoilers)
     {
+        ArgumentNullException.ThrowIfNull(unlocks);
         if (spoilers is not { MasksNames: true })
         {
             return unlocks;
@@ -181,7 +185,7 @@ public sealed class UnlockPlan
         for (var i = 0; i < unlocks.Count; i++)
         {
             var unlock = unlocks[i];
-            var kind = KindOf(unlock.Kind);
+            var kind = KindOf(unlock.Kind, unlock.Name, spoilers);
             if (unlock.Name.Length == 0 || !spoilers.IsNameMasked(kind, unlock.Name))
             {
                 continue;
@@ -194,11 +198,16 @@ public sealed class UnlockPlan
         return shielded ?? unlocks;
     }
 
-    /// <summary>The kind of name the shield places a plan unlock by: a duty, flying in a zone (an area), anything else a reward.</summary>
-    private static Query.SpoilerKind KindOf(UnlockKind kind) => kind switch
+    /// <summary>
+    /// The kind of name the shield places a plan unlock by: a duty, flying in a zone (an area), anything else a reward.
+    /// An Other unlock (an instance the duty data lacks, a named reward) or a System one (a curated feature: Heaven-on-High,
+    /// Eureka Orthos) may be a duty: a duty when the shield places its name as one, else a reward.
+    /// </summary>
+    private static Query.SpoilerKind KindOf(UnlockKind kind, string name, Query.SpoilerMask spoilers) => kind switch
     {
         UnlockKind.Dungeon or UnlockKind.Trial or UnlockKind.NormalRaid or UnlockKind.AllianceRaid or UnlockKind.FieldOperation => Query.SpoilerKind.Duty,
         UnlockKind.Flying => Query.SpoilerKind.Area,
+        UnlockKind.Other or UnlockKind.System => spoilers.PlacedKind(Query.SpoilerKind.Duty, name),
         _ => Query.SpoilerKind.Reward,
     };
 

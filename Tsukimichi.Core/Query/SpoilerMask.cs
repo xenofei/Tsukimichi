@@ -1,11 +1,15 @@
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Globalization;
 using System.Text;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Localization;
+using Tsukimichi.Core.Unlocks;
 
 namespace Tsukimichi.Core.Query;
 
@@ -75,7 +79,7 @@ public sealed class SpoilerMask
     public static string PlaceholderFormat => CoreText.T("Core.Spoiler.Placeholder", "Main scenario quest (Lv {0})");
 
     /// <summary>Masks nothing and shows every banner: no catalog yet, or the shield turned off.</summary>
-    public static readonly SpoilerMask None = new(SpoilerOptions.Off, FrozenDictionary<uint, byte>.Empty, byte.MaxValue, 0, SpoilerNames.Empty, FrozenSet<(SpoilerKind Kind, string Name)>.Empty);
+    public static readonly SpoilerMask None = new(SpoilerOptions.Off, FrozenDictionary<uint, byte>.Empty, FrozenSet<uint>.Empty, byte.MaxValue, 0, SpoilerNames.Empty, FrozenSet<(SpoilerKind Kind, string Name)>.Empty);
 
     // One placeholder (and its lowercased search form) per display level and language, shared by every mask: a
     // rebuild per session version allocates no strings. Written racily at worst with equal values.
@@ -85,17 +89,22 @@ public sealed class SpoilerMask
     // Every placeholder formatted so far, in any language: what IsPlaceholder and HoldsPlaceholder look for.
     private static readonly ConcurrentDictionary<string, byte> Registered = new(StringComparer.Ordinal);
 
-    // HoldsPlaceholder's answers by string instance, for composed strings drawn every frame; dropped when it grows or a
-    // placeholder is registered.
-    private static readonly Dictionary<string, bool> Holds = new(ReferenceEqualityComparer.Instance);
-    private static readonly Lock HoldsLock = new();
-    private static int holdsRegistered = -1;
-    private const int MaxHolds = 4096;
+    // Bumped as a placeholder is registered: HoldsPlaceholder rebuilds its matcher when it moved.
+    private static int registeredVersion;
+    private static PlaceholderMatcher? matcher;
+    private static readonly Lock MatcherLock = new();
 
     private static readonly SpoilerKind[] AllKinds = [SpoilerKind.Area, SpoilerKind.Aetheryte, SpoilerKind.Duty, SpoilerKind.Reward, SpoilerKind.Npc];
 
     /// <summary>Masked row id to the display level its placeholder prints.</summary>
     private readonly IReadOnlyDictionary<uint, byte> masked;
+
+    /// <summary>
+    /// The main scenario quests the story has not reached: <see cref="masked"/> before a quest's name is revealed or
+    /// found abandoned. The wider shield places names against it, so revealing a quest's name is no story progress:
+    /// the names it introduces stay hidden but for those revealed with it (<see cref="reveals"/>).
+    /// </summary>
+    private readonly IReadOnlySet<uint> ahead;
 
     /// <summary>Where each zone, duty, reward and NPC name sits in the story; <see cref="SpoilerNames.Empty"/> when the wider shield is off.</summary>
     private readonly SpoilerNames names;
@@ -105,10 +114,11 @@ public sealed class SpoilerMask
 
     private int maskedNameCount = -1;
 
-    private SpoilerMask(SpoilerOptions options, IReadOnlyDictionary<uint, byte> masked, byte reachExpansion, int fingerprint, SpoilerNames names, FrozenSet<(SpoilerKind Kind, string Name)> reveals)
+    private SpoilerMask(SpoilerOptions options, IReadOnlyDictionary<uint, byte> masked, IReadOnlySet<uint> ahead, byte reachExpansion, int fingerprint, SpoilerNames names, FrozenSet<(SpoilerKind Kind, string Name)> reveals)
     {
         Options = options;
         this.masked = masked;
+        this.ahead = ahead;
         ReachExpansion = reachExpansion;
         Fingerprint = fingerprint;
         this.names = names;
@@ -135,7 +145,7 @@ public sealed class SpoilerMask
     public int Fingerprint { get; }
 
     /// <summary>Whether the wider shield can mask anything: it is on and the names are placed.</summary>
-    public bool MasksNames => names.Count > 0 && masked.Count > 0;
+    public bool MasksNames => names.Count > 0 && ahead.Count > 0;
 
     /// <summary>
     /// How many places, aetherytes, duties, rewards and people the wider shield hides ("486 other names" on Settings ›
@@ -264,10 +274,111 @@ public sealed class SpoilerMask
             : string.Format(CultureInfo.CurrentCulture, pathFormat, region, place);
     }
 
+    /// <summary>
+    /// Where the wider shield places a Moonlit reward's name (<paramref name="display"/>, <see cref="Unique.RewardNames.Display"/>),
+    /// as the unlock index files it (<see cref="SpoilerNames"/>): a duty unlock or instance as a duty ("the Palace of
+    /// the Dead (Floors 1-10)" as "the Palace of the Dead"), an aether current as flying in its zone, an area ("Aether
+    /// Current (Yanxia)" as "Yanxia"), a curated unlock that opens flying or a field operation as that, anything else
+    /// (an item, a mount, a job, a feature) as a reward. A name the data does not place under that kind is a reward.
+    /// </summary>
+    public (SpoilerKind Kind, string Name) RewardName(UniqueRewardEntry entry, string? display)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        display ??= string.Empty;
+        var (kind, name) = entry.Kind switch
+        {
+            RewardKind.DutyUnlock or RewardKind.Instance => (SpoilerKind.Duty, UnlockTags.ContentName(display)),
+            RewardKind.AetherCurrent => (SpoilerKind.Area, UnlockRewards.CurrentZone(display)),
+            RewardKind.SystemUnlock or RewardKind.Other when UnlockTags.FlyingLabels.Contains(display) => (SpoilerKind.Area, display),
+            RewardKind.SystemUnlock or RewardKind.Other when UnlockTags.FieldOperationLabels.Contains(display) => (SpoilerKind.Duty, display),
+            _ => (SpoilerKind.Reward, display),
+        };
+
+        return kind == SpoilerKind.Reward || names.TryGet(kind, name, out _) ? (kind, name) : (SpoilerKind.Reward, display);
+    }
+
+    /// <summary>
+    /// Whether the wider shield hides a Moonlit reward (<see cref="RewardName"/> says where its name is placed). A reward
+    /// whose name the data does not place (a curated unlock, named by its note) is hidden while the quest that gives it
+    /// lies in the story ahead. Not revealed for the session either way.
+    /// </summary>
+    public bool IsRewardMasked(UniqueRewardEntry entry, string? display)
+    {
+        var (kind, name) = RewardName(entry, display);
+        if (names.TryGet(kind, name, out _))
+        {
+            return PlacedMasked(kind, name, out _);
+        }
+
+        return QuestAhead(entry.QuestRowId) && !(reveals.Count > 0 && reveals.Contains((kind, name)));
+    }
+
+    /// <summary>
+    /// What a Moonlit reward prints through the wider shield: <paramref name="display"/> itself when shown; its
+    /// placeholder when hidden ("Trial (Lv 60)", "A mount"), an aether current keeping its own words around its zone's
+    /// ("Aether Current (Stormblood area 3)"). Allocates only to compose an aether current's.
+    /// </summary>
+    public string RewardDisplay(UniqueRewardEntry entry, string? display)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        if (string.IsNullOrEmpty(display) || !MasksNames)
+        {
+            return display ?? string.Empty;
+        }
+
+        var (kind, name) = RewardName(entry, display);
+        if (PlacedMasked(kind, name, out var placed))
+        {
+            var placeholder = names.Placeholder(placed);
+            var open = display.IndexOf('(', StringComparison.Ordinal);
+            var close = display.LastIndexOf(')');
+            return entry.Kind == RewardKind.AetherCurrent && open >= 0 && close > open && !ReferenceEquals(name, display)
+                ? string.Concat(display.AsSpan(0, open + 1), placeholder, display.AsSpan(close))
+                : placeholder;
+        }
+
+        return !names.TryGet(kind, name, out _) && IsRewardMasked(entry, display) ? SpoilerNames.RewardPlaceholder(entry.Kind) : display;
+    }
+
+    /// <summary>
+    /// The kind a name is placed under: <paramref name="first"/> when the data places it there, else a reward. For a
+    /// name whose kind is not known for sure (a plan's Other unlock: a duty the plan could not class, or a feature).
+    /// </summary>
+    public SpoilerKind PlacedKind(SpoilerKind first, string? name) =>
+        first == SpoilerKind.Reward || names.TryGet(first, name, out _) ? first : SpoilerKind.Reward;
+
+    /// <summary>
+    /// A duty the story has not reached as the wider shield prints it, "Dungeon (Lv 90)": its own placeholder when the
+    /// names place it, else one from its Duty Finder category and level (registered, so it reads and answers as one).
+    /// For the duties hidden because every quest that shows them is (<see cref="HidesDuty"/>). Allocates nothing once formatted.
+    /// </summary>
+    public string DutyPlaceholder(DutyRunInfo duty)
+    {
+        ArgumentNullException.ThrowIfNull(duty);
+        if (names.TryGet(SpoilerKind.Duty, duty.Name, out var placed))
+        {
+            return names.Placeholder(placed);
+        }
+
+        var target = duty.ContentTypeId switch
+        {
+            DutyRunInfo.Dungeons => UnlockTarget.Dungeon,
+            DutyRunInfo.Trials => UnlockTarget.Trial,
+            DutyRunInfo.Raids or DutyRunInfo.UltimateRaids => UnlockTarget.NormalRaid,
+            DutyRunInfo.ChaoticAllianceRaid => UnlockTarget.AllianceRaid,
+            _ => UnlockTarget.OtherDuty,
+        };
+
+        return SpoilerNames.DutyPlaceholder(target, duty.LevelRequired);
+    }
+
+    /// <summary>Whether the quest is anchored at a main scenario quest the story has not reached (the wider shield on).</summary>
+    private bool QuestAhead(uint rowId) => names.Count > 0 && names.AnchorOf(rowId) is var anchor and not 0 && ahead.Contains(anchor);
+
     private bool PlacedMasked(SpoilerKind kind, string name, out SpoilerNames.Placed placed)
     {
         placed = default;
-        if (masked.Count == 0 || !names.TryGet(kind, name, out placed))
+        if (ahead.Count == 0 || !names.TryGet(kind, name, out placed))
         {
             return false;
         }
@@ -283,38 +394,52 @@ public sealed class SpoilerMask
             return PlacedMasked(SpoilerKind.Area, zone, out _);
         }
 
-        // Shown once the story reaches any quest that introduces it, "names ahead" included.
+        // Shown once the story reaches any quest that introduces it, "names ahead" included (a quest whose name was
+        // revealed is not reached: the reveal is no story progress).
+        var reached = false;
+        var reach = ReachExpansion;
         foreach (var anchor in placed.Anchors)
         {
-            if (!masked.ContainsKey(anchor))
+            if (!ahead.Contains(anchor))
             {
-                return false;
+                reached = true;
+                // The furthest shown anchor counts as reached, so "names ahead" past an expansion's last quest shows
+                // the next expansion's places and duties.
+                var expansion = names.AnchorExpansion(anchor);
+                if (expansion != byte.MaxValue && expansion > reach)
+                {
+                    reach = expansion;
+                }
             }
         }
 
-        // A place or duty of an expansion past the story's own is hidden whatever introduces it.
-        if (kind is SpoilerKind.Area or SpoilerKind.Aetheryte or SpoilerKind.Duty && placed.Expansion != byte.MaxValue && placed.Expansion > ReachExpansion)
+        // A place or duty of an expansion past the story's own is hidden whatever introduces it, however early.
+        if (kind is SpoilerKind.Area or SpoilerKind.Aetheryte or SpoilerKind.Duty && placed.Expansion != byte.MaxValue && placed.Expansion > reach)
         {
             return true;
         }
 
-        return !placed.Unanchored && placed.Anchors.Length > 0;
+        return !reached && !placed.Unanchored && placed.Anchors.Length > 0;
     }
 
     /// <summary>
     /// Whether <paramref name="text"/> is a placeholder exactly ("Main scenario quest (Lv 97)", "Dawntrail area 6"), one
     /// any mask has formatted in this session. Allocates nothing.
     /// </summary>
-    public static bool IsPlaceholder(string? text) => !string.IsNullOrEmpty(text) && !Registered.IsEmpty && Registered.ContainsKey(text);
+    public static bool IsPlaceholder(string? text) => !string.IsNullOrEmpty(text) && Volatile.Read(ref registeredVersion) != 0 && Registered.ContainsKey(text);
 
     /// <summary>
-    /// Whether <paramref name="text"/> is or holds a placeholder: "Flying in Dawntrail area 6", "Opens Dungeon (Lv 97)".
-    /// Such a string is drawn in Secondary as a whole (spec-1.20). Answers are kept per string instance, so a string
-    /// composed once and drawn every frame is scanned once.
+    /// Whether <paramref name="text"/> is or holds a placeholder: "Flying in Dawntrail area 6", "Opens Dungeon (Lv 97)",
+    /// "Job: A job". Such a string is drawn in Secondary as a whole (spec-1.20). A placeholder counts inside a longer
+    /// string only as a whole: on word boundaries ("Dawntrail area 1" is not in "Dawntrail area 10", "A trait" not in
+    /// "A traitor"), and never as a kind label ("Dungeon: Sastasha" names a kind, not a hidden duty). A placeholder of one
+    /// word ("Dungeon", a duty without a level) counts only as the whole string or after a kind label ("Dungeon:
+    /// Dungeon"), so "Duty Finder" or "The Dungeon of …" is never one. Allocates nothing once the placeholders in use
+    /// are formatted.
     /// </summary>
     public static bool HoldsPlaceholder(string? text)
     {
-        if (string.IsNullOrEmpty(text) || Registered.IsEmpty)
+        if (string.IsNullOrEmpty(text) || Volatile.Read(ref registeredVersion) == 0)
         {
             return false;
         }
@@ -324,40 +449,130 @@ public sealed class SpoilerMask
             return true;
         }
 
-        lock (HoldsLock)
+        var current = MatcherNow();
+        var span = text.AsSpan();
+        for (var from = 0; from < span.Length;)
         {
-            if (holdsRegistered != Registered.Count || Holds.Count >= MaxHolds)
+            var at = span[from..].IndexOfAny(current.Starts);
+            if (at < 0)
             {
-                holdsRegistered = Registered.Count;
-                Holds.Clear();
+                break;
             }
 
-            if (Holds.TryGetValue(text, out var known))
+            at += from;
+            foreach (var placeholder in current.Inline)
             {
-                return known;
-            }
-
-            var holds = false;
-            foreach (var (placeholder, _) in Registered)
-            {
-                if (placeholder.Length <= text.Length && text.Contains(placeholder, StringComparison.Ordinal))
+                if (PlaceholderAt(text, at, placeholder))
                 {
-                    holds = true;
-                    break;
+                    return true;
                 }
             }
 
-            Holds[text] = holds;
-            return holds;
+            from = at + 1;
+        }
+
+        // "Dungeon: Dungeon": a one-word placeholder after a kind label.
+        var label = text.LastIndexOf(": ", StringComparison.Ordinal);
+        if (label >= 0 && current.Words.Length > 0)
+        {
+            var tail = span[(label + 2)..];
+            foreach (var word in current.Words)
+            {
+                if (tail.SequenceEqual(word))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Whether <paramref name="placeholder"/> stands at <paramref name="index"/> as a whole: on word boundaries, and not a kind label (followed by a colon).</summary>
+    private static bool PlaceholderAt(string text, int index, string placeholder)
+    {
+        if (!MatchesAt(text, index, placeholder))
+        {
+            return false;
+        }
+
+        var end = index + placeholder.Length;
+        return end >= text.Length || text[end] != ':';
+    }
+
+    /// <summary>The matcher over the placeholders registered so far; rebuilt (allocating) only after one is registered.</summary>
+    private static PlaceholderMatcher MatcherNow()
+    {
+        var version = Volatile.Read(ref registeredVersion);
+        var current = Volatile.Read(ref matcher);
+        if (current is not null && current.Version == version)
+        {
+            return current;
+        }
+
+        lock (MatcherLock)
+        {
+            current = matcher;
+            if (current is null || current.Version != version)
+            {
+                current = new PlaceholderMatcher(version, Registered.Keys);
+                Volatile.Write(ref matcher, current);
+            }
+
+            return current;
+        }
+    }
+
+    /// <summary>
+    /// The registered placeholders as <see cref="HoldsPlaceholder"/> looks for them: those of several words or with a
+    /// locator (found anywhere, on word boundaries; longest first), and those of one word (only after a kind label).
+    /// </summary>
+    private sealed class PlaceholderMatcher
+    {
+        public PlaceholderMatcher(int version, IEnumerable<string> placeholders)
+        {
+            Version = version;
+            var inline = new List<string>();
+            var words = new List<string>();
+            foreach (var placeholder in placeholders)
+            {
+                (IsOneWord(placeholder) ? words : inline).Add(placeholder);
+            }
+
+            inline.Sort(static (a, b) => b.Length != a.Length ? b.Length.CompareTo(a.Length) : string.CompareOrdinal(a, b));
+            Inline = [.. inline];
+            Words = [.. words];
+            Starts = SearchValues.Create(Inline, StringComparison.Ordinal);
+        }
+
+        public int Version { get; }
+
+        public string[] Inline { get; }
+
+        public string[] Words { get; }
+
+        public SearchValues<string> Starts { get; }
+
+        private static bool IsOneWord(string placeholder)
+        {
+            foreach (var c in placeholder)
+            {
+                if (!char.IsLetter(c) && c != '-' && c != '\'')
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 
     /// <summary>Notes a placeholder as formatted (<see cref="IsPlaceholder"/>) and returns it.</summary>
     internal static string Register(string placeholder)
     {
-        if (placeholder.Length > 0)
+        if (placeholder.Length > 0 && Registered.TryAdd(placeholder, 0))
         {
-            Registered.TryAdd(placeholder, 0);
+            Interlocked.Increment(ref registeredVersion);
         }
 
         return placeholder;
@@ -612,8 +827,9 @@ public sealed class SpoilerMask
         ArgumentNullException.ThrowIfNull(options);
 
         // Without states there is no position: only the very first quest of the story keeps its name.
-        var ahead = noStates ? 0 : options.AheadClamped;
+        var namesAhead = noStates ? 0 : options.AheadClamped;
         var masked = new Dictionary<uint, byte>();
+        var ahead = new HashSet<uint>();
         var hash = new HashCode();
         hash.Add(options.HideNames);
         // The wider shield: off, or on over this catalog's names (a new unlock index can mask other names).
@@ -675,22 +891,29 @@ public sealed class SpoilerMask
             }
 
             if (!options.HideNames
-                || distance <= ahead
+                || distance <= namesAhead
                 || state is QuestState.Completed or QuestState.Accepted
-                || source.OtherPathKind(quest.RowId) is not null
-                || (revealed is not null && revealed.Contains(quest.RowId))
-                || (abandoned is not null && abandoned.ContainsKey(quest.QuestId)))
+                || source.OtherPathKind(quest.RowId) is not null)
             {
                 continue;
             }
 
-            masked[quest.RowId] = quest.DisplayLevel;
+            // The story has not reached it; its name shows when revealed, or once the game has shown it (abandoned).
+            ahead.Add(quest.RowId);
             hash.Add(quest.RowId);
+            if ((revealed is not null && revealed.Contains(quest.RowId))
+                || (abandoned is not null && abandoned.ContainsKey(quest.QuestId)))
+            {
+                hash.Add(0);
+                continue;
+            }
+
+            masked[quest.RowId] = quest.DisplayLevel;
         }
 
         var reachExpansion = msq is null ? byte.MaxValue : noStates ? (byte)0 : msq.Next?.Expansion ?? byte.MaxValue;
         hash.Add(reachExpansion);
-        return new SpoilerMask(options, masked, reachExpansion, hash.ToHashCode(), related, reveals);
+        return new SpoilerMask(options, masked, ahead, reachExpansion, hash.ToHashCode(), related, reveals);
     }
 
     /// <summary>
