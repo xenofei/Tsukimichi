@@ -25,6 +25,7 @@ public sealed partial class IpcProvider
     private ICallGateProvider<string>? getTheme;
     private ICallGateProvider<string, bool>? openAt;
     private ICallGateProvider<string, string, int>? addonHello;
+    private ICallGateProvider<int, (uint, string, string)[]>? getReadyTonight;
     private ICallGateProvider<object>? summaryChanged;
 
     /// <summary>The summary the gates answer from (<c>Ui.SummarySource.Current</c>); any thread. Null answers as not ready.</summary>
@@ -69,6 +70,7 @@ public sealed partial class IpcProvider
         getTheme = pluginInterface.GetIpcProvider<string>(IpcChannels.GetThemeGate);
         openAt = pluginInterface.GetIpcProvider<string, bool>(IpcChannels.OpenAtGate);
         addonHello = pluginInterface.GetIpcProvider<string, string, int>(IpcChannels.AddonHelloGate);
+        getReadyTonight = pluginInterface.GetIpcProvider<int, (uint, string, string)[]>(IpcChannels.GetReadyTonightGate);
         summaryChanged = pluginInterface.GetIpcProvider<object>(IpcChannels.SummaryChangedGate);
 
         getSummaryVersion.RegisterFunc(static () => IpcChannels.SummaryVersion);
@@ -81,6 +83,7 @@ public sealed partial class IpcProvider
         getTheme.RegisterFunc(GetTheme);
         openAt.RegisterFunc(OpenAt);
         addonHello.RegisterFunc(AddonHello);
+        getReadyTonight.RegisterFunc(max => FromSummary(IpcChannels.GetReadyTonightGate, Array.Empty<(uint, string, string)>(), s => s.ReadyTonightAnswer(max)));
     }
 
     private void UnregisterSummary()
@@ -95,6 +98,7 @@ public sealed partial class IpcProvider
         Unregister(getTheme);
         Unregister(openAt);
         Unregister(addonHello);
+        Unregister(getReadyTonight);
     }
 
     /// <summary>For the <c>/tsuki ipc</c> window: the summary gates' providers.</summary>
@@ -110,13 +114,15 @@ public sealed partial class IpcProvider
         IpcChannels.GetThemeGate => getTheme,
         IpcChannels.OpenAtGate => openAt,
         IpcChannels.AddonHelloGate => addonHello,
+        IpcChannels.GetReadyTonightGate => getReadyTonight,
         IpcChannels.SummaryChangedGate => summaryChanged,
         _ => null,
     };
 
     private static bool IsSummaryGate(string gate) => gate is IpcChannels.GetSummaryVersionGate or IpcChannels.GetCharacterGate
         or IpcChannels.GetUpNextGate or IpcChannels.GetReadyCountGate or IpcChannels.GetJournalRoomGate or IpcChannels.GetEndingSoonGate
-        or IpcChannels.GetStoryMeterGate or IpcChannels.GetThemeGate or IpcChannels.OpenAtGate or IpcChannels.AddonHelloGate;
+        or IpcChannels.GetStoryMeterGate or IpcChannels.GetThemeGate or IpcChannels.OpenAtGate or IpcChannels.AddonHelloGate
+        or IpcChannels.GetReadyTonightGate;
 
     /// <summary>For the <c>/tsuki ipc</c> window: a summary gate called through Dalamud's subscriber, as another plugin would.</summary>
     private object? SummaryTestCall(string gate, string arguments) => gate switch
@@ -133,6 +139,8 @@ public sealed partial class IpcProvider
         IpcChannels.AddonHelloGate => IpcConsole.Words(arguments) is { Length: 2 } words
             ? pluginInterface.GetIpcSubscriber<string, string, int>(gate).InvokeFunc(words[0], words[1])
             : throw new FormatException("Type the add-on's name, then its version."),
+        IpcChannels.GetReadyTonightGate => pluginInterface.GetIpcSubscriber<int, (uint, string, string)[]>(gate).InvokeFunc(
+            int.TryParse(arguments.Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var max) ? max : throw new FormatException("Type how many quests, a number.")),
         _ => throw new FormatException("A message cannot be called; subscribe to it instead."),
     };
 

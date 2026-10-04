@@ -63,6 +63,7 @@ public sealed class TsukimichiIpc : IDisposable
     private readonly ICallGateSubscriber<string> getTheme;
     private readonly ICallGateSubscriber<string, bool> openAt;
     private readonly ICallGateSubscriber<string, string, int> addonHello;
+    private readonly ICallGateSubscriber<int, (uint, string, string)[]> getReadyTonight;
     private readonly ICallGateSubscriber<object> summaryChanged;
 
     public TsukimichiIpc(IDalamudPluginInterface pluginInterface)
@@ -102,6 +103,7 @@ public sealed class TsukimichiIpc : IDisposable
         getTheme = pluginInterface.GetIpcSubscriber<string>("Tsukimichi.GetTheme");
         openAt = pluginInterface.GetIpcSubscriber<string, bool>("Tsukimichi.OpenAt");
         addonHello = pluginInterface.GetIpcSubscriber<string, string, int>("Tsukimichi.AddonHello");
+        getReadyTonight = pluginInterface.GetIpcSubscriber<int, (uint, string, string)[]>("Tsukimichi.GetReadyTonight");
         summaryChanged = pluginInterface.GetIpcSubscriber<object>("Tsukimichi.SummaryChanged");
 
         // Subscribing works whether or not Tsukimichi is loaded yet; the messages start arriving once it is.
@@ -218,11 +220,14 @@ public sealed class TsukimichiIpc : IDisposable
     /// <summary>The theme in use ("medallion", "classic", "ishgard-glass", "aether-crystal", "astrologian-orrery", "sumi-to-kinpaku").</summary>
     public string Theme => Try(() => getTheme.InvokeFunc(), string.Empty);
 
-    /// <summary>Opens Tsukimichi at "main", "tonight", "upnext", "route" or "settings"; never travels. Call it from a click.</summary>
+    /// <summary>Opens Tsukimichi at "main", "tonight", "upnext", "route", "settings" or "makeroom"; never travels. Call it from a click.</summary>
     public bool OpenAt(string place) => Try(() => openAt.InvokeFunc(place), false);
 
     /// <summary>Says your add-on is there (Tsukimichi's Settings › About shows its version); returns the summary version, 0 when absent.</summary>
     public int Hello(string addon, string version) => Try(() => addonHello.InvokeFunc(addon, version), 0);
+
+    /// <summary>The first <paramref name="max"/> Ready quests in Tonight's order (at most 20): row id, shielded name, the giver's zone.</summary>
+    public (uint RowId, string Name, string Place)[] ReadyTonight(int max) => Try(() => getReadyTonight.InvokeFunc(max), Array.Empty<(uint, string, string)>());
 
     public void Dispose()
     {

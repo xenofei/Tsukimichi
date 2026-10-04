@@ -38,6 +38,26 @@ public sealed class UpNextPickerTests(FixtureCatalog fixture) : IClassFixture<Fi
     }
 
     [Fact]
+    public void Ready_quests_in_Tonights_order_follow_Up_nexts_order_then_the_journal()
+    {
+        // 10 and 11 are Ready quests no rule names; 2 (in the journal) and 6, 9 (blocked) are not Ready.
+        var states = Everything();
+        states[10] = State(QuestState.Ready);
+        states[11] = State(QuestState.Ready);
+        uint[] journal = [11, 9, 5, 4, 3, 2, 1, 10, 6];
+
+        Assert.Equal([1u, 3, 4, 5, 11, 10], UpNextPicker.ReadyInOrder(states, 1, [2], 3, [4], [5], journal, 10));
+
+        // Each quest once (a pin that is also the route's stop), at most max, nothing for max 0 or less.
+        Assert.Equal([1u, 3], UpNextPicker.ReadyInOrder(states, 1, [1, 2], 3, [1, 4], [5], journal, 2));
+        Assert.Empty(UpNextPicker.ReadyInOrder(states, 1, [2], 3, [4], [5], journal, 0));
+        Assert.Empty(UpNextPicker.ReadyInOrder(states, 1, [2], 3, [4], [5], journal, -3));
+
+        // No rule: the journal's order.
+        Assert.Equal([11u, 5, 4], UpNextPicker.ReadyInOrder(states, null, [], null, [], [], journal, 3));
+    }
+
+    [Fact]
     public void Each_rule_wins_over_the_ones_after_it()
     {
         var states = Everything();

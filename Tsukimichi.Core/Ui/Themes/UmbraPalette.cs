@@ -18,7 +18,8 @@ namespace Tsukimichi.Core.Ui.Themes;
 /// <para>
 /// <b>The clamp.</b> Follow Dalamud already pushes every derived ink to 4.5 : 1 on every surface and every line and
 /// stripe to 3 : 1. The one role it takes as given is the text itself, so a profile whose text barely reads on its own
-/// background has its text pushed towards white (dark window) or black (light window) until it reads at 4.5 : 1 on
+/// background has its text pushed towards whichever of white or black reads better on the window (black for a mid grey)
+/// until it reads at 4.5 : 1 on
 /// every surface. The inks Follow Dalamud only meets on its own hosts are re-made for Umbra's: the destructive button's
 /// text (black or white, whichever reads), the tree ring, and a light window's gauge keyline, track and flat arc (each
 /// pushed towards the text to 3 : 1 on the window). If the palette still misses any pair (<see cref="UiPalette.TextPairs"/>,
@@ -63,9 +64,14 @@ public static class UmbraPalette
         var text = ColorMath.Over(profile.Get("Window.Text", Vector4.One), window);
         var muted = ColorMath.Over(Pick(profile, "Window.TextMuted", "Window.TextDisabled", ColorMath.Mix(text, window, 0.5f)), window);
 
+        // The ink goes towards whichever of black or white reads better on the window: a mid-grey window (luminance under
+        // 0.5) reads better with black, which white text could never reach 4.5 : 1 on.
+        var black = new Vector4(0f, 0f, 0f, 1f);
+        var light = ColorMath.Contrast(black, window) >= ColorMath.Contrast(Vector4.One, window);
+
         // The text must read on every surface the palette derives (window, cards, wells, hovered rows).
-        var host = SurfaceColors.FromHost(window, raised, hover, border, text, muted);
-        var extreme = host.Light ? new Vector4(0f, 0f, 0f, 1f) : Vector4.One;
+        var host = SurfaceColors.FromHost(window, raised, hover, border, text, muted, light);
+        var extreme = light ? black : Vector4.One;
         var readable = Readable(text, host, extreme);
         if (readable != text)
         {
@@ -74,7 +80,7 @@ public static class UmbraPalette
             clamped = true;
         }
 
-        var palette = Repair(UiPalettes.FollowDalamud(window, raised, hover, border, readable, muted) with { Key = Key, Name = Name });
+        var palette = Repair(UiPalettes.FollowDalamud(window, raised, hover, border, readable, muted, light) with { Key = Key, Name = Name });
         if (!Passes(palette) || !Passes(palette.HighContrast))
         {
             clamped = false;
@@ -168,12 +174,19 @@ public static class UmbraPalette
         var gauges = palette.Gauges;
         if (palette.IsLight)
         {
+            // Snow's gauge inks are made for a near-white window; on a darker light window (down to a mid grey that reads
+            // better with black) every colour of the arc and the moon's dark side are pushed towards the text too.
             const float line = SurfaceColors.LineMinContrast;
+            Vector4 OnWindow(Vector4 ink) => ColorMath.EnsureContrast(ink, s.Text, s.Window, line);
             gauges = gauges with
             {
-                Keyline = ColorMath.EnsureContrast(gauges.Keyline, s.Text, s.Window, line),
-                Arc = ColorMath.EnsureContrast(gauges.Arc, s.Text, s.Window, line),
-                Track = ColorMath.EnsureContrast(gauges.Track, s.Text, s.Window, line),
+                Keyline = OnWindow(gauges.Keyline),
+                Arc = OnWindow(gauges.Arc),
+                Track = OnWindow(gauges.Track),
+                ArcBase = OnWindow(gauges.ArcBase),
+                OuterSlope = [.. gauges.OuterSlope.Select(stop => (stop.At, OnWindow(stop.Color)))],
+                InnerSlope = [.. gauges.InnerSlope.Select(stop => (stop.At, OnWindow(stop.Color)))],
+                DarkSide = OnWindow(gauges.DarkSide),
             };
         }
 

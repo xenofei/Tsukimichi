@@ -120,10 +120,17 @@ public sealed partial class Plugin
 
                 return;
             case IpcPlaces.Route:
-                routeWindow?.ShowFollowed();
+                routeWindow?.RevealFollowed();
                 return;
+            case IpcPlaces.MakeRoom:
+                // Make room (C9) for the logged-in character, whose journal the summary counts: a popover, nothing more.
+                ViewLiveCharacter();
+                mainWindow.RequestMakeRoom();
+                break;
             case IpcPlaces.Tonight or IpcPlaces.UpNext:
-                // As the moon icon's Tonight: the Journal tab with nothing selected shows the Tonight card.
+                // As the moon icon's Tonight: the Journal tab with nothing selected shows the Tonight card, for the
+                // logged-in character the tooltip and the summary describe.
+                ViewLiveCharacter();
                 ui.Tab = NavTab.Journal;
                 ui.SelectedRowId = null;
                 break;
@@ -131,6 +138,18 @@ public sealed partial class Plugin
 
         mainWindow.IsOpen = true;
         mainWindow.BringToFront();
+    }
+
+    /// <summary>
+    /// Shows the logged-in character when another is on view: the moon icon's quick card, the server info bar and the
+    /// summary gates describe the logged-in character, so their Tonight opens on it, not on a stored alt.
+    /// </summary>
+    private void ViewLiveCharacter()
+    {
+        if (Session.LiveContentId is { } live && Session.ViewedContentId != live)
+        {
+            Session.ViewCharacter(live);
+        }
     }
 
     /// <summary>Unwinds the 1.22.0 pieces (from <see cref="TearDown"/>).</summary>

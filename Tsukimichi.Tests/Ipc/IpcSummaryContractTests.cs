@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Text.RegularExpressions;
 using Tsukimichi.Core.Ipc;
 using Tsukimichi.Tests.Localization;
 
@@ -9,7 +11,7 @@ namespace Tsukimichi.Tests.Ipc;
 /// drop-in client name every one. Changing what a shipped gate takes or returns bumps <see cref="IpcChannels.SummaryVersion"/>
 /// and this test with it; adding a gate keeps both versions.
 /// </summary>
-public sealed class IpcSummaryContractTests
+public sealed partial class IpcSummaryContractTests
 {
     /// <summary>The summary gates as shipped in 1.22.0: name, signature, release.</summary>
     private static readonly (string Name, string Signature, string Since, bool Message)[] Shipped =
@@ -24,8 +26,87 @@ public sealed class IpcSummaryContractTests
         ("Tsukimichi.GetTheme", "() -> string", "1.22.0", false),
         ("Tsukimichi.OpenAt", "(string place) -> bool", "1.22.0", false),
         ("Tsukimichi.AddonHello", "(string addon, string version) -> int", "1.22.0", false),
+        ("Tsukimichi.GetReadyTonight", "(int max) -> (uint rowId, string name, string place)[]", "1.22.0", false),
         ("Tsukimichi.SummaryChanged", "message ()", "1.22.0", true),
     ];
+
+    /// <summary>
+    /// The generic types each pinned signature is registered with: the arguments, then the answer, without the names
+    /// (<c>ICallGateProvider&lt;…&gt;</c>'s type arguments); a message is <c>object</c> plus its arguments.
+    /// </summary>
+    private static string GenericTypes(string signature)
+    {
+        if (signature.StartsWith("message (", StringComparison.Ordinal))
+        {
+            var args = TypesOf(signature["message (".Length..^1]);
+            return args.Length == 0 ? "object" : args + ",object";
+        }
+
+        var arrow = signature.IndexOf(" -> ", StringComparison.Ordinal);
+        var parameters = TypesOf(signature[1..(arrow - 1)]);
+        var answer = signature[(arrow + 4)..];
+        answer = answer.StartsWith('(') ? "(" + TypesOf(answer[1..answer.LastIndexOf(')')]) + ")" + answer[(answer.LastIndexOf(')') + 1)..] : answer;
+        return parameters.Length == 0 ? answer : parameters + "," + answer;
+    }
+
+    /// <summary>"uint rowId, string name" as "uint,string".</summary>
+    private static string TypesOf(string list) =>
+        string.Join(',', list.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(static p => p.Split(' ')[0]));
+
+    /// <summary>The gate constants of <see cref="IpcChannels"/> by name ("GetUpNextGate" → "Tsukimichi.GetUpNext").</summary>
+    private static Dictionary<string, string> GateConstants() =>
+        typeof(IpcChannels).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(static f => f.IsLiteral && f.FieldType == typeof(string))
+            .ToDictionary(static f => f.Name, static f => (string)f.GetRawConstantValue()!);
+
+    [Fact]
+    public void Each_summary_gate_is_registered_and_wrapped_with_the_types_its_signature_pins()
+    {
+        // The provider's own registration and the drop-in client's subscriber, read from source (the test project does
+        // not load the plugin): a type changed on either side without the signature fails here.
+        var root = ResxFiles.RepositoryRoot();
+        var provider = File.ReadAllText(Path.Combine(root, "Tsukimichi", "Game", "IpcProvider.Summary.cs"));
+        var client = File.ReadAllText(Path.Combine(root, "docs", "TsukimichiIpc.cs"));
+        var constants = GateConstants();
+        var registrations = ProviderRegistration().Matches(provider);
+        var registered = registrations
+            .ToDictionary(m => constants[m.Groups["gate"].Value], m => Regex.Replace(m.Groups["types"].Value, @"\s+", string.Empty));
+        var fields = registrations.ToDictionary(m => constants[m.Groups["gate"].Value], m => m.Groups["field"].Value);
+        var wrapped = ClientSubscription().Matches(client)
+            .ToDictionary(m => m.Groups["gate"].Value, m => Regex.Replace(m.Groups["types"].Value, @"\s+", string.Empty));
+
+        foreach (var (name, signature, _, _) in Shipped)
+        {
+            var expected = GenericTypes(signature);
+            Assert.True(registered.TryGetValue(name, out var types), name + " is not registered");
+            Assert.Equal(expected, types);
+            Assert.True(wrapped.TryGetValue(name, out var clientTypes), name + " is not in the client");
+            Assert.Equal(expected, clientTypes);
+        }
+
+        // And each one with an answer is registered as a function on that provider, and unregistered with it.
+        foreach (var (name, _, _, _) in Shipped.Where(static g => !g.Message))
+        {
+            Assert.Contains(fields[name] + ".RegisterFunc(", provider, StringComparison.Ordinal);
+            Assert.Contains("Unregister(" + fields[name] + ");", provider, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void The_type_reading_is_strict()
+    {
+        Assert.Equal("(uint,string,string)", GenericTypes("() -> (uint rowId, string name, string step)"));
+        Assert.Equal("int,(uint,string,string)[]", GenericTypes("(int max) -> (uint rowId, string name, string place)[]"));
+        Assert.Equal("string,string,int", GenericTypes("(string addon, string version) -> int"));
+        Assert.Equal("object", GenericTypes("message ()"));
+        Assert.NotEqual("(int,string,string)", GenericTypes("() -> (uint rowId, string name, string step)"));
+    }
+
+    [GeneratedRegex(@"(?<field>\w+) = pluginInterface\.GetIpcProvider<(?<types>[^;]+?)>\(IpcChannels\.(?<gate>\w+)\)")]
+    private static partial Regex ProviderRegistration();
+
+    [GeneratedRegex(@"GetIpcSubscriber<(?<types>[^;]+?)>\(""(?<gate>Tsukimichi\.\w+)""\)")]
+    private static partial Regex ClientSubscription();
 
     [Fact]
     public void The_summary_gates_are_pinned_by_name_signature_and_release()
@@ -43,11 +124,14 @@ public sealed class IpcSummaryContractTests
     }
 
     [Fact]
-    public void OpenAt_knows_five_places_and_nothing_else()
+    public void OpenAt_knows_six_places_and_nothing_else()
     {
-        Assert.Equal(["main", "tonight", "upnext", "route", "settings"], IpcPlaces.All);
+        // 1.22.0's five, then Make room appended (the words stay stable within the summary version).
+        Assert.Equal(["main", "tonight", "upnext", "route", "settings", "makeroom"], IpcPlaces.All);
         Assert.Equal("tonight", IpcPlaces.Parse(" Tonight "));
         Assert.Equal("upnext", IpcPlaces.Parse("UPNEXT"));
+        Assert.Equal("makeroom", IpcPlaces.Parse(" MakeRoom "));
+        Assert.Null(IpcPlaces.Parse("make room"));
         Assert.Null(IpcPlaces.Parse("travel"));
         Assert.Null(IpcPlaces.Parse("teleport"));
         Assert.Null(IpcPlaces.Parse(string.Empty));
@@ -65,6 +149,36 @@ public sealed class IpcSummaryContractTests
         Assert.Equal((-1, 0), empty.JournalAnswer());
         Assert.Empty(empty.EndingSoonAnswer());
         Assert.Equal((string.Empty, 0, false), empty.StoryAnswer());
+        Assert.Empty(empty.ReadyTonightAnswer(5));
+    }
+
+    [Fact]
+    public void GetReadyTonight_answers_the_first_max_a_fresh_array_each_call()
+    {
+        var summary = Sample() with
+        {
+            ReadyTonight = [(70100u, "The Long Road to Xak Tural", "Tuliyollal"), (70200u, "Sidequest (Lv 92)", "Dawntrail area 3"), (70300u, "A Fresh Start", "Gridania")],
+        };
+        Assert.Equal([(70100u, "The Long Road to Xak Tural", "Tuliyollal"), (70200u, "Sidequest (Lv 92)", "Dawntrail area 3")], summary.ReadyTonightAnswer(2));
+        Assert.Equal(3, summary.ReadyTonightAnswer(50).Length);
+        Assert.Empty(summary.ReadyTonightAnswer(0));
+        Assert.Empty(summary.ReadyTonightAnswer(-1));
+
+        var first = summary.ReadyTonightAnswer(1);
+        first[0] = (1u, "Changed", string.Empty);
+        Assert.Equal(70100u, summary.ReadyTonightAnswer(1)[0].RowId);
+
+        // A changed list is a changed summary (SummaryChanged).
+        Assert.False(summary.Same(Sample()));
+        Assert.True(summary.Same(summary with { ReadyTonight = [.. summary.ReadyTonight] }));
+    }
+
+    [Fact]
+    public void The_first_ready_summary_after_loading_is_a_change_so_SummaryChanged_is_sent()
+    {
+        // SummarySource starts from Empty and raises Changed (wired to SummaryChanged) for the first capture that differs.
+        Assert.False(Sample().Same(TsukimichiSummary.Empty));
+        Assert.False(TsukimichiSummary.Empty.Same(Sample()));
     }
 
     [Fact]

@@ -107,6 +107,64 @@ public static class UpNextPicker
         return levelGate is { } gate ? new UpNextPick(gate, UpNextRule.LevelGate) : null;
     }
 
+    /// <summary>
+    /// The Ready quests in Tonight's order (1.22.0, IPC <c>GetReadyTonight</c>): Up next's <see cref="Order"/> over every
+    /// quest (the followed route's next stop, the goal's quests, the next main scenario quest, the pins in pin order,
+    /// Next stops' quests closest first), then every other Ready quest in <paramref name="rest"/>'s order. Each quest
+    /// once, Ready ones only, at most <paramref name="max"/>; empty for a <paramref name="max"/> of 0 or less.
+    /// </summary>
+    /// <param name="rest">Every quest, in the journal's order (the catalog's).</param>
+    public static IReadOnlyList<uint> ReadyInOrder(
+        IReadOnlyDictionary<uint, QuestEvaluation> states,
+        uint? routeNext,
+        IEnumerable<uint> goal,
+        uint? msqNext,
+        IEnumerable<uint> pins,
+        IEnumerable<uint> closest,
+        IEnumerable<uint> rest,
+        int max)
+    {
+        ArgumentNullException.ThrowIfNull(states);
+        ArgumentNullException.ThrowIfNull(goal);
+        ArgumentNullException.ThrowIfNull(pins);
+        ArgumentNullException.ThrowIfNull(closest);
+        ArgumentNullException.ThrowIfNull(rest);
+        var picked = new List<uint>(Math.Clamp(max, 0, 64));
+        if (max <= 0)
+        {
+            return picked;
+        }
+
+        var seen = new HashSet<uint>();
+        bool Add(uint rowId)
+        {
+            if (Is(states, rowId, QuestState.Ready) && seen.Add(rowId))
+            {
+                picked.Add(rowId);
+            }
+
+            return picked.Count >= max;
+        }
+
+        if (routeNext is { } route && Add(route))
+        {
+            return picked;
+        }
+
+        foreach (var source in (IEnumerable<uint>[])[goal, msqNext is { } msq ? [msq] : [], pins, closest, rest])
+        {
+            foreach (var rowId in source)
+            {
+                if (Add(rowId))
+                {
+                    return picked;
+                }
+            }
+        }
+
+        return picked;
+    }
+
     /// <summary>Ready or in the journal: what a route stop, a goal quest and the main scenario need to be picked.</summary>
     public static bool Actionable(IReadOnlyDictionary<uint, QuestEvaluation> states, uint rowId) =>
         Is(states, rowId, QuestState.Ready) || Is(states, rowId, QuestState.Accepted);

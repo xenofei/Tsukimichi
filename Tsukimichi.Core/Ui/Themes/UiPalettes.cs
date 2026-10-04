@@ -891,9 +891,10 @@ public static class UiPalettes
     /// gilt on a light one. No designed tones, so Quiet, Plain and the drawer are mixed from the surface, and no lit pills.
     /// <c>Theme</c> builds it only when the host colours change.
     /// </summary>
-    public static UiPalette FollowDalamud(Vector4 windowBg, Vector4 frameBg, Vector4 frameBgHovered, Vector4 border, Vector4 text, Vector4 textDisabled)
+    /// <param name="light">Whether the window takes dark ink (<see cref="SurfaceColors.FromHost"/>); null decides by its luminance.</param>
+    public static UiPalette FollowDalamud(Vector4 windowBg, Vector4 frameBg, Vector4 frameBgHovered, Vector4 border, Vector4 text, Vector4 textDisabled, bool? light = null)
     {
-        var host = SurfaceColors.FromHost(windowBg, frameBg, frameBgHovered, border, text, textDisabled);
+        var host = SurfaceColors.FromHost(windowBg, frameBg, frameBgHovered, border, text, textDisabled, light);
         const float min = SurfaceColors.TextMinContrast;
         const float line = SurfaceColors.LineMinContrast;
         var s = host with

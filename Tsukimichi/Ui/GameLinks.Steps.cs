@@ -45,7 +45,12 @@ public sealed partial class GameLinks
     private readonly Dictionary<(uint RowId, byte Sequence), StepChoices?> stepChoices = [];
     private const int StepChoicesCacheSize = 256;
 
-    private readonly record struct StepViewKey(uint RowId, byte Sequence, uint LevelId, bool Live, ulong ContentId, int Spoilers, int Language);
+    /// <summary>
+    /// A step view's inputs: both shields it names through, the logged-in character's (<see cref="Spoilers"/>: person,
+    /// duty, whether the zone is hidden) and the pane's (<see cref="PaneSpoilers"/>: the zone's name), so a view named
+    /// through one character's shield is never handed out for another's.
+    /// </summary>
+    private readonly record struct StepViewKey(uint RowId, byte Sequence, uint LevelId, bool Live, ulong ContentId, int Spoilers, int PaneSpoilers, int Language);
 
     /// <summary>The journal text reader, for the step's objective in the game's words; null shows no objective text.</summary>
     public QuestTextService? QuestText { get; set; }
@@ -125,7 +130,7 @@ public sealed partial class GameLinks
 
         var step = choices.Pick(territory, x, z);
         var spoilers = Spoilers?.Invoke();
-        var key = new StepViewKey(quest.RowId, sequence, step.Place?.LevelId ?? 0, live, contentId, spoilers?.Fingerprint ?? 0, Localization.Loc.Version);
+        var key = new StepViewKey(quest.RowId, sequence, step.Place?.LevelId ?? 0, live, contentId, spoilers?.Fingerprint ?? 0, PaneSpoilers?.Fingerprint ?? 0, Localization.Loc.Version);
         for (var i = stepViews.Count - 1; i >= 0; i--)
         {
             if (stepViews[i].Key == key)
