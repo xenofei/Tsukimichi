@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-10-03T19:06:31Z",
+  "generatedUtc": "2026-10-04T02:56:18Z",
   "entries": [
     {
       "questRowId": 65549,
@@ -796,6 +796,18 @@
     },
     {
       "questRowId": 65770,
+      "kind": "Item",
+      "rewardId": 7890,
+      "itemId": 7890,
+      "rewardName": "Ninja Chainmail",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 65770,
       "kind": "Action",
       "rewardId": 2264,
       "itemId": 0,
@@ -813,6 +825,54 @@
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 65774,
+      "kind": "Item",
+      "rewardId": 8711,
+      "itemId": 8711,
+      "rewardName": "Eerie Hat",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 65774,
+      "kind": "Item",
+      "rewardId": 8712,
+      "itemId": 8712,
+      "rewardName": "Eerie Robe",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 65774,
+      "kind": "Item",
+      "rewardId": 8713,
+      "itemId": 8713,
+      "rewardName": "Eerie Tights",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 65774,
+      "kind": "Item",
+      "rewardId": 8714,
+      "itemId": 8714,
+      "rewardName": "Eerie Crakows",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 65774,
@@ -843,6 +903,30 @@
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1031;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 65786,
+      "kind": "Item",
+      "rewardId": 9273,
+      "itemId": 9273,
+      "rewardName": "Starlight Tunic",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 65788,
+      "kind": "Item",
+      "rewardId": 9268,
+      "itemId": 9268,
+      "rewardName": "Hitsuji Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 65789,
@@ -933,11 +1017,47 @@
       "otherSources": []
     },
     {
+      "questRowId": 65825,
+      "kind": "Item",
+      "rewardId": 9271,
+      "itemId": 9271,
+      "rewardName": "White Hitsuji Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 65826,
+      "kind": "Item",
+      "rewardId": 9270,
+      "itemId": 9270,
+      "rewardName": "Crimson Hitsuji Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
       "questRowId": 65838,
       "kind": "Item",
       "rewardId": 2354,
       "itemId": 2354,
       "rewardName": "Vulcan",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 65845,
+      "kind": "Item",
+      "rewardId": 9269,
+      "itemId": 9269,
+      "rewardName": "Black Hitsuji Kabuto",
       "confidence": "Static",
       "source": "Quest.Reward;untradable;otherSource=GilShopItem",
       "otherSources": [
@@ -1069,6 +1189,18 @@
       "confidence": "Static",
       "source": "Achievement.Data;type=9",
       "otherSources": []
+    },
+    {
+      "questRowId": 65890,
+      "kind": "Item",
+      "rewardId": 9272,
+      "itemId": 9272,
+      "rewardName": "Starlight Sugarloaf Hat",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 65890,
@@ -1480,6 +1612,18 @@
     },
     {
       "questRowId": 66037,
+      "kind": "Item",
+      "rewardId": 10066,
+      "itemId": 10066,
+      "rewardName": "Peach Blossom Choker",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66037,
       "kind": "Title",
       "rewardId": 194,
       "itemId": 0,
@@ -1782,6 +1926,18 @@
       "confidence": "Static",
       "source": "Action.UnlockLink",
       "otherSources": []
+    },
+    {
+      "questRowId": 66095,
+      "kind": "Item",
+      "rewardId": 10067,
+      "itemId": 10067,
+      "rewardName": "Egg Earrings",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 66095,
@@ -2479,6 +2635,18 @@
     },
     {
       "questRowId": 66590,
+      "kind": "Item",
+      "rewardId": 3222,
+      "itemId": 3222,
+      "rewardName": "Fighter's Cuirass",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66590,
       "kind": "Action",
       "rewardId": 52,
       "itemId": 0,
@@ -2566,6 +2734,18 @@
       "confidence": "Static",
       "source": "Quest.ActionReward",
       "otherSources": []
+    },
+    {
+      "questRowId": 66596,
+      "kind": "Item",
+      "rewardId": 3220,
+      "itemId": 3220,
+      "rewardName": "Gallant Surcoat",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 66596,
@@ -2659,6 +2839,18 @@
     },
     {
       "questRowId": 66602,
+      "kind": "Item",
+      "rewardId": 3221,
+      "itemId": 3221,
+      "rewardName": "Temple Cyclas",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66602,
       "kind": "Action",
       "rewardId": 69,
       "itemId": 0,
@@ -2736,6 +2928,18 @@
       "confidence": "Static",
       "source": "Quest.ActionReward",
       "otherSources": []
+    },
+    {
+      "questRowId": 66608,
+      "kind": "Item",
+      "rewardId": 3223,
+      "itemId": 3223,
+      "rewardName": "Drachen Mail",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 66608,
@@ -2839,6 +3043,18 @@
     },
     {
       "questRowId": 66614,
+      "kind": "Item",
+      "rewardId": 3226,
+      "itemId": 3226,
+      "rewardName": "Wizard's Coat",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66614,
       "kind": "Action",
       "rewardId": 162,
       "itemId": 0,
@@ -2919,6 +3135,18 @@
     },
     {
       "questRowId": 66620,
+      "kind": "Item",
+      "rewardId": 3225,
+      "itemId": 3225,
+      "rewardName": "Healer's Robe",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66620,
       "kind": "Action",
       "rewardId": 140,
       "itemId": 0,
@@ -2996,6 +3224,18 @@
       "confidence": "Static",
       "source": "Quest.ActionReward",
       "otherSources": []
+    },
+    {
+      "questRowId": 66626,
+      "kind": "Item",
+      "rewardId": 3224,
+      "itemId": 3224,
+      "rewardName": "Choral Shirt",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 66626,
@@ -3109,6 +3349,18 @@
     },
     {
       "questRowId": 66632,
+      "kind": "Item",
+      "rewardId": 3227,
+      "itemId": 3227,
+      "rewardName": "Evoker's Doublet",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66632,
       "kind": "Trait",
       "rewardId": 471,
       "itemId": 0,
@@ -3176,6 +3428,18 @@
       "confidence": "Static",
       "source": "Quest.ActionReward",
       "otherSources": []
+    },
+    {
+      "questRowId": 66638,
+      "kind": "Item",
+      "rewardId": 3228,
+      "itemId": 3228,
+      "rewardName": "Scholar's Gown",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 66638,
@@ -4113,6 +4377,18 @@
     },
     {
       "questRowId": 66824,
+      "kind": "Item",
+      "rewardId": 6112,
+      "itemId": 6112,
+      "rewardName": "Thug's Mug",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66824,
       "kind": "Minion",
       "rewardId": 62,
       "itemId": 6985,
@@ -4140,6 +4416,54 @@
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=853",
       "otherSources": []
+    },
+    {
+      "questRowId": 66828,
+      "kind": "Item",
+      "rewardId": 6964,
+      "itemId": 6964,
+      "rewardName": "Uma Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66829,
+      "kind": "Item",
+      "rewardId": 6966,
+      "itemId": 6966,
+      "rewardName": "Golden Uma Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66830,
+      "kind": "Item",
+      "rewardId": 6967,
+      "itemId": 6967,
+      "rewardName": "Black Uma Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 66831,
+      "kind": "Item",
+      "rewardId": 6965,
+      "itemId": 6965,
+      "rewardName": "Crimson Uma Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 66832,
@@ -4915,6 +5239,18 @@
     },
     {
       "questRowId": 67084,
+      "kind": "Item",
+      "rewardId": 16613,
+      "itemId": 16613,
+      "rewardName": "Vampire's Vest",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67084,
       "kind": "Achievement",
       "rewardId": 1624,
       "itemId": 0,
@@ -4922,6 +5258,30 @@
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 67085,
+      "kind": "Item",
+      "rewardId": 16614,
+      "itemId": 16614,
+      "rewardName": "Red Tori Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67085,
+      "kind": "Item",
+      "rewardId": 16615,
+      "itemId": 16615,
+      "rewardName": "Black Tori Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 67085,
@@ -7467,6 +7827,18 @@
     },
     {
       "questRowId": 67677,
+      "kind": "Item",
+      "rewardId": 15222,
+      "itemId": 15222,
+      "rewardName": "Yo-kai Watch",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67677,
       "kind": "Other",
       "rewardId": 6,
       "itemId": 0,
@@ -7620,6 +7992,66 @@
       "confidence": "Curated",
       "source": "curated/duty_unlocks.json",
       "otherSources": []
+    },
+    {
+      "questRowId": 67742,
+      "kind": "Item",
+      "rewardId": 13330,
+      "itemId": 13330,
+      "rewardName": "Amatsu Hachigane",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67742,
+      "kind": "Item",
+      "rewardId": 13331,
+      "itemId": 13331,
+      "rewardName": "Amatsu Togi",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67742,
+      "kind": "Item",
+      "rewardId": 13332,
+      "itemId": 13332,
+      "rewardName": "Amatsu Tekko",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67742,
+      "kind": "Item",
+      "rewardId": 13333,
+      "itemId": 13333,
+      "rewardName": "Amatsu Haidate",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67742,
+      "kind": "Item",
+      "rewardId": 13334,
+      "itemId": 13334,
+      "rewardName": "Amatsu Sune-ate",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 67742,
@@ -8083,6 +8515,42 @@
     },
     {
       "questRowId": 67753,
+      "kind": "Item",
+      "rewardId": 13295,
+      "itemId": 13295,
+      "rewardName": "See No Helm",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67753,
+      "kind": "Item",
+      "rewardId": 13296,
+      "itemId": 13296,
+      "rewardName": "Speak No Helm",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67753,
+      "kind": "Item",
+      "rewardId": 13297,
+      "itemId": 13297,
+      "rewardName": "Hear No Helm",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67753,
       "kind": "Achievement",
       "rewardId": 1391,
       "itemId": 0,
@@ -8090,6 +8558,54 @@
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 67754,
+      "kind": "Item",
+      "rewardId": 13299,
+      "itemId": 13299,
+      "rewardName": "Platinum Paramour's Earrings",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67754,
+      "kind": "Item",
+      "rewardId": 13568,
+      "itemId": 13568,
+      "rewardName": "Paramour's Earrings",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67756,
+      "kind": "Item",
+      "rewardId": 13298,
+      "itemId": 13298,
+      "rewardName": "Black-feathered Flat Hat",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67756,
+      "kind": "Item",
+      "rewardId": 13567,
+      "itemId": 13567,
+      "rewardName": "Red-feathered Flat Hat",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 67756,
@@ -8110,6 +8626,42 @@
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 67760,
+      "kind": "Item",
+      "rewardId": 13290,
+      "itemId": 13290,
+      "rewardName": "Reindeer Antler Headband",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67760,
+      "kind": "Item",
+      "rewardId": 13291,
+      "itemId": 13291,
+      "rewardName": "Reindeer Gloves",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67760,
+      "kind": "Item",
+      "rewardId": 13292,
+      "itemId": 13292,
+      "rewardName": "Reindeer Hooves",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 67760,
@@ -9184,6 +9736,18 @@
       ]
     },
     {
+      "questRowId": 67911,
+      "kind": "Item",
+      "rewardId": 16612,
+      "itemId": 16612,
+      "rewardName": "Starlight Robe",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
       "questRowId": 67913,
       "kind": "Orchestrion",
       "rewardId": 82,
@@ -10023,6 +10587,30 @@
     },
     {
       "questRowId": 67961,
+      "kind": "Item",
+      "rewardId": 20678,
+      "itemId": 20678,
+      "rewardName": "White Inu Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67961,
+      "kind": "Item",
+      "rewardId": 20679,
+      "itemId": 20679,
+      "rewardName": "Black Inu Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 67961,
       "kind": "Achievement",
       "rewardId": 1964,
       "itemId": 0,
@@ -10132,6 +10720,18 @@
       "otherSources": []
     },
     {
+      "questRowId": 68009,
+      "kind": "Item",
+      "rewardId": 20306,
+      "itemId": 20306,
+      "rewardName": "Yugiri and Gosetsu Sketch",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
       "questRowId": 68012,
       "kind": "Title",
       "rewardId": 352,
@@ -10223,6 +10823,18 @@
     },
     {
       "questRowId": 68052,
+      "kind": "Item",
+      "rewardId": 20307,
+      "itemId": 20307,
+      "rewardName": "Morin Khuur",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68052,
       "kind": "AetherCurrent",
       "rewardId": 2818203,
       "itemId": 0,
@@ -10230,6 +10842,18 @@
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
       "otherSources": []
+    },
+    {
+      "questRowId": 68053,
+      "kind": "Item",
+      "rewardId": 20639,
+      "itemId": 20639,
+      "rewardName": "Mol Banner",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 68053,
@@ -11647,6 +12271,42 @@
     },
     {
       "questRowId": 68496,
+      "kind": "Item",
+      "rewardId": 20564,
+      "itemId": 20564,
+      "rewardName": "Faire Joi",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68496,
+      "kind": "Item",
+      "rewardId": 20565,
+      "itemId": 20565,
+      "rewardName": "Faire Kohakama",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68496,
+      "kind": "Item",
+      "rewardId": 20566,
+      "itemId": 20566,
+      "rewardName": "Faire Zori",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68496,
       "kind": "Achievement",
       "rewardId": 1785,
       "itemId": 0,
@@ -11842,6 +12502,30 @@
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 68550,
+      "kind": "Item",
+      "rewardId": 22457,
+      "itemId": 22457,
+      "rewardName": "Inoshishi Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68550,
+      "kind": "Item",
+      "rewardId": 22458,
+      "itemId": 22458,
+      "rewardName": "Crimson Inoshishi Kabuto",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 68550,
@@ -12238,6 +12922,18 @@
       "otherSources": []
     },
     {
+      "questRowId": 68638,
+      "kind": "Item",
+      "rewardId": 23360,
+      "itemId": 23360,
+      "rewardName": "Namazu Bell",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
       "questRowId": 68667,
       "kind": "DutyUnlock",
       "rewardId": 540,
@@ -12574,6 +13270,54 @@
       "otherSources": []
     },
     {
+      "questRowId": 68694,
+      "kind": "Item",
+      "rewardId": 24609,
+      "itemId": 24609,
+      "rewardName": "Lucian Prince's Fingerless Glove",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68695,
+      "kind": "Item",
+      "rewardId": 24610,
+      "itemId": 24610,
+      "rewardName": "Lucian Prince's Bottoms",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68696,
+      "kind": "Item",
+      "rewardId": 24608,
+      "itemId": 24608,
+      "rewardName": "Lucian Prince's Jacket",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68696,
+      "kind": "Item",
+      "rewardId": 24611,
+      "itemId": 24611,
+      "rewardName": "Lucian Prince's Boots",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
       "questRowId": 68696,
       "kind": "Title",
       "rewardId": 420,
@@ -12612,6 +13356,18 @@
       "confidence": "Curated",
       "source": "curated/duty_unlocks.json",
       "otherSources": []
+    },
+    {
+      "questRowId": 68702,
+      "kind": "Item",
+      "rewardId": 24510,
+      "itemId": 24510,
+      "rewardName": "Four Lords",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 68703,
@@ -12678,6 +13434,42 @@
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 68711,
+      "kind": "Item",
+      "rewardId": 24145,
+      "itemId": 24145,
+      "rewardName": "Choir Hat",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68711,
+      "kind": "Item",
+      "rewardId": 24146,
+      "itemId": 24146,
+      "rewardName": "Choir Robe",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68711,
+      "kind": "Item",
+      "rewardId": 24147,
+      "itemId": 24147,
+      "rewardName": "Choir Shoes",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 68711,
@@ -12937,6 +13729,30 @@
     },
     {
       "questRowId": 68740,
+      "kind": "Item",
+      "rewardId": 24606,
+      "itemId": 24606,
+      "rewardName": "Spriggan Bottoms",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68740,
+      "kind": "Item",
+      "rewardId": 24607,
+      "itemId": 24607,
+      "rewardName": "Spriggan Boots",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 68740,
       "kind": "Achievement",
       "rewardId": 2239,
       "itemId": 0,
@@ -12976,6 +13792,18 @@
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 68744,
+      "kind": "Item",
+      "rewardId": 24590,
+      "itemId": 24590,
+      "rewardName": "Flower Crown",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 68744,
@@ -14219,6 +15047,42 @@
     },
     {
       "questRowId": 69200,
+      "kind": "Item",
+      "rewardId": 27943,
+      "itemId": 27943,
+      "rewardName": "Moonfire Hachimaki",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 69200,
+      "kind": "Item",
+      "rewardId": 27947,
+      "itemId": 27947,
+      "rewardName": "White Moonfire Happi",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 69200,
+      "kind": "Item",
+      "rewardId": 27950,
+      "itemId": 27950,
+      "rewardName": "Moonfire Tabi",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 69200,
       "kind": "Achievement",
       "rewardId": 2398,
       "itemId": 0,
@@ -15320,6 +16184,30 @@
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 69386,
+      "kind": "Item",
+      "rewardId": 30042,
+      "itemId": 30042,
+      "rewardName": "Seneschal's Monocle",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 69386,
+      "kind": "Item",
+      "rewardId": 30043,
+      "itemId": 30043,
+      "rewardName": "Princess's Peach Corsage",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 69386,
@@ -16834,6 +17722,18 @@
       "confidence": "Static",
       "source": "ContentFinderCondition.UnlockCriteria",
       "otherSources": []
+    },
+    {
+      "questRowId": 69533,
+      "kind": "Item",
+      "rewardId": 32803,
+      "itemId": 32803,
+      "rewardName": "Lovely Moogle Cap",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 69533,
@@ -18841,6 +19741,18 @@
     },
     {
       "questRowId": 70007,
+      "kind": "Item",
+      "rewardId": 35857,
+      "itemId": 35857,
+      "rewardName": "Little Lady's Crown",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70007,
       "kind": "Achievement",
       "rewardId": 3034,
       "itemId": 0,
@@ -19183,6 +20095,66 @@
     },
     {
       "questRowId": 70077,
+      "kind": "Item",
+      "rewardId": 36832,
+      "itemId": 36832,
+      "rewardName": "Summer Sunset Bandana",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70077,
+      "kind": "Item",
+      "rewardId": 36833,
+      "itemId": 36833,
+      "rewardName": "Summer Sunset Beach Cover-up",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70077,
+      "kind": "Item",
+      "rewardId": 36834,
+      "itemId": 36834,
+      "rewardName": "Summer Sunset Wrist Torques",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70077,
+      "kind": "Item",
+      "rewardId": 36835,
+      "itemId": 36835,
+      "rewardName": "Summer Sunset Bottoms",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70077,
+      "kind": "Item",
+      "rewardId": 36836,
+      "itemId": 36836,
+      "rewardName": "Summer Sunset Sandals",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70077,
       "kind": "Achievement",
       "rewardId": 3080,
       "itemId": 0,
@@ -19264,6 +20236,54 @@
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=509",
       "otherSources": []
+    },
+    {
+      "questRowId": 70125,
+      "kind": "Item",
+      "rewardId": 35853,
+      "itemId": 35853,
+      "rewardName": "Heavensturn Domaru",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70125,
+      "kind": "Item",
+      "rewardId": 35854,
+      "itemId": 35854,
+      "rewardName": "Heavensturn Kote",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70125,
+      "kind": "Item",
+      "rewardId": 35855,
+      "itemId": 35855,
+      "rewardName": "Heavensturn Haidate",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70125,
+      "kind": "Item",
+      "rewardId": 35856,
+      "itemId": 35856,
+      "rewardName": "Heavensturn Sune-ate",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 70125,
@@ -19939,6 +20959,66 @@
     },
     {
       "questRowId": 70191,
+      "kind": "Item",
+      "rewardId": 38228,
+      "itemId": 38228,
+      "rewardName": "Wake Doctor's Mask",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70191,
+      "kind": "Item",
+      "rewardId": 38229,
+      "itemId": 38229,
+      "rewardName": "Wake Doctor's White Coat",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70191,
+      "kind": "Item",
+      "rewardId": 38230,
+      "itemId": 38230,
+      "rewardName": "Wake Doctor's Rubber Gloves",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70191,
+      "kind": "Item",
+      "rewardId": 38231,
+      "itemId": 38231,
+      "rewardName": "Wake Doctor's Bottoms",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70191,
+      "kind": "Item",
+      "rewardId": 38232,
+      "itemId": 38232,
+      "rewardName": "Wake Doctor's Shoes",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70191,
       "kind": "Achievement",
       "rewardId": 3120,
       "itemId": 0,
@@ -20296,6 +21376,30 @@
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 70260,
+      "kind": "Item",
+      "rewardId": 39245,
+      "itemId": 39245,
+      "rewardName": "Phoenix Riser Helmet",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70260,
+      "kind": "Item",
+      "rewardId": 39246,
+      "itemId": 39246,
+      "rewardName": "Phoenix Riser Suit",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 70260,
@@ -21996,6 +23100,66 @@
       "otherSources": []
     },
     {
+      "questRowId": 70317,
+      "kind": "Item",
+      "rewardId": 40416,
+      "itemId": 40416,
+      "rewardName": "Unorthodox Saint's Cap",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70317,
+      "kind": "Item",
+      "rewardId": 40417,
+      "itemId": 40417,
+      "rewardName": "Unorthodox Saint's Halfrobe",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70317,
+      "kind": "Item",
+      "rewardId": 40418,
+      "itemId": 40418,
+      "rewardName": "Unorthodox Saint's Gloves",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70317,
+      "kind": "Item",
+      "rewardId": 40419,
+      "itemId": 40419,
+      "rewardName": "Unorthodox Saint's Bottoms",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70317,
+      "kind": "Item",
+      "rewardId": 40420,
+      "itemId": 40420,
+      "rewardName": "Unorthodox Saint's Longboots",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
       "questRowId": 70318,
       "kind": "Achievement",
       "rewardId": 3284,
@@ -22993,6 +24157,30 @@
     },
     {
       "questRowId": 70350,
+      "kind": "Item",
+      "rewardId": 41565,
+      "itemId": 41565,
+      "rewardName": "Imp Head",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70350,
+      "kind": "Item",
+      "rewardId": 41566,
+      "itemId": 41566,
+      "rewardName": "Imp Suit",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70350,
       "kind": "Achievement",
       "rewardId": 3418,
       "itemId": 0,
@@ -23262,6 +24450,18 @@
       "confidence": "Static",
       "source": "Achievement.Key;achievement=3492;type=6",
       "otherSources": []
+    },
+    {
+      "questRowId": 70436,
+      "kind": "Item",
+      "rewardId": 44112,
+      "itemId": 44112,
+      "rewardName": "Xibruq Pibil",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 70445,
@@ -24101,6 +25301,66 @@
     },
     {
       "questRowId": 70721,
+      "kind": "Item",
+      "rewardId": 43471,
+      "itemId": 43471,
+      "rewardName": "Night of Devilry Horns",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70721,
+      "kind": "Item",
+      "rewardId": 43472,
+      "itemId": 43472,
+      "rewardName": "Night of Devilry Shirt",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70721,
+      "kind": "Item",
+      "rewardId": 43473,
+      "itemId": 43473,
+      "rewardName": "Night of Devilry Fingerless Gloves",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70721,
+      "kind": "Item",
+      "rewardId": 43474,
+      "itemId": 43474,
+      "rewardName": "Night of Devilry Trousers",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70721,
+      "kind": "Item",
+      "rewardId": 43475,
+      "itemId": 43475,
+      "rewardName": "Night of Devilry Boots",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70721,
       "kind": "Achievement",
       "rewardId": 3570,
       "itemId": 0,
@@ -24252,6 +25512,66 @@
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=709",
       "otherSources": []
+    },
+    {
+      "questRowId": 70774,
+      "kind": "Item",
+      "rewardId": 44645,
+      "itemId": 44645,
+      "rewardName": "Seneschal Prince's Headset",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70774,
+      "kind": "Item",
+      "rewardId": 44646,
+      "itemId": 44646,
+      "rewardName": "Seneschal Prince's Jacket",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70774,
+      "kind": "Item",
+      "rewardId": 44647,
+      "itemId": 44647,
+      "rewardName": "Seneschal Prince's Gloves",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70774,
+      "kind": "Item",
+      "rewardId": 44648,
+      "itemId": 44648,
+      "rewardName": "Seneschal Prince's Trousers",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70774,
+      "kind": "Item",
+      "rewardId": 44649,
+      "itemId": 44649,
+      "rewardName": "Seneschal Prince's Longboots",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 70774,
@@ -24751,6 +26071,54 @@
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6;otherSource=SpecialShop",
       "otherSources": [
         "SpecialShop"
+      ]
+    },
+    {
+      "questRowId": 70857,
+      "kind": "Item",
+      "rewardId": 47924,
+      "itemId": 47924,
+      "rewardName": "Maritime Mirrored Sunglasses",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70857,
+      "kind": "Item",
+      "rewardId": 47925,
+      "itemId": 47925,
+      "rewardName": "Maritime Top",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70857,
+      "kind": "Item",
+      "rewardId": 47926,
+      "itemId": 47926,
+      "rewardName": "Maritime Shorts",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
+    },
+    {
+      "questRowId": 70857,
+      "kind": "Item",
+      "rewardId": 47927,
+      "itemId": 47927,
+      "rewardName": "Maritime Sandals",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
       ]
     },
     {
@@ -25320,6 +26688,18 @@
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
+    },
+    {
+      "questRowId": 70961,
+      "kind": "Item",
+      "rewardId": 50286,
+      "itemId": 50286,
+      "rewardName": "Party Eggy Eyeglasses",
+      "confidence": "Static",
+      "source": "Quest.Reward;untradable;otherSource=GilShopItem",
+      "otherSources": [
+        "GilShopItem"
+      ]
     },
     {
       "questRowId": 70961,
