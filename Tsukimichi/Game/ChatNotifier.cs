@@ -101,6 +101,7 @@ public sealed partial class ChatNotifier : IDisposable
             Nudge();
             AnnounceSeasonal();
             AnnounceEndingSoon();
+            AnnounceCappedTurnIns();
             AnnouncePayoffGates();
         }
         catch (Exception ex)

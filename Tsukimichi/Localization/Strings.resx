@@ -13087,6 +13087,32 @@
     <value>The game counts your inventory only: take it out of the armoury chest.</value>
     <comment>Hand in line (1.19, N5).</comment>
   </data>
+  <data name="Core.Todo.TurnIn" xml:space="preserve">
+    <value>Turn in on a job that isn't capped: {0}</value>
+    <comment>Core: TodoList.cs. A Todo row (1.19, C8). {0} = the quest's name.</comment>
+  </data>
+  <data name="Core.Todo.TurnInHint" xml:space="preserve">
+    <value>{0} Lv {1} · {2} EXP</value>
+    <comment>Core: TodoList.cs. After the capped turn-in row. {0} = the job that gets the most (abbreviation), {1} = its level, {2} = the EXP it gets.</comment>
+  </data>
+  <data name="Core.Todo.TurnInHintNoJob" xml:space="preserve">
+    <value>{0} EXP elsewhere</value>
+    <comment>Core: TodoList.cs. After the capped turn-in row when the job's name is unknown. {0} = the EXP another job gets.</comment>
+  </data>
+  <data name="TodoSectionTurnIn" xml:space="preserve">
+    <value>Where the EXP goes</value>
+    <comment>Todo overlay caption over the capped turn-in rows (1.19, C8).</comment>
+  </data>
+  <data name="CappedTurnInChatFormat" xml:space="preserve">
+    <value>Turn in on a job that isn't capped: {0}</value>
+    <comment>Chat line (1.19, C8). {0} = the quest link.</comment>
+  </data>
+  <data name="CappedTurnInConfig" xml:space="preserve">
+    <value>Notice before handing in on a capped job</value>
+  </data>
+  <data name="CappedTurnInConfigHint" xml:space="preserve">
+    <value>A chat line once per quest when it reaches its turn-in step on a capped job and another job gets the EXP.</value>
+  </data>
   <data name="GameOfferedFormat" xml:space="preserve">
     <value>Offered by the game · {0}</value>
     <comment>Detail pane hero, after the state (1.19 C1). {0} = the date the game first offered it (short, no year unless another year).</comment>
