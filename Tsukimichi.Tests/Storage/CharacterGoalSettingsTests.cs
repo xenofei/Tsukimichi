@@ -87,6 +87,23 @@ public sealed class CharacterGoalSettingsTests : IDisposable
     }
 
     [Fact]
+    public void A_long_label_is_cut_on_a_character_boundary()
+    {
+        // 1.21 Core review: the cut at 24 UTF-16 units split a surrogate pair; it counts characters (text elements).
+        var moons = "a" + string.Concat(Enumerable.Repeat("\U0001F319", 30));
+        var cut = CharacterSettings.Trimmed(moons)!;
+        Assert.Equal(1 + ((CharacterSettings.MaxLabelLength - 1) * 2), cut.Length);
+        Assert.False(char.IsHighSurrogate(cut[^1]));
+        Assert.Equal("\U0001F319", cut[^2..]);
+
+        var japanese = new string('月', 30);
+        Assert.Equal(CharacterSettings.MaxLabelLength, CharacterSettings.Trimmed(japanese)!.Length);
+
+        // The text field's buffer counts bytes: 24 Japanese characters take 72 of them.
+        Assert.True(CharacterSettings.MaxLabelBytes >= System.Text.Encoding.UTF8.GetByteCount(japanese[..CharacterSettings.MaxLabelLength]));
+    }
+
+    [Fact]
     public void Copy_same_and_empty_know_the_new_fields()
     {
         var entry = new CharacterSettings { Goal = AltGoal.Flying(3), Starred = true, Role = "main", Nickname = "K" };

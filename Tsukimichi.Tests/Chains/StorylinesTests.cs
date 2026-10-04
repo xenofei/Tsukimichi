@@ -183,6 +183,10 @@ public sealed class StorylinesTests
         Assert.Equal(4, ends[2].Left);
         Assert.False(ends[2].IsFinale);
         Assert.All(ends, e => Assert.Equal(StoryLineKind.Job, e.Line.Kind));
+
+        // "Not for me" on a line's next quest (P4's set-aside list) takes the line off the card.
+        var kept = LooseEnds.Find(LooseEnds.Lines(catalog, ChainCatalog.Empty), states, catalog, new HashSet<uint> { 612 });
+        Assert.Equal(["Genre 600", "Genre 620"], kept.Select(e => e.Line.Chain.Name));
     }
 
     [Fact]

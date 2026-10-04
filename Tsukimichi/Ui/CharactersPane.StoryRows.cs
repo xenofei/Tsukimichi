@@ -4,6 +4,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
@@ -13,8 +14,10 @@ namespace Tsukimichi.Ui;
 /// 44 px (scaled with the body text), the line's icon, its name on line 1 and what is left on line 2 ("3 left · next:
 /// Forever in Our Hearts · Ready", "Finale · 1 left · Lv 80 · ◑ A Harmony from the Heavens"), and a reserved slot at the
 /// trailing end where Teleport and "…" show on hover or keyboard navigation, so a hover never covers text and nothing
-/// moves. The quest name is a link that shows the quest in the Journal. Drawn on the draw list; nothing allocates per
-/// frame.
+/// moves. The quest name is a link that shows the quest in the Journal; a placeholder ("A side story ahead",
+/// "Sidequest (Lv 90)", "Job quest ahead (Lv 80)") takes the shield's hover and right-click. Travel and hand-offs are
+/// offered only for the character logged in here (spec-1.21 decision 5). Drawn on the draw list; nothing allocates
+/// per frame.
 /// </summary>
 public sealed partial class CharactersPane
 {
@@ -40,6 +43,8 @@ public sealed partial class CharactersPane
     /// <param name="Tail">Line 2's words after the quest (" · Ready").</param>
     /// <param name="RowIds">The line's quests, for Send to Questionable.</param>
     /// <param name="RecapQuest">A quest naming the line for the story recap; 0 offers none.</param>
+    /// <param name="Shield">What a placeholder on the row hides (<see cref="StoryShield"/>); null when the row prints none.</param>
+    /// <param name="NotForMe">The "…" offers "Not for me" on <paramref name="Quest"/> (Loose ends, P4's set-aside list).</param>
     private sealed record StoryRowView(
         uint IconId,
         string Name,
@@ -53,11 +58,23 @@ public sealed partial class CharactersPane
         bool Veiled,
         string Tail,
         IReadOnlyList<uint> RowIds,
-        uint RecapQuest = 0)
+        uint RecapQuest = 0,
+        StoryShield? Shield = null,
+        bool NotForMe = false)
     {
         /// <summary>The slot's actions apply: a quest to travel to that the shield does not hide.</summary>
         public bool HasActions => Quest is not null && !Veiled;
     }
+
+    /// <summary>
+    /// What a storyline row's placeholder hides, for the shield's hover and right-click (spec-1.20 N6): the quest past the
+    /// story point it stands for (its reveal is that quest's names), and whether the placeholder is line 1 (the line's
+    /// name, "A side story ahead") or line 2's quest ("Sidequest (Lv 90)").
+    /// </summary>
+    private readonly record struct StoryShield(string Name, QuestRecord Quest, bool OnName);
+
+    /// <summary>The character on view is the one logged in on this client: the only one travel and hand-offs act for (spec-1.21 decision 5).</summary>
+    private bool ViewedLiveHere => session.ViewedContentId is { } viewed && viewed == session.LiveContentId;
 
     /// <summary>A row's height at the current scale and text size: 44 px at 100 %, never less than two lines and their air.</summary>
     private static float StoryRowHeight() =>
@@ -68,7 +85,7 @@ public sealed partial class CharactersPane
     {
         var more = MoreSize(ImGui.GetTextLineHeight());
         var gap = ImGui.GetStyle().ItemSpacing.X;
-        var teleport = Links is { TeleportShown: true } ? TravelControls.RowButtonWidth(ActionIcons.TeleportIcon, Strings.StoriesTeleport) + gap : 0f;
+        var teleport = Links is { TeleportShown: true } && ViewedLiveHere ? TravelControls.RowButtonWidth(ActionIcons.TeleportIcon, Strings.StoriesTeleport) + gap : 0f;
         return teleport + more;
     }
 
@@ -117,8 +134,14 @@ public sealed partial class CharactersPane
         var y1 = start.Y + gapY;
         var y2 = y1 + line + gapY;
 
-        // Line 1: the line's name; a side story the shield hides reads in Secondary as a whole (spec-1.21 colour language).
-        if (Chrome.EllipsisTextAt(dl, new Vector2(left, y1), room, row.Name, Theme.U32(row.Veiled && row.Quest is null ? s.TextSecondary : s.Text)) && hovered && ImGui.IsMouseHoveringRect(new Vector2(left, y1), new Vector2(right, y1 + line)))
+        // Line 1: the line's name; a side story the shield hides reads in Secondary as a whole (spec-1.21 colour language)
+        // and answers the shield's hover and right-click.
+        var nameCut = Chrome.EllipsisTextAt(dl, new Vector2(left, y1), room, row.Name, Theme.U32(row.Veiled && row.Quest is null ? s.TextSecondary : s.Text));
+        if (row.Shield is { OnName: true } named)
+        {
+            ShieldText.Interact(new Vector2(left, y1), new Vector2(right, y1 + line), session, SpoilerKind.Reward, named.Name, row.Name, named.Quest, Links, lead: nameCut ? row.Name : null, standIn: true);
+        }
+        else if (nameCut && hovered && ImGui.IsMouseHoveringRect(new Vector2(left, y1), new Vector2(right, y1 + line)))
         {
             UiMetrics.Tooltip(row.Name);
         }
@@ -171,7 +194,11 @@ public sealed partial class CharactersPane
             var nameWidth = ImGui.CalcTextSize(row.QuestName).X;
             var shown = MathF.Min(nameWidth, right - x);
             var cut = Chrome.EllipsisTextAt(dl, new Vector2(x, y2), shown, row.QuestName, Theme.U32(row.Veiled ? s.TextSecondary : s.Text), nameWidth);
-            if (row.Quest is { } quest && !row.Veiled)
+            if (row.Shield is { OnName: false } hidden)
+            {
+                ShieldText.Interact(new Vector2(x, y2), new Vector2(x + MathF.Max(1f, shown), y2 + line), session, SpoilerKind.Reward, hidden.Name, row.QuestName, hidden.Quest, Links, lead: cut ? row.QuestName : null, standIn: true);
+            }
+            else if (row.Quest is { } quest && !row.Veiled)
             {
                 ImGui.SetCursorScreenPos(new Vector2(x, y2));
                 if (ImGui.InvisibleButton("##quest", new Vector2(MathF.Max(1f, shown), line)))
@@ -199,7 +226,7 @@ public sealed partial class CharactersPane
             var more = MoreSize(line);
             var slotLeft = max.X - slot;
             var rowMid = start.Y + (height * 0.5f);
-            if (Links is { TeleportShown: true } links)
+            if (Links is { TeleportShown: true } links && ViewedLiveHere)
             {
                 ImGui.SetCursorScreenPos(new Vector2(slotLeft, rowMid - (ImGui.GetFrameHeight() * 0.5f)));
                 TravelControls.TeleportButton(links, target, Strings.StoriesTeleport);
@@ -224,7 +251,8 @@ public sealed partial class CharactersPane
 
     /// <summary>
     /// A row's "…" menu: Show in the Journal, Flag the giver, travel (Teleport, Walk, Go to giver, as the automation level
-    /// shows them), Send to Questionable (at Full hand-offs) and, for a story the character started, Read the story so far.
+    /// shows them) and Send to Questionable (at Full hand-offs), both for the character logged in here only; for a story
+    /// the character started, Read the story so far; on a Loose ends row, Not for me (P4's set-aside list, with Undo).
     /// </summary>
     private void DrawStoryRowMenu(UiState ui, string menuId, StoryRowView row, QuestRecord quest)
     {
@@ -247,10 +275,13 @@ public sealed partial class CharactersPane
                 links.FlagMap(quest);
             }
 
-            TravelControls.MenuItems(links, quest, Strings.StoriesTeleport);
+            if (ViewedLiveHere)
+            {
+                TravelControls.MenuItems(links, quest, Strings.StoriesTeleport);
+            }
         }
 
-        if (row.RowIds.Count > 0 && AutomationGate.Questionable(Questionable) is { } questionable)
+        if (row.RowIds.Count > 0 && ViewedLiveHere && AutomationGate.Questionable(Questionable) is { } questionable)
         {
             questionable.DrawSubmenu(MainWindow.QuestionableHost, Strings.QuestionableSendButton, row.RowIds, static rows => rows);
         }
@@ -259,5 +290,25 @@ public sealed partial class CharactersPane
         {
             ui.OpenRecap(new RecapRequest(row.RecapQuest));
         }
+
+        if (row.NotForMe && SetAside.CanSetAside)
+        {
+            ImGui.Separator();
+            if (ImGui.MenuItem(Strings.BluesNotForMe))
+            {
+                // The line leaves the card (LooseEnds.Find skips a line whose next quest is set aside), with Undo.
+                SetAside.SetAside(quest, notForMe: true);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.LooseEndsNotForMeTooltip);
+            }
+        }
     }
+
+    /// <summary>"Set aside for later" and "Not for me" for the character on view (P4), over the roster's settings book.</summary>
+    private SetAsideActions SetAside => setAsideActions ??= new SetAsideActions(session, roster.Settings);
+
+    private SetAsideActions? setAsideActions;
 }

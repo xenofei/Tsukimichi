@@ -114,8 +114,8 @@ public static class TriadBoard
         }
 
         var read = records is not null && records.Watch == index.Fingerprint ? records : null;
-        var beaten = read is null ? null : new HashSet<uint>(read.Beaten);
-        var owned = read is null ? null : new HashSet<uint>(read.Cards);
+        var beaten = read is null ? null : new HashSet<uint>(read.Beaten ?? []);
+        var owned = read is null ? null : new HashSet<uint>(read.Cards ?? []);
         questMasked ??= static _ => false;
         zoneMasked ??= static _ => false;
 

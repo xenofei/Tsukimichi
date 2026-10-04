@@ -135,6 +135,40 @@ public sealed class LinkedFolders
         beats[folder] = [.. result.Heartbeats];
     }
 
+    /// <summary>
+    /// One pass over <paramref name="folders"/> (the linked folders, in order): forgets the unlinked ones, then folds each
+    /// one's <paramref name="scan"/>. A folder whose scan says it is gone (null: its <c>characters</c> folder no longer
+    /// exists) is forgotten with its characters. A folder whose scan throws keeps its last snapshots but loses its
+    /// heartbeats, so none of its characters stays "Live" on a stale read; the other folders are scanned all the same.
+    /// </summary>
+    /// <param name="scan">Scans one folder (<see cref="FolderScan.Run"/> with <see cref="KnownStamps"/>); null when the folder is gone.</param>
+    /// <param name="failed">Told of a folder whose scan threw; null tells no one.</param>
+    public void ScanAll(IReadOnlyList<string> folders, Func<string, FolderScanResult?> scan, Action<string, Exception>? failed = null)
+    {
+        ArgumentNullException.ThrowIfNull(folders);
+        ArgumentNullException.ThrowIfNull(scan);
+        Keep(folders);
+        foreach (var folder in folders)
+        {
+            try
+            {
+                if (scan(folder) is { } result)
+                {
+                    Take(folder, result);
+                }
+                else
+                {
+                    Forget(folder);
+                }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                beats.Remove(folder);
+                failed?.Invoke(folder, ex);
+            }
+        }
+    }
+
     /// <summary>The stamps the last scan of <paramref name="folder"/> returned (empty before the first), to pass as <c>known</c>.</summary>
     public IReadOnlyDictionary<ulong, FileStamp> KnownStamps(string folder) =>
         known.TryGetValue(folder, out var stamps) ? stamps : new Dictionary<ulong, FileStamp>();
@@ -146,10 +180,15 @@ public sealed class LinkedFolders
         var keep = new HashSet<string>(folders, StringComparer.OrdinalIgnoreCase);
         foreach (var folder in known.Keys.Where(f => !keep.Contains(f)).ToList())
         {
-            known.Remove(folder);
-            saved.Remove(folder);
-            beats.Remove(folder);
+            Forget(folder);
         }
+    }
+
+    private void Forget(string folder)
+    {
+        known.Remove(folder);
+        saved.Remove(folder);
+        beats.Remove(folder);
     }
 
     /// <summary>

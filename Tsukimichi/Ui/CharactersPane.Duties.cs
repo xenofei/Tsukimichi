@@ -193,7 +193,18 @@ public sealed partial class CharactersPane
     /// </summary>
     private (string Name, bool StandIn)? HiddenDuty(DutyBoardSource.Row row)
     {
-        if (row.Quest is not { } quest || !ShieldText.Holds(row.Duty) || session.Unlocks is not { } unlocks)
+        if (!ShieldText.Holds(row.Duty))
+        {
+            return null;
+        }
+
+        // "Unlocked, never cleared": no quest to find the duty by; the row carries its own name.
+        if (row.Quest is null && row.RealName is { } real)
+        {
+            return session.Spoilers.IsNameMasked(SpoilerKind.Duty, real) ? (real, false) : null;
+        }
+
+        if (row.Quest is not { } quest || session.Unlocks is not { } unlocks)
         {
             return null;
         }

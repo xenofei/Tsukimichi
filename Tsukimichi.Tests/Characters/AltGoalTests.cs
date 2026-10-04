@@ -88,6 +88,63 @@ public sealed class AltGoalTests(FixtureCatalog fixture) : IClassFixture<Fixture
     }
 
     [Fact]
+    public void The_story_goal_leaves_out_quests_out_of_the_totals()
+    {
+        // 1.21 Core review: before choosing a Grand Company all three "The Company You Keep" counted, so Left was two
+        // too high and Ready listed three. A spare alternative and another path's quest are not left to do.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Start", section: 0, genre: 1) with { AddedIn = "2.0" },
+            Quest(2, "Maelstrom", section: 0, genre: 1) with { AddedIn = "2.0" },
+            Quest(3, "Twin Adder", section: 0, genre: 1) with { AddedIn = "2.0" },
+            Quest(4, "Immortal Flames", section: 0, genre: 1) with { AddedIn = "2.0" },
+            Quest(5, "After", section: 0, genre: 1) with { AddedIn = "2.0" },
+        ]);
+        var states = new Dictionary<uint, QuestEvaluation>
+        {
+            [1] = State(QuestState.Completed),
+            [2] = State(QuestState.Ready),
+            [3] = State(QuestState.Ready) with { IsSpareAlternative = true },
+            [4] = State(QuestState.Ready) with { IsSpareAlternative = true },
+            [5] = State(QuestState.Blocked),
+        };
+
+        var progress = AltGoals.Story(catalog, states, "2.0");
+        Assert.Equal(2, progress.Left);
+        Assert.Equal([2u, 5u], progress.Quests.Select(static q => q.RowId));
+        Assert.Equal(1, progress.Doable);
+    }
+
+    [Fact]
+    public void The_roulettes_goal_counts_a_shared_duty_once_and_a_level_as_a_level()
+    {
+        // 1.21 Core review: Left summed Needed - Unlocked per roulette, so a duty in two roulettes counted twice, and a
+        // roulette closed only by level added a duty.
+        var unlock = Quest(1, "Unlock");
+        var duty = new DutyRunInfo(100, 200, 300, DutyRunInfo.Dungeons, "Shared", true, false);
+        var leveling = new RouletteInfo(1, "Leveling", DutyRoulettes.Leveling, false, 15, 0, 0, 0);
+        var high = new RouletteInfo(2, "High-level", DutyRoulettes.HighLevel, false, 50, 0, 0, 0);
+        var expert = new RouletteInfo(3, "Expert", DutyRoulettes.Expert, false, 100, 0, 0, 0);
+        var states = new Dictionary<uint, QuestEvaluation> { [1] = State(QuestState.Ready) };
+        var shared = new BoardDuty(duty, [unlock]);
+
+        var board = new DutyBoardModel(
+        [
+            new RouletteLine(leveling, RouletteLock.NeedsDuties, 0, 1, [shared]) { NeedsEvery = true },
+            new RouletteLine(high, RouletteLock.NeedsDuties, 0, 1, [shared]) { NeedsEvery = true },
+        ], []);
+        var progress = AltGoals.Roulettes(states, board);
+        Assert.Equal(1, progress.Left);
+        Assert.Equal(0, progress.LevelNeeded);
+
+        var level = new DutyBoardModel([new RouletteLine(expert, RouletteLock.NeedsLevel, 4, 4, [])], []);
+        var byLevel = AltGoals.Roulettes(states, level);
+        Assert.Equal(0, byLevel.Left);
+        Assert.Equal(100, byLevel.LevelNeeded);
+        Assert.False(byLevel.Reached);
+    }
+
+    [Fact]
     public void The_match_goal_is_the_unlock_quests_the_other_has_done()
     {
         var catalog = fixture.Bundle.Catalog;

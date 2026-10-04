@@ -48,6 +48,40 @@ public sealed class FolderScanTests : IDisposable
     }
 
     [Fact]
+    public void A_file_with_null_lists_reads_with_empty_ones_and_never_throws()
+    {
+        // 1.21 Core review: "tribes": null made the rank repair throw a NullReferenceException out of the scan, and a
+        // Triple Triad record's null lists threw later in the board and the diff.
+        Directory.CreateDirectory(Dir);
+        File.WriteAllText(Path.Combine(Dir, "123.json"), """{"schemaVersion":1,"contentId":123,"name":"X","tribes":null,"jobLevels":null,"triadRecords":{"watch":1,"beaten":null,"cards":null}}""");
+
+        var scan = FolderScan.Run(Dir, new Dictionary<ulong, FileStamp>(), new JsonSnapshotStore(tmp.Path), None);
+
+        var read = Assert.Single(scan.Changed);
+        Assert.Empty(read.Tribes);
+        Assert.Empty(read.JobLevels);
+        Assert.Empty(read.TriadRecords!.Beaten);
+        Assert.Empty(read.TriadRecords.Cards);
+        Assert.True(TriadRecordCapture.Same(read.TriadRecords, new TriadRecordCapture(1, [], [])));
+        Assert.True(TriadRecordCapture.Same(new TriadRecordCapture(1, null!, null!), new TriadRecordCapture(1, [], [])));
+    }
+
+    [Fact]
+    public void A_file_naming_another_character_is_skipped_not_taken_in_under_that_id()
+    {
+        // 1.21 Core review: a 5.json holding character 6 was stored under 6 and removed by 5, so it never left the list.
+        var store = new JsonSnapshotStore(tmp.Path);
+        store.Save(Snapshot(6, 0));
+        File.Copy(Path.Combine(Dir, "6.json"), Path.Combine(Dir, "5.json"));
+
+        var scan = FolderScan.Run(Dir, new Dictionary<ulong, FileStamp>(), store, None);
+
+        Assert.Equal([6UL], scan.Changed.Select(static s => s.ContentId));
+        Assert.Equal(SharedLoad.Invalid, scan.Problems![5]);
+        Assert.Contains(scan.Warnings, static w => w.Contains("5.json", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void A_deleted_snapshot_is_reported_removed()
     {
         var store = new JsonSnapshotStore(tmp.Path);

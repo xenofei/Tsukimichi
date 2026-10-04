@@ -327,8 +327,8 @@ public sealed class JsonSnapshotStore : ISnapshotStore
             }
 
             var migrated = migrator.Migrate(root, out _);
-            var snapshot = migrated.Deserialize<CharacterSnapshot>(StorageJson.Options)
-                ?? throw new InvalidDataException("Snapshot deserialized to null.");
+            var snapshot = Normalized(migrated.Deserialize<CharacterSnapshot>(StorageJson.Options)
+                ?? throw new InvalidDataException("Snapshot deserialized to null."));
 
             // Builds before 1.4.2 saved the raw rank byte, with the "ranked up today" bit set on a rank-up day.
             snapshot = snapshot.WithMaskedTribeRanks();
@@ -343,11 +343,62 @@ public sealed class JsonSnapshotStore : ISnapshotStore
 
             return SharedRead<CharacterSnapshot>.Of(snapshot);
         }
-        catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException or InvalidOperationException or FormatException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
+            // Whatever a hand-edited or damaged file makes the reader throw (a null list a migration or repair then walks
+            // included) is that file's problem, never the caller's: one bad file must not stop a folder scan.
             parseError = ex.Message;
             return new SharedRead<CharacterSnapshot>(SharedLoad.Invalid, null, $"Snapshot {fileName} could not be parsed and was left in place: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// A deserialized snapshot with every collection a hand-edited or damaged file wrote as null (<c>"tribes": null</c>)
+    /// read as empty, as <see cref="CharacterSettings.Normalize"/> does for the settings: the model's readers never meet
+    /// a null list. This instance when nothing is null.
+    /// </summary>
+    internal static CharacterSnapshot Normalized(CharacterSnapshot snapshot)
+    {
+        // The properties are declared non-null, but the deserializer writes a JSON null into them as it is.
+        if (snapshot.Name is not null && snapshot.CompletedBits is not null && snapshot.Accepted is not null && snapshot.DailyDone is not null
+            && snapshot.RepeatFlags is not null && snapshot.JobLevels is not null && snapshot.GcRanks is not null && snapshot.Tribes is not null
+            && snapshot.UnlockedInstances is not null && snapshot.ActiveFestivals is not null && snapshot.ActiveFestivalPhases is not null
+            && snapshot.SatisfactionRanks is not null && snapshot.CompletedAchievements is not null && snapshot.JobItemLevels is not null
+            && snapshot.Collectibles is not null && snapshot.CompletedUtc is not null && snapshot.CompletedAfterUtc is not null
+            && snapshot.TriadRecords is null or { Beaten: not null, Cards: not null }
+            && snapshot.DutyRecords is null or { Unlocked: not null, Cleared: not null }
+            && snapshot.GateItems is null or { Equipped: not null, Held: not null })
+        {
+            return snapshot;
+        }
+
+        return snapshot with
+        {
+            Name = snapshot.Name ?? string.Empty,
+            CompletedBits = snapshot.CompletedBits ?? [],
+            Accepted = snapshot.Accepted ?? [],
+            DailyDone = snapshot.DailyDone ?? new Dictionary<ushort, byte>(),
+            RepeatFlags = snapshot.RepeatFlags ?? [],
+            JobLevels = snapshot.JobLevels ?? new Dictionary<byte, short>(),
+            GcRanks = snapshot.GcRanks ?? [],
+            Tribes = snapshot.Tribes ?? new Dictionary<byte, TribeStanding>(),
+            UnlockedInstances = snapshot.UnlockedInstances ?? [],
+            ActiveFestivals = snapshot.ActiveFestivals ?? [],
+            ActiveFestivalPhases = snapshot.ActiveFestivalPhases ?? [],
+            SatisfactionRanks = snapshot.SatisfactionRanks ?? new Dictionary<byte, byte>(),
+            CompletedAchievements = snapshot.CompletedAchievements ?? [],
+            JobItemLevels = snapshot.JobItemLevels ?? new Dictionary<byte, ushort>(),
+            Collectibles = snapshot.Collectibles ?? new Dictionary<string, CollectibleSet>(),
+            CompletedUtc = snapshot.CompletedUtc ?? new Dictionary<ushort, DateTime>(),
+            CompletedAfterUtc = snapshot.CompletedAfterUtc ?? new Dictionary<ushort, DateTime>(),
+            TriadRecords = snapshot.TriadRecords?.Normalized(),
+            DutyRecords = snapshot.DutyRecords is { } duties && (duties.Unlocked is null || duties.Cleared is null)
+                ? duties with { Unlocked = duties.Unlocked ?? [], Cleared = duties.Cleared ?? [] }
+                : snapshot.DutyRecords,
+            GateItems = snapshot.GateItems is { } items && (items.Equipped is null || items.Held is null)
+                ? items with { Equipped = items.Equipped ?? [], Held = items.Held ?? [] }
+                : snapshot.GateItems,
+        };
     }
 
     private static SnapshotSummary Summarize(CharacterSnapshot snapshot) =>

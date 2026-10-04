@@ -149,6 +149,22 @@ public sealed class ZoneBoardTests
     }
 
     [Fact]
+    public void A_set_aside_quest_counts_for_no_kind_but_keeps_its_level_in_the_span()
+    {
+        // Thavnair's Ready side story and its blue set aside (P4): its Ready, side story and blue leave the counts.
+        var setAside = new HashSet<uint> { ThavnairStory.RowId, ThavnairBlue.RowId };
+        var board = ZoneBoard.Build(Zones, Catalog, States, KindsOf, ZoneKinds.All, ZoneSort.LevelFit, 90, setAside: setAside);
+        var thavnair = Line(board, Thavnair);
+        Assert.Equal((0, 0, 0, 1), (thavnair.Ready, thavnair.Blues, thavnair.SideStories, thavnair.Rewards));
+        Assert.Equal((80, 89), (thavnair.MinLevel, thavnair.MaxLevel));
+
+        // With only the set-aside kinds on, Thavnair has nothing left and folds away.
+        var stories = ZoneBoard.Build(Zones, Catalog, States, KindsOf, ZoneKinds.SideStories, ZoneSort.LevelFit, 90, setAside: setAside);
+        Assert.Contains(stories.Single(g => g.Expansion == Endwalker).Empty, l => l.Zone == Thavnair);
+        Assert.Equal(3, board.Single(g => g.Expansion == Endwalker).Ready);
+    }
+
+    [Fact]
     public void An_expansion_past_the_story_is_masked_whole_and_a_zone_ahead_is_masked_and_last()
     {
         var board = Board(level: 82, reach: Endwalker, masked: zone => zone is "Elpis" or "Urqopacha");

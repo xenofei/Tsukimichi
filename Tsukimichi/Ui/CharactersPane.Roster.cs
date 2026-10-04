@@ -39,6 +39,9 @@ public sealed partial class CharactersPane
     private bool openGoalPopup;
     private bool openLabelPopup;
 
+    // The character whose row menu is open (captured when it opens).
+    private ulong rosterMenuFor;
+
     // The label popup: which character and which label (true: nickname, false: role), and the text being typed.
     private ulong labelFor;
     private bool labelNickname;
@@ -172,7 +175,7 @@ public sealed partial class CharactersPane
         var rowHeight = MathF.Max(UiMetrics.Px(RosterRowLogical), (ImGui.GetTextLineHeight() * 2f) + UiMetrics.Px(8f));
         for (var i = 0; i < rosterLines.Length; i++)
         {
-            DrawRosterRow(ui, board, rosterLines[i], i, rowHeight);
+            DrawRosterRow(ui, board, rosterLines[i], rowHeight);
         }
     }
 
@@ -199,11 +202,14 @@ public sealed partial class CharactersPane
         specs.SpecsDirty = false;
     }
 
-    private void DrawRosterRow(UiState ui, RosterSource board, RosterLine line, int index, float rowHeight)
+    private void DrawRosterRow(UiState ui, RosterSource board, RosterLine line, float rowHeight)
     {
         var row = line.Row;
         var s = Theme.Surface;
-        using var id = ImRaii.PushId(index);
+        // Keyed by the character, never by its place in the sort: a re-sort while the row's menu is open (a heartbeat,
+        // the linked folders' pass) keeps the menu on the same character, so Star, Role, Nickname and the goal act on it.
+        using var idLow = ImRaii.PushId(unchecked((int)row.ContentId));
+        using var idHigh = ImRaii.PushId(unchecked((int)(row.ContentId >> 32)));
         ImGui.TableNextRow(ImGuiTableRowFlags.None, rowHeight);
         ImGui.TableSetColumnIndex(0);
         var selected = session.ViewedContentId == row.ContentId;
@@ -250,8 +256,22 @@ public sealed partial class CharactersPane
 
         if (ImGui.BeginPopupContextItem("##rosterMenu"))
         {
+            // The character the menu opened on, captured then: every item acts on it, whatever row this is now.
+            if (ImGui.IsWindowAppearing())
+            {
+                rosterMenuFor = row.ContentId;
+            }
+
             UiMetrics.ApplyFontScale();
-            DrawRosterMenu(ui, board, line);
+            if (rosterMenuFor == row.ContentId)
+            {
+                DrawRosterMenu(ui, board, line);
+            }
+            else
+            {
+                ImGui.CloseCurrentPopup();
+            }
+
             ImGui.EndPopup();
         }
 
@@ -475,7 +495,7 @@ public sealed partial class CharactersPane
             ImGui.SetKeyboardFocusHere();
         }
 
-        var enter = ImGui.InputTextWithHint("##label", labelNickname ? Strings.RosterNicknameHint : Strings.RosterRoleHint, ref labelText, CharacterSettings.MaxLabelLength, ImGuiInputTextFlags.EnterReturnsTrue);
+        var enter = ImGui.InputTextWithHint("##label", labelNickname ? Strings.RosterNicknameHint : Strings.RosterRoleHint, ref labelText, CharacterSettings.MaxLabelBytes, ImGuiInputTextFlags.EnterReturnsTrue);
         if (Chrome.ActionChip("##labelSave", Strings.RosterLabelSave, accent: true) || enter)
         {
             book.Edit(labelNickname ? CharacterSettingChange.SetNickname(labelFor, labelText) : CharacterSettingChange.SetRole(labelFor, labelText));

@@ -47,6 +47,7 @@ static partial class Strings
     public static string LooseEndsCaptionFormat => Loc.Get("LooseEndsCaptionFormat");
     public static string LooseEndsFinale => Loc.Get("LooseEndsFinale");
     public static string LooseEndsFinaleTooltip => Loc.Get("LooseEndsFinaleTooltip");
+    public static string LooseEndsNotForMeTooltip => Loc.Get("LooseEndsNotForMeTooltip");
     public static string LooseEndsLeftFormat => Loc.Get("LooseEndsLeftFormat");
     public static string LooseEndsLeftLevelFormat => Loc.Get("LooseEndsLeftLevelFormat");
     public static string LooseEndsJobAheadFormat => Loc.Get("LooseEndsJobAheadFormat");

@@ -102,7 +102,11 @@ public sealed partial class CharactersPane
             {
                 var first = bundle.Catalog.GetByRowId(chain.RowIds[0]);
                 var later = first is not null && first.Expansion > spoilers.ReachExpansion && spoilers.ReachExpansion != byte.MaxValue;
-                rows.Add(new StoryRowView(SideQuestIcon, Strings.StoriesAhead, null, false, later ? Strings.StoriesAheadExpansion : Strings.StoriesAheadStory, null, string.Empty, false, QuestState.Unknown, true, string.Empty, []));
+                rows.Add(new StoryRowView(SideQuestIcon, Strings.StoriesAhead, null, false, later ? Strings.StoriesAheadExpansion : Strings.StoriesAheadStory, null, string.Empty, false, QuestState.Unknown, true, string.Empty, [])
+                {
+                    // The placeholder's reveal is the line's first quest's: once revealed it is no longer ahead.
+                    Shield = first is null ? null : new StoryShield(chain.Name, first, OnName: true),
+                });
                 continue;
             }
 
@@ -118,7 +122,10 @@ public sealed partial class CharactersPane
             var veiled = spoilers.IsAhead(next.RowId);
             var name = veiled ? AheadName(next, StoryLineKind.Chain) : spoilers.DisplayName(next);
             var tail = veiled ? string.Empty : Strings.StateReasonSeparator + Strings.StateName(state, next);
-            rows.Add(new StoryRowView(SideQuestIcon, chain.Name, null, false, lead, next, name, false, state, veiled, tail, chain.RowIds, RecapQuestOf(session.Chains, chain, states)));
+            rows.Add(new StoryRowView(SideQuestIcon, chain.Name, null, false, lead, next, name, false, state, veiled, tail, chain.RowIds, RecapQuestOf(session.Chains, chain, states))
+            {
+                Shield = veiled ? new StoryShield(next.Name, next, OnName: false) : null,
+            });
         }
 
         sideRows = rows.ToArray();

@@ -957,13 +957,14 @@ public sealed partial class CharactersPane
 
     /// <summary>
     /// The right-click menu on a ladder's or a chain's name (feature plan v5, 1.6.0): "Send to Questionable" with the
-    /// row's quests in their order (done ones left out when sent), and for a story chain the character has started,
-    /// "Read the story so far" (the story recap, 1.9.0).
+    /// row's quests in their order (done ones left out when sent; only for the character logged in here), and for a
+    /// story chain the character has started, "Read the story so far" (the story recap, 1.9.0).
     /// </summary>
     /// <param name="recapQuest">A quest naming the chain for the recap (<see cref="RecapRequest.ChainQuestRowId"/>); 0 offers none.</param>
     private void DrawRowMenu(UiState ui, IReadOnlyList<uint> rowIds, uint recapQuest = 0)
     {
-        var questionable = rowIds.Count > 0 ? AutomationGate.Questionable(Questionable) : null;
+        // Hand-offs only for the character logged in here (spec-1.21 decision 5).
+        var questionable = rowIds.Count > 0 && ViewedLiveHere ? AutomationGate.Questionable(Questionable) : null;
         if (questionable is null && recapQuest == 0)
         {
             return;

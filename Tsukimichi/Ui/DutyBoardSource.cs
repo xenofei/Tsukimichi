@@ -50,9 +50,11 @@ public sealed class DutyBoardSource
 
     /// <summary>
     /// One duty row: its name (or the shield's stand-in), its size badge (none when unknown), the words before the unlock
-    /// quest ("not unlocked · with "), that quest's name and the quest itself (null when none is known).
+    /// quest ("not unlocked · with "), that quest's name and the quest itself (null when none is known), and the duty's
+    /// own name (what its placeholder hides, for the shield's hover and right-click; null when the row has a quest to
+    /// find it by).
     /// </summary>
-    public sealed record Row(string Duty, DutyBadges.Look? Badge, string Trailing, string QuestName, QuestRecord? Quest);
+    public sealed record Row(string Duty, DutyBadges.Look? Badge, string Trailing, string QuestName, QuestRecord? Quest, string? RealName = null);
 
     /// <summary>
     /// One roulette: its id (for the card's "more" toggle), header ("Level Cap Dungeons roulette"), state, rows, the
@@ -169,7 +171,7 @@ public sealed class DutyBoardSource
         }
 
         blocks = list;
-        never = model.NeverCleared.SelectMany(static g => g.Duties).Select(d => new Row(HiddenOr(d), SizeBadge(d, index), string.Empty, string.Empty, null)).ToArray();
+        never = model.NeverCleared.SelectMany(static g => g.Duties).Select(d => new Row(HiddenOr(d), SizeBadge(d, index), string.Empty, string.Empty, null, d.Name)).ToArray();
     }
 
     /// <summary>"locked · needs a Lv 100 job · best is BLM 98", "locked · 2 dungeons not unlocked", "open · 1 raid not unlocked".</summary>

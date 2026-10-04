@@ -220,13 +220,16 @@ public sealed class LinkedFolderService : IDisposable
     private void Pass()
     {
         var list = wanted;
-        folders.Keep(list);
-        foreach (var folder in list)
+
+        // Each folder on its own (LinkedFolders.ScanAll): one that throws keeps its last snapshots and loses its
+        // heartbeats (no stale "Live"), one that is gone loses its characters, and the others are read all the same.
+        folders.ScanAll(list, folder =>
         {
             var dir = Path.Combine(folder, LinkedFolders.CharactersFolder);
             if (!Directory.Exists(dir))
             {
-                continue;
+                stores.Remove(folder);
+                return null;
             }
 
             if (!stores.TryGetValue(folder, out var store))
@@ -240,8 +243,8 @@ public sealed class LinkedFolderService : IDisposable
                 Warn(warning, null, "Linked folder " + folder + ": " + warning);
             }
 
-            folders.Take(folder, result);
-        }
+            return result;
+        }, (folder, ex) => Warn("folder " + folder, ex, "Linked folder " + folder + " could not be read this pass"));
 
         landed = folders.Characters(list, ownIds, session.Me, DateTime.UtcNow);
     }
