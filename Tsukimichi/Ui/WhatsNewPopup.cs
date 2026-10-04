@@ -30,7 +30,8 @@ namespace Tsukimichi.Ui;
 /// the tallest page at the current Text size, capped at 80 % of the screen (past that a page's notes scroll), and the
 /// art band on every page or on none. Full draws the theme's frame kit and the release's picture in the theme's craft;
 /// Quiet a tonal card with Classic's picture; Plain a flat ledger with no picture, loading none. The picture is one
-/// texture held only while the popup is open (<see cref="ReleaseArtTexture"/>); a missing one shows the band's flat sky.
+/// texture held only while the popup is open, two while a page change cross-fades them (<see cref="ReleaseArtTexture"/>);
+/// a missing one shows the band's flat sky.
 /// Opens with a fade and a 4 px rise, pages cross-fade in place, Close fades out; all instant under Reduce motion and at
 /// Plain (<see cref="Motion.Enabled"/>).
 /// </para>
@@ -88,6 +89,7 @@ public sealed class WhatsNewPopup : Window, IDisposable
 
     // Placement and motion.
     private bool placed;
+    private WhatsNewPlacement placement;
     private Vector2 target;
     private Vector2 size = new(560f, 480f);
     private double openedAt;
@@ -95,6 +97,9 @@ public sealed class WhatsNewPopup : Window, IDisposable
     private double pageAt = double.NegativeInfinity;
     private int previousPage = -1;
     private bool scrollToTop;
+
+    // Close's label with its id, composed once per language.
+    private readonly LocText closeFooterLabel = new(static () => Strings.WhatsNew.Close + "##closeFooter");
 
     // "1 of 4" and "You were on 1.18.0", composed when they change.
     private (int Page, int Count, int Language) counterKey = (-1, -1, -1);
@@ -235,15 +240,16 @@ public sealed class WhatsNewPopup : Window, IDisposable
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
         styled = true;
 
+        var viewport = ImGuiHelpers.MainViewport;
         if (!placed)
         {
             // The measuring frame: drawn invisible at the screen's centre, then placed once its size is known.
-            var viewport = ImGuiHelpers.MainViewport;
             ImGui.SetNextWindowPos(viewport.WorkPos + ((viewport.WorkSize - size) * 0.5f), ImGuiCond.Always);
         }
-        else if (Rising(ImGui.GetTime(), out var rise))
+        else if (placement.Next(target, size, viewport.WorkPos, viewport.WorkSize, Motion.Enabled, ImGui.GetTime() - openedAt, UiMetrics.Px(1f)) is { } at)
         {
-            ImGui.SetNextWindowPos(target + new Vector2(0f, rise), ImGuiCond.Always);
+            // The first frame after measuring always, with the open's rise or (without motion) none; then while it rises.
+            ImGui.SetNextWindowPos(at, ImGuiCond.Always);
         }
 
         ImGui.SetNextWindowSize(size, ImGuiCond.Always);
@@ -319,7 +325,7 @@ public sealed class WhatsNewPopup : Window, IDisposable
             y += band;
         }
 
-        DrawBody(new Vector2(min.X, y), new Vector2(width, max.Y - footer - y), flair, textWidth, alpha, swap);
+        DrawBody(new Vector2(min.X, y), new Vector2(width, max.Y - footer - y), flair, textWidth, alpha, swap, measuring);
         DrawFooter(dl, new Vector2(min.X, max.Y - footer), width, footer, flair);
         if (alpha < 1f)
         {
@@ -372,6 +378,9 @@ public sealed class WhatsNewPopup : Window, IDisposable
         artKey = null;
         previousPage = -1;
         pageAt = double.NegativeInfinity;
+
+        // Every open starts at the top of its notes, whatever was scrolled last time.
+        scrollToTop = true;
         if (!IsOpen)
         {
             placed = false;
@@ -452,36 +461,18 @@ public sealed class WhatsNewPopup : Window, IDisposable
 
     // ------------------------------------------------------------------ placement and motion
 
-    /// <summary>Centred on the main window when it is open, else on the screen, and kept inside the screen.</summary>
+    /// <summary>
+    /// Centred on the main window when it is open, else on the screen, and kept inside the screen. The next frames put
+    /// it there (<see cref="WhatsNewPlacement"/>): with the open's 4 px rise, or at once under Reduce motion and at Plain.
+    /// </summary>
     private void Place()
     {
         var viewport = ImGuiHelpers.MainViewport;
         var centre = MainWindowRect?.Invoke() is { } main ? main.Pos + (main.Size * 0.5f) : viewport.WorkPos + (viewport.WorkSize * 0.5f);
-        var pos = centre - (size * 0.5f);
-        var low = viewport.WorkPos;
-        var high = viewport.WorkPos + viewport.WorkSize - size;
-        target = new Vector2(MathF.Round(Math.Clamp(pos.X, low.X, MathF.Max(low.X, high.X))), MathF.Round(Math.Clamp(pos.Y, low.Y, MathF.Max(low.Y, high.Y))));
+        target = WhatsNewLayout.Clamp(centre - (size * 0.5f), size, viewport.WorkPos, viewport.WorkSize);
         placed = true;
+        placement.Reset();
         openedAt = ImGui.GetTime();
-    }
-
-    /// <summary>The open's rise: 4 px over <see cref="MotionTokens.Rise"/>, eased; none under Reduce motion or at Plain.</summary>
-    private bool Rising(double now, out float offset)
-    {
-        offset = 0f;
-        if (!Motion.Enabled)
-        {
-            return false;
-        }
-
-        var t = (float)((now - openedAt) / MotionTokens.Rise);
-        if (t >= 1f)
-        {
-            return false;
-        }
-
-        offset = MathF.Round(UiMetrics.Px(MotionTokens.RiseLogical) * (1f - MotionMath.EaseOutCubic(Math.Clamp(t, 0f, 1f))));
-        return true;
     }
 
     /// <summary>The whole popup's opacity: fading in over <see cref="MotionTokens.Rise"/>, out over <see cref="MotionTokens.Leave"/>.</summary>
@@ -649,7 +640,15 @@ public sealed class WhatsNewPopup : Window, IDisposable
         // The theme's flat sky while the picture loads, and on a page that has none.
         dl.AddRectFilled(min, max, Theme.U32(Theme.Scene.Zenith with { W = 1f }), rounding);
         art.Want(artPaths[page], ReleaseArt.TierFor(max.X - min.X));
-        if (art.Current(Motion.Enabled ? MotionTokens.Select : 0f, out var fade) is { } picture)
+        var picture = art.Current(Motion.Enabled ? MotionTokens.Select : 0f, out var fade);
+
+        // The previous page's picture fades out beneath until the new one lands or the page's cross-fade has run.
+        if (art.Leaving(swap >= 1f) is { } leaving)
+        {
+            Chrome.ImageCoverAt(dl, leaving.Handle, min, max, new Vector2(leaving.Width, leaving.Height), Theme.WithAlpha(Vector4.One, 1f - swap), rounding);
+        }
+
+        if (picture is not null)
         {
             var tint = Theme.WithAlpha(Vector4.One, fade * swap);
             Chrome.ImageCoverAt(dl, picture.Handle, min, max, new Vector2(picture.Width, picture.Height), tint, rounding);
@@ -667,9 +666,10 @@ public sealed class WhatsNewPopup : Window, IDisposable
 
     /// <summary>
     /// The notes block: a child of fixed height, so a page longer than the cap scrolls inside it and nothing below
-    /// moves. A page change cross-fades the old page out and the new one in, in place.
+    /// moves. A page change cross-fades the old page out and the new one in, in place. The child's scrollbar fades with
+    /// the popup, and the measuring frame draws none.
     /// </summary>
-    private void DrawBody(Vector2 pos, Vector2 blockSize, Flair flair, float textWidth, float alpha, float swap)
+    private void DrawBody(Vector2 pos, Vector2 blockSize, Flair flair, float textWidth, float alpha, float swap, bool measuring)
     {
         // The child starts at the text's left edge (a borderless child has no padding of its own) and reaches past the
         // text's right edge by the thin scrollbar, so a scrolling page never wraps differently from its measure.
@@ -677,7 +677,8 @@ public sealed class WhatsNewPopup : Window, IDisposable
         var bar = MathF.Max(4f, UiMetrics.Px(ScrollbarLogical));
         ImGui.SetCursorScreenPos(new Vector2(pos.X + pad, pos.Y));
         using var scrollbar = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, bar);
-        using var child = ImRaii.Child("##whatsNewNotes", new Vector2(MathF.Max(1f, blockSize.X - (2f * pad) + bar + UiMetrics.Px(4f)), MathF.Max(1f, blockSize.Y)), false, ImGuiWindowFlags.NoBackground);
+        var flags = measuring ? ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoScrollbar : ImGuiWindowFlags.NoBackground;
+        using var child = ImRaii.Child("##whatsNewNotes", new Vector2(MathF.Max(1f, blockSize.X - (2f * pad) + bar + UiMetrics.Px(4f)), MathF.Max(1f, blockSize.Y)), false, flags);
         if (!child)
         {
             return;
@@ -690,8 +691,8 @@ public sealed class WhatsNewPopup : Window, IDisposable
             ImGui.SetScrollY(0f);
         }
 
+        // The child's own list starts with its scrollbar, drawn as the child began, so the fade takes it from vertex 0.
         var dl = ImGui.GetWindowDrawList();
-        var start = dl.VtxBuffer.Size;
         var origin = ImGui.GetCursorScreenPos();
         if (swap < 1f && previousPage >= 0 && previousPage < pages.Length)
         {
@@ -710,7 +711,7 @@ public sealed class WhatsNewPopup : Window, IDisposable
 
         if (alpha < 1f)
         {
-            Chrome.FadeVertices(dl, start, alpha);
+            Chrome.FadeVertices(dl, 0, alpha);
         }
     }
 
@@ -881,7 +882,7 @@ public sealed class WhatsNewPopup : Window, IDisposable
         var close = Strings.WhatsNew.Close;
         var closeWidth = ImGui.CalcTextSize(close).X + (ImGui.GetStyle().FramePadding.X * 2f) + UiMetrics.Px(8f);
         ImGui.SetCursorScreenPos(new Vector2(MathF.Round(max.X - pad - closeWidth), MathF.Round(mid - (ImGui.GetFrameHeight() * 0.5f))));
-        if (ImGui.Button(close + "##closeFooter", new Vector2(closeWidth, 0f)))
+        if (ImGui.Button(closeFooterLabel.Value, new Vector2(closeWidth, 0f)))
         {
             Leave();
         }

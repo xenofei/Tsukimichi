@@ -85,6 +85,19 @@ public readonly record struct MoonIconHideRules(bool Cutscenes, bool GroupPose, 
     public static MoonIconHideRules Default => new(true, true, false);
 }
 
+/// <summary>What the moon icon's quick card does with a height it measured (<see cref="MoonIconRules.Settle"/>).</summary>
+public enum CardSettle
+{
+    /// <summary>The height is the one drawn: nothing to do.</summary>
+    Keep,
+
+    /// <summary>The card just opened: it settles its height unseen this frame.</summary>
+    Measure,
+
+    /// <summary>The height changed while open: the card takes it this frame and stays visible.</summary>
+    Resize,
+}
+
 /// <summary>
 /// The moon icon's rules (feature plan v8 H1; spec-1.22 H1), pure so they are tested: its size, when it shows, which dot
 /// it wears, where it sits (per screen size, clamped on screen and clear of a toolbar) and where its quick card opens.
@@ -235,6 +248,37 @@ public static class MoonIconRules
         }
 
         return new Vector2(x, icon.Min.Y - g - card.Y);
+    }
+
+    /// <summary>
+    /// What the quick card does with the height it measured this frame (<paramref name="measured"/>) against the height
+    /// it was drawn at (<paramref name="held"/>, 0 when it just opened): on open it settles unseen for one frame; after
+    /// that a new height (a line arriving or leaving) is taken in the same frame and the card stays visible, so it never
+    /// blinks while it is open.
+    /// </summary>
+    public static CardSettle Settle(float held, float measured)
+    {
+        if (!(held > 0f))
+        {
+            return CardSettle.Measure;
+        }
+
+        return MathF.Abs(measured - held) > 0.5f ? CardSettle.Resize : CardSettle.Keep;
+    }
+
+    /// <summary>
+    /// The Hide toast's opacity <paramref name="sinceShown"/> seconds after it appeared: a fade in over
+    /// <paramref name="seconds"/> at Full and Quiet, at once under Reduce motion and at Plain (which draws every state at
+    /// once, <see cref="FlairRules.UiMotion"/>).
+    /// </summary>
+    public static float ToastFade(double sinceShown, float seconds, Flair flair, bool reduceMotion)
+    {
+        if (!FlairRules.UiMotion(flair, reduceMotion) || !(seconds > 0f) || !double.IsFinite(sinceShown))
+        {
+            return 1f;
+        }
+
+        return Math.Clamp((float)(sinceShown / seconds), 0f, 1f);
     }
 
     private static long Whole(float value) => float.IsFinite(value) ? (long)MathF.Round(MathF.Max(0f, value)) : 0;

@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace Tsukimichi.Core.Ui;
 
 /// <summary>
@@ -162,5 +164,63 @@ public static class WhatsNewLayout
         var header = plain ? HeaderPlain : Header;
         var footer = plain ? FooterPlain : Footer;
         return MathF.Round((header + footer + (artBand ? ArtHeight : 0f)) * scale);
+    }
+
+    /// <summary>
+    /// The popup's top left at <paramref name="pos"/>, rounded and kept inside the screen's work area
+    /// (<paramref name="workPos"/>, <paramref name="workSize"/>); a popup taller or wider than the screen keeps its top
+    /// left on screen, so the header and × are always reachable.
+    /// </summary>
+    public static Vector2 Clamp(Vector2 pos, Vector2 size, Vector2 workPos, Vector2 workSize)
+    {
+        var high = workPos + workSize - size;
+        return new Vector2(
+            MathF.Round(Math.Clamp(pos.X, workPos.X, MathF.Max(workPos.X, high.X))),
+            MathF.Round(Math.Clamp(pos.Y, workPos.Y, MathF.Max(workPos.Y, high.Y))));
+    }
+}
+
+/// <summary>
+/// Where the measured What's new popup goes, frame by frame (spec-1.22 W1, "Motion"): on the first frame after it is
+/// measured always (at its target, 4 px low while the open's rise plays, at the target itself when motion is off), every
+/// frame while it rises, and once more at the target when the rise ends; then it is left where it is. Every place is kept
+/// inside the screen. <see cref="Reset"/> starts it again for the next open. Pure.
+/// </summary>
+public struct WhatsNewPlacement
+{
+    private bool settled;
+
+    /// <summary>The popup was measured again (it opened): the next frame places it.</summary>
+    public void Reset() => settled = false;
+
+    /// <summary>
+    /// The popup's top left this frame, or null to leave it where it is.
+    /// </summary>
+    /// <param name="target">Where it rests (centred and clamped when it was measured).</param>
+    /// <param name="size">Its size this frame.</param>
+    /// <param name="workPos">The screen's work area.</param>
+    /// <param name="workSize">The screen's work area.</param>
+    /// <param name="motion">Whether motion plays (Reduce motion off, not Plain).</param>
+    /// <param name="sinceOpen">Seconds since it was measured.</param>
+    /// <param name="scale">Px per logical px.</param>
+    public Vector2? Next(Vector2 target, Vector2 size, Vector2 workPos, Vector2 workSize, bool motion, double sinceOpen, float scale)
+    {
+        if (settled)
+        {
+            return null;
+        }
+
+        var t = motion && double.IsFinite(sinceOpen) ? (float)(sinceOpen / MotionTokens.Rise) : 1f;
+        var rise = 0f;
+        if (t >= 1f)
+        {
+            settled = true;
+        }
+        else
+        {
+            rise = MathF.Round(MotionTokens.RiseLogical * scale * (1f - MotionMath.EaseOutCubic(t)));
+        }
+
+        return WhatsNewLayout.Clamp(target + new Vector2(0f, rise), size, workPos, workSize);
     }
 }

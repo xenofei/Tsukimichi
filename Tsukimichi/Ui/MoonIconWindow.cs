@@ -85,6 +85,14 @@ public sealed class MoonIconWindow
     private int toastSettled;
     private bool toastHovered;
 
+    // The menu's window padding (the icon's own window has none) and its popup id, so a hidden icon can close it.
+    private Vector2 menuPadding;
+    private uint menuId;
+
+    // The quick card and the particles rest and retry on their own when they fail, so the icon itself keeps showing.
+    private readonly DrawRetry cardRetry = new();
+    private readonly DrawRetry particleRetry = new();
+
     /// <param name="settings">The icon's settings; read every frame, so Settings' changes show at once.</param>
     /// <param name="save">Saves the settings (a drop, Lock, Hide, the first-run hint).</param>
     /// <param name="clientState">Logged in, and Group Pose.</param>
@@ -122,6 +130,9 @@ public sealed class MoonIconWindow
 
     /// <summary>The Needs you alerts (1.18 A5) behind the copper dot; null shows none.</summary>
     public RunStops? Stops { get; set; }
+
+    /// <summary>Where a failing quick card or particles are logged (at most once a minute each); null logs nothing.</summary>
+    public IPluginLog? Log { get; set; }
 
     /// <summary>Shows or hides the icon (<c>/tsuki icon</c>, Settings) and saves; a hidden icon's Undo toast goes.</summary>
     public void ToggleEnabled()
@@ -165,15 +176,42 @@ public sealed class MoonIconWindow
         clientState.IsGPosing,
         condition[ConditionFlag.BoundByDuty] || condition[ConditionFlag.BoundByDuty56] || condition[ConditionFlag.BoundByDuty95]);
 
-    /// <summary>Not shown: nothing is held, the card is closed and the particles' clock stands still.</summary>
+    /// <summary>Not shown: nothing is held, the card and the menu are closed and the particles' clock stands still.</summary>
     private void Rest()
     {
         hover = 0f;
         hoverSince = double.NaN;
         pressed = false;
         dragging = false;
+        if (menuOpen)
+        {
+            CloseMenu();
+        }
+
         menuOpen = false;
         CloseCard();
+    }
+
+    /// <summary>
+    /// Closes the right-click menu from outside the icon's window (the icon hid with it open), so it never comes back
+    /// stale when the icon shows again. Only the menu and anything opened from it close.
+    /// </summary>
+    private void CloseMenu()
+    {
+        if (menuId == 0)
+        {
+            return;
+        }
+
+        var stack = ImGui.GetCurrentContext().OpenPopupStack;
+        for (var i = 0; i < stack.Size; i++)
+        {
+            if (stack[i].PopupId == menuId)
+            {
+                ImGuiP.ClosePopupToLevel(i, false);
+                return;
+            }
+        }
     }
 
     private void DrawIcon(double now, double delta)
@@ -213,6 +251,7 @@ public sealed class MoonIconWindow
         var half = MathF.Ceiling((radius * (IconParticles.MaxReach + 0.15f)) + rise + (6f * scale));
         ImGui.SetNextWindowPos(centre - new Vector2(half), ImGuiCond.Always);
         ImGui.SetNextWindowSize(new Vector2(half * 2f), ImGuiCond.Always);
+        menuPadding = ImGui.GetStyle().WindowPadding;
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
         using var body = Typography.Body();
@@ -232,25 +271,48 @@ public sealed class MoonIconWindow
                 var rightClicked = hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Right);
                 if (rightClicked)
                 {
+                    menuId = ImGui.GetID(MenuId);
                     ImGui.OpenPopup(MenuId);
                 }
 
                 Menu(now, centre);
 
-                // The face, lifted by the hover: Full, Quiet and Plain each their own; particles only at Full.
+                // The face, lifted by the hover: Full, Quiet and Plain each their own; particles only at Full. Failing
+                // particles rest and retry on their own; the face keeps drawing without them.
                 hover = MoonIconHover.Step(hover, hovered || pressed || dragging || menuOpen, (float)delta, flair, reduce);
                 var count = 0;
-                if (IconParticles.Enabled(flair, reduce))
+                if (IconParticles.Enabled(flair, reduce) && particleRetry.Ready(now))
                 {
                     clock += delta;
-                    count = IconParticles.At(GlyphSeamTheme(), flair, reduce, clock, particles);
+                    try
+                    {
+                        count = IconParticles.At(GlyphSeamTheme(), flair, reduce, clock, particles);
+                    }
+                    catch (Exception ex)
+                    {
+                        count = 0;
+                        ParticlesFailed(now, ex);
+                    }
                 }
 
                 var look = new MoonIconFace.Look(GlyphSeamTheme(), Themes.GlyphSeam.Appearance.Frames, flair);
                 var dl = ImGui.GetWindowDrawList();
                 var drawCentre = new Vector2(MathF.Round(centre.X), MathF.Round(centre.Y));
                 var orbit = count > 0 && IconParticles.HasOrbit(look.Theme);
-                MoonIconFace.Draw(dl, drawCentre, radius, look, hover, rise * hover, particles.AsSpan(0, count), orbit, DotInk(), scale);
+                try
+                {
+                    MoonIconFace.Draw(dl, drawCentre, radius, look, hover, rise * hover, particles.AsSpan(0, count), orbit, DotInk(), scale);
+                    if (count > 0)
+                    {
+                        particleRetry.Succeeded();
+                    }
+                }
+                catch (Exception ex) when (count > 0)
+                {
+                    // The face drew with particles: they rest, and the icon's own retry takes this frame.
+                    ParticlesFailed(now, ex);
+                    throw;
+                }
 
                 // The first-run hint and the locked hint, beside the icon.
                 var showHint = hint.Update(now, true, clicked || rightClicked, out var becameSeen);
@@ -290,14 +352,35 @@ public sealed class MoonIconWindow
             hoverSince = double.NaN;
         }
 
-        if (!double.IsNaN(hoverSince) && now - hoverSince >= MoonIconRules.CardDelaySeconds)
+        if (!double.IsNaN(hoverSince) && now - hoverSince >= MoonIconRules.CardDelaySeconds && cardRetry.Ready(now))
         {
             cardOpen = true;
-            card.Draw(new ScreenRect(centre - new Vector2(radius), centre + new Vector2(radius)), settings.MoonIconLocked, now);
+            try
+            {
+                card.Draw(new ScreenRect(centre - new Vector2(radius), centre + new Vector2(radius)), settings.MoonIconLocked, now);
+                cardRetry.Succeeded();
+            }
+            catch (Exception ex)
+            {
+                // The card rests and tries again; the icon keeps showing.
+                CloseCard();
+                if (cardRetry.Failed(now))
+                {
+                    Log?.Warning(ex, "The moon icon's quick card could not be drawn; it tries again in {Seconds} s", cardRetry.Backoff);
+                }
+            }
         }
         else
         {
             CloseCard();
+        }
+    }
+
+    private void ParticlesFailed(double now, Exception ex)
+    {
+        if (particleRetry.Failed(now))
+        {
+            Log?.Warning(ex, "The moon icon's particles could not be drawn; they try again in {Seconds} s", particleRetry.Backoff);
         }
     }
 
@@ -376,16 +459,40 @@ public sealed class MoonIconWindow
         }
     }
 
-    /// <summary>The right-click menu, in words: Lock in place or Unlock, Hide icon, then Tonight and Settings.</summary>
+    /// <summary>
+    /// The right-click menu, in words: Lock in place or Unlock, Hide icon, then Tonight and Settings. It takes back the
+    /// window padding the icon's own window drops, and the palette's popup colours.
+    /// </summary>
     private void Menu(double now, Vector2 centre)
     {
         menuOpen = false;
-        if (!ImGui.BeginPopup(MenuId))
+        if (!ImGui.IsPopupOpen(MenuId))
         {
             return;
         }
 
-        menuOpen = true;
+        // A struct scope and a raw push, popped in reverse: nothing is allocated while the menu is open.
+        using var popup = Theme.PushPopup();
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, menuPadding);
+        try
+        {
+            if (!ImGui.BeginPopup(MenuId))
+            {
+                return;
+            }
+
+            menuOpen = true;
+            DrawMenuItems(now, centre);
+        }
+        finally
+        {
+            ImGui.PopStyleVar();
+        }
+    }
+
+    /// <summary>The menu's items, inside its popup; ends the popup.</summary>
+    private void DrawMenuItems(double now, Vector2 centre)
+    {
         try
         {
             if (ImGui.MenuItem(settings.MoonIconLocked ? Strings.MoonIconMenuUnlock : Strings.MoonIconMenuLock))
@@ -423,7 +530,7 @@ public sealed class MoonIconWindow
 
     /// <summary>
     /// "Moon icon hidden · Undo · /tsuki icon shows it again", where the icon was, for 8 s (the pointer on it stops the
-    /// clock); kept on screen. It settles its size unseen, then fades in (at once under Reduce motion).
+    /// clock); kept on screen. It settles its size unseen, then fades in (at once under Reduce motion and at Plain).
     /// </summary>
     private void DrawHiddenToast(double now)
     {
@@ -443,7 +550,7 @@ public sealed class MoonIconWindow
             Math.Clamp(pos.Y, screen.Min.Y + margin, MathF.Max(screen.Min.Y + margin, screen.Max.Y - margin - toastSize.Y)));
         ImGui.SetNextWindowPos(new Vector2(MathF.Round(pos.X), MathF.Round(pos.Y)), ImGuiCond.Always);
         var measuring = toastSettled < GamePanelShell.SettleFrames;
-        var fade = measuring ? 0f : UiMetrics.ReduceMotion ? 1f : Math.Clamp((float)((now - hideUndo.StartedAt) / ToastFadeSeconds), 0f, 1f);
+        var fade = measuring ? 0f : MoonIconRules.ToastFade(now - hideUndo.StartedAt, ToastFadeSeconds, Theme.Flair, UiMetrics.ReduceMotion);
         using var body = Typography.Body();
         using var style = GamePanelShell.PushPanelStyle(measuring);
         ImGui.PushStyleVar(ImGuiStyleVar.Alpha, fade);
