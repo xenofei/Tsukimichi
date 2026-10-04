@@ -257,3 +257,4 @@
 .mk.plain .kv dd{overflow:hidden}
 .mk.plain .kv dd .mu,.mk.plain .kv dd .ph20{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .lg20 .set20 .sr20.pk{border-top:0;padding-top:4px}
+.mk.plain .kv dd .ph20 + .mu{margin-left:-3px}

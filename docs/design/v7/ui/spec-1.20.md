@@ -237,6 +237,8 @@ Sizes, counts and the release name come from a manifest compiled into the plugin
 A small window of its own, 470 px wide, centred on the Settings window and kept in front of it. **It does not use ImGui's modal popup:** `BeginPopupModal`'s dim covers the whole game screen, fades in on ImGui's own clock (about 0.17 s, ignoring Reduce motion), and is drawn after the plugin's style colours are popped, so it would take Dalamud's colour, not the palette's. Instead:
 - **The scrim is Tsukimichi's own:** a filled rect over the Settings window's rect only (the dialog window's draw list, its clip rect pushed to the Settings rect), in `rgba(5,7,14,.55)` on the dark palettes and `rgba(26,33,54,.30)` on Ishgard Snow. The game and other windows stay as they are. It is the only dimming: Settings is not faded or desaturated as well.
 - **Settings ignores input** while the dialog is open (it draws inside `BeginDisabled` without the dimmed alpha, so only the scrim dims it), and a click on Settings brings the dialog back to the front (`SetNextWindowFocus`).
+- **It follows Settings:** its position is set from the Settings window on every frame, not only when it opens, so the two always share a viewport, even when Settings is dragged out of the game window.
+- **Accepted:** because the scrim is drawn from the dialog's own draw list, another Tsukimichi window that overlaps the Settings rect, behind the dialog, is darkened where they overlap.
 - **It goes when** the player cancels, downloads, closes Settings or the plugin unloads.
 - `LinkConfirmWindow` stays as it is; this one blocks because it asks about the one network action.
 
@@ -389,6 +391,27 @@ The second matrix shows every part new in 1.20 on all four palettes:
 2. **Side-quest names.** The shield still shows the names of side, feature and job quests from expansions you haven't reached (only their zones, givers and rewards are hidden). Should 1.20 also show those as "Side quest (Lv 93)"? It closes a leak, but a new player browsing All quests would see thousands of placeholders.
 3. **The journal line's threshold:** 10 free slots (my proposal), or 5?
 
-## Approval record
+## Approval record (realism supervisor: APPROVED, round 3)
 
-_To be filled after the realism supervisor's review._
+| Round | Commit | Verdict | What it found |
+|---|---|---|---|
+| 1 | (draft) | CHANGES | 6 major findings:<br>• the pack row's height changed with its state;<br>• a tick reflowed the prep card;<br>• the checkbox outline was under 3:1;<br>• the Hold button was not the shipped one;<br>• placeholders wrapped or changed a row's height on reveal;<br>• the new parts were rendered on Night only.<br>Also 11 minor findings and some nits. |
+| 2 | `2faa372` | CHANGES | 1 major: ImGui's modal dim would cover the whole game screen, fade on its own clock and ignore the palette.<br>5 minor findings and some nits. |
+| 3 | `22766f1` | **APPROVED** | No blocker or major finding. |
+
+**Round 3's one minor finding is applied:** the dialog's position follows Settings every frame, and the overlap darkening is accepted (F4, "The confirmation").
+
+**Its nits:**
+- The double space in the Plain giver line is fixed.
+- Whether a placeholder in search really keeps medium weight is left to an in-plugin check, since the lighter look may only be the Secondary colour.
+
+**The supervisor asked to keep:**
+- the fixed-height rows;
+- the reserved button slot on a tick;
+- the MoonToggle and the shipped Hold button;
+- composite strings in Secondary;
+- the Snow disc in `#56607C` (3.78:1) and the `--hint` dot;
+- pack photos checked beside a game-art face;
+- the TextSecondary focus ring.
+
+**Unverified until it is built:** the scrim, input blocking and focus in Dalamud's ImGui (including multi-viewport); whether a placeholder in search keeps medium weight; the size of the real pack and how it frames once DataGen has built it.
