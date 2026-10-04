@@ -8,8 +8,9 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// Settings › Spoilers (T19): hide main scenario names ahead of the character, how many quests ahead keep their names
-/// (saved once the slider is still), hide journal artwork until a quest is in the journal, whether "Before you
-/// continue" notes show (P5), and an override for the character shown. Every change bumps the session so each surface
+/// (saved once the slider is still), whether the places, duties, rewards and people the story ahead introduces hide too
+/// (1.20.0 N6), hide journal artwork until a quest is in the journal, whether "Before you continue" notes show (P5),
+/// and an override for the character shown. Every change bumps the session so each surface
 /// re-reads the mask at once.
 /// </summary>
 public sealed partial class ConfigWindow
@@ -50,6 +51,25 @@ public sealed partial class ConfigWindow
                 settings.SpoilerRevealAhead = ahead;
                 SaveSoon();
                 session.RefreshSpoilers();
+            }
+
+            EndSetting();
+        }
+
+        // The wider shield (1.20.0 N6) hangs off the same switch: it hides what the masked quests introduce.
+        // Its hint says what hides; the placeholders themselves follow on a line of their own (spec-1.20 N6).
+        if (ToggleSetting(Strings.SpoilerHideRelated, Strings.SpoilerHideRelatedHelp, "spoiler shield zone area aetheryte duty reward npc giver people places character", effectiveHide, sub: true, reason: Strings.SettingsSpoilerAheadOffReason))
+        {
+            var hideRelated = settings.HideOtherNames;
+            if (RowToggle(ref hideRelated))
+            {
+                settings.HideOtherNames = hideRelated;
+                SpoilersChanged();
+            }
+
+            if (effectiveHide)
+            {
+                SettingNote(Strings.SpoilerHideRelatedExamples);
             }
 
             EndSetting();
@@ -106,9 +126,7 @@ public sealed partial class ConfigWindow
         if (spoilerCountVersion != session.Version)
         {
             spoilerCountVersion = session.Version;
-            spoilerCountLine = session.Bundle is null
-                ? string.Empty
-                : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountFormat, session.Spoilers.MaskedCount);
+            spoilerCountLine = session.Bundle is null ? string.Empty : SpoilerCountLine(session.Spoilers, name);
         }
 
         if (spoilerCountLine.Length > 0)
@@ -118,6 +136,17 @@ public sealed partial class ConfigWindow
 
         EndSetting();
     }
+
+    /// <summary>
+    /// "212 story names and 486 other names hidden for Michiru." (spec-1.20 N6): the quest names and the wider shield's
+    /// names. Without the wider shield it counts the quest names alone, as before 1.20.
+    /// </summary>
+    internal static string SpoilerCountLine(SpoilerMask spoilers, string? characterName) =>
+        !spoilers.Options.HideRelated || !spoilers.Options.HideNames
+            ? string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountFormat, spoilers.MaskedCount)
+            : string.IsNullOrEmpty(characterName)
+                ? string.Format(CultureInfo.CurrentCulture, Strings.SpoilerHiddenCountUnnamed, spoilers.MaskedCount, spoilers.MaskedNameCount)
+                : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerHiddenCountFormat, spoilers.MaskedCount, spoilers.MaskedNameCount, characterName);
 
     /// <summary>Saves a spoiler setting and makes every surface re-read the mask.</summary>
     private void SpoilersChanged()

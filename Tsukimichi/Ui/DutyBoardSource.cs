@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Route;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Unique;
@@ -168,7 +169,7 @@ public sealed class DutyBoardSource
         }
 
         blocks = list;
-        never = model.NeverCleared.SelectMany(static g => g.Duties).Select(d => new Row(d.Name, SizeBadge(d, index), string.Empty, string.Empty, null)).ToArray();
+        never = model.NeverCleared.SelectMany(static g => g.Duties).Select(d => new Row(HiddenOr(d), SizeBadge(d, index), string.Empty, string.Empty, null)).ToArray();
     }
 
     /// <summary>"locked · needs a Lv 100 job · best is BLM 98", "locked · 2 dungeons not unlocked", "open · 1 raid not unlocked".</summary>
@@ -241,22 +242,32 @@ public sealed class DutyBoardSource
         _ => 4,
     };
 
-    /// <summary>The duty's name, or the shield's stand-in when every quest that unlocks it is hidden.</summary>
+    /// <summary>The duty's name, or the shield's stand-in (<see cref="ShownDutyName"/>).</summary>
     private string DutyName(BoardDuty duty) => ShownDutyName(duty.Duty, duty.UnlockQuests, session.Spoilers);
 
     /// <summary>
-    /// A duty's name through the spoiler shield: "A duty further along the story (Lv 90)" when every quest it is shown
-    /// through is masked (<see cref="Core.Query.SpoilerMask.HidesDuty"/>), else its own name. The one place the stand-in
-    /// is written: the Duties board, the roulette hint and the detail pane's duty sections all name duties through it.
+    /// A duty's name through the spoiler shield: the wider shield's placeholder, "Dungeon (Lv 97)", for a duty the
+    /// story has not introduced (1.20.0 N6); "A duty further along the story (Lv 90)" when every quest it is shown
+    /// through is masked (<see cref="Core.Query.SpoilerMask.HidesDuty"/>); else its own name. The one place the
+    /// stand-in is written: the Duties board, the roulette hint and the detail pane's duty sections all name duties
+    /// through it.
     /// </summary>
     public static string ShownDutyName(DutyRunInfo duty, IReadOnlyCollection<QuestRecord> quests, Core.Query.SpoilerMask spoilers)
     {
         ArgumentNullException.ThrowIfNull(duty);
         ArgumentNullException.ThrowIfNull(spoilers);
+        if (spoilers.IsNameMasked(SpoilerKind.Duty, duty.Name))
+        {
+            return spoilers.Name(SpoilerKind.Duty, duty.Name);
+        }
+
         return spoilers.HidesDuty(quests)
             ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.LevelRequired)
             : duty.Name;
     }
+
+    /// <summary>The duty's name, or for one past the story point the wider shield's placeholder, "Dungeon (Lv 97)" (1.20.0 N6).</summary>
+    private string HiddenOr(DutyRunInfo duty) => session.Spoilers.Name(SpoilerKind.Duty, duty.Name);
 
     private Row MissingRow(BoardDuty duty, DutyRunIndex index)
     {

@@ -55,6 +55,12 @@ public sealed partial class DetailPane
     /// <summary>The title drawn on the art: a warm near-white over the night grade (the palette's scene; navy ink on a light one).</summary>
     private static Vector4 TitleOnArt => Theme.Scene.BannerTitle;
 
+    /// <summary>
+    /// The title's ink off the art: Text, or Secondary for a masked main scenario quest's placeholder (spec-1.20 N6: a
+    /// placeholder keeps the name's slot, size and weight, and only its colour changes).
+    /// </summary>
+    private Vector4 TitleInk => model.NameMasked ? Theme.Surface.TextSecondary : Theme.Surface.Text;
+
     // The moonrise: the row it last started for and when.
     private uint riseRowId = uint.MaxValue;
     private double riseStart;
@@ -286,7 +292,8 @@ public sealed partial class DetailPane
             bool cut;
             using (Typography.HeroTitle(model.DisplayName))
             {
-                cut = Chrome.ArtTextAt(dl, new Vector2(artLeft, titleY), artRoom, model.DisplayName, Theme.WithAlphaVector(TitleOnArt, titleIn), titleWidth, titleIn);
+                // A masked title is a placeholder: Secondary on the art too, as the location line under it is.
+                cut = Chrome.ArtTextAt(dl, new Vector2(artLeft, titleY), artRoom, model.DisplayName, Theme.WithAlphaVector(model.NameMasked ? Theme.Surface.TextSecondary : TitleOnArt, titleIn), titleWidth, titleIn);
             }
 
             using (Typography.Caption())
@@ -315,7 +322,7 @@ public sealed partial class DetailPane
             ImGui.BeginGroup();
             using (Typography.HeroTitle(model.DisplayName))
             {
-                TextFlow.Wrapped(model.DisplayName, room, Theme.WithAlpha(Theme.Surface.Text, titleIn));
+                TextFlow.Wrapped(model.DisplayName, room, Theme.WithAlpha(TitleInk, titleIn));
             }
 
             SegmentFlow(model.JournalSegments, JournalSeparator, room, Theme.Surface.TextDisabled);
@@ -359,7 +366,7 @@ public sealed partial class DetailPane
         // At 1.40× the body (plan v7 §1), so the name stays above the Lead-face section headings under it.
         using (Typography.QuietTitle())
         {
-            TextFlow.Wrapped(model.DisplayName, room, Theme.U32(Theme.Surface.Text));
+            TextFlow.Wrapped(model.DisplayName, room, Theme.U32(TitleInk));
         }
 
         SegmentFlow(model.JournalSegments, JournalSeparator, room, Theme.Surface.TextTertiary);
@@ -417,7 +424,7 @@ public sealed partial class DetailPane
         // The name in the Lead face (1.15×, plan v7 §1), a step over the body-size section bands under it.
         using (Typography.Lead())
         {
-            TextFlow.Wrapped(model.DisplayName, room, Theme.U32(Theme.Surface.Text));
+            TextFlow.Wrapped(model.DisplayName, room, Theme.U32(TitleInk));
         }
 
         using (Typography.Caption())
@@ -505,17 +512,34 @@ public sealed partial class DetailPane
         }
 
         var nameRoom = MathF.Max(1f, bodyRight - nameX);
-        cut = Chrome.EllipsisTextAt(dl, new Vector2(nameX, textY), nameRoom, giver, Theme.U32(model.GiverName is null ? Theme.Surface.TextDisabled : Theme.Surface.Text), giverWidth);
+        // A single-line slot holding a name and a place: a hidden place is cut to its locator first ("area 6"), so the
+        // locator is never the part an ellipsis takes (spec-1.20 N6).
+        var giverInk = model.GiverName is null ? Theme.Surface.TextDisabled : ShieldText.Tone(giver, Theme.Surface.Text);
+        var shortPlace = model.PlaceShort ?? model.PlaceLine;
+        cut = Chrome.EllipsisTextAt(dl, new Vector2(nameX, textY), nameRoom, giver, Theme.U32(giverInk), giverWidth);
         if (model.PlaceLine is { } place && nameX + giverWidth + gap < bodyRight)
         {
             var placeX = nameX + giverWidth + gap;
-            cut |= Chrome.EllipsisTextAt(dl, new Vector2(placeX, textY), MathF.Max(1f, bodyRight - placeX), place, secondary, ImGui.CalcTextSize(place).X);
+            var placeRoom = MathF.Max(1f, bodyRight - placeX);
+            var placeWidth = ImGui.CalcTextSize(place).X;
+            if (placeWidth > placeRoom && shortPlace is { } locator)
+            {
+                place = locator;
+                placeWidth = ImGui.CalcTextSize(place).X;
+            }
+
+            cut |= Chrome.EllipsisTextAt(dl, new Vector2(placeX, textY), placeRoom, place, ShieldText.U32(place, Theme.Surface.TextSecondary), placeWidth);
         }
 
         ImGui.Dummy(new Vector2(room, rowHeight));
         if (plate > 0f && ImGui.IsItemHovered() && ImGui.IsMouseHoveringRect(plateMin, plateMin + new Vector2(plate)))
         {
             Chrome.PortraitTooltip(portrait, giver, model.PlaceLine);
+        }
+        else if ((model.GiverHidden ?? model.PlaceHidden) is { } hidden)
+        {
+            // A placeholder's own hover and right-click (spec-1.20 N6).
+            ShieldItem(hidden.Kind, hidden.Name, model.GiverHidden is not null ? giver : model.PlaceLine ?? giver);
         }
         else if (cut && ImGui.IsItemHovered())
         {

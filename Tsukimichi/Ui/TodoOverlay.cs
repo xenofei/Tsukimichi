@@ -968,7 +968,7 @@ public sealed class TodoOverlay : Window, IDisposable
         dl.PopClipRect();
         if (hovered && avatar > 0f && ImGui.IsMouseHoveringRect(avatarMin, avatarMin + new Vector2(avatar)))
         {
-            Chrome.PortraitTooltip(portrait, row.Quest.Issuer?.Name ?? string.Empty, GiverPortraits.Place(row.Quest));
+            Chrome.PortraitTooltip(portrait, GiverPortraits.Name(row.Quest, session.Spoilers), GiverPortraits.Place(row.Quest, session.Spoilers));
         }
         else if (hovered)
         {
@@ -1346,7 +1346,7 @@ public sealed class TodoOverlay : Window, IDisposable
                 if (section.Section == TodoSection.NearbyFeature && pins.Unlocks is { } unlocks && !session.Spoilers.IsMasked(quest)
                     && unlocks.Current.Headline(quest.RowId) is { Group: <= Core.Unlocks.UnlockGroup.Feature } headline)
                 {
-                    var opens = Core.Unlocks.UnlockText.Opens(headline.Name);
+                    var opens = Core.Unlocks.UnlockText.Opens(Core.Unlocks.UnlockView.ShieldedName(headline, session.Spoilers));
                     hint = hint.Length > 0 ? hint + Strings.StateReasonSeparator + opens : opens;
                 }
 

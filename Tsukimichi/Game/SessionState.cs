@@ -61,6 +61,14 @@ public sealed partial class SessionState
     private int liveSpoilersVersion = -1;
     private readonly HashSet<uint> revealedNames = [];
 
+    // The wider shield (plan v7, 1.20.0 N6): where zone, duty, reward and NPC names sit in the story, from the unlock
+    // index of the loaded catalog (UseSpoilerNames).
+    private SpoilerNames spoilerNames = SpoilerNames.Empty;
+
+    // Places, duties, rewards and people the player revealed for the session (1.20.0 N6: "Reveal this name", "Reveal
+    // names in this quest").
+    private readonly HashSet<(SpoilerKind Kind, string Name)> revealedOtherNames = new(SpoilerNames.NameComparer);
+
     public SessionState(SnapshotService snapshots, PluginPaths paths, UniqueRewardsData uniqueRewards, CuratedData curated, IPluginLog? log = null)
     {
         this.snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
@@ -236,7 +244,7 @@ public sealed partial class SessionState
             {
                 spoilersVersion = Version;
                 spoilers = Bundle is { } bundle
-                    ? SpoilerMask.Build(bundle.Catalog, States, SpoilerOptionsFor(ViewedContentId), revealedNames, Abandoned)
+                    ? SpoilerMask.Build(bundle.Catalog, States, SpoilerOptionsFor(ViewedContentId), revealedNames, Abandoned, spoilerNames, revealedOtherNames)
                     : SpoilerMask.None;
             }
 
@@ -261,7 +269,7 @@ public sealed partial class SessionState
             if (liveSpoilersVersion != Version)
             {
                 liveSpoilersVersion = Version;
-                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames, liveAbandoned);
+                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames, liveAbandoned, spoilerNames, revealedOtherNames);
             }
 
             return liveSpoilers;
@@ -277,8 +285,63 @@ public sealed partial class SessionState
         }
     }
 
+    /// <summary>"Reveal this name" on a placeholder (1.20.0 N6): the place, duty, reward or person shows until the plugin unloads.</summary>
+    public void RevealName(SpoilerKind kind, string name)
+    {
+        if (!string.IsNullOrEmpty(name) && revealedOtherNames.Add((kind, name)))
+        {
+            Bump();
+        }
+    }
+
+    /// <summary>
+    /// "Reveal names in this quest" (1.20.0 N6): the quest's own name, its giver, place, duties, rewards and unlocks
+    /// (<see cref="SpoilerNames.NamesIn"/>) show until the plugin unloads.
+    /// </summary>
+    public void RevealQuestNames(uint rowId, IEnumerable<(SpoilerKind Kind, string Name)> names)
+    {
+        ArgumentNullException.ThrowIfNull(names);
+        var changed = revealedNames.Add(rowId);
+        foreach (var name in names)
+        {
+            changed |= name.Name.Length > 0 && revealedOtherNames.Add(name);
+        }
+
+        if (changed)
+        {
+            Bump();
+        }
+    }
+
     /// <summary>A spoiler setting changed: every surface re-reads the mask.</summary>
     public void RefreshSpoilers() => Bump();
+
+    /// <summary>
+    /// Where zone, duty, reward and NPC names sit in the story (plan v7, 1.20.0 N6), from the unlock index of the loaded
+    /// catalog: the plugin hands it over each frame, and a new one (the index of a new catalog landing) makes every
+    /// surface re-read the mask.
+    /// </summary>
+    public void UseSpoilerNames(SpoilerNames names) => UseUnlocks(null, names);
+
+    /// <summary>
+    /// The unlock index of the loaded catalog as of the last poll (what "Reveal names in this quest" reads the quest's
+    /// unlocks from, 1.20.0 N6); null until the plugin hands one over.
+    /// </summary>
+    public Core.Unlocks.QuestUnlocks? Unlocks { get; private set; }
+
+    /// <summary>The unlock index of the loaded catalog, and the spoiler names it places (<see cref="UseSpoilerNames"/>).</summary>
+    public void UseUnlocks(Core.Unlocks.QuestUnlocks? index, SpoilerNames? names = null)
+    {
+        Unlocks = index ?? Unlocks;
+        names ??= index?.Names ?? SpoilerNames.Empty;
+        if (ReferenceEquals(spoilerNames, names))
+        {
+            return;
+        }
+
+        spoilerNames = names;
+        Bump();
+    }
 
     /// <summary>
     /// The end dates the player entered for running events with no known end (1.19.0, C10: Characters › Seasonal
@@ -474,8 +537,16 @@ public sealed partial class SessionState
         }
 
         var indexes = prepared.Indexes;
-        // Every blocker, status line, todo row and diagnostic names quests through the viewed character's shield.
-        var names = prepared.Names with { QuestName = quest => Spoilers.DisplayName(quest) };
+        // Every blocker, status line, todo row and diagnostic names quests (and duties past the story point, 1.20.0
+        // N6) through the viewed character's shield.
+        var dutyName = prepared.Names.Duty;
+        var clientName = prepared.Names.SatisfactionNpc;
+        var names = prepared.Names with
+        {
+            QuestName = quest => Spoilers.DisplayName(quest),
+            Duty = id => Spoilers.Name(SpoilerKind.Duty, dutyName(id)),
+            SatisfactionNpc = id => Spoilers.Name(SpoilerKind.Npc, clientName(id)),
+        };
         var context = prepared.Context;
 
         // The live evaluations belong to the previous catalog (a filing flip retires or restores rows): shown
@@ -523,7 +594,12 @@ public sealed partial class SessionState
         Chains = indexes.Chains;
         Names = names;
         // Chat, item menus and hints speak for the logged-in character, whichever one the window shows.
-        LiveNames = names with { QuestName = quest => LiveSpoilers.DisplayName(quest) };
+        LiveNames = names with
+        {
+            QuestName = quest => LiveSpoilers.DisplayName(quest),
+            Duty = id => LiveSpoilers.Name(SpoilerKind.Duty, dutyName(id)),
+            SatisfactionNpc = id => LiveSpoilers.Name(SpoilerKind.Npc, clientName(id)),
+        };
         baseContext = context;
         liveStates = NoStates;
         Context = viewedContext;

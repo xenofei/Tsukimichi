@@ -66,7 +66,7 @@ public class SpoilerMaskFixtureTests(FixtureCatalog fixture) : IClassFixture<Fix
         Assert.All(dawntrail, q =>
         {
             Assert.True(mask.IsMasked(q));
-            Assert.Equal($"Main scenario quest (Lv {q.DisplayLevel})", mask.DisplayName(q));
+            Assert.Equal($"Main scenario quest (Lv\u00A0{q.DisplayLevel})", mask.DisplayName(q));
             Assert.DoesNotContain(q.Name, mask.DisplayName(q), StringComparison.Ordinal);
         });
 
@@ -344,17 +344,17 @@ public class SpoilerMaskTests
 
         // Masked "Endwalker" inside masked "Endwalker Finale": the longer name wins whatever the list order.
         Assert.Equal(
-            "needs Main scenario quest (Lv 100) and Main scenario quest (Lv 90)",
+            "needs Main scenario quest (Lv\u00A0100) and Main scenario quest (Lv\u00A090)",
             mask.MaskNamesIn("needs Endwalker Finale and Endwalker", catalog, [3u, 4u]));
 
         // Masked "Endwalker" inside a listed name that is not masked stays as it is.
         Assert.Equal(
-            "needs Endwalker Prologue and Main scenario quest (Lv 90)",
+            "needs Endwalker Prologue and Main scenario quest (Lv\u00A090)",
             mask.MaskNamesIn("needs Endwalker Prologue and Endwalker", catalog, [3u, 2u]));
 
         // Only whole words: "Home" inside "Homestead" is not a quest name.
         Assert.Equal(
-            "Homestead, then Main scenario quest (Lv 95).",
+            "Homestead, then Main scenario quest (Lv\u00A095).",
             mask.MaskNamesIn("Homestead, then Home.", catalog, [5u]));
     }
 
@@ -383,7 +383,7 @@ public class SpoilerMaskTests
         var mask = SpoilerMask.Build(Catalog, states, SpoilerOptions.Default with { Ahead = 0 });
         var names = BlockerNames.Default with { Catalog = Catalog, QuestName = mask.DisplayName };
 
-        Assert.Equal("Main scenario quest (Lv 100)", names.QuestName(Catalog.GetByRowId(7)!));
+        Assert.Equal("Main scenario quest (Lv\u00A0100)", names.QuestName(Catalog.GetByRowId(7)!));
         Assert.Equal("Coming to Gridania", names.QuestName(Catalog.GetByRowId(1)!));
         Assert.Equal("Side quest", names.QuestName(Catalog.GetByRowId(20)!));
         Assert.Equal("Close to Home", BlockerNames.Default.QuestName(Catalog.GetByRowId(2)!));

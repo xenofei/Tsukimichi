@@ -299,6 +299,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     // "Also opens: …" per quest, composed once per index revision, reach and Moonlit catalog.
     private readonly Dictionary<uint, string> alsoOpens = [];
     private int alsoOpensRevision = -1;
+    private int alsoOpensShield;
     private byte alsoOpensReach = byte.MaxValue;
     private UniqueRewardCatalog? alsoOpensCatalog;
 
@@ -316,8 +317,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         var reach = UnlockReach?.Invoke() ?? byte.MaxValue;
         var moonlit = Catalog;
-        if (alsoOpensRevision != unlocks.Revision || alsoOpensReach != reach || !ReferenceEquals(alsoOpensCatalog, moonlit))
+        var shield = session.Spoilers.Fingerprint;
+        if (alsoOpensRevision != unlocks.Revision || alsoOpensReach != reach || !ReferenceEquals(alsoOpensCatalog, moonlit) || alsoOpensShield != shield)
         {
+            alsoOpensShield = shield;
             alsoOpensRevision = unlocks.Revision;
             alsoOpensReach = reach;
             alsoOpensCatalog = moonlit;
@@ -328,11 +331,17 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             var uniques = moonlit.ForQuest(quest.RowId);
             var entries = new List<Core.Unlocks.UnlockEntry>();
-            foreach (var entry in Core.Unlocks.UnlockView.Visible(unlocks.For(quest.RowId), masked: false, reach))
+            // Matched against the Moonlit rows as they are; printed as the shield shows them (1.20.0 N6). Both lists
+            // keep the same rows in the same order.
+            var rows = unlocks.For(quest.RowId);
+            var plain = Core.Unlocks.UnlockView.Visible(rows, masked: false, reach);
+            var shown = Core.Unlocks.UnlockView.Visible(rows, masked: false, reach, session.Spoilers);
+            for (var i = 0; i < plain.Count; i++)
             {
-                if (!uniques.Any(unique => Core.Unlocks.UnlockRewards.Same(unique, entry)))
+                var own = plain[i];
+                if (!uniques.Any(unique => Core.Unlocks.UnlockRewards.Same(unique, own)))
                 {
-                    entries.Add(entry);
+                    entries.Add(shown[i]);
                 }
             }
 
@@ -1570,6 +1579,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                     dl.AddImageRounded(wrap.Handle, artMin, artMax, Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding * 0.5f);
                 }
             }
+            else if (row.Shielded)
+            {
+                // A reward the shield hides: the 22 px moon-disc tile (spec-1.20 N6), centred.
+                HiddenTile(dl, iconMin, iconMax);
+            }
             else
             {
                 // No art of its own: the kind's icon, faded, at half the tile.
@@ -1918,11 +1932,24 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// <summary>A reward without art of its own: its kind's icon (the game's menu icon, else the kind's glyph), faded, on the sunken ground.</summary>
     private void DrawKindStandIn(ImDrawListPtr dl, Row row, Vector2 min, Vector2 max)
     {
+        if (row.Shielded)
+        {
+            HiddenTile(dl, min, max);
+            return;
+        }
+
         var side = max.X - min.X;
         var rounding = MathF.Round(side * 0.125f);
         dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Sunken), rounding);
         var inset = new Vector2(MathF.Round(side * 0.14f));
         Orbit.DrawIcon(dl, textures, row.KindIcon, min + inset, max - inset, NoIconAlpha, rounding * 0.5f);
+    }
+
+    /// <summary>The hidden-reward tile (spec-1.20 N6) centred in <paramref name="min"/>–<paramref name="max"/>: 22 px, or the room when smaller.</summary>
+    private static void HiddenTile(ImDrawListPtr dl, Vector2 min, Vector2 max)
+    {
+        var side = MathF.Min(max.X - min.X, MathF.Round(UiMetrics.Px(22f)));
+        Chrome.HiddenRewardTile(dl, new Vector2(MathF.Round((min.X + max.X - side) * 0.5f), MathF.Round((min.Y + max.Y - side) * 0.5f)), side);
     }
 
     /// <summary>Alpha of the kind's icon standing in where a reward's own art would go: present but clearly not the reward.</summary>
@@ -1942,7 +1969,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         // "Open on FFXIV Collect" and the item on Garland Tools (1.8.0); a masked quest's reward asks first.
-        links.DrawRewardLinks(row.Entry, row.Quest is { } giver && session.Spoilers.IsMasked(giver), row.Name);
+        // A reward the wider shield hides asks too, naming it by its placeholder (1.20.0 N6).
+        links.DrawRewardLinks(row.Entry, row.Shielded || (row.Quest is { } giver && session.Spoilers.IsMasked(giver)), row.Name);
         if (ImGui.MenuItem(Strings.LinksCopyViewTsv))
         {
             CopyViewTsv();
@@ -2581,9 +2609,16 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             Index = index;
             Group = group;
-            var icon = art.Icon;
+
+            // The wider shield (1.20.0 N6): a reward the story has not introduced is its placeholder, with the kind's
+            // icon only (no art of its own, no gallery picture, no item tooltip).
+            var primaryQuest = questOf(entry.QuestRowId);
+            var rewardName = RewardNames.Display(entry, primaryQuest, catalogLanguage);
+            var shielded = spoilers.IsNameMasked(SpoilerKind.Reward, rewardName);
+            var icon = shielded ? 0u : art.Icon;
+            Shielded = shielded;
             Icon = icon;
-            Picture = art.Picture;
+            Picture = shielded ? 0u : art.Picture;
             KindIcon = art.Fallback;
             Hidden = hidden;
             IReadOnlyList<uint> ids = group is null ? [entry.QuestRowId] : group.Quests;
@@ -2600,12 +2635,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 questEntries[i] = group?.FirstOf(ids[i]) ?? entry;
             }
 
-            var primaryQuest = questOf(entry.QuestRowId);
             KindName = Strings.MoonlitKindName(entry.Kind);
-            var rewardName = RewardNames.Display(entry, primaryQuest, catalogLanguage);
             var baseName = string.IsNullOrWhiteSpace(rewardName)
                 ? KindName + " #" + entry.RewardId.ToString(CultureInfo.InvariantCulture)
-                : rewardName;
+                : shielded ? spoilers.Name(SpoilerKind.Reward, rewardName) : rewardName;
             var search = new List<string> { baseName };
             if (group is { IsChoice: true })
             {
@@ -2617,7 +2650,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 {
                     if (seen.Add(RewardKey.Of(item)))
                     {
-                        var itemName = RewardNames.Display(item, questOf(item.QuestRowId), catalogLanguage);
+                        var itemName = spoilers.Name(SpoilerKind.Reward, RewardNames.Display(item, questOf(item.QuestRowId), catalogLanguage));
                         items.Add(itemName);
                         search.Add(itemName);
                     }
@@ -2652,7 +2685,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
 
             DropsInDuty = drop is not null;
-            DropTooltip = drop is null ? string.Empty : Strings.MoonlitAlsoDropsTooltip(drop.DropWhere);
+            DropTooltip = drop is null ? string.Empty : Strings.MoonlitAlsoDropsTooltip(spoilers.Name(SpoilerKind.Duty, drop.DropWhere));
             Reward = icon == 0 ? null : RewardFor(primaryQuest, entry, icon, baseName);
         }
 
@@ -2713,6 +2746,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         /// <summary>The reward's own icon; 0 when it has none (<see cref="KindIcon"/> is worn instead).</summary>
         public uint Icon { get; }
+
+        /// <summary>The wider spoiler shield hides the reward (1.20.0 N6): its placeholder, the moon-disc tile, no art.</summary>
+        public bool Shielded { get; }
 
         /// <summary>The reward's large picture for a gallery tile (a mount's or minion's guide art); 0 when it has none.</summary>
         public uint Picture { get; }

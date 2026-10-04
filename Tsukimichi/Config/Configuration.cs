@@ -404,6 +404,23 @@ public sealed partial class Configuration : IPluginConfiguration
     public bool SpoilerHideArtwork { get; set; } = true;
 
     /// <summary>
+    /// 1.20.0 (N6, "Also hide places, duties, rewards and people"): with <see cref="SpoilerHideMsqNames"/>, areas,
+    /// aetherytes, duties, quest rewards and characters from the story past the character's read as placeholders
+    /// ("Dawntrail area 6"). Null only in a configuration saved before 1.20.0: <see cref="Load(IDalamudPluginInterface, IPluginLog?)"/>
+    /// gives it the value of <see cref="SpoilerHideMsqNames"/> (<see cref="SpoilerOptions.HideRelatedOnLoad"/>), so a
+    /// fresh install has it on and a player who turned the shield off keeps everything shown.
+    /// </summary>
+    public bool? SpoilerHideOtherNames { get; set; }
+
+    /// <summary><see cref="SpoilerHideOtherNames"/> as the switch shows it.</summary>
+    [Newtonsoft.Json.JsonIgnore]
+    public bool HideOtherNames
+    {
+        get => SpoilerOptions.HideRelatedOnLoad(SpoilerHideOtherNames, SpoilerHideMsqNames);
+        set => SpoilerHideOtherNames = value;
+    }
+
+    /// <summary>
     /// Legacy (1.7 and earlier): the per-character override of the shield, by content id. Since 1.8.0 it lives in
     /// <c>user/characters.json</c> (<see cref="Core.Storage.CharacterSettingsBook"/>), shared by every game client; this
     /// is read once at load, moved there, and emptied (<see cref="TakeLegacyCharacterSettings"/>).
@@ -419,10 +436,10 @@ public sealed partial class Configuration : IPluginConfiguration
         var ahead = Math.Clamp(SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
         if (contentId is not null && shield is { } shielded)
         {
-            return shielded ? new SpoilerOptions(true, ahead, true) : SpoilerOptions.Off with { Ahead = ahead };
+            return shielded ? new SpoilerOptions(true, ahead, true, true) : SpoilerOptions.Off with { Ahead = ahead };
         }
 
-        return new SpoilerOptions(SpoilerHideMsqNames, ahead, SpoilerHideArtwork);
+        return new SpoilerOptions(SpoilerHideMsqNames, ahead, SpoilerHideArtwork, HideOtherNames);
     }
 
     /// <summary>Last table filters, restored on load.</summary>
@@ -836,6 +853,9 @@ public sealed partial class Configuration : IPluginConfiguration
         config.EnableHooksOnUntestedVersion = config.EnableHooksOnUntestedVersion?.Trim() ?? string.Empty;
         config.DataFreshnessDismissedFor = config.DataFreshnessDismissedFor?.Trim() ?? string.Empty;
         config.SpoilerShieldByCharacter ??= [];
+
+        // 1.20.0 (N6): the wider shield's switch takes the value of Hide story names ahead on upgrade.
+        config.SpoilerHideOtherNames = SpoilerOptions.HideRelatedOnLoad(config.SpoilerHideOtherNames, config.SpoilerHideMsqNames);
         config.PayoffGatesNoticedByCharacter ??= [];
         config.PayoffWhyOpenByCharacter ??= [];
         if (config.QuestionableLastReceipt is { } receipt)
