@@ -412,6 +412,17 @@ public sealed record QuestGate(string Gate, uint[] After, GateItems? Items = nul
 
     /// <summary>The sheet's accept conditions that are no quest which this gate stands for (<see cref="QuestCatalog.UncheckedAcceptConditions"/> leaves them out).</summary>
     public uint[] AcceptConditions { get; init; } = [];
+
+    /// <summary>
+    /// Where the gate was confirmed, in a fixed order: <see cref="GameTextSource"/> (the quest's own text, or an after
+    /// quest's, states it), <see cref="SheetSource"/> (sheet rows give its weapons, mounts, unlock links or accept
+    /// conditions), <see cref="WikiSource"/> (the Console Games Wiki page in its evidence). Every curated gate has two.
+    /// </summary>
+    public IReadOnlyList<string> Sources { get; init; } = [];
+
+    public const string GameTextSource = "gameText";
+    public const string SheetSource = "sheet";
+    public const string WikiSource = "wiki";
 }
 
 /// <summary>Where a gate's weapons must be (<see cref="GateItems.Hold"/>).</summary>

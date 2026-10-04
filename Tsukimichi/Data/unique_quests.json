@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-10-03T19:06:31Z",
+  "generatedUtc": "2026-10-04T03:11:37Z",
   "entries": [
     {
       "questRowId": 65549,
@@ -372,6 +372,16 @@
       "rewardName": "conjurer",
       "confidence": "Static",
       "source": "Quest.ClassJobUnlock",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65665,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Guildleves and inn rooms",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -997,6 +1007,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 65856,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Guildleves and inn rooms",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 65879,
       "kind": "Item",
       "rewardId": 4102,
@@ -1016,6 +1036,16 @@
       "rewardName": "the Bowl of Embers",
       "confidence": "Curated",
       "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65880,
+      "kind": "ClassJob",
+      "rewardId": 7,
+      "itemId": 0,
+      "rewardName": "thaumaturge",
+      "confidence": "Static",
+      "source": "Quest.SystemReward 21 (the same-named class quest's ClassJobUnlock)",
       "otherSources": []
     },
     {
@@ -1436,6 +1466,16 @@
       "rewardName": "This One Time, at Level Thirty...",
       "confidence": "Static",
       "source": "Achievement.Data;type=9",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66005,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Guildleves and inn rooms",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -24470,6 +24510,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 70845,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Occult Record",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70847,
       "kind": "DutyUnlock",
       "rewardId": 1018,
@@ -24477,6 +24527,16 @@
       "rewardName": "the Occult Crescent: South Horn",
       "confidence": "Static",
       "source": "ContentFinderCondition.UnlockCriteria",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70848,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Phantom jobs",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {

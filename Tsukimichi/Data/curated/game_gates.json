@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "Gates the game checks before it offers a quest: a relic weapon at some stage equipped or held, a collection of mounts owned, Eureka story and elemental level, Doman Enclave reconstruction progress. A gate Tsukimichi cannot read is listed as not checked, so the quest reads Not checked where it would otherwise read Ready (never Blocked by the gate itself). A gear gate lists its weapons under \"equipped\" (worn) or \"held\" (equipped, in the Armoury Chest or in the inventory): \"items\" are groups of Item row ids, any one group passing when every item of it is there (a paladin's sword and shield form one group), derived from the sheet rows in \"sources\" as the game-data tests check, with \"shield\" saying how a paladin's shield counts; it is judged from the gear the plugin captures, and reads not checked for a character captured without it. A mount-collection gate lists under \"mounts\" the Mount row ids that must all be owned (\"all\"), derived from the reward mount in \"sources\" (Mount#105: the mounts in the hundred of the Firebird's UIPriority with a ones digit) as the game-data tests check; it is judged from the owned mounts the plugin captures. \"after\" names the quests before which the gate cannot be passed at all; the catalog adds them to the quest's prerequisites, with \"afterTextKey\" the text row of an after quest that says what it opens. \"gameTextKey\" is the gated quest's own text row stating the gate, when the game states one. The text is never committed. Keys are Quest sheet row ids, sorted ascending.",
+  "note": "Gates the game checks before it offers a quest: a relic weapon at some stage equipped or held, a collection of mounts owned, Eureka story and elemental level, Doman Enclave reconstruction progress, a deep-dungeon floor, a Resistance rank, Occult Record entries, a blue magic spell learned, a relic tool held. A gate Tsukimichi cannot read is listed as not checked, so the quest reads Not checked where it would otherwise read Ready (never Blocked by the gate itself). A gear gate lists its weapons under \"equipped\" (worn) or \"held\" (equipped, in the Armoury Chest or in the inventory): \"items\" are groups of Item row ids, any one group passing when every item of it is there (a paladin's sword and shield form one group), derived from the sheet rows in \"sources\" as the game-data tests check, with \"shield\" saying how a paladin's shield counts; it is judged from the gear the plugin captures, and reads not checked for a character captured without it. A mount-collection gate lists under \"mounts\" the Mount row ids that must all be owned (\"all\"), derived from the reward mount in \"sources\" (Mount#105: the mounts in the hundred of the Firebird's UIPriority with a ones digit) as the game-data tests check; it is judged from the owned mounts the plugin captures. An unlock-link gate lists under \"unlockLinks\" the unlock link ids that must all be set (\"all\"), derived from the sheet rows in \"sources\" (QuestAcceptAdditionCondition#row: the gated quest's own accept conditions that are no quest; Action#row: the UnlockLink a learned blue magic spell sets) as the game-data tests check; it is judged from the links the plugin captures. \"metBy\" names quests the game gives only once the gate is passed: one of them done meets the gate. \"acceptConditions\" are the sheet's accept conditions that are no quest which the gate stands for, listed under the gate rather than as an accept condition not checked. Every gate is confirmed by two sources of three: the game's text (gameTextKey or afterTextKey), the sheets (the derived lists) and the wiki (the evidence page). \"after\" names the quests before which the gate cannot be passed at all; the catalog adds them to the quest's prerequisites, with \"afterTextKey\" the text row of an after quest that says what it opens. \"gameTextKey\" is the gated quest's own text row stating the gate, when the game states one. The text is never committed. Keys are Quest sheet row ids, sorted ascending.",
   "entries": {
     "65742": {
       "gate": "a relic weapon novus equipped",
@@ -67,11 +67,28 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Zodiac_Weapons",
       "note": "Star Light, Star Bright, level 50, Zodiac Weapons: offered only to a character wearing a relic weapon animus (its own text; script IsRelicWeapon025Equipped); a paladin wears both sword and shield. The items are RelicItem row 3. It read Ready as soon as Celestial Radiance was done."
     },
+    "67016": {
+      "gate": "the Dun Scaith raid unlocked",
+      "after": [67909],
+      "metBy": [67909],
+      "gameTextKey": "TEXT_HEAVNM303_01480_SYSTEM_000_022",
+      "afterTextKey": "TEXT_HEAVNM301_02373_SEQ_03",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Unidentified_Flying_Object",
+      "note": "Unidentified Flying Object: its own text asks for the Dun Scaith raid unlocked, which Where Shadows Reign opens (its journal step says the raid is now in the Duty Finder). Blocked before that quest and met once it is done; Questionable makes it wait for the same quest."
+    },
     "67086": {
       "gate": "all seven Heavensward Lanner mounts",
       "mounts": { "sources": ["Mount#105"], "all": [75, 76, 77, 78, 90, 98, 104] },
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Fiery_Wings,_Fiery_Hearts",
       "note": "Fiery Wings, Fiery Hearts, the Firebird quest: offered only once the character owns the seven Lanners of the Heavensward extreme trials (white, rose, round, warring, dark, Sophic and Demonic). Its script calls CheckMountAcquire. The sheet gives it level 1 and no previous quest, so it read Ready and Moonlit's Get now for anyone with Heavensward. The mounts are the Firebird's collection in the Mount sheet (UIPriority 30100 to 30109); the later Wondrous Lanner (30110) is not one of them."
+    },
+    "67199": {
+      "gate": "My Little Chocobo done (the chocobo companion)",
+      "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#67199"], "all": [17] },
+      "metBy": [66236, 66237, 66238],
+      "gameTextKey": "TEXT_HEAVNA701_01663_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_First_Flight_of_the_Excelsior",
+      "note": "The First Flight of the Excelsior: its own text asks for the Grand Company's My Little Chocobo, which the sheet keeps as unlock link 17 (the chocobo companion, the link the three My Little Chocobo quests set). Met once any of the three is done, else judged from the link the capture reads."
     },
     "67749": {
       "gate": "an animated anima weapon equipped",
@@ -157,6 +174,21 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/And_We_Shall_Call_It_Pagos",
       "note": "And We Shall Call It Pagos, the quasi-quest that opens Eureka Pagos: Rodney grants it once the Anemos story is done at elemental level 20, neither of which Tsukimichi can read, and Anemos is open only after And We Shall Call It Eureka (68614). The sheet gives it no previous quest, so it read Ready."
     },
+    "68667": {
+      "gate": "floor 50 of the Palace of the Dead cleared",
+      "after": [67092],
+      "metBy": [67923],
+      "gameTextKey": "TEXT_STMBDY701_03131_SYSTEM_100_000",
+      "afterTextKey": "TEXT_SUBCTS701_01556_SYSTEM_000_100",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Knocking_on_Heaven%27s_Door",
+      "note": "Knocking on Heaven's Door: the game offers it only once floor 50 of the Palace of the Dead has been cleared (its own text says so; the wiki infobox agrees). No flag a plugin can read outside the dungeon records the clear, so the gate is not checked; What Lies Beneath, the quasi-quest the game hands out after that clear, shows it passed. The House That Death Built opens the Palace of the Dead, so nothing passes the gate before it."
+    },
+    "68668": {
+      "gate": "floor 30 of Heaven-on-High cleared",
+      "acceptConditions": [226],
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/On_the_Shoulders_of_Giants",
+      "note": "On the Shoulders of Giants: the sheet's accept condition 226 holds it back until floor 30 of Heaven-on-High is cleared, as the wiki infobox states. The value is flagged unlike an unlock link, so Tsukimichi does not read it: not checked."
+    },
     "68689": {
       "gate": "the Doman Enclave reconstruction at its last stage (donations)",
       "after": [68677],
@@ -164,11 +196,138 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Lighting_the_Way",
       "note": "Lighting the Way, level 70, Doman Reconstruction Quests: Kozakura offers it when the enclave's reconstruction reaches its last stage (the wiki files it after the Tauyaku stage; finishing it completes the rebuilding), which Tsukimichi cannot read, and donations open only with It Takes an Enclave (68677), the link Questionable also adds. The sheet gives it no previous quest, so it read Ready."
     },
+    "68730": {
+      "gate": "the blue magic Blood Drain learned",
+      "unlockLinks": { "sources": ["Action#11395"], "all": [114] },
+      "gameTextKey": "TEXT_JOBAOZ100_03194_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Blue_Collar_Work",
+      "note": "Blue Collar Work, blue mage: the trainer offers it only once Blood Drain is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "68731": {
+      "gate": "the blue magic Mind Blast learned",
+      "unlockLinks": { "sources": ["Action#11394"], "all": [113] },
+      "gameTextKey": "TEXT_JOBAOZ200_03195_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Why_They_Call_It_the_Blues",
+      "note": "Why They Call It the Blues, blue mage: the trainer offers it only once Mind Blast is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "68732": {
+      "gate": "the blue magic Faze learned",
+      "unlockLinks": { "sources": ["Action#11403"], "all": [122] },
+      "gameTextKey": "TEXT_JOBAOZ300_03196_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Scream_Blue_Murder",
+      "note": "Scream Blue Murder, blue mage: the trainer offers it only once Faze is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "68733": {
+      "gate": "the blue magic 1000 Needles learned",
+      "unlockLinks": { "sources": ["Action#11397"], "all": [116] },
+      "gameTextKey": "TEXT_JOBAOZ400_03197_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Blue_Gold",
+      "note": "Blue Gold, blue mage: the trainer offers it only once 1000 Needles is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "68734": {
+      "gate": "the blue magic Glower learned",
+      "unlockLinks": { "sources": ["Action#11404"], "all": [123] },
+      "gameTextKey": "TEXT_JOBAOZ500_03198_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Real_Folk_Blues",
+      "note": "The Real Folk Blues, blue mage: the trainer offers it only once Glower is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
     "68736": {
       "gate": "all seven Stormblood Kamuy mounts",
       "mounts": { "sources": ["Mount#181"], "all": [115, 116, 133, 144, 158, 172, 182] },
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Lone_Wolf_No_More",
       "note": "A Lone Wolf No More, the Kamuy of the Nine Tails quest: offered only once the character owns the seven Kamuy of the Stormblood extreme trials. Its script calls CheckMountAcquire. The sheet gives it level 1 and no previous quest, so it read Ready from level 1. The mounts are the collection of Kamuy of the Nine Tails in the Mount sheet (UIPriority 30200 to 30209); the later Venturous Kamuy (30210) is not one of them."
+    },
+    "69269": {
+      "gate": "the blue magic Northerlies learned",
+      "unlockLinks": { "sources": ["Action#18297"], "all": [153] },
+      "gameTextKey": "TEXT_JOBAOZ530_03733_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Something_Borrowed,_Something_Blue",
+      "note": "Something Borrowed, Something Blue, blue mage: the trainer offers it only once Northerlies is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "69270": {
+      "gate": "the blue magic Whistle learned",
+      "unlockLinks": { "sources": ["Action#18309"], "all": [165] },
+      "gameTextKey": "TEXT_JOBAOZ550_03734_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Bolt_from_the_Blue",
+      "note": "Bolt from the Blue, blue mage: the trainer offers it only once Whistle is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "69271": {
+      "gate": "the blue magic Exuviation learned",
+      "unlockLinks": { "sources": ["Action#18318"], "all": [174] },
+      "gameTextKey": "TEXT_JOBAOZ580_03735_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Blue_in_the_Face",
+      "note": "Blue in the Face, blue mage: the trainer offers it only once Exuviation is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "69272": {
+      "gate": "the blue magic Frog Legs learned",
+      "unlockLinks": { "sources": ["Action#18307"], "all": [163] },
+      "gameTextKey": "TEXT_JOBAOZ600_03736_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Blue_Scream_of_Death",
+      "note": "Blue Scream of Death, blue mage: the trainer offers it only once Frog Legs is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "69307": {
+      "gate": "My Little Chocobo done (the chocobo companion)",
+      "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#69307"], "all": [17] },
+      "metBy": [66236, 66237, 66238],
+      "gameTextKey": "TEXT_LUCKMI101_03771_SYSTEM_000_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/In_the_Name_of_the_Light",
+      "note": "In the Name of the Light: its own text asks for the Grand Company's My Little Chocobo, which the sheet keeps as unlock link 17 (the chocobo companion, the link the three My Little Chocobo quests set). Met once any of the three is done, else judged from the link the capture reads."
+    },
+    "69429": {
+      "gate": "a dragonsung tool in your possession",
+      "held": { "sources": ["QuestClassJobReward#14"], "items": [[29634], [29635], [29636], [29637], [29638], [29639], [29640], [29641], [29642], [29643], [29644]] },
+      "gameTextKey": "TEXT_LUCKHT012_03893_SYSTEM_000_003",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Ever_Skyward",
+      "note": "Ever Skyward: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the RequiredItem of the quest's own reward row, materials left out; the game asks for the one of the current class, any one passes here."
+    },
+    "69430": {
+      "gate": "an augmented dragonsung tool in your possession",
+      "held": { "sources": ["QuestClassJobReward#15"], "items": [[30282], [30283], [30284], [30285], [30286], [30287], [30288], [30289], [30290], [30291], [30292]] },
+      "gameTextKey": "TEXT_LUCKHT013_03894_SYSTEM_000_003",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Tools_of_Tomorrow",
+      "note": "The Tools of Tomorrow: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the RequiredItem of the quest's own reward row, materials left out; the game asks for the one of the current class, any one passes here."
+    },
+    "69481": {
+      "gate": "Resistance rank 5",
+      "gameTextKey": "TEXT_LUCKSA105_03945_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/On_the_Offensive",
+      "note": "On the Offensive, Bozjan Southern Front: its own text asks for a Resistance rank, and the wiki infobox names rank 5. The rank is kept with the Bozjan field records, which a plugin cannot read outside the zone: not checked."
+    },
+    "69482": {
+      "gate": "Resistance rank 6",
+      "gameTextKey": "TEXT_LUCKSA106_03946_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Time_to_Focus",
+      "note": "Time to Focus, Bozjan Southern Front: its own text asks for a Resistance rank, and the wiki infobox names rank 6. The rank is kept with the Bozjan field records, which a plugin cannot read outside the zone: not checked."
+    },
+    "69483": {
+      "gate": "Resistance rank 7",
+      "gameTextKey": "TEXT_LUCKSA107_03947_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Third_Time%27s_the_Charm",
+      "note": "Third Time's the Charm, Bozjan Southern Front: its own text asks for a Resistance rank, and the wiki infobox names rank 7. The rank is kept with the Bozjan field records, which a plugin cannot read outside the zone: not checked."
+    },
+    "69484": {
+      "gate": "Resistance rank 8",
+      "gameTextKey": "TEXT_LUCKSA108_03948_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Pressing_Forward",
+      "note": "Pressing Forward, Bozjan Southern Front: its own text asks for a Resistance rank, and the wiki infobox names rank 8. The rank is kept with the Bozjan field records, which a plugin cannot read outside the zone: not checked."
+    },
+    "69485": {
+      "gate": "Resistance rank 9",
+      "gameTextKey": "TEXT_LUCKSA109_03949_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Signature_Acquired",
+      "note": "Signature Acquired, Bozjan Southern Front: its own text asks for a Resistance rank, and the wiki infobox names rank 9. The rank is kept with the Bozjan field records, which a plugin cannot read outside the zone: not checked."
+    },
+    "69486": {
+      "gate": "Resistance rank 9",
+      "gameTextKey": "TEXT_LUCKSA110_03950_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Picking_Up_the_Trail",
+      "note": "Picking Up the Trail, Bozjan Southern Front: its own text asks for a Resistance rank, and the wiki infobox names rank 9. The rank is kept with the Bozjan field records, which a plugin cannot read outside the zone: not checked."
+    },
+    "69487": {
+      "gate": "Resistance rank 10",
+      "gameTextKey": "TEXT_LUCKSA111_03951_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Lady_of_Blades",
+      "note": "The Lady of Blades, Bozjan Southern Front: its own text asks for a Resistance rank, and the wiki infobox names rank 10. The rank is kept with the Bozjan field records, which a plugin cannot read outside the zone: not checked."
     },
     "69506": {
       "gate": "a resistance weapon in your possession",
@@ -183,6 +342,47 @@
       "gameTextKey": "TEXT_LUCKSA152_03971_SYSTEM_800_009",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Resistance_Weapons",
       "note": "The Will to Resist, level 80, Resistance Weapons: offered only while the augmented resistance weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 18. It read Ready as soon as For Want of a Memory was done."
+    },
+    "69520": {
+      "gate": "a skybuilders' tool in your possession",
+      "held": { "sources": ["QuestClassJobRewardItem#19"], "items": [[31714], [31715], [31716], [31717], [31718], [31719], [31720], [31721], [31722], [31723], [31724]] },
+      "gameTextKey": "TEXT_LUCKHT023_03984_SYSTEM_300_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Greater_Heights",
+      "note": "Greater Heights: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the ones the previous step hands out (its reward row's RewardItem); the game asks for the one of the current class, any one passes here."
+    },
+    "69526": {
+      "gate": "the blue magic Basic Instinct learned",
+      "unlockLinks": { "sources": ["Action#23276"], "all": [192] },
+      "gameTextKey": "TEXT_JOBAOZ630_03990_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Everybody_Was_Fukumen_Fighting",
+      "note": "Everybody Was Fukumen Fighting, blue mage: the trainer offers it only once Basic Instinct is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "69527": {
+      "gate": "the blue magic Tingle learned",
+      "unlockLinks": { "sources": ["Action#23265"], "all": [183] },
+      "gameTextKey": "TEXT_JOBAOZ650_03991_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Azuro_and_Goliath",
+      "note": "Azuro and Goliath, blue mage: the trainer offers it only once Tingle is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "69528": {
+      "gate": "the blue magic Ultravibration learned",
+      "unlockLinks": { "sources": ["Action#23277"], "all": [193] },
+      "gameTextKey": "TEXT_JOBAOZ680_03992_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Where_the_Gold_Goes",
+      "note": "Where the Gold Goes, blue mage: the trainer offers it only once Ultravibration is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "69529": {
+      "gate": "the blue magic Aetherial Spark learned",
+      "unlockLinks": { "sources": ["Action#23281"], "all": [197] },
+      "gameTextKey": "TEXT_JOBAOZ700_03993_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Master_of_Mimicry",
+      "note": "Master of Mimicry, blue mage: the trainer offers it only once Aetherial Spark is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "69564": {
+      "gate": "78,000 mettle amassed",
+      "gameTextKey": "TEXT_LUCKSA212_04028_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/One_Man%27s_Relic",
+      "note": "One Man's Relic: its own text asks for mettle amassed (78,000 in the quest's script parameters and on the wiki). Mettle is a Bozjan field value a plugin cannot read outside the zone: not checked."
     },
     "69574": {
       "gate": "a recollection resistance weapon in your possession",
@@ -211,6 +411,23 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Resistance_Weapons",
       "note": "Irresistible, level 80, Resistance Weapons: offered only while the augmented Law's Order weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 22. It read Ready as soon as A Done Deal was done."
     },
+    "70057": {
+      "gate": "My Little Chocobo done (the chocobo companion)",
+      "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#70057"], "all": [17] },
+      "metBy": [66236, 66237, 66238],
+      "gameTextKey": "TEXT_XXCUSC901_04521_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Operation_Archon",
+      "note": "Operation Archon: its own text asks for the Grand Company's My Little Chocobo, which the sheet keeps as unlock link 17 (the chocobo companion, the link the three My Little Chocobo quests set). Met once any of the three is done, else judged from the link the capture reads."
+    },
+    "70199": {
+      "gate": "floor 50 of the Palace of the Dead cleared",
+      "after": [67092],
+      "metBy": [67923],
+      "gameTextKey": "TEXT_AKTKDD101_04663_SYSTEM_000_000",
+      "afterTextKey": "TEXT_SUBCTS701_01556_SYSTEM_000_100",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Delve_into_Myth",
+      "note": "Delve into Myth: the game offers it only once floor 50 of the Palace of the Dead has been cleared (its own text says so; the wiki infobox agrees). No flag a plugin can read outside the dungeon records the clear, so the gate is not checked; What Lies Beneath, the quasi-quest the game hands out after that clear, shows it passed. The House That Death Built opens the Palace of the Dead, so nothing passes the gate before it."
+    },
     "70261": {
       "gate": "a Manderville weapon in your possession",
       "held": { "sources": ["QuestClassJobReward#24"], "items": [[38400, 38419], [38401], [38402], [38403], [38404], [38405], [38406], [38407], [38408], [38409], [38410], [38411], [38412], [38413], [38414], [38415], [38416], [38417], [38418]] },
@@ -224,6 +441,34 @@
       "gameTextKey": "TEXT_CHRHDY251_04726_SYSTEM_000_009",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Manderville_Weapons",
       "note": "The Next Mander-level, level 90, Manderville Weapons: the repeat of Well-oiled for a further job, offered only while that job's Manderville weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 24."
+    },
+    "70267": {
+      "gate": "a splendorous tool in your possession",
+      "held": { "sources": ["QuestClassJobReward#25"], "items": [[38715], [38716], [38717], [38718], [38719], [38720], [38721], [38722], [38723], [38724], [38725]] },
+      "gameTextKey": "TEXT_AKTKCT102_04731_SYSTEM_000_003",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Dedicated_Tool",
+      "note": "A Dedicated Tool: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the RequiredItem of the quest's own reward row, materials left out; the game asks for the one of the current class, any one passes here."
+    },
+    "70268": {
+      "gate": "an augmented splendorous tool in your possession",
+      "held": { "sources": ["QuestClassJobReward#26"], "items": [[38726], [38727], [38728], [38729], [38730], [38731], [38732], [38733], [38734], [38735], [38736]] },
+      "gameTextKey": "TEXT_AKTKCT103_04732_SYSTEM_000_006",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_Adaptive_Tool",
+      "note": "An Adaptive Tool: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the RequiredItem of the quest's own reward row, materials left out; the game asks for the one of the current class, any one passes here."
+    },
+    "70304": {
+      "gate": "a crystalline tool in your possession",
+      "held": { "sources": ["QuestClassJobReward#29"], "items": [[38737], [38738], [38739], [38740], [38741], [38742], [38743], [38744], [38745], [38746], [38747]] },
+      "gameTextKey": "TEXT_AKTKCT202_04768_SYSTEM_000_006",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Tool_of_Her_Own",
+      "note": "A Tool of Her Own: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the RequiredItem of the quest's own reward row, materials left out; the game asks for the one of the current class, any one passes here."
+    },
+    "70305": {
+      "gate": "one of Chora-Zoi's crystalline tools in your possession",
+      "held": { "sources": ["QuestClassJobReward#30"], "items": [[39732], [39733], [39734], [39735], [39736], [39737], [39738], [39739], [39740], [39741], [39742]] },
+      "gameTextKey": "TEXT_AKTKCT203_04769_SYSTEM_000_006",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Tool_without_Compare",
+      "note": "A Tool without Compare: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the RequiredItem of the quest's own reward row, materials left out; the game asks for the one of the current class, any one passes here."
     },
     "70307": {
       "gate": "an amazing Manderville weapon in your possession",
@@ -239,11 +484,53 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Manderville_Weapons",
       "note": "In Need of Adjustment, level 90, Manderville Weapons: the repeat of A Spirited Reforging for a further job, offered only while that job's amazing Manderville weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 28."
     },
+    "70310": {
+      "gate": "the blue magic Goblin Punch learned",
+      "unlockLinks": { "sources": ["Action#34563"], "all": [206] },
+      "gameTextKey": "TEXT_JOBAOZ730_04774_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Beard,_the_Myth,_the_Legend",
+      "note": "The Beard, the Myth, the Legend, blue mage: the trainer offers it only once Goblin Punch is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "70311": {
+      "gate": "the blue magic Schiltron learned",
+      "unlockLinks": { "sources": ["Action#34565"], "all": [208] },
+      "gameTextKey": "TEXT_JOBAOZ750_04775_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Gridania%27s_Most_Wanted",
+      "note": "Gridania's Most Wanted, blue mage: the trainer offers it only once Schiltron is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
+    "70312": {
+      "gate": "the blue magic Rehydration learned",
+      "unlockLinks": { "sources": ["Action#34566"], "all": [209] },
+      "gameTextKey": "TEXT_JOBAOZ780_04776_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/No_Butts_About_It",
+      "note": "No Butts About It, blue mage: the trainer offers it only once Rehydration is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
+    },
     "70331": {
       "gate": "all seven Endwalker Lynx mounts",
       "mounts": { "sources": ["Mount#328"], "all": [261, 262, 293, 306, 315, 325, 332] },
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Wings_of_Hope",
       "note": "Wings of Hope, the apocryphal Bahamut quest: offered only once the character owns the seven Lynxes of the Endwalker extreme trials. Its script calls CheckMountAcquire. The sheet checks only its previous quest, so it read Ready as soon as that was done. The mounts are apocryphal Bahamut's collection in the Mount sheet (UIPriority 30400 to 30409)."
+    },
+    "70339": {
+      "gate": "a brilliant tool in your possession",
+      "held": { "sources": ["QuestClassJobReward#32"], "items": [[39743], [39744], [39745], [39746], [39747], [39748], [39749], [39750], [39751], [39752], [39753]] },
+      "gameTextKey": "TEXT_AKTKCT302_04803_SYSTEM_000_004",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Tool_for_the_Ages",
+      "note": "A Tool for the Ages: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the RequiredItem of the quest's own reward row, materials left out; the game asks for the one of the current class, any one passes here."
+    },
+    "70340": {
+      "gate": "a Vrandtic visionary's tool in your possession",
+      "held": { "sources": ["QuestClassJobReward#33"], "items": [[41180], [41181], [41182], [41183], [41184], [41185], [41186], [41187], [41188], [41189], [41190]] },
+      "gameTextKey": "TEXT_AKTKCT303_04804_SYSTEM_000_003",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Stand_Tool,_My_Friend",
+      "note": "Stand Tool, My Friend: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the RequiredItem of the quest's own reward row, materials left out; the game asks for the one of the current class, any one passes here."
+    },
+    "70341": {
+      "gate": "a lodestar tool in your possession",
+      "held": { "sources": ["QuestClassJobRewardItem#33"], "items": [[41191], [41192], [41193], [41194], [41195], [41196], [41197], [41198], [41199], [41200], [41201]] },
+      "gameTextKey": "TEXT_AKTKCT304_04805_SYSTEM_110_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Dearly_Bekettled",
+      "note": "Dearly Bekettled: offered only while the tool is equipped, in the Armoury Chest or in the inventory (its own text; the wiki quest page quotes it). The tools are the ones the previous step hands out (its reward row's RewardItem); the game asks for the one of the current class, any one passes here."
     },
     "70342": {
       "gate": "a majestic Manderville weapon in your possession",
@@ -259,12 +546,48 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Manderville_Weapons",
       "note": "Positively Mandervillous, level 90, Manderville Weapons: the repeat of Resonating with Perfection for a further job, offered only while that job's majestic Manderville weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 31."
     },
+    "70851": {
+      "gate": "the Occult Record entry The Lost Citadel (No. 7) unlocked",
+      "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#70851"], "all": [509] },
+      "gameTextKey": "TEXT_KINGKD007_05315_SYSTEM_000_005",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Ruined_Land",
+      "note": "A Ruined Land, the Occult Crescent: the sheet's accept conditions are unlock links, the Occult Record entries its own text asks for; the wiki infobox names the entries. Judged from the links the capture reads."
+    },
+    "70852": {
+      "gate": "the Occult Record entries The Vanishing Slope (No. 9), The Fell Warren (No. 13) and The Shadowed City (No. 15) unlocked",
+      "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#70852"], "all": [510, 511, 512] },
+      "gameTextKey": "TEXT_KINGKD008_05316_SYSTEM_000_005",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Common_Thread",
+      "note": "A Common Thread, the Occult Crescent: the sheet's accept conditions are unlock links, the Occult Record entries its own text asks for; the wiki infobox names the entries. Judged from the links the capture reads."
+    },
+    "70853": {
+      "gate": "the Occult Record entry The Abandoned Ascent (No. 19) unlocked",
+      "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#70853"], "all": [513] },
+      "gameTextKey": "TEXT_KINGKD009_05317_SYSTEM_000_005",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Past_and_Crescent",
+      "note": "Past and Crescent, the Occult Crescent: the sheet's accept conditions are unlock links, the Occult Record entries its own text asks for; the wiki infobox names the entries. Judged from the links the capture reads."
+    },
     "70918": {
       "gate": "a penumbrae phantom weapon in your possession",
       "held": { "sources": ["QuestClassJobReward#35"], "items": [[47869, 47890], [47870], [47871], [47872], [47873], [47874], [47875], [47876], [47877], [47878], [47879], [47880], [47881], [47882], [47883], [47884], [47885], [47886], [47887], [47888], [47889]] },
       "gameTextKey": "TEXT_KINGKW103_05382_SYSTEM_000_006",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Phantom_Weapons",
       "note": "Wrought by Hands Phantasmal, level 100, Phantom Weapons: offered only while the penumbrae weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 35. It read Ready as soon as Aether, Aether, Everywhere was done."
+    },
+    "70941": {
+      "gate": "floor 50 of the Palace of the Dead cleared",
+      "after": [67092],
+      "metBy": [67923],
+      "gameTextKey": "TEXT_KINGDD101_05405_SYSTEM_000_000",
+      "afterTextKey": "TEXT_SUBCTS701_01556_SYSTEM_000_100",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Pilgrimage_of_Light",
+      "note": "Pilgrimage of Light: the game offers it only once floor 50 of the Palace of the Dead has been cleared (its own text says so; the wiki infobox agrees). No flag a plugin can read outside the dungeon records the clear, so the gate is not checked; What Lies Beneath, the quasi-quest the game hands out after that clear, shows it passed. The House That Death Built opens the Palace of the Dead, so nothing passes the gate before it."
+    },
+    "70942": {
+      "gate": "stone 30 of Pilgrim's Traverse cleared",
+      "acceptConditions": [566],
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Faerie_Tale",
+      "note": "Faerie Tale: the sheet's accept condition 566 holds it back until stone 30 of Pilgrim's Traverse is cleared, as the wiki infobox states. Flagged like the Heaven-on-High floor, so not read: not checked."
     },
     "70992": {
       "gate": "an umbrae phantom weapon in your possession",
@@ -292,6 +615,13 @@
       "gameTextKey": "TEXT_KINGKW304_05505_SYSTEM_000_011",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Phantom_Weapons",
       "note": "Final Phantasm, level 100, Phantom Weapons: offered only while the eclipticum weapon is equipped, in the Armoury Chest or in the inventory (its own text). The items are the RequiredItem of its own QuestClassJobReward row 39. It read Ready as soon as A Phantom Unveiled was done."
+    },
+    "71054": {
+      "gate": "the Forked Tower: Magic cleared (either version)",
+      "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#71054"], "all": [639] },
+      "gameTextKey": "TEXT_KINGKD108_05518_SYSTEM_000_010",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Wisdom%27s_End",
+      "note": "Wisdom's End: its own text asks for a clear of the Forked Tower: Magic or its Extreme version, which the sheet keeps as the unlock link of its accept condition; the wiki infobox agrees. Judged from the link the capture reads."
     }
   }
 }

@@ -198,6 +198,15 @@ public sealed record GameGateRequirement(string Gate) : Requirement(RequirementK
     /// <summary>A judged unlock-link gate: the links the capture read as not set; ascending. Empty otherwise.</summary>
     public uint[] MissingLinks { get; init; } = [];
 
+    /// <summary>The player marked the gate passed ("I've done this"); <see cref="Judged"/> is set with it.</summary>
+    public bool MarkedByYou { get; init; }
+
+    /// <summary>
+    /// Where the curated gate was confirmed (<see cref="QuestGate.Sources"/>: <c>gameText</c>, <c>sheet</c>, <c>wiki</c>),
+    /// for the "can't check" row's source line. Empty for a requirement built without a gate.
+    /// </summary>
+    public IReadOnlyList<string> Sources { get; init; } = [];
+
     /// <summary>The gate-listed weapons the character has equipped (any stage of the line, not only the one wanted).</summary>
     public uint[] Equipped { get; init; } = [];
 

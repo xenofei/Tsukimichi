@@ -271,7 +271,7 @@ public static class RequirementEvaluator
         {
             results.Add(gate.Mounts is { } mounts
                 ? MountCheck.Evaluate(mounts, gate.Gate, s, ctx.MountName)
-                : GameGateCheck.Evaluate(gate, s, catalog, ctx.ItemName));
+                : GameGateCheck.Evaluate(gate, s, catalog, ctx.ItemName, ctx.GateMarkedDone(s.ContentId, q.RowId)));
         }
 
         return results;

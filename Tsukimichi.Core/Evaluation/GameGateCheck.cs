@@ -14,14 +14,26 @@ namespace Tsukimichi.Core.Evaluation;
 /// </summary>
 public static class GameGateCheck
 {
-    /// <summary>The requirement result for <paramref name="gate"/> on <paramref name="s"/>, its detail in English.</summary>
-    public static RequirementResult Evaluate(QuestGate gate, CharacterSnapshot s, QuestCatalog catalog, Func<uint, string> itemName)
+    /// <summary>
+    /// The requirement result for <paramref name="gate"/> on <paramref name="s"/>, its detail in English. With
+    /// <paramref name="markedDone"/> (the player said "I've done this", feature plan v7 C3) a gate Tsukimichi cannot check
+    /// reads met, "you said so"; a gate it judged keeps its own answer.
+    /// </summary>
+    public static RequirementResult Evaluate(QuestGate gate, CharacterSnapshot s, QuestCatalog catalog, Func<uint, string> itemName, bool markedDone = false)
     {
         ArgumentNullException.ThrowIfNull(gate);
         ArgumentNullException.ThrowIfNull(s);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(itemName);
 
+        var result = Judge(gate, s, catalog, itemName);
+        return markedDone && result.Req is GameGateRequirement { IsNotChecked: true }
+            ? new(new GameGateRequirement(gate.Gate) { Judged = true, MarkedByYou = true, Sources = gate.Sources }, true, "you said so")
+            : result with { Req = ((GameGateRequirement)result.Req) with { Sources = gate.Sources } };
+    }
+
+    private static RequirementResult Judge(QuestGate gate, CharacterSnapshot s, QuestCatalog catalog, Func<uint, string> itemName)
+    {
         if (Proof(gate, s, catalog) is { } proof)
         {
             return proof;

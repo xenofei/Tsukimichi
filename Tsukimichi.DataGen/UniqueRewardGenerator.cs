@@ -12,6 +12,9 @@ internal sealed class UniqueRewardGenerator
 {
     // ItemAction type ids verified in docs/feasibility-report.md section 4. In Lumina.Excel 7.5.0 the
     // "Type" column is exposed as ItemAction.Action (RowRef<Action>), so the id lives in Action.RowId.
+    /// <summary>The <c>Quest.SystemReward</c> feature code every "Way of the &lt;class&gt;" quest carries (the class unlock).</summary>
+    private const uint ClassUnlockFeatureCode = 21;
+
     private const uint ActionMount = 1322;
     private const uint ActionMinion = 853;
     private const uint ActionOrchestrion = 25183;
@@ -551,6 +554,27 @@ internal sealed class UniqueRewardGenerator
             if (job.UnlockQuest.RowId == 0)
                 continue;
             Add(job.UnlockQuest.RowId, RewardKind.ClassJob, job.RowId, 0, Text(job.Name), "ClassJob.UnlockQuest");
+        }
+
+        // Feature code 21 (Quest.SystemReward) marks every "Way of the <class>" quest, the class unlock. Thaumaturge has
+        // two: the starter row names its class (ClassJobUnlock) and the row for a character of another class names none,
+        // though its own text says it unlocks the class (feature plan v7 K5 audit). Such a row takes its namesake's class.
+        var classByName = new Dictionary<string, (uint Job, string Name)>(StringComparer.Ordinal);
+        foreach (var quest in g.Quests)
+        {
+            if (quest.SystemReward.Count > 1 && quest.SystemReward[1] == ClassUnlockFeatureCode && quest.ClassJobUnlock.RowId != 0)
+            {
+                classByName.TryAdd(Text(quest.Name), (quest.ClassJobUnlock.RowId, Text(quest.ClassJobUnlock.ValueNullable?.Name)));
+            }
+        }
+
+        foreach (var quest in g.Quests)
+        {
+            if (quest.SystemReward.Count > 1 && quest.SystemReward[1] == ClassUnlockFeatureCode && quest.ClassJobUnlock.RowId == 0
+                && classByName.TryGetValue(Text(quest.Name), out var sibling))
+            {
+                Add(quest.RowId, RewardKind.ClassJob, sibling.Job, 0, sibling.Name, "Quest.SystemReward 21 (the same-named class quest's ClassJobUnlock)");
+            }
         }
 
         // The awarding quest, not always the one AetherCurrent.Quest lists (five currents name the wrong quest); the

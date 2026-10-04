@@ -133,17 +133,6 @@
       "rewardId": "8791"
     },
     {
-      "rowId": "67016",
-      "fact": "prereqs",
-      "source": "questionable",
-      "prereqId": "67909",
-      "verdict": "unresolved",
-      "reason": "Unidentified Flying Object: Questionable makes it wait for Where Shadows Reign (67909). The quest text asks instead for the Dun Scaith raid to be unlocked, which that quest does, and the wiki names only Freedom for Our Skies (67822). A duty unlock is not a quest prerequisite curated/extra_prerequisites.json can take, and no second source names the quest itself, so it is not added. 1.11.0 review: no sheet, quest script or game gate decides it, so the game data settles nothing more; extended to 1.15.0 for the in-game check (feature plan v6, C1). 1.15.0: extended to 1.19.0, where feature plan v7 item C1 (\"The game confirms it\") checks it against live game state. 1.19.0: feature plan v7 item C1 shipped the observer: Tsukimichi now records the game's own available-quest markers and quest offers per character and shows them in the Report block (\"in game:\" line), /tsuki why and Settings › Advanced › Diagnostics (Copy game checks). No character has stood in this quest's giver zone with the observer running yet, so the game's answer is still pending; extended to 1.21.0. To settle it: on a character that has not done the disputed prerequisite, visit the giver's zone (or talk to the giver), then copy the Report block: an \"in game: offered\" line while the prerequisite is not done means the extra prerequisite is wrong",
-      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
-      "fix": "model the gate as \"Dun Scaith unlocked\" (a duty requirement) or, after an in-game check, a curated extra prerequisite",
-      "until": "1.21.0"
-    },
-    {
       "rowId": "68434",
       "fact": "prereqs",
       "source": "questionable",

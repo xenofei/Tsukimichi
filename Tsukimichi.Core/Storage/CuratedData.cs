@@ -132,6 +132,35 @@ public sealed record GameGate(
 
     /// <summary><see cref="AcceptConditions"/>, never null.</summary>
     public IReadOnlyList<uint> AcceptConditionIds => AcceptConditions ?? [];
+
+    /// <summary>
+    /// Where the gate is confirmed (<see cref="QuestGate.Sources"/>): the game's text when <see cref="GameTextKey"/> or
+    /// <see cref="AfterTextKey"/> names a row, the sheets when weapons, mounts, unlock links or accept conditions are
+    /// derived from them, the wiki when <see cref="Evidence"/> is a Console Games Wiki page.
+    /// </summary>
+    public IReadOnlyList<string> SourceKinds
+    {
+        get
+        {
+            var kinds = new List<string>(3);
+            if (GameTextKey is not null || AfterTextKey is not null)
+            {
+                kinds.Add(QuestGate.GameTextSource);
+            }
+
+            if (Items is not null || Mounts is not null || UnlockLinks is not null || AcceptConditionIds.Count > 0)
+            {
+                kinds.Add(QuestGate.SheetSource);
+            }
+
+            if (Evidence.StartsWith("https://ffxiv.consolegameswiki.com/", StringComparison.Ordinal))
+            {
+                kinds.Add(QuestGate.WikiSource);
+            }
+
+            return kinds;
+        }
+    }
 }
 
 /// <summary>
@@ -380,6 +409,7 @@ public sealed class CuratedData
             UnlockLinks = kv.Value.UnlockLinks?.All,
             MetBy = [.. kv.Value.MetByIds],
             AcceptConditions = [.. kv.Value.AcceptConditionIds],
+            Sources = kv.Value.SourceKinds,
         });
 
     /// <summary>

@@ -44,7 +44,27 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
         69506, 69507, 69574, 69576, 69637,
         70261, 70262, 70307, 70308, 70342, 70343,
         70918, 70992, 71040, 71041,
+
+        // Relic tools (feature plan v7 C3): Skysteel and Splendorous, held.
+        69429, 69430, 69520, 70267, 70268, 70304, 70305, 70339, 70340, 70341,
     ];
+
+    /// <summary>
+    /// The unlock-link gates (1.19, C3), judged from the links a capture reads: the chocobo companion before two main
+    /// scenario quests, the Occult Record entries and the Forked Tower, and the blue magic each blue mage quest asks for.
+    /// </summary>
+    internal static readonly uint[] UnlockLinkGates =
+    [
+        67199, 69307, 70057,
+        70851, 70852, 70853, 71054,
+        68730, 68731, 68732, 68733, 68734, 69269, 69270, 69271, 69272, 69526, 69527, 69528, 69529, 70310, 70311, 70312,
+    ];
+
+    /// <summary>
+    /// The 1.19 gates Tsukimichi cannot read (C3): deep-dungeon floors, Resistance ranks and mettle; and the Dun Scaith
+    /// raid unlocked, met by the quest that opens it.
+    /// </summary>
+    internal static readonly uint[] UnreadGates = [68667, 68668, 70199, 70941, 70942, 69481, 69482, 69483, 69484, 69485, 69486, 69487, 69564, 67016];
 
     /// <summary>
     /// The mount-collection quests (1.11.0, C2), each offered only once the seven extreme-trial mounts of its expansion
@@ -117,7 +137,8 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
         var keys = root["entries"]!.AsObject().Select(kv => uint.Parse(kv.Key, CultureInfo.InvariantCulture)).ToList();
         Assert.Equal(keys.Order().Distinct(), keys);
         Assert.Equal(keys.Count, Gates.Count);
-        Assert.Equal(GearGates.Concat(MountGates).Concat([Pyros, Hydatos, Pagos, LightingTheWay]).Order(), Gates.Keys.Order());
+        Assert.Equal(GearGates.Concat(MountGates).Concat(UnlockLinkGates).Concat(UnreadGates).Concat([Pyros, Hydatos, Pagos, LightingTheWay]).Order(), Gates.Keys.Order());
+        Assert.Equal(UnlockLinkGates.Order(), Gates.Where(kv => kv.Value.UnlockLinks is not null).Select(kv => kv.Key).Order());
         Assert.Equal(GearGates.Order(), Gates.Where(kv => kv.Value.Items is not null).Select(kv => kv.Key).Order());
         Assert.Equal(MountGates.Order(), Gates.Where(kv => kv.Value.Mounts is not null).Select(kv => kv.Key).Order());
 
@@ -171,6 +192,40 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
             {
                 problems.Add($"{rowId} evidence is not an https URL");
             }
+
+            // Two sources of three (the C3 rule): the game's text, the sheets, the wiki.
+            if (gate.SourceKinds.Count < 2)
+            {
+                problems.Add($"{rowId} is confirmed by {gate.SourceKinds.Count} source(s) ({string.Join(", ", gate.SourceKinds)}); every gate needs two of the game's text, the sheets and the wiki");
+            }
+
+            if (!Catalog.GameGateOf(rowId)!.Sources.SequenceEqual(gate.SourceKinds))
+            {
+                problems.Add($"{rowId}: the catalog does not carry its sources");
+            }
+
+            // A met-by quest is one of the catalog, and not one the sheet already requires (it would always be done).
+            foreach (var id in gate.MetByIds)
+            {
+                if (Catalog.GetByRowId(id) is null)
+                {
+                    problems.Add($"{rowId} metBy {id}, which is not a quest of the catalog fixture");
+                }
+                else if (quest.PreviousQuests.QuestIds.Contains(id))
+                {
+                    problems.Add($"{rowId} metBy {id}, which the sheet already requires");
+                }
+            }
+
+            // The accept conditions a gate stands for are the quest's own.
+            var fromAccept = gate.UnlockLinks is { } set && set.Sources.Any(src => src.StartsWith("QuestAcceptAdditionCondition#", StringComparison.Ordinal)) ? set.All : [];
+            foreach (var id in gate.AcceptConditionIds.Concat(fromAccept))
+            {
+                if (!quest.AcceptConditions.Contains(id))
+                {
+                    problems.Add($"{rowId}: {id} is not one of its accept conditions [{string.Join(", ", quest.AcceptConditions)}]");
+                }
+            }
         }
 
         Assert.True(problems.Count == 0, string.Join("\n", problems));
@@ -205,14 +260,24 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
         foreach (var (rowId, gate) in Gates.Where(kv => kv.Value.After.Count > 0))
         {
             var quest = Catalog.GetByRowId(rowId)!;
-            var withoutAfter = Without(michiru, [.. gate.After, rowId]);
+            if (michiru.Accepted.Any(a => a.QuestId == quest.QuestId))
+            {
+                // In the character's journal (Delve into Myth): the game let it through, and the journal state wins.
+                continue;
+            }
+
+            var withoutAfter = Without(michiru, [.. gate.After, .. gate.MetByIds, rowId]);
             var blocked = StateResolver.Resolve(quest, withoutAfter, Catalog, context);
             Assert.True(blocked.State == QuestState.Blocked, $"{rowId} {quest.Name} without {string.Join(", ", gate.After)} reads {blocked.State}");
 
-            // Every other prerequisite done as well: still not Ready, the gate is not checked.
-            var everything = With(Without(michiru, rowId), [.. Catalog.PrerequisitesOf(quest).QuestIds, .. gate.After]);
+            // Every other prerequisite done as well: still not Ready, the gate is not checked; unless a quest that shows
+            // it passed is among them (the Dun Scaith raid is unlocked by the very quest the gate waits for).
+            var everything = With(Without(michiru, [rowId, .. gate.MetByIds.Except(gate.After)]), [.. Catalog.PrerequisitesOf(quest).QuestIds, .. gate.After]);
             var state = StateResolver.Resolve(quest, everything, Catalog, context).State;
-            Assert.True(state is QuestState.Unknown or QuestState.Blocked, $"{rowId} {quest.Name} reads {state} with every prerequisite done");
+            var proven = gate.MetByIds.Any(gate.After.Contains);
+            Assert.True(
+                proven ? state is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Blocked : state is QuestState.Unknown or QuestState.Blocked,
+                $"{rowId} {quest.Name} reads {state} with every prerequisite done");
         }
     }
 
@@ -411,9 +476,12 @@ public sealed class GameGatesGameTextTests(GameDataFixture game) : IClassFixture
 
                 // The repeatable relic steps open their name with an icon glyph (private use area) the text does not carry.
                 var name = new string(catalog.GetByRowId(rowId)!.Name.Where(c => c is < '' or > '').ToArray()).Trim();
-                if (key == gate.GameTextKey && !text.Contains(name, StringComparison.Ordinal))
+                // The quest's own row states its gate: it names the quest, speaks of "this quest" (the deep-dungeon,
+                // Resistance and Occult rows), or names what the gate wants (a blue mage trainer's "upon learning X").
+                if (key == gate.GameTextKey && !text.Contains(name, StringComparison.Ordinal) && !text.Contains("this quest", StringComparison.Ordinal)
+                    && !(GateSubject(gate.Gate) is { } subject && text.Contains(subject, StringComparison.Ordinal)))
                 {
-                    problems.Add($"{rowId}: {key} does not name {name}");
+                    problems.Add($"{rowId}: {key} does not name {name}, this quest or what the gate wants");
                 }
 
                 checkedCount++;
@@ -422,5 +490,15 @@ public sealed class GameGatesGameTextTests(GameDataFixture game) : IClassFixture
 
         Assert.True(checkedCount >= 6, $"only {checkedCount} text rows checked");
         Assert.True(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    /// <summary>The spell of a blue magic gate ("the blue magic Blood Drain learned"); null for any other gate.</summary>
+    private static string? GateSubject(string gate)
+    {
+        const string Prefix = "the blue magic ";
+        const string Suffix = " learned";
+        return gate.StartsWith(Prefix, StringComparison.Ordinal) && gate.EndsWith(Suffix, StringComparison.Ordinal)
+            ? gate[Prefix.Length..^Suffix.Length]
+            : null;
     }
 }

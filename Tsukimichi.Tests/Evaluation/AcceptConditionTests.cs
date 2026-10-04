@@ -219,16 +219,20 @@ public class AcceptConditionFixtureTests(FixtureCatalog fixture) : IClassFixture
     }
 
     [Fact]
-    public void Forty_seven_quests_gain_a_prerequisite_and_twelve_values_stay_unchecked()
+    public void Forty_seven_quests_gain_a_prerequisite_and_one_value_stays_unchecked()
     {
         // 57 quests carry accept conditions. 47 hold quest ids only: all but Royal Rumblings (which repeats its own
         // previous quests) gain them, and so does In the Name of the Light (a quest and a value of another sheet). The
-        // twelve values that are no quest sit on ten quests. (The curated extras extend others; ExtraPrerequisiteTests.)
+        // twelve values that are no quest sit on ten quests; since 1.19 (feature plan v7 C3) a curated game gate stands
+        // for each but the one of the Operation Archon row the game no longer lists. (The curated extras extend others;
+        // ExtraPrerequisiteTests.)
         Assert.Equal(57, Catalog.All.Count(q => q.AcceptConditions.Length > 0));
         var extended = Catalog.All.Where(q => q.AcceptConditions.Length > 0 && !ReferenceEquals(Catalog.PrerequisitesOf(q), q.PreviousQuests)).ToArray();
         Assert.Equal(47, extended.Length);
         Assert.All(extended, q => Assert.Equal(q.PreviousQuests.Join, Catalog.PrerequisitesOf(q).Join));
-        Assert.Equal(12, Catalog.All.Sum(q => Catalog.UncheckedAcceptConditions(q).Length));
-        Assert.Equal(10, Catalog.All.Count(q => Catalog.UncheckedAcceptConditions(q).Length > 0));
+        Assert.Equal(12, Catalog.All.Sum(q => q.AcceptConditions.Count(id => Catalog.GetByRowId(id) is null)));
+        var left = Assert.Single(Catalog.All, q => Catalog.UncheckedAcceptConditions(q).Length > 0);
+        Assert.True(left.IsRemoved, $"{left.RowId} {left.Name}");
+        Assert.Equal([17u], Catalog.UncheckedAcceptConditions(left));
     }
 }

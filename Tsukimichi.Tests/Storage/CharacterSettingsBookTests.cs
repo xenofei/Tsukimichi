@@ -86,6 +86,22 @@ public sealed class CharacterSettingsBookTests : IDisposable
     }
 
     [Fact]
+    public void A_gate_marked_done_is_per_character_saved_and_taken_back()
+    {
+        var book = new CharacterSettingsBook(Path);
+        book.Edit([CharacterSettingChange.GateDone(Main, 68667, true), CharacterSettingChange.GateDone(Main, 68668, true)]);
+
+        Assert.True(book.IsGateDone(Main, 68667));
+        Assert.False(book.IsGateDone(Alt, 68667));
+        Assert.Equal([68667u, 68668u], CharacterSettingsFile.Load(Path)[Main].GatesDone);
+
+        // Undo takes the mark back; a character left with nothing set drops out of the file.
+        book.Edit([CharacterSettingChange.GateDone(Main, 68667, false), CharacterSettingChange.GateDone(Main, 68668, false)]);
+        Assert.False(book.IsGateDone(Main, 68667));
+        Assert.False(CharacterSettingsFile.Load(Path).ContainsKey(Main));
+    }
+
+    [Fact]
     public void Migration_shows_at_once_and_reports_when_saved()
     {
         var book = new CharacterSettingsBook(Path);

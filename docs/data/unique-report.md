@@ -2,7 +2,7 @@
 
 Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
-- Entries: **2629** across **1301** quests.
+- Entries: **2635** across **1307** quests.
 - Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **363**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
   - `GilShopItem`: 136
   - `SpecialShop`: 115
@@ -21,7 +21,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | Emote | 56 | 0 | 0 | 0 | 56 |
 | Action | 250 | 0 | 0 | 0 | 250 |
 | GeneralAction | 12 | 0 | 0 | 0 | 12 |
-| ClassJob | 48 | 0 | 0 | 0 | 48 |
+| ClassJob | 49 | 0 | 0 | 0 | 49 |
 | Other | 6 | 0 | 0 | 0 | 6 |
 | ArtifactGear | 607 | 0 | 0 | 0 | 607 |
 | Mount | 38 | 0 | 0 | 0 | 38 |
@@ -37,8 +37,8 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | Achievement | 210 | 0 | 0 | 0 | 210 |
 | Title | 199 | 0 | 0 | 0 | 199 |
 | DutyUnlock | 156 | 0 | 308 | 0 | 464 |
-| SystemUnlock | 0 | 0 | 133 | 0 | 133 |
-| **Total** | 2188 | 0 | 441 | 0 | 2629 |
+| SystemUnlock | 0 | 0 | 138 | 0 | 138 |
+| **Total** | 2189 | 0 | 446 | 0 | 2635 |
 
 ## Examples per kind
 
@@ -117,7 +117,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 66957 A Self-improving Man | Glamour Plate | 25 | 0 | Static | `Quest.GeneralActionReward` |
 | 67633 No Longer a Collectable | Aetherial Reduction | 21 | 0 | Static | `Quest.GeneralActionReward` |
 
-### ClassJob (48)
+### ClassJob (49)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
@@ -330,24 +330,24 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65620 The Instruments of Our Deliverance | the Akh Afah Amphitheatre (Hard) | 79 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65626 Drop Dead Shiva | the Akh Afah Amphitheatre (Extreme) | 80 | 0 | Curated | `curated/duty_unlocks.json` |
 
-### SystemUnlock (133)
+### SystemUnlock (138)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
 | 65594 Simply the Hest | Guildhests | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65595 Simply the Hest | Guildhests | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65596 Simply the Hest | Guildhests | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 65665 Spirithold Broken | Guildleves and inn rooms | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65688 Gone to Pieces | Desynthesis | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65698 A Sight to Behold | Sightseeing Log | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 65856 Way Down in the Hole | Guildleves and inn rooms | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65970 It Could Happen to You | Gold Saucer | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65972 So You Want to Be a Jockey | Chocobo racing | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65973 Triple Triad Trial | Triple Triad | 0 | 0 | Curated | `curated/system_unlocks.json` |
-| 66024 Scratch It Rich | Mini Cactpot | 0 | 0 | Curated | `curated/system_unlocks.json` |
-| 66025 Hitting the Cactpot | Jumbo Cactpot | 0 | 0 | Curated | `curated/system_unlocks.json` |
 
 ## Quests with rewards but no unique classification
 
-Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **2006** of 3015.
+Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **2004** of 3015.
 Most of them only give tradable gear or consumables. The list below is restricted to the ones worth a second look: at least one reward item is untradable, or carries an ItemAction and is not sold on the market board, yet no rule claimed it.
 
 Quests to review: **378**.
