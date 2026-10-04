@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using Tsukimichi.Core.Diagnostics;
 using Tsukimichi.Core.Model;
@@ -59,7 +60,9 @@ public sealed class WhyCommand(SessionState session, UiState ui, GameLinks links
             coordinates = links.MapCoordinates(quest) is { } c ? (c.X, c.Y) : null;
         }
 
-        var lines = WhyText.Lines(evaluation, quest, session.LiveNames, states, place, coordinates, quirk?.Note);
+        // What the game itself showed (feature plan v7, C1): a line only when it showed the quest.
+        var gameLine = GameOffer is { } check ? GameOfferChecks.WhyLine(check(quest, evaluation), DateTime.UtcNow) : null;
+        var lines = WhyText.Lines(evaluation, quest, session.LiveNames, states, place, coordinates, quirk?.Note, gameLine);
         links.PrintHeadline(quest, lines[0], linkGiver);
         for (var i = 1; i < lines.Count; i++)
         {
@@ -74,6 +77,9 @@ public sealed class WhyCommand(SessionState session, UiState ui, GameLinks links
                 : Strings.QuestMapWhyLine);
         }
     }
+
+    /// <summary>The game's own offers compared with the viewed state (<see cref="OfferObserver.Check"/>); null leaves the line out.</summary>
+    public Func<QuestRecord, Core.Evaluation.QuestEvaluation?, GameOfferCheck>? GameOffer { get; set; }
 
     /// <summary>Quest Map's IPC; with it the reply ends with where to open the full requirement graph. Null leaves the line out.</summary>
     public QuestMapIpc? QuestMap { get; set; }

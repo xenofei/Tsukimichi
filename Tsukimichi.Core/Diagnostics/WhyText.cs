@@ -13,6 +13,7 @@ namespace Tsukimichi.Core.Diagnostics;
 /// Blocked · after: Peace for Thanalan
 ///   - Level: met (24 ≤ 31)
 ///   - PreviousQuests: unmet (66753 Peace for Thanalan: not done)
+/// Game: shown on the map 2 days ago.                 (when the game showed the quest, feature plan v7 C1)
 /// Note: …                                            (curated/quirks.json, when the quest has one)
 /// </code>
 /// A Ready quest instead says where to go: "Ready — talk to Gerolt in Northern Thanalan (23.1, 14.2)"; the plugin
@@ -102,8 +103,9 @@ public static class WhyText
     }
 
     /// <summary>
-    /// Every line in print order: the headline, the requirement lines (none without an evaluation), then the note
-    /// when the quest has one.
+    /// Every line in print order: the headline, the requirement lines (none without an evaluation), the game's own
+    /// offer (<see cref="GameOfferChecks.WhyLine"/>, feature plan v7 C1) when one was seen, then the note when the
+    /// quest has one.
     /// </summary>
     public static List<string> Lines(
         QuestEvaluation? evaluation,
@@ -112,12 +114,18 @@ public static class WhyText
         IReadOnlyDictionary<uint, QuestEvaluation>? states = null,
         string? place = null,
         (float X, float Y)? coordinates = null,
-        string? quirkNote = null)
+        string? quirkNote = null,
+        string? gameLine = null)
     {
         var lines = new List<string> { Headline(evaluation, quest, names, states, place, coordinates) };
         if (evaluation is not null)
         {
             lines.AddRange(RequirementLines(evaluation, names));
+        }
+
+        if (!string.IsNullOrWhiteSpace(gameLine))
+        {
+            lines.Add(gameLine);
         }
 
         if (!string.IsNullOrWhiteSpace(quirkNote))

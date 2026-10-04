@@ -6,8 +6,8 @@ namespace Tsukimichi.Core.Runtime;
 /// <summary>
 /// The per-character files kept beside a snapshot (<c>characters/&lt;ContentId&gt;.json</c>): the accepted-time map
 /// (<see cref="AcceptedSince"/>), the abandoned ledger (<see cref="AbandonedLedger"/>), the "Since you were away"
-/// state (<see cref="WelcomeBackStateFile"/>), the two snapshot backup generations (<see cref="SnapshotBackup"/>) and the
-/// quest completion dates (<see cref="CompletionDateFile"/>). Forgetting a character and
+/// state (<see cref="WelcomeBackStateFile"/>), the two snapshot backup generations (<see cref="SnapshotBackup"/>), the
+/// quest completion dates (<see cref="CompletionDateFile"/>) and the game's own offers (<see cref="OfferSightings"/>). Forgetting a character and
 /// Settings › Delete all data remove them through these lists, so a sidecar added later is deleted with the rest.
 /// </summary>
 public static class CharacterSidecars
@@ -21,6 +21,7 @@ public static class CharacterSidecars
         SnapshotBackup.FileSuffix,
         SnapshotBackup.OlderFileSuffix,
         CompletionDateFile.FileSuffix,
+        OfferSightings.FileSuffix,
     ];
 
     /// <summary>Every sidecar path of one character, whether or not the file exists.</summary>
@@ -32,6 +33,7 @@ public static class CharacterSidecars
         SnapshotBackup.PathFor(charactersDir, contentId),
         SnapshotBackup.OlderPathFor(charactersDir, contentId),
         CompletionDateFile.PathFor(charactersDir, contentId),
+        OfferSightings.PathFor(charactersDir, contentId),
     ];
 
     /// <summary>Every sidecar file present in <paramref name="charactersDir"/>, of every character; empty when the directory is missing.</summary>
