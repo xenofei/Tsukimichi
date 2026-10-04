@@ -383,6 +383,7 @@ public sealed class TodoOverlay : Window, IDisposable
             ? MotionMath.ApproachAsym(moreShown, reaching ? 1f : 0f, MotionMath.HoverRate, MotionMath.HoverOutRate, ImGui.GetIO().DeltaTime)
             : reaching ? 1f : 0f;
         DrawHeader(layout);
+        DrawStopRow(layout);
         if (!catalogReady)
         {
             Chrome.OutlinedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, Theme.Surface.TextSecondary);
@@ -1071,6 +1072,34 @@ public sealed class TodoOverlay : Window, IDisposable
 
     /// <summary>Opens the route window on the followed route; the route section's "+N more" line calls it.</summary>
     public Action? ShowFollowedRoute { get; set; }
+
+    /// <summary>The "Why it stopped" card (1.18, A2), shown as the panel's top row while it is up. Set by the plugin.</summary>
+    public Game.RunStops? RunStops { get; set; }
+
+    /// <summary>
+    /// The "Why it stopped" card as the top row (spec-1.18 A2): its cue bar, title, ×, reason and first fix, fading with
+    /// the card. The row is a place the panel takes the pointer, so it is clickable while the panel passes clicks.
+    /// </summary>
+    private void DrawStopRow(in RowLayout layout)
+    {
+        if (RunStops is not { } stops || stops.Dock.Current is not { } card)
+        {
+            return;
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        var start = dl.VtxBuffer.Size;
+        var top = ImGui.GetCursorScreenPos();
+        var hovered = StopCardView.DrawRow(stops, card, layout.RowWidth, QuestionableHost);
+        targets.Add(new ScreenRect(top, new Vector2(top.X + layout.RowWidth, ImGui.GetCursorScreenPos().Y)));
+        var alpha = stops.Dock.Alpha(stops.Now, UiMetrics.ReduceMotion);
+        if (alpha < 1f)
+        {
+            Chrome.FadeVertices(dl, start, alpha);
+        }
+
+        stops.NoteShown(hovered);
+    }
 
     private void OnSessionChanged() => dirty = true;
 

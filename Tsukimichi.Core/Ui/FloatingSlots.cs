@@ -13,6 +13,12 @@ public enum FloatingLayer
 
     /// <summary>A passing hint: bottom left.</summary>
     Hint = 2,
+
+    /// <summary>
+    /// The "Why it stopped" card (plan v7, 1.18.0, A2): the notice dock's column, bottom right, above the action bar and
+    /// above a notice when one shows.
+    /// </summary>
+    Stop = 3,
 }
 
 /// <summary>
@@ -68,7 +74,7 @@ public static class FloatingSlots
         var x = layer switch
         {
             FloatingLayer.Undo => area.Min.X + ((area.Width - width) * 0.5f),
-            FloatingLayer.Dock => area.Max.X - margin - width,
+            FloatingLayer.Dock or FloatingLayer.Stop => area.Max.X - margin - width,
             _ => area.Min.X + margin,
         };
         x = MathF.Round(MathF.Max(area.Min.X, x));

@@ -30,16 +30,21 @@ namespace Tsukimichi.Game;
 /// after a stop, a character still in the Duty Finder queue is told so: Tsukimichi never withdraws for the player.</item>
 /// <item><b>A5, "Needs you".</b> While a hand-off runs (Questionable, or a Go to giver, Lifestream task, AutoDuty run or
 /// Artisan craft Tsukimichi started), the character dying, standing still while vnavmesh says it moves, a duty pop
-/// (<see cref="IClientState.CfPop"/>) and an incoming tell each raise one chat line, a chat sound effect and a toast,
-/// each kind and channel per Settings › Alerts › While automation runs, rate-limited by <see cref="NeedsYouWatch"/>.
-/// Nothing is read or raised while no hand-off runs; a tell is only noticed, never answered or hidden.</item>
+/// (<see cref="IClientState.CfPop"/>) and an incoming tell each raise one chat line ("Needs you:" in bold), the calm
+/// panel over the game (<see cref="RunStops.NeedsYou"/>), the kind's chat sound effect and a taskbar flash while the
+/// game is not in front, each per Settings › Alerts › While automation runs, rate-limited by <see cref="NeedsYouWatch"/>.
+/// On a knock-out or a stall Tsukimichi stops its own hand-offs (and Questionable, when the player opted in), and the
+/// "Why it stopped" card (A2) says so. Nothing is read or raised while no hand-off runs; a tell is only noticed, never
+/// answered or hidden, and neither its sender nor its text is repeated. Tsukimichi never commences a duty.</item>
 /// </list>
-/// The sound and the toast are game calls, so they wait for the hook gate. Runs on the framework thread.
+/// The sound is a game call, so it waits for the hook gate. Runs on the framework thread.
 /// </summary>
 public sealed class RunWatch : IDisposable
 {
-    /// <summary>The chat sound effect a "Needs you" alert plays (<c>&lt;se.6&gt;</c>).</summary>
-    public const uint AlertSound = 6;
+    private const string QuestionableName = "Questionable";
+    private const string AutoDutyName = "AutoDuty";
+    private const string ArtisanName = "Artisan";
+    private const string LifestreamName = "Lifestream";
 
     /// <summary>After a guard stop, how long to wait before checking whether the character is still queued.</summary>
     public const double QueueCheckSeconds = 3.0;
@@ -49,7 +54,6 @@ public sealed class RunWatch : IDisposable
     private readonly ICondition condition;
     private readonly IObjectTable objects;
     private readonly IChatGui chat;
-    private readonly IToastGui toasts;
     private readonly IDataManager data;
     private readonly Configuration config;
     private readonly SessionState session;
@@ -86,7 +90,6 @@ public sealed class RunWatch : IDisposable
         ICondition condition,
         IObjectTable objects,
         IChatGui chat,
-        IToastGui toasts,
         IDataManager data,
         Configuration config,
         SessionState session,
@@ -104,7 +107,6 @@ public sealed class RunWatch : IDisposable
         this.condition = condition ?? throw new ArgumentNullException(nameof(condition));
         this.objects = objects ?? throw new ArgumentNullException(nameof(objects));
         this.chat = chat ?? throw new ArgumentNullException(nameof(chat));
-        this.toasts = toasts ?? throw new ArgumentNullException(nameof(toasts));
         this.data = data ?? throw new ArgumentNullException(nameof(data));
         this.config = config ?? throw new ArgumentNullException(nameof(config));
         this.session = session ?? throw new ArgumentNullException(nameof(session));
@@ -139,6 +141,9 @@ public sealed class RunWatch : IDisposable
 
     /// <summary>The Questionable run receipts (A4): a guard stop is their reason. Set by the plugin; null records nothing.</summary>
     public QuestionableRunWatch? Runs { get; set; }
+
+    /// <summary>The "Why it stopped" card and the "Needs you" panel. Set by the plugin; null shows neither.</summary>
+    public RunStops? Stops { get; set; }
 
     private double Now => clock.Elapsed.TotalSeconds;
 
@@ -217,13 +222,101 @@ public sealed class RunWatch : IDisposable
         var raised = needsYou.Tick(frame, enabled);
         if ((raised & NeedsYouKind.Death) != 0)
         {
-            Alert(Strings.NeedsYouDeathLine, Strings.NeedsYouToastDeath, now);
+            Trouble(StopReason.KnockedOut, status, now);
         }
 
         if ((raised & NeedsYouKind.Stuck) != 0)
         {
-            Alert(string.Format(CultureInfo.CurrentCulture, Strings.NeedsYouStuckFormat, (int)NeedsYouWatch.StuckSeconds), Strings.NeedsYouToastStuck, now);
+            Trouble(StopReason.Stuck, status, now);
         }
+    }
+
+    /// <summary>
+    /// A knock-out or a stall during a run: Tsukimichi stops its own hand-offs (Settings), then one chat line, the panel,
+    /// the sound and the flash, and the "Why it stopped" card.
+    /// </summary>
+    private void Trouble(StopReason reason, QuestionableStatus status, double now)
+    {
+        var handOff = status.Running ? StopHandOff.Questionable
+            : travel.JourneyActive ? StopHandOff.Travel
+            : autoDuty.HandOffClaimed ? StopHandOff.AutoDuty
+            : artisan is { HandOffClaimed: true } ? StopHandOff.Artisan
+            : StopHandOff.Travel;
+        var (stopped, questionableLeft) = StopForTrouble(status);
+        var did = RunStops.DidSentence(stopped, questionableLeft);
+        var seconds = (int)NeedsYouWatch.StuckSeconds;
+        if (reason == StopReason.KnockedOut)
+        {
+            var quest = status.RowId is { } rowId ? QuestDisplayName(rowId) : null;
+            var chatLine = quest is not null
+                ? string.Format(CultureInfo.CurrentCulture, Strings.NeedsYouDeathDuringChatFormat, quest, did)
+                : string.Format(CultureInfo.CurrentCulture, Strings.NeedsYouDeathChatFormat, did);
+            Alert(NeedsYouKind.Death, chatLine, new NeedsYouAlert(NeedsYouKind.Death, Strings.NeedsYouTitle(NeedsYouKind.Death), did), now);
+        }
+        else
+        {
+            Alert(
+                NeedsYouKind.Stuck,
+                string.Format(CultureInfo.CurrentCulture, Strings.NeedsYouStuckChatFormat, seconds, did),
+                new NeedsYouAlert(NeedsYouKind.Stuck, Strings.NeedsYouTitle(NeedsYouKind.Stuck), string.Format(CultureInfo.CurrentCulture, Strings.NeedsYouStuckLineFormat, seconds, did)),
+                now);
+        }
+
+        Stops?.RaiseTrouble(reason, handOff, did);
+    }
+
+    /// <summary>
+    /// Stops Tsukimichi's own hand-offs (a walk, a Lifestream task, an AutoDuty run, an Artisan craft), when Settings
+    /// says to, and Questionable only when the player opted in. Returns the names stopped and whether Questionable runs on.
+    /// </summary>
+    private (List<string> Stopped, bool QuestionableLeft) StopForTrouble(QuestionableStatus status)
+    {
+        var stopped = new List<string>(4);
+        if (!config.NeedsYouStopHandOffs)
+        {
+            return (stopped, status.Running);
+        }
+
+        if (travel.JourneyActive)
+        {
+            var name = travel.JourneyIsWalkOnly ? Strings.TravelWalk : Strings.TravelGoTo;
+            if (travel.Stop())
+            {
+                stopped.Add(name);
+            }
+        }
+
+        if (lifestream.HandOffClaimed && lifestream.Abort())
+        {
+            stopped.Add(LifestreamName);
+        }
+
+        if (autoDuty.HandOffClaimed && autoDuty.Stop())
+        {
+            stopped.Add(AutoDutyName);
+        }
+
+        if (artisan is { HandOffClaimed: true } crafting && crafting.Stop())
+        {
+            stopped.Add(ArtisanName);
+        }
+
+        var left = status.Running;
+        if (left && config.NeedsYouStopQuestionable && questionable.CanStop && questionable.Stop())
+        {
+            stopped.Add(QuestionableName);
+            left = false;
+        }
+
+        log.Information("Needs you: stopped {Stopped}; Questionable left running {Left}", string.Join(", ", stopped), left);
+        return (stopped, left);
+    }
+
+    /// <summary>The quest's name as the live character's spoiler shield shows it.</summary>
+    private string QuestDisplayName(uint rowId)
+    {
+        var quest = session.Bundle?.Catalog.GetByRowId(rowId);
+        return quest is null ? QuestionableCrossCheck.QuestionableId(rowId) ?? rowId.ToString(CultureInfo.InvariantCulture) : session.LiveSpoilers.DisplayName(quest);
     }
 
     /// <summary>A3: one look at Questionable's step; acts at most once per step (<see cref="DutyGuardWatch"/>).</summary>
@@ -253,26 +346,25 @@ public sealed class RunWatch : IDisposable
             case DutyGuardAction.Stop when questionable.CanStop && questionable.Stop():
                 Runs?.NoteDutyGuardStop();
                 queueCheckAt = now + QueueCheckSeconds;
-                Alert(
+                GuardLine(
                     verdict.Certain
                         ? string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardStopFormat, dutyName)
                         : string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardStopMaybeFormat, dutyName, questName),
-                    Strings.DutyGuardToastStop,
                     now);
+                Stops?.RaiseDutyGuard(status, verdict.Duty, hidden ? string.Empty : dutyName);
                 break;
             case DutyGuardAction.Stop:
-                Alert(string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardNoStopFormat, dutyName), Strings.DutyGuardToastWarn, now);
+                GuardLine(string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardNoStopFormat, dutyName), now);
                 break;
             case DutyGuardAction.Warn:
-                Alert(
+                GuardLine(
                     verdict.Certain
                         ? string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardWarnFormat, dutyName)
                         : string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardWarnMaybeFormat, dutyName, questName),
-                    Strings.DutyGuardToastWarn,
                     now);
                 break;
             default:
-                Alert(string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardUnsureFormat, questName), Strings.DutyGuardToastWarn, now);
+                GuardLine(string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardUnsureFormat, questName), now);
                 break;
         }
     }
@@ -313,7 +405,11 @@ public sealed class RunWatch : IDisposable
                 return;
             }
 
-            Alert(Strings.NeedsYouTravelGaveUp, Strings.NeedsYouToastStuck, Now);
+            Alert(
+                NeedsYouKind.Stuck,
+                Strings.NeedsYouTravelGaveUp,
+                new NeedsYouAlert(NeedsYouKind.Stuck, Strings.NeedsYouTitle(NeedsYouKind.Stuck), Strings.NeedsYouTravelGaveUpLine) { Fix = StopFix.ReloadAndRetry },
+                Now);
         }
         catch (Exception ex)
         {
@@ -331,7 +427,14 @@ public sealed class RunWatch : IDisposable
             }
 
             var name = duty.Name.ExtractText().Trim();
-            Alert(name.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.NeedsYouDutyPopFormat, name) : Strings.NeedsYouDutyPopUnnamed, Strings.NeedsYouToastDutyPop, Now);
+            Alert(
+                NeedsYouKind.DutyPop,
+                name.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.NeedsYouDutyPopChatFormat, name) : Strings.NeedsYouDutyPopChat,
+                new NeedsYouAlert(
+                    NeedsYouKind.DutyPop,
+                    Strings.NeedsYouTitle(NeedsYouKind.DutyPop),
+                    name.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.NeedsYouDutyPopLineFormat, name) : Strings.NeedsYouDutyPopLine),
+                Now);
         }
         catch (Exception ex)
         {
@@ -348,8 +451,8 @@ public sealed class RunWatch : IDisposable
                 return;
             }
 
-            var sender = message.Sender.TextValue.Trim();
-            Alert(sender.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.NeedsYouTellFormat, sender) : Strings.NeedsYouTellUnnamed, Strings.NeedsYouToastTell, Now);
+            // Neither the sender nor the text is repeated anywhere (spec-1.18 A5).
+            Alert(NeedsYouKind.Tell, Strings.NeedsYouTellChat, new NeedsYouAlert(NeedsYouKind.Tell, Strings.NeedsYouTitle(NeedsYouKind.Tell), Strings.NeedsYouTellLine), Now);
         }
         catch (Exception ex)
         {
@@ -357,24 +460,73 @@ public sealed class RunWatch : IDisposable
         }
     }
 
-    /// <summary>One chat line, then the toast and the sound when Settings allows them and the hook gate is open.</summary>
-    private void Alert(string line, string toast, double now)
+    /// <summary>
+    /// One "Needs you" alert: the chat line ("Needs you:" in bold, then <paramref name="chatLine"/>, in the plugin's own
+    /// echo channel), the panel over the game, the kind's sound and the taskbar flash.
+    /// </summary>
+    private void Alert(NeedsYouKind kind, string chatLine, NeedsYouAlert panel, double now)
+    {
+        PrintNeedsYou(chatLine);
+        Stops?.Alert(panel);
+        Signal(kind, now);
+    }
+
+    /// <summary>A duty guard line (A3): the chat line, Duty ready's sound and the flash; the card says the rest.</summary>
+    private void GuardLine(string line, double now)
     {
         chat.Print(line, Strings.ChatTag);
-        if (!gate.HooksAllowed)
+        Signal(NeedsYouKind.DutyPop, now);
+    }
+
+    /// <summary>The kind's chat sound effect (none for 0; at most once every 10 s; while the hook gate allows) and the taskbar flash.</summary>
+    private void Signal(NeedsYouKind kind, double now)
+    {
+        var sound = SoundFor(config, kind);
+        if (sound > 0 && gate.HooksAllowed && needsYou.TakeSound(now))
         {
-            return;
+            UIGlobals.PlayChatSoundEffect((uint)sound);
         }
 
-        if (config.NeedsYouToast)
+        if (config.NeedsYouFlash)
         {
-            toasts.ShowError(toast);
+            TaskbarFlash.FlashIfBackground();
+        }
+    }
+
+    /// <summary>The chat sound effect Settings picked for <paramref name="kind"/> (1–16), 0 for none.</summary>
+    public static int SoundFor(Configuration config, NeedsYouKind kind)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        return kind switch
+        {
+            NeedsYouKind.Death => config.NeedsYouSoundDeath,
+            NeedsYouKind.Stuck => config.NeedsYouSoundStuck,
+            NeedsYouKind.DutyPop => config.NeedsYouSoundDutyPop,
+            NeedsYouKind.Tell => config.NeedsYouSoundTell,
+            _ => 0,
+        };
+    }
+
+    /// <summary>Plays chat sound effect <paramref name="sound"/> now (Settings' Test); false while the hook gate pauses game calls.</summary>
+    public bool TestSound(int sound)
+    {
+        if (sound is < 1 or > Configuration.MaxNeedsYouSound || !gate.HooksAllowed)
+        {
+            return false;
         }
 
-        if (config.NeedsYouSound && needsYou.TakeSound(now))
-        {
-            UIGlobals.PlayChatSoundEffect(AlertSound);
-        }
+        UIGlobals.PlayChatSoundEffect((uint)sound);
+        return true;
+    }
+
+    /// <summary>"Needs you:" in the chat channel's bold, then the rest in its normal colour, after the plugin's gold tag.</summary>
+    private void PrintNeedsYou(string rest)
+    {
+        var builder = new Lumina.Text.SeStringBuilder();
+        builder.AppendBold(Strings.NeedsYouLead);
+        builder.Append(" ");
+        builder.Append(rest);
+        chat.Print(builder.ToArray(), Strings.ChatTag);
     }
 
     private void WarnOnce(Exception ex, string message)

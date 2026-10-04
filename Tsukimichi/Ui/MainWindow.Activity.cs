@@ -36,6 +36,8 @@ public sealed partial class MainWindow
         var alpha = activityFade.Alpha(text);
         if (text is null)
         {
+            // Nothing runs and no note shows: a folded "Why it stopped" card (1.18, A2) waits here.
+            DrawFoldedStopNote(dl, ref x, textY, gap, separatorWidth, versionX, left);
             return;
         }
 

@@ -8,6 +8,8 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Core.Ui;
+using Action = System.Action;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Ipc;
@@ -261,20 +263,15 @@ public sealed class RunStops : IDisposable
 
     /// <summary>
     /// The character was knocked out (or stalled, <paramref name="reason"/> <see cref="StopReason.Stuck"/>) during a
-    /// run, and <paramref name="did"/> says what Tsukimichi stopped: the card, and the reason a Questionable run that
+    /// run of <paramref name="handOff"/>, and <paramref name="did"/> says what Tsukimichi stopped: the card, and the reason a Questionable run that
     /// ends in the next <see cref="RunStopClassifier.TroubleExplainsSeconds"/> gets.
     /// </summary>
-    public void RaiseTrouble(StopReason reason, string did)
+    public void RaiseTrouble(StopReason reason, StopHandOff handOff, string did)
     {
         troubleAt = Now;
         troubleReason = reason;
         var status = questionable.LastStatus;
-        var rowId = status.Running ? status.RowId ?? 0 : 0;
-        var handOff = status.Running ? StopHandOff.Questionable
-            : travel.JourneyActive ? StopHandOff.Travel
-            : autoDuty.HandOffClaimed ? StopHandOff.AutoDuty
-            : artisan is { HandOffClaimed: true } ? StopHandOff.Artisan
-            : StopHandOff.Travel;
+        var rowId = handOff == StopHandOff.Questionable ? status.RowId ?? 0 : 0;
         var why = reason == StopReason.KnockedOut
             ? rowId != 0 ? Format(Strings.StopWhyKnockedOutFormat, QuestName(rowId), did) : Format(Strings.StopWhyKnockedOut, did)
             : Strings.StopWhyStuck;
@@ -327,22 +324,41 @@ public sealed class RunStops : IDisposable
         _ => ActionIcons.GoTo(card.QuestRowId != 0 ? session.Bundle?.Catalog.GetByRowId(card.QuestRowId) : null),
     };
 
-    /// <summary>Whether <paramref name="fix"/> shows on <paramref name="card"/> (a fix with nothing to act on is left out).</summary>
-    public bool Shows(StopCard card, StopFix fix) => fix switch
+    /// <summary>
+    /// Whether <paramref name="fix"/> shows on <paramref name="card"/>: a fix with nothing to act on is left out, and so
+    /// is one that starts a hand-off the automation level hides (1.18, A10: restarting Questionable needs its buttons
+    /// shown, a walk Walk or Go to giver, Teleport closer Teleport). Views (the Duty Finder, the map, the journal, Setup)
+    /// show at every level.
+    /// </summary>
+    public bool Shows(StopCard card, StopFix fix)
     {
-        StopFix.None => false,
-        StopFix.StartNext => card.NextRowId != 0 && Actions is not null,
-        StopFix.StartAgain => card.QuestRowId != 0 && Actions is not null,
-        StopFix.ShowDuty => card.DutyId != 0 && Links is not null,
-        StopFix.KeepGoingAfterDuty => card.InstanceContentId != 0 && card.QuestRowId != 0 && Actions is not null,
-        StopFix.TryAgain => card.HandOff == StopHandOff.Questionable ? card.QuestRowId != 0 && Actions is not null : RetryPlanFor(card) is not null,
-        StopFix.ReloadAndRetry => RetryPlanFor(card) is not null || (card.HandOff == StopHandOff.Questionable && card.QuestRowId != 0 && Actions is not null),
-        StopFix.FlagSpot => card.Position is not null && card.TerritoryId != 0 && Links is not null,
-        StopFix.TeleportCloser => TravelQuest(card) is not null && Links is not null,
-        StopFix.OpenSetup => OpenSetup is not null,
-        StopFix.OpenJournal => card.QuestRowId != 0 && Links is not null && Quest(card.QuestRowId) is not null,
-        _ => false,
-    };
+        var questionableShown = Actions is not null && AutomationGate.Shows(AutomationButtons.Questionable);
+        var travelShown = AutomationGate.ShowsAny(AutomationButtons.Walk | AutomationButtons.GoTo);
+        return fix switch
+        {
+            StopFix.StartNext => card.NextRowId != 0 && questionableShown,
+            StopFix.StartAgain => card.QuestRowId != 0 && questionableShown,
+            StopFix.ShowDuty => card.DutyId != 0 && Links is not null,
+            StopFix.KeepGoingAfterDuty => card.InstanceContentId != 0 && card.QuestRowId != 0 && questionableShown,
+            StopFix.TryAgain => card.HandOff == StopHandOff.Questionable ? card.QuestRowId != 0 && questionableShown : travelShown && RetryPlanFor(card) is not null,
+            StopFix.ReloadAndRetry => (travelShown && RetryPlanFor(card) is not null) || (card.HandOff == StopHandOff.Questionable && card.QuestRowId != 0 && questionableShown),
+            StopFix.FlagSpot => card.Position is not null && card.TerritoryId != 0 && Links is not null,
+            StopFix.TeleportCloser => TravelQuest(card) is not null && Links is not null && AutomationGate.Shows(AutomationButtons.Teleport),
+            StopFix.OpenSetup => OpenSetup is not null,
+            StopFix.OpenJournal => card.QuestRowId != 0 && Links is not null && Quest(card.QuestRowId) is not null,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Whether a hand-off runs now (Questionable, or a walk, AutoDuty run or Artisan craft Tsukimichi started): the card
+    /// then offers Stop all, so a run whose own button the automation level hides can always be stopped from here, as
+    /// from the status bar and <c>/tsuki stop</c>.
+    /// </summary>
+    public bool AnyRunning => wasRunning;
+
+    /// <summary>Whether the automation level shows Walk or Go to giver (the walks a retry restarts).</summary>
+    private static bool TravelShown => AutomationGate.ShowsAny(AutomationButtons.Walk | AutomationButtons.GoTo);
 
     /// <summary>Why <paramref name="fix"/> cannot act now, shown under or on it; null when it can.</summary>
     public string? Blocker(StopCard card, StopFix fix)
@@ -447,9 +463,9 @@ public sealed class RunStops : IDisposable
                     {
                         StartQuestionable(card, host);
                     }
-                    else if (RetryPlanFor(card) is { } again)
+                    else if (RetryPlanFor(card) is { Plan: { } plan } again)
                     {
-                        travel.Start(again.Plan, again.Target);
+                        travel.Start(plan with { Options = travel.CurrentOptions }, again.Target);
                     }
 
                     break;
@@ -477,7 +493,7 @@ public sealed class RunStops : IDisposable
     }
 
     /// <summary>The panel's fix for its alert (Reload navmesh and retry after a walk gave up).</summary>
-    public bool PanelShows(NeedsYouAlert alert) => alert.Fix == StopFix.ReloadAndRetry && lastGaveUpPlan is not null;
+    public bool PanelShows(NeedsYouAlert alert) => alert.Fix == StopFix.ReloadAndRetry && lastGaveUpPlan is not null && TravelShown;
 
     /// <summary>Runs the panel's fix.</summary>
     public void PanelFix(NeedsYouAlert alert)

@@ -11375,7 +11375,7 @@
     <comment>Card reason with no quest known.</comment>
   </data>
   <data name="StopWhyDutyGuardFormat" xml:space="preserve">
-    <value>The next step is {0}, which has no Duty Support or Trust. It would queue you with real players.</value>
+    <value>Questionable was about to queue for {0}, which has no Duty Support or Trust. It would put you with real players.</value>
     <comment>{0} = the duty.</comment>
   </data>
   <data name="StopWhyDutyGuard" xml:space="preserve">
