@@ -135,6 +135,9 @@ public sealed class RunWatch : IDisposable
         chat.ChatMessage -= OnChatMessage;
     }
 
+    /// <summary>The Questionable run receipts (A4): a guard stop is their reason. Set by the plugin; null records nothing.</summary>
+    public QuestionableRunWatch? Runs { get; set; }
+
     private double Now => clock.Elapsed.TotalSeconds;
 
     /// <summary>The "Needs you" kinds the player left on.</summary>
@@ -244,6 +247,7 @@ public sealed class RunWatch : IDisposable
         switch (verdict.Action)
         {
             case DutyGuardAction.Stop when questionable.CanStop && questionable.Stop():
+                Runs?.NoteDutyGuardStop();
                 queueCheckAt = now + QueueCheckSeconds;
                 Alert(
                     verdict.Certain

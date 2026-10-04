@@ -146,6 +146,12 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public bool QuestionableConfirmStopCommand { get; set; } = true;
 
+    /// <summary>
+    /// The receipt of the last Questionable run Tsukimichi watched (feature plan v7 A4): when it ran, the quests done and
+    /// why it stopped, shown in Settings › Automation › Questionable after a restart. Null until a run ends.
+    /// </summary>
+    public Core.Ipc.QuestionableRunReceipt? QuestionableLastReceipt { get; set; }
+
     // ---- 1.18.0: runs you can trust (plan v7 A3, A5) ----
     /// <summary>
     /// What happens when a Questionable run reaches a duty with no Duty Support or Trust, which would put the character
@@ -743,6 +749,11 @@ public sealed partial class Configuration : IPluginConfiguration
         config.SpoilerShieldByCharacter ??= [];
         config.PayoffGatesNoticedByCharacter ??= [];
         config.PayoffWhyOpenByCharacter ??= [];
+        if (config.QuestionableLastReceipt is { } receipt)
+        {
+            receipt.Completed ??= [];
+        }
+
         config.ExportFolder ??= string.Empty;
         config.CommandAliases ??= string.Empty;
         config.SettingsPage ??= string.Empty;

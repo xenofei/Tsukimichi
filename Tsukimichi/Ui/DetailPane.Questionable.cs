@@ -170,10 +170,12 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// The round "…" button and its menu, last on the action bar (always shown since 1.8.0): first the travel and
-    /// automation pills the row had no room for (1.10), then "Open on…" (the quest's
+    /// automation pills the row had no room for (1.10), then "Start here and keep going" or, while Questionable runs,
+    /// "Stop later" (1.18.0, <see cref="DrawQuestionableRunItems"/>), then "Open on…" (the quest's
     /// page on the Lodestone, Garland Tools, the wiki or Teamcraft; a masked quest asks first), then, when
     /// <see cref="ShowsQuestionableMore"/>, "Add to Questionable priority", which calls Questionable's own
-    /// <c>AddQuestPriority</c> gate and is disabled, saying why, for a quest Questionable has no path for.
+    /// <c>AddQuestPriority</c> gate and is disabled, saying why, for a quest Questionable has no path for, and "Do this
+    /// next" (1.18.0), the same quest first on its list, also disabled while Questionable runs.
     /// </summary>
     private void DrawMoreMenu(ref float used, float width, QuestRecord quest, uint rowId)
     {
@@ -191,6 +193,11 @@ public sealed partial class DetailPane
 
         // The travel and automation pills the first row had no room for (1.10), then "Open on…".
         if (DrawOverflowActions(quest, rowId))
+        {
+            ImGui.Separator();
+        }
+
+        if (DrawQuestionableRunItems(rowId))
         {
             ImGui.Separator();
         }
@@ -216,5 +223,76 @@ public sealed partial class DetailPane
         {
             UiMetrics.Tooltip(questionableCanAdd ? Strings.QuestionableAddToPriorityTooltip : Strings.QuestionableAddToPriorityNoPath);
         }
+
+        // "Do this next" (feature plan v7 A6): first on Questionable's list, only for a quest it has a path for, and not
+        // while it runs (Questionable#45).
+        var doNextBlocker = !questionableCanAdd
+            ? Strings.QuestionableAddToPriorityNoPath
+            : QuestionableActions is { } actions ? actions.DoThisNextBlocker() : Strings.QuestionableDoNextNoGate;
+        if (ImGui.MenuItem(Strings.QuestionableDoNext, enabled: doNextBlocker is null))
+        {
+            QuestionableActions?.DoThisNext(rowId);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(doNextBlocker ?? Strings.QuestionableDoNextTooltip);
+        }
+    }
+
+    /// <summary>
+    /// The Questionable run items of the "…" menu (feature plan v7 A4, A6): "Start here and keep going" (the Start
+    /// pill's behaviour before 1.18.0) while the pill offers Start and Questionable can do a single quest, or "Stop
+    /// later" while it runs. True when anything was drawn.
+    /// </summary>
+    private bool DrawQuestionableRunItems(uint rowId)
+    {
+        if (QuestionableActions is not { } questionable)
+        {
+            return false;
+        }
+
+        var index = -1;
+        for (var i = 0; i < actionCount && index < 0; i++)
+        {
+            if (actions[i].Kind == ActionKind.Questionable)
+            {
+                index = i;
+            }
+        }
+
+        if (index < 0)
+        {
+            return false;
+        }
+
+        if (actions[index].Stop)
+        {
+            if (questionable.Runs is null || !questionable.Running)
+            {
+                return false;
+            }
+
+            questionable.DrawStopLaterMenu();
+            return true;
+        }
+
+        // Without the single-quest gate the pill itself keeps going: no second item for the same thing.
+        if (!questionable.Ipc.CanStartSingle)
+        {
+            return false;
+        }
+
+        if (ImGui.MenuItem(Strings.QuestionableKeepGoing, string.Empty, false, actions[index].Enabled))
+        {
+            questionable.StartKeepGoing(MainWindow.QuestionableHost, rowId);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(questionableBlocker ?? Strings.ActionQuestionableStartTooltip);
+        }
+
+        return true;
     }
 }

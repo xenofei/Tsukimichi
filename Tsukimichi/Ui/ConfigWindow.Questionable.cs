@@ -12,12 +12,21 @@ namespace Tsukimichi.Ui;
 /// Questionable priority"), "Allow starting Questionable" (on by default) and, under it, "Ask before starting" (on
 /// until the player ticks "Don't ask again" in the confirmation), and "Before a duty with other players" (1.18.0, A3:
 /// Stop, Warn or Do nothing). Send to Questionable itself needs no setting: it is a button the player presses, disabled
-/// without Questionable. "Confirm Stop" lives in Advanced.
+/// without Questionable. "Confirm Stop" lives in Advanced. Since 1.18.0 (feature plan v7 A4) "Recent runs" lists the
+/// run receipts.
 /// </summary>
 public sealed partial class ConfigWindow
 {
     /// <summary>Questionable's IPC, for the loaded line; set by the plugin. Null leaves the line out.</summary>
     public QuestionableIpc? Questionable { get; set; }
+
+    /// <summary>The Questionable run watch, for the receipts (feature plan v7 A4); set by the plugin. Null leaves them out.</summary>
+    public QuestionableRunWatch? QuestionableRuns { get; set; }
+
+    // The receipts' text, composed when a receipt is added or the language changes.
+    private string runsText = string.Empty;
+    private int runsTextVersion = -1;
+    private int runsTextLanguage = -1;
 
     private void DrawQuestionableSettings()
     {
@@ -71,6 +80,40 @@ public sealed partial class ConfigWindow
             settings.QuestionableDutyGuard = (DutyGuardMode)guard;
             Save();
         }
+
+        if (QuestionableRuns is { } runs)
+        {
+            Note(Strings.SettingsQuestionableRuns, RunsText(runs), "questionable runs receipt history stopped why quests done");
+        }
+    }
+
+    /// <summary>The receipts as lines, newest first ("21:04 · Questionable ran 42 min: …"), composed again only when one is added.</summary>
+    private string RunsText(QuestionableRunWatch runs)
+    {
+        if (runsTextVersion == runs.Version && runsTextLanguage == Localization.Loc.Version)
+        {
+            return runsText;
+        }
+
+        runsTextVersion = runs.Version;
+        runsTextLanguage = Localization.Loc.Version;
+        if (runs.Receipts.Count == 0)
+        {
+            runsText = Strings.SettingsQuestionableRunsNone;
+            return runsText;
+        }
+
+        var lines = new string[runs.Receipts.Count];
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var receipt = runs.Receipts[i];
+            var when = receipt.EndedUtc.ToLocalTime();
+            var stamp = when.Date == DateTime.Today ? when.ToString("t", CultureInfo.CurrentCulture) : when.ToString("g", CultureInfo.CurrentCulture);
+            lines[i] = string.Format(CultureInfo.CurrentCulture, Strings.SettingsQuestionableRunRowFormat, stamp, runs.Describe(receipt));
+        }
+
+        runsText = string.Join("\n", lines);
+        return runsText;
     }
 
     /// <summary>The duty guard's choices, in <see cref="DutyGuardMode"/> order.</summary>

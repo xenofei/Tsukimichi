@@ -89,6 +89,7 @@ public sealed partial class Plugin : IDalamudPlugin
     private MoonlitPane? moonlitPane;
     private Game.WotsitIpc? wotsit;
     private Game.QuestionableIpc? questionable;
+    private Game.QuestionableRunWatch? questionableRuns;
     private CharactersPane? charactersPane;
     private FlightPane? flightPane;
     private PlanSource? planSource;
@@ -1159,13 +1160,20 @@ public sealed partial class Plugin : IDalamudPlugin
             // Questionable runs its "command after stop" (default /li auto) on any stop asked over IPC: Stop says so.
             questionableActions.CommandAfterStop = companionSetup.QuestionableCommandAfterStop;
             questionableActions.CommandAfterStopNow = companionSetup.QuestionableCommandAfterStopNow;
+            // The run watch (feature plan v7 A4, A6): "Stop later", the chat line when a run Tsukimichi started ends,
+            // and the run receipts. It asks Questionable nothing while no run is followed.
+            questionableRuns = new Game.QuestionableRunWatch(Framework, questionableIpc, Session, Settings, () => Settings.Save(PluginInterface), line => ChatGui.Print(line, Ui.Strings.ChatTag), questionableActions.QuestName, Log);
+            questionableActions.Runs = questionableRuns;
             // /tsuki stop (1.11.0, A1): one Stop for every hand-off, for a macro or a single key, through each Stop
             // button's own call; one chat line says what stopped.
             stopCommand = new StopCommand(Framework, travel, lifestream, autoDuty, artisan, questionableActions, () => questionableIpc.PollStatus().Running, gameLinks.PrintText, Log);
             command.Stop = stopCommand.Run;
             // Runs you can trust (1.18.0, A3 and A5): the duty guard stops (or warns about) a Questionable run before a
             // duty with no Duty Support or Trust, and "Needs you" alerts while a hand-off runs.
-            runWatch = new Game.RunWatch(Framework, ClientState, Condition, ObjectTable, ChatGui, ToastGui, DataManager, Settings, Session, questionableIpc, travel, lifestream, autoDuty, artisan, () => dutyRuns.Value, gate, Log);
+            runWatch = new Game.RunWatch(Framework, ClientState, Condition, ObjectTable, ChatGui, ToastGui, DataManager, Settings, Session, questionableIpc, travel, lifestream, autoDuty, artisan, () => dutyRuns.Value, gate, Log)
+            {
+                Runs = questionableRuns,
+            };
             mainWindow.AttachDiagnostics(diagnostics);
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
@@ -1329,6 +1337,7 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.Companions = companions;
             configWindow.CompanionSetup = companionSetup;
             configWindow.Questionable = questionableIpc;
+            configWindow.QuestionableRuns = questionableRuns;
             configWindow.Nearby = discoveryWindow;
             var settingsWindow = configWindow;
             discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.InGame, Core.Ui.SettingsAnchor.Nearby);
@@ -1584,6 +1593,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("command", () => command?.Dispose());
         Unwind("stop command", () => stopCommand?.Dispose());
         Unwind("run watch", () => runWatch?.Dispose());
+        Unwind("questionable runs", () => questionableRuns?.Dispose());
         Unwind("draw hook", () =>
         {
             if (configWindow is not null)

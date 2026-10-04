@@ -44,6 +44,9 @@ public static partial class Strings
 
     public static string DutyGuardToastWarn => Loc.Get("DutyGuardToastWarn");
 
+    /// <summary>A run receipt's reason (A4) when the duty guard stopped the run.</summary>
+    public static string QuestionableRunWhyDutyGuard => Loc.Get("QuestionableRunWhyDutyGuard");
+
     public static string ConfigSectionNeedsYou => Loc.Get("ConfigSectionNeedsYou");
 
     public static string ConfigNeedsYouScope => Loc.Get("ConfigNeedsYouScope");
