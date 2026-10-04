@@ -257,14 +257,14 @@ public sealed partial class TonightCard
             }
 
             var top = light ? Vector4.One : Theme.WithAlphaVector(s.Text, flair == Flair.Full ? 0.085f : 0.055f);
-            var foot = light ? new Vector4(0.957f, 0.965f, 0.980f, 1f) : Theme.WithAlphaVector(s.Text, flair == Flair.Full ? 0.05f : 0.055f);
+            var foot = light ? s.Raised : Theme.WithAlphaVector(s.Text, flair == Flair.Full ? 0.05f : 0.055f);
             dl.AddRectFilledMultiColor(min + new Vector2(rounding * 0.3f, 0f), max - new Vector2(rounding * 0.3f, 0f), Theme.U32(top), Theme.U32(top), Theme.U32(foot), Theme.U32(foot));
             dl.AddRectFilled(min, max, Theme.U32(Vector4.Lerp(top, foot, 0.5f)), rounding);
             var keyline = light ? s.Line : Theme.WithAlphaVector(s.Text, 0.10f);
             dl.AddRect(min, max, Theme.U32(keyline), rounding, ImDrawFlags.None, highContrast ? UiMetrics.Px(1.5f) : UiMetrics.Hairline);
             if (flair == Flair.Full && !light)
             {
-                dl.AddLine(new Vector2(min.X + rounding, min.Y + 0.5f), new Vector2(max.X - rounding, min.Y + 0.5f), Theme.U32(new Vector4(1f, 0.941f, 0.745f, 0.12f)), UiMetrics.Hairline);
+                dl.AddLine(new Vector2(min.X + rounding, min.Y + 0.5f), new Vector2(max.X - rounding, min.Y + 0.5f), Theme.U32(Theme.WithAlphaVector(Theme.Gold, 0.12f)), UiMetrics.Hairline);
             }
         }
 

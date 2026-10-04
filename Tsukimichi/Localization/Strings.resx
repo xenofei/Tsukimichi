@@ -14657,7 +14657,7 @@
     <comment>Settings › Data › Characters (1.21 P3).</comment>
   </data>
   <data name="LinkedFoldersHint" xml:space="preserve">
-    <value>Other XIVLauncher roaming folders (one per client when multiboxing). Their characters show on All characters, read only; nothing there is ever written.</value>
+    <value>Other launcher folders, one per multibox client. Their characters show on All characters, read only.</value>
   </data>
   <data name="LinkedFoldersPathHint" xml:space="preserve">
     <value>Folder path</value>

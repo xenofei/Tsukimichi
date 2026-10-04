@@ -57,8 +57,17 @@ public sealed class LinkedFolderService : IDisposable
         loop = Task.Run(() => RunAsync(lifetime.Token));
     }
 
-    /// <summary>Bumps whenever <see cref="Characters"/> reads differently.</summary>
-    public int Revision { get; private set; }
+    /// <summary>Bumps whenever <see cref="Characters"/> reads differently (framework thread; takes the loop's latest list).</summary>
+    public int Revision
+    {
+        get
+        {
+            Update();
+            return revision;
+        }
+    }
+
+    private int revision;
 
     /// <summary>The characters of the linked folders, as of the last pass (framework thread).</summary>
     public IReadOnlyList<LinkedCharacter> Characters
@@ -132,7 +141,7 @@ public sealed class LinkedFolderService : IDisposable
     private void Update()
     {
         var folderList = settings.LinkedCharacterFolders;
-        if (!folderList.SequenceEqual(wanted, StringComparer.OrdinalIgnoreCase))
+        if (!SameFolders(folderList, wanted))
         {
             wanted = [.. folderList];
             Refresh();
@@ -155,7 +164,26 @@ public sealed class LinkedFolderService : IDisposable
         }
 
         shown = next;
-        Revision++;
+        revision++;
+    }
+
+    /// <summary>The same folders in the same order (no allocation: it runs every frame the roster is read).</summary>
+    private static bool SameFolders(List<string> a, IReadOnlyList<string> b)
+    {
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < a.Count; i++)
+        {
+            if (!string.Equals(a[i], b[i], StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool Same(LinkedCharacter a, LinkedCharacter b) =>

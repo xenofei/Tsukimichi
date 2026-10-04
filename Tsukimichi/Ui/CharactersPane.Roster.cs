@@ -219,14 +219,15 @@ public sealed partial class CharactersPane
         var dl = ImGui.GetWindowDrawList();
 
         // The selected row: a faint Moon wash and a gold 2 px left edge (1.14's selection); a hovered one the Hover tone.
+        // The wash spans the row through the table's own row background (a cell's draw list is clipped to its column).
         if (selected)
         {
-            dl.AddRectFilled(rowMin, rowMax, Theme.WithAlpha(Theme.Moon, Theme.IsLight ? 0.10f : 0.07f));
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, Theme.WithAlpha(Theme.Gold, Theme.IsLight ? 0.10f : 0.07f));
             dl.AddRectFilled(rowMin, new Vector2(rowMin.X + UiMetrics.Px(2f), rowMax.Y), Theme.U32(Theme.Gold));
         }
         else if (hovered)
         {
-            dl.AddRectFilled(rowMin, rowMax, Theme.U32(s.Hover));
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, Theme.U32(s.Hover));
         }
 
         if (clicked)
