@@ -172,8 +172,9 @@ public sealed partial class ConfigWindow
         new(SettingsSection.Advanced, DrawHookGate),
         new(SettingsSection.Advanced, DrawQuestionableStopConfirm),
         new(SettingsSection.Advanced, DrawDiagnostics),
-        // 1.22.0 U1 and M3: Updates and Umbra, under Diagnostics (About) until Settings › About has its own page (W3).
+        // 1.22.0 U1, W3 and M3, where About lives: Updates (with Show what's new after an update), What's new, Umbra.
         new(SettingsSection.Advanced, DrawUpdates, UpdatesKeywords),
+        new(SettingsSection.Advanced, DrawWhatsNew, anchor: SettingsAnchor.WhatsNew),
         new(SettingsSection.Advanced, DrawUmbraAbout, UmbraKeywords),
         new(SettingsSection.Advanced, DrawPrivacy),
     ];

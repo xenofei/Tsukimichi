@@ -34,6 +34,13 @@ public sealed partial class Plugin
         updateWatcher = updates;
         mainWindow.Updates = updates;
 
+        // The update note's hover: the release's plain notes (W's whats_new.json), else Dalamud's changelog.
+        updates.PlainNotes = static version =>
+        {
+            var points = Core.Releases.WhatsNewNotes.For(version);
+            return points.Count == 0 ? null : "- " + string.Join("\n- ", System.Linq.Enumerable.Select(points, static p => p.Line));
+        };
+
         // M3: Umbra's toolbar and colour profile, read-only from its saved settings.
         var umbra = new Game.UmbraProbe(PluginInterface, Framework, Settings, () => Session.LiveContentId, static () => UiMetrics.UiScale, Log);
         umbraProbe = umbra;
@@ -41,6 +48,18 @@ public sealed partial class Plugin
         {
             settingsWindow.Updates = updates;
             settingsWindow.Umbra = umbra;
+        }
+
+        // The moon icon (H1): its update dot and quick-card line, and its clearance of Umbra's bar.
+        if (moonIcon is { } icon)
+        {
+            icon.Updates = updates;
+            icon.Umbra = umbra;
+        }
+
+        if (moonIconCard is { } card)
+        {
+            card.Updates = updates;
         }
 
         if (guidanceCommand is not { } guidance || discoveryWindow is not { } nearby)
@@ -104,6 +123,8 @@ public sealed partial class Plugin
                 routeWindow?.ShowFollowed();
                 return;
             case IpcPlaces.Tonight or IpcPlaces.UpNext:
+                // As the moon icon's Tonight: the Journal tab with nothing selected shows the Tonight card.
+                ui.Tab = NavTab.Journal;
                 ui.SelectedRowId = null;
                 break;
         }

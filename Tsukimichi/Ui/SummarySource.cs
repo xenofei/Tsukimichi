@@ -89,7 +89,7 @@ public sealed class SummarySource
 
         uint upNextRow = 0;
         string upNextName = string.Empty, upNextStep = string.Empty;
-        if (guidance.UpNext() is { } pick)
+        if (guidance.UpNextWithStep() is { } pick)
         {
             upNextRow = pick.Quest.RowId;
             upNextName = spoilers.DisplayName(pick.Quest);

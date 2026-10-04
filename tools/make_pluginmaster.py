@@ -2,12 +2,14 @@
 
 Usage (after `dotnet build Tsukimichi/Tsukimichi.csproj -c Release`):
     python tools/make_pluginmaster.py --tag v0.1.0
-The tag must match a GitHub Release that has latest.zip attached, and CHANGELOG.md must have a
-`## [X.Y.Z]` section for it (or pass --changelog); otherwise the script exits 1 and writes nothing.
+The tag must match a GitHub Release that has latest.zip attached. The manifest's changelog is the release's plain
+What's new notes from Tsukimichi/Data/curated/whats_new.json (spec-1.22 U1: Dalamud's installer shows the same words as
+the in-game popup); a release without notes falls back to its CHANGELOG.md `## [X.Y.Z]` section, and with neither (and
+no --changelog) the script exits 1 and writes nothing. CHANGELOG.md stays the technical record on GitHub.
 
-Since 1.22.0 (plan v8 U1, spec-1.22 decision 8) the manifest's changelog is the release's plain notes from
-Tsukimichi/Data/whats_new.json when it has an entry for the version, so Dalamud's installer and the update note's hover
-show the same words as the What's new popup; the technical CHANGELOG.md section is the fallback.
+    python tools/make_pluginmaster.py --notes 1.22.0
+prints the changelog text a release would get from its notes, and nothing else (exit 1 when it has none). The
+plugin's tests compare it with Core's ReleaseNote.ManifestText.
 """
 import argparse
 import json
@@ -19,6 +21,29 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CANDIDATES = [os.path.join(ROOT, "Tsukimichi", "bin", *tail, "Tsukimichi", "Tsukimichi.json") for tail in (("Release",), ("x64", "Release"))]
 MANIFEST = next((c for c in _CANDIDATES if os.path.exists(c)), _CANDIDATES[0])
 OUTPUT = os.path.join(ROOT, "pluginmaster.json")
+WHATS_NEW = os.path.join(ROOT, "Tsukimichi", "Data", "curated", "whats_new.json")
+# Must match ReleaseNote.ManifestBullet in Tsukimichi.Core/Releases/ReleaseNotes.cs.
+BULLET = "\u2022 "
+
+
+def whats_new_text(tag: str) -> str:
+    """Return the release's plain notes (vX.Y.Z or X.Y.Z) as the manifest's changelog, or empty.
+
+    The form is ReleaseNote.ManifestText: the release's name, a blank line, then one bullet line per point.
+    """
+    if not os.path.exists(WHATS_NEW):
+        return ""
+    version = tag[1:] if tag.startswith("v") else tag
+    with open(WHATS_NEW, encoding="utf-8") as f:
+        notes = json.load(f)
+    for release in notes.get("releases", []):
+        if release.get("version") != version:
+            continue
+        lines = [release["name"].strip(), ""]
+        for point in release.get("points", []):
+            lines.append(BULLET + point["lead"].strip() + " " + point["text"].strip())
+        return "\n".join(lines)
+    return ""
 
 
 def changelog_section(tag: str) -> str:
@@ -43,48 +68,22 @@ def changelog_section(tag: str) -> str:
     return "\n".join(l.replace("### ", "") for l in text.splitlines())
 
 
-WHATS_NEW = os.path.join(ROOT, "Tsukimichi", "Data", "whats_new.json")
-
-
-def plain_notes(tag: str) -> str:
-    """The release's plain points from whats_new.json as "- Lead. Sentence." lines, or empty when it has none.
-
-    Reads the file loosely, since its other fields are the What's new popup's: a list of releases, or an object holding
-    one under "releases"; each release has "version" and "points"; a point is a string, or an object with a "lead" and
-    one of "text", "sentence" or "body".
-    """
-    if not os.path.exists(WHATS_NEW):
-        return ""
-    version = tag[1:] if tag.startswith("v") else tag
-    with open(WHATS_NEW, encoding="utf-8-sig") as f:
-        data = json.load(f)
-    releases = data.get("releases", []) if isinstance(data, dict) else data
-    for release in releases if isinstance(releases, list) else []:
-        if not isinstance(release, dict) or str(release.get("version", "")).strip() != version:
-            continue
-        lines = []
-        for point in release.get("points", []):
-            if isinstance(point, str):
-                text = point.strip()
-            elif isinstance(point, dict):
-                lead = str(point.get("lead", "")).strip()
-                body = str(point.get("text") or point.get("sentence") or point.get("body") or "").strip()
-                text = f"{lead} {body}".strip()
-            else:
-                text = ""
-            if text:
-                lines.append(f"- {text}")
-        return "\n".join(lines)
-    return ""
-
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default="xenofei/Tsukimichi", help="GitHub owner/name")
     parser.add_argument("--tag", help="Release tag (default: v<Major>.<Minor>.<Build> from the manifest)")
     parser.add_argument("--branch", default="main", help="Branch that serves pluginmaster.json and the icon")
     parser.add_argument("--changelog", default="", help="Changelog text for this version")
+    parser.add_argument("--notes", metavar="VERSION", help="Print the changelog text whats_new.json gives VERSION, and exit")
     args = parser.parse_args()
+
+    if args.notes:
+        text = whats_new_text(args.notes)
+        if not text:
+            print(f"whats_new.json has no release {args.notes}", file=sys.stderr)
+            return 1
+        sys.stdout.buffer.write(text.encode("utf-8"))
+        return 0
 
     if not os.path.exists(MANIFEST):
         print(f"manifest not found: {MANIFEST}\nrun: dotnet build Tsukimichi/Tsukimichi.csproj -c Release", file=sys.stderr)
@@ -110,11 +109,15 @@ def main() -> int:
         "IsHide": False,
         "IsTestingExclusive": False,
     })
-    changelog = args.changelog or plain_notes(tag) or changelog_section(tag)
+    changelog = args.changelog or whats_new_text(tag)
+    if not changelog:
+        changelog = changelog_section(tag)
+        if changelog:
+            print(f"whats_new.json has no release {tag}; using its CHANGELOG.md section instead", file=sys.stderr)
     if not changelog:
         version_label = tag[1:] if tag.startswith("v") else tag
         print(
-            f"CHANGELOG.md has no '## [{version_label}]' section with content for {tag}; "
+            f"Neither whats_new.json nor CHANGELOG.md ('## [{version_label}]') has notes for {tag}; "
             "write the release notes (or pass --changelog) before regenerating pluginmaster.json",
             file=sys.stderr,
         )

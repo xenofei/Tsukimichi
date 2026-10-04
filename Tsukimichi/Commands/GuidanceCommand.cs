@@ -218,7 +218,7 @@ public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks 
     /// Up next for the character the lines are about (1.22: the server info bar's tooltip and the summary IPC), with its
     /// current step when the quest is in the journal; null while the catalog is not ready or nothing is picked.
     /// </summary>
-    public (QuestRecord Quest, Core.Todo.UpNextRule Rule, StepView? Step)? UpNext()
+    public (QuestRecord Quest, Core.Todo.UpNextRule Rule, StepView? Step)? UpNextWithStep()
     {
         if (session.Bundle is not { } bundle || PickWithRule(bundle.Catalog, States) is not { } picked)
         {

@@ -83,6 +83,14 @@ public sealed partial class ConfigWindow
             settings.UpdateChatLine = chat;
             Save();
         }
+
+        // W's switch, drawn here so the Updates block holds every update setting once (spec-1.22 W3 item 2).
+        var show = settings.ShowWhatsNewAfterUpdate;
+        if (Toggle(Strings.WhatsNew.ShowAfterUpdate, Strings.WhatsNew.ShowAfterUpdateHint, ref show, "whats new changelog release notes update popup"))
+        {
+            settings.ShowWhatsNewAfterUpdate = show;
+            Save();
+        }
     }
 
     // The status line, rebuilt when the minute, the answer, the switch or the language moves.

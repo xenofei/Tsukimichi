@@ -1452,14 +1452,8 @@
   <data name="ConfigPollCostUnknown" xml:space="preserve">
     <value>Jede Abfrage kostet wenige Millisekunden; 1 s ist der Standard und sicher.</value>
   </data>
-  <data name="WhatsNew.TitleFormat" xml:space="preserve">
-    <value>Neu in {0}</value>
-  </data>
   <data name="WhatsNew.Close" xml:space="preserve">
     <value>Schließen</value>
-  </data>
-  <data name="WhatsNew.Help" xml:space="preserve">
-    <value>Hilfe</value>
   </data>
   <data name="Help.WindowTitle" xml:space="preserve">
     <value>Tsukimichi-Hilfe###TsukimichiHelp</value>

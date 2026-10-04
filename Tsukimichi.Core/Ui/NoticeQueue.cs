@@ -18,17 +18,14 @@ public enum NoticeKind
     /// <summary>"Set up your road" is waiting in the detail column while a quest is selected.</summary>
     Setup = 4,
 
-    /// <summary>What's new is waiting in the detail column while a quest is selected.</summary>
-    WhatsNew = 5,
-
     /// <summary>Since you were away is waiting in the detail column while a quest is selected.</summary>
-    WelcomeBack = 6,
+    WelcomeBack = 5,
 
     /// <summary>
     /// "All Saints' Wake ends in 2 days" (1.19.0, C10), once per session while the player turned the ending-soon notice
     /// on; Show the event.
     /// </summary>
-    EventEnding = 7,
+    EventEnding = 6,
 }
 
 /// <summary>

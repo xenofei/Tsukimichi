@@ -27,8 +27,8 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
     [GitHistoryFact]
     public void Version_json_names_the_last_commit_that_changed_the_curated_data()
     {
-        // tools/regen.ps1 stamps VERSION.json with `git log -1 --format=%h` over the curated data files (VERSION.json
-        // and README.md excluded). Settings > About, the status bar and every "Report this quest" block name that
+        // tools/regen.ps1 stamps VERSION.json with `git log -1 --format=%h` over the curated data files (VERSION.json,
+        // README.md and the release notes in whats_new.json excluded). Settings > About, the status bar and every "Report this quest" block name that
         // revision, so a data commit without a fresh stamp would send bug reports against the wrong data.
         var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.VersionFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
         var stamp = (string?)root[CuratedData.CuratedRevisionKey];
@@ -38,7 +38,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         // The full hash, compared by prefix: the abbreviation's length depends on the clone's object count.
         var head = GitHistoryFactAttribute.Git(
             "log", "-1", "--format=%H", "--",
-            "Tsukimichi/Data/curated", ":!Tsukimichi/Data/curated/VERSION.json", ":!Tsukimichi/Data/curated/README.md");
+            "Tsukimichi/Data/curated", ":!Tsukimichi/Data/curated/VERSION.json", ":!Tsukimichi/Data/curated/README.md", ":!Tsukimichi/Data/curated/" + Tsukimichi.Core.Releases.ReleaseNotes.FileName);
         Assert.False(string.IsNullOrEmpty(head), "git log found no commit touching Tsukimichi/Data/curated");
         Assert.True(
             stamp!.Length >= 7 && head!.StartsWith(stamp, StringComparison.OrdinalIgnoreCase),
@@ -91,7 +91,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
             CuratedData.RefileOverridesFileName, CuratedData.RetiredQuestsFileName, CuratedData.QuirksFileName, CuratedData.PayoffGatesFileName,
             CuratedData.PathChoicesFileName, CuratedData.ExtraPrerequisitesFileName, CuratedData.GameGatesFileName, CuratedData.VersionFileName,
             CuratedData.AetheryteUnlocksFileName, CuratedData.GiverPortraitsFileName, CuratedData.StoryRequiredFileName, CuratedData.ExpansionLaunchesFileName,
-            CuratedData.StoryCastFileName,
+            CuratedData.StoryCastFileName, Tsukimichi.Core.Releases.ReleaseNotes.FileName,
         };
         Assert.Equal(known.OrderBy(n => n, StringComparer.Ordinal), files.Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal));
         Assert.Empty(Curated().Warnings);

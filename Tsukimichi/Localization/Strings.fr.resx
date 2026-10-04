@@ -1452,14 +1452,8 @@
   <data name="ConfigPollCostUnknown" xml:space="preserve">
     <value>Chaque actualisation coûte quelques millisecondes ; 1 s est la valeur par défaut et reste sûre.</value>
   </data>
-  <data name="WhatsNew.TitleFormat" xml:space="preserve">
-    <value>Nouveautés de la version {0}</value>
-  </data>
   <data name="WhatsNew.Close" xml:space="preserve">
     <value>Fermer</value>
-  </data>
-  <data name="WhatsNew.Help" xml:space="preserve">
-    <value>Aide</value>
   </data>
   <data name="Help.WindowTitle" xml:space="preserve">
     <value>Aide de Tsukimichi###TsukimichiHelp</value>

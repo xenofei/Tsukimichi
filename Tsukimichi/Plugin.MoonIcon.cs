@@ -14,6 +14,7 @@ namespace Tsukimichi;
 public sealed partial class Plugin
 {
     private MoonIconWindow? moonIcon;
+    private MoonIconCard? moonIconCard;
     private bool moonIconDrawSubscribed;
     private bool moonIconFailed;
 
@@ -39,6 +40,7 @@ public sealed partial class Plugin
 
         void OpenSettings() => configWindow?.OpenAt(Core.Ui.SettingsSection.InGame, Core.Ui.SettingsAnchor.MoonIcon);
 
+        moonIconCard = card;
         moonIcon = new MoonIconWindow(Settings, () => Settings.Save(PluginInterface), ClientState, Condition, mainWindow.Toggle, OpenTonight, OpenSettings, card)
         {
             Stops = runStops,

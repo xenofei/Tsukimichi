@@ -21,7 +21,7 @@ namespace Tsukimichi.Game;
 /// per frame. <see cref="UmbraLayout.Clearance"/> is kept current on the framework thread.
 /// </para>
 /// </summary>
-public sealed class UmbraProbe : IDisposable
+public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
 {
     /// <summary>How often the settings file's write time is looked at, in seconds.</summary>
     public const double StatInterval = 5.0;
@@ -66,6 +66,17 @@ public sealed class UmbraProbe : IDisposable
 
     /// <summary>The last read of Umbra's settings; null before one, or while Umbra is not loaded.</summary>
     public UmbraRead? Read { get; private set; }
+
+    /// <summary>
+    /// The moon icon's view of the bar (H1, <see cref="Core.Ui.IUmbraLayout"/>): the edge it holds and its height in
+    /// screen px without the gap (the icon adds its own 8 px); none while nothing keeps clear.
+    /// </summary>
+    public Core.Ui.ToolbarClearance Toolbar => UmbraLayout.Clearance switch
+    {
+        { Top: > 0f } c => new Core.Ui.ToolbarClearance(Core.Ui.ToolbarEdge.Top, c.Bar),
+        { Bottom: > 0f } c => new Core.Ui.ToolbarClearance(Core.Ui.ToolbarEdge.Bottom, c.Bar),
+        _ => Core.Ui.ToolbarClearance.None,
+    };
 
     /// <summary>Tsukimichi for Umbra said hello over IPC this session, with its version; null until it does.</summary>
     public string? AddonVersion { get; private set; }

@@ -27,7 +27,7 @@ namespace Tsukimichi.Game;
 /// next framework tick.
 /// </para>
 /// </summary>
-public sealed class UpdateWatcher : IDisposable
+public sealed class UpdateWatcher : IDisposable, Core.Ui.IUpdateState
 {
     /// <summary>The installer's search text: the plugin's name as Dalamud lists it.</summary>
     public const string InstallerSearch = "Tsukimichi";
@@ -77,6 +77,9 @@ public sealed class UpdateWatcher : IDisposable
     /// changelog Dalamud has (<c>PluginUpdate.Changelog</c>), which the manifest fills with the same plain notes.
     /// </summary>
     public Func<string, string?>? PlainNotes { get; set; }
+
+    /// <summary>The moon icon's dot (H1): the ready version while its note shows; null when none is, or after Later.</summary>
+    public string? ReadyVersion => Current.ShowsNote ? Current.Available : null;
 
     /// <summary>The running build's version, as the note compares it.</summary>
     public string Running => running;

@@ -32,6 +32,9 @@ public sealed class UmbraClearanceTests
         Assert.Equal(40f, clearance.Top);
         Assert.Equal(0f, clearance.Bottom);
         Assert.Equal(ClearanceSource.Read, clearance.Source);
+
+        // The moon icon reads the bar without the gap (it adds its own 8 px).
+        Assert.Equal(32f, clearance.Bar);
         Assert.True(clearance.TopAligned);
 
         Assert.Equal(new Vector2(10, 40), clearance.Apply(new Vector2(10, 5), new Vector2(200, 100), ViewportTop, ViewportHeight));
@@ -45,6 +48,7 @@ public sealed class UmbraClearanceTests
         var clearance = UmbraClearance.For(true, Top with { UiScalePercent = 150, YOffset = 4 }, 32, uiScale: 2f);
         // (32 + 4) × 1.5 = 54, + 8 × 2 = 70.
         Assert.Equal(70f, clearance.Top);
+        Assert.Equal(54f, clearance.Bar);
     }
 
     [Fact]

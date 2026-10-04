@@ -26,7 +26,8 @@ public enum ClearanceSource : byte
 /// <param name="Bottom">Pixels from the viewport's bottom that a surface's bottom edge keeps above (0: none).</param>
 /// <param name="Source">Whether the bar was read or assumed.</param>
 /// <param name="TopAligned">The bar sits at the top (for the About line); meaningless with <see cref="ClearanceSource.None"/>.</param>
-public readonly record struct UmbraClearance(float Top, float Bottom, ClearanceSource Source, bool TopAligned)
+/// <param name="Bar">The bar's band in screen px without the gap (its height and offset at Umbra's scale); 0 for none.</param>
+public readonly record struct UmbraClearance(float Top, float Bottom, ClearanceSource Source, bool TopAligned, float Bar = 0f)
 {
     /// <summary>The gap between the bar and a surface, in Tsukimichi's logical px (spec-1.22 M3: 8).</summary>
     public const float GapLogical = 8f;
@@ -61,10 +62,11 @@ public readonly record struct UmbraClearance(float Top, float Bottom, ClearanceS
         }
 
         var gap = GapLogical * Math.Clamp(uiScale, 0.5f, 4f);
-        var band = MathF.Round((bar.Height + Math.Max(0, bar.YOffset)) * bar.Scale) + gap;
+        var held = MathF.Round((bar.Height + Math.Max(0, bar.YOffset)) * bar.Scale);
+        var band = held + gap;
         return bar.TopAligned
-            ? new UmbraClearance(band, 0f, source, TopAligned: true)
-            : new UmbraClearance(0f, band, source, TopAligned: false);
+            ? new UmbraClearance(band, 0f, source, TopAligned: true, held)
+            : new UmbraClearance(0f, band, source, TopAligned: false, held);
     }
 
     /// <summary>

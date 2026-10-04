@@ -65,6 +65,9 @@ public enum SettingsAnchor
 
     /// <summary>Settings › In game › Moon icon (1.22, H1; the icon's right-click menu opens it).</summary>
     MoonIcon,
+
+    /// <summary>Settings › Advanced › What's new (1.22, W3; the What's new popup's "All releases").</summary>
+    WhatsNew,
 }
 
 /// <summary>The order of the Settings window's section index and of the search results, and the remembered page.</summary>

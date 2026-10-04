@@ -39,6 +39,7 @@ static partial class Strings
     public static string NewChaptersNameHidden => Loc.Get("NewChaptersNameHidden");
     public static string NewChaptersShow => Loc.Get("NewChaptersShow");
     public static string NewChaptersShowTooltip => Loc.Get("NewChaptersShowTooltip");
+    public static string NewChaptersCloseTooltip => Loc.Get("NewChaptersCloseTooltip");
 
     // ---- Loose ends (N8) ----
     public static string LooseEndsSection => Loc.Get("LooseEndsSection");

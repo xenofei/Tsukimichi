@@ -161,6 +161,43 @@ public static class TextFlow
         return cut || lines.Length > shown;
     }
 
+    /// <summary>
+    /// <paramref name="text"/> wrapped between words in <paramref name="width"/> pixels as one item, its first
+    /// <paramref name="leadLength"/> characters a weight heavier (drawn twice, as <see cref="Chrome.SemiboldText"/> does,
+    /// so the lines break exactly as the plain text would): What's new's "<b>Lead.</b> Sentence" points (spec-1.22 W1).
+    /// </summary>
+    public static void WrappedLead(string text, int leadLength, float width, uint color)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var lines = Lines(text, width);
+        var lineHeight = ImGui.GetTextLineHeight();
+        var origin = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(MathF.Max(1f, width), MathF.Max(1, lines.Length) * lineHeight));
+        if (!ImGui.IsItemVisible())
+        {
+            return;
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        var shift = MathF.Max(0.5f, UiMetrics.Px(0.5f));
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            if (line.Length == 0)
+            {
+                continue;
+            }
+
+            var pos = new Vector2(origin.X, origin.Y + (i * lineHeight));
+            dl.AddText(pos, color, text.AsSpan(line.Start, line.Length));
+            var bold = Math.Min(line.Start + line.Length, leadLength) - line.Start;
+            if (bold > 0)
+            {
+                dl.AddText(pos + new Vector2(shift, 0f), color, text.AsSpan(line.Start, bold));
+            }
+        }
+    }
+
     /// <summary>The height <paramref name="text"/> takes wrapped in <paramref name="width"/> pixels, in the current font.</summary>
     public static float Height(string text, float width)
     {
