@@ -571,6 +571,16 @@ def orrery(px):
     lip = np.clip(cut - np.roll(cut, 1, 0), 0, 1) * (1 - M["figs"])
     lip[0] = 0
     plate = plate + (hexc("#F4F6FA") - plate) * (lip * 0.25)[..., None]
+    if CFG.get("orrery_crisp") and CFG.get("orrery_backlit"):
+        # backlit silhouettes on a dark plate ground with thin silver lines over it, as evercold-b's city, so each one
+        # averages darker than the enamel sky behind it
+        bk = np.zeros((h, w), np.float32)
+        for n in CFG["orrery_backlit"]:
+            bk = np.maximum(bk, blur(M[n], 0.8))
+        bk = np.clip(bk, 0, 1) * (1 - M["figs"]) * (1 - sky) * (1 - M["field"]) * (1 - M["ridge"])   # not the ground sealed into far
+        sl = aa_lines(yy, 5.0, 5.0, 0.15)
+        bkcol = hexc("#181C2A")[None, None, :] * (1 - sl[..., None]) + hexc("#6E768C")[None, None, :] * sl[..., None]
+        plate = plate * (1 - bk[..., None]) + bkcol * bk[..., None]
     for k in ("far", "ridge", "field", "figs", "city"):
         plate = plate * (1 - (outline(M[k]) * 0.6)[..., None])
     if CFG.get("far_layers"):                                                      # each range's own ridgeline

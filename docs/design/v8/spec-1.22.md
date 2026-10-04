@@ -283,12 +283,12 @@ All nine releases, shipped (six JPEGs each):
 | 1.21.0 What next | `whatnext-b` | 344 KB |
 | 1.20.0 Before Evercold | `evercold-b` | 445 KB |
 | 1.19.0 Right answers | `answers-b` | 353 KB |
-| 1.18.0 Runs you can trust | `runs-b` | 461 KB |
-| 1.17.0 Mix and match | `mixmatch-b` | 476 KB |
+| 1.18.0 Runs you can trust | `runs-b` | 457 KB |
+| 1.17.0 Mix and match | `mixmatch-b` | 456 KB |
 | 1.16.0 Themes | `themes-b` | 490 KB |
 | 1.15.0 Faces and icons | `faces-b` | 477 KB |
-| 1.14.0 The polish you asked for | `polish-b` | 446 KB |
-| **All nine** | | **about 3.8 MB** (3,839 KB), each release within its 600 KB budget. The backfill's Orrery files are the largest (141–193 KB), because their engraving covers whole night masses. |
+| 1.14.0 The polish you asked for | `polish-b` | 427 KB |
+| **All nine** | | **about 3.7 MB** (3,796 KB), each release within its 600 KB budget. The backfill's Orrery files are the largest (141–193 KB), because their engraving covers whole night masses. |
 
 ### Production recipe (Option B, every release)
 
@@ -314,7 +314,7 @@ Added for the 1.14–1.18 backfill. Each is additive: absent, every treatment is
 - `lines`: mask names of thin linear things, a guide rope or rigging. Glass leads them, the Orrery engraves them, Sumi inks them, Medallion keeps them crisp and Aether keeps its facets off them.
 - `field_flat`: the field is a flat sea or river. Its glass strips, engraved lines and brush strokes run from the horizon in every column, so a boat or a boathouse standing in the water never restarts them. Only the dark marks on it are drawn in glass and ink, so a moon's glitter path stays light.
 - `orrery_crisp`: the Orrery is engraved by value. The painting's own luminance, normalised over the land, sets each line's weight: lit snow, lit crystals and lit tops stay bare silver, and shadow takes heavier lines, cross-hatched past mid-tone. Lines are anti-aliased, follow smoothed ridgelines, and are never closer than 5 px at 1120 (2.5 px at 1x). Where they would be closer, a flat tone stands in, so no checker or moiré forms. Past mid-tone, a second, lighter hatch runs at about 35° and a 9 px pitch, so the two sets neither mesh nor beat. Each place carries one line set (the ridge isn't also engraved as a far range), and the moon's sea lines are only the mass's core, 3 to 5 short level lines.
-- `orrery_backlit`: mask names of backlit silhouettes, which the Orrery engraves dark (at a tone of at least .88) with `orrery_crisp`, as evercold-b's city is. They are Limsa, runs-b's willow bank, and mixmatch-b's keep, hills and pines. Without it, normalising over the land left them as bare silver, lighter than the enamel sky.
+- `orrery_backlit`: mask names of backlit silhouettes. With `orrery_crisp`, the Orrery lays them on a dark plate ground (#181C2A) with thin silver lines over it, as evercold-b's city is, so each one averages darker than the enamel sky behind it. The ground sealed into `far` is excluded. They are Limsa, runs-b's willow bank, and mixmatch-b's keep, hills and pines. Without it, normalising over the land left them as bare silver, lighter than the enamel sky.
 - `glass_palette_bld`: a palette for the city's pieces above `bluff_split`, so a roof is apart from its walls.
 - `glass_moon_path`: the moon's path on the water as broken glints.
   - About a third of the strips have none.
@@ -857,3 +857,15 @@ The five backfill releases (`polish-b`, `faces-b`, `themes-b`, `mixmatch-b`, `ru
   - The sea lines are only the mass's core.
   - The glass paths are broken glints, as described under `glass_moon_path`.
   - All nine releases are re-shipped and the four boards re-rendered. evercold-b and whatnext-b are byte-identical.
+- **Round 4: CHANGES.** 1 Minor and 1 Nit.
+  - **Fixed:** the summit bands, the glass moon paths (now broken moonlight), the mesh and the grille.
+  - **The moon rule holds again on all nine moons:** welcome-b at (224, 92) and answers-b at (655, 103) show one soft grey mass, no hook or ring, with the sliver kept.
+  - **Minor:** the backlit silhouettes in the Orrery were still lighter than the sky. The hatching sat on bare silver.
+    - mixmatch-b's keep measured 115 against a sky of 65.
+    - runs-b's willows measured 131 against 66.
+    - polish-b's Limsa measured 104 against 50.
+    - For comparison, evercold-b's city measures 48 against 48.
+  - **Nit:** round 2's Nits 7–9.
+- **After round 4:** `orrery_backlit` lays those silhouettes on a dark plate ground with thin silver lines, and the sealed ground is excluded.
+  - The keep now measures 47 against 65, the hills 40 against 70 and Limsa 41 against 49. The willows read dark against the enamel.
+  - All nine releases are re-shipped. evercold-b and whatnext-b are byte-identical.
