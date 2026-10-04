@@ -5619,11 +5619,11 @@
     <value>How many main scenario quests past your current one keep their names.</value>
   </data>
   <data name="SpoilerHideRelated" xml:space="preserve">
-    <value>Also hide places, duties, rewards and people</value>
+    <value>Hide places, duties, rewards and people</value>
     <comment>Settings › Spoilers, under "Hide story names ahead" (1.20 N6).</comment>
   </data>
   <data name="SpoilerHideRelatedHelp" xml:space="preserve">
-    <value>Areas, duties, rewards and givers your story has not reached read Area ahead (Lv 61) and the like, in lists, tooltips, search, chat and copies.</value>
+    <value>Places, duties, rewards and givers your story has not reached read as Area ahead (Lv 61) and the like.</value>
   </data>
   <data name="SpoilerHideArtwork" xml:space="preserve">
     <value>Hide journal artwork</value>

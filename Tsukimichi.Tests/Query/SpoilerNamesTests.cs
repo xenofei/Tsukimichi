@@ -258,6 +258,43 @@ public class SpoilerNamesTests
     }
 
     [Fact]
+    public void Places_vendors_routes_and_blockers_print_through_the_shield()
+    {
+        var before = At(Path);
+        var after = At(Dungeon);
+
+        // A place with its region: the placeholder alone for a masked place; the place alone under a masked region.
+        Assert.Equal("Area ahead (Lv 61)", before.Place("Hingashi", "Kugane", "{0} › {1}"));
+        Assert.Equal("Hingashi › Kugane", after.Place("Hingashi", "Kugane", "{0} › {1}"));
+        Assert.Equal("Ul'dah - Steps of Nald", before.Place("Hingashi", "Ul'dah - Steps of Nald", "{0} › {1}"));
+        Assert.Equal(string.Empty, before.Place("Hingashi", null, "{0} › {1}"));
+
+        // Where to get: a vendor the story has not introduced, standing in a zone it has not reached.
+        var vendor = new Core.Sources.Vendor(1, "Hancock", new Core.Sources.WorldSpot(Kugane, "Kugane", 0f, 0f, 10f, 11f));
+        Assert.True(Core.Sources.SourceText.Shielded(vendor, before));
+        Assert.Equal("Someone ahead (Lv 61), Area ahead (Lv 61)", Core.Sources.SourceText.VendorWithPlace(vendor, before));
+        Assert.Equal("Hancock, Kugane (10.0, 11.0)", Core.Sources.SourceText.VendorWithPlace(vendor, after));
+        Assert.False(Core.Sources.SourceText.Shielded(vendor, after));
+
+        // A route to a duty is titled by its placeholder, and so is each part; the quests stay.
+        var duty = new Core.Route.RouteTarget(Core.Route.RouteTargetKind.Duty, "The Sirensong Sea", [Dungeon]) { Icon = 61801 };
+        var shown = duty.Through(before);
+        Assert.Equal("Duty ahead (Lv 62)", shown.Label);
+        Assert.Equal(0u, shown.Icon);
+        Assert.Equal(duty.QuestRowIds, shown.QuestRowIds);
+        Assert.Same(duty, duty.Through(after));
+        var union = Core.Route.RouteTarget.Union(Core.Route.RouteTargetKind.Duty, "Roulette", [duty]);
+        Assert.Equal("Duty ahead (Lv 62)", union.Through(before).Parts[0].Label);
+        var ruby = Core.Route.RouteTarget.ForUnlock(Index.Finds.Single(f => f.Name == "The Ruby Sea"));
+        Assert.Equal("Area ahead (Lv 61)", ruby.Through(before).Label);
+
+        // Blockers name a duty past the story point by its placeholder.
+        var names = Core.Evaluation.BlockerNames.Default with { Duty = _ => "The Sirensong Sea" };
+        Assert.Equal("Duty ahead (Lv 62)", names.Through(before).Duty(62));
+        Assert.Equal("The Sirensong Sea", names.Through(after).Duty(62));
+    }
+
+    [Fact]
     public void An_empty_catalog_places_nothing()
     {
         Assert.Equal(0, SpoilerNames.Build(QuestCatalog.Empty, QuestUnlocks.Empty).Count);
