@@ -1,6 +1,8 @@
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Core.Unlocks;
@@ -328,6 +330,131 @@ public class SpoilerNamesTests
         // Another quest's names stay hidden.
         Assert.True(revealed.IsNameMasked(SpoilerKind.Reward, "Lunar Whale"));
         Assert.True(revealed.IsNameMasked(SpoilerKind.Reward, "Kojin Blade"));
+    }
+
+    [Fact]
+    public void Revealing_a_quests_name_is_no_story_progress()
+    {
+        // "Reveal this name" on Not without Incident shows its title only: Kugane, its aetheryte and the Lunar Whale
+        // are what reaching it would show, and stay hidden.
+        var revealed = At(Path, revealedQuests: new HashSet<uint> { Opener });
+
+        Assert.False(revealed.IsMasked(Opener));
+        Assert.True(revealed.IsNameMasked(SpoilerKind.Area, "Kugane"));
+        Assert.True(revealed.IsNameMasked(SpoilerKind.Aetheryte, "Kogane Dori Markets"));
+        Assert.True(revealed.IsNameMasked(SpoilerKind.Reward, "Lunar Whale"));
+        Assert.True(revealed.IsNameMasked(SpoilerKind.Reward, "Kojin Blade"));
+        Assert.Equal(At(Path).MaskedNameCount, revealed.MaskedNameCount);
+        Assert.NotEqual(At(Path).Fingerprint, revealed.Fingerprint);
+
+        // Reaching it does show them.
+        Assert.False(At(Opener).IsNameMasked(SpoilerKind.Area, "Kugane"));
+    }
+
+    [Fact]
+    public void A_moonlit_reward_is_shielded_where_the_index_places_it()
+    {
+        var mask = At(Path);
+        var duty = new UniqueRewardEntry(Dungeon, RewardKind.DutyUnlock, Sirensong, 0, "the Sirensong Sea", Confidence.Curated, "curated/duty_unlocks.json");
+        var current = new UniqueRewardEntry(KuganeSide, RewardKind.AetherCurrent, 1, 0, "Aether Current (The Ruby Sea)", Confidence.Static, "test");
+        var mount = new UniqueRewardEntry(Opener, RewardKind.Mount, 7, 0, "Lunar Whale", Confidence.Static, "test");
+
+        // The duty is placed as a duty and the current as flying in its zone: never as a reward.
+        Assert.False(mask.IsNameMasked(SpoilerKind.Reward, "the Sirensong Sea"));
+        Assert.Equal((SpoilerKind.Duty, "the Sirensong Sea"), mask.RewardName(duty, "the Sirensong Sea"));
+        Assert.Equal((SpoilerKind.Area, "The Ruby Sea"), mask.RewardName(current, "Aether Current (The Ruby Sea)"));
+        Assert.Equal((SpoilerKind.Reward, "Lunar Whale"), mask.RewardName(mount, "Lunar Whale"));
+
+        Assert.True(mask.IsRewardMasked(duty, "the Sirensong Sea"));
+        Assert.True(mask.IsRewardMasked(current, "Aether Current (The Ruby Sea)"));
+        Assert.True(mask.IsRewardMasked(mount, "Lunar Whale"));
+        Assert.Equal("Dungeon (Lv" + Nbsp + "61)", mask.RewardDisplay(duty, "the Sirensong Sea"));
+        // The Ruby Sea is Stormblood's first zone in the sheet's order here (Kugane the second).
+        Assert.Equal("Aether Current (Stormblood area" + Nbsp + "1)", mask.RewardDisplay(current, "Aether Current (The Ruby Sea)"));
+        Assert.True(SpoilerMask.HoldsPlaceholder(mask.RewardDisplay(current, "Aether Current (The Ruby Sea)")));
+        Assert.Equal("A mount", mask.RewardDisplay(mount, "Lunar Whale"));
+
+        // Wotsit registers none of them until the story reaches them.
+        var rewards = UniqueRewardCatalog.Build(new UniqueRewardsData("test", default, [duty, current, mount]), new Dictionary<uint, UniqueOverride>(), CuratedData.Empty);
+        Assert.DoesNotContain(WotsitOrder.Items(Catalog, rewards, k => k.ToString(), "English", mask), i => i.IsReward);
+        var done = At(Far);
+        Assert.Equal(3, WotsitOrder.Items(Catalog, rewards, k => k.ToString(), "English", done).Count(i => i.IsReward));
+        Assert.Same("Lunar Whale", done.RewardDisplay(mount, "Lunar Whale"));
+
+        // A reward the names do not place (a curated unlock named by its note) hides while its quest lies ahead.
+        var note = new UniqueRewardEntry(Dungeon, RewardKind.DutyUnlock, 99, 0, "Once More -> a duty the note names", Confidence.Curated, "curated/duty_unlocks.json");
+        Assert.True(mask.IsRewardMasked(note, note.RewardName));
+        Assert.Equal("A duty", mask.RewardDisplay(note, note.RewardName));
+        Assert.True(SpoilerMask.IsPlaceholder(mask.RewardDisplay(note, note.RewardName)));
+        Assert.False(done.IsRewardMasked(note, note.RewardName));
+        Assert.False(mask.IsRewardMasked(new UniqueRewardEntry(EarlySide, RewardKind.DutyUnlock, 99, 0, "Unplaced", Confidence.Curated, "test"), "Unplaced"));
+    }
+
+    [Fact]
+    public void A_duty_hidden_through_its_quests_prints_the_wider_shields_form()
+    {
+        var mask = At(Path);
+        var placed = new DutyRunInfo(Sirensong, 0, 0, DutyRunInfo.Dungeons, "The Sirensong Sea", false, false) { LevelRequired = 61 };
+        var unplaced = new DutyRunInfo(4242, 0, 0, DutyRunInfo.Trials, "The Unplaced Trial", false, false) { LevelRequired = 90 };
+
+        Assert.Equal(mask.Name(SpoilerKind.Duty, "The Sirensong Sea"), mask.DutyPlaceholder(placed));
+        Assert.Equal("Trial (Lv" + Nbsp + "90)", mask.DutyPlaceholder(unplaced));
+        Assert.True(SpoilerMask.IsPlaceholder(mask.DutyPlaceholder(unplaced)));
+        Assert.Same(mask.DutyPlaceholder(unplaced), mask.DutyPlaceholder(unplaced));
+    }
+
+    [Fact]
+    public void A_placeholder_inside_a_string_counts_only_as_a_whole()
+    {
+        var trait = SpoilerMask.Register("A trait");
+        var dungeon = SpoilerMask.Register("Dungeon");
+        SpoilerMask.Register("Field operation");
+        SpoilerMask.Register("Duty");
+        SpoilerMask.Register("Holdtest area" + Nbsp + "1");
+
+        // On word boundaries, whole, and not a kind label.
+        Assert.False(SpoilerMask.HoldsPlaceholder("A traitor's tale"));
+        Assert.False(SpoilerMask.HoldsPlaceholder("Dungeon: Sastasha"));
+        Assert.False(SpoilerMask.HoldsPlaceholder("Field operation: Eureka Anemos"));
+        Assert.False(SpoilerMask.HoldsPlaceholder("Open in Duty Finder"));
+        Assert.False(SpoilerMask.HoldsPlaceholder("The Dungeon of Dreams"));
+        Assert.False(SpoilerMask.HoldsPlaceholder("Flying in Holdtest area" + Nbsp + "10"));
+
+        Assert.True(SpoilerMask.HoldsPlaceholder(trait));
+        Assert.True(SpoilerMask.HoldsPlaceholder("Job: A trait"));
+        Assert.True(SpoilerMask.HoldsPlaceholder("Moonlit: A trait and 2 more"));
+        Assert.True(SpoilerMask.HoldsPlaceholder(dungeon));
+        Assert.True(SpoilerMask.HoldsPlaceholder("Dungeon: Dungeon"));
+        Assert.True(SpoilerMask.HoldsPlaceholder("Flying in Holdtest area" + Nbsp + "1"));
+        Assert.True(SpoilerMask.HoldsPlaceholder("Holdtest area" + Nbsp + "1 Sidequests"));
+    }
+
+    [Fact]
+    public void Telling_a_placeholder_apart_allocates_nothing_per_frame()
+    {
+        SpoilerMask.Register("Holdtest area" + Nbsp + "2");
+        // Fresh instances each time, as a string composed every frame is.
+        var texts = new string[64];
+        for (var i = 0; i < texts.Length; i++)
+        {
+            texts[i] = i % 2 == 0 ? new string("Flying in Holdtest area" + Nbsp + "2") : new string("Flying in Kugane, quest " + i);
+        }
+
+        SpoilerMask.HoldsPlaceholder(texts[0]);
+        var allocated = long.MaxValue;
+        // Another test registering a placeholder meanwhile rebuilds the matcher once; a clean pass allocates nothing.
+        for (var attempt = 0; attempt < 3 && allocated != 0; attempt++)
+        {
+            var start = GC.GetAllocatedBytesForCurrentThread();
+            foreach (var text in texts)
+            {
+                SpoilerMask.HoldsPlaceholder(text);
+            }
+
+            allocated = GC.GetAllocatedBytesForCurrentThread() - start;
+        }
+
+        Assert.Equal(0, allocated);
     }
 
     [Fact]

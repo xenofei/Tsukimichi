@@ -1,6 +1,7 @@
 using Lumina.Data;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Core.Unlocks;
@@ -187,7 +188,7 @@ public sealed class UnlockIndexFixture : IDisposable
     public static readonly IReadOnlyDictionary<uint, string> NotYetCurated = new Dictionary<uint, string>();
 
     private readonly GameDataFixture game = new();
-    private readonly Lazy<(UnlockLinks Links, QuestUnlocks Unlocks, CuratedData Curated)> built;
+    private readonly Lazy<(UnlockLinks Links, QuestUnlocks Unlocks, CuratedData Curated, UniqueRewardCatalog Rewards, PlanDuties Duties)> built;
 
     public UnlockIndexFixture()
     {
@@ -206,9 +207,15 @@ public sealed class UnlockIndexFixture : IDisposable
 
     public CuratedData Curated => built.Value.Curated;
 
+    /// <summary>The Moonlit rewards the index was built from (no user overrides).</summary>
+    public UniqueRewardCatalog Rewards => built.Value.Rewards;
+
+    /// <summary>The duties the index was built from.</summary>
+    public PlanDuties Duties => built.Value.Duties;
+
     public void Dispose() => game.Dispose();
 
-    private (UnlockLinks, QuestUnlocks, CuratedData) Build()
+    private (UnlockLinks, QuestUnlocks, CuratedData, UniqueRewardCatalog, PlanDuties) Build()
     {
         var excel = game.Game.Excel;
         var curated = CuratedData.Load(FixtureCatalog.CuratedDir());
@@ -218,6 +225,6 @@ public sealed class UnlockIndexFixture : IDisposable
         var duties = DutyIndex.Build(excel, Language.English);
         // The spoiler shield's placeholders name expansions from the client's ExVersion sheet, as the plugin does.
         var names = game.Bundle.Names;
-        return (links, QuestUnlocks.Build(Catalog, rewards, duties, links, curated, id => names.Expansion(id)), curated);
+        return (links, QuestUnlocks.Build(Catalog, rewards, duties, links, curated, id => names.Expansion(id)), curated, rewards, duties);
     }
 }

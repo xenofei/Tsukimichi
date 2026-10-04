@@ -75,9 +75,10 @@ public static class WotsitOrder
             }
 
             var rewardName = RewardNames.Display(entry, quest, language);
-            if (spoilers.IsNameMasked(SpoilerKind.Reward, rewardName))
+            if (spoilers.IsRewardMasked(entry, rewardName))
             {
-                // A reward the story has not introduced (1.20.0 N6) is not registered: a placeholder finds nothing.
+                // A reward the story has not introduced (1.20.0 N6) is not registered: a placeholder finds nothing. A duty
+                // or flying in a zone is placed as one (SpoilerMask.RewardName), not as a reward.
                 continue;
             }
 

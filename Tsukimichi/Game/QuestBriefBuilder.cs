@@ -109,12 +109,15 @@ public sealed class QuestBriefBuilder
         return false;
     }
 
-    /// <summary>Whether a Moonlit line of the panel already names it (a duty unlock, a job): the unlock lines leave it out.</summary>
-    private static bool InMoonlit(List<MoonlitBriefLine> lines, string name)
+    /// <summary>
+    /// Whether a Moonlit line of the panel already names it (a duty unlock, a job): the unlock lines leave it out. Asked
+    /// of the lines' own names, never their placeholders.
+    /// </summary>
+    private static bool InMoonlit(List<string> lines, string name)
     {
         foreach (var line in lines)
         {
-            if (Core.Unlocks.UnlockRewards.SameName(line.Name, name))
+            if (Core.Unlocks.UnlockRewards.SameName(line, name))
             {
                 return true;
             }
@@ -181,6 +184,7 @@ public sealed class QuestBriefBuilder
         var masked = spoilers.IsMasked(quest);
 
         var moonlitLines = new List<MoonlitBriefLine>();
+        var moonlitNames = new List<string>();
         var unlockLabels = new List<BriefUnlockLine>();
         var iconSheets = IconSheets?.Invoke();
         verdictRewards.Clear();
@@ -195,9 +199,11 @@ public sealed class QuestBriefBuilder
             foreach (var entry in uniques)
             {
                 var owned = forLive ? unlocks.IsObtained(entry) : null;
-                // A reward the story has not introduced reads as its placeholder (1.20.0 N6), unless the character has it.
+                // A reward the story has not introduced reads as its placeholder (1.20.0 N6), unless the character has it:
+                // a duty or flying in a zone as the shield places it (SpoilerMask.RewardName), not as a reward.
                 var display = RewardNames.Display(entry, quest, bundle.Language);
-                var name = owned == true ? display : spoilers.Name(Core.Query.SpoilerKind.Reward, display);
+                var name = owned == true ? display : spoilers.RewardDisplay(entry, display);
+                moonlitNames.Add(display);
                 verdictRewards.Add(new MoonlitReward(name, owned));
                 moonlitLines.Add(new MoonlitBriefLine(name, owned, owned switch
                 {
@@ -207,15 +213,18 @@ public sealed class QuestBriefBuilder
                 }, ReferenceEquals(name, display) ? MoonlitIcon?.Invoke(quest, entry) ?? 0u : 0u));
             }
 
-            // A Moonlit line already names what it shows, so the unlock lines never repeat it.
-            opens = QuestVerdict.Unlocks(quest, tags().For(quest.RowId));
-            foreach (var unlock in opens)
+            // A Moonlit line already names what it shows, so the unlock lines never repeat it. The lines and the verdict
+            // print each name the shield hides as its placeholder (1.20.0 N6); the repeats are found by the names.
+            var named = QuestVerdict.Unlocks(quest, tags().For(quest.RowId));
+            opens = UnlockPlan.Shield(named, spoilers);
+            for (var i = 0; i < named.Count; i++)
             {
-                if (InMoonlit(moonlitLines, unlock.Name))
+                if (InMoonlit(moonlitNames, named[i].Name))
                 {
                     continue;
                 }
 
+                var unlock = opens[i];
                 unlockLabels.Add(new BriefUnlockLine(unlock.Label, iconSheets is null ? 0u : Core.Ui.PaneIcons.UnlockKind(unlock.Kind, iconSheets)));
             }
 
@@ -226,7 +235,7 @@ public sealed class QuestBriefBuilder
                 var added = 0;
                 foreach (var entry in index.For(quest.RowId))
                 {
-                    if (entry.Group > Core.Unlocks.UnlockGroup.Feature || added >= MaxIndexLabels || NamedAlready(opens, entry.Name) || InMoonlit(uniques, entry) || InMoonlit(moonlitLines, entry.Name))
+                    if (entry.Group > Core.Unlocks.UnlockGroup.Feature || added >= MaxIndexLabels || NamedAlready(named, entry.Name) || InMoonlit(uniques, entry) || InMoonlit(moonlitNames, entry.Name))
                     {
                         continue;
                     }
