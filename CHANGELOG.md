@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-10-03
+
 ### Added
 - **Why it stopped:** when a run Tsukimichi started stops, a card says why in plain words.
   - It offers up to two safe fixes: Start again, Show the duty, Keep going after it, Reload navmesh and retry, Teleport closer, or Open Setup.
@@ -37,6 +39,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
   - Flights land on solid ground beside the quest giver and walk the last few yalms.
 - **"Craft with Artisan" turns into Stop** while Artisan crafts the run you started, and the status bar names the item.
 - **A new copper colour** means "needs you" on every palette, always beside words that say the same.
+- **Inside a duty, a knock-out only alerts you.** It never stops AutoDuty or Questionable, because the NPC healers raise you.
+- **A Stop for a run already under way stays visible** after you lower the automation level.
 
 ## [1.17.0] - 2026-10-03
 
