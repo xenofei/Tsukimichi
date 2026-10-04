@@ -211,6 +211,37 @@ public sealed class SpoilerMask
         name is not null && PlacedMasked(kind, name, out var placed) ? names.SearchText(placed) : null;
 
     /// <summary>
+    /// A journal node's name through the wider shield (spec-1.20 N6, "Journal tree"): a node named after an area the
+    /// story has not reached takes the area's placeholder, the whole name ("Living Memory") or its leading place
+    /// ("Tuliyollal Sidequests" reads "Dawntrail area 1 Sidequests"). The name itself otherwise. Allocates only to
+    /// compose a shielded name.
+    /// </summary>
+    public string NodeName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        if (!MasksNames || name.Length == 0)
+        {
+            return name;
+        }
+
+        if (PlacedMasked(SpoilerKind.Area, name, out var whole))
+        {
+            return names.Placeholder(whole);
+        }
+
+        // The longest leading run of words that is a hidden area.
+        for (var end = name.LastIndexOf(' '); end > 0; end = name.LastIndexOf(' ', end - 1))
+        {
+            if (PlacedMasked(SpoilerKind.Area, name[..end], out var lead))
+            {
+                return names.Placeholder(lead) + name[end..];
+            }
+        }
+
+        return name;
+    }
+
+    /// <summary>
     /// A place with its region through the wider shield, in <paramref name="pathFormat"/> ("{0} › {1}": "Hingashi ›
     /// Kugane"): the place's placeholder alone when the place is masked (its region would say where), the place alone
     /// under a masked region, the place alone when the region is empty or the same. Allocates only to compose the path.

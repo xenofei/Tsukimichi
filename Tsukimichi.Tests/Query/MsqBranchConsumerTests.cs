@@ -67,7 +67,7 @@ public class MsqBranchConsumerTests
 
         // Every route's first quest is a position, so the shield never hides a route's name; the join's name is hidden.
         Assert.Equal("route The Ember Road — · route The Glacier Road — · route The Aurora Road —", MsqText.Compact(position, mask.DisplayName));
-        Assert.StartsWith("The routes meet again at Main scenario quest (Lv 41)", MsqText.JoinLine(position, mask.DisplayName));
+        Assert.StartsWith("The routes meet again at Main scenario quest (Lv\u00A041)", MsqText.JoinLine(position, mask.DisplayName));
     }
 
     [Fact]

@@ -5603,7 +5603,11 @@
   <data name="SpoilerMaskedNote" xml:space="preserve">
     <value>Name hidden: this main scenario quest is further ahead than you are</value>
   </data>
-  <data name="SpoilerMaskedCountUnnamed" xml:space="preserve">
+  <data name="SpoilerHiddenCountFormat" xml:space="preserve">
+    <value>{0:N0} story names and {1:N0} other names hidden for {2}.</value>
+    <comment>Settings › Spoilers count line (1.20 N6): main scenario names, then places, aetherytes, duties, rewards and people; {2} is the character's name.</comment>
+  </data>
+  <data name="SpoilerHiddenCountUnnamed" xml:space="preserve">
     <value>{0:N0} story names and {1:N0} other names hidden for the character shown.</value>
     <comment>Settings › Spoilers count line when the character has no name yet.</comment>
   </data>
@@ -5648,11 +5652,15 @@
     <value>How many main scenario quests past your current one keep their names.</value>
   </data>
   <data name="SpoilerHideRelated" xml:space="preserve">
-    <value>Also hide places, duties, rewards and people</value>
+    <value>Hide places, duties, rewards and people</value>
     <comment>Settings › Spoilers, under "Hide story names ahead" (1.20 N6).</comment>
   </data>
   <data name="SpoilerHideRelatedHelp" xml:space="preserve">
-    <value>Areas, aetherytes, duties, quest rewards and characters from the story past yours read Dawntrail area&#160;6, Dungeon (Lv&#160;97), An orchestrion roll, Dawntrail character. Unlocks, Path, Route, the Duties board, tooltips and search follow it.</value>
+    <value>Areas, aetherytes, duties, quest rewards and characters from the story past yours read as placeholders.</value>
+  </data>
+  <data name="SpoilerHideRelatedExamples" xml:space="preserve">
+    <value>They read Dawntrail area&#160;6, Dungeon (Lv&#160;97), An orchestrion roll, Dawntrail character. Unlocks, Path, Route, the Duties board, tooltips and search follow it.</value>
+    <comment>Settings › Spoilers, the line under "Hide places, duties, rewards and people" (1.20 N6): the spec's placeholder vocabulary.</comment>
   </data>
   <data name="SpoilerHideArtwork" xml:space="preserve">
     <value>Hide journal artwork</value>
@@ -5682,7 +5690,7 @@
     <value>A character who finished the story can show everything while alts stay shielded.</value>
   </data>
   <data name="SpoilerMaskedCountFormat" xml:space="preserve">
-    <value>{0:N0} story names and {1:N0} other names hidden for {2}.</value>
+    <value>{0:N0} main scenario names hidden for the character shown.</value>
   </data>
   <data name="PresetSproutTooltip" xml:space="preserve">
     <value>Only the quests of the expansions your main scenario has reached; later sections of the tree fold to their counts</value>

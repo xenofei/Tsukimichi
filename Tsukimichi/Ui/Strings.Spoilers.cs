@@ -35,6 +35,7 @@ static partial class Strings
     public static string SpoilerAheadHelp => Loc.Get("SpoilerAheadHelp");
     public static string SpoilerHideRelated => Loc.Get("SpoilerHideRelated");
     public static string SpoilerHideRelatedHelp => Loc.Get("SpoilerHideRelatedHelp");
+    public static string SpoilerHideRelatedExamples => Loc.Get("SpoilerHideRelatedExamples");
     public static string SpoilerHideArtwork => Loc.Get("SpoilerHideArtwork");
     public static string SpoilerHideArtworkHelp => Loc.Get("SpoilerHideArtworkHelp");
     public static string SpoilerCharacterLabel => Loc.Get("SpoilerCharacterLabel");
@@ -45,7 +46,8 @@ static partial class Strings
     public static string SpoilerCharacterOff => Loc.Get("SpoilerCharacterOff");
     public static string SpoilerCharacterHelp => Loc.Get("SpoilerCharacterHelp");
     public static string SpoilerMaskedCountFormat => Loc.Get("SpoilerMaskedCountFormat");
-    public static string SpoilerMaskedCountUnnamed => Loc.Get("SpoilerMaskedCountUnnamed");
+    public static string SpoilerHiddenCountFormat => Loc.Get("SpoilerHiddenCountFormat");
+    public static string SpoilerHiddenCountUnnamed => Loc.Get("SpoilerHiddenCountUnnamed");
 
     // ---- Sprout mode quick view ----
     public static string PresetSprout => FilterNames.Display(FilterNames.Sprout);

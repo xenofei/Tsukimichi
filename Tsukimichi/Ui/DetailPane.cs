@@ -1384,7 +1384,8 @@ public sealed partial class DetailPane
         ApplyJournalFull(session, bundle, evaluation);
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
-        model.JournalSegments = quest.IsUnlisted ? [Strings.RemovedFromGame] : [quest.Journal.GenreName, quest.Journal.CategoryName];
+        // A journal genre named after a place the story has not reached reads as its placeholder (1.20.0 N6).
+        model.JournalSegments = quest.IsUnlisted ? [Strings.RemovedFromGame] : [spoilers.NodeName(quest.Journal.GenreName), spoilers.NodeName(quest.Journal.CategoryName)];
         model.FilingLine = FilingLine(quest, session.Curated);
         model.QuirkNote = session.Curated.Quirks.TryGetValue(rowId, out var quirk) ? WhyText.NoteLine(quirk.Note) : null;
         var jobName = quest.ClassJobCategory <= 1 ? Strings.JobAny : links.ClassJobCategoryName(quest.ClassJobCategory);
@@ -1526,7 +1527,7 @@ public sealed partial class DetailPane
 
         // Whether the note under the hero offers "Reveal names in this quest" (1.20.0 N6).
         model.NamesHidden = session.Spoilers.MasksNames
-            && ShieldText.HidesAny(session.Spoilers, quest, ShieldText.QuestNames(links, session.Unlocks, quest, model.DutyNames));
+            && ShieldText.HidesAny(session.Spoilers, quest, ShieldText.QuestNames(links, session.Unlocks, quest));
     }
 
     /// <summary>

@@ -47,6 +47,8 @@ public static class TextFlow
     public static bool Wrapped(string text, float width, uint color)
     {
         ArgumentNullException.ThrowIfNull(text);
+        // A string that is or holds a spoiler placeholder is Secondary as a whole (spec-1.20 N6).
+        color = ShieldText.Ink(text, color);
         var room = width > 0f ? width : ImGui.GetContentRegionAvail().X;
         var lines = Lines(text, room);
         var lineHeight = ImGui.GetTextLineHeight();

@@ -57,11 +57,22 @@ public sealed partial class ConfigWindow
         }
 
         // The wider shield (1.20.0 N6) hangs off the same switch: it hides what the masked quests introduce.
-        var hideRelated = settings.HideOtherNames;
-        if (Toggle(Strings.SpoilerHideRelated, Strings.SpoilerHideRelatedHelp, ref hideRelated, "spoiler shield zone area aetheryte duty reward npc giver people places character", enabled: effectiveHide, sub: true, reason: Strings.SettingsSpoilerAheadOffReason))
+        // Its hint says what hides; the placeholders themselves follow on a line of their own (spec-1.20 N6).
+        if (ToggleSetting(Strings.SpoilerHideRelated, Strings.SpoilerHideRelatedHelp, "spoiler shield zone area aetheryte duty reward npc giver people places character", effectiveHide, sub: true, reason: Strings.SettingsSpoilerAheadOffReason))
         {
-            settings.HideOtherNames = hideRelated;
-            SpoilersChanged();
+            var hideRelated = settings.HideOtherNames;
+            if (RowToggle(ref hideRelated))
+            {
+                settings.HideOtherNames = hideRelated;
+                SpoilersChanged();
+            }
+
+            if (effectiveHide)
+            {
+                SettingNote(Strings.SpoilerHideRelatedExamples);
+            }
+
+            EndSetting();
         }
 
         var hideArtwork = settings.SpoilerHideArtwork;
@@ -126,10 +137,16 @@ public sealed partial class ConfigWindow
         EndSetting();
     }
 
-    /// <summary>"212 story names and 486 other names hidden for Michiru." (spec-1.20 N6): the quest names and the wider shield's names.</summary>
-    internal static string SpoilerCountLine(SpoilerMask spoilers, string? characterName) => string.IsNullOrEmpty(characterName)
-        ? string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountUnnamed, spoilers.MaskedCount, spoilers.MaskedNameCount)
-        : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountFormat, spoilers.MaskedCount, spoilers.MaskedNameCount, characterName);
+    /// <summary>
+    /// "212 story names and 486 other names hidden for Michiru." (spec-1.20 N6): the quest names and the wider shield's
+    /// names. Without the wider shield it counts the quest names alone, as before 1.20.
+    /// </summary>
+    internal static string SpoilerCountLine(SpoilerMask spoilers, string? characterName) =>
+        !spoilers.Options.HideRelated || !spoilers.Options.HideNames
+            ? string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountFormat, spoilers.MaskedCount)
+            : string.IsNullOrEmpty(characterName)
+                ? string.Format(CultureInfo.CurrentCulture, Strings.SpoilerHiddenCountUnnamed, spoilers.MaskedCount, spoilers.MaskedNameCount)
+                : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerHiddenCountFormat, spoilers.MaskedCount, spoilers.MaskedNameCount, characterName);
 
     /// <summary>Saves a spoiler setting and makes every surface re-read the mask.</summary>
     private void SpoilersChanged()

@@ -247,15 +247,13 @@ public sealed class DutyBoardSource
     /// introduced the duty yet (1.20.0 N6).
     /// </summary>
     private string DutyName(BoardDuty duty) =>
-        duty.UnlockQuests.Count > 0 && duty.UnlockQuests.All(session.Spoilers.IsMasked)
+        session.Spoilers.IsNameMasked(SpoilerKind.Duty, duty.Duty.Name) ? HiddenOr(duty.Duty)
+        : duty.UnlockQuests.Count > 0 && duty.UnlockQuests.All(session.Spoilers.IsMasked)
             ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.Duty.LevelRequired)
-            : HiddenOr(duty.Duty);
+            : duty.Duty.Name;
 
-    /// <summary>The duty's name, or the board's stand-in for one past the story point (the wider shield, 1.20.0 N6).</summary>
-    private string HiddenOr(DutyRunInfo duty) =>
-        session.Spoilers.IsNameMasked(SpoilerKind.Duty, duty.Name)
-            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.LevelRequired)
-            : duty.Name;
+    /// <summary>The duty's name, or for one past the story point the wider shield's placeholder, "Dungeon (Lv 97)" (1.20.0 N6).</summary>
+    private string HiddenOr(DutyRunInfo duty) => session.Spoilers.Name(SpoilerKind.Duty, duty.Name);
 
     private Row MissingRow(BoardDuty duty, DutyRunIndex index)
     {

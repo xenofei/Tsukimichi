@@ -1579,6 +1579,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                     dl.AddImageRounded(wrap.Handle, artMin, artMax, Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding * 0.5f);
                 }
             }
+            else if (row.Shielded)
+            {
+                // A reward the shield hides: the 22 px moon-disc tile (spec-1.20 N6), centred.
+                HiddenTile(dl, iconMin, iconMax);
+            }
             else
             {
                 // No art of its own: the kind's icon, faded, at half the tile.
@@ -1927,11 +1932,24 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// <summary>A reward without art of its own: its kind's icon (the game's menu icon, else the kind's glyph), faded, on the sunken ground.</summary>
     private void DrawKindStandIn(ImDrawListPtr dl, Row row, Vector2 min, Vector2 max)
     {
+        if (row.Shielded)
+        {
+            HiddenTile(dl, min, max);
+            return;
+        }
+
         var side = max.X - min.X;
         var rounding = MathF.Round(side * 0.125f);
         dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Sunken), rounding);
         var inset = new Vector2(MathF.Round(side * 0.14f));
         Orbit.DrawIcon(dl, textures, row.KindIcon, min + inset, max - inset, NoIconAlpha, rounding * 0.5f);
+    }
+
+    /// <summary>The hidden-reward tile (spec-1.20 N6) centred in <paramref name="min"/>–<paramref name="max"/>: 22 px, or the room when smaller.</summary>
+    private static void HiddenTile(ImDrawListPtr dl, Vector2 min, Vector2 max)
+    {
+        var side = MathF.Min(max.X - min.X, MathF.Round(UiMetrics.Px(22f)));
+        Chrome.HiddenRewardTile(dl, new Vector2(MathF.Round((min.X + max.X - side) * 0.5f), MathF.Round((min.Y + max.Y - side) * 0.5f)), side);
     }
 
     /// <summary>Alpha of the kind's icon standing in where a reward's own art would go: present but clearly not the reward.</summary>
@@ -1951,7 +1969,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         // "Open on FFXIV Collect" and the item on Garland Tools (1.8.0); a masked quest's reward asks first.
-        links.DrawRewardLinks(row.Entry, row.Quest is { } giver && session.Spoilers.IsMasked(giver), row.Name);
+        // A reward the wider shield hides asks too, naming it by its placeholder (1.20.0 N6).
+        links.DrawRewardLinks(row.Entry, row.Shielded || (row.Quest is { } giver && session.Spoilers.IsMasked(giver)), row.Name);
         if (ImGui.MenuItem(Strings.LinksCopyViewTsv))
         {
             CopyViewTsv();
@@ -2597,6 +2616,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             var rewardName = RewardNames.Display(entry, primaryQuest, catalogLanguage);
             var shielded = spoilers.IsNameMasked(SpoilerKind.Reward, rewardName);
             var icon = shielded ? 0u : art.Icon;
+            Shielded = shielded;
             Icon = icon;
             Picture = shielded ? 0u : art.Picture;
             KindIcon = art.Fallback;
@@ -2726,6 +2746,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         /// <summary>The reward's own icon; 0 when it has none (<see cref="KindIcon"/> is worn instead).</summary>
         public uint Icon { get; }
+
+        /// <summary>The wider spoiler shield hides the reward (1.20.0 N6): its placeholder, the moon-disc tile, no art.</summary>
+        public bool Shielded { get; }
 
         /// <summary>The reward's large picture for a gallery tile (a mount's or minion's guide art); 0 when it has none.</summary>
         public uint Picture { get; }

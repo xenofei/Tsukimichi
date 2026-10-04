@@ -35,6 +35,13 @@ internal static class ShieldText
     /// <summary><paramref name="normal"/>, or Secondary for a string that is or holds a placeholder.</summary>
     public static Vector4 Tone(string? text, Vector4 normal) => Holds(text) ? Theme.Surface.TextSecondary : normal;
 
+    /// <summary>
+    /// The colour a text primitive draws <paramref name="text"/> in: a string asked for in Text that is or holds a
+    /// placeholder turns Secondary as a whole; any other colour (a state's ink, a disabled line) stays.
+    /// </summary>
+    public static uint Ink(string text, uint color) =>
+        color == Theme.U32(Theme.Surface.Text) && Holds(text) ? Theme.U32(Theme.Surface.TextSecondary) : color;
+
     /// <summary><see cref="Tone"/> packed for a draw list.</summary>
     public static uint U32(string? text, Vector4 normal) => Theme.U32(Tone(text, normal));
 

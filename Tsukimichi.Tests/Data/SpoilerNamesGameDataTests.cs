@@ -7,8 +7,10 @@ namespace Tsukimichi.Tests.Data;
 
 /// <summary>
 /// The wider spoiler shield (plan v7, 1.20.0 N6) over the installed game: Kugane, the Sirensong Sea, Hancock and a
-/// Stormblood story reward hide for a character before Stormblood and show once the story reaches them; Dawntrail's
-/// city likewise; search and find by unlock never name what the shield hides.
+/// Stormblood story reward hide for a character before Stormblood and show once the story reaches them, under the
+/// spec's placeholders ("Stormblood area 2", "Dungeon (Lv 61)", "Stormblood character"); Dawntrail's areas are numbered
+/// in the game's own TerritoryType order and named from its ExVersion sheet; search and find by unlock never name what
+/// the shield hides.
 /// </summary>
 public sealed class SpoilerNamesGameDataTests(UnlockIndexFixture fixture, ITestOutputHelper output) : IClassFixture<UnlockIndexFixture>
 {
@@ -77,7 +79,8 @@ public sealed class SpoilerNamesGameDataTests(UnlockIndexFixture fixture, ITestO
         Assert.True(names.Count > 2_000, $"names placed: {names.Count}");
         Assert.Equal(NotWithoutIncident, names.AnchorOf(NotWithoutIncident));
         Assert.True(names.TryGet(SpoilerKind.Area, "Kugane", out var kugane));
-        output.WriteLine($"Kugane: anchored at {string.Join(", ", kugane.Anchors)}, Lv {kugane.Level}");
+        output.WriteLine($"Kugane: anchored at {string.Join(", ", kugane.Anchors)}, expansion {kugane.Expansion}, prints {names.Placeholder(kugane)}");
+        Assert.Equal(Stormblood, kugane.Expansion);
     }
 
     [GameDataFact]
@@ -86,7 +89,7 @@ public sealed class SpoilerNamesGameDataTests(UnlockIndexFixture fixture, ITestO
         var before = At(FirstOf(Stormblood));
         Assert.True(before.IsMasked(NotWithoutIncident), "Not without Incident lies past the three names ahead");
         Assert.True(before.IsNameMasked(SpoilerKind.Area, "Kugane"));
-        Assert.StartsWith("Area ahead (Lv ", before.Name(SpoilerKind.Area, "Kugane"), StringComparison.Ordinal);
+        Assert.StartsWith("Stormblood area\u00A0", before.Name(SpoilerKind.Area, "Kugane"), StringComparison.Ordinal);
         // A city the character has already been through never hides.
         Assert.False(before.IsNameMasked(SpoilerKind.Area, "Limsa Lominsa Lower Decks"));
         Assert.False(before.IsNameMasked(SpoilerKind.Area, "Ishgard - Foundation"));
@@ -103,10 +106,11 @@ public sealed class SpoilerNamesGameDataTests(UnlockIndexFixture fixture, ITestO
         var after = At(FirstOf(Shadowbringers));
 
         Assert.True(before.IsNameMasked(SpoilerKind.Duty, "The Sirensong Sea"));
-        Assert.StartsWith("Duty ahead (Lv ", before.Name(SpoilerKind.Duty, "The Sirensong Sea"), StringComparison.Ordinal);
+        Assert.Equal("Dungeon (Lv\u00A061)", before.Name(SpoilerKind.Duty, "The Sirensong Sea"));
         Assert.False(after.IsNameMasked(SpoilerKind.Duty, "The Sirensong Sea"));
 
         Assert.True(before.IsNameMasked(SpoilerKind.Npc, "Hancock"));
+        Assert.Equal("Stormblood character", before.Name(SpoilerKind.Npc, "Hancock"));
         Assert.False(after.IsNameMasked(SpoilerKind.Npc, "Hancock"));
         // Someone met in A Realm Reborn is never hidden.
         Assert.False(before.IsNameMasked(SpoilerKind.Npc, "Alphinaud"));
@@ -144,8 +148,11 @@ public sealed class SpoilerNamesGameDataTests(UnlockIndexFixture fixture, ITestO
                     continue;
                 }
 
-                output.WriteLine($"{quest.RowId} {quest.Name}: {reward.Name}");
+                output.WriteLine($"{quest.RowId} {quest.Name}: {reward.Name} prints {before.Name(SpoilerKind.Reward, reward.Name)}");
                 Assert.True(before.IsNameMasked(SpoilerKind.Reward, reward.Name), reward.Name);
+                // A reward prints its kind, never a level or its own name.
+                Assert.StartsWith("A", before.Name(SpoilerKind.Reward, reward.Name), StringComparison.Ordinal);
+                Assert.DoesNotContain(reward.Name, before.Name(SpoilerKind.Reward, reward.Name), StringComparison.Ordinal);
                 Assert.False(At(i + 1).IsNameMasked(SpoilerKind.Reward, reward.Name), reward.Name);
                 checkedOne = true;
                 break;
@@ -189,6 +196,16 @@ public sealed class SpoilerNamesGameDataTests(UnlockIndexFixture fixture, ITestO
         var before = At(FirstOf(Endwalker) + 10);
         Assert.True(before.IsNameMasked(SpoilerKind.Area, city.Name));
         Assert.False(At(Story.Count).IsNameMasked(SpoilerKind.Area, city.Name));
+
+        // Its number is its place among Dawntrail's zones in the game's own TerritoryType order, the expansion named
+        // from the ExVersion sheet; the same number everywhere.
+        var dawntrail = fixture.Links.Zones.Where(z => z.Expansion == Dawntrail).OrderBy(z => z.SortKey).ThenBy(z => z.TerritoryId)
+            .Select(z => z.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        output.WriteLine($"Dawntrail areas in sheet order: {string.Join(", ", dawntrail)}");
+        var number = dawntrail.FindIndex(n => string.Equals(n, city.Name, StringComparison.OrdinalIgnoreCase)) + 1;
+        Assert.True(number > 0);
+        Assert.Equal($"Dawntrail area\u00A0{number}", before.Name(SpoilerKind.Area, city.Name));
+        Assert.Equal("Dawntrail area\u00A01", before.Name(SpoilerKind.Area, dawntrail[0]));
 
         // Every Dawntrail zone the story opens hides from a Heavensward character.
         var heavensward = At(FirstOf(Heavensward));
