@@ -24,11 +24,14 @@ consumable-like `ItemUICategory` (Medicine, Meal, Ingredient, Reagent, Dye, Crys
 Miscellany, Seasonal Miscellany, Materia, Demimateria, Part, Lumber, Stone, Metal, Cloth, Leather, Bone, Gardening),
 is not sold by a special shop, crafted by a recipe or gathered, and is not sold by a gil shop menu other than the
 Calamity Salvager's quest-reward reacquisition menus ("Purchase Quest Rewards ...", "... Arms & Gear", "... Arms & Tools",
-which only re-sell what the character already earned). Items whose ItemAction is an unlock (portrait framer's kits 29459,
-Bozja field notes 19743) are kept whatever their category, as is facewear (37312). Collectible kinds (Mount, Minion,
-Emote, Orchestrion, Triple Triad card, Ornament, Barding, Hairstyle) are untouched.
+which only re-sell what the character already earned). Since 1.19.0 (C6) a gil shop row that wants the rewarding quest
+done first counts the same way: the recompense officer's seasonal menus ("Purchase Heavensturn Items", "Purchase All
+Saints' Wake Items" and the like) sell a festival's reward back only to those who finished it, so those 115 items ship
+again and the "sold by a real vendor menu" count below lists them. Items whose ItemAction is an unlock (portrait
+framer's kits 29459, Bozja field notes 19743) are kept whatever their category, as is facewear (37312). Collectible
+kinds (Mount, Minion, Emote, Orchestrion, Triple Triad card, Ornament, Barding, Hairstyle) are untouched.
 
-### Before / after
+### Before / after (the 2026-09-27 regeneration that introduced the rule)
 
 | | Shipped before (2026-09-27 20:07) | Fixed generator, legacy item rule | Fixed generator, strict rule (shipped now) |
 |---|---:|---:|---:|
@@ -43,8 +46,9 @@ Emote, Orchestrion, Triple Triad card, Ornament, Barding, Hairstyle) are untouch
 Items refused by the strict rule: 713 (Miscellany 337, other gil shop menu 130, special shop 109, Seasonal Miscellany 58,
 Other 37, Medicine 24, Currency 10, Reagent 3, unnamed 3, Catalyst 1, Stone 1). Examples that are gone: Fantasia
 (70058), Hi-Cordial (19 quests), Aetheryte Tickets, MGP vouchers and cards, Faire Vouchers, Gold Saucer Tickets,
-Rowena's and Jandelaine's Tokens, every gear and accessory coffer, chocobo feed, Bozjan coins, seasonal fireworks and
-all seasonal-event gear the Calamity Salvager sells to anyone. The full list is in `unique-report.md`.
+Rowena's and Jandelaine's Tokens, every gear and accessory coffer, chocobo feed, Bozjan coins and seasonal fireworks.
+The 130 "other gil shop menu" refusals included seasonal-event gear that the recompense officer sells back only after
+the festival quest; 1.19.0 (C6) restores those 115. The full list is in `unique-report.md`.
 
 ### Observations not fixed here (outside `Tsukimichi.DataGen` / `Tsukimichi/Data`)
 
