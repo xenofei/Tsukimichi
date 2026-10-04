@@ -42,6 +42,7 @@ public sealed partial class CharactersPane
         using var id = ImRaii.PushId("dutyBoard");
         Gap();
         SectionHeading.Draw(Strings.DutyBoardHeading, board.HasRecords && board.Caption.Length > 0 ? board.Caption : null);
+        ScrollToDutyBoardIfAsked();
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.DutyBoardTooltip);

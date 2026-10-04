@@ -84,7 +84,6 @@ public sealed partial class TonightCard
         else
         {
             DrawReplayAndEvents(session, bundle);
-            DrawBeforeEvercold();
             DrawReady();
             DrawMsq(bundle);
             DrawPlanning();
@@ -97,6 +96,7 @@ public sealed partial class TonightCard
                 TextFlow.Wrapped(events, Chrome.RoomX());
             }
 
+            DrawBeforeEvercold();
             DrawPinned(bundle);
         }
 

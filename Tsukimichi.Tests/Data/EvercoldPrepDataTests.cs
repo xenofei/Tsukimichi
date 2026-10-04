@@ -1,5 +1,5 @@
 using Tsukimichi.Core.Model;
-using Tsukimichi.Core.Prep;
+using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
@@ -10,9 +10,10 @@ namespace Tsukimichi.Tests.Data;
 /// <summary>
 /// Before Evercold (feature plan v7, 1.20.0, N7) over real data: the end of the 7.x main scenario is read from the
 /// Quest sheet (the last story quest nothing follows), never a hard-coded id, and today's data is Dawntrail's, so the
-/// card is live until its date. The frozen catalog runs everywhere; the live sheets check the same where the game is.
+/// card is live until the curated early access day. The frozen catalog runs everywhere; the live sheets check the same
+/// where the game is.
 /// </summary>
-public sealed class BeforeEvercoldDataTests(FixtureCatalog fixture, GameDataFixture game, ITestOutputHelper output)
+public sealed class EvercoldPrepDataTests(FixtureCatalog fixture, GameDataFixture game, ITestOutputHelper output)
     : IClassFixture<FixtureCatalog>, IClassFixture<GameDataFixture>
 {
     private const byte Dawntrail = 5;
@@ -23,7 +24,7 @@ public sealed class BeforeEvercoldDataTests(FixtureCatalog fixture, GameDataFixt
 
     private void AssertEndOfSevenX(QuestCatalog catalog)
     {
-        var end = BeforeEvercold.StoryEnd(catalog);
+        var end = EvercoldPrep.StoryEnd(catalog);
         Assert.NotNull(end);
         output.WriteLine($"{end.RowId} {end.Name} (expansion {end.Expansion}, patch {end.AddedIn}, Lv {end.Level})");
 
@@ -35,9 +36,11 @@ public sealed class BeforeEvercoldDataTests(FixtureCatalog fixture, GameDataFixt
         var after = graph.Story.SkipWhile(q => q.RowId != end.RowId).Skip(1).ToList();
         Assert.All(after, q => Assert.NotEmpty(graph.Successors(q.RowId)));
 
-        // Today's data is 7.x: the card is live until its date.
-        Assert.Equal(Dawntrail, BeforeEvercold.LatestExpansion(catalog));
-        Assert.False(BeforeEvercold.IsRetired(catalog, BeforeEvercold.ExpectedUtc.AddDays(-30)));
+        // Today's data is 7.x: the card is live until the curated day.
+        var launch = EvercoldPrep.Launch(fixture.Curated);
+        Assert.Equal(Dawntrail, EvercoldPrep.LatestExpansion(catalog));
+        Assert.False(EvercoldPrep.IsRetired(catalog, launch, launch.EarlyAccessUtc.AddDays(-30)));
+        Assert.True(EvercoldPrep.IsRetired(catalog, launch, launch.EarlyAccessUtc));
     }
 
     [Fact]
@@ -46,8 +49,8 @@ public sealed class BeforeEvercoldDataTests(FixtureCatalog fixture, GameDataFixt
         var catalog = Dated().Catalog;
         AssertEndOfSevenX(catalog);
 
-        // Dated, it is a quest of the newest 7.x patch series, as the 8.0 prep lists put it ("through 7.56").
-        var end = BeforeEvercold.StoryEnd(catalog);
+        // Dated, it is a quest of the newest 7.x patch series: the line reads "through Patch 7.5".
+        var end = EvercoldPrep.StoryEnd(catalog);
         Assert.NotNull(end);
         Assert.StartsWith("7.", end.AddedIn, StringComparison.Ordinal);
         Assert.Equal(PatchIndex.For(catalog).NewestSeries, PatchVersion.Series(end.AddedIn));
@@ -57,6 +60,6 @@ public sealed class BeforeEvercoldDataTests(FixtureCatalog fixture, GameDataFixt
     public void The_end_of_the_7x_story_comes_from_the_live_quest_sheet()
     {
         AssertEndOfSevenX(game.Bundle.Catalog);
-        Assert.Equal(BeforeEvercold.StoryEnd(fixture.Bundle.Catalog)?.RowId, BeforeEvercold.StoryEnd(game.Bundle.Catalog)?.RowId);
+        Assert.Equal(EvercoldPrep.StoryEnd(fixture.Bundle.Catalog)?.RowId, EvercoldPrep.StoryEnd(game.Bundle.Catalog)?.RowId);
     }
 }

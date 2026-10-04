@@ -490,6 +490,8 @@ public sealed partial class CharactersPane
         DrawStatusNotices(snapshot.ContentId);
         TextFlow.Wrapped(d.CountsLine);
         DrawMsqLine(ui, d);
+        Gap();
+        DrawBeforeEvercold(ui);
 
         DrawPayoffGates(ui);
         Gap();
@@ -506,7 +508,6 @@ public sealed partial class CharactersPane
         Gap();
         DrawPinned(ui, d);
         Gap();
-        DrawBeforeEvercold(ui);
         DrawJournalRoom();
         Gap();
         DrawAbandoned(ui);

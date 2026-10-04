@@ -81,6 +81,9 @@ public enum GuardedAction
 
     /// <summary>Reset appearance while a mix is set (spec-1.17 §A5): it discards several picks, so it is held like Reset mix.</summary>
     ResetAppearanceWithMix,
+
+    /// <summary>The × on the Before Evercold card (spec-1.20 N7): hides the card for one character; Undo and Show again bring it back.</summary>
+    HideEvercoldCard,
 }
 
 /// <summary>
@@ -128,6 +131,7 @@ public static class SafetyRules
         GuardedAction.ResetAppearance => SafetyTier.None,
         GuardedAction.ApplyShareCode => SafetyTier.None,
         GuardedAction.ApplyFix => SafetyTier.None,
+        GuardedAction.HideEvercoldCard => SafetyTier.None,
         GuardedAction.ResetMix => SafetyTier.Hold,
         GuardedAction.ResetAppearanceWithMix => SafetyTier.Hold,
         GuardedAction.RestoreAllVerdicts => SafetyTier.Hold,

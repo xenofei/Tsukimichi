@@ -173,21 +173,33 @@ public sealed class CharacterSettingsBookTests : IDisposable
     }
 
     [Fact]
-    public void Gate_marks_and_hidden_cards_save_on_a_character_that_already_has_settings()
+    public void Gate_marks_hidden_cards_and_ticks_save_on_a_character_that_already_has_settings()
     {
         // The book skips an edit that leaves the map the same; a character with another setting already has an entry,
         // so only comparing the lists themselves tells these edits apart.
         var book = new CharacterSettingsBook(Path);
         book.Edit(CharacterSettingChange.Spoiler(Main, true));
+        var raised = 0;
+        book.Changed += _ => raised++;
 
         book.Edit(CharacterSettingChange.GateDone(Main, 68667, true));
         book.Edit(CharacterSettingChange.Dismiss(Main, "beforeEvercold", true));
+        book.Edit(CharacterSettingChange.EvercoldTick(Main, "journal", true));
 
+        Assert.Equal(3, raised);
         Assert.True(book.IsGateDone(Main, 68667));
         Assert.True(book.IsCardDismissed(Main, "beforeEvercold"));
+        Assert.Equal(["journal"], book.EvercoldTicks(Main));
         var saved = CharacterSettingsFile.Load(Path)[Main];
         Assert.Equal([68667u], saved.GatesDone);
         Assert.Equal(["beforeEvercold"], saved.CardsDismissed);
+        Assert.Equal(["journal"], saved.EvercoldTicks);
+
+        // Unticking is a change too, and the tick stays per character.
+        book.Edit(CharacterSettingChange.EvercoldTick(Main, "journal", false));
+        Assert.Equal(4, raised);
+        Assert.Empty(book.EvercoldTicks(Main));
+        Assert.Empty(book.EvercoldTicks(Alt));
     }
 
     [Fact]

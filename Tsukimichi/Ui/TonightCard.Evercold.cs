@@ -1,53 +1,30 @@
-using System;
-using System.Numerics;
 using Dalamud.Bindings.ImGui;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// "Before Evercold" in the Tonight card (feature plan v7, 1.20.0, N7): the viewed character's checklist for Patch 8.0
-/// (<see cref="BeforeEvercoldCard"/>) in the plain keyline card of the ending-soon events, under them. Gone once the
-/// player hides it for the character, and by itself on Evercold's data or date.
+/// "Before Evercold" in the Tonight card (feature plan v7, 1.20.0, N7; spec-1.20 "Where it lives"): the viewed
+/// character's card (<see cref="EvercoldCardModel"/>, drawn by <see cref="EvercoldCardView"/>) below the story line and
+/// the events line, above the pinned quests. The ending-soon event cards stay above it, since they are dated and closer.
+/// Gone while hidden for the character, and by itself on Evercold's data or its early access day.
 /// </summary>
 public sealed partial class TonightCard
 {
     /// <summary>The Before Evercold card; set by the plugin. Null draws none.</summary>
-    public BeforeEvercoldCard? BeforeEvercold { get; set; }
-
-    // The card's height as drawn last frame: its frame goes under the words before they are drawn (as the event cards').
-    private float evercoldHeight;
+    public EvercoldCardModel? Evercold { get; set; }
 
     private void DrawBeforeEvercold()
     {
-        if (BeforeEvercold is not { } card || !card.ShowsOnTonight)
+        if (Evercold is not { } card)
         {
-            evercoldHeight = 0f;
             return;
         }
 
-        var dl = ImGui.GetWindowDrawList();
-        var min = ImGui.GetCursorScreenPos();
-        var width = Chrome.RoomX();
-        var pad = UiMetrics.Px(10f);
-        if (evercoldHeight > 0f)
+        var start = ImGui.GetCursorScreenPos().Y;
+        EvercoldCardView.Draw(card, ui, EvercoldSurface.Tonight, Chrome.RoomX());
+        if (ImGui.GetCursorScreenPos().Y > start)
         {
-            DrawEventCardFrame(dl, min, new Vector2(min.X + width, min.Y + evercoldHeight), bar: false);
+            ImGui.Spacing();
         }
-
-        ImGui.SetCursorScreenPos(new Vector2(min.X + pad, min.Y + pad));
-        card.DrawCard(ui, MathF.Max(1f, width - (2f * pad)));
-
-        var bottom = ImGui.GetCursorScreenPos().Y + pad - ImGui.GetStyle().ItemSpacing.Y;
-        var height = MathF.Ceiling(MathF.Max((2f * pad) + ImGui.GetTextLineHeight(), bottom - min.Y));
-        if (evercoldHeight <= 0f)
-        {
-            // The first frame: the words are drawn, the frame is not yet; draw it now, over the empty ground only.
-            DrawEventCardFrame(dl, min, new Vector2(min.X + width, min.Y + height), bar: false, outlineOnly: true);
-        }
-
-        evercoldHeight = height;
-        ImGui.SetCursorScreenPos(new Vector2(min.X, min.Y + height));
-        ImGui.Dummy(new Vector2(width, 0f));
-        ImGui.Spacing();
     }
 }

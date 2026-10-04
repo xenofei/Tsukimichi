@@ -1,23 +1,47 @@
+using Dalamud.Bindings.ImGui;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// "Before Evercold" on the Characters dashboard (feature plan v7, 1.20.0, N7): the viewed character's checklist for
-/// Patch 8.0 (<see cref="BeforeEvercoldCard"/>) as a section above the journal's room, kept while the card is hidden
-/// from Tonight so it can be shown again there. Gone by itself on Evercold's data or date.
+/// "Before Evercold" on the Characters dashboard (feature plan v7, 1.20.0, N7; spec-1.20 "Where it lives"): the same card
+/// as Tonight's (<see cref="EvercoldCardModel"/>) for the viewed character, below the header. It works for any stored
+/// character, read from its last snapshot, with "As of the last login, 2 days ago" as its sub-line. Once hidden it
+/// leaves one quiet line, "Before Evercold is hidden for Michiru." with Show again. Gone by itself on Evercold's data or
+/// its early access day.
 /// </summary>
 public sealed partial class CharactersPane
 {
+    // "Duties board" on the card asked for the Duties board (N4): it scrolls into view the next time it is drawn.
+    private bool scrollToDutyBoard;
+
     /// <summary>The Before Evercold card; set by the plugin. Null draws nothing.</summary>
-    public BeforeEvercoldCard? BeforeEvercold { get; set; }
+    public EvercoldCardModel? Evercold { get; set; }
+
+    /// <summary>Scrolls the Duties board (N4) into view on its next draw: the card's "Duties board" button.</summary>
+    public void RequestDutyBoard() => scrollToDutyBoard = true;
 
     private void DrawBeforeEvercold(UiState ui)
     {
-        if (BeforeEvercold is not { Active: true } card)
+        if (Evercold is not { } card)
         {
             return;
         }
 
-        card.DrawSection(ui);
-        Gap();
+        var start = ImGui.GetCursorScreenPos().Y;
+        EvercoldCardView.Draw(card, ui, EvercoldSurface.Dashboard, ImGui.GetContentRegionAvail().X);
+        if (ImGui.GetCursorScreenPos().Y > start)
+        {
+            Gap();
+        }
+    }
+
+    /// <summary>Called where the Duties board's heading is drawn: brings it into view once after a request.</summary>
+    private void ScrollToDutyBoardIfAsked()
+    {
+        if (scrollToDutyBoard)
+        {
+            scrollToDutyBoard = false;
+            ImGui.SetScrollHereY(0f);
+        }
     }
 }

@@ -85,6 +85,9 @@ public sealed class CharacterSettingsBook
     public bool IsCardDismissed(ulong contentId, string cardId) =>
         Get(contentId)?.CardsDismissed.Contains(cardId, StringComparer.Ordinal) == true;
 
+    /// <summary>The Before Evercold lines the player ticked for the character, by line id (<see cref="CharacterSettings.EvercoldTicks"/>); empty for none.</summary>
+    public IReadOnlyList<string> EvercoldTicks(ulong contentId) => Get(contentId)?.EvercoldTicks ?? (IReadOnlyList<string>)[];
+
     public bool IsWhyOpen(ulong contentId, string gateId) =>
         Get(contentId)?.PayoffWhyOpen.Contains(gateId, StringComparer.Ordinal) == true;
 
@@ -344,6 +347,7 @@ public sealed class CharacterSettingsBook
                 || !x.GatesDone.SequenceEqual(y.GatesDone)
                 || !x.GoWithGame.SequenceEqual(y.GoWithGame)
                 || !x.CardsDismissed.SequenceEqual(y.CardsDismissed, StringComparer.Ordinal)
+                || !x.EvercoldTicks.SequenceEqual(y.EvercoldTicks, StringComparer.Ordinal)
                 || !SameIds(x.SeenReady, y.SeenReady)
                 || x.SeenReadyRules != y.SeenReadyRules)
             {

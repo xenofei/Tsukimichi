@@ -13198,142 +13198,246 @@
   </data>
   <data name="PrepTitle" xml:space="preserve">
     <value>Before Evercold</value>
-    <comment>Before Evercold card title (1.20, N7).</comment>
+    <comment>Before Evercold card title (1.20 N7).</comment>
   </data>
-  <data name="PrepExpectedFormat" xml:space="preserve">
-    <value>Patch 8.0 early access is expected {0}.</value>
-    <comment>Before Evercold. {0} = the expected date.</comment>
+  <data name="PrepForFormat" xml:space="preserve">
+    <value>For {0}</value>
+    <comment>Before Evercold sub-line. {0} = the character's first name.</comment>
   </data>
-  <data name="PrepExpectedTooltip" xml:space="preserve">
-    <value>An estimate: Eorzean Tavern (September 2026) and PCGamesN (July 2026) give 22 January 2027, and the Tokyo Fan Fest (31 October to 1 November) may confirm it. This list goes away by itself on that day, or as soon as the game data is Patch 8.0's.</value>
-    <comment>Before Evercold.</comment>
+  <data name="PrepAsOfFormat" xml:space="preserve">
+    <value>As of the last login, {0}</value>
+    <comment>Before Evercold sub-line on the Characters dashboard for a stored character. {0} = how long ago ("2 days ago").</comment>
   </data>
-  <data name="PrepSectionTooltip" xml:space="preserve">
-    <value>What this character should finish before Patch 8.0 "Evercold". Hover a line to see why.</value>
-    <comment>Before Evercold, the Characters dashboard section header.</comment>
+  <data name="PrepAgoToday" xml:space="preserve">
+    <value>today</value>
+    <comment>Before Evercold sub-line: the last login was today.</comment>
   </data>
-  <data name="PrepHeaderDone" xml:space="preserve">
-    <value>Before Evercold · all set</value>
-    <comment>Before Evercold, the dashboard section header when every line is done.</comment>
+  <data name="PrepAgoDayOne" xml:space="preserve">
+    <value>1 day ago</value>
+    <comment>Before Evercold sub-line.</comment>
   </data>
-  <data name="PrepHeaderLeftFormat" xml:space="preserve">
-    <value>Before Evercold · {0} to do</value>
-    <comment>Before Evercold, the dashboard section header. {0} = lines left.</comment>
+  <data name="PrepAgoDaysFormat" xml:space="preserve">
+    <value>{0} days ago</value>
+    <comment>Before Evercold sub-line. {0} = days.</comment>
   </data>
-  <data name="PrepDoneTooltip" xml:space="preserve">
-    <value>Done</value>
-    <comment>Before Evercold, a line's check.</comment>
+  <data name="PrepEarlyAccessFormat" xml:space="preserve">
+    <value>early access {0}</value>
+    <comment>Before Evercold sub-line, once the day is announced. {0} = the day ("22 Jan").</comment>
   </data>
-  <data name="PrepLeftTooltip" xml:space="preserve">
-    <value>Still to do</value>
-    <comment>Before Evercold, a line's empty check box.</comment>
+  <data name="PrepEarlyAccessExpectedFormat" xml:space="preserve">
+    <value>early access {0} (expected)</value>
+    <comment>Before Evercold sub-line while the day is an estimate. {0} = the day ("22 Jan").</comment>
   </data>
-  <data name="PrepActionSelect" xml:space="preserve">
-    <value>Click to select the quest.</value>
-    <comment>Before Evercold, a line's tooltip.</comment>
+  <data name="PrepSubTooltipExpected" xml:space="preserve">
+    <value>Evercold's early access is expected on this day: an estimate until Square Enix announces it (the Tokyo Fan Fest, 31 October to 1 November, may). This card goes away by itself on that day, or as soon as the game data is Patch 8.0's.</value>
+    <comment>Before Evercold sub-line hover. Recheck after the Tokyo Fan Fest.</comment>
   </data>
-  <data name="PrepActionMakeRoom" xml:space="preserve">
-    <value>Click to open Make room on the Characters tab.</value>
-    <comment>Before Evercold, the journal line's tooltip on Tonight.</comment>
-  </data>
-  <data name="PrepHide" xml:space="preserve">
-    <value>Hide</value>
-    <comment>Before Evercold, the Tonight card's hide button.</comment>
+  <data name="PrepSubTooltip" xml:space="preserve">
+    <value>Evercold's early access opens on this day. This card goes away by itself on that day, or as soon as the game data is Patch 8.0's.</value>
+    <comment>Before Evercold sub-line hover once the day is announced.</comment>
   </data>
   <data name="PrepHideTooltip" xml:space="preserve">
-    <value>Takes Before Evercold off Tonight for this character. The Characters tab keeps the list and can show it again.</value>
-    <comment>Before Evercold.</comment>
-  </data>
-  <data name="PrepHideFromTonight" xml:space="preserve">
-    <value>Hide from Tonight</value>
-    <comment>Before Evercold, the dashboard section's button.</comment>
-  </data>
-  <data name="PrepShowOnTonight" xml:space="preserve">
-    <value>Show on Tonight</value>
-    <comment>Before Evercold, the dashboard section's button once hidden.</comment>
-  </data>
-  <data name="PrepShowOnTonightTooltip" xml:space="preserve">
-    <value>Shows Before Evercold on Tonight again for this character.</value>
-    <comment>Before Evercold.</comment>
+    <value>Hide for this character</value>
+    <comment>Before Evercold: the × in the title row.</comment>
   </data>
   <data name="PrepHiddenToastFormat" xml:space="preserve">
     <value>Before Evercold hidden for {0}</value>
-    <comment>Undo toast. {0} = the character's name.</comment>
+    <comment>Undo toast. {0} = the character's first name.</comment>
   </data>
-  <data name="PrepShownToastFormat" xml:space="preserve">
-    <value>Before Evercold shown again for {0}</value>
-    <comment>Undo toast. {0} = the character's name.</comment>
+  <data name="PrepHiddenLineFormat" xml:space="preserve">
+    <value>Before Evercold is hidden for {0}.</value>
+    <comment>Characters dashboard, in the card's place once hidden. {0} = the character's first name.</comment>
   </data>
-  <data name="PrepMsqTitleFormat" xml:space="preserve">
-    <value>Main scenario through Patch {0}</value>
-    <comment>Before Evercold. {0} = the patch of the game data's last main scenario quest ("7.56").</comment>
+  <data name="PrepShowAgain" xml:space="preserve">
+    <value>Show again</value>
+    <comment>Before Evercold: the way back on the Characters dashboard.</comment>
   </data>
-  <data name="PrepMsqTitle" xml:space="preserve">
-    <value>Main scenario caught up</value>
-    <comment>Before Evercold, when the last quest's patch is not known.</comment>
+  <data name="PrepShowAgainTooltip" xml:space="preserve">
+    <value>Shows Before Evercold again for this character, here and in Tonight.</value>
+    <comment>Before Evercold.</comment>
   </data>
-  <data name="PrepMsqLeftFormat" xml:space="preserve">
-    <value>{0} quests left · next: {1}</value>
-    <comment>Before Evercold. {0} = main scenario quests left, {1} = the next quest.</comment>
+  <data name="PrepYouSaidSo" xml:space="preserve">
+    <value>you said so</value>
+    <comment>Before Evercold: a line the player ticked (the 1.19 C3 wording).</comment>
   </data>
-  <data name="PrepMsqLeftOneFormat" xml:space="preserve">
-    <value>1 quest left: {0}</value>
-    <comment>Before Evercold. {0} = the last quest left.</comment>
+  <data name="PrepTickTooltip" xml:space="preserve">
+    <value>Tick it off yourself. It folds into the Done line the next time the card is built.</value>
+    <comment>Before Evercold: an empty checkbox.</comment>
   </data>
-  <data name="PrepMsqDone" xml:space="preserve">
-    <value>Caught up</value>
-    <comment>Before Evercold, the main scenario line once done.</comment>
+  <data name="PrepUntickTooltip" xml:space="preserve">
+    <value>You ticked this. Click to untick it and bring its buttons back.</value>
+    <comment>Before Evercold: a checkbox the player ticked.</comment>
   </data>
-  <data name="PrepMsqTooltip" xml:space="preserve">
-    <value>Every expansion so far has opened its story only after the last patch's main scenario. Japanese players' 8.0 lists say to finish the 7.x story through 7.56 (trozo.hateblo.jp, April 2026).</value>
-    <comment>Before Evercold, the main scenario line's reason and source.</comment>
+  <data name="PrepGameDoneTooltip" xml:space="preserve">
+    <value>Done: the game says so.</value>
+    <comment>Before Evercold: the check of a line the game counts as done.</comment>
   </data>
-  <data name="PrepJobsTitleFormat" xml:space="preserve">
-    <value>Job quests up to level {0}</value>
-    <comment>Before Evercold. {0} = the level cap.</comment>
+  <data name="PrepFoldFormat" xml:space="preserve">
+    <value>Done: {0}</value>
+    <comment>Before Evercold: the fold line. {0} = the done lines' names, in the card's order.</comment>
   </data>
-  <data name="PrepJobLeftFormat" xml:space="preserve">
-    <value>{0}: {1} left</value>
-    <comment>Before Evercold. {0} = a job or "Tank role quests", {1} = quests left.</comment>
+  <data name="PrepFoldSeparator" xml:space="preserve">
+    <value>, </value>
+    <comment>Before Evercold: between the names on the fold line.</comment>
   </data>
-  <data name="PrepJobsDoneFormat" xml:space="preserve">
-    <value>Done for every job at level {0}</value>
-    <comment>Before Evercold. {0} = the level cap.</comment>
+  <data name="PrepAllDoneFormat" xml:space="preserve">
+    <value>Ready for Evercold. Nothing left on {0}.</value>
+    <comment>Before Evercold, every line done. {0} = the character's first name.</comment>
   </data>
-  <data name="PrepJobsTooltip" xml:space="preserve">
-    <value>For the jobs at your level cap, and their role quests. Patch 8.0 raises the cap from 100 to 110 (Eorzean Tavern, September 2026). Japanese players' 8.0 lists suggest finishing class and job quests first; optional, as recent ones are mostly story (trozo.hateblo.jp, April 2026).</value>
-    <comment>Before Evercold, the job quests line's reason and source.</comment>
+  <data name="PrepListAnd" xml:space="preserve">
+    <value> and </value>
+    <comment>Before Evercold: before the last item of a list ("DRG, SGE and CUL").</comment>
+  </data>
+  <data name="PrepListComma" xml:space="preserve">
+    <value>, </value>
+    <comment>Before Evercold: between items of a list.</comment>
+  </data>
+  <data name="PrepStoryTitle" xml:space="preserve">
+    <value>Finish the main story</value>
+    <comment>Before Evercold, line 1.</comment>
+  </data>
+  <data name="PrepStoryEarlierTitle" xml:space="preserve">
+    <value>The main story</value>
+    <comment>Before Evercold, line 1 for a character still in an earlier expansion.</comment>
+  </data>
+  <data name="PrepStoryLeftFormat" xml:space="preserve">
+    <value>{0} quests left, through Patch {1}</value>
+    <comment>Before Evercold. {0} = main scenario quests left, {1} = the patch series of the data's last one ("7.5").</comment>
+  </data>
+  <data name="PrepStoryLeftOneFormat" xml:space="preserve">
+    <value>1 quest left, through Patch {0}</value>
+    <comment>Before Evercold. {0} = the patch series ("7.5").</comment>
+  </data>
+  <data name="PrepStoryLeftNoPatchFormat" xml:space="preserve">
+    <value>{0} quests left</value>
+    <comment>Before Evercold, when the last quest's patch is not known. {0} = quests left.</comment>
+  </data>
+  <data name="PrepStoryEarlierFormat" xml:space="preserve">
+    <value>You're in {0}: {1} quests to Evercold. No rush; the lines below matter first.</value>
+    <comment>Before Evercold. {0} = the expansion the character's story is in, {1} = main scenario quests left.</comment>
+  </data>
+  <data name="PrepStoryWhy" xml:space="preserve">
+    <value>Evercold's story starts where the last patch's main scenario ends, so its first quest needs that one done. Done when the last main scenario quest before Evercold is complete.</value>
+    <comment>Before Evercold, line 1's hover.</comment>
+  </data>
+  <data name="PrepStoryTick" xml:space="preserve">
+    <value>Tick it yourself if you'll catch up after Evercold arrives.</value>
+    <comment>Before Evercold, line 1's hover.</comment>
+  </data>
+  <data name="PrepShowNext" xml:space="preserve">
+    <value>Show next</value>
+    <comment>Before Evercold, line 1's button.</comment>
+  </data>
+  <data name="PrepShowNextTooltip" xml:space="preserve">
+    <value>Selects the next main scenario quest.</value>
+    <comment>Before Evercold.</comment>
+  </data>
+  <data name="PrepRoute" xml:space="preserve">
+    <value>Route</value>
+    <comment>Before Evercold: the Route button (lines 1 and 5).</comment>
+  </data>
+  <data name="PrepStoryRouteTooltip" xml:space="preserve">
+    <value>Opens the Route window to the end of the main scenario.</value>
+    <comment>Before Evercold.</comment>
   </data>
   <data name="PrepJournalTitle" xml:space="preserve">
     <value>Room in your journal</value>
-    <comment>Before Evercold, the journal line.</comment>
+    <comment>Before Evercold, line 2.</comment>
   </data>
-  <data name="PrepJournalLeftFormat" xml:space="preserve">
-    <value>{0} · hand in or drop the quests you don't need</value>
-    <comment>Before Evercold. {0} = "2 journal slots left".</comment>
+  <data name="PrepJournalDetailFormat" xml:space="preserve">
+    <value>{0} of {1} slots used. Evercold brings new quests.</value>
+    <comment>Before Evercold. {0} = slots used, {1} = slots the journal has.</comment>
   </data>
-  <data name="PrepJournalTooltip" xml:space="preserve">
-    <value>The journal holds 30 quests. Japanese players' 8.0 lists say to clear your journal first: there's no time once 8.0 starts (trozo.hateblo.jp, April 2026). Done while more than 3 slots are free.</value>
-    <comment>Before Evercold, the journal line's reason and source.</comment>
+  <data name="PrepJournalWhyFormat" xml:space="preserve">
+    <value>Done when at least {0} of {1} slots are free. Evercold's launch adds new side, job and unlock quests; the main scenario never takes a slot.</value>
+    <comment>Before Evercold, line 2's hover. {0} = free slots needed (10), {1} = slots the journal has.</comment>
   </data>
-  <data name="PrepEventTitleFormat" xml:space="preserve">
-    <value>{0} ends {1}</value>
-    <comment>Before Evercold. {0} = event, {1} = its end date.</comment>
+  <data name="PrepJournalTick" xml:space="preserve">
+    <value>Tick it yourself if you keep your journal full on purpose.</value>
+    <comment>Before Evercold, line 2's hover.</comment>
   </data>
-  <data name="PrepEventLeftOne" xml:space="preserve">
-    <value>1 quest left</value>
-    <comment>Before Evercold, an event line.</comment>
+  <data name="PrepJobsTitle" xml:space="preserve">
+    <value>Job and role quests</value>
+    <comment>Before Evercold, line 3.</comment>
   </data>
-  <data name="PrepEventLeftFormat" xml:space="preserve">
-    <value>{0} quests left</value>
-    <comment>Before Evercold. {0} = event quests left (in the journal or to take).</comment>
+  <data name="PrepJobsDetailFormat" xml:space="preserve">
+    <value>Your {0} have quests you can take now</value>
+    <comment>Before Evercold. {0} = jobs and roles ("DRG, SGE and CUL").</comment>
   </data>
-  <data name="PrepEventDone" xml:space="preserve">
-    <value>Done</value>
-    <comment>Before Evercold, an event line once done.</comment>
+  <data name="PrepJobsDetailOneFormat" xml:space="preserve">
+    <value>Your {0} has quests you can take now</value>
+    <comment>Before Evercold. {0} = one job or role ("DRG").</comment>
   </data>
-  <data name="PrepEventTooltipFormat" xml:space="preserve">
-    <value>{0}: {1}, before Patch 8.0's expected early access. The game takes an event's quests out of your journal when it ends.</value>
-    <comment>Before Evercold. {0} = event, {1} = its end and source ("announced to end Dec 31 (Lodestone)").</comment>
+  <data name="PrepRoleFormat" xml:space="preserve">
+    <value>{0} role</value>
+    <comment>Before Evercold, in line 3's list. {0} = the role ("Tank").</comment>
+  </data>
+  <data name="PrepJobsWhy" xml:space="preserve">
+    <value>Evercold raises the level cap from 100 to 110; the job and role quests you can take now are quickest to clear before it. Done when no job or role quest is Ready for this character.</value>
+    <comment>Before Evercold, line 3's hover.</comment>
+  </data>
+  <data name="PrepJobsTick" xml:space="preserve">
+    <value>Tick it yourself if you're leaving those jobs for later.</value>
+    <comment>Before Evercold, line 3's hover.</comment>
+  </data>
+  <data name="PrepShowThem" xml:space="preserve">
+    <value>Show them</value>
+    <comment>Before Evercold, line 3's button.</comment>
+  </data>
+  <data name="PrepShowThemTooltip" xml:space="preserve">
+    <value>Opens the Journal on the class, job and role quests you can take now.</value>
+    <comment>Before Evercold.</comment>
+  </data>
+  <data name="PrepDutiesTitle" xml:space="preserve">
+    <value>Duties for the roulettes</value>
+    <comment>Before Evercold, line 4. Depends on Tokyo: recheck after the Fan Fest (31 Oct to 1 Nov 2026), when Adventurer Activity's effect on the roulettes is due.</comment>
+  </data>
+  <data name="PrepDutiesDetailFormat" xml:space="preserve">
+    <value>{0} {1} duties not unlocked yet</value>
+    <comment>Before Evercold. {0} = count, {1} = the expansion ("Dawntrail").</comment>
+  </data>
+  <data name="PrepDutiesDetailOneFormat" xml:space="preserve">
+    <value>1 {0} duty not unlocked yet</value>
+    <comment>Before Evercold. {0} = the expansion ("Dawntrail").</comment>
+  </data>
+  <data name="PrepDutiesWhyFormat" xml:space="preserve">
+    <value>The roulettes draw from the duties you have unlocked, and the level-cap ones open only once every one is. Done when every {0} dungeon, trial and raid is unlocked.</value>
+    <comment>Before Evercold, line 4's hover. {0} = the expansion. Depends on Tokyo: recheck after the Fan Fest (Adventurer Activity).</comment>
+  </data>
+  <data name="PrepDutiesTick" xml:space="preserve">
+    <value>Tick it yourself if you don't run the roulettes.</value>
+    <comment>Before Evercold, line 4's hover. Depends on Tokyo: recheck after the Fan Fest.</comment>
+  </data>
+  <data name="PrepDutyBoard" xml:space="preserve">
+    <value>Duties board</value>
+    <comment>Before Evercold, line 4's button.</comment>
+  </data>
+  <data name="PrepDutyBoardTooltip" xml:space="preserve">
+    <value>Opens the Duties board on the Characters tab: which quest unlocks each duty.</value>
+    <comment>Before Evercold.</comment>
+  </data>
+  <data name="PrepFlyingTitleFormat" xml:space="preserve">
+    <value>Flying in {0}</value>
+    <comment>Before Evercold, line 5. {0} = the expansion ("Dawntrail").</comment>
+  </data>
+  <data name="PrepFlyingDetailFormat" xml:space="preserve">
+    <value>{0} areas left: {1}</value>
+    <comment>Before Evercold. {0} = count, {1} = the areas, through the spoiler shield.</comment>
+  </data>
+  <data name="PrepFlyingDetailOneFormat" xml:space="preserve">
+    <value>1 area left: {0}</value>
+    <comment>Before Evercold. {0} = the area, through the spoiler shield.</comment>
+  </data>
+  <data name="PrepFlyingWhyFormat" xml:space="preserve">
+    <value>Flying makes the quests and duties still ahead of you in {0} quicker to reach. Done when flying is unlocked in every {0} area.</value>
+    <comment>Before Evercold, line 5's hover. {0} = the expansion.</comment>
+  </data>
+  <data name="PrepFlyingTick" xml:space="preserve">
+    <value>Tick it yourself if you'd rather walk.</value>
+    <comment>Before Evercold, line 5's hover.</comment>
+  </data>
+  <data name="PrepFlyingRouteTooltip" xml:space="preserve">
+    <value>Opens the Route window to the quests whose aether currents are left.</value>
+    <comment>Before Evercold.</comment>
   </data>
 </root>

@@ -196,4 +196,33 @@ public sealed class DutyRunSheetsTests(DutyRunFixture fixture, ITestOutputHelper
         var refused = Assert.Throws<ArgumentException>(() => DutyRunSheets.Build(fixture.Game.Excel, Language.None));
         Assert.Equal("language", refused.ParamName);
     }
+
+    /// <summary>
+    /// Each duty carries its territory's expansion (1.20.0 N7): what the Before Evercold card counts the newest
+    /// expansion's roulette duties by.
+    /// </summary>
+    [GameDataTheory]
+    [InlineData(4u, 0)]
+    [InlineData(676u, 3)]
+    [InlineData(783u, 4)]
+    public void A_duty_carries_its_expansion(uint condition, byte expansion)
+    {
+        Assert.Equal(expansion, fixture.Index.ByCondition(condition)?.Expansion);
+    }
+
+    [GameDataFact]
+    public void The_newest_expansion_has_roulette_dungeons_trials_and_raids()
+    {
+        var duties = Tsukimichi.Core.Plan.EvercoldPrep.RouletteDuties(fixture.Index, 5).ToArray();
+        foreach (var duty in duties)
+        {
+            output.WriteLine($"{duty.ContentFinderConditionId} {duty.Name} (type {duty.ContentTypeId}, Lv {duty.LevelRequired})");
+        }
+
+        Assert.Contains(duties, d => d.ContentTypeId == DutyRunInfo.Dungeons);
+        Assert.Contains(duties, d => d.ContentTypeId == DutyRunInfo.Trials);
+        Assert.Contains(duties, d => d.ContentTypeId == DutyRunInfo.Raids);
+        Assert.All(duties, d => Assert.True(d.LevelRequired >= 91, $"{d.Name} is Lv {d.LevelRequired}"));
+        Assert.All(duties, d => Assert.False(d.HighEnd, d.Name));
+    }
 }

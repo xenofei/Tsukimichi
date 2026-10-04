@@ -62,6 +62,12 @@ public sealed record DutyRunInfo(
     /// tier, and the Duty Finder's "High-end Trials" and "Savage Raids" categories for the rest; C7's "High-end" badge).
     /// </summary>
     public bool HighEnd { get; init; }
+
+    /// <summary>
+    /// The expansion the duty belongs to: its territory's ExVersion row (<c>TerritoryType.ExVersion</c>; 5 is Dawntrail).
+    /// The Before Evercold card counts the newest expansion's roulette duties by it (1.20.0 N7).
+    /// </summary>
+    public byte Expansion { get; init; }
 }
 
 /// <summary>
