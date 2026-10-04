@@ -54,6 +54,13 @@ public sealed partial class ConfigWindow
 
         DrawEventWarnings();
 
+        var cappedTurnIn = settings.ChatNoticeCappedTurnIn;
+        if (Toggle(Strings.CappedTurnInConfig, Strings.CappedTurnInConfigHint, ref cappedTurnIn, "chat notice exp experience capped level cap turn in hand in job"))
+        {
+            settings.ChatNoticeCappedTurnIn = cappedTurnIn;
+            Save();
+        }
+
         var payoff = settings.ChatNoticePayoffGates;
         if (Toggle(Strings.PayoffConfigNotice, Strings.PayoffConfigNoticeHint, ref payoff, "chat notice before you continue optional", settings.ShowPayoffGates, reason: Strings.SettingsPayoffOffReason))
         {

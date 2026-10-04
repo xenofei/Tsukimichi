@@ -385,11 +385,11 @@ The second matrix shows every part new in 1.20 on all four palettes:
 16. **Every placeholder slot is either single-line with an ellipsis or sized for the longer string,** so a reveal never reflows anything.
 17. **The confirmation blocks Settings, not the game.** Its scrim is Tsukimichi's own, over Settings only, in the palette's colour, and it follows Reduce motion. ImGui's modal dim is not used.
 
-## Open questions
+## Open questions (answered 3 October 2026)
 
-1. **The no-network guard.** An in-plugin download needs one exception in `NoNetworkTests`: one named file, one host (`github.com/xenofei/Tsukimichi/releases/download/`), one pinned URL per release. Do you accept that exception, as plan decision 8 implies? The alternative keeps the test as it is: Download… opens the release asset in your browser and the row offers **Import pack…** (a file picker) with the same hash check. It is one extra step for players. I recommend the in-plugin download.
-2. **Side-quest names.** The shield still shows the names of side, feature and job quests from expansions you haven't reached (only their zones, givers and rewards are hidden). Should 1.20 also show those as "Side quest (Lv 93)"? It closes a leak, but a new player browsing All quests would see thousands of placeholders.
-3. **The journal line's threshold:** 10 free slots (my proposal), or 5?
+1. **The no-network guard (owner):** allowed. `NoNetworkTests` gets one narrow exception: the pack downloader's file, the host and path `github.com/xenofei/Tsukimichi/releases/download/`, and one pinned URL per release. Any other network use still fails the test.
+2. **Side-quest names (owner):** keep them visible. Only their zones, givers and rewards are hidden.
+3. **The journal line's threshold:** 10 free slots, as Decision 9 says.
 
 ## Approval record (realism supervisor: APPROVED, round 3)
 

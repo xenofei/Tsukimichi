@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
-using Tsukimichi.Core.Model;
+using Dalamud.Game.Text.SeStringHandling;
+using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Ui;
 
 namespace Tsukimichi.Game;
@@ -46,28 +47,24 @@ public sealed partial class ChatNotifier
                 continue;
             }
 
-            QuestRecord? first = null;
-            foreach (var quest in warning.Festival.Quests)
+            // Every warning prints, linking a quest when one is in the journal or can be taken; a warning with only
+            // rewards left prints without a link rather than using up its once-per-login line silently.
+            var line = Core.Seasonal.EventWarnings.ChatLine(warning);
+            var culture = CultureInfo.CurrentCulture;
+            var left = line.Left switch
             {
-                if (quest.State == QuestState.Accepted && !quest.IsSpareAlternative)
-                {
-                    first = quest.Quest;
-                    break;
-                }
-
-                if (first is null && quest.IsActionable)
-                {
-                    first = quest.Quest;
-                }
+                EndingSoonLeft.InJournal => line.Count == 1 ? Strings.EventCardJournalOne : string.Format(culture, Strings.EventCardJournalFormat, line.Count),
+                EndingSoonLeft.ToTake => line.Count == 1 ? Strings.EventCardLeftOne : string.Format(culture, Strings.EventCardLeftFormat, line.Count),
+                _ => line.Count == 1 ? Strings.EventCardRewardsOne : string.Format(culture, Strings.EventCardRewardsFormat, line.Count),
+            };
+            var text = string.Format(culture, Strings.EventChatFormat, EventWarningSource.Title(warning), left);
+            if (line.Link is { } quest)
+            {
+                Print(text + Strings.SeasonalChatNextPrefix, quest, string.Empty);
             }
-
-            var left = warning.InJournal > 0
-                ? warning.InJournal == 1 ? Strings.EventCardJournalOne : string.Format(CultureInfo.CurrentCulture, Strings.EventCardJournalFormat, warning.InJournal)
-                : warning.Left == 1 ? Strings.EventCardLeftOne : string.Format(CultureInfo.CurrentCulture, Strings.EventCardLeftFormat, warning.Left);
-            var text = string.Format(CultureInfo.CurrentCulture, Strings.EventChatFormat, EventWarningSource.Title(warning), left);
-            if (first is not null)
+            else
             {
-                Print(text + Strings.SeasonalChatNextPrefix, first, string.Empty);
+                chat.Print(new SeStringBuilder().AddText(text).Build(), Strings.ChatTag);
             }
         }
     }

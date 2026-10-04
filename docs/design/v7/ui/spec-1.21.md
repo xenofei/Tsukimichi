@@ -551,14 +551,15 @@ There are no new pairs.
 16. **No copper in 1.21**, because nothing here needs the player urgently. No new tokens.
 17. **Every list row in 1.21 is two-line with a reserved action slot**: blues, side stories, Loose ends, Triple Triad and zones. A hover never covers text.
 
-## Open questions
+## Open questions (settled 3 October 2026)
 
-1. **Log in as this character** from the roster, through Lifestream's character switch, behind a hold confirm and disabled while a hand-off runs. Plan v6 deferred it. Should 1.21 add it, or leave the roster read-and-plan only (my proposal)?
-2. **The pace line in Your story:** on by default (my proposal, always labelled an estimate), or opt-in for players who don't want a number of evenings?
-3. **The roster's Moonlit column:** keep it (rewards left, as the synthesis asked) or drop it to keep the table calmer at its default width?
-4. **Set aside reach:** per character (the synthesis, my proposal), or account-wide for blues that no character wants, such as housing?
-5. **Up next for a character with a goal:** goal second (my proposal, after a route you chose today), or above the route?
+The coordinator took the designer's proposal on each, under the owner's standing "execute" approval. The owner can still change any of them.
 
+1. **Log in as this character:** not in 1.21. The roster stays read-and-plan only.
+2. **The pace line in Your story:** on by default, always labelled an estimate.
+3. **The roster's Moonlit column:** kept.
+4. **Set aside reach:** per character.
+5. **Up next for a character with a goal:** the goal comes second, after a route you chose today.
 
 ## Approval record (realism supervisor)
 
@@ -577,4 +578,4 @@ There are no new pairs.
   - Loose ends line 2 now reads Finale · 1 left · level · quest name. The Loose ends column is wider, so the hovered row with the longest finale name (A Harmony from the Heavens) fits whole.
   - The masked row reads "Job quest ahead (Lv 80)".
   - Both Nits are fixed.
-  - **Not re-reviewed:** the supervisor has not seen the re-rendered row, so the final spot check is still open.
+  - **Spot check (commit 81ff4db): APPROVED.** No Blocker, Major or Minor findings remain. One optional Nit: finale rows put the level before the quest ("1 left · Lv 80 · quest") and other rows after it ("3 left · quest · Lv 90"). **Implementers: use one order for every Loose ends row, "N left · Lv N · quest", in the looks matrix too.**
