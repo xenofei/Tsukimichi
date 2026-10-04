@@ -3,6 +3,7 @@ using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Updates;
 using Tsukimichi.Game;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -21,6 +22,14 @@ public sealed partial class ConfigWindow
 
     private bool updateNotesOpen;
 
+    // The ready line and the plain notes, built when the version, the notes or the language change; the labels once per language.
+    private (string? Version, string? Notes, int Language) updateTextKey;
+    private string updateReadyLine = string.Empty;
+    private string updatePlainNotes = string.Empty;
+    private readonly LocText updateButtonLabel = new(static () => Strings.UpdateButton + "##aboutUpdate");
+    private readonly LocText updateNotesLabel = new(static () => Strings.UpdateWhatsInIt + "##aboutNotes");
+    private readonly LocText updateNotesOpenLabel = new(static () => Strings.UpdateWhatsInItOpen + "##aboutNotes");
+
     private void DrawUpdates()
     {
         if (Updates is not { } updates)
@@ -32,10 +41,10 @@ public sealed partial class ConfigWindow
         var state = updates.Current;
         if (state is { HasUpdate: true, Available: { } version })
         {
-            var line = string.Format(CultureInfo.CurrentCulture, Strings.UpdateSettingsReadyFormat, version);
-            if (Setting(line, Strings.UpdateSettingsReadyHint, UpdatesKeywords, ImGui.CalcTextSize(Strings.UpdateButton).X + (ImGui.GetStyle().FramePadding.X * 2f)))
+            RefreshUpdateTexts(version, state.Notes);
+            if (Setting(updateReadyLine, Strings.UpdateSettingsReadyHint, UpdatesKeywords, ImGui.CalcTextSize(Strings.UpdateButton).X + (ImGui.GetStyle().FramePadding.X * 2f)))
             {
-                if (ImGui.Button(Strings.UpdateButton + "##aboutUpdate"))
+                if (ImGui.Button(updateButtonLabel.Value))
                 {
                     updates.OpenInstaller();
                 }
@@ -46,7 +55,7 @@ public sealed partial class ConfigWindow
                 }
 
                 SettingBelow();
-                if (ImGui.SmallButton((updateNotesOpen ? Strings.UpdateWhatsInItOpen : Strings.UpdateWhatsInIt) + "##aboutNotes"))
+                if (ImGui.SmallButton(updateNotesOpen ? updateNotesOpenLabel.Value : updateNotesLabel.Value))
                 {
                     updateNotesOpen = !updateNotesOpen;
                 }
@@ -56,7 +65,7 @@ public sealed partial class ConfigWindow
                     using (Typography.Caption())
                     using (Theme.PushText(Theme.Surface.TextSecondary))
                     {
-                        ImGui.TextWrapped(state.Notes.Length > 0 ? UpdateNotes.Plain(state.Notes) : Strings.UpdateNoNotes);
+                        ImGui.TextWrapped(updatePlainNotes);
                         ImGui.TextWrapped(Strings.UpdateHoverFoot);
                     }
                 }
@@ -91,6 +100,20 @@ public sealed partial class ConfigWindow
             settings.ShowWhatsNewAfterUpdate = show;
             Save();
         }
+    }
+
+    /// <summary>"Tsukimichi 1.23.0 is ready · Dalamud has it" and the plain notes, rebuilt only when what they say changes.</summary>
+    private void RefreshUpdateTexts(string version, string notes)
+    {
+        var key = (version, notes, Localization.Loc.Version);
+        if (key == updateTextKey)
+        {
+            return;
+        }
+
+        updateTextKey = key;
+        updateReadyLine = string.Format(CultureInfo.CurrentCulture, Strings.UpdateSettingsReadyFormat, version);
+        updatePlainNotes = notes.Length > 0 ? UpdateNotes.Plain(notes) : Strings.UpdateNoNotes;
     }
 
     // The status line, rebuilt when the minute, the answer, the switch or the language moves.

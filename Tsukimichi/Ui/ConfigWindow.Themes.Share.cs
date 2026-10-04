@@ -309,12 +309,13 @@ public sealed partial class ConfigWindow
         }
 
         var before = settings.Appearance.Clone();
+        var wasUmbra = LeaveFollowUmbra();
         settings.Appearance = result.Clone();
         Save();
         ClearShareText();
         if (SafetyRules.OffersUndo(GuardedAction.ApplyShareCode))
         {
-            UndoToast.Show(Strings.UndoToastLookApplied, () => RestoreAppearance(before));
+            UndoToast.Show(Strings.UndoToastLookApplied, () => RestoreAppearance(before, wasUmbra));
         }
     }
 

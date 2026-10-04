@@ -169,6 +169,14 @@ public static class AppearanceEdits
         return !IsCustom(config) && !config.HighContrast && resolved.Theme.Id == ThemePresets.Default.Id;
     }
 
+    /// <summary>
+    /// <see cref="IsDefault(AppearanceConfig, ResolvedAppearance)"/> with the Follow Umbra palette (1.22.0 M3), which is
+    /// kept beside the appearance and wins over it: while it is chosen the window wears Umbra's colours, so Reset still
+    /// has something to undo.
+    /// </summary>
+    public static bool IsDefault(AppearanceConfig config, ResolvedAppearance resolved, bool followUmbra) =>
+        IsDefault(config, resolved) && !followUmbra;
+
     /// <summary>Whether the appearance overrides any axis of its theme ("Custom (based on X)" on the Themes page).</summary>
     public static bool IsCustom(AppearanceConfig config)
     {

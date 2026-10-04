@@ -1885,8 +1885,18 @@ public sealed partial class MainWindow : Window, IDisposable
         var statusWidth = ImGui.CalcTextSize(status).X;
 
         // "Tsukimichi 1.23.0 is ready" (1.22.0, U1) sits before the version while a version is ready; the rest fits left of it.
-        var noteWidth = UpdateNoteWidth(gap);
-        var noteX = noteWidth > 0f ? MathF.Max(x, versionX - gap - noteWidth) : versionX;
+        // In a narrow window its words end in an ellipsis, and below a few words it is left out, so it never runs into
+        // the version (UpdateNoteFit).
+        var noteTextRoom = -1f;
+        var noteWidth = 0f;
+        if (UpdateNoteShown)
+        {
+            var noteFixed = UpdateNoteFixedWidth(gap);
+            noteTextRoom = Core.Updates.UpdateNoteFit.TextRoom(versionX - gap - x, noteFixed, UpdateNoteTextWidth(), UiMetrics.Px(1f));
+            noteWidth = noteTextRoom >= 0f ? noteFixed + noteTextRoom : 0f;
+        }
+
+        var noteX = noteWidth > 0f ? versionX - gap - noteWidth : versionX;
 
         // The journal count (1.19.0, C9) keeps its room: what comes before it is fitted into the rest.
         var segmentsEnd = MathF.Max(x, noteX - JournalSegmentWidth(separatorWidth, gap));
@@ -2001,7 +2011,7 @@ public sealed partial class MainWindow : Window, IDisposable
         DrawCompanionActivity(dl, ref x, textY, gap, separatorWidth, noteX, origin.X);
         if (noteWidth > 0f)
         {
-            DrawUpdateNote(dl, noteX, textY, line, gap);
+            DrawUpdateNote(dl, noteX, textY, line, gap, noteTextRoom);
         }
 
         // One item spanning the bar so the layout advances past it.

@@ -26,28 +26,40 @@ public sealed partial class MainWindow
     private string updateNoteText = string.Empty;
     private string updateNoteTitle = string.Empty;
     private string updateNoteNotes = string.Empty;
+    private string updateNoteHover = string.Empty;
 
     /// <summary>Whether the note shows this frame (a version is ready and not put off with Later).</summary>
     private bool UpdateNoteShown => Updates is { Current.ShowsNote: true };
 
-    /// <summary>The note's width as drawn, the gap before it included; 0 while it does not show.</summary>
-    private float UpdateNoteWidth(float gap)
+    /// <summary>
+    /// The note's width without its words, the gap before it included: its padding, the dot, Update and ×, which keep
+    /// their size however narrow the window (<see cref="UpdateNoteFit"/>); 0 while it does not show.
+    /// </summary>
+    private float UpdateNoteFixedWidth(float gap)
     {
         if (!UpdateNoteShown)
         {
             return 0f;
         }
 
-        RefreshUpdateNote();
         var pad = UpdatePad();
-        return gap + pad + UiMetrics.Px(7f) + UiMetrics.Px(5f) + ImGui.CalcTextSize(updateNoteText).X + UiMetrics.Px(8f)
-               + UpdateButtonWidth() + UiMetrics.Px(4f) + UpdateCloseWidth() + pad;
+        return gap + pad + UiMetrics.Px(7f) + UiMetrics.Px(5f) + UiMetrics.Px(8f) + UpdateButtonWidth() + UiMetrics.Px(4f) + UpdateCloseWidth() + pad;
     }
 
-    /// <summary>Draws the note from <paramref name="x"/> (its gap first) and returns where it ends.</summary>
-    private float DrawUpdateNote(ImDrawListPtr dl, float x, float textY, float line, float gap)
+    /// <summary>The note's words at full width.</summary>
+    private float UpdateNoteTextWidth()
     {
-        if (!UpdateNoteShown || Updates is not { } updates)
+        RefreshUpdateNote();
+        return ImGui.CalcTextSize(updateNoteText).X;
+    }
+
+    /// <summary>
+    /// Draws the note from <paramref name="x"/> (its gap first), its words within <paramref name="textRoom"/> (ending in
+    /// an ellipsis when the window is narrow), and returns where it ends.
+    /// </summary>
+    private float DrawUpdateNote(ImDrawListPtr dl, float x, float textY, float line, float gap, float textRoom)
+    {
+        if (!UpdateNoteShown || Updates is not { } updates || textRoom < 0f)
         {
             return x;
         }
@@ -58,7 +70,7 @@ public sealed partial class MainWindow
         var cool = s.Cool;
         var pad = UpdatePad();
         var min = new Vector2(x + gap, textY - UiMetrics.Px(2f));
-        var width = UpdateNoteWidth(gap) - gap;
+        var width = UpdateNoteFixedWidth(gap) - gap + textRoom;
         var max = new Vector2(min.X + width, textY + line + UiMetrics.Px(2f));
         var rounding = (max.Y - min.Y) * 0.5f;
         switch (flair)
@@ -76,10 +88,12 @@ public sealed partial class MainWindow
         var cx = min.X + pad + UiMetrics.Px(3.5f);
         dl.AddCircleFilled(new Vector2(cx, textY + (line * 0.5f)), UiMetrics.Px(3.5f), Theme.U32(cool), 12);
         var textX = min.X + pad + UiMetrics.Px(12f);
-        var textEnd = StatusText(textX, textY, updateNoteText, Theme.U32(s.Text));
+        ImGui.SetCursorScreenPos(new Vector2(textX, textY));
+        Chrome.EllipsisText(updateNoteText, textRoom, Theme.U32(s.Text));
+        var textEnd = textX + textRoom;
         if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(new Vector2(min.X, min.Y), new Vector2(textEnd, max.Y)))
         {
-            UiMetrics.Tooltip(updateNoteTitle + "\n\n" + updateNoteNotes, Strings.UpdateHoverFoot);
+            UiMetrics.Tooltip(updateNoteHover, Strings.UpdateHoverFoot);
         }
 
         // Update: Dalamud's installer on "Can be updated". A quiet pill, a square at Plain.
@@ -159,5 +173,6 @@ public sealed partial class MainWindow
         updateNoteText = string.Format(CultureInfo.CurrentCulture, Strings.UpdateReadyFormat, version);
         updateNoteTitle = string.Format(CultureInfo.CurrentCulture, Strings.UpdateHoverTitleFormat, version);
         updateNoteNotes = state.Notes.Length > 0 ? UpdateNotes.Plain(state.Notes) : Strings.UpdateNoNotes;
+        updateNoteHover = updateNoteTitle + "\n\n" + updateNoteNotes;
     }
 }

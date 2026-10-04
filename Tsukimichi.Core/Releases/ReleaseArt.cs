@@ -26,6 +26,18 @@ public static class ReleaseArt
     /// </summary>
     public const long TextureBytes1x = (long)(Width / 2) * (Height / 2) * 4;
 
+    /// <summary>The texture budget the popup's pictures live in (spec-1.22 W2, "Cost"): 12 MB.</summary>
+    public const long BudgetBytes = 12L * 1024 * 1024;
+
+    /// <summary>
+    /// The pictures the popup holds at most: the page's and, while a page change cross-fades, the outgoing one
+    /// (<see cref="ReleaseArtSlots{T}"/>).
+    /// </summary>
+    public const int HeldSlots = 2;
+
+    /// <summary>The most the popup's pictures take, both slots at the full (2x) size: inside <see cref="BudgetBytes"/>.</summary>
+    public const long HeldBytes = HeldSlots * TextureBytes;
+
     /// <summary>
     /// The size the popup keeps the picture at for a band <paramref name="bandWidth"/> px wide: the 1x tier (560 × 220,
     /// a quarter of the bytes) while the band fits it, else the full 1120 × 440, as the theme atlases keep their 2x tier

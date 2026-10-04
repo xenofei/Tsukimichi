@@ -633,6 +633,27 @@ public static partial class Chrome
         }
     }
 
+    /// <summary>
+    /// Moves every vertex drawn into <paramref name="dl"/> since vertex <paramref name="from"/> by
+    /// <paramref name="offset"/>: a surface measured after it drew (the moon icon's quick card) is put in its place in
+    /// the same frame. The caller keeps the shapes' clip rectangle wide enough for the move. Allocation-free.
+    /// </summary>
+    public static void ShiftVertices(ImDrawListPtr dl, int from, Vector2 offset)
+    {
+        if (offset == Vector2.Zero)
+        {
+            return;
+        }
+
+        var vertices = dl.VtxBuffer;
+        for (var i = Math.Max(0, from); i < vertices.Size; i++)
+        {
+            var vertex = vertices[i];
+            vertex.Pos += offset;
+            vertices[i] = vertex;
+        }
+    }
+
     /// <summary>The scrim in an explicit colour.</summary>
     public static void Scrim(ImDrawListPtr dl, Vector2 min, Vector2 max, Vector4 color, float fromAlpha, float toAlpha)
     {

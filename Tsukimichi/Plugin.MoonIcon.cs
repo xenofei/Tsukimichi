@@ -44,6 +44,7 @@ public sealed partial class Plugin
         moonIcon = new MoonIconWindow(Settings, () => Settings.Save(PluginInterface), ClientState, Condition, mainWindow.Toggle, OpenTonight, OpenSettings, card)
         {
             Stops = runStops,
+            Log = Log,
         };
 
         MoonIconWindow icon = moonIcon;
@@ -57,9 +58,17 @@ public sealed partial class Plugin
         moonIconDrawSubscribed = true;
     }
 
-    /// <summary>The icon, its card and its Hide toast, in the body font; a failure is logged once and the icon stays away.</summary>
+    /// <summary>A failed frame rests the icon, then it tries again (<see cref="Core.Ui.DrawRetry"/>): one bad frame never hides it for the session.</summary>
+    private readonly Core.Ui.DrawRetry moonIconRetry = new();
+
+    /// <summary>
+    /// The icon, its card and its Hide toast, in the body font. A failure hides it for a back-off (1 s, doubling to 30 s)
+    /// and is logged at most once a minute; a frame that draws resets the back-off.
+    /// </summary>
     private void DrawMoonIcon()
     {
+        var now = Dalamud.Bindings.ImGui.ImGui.GetTime();
+        moonIconFailed = !moonIconRetry.Ready(now);
         if (moonIcon is not { } icon || moonIconFailed)
         {
             return;
@@ -68,11 +77,15 @@ public sealed partial class Plugin
         try
         {
             icon.Draw();
+            moonIconRetry.Succeeded();
         }
         catch (Exception ex)
         {
             moonIconFailed = true;
-            Log.Error(ex, "The moon icon could not be drawn; it stays hidden until the plugin reloads");
+            if (moonIconRetry.Failed(now))
+            {
+                Log.Error(ex, "The moon icon could not be drawn; it tries again in {Seconds} s", moonIconRetry.Backoff);
+            }
         }
     }
 

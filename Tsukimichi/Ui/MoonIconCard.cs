@@ -30,7 +30,7 @@ namespace Tsukimichi.Ui;
 /// </list>
 /// At Full it is the kit's card, at Quiet a tonal card, at Plain a flat sheet with a line. Its words are built when it
 /// opens and again at most twice a second while it shows, never per frame; it settles its height unseen on its first
-/// frame so it never jumps.
+/// frame so it never jumps, and takes a later change of height in the same frame, staying visible.
 /// </summary>
 internal sealed class MoonIconCard
 {
@@ -54,7 +54,6 @@ internal sealed class MoonIconCard
     private int builtVersion = -1;
     private int builtLanguage = -1;
     private float height;
-    private bool measuring = true;
 
     // What the card says, built by Refresh.
     private string eyebrowUpper = string.Empty;
@@ -93,11 +92,14 @@ internal sealed class MoonIconCard
     public void Close()
     {
         builtAt = double.NegativeInfinity;
-        measuring = true;
         height = 0f;
     }
 
-    /// <summary>Draws the card beside <paramref name="icon"/> (the icon's square on screen). Never throws into the draw loop.</summary>
+    /// <summary>
+    /// Draws the card beside <paramref name="icon"/> (the icon's square on screen). On open it settles its height unseen
+    /// for one frame; a height that changes while it is open (a line arriving or leaving) is taken in the same frame, the
+    /// card moved to its place for that height, and it stays visible (<see cref="MoonIconRules.Settle"/>).
+    /// </summary>
     public void Draw(in ScreenRect icon, bool locked, double now)
     {
         Refresh(now);
@@ -105,8 +107,9 @@ internal sealed class MoonIconCard
         var screen = new ScreenRect(viewport.Pos, viewport.Pos + viewport.Size);
         var width = MathF.Min(UiMetrics.Px(MoonIconRules.CardWidthLogical), MathF.Max(1f, viewport.Size.X - UiMetrics.Px(16f)));
         var shown = MathF.Max(1f, height > 0f ? height : UiMetrics.Px(160f));
-        var pos = MoonIconRules.CardPlace(icon, new Vector2(width, shown), screen, UiMetrics.Px(MoonIconRules.CardGapLogical));
-        ImGui.SetNextWindowPos(new Vector2(MathF.Round(pos.X), MathF.Round(pos.Y)), ImGuiCond.Always);
+        var gap = UiMetrics.Px(MoonIconRules.CardGapLogical);
+        var pos = Rounded(MoonIconRules.CardPlace(icon, new Vector2(width, shown), screen, gap));
+        ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
         ImGui.SetNextWindowSize(new Vector2(width, shown), ImGuiCond.Always);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
@@ -120,11 +123,8 @@ internal sealed class MoonIconCard
                 UiMetrics.ApplyFontScale();
                 var dl = ImGui.GetWindowDrawList();
                 var start = dl.VtxBuffer.Size;
-                var measured = Content(width, locked);
-                var wasMeasuring = measuring;
-                measuring = height <= 0f || MathF.Abs(measured - height) > 0.5f;
-                height = measured;
-                if (wasMeasuring)
+                var settle = Content(dl, icon, screen, width, gap, locked);
+                if (settle == CardSettle.Measure)
                 {
                     Chrome.FadeVertices(dl, start, 0f);
                 }
@@ -137,17 +137,66 @@ internal sealed class MoonIconCard
         }
     }
 
-    /// <summary>The card's frame and lines; returns its height.</summary>
-    private float Content(float width, bool locked)
+    private static Vector2 Rounded(Vector2 at) => new(MathF.Round(at.X), MathF.Round(at.Y));
+
+    // The draw-list channels: the card's frame at the back, the Up next lift over it, the lines on top.
+    private const int FrameChannel = 0;
+    private const int LiftChannel = 1;
+    private const int LinesChannel = 2;
+
+    /// <summary>
+    /// The card's lines first, measured; when their height changed while open, they move to the card's place for the new
+    /// height; then its frame at that place and height, beneath them. Returns what the height did.
+    /// </summary>
+    private CardSettle Content(ImDrawListPtr dl, in ScreenRect icon, in ScreenRect screen, float width, float gap, bool locked)
+    {
+        var start = dl.VtxBuffer.Size;
+        var min = ImGui.GetWindowPos();
+        dl.ChannelsSplit(3);
+        try
+        {
+            // Against the screen's clip, not the window's, so lines past the height the window was given still draw.
+            dl.ChannelsSetCurrent(LinesChannel);
+            ImGui.PushClipRect(screen.Min, screen.Max, false);
+            float measured;
+            try
+            {
+                measured = Lines(dl, min, width, locked);
+            }
+            finally
+            {
+                ImGui.PopClipRect();
+            }
+
+            var settle = MoonIconRules.Settle(height, measured);
+            height = measured;
+            if (settle == CardSettle.Resize)
+            {
+                var place = Rounded(MoonIconRules.CardPlace(icon, new Vector2(width, measured), screen, gap));
+                Chrome.ShiftVertices(dl, start, place - min);
+                min = place;
+            }
+
+            // The frame is clipped to the card, as the window clipped it before.
+            var max = min + new Vector2(width, MathF.Max(1f, measured));
+            dl.ChannelsSetCurrent(FrameChannel);
+            dl.PushClipRect(min, max, false);
+            Frame(dl, min, max);
+            dl.PopClipRect();
+            return settle;
+        }
+        finally
+        {
+            dl.ChannelsMerge();
+        }
+    }
+
+    /// <summary>The palette's own sheet, opaque (the card sits over the game, light palettes included), in the level's frame.</summary>
+    private static void Frame(ImDrawListPtr dl, Vector2 min, Vector2 max)
     {
         var flair = Theme.Flair;
         var s = Theme.Surface;
-        var dl = ImGui.GetWindowDrawList();
-        var min = ImGui.GetWindowPos();
-        var max = min + new Vector2(width, MathF.Max(1f, height));
         var rounding = flair == Flair.Plain ? 0f : UiMetrics.Px(Theme.Spacing.CardRounding);
-
-        // The palette's own sheet, opaque: the card sits over the game, light palettes included.
         dl.AddRectFilled(min, max, Theme.U32(s.Window with { W = 1f }), rounding);
         switch (FlairRules.Card(flair))
         {
@@ -162,7 +211,14 @@ internal sealed class MoonIconCard
                 dl.AddRect(min, max, Theme.U32(s.StrongLine), rounding, ImDrawFlags.None, UiMetrics.Hairline);
                 break;
         }
+    }
 
+    /// <summary>The card's lines from <paramref name="min"/>; returns the card's height.</summary>
+    private float Lines(ImDrawListPtr dl, Vector2 min, float width, bool locked)
+    {
+        var flair = Theme.Flair;
+        var s = Theme.Surface;
+        var max = new Vector2(min.X + width, min.Y);
         using var text = Theme.PushText(s.Text);
         var pad = UiMetrics.Px(PadLogical);
         var gap = UiMetrics.Px(GapLogical);
@@ -265,8 +321,7 @@ internal sealed class MoonIconCard
         var medal = MathF.Round(UiMetrics.Px(flair == Flair.Plain ? 16f : 22f));
         var textX = left + inset + medal + UiMetrics.Px(8f);
         var wrap = MathF.Max(textX + 1f, right - inset);
-        dl.ChannelsSplit(2);
-        dl.ChannelsSetCurrent(1);
+        dl.ChannelsSetCurrent(LinesChannel);
         ImGui.SetCursorScreenPos(new Vector2(textX, top + inset));
         ImGui.PushTextWrapPos(wrap - ImGui.GetWindowPos().X);
         ImGui.BeginGroup();
@@ -310,7 +365,7 @@ internal sealed class MoonIconCard
             MoonGlyph.Draw(dl, new Vector2(left + inset + (medal * 0.5f), first + (medal * 0.5f)), medal * 0.5f, upNextState);
         }
 
-        dl.ChannelsSetCurrent(0);
+        dl.ChannelsSetCurrent(LiftChannel);
         var min = new Vector2(left, top);
         var max = new Vector2(right, bottom);
         if (flair == Flair.Plain)
@@ -324,7 +379,7 @@ internal sealed class MoonIconCard
             dl.AddRect(min, max, Theme.U32(Theme.IsLight ? s.Line : Theme.WithAlphaVector(s.Text, 0.10f)), UiMetrics.Px(6f), ImDrawFlags.None, UiMetrics.Hairline);
         }
 
-        dl.ChannelsMerge();
+        dl.ChannelsSetCurrent(LinesChannel);
         return bottom;
     }
 

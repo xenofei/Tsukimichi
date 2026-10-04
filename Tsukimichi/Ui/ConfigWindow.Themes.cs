@@ -246,19 +246,23 @@ public sealed partial class ConfigWindow
         EndBareRow();
     }
 
-    /// <summary>Applies <paramref name="theme"/> (its palette and frames follow it; high contrast stays), with Undo.</summary>
+    /// <summary>
+    /// Applies <paramref name="theme"/> (its palette and frames follow it; high contrast stays), with Undo. A theme picked
+    /// while Follow Umbra is on leaves it, so the window wears the theme the card showed on hover.
+    /// </summary>
     private void ApplyThemeCard(ThemePreset theme)
     {
         var saved = settings.Appearance;
-        if (ThemesPage.WhatIf(saved, theme).SameAs(saved))
+        if (ThemesPage.WhatIf(saved, theme).SameAs(saved) && !settings.FollowUmbraPalette)
         {
             return;
         }
 
         var before = saved.Clone();
+        var wasUmbra = LeaveFollowUmbra();
         AppearanceEdits.ApplyTheme(saved, theme);
         Save();
-        UndoToast.Show(string.Format(CultureInfo.CurrentCulture, Strings.UndoToastThemeFormat, ThemeName(theme.Id)), () => RestoreAppearance(before));
+        UndoToast.Show(string.Format(CultureInfo.CurrentCulture, Strings.UndoToastThemeFormat, ThemeName(theme.Id)), () => RestoreAppearance(before, wasUmbra));
     }
 
     /// <summary>Undo of any change on this page: the appearance as it was.</summary>
@@ -266,6 +270,24 @@ public sealed partial class ConfigWindow
     {
         settings.Appearance = before.Clone();
         Save();
+    }
+
+    /// <summary>Undo of a change that left Follow Umbra: the appearance and the Follow Umbra palette as they were.</summary>
+    private void RestoreAppearance(AppearanceConfig before, bool followUmbra)
+    {
+        settings.FollowUmbraPalette = followUmbra;
+        RestoreAppearance(before);
+    }
+
+    /// <summary>
+    /// Turns the Follow Umbra palette off (1.22.0 M3: it wins over the appearance, so a theme, Reset or a share code would
+    /// not show while it is on) and returns whether it was on, for the Undo. The caller saves.
+    /// </summary>
+    private bool LeaveFollowUmbra()
+    {
+        var was = settings.FollowUmbraPalette;
+        settings.FollowUmbraPalette = false;
+        return was;
     }
 
     /// <summary>The cards' second lines ("Brass frames · Night", "Ishgard Snow", "The 1.11 moons · Night"), once per language.</summary>
@@ -856,7 +878,7 @@ public sealed partial class ConfigWindow
     {
         var saved = settings.Appearance;
         // The frame's resolved appearance (the saved one: no preview is pushed here), so nothing resolves per frame.
-        var isDefault = AppearanceEdits.IsDefault(saved, GlyphSeam.Appearance);
+        var isDefault = AppearanceEdits.IsDefault(saved, GlyphSeam.Appearance, settings.FollowUmbraPalette);
 
         // While a mix is set the reset discards several picks, so it is held (spec-1.17 §A5).
         var mixed = AppearanceEdits.HasMix(saved);
@@ -869,12 +891,13 @@ public sealed partial class ConfigWindow
         }
 
         var before = saved.Clone();
+        var wasUmbra = LeaveFollowUmbra();
         AppearanceEdits.Reset(saved);
         Save();
         mixKeep = null;
         if (SafetyRules.OffersUndo(action))
         {
-            UndoToast.Show(Strings.UndoToastAppearanceReset, () => RestoreAppearance(before));
+            UndoToast.Show(Strings.UndoToastAppearanceReset, () => RestoreAppearance(before, wasUmbra));
         }
     }
 
