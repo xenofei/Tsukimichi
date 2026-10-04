@@ -127,6 +127,24 @@ public sealed class TsukimichiCommand : IDisposable
     /// <summary>Opens Settings (never closes it), for <c>/tsukimichi look</c> while <see cref="Look"/> is not wired.</summary>
     public Action? OpenConfigWindow { get; set; }
 
+    /// <summary>Invoked for <c>/tsukimichi msq</c> (1.21, P8): the main scenario line. Falls back to a search for the text.</summary>
+    public Action? Msq { get; set; }
+
+    /// <summary>Invoked for <c>/tsukimichi next</c> (1.21, P8): what to do next. Falls back to a search for the text.</summary>
+    public Action? Next { get; set; }
+
+    /// <summary>
+    /// Invoked for <c>/tsukimichi go [quest name]</c> (1.21, P2) with the rest of the line: travel to the current step of
+    /// the named or selected quest. Falls back to a search for the text.
+    /// </summary>
+    public Action<string>? Go { get; set; }
+
+    /// <summary>
+    /// Whether a quest's name (as the player sees it) begins with the given text, case-insensitively: a <c>go</c> line
+    /// that begins a quest's own name ("go west", "go with the flow") stays a search (<see cref="CommandLine.RunsGuidance"/>).
+    /// </summary>
+    public Func<string, bool>? BeginsQuestName { get; set; }
+
     /// <summary>The aliases registered now: the built-in ones, then the player's, in order.</summary>
     public IReadOnlyList<string> ActiveAliases { get; private set; } = [];
 
@@ -430,6 +448,10 @@ public sealed class TsukimichiCommand : IDisposable
 
                 break;
 
+            case Subcommand.Msq or Subcommand.Next or Subcommand.Go:
+                RunGuidance(parsed);
+                break;
+
             case Subcommand.Todo:
                 if (ToggleTodoOverlay is { } toggleTodo)
                 {
@@ -462,6 +484,33 @@ public sealed class TsukimichiCommand : IDisposable
             && CommandLine.DidYouMean(parsed.Word) is { } meant && Print is { } print)
         {
             print(string.Format(CultureInfo.CurrentCulture, Strings.CommandDidYouMeanFormat, meant));
+        }
+    }
+
+    /// <summary>
+    /// <c>msq</c>, <c>next</c> and <c>go</c> (1.21): the line runs when <see cref="CommandLine.RunsGuidance"/> says so and
+    /// the handler is wired; otherwise it is the quest search it was before, so no quest name is shadowed.
+    /// </summary>
+    private void RunGuidance(ParsedCommand parsed)
+    {
+        Action? run = null;
+        if (CommandLine.RunsGuidance(parsed, BeginsQuestName))
+        {
+            run = parsed.Kind switch
+            {
+                Subcommand.Msq => Msq,
+                Subcommand.Next => Next,
+                _ => Go is { } go ? () => go(parsed.Rest) : null,
+            };
+        }
+
+        if (run is not null)
+        {
+            run();
+        }
+        else
+        {
+            search(parsed.Arguments);
         }
     }
 

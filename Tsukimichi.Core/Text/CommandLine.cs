@@ -61,6 +61,15 @@ public enum Subcommand
     /// never applies the look on its own.
     /// </summary>
     Look,
+
+    /// <summary><c>msq</c> (1.21, P8): where the character stands in the main scenario, as one plain sentence.</summary>
+    Msq,
+
+    /// <summary><c>next</c> (1.21, P8): what to do next and where, as plain sentences for text-to-speech.</summary>
+    Next,
+
+    /// <summary><c>go [quest name]</c> (1.21, P2): travel to the current step of the selected or named quest, else its giver.</summary>
+    Go,
 }
 
 /// <summary>A parsed <c>/tsukimichi</c> line.</summary>
@@ -107,6 +116,9 @@ public static class CommandLine
         ("blues", Subcommand.Blues, true),
         ("stop", Subcommand.Stop, true),
         ("look", Subcommand.Look, true),
+        ("msq", Subcommand.Msq, true),
+        ("next", Subcommand.Next, true),
+        ("go", Subcommand.Go, true),
     ];
 
     /// <summary>The subcommand words players are shown (and offered by <see cref="DidYouMean"/>), in help order; <c>glyphs</c> and <c>ipc</c> are not.</summary>
@@ -133,6 +145,54 @@ public static class CommandLine
         }
 
         return new ParsedCommand(Subcommand.Search, word, rest, args);
+    }
+
+    /// <summary>
+    /// Whether <c>msq</c>, <c>next</c> or <c>go</c> runs, or the line stays the quest search it was before those were
+    /// subcommands (1.21, P8; as <c>look</c> routes text that is no share code to search). <c>msq</c> and <c>next</c>
+    /// take no text: with text after them the whole line searches. <c>go</c> takes a quest name, but a line that begins a
+    /// quest's own name ("go west" of "Go West, Craftsman", "go with the flow") searches, so no quest name is shadowed;
+    /// <paramref name="beginsQuestName"/> answers that for the whole argument line (null: no quest name is known).
+    /// </summary>
+    public static bool RunsGuidance(ParsedCommand parsed, Func<string, bool>? beginsQuestName)
+    {
+        if (parsed.Kind is not (Subcommand.Msq or Subcommand.Next or Subcommand.Go))
+        {
+            return false;
+        }
+
+        if (parsed.Rest.Length == 0)
+        {
+            return true;
+        }
+
+        return parsed.Kind == Subcommand.Go && beginsQuestName?.Invoke(parsed.Arguments) != true;
+    }
+
+    /// <summary>
+    /// Whether the name of a quest still in the game, as <paramref name="spoilers"/> shows it, begins with
+    /// <paramref name="text"/>, case-insensitively (<see cref="RunsGuidance"/>'s question). A name the shield hides is
+    /// matched by its placeholder only, so a masked quest's name is never confirmed by the routing.
+    /// </summary>
+    public static bool BeginsQuestName(Model.QuestCatalog catalog, Query.SpoilerMask? spoilers, string? text)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var trimmed = text.Trim();
+        spoilers ??= Query.SpoilerMask.None;
+        foreach (var quest in catalog.All)
+        {
+            if (!quest.IsRemoved && spoilers.DisplayName(quest).StartsWith(trimmed, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

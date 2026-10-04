@@ -176,8 +176,9 @@ public sealed partial class GameLinks
     private readonly TravelClickGuard clickGuard = new();
     private readonly Dictionary<uint, uint> regions = [];
 
-    // This frame's travel checks by quest row; emptied when the frame moves on, or by a click that starts or stops travel.
-    private readonly Dictionary<uint, TravelMemo> travelMemo = [];
+    // This frame's travel checks by quest row and aimed place (the giver, or the current step, 1.21 P2: the same quest
+    // can be asked for both in one frame); emptied when the frame moves on, or by a click that starts or stops travel.
+    private readonly Dictionary<(uint RowId, uint Territory, float X, float Z), TravelMemo> travelMemo = [];
     private int travelMemoFrame = -1;
     private AetheryteIndex? aetherytes;
     private EntranceIndex? entrances;
@@ -470,7 +471,8 @@ public sealed partial class GameLinks
             travelMemo.Clear();
         }
 
-        return ref CollectionsMarshal.GetValueRefOrAddDefault(travelMemo, quest.RowId, out _);
+        var place = quest.Issuer;
+        return ref CollectionsMarshal.GetValueRefOrAddDefault(travelMemo, (quest.RowId, place?.TerritoryId ?? 0, place?.X ?? 0f, place?.Z ?? 0f), out _);
     }
 
     /// <summary>Works every check out afresh on the next ask: a click is about to act on them, or just changed what they say.</summary>

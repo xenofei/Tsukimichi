@@ -468,12 +468,14 @@ public sealed class DiscoveryWindow : Window, IDisposable
             return;
         }
 
+        // A quest in the journal: its current step first (1.21.0 P2), then the giver.
+        var stepped = StepTravelMenu.Draw(links, session, quest);
         if (ImGui.MenuItem(Strings.DiscoveryRevealInJournal))
         {
             reveal(quest);
         }
 
-        if (ImGui.MenuItem(Strings.FlagOnMap, enabled: links.CanFlagMap(quest)))
+        if (ImGui.MenuItem(stepped ? Strings.StepMenuFlagGiver : Strings.FlagOnMap, enabled: links.CanFlagMap(quest)))
         {
             links.FlagMap(quest);
         }

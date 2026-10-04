@@ -1405,6 +1405,9 @@ public sealed partial class Plugin : IDalamudPlugin
             var nextStops = new NextStopsSource(Session, gameLinks, queryRunner, planSource, followed, Settings, () => ClientState.TerritoryType);
             mainWindow.AttachNextStops(nextStops);
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log) { QuestUnlocks = () => questUnlocks?.Current };
+
+            // Where to go and the plain chat lines (1.21.0 P2, P8): /tsuki msq, next and go, and Say what's next in chat.
+            WireGuidance(command, ui, gameLinks, followed, queryRunner, nextStops, chatNotifier);
             // "Before you continue" (P5): the dashboard and the Tonight card lines, and the once-per-character chat line.
             var payoffGates = new Game.PayoffGateSource(Session, Log);
             var payoffLines = new PayoffGateLines(payoffGates, Session, Settings, CharacterBook);

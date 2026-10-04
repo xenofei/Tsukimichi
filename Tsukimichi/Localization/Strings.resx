@@ -7164,7 +7164,297 @@
     <value>Right-click an item to reveal the quest that rewards it.</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
-    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
+    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; msq says where you are in the main scenario and next says what to do next, both as plain sentences; go [quest name] travels to the current step of the selected or named quest, else to its giver; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
+  </data>
+  <data name="StepWhereToGo" xml:space="preserve">
+    <value>Where to go</value>
+    <comment>Detail pane section for a quest in the journal (1.21 P2).</comment>
+  </data>
+  <data name="StepAimAt" xml:space="preserve">
+    <value>Aim at</value>
+  </data>
+  <data name="StepAimCurrent" xml:space="preserve">
+    <value>Current step</value>
+  </data>
+  <data name="StepAimCurrentShort" xml:space="preserve">
+    <value>Current</value>
+    <comment>StepAimCurrent shortened to its first word when the cell is narrow.</comment>
+  </data>
+  <data name="StepAimGiver" xml:space="preserve">
+    <value>Giver</value>
+  </data>
+  <data name="StepAimCurrentTooltip" xml:space="preserve">
+    <value>Flag, Teleport and Walk aim at the step you are on, then at the next one once it is done.</value>
+  </data>
+  <data name="StepAimGiverTooltip" xml:space="preserve">
+    <value>Flag, Teleport and Walk aim at the quest's giver, for this quest until it leaves your journal.</value>
+  </data>
+  <data name="StepNumberFormat" xml:space="preserve">
+    <value>Step {0}</value>
+    <comment>{0} = the step's number.</comment>
+  </data>
+  <data name="StepMoreFormat" xml:space="preserve">
+    <value>{0} more</value>
+    <comment>{0} = how many more objectives the step has besides the one shown.</comment>
+  </data>
+  <data name="StepGiverLabel" xml:space="preserve">
+    <value>Giver</value>
+  </data>
+  <data name="StepNoObjective" xml:space="preserve">
+    <value>The game has no objective text for this step.</value>
+  </data>
+  <data name="StepAreaTarget" xml:space="preserve">
+    <value>the marked area</value>
+    <comment>What travel's status line and chat call a marked area it goes to.</comment>
+  </data>
+  <data name="StepAreaPlace" xml:space="preserve">
+    <value>The area the game marks</value>
+  </data>
+  <data name="StepNearestFormat" xml:space="preserve">
+    <value>Nearest of {0} places</value>
+    <comment>{0} = how many separate places the step has.</comment>
+  </data>
+  <data name="StepCoordinatesFormat" xml:space="preserve">
+    <value>X {0:0.0}, Y {1:0.0}</value>
+    <comment>{0}, {1} = map coordinates.</comment>
+  </data>
+  <data name="StepYoureInFormat" xml:space="preserve">
+    <value>you're in {0}</value>
+    <comment>{0} = the zone the player stands in.</comment>
+  </data>
+  <data name="StepNoPlaceFormat" xml:space="preserve">
+    <value>This step has no place in the game's data, so travel aims at the giver: {0} · {1}</value>
+    <comment>{0} = the giver, {1} = the giver's zone.</comment>
+  </data>
+  <data name="StepDutyFormat" xml:space="preserve">
+    <value>This step happens inside a duty, {0}, which you join through the Duty Finder, so travel aims at the giver: {1} · {2}</value>
+    <comment>{0} = the duty, {1} = the giver, {2} = the giver's zone.</comment>
+  </data>
+  <data name="StepDutyFinder" xml:space="preserve">
+    <value>Duty Finder</value>
+  </data>
+  <data name="StepDutyFinderTooltip" xml:space="preserve">
+    <value>Opens the Duty Finder with this duty selected. Nothing is queued.</value>
+  </data>
+  <data name="StepNoteFormat" xml:space="preserve">
+    <value>Travel follows this step until it's done, then the next one. The giver, {0} in {1}, is one click away.</value>
+    <comment>{0} = the giver, {1} = the giver's zone.</comment>
+  </data>
+  <data name="StepGiverNote" xml:space="preserve">
+    <value>Travel aims at the giver for this quest until it leaves your journal. Current step aims at the step again.</value>
+  </data>
+  <data name="StepFlag" xml:space="preserve">
+    <value>Flag</value>
+  </data>
+  <data name="StepGoTo" xml:space="preserve">
+    <value>Go to step</value>
+    <comment>The action bar's Go to pill while travel aims at the current step.</comment>
+  </data>
+  <data name="StepWalkTo" xml:space="preserve">
+    <value>Walk to step</value>
+    <comment>The action bar's Walk pill while travel aims at the current step.</comment>
+  </data>
+  <data name="StepMenuFlag" xml:space="preserve">
+    <value>Flag the current step</value>
+  </data>
+  <data name="StepMenuTeleport" xml:space="preserve">
+    <value>Teleport near the current step</value>
+  </data>
+  <data name="StepMenuWalk" xml:space="preserve">
+    <value>Walk to the current step</value>
+  </data>
+  <data name="StepMenuFlagGiver" xml:space="preserve">
+    <value>Flag the giver</value>
+  </data>
+  <data name="GuidanceNothingToGo" xml:space="preserve">
+    <value>Nothing to go to. Select a quest, or name one after go.</value>
+    <comment>/tsuki go with no quest to go to (1.21 P2).</comment>
+  </data>
+  <data name="GuidanceNoPlaceFormat" xml:space="preserve">
+    <value>There is no place on the map to go to for {0}.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="GuidanceChatHeader" xml:space="preserve">
+    <value>Chat</value>
+    <comment>Settings › In game heading (1.21 P8).</comment>
+  </data>
+  <data name="GuidanceSayNext" xml:space="preserve">
+    <value>Say what's next in chat</value>
+  </data>
+  <data name="GuidanceSayNextHint" xml:space="preserve">
+    <value>After each step or quest you finish, prints the /tsuki next line as plain sentences, for text-to-speech. At most one line every 10 seconds, in Tsukimichi's own chat lines only.</value>
+  </data>
+  <data name="GuidanceSayNextExampleFormat" xml:space="preserve">
+    <value>Example: {0}</value>
+    <comment>{0} = a sample line.</comment>
+  </data>
+  <data name="Core.Guidance.Coordinates" xml:space="preserve">
+    <value>X {0}, Y {1}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.North" xml:space="preserve">
+    <value>north</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NorthEast" xml:space="preserve">
+    <value>north-east</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.East" xml:space="preserve">
+    <value>east</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.SouthEast" xml:space="preserve">
+    <value>south-east</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.South" xml:space="preserve">
+    <value>south</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.SouthWest" xml:space="preserve">
+    <value>south-west</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.West" xml:space="preserve">
+    <value>west</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NorthWest" xml:space="preserve">
+    <value>north-west</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Distance" xml:space="preserve">
+    <value>about {0} yalms {1} of you</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Level" xml:space="preserve">
+    <value>level {0}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Levels" xml:space="preserve">
+    <value>levels {0} to {1}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MsqLeftLatest" xml:space="preserve">
+    <value>{0} left to the latest story, {1}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MsqLeftBoth" xml:space="preserve">
+    <value>{0} left in this expansion, and {1} to the latest story, {2}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MsqAt" xml:space="preserve">
+    <value>Main scenario: {0}, at {1}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MsqCaughtUp" xml:space="preserve">
+    <value>Main scenario: caught up. The story continues in a later patch.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.OneQuest" xml:space="preserve">
+    <value>1 quest</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Quests" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NextStep" xml:space="preserve">
+    <value>Next: {0}, step {1}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.Next" xml:space="preserve">
+    <value>Next: {0}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NextNothing" xml:space="preserve">
+    <value>Next: nothing is Ready on this job.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.OtherJobOne" xml:space="preserve">
+    <value>1 quest is Ready on another job.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.OtherJobMany" xml:space="preserve">
+    <value>{0} quests are Ready on another job.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MaskedMsq" xml:space="preserve">
+    <value>Next: a main scenario quest at level {0}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MaskedQuest" xml:space="preserve">
+    <value>Next: a quest at level {0}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.MaskedZone" xml:space="preserve">
+    <value>, in a zone ahead of your story.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.StepDone" xml:space="preserve">
+    <value>Step done. Next: step {0}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.QuestDone" xml:space="preserve">
+    <value>Quest done.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoStep" xml:space="preserve">
+    <value>Going to step {0} of {1}:</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoGiver" xml:space="preserve">
+    <value>Going to the giver of {0}:</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.ZoneAhead" xml:space="preserve">
+    <value>a zone ahead of your story</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoTeleportFirst" xml:space="preserve">
+    <value>Teleporting first.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoTeleport" xml:space="preserve">
+    <value>Teleporting.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoWalk" xml:space="preserve">
+    <value>Walking there.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.GoFlag" xml:space="preserve">
+    <value>Flagged on the map.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.NoPlace" xml:space="preserve">
+    <value>This step has no place on the map.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.InZoneAhead" xml:space="preserve">
+    <value>It is in a zone ahead of your story.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.TheGiver" xml:space="preserve">
+    <value>the giver</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.TalkTo" xml:space="preserve">
+    <value>Talk to {0}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.TalkToAhead" xml:space="preserve">
+    <value>Talk to {0} in a zone ahead of your story.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.TalkToIn" xml:space="preserve">
+    <value>Talk to {0} in {1}</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
+  </data>
+  <data name="Core.Guidance.YouAreIn" xml:space="preserve">
+    <value>You are in {0}.</value>
+    <comment>Core: GuidanceText.cs (1.21 P8), a plain chat sentence for text-to-speech: no symbols or brackets.</comment>
   </data>
   <data name="CommandAliasHelp" xml:space="preserve">
     <value>Short form of /tsukimichi; every subcommand works with it.</value>
