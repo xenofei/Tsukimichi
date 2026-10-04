@@ -581,6 +581,7 @@ public sealed partial class Plugin : IDalamudPlugin
             // The appearance first (theme, moons per state, palette, frames, high contrast), then the palette it names, then
             // the atlases it draws at the level's finish on that palette.
             var appearance = Ui.Themes.GlyphSeam.Refresh(settings.Appearance);
+            RefreshFollowUmbra();
             Ui.Theme.Refresh(appearance.FollowDalamud, appearance.GlyphPalette, settings.Flair, appearance.Palette);
             Ui.Themes.GlyphSeam.BeginAtlasFrame();
             Ui.Motion.BeginFrame();
@@ -1279,7 +1280,12 @@ public sealed partial class Plugin : IDalamudPlugin
             // Nearby quests window and the server info bar entry; settings in user/discovery.json until they move into Configuration.
             var discoverySettingsPath = Core.Discovery.DiscoverySettings.PathFor(Paths);
             var discoveryWarnings = new System.Collections.Generic.List<string>();
-            var discoverySettings = Core.Discovery.DiscoverySettings.Load(discoverySettingsPath, discoveryWarnings);
+
+            // 1.22.0 M1: one server info bar entry; a player who had the Nearby entry keeps it, counting this zone. 1.21
+            // wrote no file until a setting changed, so an earlier configuration marks an update too.
+            var priorInstall = Settings.HasPriorConfig || Settings.LastSeenVersion.Length > 0;
+            var discoverySettings = Core.Discovery.DiscoverySettings.LoadMigrated(discoverySettingsPath, priorInstall, discoveryWarnings, Core.Storage.AtomicFile.QuickAttempts);
+
             foreach (var warning in discoveryWarnings)
             {
                 Log.Warning("Discovery settings: {Warning}", warning);
@@ -1292,7 +1298,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 MoonlitPane.Reveal(ui, quest);
             });
             windowSystem.AddWindow(discoveryWindow);
-            dtrEntry = new Game.DtrEntry(DtrBar, discoveryWindow, discoverySettings, gate, Log);
+            // The server info bar entry is built with the summary it reads (1.22.0 M1, InitializeWelcomeHome).
             command.ToggleNearbyWindow = discoveryWindow.Toggle;
             charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, Roster, Settings, () => Settings.Save(PluginInterface), DataManager, TextureProvider);
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
@@ -1538,6 +1544,9 @@ public sealed partial class Plugin : IDalamudPlugin
             command.ToggleTodoOverlay = todoOverlay.ToggleEnabled;
             configWindow.ResetTodoPosition = todoOverlay.ResetPosition;
 
+            // The moon icon (1.22.0, H1 and H2): over the game, with its quick card, menu and /tsuki icon.
+            InitializeMoonIcon();
+
             // The tutorial draws over the main window (ITutorial.Draw at the end of MainWindow.Draw) and offers itself
             // the first time the main window opens (CheckFirstRun on UiBuilder.Draw).
             TutorialOverlay tutorial = new(Settings, PluginInterface, ui);
@@ -1608,12 +1617,11 @@ public sealed partial class Plugin : IDalamudPlugin
 
             command.ToggleHelpWindow = helpWindow.Toggle;
 
-            // "What's new" after an update: decided on the main window's first draw, drawn above the detail pane.
-            mainWindow.AttachWhatsNew(new WhatsNewCard(Settings, PluginInterface, Log, helpWindow.Show)
-            {
-                // New chapters of the side stories the character started (1.21.0 P5), once per patch.
-                NewChapters = new NewChaptersSource(Session, ui) { CharacterSettings = CharacterBook },
-            });
+            // What's new after an update (1.22, W1): a popup at the first quiet moment; the history is in Settings.
+            InitializeWhatsNew(mainWindow, settingsWindow);
+
+            // New chapters of the side stories the character started (1.21.0 P5), once per patch, in the Tonight card (W4).
+            mainWindow.AttachNewChapters(new NewChaptersSource(Session, ui) { CharacterSettings = CharacterBook });
 
             // "Set up your road" (1.7.0, decision 7): once on a fresh install, after the tour offer; Help reopens it.
             // Each switch applies at once and tells the service that follows it, as Settings does.
@@ -1658,6 +1666,9 @@ public sealed partial class Plugin : IDalamudPlugin
             ipcWindow = new IpcWindow(ipcProvider);
             windowSystem.AddWindow(ipcWindow);
             command.ToggleIpcWindow = ipcWindow.Toggle;
+
+            // 1.22.0 "Welcome home": updates, Umbra, the summary, the server info bar entry and the summary gates.
+            InitializeWelcomeHome(gate, diagnostics.PluginVersion);
             // /UI
 
             // Last: nothing runs per frame before the plugin is whole.
@@ -1819,6 +1830,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("windows", windowSystem.RemoveAllWindows);
         Unwind("automation level", Ui.AutomationGate.Detach);
         Unwind("settings window", () => configWindow?.Dispose());
+        Unwind("whats new", () => whatsNewPopup?.Dispose());
         Unwind("fonts", Ui.Typography.Dispose);
         Unwind("banner grades", Ui.BannerGrading.Dispose);
         Unwind("portrait grades", Ui.PortraitGrading.Dispose);
@@ -1834,8 +1846,10 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());
         Unwind("since you were away", () => welcomeBack?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
+        Unwind("moon icon", DisposeMoonIcon);
         Unwind("followed route", () => activeRoutes?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
+        Unwind("welcome home", TearDownWelcomeHome);
         Unwind("nearby window", () => discoveryWindow?.Dispose());
         Unwind("glyph window", () => glyphDebugWindow?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());

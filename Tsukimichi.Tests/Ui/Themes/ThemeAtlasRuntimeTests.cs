@@ -506,6 +506,9 @@ public sealed class ThemeAtlasRuntimeTests
 
         var (worst, inKit) = WorstReachable1x(sets, kits);
         Assert.True(worst <= ReachableBudget1x, $"the worst reachable appearance (in {inKit}) is {worst} bytes at 1x (budget 12 MB)");
+
+        // What's new (spec-1.22 W2): the popup holds one release picture while it is open, over whatever look is drawn.
+        Assert.True(worst + Tsukimichi.Core.Releases.ReleaseArt.TextureBytes1x <= ReachableBudget1x, $"the worst reachable appearance (in {inKit}) and What's new's 1x picture are {worst + Tsukimichi.Core.Releases.ReleaseArt.TextureBytes1x} bytes (budget 12 MB)");
     }
 
     /// <summary>The 1x RGBA every reachable appearance may hold at once (ATLAS-CONTRACT §6).</summary>

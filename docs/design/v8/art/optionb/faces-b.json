@@ -98,5 +98,7 @@
     "#080C0E",
     "#0E1414",
     "#141C1C"
-  ]
+  ],
+  "orrery_moon": "engraved",
+  "glass_moon_seas": true
 }

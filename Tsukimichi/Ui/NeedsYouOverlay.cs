@@ -78,6 +78,9 @@ public sealed class NeedsYouOverlay
         var pos = new Vector2(
             MathF.Round(viewport.Pos.X + ((viewport.Size.X - width) * 0.5f)),
             MathF.Round(viewport.Pos.Y + (viewport.Size.Y * DownShare) + UiMetrics.Px(stops.NeedsYou.Rise(now, reduce))));
+
+        // 1.22.0 M3: clear of Umbra's toolbar (its place is computed each frame, so nothing is remembered).
+        pos = UmbraLayout.KeepClear(pos, new Vector2(width, MathF.Max(1f, height)));
         ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
         ImGui.SetNextWindowSize(new Vector2(width, MathF.Max(1f, height)), ImGuiCond.Always);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);

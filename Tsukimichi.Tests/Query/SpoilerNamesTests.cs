@@ -24,10 +24,10 @@ public class SpoilerNamesTests
     // The story: 1 → 2 (A Realm Reborn) → 3 (Stormblood; opens Kugane, gives the Lunar Whale) → 4 (opens the
     // Sirensong Sea) → 5.
     private const uint Start = 1;
-    private const uint Path = 2;
+    internal const uint Path = 2;
     private const uint Opener = 3;
     private const uint Dungeon = 4;
-    private const uint Far = 5;
+    internal const uint Far = 5;
 
     // Side quests: given in Kugane with no previous quest (it opens the Ruby Sea); after the start; after the end of the story.
     private const uint KuganeSide = 10;
@@ -109,7 +109,7 @@ public class SpoilerNamesTests
     }
 
     /// <summary>The character whose next main scenario quest is <paramref name="next"/>, with nothing revealed ahead.</summary>
-    private static SpoilerMask At(uint next, SpoilerOptions? options = null, IEnumerable<(SpoilerKind, string)>? revealed = null, IReadOnlySet<uint>? revealedQuests = null) =>
+    internal static SpoilerMask At(uint next, SpoilerOptions? options = null, IEnumerable<(SpoilerKind, string)>? revealed = null, IReadOnlySet<uint>? revealedQuests = null) =>
         SpoilerMask.Build(Catalog, StatesAt(next), options ?? SpoilerOptions.Default with { Ahead = 0 }, revealedQuests, names: Index.Names, revealedNames: revealed);
 
     [Fact]

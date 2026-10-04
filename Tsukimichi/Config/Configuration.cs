@@ -503,15 +503,16 @@ public sealed partial class Configuration : IPluginConfiguration
 
     // ---- 0.6.0: what's new ----
     /// <summary>
-    /// The plugin version whose "What's new" card was seen (or recorded silently on a fresh install); empty until the
-    /// main window first opens. When it differs from the running version the card shows once (see <c>Ui.WhatsNewCard</c>).
+    /// The plugin version whose What's new was seen (or recorded silently on a fresh install); empty until the plugin
+    /// first loads. When the running version is newer the popup shows once, at the first quiet moment, and closing it
+    /// records the version (1.22, see <c>Ui.WhatsNewPopup</c>).
     /// </summary>
     public string LastSeenVersion { get; set; } = string.Empty;
 
     /// <summary>
     /// Whether a configuration file existed before this load; set by <see cref="Load(IDalamudPluginInterface, IPluginLog?)"/>,
     /// never persisted. With <see cref="LastSeenVersion"/> empty it tells an update from a build that predates the
-    /// card (every release before 0.6.0) apart from a fresh install (<c>Core.Ui.WhatsNew.Decide</c>).
+    /// record (every release before 0.6.0) apart from a fresh install (<c>Core.Ui.WhatsNew.Decide</c>).
     /// </summary>
     [Newtonsoft.Json.JsonIgnore]
     public bool HasPriorConfig { get; private set; }
@@ -875,6 +876,15 @@ public sealed partial class Configuration : IPluginConfiguration
         }
 
         config.RunStopCounts ??= [];
+
+        // A hand-edited or foreign "null" reads as empty, like the collections above (the Todo overlay's Umbra clearance
+        // and the moon icon read theirs every frame).
+        config.UmbraPlaces ??= [];
+        config.MoonIconPlaces ??= [];
+        config.SeasonalEndDates ??= [];
+        config.LinkedCharacterFolders ??= [];
+        config.UpdateDismissedVersion ??= string.Empty;
+        config.UpdateChatSaidVersion ??= string.Empty;
         config.NeedsYouSoundDeath = Math.Clamp(config.NeedsYouSoundDeath, 0, MaxNeedsYouSound);
         config.NeedsYouSoundStuck = Math.Clamp(config.NeedsYouSoundStuck, 0, MaxNeedsYouSound);
         config.NeedsYouSoundDutyPop = Math.Clamp(config.NeedsYouSoundDutyPop, 0, MaxNeedsYouSound);

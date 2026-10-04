@@ -64,7 +64,6 @@ public sealed partial class MainWindow : Window, IDisposable
     private Action? openSettings;
     private Action? openHelp;
     private ITutorial? tutorial;
-    private WhatsNewCard? whatsNew;
     private WelcomeBackCard? welcomeBack;
     private SetupCard? setupCard;
 
@@ -471,15 +470,9 @@ public sealed partial class MainWindow : Window, IDisposable
         this.tutorial = tutorial ?? throw new ArgumentNullException(nameof(tutorial));
     }
 
-    /// <summary>Attaches the "What's new" card; it decides on the window's first draw and sits above the detail pane while visible.</summary>
-    public void AttachWhatsNew(WhatsNewCard card)
-    {
-        whatsNew = card ?? throw new ArgumentNullException(nameof(card));
-    }
-
     /// <summary>
     /// Attaches "Since you were away" (P7): drawn above the detail pane while <paramref name="source"/> has something to
-    /// show, after the What's-new card when both are due.
+    /// show.
     /// </summary>
     public void AttachWelcomeBack(WelcomeBackSource source, SessionState session)
     {
@@ -523,6 +516,7 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         EnsureInitialized();
+        NoteDrawn();
 
         // The rail and the panes' floors grow with the UI scale, so the minimum size must too or a pane goes under its
         // floor (ScaleMetrics.MinWindowSize, PaneLayout); it never exceeds the viewport, so the window can always be
@@ -769,6 +763,7 @@ public sealed partial class MainWindow : Window, IDisposable
         DrawToolbar(session);
         DrawBody(session, bundle);
         DrawStatusBar(session, bundle);
+        OpenRequestedMakeRoom();
         DrawMakeRoomPopover();
         DrawFloating(session, bundle);
         questionableActions?.DrawModals(QuestionableHost);
@@ -910,7 +905,6 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         initialized = true;
-        whatsNew?.CheckOnOpen();
         ui.Filters = plugin.Settings.Filters;
         ui.Sort = new SortSpec(plugin.Settings.SortColumn, plugin.Settings.SortDescending, plugin.Settings.PinnedFirst);
         persistedSort = ui.Sort;
@@ -1550,8 +1544,8 @@ public sealed partial class MainWindow : Window, IDisposable
     /// <summary>
     /// The body (feature plan v4 L1): rail · tree · centre · detail side by side, their widths from
     /// <see cref="PaneSplit"/> (floors that hold, widths in logical units, a double-click to reset). Each pane is a child
-    /// window of its width placed on one line; the detail column is a group so the What's new and Since you were away
-    /// cards stack above the detail pane inside it.
+    /// window of its width placed on one line; the detail column is a group so the Set up your road and Since you
+    /// were away cards stack above the detail pane inside it.
     /// </summary>
     private void DrawBody(SessionState session, CatalogBundle bundle)
     {
@@ -1649,8 +1643,8 @@ public sealed partial class MainWindow : Window, IDisposable
         using var backdrop = Theme.PushPaneBackdrop();
         using var detailColumn = ImRaii.Group();
 
-        // A selected quest's details always start at the top of the column (feature plan v6 U2): the Setup, What's new
-        // and Since you were away cards live in the no-selection slot, above the Tonight card, and while a quest is
+        // A selected quest's details always start at the top of the column (feature plan v6 U2): the Setup and Since you
+        // were away cards live in the no-selection slot, above the Tonight card, and while a quest is
         // selected the dock says one is waiting (DrawFloating).
         if (ui.SelectedRowId is not null)
         {
@@ -1664,9 +1658,6 @@ public sealed partial class MainWindow : Window, IDisposable
             case NoticeKind.Setup:
                 detailHeight -= setupCard!.Draw(height);
                 break;
-            case NoticeKind.WhatsNew:
-                detailHeight -= whatsNew!.Draw(height);
-                break;
             case NoticeKind.WelcomeBack:
                 detailHeight -= welcomeBack!.Draw(height, bundle);
                 break;
@@ -1678,19 +1669,14 @@ public sealed partial class MainWindow : Window, IDisposable
 
     /// <summary>
     /// The detail-column card that is due, if any, in their order: "Set up your road" first (it shows by itself only on
-    /// a fresh install, where What's new never does, and otherwise only when Help asked for it, and never during the
-    /// tour), then What's new, then Since you were away.
+    /// a fresh install, and otherwise only when Help asked for it, and never during the tour), then Since you were away.
+    /// What's new is a popup of its own since 1.22 (W4, <see cref="WhatsNewPopup"/>).
     /// </summary>
     private NoticeKind? DueCard()
     {
         if (setupCard is { Visible: true } && tutorial?.Active != true)
         {
             return NoticeKind.Setup;
-        }
-
-        if (whatsNew is { Visible: true })
-        {
-            return NoticeKind.WhatsNew;
         }
 
         return welcomeBack is { Visible: true } ? NoticeKind.WelcomeBack : null;
@@ -1899,8 +1885,22 @@ public sealed partial class MainWindow : Window, IDisposable
         var msqWidth = msqStatus.Length > 0 ? msqTextWidth + 2f * pillPad : 0f;
         var statusWidth = ImGui.CalcTextSize(status).X;
 
+        // "Tsukimichi 1.23.0 is ready" (1.22.0, U1) sits before the version while a version is ready; the rest fits left of it.
+        // In a narrow window its words end in an ellipsis, and below a few words it is left out, so it never runs into
+        // the version (UpdateNoteFit).
+        var noteTextRoom = -1f;
+        var noteWidth = 0f;
+        if (UpdateNoteShown)
+        {
+            var noteFixed = UpdateNoteFixedWidth(gap);
+            noteTextRoom = Core.Updates.UpdateNoteFit.TextRoom(versionX - gap - x, noteFixed, UpdateNoteTextWidth(), UiMetrics.Px(1f));
+            noteWidth = noteTextRoom >= 0f ? noteFixed + noteTextRoom : 0f;
+        }
+
+        var noteX = noteWidth > 0f ? versionX - gap - noteWidth : versionX;
+
         // The journal count (1.19.0, C9) keeps its room: what comes before it is fitted into the rest.
-        var segmentsEnd = MathF.Max(x, versionX - JournalSegmentWidth(separatorWidth, gap));
+        var segmentsEnd = MathF.Max(x, noteX - JournalSegmentWidth(separatorWidth, gap));
         var room = segmentsEnd - gap - x;
 
         var fixedWidth = separatorWidth + modeWidth + (msqWidth > 0f ? separatorWidth : 0f);
@@ -2009,7 +2009,11 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         x = DrawJournalSegment(dl, x, origin.X, textY, line, gap, separator);
-        DrawCompanionActivity(dl, ref x, textY, gap, separatorWidth, versionX, origin.X);
+        DrawCompanionActivity(dl, ref x, textY, gap, separatorWidth, noteX, origin.X);
+        if (noteWidth > 0f)
+        {
+            DrawUpdateNote(dl, noteX, textY, line, gap, noteTextRoom);
+        }
 
         // One item spanning the bar so the layout advances past it.
         ImGui.SetCursorScreenPos(origin);

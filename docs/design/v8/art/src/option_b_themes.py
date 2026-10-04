@@ -86,6 +86,27 @@ def tex(T, u, v):
     return (T[v0, u0] * (1 - fu) + T[v0, u0 + 1] * fu) * (1 - fv) + (T[v0 + 1, u0] * (1 - fu) + T[v0 + 1, u0 + 1] * fu) * fv
 
 
+# the maria of the approved near-full moon (paint_release.moon_disc), in units of the moon's radius:
+# Procellarum and Imbrium on the left, Serenitatis to Fecunditatis down the right, Nubium below
+MARIA = [(-0.42, -0.18, 0.20, 0.26), (-0.50, 0.10, 0.18, 0.28), (-0.38, 0.32, 0.16, 0.16), (-0.24, -0.32, 0.22, 0.17), (-0.10, -0.24, 0.12, 0.10),
+         (0.04, -0.34, 0.17, 0.14), (0.18, -0.16, 0.16, 0.15), (0.30, 0.04, 0.18, 0.14), (0.40, 0.24, 0.12, 0.13), (0.50, -0.30, 0.09, 0.08),
+         (-0.16, 0.30, 0.15, 0.10), (-0.02, 0.36, 0.10, 0.08),
+         (-0.24, 0.02, 0.15, 0.11), (-0.04, -0.06, 0.12, 0.09), (0.12, 0.06, 0.10, 0.08)]   # Insularum, Vaporum: across the middle
+
+
+def moon_seas(L, M):
+    """The near-full moon's maria as a soft 0..1 weight, laid out as the approved moon's joined chains (from the
+    release's moon place and radius), soft-edged, inside the lit disc only."""
+    h, w = L.shape
+    mx, my, mr = CFG["moon"][0] * w, CFG["moon"][1] * h, CFG["moon"][2]
+    yy, xx = grid(h, w)
+    m = np.zeros((h, w), np.float32)
+    for sx, sy, rx, ry in MARIA:
+        d = ((xx - (mx + sx * mr)) / (rx * mr)) ** 2 + ((yy - (my + sy * mr)) / (ry * mr)) ** 2
+        m = np.maximum(m, np.clip(1.6 - d * 1.2, 0, 1))
+    return blur(m, 0.8) * (M["moonlit"] > 0.5)
+
+
 def masks():
     M = dict(np.load(OUT / f"{CFG['key']}-masks.npz"))
     M["below"] = np.maximum(M["far"], M["city"])
@@ -111,7 +132,7 @@ def top_row(m):
 #   glass_moon_path  the moon's path on the water cut as its own pale pieces in each strip
 #   glass_moon_seas  the moon's seas (the painter's `seas` mask) as a faint grisaille on its white piece
 #   orrery_backlit  mask names of backlit silhouettes the Orrery engraves dark (with orrery_crisp)
-#   medallion_moon_seas  Medallion's cream moon keeps the painter's seas (a near-full moon)
+#   (medallion_moon_seas, once used here, is superseded by the designer's restored moon: Medallion now keeps the painting's own moon under 10 % varnish)
 #   aether_keep_clear  mask names the facets fade out round (about 30 px), as they do round the figures
 #   lines       mask names of thin linear things (a guide rope, rigging) that every treatment keeps as a line
 #   field_flat  the field is a flat sea or river: its strips, lines and strokes run from the horizon in every column,
@@ -255,13 +276,8 @@ def medallion(px):
     rad = np.sqrt(((xx - w / 2) / (w * 0.62)) ** 2 + ((yy - h / 2) / (h * 0.75)) ** 2)
     p = p * (1 - 0.30 * np.clip(rad - 0.55, 0, 1) ** 1.5 - 0.14 * np.clip(1 - ex / 40, 0, 1) ** 2)[..., None]
     # the moon after the pass: the painting's own disc, with at most a light share of the varnish, and the crescent in cream
-    moon_col = px * 0.88 + p * 0.12
+    moon_col = px * 0.90 + p * 0.10                                               # the painting's own moon, 10 % varnish
     p = p * (1 - mz[..., None]) + moon_col * mz[..., None]
-    lit = blur(M["moonlit"], 0.5)[..., None]
-    cream = (hexc("#F3EAD3") * 0.9 + hexc("#E9C98C") * 0.1)[None, None, :]
-    if CFG.get("medallion_moon_seas") and "seas" in M:                     # the painter's seas, kept under the cream
-        cream = cream * (1 - 0.20 * M["seas"])[..., None]
-    p = p * (1 - lit) + cream * lit
     inset, wdt = 5, 4
     slip = (ex >= inset) & (ex < inset + wdt)
     litside = np.stack([yy, xx, h - 1 - yy, w - 1 - xx]).argmin(0) < 2
@@ -443,8 +459,10 @@ def ishgard(px):
     mx, my, mr = CFG["moon"][0] * w, CFG["moon"][1] * h, CFG["moon"][2]
     toward = np.clip(((mx - xx) * 0.7 + (yy - my) * 0.7) / mr * 0.5 + 0.5, 0, 1)
     glass = np.where((reg == 8)[..., None], hexc("#E8E2CC") + (hexc("#FFFBEE") - hexc("#E8E2CC")) * toward[..., None], glass)
-    if CFG.get("glass_moon_seas") and "seas" in M:                # the seas as a faint grisaille on the moon's white piece
-        glass = glass * (1 - (M["seas"] * 0.24 * (reg == 8))[..., None])
+    if CFG.get("glass_moon_seas") and "seas" in M:                # the painter's seas (the one moon rule) as faint grisaille
+        glass = glass * (1 - (M["seas"] * 0.18 * (reg == 8))[..., None])
+    elif (reg == 8).sum() > 400:                                                   # faint grisaille seas on a big moon
+        glass = glass * (1 - (moon_seas(lum(px), M) * 0.14 * (reg == 8))[..., None])
     glass = 1 - (1 - glass) * 0.9
     glass = 1 - (1 - glass) * (1 - np.array([1.0, 0.92, 0.84], np.float32) * (blur(np.clip(lum(glass) - 0.6, 0, 1), 4) * 0.25)[..., None])
     L = lum(px)
@@ -591,9 +609,18 @@ def orrery(px):
     # a flat, lit base: each column's lowest cloud row, levelled over a wide span, cuts the shape off below it
     on = cs > 0.5
     bottom = np.where(on.any(0), h - 1 - np.argmax(on[::-1], 0), -1).astype(np.float32)
-    span = 70
-    lv = np.array([bottom[max(0, i - span):i + span][bottom[max(0, i - span):i + span] >= 0].min() if (bottom[max(0, i - span):i + span] >= 0).any() else -1 for i in range(w)], np.float32)
-    lv = np.where(bottom >= 0, np.minimum(bottom, lv + 4), -1)
+    lv = np.full(w, -1.0, np.float32)
+    has = bottom >= 0
+    i = 0
+    while i < w:                                                                  # each run of cloud columns is one cloud
+        if not has[i]:
+            i += 1
+            continue
+        j = i
+        while j < w and has[j]:
+            j += 1
+        lv[i:j] = np.percentile(bottom[i:j], 30)
+        i = j
     cs = (on & (yy <= lv[None, :])).astype(np.float32)
     plate = plate + (hexc("#4A5A98") - plate) * (cs * 0.45)[..., None]            # a lighter enamel inside each shape
     co = outline(cs)
@@ -609,29 +636,28 @@ def orrery(px):
     plate = plate + (hexc("#D9B86E") - plate) * (dl_ * 0.55)[..., None]
     plate = plate * (1 - M["moon"][..., None]) + hexc("#1E2D66") * M["moon"][..., None]
     if CFG.get("orrery_moon") == "engraved":
-        # a near-full moon: a silver face with its seas engraved as hatching, the unlit sliver left in dark enamel, and
-        # a brass ring round the whole disc (a flat brass disc would read as the sun or a coin)
+        # the one moon rule on the designer's engraved moon (round 7, R1): a brass face, the unlit sliver left in dark
+        # enamel, the seas engraved from the painter's own seas mask as fine level cuts 2 px apart (only the mass's core,
+        # tapering where it thins), and a brass ring just outside the disc, so the ring never covers the sliver
         lit = M["moonlit"]
-        if "seas" in M:                                                          # the painter's own seas
-            sea = np.clip(M["seas"] * 1.6, 0, 1) * lit
-        else:
-            Lm = np.where(lit > 0.5, L, np.nan)
-            hi_ = np.nanpercentile(Lm, 92) if np.isfinite(Lm).any() else 1.0
-            sea = np.clip((hi_ - L) / 0.22, 0, 1) * (lit > 0.5)
-        face = hexc("#DCDFE6")
-        plate = plate * (1 - lit[..., None]) + face * lit[..., None]
-        # one set of anti-aliased diagonal lines, 3 px apart, swelling with the seas' depth: the mass engraved
-        core = np.clip((sea - 0.35) / 0.45, 0, 1)                                    # only the mass's core: 3-5 short lines
-        hatch = aa_lines(yy, 5.0, 5.0, core * 0.85, min_px=3.5) * lit                 # level, tapering where the mass thins
-        plate = plate * (1 - (hatch * 0.8)[..., None]) + hexc("#4A5066") * (hatch * 0.8)[..., None]
-        # the unlit sliver in dark enamel, and a brass ring just outside the disc, so the ring never covers the sliver
-        sliver = np.clip(M["moon"] - lit, 0, 1)
-        plate = plate * (1 - sliver[..., None]) + hexc("#1A2860") * sliver[..., None]
+        plate = plate * (1 - lit[..., None]) + hexc("#E6CC90") * lit[..., None]
+        sea = (M["seas"] if "seas" in M else moon_seas(L, M)) * lit
+        wt = np.clip(sea * 1.3, 0, 0.85)                                               # the lobed mass, weighted, not thresholded
+        hatch = aa_lines(yy, 2.0, 2.0, wt, min_px=0.0) * lit                          # fine cuts 2 px apart: soft tone at popup size, never bars
+        plate = plate * (1 - (hatch * 0.55)[..., None]) + hexc("#7A5A2E") * (hatch * 0.55)[..., None]
         ring = np.clip((blur(M["moon"], 1.0) > 0.06).astype(np.float32) - (M["moon"] > 0.5), 0, 1)
         ring = np.clip(blur(ring, 0.5) * 1.5, 0, 1) * (1 - M["moon"])
-        plate = plate * (1 - ring[..., None]) + hexc("#D9B86E") * ring[..., None]
+        plate = plate * (1 - ring[..., None]) + hexc("#B8924E") * ring[..., None]
     else:
         plate = plate * (1 - M["moonlit"][..., None]) + hexc("#E6CC90") * M["moonlit"][..., None]
+        lit_m = M["moonlit"] > 0.5
+        if lit_m.sum() > 400:                                                      # a big moon: engrave its seas
+            seas = moon_seas(L, M)
+            lines_ = (np.abs(((xx - yy) / 2.2) % 1.0 - 0.5) * 2 > 0.6).astype(np.float32)   # fine parallel cuts
+            hatch = lines_ * seas * 0.5
+            plate = plate * (1 - hatch[..., None]) + hexc("#7A5A2E") * hatch[..., None]
+        ring = outline(M["moon"]) * (M["moon"].sum() > 400)
+        plate = plate * (1 - blur(ring, 0.5)[..., None]) + hexc("#B8924E") * blur(ring, 0.5)[..., None]
     im = Image.new("L", (w * 2, h * 2), 0)
     dr = ImageDraw.Draw(im)
     cx, cy = w * 1.0, h * 2.8

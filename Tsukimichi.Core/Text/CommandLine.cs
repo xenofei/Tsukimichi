@@ -70,6 +70,9 @@ public enum Subcommand
 
     /// <summary><c>go [quest name]</c> (1.21, P2): travel to the current step of the selected or named quest, else its giver.</summary>
     Go,
+
+    /// <summary><c>icon</c> (1.22, H1): shows or hides the moon icon. With text after it the whole line searches (<see cref="CommandLine.RunsIcon"/>).</summary>
+    Icon,
 }
 
 /// <summary>A parsed <c>/tsukimichi</c> line.</summary>
@@ -119,6 +122,7 @@ public static class CommandLine
         ("msq", Subcommand.Msq, true),
         ("next", Subcommand.Next, true),
         ("go", Subcommand.Go, true),
+        ("icon", Subcommand.Icon, true),
     ];
 
     /// <summary>The subcommand words players are shown (and offered by <see cref="DidYouMean"/>), in help order; <c>glyphs</c> and <c>ipc</c> are not.</summary>
@@ -168,6 +172,12 @@ public static class CommandLine
 
         return parsed.Kind == Subcommand.Go && beginsQuestName?.Invoke(parsed.Arguments) != true;
     }
+
+    /// <summary>
+    /// Whether <c>icon</c> shows or hides the moon icon (1.22, H1): only on its own. With text after it ("icon of the
+    /// past") the whole line is the quest search it was before <c>icon</c> was a subcommand, so no quest name is shadowed.
+    /// </summary>
+    public static bool RunsIcon(ParsedCommand parsed) => parsed.Kind == Subcommand.Icon && parsed.Rest.Length == 0;
 
     /// <summary>
     /// Whether the name of a quest still in the game, as <paramref name="spoilers"/> shows it, begins with

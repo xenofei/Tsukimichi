@@ -35,8 +35,6 @@ Local only: no network code.</Description>
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The in-app "What's new" card reads the running version's section from this copy at runtime (Ui\WhatsNewCard.cs). -->
-    <EmbeddedResource Include="..\CHANGELOG.md" LogicalName="Tsukimichi.CHANGELOG.md" />
     <!--
       Moon Road art (docs/design/moon-road/): the ornament atlas (Ui\OrnamentAtlas.cs, layout in Core/Ui/OrnamentLayout.cs)
       and the bundled category banners (Ui\BannerArtwork.cs). Embedded, so they travel inside Tsukimichi.dll and load
@@ -68,6 +66,12 @@ Local only: no network code.</Description>
       metrics.json is the build's record for the tests and reviewers; the plugin never reads it, so it does not ship.
     -->
     <Content Include="assets\ui\themes\**\*.png;assets\ui\themes\**\*.json" Exclude="assets\ui\themes\**\metrics.json" CopyToOutputDirectory="PreserveNewest" />
+    <!--
+      The release pictures of What's new (1.22, spec-1.22 W2, Option B): assets\whatsnew\<version>\<theme>.jpg, six per
+      release, 1120 x 440. Loaded from disk one at a time while the popup is open (Ui\ReleaseArtTexture.cs); a missing
+      file is no picture.
+    -->
+    <Content Include="assets\whatsnew\**\*.jpg" CopyToOutputDirectory="PreserveNewest" />
     <!-- The frame kits' frames and badges (1.17 T11, ATLAS-CONTRACT.md §7): one folder per kit, loaded only while a set is composed in it. -->
     <Content Include="assets\ui\kits\**\*.png;assets\ui\kits\**\*.json" Exclude="assets\ui\kits\**\metrics.json" CopyToOutputDirectory="PreserveNewest" />
     <!-- Packaged as images\icon.png, where Dalamud looks for a plugin's icon inside the zip; assets\icon.png stays the source. -->

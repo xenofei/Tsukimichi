@@ -33,6 +33,7 @@ public sealed partial class Plugin
         }
 
         var events = new Ui.EventWarningSource(Session, () => Settings.SeasonalWarnDays, RewardsMissing);
+        eventWarnings = events;
         mainWindow.AttachReplayAndEvents(new Ui.RowChipSource(Session, events), events);
         if (todoOverlay is { } overlay)
         {

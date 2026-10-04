@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "note": "The plain What's new notes, one entry per release since 1.14.0, newest first: the popup after an update, Settings > Advanced > What's new and Dalamud's installer listing (tools/make_pluginmaster.py) read them. Written for players: 3 to 5 points, each a short lead and one plain sentence, no class names, settings paths only when the player needs them, no lists of fixes. CHANGELOG.md stays the technical record. Add the new release's entry before tagging it; the tests fail when the csproj version has none.",
+  "releases": [
+    {
+      "version": "1.22.0",
+      "date": "2026-10-05",
+      "name": "Welcome home",
+      "points": [
+        { "lead": "What's new, in pictures.", "text": "After each update, a short note like this one shows what changed. Past notes are in Settings, under What's new." },
+        { "lead": "Know when an update is ready.", "text": "A quiet note in the status bar and a dot on the moon icon tell you. Update opens Dalamud's installer." },
+        { "lead": "A moon on your screen.", "text": "A small moon opens Tsukimichi and shows what's next when you hover it. Move it, lock it or hide it." },
+        { "lead": "At home in Umbra.", "text": "Tsukimichi keeps clear of Umbra's toolbar, and an Umbra add-on puts Tonight in your Umbra bar." }
+      ]
+    },
+    {
+      "version": "1.21.0",
+      "date": "2026-10-04",
+      "name": "What next, for every character",
+      "points": [
+        { "lead": "Up next.", "text": "Tonight starts with one suggestion for the character you're on, and says why." },
+        { "lead": "Go to the current step.", "text": "Travel aims at the step you're on, not only at the quest giver." },
+        { "lead": "All your characters.", "text": "One board shows each character's story, goals and what's Ready." },
+        { "lead": "Loose ends.", "text": "Storylines you started and never finished, finales first." }
+      ]
+    },
+    {
+      "version": "1.20.0",
+      "date": "2026-10-04",
+      "name": "Before Evercold",
+      "points": [
+        { "lead": "Fewer spoilers.", "text": "Past where you are in the story, Tsukimichi now hides the names of places, duties, rewards and people too. Hover a hidden name to see why." },
+        { "lead": "Ready for Evercold.", "text": "A card in Tonight lists what each character should finish before Patch 8.0: the story, journal room, job quests, roulettes and flying. Tick lines off as you go." },
+        { "lead": "More faces, if you want them.", "text": "An optional download adds about 1,850 quest-giver portraits. Nothing downloads until you choose it in Settings › Look." }
+      ]
+    },
+    {
+      "version": "1.19.0",
+      "date": "2026-10-04",
+      "name": "Right answers",
+      "points": [
+        { "lead": "The game has the last word.", "text": "When the game offers you a quest, Tsukimichi shows it as Ready, even one it couldn't check before." },
+        { "lead": "Know how you'll clear it.", "text": "Quests with a duty say whether NPCs can come along or you need a group, and which job gets the most from the EXP." },
+        { "lead": "Room in your journal.", "text": "See how full your journal is, and what you can finish or safely drop to make room." },
+        { "lead": "Events ending soon.", "text": "Seasonal events warn you three days before they end, and their quests come first." },
+        { "lead": "Find by unlock.", "text": "Search for \"Kugane\" or \"flying Thavnair\" to see the quests that open it, with a route there." }
+      ]
+    },
+    {
+      "version": "1.18.0",
+      "date": "2026-10-03",
+      "name": "Runs you can trust",
+      "points": [
+        { "lead": "Know why it stopped.", "text": "When a run stops, a card says why in plain words and offers a safe way to carry on." },
+        { "lead": "Needs you.", "text": "If you're knocked out, stuck, or your duty pops during a run, one calm panel and a sound tell you." },
+        { "lead": "No surprise parties.", "text": "Questionable no longer walks you into a duty with other players unless you say so." },
+        { "lead": "Stop when you want.", "text": "Stop a run after this quest, after a few more, or at a time you choose." },
+        { "lead": "Choose how much it does.", "text": "Pick a level of automation, from tracker only to full hand-offs, in Settings › Automation." }
+      ]
+    },
+    {
+      "version": "1.17.0",
+      "date": "2026-10-03",
+      "name": "Mix and match",
+      "points": [
+        { "lead": "Two new themes.", "text": "Astrologian's Orrery and Sumi to Kinpaku join the list, with two new palettes, Dawn and Kugane Lacquer." },
+        { "lead": "Mix your moons.", "text": "Pick each quest state's moon from any theme, and Tsukimichi warns you when two would look alike." },
+        { "lead": "Choose your frames.", "text": "Brass, silver, lead, astrolabe or gold-leaf rims go with any theme." },
+        { "lead": "Share your look.", "text": "Copy your look as a short code, or paste a friend's to see it before you apply it." }
+      ]
+    },
+    {
+      "version": "1.16.0",
+      "date": "2026-10-03",
+      "name": "Themes",
+      "points": [
+        { "lead": "Choose a theme.", "text": "Settings › Themes offers Menphina's Medallion, Ishgard Glass, Aether Crystal and Classic. Hover a card to preview it." },
+        { "lead": "A daylight look.", "text": "Ishgard Snow is a light palette with navy ink and a still dawn sky." },
+        { "lead": "Clearer for everyone.", "text": "High contrast has its own designed look, with every word easy to read." },
+        { "lead": "Back in one click.", "text": "Reset appearance returns to the usual look, and Undo is there if you change your mind." }
+      ]
+    },
+    {
+      "version": "1.15.0",
+      "date": "2026-10-03",
+      "name": "Faces and icons",
+      "points": [
+        { "lead": "Quest givers have faces.", "text": "The Giver card shows who to walk up to, from the game's own art, and never a face from story you haven't reached." },
+        { "lead": "Faces along the way.", "text": "Next stops, the Route window and the Todo overlay show a small portrait of each giver." },
+        { "lead": "The game's own icons.", "text": "Travel buttons, requirements, duties and your characters' progress wear the icons you know from the game." }
+      ]
+    },
+    {
+      "version": "1.14.0",
+      "date": "2026-10-03",
+      "name": "The polish you asked for",
+      "points": [
+        { "lead": "Back and forward.", "text": "Step back through the quests you looked at with the ‹ › buttons, your mouse's side buttons or Alt and the arrow keys." },
+        { "lead": "A sky that moves.", "text": "The stars twinkle and drift, and a shooting star marks each quest you complete." },
+        { "lead": "Trust you can check.", "text": "Settings shows a fingerprint of the plugin you're running, so you can compare it with the release." },
+        { "lead": "Easier to read.", "text": "Section names and the Journal's column headers are larger and brighter, and the filters fit their space." },
+        { "lead": "Only what's new.", "text": "The Journal badge counts the quests that became Ready since you last looked." }
+      ]
+    }
+  ]
+}

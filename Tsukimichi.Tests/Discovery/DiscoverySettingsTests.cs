@@ -38,6 +38,44 @@ public sealed class DiscoverySettingsTests : IDisposable
     }
 
     [Fact]
+    public void A_1_21_update_with_no_file_keeps_the_entry_and_saves_the_migration_once()
+    {
+        var path = tmp.File(Path.Combine("user", "discovery.json"));
+
+        var updated = DiscoverySettings.LoadMigrated(path, priorInstall: true);
+        Assert.True(updated.DtrEntryChosen);
+        Assert.True(updated.ShowDtrEntry);
+        Assert.Equal(DtrCounts.Zone, updated.DtrCounts);
+        Assert.Equal(DiscoverySettings.CurrentServerInfoBarSchema, updated.ServerInfoBarSchema);
+
+        // Saved, so the choice sticks: the next start reads it from the file (Zone, with or without Umbra).
+        Assert.True(File.Exists(path));
+        var reloaded = DiscoverySettings.Load(path);
+        Assert.True(reloaded.DtrEntryChosen);
+        Assert.Equal(DtrCounts.Zone, reloaded.DtrCounts);
+
+        // A later choice survives the next start: the saved file is already migrated.
+        updated.DtrCounts = DtrCounts.Ready;
+        updated.Save(path);
+        Assert.Equal(DtrCounts.Ready, DiscoverySettings.LoadMigrated(path, priorInstall: true).DtrCounts);
+    }
+
+    [Fact]
+    public void A_fresh_install_saves_its_migration_so_its_second_start_is_not_taken_for_an_update()
+    {
+        var path = tmp.File(Path.Combine("user", "discovery.json"));
+
+        var first = DiscoverySettings.LoadMigrated(path, priorInstall: false);
+        Assert.False(first.DtrEntryChosen);
+        Assert.Equal(DtrCounts.Ready, first.DtrCounts);
+
+        // By the second start the plugin's own configuration exists, but this is still the fresh install's choice-free entry.
+        var second = DiscoverySettings.LoadMigrated(path, priorInstall: true);
+        Assert.False(second.DtrEntryChosen);
+        Assert.Equal(DtrCounts.Ready, second.DtrCounts);
+    }
+
+    [Fact]
     public void PathFor_lives_under_the_user_directory()
     {
         var paths = new PluginPaths(tmp.Path, tmp.Path);

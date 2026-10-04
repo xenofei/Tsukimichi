@@ -73,6 +73,47 @@ public class CommandLineTests
     }
 
     [Theory]
+    [InlineData("icon")]
+    [InlineData("ICON")]
+    [InlineData("  icon  ")]
+    public void Icon_alone_shows_or_hides_the_moon_icon(string line)
+    {
+        var parsed = CommandLine.Parse(line);
+        Assert.Equal(Subcommand.Icon, parsed.Kind);
+        Assert.True(CommandLine.RunsIcon(parsed));
+        Assert.Contains("icon", CommandLine.ListedWords);
+    }
+
+    [Theory]
+    [InlineData("icon of the past")]
+    [InlineData("Icon Ishgard")]
+    public void Icon_with_text_after_it_stays_a_quest_search(string line)
+    {
+        // A quest whose name begins with the word is never shadowed: the whole line searches, as before 1.22.
+        var parsed = CommandLine.Parse(line);
+        Assert.Equal(Subcommand.Icon, parsed.Kind);
+        Assert.False(CommandLine.RunsIcon(parsed));
+        Assert.Equal(line.Trim(), parsed.Arguments);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("iconography")]
+    [InlineData("todo")]
+    [InlineData("go west")]
+    public void Only_the_icon_word_runs_the_icon(string line)
+    {
+        Assert.False(CommandLine.RunsIcon(CommandLine.Parse(line)));
+    }
+
+    [Fact]
+    public void A_near_miss_of_icon_suggests_it()
+    {
+        Assert.Equal("icon", CommandLine.DidYouMean("icno"));
+        Assert.Equal("icon", CommandLine.DidYouMean("ikon"));
+    }
+
+    [Theory]
     [InlineData("nearbt", "nearby")]
     [InlineData("neaby", "nearby")]
     [InlineData("naerby", "nearby")]

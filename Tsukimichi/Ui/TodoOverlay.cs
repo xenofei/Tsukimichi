@@ -74,7 +74,7 @@ namespace Tsukimichi.Ui;
 /// status while it is up, so the rows never move for it; and while a hand-off other than Questionable runs, a Stop all
 /// stands where Questionable's Stop would.
 /// </summary>
-public sealed class TodoOverlay : Window, IDisposable
+public sealed partial class TodoOverlay : Window, IDisposable
 {
     /// <summary>The lowest background opacity: none at all (1.13.0); every text is outlined, so it still reads.</summary>
     public const float MinOpacity = 0f;
@@ -325,6 +325,11 @@ public sealed class TodoOverlay : Window, IDisposable
             resetPosition = false;
             ImGui.SetNextWindowPos(ImGuiHelpers.MainViewport.WorkPos + DefaultOffset * ImGuiHelpers.GlobalScale, ImGuiCond.Always);
         }
+        else
+        {
+            // 1.22.0 M3: clear of Umbra's toolbar, the player's own place kept (TodoOverlay.Umbra.cs).
+            KeepClearOfUmbra();
+        }
 
         Refresh();
         nightChrome = Theme.PushNightWindow();
@@ -357,6 +362,7 @@ public sealed class TodoOverlay : Window, IDisposable
         // The panel is its own top-level window, so it scales itself (the glyphs already followed the icon scale;
         // the text now keeps pace). Reset before Begin lays the window out again.
         UiMetrics.ApplyFontScale();
+        NoteWindowPlace();
         try
         {
             DrawContent();

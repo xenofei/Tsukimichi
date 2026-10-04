@@ -205,7 +205,71 @@ public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks 
         return null;
     }
 
+    /// <summary>
+    /// Up next's pick for the character these lines are about (the logged-in one, else the viewed one), for the moon
+    /// icon's quick card (1.22, H1); null while the catalog is not ready or nothing is picked.
+    /// </summary>
+    public (QuestRecord Quest, Core.Todo.UpNextRule Rule)? UpNext() =>
+        session.Bundle is { } bundle ? PickWithRule(bundle.Catalog, States) : null;
+
     private QuestRecord? Pick(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states) => PickWithRule(catalog, states)?.Quest;
+
+    /// <summary>
+    /// Up next for the character the lines are about (1.22: the server info bar's tooltip and the summary IPC), with its
+    /// current step when the quest is in the journal; null while the catalog is not ready or nothing is picked.
+    /// </summary>
+    public (QuestRecord Quest, Core.Todo.UpNextRule Rule, StepView? Step)? UpNextWithStep()
+    {
+        if (session.Bundle is not { } bundle || PickWithRule(bundle.Catalog, States) is not { } picked)
+        {
+            return null;
+        }
+
+        States.TryGetValue(picked.Quest.RowId, out var evaluation);
+        var step = picked.Rule == Core.Todo.UpNextRule.LevelGate ? null : links.CurrentStep(picked.Quest, evaluation, Live, null, ContentId);
+        return (picked.Quest, picked.Rule, step);
+    }
+
+    /// <summary>
+    /// The first <paramref name="max"/> Ready quests in Tonight's order (<see cref="Core.Todo.UpNextPicker.ReadyInOrder"/>)
+    /// for the logged-in character, from the same inputs as Up next; empty without a catalog.
+    /// </summary>
+    public IReadOnlyList<QuestRecord> ReadyInTonightOrder(int max)
+    {
+        if (session.Bundle is not { } bundle || max <= 0)
+        {
+            return [];
+        }
+
+        var catalog = bundle.Catalog;
+        var states = States;
+        var id = ContentId;
+        var rows = Core.Todo.UpNextPicker.ReadyInOrder(
+            states,
+            RouteNext?.Invoke(id)?.RowId,
+            Goal?.Invoke(id) ?? [],
+            MsqProgress.Compute(catalog, states)?.Next?.RowId,
+            Pins?.Invoke(id) ?? [],
+            Closest?.Invoke(id) ?? [],
+            catalog.All.Where(static q => !q.IsRemoved).Select(static q => q.RowId),
+            max);
+        var quests = new List<QuestRecord>(rows.Count);
+        foreach (var rowId in rows)
+        {
+            if (catalog.GetByRowId(rowId) is { } quest)
+            {
+                quests.Add(quest);
+            }
+        }
+
+        return quests;
+    }
+
+    /// <summary>
+    /// The zone of a step's place by its own name, never through a shield (null when the step has no place): a caller
+    /// names it through the shield it speaks for (the summary: the logged-in character's). Never print it as it is.
+    /// </summary>
+    public string? StepZone(StepView? view) => view?.Step.Place is { } place ? links.Map(place.MapId)?.PlaceName : null;
 
     /// <summary>Up next's pick (1.21.0 P1, <see cref="Core.Todo.UpNextPicker"/>), so the chat and Tonight always agree.</summary>
     private (QuestRecord Quest, Core.Todo.UpNextRule Rule)? PickWithRule(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states)

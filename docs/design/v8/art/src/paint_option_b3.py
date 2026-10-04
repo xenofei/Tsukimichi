@@ -50,8 +50,9 @@ def moon(c, M, mx, my, mr, ux, uy, k, tint="#F3EFE3", unlit="#1E2A55", unlit_a=0
 
 def moon_full(c, M, mx, my, mr, ux=0.919, uy=0.395, tint=(1.0, 1.0, 1.0), seed=3):
     """A near-full moon after the recipe of paint_release.moon_disc (Option A's answers-base): the seas (sea_mask)
-    at one low opacity, limb darkening, a cool halo, and a thin unlit sliver (0.09 r) on the side away from the sun
-    (ux, uy). Sets the masks moon (the disc), moonlit (the disc without the sliver) and seas (for the Orrery's
+    at one low opacity, limb darkening, a cool halo, and an unlit sliver on the side away from the sun (ux, uy): at
+    popup size 0.2 r wide, softly edged, in the local sky's own tone, so it reads as an unlit band (0.09 r for a
+    larger moon). Sets the masks moon (the disc), moonlit (the disc without the sliver) and seas (for the Orrery's
     engraving and the glass's grisaille). tint warms a low moon. Every moon is kept out of the Kuwahara pass."""
     d = c.radial(mx, my, mr)
     disc = np.clip((1 - d) * mr / 1.2 + 0.5, 0, 1)
@@ -64,11 +65,16 @@ def moon_full(c, M, mx, my, mr, ux=0.919, uy=0.395, tint=(1.0, 1.0, 1.0), seed=3
     dx, dy = (c.xx - mx) / mr, (c.yy - my) / mr
     a = dx * ux + dy * uy
     b = -dx * uy + dy * ux
-    term = np.clip((-0.91 * np.sqrt(np.clip(1 - b * b, 0, 1)) - a) * mr + 0.5, 0, 1) * disc
+    # at popup size the sliver is 0.2 r at its middle (2 px at the popup's 1x), softly edged, so it can be seen
+    kt = 0.80 if mr <= SMALL_MOON else 0.91
+    term = np.clip((-kt * np.sqrt(np.clip(1 - b * b, 0, 1)) - a) * mr / 1.6 + 0.5, 0, 1) * disc
     c.add(hexc("#DCE6FF"), np.exp(-(c.radial(mx, my, mr * 4.5)) ** 2 * 2.2) * 0.16)
     c.add(hexc("#C8D6FF"), np.exp(-(c.radial(mx, my, mr * 12)) ** 2 * 2.0) * 0.10)
+    # the unlit band takes the local sky's own tone (just outside the disc on that side), a touch lifted by earthshine
+    sx_, sy_ = int(np.clip(mx - ux * mr * 1.35, 0, c.w - 1)), int(np.clip(my - uy * mr * 1.35, 0, c.h - 1))
+    sky_c = c.px[sy_, sx_].copy() * 1.08 + hexc("#0A0E1C") * 0.08
     c.over(col, disc)
-    c.over(hexc("#2A3866"), term * 0.82)
+    c.over(sky_c, term * 0.95)
     M["moon"], M["moonlit"] = disc, np.clip(disc - term, 0, 1)
     M["seas"] = sm_ * disc
 
@@ -87,7 +93,7 @@ def sea_mask(c, mx, my, mr, seed):
         for (sx, sy, rx, ry, k) in ((-0.30, -0.16, 0.34, 0.25, 1.0), (0.04, -0.24, 0.30, 0.22, 0.95), (0.30, -0.10, 0.24, 0.21, 0.85),
                                     (-0.08, -0.04, 0.26, 0.16, 0.8), (-0.48, -0.02, 0.14, 0.17, 0.6)):
             seas = np.maximum(seas, c.ellipse(mx + sx * mr, my + sy * mr, rx * mr, ry * mr, 0.6) * k)
-        seas = blur(seas, mr * 0.12) * (0.85 + 0.15 * fbm(c.h, c.w, mr * 0.25, 3, seed))
+        seas = blur(seas, mr * 0.08) * (0.72 + 0.28 * fbm(c.h, c.w, mr * 0.22, 3, seed))     # a lobed, broken mass
         return np.clip(seas, 0, 1)
     # a broken chain with clear gaps, so no two seas join into a hook ("?" or "C"): Procellarum along the left limb,
     # Imbrium upper left, Serenitatis upper right of centre, Tranquillitatis right of centre, Fecunditatis and
@@ -370,7 +376,7 @@ def polish():
     # the boat stays in front of its reflection
     c.over(hexc("#0C101C"), boat)
     c.over(hexc("#141A2C"), rig * 0.8)
-    finish(c, np.maximum.reduce([city, boat, towers, rig, M["moon"]]), 741)
+    finish(c, np.maximum.reduce([city, boat, towers, rig, M["moon"]]), 741, plain=M["moon"])
     # after the pass: the moon's path on the water, the moonlit rims, the window's glow and its warmth on the boat
     glitter(c, mx, hz, field * (1 - np.maximum(city, boat)), 148, col="#FFEBC8", strength=0.95, w0=8.0, spread=0.26, thr=0.60)
     c.add(hexc("#B8BDD8"), rims(boat, -1, -1, 2) * 0.45)
@@ -593,7 +599,7 @@ def faces():
     # the moon's shadows: the lodge throws its shadow toward the viewer and right; the windows' warm pools lie in it
     lshadow = c.poly([(lx0 + 0.03 * W, 0.808 * H), (lx1, 0.808 * H), (lx1 + 0.10 * W, 0.90 * H), (lx0 + 0.10 * W, 0.90 * H)], 10) * field * (1 - rm)
     c.mul(hexc("#08121A"), lshadow * 0.45)
-    finish(c, np.maximum.reduce([city, faces_m, win, fern, M["moon"]]), 751)
+    finish(c, np.maximum.reduce([city, faces_m, win, fern, M["moon"]]), 751, plain=M["moon"])
     pools = np.zeros((H, W), np.float32)
     for wc in wcs:
         d_ = np.clip(c.yy - 0.81 * H, 0, None)
@@ -724,7 +730,7 @@ def themes():
     w_ = np.maximum(w_, c.poly(P([(-14, -44), (-30, -30), (-24, -6), (-14, -10)]), 0.7))            # cloak over the rock
     c.over(hexc("#0C1020"), w_)
     M["figs"] = w_
-    finish(c, np.maximum.reduce([w_, crys, M["moon"]]), 761)
+    finish(c, np.maximum.reduce([w_, crys, M["moon"]]), 761, plain=M["moon"])
     c.add(hexc("#B8C6EE"), rims(w_, 1, -1, 2) * 0.6)
     M["city"] = crys * (1 - fmask)                                               # the crystals are their own shapes
     M["far_c"] = np.clip(M["far_c"] - M["city"], 0, 1)
@@ -912,7 +918,7 @@ def mixmatch():
     M["ridge"] = rm * (1 - toro)
     mist = np.exp(-((c.yy - (hz + 0.07 * H)) / 22) ** 2) * fbm(H, W, 120, 3, 181)
     c.add(hexc("#C890A0"), mist * 0.22)
-    finish(c, np.maximum.reduce([figs, keep, pines, M["moon"]]), 771)
+    finish(c, np.maximum.reduce([figs, keep, pines, M["moon"]]), 771, plain=M["moon"])
     # after the pass: the dawn on the stones' tops and left rims, the lantern's glow and its warmth on what faces it
     for (topm, x, y, hw, _ty) in tops:
         c.add(hexc("#F4B8A0"), topm * 0.10)
@@ -1076,7 +1082,7 @@ def runs():
     M["rope"] = np.maximum(M["rope"], reeds)                                    # reeds kept as lines in every treatment
     # soft moon shadows (the veil diffuses them): the near post's shadow toward us and right
     contact_shadow(c, npx, npy_b, 26, -60, 30, 0.45)
-    finish(c, np.maximum.reduce([ferry, lines, lan, reeds, M["moon"]]), 781)
+    finish(c, np.maximum.reduce([ferry, lines, lan, reeds, M["moon"]]), 781, plain=M["moon"])
     # after the pass: the moon's broken path on the river, rims, the lantern's glow, its column on the water and
     # its warmth on the chocobo and the deck
     glitter(c, mx, wl, field * (1 - ferry), 192, col="#E6ECFF", strength=0.55, w0=6.0, spread=0.20, thr=0.66, near=0.8)

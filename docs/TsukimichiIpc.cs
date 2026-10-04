@@ -1,4 +1,5 @@
-// TsukimichiIpc.cs — a drop-in client for Tsukimichi's IPC (docs/ipc.md), API version 1, gates up to Tsukimichi 1.8.0.
+// TsukimichiIpc.cs — a drop-in client for Tsukimichi's IPC (docs/ipc.md), API version 1, gates up to Tsukimichi 1.22.0
+// (the summary, version 1).
 //
 // Copy this file into your Dalamud plugin, change the namespace, and create one instance with your plugin interface:
 //
@@ -23,6 +24,9 @@ public sealed class TsukimichiIpc : IDisposable
 {
     /// <summary>The API version this file was written for.</summary>
     public const int SupportedApiVersion = 1;
+
+    /// <summary>The summary version this file was written for (Tsukimichi.GetSummaryVersion, since 1.22.0).</summary>
+    public const int SupportedSummaryVersion = 1;
 
     private readonly ICallGateSubscriber<int> apiVersion;
     private readonly ICallGateSubscriber<bool> isReady;
@@ -49,6 +53,18 @@ public sealed class TsukimichiIpc : IDisposable
     private readonly ICallGateSubscriber<object> statesChanged;
     private readonly ICallGateSubscriber<uint, string, string, object> questStateChanged;
     private readonly ICallGateSubscriber<object> disposing;
+    private readonly ICallGateSubscriber<int> getSummaryVersion;
+    private readonly ICallGateSubscriber<(string, string, int)> getCharacter;
+    private readonly ICallGateSubscriber<(uint, string, string)> getUpNext;
+    private readonly ICallGateSubscriber<(int, int, string)> getReadyCount;
+    private readonly ICallGateSubscriber<(int, int)> getJournalRoom;
+    private readonly ICallGateSubscriber<(string, int)[]> getEndingSoon;
+    private readonly ICallGateSubscriber<(string, int, bool)> getStoryMeter;
+    private readonly ICallGateSubscriber<string> getTheme;
+    private readonly ICallGateSubscriber<string, bool> openAt;
+    private readonly ICallGateSubscriber<string, string, int> addonHello;
+    private readonly ICallGateSubscriber<int, (uint, string, string)[]> getReadyTonight;
+    private readonly ICallGateSubscriber<object> summaryChanged;
 
     public TsukimichiIpc(IDalamudPluginInterface pluginInterface)
     {
@@ -77,11 +93,24 @@ public sealed class TsukimichiIpc : IDisposable
         statesChanged = pluginInterface.GetIpcSubscriber<object>("Tsukimichi.StatesChanged");
         questStateChanged = pluginInterface.GetIpcSubscriber<uint, string, string, object>("Tsukimichi.QuestStateChanged");
         disposing = pluginInterface.GetIpcSubscriber<object>("Tsukimichi.Disposing");
+        getSummaryVersion = pluginInterface.GetIpcSubscriber<int>("Tsukimichi.GetSummaryVersion");
+        getCharacter = pluginInterface.GetIpcSubscriber<(string, string, int)>("Tsukimichi.GetCharacter");
+        getUpNext = pluginInterface.GetIpcSubscriber<(uint, string, string)>("Tsukimichi.GetUpNext");
+        getReadyCount = pluginInterface.GetIpcSubscriber<(int, int, string)>("Tsukimichi.GetReadyCount");
+        getJournalRoom = pluginInterface.GetIpcSubscriber<(int, int)>("Tsukimichi.GetJournalRoom");
+        getEndingSoon = pluginInterface.GetIpcSubscriber<(string, int)[]>("Tsukimichi.GetEndingSoon");
+        getStoryMeter = pluginInterface.GetIpcSubscriber<(string, int, bool)>("Tsukimichi.GetStoryMeter");
+        getTheme = pluginInterface.GetIpcSubscriber<string>("Tsukimichi.GetTheme");
+        openAt = pluginInterface.GetIpcSubscriber<string, bool>("Tsukimichi.OpenAt");
+        addonHello = pluginInterface.GetIpcSubscriber<string, string, int>("Tsukimichi.AddonHello");
+        getReadyTonight = pluginInterface.GetIpcSubscriber<int, (uint, string, string)[]>("Tsukimichi.GetReadyTonight");
+        summaryChanged = pluginInterface.GetIpcSubscriber<object>("Tsukimichi.SummaryChanged");
 
         // Subscribing works whether or not Tsukimichi is loaded yet; the messages start arriving once it is.
         statesChanged.Subscribe(OnStatesChanged);
         questStateChanged.Subscribe(OnQuestStateChanged);
         disposing.Subscribe(OnDisposing);
+        summaryChanged.Subscribe(OnSummaryChanged);
     }
 
     /// <summary>The logged-in character's quest states changed: read again what you show.</summary>
@@ -92,6 +121,9 @@ public sealed class TsukimichiIpc : IDisposable
 
     /// <summary>Tsukimichi is unloading: drop what you cached. Since 1.8.0.</summary>
     public event Action? Unloading;
+
+    /// <summary>Anything the summary answers changed: read it again. Since 1.22.0.</summary>
+    public event Action? SummaryChanged;
 
     /// <summary>Tsukimichi is loaded, speaks a version this file understands, and has evaluated the character.</summary>
     public bool Ready => Try(() => apiVersion.InvokeFunc() == SupportedApiVersion && isReady.InvokeFunc(), false);
@@ -162,11 +194,47 @@ public sealed class TsukimichiIpc : IDisposable
     /// <summary>Opens Tsukimichi's window on the quest; call it from a click.</summary>
     public bool Open(uint questId) => Try(() => openQuest.InvokeFunc(questId), false);
 
+    // ---- The summary (since 1.22.0): tonight for the logged-in character, names already through the spoiler shield.
+
+    /// <summary>The summary is there and speaks a version this file understands.</summary>
+    public bool SummaryReady => Try(() => getSummaryVersion.InvokeFunc() == SupportedSummaryVersion, false);
+
+    /// <summary>The character's name, job ("WHM") and level; empty before one is evaluated.</summary>
+    public (string Name, string Job, int Level) Character => Try(() => getCharacter.InvokeFunc(), (string.Empty, string.Empty, 0));
+
+    /// <summary>Up next: row id (0 for none), its name and its step or place line.</summary>
+    public (uint RowId, string Name, string Step) UpNext => Try(() => getUpNext.InvokeFunc(), (0u, string.Empty, string.Empty));
+
+    /// <summary>Quests Ready on the current job, quests that can start in this zone, and the job.</summary>
+    public (int Ready, int Here, string Job) ReadyCount => Try(() => getReadyCount.InvokeFunc(), (0, 0, string.Empty));
+
+    /// <summary>Journal slots used and in all; (-1, 0) when not read.</summary>
+    public (int Used, int Cap) JournalRoom => Try(() => getJournalRoom.InvokeFunc(), (-1, 0));
+
+    /// <summary>Seasonal events ending soon, soonest first, with whole days left (0: today).</summary>
+    public (string Name, int DaysLeft)[] EndingSoon => Try(() => getEndingSoon.InvokeFunc(), Array.Empty<(string, int)>());
+
+    /// <summary>The main scenario part, quests left to the latest story, and whether the story is caught up.</summary>
+    public (string Part, int LeftToLatest, bool CaughtUp) StoryMeter => Try(() => getStoryMeter.InvokeFunc(), (string.Empty, 0, false));
+
+    /// <summary>The theme in use ("medallion", "classic", "ishgard-glass", "aether-crystal", "astrologian-orrery", "sumi-to-kinpaku").</summary>
+    public string Theme => Try(() => getTheme.InvokeFunc(), string.Empty);
+
+    /// <summary>Opens Tsukimichi at "main", "tonight", "upnext", "route", "settings" or "makeroom"; never travels. Call it from a click.</summary>
+    public bool OpenAt(string place) => Try(() => openAt.InvokeFunc(place), false);
+
+    /// <summary>Says your add-on is there (Tsukimichi's Settings › About shows its version); returns the summary version, 0 when absent.</summary>
+    public int Hello(string addon, string version) => Try(() => addonHello.InvokeFunc(addon, version), 0);
+
+    /// <summary>The first <paramref name="max"/> Ready quests in Tonight's order (at most 20): row id, shielded name, the giver's zone.</summary>
+    public (uint RowId, string Name, string Place)[] ReadyTonight(int max) => Try(() => getReadyTonight.InvokeFunc(max), Array.Empty<(uint, string, string)>());
+
     public void Dispose()
     {
         statesChanged.Unsubscribe(OnStatesChanged);
         questStateChanged.Unsubscribe(OnQuestStateChanged);
         disposing.Unsubscribe(OnDisposing);
+        summaryChanged.Unsubscribe(OnSummaryChanged);
     }
 
     private void OnStatesChanged() => Changed?.Invoke();
@@ -174,6 +242,8 @@ public sealed class TsukimichiIpc : IDisposable
     private void OnQuestStateChanged(uint rowId, string from, string to) => QuestChanged?.Invoke(rowId, from, to);
 
     private void OnDisposing() => Unloading?.Invoke();
+
+    private void OnSummaryChanged() => SummaryChanged?.Invoke();
 
     private static T Try<T>(Func<T> call, T absent)
     {

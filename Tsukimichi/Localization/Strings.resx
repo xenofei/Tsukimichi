@@ -439,6 +439,314 @@
   <data name="DiscoveryDtrTooltipClick" xml:space="preserve">
     <value>Click to open Nearby quests</value>
   </data>
+  <data name="SettingsUpdatesHeading" xml:space="preserve">
+    <value>Updates</value>
+    <comment>Settings › About block heading (1.22 U1).</comment>
+  </data>
+  <data name="UpdateReadyFormat" xml:space="preserve">
+    <value>Tsukimichi {0} is ready</value>
+    <comment>The status bar's update note (1.22 U1). {0} = the new version.</comment>
+  </data>
+  <data name="UpdateButton" xml:space="preserve">
+    <value>Update</value>
+    <comment>The update note's button: opens Dalamud's plugin installer on Can be updated (1.22 U1).</comment>
+  </data>
+  <data name="UpdateButtonTooltip" xml:space="preserve">
+    <value>Opens Dalamud's plugin installer on Can be updated. Dalamud installs it.</value>
+    <comment>Tooltip on Update (1.22 U1).</comment>
+  </data>
+  <data name="UpdateLaterTooltip" xml:space="preserve">
+    <value>Later: hide this until a newer version is ready</value>
+    <comment>Tooltip on the update note's × (1.22 U1).</comment>
+  </data>
+  <data name="UpdateHoverTitleFormat" xml:space="preserve">
+    <value>What's in {0}</value>
+    <comment>First line of the update note's hover (1.22 U1). {0} = the new version.</comment>
+  </data>
+  <data name="UpdateHoverFoot" xml:space="preserve">
+    <value>Dalamud installs it; Tsukimichi never downloads itself.</value>
+    <comment>Last line of the update note's hover and of Settings › About › What's in it (1.22 U1).</comment>
+  </data>
+  <data name="UpdateNoNotes" xml:space="preserve">
+    <value>Dalamud has no notes for this version yet.</value>
+    <comment>The update hover when Dalamud has no changelog (1.22 U1).</comment>
+  </data>
+  <data name="UpdateChatFormat" xml:space="preserve">
+    <value>Tsukimichi {0} is ready. Update it in Dalamud's plugin installer.</value>
+    <comment>The opt-in chat line when a version is ready (1.22 U1, decision 6). {0} = the new version.</comment>
+  </data>
+  <data name="UpdateCheckLabel" xml:space="preserve">
+    <value>Tell me when a new version is ready</value>
+    <comment>Settings › About › Updates switch (1.22 U1). At most 40 characters.</comment>
+  </data>
+  <data name="UpdateCheckHint" xml:space="preserve">
+    <value>Asks Dalamud, which already checks your plugin repositories. Tsukimichi itself never goes online for this.</value>
+    <comment>Hint under the update switch (1.22 U1). At most 110 characters.</comment>
+  </data>
+  <data name="UpdateChatLabel" xml:space="preserve">
+    <value>Also say it in chat</value>
+    <comment>Settings › About › Updates sub-switch (1.22 U1, decision 6).</comment>
+  </data>
+  <data name="UpdateChatHint" xml:space="preserve">
+    <value>One line in your echo channel when a version is ready.</value>
+    <comment>Hint under Also say it in chat (1.22 U1).</comment>
+  </data>
+  <data name="UpdateChatOffReason" xml:space="preserve">
+    <value>Turn on Tell me when a new version is ready first.</value>
+    <comment>Shown in place of the hint while the update switch is off (1.22 U1).</comment>
+  </data>
+  <data name="UpdateSettingsReadyFormat" xml:space="preserve">
+    <value>Tsukimichi {0} is ready</value>
+    <comment>Settings › About › Updates status line while a version waits (1.22 U1). {0} = the new version.</comment>
+  </data>
+  <data name="UpdateSettingsReadyHint" xml:space="preserve">
+    <value>Dalamud has it. Update opens its installer; Dalamud installs it.</value>
+    <comment>Hint under the ready status line (1.22 U1).</comment>
+  </data>
+  <data name="UpdateSettingsUpToDateFormat" xml:space="preserve">
+    <value>Up to date · Dalamud last looked {0}</value>
+    <comment>Settings › About › Updates status line (1.22 U1). {0} = an age ("6 min ago").</comment>
+  </data>
+  <data name="UpdateSettingsWaiting" xml:space="preserve">
+    <value>Asking Dalamud whether a new version is ready…</value>
+    <comment>Settings › About › Updates status line before the first answer (1.22 U1).</comment>
+  </data>
+  <data name="UpdateSettingsOff" xml:space="preserve">
+    <value>Not checking: Tell me when a new version is ready is off</value>
+    <comment>Settings › About › Updates status line while the switch is off (1.22 U1).</comment>
+  </data>
+  <data name="UpdateWhatsInIt" xml:space="preserve">
+    <value>What's in it ›</value>
+    <comment>Settings › About › Updates: opens the new version's plain notes (1.22 U1).</comment>
+  </data>
+  <data name="UpdateWhatsInItOpen" xml:space="preserve">
+    <value>What's in it ▾</value>
+    <comment>Settings › About › Updates: the notes are open (1.22 U1).</comment>
+  </data>
+  <data name="ServerBarReadyFormat" xml:space="preserve">
+    <value>{0} Ready</value>
+    <comment>The server info bar entry after the moon (1.22 M1). {0} = quests Ready on the current job.</comment>
+  </data>
+  <data name="ServerBarHereFormat" xml:space="preserve">
+    <value>{0} here</value>
+    <comment>The server info bar entry counting this zone (1.22 M1). {0} = quests that can start here.</comment>
+  </data>
+  <data name="ServerBarNothingReady" xml:space="preserve">
+    <value>Nothing Ready</value>
+    <comment>The entry at zero with Show at zero on (1.22 M1).</comment>
+  </data>
+  <data name="ServerBarNothingHere" xml:space="preserve">
+    <value>Nothing here</value>
+    <comment>The zone entry at zero with Show at zero on (1.22 M1).</comment>
+  </data>
+  <data name="ServerBarUpNextFormat" xml:space="preserve">
+    <value>Up next: {0}</value>
+    <comment>Server info bar tooltip line (1.22 M1). {0} = Up next's quest, through the spoiler shield.</comment>
+  </data>
+  <data name="ServerBarTipReadyFormat" xml:space="preserve">
+    <value>{0} quests are Ready on {1}</value>
+    <comment>Server info bar tooltip (1.22 M1). {0} = count; {1} = job abbreviation.</comment>
+  </data>
+  <data name="ServerBarTipReadyOneFormat" xml:space="preserve">
+    <value>1 quest is Ready on {0}</value>
+    <comment>Server info bar tooltip (1.22 M1). {0} = job abbreviation.</comment>
+  </data>
+  <data name="ServerBarTipNothingReadyFormat" xml:space="preserve">
+    <value>Nothing is Ready on {0}</value>
+    <comment>Server info bar tooltip (1.22 M1). {0} = job abbreviation.</comment>
+  </data>
+  <data name="ServerBarTipHereFormat" xml:space="preserve">
+    <value>{0} can start here</value>
+    <comment>Server info bar tooltip, after the Ready count (1.22 M1). {0} = quests that can start in this zone.</comment>
+  </data>
+  <data name="ServerBarTipHereNone" xml:space="preserve">
+    <value>nothing starts here</value>
+    <comment>Server info bar tooltip, after the Ready count, when no quest starts in this zone (1.22 M1).</comment>
+  </data>
+  <data name="ServerBarJournalFormat" xml:space="preserve">
+    <value>Journal {0}/{1} · {2} slots left</value>
+    <comment>Server info bar tooltip (1.22 M1). {0} = used; {1} = slots; {2} = left.</comment>
+  </data>
+  <data name="ServerBarJournalOneFormat" xml:space="preserve">
+    <value>Journal {0}/{1} · 1 slot left</value>
+    <comment>Server info bar tooltip (1.22 M1). {0} = used; {1} = slots.</comment>
+  </data>
+  <data name="ServerBarJournalFullFormat" xml:space="preserve">
+    <value>Journal full · {0}/{1}</value>
+    <comment>Server info bar tooltip (1.22 M1). {0} = used; {1} = slots.</comment>
+  </data>
+  <data name="ServerBarEndsInFormat" xml:space="preserve">
+    <value>{0} ends in {1} days</value>
+    <comment>Server info bar tooltip (1.22 M1). {0} = event; {1} = days left.</comment>
+  </data>
+  <data name="ServerBarEndsTomorrowFormat" xml:space="preserve">
+    <value>{0} ends tomorrow</value>
+    <comment>Server info bar tooltip (1.22 M1). {0} = event.</comment>
+  </data>
+  <data name="ServerBarEndsTodayFormat" xml:space="preserve">
+    <value>{0} ends today</value>
+    <comment>Server info bar tooltip (1.22 M1). {0} = event.</comment>
+  </data>
+  <data name="ServerBarClicksReady" xml:space="preserve">
+    <value>Click: open Tsukimichi · Right-click: Tonight</value>
+    <comment>Server info bar tooltip's last line (1.22 M1).</comment>
+  </data>
+  <data name="ServerBarClicksZone" xml:space="preserve">
+    <value>Click: Nearby quests · Right-click: Tonight</value>
+    <comment>Server info bar tooltip's last line while the entry counts this zone (1.22 M1).</comment>
+  </data>
+  <data name="ServerBarShowHint" xml:space="preserve">
+    <value>Ready quests, Up next and your journal at a glance. On by default with Umbra.</value>
+    <comment>Hint under Count in the server info bar (1.22 M1). At most 110 characters.</comment>
+  </data>
+  <data name="ServerBarCountsLabel" xml:space="preserve">
+    <value>The entry counts</value>
+    <comment>Settings › In game › Server info bar choice (1.22 M1).</comment>
+  </data>
+  <data name="ServerBarCountsHint" xml:space="preserve">
+    <value>Ready quests opens Tsukimichi; Quests in this zone opens Nearby.</value>
+    <comment>Hint under The entry counts (1.22 M1).</comment>
+  </data>
+  <data name="ServerBarCountsReady" xml:space="preserve">
+    <value>Ready quests</value>
+    <comment>The entry counts: Ready quests (1.22 M1, the default).</comment>
+  </data>
+  <data name="ServerBarCountsZone" xml:space="preserve">
+    <value>Quests in this zone</value>
+    <comment>The entry counts: quests that can start in this zone (1.22 M1).</comment>
+  </data>
+  <data name="SettingsUmbraHeading" xml:space="preserve">
+    <value>Umbra</value>
+    <comment>Settings › About block heading (1.22 M3).</comment>
+  </data>
+  <data name="UmbraNotInstalled" xml:space="preserve">
+    <value>Umbra isn't installed</value>
+    <comment>Settings › About › Umbra, without Umbra (1.22 M3). At most 40 characters.</comment>
+  </data>
+  <data name="UmbraNotInstalledHint" xml:space="preserve">
+    <value>Tsukimichi works the same without it.</value>
+    <comment>Under Umbra isn't installed (1.22 M3).</comment>
+  </data>
+  <data name="UmbraRunning" xml:space="preserve">
+    <value>Umbra is running</value>
+    <comment>Settings › About › Umbra status label (1.22 M3).</comment>
+  </data>
+  <data name="UmbraBarTop" xml:space="preserve">
+    <value>Its toolbar is at the top. The moon icon, the Todo overlay and Needs you keep clear of it.</value>
+    <comment>Under Umbra is running (1.22 M3).</comment>
+  </data>
+  <data name="UmbraBarBottom" xml:space="preserve">
+    <value>Its toolbar is at the bottom. The moon icon, the Todo overlay and Needs you keep clear of it.</value>
+    <comment>Under Umbra is running (1.22 M3).</comment>
+  </data>
+  <data name="UmbraBarFloats" xml:space="preserve">
+    <value>Its toolbar floats or hides itself, so nothing needs to move for it.</value>
+    <comment>Under Umbra is running: a floating or auto-hidden bar (1.22 M3).</comment>
+  </data>
+  <data name="UmbraBarHidden" xml:space="preserve">
+    <value>Its toolbar is turned off, so nothing needs to move for it.</value>
+    <comment>Under Umbra is running: the bar is off (1.22 M3).</comment>
+  </data>
+  <data name="UmbraUnreadFormat" xml:space="preserve">
+    <value>Umbra's settings can't be read, so Tsukimichi keeps clear of a {0} px bar at the top.</value>
+    <comment>Under Umbra is running when its settings can't be read (1.22 M3). {0} = the assumed height.</comment>
+  </data>
+  <data name="UmbraAssumedLabel" xml:space="preserve">
+    <value>Assumed toolbar height</value>
+    <comment>Settings › About › Umbra, while Umbra's settings can't be read (1.22 M3).</comment>
+  </data>
+  <data name="UmbraAssumedHint" xml:space="preserve">
+    <value>How far the moon icon, the Todo overlay and Needs you keep from the top. 0 keeps nothing clear.</value>
+    <comment>Hint under Assumed toolbar height (1.22 M3).</comment>
+  </data>
+  <data name="UmbraAssumedFormat" xml:space="preserve">
+    <value>%d px</value>
+    <comment>Slider text of Assumed toolbar height (1.22 M3): a printf specifier, keep %d.</comment>
+  </data>
+  <data name="UmbraAddonLabel" xml:space="preserve">
+    <value>Tsukimichi for Umbra</value>
+    <comment>Settings › About › Umbra: the add-on (1.22 M3).</comment>
+  </data>
+  <data name="UmbraAddonAddedFormat" xml:space="preserve">
+    <value>Added · {0}</value>
+    <comment>Under Tsukimichi for Umbra (1.22 M3). {0} = the add-on's version.</comment>
+  </data>
+  <data name="UmbraAddonListed" xml:space="preserve">
+    <value>Added</value>
+    <comment>Under Tsukimichi for Umbra when Umbra lists it but it has not said hello yet (1.22 M3).</comment>
+  </data>
+  <data name="UmbraAddonMissing" xml:space="preserve">
+    <value>Not added. It puts Tonight in your Umbra bar.</value>
+    <comment>Under Tsukimichi for Umbra (1.22 M3).</comment>
+  </data>
+  <data name="UmbraHowToAdd" xml:space="preserve">
+    <value>How to add it ›</value>
+    <comment>Opens the three steps (1.22 M3).</comment>
+  </data>
+  <data name="UmbraHowToAddOpen" xml:space="preserve">
+    <value>How to add it ▾</value>
+    <comment>The three steps are open (1.22 M3).</comment>
+  </data>
+  <data name="UmbraHowLead" xml:space="preserve">
+    <value>Umbra loads add-ons it calls custom plugins. Once:</value>
+    <comment>Before the three steps (1.22 M3).</comment>
+  </data>
+  <data name="UmbraHowStep1" xml:space="preserve">
+    <value>1. In Umbra's settings, open Plugins and turn on custom plugins (Umbra asks you to agree first).</value>
+    <comment>Step 1 (1.22 M3).</comment>
+  </data>
+  <data name="UmbraHowStep2Format" xml:space="preserve">
+    <value>2. Add the repository {0}. Umbra installs it and keeps it up to date.</value>
+    <comment>Step 2 (1.22 M3). {0} = the repository.</comment>
+  </data>
+  <data name="UmbraHowStep3" xml:space="preserve">
+    <value>3. Add the Tsukimichi widgets to your toolbar from Umbra's widget list.</value>
+    <comment>Step 3 (1.22 M3).</comment>
+  </data>
+  <data name="UmbraCopyRepository" xml:space="preserve">
+    <value>Copy the repository</value>
+    <comment>Copies xenofei/Tsukimichi.Umbra (1.22 M3).</comment>
+  </data>
+  <data name="FollowUmbraLabel" xml:space="preserve">
+    <value>Follow Umbra</value>
+    <comment>Settings › About › Umbra: the palette row (1.22 M3, decision 4).</comment>
+  </data>
+  <data name="FollowUmbraInUse" xml:space="preserve">
+    <value>A palette that matches your Umbra colours. In use; choose palettes in Settings › Themes.</value>
+    <comment>Under Follow Umbra (1.22 M3).</comment>
+  </data>
+  <data name="FollowUmbraNotInUse" xml:space="preserve">
+    <value>A palette that matches your Umbra colours, in Settings › Themes beside Follow Dalamud.</value>
+    <comment>Under Follow Umbra (1.22 M3).</comment>
+  </data>
+  <data name="FollowUmbraFellBack" xml:space="preserve">
+    <value>In use, but Umbra's colours can't be read, so Tsukimichi shows Night.</value>
+    <comment>Under Follow Umbra (1.22 M3).</comment>
+  </data>
+  <data name="FollowUmbraThemesLink" xml:space="preserve">
+    <value>Themes ›</value>
+    <comment>Opens Settings › Themes (1.22 M3).</comment>
+  </data>
+  <data name="PaletteNameFollowUmbra" xml:space="preserve">
+    <value>Follow Umbra</value>
+    <comment>Palette tile name (1.22 M3, decision 4).</comment>
+  </data>
+  <data name="FollowUmbraTileFormat" xml:space="preserve">
+    <value>Your Umbra colours ({0}), read from Umbra's settings. Tsukimichi never changes them.</value>
+    <comment>Follow Umbra tile hover (1.22 M3). {0} = Umbra's colour profile name.</comment>
+  </data>
+  <data name="FollowUmbraTileClamped" xml:space="preserve">
+    <value>Its text was made a little stronger so every line reads.</value>
+    <comment>Follow Umbra tile hover, when the contrast clamp moved the text (1.22 M3).</comment>
+  </data>
+  <data name="FollowUmbraTileUnread" xml:space="preserve">
+    <value>Umbra's colours can't be read, so this shows Night.</value>
+    <comment>Follow Umbra tile hover (1.22 M3).</comment>
+  </data>
+  <data name="FollowUmbraTileNoUmbra" xml:space="preserve">
+    <value>Umbra isn't running, so this shows Night.</value>
+    <comment>Follow Umbra tile hover (1.22 M3).</comment>
+  </data>
   <data name="DutyHintCaption" xml:space="preserve">
     <value>Locked duty</value>
     <comment>Caption above the duty name.</comment>
@@ -1444,7 +1752,7 @@
   </data>
   <data name="NewChaptersLabel" xml:space="preserve">
     <value>New chapters</value>
-    <comment>1.21.0 P5: the What's new card's line for side stories that gained quests this patch.</comment>
+    <comment>1.21.0 P5: the Tonight card's line (the What's new card's until 1.22) for side stories that gained quests this patch.</comment>
   </data>
   <data name="NewChaptersQuestOne" xml:space="preserve">
     <value>1 quest</value>
@@ -3795,15 +4103,8 @@
   <data name="ConfigPollCostUnknown" xml:space="preserve">
     <value>Each refresh costs a few milliseconds; 1 s is the default and is safe.</value>
   </data>
-  <data name="WhatsNew.TitleFormat" xml:space="preserve">
-    <value>What's new in {0}</value>
-    <comment>{0} = plugin version.</comment>
-  </data>
   <data name="WhatsNew.Close" xml:space="preserve">
     <value>Close</value>
-  </data>
-  <data name="WhatsNew.Help" xml:space="preserve">
-    <value>Help</value>
   </data>
   <data name="Help.WindowTitle" xml:space="preserve">
     <value>Tsukimichi Help###TsukimichiHelp</value>
@@ -4566,22 +4867,6 @@
   </data>
   <data name="RouteCommandNoSelection" xml:space="preserve">
     <value>Select a quest first, or name one: /tsuki route &lt;quest name&gt;.</value>
-  </data>
-  <data name="WhatsNew.SinceFormat" xml:space="preserve">
-    <value>What's new since {0}</value>
-    <comment>{0} = the version you had before; the card lists every version since.</comment>
-  </data>
-  <data name="WhatsNew.More" xml:space="preserve">
-    <value>More</value>
-  </data>
-  <data name="WhatsNew.Less" xml:space="preserve">
-    <value>Less</value>
-  </data>
-  <data name="WhatsNew.MoreTooltip" xml:space="preserve">
-    <value>Show every change in this version</value>
-  </data>
-  <data name="WhatsNew.LessTooltip" xml:space="preserve">
-    <value>Back to the highlights</value>
   </data>
   <data name="Setup.Title" xml:space="preserve">
     <value>Set up your road</value>
@@ -6285,6 +6570,133 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="TodoConfigResetPositionHint" xml:space="preserve">
     <value>Move the overlay back to the top left of the screen.</value>
   </data>
+  <data name="MoonIconMenuLock" xml:space="preserve">
+    <value>Lock in place</value>
+    <comment>The moon icon's right-click menu (1.22 H1). Words only: a padlock would mean Blocked.</comment>
+  </data>
+  <data name="MoonIconMenuUnlock" xml:space="preserve">
+    <value>Unlock</value>
+    <comment>The moon icon's right-click menu while it is locked (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconMenuHide" xml:space="preserve">
+    <value>Hide icon</value>
+    <comment>The moon icon's right-click menu (1.22 H1); /tsuki icon shows it again.</comment>
+  </data>
+  <data name="MoonIconMenuSettings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>The moon icon's right-click menu (1.22 H1): opens Settings.</comment>
+  </data>
+  <data name="MoonIconFirstRunHint" xml:space="preserve">
+    <value>Right-click for options</value>
+    <comment>Beside the moon icon once, after it first appears (1.22 H1, decision 5).</comment>
+  </data>
+  <data name="MoonIconLockedHint" xml:space="preserve">
+    <value>Locked in place · right-click to unlock</value>
+    <comment>Beside the moon icon when a locked icon is dragged, and the quick card's last line while it is locked (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconHidden" xml:space="preserve">
+    <value>Moon icon hidden</value>
+    <comment>Undo toast after Hide icon (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconShowsAgain" xml:space="preserve">
+    <value>/tsuki icon shows it again</value>
+    <comment>Undo toast after Hide icon, after Undo (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconCardHint" xml:space="preserve">
+    <value>Click to open · right-click for options</value>
+    <comment>The moon icon's quick card, its last line (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconCardWhoFormat" xml:space="preserve">
+    <value>{0} · {1} {2}</value>
+    <comment>The quick card's header, right side (1.22 H1). {0} = the character's first name, {1} = job abbreviation, {2} = level.</comment>
+  </data>
+  <data name="MoonIconCardReadyFormat" xml:space="preserve">
+    <value>{0} quests are Ready</value>
+    <comment>The quick card (1.22 H1). {0} = Ready quests, two or more.</comment>
+  </data>
+  <data name="MoonIconCardReadyOne" xml:space="preserve">
+    <value>1 quest is Ready</value>
+    <comment>The quick card (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconCardReadyNone" xml:space="preserve">
+    <value>Nothing is Ready</value>
+    <comment>The quick card (1.22 H1).</comment>
+  </data>
+  <data name="MoonIconCardOnJobFormat" xml:space="preserve">
+    <value>on {0}</value>
+    <comment>The quick card, after the Ready count (1.22 H1). {0} = job abbreviation.</comment>
+  </data>
+  <data name="MoonIconCardUpdateFormat" xml:space="preserve">
+    <value>Tsukimichi {0} is ready</value>
+    <comment>The quick card when Dalamud has a newer version (1.22 U1). {0} = the version.</comment>
+  </data>
+  <data name="MoonIconCardUpdate" xml:space="preserve">
+    <value>Update</value>
+    <comment>The quick card, after the update line: the status bar note's Update does it (1.22 U1).</comment>
+  </data>
+  <data name="MoonIconCardShow" xml:space="preserve">
+    <value>Show</value>
+    <comment>The quick card, after the Needs you line (1.22 H1).</comment>
+  </data>
+  <data name="ConfigSectionMoonIcon" xml:space="preserve">
+    <value>Moon icon</value>
+    <comment>Settings › In game (1.22 H1).</comment>
+  </data>
+  <data name="ConfigMoonIconShow" xml:space="preserve">
+    <value>Show the moon icon</value>
+  </data>
+  <data name="ConfigMoonIconShowHint" xml:space="preserve">
+    <value>A small moon on your screen: click it to open Tsukimichi, hover it for what's next. /tsuki icon</value>
+  </data>
+  <data name="ConfigMoonIconSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="ConfigMoonIconSizeHint" xml:space="preserve">
+    <value>Small 32, Medium 40 or Large 48 px, times the window scale. Text size leaves it alone.</value>
+  </data>
+  <data name="ConfigMoonIconSizeSmall" xml:space="preserve">
+    <value>Small</value>
+  </data>
+  <data name="ConfigMoonIconSizeMedium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="ConfigMoonIconSizeLarge" xml:space="preserve">
+    <value>Large</value>
+  </data>
+  <data name="ConfigMoonIconLock" xml:space="preserve">
+    <value>Lock in place</value>
+  </data>
+  <data name="ConfigMoonIconLockHint" xml:space="preserve">
+    <value>Dragging the icon does nothing. Its right-click menu unlocks it too.</value>
+  </data>
+  <data name="ConfigMoonIconHideCutscenes" xml:space="preserve">
+    <value>Hide in cutscenes</value>
+  </data>
+  <data name="ConfigMoonIconHideCutscenesHint" xml:space="preserve">
+    <value>The icon steps aside while a cutscene plays.</value>
+  </data>
+  <data name="ConfigMoonIconHideGroupPose" xml:space="preserve">
+    <value>Hide in Group Pose</value>
+  </data>
+  <data name="ConfigMoonIconHideGroupPoseHint" xml:space="preserve">
+    <value>Keeps the icon out of your screenshots.</value>
+  </data>
+  <data name="ConfigMoonIconHideDuties" xml:space="preserve">
+    <value>Hide in duties</value>
+  </data>
+  <data name="ConfigMoonIconHideDutiesHint" xml:space="preserve">
+    <value>The icon steps aside while you are in a duty.</value>
+  </data>
+  <data name="ConfigMoonIconOffReason" xml:space="preserve">
+    <value>Turn on Show the moon icon to use this.</value>
+    <comment>Shown in place of a hint while the moon icon is off (1.22 H1).</comment>
+  </data>
+  <data name="ConfigMoonIconReset" xml:space="preserve">
+    <value>Reset position</value>
+  </data>
+  <data name="ConfigMoonIconResetHint" xml:space="preserve">
+    <value>Puts the icon back where it starts on this screen size.</value>
+  </data>
   <data name="QuickViewAll" xml:space="preserve">
     <value>All</value>
   </data>
@@ -7644,7 +8056,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <value>Right-click an item to reveal the quest that rewards it.</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
-    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; msq says where you are in the main scenario and next says what to do next, both as plain sentences; go [quest name] travels to the current step of the selected or named quest, else to its giver; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
+    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby, todo and icon toggle the Nearby quests window, the Todo overlay and the moon icon; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; msq says where you are in the main scenario and next says what to do next, both as plain sentences; go [quest name] travels to the current step of the selected or named quest, else to its giver; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
   </data>
   <data name="StepWhereToGo" xml:space="preserve">
     <value>Where to go</value>
@@ -14916,7 +15328,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Confirmation promise, bold lead.</comment>
   </data>
   <data name="Pack.Promise" xml:space="preserve">
-    <value>This is the one time Tsukimichi goes online. It sends nothing about you or your characters: GitHub sees an ordinary file download from this PC. Tsukimichi never checks for updates by itself.</value>
+    <value>This is the one time Tsukimichi goes online. It sends nothing about you or your characters: GitHub sees an ordinary file download from this PC. Tsukimichi never goes online to check for updates. It asks Dalamud, which already does.</value>
     <comment>Confirmation promise, after the lead.</comment>
   </data>
   <data name="Pack.Spoilers" xml:space="preserve">
@@ -15512,5 +15924,67 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="Core.Guidance.YouAreJob" xml:space="preserve">
     <value>You are {0} {1}.</value>
     <comment>Core: GuidanceText.cs (1.21 P1), a plain chat sentence for text-to-speech: no symbols or brackets. {0} = job abbreviation; {1} = level.</comment>
+  </data>
+  <data name="WhatsNew.Title" xml:space="preserve">
+    <value>What's new</value>
+  </data>
+  <data name="WhatsNew.WasOnFormat" xml:space="preserve">
+    <value>You were on {0}</value>
+    <comment>{0} = the version the player had before the update; shown only when several releases arrived at once.</comment>
+  </data>
+  <data name="WhatsNew.VersionDateFormat" xml:space="preserve">
+    <value>Tsukimichi {0} · {1}</value>
+    <comment>{0} = the plugin version; {1} = the release date ("4 October 2026").</comment>
+  </data>
+  <data name="WhatsNew.PageFormat" xml:space="preserve">
+    <value>{0} of {1}</value>
+    <comment>{0} = this page; {1} = how many pages: "1 of 4".</comment>
+  </data>
+  <data name="WhatsNew.Newer" xml:space="preserve">
+    <value>Newer release</value>
+  </data>
+  <data name="WhatsNew.Older" xml:space="preserve">
+    <value>Older release</value>
+  </data>
+  <data name="WhatsNew.AllReleases" xml:space="preserve">
+    <value>All releases</value>
+  </data>
+  <data name="WhatsNew.AllReleasesTooltip" xml:space="preserve">
+    <value>Every release's notes, in Settings</value>
+  </data>
+  <data name="WhatsNew.ShowAfterUpdate" xml:space="preserve">
+    <value>Show what's new after an update</value>
+  </data>
+  <data name="WhatsNew.ShowAfterUpdateHint" xml:space="preserve">
+    <value>Once per update, at the first quiet moment.</value>
+  </data>
+  <data name="WhatsNew.History" xml:space="preserve">
+    <value>Past releases</value>
+  </data>
+  <data name="WhatsNew.HistoryHint" xml:space="preserve">
+    <value>Each release's notes, newest first. Open one to read it again.</value>
+  </data>
+  <data name="WhatsNew.HistoryNone" xml:space="preserve">
+    <value>No release notes were found in this build.</value>
+  </data>
+  <data name="WhatsNew.RowTooltip" xml:space="preserve">
+    <value>Open this release's notes</value>
+  </data>
+  <data name="WhatsNew.Installed" xml:space="preserve">
+    <value>Installed</value>
+  </data>
+  <data name="WhatsNew.EarlierFormat" xml:space="preserve">
+    <value>{0} earlier releases, back to {1}</value>
+    <comment>{0} = how many releases are folded away; {1} = the oldest one's version.</comment>
+  </data>
+  <data name="WhatsNew.EarlierOneFormat" xml:space="preserve">
+    <value>1 earlier release, {0}</value>
+    <comment>{0} = the one folded release's version.</comment>
+  </data>
+  <data name="WhatsNew.Fewer" xml:space="preserve">
+    <value>Show fewer</value>
+  </data>
+  <data name="NewChaptersCloseTooltip" xml:space="preserve">
+    <value>Close · it comes back with the next patch</value>
   </data>
 </root>
