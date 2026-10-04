@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.19.0 are released; 1.20.0 is built on branches and waits its turn; 1.21.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.20.0 are released; 1.21.0 is built on branches and is being merged. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -164,7 +164,7 @@ Carried from plan v6 (was 1.15), adjusted for Evercold, plus new correctness fea
 | N4 | **Duties board:** why a roulette is locked, and duties unlocked but never cleared | M |
 | N5 | **Where to get hand-in items** for quests that need them | S–M |
 
-### 1.20.0 · Before Evercold
+### 1.20.0 · Before Evercold (released 2026-10-04)
 
 Aim: early December 2026, ahead of 8.0 early access (expected 22 January 2027).
 
@@ -388,6 +388,25 @@ Your notes, and what happens with each:
   - Your High contrast setting is never changed by a code.
 - **Glyph window:** the Themes tab compares two looks, with a heat table and Ready's lead.
 - **Plain:** after the window has been closed for over 30 s, there is no flash of Medallion.
+
+### 1.20.0 (released 2026-10-04)
+
+- **Wider spoiler shield** (use an alt in Stormblood or early Endwalker):
+  - A Kugane-area side quest: the giver, place, rewards and Unlocks rows show placeholders in the quieter colour; the hover and right-click menu work; Reveal this name and Reveal names in this quest reveal only what they say.
+  - Flight, the Duties board, Moonlit, Route titles and stops, the Journal tree and the table title use placeholders; `/tsuki find` and Wotsit don't find hidden names.
+  - A main past Dawntrail viewing an Endwalker alt: no Teleport, Walk or Flag to a Dawntrail place.
+  - Non-breaking spaces in "area 6" and "Lv 97" render in ImGui, chat and Wotsit.
+  - Flipping the new switch and "Quests ahead to reveal" updates every surface at once.
+  - Whether masking feels heavy for very early characters.
+- **Before Evercold:**
+  - The card at Full, Quiet and Plain on Night and Ishgard Snow, and the 460 px switch between button column and row.
+  - Tick and untick a line (it keeps its height); the Done line after reopening; × with Undo and Show again; the card shows once on the Characters tab.
+  - Make room, Show them, the Duties board and both Route buttons; flying status on the live character; a stored alt's sub-line.
+- **Portrait pack:**
+  - Download from Settings › Look: the confirmation (Enter and Esc, focus on Cancel), the scrim over Settings, even with Settings dragged out of the game window; Settings doesn't scroll behind it.
+  - A real download and GitHub redirect; the row keeps its height through Download, Checking and Installed.
+  - Pack faces on the plate and in the hover at Full, Quiet and Plain, and on Ishgard Snow.
+  - Delete an image in the pack folder and restart: "Pack damaged" with Download again. Remove switches back to Game art; Update keeps your choice.
 
 ### 1.19.0 (released 2026-10-04)
 

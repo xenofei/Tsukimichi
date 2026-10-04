@@ -383,7 +383,7 @@ The second matrix shows every part new in 1.20 on all four palettes:
 14. **Remove pack is at the Hold tier with no Undo,** because getting it back takes a download. It uses the shipped Hold button unchanged; no destructive colour variant is added.
 15. **Installing switches Giver portraits to Game art + pack;** picking that choice without the pack opens the confirmation.
 16. **Every placeholder slot is either single-line with an ellipsis or sized for the longer string,** so a reveal never reflows anything.
-17. **The confirmation blocks Settings, not the game.** Its scrim is Tsukimichi's own, over Settings only, in the palette's colour, and it follows Reduce motion. ImGui's modal dim is not used.
+17. **The confirmation blocks Settings, not the game.** Its scrim is Tsukimichi's own, over Settings only, in the palette's colour, and it follows Reduce motion. ImGui's modal dim is not used. (Built in 1.20.0: the scrim is drawn on Settings' own viewport, cut out around the dialog, so it also covers Settings dragged out of the game window; Settings' scrolling and title-bar buttons are off while the dialog is open.)
 
 ## Open questions (answered 3 October 2026)
 

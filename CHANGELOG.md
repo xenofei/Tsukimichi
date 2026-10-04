@@ -4,6 +4,37 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-10-04
+
+### Added
+- **A wider spoiler shield:** past your story point, the names of places, aetherytes, duties, rewards and people are hidden too, not only main scenario quests.
+  - They read "Dawntrail area 6", "Dawntrail aetheryte · area 6", "Dungeon (Lv 97)", "A mount" or "Dawntrail character".
+  - They're drawn in a quieter colour, in the same place and size as the real name.
+  - Hidden rewards show a moon-disc tile instead of their icon.
+  - People you've already met keep their names.
+  - It covers Unlocks, Path, Route, the Journal table and tree, the Duties board, Moonlit, Flight, My blues, tooltips, search, find by unlock, Wotsit, chat lines and copied text.
+  - Hover any placeholder to see why it's hidden. Right-click it for **Reveal this name**, or **Reveal names in this quest**, for this session.
+  - No Teleport, Walk or Flag leads to a place you haven't reached yet. When you view another character, a place stays hidden if either character hasn't reached it.
+  - Settings › Spoilers has a new switch, "Hide places, duties, rewards and people". It starts with the same value as Hide story names ahead. The count line reads "212 story names and 486 other names hidden for …".
+  - It reads the game data, so Evercold's new names are covered as soon as the data updates.
+- **Before Evercold:** a card in Tonight and on the Characters dashboard listing what each character should finish before Patch 8.0. It shows only the lines that apply:
+  - finish the main story;
+  - make room in your journal;
+  - job and role quests;
+  - Dawntrail duties for the roulettes;
+  - flying in Dawntrail.
+  - Each line has its buttons, and its hover says why it's there.
+  - Tick a line yourself ("you said so") and untick it any time. Lines the game says are done fold into one "Done" line the next time the card is built, so nothing moves while you look.
+  - × hides the card for that character, with Undo. The dashboard keeps a "Show again" line.
+  - The card goes away by itself on your own early-access day.
+- **An optional portrait pack:** about 1,850 more quest-giver faces, from Garland Tools' NPC photos (by Celes). 10 MB from Tsukimichi's own GitHub release.
+  - It downloads only when you choose Download in Settings › Look and confirm. Giver portraits gains a "Game art + pack" choice.
+  - The download is checked against a fingerprint built into Tsukimichi before anything is installed.
+  - A damaged pack says so and offers Download again. A failed update or removal shows what went wrong, and your installed pack keeps working.
+  - Remove pack switches Giver portraits back to Game art.
+  - A newer pack is offered only by a Tsukimichi update; Tsukimichi never checks online by itself.
+  - Privacy & trust says exactly what the one download fetches, from where, and when.
+
 ## [1.19.0] - 2026-10-04
 
 ### Added
