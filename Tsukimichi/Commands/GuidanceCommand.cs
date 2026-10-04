@@ -207,6 +207,22 @@ public sealed class GuidanceCommand(SessionState session, UiState ui, GameLinks 
 
     private QuestRecord? Pick(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states) => PickWithRule(catalog, states)?.Quest;
 
+    /// <summary>
+    /// Up next for the character the lines are about (1.22: the server info bar's tooltip and the summary IPC), with its
+    /// current step when the quest is in the journal; null while the catalog is not ready or nothing is picked.
+    /// </summary>
+    public (QuestRecord Quest, Core.Todo.UpNextRule Rule, StepView? Step)? UpNext()
+    {
+        if (session.Bundle is not { } bundle || PickWithRule(bundle.Catalog, States) is not { } picked)
+        {
+            return null;
+        }
+
+        States.TryGetValue(picked.Quest.RowId, out var evaluation);
+        var step = picked.Rule == Core.Todo.UpNextRule.LevelGate ? null : links.CurrentStep(picked.Quest, evaluation, Live, null, ContentId);
+        return (picked.Quest, picked.Rule, step);
+    }
+
     /// <summary>Up next's pick (1.21.0 P1, <see cref="Core.Todo.UpNextPicker"/>), so the chat and Tonight always agree.</summary>
     private (QuestRecord Quest, Core.Todo.UpNextRule Rule)? PickWithRule(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states)
     {

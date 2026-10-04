@@ -93,6 +93,47 @@ public static class IpcChannels
     /// <summary>Message <c>(uint rowId, string from, string to)</c>, one per quest whose state a live poll changed. Since 1.8.0.</summary>
     public const string QuestStateChangedGate = "Tsukimichi.QuestStateChanged";
 
+    // ---- Since 1.22.0: the summary for Tsukimichi for Umbra (additive: ApiVersion stays 1; the summary has its own version) ----
+
+    /// <summary>
+    /// What <see cref="GetSummaryVersionGate"/> returns: the summary gates' own contract version (plan v8 M2). Bumped only
+    /// by a breaking change to a shipped summary gate; adding one keeps it.
+    /// </summary>
+    public const int SummaryVersion = 1;
+
+    /// <summary><c>() -> int</c>: <see cref="SummaryVersion"/>. Since 1.22.0.</summary>
+    public const string GetSummaryVersionGate = "Tsukimichi.GetSummaryVersion";
+
+    /// <summary><c>() -> (string name, string job, int level)</c>: the logged-in character. Since 1.22.0.</summary>
+    public const string GetCharacterGate = "Tsukimichi.GetCharacter";
+
+    /// <summary><c>() -> (uint rowId, string name, string step)</c>: Up next, its name shielded. Since 1.22.0.</summary>
+    public const string GetUpNextGate = "Tsukimichi.GetUpNext";
+
+    /// <summary><c>() -> (int ready, int here, string job)</c>: quests Ready on the current job, and how many can start in this zone. Since 1.22.0.</summary>
+    public const string GetReadyCountGate = "Tsukimichi.GetReadyCount";
+
+    /// <summary><c>() -> (int used, int cap)</c>: the journal's slots. Since 1.22.0.</summary>
+    public const string GetJournalRoomGate = "Tsukimichi.GetJournalRoom";
+
+    /// <summary><c>() -> (string name, int daysLeft)[]</c>: the seasonal events ending soon, soonest first. Since 1.22.0.</summary>
+    public const string GetEndingSoonGate = "Tsukimichi.GetEndingSoon";
+
+    /// <summary><c>() -> (string part, int leftToLatest, bool caughtUp)</c>: the story meter. Since 1.22.0.</summary>
+    public const string GetStoryMeterGate = "Tsukimichi.GetStoryMeter";
+
+    /// <summary><c>() -> string</c>: the theme in use, by its key ("medallion", "classic", …). Since 1.22.0.</summary>
+    public const string GetThemeGate = "Tsukimichi.GetTheme";
+
+    /// <summary><c>(string place) -> bool</c>: opens Tsukimichi at a place (<see cref="IpcPlaces"/>); never starts travel or a run. Since 1.22.0.</summary>
+    public const string OpenAtGate = "Tsukimichi.OpenAt";
+
+    /// <summary><c>(string addon, string version) -> int</c>: an add-on says it is there; answers <see cref="SummaryVersion"/>. Since 1.22.0.</summary>
+    public const string AddonHelloGate = "Tsukimichi.AddonHello";
+
+    /// <summary>Message with no arguments, sent on the framework thread when anything the summary gates answer changed. Since 1.22.0.</summary>
+    public const string SummaryChangedGate = "Tsukimichi.SummaryChanged";
+
     /// <summary>
     /// Every gate and message with its signature and the release that added it, in the order docs/ipc.md lists them:
     /// what <see cref="GetGatesGate"/> answers (the names) and the <c>/tsuki ipc</c> window lists.
@@ -121,9 +162,20 @@ public static class IpcChannels
         new(GetPinsGate, "() -> uint[]", "1.8.0"),
         new(PinQuestGate, "(uint questId, bool pinned) -> bool", "1.8.0"),
         new(OpenQuestGate, "(uint questId) -> bool", "0.9.0"),
+        new(GetSummaryVersionGate, "() -> int", "1.22.0"),
+        new(GetCharacterGate, "() -> (string name, string job, int level)", "1.22.0"),
+        new(GetUpNextGate, "() -> (uint rowId, string name, string step)", "1.22.0"),
+        new(GetReadyCountGate, "() -> (int ready, int here, string job)", "1.22.0"),
+        new(GetJournalRoomGate, "() -> (int used, int cap)", "1.22.0"),
+        new(GetEndingSoonGate, "() -> (string name, int daysLeft)[]", "1.22.0"),
+        new(GetStoryMeterGate, "() -> (string part, int leftToLatest, bool caughtUp)", "1.22.0"),
+        new(GetThemeGate, "() -> string", "1.22.0"),
+        new(OpenAtGate, "(string place) -> bool", "1.22.0"),
+        new(AddonHelloGate, "(string addon, string version) -> int", "1.22.0"),
         new(StatesChangedGate, "message ()", "0.9.0", IsMessage: true),
         new(QuestStateChangedGate, "message (uint rowId, string from, string to)", "1.8.0", IsMessage: true),
         new(DisposingGate, "message ()", "1.8.0", IsMessage: true),
+        new(SummaryChangedGate, "message ()", "1.22.0", IsMessage: true),
     ];
 
     /// <summary>The names of <see cref="All"/>, a fresh array per call: what <see cref="GetGatesGate"/> returns.</summary>

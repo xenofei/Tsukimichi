@@ -732,6 +732,9 @@ public sealed partial class ConfigWindow
         var tile = new Vector2(UiMetrics.Px(TileWidthLogical), UiMetrics.Px(TileHeightLogical));
         float labelHeight;
         var widest = tile.X;
+        // 1.22.0 M3: Follow Umbra is one more tile after the registry's (decision 17), while the plugin offers it.
+        var umbraTile = Umbra is not null;
+        var count = tiles.Length + (umbraTile ? 1 : 0);
         using (Typography.Caption())
         {
             labelHeight = ImGui.GetTextLineHeight();
@@ -739,12 +742,17 @@ public sealed partial class ConfigWindow
             {
                 widest = MathF.Max(widest, ImGui.CalcTextSize(PaletteName(palette.Id)).X);
             }
+
+            if (umbraTile)
+            {
+                widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.PaletteNameFollowUmbra).X);
+            }
         }
 
         var gap = UiMetrics.Px(TileGapLogical);
         var pitch = widest + gap;
         var controlHeight = tile.Y + UiMetrics.Px(4f) + labelHeight;
-        if (!Setting(Strings.ThemesPalette, Strings.ThemesPaletteHint, "palette colours colors window sky night ishgard snow dawn kugane lacquer light dark follow dalamud style theme", (pitch * tiles.Length) - gap, controlHeight))
+        if (!Setting(Strings.ThemesPalette, Strings.ThemesPaletteHint, "palette colours colors window sky night ishgard snow dawn kugane lacquer light dark follow dalamud style theme umbra", (pitch * count) - gap, controlHeight))
         {
             return;
         }
@@ -752,7 +760,7 @@ public sealed partial class ConfigWindow
         var saved = settings.Appearance;
         var resolved = GlyphSeam.Appearance;
         var current = ThemesPage.Drawable(resolved.Palette, UiPalettes.IsRegistered);
-        pitch = MathF.Min(pitch, (ControlWidth + gap) / MathF.Max(1, tiles.Length));
+        pitch = MathF.Min(pitch, (ControlWidth + gap) / MathF.Max(1, count));
         var origin = ImGui.GetCursorScreenPos();
         var dl = ImGui.GetWindowDrawList();
         var s = Theme.Surface;
@@ -765,7 +773,7 @@ public sealed partial class ConfigWindow
             using var id = ImRaii.PushId(info.Key);
             var clicked = ImGui.InvisibleButton("##paletteTile", tile);
             var hovered = ImGui.IsItemHovered();
-            var selected = info.Id == current;
+            var selected = info.Id == current && !settings.FollowUmbraPalette;
             DrawPaletteTile(dl, min, tile, PaletteFor(info.Id, saved.HighContrast));
 
             var hover = Motion.Hover(Motion.Key(CardHoverTag, 0x100u + (uint)i), hovered);
@@ -793,10 +801,21 @@ public sealed partial class ConfigWindow
             if (clicked && !selected)
             {
                 var before = saved.Clone();
+                var wasUmbra = settings.FollowUmbraPalette;
+                settings.FollowUmbraPalette = false;
                 AppearanceEdits.SetPalette(saved, info);
                 Save();
-                UndoToast.Show(string.Format(CultureInfo.CurrentCulture, Strings.UndoToastPaletteFormat, PaletteName(info.Id)), () => RestoreAppearance(before));
+                UndoToast.Show(string.Format(CultureInfo.CurrentCulture, Strings.UndoToastPaletteFormat, PaletteName(info.Id)), () =>
+                {
+                    settings.FollowUmbraPalette = wasUmbra;
+                    RestoreAppearance(before);
+                });
             }
+        }
+
+        if (umbraTile)
+        {
+            DrawFollowUmbraTile(dl, origin + new Vector2(tiles.Length * pitch, 0f), tile, pitch, gap, saved.HighContrast);
         }
 
         ImGui.SetCursorScreenPos(origin);

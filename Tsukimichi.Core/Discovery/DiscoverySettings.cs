@@ -31,6 +31,21 @@ public sealed class DiscoverySettings
     /// <summary>Nearby's sort (<see cref="Query.ZoneSort"/>).</summary>
     public Query.ZoneSort NearbySort { get; set; } = Query.ZoneSort.LevelFit;
 
+    /// <summary>The settings schema of the 1.22 server info bar entry (<see cref="ServerInfoBar.Migrate"/>); 0 before 1.22.</summary>
+    public const int CurrentServerInfoBarSchema = 1;
+
+    /// <summary>Which server info bar schema this file was migrated to; 0 for a file written before 1.22.</summary>
+    public int ServerInfoBarSchema { get; set; }
+
+    /// <summary>
+    /// The player set the entry's switch (1.22, spec-1.22 M1): <see cref="ShowDtrEntry"/> is then theirs. Until then the
+    /// entry follows <see cref="ServerInfoBar.Shown"/>'s default (on while Umbra is installed without its add-on).
+    /// </summary>
+    public bool DtrEntryChosen { get; set; }
+
+    /// <summary>What the entry counts (1.22): Ready quests by default; Quests in this zone for players who had 1.x's entry on.</summary>
+    public DtrCounts DtrCounts { get; set; } = DtrCounts.Ready;
+
     /// <summary>Where the file lives: <c>&lt;config&gt;/user/discovery.json</c>.</summary>
     public static string PathFor(PluginPaths paths)
     {
