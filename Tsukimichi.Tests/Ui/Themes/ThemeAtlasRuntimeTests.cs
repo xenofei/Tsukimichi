@@ -167,12 +167,14 @@ public sealed class ThemeAtlasRuntimeTests
     {
         var residency = new AtlasResidency();
         var appearance = Mix("ishgard-glass");
+        residency.Retain(appearance, MedalFinish.Plain, UiPalettes.IshgardSnow);
         residency.Retain(appearance);
         _ = UiPalettes.IsRegistered(PaletteId.IshgardSnow);
 
         var before = GC.GetAllocatedBytesForCurrentThread();
         for (var i = 0; i < 100; i++)
         {
+            residency.Retain(appearance, MedalFinish.Plain, UiPalettes.IshgardSnow);
             residency.Retain(appearance);
             _ = UiPalettes.IsRegistered(PaletteId.IshgardSnow);
             _ = UiPalettes.IsRegistered(PaletteId.Dawn);
@@ -317,6 +319,87 @@ public sealed class ThemeAtlasRuntimeTests
         Assert.All(FrameKits.All, kit => Assert.False(residency.IsWanted(kit.Id)));
         Assert.False(residency.IsWanted((FrameKitId)0));
         Assert.False(residency.IsWanted((FrameKitId)200));
+    }
+
+    [Fact]
+    public void At_Plain_a_composed_set_wants_its_own_atlases_and_no_kit_frames()
+    {
+        // Sumi to Kinpaku in Silver frames, Ready from Medallion: at Full and Quiet Sumi is composed (its faces, Silver's
+        // frames); at Plain nothing is composed (no frames), so Sumi draws its own row strip's flat finish, which must
+        // preload and stay, while its faces and Silver's frames go once idle. Medallion is procedural at Plain.
+        var appearance = AppearanceResolver.Resolve(new AppearanceConfig
+        {
+            Theme = ThemePresets.Sumi.Key,
+            Frames = "silver",
+            Glyphs = new Dictionary<string, string> { ["ready"] = "medallion" },
+        });
+        var lacquer = UiPalettes.KuganeLacquer;
+        var residency = new AtlasResidency();
+        residency.Retain(appearance, MedalFinish.LightRim, lacquer);
+        Assert.True(residency.WantsFaces(GlyphSetId.Sumi));
+        Assert.False(residency.WantsComposites(GlyphSetId.Sumi));
+        Assert.True(residency.IsWanted(FrameKitId.Silver));
+
+        residency.Touch(GlyphSetId.Sumi, AtlasPart.FacesRow, 0);
+        residency.Touch(FrameKitId.Silver, AtlasPart.FramesRow, 0);
+        residency.Retain(appearance, MedalFinish.Plain, lacquer);
+        Assert.True(residency.IsWanted(GlyphSetId.Sumi));
+        Assert.True(residency.WantsComposites(GlyphSetId.Sumi));
+        Assert.False(residency.WantsFaces(GlyphSetId.Sumi));
+        Assert.False(residency.WantsFaces(GlyphSetId.Medallion));
+        Assert.False(residency.IsWanted(GlyphSetId.Medallion));
+        Assert.False(residency.IsWanted(FrameKitId.Silver));
+        Assert.True(residency.ShouldPreload(GlyphSetId.Sumi, AtlasPart.Row));
+        Assert.False(residency.ShouldPreload(GlyphSetId.Sumi, AtlasPart.FacesRow));
+        Assert.False(residency.ShouldPreload(FrameKitId.Silver, AtlasPart.FramesRow));
+
+        var later = AtlasResidency.IdleSeconds + 1;
+        residency.Touch(GlyphSetId.Sumi, AtlasPart.Row, 0);
+        Assert.False(residency.ShouldRelease(GlyphSetId.Sumi, AtlasPart.Row, later));
+        Assert.True(residency.ShouldRelease(GlyphSetId.Sumi, AtlasPart.FacesRow, later));
+        Assert.True(residency.ShouldRelease(FrameKitId.Silver, AtlasPart.FramesRow, later));
+
+        // Back to Full: composed again.
+        residency.Retain(appearance, MedalFinish.Gilt, lacquer);
+        Assert.True(residency.WantsFaces(GlyphSetId.Sumi));
+        Assert.True(residency.WantsFaces(GlyphSetId.Medallion));
+        Assert.True(residency.IsWanted(FrameKitId.Silver));
+        Assert.False(residency.ShouldRelease(GlyphSetId.Sumi, AtlasPart.FacesRow, later));
+
+        // A set without a flat finish of its own draws Medallion's Plain at Plain, composed or not: nothing of it is wanted.
+        Assert.False(GlyphSets.IshgardGlass.HasPlainFinish);
+        foreach (var frames in new[] { (string?)null, "silver" })
+        {
+            residency.Retain(AppearanceResolver.Resolve(new AppearanceConfig { Theme = ThemePresets.IshgardGlass.Key, Frames = frames }), MedalFinish.Plain, UiPalettes.IshgardSnow);
+            Assert.False(residency.IsWanted(GlyphSetId.IshgardGlass));
+            Assert.False(residency.ShouldPreload(GlyphSetId.IshgardGlass, AtlasPart.Row));
+            Assert.All(FrameKits.All, kit => Assert.False(residency.IsWanted(kit.Id)));
+        }
+    }
+
+    [Fact]
+    public void The_ornament_strip_is_not_wanted_on_a_palette_that_never_draws_it()
+    {
+        // Kirikane's sprites draw on a dark standard-contrast palette only (FrameKitMetals.DrawsOrnamentSprites): on Ishgard
+        // Snow (light) the palette's own ornament draws, so the strip is neither preloaded nor kept.
+        var sumi = AppearanceResolver.Resolve(new AppearanceConfig { Theme = ThemePresets.Sumi.Key });
+        var residency = new AtlasResidency();
+        residency.Retain(sumi, MedalFinish.Gilt, UiPalettes.KuganeLacquer);
+        Assert.True(residency.WantsOrnaments(FrameKitId.Kirikane));
+        Assert.True(residency.ShouldPreload(FrameKitId.Kirikane, AtlasPart.Ornaments));
+
+        residency.Touch(FrameKitId.Kirikane, AtlasPart.Ornaments, 0);
+        residency.Retain(sumi, MedalFinish.Gilt, UiPalettes.IshgardSnow);
+        Assert.False(residency.WantsOrnaments(FrameKitId.Kirikane));
+        Assert.False(residency.ShouldPreload(FrameKitId.Kirikane, AtlasPart.Ornaments));
+        Assert.True(residency.ShouldRelease(FrameKitId.Kirikane, AtlasPart.Ornaments, AtlasResidency.IdleSeconds + 1));
+        Assert.Equal(
+            FrameKitMetals.DrawsOrnamentSprites(UiPalettes.IshgardSnow, FrameKitId.Kirikane),
+            residency.WantsOrnaments(FrameKitId.Kirikane));
+
+        // The high-contrast form of a dark palette draws its strong line instead.
+        residency.Retain(sumi, MedalFinish.Gilt, UiPalettes.KuganeLacquer.HighContrast);
+        Assert.False(residency.WantsOrnaments(FrameKitId.Kirikane));
     }
 
     [Fact]
@@ -626,7 +709,11 @@ public sealed class ThemeAtlasRuntimeTests
         Assert.True(residency.ShouldRelease(FrameKitId.Kirikane, AtlasPart.Ornaments, later));
         residency.Retain(AppearanceResolver.Resolve(new AppearanceConfig { Theme = "sumi-to-kinpaku", Frames = "brass" }));
         Assert.False(residency.WantsOrnaments(FrameKitId.Kirikane));
-        Assert.True(residency.WantsOrnaments(FrameKitId.Brass));
+        Assert.True(residency.ShouldRelease(FrameKitId.Kirikane, AtlasPart.Ornaments, later));
+
+        // Brass's metal is the ornament's then, but Brass ships no sprites (the palette's drawn ornament): no strip is wanted.
+        Assert.False(residency.WantsOrnaments(FrameKitId.Brass));
+        Assert.False(residency.ShouldPreload(FrameKitId.Brass, AtlasPart.Ornaments));
     }
 
     [Fact]

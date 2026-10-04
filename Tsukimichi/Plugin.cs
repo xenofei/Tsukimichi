@@ -566,9 +566,11 @@ public sealed partial class Plugin : IDalamudPlugin
         {
             Ui.UiMetrics.Update(settings);
             Ui.Typography.Update(Core.Ui.FlairRules.GameHeadingFonts(settings.Flair, settings.GameHeadingFonts));
-            // The appearance first (theme, moons per state, palette, frames, high contrast), then the palette it names.
+            // The appearance first (theme, moons per state, palette, frames, high contrast), then the palette it names, then
+            // the atlases it draws at the level's finish on that palette.
             var appearance = Ui.Themes.GlyphSeam.Refresh(settings.Appearance);
             Ui.Theme.Refresh(appearance.FollowDalamud, appearance.GlyphPalette, settings.Flair, appearance.Palette);
+            Ui.Themes.GlyphSeam.BeginAtlasFrame();
             Ui.Motion.BeginFrame();
             Ui.PopupFade.BeginFrame();
             if (Session is { } session)

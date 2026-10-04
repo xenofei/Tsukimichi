@@ -100,6 +100,32 @@ public static class ColorMath
         return towards with { W = color.W };
     }
 
+    /// <summary>
+    /// <see cref="EnsureContrast(Vector4, Vector4, Vector4, float)"/> against every one of <paramref name="backgrounds"/>
+    /// (the grounds a mark sits on in turn: a list item at rest, hovered, selected): <paramref name="color"/> if it reaches
+    /// <paramref name="minRatio"/> on all of them, else the first 5 % step towards <paramref name="towards"/> that does, or
+    /// <paramref name="towards"/> itself. Allocation-free.
+    /// </summary>
+    public static Vector4 EnsureContrast(Vector4 color, Vector4 towards, ReadOnlySpan<Vector4> backgrounds, float minRatio)
+    {
+        for (var step = 0; step <= 20; step++)
+        {
+            var candidate = step == 0 ? color : Mix(color, towards, step * 0.05f);
+            var reads = true;
+            foreach (var background in backgrounds)
+            {
+                reads &= Contrast(candidate, background) >= minRatio;
+            }
+
+            if (reads)
+            {
+                return candidate;
+            }
+        }
+
+        return towards with { W = color.W };
+    }
+
     private static float Linear(float channel)
     {
         channel = float.IsFinite(channel) ? Math.Clamp(channel, 0f, 1f) : 0f;

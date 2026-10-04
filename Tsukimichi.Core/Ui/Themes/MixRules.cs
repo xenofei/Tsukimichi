@@ -154,14 +154,40 @@ public static class MixRules
     /// </summary>
     public static IReadOnlyList<GlyphSetInfo> Choices => OfferedChoices;
 
+    /// <summary>
+    /// The look a Mix preview draws <paramref name="set"/>'s faces in (spec-1.17 §A2): every state from that set, in the
+    /// saved look's theme, palette and frames (its override, or the theme's own kit when it has none). Built from the
+    /// saved look itself, so it follows a frames or theme change the moment it is made.
+    /// </summary>
+    public static AppearanceConfig OneSetLook(AppearanceConfig saved, GlyphSetId set)
+    {
+        ArgumentNullException.ThrowIfNull(saved);
+        var key = GlyphSets.Get(set).Key;
+        var glyphs = new Dictionary<string, string>(StringComparer.Ordinal);
+        var states = AppearanceStates.All;
+        for (var i = 0; i < states.Count; i++)
+        {
+            glyphs[AppearanceStates.Key(states[i])] = key;
+        }
+
+        return new AppearanceConfig
+        {
+            Theme = saved.Theme,
+            Palette = saved.Palette,
+            Frames = saved.Frames,
+            Glyphs = glyphs,
+        };
+    }
+
     /// <summary>The column <paramref name="appearance"/> draws: each state's set, in state order.</summary>
     public static GlyphSetId[] Column(ResolvedAppearance appearance)
     {
         ArgumentNullException.ThrowIfNull(appearance);
         var column = new GlyphSetId[AppearanceStates.Count];
-        foreach (var state in AppearanceStates.All)
+        var states = AppearanceStates.All;
+        for (var i = 0; i < states.Count; i++)
         {
-            column[AppearanceStates.Index(state)] = appearance.SetFor(state);
+            column[AppearanceStates.Index(states[i])] = appearance.SetFor(states[i]);
         }
 
         return column;
@@ -429,5 +455,39 @@ public static class MixRules
         }
 
         return null;
+    }
+}
+
+/// <summary>
+/// The Mix section's preview looks (<see cref="MixRules.OneSetLook"/>), one per set, resolved once and kept until the saved
+/// look changes, so the section's faces cost a dictionary lookup a draw. Keyed on the saved look the looks are built from,
+/// so a change made mid-frame (a frames pick, a theme card) rebuilds them at once.
+/// </summary>
+public sealed class MixLooks
+{
+    private readonly Dictionary<GlyphSetId, ResolvedAppearance> looks = [];
+    private AppearanceConfig? of;
+
+    /// <summary>How many looks have been resolved (for tests).</summary>
+    public int Resolutions { get; private set; }
+
+    /// <summary>The look that draws every state from <paramref name="set"/> in <paramref name="saved"/>'s theme, palette and frames.</summary>
+    public ResolvedAppearance For(AppearanceConfig saved, GlyphSetId set)
+    {
+        ArgumentNullException.ThrowIfNull(saved);
+        if (of is null || !of.SameAs(saved))
+        {
+            looks.Clear();
+            of = saved.Clone();
+        }
+
+        if (!looks.TryGetValue(set, out var look))
+        {
+            look = AppearanceResolver.Resolve(MixRules.OneSetLook(saved, set));
+            looks[set] = look;
+            Resolutions++;
+        }
+
+        return look;
     }
 }

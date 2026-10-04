@@ -110,10 +110,14 @@ public static class FrameParts
     /// <summary>
     /// Whether a medal gets the 1 px Abyss outer keyline (spec-1.17 §B2, the supervisor's condition for Silver on Ishgard
     /// Snow): on a light palette, at Decoration Full, in every kit, so a medal's outline never depends on its metal's own
-    /// darkest stop. Not at Quiet (its hairline rim is the outline) or Plain (its flat rim is), nor under high contrast.
+    /// darkest stop. At Quiet only a <paramref name="composed"/> medal gets it: Medallion's own Quiet hairline has a light
+    /// variant, but a kit's Quiet frame sprite is one for every palette, and on Ishgard Snow's Quiet panes the outer edge
+    /// of Brass's row hairline reads at about 1.7–2.3 : 1 and Astrolabe's at 2.9–3.4 : 1 (Silver's and Came's at 3 : 1 or
+    /// better from 16 px), under the 3 : 1 an outline needs. Not at Plain (its flat rim is the outline), nor under high
+    /// contrast.
     /// </summary>
-    public static bool LightKeyline(bool lightPalette, bool highContrast, MedalFinish finish) =>
-        lightPalette && !highContrast && finish == MedalFinish.Gilt;
+    public static bool LightKeyline(bool lightPalette, bool highContrast, MedalFinish finish, bool composed) =>
+        lightPalette && !highContrast && (finish == MedalFinish.Gilt || (finish == MedalFinish.LightRim && composed));
 
     /// <summary>
     /// The light-palette keyline's radius for a medal <paramref name="size"/> px across: centred half a pixel outside the

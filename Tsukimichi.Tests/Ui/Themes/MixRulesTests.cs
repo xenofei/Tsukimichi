@@ -327,6 +327,43 @@ public sealed class MixRulesTests
         Assert.False(MixRules.TryHeat(mix, QuestState.Ready, QuestState.Ready, null, out _));
     }
 
+    [Fact]
+    public void A_preview_look_follows_the_saved_frames_and_theme_the_moment_they_change()
+    {
+        // The Mix section's faces are drawn in a look per set built from the saved look, never the frame's resolved one:
+        // a frames pick or a theme card in the same frame must not leave the previews in the old kit until the next edit.
+        var looks = new MixLooks();
+        var saved = new AppearanceConfig { Theme = ThemePresets.IshgardGlass.Key };
+        var crystal = looks.For(saved, GlyphSetId.AetherCrystal);
+        Assert.Equal(FrameKitId.Came, crystal.Frames);
+        Assert.Equal(PaletteId.IshgardSnow, crystal.Palette);
+        Assert.All(AppearanceStates.All, state => Assert.Equal(GlyphSetId.AetherCrystal, crystal.SetFor(state)));
+        Assert.Same(crystal, looks.For(saved, GlyphSetId.AetherCrystal));
+        Assert.Equal(1, looks.Resolutions);
+
+        // A frames pick: the next preview is in the new kit, with nothing else edited in between.
+        AppearanceEdits.SetFrames(saved, FrameKits.Get(FrameKitId.Silver));
+        Assert.Equal(FrameKitId.Silver, looks.For(saved, GlyphSetId.AetherCrystal).Frames);
+        Assert.Equal(FrameKitId.Silver, looks.For(saved, GlyphSetId.Medallion).Frames);
+
+        // "From theme" again: the theme's own kit.
+        AppearanceEdits.SetFrames(saved, null);
+        Assert.Equal(FrameKitId.Came, looks.For(saved, GlyphSetId.AetherCrystal).Frames);
+
+        // A theme card: its kit and palette, at once.
+        AppearanceEdits.ApplyTheme(saved, ThemePresets.Sumi);
+        var sumi = looks.For(saved, GlyphSetId.Orrery);
+        Assert.Equal(FrameKitId.Kirikane, sumi.Frames);
+        Assert.Equal(PaletteId.KuganeLacquer, sumi.Palette);
+        Assert.All(AppearanceStates.All, state => Assert.Equal(GlyphSetId.Orrery, sumi.SetFor(state)));
+
+        // The saved look is only read: the one-set look is a new config, and an unchanged saved look resolves nothing more.
+        Assert.Null(saved.Glyphs);
+        var resolutions = looks.Resolutions;
+        Assert.Same(sumi, looks.For(saved.Clone(), GlyphSetId.Orrery));
+        Assert.Equal(resolutions, looks.Resolutions);
+    }
+
     /// <summary>Every column one state away from a measured set: 4 sets × 8 states × 3 other sets.</summary>
     private static IEnumerable<GlyphSetId[]> OneChangeMixes()
     {

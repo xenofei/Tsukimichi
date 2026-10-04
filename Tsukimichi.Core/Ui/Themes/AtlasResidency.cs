@@ -44,10 +44,12 @@ public enum AtlasPart : byte
 /// Which theme set and frame kit textures to keep (theme-system §6.3, "Loading rules"), pure so it is tested without
 /// Dalamud. The atlas cache asks it every frame:
 /// <list type="bullet">
-/// <item><see cref="Retain"/> names what the saved appearance draws: each atlas set it uses as designed (its
-/// <c>medals</c>, <c>plain</c> and <c>row</c>), each set it composes in another kit (its <c>faces</c>; Menphina's Medallion
-/// too), and that kit (its <c>frames</c>; <see cref="ResolvedAppearance.Composes"/>). Their row strips are wanted at once
-/// (<see cref="ShouldPreload(GlyphSetId, AtlasPart)"/>); nothing else is loaded until something draws it.</item>
+/// <item><see cref="Retain(ResolvedAppearance, MedalFinish, UiPalette)"/> names what the saved appearance draws at the
+/// frame's finish: each atlas set it uses as designed (its <c>medals</c>, <c>plain</c> and <c>row</c>), each set it
+/// composes in another kit (its <c>faces</c>; Menphina's Medallion too), and that kit (its <c>frames</c>;
+/// <see cref="ResolvedAppearance.Composes"/>). Plain draws no frames, so there no kit is wanted and an atlas set is wanted
+/// only for a flat finish of its own (<see cref="GlyphSetInfo.HasPlainFinish"/>; the others draw Medallion's Plain). Their row strips are wanted at once (<see cref="ShouldPreload(GlyphSetId, AtlasPart)"/>); nothing
+/// else is loaded until something draws it.</item>
 /// <item><see cref="Touch(GlyphSetId, AtlasPart, double)"/> marks a part as drawn this frame; a draw is what loads a hero
 /// tier, a 2x tier, or a set outside the appearance (the Themes page's previews).</item>
 /// <item><see cref="ShouldRelease(GlyphSetId, AtlasPart, double)"/> lets a loaded part go once it has not been drawn for
@@ -75,16 +77,38 @@ public sealed class AtlasResidency
     private readonly bool[] loaded = new bool[2 * Slots * PartSlots];
     private readonly double[] lastDrawn = new double[2 * Slots * PartSlots];
 
-    /// <summary>Marks what <paramref name="appearance"/> draws as wanted, and everything else as not (see the class remarks).</summary>
+    /// <summary>
+    /// <see cref="Retain(ResolvedAppearance, MedalFinish, UiPalette)"/> at Decoration Full on the appearance's own palette
+    /// (its high-contrast form under high contrast; Night for Follow Dalamud, which has no fixed colours).
+    /// </summary>
     public void Retain(ResolvedAppearance appearance)
     {
         ArgumentNullException.ThrowIfNull(appearance);
+        var palette = UiPalettes.Get(appearance.Palette);
+        Retain(appearance, appearance.Classic ? MedalFinish.Classic : MedalFinish.Gilt, appearance.HighContrast ? palette.HighContrast : palette);
+    }
+
+    /// <summary>
+    /// Marks what <paramref name="appearance"/> draws at <paramref name="finish"/> on <paramref name="palette"/> (the
+    /// palette in effect, its high-contrast form included) as wanted, and everything else as not (see the class remarks).
+    /// </summary>
+    public void Retain(ResolvedAppearance appearance, MedalFinish finish, UiPalette palette)
+    {
+        ArgumentNullException.ThrowIfNull(appearance);
+        ArgumentNullException.ThrowIfNull(palette);
         Array.Clear(composite);
         Array.Clear(faces);
         Array.Clear(kits);
 
-        // The kit whose metal the ornament takes (the seam's Theme.UseFrameKit): Brass under Classic and high contrast.
-        ornamentKit = appearance.Classic || appearance.HighContrast ? FrameKitId.Brass : appearance.Frames;
+        // The kit whose metal the ornament takes (the seam's Theme.UseFrameKit): Brass under Classic and high contrast. Its
+        // sprites are wanted only where the palette draws them (Theme.KitOrnaments: a dark, standard-contrast palette).
+        var metal = appearance.Classic || appearance.HighContrast ? FrameKitId.Brass : appearance.Frames;
+        ornamentKit = FrameKitMetals.DrawsOrnamentSprites(palette, metal) ? metal : default;
+
+        // Plain has no frames: a set composed at Full and Quiet draws its own flat finish there (AtlasGlyphSet), so it
+        // wants its own atlases and nothing is composed. A set without a flat finish of its own draws Medallion's Plain
+        // there (ThemeAtlasRules.Pick), so it wants nothing.
+        var composing = finish != MedalFinish.Plain;
 
         // Indexed: Retain runs every frame, and a foreach over the IReadOnlyList would box its enumerator.
         var sets = GlyphSets.All;
@@ -97,12 +121,12 @@ public sealed class AtlasResidency
                 continue;
             }
 
-            if (appearance.Composes(set.Id))
+            if (composing && appearance.Composes(set.Id))
             {
                 faces[slot] = true;
                 composes = true;
             }
-            else if (set.Kind == GlyphRenderKind.Atlas)
+            else if (set.Kind == GlyphRenderKind.Atlas && (composing || set.HasPlainFinish))
             {
                 composite[slot] = true;
             }
@@ -127,8 +151,9 @@ public sealed class AtlasResidency
     public bool IsWanted(FrameKitId kit) => Slot(kit) is var slot and >= 0 && kits[slot];
 
     /// <summary>
-    /// Whether that appearance's ornament is <paramref name="kit"/>'s (its frames, unless Classic or high contrast): its
-    /// <c>ornaments</c> strip, where the kit ships one, is wanted.
+    /// Whether that appearance's ornament is <paramref name="kit"/>'s (its frames, unless Classic or high contrast) and the
+    /// palette draws the kit's sprites (<see cref="FrameKitMetals.DrawsOrnamentSprites"/>: a dark, standard-contrast
+    /// palette): its <c>ornaments</c> strip is wanted.
     /// </summary>
     public bool WantsOrnaments(FrameKitId kit) => Slot(kit) >= 0 && kit == ornamentKit;
 

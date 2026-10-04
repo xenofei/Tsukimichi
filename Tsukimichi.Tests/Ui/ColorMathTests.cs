@@ -78,6 +78,37 @@ public class ColorMathTests
     }
 
     [Fact]
+    public void Ensure_contrast_against_several_grounds_reads_on_every_one()
+    {
+        // The Mix list's amber note (#C9A866) sits on an option at rest, hovered, selected and pressed: on every palette it
+        // must read at 4.5 : 1 on all four, not only on the popup's window.
+        var amber = ColorMath.FromHex(0xC9A866);
+        foreach (var palette in Tsukimichi.Core.Ui.Themes.UiPalettes.All)
+        {
+            var s = palette.Surface;
+            var window = s.Window with { W = 1f };
+            Vector4[] grounds =
+            [
+                window,
+                ColorMath.Over(s.Hover, window),
+                ColorMath.Over(s.Text with { W = 0.10f }, window),
+                ColorMath.Over(s.Text with { W = 0.16f }, window),
+            ];
+            var note = ColorMath.EnsureContrast(amber, s.Text, grounds, SurfaceColors.TextMinContrast);
+            foreach (var ground in grounds)
+            {
+                Assert.True(ColorMath.Contrast(note, ground) >= SurfaceColors.TextMinContrast, $"{palette.Id}: {ColorMath.Contrast(note, ground):0.00}");
+            }
+
+            Assert.Equal(amber.W, note.W);
+        }
+
+        // A colour that already reads everywhere is kept; one ground that cannot be met leaves the target itself.
+        Assert.Equal(Mist, ColorMath.EnsureContrast(Mist, Silver, [Night, NightRaised, NightHover], 4.5f));
+        Assert.Equal(Silver, ColorMath.EnsureContrast(VeilLine, Silver, [Night, Silver], 4.5f));
+    }
+
+    [Fact]
     public void Night_like_host_maps_to_readable_roles()
     {
         var s = SurfaceColors.FromHost(Night, NightRaised, NightHover, ColorMath.FromHex(0x2A3149), Silver, Dusk);

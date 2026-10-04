@@ -46,14 +46,23 @@ public sealed class FramePartsTests
     }
 
     [Fact]
-    public void On_a_light_palette_every_medal_keeps_the_Abyss_outer_keyline_at_Full()
+    public void On_a_light_palette_every_medal_keeps_the_Abyss_outer_keyline_at_Full_and_a_composed_one_at_Quiet()
     {
         // spec-1.17 §B2, the supervisor's condition for Silver on Ishgard Snow: 1 px Abyss at .6 round every kit's medals.
-        Assert.True(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.Gilt));
-        Assert.False(FrameParts.LightKeyline(lightPalette: false, highContrast: false, MedalFinish.Gilt));
-        Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: true, MedalFinish.Gilt));
-        Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.LightRim));
-        Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.Plain));
+        foreach (var composed in new[] { false, true })
+        {
+            Assert.True(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.Gilt, composed));
+            Assert.False(FrameParts.LightKeyline(lightPalette: false, highContrast: false, MedalFinish.Gilt, composed));
+            Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: true, MedalFinish.Gilt, composed));
+            Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.Plain, composed));
+            Assert.False(FrameParts.LightKeyline(lightPalette: false, highContrast: false, MedalFinish.LightRim, composed));
+            Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: true, MedalFinish.LightRim, composed));
+        }
+
+        // At Quiet Medallion's own hairline has a light variant; a kit's Quiet frame sprite has none, so a composed medal
+        // keeps the keyline there too (Brass's row hairline is about 2 : 1 on Snow's Quiet panes).
+        Assert.False(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.LightRim, composed: false));
+        Assert.True(FrameParts.LightKeyline(lightPalette: true, highContrast: false, MedalFinish.LightRim, composed: true));
         Assert.Equal(0.6f, FrameParts.LightKeylineAlpha);
 
         // Half a pixel outside the medal's own keyline (r 63.2 of 128), so the 1 px line sits just outside the rim.

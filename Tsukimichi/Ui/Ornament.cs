@@ -291,11 +291,18 @@ public static class Ornament
             return;
         }
 
-        if (Theme.KitOrnaments
-            && KitCorner(dl, min, FrameCorner.TopLeft, size)
-            && KitCorner(dl, max, FrameCorner.BottomRight, size)
-            && (twoOnly || (KitCorner(dl, new Vector2(max.X, min.Y), FrameCorner.TopRight, size) && KitCorner(dl, new Vector2(min.X, max.Y), FrameCorner.BottomLeft, size))))
+        // The kit's corners all or none: every corner is the same sprite at the same cell, so one readiness check before
+        // drawing any keeps a strip that lands mid-frame from mixing kamon corners with drawn L's.
+        if (Theme.KitOrnaments && KitCornersReady(size))
         {
+            KitCorner(dl, min, FrameCorner.TopLeft, size);
+            KitCorner(dl, max, FrameCorner.BottomRight, size);
+            if (!twoOnly)
+            {
+                KitCorner(dl, new Vector2(max.X, min.Y), FrameCorner.TopRight, size);
+                KitCorner(dl, new Vector2(min.X, max.Y), FrameCorner.BottomLeft, size);
+            }
+
             return;
         }
 
@@ -328,6 +335,10 @@ public static class Ornament
         var min = new Vector2(x, y);
         return ThemeAtlasCache.TryDrawOrnament(dl, Theme.FrameKit, KitOrnament.Corner, side, min, min + new Vector2(side), right, bottom, tint);
     }
+
+    /// <summary>Whether the frame kit's corner mark with arms of <paramref name="arm"/> px would draw now (the same sprite and cell at every corner).</summary>
+    private static bool KitCornersReady(float arm) =>
+        ThemeAtlasCache.CanDrawOrnament(Theme.FrameKit, KitOrnament.Corner, KitOrnaments.CornerBox(0f, 0f, false, false, arm).Side);
 
     private static void Mark(ImDrawListPtr dl, Vector2 corner, Vector2 along, Vector2 down, float size, float width, Vector4 tone)
     {
