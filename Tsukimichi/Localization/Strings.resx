@@ -15224,7 +15224,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Confirmation promise, bold lead.</comment>
   </data>
   <data name="Pack.Promise" xml:space="preserve">
-    <value>This is the one time Tsukimichi goes online. It sends nothing about you or your characters: GitHub sees an ordinary file download from this PC. Tsukimichi never checks for updates by itself.</value>
+    <value>This is the one time Tsukimichi goes online. It sends nothing about you or your characters: GitHub sees an ordinary file download from this PC. Tsukimichi never goes online to check for updates. It asks Dalamud, which already does.</value>
     <comment>Confirmation promise, after the lead.</comment>
   </data>
   <data name="Pack.Spoilers" xml:space="preserve">

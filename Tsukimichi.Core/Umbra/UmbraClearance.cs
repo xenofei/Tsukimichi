@@ -103,8 +103,8 @@ public readonly record struct ClearedPlace(Vector2? Original, Vector2? Moved)
     public static readonly ClearedPlace Untouched = default;
 
     /// <summary>
-    /// The place to set this frame (null: leave it) and what to remember. Never moves a surface the player is dragging:
-    /// a drag makes its place the player's, so the remembered one is forgotten.
+    /// The place to set this frame (null: leave it) and what to remember. Never moves a surface the player is dragging;
+    /// once a drag (or anything else) has moved it, its place is the player's and the remembered one is forgotten.
     /// </summary>
     /// <param name="current">Where the surface is now.</param>
     /// <param name="size">Its size.</param>
@@ -116,7 +116,7 @@ public readonly record struct ClearedPlace(Vector2? Original, Vector2? Moved)
     {
         if (dragging)
         {
-            return (null, Untouched);
+            return (null, this);
         }
 
         // Moved by something other than the clearance (Reset position, a drag we did not see): the place is the player's.

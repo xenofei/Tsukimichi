@@ -118,15 +118,25 @@ public sealed class UmbraClearanceTests
         var size = new Vector2(200, 100);
         var (_, moved) = ClearedPlace.Untouched.Step(new Vector2(20, 10), size, ViewportTop, ViewportHeight, bar, dragging: false);
 
-        // A drag: nothing moves while it lasts, and the remembered place is forgotten.
-        var (setTo, next) = moved.Step(new Vector2(300, 600), size, ViewportTop, ViewportHeight, bar, dragging: true);
+        // A drag, even into the bar's band: nothing moves while it lasts.
+        var (setTo, next) = moved.Step(new Vector2(300, 12), size, ViewportTop, ViewportHeight, bar, dragging: true);
         Assert.Null(setTo);
-        Assert.Equal(ClearedPlace.Untouched, next);
+        Assert.Equal(moved, next);
 
-        // Moved some other way (Reset position): forgotten too, and the bar leaving moves nothing.
+        // A click that moved nothing keeps the remembered place.
+        (setTo, next) = moved.Step(new Vector2(20, 40), size, ViewportTop, ViewportHeight, bar, dragging: true);
+        Assert.Null(setTo);
+        Assert.Equal(moved, next);
+
+        // Once dropped somewhere else, the new place is the player's: the bar leaving moves nothing.
         (setTo, next) = moved.Step(new Vector2(300, 600), size, ViewportTop, ViewportHeight, UmbraClearance.None, dragging: false);
         Assert.Null(setTo);
         Assert.Equal(ClearedPlace.Untouched, next);
+
+        // Dropped inside the band: kept clear, and that drop is the place that comes back.
+        (setTo, next) = moved.Step(new Vector2(300, 12), size, ViewportTop, ViewportHeight, bar, dragging: false);
+        Assert.Equal(new Vector2(300, 40), setTo);
+        Assert.Equal(new Vector2(300, 12), next.Original);
     }
 
     [Fact]

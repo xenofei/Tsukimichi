@@ -28,7 +28,7 @@ public sealed partial class TodoOverlay
     {
         lastWindowPos = ImGui.GetWindowPos();
         lastWindowSize = ImGui.GetWindowSize();
-        lastWindowMoving = ImGui.IsMouseDown(ImGuiMouseButton.Left) && ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
+        lastWindowMoving = ImGui.IsMouseDragging(ImGuiMouseButton.Left) && ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
         windowPlaced = true;
     }
 

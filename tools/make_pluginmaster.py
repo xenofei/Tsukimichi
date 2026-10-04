@@ -4,6 +4,10 @@ Usage (after `dotnet build Tsukimichi/Tsukimichi.csproj -c Release`):
     python tools/make_pluginmaster.py --tag v0.1.0
 The tag must match a GitHub Release that has latest.zip attached, and CHANGELOG.md must have a
 `## [X.Y.Z]` section for it (or pass --changelog); otherwise the script exits 1 and writes nothing.
+
+Since 1.22.0 (plan v8 U1, spec-1.22 decision 8) the manifest's changelog is the release's plain notes from
+Tsukimichi/Data/whats_new.json when it has an entry for the version, so Dalamud's installer and the update note's hover
+show the same words as the What's new popup; the technical CHANGELOG.md section is the fallback.
 """
 import argparse
 import json
@@ -39,6 +43,41 @@ def changelog_section(tag: str) -> str:
     return "\n".join(l.replace("### ", "") for l in text.splitlines())
 
 
+WHATS_NEW = os.path.join(ROOT, "Tsukimichi", "Data", "whats_new.json")
+
+
+def plain_notes(tag: str) -> str:
+    """The release's plain points from whats_new.json as "- Lead. Sentence." lines, or empty when it has none.
+
+    Reads the file loosely, since its other fields are the What's new popup's: a list of releases, or an object holding
+    one under "releases"; each release has "version" and "points"; a point is a string, or an object with a "lead" and
+    one of "text", "sentence" or "body".
+    """
+    if not os.path.exists(WHATS_NEW):
+        return ""
+    version = tag[1:] if tag.startswith("v") else tag
+    with open(WHATS_NEW, encoding="utf-8-sig") as f:
+        data = json.load(f)
+    releases = data.get("releases", []) if isinstance(data, dict) else data
+    for release in releases if isinstance(releases, list) else []:
+        if not isinstance(release, dict) or str(release.get("version", "")).strip() != version:
+            continue
+        lines = []
+        for point in release.get("points", []):
+            if isinstance(point, str):
+                text = point.strip()
+            elif isinstance(point, dict):
+                lead = str(point.get("lead", "")).strip()
+                body = str(point.get("text") or point.get("sentence") or point.get("body") or "").strip()
+                text = f"{lead} {body}".strip()
+            else:
+                text = ""
+            if text:
+                lines.append(f"- {text}")
+        return "\n".join(lines)
+    return ""
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default="xenofei/Tsukimichi", help="GitHub owner/name")
@@ -71,7 +110,7 @@ def main() -> int:
         "IsHide": False,
         "IsTestingExclusive": False,
     })
-    changelog = args.changelog or changelog_section(tag)
+    changelog = args.changelog or plain_notes(tag) or changelog_section(tag)
     if not changelog:
         version_label = tag[1:] if tag.startswith("v") else tag
         print(

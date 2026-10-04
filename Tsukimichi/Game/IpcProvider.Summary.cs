@@ -116,7 +116,7 @@ public sealed partial class IpcProvider
 
     private static bool IsSummaryGate(string gate) => gate is IpcChannels.GetSummaryVersionGate or IpcChannels.GetCharacterGate
         or IpcChannels.GetUpNextGate or IpcChannels.GetReadyCountGate or IpcChannels.GetJournalRoomGate or IpcChannels.GetEndingSoonGate
-        or IpcChannels.GetStoryMeterGate or IpcChannels.GetThemeGate or IpcChannels.OpenAtGate;
+        or IpcChannels.GetStoryMeterGate or IpcChannels.GetThemeGate or IpcChannels.OpenAtGate or IpcChannels.AddonHelloGate;
 
     /// <summary>For the <c>/tsuki ipc</c> window: a summary gate called through Dalamud's subscriber, as another plugin would.</summary>
     private object? SummaryTestCall(string gate, string arguments) => gate switch
@@ -130,6 +130,9 @@ public sealed partial class IpcProvider
         IpcChannels.GetStoryMeterGate => pluginInterface.GetIpcSubscriber<(string, int, bool)>(gate).InvokeFunc(),
         IpcChannels.GetThemeGate => pluginInterface.GetIpcSubscriber<string>(gate).InvokeFunc(),
         IpcChannels.OpenAtGate => pluginInterface.GetIpcSubscriber<string, bool>(gate).InvokeFunc(arguments.Trim()),
+        IpcChannels.AddonHelloGate => IpcConsole.Words(arguments) is { Length: 2 } words
+            ? pluginInterface.GetIpcSubscriber<string, string, int>(gate).InvokeFunc(words[0], words[1])
+            : throw new FormatException("Type the add-on's name, then its version."),
         _ => throw new FormatException("A message cannot be called; subscribe to it instead."),
     };
 
