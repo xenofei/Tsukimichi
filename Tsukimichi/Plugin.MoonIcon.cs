@@ -32,6 +32,8 @@ public sealed partial class Plugin
 
         void OpenTonight()
         {
+            // The quick card describes the logged-in character: Tonight opens on it.
+            ViewLiveCharacter();
             ui.Tab = NavTab.Journal;
             ui.SelectedRowId = null;
             mainWindow.IsOpen = true;

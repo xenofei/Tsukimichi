@@ -252,6 +252,12 @@ public readonly record struct SurfaceColors(
     /// TextDisabled. Secondary text is the Text/TextDisabled midpoint, pushed towards Text until it reaches
     /// <see cref="TextMinContrast"/> on the window; the strong line is pushed towards Text until it reaches
     /// <see cref="LineMinContrast"/>. Every colour is opaque. Translucent host colours are composited over the window.
+    /// <para>
+    /// <paramref name="light"/> says whether the window takes dark ink; by default a window whose luminance is over 0.5.
+    /// A caller that picks its ink by contrast (Follow Umbra) may call a mid-grey window light: its ink is then black, and
+    /// with little room under it its derived surfaces (fallback cards and hovered rows, wells, the deep surface) step
+    /// towards white, away from the ink, so the ink still reads on every one.
+    /// </para>
     /// </summary>
     public static SurfaceColors FromHost(
         Vector4 windowBg,
@@ -259,26 +265,32 @@ public readonly record struct SurfaceColors(
         Vector4 frameBgHovered,
         Vector4 border,
         Vector4 text,
-        Vector4 textDisabled)
+        Vector4 textDisabled,
+        bool? light = null)
     {
         var window = ColorMath.Opaque(windowBg);
-        var light = ColorMath.Luminance(window) > 0.5f;
+        var luminanceLight = ColorMath.Luminance(window) > 0.5f;
+        var isLight = light ?? luminanceLight;
+        var lift = isLight && !luminanceLight;
         var textOpaque = ColorMath.Opaque(text);
+        var white = new Vector4(1f, 1f, 1f, 1f);
+        var step = lift ? white : textOpaque;
         var raised = ColorMath.Over(frameBg, window);
         if (ColorMath.Contrast(raised, window) < 1.08f)
         {
             // A host whose frames are invisible on the window still needs cards that read as raised.
-            raised = ColorMath.Mix(window, textOpaque, 0.07f);
+            raised = ColorMath.Mix(window, step, 0.07f);
         }
 
         var hover = ColorMath.Over(frameBgHovered, window);
         if (ColorMath.Contrast(hover, window) < 1.12f)
         {
-            hover = ColorMath.Mix(window, textOpaque, 0.12f);
+            hover = ColorMath.Mix(window, step, 0.12f);
         }
 
         var black = new Vector4(0f, 0f, 0f, 1f);
-        var sunken = ColorMath.Mix(window, black, light ? 0.06f : 0.3f);
+        var sink = lift ? white : black;
+        var sunken = ColorMath.Mix(window, sink, isLight ? 0.06f : 0.3f);
         var line = ColorMath.Over(border, window);
         var strongLine = ColorMath.EnsureContrast(ColorMath.Mix(line, textOpaque, 0.25f), textOpaque, window, LineMinContrast);
         var tertiary = ColorMath.Opaque(textDisabled);
@@ -288,14 +300,13 @@ public readonly record struct SurfaceColors(
         // The Moon Road roles (proposal §3): the deep surface is the window darkened; the gradient's top is a small
         // step towards the text colour on a dark window (sky lighter than water) and towards white on a light one; the
         // brass and tide inks keep their hue, pushed towards the text colour until they read on the window.
-        var white = new Vector4(1f, 1f, 1f, 1f);
-        var deep = ColorMath.Mix(window, black, light ? DeepDarkenLight : DeepDarkenDark);
-        var top = light ? ColorMath.Mix(window, white, 0.5f) : ColorMath.Mix(window, textOpaque, 0.04f);
+        var deep = ColorMath.Mix(window, sink, isLight ? DeepDarkenLight : DeepDarkenDark);
+        var top = isLight ? ColorMath.Mix(window, white, 0.5f) : ColorMath.Mix(window, textOpaque, 0.04f);
         var ornament = ColorMath.EnsureContrast(GlyphTokens.Gilt, textOpaque, window, LineMinContrast);
         var ornamentHigh = ColorMath.EnsureContrast(GlyphTokens.GiltHigh, textOpaque, window, LineMinContrast);
         var cool = ColorMath.EnsureContrast(GlyphTokens.Tide, textOpaque, window, TextMinContrast);
         return new SurfaceColors(
-            window, sunken, raised, hover, line, strongLine, textOpaque, secondary, tertiary, disabled, light,
+            window, sunken, raised, hover, line, strongLine, textOpaque, secondary, tertiary, disabled, isLight,
             deep, top, ornament, ornamentHigh, cool, GlyphTokens.TideDeep);
     }
 }

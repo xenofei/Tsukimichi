@@ -1280,14 +1280,11 @@ public sealed partial class Plugin : IDalamudPlugin
             // Nearby quests window and the server info bar entry; settings in user/discovery.json until they move into Configuration.
             var discoverySettingsPath = Core.Discovery.DiscoverySettings.PathFor(Paths);
             var discoveryWarnings = new System.Collections.Generic.List<string>();
-            var discoveryFileExisted = System.IO.File.Exists(discoverySettingsPath);
-            var discoverySettings = Core.Discovery.DiscoverySettings.Load(discoverySettingsPath, discoveryWarnings);
 
-            // 1.22.0 M1: one server info bar entry; a player who had the Nearby entry keeps it, counting this zone.
-            if (Core.Discovery.ServerInfoBar.Migrate(discoverySettings, discoveryFileExisted) && discoveryFileExisted)
-            {
-                discoverySettings.Save(discoverySettingsPath, Core.Storage.AtomicFile.QuickAttempts);
-            }
+            // 1.22.0 M1: one server info bar entry; a player who had the Nearby entry keeps it, counting this zone. 1.21
+            // wrote no file until a setting changed, so an earlier configuration marks an update too.
+            var priorInstall = Settings.HasPriorConfig || Settings.LastSeenVersion.Length > 0;
+            var discoverySettings = Core.Discovery.DiscoverySettings.LoadMigrated(discoverySettingsPath, priorInstall, discoveryWarnings, Core.Storage.AtomicFile.QuickAttempts);
 
             foreach (var warning in discoveryWarnings)
             {

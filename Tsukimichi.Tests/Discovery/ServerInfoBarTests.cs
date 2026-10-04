@@ -47,7 +47,7 @@ public sealed class ServerInfoBarTests
     public void Players_who_had_the_Nearby_entry_keep_it_counting_this_zone()
     {
         var hadIt = new DiscoverySettings { ShowDtrEntry = true };
-        Assert.True(ServerInfoBar.Migrate(hadIt, fileExisted: true));
+        Assert.True(ServerInfoBar.Migrate(hadIt, fileExisted: true, priorInstall: true));
         Assert.True(hadIt.DtrEntryChosen);
         Assert.True(hadIt.ShowDtrEntry);
         Assert.Equal(DtrCounts.Zone, hadIt.DtrCounts);
@@ -55,21 +55,36 @@ public sealed class ServerInfoBarTests
 
         // Turned off in 1.x: it stays off, as their choice, and counts Ready if they turn it on.
         var turnedOff = new DiscoverySettings { ShowDtrEntry = false };
-        Assert.True(ServerInfoBar.Migrate(turnedOff, fileExisted: true));
+        Assert.True(ServerInfoBar.Migrate(turnedOff, fileExisted: true, priorInstall: true));
         Assert.True(turnedOff.DtrEntryChosen);
         Assert.False(turnedOff.ShowDtrEntry);
         Assert.Equal(DtrCounts.Ready, turnedOff.DtrCounts);
 
-        // A fresh install chooses nothing: Ready, and the default rule.
+        // A fresh install (no file, no earlier configuration) chooses nothing: Ready, and the default rule.
         var fresh = new DiscoverySettings();
-        Assert.True(ServerInfoBar.Migrate(fresh, fileExisted: false));
+        Assert.True(ServerInfoBar.Migrate(fresh, fileExisted: false, priorInstall: false));
         Assert.False(fresh.DtrEntryChosen);
         Assert.Equal(DtrCounts.Ready, fresh.DtrCounts);
 
         // Once migrated, never again: a later choice of Ready stays.
         hadIt.DtrCounts = DtrCounts.Ready;
-        Assert.False(ServerInfoBar.Migrate(hadIt, fileExisted: true));
+        Assert.False(ServerInfoBar.Migrate(hadIt, fileExisted: true, priorInstall: true));
         Assert.Equal(DtrCounts.Ready, hadIt.DtrCounts);
+    }
+
+    [Fact]
+    public void An_update_with_no_settings_file_had_the_entry_on_and_keeps_it_counting_this_zone()
+    {
+        // 1.21 wrote discovery.json only when a Nearby or entry setting changed, and its entry was on by default: a player
+        // who never touched it updates with no file, and had the entry showing.
+        var untouched = new DiscoverySettings();
+        Assert.True(ServerInfoBar.Migrate(untouched, fileExisted: false, priorInstall: true));
+        Assert.True(untouched.DtrEntryChosen);
+        Assert.True(untouched.ShowDtrEntry);
+        Assert.Equal(DtrCounts.Zone, untouched.DtrCounts);
+
+        // Without Umbra it still shows: their choice, not the default rule.
+        Assert.True(ServerInfoBar.Shown(untouched.DtrEntryChosen, untouched.ShowDtrEntry, umbraInstalled: false, addonInstalled: false));
     }
 
     [Fact]

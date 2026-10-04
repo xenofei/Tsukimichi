@@ -43,6 +43,7 @@ Everything here is read-only except `Tsukimichi.OpenQuest` and `Tsukimichi.OpenA
 | `Tsukimichi.GetTheme` | `() -> string` | the theme in use, by key | 1.22.0 |
 | `Tsukimichi.OpenAt` | `(string place) -> bool` | opens Tsukimichi at a place; never travels | 1.22.0 |
 | `Tsukimichi.AddonHello` | `(string addon, string version) -> int` | an add-on says it is there; answers the summary version | 1.22.0 |
+| `Tsukimichi.GetReadyTonight` | `(int max) -> (uint rowId, string name, string place)[]` | the first Ready quests in Tonight's order | 1.22.0 |
 | `Tsukimichi.SummaryChanged` | message, no arguments | sent after anything the summary gates answer changed | 1.22.0 |
 
 The plugin's internal name is `Tsukimichi`. Every argument and answer is a primitive, an array of primitives or a value tuple of them, so no shared type is needed: copy [`TsukimichiIpc.cs`](TsukimichiIpc.cs), a drop-in client that wraps every gate, or use the examples below.
@@ -356,16 +357,21 @@ Tonight in a few numbers and lines, for **Tsukimichi for Umbra** (`xenofei/Tsuki
 | `upnext` | the main window on Tonight, whose first block is Up next with its travel pill (the player clicks it) |
 | `route` | the followed route's window (nothing when no route is followed) |
 | `settings` | the Settings window |
+| `makeroom` | the main window with the Make room popover open: the journal's quests by what finishing each takes (since 1.22.0, for the logged-in character) |
 
-The window opens on the framework thread, at once when you call from it. Call it from a click.
+`tonight`, `upnext` and `makeroom` show the logged-in character, the one the summary describes, when another is on view. The window opens on the framework thread, at once when you call from it. Call it from a click.
 
 ### Tsukimichi.AddonHello
 
 `(string addon, string version) -> int`. Says an add-on is there: Tsukimichi for Umbra calls `AddonHello("Tsukimichi.Umbra", "1.0.0")` when it loads, and Settings › About shows "Tsukimichi for Umbra · Added · 1.0.0" (and the server info bar entry stops defaulting on, since the add-on shows the same in Umbra). Answers the summary version. Nothing else changes.
 
+### Tsukimichi.GetReadyTonight
+
+`(int max) -> (uint rowId, string name, string place)[]`. The first `max` Ready quests in Tonight's order: Up next's order over every quest (the followed route's next stop, the goal's quests, the next main scenario quest, the pins in pin order, the closest stops' quests), then every other Ready quest in the journal's order. `rowId` is the Quest row id, `name` its name and `place` its giver's zone, both through the logged-in character's shield (`place` is empty when unknown). At most 20 come back; empty when logged out or for a `max` of 0 or less. A fresh array per call. Adding it kept the summary version at 1.
+
 ### Tsukimichi.SummaryChanged
 
-A message with no arguments, sent on the framework thread after anything the summary gates answer changed. Read the gates again then, rather than polling every frame.
+A message with no arguments, sent on the framework thread after anything the summary gates answer changed. Read the gates again then, rather than polling every frame. It is also sent once Tsukimichi's first summary after it loads is ready (the first capture with a character logged in), so an add-on that was waiting, for example after Tsukimichi was turned off and on again, reads the gates again.
 
 ## The /tsuki ipc window
 

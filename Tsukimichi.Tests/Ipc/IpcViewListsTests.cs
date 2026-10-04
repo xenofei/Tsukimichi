@@ -264,8 +264,9 @@ public class IpcViewListsTests
         var names = IpcChannels.Names();
         Assert.Equal(names.Length, names.Distinct(StringComparer.Ordinal).Count());
         Assert.All(names, n => Assert.StartsWith("Tsukimichi.", n, StringComparison.Ordinal));
-        // 25 through 1.21.0; 1.22.0 adds ten summary gates and the SummaryChanged message (IpcSummaryContractTests pins them).
-        Assert.Equal(36, names.Length);
+        // 25 through 1.21.0; 1.22.0 adds eleven summary gates (GetReadyTonight the last) and the SummaryChanged message
+        // (IpcSummaryContractTests pins them).
+        Assert.Equal(37, names.Length);
         foreach (var gate in new[]
         {
             "Tsukimichi.GetGates", "Tsukimichi.Disposing", "Tsukimichi.GetStates", "Tsukimichi.GetQuestsInState", "Tsukimichi.GetQuestsInZone",

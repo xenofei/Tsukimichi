@@ -60,11 +60,25 @@ public sealed record TsukimichiSummary(
     /// <summary><see cref="IpcChannels.GetStoryMeterGate"/>'s answer.</summary>
     public (string Part, int LeftToLatest, bool CaughtUp) StoryAnswer() => (StoryPart, StoryLeft, CaughtUp);
 
+    /// <summary>The most Ready quests a capture keeps for <see cref="IpcChannels.GetReadyTonightGate"/>.</summary>
+    public const int MaxReadyTonight = 20;
+
+    /// <summary>
+    /// The first Ready quests in Tonight's order (<c>Core.Todo.UpNextPicker.ReadyInOrder</c>), at most
+    /// <see cref="MaxReadyTonight"/>: Quest row id, name and the giver's place, both through the logged-in character's shield.
+    /// </summary>
+    public IReadOnlyList<(uint RowId, string Name, string Place)> ReadyTonight { get; init; } = [];
+
+    /// <summary><see cref="IpcChannels.GetReadyTonightGate"/>'s answer: the first <paramref name="max"/>, a fresh array per call.</summary>
+    public (uint RowId, string Name, string Place)[] ReadyTonightAnswer(int max) =>
+        max <= 0 ? [] : [.. ReadyTonight.Take(max)];
+
     /// <summary>Whether two captures say the same (the <see cref="IpcChannels.SummaryChangedGate"/> message's test).</summary>
     public bool Same(TsukimichiSummary? other) =>
         other is not null
-        && this with { EndingSoon = [] } == other with { EndingSoon = [] }
-        && EndingSoon.SequenceEqual(other.EndingSoon);
+        && this with { EndingSoon = [], ReadyTonight = [] } == other with { EndingSoon = [], ReadyTonight = [] }
+        && EndingSoon.SequenceEqual(other.EndingSoon)
+        && ReadyTonight.SequenceEqual(other.ReadyTonight);
 }
 
 /// <summary>
@@ -89,8 +103,11 @@ public static class IpcPlaces
     /// <summary>The Settings window.</summary>
     public const string Settings = "settings";
 
-    /// <summary>Every place, in the order docs/ipc.md lists them.</summary>
-    public static IReadOnlyList<string> All { get; } = [Main, Tonight, UpNext, Route, Settings];
+    /// <summary>The main window with the Make room popover open (C9, 1.19.0): the journal's quests by what finishing each takes.</summary>
+    public const string MakeRoom = "makeroom";
+
+    /// <summary>Every place, in the order docs/ipc.md lists them (a new one is appended).</summary>
+    public static IReadOnlyList<string> All { get; } = [Main, Tonight, UpNext, Route, Settings, MakeRoom];
 
     /// <summary>The place a caller's word names (case and spaces ignored); null for a word this build does not know.</summary>
     public static string? Parse(string? word)

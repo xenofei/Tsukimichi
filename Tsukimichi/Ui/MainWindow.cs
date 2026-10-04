@@ -763,6 +763,7 @@ public sealed partial class MainWindow : Window, IDisposable
         DrawToolbar(session);
         DrawBody(session, bundle);
         DrawStatusBar(session, bundle);
+        OpenRequestedMakeRoom();
         DrawMakeRoomPopover();
         DrawFloating(session, bundle);
         questionableActions?.DrawModals(QuestionableHost);

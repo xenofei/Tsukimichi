@@ -92,6 +92,28 @@ public sealed class UmbraPaletteTests
         AssertPasses(palette);
     }
 
+    [Theory]
+    [InlineData(0x888888u, 0x000000u)]
+    [InlineData(0x888888u, 0x9A9A9Au)]
+    [InlineData(0x999999u, 0xAAAAAAu)]
+    [InlineData(0x777777u, 0x7A7A7Au)]
+    public void A_mid_grey_window_reads_with_whichever_of_black_or_white_reads_better(uint window, uint text)
+    {
+        // A mid-grey window (luminance under 0.5) reads better with black than white: pushing the text towards white could
+        // never reach 4.5 : 1, so the palette went to Night.
+        var grey = new UmbraColorProfile("Grey", new Dictionary<string, uint>
+        {
+            ["Window.Background"] = UmbraSettings.ToAbgr(window),
+            ["Window.Text"] = UmbraSettings.ToAbgr(text),
+        });
+        var palette = UmbraPalette.From(grey, out _, out var fellBack);
+        Assert.False(fellBack);
+        Assert.Equal(UmbraPalette.Key, palette.Key);
+        Assert.Equal(window, ColorMath.ToHex(palette.Surface.Window));
+        AssertPasses(palette);
+        AssertPasses(palette.HighContrast);
+    }
+
     [Fact]
     public void An_unreadable_or_incomplete_profile_falls_back_to_Night()
     {

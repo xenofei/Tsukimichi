@@ -40,7 +40,8 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
     private string? readPath;
     private DateTime readStamp;
     private double nextStat;
-    private volatile bool reading;
+    private double? retryAt;
+    private readonly UmbraReads reads = new();
     private volatile Landed? landed;
     private UmbraColorProfile? paletteFor;
     private bool disposed;
@@ -81,8 +82,11 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
     /// <summary>Tsukimichi for Umbra said hello over IPC this session, with its version; null until it does.</summary>
     public string? AddonVersion { get; private set; }
 
-    /// <summary>Tsukimichi for Umbra is installed: it said hello, or Umbra's add-on list names it.</summary>
-    public bool AddonPresent => AddonVersion is not null || Read?.AddonListed == true;
+    /// <summary>
+    /// Tsukimichi for Umbra is installed: it said hello, or Umbra's add-on list names it with Umbra's custom plugins on
+    /// (<see cref="UmbraReads.AddonPresent"/>).
+    /// </summary>
+    public bool AddonPresent => UmbraReads.AddonPresent(AddonVersion, Read);
 
     /// <summary>The Follow Umbra palette for the profile last read: Night when it can't be read (<see cref="PaletteFellBack"/>).</summary>
     public UiPalette Palette { get; private set; } = UiPalettes.Night;
@@ -141,17 +145,29 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
 
         try
         {
-            if (landed is { } read)
-            {
-                landed = null;
-                readPath = read.Path;
-                readStamp = read.Stamp;
-                Land(read.Read);
-            }
-
             var loaded = umbra.Loaded;
             var character = contentId();
             var now = fw.LastUpdateUTC.Subtract(DateTime.UnixEpoch).TotalSeconds;
+            if (landed is { } read)
+            {
+                landed = null;
+                var landing = reads.Land(Read, readPath, read.Read, read.Path);
+                if (landing.Take)
+                {
+                    readPath = read.Path;
+                    readStamp = read.Stamp;
+                    Land(read.Read);
+                }
+
+                // A failed re-read of the same file keeps the last good read and tries once more soon.
+                retryAt = landing.RetrySoon ? now + UmbraReads.RetrySeconds : null;
+                if (landing.StartAgain)
+                {
+                    // Asked for while that read ran (the character changed, or Umbra's file moved): read for the character now.
+                    Run(character);
+                }
+            }
+
             var moved = umbra.Generation != seenGeneration || character != seenCharacter;
             if (moved)
             {
@@ -159,17 +175,17 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
                 seenCharacter = character;
                 if (!loaded)
                 {
-                    readPath = null;
-                    if (Read is not null)
-                    {
-                        Read = null;
-                        Bump();
-                    }
+                    Unloaded();
                 }
                 else
                 {
                     StartRead(character);
                 }
+            }
+            else if (loaded && retryAt is { } retry && now >= retry)
+            {
+                retryAt = null;
+                StartRead(character);
             }
             else if (loaded && now >= nextStat)
             {
@@ -188,17 +204,39 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
         }
     }
 
-    /// <summary>Reads the character's profile file on a worker; the result lands on the next framework tick.</summary>
+    /// <summary>
+    /// Umbra unloaded: its read, the first-read wait and the add-on's hello go (the add-on unloads with Umbra), so the
+    /// clearance and Settings › About follow at once.
+    /// </summary>
+    private void Unloaded()
+    {
+        readPath = null;
+        retryAt = null;
+        reads.Unloaded();
+        var changed = Read is not null || AddonVersion is not null;
+        Read = null;
+        AddonVersion = null;
+        if (changed)
+        {
+            Bump();
+        }
+    }
+
+    /// <summary>
+    /// Reads the character's profile file on a worker; the result lands on a later framework tick. Asked for while a read
+    /// runs, it starts when that one lands (<see cref="UmbraReads"/>), so a character change mid-read is never dropped.
+    /// </summary>
     private void StartRead(ulong? character)
     {
-        if (reading)
+        if (reads.Request())
         {
-            // A read is under way; the next stat sees any later change.
-            nextStat = 0;
-            return;
+            Run(character);
         }
+    }
 
-        reading = true;
+    /// <summary>The read itself, on a worker; every path ends by publishing what it found.</summary>
+    private void Run(ulong? character)
+    {
         var dir = folder;
         _ = Task.Run(() =>
         {
@@ -219,10 +257,6 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
             {
                 landed = new Landed(Path.Combine(dir, UmbraSettings.DefaultProfile + ".profile.json"), DateTime.MinValue, UmbraRead.Failed(ex.GetType().Name));
             }
-            finally
-            {
-                reading = false;
-            }
         });
     }
 
@@ -240,6 +274,12 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
         }
 
         Read = read;
+        if (AddonVersion is not null && !UmbraReads.HelloStands(umbraLoaded: true, read))
+        {
+            // Umbra's settings now show the add-on unlisted or its custom plugins off: it no longer runs.
+            AddonVersion = null;
+        }
+
         if (!SameColors(read.Colors, paletteFor))
         {
             paletteFor = read.Colors;
@@ -255,7 +295,9 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
     /// <summary>The clearance from what is known now; <see cref="UmbraLayout"/> moves only when it changes.</summary>
     private void Recompute()
     {
-        var next = UmbraClearance.For(umbra.Loaded, Read?.Toolbar, settings.UmbraAssumedBarHeight, uiScale());
+        // Nothing moves until the first read since Umbra loaded lands: assuming a top bar before it would move a surface
+        // down and back for a player whose bar is at the bottom or floating.
+        var next = UmbraClearance.For(umbra.Loaded && reads.Settled, Read?.Toolbar, settings.UmbraAssumedBarHeight, uiScale());
         if (next != UmbraLayout.Clearance)
         {
             UmbraLayout.Clearance = next;

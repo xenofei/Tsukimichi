@@ -131,6 +131,12 @@ public static class IpcChannels
     /// <summary><c>(string addon, string version) -> int</c>: an add-on says it is there; answers <see cref="SummaryVersion"/>. Since 1.22.0.</summary>
     public const string AddonHelloGate = "Tsukimichi.AddonHello";
 
+    /// <summary>
+    /// <c>(int max) -> (uint rowId, string name, string place)[]</c>: the first <c>max</c> Ready quests in Tonight's order,
+    /// names and places shielded for the logged-in character; empty when logged out. Since 1.22.0.
+    /// </summary>
+    public const string GetReadyTonightGate = "Tsukimichi.GetReadyTonight";
+
     /// <summary>Message with no arguments, sent on the framework thread when anything the summary gates answer changed. Since 1.22.0.</summary>
     public const string SummaryChangedGate = "Tsukimichi.SummaryChanged";
 
@@ -172,6 +178,7 @@ public static class IpcChannels
         new(GetThemeGate, "() -> string", "1.22.0"),
         new(OpenAtGate, "(string place) -> bool", "1.22.0"),
         new(AddonHelloGate, "(string addon, string version) -> int", "1.22.0"),
+        new(GetReadyTonightGate, "(int max) -> (uint rowId, string name, string place)[]", "1.22.0"),
         new(StatesChangedGate, "message ()", "0.9.0", IsMessage: true),
         new(QuestStateChangedGate, "message (uint rowId, string from, string to)", "1.8.0", IsMessage: true),
         new(DisposingGate, "message ()", "1.8.0", IsMessage: true),

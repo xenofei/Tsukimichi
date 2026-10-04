@@ -60,6 +60,36 @@ public sealed class DiscoverySettings
     public static DiscoverySettings Load(string path, IList<string>? warnings = null) =>
         UserFile.Load<DiscoverySettings>(path, warnings) ?? new DiscoverySettings();
 
+    /// <summary>
+    /// Loads the settings at startup and migrates them to the 1.22 server info bar entry (<see cref="ServerInfoBar.Migrate"/>),
+    /// saving when the migration changed anything, so the next load sees the migrated file and never migrates again.
+    /// </summary>
+    /// <param name="path">The settings file.</param>
+    /// <param name="priorInstall">An earlier Tsukimichi ran here (see <see cref="ServerInfoBar.Migrate"/>).</param>
+    /// <param name="warnings">Load warnings, as <see cref="Load"/>.</param>
+    /// <param name="attempts">Renames at most when saving.</param>
+    public static DiscoverySettings LoadMigrated(string path, bool priorInstall, IList<string>? warnings = null, int attempts = AtomicFile.DefaultAttempts)
+    {
+        var fileExisted = File.Exists(path);
+        var settings = Load(path, warnings);
+        if (ServerInfoBar.Migrate(settings, fileExisted, priorInstall))
+        {
+            // Saved in every case: an unsaved fresh migration would be taken for an update on the next start, once the
+            // plugin's own configuration exists.
+            try
+            {
+                settings.Save(path, attempts);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // The migrated settings still apply this session; the next start migrates again.
+                warnings?.Add("could not save the migrated server info bar settings: " + ex.Message);
+            }
+        }
+
+        return settings;
+    }
+
     /// <summary>Writes the settings atomically, creating the parent directory; <paramref name="attempts"/> renames at most (<see cref="AtomicFile.QuickAttempts"/> on the framework thread).</summary>
     public void Save(string path, int attempts = AtomicFile.DefaultAttempts) => AtomicFile.Write(path, JsonSerializer.Serialize(this, StorageJson.Options), attempts);
 }

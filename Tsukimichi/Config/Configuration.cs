@@ -876,6 +876,15 @@ public sealed partial class Configuration : IPluginConfiguration
         }
 
         config.RunStopCounts ??= [];
+
+        // A hand-edited or foreign "null" reads as empty, like the collections above (the Todo overlay's Umbra clearance
+        // and the moon icon read theirs every frame).
+        config.UmbraPlaces ??= [];
+        config.MoonIconPlaces ??= [];
+        config.SeasonalEndDates ??= [];
+        config.LinkedCharacterFolders ??= [];
+        config.UpdateDismissedVersion ??= string.Empty;
+        config.UpdateChatSaidVersion ??= string.Empty;
         config.NeedsYouSoundDeath = Math.Clamp(config.NeedsYouSoundDeath, 0, MaxNeedsYouSound);
         config.NeedsYouSoundStuck = Math.Clamp(config.NeedsYouSoundStuck, 0, MaxNeedsYouSound);
         config.NeedsYouSoundDutyPop = Math.Clamp(config.NeedsYouSoundDutyPop, 0, MaxNeedsYouSound);

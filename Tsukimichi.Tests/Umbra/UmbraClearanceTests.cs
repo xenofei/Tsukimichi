@@ -143,6 +143,62 @@ public sealed class UmbraClearanceTests
         Assert.Equal(new Vector2(300, 12), next.Original);
     }
 
+    [Theory]
+    [InlineData(1.1f)]
+    [InlineData(1.2f)]
+    [InlineData(1.35f)]
+    [InlineData(0.95f)]
+    public void At_a_fractional_UI_scale_the_cleared_place_is_whole_pixels_and_the_players_place_is_kept(float uiScale)
+    {
+        // ImGui keeps window positions in whole pixels: a fractional place (32 + 8 × 1.2 = 41.6) comes back as 41 and
+        // must not read as the player moving the overlay.
+        var size = new Vector2(200, 100);
+        foreach (var bar in new[] { UmbraClearance.For(true, Top, 32, uiScale), UmbraClearance.For(true, Top with { TopAligned = false }, 32, uiScale) })
+        {
+            var start = bar.TopAligned ? new Vector2(20, 10) : new Vector2(20, 975);
+            var (setTo, next) = ClearedPlace.Untouched.Step(start, size, ViewportTop, ViewportHeight, bar, dragging: false);
+            Assert.NotNull(setTo);
+            var placed = setTo.Value;
+            Assert.Equal(MathF.Round(placed.Y), placed.Y);
+            Assert.Equal(placed, next.Moved);
+
+            // Clear of the band: the top edge at or below it, the bottom edge at or above it.
+            if (bar.TopAligned)
+            {
+                Assert.True(placed.Y >= bar.Top);
+            }
+            else
+            {
+                Assert.True(placed.Y + size.Y <= ViewportHeight - bar.Bottom);
+            }
+
+            // Next frame ImGui reports the window where it was put, truncated to whole pixels: nothing moves, nothing is forgotten.
+            var landed = new Vector2(MathF.Truncate(placed.X), MathF.Truncate(placed.Y));
+            (setTo, next) = next.Step(landed, size, ViewportTop, ViewportHeight, bar, dragging: false);
+            Assert.Null(setTo);
+            Assert.Equal(start, next.Original);
+
+            // The bar leaves: the player's own place comes back.
+            (setTo, _) = next.Step(landed, size, ViewportTop, ViewportHeight, UmbraClearance.None, dragging: false);
+            Assert.Equal(start, setTo);
+        }
+    }
+
+    [Fact]
+    public void Unread_settings_cost_no_allocation_per_frame()
+    {
+        UmbraClearance.For(true, null, 32, 1.2f);
+        UmbraClearance.For(true, null, 48, 1.2f);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 100; i++)
+        {
+            UmbraClearance.For(true, null, 32, 1.2f);
+            UmbraClearance.For(true, null, 48, 1.2f);
+        }
+
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+    }
+
     [Fact]
     public void A_bar_that_shrinks_gives_back_what_it_can()
     {

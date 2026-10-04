@@ -54,17 +54,23 @@ public readonly record struct UmbraClearance(float Top, float Bottom, ClearanceS
             return None;
         }
 
+        // Unread settings: the assumed bar (UmbraToolbar.Assumed) at the set height, read field by field so a frame that
+        // asks allocates nothing.
         var source = toolbar is null ? ClearanceSource.Assumed : ClearanceSource.Read;
-        var bar = toolbar ?? UmbraToolbar.Assumed with { Height = (int)MathF.Round(Math.Clamp(assumedHeight, 0f, 512f)) };
-        if (!bar.HoldsEdge)
+        var topAligned = toolbar?.TopAligned ?? UmbraToolbar.Assumed.TopAligned;
+        var height = toolbar?.Height ?? (int)MathF.Round(Math.Clamp(assumedHeight, 0f, 512f));
+        var holdsEdge = toolbar?.HoldsEdge ?? height > 0;
+        if (!holdsEdge)
         {
-            return None with { Source = source, TopAligned = bar.TopAligned };
+            return None with { Source = source, TopAligned = topAligned };
         }
 
+        var offset = Math.Max(0, toolbar?.YOffset ?? UmbraToolbar.Assumed.YOffset);
+        var scale = toolbar?.Scale ?? UmbraToolbar.Assumed.Scale;
         var gap = GapLogical * Math.Clamp(uiScale, 0.5f, 4f);
-        var held = MathF.Round((bar.Height + Math.Max(0, bar.YOffset)) * bar.Scale);
+        var held = MathF.Round((height + offset) * scale);
         var band = held + gap;
-        return bar.TopAligned
+        return topAligned
             ? new UmbraClearance(band, 0f, source, TopAligned: true, held)
             : new UmbraClearance(0f, band, source, TopAligned: false, held);
     }
@@ -73,19 +79,21 @@ public readonly record struct UmbraClearance(float Top, float Bottom, ClearanceS
     /// <paramref name="position"/> moved the least it must so a <paramref name="size"/> surface keeps clear inside a
     /// viewport from <paramref name="viewportTop"/> of <paramref name="viewportHeight"/>: down below a top bar, up above
     /// a bottom one. A surface taller than the room left keeps its top clear. The position itself when it already is.
+    /// A moved place is in whole pixels, rounded away from the bar (ImGui keeps window places in whole pixels, so a
+    /// fractional one would come back truncated and read as the player moving the surface).
     /// </summary>
     public Vector2 Apply(Vector2 position, Vector2 size, float viewportTop, float viewportHeight)
     {
         var y = position.Y;
         if (Bottom > 0f)
         {
-            var maxTop = viewportTop + viewportHeight - Bottom - size.Y;
+            var maxTop = MathF.Floor(viewportTop + viewportHeight - Bottom - size.Y);
             y = MathF.Min(y, maxTop);
         }
 
         if (Top > 0f)
         {
-            y = MathF.Max(y, viewportTop + Top);
+            y = MathF.Max(y, MathF.Ceiling(viewportTop + Top));
         }
 
         return y == position.Y ? position : position with { Y = y };
@@ -103,6 +111,9 @@ public readonly record struct ClearedPlace(Vector2? Original, Vector2? Moved)
 {
     /// <summary>Nothing moved.</summary>
     public static readonly ClearedPlace Untouched = default;
+
+    /// <summary>How far, in px, the surface may sit from where the clearance put it and still count as not moved by the player.</summary>
+    public const float MovedTolerance = 1f;
 
     /// <summary>
     /// The place to set this frame (null: leave it) and what to remember. Never moves a surface the player is dragging;
@@ -122,7 +133,8 @@ public readonly record struct ClearedPlace(Vector2? Original, Vector2? Moved)
         }
 
         // Moved by something other than the clearance (Reset position, a drag we did not see): the place is the player's.
-        var state = Moved is { } moved && Vector2.DistanceSquared(moved, current) > 0.25f ? Untouched : this;
+        // Within a pixel is where the clearance put it (ImGui's whole-pixel rounding).
+        var state = Moved is { } moved && Vector2.DistanceSquared(moved, current) > MovedTolerance * MovedTolerance ? Untouched : this;
         var target = clearance.Apply(current, size, viewportTop, viewportHeight);
         if (target != current)
         {

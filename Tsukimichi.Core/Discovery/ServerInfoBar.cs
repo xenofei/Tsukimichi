@@ -63,11 +63,20 @@ public static class ServerInfoBar
     /// The 1.22 settings from a file written by 1.21 or earlier (spec-1.22 M1): a player who had the Nearby entry on
     /// keeps it, counting Quests in this zone, and their on or off stays their choice. A fresh install chooses nothing:
     /// the entry counts Ready and follows <see cref="Shown"/>'s default.
+    /// <para>
+    /// 1.21 and earlier wrote <c>discovery.json</c> only when the player changed a Nearby or entry setting, and the entry
+    /// was on by default; so an update with no file is a player who had the entry on (shown, counting this zone), not a
+    /// fresh install.
+    /// </para>
     /// </summary>
     /// <param name="settings">The loaded settings; changed in place.</param>
-    /// <param name="fileExisted">The settings file existed before this load (an update, not a fresh install).</param>
-    /// <returns>Whether anything changed (the caller saves).</returns>
-    public static bool Migrate(DiscoverySettings settings, bool fileExisted)
+    /// <param name="fileExisted">The settings file existed before this load.</param>
+    /// <param name="priorInstall">
+    /// An earlier Tsukimichi ran here: its configuration existed or recorded a version (<c>Configuration.HasPriorConfig</c>,
+    /// <c>LastSeenVersion</c>).
+    /// </param>
+    /// <returns>Whether anything changed (the caller saves, so the next load does not migrate again).</returns>
+    public static bool Migrate(DiscoverySettings settings, bool fileExisted, bool priorInstall)
     {
         ArgumentNullException.ThrowIfNull(settings);
         if (settings.ServerInfoBarSchema >= DiscoverySettings.CurrentServerInfoBarSchema)
@@ -80,6 +89,13 @@ public static class ServerInfoBar
         {
             settings.DtrEntryChosen = true;
             settings.DtrCounts = settings.ShowDtrEntry ? DtrCounts.Zone : DtrCounts.Ready;
+        }
+        else if (priorInstall)
+        {
+            // 1.21 left its defaults unsaved: the entry was on, counting this zone.
+            settings.DtrEntryChosen = true;
+            settings.ShowDtrEntry = true;
+            settings.DtrCounts = DtrCounts.Zone;
         }
         else
         {

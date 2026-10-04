@@ -171,6 +171,29 @@ public sealed class RouteWindow : Window
         return true;
     }
 
+    /// <summary>
+    /// IPC <c>OpenAt("route")</c> (1.22.0): the followed route's window, opening only a window. A window already on the
+    /// followed route, or holding a Pin all's Undo, is only brought to the front: another program never takes the
+    /// player's Undo or changes what the window shows under it. False when no route is followed.
+    /// </summary>
+    public bool RevealFollowed()
+    {
+        if (routes.Saved is not { } saved)
+        {
+            return false;
+        }
+
+        if (target is { } shown && (saved.Matches(shown) || undo.Added.Count > 0))
+        {
+            IsOpen = true;
+            BringToFront();
+            return true;
+        }
+
+        Show(saved.ToTarget());
+        return true;
+    }
+
     public override void PreDraw()
     {
         // The window is its own top level, so its minimum follows the UI scale like Nearby's.

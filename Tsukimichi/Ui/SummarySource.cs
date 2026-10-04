@@ -93,7 +93,7 @@ public sealed class SummarySource
         {
             upNextRow = pick.Quest.RowId;
             upNextName = spoilers.DisplayName(pick.Quest);
-            upNextStep = PlaceLine(pick.Quest, pick.Step, spoilers);
+            upNextStep = PlaceLine(pick.Quest, pick.Step, guidance.StepZone(pick.Step), spoilers);
         }
 
         var slots = JournalSlots.Of(snapshot, catalog);
@@ -104,6 +104,13 @@ public sealed class SummarySource
             {
                 ending.Add((warning.Festival.Name, warning.DaysLeft));
             }
+        }
+
+        // IPC GetReadyTonight: the first Ready quests in Tonight's order, named and placed through the same shield.
+        var readyTonight = new List<(uint RowId, string Name, string Place)>();
+        foreach (var quest in guidance.ReadyInTonightOrder(TsukimichiSummary.MaxReadyTonight))
+        {
+            readyTonight.Add((quest.RowId, spoilers.DisplayName(quest), GiverPortraits.Place(quest, spoilers) ?? string.Empty));
         }
 
         var story = RosterBoard.StoryOf(catalog, states);
@@ -122,17 +129,22 @@ public sealed class SummarySource
             EndingSoon: ending,
             StoryPart: story?.Part ?? string.Empty,
             StoryLeft: story?.LeftToLatest ?? 0,
-            CaughtUp: story?.CaughtUp ?? false);
+            CaughtUp: story?.CaughtUp ?? false)
+        {
+            ReadyTonight = readyTonight,
+        };
     }
 
-    /// <summary>"Step 3: Speak with Erenville. · Shaaloani", or "Talk to … · place", as Tonight's Up next writes it.</summary>
-    private static string PlaceLine(Core.Model.QuestRecord quest, StepView? step, Core.Query.SpoilerMask spoilers)
+    /// <summary>
+    /// "Step 3: Speak with Erenville. · Shaaloani", or "Talk to … · place", as Tonight's Up next writes it. The step's zone
+    /// is its own name (<paramref name="zone"/>) named here through the logged-in character's shield, never the step
+    /// view's <see cref="StepView.Zone"/>, which the viewed character's shield names for the panes.
+    /// </summary>
+    private static string PlaceLine(Core.Model.QuestRecord quest, StepView? step, string? zone, Core.Query.SpoilerMask spoilers)
     {
         if (step is not null)
         {
-            var objective = step.Objective.Length > 0 ? step.Objective : Strings.StepNoObjective;
-            var line = string.Format(CultureInfo.CurrentCulture, Strings.UpNextStepFormat, step.Step.Step, objective);
-            return step.Zone.Length > 0 ? line + Strings.UpNextSeparator + step.Zone : line;
+            return SummaryText.StepLine(step.Step.Step, step.Objective, zone, spoilers, Strings.UpNextStepFormat, Strings.StepNoObjective, Strings.UpNextSeparator);
         }
 
         var giver = GiverPortraits.Name(quest, spoilers);
