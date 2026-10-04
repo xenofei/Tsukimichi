@@ -12,9 +12,9 @@ using Tsukimichi.Core.Localization;
 namespace Tsukimichi.Core.Todo;
 
 /// <summary>
-/// The parts of the todo overlay. Display order is Route, NextStops, Pinned, Seasonal, NearbyFeature, Plan, Msq,
-/// JobQuests; Seasonal (0.8.0), Plan (0.9.0), Route and NextStops (1.6.0) were added last, so the stored values of
-/// the others did not move.
+/// The parts of the todo overlay. Display order is TurnIn, Route, NextStops, Pinned, Seasonal, NearbyFeature, Plan, Msq,
+/// JobQuests; Seasonal (0.8.0), Plan (0.9.0), Route and NextStops (1.6.0) and TurnIn (1.19.0) were added last, so the
+/// stored values of the others did not move.
 /// </summary>
 public enum TodoSection : byte
 {
@@ -32,6 +32,12 @@ public enum TodoSection : byte
 
     /// <summary>"Next stops" (1.6.0, R6 B): Ready quests batched by aetheryte, one row per stop.</summary>
     NextStops,
+
+    /// <summary>
+    /// "Turn in on a job that isn't capped" (1.19.0, C8): journal quests at their turn-in step whose EXP the current,
+    /// capped job would lose (<see cref="CappedTurnIns"/>). No setting of its own: it shows only while that is so.
+    /// </summary>
+    TurnIn,
 
     /// <summary>"Loose ends" (1.21.0 N8): storylines started and never finished, finales first; one row per line.</summary>
     LooseEnds,
@@ -53,6 +59,9 @@ public enum TodoRowKind : byte
 
     /// <summary>A stop of Next stops: the row names the place and stands on its first quest.</summary>
     Stop,
+
+    /// <summary>A quest to hand in on a job that isn't capped (1.19.0, C8).</summary>
+    TurnIn,
 
     /// <summary>A loose end: the row names the storyline and stands on its next quest.</summary>
     LooseEnd,
@@ -133,6 +142,7 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="ShowNextStops">Include the Next stops section.</param>
 /// <param name="EndingSoon">The events ending soon (<see cref="EventWarnings.EndingSoon"/>, 1.19.0 C10): their quests in the journal lead the seasonal section; null keeps the events' order.</param>
 /// <param name="TimeZone">The zone the end-date line prints its date in (<see cref="SeasonalNow.DateText"/>); null reads <see cref="TimeZoneInfo.Local"/>, the player's.</param>
+/// <param name="CappedTurnIns">The journal quests to turn in on a job that isn't capped (<see cref="Jobs.CappedTurnIns.Find"/>, 1.19.0 C8); null or empty leaves the section out. Not a section the player enables, so it never counts in <see cref="TodoModel.EnabledSections"/>.</param>
 /// <param name="LooseEnds">The Loose ends rows (1.21.0 N8), built by the caller in display order (finales first), each standing on its line's next quest; null leaves the section out.</param>
 /// <param name="ShowLooseEnds">Include the Loose ends section (off by default).</param>
 public sealed record TodoInputs(
@@ -163,6 +173,7 @@ public sealed record TodoInputs(
     bool ShowNextStops = false,
     IReadOnlyList<EndingSoonEvent>? EndingSoon = null,
     TimeZoneInfo? TimeZone = null,
+    IReadOnlyList<CappedTurnIn>? CappedTurnIns = null,
     IReadOnlyList<TodoRow>? LooseEnds = null,
     bool ShowLooseEnds = false);
 
@@ -206,8 +217,13 @@ public static class TodoList
         ArgumentNullException.ThrowIfNull(inputs.Ladder);
         ArgumentNullException.ThrowIfNull(inputs.JobNames);
 
-        var sections = new List<TodoSectionModel>(8);
+        var sections = new List<TodoSectionModel>(9);
         var enabled = 0;
+        if (inputs.CappedTurnIns is { Count: > 0 } turnIns)
+        {
+            AddTurnIns(sections, inputs, turnIns);
+        }
+
         if (inputs.ShowRoute && inputs.Route is { } route)
         {
             enabled++;
@@ -267,6 +283,37 @@ public static class TodoList
 
     /// <summary>Most stops the Next stops section lists.</summary>
     public const int MaxStops = 3;
+
+    private static string TurnInFormat => CoreText.T("Core.Todo.TurnIn", "Turn in on a job that isn't capped: {0}");
+    private static string TurnInHintFormat => CoreText.T("Core.Todo.TurnInHint", "{0} Lv {1} · {2} EXP");
+    private static string TurnInHintNoJobFormat => CoreText.T("Core.Todo.TurnInHintNoJob", "{0} EXP elsewhere");
+
+    /// <summary>
+    /// "Turn in on a job that isn't capped: Into the Aery" (spec-1.19 C8), one row per capped turn-in in journal order,
+    /// the quest named through the spoiler shield (<see cref="TodoInputs.Names"/>), the hint naming the job that gets
+    /// the most ("DRG Lv 56 · 50,700 EXP"). A click selects the quest, as every row does.
+    /// </summary>
+    private static void AddTurnIns(List<TodoSectionModel> sections, TodoInputs inputs, IReadOnlyList<CappedTurnIn> turnIns)
+    {
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        var rows = new List<TodoRow>(turnIns.Count);
+        foreach (var turnIn in turnIns)
+        {
+            var name = string.Format(culture, TurnInFormat, QuestName(inputs, turnIn.Quest));
+            var hint = string.Empty;
+            if (turnIn.Advice.Best is { } best)
+            {
+                var amount = best.Exp.ToString("N0", culture);
+                hint = inputs.JobNames.TryGetValue(best.Job, out var job) && job.Length > 0 && best.Level > 0
+                    ? string.Format(culture, TurnInHintFormat, job, best.Level, amount)
+                    : string.Format(culture, TurnInHintNoJobFormat, amount);
+            }
+
+            rows.Add(new TodoRow(turnIn.Quest.RowId, name, QuestState.Accepted, hint, TodoRowKind.TurnIn));
+        }
+
+        Add(sections, TodoSection.TurnIn, rows);
+    }
 
     /// <summary>Most lines the Loose ends section lists; the rest are one "+N more" line.</summary>
     public const int MaxLooseEnds = 3;

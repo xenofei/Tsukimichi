@@ -47,6 +47,13 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
     private bool PlaceHidden(string place) => Spoilers?.Invoke().IsNameMasked(Core.Query.SpoilerKind.Area, place) == true;
 
     /// <summary>
+    /// Whether the zone the quest's giver stands in is one the story has not reached (1.20.0 N6): no travel button,
+    /// Flag or coordinates leads there, since the place is ahead of the story and the game's map would name it.
+    /// </summary>
+    public bool GiverPlaceHidden(QuestRecord quest) =>
+        quest.Issuer is { } issuer && Map(issuer.MapId) is { } map && PlaceHidden(map.PlaceName);
+
+    /// <summary>
     /// The clickable "[Open] [Pin] [Route]" actions (1.7.0), attached by the plugin: every quest line and headline this
     /// class prints ends with them while Settings › Notices › Chat actions has them on. Null prints none.
     /// </summary>

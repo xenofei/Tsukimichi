@@ -65,6 +65,10 @@ public sealed partial class SessionState
     // index of the loaded catalog (UseSpoilerNames).
     private SpoilerNames spoilerNames = SpoilerNames.Empty;
 
+    // Places, duties, rewards and people the player revealed for the session (1.20.0 N6: "Reveal this name", "Reveal
+    // names in this quest").
+    private readonly HashSet<(SpoilerKind Kind, string Name)> revealedOtherNames = new(SpoilerNames.NameComparer);
+
     public SessionState(SnapshotService snapshots, PluginPaths paths, UniqueRewardsData uniqueRewards, CuratedData curated, IPluginLog? log = null)
     {
         this.snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
@@ -240,7 +244,7 @@ public sealed partial class SessionState
             {
                 spoilersVersion = Version;
                 spoilers = Bundle is { } bundle
-                    ? SpoilerMask.Build(bundle.Catalog, States, SpoilerOptionsFor(ViewedContentId), revealedNames, Abandoned, spoilerNames)
+                    ? SpoilerMask.Build(bundle.Catalog, States, SpoilerOptionsFor(ViewedContentId), revealedNames, Abandoned, spoilerNames, revealedOtherNames)
                     : SpoilerMask.None;
             }
 
@@ -265,7 +269,7 @@ public sealed partial class SessionState
             if (liveSpoilersVersion != Version)
             {
                 liveSpoilersVersion = Version;
-                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames, liveAbandoned, spoilerNames);
+                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames, liveAbandoned, spoilerNames, revealedOtherNames);
             }
 
             return liveSpoilers;
@@ -281,6 +285,34 @@ public sealed partial class SessionState
         }
     }
 
+    /// <summary>"Reveal this name" on a placeholder (1.20.0 N6): the place, duty, reward or person shows until the plugin unloads.</summary>
+    public void RevealName(SpoilerKind kind, string name)
+    {
+        if (!string.IsNullOrEmpty(name) && revealedOtherNames.Add((kind, name)))
+        {
+            Bump();
+        }
+    }
+
+    /// <summary>
+    /// "Reveal names in this quest" (1.20.0 N6): the quest's own name, its giver, place, duties, rewards and unlocks
+    /// (<see cref="SpoilerNames.NamesIn"/>) show until the plugin unloads.
+    /// </summary>
+    public void RevealQuestNames(uint rowId, IEnumerable<(SpoilerKind Kind, string Name)> names)
+    {
+        ArgumentNullException.ThrowIfNull(names);
+        var changed = revealedNames.Add(rowId);
+        foreach (var name in names)
+        {
+            changed |= name.Name.Length > 0 && revealedOtherNames.Add(name);
+        }
+
+        if (changed)
+        {
+            Bump();
+        }
+    }
+
     /// <summary>A spoiler setting changed: every surface re-reads the mask.</summary>
     public void RefreshSpoilers() => Bump();
 
@@ -289,9 +321,19 @@ public sealed partial class SessionState
     /// catalog: the plugin hands it over each frame, and a new one (the index of a new catalog landing) makes every
     /// surface re-read the mask.
     /// </summary>
-    public void UseSpoilerNames(SpoilerNames names)
+    public void UseSpoilerNames(SpoilerNames names) => UseUnlocks(null, names);
+
+    /// <summary>
+    /// The unlock index of the loaded catalog as of the last poll (what "Reveal names in this quest" reads the quest's
+    /// unlocks from, 1.20.0 N6); null until the plugin hands one over.
+    /// </summary>
+    public Core.Unlocks.QuestUnlocks? Unlocks { get; private set; }
+
+    /// <summary>The unlock index of the loaded catalog, and the spoiler names it places (<see cref="UseSpoilerNames"/>).</summary>
+    public void UseUnlocks(Core.Unlocks.QuestUnlocks? index, SpoilerNames? names = null)
     {
-        ArgumentNullException.ThrowIfNull(names);
+        Unlocks = index ?? Unlocks;
+        names ??= index?.Names ?? SpoilerNames.Empty;
         if (ReferenceEquals(spoilerNames, names))
         {
             return;

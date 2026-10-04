@@ -1195,11 +1195,16 @@ public sealed class TodoOverlay : Window, IDisposable
 
     private void OnTerritoryChanged(uint territory) => dirty = true;
 
-    /// <summary>Section toggles as one integer, compared per frame so a change in the settings window rebuilds at once.</summary>
+    /// <summary>
+    /// Section toggles and "Warn before an event ends" (which orders the seasonal section, 1.19.0 C10) as one integer,
+    /// compared per frame so a change in the settings window rebuilds at once.
+    /// </summary>
     private int SettingsSignature() =>
         (settings.TodoShowPins ? 1 : 0) | (settings.TodoShowNearbyFeature ? 2 : 0) | (settings.TodoShowMsq ? 4 : 0) | (settings.TodoShowJobQuests ? 8 : 0)
         | (settings.TodoShowSeasonal ? 16 : 0) | (settings.TodoShowPlan ? 32 : 0) | ((settings.TodoPlanExpansion + 1) << 6)
-        | (settings.TodoShowRoute ? 1 << 20 : 0) | (settings.TodoShowNextStops ? 1 << 21 : 0) | (settings.TodoShowLooseEnds ? 1 << 22 : 0);
+        | (settings.TodoShowRoute ? 1 << 20 : 0) | (settings.TodoShowNextStops ? 1 << 21 : 0)
+        | (Math.Clamp(settings.SeasonalWarnDays, 0, 15) << 22)
+        | (settings.TodoShowLooseEnds ? 1 << 26 : 0);
 
     /// <summary>The Loose ends section's lines (1.21.0 N8); set by the plugin. Null leaves the section out.</summary>
     public LooseEndsSource? LooseEnds { get; set; }
@@ -1235,10 +1240,11 @@ public sealed class TodoOverlay : Window, IDisposable
     }
 
     /// <summary>
-    /// The followed route's, Next stops' and the unlock index's revisions (each read through its source, which rebuilds
-    /// first when due), so a nearby unlock quest's "Opens …" hint follows the index once it is built.
+    /// The followed route's, Next stops', the unlock index's and the ending-soon warnings' revisions (each read through
+    /// its source, which rebuilds first when due), so a nearby unlock quest's "Opens …" hint follows the index once it is
+    /// built, and an event entering the warning window moves its journal quests to the top of the seasonal section.
     /// </summary>
-    private (int Route, int Stops, int Unlocks) SourceRevisions()
+    private (int Route, int Stops, int Unlocks, int Events) SourceRevisions()
     {
         var route = 0;
         if (settings.TodoShowRoute && ActiveRoutes is { } routes)
@@ -1255,10 +1261,18 @@ public sealed class TodoOverlay : Window, IDisposable
         }
 
         var unlocks = settings.TodoShowNearbyFeature && pins.Unlocks is { } index ? index.Revision : 0;
-        return (route, stops, unlocks);
+
+        var events = 0;
+        if (settings.TodoShowSeasonal && EventWarnings is { } warnings)
+        {
+            _ = warnings.Current;
+            events = warnings.Revision;
+        }
+
+        return (route, stops, unlocks, events);
     }
 
-    private (int Route, int Stops, int Unlocks) builtSources = (-1, -1, -1);
+    private (int Route, int Stops, int Unlocks, int Events) builtSources = (-1, -1, -1, -1);
 
     /// <summary>Once per frame: rebuilds when any input moved, the viewed character's pins included.</summary>
     private void Refresh()
@@ -1343,6 +1357,8 @@ public sealed class TodoOverlay : Window, IDisposable
             Stops: settings.TodoShowNextStops ? NextStops?.Stops : null,
             ShowNextStops: settings.TodoShowNextStops,
             EndingSoon: settings.TodoShowSeasonal ? EventWarnings?.Current : null,
+            // "Turn in on a job that isn't capped" (1.19.0, C8): shown whenever it is so, with no setting of its own.
+            CappedTurnIns: CappedTurnInScan.Viewed(session),
             LooseEnds: LooseEndRows(),
             ShowLooseEnds: settings.TodoShowLooseEnds));
 

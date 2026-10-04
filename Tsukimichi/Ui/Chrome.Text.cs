@@ -31,8 +31,9 @@ public static partial class Chrome
     }
 
     /// <inheritdoc cref="EllipsisText(ReadOnlySpan{char}, float, uint, float)"/>
+    /// <remarks>A string that is or holds a spoiler placeholder and is asked for in Text draws in Secondary (<see cref="ShieldText.Ink"/>).</remarks>
     public static bool EllipsisText(string text, float width, uint color, float textWidth = -1f) =>
-        EllipsisText(text.AsSpan(), width, color, textWidth);
+        EllipsisText(text.AsSpan(), width, ShieldText.Ink(text, color), textWidth);
 
     /// <summary>
     /// <paramref name="text"/> drawn on <paramref name="dl"/> at <paramref name="pos"/> within <paramref name="width"/>,
@@ -175,8 +176,9 @@ public static partial class Chrome
     }
 
     /// <inheritdoc cref="EllipsisTextAt(ImDrawListPtr, Vector2, float, ReadOnlySpan{char}, uint, float)"/>
+    /// <remarks>A string that is or holds a spoiler placeholder and is asked for in Text draws in Secondary (<see cref="ShieldText.Ink"/>).</remarks>
     public static bool EllipsisTextAt(ImDrawListPtr dl, Vector2 pos, float width, string text, uint color, float textWidth = -1f) =>
-        EllipsisTextAt(dl, pos, width, text.AsSpan(), color, textWidth);
+        EllipsisTextAt(dl, pos, width, text.AsSpan(), ShieldText.Ink(text, color), textWidth);
 
     /// <summary>
     /// The width of <paramref name="text"/> in the current font with <paramref name="tracking"/> pixels between glyphs

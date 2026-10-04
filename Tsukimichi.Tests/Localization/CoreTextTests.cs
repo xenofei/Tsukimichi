@@ -88,7 +88,7 @@ public sealed class CoreTextTests : IDisposable
     {
         Assert.True(CoreText.IsEnglish);
         Assert.Equal("Blocked", StateNames.Name(QuestState.Blocked));
-        Assert.Equal("Main scenario quest (Lv 83)", string.Format(System.Globalization.CultureInfo.InvariantCulture, SpoilerMask.PlaceholderFormat, 83));
+        Assert.Equal("Main scenario quest (Lv\u00A083)", string.Format(System.Globalization.CultureInfo.InvariantCulture, SpoilerMask.PlaceholderFormat, 83));
         Assert.Equal("step 3 of 7", BlockerText.StepText(3, 7));
     }
 
@@ -161,7 +161,7 @@ public sealed class CoreTextTests : IDisposable
         Assert.Equal("メインクエスト（Lv83）", SpoilerMask.Placeholder(quest));
         CoreText.Use(null);
         Assert.Equal(english, SpoilerMask.Placeholder(quest));
-        Assert.Equal("Main scenario quest (Lv 83)", english);
+        Assert.Equal("Main scenario quest (Lv\u00A083)", english);
     }
 
     [Fact]

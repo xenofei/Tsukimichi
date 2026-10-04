@@ -20,6 +20,8 @@ static partial class Strings
     public static string TodoSectionNearby => Loc.Get("TodoSectionNearby");
     public static string TodoSectionMsq => Loc.Get("TodoSectionMsq");
     public static string TodoSectionJobQuests => Loc.Get("TodoSectionJobQuests");
+    /// <summary>The capped turn-in rows' caption (1.19.0, C8).</summary>
+    public static string TodoSectionTurnIn => Loc.Get("TodoSectionTurnIn");
 
     /// <summary>{0} = section name, {1} = row count.</summary>
     public const string TodoSectionFormat = "{0} ({1})";
@@ -53,6 +55,7 @@ static partial class Strings
         TodoSection.Plan => PlanTodoSection,
         TodoSection.Route => RouteWindowTitle,
         TodoSection.NextStops => TodoSectionNextStops,
+        TodoSection.TurnIn => TodoSectionTurnIn,
         TodoSection.LooseEnds => LooseEndsSection,
         _ => section.ToString(),
     };

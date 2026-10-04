@@ -78,6 +78,10 @@ static partial class Strings
     public static string GearsetSwitchBlockedFormat => Loc.Get("GearsetSwitchBlockedFormat");
     public static string GearsetSwitchPaused => Loc.Get("GearsetSwitchPaused");
     public static string GearsetSwitchLoggedOut => Loc.Get("GearsetSwitchLoggedOut");
+    /// <summary>{0} = the quest link (its name through the spoiler shield).</summary>
+    public static string CappedTurnInChatFormat => Loc.Get("CappedTurnInChatFormat");
+    public static string CappedTurnInConfig => Loc.Get("CappedTurnInConfig");
+    public static string CappedTurnInConfigHint => Loc.Get("CappedTurnInConfigHint");
 
     // ---- C9: journal slots and Make room ----
     public static string JournalRoomTooltip => Loc.Get("JournalRoomTooltip");

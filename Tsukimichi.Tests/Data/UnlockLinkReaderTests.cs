@@ -216,6 +216,8 @@ public sealed class UnlockIndexFixture : IDisposable
         var rewards = UniqueRewardCatalog.Build(unique, new Dictionary<uint, UniqueOverride>(), curated);
         var links = UnlockLinkReader.Read(excel, Language.English);
         var duties = DutyIndex.Build(excel, Language.English);
-        return (links, QuestUnlocks.Build(Catalog, rewards, duties, links, curated), curated);
+        // The spoiler shield's placeholders name expansions from the client's ExVersion sheet, as the plugin does.
+        var names = game.Bundle.Names;
+        return (links, QuestUnlocks.Build(Catalog, rewards, duties, links, curated, id => names.Expansion(id)), curated);
     }
 }

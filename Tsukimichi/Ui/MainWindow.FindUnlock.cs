@@ -43,7 +43,8 @@ public sealed partial class MainWindow
     public Func<FlightIndex?>? FlightZones { get; set; }
 
     /// <summary>One row of the group, every string ready to draw.</summary>
-    private sealed record UnlockResultRow(UnlockFind Find, string Kind, string Label, string Via, string Tooltip);
+    /// <param name="Hidden">The find's own name kind while the spoiler shield hides it (1.20.0 N6); null when shown.</param>
+    private sealed record UnlockResultRow(UnlockFind Find, string Kind, string Label, string Via, string Tooltip, SpoilerKind? Hidden = null);
 
     /// <summary>The Unlocks group under the search pill, drawn as a small window of its own so it floats over the panes.</summary>
     private void DrawUnlockResults(SessionState session)
@@ -129,7 +130,8 @@ public sealed partial class MainWindow
             var routeX = right - routeWidth;
             var room = MathF.Max(1f, routeX - gap - x);
             var labelWidth = ImGui.CalcTextSize(row.Label).X;
-            Chrome.EllipsisTextAt(dl, new Vector2(x, textY), room, row.Label, Theme.U32(s.Text), labelWidth);
+            // A string that holds a placeholder is Secondary as a whole: "Flying in Dawntrail area 6" (spec-1.20 N6).
+            Chrome.EllipsisTextAt(dl, new Vector2(x, textY), room, row.Label, Theme.U32(row.Hidden is null ? s.Text : s.TextSecondary), labelWidth);
             var viaX = x + MathF.Min(labelWidth, room) + UiMetrics.Px(8f);
             if (row.Via.Length > 0 && viaX < routeX - gap)
             {
@@ -138,7 +140,14 @@ public sealed partial class MainWindow
 
             ImGui.SetCursorScreenPos(new Vector2(left.X, left.Y));
             ImGui.Dummy(new Vector2(MathF.Max(1f, routeX - gap - left.X), rowHeight));
-            if (ImGui.IsItemHovered())
+            if (row.Hidden is { } kind && runner.Session is { } session)
+            {
+                using (ImRaii.PushId(i))
+                {
+                    ShieldText.InteractItem(session, kind, row.Find.Name, row.Label, lead: row.Label);
+                }
+            }
+            else if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(row.Tooltip);
             }
@@ -194,13 +203,14 @@ public sealed partial class MainWindow
 
         var spoilers = session.Spoilers;
         var catalog = bundle.Catalog;
-        // Neither through a masked quest nor by a name past the story point (1.20.0 N6).
+        // Never through a masked quest; a name past the story point matches and lists only as its placeholder (1.20.0 N6).
         var matches = source.Current.Find(query, rowId => !spoilers.IsMasked(rowId), reach, MaxUnlockResults, spoilers);
         var rows = new List<UnlockResultRow>(matches.Count);
         var index = FlightZones?.Invoke();
         foreach (var match in matches)
         {
             var find = match.Find;
+            var label = match.Label;
             var via = catalog.GetByRowId(match.Via) is { } quest ? string.Format(CultureInfo.CurrentCulture, Strings.FindUnlockViaFormat, spoilers.DisplayName(quest)) : string.Empty;
             if (find.NeedsAll && index?.ZoneOfQuests(find.Quests) is { } zone)
             {
@@ -208,8 +218,8 @@ public sealed partial class MainWindow
             }
 
             var kind = find.Kind is { } k ? UnlockFindKinds.Name(k) : UnlockTargets.Name(find.Target);
-            var tooltip = find.Label + "\n" + UnlockTargets.Name(find.Target) + (via.Length > 0 ? " · " + via : string.Empty);
-            rows.Add(new UnlockResultRow(find, kind, find.Label, via, tooltip));
+            var tooltip = label + "\n" + UnlockTargets.Name(find.Target) + (via.Length > 0 ? " · " + via : string.Empty);
+            rows.Add(new UnlockResultRow(find, kind, label, via, tooltip, match.Hidden ? SpoilerNames.KindOf(find.Target) : null));
         }
 
         unlockRows = [.. rows];

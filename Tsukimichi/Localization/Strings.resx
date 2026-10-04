@@ -5770,6 +5770,39 @@
   <data name="SpoilerMaskedNote" xml:space="preserve">
     <value>Name hidden: this main scenario quest is further ahead than you are</value>
   </data>
+  <data name="SpoilerHiddenCountFormat" xml:space="preserve">
+    <value>{0:N0} story names and {1:N0} other names hidden for {2}.</value>
+    <comment>Settings › Spoilers count line (1.20 N6): main scenario names, then places, aetherytes, duties, rewards and people; {2} is the character's name.</comment>
+  </data>
+  <data name="SpoilerHiddenCountUnnamed" xml:space="preserve">
+    <value>{0:N0} story names and {1:N0} other names hidden for the character shown.</value>
+    <comment>Settings › Spoilers count line when the character has no name yet.</comment>
+  </data>
+  <data name="SpoilerRevealQuestNames" xml:space="preserve">
+    <value>Reveal names in this quest</value>
+    <comment>Detail pane note button and placeholder right-click (1.20 N6): the quest's name, giver, place, duty, rewards and unlocks, for this session.</comment>
+  </data>
+  <data name="SpoilerRevealQuestNamesTooltip" xml:space="preserve">
+    <value>Show this quest's name, giver, place, duties, rewards and unlocks until the plugin reloads</value>
+  </data>
+  <data name="SpoilerRevealThisSession" xml:space="preserve">
+    <value>this session</value>
+    <comment>Trailing hint after Reveal this name in a placeholder's right-click menu.</comment>
+  </data>
+  <data name="SpoilerHoverTitle" xml:space="preserve">
+    <value>Hidden by the spoiler shield</value>
+    <comment>The hover on any placeholder (1.20 N6), first line.</comment>
+  </data>
+  <data name="SpoilerHoverWhy" xml:space="preserve">
+    <value>It's from the story past yours.</value>
+  </data>
+  <data name="SpoilerHoverHint" xml:space="preserve">
+    <value>Right-click to reveal it for this session.</value>
+  </data>
+  <data name="SpoilerMaskedNamesNote" xml:space="preserve">
+    <value>Names hidden: this quest is further ahead than you are.</value>
+    <comment>Detail pane note for a quest whose names the shield hides (1.20 N6).</comment>
+  </data>
   <data name="SettingsSpoilers" xml:space="preserve">
     <value>Spoilers</value>
   </data>
@@ -5790,7 +5823,11 @@
     <comment>Settings › Spoilers, under "Hide story names ahead" (1.20 N6).</comment>
   </data>
   <data name="SpoilerHideRelatedHelp" xml:space="preserve">
-    <value>Places, duties, rewards and givers your story has not reached read as Area ahead (Lv 61) and the like.</value>
+    <value>Areas, aetherytes, duties, quest rewards and characters from the story past yours read as placeholders.</value>
+  </data>
+  <data name="SpoilerHideRelatedExamples" xml:space="preserve">
+    <value>They read Dawntrail area&#160;6, Dungeon (Lv&#160;97), An orchestrion roll, Dawntrail character. Unlocks, Path, Route, the Duties board, tooltips and search follow it.</value>
+    <comment>Settings › Spoilers, the line under "Hide places, duties, rewards and people" (1.20 N6): the spec's placeholder vocabulary.</comment>
   </data>
   <data name="SpoilerHideArtwork" xml:space="preserve">
     <value>Hide journal artwork</value>
@@ -7747,24 +7784,116 @@
     <comment>Core: UnlockKind.cs.</comment>
   </data>
   <data name="Core.Spoiler.Placeholder" xml:space="preserve">
-    <value>Main scenario quest (Lv {0})</value>
-    <comment>Core: SpoilerMask.cs.</comment>
+    <value>Main scenario quest (Lv&#160;{0})</value>
+    <comment>Core: SpoilerMask.cs. Keep the non-breaking space: the locator never wraps (spec-1.20).</comment>
   </data>
-  <data name="Core.Spoiler.AreaPlaceholder" xml:space="preserve">
-    <value>Area ahead (Lv {0})</value>
-    <comment>Core: SpoilerMask.cs. A zone, region or aetheryte past the character's story point (1.20 N6); {0} is the level of the story quest that introduces it.</comment>
+  <data name="Core.Spoiler.Area" xml:space="preserve">
+    <value>{0} area&#160;{1}</value>
+    <comment>Core: SpoilerNames.cs. An area or city past the character's story point (1.20 N6): {0} the expansion's name from the game, {1} the area's place in the expansion's TerritoryType order. Keep the non-breaking space.</comment>
   </data>
-  <data name="Core.Spoiler.DutyPlaceholder" xml:space="preserve">
-    <value>Duty ahead (Lv {0})</value>
-    <comment>Core: SpoilerMask.cs. A duty past the character's story point (1.20 N6).</comment>
+  <data name="Core.Spoiler.AreaUnnumbered" xml:space="preserve">
+    <value>{0} area</value>
+    <comment>Core: SpoilerNames.cs. An area the zone list does not number; {0} the expansion.</comment>
   </data>
-  <data name="Core.Spoiler.RewardPlaceholder" xml:space="preserve">
-    <value>Reward ahead (Lv {0})</value>
-    <comment>Core: SpoilerMask.cs. A reward or other unlock (a mount, an emote, a job, a feature) past the character's story point (1.20 N6).</comment>
+  <data name="Core.Spoiler.Region" xml:space="preserve">
+    <value>{0} region</value>
+    <comment>Core: SpoilerNames.cs. A world-map region past the story point; {0} the expansion.</comment>
   </data>
-  <data name="Core.Spoiler.NpcPlaceholder" xml:space="preserve">
-    <value>Someone ahead (Lv {0})</value>
-    <comment>Core: SpoilerMask.cs. A person (a quest giver) past the character's story point (1.20 N6).</comment>
+  <data name="Core.Spoiler.Aetheryte" xml:space="preserve">
+    <value>{0} aetheryte · area&#160;{1}</value>
+    <comment>Core: SpoilerNames.cs. An aetheryte in a hidden area; {0} the expansion, {1} the area's number.</comment>
+  </data>
+  <data name="Core.Spoiler.AetheryteUnnumbered" xml:space="preserve">
+    <value>{0} aetheryte</value>
+    <comment>Core: SpoilerNames.cs. An aetheryte whose area is not numbered; {0} the expansion.</comment>
+  </data>
+  <data name="Core.Spoiler.AreaLocator" xml:space="preserve">
+    <value>area&#160;{0}</value>
+    <comment>Core: SpoilerNames.cs. A hidden area's locator alone, where a slot shortens the place first.</comment>
+  </data>
+  <data name="Core.Spoiler.Person" xml:space="preserve">
+    <value>{0} character</value>
+    <comment>Core: SpoilerNames.cs. A person past the story point; {0} the expansion that introduces them.</comment>
+  </data>
+  <data name="Core.Spoiler.Duty" xml:space="preserve">
+    <value>{0} (Lv&#160;{1})</value>
+    <comment>Core: SpoilerNames.cs. A duty past the story point: {0} its content type (Dungeon, Trial, Alliance raid), {1} its level.</comment>
+  </data>
+  <data name="Core.Spoiler.Item" xml:space="preserve">
+    <value>An item</value>
+    <comment>Core: SpoilerNames.cs. A hidden reward of this kind (1.20 N6).</comment>
+  </data>
+  <data name="Core.Spoiler.Mount" xml:space="preserve">
+    <value>A mount</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Minion" xml:space="preserve">
+    <value>A minion</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Emote" xml:space="preserve">
+    <value>An emote</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Orchestrion" xml:space="preserve">
+    <value>An orchestrion roll</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Title" xml:space="preserve">
+    <value>A title</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Hairstyle" xml:space="preserve">
+    <value>A hairstyle</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Card" xml:space="preserve">
+    <value>A Triple Triad card</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Barding" xml:space="preserve">
+    <value>A barding</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Ornament" xml:space="preserve">
+    <value>A fashion accessory</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Action" xml:space="preserve">
+    <value>An action</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Trait" xml:space="preserve">
+    <value>A trait</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.BlueMagic" xml:space="preserve">
+    <value>A blue magic spell</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Job" xml:space="preserve">
+    <value>A job</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Feature" xml:space="preserve">
+    <value>A feature</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.AetherCurrent" xml:space="preserve">
+    <value>An aether current</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Achievement" xml:space="preserve">
+    <value>An achievement</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.DutyReward" xml:space="preserve">
+    <value>A duty</value>
+    <comment>Core: SpoilerNames.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Reward" xml:space="preserve">
+    <value>A reward</value>
+    <comment>Core: SpoilerNames.cs.</comment>
   </data>
   <data name="Core.Route.QuestFallback" xml:space="preserve">
     <value>quest</value>
@@ -13128,6 +13257,32 @@
   <data name="HandInMisplacedArmoury" xml:space="preserve">
     <value>The game counts your inventory only: take it out of the armoury chest.</value>
     <comment>Hand in line (1.19, N5).</comment>
+  </data>
+  <data name="Core.Todo.TurnIn" xml:space="preserve">
+    <value>Turn in on a job that isn't capped: {0}</value>
+    <comment>Core: TodoList.cs. A Todo row (1.19, C8). {0} = the quest's name.</comment>
+  </data>
+  <data name="Core.Todo.TurnInHint" xml:space="preserve">
+    <value>{0} Lv {1} · {2} EXP</value>
+    <comment>Core: TodoList.cs. After the capped turn-in row. {0} = the job that gets the most (abbreviation), {1} = its level, {2} = the EXP it gets.</comment>
+  </data>
+  <data name="Core.Todo.TurnInHintNoJob" xml:space="preserve">
+    <value>{0} EXP elsewhere</value>
+    <comment>Core: TodoList.cs. After the capped turn-in row when the job's name is unknown. {0} = the EXP another job gets.</comment>
+  </data>
+  <data name="TodoSectionTurnIn" xml:space="preserve">
+    <value>Where the EXP goes</value>
+    <comment>Todo overlay caption over the capped turn-in rows (1.19, C8).</comment>
+  </data>
+  <data name="CappedTurnInChatFormat" xml:space="preserve">
+    <value>Turn in on a job that isn't capped: {0}</value>
+    <comment>Chat line (1.19, C8). {0} = the quest link.</comment>
+  </data>
+  <data name="CappedTurnInConfig" xml:space="preserve">
+    <value>Notice before handing in on a capped job</value>
+  </data>
+  <data name="CappedTurnInConfigHint" xml:space="preserve">
+    <value>A chat line once per quest when it reaches its turn-in step on a capped job and another job gets the EXP.</value>
   </data>
   <data name="GameOfferedFormat" xml:space="preserve">
     <value>Offered by the game · {0}</value>
