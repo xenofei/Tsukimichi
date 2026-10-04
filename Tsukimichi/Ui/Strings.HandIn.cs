@@ -109,12 +109,35 @@ static partial class Strings
     public static string HandInNothingMissing => Loc.Get("HandInNothingMissing");
     public static string HandInCopied => Loc.Get("HandInCopied");
 
-    // ---- Where to get it (1.19, N5; the lines themselves are Core's WhereToGet) ----
-    /// <summary>The last line of a placed "Where" line's tooltip.</summary>
-    public static string HandInWhereClickHint => Loc.Get("HandInWhereClickHint");
+    // ---- Where to get it (1.19, N5; the line itself is Core's WhereToGet) ----
+    /// <summary>{0} = how many more shops of that kind the tooltip leaves out.</summary>
+    public static string HandInWhereMoreFormat => Loc.Get("HandInWhereMoreFormat");
+
+    /// <summary>Flag's tooltip on a "Where" line. {0} = the vendor's zone and map coordinates.</summary>
+    public static string HandInWhereFlagTooltipFormat => Loc.Get("HandInWhereFlagTooltipFormat");
 
     /// <summary>Status note when the map could not be opened on a "Where" line's place.</summary>
     public static string HandInWhereFlagFailed => Loc.Get("HandInWhereFlagFailed");
+
+    public static string HandInOpenGatheringLog => Loc.Get("HandInOpenGatheringLog");
+    public static string HandInOpenGatheringLogTooltip => Loc.Get("HandInOpenGatheringLogTooltip");
+    public static string HandInGatheringLogFailed => Loc.Get("HandInGatheringLogFailed");
+
+    // ---- The inventory count (1.19, N5: the game counts the inventory only) ----
+    /// <summary>{0} = in the inventory, {1} = what the quest asks for.</summary>
+    public static string HandInOfNeededFormat => Loc.Get("HandInOfNeededFormat");
+    public static string HandInNoneInInventory => Loc.Get("HandInNoneInInventory");
+
+    /// <summary>{0} = in the inventory.</summary>
+    public static string HandInInInventoryFormat => Loc.Get("HandInInInventoryFormat");
+
+    /// <summary>{0} = in the saddlebag.</summary>
+    public static string HandInInSaddlebagFormat => Loc.Get("HandInInSaddlebagFormat");
+
+    /// <summary>{0} = in the armoury chest.</summary>
+    public static string HandInInArmouryFormat => Loc.Get("HandInInArmouryFormat");
+    public static string HandInMisplacedSaddlebag => Loc.Get("HandInMisplacedSaddlebag");
+    public static string HandInMisplacedArmoury => Loc.Get("HandInMisplacedArmoury");
 
     // ---- Moonlit ----
     /// <summary>The obtained line of a relic or special weapon Allagan Tools counts.</summary>

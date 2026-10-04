@@ -136,8 +136,15 @@ public sealed class ItemSourceIndex
         {
             if (!vendorCache.TryGetValue(npcId, out var vendor))
             {
-                var name = residents.GetRowOrDefault(npcId)?.Singular.ExtractText().Trim() ?? string.Empty;
-                vendor = name.Length == 0 ? null : new Vendor(npcId, name, spots.GetValueOrDefault(npcId));
+                var resident = residents.GetRowOrDefault(npcId);
+                var name = resident?.Singular.ExtractText().Trim() ?? string.Empty;
+
+                // Article 1 marks a person's name; 0 a role ("Calamity salvager") that a sentence gives an article.
+                vendor = name.Length == 0 || resident is not { } row ? null : new Vendor(npcId, name, spots.GetValueOrDefault(npcId))
+                {
+                    Generic = row.Article == 0,
+                    StartsWithVowel = row.StartsWithVowel != 0,
+                };
                 vendorCache[npcId] = vendor;
             }
 
@@ -432,7 +439,11 @@ public sealed class ItemSourceIndex
 
             var job = type <= 1 ? Miner : Botanist;
             var place = placed.Point.PlaceName.ValueNullable?.Name.ExtractText().Trim() ?? string.Empty;
-            var gatherSpot = new GatherSpot(GatherKind.Gathered, job, jobs.GetValueOrDefault(job) ?? string.Empty, pointBase.GatheringLevel, place, spot, placed.Timed);
+            var gatherSpot = new GatherSpot(GatherKind.Gathered, job, jobs.GetValueOrDefault(job) ?? string.Empty, pointBase.GatheringLevel, place, spot, placed.Timed)
+            {
+                // GatheringType 0 Mining, 1 Quarrying, 2 Logging, 3 Harvesting.
+                Method = (GatherMethod)type,
+            };
             foreach (var entry in pointBase.Item)
             {
                 if (entry.RowId != 0 && gatheringItems.GetRowOrDefault(entry.RowId) is { } gatheringItem && gatheringItem.Item.RowId is > 0 and < QuestHandIns.EventItemBase)
@@ -476,7 +487,7 @@ public sealed class ItemSourceIndex
             }
 
             var place = notebook.PlaceName.ValueNullable?.Name.ExtractText().Trim() ?? string.Empty;
-            var gatherSpot = new GatherSpot(GatherKind.Fish, Fisher, fisher, notebook.GatheringLevel, place, spot);
+            var gatherSpot = new GatherSpot(GatherKind.Fish, Fisher, fisher, notebook.GatheringLevel, place, spot) { Method = GatherMethod.Spearfishing };
             foreach (var entry in pointBase.Item)
             {
                 if (entry.RowId != 0 && spearItems.GetRowOrDefault(entry.RowId) is { } spear && spear.Item.RowId is > 0 and < QuestHandIns.EventItemBase)

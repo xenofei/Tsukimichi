@@ -29,7 +29,28 @@ public sealed record WorldSpot(uint TerritoryId, string Zone, float X, float Z, 
 /// <summary>An NPC that opens a shop, with where it stands when the data places it.</summary>
 /// <param name="Name">The NPC's name as the game writes it ("Calamity salvager", "Ranaa Mihgo").</param>
 /// <param name="Spot">Where it stands (a <c>Level</c> row, else the zone's event layout); null when the data does not say.</param>
-public sealed record Vendor(uint NpcId, string Name, WorldSpot? Spot);
+public sealed record Vendor(uint NpcId, string Name, WorldSpot? Spot)
+{
+    /// <summary>
+    /// A role rather than a person ("Calamity salvager", "recompense officer": <c>ENpcResident.Article</c> 0): a sentence
+    /// names it with an article, "a Calamity Salvager".
+    /// </summary>
+    public bool Generic { get; init; }
+
+    /// <summary>The name starts with a vowel sound (<c>ENpcResident.StartsWithVowel</c>): "an independent merchant".</summary>
+    public bool StartsWithVowel { get; init; }
+}
+
+/// <summary>How a node or spot yields its item, as the game's logs name it.</summary>
+public enum GatherMethod : byte
+{
+    Mining,
+    Quarrying,
+    Logging,
+    Harvesting,
+    Fishing,
+    Spearfishing,
+}
 
 /// <summary>What one purchase costs in one currency.</summary>
 /// <param name="ItemId">The currency's item row: 1 for gil, 20–22 for company seals, an item for an exchange.</param>
@@ -83,7 +104,11 @@ public sealed record ShopOffer(ShopKind Kind, uint ShopId, string ShopName, IRea
 /// allied society quests' own nodes, which appear only while the quest is under way.
 /// </param>
 /// <param name="Timed">An unspoiled, legendary or ephemeral node: up only at set Eorzea times.</param>
-public sealed record GatherSpot(GatherKind Kind, byte JobId, string JobName, byte Level, string Place, WorldSpot? Spot, bool Timed = false);
+public sealed record GatherSpot(GatherKind Kind, byte JobId, string JobName, byte Level, string Place, WorldSpot? Spot, bool Timed = false)
+{
+    /// <summary>How the spot yields it (<c>GatheringType</c>): mined, quarried, logged, harvested, fished or spearfished.</summary>
+    public GatherMethod Method { get; init; } = Kind == GatherKind.Fish ? GatherMethod.Fishing : GatherMethod.Mining;
+}
 
 /// <summary>A recipe that makes an item, with the crafter and the level it needs.</summary>
 /// <param name="JobName">The crafter's name in the catalog's language.</param>

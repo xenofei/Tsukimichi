@@ -79,8 +79,10 @@ public sealed class ItemSourceIndexTests(ItemSourceFixture fixture, ITestOutputH
         Assert.Equal(FestiveEndeavors, buyBack.Offer.RequiredQuest);
         Assert.Equal(100u, buyBack.Offer.GilPrice);
         Assert.Equal("Calamity salvager", buyBack.Vendor.Name);
+        Assert.True(buyBack.Vendor.Generic);
         output.WriteLine(BuyBacks.Line(buyBack));
-        Assert.StartsWith("Can be bought back from Calamity salvager", BuyBacks.Line(buyBack), StringComparison.Ordinal);
+        Assert.StartsWith("Can be bought back from a Calamity salvager", BuyBacks.Line(buyBack), StringComparison.Ordinal);
+        Assert.Equal("Re-buyable · 100 gil", BuyBacks.Short(buyBack));
         Assert.EndsWith("for 100 gil", BuyBacks.Line(buyBack), StringComparison.Ordinal);
 
         // Another quest's reward is not this quest's buy-back.
@@ -95,7 +97,7 @@ public sealed class ItemSourceIndexTests(ItemSourceFixture fixture, ITestOutputH
         Assert.Equal(BuyBackKind.BuyBack, buyBack.Kind);
         Assert.Equal(ShopKind.Gil, buyBack.Offer.Kind);
         Assert.Equal("recompense officer", buyBack.Vendor.Name);
-        Assert.StartsWith("Can be bought back from Recompense officer", BuyBacks.Line(buyBack), StringComparison.Ordinal);
+        Assert.StartsWith("Can be bought back from a recompense officer", BuyBacks.Line(buyBack), StringComparison.Ordinal);
     }
 
     [GameDataFact]
@@ -112,14 +114,15 @@ public sealed class ItemSourceIndexTests(ItemSourceFixture fixture, ITestOutputH
     {
         var sources = fixture.Index.For(HiPotion);
         var vendor = WhereToGet.Lines(sources).First(l => l.Kind == WhereKind.Vendor);
-        output.WriteLine(vendor.Text + " " + WhereToGet.MoreText(vendor.More));
+        output.WriteLine(WhereToGet.Summary(sources)!.Text);
         Assert.NotNull(vendor.Spot);
         Assert.InRange(vendor.Spot.MapX, 1f, 43f);
         Assert.InRange(vendor.Spot.MapY, 1f, 43f);
-        Assert.True(vendor.More > 0);
-        Assert.Contains("gil", vendor.Text, StringComparison.Ordinal);
+        Assert.NotEmpty(vendor.Others);
+        Assert.Contains("gil", vendor.Lead, StringComparison.Ordinal);
         Assert.All(sources.Shops.Where(s => s.Kind == ShopKind.Gil && !s.Gated), s => Assert.Equal(sources.Shops.First(o => o.Kind == ShopKind.Gil).GilPrice, s.GilPrice));
-        Assert.Contains(WhereToGet.Lines(sources), l => l.Kind == WhereKind.Crafted && l.Text.Contains("Alchemist Lv. 25", StringComparison.Ordinal));
+        Assert.Contains(WhereToGet.Lines(sources), l => l.Kind == WhereKind.Crafted && l.Lead == "Crafted · Alchemist Lv 25");
+        Assert.EndsWith("· or crafted, Alchemist Lv 25", WhereToGet.Summary(sources)!.Text, StringComparison.Ordinal);
         Assert.Equal(BuyBackKind.Sold, BuyBacks.For(sources)!.Kind);
     }
 
@@ -141,7 +144,7 @@ public sealed class ItemSourceIndexTests(ItemSourceFixture fixture, ITestOutputH
         Assert.Equal(3, companies.Count);
         Assert.Equal([20u, 21u, 22u], companies.Select(s => s.Costs.Single().ItemId).Order());
         Assert.All(companies, s => Assert.Contains("quartermaster", s.FirstVendor!.Name, StringComparison.Ordinal));
-        Assert.Contains(WhereToGet.Lines(sources), l => l.Kind == WhereKind.GrandCompany && l.Text.Contains("Seals", StringComparison.Ordinal));
+        Assert.Contains(WhereToGet.Lines(sources), l => l.Kind == WhereKind.GrandCompany && l.Lead.Contains("Seals", StringComparison.Ordinal));
     }
 
     [GameDataFact]
@@ -155,7 +158,12 @@ public sealed class ItemSourceIndexTests(ItemSourceFixture fixture, ITestOutputH
         var ore = fixture.Index.For(RedMalachite).Gathering;
         Assert.NotEmpty(ore);
         Assert.All(ore, s => Assert.Equal("miner", s.JobName));
-        Assert.Contains(WhereToGet.Lines(fixture.Index.For(RedMalachite)), l => l.Kind == WhereKind.Gathered && l.Text == "Gathered: Miner Lv. 60");
+        Assert.All(ore, s => Assert.Equal(GatherMethod.Quarrying, s.Method));
+
+        // The line names no node: the game's Gathering Log shows them (spec-1.19 decision 7).
+        var summary = WhereToGet.Summary(fixture.Index.For(RedMalachite))!;
+        Assert.Equal("Quarried · the Gathering Log shows the nodes", summary.Text);
+        Assert.True(summary.GatheringLog);
     }
 
     [GameDataFact]

@@ -10,6 +10,7 @@ using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.HandIn;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Sources;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -37,13 +38,8 @@ public sealed partial class DetailPane
 {
     private const string HandInCopyMenuId = "##handInCopy";
 
-    private const string WhereMenuId = "##whereMenu";
-
-    /// <summary>At most this many other shops or spots a "Where" line's tooltip lists before "+N more".</summary>
-    private const int WhereOthersShown = 6;
-
-    /// <summary>The most lines one "Where" line wraps to before it ends in an ellipsis (its tooltip has it whole).</summary>
-    private const int WhereMaxLines = 3;
+    /// <summary>At most this many other shops a "Where" line's tooltip lists per kind before "+N more".</summary>
+    private const int WhereOthersShown = 4;
 
     /// <summary>The least room a hand-in row keeps for the item's name before its pills drop their labels, logical pixels.</summary>
     private const float HandInNameRoomLogical = 120f;
@@ -73,17 +69,6 @@ public sealed partial class DetailPane
     /// <summary>GatherBuddy's commands; null until the plugin attaches it (the Gather button then names GatherBuddy as missing).</summary>
     public GatherBuddyCommands? GatherBuddy { get; set; }
 
-    /// <summary>One "Where" line as the row draws it (1.19, N5): the line, its text with "+N more", and its tooltip's body.</summary>
-    private sealed class WhereRow(WhereLine line, string text, string detail)
-    {
-        public WhereLine Line { get; } = line;
-
-        public string Text { get; } = text;
-
-        /// <summary>The other shops or spots of its kind, then what a click does; empty when neither.</summary>
-        public string Detail { get; } = detail;
-    }
-
     private sealed class HandInRow(HandInItem item, string name, string detail)
     {
         public HandInItem Item { get; } = item;
@@ -91,8 +76,14 @@ public sealed partial class DetailPane
         /// <summary>The item sources <see cref="Where"/> was read from; it is read again when they land.</summary>
         public ItemSourceIndex? WhereSources { get; set; }
 
-        /// <summary>Where to get the item (1.19, N5), one line per kind of source; empty while the sources are read.</summary>
-        public List<WhereRow> Where { get; } = [];
+        /// <summary>Where to get the item (1.19, N5): its first two sources; null while the sources are read or when none is known.</summary>
+        public WhereSummary? Where { get; set; }
+
+        /// <summary>Every source with its other shops, for the "Where" line's tooltip.</summary>
+        public string WhereTooltip { get; set; } = string.Empty;
+
+        /// <summary>Where more of it sits than the inventory (the game counts the inventory only); none otherwise.</summary>
+        public HandInPlace Misplaced { get; set; }
 
         /// <summary>The item's name.</summary>
         public string Name { get; } = name;
@@ -257,11 +248,15 @@ public sealed partial class DetailPane
                     }
                 }
 
-                var where = WhereOf(row);
-                for (var w = 0; w < where.Count; w++)
+                // Where the game data gets it (1.19, N5), then, when the inventory alone is short, where the rest sits.
+                if (WhereOf(row) is { } where)
                 {
-                    using var whereId = ImRaii.PushId(w);
-                    DrawWhereLine(where[w], textRoom);
+                    DrawWhere(row, where, textRoom);
+                }
+
+                if (live && row.Misplaced != HandInPlace.None)
+                {
+                    TextFlow.Wrapped(row.Misplaced == HandInPlace.Saddlebag ? Strings.HandInMisplacedSaddlebag : Strings.HandInMisplacedArmoury, textRoom, Theme.U32(Theme.Surface.TextSecondary));
                 }
             }
 
@@ -306,10 +301,11 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// The row's "Where" lines (1.19, N5), composed once per item source index (<see cref="WhereToGet.Lines"/>): empty
-    /// until the index lands, then one per kind of source, best first.
+    /// The row's "Where" line (1.19, N5; spec-1.19 "N5"), composed once per item source index
+    /// (<see cref="WhereToGet.Summary(ItemSources?)"/>): null until the index lands or when the data knows no source.
+    /// The tooltip lists every source with the other shops of its kind.
     /// </summary>
-    private List<WhereRow> WhereOf(HandInRow row)
+    private WhereSummary? WhereOf(HandInRow row)
     {
         var sources = links.ItemSources;
         if (ReferenceEquals(row.WhereSources, sources))
@@ -318,115 +314,127 @@ public sealed partial class DetailPane
         }
 
         row.WhereSources = sources;
-        row.Where.Clear();
-        if (sources is null)
+        row.Where = sources is null ? null : WhereToGet.Summary(sources.For(row.Item.ItemId));
+        row.WhereTooltip = string.Empty;
+        if (row.Where is not { } where)
         {
-            return row.Where;
+            return null;
         }
 
-        foreach (var line in WhereToGet.Lines(sources.For(row.Item.ItemId)))
+        var tooltip = new List<string>(where.Sources.Count * 2);
+        foreach (var line in where.Sources)
         {
-            var text = line.More > 0 ? line.Text + Core.Evaluation.BlockerText.Separator + WhereToGet.MoreText(line.More) : line.Text;
-            var detail = new List<string>(WhereOthersShown + 2);
+            tooltip.Add(line.Lead);
             for (var i = 0; i < line.Others.Count && i < WhereOthersShown; i++)
             {
-                detail.Add(line.Others[i]);
+                tooltip.Add("  " + line.Others[i]);
             }
 
             if (line.Others.Count > WhereOthersShown)
             {
-                detail.Add(WhereToGet.MoreText(line.Others.Count - WhereOthersShown));
+                tooltip.Add("  " + string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereMoreFormat, line.Others.Count - WhereOthersShown));
             }
-
-            if (line.Spot is not null)
-            {
-                detail.Add(Strings.HandInWhereClickHint);
-            }
-
-            row.Where.Add(new WhereRow(line, text, string.Join("\n", detail)));
         }
 
-        return row.Where;
+        // Where the vendor the Flag marks stands, as the map prints it.
+        if (where.Spot is { } spot)
+        {
+            tooltip.Add(string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereFlagTooltipFormat, SourceText.Spot(spot)));
+        }
+
+        row.WhereTooltip = string.Join("\n", tooltip);
+        return where;
     }
 
     /// <summary>
-    /// One "Where" line, in the caption size: a click (or Enter) flags its place on the map, the right-click menu (or
-    /// the Menu key) offers Flag, Teleport to the nearest aetheryte while the automation level shows Teleport, and Copy
-    /// coordinates; the tooltip lists the other shops or spots of its kind. A line with no place is text alone. The
-    /// line's height never changes on hover.
+    /// One item's "Where" line in the caption size, its first source's game icon at 14 px before it, then its actions as
+    /// small row pills: Flag (and, while the automation level shows Teleport, Teleport to the aetheryte nearest the
+    /// vendor) for a shop the data places, Open Gathering Log for a gathered item (the game's own log shows the nodes;
+    /// Tsukimichi never names one). Craft with Artisan stays the row's own pill. Nothing here moves on hover.
     /// </summary>
-    private void DrawWhereLine(WhereRow where, float width)
+    private void DrawWhere(HandInRow row, WhereSummary where, float width)
     {
-        using var caption = Typography.Caption();
-        var dl = ImGui.GetWindowDrawList();
-        var start = ImGui.GetCursorScreenPos();
-        var size = new Vector2(width, TextFlow.Height(where.Text, width));
-        ImGui.InvisibleButton("##where", size);
-        var hovered = ImGui.IsItemHovered();
-        var spot = where.Line.Spot;
-        var clicked = spot is not null && (ImGui.IsItemClicked(ImGuiMouseButton.Left) || (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter, false)));
-        if (spot is not null)
+        using (Typography.Caption())
         {
-            Keyboard.OpenMenuOnKey(WhereMenuId);
+            var icon = UiMetrics.Px(14f);
+            var gap = UiMetrics.Px(6f);
+            var lineHeight = ImGui.GetTextLineHeight();
+            if (where.Icon != 0)
+            {
+                var at = ImGui.GetCursorScreenPos();
+                ImGui.SetCursorScreenPos(new Vector2(at.X, at.Y + MathF.Max(0f, (lineHeight - icon) * 0.5f)));
+                GameIcon.Draw(textures, where.Icon, icon);
+                ImGui.SameLine(0f, gap);
+                ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, at.Y));
+            }
+
+            TextFlow.Wrapped(where.Text, MathF.Max(1f, width - (where.Icon != 0 ? icon + gap : 0f)), Theme.U32(Theme.Surface.TextSecondary));
+            if (ImGui.IsItemHovered() && row.WhereTooltip.Length > 0)
+            {
+                UiMetrics.Tooltip(where.Text, row.WhereTooltip);
+            }
         }
 
-        var rounding = UiMetrics.Px(4f);
-        if (hovered && spot is not null)
+        var any = false;
+        if (where.Spot is { } spot)
         {
-            dl.AddRectFilled(start, start + size, Theme.U32(Theme.Surface.Hover), rounding);
+            any = true;
+            DrawSpotActions(spot);
         }
 
-        Chrome.FocusRing(rounding);
-        TextFlow.DrawClamped(dl, start, where.Text, width, WhereMaxLines, Theme.U32(Theme.Surface.TextSecondary));
-        if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
+        if (where.GatheringLog)
         {
-            UiMetrics.Tooltip(where.Line.Text, where.Detail);
-        }
+            if (any)
+            {
+                ImGui.SameLine();
+            }
 
-        if (spot is null)
-        {
-            return;
-        }
+            var canOpen = links.CanOpenGatheringLog(row.Item.ItemId);
+            if (TravelControls.RowButton("##gatheringLog", GameIconRef.Tile(WhereToGet.GatheringLogIcon), Strings.HandInOpenGatheringLog, canOpen)
+                && !links.OpenGatheringLog(row.Item.ItemId))
+            {
+                ShowHandInNote(Strings.HandInGatheringLogFailed);
+            }
 
-        if (clicked && !links.FlagWorldSpot(spot))
-        {
-            ShowHandInNote(Strings.HandInWhereFlagFailed);
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.HandInOpenGatheringLogTooltip);
+            }
         }
-
-        DrawWhereMenu(spot);
     }
 
-    /// <summary>A "Where" line's menu: Flag on map, Teleport to the aetheryte nearest the place (automation level), Copy coordinates.</summary>
-    private void DrawWhereMenu(Core.Sources.WorldSpot spot)
+    /// <summary>
+    /// Flag and, while the automation level shows Teleport (1.18 rule: hidden above the level, never greyed), Teleport
+    /// to the aetheryte nearest a vendor's place, as small row pills on one line (1.19, N5 and C6).
+    /// </summary>
+    private void DrawSpotActions(WorldSpot spot)
     {
-        using var menu = ImRaii.ContextPopupItem(WhereMenuId);
-        if (!menu)
-        {
-            return;
-        }
-
-        if (ImGui.MenuItem(Strings.FlagOnMap, string.Empty, false, links.CanFlagWorldSpot(spot)) && !links.FlagWorldSpot(spot))
+        var canFlag = links.CanFlagWorldSpot(spot);
+        if (TravelControls.FlagButton(Strings.AutomationPillFlag, canFlag, "##spotFlag") && !links.FlagWorldSpot(spot))
         {
             ShowHandInNote(Strings.HandInWhereFlagFailed);
         }
 
-        if (links.TeleportShown && links.AetheryteNear(spot) is { } aetheryte)
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            var teleport = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, aetheryte.Name);
-            if (ImGui.MenuItem(teleport, string.Empty, false, links.CanTeleportTo(aetheryte.RowId)))
-            {
-                links.TeleportTo(aetheryte.RowId, aetheryte.Name);
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) && links.TeleportToBlocked(aetheryte.RowId) is { } why)
-            {
-                UiMetrics.Tooltip(why);
-            }
+            UiMetrics.Tooltip(canFlag ? string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereFlagTooltipFormat, SourceText.Spot(spot)) : Strings.HandInWhereFlagFailed);
         }
 
-        if (ImGui.MenuItem(Strings.UnlocksMenuCopyCoordinates))
+        if (!links.TeleportShown || links.AetheryteNear(spot) is not { } aetheryte)
         {
-            ImGui.SetClipboardText(Core.Sources.SourceText.Spot(spot));
+            return;
+        }
+
+        ImGui.SameLine();
+        var canTeleport = links.CanTeleportTo(aetheryte.RowId);
+        if (Chrome.ActionPill("##spotTeleport", ActionIcons.TeleportIcon, Strings.ActionTeleport, PillTone.Normal, canTeleport, size: PillLayout.Row))
+        {
+            links.TeleportTo(aetheryte.RowId, aetheryte.Name);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(links.TeleportToBlocked(aetheryte.RowId) ?? string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, aetheryte.Name));
         }
     }
 
@@ -441,13 +449,39 @@ public sealed partial class DetailPane
         handInCaptionDirty = true;
         row.Count = count;
         row.Enough = count.IsEnough(row.Item);
-        row.CountText = row.Item.IsHq ? HqCountText(count) : (count.Held, count.Retainers) switch
+        row.Misplaced = count.MisplacedIn(row.Item);
+        var text = row.Item.IsHq ? HqCountText(count)
+            : count.HeldHq is not null ? InventoryCountText(row.Item, count)
+            : (count.Held, count.Retainers) switch
+            {
+                (null, null) => Strings.HandInCountUnknown,
+                ({ } held, null) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveFormat, held),
+                (null, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInRetainersOnlyFormat, retainers),
+                ({ } held, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveWithRetainersFormat, held, retainers),
+            };
+
+        // "0 / 1 · 1 in your saddlebag" (spec-1.19 "N5"): the game counts the inventory only, so the rest is named.
+        row.CountText = row.Misplaced switch
         {
-            (null, null) => Strings.HandInCountUnknown,
-            ({ } held, null) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveFormat, held),
-            (null, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInRetainersOnlyFormat, retainers),
-            ({ } held, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveWithRetainersFormat, held, retainers),
+            HandInPlace.Saddlebag => text + Core.Evaluation.BlockerText.Separator + string.Format(CultureInfo.CurrentCulture, Strings.HandInInSaddlebagFormat, count.CountIn(HandInPlace.Saddlebag)),
+            HandInPlace.Armoury => text + Core.Evaluation.BlockerText.Separator + string.Format(CultureInfo.CurrentCulture, Strings.HandInInArmouryFormat, count.CountIn(HandInPlace.Armoury)),
+            _ => text,
         };
+    }
+
+    /// <summary>
+    /// The counts line from the game's inventory read (1.19, N5): "0 / 1" when the amount is known, "none in your
+    /// inventory" or "2 in your inventory" when it is not; the retainers' count after it when Allagan Tools gives one.
+    /// </summary>
+    private static string InventoryCountText(HandInItem item, HandInCount count)
+    {
+        var held = count.Held ?? 0;
+        var text = item.AmountKnown
+            ? string.Format(CultureInfo.CurrentCulture, Strings.HandInOfNeededFormat, held, item.Needed)
+            : held == 0 ? Strings.HandInNoneInInventory : string.Format(CultureInfo.CurrentCulture, Strings.HandInInInventoryFormat, held);
+        return count.Retainers is { } retainers && retainers > 0
+            ? text + Core.Evaluation.BlockerText.Separator + string.Format(CultureInfo.CurrentCulture, Strings.HandInRetainersOnlyFormat, retainers)
+            : text;
     }
 
     /// <summary>

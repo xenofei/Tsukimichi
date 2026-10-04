@@ -304,6 +304,7 @@ public sealed partial class DetailPane
             if (model.Rewards.Count > 0)
             {
                 DrawRewards(cardRight);
+                DrawRewardStates(session, quest);
             }
 
             EndSection();
@@ -1369,6 +1370,9 @@ public sealed partial class DetailPane
     private void BuildRewards(SessionState session, QuestRecord quest)
     {
         uniqueByQuest.TryGetValue(quest.RowId, out var entries);
+
+        // A finished quest says it on a state line under the tiles instead (1.19, C6: DetailPane.BuyBack.cs).
+        var done = model.State is QuestState.Completed or QuestState.DoneThisCycle;
         var unique = 0;
         foreach (var reward in quest.Rewards)
         {
@@ -1384,7 +1388,7 @@ public sealed partial class DetailPane
             // store, a duty, or a shop that sells it back once the quest is done (1.19, C6).
             var mark = session.StoreResells.Contains(reward) ? Strings.MoonlitStoreOnly
                 : session.StoreResells.DropWhere(reward) is not null ? Strings.MoonlitAlsoDrops
-                : links.BuyBackOf(reward.ItemId, quest.RowId) is not null ? Core.Sources.BuyBacks.Mark
+                : !done && links.BuyBackOf(reward.ItemId, quest.RowId) is not null ? Core.Sources.BuyBacks.Mark
                 : null;
             unique += isUnique ? 1 : 0;
             model.Rewards.Add(new RewardTile(reward, isUnique, mark));

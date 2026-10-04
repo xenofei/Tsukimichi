@@ -12056,53 +12056,57 @@
     <value>Artisan: crafting {0}</value>
     <comment>Status bar line while an Artisan craft Tsukimichi handed off runs. {0} = the item.</comment>
   </data>
-  <data name="HandInWhereClickHint" xml:space="preserve">
-    <value>Click to flag it on the map; right-click to teleport or copy the coordinates.</value>
-    <comment>Last line of a hand-in item's Where line tooltip (1.19, N5).</comment>
+  <data name="Core.Sources.AnVendor" xml:space="preserve">
+    <value>an {0}</value>
+    <comment>Core: SourceText.cs.</comment>
   </data>
-  <data name="HandInWhereFlagFailed" xml:space="preserve">
-    <value>The map could not be opened there.</value>
-    <comment>Status note when Flag on a Where line fails.</comment>
+  <data name="Core.Sources.AVendor" xml:space="preserve">
+    <value>a {0}</value>
+    <comment>Core: SourceText.cs.</comment>
   </data>
   <data name="Core.Sources.VendorAt" xml:space="preserve">
     <value>{0}, {1}</value>
-    <comment>Core: SourceText.cs. {0} = NPC name, {1} = zone and coordinates.</comment>
+    <comment>Core: SourceText.cs.</comment>
   </data>
   <data name="Core.Sources.Spot" xml:space="preserve">
     <value>{0} ({1:0.0}, {2:0.0})</value>
-    <comment>Core: SourceText.cs. {0} = zone, {1} {2} = map coordinates.</comment>
+    <comment>Core: SourceText.cs.</comment>
   </data>
   <data name="Core.Sources.CostJoin" xml:space="preserve">
     <value> + </value>
-    <comment>Core: SourceText.cs. Between two costs of one purchase.</comment>
+    <comment>Core: SourceText.cs.</comment>
   </data>
   <data name="Core.Sources.Gil" xml:space="preserve">
     <value>{0:N0} gil</value>
-    <comment>Core: SourceText.cs. {0} = amount.</comment>
+    <comment>Core: SourceText.cs.</comment>
   </data>
   <data name="Core.Sources.Currency" xml:space="preserve">
     <value>{0:N0} {1}</value>
-    <comment>Core: SourceText.cs. {0} = amount, {1} = currency name as the game writes it.</comment>
+    <comment>Core: SourceText.cs.</comment>
   </data>
   <data name="Core.BuyBack.Mark" xml:space="preserve">
     <value>Re-buyable</value>
-    <comment>Core: BuyBacks.cs. Small mark under a reward a shop sells back (1.19, C6).</comment>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.Short" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>Core: BuyBacks.cs.</comment>
   </data>
   <data name="Core.BuyBack.BuyBackFor" xml:space="preserve">
     <value>Can be bought back from {0} for {1}</value>
-    <comment>Core: BuyBacks.cs. {0} = vendor (and place), {1} = price.</comment>
+    <comment>Core: BuyBacks.cs.</comment>
   </data>
   <data name="Core.BuyBack.BuyBack" xml:space="preserve">
     <value>Can be bought back from {0}</value>
-    <comment>Core: BuyBacks.cs. {0} = vendor (and place).</comment>
+    <comment>Core: BuyBacks.cs.</comment>
   </data>
   <data name="Core.BuyBack.SoldFor" xml:space="preserve">
     <value>Also sold by {0} for {1}</value>
-    <comment>Core: BuyBacks.cs. {0} = vendor (and place), {1} = price.</comment>
+    <comment>Core: BuyBacks.cs.</comment>
   </data>
   <data name="Core.BuyBack.Sold" xml:space="preserve">
     <value>Also sold by {0}</value>
-    <comment>Core: BuyBacks.cs. {0} = vendor (and place).</comment>
+    <comment>Core: BuyBacks.cs.</comment>
   </data>
   <data name="Core.BuyBack.BuyBackNote" xml:space="preserve">
     <value>Once the quest is done, a reward you sold or discarded can be had again.</value>
@@ -12112,76 +12116,216 @@
     <value>Anyone can buy it, so the quest is not the only way to get it.</value>
     <comment>Core: BuyBacks.cs.</comment>
   </data>
+  <data name="Core.Where.Crafted" xml:space="preserve">
+    <value>Crafted · {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrCrafted" xml:space="preserve">
+    <value>or crafted, {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
   <data name="Core.Where.Drops" xml:space="preserve">
     <value>Drops in {0}</value>
-    <comment>Core: WhereToGet.cs. {0} = the duties.</comment>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
-  <data name="Core.Where.MarketOnly" xml:space="preserve">
-    <value>Market board only</value>
+  <data name="Core.Where.OrDrops" xml:space="preserve">
+    <value>or drops in {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Join" xml:space="preserve">
+    <value> · </value>
     <comment>Core: WhereToGet.cs.</comment>
   </data>
   <data name="Core.Where.ListJoin" xml:space="preserve">
     <value>, </value>
-    <comment>Core: WhereToGet.cs. Between two crafters.</comment>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
   <data name="Core.Where.JobLevelStars" xml:space="preserve">
-    <value>{0} Lv. {1} ({2}-star)</value>
-    <comment>Core: WhereToGet.cs. {0} = crafter, {1} = level, {2} = recipe stars.</comment>
+    <value>{0} Lv {1} ({2}-star)</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
   <data name="Core.Where.JobLevel" xml:space="preserve">
-    <value>{0} Lv. {1}</value>
-    <comment>Core: WhereToGet.cs. {0} = crafter, {1} = level.</comment>
-  </data>
-  <data name="Core.Where.Crafted" xml:space="preserve">
-    <value>Crafted: {0}</value>
-    <comment>Core: WhereToGet.cs. {0} = crafters and levels.</comment>
-  </data>
-  <data name="Core.Where.GrandCompany" xml:space="preserve">
-    <value>Grand Company: {0}</value>
-    <comment>Core: WhereToGet.cs. {0} = quartermaster (and place).</comment>
+    <value>{0} Lv {1}</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
   <data name="Core.Where.Exchange" xml:space="preserve">
-    <value>Exchange: {0}</value>
-    <comment>Core: WhereToGet.cs. {0} = vendor (and place).</comment>
+    <value>Exchanged by {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrExchange" xml:space="preserve">
+    <value>or exchanged by {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
   <data name="Core.Where.SoldBy" xml:space="preserve">
     <value>Sold by {0}</value>
-    <comment>Core: WhereToGet.cs. {0} = vendor (and place).</comment>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrSoldBy" xml:space="preserve">
+    <value>or sold by {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
   <data name="Core.Where.WithCost" xml:space="preserve">
     <value>{0} · {1}</value>
-    <comment>Core: WhereToGet.cs. {0} = the shop line, {1} = price.</comment>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
   <data name="Core.Where.Gated" xml:space="preserve">
     <value>{0} (after a quest or achievement)</value>
-    <comment>Core: WhereToGet.cs. {0} = the shop line.</comment>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
-  <data name="Core.Where.FishedUnplaced" xml:space="preserve">
-    <value>Fished: Lv. {0}</value>
-    <comment>Core: WhereToGet.cs. {0} = level.</comment>
+  <data name="Core.Where.Mined" xml:space="preserve">
+    <value>Mined · the Gathering Log shows the nodes</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
-  <data name="Core.Where.GatheredUnplaced" xml:space="preserve">
-    <value>Gathered: {0} Lv. {1}</value>
-    <comment>Core: WhereToGet.cs. {0} = gatherer, {1} = level.</comment>
+  <data name="Core.Where.Quarried" xml:space="preserve">
+    <value>Quarried · the Gathering Log shows the nodes</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
-  <data name="Core.Where.PlaceInZone" xml:space="preserve">
-    <value>{0}, {1}</value>
-    <comment>Core: WhereToGet.cs. {0} = the spot's place name, {1} = zone and coordinates.</comment>
+  <data name="Core.Where.Logged" xml:space="preserve">
+    <value>Logged · the Gathering Log shows the nodes</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Harvested" xml:space="preserve">
+    <value>Harvested · the Gathering Log shows the nodes</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Spearfished" xml:space="preserve">
+    <value>Spearfished · the Fishing Log shows the spots</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
   <data name="Core.Where.Fished" xml:space="preserve">
-    <value>Fished: Lv. {0} · {1}</value>
-    <comment>Core: WhereToGet.cs. {0} = level, {1} = place.</comment>
+    <value>Fished · the Fishing Log shows the holes</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
-  <data name="Core.Where.Gathered" xml:space="preserve">
-    <value>Gathered: {0} Lv. {1} · {2}</value>
-    <comment>Core: WhereToGet.cs. {0} = gatherer, {1} = level, {2} = place.</comment>
+  <data name="Core.Where.OrMined" xml:space="preserve">
+    <value>or mined, see the Gathering Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
-  <data name="Core.Where.Timed" xml:space="preserve">
-    <value>{0} (timed)</value>
-    <comment>Core: WhereToGet.cs. {0} = a gathering line whose node is up only at set times.</comment>
+  <data name="Core.Where.OrQuarried" xml:space="preserve">
+    <value>or quarried, see the Gathering Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
   </data>
-  <data name="Core.Where.More" xml:space="preserve">
+  <data name="Core.Where.OrLogged" xml:space="preserve">
+    <value>or logged, see the Gathering Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrHarvested" xml:space="preserve">
+    <value>or harvested, see the Gathering Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrSpearfished" xml:space="preserve">
+    <value>or spearfished, see the Fishing Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrFished" xml:space="preserve">
+    <value>or fished, see the Fishing Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.AtPlace" xml:space="preserve">
+    <value>{0} ({1})</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.RewardState.NotLearned" xml:space="preserve">
+    <value>Done, not learned</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.OnYou" xml:space="preserve">
+    <value>it is on you</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.NotOnYou" xml:space="preserve">
+    <value>Not on you</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.Reclaim" xml:space="preserve">
+    <value>reclaim at {0}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.BuyItBack" xml:space="preserve">
+    <value>buy it back from {0}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.AlsoSold" xml:space="preserve">
+    <value>also sold by {0}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.WithCost" xml:space="preserve">
+    <value>{0}, {1}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.NotOfferedLower" xml:space="preserve">
+    <value>not offered by the Salvager</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.NotOffered" xml:space="preserve">
+    <value>Not offered by the Salvager</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.InArmoury" xml:space="preserve">
+    <value>in your armoury chest</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.InSaddlebag" xml:space="preserve">
+    <value>in your saddlebag</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.WithRetainers" xml:space="preserve">
+    <value>with your retainers</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.Join" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="HandInWhereMoreFormat" xml:space="preserve">
     <value>+{0} more</value>
-    <comment>Core: WhereToGet.cs. {0} = how many more shops or spots.</comment>
+    <comment>Hand in Where tooltip (1.19, N5). {0} = how many more shops of that kind.</comment>
+  </data>
+  <data name="HandInWhereFlagTooltipFormat" xml:space="preserve">
+    <value>Flag it on the map: {0}</value>
+    <comment>Hand in Where line's Flag (1.19, N5/C6). {0} = zone and map coordinates.</comment>
+  </data>
+  <data name="HandInWhereFlagFailed" xml:space="preserve">
+    <value>The map could not be opened there.</value>
+    <comment>Status note when Flag on a Where line fails.</comment>
+  </data>
+  <data name="HandInOpenGatheringLog" xml:space="preserve">
+    <value>Open Gathering Log</value>
+    <comment>Hand in Where line's action for a gathered item (1.19, N5).</comment>
+  </data>
+  <data name="HandInOpenGatheringLogTooltip" xml:space="preserve">
+    <value>Opens the game's Gathering Log at this item. It shows the nodes and their times; Tsukimichi never guesses one.</value>
+    <comment>Tooltip of Open Gathering Log.</comment>
+  </data>
+  <data name="HandInGatheringLogFailed" xml:space="preserve">
+    <value>The Gathering Log could not be opened.</value>
+    <comment>Status note when Open Gathering Log fails.</comment>
+  </data>
+  <data name="HandInOfNeededFormat" xml:space="preserve">
+    <value>{0} / {1}</value>
+    <comment>Hand in count (1.19, N5). {0} = in the inventory, {1} = what the quest asks for.</comment>
+  </data>
+  <data name="HandInNoneInInventory" xml:space="preserve">
+    <value>none in your inventory</value>
+    <comment>Hand in count when the amount is unknown and none is held.</comment>
+  </data>
+  <data name="HandInInInventoryFormat" xml:space="preserve">
+    <value>{0} in your inventory</value>
+    <comment>Hand in count when the amount is unknown. {0} = how many.</comment>
+  </data>
+  <data name="HandInInSaddlebagFormat" xml:space="preserve">
+    <value>{0} in your saddlebag</value>
+    <comment>After the hand-in count. {0} = how many.</comment>
+  </data>
+  <data name="HandInInArmouryFormat" xml:space="preserve">
+    <value>{0} in your armoury chest</value>
+    <comment>After the hand-in count. {0} = how many.</comment>
+  </data>
+  <data name="HandInMisplacedSaddlebag" xml:space="preserve">
+    <value>The game counts your inventory only: take it out of the saddlebag.</value>
+    <comment>Hand in line (1.19, N5).</comment>
+  </data>
+  <data name="HandInMisplacedArmoury" xml:space="preserve">
+    <value>The game counts your inventory only: take it out of the armoury chest.</value>
+    <comment>Hand in line (1.19, N5).</comment>
   </data>
 </root>

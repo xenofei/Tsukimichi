@@ -17,11 +17,33 @@ public static class SourceText
         return Capitalized(vendor.Name);
     }
 
-    /// <summary>"Calamity salvager, Ul'dah - Steps of Thal (11.2, 9.8)", or the name alone when the data does not place it.</summary>
+    /// <summary>
+    /// The vendor as a sentence names it, in the game's own letter case: "a Calamity salvager", "an independent
+    /// merchant" for a role (<see cref="Vendor.Generic"/>), the name alone for a person ("Kurogai").
+    /// </summary>
+    public static string VendorInSentence(Vendor vendor)
+    {
+        ArgumentNullException.ThrowIfNull(vendor);
+        var name = vendor.Name;
+        if (!vendor.Generic)
+        {
+            return name;
+        }
+
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            vendor.StartsWithVowel ? CoreText.T("Core.Sources.AnVendor", "an {0}") : CoreText.T("Core.Sources.AVendor", "a {0}"),
+            name);
+    }
+
+    /// <summary>
+    /// "a Calamity salvager, Ul'dah - Steps of Thal (11.2, 9.8)" (<see cref="VendorInSentence"/> and the place), or the
+    /// vendor alone when the data does not place it.
+    /// </summary>
     public static string VendorWithPlace(Vendor vendor)
     {
         ArgumentNullException.ThrowIfNull(vendor);
-        var name = VendorName(vendor);
+        var name = VendorInSentence(vendor);
         return vendor.Spot is { } spot ? string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Sources.VendorAt", "{0}, {1}"), name, Spot(spot)) : name;
     }
 

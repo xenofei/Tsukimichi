@@ -1074,7 +1074,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 Enabled = Settings.ItemHintsEnabled,
                 HandIns = handIns,
                 NeededForEnabled = () => Settings.ItemNeededForEnabled,
-                BuyBack = (item, quest) => gameLinks.BuyBackOf(item, quest)?.Line,
+                BuyBack = (item, quest) => gameLinks.BuyBackOf(item, quest)?.Short,
             };
             PluginInterface.UiBuilder.Draw += DrawHoverHint;
             itemHooks = new Game.ItemHooks(ContextMenu, rewardLookup, quest =>
@@ -1090,6 +1090,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 // The item is in the logged-in character's inventory: its states decide what is open.
                 NeededStates = () => Session.LiveStates,
                 NeededForEnabled = () => Settings.ItemNeededForEnabled,
+                BuyBack = (item, quest) => gameLinks.BuyBackOf(item, quest)?.Short,
             };
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;

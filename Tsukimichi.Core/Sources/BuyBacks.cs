@@ -68,7 +68,18 @@ public static class BuyBacks
     public static string Mark => CoreText.T("Core.BuyBack.Mark", "Re-buyable");
 
     /// <summary>
-    /// The line under a reward: "Can be bought back from Calamity salvager for 100 gil" or "Also sold by Material
+    /// The one line the item hover hint and the item menu add (spec-1.19 "C6"): "Re-buyable · 100 gil", or "Re-buyable"
+    /// when the data gives no price.
+    /// </summary>
+    public static string Short(BuyBack buyBack)
+    {
+        ArgumentNullException.ThrowIfNull(buyBack);
+        var cost = SourceText.Cost(buyBack.Offer.Costs);
+        return cost.Length == 0 ? Mark : string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.BuyBack.Short", "{0} · {1}"), Mark, cost);
+    }
+
+    /// <summary>
+    /// The line under a reward: "Can be bought back from a Calamity salvager for 100 gil" or "Also sold by a material
     /// supplier, Limsa Lominsa Lower Decks (9.4, 11.2) for 20 gil"; the price is left out when the data does not give it.
     /// </summary>
     public static string Line(BuyBack buyBack)

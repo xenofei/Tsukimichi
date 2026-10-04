@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Sources;
 using Tsukimichi.GameData;
@@ -26,9 +27,10 @@ public sealed partial class GameLinks
     public ItemSourceIndex? ItemSources => ItemSourceIndex?.Invoke();
 
     /// <summary>A buy-back verdict with its words, composed once.</summary>
-    /// <param name="Line">"Can be bought back from Calamity salvager for 100 gil".</param>
+    /// <param name="Line">"Can be bought back from a Calamity salvager for 100 gil".</param>
     /// <param name="Tooltip">The line and what it means for the reward.</param>
-    public sealed record BuyBackText(BuyBack BuyBack, string Line, string Tooltip);
+    /// <param name="Short">"Re-buyable · 100 gil", the item hover hint's and item menu's line.</param>
+    public sealed record BuyBackText(BuyBack BuyBack, string Line, string Tooltip, string Short);
 
     /// <summary>
     /// How a reward can be had again (<see cref="BuyBacks.For"/>) with its words, cached per item and quest; null when no
@@ -50,7 +52,9 @@ public sealed partial class GameLinks
 
         if (!buyBacks.TryGetValue((itemId, questRowId), out var text))
         {
-            text = BuyBacks.For(index.For(itemId), questRowId) is { } found ? new BuyBackText(found, BuyBacks.Line(found), BuyBacks.Tooltip(found)) : null;
+            text = BuyBacks.For(index.For(itemId), questRowId) is { } found
+                ? new BuyBackText(found, BuyBacks.Line(found), BuyBacks.Tooltip(found), BuyBacks.Short(found))
+                : null;
             buyBacks[(itemId, questRowId)] = text;
         }
 
@@ -76,5 +80,37 @@ public sealed partial class GameLinks
     {
         ArgumentNullException.ThrowIfNull(spot);
         return Aetherytes.Nearest(spot.TerritoryId, spot.X, spot.Z);
+    }
+
+    /// <summary>Whether the game's Gathering Log can be opened at an item now (game calls allowed, an item row that fits).</summary>
+    public bool CanOpenGatheringLog(uint itemId) => itemId is > 0 and <= ushort.MaxValue && CallsAllowed;
+
+    /// <summary>
+    /// Opens the game's Gathering Log at the item (spec-1.19 "N5": the game's own log shows the nodes, Tsukimichi never
+    /// guesses one): <c>AgentGatheringNote.OpenGatherableByItemId</c>, a read-only UI call. False when it failed.
+    /// </summary>
+    public unsafe bool OpenGatheringLog(uint itemId)
+    {
+        if (!CanOpenGatheringLog(itemId))
+        {
+            return false;
+        }
+
+        try
+        {
+            var agent = AgentGatheringNote.Instance();
+            if (agent == null)
+            {
+                return false;
+            }
+
+            agent->OpenGatherableByItemId((ushort)itemId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            WarnUnlockCall(ex, "Open the Gathering Log at item {0} failed", itemId);
+            return false;
+        }
     }
 }
