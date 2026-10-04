@@ -293,17 +293,17 @@
 
   // ---------- Decision 1, Option B: one release with a distinct treatment per theme ----------
   var OPTB22 = {
-    "medallion": "a gilt-framed oil vignette: heavier impasto, warm varnish, faint craquelure, an oval opening in a gilt moulding lit from the upper left",
+    "medallion": "an oil painting: heavier impasto, warm varnish, faint craquelure only in the thick paint, a slim gilt slip lit from the upper left inside the popup's own brass frame",
     "classic": "the painting as painted",
-    "ishgard-glass": "a stained-glass window: leaded pot-metal pieces chosen per region, grisaille for the figures and spires, light passing through, two saddle bars",
-    "aether-crystal": "seen through cut moonstone: a triangle facet mesh, each facet tilted to the upper-left light; the figures and the city keep their shapes",
-    "astrologian-orrery": "an engraved astrolabe plate: lapis enamel sky, brass ground cut as hatching, the city cross-hatched, a brass-inlay crescent, the rete's hairlines",
-    "sumi-to-kinpaku": "sumi-e on toned washi: ink washes by depth, bare-paper snow, one dry-brush stroke for the ridge, a gold-leaf crescent, kirigane and two gold cloud bands, a seal"
+    "ishgard-glass": "a stained-glass window whose lead follows the drawing: large sky pieces, clouds cut along their edges, snow as contour strips, grisaille figures and spires, a white glass crescent, an amber lantern piece",
+    "aether-crystal": "cut moonstone over the sky and the far range only: facets shaded as on domed gems lit from the upper left, a faint blue adularescent sheen; the ground and figures stay clear",
+    "astrologian-orrery": "an engraved plate: silver ground and lapis enamel sky, dark line following each contour, the clouds cut in line, the backlit city densely cross-hatched; brass only as inlay (crescent, limb, rete)",
+    "sumi-to-kinpaku": "sumi-e on toned washi: ink washes by depth, bare-paper snow, one tapered dry-brush stroke for the ridge, genji-gumo gold bands with gold-dust edges, kirigane in the bands and corners, a seal carved with a crescent"
   };
   function board_optb22() {
     var h = '<div class="board b15 b22"><h2>Decision 1 · Option A or Option B<small>1.20.0 Before Evercold in both options. Option A (recommended in the plan): one painting, restyled per theme by a grade and a motif layer. Option B: a richer painting, rendered in a distinct art treatment per theme. Each row is one theme: A on the left, B on the right, at the popup\'s art size.</small></h2>';
     h += '<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><figure style="width:560px;flex:none"><img src="' + V8 + 'art/optionb/evercold-b-base.png" width="560" height="220" style="border-radius:4px;display:block">' +
-      cap22("Option B's painting", "dawn over Coerthas: Ishgard on its bluff, backlit by the sun still under the horizon behind it; cloud undersides lit; an adventurer with a lantern and a chocobo on the near ridge, rim-lit, their long shadows toward you. One natural light and one warm practical light.") + "</figure>";
+      cap22("Option B's painting", "dawn over Coerthas: Ishgard on its bluff (the Vault's paired spires, two of the Pillars and their bridge), backlit by the sun still under the horizon; an adventurer with a lantern and her chocobo, rim-lit, with short soft shadows from their feet; the lantern warms the chocobo's chest and the snow. One natural light and one warm practical light.") + "</figure>";
     h += '<div class="spec" style="width:760px"><table><tr><th></th><th>Option A · one painting, restyled</th><th>Option B · one painting, six treatments</th></tr>' +
       "<tr><td>Art per release</td><td>1 painting (about a day with supervision) plus its moon's place; the six restyles are automatic</td><td>1 richer painting (2 to 3 days) plus its region masks; the six treatments are code, but each release needs a check of all six, since a treatment can break a new composition (a band across a figure, a came line through a face)</td></tr>" +
       "<tr><td>Ships</td><td>1 base image per release (about 180 KB JPEG) and six motif sprite sheets once</td><td>1 base image (about 250 KB) and a mask file (about 250 KB) per release, or six pre-rendered images (about 2.4 MB per release)</td></tr>" +

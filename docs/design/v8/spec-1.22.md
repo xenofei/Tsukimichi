@@ -226,25 +226,26 @@ Every painting is **a night or twilight landscape with one natural light, plus a
 The owner asked for "beautiful, theme specific custom art". Option A (above) gives one painting per release and lets each theme restyle it; its themes differ in colour and in a few motifs, and Medallion and Classic look almost the same. So the owner can compare, **1.20.0 Before Evercold is also made as Option B**: a richer painting, rendered in a distinct art treatment per theme.
 
 **The painting** (`art/optionb/evercold-b-base.png`, by `art/src/paint_option_b.py`): dawn over Coerthas.
-- **The scene:** Ishgard stands on its bluff, backlit by the sun still under the horizon behind it. Broken altocumulus is lit on its undersides, warmest near the sun, and mist lies in the valley. On the near snow ridge an adventurer with a lantern and a chocobo look toward the city.
+- **The scene:** Ishgard stands on its bluff, backlit by the sun still under the horizon behind it. Two Ishgard cues are drawn in our own silhouette: the Vault's tall paired spires and two of the Pillars joined by an arched bridge. Broken altocumulus is lit on its undersides, warmest near the sun, and mist lies in the valley. On the near snow ridge an adventurer with a lantern looks toward the city, and her chocobo faces her.
 - **The light:** one natural light, plus the lantern as the one warm practical light.
   - The city and the far range are backlit, capped darker than the sky behind them, with a thin warm rim.
   - The ridge crest takes the dawn, and its face toward the viewer is in blue shade.
-  - The figures are rim-lit on their sun side. Their long dawn shadows run toward the viewer and left, and the lantern lays a small warm pool at their feet.
+  - The figures carry a 1 px warm rim on their sun-facing (right) edges, as the spires do. Their shadows are short and soft (the sun is below the horizon): contact-dark at the feet, then fading toward the viewer and left.
+  - The lantern warms the chocobo's chest and the adventurer's arm, and lays a small foreshortened pool on the snow.
   - The crescent is lit toward the sun.
-- **The finish:** a Kuwahara pass flattens it into painted shapes, then a light brush and canvas texture is laid over it.
+- **The finish:** a Kuwahara pass flattens everything but the silhouettes into painted shapes. The city and the figures keep their anti-aliased edges, and their rims and the lantern are drawn after the pass. A light brush and canvas texture goes over it all.
 - **Sources:** it is original work, painted in code; no official art or screenshot is used in it. Ishgard is our own simplified silhouette of the Holy See's spires, not a trace. (The game scenes behind the mock's UI are the official screenshots listed in Files.)
 
 **The six treatments** (`art/src/option_b_themes.py`, from the painting and its region masks):
 
 | Theme | Treatment |
 |---|---|
-| Medallion | A gilt-framed oil vignette: heavier impasto, a warm varnish, faint craquelure, and an oval opening in a gilt moulding lit from the upper left, with lapis velvet in the spandrels |
+| Medallion | An oil painting: heavier impasto (the silhouettes kept sharp), a warm varnish, faint craquelure only in the thick, light paint and never on the dark silhouettes, and a slim gilt slip lit from the upper left and shaded on the lower right, inside the popup's own brass frame. No oval, so the moon and the whole scene stay in view and there is no double frame. |
 | Classic | The painting as painted |
-| Ishgard Glass | A stained-glass window: leaded pieces, each a pot-metal colour chosen by region and lightness (lapis and cobalt sky, rose and amber dawn, violet hills, amethyst city, white and pale-blue snow, a white glass moon). Grisaille gives the figures and spires; the light passes through and the bright pieces bloom past the lead. Two iron saddle bars are placed clear of the subject. |
-| Aether Crystal | The scene seen through cut moonstone: a triangle facet mesh, each facet tilted to the upper-left light with bright facet edges. The figures, the city and the moon keep their own shapes. |
-| Astrologian's Orrery | An engraved astrolabe plate: a lapis enamel sky inlaid in brass, the land cut as hatching that is heavier in shadow, the city and figures cross-hatched, a brass-inlay crescent, and the rete's almucantar and azimuth hairlines with a graduated limb |
-| Sumi to Kinpaku | Sumi-e on toned washi: ink washes by depth, bare-paper snow, one dry-brush stroke for the ridge, solid ink figures, a gold-leaf crescent, kirigane and two gold cloud bands kept clear of the subject, one vermilion touch for the lantern, and a seal |
+| Ishgard Glass | A stained-glass window whose lead follows the drawing. Large sky pieces (cells only in the sky, sparingly), clouds cut along their own edges, the far hills and the bluff as a few large pieces, and the snow and the ridge as long strips cut parallel to their contours, never paving. The figures and spires are painted in grisaille on a few pieces. The crescent is one white piece, brighter on its lower left, with the earthshine as a separate deep-blue piece; the lantern is one amber piece. The bright pieces bloom past the lead, and two saddle bars run above the spires and below the figures. |
+| Aether Crystal | Cut moonstone over the sky and the far range only: facets shaded consistently, as on three broad domed gems lit from the upper left, with bright edges on the lit side and a faint blue adularescent sheen across the upper sky. The ground, the city and the figures stay clear. |
+| Astrologian's Orrery | An engraved plate: a silver ground and a lapis enamel sky. Dark line engraving follows each contour: parallel to the ridge, to the plain in perspective and to the far ridgeline, and down the cliff faces with their strata. The backlit city is densely cross-hatched, the shadows are dense hatching, the figures are solid, and the clouds are cut in silver line. Brass is used only as inlay: the crescent, the graduated limb and the rete. |
+| Sumi to Kinpaku | Sumi-e on toned washi: ink washes by depth, bare-paper snow, and the ridge as one tapered dry-brush stroke (wide and dark where the brush lands on the left, thinning and broken by dry gaps toward the right). Solid ink figures, a gold-leaf crescent, two genji-gumo gold bands with scalloped, stepped ends and gold-dust edges, kirigane only inside the bands and in the top corners, one vermilion touch for the lantern, and a vermilion seal carved with a crescent. |
 
 No treatment adds a light of its own. Quiet would show the Classic painting graded to the palette; Plain shows no art in either option.
 
@@ -580,3 +581,18 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
   - The Aether orbit now rings the icon's foot, and no shard is ever drawn over the face.
   - The art direction reads "one natural light, plus at most one warm practical light".
   - Option B is made for 1.20.0 (painting, masks and six treatments), with `release-art-option-b-1.22.png` and its section above.
+- **Round 3: Option A APPROVED; Option B CHANGES.**
+  - **Option A:** every round 2 fix held, with no Blocker, Major or Minor findings. **Option A is approved.**
+  - **Option B, the painting:** the figures' shadows didn't touch their feet (Minor); the rims, the lantern bounce and the pool weren't visible (Minor); the paint filter smeared the silhouettes (Nit); and the city read as a generic castle (Nit).
+  - **Medallion:** the oval cropped the moon and double-framed inside the popup's frame (Major); the craquelure was too strong and too even (Minor); and the moulding's light (Nit).
+  - **Ishgard Glass:** the moon read as a dark perforated disc (Major); the window read as mosaic or cobblestone, not lead following the drawing (Major); a saddle bar crossed the tallest spire (Minor); and the lantern needed an amber piece (Minor).
+  - **Aether Crystal:** it read as a low-poly filter (Minor).
+  - **Orrery:** the brass ground turned the snow into desert (Major); and the hatching didn't follow the contours, the clouds weren't cut in line, and the shadows lacked dense hatching (Minor).
+  - **Sumi to Kinpaku:** the gold bands looked like UI pills, flecks sat on the spires, the ridge stroke wasn't a brush stroke (Minors), and the seal had no mark (Nit).
+- **After round 3**, Option B was reworked as the treatment table above describes:
+  - the painting: contact shadows, a 1 px warm rim on the figures and spires, the lantern's bounce and pool, silhouettes kept out of the paint filter, the Vault's paired spires and the bridged Pillars, and the chocobo turned to face the lantern;
+  - Medallion: a slim gilt slip in place of the oval, and craquelure at a third of the strength, only in the thick paint;
+  - Ishgard Glass: lead that follows the drawing, a white glass crescent, an amber lantern piece, and the saddle bars moved clear of the subject;
+  - Aether Crystal: facets in the sky and the far range only, with consistent dome shading and adularescence;
+  - Orrery: a silver ground with contour engraving and brass only as inlay;
+  - Sumi to Kinpaku: genji-gumo bands, kirigane only in the bands and the corners, a tapered dry-brush ridge, and a carved seal.

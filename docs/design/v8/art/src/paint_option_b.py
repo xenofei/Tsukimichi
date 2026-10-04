@@ -145,7 +145,7 @@ def paint():
     bt = hz + 0.06 * H - (hz + 0.06 * H - top_y) * np.clip(prof * (0.85 + 0.35 * jag), 0, 1) + 8 * (fbm1d(W, 14, 3, 9) - 0.5)
     city = c.below_curve(bt, 1.2)
     rng = np.random.default_rng(31)
-    spires = [(0.600, 0.190, 12), (0.578, 0.265, 8), (0.622, 0.265, 8), (0.560, 0.330, 6), (0.640, 0.330, 6), (0.545, 0.365, 7),
+    spires = [(0.591, 0.180, 8), (0.611, 0.180, 8), (0.578, 0.265, 8), (0.622, 0.265, 8), (0.560, 0.330, 6), (0.640, 0.330, 6), (0.545, 0.365, 7),
               (0.665, 0.350, 7), (0.700, 0.385, 6), (0.520, 0.395, 6), (0.735, 0.410, 5), (0.585, 0.370, 4), (0.615, 0.370, 4),
               (0.760, 0.430, 5), (0.490, 0.425, 5), (0.495, 0.450, 4), (0.775, 0.450, 4)]
     for sx, sy, sw in spires:
@@ -156,6 +156,17 @@ def paint():
         for side in (-1, 1):  # pinnacles
             px_ = x + side * sw * 1.4
             city = np.maximum(city, c.poly([(px_ - 2.5, body_top + 20), (px_ + 2.5, body_top + 20), (px_, body_top - 18)], 0.6))
+    # the Vault's nave between its paired spires: a steep gable under them
+    city = np.maximum(city, c.poly([(0.582 * W, top_y + 4), (0.620 * W, top_y + 4), (0.620 * W, 0.300 * H), (0.601 * W, 0.255 * H), (0.582 * W, 0.300 * H)], 0.8))
+    # two of the Pillars, flat-topped towers, joined high up by an arched bridge
+    for px0 in (0.712, 0.748):
+        city = np.maximum(city, c.poly([(px0 * W - 9, top_y + 6), (px0 * W + 9, top_y + 6), (px0 * W + 8, 0.335 * H), (px0 * W - 8, 0.335 * H)], 0.8))
+        city = np.maximum(city, c.poly([(px0 * W - 11, 0.335 * H), (px0 * W + 11, 0.335 * H), (px0 * W + 11, 0.325 * H), (px0 * W - 11, 0.325 * H)], 0.6))
+    deck_top, deck_bot = 0.360 * H, 0.372 * H
+    bx_a, bx_b = 0.712 * W + 8, 0.748 * W - 8
+    bridge = c.poly([(bx_a, deck_top), (bx_b, deck_top), (bx_b, deck_bot + 14), (bx_a, deck_bot + 14)], 0.6)
+    arch = c.ellipse((bx_a + bx_b) / 2, deck_bot + 26, (bx_b - bx_a) / 2 - 2, 22, 0.6)
+    city = np.maximum(city, np.clip(bridge - arch, 0, 1))
     # walls, roofs and the Pillars' terraces along the top of the bluff
     for i in range(90):
         x = (0.48 + 0.31 * rng.random()) * W
@@ -168,8 +179,8 @@ def paint():
     citycol = citycol * np.minimum(1.0, 0.82 * sky_l / np.maximum(citycol @ LUM, 1e-4))[..., None]
     c.over(citycol, city)
     M["city"] = city.copy()
-    crim = np.clip(city - np.roll(np.roll(city, 2, axis=0), -2, axis=1), 0, 1) * np.exp(-((c.xx - gx) / (0.16 * W)) ** 2)
-    c.add(hexc("#FFD0A0"), crim * 0.8)
+    crim = np.clip(city - np.roll(city, -2, axis=1), 0, 1) * (c.yy < top_y + 6) * (0.35 + 0.65 * np.exp(-((c.xx - gx) / (0.20 * W)) ** 2))
+    c.add(hexc("#FFD0A0"), crim * 0.9)
     win = np.zeros((H, W), np.float32)
     for i in range(34):
         wx_ = (0.50 + 0.28 * rng.random()) * W
@@ -244,10 +255,14 @@ def paint():
 
     # the figures: an adventurer with a lantern, and a chocobo, looking toward the city
     ax, ay = 0.315 * W, crest[int(0.315 * W)] + 4
-    cx2, cy2 = 0.365 * W, crest[int(0.365 * W)] + 4
-    # long dawn shadows toward the viewer and left
-    for (x0, y0, hgt, wdt) in ((ax, ay, 150, 22), (cx2, cy2, 128, 40)):
-        c.mul(hexc("#2A3266"), c.poly([(x0 - wdt * 0.5, y0), (x0 + wdt * 0.5, y0), (x0 - 210, y0 + 62), (x0 - 236, y0 + 50)], 6) * 0.55)
+    cx2, cy2 = 0.378 * W, crest[int(0.378 * W)] + 4
+    # short, soft dawn shadows (the sun is still below the horizon): contact-dark at the feet, then fading toward the
+    # viewer and left, away from the glow behind the city
+    for (x0, y0, wdt, ln) in ((ax, ay, 40, 120), (cx2, cy2, 56, 130)):
+        shp = c.poly([(x0 - wdt * 0.5, y0 - 2), (x0 + wdt * 0.5, y0 - 2), (x0 - ln, y0 + 30), (x0 - ln - 22, y0 + 20)], 3)
+        away = np.clip(((x0 - c.xx) + (c.yy - y0)) / (ln + 30), 0, 1)
+        c.mul(hexc("#2A3266"), shp * (0.62 - 0.52 * away))
+        c.mul(hexc("#1A2050"), c.ellipse(x0, y0 + 1, wdt * 0.55, 4, 1.5) * 0.55)
     person = np.zeros((H, W), np.float32)
     # cloak: a long A-line, hood, the far arm holding the lantern out to the right
     person = np.maximum(person, c.poly([(ax - 26, ay), (ax + 24, ay), (ax + 13, ay - 92), (ax + 10, ay - 118), (ax - 9, ay - 118), (ax - 14, ay - 92)], 0.8))
@@ -257,45 +272,55 @@ def paint():
     person = np.maximum(person, c.poly([(ax - 24, ay - 10), (ax - 40, ay - 4), (ax - 22, ay - 30)], 0.8))  # cloak hem in the wind
     person = np.maximum(person, c.ellipse(ax, ay - 104, 17, 9, 0.8))  # shoulders
     person = np.maximum(person, c.ellipse(ax - 14, ay - 84, 9, 18, 0.8))  # the pack on the back
+    # the chocobo, facing left toward the adventurer and her lantern; f mirrors every x offset
+    f = -1
     choco = np.zeros((H, W), np.float32)
-    choco = np.maximum(choco, c.ellipse(cx2 - 2, cy2 - 66, 44, 33, 0.8))           # body
-    choco = np.maximum(choco, c.ellipse(cx2 + 14, cy2 - 82, 26, 24, 0.8))          # breast
-    choco = np.maximum(choco, c.poly([(cx2 + 12, cy2 - 92), (cx2 + 36, cy2 - 96), (cx2 + 40, cy2 - 132), (cx2 + 22, cy2 - 136)], 0.8))  # neck
-    choco = np.maximum(choco, c.ellipse(cx2 + 34, cy2 - 140, 17, 15, 0.8))         # head
-    choco = np.maximum(choco, c.poly([(cx2 + 46, cy2 - 146), (cx2 + 64, cy2 - 138), (cx2 + 46, cy2 - 132)], 0.6))  # beak
-    for (dx_, dy_, ln) in ((-4, -150, 22), (2, -154, 20), (8, -155, 16)):        # crest feathers, swept back
-        choco = np.maximum(choco, c.poly([(cx2 + 24 + dx_, cy2 + dy_ + 6), (cx2 + 24 + dx_ - ln, cy2 + dy_ - 4), (cx2 + 28 + dx_, cy2 + dy_)], 0.6))
-    for (dy_, ln) in ((-80, 46), (-70, 52), (-60, 42)):                             # tail plume
-        choco = np.maximum(choco, c.poly([(cx2 - 38, cy2 + dy_ - 6), (cx2 - 38 - ln, cy2 + dy_ - 22), (cx2 - 38 - ln * 0.8, cy2 + dy_ + 4), (cx2 - 38, cy2 + dy_ + 6)], 0.8))
-    choco = np.maximum(choco, c.poly([(cx2 - 30, cy2 - 64), (cx2 + 6, cy2 - 76), (cx2 + 2, cy2 - 52)], 0.6))  # folded wing
-    for lx_ in (cx2 - 12, cx2 + 10):                                                # legs, knee forward
-        choco = np.maximum(choco, c.poly([(lx_ - 5, cy2 - 42), (lx_ + 5, cy2 - 42), (lx_ + 6, cy2 - 22), (lx_ + 3, cy2), (lx_ - 3, cy2), (lx_ - 1, cy2 - 22)], 0.6))
-        choco = np.maximum(choco, c.poly([(lx_ - 3, cy2 - 2), (lx_ + 12, cy2 - 1), (lx_ + 3, cy2 + 2)], 0.5))
+    choco = np.maximum(choco, c.ellipse(cx2 + f * -2, cy2 - 66, 44, 33, 0.8))                       # body
+    choco = np.maximum(choco, c.ellipse(cx2 + f * 14, cy2 - 82, 26, 24, 0.8))                       # breast
+    choco = np.maximum(choco, c.poly([(cx2 + f * 12, cy2 - 92), (cx2 + f * 36, cy2 - 96), (cx2 + f * 40, cy2 - 132), (cx2 + f * 22, cy2 - 136)], 0.8))  # neck
+    choco = np.maximum(choco, c.ellipse(cx2 + f * 34, cy2 - 140, 17, 15, 0.8))                      # head
+    choco = np.maximum(choco, c.poly([(cx2 + f * 46, cy2 - 146), (cx2 + f * 66, cy2 - 138), (cx2 + f * 46, cy2 - 132)], 0.6))  # beak
+    for (dx_, dy_, ln) in ((-4, -150, 22), (2, -154, 20), (8, -155, 16)):                           # crest feathers, swept back
+        choco = np.maximum(choco, c.poly([(cx2 + f * (24 + dx_), cy2 + dy_ + 6), (cx2 + f * (24 + dx_ - ln), cy2 + dy_ - 4), (cx2 + f * (28 + dx_), cy2 + dy_)], 0.6))
+    for (dy_, ln) in ((-80, 46), (-70, 52), (-60, 42)):                                               # tail plume
+        choco = np.maximum(choco, c.poly([(cx2 + f * -38, cy2 + dy_ - 6), (cx2 + f * (-38 - ln), cy2 + dy_ - 22), (cx2 + f * (-38 - ln * 0.8), cy2 + dy_ + 4), (cx2 + f * -38, cy2 + dy_ + 6)], 0.8))
+    choco = np.maximum(choco, c.poly([(cx2 + f * -30, cy2 - 64), (cx2 + f * 6, cy2 - 76), (cx2 + f * 2, cy2 - 52)], 0.6))  # folded wing
+    for lx_ in (cx2 + f * -12, cx2 + f * 10):                                                         # legs, knee forward
+        choco = np.maximum(choco, c.poly([(lx_ - 5, cy2 - 42), (lx_ + 5, cy2 - 42), (lx_ + f * 6, cy2 - 22), (lx_ + 3, cy2), (lx_ - 3, cy2), (lx_ + f * -1, cy2 - 22)], 0.6))
+        choco = np.maximum(choco, c.poly([(lx_ - 3, cy2 - 2), (lx_ + f * 12, cy2 - 1), (lx_ + 3, cy2 + 2)], 0.5))
     figs = np.maximum(person, choco)
     M["figs"] = figs
     c.over(hexc("#141A33"), figs)
-    rimf = np.clip(figs - np.roll(figs, -3, axis=1), 0, 1) * (c.xx > 0)
-    c.add(hexc("#FFC9A0"), rimf * 0.75)
-    c.add(hexc("#9AA6D8"), top_edge(figs, 2) * 0.25)
     # the lantern: a warm practical light, its small pool on the snow at their feet
     lpx, lpy = ax + 40, ay - 76
-    lan = c.ellipse(lpx, lpy + 8, 5, 7, 0.6)
+    lan = c.ellipse(lpx, lpy + 8, 6, 8, 0.6)
     M["lantern"] = lan
-    c.over(hexc("#FFD48E"), lan)
-    c.add(hexc("#FFB466"), blur(lan, 10) * 1.6)
-    c.add(hexc("#FFB466"), np.exp(-((c.xx - lpx) ** 2 + (c.yy - lpy) ** 2) / (2 * 70 ** 2)) * 0.16)
-    dyy = c.yy - ay
-    dyy = np.where(dyy < 0, dyy * 2.2, dyy)
-    pool = np.exp(-(np.sqrt((c.xx - lpx) ** 2 + (dyy * 3.5) ** 2) / 120) ** 2) * rm
-    c.add(hexc("#FFB062"), pool * 0.45)
-    c.add(hexc("#FFB062"), np.clip(figs - np.roll(figs, 3, axis=1), 0, 1) * np.exp(-((c.xx - lpx) ** 2 + (c.yy - lpy) ** 2) / (2 * 50 ** 2)) * 0.8)
 
     # a few falling flakes, never over the moon or star-like in the sky
     c.over(hexc("#E6EAF8"), flakes(c, 70, 69, (mx, my, mr), crest.min() + 20))
     v = c.radial(W * 0.55, H * 0.45, W * 0.78, H * 0.85)
     c.mul(hexc("#04060E"), np.clip(v - 0.55, 0, 1) * 0.5)
-    # the painterly pass: a Kuwahara flattening, then a soft canvas tooth
-    c.px = kuwahara(np.clip(c.px, 0, 1), 5)
+    # the painterly pass: a Kuwahara flattening of everything but the silhouettes, which keep their anti-aliased edges
+    crisp = c.px.copy()
+    keep = np.clip(blur(np.maximum(np.maximum(city * (c.yy < top_y + 8), figs), lan), 5) * 3.0, 0, 1)
+    c.px = kuwahara(np.clip(c.px, 0, 1), 5) * (1 - keep[..., None]) + crisp * keep[..., None]
+    # rims, drawn crisp: the sun's 1 px warm rim on the figures' right-hand edges; the cool sky on their tops
+    rimf = np.clip(figs - np.roll(figs, -2, axis=1), 0, 1)
+    c.add(hexc("#FFC9A0"), rimf * 0.85)
+    c.add(hexc("#9AA6D8"), top_edge(figs, 2) * 0.22)
+    # the lantern: its glow, a warm bounce on the chocobo's chest and on the adventurer's arm, a foreshortened pool
+    c.over(hexc("#FFD48E"), lan)
+    c.add(hexc("#FFB466"), blur(lan, 10) * 1.6)
+    c.add(hexc("#FFB466"), np.exp(-((c.xx - lpx) ** 2 + (c.yy - lpy) ** 2) / (2 * 70 ** 2)) * 0.14)
+    near_l = np.exp(-((c.xx - lpx) ** 2 + (c.yy - lpy) ** 2) / (2 * 60 ** 2))
+    chest_zone = np.exp(-((c.xx - (cx2 - 22)) ** 2 + (c.yy - (cy2 - 84)) ** 2) / (2 * 22 ** 2))
+    chest = np.clip(choco - np.roll(choco, 3, axis=1), 0, 1) * near_l + choco * chest_zone * 0.22
+    c.add(hexc("#FFB062"), np.clip(chest, 0, 1) * 0.9)
+    c.add(hexc("#FFB062"), np.clip(person - np.roll(person, -3, axis=1), 0, 1) * near_l * 0.8)
+    dyy = c.yy - ay
+    dyy = np.where(dyy < 0, dyy * 2.5, dyy)
+    pool = np.exp(-(np.sqrt((c.xx - lpx) ** 2 + (dyy * 3.5) ** 2) / 95) ** 2) * rm * (1 - figs)
+    c.add(hexc("#FFB062"), pool * 0.6)
     strokes = tex_sample(fbm(512, 512, 5, 3, 71), c.xx / 4.0, c.yy / 1.0)
     tooth = fbm(H, W, 1.6, 2, 70)
     c.px = np.clip(c.px * (1 + (strokes - 0.5)[..., None] * 0.07 + (tooth - 0.5)[..., None] * 0.03), 0, 1)
