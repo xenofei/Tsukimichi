@@ -12956,10 +12956,10 @@
     <comment>Chat line (1.19, C8). {0} = the quest link.</comment>
   </data>
   <data name="CappedTurnInConfig" xml:space="preserve">
-    <value>Notice when a quest is ready to hand in on a capped job</value>
+    <value>Notice before handing in on a capped job</value>
   </data>
   <data name="CappedTurnInConfigHint" xml:space="preserve">
-    <value>A chat line, once per quest, when a quest in your journal reaches its turn-in step while your job is at the level cap and another job would get the EXP. The Todo overlay shows it either way.</value>
+    <value>A chat line once per quest when it reaches its turn-in step on a capped job and another job gets the EXP.</value>
   </data>
   <data name="GameOfferedFormat" xml:space="preserve">
     <value>Offered by the game · {0}</value>
