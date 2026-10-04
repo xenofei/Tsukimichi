@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Route;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Unique;
@@ -168,7 +169,7 @@ public sealed class DutyBoardSource
         }
 
         blocks = list;
-        never = model.NeverCleared.SelectMany(static g => g.Duties).Select(d => new Row(d.Name, SizeBadge(d, index), string.Empty, string.Empty, null)).ToArray();
+        never = model.NeverCleared.SelectMany(static g => g.Duties).Select(d => new Row(HiddenOr(d), SizeBadge(d, index), string.Empty, string.Empty, null)).ToArray();
     }
 
     /// <summary>"locked · needs a Lv 100 job · best is BLM 98", "locked · 2 dungeons not unlocked", "open · 1 raid not unlocked".</summary>
@@ -241,11 +242,20 @@ public sealed class DutyBoardSource
         _ => 4,
     };
 
-    /// <summary>The duty's name, or the shield's stand-in when every quest that unlocks it is hidden.</summary>
+    /// <summary>
+    /// The duty's name, or the shield's stand-in when every quest that unlocks it is hidden or the story has not
+    /// introduced the duty yet (1.20.0 N6).
+    /// </summary>
     private string DutyName(BoardDuty duty) =>
         duty.UnlockQuests.Count > 0 && duty.UnlockQuests.All(session.Spoilers.IsMasked)
             ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.Duty.LevelRequired)
-            : duty.Duty.Name;
+            : HiddenOr(duty.Duty);
+
+    /// <summary>The duty's name, or the board's stand-in for one past the story point (the wider shield, 1.20.0 N6).</summary>
+    private string HiddenOr(DutyRunInfo duty) =>
+        session.Spoilers.IsNameMasked(SpoilerKind.Duty, duty.Name)
+            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.LevelRequired)
+            : duty.Name;
 
     private Row MissingRow(BoardDuty duty, DutyRunIndex index)
     {

@@ -197,7 +197,7 @@ public sealed partial class CharactersPane
             {
                 var (quest, state) = festival.Quests[r];
                 var name = session.Spoilers.DisplayName(quest);
-                var tooltip = quest.Issuer is { Name.Length: > 0 } issuer ? string.Format(CultureInfo.CurrentCulture, Strings.SeasonalGiverFormat, issuer.Name) + "\n" + Strings.MsqClickHint : Strings.MsqClickHint;
+                var tooltip = quest.Issuer is { Name.Length: > 0 } ? string.Format(CultureInfo.CurrentCulture, Strings.SeasonalGiverFormat, GiverPortraits.Name(quest, session.Spoilers)) + "\n" + Strings.MsqClickHint : Strings.MsqClickHint;
                 rows[r] = new SeasonalRowView(quest, name, state, SeasonalDetail(quest, state), tooltip);
             }
 

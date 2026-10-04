@@ -143,7 +143,11 @@ public sealed class UnlockPlan
     /// <param name="states">The character's evaluations by quest row id; empty reads every quest as Not checked.</param>
     /// <param name="names">Names for the quest (spoiler-aware), its status line and the expansion headers.</param>
     /// <param name="regionOf">A zone's region by its giver's Map row id (empty when unknown); null orders zones by level alone.</param>
-    public static UnlockPlan Build(UnlockTags tags, IReadOnlyDictionary<uint, QuestEvaluation> states, BlockerNames names, Func<uint, string>? regionOf = null)
+    /// <param name="spoilers">
+    /// The wider spoiler shield (1.20.0 N6): a duty, place or feature the story has not introduced is named by its
+    /// placeholder in the pills, tooltips and copies; null names all.
+    /// </param>
+    public static UnlockPlan Build(UnlockTags tags, IReadOnlyDictionary<uint, QuestEvaluation> states, BlockerNames names, Func<uint, string>? regionOf = null, Query.SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(tags);
         ArgumentNullException.ThrowIfNull(states);
@@ -159,11 +163,44 @@ public sealed class UnlockPlan
                 continue;
             }
 
-            list.Add(new PlanEntry(quest, names.QuestName(quest), state, BlockerText.StatusText(evaluation, quest, names, states), tags.For(quest.RowId)));
+            list.Add(new PlanEntry(quest, names.QuestName(quest), state, BlockerText.StatusText(evaluation, quest, names, states), Shield(tags.For(quest.RowId), spoilers)));
         }
 
         return Group(list, names.Expansion, regionOf);
     }
+
+    /// <summary>The unlocks with each name the shield masks replaced by its placeholder; the list itself when none is.</summary>
+    private static IReadOnlyList<PlanUnlock> Shield(IReadOnlyList<PlanUnlock> unlocks, Query.SpoilerMask? spoilers)
+    {
+        if (spoilers is not { MasksNames: true })
+        {
+            return unlocks;
+        }
+
+        PlanUnlock[]? shielded = null;
+        for (var i = 0; i < unlocks.Count; i++)
+        {
+            var unlock = unlocks[i];
+            var kind = KindOf(unlock.Kind);
+            if (unlock.Name.Length == 0 || !spoilers.IsNameMasked(kind, unlock.Name))
+            {
+                continue;
+            }
+
+            shielded ??= [.. unlocks];
+            shielded[i] = unlock with { Name = spoilers.Name(kind, unlock.Name) };
+        }
+
+        return shielded ?? unlocks;
+    }
+
+    /// <summary>The kind of name the shield places a plan unlock by: a duty, flying in a zone (an area), anything else a reward.</summary>
+    private static Query.SpoilerKind KindOf(UnlockKind kind) => kind switch
+    {
+        UnlockKind.Dungeon or UnlockKind.Trial or UnlockKind.NormalRaid or UnlockKind.AllianceRaid or UnlockKind.FieldOperation => Query.SpoilerKind.Duty,
+        UnlockKind.Flying => Query.SpoilerKind.Area,
+        _ => Query.SpoilerKind.Reward,
+    };
 
     /// <summary>The entries <paramref name="filter"/> keeps, regrouped in story order.</summary>
     public UnlockPlan Filter(PlanFilter filter)
