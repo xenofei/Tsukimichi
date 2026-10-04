@@ -22,6 +22,15 @@ public sealed class DiscoverySettings
     /// <summary>List quests that are Ready on another job next to the ones ready on the current job.</summary>
     public bool NearbyIncludeOtherJob { get; set; } = true;
 
+    /// <summary>Nearby shows Everywhere (the zones board, 1.21.0 P7) rather than Here.</summary>
+    public bool NearbyEverywhere { get; set; }
+
+    /// <summary>Nearby's kind chips that are on (<see cref="Query.ZoneKinds"/>); every kind by default.</summary>
+    public Query.ZoneKinds NearbyKinds { get; set; } = Query.ZoneKinds.All;
+
+    /// <summary>Nearby's sort (<see cref="Query.ZoneSort"/>).</summary>
+    public Query.ZoneSort NearbySort { get; set; } = Query.ZoneSort.LevelFit;
+
     /// <summary>Where the file lives: <c>&lt;config&gt;/user/discovery.json</c>.</summary>
     public static string PathFor(PluginPaths paths)
     {

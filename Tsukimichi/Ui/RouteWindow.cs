@@ -219,7 +219,8 @@ public sealed class RouteWindow : Window
         DrawHeader(v, ActionIcons.RouteHeader(target, firstQuest));
 
         // A route to flying whose quests are done can still have field currents left: those lines are the route then.
-        var fieldOnly = v.FieldLeft > 0 && v.Route.Outcome == RouteOutcome.AlreadyDone;
+        // So can a route to Triple Triad opponents whose quests are done (or that wait on none): its opponents (1.21 P6).
+        var fieldOnly = v.FieldLeft > 0 && (v.Route.Outcome == RouteOutcome.AlreadyDone || (v.Route.Outcome == RouteOutcome.NoQuest && target.TriadStops.Count > 0));
         switch (fieldOnly ? RouteOutcome.Route : v.Route.Outcome)
         {
             case RouteOutcome.AlreadyDone:
@@ -794,7 +795,7 @@ public sealed class RouteWindow : Window
 
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
-                UiMetrics.Tooltip(canFlag ? Strings.RouteFieldFlagTooltip : Strings.RouteStepFlagUnavailable);
+                UiMetrics.Tooltip(canFlag ? (l.IsTriad ? Strings.RouteTriadFlagTooltip : Strings.RouteFieldFlagTooltip) : Strings.RouteStepFlagUnavailable);
             }
 
             end -= UiMetrics.Px(8f);
@@ -813,7 +814,7 @@ public sealed class RouteWindow : Window
         dl.AddText(new Vector2(end - markWidth, textY), Theme.U32(Theme.Surface.TextTertiary), l.Detail);
         if (hovered)
         {
-            UiMetrics.Tooltip(cut ? l.Tooltip : Strings.RouteFieldTooltip);
+            UiMetrics.Tooltip(cut ? l.Tooltip : l.IsTriad ? Strings.RouteTriadTooltip : Strings.RouteFieldTooltip);
         }
     }
 
@@ -1031,8 +1032,11 @@ public sealed class RouteWindow : Window
 
         // Route to flying (K3): after the quests, each field current not attuned yet, by the aetheryte nearest it.
         var fieldLeft = AddFieldLines(routeTarget, route.Steps.Count, lines);
+
+        // Route to Triple Triad opponents (1.21 P6): after the quests, each opponent where it stands.
+        fieldLeft += AddTriadLines(routeTarget, route.Steps.Count + fieldLeft, lines);
         var stopsText = string.Empty;
-        if (routeTarget.Kind == RouteTargetKind.Unlock)
+        if (routeTarget.Kind is RouteTargetKind.Unlock or RouteTargetKind.TriadNpc)
         {
             var count = FieldCurrentStops.Stops(route.Steps.Count, fieldLeft);
             stopsText = string.Format(CultureInfo.CurrentCulture, count == 1 ? Strings.RouteStopsOne : Strings.RouteStopsFormat, count);
@@ -1100,6 +1104,33 @@ public sealed class RouteWindow : Window
         return left.Count;
     }
 
+    /// <summary>
+    /// The opponents of a route to Triple Triad opponents (1.21 P6), numbered on from the quests: "Elaisse · Triple
+    /// Triad" with its place, a Flag where it stands; returns how many. The card names only opponents the story has
+    /// reached, so no name here is masked; a place the shield hides still reads as its placeholder.
+    /// </summary>
+    private int AddTriadLines(RouteTarget routeTarget, int before, List<Line> lines)
+    {
+        var stops = routeTarget.TriadStops;
+        for (var i = 0; i < stops.Count; i++)
+        {
+            var stop = stops[i];
+            var text = string.Format(CultureInfo.CurrentCulture, Strings.RouteTriadStopFormat, stop.Name);
+            var zone = session.Spoilers.Name(Core.Query.SpoilerKind.Area, stop.Zone);
+            lines.Add(new Line(LineKind.Field, stop.ResidentId, QuestState.Unknown, text)
+            {
+                Number = (before + i + 1).ToString(CultureInfo.CurrentCulture) + ".",
+                Detail = zone.Length > 0 ? zone : Strings.RouteTriadMark,
+                Tooltip = text + "\n" + zone + "\n" + Strings.RouteTriadTooltip,
+                FieldTerritory = stop.TerritoryId,
+                FieldPosition = stop.TerritoryId == 0 ? null : new Vector3(stop.X, 0f, stop.Z),
+                IsTriad = true,
+            });
+        }
+
+        return stops.Count;
+    }
+
     private string NameOf(QuestCatalog catalog, uint rowId) =>
         session.Spoilers.DisplayName(catalog, rowId, rowId.ToString(CultureInfo.InvariantCulture));
 
@@ -1145,6 +1176,9 @@ public sealed class RouteWindow : Window
         public uint FieldTerritory { get; init; }
 
         public Vector3? FieldPosition { get; init; }
+
+        /// <summary>A Triple Triad opponent on a route to opponents (1.21 P6), drawn as a field line.</summary>
+        public bool IsTriad { get; init; }
     }
 
     private sealed record View(UnlockRoute Route, string Title, string Caption, string Summary, string AlsoUnlockedBy, Line[] Lines)

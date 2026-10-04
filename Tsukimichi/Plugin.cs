@@ -1458,6 +1458,7 @@ public sealed partial class Plugin : IDalamudPlugin
             InitializeInGame(gate, rewardLookup, handIns, moonlit);
             InitializeRightAnswers(gate, diagnostics, why);
             InitializeCollector(unlockReader);
+            InitializeTripleTriad(warmer, unlockReader, moonlit, questionableActions);
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;

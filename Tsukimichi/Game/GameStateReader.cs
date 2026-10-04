@@ -21,7 +21,7 @@ namespace Tsukimichi.Game;
 /// GameMain, SatisfactionSupplyManager) and from <see cref="IPlayerState"/>. Every method that touches ClientStructs
 /// must run on the framework thread; <see cref="Capture"/> checks and throws otherwise.
 /// </summary>
-public sealed class GameStateReader
+public sealed partial class GameStateReader
 {
     /// <summary>Bytes in the snapshot bitmask: room for every 16-bit quest id.</summary>
     public const int CompletedBitmaskBytes = 8192;
@@ -416,6 +416,7 @@ public sealed class GameStateReader
             ItemLevel = itemLevel,
             JobItemLevels = jobItemLevels,
             DutyRecords = ReadDutyRecords(contentId, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
+            TriadRecords = ReadTriadRecords(ui, contentId, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
         };
 
         if (stopwatch is not null)

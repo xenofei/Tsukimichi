@@ -1414,7 +1414,7 @@ public sealed partial class FilterPanel
     /// A dashed outline round a pill (or a rounded box) from <paramref name="min"/> to <paramref name="max"/>: short
     /// dashes laid along its perimeter, the arcs included, so an "off" chip reads as a place a state could be.
     /// </summary>
-    private static void DashedOutline(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding, uint color)
+    internal static void DashedOutline(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding, uint color)
     {
         var r = MathF.Min(rounding, MathF.Min(max.X - min.X, max.Y - min.Y) * 0.5f);
         var straightX = MathF.Max(0f, max.X - min.X - (2f * r));

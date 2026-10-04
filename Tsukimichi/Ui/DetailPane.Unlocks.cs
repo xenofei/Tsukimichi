@@ -110,7 +110,8 @@ public sealed partial class DetailPane
         }
 
         RefreshUnlocks(session, quest, source);
-        if (!unlocksAny)
+        var triad = TriadUnlockLines(session, quest);
+        if (!unlocksAny && triad.Count == 0)
         {
             return;
         }
@@ -124,6 +125,7 @@ public sealed partial class DetailPane
         else
         {
             DrawUnlockGroups(quest);
+            DrawTriadUnlockLines(triad);
         }
 
         EndSection();
