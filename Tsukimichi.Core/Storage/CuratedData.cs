@@ -223,8 +223,9 @@ public sealed record GameGate(
 /// </summary>
 /// <param name="Sources">
 /// The sheet rows the links come from, as <c>Sheet#row</c>: <c>QuestAcceptAdditionCondition#70852</c> (the values of
-/// the gated quest's own accept row that are no quest), <c>Action#11395</c> (the <c>UnlockLink</c> of an action, a blue
-/// magic spell learned).
+/// the gated quest's own accept row that are no quest), <c>Quest#67093</c> (the link the gated quest's own row says it
+/// waits for, its <c>Header</c> column: the floor-50 clear of the Palace of the Dead), <c>Action#11395</c> (the
+/// <c>UnlockLink</c> of an action, a blue magic spell learned).
 /// </param>
 /// <param name="All">Unlock link ids, each needed. Ascending, distinct, never empty, each below 65536.</param>
 public sealed record GateUnlockLinkSet(IReadOnlyList<string> Sources, uint[] All);

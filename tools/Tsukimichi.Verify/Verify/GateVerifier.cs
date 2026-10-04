@@ -72,8 +72,53 @@ internal static partial class GateVerifier
             }
         }
 
+        Reconcile(game, rows);
         return rows;
     }
+
+    /// <summary>
+    /// qa-data-engineer §1.4 for the gates fact (1.21): an unresolved row becomes sourceWrong when the wiki names on the
+    /// quest the very gate a quest that follows it carries (that quest's row matched with the same value, and its previous
+    /// quests include this one) while this quest's own text and sheet state none: no System line "In order to … this
+    /// quest", no accept condition that is no quest, no unlock link its row waits for. The game's text and its sheet then
+    /// agree with the catalog, and the wiki has put the next quest's gate on this one (The Black Wolf's Ultimatum names
+    /// the chocobo companion Operation Archon asks for).
+    /// </summary>
+    private static void Reconcile(GameCatalog game, List<QuestRow> rows)
+    {
+        var matched = rows.Where(r => r.Verdict == Verdict.Match).ToList();
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            if (row.Verdict != Verdict.Unresolved || game.Catalog.GetByRowId(row.RowId) is not { } quest)
+            {
+                continue;
+            }
+
+            var next = matched.FirstOrDefault(m => m.SourceValue == row.SourceValue && game.Catalog.GetByRowId(m.RowId) is { } follower && follower.PreviousQuests.QuestIds.Contains(quest.RowId));
+            if (next is null)
+            {
+                continue;
+            }
+
+            var name = Bare(quest.Name);
+            var textStatesGate = game.SystemLines(quest).Any(line => InOrderTo().IsMatch(line) && (line.Contains("this quest", StringComparison.Ordinal) || (name.Length > 0 && line.Contains(name, StringComparison.Ordinal))));
+            var sheetStatesGate = quest.AcceptConditions.Any(id => game.Catalog.GetByRowId(id) is null) || game.RequiredUnlockLink(quest.RowId) != 0;
+            if (textStatesGate || sheetStatesGate)
+            {
+                continue;
+            }
+
+            rows[i] = row with
+            {
+                Verdict = Verdict.SourceWrong,
+                Reason = $"the wiki names the gate of the quest that follows, {next.Name} ({next.RowId}), which curated/game_gates.json carries; this quest's own text states no gate and its sheet names no accept condition or unlock link to wait for",
+            };
+        }
+    }
+
+    /// <summary>A quest name without the private-use icon glyphs some repeatable quests open with.</summary>
+    private static string Bare(string name) => new string(name.Where(c => c is < '' or > '').ToArray()).Trim();
 
     /// <summary>A row: matched when the catalog models a gate for the quest, unresolved when it models none.</summary>
     private static QuestRow Row(GameCatalog game, QuestRecord quest, string gateClass, string value, string url)
@@ -97,7 +142,7 @@ internal static partial class GateVerifier
             return false;
         }
 
-        var bare = new string(name.Where(c => c is < '' or > '').ToArray()).Trim();
+        var bare = Bare(name);
         return line.Contains("this quest", StringComparison.Ordinal) || (bare.Length > 0 && line.Contains(bare, StringComparison.Ordinal));
     }
 

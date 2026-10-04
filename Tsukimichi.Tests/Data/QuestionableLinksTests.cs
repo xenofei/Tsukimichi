@@ -117,7 +117,7 @@ public sealed class QuestionableLinksTests(FixtureCatalog fixture) : IClassFixtu
 /// outlive the release that was meant to resolve it. Resolve the row, or extend <c>until</c> with a reason.
 /// </summary>
 [Trait("Category", "Curated")]
-public sealed partial class VerificationAllowlistTests
+public sealed partial class VerificationAllowlistTests(FixtureCatalog fixture) : IClassFixture<FixtureCatalog>
 {
     /// <summary>The plugin's csproj <c>&lt;Version&gt;</c> as major.minor.patch.</summary>
     internal static Version PluginVersion()
@@ -234,6 +234,33 @@ public sealed partial class VerificationAllowlistTests
         }
 
         Assert.True(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    /// <summary>
+    /// A sourceWrong row of the gates report (1.21, the gates fact's qa-data-engineer 1.4 rule) is the gate of a quest
+    /// that follows: the wiki states the same gate on a quest whose previous quests include this one, that quest's row is
+    /// matched by a curated game gate, and this quest has none. So a wiki gate never leaves the unresolved list on its
+    /// verdict alone (The Black Wolf's Ultimatum names the chocobo companion Operation Archon asks for).
+    /// </summary>
+    [Fact]
+    public void Every_sourceWrong_gate_row_is_the_gate_of_a_quest_that_follows()
+    {
+        var rows = ReadCsv(Path.Combine(ExtraPrerequisitesDataTests.DocsDataDir(), "gate-verification.csv"));
+        var catalog = fixture.Bundle.Catalog;
+        var gates = fixture.Curated.GameGates;
+        var wrong = rows.Where(f => f[7] == "sourceWrong").ToList();
+        Assert.Contains(wrong, f => f[0] == "66058");
+        foreach (var f in wrong)
+        {
+            var rowId = uint.Parse(f[0], System.Globalization.CultureInfo.InvariantCulture);
+            Assert.False(gates.ContainsKey(rowId), $"{f[0]} {f[1]}: sourceWrong, yet curated/game_gates.json gates it");
+            var followers = rows
+                .Where(m => m[7] == "match" && m[5] == f[5])
+                .Select(m => uint.Parse(m[0], System.Globalization.CultureInfo.InvariantCulture))
+                .Where(id => catalog.GetByRowId(id) is { } next && next.PreviousQuests.QuestIds.Contains(rowId) && gates.ContainsKey(id))
+                .ToList();
+            Assert.True(followers.Count > 0, $"{f[0]} {f[1]}: sourceWrong, but no quest that follows it carries the gate the wiki states ({f[5]})");
+        }
     }
 
     /// <summary>The data lines of a committed report, split on commas outside double quotes ("" is a quote).</summary>

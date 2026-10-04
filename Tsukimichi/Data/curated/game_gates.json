@@ -82,6 +82,15 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Fiery_Wings,_Fiery_Hearts",
       "note": "Fiery Wings, Fiery Hearts, the Firebird quest: offered only once the character owns the seven Lanners of the Heavensward extreme trials (white, rose, round, warring, dark, Sophic and Demonic). Its script calls CheckMountAcquire. The sheet gives it level 1 and no previous quest, so it read Ready and Moonlit's Get now for anyone with Heavensward. The mounts are the Firebird's collection in the Mount sheet (UIPriority 30100 to 30109); the later Wondrous Lanner (30110) is not one of them."
     },
+    "67093": {
+      "gate": "floor 50 of the Palace of the Dead cleared",
+      "unlockLinks": { "sources": ["Quest#67093"], "all": [320] },
+      "after": [67092],
+      "metBy": [67923],
+      "afterTextKey": "TEXT_SUBCTS701_01556_SYSTEM_000_100",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Nightmare%27s_End",
+      "note": "The Nightmare's End: its Quest row names unlock link 320 as the link it waits for (the Header column, where each blue magic quest names its spell's link), the link a floor-50 clear of the Palace of the Dead sets (Knocking on Heaven's Door, Delve into Myth and Pilgrimage of Light call it REWARD_DD1_50F_COMP in their scripts); the wiki infobox names the floor. Judged from the link the capture reads, or met once What Lies Beneath is done. The House That Death Built opens the Palace of the Dead, so nothing passes the gate before it."
+    },
     "67199": {
       "gate": "My Little Chocobo done (the chocobo companion)",
       "unlockLinks": { "sources": ["QuestAcceptAdditionCondition#67199"], "all": [17] },
@@ -131,6 +140,20 @@
       "gameTextKey": "TEXT_JOBREL400_02379_SYSTEM_000_004",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Anima_Weapons",
       "note": "Future Proof, level 60, Anima Weapons: offered only while the reconditioned weapon is equipped (its own text). The items are the RequiredItem of its own QuestClassJobReward row 8. It read Ready as soon as A Dream Fulfilled was done."
+    },
+    "67923": {
+      "gate": "floor 50 of the Palace of the Dead cleared",
+      "unlockLinks": { "sources": ["Quest#67923"], "all": [320] },
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/What_Lies_Beneath",
+      "note": "What Lies Beneath, the quasi-quest that opens floors 51 and beyond: its Quest row names unlock link 320, the floor-50 clear of the Palace of the Dead, as the link it waits for, and the wiki infobox names the floor (Questionable also holds it back until the floor-50 achievement In Too Deep V). Judged from the link the capture reads. The other floor-50 gates count it done as the clear."
+    },
+    "67924": {
+      "gate": "floor 100 of the Palace of the Dead cleared",
+      "unlockLinks": { "sources": ["Quest#67924"], "all": [327] },
+      "after": [67923],
+      "afterTextKey": "TEXT_SUBCTS711_02387_SYSTEM_000_010",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Dead_but_Not_Gone",
+      "note": "Dead but Not Gone: its Quest row names unlock link 327 as the link it waits for, the link a floor-100 clear sets (the Palace of the Dead's reward talk calls it DEEP_DUNGEON1_REWARD_100F); the wiki infobox names the floor. Judged from the link the capture reads. Floors 51 and beyond open only with What Lies Beneath (its own text; the floor 51-200 Duty Finder entries name it as their unlock quest), so nothing passes the gate before it."
     },
     "67932": {
       "gate": "a sharpened anima weapon equipped",
@@ -607,6 +630,18 @@
       "mounts": { "sources": ["Mount#420"], "all": [345, 346, 363, 389, 407, 422, 444] },
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Wing_Spirit_Cometh",
       "note": "The Wing Spirit Cometh, the wings of legacy quest: offered only once the character owns the seven Wings of the Dawntrail extreme trials. Its script calls CheckMountAcquire. The sheet checks only its previous quest, so it read Ready as soon as that was done. The mounts are the collection of the wings of legacy in the Mount sheet (UIPriority 30500 to 30509)."
+    },
+    "71036": {
+      "gate": "25 beasts befriended as a beastmaster",
+      "gameTextKey": "TEXT_JOBXBM191_05500_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Free_for_All",
+      "note": "Free for All, beastmaster: its own text lists what it wants before it is offered, among them at least twenty-five beasts befriended, and the wiki infobox agrees. Tsukimichi does not read the count: not checked."
+    },
+    "71037": {
+      "gate": "30 beasts befriended as a beastmaster",
+      "gameTextKey": "TEXT_JOBXBM192_05501_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Mastery_Rematch",
+      "note": "Mastery Rematch, beastmaster: its own text lists at least thirty beasts befriended besides the First Master's Board (the board is the sheet's required duty), and the wiki infobox agrees. Tsukimichi does not read the count: not checked."
     },
     "71040": {
       "gate": "an obscurum phantom weapon in your possession",

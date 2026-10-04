@@ -35,12 +35,15 @@ public sealed class GameGateLinksGameDataTests(GameDataFixture game) : IClassFix
                     case "QuestAcceptAdditionCondition" when row == rowId:
                         derived.UnionWith(AcceptConditionsThatAreNoQuest(row));
                         break;
+                    case "Quest" when row == rowId:
+                        derived.Add(game.Game.GetExcelSheet<Sheets.Quest>()!.GetRow(row).Header);
+                        break;
                     case "Action":
                         var action = game.Game.GetExcelSheet<Sheets.Action>()!.GetRow(row);
                         derived.Add(action.UnlockLink.RowId);
                         break;
                     default:
-                        problems.Add($"{rowId}: source {source} is no accept row of the quest itself nor an action");
+                        problems.Add($"{rowId}: source {source} is no accept row or Quest row of the quest itself nor an action");
                         break;
                 }
             }
@@ -78,6 +81,39 @@ public sealed class GameGateLinksGameDataTests(GameDataFixture game) : IClassFix
             Assert.Contains(action.Name.ExtractText(), gate.Gate, StringComparison.Ordinal);
             Assert.True(rowId > 0);
         }
+    }
+
+    /// <summary>
+    /// What the <c>Quest#row</c> source reads: a quest's <c>Header</c> is the unlock link the quest waits for. Every blue
+    /// magic quest names its spell's <c>UnlockLink</c> there, and the Palace of the Dead quests name the link the floor
+    /// clears set, as the scripts that check them call it: <c>REWARD_DD1_50F_COMP</c> (320) in the scripts of Knocking
+    /// on Heaven's Door, Delve into Myth and Pilgrimage of Light, <c>DEEP_DUNGEON1_REWARD_100F</c> (327) in the
+    /// dungeon's reward talk.
+    /// </summary>
+    [GameDataFact]
+    public void A_quests_header_is_the_unlock_link_it_waits_for()
+    {
+        var curated = CuratedData.Load(FixtureCatalog.CuratedDir());
+        var quests = game.Game.GetExcelSheet<Sheets.Quest>()!;
+        var actions = game.Game.GetExcelSheet<Sheets.Action>()!;
+        var blue = curated.GameGates.Where(kv => kv.Value.UnlockLinks?.Sources.Any(s => s.StartsWith("Action#", StringComparison.Ordinal)) == true).ToList();
+        Assert.True(blue.Count >= 15, $"only {blue.Count} blue magic gates");
+        foreach (var (rowId, gate) in blue)
+        {
+            var action = actions.GetRow(uint.Parse(gate.UnlockLinks!.Sources[0]["Action#".Length..], System.Globalization.CultureInfo.InvariantCulture));
+            Assert.Equal(action.UnlockLink.RowId, (uint)quests.GetRow(rowId).Header);
+        }
+
+        uint Param(uint questRowId, string name) => quests.GetRow(questRowId).QuestParams.Single(p => p.ScriptInstruction.ExtractText() == name).ScriptArg;
+        foreach (var floor50 in new uint[] { 68667, 70199, 70941 })
+        {
+            Assert.Equal(320u, Param(floor50, "REWARD_DD1_50F_COMP"));
+        }
+
+        var rewardTalk = game.Game.GetExcelSheet<Sheets.CustomTalk>()!.Single(t => t.Name.ExtractText().StartsWith("CtsDdd1Reward", StringComparison.Ordinal));
+        Assert.Contains(rewardTalk.Script, s => s.ScriptInstruction.ExtractText() == "DEEP_DUNGEON1_REWARD_100F" && s.ScriptArg == 327);
+        Assert.Equal(320, (int)quests.GetRow(67093).Header);
+        Assert.Equal(327, (int)quests.GetRow(67924).Header);
     }
 
     /// <summary>The values of the quest's <c>QuestAcceptAdditionCondition</c> row below 65536 (the unlock links), read raw.</summary>

@@ -55,6 +55,8 @@ internal sealed class GameCatalog
         SheetRecords = legacy.Catalog.All.ToDictionary(q => q.RowId);
 
         var quests = data.GetExcelSheet<Quest>(Language.English) ?? throw new InvalidOperationException("Quest sheet missing");
+        gameData = data;
+        questSheet = quests;
         items = data.GetExcelSheet<Item>(Language.English) ?? throw new InvalidOperationException("Item sheet missing");
         var categories = data.GetExcelSheet<ClassJobCategory>(Language.English) ?? throw new InvalidOperationException("ClassJobCategory sheet missing");
         var cfcs = data.GetExcelSheet<ContentFinderCondition>(Language.English) ?? throw new InvalidOperationException("ContentFinderCondition sheet missing");
@@ -135,6 +137,38 @@ internal sealed class GameCatalog
     }
 
     private readonly ExcelSheet<Item> items;
+    private readonly Lumina.GameData gameData;
+    private readonly ExcelSheet<Quest> questSheet;
+
+    /// <summary>
+    /// The unlock link a quest's own row says it waits for (<c>Quest.Header</c>, where each blue magic quest names its
+    /// spell's link and the Palace of the Dead quests the floor clears); 0 when it names none.
+    /// </summary>
+    public uint RequiredUnlockLink(uint rowId) => questSheet.GetRowOrDefault(rowId) is { } quest ? quest.Header : 0u;
+
+    /// <summary>
+    /// The System lines of a quest's own text sheet (rows whose key holds <c>_SYSTEM_</c>), English, as plain text:
+    /// what the game tells a player about the quest ("In order to undertake this quest, …"). Empty when the quest has
+    /// no text sheet. Read on demand; the gates fact asks for a handful of quests.
+    /// </summary>
+    public IReadOnlyList<string> SystemLines(QuestRecord quest)
+    {
+        if (QuestTextReader.SheetName(quest.InternalId) is not { } sheetName || !gameData.FileExists($"exd/{sheetName}.exh"))
+        {
+            return [];
+        }
+
+        var lines = new List<string>();
+        foreach (var row in gameData.Excel.GetSheet<RawRow>(Language.English, sheetName))
+        {
+            if (row.ReadStringColumn(0).ExtractText().Contains("_SYSTEM_", StringComparison.Ordinal))
+            {
+                lines.Add(row.ReadStringColumn(1).ExtractText());
+            }
+        }
+
+        return lines;
+    }
 
     /// <summary>The Item sheet's English name for an item row, or empty.</summary>
     public string ItemName(uint itemId) => items.GetRowOrDefault(itemId) is { } item ? item.Name.ExtractText() : string.Empty;
