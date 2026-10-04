@@ -51,20 +51,24 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
 
     /// <summary>
     /// The unlock-link gates (1.19, C3), judged from the links a capture reads: the chocobo companion before two main
-    /// scenario quests, the Occult Record entries and the Forked Tower, and the blue magic each blue mage quest asks for.
+    /// scenario quests, the Occult Record entries and the Forked Tower, and the blue magic each blue mage quest asks for;
+    /// since 1.21 the Palace of the Dead floor clears the quest's own row names (The Nightmare's End, What Lies Beneath,
+    /// Dead but Not Gone).
     /// </summary>
     internal static readonly uint[] UnlockLinkGates =
     [
         67199, 69307, 70057,
         70851, 70852, 70853, 71054,
         68730, 68731, 68732, 68733, 68734, 69269, 69270, 69271, 69272, 69526, 69527, 69528, 69529, 70310, 70311, 70312,
+        67093, 67923, 67924,
     ];
 
     /// <summary>
     /// The 1.19 gates Tsukimichi cannot read (C3): deep-dungeon floors, Resistance ranks and mettle; and the Dun Scaith
-    /// raid unlocked, met by the quest that opens it.
+    /// raid unlocked, met by the quest that opens it. Since 1.21 also the beasts a beastmaster has befriended (Free for
+    /// All, Mastery Rematch).
     /// </summary>
-    internal static readonly uint[] UnreadGates = [68667, 68668, 70199, 70941, 70942, 69481, 69482, 69483, 69484, 69485, 69486, 69487, 69563, 69564, 67016];
+    internal static readonly uint[] UnreadGates = [68667, 68668, 70199, 70941, 70942, 69481, 69482, 69483, 69484, 69485, 69486, 69487, 69563, 69564, 67016, 71036, 71037];
 
     /// <summary>
     /// The mount-collection quests (1.11.0, C2), each offered only once the seven extreme-trial mounts of its expansion
@@ -278,6 +282,47 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
             Assert.True(
                 proven ? state is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Blocked : state is QuestState.Unknown or QuestState.Blocked,
                 $"{rowId} {quest.Name} reads {state} with every prerequisite done");
+        }
+    }
+
+    /// <summary>
+    /// The Palace of the Dead gates of 1.21 (The Nightmare's End and What Lies Beneath after floor 50, Dead but Not Gone
+    /// after floor 100) are the links their own Quest rows name, judged from the capture like any unlock link: met with the
+    /// link set, unmet without it, and not checked by a capture that did not read it. Dead but Not Gone also waits for
+    /// What Lies Beneath, which opens the floors past 50.
+    /// </summary>
+    [Fact]
+    public void The_Palace_of_the_Dead_floor_gates_are_judged_from_the_links_their_rows_name()
+    {
+        var context = Context();
+        var michiru = Character();
+        var watch = Catalog.GateUnlockLinkWatch;
+        Assert.Contains(67923u, Catalog.PrerequisitesOf(Catalog.GetByRowId(67924)!).QuestIds);
+        foreach (var (rowId, link) in new (uint RowId, uint Link)[] { (67093, 320), (67923, 320), (67924, 327) })
+        {
+            var quest = Catalog.GetByRowId(rowId)!;
+            var gate = Catalog.GameGateOf(rowId)!;
+            Assert.Equal([link], Assert.IsType<uint[]>(gate.UnlockLinks));
+            Assert.Contains(link, watch);
+
+            var ready = With(Without(michiru, [rowId, .. gate.MetBy]), [.. Catalog.PrerequisitesOf(quest).QuestIds]);
+            GameGateRequirement Gate(CharacterSnapshot s, out bool met)
+            {
+                var r = RequirementEvaluator.Evaluate(quest, s, Catalog, context).Single(r => r.Req.Kind == RequirementKind.GameGate);
+                met = r.Met;
+                return Assert.IsType<GameGateRequirement>(r.Req);
+            }
+
+            var set = ready with { GateUnlockLinks = new CollectibleSet { Owned = [link], Missing = [.. watch.Where(l => l != link)] } };
+            Assert.True(Gate(set, out var metWithLink).Judged);
+            Assert.True(metWithLink, $"{rowId} {quest.Name}: the gate is unmet with link {link} set");
+
+            var unset = ready with { GateUnlockLinks = new CollectibleSet { Owned = [.. watch.Where(l => l != link)], Missing = [link] } };
+            Assert.Equal([link], Gate(unset, out var metWithout).MissingLinks);
+            Assert.False(metWithout, $"{rowId} {quest.Name}: the gate is met without link {link}");
+            Assert.Equal(QuestState.Blocked, StateResolver.Resolve(quest, unset, Catalog, context).State);
+
+            Assert.True(Gate(ready with { GateUnlockLinks = null }, out _).IsNotChecked);
         }
     }
 
