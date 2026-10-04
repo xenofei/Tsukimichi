@@ -39,6 +39,7 @@ static partial class Strings
     /// <summary>{0} = rows not shown.</summary>
     public static string BluesMoreFormat => Loc.Get("BluesMoreFormat");
     public static string BluesFewer => Loc.Get("BluesFewer");
+    public static string BluesTierFold => Loc.Get("BluesTierFold");
 
     /// <summary>{0} = the main scenario quest that needs it (through the shield).</summary>
     public static string BluesNeedsItFormat => Loc.Get("BluesNeedsItFormat");

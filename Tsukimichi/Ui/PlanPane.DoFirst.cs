@@ -143,7 +143,7 @@ public sealed partial class PlanPane
                     ImGui.SameLine(0f, UiMetrics.Px(16f));
                 }
 
-                if (TextLink("##fold", Strings.PlanCardToggleTooltip, null))
+                if (TextLink("##fold", Strings.BluesTierFold, null))
                 {
                     openedTiers.Remove(group.Tier);
                 }

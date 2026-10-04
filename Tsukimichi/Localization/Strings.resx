@@ -4948,6 +4948,9 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="BluesFewer" xml:space="preserve">
     <value>Show fewer</value>
   </data>
+  <data name="BluesTierFold" xml:space="preserve">
+    <value>Fold this tier</value>
+  </data>
   <data name="BluesNeedsItFormat" xml:space="preserve">
     <value>{0} needs it</value>
     <comment>{0} = the main scenario quest that needs it.</comment>
