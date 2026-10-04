@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v8: welcome home
 
-Status: **draft for your review (4 October 2026).** Plan v7 shipped 1.14.0 to 1.20.0; 1.21.0 is built and being merged. This plan adds one release, 1.22.0, and a companion add-on for Umbra.
+Status: **draft for your review (4 October 2026).** Designs: Option A approved by the realism supervisor; the Option B sample is being fixed. Plan v7 shipped 1.14.0 to 1.20.0; 1.21.0 is built and being merged. This plan adds one release, 1.22.0, and a companion add-on for Umbra.
 
 ## Sources
 
@@ -69,13 +69,14 @@ All of plan v7's rules carry over:
 
 | # | Question | My recommendation |
 |---|---|---|
-| 1 | Release art: one illustration per release, shown in each theme's own frame, palette and motifs, or a fully separate painting per theme for every release (six per release)? | One illustration per release, composed so each theme restyles it: its frame kit, palette grade and motif layer (frost, gold leaf, orbits). It is six times less art to make and keep consistent, and each theme still looks like its own. |
+| 1 | Release art. **Option A:** one painting per release, restyled by each theme's grade, motifs and frame. It is approved and costs about a day per release. **Option B:** a richer painting, with each theme rendered as its own craft (gilt oil, stained glass, cut crystal, an engraved astrolabe, sumi-e with gold leaf). It costs 2–3 days per release, and you approve six pictures each time. **A middle way:** Option B for major releases only. See the Designs tab. | Option A. It is approved, consistent and cheap to keep up. Choose B or the middle way if the themes must look like different crafts. |
 | 2 | Backfill popups and art for 1.14.0 to 1.21.0? | Yes, with simple notes, so Settings › What's new starts with a full history. |
 | 3 | The Umbra add-on lives in a new public repository, `xenofei/Tsukimichi.Umbra` (AGPL-3.0, as Umbra requires), released separately. Creating it is a public step, so I need your OK. | Yes. |
 | 4 | "Follow Umbra" palette: Umbra has no theme API, so Tsukimichi would read Umbra's saved settings file (read-only) and fall back to Night if it can't. | Yes, as an option, off by default. |
 | 5 | Should the moon icon show by default on a fresh install or update? | Yes, once, with a one-line hint ("Right-click for options"). Hide it any time. |
 | 6 | When an update is waiting, should Tsukimichi also print a chat line? | No. The status bar and icon dot are enough; a chat line is an opt-in. |
 | 7 | Release order: 1.22.0 after 1.21.0, with the add-on released alongside 1.22.0. | As written. |
+| 8 | The server info bar's moon is "◐". If the game's font can't draw it, fall back to the shipped "☾" or to one of the game's own icons? | The game's own icon, so it always matches the bar's style. |
 
 ## Not doing
 
