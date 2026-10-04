@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Core.Sources;
 
@@ -50,7 +51,8 @@ public sealed record WhereSummary(string Text, uint Icon, WorldSpot? Spot, bool 
 /// ("Sold by Kurogai · 1,053 gil"), the crafters and their levels, gathering (which names no node: the game's own
 /// Gathering Log shows them, spec decision 7), fishing, a Grand Company quartermaster, an exchange, the duties it drops
 /// in. At most two show, joined by "· or". No market board source (its prices need a network service). Facts from the
-/// data only, no advice. Pure.
+/// data only, no advice. Through a spoiler shield, a vendor, a place or a duty past the story point is named by its
+/// placeholder (1.20.0 N6). Pure.
 /// </summary>
 public static class WhereToGet
 {
@@ -66,7 +68,9 @@ public static class WhereToGet
     private static readonly string[] NoOthers = [];
 
     /// <summary>Every source of the item, one per kind, in <see cref="WhereKind"/> order; empty when the data knows none.</summary>
-    public static IReadOnlyList<WhereLine> Lines(ItemSources? sources)
+    /// <param name="sources">The item's sources.</param>
+    /// <param name="spoilers">The wider shield over vendors, places and duties; null names all.</param>
+    public static IReadOnlyList<WhereLine> Lines(ItemSources? sources, SpoilerMask? spoilers = null)
     {
         if (sources is null)
         {
@@ -74,7 +78,7 @@ public static class WhereToGet
         }
 
         var lines = new List<WhereLine>(4);
-        AddShopLine(lines, sources, ShopKind.Gil, WhereKind.Vendor);
+        AddShopLine(lines, sources, ShopKind.Gil, WhereKind.Vendor, spoilers);
         if (sources.Crafts.Count > 0)
         {
             var jobs = CraftedJobs(sources.Crafts);
@@ -89,14 +93,15 @@ public static class WhereToGet
 
         AddGatherLine(lines, sources, GatherKind.Gathered);
         AddGatherLine(lines, sources, GatherKind.Fish);
-        AddShopLine(lines, sources, ShopKind.GrandCompany, WhereKind.GrandCompany);
-        AddShopLine(lines, sources, ShopKind.Exchange, WhereKind.Exchange);
+        AddShopLine(lines, sources, ShopKind.GrandCompany, WhereKind.GrandCompany, spoilers);
+        AddShopLine(lines, sources, ShopKind.Exchange, WhereKind.Exchange, spoilers);
         if (sources.DropWhere.Length > 0)
         {
+            var duty = spoilers?.Name(SpoilerKind.Duty, sources.DropWhere) ?? sources.DropWhere;
             lines.Add(new WhereLine(
                 WhereKind.Drops,
-                F("Core.Where.Drops", "Drops in {0}", sources.DropWhere),
-                F("Core.Where.OrDrops", "or drops in {0}", sources.DropWhere),
+                F("Core.Where.Drops", "Drops in {0}", duty),
+                F("Core.Where.OrDrops", "or drops in {0}", duty),
                 null,
                 0,
                 NoOthers));
@@ -109,9 +114,11 @@ public static class WhereToGet
     /// The line for an item: the first source's lead and the second's "or" form ("Sold by Kurogai · 1,053 gil · or
     /// crafted, Culinarian Lv 54"); null when the data knows no source.
     /// </summary>
-    public static WhereSummary? Summary(ItemSources? sources) => Summary(Lines(sources));
+    /// <param name="sources">The item's sources.</param>
+    /// <param name="spoilers">The wider shield over vendors, places and duties; null names all.</param>
+    public static WhereSummary? Summary(ItemSources? sources, SpoilerMask? spoilers = null) => Summary(Lines(sources, spoilers));
 
-    /// <inheritdoc cref="Summary(ItemSources?)"/>
+    /// <inheritdoc cref="Summary(ItemSources?, SpoilerMask?)"/>
     public static WhereSummary? Summary(IReadOnlyList<WhereLine> lines)
     {
         ArgumentNullException.ThrowIfNull(lines);
@@ -168,10 +175,10 @@ public static class WhereToGet
     }
 
     /// <summary>"Sold by Kurogai · 1,053 gil" and its kin for the other shops (<paramref name="or"/>: the "or sold by …" form).</summary>
-    public static string ShopText(ShopOffer offer, WhereKind kind, bool or = false)
+    public static string ShopText(ShopOffer offer, WhereKind kind, bool or = false, SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(offer);
-        var vendor = offer.FirstVendor is { } first ? SourceText.VendorInSentence(first) : offer.ShopName;
+        var vendor = offer.FirstVendor is { } first ? SourceText.VendorInSentence(first, spoilers) : offer.ShopName;
         var cost = SourceText.Cost(offer.Costs);
         var head = (kind, or) switch
         {
@@ -201,7 +208,7 @@ public static class WhereToGet
         _ => CoreText.T("Core.Where.OrFished", "or fished, see the Fishing Log"),
     };
 
-    private static void AddShopLine(List<WhereLine> lines, ItemSources sources, ShopKind shopKind, WhereKind kind)
+    private static void AddShopLine(List<WhereLine> lines, ItemSources sources, ShopKind shopKind, WhereKind kind, SpoilerMask? spoilers)
     {
         ShopOffer? best = null;
         var bestText = string.Empty;
@@ -215,7 +222,7 @@ public static class WhereToGet
 
             // Shops come cheapest and ungated first within a kind (ItemSourceIndex sorts them), so the first one leads;
             // the tooltip names the others with their places.
-            var phrase = ShopText(offer, kind);
+            var phrase = ShopText(offer, kind, spoilers: spoilers);
             if (best is null)
             {
                 best = offer;
@@ -223,7 +230,7 @@ public static class WhereToGet
                 continue;
             }
 
-            var place = offer.FirstVendor.Spot is { } at ? F("Core.Where.AtPlace", "{0} ({1})", phrase, SourceText.Spot(at)) : phrase;
+            var place = offer.FirstVendor.Spot is { } at ? F("Core.Where.AtPlace", "{0} ({1})", phrase, SourceText.Spot(at, spoilers)) : phrase;
             if (!others.Contains(place))
             {
                 others.Add(place);
@@ -232,7 +239,9 @@ public static class WhereToGet
 
         if (best is not null)
         {
-            lines.Add(new WhereLine(kind, bestText, ShopText(best, kind, or: true), best.FirstVendor!.Spot, ShopIcon, others.Count == 0 ? NoOthers : others));
+            // A spot past the story point is no place to flag or teleport to: the line keeps none.
+            var spot = SourceText.Shielded(best.FirstVendor!, spoilers) ? null : best.FirstVendor!.Spot;
+            lines.Add(new WhereLine(kind, bestText, ShopText(best, kind, or: true, spoilers), spot, ShopIcon, others.Count == 0 ? NoOthers : others));
         }
     }
 

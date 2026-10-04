@@ -6,6 +6,8 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Sources;
 
 namespace Tsukimichi.Ui;
 
@@ -28,9 +30,10 @@ public static class RewardTooltip
     /// Draws the tooltip; call only while the reward's item is hovered. <paramref name="source"/>, when given, closes
     /// the tooltip as a disabled line (Moonlit passes where its unique verdict came from). <paramref name="questRowId"/>
     /// is the quest that rewards it, for the buy-back line (1.19, C6: a reclaim row counts for its own quest); 0 lets any
-    /// quest's count.
+    /// quest's count. Through <paramref name="spoilers"/> (1.20.0 N6), a duty it drops in and a vendor or place that sells
+    /// it back past the story point read as their placeholders.
     /// </summary>
-    public static void Draw(RewardRef reward, GameLinks links, ITextureProvider textures, string? source = null, uint questRowId = 0)
+    public static void Draw(RewardRef reward, GameLinks links, ITextureProvider textures, string? source = null, uint questRowId = 0, SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(reward);
         ArgumentNullException.ThrowIfNull(links);
@@ -68,7 +71,7 @@ public static class RewardTooltip
             // A duty drops it too (curated/other_sources.json): the same "Also drops in …" line as the item hover hint.
             using (Theme.PushText(Theme.Surface.TextTertiary))
             {
-                ImGui.TextUnformatted(DropLine(where));
+                ImGui.TextUnformatted(DropLine(spoilers?.Name(SpoilerKind.Duty, where) ?? where));
             }
         }
 
@@ -77,7 +80,8 @@ public static class RewardTooltip
             // A shop sells it back once the quest is done, or to anyone (1.19, C6): composed once per item and quest.
             using (Theme.PushText(Theme.Surface.TextTertiary))
             {
-                ImGui.TextUnformatted(buyBack.Line);
+                // The cached line names the vendor and its place; one the shield hides is composed through it.
+                ImGui.TextUnformatted(SourceText.Shielded(buyBack.BuyBack.Vendor, spoilers) ? BuyBacks.Line(buyBack.BuyBack, spoilers) : buyBack.Line);
             }
         }
 

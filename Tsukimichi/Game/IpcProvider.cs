@@ -446,7 +446,7 @@ public sealed class IpcProvider : IDisposable
         // The mask is immutable; binding its DisplayName (not session.LiveNames, whose lookup reads the session on
         // each call) keeps the view safe to read from any thread.
         var mask = session.LiveSpoilers;
-        var names = bundle.BlockerNames() with { QuestName = mask.DisplayName };
+        var names = bundle.BlockerNames().Through(mask);
         view = new IpcView(bundle.Catalog, states, names, extras);
         masked = true;
     }

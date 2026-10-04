@@ -753,6 +753,11 @@ public sealed partial class Plugin : IDalamudPlugin
             // The unlock index starts building as soon as a catalog loads and is collected here, so the first chat
             // "Unlocked:" line and the first Unlocks section read a built index, not the empty one a lazy start gives.
             questUnlocks?.Poll();
+            if (questUnlocks is { } unlocks)
+            {
+                // The wider spoiler shield places names from the index (plan v7, 1.20.0 N6).
+                Session?.UseSpoilerNames(unlocks.Latest.Names);
+            }
         }
         catch (Exception ex)
         {
@@ -986,10 +991,9 @@ public sealed partial class Plugin : IDalamudPlugin
             // Giver portraits (1.15, F2/F5): the index is warmed with the others; every plate shows its fallback until it lands.
             Ui.GiverPortraits.Index = () => warmer.Portraits.Value;
             Ui.GiverPortraits.Mode = () => Settings.GiverPortraits;
-            Ui.GiverPortraits.PlaceOf = quest => quest.Issuer is { } issuer && gameLinks.Map(issuer.MapId) is { } map
-                ? map.Region.Length > 0 && map.Region != map.PlaceName
-                    ? string.Format(System.Globalization.CultureInfo.CurrentCulture, Ui.Strings.JournalPathFormat, map.Region, map.PlaceName)
-                    : map.PlaceName
+            // A place the story has not reached reads as its placeholder (1.20.0 N6).
+            Ui.GiverPortraits.PlaceOf = (quest, spoilers) => quest.Issuer is { } issuer && gameLinks.Map(issuer.MapId) is { } map
+                ? spoilers.Place(map.Region, map.PlaceName, Ui.Strings.JournalPathFormat)
                 : null;
 
             // "Open on…" (1.8.0): the shipped link table; the browser opens the pages, the plugin stays offline (decision 8).
@@ -1026,6 +1030,7 @@ public sealed partial class Plugin : IDalamudPlugin
             // Chat links print a masked main scenario quest under its placeholder (T19). Chat, the item menu, hover
             // hints and Wotsit speak for the logged-in character, so they use its mask, not the viewed character's.
             gameLinks.QuestName = quest => Session.LiveSpoilers.DisplayName(quest);
+            gameLinks.Spoilers = () => Session.LiveSpoilers;
             gameLinks.DropWhere = reward => Session.StoreResells.DropWhere(reward);
             wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
             wotsit.Enabled = Settings.WotsitIntegration;
