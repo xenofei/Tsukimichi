@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
@@ -21,8 +22,13 @@ public sealed partial class ConfigWindow
     private const float WhatsNewRowLogical = 36f;
 
     private bool whatsNewAllShown;
+
+    // The folded line's label and each row's "4 Oct ›", composed when they change rather than every frame.
     private (int Count, string Oldest, int Language) earlierKey;
-    private string earlierText = string.Empty;
+    private string earlierLabel = string.Empty;
+    private readonly LocCache<string> fewerLabel = new(static () => Strings.WhatsNew.Fewer + "##whatsNewEarlier");
+    private IReadOnlyList<ReleaseNote>? rowEndsFor;
+    private string[] rowEnds = [];
 
     /// <summary>The What's new popup; set by the plugin. Null leaves the list out.</summary>
     public WhatsNewPopup? WhatsNew { get; set; }
@@ -56,11 +62,21 @@ public sealed partial class ConfigWindow
             return;
         }
 
+        if (!ReferenceEquals(rowEndsFor, history))
+        {
+            rowEndsFor = history;
+            rowEnds = new string[history.Count];
+            for (var i = 0; i < history.Count; i++)
+            {
+                rowEnds[i] = history[i].ShortDate + Strings.WhatsNew.Chevron;
+            }
+        }
+
         var width = MathF.Max(1f, row.Right - row.Left);
         var shown = whatsNewAllShown ? history.Count : Math.Min(history.Count, WhatsNewRowsShown);
         for (var i = 0; i < shown; i++)
         {
-            if (WhatsNewRow(history[i], i, width, history[i].Version == popup.RunningVersion))
+            if (WhatsNewRow(history[i], rowEnds[i], i, width, history[i].Version == popup.RunningVersion))
             {
                 popup.OpenAt(history[i]);
             }
@@ -73,12 +89,12 @@ public sealed partial class ConfigWindow
             if (earlierKey != (folded, oldest, Loc.Version))
             {
                 earlierKey = (folded, oldest, Loc.Version);
-                earlierText = (folded == 1
+                earlierLabel = (folded == 1
                     ? string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.EarlierOneFormat, oldest)
-                    : string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.EarlierFormat, folded, oldest)) + Strings.WhatsNew.Chevron;
+                    : string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.EarlierFormat, folded, oldest)) + Strings.WhatsNew.Chevron + "##whatsNewEarlier";
             }
 
-            if (ImGui.Selectable((whatsNewAllShown ? Strings.WhatsNew.Fewer : earlierText) + "##whatsNewEarlier", false, ImGuiSelectableFlags.None, new Vector2(width, 0f)))
+            if (ImGui.Selectable(whatsNewAllShown ? fewerLabel.Value : earlierLabel, false, ImGuiSelectableFlags.None, new Vector2(width, 0f)))
             {
                 whatsNewAllShown = !whatsNewAllShown;
             }
@@ -91,7 +107,7 @@ public sealed partial class ConfigWindow
     /// One release: its name, its version in Secondary, the Installed chip on the running one, and its date with "›"
     /// at the right end. The whole row is one focusable item; returns true when it was clicked.
     /// </summary>
-    private static bool WhatsNewRow(ReleaseNote release, int index, float width, bool installed)
+    private static bool WhatsNewRow(ReleaseNote release, string end, int index, float width, bool installed)
     {
         var s = Theme.Surface;
         var height = MathF.Max(UiMetrics.Px(WhatsNewRowLogical), ImGui.GetFrameHeight());
@@ -114,7 +130,6 @@ public sealed partial class ConfigWindow
         var pad = UiMetrics.Px(8f);
 
         // The date and the chevron on the right, then the name and the version in what room is left.
-        var end = release.ShortDate + Strings.WhatsNew.Chevron;
         var endWidth = ImGui.CalcTextSize(end).X;
         dl.AddText(new Vector2(max.X - pad - endWidth, y), Theme.U32(s.TextSecondary), end);
         var x = min.X + pad;

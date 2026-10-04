@@ -99,6 +99,9 @@ public sealed class WhatsNewPopup : Window, IDisposable
     // "1 of 4" and "You were on 1.18.0", composed when they change.
     private (int Page, int Count, int Language) counterKey = (-1, -1, -1);
     private string counter = string.Empty;
+
+    // The widest counter ("9 of 9"), so the arrows keep their places from page to page.
+    private string counterWidest = string.Empty;
     private (string? Version, int Language) wasOnKey;
     private string wasOnText = string.Empty;
 
@@ -850,10 +853,11 @@ public sealed class WhatsNewPopup : Window, IDisposable
             {
                 counterKey = (page, pages.Length, Loc.Version);
                 counter = string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.PageFormat, page + 1, pages.Length);
+                counterWidest = string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.PageFormat, pages.Length, pages.Length);
             }
 
             var arrow = UiMetrics.MinTarget;
-            var widest = ImGui.CalcTextSize(string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.PageFormat, pages.Length, pages.Length)).X;
+            var widest = ImGui.CalcTextSize(counterWidest).X;
             var gap = UiMetrics.Px(8f);
             var total = (2f * arrow) + (2f * gap) + widest;
             var left = MathF.Round(min.X + ((width - total) * 0.5f));
