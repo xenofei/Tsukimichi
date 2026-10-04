@@ -118,9 +118,9 @@ public sealed class TsukimichiCommand : IDisposable
 
     /// <summary>
     /// Invoked for <c>/tsukimichi look &lt;code&gt;</c> with the rest of the line (empty opens the Share section): opens
-    /// Settings › Themes with the code pasted and its preview showing. It never applies the look. A code that does not
-    /// read (<see cref="SharePreview.CommandOpens"/>) prints one chat line instead and opens nothing. Falls back to
-    /// <see cref="OpenConfigWindow"/>.
+    /// Settings › Themes with the code pasted and its preview showing. It never applies the look. A code-shaped text that
+    /// does not read prints one chat line instead and opens nothing, and text that is not a code searches the whole line
+    /// (<see cref="SharePreview.CommandRoute"/>). Falls back to <see cref="OpenConfigWindow"/>.
     /// </summary>
     public Action<string>? Look { get; set; }
 
@@ -408,8 +408,14 @@ public sealed class TsukimichiCommand : IDisposable
                 break;
 
             case Subcommand.Look:
-                // spec-1.17 §C2: a code that does not read says so in chat and opens nothing.
-                if (!SharePreview.CommandOpens(rest))
+                // spec-1.17 §C2: a code-shaped text that does not read says so in chat and opens nothing; text that is not
+                // a code at all ("look to the stars") is the quest search it was before "look" was a subcommand.
+                var route = SharePreview.CommandRoute(rest);
+                if (route == LookCommandRoute.Search)
+                {
+                    search(args);
+                }
+                else if (route == LookCommandRoute.Unreadable)
                 {
                     Print?.Invoke(Strings.CommandLookUnreadable);
                 }

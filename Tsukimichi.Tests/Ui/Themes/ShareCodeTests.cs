@@ -704,46 +704,60 @@ public sealed class ShareCodeTests
     // ------------------------------------------------------------------ /tsuki look <code> (spec-1.17 §C2)
 
     [Theory]
-    [InlineData("", true)] // opens the Share section
-    [InlineData("   ", true)]
-    [InlineData("TM1-202C-000C-02C", true)]
-    [InlineData("  tm1 202c 000c 02c ", true)]
-    [InlineData("TM1–202C–000C–02C", true)] // typography reads as typed
-    [InlineData("TM1-2034-000C-0DJ", true)] // a newer build's id: the preview names it
-    [InlineData("TM2-8003-0", true)] // a newer format: the field says so
-    [InlineData("TM1-202C-000C-02X", false)] // a typo
-    [InlineData("TM1-202C", false)] // cut short: finished, so not "still typing"
-    [InlineData("TM1-U", false)] // outside the alphabet
-    [InlineData("TM0-8003-0", false)] // format version 0
-    [InlineData("hello", false)] // not a code
-    [InlineData("2-8003-0", false)] // reads as a later version, but without "TM" it is a mistyped code
-    public void The_look_command_opens_only_a_text_that_reads(string text, bool opens)
+    [InlineData("", LookCommandRoute.OpenShare)] // the Share section, field focused
+    [InlineData("   ", LookCommandRoute.OpenShare)]
+    [InlineData("TM1-202C-000C-02C", LookCommandRoute.OpenShare)]
+    [InlineData("  tm1 202c 000c 02c ", LookCommandRoute.OpenShare)]
+    [InlineData("1-202C-000C-02C", LookCommandRoute.OpenShare)] // no "TM", but it reads
+    [InlineData("TM1–202C–000C–02C", LookCommandRoute.OpenShare)] // typography reads as typed
+    [InlineData("ｔｍ１-202C-000C-02C", LookCommandRoute.OpenShare)] // a full-width "tm1"
+    [InlineData("TM1-2034-000C-0DJ", LookCommandRoute.OpenShare)] // a newer build's id: the preview names it
+    [InlineData("TM2-8003-0", LookCommandRoute.OpenShare)] // a newer format: the field says so
+    [InlineData("TM", LookCommandRoute.OpenShare)] // the start of a code: the field takes it
+    [InlineData("TM1-202C-000C-02X", LookCommandRoute.Unreadable)] // a typo
+    [InlineData("tm1-202c", LookCommandRoute.Unreadable)] // cut short: finished, so not "still typing"
+    [InlineData("TM1-U", LookCommandRoute.Unreadable)] // outside the alphabet
+    [InlineData("TM0-8003-0", LookCommandRoute.Unreadable)] // format version 0
+    [InlineData("tm 8003!", LookCommandRoute.Unreadable)] // "TM" makes it code-shaped
+    [InlineData("to the stars", LookCommandRoute.Search)] // "Look to the Stars"
+    [InlineData("hello", LookCommandRoute.Search)]
+    [InlineData("2-8003-0", LookCommandRoute.Search)] // a later version without "TM" is not code-shaped
+    [InlineData("1-202C-000C-02X", LookCommandRoute.Search)] // without "TM" and not reading: words, not a code
+    public void The_look_command_opens_a_code_names_a_mistyped_one_and_searches_anything_else(string text, LookCommandRoute route)
     {
-        Assert.Equal(opens, SharePreview.CommandOpens(text));
+        Assert.Equal(route, SharePreview.CommandRoute(text));
 
-        // It is the field's own verdict for the finished text, so the page and the command never disagree.
-        Assert.Equal(opens, SharePreview.Of(text, new AppearanceConfig()).Verdict(editing: false) != ShareVerdict.Mistyped);
+        // A code-shaped text gets the field's own verdict, so the page and the command never disagree.
+        if (route != LookCommandRoute.Search)
+        {
+            Assert.Equal(route == LookCommandRoute.OpenShare, SharePreview.Of(text, new AppearanceConfig()).Verdict(editing: false) != ShareVerdict.Mistyped);
+        }
     }
 
     [Fact]
     public void The_look_command_reads_the_text_as_the_field_takes_it()
     {
-        Assert.True(SharePreview.CommandOpens(null));
+        Assert.Equal(LookCommandRoute.OpenShare, SharePreview.CommandRoute(null));
 
         // The field keeps the first 64 characters, so the command judges those: a code with trailing junk past the cut
         // opens, and junk inside it does not.
         var padded = "TM1-202C-000C-02C" + new string(' ', ShareCode.MaxTextLength) + "!";
-        Assert.True(SharePreview.CommandOpens(padded));
-        Assert.False(SharePreview.CommandOpens("TM1-202C-000C-02C !"));
+        Assert.Equal(LookCommandRoute.OpenShare, SharePreview.CommandRoute(padded));
+        Assert.Equal(LookCommandRoute.Unreadable, SharePreview.CommandRoute("TM1-202C-000C-02C !"));
     }
 
     [Fact]
-    public void Look_is_a_listed_subcommand_and_takes_the_rest_of_the_line_as_the_code()
+    public void Look_is_a_listed_subcommand_and_text_that_is_not_a_code_searches_the_whole_line()
     {
         var parsed = Tsukimichi.Core.Text.CommandLine.Parse("look TM1–202C 000C–02X");
         Assert.Equal(Tsukimichi.Core.Text.Subcommand.Look, parsed.Kind);
-        Assert.False(SharePreview.CommandOpens(parsed.Rest));
-        Assert.True(SharePreview.CommandOpens(Tsukimichi.Core.Text.CommandLine.Parse("look").Rest));
+        Assert.Equal(LookCommandRoute.Unreadable, SharePreview.CommandRoute(parsed.Rest));
+        Assert.Equal(LookCommandRoute.OpenShare, SharePreview.CommandRoute(Tsukimichi.Core.Text.CommandLine.Parse("look").Rest));
+
+        // The command searches parsed.Arguments, the whole line, as it did before "look" was a subcommand.
+        var quest = Tsukimichi.Core.Text.CommandLine.Parse("Look to the Stars");
+        Assert.Equal(LookCommandRoute.Search, SharePreview.CommandRoute(quest.Rest));
+        Assert.Equal("Look to the Stars", quest.Arguments);
     }
 
     [Fact]

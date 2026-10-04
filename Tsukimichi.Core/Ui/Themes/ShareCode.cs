@@ -654,6 +654,19 @@ public enum ShareChangeKind
 /// <param name="State">The state, for <see cref="ShareChangeKind.State"/>; otherwise <see cref="QuestState.Ready"/>.</param>
 public readonly record struct ShareChange(ShareChangeKind Kind, QuestState State, int From, int To);
 
+/// <summary>What <c>/tsuki look &lt;text&gt;</c> does (<see cref="SharePreview.CommandRoute"/>).</summary>
+public enum LookCommandRoute
+{
+    /// <summary>Opens Settings › Themes › Share with the text pasted (or the field focused, for no text).</summary>
+    OpenShare,
+
+    /// <summary>A code-shaped text that does not read: "That code doesn't read." in chat, and nothing opens.</summary>
+    Unreadable,
+
+    /// <summary>Not a code: the whole line ("look …") is a quest search, as before "look" was a subcommand.</summary>
+    Search,
+}
+
 /// <summary>What the paste field says about its text (<see cref="SharePreview.Verdict"/>).</summary>
 public enum ShareVerdict
 {
@@ -723,18 +736,35 @@ public sealed class SharePreview
     public ShareVerdict Verdict(bool editing) => VerdictOf(Read, Changes.Count > 0, editing);
 
     /// <summary>
-    /// Whether <c>/tsuki look &lt;text&gt;</c> opens the Themes page with <paramref name="text"/> pasted (spec-1.17 §C2).
-    /// False for a text that does not read, the field's <see cref="ShareVerdict.Mistyped"/> for a finished text (a
-    /// character outside the alphabet, format version 0, a failed checksum, or a later version without "TM"): the command
-    /// then prints "That code doesn't read." to chat and opens nothing. An empty text opens the Share section, and a code
-    /// from a newer Tsukimichi opens so its preview can say so. The text is read as the field takes it: trimmed, and cut
-    /// to <see cref="ShareCode.MaxTextLength"/>.
+    /// What <c>/tsuki look &lt;text&gt;</c> does with <paramref name="text"/> (spec-1.17 §C2, and the coordinator's ruling
+    /// that it must not cost quest search, "Look to the Stars" among them). The text is read as the field takes it:
+    /// trimmed, and cut to <see cref="ShareCode.MaxTextLength"/>.
+    /// <list type="bullet">
+    /// <item>Empty: <see cref="LookCommandRoute.OpenShare"/>, the Share section with the field focused.</item>
+    /// <item>Code-shaped, meaning it reads as a code or begins with "TM" (any case, after normalisation): opened with the
+    /// code pasted when it reads or is from a newer Tsukimichi (its preview says so);
+    /// <see cref="LookCommandRoute.Unreadable"/> when the field would call it mistyped, so the command prints "That code
+    /// doesn't read." and opens nothing.</item>
+    /// <item>Anything else: <see cref="LookCommandRoute.Search"/>, the whole line searched as before "look" was a
+    /// subcommand.</item>
+    /// </list>
     /// </summary>
-    public static bool CommandOpens(string? text)
+    public static LookCommandRoute CommandRoute(string? text)
     {
         var trimmed = (text ?? string.Empty).Trim();
         var field = trimmed.Length > ShareCode.MaxTextLength ? trimmed[..ShareCode.MaxTextLength] : trimmed;
-        return VerdictOf(ShareCode.Decode(field), changes: false, editing: false) != ShareVerdict.Mistyped;
+        var read = ShareCode.Decode(field);
+        if (read.Status == ShareCodeStatus.Empty && !read.Prefixed)
+        {
+            return field.Length == 0 ? LookCommandRoute.OpenShare : LookCommandRoute.Search;
+        }
+
+        if (!read.Ok && !read.Prefixed)
+        {
+            return LookCommandRoute.Search;
+        }
+
+        return VerdictOf(read, changes: false, editing: false) == ShareVerdict.Mistyped ? LookCommandRoute.Unreadable : LookCommandRoute.OpenShare;
     }
 
     private static ShareVerdict VerdictOf(ShareCodeRead read, bool changes, bool editing)
