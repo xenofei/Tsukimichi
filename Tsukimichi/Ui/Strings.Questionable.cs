@@ -303,6 +303,12 @@ static partial class Strings
 
     public static string QuestionableStopArmedAtFormat => Loc.Get("QuestionableStopArmedAtFormat");
 
+    public static string QuestionableStopArmedAtTomorrowFormat => Loc.Get("QuestionableStopArmedAtTomorrowFormat");
+
+    public static string QuestionableStopAtTodayFormat => Loc.Get("QuestionableStopAtTodayFormat");
+
+    public static string QuestionableStopAtTomorrowFormat => Loc.Get("QuestionableStopAtTomorrowFormat");
+
     public static string QuestionableStatusThenStops => Loc.Get("QuestionableStatusThenStops");
 
     public static string QuestionableStatusStopsAfterThis => Loc.Get("QuestionableStatusStopsAfterThis");

@@ -34,6 +34,17 @@ public sealed partial class ConfigWindow
     private string? preflightNote;
     private double preflightNoteUntil;
 
+    // Each row's words, composed again only when what its result says or the language changes (the service reads again
+    // every half second), so the table allocates nothing per frame.
+    private readonly PreflightTexts?[] preflightTexts = new PreflightTexts?[Enum.GetValues<PreflightItem>().Length];
+
+    /// <summary>The words of one preflight row, for its result in the language they were composed in.</summary>
+    private sealed record PreflightTexts(PreflightResult Result, int Language, string Label, string Head, string Detail, string Tooltip, string TooltipWhy, string? FixLabel, string? FixTooltip, string? Safety)
+    {
+        /// <summary>"Restore Legacy" or "Undo", composed the first time the row offers it.</summary>
+        public string? UndoLabel { get; set; }
+    }
+
     /// <summary>The travel preflight; set by the plugin. Null hides the row.</summary>
     public TravelPreflightService? TravelPreflight { get; set; }
 
@@ -67,10 +78,12 @@ public sealed partial class ConfigWindow
                 ImGui.TableSetupColumn("##status", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableSetupColumn("##fix", ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(PreflightFixWidth));
                 var minHeight = UiMetrics.Px(Theme.Flair == Flair.Plain ? PreflightRowHeightPlain : PreflightRowHeight);
-                foreach (var result in preflight.Results)
+                var results = preflight.Results;
+                for (var i = 0; i < results.Count; i++)
                 {
+                    var result = results[i];
                     using var id = ImRaii.PushId((int)result.Item);
-                    DrawPreflightRow(preflight, result, minHeight);
+                    DrawPreflightRow(preflight, result, PreflightTextsFor(result), minHeight);
                 }
             }
         }
@@ -87,7 +100,54 @@ public sealed partial class ConfigWindow
         EndSetting();
     }
 
-    private void DrawPreflightRow(TravelPreflightService preflight, PreflightResult result, float minHeight)
+    /// <summary>The row's words for <paramref name="result"/>, composed once per result and language.</summary>
+    private PreflightTexts PreflightTextsFor(PreflightResult result)
+    {
+        var slot = (int)result.Item;
+        if (slot < 0 || slot >= preflightTexts.Length)
+        {
+            return ComposePreflightTexts(result);
+        }
+
+        if (preflightTexts[slot] is { } cached && SameWords(cached.Result, result) && cached.Language == Localization.Loc.Version)
+        {
+            return cached;
+        }
+
+        var texts = ComposePreflightTexts(result);
+        preflightTexts[slot] = texts;
+        return texts;
+    }
+
+    /// <summary>Whether two reads of a check say the same words: its state, its fix and the first conflict named.</summary>
+    private static bool SameWords(PreflightResult a, PreflightResult b) =>
+        a.Item == b.Item && a.State == b.State && a.Fix == b.Fix && a.Conflicts.Count == b.Conflicts.Count
+        && (a.Conflicts.Count == 0 || a.Conflicts[0] == b.Conflicts[0]);
+
+    private static PreflightTexts ComposePreflightTexts(PreflightResult result)
+    {
+        var conflict = result.Item == PreflightItem.Conflicts && result.Conflicts.Count > 0;
+        var head = conflict
+            ? string.Format(CultureInfo.CurrentCulture, Strings.TravelPreflightConflictHeadFormat, result.Conflicts[0].InternalName)
+            : Strings.TravelPreflightHead(result.Item, result.State);
+        var detail = conflict
+            ? string.Format(CultureInfo.CurrentCulture, Strings.TravelPreflightConflictFormat, Strings.TravelPreflightConflict(result.Conflicts[0].Key))
+            : Strings.TravelPreflightStatus(result.Item, result.State);
+        var fix = result.Fix != PreflightFix.None;
+        return new PreflightTexts(
+            result,
+            Localization.Loc.Version,
+            Strings.TravelPreflightLabel(result.Item),
+            head,
+            detail,
+            Strings.TravelPreflightWord(result.State),
+            Strings.TravelPreflightWhy(result.Item),
+            fix ? Strings.TravelPreflightFixLabel(result.Fix) : null,
+            fix ? Strings.TravelPreflightFixTooltip(result.Fix) : null,
+            fix ? Strings.TravelPreflightSafety(result.Fix) : null);
+    }
+
+    private void DrawPreflightRow(TravelPreflightService preflight, PreflightResult result, PreflightTexts texts, float minHeight)
     {
         ImGui.TableNextRow(ImGuiTableRowFlags.None, minHeight);
 
@@ -96,35 +156,30 @@ public sealed partial class ConfigWindow
         ImGui.AlignTextToFramePadding();
         using (Theme.PushText(Theme.Surface.TextSecondary))
         {
-            ImGui.TextUnformatted(Strings.TravelPreflightLabel(result.Item));
+            ImGui.TextUnformatted(texts.Label);
         }
 
         // Status: the dot, the status in words, the consequence under it.
         ImGui.TableNextColumn();
-        var head = result.Item == PreflightItem.Conflicts && result.Conflicts.Count > 0
-            ? string.Format(CultureInfo.CurrentCulture, Strings.TravelPreflightConflictHeadFormat, result.Conflicts[0].InternalName)
-            : Strings.TravelPreflightHead(result.Item, result.State);
-        var detail = result.Item == PreflightItem.Conflicts && result.Conflicts.Count > 0
-            ? string.Format(CultureInfo.CurrentCulture, Strings.TravelPreflightConflictFormat, Strings.TravelPreflightConflict(result.Conflicts[0].Key))
-            : Strings.TravelPreflightStatus(result.Item, result.State);
+        var head = texts.Head;
         DrawPreflightDot(result.State);
         Chrome.SemiboldTextWrapped(head, Theme.Surface.Text);
         var hovered = ImGui.IsItemHovered();
         using (Typography.Caption())
         using (Theme.PushText(Theme.Surface.TextSecondary))
         {
-            ImGui.TextWrapped(detail);
+            ImGui.TextWrapped(texts.Detail);
         }
 
         hovered |= ImGui.IsItemHovered();
         if (hovered)
         {
-            UiMetrics.Tooltip(Strings.TravelPreflightWord(result.State), Strings.TravelPreflightWhy(result.Item));
+            UiMetrics.Tooltip(texts.Tooltip, texts.TooltipWhy);
         }
 
         // Fix: reserved even when empty.
         ImGui.TableNextColumn();
-        DrawPreflightFix(preflight, result);
+        DrawPreflightFix(preflight, result, texts);
     }
 
     /// <summary>A 7 px dot at the start of the status line: filled Secondary, hollow Tertiary ring, or the attention colour.</summary>
@@ -152,11 +207,11 @@ public sealed partial class ConfigWindow
     }
 
     /// <summary>The row's one pill and its safety line; then "Restore Legacy" or Undo while what the fix changed still reads as the fix set it.</summary>
-    private void DrawPreflightFix(TravelPreflightService preflight, PreflightResult result)
+    private void DrawPreflightFix(TravelPreflightService preflight, PreflightResult result, PreflightTexts texts)
     {
         if (result.Fix != PreflightFix.None)
         {
-            if (PreflightPill(Strings.TravelPreflightFixLabel(result.Fix)))
+            if (PreflightPill(texts.FixLabel ?? string.Empty))
             {
                 var done = preflight.Fix(result.Item);
                 if (result.Fix != PreflightFix.OpenPluginInstaller || !done)
@@ -165,12 +220,12 @@ public sealed partial class ConfigWindow
                 }
             }
 
-            if (ImGui.IsItemHovered())
+            if (ImGui.IsItemHovered() && texts.FixTooltip is { } tooltip)
             {
-                UiMetrics.Tooltip(Strings.TravelPreflightFixTooltip(result.Fix));
+                UiMetrics.Tooltip(tooltip);
             }
 
-            PreflightSafetyLine(Strings.TravelPreflightSafety(result.Fix));
+            PreflightSafetyLine(texts.Safety ?? string.Empty);
             return;
         }
 
@@ -179,7 +234,7 @@ public sealed partial class ConfigWindow
             return;
         }
 
-        if (PreflightPill(Strings.TravelPreflightUndoLabel(result.Item)))
+        if (PreflightPill(texts.UndoLabel ??= Strings.TravelPreflightUndoLabel(result.Item)))
         {
             ShowPreflightNote(preflight.Undo(result.Item) ? Strings.TravelPreflightUndone : Strings.TravelPreflightFixFailed);
         }

@@ -7,15 +7,12 @@ namespace Tsukimichi.Ui;
 /// The automation level's one question for every surface (1.18, A10): is this hand-off button shown? A button above the
 /// chosen level, or turned off in its fine-tuning, is hidden, not greyed: the detail pane's pills, round buttons and "…"
 /// menu, the Hand in rows, the Duties section, the Send to Questionable buttons and menus, travel menus and rows, the
-/// Todo overlay and the settings that only serve that button. A Stop for a run already under way always shows. The
-/// plugin attaches the configuration at load; until then (and in tools) every button shows.
+/// Todo overlay and the settings that only serve that button. A Stop for a run already under way always shows, and so
+/// do the settings for what watches every run (the duty guard, Recent runs, the "Needs you" alerts). The plugin attaches
+/// the configuration at load; until then (and in tools) every button shows.
 /// </summary>
 public static class AutomationGate
 {
-    /// <summary>The buttons whose runs a "Needs you" alert or the duty guard can watch: anything that moves or plays for the player.</summary>
-    public const AutomationButtons RunningHandOffs = AutomationButtons.Walk | AutomationButtons.GoTo
-        | AutomationButtons.Questionable | AutomationButtons.AutoDuty | AutomationButtons.Artisan;
-
     private static Func<AutomationButtons>? source;
 
     /// <summary>Reads the shown buttons from <paramref name="shown"/> (the configuration) from now on.</summary>

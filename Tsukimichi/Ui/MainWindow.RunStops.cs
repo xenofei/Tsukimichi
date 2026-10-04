@@ -23,9 +23,9 @@ public sealed partial class MainWindow
 
     private RunStops? runStops;
 
-    // The card's height as last measured, and the card and width it was measured for (0 until it first draws).
+    // The card's height as last measured (0 until it first draws, and again once it has gone), and the stop it showed.
     private float stopCardHeight;
-    private StopCardKey stopCardKey;
+    private (StopReason Reason, StopHandOff HandOff, uint Quest) stopCardKey;
 
     /// <summary>Shows the "Why it stopped" card from <paramref name="stops"/>.</summary>
     public void AttachRunStops(RunStops stops) => runStops = stops ?? throw new ArgumentNullException(nameof(stops));
@@ -35,6 +35,7 @@ public sealed partial class MainWindow
     {
         if (runStops is not { } stops || stops.Dock.Current is null)
         {
+            stopCardHeight = 0f;
             return;
         }
 
@@ -60,7 +61,7 @@ public sealed partial class MainWindow
         return room < UiMetrics.Px(240f) ? 0f : MathF.Min(width, room);
     }
 
-    /// <summary>The card at its slot: it fades in over Rise and out over Leave; a new shape is drawn unseen for one frame.</summary>
+    /// <summary>The card at its slot: it fades in over Rise and out over Leave; a new stop is drawn unseen for one frame.</summary>
     private void DrawStopCard()
     {
         if (runStops is not { } stops || stops.Dock.Current is not { } card || stops.Dock.Folded)
@@ -73,12 +74,15 @@ public sealed partial class MainWindow
             return;
         }
 
-        var key = new StopCardKey(card, stops.Dock.Version, MathF.Round(place.Width), Theme.Flair, UiMetrics.Scale, stops.WaitingForDuty, stops.AnyRunning);
-        var measuring = stopCardHeight <= 0f || key != stopCardKey;
+        // A new stop is drawn unseen for one frame, so its slot takes its height first. Anything else that reshapes the
+        // card (its width, the look, "2 min ago" turning "1 h ago", "Report copied", Stop all coming or going) is drawn
+        // at once: the card paints its frame to the height it took this frame, and a leaving card keeps fading.
+        var key = card.Key;
+        var unseen = stopCardHeight <= 0f || (key != stopCardKey && !stops.Dock.Leaving);
         var now = stops.Now;
         var reduce = UiMetrics.ReduceMotion;
-        var alpha = measuring ? 0f : stops.Dock.Alpha(now, reduce);
-        var interactive = !measuring && stops.Dock.Interactive(now, reduce);
+        var alpha = unseen ? 0f : stops.Dock.Alpha(now, reduce);
+        var interactive = !unseen && stops.Dock.Interactive(now, reduce);
         var hovered = false;
         ImGui.SetCursorScreenPos(place.Min);
         using (ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.Zero).Push(ImGuiStyleVar.ChildBorderSize, 0f))
@@ -90,7 +94,7 @@ public sealed partial class MainWindow
                 var dl = ImGui.GetWindowDrawList();
                 var start = dl.VtxBuffer.Size;
                 ImGui.SetCursorScreenPos(place.Min);
-                var height = StopCardView.Draw(stops, card, place.Width, place.Height, interactive, QuestionableHost, ShowStatusNote);
+                var height = StopCardView.Draw(stops, card, place.Width, interactive, QuestionableHost, ShowStatusNote);
                 hovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows | ImGuiHoveredFlags.AllowWhenBlockedByActiveItem);
                 if (alpha < 1f)
                 {
@@ -149,6 +153,4 @@ public sealed partial class MainWindow
         return true;
     }
 
-    /// <summary>What the card's measured height belongs to; any change measures it again, unseen.</summary>
-    private readonly record struct StopCardKey(StopCard? Card, int Version, float Width, Flair Flair, float Scale, bool Waiting, bool Running);
 }

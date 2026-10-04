@@ -41,7 +41,13 @@ public sealed class NeedsYouOverlay
 
     private static readonly string StopIcon = FontAwesomeIcon.Stop.ToIconString();
 
+    // The panel's fix restarts the walk travel gave up on; the card's blocker for it reads nothing of the card but the
+    // fix, so this stand-in (never shown) asks the same question the card does.
+    private static readonly StopCard RetryCard = new(StopReason.Stuck, StopHandOff.Travel);
+
     private readonly RunStops stops;
+    private string? fixBlocker;
+    private double fixBlockerAt = double.NegativeInfinity;
     private float height;
     private (int Version, int More, int Language) moreKey = (-1, -1, -1);
     private string moreText = string.Empty;
@@ -66,7 +72,8 @@ public sealed class NeedsYouOverlay
         var reduce = UiMetrics.ReduceMotion;
         var alpha = stops.NeedsYou.Alpha(now, reduce);
         var viewport = ImGuiHelpers.MainViewport;
-        var width = MathF.Min(UiMetrics.Px(WidthLogical), viewport.Size.X - UiMetrics.Px(32f));
+        // A game window narrower than the panel and its margins: as wide as there is room, never a negative width.
+        var width = MathF.Max(1f, MathF.Min(UiMetrics.Px(WidthLogical), viewport.Size.X - UiMetrics.Px(32f)));
         var measuring = height <= 0f;
         var pos = new Vector2(
             MathF.Round(viewport.Pos.X + ((viewport.Size.X - width) * 0.5f)),
@@ -130,7 +137,20 @@ public sealed class NeedsYouOverlay
         var y = min.Y + UiMetrics.Px(PadYLogical);
         ImGui.SetCursorScreenPos(new Vector2(left, y));
 
-        // The eyebrow and the title on one line.
+        // The eyebrow and the title on one line, and "+1 more" at its right end; the title is cut short of it.
+        var gap = UiMetrics.Px(GapLogical);
+        var more = stops.NeedsYou.More > 0 ? MoreText() : null;
+        var moreWidth = 0f;
+        if (more is not null)
+        {
+            using (Typography.Caption())
+            {
+                moreWidth = ImGui.CalcTextSize(more).X;
+            }
+        }
+
+        var titleRight = more is null ? right : right - moreWidth - gap;
+        float lineTop;
         if (flair == Flair.Full)
         {
             var upper = EyebrowUpper();
@@ -143,22 +163,39 @@ public sealed class NeedsYouOverlay
                 }
             }
 
-            ImGui.SameLine(0f, UiMetrics.Px(GapLogical));
+            ImGui.SameLine(0f, gap);
+            lineTop = ImGui.GetCursorScreenPos().Y;
+            ImGui.PushClipRect(min, new Vector2(MathF.Max(min.X, titleRight), min.Y + UiMetrics.Px(400f)), true);
             using (Typography.Title(alert.Title))
             using (Theme.PushText(s.Text))
             {
                 ImGui.TextUnformatted(alert.Title);
             }
+
+            ImGui.PopClipRect();
         }
         else
         {
             Chrome.SemiboldText(Strings.NeedsYouEyebrow, Theme.Copper);
-            ImGui.SameLine(0f, UiMetrics.Px(GapLogical));
+            ImGui.SameLine(0f, gap);
+            lineTop = ImGui.GetCursorScreenPos().Y;
+            ImGui.PushClipRect(min, new Vector2(MathF.Max(min.X, titleRight), min.Y + UiMetrics.Px(400f)), true);
             Chrome.SemiboldText(alert.Title, s.Text);
+            ImGui.PopClipRect();
+        }
+
+        var lineBottom = ImGui.GetItemRectMax().Y;
+        if (more is not null)
+        {
+            using (Typography.Caption())
+            {
+                var moreY = MathF.Round(lineTop + MathF.Max(0f, (lineBottom - lineTop - ImGui.GetTextLineHeight()) * 0.5f));
+                dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(right - moreWidth, moreY), Theme.U32(GamePanelShell.QuietTone), more);
+            }
         }
 
         // What Tsukimichi did.
-        ImGui.SetCursorScreenPos(new Vector2(left, ImGui.GetItemRectMax().Y + UiMetrics.Px(4f)));
+        ImGui.SetCursorScreenPos(new Vector2(left, lineBottom + UiMetrics.Px(4f)));
         ImGui.PushTextWrapPos(right - min.X);
         ImGui.BeginGroup();
         using (Typography.Caption())
@@ -170,55 +207,88 @@ public sealed class NeedsYouOverlay
         ImGui.EndGroup();
         ImGui.PopTextWrapPos();
 
-        // Stop all, the fix, Dismiss, and "+1 more" at the right.
+        // Stop all, the fix and Dismiss, each on the next line when the row has no room left for it.
         var interactive = stops.NeedsYou.Interactive(now, reduce);
-        ImGui.SetCursorScreenPos(new Vector2(left, ImGui.GetItemRectMax().Y + UiMetrics.Px(GapLogical)));
-        if (stops.StopAll is { } stopAll
-            && Chrome.ActionPill("##needsYouStopAll", StopIcon, Strings.NeedsYouStopAll, PillTone.Normal, true, Strings.NeedsYouStopAllTooltip, PillLayout.Panel)
-            && interactive)
+        var pillHeight = Chrome.PillHeight(PillLayout.Panel);
+        var rowX = left;
+        var rowY = ImGui.GetItemRectMax().Y + gap;
+
+        void Place(float itemWidth)
         {
-            stopAll();
+            if (rowX > left && rowX + itemWidth > right)
+            {
+                rowX = left;
+                rowY += pillHeight + UiMetrics.Px(6f);
+            }
+
+            ImGui.SetCursorScreenPos(new Vector2(rowX, rowY));
+            rowX += itemWidth + gap;
+        }
+
+        if (StopCardView.StopAll(stops) is { } stopAll)
+        {
+            Place(Chrome.ActionPillWidth(StopIcon, Strings.NeedsYouStopAll, PillLayout.Panel));
+            if (Chrome.ActionPill("##needsYouStopAll", StopIcon, Strings.NeedsYouStopAll, PillTone.Normal, true, Strings.NeedsYouStopAllTooltip, PillLayout.Panel) && interactive)
+            {
+                stopAll();
+            }
         }
 
         if (stops.PanelShows(alert))
         {
-            ImGui.SameLine(0f, UiMetrics.Px(GapLogical));
-            if (Chrome.ActionPill("##needsYouFix", ActionIcons.WalkIcon, stops.Label(alert.Fix), PillTone.Normal, !stops.Retrying, Strings.StopFixReloadRetryTooltip, PillLayout.Panel) && interactive)
+            // The card's own reason to wait (vnavmesh not loaded), so the panel never offers what the card would refuse.
+            var blocker = FixBlocker(alert, now);
+            var label = stops.Label(alert.Fix);
+            var enabled = blocker is null && !stops.Retrying;
+            Place(Chrome.ActionPillWidth(ActionIcons.WalkIcon, label, PillLayout.Panel));
+            if (Chrome.ActionPill("##needsYouFix", ActionIcons.WalkIcon, label, PillTone.Normal, enabled, null, PillLayout.Panel) && interactive && enabled)
             {
                 stops.PanelFix(alert);
+                fixBlockerAt = double.NegativeInfinity;
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(blocker ?? Strings.StopFixReloadRetryTooltip);
             }
         }
 
-        ImGui.SameLine(0f, UiMetrics.Px(GapLogical));
+        Place(DismissWidth());
         if (DismissButton(interactive))
         {
             stops.NeedsYou.Dismiss(now);
         }
 
-        var rowBottom = ImGui.GetItemRectMax().Y;
-        if (stops.NeedsYou.More > 0)
-        {
-            var more = MoreText();
-            using (Typography.Caption())
-            {
-                var size = ImGui.CalcTextSize(more);
-                dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(right - size.X, MathF.Round(rowBottom - ((Chrome.PillHeight(PillLayout.Panel) + size.Y) * 0.5f))), Theme.U32(GamePanelShell.QuietTone), more);
-            }
-        }
-
-        var bottom = rowBottom + UiMetrics.Px(PadYLogical);
+        var bottom = ImGui.GetItemRectMax().Y + UiMetrics.Px(PadYLogical);
 
         // The copper bar, beside the words that say the same.
         dl.AddRectFilled(min, new Vector2(min.X + UiMetrics.Px(BarLogical), MathF.Max(min.Y + 1f, MathF.Min(max.Y, bottom))), Theme.U32(Theme.Copper), rounding, ImDrawFlags.RoundCornersLeft);
         return MathF.Ceiling(bottom - min.Y);
     }
 
+    /// <summary>
+    /// Why the panel's fix cannot act now, as the card says it (<see cref="RunStops.Blocker"/>); asked at most every
+    /// half second, and at once after a press.
+    /// </summary>
+    private string? FixBlocker(NeedsYouAlert alert, double now)
+    {
+        if (now - fixBlockerAt >= 0.5 || now < fixBlockerAt)
+        {
+            fixBlockerAt = now;
+            fixBlocker = stops.Blocker(RetryCard, alert.Fix);
+        }
+
+        return fixBlocker;
+    }
+
+    private static float DismissWidth() => ImGui.CalcTextSize(Strings.NeedsYouDismiss).X + UiMetrics.Px(12f);
+
     /// <summary>Dismiss as a quiet text button; true on click while the panel acts.</summary>
     private static bool DismissButton(bool interactive)
     {
         var label = Strings.NeedsYouDismiss;
         var height = Chrome.PillHeight(PillLayout.Panel);
-        var width = ImGui.CalcTextSize(label).X + UiMetrics.Px(12f);
+        var width = DismissWidth();
         var clicked = ImGui.InvisibleButton("##needsYouDismiss", new Vector2(width, height));
         var hovered = ImGui.IsItemHovered();
         var min = ImGui.GetItemRectMin();

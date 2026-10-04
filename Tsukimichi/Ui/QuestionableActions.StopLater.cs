@@ -20,9 +20,17 @@ public sealed partial class QuestionableActions
 {
     private const string StopLaterContextId = "##questionableStopLater";
 
-    // The values typed in the menu, kept while it is closed.
+    // The values typed in the menu, kept while it is closed. Until the player types a time, it is suggested afresh each
+    // time the menu opens, so it never offers a time already gone.
     private int stopAfterQuests = 5;
     private string stopAtText = string.Empty;
+    private bool stopAtTyped;
+    private int stopLaterFrame = -10;
+
+    // "Today at 21:30" or "Tomorrow at 02:00" under the time field, composed again when the time or the day changes.
+    private DateTime stopAtWhenFor;
+    private int stopAtWhenLanguage = -1;
+    private string stopAtWhen = string.Empty;
 
     /// <summary>"Stop later" as a submenu of an open popup; disabled, saying why, without a Stop gate.</summary>
     public void DrawStopLaterMenu()
@@ -120,16 +128,25 @@ public sealed partial class QuestionableActions
 
         ImGui.Spacing();
         ImGui.TextUnformatted(Strings.QuestionableStopAtLabel);
-        if (stopAtText.Length == 0)
+        var now = DateTime.Now;
+        var frame = ImGui.GetFrameCount();
+        var opened = frame - stopLaterFrame > 1;
+        stopLaterFrame = frame;
+        if (stopAtText.Length == 0 || (opened && !stopAtTyped))
         {
             // An hour from now, to the quarter: a sensible first value to edit.
-            var suggestion = DateTime.Now.AddHours(1);
+            var suggestion = now.AddHours(1);
             stopAtText = new DateTime(suggestion.Year, suggestion.Month, suggestion.Day, suggestion.Hour, suggestion.Minute / 15 * 15, 0, DateTimeKind.Local)
                 .ToString("HH:mm", CultureInfo.InvariantCulture);
+            stopAtTyped = false;
         }
 
         ImGui.SetNextItemWidth(UiMetrics.Px(96f));
-        ImGui.InputText("##stopAt", ref stopAtText, 8);
+        if (ImGui.InputText("##stopAt", ref stopAtText, 8))
+        {
+            stopAtTyped = stopAtText.Length > 0;
+        }
+
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.QuestionableStopAtTooltip);
@@ -137,11 +154,13 @@ public sealed partial class QuestionableActions
 
         ImGui.SameLine();
         var parsed = QuestionableRunGuard.TryParseClock(stopAtText, out var hour, out var minute);
+        var at = parsed ? QuestionableRunGuard.NextAt(now, hour, minute) : default;
         using (ImRaii.Disabled(!parsed))
         {
             if (ImGui.SmallButton(Strings.QuestionableStopSet + "##at"))
             {
-                Arm(runs, QuestionableStopCondition.AtTime(QuestionableRunGuard.NextAt(DateTime.Now, hour, minute).ToUniversalTime()));
+                Arm(runs, QuestionableStopCondition.AtTime(at.ToUniversalTime()));
+                stopAtTyped = false;
             }
         }
 
@@ -149,6 +168,9 @@ public sealed partial class QuestionableActions
         {
             UiMetrics.Tooltip(Strings.QuestionableStopAtTooltip);
         }
+
+        // When the typed time falls, today or tomorrow; the line keeps its place while the text does not read as a time.
+        ImGui.TextDisabled(parsed ? StopAtWhen(at, now) : " ");
 
         if (condition.Rule == QuestionableStopRule.None)
         {
@@ -178,8 +200,23 @@ public sealed partial class QuestionableActions
             QuestionableStopRule.AfterCurrent => Strings.QuestionableStopArmedAfterNext,
             QuestionableStopRule.AfterQuests when condition.Quests == 1 => Strings.QuestionableStopArmedAfterOne,
             QuestionableStopRule.AfterQuests => string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStopArmedAfterQuestsFormat, condition.Quests),
+            _ when condition.AtUtc.ToLocalTime().Date > DateTime.Today => string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStopArmedAtTomorrowFormat, ClockText(condition.AtUtc)),
             _ => string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStopArmedAtFormat, ClockText(condition.AtUtc)),
         });
+    }
+
+    /// <summary>"Today at 21:30" or "Tomorrow at 02:00" for <paramref name="at"/> (local), composed again only when it or the language changes.</summary>
+    private string StopAtWhen(DateTime at, DateTime now)
+    {
+        if (at != stopAtWhenFor || stopAtWhenLanguage != Localization.Loc.Version)
+        {
+            stopAtWhenFor = at;
+            stopAtWhenLanguage = Localization.Loc.Version;
+            var clock = at.ToString("t", CultureInfo.CurrentCulture);
+            stopAtWhen = string.Format(CultureInfo.CurrentCulture, at.Date > now.Date ? Strings.QuestionableStopAtTomorrowFormat : Strings.QuestionableStopAtTodayFormat, clock);
+        }
+
+        return stopAtWhen;
     }
 
     /// <summary>What the status line's run suffix depends on.</summary>
