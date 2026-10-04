@@ -1392,6 +1392,7 @@ public sealed partial class Plugin : IDalamudPlugin
             var payoffLines = new PayoffGateLines(payoffGates, Session, Settings, CharacterBook);
             charactersPane.PayoffLines = payoffLines;
             mainWindow.AttachPayoffLines(payoffLines);
+            InitializeBeforeEvercold(charactersPane);
             // Planning extras (1.9.0): the level advisor, the main scenario catch-up and the allied society board.
             var catchUpDuties = PlanningSource.DutySource(() => Session.Curated, () => moonlit.Catalog, () => dutyRuns.Value);
             var planning = new PlanningSource(Session, gameLinks, catchUpDuties);

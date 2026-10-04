@@ -102,6 +102,24 @@ public sealed class CharacterSettingsBookTests : IDisposable
     }
 
     [Fact]
+    public void Gate_marks_and_hidden_cards_save_on_a_character_that_already_has_settings()
+    {
+        // The book skips an edit that leaves the map the same; a character with another setting already has an entry,
+        // so only comparing the lists themselves tells these edits apart.
+        var book = new CharacterSettingsBook(Path);
+        book.Edit(CharacterSettingChange.Spoiler(Main, true));
+
+        book.Edit(CharacterSettingChange.GateDone(Main, 68667, true));
+        book.Edit(CharacterSettingChange.Dismiss(Main, "beforeEvercold", true));
+
+        Assert.True(book.IsGateDone(Main, 68667));
+        Assert.True(book.IsCardDismissed(Main, "beforeEvercold"));
+        var saved = CharacterSettingsFile.Load(Path)[Main];
+        Assert.Equal([68667u], saved.GatesDone);
+        Assert.Equal(["beforeEvercold"], saved.CardsDismissed);
+    }
+
+    [Fact]
     public void Migration_shows_at_once_and_reports_when_saved()
     {
         var book = new CharacterSettingsBook(Path);

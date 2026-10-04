@@ -84,6 +84,7 @@ public sealed partial class TonightCard
         else
         {
             DrawReplayAndEvents(session, bundle);
+            DrawBeforeEvercold();
             DrawReady();
             DrawMsq(bundle);
             DrawPlanning();

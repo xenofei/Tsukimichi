@@ -74,6 +74,10 @@ public sealed class CharacterSettingsBook
     /// <summary>Whether the player marked the game gate of <paramref name="questRowId"/> passed on the character ("I've done this").</summary>
     public bool IsGateDone(ulong contentId, uint questRowId) => Get(contentId)?.GatesDone.Contains(questRowId) == true;
 
+    /// <summary>Whether the player hid the card <paramref name="cardId"/> for the character (<see cref="CharacterSettings.CardsDismissed"/>).</summary>
+    public bool IsCardDismissed(ulong contentId, string cardId) =>
+        Get(contentId)?.CardsDismissed.Contains(cardId, StringComparer.Ordinal) == true;
+
     public bool IsWhyOpen(ulong contentId, string gateId) =>
         Get(contentId)?.PayoffWhyOpen.Contains(gateId, StringComparer.Ordinal) == true;
 
@@ -330,6 +334,8 @@ public sealed class CharacterSettingsBook
                 || x.CompareWith != y.CompareWith
                 || !x.PayoffGatesNoticed.SequenceEqual(y.PayoffGatesNoticed, StringComparer.Ordinal)
                 || !x.PayoffWhyOpen.SequenceEqual(y.PayoffWhyOpen, StringComparer.Ordinal)
+                || !x.GatesDone.SequenceEqual(y.GatesDone)
+                || !x.CardsDismissed.SequenceEqual(y.CardsDismissed, StringComparer.Ordinal)
                 || !SameIds(x.SeenReady, y.SeenReady)
                 || x.SeenReadyRules != y.SeenReadyRules)
             {
