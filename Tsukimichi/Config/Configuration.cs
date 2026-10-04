@@ -282,6 +282,13 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public bool ChatNoticeSeasonalEnding { get; set; }
 
+    // ---- 1.19.0: EXP to a job that isn't capped (C8) ----
+    /// <summary>
+    /// Say "Turn in on a job that isn't capped: [quest]" in chat once when a journal quest reaches its turn-in step on
+    /// a capped job (the Todo overlay's row shows regardless). Off by default (spec-1.19 C8).
+    /// </summary>
+    public bool ChatNoticeCappedTurnIn { get; set; }
+
     /// <summary>
     /// End dates the player entered for running events with no known end (Characters › Seasonal events › Set end
     /// date…), Festival id to UTC end. Curated data replaces an entry when it gives one; a passed date is ignored.

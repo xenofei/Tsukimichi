@@ -1253,7 +1253,9 @@ public sealed class TodoOverlay : Window, IDisposable
             ShowRoute: settings.TodoShowRoute,
             Stops: settings.TodoShowNextStops ? NextStops?.Stops : null,
             ShowNextStops: settings.TodoShowNextStops,
-            EndingSoon: settings.TodoShowSeasonal ? EventWarnings?.Current : null));
+            EndingSoon: settings.TodoShowSeasonal ? EventWarnings?.Current : null,
+            // "Turn in on a job that isn't capped" (1.19.0, C8): shown whenever it is so, with no setting of its own.
+            CappedTurnIns: CappedTurnInScan.Viewed(session)));
 
         enabledSections = model.EnabledSections;
         if (model.Sections.Count == 0)
