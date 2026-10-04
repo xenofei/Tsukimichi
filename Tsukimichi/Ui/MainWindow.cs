@@ -192,6 +192,10 @@ public sealed partial class MainWindow : Window, IDisposable
         };
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tablePane.Lane = filterPanel;
+
+        // The row menu's "Reveal names in this quest" covers the quest's duties too (1.20.0 N6), from the index the
+        // detail pane reads.
+        tablePane.QuestDuties = quest => Core.Query.ShieldRules.DutyNames(quest, detailPane.DutyRuns?.Invoke(), plugin.Session?.Curated, detailPane.RewardEntries?.Invoke(quest.RowId));
         tonightCard = new TonightCard(ui, runner, OnFiltersChanged) { Textures = textures };
         runner.QuestPinned += OnQuestPinned;
 
@@ -566,6 +570,10 @@ public sealed partial class MainWindow : Window, IDisposable
         try
         {
             DrawContent(session);
+
+            // The spoiler shield's placeholder menu, from the window's root, after every pane: it stays while the
+            // placeholder that opened it scrolls out or is skipped for a frame (spec-1.20 N6).
+            ShieldText.DrawMenu(nameof(MainWindow), session);
             if (!tourWasActive)
             {
                 HandleRevealShortcut(session);

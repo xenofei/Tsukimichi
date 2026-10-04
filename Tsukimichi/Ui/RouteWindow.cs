@@ -199,6 +199,9 @@ public sealed class RouteWindow : Window
         try
         {
             DrawContent();
+
+            // The placeholder menu from the window's root: the line that opened it may be clipped out (spec-1.20 N6).
+            ShieldText.DrawMenu(nameof(RouteWindow), session);
             Questionable?.DrawModals(QuestionableHost);
         }
         finally
@@ -689,7 +692,7 @@ public sealed class RouteWindow : Window
             {
                 // "3 quests near Camp Dragonhead": one Teleport for the stop; its steps keep their own Flag.
                 var first = bundle.Catalog.GetByRowId(l.RowId);
-                var end = first is null ? min.X + width : DrawStepButtons(first, flag: false, teleport: l.Teleport, walk: false, min.X + width, min.Y, rowHeight);
+                var end = first is null ? min.X + width : DrawStepButtons(first, flag: false, teleport: l.Teleport && !links.GiverPlaceHidden(first), walk: false, min.X + width, min.Y, rowHeight);
                 ImGui.SetCursorScreenPos(min);
                 ImGui.Dummy(new Vector2(MathF.Max(1f, end - min.X), rowHeight));
                 var indent = UiMetrics.Px(IndentLogical);
@@ -721,9 +724,11 @@ public sealed class RouteWindow : Window
         {
             // Walk shows on every step (each giver is its own walk) while the window is wide enough; narrower, it and
             // Go to giver are in the step's right-click menu.
-            var walk = links.WalkShown && !PaneFit.FoldActions(width / UiMetrics.Scale);
-            // A giver in a place the story has not reached gets no Flag (the map would name it; 1.20.0 N6).
-            textEnd = DrawStepButtons(stepQuest, flag: !links.GiverPlaceHidden(stepQuest), teleport: l.Teleport && links.TeleportShown, walk, min.X + width, min.Y, rowHeight);
+            // A giver in a place the story has not reached, the viewed character's or the logged-in one's, gets no
+            // Flag, Teleport or Walk (the map would name it; 1.20.0 N6).
+            var placeHidden = links.GiverPlaceHidden(stepQuest);
+            var walk = links.WalkShown && !placeHidden && !PaneFit.FoldActions(width / UiMetrics.Scale);
+            textEnd = DrawStepButtons(stepQuest, flag: !placeHidden, teleport: l.Teleport && links.TeleportShown && !placeHidden, walk, min.X + width, min.Y, rowHeight);
             ImGui.SetCursorScreenPos(min);
         }
 
@@ -749,6 +754,13 @@ public sealed class RouteWindow : Window
             {
                 // A popup is its own window: it scales itself.
                 UiMetrics.ApplyFontScale();
+                if (l.Hidden is { } hiddenNear)
+                {
+                    // The step names a place by its placeholder: its reveal comes first (spec-1.20 N6).
+                    ShieldText.RevealItems(session, links, hiddenNear.Kind, hiddenNear.Name, stepQuest);
+                    ImGui.Separator();
+                }
+
                 TravelControls.MenuItems(links, stepQuest, Strings.RouteStepTeleport);
             }
         }
@@ -1042,6 +1054,7 @@ public sealed class RouteWindow : Window
                 IsTarget = step.IsTarget,
                 InStop = inStop,
                 Teleport = !inStop && !nearHidden,
+                Hidden = nearHidden ? (Core.Query.SpoilerKind.Aetheryte, nearName) : null,
                 Tooltip = near.Length > 0 ? name + "\n" + step.StatusText + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.RouteNearFormat, near) : name + "\n" + step.StatusText,
                 Badges = quest is not null && clearBadges is not null ? clearBadges.ForQuest(quest, Core.Companions.DutyBadgeSurface.Route) : [],
             });
@@ -1188,7 +1201,7 @@ public sealed class RouteWindow : Window
         /// <summary>The step shows its own Teleport (a stop of one step).</summary>
         public bool Teleport { get; init; }
 
-        /// <summary>The hidden name a stop line's placeholder stands for (1.20.0 N6); null when shown.</summary>
+        /// <summary>The hidden name a stop line's or a step's placeholder stands for (1.20.0 N6); null when shown.</summary>
         public (Core.Query.SpoilerKind Kind, string Name)? Hidden { get; init; }
 
         /// <summary>The C7 clear badges of the duty the step involves (1.19.0); empty for none.</summary>

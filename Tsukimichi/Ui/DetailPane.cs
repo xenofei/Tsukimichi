@@ -327,6 +327,10 @@ public sealed partial class DetailPane
         // The sections are cards at Full (gilt brass) and Quiet (tonal planes), and heading rows on the pane at Plain
         // (docs/design/flair-v13 §1, "Card frame"): content wraps at the card's inner edge, or the body's at Plain.
         cardRight = bodyRight - UiMetrics.Px(Theme.Spacing.CardPad.X);
+
+        // The quest's duties first (keyed, so once per change): every placeholder's "Reveal names in this quest" and the
+        // note under the hero reveal them with the rest (1.20.0 N6).
+        RefreshClear(session, quest);
         DrawHero(quest);
         DrawNotYet(quest);
         DrawUnderHero(session, rowId);
@@ -507,12 +511,12 @@ public sealed partial class DetailPane
     /// </summary>
     private void DrawUnderHero(SessionState session, uint rowId)
     {
-        if (model.NameMasked || model.NamesHidden)
+        if (model.NameMasked || model.NamesHidden || ClearDutyHidden())
         {
             // The note keeps its place; its button reveals the quest's name, giver, place, duties, rewards and unlocks
             // for the session (spec-1.20 N6). Without the wider shield it is the quest's name alone, as before.
             var wider = session.Spoilers.MasksNames;
-            var note = model.NamesHidden || wider ? Strings.SpoilerMaskedNamesNote : Strings.SpoilerMaskedNote;
+            var note = model.NamesHidden || wider || ClearDutyHidden() ? Strings.SpoilerMaskedNamesNote : Strings.SpoilerMaskedNote;
             var button = wider ? Strings.SpoilerRevealQuestNames : Strings.SpoilerRevealName;
             TextFlow.Wrapped(note, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextDisabled));
             SameLineOrWrap(SmallButtonWidth(button), bodyRight);
@@ -699,7 +703,7 @@ public sealed partial class DetailPane
             if (reward.HiddenName is { } hiddenName && shieldSession is { } shieldFor)
             {
                 // The placeholder's own hover (its name first) and right-click.
-                ShieldText.Interact(min, max, shieldFor, SpoilerKind.Reward, hiddenName, reward.Reward.Name, model.Quest, links, lead: reward.Reward.Name);
+                ShieldText.Interact(min, max, shieldFor, SpoilerKind.Reward, hiddenName, reward.Reward.Name, model.Quest, links, lead: reward.Reward.Name, duties: model.DutyNames);
             }
             else if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
             {
@@ -991,7 +995,7 @@ public sealed partial class DetailPane
         if (model.PlaceHidden is { } hidden && shieldSession is { } session)
         {
             var bottom = ImGui.GetCursorScreenPos().Y - ImGui.GetStyle().ItemSpacing.Y;
-            ShieldText.Interact(top, new Vector2(top.X + room, MathF.Max(top.Y + 1f, bottom)), session, hidden.Kind, hidden.Name, place, model.Quest, links);
+            ShieldText.Interact(top, new Vector2(top.X + room, MathF.Max(top.Y + 1f, bottom)), session, hidden.Kind, hidden.Name, place, model.Quest, links, duties: model.DutyNames);
 
             // Held at the revealed line's height, so the card keeps its size when the name shows.
             var extra = PlaceHeight(place, room) - TextFlow.Height(place, room);
@@ -1388,8 +1392,8 @@ public sealed partial class DetailPane
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
         // A journal genre named after a place the story has not reached reads as its placeholder (1.20.0 N6).
-        model.JournalSegments = quest.IsUnlisted ? [Strings.RemovedFromGame] : [spoilers.NodeName(quest.Journal.GenreName), spoilers.NodeName(quest.Journal.CategoryName)];
-        model.FilingLine = FilingLine(quest, session.Curated);
+        model.JournalSegments = quest.IsUnlisted ? [Strings.RemovedFromGame] : [ShieldRules.Genre(quest, spoilers), ShieldRules.Category(quest, spoilers)];
+        model.FilingLine = FilingLine(quest, session.Curated, spoilers);
         model.QuirkNote = session.Curated.Quirks.TryGetValue(rowId, out var quirk) ? WhyText.NoteLine(quirk.Note) : null;
         var jobName = quest.ClassJobCategory <= 1 ? Strings.JobAny : links.ClassJobCategoryName(quest.ClassJobCategory);
         if (jobName.Length == 0)
@@ -1663,10 +1667,10 @@ public sealed partial class DetailPane
     /// The provenance line under the journal path: which rule (or curated file) filed a refiled quest, or why the
     /// game removed it: the patch when the curated note names one, else the sheet signal rule 1 read ("Rule 1:
     /// placeholder issuer"). It never repeats the path: an unlisted retired row's path already reads "Removed from
-    /// the game", so only a listed retired row (its path is the genre) gets those words here. Null for a quest the
-    /// sheet filed itself.
+    /// the game", so only a listed retired row (its path is the genre) gets those words here. The genre it names
+    /// follows the spoiler shield, as the path does (1.20.0 N6). Null for a quest the sheet filed itself.
     /// </summary>
-    internal static string? FilingLine(QuestRecord quest, CuratedData curated)
+    internal static string? FilingLine(QuestRecord quest, CuratedData curated, SpoilerMask spoilers)
     {
         if (quest.IsRetired)
         {
@@ -1691,8 +1695,8 @@ public sealed partial class DetailPane
         }
 
         return quest.RefiledFrom == JournalRefiler.CuratedRule
-            ? string.Format(CultureInfo.CurrentCulture, Strings.FilingCuratedFormat, quest.Journal.GenreName)
-            : string.Format(CultureInfo.CurrentCulture, Strings.FilingRuleFormat, quest.Journal.GenreName, quest.RefiledFrom, Strings.FilingReason(quest.RefiledFrom));
+            ? string.Format(CultureInfo.CurrentCulture, Strings.FilingCuratedFormat, ShieldRules.Genre(quest, spoilers))
+            : string.Format(CultureInfo.CurrentCulture, Strings.FilingRuleFormat, ShieldRules.Genre(quest, spoilers), quest.RefiledFrom, Strings.FilingReason(quest.RefiledFrom));
     }
 
     private bool HasShippedUniqueEntry(UniqueRewardsData data, uint rowId)

@@ -83,6 +83,23 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
+    /// Whether the wider shield hides a duty the quest involves (as of the last <see cref="RefreshClear"/>): the note
+    /// under the hero then offers "Reveal names in this quest", which reveals it with the rest (1.20.0 N6).
+    /// </summary>
+    private bool ClearDutyHidden()
+    {
+        foreach (var row in clearRows)
+        {
+            if (row.Hidden is not null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// The wall's two lines; both empty unless the wall bites. Before 8.0 the first names the current job and the best
     /// gearset that qualifies, the second the next ones that do; from 8.0 neither names a job. The second line adds
     /// "Duty Support checks item level too." for a duty NPCs can clear.

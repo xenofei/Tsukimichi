@@ -405,8 +405,9 @@ public sealed class PlanningSource
                 continue;
             }
 
-            var genre = quests[0].Journal.GenreName;
-            var name = quests.Length > 1 && genre.Length > 0 && quests.All(q => q.Journal.GenreName == genre) ? genre : session.Spoilers.DisplayName(quests[^1]);
+            // A run of one genre is named after it, through the shield as the journal path is (1.20.0 N6).
+            var genre = quests[0].Journal.GenreId;
+            var name = quests.Length > 1 && genre != 0 && quests.All(q => q.Journal.GenreId == genre) ? ShieldRules.Genre(quests[0], session.Spoilers) : session.Spoilers.DisplayName(quests[^1]);
             items.Add(string.Format(CultureInfo.CurrentCulture, Strings.MsqMeterEarlierItemFormat, name, Quests(quests.Length), quests.Max(static q => q.DisplayLevel)));
         }
 

@@ -175,8 +175,10 @@ public static class ExportWriter
     /// One quest's row: <paramref name="name"/> as given (the export writes the quest's own name, Copy table as TSV the
     /// spoiler shield's), completed from <paramref name="snapshot"/> (from <paramref name="evaluation"/> without one),
     /// the completion date from the snapshot, <c>state</c> from the evaluation and <c>lodestoneId</c> from the table.
+    /// With <paramref name="spoilers"/> (Copy table as TSV) the journal's section, category and genre are the shield's
+    /// too (<see cref="SpoilerMask.NodeName"/>): a genre named after a hidden area reads "Dawntrail area 5 Sidequests".
     /// </summary>
-    public static QuestExportRow Row(QuestRecord quest, CharacterSnapshot? snapshot, string name, Func<byte, string>? expansionName, QuestEvaluation? evaluation, ExternalIds? ids)
+    public static QuestExportRow Row(QuestRecord quest, CharacterSnapshot? snapshot, string name, Func<byte, string>? expansionName, QuestEvaluation? evaluation, ExternalIds? ids, SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(quest);
         var expansion = expansionName?.Invoke(quest.Expansion) is { Length: > 0 } expansionText
@@ -191,9 +193,9 @@ public static class ExportWriter
             quest.RowId,
             quest.QuestId,
             name ?? quest.Name,
-            quest.Journal.SectionName,
-            quest.Journal.CategoryName,
-            quest.Journal.GenreName,
+            spoilers is null ? quest.Journal.SectionName : spoilers.NodeName(quest.Journal.SectionName),
+            spoilers is null ? quest.Journal.CategoryName : spoilers.NodeName(quest.Journal.CategoryName),
+            spoilers is null ? quest.Journal.GenreName : spoilers.NodeName(quest.Journal.GenreName),
             expansion,
             completed,
             dated?.Utc,

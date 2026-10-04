@@ -636,9 +636,11 @@ public sealed partial class FilterPanel
     /// <summary>
     /// The tree node <paramref name="scope"/> as its parent's name and its own (the parent empty for a section, a
     /// virtual node or an NPC's quests): the scope chip joins them, the quest table's title (R3 #6) draws the parent as
-    /// a breadcrumb before the name. Scans the catalog once; callers memoize.
+    /// a breadcrumb before the name. Names follow the viewed character's spoiler shield (1.20.0 N6,
+    /// <see cref="ShieldRules.JournalScope"/>): a node named after a hidden area, or a person the story has not
+    /// introduced, prints its placeholder. Scans the catalog once; callers memoize (and key on the mask's fingerprint).
     /// </summary>
-    internal static (string Parent, string Name) ScopeParts(QuestScope scope, QuestCatalog? catalog)
+    internal static (string Parent, string Name) ScopeParts(QuestScope scope, QuestCatalog? catalog, SpoilerMask spoilers)
     {
         switch (scope.Kind)
         {
@@ -653,28 +655,11 @@ public sealed partial class FilterPanel
             case ScopeKind.VirtualNewlyReady:
                 return (string.Empty, Strings.RailNewlyReady);
             case ScopeKind.VirtualIssuer:
-                var npc = catalog is null ? null : QuestDiscovery.IssuerName(catalog, scope.Id);
+                var npc = catalog is null ? null : ShieldRules.IssuerName(catalog, scope.Id, spoilers);
                 return (string.Empty, npc is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, npc));
         }
 
-        if (catalog is not null)
-        {
-            foreach (var quest in catalog.All)
-            {
-                var j = quest.Journal;
-                switch (scope.Kind)
-                {
-                    case ScopeKind.Section when j.SectionId == scope.Id:
-                        return (string.Empty, j.SectionName);
-                    case ScopeKind.Category when j.CategoryId == scope.Id:
-                        return (j.SectionName, j.CategoryName);
-                    case ScopeKind.Genre when j.GenreId == scope.Id:
-                        return (j.CategoryName, j.GenreName);
-                }
-            }
-        }
-
-        return (string.Empty, Strings.ScopeUnnamed);
+        return catalog is not null && ShieldRules.JournalScope(scope, catalog, spoilers) is { } parts ? parts : (string.Empty, Strings.ScopeUnnamed);
     }
 
     /// <summary>"Parent › Child", or the child alone when the two carry the same name (a folded tree node).</summary>

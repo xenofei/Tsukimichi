@@ -266,9 +266,12 @@ public sealed partial class DetailPane
 
     private static float ActionGap => UiMetrics.Px(ActionPillFit.GapLogical);
 
-    /// <summary>Run with AutoDuty's icon (UI-5e): the duty's own tile, else the Duty Finder's.</summary>
+    /// <summary>
+    /// Run with AutoDuty's icon (UI-5e): the duty's own tile, else the Duty Finder's; the Duty Finder's, a generic kind
+    /// icon, for a masked duty, whose own tile would name it (spec-1.20 N6).
+    /// </summary>
     private static PillIcon DutyPillIcon(DutyRow row) =>
-        GameIconRef.Tile(row.Duty.Duty.Icon != 0 ? row.Duty.Duty.Icon : ActionIcons.DutyFinder);
+        GameIconRef.Tile(row.Duty.Duty.Icon != 0 && !row.Masked ? row.Duty.Duty.Icon : ActionIcons.DutyFinder);
 
     /// <summary>The row of pills.</summary>
     private void DrawActionRow(QuestRecord quest, uint rowId)

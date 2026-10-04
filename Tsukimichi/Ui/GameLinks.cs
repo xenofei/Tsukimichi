@@ -43,15 +43,32 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
     /// </summary>
     public Func<Core.Query.SpoilerMask>? Spoilers { get; set; }
 
-    /// <summary>Whether the wider shield hides a place's name (1.20.0 N6).</summary>
+    /// <summary>
+    /// The viewed character's spoiler shield (attached by the plugin), the one the panes print through: the travel
+    /// tooltips and labels a pane shows name places and people by it (1.20.0 N6). Null falls back to <see cref="Spoilers"/>.
+    /// </summary>
+    public Func<Core.Query.SpoilerMask>? ViewedSpoilers { get; set; }
+
+    /// <summary>The mask a pane's travel labels and tooltips print through: the viewed character's, else the logged-in one's.</summary>
+    private Core.Query.SpoilerMask? PaneSpoilers => ViewedSpoilers?.Invoke() ?? Spoilers?.Invoke();
+
+    /// <summary>Whether the logged-in character's shield hides a place's name (1.20.0 N6): what chat lines follow.</summary>
     private bool PlaceHidden(string place) => Spoilers?.Invoke().IsNameMasked(Core.Query.SpoilerKind.Area, place) == true;
 
     /// <summary>
+    /// Whether travel to a place is hidden (1.20.0 N6, <see cref="Core.Query.ShieldRules.PlaceHidden"/>): the viewed
+    /// character's story has not reached it (the pane prints its placeholder) or the logged-in character's has not
+    /// (the game's map would name it).
+    /// </summary>
+    private bool TravelPlaceHidden(string place) => Core.Query.ShieldRules.PlaceHidden(ViewedSpoilers?.Invoke(), Spoilers?.Invoke(), place);
+
+    /// <summary>
     /// Whether the zone the quest's giver stands in is one the story has not reached (1.20.0 N6): no travel button,
-    /// Flag or coordinates leads there, since the place is ahead of the story and the game's map would name it.
+    /// Flag or coordinates leads there, since the place is ahead of the story and the game's map would name it. Either
+    /// story counts: the viewed character's, whose pane names the place by its placeholder, and the logged-in one's.
     /// </summary>
     public bool GiverPlaceHidden(QuestRecord quest) =>
-        quest.Issuer is { } issuer && Map(issuer.MapId) is { } map && PlaceHidden(map.PlaceName);
+        quest.Issuer is { } issuer && Map(issuer.MapId) is { } map && TravelPlaceHidden(map.PlaceName);
 
     /// <summary>
     /// The clickable "[Open] [Pin] [Route]" actions (1.7.0), attached by the plugin: every quest line and headline this
@@ -210,7 +227,7 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
     /// <summary>"Place (x.x, y.y)" for the clipboard, or null without a map. Allocates; call on click, not per frame.</summary>
     public string? CoordinateText(QuestRecord quest)
     {
-        if (quest.Issuer is not { } issuer || Map(issuer.MapId) is not { } map || MapCoordinates(quest) is not { } coords || PlaceHidden(map.PlaceName))
+        if (quest.Issuer is not { } issuer || Map(issuer.MapId) is not { } map || MapCoordinates(quest) is not { } coords || TravelPlaceHidden(map.PlaceName))
         {
             return null;
         }

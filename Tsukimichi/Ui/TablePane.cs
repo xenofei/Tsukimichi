@@ -139,6 +139,17 @@ public sealed class TablePane : IDisposable
     public Func<bool>? ShowOpens { get; set; }
 
     /// <summary>
+    /// The duties a quest involves, by name (<see cref="ShieldRules.DutyNames"/>), for the row menu's "Reveal names in
+    /// this quest" (1.20.0 N6); null reads none.
+    /// </summary>
+    public Func<QuestRecord, System.Collections.Generic.IEnumerable<string>>? QuestDuties { get; set; }
+
+    // The placeholder under the pointer (the giver, a hidden reward or unlock icon; 1.20.0 N6) as of the frame it was
+    // drawn, and the one the row menu opened over: that menu starts with its reveal, as every placeholder's does.
+    private (uint RowId, SpoilerKind Kind, string Name, int Frame) placeholderHover = (0, default, string.Empty, int.MinValue);
+    private (uint RowId, SpoilerKind Kind, string Name)? menuPlaceholder;
+
+    /// <summary>
     /// Whether the Giver column (1.15, F5) has been hidden once for this configuration: it is off by default, and ImGui's
     /// saved table settings from before it existed would show it. Null or true leaves ImGui's own state alone.
     /// </summary>
@@ -168,11 +179,13 @@ public sealed class TablePane : IDisposable
     private const float TitleCountGap = 12f;
     private const float TitleCrumbGap = 6f;
 
-    // The title line (R3 #6): the node's name and its parent as a breadcrumb, named again when the scope, the catalog
-    // or the language changes; the count, rebuilt when the numbers change. Nothing is built per frame otherwise.
+    // The title line (R3 #6): the node's name and its parent as a breadcrumb, named again when the scope, the catalog,
+    // the language or the spoiler shield changes; the count, rebuilt when the numbers change. Nothing is built per
+    // frame otherwise.
     private QuestScope titleScope = QuestScope.None;
     private QuestCatalog? titleCatalog;
     private int titleLanguage = -1;
+    private int titleShield = int.MinValue;
     private string titleName = string.Empty;
     private string titleCrumb = string.Empty;
     private string titlePath = string.Empty;
@@ -1422,12 +1435,14 @@ public sealed class TablePane : IDisposable
     private void RefreshTitle(QuestCatalog? catalog, int shown, int total)
     {
         var language = Localization.Loc.Version;
-        if (ui.Scope != titleScope || !ReferenceEquals(catalog, titleCatalog) || language != titleLanguage || titleName.Length == 0)
+        var spoilers = runner.Spoilers;
+        if (ui.Scope != titleScope || !ReferenceEquals(catalog, titleCatalog) || language != titleLanguage || spoilers.Fingerprint != titleShield || titleName.Length == 0)
         {
             titleScope = ui.Scope;
             titleCatalog = catalog;
             titleLanguage = language;
-            var (parent, name) = ui.Scope.Kind == ScopeKind.None ? (string.Empty, Strings.AllQuests) : FilterPanel.ScopeParts(ui.Scope, catalog);
+            titleShield = spoilers.Fingerprint;
+            var (parent, name) = ui.Scope.Kind == ScopeKind.None ? (string.Empty, Strings.AllQuests) : FilterPanel.ScopeParts(ui.Scope, catalog, spoilers);
             var crumb = parent.Length > 0 && !string.Equals(parent, name, StringComparison.Ordinal);
             titleName = name;
             titleCrumb = crumb ? parent + Strings.TitleCrumbSuffix : string.Empty;
@@ -1619,6 +1634,11 @@ public sealed class TablePane : IDisposable
                 {
                     SelectFromTable(quest.RowId);
                     RefreshQuestMapAvailability();
+
+                    // Opened over a placeholder (noted the frame before, the cells drawing after this one): its reveal first.
+                    menuPlaceholder = placeholderHover.RowId == quest.RowId && placeholderHover.Frame >= ImGui.GetFrameCount() - 2
+                        ? (placeholderHover.RowId, placeholderHover.Kind, placeholderHover.Name)
+                        : null;
                 }
 
                 DrawContextMenu(quest, row.State);
@@ -1817,8 +1837,9 @@ public sealed class TablePane : IDisposable
 
         if (personHidden && ImGui.IsMouseHoveringRect(cell, new Vector2(cell.X + room, cell.Y + layout.RowContent)))
         {
-            // A placeholder's hover; its right-click is the row's menu ("Reveal names in this quest").
+            // A placeholder's hover; its right-click is the row's menu, which then starts with its reveal.
             ShieldText.Hover(cut ? name : null);
+            NotePlaceholder(quest.RowId, SpoilerKind.Npc, issuer.Name);
         }
         else if (!masked && !questMasked && ImGui.IsMouseHoveringRect(plateMin, plateMin + new Vector2(avatar)))
         {
@@ -2343,7 +2364,7 @@ public sealed class TablePane : IDisposable
 
         using var wrapPos = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width);
         ImGui.TextWrapped(spoilers.DisplayName(quest));
-        ImGui.TextDisabled(quest.Journal.GenreName);
+        ImGui.TextDisabled(ShieldRules.Genre(quest, spoilers));
         ImGui.TextDisabled(runner.ExpansionShort(quest.Expansion));
         ImGui.SameLine();
         ImGui.TextDisabled(Strings.ColumnLevel);
@@ -2426,6 +2447,10 @@ public sealed class TablePane : IDisposable
                 if (hidden)
                 {
                     ShieldText.Hover(Core.Unlocks.UnlockView.ShieldedName(entry, runner.Spoilers));
+                    if (SpoilerNames.KindOf(entry.Target) is { } kind)
+                    {
+                        NotePlaceholder(quest.RowId, kind, entry.Name);
+                    }
                 }
                 else
                 {
@@ -2522,6 +2547,7 @@ public sealed class TablePane : IDisposable
                 if (shielded)
                 {
                     ShieldText.Hover(runner.Spoilers.Name(SpoilerKind.Reward, reward.Name));
+                    NotePlaceholder(quest.RowId, SpoilerKind.Reward, reward.Name);
                 }
                 else
                 {
@@ -2571,8 +2597,23 @@ public sealed class TablePane : IDisposable
         return ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(new Vector2(x, cell.Y), new Vector2(x + size.X, cell.Y + layout.RowContent));
     }
 
+    /// <summary>Notes the placeholder under the pointer this frame, for the row menu a right-click opens over it.</summary>
+    private void NotePlaceholder(uint rowId, SpoilerKind kind, string name) =>
+        placeholderHover = (rowId, kind, name, ImGui.GetFrameCount());
+
     private void DrawContextMenu(QuestRecord quest, QuestState state)
     {
+        // Opened over a placeholder: Reveal this name · this session, then Reveal names in this quest, as on every
+        // placeholder (spec-1.20 N6); the row's own items follow.
+        var duties = QuestDuties?.Invoke(quest);
+        var overPlaceholder = false;
+        if (runner.Session is { } revealSession && menuPlaceholder is { } over && over.RowId == quest.RowId && runner.Spoilers.IsNameMasked(over.Kind, over.Name))
+        {
+            overPlaceholder = true;
+            ShieldText.RevealItems(revealSession, links, over.Kind, over.Name, quest, duties);
+            ImGui.Separator();
+        }
+
         if (ImGui.MenuItem(runner.IsPinned(quest.RowId) ? Strings.Unpin : Strings.Pin, enabled: runner.CanPin))
         {
             runner.TogglePinWithUndo(quest);
@@ -2607,10 +2648,11 @@ public sealed class TablePane : IDisposable
             ImGui.SetClipboardText(coordinates);
         }
 
-        // The placeholders of the row (its name, giver, place, rewards, unlocks): reveal them for the session (1.20.0 N6).
-        if (runner.Session is { } session &&(runner.Spoilers.IsMasked(quest) || runner.Spoilers.MasksNames))
+        // The placeholders of the row (its name, giver, place, duties, rewards, unlocks): reveal them for the session
+        // (1.20.0 N6); offered above instead when the menu opened over one.
+        if (!overPlaceholder && runner.Session is { } session && (runner.Spoilers.IsMasked(quest) || runner.Spoilers.MasksNames))
         {
-            var names = ShieldText.QuestNames(links, session.Unlocks, quest);
+            var names = ShieldText.QuestNames(links, session.Unlocks, quest, duties);
             if (ShieldText.HidesAny(runner.Spoilers, quest, names))
             {
                 if (ImGui.MenuItem(Strings.SpoilerRevealQuestNames, Strings.SpoilerRevealThisSession))
