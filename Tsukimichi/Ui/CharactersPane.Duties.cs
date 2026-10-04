@@ -142,7 +142,7 @@ public sealed partial class CharactersPane
         if (HiddenDuty(row) is { } hidden)
         {
             var cut = Chrome.EllipsisText(row.Duty, Chrome.RoomX(), ShieldText.U32(row.Duty, Theme.Surface.Text));
-            ShieldText.InteractItem(session, SpoilerKind.Duty, hidden, row.Duty, row.Quest, Links, lead: cut ? row.Duty : null);
+            ShieldText.InteractItem(session, SpoilerKind.Duty, hidden.Name, row.Duty, row.Quest, Links, lead: cut ? row.Duty : null, standIn: hidden.StandIn);
         }
         else
         {
@@ -186,10 +186,12 @@ public sealed partial class CharactersPane
     }
 
     /// <summary>
-    /// The duty's own name behind a row's placeholder: the duty its unlock quest opens whose placeholder the row prints.
-    /// Null when the row shows the name, or has no unlock quest to find it by. Allocates nothing.
+    /// What a row's placeholder stands for: the duty its unlock quest opens whose placeholder the row prints, or, for
+    /// the stand-in of a duty hidden because its unlock quest is (<see cref="SpoilerMask.HidesDuty"/>), that duty with
+    /// <c>StandIn</c> set (its reveal is the quest's). Null when the row shows the name, or has no unlock quest to find
+    /// it by. Allocates nothing.
     /// </summary>
-    private string? HiddenDuty(DutyBoardSource.Row row)
+    private (string Name, bool StandIn)? HiddenDuty(DutyBoardSource.Row row)
     {
         if (row.Quest is not { } quest || !ShieldText.Holds(row.Duty) || session.Unlocks is not { } unlocks)
         {
@@ -197,16 +199,23 @@ public sealed partial class CharactersPane
         }
 
         var spoilers = session.Spoilers;
+        string? opened = null;
         foreach (var entry in unlocks.For(quest.RowId))
         {
-            if (SpoilerNames.KindOf(entry.Target) == SpoilerKind.Duty && spoilers.IsNameMasked(SpoilerKind.Duty, entry.Name)
-                && string.Equals(spoilers.Name(SpoilerKind.Duty, entry.Name), row.Duty, StringComparison.Ordinal))
+            if (SpoilerNames.KindOf(entry.Target) != SpoilerKind.Duty)
             {
-                return entry.Name;
+                continue;
             }
+
+            if (spoilers.IsNameMasked(SpoilerKind.Duty, entry.Name) && string.Equals(spoilers.Name(SpoilerKind.Duty, entry.Name), row.Duty, StringComparison.Ordinal))
+            {
+                return (entry.Name, false);
+            }
+
+            opened ??= entry.Name;
         }
 
-        return null;
+        return spoilers.IsMasked(quest) ? (opened ?? row.Duty, true) : null;
     }
 
     /// <summary>Route and Pin both / Pin all under a block, when its duties have unlock quests.</summary>

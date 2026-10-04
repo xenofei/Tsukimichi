@@ -212,6 +212,11 @@ public sealed partial class DetailPane
             // The placeholder's hover and right-click, as in How you'll clear it (spec-1.20 N6).
             ShieldItem(SpoilerKind.Duty, hidden, row.Name, cut ? row.Name : null);
         }
+        else if (row.Masked)
+        {
+            // The stand-in of a duty hidden because the quest is: its reveal is the quest's.
+            ShieldItem(SpoilerKind.Duty, row.Duty.Duty.Name, row.Name, cut ? row.Name : null, standIn: true);
+        }
         else if (cut && ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(row.Name);

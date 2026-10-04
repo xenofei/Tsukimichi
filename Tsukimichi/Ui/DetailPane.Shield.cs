@@ -15,11 +15,12 @@ public sealed partial class DetailPane
     /// <param name="name">The hidden name itself.</param>
     /// <param name="shown">The placeholder as printed.</param>
     /// <param name="lead">The placeholder over the hover's lines when the slot cut it short; null for none.</param>
-    private void ShieldItem(SpoilerKind kind, string name, string shown, string? lead = null)
+    /// <param name="standIn">A duty hidden because the quest is, not by its own name (<see cref="ShieldText.RevealItems"/>).</param>
+    private void ShieldItem(SpoilerKind kind, string name, string shown, string? lead = null, bool standIn = false)
     {
         if (shieldSession is { } session)
         {
-            ShieldText.InteractItem(session, kind, name, shown, model.Quest, links, lead: lead, duties: model.DutyNames);
+            ShieldText.InteractItem(session, kind, name, shown, model.Quest, links, lead: lead, duties: model.DutyNames, standIn: standIn);
         }
     }
 }
