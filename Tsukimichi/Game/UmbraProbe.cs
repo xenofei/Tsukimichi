@@ -152,7 +152,12 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
             {
                 landed = null;
                 var landing = reads.Land(Read, readPath, read.Read, read.Path);
-                if (landing.Take)
+                if (!loaded)
+                {
+                    // Landed after Umbra unloaded: it settles nothing, so Umbra's next load waits for its own first read.
+                    reads.Unloaded();
+                }
+                else if (landing.Take)
                 {
                     readPath = read.Path;
                     readStamp = read.Stamp;
