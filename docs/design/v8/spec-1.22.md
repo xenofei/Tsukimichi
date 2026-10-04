@@ -268,7 +268,7 @@ No treatment adds a light of its own. Quiet would show the Classic painting grad
 
 Their files are in `art/optionb/`: `<key>-base.png`, `<key>-masks.npz`, `<key>.json`, `<key>-<theme>.png` and `ship/<key>-<theme>.jpg`. The painters are in `art/src/paint_option_b2.py`.
 
-The backfill, 1.18.0 to 1.14.0, is made on the same recipe by `art/src/paint_option_b3.py`. Its briefs are under "Backfill (decision 2)" below, and its supervision is under "Backfill 1.14–1.18" in the Approval record, with every round to date. The moons of 1.22.0 and 1.19.0 were repainted in round 3 under the moon rule in the recipe.
+The backfill, 1.18.0 to 1.14.0, is made on the same recipe by `art/src/paint_option_b3.py`. Its briefs are under "Backfill (decision 2)" below, and its supervision is under "Backfill 1.14–1.18" in the Approval record: approved in round 5. The moons of 1.22.0 and 1.19.0 were repainted in round 3 under the moon rule in the recipe.
 - **Runs you can trust** (`runs-b`): a ferry on a guide rope under a veiled near-full moon.
 - **Mix and match** (`mixmatch-b`): six stepping stones of six stones in a Kugane garden at dawn.
 - **Themes** (`themes-b`): one moon over four horizons, from a summit.
@@ -869,3 +869,13 @@ The five backfill releases (`polish-b`, `faces-b`, `themes-b`, `mixmatch-b`, `ru
 - **After round 4:** `orrery_backlit` lays those silhouettes on a dark plate ground with thin silver lines, and the sealed ground is excluded.
   - The keep now measures 47 against 65, the hills 40 against 70 and Limsa 41 against 49. The willows read dark against the enamel.
   - All nine releases are re-shipped. evercold-b and whatnext-b are byte-identical.
+- **Round 5: APPROVED.** The backfill supervisor approved all six treatments of polish-b, faces-b, themes-b, mixmatch-b and runs-b, and the moons of welcome-b and answers-b.
+  - The backlit silhouettes now measure darker than the sky beside them: the keep 47 against 65, the hills 40 against 69, Limsa 42 against 50.
+  - The moon rule holds on every moon in every treatment. welcome-b (224, 92) and answers-b (655, 103) are clean.
+  - Every release is within budget, and the JPEGs match their masters.
+  - **Nits left, not needed for approval:**
+    - polish-b's Orrery roof is weak against Limsa's dark plate;
+    - mixmatch-b's Orrery pines sit dark on the dark hills;
+    - runs-b's misty Orrery hills are pale, which reads as mist, as on evercold-b;
+    - round 2's Nits 7–9.
+- **Spot check of the welcome-b and answers-b moons by the original supervisor (a0db09056470943e1): not done.** The request was sent, but that agent can't be resumed, because its worktree no longer exists. The coordinator needs to run the spot check with a fresh reviewer, or with the original supervisor from wherever it can still run. Only the backfill supervisor's approval is on record for those two moons.
