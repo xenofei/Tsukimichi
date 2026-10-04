@@ -95,7 +95,9 @@ public sealed partial class DetailPane
             AddAction(ActionKind.Flag, ActionIcons.FlagIcon, Strings.FlagOnMap, Strings.FlagOnMap, PillTone.Normal, canFlag);
         }
 
-        if (links.GoToShown)
+        // With Walk and Go to giver both above the automation level, a trip under way still gets its Stop here.
+        var stopOnly = journey && !links.GoToShown && !links.WalkShown;
+        if (links.GoToShown || (stopOnly && goToCheck.Stoppable))
         {
             var go = goToCheck;
             var stop = go.Stoppable && (travelStartedBy != ActionKind.Walk || !links.WalkShown);

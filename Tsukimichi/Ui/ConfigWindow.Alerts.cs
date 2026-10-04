@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
@@ -83,9 +84,11 @@ public sealed partial class ConfigWindow
     /// </summary>
     private void DrawNeedsYou()
     {
-        // Only while the automation level shows a hand-off that runs (1.18, A10): at Tracker only and Travel, Tsukimichi
-        // starts nothing that could need you.
-        if (!AutomationGate.ShowsAny(AutomationGate.RunningHandOffs))
+        // Whenever a plugin that runs for the player is installed, whatever the automation level: the run watch alerts on
+        // every Questionable run, however it started, and on a run started before the level was lowered.
+        if (!CompanionInstalled(CompanionPlugin.Questionable) && !CompanionInstalled(CompanionPlugin.AutoDuty)
+            && !CompanionInstalled(CompanionPlugin.Artisan) && !CompanionInstalled(CompanionPlugin.Vnavmesh)
+            && !CompanionInstalled(CompanionPlugin.Lifestream))
         {
             return;
         }

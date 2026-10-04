@@ -934,7 +934,7 @@ public sealed partial class DetailPane
     {
         teleportCheck = links.CheckTeleport(quest);
         walkCheck = links.WalkShown ? links.CheckWalk(quest) : default;
-        goToCheck = links.GoToShown ? links.CheckGoTo(quest) : default;
+        goToCheck = links.GoToShown || (links.IsTraveling && !links.WalkShown) ? links.CheckGoTo(quest) : default;
         hopCheck = links.TeleportShown ? links.CheckHop(quest) : default;
         PrepareActions(session, quest);
     }

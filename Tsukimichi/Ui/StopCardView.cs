@@ -24,7 +24,8 @@ namespace Tsukimichi.Ui;
 /// receipt on a Finished card, up to two safe fixes as pills (the first the primary, unless Copy report is), Stop all
 /// while a hand-off still runs (so a run whose own button the automation level hides is always stoppable), and Copy
 /// report right-aligned. A disabled fix keeps its label and says why under the row. Drawn by the notice dock
-/// (<see cref="MainWindow"/>) and, as a compact row, by the Todo overlay (<see cref="DrawRow"/>).
+/// (<see cref="MainWindow"/>) and, in its title's line, by the Todo overlay (<see cref="DrawInline"/>). The fixes' state
+/// is asked at most every half second, and their tooltips only on hover.
 /// </summary>
 internal static class StopCardView
 {
@@ -53,6 +54,19 @@ internal static class StopCardView
     private static int waitingLanguage = -1;
     private static string waitingText = string.Empty;
 
+    // The card's two fixes, whether each shows and why it cannot act, asked at most every half second per card (a
+    // blocker may compose a list of missing plugins, and a retry's check builds its plan); a click asks again at once.
+    private static readonly FixState[] FixStates = new FixState[2];
+    private static StopCard? fixesCard;
+    private static int fixesLanguage = -1;
+    private static double fixesAt = double.NegativeInfinity;
+
+    /// <summary>
+    /// What every "Stop all" (the card, the "Needs you" panel, the Todo overlay's title line) runs: every running
+    /// hand-off, as <c>/tsuki stop</c>; null leaves the button out. The one place to point them all somewhere else.
+    /// </summary>
+    public static Action? StopAll(RunStops stops) => stops.StopAll;
+
     /// <summary>The cue's ink: gold finished well, silver you did it, copper it needs you.</summary>
     public static Vector4 CueColor(StopCue cue) => cue switch
     {
@@ -62,36 +76,25 @@ internal static class StopCardView
     };
 
     /// <summary>
-    /// The card in the current window, filling <paramref name="width"/> from the cursor; its frame painted to
-    /// <paramref name="frameHeight"/> (last frame's measure, the caller's child height). Returns the height the content
-    /// needs. Buttons act only while <paramref name="interactive"/>; <paramref name="host"/> is where Questionable's
-    /// confirmation opens; <paramref name="note"/> takes "Report copied" for the status bar.
+    /// The card in the current window, filling <paramref name="width"/> from the cursor. The words and buttons are drawn
+    /// first and the frame under them after, to the height they took this frame, so the frame always fits what it holds
+    /// (a longer "2 min ago", "Report copied", Stop all coming or going). Returns that height. Buttons act only while
+    /// <paramref name="interactive"/>; <paramref name="host"/> is where Questionable's confirmation opens;
+    /// <paramref name="note"/> takes "Report copied" for the status bar.
     /// </summary>
-    public static float Draw(RunStops stops, StopCard card, float width, float frameHeight, bool interactive, string host, Action<string>? note)
+    public static float Draw(RunStops stops, StopCard card, float width, bool interactive, string host, Action<string>? note)
     {
         var flair = Theme.Flair;
         var plain = flair == Flair.Plain;
         var dl = ImGui.GetWindowDrawList();
         var min = ImGui.GetCursorScreenPos();
-        var max = min + new Vector2(width, MathF.Max(1f, frameHeight));
+        var max = new Vector2(min.X + width, min.Y);
         var s = Theme.Surface;
         var rounding = UiMetrics.Px(Theme.Spacing.CardRounding);
 
-        // The ground is opaque: the card floats over the panes.
-        dl.AddRectFilled(min, max, Theme.U32(s.Window with { W = 1f }), rounding);
-        if (plain)
-        {
-            dl.AddRect(min, max, Theme.U32(Theme.Glyphs.HighContrast ? s.StrongLine : s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
-        }
-        else
-        {
-            if (FlairRules.Card(flair) == CardFrame.Tonal)
-            {
-                dl.AddRectFilled(min, max, Theme.U32(Theme.Tones.Card with { W = 1f }), rounding);
-            }
-
-            Chrome.CardSurface(dl, min, max);
-        }
+        // The frame goes on channel 0 once the content (channel 1) has its height.
+        dl.ChannelsSplit(2);
+        dl.ChannelsSetCurrent(1);
 
         var padX = UiMetrics.Px(plain ? PlainPadXLogical : PadXLogical);
         var padY = UiMetrics.Px(plain ? PlainPadYLogical : PadYLogical);
@@ -194,6 +197,25 @@ internal static class StopCardView
         // The actions: the fixes, Stop all while a hand-off runs, and Copy report at the right end.
         var actionsTop = ImGui.GetCursorScreenPos().Y + UiMetrics.Px(RowGapLogical);
         var bottom = DrawActions(stops, card, left, right, actionsTop, interactive, host, note);
+        var height = MathF.Ceiling(bottom + padY - min.Y);
+        max.Y = min.Y + MathF.Max(1f, height);
+
+        // The ground is opaque: the card floats over the panes.
+        dl.ChannelsSetCurrent(0);
+        dl.AddRectFilled(min, max, Theme.U32(s.Window with { W = 1f }), rounding);
+        if (plain)
+        {
+            dl.AddRect(min, max, Theme.U32(Theme.Glyphs.HighContrast ? s.StrongLine : s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        }
+        else
+        {
+            if (FlairRules.Card(flair) == CardFrame.Tonal)
+            {
+                dl.AddRectFilled(min, max, Theme.U32(Theme.Tones.Card with { W = 1f }), rounding);
+            }
+
+            Chrome.CardSurface(dl, min, max);
+        }
 
         // The cue: one bar, beside the words above.
         var cue = Theme.U32(CueColor(card.Cue));
@@ -208,66 +230,110 @@ internal static class StopCardView
             dl.AddRectFilled(new Vector2(min.X + inset, min.Y + ends), new Vector2(min.X + inset + UiMetrics.Px(BarLogical), MathF.Max(min.Y + ends + 1f, max.Y - ends)), cue);
         }
 
-        return MathF.Ceiling(bottom + padY - min.Y);
+        dl.ChannelsMerge();
+        return height;
     }
 
     /// <summary>
-    /// The Todo overlay's top row: the cue bar, the title (semibold), × and the reason in the caption role under it,
-    /// within <paramref name="width"/>; the first fix as a row pill when it shows. Returns whether the row was hovered.
+    /// The Todo overlay's form, in the panel's title line between <paramref name="left"/> and <paramref name="right"/>
+    /// (a row of <paramref name="rowHeight"/> from <paramref name="top"/>, its text at <paramref name="textY"/>), so the
+    /// quest rows never move when a card comes or goes: the cue dot, the title outlined and cut to the room (the title
+    /// and the reason in full on hover) and, with <paramref name="buttons"/>, the first fix as an icon pill and × at the
+    /// right. Returns whether the pointer is on it.
     /// </summary>
-    public static bool DrawRow(RunStops stops, StopCard card, float width, string host)
+    public static bool DrawInline(RunStops stops, StopCard card, float left, float right, float top, float rowHeight, float textY, bool buttons, string host)
     {
         var dl = ImGui.GetWindowDrawList();
-        var s = Theme.Surface;
-        var start = ImGui.GetCursorScreenPos();
-        var bar = UiMetrics.Px(BarLogical);
-        var left = start.X + bar + UiMetrics.Px(GapLogical);
-        var side = ImGui.GetTextLineHeight();
-        var right = start.X + width;
+        var line = ImGui.GetTextLineHeight();
+        var gap = UiMetrics.Px(6f);
+        var dot = UiMetrics.Px(7f);
         var interactive = stops.Dock.Interactive(stops.Now, UiMetrics.ReduceMotion);
-        ImGui.SetCursorScreenPos(new Vector2(left, start.Y));
-        ImGui.PushClipRect(start, new Vector2(right - side - UiMetrics.Px(4f), start.Y + side + 2f), true);
-        Chrome.SemiboldText(card.Title, s.Text);
-        ImGui.PopClipRect();
-        ImGui.SetCursorScreenPos(new Vector2(right - side, start.Y));
-        if (CloseButton(side, interactive))
+        var x = right;
+        if (buttons && right - line - gap - dot >= left)
         {
-            stops.Dismiss();
-        }
-
-        ImGui.SetCursorScreenPos(new Vector2(left, start.Y + side + UiMetrics.Px(2f)));
-        BeginWrapped(left, MathF.Max(1f, right - left));
-        using (Typography.Caption())
-        using (Theme.PushText(s.TextSecondary))
-        {
-            ImGui.TextWrapped(card.Why);
-        }
-
-        EndWrapped();
-
-        var (first, _) = RunStopClassifier.Fixes(card.Reason);
-        if (stops.Shows(card, first) && first != StopFix.None)
-        {
-            ImGui.SetCursorScreenPos(new Vector2(left, ImGui.GetCursorScreenPos().Y + UiMetrics.Px(2f)));
-            var blocker = stops.Blocker(card, first);
-            if (Chrome.ActionPill("##stopRowFix", stops.FixIcon(card, first), stops.Label(first), PillTone.Normal, blocker is null, blocker ?? stops.Tooltip(card, first), PillLayout.Row) && interactive)
+            x -= line;
+            ImGui.SetCursorScreenPos(new Vector2(x, textY));
+            if (CloseButton(line, interactive))
             {
-                stops.Fix(card, first, host);
+                stops.Dismiss();
             }
+
+            var first = Fixes(stops, card)[0];
+            if (first.Shows)
+            {
+                var icon = stops.FixIcon(card, first.Fix);
+                var width = Chrome.ActionPillWidth(icon, null, PillLayout.Row);
+                if (x - gap - width - dot - gap >= left)
+                {
+                    x -= gap + width;
+                    ImGui.SetCursorScreenPos(new Vector2(x, MathF.Round(top + ((rowHeight - Chrome.PillHeight(PillLayout.Row)) * 0.5f))));
+                    var enabled = first.Blocker is null && !(first.Fix == StopFix.ReloadAndRetry && stops.Retrying);
+                    if (Chrome.ActionPill("##stopRowFix", icon, null, PillTone.Normal, enabled, null, PillLayout.Row) && interactive && enabled)
+                    {
+                        RunFix(stops, card, first.Fix, host);
+                    }
+
+                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                    {
+                        UiMetrics.Tooltip(stops.Label(first.Fix), first.Blocker ?? stops.Tooltip(card, first.Fix));
+                    }
+                }
+            }
+
+            x -= gap;
         }
 
-        var end = ImGui.GetCursorScreenPos().Y;
-        dl.AddRectFilled(new Vector2(start.X, start.Y + 1f), new Vector2(start.X + bar, MathF.Max(start.Y + 2f, end - ImGui.GetStyle().ItemSpacing.Y - 1f)), Theme.U32(CueColor(card.Cue)));
-        var hovered = ImGui.IsMouseHoveringRect(start, new Vector2(right, end));
-        ImGui.SetCursorScreenPos(new Vector2(start.X, end + UiMetrics.Px(4f)));
-        ImGui.Dummy(new Vector2(width, 1f));
+        dl.AddCircleFilled(new Vector2(left + (dot * 0.5f), textY + (line * 0.5f)), dot * 0.5f, Theme.U32(CueColor(card.Cue)));
+        var textMin = new Vector2(left + dot + gap, textY);
+        var room = x - textMin.X;
+        if (room >= UiMetrics.Px(24f))
+        {
+            Chrome.OutlinedEllipsisAt(dl, textMin, room, card.Title, Theme.U32(Theme.Surface.Text));
+        }
+
+        var hovered = ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(new Vector2(left, top), new Vector2(right, top + rowHeight));
+        if (hovered && ImGui.IsMouseHoveringRect(new Vector2(left, top), new Vector2(x, top + rowHeight)))
+        {
+            UiMetrics.Tooltip(card.Title, card.Why);
+        }
+
         return hovered;
+    }
+
+    /// <summary>One fix of the card: whether it shows and why it cannot act now (null when it can).</summary>
+    private readonly record struct FixState(StopFix Fix, bool Shows, string? Blocker);
+
+    /// <summary>The card's first and second fix, asked again at most every half second (and at once for another card or language).</summary>
+    private static ReadOnlySpan<FixState> Fixes(RunStops stops, StopCard card)
+    {
+        var now = stops.Now;
+        if (!ReferenceEquals(card, fixesCard) || fixesLanguage != Localization.Loc.Version || now - fixesAt >= 0.5 || now < fixesAt)
+        {
+            fixesCard = card;
+            fixesLanguage = Localization.Loc.Version;
+            fixesAt = now;
+            var (first, second) = RunStopClassifier.Fixes(card.Reason);
+            FixStates[0] = State(stops, card, first);
+            FixStates[1] = State(stops, card, second);
+        }
+
+        return FixStates;
+
+        static FixState State(RunStops stops, StopCard card, StopFix fix) =>
+            fix != StopFix.None && stops.Shows(card, fix) ? new FixState(fix, true, stops.Blocker(card, fix)) : new FixState(fix, false, null);
+    }
+
+    /// <summary>Runs a fix and asks the fixes again next frame (the fix may have changed what they can do).</summary>
+    private static void RunFix(RunStops stops, StopCard card, StopFix fix, string host)
+    {
+        stops.Fix(card, fix, host);
+        fixesAt = double.NegativeInfinity;
     }
 
     /// <summary>The fixes, Stop all and Copy report, flowing onto a second row when they do not fit; returns the bottom.</summary>
     private static float DrawActions(RunStops stops, StopCard card, float left, float right, float top, bool interactive, string host, Action<string>? note)
     {
-        var (first, second) = RunStopClassifier.Fixes(card.Reason);
+        var fixes = Fixes(stops, card);
         var reportPrimary = RunStopClassifier.ReportIsPrimary(card.Reason);
         var height = Chrome.PillHeight(PillLayout.Panel);
         var gap = UiMetrics.Px(GapLogical);
@@ -288,25 +354,32 @@ internal static class StopCardView
         }
 
         var primaryTaken = reportPrimary;
-        foreach (var fix in (ReadOnlySpan<StopFix>)[first, second])
+        foreach (var state in fixes)
         {
-            if (fix == StopFix.None || !stops.Shows(card, fix))
+            if (!state.Shows)
             {
                 continue;
             }
 
+            var fix = state.Fix;
             var label = stops.Label(fix);
             var icon = stops.FixIcon(card, fix);
-            var blocker = stops.Blocker(card, fix);
+            var blocker = state.Blocker;
             var busy = (fix == StopFix.ReloadAndRetry && stops.Retrying) || (fix == StopFix.KeepGoingAfterDuty && stops.WaitingForDuty);
             var tone = !primaryTaken && !busy ? PillTone.Primary : PillTone.Normal;
             primaryTaken = true;
             Place(Chrome.ActionPillWidth(icon, label, PillLayout.Panel));
             var enabled = blocker is null && !(fix == StopFix.ReloadAndRetry && stops.Retrying);
             ImGui.PushID((int)fix);
-            if (Chrome.ActionPill("##stopFix", icon, label, tone, enabled, enabled ? stops.Tooltip(card, fix) : blocker, PillLayout.Panel) && interactive)
+            if (Chrome.ActionPill("##stopFix", icon, label, tone, enabled, null, PillLayout.Panel) && interactive)
             {
-                stops.Fix(card, fix, host);
+                RunFix(stops, card, fix, host);
+            }
+
+            // Composed only on hover: the tooltip may name a quest.
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) && (enabled ? stops.Tooltip(card, fix) : blocker) is { Length: > 0 } tooltip)
+            {
+                UiMetrics.Tooltip(tooltip);
             }
 
             ImGui.PopID();
@@ -317,7 +390,7 @@ internal static class StopCardView
             }
         }
 
-        if (stops.AnyRunning && stops.StopAll is { } stopAll)
+        if (stops.AnyRunning && StopAll(stops) is { } stopAll)
         {
             Place(Chrome.ActionPillWidth(StopIcon, Strings.NeedsYouStopAll, PillLayout.Panel));
             if (Chrome.ActionPill("##stopAll", StopIcon, Strings.NeedsYouStopAll, PillTone.Danger, true, Strings.NeedsYouStopAllTooltip, PillLayout.Panel) && interactive)

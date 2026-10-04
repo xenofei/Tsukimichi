@@ -69,6 +69,10 @@ namespace Tsukimichi.Ui;
 /// finished quest's row stays a moment as a ghost (its moon fills, one soft halo, then it fades out where it stood);
 /// new rows fade in; and the rows' "…" buttons show only while the pointer or the keyboard is on the panel. Nothing
 /// moves under Reduce motion, and no beat plays in combat.
+///
+/// 1.18.0 (feature plan v7 A2): the "Why it stopped" card sits in the title's line too, in place of the Questionable
+/// status while it is up, so the rows never move for it; and while a hand-off other than Questionable runs, a Stop all
+/// stands where Questionable's Stop would.
 /// </summary>
 public sealed class TodoOverlay : Window, IDisposable
 {
@@ -383,7 +387,6 @@ public sealed class TodoOverlay : Window, IDisposable
             ? MotionMath.ApproachAsym(moreShown, reaching ? 1f : 0f, MotionMath.HoverRate, MotionMath.HoverOutRate, ImGui.GetIO().DeltaTime)
             : reaching ? 1f : 0f;
         DrawHeader(layout);
-        DrawStopRow(layout);
         if (!catalogReady)
         {
             Chrome.OutlinedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, Theme.Surface.TextSecondary);
@@ -629,7 +632,7 @@ public sealed class TodoOverlay : Window, IDisposable
         }
 
         var titleEnd = ImGui.GetItemRectMax().X;
-        DrawQuestionableStatus(start, titleEnd, textY, layout);
+        DrawHeaderStatus(start, titleEnd, textY, layout);
         if (!settings.TodoOverlayLocked)
         {
             // The "…" sits in the rows' button column; while locked nothing can be clicked, so it is not drawn.
@@ -699,13 +702,22 @@ public sealed class TodoOverlay : Window, IDisposable
     }
 
     /// <summary>
-    /// Questionable's live status in the title's line while it runs (1.12.0, U4: never a line of its own), outlined in
-    /// gold and cut to the room between the title and the button column, the whole text on hover, and a small Stop
-    /// left of the "…" (not while locked: the panel takes no clicks then). The panel is not widened for it.
+    /// The title's line after the title (1.12.0, U4: never a line of its own; the panel is not widened for it): the
+    /// "Why it stopped" card while one is up (1.18, A2: its cue dot, title, first fix and ×, so the quest rows never move
+    /// when it comes or goes), else Questionable's live status while it runs, outlined in gold and cut to the room, the
+    /// whole text on hover. Then a small Stop left of the "…": Questionable's while it runs, else Stop all while another
+    /// hand-off runs (a walk, a craft, an AutoDuty run), whatever the automation level shows. Not while locked: the
+    /// panel takes no clicks then.
     /// </summary>
-    private void DrawQuestionableStatus(Vector2 start, float titleEnd, float textY, in RowLayout layout)
+    private void DrawHeaderStatus(Vector2 start, float titleEnd, float textY, in RowLayout layout)
     {
-        if (Questionable?.PollStatusText() is not { } text)
+        var stops = RunStops;
+        var card = stops?.Dock.Current;
+        var questionable = Questionable;
+        var text = questionable?.PollStatusText();
+        var stopAll = text is null && stops is { AnyRunning: true } ? StopCardView.StopAll(stops) : null;
+
+        if (card is null && text is null && stopAll is null)
         {
             return;
         }
@@ -713,18 +725,19 @@ public sealed class TodoOverlay : Window, IDisposable
         var style = ImGui.GetStyle();
         var locked = settings.TodoOverlayLocked;
         var right = start.X + layout.RowWidth - (locked ? 0f : UiMetrics.MinTarget + style.ItemSpacing.X);
-        var stopWidth = locked ? 0f : ImGui.CalcTextSize(Strings.QuestionableStopShort).X + (style.FramePadding.X * 2f);
+        var showStop = !locked && (text is not null || stopAll is not null);
+        var stopLabel = text is not null ? Strings.QuestionableStopShort : Strings.ActionStopShort;
+        var stopWidth = showStop ? ImGui.CalcTextSize(stopLabel).X + (style.FramePadding.X * 2f) : 0f;
         var textX = titleEnd + style.ItemSpacing.X;
-        var room = right - textX - (locked ? 0f : stopWidth + style.ItemSpacing.X);
-        if (room < UiMetrics.Px(32f))
+        var room = right - textX - (showStop ? stopWidth + style.ItemSpacing.X : 0f);
+        if (card is not null && stops is not null)
         {
-            // No room beside the title: the Stop alone still shows Questionable is running.
-            room = 0f;
+            DrawStopCardInline(stops, card, textX, textX + MathF.Max(0f, room), start.Y, textY, layout.RowHeight, locked);
         }
-
-        var line = ImGui.GetTextLineHeight();
-        if (room > 0f)
+        else if (text is not null && room >= UiMetrics.Px(32f))
         {
+            // Without room beside the title, the Stop alone still shows Questionable is running.
+            var line = ImGui.GetTextLineHeight();
             var dl = ImGui.GetWindowDrawList();
             var textMin = new Vector2(textX, textY);
             Chrome.OutlinedEllipsisAt(dl, textMin, room, text, Theme.AccentU32);
@@ -734,7 +747,7 @@ public sealed class TodoOverlay : Window, IDisposable
             }
         }
 
-        if (locked || right - stopWidth < titleEnd)
+        if (!showStop || right - stopWidth < titleEnd)
         {
             return;
         }
@@ -742,8 +755,41 @@ public sealed class TodoOverlay : Window, IDisposable
         ImGui.SetCursorScreenPos(new Vector2(right - stopWidth, textY));
         using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(style.FramePadding.X, 0f)))
         {
-            Questionable.DrawStopSmallButton(QuestionableHost, "##questionableStop");
+            if (text is not null && questionable is not null)
+            {
+                questionable.DrawStopSmallButton(QuestionableHost, "##questionableStop");
+            }
+            else if (stopAll is not null)
+            {
+                if (ImGui.SmallButton(stopLabel + "##stopAll"))
+                {
+                    stopAll();
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(Strings.NeedsYouStopAllTooltip);
+                }
+            }
         }
+    }
+
+    /// <summary>
+    /// The "Why it stopped" card in the title's line between <paramref name="left"/> and <paramref name="right"/>,
+    /// fading with the card; under the pointer (and not locked) it holds the card's clock.
+    /// </summary>
+    private void DrawStopCardInline(Game.RunStops stops, Core.Companions.StopCard card, float left, float right, float top, float textY, float rowHeight, bool locked)
+    {
+        var dl = ImGui.GetWindowDrawList();
+        var start = dl.VtxBuffer.Size;
+        var hovered = StopCardView.DrawInline(stops, card, left, right, top, rowHeight, textY, buttons: !locked, QuestionableHost);
+        var alpha = stops.Dock.Alpha(stops.Now, UiMetrics.ReduceMotion);
+        if (alpha < 1f)
+        {
+            Chrome.FadeVertices(dl, start, alpha);
+        }
+
+        stops.NoteShown(hovered && !locked);
     }
 
     /// <summary>A section caption (caret, name and count) outlined in the secondary tone over a hairline; a click folds it.</summary>
@@ -1073,33 +1119,11 @@ public sealed class TodoOverlay : Window, IDisposable
     /// <summary>Opens the route window on the followed route; the route section's "+N more" line calls it.</summary>
     public Action? ShowFollowedRoute { get; set; }
 
-    /// <summary>The "Why it stopped" card (1.18, A2), shown as the panel's top row while it is up. Set by the plugin.</summary>
-    public Game.RunStops? RunStops { get; set; }
-
     /// <summary>
-    /// The "Why it stopped" card as the top row (spec-1.18 A2): its cue bar, title, ×, reason and first fix, fading with
-    /// the card. The row is a place the panel takes the pointer, so it is clickable while the panel passes clicks.
+    /// The "Why it stopped" card (1.18, A2), shown in the title's line while it is up, and Stop all there while a
+    /// hand-off other than Questionable runs. Set by the plugin.
     /// </summary>
-    private void DrawStopRow(in RowLayout layout)
-    {
-        if (RunStops is not { } stops || stops.Dock.Current is not { } card)
-        {
-            return;
-        }
-
-        var dl = ImGui.GetWindowDrawList();
-        var start = dl.VtxBuffer.Size;
-        var top = ImGui.GetCursorScreenPos();
-        var hovered = StopCardView.DrawRow(stops, card, layout.RowWidth, QuestionableHost);
-        targets.Add(new ScreenRect(top, new Vector2(top.X + layout.RowWidth, ImGui.GetCursorScreenPos().Y)));
-        var alpha = stops.Dock.Alpha(stops.Now, UiMetrics.ReduceMotion);
-        if (alpha < 1f)
-        {
-            Chrome.FadeVertices(dl, start, alpha);
-        }
-
-        stops.NoteShown(hovered);
-    }
+    public Game.RunStops? RunStops { get; set; }
 
     private void OnSessionChanged() => dirty = true;
 

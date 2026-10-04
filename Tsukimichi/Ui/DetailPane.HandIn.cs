@@ -188,8 +188,10 @@ public sealed partial class DetailPane
 
         // The two hand-offs are pills like the action bar's (1.10): labelled while the row keeps room for the item's
         // name, else the icons alone (still pills), their labels in the tooltips. Each shows only while the automation
-        // level does (1.18, A10); Craft's slot is sized for its Stop too (A7), so nothing moves when it turns.
-        var showCraft = AutomationGate.Shows(AutomationButtons.Artisan);
+        // level does (1.18, A10); Craft's slot is sized for its Stop too (A7), so nothing moves when it turns. A craft
+        // Tsukimichi handed Artisan keeps its slot while it runs, holding only the Stop, even with Craft above the level.
+        var stopOnly = !AutomationGate.Shows(AutomationButtons.Artisan) && Artisan is { HandOffClaimed: true };
+        var showCraft = AutomationGate.Shows(AutomationButtons.Artisan) || stopOnly;
         var showGather = AutomationGate.Shows(AutomationButtons.Gather);
         var labelled = HandInPillsLabelled(iconSize, showCraft, showGather);
         var craftWidth = showCraft ? CraftSlotWidth(labelled) : 0f;
@@ -235,7 +237,7 @@ public sealed partial class DetailPane
             ImGui.SetCursorScreenPos(new Vector2(MathF.Max(ImGui.GetCursorScreenPos().X, cardRight - buttons), MathF.Max(ImGui.GetCursorScreenPos().Y, start.Y)));
             if (showCraft)
             {
-                DrawCraftButton(session, row, artisanLoaded, artisanBusy, labelled, craftWidth);
+                DrawCraftButton(session, row, artisanLoaded, artisanBusy, labelled, craftWidth, stopOnly);
             }
 
             if (showGather)
@@ -324,12 +326,20 @@ public sealed partial class DetailPane
     /// <summary>
     /// Craft with Artisan, or, while Artisan crafts the run this row handed it (1.18, A7), a labelled Stop in the same
     /// slot that ends it through Artisan's IPC (<c>SetEnduranceStatus(false)</c>; Artisan finishes the craft in hand).
-    /// The pill keeps <paramref name="slotWidth"/> either way, so Gather beside it never moves.
+    /// The pill keeps <paramref name="slotWidth"/> either way, so Gather beside it never moves. With
+    /// <paramref name="stopOnly"/> (Craft above the automation level, its run still under way) only the Stop draws.
     /// </summary>
-    private void DrawCraftButton(SessionState session, HandInRow row, bool artisanLoaded, bool artisanBusy, bool labelled, float slotWidth)
+    private void DrawCraftButton(SessionState session, HandInRow row, bool artisanLoaded, bool artisanBusy, bool labelled, float slotWidth, bool stopOnly)
     {
         var start = ImGui.GetCursorScreenPos();
         var stop = Artisan is { HandOffClaimed: true } claimed && HandInActions.CraftShowsStop(row.Item, artisanBusy, claimed.ClaimedRecipeId);
+        if (!stop && stopOnly)
+        {
+            // Craft is above the automation level: the other rows keep the empty slot, so nothing moves.
+            ImGui.Dummy(new Vector2(slotWidth, Chrome.ActionPillHeight));
+            return;
+        }
+
         if (stop)
         {
             var stopPressed = Chrome.ActionPill("##craft", StopIcon, labelled ? Strings.ActionStopShort : null, PillTone.Danger, true);

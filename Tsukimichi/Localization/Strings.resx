@@ -11297,6 +11297,18 @@
     <value>Questionable will stop at {0}.</value>
     <comment>{0} = the time ("21:30").</comment>
   </data>
+  <data name="QuestionableStopArmedAtTomorrowFormat" xml:space="preserve">
+    <value>Questionable will stop tomorrow at {0}.</value>
+    <comment>{0} = the time ("02:00"), which has already passed today.</comment>
+  </data>
+  <data name="QuestionableStopAtTodayFormat" xml:space="preserve">
+    <value>Today at {0}</value>
+    <comment>Under Stop later's time field: when the typed time is. {0} = the time ("21:30").</comment>
+  </data>
+  <data name="QuestionableStopAtTomorrowFormat" xml:space="preserve">
+    <value>Tomorrow at {0}</value>
+    <comment>Under Stop later's time field, for a time already passed today. {0} = the time ("02:00").</comment>
+  </data>
   <data name="QuestionableStatusThenStops" xml:space="preserve">
     <value>then stops</value>
     <comment>Appended to the live status of a single-quest run.</comment>

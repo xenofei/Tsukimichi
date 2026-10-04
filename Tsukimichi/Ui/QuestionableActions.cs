@@ -527,11 +527,16 @@ public sealed partial class QuestionableActions
         }
 
         // The first start links About automation (1.18, A10): the rules and where players draw the line, never a promise.
+        // The modal would sit over the window it opens and block it, so the start is set aside first: nothing starts,
+        // and the player presses Start again once they have read it.
         if (pending == PendingKind.Start && OpenAboutAutomation is { } openAbout)
         {
             if (ImGui.SmallButton(Strings.AboutAutomationTitle))
             {
+                pending = PendingKind.None;
+                ImGui.CloseCurrentPopup();
                 openAbout();
+                return;
             }
 
             ImGui.Spacing();

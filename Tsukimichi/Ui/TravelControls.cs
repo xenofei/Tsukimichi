@@ -12,7 +12,10 @@ namespace Tsukimichi.Ui;
 /// </summary>
 internal static class TravelControls
 {
-    /// <summary>Teleport, then Walk to giver and Go to giver (one Stop while moving), as menu items; each only while its automation level shows it.</summary>
+    /// <summary>
+    /// Teleport, then Walk to giver and Go to giver (one Stop while moving), as menu items; each only while its
+    /// automation level shows it, except Stop, which shows while the character moves whatever the level.
+    /// </summary>
     public static void MenuItems(GameLinks links, QuestRecord quest, string teleportLabel)
     {
         if (links.TeleportShown)
@@ -29,7 +32,8 @@ internal static class TravelControls
             }
         }
 
-        if (links.IsTraveling && (links.WalkShown || links.GoToShown))
+        // A trip under way can always be stopped, even after the automation level was lowered under it.
+        if (links.IsTraveling)
         {
             if (ImGui.MenuItem(Strings.TravelStop))
             {

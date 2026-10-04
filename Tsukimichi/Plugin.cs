@@ -617,6 +617,24 @@ public sealed partial class Plugin : IDalamudPlugin
     private void DrawDutyFinderPanel() => dutyFinderPanel?.Draw();
 
     /// <summary>
+    /// Logging out (or switching characters) ends what the "Why it stopped" card and the "Needs you" alerts were about:
+    /// the card goes and every alert clears, so none is shown, or copied as a report, for the next character.
+    /// </summary>
+    private void OnLogoutClearStops(int type, int code)
+    {
+        if (runStops is not { } stops)
+        {
+            return;
+        }
+
+        stops.Dismiss();
+        foreach (var kind in Enum.GetValues<Core.Companions.NeedsYouKind>())
+        {
+            stops.NeedsYou.Clear(kind, stops.Now);
+        }
+    }
+
+    /// <summary>
     /// The one-time move of the per-character settings 1.7 kept in Settings (spoiler overrides, notices, open
     /// disclosures) into <c>user/characters.json</c> (1.8.0). They read from the file at once; Settings is emptied once
     /// the file holds them, and a failed save leaves them there for the next load. Running in two clients at once, or
@@ -1208,6 +1226,7 @@ public sealed partial class Plugin : IDalamudPlugin
             mainWindow.AttachRunStops(runStops);
             needsYouOverlay = new NeedsYouOverlay(runStops);
             PluginInterface.UiBuilder.Draw += needsYouOverlay.Draw;
+            ClientState.Logout += OnLogoutClearStops;
             mainWindow.AttachDiagnostics(diagnostics);
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
@@ -1640,6 +1659,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("run watch", () => runWatch?.Dispose());
         Unwind("run stops", () =>
         {
+            ClientState.Logout -= OnLogoutClearStops;
             if (needsYouOverlay is not null)
             {
                 PluginInterface.UiBuilder.Draw -= needsYouOverlay.Draw;
