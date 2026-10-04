@@ -345,7 +345,7 @@
       ],
       "lightMeasure": "chroma",
       "flags": [
-        {"kind": "pair", "a": "locked-out", "b": "not-checked", "d": 9.91, "mode": "machado-prot", "ground": "ishgard-snow", "tier": "hero-96-128", "level": "hard"}
+        {"kind": "pair", "a": "locked-out", "b": "not-checked", "d": 9.91, "mode": "machado-prot", "ground": "ishgard-snow", "tier": "hero-96-128", "px": 16, "level": "hard"}
       ]
     },
     "medallion": {

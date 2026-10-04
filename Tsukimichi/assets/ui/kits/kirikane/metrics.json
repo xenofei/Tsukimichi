@@ -467,7 +467,7 @@
       ],
       "lightMeasure": "chroma",
       "flags": [
-        {"kind": "pair", "a": "blocked", "b": "locked-out", "d": 10.88, "mode": "machado-prot", "ground": "night", "tier": "row", "level": "close"}
+        {"kind": "pair", "a": "blocked", "b": "locked-out", "d": 10.88, "mode": "machado-prot", "ground": "night", "tier": "row", "px": 16, "level": "close"}
       ]
     },
     "sumi-to-kinpaku": {
@@ -629,7 +629,7 @@
     }
   },
   "ornaments": {
-    "note": "The kit's Decoration ornament sprites (ornaments.png): the size rule, the strip's fit, and the leaf's contrast on each dark palette's window (a light palette and high contrast draw the palette's own ornament).",
+    "note": "The kit's Decoration ornament sprites (ornaments.png): the size rule, the strip's fit, and every sprite's contrast (sigil, sigil-small, lozenge and corner, each at its largest and smallest size) on every dark window: Night, Dawn, Kugane Lacquer, and Follow Dalamud on a dark host (#0F0F0F, Dalamud's dark styles' window background, and #141414, that window over a dark scene). A light palette and high contrast draw the palette's own ornament.",
     "gates": [
       {"gate": "Ornament size rule: sigil", "tier": "ornaments", "value": "13-32", "bar": "13-", "detail": "sigil from 13 px, sigil-small 10-12 px, lozenge below 10 px, corner from 15 px", "pass": true},
       {"gate": "Ornament size rule: sigil-small", "tier": "ornaments", "value": "10-12", "bar": "10-12", "detail": "sigil from 13 px, sigil-small 10-12 px, lozenge below 10 px, corner from 15 px", "pass": true},
@@ -637,9 +637,46 @@
       {"gate": "Ornament size rule: corner", "tier": "ornaments", "value": "15-32", "bar": "15-", "detail": "sigil from 13 px, sigil-small 10-12 px, lozenge below 10 px, corner from 15 px", "pass": true},
       {"gate": "Fit ornaments: no bleed", "tier": "ornaments", "value": 0, "bar": 0, "detail": "max alpha outside every cell", "pass": true},
       {"gate": "Fit ornaments: not cut", "tier": "ornaments", "value": 193, "bar": 254, "detail": "max alpha on a cell edge: lozenge at 3", "pass": true},
-      {"gate": "Ornament contrast on night", "tier": "ornaments", "value": 9.76, "bar": 3.0, "detail": "leaf #DEB863 on #0F1424", "pass": true},
-      {"gate": "Ornament contrast on dawn", "tier": "ornaments", "value": 9.48, "bar": 3.0, "detail": "leaf #DEB863 on #1A1526", "pass": true},
-      {"gate": "Ornament contrast on kugane-lacquer", "tier": "ornaments", "value": 10.03, "bar": 3.0, "detail": "leaf #DEB863 on #16100F", "pass": true}
+      {"gate": "Ornament contrast: sigil 13 px on night", "tier": "ornaments", "value": 9.71, "bar": 3.0, "detail": "ink #DEB862 on #0F1424", "pass": true},
+      {"gate": "Ornament contrast: sigil 13 px on dawn", "tier": "ornaments", "value": 9.44, "bar": 3.0, "detail": "ink #DEB862 on #1A1526", "pass": true},
+      {"gate": "Ornament contrast: sigil 13 px on kugane-lacquer", "tier": "ornaments", "value": 9.98, "bar": 3.0, "detail": "ink #DEB862 on #16100F", "pass": true},
+      {"gate": "Ornament contrast: sigil 13 px on follow-dalamud", "tier": "ornaments", "value": 10.16, "bar": 3.0, "detail": "ink #DEB862 on #0F0F0F", "pass": true},
+      {"gate": "Ornament contrast: sigil 13 px on follow-dalamud-lifted", "tier": "ornaments", "value": 9.76, "bar": 3.0, "detail": "ink #DEB862 on #141414", "pass": true},
+      {"gate": "Ornament contrast: sigil 32 px on night", "tier": "ornaments", "value": 9.76, "bar": 3.0, "detail": "ink #DEB863 on #0F1424", "pass": true},
+      {"gate": "Ornament contrast: sigil 32 px on dawn", "tier": "ornaments", "value": 9.48, "bar": 3.0, "detail": "ink #DEB863 on #1A1526", "pass": true},
+      {"gate": "Ornament contrast: sigil 32 px on kugane-lacquer", "tier": "ornaments", "value": 10.03, "bar": 3.0, "detail": "ink #DEB863 on #16100F", "pass": true},
+      {"gate": "Ornament contrast: sigil 32 px on follow-dalamud", "tier": "ornaments", "value": 10.21, "bar": 3.0, "detail": "ink #DEB863 on #0F0F0F", "pass": true},
+      {"gate": "Ornament contrast: sigil 32 px on follow-dalamud-lifted", "tier": "ornaments", "value": 9.81, "bar": 3.0, "detail": "ink #DEB863 on #141414", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 10 px on night", "tier": "ornaments", "value": 9.71, "bar": 3.0, "detail": "ink #DEB862 on #0F1424", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 10 px on dawn", "tier": "ornaments", "value": 9.44, "bar": 3.0, "detail": "ink #DEB862 on #1A1526", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 10 px on kugane-lacquer", "tier": "ornaments", "value": 9.98, "bar": 3.0, "detail": "ink #DEB862 on #16100F", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 10 px on follow-dalamud", "tier": "ornaments", "value": 10.16, "bar": 3.0, "detail": "ink #DEB862 on #0F0F0F", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 10 px on follow-dalamud-lifted", "tier": "ornaments", "value": 9.76, "bar": 3.0, "detail": "ink #DEB862 on #141414", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 12 px on night", "tier": "ornaments", "value": 9.69, "bar": 3.0, "detail": "ink #DEB862 on #0F1424", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 12 px on dawn", "tier": "ornaments", "value": 9.41, "bar": 3.0, "detail": "ink #DEB862 on #1A1526", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 12 px on kugane-lacquer", "tier": "ornaments", "value": 9.95, "bar": 3.0, "detail": "ink #DEB862 on #16100F", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 12 px on follow-dalamud", "tier": "ornaments", "value": 10.13, "bar": 3.0, "detail": "ink #DEB862 on #0F0F0F", "pass": true},
+      {"gate": "Ornament contrast: sigil-small 12 px on follow-dalamud-lifted", "tier": "ornaments", "value": 9.74, "bar": 3.0, "detail": "ink #DEB862 on #141414", "pass": true},
+      {"gate": "Ornament contrast: lozenge 2 px on night", "tier": "ornaments", "value": 9.62, "bar": 3.0, "detail": "ink #DDB762 on #0F1424", "pass": true},
+      {"gate": "Ornament contrast: lozenge 2 px on dawn", "tier": "ornaments", "value": 9.35, "bar": 3.0, "detail": "ink #DDB762 on #1A1526", "pass": true},
+      {"gate": "Ornament contrast: lozenge 2 px on kugane-lacquer", "tier": "ornaments", "value": 9.89, "bar": 3.0, "detail": "ink #DDB762 on #16100F", "pass": true},
+      {"gate": "Ornament contrast: lozenge 2 px on follow-dalamud", "tier": "ornaments", "value": 10.06, "bar": 3.0, "detail": "ink #DDB762 on #0F0F0F", "pass": true},
+      {"gate": "Ornament contrast: lozenge 2 px on follow-dalamud-lifted", "tier": "ornaments", "value": 9.67, "bar": 3.0, "detail": "ink #DDB762 on #141414", "pass": true},
+      {"gate": "Ornament contrast: lozenge 6 px on night", "tier": "ornaments", "value": 9.72, "bar": 3.0, "detail": "ink #DEB862 on #0F1424", "pass": true},
+      {"gate": "Ornament contrast: lozenge 6 px on dawn", "tier": "ornaments", "value": 9.45, "bar": 3.0, "detail": "ink #DEB862 on #1A1526", "pass": true},
+      {"gate": "Ornament contrast: lozenge 6 px on kugane-lacquer", "tier": "ornaments", "value": 9.99, "bar": 3.0, "detail": "ink #DEB862 on #16100F", "pass": true},
+      {"gate": "Ornament contrast: lozenge 6 px on follow-dalamud", "tier": "ornaments", "value": 10.17, "bar": 3.0, "detail": "ink #DEB862 on #0F0F0F", "pass": true},
+      {"gate": "Ornament contrast: lozenge 6 px on follow-dalamud-lifted", "tier": "ornaments", "value": 9.77, "bar": 3.0, "detail": "ink #DEB862 on #141414", "pass": true},
+      {"gate": "Ornament contrast: corner 15 px on night", "tier": "ornaments", "value": 9.77, "bar": 3.0, "detail": "ink #DEB862 on #0F1424", "pass": true},
+      {"gate": "Ornament contrast: corner 15 px on dawn", "tier": "ornaments", "value": 9.5, "bar": 3.0, "detail": "ink #DEB862 on #1A1526", "pass": true},
+      {"gate": "Ornament contrast: corner 15 px on kugane-lacquer", "tier": "ornaments", "value": 10.04, "bar": 3.0, "detail": "ink #DEB862 on #16100F", "pass": true},
+      {"gate": "Ornament contrast: corner 15 px on follow-dalamud", "tier": "ornaments", "value": 10.22, "bar": 3.0, "detail": "ink #DEB862 on #0F0F0F", "pass": true},
+      {"gate": "Ornament contrast: corner 15 px on follow-dalamud-lifted", "tier": "ornaments", "value": 9.82, "bar": 3.0, "detail": "ink #DEB862 on #141414", "pass": true},
+      {"gate": "Ornament contrast: corner 32 px on night", "tier": "ornaments", "value": 9.77, "bar": 3.0, "detail": "ink #DEB963 on #0F1424", "pass": true},
+      {"gate": "Ornament contrast: corner 32 px on dawn", "tier": "ornaments", "value": 9.5, "bar": 3.0, "detail": "ink #DEB963 on #1A1526", "pass": true},
+      {"gate": "Ornament contrast: corner 32 px on kugane-lacquer", "tier": "ornaments", "value": 10.04, "bar": 3.0, "detail": "ink #DEB963 on #16100F", "pass": true},
+      {"gate": "Ornament contrast: corner 32 px on follow-dalamud", "tier": "ornaments", "value": 10.22, "bar": 3.0, "detail": "ink #DEB963 on #0F0F0F", "pass": true},
+      {"gate": "Ornament contrast: corner 32 px on follow-dalamud-lifted", "tier": "ornaments", "value": 9.82, "bar": 3.0, "detail": "ink #DEB963 on #141414", "pass": true}
     ]
   }
 }

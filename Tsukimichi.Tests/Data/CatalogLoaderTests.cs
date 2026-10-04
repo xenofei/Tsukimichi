@@ -96,6 +96,21 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     }
 
     [GameDataFact]
+    public void Quests_that_look_now_shadows_are_the_known_ones()
+    {
+        // 1.17 made "look" a reserved first word (/tsuki look <code>), so "/tsuki look ..." no longer searches quest
+        // names. Pinned so a patch adding a quest named "Look ..." is noticed; "/tsuki search look ..." still finds them.
+        // "Look to the Stars" is the one today: "/tsuki look to the stars" now reads as an unreadable share code.
+        var shadowed = Catalog.All
+            .Select(static q => q.Name)
+            .Where(static n => Tsukimichi.Core.Text.CommandLine.Parse(n).Kind == Tsukimichi.Core.Text.Subcommand.Look)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        output.WriteLine($"quests /tsuki look shadows: {(shadowed.Length == 0 ? "none" : string.Join(" | ", shadowed))}");
+        Assert.Equal(["Look to the Stars"], shadowed);
+    }
+
+    [GameDataFact]
     public void Maps_every_named_quest()
     {
         output.WriteLine($"CatalogMapper.Map: {Catalog.Count} quests in {fixture.MapElapsed.TotalMilliseconds:F0} ms (excludes GameData construction)");

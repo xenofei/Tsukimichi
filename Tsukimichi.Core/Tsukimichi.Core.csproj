@@ -7,4 +7,9 @@
     <RootNamespace>Tsukimichi.Core</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Test-only seams (e.g. ShareCode.Apply's stand-in Offered flags) stay internal. -->
+    <InternalsVisibleTo Include="Tsukimichi.Tests" />
+  </ItemGroup>
+
 </Project>

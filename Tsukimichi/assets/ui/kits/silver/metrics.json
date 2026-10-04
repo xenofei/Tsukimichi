@@ -223,8 +223,8 @@
       ],
       "lightMeasure": "chroma",
       "flags": [
-        {"kind": "ready", "a": "ready", "b": "completed", "d": 1.23, "mode": "grey", "ground": "night", "tier": "hero-96-128", "level": "close"},
-        {"kind": "completed", "a": "completed", "b": "ready", "d": 0.81, "mode": "grey", "ground": "night", "tier": "hero-96-128", "level": "close"}
+        {"kind": "ready", "a": "ready", "b": "completed", "d": 1.23, "mode": "grey", "ground": "night", "tier": "hero-96-128", "px": 16, "level": "close"},
+        {"kind": "completed", "a": "completed", "b": "ready", "d": 0.81, "mode": "grey", "ground": "night", "tier": "hero-96-128", "px": 16, "level": "close"}
       ]
     },
     "ishgard-glass": {
@@ -470,7 +470,7 @@
       ],
       "lightMeasure": "chroma",
       "flags": [
-        {"kind": "pair", "a": "blocked", "b": "locked-out", "d": 10.92, "mode": "machado-prot", "ground": "ishgard-snow", "tier": "row", "level": "close"}
+        {"kind": "pair", "a": "blocked", "b": "locked-out", "d": 10.92, "mode": "machado-prot", "ground": "ishgard-snow", "tier": "row", "px": 16, "level": "close"}
       ]
     },
     "sumi-to-kinpaku": {

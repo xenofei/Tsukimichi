@@ -382,6 +382,9 @@ public static partial class Strings
     public static string StopDoneFormat => Loc.Get("StopDoneFormat");
     /// <summary>{0} = what could not be asked to stop, joined by <see cref="CommandListSeparator"/>.</summary>
     public static string StopFailedFormat => Loc.Get("StopFailedFormat");
+
+    // /tsuki look <code> (1.17, spec-1.17 §C2): an unreadable code says so in chat and opens nothing
+    public static string CommandLookUnreadable => Loc.Get("CommandLookUnreadable");
     /// <summary>{0} = the command Questionable runs after a stop, {1} = seconds to confirm.</summary>
     public static string StopAskQuestionableFormat => Loc.Get("StopAskQuestionableFormat");
     /// <summary>{0} = seconds to confirm.</summary>

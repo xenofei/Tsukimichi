@@ -487,7 +487,30 @@ public sealed class ThemeAtlasTests
 
         using var json = Json(folder, "metrics.json");
         var gates = json.RootElement.GetProperty("ornaments").GetProperty("gates").EnumerateArray().ToArray();
-        Assert.Contains(gates, static g => g.GetProperty("gate").GetString() == "Ornament contrast on kugane-lacquer");
+
+        // Every sprite, at its largest and smallest size, on every dark window: Night, Dawn, Kugane Lacquer and the two
+        // Follow Dalamud host references (#0F0F0F and #141414; tools/themes/build_themes.py ORNAMENT_HOSTS).
+        string[] grounds = ["night", "dawn", "kugane-lacquer", "follow-dalamud", "follow-dalamud-lifted"];
+        foreach (var sprite in new[] { Core.Ui.Themes.KitOrnament.Sigil, Core.Ui.Themes.KitOrnament.SigilSmall, Core.Ui.Themes.KitOrnament.Lozenge, Core.Ui.Themes.KitOrnament.Corner })
+        {
+            var key = sprite switch
+            {
+                Core.Ui.Themes.KitOrnament.Sigil => "sigil",
+                Core.Ui.Themes.KitOrnament.SigilSmall => "sigil-small",
+                Core.Ui.Themes.KitOrnament.Lozenge => "lozenge",
+                _ => "corner",
+            };
+            var (min, max) = layout.Range(sprite);
+            foreach (var px in new[] { min, max })
+            {
+                foreach (var ground in grounds)
+                {
+                    var gate = $"Ornament contrast: {key} {px} px on {ground}";
+                    Assert.Contains(gates, g => g.GetProperty("gate").GetString() == gate);
+                }
+            }
+        }
+
         Assert.All(gates, static g => Assert.True(g.GetProperty("pass").GetBoolean(), g.ToString()));
         foreach (var g in gates.Where(static g => g.GetProperty("gate").GetString()!.StartsWith("Ornament contrast", StringComparison.Ordinal)))
         {

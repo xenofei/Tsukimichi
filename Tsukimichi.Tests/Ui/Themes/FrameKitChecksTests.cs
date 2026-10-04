@@ -48,13 +48,58 @@ public sealed class FrameKitChecksTests
                         "ready" => KitFlagKind.ReadyLead,
                         _ => KitFlagKind.CompletedRecedes,
                     };
-                    expected.Add(new KitFlag(kit.Id, Sets[face.Name], kind, a, b, (float)f.GetProperty("d").GetDouble(), f.GetProperty("level").GetString() == "hard", f.GetProperty("mode").GetString()!.StartsWith("machado", StringComparison.Ordinal)));
+                    expected.Add(new KitFlag(kit.Id, Sets[face.Name], kind, a, b, (float)f.GetProperty("d").GetDouble(), f.GetProperty("level").GetString() == "hard", f.GetProperty("mode").GetString()!.StartsWith("machado", StringComparison.Ordinal), f.GetProperty("px").GetInt32()));
                 }
             }
         }
 
         Assert.NotEmpty(expected);
         Assert.Equal(expected, FrameKitChecks.All);
+    }
+
+    [Fact]
+    public void Every_pair_a_kits_G1_or_G1c_gate_misses_is_flagged_at_16_and_20_px()
+    {
+        // The Frames row says in words what the kit's own gates record: each pair a missed G1 (16 and 20 px) or G1c gate
+        // names is one of that pairing's compiled flags, so the row never stays quiet about a recorded miss.
+        string[] shortNames = ["Rdy", "RoJ", "Jrn", "Blk", "Done", "Comp", "Lock", "NotC"];
+        var checkedSizes = new HashSet<int>();
+        foreach (var folder in Directory.GetDirectories(Path.Combine(OrnamentLayoutTests.AssetsDir(), "kits")))
+        {
+            Assert.True(FrameKits.TryGet(Path.GetFileName(folder), out var kit));
+            using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(folder, "metrics.json")));
+            foreach (var face in json.RootElement.GetProperty("faces").EnumerateObject())
+            {
+                if (face.Value.GetProperty("own").GetBoolean())
+                {
+                    continue;
+                }
+
+                foreach (var gate in face.Value.GetProperty("gates").EnumerateArray())
+                {
+                    var name = gate.GetProperty("gate").GetString()!;
+                    if (!name.StartsWith("G1 weakest pair", StringComparison.Ordinal) && !name.StartsWith("G1c weakest pair", StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    checkedSizes.Add(name.Contains(" 20 px", StringComparison.Ordinal) ? 20 : 16);
+                    if (gate.GetProperty("pass").GetBoolean())
+                    {
+                        continue;
+                    }
+
+                    var states = gate.GetProperty("detail").GetString()!.Split('-');
+                    var a = AppearanceStates.All[Array.IndexOf(shortNames, states[0])];
+                    var b = AppearanceStates.All[Array.IndexOf(shortNames, states[1])];
+                    Assert.True(
+                        FrameKitChecks.All.Any(f => f.Kit == kit.Id && f.Set == Sets[face.Name] && f.Kind == KitFlagKind.Pair && f.A == a && f.B == b),
+                        $"{kit.Key} {face.Name}: '{name}' misses {a}-{b}, but the Frames row has no flag for it");
+                }
+            }
+        }
+
+        Assert.Equal([16, 20], checkedSizes.Order());
     }
 
     [Fact]
@@ -66,10 +111,14 @@ public sealed class FrameKitChecksTests
             switch (flag.Kind)
             {
                 case KitFlagKind.Pair:
-                    Assert.True(flag.Value < (flag.ColourVision ? 11.0 : 12.0) - 0.04, name);
+                    // G1 and G1c at 16 px; at 20 px only G1 (greyscale and deuteranopia on Night, bar 16).
+                    Assert.Contains(flag.Px, new[] { 16, 20 });
+                    Assert.False(flag.Px == 20 && flag.ColourVision, name);
+                    Assert.True(flag.Value < (flag.Px == 20 ? 16.0 : flag.ColourVision ? 11.0 : 12.0) - 0.04, name);
                     Assert.Equal(flag.Value < 9.95, flag.Hard);
                     break;
                 case KitFlagKind.ReadyLead:
+                    Assert.Equal(16, flag.Px);
                     Assert.Equal(QuestState.Ready, flag.A);
                     Assert.True(flag.Value < 1.25, name);
                     break;

@@ -213,6 +213,42 @@ public sealed class DawnKuganeTests
         Assert.Equal(WashTokens.ReadyHaloAlpha, UiPalettes.IshgardSnow.Scene.Washes.ReadyHalo.W);
     }
 
+    [Theory]
+    [InlineData("dawn")]
+    [InlineData("kugane-lacquer")]
+    public void Ready_halo_draws_the_halo_the_build_gated_on_that_palette(string ground)
+    {
+        // The build's G2D gate (tools/themes/build_themes.py, dark_halo_for) records in every set's metrics.json the least
+        // halo each dark palette must draw: dark.halo[palette] names one of dark.halos ("default" .45, "raised" .60), or
+        // "none" for no halo (alpha 0). The palette draws exactly that halo, so a rebuild that raises it fails here until
+        // UiPalettes follows. metrics.json is not packaged, so it is read from the repo's assets.
+        var drawn = ground == "dawn" ? UiPalettes.DawnReadyHaloAlpha : UiPalettes.KuganeReadyHaloAlpha;
+        var palette = ground == "dawn" ? Dawn : Kugane;
+        var sets = Directory.GetDirectories(Path.Combine(OrnamentLayoutTests.AssetsDir(), "themes"));
+        Assert.NotEmpty(sets);
+        foreach (var folder in sets)
+        {
+            using var metrics = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(folder, "metrics.json")));
+            var dark = metrics.RootElement.GetProperty("dark");
+            var name = dark.GetProperty("halo").GetProperty(ground).GetString();
+            float gated;
+            if (name == "none")
+            {
+                gated = 0f;
+            }
+            else
+            {
+                Assert.True(dark.GetProperty("halos").TryGetProperty(name!, out var halo), $"{folder}: dark.halos has no '{name}'");
+                Assert.Equal("#F2D27A", halo.GetProperty("color").GetString());
+                Assert.Equal(3, halo.GetProperty("radiusPx").GetInt32());
+                gated = halo.GetProperty("alpha").GetSingle();
+            }
+
+            Assert.True(MathF.Abs(gated - drawn) < 1e-4f, $"{Path.GetFileName(folder)}: the build gated the '{name}' halo ({gated}) on {ground}; UiPalettes draws {drawn}");
+            Assert.True(MathF.Abs(gated - palette.Scene.Washes.ReadyHalo.W) < 1e-4f, $"{ground}: the scene's halo alpha");
+        }
+    }
+
     [Fact]
     public void Designed_quiet_tones_are_the_spec_hexes()
     {
