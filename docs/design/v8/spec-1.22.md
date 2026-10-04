@@ -268,7 +268,7 @@ No treatment adds a light of its own. Quiet would show the Classic painting grad
 
 Their files are in `art/optionb/`: `<key>-base.png`, `<key>-masks.npz`, `<key>.json`, `<key>-<theme>.png` and `ship/<key>-<theme>.jpg`. The painters are in `art/src/paint_option_b2.py`.
 
-The backfill, 1.18.0 to 1.14.0, is made on the same recipe by `art/src/paint_option_b3.py`. Its briefs are under "Backfill (decision 2)" below, and its supervision is under "Backfill 1.14–1.18" in the Approval record, where round 2 returned CHANGES (an Orrery Major and five treatment Minors) and round 3 is still open.
+The backfill, 1.18.0 to 1.14.0, is made on the same recipe by `art/src/paint_option_b3.py`. Its briefs are under "Backfill (decision 2)" below, and its supervision is under "Backfill 1.14–1.18" in the Approval record, with every round to date. The moons of 1.22.0 and 1.19.0 were repainted in round 3 under the moon rule in the recipe.
 - **Runs you can trust** (`runs-b`): a ferry on a guide rope under a veiled near-full moon.
 - **Mix and match** (`mixmatch-b`): six stepping stones of six stones in a Kugane garden at dawn.
 - **Themes** (`themes-b`): one moon over four horizons, from a summit.
@@ -279,16 +279,16 @@ All nine releases, shipped (six JPEGs each):
 
 | Release | Key | Shipped |
 |---|---|---|
-| 1.22.0 Welcome home | `welcome-b` | 347 KB |
+| 1.22.0 Welcome home | `welcome-b` | 348 KB |
 | 1.21.0 What next | `whatnext-b` | 344 KB |
-| 1.20.0 Before Evercold | `evercold-b` | 446 KB |
-| 1.19.0 Right answers | `answers-b` | 352 KB |
-| 1.18.0 Runs you can trust | `runs-b` | 486 KB |
-| 1.17.0 Mix and match | `mixmatch-b` | 494 KB |
-| 1.16.0 Themes | `themes-b` | 513 KB |
-| 1.15.0 Faces and icons | `faces-b` | 482 KB |
-| 1.14.0 The polish you asked for | `polish-b` | 460 KB |
-| **All nine** | | **about 3.9 MB** (3,924 KB), each release within its 600 KB budget |
+| 1.20.0 Before Evercold | `evercold-b` | 445 KB |
+| 1.19.0 Right answers | `answers-b` | 353 KB |
+| 1.18.0 Runs you can trust | `runs-b` | 457 KB |
+| 1.17.0 Mix and match | `mixmatch-b` | 472 KB |
+| 1.16.0 Themes | `themes-b` | 492 KB |
+| 1.15.0 Faces and icons | `faces-b` | 484 KB |
+| 1.14.0 The polish you asked for | `polish-b` | 450 KB |
+| **All nine** | | **about 3.8 MB** (3,844 KB), each release within its 600 KB budget. The backfill's Orrery files are the largest (141–193 KB), because their engraving covers whole night masses. |
 
 ### Production recipe (Option B, every release)
 
@@ -313,10 +313,26 @@ Added for the 1.14–1.18 backfill. Each is additive: absent, every treatment is
 - `glass_true_colour`: glass region ids whose pieces keep their own painted colour, not a palette (6 for six different stones).
 - `lines`: mask names of thin linear things, a guide rope or rigging. Glass leads them, the Orrery engraves them, Sumi inks them, Medallion keeps them crisp and Aether keeps its facets off them.
 - `field_flat`: the field is a flat sea or river. Its glass strips, engraved lines and brush strokes run from the horizon in every column, so a boat or a boathouse standing in the water never restarts them. Only the dark marks on it are drawn in glass and ink, so a moon's glitter path stays light.
-- `orrery_crisp`: the Orrery's lines are cut crisp, unblurred, so fine hatching on dark night masses still reads.
+- `orrery_crisp`: the Orrery is engraved by value. The painting's own luminance, normalised over the land, sets each line's weight: lit snow, lit crystals and lit tops stay bare silver, and shadow takes heavier lines, cross-hatched past mid-tone. Lines are anti-aliased, follow smoothed ridgelines, and are never closer than 5 px at 1120 (2.5 px at 1x). Where they would be closer, a flat tone stands in, so no checker or moiré forms.
+- `glass_palette_bld`: a palette for the city's pieces above `bluff_split`, so a roof is apart from its walls.
+- `glass_moon_path`: the moon's path on the water as one glint piece per strip, each of random width and offset, either lit at a random strength or left dark water. The column has ragged edges, so it reads as broken moonlight, not a road.
+- `glass_moon_seas`: the moon's seas, from the painter's `seas` mask, as a faint grisaille on the moon's white piece.
+- `aether_keep_clear`: mask names (from the npz) that the facets fade out round, within about 30 px, as they do round the figures. polish-b keeps Limsa clear.
+- `medallion_moon_seas`: Medallion's cream moon keeps the painter's seas, faintly.
 - `glass_far_strips`: with `far_layers`, each range is cut in strips along its own ridgeline, with no vertical joins.
 - `aether_clear_ground`: no facets on the field or the ridge, and they fade out just above the horizon.
-- `orrery_moon: "engraved"`: for a near-full moon, the Orrery shows a silver face with its seas engraved as hatching, the unlit sliver in dark enamel, and a brass ring. A flat brass disc reads as the sun or a coin.
+- `orrery_moon: "engraved"` (revised in round 3): the seas come from the painter's `seas` mask, engraved as level anti-aliased lines 4 px apart. The unlit sliver is in dark enamel, and the brass ring sits just outside the disc, so it never covers the sliver. Earlier, for a near-full moon, the Orrery shows a silver face with its seas engraved as hatching, the unlit sliver in dark enamel, and a brass ring. A flat brass disc reads as the sun or a coin.
+
+**The moon rule for every release** (round 3, at the coordinator's request; it covers all nine moons, 1.22.0 and 1.19.0 included):
+- At popup size (r 25 px or less at 1120, which is every moon in the series), the seas are one broad, soft, slightly irregular mass across the upper middle of the disc: the familiar face of the full moon, with no curve, no hook and no ring. A chain of seas at this size curved into a hook that read as "?" or "C", Tsukimichi's Not checked mark.
+- The seas are neutral grey at low opacity (`SEA_A` .36), and a near-full moon keeps its thin unlit sliver.
+- `paint_option_b3.sea_mask` and `moon_full` paint it, and `paint_option_b2`'s welcome-b and answers-b now call them. Every painter writes a `seas` mask.
+- Every treatment carries it:
+  - the base painting, Classic and Aether directly;
+  - Medallion through `medallion_moon_seas`;
+  - Glass as faint grisaille through `glass_moon_seas`;
+  - the Orrery as engraving that follows the same mass, through `orrery_moon: "engraved"`;
+  - Sumi keeps its flat gold-leaf disc.
 
 The painter's own rules, learned in the backfill:
 - `far` runs to the frame's foot, over the ground and the water, because the treatments take everything outside `far` and `city` as sky.
@@ -369,7 +385,7 @@ The first one-line briefs were thin, and four of them repeated the four painting
 | 1.17.0 Mix and match | **Six stepping stones of six different stones across a stream in a Kugane garden, at dawn.** The sky is the 1.17 Dawn palette: a plum night with a rose horizon over the sun, still under it on the left, and the old crescent low near it, lit toward it. Kugane's keep, with tiered curved roofs on a stone base, stands backlit on the far hill with a warm rim, and black pines line the far bank. Six squat stones cross the stream on a diagonal: basalt, granite, slate, moss, sandstone and marble. Each has a lit top, a face in shade and a wet line at the water, and each is mirrored in the still stream. There is no figure: the six stones are the subject, and each reads on its own. A kasuga-dōrō on the near bank is the one warm practical light; it warms the stones' sides that face it. |
 | 1.18.0 Runs you can trust | **A ferry on a guide rope, crossing a misty river under a veiled moon.** A near-full moon stands right of centre behind thin altostratus with a soft aureole, and its broken path lies on the water between the ferry and the near post. (It sits right, not upper left, so this harbour-like layout doesn't repeat 1.14's.) The guide rope runs from a post on the far bank to a post on the near bank. The ferry hangs from it by a traveller block and bridle: a ferryman at the stern with his pole, a chocobo amidships facing the near bank, and the lantern at the bow, the one warm practical light. The lantern warms the chocobo's breast and the rail, and its column breaks on the water. River mist lies low, reeds stand at the near left, and the far bank is a line of willows under misty hills. |
 
-Each was supervised as the four before it (Approval record, "Backfill 1.14–1.18"). Until the plugin ships the art, a row shows the shipped category banner of the nearest motif (`about-history-1.22.png`, the 1.18.0 and 1.17.0 rows).
+Each was supervised as the four before it (Approval record, "Backfill 1.14–1.18"). `about-history-1.22.png` now shows their art in the 1.18.0 and 1.17.0 rows, in place of the category banners that stood in for it.
 
 ---
 
@@ -806,4 +822,12 @@ The five backfill releases (`polish-b`, `faces-b`, `themes-b`, `mixmatch-b`, `ru
     - a faint wedge at mixmatch-b's stream edge;
     - faces-b's Aether earthshine is slightly light;
     - polish-b's sloop is lost in glass.
-  - **Open:** these fixes and a round 3 review. The backfill is not yet APPROVED.
+- **After round 2** (and the coordinator's moon request):
+  - **The Orrery (`orrery_crisp`, redefined):** engraved by value, with anti-aliased lines following smoothed ridgelines, at least 5 px apart at 1120 (a flat tone stands in where finer), and cross-hatched past mid-tone. Lit snow and crystals are bare silver, and shadow is dark.
+  - **Its moon:** engraved from the painter's `seas` mask, as level lines 4 px apart, with the sliver in dark enamel and the ring outside the disc.
+  - **polish-b, Aether:** `aether_keep_clear` keeps Limsa clear.
+  - **polish-b and runs-b, glass:** `glass_moon_path` adds a ragged column of glint pieces, lit or dark.
+  - **faces-b, glass:** `glass_palette_bld` gives the roof its own dark palette.
+  - **themes-b, glass:** a lighter forest palette behind the watcher.
+  - **All nine moons:** the small-moon rule (one broad soft mass of seas, the sliver kept), welcome-b and answers-b included, carried into Medallion, Glass and the Orrery. Both were re-shipped, and the What's new, states and About boards were re-rendered. The About board's 1.18.0 and 1.17.0 rows now show their own art.
+  - evercold-b and whatnext-b re-render byte-identical.

@@ -15,7 +15,7 @@ import numpy as np
 
 from artlib import Canvas, blur, fbm, fbm1d, hexc, smooth
 from paint_option_b import kuwahara
-from paint_release import bezier, crescent, moon_disc, stars, tex_sample, top_edge
+from paint_release import bezier, crescent, stars, tex_sample, top_edge
 
 W, H = 2240, 880
 LUM = np.array([0.2126, 0.7152, 0.0722], np.float32)
@@ -122,9 +122,8 @@ def welcome():
 
     stars(c, 200, 131, hz * 0.95, sky_lum, near_moon=(mx, my, mr), warm=0.08)
     cloud_band(c, M, 501, 0.10 * H, 0.42 * H, (mx, my), dens_k=0.58)
-    moon_disc(c, mx, my, mr, seed=5)
-    M["moon"] = c.ellipse(mx, my, mr, mr, 0.7)
-    M["moonlit"] = M["moon"].copy()
+    from paint_option_b3 import moon_full   # the series' small-moon rule: one broad soft mass of seas, the sliver kept
+    moon_full(c, M, mx, my, mr, seed=5)
     xs = np.arange(W, dtype=np.float32)
     ridge_layer(c, M, xs, hz + 4, 0.065, W / 2.0, 61, "#25355E", "#2C3F6C", mx, "#5F78AE", haze=0.45)
     ridge_layer(c, M, xs, hz + 0.045 * H, 0.05, W / 3.0, 62, "#1A2844", "#223451", mx, "#4E6898", haze=0.35)
@@ -199,7 +198,7 @@ def welcome():
     spill = np.exp(-((c.xx - dcx) / np.maximum(wid, 1)) ** 4) * (c.yy > yb) / (1 + dist / 60) ** 1.4
     for wx in (0.600 * W, 0.755 * W):
         spill = spill + np.exp(-((c.xx - wx) / (30 + dist * 0.6)) ** 2) * (c.yy > yb) * np.exp(-dist / 40) * 0.25
-    finish(c, np.maximum(np.maximum(house, person), M["lantern"]), 701)
+    finish(c, np.maximum.reduce([house, person, M["lantern"], M["moon"]]), 701)   # the moon stays out of the paint pass
     c.add(hexc("#FFB062"), np.clip(spill, 0, 1) * 0.5 * (1 - person))
     c.add(hexc("#FFB466"), blur(M["lantern"], 10) * 0.45 * (1 - M["lantern"]))
     c.add(hexc("#9FB2E0"), np.clip(person - np.roll(np.roll(person, 2, 0), 2, 1), 0, 1) * 0.55)   # moon rim, upper left
@@ -323,9 +322,8 @@ def answers():
         return 0.03 + 0.22 * min(1.0, max(0.0, y / hz)) ** 2
 
     stars(c, 220, 23, hz * 0.97, sky_lum, near_moon=(mx, my, mr), warm=0.08)
-    moon_disc(c, mx, my, mr)
-    M["moon"] = c.ellipse(mx, my, mr, mr, 0.7)
-    M["moonlit"] = M["moon"].copy()
+    from paint_option_b3 import moon_full
+    moon_full(c, M, mx, my, mr)
     xs = np.arange(W, dtype=np.float32)
     for i, (yb, amp, top, bot, seed, haze, f) in enumerate([(hz + 4, 0.075, "#2A3A66", "#304373", 4, 0.50, 1.8), (hz + 0.040 * H, 0.070, "#1F2D4C", "#27385A", 5, 0.40, 2.6),
                                                             (hz + 0.085 * H, 0.045, "#172438", "#1E2E46", 6, 0.30, 3.4)]):
@@ -402,7 +400,7 @@ def answers():
             w0 = 2.0 + rng.random() * 2.2
             tuft = np.maximum(tuft, c.poly([(bx - w0, H + 2), (bx + w0, H + 2), (bx + lean + 0.6, H - hgt), (bx + lean - 0.6, H - hgt)], 0.6))
     c.over(hexc("#08101B"), tuft)
-    finish(c, np.maximum(figs, tuft), 721)
+    finish(c, np.maximum.reduce([figs, tuft, M["moon"]]), 721)
     # rims after the pass: every silhouette's edges facing the moon (above and toward x = mx)
     rim_l = np.clip(figs - np.roll(np.roll(figs, 2, 0), -1, 1), 0, 1)
     rim_r = np.clip(figs - np.roll(np.roll(figs, 2, 0), 1, 1), 0, 1)

@@ -62,11 +62,11 @@
       "#7E96D0"
     ],
     "2": [
-      "#1A2248",
-      "#26305E",
-      "#36427A",
-      "#4E5C96",
-      "#7482B8",
+      "#2A3462",
+      "#323E70",
+      "#3E4C82",
+      "#56649C",
+      "#7A88BC",
       "#A6B4DE"
     ],
     "3": [
@@ -93,5 +93,7 @@
   ],
   "glass_far_strips": true,
   "aether_clear_ground": true,
-  "orrery_crisp": true
+  "orrery_crisp": true,
+  "glass_moon_seas": true,
+  "medallion_moon_seas": true
 }

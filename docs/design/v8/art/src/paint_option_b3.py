@@ -7,8 +7,9 @@ moons and palettes, so the nine releases read as one series and not one repeated
 
 Light, in every scene: one natural light, plus at most one warm practical light that lights something. Shadows follow
 the natural light; the practical light adds only its own pool, bounce and reflection. Every moon is lit toward the
-sun; a near-full moon carries the approved maria chains of paint_release.moon_disc (no hook-shaped sea, no holes)
-and a thin unlit sliver.
+sun; at popup size every moon's seas are one broad soft mass across the upper middle (sea_mask: no curve, no hook,
+no ring, so never '?' or 'C'), and a near-full moon keeps a thin unlit sliver. The same rule paints the moons of
+1.22.0 and 1.19.0 (paint_option_b2), so all nine moons match.
 
 Original work, painted in code; nothing is traced. Limsa Lominsa, Gridania, Coerthas, Mor Dhona and Kugane appear as
 our own simplified silhouettes, as the plan's art rule allows.
@@ -28,9 +29,8 @@ LUM = np.array([0.2126, 0.7152, 0.0722], np.float32)
 # ------------------------------------------------------------------------------------------------------ shared
 def moon(c, M, mx, my, mr, ux, uy, k, tint="#F3EFE3", unlit="#1E2A55", unlit_a=0.45, seas=True, glow="#DCE6FF", glow_a=0.16):
     """A moon lit toward the sun (ux, uy). k > 0 is a crescent, k = 0 a half moon, k < 0 a gibbous (the unlit sliver
-    is 1 + k radii wide at its middle). The seas are the approved chains of paint_release.moon_disc (Procellarum and
-    Imbrium on the left, Serenitatis to Fecunditatis down the right, Nubium below), one union at one opacity: no
-    hook-shaped sea, no holes. The unlit part is a faint earthshine barely above the sky."""
+    is 1 + k radii wide at its middle). The seas are sea_mask's, at one low opacity, on the lit part only. The
+    unlit part is a faint earthshine at the sky's value: no hole."""
     disc, lit = crescent(c, mx, my, mr, ux, uy, k)
     # the unlit part first, then the glow over it: the earthshine sits at the local sky's value, never below it (no hole)
     c.over(hexc(unlit), disc * unlit_a)
@@ -39,7 +39,9 @@ def moon(c, M, mx, my, mr, ux, uy, k, tint="#F3EFE3", unlit="#1E2A55", unlit_a=0
     c.add(hexc(glow), disc * (1 - lit) * 0.06)
     col = np.stack([np.full((c.h, c.w), v, np.float32) for v in hexc(tint)], -1)
     if seas:
-        col = col + (hexc("#A3A39C") - col) * (sea_mask(c, mx, my, mr, 3) * 0.44)[..., None]
+        sm_ = sea_mask(c, mx, my, mr, 3)
+        col = col + (hexc("#A3A39C") - col) * (sm_ * SEA_A)[..., None]
+        M["seas"] = sm_ * disc
     limb = np.clip(c.radial(mx, my, mr), 0, 1) ** 3
     col = col + (hexc("#C9C3B4") - col) * (limb * 0.35)[..., None]
     c.over(col, lit)
@@ -47,15 +49,15 @@ def moon(c, M, mx, my, mr, ux, uy, k, tint="#F3EFE3", unlit="#1E2A55", unlit_a=0
 
 
 def moon_full(c, M, mx, my, mr, ux=0.919, uy=0.395, tint=(1.0, 1.0, 1.0), seed=3):
-    """A near-full moon after the approved recipe of paint_release.moon_disc (Option A's answers-base): the seas
-    (sea_mask) at one opacity, limb darkening, a cool halo, and a thin unlit sliver (0.09 r) on the side away from the
-    sun (ux, uy). The seas are laid out with wider gaps than moon_disc's chains, because at this size, after the
-    paint pass, those chains joined into a hook. Returns the masks: moon is the disc, moonlit the disc without the
-    sliver. tint warms a low moon. Every moon is kept out of the Kuwahara pass."""
+    """A near-full moon after the recipe of paint_release.moon_disc (Option A's answers-base): the seas (sea_mask)
+    at one low opacity, limb darkening, a cool halo, and a thin unlit sliver (0.09 r) on the side away from the sun
+    (ux, uy). Sets the masks moon (the disc), moonlit (the disc without the sliver) and seas (for the Orrery's
+    engraving and the glass's grisaille). tint warms a low moon. Every moon is kept out of the Kuwahara pass."""
     d = c.radial(mx, my, mr)
     disc = np.clip((1 - d) * mr / 1.2 + 0.5, 0, 1)
     col = np.stack([np.full((c.h, c.w), v, np.float32) for v in hexc("#F3EFE3")], -1)
-    col = col + (hexc("#A3A39C") - col) * (sea_mask(c, mx, my, mr, seed) * 0.44)[..., None]
+    sm_ = sea_mask(c, mx, my, mr, seed)
+    col = col + (hexc("#A3A39C") - col) * (sm_ * SEA_A)[..., None]
     limb = np.clip(d, 0, 1) ** 3
     col = col + (hexc("#C9C3B4") - col) * (limb * 0.35)[..., None]
     col = col * np.asarray(tint, np.float32)
@@ -68,10 +70,25 @@ def moon_full(c, M, mx, my, mr, ux=0.919, uy=0.395, tint=(1.0, 1.0, 1.0), seed=3
     c.over(col, disc)
     c.over(hexc("#2A3866"), term * 0.82)
     M["moon"], M["moonlit"] = disc, np.clip(disc - term, 0, 1)
+    M["seas"] = sm_ * disc
+
+
+SEA_A = 0.36            # the seas' opacity: neutral grey, low contrast
+SMALL_MOON = 50.0       # radius in painter px (25 px at 1120) at or under which a moon is "small"
 
 
 def sea_mask(c, mx, my, mr, seed):
+    """The moon's seas, 0..1. At popup size (r <= 25 px at 1120, so every moon in the series) they are one broad,
+    soft, slightly irregular mass across the upper middle of the disc: the familiar face of the full moon, with no
+    curve, no hook and no ring, so it can never read as '?' or 'C' (Tsukimichi's Not checked mark). Larger moons keep
+    the broken chain."""
     seas = np.zeros((c.h, c.w), np.float32)
+    if mr <= SMALL_MOON:
+        for (sx, sy, rx, ry, k) in ((-0.30, -0.16, 0.34, 0.25, 1.0), (0.04, -0.24, 0.30, 0.22, 0.95), (0.30, -0.10, 0.24, 0.21, 0.85),
+                                    (-0.08, -0.04, 0.26, 0.16, 0.8), (-0.48, -0.02, 0.14, 0.17, 0.6)):
+            seas = np.maximum(seas, c.ellipse(mx + sx * mr, my + sy * mr, rx * mr, ry * mr, 0.6) * k)
+        seas = blur(seas, mr * 0.12) * (0.85 + 0.15 * fbm(c.h, c.w, mr * 0.25, 3, seed))
+        return np.clip(seas, 0, 1)
     # a broken chain with clear gaps, so no two seas join into a hook ("?" or "C"): Procellarum along the left limb,
     # Imbrium upper left, Serenitatis upper right of centre, Tranquillitatis right of centre, Fecunditatis and
     # Nectaris lower right, Crisium alone by the right limb, Nubium low on the left
@@ -260,6 +277,7 @@ def polish():
     c.add(hexc("#9D9BB6"), blur(lit_face, 0.7) * 0.55)
     c.add(hexc("#6C7096"), top_edge(far, 2) * 0.25)
     M["far"] = far
+    M["limsa"] = far.copy()                                                      # kept clear of Aether's facets
     # the sea under the sky, to the horizon
     field = np.clip((c.yy - hz) / 1.2 + 0.5, 0, 1)
     M["field"] = field

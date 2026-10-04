@@ -93,5 +93,10 @@
   ],
   "field_flat": true,
   "orrery_crisp": true,
-  "aether_clear_ground": true
+  "aether_clear_ground": true,
+  "glass_palette_bld": [
+    "#080C0E",
+    "#0E1414",
+    "#141C1C"
+  ]
 }

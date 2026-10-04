@@ -90,5 +90,8 @@
   ],
   "field_flat": true,
   "orrery_crisp": true,
-  "aether_clear_ground": true
+  "aether_clear_ground": true,
+  "glass_moon_path": true,
+  "glass_moon_seas": true,
+  "medallion_moon_seas": true
 }

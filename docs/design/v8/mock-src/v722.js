@@ -325,7 +325,7 @@
 
   // ---------- W3, U1, M3: Settings › About ----------
   var HIST22 = [["1.22.0", "Welcome home", "5 Oct", "welcome"], ["1.21.0", "What next, for every character", "4 Oct", "whatnext"], ["1.20.0", "Before Evercold", "4 Oct", "evercold"],
-    ["1.19.0", "Right answers", "4 Oct", "answers"], ["1.18.0", "Runs you can trust", "3 Oct", "banners/grand-company"], ["1.17.0", "Mix and match", "3 Oct", "banners/chronicles"]];
+    ["1.19.0", "Right answers", "4 Oct", "answers"], ["1.18.0", "Runs you can trust", "3 Oct", "runs"], ["1.17.0", "Mix and match", "3 Oct", "mixmatch"]];
   function histImg22(src, th) { return src.indexOf("banners/") === 0 ? "../../../../Tsukimichi/assets/ui/" + src + "@2x.png" : V8 + "art/optionb/" + src + "-b-" + th + ".png"; }
   function settings22(th, o) {
     o = o || {};
