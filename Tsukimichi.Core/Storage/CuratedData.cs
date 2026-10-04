@@ -30,6 +30,16 @@ public sealed record StoryRequiredEntry(IReadOnlyList<uint> Quests, JoinKind Joi
 public sealed record DutyUnlock(IReadOnlyList<uint> ContentFinderConditionIds, string? Note);
 
 /// <summary>
+/// An expansion's launch, from <c>curated/expansion_launches.json</c> (1.20.0 N7): the day its early access opens (UTC,
+/// the start of that day), whether that day is still an estimate, and the page it was read from. The Before Evercold
+/// card names the day and retires on it (<see cref="Plan.EvercoldPrep"/>).
+/// </summary>
+/// <param name="Expansion">The ExVersion row the launch brings (6 is Evercold).</param>
+/// <param name="Name">The expansion's name ("Evercold").</param>
+/// <param name="Expected">An estimate, not an announcement: the card says "(expected)".</param>
+public sealed record ExpansionLaunch(byte Expansion, string Name, DateTime EarlyAccessUtc, bool Expected, string Evidence, string Note);
+
+/// <summary>
 /// A seasonal event window, from <c>curated/festivals.json</c>. Null dates mean "unknown; use the live flag only".
 /// <paramref name="Evidence"/> is the announcement the dates were read from (the Lodestone page); the plugin shows an
 /// end date only when it has one, so a date is never shown that cannot be attributed.
@@ -269,6 +279,7 @@ public sealed record PayoffGate(
 /// path_choices.json    { "schema": 1, "cities": { "65575": { "label": "Gridania", "note": "..." } },
 ///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
 ///                        "grandCompanies": { "66216": { "grandCompany": 2, "note": "..." } } }   (classes keyed by ClassJob row id)
+/// expansion_launches.json { "schema": 1, "entries": { "6": { "name": "Evercold", "earlyAccess": "2027-01-22", "expected": true, "evidence": "https://...", "note": "..." } } }   (keyed by ExVersion row)
 /// story_required.json { "schema": 1, "entries": { "69186": { "anyOf": [ 68784, 68808 ], "evidence": "https://...", "note": "..." } } }   ("allOf" for every one; keyed by the main scenario quest)
 /// aetheryte_unlocks.json { "schema": 1, "entries": { "75": { "name": "Idyllshire", "quests": [ 67116 ], "evidence": "https://...", "note": "..." } } }   (keyed by Aetheryte row id)
 /// giver_portraits.json { "schema": 1, "crops": { .. }, "iconCrops": { .. }, "faces": { .. }, "aliases": { .. }, "blocks": { .. }, "pins": { .. } }   (see <see cref="Portraits.PortraitCuration"/>)
@@ -295,6 +306,7 @@ public sealed class CuratedData
     public const string AetheryteUnlocksFileName = "aetheryte_unlocks.json";
     public const string GiverPortraitsFileName = "giver_portraits.json";
     public const string StoryRequiredFileName = "story_required.json";
+    public const string ExpansionLaunchesFileName = "expansion_launches.json";
 
     /// <summary>The sources an <see cref="ExtraPrerequisitesFileName"/> entry may cite; each entry needs two of them.</summary>
     public static readonly IReadOnlyList<string> ExtraPrerequisiteSources = [GameTextSource, QuestionableSource, WikiSource];
@@ -433,6 +445,9 @@ public sealed class CuratedData
     /// </summary>
     public Portraits.PortraitCuration GiverPortraits { get; private init; } = Portraits.PortraitCuration.Empty;
 
+    /// <summary>Expansion launches by ExVersion row (<see cref="ExpansionLaunchesFileName"/>): the Before Evercold card's day.</summary>
+    public IReadOnlyDictionary<byte, ExpansionLaunch> ExpansionLaunches { get; private init; } = new Dictionary<byte, ExpansionLaunch>();
+
     /// <summary><see cref="GameGates"/> as the catalog builders take them (<c>QuestCatalog.Build</c>).</summary>
     public IReadOnlyDictionary<uint, QuestGate> GameGateIds => GameGates.ToDictionary(
         kv => kv.Key,
@@ -458,7 +473,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks, GiverPortraits = GiverPortraits, StoryRequired = StoryRequired };
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks, GiverPortraits = GiverPortraits, StoryRequired = StoryRequired, ExpansionLaunches = ExpansionLaunches };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -796,6 +811,7 @@ public sealed class CuratedData
         var aetheryteUnlocks = LoadAetheryteUnlocks(Path.Combine(dir, AetheryteUnlocksFileName), warnings);
         var giverPortraits = Portraits.PortraitCuration.Load(Path.Combine(dir, GiverPortraitsFileName), warnings);
         var storyRequired = LoadStoryRequired(Path.Combine(dir, StoryRequiredFileName), warnings);
+        var expansionLaunches = LoadExpansionLaunches(Path.Combine(dir, ExpansionLaunchesFileName), warnings);
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
@@ -808,7 +824,68 @@ public sealed class CuratedData
             AetheryteUnlocks = aetheryteUnlocks,
             GiverPortraits = giverPortraits,
             StoryRequired = storyRequired,
+            ExpansionLaunches = expansionLaunches,
         };
+    }
+
+    /// <summary>
+    /// expansion_launches.json: entries keyed by ExVersion row, each with a <c>name</c>, an <c>earlyAccess</c> date
+    /// (read as the start of that day, UTC), an <c>expected</c> flag (true while the day is an estimate), an https
+    /// <c>evidence</c> URL and a <c>note</c>. An entry missing any of them, or with a malformed one, is skipped with a
+    /// warning.
+    /// </summary>
+    private static Dictionary<byte, ExpansionLaunch> LoadExpansionLaunches(string path, List<string> warnings)
+    {
+        var entries = new Dictionary<byte, ExpansionLaunch>();
+        ForEachEntry(path, warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint expansion) || expansion == 0 || expansion > byte.MaxValue)
+            {
+                warn("key is not an expansion (ExVersion row)");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            var name = StorageJson.ReadString(obj, "name")?.Trim() ?? string.Empty;
+            if (name.Length == 0)
+            {
+                warn("name is missing");
+                return;
+            }
+
+            if (!StorageJson.TryReadUtc(obj, "earlyAccess", out var day) || day is not { } earlyAccess)
+            {
+                warn("earlyAccess is missing or not a date");
+                return;
+            }
+
+            if (!obj.TryGetPropertyValue("expected", out var expectedNode) || expectedNode is not JsonValue expectedValue
+                || !expectedValue.TryGetValue<bool>(out var expected))
+            {
+                warn("expected is missing or not true or false");
+                return;
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            if (!evidence.StartsWith("https://", StringComparison.Ordinal))
+            {
+                warn("evidence is not an https URL");
+                return;
+            }
+
+            entries[(byte)expansion] = new ExpansionLaunch((byte)expansion, name, earlyAccess.Date, expected, evidence, note);
+        });
+
+        return entries;
     }
 
     /// <summary>

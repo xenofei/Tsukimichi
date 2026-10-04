@@ -103,6 +103,7 @@ public static class DutyRunSheets
                 Players = members is { } m ? m.MembersPerParty * Math.Max(1, (int)m.PartyCount) : 0,
                 Roulettes = RoulettesOf(in row),
                 SortKey = row.SortKey,
+                Expansion = (byte)Math.Min(row.TerritoryType.ValueNullable?.ExVersion.RowId ?? 0u, byte.MaxValue),
                 HighEnd = row.HighEndDuty
                     || row.ContentType.RowId is DutyRunInfo.UltimateRaids or DutyRunInfo.ChaoticAllianceRaid
                     || highEndCategories.Contains(row.ContentUICategory.RowId),

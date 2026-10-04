@@ -64,6 +64,9 @@ public enum GuardedAction
     /// <summary>The last step of Delete all data.</summary>
     DeleteAllData,
 
+    /// <summary>Remove pack (Settings › Look › Portrait pack, spec-1.20 F4): deletes the downloaded portrait pack; getting it back is a download.</summary>
+    RemovePortraitPack,
+
     /// <summary>Reset in the filter drawer (plan v7 UI-2): clears every filter and the search.</summary>
     ResetFilters,
 
@@ -81,6 +84,9 @@ public enum GuardedAction
 
     /// <summary>Reset appearance while a mix is set (spec-1.17 §A5): it discards several picks, so it is held like Reset mix.</summary>
     ResetAppearanceWithMix,
+
+    /// <summary>The × on the Before Evercold card (spec-1.20 N7): hides the card for one character; Undo and Show again bring it back.</summary>
+    HideEvercoldCard,
 }
 
 /// <summary>
@@ -128,6 +134,7 @@ public static class SafetyRules
         GuardedAction.ResetAppearance => SafetyTier.None,
         GuardedAction.ApplyShareCode => SafetyTier.None,
         GuardedAction.ApplyFix => SafetyTier.None,
+        GuardedAction.HideEvercoldCard => SafetyTier.None,
         GuardedAction.ResetMix => SafetyTier.Hold,
         GuardedAction.ResetAppearanceWithMix => SafetyTier.Hold,
         GuardedAction.RestoreAllVerdicts => SafetyTier.Hold,
@@ -137,6 +144,7 @@ public static class SafetyRules
         GuardedAction.ForgetCharacter => SafetyTier.Hold,
         GuardedAction.ForgetCharacters => SafetyTier.Hold,
         GuardedAction.DeleteAllData => SafetyTier.Hold,
+        GuardedAction.RemovePortraitPack => SafetyTier.Hold,
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Every guarded action needs a row in the safety table."),
     };
 
@@ -148,6 +156,7 @@ public static class SafetyRules
         GuardedAction.ForgetCharacter => false,
         GuardedAction.ForgetCharacters => false,
         GuardedAction.DeleteAllData => false,
+        GuardedAction.RemovePortraitPack => false,
         _ => true,
     };
 

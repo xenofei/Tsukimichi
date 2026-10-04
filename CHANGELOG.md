@@ -64,6 +64,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - Event end dates print in your time zone, and an event still running past its announced end uses your own end date.
 - Tonight's ending-soon cards no longer flicker once a minute; the Todo overlay re-sorts when an event starts ending soon.
 - The second Way of the Thaumaturge shows the class it unlocks.
+- With two game clients open, reading the other client's saved files no longer fails now and then while it is saving.
 
 ## [1.18.0] - 2026-10-03
 

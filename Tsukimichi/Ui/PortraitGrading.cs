@@ -52,8 +52,11 @@ public static class PortraitGrading
     /// </summary>
     public static bool NightMultiply => Theme.Scene.NightGrade;
 
-    /// <summary>Which copy: the icon, the small or full-size copy, and whether the night multiply is in it.</summary>
-    public readonly record struct Key(uint Icon, bool Small, bool Night);
+    /// <summary>
+    /// Which copy: the icon (for a portrait pack photo, the NPC id, so <paramref name="Pack"/> keeps the two apart), the
+    /// small or full-size copy, and whether the night multiply is in it.
+    /// </summary>
+    public readonly record struct Key(uint Icon, bool Small, bool Night, bool Pack = false);
 
     /// <summary>What <see cref="TryGet"/> found.</summary>
     public enum State : byte
@@ -104,7 +107,7 @@ public static class PortraitGrading
     {
         graded = null;
         var frame = ImGui.GetFrameCount();
-        var key = new Key(portrait.Icon, small, NightMultiply);
+        var key = new Key(portrait.Icon, small, NightMultiply, portrait.Source == PortraitSource.Pack);
         Entry? entry;
         lock (Gate)
         {

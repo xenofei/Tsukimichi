@@ -17,6 +17,9 @@ public sealed partial class MainWindow
     /// </summary>
     private void ShowStatusNote(string note) => detailPane.Activity.Note(note, ImGui.GetTime());
 
+    /// <summary>A note raised off the draw thread (the portrait pack landing, spec-1.20 F4), taken once and shown like "Report copied"; set by the plugin.</summary>
+    public Func<string?>? TakeStatusNote { get; set; }
+
     /// <summary>
     /// What the hand-offs are doing, after the MSQ pill in the room the bar has left (feature plan v6, U4; Questionable's
     /// status since 1.6.0): the first running hand-off in <see cref="StopAll.Order"/> (travel, Questionable, AutoDuty,
@@ -29,6 +32,11 @@ public sealed partial class MainWindow
     private void DrawCompanionActivity(ImDrawListPtr dl, ref float x, float textY, float gap, float separatorWidth, float versionX, float left)
     {
         detailPane.PollActivity();
+        if (TakeStatusNote?.Invoke() is { } pending)
+        {
+            ShowStatusNote(pending);
+        }
+
         var feed = detailPane.Activity;
         var note = feed.NoteAt(ImGui.GetTime());
         var live = feed.Live;

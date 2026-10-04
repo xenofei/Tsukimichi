@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "note": "Expansion launches by ExVersion row: the day early access opens (the start of that day, UTC) and whether it is still an estimate. The Before Evercold card (1.20.0 N7) names the day as \"early access 22 Jan (expected)\" and goes away by itself on it, or as soon as the game data holds the expansion. Recheck after the Tokyo Fan Fest keynote (31 October to 1 November 2026) and set expected to false once Square Enix announces the day.",
+  "entries": {
+    "6": {
+      "name": "Evercold",
+      "earlyAccess": "2027-01-22",
+      "expected": true,
+      "evidence": "https://eorzeantavern.com/evercold/",
+      "note": "An estimate: Eorzean Tavern (updated 17 September 2026) and PCGamesN's Fan Fest keynote summary (25 July 2026) give Friday 22 January 2027 for early access."
+    }
+  }
+}

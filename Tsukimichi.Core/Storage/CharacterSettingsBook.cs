@@ -93,6 +93,13 @@ public sealed class CharacterSettingsBook
     /// <summary>The character's nickname on the roster; null for none.</summary>
     public string? Nickname(ulong contentId) => Get(contentId)?.Nickname;
 
+    /// <summary>Whether the player hid the card <paramref name="cardId"/> for the character (<see cref="CharacterSettings.CardsDismissed"/>).</summary>
+    public bool IsCardDismissed(ulong contentId, string cardId) =>
+        Get(contentId)?.CardsDismissed.Contains(cardId, StringComparer.Ordinal) == true;
+
+    /// <summary>The Before Evercold lines the player ticked for the character, by line id (<see cref="CharacterSettings.EvercoldTicks"/>); empty for none.</summary>
+    public IReadOnlyList<string> EvercoldTicks(ulong contentId) => Get(contentId)?.EvercoldTicks ?? (IReadOnlyList<string>)[];
+
     public bool IsWhyOpen(ulong contentId, string gateId) =>
         Get(contentId)?.PayoffWhyOpen.Contains(gateId, StringComparer.Ordinal) == true;
 
@@ -351,6 +358,8 @@ public sealed class CharacterSettingsBook
                 || !x.PayoffWhyOpen.SequenceEqual(y.PayoffWhyOpen, StringComparer.Ordinal)
                 || !x.GatesDone.SequenceEqual(y.GatesDone)
                 || !x.GoWithGame.SequenceEqual(y.GoWithGame)
+                || !x.CardsDismissed.SequenceEqual(y.CardsDismissed, StringComparer.Ordinal)
+                || !x.EvercoldTicks.SequenceEqual(y.EvercoldTicks, StringComparer.Ordinal)
                 || !SameIds(x.SeenReady, y.SeenReady)
                 || x.SeenReadyRules != y.SeenReadyRules
                 || x.Goal != y.Goal

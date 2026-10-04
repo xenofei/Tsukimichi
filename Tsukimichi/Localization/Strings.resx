@@ -3349,7 +3349,7 @@
     <value>What Tsukimichi reads and sends</value>
   </data>
   <data name="ConfigPrivacyStatementHint" xml:space="preserve">
-    <value>It reads your game on this PC and keeps its files here. It has no network code and sends nothing.</value>
+    <value>Its only network code downloads the portrait pack, when you click Download. It sends nothing.</value>
   </data>
   <data name="ConfigPrivacyReads" xml:space="preserve">
     <value>Reads: your quests, levels, unlocks and items through Dalamud, and the game data on your disk.</value>
@@ -3359,7 +3359,7 @@
     <value>Keeps: its settings and a few files per character in Dalamud's pluginConfigs folder, and exports only when you ask.</value>
   </data>
   <data name="ConfigPrivacySends" xml:space="preserve">
-    <value>Sends: nothing. A web page opens in your browser only when you click its link, and other plugins see only what they ask Tsukimichi for.</value>
+    <value>Sends: nothing, except the portrait pack when you click Download: one file from Tsukimichi's GitHub release. Photos: Garland Tools NPC renders, credit Celes.</value>
   </data>
   <data name="ConfigPrivacyFull" xml:space="preserve">
     <value>The full statement</value>
@@ -4572,7 +4572,7 @@
     <value>What Tsukimichi reads and keeps</value>
   </data>
   <data name="Help.TopicLede.Privacy" xml:space="preserve">
-    <value>Tsukimichi reads your own characters, keeps its files on this PC and has no network code.</value>
+    <value>Tsukimichi reads your own characters, keeps its files on this PC, and goes online only to download the portrait pack when you ask.</value>
   </data>
   <data name="Help.PrivacyCardTitles.0" xml:space="preserve">
     <value>Your own characters only</value>
@@ -4581,7 +4581,7 @@
     <value>Files on this PC</value>
   </data>
   <data name="Help.PrivacyCardTitles.2" xml:space="preserve">
-    <value>No network code</value>
+    <value>Offline unless you ask</value>
   </data>
   <data name="Help.PrivacyCardTitles.3" xml:space="preserve">
     <value>Links open your browser</value>
@@ -4602,7 +4602,7 @@
     <value>Your settings are in Dalamud's pluginConfigs/Tsukimichi.json; everything else stays in the folder beside it, pluginConfigs/Tsukimichi: characters/&lt;id&gt;.json, one snapshot per character, with its completion dates (.dates), accepted and abandoned quests (.accepted, .abandoned) and the Since you were away state (.return) beside it; daily backups (.prev, .prev2); user/pins.json, user/overrides.json and user/discovery.json; cache/ for the journal text search index when it is on; and exports/ (or the folder you chose) when you export. While the game runs, a small .live.json tells a second game client who is logged in.</value>
   </data>
   <data name="Help.PrivacyCardBodies.2" xml:space="preserve">
-    <value>Tsukimichi never uploads, downloads or checks anything online. The quest data it needs ships inside the plugin, and Dalamud installs updates.</value>
+    <value>Tsukimichi never uploads or checks anything online. Its one download is the optional portrait pack, from its own GitHub release, after you confirm it in Settings. The quest data ships inside the plugin, and Dalamud installs updates.</value>
   </data>
   <data name="Help.PrivacyCardBodies.3" xml:space="preserve">
     <value>Wiki, GitHub and other links open in your browser only when you click them. The plugin itself fetches nothing.</value>
@@ -11251,7 +11251,7 @@
     <comment>Settings, Look: choice of portraits for quest givers (the Giver card, Next stops, the Route window, the Journal's Giver column).</comment>
   </data>
   <data name="Settings.GiverPortraitsHint" xml:space="preserve">
-    <value>The giver's face from the game's art, or a silhouette, emblem or initials. Read locally; never uploaded.</value>
+    <value>The giver's face from the game's art and the pack, or a silhouette, emblem or initials. Read on this PC.</value>
     <comment>Hint under Giver portraits.</comment>
   </data>
   <data name="Settings.GiverPortraitsOff" xml:space="preserve">
@@ -12654,7 +12654,7 @@
     <value>Local only</value>
   </data>
   <data name="AboutAutomationLocalBody" xml:space="preserve">
-    <value>Tsukimichi has no network code. Nothing you do here leaves your computer.</value>
+    <value>Nothing you do here leaves your computer.</value>
   </data>
   <data name="AboutAutomationAgreement" xml:space="preserve">
     <value>Read the User Agreement</value>
@@ -13381,6 +13381,14 @@
     <value>The game counts your inventory only: take it out of the armoury chest.</value>
     <comment>Hand in line (1.19, N5).</comment>
   </data>
+  <data name="Portrait.SourcePack" xml:space="preserve">
+    <value>Portrait: Garland Tools photo · credit Celes</value>
+    <comment>Giver portrait tooltip: the face comes from the optional portrait pack (a Garland Tools NPC render; Celes made the photos).</comment>
+  </data>
+  <data name="Settings.GiverPortraitsGameArtAndPack" xml:space="preserve">
+    <value>Game art + pack</value>
+    <comment>Giver portraits choice (1.20, F4): the game's art, and the optional portrait pack's photos where the game has none.</comment>
+  </data>
   <data name="Core.Todo.TurnIn" xml:space="preserve">
     <value>Turn in on a job that isn't capped: {0}</value>
     <comment>Core: TodoList.cs. A Todo row (1.19, C8). {0} = the quest's name.</comment>
@@ -13633,5 +13641,513 @@
   <data name="GateTakenBackToastFormat" xml:space="preserve">
     <value>Taken back: {0}</value>
     <comment>Undo toast. {0} = the gate.</comment>
+  </data>
+  <data name="PrepTitle" xml:space="preserve">
+    <value>Before Evercold</value>
+    <comment>Before Evercold card title (1.20 N7).</comment>
+  </data>
+  <data name="PrepForFormat" xml:space="preserve">
+    <value>For {0}</value>
+    <comment>Before Evercold sub-line. {0} = the character's first name.</comment>
+  </data>
+  <data name="PrepAsOfFormat" xml:space="preserve">
+    <value>As of the last login, {0}</value>
+    <comment>Before Evercold sub-line on the Characters dashboard for a stored character. {0} = how long ago ("2 days ago").</comment>
+  </data>
+  <data name="PrepAgoToday" xml:space="preserve">
+    <value>today</value>
+    <comment>Before Evercold sub-line: the last login was today.</comment>
+  </data>
+  <data name="PrepAgoDayOne" xml:space="preserve">
+    <value>1 day ago</value>
+    <comment>Before Evercold sub-line.</comment>
+  </data>
+  <data name="PrepAgoDaysFormat" xml:space="preserve">
+    <value>{0} days ago</value>
+    <comment>Before Evercold sub-line. {0} = days.</comment>
+  </data>
+  <data name="PrepEarlyAccessFormat" xml:space="preserve">
+    <value>early access {0}</value>
+    <comment>Before Evercold sub-line, once the day is announced. {0} = the day ("22 Jan").</comment>
+  </data>
+  <data name="PrepEarlyAccessExpectedFormat" xml:space="preserve">
+    <value>early access {0} (expected)</value>
+    <comment>Before Evercold sub-line while the day is an estimate. {0} = the day ("22 Jan").</comment>
+  </data>
+  <data name="PrepSubTooltipExpected" xml:space="preserve">
+    <value>Evercold's early access is expected on this day: an estimate until Square Enix announces it (the Tokyo Fan Fest, 31 October to 1 November, may). This card goes away by itself on that day, or as soon as the game data is Patch 8.0's.</value>
+    <comment>Before Evercold sub-line hover. Recheck after the Tokyo Fan Fest.</comment>
+  </data>
+  <data name="PrepSubTooltip" xml:space="preserve">
+    <value>Evercold's early access opens on this day. This card goes away by itself on that day, or as soon as the game data is Patch 8.0's.</value>
+    <comment>Before Evercold sub-line hover once the day is announced.</comment>
+  </data>
+  <data name="PrepHideTooltip" xml:space="preserve">
+    <value>Hide for this character</value>
+    <comment>Before Evercold: the × in the title row.</comment>
+  </data>
+  <data name="PrepHiddenToastFormat" xml:space="preserve">
+    <value>Before Evercold hidden for {0}</value>
+    <comment>Undo toast. {0} = the character's first name.</comment>
+  </data>
+  <data name="PrepHiddenLineFormat" xml:space="preserve">
+    <value>Before Evercold is hidden for {0}.</value>
+    <comment>Characters dashboard, in the card's place once hidden. {0} = the character's first name.</comment>
+  </data>
+  <data name="PrepShowAgain" xml:space="preserve">
+    <value>Show again</value>
+    <comment>Before Evercold: the way back on the Characters dashboard.</comment>
+  </data>
+  <data name="PrepShowAgainTooltip" xml:space="preserve">
+    <value>Shows Before Evercold again for this character, here and in Tonight.</value>
+    <comment>Before Evercold.</comment>
+  </data>
+  <data name="PrepYouSaidSo" xml:space="preserve">
+    <value>you said so</value>
+    <comment>Before Evercold: a line the player ticked (the 1.19 C3 wording).</comment>
+  </data>
+  <data name="PrepTickTooltip" xml:space="preserve">
+    <value>Tick it off yourself. It folds into the Done line the next time the card is built.</value>
+    <comment>Before Evercold: an empty checkbox.</comment>
+  </data>
+  <data name="PrepUntickTooltip" xml:space="preserve">
+    <value>You ticked this. Click to untick it and bring its buttons back.</value>
+    <comment>Before Evercold: a checkbox the player ticked.</comment>
+  </data>
+  <data name="PrepGameDoneTooltip" xml:space="preserve">
+    <value>Done: the game says so.</value>
+    <comment>Before Evercold: the check of a line the game counts as done.</comment>
+  </data>
+  <data name="PrepFoldFormat" xml:space="preserve">
+    <value>Done: {0}</value>
+    <comment>Before Evercold: the fold line. {0} = the done lines' names, in the card's order.</comment>
+  </data>
+  <data name="PrepFoldSeparator" xml:space="preserve">
+    <value>, </value>
+    <comment>Before Evercold: between the names on the fold line.</comment>
+  </data>
+  <data name="PrepAllDoneFormat" xml:space="preserve">
+    <value>Ready for Evercold. Nothing left on {0}.</value>
+    <comment>Before Evercold, every line done. {0} = the character's first name.</comment>
+  </data>
+  <data name="PrepListAnd" xml:space="preserve">
+    <value> and </value>
+    <comment>Before Evercold: before the last item of a list ("DRG, SGE and CUL").</comment>
+  </data>
+  <data name="PrepListComma" xml:space="preserve">
+    <value>, </value>
+    <comment>Before Evercold: between items of a list.</comment>
+  </data>
+  <data name="PrepStoryTitle" xml:space="preserve">
+    <value>Finish the main story</value>
+    <comment>Before Evercold, line 1.</comment>
+  </data>
+  <data name="PrepStoryEarlierTitle" xml:space="preserve">
+    <value>The main story</value>
+    <comment>Before Evercold, line 1 for a character still in an earlier expansion.</comment>
+  </data>
+  <data name="PrepStoryLeftFormat" xml:space="preserve">
+    <value>{0} quests left, through Patch {1}</value>
+    <comment>Before Evercold. {0} = main scenario quests left, {1} = the patch series of the data's last one ("7.5").</comment>
+  </data>
+  <data name="PrepStoryLeftOneFormat" xml:space="preserve">
+    <value>1 quest left, through Patch {0}</value>
+    <comment>Before Evercold. {0} = the patch series ("7.5").</comment>
+  </data>
+  <data name="PrepStoryLeftNoPatchFormat" xml:space="preserve">
+    <value>{0} quests left</value>
+    <comment>Before Evercold, when the last quest's patch is not known. {0} = quests left.</comment>
+  </data>
+  <data name="PrepStoryEarlierFormat" xml:space="preserve">
+    <value>You're in {0}: {1} quests to Evercold. No rush; the lines below matter first.</value>
+    <comment>Before Evercold. {0} = the expansion the character's story is in, {1} = main scenario quests left.</comment>
+  </data>
+  <data name="PrepStoryWhy" xml:space="preserve">
+    <value>Evercold's story starts where the last patch's main scenario ends, so its first quest needs that one done. Done when the last main scenario quest before Evercold is complete.</value>
+    <comment>Before Evercold, line 1's hover.</comment>
+  </data>
+  <data name="PrepStoryTick" xml:space="preserve">
+    <value>Tick it yourself if you'll catch up after Evercold arrives.</value>
+    <comment>Before Evercold, line 1's hover.</comment>
+  </data>
+  <data name="PrepShowNext" xml:space="preserve">
+    <value>Show next</value>
+    <comment>Before Evercold, line 1's button.</comment>
+  </data>
+  <data name="PrepShowNextTooltip" xml:space="preserve">
+    <value>Selects the next main scenario quest.</value>
+    <comment>Before Evercold.</comment>
+  </data>
+  <data name="PrepRoute" xml:space="preserve">
+    <value>Route</value>
+    <comment>Before Evercold: the Route button (lines 1 and 5).</comment>
+  </data>
+  <data name="PrepStoryRouteTooltip" xml:space="preserve">
+    <value>Opens the Route window to the end of the main scenario.</value>
+    <comment>Before Evercold.</comment>
+  </data>
+  <data name="PrepJournalTitle" xml:space="preserve">
+    <value>Room in your journal</value>
+    <comment>Before Evercold, line 2.</comment>
+  </data>
+  <data name="PrepJournalDetailFormat" xml:space="preserve">
+    <value>{0} of {1} slots used. Evercold brings new quests.</value>
+    <comment>Before Evercold. {0} = slots used, {1} = slots the journal has.</comment>
+  </data>
+  <data name="PrepJournalWhyFormat" xml:space="preserve">
+    <value>Done when at least {0} of {1} slots are free. Evercold's launch adds new side, job and unlock quests; the main scenario never takes a slot.</value>
+    <comment>Before Evercold, line 2's hover. {0} = free slots needed (10), {1} = slots the journal has.</comment>
+  </data>
+  <data name="PrepJournalTick" xml:space="preserve">
+    <value>Tick it yourself if you keep your journal full on purpose.</value>
+    <comment>Before Evercold, line 2's hover.</comment>
+  </data>
+  <data name="PrepJobsTitle" xml:space="preserve">
+    <value>Job and role quests</value>
+    <comment>Before Evercold, line 3.</comment>
+  </data>
+  <data name="PrepJobsDetailFormat" xml:space="preserve">
+    <value>Your {0} have quests you can take now</value>
+    <comment>Before Evercold. {0} = jobs and roles ("DRG, SGE and CUL").</comment>
+  </data>
+  <data name="PrepJobsDetailOneFormat" xml:space="preserve">
+    <value>Your {0} has quests you can take now</value>
+    <comment>Before Evercold. {0} = one job or role ("DRG").</comment>
+  </data>
+  <data name="PrepRoleFormat" xml:space="preserve">
+    <value>{0} role</value>
+    <comment>Before Evercold, in line 3's list. {0} = the role ("Tank").</comment>
+  </data>
+  <data name="PrepJobsWhy" xml:space="preserve">
+    <value>Evercold raises the level cap from 100 to 110; the job and role quests you can take now are quickest to clear before it. Done when no job or role quest is Ready for this character.</value>
+    <comment>Before Evercold, line 3's hover.</comment>
+  </data>
+  <data name="PrepJobsTick" xml:space="preserve">
+    <value>Tick it yourself if you're leaving those jobs for later.</value>
+    <comment>Before Evercold, line 3's hover.</comment>
+  </data>
+  <data name="PrepShowThem" xml:space="preserve">
+    <value>Show them</value>
+    <comment>Before Evercold, line 3's button.</comment>
+  </data>
+  <data name="PrepShowThemTooltip" xml:space="preserve">
+    <value>Opens the Journal on the class, job and role quests you can take now.</value>
+    <comment>Before Evercold.</comment>
+  </data>
+  <data name="PrepDutiesTitle" xml:space="preserve">
+    <value>Duties for the roulettes</value>
+    <comment>Before Evercold, line 4. Depends on Tokyo: recheck after the Fan Fest (31 Oct to 1 Nov 2026), when Adventurer Activity's effect on the roulettes is due.</comment>
+  </data>
+  <data name="PrepDutiesDetailFormat" xml:space="preserve">
+    <value>{0} {1} duties not unlocked yet</value>
+    <comment>Before Evercold. {0} = count, {1} = the expansion ("Dawntrail").</comment>
+  </data>
+  <data name="PrepDutiesDetailOneFormat" xml:space="preserve">
+    <value>1 {0} duty not unlocked yet</value>
+    <comment>Before Evercold. {0} = the expansion ("Dawntrail").</comment>
+  </data>
+  <data name="PrepDutiesWhyFormat" xml:space="preserve">
+    <value>The roulettes draw from the duties you have unlocked, and the level-cap ones open only once every one is. Done when every {0} dungeon, trial and raid is unlocked.</value>
+    <comment>Before Evercold, line 4's hover. {0} = the expansion. Depends on Tokyo: recheck after the Fan Fest (Adventurer Activity).</comment>
+  </data>
+  <data name="PrepDutiesTick" xml:space="preserve">
+    <value>Tick it yourself if you don't run the roulettes.</value>
+    <comment>Before Evercold, line 4's hover. Depends on Tokyo: recheck after the Fan Fest.</comment>
+  </data>
+  <data name="PrepDutyBoard" xml:space="preserve">
+    <value>Duties board</value>
+    <comment>Before Evercold, line 4's button.</comment>
+  </data>
+  <data name="PrepDutyBoardTooltip" xml:space="preserve">
+    <value>Opens the Duties board on the Characters tab: which quest unlocks each duty.</value>
+    <comment>Before Evercold.</comment>
+  </data>
+  <data name="PrepFlyingTitleFormat" xml:space="preserve">
+    <value>Flying in {0}</value>
+    <comment>Before Evercold, line 5. {0} = the expansion ("Dawntrail").</comment>
+  </data>
+  <data name="PrepFlyingDetailFormat" xml:space="preserve">
+    <value>{0} areas left: {1}</value>
+    <comment>Before Evercold. {0} = count, {1} = the areas, through the spoiler shield.</comment>
+  </data>
+  <data name="PrepFlyingDetailOneFormat" xml:space="preserve">
+    <value>1 area left: {0}</value>
+    <comment>Before Evercold. {0} = the area, through the spoiler shield.</comment>
+  </data>
+  <data name="PrepFlyingWhyFormat" xml:space="preserve">
+    <value>Flying makes the quests and duties still ahead of you in {0} quicker to reach. Done when flying is unlocked in every {0} area.</value>
+    <comment>Before Evercold, line 5's hover. {0} = the expansion.</comment>
+  </data>
+  <data name="PrepFlyingTick" xml:space="preserve">
+    <value>Tick it yourself if you'd rather walk.</value>
+    <comment>Before Evercold, line 5's hover.</comment>
+  </data>
+  <data name="PrepFlyingRouteTooltip" xml:space="preserve">
+    <value>Opens the Route window to the quests whose aether currents are left.</value>
+    <comment>Before Evercold.</comment>
+  </data>
+  <data name="Pack.Label" xml:space="preserve">
+    <value>Portrait pack</value>
+    <comment>Settings › Look: the portrait pack row (1.20, F4).</comment>
+  </data>
+  <data name="Pack.StatusNotOffered" xml:space="preserve">
+    <value>No pack with this version</value>
+    <comment>Portrait pack status when this build names no pack.</comment>
+  </data>
+  <data name="Pack.LineNotOffered" xml:space="preserve">
+    <value>This version of Tsukimichi names no portrait pack.</value>
+    <comment>Portrait pack line when this build names no pack.</comment>
+  </data>
+  <data name="Pack.StatusNotDownloaded" xml:space="preserve">
+    <value>Not downloaded</value>
+    <comment>Portrait pack status before it is downloaded.</comment>
+  </data>
+  <data name="Pack.LineAvailable" xml:space="preserve">
+    <value>About {0} more giver faces from Garland Tools' NPC photos. {1} from Tsukimichi's GitHub release, only when you click.</value>
+    <comment>Portrait pack line before download. {0} = how many faces, {1} = size ("14.8 MB").</comment>
+  </data>
+  <data name="Pack.StatusDownloading" xml:space="preserve">
+    <value>Downloading</value>
+    <comment>Portrait pack status while it downloads.</comment>
+  </data>
+  <data name="Pack.LineProgress" xml:space="preserve">
+    <value>{0} of {1} · about {2} s left</value>
+    <comment>Portrait pack progress. {0} = received, {1} = total, {2} = seconds left.</comment>
+  </data>
+  <data name="Pack.LineProgressNoEta" xml:space="preserve">
+    <value>{0} of {1}</value>
+    <comment>Portrait pack progress before a time can be guessed. {0} = received, {1} = total.</comment>
+  </data>
+  <data name="Pack.KeepsGoing" xml:space="preserve">
+    <value>Keeps going if Settings closes.</value>
+    <comment>Portrait pack, under the bar while it downloads.</comment>
+  </data>
+  <data name="Pack.StatusChecking" xml:space="preserve">
+    <value>Checking the file</value>
+    <comment>Portrait pack status while the download is checked and unpacked.</comment>
+  </data>
+  <data name="Pack.LineChecking" xml:space="preserve">
+    <value>Comparing it with the fingerprint built into Tsukimichi {0}</value>
+    <comment>Portrait pack line while checking. {0} = plugin version.</comment>
+  </data>
+  <data name="Pack.StatusRemoving" xml:space="preserve">
+    <value>Removing</value>
+    <comment>Portrait pack status while its files are deleted.</comment>
+  </data>
+  <data name="Pack.StatusInstalled" xml:space="preserve">
+    <value>Installed · pack {0}</value>
+    <comment>Portrait pack status once installed. {0} = pack number.</comment>
+  </data>
+  <data name="Pack.LineInstalled" xml:space="preserve">
+    <value>{0} faces · {1} on this PC · downloaded {2}</value>
+    <comment>Portrait pack line once installed. {0} = faces, {1} = size on disk, {2} = date.</comment>
+  </data>
+  <data name="Pack.StatusUpdate" xml:space="preserve">
+    <value>Pack {0} is ready to download</value>
+    <comment>Portrait pack status when this version names a newer pack. {0} = its number.</comment>
+  </data>
+  <data name="Pack.LineUpdate" xml:space="preserve">
+    <value>{0} faces · {1}, replaces pack {2}, which keeps working until then.</value>
+    <comment>Portrait pack update line. {0} = faces, {1} = size, {2} = installed pack number.</comment>
+  </data>
+  <data name="Pack.UpdateNote" xml:space="preserve">
+    <value>Named by this version of Tsukimichi; it never checks online.</value>
+    <comment>Portrait pack, under the update line.</comment>
+  </data>
+  <data name="Pack.StatusCancelled" xml:space="preserve">
+    <value>Cancelled</value>
+    <comment>Portrait pack status after Cancel.</comment>
+  </data>
+  <data name="Pack.LineCancelled" xml:space="preserve">
+    <value>Nothing was saved.</value>
+    <comment>Portrait pack line after Cancel.</comment>
+  </data>
+  <data name="Pack.StatusFailed" xml:space="preserve">
+    <value>Download failed</value>
+    <comment>Portrait pack status after a failed download (with the hint dot).</comment>
+  </data>
+  <data name="Pack.FailedOffline" xml:space="preserve">
+    <value>Couldn't reach GitHub. Nothing was saved.</value>
+    <comment>Portrait pack error: no connection.</comment>
+  </data>
+  <data name="Pack.FailedHash" xml:space="preserve">
+    <value>The file didn't match this version's fingerprint, so it was deleted. Nothing was installed.</value>
+    <comment>Portrait pack error: SHA-256 mismatch.</comment>
+  </data>
+  <data name="Pack.FailedDiskFull" xml:space="preserve">
+    <value>Not enough space: the pack needs {0} in Dalamud's pluginConfigs folder.</value>
+    <comment>Portrait pack error: disk full. {0} = size.</comment>
+  </data>
+  <data name="Pack.FailedNotFound" xml:space="preserve">
+    <value>The pack isn't on Tsukimichi's GitHub release. Nothing was saved.</value>
+    <comment>Portrait pack error: 404.</comment>
+  </data>
+  <data name="Pack.FailedHttp" xml:space="preserve">
+    <value>GitHub answered with an error. Nothing was saved.</value>
+    <comment>Portrait pack error: another HTTP status.</comment>
+  </data>
+  <data name="Pack.FailedRedirected" xml:space="preserve">
+    <value>The download was sent somewhere other than GitHub, so it stopped. Nothing was saved.</value>
+    <comment>Portrait pack error: a redirect off GitHub.</comment>
+  </data>
+  <data name="Pack.FailedSize" xml:space="preserve">
+    <value>The file wasn't the size this version names, so it was deleted. Nothing was installed.</value>
+    <comment>Portrait pack error: size mismatch.</comment>
+  </data>
+  <data name="Pack.FailedChecks" xml:space="preserve">
+    <value>The pack failed its safety checks, so nothing was installed.</value>
+    <comment>Portrait pack error: unexpected zip content, or an image that did not match or decode.</comment>
+  </data>
+  <data name="Pack.FailedDisk" xml:space="preserve">
+    <value>The pack couldn't be written to Tsukimichi's folder. Nothing was installed.</value>
+    <comment>Portrait pack error: another file error.</comment>
+  </data>
+  <data name="Pack.StatusDamaged" xml:space="preserve">
+    <value>Pack damaged</value>
+    <comment>Portrait pack status when its files are missing (found at start).</comment>
+  </data>
+  <data name="Pack.LineDamaged" xml:space="preserve">
+    <value>Some of the pack's files are missing. Faces use game art until you download it again.</value>
+    <comment>Portrait pack line when damaged.</comment>
+  </data>
+  <data name="Pack.OlderGame" xml:space="preserve">
+    <value>Built for game {0}; you are on {1}. Givers added since show game art or a fallback.</value>
+    <comment>Portrait pack note when the pack is older than the game. {0} = pack's game version, {1} = the client's.</comment>
+  </data>
+  <data name="Pack.NotInUse" xml:space="preserve">
+    <value>Not shown: choose Game art + pack above.</value>
+    <comment>Portrait pack note when installed but Giver portraits does not use it.</comment>
+  </data>
+  <data name="Pack.Download" xml:space="preserve">
+    <value>Download…</value>
+    <comment>Portrait pack action: opens the confirmation.</comment>
+  </data>
+  <data name="Pack.DownloadAgain" xml:space="preserve">
+    <value>Download again…</value>
+    <comment>Portrait pack action when damaged: opens the confirmation.</comment>
+  </data>
+  <data name="Pack.Update" xml:space="preserve">
+    <value>Update…</value>
+    <comment>Portrait pack action: opens the confirmation for the newer pack.</comment>
+  </data>
+  <data name="Pack.Remove" xml:space="preserve">
+    <value>Remove pack…</value>
+    <comment>Portrait pack action: opens the remove confirmation.</comment>
+  </data>
+  <data name="Pack.Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Portrait pack action: stops the download.</comment>
+  </data>
+  <data name="Pack.TryAgain" xml:space="preserve">
+    <value>Try again</value>
+    <comment>Portrait pack action after a failed download: starts it again.</comment>
+  </data>
+  <data name="Pack.CopyReport" xml:space="preserve">
+    <value>Copy report</value>
+    <comment>Portrait pack action after a fingerprint mismatch: copies the version, hashes and byte count.</comment>
+  </data>
+  <data name="Pack.ReportFormat" xml:space="preserve">
+    <value>Tsukimichi {0}, portrait pack {1}: expected SHA-256 {2} ({3} bytes), received {4} ({5} bytes).</value>
+    <comment>Clipboard text of Copy report. English diagnostics; no character data.</comment>
+  </data>
+  <data name="Pack.ConfirmTitle" xml:space="preserve">
+    <value>Download the portrait pack?</value>
+    <comment>Download confirmation title.</comment>
+  </data>
+  <data name="Pack.ConfirmTitleUpdate" xml:space="preserve">
+    <value>Download pack {0}?</value>
+    <comment>Update confirmation title. {0} = pack number.</comment>
+  </data>
+  <data name="Pack.ConfirmWhat" xml:space="preserve">
+    <value>Adds about {0} giver faces, so roughly 4 in 5 quests show who gives them. The rest keep a silhouette, an emblem or initials.</value>
+    <comment>Download confirmation. {0} = faces.</comment>
+  </data>
+  <data name="Pack.ConfirmWhatUpdate" xml:space="preserve">
+    <value>Adds {0} faces and replaces pack {1} when it's checked.</value>
+    <comment>Update confirmation. {0} = faces, {1} = installed pack number.</comment>
+  </data>
+  <data name="Pack.FactSize" xml:space="preserve">
+    <value>Size</value>
+    <comment>Confirmation fact key.</comment>
+  </data>
+  <data name="Pack.FactSizeAside" xml:space="preserve">
+    <value> · saved once in Tsukimichi's folder on this PC</value>
+    <comment>Confirmation fact aside after the size.</comment>
+  </data>
+  <data name="Pack.FactFrom" xml:space="preserve">
+    <value>From</value>
+    <comment>Confirmation fact key.</comment>
+  </data>
+  <data name="Pack.FactFromAside" xml:space="preserve">
+    <value> · release {0}</value>
+    <comment>Confirmation fact aside after the repository. {0} = release name ("portraits-1").</comment>
+  </data>
+  <data name="Pack.FactPhotos" xml:space="preserve">
+    <value>Photos</value>
+    <comment>Confirmation fact key.</comment>
+  </data>
+  <data name="Pack.FactPhotosValue" xml:space="preserve">
+    <value>Garland Tools NPC photos by Celes</value>
+    <comment>Confirmation fact value: the source and credit.</comment>
+  </data>
+  <data name="Pack.FactPhotosAside" xml:space="preserve">
+    <value> · cropped to the head</value>
+    <comment>Confirmation fact aside after the source.</comment>
+  </data>
+  <data name="Pack.FactChecked" xml:space="preserve">
+    <value>Checked</value>
+    <comment>Confirmation fact key.</comment>
+  </data>
+  <data name="Pack.FactCheckedValue" xml:space="preserve">
+    <value>against the fingerprint built into Tsukimichi {0}</value>
+    <comment>Confirmation fact value. {0} = plugin version.</comment>
+  </data>
+  <data name="Pack.PromiseLead" xml:space="preserve">
+    <value>Only because you clicked.</value>
+    <comment>Confirmation promise, bold lead.</comment>
+  </data>
+  <data name="Pack.Promise" xml:space="preserve">
+    <value>This is the one time Tsukimichi goes online. It sends nothing about you or your characters: GitHub sees an ordinary file download from this PC. Tsukimichi never checks for updates by itself.</value>
+    <comment>Confirmation promise, after the lead.</comment>
+  </data>
+  <data name="Pack.Spoilers" xml:space="preserve">
+    <value>The spoiler shield still hides faces from quests ahead of you.</value>
+    <comment>Confirmation spoiler line.</comment>
+  </data>
+  <data name="Pack.WhatItSends" xml:space="preserve">
+    <value>What Tsukimichi sends</value>
+    <comment>Confirmation link: opens docs/privacy.md in the browser.</comment>
+  </data>
+  <data name="Pack.ConfirmDownload" xml:space="preserve">
+    <value>Download {0}</value>
+    <comment>Confirmation primary button. {0} = size.</comment>
+  </data>
+  <data name="Pack.RemoveTitle" xml:space="preserve">
+    <value>Remove the portrait pack?</value>
+    <comment>Remove confirmation title.</comment>
+  </data>
+  <data name="Pack.RemoveBody" xml:space="preserve">
+    <value>Deletes {0} from this PC. Faces go back to game art, silhouettes, emblems and initials. Getting it back means downloading it again.</value>
+    <comment>Remove confirmation body. {0} = size on disk.</comment>
+  </data>
+  <data name="Pack.RemoveHold" xml:space="preserve">
+    <value>Remove pack</value>
+    <comment>Remove confirmation: the hold button.</comment>
+  </data>
+  <data name="Pack.RemoveHoldTooltip" xml:space="preserve">
+    <value>Deletes the portrait pack's photos from this PC.</value>
+    <comment>Tooltip on the Remove pack hold button.</comment>
+  </data>
+  <data name="Pack.KeepIt" xml:space="preserve">
+    <value>Keep it</value>
+    <comment>Remove confirmation: the quiet button that keeps the pack.</comment>
+  </data>
+  <data name="Pack.HoldHint" xml:space="preserve">
+    <value>Hold, or Ctrl-click</value>
+    <comment>Remove confirmation: how to confirm.</comment>
+  </data>
+  <data name="Pack.Arrived" xml:space="preserve">
+    <value>Portrait pack installed · {0} faces</value>
+    <comment>Status bar note when the pack lands. {0} = faces.</comment>
   </data>
 </root>
