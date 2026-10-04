@@ -1,0 +1,260 @@
+/* ======================================================================================================
+   1.20 "Before Evercold" (spec-1.20.md): N6 the wider spoiler shield, N7 the Before Evercold card, F4 the portrait pack.
+   Built only from 1.14–1.19 tokens. One new token value: --hint on Ishgard Snow (the 1.17 amber hint, darkened so the
+   dot keeps 3:1 on a light card).
+   ====================================================================================================== */
+.mk{--hint:#C9A866}
+.mk.snow{--hint:#8E6A1E}
+/* The plugin's gated Night Tertiary (#8B94B3, 4.5:1 at the worst case); the shared mock's #7C86A8 predates the gate. */
+.mk.v7:not(.snow):not(.dawn):not(.kugane){--dusk:#8B94B3}
+
+/* ---------- N6: placeholders ---------- */
+.mk .ph20{color:var(--mist)}
+.mk .hd19 .n.ph20{color:var(--mist)}
+.mk .hd20 .note{margin-top:8px;font-size:11.5px;color:var(--dusk);display:flex;align-items:center;gap:10px}
+.mk .hd20 .note .qa19{margin-left:auto}
+/* the hidden-reward tile: the 1.15 moon disc on a quiet plate */
+.mk .hid20{display:inline-flex;width:22px;height:22px;border-radius:4px;flex:none;align-items:center;justify-content:center;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line)}
+.mk .hid20 img{width:16px;height:16px}
+.mk.snow .hid20 img{filter:brightness(.55) saturate(.6)}
+.mk .rwl20{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:12.5px}
+.mk .rwl20 .k{margin-left:auto;font-size:11.5px;color:var(--dusk)}
+/* table rows, before and after */
+.mk .tb20{display:flex;flex-direction:column}
+.mk .tb20 .th,.mk .tb20 .tr{display:grid;grid-template-columns:24px 186px 124px 118px 1fr;align-items:center;column-gap:10px;white-space:nowrap}
+.mk .tb20 .th{height:28px;font-size:11.5px;color:var(--mist);border-bottom:1px solid var(--line)}
+.mk .tb20 .tr{height:32px;font-size:12.5px;border-bottom:1px solid rgba(42,49,73,.4);color:var(--silver)}
+.mk.snow .tb20 .tr{border-bottom-color:#DCE2EC}
+.mk .tb20 .tr .g{display:flex;justify-content:center}
+.mk .tb20 .tr .leak{color:var(--silver)}
+.mk .tb20 .tr>span{overflow:hidden;text-overflow:ellipsis}
+.mk .tb20 .tr .nm{color:var(--mist)}
+.mk .tb20 .cap{font-size:11px;color:var(--dusk);margin:8px 0 4px;letter-spacing:.04em;text-transform:uppercase}
+/* tooltip and context menu */
+.mk .tip20{width:300px;padding:10px 12px;border-radius:5px;background:var(--raised);box-shadow:0 0 0 1px var(--vline),0 8px 24px rgba(0,0,0,.45);font-size:12px;color:var(--silver);line-height:1.45}
+.mk.snow .tip20{box-shadow:0 0 0 1px #9AA2B6,0 8px 20px rgba(26,33,54,.18)}
+.mk .tip20 b{font-weight:600}
+.mk .tip20 p{margin:4px 0 0;color:var(--mist)}
+.mk .tip20 p.t{color:var(--dusk);font-size:11px}
+.mk .cm20{width:250px;padding:4px;border-radius:5px;background:var(--raised);box-shadow:0 0 0 1px var(--vline),0 8px 24px rgba(0,0,0,.45);font-size:12px}
+.mk .cm20 div{height:26px;display:flex;align-items:center;padding:0 10px;border-radius:3px;color:var(--silver)}
+.mk .cm20 div.on{background:var(--hover)}
+.mk .cm20 div span{margin-left:auto;font-size:11px;color:var(--dusk)}
+.mk .cm20 hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+/* the placeholder vocabulary */
+.mk .vo20{display:grid;grid-template-columns:150px 1fr;gap:0 14px;font-size:12px}
+.mk .vo20 div{padding:5px 0;border-bottom:1px solid var(--line);color:var(--mist)}
+.mk .vo20 div.k{color:var(--silver)}
+.mk .vo20 div.h{font-size:11px;color:var(--dusk);text-transform:uppercase;letter-spacing:.05em}
+
+/* ---------- Settings rows (N6 and F4) ---------- */
+.mk .set20 .sh{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.mk .set20 .sh b{font:500 18px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--gilthi)}
+.mk.quiet .set20 .sh b,.mk.plain .set20 .sh b{font:500 14px/1 "Noto Sans",sans-serif;letter-spacing:0;text-transform:none;color:var(--silver)}
+.mk .set20 .sh span{font-size:11.5px;color:var(--dusk)}
+.mk .sr20{display:grid;grid-template-columns:190px 1fr 170px;column-gap:14px;align-items:start;padding:11px 0;border-top:1px solid var(--line)}
+.mk .sr20.sub{grid-template-columns:24px 166px 1fr 170px}
+.mk .sr20.sub>i{display:block;width:1px;align-self:stretch;margin-left:7px;background:var(--line)}
+/* narrow rows (cards under 400 px): label, then status, then actions, stacked; decided per card, never per state */
+.mk .sr20.nar{grid-template-columns:1fr;row-gap:4px}
+.mk .sr20.nar .sa{flex-direction:row;justify-content:flex-start;margin-top:4px}
+.mk .sr20 .sl{font-size:12.5px;color:var(--silver);padding-top:3px}
+.mk .sr20 .sm{min-width:0}
+.mk .sr20 .sm .ss{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--silver);font-weight:500;min-height:22px}
+.mk .sr20 .sm .sn{font-size:11.5px;color:var(--mist);line-height:1.45;margin-top:2px}
+.mk .sr20 .sm .sn b{color:var(--silver);font-weight:500}
+.mk .sr20 .sm .tt20{text-align:left;font-size:11px;color:var(--dusk);line-height:1.45;margin-top:3px}
+.mk .sr20 .sa{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.mk .sr20 .sa .p18{min-width:0}
+.mk .sr20 .sa small{font-size:11px;color:var(--dusk);text-align:right}
+.mk .sr20.dis .sl,.mk .sr20.dis .sn{opacity:.55}
+.mk.plain .sr20{padding:7px 0}
+.mk .hd20dot{width:6px;height:6px;border-radius:50%;background:var(--hint);flex:none}
+/* toggles and the segmented choice */
+.mk .tg20{width:30px;height:16px;border-radius:8px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--vline);position:relative;flex:none}
+.mk .tg20::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--mist)}
+.mk .tg20.on{background:var(--moon);box-shadow:none}
+.mk .tg20.on::after{left:16px;background:#1A1406}
+.mk.snow .tg20.on{background:#A07B25}
+.mk.snow .tg20.on::after{background:#FFFFFF}
+.mk.plain .tg20,.mk.plain .tg20::after{border-radius:2px}
+.mk .sg20{display:inline-flex;border-radius:14px;box-shadow:inset 0 0 0 1px var(--line);padding:2px;gap:2px}
+.mk .sg20 span{height:24px;display:inline-flex;align-items:center;padding:0 11px;border-radius:12px;font-size:11.5px;color:var(--mist);white-space:nowrap}
+.mk .sg20 span.on{background:var(--hover);color:var(--silver);box-shadow:inset 0 0 0 1px var(--vline)}
+.mk.plain .sg20,.mk.plain .sg20 span{border-radius:2px}
+.mk .sl20{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mist)}
+.mk .sl20 i{display:block;width:150px;height:4px;border-radius:2px;background:var(--line);position:relative}
+.mk .sl20 i::after{content:"";position:absolute;left:44px;top:-5px;width:14px;height:14px;border-radius:50%;background:var(--silver);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+/* progress */
+.mk .pb20{height:4px;border-radius:2px;background:var(--line);margin-top:7px;overflow:hidden}
+.mk .pb20 i{display:block;height:100%;border-radius:2px;background:var(--mist)}
+/* the confirmation dialog */
+.mk .dlg20{width:470px;border-radius:6px;padding:16px 18px 14px;background:var(--raised);box-shadow:0 0 0 1px var(--vline),0 18px 48px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.35)}
+.mk.full .dlg20{background:linear-gradient(180deg,var(--hover),var(--raised) 70%);box-shadow:0 0 0 1px rgba(168,139,82,.55),inset 0 1px 0 rgba(255,240,190,.06),0 18px 48px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.35)}
+.mk.snow .dlg20{background:#FFFFFF;box-shadow:0 0 0 1px #9AA2B6,0 18px 40px rgba(26,33,54,.22),0 3px 8px rgba(26,33,54,.12)}
+.mk .dlg20 h3{margin:0 0 8px;font:400 18px/1.25 Marcellus,Georgia,serif;color:var(--silver)}
+.mk.quiet .dlg20 h3,.mk.plain .dlg20 h3{font:600 14.5px/1.3 "Noto Sans",sans-serif}
+.mk .dlg20 p{margin:0 0 10px;font-size:12.5px;line-height:1.5;color:var(--silver)}
+.mk .dlg20 dl{display:grid;grid-template-columns:70px 1fr;gap:6px 12px;margin:0 0 12px;font-size:12px}
+.mk .dlg20 dt{color:var(--dusk)}
+.mk .dlg20 dd{margin:0;color:var(--silver);line-height:1.4}
+.mk .dlg20 dd span{color:var(--mist)}
+.mk .dlg20 .pr{padding:9px 12px;border-radius:4px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);font-size:12px;line-height:1.5;color:var(--silver);margin-bottom:10px}
+.mk .dlg20 .pr b{font-weight:600;color:var(--silver)}
+.mk .dlg20 .pr span{color:var(--mist)}
+.mk .dlg20 .sp{font-size:11.5px;color:var(--mist);margin-bottom:12px}
+.mk .dlg20 .ac{display:flex;align-items:center;gap:10px}
+.mk .dlg20 .ac .lnk{font-size:11.5px;color:var(--mist);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--vline)}
+.mk .dlg20 .ac .p18:first-of-type{margin-left:auto}
+.mk .dlg20 .fc{box-shadow:0 0 0 2px var(--raised),0 0 0 3.5px var(--mist)}
+.mk .scrim20{position:relative;border-radius:6px;overflow:hidden;height:560px}
+.mk .scrim20 .under{}
+.mk .scrim20 .over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,7,14,.55)}
+.mk.snow .scrim20 .over{background:rgba(26,33,54,.30)}
+/* the remove popover and the hold button */
+.mk .pop20{width:330px;padding:12px 14px;border-radius:5px;background:var(--raised);box-shadow:0 0 0 1px var(--vline),0 10px 28px rgba(0,0,0,.5)}
+.mk.snow .pop20{background:#FFFFFF;box-shadow:0 0 0 1px #9AA2B6,0 10px 24px rgba(26,33,54,.18)}
+.mk .pop20 b{display:block;font-size:13px;font-weight:600;color:var(--silver);margin-bottom:5px}
+.mk .pop20 p{margin:0 0 10px;font-size:12px;line-height:1.5;color:var(--mist)}
+.mk .pop20 .ac{display:flex;justify-content:flex-end;gap:8px;align-items:center}
+.mk .hold20{position:relative;overflow:hidden;display:inline-flex;align-items:center;height:28px;padding:0 13px;border-radius:14px;font-size:12px;color:var(--silver);box-shadow:inset 0 0 0 1px var(--eclipse)}
+.mk .hold20 i{position:absolute;left:0;top:0;bottom:0;background:var(--eclipse);opacity:.28}
+.mk .hold20 span{position:relative}
+.mk.plain .hold20{border-radius:3px;height:22px}
+.mk .hold20 + small{font-size:10.5px;color:var(--dusk)}
+/* status-bar note */
+.mk .sbn20{display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 12px;border-radius:5px;background:linear-gradient(180deg,#0E1329,#0A0E1C);box-shadow:inset 0 1px 0 rgba(217,190,130,.6);font-size:11.5px;color:var(--mist);white-space:nowrap}
+.mk .sbn20 b{color:var(--silver);font-weight:500}
+/* giver card before / after */
+.mk .ba20{display:flex;align-items:center;gap:12px}
+.mk .ba20 .ar{color:var(--dusk);font-size:16px}
+.mk .gv20{display:flex;align-items:center;gap:14px}
+.mk.quiet .gv20{gap:12px}
+.mk .gv20 .gt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.mk .gv20 .gt b{font-weight:500;font-size:13.5px;color:var(--silver)}
+.mk .gv20 .gt b.ph20{color:var(--mist)}
+.mk .gv20 .gt span{font-size:12px;color:var(--mist)}
+.mk .gv20 .gt i{font-style:normal;font-size:11px;color:var(--dusk)}
+.mk.plain .gv20 .pp{width:18px;height:18px}
+.mk .tipf20{width:180px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 14px 12px;text-align:center;border-radius:5px;background:var(--raised);box-shadow:0 0 0 1px rgba(168,139,82,.55),0 8px 24px rgba(0,0,0,.45);font-size:12px}
+.mk .tipf20 b{margin-top:6px;font:400 15px/1.2 Marcellus,Georgia,serif;color:var(--moon)}
+.mk .tipf20 p{margin:0;color:var(--mist)}
+.mk .tipf20 p.src{color:var(--dusk);font-size:11px}
+
+/* ---------- N7: the Before Evercold card ---------- */
+.mk .be20 .bh{display:flex;align-items:center;gap:8px}
+.mk .be20 .bh b{font:400 16px/1.2 Marcellus,Georgia,serif;color:var(--silver)}
+.mk.quiet .be20 .bh b,.mk.plain .be20 .bh b{font:600 13.5px/1.2 "Noto Sans",sans-serif}
+.mk .be20 .bh .x{margin-left:auto;display:flex;color:var(--dusk);padding:3px}
+.mk .be20 .bs{font-size:11.5px;color:var(--mist);margin:3px 0 6px}
+.mk .be20 .bl{display:grid;grid-template-columns:18px 20px 1fr auto;column-gap:9px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.mk .be20 .bl:first-of-type{border-top:0}
+.mk .be20 .cb{width:14px;height:14px;margin-top:2px;border-radius:3px;box-shadow:inset 0 0 0 1.5px var(--vline);display:flex;align-items:center;justify-content:center}
+.mk .be20 .cb svg{width:11px;height:11px}
+.mk .be20 .cb.on{background:var(--hover);box-shadow:inset 0 0 0 1.5px var(--vline)}
+.mk .be20 .bi{padding-top:0}
+.mk .be20 .bi .gi,.mk .be20 .bi svg{width:18px;height:18px;display:block}
+.mk .be20 .bi svg{color:var(--mist)}
+.mk .be20 .bt{min-width:0}
+.mk .be20 .bt b{display:block;font-size:12.5px;font-weight:500;color:var(--silver)}
+.mk .be20 .bt span{display:block;font-size:11.5px;color:var(--mist);line-height:1.45;margin-top:1px}
+.mk .be20 .bt span em{font-style:normal;color:var(--dusk)}
+.mk .be20 .ba{display:flex;gap:6px;padding-top:1px}
+.mk .be20 .bl.done .bt b{color:var(--mist)}
+.mk .be20 .bl.done .bt span{color:var(--dusk)}
+.mk .be20 .bl.done .bi{opacity:.6}
+.mk .be20.nar .bl{grid-template-columns:18px 20px 1fr}
+.mk .be20.nar .ba{grid-column:3;padding-top:5px}
+.mk .be20 .bf{font-size:11px;color:var(--dusk);padding-top:7px;border-top:1px solid var(--line)}
+.mk .be20 .ok{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--silver);padding:4px 0 2px}
+.mk .be20 .ok svg{width:13px;height:13px}
+.mk .tn20 .tnh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mk .tn20 .tnh b{font:500 18px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--gilthi)}
+.mk .tn20 .tnh svg{width:15px;height:15px;color:var(--gilthi)}
+.mk .tn20 .tl{display:flex;align-items:center;gap:8px;height:30px;font-size:12.5px;color:var(--silver);border-bottom:1px solid var(--line)}
+.mk .tn20 .tl span{color:var(--mist);font-size:11.5px}
+.mk .tn20 .tl .r{margin-left:auto}
+.mk .tn20 .gap{height:10px}
+.mk .stub20{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mist);padding:8px 12px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--line)}
+.mk .stub20 .qa19{margin-left:auto}
+.mk .ut20{display:flex;align-items:center;gap:22px;height:40px;padding:0 15px;border-radius:5px;background:var(--raised);box-shadow:0 0 0 1px var(--vline),0 8px 22px rgba(0,0,0,.45);font-size:12.5px;color:var(--silver);white-space:nowrap}
+.mk .ut20 .u{color:var(--moon);font-weight:600}
+.mk.snow .ut20 .u{color:#755308}
+.mk .chd20{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.mk .chd20 b{font:400 17px/1.2 Marcellus,Georgia,serif;color:var(--silver)}
+.mk .chd20 span{font-size:11.5px;color:var(--dusk)}
+
+/* looks grid */
+.lg20{display:grid;grid-template-columns:64px repeat(4,1fr);gap:7px 10px;align-items:start}
+.lg20 .lh{font-size:12px;color:#A9B2CC;font-weight:600}
+.lg20 .lr{font-size:12px;color:#FFF0BE;font-weight:600;padding-top:10px}
+.lg20 .mk.look18 .lk{padding:6px 10px}
+.lg20 .mk.plain.look18 .lk{padding:6px 8px}
+.lg20 .dp19{gap:5px}
+.board.b20 .row{gap:14px;flex-wrap:nowrap}
+.board.b20 .col{display:flex;flex-direction:column;gap:12px}
+
+/* ---------- round 2 (the supervisor's review) ---------- */
+/* the checkbox: a sunken fill and a Secondary outline (6.4:1 on Night hover) */
+.mk .cb20{width:14px;height:14px;margin-top:2px;border-radius:3px;flex:none;background:var(--sunk);box-shadow:inset 0 0 0 1.5px var(--mist);display:inline-flex;align-items:center;justify-content:center;color:var(--silver)}
+.mk .cb20 svg{width:11px;height:11px}
+.mk.plain .cb20{border-radius:2px}
+.mk .be20 .ba.held{visibility:hidden}
+.mk .be20 .bh .x,.mk .be20 .ps .x{width:24px;height:24px;padding:0;display:flex;align-items:center;justify-content:center;margin-left:auto;margin-right:-6px;color:var(--dusk)}
+.mk .be20.plain .ps span.x{margin-left:auto}
+.mk .pair20{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+/* Chrome.MoonToggle, 36 x 20 */
+.mk .mt20{position:relative;display:inline-block;width:36px;height:20px;border-radius:10px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);flex:none}
+/* the pack row: one fixed height for every state; two actions side by side at most */
+.mk .sr20.pk{grid-template-columns:150px 1fr 210px;height:118px;box-sizing:border-box;overflow:hidden}
+.mk .sr20.pk.sub{grid-template-columns:24px 126px 1fr 210px}
+.mk .sr20.pk .sa{flex-direction:row;justify-content:flex-end;align-items:center;flex-wrap:nowrap}
+.mk .sr20.pk .sn{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.9em}
+.mk .sr20.pk .slot{min-height:22px}
+.mk .sr20.pk .slot .pb20{margin-top:6px}
+.mk .sr20.pk .slot .tt20{margin-top:4px}
+.mk .sr20.pk.nar{grid-template-columns:1fr;height:141px;row-gap:2px}
+.mk .sr20.pk.nar .sa{justify-content:flex-start;margin-top:2px}
+.mk.plain .sr20.pk{height:108px}
+.mk.plain .sr20.pk.nar{height:130px}
+/* placeholders in single-line slots */
+.mk .se20 .sres b,.mk .se20 .sres .via{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk .se20 .sres b.ph20,.mk .se20 .sres b.ph20 *{color:var(--mist);font-weight:500}
+.mk .ro20 .rr{gap:10px}
+/* Chrome.HoldButton */
+.mk .hb20{position:relative;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--silver);background:var(--raised)}
+.mk.full .hb20{background:linear-gradient(180deg,var(--hover),var(--raised))}
+.mk.snow .hb20{background:#FFFFFF}
+.mk .hb20{border-radius:14px}
+.mk.plain .hb20{border-radius:3px}
+.mk .hb20 svg{position:absolute;inset:0}
+.mk .hb20>span{position:relative}
+.mk.plain .hb20{font-size:11.5px}
+.mk .pop20 .hn{margin:6px 0 0;font-size:11px;color:var(--dusk);text-align:right}
+.mk .hbrow{display:flex;align-items:center;gap:10px}
+.mk .hbrow small{font-size:11px;color:var(--dusk)}
+.mk .pop20{box-sizing:border-box}
+/* the compact dialog over its dim, for the looks board */
+.mk .dim20{margin:-10px;padding:16px 10px;background:rgba(5,7,14,.55);border-radius:6px}
+.mk.plain .dim20{margin:-6px -8px}
+.mk.snow .dim20{background:rgba(26,33,54,.30)}
+.mk .dlg20.cmp{width:auto;padding:13px 14px 12px}
+.mk .dlg20.cmp dl{grid-template-columns:56px 1fr}
+.mk .dlg20.cmp .ac{flex-wrap:wrap;row-gap:8px}
+.mk .dlg20.cmp .ac .lnk{flex-basis:100%}
+.mk .dlg20.cmp .ac .p18:first-of-type{margin-left:0}
+.mk .fs20{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mk .fs20 .sm20{display:flex;align-items:center;gap:6px}
+.lg20 .mk.look18{width:340px!important}
+.mk .be20:not(.nar) .bl{grid-template-columns:18px 20px 1fr 150px}
+.mk .be20:not(.nar) .ba{justify-content:flex-end}
+.mk .be20 .ba{min-height:24px;align-items:center}
+.mk .be20 .ba .ys{font-style:normal;font-size:11px;color:var(--dusk)}
+.mk .be20.nar .ba .ys{padding-left:2px}
+.lg20 .be20 .bl{padding:6px 0}
+.lg20 .be20 .bs{margin-bottom:3px}
+/* round 3: the Plain giver line ellipsises; the error row's cell keeps its fixed height */
+.mk.plain .kv dd{overflow:hidden}
+.mk.plain .kv dd .mu,.mk.plain .kv dd .ph20{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lg20 .set20 .sr20.pk{border-top:0;padding-top:4px}
+.mk.plain .kv dd .ph20 + .mu{margin-left:-3px}

@@ -15,6 +15,25 @@ public sealed record EndingSoonEvent(RunningFestival Festival, DateTime EndUtc, 
     public bool LastDay => DaysLeft == 0;
 }
 
+/// <summary>What an ending-soon chat line says is left of the event (<see cref="EventWarnings.ChatLine"/>).</summary>
+public enum EndingSoonLeft : byte
+{
+    /// <summary>Quests in the journal, which the game takes away when the event ends.</summary>
+    InJournal,
+
+    /// <summary>Quests the character can still take.</summary>
+    ToTake,
+
+    /// <summary>Only rewards the character lacks (no quest in the journal or to take now).</summary>
+    Rewards,
+}
+
+/// <summary>
+/// The parts of one ending-soon chat line: what is left and how many, and the quest to link after it; null
+/// <paramref name="Link"/> prints the line without one (only rewards are left), never no line.
+/// </summary>
+public readonly record struct EndingSoonLine(EndingSoonLeft Left, int Count, QuestRecord? Link);
+
 /// <summary>
 /// Seasonal events' ending-soon warnings (feature plan v7, 1.19.0, C10). Forgetting an event until too late, and
 /// losing an accepted event quest when the event ends (the game takes it out of the journal), are the most common
@@ -148,6 +167,39 @@ public static class EventWarnings
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// The chat line for <paramref name="warning"/>: the journal's quests when any (linking the first), else the quests
+    /// to take (linking the first), else the rewards the character lacks, with no link. Every warning has a line, so the
+    /// once-per-login line is never used up by a warning that printed nothing.
+    /// </summary>
+    public static EndingSoonLine ChatLine(EndingSoonEvent warning)
+    {
+        ArgumentNullException.ThrowIfNull(warning);
+        QuestRecord? accepted = null, actionable = null;
+        foreach (var quest in warning.Festival.Quests)
+        {
+            if (quest.IsSpareAlternative)
+            {
+                continue;
+            }
+
+            if (quest.State == QuestState.Accepted)
+            {
+                accepted = quest.Quest;
+                break;
+            }
+
+            if (actionable is null && quest.IsActionable)
+            {
+                actionable = quest.Quest;
+            }
+        }
+
+        return warning.InJournal > 0 ? new EndingSoonLine(EndingSoonLeft.InJournal, warning.InJournal, accepted ?? actionable)
+            : warning.Left > 0 ? new EndingSoonLine(EndingSoonLeft.ToTake, warning.Left, actionable)
+            : new EndingSoonLine(EndingSoonLeft.Rewards, warning.RewardsMissing, null);
     }
 
     /// <summary>

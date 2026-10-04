@@ -233,4 +233,25 @@ public sealed class EventWarningsTests
         Assert.Equal(4, SeasonalCalendar.UsualMonth([march, april]));
         Assert.Null(SeasonalCalendar.UsualMonth([]));
     }
+
+    [Fact]
+    public void The_chat_line_links_the_journal_quest_then_one_to_take()
+    {
+        var journal = Assert.Single(EventWarnings.EndingSoon([Running(Rerun, QuestState.Ready, QuestState.Accepted)], Now, 3, TimeZoneInfo.Utc));
+        Assert.Equal(new EndingSoonLine(EndingSoonLeft.InJournal, 1, Second), EventWarnings.ChatLine(journal));
+
+        var toTake = Assert.Single(EventWarnings.EndingSoon([Running(Rerun, QuestState.Completed, QuestState.Ready)], Now, 3, TimeZoneInfo.Utc));
+        Assert.Equal(new EndingSoonLine(EndingSoonLeft.ToTake, 1, Second), EventWarnings.ChatLine(toTake));
+    }
+
+    [Fact]
+    public void A_warning_with_only_rewards_left_still_has_a_chat_line_without_a_link()
+    {
+        // Review fix: the line used to be skipped (and its once-per-login slot used up) when no quest could be linked.
+        var festival = Running(Rerun, QuestState.Blocked, QuestState.Completed);
+        var warning = Assert.Single(EventWarnings.EndingSoon([festival], Now, 3, TimeZoneInfo.Utc, rewardsMissing: static _ => 2));
+        Assert.Equal(0, warning.InJournal + warning.Left);
+
+        Assert.Equal(new EndingSoonLine(EndingSoonLeft.Rewards, 2, null), EventWarnings.ChatLine(warning));
+    }
 }
