@@ -187,13 +187,14 @@ public sealed partial class DetailPane
         handInHqMixed = false;
 
         // The two hand-offs are pills like the action bar's (1.10): labelled while the row keeps room for the item's
-        // name, else the icons alone (still pills), their labels in the tooltips.
-        var labelled = HandInPillsLabelled(iconSize);
-        var craftWidth = Chrome.ActionPillWidth(CraftIcon, labelled ? Strings.HandInCraftShort : null);
-        var gatherWidth = labelled
-            ? MathF.Max(Chrome.ActionPillWidth(GatherIcon, Strings.HandInGatherShort), Chrome.ActionPillWidth(FishIcon, Strings.HandInFishShort))
-            : Chrome.ActionPillWidth(GatherIcon, null);
-        var buttons = craftWidth + ImGui.GetStyle().ItemSpacing.X + gatherWidth;
+        // name, else the icons alone (still pills), their labels in the tooltips. Each shows only while the automation
+        // level does (1.18, A10); Craft's slot is sized for its Stop too (A7), so nothing moves when it turns.
+        var showCraft = AutomationGate.Shows(AutomationButtons.Artisan);
+        var showGather = AutomationGate.Shows(AutomationButtons.Gather);
+        var labelled = HandInPillsLabelled(iconSize, showCraft, showGather);
+        var craftWidth = showCraft ? CraftSlotWidth(labelled) : 0f;
+        var gatherWidth = showGather ? GatherSlotWidth(labelled) : 0f;
+        var buttons = craftWidth + (showCraft && showGather ? ImGui.GetStyle().ItemSpacing.X : 0f) + gatherWidth;
         for (var i = 0; i < handInRows.Count; i++)
         {
             var row = handInRows[i];
@@ -225,11 +226,27 @@ public sealed partial class DetailPane
             }
 
             // The two hand-offs at the row's right edge, beside the name while they fit.
+            if (buttons <= 0f)
+            {
+                continue;
+            }
+
             SameLineOrWrap(buttons, cardRight);
             ImGui.SetCursorScreenPos(new Vector2(MathF.Max(ImGui.GetCursorScreenPos().X, cardRight - buttons), MathF.Max(ImGui.GetCursorScreenPos().Y, start.Y)));
-            DrawCraftButton(session, row, artisanLoaded, artisanBusy, labelled);
-            ImGui.SameLine();
-            DrawGatherButton(row, gatherPlugin, labelled, gatherWidth);
+            if (showCraft)
+            {
+                DrawCraftButton(session, row, artisanLoaded, artisanBusy, labelled, craftWidth);
+            }
+
+            if (showGather)
+            {
+                if (showCraft)
+                {
+                    ImGui.SameLine();
+                }
+
+                DrawGatherButton(row, gatherPlugin, labelled, gatherWidth);
+            }
         }
 
         if (!live)
@@ -283,39 +300,73 @@ public sealed partial class DetailPane
     };
 
     /// <summary>
-    /// Whether the hand-off pills carry their labels: while the item's icon, the labelled pills and
+    /// Whether the hand-off pills carry their labels: while the item's icon, the labelled pills shown and
     /// <see cref="HandInNameRoomLogical"/> of name fit the card.
     /// </summary>
-    private bool HandInPillsLabelled(float iconSize)
+    private bool HandInPillsLabelled(float iconSize, bool showCraft, bool showGather)
     {
-        var labelled = Chrome.ActionPillWidth(CraftIcon, Strings.HandInCraftShort)
-            + ImGui.GetStyle().ItemSpacing.X
-            + MathF.Max(Chrome.ActionPillWidth(GatherIcon, Strings.HandInGatherShort), Chrome.ActionPillWidth(FishIcon, Strings.HandInFishShort));
+        var labelled = (showCraft ? CraftSlotWidth(true) : 0f)
+            + (showCraft && showGather ? ImGui.GetStyle().ItemSpacing.X : 0f)
+            + (showGather ? GatherSlotWidth(true) : 0f);
         return iconSize + ImGui.GetStyle().ItemSpacing.X + UiMetrics.Px(HandInNameRoomLogical) + labelled <= RoomTo(cardRight);
     }
 
-    private void DrawCraftButton(SessionState session, HandInRow row, bool artisanLoaded, bool artisanBusy, bool labelled)
+    /// <summary>Craft's slot: the wider of Craft and the Stop it turns into while its run is under way (1.18, A7).</summary>
+    private static float CraftSlotWidth(bool labelled) => MathF.Max(
+        Chrome.ActionPillWidth(CraftIcon, labelled ? Strings.HandInCraftShort : null),
+        Chrome.ActionPillWidth(StopIcon, labelled ? Strings.ActionStopShort : null));
+
+    /// <summary>Gather's slot: the wider of Gather and Fish.</summary>
+    private static float GatherSlotWidth(bool labelled) => labelled
+        ? MathF.Max(Chrome.ActionPillWidth(GatherIcon, Strings.HandInGatherShort), Chrome.ActionPillWidth(FishIcon, Strings.HandInFishShort))
+        : Chrome.ActionPillWidth(GatherIcon, null);
+
+    /// <summary>
+    /// Craft with Artisan, or, while Artisan crafts the run this row handed it (1.18, A7), a labelled Stop in the same
+    /// slot that ends it through Artisan's IPC (<c>SetEnduranceStatus(false)</c>; Artisan finishes the craft in hand).
+    /// The pill keeps <paramref name="slotWidth"/> either way, so Gather beside it never moves.
+    /// </summary>
+    private void DrawCraftButton(SessionState session, HandInRow row, bool artisanLoaded, bool artisanBusy, bool labelled, float slotWidth)
     {
+        var start = ImGui.GetCursorScreenPos();
+        var stop = Artisan is { HandOffClaimed: true } claimed && HandInActions.CraftShowsStop(row.Item, artisanBusy, claimed.ClaimedRecipeId);
+        if (stop)
+        {
+            var stopPressed = Chrome.ActionPill("##craft", StopIcon, labelled ? Strings.ActionStopShort : null, PillTone.Danger, true);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(labelled ? Strings.ArtisanStopTooltip : Strings.ActionStopShort, labelled ? null : Strings.ArtisanStopTooltip);
+            }
+
+            KeepSlot(start, slotWidth);
+            if (stopPressed)
+            {
+                StopActivity(StopTarget.Artisan);
+            }
+
+            return;
+        }
+
         // Enough only from the live character's count: another character on view has no count to go by.
         var state = HandInActions.Craft(row.Item, artisanLoaded, artisanBusy, enough: session.IsLive && row.Enough);
         var recipe = state == HandOffState.Ready
             ? HandInActions.ChooseRecipe(row.Item, session.LiveSnapshot?.CurrentJob ?? 0, session.LiveSnapshot?.JobLevels)
             : null;
-        var tooltip = state switch
-        {
-            HandOffState.Ready => WithSetupNote(CraftTooltip(session, row, recipe), CompanionPlugin.Artisan),
-            HandOffState.Enough => Strings.HandInHaveEnough,
-            // The registry's reason when it has one ("Artisan is installed but turned off…"), as every hand-off button says it.
-            HandOffState.PluginMissing => CompanionPlugins.DisabledReason(CompanionPlugin.Artisan) ?? Strings.HandInNeedsArtisan,
-            HandOffState.Busy => Strings.HandInArtisanBusy,
-            _ => Strings.HandInNoRecipe,
-        };
         var pressed = Chrome.ActionPill("##craft", CraftIcon, labelled ? Strings.HandInCraftShort : null, PillTone.Normal, state == HandOffState.Ready);
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(tooltip);
+            UiMetrics.Tooltip(state switch
+            {
+                HandOffState.Ready => WithSetupNote(CraftTooltip(session, row, recipe), CompanionPlugin.Artisan),
+                HandOffState.Enough => Strings.HandInHaveEnough,
+                // The registry's reason when it has one ("Artisan is installed but turned off…"), as every hand-off button says it.
+                HandOffState.PluginMissing => CompanionPlugins.DisabledReason(CompanionPlugin.Artisan) ?? Strings.HandInNeedsArtisan,
+                HandOffState.Busy => Strings.HandInArtisanBusy,
+                _ => Strings.HandInNoRecipe,
+            });
         }
 
+        KeepSlot(start, slotWidth);
         if (!pressed)
         {
             return;
@@ -323,7 +374,29 @@ public sealed partial class DetailPane
 
         var amount = CraftAmountFor(session, row, recipe);
         var sent = recipe is not null && amount > 0 && Artisan is { } artisan && artisan.Craft(recipe.RecipeId, amount);
+        if (sent)
+        {
+            // The status bar's activity line names the craft while it runs ("Artisan: crafting Maple Lumber").
+            artisanCraftingLine = string.Format(CultureInfo.CurrentCulture, Strings.ArtisanCraftingFormat, row.Name);
+        }
+
         ShowHandInNote(sent ? string.Format(CultureInfo.CurrentCulture, Strings.HandInSentToArtisanFormat, row.Name) : Strings.HandInArtisanFailed);
+    }
+
+    /// <summary>
+    /// Pads a pill drawn at <paramref name="start"/> out to <paramref name="slotWidth"/>, so the item after it on the
+    /// line keeps its place whichever form the pill took. Call after the pill's own hover is read.
+    /// </summary>
+    private static void KeepSlot(Vector2 start, float slotWidth)
+    {
+        var drawn = ImGui.GetItemRectMax().X - start.X;
+        if (drawn >= slotWidth - 0.5f)
+        {
+            return;
+        }
+
+        ImGui.SameLine(0f, 0f);
+        ImGui.Dummy(new Vector2(slotWidth - drawn, Chrome.ActionPillHeight));
     }
 
     /// <summary>An enabled hand-off's tooltip, with the companion setup note under it when a recommended setting is set otherwise.</summary>

@@ -87,8 +87,9 @@ public sealed partial class DetailPane
             travelStartedBy = null;
         }
 
-        // Without Lifestream, Flag on map leads the row, as the primary action did before 1.10.
-        if (!links.TeleportAvailable)
+        // Without Lifestream (or with Teleport hidden by the automation level, 1.18), Flag on map leads the row, as the
+        // primary action did before 1.10.
+        if (links.FlagLeads)
         {
             var canFlag = links.CanFlagMap(quest);
             AddAction(ActionKind.Flag, ActionIcons.FlagIcon, Strings.FlagOnMap, Strings.FlagOnMap, PillTone.Normal, canFlag);
@@ -102,8 +103,11 @@ public sealed partial class DetailPane
                 stop ? PillTone.Danger : PillTone.Normal, stop || go.Ready, stop, waits: go.Stoppable && !stop);
         }
 
-        var teleport = teleportCheck;
-        AddAction(ActionKind.Teleport, ActionIcons.TeleportIcon, Strings.ActionTeleport, Strings.ActionTeleport, teleport.AlreadyHere ? PillTone.Quiet : PillTone.Normal, teleport.Ready);
+        if (links.TeleportShown)
+        {
+            var teleport = teleportCheck;
+            AddAction(ActionKind.Teleport, ActionIcons.TeleportIcon, Strings.ActionTeleport, Strings.ActionTeleport, teleport.AlreadyHere ? PillTone.Quiet : PillTone.Normal, teleport.Ready);
+        }
 
         if (links.WalkShown)
         {
@@ -170,6 +174,12 @@ public sealed partial class DetailPane
             return;
         }
 
+        // Above the automation level (1.18, A10) Start is hidden, not greyed; a Stop above always shows.
+        if (!AutomationGate.Shows(AutomationButtons.Questionable))
+        {
+            return;
+        }
+
         var installed = Companions?.Status(CompanionPlugin.Questionable).State is { } state ? state != CompanionState.Missing : questionable.Ipc.Available;
         if (!installed || model.State is QuestState.Completed or QuestState.DoneThisCycle or QuestState.Foreclosed)
         {
@@ -206,7 +216,7 @@ public sealed partial class DetailPane
             return;
         }
 
-        if (companions.Status(CompanionPlugin.AutoDuty).State == CompanionState.Missing)
+        if (!AutomationGate.Shows(AutomationButtons.AutoDuty) || companions.Status(CompanionPlugin.AutoDuty).State == CompanionState.Missing)
         {
             return;
         }

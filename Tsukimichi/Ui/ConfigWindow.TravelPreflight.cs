@@ -45,7 +45,9 @@ public sealed partial class ConfigWindow
 
     private void DrawTravelPreflight()
     {
-        if (TravelPreflight is not { } preflight)
+        // Only while the automation level shows a travel button (1.18, A10): at Tracker only nothing travels.
+        if (TravelPreflight is not { } preflight
+            || !AutomationGate.ShowsAny(Core.Companions.AutomationButtons.Teleport | Core.Companions.AutomationButtons.Walk | Core.Companions.AutomationButtons.GoTo))
         {
             return;
         }

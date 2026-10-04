@@ -393,7 +393,7 @@ public sealed partial class DetailPane
         {
             case UnlockTarget.Aetheryte:
             case UnlockTarget.AethernetShard:
-                if (entry.Target == UnlockTarget.Aetheryte)
+                if (entry.Target == UnlockTarget.Aetheryte && links.TeleportShown)
                 {
                     var teleport = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, entry.Name);
                     if (ImGui.MenuItem(teleport, string.Empty, false, links.CanTeleportTo(entry.TargetId)))
@@ -425,7 +425,7 @@ public sealed partial class DetailPane
                     links.OpenMap(entry.PlaceId);
                 }
 
-                if (links.ZoneAetheryte(entry.PlaceId) is { } home)
+                if (links.TeleportShown && links.ZoneAetheryte(entry.PlaceId) is { } home)
                 {
                     var teleport = string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, home.Name);
                     if (ImGui.MenuItem(teleport, string.Empty, false, links.CanTeleportTo(home.RowId)))

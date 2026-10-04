@@ -927,7 +927,7 @@ public sealed partial class DetailPane
     /// Journal, Report (when attached), the aethernet hop (in the giver's city) and "…" ("Open on…", the pills the
     /// first row had no room for, and the Questionable hand-off when shown).
     /// </summary>
-    private int IconButtonCount => 7 + (Diagnostics is null ? 0 : 1) + (links.TeleportAvailable ? 1 : 0) + (hopCheck.Visible ? 1 : 0);
+    private int IconButtonCount => 7 + (Diagnostics is null ? 0 : 1) + (links.FlagLeads ? 0 : 1) + (hopCheck.Visible ? 1 : 0);
 
     /// <summary>Reads the travel checks and the pills' state once per frame, before the bar's height is planned.</summary>
     private void PrepareTravel(SessionState session, QuestRecord quest)
@@ -935,7 +935,7 @@ public sealed partial class DetailPane
         teleportCheck = links.CheckTeleport(quest);
         walkCheck = links.WalkShown ? links.CheckWalk(quest) : default;
         goToCheck = links.GoToShown ? links.CheckGoTo(quest) : default;
-        hopCheck = links.CheckHop(quest);
+        hopCheck = links.TeleportShown ? links.CheckHop(quest) : default;
         PrepareActions(session, quest);
     }
 
@@ -1036,9 +1036,9 @@ public sealed partial class DetailPane
             ui.OpenRoute(Core.Route.RouteTarget.ForQuest(rowId, model.DisplayName));
         }
 
-        if (links.TeleportAvailable)
+        if (!links.FlagLeads)
         {
-            // Without Lifestream Flag on map leads the pills instead.
+            // Without Lifestream, or with Teleport hidden by the automation level, Flag on map leads the pills instead.
             NextRound(ref used, width);
             var canFlag = links.CanFlagMap(quest);
             if (Chrome.IconButtonRound("##flagIcon", ActionIcons.FlagIcon, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable, enabled: canFlag))

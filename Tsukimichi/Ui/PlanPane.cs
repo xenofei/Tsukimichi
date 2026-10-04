@@ -394,7 +394,7 @@ public sealed class PlanPane
         var pinWidth = TravelControls.ToolbarButtonWidth(ActionGlyphs.Pin, pinLabel);
         var routeWidth = TravelControls.ToolbarButtonWidth(ActionGlyphs.Route, Strings.PlanRouteBlues);
         var headerStart = ImGui.GetCursorPos();
-        var questionableWidth = Questionable is null ? 0f : UiMetrics.MinTarget + UiMetrics.Px(4f);
+        var questionableWidth = AutomationGate.Questionable(Questionable) is null ? 0f : UiMetrics.MinTarget + UiMetrics.Px(4f);
         var titleWidth = MathF.Max(1f, right - pinWidth - routeWidth - questionableWidth - UiMetrics.Px(14f) - headerStart.X);
         if (ImGui.InvisibleButton("##fold", new Vector2(titleWidth, ImGui.GetFrameHeight())))
         {
@@ -444,7 +444,7 @@ public sealed class PlanPane
             }
         }
 
-        if (Questionable is { } questionable)
+        if (AutomationGate.Questionable(Questionable) is { } questionable)
         {
             // Send to Questionable: the expansion's quests as the card lists them (filters applied), in story order.
             ImGui.SetCursorPos(new Vector2(right - pinWidth - routeWidth - UiMetrics.Px(6f) - questionableWidth, headerStart.Y + ((ImGui.GetFrameHeight() - UiMetrics.MinTarget) * 0.5f)));

@@ -7,6 +7,7 @@ Tsukimichi (月道, "the moon's path") takes *tsuki* from the author's character
 - Source: this repository, [MIT licensed](LICENSE).
 - Releases: [GitHub Releases](https://github.com/xenofei/Tsukimichi/releases), built by GitHub Actions from the tagged commit.
 - Issues: [GitHub Issues](https://github.com/xenofei/Tsukimichi/issues).
+- Local only: no network code. [What Tsukimichi reads and sends](docs/privacy.md).
 
 ## Install
 

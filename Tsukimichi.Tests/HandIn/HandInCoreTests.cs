@@ -185,6 +185,22 @@ public class HandInCoreTests
     }
 
     [Fact]
+    public void The_craft_pill_reads_stop_only_for_the_row_tsukimichi_handed_artisan_while_it_crafts()
+    {
+        // Tsukimichi's run for one of this item's recipes (any crafter's), while Artisan is busy with it.
+        Assert.True(HandInActions.CraftShowsStop(Craftable, claimedAndBusy: true, claimedRecipeId: 101));
+        Assert.True(HandInActions.CraftShowsStop(Craftable, claimedAndBusy: true, claimedRecipeId: 107));
+
+        // Not busy or not claimed (a run the player started in Artisan): the pill waits as Busy instead.
+        Assert.False(HandInActions.CraftShowsStop(Craftable, claimedAndBusy: false, claimedRecipeId: 101));
+
+        // Another row's run, or none remembered.
+        Assert.False(HandInActions.CraftShowsStop(Craftable, claimedAndBusy: true, claimedRecipeId: 555));
+        Assert.False(HandInActions.CraftShowsStop(Craftable, claimedAndBusy: true, claimedRecipeId: 0));
+        Assert.False(HandInActions.CraftShowsStop(Gatherable, claimedAndBusy: true, claimedRecipeId: 100));
+    }
+
+    [Fact]
     public void The_gather_button_takes_either_gatherbuddy()
     {
         Assert.Equal(HandOffState.NotApplicable, HandInActions.Gather(Craftable, GatherPlugin.GatherBuddy));

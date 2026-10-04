@@ -122,11 +122,18 @@ public sealed partial class DetailPane
         var running = autoDuty.Available && !autoDuty.IsStopped;
         var inputsBase = AutoDutyInputsFor(companions, session, running);
         var anyPath = false;
+        var showRun = AutomationGate.Shows(AutomationButtons.AutoDuty);
         for (var i = 0; i < dutyRows.Count; i++)
         {
             var row = dutyRows[i];
             anyPath |= row.HasPath == true;
             DrawDutyIdentity(row);
+            if (!showRun)
+            {
+                // Run with AutoDuty is above the automation level (1.18, A10): the duty is listed without its button.
+                continue;
+            }
+
             var choice = AutoDutyPlan.Choose(row.Duty.Duty, inputsBase with { HasPath = row.HasPath, Unlocked = row.Unlocked });
 
             // The same pill as the action bar's Run with AutoDuty (1.10); the icon alone when the card is narrower than its label.
@@ -157,7 +164,7 @@ public sealed partial class DetailPane
         }
 
         // Boss Mod's own autorotation serves too, so a missing rotation plugin is a note, not a blocker.
-        if (anyPath && companions.IsLoaded(CompanionPlugin.AutoDuty) && !companions.IsLoaded(CompanionPlugin.RotationPlugin))
+        if (showRun && anyPath && companions.IsLoaded(CompanionPlugin.AutoDuty) && !companions.IsLoaded(CompanionPlugin.RotationPlugin))
         {
             TextFlow.Wrapped(Strings.AutoDutyRotationNote, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
         }

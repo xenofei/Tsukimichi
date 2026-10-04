@@ -689,7 +689,7 @@ public sealed class TodoOverlay : Window, IDisposable
             Save();
         }
 
-        if (Questionable is { } questionable)
+        if (AutomationGate.Questionable(Questionable) is { } questionable)
         {
             // The viewed character's pins, in the order they were pinned.
             ImGui.Separator();
@@ -759,7 +759,7 @@ public sealed class TodoOverlay : Window, IDisposable
 
         var hovered = ImGui.IsItemHovered();
         // The pins' caption has one menu (1.6.0): a route through every pin, and Send pins to Questionable.
-        var pinsMenu = section.Section == TodoSection.Pinned && (OpenRoute is not null || Questionable is not null);
+        var pinsMenu = section.Section == TodoSection.Pinned && (OpenRoute is not null || AutomationGate.Questionable(Questionable) is not null);
         if (pinsMenu && hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
         {
             ImGui.OpenPopup(PinsMenuId);
@@ -832,7 +832,7 @@ public sealed class TodoOverlay : Window, IDisposable
         }
 
         // The same "Send pins to Questionable" as the title's menu.
-        Questionable?.DrawSubmenu(QuestionableHost, Strings.QuestionableSendPins, pinned, static pins => pins);
+        AutomationGate.Questionable(Questionable)?.DrawSubmenu(QuestionableHost, Strings.QuestionableSendPins, pinned, static pins => pins);
     }
 
     /// <summary>The room a row's giver avatar and its gap take before the name (Next stops rows, 1.15); 0 for the others or with portraits off.</summary>

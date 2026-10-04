@@ -22,6 +22,9 @@ public sealed partial class DetailPane
     private int travelLineLanguage = -1;
     private string travelLine = string.Empty;
 
+    // "Artisan: crafting Maple Lumber" (1.18, A7), composed when Craft hands the run over; null before any.
+    private string? artisanCraftingLine;
+
     /// <summary>
     /// HOOK for richer travel status (mounting, flying, "step 2 of 4"): when set and it answers, its text replaces the
     /// line built from <see cref="TravelService.JourneyStep"/> while a trip runs. Read once per frame while travelling,
@@ -50,7 +53,7 @@ public sealed partial class DetailPane
 
         // Only a craft Tsukimichi handed off (the claim is kept current by /tsuki stop's frame hook): Stop ends that run.
         var crafting = Artisan is { HandOffClaimed: true, IsBusy: true };
-        Activity.Report(StopTarget.Artisan, crafting ? Strings.ArtisanCraftingStatus : null, canStop: true);
+        Activity.Report(StopTarget.Artisan, crafting ? artisanCraftingLine ?? Strings.ArtisanCraftingStatus : null, canStop: true);
     }
 
     /// <summary>The Stop tooltip of the hand-off <paramref name="kind"/>; Questionable draws its own button.</summary>

@@ -59,6 +59,9 @@ public enum SettingsAnchor
 
     /// <summary>Settings › Themes › Share (<c>/tsuki look &lt;code&gt;</c> opens it with the code pasted).</summary>
     ThemeShare,
+
+    /// <summary>Settings › Automation › Automation buttons (1.18, A10; the Set up your road card's "Choose a level").</summary>
+    AutomationLevel,
 }
 
 /// <summary>The order of the Settings window's section index and of the search results, and the remembered page.</summary>

@@ -65,6 +65,31 @@ public static class HandInActions
             : HandOffState.Ready;
     }
 
+    /// <summary>
+    /// Whether the row's Craft pill reads Stop (1.18, A7): while Artisan is busy with the run Tsukimichi handed it
+    /// (<paramref name="claimedAndBusy"/>) and that run is for one of this item's recipes
+    /// (<paramref name="claimedRecipeId"/>). A run the player started in Artisan, or one for another row, leaves the pill
+    /// alone (it then waits, disabled, as <see cref="HandOffState.Busy"/>).
+    /// </summary>
+    public static bool CraftShowsStop(HandInItem item, bool claimedAndBusy, uint claimedRecipeId)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        if (!claimedAndBusy || claimedRecipeId == 0)
+        {
+            return false;
+        }
+
+        foreach (var recipe in item.Recipes)
+        {
+            if (recipe.RecipeId == claimedRecipeId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>The Gather button: shown only for a gatherable item; either GatherBuddy registers the command.</summary>
     public static HandOffState Gather(HandInItem item, GatherPlugin plugin)
     {

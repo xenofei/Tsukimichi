@@ -1026,7 +1026,7 @@ public sealed partial class CharactersPane
     /// <param name="recapQuest">A quest naming the chain for the recap (<see cref="RecapRequest.ChainQuestRowId"/>); 0 offers none.</param>
     private void DrawRowMenu(UiState ui, IReadOnlyList<uint> rowIds, uint recapQuest = 0)
     {
-        var questionable = rowIds.Count > 0 ? Questionable : null;
+        var questionable = rowIds.Count > 0 ? AutomationGate.Questionable(Questionable) : null;
         if (questionable is null && recapQuest == 0)
         {
             return;

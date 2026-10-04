@@ -18,6 +18,7 @@ public sealed class LinkConfirmWindow : Window
     private readonly Action<string> open;
     private string url = string.Empty;
     private string name = string.Empty;
+    private string? body;
 
     /// <param name="open">Opens a URL in the browser (<see cref="GameLinks.OpenUrl"/>).</param>
     public LinkConfirmWindow(Action<string> open)
@@ -27,11 +28,18 @@ public sealed class LinkConfirmWindow : Window
         RespectCloseHotkey = true;
     }
 
-    /// <summary>Shows the question for <paramref name="target"/>; <paramref name="questName"/> is the name the shield prints.</summary>
-    public void Ask(string target, string questName)
+    /// <summary>Shows the spoiler question for <paramref name="target"/>; <paramref name="questName"/> is the name the shield prints.</summary>
+    public void Ask(string target, string questName) => Ask(target, questName, null);
+
+    /// <summary>
+    /// Shows the question for <paramref name="target"/> under <paramref name="title"/>; <paramref name="question"/>
+    /// replaces the spoiler question for a page that is not a quest's (the User Agreement, 1.18).
+    /// </summary>
+    public void Ask(string target, string title, string? question)
     {
         url = target ?? string.Empty;
-        name = questName ?? string.Empty;
+        name = title ?? string.Empty;
+        body = question;
         WindowName = Strings.LinksConfirmTitle + Id;
         Position = ImGui.GetMousePos() + new Vector2(8f, 8f);
         PositionCondition = ImGuiCond.Appearing;
@@ -47,7 +55,7 @@ public sealed class LinkConfirmWindow : Window
             ImGui.TextUnformatted(name);
         }
 
-        ImGui.TextUnformatted(Strings.LinksConfirmBody);
+        ImGui.TextUnformatted(body ?? Strings.LinksConfirmBody);
         ImGui.Spacing();
         if (ImGui.Button(Strings.LinksConfirmOpen))
         {
@@ -66,5 +74,6 @@ public sealed class LinkConfirmWindow : Window
     {
         url = string.Empty;
         name = string.Empty;
+        body = null;
     }
 }

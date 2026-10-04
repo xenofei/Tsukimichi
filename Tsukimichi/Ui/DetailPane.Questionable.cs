@@ -50,10 +50,13 @@ public sealed partial class DetailPane
     public Func<bool>? QuestionableHandoff { get; set; }
 
     /// <summary>
-    /// The "…" button is drawn: Questionable is loaded, registers the priority gate and a working reason gate, and the
-    /// setting is ticked. A fork without the reason gate gets no button rather than one whose item is always disabled.
+    /// The "…" menu's Questionable items are drawn: Questionable is loaded, registers the priority gate and a working
+    /// reason gate, the setting is ticked and the automation level shows Questionable (1.18, A10; "Start here and keep
+    /// going" follows the Start pill, which the level hides the same way). A fork without the reason gate gets no item
+    /// rather than one that is always disabled.
     /// </summary>
-    private bool ShowsQuestionableMore => Questionable is not null && questionableSupportsPriority && QuestionableHandoff?.Invoke() == true;
+    private bool ShowsQuestionableMore => Questionable is not null && questionableSupportsPriority && QuestionableHandoff?.Invoke() == true
+        && AutomationGate.Shows(Core.Companions.AutomationButtons.Questionable);
 
     /// <summary>Re-asks Questionable when the quest, the session version or Dalamud's plugin list changed, or Questionable reloaded its paths; otherwise free.</summary>
     private void RefreshQuestionable(SessionState session, QuestRecord quest)

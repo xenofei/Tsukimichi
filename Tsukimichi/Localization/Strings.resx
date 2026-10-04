@@ -11714,4 +11714,158 @@
     <value>Off by default: Questionable is yours to stop.</value>
     <comment>Hint.</comment>
   </data>
+  <data name="AutomationButtonsHeading" xml:space="preserve">
+    <value>Automation buttons</value>
+    <comment>Settings › Automation, first block (1.18 A10).</comment>
+  </data>
+  <data name="AutomationButtonsHint" xml:space="preserve">
+    <value>Which buttons Tsukimichi shows. Higher levels add buttons that hand the game to another plugin.</value>
+  </data>
+  <data name="AutomationLevelTrackerOnly" xml:space="preserve">
+    <value>Tracker only</value>
+  </data>
+  <data name="AutomationLevelTravel" xml:space="preserve">
+    <value>Travel</value>
+  </data>
+  <data name="AutomationLevelTravelAndWalking" xml:space="preserve">
+    <value>Travel and walking</value>
+  </data>
+  <data name="AutomationLevelFullHandOffs" xml:space="preserve">
+    <value>Full hand-offs</value>
+  </data>
+  <data name="AutomationLevelTrackerOnlyBody" xml:space="preserve">
+    <value>Tsukimichi tracks; it never presses anything for you.</value>
+  </data>
+  <data name="AutomationLevelTravelBody" xml:space="preserve">
+    <value>Adds Teleport and the aethernet, through Lifestream.</value>
+  </data>
+  <data name="AutomationLevelTravelAndWalkingBody" xml:space="preserve">
+    <value>Adds Walk to giver, through vnavmesh.</value>
+  </data>
+  <data name="AutomationLevelFullHandOffsBody" xml:space="preserve">
+    <value>Adds Questionable, AutoDuty and Artisan: they play the quest, the duty or the craft for you.</value>
+  </data>
+  <data name="AutomationLevelCustom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="AutomationCustomNote" xml:space="preserve">
+    <value>Custom: your own mix of buttons, set below. Pick a level to use its buttons instead.</value>
+  </data>
+  <data name="AutomationPillFlag" xml:space="preserve">
+    <value>Flag</value>
+  </data>
+  <data name="AutomationPillMap" xml:space="preserve">
+    <value>Map</value>
+  </data>
+  <data name="AutomationPillAethernet" xml:space="preserve">
+    <value>Aethernet</value>
+  </data>
+  <data name="AutomationFineTune" xml:space="preserve">
+    <value>Fine-tune each button</value>
+  </data>
+  <data name="AutomationButtonTeleport" xml:space="preserve">
+    <value>Teleport and aethernet</value>
+  </data>
+  <data name="AutomationButtonTeleportHint" xml:space="preserve">
+    <value>Teleports and aethernet hops through Lifestream, wherever a giver or aetheryte is shown.</value>
+  </data>
+  <data name="AutomationButtonGather" xml:space="preserve">
+    <value>Gather with GatherBuddy</value>
+  </data>
+  <data name="AutomationButtonGatherHint" xml:space="preserve">
+    <value>Hand in rows: GatherBuddy's /gather teleports toward the node and marks it.</value>
+  </data>
+  <data name="AutomationButtonQuestionable" xml:space="preserve">
+    <value>Questionable buttons</value>
+  </data>
+  <data name="AutomationButtonQuestionableHint" xml:space="preserve">
+    <value>Start Questionable, Send to Questionable and the priority items. Stop always shows.</value>
+  </data>
+  <data name="AutomationButtonAutoDuty" xml:space="preserve">
+    <value>Run with AutoDuty</value>
+  </data>
+  <data name="AutomationButtonAutoDutyHint" xml:space="preserve">
+    <value>AutoDuty runs the duty with Duty Support or Trust. Stop always shows.</value>
+  </data>
+  <data name="AutomationButtonArtisan" xml:space="preserve">
+    <value>Craft with Artisan</value>
+  </data>
+  <data name="AutomationButtonArtisanHint" xml:space="preserve">
+    <value>Hand in rows: Artisan crafts what the quest asks for. A run's Stop stays in the status bar.</value>
+  </data>
+  <data name="UndoToastAutomationFormat" xml:space="preserve">
+    <value>Automation buttons: {0}</value>
+    <comment>{0} = the level's name.</comment>
+  </data>
+  <data name="AboutAutomationTitle" xml:space="preserve">
+    <value>About automation</value>
+  </data>
+  <data name="AboutAutomationRowHint" xml:space="preserve">
+    <value>What Tsukimichi does itself, what the rules say, and where players draw the line.</value>
+  </data>
+  <data name="AboutAutomationOpen" xml:space="preserve">
+    <value>Read</value>
+  </data>
+  <data name="AboutAutomationDoesHeading" xml:space="preserve">
+    <value>What Tsukimichi does itself</value>
+  </data>
+  <data name="AboutAutomationDoesBody" xml:space="preserve">
+    <value>It reads your game to track quests. It never moves, fights or talks for you. Every button that does sends the job to another plugin you installed, and only when you press it.</value>
+  </data>
+  <data name="AboutAutomationOthersHeading" xml:space="preserve">
+    <value>What the other plugins do</value>
+  </data>
+  <data name="AboutAutomationOthersBody" xml:space="preserve">
+    <value>Lifestream teleports, vnavmesh walks, Questionable plays quests, AutoDuty runs duties with Duty Support or Trust, Artisan crafts.</value>
+  </data>
+  <data name="AboutAutomationRulesHeading" xml:space="preserve">
+    <value>What the rules say</value>
+  </data>
+  <data name="AboutAutomationRulesBody" xml:space="preserve">
+    <value>Third-party tools are against the FINAL FANTASY XIV User Agreement. Square Enix has said it acts on what affects other players, and it can act on any account. No setting here makes automation safe.</value>
+  </data>
+  <data name="AboutAutomationLineHeading" xml:space="preserve">
+    <value>Where players draw the line</value>
+  </data>
+  <data name="AboutAutomationLineBody" xml:space="preserve">
+    <value>Most players accept automation in solo content and with NPCs (Duty Support, Trust). They object when it runs in content with other players, or unattended for hours. Tsukimichi stops before a duty with other players unless you change that.</value>
+  </data>
+  <data name="AboutAutomationMannersHeading" xml:space="preserve">
+    <value>Good manners</value>
+  </data>
+  <data name="AboutAutomationMannersBody" xml:space="preserve">
+    <value>Stay at the keyboard. Answer tells yourself. Keep runs short: Start does one quest unless you choose otherwise.</value>
+  </data>
+  <data name="AboutAutomationLocalHeading" xml:space="preserve">
+    <value>Local only</value>
+  </data>
+  <data name="AboutAutomationLocalBody" xml:space="preserve">
+    <value>Tsukimichi has no network code. Nothing you do here leaves your computer.</value>
+  </data>
+  <data name="AboutAutomationAgreement" xml:space="preserve">
+    <value>Read the User Agreement</value>
+  </data>
+  <data name="AboutAutomationAgreementBody" xml:space="preserve">
+    <value>Opens the FINAL FANTASY XIV User Agreement on Square Enix's site.</value>
+  </data>
+  <data name="AboutAutomationClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="SetupAutomationFormat" xml:space="preserve">
+    <value>Automation buttons: {0}</value>
+    <comment>Set up your road card. {0} = the level's name.</comment>
+  </data>
+  <data name="SetupAutomationButton" xml:space="preserve">
+    <value>Choose a level</value>
+  </data>
+  <data name="SetupAutomationTooltip" xml:space="preserve">
+    <value>Opens Settings › Automation: from Tracker only to Full hand-offs.</value>
+  </data>
+  <data name="HelpAboutAutomationTip" xml:space="preserve">
+    <value>Where Tsukimichi stops and other plugins start, what the User Agreement says, and where players draw the line.</value>
+  </data>
+  <data name="ArtisanCraftingFormat" xml:space="preserve">
+    <value>Artisan: crafting {0}</value>
+    <comment>Status bar line while an Artisan craft Tsukimichi handed off runs. {0} = the item.</comment>
+  </data>
 </root>

@@ -379,6 +379,9 @@ public sealed class HelpWindow : Window
         BuildSearchText();
     }
 
+    /// <summary>Opens About automation (1.18, A10) from the Companion plugins topic; set by the plugin, null leaves the tip out.</summary>
+    public Action? OpenAboutAutomation { get; set; }
+
     /// <summary>Opens the window (on its current topic) and brings it to the front.</summary>
     public void Show()
     {
@@ -724,6 +727,11 @@ public sealed class HelpWindow : Window
 
                 DrawCards(CompanionCards);
                 Tip(100, Strings.HelpCompanionsTip, actions.OpenSettings, Strings.Help.OpenSettings);
+                if (OpenAboutAutomation is { } openAbout)
+                {
+                    // About automation (1.18, A10): what Tsukimichi does itself, the rules and where players draw the line.
+                    Tip(101, Strings.HelpAboutAutomationTip, openAbout, Strings.AboutAutomationTitle);
+                }
                 break;
             case HelpTopic.Commands:
                 DrawCommands(scale);
