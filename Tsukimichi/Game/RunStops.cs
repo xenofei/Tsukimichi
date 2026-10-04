@@ -68,6 +68,7 @@ public sealed class RunStops : IDisposable
     private readonly Action<string> print;
     private readonly IPluginLog log;
     private readonly Stopwatch clock = Stopwatch.StartNew();
+    private readonly Func<uint, string> zoneName;
 
     private QuestionableStatus lastRun = QuestionableStatus.Idle;
     private bool wasRunning;
@@ -121,6 +122,7 @@ public sealed class RunStops : IDisposable
         this.gate = gate ?? throw new ArgumentNullException(nameof(gate));
         this.print = print ?? throw new ArgumentNullException(nameof(print));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        zoneName = ZoneName;
         framework.Update += OnUpdate;
         travel.GaveUp += OnTravelGaveUp;
     }
@@ -180,6 +182,10 @@ public sealed class RunStops : IDisposable
     {
         try
         {
+            // The character as it is at the stop, so Copy report later names the job, level and zone of that moment.
+            var player = objects.LocalPlayer;
+            card = card.WithCharacter(clientState.TerritoryType, zoneName, player?.ClassJob.ValueNullable?.Abbreviation.ExtractText() ?? string.Empty, player?.Level ?? 0);
+
             // A stop counts once at its step: the same stop raised again (the guard's card, then its receipt) refreshes.
             var refresh = Dock.Current is { } shown && !Dock.Leaving && shown.Key == card.Key;
             if (card.NeedsYou && card.QuestRowId != 0 && !refresh)
@@ -573,9 +579,9 @@ public sealed class RunStops : IDisposable
             QuestId = card.QuestRowId & 0xFFFF,
             Sequence = card.Sequence,
             Step = card.Step,
-            Job = player?.ClassJob.ValueNullable?.Abbreviation.ExtractText() ?? string.Empty,
-            Level = player?.Level ?? 0,
-            Zone = ZoneName(territory),
+            Job = card.Job,
+            Level = card.Level,
+            Zone = card.Zone.Length > 0 ? card.Zone : ZoneName(territory),
             TerritoryId = territory,
             MapCoordinates = card.Position is { } at && Links is { } links ? links.MapCoordinateText(territory, at) : string.Empty,
             Travel = TravelLine(),
