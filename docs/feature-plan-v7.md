@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.16.0 are released; 1.17.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.17.0 are released; 1.18.0 is in progress. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -113,7 +113,7 @@ Point 7, part 1: the system and the first two revived sets.
 | T8 | Palettes: Night (ported) and **Ishgard Snow**, the first light palette, each with a high-contrast form, plus contrast tests | M |
 | T9 | Settings › Themes: a card grid with live previews, the palette picker, the frames choice, and Reset with safety | M |
 
-### 1.17.0 · Mix and match
+### 1.17.0 · Mix and match (released 2026-10-03)
 
 Point 7, part 2.
 
@@ -359,3 +359,32 @@ Your notes, and what happens with each:
 - **Classic on Snow:** no navy dots, and Ready is a warm wash.
 - **Banner location line:** one line, with no level (the level chip shows it).
 - **Upgrading:** an existing 1.15 config keeps its look. Moon style, Moon colours and Follow Dalamud carry over.
+
+### 1.17.0 (released 2026-10-03)
+
+- **Mix moons by state** (Settings › Themes):
+  - Rows never shift, and list options warn before you pick them.
+  - "Fix it" shows a proposal card, then Undo.
+  - Reset mix is a hold, with Undo.
+  - Previews follow a newly picked frame kit or theme straight away.
+- **Frames:**
+  - Brass, Silver, Lead came, Astrolabe and Kirikane on a mixed column, including a job icon in a composed seat, at Full and Quiet.
+  - The Frames warning line.
+  - On Ishgard Snow at Quiet, the keyline around composed medals.
+- **New themes:**
+  - Astrologian's Orrery: hatching shows only at large sizes.
+  - Sumi to Kinpaku, at Full, Quiet and Plain, on Kugane Lacquer.
+  - Kirikane heading crests at 1x, at a large UI scale and at a small text size, and the card corners. Are the corners too big?
+- **Palettes:**
+  - Dawn's rose horizon.
+  - Kugane's hazy sky and vermilion rail edge.
+  - The Ready halo on both.
+  - The high-contrast forms.
+- **Share:**
+  - Copy, then paste a code: a preview, Apply, then Undo.
+  - `/tsuki look <code>` opens the preview.
+  - `/tsuki look to the stars` still finds the quest.
+  - A mistyped code prints a line in chat.
+  - Your High contrast setting is never changed by a code.
+- **Glyph window:** the Themes tab compares two looks, with a heat table and Ready's lead.
+- **Plain:** after the window has been closed for over 30 s, there is no flash of Medallion.
