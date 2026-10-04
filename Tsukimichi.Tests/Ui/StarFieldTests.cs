@@ -204,10 +204,14 @@ public class StarFieldTests
         var into = new PlacedStar[512];
         var clock = new SkyClock();
         var view = new SkyView(new Vector2(0, 0), new Vector2(300, 900), new Vector2(8, 300), new Vector2(292, 892), 4f, 0f, 10f, 0, true, true);
+        // Warm up exactly what is measured: a first call's one-time setup (static state, tiered JIT) would otherwise land
+        // inside the measured frames whenever no earlier test happened to run it.
         for (var i = 0; i < 100; i++)
         {
             clock.Advance(1 / 60.0, animates: true, focused: true, drifts: true);
+            clock.TakeAmbient(i);
             StarField.Place(field.For(300, 900), view with { Offset = clock.Offset(6f), Time = clock.Time }, into);
+            MotionTokens.MeteorAlpha(i / 100f);
         }
 
         var before = GC.GetAllocatedBytesForCurrentThread();
