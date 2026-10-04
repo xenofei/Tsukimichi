@@ -64,7 +64,8 @@ public sealed partial class DetailPane
             bool? storyRequired = story?.IsStoryDuty(info.ContentFinderConditionId, info.InstanceContentId);
             var badges = DutyBadgeRules.For(info, storyRequired).Select(b => DutyBadges.Describe(b, info, index.Roulettes)).ToArray();
             var (wall, note) = WallLines(ItemLevelWall.For(info, session.ViewedSnapshot, rule), info, bundle.Names);
-            clearRows.Add(new ClearRow(info.Name, badges, wall, note));
+            // A duty the story has not introduced reads as its placeholder (1.20.0 N6).
+            clearRows.Add(new ClearRow(session.Spoilers.Name(SpoilerKind.Duty, info.Name), badges, wall, note));
         }
 
         clearCaption = duties.Count == 1

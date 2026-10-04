@@ -186,7 +186,9 @@ public sealed partial class DetailPane
         dl.AddRectFilled(start, wellMax, Theme.U32(Theme.Surface.Sunken), rounding);
         dl.AddRect(start, wellMax, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         var inset = new Vector2(UiMetrics.Px(3f));
-        var icon = row.Duty.Duty.Icon;
+        // A duty the story has not introduced (1.20.0 N6): the veiled moon and its placeholder.
+        var name = DutyLabel(row.Duty.Duty.Name);
+        var icon = ReferenceEquals(name, row.Duty.Duty.Name) ? row.Duty.Duty.Icon : 0;
         if (icon == 0 || !GameIcon.DrawAt(dl, textures, icon, start + inset, wellMax - inset, UiMetrics.Px(3f)))
         {
             MoonGlyph.DrawVeiled(dl, (start + wellMax) * 0.5f, well * 0.32f, 0.6f);
@@ -194,9 +196,9 @@ public sealed partial class DetailPane
 
         var textX = wellMax.X + UiMetrics.Px(8f);
         ImGui.SetCursorScreenPos(new Vector2(textX, start.Y));
-        if (Chrome.EllipsisText(row.Duty.Duty.Name, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
+        if (Chrome.EllipsisText(name, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(row.Duty.Duty.Name);
+            UiMetrics.Tooltip(name);
         }
 
         ImGui.SetCursorScreenPos(new Vector2(textX, ImGui.GetCursorScreenPos().Y));
@@ -210,6 +212,9 @@ public sealed partial class DetailPane
         var bottom = MathF.Max(ImGui.GetItemRectMax().Y, wellMax.Y);
         ImGui.SetCursorScreenPos(new Vector2(start.X, bottom + ImGui.GetStyle().ItemSpacing.Y));
     }
+
+    /// <summary>A duty's name through the viewed character's shield: its placeholder past the story point (1.20.0 N6).</summary>
+    private string DutyLabel(string name) => (lastSpoilers ?? Core.Query.SpoilerMask.None).Name(Core.Query.SpoilerKind.Duty, name);
 
     /// <summary>
     /// AutoDuty's inputs for a run as of now, before the duty's own path and unlock answers. A trip of Tsukimichi's
@@ -234,7 +239,7 @@ public sealed partial class DetailPane
         var result = autoDuty.Run(row.Duty.Duty.TerritoryTypeId, choice.Mode);
         ShowCompanionNote(result switch
         {
-            AutoDutyStart.Started => string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyStartedFormat, row.Duty.Duty.Name),
+            AutoDutyStart.Started => string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyStartedFormat, DutyLabel(row.Duty.Duty.Name)),
             AutoDutyStart.ModeRefused => Strings.AutoDutyModeRefused,
             AutoDutyStart.NotStarted => Strings.AutoDutyNotStarted,
             _ => Strings.AutoDutyUnreachable,
