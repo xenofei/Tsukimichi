@@ -265,4 +265,25 @@ public class RunStopTests
         Assert.Equal(StopCue.Copper, card.Cue);
         Assert.True(card.NeedsYou);
     }
+
+    [Fact]
+    public void One_stop_cancels_every_automatic_start_left_waiting()
+    {
+        // "Keep going after it" waits for a duty and "Reload navmesh and retry" for vnavmesh: /tsuki stop or Stop all
+        // must leave neither to start on its own later.
+        var pending = new PendingStarts<GoToGiverPlan>
+        {
+            WaitingFor = Card(StopReason.DutyGuard, 65964),
+            Retry = GoToGiverPlan.WalkOnly(132, 1f, 2f, 3f),
+        };
+        Assert.True(pending.Any);
+        Assert.True(pending.CancelAll());
+        Assert.Null(pending.WaitingFor);
+        Assert.Null(pending.Retry);
+        Assert.False(pending.Any);
+
+        // Nothing waiting: a stop says nothing about it.
+        Assert.False(pending.CancelAll());
+        Assert.True(new PendingStarts<GoToGiverPlan> { Retry = GoToGiverPlan.WalkOnly(132, 0f, 0f, 0f) }.CancelAll());
+    }
 }

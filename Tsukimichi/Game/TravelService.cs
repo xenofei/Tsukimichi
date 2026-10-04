@@ -448,6 +448,9 @@ public sealed class TravelService : ITravelPorts, IDisposable
     /// <inheritdoc />
     public int? Waypoints => Vnavmesh.Waypoints;
 
+    /// <inheritdoc />
+    public int? WaypointsNow => Vnavmesh.ReadWaypoints();
+
     /// <summary>
     /// Starts a Go to giver chain (or, with <see cref="GoToGiverPlan.WalkOnly"/>, a lone walk), replacing any under way.
     /// <paramref name="target"/> names where it heads for the status line; <paramref name="arrivalNote"/> is the chat

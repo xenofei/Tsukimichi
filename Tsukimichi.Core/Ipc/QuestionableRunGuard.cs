@@ -129,7 +129,9 @@ public enum QuestionableGuardAction
 /// A run is tracked from the first status that reads running. A start Tsukimichi asked for less than
 /// <see cref="StartWindowSeconds"/> earlier names its origin and start time; anything else counts as started
 /// elsewhere. A run ends once Questionable has read not running for <see cref="EndGraceSeconds"/> (an IPC blip or a
-/// late completion does not cut it short); a start Tsukimichi asks for meanwhile ends it at once. A condition holds for the run it was set on and is gone when that run ends;
+/// late completion does not cut it short); a start Tsukimichi asks for meanwhile ends it at once, and so does running
+/// again after a stop of Tsukimichi's (a restart from anywhere is a new run, never merged into the stopped one). A stop
+/// the duty guard made before the run was followed starts following it, so its receipt keeps the reason. A condition holds for the run it was set on and is gone when that run ends;
 /// it fires once, and a stop Questionable refuses clears it (<see cref="StopFailed"/>) so it is not asked again every
 /// second.
 /// </para>
@@ -190,8 +192,9 @@ public sealed class QuestionableRunGuard
     /// <summary>Tsukimichi asked Questionable to start: the run seen next is this one.</summary>
     public void NoteStarted(QuestionableRunOrigin origin, uint rowId, DateTime nowUtc)
     {
-        // A run that still reads running cannot have been started again; one that went idle can (its grace runs).
-        if (Tracking && idleSince is null)
+        // A run that still reads running cannot have been started again, unless a stop of Tsukimichi's was taken (the
+        // start then follows that stop); one that went idle can (its grace runs).
+        if (Tracking && idleSince is null && stopReason is null)
         {
             return;
         }
@@ -215,6 +218,21 @@ public sealed class QuestionableRunGuard
         {
             stopReason ??= reason;
         }
+    }
+
+    /// <summary>
+    /// A stop of Tsukimichi's was taken by a Questionable the caller saw running at <paramref name="nowUtc"/> (the duty
+    /// guard reads the status itself, and may stop a run before it is followed here): a run not followed yet is
+    /// followed from now, so its receipt still gives <paramref name="reason"/>.
+    /// </summary>
+    public void NoteStopAsked(QuestionableRunEnd reason, DateTime nowUtc)
+    {
+        if (!Tracking)
+        {
+            Begin(nowUtc);
+        }
+
+        NoteStopAsked(reason);
     }
 
     /// <summary>The character completed a quest; counted while a run is followed.</summary>
@@ -259,9 +277,10 @@ public sealed class QuestionableRunGuard
         receipt = null;
         if (running)
         {
-            if (Tracking && idleSince is { } idle && pendingAt is { } at && at >= idle)
+            if (Tracking && idleSince is { } idle && (stopReason is not null || (pendingAt is { } at && at >= idle)))
             {
-                // Started again from Tsukimichi while the last run's grace ran: that run ended when it went idle.
+                // Running again while the last run's grace ran, after a stop of Tsukimichi's (whoever started it again)
+                // or a start Tsukimichi asked for: a new run. The last one ended when it went idle, for its own reason.
                 receipt = Finish(idle, isCompleted);
                 Begin(nowUtc);
                 return QuestionableGuardAction.Ended;

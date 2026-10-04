@@ -71,13 +71,18 @@ public sealed record PreflightResult(PreflightItem Item, PreflightState State, P
 
 /// <summary>
 /// A game setting the preflight changed, kept for Undo: <see cref="Before"/> is what it was, <see cref="After"/> what
-/// the fix set. Undo puts <see cref="Before"/> back only while the setting still reads <see cref="After"/>, so a change
-/// the player made since in the game's own window is never overwritten.
+/// the fix set, and <see cref="ContentId"/> the character it was made on. Undo puts <see cref="Before"/> back only for
+/// that character and only while the setting still reads <see cref="After"/>, so a change the player made since in the
+/// game's own window, or another character's setting (the movement type is kept per character), is never overwritten.
 /// </summary>
-public readonly record struct PreflightChange(PreflightItem Item, uint Before, uint After)
+public readonly record struct PreflightChange(PreflightItem Item, uint Before, uint After, ulong ContentId)
 {
-    /// <summary>True while Undo would restore <see cref="Before"/>: the setting still reads what the fix set.</summary>
-    public bool CanUndo(uint? current) => current == After && Before != After;
+    /// <summary>
+    /// True while Undo would restore <see cref="Before"/>: the character logged in (<paramref name="contentId"/>) is the
+    /// one the fix was made on, and the setting still reads what the fix set.
+    /// </summary>
+    public bool CanUndo(uint? current, ulong? contentId) =>
+        ContentId != 0 && contentId == ContentId && current == After && Before != After;
 }
 
 /// <summary>

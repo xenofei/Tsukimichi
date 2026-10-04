@@ -80,12 +80,11 @@ public sealed class RunStops : IDisposable
     private GoToGiverPlan? lastGaveUpPlan;
     private uint lastGaveUpQuest;
 
-    // "Keep going after it": the duty to wait for and the quest to restart, while the card it came from shows.
-    private StopCard? waitingFor;
-
-    // "Reload navmesh and retry": what to start once vnavmesh is ready again.
-    private RetryPlan? retry;
+    // The automatic starts waiting: "Keep going after it" (the card whose duty to wait for and quest to restart, while
+    // it shows) and "Reload navmesh and retry" (what to start once vnavmesh is ready again). One Stop cancels both.
+    private readonly PendingStarts<RetryPlan> pending = new();
     private double copiedAt = double.NegativeInfinity;
+    private double dutyPopAt = double.NegativeInfinity;
     private bool warned;
 
     public RunStops(
@@ -153,7 +152,10 @@ public sealed class RunStops : IDisposable
     /// <summary>Opens Settings › Companions › Setup. Set by the plugin.</summary>
     public Action? OpenSetup { get; set; }
 
-    /// <summary>The panel's Stop all: <c>/tsuki stop</c>. Set by the plugin.</summary>
+    /// <summary>
+    /// The card's and the panel's Stop all: <c>/tsuki stop</c>, which also cancels what waits to start on its own
+    /// (<see cref="CancelPending"/>). Set by the plugin.
+    /// </summary>
     public Action? StopAll { get; set; }
 
     /// <summary>The travel preflight, for the report's movement line. Set by the plugin.</summary>
@@ -163,10 +165,10 @@ public sealed class RunStops : IDisposable
     public string GameVersion { get; set; } = string.Empty;
 
     /// <summary>Whether "Keep going after it" waits for the card on screen.</summary>
-    public bool WaitingForDuty => waitingFor is not null;
+    public bool WaitingForDuty => pending.WaitingFor is not null;
 
     /// <summary>Whether "Reload navmesh and retry" waits for vnavmesh.</summary>
-    public bool Retrying => retry is not null;
+    public bool Retrying => pending.Retry is not null;
 
     /// <summary>Whether Copy report was pressed in the last two seconds (the action then says "Report copied").</summary>
     public bool JustCopied => Now - copiedAt < 2.0;
@@ -229,6 +231,11 @@ public sealed class RunStops : IDisposable
     {
         try
         {
+            if (alert.Kind == NeedsYouKind.DutyPop)
+            {
+                dutyPopAt = Now;
+            }
+
             NeedsYou.Raise(alert, Now);
         }
         catch (Exception ex)
@@ -458,7 +465,7 @@ public sealed class RunStops : IDisposable
                     Links?.OpenDutyFinder(card.DutyId);
                     break;
                 case StopFix.KeepGoingAfterDuty:
-                    waitingFor = WaitingForDuty ? null : card;
+                    pending.WaitingFor = WaitingForDuty ? null : card;
                     break;
                 case StopFix.TryAgain:
                     if (card.HandOff == StopHandOff.Questionable)
@@ -506,10 +513,25 @@ public sealed class RunStops : IDisposable
         }
     }
 
+    /// <summary>
+    /// <c>/tsuki stop</c> and Stop all: nothing starts on its own afterwards. "Keep going after it" stops waiting and a
+    /// "Reload navmesh and retry" under way starts nothing (the reload itself finishes). True when one was waiting.
+    /// </summary>
+    public bool CancelPending()
+    {
+        var cancelled = pending.CancelAll();
+        if (cancelled)
+        {
+            log.Information("Stop: the automatic start that was waiting is cancelled");
+        }
+
+        return cancelled;
+    }
+
     /// <summary>The card's × (or the overlay's): the card fades out, and "Keep going after it" stops waiting.</summary>
     public void Dismiss()
     {
-        waitingFor = null;
+        pending.WaitingFor = null;
         Dock.Dismiss(Now);
     }
 
@@ -590,7 +612,7 @@ public sealed class RunStops : IDisposable
         var running = status.Running || travel.JourneyActive || autoDuty.HandOffClaimed || artisan is { HandOffClaimed: true };
         if (running && !wasRunning && Dock.Current is not null && !Dock.Leaving)
         {
-            waitingFor = null;
+            pending.WaitingFor = null;
             Dock.HandOffStarted(now);
         }
 
@@ -605,15 +627,17 @@ public sealed class RunStops : IDisposable
             NeedsYou.Clear(NeedsYouKind.Death, now);
         }
 
-        if (NeedsYou.Has(NeedsYouKind.DutyPop) && !condition[ConditionFlag.InDutyQueue])
+        // The duty pop's alert goes when its window closes (committed, withdrawn, lapsed) or the duty starts, read from
+        // the Duty Finder's own state rather than the queue condition.
+        if (NeedsYou.Has(NeedsYouKind.DutyPop) && NeedsYouWatch.DutyPopOver(DutyPopOpen(), travel.InDuty, now - dutyPopAt))
         {
             NeedsYou.Clear(NeedsYouKind.DutyPop, now);
         }
 
         if (!clientState.IsLoggedIn)
         {
-            waitingFor = null;
-            retry = null;
+            pending.WaitingFor = null;
+            pending.Retry = null;
         }
 
         Dock.Tick(now, shownThisFrame, hoveredThisFrame, reduce);
@@ -695,7 +719,7 @@ public sealed class RunStops : IDisposable
     /// <summary>"Keep going after it": once the player has cleared the duty themselves and stands outside it, Questionable starts again, once.</summary>
     private void TickWaiting()
     {
-        if (waitingFor is not { } card)
+        if (pending.WaitingFor is not { } card)
         {
             return;
         }
@@ -703,7 +727,7 @@ public sealed class RunStops : IDisposable
         if (!ReferenceEquals(Dock.Current, card) && Dock.Current?.Key != card.Key)
         {
             // The card went (dismissed, replaced): nothing waits on its behalf.
-            waitingFor = null;
+            pending.WaitingFor = null;
             return;
         }
 
@@ -717,7 +741,7 @@ public sealed class RunStops : IDisposable
             return;
         }
 
-        waitingFor = null;
+        pending.WaitingFor = null;
         log.Information("Keep going after it: duty {Duty} cleared; starting Questionable on {RowId}", card.InstanceContentId, card.QuestRowId);
         if (Actions?.StartChosen(card.QuestRowId, card.SingleQuest) != true)
         {
@@ -727,22 +751,38 @@ public sealed class RunStops : IDisposable
 
     private static bool Cleared(uint instanceContentId) => instanceContentId != 0 && UIState.IsInstanceContentCompleted(instanceContentId);
 
+    /// <summary>
+    /// Whether the duty pop's window is up: the Duty Finder's queue reads Ready (FFXIVClientStructs
+    /// <c>ContentsFinder.Instance()->QueueInfo.QueueState</c>, a read of game memory, so only while the hook gate allows
+    /// game calls); null when it cannot be read.
+    /// </summary>
+    private unsafe bool? DutyPopOpen()
+    {
+        if (!gate.HooksAllowed)
+        {
+            return null;
+        }
+
+        var finder = FFXIVClientStructs.FFXIV.Client.Game.UI.ContentsFinder.Instance();
+        return finder == null ? null : finder->QueueInfo.QueueState == FFXIVClientStructs.FFXIV.Client.Enums.ContentsFinderQueueState.Ready;
+    }
+
     /// <summary>"Reload navmesh and retry": once vnavmesh is ready again, the same walk (or Questionable) starts once.</summary>
     private void TickRetry(double now)
     {
-        if (retry is not { } pending)
+        if (pending.Retry is not { } retry)
         {
             return;
         }
 
-        if (now - pending.AskedAt < RetrySettleSeconds)
+        if (now - retry.AskedAt < RetrySettleSeconds)
         {
             return;
         }
 
-        if (now - pending.AskedAt > RetryWaitSeconds)
+        if (now - retry.AskedAt > RetryWaitSeconds)
         {
-            retry = null;
+            pending.Retry = null;
             print(Strings.StopReloadFailed);
             return;
         }
@@ -752,17 +792,17 @@ public sealed class RunStops : IDisposable
             return;
         }
 
-        retry = null;
-        if (pending.Questionable)
+        pending.Retry = null;
+        if (retry.Questionable)
         {
-            if (Actions?.StartChosen(pending.QuestRowId, pending.Single) != true)
+            if (Actions?.StartChosen(retry.QuestRowId, retry.Single) != true)
             {
                 print(Strings.QuestionableStartFailed);
             }
         }
-        else if (pending.Plan is { } plan)
+        else if (retry.Plan is { } plan)
         {
-            travel.Start(plan with { Options = travel.CurrentOptions }, pending.Target);
+            travel.Start(plan with { Options = travel.CurrentOptions }, retry.Target);
         }
     }
 
@@ -790,11 +830,11 @@ public sealed class RunStops : IDisposable
         if (!travel.StartNavReload())
         {
             // No reload to wait for (the gate is missing): start again now.
-            retry = plan with { AskedAt = Now - RetrySettleSeconds };
+            pending.Retry = plan with { AskedAt = Now - RetrySettleSeconds };
             return;
         }
 
-        retry = plan with { AskedAt = Now };
+        pending.Retry = plan with { AskedAt = Now };
     }
 
     private RetryPlan? RetryPlanFor(StopCard card) =>

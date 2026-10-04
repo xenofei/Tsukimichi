@@ -21,7 +21,7 @@ public enum DutyGuardAction
 {
     None,
 
-    /// <summary>Stop Questionable: a duty the step may be has no Duty Support or Trust.</summary>
+    /// <summary>Stop Questionable: the step's duty has no Duty Support or Trust, for certain.</summary>
     Stop,
 
     /// <summary>Say that a duty the step may be has no Duty Support or Trust; Questionable keeps running.</summary>
@@ -40,7 +40,7 @@ public enum DutyGuardAction
 /// <param name="Certain">
 /// Every duty the step may be needs other players. False when the quest also names one with Duty Support or Trust the
 /// character has not cleared yet (the expansion finales name a dungeon and a trial): the step may be either, so the
-/// line says "may be".
+/// guard only warns, and the line names no duty (the one with players may be a later one, a spoiler).
 /// </param>
 public readonly record struct DutyGuardVerdict(DutyGuardAction Action, DutyRunInfo? Duty, bool Certain)
 {
@@ -65,6 +65,15 @@ public static class DutyGuard
     /// <summary>Questionable's <c>EInteractionType.Duty</c>, as <c>GetCurrentStepData</c> spells it.</summary>
     public const string DutyInteraction = "Duty";
 
+    /// <summary>
+    /// Whether the guard cannot see the step's kind while Questionable runs, so it could not act before a duty: the step
+    /// data cannot be read at all (<paramref name="stepDataUnreadable"/>: its gate is missing or answers in another
+    /// shape), or a step was read without its <c>InteractionType</c> (renamed or dropped). A run between steps (no step
+    /// read) is not blind.
+    /// </summary>
+    public static bool Blind(bool stepDataUnreadable, int? step, string? interactionType) =>
+        stepDataUnreadable || (step is not null && string.IsNullOrWhiteSpace(interactionType));
+
     /// <summary>The duty can be run with an NPC party: Duty Support or Trust lists it.</summary>
     public static bool NpcRunnable(DutyRunInfo duty)
     {
@@ -76,8 +85,10 @@ public static class DutyGuard
     /// The verdict for one step: <paramref name="interactionType"/> is Questionable's step kind and
     /// <paramref name="questDuties"/> the duties the quest's script names; <paramref name="cleared"/> says whether the
     /// character has cleared one (null when unknown: then none counts as cleared). None unless the step is a duty, the
-    /// mode acts, and a duty the step may be has no NPC party; then Stop or Warn per <paramref name="mode"/>. A duty step
-    /// of a quest naming no known duty is <see cref="DutyGuardAction.Unsure"/>.
+    /// mode acts, and a duty the step may be has no NPC party; then Stop or Warn per <paramref name="mode"/>, except that
+    /// a step that may also be a duty with Duty Support or Trust (not <see cref="DutyGuardVerdict.Certain"/>) is only
+    /// warned about: the guard never stops Questionable before a duty the NPCs may run. A duty step of a quest naming no
+    /// known duty is <see cref="DutyGuardAction.Unsure"/>.
     /// </summary>
     public static DutyGuardVerdict Decide(DutyGuardMode mode, string? interactionType, IReadOnlyList<DutyRunInfo> questDuties, Func<DutyRunInfo, bool>? cleared = null)
     {
@@ -130,7 +141,11 @@ public static class DutyGuard
             return DutyGuardVerdict.None;
         }
 
-        return new DutyGuardVerdict(mode == DutyGuardMode.Stop ? DutyGuardAction.Stop : DutyGuardAction.Warn, firstWithPlayers, !anyNpc);
+        // Only a certain step is stopped: one that may be a duty with Duty Support or Trust (the expansion finales'
+        // dungeon) is warned about, so Questionable is never stopped before a duty the NPCs could run.
+        var certain = !anyNpc;
+        var action = mode == DutyGuardMode.Stop && certain ? DutyGuardAction.Stop : DutyGuardAction.Warn;
+        return new DutyGuardVerdict(action, firstWithPlayers, certain);
     }
 }
 

@@ -217,8 +217,10 @@ public static class RunReport
 
 /// <summary>
 /// How often a hand-off stopped at a quest's step on this computer (spec-1.18 A2: "Stops at this step on this
-/// computer"), kept in the settings under "rowId:sequence" keys and capped at <see cref="Max"/> steps (the oldest key
-/// in the map's order goes first). Pure.
+/// computer"), kept in the settings under "rowId:sequence" keys and capped at <see cref="Max"/> steps: the step noted
+/// first goes first. The settings keep a plain dictionary (so the saved file keeps its shape), whose order is the order
+/// keys were added only while none was ever removed; so a step is never removed alone: the map is rebuilt in order
+/// without the oldest, and its order stays the order the steps were first noted in, through saves and loads. Pure.
 /// </summary>
 public static class RunStopCounts
 {
@@ -239,17 +241,26 @@ public static class RunStopCounts
         }
 
         var key = Key(rowId, sequence);
-        counts.TryGetValue(key, out var count);
-        count = Math.Max(0, count) + 1;
-        if (!counts.ContainsKey(key))
+        if (counts.TryGetValue(key, out var count))
         {
-            while (counts.Count >= Max)
+            count = Math.Max(0, count) + 1;
+            counts[key] = count;
+            return count;
+        }
+
+        if (counts.Count >= Max)
+        {
+            // Removing one key would leave a hole the next key fills, out of order (the newest would then go first):
+            // keep the newest Max - 1 in their order and add them back to an emptied map, which fills it in order.
+            var kept = counts.Skip(counts.Count - (Max - 1)).ToList();
+            counts.Clear();
+            foreach (var (k, v) in kept)
             {
-                counts.Remove(counts.Keys.First());
+                counts.Add(k, v);
             }
         }
 
-        counts[key] = count;
-        return count;
+        counts.Add(key, 1);
+        return 1;
     }
 }

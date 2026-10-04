@@ -62,12 +62,14 @@ public sealed class DutyGuardSheetsTests(DutyRunFixture fixture, ITestOutputHelp
         var runs = Runs(70000);
         Assert.Equal([792u, 796u], runs.Select(static duty => duty.ContentFinderConditionId));
 
+        // Nothing cleared: the step may be the dungeon, so a warning only.
         var first = DutyGuard.Decide(DutyGuardMode.Stop, Duty, runs, static _ => false);
-        Assert.Equal(DutyGuardAction.Stop, first.Action);
+        Assert.Equal(DutyGuardAction.Warn, first.Action);
         Assert.False(first.Certain);
         Assert.Equal(796u, first.Duty!.ContentFinderConditionId);
 
         var dungeonDone = DutyGuard.Decide(DutyGuardMode.Stop, Duty, runs, static duty => duty.ContentFinderConditionId == 792);
+        Assert.Equal(DutyGuardAction.Stop, dungeonDone.Action);
         Assert.True(dungeonDone.Certain);
         Assert.Equal(796u, dungeonDone.Duty!.ContentFinderConditionId);
     }

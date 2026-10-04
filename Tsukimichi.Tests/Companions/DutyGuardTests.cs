@@ -67,17 +67,29 @@ public class DutyGuardTests
     }
 
     [Fact]
-    public void A_quest_naming_a_dungeon_and_a_trial_stops_but_says_may_be()
+    public void A_quest_naming_a_dungeon_and_a_trial_only_warns_even_when_set_to_stop()
     {
         // Endwalker's finale names the Dead Ends (Duty Support) and the Final Day (other players); nothing cleared yet.
+        // The step may be the dungeon the NPCs run: Questionable is never stopped before it, only warned about.
         var verdict = DutyGuard.Decide(DutyGuardMode.Stop, Duty, [DeadEnds, FinalDay], static _ => false);
-        Assert.Equal(DutyGuardAction.Stop, verdict.Action);
+        Assert.Equal(DutyGuardAction.Warn, verdict.Action);
         Assert.Same(FinalDay, verdict.Duty);
         Assert.False(verdict.Certain);
 
-        // Unknown clears read the same.
+        // Unknown clears read the same, and Warn mode warns alike.
         Assert.Equal(verdict, DutyGuard.Decide(DutyGuardMode.Stop, Duty, [DeadEnds, FinalDay]));
+        Assert.Equal(verdict, DutyGuard.Decide(DutyGuardMode.Warn, Duty, [DeadEnds, FinalDay]));
     }
+
+    [Theory]
+    [InlineData(true, null, null, true)] // the step data cannot be read at all
+    [InlineData(true, 2, "Duty", true)]
+    [InlineData(false, 2, null, true)] // a step read without its kind: renamed or dropped
+    [InlineData(false, 2, " ", true)]
+    [InlineData(false, 2, "Interact", false)]
+    [InlineData(false, null, null, false)] // between steps: nothing to read yet
+    public void The_guard_knows_when_it_cannot_see_the_step(bool unreadable, int? step, string? interaction, bool blind) =>
+        Assert.Equal(blind, DutyGuard.Blind(unreadable, step, interaction));
 
     [Fact]
     public void Cleared_duties_narrow_the_step_to_the_one_ahead()
@@ -116,6 +128,9 @@ public class DutyGuardTests
         Assert.Equal(DutyGuardVerdict.None, watch.Observe(DutyGuardMode.Stop, 65000, 3, 0, "Interact", Duties));
         Assert.Equal(DutyGuardAction.Stop, watch.Observe(DutyGuardMode.Stop, 70000, 5, 1, Duty, Duties, duty => duty == DeadEnds).Action);
         Assert.Equal(2, asked);
+
+        // The same quest's next duty step with nothing cleared: may be the dungeon, so a warning only.
+        Assert.Equal(DutyGuardAction.Warn, watch.Observe(DutyGuardMode.Stop, 70000, 5, 2, Duty, Duties).Action);
 
         // Back on the first step later: it is new again.
         Assert.Equal(DutyGuardAction.Stop, watch.Observe(DutyGuardMode.Stop, 65000, 2, 0, Duty, Duties).Action);

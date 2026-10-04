@@ -120,6 +120,73 @@ public class NeedsYouWatchTests
         Assert.False(new NeedsYouWatch().Event(kind, handOff: true, NeedsYouKind.All, 0));
 
     [Fact]
+    public void A_walk_whose_recovery_gave_up_raises_stuck_through_Raise()
+    {
+        // The regression: the travel give-up went through Event, which only takes pops and tells, so it never alerted.
+        var watch = new NeedsYouWatch();
+        Assert.True(watch.Raise(NeedsYouKind.Stuck, NeedsYouKind.All, 0));
+
+        // Rate-limited like the others, off when the kind is off, and one kind at a time.
+        Assert.False(watch.Raise(NeedsYouKind.Stuck, NeedsYouKind.All, 30));
+        Assert.True(watch.Raise(NeedsYouKind.Stuck, NeedsYouKind.All, NeedsYouWatch.RepeatSeconds));
+        Assert.False(new NeedsYouWatch().Raise(NeedsYouKind.Stuck, NeedsYouKind.All & ~NeedsYouKind.Stuck, 0));
+        Assert.False(new NeedsYouWatch().Raise(NeedsYouKind.None, NeedsYouKind.All, 0));
+        Assert.False(new NeedsYouWatch().Raise(NeedsYouKind.All, NeedsYouKind.All, 0));
+        Assert.False(new NeedsYouWatch().Raise(NeedsYouKind.Stuck, NeedsYouKind.All, double.NaN));
+
+        // A stall the frame raised holds the travel one back for a minute, and the other way round.
+        var both = new NeedsYouWatch();
+        Assert.True(both.Raise(NeedsYouKind.Stuck, NeedsYouKind.All, 0));
+        both.Tick(Frame(1, moving: true), NeedsYouKind.All);
+        Assert.Equal(NeedsYouKind.None, both.Tick(Frame(1 + NeedsYouWatch.StuckSeconds, moving: true), NeedsYouKind.All));
+    }
+
+    [Fact]
+    public void A_pending_pathfind_is_progress_not_a_stall()
+    {
+        var watch = new NeedsYouWatch();
+        watch.Tick(Frame(0, moving: true), NeedsYouKind.All);
+
+        // A long pathfind: vnavmesh says it moves, the character stands still, the path is still being found.
+        for (var now = 1.0; now <= 3 * NeedsYouWatch.StuckSeconds; now += 1)
+        {
+            Assert.Equal(NeedsYouKind.None, watch.Tick(new NeedsYouFrame(true, false, true, Here, now, Pathfinding: true), NeedsYouKind.All));
+        }
+
+        // The path found, still not moving: the stall is counted from the end of the pathfind.
+        var found = 3 * NeedsYouWatch.StuckSeconds;
+        Assert.Equal(NeedsYouKind.None, watch.Tick(Frame(found + NeedsYouWatch.StuckSeconds - 1, moving: true), NeedsYouKind.All));
+        Assert.Equal(NeedsYouKind.Stuck, watch.Tick(Frame(found + NeedsYouWatch.StuckSeconds, moving: true), NeedsYouKind.All));
+    }
+
+    [Fact]
+    public void A_cutscene_talk_or_loading_screen_is_not_a_stall()
+    {
+        var watch = new NeedsYouWatch();
+        watch.Tick(Frame(0, moving: true), NeedsYouKind.All);
+        for (var now = 1.0; now <= 2 * NeedsYouWatch.StuckSeconds; now += 1)
+        {
+            Assert.Equal(NeedsYouKind.None, watch.Tick(new NeedsYouFrame(true, false, true, Here, now, Held: true), NeedsYouKind.All));
+        }
+
+        // Out of the cutscene: the stall starts from scratch.
+        var after = 2 * NeedsYouWatch.StuckSeconds;
+        Assert.Equal(NeedsYouKind.None, watch.Tick(Frame(after + 1, moving: true), NeedsYouKind.All));
+        Assert.Equal(NeedsYouKind.None, watch.Tick(Frame(after + NeedsYouWatch.StuckSeconds, moving: true), NeedsYouKind.All));
+        Assert.Equal(NeedsYouKind.Stuck, watch.Tick(Frame(after + 1 + NeedsYouWatch.StuckSeconds, moving: true), NeedsYouKind.All));
+    }
+
+    [Theory]
+    [InlineData(true, false, 0.5, false)] // the pop window is up
+    [InlineData(null, false, 60.0, false)] // the queue cannot be read: the alert stays
+    [InlineData(false, false, 0.5, false)] // not Ready yet, a moment after the pop event: not believed yet
+    [InlineData(false, false, NeedsYouWatch.PopSettleSeconds, true)] // the window closed: committed, withdrew, lapsed
+    [InlineData(null, true, 0.0, true)] // the duty started
+    [InlineData(true, true, 0.0, true)]
+    public void A_duty_pop_alert_ends_when_the_window_closes_or_the_duty_starts(bool? popOpen, bool inDuty, double since, bool over) =>
+        Assert.Equal(over, NeedsYouWatch.DutyPopOver(popOpen, inDuty, since));
+
+    [Fact]
     public void The_sound_keeps_a_gap()
     {
         var watch = new NeedsYouWatch();

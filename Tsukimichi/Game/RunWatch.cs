@@ -26,18 +26,26 @@ namespace Tsukimichi.Game;
 /// at most once a second). On a <c>Duty</c> step whose duty has no Duty Support or Trust (<see cref="DutyGuard"/>, the
 /// duty read from the quest's script by <see cref="QuestScriptDuties.NamedRuns"/>) it stops Questionable
 /// (<c>Questionable.Stop("Tsukimichi")</c>, which also stops the AutoDuty run Questionable started), warns, or does
-/// nothing, per <see cref="Configuration.QuestionableDutyGuard"/>, with one chat line and the alert below. A few seconds
-/// after a stop, a character still in the Duty Finder queue is told so: Tsukimichi never withdraws for the player.</item>
+/// nothing, per <see cref="Configuration.QuestionableDutyGuard"/>, with one chat line and the alert below. A step that
+/// may also be a duty with Duty Support or Trust (a quest naming several) is only warned about, and its line names no
+/// duty (a later one would be a spoiler). A few seconds after a stop, a character still in the Duty Finder queue is told
+/// so: Tsukimichi never withdraws for the player. When Questionable's step data (or its step kind) cannot be read, the
+/// guard cannot act: one chat line says so, once, and Settings' guard row shows it.</item>
 /// <item><b>A5, "Needs you".</b> While a hand-off runs (Questionable, or a Go to giver, Lifestream task, AutoDuty run or
-/// Artisan craft Tsukimichi started), the character dying, standing still while vnavmesh says it moves, a duty pop
-/// (<see cref="IClientState.CfPop"/>) and an incoming tell each raise one chat line ("Needs you:" in bold), the calm
-/// panel over the game (<see cref="RunStops.NeedsYou"/>), the kind's chat sound effect and a taskbar flash while the
-/// game is not in front, each per Settings › Alerts › While automation runs, rate-limited by <see cref="NeedsYouWatch"/>.
-/// On a knock-out or a stall Tsukimichi stops its own hand-offs (and Questionable, when the player opted in), and the
-/// "Why it stopped" card (A2) says so. Nothing is read or raised while no hand-off runs; a tell is only noticed, never
-/// answered or hidden, and neither its sender nor its text is repeated. Tsukimichi never commences a duty.</item>
+/// Artisan craft Tsukimichi started), the character dying, standing still while vnavmesh says it moves (a pathfind still
+/// pending is progress; a cutscene, talk or loading screen is no stall), a Walk or Go to giver whose recovery gave up
+/// (<see cref="TravelService.GaveUp"/>), a duty pop (<see cref="IClientState.CfPop"/>) and an incoming tell each raise
+/// one chat line ("Needs you:" in bold), the calm panel over the game (<see cref="RunStops.NeedsYou"/>), the kind's chat
+/// sound effect and a taskbar flash while the game's window is not in front, each per Settings › Alerts › While
+/// automation runs, rate-limited by <see cref="NeedsYouWatch"/>. On a knock-out or a stall Tsukimichi stops its own
+/// hand-offs (and Questionable, when the player opted in), and the "Why it stopped" card (A2) says so; inside a duty it
+/// stops neither AutoDuty nor Questionable (the NPC healers raise the character), and only alerts. A tell is only
+/// noticed, never answered or hidden, and neither its sender nor its text is repeated. Tsukimichi never commences a
+/// duty.</item>
 /// </list>
-/// The sound is a game call, so it waits for the hook gate. Runs on the framework thread.
+/// Questionable's status is asked at most once a second whenever Questionable is loaded and the guard or any alert is
+/// on, run or not (a run is noticed by asking); nothing else is read or raised while no hand-off runs. Only the sound
+/// waits for the hook gate (a game call); the chat line, the panel and the flash do not. Runs on the framework thread.
 /// </summary>
 public sealed class RunWatch : IDisposable
 {
@@ -82,6 +90,7 @@ public sealed class RunWatch : IDisposable
     private double? queueCheckAt;
     private ulong? contentId;
     private bool warned;
+    private bool blindSaid;
     private bool disposed;
 
     public RunWatch(
@@ -147,6 +156,16 @@ public sealed class RunWatch : IDisposable
 
     private double Now => clock.Elapsed.TotalSeconds;
 
+    /// <summary>
+    /// The game holds the character: a cutscene, a loading screen, or a talk, a quest event or another occupied state
+    /// (the same conditions travel's refusal reasons read). Standing still then is no stall.
+    /// </summary>
+    private bool Held =>
+        travel.InCutscene || travel.BetweenAreas
+        || condition[ConditionFlag.OccupiedInQuestEvent] || condition[ConditionFlag.OccupiedInEvent] || condition[ConditionFlag.Occupied]
+        || condition[ConditionFlag.Occupied30] || condition[ConditionFlag.Occupied33] || condition[ConditionFlag.Occupied38]
+        || condition[ConditionFlag.Occupied39] || condition[ConditionFlag.OccupiedSummoningBell];
+
     /// <summary>The "Needs you" kinds the player left on.</summary>
     private NeedsYouKind Enabled =>
         (config.NeedsYouDeath ? NeedsYouKind.Death : NeedsYouKind.None)
@@ -192,6 +211,13 @@ public sealed class RunWatch : IDisposable
         if (status.Running && mode != DutyGuardMode.Nothing)
         {
             Guard(status, mode, now);
+            if (!blindSaid && questionable.StepKindUnreadable)
+            {
+                // The guard cannot see the step's kind: said once in chat (and in Settings' guard row), not only logged.
+                blindSaid = true;
+                log.Warning("Duty guard: Questionable's step kind cannot be read (step data unreadable {Unreadable}); the guard cannot act before a duty", questionable.StepDataUnreadable);
+                chat.Print(Strings.DutyGuardBlindChat, Strings.ChatTag);
+            }
         }
 
         handOff = status.Running
@@ -217,8 +243,9 @@ public sealed class RunWatch : IDisposable
         var player = objects.LocalPlayer;
         // A Walk or Go to giver of Tsukimichi's watches its own walk and recovers first (a new path, then a navmesh
         // reload, feature plan v7 A8); its stall raises the alert only when that recovery gives up (OnTravelGaveUp).
+        // A pathfind still pending is progress, and a cutscene, talk or loading screen holds the character: no stall.
         var moving = handOff && (enabled & NeedsYouKind.Stuck) != 0 && !travel.JourneyActive && travel.Vnavmesh.Available && travel.Vnavmesh.IsWalking;
-        var frame = new NeedsYouFrame(handOff, player?.IsDead == true, moving, player?.Position, now);
+        var frame = new NeedsYouFrame(handOff, player?.IsDead == true, moving, player?.Position, now, moving && travel.Vnavmesh.IsPathfinding, moving && Held);
         var raised = needsYou.Tick(frame, enabled);
         if ((raised & NeedsYouKind.Death) != 0)
         {
@@ -267,17 +294,27 @@ public sealed class RunWatch : IDisposable
 
     /// <summary>
     /// Stops Tsukimichi's own hand-offs (a walk, a Lifestream task, an AutoDuty run, an Artisan craft), when Settings
-    /// says to, and Questionable only when the player opted in. Returns the names stopped and whether Questionable runs on.
+    /// says to, and Questionable only when the player opted in (<see cref="StopAll.OnTrouble"/>). Inside a duty neither
+    /// AutoDuty nor Questionable is stopped: the NPC healers raise the character and the run goes on, so the alert is
+    /// all it gets. Returns the names stopped and whether Questionable runs on.
     /// </summary>
     private (List<string> Stopped, bool QuestionableLeft) StopForTrouble(QuestionableStatus status)
     {
         var stopped = new List<string>(4);
-        if (!config.NeedsYouStopHandOffs)
+        var running = (travel.JourneyActive ? StopTarget.Travel : StopTarget.None)
+            | (lifestream.HandOffClaimed ? StopTarget.Lifestream : StopTarget.None)
+            | (status.Running ? StopTarget.Questionable : StopTarget.None)
+            | (autoDuty.HandOffClaimed ? StopTarget.AutoDuty : StopTarget.None)
+            | (artisan is { HandOffClaimed: true } ? StopTarget.Artisan : StopTarget.None);
+        var inDuty = travel.InDuty;
+        var stop = StopAll.OnTrouble(running, config.NeedsYouStopHandOffs, config.NeedsYouStopQuestionable, inDuty);
+        if (stop == StopTarget.None)
         {
+            log.Information("Needs you: stopped nothing (in a duty {InDuty}); Questionable left running {Left}", inDuty, status.Running);
             return (stopped, status.Running);
         }
 
-        if (travel.JourneyActive)
+        if ((stop & StopTarget.Travel) != 0)
         {
             var name = travel.JourneyIsWalkOnly ? Strings.TravelWalk : Strings.TravelGoTo;
             if (travel.Stop())
@@ -286,29 +323,29 @@ public sealed class RunWatch : IDisposable
             }
         }
 
-        if (lifestream.HandOffClaimed && lifestream.Abort())
+        if ((stop & StopTarget.Lifestream) != 0 && lifestream.Abort())
         {
             stopped.Add(LifestreamName);
         }
 
-        if (autoDuty.HandOffClaimed && autoDuty.Stop())
+        if ((stop & StopTarget.AutoDuty) != 0 && autoDuty.Stop())
         {
             stopped.Add(AutoDutyName);
         }
 
-        if (artisan is { HandOffClaimed: true } crafting && crafting.Stop())
+        if ((stop & StopTarget.Artisan) != 0 && artisan is { } crafting && crafting.Stop())
         {
             stopped.Add(ArtisanName);
         }
 
         var left = status.Running;
-        if (left && config.NeedsYouStopQuestionable && questionable.CanStop && questionable.Stop())
+        if ((stop & StopTarget.Questionable) != 0 && questionable.CanStop && questionable.Stop())
         {
             stopped.Add(QuestionableName);
             left = false;
         }
 
-        log.Information("Needs you: stopped {Stopped}; Questionable left running {Left}", string.Join(", ", stopped), left);
+        log.Information("Needs you: stopped {Stopped} (in a duty {InDuty}); Questionable left running {Left}", string.Join(", ", stopped), inDuty, left);
         return (stopped, left);
     }
 
@@ -331,7 +368,9 @@ public sealed class RunWatch : IDisposable
         var quest = session.Bundle?.Catalog.GetByRowId(rowId);
         var hidden = quest is not null && session.LiveSpoilers.IsMasked(quest);
         var questName = quest is null ? QuestionableCrossCheck.QuestionableId(rowId) ?? rowId.ToString(CultureInfo.InvariantCulture) : session.LiveSpoilers.DisplayName(quest);
-        var dutyName = hidden || verdict.Duty is not { } duty ? Strings.DutyGuardHiddenDuty : duty.Name;
+
+        // An uncertain step may be a later duty of the quest: it is never named (a spoiler), only "the next duty".
+        var dutyName = hidden || !verdict.Certain || verdict.Duty is not { } duty ? Strings.DutyGuardHiddenDuty : duty.Name;
         log.Information(
             "Duty guard: {Action} at quest {RowId} sequence {Sequence} step {Step}, duty {Duty} (certain {Certain})",
             verdict.Action,
@@ -344,13 +383,10 @@ public sealed class RunWatch : IDisposable
         switch (verdict.Action)
         {
             case DutyGuardAction.Stop when questionable.CanStop && questionable.Stop():
+                // Only a certain step is stopped (DutyGuard.Decide): the line names its duty unless the shield hides it.
                 Runs?.NoteDutyGuardStop();
                 queueCheckAt = now + QueueCheckSeconds;
-                GuardLine(
-                    verdict.Certain
-                        ? string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardStopFormat, dutyName)
-                        : string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardStopMaybeFormat, dutyName, questName),
-                    now);
+                GuardLine(string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardStopFormat, dutyName), now);
                 Stops?.RaiseDutyGuard(status, verdict.Duty, hidden ? string.Empty : dutyName);
                 break;
             case DutyGuardAction.Stop:
@@ -360,7 +396,7 @@ public sealed class RunWatch : IDisposable
                 GuardLine(
                     verdict.Certain
                         ? string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardWarnFormat, dutyName)
-                        : string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardWarnMaybeFormat, dutyName, questName),
+                        : string.Format(CultureInfo.CurrentCulture, Strings.DutyGuardWarnNextFormat, questName),
                     now);
                 break;
             default:
@@ -395,12 +431,16 @@ public sealed class RunWatch : IDisposable
     /// <summary>Whether the character has cleared the duty (the game's own record); asked only while the hook gate allows.</summary>
     private static bool Cleared(DutyRunInfo duty) => duty.InstanceContentId != 0 && UIState.IsInstanceContentCompleted(duty.InstanceContentId);
 
-    /// <summary>A Walk or Go to giver whose recovery gave up: the stuck alert, rate-limited like the others.</summary>
+    /// <summary>
+    /// A Walk or Go to giver whose recovery gave up: the stuck alert (chat, panel with "Reload navmesh and retry",
+    /// sound, flash), rate-limited like the others. Raised through <see cref="NeedsYouWatch.Raise"/>: the frame's
+    /// <see cref="NeedsYouWatch.Event"/> takes only pops and tells.
+    /// </summary>
     private void OnTravelGaveUp(TravelGaveUp gaveUp)
     {
         try
         {
-            if (!needsYou.Event(NeedsYouKind.Stuck, true, Enabled, Now))
+            if (!needsYou.Raise(NeedsYouKind.Stuck, Enabled, Now))
             {
                 return;
             }

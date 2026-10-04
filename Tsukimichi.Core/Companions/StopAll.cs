@@ -49,6 +49,34 @@ public static class StopAll
         return new StopDecision(running & ~ask, ask);
     }
 
+    /// <summary>
+    /// What a knock-out or a stall during a run stops (1.18.0, A5) among the <paramref name="running"/> targets:
+    /// nothing unless Settings says to stop the hand-offs (<paramref name="stopHandOffs"/>), Questionable only when the
+    /// player opted in (<paramref name="stopQuestionable"/>), and, <paramref name="inDuty"/>, neither AutoDuty nor
+    /// Questionable (whose stop ends the AutoDuty run it started): in a duty the NPC healers raise the character and the
+    /// run carries on, so an alert is all it gets, as <c>/tsuki stop</c> asks before stopping AutoDuty there.
+    /// </summary>
+    public static StopTarget OnTrouble(StopTarget running, bool stopHandOffs, bool stopQuestionable, bool inDuty)
+    {
+        if (!stopHandOffs)
+        {
+            return StopTarget.None;
+        }
+
+        var stop = running;
+        if (!stopQuestionable || inDuty)
+        {
+            stop &= ~StopTarget.Questionable;
+        }
+
+        if (inDuty)
+        {
+            stop &= ~StopTarget.AutoDuty;
+        }
+
+        return stop;
+    }
+
     /// <summary>The single targets set in <paramref name="targets"/>, in <see cref="Order"/>.</summary>
     public static IEnumerable<StopTarget> Each(StopTarget targets) => Order.Where(target => (targets & target) != 0);
 }

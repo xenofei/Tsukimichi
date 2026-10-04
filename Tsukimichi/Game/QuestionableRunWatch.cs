@@ -97,8 +97,11 @@ public sealed class QuestionableRunWatch : IDisposable
     /// <summary>Tsukimichi's Stop was taken by Questionable: the receipt says it was stopped from Tsukimichi.</summary>
     public void NoteStopAsked() => guard.NoteStopAsked();
 
-    /// <summary>The duty guard's stop (plan v7 A3) was taken by Questionable: the receipt says it stopped before a duty with other players.</summary>
-    public void NoteDutyGuardStop() => guard.NoteStopAsked(QuestionableRunEnd.BeforeDutyWithPlayers);
+    /// <summary>
+    /// The duty guard's stop (plan v7 A3) was taken by a Questionable it saw running: the receipt says it stopped before
+    /// a duty with other players, even when this watch had not followed the run yet (it follows it from now).
+    /// </summary>
+    public void NoteDutyGuardStop() => guard.NoteStopAsked(QuestionableRunEnd.BeforeDutyWithPlayers, DateTime.UtcNow);
 
     /// <summary>
     /// Sets a stop condition on the running Questionable (the status a window last read says it runs); false when no

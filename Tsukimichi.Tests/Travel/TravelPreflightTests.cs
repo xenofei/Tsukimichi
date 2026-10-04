@@ -4,6 +4,9 @@ namespace Tsukimichi.Tests.Travel;
 
 public sealed class TravelPreflightTests
 {
+    /// <summary>A character's content id.</summary>
+    private const ulong Alt = 0x0040_0000_1234_5678;
+
     private static PreflightResult Of(IReadOnlyList<PreflightResult> results, PreflightItem item) => results.Single(r => r.Item == item);
 
     [Fact]
@@ -87,18 +90,30 @@ public sealed class TravelPreflightTests
     [Fact]
     public void Undo_puts_the_old_value_back_only_while_the_setting_still_reads_what_the_fix_set()
     {
-        var change = new PreflightChange(PreflightItem.MovementType, TravelPreflight.LegacyMoveMode, TravelPreflight.StandardMoveMode);
+        var change = new PreflightChange(PreflightItem.MovementType, TravelPreflight.LegacyMoveMode, TravelPreflight.StandardMoveMode, Alt);
 
-        Assert.True(change.CanUndo(TravelPreflight.StandardMoveMode));
+        Assert.True(change.CanUndo(TravelPreflight.StandardMoveMode, Alt));
 
         // The player changed it again in the game's own window, or it cannot be read: hands off.
-        Assert.False(change.CanUndo(TravelPreflight.LegacyMoveMode));
-        Assert.False(change.CanUndo(null));
-        Assert.False(new PreflightChange(PreflightItem.MovementType, 0, 0).CanUndo(0));
+        Assert.False(change.CanUndo(TravelPreflight.LegacyMoveMode, Alt));
+        Assert.False(change.CanUndo(null, Alt));
+        Assert.False(new PreflightChange(PreflightItem.MovementType, 0, 0, Alt).CanUndo(0, Alt));
 
         // vnavmesh's switch as 0 (paused) and 1 (allowed): Undo pauses it again only while it is still allowed.
-        var vnav = new PreflightChange(PreflightItem.VnavmeshMovement, 0, 1);
-        Assert.True(vnav.CanUndo(1));
-        Assert.False(vnav.CanUndo(0));
+        var vnav = new PreflightChange(PreflightItem.VnavmeshMovement, 0, 1, Alt);
+        Assert.True(vnav.CanUndo(1, Alt));
+        Assert.False(vnav.CanUndo(0, Alt));
+    }
+
+    [Fact]
+    public void Undo_is_only_for_the_character_the_fix_was_made_on()
+    {
+        // "Restore Legacy" made on one character: another one logged in (whose own setting reads Standard too) gets no
+        // Undo, nor does a logged-out reading, nor a change with no character.
+        var change = new PreflightChange(PreflightItem.MovementType, TravelPreflight.LegacyMoveMode, TravelPreflight.StandardMoveMode, Alt);
+        Assert.False(change.CanUndo(TravelPreflight.StandardMoveMode, Alt + 1));
+        Assert.False(change.CanUndo(TravelPreflight.StandardMoveMode, null));
+        Assert.False((change with { ContentId = 0 }).CanUndo(TravelPreflight.StandardMoveMode, 0));
+        Assert.True(change.CanUndo(TravelPreflight.StandardMoveMode, Alt));
     }
 }

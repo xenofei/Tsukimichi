@@ -120,4 +120,23 @@ public class HandOffClaimTests
         Assert.False(claim.Observe(busy: false, now: 1_100));
         Assert.True(claim.Claimed);
     }
+
+    [Fact]
+    public void Trouble_stops_the_hand_offs_per_settings_and_Questionable_only_when_opted_in()
+    {
+        var running = StopTarget.Travel | StopTarget.Lifestream | StopTarget.Questionable | StopTarget.AutoDuty | StopTarget.Artisan;
+        Assert.Equal(StopTarget.None, StopAll.OnTrouble(running, stopHandOffs: false, stopQuestionable: true, inDuty: false));
+        Assert.Equal(running & ~StopTarget.Questionable, StopAll.OnTrouble(running, stopHandOffs: true, stopQuestionable: false, inDuty: false));
+        Assert.Equal(running, StopAll.OnTrouble(running, stopHandOffs: true, stopQuestionable: true, inDuty: false));
+        Assert.Equal(StopTarget.None, StopAll.OnTrouble(StopTarget.None, stopHandOffs: true, stopQuestionable: true, inDuty: false));
+    }
+
+    [Fact]
+    public void A_knock_out_in_a_duty_never_stops_AutoDuty_or_Questionable()
+    {
+        // NPC healers raise the character and the run carries on: an alert only, even with Questionable opted in.
+        var running = StopTarget.Questionable | StopTarget.AutoDuty;
+        Assert.Equal(StopTarget.None, StopAll.OnTrouble(running, stopHandOffs: true, stopQuestionable: true, inDuty: true));
+        Assert.Equal(StopTarget.Artisan, StopAll.OnTrouble(running | StopTarget.Artisan, stopHandOffs: true, stopQuestionable: true, inDuty: true));
+    }
 }

@@ -454,6 +454,19 @@ public sealed partial class QuestionableIpc
     /// <summary>The status as last read by <see cref="PollStatus"/>, without asking Questionable.</summary>
     public QuestionableStatus LastStatus => status;
 
+    /// <summary>
+    /// Whether the step data cannot be read: Questionable is loaded, and <c>GetCurrentStepData</c> is missing or answered
+    /// in another shape (until Dalamud's plugin list changes).
+    /// </summary>
+    public bool StepDataUnreadable => Available && (stepDataBroken || getCurrentStepData is null || !HasFunction(getCurrentStepData));
+
+    /// <summary>
+    /// Whether the duty guard (1.18.0, A3) cannot see the step's kind, so it cannot act before a duty
+    /// (<see cref="Core.Companions.DutyGuard.Blind"/>): the step data cannot be read, or the last running status read a
+    /// step without its <c>InteractionType</c>. For the guard's one chat line and its row in Settings.
+    /// </summary>
+    public bool StepKindUnreadable => Core.Companions.DutyGuard.Blind(StepDataUnreadable, status.Running ? status.Step : null, status.Interaction);
+
     /// <summary>Asks for a fresh read of Questionable's list on the next badge that needs it (a pane opened, the player asked).</summary>
     public void MarkListStale() => badges.MarkListStale();
 
