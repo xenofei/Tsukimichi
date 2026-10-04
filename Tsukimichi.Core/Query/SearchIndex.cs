@@ -9,7 +9,8 @@ namespace Tsukimichi.Core.Query;
 /// must all match: text terms match the name, reward names or internal id by substring; all-digit terms match the
 /// row id or quest id exactly, or digits inside the name. Matching allocates nothing. A quest the spoiler shield masks
 /// is matched by its placeholder ("main scenario quest (lv 83)") in place of its name, so typing a hidden name never
-/// finds the quest. With the unlock index, a term may also match what a shown quest opens ("kugane", plan v7 K3).
+/// finds the quest. With the unlock index, a term may also match what a shown quest opens ("kugane", plan v7 K3). A
+/// reward or an unlock whose name the wider shield masks (plan v7, 1.20.0 N6) is never matched.
 /// </summary>
 public sealed class SearchIndex
 {
@@ -97,7 +98,7 @@ public sealed class SearchIndex
                 continue;
             }
 
-            if (!entry.MatchesTerm(term, maskedName) && (maskedName is not null || unlocks?.MatchesTerm(rowId, term, unlockReach) != true))
+            if (!entry.MatchesTerm(term, maskedName, spoilers) && (maskedName is not null || unlocks?.MatchesTerm(rowId, term, unlockReach, spoilers) != true))
             {
                 return false;
             }
@@ -110,14 +111,16 @@ public sealed class SearchIndex
     {
         private readonly string name;
         private readonly string rewards;
+        private readonly string[] rewardNames;
         private readonly string internalId;
         private readonly string rowIdText;
         private readonly string questIdText;
 
-        private Entry(string name, string rewards, string internalId, string rowIdText, string questIdText)
+        private Entry(string name, string rewards, string[] rewardNames, string internalId, string rowIdText, string questIdText)
         {
             this.name = name;
             this.rewards = rewards;
+            this.rewardNames = rewardNames;
             this.internalId = internalId;
             this.rowIdText = rowIdText;
             this.questIdText = questIdText;
@@ -131,13 +134,15 @@ public sealed class SearchIndex
             return new Entry(
                 quest.Name.ToLowerInvariant(),
                 rewards,
+                quest.Rewards.Count == 0 ? [] : quest.Rewards.Select(r => r.Name).ToArray(),
                 quest.InternalId.ToLowerInvariant(),
                 quest.RowId.ToString(CultureInfo.InvariantCulture),
                 quest.QuestId.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <param name="maskedName">The lowercased placeholder matched instead of the name; null matches the name.</param>
-        public bool MatchesTerm(ReadOnlySpan<char> term, string? maskedName)
+        /// <param name="spoilers">The wider shield: a reward whose name it masks is not matched.</param>
+        public bool MatchesTerm(ReadOnlySpan<char> term, string? maskedName, SpoilerMask? spoilers)
         {
             var name = maskedName ?? this.name;
             if (IsAllDigits(term))
@@ -148,8 +153,33 @@ public sealed class SearchIndex
             }
 
             return name.AsSpan().Contains(term, StringComparison.Ordinal)
-                || rewards.AsSpan().Contains(term, StringComparison.Ordinal)
+                || MatchesReward(term, spoilers)
                 || internalId.AsSpan().Contains(term, StringComparison.Ordinal);
+        }
+
+        /// <summary>Whether the term is part of the name of a reward the shield shows; one scan of the joined names when it masks none.</summary>
+        private bool MatchesReward(ReadOnlySpan<char> term, SpoilerMask? spoilers)
+        {
+            if (!rewards.AsSpan().Contains(term, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (spoilers is not { MasksNames: true })
+            {
+                return true;
+            }
+
+            foreach (var reward in rewardNames)
+            {
+                // The term is lowercased; the reward's own name is what the shield places, matched ignoring case.
+                if (reward.AsSpan().Contains(term, StringComparison.OrdinalIgnoreCase) && !spoilers.IsNameMasked(SpoilerKind.Reward, reward))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool IsAllDigits(ReadOnlySpan<char> term)

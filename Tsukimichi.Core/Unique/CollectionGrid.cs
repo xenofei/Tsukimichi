@@ -40,14 +40,17 @@ public static class CollectionGrid
     /// The reward rows: every collectible of a saved kind (<see cref="Collectibles.IsStored"/>) once, by kind then name,
     /// each with one cell per entry of <paramref name="columns"/> (a character's saved answers; null when it saved none).
     /// <paramref name="kind"/> keeps one kind; <paramref name="missingOnAny"/> keeps the rows some character is known
-    /// to lack; <paramref name="search"/> keeps the rows whose name holds every word typed.
+    /// to lack; <paramref name="search"/> keeps the rows whose name holds every word typed. Through
+    /// <paramref name="spoilers"/> (1.20.0 N6), a reward the story has not introduced and no character owns is named by
+    /// its placeholder, and searched by it.
     /// </summary>
     public static List<CollectionGridRow> Rewards(
         IEnumerable<UniqueRewardEntry> entries,
         IReadOnlyList<CollectibleLookup?> columns,
         RewardKind? kind = null,
         bool missingOnAny = false,
-        string? search = null)
+        string? search = null,
+        Query.SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(entries);
         ArgumentNullException.ThrowIfNull(columns);
@@ -57,7 +60,7 @@ public static class CollectionGrid
         foreach (var entry in entries)
         {
             if (!Collectibles.IsStored(entry.Kind) || entry.RewardId == 0 || (kind is { } only && entry.Kind != only)
-                || !seen.Add((entry.Kind, entry.RewardId)) || !HasWords(entry.RewardName, words))
+                || !seen.Add((entry.Kind, entry.RewardId)))
             {
                 continue;
             }
@@ -78,12 +81,14 @@ public static class CollectionGrid
                 anyMissing |= answer == false;
             }
 
-            if (missingOnAny && !anyMissing)
+            // A character who owns it has seen it: only a reward nobody owns can be past the story point.
+            var name = owned == 0 && spoilers is not null ? spoilers.Name(Query.SpoilerKind.Reward, entry.RewardName) : entry.RewardName;
+            if ((missingOnAny && !anyMissing) || !HasWords(name, words))
             {
                 continue;
             }
 
-            rows.Add(new CollectionGridRow(entry.Kind, entry.RewardId, entry.RewardName, entry.QuestRowId, cells, owned) { Entry = entry });
+            rows.Add(new CollectionGridRow(entry.Kind, entry.RewardId, name, entry.QuestRowId, cells, owned) { Entry = entry });
         }
 
         rows.Sort(static (a, b) =>

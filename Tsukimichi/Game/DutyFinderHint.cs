@@ -448,7 +448,8 @@ public sealed unsafe class DutyFinderHint : IDisposable
         foreach (var missing in line.Missing)
         {
             var quest = missing.UnlockQuests.Count > 0 ? missing.UnlockQuests[0] : null;
-            var name = quest is not null && missing.UnlockQuests.All(spoilers.IsMasked)
+            // Hidden as the Duties board hides it: every unlock quest masked, or a duty the story has not introduced (1.20.0 N6).
+            var name = (quest is not null && missing.UnlockQuests.All(spoilers.IsMasked)) || spoilers.IsNameMasked(Core.Query.SpoilerKind.Duty, missing.Duty.Name)
                 ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, missing.Duty.LevelRequired)
                 : missing.Duty.Name;
             if (quest is not null)

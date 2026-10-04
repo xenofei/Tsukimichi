@@ -139,7 +139,7 @@ public sealed partial class TonightCard
         Chrome.Portrait(ImGui.GetWindowDrawList(), new System.Numerics.Vector2(top.X, top.Y + MathF.Round((row - avatar) * 0.5f)), avatar, request);
         if (ImGui.IsItemHovered())
         {
-            Chrome.PortraitTooltip(request, quest.Issuer?.Name ?? string.Empty, GiverPortraits.Place(quest));
+            Chrome.PortraitTooltip(request, GiverPortraits.Name(quest, runner.Spoilers), GiverPortraits.Place(quest, runner.Spoilers));
         }
     }
 }

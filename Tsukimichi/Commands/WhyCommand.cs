@@ -56,7 +56,7 @@ public sealed class WhyCommand(SessionState session, UiState ui, GameLinks links
         (float X, float Y)? coordinates = null;
         if (!linkGiver && quest.Issuer is { } issuer)
         {
-            place = links.Map(issuer.MapId)?.PlaceName;
+            place = links.Map(issuer.MapId)?.PlaceName is { } zone ? session.LiveSpoilers.Name(Core.Query.SpoilerKind.Area, zone) : null;
             coordinates = links.MapCoordinates(quest) is { } c ? (c.X, c.Y) : null;
         }
 

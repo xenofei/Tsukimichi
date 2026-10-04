@@ -123,7 +123,7 @@ public sealed class PlanSource
         {
             planVersion = session.Version;
             planTags = tags;
-            plan = UnlockPlan.Build(tags, session.States, session.Names, RegionOfMap);
+            plan = UnlockPlan.Build(tags, session.States, session.Names, RegionOfMap, session.Spoilers);
             Revision++;
         }
     }

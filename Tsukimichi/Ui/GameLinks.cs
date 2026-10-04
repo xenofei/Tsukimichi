@@ -38,6 +38,15 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
     public string NameOf(QuestRecord quest) => QuestName?.Invoke(quest) ?? quest.Name;
 
     /// <summary>
+    /// The logged-in character's spoiler shield (attached by the plugin): a giver's map link or coordinates in a zone the
+    /// story has not reached are left out of chat lines and the clipboard (1.20.0 N6). Null hides nothing.
+    /// </summary>
+    public Func<Core.Query.SpoilerMask>? Spoilers { get; set; }
+
+    /// <summary>Whether the wider shield hides a place's name (1.20.0 N6).</summary>
+    private bool PlaceHidden(string place) => Spoilers?.Invoke().IsNameMasked(Core.Query.SpoilerKind.Area, place) == true;
+
+    /// <summary>
     /// The clickable "[Open] [Pin] [Route]" actions (1.7.0), attached by the plugin: every quest line and headline this
     /// class prints ends with them while Settings › Notices › Chat actions has them on. Null prints none.
     /// </summary>
@@ -194,7 +203,7 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
     /// <summary>"Place (x.x, y.y)" for the clipboard, or null without a map. Allocates; call on click, not per frame.</summary>
     public string? CoordinateText(QuestRecord quest)
     {
-        if (quest.Issuer is not { } issuer || Map(issuer.MapId) is not { } map || MapCoordinates(quest) is not { } coords)
+        if (quest.Issuer is not { } issuer || Map(issuer.MapId) is not { } map || MapCoordinates(quest) is not { } coords || PlaceHidden(map.PlaceName))
         {
             return null;
         }
@@ -288,7 +297,7 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
                 .Add(RawPayload.LinkTerminator)
                 .AddText(Strings.ChatSuffixSeparator + headline);
 
-            if (linkGiver && MapLink(quest) is { } link && MapCoordinates(quest) is { } coords)
+            if (linkGiver && MapLink(quest) is { } link && MapCoordinates(quest) is { } coords && !PlaceHidden(link.PlaceName))
             {
                 builder.AddText(Strings.WhyGiverIn)
                        .Add(link)
@@ -417,7 +426,7 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
             .AddText(NameOf(quest))
             .Add(RawPayload.LinkTerminator);
 
-        if (MapLink(quest) is { } link)
+        if (MapLink(quest) is { } link && !PlaceHidden(link.PlaceName))
         {
             builder.AddText("  ")
                    .Add(link)
