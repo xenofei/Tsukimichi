@@ -12393,6 +12393,10 @@
     <value>Aether current · in the field</value>
     <comment>A field aether current the game's layouts do not place.</comment>
   </data>
+  <data name="RouteFieldCurrentReading" xml:space="preserve">
+    <value>Aether current · finding where it stands</value>
+    <comment>A field aether current while the game's layouts are read for where it stands (a moment, off the frame).</comment>
+  </data>
   <data name="RouteFieldMark" xml:space="preserve">
     <value>field</value>
     <comment>The mark at the end of a field aether current's line on a route to flying.</comment>

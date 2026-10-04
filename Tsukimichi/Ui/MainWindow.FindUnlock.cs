@@ -31,9 +31,10 @@ public sealed partial class MainWindow
     private Vector2 searchPillMax;
     private bool unlockResultsHovered;
 
-    // The matches for the last query, index revision, shield and reach, with their printed lines.
+    // The matches for the last query, index revision, shield, reach and language, with their printed lines.
     private string unlockQuery = string.Empty;
     private int unlockRevision = -1;
+    private int unlockLanguage = -1;
     private int unlockShield = int.MinValue;
     private byte unlockReach;
     private bool unlockFlight;
@@ -167,7 +168,7 @@ public sealed partial class MainWindow
     private RouteTarget RouteToUnlock(UnlockFind find) =>
         RouteTarget.ForUnlock(find, find.NeedsAll && FlightZones?.Invoke()?.ZoneOfQuests(find.Quests) is { } zone ? zone.TerritoryId : 0);
 
-    /// <summary>This frame's rows: worked out again only when the search, the index, the shield, the reach or the flying zones changed.</summary>
+    /// <summary>This frame's rows: worked out again only when the search, the index, the shield, the reach, the flying zones or the language changed.</summary>
     private UnlockResultRow[] UnlockRows(SessionState session)
     {
         var query = SearchIndex.Normalize(ui.SearchText);
@@ -176,12 +177,16 @@ public sealed partial class MainWindow
         var revision = source?.Revision ?? -1;
         var shield = session.Spoilers.Fingerprint;
         var reach = runner.UnlockReach;
-        if (string.Equals(query, unlockQuery, StringComparison.Ordinal) && revision == unlockRevision && shield == unlockShield && reach == unlockReach && flight == unlockFlight)
+        // The kind names and "via …" lines are worded in the plugin's language: a language change words them again.
+        var language = Localization.Loc.Version;
+        if (string.Equals(query, unlockQuery, StringComparison.Ordinal) && revision == unlockRevision && shield == unlockShield && reach == unlockReach && flight == unlockFlight
+            && language == unlockLanguage)
         {
             return unlockRows;
         }
 
         unlockQuery = query;
+        unlockLanguage = language;
         unlockRevision = revision;
         unlockShield = shield;
         unlockReach = reach;

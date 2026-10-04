@@ -58,6 +58,19 @@ public static class FieldCurrentStops
         return left;
     }
 
+    /// <summary>
+    /// The currents of a zone still to attune while where they stand is still being read (off the draw thread): every
+    /// one of <paramref name="fieldCurrentIds"/> <paramref name="attuned"/> does not answer true for, in the zone's sheet
+    /// order, none placed. As many as <see cref="Left"/> gives once the places land, so the route reserves their lines
+    /// and nothing below moves when the places fill them in.
+    /// </summary>
+    public static IReadOnlyList<FieldCurrentStop> Pending(IEnumerable<uint> fieldCurrentIds, Func<uint, bool?> attuned)
+    {
+        ArgumentNullException.ThrowIfNull(fieldCurrentIds);
+        ArgumentNullException.ThrowIfNull(attuned);
+        return Left(fieldCurrentIds.Select(static id => new FieldCurrentStop(id, 0, string.Empty)), attuned);
+    }
+
     /// <summary>The header's "N stops": the quests left on the route and the field currents left.</summary>
     public static int Stops(int questSteps, int fieldLeft) => Math.Max(0, questSteps) + Math.Max(0, fieldLeft);
 }

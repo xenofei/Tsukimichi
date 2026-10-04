@@ -20,7 +20,8 @@ public class CopperBesideWordsTests
         ("NeedsYouOverlay.cs", ["Strings.NeedsYouEyebrow", "alert.Title", "alert.Line"]),
         ("ConfigWindow.TravelPreflight.cs", ["SemiboldTextWrapped(head", "DrawPreflightDot"]),
         ("MainWindow.RunStops.cs", ["card.Title"]),
-        // 1.19.0: the allied board's carried-over daily (C5) and the ending-soon card (C10).
+        // 1.19.0: the allied board's carried-over daily (C5, the logged-in character's only: a stored alt's has no dot,
+        // AlliedCarryover.NeedsYou) and the ending-soon card (C10).
         ("CharactersPane.Planning.cs", ["line.NeedsYou", "line.Line"]),
         ("TonightCard.Events.cs", ["card.Title", "card.Why"]),
         // 1.19.0, C9 (spec-1.19 "Copper is a dot, with words in Text"): a full journal in the row, the status bar, the

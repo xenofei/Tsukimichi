@@ -162,7 +162,8 @@ public sealed partial class CharactersPane
 
     /// <summary>
     /// "Moogles · Rank 6" (the rank's reputation in its words, gold once full), the alt's name on a stored character's
-    /// carried row, and the one line under it: a carried-over daily (a copper dot, Text), the rank-up hint or today.
+    /// carried row, and the one line under it: a carried-over daily (the logged-in character's with a copper dot, in Text;
+    /// a stored alt's in Secondary), the rank-up hint or today.
     /// </summary>
     private static void DrawBoardSociety(PlanningSource.BoardLine line)
     {
@@ -215,7 +216,14 @@ public sealed partial class CharactersPane
     private void DrawBoardWhere(PlanningSource.BoardLine line)
     {
         // A daily carried over the reset (1.19.0, C5): Flag its giver, where it is turned in, and Teleport there (Flag
-        // at every automation level, Teleport from Travel).
+        // at every automation level, Teleport from Travel). The logged-in character's only: a stored alt's held daily is a
+        // note, and Flag and Teleport would act on whoever is logged in.
+        if (line.Row.Carried is not null && !line.CarriedActions)
+        {
+            ImGui.TextDisabled(line.Zone);
+            return;
+        }
+
         if (line.Row.Carried is { } carried && Links is { } carriedLinks)
         {
             if (TravelControls.FlagButton(Strings.AlliedFlag, carriedLinks.CanFlagMap(carried), "##carriedFlag"))

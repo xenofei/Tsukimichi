@@ -237,11 +237,27 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
         }
     }
 
-    /// <summary>Opens the journal on the quest; falls back to a clickable chat link when the agent is unavailable.</summary>
+    /// <summary>
+    /// Whether the game's journal can be opened now: the agent call takes the same kill switch as the map, the Duty
+    /// Finder and the Gathering Log (<see cref="GameCallsAllowed"/>). <see cref="CanOpenJournal"/> says whether the quest
+    /// has a journal page at all.
+    /// </summary>
+    public bool CanOpenJournalNow => CallsAllowed;
+
+    /// <summary>
+    /// Opens the journal on the quest; falls back to a clickable chat link when the agent is unavailable or game calls
+    /// are paused (<see cref="CanOpenJournalNow"/>).
+    /// </summary>
     public unsafe void OpenJournal(QuestRecord quest)
     {
         try
         {
+            if (!CanOpenJournalNow)
+            {
+                PrintQuestLink(quest);
+                return;
+            }
+
             var agent = AgentQuestJournal.Instance();
             if (agent == null)
             {

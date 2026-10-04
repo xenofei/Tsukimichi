@@ -146,6 +146,26 @@ public sealed class EventWarningsTests
     }
 
     [Fact]
+    public void Warnings_built_a_minute_apart_are_the_same_until_their_words_change()
+    {
+        // The source reads the warnings again every minute; the Tonight card is rebuilt (and its frames re-measured)
+        // only when they say something else, so it does not lose its ground for a frame each minute.
+        var utc = TimeZoneInfo.Utc;
+        var before = EventWarnings.EndingSoon([Running(Rerun, QuestState.Accepted, QuestState.Ready)], Now, 3, utc);
+        var minute = EventWarnings.EndingSoon([Running(Rerun, QuestState.Accepted, QuestState.Ready, now: Now.AddMinutes(1))], Now.AddMinutes(1), 3, utc);
+        Assert.NotEqual(before[0], minute[0]);
+        Assert.True(EventWarnings.SameWarnings(before, minute));
+        Assert.True(EventWarnings.SameWarnings([], []));
+
+        // A day turns, a quest is turned in, or the event drops out: they differ.
+        var nextDay = EventWarnings.EndingSoon([Running(Rerun, QuestState.Accepted, QuestState.Ready, now: Now.AddDays(1))], Now.AddDays(1), 3, utc);
+        Assert.False(EventWarnings.SameWarnings(before, nextDay));
+        var turnedIn = EventWarnings.EndingSoon([Running(Rerun, QuestState.Completed, QuestState.Ready)], Now, 3, utc);
+        Assert.False(EventWarnings.SameWarnings(before, turnedIn));
+        Assert.False(EventWarnings.SameWarnings(before, []));
+    }
+
+    [Fact]
     public void An_event_warns_within_the_window_when_its_end_is_known_and_something_is_left()
     {
         var utc = TimeZoneInfo.Utc;

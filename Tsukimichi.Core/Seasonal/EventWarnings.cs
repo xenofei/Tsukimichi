@@ -116,6 +116,41 @@ public static class EventWarnings
     }
 
     /// <summary>
+    /// Whether two warning lists say the same thing: the same events, in the same order, with the same end, days left
+    /// and counts. <see cref="EndingSoonEvent"/>'s own equality compares the festival's quest list by reference, so two
+    /// builds a minute apart never match; this is what the ending-soon cards and chips are worded from, so a rebuild
+    /// that matches changes nothing on screen.
+    /// </summary>
+    public static bool SameWarnings(IReadOnlyList<EndingSoonEvent> a, IReadOnlyList<EndingSoonEvent> b)
+    {
+        ArgumentNullException.ThrowIfNull(a);
+        ArgumentNullException.ThrowIfNull(b);
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < a.Count; i++)
+        {
+            var x = a[i];
+            var y = b[i];
+            if (x.Festival.FestivalId != y.Festival.FestivalId
+                || !string.Equals(x.Festival.Name, y.Festival.Name, StringComparison.Ordinal)
+                || x.Festival.EndSource != y.Festival.EndSource
+                || x.EndUtc != y.EndUtc
+                || x.DaysLeft != y.DaysLeft
+                || x.InJournal != y.InJournal
+                || x.Left != y.Left
+                || x.RewardsMissing != y.RewardsMissing)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// The days left for a quest's "Ends in 2 days" chip: the quest is in the journal and its event ends soon
     /// (<paramref name="soon"/>); null otherwise.
     /// </summary>

@@ -109,6 +109,32 @@ public sealed class AlliedCarryoverTests
     }
 
     [Fact]
+    public void A_stored_alts_held_daily_is_a_note_with_no_copper_and_no_actions()
+    {
+        // Spec-1.19 C5: the logged-in character's carried daily needs you (a copper dot, Flag and Teleport); a stored
+        // alt's reads "0 allowances today: holds a daily …" in Secondary, with no actions (they would act on the
+        // logged-in character).
+        var since = new Dictionary<ushort, DateTime> { [Id(MoogleDaily)] = LastReset.AddHours(-1) };
+        var live = AlliedSocietyBoard.Build(Catalog, Character(Now, MoogleDaily), null, null, Now, since).Rows.Single(r => r.Tribe == 8);
+        Assert.Equal(AlliedLine.Carried, AlliedCarryover.LineFor(live, live: true));
+        Assert.True(AlliedCarryover.NeedsYou(AlliedLine.Carried));
+        Assert.True(AlliedCarryover.HasCarriedActions(AlliedLine.Carried));
+
+        var stored = AlliedSocietyBoard.Build(Catalog, Character(LastReset.AddDays(-2), MoogleDaily), null, null, Now).Rows.Single(r => r.Tribe == 8);
+        var line = AlliedCarryover.LineFor(stored, live: false);
+        Assert.Equal(AlliedLine.StoredHolds, line);
+        Assert.False(AlliedCarryover.NeedsYou(line));
+        Assert.False(AlliedCarryover.HasCarriedActions(line));
+
+        // Nothing held: the rank-up hint or today, neither of which needs you.
+        var clear = AlliedSocietyBoard.Build(Catalog, Character(LastReset.AddDays(-2)), null, null, Now).Rows;
+        Assert.Equal(AlliedLine.RankUpReady, AlliedCarryover.LineFor(clear.Single(r => r.Tribe == 4), live: false));
+        Assert.Equal(AlliedLine.Today, AlliedCarryover.LineFor(clear.Single(r => r.Tribe == 8), live: false));
+        Assert.False(AlliedCarryover.NeedsYou(AlliedLine.RankUpReady));
+        Assert.False(AlliedCarryover.NeedsYou(AlliedLine.Today));
+    }
+
+    [Fact]
     public void Rank_up_ready_when_the_reputation_is_full_and_the_rank_up_quest_waits()
     {
         // Sahagin rank 3 at 510 (full): its rank-up quest waits, and ranking up to rank 4 opens the bonus dailies.
