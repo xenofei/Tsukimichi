@@ -9,6 +9,7 @@ using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Query;
+using StoryLine = Tsukimichi.Core.Plan.StoryLine;
 
 namespace Tsukimichi.Ui;
 
