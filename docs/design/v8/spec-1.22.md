@@ -283,12 +283,12 @@ All nine releases, shipped (six JPEGs each):
 | 1.21.0 What next | `whatnext-b` | 344 KB |
 | 1.20.0 Before Evercold | `evercold-b` | 445 KB |
 | 1.19.0 Right answers | `answers-b` | 353 KB |
-| 1.18.0 Runs you can trust | `runs-b` | 457 KB |
-| 1.17.0 Mix and match | `mixmatch-b` | 472 KB |
-| 1.16.0 Themes | `themes-b` | 492 KB |
-| 1.15.0 Faces and icons | `faces-b` | 484 KB |
-| 1.14.0 The polish you asked for | `polish-b` | 450 KB |
-| **All nine** | | **about 3.8 MB** (3,844 KB), each release within its 600 KB budget. The backfill's Orrery files are the largest (141–193 KB), because their engraving covers whole night masses. |
+| 1.18.0 Runs you can trust | `runs-b` | 461 KB |
+| 1.17.0 Mix and match | `mixmatch-b` | 476 KB |
+| 1.16.0 Themes | `themes-b` | 490 KB |
+| 1.15.0 Faces and icons | `faces-b` | 477 KB |
+| 1.14.0 The polish you asked for | `polish-b` | 446 KB |
+| **All nine** | | **about 3.8 MB** (3,839 KB), each release within its 600 KB budget. The backfill's Orrery files are the largest (141–193 KB), because their engraving covers whole night masses. |
 
 ### Production recipe (Option B, every release)
 
@@ -313,9 +313,14 @@ Added for the 1.14–1.18 backfill. Each is additive: absent, every treatment is
 - `glass_true_colour`: glass region ids whose pieces keep their own painted colour, not a palette (6 for six different stones).
 - `lines`: mask names of thin linear things, a guide rope or rigging. Glass leads them, the Orrery engraves them, Sumi inks them, Medallion keeps them crisp and Aether keeps its facets off them.
 - `field_flat`: the field is a flat sea or river. Its glass strips, engraved lines and brush strokes run from the horizon in every column, so a boat or a boathouse standing in the water never restarts them. Only the dark marks on it are drawn in glass and ink, so a moon's glitter path stays light.
-- `orrery_crisp`: the Orrery is engraved by value. The painting's own luminance, normalised over the land, sets each line's weight: lit snow, lit crystals and lit tops stay bare silver, and shadow takes heavier lines, cross-hatched past mid-tone. Lines are anti-aliased, follow smoothed ridgelines, and are never closer than 5 px at 1120 (2.5 px at 1x). Where they would be closer, a flat tone stands in, so no checker or moiré forms.
+- `orrery_crisp`: the Orrery is engraved by value. The painting's own luminance, normalised over the land, sets each line's weight: lit snow, lit crystals and lit tops stay bare silver, and shadow takes heavier lines, cross-hatched past mid-tone. Lines are anti-aliased, follow smoothed ridgelines, and are never closer than 5 px at 1120 (2.5 px at 1x). Where they would be closer, a flat tone stands in, so no checker or moiré forms. Past mid-tone, a second, lighter hatch runs at about 35° and a 9 px pitch, so the two sets neither mesh nor beat. Each place carries one line set (the ridge isn't also engraved as a far range), and the moon's sea lines are only the mass's core, 3 to 5 short level lines.
+- `orrery_backlit`: mask names of backlit silhouettes, which the Orrery engraves dark (at a tone of at least .88) with `orrery_crisp`, as evercold-b's city is. They are Limsa, runs-b's willow bank, and mixmatch-b's keep, hills and pines. Without it, normalising over the land left them as bare silver, lighter than the enamel sky.
 - `glass_palette_bld`: a palette for the city's pieces above `bluff_split`, so a roof is apart from its walls.
-- `glass_moon_path`: the moon's path on the water as one glint piece per strip, each of random width and offset, either lit at a random strength or left dark water. The column has ragged edges, so it reads as broken moonlight, not a road.
+- `glass_moon_path`: the moon's path on the water as broken glints.
+  - About a third of the strips have none.
+  - The rest have one or, where the path widens, two pieces, of varied width and offset by up to a moon radius.
+  - The pieces are pale blue glass, dimmer toward the viewer.
+  - The column has ragged edges, so it reads as broken moonlight, not road markings.
 - `glass_moon_seas`: the moon's seas, from the painter's `seas` mask, as a faint grisaille on the moon's white piece.
 - `aether_keep_clear`: mask names (from the npz) that the facets fade out round, within about 30 px, as they do round the figures. polish-b keeps Limsa clear.
 - `medallion_moon_seas`: Medallion's cream moon keeps the painter's seas, faintly.
@@ -831,3 +836,24 @@ The five backfill releases (`polish-b`, `faces-b`, `themes-b`, `mixmatch-b`, `ru
   - **themes-b, glass:** a lighter forest palette behind the watcher.
   - **All nine moons:** the small-moon rule (one broad soft mass of seas, the sliver kept), welcome-b and answers-b included, carried into Medallion, Glass and the Orrery. Both were re-shipped, and the What's new, states and About boards were re-rendered. The About board's 1.18.0 and 1.17.0 rows now show their own art.
   - evercold-b and whatnext-b re-render byte-identical.
+- **Round 3: CHANGES.** 3 Minor and 3 Nits; the round 2 Major was downgraded.
+  - **The moon rule holds on all nine moons, in every treatment.**
+    - On welcome-b (at about 224, 92) and answers-b (at about 655, 103), there is one soft neutral-grey mass with no hook, curl or ring, and the sliver is kept.
+    - The shipped Classic JPEGs match.
+    - The four boards show the new moons, and the 1.18.0 and 1.17.0 history rows show their own art.
+  - **Fixed:** the engraved moons, polish-b's Aether, faces-b's glass roof, and themes-b's glass watcher.
+  - **Minor:**
+    - backlit silhouettes were engraved lighter than the sky (mixmatch-b's keep, hills and pines; runs-b's willows);
+    - themes-b's Orrery showed dark vertical bands across the summit;
+    - the glass moon paths read as road markings.
+  - **Nits:**
+    - the Orrery's shadow cross-hatch read as a mesh;
+    - the engraved sea lines read as a grille;
+    - round 2's Nits 7–9 remain.
+- **After round 3:**
+  - `orrery_backlit` engraves the named silhouettes dark.
+  - The summit bands came from two line sets beating, because `far` is sealed over the ground. The engraving now gives each place one set.
+  - The cross-hatch is lighter, at about 35° and a 9 px pitch, so it neither meshes nor beats.
+  - The sea lines are only the mass's core.
+  - The glass paths are broken glints, as described under `glass_moon_path`.
+  - All nine releases are re-shipped and the four boards re-rendered. evercold-b and whatnext-b are byte-identical.

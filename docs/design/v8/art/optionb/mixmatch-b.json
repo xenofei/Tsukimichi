@@ -111,5 +111,10 @@
   ],
   "field_flat": true,
   "orrery_crisp": true,
-  "aether_clear_ground": true
+  "aether_clear_ground": true,
+  "orrery_backlit": [
+    "city",
+    "far_a",
+    "far_b"
+  ]
 }

@@ -110,6 +110,7 @@ def top_row(m):
 #   glass_palette_bld  a palette for the city's pieces above bluff_split (a roof apart from its walls)
 #   glass_moon_path  the moon's path on the water cut as its own pale pieces in each strip
 #   glass_moon_seas  the moon's seas (the painter's `seas` mask) as a faint grisaille on its white piece
+#   orrery_backlit  mask names of backlit silhouettes the Orrery engraves dark (with orrery_crisp)
 #   medallion_moon_seas  Medallion's cream moon keeps the painter's seas (a near-full moon)
 #   aether_keep_clear  mask names the facets fade out round (about 30 px), as they do round the figures
 #   lines       mask names of thin linear things (a guide rope, rigging) that every treatment keeps as a line
@@ -159,8 +160,12 @@ def engrave_by_value(M, L, xx, yy, sky):
     land = (sky < 0.5) & (M["moon"] < 0.5)
     Lb = blur(L, 1.2)
     lo, hi = np.percentile(Lb[land], 3), np.percentile(Lb[land], 97)
-    t = blur(np.clip((hi - Lb) / max(hi - lo, 1e-3), 0, 1) ** 0.85, 2.0)          # tone, not texture, sets the weight
-    ridge, field, far = M["ridge"], M["field"] * (1 - M["ridge"]), M["far"] * (1 - M["field"]) * (1 - M["city"])
+    t = blur(np.clip((hi - Lb) / max(hi - lo, 1e-3), 0, 1) ** 0.85, 5.0)          # tone, not texture, sets the weight
+    ridge, field, far = M["ridge"], M["field"] * (1 - M["ridge"]), M["far"] * (1 - M["field"]) * (1 - M["city"]) * (1 - M["ridge"])   # one line set per place
+    # backlit silhouettes the painter names (orrery_backlit) are engraved dark, as evercold-b's city is, whatever
+    # their value relative to the land: they stand against a brighter sky
+    for n in CFG.get("orrery_backlit", []):
+        t = np.maximum(t, blur(M[n], 1.0) * 0.88)
     cliff = M["city"] * (yy > h * CFG["bluff_split"])
     bld = M["city"] * (yy <= h * CFG["bluff_split"])
     def sm_row(r, k=31):                                                                          # a ridgeline without its serrations
@@ -182,8 +187,9 @@ def engrave_by_value(M, L, xx, yy, sky):
     cut += far * aa_lines(fph, 6.0, 6.0, t)
     cut += cliff * aa_lines(xx + 3 * np.sin(yy / 9), 6.0, 6.0, t)                               # down the faces
     cut += bld * aa_lines(yy, 6.0, 6.0, t)                                                        # along the courses
-    cross = np.clip((t - 0.55) / 0.45, 0, 1)                                                      # past mid-tone, cross-hatched
-    cut = 1 - (1 - np.clip(cut, 0, 1)) * (1 - aa_lines(xx + yy, 8.0 * math.sqrt(2), 8.0, cross) * (ridge + field + far + M["city"]).clip(0, 1))
+    # past mid-tone a second, lighter hatch at about 35 degrees and a wider pitch, so it neither meshes nor beats
+    cross = np.clip((t - 0.55) / 0.45, 0, 1) * 0.65
+    cut = 1 - (1 - np.clip(cut, 0, 1)) * (1 - aa_lines(0.82 * yy + 0.57 * xx, 9.0, 9.0, cross) * (ridge + field + far + M["city"]).clip(0, 1))
     return np.clip(cut, 0, 1) * (1 - sky)
 
 
@@ -376,11 +382,18 @@ def ishgard(px):
     if CFG.get("glass_moon_path"):                                  # the moon's path on the water: its own pieces, cut
         pmx = CFG["moon"][0] * w                                    # from each strip where the path crosses it
         hw_ = 5 + np.clip(yy - CFG["horizon"] * h, 0, None) * 0.20
+        mrp = CFG["moon"][2]                                        # the moon's radius at 1120
         bnd = parts[4] // 1000                                      # the strip each pixel belongs to
-        hb = (bnd * 2654435761 % 1000) / 1000.0                     # per strip: the glint's width and offset
+        hb = (bnd * 2654435761 % 1000) / 1000.0                     # per strip: width, offset, and whether it glints at all
         hb2 = (bnd * 40503 % 997) / 997.0
-        path = (np.abs(xx - (pmx + (hb2 - 0.5) * 0.8 * hw_)) < hw_ * (0.35 + 0.65 * hb)) & (reg == 4)
-        parts[4] = parts[4] * 2 + path                              # one glint piece per strip, ragged down the column
+        hb3 = (bnd * 69069 % 991) / 991.0
+        on = hb3 > 0.34                                             # about a third of the strips stay dark
+        c1 = pmx + (hb2 - 0.5) * 2.0 * mrp
+        g1 = np.abs(xx - c1) < hw_ * (0.15 + 0.55 * hb)
+        c2 = pmx - (hb2 - 0.5) * 2.0 * mrp + np.sign(0.5 - hb2) * hw_ * 0.9   # a second, narrower glint where the path widens
+        g2 = (np.abs(xx - c2) < hw_ * (0.10 + 0.30 * hb3)) & (hw_ > 22)
+        path = (g1 | g2) & on & (reg == 4)
+        parts[4] = parts[4] * 3 + path * (1 + g2)                   # ragged, broken glints down the column
     lab = reg * 10_000_000
     for rid, l in parts.items():
         lab = np.where(reg == rid, rid * 10_000_000 + l, lab)
@@ -419,10 +432,10 @@ def ishgard(px):
         pl = np.bincount(lab.ravel(), weights=path.ravel().astype(np.float64), minlength=len(uniq2)) / np.maximum(cnt, 1)
         rnd = (np.arange(len(uniq2)) * 2654435761 % 1000) / 1000.0
         inp = np.clip((pl - 0.5) * 4, 0, 1)
-        k_ = inp * (rnd > 0.45) * (0.35 + 0.55 * rnd)                       # broken: about half the pieces lit
-        d_ = inp * (rnd <= 0.45) * 0.55                                      # the rest dark water between the glints
-        col = col * (1 - k_[:, None]) + hexc("#D6DAEA") * k_[:, None]
-        col = col * (1 - d_[:, None]) + hexc("#1A2652") * d_[:, None]
+        yb_ = np.bincount(lab.ravel(), weights=yy.ravel(), minlength=len(uniq2)) / np.maximum(cnt, 1)
+        near_ = np.clip((yb_ - CFG["horizon"] * h) / ((1 - CFG["horizon"]) * h), 0, 1)
+        k_ = inp * (0.30 + 0.45 * rnd) * (1 - 0.55 * near_)                  # pale blue glass, dimmer toward the viewer
+        col = col * (1 - k_[:, None]) + hexc("#AEBEE4") * k_[:, None]
     glass = col[lab]
     streak = tex(fbm(256, 256, 14, 3, 906), xx / 3.0, yy / 0.8)
     glass = glass * (0.92 + 0.14 * streak)[..., None]
@@ -598,7 +611,8 @@ def orrery(px):
         face = hexc("#DCDFE6")
         plate = plate * (1 - lit[..., None]) + face * lit[..., None]
         # one set of anti-aliased diagonal lines, 3 px apart, swelling with the seas' depth: the mass engraved
-        hatch = aa_lines(yy, 4.0, 4.0, sea * 0.8, min_px=3.5) * lit                     # level lines on the pixel grid
+        core = np.clip((sea - 0.35) / 0.45, 0, 1)                                    # only the mass's core: 3-5 short lines
+        hatch = aa_lines(yy, 5.0, 5.0, core * 0.85, min_px=3.5) * lit                 # level, tapering where the mass thins
         plate = plate * (1 - (hatch * 0.8)[..., None]) + hexc("#4A5066") * (hatch * 0.8)[..., None]
         # the unlit sliver in dark enamel, and a brass ring just outside the disc, so the ring never covers the sliver
         sliver = np.clip(M["moon"] - lit, 0, 1)
