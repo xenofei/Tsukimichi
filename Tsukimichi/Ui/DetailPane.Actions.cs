@@ -403,7 +403,7 @@ public sealed partial class DetailPane
             ActionKind.Walk => links.WalkTooltip(quest, walkCheck),
             ActionKind.Teleport => links.TeleportTooltip(quest, teleportCheck),
             ActionKind.Questionable when slot.Stop => QuestionableActions?.StopTooltip() ?? Strings.QuestionableStopNoGate,
-            ActionKind.Questionable => questionableBlocker ?? Strings.ActionQuestionableStartTooltip,
+            ActionKind.Questionable => questionableBlocker ?? QuestionableActions?.StartTooltip ?? Strings.ActionQuestionableStartTooltip,
             ActionKind.AutoDuty when slot.Stop => Strings.AutoDutyStopTooltip,
             _ => AutoDutyTooltip(),
         };

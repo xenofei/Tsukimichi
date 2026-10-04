@@ -41,6 +41,8 @@ public sealed class QuestionableStepData
 /// <c>IsRunning() -> bool</c>, <c>GetCurrentQuestId() -> string?</c>, <c>GetCurrentStepData() -> StepData?</c>,
 /// <c>GetCurrentlyActiveEventQuests() -> List&lt;string&gt;</c>, <c>StartQuest(string) -> bool</c> (sets the quest as
 /// the next one and starts its automatic mode, which then works through the priority list),
+/// <c>StartSingleQuest(string) -> bool</c> (the same, for that one quest, then manual again; 1.18.0),
+/// <c>InsertQuestPriority(int index, string) -> bool</c> ("Do this next", 1.18.0),
 /// <c>IsQuestUnobtainable(string) -> bool</c> (upstream; throws for a quest it has no data for),
 /// <c>ImportQuestPriority(string) -> bool</c>, <c>ClearQuestPriority() -> bool</c>, <c>ExportQuestPriority() -> string</c>
 /// and <c>Stop(string label) -> bool</c> (upstream). Questionable sends no message when its list or its running state
@@ -56,6 +58,8 @@ public sealed partial class QuestionableIpc
     public const string GetCurrentStepDataGate = "Questionable.GetCurrentStepData";
     public const string GetCurrentlyActiveEventQuestsGate = "Questionable.GetCurrentlyActiveEventQuests";
     public const string StartQuestGate = "Questionable.StartQuest";
+    public const string StartSingleQuestGate = "Questionable.StartSingleQuest";
+    public const string InsertQuestPriorityGate = "Questionable.InsertQuestPriority";
     public const string IsQuestUnobtainableGate = "Questionable.IsQuestUnobtainable";
     public const string ImportQuestPriorityGate = "Questionable.ImportQuestPriority";
     public const string ClearQuestPriorityGate = "Questionable.ClearQuestPriority";
@@ -86,6 +90,8 @@ public sealed partial class QuestionableIpc
     private ICallGateSubscriber<QuestionableStepData?>? getCurrentStepData;
     private ICallGateSubscriber<List<string>>? getActiveEventQuests;
     private ICallGateSubscriber<string, bool>? startQuest;
+    private ICallGateSubscriber<string, bool>? startSingleQuest;
+    private ICallGateSubscriber<int, string, bool>? insertQuestPriority;
     private ICallGateSubscriber<string, bool>? isQuestUnobtainable;
     private ICallGateSubscriber<string, bool>? importQuestPriority;
     private ICallGateSubscriber<bool>? clearQuestPriority;
@@ -134,6 +140,15 @@ public sealed partial class QuestionableIpc
 
     /// <summary>Questionable can be started on a quest (<c>StartQuest</c>): both versions.</summary>
     public bool CanStart => Available && HasFunction(startQuest);
+
+    /// <summary>
+    /// Questionable can do one quest and stop (<c>StartSingleQuest</c>): both versions at the commits above. A build
+    /// without it gets the Start pill's old path, which says so (feature plan v7 A6).
+    /// </summary>
+    public bool CanStartSingle => Available && HasFunction(startSingleQuest);
+
+    /// <summary>Questionable can put a quest first on its list (<c>InsertQuestPriority</c>): both versions at the commits above.</summary>
+    public bool CanInsert => Available && HasFunction(insertQuestPriority);
 
     /// <summary>Questionable can be stopped by another plugin (<c>Stop</c>): upstream only.</summary>
     public bool CanStop => Available && HasFunction(stop);
@@ -254,6 +269,87 @@ public sealed partial class QuestionableIpc
         }
     }
 
+    /// <summary>
+    /// Starts Questionable on one quest through <c>StartSingleQuest</c> (feature plan v7 A6): it sets the quest as the
+    /// next one, picks it up if needed, and once the quest it took is done it logs "Single quest is finished" and goes
+    /// back to manual, with no new main scenario quest (<c>QuestController</c>'s SingleQuestA/SingleQuestB). False when
+    /// the gate is missing, Questionable has no path for the quest (the gate answers false), or the call failed.
+    /// </summary>
+    public bool StartSingle(uint rowId)
+    {
+        if (!CanStartSingle || startSingleQuest is null || QuestionableCrossCheck.QuestionableId(rowId) is not { } id)
+        {
+            return false;
+        }
+
+        try
+        {
+            var started = startSingleQuest.InvokeFunc(id);
+            log.Information("Questionable single-quest start on quest {RowId}: {Started}", rowId, started);
+            return started;
+        }
+        catch (IpcNotReadyError)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, "Questionable.StartSingleQuest failed");
+            return false;
+        }
+        finally
+        {
+            statusAt = double.NegativeInfinity;
+        }
+    }
+
+    /// <summary>
+    /// "Do this next" (feature plan v7 A6): <c>InsertQuestPriority(0, id)</c> with the list read before and after.
+    /// The gate answers true even for a quest Questionable does not know and leaves a quest already on the list where it
+    /// is (<c>QuestPriorityManager.Insert</c>), so the outcome is the place the quest holds afterwards
+    /// (<see cref="QuestionableInsert"/>). Null when the gate is missing, refused or failed.
+    /// </summary>
+    public QuestionableInsertOutcome? InsertFirst(uint rowId)
+    {
+        if (!CanInsert || insertQuestPriority is null || QuestionableCrossCheck.QuestionableId(rowId) is not { } id)
+        {
+            return null;
+        }
+
+        var before = ReadList();
+        try
+        {
+            if (!insertQuestPriority.InvokeFunc(0, id))
+            {
+                log.Information("Questionable declined to put quest {RowId} first", rowId);
+                return null;
+            }
+        }
+        catch (IpcNotReadyError)
+        {
+            return null;
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, "Questionable.InsertQuestPriority failed");
+            return null;
+        }
+
+        var after = ReadList();
+        if (after is null)
+        {
+            badges.MarkListStale();
+        }
+        else
+        {
+            badges.StoreList(after, Generation, Now);
+        }
+
+        var outcome = QuestionableInsert.Read(rowId, before, after);
+        log.Information("Questionable do-this-next on quest {RowId}: {Kind} (#{Position})", rowId, outcome.Kind, outcome.Position);
+        return outcome;
+    }
+
     /// <summary>Stops Questionable through <c>Stop("Tsukimichi")</c> (upstream only). False when the gate is missing or failed.</summary>
     public bool Stop()
     {
@@ -353,6 +449,9 @@ public sealed partial class QuestionableIpc
 
         return status;
     }
+
+    /// <summary>The status as last read by <see cref="PollStatus"/>, without asking Questionable.</summary>
+    public QuestionableStatus LastStatus => status;
 
     /// <summary>Asks for a fresh read of Questionable's list on the next badge that needs it (a pane opened, the player asked).</summary>
     public void MarkListStale() => badges.MarkListStale();
@@ -564,6 +663,8 @@ public sealed partial class QuestionableIpc
             getCurrentStepData = pluginInterface.GetIpcSubscriber<QuestionableStepData?>(GetCurrentStepDataGate);
             getActiveEventQuests = pluginInterface.GetIpcSubscriber<List<string>>(GetCurrentlyActiveEventQuestsGate);
             startQuest = pluginInterface.GetIpcSubscriber<string, bool>(StartQuestGate);
+            startSingleQuest = pluginInterface.GetIpcSubscriber<string, bool>(StartSingleQuestGate);
+            insertQuestPriority = pluginInterface.GetIpcSubscriber<int, string, bool>(InsertQuestPriorityGate);
             isQuestUnobtainable = pluginInterface.GetIpcSubscriber<string, bool>(IsQuestUnobtainableGate);
             importQuestPriority = pluginInterface.GetIpcSubscriber<string, bool>(ImportQuestPriorityGate);
             clearQuestPriority = pluginInterface.GetIpcSubscriber<bool>(ClearQuestPriorityGate);
@@ -578,6 +679,8 @@ public sealed partial class QuestionableIpc
             getCurrentStepData = null;
             getActiveEventQuests = null;
             startQuest = null;
+            startSingleQuest = null;
+            insertQuestPriority = null;
             isQuestUnobtainable = null;
             importQuestPriority = null;
             clearQuestPriority = null;

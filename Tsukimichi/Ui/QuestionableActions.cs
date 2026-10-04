@@ -29,8 +29,14 @@ namespace Tsukimichi.Ui;
 /// out, order kept), not per frame, from the logged-in character's states, since Questionable plays that character
 /// whoever is viewed; "Add and start" also waits until the viewed character is the one logged in.
 /// </para>
+/// <para>
+/// 1.18.0 (feature plan v7 A6): the detail pane's Start pill does one quest (<c>StartSingleQuest</c>) and falls back to
+/// the old add-then-start path only on a Questionable without that gate; "Start here and keep going" and "Do this next"
+/// sit in the pane's "…" menu. A4: "Stop later" (after this quest, after a number of quests, at a time) for any running
+/// Questionable, and each start and stop is told to the run watch (<see cref="Runs"/>) for its receipt.
+/// </para>
 /// </summary>
-public sealed class QuestionableActions
+public sealed partial class QuestionableActions
 {
     private const string MenuId = "##questionableSend";
     private static readonly string SendIcon = Chrome.Icon(FontAwesomeIcon.PaperPlane);
@@ -65,6 +71,7 @@ public sealed class QuestionableActions
     private static readonly Localization.LocText replaceConfirmLabelText = new(static () => Strings.QuestionableReplaceConfirm + Chrome.HoldIdSuffix);
     private QuestionableSendPlan pendingPlan = QuestionableSendPlan.Empty;
     private uint pendingStartOnly;
+    private bool pendingSingle;
     private string pendingQuestion = string.Empty;
     private bool dontAskAgain = true;
 
@@ -74,6 +81,7 @@ public sealed class QuestionableActions
     private int statusVersion = -1;
     private int statusLanguage = -1;
     private string statusText = string.Empty;
+    private (QuestionableStopCondition Condition, int Left, QuestionableRunOrigin Origin) statusRunKey;
 
     // Badge texts, rebuilt when what they show changes.
     private (uint RowId, int? Position, bool? Path, int Language) badgeKey = (0, null, null, -1);
@@ -101,6 +109,12 @@ public sealed class QuestionableActions
 
     /// <summary>Questionable's IPC.</summary>
     public QuestionableIpc Ipc => ipc;
+
+    /// <summary>
+    /// The run watch (feature plan v7 A4): stop conditions and receipts. Told of every start and stop asked here; null
+    /// leaves "Stop later" out and the runs unwatched. Set by the plugin.
+    /// </summary>
+    public QuestionableRunWatch? Runs { get; set; }
 
     /// <summary>
     /// Whether Go to giver or Walk to giver runs; Start waits meanwhile, as both would drive vnavmesh at once. Set by the
@@ -179,7 +193,16 @@ public sealed class QuestionableActions
     /// Stops Questionable with no chat line and no question, for <c>/tsuki stop</c>, which asks in chat and names what it
     /// stopped in one line. False when Questionable could not be asked or refused.
     /// </summary>
-    public bool StopQuietly() => ipc.Stop();
+    public bool StopQuietly()
+    {
+        var stopped = ipc.Stop();
+        if (stopped)
+        {
+            Runs?.NoteStopAsked();
+        }
+
+        return stopped;
+    }
 
     /// <summary>
     /// The Stop tooltip: what Stop does, and, while Questionable's "Run command after stop" is on, the command it then
@@ -233,12 +256,45 @@ public sealed class QuestionableActions
     }
 
     /// <summary>
-    /// "Start Questionable" for one quest (the detail pane's pill, 1.10): adds it to Questionable's priority list when
-    /// it is not in the journal yet, then starts Questionable on it; a quest already in the journal is started on
-    /// directly. Asks first, in <paramref name="host"/>'s confirmation (<see cref="DrawModals"/>), unless the player
-    /// said not to. Does nothing while <see cref="StartQuestBlocker"/> has a reason.
+    /// "Start Questionable" for one quest (the detail pane's pill; since 1.18.0, feature plan v7 A6): Questionable does
+    /// this quest, then stops (<c>StartSingleQuest</c>). A Questionable without that gate gets the old path
+    /// (<see cref="StartKeepGoing"/>), which the pill's tooltip says (<see cref="StartTooltip"/>). Asks first, in
+    /// <paramref name="host"/>'s confirmation (<see cref="DrawModals"/>), unless the player said not to. Does nothing
+    /// while <see cref="StartQuestBlocker"/> has a reason.
     /// </summary>
     public void StartQuest(string host, uint rowId)
+    {
+        if (!ipc.CanStartSingle)
+        {
+            StartKeepGoing(host, rowId);
+            return;
+        }
+
+        // A hand-off: the blocker reads the companion settings as they are now, not as last read.
+        CompanionPlugins.ReadSetupNow();
+        if (StartQuestBlocker(rowId) is not null)
+        {
+            return;
+        }
+
+        if (!settings.QuestionableConfirmStart)
+        {
+            DoStartSingle(rowId);
+            return;
+        }
+
+        pendingQuestion = string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStartSingleQuestionFormat, NameOf(rowId));
+        dontAskAgain = true;
+        Request(PendingKind.Start, host, QuestionableSendPlan.Empty, rowId, single: true);
+    }
+
+    /// <summary>
+    /// "Start here and keep going" (the detail pane's "…" menu; the Start pill until 1.18.0): adds the quest to
+    /// Questionable's priority list when it is not in the journal yet, then starts Questionable on it, which carries on
+    /// with its list and its own choices until stopped; a quest already in the journal is started on directly. Asks
+    /// first unless the player said not to. Does nothing while <see cref="StartQuestBlocker"/> has a reason.
+    /// </summary>
+    public void StartKeepGoing(string host, uint rowId)
     {
         // A hand-off: the blocker reads the companion settings as they are now, not as last read.
         CompanionPlugins.ReadSetupNow();
@@ -249,6 +305,56 @@ public sealed class QuestionableActions
 
         var sendPlan = ipc.CanSend ? QuestionableList.Plan([rowId], ActingStates) : QuestionableSendPlan.Empty;
         RequestStart(host, sendPlan, sendPlan.Count == 0 ? rowId : 0u);
+    }
+
+    /// <summary>
+    /// The Start pill's tooltip while it can start: "Questionable does this quest, then stops.", or, on a Questionable
+    /// without <c>StartSingleQuest</c>, that Start falls back to the keep-going path.
+    /// </summary>
+    public string StartTooltip => ipc.CanStartSingle ? Strings.ActionQuestionableStartSingleTooltip : Strings.ActionQuestionableStartFallbackTooltip;
+
+    /// <summary>
+    /// Why "Do this next" (feature plan v7 A6) cannot put the quest first on Questionable's list now, or null when it
+    /// can: no insert gate, or Questionable running. The panel's conservative branch for Questionable#45 (a priority
+    /// quest started mid-run reset the current quest's progress) holds until that is tested in game: no insert while
+    /// Questionable runs. The caller checks the path (the reason gate) first.
+    /// </summary>
+    public string? DoThisNextBlocker()
+    {
+        if (!ipc.CanInsert)
+        {
+            return Strings.QuestionableDoNextNoGate;
+        }
+
+        return status.Running || ipc.LastStatus.Running ? Strings.QuestionableDoNextRunning : null;
+    }
+
+    /// <summary>
+    /// "Do this next": puts the quest first on Questionable's list (<c>InsertQuestPriority(0, id)</c>), reads the list
+    /// back and says in chat where the quest stands ("Close to Home is #1 on Questionable's list."). Nothing starts.
+    /// </summary>
+    public void DoThisNext(uint rowId)
+    {
+        if (DoThisNextBlocker() is not null)
+        {
+            return;
+        }
+
+        var name = NameOf(rowId);
+        if (ipc.InsertFirst(rowId) is not { } outcome)
+        {
+            print(Strings.QuestionableDoNextFailed);
+            return;
+        }
+
+        print(outcome.Kind switch
+        {
+            QuestionableInsertKind.First => string.Format(CultureInfo.CurrentCulture, Strings.QuestionableDoNextFirstFormat, name),
+            QuestionableInsertKind.AlreadyThere => string.Format(CultureInfo.CurrentCulture, Strings.QuestionableDoNextAlreadyFormat, name, outcome.Position),
+            QuestionableInsertKind.Lower => string.Format(CultureInfo.CurrentCulture, Strings.QuestionableDoNextLowerFormat, name, outcome.Position),
+            QuestionableInsertKind.Missing => string.Format(CultureInfo.CurrentCulture, Strings.QuestionableDoNextMissingFormat, name),
+            _ => string.Format(CultureInfo.CurrentCulture, Strings.QuestionableDoNextUnverifiedFormat, name),
+        });
     }
 
     /// <summary>
@@ -263,12 +369,14 @@ public sealed class QuestionableActions
             return null;
         }
 
-        if (!ReferenceEquals(statusFor, status) || statusVersion != session.Version || statusLanguage != Localization.Loc.Version)
+        var runKey = RunKey();
+        if (!ReferenceEquals(statusFor, status) || statusVersion != session.Version || statusLanguage != Localization.Loc.Version || statusRunKey != runKey)
         {
             statusFor = status;
             statusVersion = session.Version;
             statusLanguage = Localization.Loc.Version;
-            statusText = ComposeStatus(status);
+            statusRunKey = runKey;
+            statusText = ComposeStatus(status) + RunSuffix();
         }
 
         return statusText;
@@ -292,8 +400,11 @@ public sealed class QuestionableActions
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(StopTooltip());
+            UiMetrics.Tooltip(StopTooltip(), canStop && Runs is not null ? Strings.QuestionableStopLaterRightClick : null);
         }
+
+        // "Stop later" (feature plan v7 A4) on a right-click, where the run is watched.
+        DrawStopLaterContext(id);
     }
 
     /// <summary>"Send to Questionable" as a text button opening the menu; visible and disabled without Questionable.</summary>
@@ -465,7 +576,11 @@ public sealed class QuestionableActions
                     save();
                 }
 
-                if (pendingStartOnly != 0)
+                if (pendingSingle)
+                {
+                    DoStartSingle(pendingStartOnly);
+                }
+                else if (pendingStartOnly != 0)
                 {
                     DoStartOnly(pendingStartOnly);
                 }
@@ -633,6 +748,8 @@ public sealed class QuestionableActions
         {
             UiMetrics.Tooltip(StopTooltip());
         }
+
+        DrawStopLaterMenu();
     }
 
     /// <summary>Why "Add and start" is disabled, or null when it can be offered.</summary>
@@ -740,18 +857,43 @@ public sealed class QuestionableActions
         Request(PendingKind.Start, host, sendPlan, startOnly);
     }
 
-    private void Request(PendingKind kind, string host, QuestionableSendPlan sendPlan, uint startOnly = 0)
+    private void Request(PendingKind kind, string host, QuestionableSendPlan sendPlan, uint startOnly = 0, bool single = false)
     {
         pending = kind;
         pendingHost = host;
         pendingPlan = sendPlan;
         pendingStartOnly = startOnly;
+        pendingSingle = single;
         pendingOpen = true;
     }
 
     /// <summary>Starts Questionable on a quest without sending it (one already in the journal), and says how it went in chat.</summary>
-    private void DoStartOnly(uint rowId) =>
-        print(ipc.Start(rowId) ? string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStartedFormat, NameOf(rowId)) : Strings.QuestionableStartFailed);
+    private void DoStartOnly(uint rowId)
+    {
+        if (ipc.Start(rowId))
+        {
+            Runs?.NoteStarted(QuestionableRunOrigin.KeepGoing, rowId);
+            print(string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStartedFormat, NameOf(rowId)));
+        }
+        else
+        {
+            print(Strings.QuestionableStartFailed);
+        }
+    }
+
+    /// <summary>Starts Questionable on one quest (<c>StartSingleQuest</c>) and says so in chat; the run watch says when it is done.</summary>
+    private void DoStartSingle(uint rowId)
+    {
+        if (ipc.StartSingle(rowId))
+        {
+            Runs?.NoteStarted(QuestionableRunOrigin.SingleQuest, rowId);
+            print(string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStartedSingleFormat, NameOf(rowId)));
+        }
+        else
+        {
+            print(Strings.QuestionableStartFailed);
+        }
+    }
 
     /// <summary>Sends, says how it went in chat, and starts Questionable when asked.</summary>
     private void DoSend(QuestionableSendPlan sendPlan, bool replace, bool start)
@@ -777,6 +919,7 @@ public sealed class QuestionableActions
 
         if (PreferredStart(sendPlan, result) is { } rowId && ipc.Start(rowId))
         {
+            Runs?.NoteStarted(QuestionableRunOrigin.KeepGoing, rowId);
             print(string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStartedFormat, NameOf(rowId)));
         }
         else
@@ -802,7 +945,18 @@ public sealed class QuestionableActions
         Request(PendingKind.Stop, host, QuestionableSendPlan.Empty);
     }
 
-    private void DoStop() => print(ipc.Stop() ? Strings.QuestionableStopped : Strings.QuestionableStopFailed);
+    private void DoStop()
+    {
+        if (ipc.Stop())
+        {
+            Runs?.NoteStopAsked();
+            print(Strings.QuestionableStopped);
+        }
+        else
+        {
+            print(Strings.QuestionableStopFailed);
+        }
+    }
 
     /// <summary>"Questionable: sent 14 of 17 (3 have no Questionable path)." and how many were already on its list.</summary>
     private static string ResultLine(QuestionableSendResult result)
@@ -854,6 +1008,9 @@ public sealed class QuestionableActions
 
         return first;
     }
+
+    /// <summary>The quest's name as the spoiler shield shows it, or its row id without a catalog: for chat lines and receipts.</summary>
+    public string QuestName(uint rowId) => NameOf(rowId);
 
     private string NameOf(uint rowId) =>
         session.Bundle?.Catalog is { } catalog

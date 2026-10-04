@@ -4924,7 +4924,7 @@
     <value>Add to priority list</value>
   </data>
   <data name="ConfigQuestionableHandoffHint" xml:space="preserve">
-    <value>Offers Add to Questionable priority in the detail pane's menu. Starts nothing.</value>
+    <value>Offers Add to Questionable priority and Do this next in the detail pane's menu. Starts nothing.</value>
   </data>
   <data name="RouteWindowTitle" xml:space="preserve">
     <value>Unlock route###tsukimichiRoute</value>
@@ -10739,5 +10739,215 @@
   <data name="UndoToastMixReset" xml:space="preserve">
     <value>Mix reset</value>
     <comment>Undo toast after Reset mix.</comment>
+  </data>
+  <data name="ActionQuestionableStartSingleTooltip" xml:space="preserve">
+    <value>Questionable does this quest, then stops.</value>
+    <comment>The Start Questionable pill (1.18.0): StartSingleQuest.</comment>
+  </data>
+  <data name="ActionQuestionableStartFallbackTooltip" xml:space="preserve">
+    <value>This version of Questionable cannot do just one quest, so Start puts the quest on its priority list and Questionable keeps going with its own choices until you stop it.</value>
+    <comment>The Start pill on a Questionable without StartSingleQuest: the old path.</comment>
+  </data>
+  <data name="QuestionableKeepGoing" xml:space="preserve">
+    <value>Start here and keep going</value>
+    <comment>The detail pane's "…" menu: the Start pill's behaviour before 1.18.0.</comment>
+  </data>
+  <data name="QuestionableStartSingleQuestionFormat" xml:space="preserve">
+    <value>Questionable will play for you: it walks, talks to NPCs, and accepts and turns in {0}, then stops. You can stop it sooner from the Questionable line in Tsukimichi or from Questionable itself.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableStartedSingleFormat" xml:space="preserve">
+    <value>Questionable started on {0}; it stops when that quest is done.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableDoNext" xml:space="preserve">
+    <value>Do this next</value>
+    <comment>The detail pane's "…" menu: InsertQuestPriority(0, quest).</comment>
+  </data>
+  <data name="QuestionableDoNextTooltip" xml:space="preserve">
+    <value>Puts this quest first on Questionable's priority list. Nothing starts: Questionable takes it the next time it runs.</value>
+  </data>
+  <data name="QuestionableDoNextRunning" xml:space="preserve">
+    <value>Questionable is on a quest; add it after it stops.</value>
+  </data>
+  <data name="QuestionableDoNextNoGate" xml:space="preserve">
+    <value>This version of Questionable cannot put a quest first on its list.</value>
+  </data>
+  <data name="QuestionableDoNextFirstFormat" xml:space="preserve">
+    <value>{0} is #1 on Questionable's list.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableDoNextAlreadyFormat" xml:space="preserve">
+    <value>{0} was already on Questionable's list and keeps its place, #{1}.</value>
+    <comment>{0} = the quest's name, {1} = its place on the list.</comment>
+  </data>
+  <data name="QuestionableDoNextLowerFormat" xml:space="preserve">
+    <value>{0} is #{1} on Questionable's list.</value>
+    <comment>{0} = the quest's name, {1} = its place on the list.</comment>
+  </data>
+  <data name="QuestionableDoNextMissingFormat" xml:space="preserve">
+    <value>Questionable did not take {0}; it may have no path for it.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableDoNextUnverifiedFormat" xml:space="preserve">
+    <value>Asked Questionable to do {0} next; its list could not be read back.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableDoNextFailed" xml:space="preserve">
+    <value>Questionable did not take the quest; see /xllog.</value>
+  </data>
+  <data name="QuestionableRunFinishedFormat" xml:space="preserve">
+    <value>Questionable finished {0} and stopped.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableRunNotFinishedFormat" xml:space="preserve">
+    <value>Questionable stopped before {0} was done, after {1}.</value>
+    <comment>{0} = the quest's name, {1} = how long it ran ("12 min").</comment>
+  </data>
+  <data name="QuestionableRunReceiptFormat" xml:space="preserve">
+    <value>Questionable ran {0}: {1}. {2}</value>
+    <comment>{0} = how long ("1 h 12 min"), {1} = the quests done ("3 quests done"), {2} = why it stopped (a sentence).</comment>
+  </data>
+  <data name="QuestionableRunNoQuests" xml:space="preserve">
+    <value>no quests done</value>
+  </data>
+  <data name="QuestionableRunOneQuestFormat" xml:space="preserve">
+    <value>1 quest done ({0})</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableRunQuestsNamedFormat" xml:space="preserve">
+    <value>{0} quests done ({1})</value>
+    <comment>{0} = how many, {1} = their names.</comment>
+  </data>
+  <data name="QuestionableRunQuestsFormat" xml:space="preserve">
+    <value>{0} quests done</value>
+    <comment>{0} = how many.</comment>
+  </data>
+  <data name="QuestionableRunWhyAfterOne" xml:space="preserve">
+    <value>Stopped after 1 quest, as you set.</value>
+  </data>
+  <data name="QuestionableRunWhyAfterQuestsFormat" xml:space="preserve">
+    <value>Stopped after {0} quests, as you set.</value>
+    <comment>{0} = the number set.</comment>
+  </data>
+  <data name="QuestionableRunWhyAtTimeFormat" xml:space="preserve">
+    <value>Stopped at {0}, as you set.</value>
+    <comment>{0} = the time set ("21:30").</comment>
+  </data>
+  <data name="QuestionableRunWhyAfterCurrentFormat" xml:space="preserve">
+    <value>Stopped after {0}, as you set.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableRunWhyAfterNext" xml:space="preserve">
+    <value>Stopped after its next quest, as you set.</value>
+  </data>
+  <data name="QuestionableRunWhyTsukimichi" xml:space="preserve">
+    <value>Stopped from Tsukimichi.</value>
+  </data>
+  <data name="QuestionableRunWhyEnded" xml:space="preserve">
+    <value>It stopped on its own or from its own window.</value>
+  </data>
+  <data name="QuestionableRunUnderMinute" xml:space="preserve">
+    <value>under a minute</value>
+  </data>
+  <data name="QuestionableRunMinutesFormat" xml:space="preserve">
+    <value>{0} min</value>
+    <comment>{0} = minutes.</comment>
+  </data>
+  <data name="QuestionableRunHoursFormat" xml:space="preserve">
+    <value>{0} h {1} min</value>
+    <comment>{0} = hours, {1} = minutes.</comment>
+  </data>
+  <data name="QuestionableRunStopFailed" xml:space="preserve">
+    <value>Questionable reached the stop you set but did not stop; see /xllog. It keeps going.</value>
+  </data>
+  <data name="QuestionableStopLater" xml:space="preserve">
+    <value>Stop later</value>
+    <comment>A submenu while Questionable runs: after this quest, after a number of quests, at a time.</comment>
+  </data>
+  <data name="QuestionableStopLaterTooltip" xml:space="preserve">
+    <value>Let Questionable finish what it is doing, then stop: after this quest, after a number of quests, or at a time. Tsukimichi stops it for you.</value>
+  </data>
+  <data name="QuestionableStopLaterRightClick" xml:space="preserve">
+    <value>Right-click to stop later: after this quest, after a number of quests, or at a time.</value>
+  </data>
+  <data name="QuestionableStopLaterFailed" xml:space="preserve">
+    <value>Questionable is not running, or cannot be stopped from Tsukimichi.</value>
+  </data>
+  <data name="QuestionableStopAfterCurrent" xml:space="preserve">
+    <value>After this quest</value>
+  </data>
+  <data name="QuestionableStopAfterCurrentFormat" xml:space="preserve">
+    <value>Questionable stops once {0} is done.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableStopAfterNextTooltip" xml:space="preserve">
+    <value>Questionable stops once it finishes its next quest.</value>
+  </data>
+  <data name="QuestionableStopAfterQuestsLabel" xml:space="preserve">
+    <value>After this many quests</value>
+  </data>
+  <data name="QuestionableStopAtLabel" xml:space="preserve">
+    <value>At a time (hh:mm)</value>
+  </data>
+  <data name="QuestionableStopAtTooltip" xml:space="preserve">
+    <value>Today, or tomorrow if that time has passed, by your computer's clock.</value>
+  </data>
+  <data name="QuestionableStopSet" xml:space="preserve">
+    <value>Set</value>
+  </data>
+  <data name="QuestionableStopClear" xml:space="preserve">
+    <value>Keep going</value>
+    <comment>Clears the stop condition set with Stop later.</comment>
+  </data>
+  <data name="QuestionableStopCleared" xml:space="preserve">
+    <value>Questionable keeps going until it stops or you stop it.</value>
+  </data>
+  <data name="QuestionableStopArmedAfterCurrentFormat" xml:space="preserve">
+    <value>Questionable will stop after {0}.</value>
+    <comment>{0} = the quest's name.</comment>
+  </data>
+  <data name="QuestionableStopArmedAfterNext" xml:space="preserve">
+    <value>Questionable will stop after its next quest.</value>
+  </data>
+  <data name="QuestionableStopArmedAfterOne" xml:space="preserve">
+    <value>Questionable will stop after 1 more quest.</value>
+  </data>
+  <data name="QuestionableStopArmedAfterQuestsFormat" xml:space="preserve">
+    <value>Questionable will stop after {0} more quests.</value>
+    <comment>{0} = how many.</comment>
+  </data>
+  <data name="QuestionableStopArmedAtFormat" xml:space="preserve">
+    <value>Questionable will stop at {0}.</value>
+    <comment>{0} = the time ("21:30").</comment>
+  </data>
+  <data name="QuestionableStatusThenStops" xml:space="preserve">
+    <value>then stops</value>
+    <comment>Appended to the live status of a single-quest run.</comment>
+  </data>
+  <data name="QuestionableStatusStopsAfterThis" xml:space="preserve">
+    <value>stops after this quest</value>
+  </data>
+  <data name="QuestionableStatusStopsAfterOne" xml:space="preserve">
+    <value>stops after 1 more quest</value>
+  </data>
+  <data name="QuestionableStatusStopsAfterFormat" xml:space="preserve">
+    <value>stops after {0} more quests</value>
+    <comment>{0} = how many.</comment>
+  </data>
+  <data name="QuestionableStatusStopsAtFormat" xml:space="preserve">
+    <value>stops at {0}</value>
+    <comment>{0} = the time ("21:30").</comment>
+  </data>
+  <data name="SettingsQuestionableRuns" xml:space="preserve">
+    <value>Recent runs</value>
+    <comment>Settings › Automation › Questionable: the run receipts.</comment>
+  </data>
+  <data name="SettingsQuestionableRunsNone" xml:space="preserve">
+    <value>No Questionable run seen yet. When one ends, Tsukimichi notes how long it ran, the quests done and why it stopped.</value>
+  </data>
+  <data name="SettingsQuestionableRunRowFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>{0} = when the run ended, {1} = the receipt.</comment>
   </data>
 </root>

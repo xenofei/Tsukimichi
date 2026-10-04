@@ -199,4 +199,123 @@ static partial class Strings
 
     public static string QuestionableStartNothing => Loc.Get("QuestionableStartNothing");
     public static string QuestionableStartNoPath => Loc.Get("QuestionableStartNoPath");
+
+    // ---- 1.18.0: one-quest Start, Do this next, Stop later and run receipts (feature plan v7 A4, A6) ----
+    public static string ActionQuestionableStartSingleTooltip => Loc.Get("ActionQuestionableStartSingleTooltip");
+
+    public static string ActionQuestionableStartFallbackTooltip => Loc.Get("ActionQuestionableStartFallbackTooltip");
+
+    public static string QuestionableKeepGoing => Loc.Get("QuestionableKeepGoing");
+
+    public static string QuestionableStartSingleQuestionFormat => Loc.Get("QuestionableStartSingleQuestionFormat");
+
+    public static string QuestionableStartedSingleFormat => Loc.Get("QuestionableStartedSingleFormat");
+
+    public static string QuestionableDoNext => Loc.Get("QuestionableDoNext");
+
+    public static string QuestionableDoNextTooltip => Loc.Get("QuestionableDoNextTooltip");
+
+    public static string QuestionableDoNextRunning => Loc.Get("QuestionableDoNextRunning");
+
+    public static string QuestionableDoNextNoGate => Loc.Get("QuestionableDoNextNoGate");
+
+    public static string QuestionableDoNextFirstFormat => Loc.Get("QuestionableDoNextFirstFormat");
+
+    public static string QuestionableDoNextAlreadyFormat => Loc.Get("QuestionableDoNextAlreadyFormat");
+
+    public static string QuestionableDoNextLowerFormat => Loc.Get("QuestionableDoNextLowerFormat");
+
+    public static string QuestionableDoNextMissingFormat => Loc.Get("QuestionableDoNextMissingFormat");
+
+    public static string QuestionableDoNextUnverifiedFormat => Loc.Get("QuestionableDoNextUnverifiedFormat");
+
+    public static string QuestionableDoNextFailed => Loc.Get("QuestionableDoNextFailed");
+
+    public static string QuestionableRunFinishedFormat => Loc.Get("QuestionableRunFinishedFormat");
+
+    public static string QuestionableRunNotFinishedFormat => Loc.Get("QuestionableRunNotFinishedFormat");
+
+    public static string QuestionableRunReceiptFormat => Loc.Get("QuestionableRunReceiptFormat");
+
+    public static string QuestionableRunNoQuests => Loc.Get("QuestionableRunNoQuests");
+
+    public static string QuestionableRunOneQuestFormat => Loc.Get("QuestionableRunOneQuestFormat");
+
+    public static string QuestionableRunQuestsNamedFormat => Loc.Get("QuestionableRunQuestsNamedFormat");
+
+    public static string QuestionableRunQuestsFormat => Loc.Get("QuestionableRunQuestsFormat");
+
+    public static string QuestionableRunWhyAfterOne => Loc.Get("QuestionableRunWhyAfterOne");
+
+    public static string QuestionableRunWhyAfterQuestsFormat => Loc.Get("QuestionableRunWhyAfterQuestsFormat");
+
+    public static string QuestionableRunWhyAtTimeFormat => Loc.Get("QuestionableRunWhyAtTimeFormat");
+
+    public static string QuestionableRunWhyAfterCurrentFormat => Loc.Get("QuestionableRunWhyAfterCurrentFormat");
+
+    public static string QuestionableRunWhyAfterNext => Loc.Get("QuestionableRunWhyAfterNext");
+
+    public static string QuestionableRunWhyTsukimichi => Loc.Get("QuestionableRunWhyTsukimichi");
+
+    public static string QuestionableRunWhyEnded => Loc.Get("QuestionableRunWhyEnded");
+
+    public static string QuestionableRunUnderMinute => Loc.Get("QuestionableRunUnderMinute");
+
+    public static string QuestionableRunMinutesFormat => Loc.Get("QuestionableRunMinutesFormat");
+
+    public static string QuestionableRunHoursFormat => Loc.Get("QuestionableRunHoursFormat");
+
+    public static string QuestionableRunStopFailed => Loc.Get("QuestionableRunStopFailed");
+
+    public static string QuestionableStopLater => Loc.Get("QuestionableStopLater");
+
+    public static string QuestionableStopLaterTooltip => Loc.Get("QuestionableStopLaterTooltip");
+
+    public static string QuestionableStopLaterRightClick => Loc.Get("QuestionableStopLaterRightClick");
+
+    public static string QuestionableStopLaterFailed => Loc.Get("QuestionableStopLaterFailed");
+
+    public static string QuestionableStopAfterCurrent => Loc.Get("QuestionableStopAfterCurrent");
+
+    public static string QuestionableStopAfterCurrentFormat => Loc.Get("QuestionableStopAfterCurrentFormat");
+
+    public static string QuestionableStopAfterNextTooltip => Loc.Get("QuestionableStopAfterNextTooltip");
+
+    public static string QuestionableStopAfterQuestsLabel => Loc.Get("QuestionableStopAfterQuestsLabel");
+
+    public static string QuestionableStopAtLabel => Loc.Get("QuestionableStopAtLabel");
+
+    public static string QuestionableStopAtTooltip => Loc.Get("QuestionableStopAtTooltip");
+
+    public static string QuestionableStopSet => Loc.Get("QuestionableStopSet");
+
+    public static string QuestionableStopClear => Loc.Get("QuestionableStopClear");
+
+    public static string QuestionableStopCleared => Loc.Get("QuestionableStopCleared");
+
+    public static string QuestionableStopArmedAfterCurrentFormat => Loc.Get("QuestionableStopArmedAfterCurrentFormat");
+
+    public static string QuestionableStopArmedAfterNext => Loc.Get("QuestionableStopArmedAfterNext");
+
+    public static string QuestionableStopArmedAfterOne => Loc.Get("QuestionableStopArmedAfterOne");
+
+    public static string QuestionableStopArmedAfterQuestsFormat => Loc.Get("QuestionableStopArmedAfterQuestsFormat");
+
+    public static string QuestionableStopArmedAtFormat => Loc.Get("QuestionableStopArmedAtFormat");
+
+    public static string QuestionableStatusThenStops => Loc.Get("QuestionableStatusThenStops");
+
+    public static string QuestionableStatusStopsAfterThis => Loc.Get("QuestionableStatusStopsAfterThis");
+
+    public static string QuestionableStatusStopsAfterOne => Loc.Get("QuestionableStatusStopsAfterOne");
+
+    public static string QuestionableStatusStopsAfterFormat => Loc.Get("QuestionableStatusStopsAfterFormat");
+
+    public static string QuestionableStatusStopsAtFormat => Loc.Get("QuestionableStatusStopsAtFormat");
+
+    public static string SettingsQuestionableRuns => Loc.Get("SettingsQuestionableRuns");
+
+    public static string SettingsQuestionableRunsNone => Loc.Get("SettingsQuestionableRunsNone");
+
+    public static string SettingsQuestionableRunRowFormat => Loc.Get("SettingsQuestionableRunRowFormat");
 }
