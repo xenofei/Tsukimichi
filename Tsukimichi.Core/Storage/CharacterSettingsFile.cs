@@ -71,6 +71,21 @@ public sealed class CharacterSettings
     [OmitWhenEmpty]
     public List<uint> GoWithGame { get; set; } = [];
 
+    /// <summary>
+    /// Cards the player hid for this character (feature plan v7 1.20.0, N7: <c>Plan.EvercoldPrep.CardId</c>), by id.
+    /// Hiding is per character and undoable; the Characters dashboard can show the card again.
+    /// </summary>
+    [OmitWhenEmpty]
+    public List<string> CardsDismissed { get; set; } = [];
+
+    /// <summary>
+    /// The Before Evercold lines the player ticked for this character ("you said so", spec-1.20 N7), by line id
+    /// (<c>Plan.EvercoldPrep.TickId</c>: story, journal, jobs, duties, flying). A ticked line folds into the card's
+    /// "Done: …" line the next time the card is built; unticking brings it back.
+    /// </summary>
+    [OmitWhenEmpty]
+    public List<string> EvercoldTicks { get; set; } = [];
+
     /// <summary>Properties this build does not know (a newer build's), written back unchanged.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; set; }
@@ -79,7 +94,7 @@ public sealed class CharacterSettings
     [JsonIgnore]
     public bool IsEmpty =>
         SpoilerShield is null && !Hidden && !DontTrack && CompareWith is null
-        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && GoWithGame.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
+        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && GoWithGame.Count == 0 && CardsDismissed.Count == 0 && EvercoldTicks.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
 
     /// <summary>
     /// What outlives Forget character and "Delete all data": the player's choices about the character itself, hidden
@@ -101,6 +116,8 @@ public sealed class CharacterSettings
         PayoffWhyOpen = [.. PayoffWhyOpen],
         GatesDone = [.. GatesDone],
         GoWithGame = [.. GoWithGame],
+        CardsDismissed = [.. CardsDismissed],
+        EvercoldTicks = [.. EvercoldTicks],
         SeenReady = SeenReady is null ? null : [.. SeenReady],
         SeenReadyRules = SeenReadyRules,
         Extra = Extra is null ? null : new Dictionary<string, JsonElement>(Extra, StringComparer.Ordinal),
@@ -113,6 +130,8 @@ public sealed class CharacterSettings
         PayoffWhyOpen ??= [];
         GatesDone ??= [];
         GoWithGame ??= [];
+        CardsDismissed ??= [];
+        EvercoldTicks ??= [];
     }
 }
 
@@ -149,6 +168,18 @@ public enum CharacterSettingField
     GoWithGame,
 
     /// <summary>
+    /// Hides (<see cref="CharacterSettingChange.Flag"/> true) or shows again the card <see cref="CharacterSettingChange.Id"/>
+    /// for the character (<see cref="CharacterSettings.CardsDismissed"/>).
+    /// </summary>
+    CardDismissed,
+
+    /// <summary>
+    /// Ticks (<see cref="CharacterSettingChange.Flag"/> true) or unticks the Before Evercold line
+    /// <see cref="CharacterSettingChange.Id"/> for the character (<see cref="CharacterSettings.EvercoldTicks"/>).
+    /// </summary>
+    EvercoldTick,
+
+    /// <summary>
     /// Forget character: drops the character's entry except <see cref="CharacterSettings.Hidden"/> and
     /// <see cref="CharacterSettings.DontTrack"/> (<see cref="CharacterSettings.Lasting"/>).
     /// </summary>
@@ -182,6 +213,9 @@ public readonly record struct CharacterSettingChange(ulong ContentId, CharacterS
     public static CharacterSettingChange GateDone(ulong contentId, uint questRowId, bool done) => new(contentId, CharacterSettingField.GateDone, done, RowIds: [questRowId]);
 
     public static CharacterSettingChange GoWithGame(ulong contentId, uint questRowId, bool withGame) => new(contentId, CharacterSettingField.GoWithGame, withGame, RowIds: [questRowId]);
+    public static CharacterSettingChange Dismiss(ulong contentId, string cardId, bool dismissed) => new(contentId, CharacterSettingField.CardDismissed, dismissed, Id: cardId);
+
+    public static CharacterSettingChange EvercoldTick(ulong contentId, string lineId, bool ticked) => new(contentId, CharacterSettingField.EvercoldTick, ticked, Id: lineId);
 
     public static CharacterSettingChange Forget(ulong contentId) => new(contentId, CharacterSettingField.Forget);
 }
@@ -292,6 +326,28 @@ public static class CharacterSettingsFile
                     else if (change.Id is not null)
                     {
                         entry.PayoffWhyOpen.Remove(change.Id);
+                    }
+
+                    break;
+                case CharacterSettingField.CardDismissed:
+                    if (change.Flag == true)
+                    {
+                        AddId(entry.CardsDismissed, change.Id);
+                    }
+                    else if (change.Id is not null)
+                    {
+                        entry.CardsDismissed.Remove(change.Id);
+                    }
+
+                    break;
+                case CharacterSettingField.EvercoldTick:
+                    if (change.Flag == true)
+                    {
+                        AddId(entry.EvercoldTicks, change.Id);
+                    }
+                    else if (change.Id is not null)
+                    {
+                        entry.EvercoldTicks.Remove(change.Id);
                     }
 
                     break;

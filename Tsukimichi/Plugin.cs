@@ -1410,6 +1410,7 @@ public sealed partial class Plugin : IDalamudPlugin
             var payoffLines = new PayoffGateLines(payoffGates, Session, Settings, CharacterBook);
             charactersPane.PayoffLines = payoffLines;
             mainWindow.AttachPayoffLines(payoffLines);
+            InitializeBeforeEvercold(charactersPane, ui, flightZones, () => dutyRuns.Value, unlockReader.IsAetherCurrentUnlocked);
             // Planning extras (1.9.0): the level advisor, the main scenario catch-up and the allied society board.
             var planning = new PlanningSource(Session, gameLinks, catchUpDuties);
             charactersPane.Planning = planning;

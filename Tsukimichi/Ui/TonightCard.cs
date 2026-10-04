@@ -96,6 +96,7 @@ public sealed partial class TonightCard
                 TextFlow.Wrapped(events, Chrome.RoomX());
             }
 
+            DrawBeforeEvercold();
             DrawPinned(bundle);
         }
 
