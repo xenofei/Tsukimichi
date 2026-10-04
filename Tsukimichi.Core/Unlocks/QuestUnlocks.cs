@@ -3,6 +3,7 @@ using System.Globalization;
 using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Plan;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Unique;
 
@@ -84,6 +85,12 @@ public sealed class QuestUnlocks
     /// <summary>The catalog the index was built over; null for <see cref="Empty"/>.</summary>
     public QuestCatalog? Catalog { get; }
 
+    /// <summary>
+    /// Where every zone, duty, reward and NPC name sits in the story (plan v7, 1.20.0 N6), placed from this index and
+    /// the catalog when the index is built: what the wider spoiler shield reads (<see cref="SpoilerMask.Name"/>).
+    /// </summary>
+    public SpoilerNames Names { get; private set; } = SpoilerNames.Empty;
+
     /// <summary>How many quests open anything, counting what their Rewards already show.</summary>
     public int Count => withRewards.Count;
 
@@ -161,18 +168,25 @@ public sealed class QuestUnlocks
     /// <summary>
     /// Whether one search term (lowercased) is part of the label of a thing the quest opens within
     /// <paramref name="reach"/> (<see cref="byte.MaxValue"/> outside Sprout mode): "kugane", or "thav" for Flying in
-    /// Thavnair. Next quests never match. Allocates nothing. The caller asks only for a quest the spoiler shield shows.
+    /// Thavnair. Next quests never match; a thing whose name <paramref name="spoilers"/> masks (plan v7, 1.20.0 N6)
+    /// matches only its placeholder. Allocates nothing. The caller asks only for a quest the spoiler shield shows.
     /// </summary>
-    public bool MatchesTerm(uint rowId, ReadOnlySpan<char> term, byte reach = byte.MaxValue)
+    public bool MatchesTerm(uint rowId, ReadOnlySpan<char> term, byte reach = byte.MaxValue, SpoilerMask? spoilers = null)
     {
         if (!indexed.TryGetValue(rowId, out var known))
         {
             return false;
         }
 
-        foreach (var (text, expansion) in known.Search)
+        foreach (var label in known.Search)
         {
-            if (expansion <= reach && text.AsSpan().Contains(term, StringComparison.Ordinal))
+            if (label.Expansion > reach)
+            {
+                continue;
+            }
+
+            var hidden = spoilers is not null && label.Kind is { } kind ? spoilers.SearchName(kind, label.Name) : null;
+            if ((hidden ?? label.Text).AsSpan().Contains(term, StringComparison.Ordinal))
             {
                 return true;
             }
@@ -187,11 +201,15 @@ public sealed class QuestUnlocks
     /// <summary>
     /// "Find by unlock" (plan v7, 1.19.0 K3): the finds whose label holds every term of <paramref name="normalizedQuery"/>
     /// (<see cref="Query.SearchIndex.Normalize"/>), within <paramref name="reach"/>, and opened by at least one quest
-    /// <paramref name="shown"/> lets through (the spoiler shield: what a masked quest opens is never named). A label that
-    /// starts with the first term comes first, then display order; at most <paramref name="max"/>. Empty for an empty query.
+    /// <paramref name="shown"/> lets through (the spoiler shield: what a masked quest opens is never named). A find whose
+    /// own name <paramref name="spoilers"/> masks (plan v7, 1.20.0 N6: a zone, duty or reward past the story) matches
+    /// only its placeholder, and is listed under it (<see cref="UnlockMatch.Label"/>): typing a name from ahead finds
+    /// nothing. A label that starts with the first term comes first, then display order; at most
+    /// <paramref name="max"/>. Empty for an empty query.
     /// </summary>
     /// <param name="shown">Whether the shield shows a quest; null shows every quest.</param>
-    public IReadOnlyList<UnlockMatch> Find(string normalizedQuery, Func<uint, bool>? shown = null, byte reach = byte.MaxValue, int max = 8)
+    /// <param name="spoilers">The wider shield over the finds' own names; null masks none.</param>
+    public IReadOnlyList<UnlockMatch> Find(string normalizedQuery, Func<uint, bool>? shown = null, byte reach = byte.MaxValue, int max = 8, SpoilerMask? spoilers = null)
     {
         if (string.IsNullOrEmpty(normalizedQuery) || max <= 0 || finds.Length == 0)
         {
@@ -203,7 +221,20 @@ public sealed class QuestUnlocks
         var rest = new List<UnlockMatch>();
         foreach (var find in finds)
         {
-            if (find.Expansion > reach || !AllTerms(find.SearchText, terms))
+            if (find.Expansion > reach)
+            {
+                continue;
+            }
+
+            // A hidden name is matched by its placeholder's label only.
+            string? hiddenLabel = null;
+            if (spoilers is not null && SpoilerNames.KindOf(find.Target) is { } kind && spoilers.IsNameMasked(kind, find.Name))
+            {
+                hiddenLabel = UnlockFindKinds.Label(find.Target, spoilers.Name(kind, find.Name));
+            }
+
+            var searchText = hiddenLabel is null ? find.SearchText : SpoilerMask.SearchForm(hiddenLabel);
+            if (!AllTerms(searchText, terms))
             {
                 continue;
             }
@@ -223,7 +254,8 @@ public sealed class QuestUnlocks
                 continue;
             }
 
-            (find.SearchText.StartsWith(terms[0], StringComparison.Ordinal) ? leading : rest).Add(new UnlockMatch(find, via));
+            var match = hiddenLabel is null ? new UnlockMatch(find, via) : new UnlockMatch(find, via) { Label = hiddenLabel, Hidden = true };
+            (searchText.StartsWith(terms[0], StringComparison.Ordinal) ? leading : rest).Add(match);
         }
 
         leading.AddRange(rest);
@@ -301,7 +333,8 @@ public sealed class QuestUnlocks
     /// <param name="duties">Duty kinds and names; <see cref="PlanDuties.Empty"/> files every duty under Other duty with the reward data's name.</param>
     /// <param name="links">What the sheets know; <see cref="UnlockLinks.Empty"/> leaves areas and aetherytes out.</param>
     /// <param name="curated">The curated overlay, for the aetheryte overrides and the system unlocks' notes; null for none.</param>
-    public static QuestUnlocks Build(QuestCatalog catalog, UniqueRewardCatalog rewards, PlanDuties duties, UnlockLinks links, CuratedData? curated = null)
+    /// <param name="expansionName">The game's expansion names (<c>ExVersion</c>), which the spoiler shield's placeholders print; null uses the built-in English ones.</param>
+    public static QuestUnlocks Build(QuestCatalog catalog, UniqueRewardCatalog rewards, PlanDuties duties, UnlockLinks links, CuratedData? curated = null, Func<byte, string>? expansionName = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(rewards);
@@ -316,7 +349,13 @@ public sealed class QuestUnlocks
         builder.AddAreas(UnlockAreas.Derive(catalog, links));
         builder.AddRewards(rewards);
         builder.AddNextQuests();
-        return builder.Finish();
+        var index = builder.Finish();
+        if (!ReferenceEquals(index, Empty))
+        {
+            index.Names = SpoilerNames.Build(catalog, index, links.Zones, expansionName);
+        }
+
+        return index;
     }
 
     /// <summary>Collects every quest's rows, deduping as it goes.</summary>
@@ -790,7 +829,7 @@ public sealed class QuestUnlocks
         private static void IndexKinds(uint rowId, List<UnlockEntry> rows, Dictionary<uint, Indexed> indexed, Dictionary<(UnlockTarget Target, uint Id, string Name), FindBuilder> finds)
         {
             ushort kinds = 0;
-            var search = new List<(string, byte)>(rows.Count);
+            var search = new List<SearchLabel>(rows.Count);
             foreach (var row in rows)
             {
                 if (row.Target == UnlockTarget.NextQuest)
@@ -798,7 +837,7 @@ public sealed class QuestUnlocks
                     continue;
                 }
 
-                search.Add((UnlockFindKinds.Label(row.Target, row.Name).ToLowerInvariant(), row.Expansion));
+                search.Add(new SearchLabel(UnlockFindKinds.Label(row.Target, row.Name).ToLowerInvariant(), row.Expansion, SpoilerNames.KindOf(row.Target), row.Name));
                 if (UnlockFindKinds.Of(row.Target) is not { } kind)
                 {
                     continue;
@@ -829,8 +868,11 @@ public sealed class QuestUnlocks
             .ToArray();
     }
 
-    /// <summary>A quest's kinds (<see cref="KindMask"/>) and its rows' lowercased labels with their expansions (<see cref="MatchesTerm"/>).</summary>
-    private sealed record Indexed(ushort Kinds, (string Text, byte Expansion)[] Search);
+    /// <summary>A quest's kinds (<see cref="KindMask"/>) and its rows' search labels (<see cref="MatchesTerm"/>).</summary>
+    private sealed record Indexed(ushort Kinds, SearchLabel[] Search);
+
+    /// <summary>One row's lowercased label, its expansion, and the kind and name the spoiler shield places it by.</summary>
+    private readonly record struct SearchLabel(string Text, byte Expansion, SpoilerKind? Kind, string Name);
 
     /// <summary>
     /// Collects one find's quests across the catalog, in catalog order: the first row's target, id, name and expansion,

@@ -634,7 +634,8 @@ public sealed class PlanningSource
             var today = row.OfferedToday is { } offered
                 ? Core.Ui.LeftText.LeftOrDone(row.DoneToday, offered)
                 : string.Format(CultureInfo.CurrentCulture, Strings.PlanningBoardTodayUnknownFormat, row.DoneToday);
-            var zone = row.Giver?.Issuer is { } issuer && links?.Map(issuer.MapId) is { } map ? map.PlaceName : string.Empty;
+            // A zone the story has not reached reads as its placeholder (1.20.0 N6).
+            var zone = row.Giver?.Issuer is { } issuer && links?.Map(issuer.MapId) is { } map ? session.Spoilers.Name(Core.Query.SpoilerKind.Area, map.PlaceName) : string.Empty;
             var todayTooltip = row.OfferedToday is { } shown ? Core.Ui.LeftText.Tally(row.DoneToday, shown) : Strings.PlanningBoardTodayUnknownTooltip;
             var kind = AlliedCarryover.LineFor(row, session.IsLive);
             lines[i] = new BoardLine(

@@ -218,6 +218,30 @@ public static partial class Chrome
         return true;
     }
 
+    /// <summary>
+    /// The tile of a reward the spoiler shield hides (spec-1.20 N6): its own icon would name it, so a quiet tile in the
+    /// Sunken tone with a Line outline (1.5 px in high contrast) holds the 1.15 moon disc at 16/22 of its side, in the
+    /// plates' fallback ink (#56607C on Ishgard Snow). Drawn at <paramref name="min"/>, <paramref name="size"/> px across
+    /// (22 px at 100 %); no item.
+    /// </summary>
+    public static void HiddenRewardTile(ImDrawListPtr dl, Vector2 min, float size)
+    {
+        if (!(size > 1f))
+        {
+            return;
+        }
+
+        var max = min + new Vector2(size);
+        var rounding = Theme.Flair == Flair.Plain ? UiMetrics.Px(2f) : UiMetrics.Px(4f);
+        var s = Theme.Surface;
+        dl.AddRectFilled(min, max, Theme.U32(s.Sunken), rounding);
+        var outline = Theme.Glyphs.HighContrast ? UiMetrics.Px(1.5f) : UiMetrics.Hairline;
+        dl.AddRect(min, max, Theme.U32(Theme.Glyphs.HighContrast ? s.StrongLine : s.Line), rounding, ImDrawFlags.None, outline);
+        var disc = MathF.Round(size * (16f / 22f));
+        var discMin = min + new Vector2(MathF.Round((size - disc) * 0.5f));
+        PortraitAtlas.TryDraw(dl, PortraitSprite.MoonDisc, discMin, discMin + new Vector2(disc), Theme.U32(Vector4.One));
+    }
+
     /// <summary>A fallback on the plate (spec A6) at <paramref name="alpha"/>.</summary>
     private static void DrawFallback(ImDrawListPtr dl, Vector2 min, float size, float logical, PortraitShow show, in PortraitFallback fallback, float alpha)
     {

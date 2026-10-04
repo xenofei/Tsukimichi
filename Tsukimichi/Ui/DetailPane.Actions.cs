@@ -87,9 +87,13 @@ public sealed partial class DetailPane
             travelStartedBy = null;
         }
 
+        // A giver in a place the story has not reached (1.20.0 N6): no travel pill or Flag leads there, hidden rather
+        // than greyed; a trip under way keeps its Stop.
+        var hiddenPlace = links.GiverPlaceHidden(quest) && !journey;
+
         // Without Lifestream (or with Teleport hidden by the automation level, 1.18), Flag on map leads the row, as the
         // primary action did before 1.10.
-        if (links.FlagLeads)
+        if (links.FlagLeads && !hiddenPlace)
         {
             var canFlag = links.CanFlagMap(quest);
             AddAction(ActionKind.Flag, ActionIcons.FlagIcon, Strings.FlagOnMap, Strings.FlagOnMap, PillTone.Normal, canFlag);
@@ -97,7 +101,7 @@ public sealed partial class DetailPane
 
         // With Walk and Go to giver both above the automation level, a trip under way still gets its Stop here.
         var stopOnly = journey && !links.GoToShown && !links.WalkShown;
-        if (links.GoToShown || (stopOnly && goToCheck.Stoppable))
+        if (!hiddenPlace && (links.GoToShown || (stopOnly && goToCheck.Stoppable)))
         {
             var go = goToCheck;
             var stop = go.Stoppable && (travelStartedBy != ActionKind.Walk || !links.WalkShown);
@@ -105,13 +109,13 @@ public sealed partial class DetailPane
                 stop ? PillTone.Danger : PillTone.Normal, stop || go.Ready, stop, waits: go.Stoppable && !stop);
         }
 
-        if (links.TeleportShown)
+        if (links.TeleportShown && !hiddenPlace)
         {
             var teleport = teleportCheck;
             AddAction(ActionKind.Teleport, ActionIcons.TeleportIcon, Strings.ActionTeleport, Strings.ActionTeleport, teleport.AlreadyHere ? PillTone.Quiet : PillTone.Normal, teleport.Ready);
         }
 
-        if (links.WalkShown)
+        if (links.WalkShown && !hiddenPlace)
         {
             var walk = walkCheck;
             var stop = walk.Stoppable && (travelStartedBy == ActionKind.Walk || !links.GoToShown);

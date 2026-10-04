@@ -1555,7 +1555,8 @@ public sealed class TablePane : IDisposable
         var nameCellMin = ImGui.GetCursorScreenPos();
         var nameCellWidth = ImGui.GetContentRegionAvail().X;
         var name = runner.Spoilers.DisplayName(quest);
-        var nameInk = ImGui.GetColorU32(ImGuiCol.Text);
+        // A masked quest's placeholder keeps the name's slot and weight, in Secondary (spec-1.20 N6).
+        var nameInk = runner.Spoilers.IsMasked(quest) ? Theme.U32(Theme.Surface.TextSecondary) : ImGui.GetColorU32(ImGuiCol.Text);
         ImGui.PushStyleColor(ImGuiCol.Header, Vector4.Zero);
         ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Vector4.Zero);
         ImGui.PushStyleColor(ImGuiCol.HeaderActive, Vector4.Zero);
@@ -1776,7 +1777,7 @@ public sealed class TablePane : IDisposable
     /// The Giver cell (1.15, F5): the giver's 20 px plate, then the name, ellipsised in the cell. Hovering the plate shows
     /// the 128 px portrait; a cut name shows whole on hover. For a quest the spoiler shield masks, the giver is masked the
     /// way the quest's name is: a column of future givers would tell the story ahead, so the cell shows the moon disc and
-    /// "Hidden giver", with no portrait tooltip.
+    /// "Hidden giver", with no portrait tooltip. So is a giver the wider shield hides (1.20.0 N6), whatever the quest.
     /// </summary>
     private void DrawGiverCell(QuestRecord quest, bool rowHovered, in RowLayout layout)
     {
@@ -1790,9 +1791,15 @@ public sealed class TablePane : IDisposable
 
         var dl = ImGui.GetWindowDrawList();
         var plateMin = new Vector2(cell.X, cell.Y + MathF.Round((layout.RowContent - avatar) * 0.5f));
-        var masked = runner.Spoilers.IsMasked(quest);
-        var request = masked ? PortraitRequest.None : GiverPortraits.For(quest, runner.Spoilers);
-        var name = masked ? Strings.GiverHidden : issuer.Name;
+        // With the wider shield (1.20.0 N6) the giver follows the people rule: someone met before keeps the name, anyone
+        // else reads "Dawntrail character"; a masked quest still never shows a face (GiverPortraits.For). Without it a
+        // masked quest's giver is hidden the 1.15 way, the moon disc and "Hidden giver".
+        var questMasked = runner.Spoilers.IsMasked(quest);
+        var wider = runner.Spoilers.MasksNames;
+        var personHidden = runner.Spoilers.IsNameMasked(SpoilerKind.Npc, issuer.Name);
+        var masked = (questMasked && !wider) || personHidden;
+        var request = questMasked && !wider ? PortraitRequest.None : GiverPortraits.For(quest, runner.Spoilers);
+        var name = questMasked && !wider ? Strings.GiverHidden : runner.Spoilers.Name(SpoilerKind.Npc, issuer.Name);
         Chrome.Portrait(dl, plateMin, avatar, request);
         var x = cell.X + avatar + UiMetrics.Px(PortraitPlate.ColumnGap);
         var nameRoom = cell.X + room - x;
@@ -1808,9 +1815,14 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        if (!masked && ImGui.IsMouseHoveringRect(plateMin, plateMin + new Vector2(avatar)))
+        if (personHidden && ImGui.IsMouseHoveringRect(cell, new Vector2(cell.X + room, cell.Y + layout.RowContent)))
         {
-            Chrome.PortraitTooltip(request, issuer.Name, GiverPortraits.Place(quest));
+            // A placeholder's hover; its right-click is the row's menu ("Reveal names in this quest").
+            ShieldText.Hover(cut ? name : null);
+        }
+        else if (!masked && !questMasked && ImGui.IsMouseHoveringRect(plateMin, plateMin + new Vector2(avatar)))
+        {
+            Chrome.PortraitTooltip(request, issuer.Name, GiverPortraits.Place(quest, runner.Spoilers));
         }
         else if (cut && ImGui.IsMouseHoveringRect(new Vector2(x, cell.Y), new Vector2(cell.X + room, cell.Y + layout.RowContent)))
         {
@@ -2339,7 +2351,7 @@ public sealed class TablePane : IDisposable
         ImGui.TextDisabled(runner.LevelText(quest.DisplayLevel));
 
         // What it opens (feature plan v6 K4), never for a quest the shield masks.
-        if (runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) && unlocks.OpensLine(quest.RowId, runner.UnlockReach) is { Length: > 0 } opens)
+        if (runner.Unlocks is { } unlocks && !spoilers.IsMasked(quest) && unlocks.OpensLine(quest.RowId, runner.UnlockReach, spoilers) is { Length: > 0 } opens)
         {
             ImGui.TextWrapped(opens);
         }
@@ -2394,10 +2406,31 @@ public sealed class TablePane : IDisposable
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + iconOffset);
             }
 
-            GameIcon.Draw(textures, entry.Icon, iconSize);
+            // A thing past the story point (1.20.0 N6): the stand-in, its placeholder and a caption without its place.
+            var hidden = Core.Unlocks.UnlockView.IsShielded(entry, runner.Spoilers);
+            var unlockIcon = Core.Unlocks.UnlockView.IconOf(entry, runner.Spoilers);
+            if (hidden && unlockIcon == 0)
+            {
+                // Its own art would name it: the moon-disc tile in the icon's slot.
+                var at = ImGui.GetCursorScreenPos();
+                ImGui.Dummy(new Vector2(iconSize));
+                Chrome.HiddenRewardTile(ImGui.GetWindowDrawList(), at, iconSize);
+            }
+            else
+            {
+                GameIcon.Draw(textures, unlockIcon, iconSize);
+            }
+
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(entry.Name, entry.Caption);
+                if (hidden)
+                {
+                    ShieldText.Hover(Core.Unlocks.UnlockView.ShieldedName(entry, runner.Spoilers));
+                }
+                else
+                {
+                    UiMetrics.Tooltip(Core.Unlocks.UnlockView.ShieldedName(entry, runner.Spoilers), Core.Unlocks.UnlockView.CaptionOf(entry, runner.Spoilers));
+                }
             }
 
             drawn++;
@@ -2413,7 +2446,7 @@ public sealed class TablePane : IDisposable
             {
                 if (ShowsOpens(entries[i], reach) && skipped++ >= fit)
                 {
-                    ImGui.TextUnformatted(entries[i].Name);
+                    ImGui.TextUnformatted(Core.Unlocks.UnlockView.ShieldedName(entries[i], runner.Spoilers));
                 }
             }
 
@@ -2470,10 +2503,30 @@ public sealed class TablePane : IDisposable
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + iconOffset);
             }
 
-            GameIcon.Draw(textures, reward.Icon, iconSize);
+            // A reward the story has not introduced (1.20.0 N6): the stand-in and its placeholder, never its own art.
+            var shielded = runner.Spoilers.IsNameMasked(SpoilerKind.Reward, reward.Name);
+            if (shielded)
+            {
+                // The moon-disc tile in the icon's slot (spec-1.20 N6).
+                var at = ImGui.GetCursorScreenPos();
+                ImGui.Dummy(new Vector2(iconSize));
+                Chrome.HiddenRewardTile(ImGui.GetWindowDrawList(), at, iconSize);
+            }
+            else
+            {
+                GameIcon.Draw(textures, reward.Icon, iconSize);
+            }
+
             if (ImGui.IsItemHovered())
             {
-                RewardTooltip.Draw(reward, links, textures, questRowId: quest.RowId);
+                if (shielded)
+                {
+                    ShieldText.Hover(runner.Spoilers.Name(SpoilerKind.Reward, reward.Name));
+                }
+                else
+                {
+                    RewardTooltip.Draw(reward, links, textures, questRowId: quest.RowId, spoilers: runner.Spoilers);
+                }
             }
 
             drawn++;
@@ -2489,7 +2542,7 @@ public sealed class TablePane : IDisposable
             {
                 if (ShowsReward(rewards[i]) && skipped++ >= fit)
                 {
-                    ImGui.TextUnformatted(rewards[i].Name);
+                    ImGui.TextUnformatted(runner.Spoilers.Name(SpoilerKind.Reward, rewards[i].Name));
                 }
             }
 
@@ -2525,7 +2578,9 @@ public sealed class TablePane : IDisposable
             runner.TogglePinWithUndo(quest);
         }
 
-        if (ImGui.MenuItem(Strings.FlagOnMap, enabled: links.CanFlagMap(quest)))
+        // A giver in a place the story has not reached: no Flag (the map would name it; spec-1.20 N6).
+        var placeHidden = links.GiverPlaceHidden(quest);
+        if (!placeHidden && ImGui.MenuItem(Strings.FlagOnMap, enabled: links.CanFlagMap(quest)))
         {
             links.FlagMap(quest);
         }
@@ -2547,9 +2602,27 @@ public sealed class TablePane : IDisposable
         }
 
         var canCopyCoordinates = links.MapCoordinates(quest) is not null;
-        if (ImGui.MenuItem(Strings.CopyCoordinates, enabled: canCopyCoordinates) && links.CoordinateText(quest) is { } coordinates)
+        if (!placeHidden && ImGui.MenuItem(Strings.CopyCoordinates, enabled: canCopyCoordinates) && links.CoordinateText(quest) is { } coordinates)
         {
             ImGui.SetClipboardText(coordinates);
+        }
+
+        // The placeholders of the row (its name, giver, place, rewards, unlocks): reveal them for the session (1.20.0 N6).
+        if (runner.Session is { } session &&(runner.Spoilers.IsMasked(quest) || runner.Spoilers.MasksNames))
+        {
+            var names = ShieldText.QuestNames(links, session.Unlocks, quest);
+            if (ShieldText.HidesAny(runner.Spoilers, quest, names))
+            {
+                if (ImGui.MenuItem(Strings.SpoilerRevealQuestNames, Strings.SpoilerRevealThisSession))
+                {
+                    session.RevealQuestNames(quest.RowId, names);
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(Strings.SpoilerRevealQuestNamesTooltip);
+                }
+            }
         }
 
         if (ImGui.MenuItem(Strings.ShowPath))

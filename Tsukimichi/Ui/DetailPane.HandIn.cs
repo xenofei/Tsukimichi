@@ -76,6 +76,9 @@ public sealed partial class DetailPane
         /// <summary>The item sources <see cref="Where"/> was read from; it is read again when they land.</summary>
         public ItemSourceIndex? WhereSources { get; set; }
 
+        /// <summary>The fingerprint of the spoiler shield <see cref="Where"/> was composed through (1.20.0 N6).</summary>
+        public int WhereShield { get; set; }
+
         /// <summary>Where to get the item (1.19, N5): its first two sources; null while the sources are read or when none is known.</summary>
         public WhereSummary? Where { get; set; }
 
@@ -308,13 +311,16 @@ public sealed partial class DetailPane
     private WhereSummary? WhereOf(HandInRow row)
     {
         var sources = links.ItemSources;
-        if (ReferenceEquals(row.WhereSources, sources))
+        // A vendor, place or duty past the story point is named by its placeholder (1.20.0 N6), and has no spot to flag.
+        var spoilers = runner.Spoilers;
+        if (ReferenceEquals(row.WhereSources, sources) && row.WhereShield == spoilers.Fingerprint)
         {
             return row.Where;
         }
 
         row.WhereSources = sources;
-        row.Where = sources is null ? null : WhereToGet.Summary(sources.For(row.Item.ItemId));
+        row.WhereShield = spoilers.Fingerprint;
+        row.Where = sources is null ? null : WhereToGet.Summary(sources.For(row.Item.ItemId), spoilers);
         row.WhereTooltip = string.Empty;
         if (row.Where is not { } where)
         {
@@ -339,7 +345,7 @@ public sealed partial class DetailPane
         // Where the vendor the Flag marks stands, as the map prints it.
         if (where.Spot is { } spot)
         {
-            tooltip.Add(string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereFlagTooltipFormat, SourceText.Spot(spot)));
+            tooltip.Add(string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereFlagTooltipFormat, SourceText.Spot(spot, spoilers)));
         }
 
         row.WhereTooltip = string.Join("\n", tooltip);
@@ -417,7 +423,7 @@ public sealed partial class DetailPane
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(canFlag ? string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereFlagTooltipFormat, SourceText.Spot(spot)) : Strings.HandInWhereFlagFailed);
+            UiMetrics.Tooltip(canFlag ? string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereFlagTooltipFormat, SourceText.Spot(spot, runner.Spoilers)) : Strings.HandInWhereFlagFailed);
         }
 
         if (!links.TeleportShown || links.AetheryteNear(spot) is not { } aetheryte)
@@ -429,12 +435,12 @@ public sealed partial class DetailPane
         var canTeleport = links.CanTeleportTo(aetheryte.RowId);
         if (Chrome.ActionPill("##spotTeleport", ActionIcons.TeleportIcon, Strings.ActionTeleport, PillTone.Normal, canTeleport, size: PillLayout.Row))
         {
-            links.TeleportTo(aetheryte.RowId, aetheryte.Name);
+            links.TeleportTo(aetheryte.RowId, runner.Spoilers.Name(Core.Query.SpoilerKind.Aetheryte, aetheryte.Name));
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(links.TeleportToBlocked(aetheryte.RowId) ?? string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, aetheryte.Name));
+            UiMetrics.Tooltip(links.TeleportToBlocked(aetheryte.RowId) ?? string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, runner.Spoilers.Name(Core.Query.SpoilerKind.Aetheryte, aetheryte.Name)));
         }
     }
 

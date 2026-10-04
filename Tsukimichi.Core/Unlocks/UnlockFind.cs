@@ -132,4 +132,14 @@ public sealed record UnlockFind(UnlockTarget Target, uint TargetId, string Name,
 /// <summary>A find the search shows, with the quest its "via" line names (the first one the shield shows).</summary>
 /// <param name="Find">The find.</param>
 /// <param name="Via">The first quest of <see cref="UnlockFind.Quests"/> the spoiler shield shows.</param>
-public sealed record UnlockMatch(UnlockFind Find, uint Via);
+public sealed record UnlockMatch(UnlockFind Find, uint Via)
+{
+    /// <summary>
+    /// The label as printed: the find's own, or for a name the wider spoiler shield hides (plan v7, 1.20.0 N6) its
+    /// placeholder ("Flying in Dawntrail area 6").
+    /// </summary>
+    public string Label { get; init; } = Find.Label;
+
+    /// <summary>The wider shield hides the find's name: <see cref="Label"/> holds its placeholder and the find's own art is not shown.</summary>
+    public bool Hidden { get; init; }
+}

@@ -17,6 +17,15 @@ static partial class Strings
     public static string SpoilerRevealName => Loc.Get("SpoilerRevealName");
     public static string SpoilerRevealNameTooltip => Loc.Get("SpoilerRevealNameTooltip");
     public static string SpoilerMaskedNote => Loc.Get("SpoilerMaskedNote");
+    public static string SpoilerMaskedNamesNote => Loc.Get("SpoilerMaskedNamesNote");
+    public static string SpoilerRevealQuestNames => Loc.Get("SpoilerRevealQuestNames");
+    public static string SpoilerRevealQuestNamesTooltip => Loc.Get("SpoilerRevealQuestNamesTooltip");
+    public static string SpoilerRevealThisSession => Loc.Get("SpoilerRevealThisSession");
+
+    // ---- The hover on any placeholder (1.20.0 N6) ----
+    public static string SpoilerHoverTitle => Loc.Get("SpoilerHoverTitle");
+    public static string SpoilerHoverWhy => Loc.Get("SpoilerHoverWhy");
+    public static string SpoilerHoverHint => Loc.Get("SpoilerHoverHint");
 
     // ---- Settings › Spoilers ----
     public static string SettingsSpoilers => Loc.Get("SettingsSpoilers");
@@ -24,6 +33,9 @@ static partial class Strings
     public static string SpoilerHideNamesHelp => Loc.Get("SpoilerHideNamesHelp");
     public static string SpoilerAhead => Loc.Get("SpoilerAhead");
     public static string SpoilerAheadHelp => Loc.Get("SpoilerAheadHelp");
+    public static string SpoilerHideRelated => Loc.Get("SpoilerHideRelated");
+    public static string SpoilerHideRelatedHelp => Loc.Get("SpoilerHideRelatedHelp");
+    public static string SpoilerHideRelatedExamples => Loc.Get("SpoilerHideRelatedExamples");
     public static string SpoilerHideArtwork => Loc.Get("SpoilerHideArtwork");
     public static string SpoilerHideArtworkHelp => Loc.Get("SpoilerHideArtworkHelp");
     public static string SpoilerCharacterLabel => Loc.Get("SpoilerCharacterLabel");
@@ -34,6 +46,8 @@ static partial class Strings
     public static string SpoilerCharacterOff => Loc.Get("SpoilerCharacterOff");
     public static string SpoilerCharacterHelp => Loc.Get("SpoilerCharacterHelp");
     public static string SpoilerMaskedCountFormat => Loc.Get("SpoilerMaskedCountFormat");
+    public static string SpoilerHiddenCountFormat => Loc.Get("SpoilerHiddenCountFormat");
+    public static string SpoilerHiddenCountUnnamed => Loc.Get("SpoilerHiddenCountUnnamed");
 
     // ---- Sprout mode quick view ----
     public static string PresetSprout => FilterNames.Display(FilterNames.Sprout);

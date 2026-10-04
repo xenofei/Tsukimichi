@@ -18,7 +18,9 @@ internal static class TravelControls
     /// </summary>
     public static void MenuItems(GameLinks links, QuestRecord quest, string teleportLabel)
     {
-        if (links.TeleportShown)
+        // A giver in a place the story has not reached: hidden, never greyed (spec-1.20 N6, after 1.18's rule).
+        var hidden = links.GiverPlaceHidden(quest);
+        if (links.TeleportShown && !hidden)
         {
             var teleport = links.CheckTeleport(quest);
             if (ImGui.MenuItem(teleportLabel, enabled: teleport.Ready))
@@ -45,6 +47,11 @@ internal static class TravelControls
                 UiMetrics.Tooltip(links.StopTooltip());
             }
 
+            return;
+        }
+
+        if (hidden)
+        {
             return;
         }
 
@@ -106,6 +113,12 @@ internal static class TravelControls
     /// </summary>
     public static void Buttons(GameLinks links, QuestRecord quest, string teleportLabel)
     {
+        // A giver in a place the story has not reached: no buttons (their room stays, so the row does not move).
+        if (links.GiverPlaceHidden(quest) && !links.IsTraveling)
+        {
+            return;
+        }
+
         if (links.TeleportShown)
         {
             ImGui.SameLine();
@@ -124,6 +137,11 @@ internal static class TravelControls
     /// <summary>Teleport to the giver's aetheryte as a row's button; quiet when the player already stands closer; disabled, saying why, when it cannot.</summary>
     public static void TeleportButton(GameLinks links, QuestRecord quest, string label)
     {
+        if (links.GiverPlaceHidden(quest))
+        {
+            return;
+        }
+
         var teleport = links.CheckTeleport(quest);
         if (Chrome.ActionPill("##travelTeleport", ActionIcons.TeleportIcon, label, teleport.AlreadyHere ? PillTone.Quiet : PillTone.Normal, teleport.Ready, size: PillLayout.Row))
         {
