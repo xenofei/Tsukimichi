@@ -899,6 +899,11 @@ public sealed partial class Plugin : IDalamudPlugin
                 MountChoice = () => Settings.TravelMountId,
             };
             gameLinks.Travel = travel;
+
+            // Travel preflight (feature plan v7 A9): movement type, camera, vnavmesh's movement switch and known
+            // conflicts, in Settings › Automation › Travel and in one chat line when a walk starts.
+            travelPreflight = new Game.TravelPreflightService(GameConfig, Framework, ClientState, vnavmesh, PluginInterface, Log);
+            travel.WalkWarnings = travelPreflight.WalkWarnings;
             gameLinks.ShowWalk = () => Settings.ShowWalkToGiver;
             gameLinks.ShowGoTo = () => Settings.ShowGoToGiver;
             queryRunner = new QueryRunner(this, ui, Log);
@@ -1016,6 +1021,7 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // And the aethernet shard attunement read (UIState.IsAetheryteUnlocked).
             travel.Gate = gate;
+            travelPreflight.Gate = gate;
 
             // Hand-in items (1.6.0): the detail pane's Hand in section, the "Needed for" hint and menu entry, Moonlit's
             // relic ownership through Allagan Tools, and the Artisan and GatherBuddy hand-offs (decision 1).
@@ -1336,6 +1342,7 @@ public sealed partial class Plugin : IDalamudPlugin
             gamePanels.Attach(configWindow);
             configWindow.Companions = companions;
             configWindow.CompanionSetup = companionSetup;
+            configWindow.TravelPreflight = travelPreflight;
             configWindow.Questionable = questionableIpc;
             configWindow.QuestionableRuns = questionableRuns;
             configWindow.Nearby = discoveryWindow;
@@ -1656,6 +1663,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("journal text", () => QuestText?.Dispose());
         // A walk or Go to giver this plugin started stops before the IPC wrappers go.
         Unwind("travel", () => travel?.Dispose());
+        Unwind("travel preflight", () => travelPreflight?.Dispose());
         Unwind("interior entrances", () => gameLinks?.StopWarmingEntrances());
         Unwind("vnavmesh ipc", () => vnavmesh?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());

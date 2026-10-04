@@ -118,6 +118,7 @@ public sealed class RunWatch : IDisposable
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         dutiesFor = DutiesFor;
         framework.Update += OnUpdate;
+        travel.GaveUp += OnTravelGaveUp;
         clientState.CfPop += OnCfPop;
         chat.ChatMessage += OnChatMessage;
     }
@@ -131,6 +132,7 @@ public sealed class RunWatch : IDisposable
 
         disposed = true;
         framework.Update -= OnUpdate;
+        travel.GaveUp -= OnTravelGaveUp;
         clientState.CfPop -= OnCfPop;
         chat.ChatMessage -= OnChatMessage;
     }
@@ -208,7 +210,9 @@ public sealed class RunWatch : IDisposable
         }
 
         var player = objects.LocalPlayer;
-        var moving = handOff && (enabled & NeedsYouKind.Stuck) != 0 && travel.Vnavmesh.Available && travel.Vnavmesh.IsWalking;
+        // A Walk or Go to giver of Tsukimichi's watches its own walk and recovers first (a new path, then a navmesh
+        // reload, feature plan v7 A8); its stall raises the alert only when that recovery gives up (OnTravelGaveUp).
+        var moving = handOff && (enabled & NeedsYouKind.Stuck) != 0 && !travel.JourneyActive && travel.Vnavmesh.Available && travel.Vnavmesh.IsWalking;
         var frame = new NeedsYouFrame(handOff, player?.IsDead == true, moving, player?.Position, now);
         var raised = needsYou.Tick(frame, enabled);
         if ((raised & NeedsYouKind.Death) != 0)
@@ -298,6 +302,24 @@ public sealed class RunWatch : IDisposable
 
     /// <summary>Whether the character has cleared the duty (the game's own record); asked only while the hook gate allows.</summary>
     private static bool Cleared(DutyRunInfo duty) => duty.InstanceContentId != 0 && UIState.IsInstanceContentCompleted(duty.InstanceContentId);
+
+    /// <summary>A Walk or Go to giver whose recovery gave up: the stuck alert, rate-limited like the others.</summary>
+    private void OnTravelGaveUp(TravelGaveUp gaveUp)
+    {
+        try
+        {
+            if (!needsYou.Event(NeedsYouKind.Stuck, true, Enabled, Now))
+            {
+                return;
+            }
+
+            Alert(Strings.NeedsYouTravelGaveUp, Strings.NeedsYouToastStuck, Now);
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, "Travel stuck alert failed");
+        }
+    }
 
     private void OnCfPop(ContentFinderCondition duty)
     {

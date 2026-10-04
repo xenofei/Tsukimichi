@@ -20,6 +20,13 @@ namespace Tsukimichi.Game;
 /// <item><c>Path.IsRunning() -> bool</c> (waypoints left), <c>Path.NumWaypoints() -> int</c> and <c>Path.Stop()</c>,
 /// which clears the waypoints only: a pathfind still pending hands its path over later (vnavmesh 1.2.3.14's
 /// <c>AsyncMoveRequest</c>), which <see cref="Core.Travel.PendingWalkStop"/> watches for.</item>
+/// <item>Travel recovery and preflight (feature plan v7 A8, A9; same commit): <c>Nav.Reload() -> bool</c> (drops the
+/// zone's navmesh and loads it again from vnavmesh's cache, the fix its developers prescribe), <c>Query.Mesh.PointOnFloor(Vector3 p,
+/// bool allowUnlandable, float halfExtentXZ) -> Vector3?</c> (the highest mesh point under <c>p</c> within the extent;
+/// unlandable false keeps to polygons reachable on foot) and <c>Query.Mesh.NearestPointReachable(Vector3 p, float
+/// halfExtentXZ, float halfExtentY) -> Vector3?</c> for a landing spot, and <c>Path.GetMovementAllowed() -> bool</c> /
+/// <c>Path.SetMovementAllowed(bool)</c>, the runtime switch another plugin can turn off to pause vnavmesh's movement.
+/// Questionable subscribes to <c>PointOnFloor</c> with the same types.</item>
 /// </list>
 /// <see cref="Available"/> comes from Dalamud's plugin list (cached, refreshed when it changes); the state reads are
 /// cached for <see cref="StateCacheMs"/> so the per-frame Walk / Stop button costs a few IPC calls a second. Every call
@@ -38,6 +45,11 @@ public sealed class VnavmeshIpc : IDisposable
     private const string IsRunningGate = "vnavmesh.Path.IsRunning";
     private const string NumWaypointsGate = "vnavmesh.Path.NumWaypoints";
     private const string StopGate = "vnavmesh.Path.Stop";
+    private const string ReloadGate = "vnavmesh.Nav.Reload";
+    private const string PointOnFloorGate = "vnavmesh.Query.Mesh.PointOnFloor";
+    private const string NearestReachableGate = "vnavmesh.Query.Mesh.NearestPointReachable";
+    private const string GetMovementAllowedGate = "vnavmesh.Path.GetMovementAllowed";
+    private const string SetMovementAllowedGate = "vnavmesh.Path.SetMovementAllowed";
 
     /// <summary>How long a state answer (ready, progress, walking) is reused before vnavmesh is asked again.</summary>
     public const long StateCacheMs = 250;
@@ -52,6 +64,11 @@ public sealed class VnavmeshIpc : IDisposable
     private readonly ICallGateSubscriber<bool>? isRunning;
     private readonly ICallGateSubscriber<int>? numWaypoints;
     private readonly ICallGateSubscriber<object>? stop;
+    private readonly ICallGateSubscriber<bool>? reload;
+    private readonly ICallGateSubscriber<Vector3, bool, float, Vector3?>? pointOnFloor;
+    private readonly ICallGateSubscriber<Vector3, float, float, Vector3?>? nearestReachable;
+    private readonly ICallGateSubscriber<bool>? getMovementAllowed;
+    private readonly ICallGateSubscriber<bool, object>? setMovementAllowed;
 
     private bool? available;
     private long? checkedAt;
@@ -76,6 +93,11 @@ public sealed class VnavmeshIpc : IDisposable
             isRunning = pluginInterface.GetIpcSubscriber<bool>(IsRunningGate);
             numWaypoints = pluginInterface.GetIpcSubscriber<int>(NumWaypointsGate);
             stop = pluginInterface.GetIpcSubscriber<object>(StopGate);
+            reload = pluginInterface.GetIpcSubscriber<bool>(ReloadGate);
+            pointOnFloor = pluginInterface.GetIpcSubscriber<Vector3, bool, float, Vector3?>(PointOnFloorGate);
+            nearestReachable = pluginInterface.GetIpcSubscriber<Vector3, float, float, Vector3?>(NearestReachableGate);
+            getMovementAllowed = pluginInterface.GetIpcSubscriber<bool>(GetMovementAllowedGate);
+            setMovementAllowed = pluginInterface.GetIpcSubscriber<bool, object>(SetMovementAllowedGate);
         }
         catch (Exception ex)
         {
@@ -87,6 +109,11 @@ public sealed class VnavmeshIpc : IDisposable
             isRunning = null;
             numWaypoints = null;
             stop = null;
+            reload = null;
+            pointOnFloor = null;
+            nearestReachable = null;
+            getMovementAllowed = null;
+            setMovementAllowed = null;
         }
 
         pluginInterface.ActivePluginsChanged += OnActivePluginsChanged;
@@ -214,6 +241,85 @@ public sealed class VnavmeshIpc : IDisposable
             return true;
         }, false);
         checkedAt = null;
+    }
+
+    /// <summary>
+    /// Asks vnavmesh to drop the zone's navmesh and load it again (from its cache when it has one). The ready answer is
+    /// read afresh afterwards. False when vnavmesh is absent, lacks the gate, refused (no zone) or threw.
+    /// </summary>
+    public bool Reload()
+    {
+        if (!Available || reload is null || gates.IsMissing(ReloadGate))
+        {
+            return false;
+        }
+
+        var accepted = Invoke(reload, ReloadGate, static gate => gate.InvokeFunc(), false);
+        checkedAt = null;
+        return accepted;
+    }
+
+    /// <summary>
+    /// The highest point of the navmesh under <paramref name="probe"/> within <paramref name="halfExtentXZ"/> on the
+    /// ground plane, on polygons reachable on foot (vnavmesh's <c>PointOnFloor</c> with unlandable spots left out); null
+    /// when there is none or vnavmesh cannot say.
+    /// </summary>
+    public Vector3? PointOnFloor(Vector3 probe, float halfExtentXZ)
+    {
+        if (!Available || pointOnFloor is null || gates.IsMissing(PointOnFloorGate))
+        {
+            return null;
+        }
+
+        return Invoke<ICallGateSubscriber<Vector3, bool, float, Vector3?>, Vector3?>(pointOnFloor, PointOnFloorGate, gate => gate.InvokeFunc(probe, false, halfExtentXZ), null);
+    }
+
+    /// <summary>The navmesh point reachable on foot nearest <paramref name="point"/> within the extents; null when none or vnavmesh cannot say.</summary>
+    public Vector3? NearestPointReachable(Vector3 point, float halfExtentXZ, float halfExtentY)
+    {
+        if (!Available || nearestReachable is null || gates.IsMissing(NearestReachableGate))
+        {
+            return null;
+        }
+
+        return Invoke<ICallGateSubscriber<Vector3, float, float, Vector3?>, Vector3?>(nearestReachable, NearestReachableGate, gate => gate.InvokeFunc(point, halfExtentXZ, halfExtentY), null);
+    }
+
+    /// <summary>
+    /// vnavmesh's "movement allowed" switch: false while another plugin paused vnavmesh's movement (a path is found but
+    /// the character stands still). Null when vnavmesh is absent or lacks the gate. Asked afresh: Setup reads it a few
+    /// times a second at most.
+    /// </summary>
+    public bool? MovementAllowed
+    {
+        get
+        {
+            if (!Available || getMovementAllowed is null || gates.IsMissing(GetMovementAllowedGate))
+            {
+                return null;
+            }
+
+            return Invoke<ICallGateSubscriber<bool>, bool?>(getMovementAllowed, GetMovementAllowedGate, static gate => gate.InvokeFunc(), null);
+        }
+    }
+
+    /// <summary>
+    /// Sets vnavmesh's "movement allowed" switch (a runtime switch: vnavmesh does not save it). Only from Setup's
+    /// explicit buttons: "Allow movement" (true) and its Undo (false). False when vnavmesh is absent, lacks the gate or
+    /// threw.
+    /// </summary>
+    public bool SetMovementAllowed(bool allowed)
+    {
+        if (!Available || setMovementAllowed is null || gates.IsMissing(SetMovementAllowedGate))
+        {
+            return false;
+        }
+
+        return Invoke(setMovementAllowed, SetMovementAllowedGate, gate =>
+        {
+            gate.InvokeAction(allowed);
+            return true;
+        }, false);
     }
 
     /// <summary>
