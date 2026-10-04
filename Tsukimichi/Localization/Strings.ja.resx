@@ -1452,14 +1452,8 @@
   <data name="ConfigPollCostUnknown" xml:space="preserve">
     <value>1回のポーリングには数ミリ秒かかります。初期値の1秒で問題ありません。</value>
   </data>
-  <data name="WhatsNew.TitleFormat" xml:space="preserve">
-    <value>{0}の新機能</value>
-  </data>
   <data name="WhatsNew.Close" xml:space="preserve">
     <value>閉じる</value>
-  </data>
-  <data name="WhatsNew.Help" xml:space="preserve">
-    <value>ヘルプ</value>
   </data>
   <data name="Help.WindowTitle" xml:space="preserve">
     <value>Tsukimichi ヘルプ###TsukimichiHelp</value>

@@ -62,6 +62,9 @@ public enum SettingsAnchor
 
     /// <summary>Settings › Automation › Automation buttons (1.18, A10; the Set up your road card's "Choose a level").</summary>
     AutomationLevel,
+
+    /// <summary>Settings › Advanced › What's new (1.22, W3; the What's new popup's "All releases").</summary>
+    WhatsNew,
 }
 
 /// <summary>The order of the Settings window's section index and of the search results, and the remembered page.</summary>

@@ -92,6 +92,7 @@ public sealed partial class TonightCard
             DrawPlanning();
             DrawPayoffGates();
             DrawFinale(bundle);
+            DrawNewChapters();
             DrawStops();
             if (events is not null)
             {

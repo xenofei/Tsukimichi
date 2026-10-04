@@ -1444,7 +1444,7 @@
   </data>
   <data name="NewChaptersLabel" xml:space="preserve">
     <value>New chapters</value>
-    <comment>1.21.0 P5: the What's new card's line for side stories that gained quests this patch.</comment>
+    <comment>1.21.0 P5: the Tonight card's line (the What's new card's until 1.22) for side stories that gained quests this patch.</comment>
   </data>
   <data name="NewChaptersQuestOne" xml:space="preserve">
     <value>1 quest</value>
@@ -3795,15 +3795,8 @@
   <data name="ConfigPollCostUnknown" xml:space="preserve">
     <value>Each refresh costs a few milliseconds; 1 s is the default and is safe.</value>
   </data>
-  <data name="WhatsNew.TitleFormat" xml:space="preserve">
-    <value>What's new in {0}</value>
-    <comment>{0} = plugin version.</comment>
-  </data>
   <data name="WhatsNew.Close" xml:space="preserve">
     <value>Close</value>
-  </data>
-  <data name="WhatsNew.Help" xml:space="preserve">
-    <value>Help</value>
   </data>
   <data name="Help.WindowTitle" xml:space="preserve">
     <value>Tsukimichi Help###TsukimichiHelp</value>
@@ -4566,22 +4559,6 @@
   </data>
   <data name="RouteCommandNoSelection" xml:space="preserve">
     <value>Select a quest first, or name one: /tsuki route &lt;quest name&gt;.</value>
-  </data>
-  <data name="WhatsNew.SinceFormat" xml:space="preserve">
-    <value>What's new since {0}</value>
-    <comment>{0} = the version you had before; the card lists every version since.</comment>
-  </data>
-  <data name="WhatsNew.More" xml:space="preserve">
-    <value>More</value>
-  </data>
-  <data name="WhatsNew.Less" xml:space="preserve">
-    <value>Less</value>
-  </data>
-  <data name="WhatsNew.MoreTooltip" xml:space="preserve">
-    <value>Show every change in this version</value>
-  </data>
-  <data name="WhatsNew.LessTooltip" xml:space="preserve">
-    <value>Back to the highlights</value>
   </data>
   <data name="Setup.Title" xml:space="preserve">
     <value>Set up your road</value>
@@ -15512,5 +15489,67 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="Core.Guidance.YouAreJob" xml:space="preserve">
     <value>You are {0} {1}.</value>
     <comment>Core: GuidanceText.cs (1.21 P1), a plain chat sentence for text-to-speech: no symbols or brackets. {0} = job abbreviation; {1} = level.</comment>
+  </data>
+  <data name="WhatsNew.Title" xml:space="preserve">
+    <value>What's new</value>
+  </data>
+  <data name="WhatsNew.WasOnFormat" xml:space="preserve">
+    <value>You were on {0}</value>
+    <comment>{0} = the version the player had before the update; shown only when several releases arrived at once.</comment>
+  </data>
+  <data name="WhatsNew.VersionDateFormat" xml:space="preserve">
+    <value>Tsukimichi {0} · {1}</value>
+    <comment>{0} = the plugin version; {1} = the release date ("4 October 2026").</comment>
+  </data>
+  <data name="WhatsNew.PageFormat" xml:space="preserve">
+    <value>{0} of {1}</value>
+    <comment>{0} = this page; {1} = how many pages: "1 of 4".</comment>
+  </data>
+  <data name="WhatsNew.Newer" xml:space="preserve">
+    <value>Newer release</value>
+  </data>
+  <data name="WhatsNew.Older" xml:space="preserve">
+    <value>Older release</value>
+  </data>
+  <data name="WhatsNew.AllReleases" xml:space="preserve">
+    <value>All releases</value>
+  </data>
+  <data name="WhatsNew.AllReleasesTooltip" xml:space="preserve">
+    <value>Every release's notes, in Settings</value>
+  </data>
+  <data name="WhatsNew.ShowAfterUpdate" xml:space="preserve">
+    <value>Show what's new after an update</value>
+  </data>
+  <data name="WhatsNew.ShowAfterUpdateHint" xml:space="preserve">
+    <value>Once per update, at the first quiet moment.</value>
+  </data>
+  <data name="WhatsNew.History" xml:space="preserve">
+    <value>Past releases</value>
+  </data>
+  <data name="WhatsNew.HistoryHint" xml:space="preserve">
+    <value>Each release's notes, newest first. Open one to read it again.</value>
+  </data>
+  <data name="WhatsNew.HistoryNone" xml:space="preserve">
+    <value>No release notes were found in this build.</value>
+  </data>
+  <data name="WhatsNew.RowTooltip" xml:space="preserve">
+    <value>Open this release's notes</value>
+  </data>
+  <data name="WhatsNew.Installed" xml:space="preserve">
+    <value>Installed</value>
+  </data>
+  <data name="WhatsNew.EarlierFormat" xml:space="preserve">
+    <value>{0} earlier releases, back to {1}</value>
+    <comment>{0} = how many releases are folded away; {1} = the oldest one's version.</comment>
+  </data>
+  <data name="WhatsNew.EarlierOneFormat" xml:space="preserve">
+    <value>1 earlier release, {0}</value>
+    <comment>{0} = the one folded release's version.</comment>
+  </data>
+  <data name="WhatsNew.Fewer" xml:space="preserve">
+    <value>Show fewer</value>
+  </data>
+  <data name="NewChaptersCloseTooltip" xml:space="preserve">
+    <value>Close · it comes back with the next patch</value>
   </data>
 </root>

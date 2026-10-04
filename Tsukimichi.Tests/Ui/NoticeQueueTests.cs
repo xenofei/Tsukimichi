@@ -132,13 +132,13 @@ public class NoticeQueueTests
     public void A_closed_prompt_stays_closed_for_the_session()
     {
         var queue = new NoticeQueue();
-        queue.Set(NoticeKind.WhatsNew, true);
-        queue.Close(NoticeKind.WhatsNew);
+        queue.Set(NoticeKind.WelcomeBack, true);
+        queue.Close(NoticeKind.WelcomeBack);
         Assert.Null(queue.Current);
 
         // Deselecting and selecting again (the card's notice comes and goes) does not bring it back.
-        queue.Set(NoticeKind.WhatsNew, false);
-        queue.Set(NoticeKind.WhatsNew, true);
+        queue.Set(NoticeKind.WelcomeBack, false);
+        queue.Set(NoticeKind.WelcomeBack, true);
         Assert.Null(queue.Current);
     }
 

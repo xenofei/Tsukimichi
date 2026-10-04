@@ -134,7 +134,6 @@ public sealed partial class MainWindow
         // A card that waits in the no-selection slot while a quest is selected says so here.
         var card = ui.SelectedRowId is null ? null : DueCard();
         notices.Set(NoticeKind.Setup, card == NoticeKind.Setup);
-        notices.Set(NoticeKind.WhatsNew, card == NoticeKind.WhatsNew);
         notices.Set(NoticeKind.WelcomeBack, card == NoticeKind.WelcomeBack);
         notices.Set(NoticeKind.EventEnding, EventEndingDue());
     }
@@ -204,7 +203,6 @@ public sealed partial class MainWindow
                 var title = kind switch
                 {
                     NoticeKind.Setup => Strings.Setup.Title,
-                    NoticeKind.WhatsNew => whatsNew?.Title ?? string.Empty,
                     _ => Strings.WelcomeBackTitle,
                 };
                 if (cardNoticeKey != (kind, title, Loc.Version))
@@ -511,7 +509,7 @@ public sealed partial class MainWindow
         }
     }
 
-    private static bool Closable(NoticeKind kind) => kind is NoticeKind.Context or NoticeKind.Setup or NoticeKind.WhatsNew or NoticeKind.WelcomeBack;
+    private static bool Closable(NoticeKind kind) => kind is NoticeKind.Context or NoticeKind.Setup or NoticeKind.WelcomeBack;
 
     /// <summary>The pager's "1/3", rebuilt when the place or the count changes.</summary>
     private string PagerText()

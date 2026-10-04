@@ -171,6 +171,7 @@ public sealed partial class ConfigWindow
         new(SettingsSection.Advanced, DrawHookGate),
         new(SettingsSection.Advanced, DrawQuestionableStopConfirm),
         new(SettingsSection.Advanced, DrawDiagnostics),
+        new(SettingsSection.Advanced, DrawWhatsNew, anchor: SettingsAnchor.WhatsNew),
         new(SettingsSection.Advanced, DrawPrivacy),
     ];
 
