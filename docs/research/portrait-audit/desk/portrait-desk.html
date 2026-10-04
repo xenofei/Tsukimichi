@@ -1,0 +1,600 @@
+<title>Tsukimichi Portrait Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working desk. Queue on the left, the source portrait with a draggable plate in the middle, the plate as players see it on the right. */
+:root {
+  --bg: #eef1f7;
+  --panel: #ffffff;
+  --sunk: #e3e8f1;
+  --ink: #1d2233;
+  --ink-soft: #586079;
+  --line: #cfd6e4;
+  --moon: #a77b22;
+  --moon-soft: #f3e7c9;
+  --plate-ring: #c9a24a;
+  --sky: #1b2140;
+  --ok: #2f7d4f;
+  --ok-soft: #d9efe1;
+  --warn: #9a5b12;
+  --warn-soft: #f7e6cc;
+  --bad: #a3343a;
+  --bad-soft: #f6dadb;
+  --guide: rgba(167, 123, 34, .85);
+  --font-display: "Marcellus", "Trajan Pro", Georgia, serif;
+  --font-body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12162a; --panel: #1a1f37; --sunk: #232945; --ink: #e8ebf5; --ink-soft: #a3abc6; --line: #2f3657;
+    --moon: #e2bd6a; --moon-soft: #3a3220; --plate-ring: #d7b260; --sky: #0c1022;
+    --ok: #7fd09f; --ok-soft: #1d3a2a; --warn: #f0b867; --warn-soft: #3d2d15; --bad: #f08a90; --bad-soft: #42222a;
+    --guide: rgba(226, 189, 106, .9); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12162a; --panel: #1a1f37; --sunk: #232945; --ink: #e8ebf5; --ink-soft: #a3abc6; --line: #2f3657;
+  --moon: #e2bd6a; --moon-soft: #3a3220; --plate-ring: #d7b260; --sky: #0c1022;
+  --ok: #7fd09f; --ok-soft: #1d3a2a; --warn: #f0b867; --warn-soft: #3d2d15; --bad: #f08a90; --bad-soft: #42222a;
+  --guide: rgba(226, 189, 106, .9); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); padding-inline: 16px; padding-block: 0 24px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; text-wrap: balance; margin: 0; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--moon); outline-offset: 2px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding-block: 16px 12px; position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 5; }
+header.top h1 { font-size: 26px; letter-spacing: .02em; }
+.tabs { display: flex; gap: 4px; background: var(--sunk); border-radius: 999px; padding: 3px; }
+.tabs button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; cursor: pointer; color: var(--ink-soft); font-weight: 600; }
+.tabs button[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.progress { margin-left: auto; display: flex; align-items: center; gap: 10px; font-family: var(--font-data); font-size: 13px; color: var(--ink-soft); }
+.bar { width: 160px; height: 6px; background: var(--sunk); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--moon); transition: width .3s; }
+.note { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; color: var(--ink-soft); font-size: 14px; max-width: 980px; }
+.note b { color: var(--ink); }
+.offline { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+
+.desk { display: grid; grid-template-columns: 290px minmax(0, 1fr) 300px; gap: 16px; margin-top: 14px; align-items: start; }
+@media (max-width: 1100px) { .desk { grid-template-columns: 250px minmax(0, 1fr); } .side { grid-column: 1 / -1; } }
+@media (max-width: 720px) { .desk { grid-template-columns: minmax(0, 1fr); } }
+
+.queue { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; max-height: calc(100vh - 120px); min-height: 320px; }
+@media (max-width: 720px) { .queue { max-height: 340px; } }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; border-bottom: 1px solid var(--line); }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 2px 10px; font-size: 12px; cursor: pointer; color: var(--ink-soft); }
+.chip[aria-pressed="true"] { background: var(--moon-soft); border-color: var(--moon); color: var(--ink); }
+.search { width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 14px; }
+.list { overflow-y: auto; flex: 1; }
+.row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; width: 100%; text-align: left; background: transparent; border-inline: 0; border-top: 0; }
+.row:hover { background: var(--sunk); }
+.row[aria-current="true"] { background: var(--moon-soft); }
+.row canvas { width: 40px; height: 40px; border-radius: 50%; background: var(--sky); }
+.row .who { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .meta { font-size: 12px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--line); }
+.dot.accept { background: var(--ok); border-color: var(--ok); }
+.dot.adjust { background: var(--moon); border-color: var(--moon); }
+.dot.noface { background: var(--bad); border-color: var(--bad); }
+.empty { padding: 20px; color: var(--ink-soft); font-size: 14px; }
+
+.stagecard { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; min-width: 0; }
+.stagehead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 10px; }
+.stagehead h2 { font-size: 24px; }
+.tag { font-family: var(--font-data); font-size: 12px; color: var(--ink-soft); }
+.pill { font-size: 12px; padding: 1px 9px; border-radius: 999px; background: var(--sunk); color: var(--ink-soft); white-space: nowrap; }
+.pill.low { background: var(--warn-soft); color: var(--warn); }
+.pill.flag { background: var(--bad-soft); color: var(--bad); }
+.pill.good { background: var(--ok-soft); color: var(--ok); }
+.stage { position: relative; background: var(--sky); border-radius: 8px; height: min(62vh, 640px); min-height: 300px; overflow: hidden; touch-action: none; user-select: none; }
+.stage img { position: absolute; image-rendering: auto; pointer-events: none; }
+.bounds { position: absolute; border: 1px dashed rgba(255,255,255,.28); pointer-events: none; }
+.ghost { position: absolute; border: 1.5px dashed rgba(255,255,255,.55); border-radius: 50%; pointer-events: none; }
+.plate { position: absolute; cursor: grab; }
+.plate:active { cursor: grabbing; }
+.plate .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--plate-ring); box-shadow: 0 0 0 9999px rgba(8, 10, 24, .52); }
+.plate .sq { position: absolute; inset: 0; border: 1px solid rgba(255,255,255,.35); }
+.plate .g { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed var(--guide); }
+.plate .gv { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--guide); left: 50%; }
+.plate .glabel { position: absolute; right: 4px; transform: translateY(-110%); font: 500 10px var(--font-data); color: var(--guide); }
+.handle { position: absolute; width: 18px; height: 18px; right: -9px; bottom: -9px; background: var(--plate-ring); border: 2px solid var(--panel); border-radius: 50%; cursor: nwse-resize; }
+.stagehint { font-size: 13px; color: var(--ink-soft); margin-top: 8px; }
+.kbd { font-family: var(--font-data); font-size: 12px; background: var(--sunk); border-radius: 4px; padding: 0 5px; }
+
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+.panel h3 { font-size: 17px; margin-bottom: 10px; }
+.previews { display: flex; align-items: flex-end; gap: 18px; }
+.previews figure { margin: 0; display: grid; justify-items: center; gap: 4px; font-size: 12px; color: var(--ink-soft); }
+.pv { border-radius: 50%; background: var(--sky); box-shadow: 0 0 0 2px var(--plate-ring); }
+.actions { display: grid; gap: 8px; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: 600; text-align: left; display: flex; justify-content: space-between; gap: 8px; }
+.btn:hover { background: var(--sunk); }
+.btn.primary { background: var(--moon); color: var(--panel); border-color: var(--moon); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.danger { color: var(--bad); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btn .k { font-family: var(--font-data); font-weight: 400; opacity: .75; font-size: 12px; }
+.small { display: flex; gap: 8px; flex-wrap: wrap; }
+.small .btn { padding: 4px 10px; font-size: 13px; font-weight: 600; }
+.saved { font-size: 13px; color: var(--ink-soft); min-height: 20px; }
+.saved.ok { color: var(--ok); }
+.saved.err { color: var(--bad); }
+.facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: 13px; margin: 0; }
+.facts dt { color: var(--ink-soft); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.facts .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+textarea { width: 100%; min-height: 54px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 13px; resize: vertical; }
+
+.qs { display: grid; gap: 14px; margin-top: 14px; max-width: 980px; }
+.q { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; }
+.q h3 { font-size: 19px; grid-column: 1 / -1; }
+.q p { margin: 0; color: var(--ink-soft); font-size: 14px; max-width: 70ch; }
+.q .opts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.q .opt { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px 12px; cursor: pointer; text-align: left; max-width: 340px; }
+.q .opt b { display: block; }
+.q .opt span { font-size: 13px; color: var(--ink-soft); }
+.q .opt[aria-pressed="true"] { border-color: var(--moon); background: var(--moon-soft); }
+.q .rec { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--moon); }
+.q .thumbs { display: flex; gap: 8px; grid-row: 2; grid-column: 2; }
+.q .thumbs canvas { width: 72px; height: 72px; border-radius: 50%; background: var(--sky); box-shadow: 0 0 0 2px var(--plate-ring); cursor: pointer; }
+.q textarea { grid-column: 1 / -1; }
+@media (max-width: 640px) { .q { grid-template-columns: minmax(0, 1fr); } .q .thumbs { grid-row: auto; grid-column: 1; } }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+
+<header class="top">
+  <h1>Portrait Desk</h1>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-desk" aria-selected="true" aria-controls="view-desk">Portraits</button>
+    <button role="tab" id="tab-qs" aria-selected="false" aria-controls="view-qs">Decisions</button>
+  </div>
+  <div class="progress"><span id="prog-text">Loading…</span><div class="bar"><i id="prog-bar"></i></div></div>
+</header>
+
+<p class="note" id="intro">Each portrait below needs your eye. Drag the gold plate onto the face, drag its corner (or scroll) to size it, and line the <b>eyes up with the upper dashed line</b> and the <b>chin with the lower one</b>. The plate on the right is what players will see. <b>Suggested is right</b> keeps the audit's crop, <b>Save my crop</b> keeps yours, and <b>No usable face</b> takes the portrait out of rotation. Everything saves for me to read back; you can change or clear any answer.</p>
+<p class="note offline" id="offline" hidden>Saving is unavailable in this view, so your answers won't reach me. Open the page from claude.ai while signed in to save them.</p>
+
+<section id="view-desk" role="tabpanel" aria-labelledby="tab-desk">
+  <div class="desk">
+    <aside class="queue" aria-label="Portrait queue">
+      <div class="filters">
+        <input class="search" id="search" type="search" placeholder="Search a character or id" aria-label="Search">
+        <button class="chip" data-f="todo" aria-pressed="true">To do</button>
+        <button class="chip" data-f="shown" aria-pressed="false">Shown today</button>
+        <button class="chip" data-f="game" aria-pressed="false">Game art</button>
+        <button class="chip" data-f="pack" aria-pressed="false">Pack</button>
+        <button class="chip" data-f="noface" aria-pressed="false">Flagged faceless</button>
+      </div>
+      <div class="list" id="list"></div>
+    </aside>
+
+    <section class="stagecard" aria-label="Crop">
+      <div class="stagehead">
+        <h2 id="who">—</h2>
+        <span class="tag" id="ident"></span>
+        <span id="pills"></span>
+      </div>
+      <div class="stage" id="stage">
+        <img id="src" alt="">
+        <div class="bounds" id="bounds" hidden></div>
+        <div class="ghost" id="ghost" hidden></div>
+        <div class="plate" id="plate" hidden>
+          <div class="ring"></div>
+          <div class="sq"></div>
+          <div class="gv"></div>
+          <div class="g" style="top:44%"><span class="glabel">eyes</span></div>
+          <div class="g" style="top:81%"><span class="glabel">chin</span></div>
+          <div class="handle" id="handle" aria-hidden="true"></div>
+        </div>
+      </div>
+      <p class="stagehint">Drag to move · drag the corner or scroll to size · <span class="kbd">←↑→↓</span> nudge, <span class="kbd">+</span>/<span class="kbd">−</span> size · the dashed ring is today's crop.</p>
+    </section>
+
+    <aside class="side">
+      <div class="panel">
+        <h3>As players see it</h3>
+        <div class="previews">
+          <figure><canvas class="pv" id="pv2" width="288" height="288" style="width:144px;height:144px"></canvas><figcaption>Detail, 2x</figcaption></figure>
+          <figure><canvas class="pv" id="pv1" width="72" height="72" style="width:36px;height:36px"></canvas><figcaption>List, 1x</figcaption></figure>
+        </div>
+      </div>
+      <div class="panel actions">
+        <button class="btn primary" id="act-adjust">Save my crop <span class="k">S</span></button>
+        <button class="btn" id="act-accept">Suggested is right <span class="k">A</span></button>
+        <button class="btn danger" id="act-noface">No usable face <span class="k">N</span></button>
+        <div class="small">
+          <button class="btn" id="act-reset">Back to suggested</button>
+          <button class="btn" id="act-current">Show today's crop</button>
+          <button class="btn" id="act-clear" hidden>Clear my answer</button>
+        </div>
+        <label for="comment" class="tag">Note for me (optional)</label>
+        <textarea id="comment" placeholder="e.g. this is Papalymo in disguise; use his 2.x look"></textarea>
+        <div class="saved" id="saved" role="status"></div>
+        <div class="small"><button class="btn" id="prev">← Previous</button><button class="btn" id="next">Next →</button></div>
+      </div>
+      <div class="panel">
+        <h3>Why it's here</h3>
+        <dl class="facts" id="facts"></dl>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section id="view-qs" role="tabpanel" aria-labelledby="tab-qs" hidden>
+  <p class="note">These are the judgement calls the three audit teams and the reconciler could not settle on evidence. Pick one per question; add a note if none fits.</p>
+  <div class="qs" id="qs"></div>
+</section>
+
+<script>
+(() => {
+  const QUESTIONS = [
+    { id: "Q1", title: "Estinien's helmeted Heavensward card", keys: ["game:87088"],
+      text: "His Heavensward and Shadowbringers quests show the helmeted dragoon card. It is true to how he looked, but there's no face to centre, and all four of his pack photos show his lance or armour.",
+      opts: [["keep", "Keep the helmet", "Centre the helmet on the plate. True to the era.", true], ["block", "Block it", "Those quests show a neutral fallback until a face exists."]] },
+    { id: "Q2", title: "Yugiri's hood", keys: ["game:73167"],
+      text: "Her A Realm Reborn battle-talk face and her pack photo show only her hood from the side. It is her real masked look in that arc.",
+      opts: [["keep", "Keep the hood", "It's how she looked then.", true], ["block", "Block it", "Show a fallback instead."]] },
+    { id: "Q3", title: "Faceless subjects", keys: [],
+      text: "Some givers have no face by nature: Nero's helmet card, Erichthonios in armour, Gaius in 6.x, Otis, Korutt, robots (Omega, N-7000), dragons (Vrtra). The reconciler proposes blocking Erichthonios and Gaius's 6.x row and keeping robots and dragons.",
+      opts: [["proposal", "Follow the proposal", "Block Erichthonios and Gaius 6.x; keep robots and dragons; Nero, Otis and Korutt stay.", true], ["keepall", "Keep them all", "Faceless art is still their look."], ["blockall", "Block all helmeted humans", "Nero, Erichthonios, Gaius 6.x, Otis and Korutt get a fallback; robots and dragons stay."]] },
+    { id: "Q4", title: "Pack photos with no face", keys: [],
+      text: "129 pack photos had no face found: mostly weapons, Viera ears, hats and helmets. 25 hide the face by design (bell-helmeted dwarves, masks, Fray's helmet).",
+      opts: [["proposal", "Drop the broken ones", "Drop 6 now, 9 more until per-character boxes exist, keep the 25 by-design ones.", true], ["all", "Drop all 129", "Only clear faces from the pack."], ["none", "Drop none", "Keep every photo; fix crops only."]] },
+    { id: "Q5", title: "The hooded Crystal Exarch", keys: ["game:72629"],
+      text: "His 5.0 hooded bust is the right look, but his eyes are in the hood's shadow; all three teams measured it differently. You can set it on the Portraits tab.",
+      opts: [["keep", "Keep the hooded bust", "I'll set the crop on the Portraits tab.", true], ["unhooded", "Use an unhooded face", "Spoils the reveal for 5.0 players."]] },
+    { id: "Q6", title: "\"Papalymo\" pack photo", keys: ["pack:1015883"],
+      text: "A pack photo named Papalymo shows a black-haired, hooded Lalafell. One team calls it his 3.x disguise; another doubts it's him.",
+      opts: [["keep", "It's him; keep it", "His 3.x look.", false], ["drop", "Drop it", "Use his game art instead.", true]] },
+    { id: "Q7", title: "How tight should card faces sit?", keys: [],
+      text: "On several curated cards (Merlwyb, Nanamo, Thancred, Krile and others) the chin was measured at the mouth, so the real chin touches the rim. Framing to the true chin makes those faces 25–40% smaller, matching the spec and the Trust busts. Across all cards the typical size barely changes, and a few (Themis, Menphina, Magnai, Pipin, Venat) get a little tighter. Pack faces get about 20% larger, because their old boxes sat low.",
+      opts: [["true", "Frame to the true chin", "Matches the spec and the busts; a little more hair and collar on the mouth-anchored cards.", true], ["tight", "Keep them tight", "Bigger faces on those cards; chins touch the rim."]] },
+    { id: "Q8", title: "Alphinaud in A Realm Reborn", keys: ["game:87059"],
+      text: "53 MSQ quests show no portrait for him. The only ARR art is the twins' card, which is blocked; his face on it is a profile looking down.",
+      opts: [["crop", "Crop the twins' card on him", "A face, even in profile, beats none.", true], ["block", "Keep the block", "Use the pack photo when installed; otherwise none."]] },
+    { id: "Q9", title: "Sphene in 7.0", keys: [],
+      text: "Her four 7.0 quests show her restored 7.2 bust: the wrong look and a spoiler within Dawntrail. Her veiled-queen card fits 7.0.",
+      opts: [["pin", "Pin 7.0 to the queen card", "No spoiler; the right look.", true], ["leave", "Leave it", "Keep the current bust."]] },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const state = { items: [], byKey: new Map(), answers: new Map(), decisions: new Map(), idx: 0, filters: new Set(["todo"]), q: "", box: null, imgs: new Map(), db: null, canWrite: true };
+
+  // ---------- data ----------
+  function imgFor(item) {
+    let p = state.imgs.get(item.key);
+    if (!p) {
+      p = new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = item.img; });
+      state.imgs.set(item.key, p);
+    }
+    return p;
+  }
+  function docId(key) { return key.replace(/[^A-Za-z0-9_\-.~:@+]/g, "_"); }
+
+  async function connect() {
+    let db = null;
+    try { db = await window.claude?.use?.("db"); } catch { db = null; }
+    if (!db) { $("offline").hidden = false; state.canWrite = false; return; }
+    state.db = db;
+    try {
+      const user = await window.claude.use("user");
+      const can = user ? await user.can("data.write") : null;
+      if (can === false) { state.canWrite = false; $("offline").hidden = false; $("offline").textContent = "You can view this desk, but only its owner can save answers."; }
+    } catch { /* keep inputs; a rejected write decides */ }
+    db.collection("corrections").onSnapshot((snap) => {
+      state.answers = new Map(snap.docs.filter((d) => d.exists).map((d) => [d.data().key, d.data()]));
+      renderList(); renderProgress(); renderAnswer();
+    }, () => { $("offline").hidden = false; });
+    db.collection("decisions").onSnapshot((snap) => {
+      state.decisions = new Map(snap.docs.filter((d) => d.exists).map((d) => [d.id, d.data()]));
+      renderQuestions();
+    }, () => {});
+  }
+
+  // ---------- queue ----------
+  function visible() {
+    const f = state.filters, q = state.q.trim().toLowerCase();
+    return state.items.filter((it) => {
+      if (f.has("todo") && state.answers.has(it.key)) return false;
+      if (f.has("shown") && !it.shown) return false;
+      if (f.has("game") && it.kind !== "game") return false;
+      if (f.has("pack") && it.kind !== "pack") return false;
+      if (f.has("noface") && !it.flags.some((x) => /face|helmet|hood|mask/.test(x))) return false;
+      if (q && !(`${it.who} ${it.id}`.toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }
+  function renderList() {
+    const list = $("list"); const vis = visible();
+    list.replaceChildren();
+    if (!vis.length) {
+      const e = document.createElement("div"); e.className = "empty";
+      e.textContent = state.items.length ? "Nothing left under these filters. Turn off \"To do\" to see answered portraits." : "Loading portraits…";
+      list.append(e); return;
+    }
+    const cur = state.items[state.idx];
+    for (const it of vis) {
+      const b = document.createElement("button"); b.className = "row"; b.type = "button";
+      if (cur && it.key === cur.key) b.setAttribute("aria-current", "true");
+      const c = document.createElement("canvas"); c.width = 80; c.height = 80;
+      const t = document.createElement("div");
+      const w = document.createElement("div"); w.className = "who"; w.textContent = it.who;
+      const m = document.createElement("div"); m.className = "meta";
+      m.textContent = `${it.kind === "pack" ? "Pack" : it.family} · ${it.eras.join(", ") || "—"}${it.msq ? ` · ${it.msq} MSQ` : ""}`;
+      t.append(w, m);
+      const d = document.createElement("span"); const a = state.answers.get(it.key);
+      d.className = "dot" + (a ? " " + a.action : ""); d.title = a ? a.action : "to do";
+      b.append(c, t, d);
+      b.addEventListener("click", () => select(state.items.indexOf(it)));
+      list.append(b);
+      const box = (a && a.box) || it.fin || it.cur;
+      imgFor(it).then((im) => im && drawPlate(c, im, it, box));
+    }
+    list.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest" });
+  }
+  function renderProgress() {
+    const n = state.items.length, done = state.items.filter((i) => state.answers.has(i.key)).length;
+    $("prog-text").textContent = n ? `${done} of ${n} answered` : "Loading…";
+    $("prog-bar").style.width = n ? `${(100 * done) / n}%` : "0";
+  }
+
+  // ---------- stage ----------
+  const view = { scale: 1, ox: 0, oy: 0 };
+  function clampBox(it, b) {
+    const lim = it.bounds || { x0: 0, x1: 1, y0: 0, y1: 1 };
+    const W = it.w, H = it.h;
+    let side = b.s * W;
+    const maxSide = Math.min((lim.x1 - lim.x0) * W, (lim.y1 - lim.y0) * H);
+    side = Math.max(12, Math.min(side, maxSide));
+    let x = b.cx * W - side / 2, y = b.cy * H - side / 2;
+    x = Math.min(Math.max(x, lim.x0 * W), lim.x1 * W - side);
+    y = Math.min(Math.max(y, lim.y0 * H), lim.y1 * H - side);
+    return { cx: (x + side / 2) / W, cy: (y + side / 2) / H, s: side / W };
+  }
+  function layout() {
+    const it = state.items[state.idx]; if (!it) return;
+    const st = $("stage"), r = st.getBoundingClientRect();
+    const pad = 16;
+    view.scale = Math.min((r.width - pad * 2) / it.w, (r.height - pad * 2) / it.h);
+    view.ox = (r.width - it.w * view.scale) / 2; view.oy = (r.height - it.h * view.scale) / 2;
+    const img = $("src");
+    Object.assign(img.style, { left: `${view.ox}px`, top: `${view.oy}px`, width: `${it.w * view.scale}px`, height: `${it.h * view.scale}px` });
+    const bd = $("bounds");
+    if (it.bounds) {
+      bd.hidden = false;
+      Object.assign(bd.style, { left: `${view.ox + it.bounds.x0 * it.w * view.scale}px`, top: `${view.oy + it.bounds.y0 * it.h * view.scale}px`, width: `${(it.bounds.x1 - it.bounds.x0) * it.w * view.scale}px`, height: `${(it.bounds.y1 - it.bounds.y0) * it.h * view.scale}px` });
+    } else bd.hidden = true;
+    place($("ghost"), it, it.cur); $("ghost").hidden = !it.cur;
+    place($("plate"), it, state.box); $("plate").hidden = !state.box;
+  }
+  function place(el, it, b) {
+    if (!b) return;
+    const side = b.s * it.w * view.scale;
+    Object.assign(el.style, { left: `${view.ox + (b.cx * it.w) * view.scale - side / 2}px`, top: `${view.oy + (b.cy * it.h) * view.scale - side / 2}px`, width: `${side}px`, height: `${side}px` });
+  }
+  function drawPlate(canvas, im, it, b) {
+    const ctx = canvas.getContext("2d"), n = canvas.width;
+    ctx.clearRect(0, 0, n, n);
+    if (!b) return;
+    const sx = im.naturalWidth / it.w, sy = im.naturalHeight / it.h;
+    const side = b.s * it.w, x = b.cx * it.w - side / 2, y = b.cy * it.h - side / 2;
+    ctx.save(); ctx.beginPath(); ctx.arc(n / 2, n / 2, n / 2, 0, Math.PI * 2); ctx.clip();
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(im, x * sx, y * sy, side * sx, side * sy, 0, 0, n, n);
+    ctx.restore();
+  }
+  let previewQueued = false;
+  function refreshPreview() {
+    if (previewQueued) return; previewQueued = true;
+    requestAnimationFrame(async () => {
+      previewQueued = false;
+      const it = state.items[state.idx]; if (!it) return;
+      const im = await imgFor(it); if (!im) return;
+      drawPlate($("pv2"), im, it, state.box); drawPlate($("pv1"), im, it, state.box);
+    });
+  }
+  function setBox(b) {
+    const it = state.items[state.idx];
+    state.box = clampBox(it, b);
+    place($("plate"), it, state.box); refreshPreview();
+  }
+
+  async function select(i) {
+    if (i < 0 || i >= state.items.length) return;
+    state.idx = i;
+    const it = state.items[i];
+    const a = state.answers.get(it.key);
+    state.box = clampBox(it, (a && a.box) || it.fin || it.cur || { cx: .5, cy: .4, s: .4 });
+    $("comment").value = (a && a.note) || "";
+    $("who").textContent = it.who;
+    $("ident").textContent = `${it.kind === "pack" ? "pack photo, NPC" : "game art, icon"} ${it.id}`;
+    const pills = $("pills"); pills.replaceChildren();
+    const mk = (t, c) => { const s = document.createElement("span"); s.className = "pill " + (c || ""); s.textContent = t; pills.append(s, " "); };
+    mk(`confidence ${it.conf.toFixed(2)}`, it.conf < 0.78 ? "low" : "good");
+    if (it.shown) mk("shown today");
+    if (it.msq) mk(`${it.msq} MSQ quests`);
+    for (const f of it.flags) mk(f, "flag");
+    if (it.sup && it.sup.verdict && it.sup.verdict !== "pass") mk(`supervisor: ${it.sup.verdict}`, "flag");
+    const facts = $("facts"); facts.replaceChildren();
+    const fact = (k, v, num) => { const dt = document.createElement("dt"); dt.textContent = k; const dd = document.createElement("dd"); dd.textContent = v; if (num) dd.className = "num"; facts.append(dt, dd); };
+    fact("Kind", it.kind === "pack" ? "Portrait pack photo" : `Game art (${it.family})`);
+    fact("Arcs", it.eras.join(", ") || "—");
+    fact("Source", `${it.w} × ${it.h} px`, true);
+    if (it.sup && it.sup.reason) fact("Supervisor", it.sup.reason);
+    fact("Audit", it.reason || "—");
+    const img = $("src"); img.alt = `${it.who}, source art`; img.src = it.img;
+    renderAnswer(); renderList(); layout(); refreshPreview();
+    try { localStorage.setItem("desk.last", it.key); } catch {}
+  }
+  function renderAnswer() {
+    const it = state.items[state.idx]; if (!it) return;
+    const a = state.answers.get(it.key);
+    $("act-clear").hidden = !a;
+    const s = $("saved");
+    if (a) { s.className = "saved ok"; s.textContent = { accept: "Saved: suggested crop is right.", adjust: "Saved: your crop.", noface: "Saved: no usable face." }[a.action] || "Saved."; }
+    else if (!s.classList.contains("err")) { s.className = "saved"; s.textContent = ""; }
+    for (const id of ["act-adjust", "act-accept", "act-noface"]) $(id).disabled = !state.db || !state.canWrite;
+  }
+
+  async function answer(action) {
+    const it = state.items[state.idx]; if (!it || !state.db) return;
+    const body = { key: it.key, kind: it.kind, id: it.id, who: it.who, action, note: $("comment").value.trim(), at: new Date().toISOString(), source: [it.w, it.h] };
+    if (action === "adjust") body.box = { ...state.box };
+    if (action === "accept") body.box = { ...(it.fin || it.cur) };
+    const s = $("saved"); s.className = "saved"; s.textContent = "Saving…";
+    try {
+      await state.db.collection("corrections").doc(docId(it.key)).set(body);
+      state.answers.set(it.key, body);
+      renderProgress();
+      const next = nextTodo(state.idx);
+      if (next >= 0) select(next); else { renderAnswer(); renderList(); }
+    } catch (e) {
+      s.className = "saved err";
+      s.textContent = e && e.code === "invalid_argument" ? "This view can't save answers." : "Couldn't save. Check your connection and try again.";
+    }
+  }
+  async function clearAnswer() {
+    const it = state.items[state.idx]; if (!it || !state.db) return;
+    try { await state.db.collection("corrections").doc(docId(it.key)).delete(); state.answers.delete(it.key); renderAnswer(); renderList(); renderProgress(); $("saved").textContent = "Answer cleared."; } catch { $("saved").className = "saved err"; $("saved").textContent = "Couldn't clear it. Try again."; }
+  }
+  function nextTodo(from) {
+    for (let k = 1; k <= state.items.length; k++) { const j = (from + k) % state.items.length; if (!state.answers.has(state.items[j].key)) return j; }
+    return -1;
+  }
+  function step(d) {
+    const vis = visible(); if (!vis.length) return;
+    const cur = state.items[state.idx]; let p = vis.findIndex((v) => v.key === cur.key);
+    p = p < 0 ? 0 : Math.min(Math.max(p + d, 0), vis.length - 1);
+    select(state.items.indexOf(vis[p]));
+  }
+
+  // ---------- dragging ----------
+  function bindStage() {
+    const plate = $("plate"), handle = $("handle"), st = $("stage");
+    let drag = null;
+    plate.addEventListener("pointerdown", (e) => {
+      const it = state.items[state.idx]; if (!it) return;
+      plate.setPointerCapture(e.pointerId);
+      drag = { mode: e.target === handle ? "size" : "move", x: e.clientX, y: e.clientY, box: { ...state.box } };
+      e.preventDefault();
+    });
+    plate.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      const it = state.items[state.idx];
+      const dx = (e.clientX - drag.x) / view.scale, dy = (e.clientY - drag.y) / view.scale;
+      if (drag.mode === "move") setBox({ cx: drag.box.cx + dx / it.w, cy: drag.box.cy + dy / it.h, s: drag.box.s });
+      else { const d = Math.max(dx, dy) * 2; setBox({ ...drag.box, s: drag.box.s + d / it.w }); }
+    });
+    const end = () => { drag = null; };
+    plate.addEventListener("pointerup", end); plate.addEventListener("pointercancel", end);
+    st.addEventListener("wheel", (e) => {
+      const it = state.items[state.idx]; if (!it || !state.box) return;
+      e.preventDefault();
+      setBox({ ...state.box, s: state.box.s * (e.deltaY > 0 ? 1.04 : 1 / 1.04) });
+    }, { passive: false });
+    new ResizeObserver(() => layout()).observe(st);
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest("input, textarea") || $("view-desk").hidden) return;
+    const it = state.items[state.idx]; if (!it || !state.box) return;
+    const px = (e.shiftKey ? 5 : 1);
+    const b = state.box;
+    const map = {
+      ArrowLeft: () => setBox({ ...b, cx: b.cx - px / it.w }), ArrowRight: () => setBox({ ...b, cx: b.cx + px / it.w }),
+      ArrowUp: () => setBox({ ...b, cy: b.cy - px / it.h }), ArrowDown: () => setBox({ ...b, cy: b.cy + px / it.h }),
+      "+": () => setBox({ ...b, s: b.s + (2 * px) / it.w }), "=": () => setBox({ ...b, s: b.s + (2 * px) / it.w }),
+      "-": () => setBox({ ...b, s: b.s - (2 * px) / it.w }),
+      s: () => answer("adjust"), a: () => answer("accept"), n: () => answer("noface"),
+      j: () => step(1), k: () => step(-1),
+    };
+    const fn = map[e.key] || map[e.key.toLowerCase?.()];
+    if (fn) { e.preventDefault(); if ("san".includes(e.key.toLowerCase()) && (!state.db || !state.canWrite)) return; fn(); }
+  });
+
+  // ---------- decisions ----------
+  function renderQuestions() {
+    const host = $("qs");
+    const keepNotes = new Map([...host.querySelectorAll("textarea")].map((t) => [t.dataset.q, t.value]));
+    host.replaceChildren();
+    for (const q of QUESTIONS) {
+      const d = state.decisions.get(q.id);
+      const card = document.createElement("article"); card.className = "q";
+      const h = document.createElement("h3"); h.textContent = `${q.id.replace("Q", "")}. ${q.title}`;
+      const p = document.createElement("p"); p.textContent = q.text;
+      const thumbs = document.createElement("div"); thumbs.className = "thumbs";
+      for (const k of q.keys) {
+        const it = state.byKey.get(k); if (!it) continue;
+        const c = document.createElement("canvas"); c.width = 144; c.height = 144; c.title = `Open ${it.who} on the Portraits tab`;
+        c.addEventListener("click", () => { showTab("desk"); state.filters.clear(); syncChips(); select(state.items.indexOf(it)); });
+        imgFor(it).then((im) => im && drawPlate(c, im, it, it.fin || it.cur));
+        thumbs.append(c);
+      }
+      const opts = document.createElement("div"); opts.className = "opts";
+      for (const [val, label, sub, rec] of q.opts) {
+        const b = document.createElement("button"); b.type = "button"; b.className = "opt";
+        b.setAttribute("aria-pressed", String(d?.choice === val));
+        b.disabled = !state.db || !state.canWrite;
+        b.innerHTML = `${rec ? '<span class="rec">Recommended</span>' : ""}<b></b><span></span>`;
+        b.querySelector("b").textContent = label; b.querySelector("span:last-child").textContent = sub;
+        b.addEventListener("click", () => decide(q.id, val, card.querySelector("textarea").value.trim()));
+        opts.append(b);
+      }
+      const ta = document.createElement("textarea"); ta.dataset.q = q.id; ta.placeholder = "Note (optional)";
+      ta.value = keepNotes.get(q.id) ?? d?.note ?? "";
+      ta.addEventListener("change", () => { if (d) decide(q.id, d.choice, ta.value.trim()); });
+      card.append(h, p, thumbs, opts, ta);
+      host.append(card);
+    }
+  }
+  async function decide(id, choice, note) {
+    if (!state.db) return;
+    const body = { choice, note, at: new Date().toISOString() };
+    state.decisions.set(id, body); renderQuestions();
+    try { await state.db.collection("decisions").doc(id).set(body); } catch { /* the snapshot restores the stored choice */ }
+  }
+
+  // ---------- chrome ----------
+  function showTab(which) {
+    const desk = which === "desk";
+    $("tab-desk").setAttribute("aria-selected", String(desk)); $("tab-qs").setAttribute("aria-selected", String(!desk));
+    $("view-desk").hidden = !desk; $("view-qs").hidden = desk;
+    if (desk) layout();
+  }
+  function syncChips() { for (const c of document.querySelectorAll(".chip")) c.setAttribute("aria-pressed", String(state.filters.has(c.dataset.f))); }
+  $("tab-desk").addEventListener("click", () => showTab("desk"));
+  $("tab-qs").addEventListener("click", () => showTab("qs"));
+  for (const c of document.querySelectorAll(".chip")) c.addEventListener("click", () => {
+    const f = c.dataset.f;
+    if (state.filters.has(f)) state.filters.delete(f); else {
+      state.filters.add(f);
+      if (f === "game") state.filters.delete("pack"); if (f === "pack") state.filters.delete("game");
+    }
+    syncChips(); renderList();
+  });
+  $("search").addEventListener("input", (e) => { state.q = e.target.value; renderList(); });
+  $("act-adjust").addEventListener("click", () => answer("adjust"));
+  $("act-accept").addEventListener("click", () => answer("accept"));
+  $("act-noface").addEventListener("click", () => answer("noface"));
+  $("act-clear").addEventListener("click", clearAnswer);
+  $("act-reset").addEventListener("click", () => { const it = state.items[state.idx]; if (it) setBox(it.fin || it.cur); });
+  $("act-current").addEventListener("click", () => { const it = state.items[state.idx]; if (it && it.cur) setBox(it.cur); });
+  $("prev").addEventListener("click", () => step(-1));
+  $("next").addEventListener("click", () => step(1));
+  if (location.hash === "#decisions") showTab("qs");
+
+  bindStage();
+  fetch("items.json").then((r) => r.json()).then((d) => {
+    state.items = d.items; state.byKey = new Map(d.items.map((i) => [i.key, i]));
+    let start = 0;
+    try { const last = localStorage.getItem("desk.last"); const j = d.items.findIndex((i) => i.key === last); if (j >= 0) start = j; } catch {}
+    renderProgress(); renderQuestions(); select(start);
+  }).catch(() => { $("list").innerHTML = '<div class="empty">The portrait list didn\'t load. Reload the page.</div>'; });
+  connect();
+})();
+</script>
