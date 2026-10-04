@@ -6,9 +6,10 @@
 # the same way. The vectors are deterministic (a seeded generator), so rerunning this rewrites the same file.
 #
 # Covered: every preset look (6 themes x 6 palettes x 6 frames x high contrast), seeded random mixes, the spec's
-# examples, ids from a newer build (themes, palettes, frames and picks 7..15), tolerant reading (case, dashes, spaces,
-# a missing "TM", O for 0 and I/L for 1), a newer format version, version 0, truncated and padded codes, characters
-# outside the alphabet, and every single-character typo of the spec's examples.
+# examples, ids from a newer build (themes 0 and 7..15, read as 0 so the receiver keeps theirs; palettes, frames and
+# picks 7..15), tolerant reading (case, dashes, spaces, a missing "TM", O for 0 and I/L for 1, typographic dashes and the
+# minus sign, zero-width characters and no-break spaces, full-width ASCII), a newer format version, version 0, truncated
+# and padded codes, characters outside the alphabet, and every single-character typo of the spec's examples.
 #
 # Usage:
 #   py -3 -X utf8 tools/themes/sharecode_vectors.py [path/to/sharecode.py]
@@ -57,6 +58,8 @@ def main():
 
     # Ids a newer build might write: they encode, and reading names them.
     newer = [
+        (0, 0, 0, False, None),
+        (0, 3, 2, False, [3, 0, 0, 0, 0, 0, 0, 0]),
         (9, 0, 0, False, None),
         (15, 2, 1, False, None),
         (1, 6, 0, False, None),
@@ -97,6 +100,23 @@ def main():
         texts.append(code + "1")
         texts.append(code[:-1])
         texts.append(code[:-2])
+
+    # Typography a chat client or an input method adds (the coordinator's 1.17 ruling): typographic dashes and the minus
+    # sign, zero-width characters, word joiners, byte-order marks and no-break spaces, and full-width ASCII.
+    def full_width(text):
+        return "".join(chr(ord(c) + 0xFEE0) if "!" <= c <= "~" else c for c in text)
+
+    for code in codes[::41] + examples:
+        for dash in "‐‑‒–—−":
+            texts.append(code.replace("-", dash))
+        texts.append("​" + code.replace("-", "​-‌") + "‍")
+        texts.append("﻿" + code.replace("-", "⁠"))
+        texts.append(code.replace("-", " ") + " ")
+        texts.append(full_width(code))
+        texts.append(full_width(code.lower()).replace("－", "　"))
+        texts.append(full_width(code[:2]) + code[2:].replace("-", "–"))
+    # Look-alikes that stay unreadable: a horizontal bar and a full-width U are not in the code's alphabet.
+    texts.extend(["TM1―8003―0", "TM1-8003-Ｕ", "−", "​", " – ", "ＴＭ"])
 
     # A newer format, version 0, and text that is not a code at all.
     for code in examples:

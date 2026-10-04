@@ -237,14 +237,96 @@ public sealed class ShareCodeTests
         Assert.Equal(
             [ShareCodeField.Theme, ShareCodeField.Palette, ShareCodeField.Frames, ShareCodeField.State],
             everything.Unknown.Select(static u => u.Field));
-        Assert.Equal(new ShareLook((int)ThemeId.Medallion, 0, 0, true, 0), everything.Look);
+        Assert.Equal(new ShareLook(0, 0, 0, true, 0), everything.Look);
+    }
+
+    [Theory]
+    [InlineData(9)]
+    [InlineData(15)]
+    [InlineData(0)]
+    public void An_unknown_theme_is_left_out_and_the_receiver_keeps_their_own(int theme)
+    {
+        // spec-1.17 §C1: the coordinator's ruling. The rest of the code (Dawn, Silver, Ready from Aether Crystal) applies.
+        var code = ShareCode.Encode(new ShareLook(theme, ShareCode.PaletteWire(PaletteId.Dawn), (int)FrameKitId.Silver, false, 0)
+            .WithPick(QuestState.Ready, (int)GlyphSetId.AetherCrystal));
+        var read = ShareCode.Decode(code);
+        Assert.True(read.Ok);
+        Assert.Equal(0, read.Look.Theme);
+        Assert.Equal([new ShareCodeOmission(ShareCodeField.Theme, QuestState.Ready, theme, Registered: false)], read.Unknown);
+
+        var saved = new AppearanceConfig { Theme = "ishgard-glass", Glyphs = new Dictionary<string, string> { ["completed"] = "medallion" } };
+        var preview = SharePreview.Of(code, saved);
+        Assert.Equal("ishgard-glass", preview.Result!.Theme);
+        Assert.Equal("dawn", preview.Result.Palette);
+        Assert.Equal("silver", preview.Result.Frames);
+        Assert.Equal(new Dictionary<string, string> { ["ready"] = "aether-crystal" }, preview.Result.Glyphs);
+        Assert.Equal(read.Unknown, preview.LeftOut);
+        Assert.DoesNotContain(preview.Changes, static c => c.Kind == ShareChangeKind.Theme);
+        Assert.Equal(ShareVerdict.Preview, preview.Verdict(editing: false));
+    }
+
+    [Fact]
+    public void A_left_out_theme_keeps_the_receivers_theme_for_the_from_the_theme_rules_too()
+    {
+        // The code's palette is the receiver's theme's own (Ishgard Glass on Ishgard Snow), so it is saved as from the theme.
+        var saved = new AppearanceConfig { Theme = "ishgard-glass", Palette = "night" };
+        var applied = ShareCode.Apply(saved, new ShareLook(0, ShareCode.PaletteWire(PaletteId.IshgardSnow), 0, false, 0), new List<ShareCodeOmission>());
+        Assert.Equal("ishgard-glass", applied.Theme);
+        Assert.Null(applied.Palette);
+
+        // A saved key a newer build wrote is kept as it is when the code's theme is left out.
+        var newer = ShareCode.Apply(new AppearanceConfig { Theme = "moonfall" }, new ShareLook(0, 0, 0, false, 0), new List<ShareCodeOmission>());
+        Assert.Equal("moonfall", newer.Theme);
+    }
+
+    // ------------------------------------------------------------------ typography (the coordinator's 1.17 ruling)
+
+    [Theory]
+    [InlineData("TM1–202C–000C–02C")] // en dash
+    [InlineData("TM1—202C—000C—02C")] // em dash
+    [InlineData("TM1−202C−000C−02C")] // minus sign
+    [InlineData("TM1‑202C‑000C‑02C")] // non-breaking hyphen
+    [InlineData("TM1‐202C‒000C-02C")] // hyphen, figure dash
+    [InlineData("​TM1-202C‌-000C‍-02C⁠﻿")] // zero-width characters, a word joiner, a BOM
+    [InlineData("TM1 202C 000C 02C ")] // no-break spaces
+    [InlineData("ＴＭ１－２０２Ｃ－０００Ｃ－０２Ｃ")] // full-width
+    [InlineData("ｔｍ１　２Ｏ２ｃ　ｏｏｏｃ　ｏ２ｃ")] // full-width lower case, O for 0, ideographic spaces
+    public void Typography_a_chat_client_or_an_input_method_adds_reads_as_typed(string text)
+    {
+        var read = ShareCode.Decode(text);
+        Assert.True(read.Ok, text);
+        Assert.Equal(ShareCode.Decode("TM1-202C-000C-02C").Look, read.Look);
+        Assert.True(read.Prefixed);
+        Assert.Equal(ShareCode.MixLength, read.Length);
+    }
+
+    [Theory]
+    [InlineData("TM1―8003―0", ShareCodeStatus.Unreadable)] // a horizontal bar is not a dash
+    [InlineData("TM1-8003-Ｕ", ShareCodeStatus.Unreadable)] // a full-width U is still U
+    [InlineData("−​ ", ShareCodeStatus.Empty)]
+    [InlineData("ＴＭ", ShareCodeStatus.Empty)]
+    public void Typography_never_makes_a_look_alike_read(string text, ShareCodeStatus status)
+    {
+        Assert.Equal(status, ShareCode.Decode(text).Status);
+    }
+
+    [Fact]
+    public void Full_width_ASCII_maps_over_its_whole_block_and_no_further()
+    {
+        Assert.Equal('!', ShareCode.Normalize('！'));
+        Assert.Equal('A', ShareCode.Normalize('Ａ'));
+        Assert.Equal('~', ShareCode.Normalize('～'));
+        Assert.Equal('＀', ShareCode.Normalize('＀'));
+        Assert.Equal('｟', ShareCode.Normalize('｟'));
+        Assert.Equal('―', ShareCode.Normalize('―'));
+        Assert.Equal('-', ShareCode.Normalize('-'));
     }
 
     [Fact]
     public void Reading_never_throws()
     {
         var random = new Random(1170);
-        const string pool = "0123456789ABCDEFGHJKMNPQRSTVWXYZabcdefIiLlOoUu -_!?\t\nTM";
+        const string pool = "0123456789ABCDEFGHJKMNPQRSTVWXYZabcdefIiLlOoUu -_!?\t\nTM–−​ １ＡＵ￿\uD800";
         for (var n = 0; n < 5000; n++)
         {
             var chars = new char[random.Next(0, 30)];
@@ -257,7 +339,9 @@ public sealed class ShareCodeTests
             Assert.True(Enum.IsDefined(read.Status));
             if (read.Ok)
             {
-                Assert.InRange(read.Look.Theme, 1, 15);
+                // A registered theme, or 0 for one this build does not know (left out, and named).
+                Assert.True(read.Look.Theme == 0 || ThemePresets.All.Any(t => (int)t.Id == read.Look.Theme), $"theme {read.Look.Theme}");
+                Assert.Equal(read.Look.Theme == 0, read.Unknown.Any(static u => u.Field == ShareCodeField.Theme));
             }
         }
     }
@@ -347,14 +431,13 @@ public sealed class ShareCodeTests
     [MemberData(nameof(OfferedLooks))]
     public void Every_offered_look_comes_back_from_its_code(string theme, string? palette, string? frames, bool highContrast, string? readyFrom)
     {
-        var original = new AppearanceConfig
+        // The mix as the Themes page saves it: a pick of the theme's own set is from the theme (AppearanceEdits.SetGlyph).
+        var original = new AppearanceConfig { Theme = theme, Palette = palette, Frames = frames, HighContrast = highContrast };
+        if (readyFrom is not null)
         {
-            Theme = theme,
-            Palette = palette,
-            Frames = frames,
-            HighContrast = highContrast,
-            Glyphs = readyFrom is null ? null : new Dictionary<string, string> { ["ready"] = readyFrom, ["completed"] = "ishgard-glass" },
-        };
+            AppearanceEdits.SetGlyph(original, QuestState.Ready, GlyphSets.TryGet(readyFrom, out var ready) ? ready : null);
+            AppearanceEdits.SetGlyph(original, QuestState.Completed, GlyphSets.IshgardGlass);
+        }
 
         var read = ShareCode.Decode(ShareCode.Encode(original));
         Assert.True(read.Ok);
@@ -389,50 +472,76 @@ public sealed class ShareCodeTests
         Assert.False(AppearanceEdits.IsCustom(applied));
     }
 
-    [Fact]
-    public void Only_offered_choices_apply_and_the_rest_are_named()
+    /// <summary>
+    /// The catalog's own Offered flags, and stand-ins that withhold one id each (this build offers every choice it
+    /// registers, so only a stand-in reaches the registered-but-not-offered paths).
+    /// </summary>
+    public static TheoryData<bool> OfferedFlags() => new() { false, true };
+
+    [Theory]
+    [MemberData(nameof(OfferedFlags))]
+    public void Only_offered_choices_apply_and_the_rest_are_named(bool standIn)
     {
+        // The receiver's look, so a left-out theme visibly keeps it.
+        var saved = new AppearanceConfig { Theme = "astrologian-orrery" };
+
         foreach (var theme in ThemePresets.All)
         {
+            var (offered, isOffered) = Offer(standIn, ShareCodeField.Theme, (int)theme.Id, theme.Offered);
             var leftOut = new List<ShareCodeOmission>();
-            var applied = ShareCode.Apply(new AppearanceConfig(), new ShareLook((int)theme.Id, 0, 0, false, 0), leftOut);
-            if (theme.Offered)
+            var applied = ShareCode.Apply(saved, new ShareLook((int)theme.Id, 0, 0, false, 0), leftOut, offered);
+            if (isOffered)
             {
                 Assert.Equal(theme.Key, applied.Theme);
                 Assert.Empty(leftOut);
             }
             else
             {
-                Assert.Equal(ThemePresets.Default.Key, applied.Theme);
+                Assert.Equal(saved.Theme, applied.Theme);
                 Assert.Equal([new ShareCodeOmission(ShareCodeField.Theme, QuestState.Ready, (int)theme.Id, Registered: true)], leftOut);
             }
         }
 
         foreach (var palette in PaletteChoices.All)
         {
+            var wire = ShareCode.PaletteWire(palette.Id);
+            var (offered, isOffered) = Offer(standIn, ShareCodeField.Palette, wire, palette.Offered);
             var leftOut = new List<ShareCodeOmission>();
-            var applied = ShareCode.Apply(new AppearanceConfig(), new ShareLook((int)ThemeId.Medallion, ShareCode.PaletteWire(palette.Id), 0, false, 0), leftOut);
-            Assert.Equal(palette.Offered, leftOut.Count == 0);
-            Assert.Equal(palette.Offered && palette.Id != PaletteId.Night ? palette.Key : null, applied.Palette);
+            var applied = ShareCode.Apply(new AppearanceConfig(), new ShareLook((int)ThemeId.Medallion, wire, 0, false, 0), leftOut, offered);
+            Assert.Equal(isOffered ? [] : [new ShareCodeOmission(ShareCodeField.Palette, QuestState.Ready, wire, Registered: true)], leftOut);
+            Assert.Equal(isOffered && palette.Id != PaletteId.Night ? palette.Key : null, applied.Palette);
         }
 
         foreach (var kit in FrameKits.All)
         {
+            var (offered, isOffered) = Offer(standIn, ShareCodeField.Frames, (int)kit.Id, kit.Offered);
             var leftOut = new List<ShareCodeOmission>();
-            var applied = ShareCode.Apply(new AppearanceConfig(), new ShareLook((int)ThemeId.Medallion, 0, (int)kit.Id, false, 0), leftOut);
-            Assert.Equal(kit.Offered, leftOut.Count == 0);
-            Assert.Equal(kit.Offered && kit.Id != FrameKitId.Brass ? kit.Key : null, applied.Frames);
+            var applied = ShareCode.Apply(new AppearanceConfig(), new ShareLook((int)ThemeId.Medallion, 0, (int)kit.Id, false, 0), leftOut, offered);
+            Assert.Equal(isOffered ? [] : [new ShareCodeOmission(ShareCodeField.Frames, QuestState.Ready, (int)kit.Id, Registered: true)], leftOut);
+            Assert.Equal(isOffered && kit.Id != FrameKitId.Brass ? kit.Key : null, applied.Frames);
         }
 
         foreach (var set in GlyphSets.All)
         {
+            var (offered, isOffered) = Offer(standIn, ShareCodeField.State, (int)set.Id, set.Offered);
             var leftOut = new List<ShareCodeOmission>();
-            var applied = ShareCode.Apply(new AppearanceConfig(), new ShareLook((int)ThemeId.IshgardGlass, 0, 0, false, 0).WithPick(QuestState.Blocked, (int)set.Id), leftOut);
-            var mixes = set.Offered && set.Mixable;
-            Assert.Equal(mixes ? set.Key : null, applied.Glyphs?.GetValueOrDefault("blocked"));
+            var applied = ShareCode.Apply(new AppearanceConfig(), new ShareLook((int)ThemeId.IshgardGlass, 0, 0, false, 0).WithPick(QuestState.Blocked, (int)set.Id), leftOut, offered);
+            var mixes = isOffered && set.Mixable;
+
+            // Ishgard Glass's own set is from the theme: no pick saved, and nothing left out.
+            Assert.Equal(mixes && set.Id != GlyphSetId.IshgardGlass ? set.Key : null, applied.Glyphs?.GetValueOrDefault("blocked"));
             Assert.Equal(mixes ? [] : [new ShareCodeOmission(ShareCodeField.State, QuestState.Blocked, (int)set.Id, Registered: true)], leftOut);
         }
+
+        // The public overload is the catalog's own flags.
+        var catalog = new List<ShareCodeOmission>();
+        var look = new ShareLook((int)ThemeId.Sumi, 3, (int)FrameKitId.Came, false, 0).WithPick(QuestState.Ready, (int)GlyphSetId.AetherCrystal);
+        Assert.True(ShareCode.Apply(saved, look, catalog).SameAs(ShareCode.Apply(saved, look, new List<ShareCodeOmission>(), null)));
     }
+
+    /// <summary>The Offered flags for one id: the catalog's own (null), or a stand-in that withholds exactly that id.</summary>
+    private static (Func<ShareCodeField, int, bool>? Offered, bool IsOffered) Offer(bool standIn, ShareCodeField field, int id, bool catalog) =>
+        standIn ? ((f, i) => f != field || i != id, false) : (null, catalog);
 
     [Theory]
     [InlineData(false, true)]
@@ -469,6 +578,62 @@ public sealed class ShareCodeTests
         Assert.Null(applied.Glyphs);
         Assert.Single(leftOut);
         Assert.True(leftOut[0].Registered);
+        Assert.False(leftOut[0].WholeTheme);
+    }
+
+    [Fact]
+    public void The_Classic_theme_leaves_every_pick_out_and_saves_no_hidden_mix()
+    {
+        // Classic is whole theme only: a mix under it would be saved and never drawn, so each pick is named as left out.
+        var look = new ShareLook((int)ThemeId.Classic, 0, 0, false, 0)
+            .WithPick(QuestState.Ready, (int)GlyphSetId.AetherCrystal)
+            .WithPick(QuestState.Completed, (int)GlyphSetId.Medallion)
+            .WithPick(QuestState.Blocked, (int)GlyphSetId.Classic);
+        var saved = new AppearanceConfig { Glyphs = new Dictionary<string, string> { ["in-journal"] = "ishgard-glass" } };
+        var preview = SharePreview.Of(ShareCode.Encode(look), saved);
+
+        Assert.Equal("classic", preview.Result!.Theme);
+        Assert.Null(preview.Result.Glyphs);
+        Assert.Equal(
+            [
+                new ShareCodeOmission(ShareCodeField.State, QuestState.Ready, (int)GlyphSetId.AetherCrystal, Registered: true, WholeTheme: true),
+                new ShareCodeOmission(ShareCodeField.State, QuestState.Blocked, (int)GlyphSetId.Classic, Registered: true),
+                new ShareCodeOmission(ShareCodeField.State, QuestState.Completed, (int)GlyphSetId.Medallion, Registered: true, WholeTheme: true),
+            ],
+            preview.LeftOut);
+        Assert.Equal(ShareVerdict.Preview, preview.Verdict(editing: false));
+        Assert.Equal(
+            [
+                new ShareChange(ShareChangeKind.Theme, QuestState.Ready, (int)ThemeId.Medallion, (int)ThemeId.Classic),
+                new ShareChange(ShareChangeKind.State, QuestState.Accepted, (int)GlyphSetId.IshgardGlass, 0),
+            ],
+            preview.Changes);
+
+        // Applied over a Classic look already in use, nothing changes: the picks never reach the saved look.
+        var same = SharePreview.Of(ShareCode.Encode(look), new AppearanceConfig { Theme = "classic" });
+        Assert.Equal(ShareVerdict.NothingToChange, same.Verdict(editing: false));
+        Assert.Null(same.Result!.Glyphs);
+    }
+
+    [Fact]
+    public void A_pick_of_the_themes_own_set_is_from_the_theme_and_changes_nothing()
+    {
+        // SetGlyph's rule: Ready from Menphina's Medallion under Medallion is no pick at all.
+        var saved = new AppearanceConfig();
+        var code = ShareCode.Encode(new ShareLook((int)ThemeId.Medallion, 0, 0, false, 0).WithPick(QuestState.Ready, (int)GlyphSetId.Medallion));
+        var preview = SharePreview.Of(code, saved);
+        Assert.Null(preview.Result!.Glyphs);
+        Assert.Empty(preview.LeftOut);
+        Assert.Empty(preview.Changes);
+        Assert.Equal(ShareVerdict.NothingToChange, preview.Verdict(editing: false));
+
+        // Beside a real pick, only the real one is saved.
+        var mixed = SharePreview.Of(
+            ShareCode.Encode(new ShareLook((int)ThemeId.Orrery, 0, 0, false, 0)
+                .WithPick(QuestState.Ready, (int)GlyphSetId.Orrery)
+                .WithPick(QuestState.Completed, (int)GlyphSetId.Sumi)),
+            saved);
+        Assert.Equal(new Dictionary<string, string> { ["completed"] = "sumi-to-kinpaku" }, mixed.Result!.Glyphs);
     }
 
     // ------------------------------------------------------------------ the preview
@@ -534,6 +699,65 @@ public sealed class ShareCodeTests
     public void The_field_says_nothing_while_a_code_is_typed_and_explains_one_that_does_not_read(string text, bool editing, ShareVerdict verdict)
     {
         Assert.Equal(verdict, SharePreview.Of(text, new AppearanceConfig()).Verdict(editing));
+    }
+
+    // ------------------------------------------------------------------ /tsuki look <code> (spec-1.17 §C2)
+
+    [Theory]
+    [InlineData("", LookCommandRoute.OpenShare)] // the Share section, field focused
+    [InlineData("   ", LookCommandRoute.OpenShare)]
+    [InlineData("TM1-202C-000C-02C", LookCommandRoute.OpenShare)]
+    [InlineData("  tm1 202c 000c 02c ", LookCommandRoute.OpenShare)]
+    [InlineData("1-202C-000C-02C", LookCommandRoute.OpenShare)] // no "TM", but it reads
+    [InlineData("TM1–202C–000C–02C", LookCommandRoute.OpenShare)] // typography reads as typed
+    [InlineData("ｔｍ１-202C-000C-02C", LookCommandRoute.OpenShare)] // a full-width "tm1"
+    [InlineData("TM1-2034-000C-0DJ", LookCommandRoute.OpenShare)] // a newer build's id: the preview names it
+    [InlineData("TM2-8003-0", LookCommandRoute.OpenShare)] // a newer format: the field says so
+    [InlineData("TM", LookCommandRoute.OpenShare)] // the start of a code: the field takes it
+    [InlineData("TM1-202C-000C-02X", LookCommandRoute.Unreadable)] // a typo
+    [InlineData("tm1-202c", LookCommandRoute.Unreadable)] // cut short: finished, so not "still typing"
+    [InlineData("TM1-U", LookCommandRoute.Unreadable)] // outside the alphabet
+    [InlineData("TM0-8003-0", LookCommandRoute.Unreadable)] // format version 0
+    [InlineData("tm 8003!", LookCommandRoute.Unreadable)] // "TM" makes it code-shaped
+    [InlineData("to the stars", LookCommandRoute.Search)] // "Look to the Stars"
+    [InlineData("hello", LookCommandRoute.Search)]
+    [InlineData("2-8003-0", LookCommandRoute.Search)] // a later version without "TM" is not code-shaped
+    [InlineData("1-202C-000C-02X", LookCommandRoute.Search)] // without "TM" and not reading: words, not a code
+    public void The_look_command_opens_a_code_names_a_mistyped_one_and_searches_anything_else(string text, LookCommandRoute route)
+    {
+        Assert.Equal(route, SharePreview.CommandRoute(text));
+
+        // A code-shaped text gets the field's own verdict, so the page and the command never disagree.
+        if (route != LookCommandRoute.Search)
+        {
+            Assert.Equal(route == LookCommandRoute.OpenShare, SharePreview.Of(text, new AppearanceConfig()).Verdict(editing: false) != ShareVerdict.Mistyped);
+        }
+    }
+
+    [Fact]
+    public void The_look_command_reads_the_text_as_the_field_takes_it()
+    {
+        Assert.Equal(LookCommandRoute.OpenShare, SharePreview.CommandRoute(null));
+
+        // The field keeps the first 64 characters, so the command judges those: a code with trailing junk past the cut
+        // opens, and junk inside it does not.
+        var padded = "TM1-202C-000C-02C" + new string(' ', ShareCode.MaxTextLength) + "!";
+        Assert.Equal(LookCommandRoute.OpenShare, SharePreview.CommandRoute(padded));
+        Assert.Equal(LookCommandRoute.Unreadable, SharePreview.CommandRoute("TM1-202C-000C-02C !"));
+    }
+
+    [Fact]
+    public void Look_is_a_listed_subcommand_and_text_that_is_not_a_code_searches_the_whole_line()
+    {
+        var parsed = Tsukimichi.Core.Text.CommandLine.Parse("look TM1–202C 000C–02X");
+        Assert.Equal(Tsukimichi.Core.Text.Subcommand.Look, parsed.Kind);
+        Assert.Equal(LookCommandRoute.Unreadable, SharePreview.CommandRoute(parsed.Rest));
+        Assert.Equal(LookCommandRoute.OpenShare, SharePreview.CommandRoute(Tsukimichi.Core.Text.CommandLine.Parse("look").Rest));
+
+        // The command searches parsed.Arguments, the whole line, as it did before "look" was a subcommand.
+        var quest = Tsukimichi.Core.Text.CommandLine.Parse("Look to the Stars");
+        Assert.Equal(LookCommandRoute.Search, SharePreview.CommandRoute(quest.Rest));
+        Assert.Equal("Look to the Stars", quest.Arguments);
     }
 
     [Fact]

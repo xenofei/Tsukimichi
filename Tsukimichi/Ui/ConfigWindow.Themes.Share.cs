@@ -385,6 +385,8 @@ public sealed partial class ConfigWindow
             ShareCodeField.Theme => (Strings.ThemesShareTheme, omission.Registered ? NotOffered(ThemeName((ThemeId)omission.Id)) : Strings.ThemesShareUnknownTheme),
             ShareCodeField.Palette => (Strings.ThemesSharePalette, omission.Registered && ShareCode.TryPaletteFromWire(omission.Id, out var palette) ? NotOffered(PaletteName(palette)) : Strings.ThemesShareUnknownPalette),
             ShareCodeField.Frames => (Strings.ThemesShareFrames, omission.Registered ? NotOffered(KitName((FrameKitId)omission.Id)) : Strings.ThemesShareUnknownFrames),
+            // A pick under the Classic theme: "Ready: Classic, whole theme only".
+            _ when omission.WholeTheme => (Strings.StateName(omission.State), string.Format(CultureInfo.CurrentCulture, Strings.ThemesShareWholeThemeFormat, ThemeName(ThemeId.Classic))),
             _ => (Strings.StateName(omission.State), !omission.Registered
                 ? Strings.ThemesShareUnknownSet
                 : GlyphSets.Get((GlyphSetId)omission.Id).Mixable

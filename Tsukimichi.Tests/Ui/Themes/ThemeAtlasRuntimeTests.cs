@@ -335,8 +335,13 @@ public sealed class ThemeAtlasRuntimeTests
     [Fact]
     public void Every_theme_folder_meets_the_contract_and_its_budgets_and_the_worst_reachable_appearance_fits_12_MB()
     {
+        // A missing folder fails: an empty list would pass every budget below without measuring anything.
         var dir = ThemesDir();
-        var folders = Directory.Exists(dir) ? Directory.GetDirectories(dir) : [];
+        Assert.True(Directory.Exists(dir), $"{dir} is missing");
+        var folders = Directory.GetDirectories(dir);
+        Assert.NotEmpty(folders);
+        Assert.True(Directory.Exists(KitsDir()), $"{KitsDir()} is missing");
+        Assert.NotEmpty(Directory.GetDirectories(KitsDir()));
 
         // Each set's 1x bytes on its two paths (Medallion as designed is its embedded atlas), and each kit's 1x frames and
         // ornaments, for the reachable worst case below.
@@ -489,6 +494,42 @@ public sealed class ThemeAtlasRuntimeTests
         }
 
         Assert.Equal(Path.Combine("assets", "ui", "kits", "came", "frames.png"), ThemeAtlasRules.RelativePath(FrameKitId.Came, "frames.png"));
+    }
+
+    [Fact]
+    public void Every_sets_faces_and_every_kits_frames_cover_the_same_sizes_so_composing_never_misses_one()
+    {
+        // TryCompose picks the cell from the faces atlas and looks the frame up at that same cell: a row size or hero
+        // tier one side has and the other lacks would fall back to Medallion's procedural medal at that size only.
+        var parts = new List<(string Name, IReadOnlyList<int> Row, IReadOnlyList<int> Tiers)>();
+        foreach (var set in GlyphSets.All.Where(static s => s.Offered && s.Mixable))
+        {
+            parts.Add(Cells(Path.Combine(ThemesDir(), set.Key), "faces", PartAtlasKind.Faces));
+        }
+
+        foreach (var kit in FrameKits.All.Where(static k => k.Offered))
+        {
+            parts.Add(Cells(Path.Combine(KitsDir(), kit.Key), "frames", PartAtlasKind.Frames));
+        }
+
+        Assert.True(parts.Count >= 2);
+        var (first, row, tiers) = parts[0];
+        foreach (var (name, otherRow, otherTiers) in parts.Skip(1))
+        {
+            Assert.True(row.SequenceEqual(otherRow), $"{name}'s row sizes [{string.Join(',', otherRow)}] are not {first}'s [{string.Join(',', row)}]");
+            Assert.True(tiers.SequenceEqual(otherTiers), $"{name}'s hero tiers [{string.Join(',', otherTiers)}] are not {first}'s [{string.Join(',', tiers)}]");
+        }
+
+        // And the row strips reach from the smallest row medal to just under the hero tiers, whole pixel by whole pixel.
+        Assert.Equal(Enumerable.Range(row[0], row.Count), row);
+        Assert.Equal((int)MedalLayout.RowTierMaxPx - 1, row[^1]);
+    }
+
+    private static (string Name, IReadOnlyList<int> Row, IReadOnlyList<int> Tiers) Cells(string folder, string stem, PartAtlasKind kind)
+    {
+        Assert.True(PartAtlasLayout.TryParse(File.ReadAllText(Path.Combine(folder, stem + "-row.json")), kind, out var row, out var error), $"{folder} {stem}-row: {error}");
+        Assert.True(PartAtlasLayout.TryParse(File.ReadAllText(Path.Combine(folder, stem + ".json")), kind, out var hero, out error), $"{folder} {stem}: {error}");
+        return ($"{Path.GetFileName(folder)}/{stem}", row!.Cells, hero!.Cells);
     }
 
     private static string KitsDir() => Path.Combine(OrnamentLayoutTests.AssetsDir(), "kits");
