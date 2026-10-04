@@ -116,6 +116,7 @@ public sealed partial class Plugin : IDalamudPlugin
     private Game.IpcProvider? ipcProvider;
     private IpcWindow? ipcWindow;
     private LinkConfirmWindow? linkConfirmWindow;
+    private AboutAutomationWindow? aboutAutomationWindow;
     private TodoOverlay? todoOverlay;
     private Localization.LocService? loc;
     private RouteWindow? routeWindow;
@@ -899,8 +900,10 @@ public sealed partial class Plugin : IDalamudPlugin
                 MountChoice = () => Settings.TravelMountId,
             };
             gameLinks.Travel = travel;
-            gameLinks.ShowWalk = () => Settings.ShowWalkToGiver;
-            gameLinks.ShowGoTo = () => Settings.ShowGoToGiver;
+            // The automation level (1.18, A10): every hand-off button asks it whether it shows.
+            Ui.AutomationGate.Attach(() => Settings.Automation);
+            gameLinks.ShowWalk = () => Ui.AutomationGate.Shows(Core.Companions.AutomationButtons.Walk);
+            gameLinks.ShowGoTo = () => Ui.AutomationGate.Shows(Core.Companions.AutomationButtons.GoTo);
             queryRunner = new QueryRunner(this, ui, Log);
             mainWindow = new MainWindow(this, ui, queryRunner, gameLinks, TextureProvider, PluginInterface, Log, RetryCatalogAsync);
             // The status line under the detail pane's pills while a trip runs: "Mounting…", "Flying to Varshahn…".
@@ -962,6 +965,11 @@ public sealed partial class Plugin : IDalamudPlugin
             linkConfirmWindow = new LinkConfirmWindow(gameLinks.OpenUrl);
             windowSystem.AddWindow(linkConfirmWindow);
             gameLinks.ConfirmLink = linkConfirmWindow.Ask;
+
+            // About automation (1.18, A10): reached from Settings, Help, the setup card and Questionable's first start.
+            var linkQuestion = linkConfirmWindow;
+            aboutAutomationWindow = new AboutAutomationWindow(url => linkQuestion.Ask(url, Ui.Strings.AboutAutomationTitle, Ui.Strings.AboutAutomationAgreementBody));
+            windowSystem.AddWindow(aboutAutomationWindow);
             DiscordCopy.Settings = Settings;
             DiscordCopy.SaveSettings = () => Settings.Save(PluginInterface);
 
@@ -1129,6 +1137,7 @@ public sealed partial class Plugin : IDalamudPlugin
             var questionableActions = new QuestionableActions(questionableIpc, Session, Settings, () => Settings.Save(PluginInterface), line => ChatGui.Print(line, Ui.Strings.ChatTag));
             diagnostics.CrossCheckMore = quest => questionableIpc.Wider(quest, (Session.States.TryGetValue(quest.RowId, out var evaluation) ? evaluation : null), Session.IsLive, Session.Version, questionableActions.FestivalRunning(quest));
             mainWindow.AttachQuestionable(questionableIpc, () => Settings.QuestionableHandoff, questionableActions);
+            questionableActions.OpenAboutAutomation = () => aboutAutomationWindow?.Show();
 
             // AutoDuty and Quest Map (decision 1): the detail pane's Duties section ("Run with AutoDuty", Duty Support or
             // Trust unless Settings allows the Duty Finder) and "Open in Quest Map"; /tsuki why points at the latter. The
@@ -1315,6 +1324,7 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.Overrides = moonlitPane;
             configWindow.Roster = Roster;
             configWindow.QuestText = QuestText;
+            configWindow.OpenAboutAutomation = () => aboutAutomationWindow?.Show();
             // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
             var exportService = new Game.ExportService(Session, Settings, Paths, unlockReader, () => moonlit.Catalog, diagnostics.PluginVersion, diagnostics.ClientGameVersion, Log)
             {
@@ -1426,6 +1436,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 OpenNearby: OpenNearby,
                 ShowSetup: mainWindow.ShowSetup);
             helpWindow = new HelpWindow(helpActions, PluginInterface);
+            helpWindow.OpenAboutAutomation = () => aboutAutomationWindow?.Show();
             command.StartTour = helpActions.StartTutorial;
             command.ShowTab = helpActions.ShowTab;
             windowSystem.AddWindow(helpWindow);
@@ -1444,7 +1455,12 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // "Set up your road" (1.7.0, decision 7): once on a fresh install, after the tour offer; Help reopens it.
             // Each switch applies at once and tells the service that follows it, as Settings does.
-            mainWindow.AttachSetup(new SetupCard(Settings, PluginInterface, Log, BuildSetupToggles(overlay, nearbyWindow), () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Automation, Core.Ui.SettingsAnchor.CompanionPlugins)));
+            mainWindow.AttachSetup(new SetupCard(Settings, PluginInterface, Log, BuildSetupToggles(overlay, nearbyWindow), () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Automation, Core.Ui.SettingsAnchor.CompanionPlugins))
+            {
+                // Onboarding offers the automation level once (1.18, A10): the card names it and opens its cards.
+                AutomationLevelName = () => Ui.Strings.AutomationLevelName(Core.Companions.AutomationLevels.LevelOf(Settings.Automation)),
+                OpenAutomationLevel = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Automation, Core.Ui.SettingsAnchor.AutomationLevel),
+            });
 
             // "Since you were away" (P7): the stored captures are kept from before this login's first save; the card
             // sits above the detail pane (after What's new) and the Characters dashboard opens it for any character.
@@ -1629,6 +1645,7 @@ public sealed partial class Plugin : IDalamudPlugin
             PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
         });
         Unwind("windows", windowSystem.RemoveAllWindows);
+        Unwind("automation level", Ui.AutomationGate.Detach);
         Unwind("settings window", () => configWindow?.Dispose());
         Unwind("fonts", Ui.Typography.Dispose);
         Unwind("banner grades", Ui.BannerGrading.Dispose);

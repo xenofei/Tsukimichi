@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Export;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
@@ -84,13 +85,41 @@ public sealed partial class Configuration : IPluginConfiguration
 
     // ---- 1.6.0: travel ----
     /// <summary>
-    /// Show Walk to giver (vnavmesh) beside Teleport. On by default; without vnavmesh the button stays, greyed, and
-    /// names it. The character only moves on a click.
+    /// Legacy (1.6 to 1.17): "Walk button", the toggle for Walk to giver. Since 1.18 it is a button of the automation
+    /// level (<see cref="AutomationShown"/>); a saved value is read once, by the migration in <see cref="Load"/>, and
+    /// never saved again.
     /// </summary>
-    public bool ShowWalkToGiver { get; set; } = true;
+    [Newtonsoft.Json.JsonProperty]
+    [Obsolete("Read once into AutomationShown.")]
+    public bool ShowWalkToGiver
+    {
+        set => legacyShowWalk = value;
+    }
 
-    /// <summary>Show Go to giver (teleport, aethernet and walk in one click, with Stop). On by default.</summary>
-    public bool ShowGoToGiver { get; set; } = true;
+    /// <summary>Legacy (1.6 to 1.17): "Go to giver button"; read once into <see cref="AutomationShown"/>, as <see cref="ShowWalkToGiver"/>.</summary>
+    [Newtonsoft.Json.JsonProperty]
+    [Obsolete("Read once into AutomationShown.")]
+    public bool ShowGoToGiver
+    {
+        set => legacyShowGoTo = value;
+    }
+
+    // The legacy toggles as the file had them (on when absent, their old default); private fields are never saved.
+    private bool legacyShowWalk = true;
+    private bool legacyShowGoTo = true;
+
+    // ---- 1.18: automation level (A10) ----
+    /// <summary>
+    /// The automation buttons shown (Settings › Automation › Automation buttons and its fine-tuning): Teleport, Gather,
+    /// Walk, Go to giver, Questionable, AutoDuty and Artisan. A level sets them; the level shown is derived from them
+    /// (<see cref="AutomationLevels.LevelOf"/>). Null only before the migration in <see cref="Load"/>: a fresh install
+    /// starts at <see cref="AutomationLevels.NewUserDefault"/>, an update keeps every button it showed.
+    /// </summary>
+    public AutomationButtons? AutomationShown { get; set; }
+
+    /// <summary><see cref="AutomationShown"/>; every button while it was never set.</summary>
+    [Newtonsoft.Json.JsonIgnore]
+    public AutomationButtons Automation => AutomationShown ?? AutomationLevels.Every;
 
     // ---- 1.10: travel, getting there faster ----
     /// <summary>Walk and Go to giver mount before a walk longer than this many yalms (0 never mounts).</summary>
@@ -845,6 +874,10 @@ public sealed partial class Configuration : IPluginConfiguration
             config.JournalShowOpensColumn = true;
             config.UnlocksColumnDefaultApplied = true;
         }
+
+        // 1.18 (A10): the automation level. A fresh install starts at Travel; an update keeps the buttons it showed (the
+        // Walk and Go to giver toggles as saved, every other hand-off on), so nothing a player uses disappears.
+        config.AutomationShown = AutomationLevels.Migrate(config.AutomationShown, hadFile, config.legacyShowWalk, config.legacyShowGoTo);
 
         // The setup card (1.7.0) is for a fresh install; a configuration saved before the card existed has set up already.
         config.SetupCardSeen ??= hadFile;

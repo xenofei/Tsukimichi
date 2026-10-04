@@ -5,25 +5,28 @@ using Tsukimichi.Core.Ui;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The travel controls every quest row shares (feature plan v5, 1.6.0): Teleport (always shown; without Lifestream
-/// greyed with a tooltip naming it, decision 2), Walk to giver and Go to giver (when shown in Settings; Stop while the
-/// character moves; greyed naming vnavmesh without it). <see cref="MenuItems"/> for a row's "…" or right-click menu,
+/// The travel controls every quest row shares (feature plan v5, 1.6.0): Teleport (shown from the Travel automation
+/// level, 1.18; without Lifestream greyed with a tooltip naming it, decision 2), Walk to giver and Go to giver (from
+/// Travel and walking; Stop while the character moves; greyed naming vnavmesh without it). <see cref="MenuItems"/> for a row's "…" or right-click menu,
 /// <see cref="Buttons"/> for a row's small buttons. Tooltips are composed only on hover.
 /// </summary>
 internal static class TravelControls
 {
-    /// <summary>Teleport, then Walk to giver and Go to giver (one Stop while moving), as menu items.</summary>
+    /// <summary>Teleport, then Walk to giver and Go to giver (one Stop while moving), as menu items; each only while its automation level shows it.</summary>
     public static void MenuItems(GameLinks links, QuestRecord quest, string teleportLabel)
     {
-        var teleport = links.CheckTeleport(quest);
-        if (ImGui.MenuItem(teleportLabel, enabled: teleport.Ready))
+        if (links.TeleportShown)
         {
-            links.TeleportToGiver(quest);
-        }
+            var teleport = links.CheckTeleport(quest);
+            if (ImGui.MenuItem(teleportLabel, enabled: teleport.Ready))
+            {
+                links.TeleportToGiver(quest);
+            }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(links.TeleportTooltip(quest, teleport));
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(links.TeleportTooltip(quest, teleport));
+            }
         }
 
         if (links.IsTraveling && (links.WalkShown || links.GoToShown))
@@ -77,7 +80,7 @@ internal static class TravelControls
     public static float ButtonsWidth(GameLinks links, string teleportLabel)
     {
         var gap = ImGui.GetStyle().ItemSpacing.X;
-        var width = gap + Chrome.ActionPillWidth(ActionIcons.TeleportIcon, teleportLabel, PillLayout.Row);
+        var width = links.TeleportShown ? gap + Chrome.ActionPillWidth(ActionIcons.TeleportIcon, teleportLabel, PillLayout.Row) : 0f;
         if (links.WalkShown)
         {
             width += gap + WalkWidth();
@@ -99,8 +102,12 @@ internal static class TravelControls
     /// </summary>
     public static void Buttons(GameLinks links, QuestRecord quest, string teleportLabel)
     {
-        ImGui.SameLine();
-        TeleportButton(links, quest, teleportLabel);
+        if (links.TeleportShown)
+        {
+            ImGui.SameLine();
+            TeleportButton(links, quest, teleportLabel);
+        }
+
         if (!links.WalkShown)
         {
             return;

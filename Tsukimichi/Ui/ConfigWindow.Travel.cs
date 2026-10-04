@@ -6,7 +6,8 @@ using Dalamud.Interface.Utility.Raii;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings › Automation › Travel (1.6.0; getting there faster, 1.10): the Walk and Go to giver buttons, "Mount for
+/// Settings › Automation › Travel (1.6.0; getting there faster, 1.10; the Walk and Go to giver buttons moved to the
+/// automation level in 1.18, and the block shows only while the level shows one of them): "Mount for
 /// walks over N yalms" (40 by default, Off never mounts), which mount (Mount Roulette or one the character owns), "Fly
 /// where unlocked" and "Sprint in towns". They apply to Walk to giver and Go to giver, which only move on a click; the
 /// panes read them per draw through GameLinks, so no callback is needed.
@@ -21,20 +22,14 @@ public sealed partial class ConfigWindow
 
     private void DrawTravelSettings()
     {
-        Header(Strings.ConfigSectionTravel);
-        var showWalk = settings.ShowWalkToGiver;
-        if (Toggle(Strings.ConfigShowWalk, Strings.ConfigShowWalkHint, ref showWalk, "travel vnavmesh walk move button"))
+        // The walking settings, while the automation level shows Walk or Go to giver (1.18, A10); the two buttons
+        // themselves are in Automation buttons › Fine-tune each button.
+        if (!AutomationGate.ShowsAny(Core.Companions.AutomationButtons.Walk | Core.Companions.AutomationButtons.GoTo))
         {
-            settings.ShowWalkToGiver = showWalk;
-            Save();
+            return;
         }
 
-        var showGoTo = settings.ShowGoToGiver;
-        if (Toggle(Strings.ConfigShowGoTo, Strings.ConfigShowGoToHint, ref showGoTo, "travel teleport lifestream aethernet vnavmesh go to giver button"))
-        {
-            settings.ShowGoToGiver = showGoTo;
-            Save();
-        }
+        Header(Strings.ConfigSectionTravel);
 
         if (Setting(Strings.ConfigTravelMountDistance, Strings.ConfigTravelMountDistanceHint, "travel mount ride distance yalms walk vnavmesh"))
         {

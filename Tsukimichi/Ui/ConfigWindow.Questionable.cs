@@ -30,6 +30,13 @@ public sealed partial class ConfigWindow
 
     private void DrawQuestionableSettings()
     {
+        // Only while the automation level shows the Questionable buttons (1.18, A10): below it Tsukimichi starts no run,
+        // so there is no start to confirm and no duty to guard.
+        if (!AutomationGate.Shows(AutomationButtons.Questionable))
+        {
+            return;
+        }
+
         Header(Strings.ConfigQuestionableSection);
         if (Questionable is { } questionable)
         {

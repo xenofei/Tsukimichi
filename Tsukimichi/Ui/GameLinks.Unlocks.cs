@@ -30,11 +30,11 @@ public sealed partial class GameLinks
     public bool IsAttunedConfirmed(uint aetheryteId) => Travel?.IsAttunedConfirmed(aetheryteId) == true;
 
     /// <summary>
-    /// Whether Teleport to the aetheryte can start now: Lifestream loaded, set up and idle, and the game confirms the
-    /// character is attuned to it.
+    /// Whether Teleport to the aetheryte can start now: shown at the automation level, Lifestream loaded, set up and
+    /// idle, and the game confirms the character is attuned to it.
     /// </summary>
     public bool CanTeleportTo(uint aetheryteId) =>
-        aetheryteId != 0 && TeleportAvailable && LifestreamReason() is null && !TeleportBusy && IsAttunedConfirmed(aetheryteId);
+        aetheryteId != 0 && TeleportShown && TeleportAvailable && LifestreamReason() is null && !TeleportBusy && IsAttunedConfirmed(aetheryteId);
 
     /// <summary>Teleports to the aetheryte through Lifestream; false when nothing started.</summary>
     public bool TeleportTo(uint aetheryteId, string name)

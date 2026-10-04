@@ -316,7 +316,7 @@ public sealed class RouteWindow : Window
             }
         }
 
-        if (Questionable is { } questionable)
+        if (AutomationGate.Questionable(Questionable) is { } questionable)
         {
             Chrome.SameLineOrWrap(QuestionableActions.ButtonWidth);
             questionable.DrawButton(QuestionableHost, "##questionable", v.Route, static route => StepRowIds(route));
@@ -660,7 +660,7 @@ public sealed class RouteWindow : Window
             // Walk shows on every step (each giver is its own walk) while the window is wide enough; narrower, it and
             // Go to giver are in the step's right-click menu.
             var walk = links.WalkShown && !PaneFit.FoldActions(width / UiMetrics.Scale);
-            textEnd = DrawStepButtons(stepQuest, flag: true, teleport: l.Teleport, walk, min.X + width, min.Y, rowHeight);
+            textEnd = DrawStepButtons(stepQuest, flag: true, teleport: l.Teleport && links.TeleportShown, walk, min.X + width, min.Y, rowHeight);
             ImGui.SetCursorScreenPos(min);
         }
 

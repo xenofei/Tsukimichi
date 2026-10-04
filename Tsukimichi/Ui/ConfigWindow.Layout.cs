@@ -148,6 +148,7 @@ public sealed partial class ConfigWindow
         new(SettingsSection.InGame, DrawMenusAndTooltips),
         new(SettingsSection.InGame, DrawNearbySettings, anchor: SettingsAnchor.Nearby),
         new(SettingsSection.InGame, DrawWotsit),
+        new(SettingsSection.Automation, DrawAutomationLevel, AutomationKeywords, SettingsAnchor.AutomationLevel),
         new(SettingsSection.Automation, DrawCompanionPlugins, anchor: SettingsAnchor.CompanionPlugins),
         new(SettingsSection.Automation, DrawTravelSettings),
         new(SettingsSection.Automation, DrawQuestionableSettings),

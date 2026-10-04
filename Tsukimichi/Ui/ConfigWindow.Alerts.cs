@@ -62,6 +62,13 @@ public sealed partial class ConfigWindow
     /// </summary>
     private void DrawNeedsYou()
     {
+        // Only while the automation level shows a hand-off that runs (1.18, A10): at Tracker only and Travel, Tsukimichi
+        // starts nothing that could need you.
+        if (!AutomationGate.ShowsAny(AutomationGate.RunningHandOffs))
+        {
+            return;
+        }
+
         Header(Strings.ConfigSectionNeedsYou);
         Note(Strings.ConfigNeedsYouScope, Strings.ConfigNeedsYouScopeHint, "needs you alert automation hand-off run questionable autoduty");
 

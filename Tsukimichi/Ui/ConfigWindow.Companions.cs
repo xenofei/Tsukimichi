@@ -95,6 +95,12 @@ public sealed partial class ConfigWindow
     /// </summary>
     private void DrawAutoDutySettings()
     {
+        // Only while the automation level shows Run with AutoDuty (1.18, A10): below it there is nothing to set.
+        if (!AutomationGate.Shows(Core.Companions.AutomationButtons.AutoDuty))
+        {
+            return;
+        }
+
         Header(Strings.ConfigSectionAutoDuty);
         var allowDutyFinder = settings.AutoDutyAllowDutyFinder;
         if (Toggle(Strings.CompanionAutoDutyAllowDutyFinder, Strings.CompanionAutoDutyAllowDutyFinderHint, ref allowDutyFinder, "autoduty duty support trust duty finder dungeon queue"))

@@ -6,7 +6,8 @@
     <Name>Tsukimichi</Name>
     <Punchline>Walk the moon's path: every quest, every requirement, every unique reward.</Punchline>
     <Description>A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.
-Moonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.</Description>
+Moonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.
+Local only: no network code.</Description>
     <RepoUrl>https://github.com/xenofei/Tsukimichi</RepoUrl>
     <!-- Dalamud reads the installer icon from the plugin's own manifest (DalamudPackager maps IconUrl to it), not from pluginmaster.json. -->
     <IconUrl>https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon-medallion.png</IconUrl>
