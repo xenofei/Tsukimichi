@@ -123,7 +123,7 @@ public static class BlockerText
         MountRequirement { HasMount: null } => CoreText.T("Core.Blocker.NotChecked.Mount", "mount"),
         HouseRequirement { HasHouse: null } => CoreText.T("Core.Blocker.NotChecked.House", "house"),
         AchievementRequirement => CoreText.T("Core.Blocker.NotChecked.Achievements", "achievements"),
-        GameGateRequirement { Checked: null } g => g.Gate,
+        GameGateRequirement { IsNotChecked: true } g => g.Gate,
         AcceptConditionRequirement => CoreText.T("Core.Blocker.NotChecked.AcceptCondition", "accept condition"),
         _ => null,
     };

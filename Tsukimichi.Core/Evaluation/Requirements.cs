@@ -175,14 +175,28 @@ public sealed record AchievementRequirement(uint RowId, bool Loaded) : Requireme
 
 /// <summary>
 /// A gate the game checks before it offers the quest (<see cref="QuestCatalog.GameGateOf"/>): <paramref name="Gate"/>
-/// says what in English ("a relic weapon nexus equipped"). A gate Tsukimichi cannot read (<see cref="Checked"/> null)
+/// says what in English ("a relic weapon nexus equipped"). A gate Tsukimichi cannot read (<see cref="IsNotChecked"/>)
 /// is listed as not checked and keeps the quest from reading Ready; a gear gate the capture can answer
-/// (<see cref="CharacterSnapshot.GateItems"/>) is judged like any other requirement.
+/// (<see cref="CharacterSnapshot.GateItems"/>), an unlock-link gate it read (<see cref="CharacterSnapshot.GateUnlockLinks"/>)
+/// and a gate a completed <see cref="QuestGate.MetBy"/> quest passed are judged like any other requirement.
 /// </summary>
 public sealed record GameGateRequirement(string Gate) : Requirement(RequirementKind.GameGate)
 {
     /// <summary>Where the gate's weapons had to be when it was judged; null when it was not (no item list, or no capture to judge it from).</summary>
     public GateHold? Checked { get; init; }
+
+    /// <summary>
+    /// A gate other than one of gear that was judged: from the captured unlock links (<see cref="QuestGate.UnlockLinks"/>)
+    /// or by a completed <see cref="QuestGate.MetBy"/> quest. False for a gear gate (see <see cref="Checked"/>) and for a
+    /// gate nobody judged.
+    /// </summary>
+    public bool Judged { get; init; }
+
+    /// <summary>Neither judged from gear nor otherwise: listed as not checked, never met, never a block on its own.</summary>
+    public bool IsNotChecked => Checked is null && !Judged;
+
+    /// <summary>A judged unlock-link gate: the links the capture read as not set; ascending. Empty otherwise.</summary>
+    public uint[] MissingLinks { get; init; } = [];
 
     /// <summary>The gate-listed weapons the character has equipped (any stage of the line, not only the one wanted).</summary>
     public uint[] Equipped { get; init; } = [];

@@ -84,6 +84,12 @@ public sealed class QuestCatalog
             .Distinct()
             .Order()
             .ToArray();
+        GateUnlockLinkWatch = knownGates.Values
+            .Where(g => g.UnlockLinks is not null)
+            .SelectMany(g => g.UnlockLinks!)
+            .Distinct()
+            .Order()
+            .ToArray();
 
         // Curated ids that name no quest of this catalog (a test catalog, a row the game dropped) are left out here.
         var known = new Dictionary<uint, uint[]>();
@@ -235,9 +241,10 @@ public sealed class QuestCatalog
     public uint[] ExtraPrerequisitesOf(uint rowId) => extraPrerequisites.TryGetValue(rowId, out var ids) ? ids : [];
 
     /// <summary>
-    /// The gate the game checks before it offers <paramref name="rowId"/> that Tsukimichi cannot read
-    /// (<c>curated/game_gates.json</c>); null for nearly every quest. The evaluator lists it as not checked, so the
-    /// quest reads Not checked where it would otherwise read Ready.
+    /// The gate the game checks before it offers <paramref name="rowId"/> that no quest of the sheets records
+    /// (<c>curated/game_gates.json</c>); null for nearly every quest. The evaluator judges it from the capture where it
+    /// can (<c>Evaluation.GameGateCheck</c>) and lists it as not checked otherwise, so the quest reads Not checked where
+    /// it would otherwise read Ready.
     /// </summary>
     public QuestGate? GameGateOf(uint rowId) => gameGates.GetValueOrDefault(rowId);
 
@@ -262,13 +269,28 @@ public sealed class QuestCatalog
     public uint[] MountWatch { get; }
 
     /// <summary>
-    /// The accept conditions <see cref="PrerequisitesOf"/> cannot use, values that are no quest of this catalog: the
-    /// evaluator lists them as not checked. Empty for most quests.
+    /// Every unlock link a gate of this catalog needs set (<see cref="QuestGate.UnlockLinks"/>), ascending and distinct:
+    /// what a capture reads (<see cref="CharacterSnapshot.GateUnlockLinks"/>). Empty when no gate names one.
+    /// </summary>
+    public uint[] GateUnlockLinkWatch { get; }
+
+    /// <summary>
+    /// The accept conditions <see cref="PrerequisitesOf"/> cannot use, values that are no quest of this catalog and that
+    /// the quest's game gate does not stand for (<see cref="QuestGate.UnlockLinks"/>, <see cref="QuestGate.AcceptConditions"/>):
+    /// the evaluator lists them as not checked. Empty for most quests.
     /// </summary>
     public uint[] UncheckedAcceptConditions(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        return quest.AcceptConditions.Length == 0 ? quest.AcceptConditions : quest.AcceptConditions.Where(id => !ByRowId.ContainsKey(id)).ToArray();
+        if (quest.AcceptConditions.Length == 0)
+        {
+            return quest.AcceptConditions;
+        }
+
+        var gate = GameGateOf(quest.RowId);
+        return quest.AcceptConditions
+            .Where(id => !ByRowId.ContainsKey(id) && !(gate is not null && (gate.AcceptConditions.Contains(id) || (gate.UnlockLinks?.Contains(id) ?? false))))
+            .ToArray();
     }
 
     /// <summary>Lookup by Quest sheet row id. Kept for older callers; the name does not say which id it takes.</summary>
@@ -376,7 +398,21 @@ public sealed class QuestCatalog
 /// The mounts that must all be owned, when the gate is a mount collection (the seven Lanners before the Firebird);
 /// judged from the owned mounts a capture reads (<see cref="QuestCatalog.MountWatch"/>). Null for any other gate.
 /// </param>
-public sealed record QuestGate(string Gate, uint[] After, GateItems? Items = null, uint[]? Mounts = null);
+public sealed record QuestGate(string Gate, uint[] After, GateItems? Items = null, uint[]? Mounts = null)
+{
+    /// <summary>
+    /// The unlock links that must all be set, when the game keeps the gate as unlock links (Occult Record entries, a blue
+    /// magic spell learned); judged from the links a capture reads (<see cref="QuestCatalog.GateUnlockLinkWatch"/>).
+    /// Null for any other gate.
+    /// </summary>
+    public uint[]? UnlockLinks { get; init; }
+
+    /// <summary>Quests the game gives only once the gate is passed: one of them completed meets it. Empty for most gates.</summary>
+    public uint[] MetBy { get; init; } = [];
+
+    /// <summary>The sheet's accept conditions that are no quest which this gate stands for (<see cref="QuestCatalog.UncheckedAcceptConditions"/> leaves them out).</summary>
+    public uint[] AcceptConditions { get; init; } = [];
+}
 
 /// <summary>Where a gate's weapons must be (<see cref="GateItems.Hold"/>).</summary>
 public enum GateHold

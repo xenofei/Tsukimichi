@@ -119,6 +119,16 @@ public sealed record CharacterSnapshot
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public GateItemCapture? GateItems { get; init; }
 
+    /// <summary>
+    /// The unlock links the game gates of curated <c>game_gates.json</c> check (<see cref="QuestGate.UnlockLinks"/>,
+    /// feature plan v7 C3: Occult Record entries, blue magic learned, the chocobo companion), read at capture from the
+    /// client's unlock-link flags: the watched links set (<see cref="CollectibleSet.Owned"/>) and not set
+    /// (<see cref="CollectibleSet.Missing"/>). A link in neither list was not read, and a gate that needs it is not
+    /// checked. Additive at schema v1: null in files written before 1.19 and when nothing was read; null is not written.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CollectibleSet? GateUnlockLinks { get; init; }
+
     public byte MaxExpansion { get; init; }
     public byte LevelCap { get; init; }
 

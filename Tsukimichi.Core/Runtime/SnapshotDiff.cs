@@ -114,7 +114,8 @@ public sealed record SnapshotDiff(
         || old.CarrierLevel != @new.CarrierLevel
         || !SameEntries(old.SatisfactionRanks, @new.SatisfactionRanks)
         || !SameSequence(old.RepeatFlags, @new.RepeatFlags)
-        || !GateItemCapture.Same(old.GateItems, @new.GateItems);
+        || !GateItemCapture.Same(old.GateItems, @new.GateItems)
+        || !(old.GateUnlockLinks is null ? @new.GateUnlockLinks is null : old.GateUnlockLinks.SameIds(@new.GateUnlockLinks));
 
     /// <summary>Running festivals by id with their phase, −1 when the capture holds none; the first entry of a repeated id wins.</summary>
     private static Dictionary<ushort, int> FestivalPhases(CharacterSnapshot s)

@@ -264,8 +264,9 @@ public static class RequirementEvaluator
         }
 
         // A gate the game checks before it offers the quest (curated/game_gates.json). A gear gate the capture can
-        // answer is judged, and so is a mount collection (MountCheck); any other is never judged, so never met, and the
-        // resolver reads the quest Not checked rather than Blocked when nothing else is missing (GameGateCheck).
+        // answer is judged, and so are a mount collection (MountCheck), unlock links the capture read and a gate a
+        // completed metBy quest passed; any other is never judged, so never met, and the resolver reads the quest Not
+        // checked rather than Blocked when nothing else is missing (GameGateCheck).
         if (catalog.GameGateOf(q.RowId) is { } gate)
         {
             results.Add(gate.Mounts is { } mounts
