@@ -31,6 +31,15 @@ dotnet run --project Tsukimichi.DataGen -c Release --no-build -- `
 - `--offer` and `--tag` write `portrait_pack.json` for the release the zip will be attached to. Without them, nothing in the repository changes.
 - `--limit N` builds from the N busiest givers, and `--ids a,b` from just those. Use either for a quick look at the crops.
 - `--skip a,b` leaves out givers whose crops missed on the contact sheets (a raised weapon or a very tall hat can fool the head finder). Rebuild after skipping. With the cache, a rebuild takes seconds.
+- `--built yyyy-MM-dd` sets the manifest's build date. Without it the date comes from the game version (`2026.09.15.0000.0000` is 2026-09-15), never from the clock.
+
+### Same inputs, same bytes
+
+From the same cache, install, `--built` date and .NET runtime, a rebuild writes a byte-identical zip with the same SHA-256, on any day and on Windows or Linux. Every entry, the manifest included, is stored rather than deflated. Every entry has one fixed timestamp and no external attributes. The "version made by" platform byte, which .NET sets from the OS and offers no API for, is rewritten to 0. `PortraitPackInstallTests.The_zip_writer_makes_these_exact_bytes` pins the writer's output.
+
+One thing is not pinned: the images. Each one is a PNG deflated by the zlib that ships inside the .NET runtime (zlib-ng since .NET 9) at its smallest-size level. Another runtime version can compress the same pixels into other bytes, and possibly so can another CPU, since zlib-ng picks its code path by CPU features. Other image bytes change their hashes in the manifest, and so the zip. Build a pack and its rebuilds with the same SDK. If a rebuild's SHA-256 differs from `portrait_pack.json`, it is a new pack: give it the next `portraits-N` tag rather than replacing the asset.
+
+The 1.20.0 builder deflated the manifest and stamped it with the build day, so the next build differs from `portraits-1` even from the same photos. `portraits-1` and its `portrait_pack.json` stay valid as they are.
 
 **Never commit the zip, the sheets or the cache.** They are Square Enix art, rendered by Garland Tools (photos by Celes). Only `portrait_pack.json` is committed.
 

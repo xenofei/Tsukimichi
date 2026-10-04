@@ -13752,6 +13752,22 @@
     <value>Try again</value>
     <comment>Portrait pack action after a failed download: starts it again.</comment>
   </data>
+  <data name="Pack.StatusUpdateFailed" xml:space="preserve">
+    <value>Update failed</value>
+    <comment>Portrait pack status after a failed update to a newer pack (with the hint dot).</comment>
+  </data>
+  <data name="Pack.UpdateKeepsWorking" xml:space="preserve">
+    <value>Pack {0} is still installed and in use.</value>
+    <comment>Portrait pack, the Tertiary line under a failed update. {0} = the installed pack's number.</comment>
+  </data>
+  <data name="Pack.StatusRemoveFailed" xml:space="preserve">
+    <value>Remove failed</value>
+    <comment>Portrait pack status after Remove pack could not delete it (with the hint dot).</comment>
+  </data>
+  <data name="Pack.LineRemoveFailed" xml:space="preserve">
+    <value>Tsukimichi couldn't delete the pack's files, so nothing was removed. The pack is still installed.</value>
+    <comment>Portrait pack line after a failed removal.</comment>
+  </data>
   <data name="Pack.CopyReport" xml:space="preserve">
     <value>Copy report</value>
     <comment>Portrait pack action after a fingerprint mismatch: copies the version, hashes and byte count.</comment>

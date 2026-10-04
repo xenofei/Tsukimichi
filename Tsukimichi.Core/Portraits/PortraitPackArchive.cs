@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Security.Cryptography;
 
@@ -196,8 +197,20 @@ public static class PortraitPackArchive
 
     /// <summary>
     /// Writes a pack as <c>Tsukimichi.DataGen --portrait-pack</c> does: the manifest, then each image under
-    /// <c>portraits/</c>, in name order, stored (a PNG does not compress further) with a fixed timestamp, so the same
-    /// images always make the same bytes and the same SHA-256. <paramref name="images"/> must be exactly the manifest's.
+    /// <c>portraits/</c>, in name order, so the same inputs (the same images and manifest, whose build date is an input
+    /// too: <see cref="PortraitPackManifest.BuiltDateOf"/>) always make the same bytes and the same SHA-256, on any
+    /// machine. Nothing in the zip depends on the machine that wrote it:
+    /// <list type="bullet">
+    /// <item>every entry is stored, the manifest too (a PNG does not compress further, and a deflater's output can
+    /// change with the runtime's zlib);</item>
+    /// <item>every entry has the same fixed timestamp and no external attributes (.NET gives an entry made on Unix its
+    /// file permissions there);</item>
+    /// <item>the "version made by" platform byte, which .NET sets from the OS it runs on (0 on Windows, 3 on Unix) and
+    /// offers no way to set, is rewritten to 0 in every central directory header after the zip is written;</item>
+    /// <item>the zip is built in memory, a seekable stream, so .NET never writes data descriptors after the entries.</item>
+    /// </list>
+    /// What remains is .NET's zip writer itself: a .NET version that wrote its headers differently would make other
+    /// bytes from the same inputs (a test pins the writer's output). <paramref name="images"/> must be exactly the manifest's.
     /// </summary>
     public static void Write(Stream output, PortraitPackManifest manifest, IReadOnlyDictionary<string, byte[]> images)
     {
@@ -210,20 +223,55 @@ public static class PortraitPackArchive
         }
 
         var stamp = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
-        using var zip = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true);
-        var manifestEntry = zip.CreateEntry(PortraitPackManifest.FileName, CompressionLevel.SmallestSize);
-        manifestEntry.LastWriteTime = stamp;
-        using (var stream = manifestEntry.Open())
+        using var buffer = new MemoryStream();
+        using (var zip = new ZipArchive(buffer, ZipArchiveMode.Create, leaveOpen: true))
         {
-            stream.Write(manifest.ToJson());
+            void Add(string name, byte[] bytes)
+            {
+                var entry = zip.CreateEntry(name, CompressionLevel.NoCompression);
+                entry.LastWriteTime = stamp;
+                entry.ExternalAttributes = 0;
+                using var stream = entry.Open();
+                stream.Write(bytes);
+            }
+
+            Add(PortraitPackManifest.FileName, manifest.ToJson());
+            foreach (var (name, bytes) in images.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+            {
+                Add(ImagePrefix + name, bytes);
+            }
         }
 
-        foreach (var (name, bytes) in images.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+        var written = buffer.GetBuffer().AsSpan(0, (int)buffer.Length);
+        PinVersionMadeBy(written);
+        output.Write(written);
+    }
+
+    /// <summary>
+    /// Sets the platform byte of "version made by" to 0 (MS-DOS and Windows) in every central directory header of the
+    /// zip in <paramref name="zip"/>, as written by <see cref="Write"/>: no archive comment, no Zip64.
+    /// </summary>
+    private static void PinVersionMadeBy(Span<byte> zip)
+    {
+        const uint EndSignature = 0x06054b50;
+        const uint HeaderSignature = 0x02014b50;
+        var end = zip.Length - 22;
+        if (end < 0 || BinaryPrimitives.ReadUInt32LittleEndian(zip[end..]) != EndSignature)
         {
-            var entry = zip.CreateEntry(ImagePrefix + name, CompressionLevel.NoCompression);
-            entry.LastWriteTime = stamp;
-            using var stream = entry.Open();
-            stream.Write(bytes);
+            throw new InvalidOperationException("The zip does not end with its directory record.");
+        }
+
+        int count = BinaryPrimitives.ReadUInt16LittleEndian(zip[(end + 10)..]);
+        var at = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(zip[(end + 16)..]));
+        for (var i = 0; i < count; i++)
+        {
+            if (BinaryPrimitives.ReadUInt32LittleEndian(zip[at..]) != HeaderSignature)
+            {
+                throw new InvalidOperationException("The zip's central directory is not where its end record says.");
+            }
+
+            zip[at + 5] = 0;
+            at += 46 + BinaryPrimitives.ReadUInt16LittleEndian(zip[(at + 28)..]) + BinaryPrimitives.ReadUInt16LittleEndian(zip[(at + 30)..]) + BinaryPrimitives.ReadUInt16LittleEndian(zip[(at + 32)..]);
         }
     }
 

@@ -39,8 +39,8 @@ public sealed class EvercoldPrepDataTests(FixtureCatalog fixture, GameDataFixtur
         // Today's data is 7.x: the card is live until the curated day.
         var launch = EvercoldPrep.Launch(fixture.Curated);
         Assert.Equal(Dawntrail, EvercoldPrep.LatestExpansion(catalog));
-        Assert.False(EvercoldPrep.IsRetired(catalog, launch, launch.EarlyAccessUtc.AddDays(-30)));
-        Assert.True(EvercoldPrep.IsRetired(catalog, launch, launch.EarlyAccessUtc));
+        Assert.False(EvercoldPrep.IsRetired(catalog, launch, launch.EarlyAccessUtc.AddDays(-30), TimeZoneInfo.Utc));
+        Assert.True(EvercoldPrep.IsRetired(catalog, launch, launch.EarlyAccessUtc, TimeZoneInfo.Utc));
     }
 
     [Fact]

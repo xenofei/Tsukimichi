@@ -140,6 +140,12 @@ public static class PortraitPackDownload
     public static readonly TimeSpan ReadStall = TimeSpan.FromSeconds(60);
 
     /// <summary>
+    /// Once the offered size has arrived, how long the body may take to end (or to show a byte more, a mismatch) before
+    /// the download goes on without waiting for its end.
+    /// </summary>
+    public static readonly TimeSpan EndGrace = TimeSpan.FromSeconds(2);
+
+    /// <summary>
     /// Fetches <paramref name="offer"/>'s pack into <paramref name="destination"/> (created or replaced). Returns
     /// <see cref="PortraitPackFailure.None"/> when the file is exactly the offered pack; otherwise the reason, with the
     /// file deleted. Disk errors are reported, not thrown.
@@ -288,6 +294,17 @@ public static class PortraitPackDownload
                 hash.AppendData(buffer, 0, read);
                 await file.WriteAsync(buffer.AsMemory(0, read), cancellation).ConfigureAwait(false);
                 progress?.Report(new PortraitPackProgress(received, offer.Size));
+                if (received == offer.Size)
+                {
+                    // Every byte promised is here: never wait on for the end of a body that may not come (a chunked
+                    // response without its terminator). A byte more, already sent, is still a mismatch.
+                    if (await MoreAfterEnd(body, cancellation).ConfigureAwait(false))
+                    {
+                        return PortraitPackFailure.TooLarge;
+                    }
+
+                    break;
+                }
             }
 
             await file.FlushAsync(cancellation).ConfigureAwait(false);
@@ -313,5 +330,28 @@ public static class PortraitPackDownload
         return string.Equals(sha, offer.Sha256, StringComparison.Ordinal)
             ? PortraitPackFailure.None
             : PortraitPackFailure.HashMismatch;
+    }
+
+    /// <summary>
+    /// After the offered size has arrived: whether the body holds more. Waits at most <see cref="EndGrace"/> for its
+    /// end; a body that neither ends nor sends more by then, or whose connection then drops, is taken as ended.
+    /// </summary>
+    private static async Task<bool> MoreAfterEnd(Stream body, CancellationToken cancellation)
+    {
+        var probe = new byte[1];
+        using var grace = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+        grace.CancelAfter(EndGrace);
+        try
+        {
+            return await body.ReadAsync(probe, grace.Token).ConfigureAwait(false) > 0;
+        }
+        catch (OperationCanceledException) when (!cancellation.IsCancellationRequested)
+        {
+            return false;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
     }
 }

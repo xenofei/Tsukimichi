@@ -33,6 +33,10 @@ public sealed partial class ConfigWindow
     private bool packDialogOpen;
     private bool packDialogFocusCancel;
     private double packDialogOpenedAt;
+    private int packDialogOpenedFrame;
+
+    // The confirmation was opened by picking Game art + pack: once the pack is in, Giver portraits switches to it.
+    private bool packAskedForPack;
     private bool openPackRemove;
     private Vector2 packRemoveAnchor;
     private float packBar;
@@ -45,8 +49,11 @@ public sealed partial class ConfigWindow
     /// <summary>The 1.17 Settings hint's dot: amber, and a darker one on Ishgard Snow for 3:1 (spec-1.20 F4, "--hint").</summary>
     private static Vector4 PackHintDot => Theme.IsLight ? new Vector4(0x8E / 255f, 0x6A / 255f, 0x1E / 255f, 1f) : new Vector4(0xC9 / 255f, 0xA8 / 255f, 0x66 / 255f, 1f);
 
-    /// <summary>Opens the download confirmation (Download…, Update…, Download again…, or Game art + pack without the pack).</summary>
-    private void OpenPackDialog()
+    /// <summary>
+    /// Opens the download confirmation (Download…, Update…, Download again…, or Game art + pack without the pack:
+    /// <paramref name="askedForPack"/>, so Giver portraits switches to it once the pack is in).
+    /// </summary>
+    private void OpenPackDialog(bool askedForPack = false)
     {
         if (PortraitPack?.Offer is null)
         {
@@ -56,6 +63,8 @@ public sealed partial class ConfigWindow
         packDialogOpen = true;
         packDialogFocusCancel = true;
         packDialogOpenedAt = ImGui.GetTime();
+        packDialogOpenedFrame = ImGui.GetFrameCount();
+        packAskedForPack = askedForPack;
     }
 
     /// <summary>The Portrait pack row: status, lines and actions at one fixed height, then the remove popover.</summary>
@@ -191,7 +200,7 @@ public sealed partial class ConfigWindow
                 break;
             case PackAct.Retry:
                 // Try again after a failed download: the player clicks it, as they clicked Download before.
-                service.StartDownload();
+                service.StartDownload(packAskedForPack);
                 break;
             case PackAct.Cancel:
                 service.Cancel();
@@ -228,13 +237,26 @@ public sealed partial class ConfigWindow
                 return new PackRow(Strings.PackStatusRemoving, string.Empty, null, null, false, null, PackAct.None, null, PackAct.None);
         }
 
-        // A download that just stopped says why, with one way forward (it stays until the next run or a restart).
+        // A run that just failed says why, with one way forward (it stays until the next run or a restart): a download,
+        // an update (the installed pack stays in use, and the row says so) or a removal (the pack stays installed).
         var failure = service.LastResult;
-        if (installed is null && !service.LastWasRemoval && service.LastFinishedUtc != default && failure != PortraitPackFailure.None && offer is not null)
+        var failed = PortraitPackStatus.FailureRowOf(service.State, offer is not null, failure, service.LastWasRemoval, service.LastFinishedUtc != default);
+        if (failed == PortraitPackFailureRow.Removal)
         {
+            return new PackRow(Strings.PackStatusRemoveFailed, Strings.PackLineRemoveFailed, null, null, true, null, PackAct.None, Strings.PackRemove, PackAct.Remove);
+        }
+
+        if (failed != PortraitPackFailureRow.None && offer is not null)
+        {
+            var keeps = failed == PortraitPackFailureRow.Update && installed is { } kept
+                ? string.Format(c, Strings.PackUpdateKeepsWorking, kept.PackNumber.ToString(c))
+                : null;
+            var update = keeps is not null;
             if (failure == PortraitPackFailure.Cancelled)
             {
-                return new PackRow(Strings.PackStatusCancelled, Strings.PackLineCancelled, null, null, false, Strings.PackDownload, PackAct.Confirm, null, PackAct.None);
+                return update
+                    ? new PackRow(Strings.PackStatusCancelled, Strings.PackLineCancelled, keeps, null, false, Strings.PackUpdate, PackAct.Confirm, Strings.PackRemove, PackAct.Remove)
+                    : new PackRow(Strings.PackStatusCancelled, Strings.PackLineCancelled, null, null, false, Strings.PackDownload, PackAct.Confirm, null, PackAct.None);
             }
 
             var reason = failure switch
@@ -250,7 +272,7 @@ public sealed partial class ConfigWindow
                 _ => Strings.PackFailedHttp,
             };
             var copy = failure is PortraitPackFailure.HashMismatch or PortraitPackFailure.SizeMismatch or PortraitPackFailure.TooLarge;
-            return new PackRow(Strings.PackStatusFailed, reason, null, null, true, Strings.PackTryAgain, PackAct.Retry, copy ? Strings.PackCopyReport : null, copy ? PackAct.CopyReport : PackAct.None);
+            return new PackRow(update ? Strings.PackStatusUpdateFailed : Strings.PackStatusFailed, reason, keeps, null, true, Strings.PackTryAgain, PackAct.Retry, copy ? Strings.PackCopyReport : null, copy ? PackAct.CopyReport : PackAct.None);
         }
 
         switch (service.State)
@@ -328,6 +350,10 @@ public sealed partial class ConfigWindow
         var c = CultureInfo.CurrentCulture;
         var size = PortraitPackOffer.SizeText(offer.Size);
 
+        // Called inside Settings' own Begin: the viewport Settings is on (the game window, or a platform window of its
+        // own when dragged out), whose foreground the scrim is drawn on.
+        var settingsViewport = ImGui.GetWindowViewport();
+
         // Rise (0.16 s, 4 px), instant under Reduce motion.
         var t = UiMetrics.ReduceMotion ? 1f : (float)Math.Clamp((ImGui.GetTime() - packDialogOpenedAt) / MotionTokens.Rise, 0d, 1d);
         var ease = 1f - ((1f - t) * (1f - t) * (1f - t));
@@ -357,15 +383,22 @@ public sealed partial class ConfigWindow
             var min = ImGui.GetWindowPos();
             var max = min + ImGui.GetWindowSize();
 
-            // The scrim: over the Settings window only, around (never over) the dialog; the only dimming.
+            // The scrim: over the Settings window only, around (never over) the dialog; the only dimming. Drawn on the
+            // foreground of Settings' own viewport, so it covers Settings whether or not the dialog shares its platform
+            // window (the dialog's draw list is clipped to the dialog's). It stays a cut-out around the dialog's rect.
             var scrim = Theme.IsLight ? new Vector4(26 / 255f, 33 / 255f, 54 / 255f, 0.30f * ease) : new Vector4(5 / 255f, 7 / 255f, 14 / 255f, 0.55f * ease);
             var ink = Theme.U32(scrim);
-            dl.PushClipRect(settingsMin, settingsMax, false);
-            dl.AddRectFilled(settingsMin, new Vector2(settingsMax.X, min.Y), ink);
-            dl.AddRectFilled(new Vector2(settingsMin.X, max.Y), settingsMax, ink);
-            dl.AddRectFilled(new Vector2(settingsMin.X, min.Y), new Vector2(min.X, max.Y), ink);
-            dl.AddRectFilled(new Vector2(max.X, min.Y), new Vector2(settingsMax.X, max.Y), ink);
-            dl.PopClipRect();
+            var cover = ImGui.GetForegroundDrawList(settingsViewport);
+            var top = Math.Clamp(min.Y, settingsMin.Y, settingsMax.Y);
+            var bottom = Math.Clamp(max.Y, settingsMin.Y, settingsMax.Y);
+            var leftEdge = Math.Clamp(min.X, settingsMin.X, settingsMax.X);
+            var rightEdge = Math.Clamp(max.X, settingsMin.X, settingsMax.X);
+            cover.PushClipRect(settingsMin, settingsMax, false);
+            cover.AddRectFilled(settingsMin, new Vector2(settingsMax.X, top), ink);
+            cover.AddRectFilled(new Vector2(settingsMin.X, bottom), settingsMax, ink);
+            cover.AddRectFilled(new Vector2(settingsMin.X, top), new Vector2(leftEdge, bottom), ink);
+            cover.AddRectFilled(new Vector2(rightEdge, top), new Vector2(settingsMax.X, bottom), ink);
+            cover.PopClipRect();
 
             var s = Theme.Surface;
             var wrap = UiMetrics.Px(PackDialogWidthLogical - 36f);
@@ -418,8 +451,10 @@ public sealed partial class ConfigWindow
             ImGui.PopTextWrapPos();
             ImGui.Spacing();
 
-            // Enter and Esc cancel, before any button sees them: Enter never downloads by accident.
-            var cancel = ImGui.IsWindowFocused() && (ImGui.IsKeyPressed(ImGuiKey.Enter) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter) || ImGui.IsKeyPressed(ImGuiKey.Escape));
+            // Enter and Esc cancel, before any button sees them: Enter never downloads by accident. Not on the frame the
+            // dialog opened (the Enter that pressed "Download…" would cancel it at once), and never on a key's repeat.
+            var cancel = ImGui.GetFrameCount() > packDialogOpenedFrame && ImGui.IsWindowFocused()
+                && (ImGui.IsKeyPressed(ImGuiKey.Enter, false) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter, false) || ImGui.IsKeyPressed(ImGuiKey.Escape, false));
 
             // "What Tsukimichi sends": the whole statement in the browser.
             using (Theme.PushText(s.TextSecondary))
@@ -445,7 +480,7 @@ public sealed partial class ConfigWindow
             if (Chrome.ActionPill("##packDownload", FontAwesomeIcon.Download.ToIconString(), download, PillTone.Primary, !service.Busy, null, PillLayout.Frame) && !cancel)
             {
                 // The one place a download starts from the player's first click: this button.
-                service.StartDownload();
+                service.StartDownload(packAskedForPack);
                 packDialogOpen = false;
             }
 
@@ -534,13 +569,9 @@ public sealed partial class ConfigWindow
 
             if (confirmed)
             {
-                // No Undo (the files are gone); Giver portraits goes back to Game art.
-                if (service.StartRemove() && settings.GiverPortraits == GiverPortraitMode.GameArtAndPack)
-                {
-                    settings.GiverPortraits = GiverPortraitMode.GameArt;
-                    Save();
-                }
-
+                // No Undo (the files are gone). Once they are, Giver portraits goes back to Game art (the plugin's
+                // pack-changed callback, PortraitPackStatus.ModeAfter); a removal that fails changes nothing.
+                service.StartRemove();
                 ImGui.CloseCurrentPopup();
             }
 

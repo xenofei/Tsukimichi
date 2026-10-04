@@ -63,6 +63,9 @@ public static class GiverPortraits
         }
     }
 
+    /// <summary>Which pack the plates draw from (its zip's SHA-256); null with none. A new pack's photos are new art.</summary>
+    public static string? PackId => combined.Pack?.Sha256;
+
     /// <summary>The image file of a pack portrait (<see cref="PortraitSource.Pack"/>: its icon is the NPC id); false when the pack in use has none.</summary>
     public static bool TryGetPackPath(in PortraitRef portrait, out string path)
     {

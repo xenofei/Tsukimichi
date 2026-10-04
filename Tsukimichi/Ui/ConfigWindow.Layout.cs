@@ -72,6 +72,9 @@ public sealed partial class ConfigWindow
     // The index bar's motion key ("IDX").
     private const uint IndexBarTag = 0x0049_4458;
 
+    /// <summary>What the Settings window turns off while the portrait pack's confirmation is up.</summary>
+    private const ImGuiWindowFlags PackBlockedWindow = ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoCollapse;
+
     private readonly SettingsFilter filter = new();
     private readonly SettingsBlock[] blocks;
     private readonly SaveDebounce pendingSave = new();
@@ -249,9 +252,22 @@ public sealed partial class ConfigWindow
             MinimumSize = minimum,
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
         };
+        // While the portrait pack's confirmation is up, Settings takes no input (spec-1.20 F4): BeginDisabled (in Draw)
+        // stops its items, and these stop what it does not: the mouse wheel, collapsing, and the title bar's buttons
+        // (close, pin, click-through). Esc belongs to the dialog.
+        var blocked = packDialogOpen;
+        Flags = blocked ? Flags | PackBlockedWindow : Flags & ~PackBlockedWindow;
+        ShowCloseButton = !blocked;
+        AllowPinning = !blocked;
+        AllowClickthrough = !blocked;
+        RespectCloseHotkey = !blocked;
+
         CaptureHostStyle();
         nightChrome = Theme.PushNightWindow();
     }
+
+    /// <summary>The mouse wheel off for Settings' index and page while the portrait pack's confirmation is up.</summary>
+    private ImGuiWindowFlags PackBlockedScroll => packDialogOpen ? ImGuiWindowFlags.NoScrollWithMouse : ImGuiWindowFlags.None;
 
     public override void PostDraw()
     {
@@ -314,7 +330,7 @@ public sealed partial class ConfigWindow
         var wide = ImGui.GetContentRegionAvail().X >= UiMetrics.Px(IndexWidthLogical + IndexBodyMinLogical);
         if (wide)
         {
-            using (var index = ImRaii.Child("##settingsIndex", new Vector2(UiMetrics.Px(IndexWidthLogical), -1f), false))
+            using (var index = ImRaii.Child("##settingsIndex", new Vector2(UiMetrics.Px(IndexWidthLogical), -1f), false, PackBlockedScroll))
             {
                 if (index)
                 {
@@ -336,7 +352,7 @@ public sealed partial class ConfigWindow
 
         // The cards reach CardPadX past the text on each side, inside the page margin.
         using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(UiMetrics.Px(PageMarginLogical + CardPadXLogical), UiMetrics.Px(16f)));
-        using var body = ImRaii.Child("##settingsBody", new Vector2(-1f, -1f), true);
+        using var body = ImRaii.Child("##settingsBody", new Vector2(-1f, -1f), true, PackBlockedScroll);
         if (!body)
         {
             return;

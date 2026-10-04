@@ -1,4 +1,5 @@
 using Dalamud.Bindings.ImGui;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
@@ -11,14 +12,15 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed partial class CharactersPane
 {
-    // "Duties board" on the card asked for the Duties board (N4): it scrolls into view the next time it is drawn.
-    private bool scrollToDutyBoard;
+    // "Duties board" on the card asked for the Duties board (N4): it scrolls into view when the board is next drawn,
+    // within a frame or two, or not at all (a request nothing reached lapses rather than firing later).
+    private FrameRequest scrollToDutyBoard;
 
     /// <summary>The Before Evercold card; set by the plugin. Null draws nothing.</summary>
     public EvercoldCardModel? Evercold { get; set; }
 
     /// <summary>Scrolls the Duties board (N4) into view on its next draw: the card's "Duties board" button.</summary>
-    public void RequestDutyBoard() => scrollToDutyBoard = true;
+    public void RequestDutyBoard() => scrollToDutyBoard.Request(ImGui.GetFrameCount());
 
     private void DrawBeforeEvercold(UiState ui)
     {
@@ -27,6 +29,8 @@ public sealed partial class CharactersPane
             return;
         }
 
+        // Tonight (the detail column, drawn after this) leaves its copy out while the dashboard shows the card.
+        card.DashboardFrame = ImGui.GetFrameCount();
         var start = ImGui.GetCursorScreenPos().Y;
         EvercoldCardView.Draw(card, ui, EvercoldSurface.Dashboard, ImGui.GetContentRegionAvail().X);
         if (ImGui.GetCursorScreenPos().Y > start)
@@ -38,9 +42,8 @@ public sealed partial class CharactersPane
     /// <summary>Called where the Duties board's heading is drawn: brings it into view once after a request.</summary>
     private void ScrollToDutyBoardIfAsked()
     {
-        if (scrollToDutyBoard)
+        if (scrollToDutyBoard.Take(ImGui.GetFrameCount()))
         {
-            scrollToDutyBoard = false;
             ImGui.SetScrollHereY(0f);
         }
     }

@@ -1,4 +1,5 @@
 using Tsukimichi.Core.Diagnostics;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Core.Portraits;
 
@@ -19,6 +20,38 @@ public enum PortraitPackState : byte
 
     /// <summary><c>current.json</c> names a pack that is not whole: Download again (when offered) or Remove.</summary>
     Damaged,
+}
+
+/// <summary>A change of the installed pack, for Giver portraits (<see cref="PortraitPackStatus.ModeAfter"/>).</summary>
+public enum PortraitPackChange : byte
+{
+    /// <summary>A pack installed where none was.</summary>
+    FirstInstall,
+
+    /// <summary>A newer pack installed over the one in use.</summary>
+    Update,
+
+    /// <summary>The pack downloaded again over a damaged copy.</summary>
+    Repair,
+
+    /// <summary>The pack removed.</summary>
+    Removed,
+}
+
+/// <summary>Which error the Settings row shows for the last run (<see cref="PortraitPackStatus.FailureRowOf"/>).</summary>
+public enum PortraitPackFailureRow : byte
+{
+    /// <summary>No error: the row shows the state.</summary>
+    None,
+
+    /// <summary>A download with no pack in use (a first download, or Download again on a damaged pack) failed.</summary>
+    Download,
+
+    /// <summary>An update failed: the installed pack stays in use.</summary>
+    Update,
+
+    /// <summary>Remove pack failed: the pack stays installed.</summary>
+    Removal,
 }
 
 /// <summary>The Settings row's decisions about the pack, pure so they are tested.</summary>
@@ -57,6 +90,54 @@ public static class PortraitPackStatus
     public static bool ForOlderGame(string packGameVersion, string clientGameVersion) =>
         !string.IsNullOrWhiteSpace(packGameVersion) && !string.IsNullOrWhiteSpace(clientGameVersion)
         && DataFreshness.Compare(packGameVersion, clientGameVersion) == FreshnessVerdict.NewerClient;
+
+    /// <summary>What a finished install was: the first pack, a newer one over the old, or the same pack over a damaged copy.</summary>
+    public static PortraitPackChange ChangeOf(bool hadPack, bool wasDamaged) =>
+        hadPack ? PortraitPackChange.Update : wasDamaged ? PortraitPackChange.Repair : PortraitPackChange.FirstInstall;
+
+    /// <summary>
+    /// Giver portraits after a pack change (spec-1.20 F4). A first install switches it to Game art + pack by itself (the
+    /// player asked for the pack); an update or a repair keeps the player's choice, unless they started it by picking
+    /// Game art + pack (<paramref name="askedForPack"/>). Removing the pack takes Game art + pack back to Game art.
+    /// </summary>
+    public static GiverPortraitMode ModeAfter(PortraitPackChange change, GiverPortraitMode current, bool askedForPack) => change switch
+    {
+        PortraitPackChange.Removed => current == GiverPortraitMode.GameArtAndPack ? GiverPortraitMode.GameArt : current,
+        PortraitPackChange.FirstInstall => GiverPortraitMode.GameArtAndPack,
+        _ => askedForPack ? GiverPortraitMode.GameArtAndPack : current,
+    };
+
+    /// <summary>
+    /// Which error the Settings row shows after the last run (<paramref name="finished"/>: one ran since load), by what
+    /// it was and where things stand now: a failed removal always (the pack stays); a failed download while the pack is
+    /// still to get (<see cref="PortraitPackState.Available"/>, <see cref="PortraitPackState.Damaged"/>) or to update
+    /// (<see cref="PortraitPackState.UpdateAvailable"/>, the installed pack staying in use), when the offer is there to
+    /// try again. Otherwise none: the row shows its state.
+    /// </summary>
+    public static PortraitPackFailureRow FailureRowOf(PortraitPackState state, bool offered, PortraitPackFailure last, bool lastWasRemoval, bool finished)
+    {
+        if (!finished || last == PortraitPackFailure.None)
+        {
+            return PortraitPackFailureRow.None;
+        }
+
+        if (lastWasRemoval)
+        {
+            return PortraitPackFailureRow.Removal;
+        }
+
+        if (!offered)
+        {
+            return PortraitPackFailureRow.None;
+        }
+
+        return state switch
+        {
+            PortraitPackState.Available or PortraitPackState.Damaged => PortraitPackFailureRow.Download,
+            PortraitPackState.UpdateAvailable => PortraitPackFailureRow.Update,
+            _ => PortraitPackFailureRow.None,
+        };
+    }
 
     /// <summary>Compares pack releases by number ("portraits-1" &lt; "portraits-2"); a tag that does not parse sorts first.</summary>
     public static int CompareTags(string? a, string? b) =>

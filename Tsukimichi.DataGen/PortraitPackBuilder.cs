@@ -21,7 +21,9 @@ namespace Tsukimichi.DataGen;
 /// many giver ids share it. A photo whose head box is under <see cref="MinBox"/> px is left out (a 72 px plate never
 /// upscales), and each image's box goes in the manifest so the hover never shows a face larger than its source.
 /// <para>
-/// Writes <c>Tsukimichi-portraits.zip</c> (manifest and images; the same photos on the same day make the same bytes), its
+/// Writes <c>Tsukimichi-portraits.zip</c> (manifest and images; the same photos, install and .NET runtime make the same
+/// bytes on any day: the manifest is stamped with the game version's date or <c>--built yyyy-MM-dd</c>, never the clock,
+/// and <see cref="PortraitPackArchive.Write"/> pins everything machine-dependent in the zip), its
 /// <c>.sha256</c>, <c>report.md</c> (coverage and every giver without a photo), and contact sheets under
 /// <c>sheets/</c> for a spot check of the crops (<c>--skip &lt;ids&gt;</c> leaves out a giver whose crop missed). With <c>--offer &lt;file&gt; --tag &lt;vX.Y.Z&gt;</c> it also writes the
 /// plugin's <c>portrait_pack.json</c>: the release, asset name, size and hash the plugin will accept. Nothing is uploaded.
@@ -44,6 +46,7 @@ internal static partial class PortraitPackBuilder
         string? cache = null;
         string? offerPath = null;
         string? tag = null;
+        DateTime? built = null;
         var curatedDir = Path.Combine("Tsukimichi", "Data", "curated");
         var rate = 1.0;
         var limit = int.MaxValue;
@@ -70,6 +73,10 @@ internal static partial class PortraitPackBuilder
                     break;
                 case "--tag" when i + 1 < args.Length:
                     tag = args[++i];
+                    break;
+                case "--built" when i + 1 < args.Length && DateTime.TryParseExact(args[i + 1], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var day):
+                    built = DateTime.SpecifyKind(day.Date, DateTimeKind.Utc);
+                    i++;
                     break;
                 case "--rate" when i + 1 < args.Length && double.TryParse(args[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out var r) && r >= 0.5:
                     rate = r;
@@ -114,6 +121,14 @@ internal static partial class PortraitPackBuilder
         Directory.CreateDirectory(outDir);
         cache ??= Path.Combine(outDir, "cache");
         var gameVersion = GameSheets.ReadGameVersion(game);
+
+        // The manifest's build date is an input, never the clock, so the same photos and install make the same zip.
+        var builtUtc = built ?? PortraitPackManifest.BuiltDateOf(gameVersion);
+        if (builtUtc == default)
+        {
+            Console.Error.WriteLine($"The game version '{gameVersion}' holds no date: give the build date with --built yyyy-MM-dd.");
+            return 2;
+        }
         using var data = new Lumina.GameData(game, new Lumina.LuminaOptions
         {
             DefaultExcelLanguage = Lumina.Data.Language.English,
@@ -216,7 +231,7 @@ internal static partial class PortraitPackBuilder
         }
 
         var files = images.ToDictionary(kv => kv.Key, kv => Convert.ToHexStringLower(SHA256.HashData(kv.Value)), StringComparer.Ordinal);
-        var manifest = PortraitPackManifest.Create(gameVersion, DateTime.UtcNow.Date, Source, files, entries, boxes: boxes);
+        var manifest = PortraitPackManifest.Create(gameVersion, builtUtc, Source, files, entries, boxes: boxes);
         var zipPath = Path.Combine(outDir, AssetName);
         using (var zipFile = File.Create(zipPath))
         {
@@ -238,7 +253,7 @@ internal static partial class PortraitPackBuilder
         }
 
         WriteSheets(Path.Combine(outDir, "sheets"), sheet);
-        var report = Report(gameVersion, inputs, gameIndex, givers, entries, images, missing, zipBytes.LongLength, zipSha);
+        var report = Report(gameVersion, builtUtc, inputs, gameIndex, givers, entries, images, missing, zipBytes.LongLength, zipSha);
         File.WriteAllText(Path.Combine(outDir, "report.md"), report);
 
         Console.WriteLine($"wrote:   {zipPath} ({PortraitPackOffer.SizeText(zipBytes.LongLength)}, {images.Count} images, {entries.Count} givers)");
@@ -260,7 +275,7 @@ internal static partial class PortraitPackBuilder
         return 0;
     }
 
-    private static string Report(string gameVersion, PortraitInputs inputs, PortraitIndex gameIndex, List<PortraitGiver> givers, SortedDictionary<uint, string> entries, SortedDictionary<string, byte[]> images, List<(uint Id, string Name, string Why)> missing, long zipSize, string zipSha)
+    private static string Report(string gameVersion, DateTime builtUtc, PortraitInputs inputs, PortraitIndex gameIndex, List<PortraitGiver> givers, SortedDictionary<uint, string> entries, SortedDictionary<string, byte[]> images, List<(uint Id, string Name, string Why)> missing, long zipSize, string zipSha)
     {
         var quests = inputs.Quests.Where(q => q.GiverId != 0).ToList();
         int game = 0, pack = 0, either = 0;
@@ -277,7 +292,7 @@ internal static partial class PortraitPackBuilder
         var text = new StringBuilder();
         text.AppendLine("# Portrait pack build report");
         text.AppendLine();
-        text.AppendLine($"Game {gameVersion}. Built {DateTime.UtcNow:yyyy-MM-dd} by `Tsukimichi.DataGen --portrait-pack`. Never commit the zip or the sheets: they are Square Enix art (renders by Garland Tools, credit Celes).");
+        text.AppendLine($"Game {gameVersion}. Built {builtUtc.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)} by `Tsukimichi.DataGen --portrait-pack`. Never commit the zip or the sheets: they are Square Enix art (renders by Garland Tools, credit Celes).");
         text.AppendLine();
         text.AppendLine("| | count |");
         text.AppendLine("|---|---|");

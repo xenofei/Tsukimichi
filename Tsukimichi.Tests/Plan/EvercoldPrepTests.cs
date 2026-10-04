@@ -311,10 +311,32 @@ public sealed class EvercoldPrepTests
         Assert.Equal(PrepCheck.Open, unticked.Open[0].Check);
         Assert.Same(unticked, unticked.Update(later, NoTicks));
 
-        // Built again (a new selection, session or snapshot): the ticked and game-done lines fold.
+        // Built again (a new selection, session or snapshot): the game-done lines fold; the ticked one stays open,
+        // checked with "you said so", so it can still be unticked.
         var rebuilt = PrepCard.Build(later, ticked);
-        Assert.Empty(rebuilt.Open);
-        Assert.Equal([PrepLineKind.Story, PrepLineKind.Journal, PrepLineKind.Jobs, PrepLineKind.Duties, PrepLineKind.Flying], rebuilt.Done);
+        Assert.Equal([PrepLineKind.Journal], rebuilt.Open.Select(l => l.Line.Kind));
+        Assert.Equal(PrepCheck.You, rebuilt.Open[0].Check);
+        Assert.Equal([PrepLineKind.Story, PrepLineKind.Jobs, PrepLineKind.Duties, PrepLineKind.Flying], rebuilt.Done);
+        Assert.False(rebuilt.AllDone);
+    }
+
+    [Fact]
+    public void A_ticked_line_never_folds_so_a_mis_tick_can_always_be_taken_back()
+    {
+        var lines = Lines(Character(journal: 25), States(AllDone));
+        var ticked = new HashSet<PrepLineKind> { PrepLineKind.Journal };
+
+        // Ticked, then the card is built again (a new session): the line is still there, checked "you said so".
+        var card = PrepCard.Build(lines, ticked);
+        var line = Assert.Single(card.Open);
+        Assert.Equal(PrepLineKind.Journal, line.Line.Kind);
+        Assert.Equal(PrepCheck.You, line.Check);
+        Assert.DoesNotContain(PrepLineKind.Journal, card.Done);
+
+        // Unticked: the same line opens again in its place, and the next build keeps it open.
+        var unticked = card.Update(lines, NoTicks);
+        Assert.Equal(PrepCheck.Open, Assert.Single(unticked.Open).Check);
+        Assert.Equal(PrepCheck.Open, Assert.Single(PrepCard.Build(lines, NoTicks).Open).Check);
     }
 
     [Fact]
@@ -326,7 +348,9 @@ public sealed class EvercoldPrepTests
 
         var one = PrepCard.Build(Lines(Character(journal: 25), States(AllDone)), NoTicks);
         Assert.False(one.AllDone);
-        Assert.True(PrepCard.Build(Lines(Character(journal: 25), States(AllDone)), new HashSet<PrepLineKind> { PrepLineKind.Journal }).AllDone);
+
+        // A line only the player ticked keeps the card open on it (checked), so the tick can be taken back.
+        Assert.False(PrepCard.Build(Lines(Character(journal: 25), States(AllDone)), new HashSet<PrepLineKind> { PrepLineKind.Journal }).AllDone);
     }
 
     [Fact]
@@ -381,21 +405,51 @@ public sealed class EvercoldPrepTests
     public void The_card_retires_on_evercold_data_or_on_the_curated_early_access_day()
     {
         var launch = EvercoldPrep.FallbackLaunch;
-        Assert.False(EvercoldPrep.IsRetired(Data, launch, Now));
+        var utc = TimeZoneInfo.Utc;
+        Assert.False(EvercoldPrep.IsRetired(Data, launch, Now, utc));
 
         // The game data holds Evercold's expansion: 8.0 data.
         var evercold = Catalog(extraExpansion: EvercoldPrep.EvercoldExpansion);
         Assert.Equal(EvercoldPrep.EvercoldExpansion, EvercoldPrep.LatestExpansion(evercold));
-        Assert.True(EvercoldPrep.IsRetired(evercold, launch, Now));
+        Assert.True(EvercoldPrep.IsRetired(evercold, launch, Now, utc));
 
         // The early access day has come.
-        Assert.False(EvercoldPrep.IsRetired(Data, launch, launch.EarlyAccessUtc.AddTicks(-1)));
-        Assert.True(EvercoldPrep.IsRetired(Data, launch, launch.EarlyAccessUtc));
+        Assert.False(EvercoldPrep.IsRetired(Data, launch, launch.EarlyAccessUtc.AddTicks(-1), utc));
+        Assert.True(EvercoldPrep.IsRetired(Data, launch, launch.EarlyAccessUtc, utc));
 
         // The day is curated data: a moved date moves the retirement.
         var moved = launch with { EarlyAccessUtc = new DateTime(2027, 2, 5, 0, 0, 0, DateTimeKind.Utc) };
-        Assert.False(EvercoldPrep.IsRetired(Data, moved, launch.EarlyAccessUtc.AddDays(3)));
-        Assert.True(EvercoldPrep.IsRetired(Data, moved, moved.EarlyAccessUtc));
+        Assert.False(EvercoldPrep.IsRetired(Data, moved, launch.EarlyAccessUtc.AddDays(3), utc));
+        Assert.True(EvercoldPrep.IsRetired(Data, moved, moved.EarlyAccessUtc, utc));
+    }
+
+    [Fact]
+    public void The_card_retires_on_the_players_own_date_and_names_that_same_day()
+    {
+        // The card says "early access 22 Jan": it goes away when the player's own calendar reaches 22 January.
+        var launch = EvercoldPrep.FallbackLaunch;
+        var day = EvercoldPrep.EarlyAccessDay(launch);
+        Assert.Equal(new DateTime(2027, 1, 22), day);
+        Assert.Equal(DateTimeKind.Unspecified, day.Kind);
+
+        // West of UTC (UTC-8): 00:00 UTC on the 22nd is 16:00 on the 21st there, so the card stays until local midnight.
+        var west = TimeZoneInfo.CreateCustomTimeZone("Minus8", TimeSpan.FromHours(-8), "Minus8", "Minus8");
+        Assert.False(EvercoldPrep.IsRetired(Data, launch, new DateTime(2027, 1, 22, 0, 0, 0, DateTimeKind.Utc), west));
+        Assert.False(EvercoldPrep.IsRetired(Data, launch, new DateTime(2027, 1, 22, 7, 59, 59, DateTimeKind.Utc), west));
+        Assert.True(EvercoldPrep.IsRetired(Data, launch, new DateTime(2027, 1, 22, 8, 0, 0, DateTimeKind.Utc), west));
+
+        // East of UTC (UTC+9): the 22nd starts at 15:00 UTC on the 21st there.
+        var east = TimeZoneInfo.CreateCustomTimeZone("Plus9", TimeSpan.FromHours(9), "Plus9", "Plus9");
+        Assert.False(EvercoldPrep.IsRetired(Data, launch, new DateTime(2027, 1, 21, 14, 59, 59, DateTimeKind.Utc), east));
+        Assert.True(EvercoldPrep.IsRetired(Data, launch, new DateTime(2027, 1, 21, 15, 0, 0, DateTimeKind.Utc), east));
+
+        // Whatever the zone, the last day the card shows is the day before the one it names.
+        foreach (var zone in new[] { west, east, TimeZoneInfo.Utc })
+        {
+            var localMidnight = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(day, DateTimeKind.Unspecified), zone);
+            Assert.False(EvercoldPrep.IsRetired(Data, launch, localMidnight.AddTicks(-1), zone));
+            Assert.True(EvercoldPrep.IsRetired(Data, launch, localMidnight, zone));
+        }
     }
 
     [Fact]

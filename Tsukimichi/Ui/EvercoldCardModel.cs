@@ -123,6 +123,12 @@ public sealed class EvercoldCardModel
 
     internal bool AllDoneNow => card.AllDone;
 
+    /// <summary>
+    /// The frame the Characters dashboard last drew the card. The dashboard (the centre column) draws before Tonight
+    /// (the detail column), so Tonight leaves the card out on a frame the dashboard already has it: one copy on screen.
+    /// </summary>
+    internal int DashboardFrame { get; set; } = -2;
+
     /// <summary>Whether the player hid the card for the viewed character.</summary>
     internal bool Hidden => hidden;
 
@@ -147,7 +153,7 @@ public sealed class EvercoldCardModel
 
         var now = DateTime.UtcNow;
         var launch = EvercoldPrep.Launch(session.Curated);
-        if (EvercoldPrep.IsRetired(bundle.Catalog, launch, now))
+        if (EvercoldPrep.IsRetired(bundle.Catalog, launch, now, TimeZoneInfo.Local))
         {
             active = false;
             return false;
@@ -299,7 +305,8 @@ public sealed class EvercoldCardModel
     {
         var culture = CultureInfo.CurrentCulture;
         Name = FirstName(snapshot.Name);
-        var day = launch.EarlyAccessUtc.ToString(Strings.EventCardDateFormat, culture);
+        // The calendar day the card retires on in the player's own time zone (EvercoldPrep.IsRetired), never converted.
+        var day = EvercoldPrep.EarlyAccessDay(launch).ToString(Strings.EventCardDateFormat, culture);
         var access = string.Format(culture, launch.Expected ? Strings.PrepEarlyAccessExpectedFormat : Strings.PrepEarlyAccessFormat, day);
         var forName = string.Format(culture, Strings.PrepForFormat, Name);
         SubTonight = forName + Strings.StateReasonSeparator + access;
