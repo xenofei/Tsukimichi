@@ -288,6 +288,9 @@ public sealed partial class DetailPane
         EndSection();
         ui.RecordItem(UiRects.DetailRequirements);
 
+        // How you'll clear it (1.19.0, C7): after Requirements, before Rewards, only for a quest that involves a duty.
+        DrawClearSection(session, quest);
+
         // Rewards then Unlocks, a pair of sections in one rhythm (RewardSplit keeps them apart); neither draws an empty header.
         if (HasExpAndGil(quest) || model.Rewards.Count > 0)
         {

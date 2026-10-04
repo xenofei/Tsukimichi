@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "note": "Side quests a main scenario quest needs that the sheets do not record. Keys are the main scenario quest's Quest row id; allOf lists quests that are all needed, anyOf quests of which one will do. Each named quest brings the side quests before it on its line. The sheets already give the rest: previous quests outside the main scenario (the Crystal Tower series before A Time to Every Purpose) and the unlock quests of duties the story needs cleared (the three hard primals before Good Intentions), so they are not listed here. Every entry needs a note and an https evidence URL; notes are original wording.",
+  "entries": {
+    "69186": {
+      "anyOf": [68784, 68808, 68814, 69164],
+      "note": "The Light of Inspiration (Lv 79) cannot be finished until one of the four Shadowbringers role quest lines is complete; the lines end with To Have Loved and Lost, The Soul of Temperance, Courage Born of Fear and A Tearful Reunion, and each is six quests from level 70 to 80.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Light_of_Inspiration"
+    }
+  }
+}

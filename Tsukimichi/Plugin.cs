@@ -1047,10 +1047,12 @@ public sealed partial class Plugin : IDalamudPlugin
                 dailyOffers.Gate = gate;
             }
 
-            // So do the repeat flags each capture reads (QuestManager.IsQuestRepeatFlagSet).
+            // So do the repeat flags each capture reads (QuestManager.IsQuestRepeatFlagSet), and the item levels and the
+            // Duties board's duty records (1.19.0, C7 and N4), read for the duties of the index once it lands.
             if (stateReader is not null)
             {
                 stateReader.Gate = gate;
+                stateReader.DutyIndex = () => warmer.DutyRuns.Value;
             }
 
             // And the aethernet shard attunement read (UIState.IsAetheryteUnlocked).
@@ -1385,6 +1387,8 @@ public sealed partial class Plugin : IDalamudPlugin
             var catchUpDuties = PlanningSource.DutySource(() => Session.Curated, () => moonlit.Catalog, () => dutyRuns.Value);
             var planning = new PlanningSource(Session, gameLinks, catchUpDuties);
             charactersPane.Planning = planning;
+            // The Duties board (1.19.0, N4): why each roulette is closed, and the duties unlocked but never cleared.
+            charactersPane.DutyBoard = new DutyBoardSource(Session, () => dutyRuns.Value, dutyUnlocks);
             mainWindow.AttachPlanning(planning);
             chatNotifier.PayoffGates = payoffGates;
             chatNotifier.CharacterSettings = CharacterBook;

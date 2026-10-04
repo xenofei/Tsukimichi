@@ -12,11 +12,31 @@ namespace Tsukimichi.GameData;
 /// row names the duty and its DawnContentParticipable row has more than one party choice. Trust needs a DawnContent row
 /// and a duty from Shadowbringers (ExVersion 3) on; AutoDuty reads an unnamed DawnContent column for it, which this
 /// leaves alone so a renamed column cannot stop the plugin loading. Each duty wears its icon through
-/// <see cref="Core.Unlocks.DutyArt"/>'s chain (<see cref="DutyArtReader"/>). Standalone (takes an <see cref="ExcelModule"/>) so
-/// tests run it against game data without Dalamud.
+/// <see cref="Core.Unlocks.DutyArt"/>'s chain (<see cref="DutyArtReader"/>). Each also carries the facts "how you'll clear
+/// it" reads (feature plan v7 C7): its level and item level, whether the Duty Finder matches it, the players it seats,
+/// and the roulettes that draw from it; the index carries the Duty Roulettes themselves for the Duties board (N4).
+/// Standalone (takes an <see cref="ExcelModule"/>) so tests run it against game data without Dalamud.
 /// </summary>
 public static class DutyRunSheets
 {
+    /// <summary>
+    /// The <c>ContentRoulette</c> row behind each roulette column of <c>ContentFinderCondition</c>. The sheets do not
+    /// link the two, so the map is by row id; <c>DutyRunSheetsTests</c> checks each row's name against the game.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<uint, DutyRoulettes> RouletteRows = new Dictionary<uint, DutyRoulettes>
+    {
+        [1] = DutyRoulettes.Leveling,
+        [2] = DutyRoulettes.HighLevel,
+        [3] = DutyRoulettes.MainScenario,
+        [4] = DutyRoulettes.Guildhests,
+        [5] = DutyRoulettes.Expert,
+        [6] = DutyRoulettes.Trials,
+        [8] = DutyRoulettes.LevelCap,
+        [9] = DutyRoulettes.Mentor,
+        [15] = DutyRoulettes.AllianceRaids,
+        [17] = DutyRoulettes.NormalRaids,
+    };
+
     /// <summary><c>ContentFinderCondition.ContentLinkType</c> value whose <c>Content</c> is an InstanceContent row.</summary>
     private const byte InstanceContentLink = 1;
 
@@ -55,6 +75,7 @@ public static class DutyRunSheets
 
         var duties = new List<DutyRunInfo>();
         var art = DutyArtReader.Shared.Read(excel, language);
+        var highEndCategories = HighEndCategories(excel);
         foreach (var row in excel.GetSheet<ContentFinderCondition>(language))
         {
             var name = row.Name.ExtractText().Trim();
@@ -73,9 +94,137 @@ public static class DutyRunSheets
             }
 
             var instance = row.ContentLinkType == InstanceContentLink ? row.Content.RowId : 0u;
-            duties.Add(new DutyRunInfo(row.RowId, instance, territory, row.ContentType.RowId, name, support, trust, DutyArtReader.Icon(in row, in art)));
+            var members = row.ContentMemberType.ValueNullable;
+            duties.Add(new DutyRunInfo(row.RowId, instance, territory, row.ContentType.RowId, name, support, trust, DutyArtReader.Icon(in row, in art))
+            {
+                LevelRequired = row.ClassJobLevelRequired,
+                ItemLevelRequired = row.ItemLevelRequired,
+                InDutyFinder = row.IsInDutyFinder,
+                Players = members is { } m ? m.MembersPerParty * Math.Max(1, (int)m.PartyCount) : 0,
+                Roulettes = RoulettesOf(in row),
+                SortKey = row.SortKey,
+                HighEnd = row.HighEndDuty
+                    || row.ContentType.RowId is DutyRunInfo.UltimateRaids or DutyRunInfo.ChaoticAllianceRaid
+                    || highEndCategories.Contains(row.ContentUICategory.RowId),
+            });
         }
 
-        return DutyRunIndex.From(duties);
+        return DutyRunIndex.From(duties, Roulettes(excel, language));
+    }
+
+    /// <summary>
+    /// The Duty Finder categories (<c>ContentUICategory</c>) of high-end content: "High-end Trials (…)" and "Savage
+    /// Raids (…)", one per expansion, read by their English names so the list grows with each expansion and does not
+    /// depend on the client's language. The current tier's flag (<c>HighEndDuty</c>) and the Ultimate and Chaotic
+    /// content types cover the rest.
+    /// </summary>
+    private static HashSet<uint> HighEndCategories(ExcelModule excel)
+    {
+        var ids = new HashSet<uint>();
+        foreach (var category in excel.GetSheet<ContentUICategory>(Language.English))
+        {
+            var name = category.Name.ExtractText();
+            if (name.StartsWith("High-end", StringComparison.Ordinal) || name.StartsWith("Savage", StringComparison.Ordinal))
+            {
+                ids.Add(category.RowId);
+            }
+        }
+
+        return ids;
+    }
+
+    /// <summary>The roulette columns a duty is ticked in.</summary>
+    public static DutyRoulettes RoulettesOf(in ContentFinderCondition row)
+    {
+        var flags = DutyRoulettes.None;
+        if (row.LevelingRoulette)
+        {
+            flags |= DutyRoulettes.Leveling;
+        }
+
+        if (row.HighLevelRoulette)
+        {
+            flags |= DutyRoulettes.HighLevel;
+        }
+
+        if (row.MSQRoulette)
+        {
+            flags |= DutyRoulettes.MainScenario;
+        }
+
+        if (row.GuildHestRoulette)
+        {
+            flags |= DutyRoulettes.Guildhests;
+        }
+
+        if (row.ExpertRoulette)
+        {
+            flags |= DutyRoulettes.Expert;
+        }
+
+        if (row.TrialRoulette)
+        {
+            flags |= DutyRoulettes.Trials;
+        }
+
+        if (row.LevelCapRoulette)
+        {
+            flags |= DutyRoulettes.LevelCap;
+        }
+
+        if (row.MentorRoulette)
+        {
+            flags |= DutyRoulettes.Mentor;
+        }
+
+        if (row.AllianceRoulette)
+        {
+            flags |= DutyRoulettes.AllianceRaids;
+        }
+
+        if (row.NormalRaidRoulette)
+        {
+            flags |= DutyRoulettes.NormalRaids;
+        }
+
+        return flags;
+    }
+
+    /// <summary>
+    /// The Duty Roulettes of <see cref="RouletteRows"/> the Duty Finder lists, with what opens them
+    /// (<c>ContentRouletteOpenRule.HasDutyRequirements</c>: every duty), their level and expansion.
+    /// </summary>
+    private static List<RouletteInfo> Roulettes(ExcelModule excel, Language language)
+    {
+        var list = new List<RouletteInfo>(RouletteRows.Count);
+        var sheet = excel.GetSheet<ContentRoulette>(language);
+        foreach (var (rowId, flag) in RouletteRows)
+        {
+            if (sheet.GetRowOrDefault(rowId) is not { } row || !row.IsInDutyFinder || row.IsPvP)
+            {
+                continue;
+            }
+
+            var name = row.Name.ExtractText().Trim();
+            if (name.Length == 0)
+            {
+                continue;
+            }
+
+            list.Add(new RouletteInfo(
+                rowId,
+                name,
+                flag,
+                row.OpenRule.ValueNullable?.HasDutyRequirements == true,
+                row.RequiredLevel,
+                (byte)Math.Min(row.RequiredExVersion.RowId, byte.MaxValue),
+                row.ItemLevelRequired,
+                row.SortKey)
+            {
+                ShortName = row.Category.ExtractText().Trim(),
+            });
+        }
+
+        return list;
     }
 }
