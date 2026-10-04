@@ -523,24 +523,42 @@ static partial class Strings
     public static string ConfigPollCostFormat => Loc.Get("ConfigPollCostFormat");
     public static string ConfigPollCostUnknown => Loc.Get("ConfigPollCostUnknown");
 
-    /// <summary>"What's new" card at the top of the detail column after an update.</summary>
+    /// <summary>What's new (spec-1.22 W1, W3): the popup after an update and Settings › Advanced › What's new.</summary>
     public static class WhatsNew
     {
-        /// <summary>{0} = plugin version.</summary>
-        public static string TitleFormat => Loc.Get("WhatsNew.TitleFormat");
+        /// <summary>The popup's eyebrow and the Settings block's heading.</summary>
+        public static string Title => Loc.Get("WhatsNew.Title");
 
-        /// <summary>{0} = the version seen before; the card lists every version since.</summary>
-        public static string SinceFormat => Loc.Get("WhatsNew.SinceFormat");
-        public static string More => Loc.Get("WhatsNew.More");
-        public static string Less => Loc.Get("WhatsNew.Less");
-        public static string MoreTooltip => Loc.Get("WhatsNew.MoreTooltip");
-        public static string LessTooltip => Loc.Get("WhatsNew.LessTooltip");
+        /// <summary>{0} = the version the player had before the update; shown only when several releases arrived.</summary>
+        public static string WasOnFormat => Loc.Get("WhatsNew.WasOnFormat");
 
-        /// <summary>A section's heading when the card lists several: {0} = version, {1} = date.</summary>
-        public const string SectionFormat = "{0} · {1}";
+        /// <summary>{0} = the plugin version, {1} = the release date ("4 October 2026").</summary>
+        public static string VersionDateFormat => Loc.Get("WhatsNew.VersionDateFormat");
+
+        /// <summary>{0} = this page, {1} = the pages: "1 of 4".</summary>
+        public static string PageFormat => Loc.Get("WhatsNew.PageFormat");
+        public static string Newer => Loc.Get("WhatsNew.Newer");
+        public static string Older => Loc.Get("WhatsNew.Older");
+        public static string AllReleases => Loc.Get("WhatsNew.AllReleases");
+        public static string AllReleasesTooltip => Loc.Get("WhatsNew.AllReleasesTooltip");
         public static string Close => Loc.Get("WhatsNew.Close");
-        public static string Help => Loc.Get("WhatsNew.Help");
-        public const string Bullet = "• ";
+        public static string ShowAfterUpdate => Loc.Get("WhatsNew.ShowAfterUpdate");
+        public static string ShowAfterUpdateHint => Loc.Get("WhatsNew.ShowAfterUpdateHint");
+        public static string History => Loc.Get("WhatsNew.History");
+        public static string HistoryHint => Loc.Get("WhatsNew.HistoryHint");
+        public static string HistoryNone => Loc.Get("WhatsNew.HistoryNone");
+        public static string RowTooltip => Loc.Get("WhatsNew.RowTooltip");
+        public static string Installed => Loc.Get("WhatsNew.Installed");
+
+        /// <summary>{0} = how many releases are folded away, {1} = the oldest one's version.</summary>
+        public static string EarlierFormat => Loc.Get("WhatsNew.EarlierFormat");
+
+        /// <summary>{0} = the one folded release's version.</summary>
+        public static string EarlierOneFormat => Loc.Get("WhatsNew.EarlierOneFormat");
+        public static string Fewer => Loc.Get("WhatsNew.Fewer");
+
+        /// <summary>The mark at the end of a history row and of the "earlier releases" line.</summary>
+        public const string Chevron = " ›";
     }
 
     /// <summary>

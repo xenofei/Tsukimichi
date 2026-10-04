@@ -1611,12 +1611,11 @@ public sealed partial class Plugin : IDalamudPlugin
 
             command.ToggleHelpWindow = helpWindow.Toggle;
 
-            // "What's new" after an update: decided on the main window's first draw, drawn above the detail pane.
-            mainWindow.AttachWhatsNew(new WhatsNewCard(Settings, PluginInterface, Log, helpWindow.Show)
-            {
-                // New chapters of the side stories the character started (1.21.0 P5), once per patch.
-                NewChapters = new NewChaptersSource(Session, ui) { CharacterSettings = CharacterBook },
-            });
+            // What's new after an update (1.22, W1): a popup at the first quiet moment; the history is in Settings.
+            InitializeWhatsNew(mainWindow, settingsWindow);
+
+            // New chapters of the side stories the character started (1.21.0 P5), once per patch, in the Tonight card (W4).
+            mainWindow.AttachNewChapters(new NewChaptersSource(Session, ui) { CharacterSettings = CharacterBook });
 
             // "Set up your road" (1.7.0, decision 7): once on a fresh install, after the tour offer; Help reopens it.
             // Each switch applies at once and tells the service that follows it, as Settings does.
@@ -1822,6 +1821,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("windows", windowSystem.RemoveAllWindows);
         Unwind("automation level", Ui.AutomationGate.Detach);
         Unwind("settings window", () => configWindow?.Dispose());
+        Unwind("whats new", () => whatsNewPopup?.Dispose());
         Unwind("fonts", Ui.Typography.Dispose);
         Unwind("banner grades", Ui.BannerGrading.Dispose);
         Unwind("portrait grades", Ui.PortraitGrading.Dispose);

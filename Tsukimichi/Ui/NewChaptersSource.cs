@@ -14,10 +14,11 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The What's new card's "New chapters" line (feature plan v7 P5; spec-1.21 P5): the named side stories the viewed
-/// character has started that gained quests in the newest patch series ("New chapters · Inconceivably Further Hildibrand
-/// Adventures · 2 quests · Show ›"), once per patch and per character (recorded with the character's noticed ids, so
-/// every client agrees), and no new notice. A line past the story point reads "A side story ahead · 2 quests · name
+/// The Tonight card's "New chapters" line (feature plan v7 P5; spec-1.21 P5; in Tonight's lines since the What's new
+/// card left in 1.22, spec-1.22 W4): the named side stories the viewed character has started that gained quests in the
+/// newest patch series ("New chapters · Inconceivably Further Hildibrand Adventures · 2 quests · Show ›"), once per
+/// patch and per character (recorded with the character's noticed ids, so every client agrees), and no new notice. It
+/// stays for the session until × closes it. A line past the story point reads "A side story ahead · 2 quests · name
 /// hidden". Show selects the first new quest. Framework thread only.
 /// </summary>
 public sealed class NewChaptersSource
@@ -25,8 +26,10 @@ public sealed class NewChaptersSource
     private readonly SessionState session;
     private readonly UiState ui;
 
-    // Characters this load showed the line to (it stays while the card does), and the lines composed for each.
+    // Characters this load showed the line to (it stays for the session), the lines composed for each, and the
+    // characters whose line × closed.
     private readonly Dictionary<ulong, Line[]> shown = [];
+    private readonly HashSet<ulong> closed = [];
 
     // The answer for the view key, kept whatever it is (none included), so a character with no new chapters costs
     // nothing per frame.
@@ -51,7 +54,10 @@ public sealed class NewChaptersSource
     /// <param name="Ahead">The line lies past the story point: <see cref="Name"/> is the shield's words for it.</param>
     private sealed record Line(string Name, string Count, QuestRecord First, bool Ahead = false);
 
-    /// <summary>Draws the line inside the What's new card, when there is something to say for the viewed character.</summary>
+    /// <summary>Whether the line has something to say for the viewed character.</summary>
+    public bool Visible => Lines() is { Length: > 0 };
+
+    /// <summary>Draws the line inside the Tonight card, when there is something to say for the viewed character.</summary>
     public void Draw()
     {
         if (Lines() is not { Length: > 0 } lines)
@@ -63,6 +69,15 @@ public sealed class NewChaptersSource
         using (Theme.PushText(Theme.Surface.TextSecondary))
         {
             ImGui.TextUnformatted(Strings.NewChaptersLabel);
+        }
+
+        // × closes the line for this character; it was recorded as seen when it first showed, so it stays closed.
+        Chrome.SameLineRightOrWrap(UiMetrics.MinTarget);
+        if (Chrome.IconButtonRound("##close", Chrome.Icon(Dalamud.Interface.FontAwesomeIcon.Times), Strings.NewChaptersCloseTooltip) && session.ViewedContentId is { } viewed)
+        {
+            closed.Add(viewed);
+            hasBuilt = false;
+            return;
         }
 
         for (var i = 0; i < lines.Length; i++)
@@ -96,7 +111,7 @@ public sealed class NewChaptersSource
     /// <summary>The lines for the viewed character, worked out once per view key (an empty answer too).</summary>
     private Line[]? Lines()
     {
-        if (session.ViewedContentId is not { } character || session.Bundle is not { } bundle || session.States.Count == 0 || CharacterSettings is not { } book)
+        if (session.ViewedContentId is not { } character || session.Bundle is not { } bundle || session.States.Count == 0 || CharacterSettings is not { } book || closed.Contains(character))
         {
             return null;
         }

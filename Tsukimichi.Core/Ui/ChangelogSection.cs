@@ -18,9 +18,11 @@ public sealed record ChangelogGroup(string Title, IReadOnlyList<string> Items)
 }
 
 /// <summary>
-/// The section of a Keep-a-Changelog file for one version, as the in-app "What's new" card shows it. Parsed from
-/// the embedded CHANGELOG.md at runtime; no network. The heading form is <c>## [x.y.z] - date</c>; <c>## [Unreleased]</c>
-/// is never a version.
+/// The section of a Keep-a-Changelog file for one version. The technical CHANGELOG.md is the record the release
+/// workflow and GitHub show; the tests hold it to its form with this parser. The plugin itself no longer reads it: since
+/// 1.22 (spec-1.22 W1, W4) players get the plain notes of <c>whats_new.json</c> (<see cref="Tsukimichi.Core.Releases.ReleaseNotes"/>).
+/// <see cref="NormalizeVersion"/> is the one version reading every caller shares. The heading form is
+/// <c>## [x.y.z] - date</c>; <c>## [Unreleased]</c> is never a version.
 /// </summary>
 /// <param name="Version">The three-part version the section is for.</param>
 /// <param name="Date">The text after <c>] - </c> on the heading, or empty.</param>
@@ -30,7 +32,6 @@ public sealed record ChangelogSection(string Version, string Date, IReadOnlyList
     private const string HeadingPrefix = "## [";
     private const string GroupPrefix = "### ";
     private const string BulletPrefix = "- ";
-    private const string Bold = "**";
 
     /// <summary>True when at least one bullet was found.</summary>
     public bool HasItems => Groups.Any(g => g.Items.Count > 0);
@@ -60,107 +61,6 @@ public sealed record ChangelogSection(string Version, string Date, IReadOnlyList
     }
 
     /// <summary>
-    /// Every released section the player has not seen yet, newest first (feature plan v5, 1.7.0 "What's new collects
-    /// every version you skipped"): the sections whose version is above <paramref name="lastSeenVersion"/> and at most
-    /// <paramref name="runningVersion"/>, each with at least one bullet. An empty <paramref name="lastSeenVersion"/> (a
-    /// build before 0.6.0 recorded none) gives the running version's section alone, so such an update is not handed
-    /// twenty releases at once. Empty when the running version is not a version, or the last seen one is not older.
-    /// </summary>
-    public static IReadOnlyList<ChangelogSection> Since(string? changelog, string? lastSeenVersion, string? runningVersion)
-    {
-        var running = ParseVersion(runningVersion);
-        if (string.IsNullOrEmpty(changelog) || running is null)
-        {
-            return [];
-        }
-
-        if (ParseVersion(lastSeenVersion) is not { } seen)
-        {
-            return Find(changelog, runningVersion) is { } only ? [only] : [];
-        }
-
-        if (seen >= running)
-        {
-            return [];
-        }
-
-        var found = new List<(System.Version Version, ChangelogSection Section)>();
-        foreach (var section in Parse(changelog))
-        {
-            if (section.HasItems && ParseVersion(section.Version) is { } version && version > seen && version <= running)
-            {
-                found.Add((version, section));
-            }
-        }
-
-        found.Sort(static (a, b) => b.Version.CompareTo(a.Version));
-        return found.Select(static f => f.Section).ToArray();
-    }
-
-    /// <summary>
-    /// A bullet's highlight, for the card's short view: the bold lead when it is a whole phrase (<c>**Companion
-    /// plugins.** Settings…</c> gives "Companion plugins."; a trailing colon is dropped), else the first sentence of the
-    /// bullet's plain text, else the whole plain text.
-    /// </summary>
-    public static string Highlight(string? item)
-    {
-        if (string.IsNullOrWhiteSpace(item))
-        {
-            return string.Empty;
-        }
-
-        var text = item.Trim();
-        if (text.StartsWith(Bold, StringComparison.Ordinal))
-        {
-            var close = text.IndexOf(Bold, Bold.Length, StringComparison.Ordinal);
-            if (close > Bold.Length)
-            {
-                var lead = text[Bold.Length..close].Trim();
-                var rest = text[(close + Bold.Length)..];
-                var leadEnds = lead.Length > 0 && lead[^1] is '.' or ':' or '?' or '!';
-                if (leadEnds && (rest.Length == 0 || rest[0] == ' '))
-                {
-                    return lead[^1] == ':' ? lead[..^1].TrimEnd() : lead;
-                }
-            }
-        }
-
-        return FirstSentence(Plain(text));
-    }
-
-    /// <summary>The item without Markdown emphasis (<c>**</c>) or code marks (<c>`</c>).</summary>
-    public static string Plain(string? item) =>
-        string.IsNullOrEmpty(item) ? string.Empty : item.Replace(Bold, string.Empty, StringComparison.Ordinal).Replace("`", string.Empty, StringComparison.Ordinal).Trim();
-
-    /// <summary>
-    /// The text up to and including the first full stop, question or exclamation mark that ends a sentence (one followed
-    /// by a space and a capital letter, a quote or an opening bracket, or by the end); the whole text when none does.
-    /// </summary>
-    public static string FirstSentence(string text)
-    {
-        ArgumentNullException.ThrowIfNull(text);
-        for (var i = 0; i < text.Length; i++)
-        {
-            if (text[i] is not ('.' or '?' or '!'))
-            {
-                continue;
-            }
-
-            if (i == text.Length - 1)
-            {
-                return text;
-            }
-
-            if (text[i + 1] == ' ' && i + 2 < text.Length && (char.IsUpper(text[i + 2]) || text[i + 2] is '"' or '“' or '(' or '/'))
-            {
-                return text[..(i + 1)];
-            }
-        }
-
-        return text;
-    }
-
-    /// <summary>
     /// The first three dotted parts of <paramref name="version"/> ("0.6.0.0" becomes "0.6.0"); empty when null, blank
     /// or not dotted digits, so "Unreleased" never names a section.
     /// </summary>
@@ -178,21 +78,6 @@ public sealed record ChangelogSection(string Version, string Date, IReadOnlyList
         }
 
         return parts.Length <= 3 ? string.Join('.', parts) : string.Join('.', parts, 0, 3);
-    }
-
-    /// <summary><see cref="NormalizeVersion"/> as a comparable version; null when it is not one.</summary>
-    private static System.Version? ParseVersion(string? version)
-    {
-        var normalized = NormalizeVersion(version);
-        if (normalized.Length == 0)
-        {
-            return null;
-        }
-
-        // "1" and "1.2" parse too; Version needs at least two parts.
-        var parts = normalized.Split('.');
-        var text = parts.Length == 1 ? normalized + ".0" : normalized;
-        return System.Version.TryParse(text, out var parsed) ? parsed : null;
     }
 
     /// <summary>Every <c>## [x.y.z]</c> section of the file in file order, with or without bullets; <c>[Unreleased]</c> is skipped.</summary>
@@ -300,58 +185,4 @@ public sealed record ChangelogSection(string Version, string Date, IReadOnlyList
         FlushSection();
         return sections;
     }
-}
-
-/// <summary>
-/// Whether the "What's new" card shows: once, on the first open of the main window after an update, and never on a
-/// fresh install. The decision is pure so it can be tested; the plugin persists <c>LastSeenVersion</c>.
-/// </summary>
-public enum WhatsNewDecision
-{
-    /// <summary>Nothing to do: the running version was already seen.</summary>
-    Nothing,
-
-    /// <summary>Fresh install (no version seen yet) or no changelog section for this version: record the version silently.</summary>
-    RecordSilently,
-
-    /// <summary>Show the card for the running version.</summary>
-    Show,
-}
-
-public static class WhatsNew
-{
-    /// <param name="lastSeenVersion">
-    /// The persisted last-seen version: empty on a fresh install, and also after an update from a build that did not
-    /// record it yet (every release before 0.6.0), which <paramref name="hasPriorConfig"/> tells apart.
-    /// </param>
-    /// <param name="runningVersion">The plugin's assembly version.</param>
-    /// <param name="hasSection">
-    /// Whether the changelog has anything to show: a non-empty section for the running version, or for any version
-    /// skipped since <paramref name="lastSeenVersion"/> (<see cref="ChangelogSection.Since"/>).
-    /// </param>
-    /// <param name="hasPriorConfig">
-    /// Whether a configuration existed before this load (the file was there). An empty
-    /// <paramref name="lastSeenVersion"/> with one is an update from a build that predates the card and shows it; without
-    /// one it is a fresh install, which records the version silently.
-    /// </param>
-    public static WhatsNewDecision Decide(string? lastSeenVersion, string? runningVersion, bool hasSection, bool hasPriorConfig)
-    {
-        var running = ChangelogSection.NormalizeVersion(runningVersion);
-        var seen = ChangelogSection.NormalizeVersion(lastSeenVersion);
-        if (running.Length == 0 || seen == running)
-        {
-            return WhatsNewDecision.Nothing;
-        }
-
-        var freshInstall = seen.Length == 0 && !hasPriorConfig;
-        return freshInstall || !hasSection ? WhatsNewDecision.RecordSilently : WhatsNewDecision.Show;
-    }
-
-    /// <summary>
-    /// <see cref="Decide(string?, string?, bool, bool)"/> for a caller that cannot say whether a configuration
-    /// existed: an empty last-seen version then reads as a fresh install, so an update from a build before 0.6.0
-    /// records silently. Callers with the configuration at hand pass <c>hasPriorConfig</c>.
-    /// </summary>
-    public static WhatsNewDecision Decide(string? lastSeenVersion, string? runningVersion, bool hasSection) =>
-        Decide(lastSeenVersion, runningVersion, hasSection, hasPriorConfig: false);
 }

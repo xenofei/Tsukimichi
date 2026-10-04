@@ -20,7 +20,7 @@
          leaves the old one in place). The fixture holds the sheet's own data; the tests lay quest_patches.json over
          it on read, as the plugin does at catalog build.
       6. docs/data/DATA-VERSION.md: game version, generation time, curated revision (short git hash of the last
-         commit touching a data file under Tsukimichi/Data/curated, README.md and VERSION.json excluded, "-dirty"
+         commit touching a data file under Tsukimichi/Data/curated, README.md, VERSION.json and whats_new.json excluded, "-dirty"
          when those files have uncommitted changes) and counts;
          the same revision goes into Tsukimichi/Data/curated/VERSION.json, which the plugin shows in Settings > About
          and in the "Report this quest" diagnostic block.
@@ -115,9 +115,10 @@ $data = $raw | ConvertFrom-Json
 $generatedUtc = [regex]::Match($raw, '"generatedUtc":\s*"([^"]+)"').Groups[1].Value
 $curated = Get-Content (Join-Path $curatedDir "feature_quests.json") -Raw | ConvertFrom-Json
 # The revision names the commit that last changed the data files: VERSION.json is excluded, or every regeneration
-# would point at the commit that recorded the previous stamp, and README.md, or a wording change would look like new data.
+# would point at the commit that recorded the previous stamp, and README.md and whats_new.json (the release notes,
+# written with each release), or a wording change would look like new data.
 $curatedVersionFile = "$curatedDir/VERSION.json"
-$curatedPathspec = @($curatedDir, ":(exclude)$curatedVersionFile", ":(exclude)$curatedDir/README.md")
+$curatedPathspec = @($curatedDir, ":(exclude)$curatedVersionFile", ":(exclude)$curatedDir/README.md", ":(exclude)$curatedDir/whats_new.json")
 $curatedRevision = (git log -n 1 --format=%h -- @curatedPathspec).Trim()
 # Content-based: `git status` also flags a file whose line endings differ from the checkout's (the generator writes
 # LF under core.autocrlf=true), which would stamp "-dirty" on data that is byte-for-byte what is committed.
@@ -131,7 +132,7 @@ $patches = Get-Content $patchesFile -Raw | ConvertFrom-Json
 # The plugin reads the revision from VERSION.json (CuratedData.CuratedRevision) for Settings > About and the diagnostic block.
 $versionJson = @(
     "{",
-    "  `"`$schema_note`": `"Written by tools/regen.ps1; do not edit by hand. curatedRevision is the short git hash of the last commit touching a data file in this directory (this file and README.md excluded), with -dirty appended when those files had uncommitted changes.`",",
+    "  `"`$schema_note`": `"Written by tools/regen.ps1; do not edit by hand. curatedRevision is the short git hash of the last commit touching a data file in this directory (this file, README.md and whats_new.json excluded), with -dirty appended when those files had uncommitted changes.`",",
     "  `"curatedRevision`": `"$curatedRevision`"",
     "}"
 )
