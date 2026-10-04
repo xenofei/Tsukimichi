@@ -13,7 +13,8 @@ Light: one natural light, the sun below the horizon behind the city (gx), plus o
   lantern lays a small warm pool on the snow at their feet.
 - The waning crescent is lit on its sun-facing (lower-left) limb.
 
-Run: py -3 paint_option_b.py -> ../optionb/evercold-b-base.png (1120 x 440); option_b_themes.py imports paint().
+This is the painter for release key evercold-b in painters_b.PAINTERS. Run: py -3 painters_b.py evercold-b
+(-> ../optionb/evercold-b-base.png and evercold-b-masks.npz). option_b_themes.py imports kuwahara() from here.
 """
 import math
 import pathlib
@@ -312,10 +313,5 @@ def paint():
 
 
 if __name__ == "__main__":
-    OUT.mkdir(exist_ok=True)
-    c, M = paint()
-    c.save(OUT / "evercold-b-base.png", (1120, 440), grain=0.008, seed=3)
-    from PIL import Image
-    small = {k: np.asarray(Image.fromarray((np.clip(v, 0, 1) * 255).astype(np.uint8)).resize((1120, 440), Image.LANCZOS), np.float32) / 255 for k, v in M.items()}
-    np.savez_compressed(OUT / "src-masks.npz", **small)
-    print("evercold-b-base.png")
+    import painters_b
+    painters_b.run("evercold-b")

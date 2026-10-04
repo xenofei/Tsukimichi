@@ -40,7 +40,7 @@ Everything is under `docs/design/v8/`.
 | `whatsnew-states-1.22.png` | W1: page 1 of 4 (1.22.0 Welcome home) at Full, Quiet, Plain, one release (no pager), Text size 150 % on a page that fits and on one that scrolls, and the size and timing table |
 | `release-art-1.22.png` | W2: the four paintings with their six restyles each, and the grade and motif table |
 | `release-art-option-b-1.22.png` | Decision 1: 1.20.0 in Option A and Option B side by side for all six themes, Option B's painting, and the cost table |
-| `art/optionb/` | Option B: the painting (`evercold-b-base.png`), its region masks (`src-masks.npz`), its placement data (`evercold-b.json`), the six lossless treatments (`evercold-b-<theme>.png`) and the shipped JPEGs (`ship/`); made by `art/src/paint_option_b.py`, `option_b_themes.py` and `ship_option_b.py` |
+| `art/optionb/` | Option B: the painting (`evercold-b-base.png`), its region masks (`evercold-b-masks.npz`), its placement data (`evercold-b.json`), the six lossless treatments (`evercold-b-<theme>.png`) and the shipped JPEGs (`ship/`); made by `art/src/painters_b.py` (the registry; 1.20.0's painter is `paint_option_b.py`), `option_b_themes.py` and `ship_option_b.py` |
 | `about-history-1.22.png` | W3, U1, M3: Settings › About with Updates, What's new (backfilled) and Umbra, and the popup opened from the list |
 | `update-ready-1.22.png` | U1: the status-bar note at each level, its hover, the dot on the icon with the quick card, Dalamud's installer, and the flow |
 | `moon-icon-1.22.png` | H1: rest, hover with the quick card, the right-click menu, locked, first run, hide with Undo, the dots, Needs you, the three levels, and the behaviour table |
@@ -270,16 +270,18 @@ Implementers turn each release into Option B with the same pipeline. Everything 
 | Input | What it is |
 |---|---|
 | The painting brief | One night or twilight landscape for the release's theme, with **one natural light plus at most one warm practical light**. The subject sits right of centre, the sky has room for the moon, and the figures (if any) are small, on the near ground, kept out of the sky. Every brief goes through realism supervision before painting. |
-| The painter | One Python function per release, written in the style of `paint_option_b.paint()`, that returns the canvas (2240 × 880) and its **region masks** with these keys: `clouds`, `under` (the clouds' lit undersides), `moon`, `moonlit`, `far`, `city`, `cliff`, `field`, `ridge`, `figs` and `lantern`. A region a scene doesn't have is an all-zero mask: a scene with no city has a zero `city`. |
+| The painter | One Python function per release, written in the style of `paint_option_b.paint()` and **registered by its key in `painters_b.PAINTERS`**, that returns the canvas (2240 × 880) and its **region masks** with these keys: `clouds`, `under` (the clouds' lit undersides), `moon`, `moonlit`, `far`, `city`, `cliff`, `field`, `ridge`, `figs` and `lantern`. A region a scene doesn't have is an all-zero mask: a scene with no city has a zero `city`. |
 | `<key>.json` | Placement data the treatments need, beside the painting in `art/optionb/`: `horizon`, `sun_glow` (x, y), `moon` (x, y as fractions; r in px at 1120), `figure_zone` (the x range where no glass join may fall), `figure_split` (the x between two figures), `bluff_split` (the y between buildings and cliff), `glass_bars` (two y values clear of the subject), `aether_domes` (gem centres), `sumi_bands` (x0, x1, y and half-height of each gold band, placed in empty sky and empty ground). `evercold-b.json` is the worked example. |
 
 **Commands:**
 
 ```
-py -3 paint_option_b.py                 # painting + masks -> art/optionb/<key>-base.png, src-masks.npz (one painter per release)
+py -3 painters_b.py <key>               # painting + masks -> art/optionb/<key>-base.png, <key>-masks.npz
 py -3 option_b_themes.py <key>          # six treatments  -> art/optionb/<key>-<theme>.png (lossless masters)
 py -3 ship_option_b.py <key>            # shipped files   -> art/optionb/ship/<key>-<theme>.jpg, with the size check
 ```
+
+Every file is keyed by the release, so releases never overwrite each other's paintings or masks.
 
 **Output and budget:**
 - **Shipped format:** six files per release, one per theme, each 1120 × 440 sRGB with no alpha (the art band's 2x tier; the 1x tier draws it at half size). JPEG quality 88, 4:4:4 chroma (no subsampling, so lead lines, engraving and gold edges stay clean), progressive. `ship_option_b.py` keeps PNG only if it is ever smaller, which it isn't for these paintings.
@@ -295,7 +297,7 @@ py -3 ship_option_b.py <key>            # shipped files   -> art/optionb/ship/<k
   | Sumi to Kinpaku | 64 KB |
   | **Total** | **about 450 KB** |
 
-- **Budget:** 600 KB per release, which the script checks. The nine releases from 1.14.0 to 1.22.0 come to about **4 MB** in the plugin zip, as content files under `assets/whatsnew/<version>/<theme>.jpg`, loaded only while the popup is open.
+- **Budget:** 600 KB per release, which the script checks. The nine releases from 1.14.0 to 1.22.0 come to about **4 MB** in the plugin zip, assuming about 450 KB per release as measured; the 600 KB cap allows at most 5.4 MB. They are stored as content files under `assets/whatsnew/<version>/<theme>.jpg` and loaded only while the popup is open.
 - **Quiet** draws the Classic file graded to the palette; **Plain** loads nothing.
 
 **Per-release review:** the supervisor checks all six treatments of every new painting. The usual fixes are moving a gold band, a saddle bar or a glass join off the subject, all of which are `<key>.json` edits, not code.
@@ -657,3 +659,21 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
   - **Ishgard Glass:** no vertical join in the figures' zone, and the cloud shapes smoothed (no islands).
   - **Sumi to Kinpaku:** one continuous tapered stroke with thin dry streaks, a lighter separate shadow, and three-tier stepped band ends.
   - **The pipeline** is now repeatable: per-release `<key>.json`, `option_b_themes.py <key>`, `ship_option_b.py`, and the production recipe in W2.
+- **Round 5: Option A stays APPROVED; Option B CHANGES.** The shipped JPEGs pass.
+  - **Major (P1):** only 1.20.0 existed as Option B, though the owner chose B for every release.
+  - **Minors:**
+    - P2: the painter and the treatments read and wrote one unkeyed `src-masks.npz`;
+    - P3: Medallion's crescent was ruined by the brush and varnish pass;
+    - P4: a smudge on the Orrery's left hill;
+    - P5: the Orrery clouds read as bubbles;
+    - P6: a glass join met the chocobo's tail, and small glass islands remained;
+    - P7: Medallion's strokes ran horizontally everywhere.
+  - **Nits:** the Aether facets ran up to the figures; the recipe's 4 MB needed its assumption stated; Sumi's lantern had no bail.
+- **After round 5, step 1** (the pipeline and the 1.20.0 art):
+  - **P2:** a painter registry (`painters_b.py <key>`), and `<key>-base.png` and `<key>-masks.npz` everywhere; the recipe is updated.
+  - **P3:** the moon is left out of Medallion's pass and redrawn after it in cream.
+  - **P4:** hatching weights are capped lower, so no shadow hatching merges.
+  - **P5:** clouds under about 40 px across are dropped by a morphological opening. The rest have a levelled, lit base and 2–3 cut lines along it.
+  - **P6:** the figures' zone is derived from the `figs` mask plus 24 px, and no join is forced at its edges; pieces under 300 px² merge into a neighbour.
+  - **P7:** Medallion's strokes follow the ridge, the plain, the far range, the cliff faces and the cloud edges.
+  - **Nits:** Aether fades within about 30 px of the figures; the 4 MB assumption and the 5.4 MB cap are stated; Sumi's lantern has a 1 px ink bail.

@@ -2,7 +2,7 @@
 
 Inputs, per release <key> (for example evercold-b), all in ../optionb/:
   <key>-base.png     the painting, 1120 x 440 (the 2x tier of the popup's 560 x 220 art band)
-  src-masks.npz      its region masks, written by the release's painter (paint_option_b.py writes them for 1.20.0);
+  <key>-masks.npz    its region masks, written by the release's painter (py -3 painters_b.py <key>);
                      keys: clouds, under, moon, moonlit, far, city, cliff, field, ridge, figs, lantern (0..1 floats)
   <key>.json         the release's placement data: horizon, sun glow, moon, the figures' zone, saddle bars, gold bands
 Output: ../optionb/<key>-<theme>.png for the six themes (lossless masters; ship_option_b.py encodes the shipped files).
@@ -42,6 +42,7 @@ CFG = {}
 def load(key):
     CFG.clear()
     CFG.update(json.loads((OUT / f"{key}.json").read_text(encoding="utf-8")))
+    CFG["key"] = key
     return np.asarray(Image.open(OUT / f"{key}-base.png").convert("RGB"), np.float32) / 255.0
 
 
@@ -86,7 +87,7 @@ def tex(T, u, v):
 
 
 def masks():
-    M = dict(np.load(OUT / "src-masks.npz"))
+    M = dict(np.load(OUT / f"{CFG['key']}-masks.npz"))
     M["below"] = np.maximum(M["far"], M["city"])
     M["sky"] = 1 - M["below"]
     M["city"] = M["city"] * (1 - M["field"]) * (1 - M["ridge"])   # the city and its bluff only, not the plain under it
@@ -106,43 +107,56 @@ def grid(h, w):
 
 # ---------------------------------------------------------------------------------------------------------- medallion
 def medallion(px):
-    """Visibly oil, not the plain painting: a warm amber varnish, a brush texture lit from the upper left that shows
-    at 1x, faint craquelure only in the thick paint, a deeper vignette inside a slim gilt slip. The popup drops its
-    own art keyline for this theme, since the slip is the edge."""
+    """Visibly oil, not the plain painting: a warm amber varnish, brush strokes that follow the forms (along the ridge
+    and the plain, down the cliff faces, round the cloud edges) lit from the upper left, faint craquelure only in the
+    thick paint, a deeper vignette inside a slim gilt slip. The silhouettes and the moon are left out of the brush and
+    varnish pass, and the crescent is redrawn after it in its own cream. The popup drops its art keyline here."""
     h, w, _ = px.shape
     M = masks()
     yy, xx = grid(h, w)
     from paint_option_b import kuwahara
     L0 = lum(px)
-    sil = blur(np.maximum(M["figs"], M["city"] * (yy < h * CFG["bluff_split"])), 2)
+    mz = np.clip(blur(M["moon"], 2) * 2.5, 0, 1)
+    sil = np.maximum(blur(np.maximum(M["figs"], M["city"] * (yy < h * CFG["bluff_split"])), 2), mz)
     p = kuwahara(px, 3) * (1 - sil[..., None]) + px * sil[..., None]
-    # the varnish: an aged amber film that warms everything, most in the lights
     L = lum(p)[..., None]
     p = p * np.array([1.06, 1.0, 0.84], np.float32)
     p = 1 - (1 - p) * (1 - np.array([0.16, 0.10, 0.02], np.float32) * np.clip(L * 1.2, 0, 1))
     Lv = lum(p)[..., None]
     p = np.clip(Lv + (p - Lv) * 1.10, 0, 1)
-    # brush texture: strokes laid along the forms (level in the sky and snow), their ridges lit from the upper left
-    stroke = tex(fbm(256, 256, 4, 3, 811), xx / 6.0 + 3 * np.sin(yy / 17), yy / 1.6)
-    relief = (np.roll(stroke, 1, 0) - stroke) + (np.roll(stroke, 1, 1) - stroke)          # facing up-left is lit
+    # brush coordinates that follow the forms: v runs across a form's contour, u along it
+    rt, ft, at = top_row(M["ridge"]), top_row(M["field"]), top_row(M["far"])
+    v = yy.copy()
+    v = np.where(M["far"] > 0.5, yy - at[None, :], v)
+    v = np.where(M["field"] > 0.5, yy - ft[None, :], v)
+    v = np.where(M["ridge"] > 0.5, yy - rt[None, :], v)
+    u = xx.copy()
+    cliff = (M["city"] > 0.5) & (yy > h * CFG["bluff_split"])
+    u, v = np.where(cliff, yy, u), np.where(cliff, xx, v)                         # down the cliff faces
+    cd = blur(M["clouds"], 3) * (M["sky"] > 0.5)
+    v = np.where(cd > 0.05, yy + cd * 14, v)                                       # bending round the cloud edges
+    stroke = tex(fbm(256, 256, 4, 3, 811), u / 6.0, v / 1.6)
+    relief = (np.roll(stroke, 1, 0) - stroke) + (np.roll(stroke, 1, 1) - stroke)
     paint = (1 - sil) * (0.5 + 0.5 * np.clip(L0 / 0.5, 0, 1))
-    p = np.clip(p * (1 + (relief * 1.0 + (stroke - 0.5) * 0.05) * paint)[..., None], 0, 1)
-    # craquelure: faint, only in the thick light paint, never on the dark silhouettes
+    p = np.clip(p * (1 + (relief * 0.75 + (stroke - 0.5) * 0.05) * paint)[..., None], 0, 1)
     cr = fbm(h, w, 14, 4, 801)
     thick = np.clip((L0 - 0.30) / 0.3, 0, 1) * (1 - np.clip(sil * 3, 0, 1))
     p = p * (1 - (np.exp(-((cr - 0.5) / 0.010) ** 2) * 0.035 * thick * (0.6 + 0.8 * fbm(h, w, 60, 2, 805)))[..., None])
-    # a deeper vignette inside the slip
     ex = np.minimum(np.minimum(xx, w - 1 - xx), np.minimum(yy, h - 1 - yy))
     rad = np.sqrt(((xx - w / 2) / (w * 0.62)) ** 2 + ((yy - h / 2) / (h * 0.75)) ** 2)
     p = p * (1 - 0.30 * np.clip(rad - 0.55, 0, 1) ** 1.5 - 0.14 * np.clip(1 - ex / 40, 0, 1) ** 2)[..., None]
-    # the gilt slip: 4 px, inset 5; top and left runs lit, bottom and right shaded; a thin dark sight edge
+    # the moon after the pass: the painting's own disc, with at most a light share of the varnish, and the crescent in cream
+    moon_col = px * 0.88 + p * 0.12
+    p = p * (1 - mz[..., None]) + moon_col * mz[..., None]
+    lit = blur(M["moonlit"], 0.5)[..., None]
+    p = p * (1 - lit) + (hexc("#F3EAD3") * 0.9 + hexc("#E9C98C") * 0.1) * lit
     inset, wdt = 5, 4
     slip = (ex >= inset) & (ex < inset + wdt)
-    lit = np.stack([yy, xx, h - 1 - yy, w - 1 - xx]).argmin(0) < 2
+    litside = np.stack([yy, xx, h - 1 - yy, w - 1 - xx]).argmin(0) < 2
     across = np.clip((ex - inset) / wdt, 0, 1)[..., None]
     hi = hexc("#F0D9A0") * (1 - across * 0.35) + hexc("#C9A65C") * (across * 0.35)
     lo = hexc("#7C6236") * (1 - across * 0.4) + hexc("#5C4724") * (across * 0.4)
-    p = np.where(slip[..., None], np.where(lit[..., None], hi, lo), p)
+    p = np.where(slip[..., None], np.where(litside[..., None], hi, lo), p)
     p = np.where(((ex >= inset + wdt) & (ex < inset + wdt + 1))[..., None], p * 0.55, p)
     p = np.where((ex < inset)[..., None], p * 0.6 + hexc("#1E2236") * 0.4, p)
     return p
@@ -168,10 +182,41 @@ def jitter_labels(h, w, cell, seed):
     return lab, gh * gw
 
 
+def figure_zone(M, margin=24):
+    """The x range no vertical glass join may cross: the figures' mask plus a margin, joined with the json's zone."""
+    cols = np.where((M["figs"] > 0.3).any(0))[0]
+    z0, z1 = CFG.get("figure_zone", [10 ** 6, -1])
+    if len(cols):
+        z0, z1 = min(z0, cols.min() - margin), max(z1, cols.max() + margin)
+    CFG["_zone"] = (z0, z1)
+
+
 def no_cut_x(xx):
-    """Vertical joins never fall inside the figures' zone: x is held at the zone's left edge across it."""
-    z0, z1 = CFG["figure_zone"]
-    return np.where((xx > z0) & (xx < z1), z0, xx)
+    """Vertical joins never fall inside the figures' zone: x is held at the zone's left edge across it, and runs on
+    from there past it, so no join is forced at the zone's right edge either."""
+    z0, z1 = CFG["_zone"]
+    return np.where(xx <= z0, xx, np.where(xx < z1, z0, xx - (z1 - z0)))
+
+
+def opening(m, r):
+    """A morphological opening (erode, then dilate) by about r px: drops any shape narrower than 2r, keeps the rest."""
+    er = (blur(m, r / 2) > 0.92).astype(np.float32)
+    return ((blur(er, r / 2) > 0.35) & (m > 0.5)).astype(np.float32)
+
+
+def merge_small(lab, min_px=300, frozen=None):
+    """Merges every piece smaller than min_px into a neighbouring piece, so no lead island or loop survives."""
+    for _ in range(40):
+        cnt = np.bincount(lab.ravel())
+        small = (cnt[lab] < min_px) & (True if frozen is None else ~frozen)
+        if not small.any():
+            break
+        for dy, dx in ((0, -1), (-1, 0), (0, 1), (1, 0)):
+            sh = np.roll(np.roll(lab, dy, 0), dx, 1)
+            take = small & (cnt[sh] >= min_px) & (True if frozen is None else ~np.roll(np.roll(frozen, dy, 0), dx, 1))
+            lab = np.where(take, sh, lab)
+            small = small & ~take
+    return lab
 
 
 def contour_strips(h, w, top, seed, k_band, seg0, seg_k):
@@ -194,8 +239,9 @@ def ishgard(px):
     h, w, _ = px.shape
     M = masks()
     yy, xx = grid(h, w)
+    figure_zone(M)
     reg = np.zeros((h, w), np.int64)
-    reg[(M["sky"] > 0.5) & (M["cloudshape"] > 0.5)] = 1
+    reg[(M["sky"] > 0.5) & (opening(M["cloudshape"], 12) > 0.5)] = 1
     reg[M["far"] > 0.5] = 2
     reg[M["city"] > 0.5] = 3
     reg[M["field"] > 0.5] = 4
@@ -216,8 +262,13 @@ def ishgard(px):
         lab = np.where(reg == rid, rid * 10_000_000 + l, lab)
     uniq, lab = np.unique(lab, return_inverse=True)
     lab = lab.reshape(h, w)
-    col, cnt = label_mean(px, lab, len(uniq))
-    regc = (uniq // 10_000_000).astype(int)
+    keep_small = np.isin(reg, [6, 7, 8, 9])                     # the figures, the moon and the lantern stay as drawn
+    merged = merge_small(lab, frozen=keep_small)
+    lab = np.where(keep_small, lab, merged)
+    uniq2, lab = np.unique(lab, return_inverse=True)
+    lab = lab.reshape(h, w)
+    regc = (uniq[uniq2] // 10_000_000).astype(int)
+    col, cnt = label_mean(px, lab, len(uniq2))
     cl = col @ LUM
     for rid, hexes in SUB.items():
         pal = np.stack([hexc(x) for x in hexes])
@@ -283,7 +334,8 @@ def aether(px):
     mx, my, mr = CFG["moon"][0] * w, CFG["moon"][1] * h, CFG["moon"][2]
     dm = np.sqrt((xx - mx) ** 2 + (yy - my) ** 2)
     fade = np.clip((dm - mr * 1.2) / (mr * 3.0), 0, 1)
-    area = blur(area, 1.0) * (fade * fade * (3 - 2 * fade))                       # a smooth fade over about 3r
+    near_figs = np.clip(blur(M["figs"], 12) * 5, 0, 1)                          # and within about 30 px of the figures
+    area = blur(area, 1.0) * (fade * fade * (3 - 2 * fade)) * (1 - near_figs)
     mix = (0.6 * area)[..., None]
     p = px * (1 - mix) + col[lab] * mix
     p = np.clip(p * (1 + 0.12 * shade[lab] * area)[..., None], 0, 1)
@@ -315,7 +367,7 @@ def orrery(px):
 
     def lines(phase, spacing, weight):
         f = np.abs((phase / spacing) % 1.0 - 0.5) * 2
-        return blur(((1 - f) < np.minimum(weight, 0.75) * 0.9).astype(np.float32), 0.45)  # never so wide they merge
+        return blur(((1 - f) < np.minimum(weight, 0.55) * 0.9).astype(np.float32), 0.45)  # never so wide they merge
 
     cut = np.zeros((h, w), np.float32)
     ridge, field, far = M["ridge"], M["field"] * (1 - M["ridge"]), M["far"] * (1 - M["field"]) * (1 - M["city"])
@@ -326,7 +378,8 @@ def orrery(px):
     cut += field * lines(np.sqrt(np.clip(yy - ft[None, :], 0, None)) * 6.0, 1.6, 0.20 + 0.6 * dark)
     cut += far * lines(yy - at[None, :], 4.0, 0.25 + 0.5 * dark)
     cut += cliff * np.maximum(lines(xx + 3 * np.sin(yy / 9), 4.0, 0.5 + 0.45 * dark), lines(yy, 11.0, 0.15))
-    cut += bld * np.maximum(lines(xx + yy, 3.0, 0.85), lines(xx - yy, 3.0, 0.85))
+    dense = lambda ph: blur((np.abs((ph / 3.0) % 1.0 - 0.5) * 2 > 0.25).astype(np.float32), 0.45)
+    cut += bld * np.maximum(dense(xx + yy), dense(xx - yy))                       # the backlit city: dense cross-hatching
     shadow = np.clip((0.42 - L) * 3, 0, 1) * (ridge + field + far) * (1 - M["figs"])
     cut += shadow * lines(xx - yy, 4.0, 0.35)                                     # every shadow as cross-hatching
     cut = np.clip(cut, 0, 1) * (1 - sky)
@@ -338,12 +391,20 @@ def orrery(px):
     for k in ("far", "ridge", "field", "figs", "city"):
         plate = plate * (1 - (outline(M[k]) * 0.6)[..., None])
     # the clouds: a few large shapes, each one clean silver outline, a few parallel lines along its lit underside
-    cs = (blur(M["clouds"], 10) > 0.33).astype(np.float32) * sky                   # the plate's clouds: a few large shapes
+    cs = opening((blur(M["clouds"], 10) > 0.33).astype(np.float32) * sky, 20)   # no cloud under about 40 px across
+    # a flat, lit base: each column's lowest cloud row, levelled over a wide span, cuts the shape off below it
+    on = cs > 0.5
+    bottom = np.where(on.any(0), h - 1 - np.argmax(on[::-1], 0), -1).astype(np.float32)
+    span = 70
+    lv = np.array([bottom[max(0, i - span):i + span][bottom[max(0, i - span):i + span] >= 0].min() if (bottom[max(0, i - span):i + span] >= 0).any() else -1 for i in range(w)], np.float32)
+    lv = np.where(bottom >= 0, np.minimum(bottom, lv + 4), -1)
+    cs = (on & (yy <= lv[None, :])).astype(np.float32)
     plate = plate + (hexc("#4A5A98") - plate) * (cs * 0.45)[..., None]            # a lighter enamel inside each shape
     co = outline(cs)
-    lower = np.clip(cs - np.roll(cs, -8, 0), 0, 1)                                # a band along each shape's underside
-    ul = lines(yy, 3.0, 0.45) * lower
-    plate = plate + (hexc("#C9D0E0") - plate) * (np.clip(blur(co, 0.5) * 1.6 + ul * 0.7, 0, 1) * 0.75)[..., None]
+    ul = np.zeros((h, w), np.float32)
+    for k in (3, 6, 9):                                                           # 2-3 cut lines along the lit base
+        ul = np.maximum(ul, (np.abs(yy - (lv[None, :] - k)) < 0.7) * cs * (k < 9 or 1))
+    plate = plate + (hexc("#C9D0E0") - plate) * (np.clip(blur(co, 0.5) * 1.6 + ul * 0.8, 0, 1) * 0.75)[..., None]
     stars = np.clip((L - blur(L, 3)) * 8 - 0.4, 0, 1) * sky * (yy < h * 0.4) * (1 - cs)
     plate = plate + (hexc("#E4E7EE") - plate) * (stars * 0.9)[..., None]
     # brass inlay: the dawn as three short brass lines low behind the city, the crescent, the rete and the limb
@@ -455,6 +516,10 @@ def sumi(px):
     p = p * (1 - M["moonlit"][..., None]) + hexc("#E6C878") * M["moonlit"][..., None]
     lan = blur(M["lantern"], 1.0)
     p = p * (1 - lan[..., None]) + hexc("#D2562E") * lan[..., None]
+    ly_, lx_ = np.where(M["lantern"] > 0.5)
+    if len(lx_):                                                                  # a 1 px ink bail up to her hand
+        cx_, top_ = int(round(lx_.mean())), int(ly_.min())
+        p[max(0, top_ - 5):top_, cx_] = p[max(0, top_ - 5):top_, cx_] * 0.25 + hexc("#16130F") * 0.75
     s0x, s0y, sz = w - 36, h - 36, 22
     p[s0y:s0y + sz, s0x:s0x + sz] = p[s0y:s0y + sz, s0x:s0x + sz] * 0.15 + hexc("#B2402F") * 0.85
     sy_, sx_ = np.mgrid[0:sz, 0:sz].astype(np.float32)
