@@ -12886,6 +12886,10 @@
     <value>Not on you</value>
     <comment>Core: RewardStates.cs.</comment>
   </data>
+  <data name="Core.RewardState.IfGone" xml:space="preserve">
+    <value>If you no longer have it</value>
+    <comment>Core: RewardStates.cs. Heads the buy-back line when the reads cannot tell whether the character still has the item.</comment>
+  </data>
   <data name="Core.RewardState.Reclaim" xml:space="preserve">
     <value>reclaim at {0}</value>
     <comment>Core: RewardStates.cs.</comment>

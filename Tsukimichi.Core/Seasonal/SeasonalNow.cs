@@ -22,9 +22,10 @@ public sealed record SeasonalQuest(QuestRecord Quest, QuestState State)
 
 /// <summary>
 /// A seasonal event the game reports as running, with its quests (removed ones left out) in display order: what can be
-/// done now first. <paramref name="AnnouncedEndUtc"/> is set only when <c>curated/festivals.json</c> has an end for
-/// this Festival id that is still ahead and an https evidence URL; otherwise the event reads "running now" and no date
-/// is shown (a date the plugin cannot attribute is never shown, product review §3.4).
+/// done now first. <paramref name="AnnouncedEndUtc"/> is set only from an end the plugin can attribute
+/// (<see cref="SeasonalNow.ResolveEnd"/>: a curated end still ahead with an https evidence URL, a dated run under way,
+/// or the player's own date); otherwise the event reads "running now" and no date is shown (a date the plugin cannot
+/// attribute is never shown, product review §3.4).
 /// </summary>
 /// <param name="FestivalId">The <c>Festival</c> row id (<see cref="QuestRecord.Festival"/>).</param>
 /// <param name="Name">Display name without the edition year ("Moonfire Faire").</param>
@@ -225,16 +226,15 @@ public static class SeasonalNow
     /// <summary>
     /// A running event's end and where it comes from, first match wins: the curated edition's end
     /// (<see cref="AnnouncedEnd"/>), the collaboration's dated run under way (<see cref="RunUnderWay"/>), then the date
-    /// the player <paramref name="entered"/> while it is still ahead. Each needs to be ahead of <paramref name="nowUtc"/>;
-    /// none gives (null, <see cref="FestivalEndSource.None"/>, null), which reads "running now" and never warns.
+    /// the player <paramref name="entered"/> while it is still ahead. Each needs to be ahead of <paramref name="nowUtc"/>:
+    /// a curated end that has passed while the server still runs the event (an extension, or stale data) gives way to
+    /// the next. None gives (null, <see cref="FestivalEndSource.None"/>, null), which reads "running now" and never warns.
     /// </summary>
     public static (DateTime? End, FestivalEndSource Source, string? Evidence) ResolveEnd(FestivalInfo? info, DateTime? entered, DateTime nowUtc)
     {
-        if (info?.End is not null)
+        if (info?.End is not null && AnnouncedEnd(info, nowUtc) is { } announced)
         {
-            return AnnouncedEnd(info, nowUtc) is { } announced
-                ? (announced, FestivalEndSource.Announced, info.Evidence)
-                : (null, FestivalEndSource.None, null);
+            return (announced, FestivalEndSource.Announced, info.Evidence);
         }
 
         if (RunUnderWay(info, nowUtc) is { } run)
@@ -312,17 +312,27 @@ public static class SeasonalNow
         return DisplayName(festivalId, info, catalog.All.Where(q => q.Festival == festivalId));
     }
 
-    /// <summary>"Aug 28", or "Jan 14, 2027" when the end falls in another year than <paramref name="nowUtc"/>; the UTC date.</summary>
-    public static string DateText(DateTime endUtc, DateTime nowUtc) =>
-        endUtc.ToString(
-            endUtc.Year == nowUtc.Year ? CoreText.T("Core.Seasonal.DateFormat", "MMM d") : CoreText.T("Core.Seasonal.DateYearFormat", "MMM d, yyyy"),
+    /// <summary>
+    /// "Aug 28", or "Jan 14, 2027" when the end falls in another year than <paramref name="nowUtc"/>: the date in
+    /// <paramref name="zone"/> (null for the player's, <see cref="TimeZoneInfo.Local"/>), the zone
+    /// <see cref="EventWarnings.DaysLeft"/> counts days in, so "ends tomorrow" never sits beside today's date.
+    /// </summary>
+    public static string DateText(DateTime endUtc, DateTime nowUtc, TimeZoneInfo? zone = null)
+    {
+        zone ??= TimeZoneInfo.Local;
+        var end = TimeZoneInfo.ConvertTimeFromUtc(AsUtc(endUtc), zone);
+        var now = TimeZoneInfo.ConvertTimeFromUtc(AsUtc(nowUtc), zone);
+        return end.ToString(
+            end.Year == now.Year ? CoreText.T("Core.Seasonal.DateFormat", "MMM d") : CoreText.T("Core.Seasonal.DateYearFormat", "MMM d, yyyy"),
             DateCulture);
+    }
 
     /// <summary>
     /// The Todo overlay's line under its "Event quests running now" header: "Ends Aug 28 (Lodestone)", or with the
-    /// event's name first when several events have quests listed. Null without an announced end.
+    /// event's name first when several events have quests listed. Null without an announced end. The date is in
+    /// <paramref name="zone"/> (null for the player's; <see cref="DateText"/>).
     /// </summary>
-    public static string? EndsLine(RunningFestival festival, bool named, DateTime nowUtc)
+    public static string? EndsLine(RunningFestival festival, bool named, DateTime nowUtc, TimeZoneInfo? zone = null)
     {
         ArgumentNullException.ThrowIfNull(festival);
         if (festival.AnnouncedEndUtc is not { } end)
@@ -330,7 +340,7 @@ public static class SeasonalNow
             return null;
         }
 
-        var date = DateText(end, nowUtc);
+        var date = DateText(end, nowUtc, zone);
         if (OtherSource(festival) is { } source)
         {
             return named
@@ -345,9 +355,10 @@ public static class SeasonalNow
 
     /// <summary>
     /// The dashboard's status for a running event: "announced to end Aug 28 (Lodestone)", "ends Oct 13 (wiki)" for a
-    /// rerun read from the wiki, "ends Oct 20 · you entered this", or "running now".
+    /// rerun read from the wiki, "ends Oct 20 · you entered this", or "running now". The date is in
+    /// <paramref name="zone"/> (null for the player's; <see cref="DateText"/>).
     /// </summary>
-    public static string Status(RunningFestival festival, DateTime nowUtc)
+    public static string Status(RunningFestival festival, DateTime nowUtc, TimeZoneInfo? zone = null)
     {
         ArgumentNullException.ThrowIfNull(festival);
         if (festival.AnnouncedEndUtc is not { } end)
@@ -355,7 +366,7 @@ public static class SeasonalNow
             return RunningNow;
         }
 
-        var date = DateText(end, nowUtc);
+        var date = DateText(end, nowUtc, zone);
         return festival.EndSource switch
         {
             FestivalEndSource.Entered => string.Format(CultureInfo.InvariantCulture, EnteredFormat, date),
@@ -379,13 +390,16 @@ public static class SeasonalNow
         _ => null,
     };
 
-    /// <summary>The login notice: "Moonfire Faire is running: 2 quests ready (ends Aug 28)"; the end only when announced.</summary>
-    public static string NoticeText(RunningFestival festival, DateTime nowUtc)
+    /// <summary>
+    /// The login notice: "Moonfire Faire is running: 2 quests ready (ends Aug 28)"; the end only when announced, its date
+    /// in <paramref name="zone"/> (null for the player's; <see cref="DateText"/>).
+    /// </summary>
+    public static string NoticeText(RunningFestival festival, DateTime nowUtc, TimeZoneInfo? zone = null)
     {
         ArgumentNullException.ThrowIfNull(festival);
         var text = string.Format(CultureInfo.CurrentCulture, festival.ReadyCount == 1 ? NoticeOneFormat : NoticeFormat, festival.Name, festival.ReadyCount);
         return festival.AnnouncedEndUtc is { } end
-            ? text + string.Format(CultureInfo.InvariantCulture, NoticeEndFormat, DateText(end, nowUtc))
+            ? text + string.Format(CultureInfo.InvariantCulture, NoticeEndFormat, DateText(end, nowUtc, zone))
             : text;
     }
 
