@@ -69,7 +69,7 @@ POINTS = [
 points = [{"id": f"N{n}", "n": n, "said": inline(said), "title": plain(said), "plan": plan, "rel": rel} for n, said, plan, rel in POINTS]
 
 decisions = [{"id": f"D{r[0]}", "n": r[0], "q": inline(r[1]), "title": plain(r[1]), "rec": inline(r[2])}
-             for r in table(section("Decisions for you"))]
+             for r in table(section("Decisions for you").split("### Your answers")[0])]
 notdoing = []
 for b in bullets(section("Not doing")):
     m = re.match(r"\*\*(.+?)\*\*\s*(.*)", b)

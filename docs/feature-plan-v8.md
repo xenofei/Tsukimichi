@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v8: welcome home
 
-Status: **draft for your review (4 October 2026).** Designs: Option A approved by the realism supervisor; the Option B sample is being fixed. Plan v7 shipped 1.14.0 to 1.20.0; 1.21.0 is built and being merged. This plan adds one release, 1.22.0, and a companion add-on for Umbra.
+Status: **signed off on 4 October 2026 and executing.** You voted to build every item and chose **Option B** for the release art (decision 1). 1.21.0 shipped the same day.
 
 ## Sources
 
@@ -77,6 +77,22 @@ All of plan v7's rules carry over:
 | 6 | When an update is waiting, should Tsukimichi also print a chat line? | No. The status bar and icon dot are enough; a chat line is an opt-in. |
 | 7 | Release order: 1.22.0 after 1.21.0, with the add-on released alongside 1.22.0. | As written. |
 | 8 | The server info bar's moon is "◐". If the game's font can't draw it, fall back to the shipped "☾" or to one of the game's own icons? | The game's own icon, so it always matches the bar's style. |
+
+
+### Your answers (4 October 2026)
+
+You voted "build it" on all 13 items and "good" on all five points of your request. You agreed with recommendations 2 to 8. On decision 1 you chose **Option B** ("I like option B."). In the designs you favourited every board and voted against Option A's art.
+
+| # | Decision | What happens |
+|---|---|---|
+| 1 | Release art | **Option B for every release.** Each release gets a richer painting, and each theme renders it as its own craft: gilt oil, stained glass, cut crystal, an engraved astrolabe, sumi-e with gold leaf, and the painting as painted for Classic. The realism supervisor reviews all six for every release. |
+| 2 | Backfill | Popups and Option B art for 1.14.0 to 1.21.0, so the history starts full. |
+| 3 | Umbra add-on repository | Create `xenofei/Tsukimichi.Umbra` (AGPL-3.0) and release the add-on from it. |
+| 4 | Follow Umbra | An option, off by default, that reads Umbra's saved theme without writing to it. |
+| 5 | Moon icon on first run | Shown once, with a one-line hint. |
+| 6 | Update chat line | Off; the status bar note and the icon dot cover it. |
+| 7 | Order | 1.22.0, with the add-on alongside it. |
+| 8 | Bar moon fallback | One of the game's own icons when the font lacks "◐". |
 
 ## Not doing
 
