@@ -125,6 +125,15 @@ public sealed class TablePane : IDisposable
     /// </summary>
     public Func<QuestRecord, QuestState, RowChip?>? RowChips { get; set; }
 
+    /// <summary>
+    /// The viewed character's journal is full (1.19.0, C9; spec-1.19 "In rows and the hero"): a Ready row reads "Ready ·
+    /// ● journal full", the copper dot before the words in Text. Set by the window each frame.
+    /// </summary>
+    public bool JournalFull { get; set; }
+
+    /// <summary>"Use Tsukimichi's answer" in a row's "…" menu (1.19.0, C1) for a quest the player went with the game on; null leaves it out.</summary>
+    public GameAnswerActions? GameAnswers { get; set; }
+
     /// <summary>Settings › Display › Planning: whether the Opens column (feature plan v6 K4) is offered; null or false keeps it off.</summary>
     public Func<bool>? ShowOpens { get; set; }
 
@@ -1656,11 +1665,11 @@ public sealed class TablePane : IDisposable
             using var caption = Typography.Caption();
             var lineWidth = nameCellWidth - (moreShown ? moreSize + gap : 0f);
             var lineChip = hasSnapshot ? RowChips?.Invoke(quest, row.State) : null;
-            var lineChipRoom = lineChip is { } shownChip ? RowChipView.Width(shownChip.Text) + UiMetrics.Px(6f) : 0f;
-            statusCut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, lineWidth - lineChipRoom));
+            var lineChipRoom = lineChip is { } shownChip ? RowChipView.Width(shownChip) + UiMetrics.Px(6f) : 0f;
+            statusCut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, lineWidth - lineChipRoom), JournalFull, rowHovered);
             if (lineChip is { } trailingChip && lineChipRoom < lineWidth)
             {
-                RowChipView.Draw(trailingChip, new Vector2(nameCellMin.X + lineWidth - RowChipView.Width(trailingChip.Text), secondLineY), rowHovered);
+                RowChipView.Draw(trailingChip, new Vector2(nameCellMin.X + lineWidth - RowChipView.Width(trailingChip), secondLineY), rowHovered);
             }
         }
 
@@ -1706,11 +1715,11 @@ public sealed class TablePane : IDisposable
             var statusCellMin = ImGui.GetCursorScreenPos();
             var statusCellWidth = ImGui.GetContentRegionAvail().X;
             var chip = hasSnapshot ? RowChips?.Invoke(quest, row.State) : null;
-            var chipRoom = chip is { } shown ? RowChipView.Width(shown.Text) + UiMetrics.Px(6f) : 0f;
-            var cut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, statusCellWidth - chipRoom));
+            var chipRoom = chip is { } shown ? RowChipView.Width(shown) + UiMetrics.Px(6f) : 0f;
+            var cut = DrawStatus(row.Status, row.State, hasSnapshot, MathF.Max(1f, statusCellWidth - chipRoom), JournalFull, rowHovered);
             if (chip is { } trailing && chipRoom < statusCellWidth)
             {
-                RowChipView.Draw(trailing, new Vector2(statusCellMin.X + statusCellWidth - RowChipView.Width(trailing.Text), statusCellMin.Y), rowHovered);
+                RowChipView.Draw(trailing, new Vector2(statusCellMin.X + statusCellWidth - RowChipView.Width(trailing), statusCellMin.Y), rowHovered);
             }
 
             // The state word is never cut; when the reason after it was ellipsised, the whole line is the cell's tooltip.
@@ -2197,8 +2206,18 @@ public sealed class TablePane : IDisposable
     /// snapshot) the whole line is in the tertiary tone. Returns whether the reason was cut. The rule is
     /// <see cref="Chrome.StatusText"/>'s, drawn with raw colour pushes so a row allocates nothing.
     /// </summary>
-    private static bool DrawStatus(string text, QuestState state, bool hasSnapshot, float cellWidth)
+    private static bool DrawStatus(string text, QuestState state, bool hasSnapshot, float cellWidth, bool journalFull = false, bool rowHovered = false)
     {
+        // A full journal keeps a Ready quest out (1.19.0, C9): "· ● journal full" closes the line, its room set aside first.
+        if (journalFull && hasSnapshot && state is QuestState.Ready or QuestState.ReadyOnOtherJob)
+        {
+            var full = JournalFullWidth();
+            var cut = DrawStatus(text, state, hasSnapshot, MathF.Max(1f, cellWidth - full));
+            ImGui.SameLine(0f, 0f);
+            DrawJournalFull(rowHovered);
+            return cut;
+        }
+
         var s = Theme.Surface;
         var split = TableGeometry.StateWordLength(text);
         var stateWord = text.AsSpan(0, split);
@@ -2231,6 +2250,33 @@ public sealed class TablePane : IDisposable
         ImGui.Dummy(new Vector2(room, ImGui.GetTextLineHeight()));
         EllipsisAt(ImGui.GetWindowDrawList(), pos, room, reason, ImGui.GetColorU32(reasonInk), reasonWidth);
         return true;
+    }
+
+    /// <summary>" · ● journal full": the separator, the 6 px copper dot and the words.</summary>
+    private static float JournalFullWidth() =>
+        ImGui.CalcTextSize(Core.Evaluation.BlockerText.Separator).X + UiMetrics.Px(12f) + ImGui.CalcTextSize(Strings.JournalFullWords).X;
+
+    /// <summary>
+    /// Draws " · ● journal full" from the cursor (spec-1.19 C9): the separator in Secondary, a 6 px copper dot (the palette's
+    /// own attention ink, never the only carrier) and the words in Text; the hover says what it means.
+    /// </summary>
+    private static void DrawJournalFull(bool rowHovered)
+    {
+        var s = Theme.Surface;
+        var dl = ImGui.GetWindowDrawList();
+        var pos = ImGui.GetCursorScreenPos();
+        var line = ImGui.GetTextLineHeight();
+        var width = JournalFullWidth();
+        ImGui.Dummy(new Vector2(width, line));
+        dl.AddText(pos, Theme.U32(s.TextSecondary), Core.Evaluation.BlockerText.Separator);
+        var x = pos.X + ImGui.CalcTextSize(Core.Evaluation.BlockerText.Separator).X;
+        var radius = UiMetrics.Px(3f);
+        dl.AddCircleFilled(new Vector2(x + radius, pos.Y + (line * 0.5f)), radius, Theme.U32(Theme.Copper), 12);
+        dl.AddText(new Vector2(x + UiMetrics.Px(12f), pos.Y), Theme.U32(s.Text), Strings.JournalFullWords);
+        if (rowHovered && ImGui.IsMouseHoveringRect(new Vector2(x, pos.Y), new Vector2(pos.X + width, pos.Y + line)))
+        {
+            UiMetrics.Tooltip(Strings.JournalFullRowTooltip);
+        }
     }
 
     /// <summary>
@@ -2506,6 +2552,20 @@ public sealed class TablePane : IDisposable
         if (ImGui.MenuItem(Strings.ShowPath))
         {
             ui.ShowPath(quest.RowId);
+        }
+
+        // "Go with the game" is taken back here (1.19.0, C1; spec-1.19 "When the game disagrees"), with the 8 s Undo.
+        if (GameAnswers is { } answers && answers.IsChosen(quest))
+        {
+            if (ImGui.MenuItem(Strings.UseOwnAnswer))
+            {
+                answers.UseOwnAnswer(quest);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.UseOwnAnswerTooltip);
+            }
         }
 
         if (ImGui.MenuItem(Strings.LinkInChat))

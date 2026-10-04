@@ -127,6 +127,13 @@ public sealed partial class ConfigWindow
             settings.TodoShowJobQuests = jobs;
             Save();
         }
+
+        var journal = settings.TodoShowJournalCount;
+        if (Toggle(Strings.TodoJournalCount, Strings.TodoJournalCountTooltip, ref journal, "overlay journal count slots full make room 30", on, reason: off))
+        {
+            settings.TodoShowJournalCount = journal;
+            Save();
+        }
     }
 
     /// <summary>

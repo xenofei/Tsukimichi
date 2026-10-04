@@ -266,6 +266,9 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>The todo overlay's "Event quests running now" section. On by default.</summary>
     public bool TodoShowSeasonal { get; set; } = true;
 
+    /// <summary>The todo overlay's journal count (1.19.0, C9): "Journal 25/30" from 25 slots used, as the status bar. Off by default.</summary>
+    public bool TodoShowJournalCount { get; set; }
+
     /// <summary>Print "Moonfire Faire is running: 2 quests ready (ends Aug 28)" once per login (see <c>Game.ChatNotifier</c>). On by default.</summary>
     public bool ChatNoticeSeasonal { get; set; } = true;
 

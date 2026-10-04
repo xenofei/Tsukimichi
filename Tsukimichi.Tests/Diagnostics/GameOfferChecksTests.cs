@@ -82,18 +82,9 @@ public class GameOfferChecksTests
     }
 
     [Fact]
-    public void The_detail_pane_speaks_only_for_a_confirmation_or_a_disagreement()
+    public void The_why_command_says_where_the_game_showed_it_and_asks_for_a_report_on_a_disagreement()
     {
         var sighting = Seen(A, TimeSpan.FromMinutes(5));
-        Assert.Equal(
-            "The game offered this quest 5 min ago, but Tsukimichi reads it as not available. Report this quest so it can be fixed.",
-            GameOfferChecks.DetailLine(new GameOfferCheck(GameOfferVerdict.Disagrees, sighting, 0), Now));
-        Assert.Equal(
-            "The game offers this quest (seen 5 min ago), so the gate Tsukimichi cannot read is met.",
-            GameOfferChecks.DetailLine(new GameOfferCheck(GameOfferVerdict.Confirms, sighting, 0), Now));
-        Assert.Null(GameOfferChecks.DetailLine(new GameOfferCheck(GameOfferVerdict.Agrees, sighting, 0), Now));
-        Assert.Null(GameOfferChecks.DetailLine(new GameOfferCheck(GameOfferVerdict.Unseen, null, 5), Now));
-
         Assert.Equal("Game: shown on the map 5 min ago.", GameOfferChecks.WhyLine(new GameOfferCheck(GameOfferVerdict.Agrees, sighting, 0), Now));
         Assert.Equal(
             "Game: offered to you 5 min ago. Tsukimichi disagrees: please report this quest.",

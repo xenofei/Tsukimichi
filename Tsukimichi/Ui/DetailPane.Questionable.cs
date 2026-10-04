@@ -207,6 +207,7 @@ public sealed partial class DetailPane
 
         var spoilers = runner.Spoilers;
         links.DrawOpenOnMenu(quest, spoilers.IsMasked(quest), spoilers.DisplayName(quest));
+        DrawGameAnswerMenuItem(quest);
 
         // The menu opens after a refresh with the hand-off on, so questionableCanAdd is current.
         if (!ShowsQuestionableMore || Questionable is not { } questionable || questionableRowId != rowId)

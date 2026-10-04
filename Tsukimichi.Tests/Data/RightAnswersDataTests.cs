@@ -76,17 +76,17 @@ public sealed class RightAnswersDataTests(FixtureCatalog fixture) : IClassFixtur
         var daily = catalog.All.First(q => q.IsAlliedSocietyDaily);
         var story = catalog.All.First(q => Core.Query.FeaturePresets.IsMainScenario(q) && q.Issuer is not null && !q.IsRemoved);
         var side = catalog.All.First(q => !Core.Query.FeaturePresets.IsMainScenario(q) && !q.IsRepeatable && q.Festival == 0
-            && q.Issuer is { Name.Length: > 0 } && !q.IsRemoved && !q.IsUnlisted);
+            && q.BeastTribe == 0 && q.Issuer is { Name.Length: > 0 } && !q.IsRemoved && !q.IsUnlisted);
         var snapshot = Character(Warrior, (Warrior, 90)) with
         {
             Accepted = [new(daily.QuestId, 0), new(story.QuestId, 1), new(side.QuestId, 1)],
         };
 
         Assert.Equal(new JournalSlots(2, JournalSlots.GameCap), JournalSlots.Of(snapshot, catalog));
-        var rows = MakeRoom.Rank(snapshot, catalog);
-        Assert.Equal([RoomAdvice.SafeToDrop, RoomAdvice.Keep], rows.Select(r => r.Advice));
-        Assert.Equal(side.QuestId, rows[0].Entry.QuestId);
-        Assert.Equal(story.QuestId, rows[1].Entry.QuestId);
+
+        // Make room lists the side quest still on step 1 as safe to drop; the main scenario on step 1 has nothing to say.
+        var entry = Assert.Single(MakeRoom.Plan(snapshot, catalog));
+        Assert.Equal((side.QuestId, RoomGroup.SafeToDrop, true), (entry.Entry.QuestId, entry.Group, entry.SafeToDrop));
     }
 
     [GameDataFact]

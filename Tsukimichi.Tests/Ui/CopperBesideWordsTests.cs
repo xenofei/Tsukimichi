@@ -23,6 +23,12 @@ public class CopperBesideWordsTests
         // 1.19.0: the allied board's carried-over daily (C5) and the ending-soon card (C10).
         ("CharactersPane.Planning.cs", ["line.NeedsYou", "line.Line"]),
         ("TonightCard.Events.cs", ["card.Title", "card.Why"]),
+        // 1.19.0, C9 (spec-1.19 "Copper is a dot, with words in Text"): a full journal in the row, the status bar, the
+        // hero's Make room link and the Todo overlay's count.
+        ("TablePane.cs", ["Strings.JournalFullWords"]),
+        ("MainWindow.Journal.cs", ["Strings.JournalBarFullFormat"]),
+        ("DetailPane.GameAnswers.cs", ["Strings.MakeRoomToAccept"]),
+        ("TodoOverlay.cs", ["Strings.JournalBarFullFormat"]),
         ("Theme.cs", []),
     ];
 

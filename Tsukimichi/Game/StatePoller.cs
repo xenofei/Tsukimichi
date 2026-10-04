@@ -105,8 +105,9 @@ public sealed class StatePoller : IDisposable
     // The daily offer the committed evaluations were resolved with; a different one re-resolves everything.
     private DailyOffer? lastOffer;
 
-    // The players' "I've done this" gate marks (SessionState.GateMarksVersion) the committed evaluations were resolved
-    // with, and the version the poll in hand read; a different one re-resolves everything, as a new offer does.
+    // The players' "I've done this" gate marks, "Go with the game" choices and the game's offers
+    // (SessionState.AnswersVersion) the committed evaluations were resolved with, and the version the poll in hand
+    // read; a different one re-resolves everything, as a new offer does.
     private int lastGateMarks = -1;
     private int polledGateMarks;
 
@@ -489,7 +490,7 @@ public sealed class StatePoller : IDisposable
         // unknown society's dailies are not held back. A change of the offer re-resolves everything below.
         // lastOffer follows only a commit: a capture held back (or a poll that throws) leaves the change to the next one.
         var offer = DailyOffers?.Read(catalog, snapshot, now) ?? DailyOffer.None;
-        polledGateMarks = session.GateMarksVersion;
+        polledGateMarks = session.AnswersVersion;
         var offerChanged = !offer.SameAs(lastOffer) || polledGateMarks != lastGateMarks;
         var context = session.BaseContext.WithDailyOffer(offer);
 

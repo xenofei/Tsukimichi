@@ -63,6 +63,14 @@ public sealed class CharacterSettings
     [OmitWhenEmpty]
     public List<uint> GatesDone { get; set; } = [];
 
+    /// <summary>
+    /// Quest row ids the player chose "Go with the game" on (feature plan v7 C1, spec-1.19 "When the game disagrees"):
+    /// the game offered the quest while Tsukimichi read it Blocked, and the player took the game's word, so it reads
+    /// Ready for this character (<c>EvalContext.GoWithGame</c>) until they take it back. Ascending.
+    /// </summary>
+    [OmitWhenEmpty]
+    public List<uint> GoWithGame { get; set; } = [];
+
     /// <summary>Properties this build does not know (a newer build's), written back unchanged.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; set; }
@@ -71,7 +79,7 @@ public sealed class CharacterSettings
     [JsonIgnore]
     public bool IsEmpty =>
         SpoilerShield is null && !Hidden && !DontTrack && CompareWith is null
-        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
+        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && GoWithGame.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
 
     /// <summary>
     /// What outlives Forget character and "Delete all data": the player's choices about the character itself, hidden
@@ -92,6 +100,7 @@ public sealed class CharacterSettings
         PayoffGatesNoticed = [.. PayoffGatesNoticed],
         PayoffWhyOpen = [.. PayoffWhyOpen],
         GatesDone = [.. GatesDone],
+        GoWithGame = [.. GoWithGame],
         SeenReady = SeenReady is null ? null : [.. SeenReady],
         SeenReadyRules = SeenReadyRules,
         Extra = Extra is null ? null : new Dictionary<string, JsonElement>(Extra, StringComparer.Ordinal),
@@ -103,6 +112,7 @@ public sealed class CharacterSettings
         PayoffGatesNoticed ??= [];
         PayoffWhyOpen ??= [];
         GatesDone ??= [];
+        GoWithGame ??= [];
     }
 }
 
@@ -131,6 +141,12 @@ public enum CharacterSettingField
     /// true) or takes the mark back (<see cref="CharacterSettings.GatesDone"/>).
     /// </summary>
     GateDone,
+
+    /// <summary>
+    /// Goes with the game's answer for quest <see cref="CharacterSettingChange.RowIds"/>[0] (<see cref="CharacterSettingChange.Flag"/>
+    /// true) or takes Tsukimichi's answer back (<see cref="CharacterSettings.GoWithGame"/>).
+    /// </summary>
+    GoWithGame,
 
     /// <summary>
     /// Forget character: drops the character's entry except <see cref="CharacterSettings.Hidden"/> and
@@ -164,6 +180,8 @@ public readonly record struct CharacterSettingChange(ulong ContentId, CharacterS
     public static CharacterSettingChange Why(ulong contentId, string gateId, bool open) => new(contentId, CharacterSettingField.WhyOpen, open, Id: gateId);
 
     public static CharacterSettingChange GateDone(ulong contentId, uint questRowId, bool done) => new(contentId, CharacterSettingField.GateDone, done, RowIds: [questRowId]);
+
+    public static CharacterSettingChange GoWithGame(ulong contentId, uint questRowId, bool withGame) => new(contentId, CharacterSettingField.GoWithGame, withGame, RowIds: [questRowId]);
 
     public static CharacterSettingChange Forget(ulong contentId) => new(contentId, CharacterSettingField.Forget);
 }
@@ -278,19 +296,10 @@ public static class CharacterSettingsFile
 
                     break;
                 case CharacterSettingField.GateDone:
-                    if (change.RowIds is [var gateRow])
-                    {
-                        if (change.Flag == true && !entry.GatesDone.Contains(gateRow))
-                        {
-                            entry.GatesDone.Add(gateRow);
-                            entry.GatesDone.Sort();
-                        }
-                        else if (change.Flag != true)
-                        {
-                            entry.GatesDone.Remove(gateRow);
-                        }
-                    }
-
+                    SetRow(entry.GatesDone, change);
+                    break;
+                case CharacterSettingField.GoWithGame:
+                    SetRow(entry.GoWithGame, change);
                     break;
                 case CharacterSettingField.SeenReady:
                     entry.SeenReady = change.RowIds is null ? null : [.. change.RowIds];
@@ -431,6 +440,25 @@ public static class CharacterSettingsFile
 
     private static IEnumerable<string> Sorted(HashSet<string>? ids) =>
         ids is null ? [] : ids.Where(static g => !string.IsNullOrEmpty(g)).Order(StringComparer.Ordinal);
+
+    /// <summary>Adds quest <see cref="CharacterSettingChange.RowIds"/>[0] to an ascending list (flag true) or removes it.</summary>
+    private static void SetRow(List<uint> rows, CharacterSettingChange change)
+    {
+        if (change.RowIds is not [var row])
+        {
+            return;
+        }
+
+        if (change.Flag == true && !rows.Contains(row))
+        {
+            rows.Add(row);
+            rows.Sort();
+        }
+        else if (change.Flag != true)
+        {
+            rows.Remove(row);
+        }
+    }
 
     private static void AddId(List<string> list, string? id)
     {
