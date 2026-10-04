@@ -2,7 +2,7 @@
 
 Tsukimichi answers other Dalamud plugins over IPC: whether a quest can be picked up now, why not, where the main scenario stands, and "show me this quest". An overlay, a route planner or another quest plugin can build on its requirement evaluator instead of writing its own. The gates exist from Tsukimichi 0.9.0 and answer with API version **1**.
 
-Everything here is read-only except `Tsukimichi.OpenQuest`, which opens Tsukimichi's own window, and `Tsukimichi.PinQuest` (1.8.0), which changes Tsukimichi's own pin list. Nothing moves the character, accepts a quest or touches the game on a caller's behalf.
+Everything here is read-only except `Tsukimichi.OpenQuest` and `Tsukimichi.OpenAt` (1.22.0), which open Tsukimichi's own windows, and `Tsukimichi.PinQuest` (1.8.0), which changes Tsukimichi's own pin list. Nothing moves the character, accepts a quest, starts travel or a run, or touches the game on a caller's behalf.
 
 ## Quick reference
 
@@ -33,6 +33,17 @@ Everything here is read-only except `Tsukimichi.OpenQuest`, which opens Tsukimic
 | `Tsukimichi.StatesChanged` | message, no arguments | sent after a poll changed the logged-in character's states | 0.9.0 |
 | `Tsukimichi.QuestStateChanged` | message `(uint rowId, string from, string to)` | one per quest whose state a live poll moved | 1.8.0 |
 | `Tsukimichi.Disposing` | message, no arguments | sent once as Tsukimichi unloads, before the gates go away | 1.8.0 |
+| `Tsukimichi.GetSummaryVersion` | `() -> int` | the summary's own version, `1` | 1.22.0 |
+| `Tsukimichi.GetCharacter` | `() -> (string name, string job, int level)` | the logged-in character, its job and level | 1.22.0 |
+| `Tsukimichi.GetUpNext` | `() -> (uint rowId, string name, string step)` | Tonight's Up next, its name shielded, and its step or place line | 1.22.0 |
+| `Tsukimichi.GetReadyCount` | `() -> (int ready, int here, string job)` | quests Ready on the current job, and quests that can start in this zone | 1.22.0 |
+| `Tsukimichi.GetJournalRoom` | `() -> (int used, int cap)` | the journal's slots | 1.22.0 |
+| `Tsukimichi.GetEndingSoon` | `() -> (string name, int daysLeft)[]` | seasonal events ending soon, soonest first | 1.22.0 |
+| `Tsukimichi.GetStoryMeter` | `() -> (string part, int leftToLatest, bool caughtUp)` | where the main scenario stands | 1.22.0 |
+| `Tsukimichi.GetTheme` | `() -> string` | the theme in use, by key | 1.22.0 |
+| `Tsukimichi.OpenAt` | `(string place) -> bool` | opens Tsukimichi at a place; never travels | 1.22.0 |
+| `Tsukimichi.AddonHello` | `(string addon, string version) -> int` | an add-on says it is there; answers the summary version | 1.22.0 |
+| `Tsukimichi.SummaryChanged` | message, no arguments | sent after anything the summary gates answer changed | 1.22.0 |
 
 The plugin's internal name is `Tsukimichi`. Every argument and answer is a primitive, an array of primitives or a value tuple of them, so no shared type is needed: copy [`TsukimichiIpc.cs`](TsukimichiIpc.cs), a drop-in client that wraps every gate, or use the examples below.
 
@@ -291,6 +302,70 @@ QuestStateChanged(66236, "Accepted", "Completed")
 QuestStateChanged(66237, "Blocked", "Ready")
 StatesChanged()
 ```
+
+## The summary (since 1.22.0)
+
+Tonight in a few numbers and lines, for **Tsukimichi for Umbra** (`xenofei/Tsukimichi.Umbra`) and any other plugin that wants a widget: the logged-in character, Up next, the Ready count, the journal, the events ending soon and the story meter, and `OpenAt` to open Tsukimichi where the player clicked. Every answer comes from one capture, taken on the framework thread when its inputs change (and at most every 10 seconds otherwise, as Up next's step follows the player), so gates called one after another agree. **Names come through the logged-in character's spoiler shield**: a hidden quest arrives as Tsukimichi shows it (`Main scenario quest (Lv 83)`), never by name.
+
+**Its own version.** The summary is versioned apart from the API: `Tsukimichi.GetSummaryVersion` returns `1`. Adding a summary gate keeps it; changing what a shipped one takes or returns bumps it (the API version stays `1`, because the rest is untouched). A caller written for summary version 1 checks it once and treats any other number as too new or too old (Tsukimichi for Umbra then says "This widget needs Tsukimichi 1.22 or later").
+
+**Not ready.** Before the catalog is built and a character is evaluated, every summary gate gives its empty answer: `("", "", 0)`, `(0, "", "")`, `(0, 0, "")`, `(-1, 0)`, `[]`, `("", 0, false)`. `GetTheme` answers whenever Tsukimichi is loaded.
+
+**No automation.** No gate here starts travel, a route, a hand-off or a run. `OpenAt` only opens Tsukimichi's own windows; anything that starts something still needs the player's click inside Tsukimichi (plan v8 M2, the standing automation rule).
+
+### Tsukimichi.GetSummaryVersion
+
+`() -> int`. `1`. Check it once when Tsukimichi appears.
+
+### Tsukimichi.GetCharacter
+
+`() -> (string name, string job, int level)`. The logged-in character's name, its current job's abbreviation (`"WHM"`) and that job's level. For a header such as "Tsukimichi · Kiri · WHM 100".
+
+### Tsukimichi.GetUpNext
+
+`() -> (uint rowId, string name, string step)`. Tonight's Up next (1.21.0): the followed route's next stop, the goal's quest, the next main scenario quest, the first Ready pin, the closest Ready stop, then the level gate's story quest. `rowId` is its Quest row id (0 for none), `name` its name through the shield, `step` the line under it: `"Step 3: Speak with Erenville. · Shaaloani"` for a quest in the journal, `"Talk to Wuk Lamat · Tuliyollal"` otherwise, empty when there is none. `OpenAt("upnext")` shows it in Tsukimichi.
+
+### Tsukimichi.GetReadyCount
+
+`() -> (int ready, int here, string job)`. How many quests are Ready on the current job (as Tonight counts them), how many can start in the current zone (the Nearby count), and the job's abbreviation.
+
+### Tsukimichi.GetJournalRoom
+
+`() -> (int used, int cap)`. The journal's slots: `(27, 30)` is three left. `(-1, 0)` when not read.
+
+### Tsukimichi.GetEndingSoon
+
+`() -> (string name, int daysLeft)[]`. The seasonal events that end within the player's warning window (Settings › Alerts), soonest first; `daysLeft` 0 means today. Empty when none, or the warning is off.
+
+### Tsukimichi.GetStoryMeter
+
+`() -> (string part, int leftToLatest, bool caughtUp)`. The main scenario part the character is in (`"Dawntrail"`), how many main scenario quests are left to the latest story, and whether it is caught up (then `part` is the latest part and `leftToLatest` 0). Say what is left, as Tsukimichi does ("91 to the latest story"), never a percentage.
+
+### Tsukimichi.GetTheme
+
+`() -> string`. The theme in use, by its stable key: `medallion`, `classic`, `ishgard-glass`, `aether-crystal`, `astrologian-orrery` or `sumi-to-kinpaku` (a future theme adds a key). An add-on draws its own copy of the theme's moon, Medallion's when the key is unknown or empty.
+
+### Tsukimichi.OpenAt
+
+`(string place) -> bool`. Opens Tsukimichi at one of these places (case and spaces ignored); true when the place is one this build knows, false otherwise:
+
+| Place | Opens |
+|---|---|
+| `main` | the main window as the player left it |
+| `tonight` | the main window on Tonight |
+| `upnext` | the main window on Tonight, whose first block is Up next with its travel pill (the player clicks it) |
+| `route` | the followed route's window (nothing when no route is followed) |
+| `settings` | the Settings window |
+
+The window opens on the framework thread, at once when you call from it. Call it from a click.
+
+### Tsukimichi.AddonHello
+
+`(string addon, string version) -> int`. Says an add-on is there: Tsukimichi for Umbra calls `AddonHello("Tsukimichi.Umbra", "1.0.0")` when it loads, and Settings › About shows "Tsukimichi for Umbra · Added · 1.0.0" (and the server info bar entry stops defaulting on, since the add-on shows the same in Umbra). Answers the summary version. Nothing else changes.
+
+### Tsukimichi.SummaryChanged
+
+A message with no arguments, sent on the framework thread after anything the summary gates answer changed. Read the gates again then, rather than polling every frame.
 
 ## The /tsuki ipc window
 

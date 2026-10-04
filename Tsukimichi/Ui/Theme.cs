@@ -499,6 +499,13 @@ public static class Theme
     /// <summary><see cref="MoonDim"/> as text, made to read on the palette the way <see cref="Accent"/> is.</summary>
     public static Vector4 AccentDim { get; private set; } = MoonDim;
 
+    /// <summary>
+    /// The Follow Umbra palette while the player chose it (1.22.0 M3, <c>Configuration.FollowUmbraPalette</c>): Umbra's colour
+    /// profile mapped by <see cref="Core.Ui.Themes.UmbraPalette"/>, or Night when it can't be read; null while not chosen.
+    /// Set by the plugin before <see cref="Refresh"/>.
+    /// </summary>
+    public static Core.Ui.Themes.UiPalette? FollowUmbra { get; set; }
+
     /// <summary>The host style's window background alpha as of the last <see cref="Refresh"/>; <see cref="PushNightWindow"/> keeps it.</summary>
     private static float hostWindowAlpha = 1f;
 
@@ -521,8 +528,13 @@ public static class Theme
         var colors = ImGui.GetStyle().Colors;
         var windowBg = colors[(int)ImGuiCol.WindowBg];
         hostWindowAlpha = float.IsFinite(windowBg.W) ? Math.Clamp(windowBg.W, 0f, 1f) : 1f;
+        // 1.22.0 M3: the Follow Umbra palette, when chosen, takes the place of the appearance's palette (Night when unread).
+        var umbra = FollowUmbra;
+        followDalamud &= umbra is null;
         FollowingDalamud = followDalamud;
-        var chosen = followDalamud
+        var chosen = umbra is not null
+            ? umbra
+            : followDalamud
             ? FollowDalamudPalette(
                 windowBg,
                 colors[(int)ImGuiCol.FrameBg],

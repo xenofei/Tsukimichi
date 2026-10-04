@@ -581,6 +581,7 @@ public sealed partial class Plugin : IDalamudPlugin
             // The appearance first (theme, moons per state, palette, frames, high contrast), then the palette it names, then
             // the atlases it draws at the level's finish on that palette.
             var appearance = Ui.Themes.GlyphSeam.Refresh(settings.Appearance);
+            RefreshFollowUmbra();
             Ui.Theme.Refresh(appearance.FollowDalamud, appearance.GlyphPalette, settings.Flair, appearance.Palette);
             Ui.Themes.GlyphSeam.BeginAtlasFrame();
             Ui.Motion.BeginFrame();
@@ -1279,7 +1280,15 @@ public sealed partial class Plugin : IDalamudPlugin
             // Nearby quests window and the server info bar entry; settings in user/discovery.json until they move into Configuration.
             var discoverySettingsPath = Core.Discovery.DiscoverySettings.PathFor(Paths);
             var discoveryWarnings = new System.Collections.Generic.List<string>();
+            var discoveryFileExisted = System.IO.File.Exists(discoverySettingsPath);
             var discoverySettings = Core.Discovery.DiscoverySettings.Load(discoverySettingsPath, discoveryWarnings);
+
+            // 1.22.0 M1: one server info bar entry; a player who had the Nearby entry keeps it, counting this zone.
+            if (Core.Discovery.ServerInfoBar.Migrate(discoverySettings, discoveryFileExisted) && discoveryFileExisted)
+            {
+                discoverySettings.Save(discoverySettingsPath, Core.Storage.AtomicFile.QuickAttempts);
+            }
+
             foreach (var warning in discoveryWarnings)
             {
                 Log.Warning("Discovery settings: {Warning}", warning);
@@ -1292,7 +1301,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 MoonlitPane.Reveal(ui, quest);
             });
             windowSystem.AddWindow(discoveryWindow);
-            dtrEntry = new Game.DtrEntry(DtrBar, discoveryWindow, discoverySettings, gate, Log);
+            // The server info bar entry is built with the summary it reads (1.22.0 M1, InitializeWelcomeHome).
             command.ToggleNearbyWindow = discoveryWindow.Toggle;
             charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, Roster, Settings, () => Settings.Save(PluginInterface), DataManager, TextureProvider);
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
@@ -1660,6 +1669,9 @@ public sealed partial class Plugin : IDalamudPlugin
             ipcWindow = new IpcWindow(ipcProvider);
             windowSystem.AddWindow(ipcWindow);
             command.ToggleIpcWindow = ipcWindow.Toggle;
+
+            // 1.22.0 "Welcome home": updates, Umbra, the summary, the server info bar entry and the summary gates.
+            InitializeWelcomeHome(gate, diagnostics.PluginVersion);
             // /UI
 
             // Last: nothing runs per frame before the plugin is whole.
@@ -1840,6 +1852,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("moon icon", DisposeMoonIcon);
         Unwind("followed route", () => activeRoutes?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
+        Unwind("welcome home", TearDownWelcomeHome);
         Unwind("nearby window", () => discoveryWindow?.Dispose());
         Unwind("glyph window", () => glyphDebugWindow?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());

@@ -52,7 +52,7 @@ namespace Tsukimichi.Game;
 /// that fails leaves the plugin running without the gates.
 /// </para>
 /// </summary>
-public sealed class IpcProvider : IDisposable
+public sealed partial class IpcProvider : IDisposable
 {
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly IFramework framework;
@@ -180,6 +180,9 @@ public sealed class IpcProvider : IDisposable
             pinQuest.RegisterFunc(PinQuest);
             getAbandoned.RegisterFunc(() => Answer(IpcChannels.GetAbandonedGate, [], static v => v.Abandoned()));
             getNextJobQuest.RegisterFunc(job => Answer(IpcChannels.GetNextJobQuestGate, 0u, v => v.NextJobQuest(job)));
+
+            // Since 1.22.0: the summary for Tsukimichi for Umbra (IpcProvider.Summary.cs).
+            RegisterSummary();
         }
         catch (Exception ex)
         {
@@ -296,7 +299,7 @@ public sealed class IpcProvider : IDisposable
             IpcChannels.GetAbandonedGate => getAbandoned,
             IpcChannels.GetNextJobQuestGate => getNextJobQuest,
             IpcChannels.QuestStateChangedGate => questStateChanged,
-            _ => null,
+            _ => SummaryProvider(gate),
         };
 
         try
@@ -340,6 +343,7 @@ public sealed class IpcProvider : IDisposable
                 IpcChannels.GetAbandonedGate => pluginInterface.GetIpcSubscriber<(uint, byte, long)[]>(gate).InvokeFunc(),
                 IpcChannels.PinQuestGate => pluginInterface.GetIpcSubscriber<uint, bool, bool>(gate).InvokeFunc(First(), Second()),
                 IpcChannels.OpenQuestGate => pluginInterface.GetIpcSubscriber<uint, bool>(gate).InvokeFunc(First()),
+                _ when IsSummaryGate(gate) => SummaryTestCall(gate, arguments),
                 _ => throw new FormatException("A message cannot be called; subscribe to it instead."),
             };
             return IpcConsole.Format(answer);
@@ -733,6 +737,7 @@ public sealed class IpcProvider : IDisposable
         Unregister(pinQuest);
         Unregister(getAbandoned);
         Unregister(getNextJobQuest);
+        UnregisterSummary();
     }
 
     private void Unregister(ICallGateProvider? gate)

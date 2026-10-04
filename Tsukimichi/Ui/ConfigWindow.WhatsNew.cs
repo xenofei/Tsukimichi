@@ -35,14 +35,8 @@ public sealed partial class ConfigWindow
 
     private void DrawWhatsNew()
     {
+        // Show what's new after an update is drawn with the update switches (ConfigWindow.Updates.cs, spec-1.22 W3 item 2).
         Header(Strings.WhatsNew.Title);
-        var show = settings.ShowWhatsNewAfterUpdate;
-        if (Toggle(Strings.WhatsNew.ShowAfterUpdate, Strings.WhatsNew.ShowAfterUpdateHint, ref show, "whats new changelog release notes update popup"))
-        {
-            settings.ShowWhatsNewAfterUpdate = show;
-            Save();
-        }
-
         if (WhatsNew is not { } popup || !Setting(Strings.WhatsNew.History, Strings.WhatsNew.HistoryHint, "whats new changelog release notes history versions past", 0f))
         {
             return;
