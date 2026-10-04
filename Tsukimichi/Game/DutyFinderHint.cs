@@ -448,9 +448,7 @@ public sealed unsafe class DutyFinderHint : IDisposable
         foreach (var missing in line.Missing)
         {
             var quest = missing.UnlockQuests.Count > 0 ? missing.UnlockQuests[0] : null;
-            var name = quest is not null && missing.UnlockQuests.All(spoilers.IsMasked)
-                ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, missing.Duty.LevelRequired)
-                : missing.Duty.Name;
+            var name = DutyBoardSource.ShownDutyName(missing.Duty, missing.UnlockQuests, spoilers);
             if (quest is not null)
             {
                 parts.Add(new RouteTarget(RouteTargetKind.Duty, name, [quest.RowId]));

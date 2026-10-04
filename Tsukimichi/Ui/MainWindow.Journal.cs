@@ -62,8 +62,7 @@ public sealed partial class MainWindow
             }
         }
 
-        var full = journalSlots is { Room: JournalRoom.Full };
-        tablePane.JournalFull = full;
+        tablePane.Journal = journalSlots;
     }
 
     /// <summary>The bar's journal segment as it would be drawn, the separator before it included; 0 when it is hidden.</summary>

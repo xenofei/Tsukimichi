@@ -422,7 +422,7 @@ public sealed partial class DetailPane
 
         // Run with AutoDuty names its duty in the title; the others their label when it is not on screen.
         var title = slot.Kind == ActionKind.AutoDuty && !slot.Stop && autoDutyRow is { } row
-            ? named ? slot.Label + Strings.AutoDutyCaptionSeparator + row.Duty.Duty.Name : row.Duty.Duty.Name
+            ? named ? slot.Label + Strings.AutoDutyCaptionSeparator + row.Name : row.Name
             : named && !string.Equals(slot.Label, body, StringComparison.Ordinal) ? slot.Label : null;
         if (title is null)
         {

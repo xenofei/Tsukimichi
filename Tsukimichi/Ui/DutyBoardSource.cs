@@ -242,10 +242,21 @@ public sealed class DutyBoardSource
     };
 
     /// <summary>The duty's name, or the shield's stand-in when every quest that unlocks it is hidden.</summary>
-    private string DutyName(BoardDuty duty) =>
-        duty.UnlockQuests.Count > 0 && duty.UnlockQuests.All(session.Spoilers.IsMasked)
-            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.Duty.LevelRequired)
-            : duty.Duty.Name;
+    private string DutyName(BoardDuty duty) => ShownDutyName(duty.Duty, duty.UnlockQuests, session.Spoilers);
+
+    /// <summary>
+    /// A duty's name through the spoiler shield: "A duty further along the story (Lv 90)" when every quest it is shown
+    /// through is masked (<see cref="Core.Query.SpoilerMask.HidesDuty"/>), else its own name. The one place the stand-in
+    /// is written: the Duties board, the roulette hint and the detail pane's duty sections all name duties through it.
+    /// </summary>
+    public static string ShownDutyName(DutyRunInfo duty, IReadOnlyCollection<QuestRecord> quests, Core.Query.SpoilerMask spoilers)
+    {
+        ArgumentNullException.ThrowIfNull(duty);
+        ArgumentNullException.ThrowIfNull(spoilers);
+        return spoilers.HidesDuty(quests)
+            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.LevelRequired)
+            : duty.Name;
+    }
 
     private Row MissingRow(BoardDuty duty, DutyRunIndex index)
     {
