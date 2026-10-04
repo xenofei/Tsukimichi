@@ -21,8 +21,8 @@ public sealed partial class ConfigWindow
 {
     private static readonly LocArray FlairOptions = new(static () => [Strings.ConfigFlairFull, Strings.ConfigFlairQuiet, Strings.ConfigFlairPlain]);
 
-    /// <summary>Giver portraits (1.15, spec-1.15 A8), in <see cref="GiverPortraitMode"/> order. The portrait pack joins as a third choice with F4.</summary>
-    private static readonly LocArray GiverPortraitOptions = new(static () => [Strings.SettingsGiverPortraitsOff, Strings.SettingsGiverPortraitsGameArt]);
+    /// <summary>Giver portraits (1.15, spec-1.15 A8), in <see cref="GiverPortraitMode"/> order; the portrait pack's choice since 1.20 (F4).</summary>
+    private static readonly LocArray GiverPortraitOptions = new(static () => [Strings.SettingsGiverPortraitsOff, Strings.SettingsGiverPortraitsGameArt, Strings.SettingsGiverPortraitsGameArtAndPack]);
 
     /// <summary>The Journal badge's choices, in <see cref="JournalBadgeMode"/> order.</summary>
     private static readonly LocArray JournalBadgeOptions = new(static () =>
@@ -149,6 +149,8 @@ public sealed partial class ConfigWindow
             settings.GiverPortraits = (GiverPortraitMode)portraits;
             Save();
         }
+
+        DrawPortraitPack();
 
         var headingFonts = settings.GameHeadingFonts;
         if (Toggle(Strings.ConfigGameHeadingFonts, Strings.ConfigGameHeadingFontsHint, ref headingFonts, "font typeface headings", enabled: settings.Flair != Flair.Plain, reason: Strings.SettingsGameFontsPlainReason))

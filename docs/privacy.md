@@ -1,6 +1,6 @@
 # What Tsukimichi reads and sends
 
-A plain statement of what the plugin looks at, what it writes, and what leaves your PC. In short: **it reads your game on this PC, keeps its files on this PC, and has no network code. Nothing is sent anywhere.** Settings › Advanced › Privacy & trust shows this summary in game, with the fingerprint of the build you are running.
+A plain statement of what the plugin looks at, what it writes, and what leaves your PC. In short: **it reads your game on this PC, keeps its files on this PC, and sends nothing anywhere. It goes online for one thing only: the optional portrait pack, when you click Download and confirm.** Settings › Advanced › Privacy & trust shows this summary in game, with the fingerprint of the build you are running.
 
 ## What it reads
 
@@ -26,6 +26,7 @@ Only under Dalamud's plugin configuration folder, `%AppData%\XIVLauncher\pluginC
 | `Tsukimichi\characters\<id>.live.json` | While that character is logged in: who is logged in, for a second game client |
 | `Tsukimichi\user\pins.json`, `overrides.json`, `discovery.json`, `characters.json` | Pins, your Moonlit verdicts, Nearby settings, per-character settings |
 | `Tsukimichi\cache\` | The journal text search index, when that search is on |
+| `Tsukimichi\portraits\` | The optional portrait pack, only if you downloaded it (below) |
 | `Tsukimichi\exports\` (or the folder you choose) | Only when you export; your character's name only if you turn it on ([format](export-format.md)) |
 
 Short-lived `.tmp` and `.lock` files appear beside these while they are written. Settings › Characters & data deletes everything but your settings; Forget this character deletes one character's files; uninstalling leaves the folder, so delete it to remove everything.
@@ -34,16 +35,24 @@ Besides files, Tsukimichi writes to the **clipboard** when you click a Copy or R
 
 ## What it sends
 
-**Nothing.** Tsukimichi has no network code: it never uploads, downloads or checks anything online. The quest data it needs ships inside the plugin, and Dalamud installs its updates.
+**Nothing.** Tsukimichi never uploads or checks anything online. The quest data it needs ships inside the plugin, and Dalamud installs its updates. Its one download is the optional portrait pack (below), and only when you ask for it.
 
-A test (`Tsukimichi.Tests/Diagnostics/NoNetworkTests.cs`) fails the build if any shipped source names an HTTP client, a web request, a socket or a DNS lookup, so this stays true. The exceptions are things you start yourself, with a click:
+A test (`Tsukimichi.Tests/Diagnostics/NoNetworkTests.cs`) fails the build if any shipped source names an HTTP client, a web request, a socket or a DNS lookup, except the portrait pack's one file (`Tsukimichi/Game/PortraitPackHttp.cs`), so this stays true. The exceptions are things you start yourself, with a click:
 
 - **Links open in your browser.** "Open on…" (Lodestone, Garland Tools, the Console Games Wiki, Teamcraft, FFXIV Collect) and Settings › Advanced › Privacy & trust › "The full statement" are handed to your browser through Dalamud when you click them. Tsukimichi itself fetches nothing.
 - **"Open folder"** after an export opens the folder in Windows Explorer.
 - **Companion plugins act when you press their buttons.** Teleport (Lifestream), Walk to giver (vnavmesh), Send to Questionable, Run with AutoDuty, and the hand-in section's Artisan and GatherBuddy buttons: the plugin you hand the work to plays the game as you would, and the game talks to its servers as it always does. Tsukimichi sends nothing of its own.
 - **Other plugins can ask Tsukimichi** over Dalamud IPC, on your PC: a quest's state and what blocks it, the next main scenario quest, your pins and abandoned quests, whether you own a quest reward. The full list is in [ipc.md](ipc.md). With the Wotsit integration on, quest and reward names are registered with Wotsit so its search finds them.
 
-**If a portrait pack is ever offered** (feature plan v7 F4, not built yet): the giver portraits ship from your own game install first. Should an optional pack ever be downloadable for more coverage, it will be off until you turn it on, and this page and Settings will say exactly what it fetches, from where, and when.
+### The portrait pack (optional, since 1.20)
+
+Giver portraits come from your own game install. For more faces, Settings › General › Look › Portrait pack offers an optional pack of NPC photos (renders by Garland Tools, credit Celes). Exactly this happens, and only after you click **Download…** and confirm a dialog that names the size, the release and the address:
+
+- **What is fetched:** one file, `Tsukimichi-portraits.zip`, from Tsukimichi's own GitHub release (`https://github.com/xenofei/Tsukimichi/releases/download/<version>/Tsukimichi-portraits.zip`). GitHub redirects the download to its own file servers (`objects.githubusercontent.com` or `release-assets.githubusercontent.com`); a redirect anywhere else stops it. The request carries a User-Agent naming Tsukimichi's version, and nothing about you, your characters or your settings.
+- **What is checked:** the file must be exactly the size and SHA-256 the plugin ships with (`Data/portrait_pack.json`), or it is deleted. Inside, only the pack's own images and manifest are accepted: no folders, no programs, nothing outside the pack's folder. Every image must match its own SHA-256 and decode as a picture before anything is installed.
+- **Where it goes:** `pluginConfigs\Tsukimichi\portraits\` (`current.json` names the pack in use; `download.part` exists only while it downloads).
+- **When:** only on that click. A plugin update with a newer pack says so in Settings and waits for you to click **Update…**; nothing downloads on its own. **Remove…** deletes the pack again.
+- **Credit and source:** the photos are Garland Tools' NPC renders (garlandtools.org, photos by Celes) of Square Enix's game art. FINAL FANTASY XIV © SQUARE ENIX.
 
 ## Check the build you run
 

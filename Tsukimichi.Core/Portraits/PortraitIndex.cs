@@ -126,15 +126,30 @@ public sealed class PortraitIndex
     private readonly FrozenDictionary<byte, uint> tribeIcons;
     private readonly IReadOnlyDictionary<uint, PortraitMask> masks;
 
-    private PortraitIndex(FrozenDictionary<uint, Giver> givers, FrozenDictionary<uint, PortraitQuest> quests, FrozenDictionary<byte, uint> tribeIcons, PortraitCrops crops, IReadOnlyDictionary<uint, PortraitMask> masks)
+    private readonly PortraitPack? pack;
+
+    private PortraitIndex(FrozenDictionary<uint, Giver> givers, FrozenDictionary<uint, PortraitQuest> quests, FrozenDictionary<byte, uint> tribeIcons, PortraitCrops crops, IReadOnlyDictionary<uint, PortraitMask> masks, PortraitPack? pack = null)
     {
         this.givers = givers;
         this.quests = quests;
         this.tribeIcons = tribeIcons;
         this.masks = masks;
+        this.pack = pack;
         Crops = crops;
         GiversWithArt = givers.Values.Count(g => g.Variants.Length > 0);
     }
+
+    /// <summary>The portrait pack this index fills gaps from (<see cref="WithPack"/>); null for game art alone.</summary>
+    public PortraitPack? Pack => pack;
+
+    /// <summary>
+    /// This index with the optional portrait pack (feature plan v7 F4) behind it, or without one for null: the game art
+    /// is picked exactly as before, and a giver the pack has a photo of wears it wherever the game art has nothing for the
+    /// quest (<see cref="PortraitSources.Rank"/>: the pack ranks after every game family), instead of a fallback. Shares
+    /// everything with this index; nothing is rebuilt.
+    /// </summary>
+    public PortraitIndex WithPack(PortraitPack? portraitPack) =>
+        ReferenceEquals(portraitPack, pack) ? this : new PortraitIndex(givers, quests, tribeIcons, Crops, masks, portraitPack);
 
     /// <summary>No game data: every giver gets a fallback.</summary>
     public static PortraitIndex Empty { get; } = Build(PortraitInputs.Empty, PortraitCuration.Empty);
@@ -178,12 +193,15 @@ public sealed class PortraitIndex
     {
         givers.TryGetValue(giverId, out var giver);
         var fallback = FallbackFor(giver, beastTribe);
-        if (giver is null || giver.Variants.Length == 0)
+        var variant = giver is null || giver.Variants.Length == 0 ? default : Pick(giver.Variants, era);
+        if (pack is not null && pack.Has(giverId) && PackWins(variant.Source))
         {
-            return new PortraitRef(giverId, 0, PortraitSource.None, PortraitCrop.Full, era, fallback);
+            // The pack's photo is this exact NPC as the quest shows them, so it belongs to the quest's own era (a
+            // seasonal event's quest: the giver's first, as nothing newer is known about them).
+            var packEra = era == SeasonalEra ? giver?.FirstEra ?? 0 : era;
+            return new PortraitRef(giverId, giverId, PortraitSource.Pack, PortraitCrop.Full, packEra, fallback);
         }
 
-        var variant = Pick(giver.Variants, era);
         if (variant.Source == PortraitSource.None)
         {
             return new PortraitRef(giverId, 0, PortraitSource.None, PortraitCrop.Full, era, fallback);
@@ -191,6 +209,13 @@ public sealed class PortraitIndex
 
         return new PortraitRef(giverId, variant.Icon, variant.Source, Crops.For(variant.Source, variant.Icon), variant.Era, fallback, masks.GetValueOrDefault(variant.Icon));
     }
+
+    /// <summary>
+    /// Whether a pack photo is worn instead of the game art's pick <paramref name="gameSource"/>: when the game has none
+    /// for the quest, or when its family ranks after the pack (none does today; <see cref="PortraitSources.Rank"/>).
+    /// </summary>
+    public static bool PackWins(PortraitSource gameSource) =>
+        gameSource == PortraitSource.None || PortraitSources.Rank(PortraitSource.Pack) < PortraitSources.Rank(gameSource);
 
     /// <summary>Every portrait the giver can wear, best family first and oldest first within one; empty when none.</summary>
     public IReadOnlyList<PortraitVariant> Variants(uint giverId) =>

@@ -15,6 +15,7 @@ namespace Tsukimichi.DataGen;
 ///        Tsukimichi.DataGen --patches <quest_patches.json> --game "<sqpack path>" [--patch <x.y>]
 ///        Tsukimichi.DataGen --portrait-masks <curated dir> --game "<sqpack path>"
 ///        Tsukimichi.DataGen --portrait-sheet <out dir> --game "<sqpack path>" [--curated <dir>] [--icons <id,id,...>]
+///        Tsukimichi.DataGen --portrait-pack <out dir> --game "<sqpack path>" [--cache <dir>] [--offer <portrait_pack.json> --tag <vX.Y.Z>] [--limit N] [--ids a,b] [--skip a,b] [--rate s]
 /// </summary>
 public static class Program
 {
@@ -33,6 +34,8 @@ public static class Program
             return WritePortraitSheet(args);
         if (args.Contains("--portrait-masks"))
             return WritePortraitMasks(args);
+        if (args.Contains("--portrait-pack"))
+            return PortraitPackBuilder.Run(args);
 
         string? game = null;
         string? output = null;
@@ -433,6 +436,9 @@ public static class Program
         Console.WriteLine("       writes the giver portrait contact sheet (every face as cropped, with the framing guides) and portraits.md; game art, never commit it.");
         Console.WriteLine("       Tsukimichi.DataGen --portrait-masks <curated dir> --game <sqpack path>");
         Console.WriteLine("       keys the delivery portraits' emblem script and writes the keep masks to <curated dir>/portrait_masks (shipped).");
+        Console.WriteLine("       Tsukimichi.DataGen --portrait-pack <out dir> --game <sqpack path> [--cache <dir>] [--offer <portrait_pack.json> --tag <vX.Y.Z>] [--limit N] [--ids a,b] [--skip a,b] [--rate s]");
+        Console.WriteLine("       builds the optional portrait pack zip from Garland Tools photos (1 request/s, cached), its hash, contact sheets and report.md;");
+        Console.WriteLine("       with --offer and --tag, writes the plugin's Data/portrait_pack.json for that release. Uploads nothing; never commit the zip.");
     }
 
     /// <summary>

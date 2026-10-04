@@ -395,6 +395,9 @@ public sealed partial class Plugin : IDalamudPlugin
     /// <summary>The journal text reader and its opt-in search index (P9); null until the constructor creates it.</summary>
     internal Game.QuestTextService? QuestText { get; private set; }
 
+    /// <summary>The optional portrait pack (1.20, F4); null before load finishes.</summary>
+    private Game.PortraitPackService? portraitPack;
+
     /// <summary>Read from the catalog continuation off-thread, so it must be volatile.</summary>
     private volatile bool gameStateDisposed;
 
@@ -1409,6 +1412,26 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.Roster = Roster;
             configWindow.QuestText = QuestText;
             configWindow.OpenAboutAutomation = () => aboutAutomationWindow?.Show();
+            // The optional portrait pack (1.20, F4, decision 8): the installed one is read from the config folder off the
+            // frame; the network is touched only when the player confirms a download in Settings › Look › Portrait pack.
+            var pack = new Game.PortraitPackService(
+                Paths,
+                clientGameVersion,
+                () => new Game.PortraitPackHttp(diagnostics.PluginVersion),
+                Log,
+                installed => _ = Framework.RunOnFrameworkThread(() =>
+                {
+                    // The player asked for the pack: use it (Game art becomes Game art + pack; Off stays Off).
+                    if (installed && Settings.GiverPortraits == Core.Ui.GiverPortraitMode.GameArt)
+                    {
+                        Settings.GiverPortraits = Core.Ui.GiverPortraitMode.GameArtAndPack;
+                        Settings.Save(PluginInterface);
+                    }
+                }));
+            portraitPack = pack;
+            _ = pack.LoadAsync();
+            Ui.GiverPortraits.Pack = () => pack.Installed;
+            configWindow.PortraitPack = pack;
             // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
             var exportService = new Game.ExportService(Session, Settings, Paths, unlockReader, () => moonlit.Catalog, diagnostics.PluginVersion, diagnostics.ClientGameVersion, Log)
             {
@@ -1773,6 +1796,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("chat notifier", () => chatNotifier?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("journal text", () => QuestText?.Dispose());
+        Unwind("portrait pack", () => portraitPack?.Dispose());
         // A walk or Go to giver this plugin started stops before the IPC wrappers go.
         Unwind("travel", () => travel?.Dispose());
         Unwind("travel preflight", () => travelPreflight?.Dispose());

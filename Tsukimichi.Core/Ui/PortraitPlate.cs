@@ -11,6 +11,12 @@ public enum GiverPortraitMode : byte
 
     /// <summary>The game's own art, read from the install at runtime (the default).</summary>
     GameArt = 1,
+
+    /// <summary>
+    /// The game's art, and the optional portrait pack's photos where it has none (feature plan v7 F4). Reads as
+    /// <see cref="GameArt"/> while no pack is installed.
+    /// </summary>
+    GameArtAndPack = 2,
 }
 
 /// <summary>What a portrait plate shows (1.15 design spec A6): the face, or one of the fallbacks, in their order.</summary>

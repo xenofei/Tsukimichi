@@ -9,15 +9,24 @@ using Tsukimichi.Tests.Localization;
 namespace Tsukimichi.Tests.Diagnostics;
 
 /// <summary>
-/// "Trust you can check" (feature plan v7 N2): docs/privacy.md says Tsukimichi has no network code. These keep it true:
-/// no source file of the shipped projects (the plugin, Core and GameData; the tools are not shipped) names an HTTP
-/// client, a web request, a socket or a DNS lookup, and none of the three assemblies references a networking assembly.
-/// The one way out is a page the player clicks to open in their browser, through Dalamud's <c>Util.OpenLink</c>, which
-/// the statement lists.
+/// "Trust you can check" (feature plan v7 N2): docs/privacy.md says Tsukimichi sends nothing and goes online for one
+/// thing only, the optional portrait pack the player confirms (F4, decision 8). These keep it true: no source file of
+/// the shipped projects (the plugin, Core and GameData; the tools are not shipped) names an HTTP client, a web request,
+/// a socket or a DNS lookup, except the pack's one transport file (<see cref="NetworkFile"/>); Core and GameData
+/// reference no networking assembly and the plugin only <c>System.Net.Http</c> (and <c>System.Net.Primitives</c>, for
+/// the status code); the transport is made in one place and a download starts only from the Settings confirmation; and
+/// the address is the pinned GitHub release. The other way out is a page the player clicks to open in their browser,
+/// through Dalamud's <c>Util.OpenLink</c>, which the statement lists.
 /// </summary>
 public class NoNetworkTests
 {
     private static readonly string[] Shipped = ["Tsukimichi", "Tsukimichi.Core", "Tsukimichi.GameData"];
+
+    /// <summary>The portrait pack's transport (docs/privacy.md, "The portrait pack"): the one file that may name network code.</summary>
+    private static readonly string NetworkFile = Path.Combine("Tsukimichi", "Game", "PortraitPackHttp.cs");
+
+    /// <summary>What the plugin's assembly alone may reference for that file: HttpClient and its status code.</summary>
+    private static readonly HashSet<string> PluginNetworkAssemblies = new(StringComparer.Ordinal) { "System.Net.Http", "System.Net.Primitives" };
 
     // Any identifier that contains a network type's name (HttpClientHandler, SocketsHttpHandler, IHttpClientFactory,
     // DnsEndPoint, ...), or a System.Net namespace.
@@ -50,6 +59,11 @@ public class NoNetworkTests
         var offenders = new List<string>();
         foreach (var file in SourceFiles())
         {
+            if (Path.GetRelativePath(ResxFiles.RepositoryRoot(), file) == NetworkFile)
+            {
+                continue;
+            }
+
             var lines = StripComments(File.ReadAllText(file)).Split('\n');
             for (var i = 0; i < lines.Length; i++)
             {
@@ -63,7 +77,53 @@ public class NoNetworkTests
             }
         }
 
-        Assert.True(offenders.Count == 0, "docs/privacy.md says there is no network code; update it before adding any:" + Environment.NewLine + string.Join(Environment.NewLine, offenders));
+        Assert.True(offenders.Count == 0, "docs/privacy.md says the portrait pack's transport is the only network code; update it before adding any:" + Environment.NewLine + string.Join(Environment.NewLine, offenders));
+    }
+
+    [Fact]
+    public void The_one_network_file_is_the_portrait_pack_transport_and_follows_no_redirect_itself()
+    {
+        var source = StripComments(File.ReadAllText(Path.Combine(ResxFiles.RepositoryRoot(), NetworkFile)));
+        Assert.Contains("class PortraitPackHttp : IPortraitPackTransport", source, StringComparison.Ordinal);
+        Assert.Contains("AllowAutoRedirect = false", source, StringComparison.Ordinal);
+        Assert.Contains("UseCookies = false", source, StringComparison.Ordinal);
+
+        // It names no address of its own: every one comes from the offer, checked hop by hop (PortraitPackOffer.Allows).
+        Assert.DoesNotContain("://", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_pack_is_fetched_only_from_the_pinned_release_after_the_settings_confirmation()
+    {
+        Assert.Equal("https://github.com/xenofei/Tsukimichi/releases/download/", Core.Portraits.PortraitPackOffer.ReleaseBase);
+
+        // The transport is made in one place (the plugin's wiring), and a download starts only from the confirmation's button.
+        var plugin = Path.Combine(ResxFiles.RepositoryRoot(), "Tsukimichi");
+        var made = new List<string>();
+        var started = new List<string>();
+        foreach (var file in Directory.GetFiles(plugin, "*.cs", SearchOption.AllDirectories))
+        {
+            var sep = Path.DirectorySeparatorChar;
+            if (file.Contains($"{sep}obj{sep}", StringComparison.Ordinal) || file.Contains($"{sep}bin{sep}", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var source = StripComments(File.ReadAllText(file));
+            var name = Path.GetRelativePath(ResxFiles.RepositoryRoot(), file);
+            if (source.Contains("new Game.PortraitPackHttp(", StringComparison.Ordinal) || source.Contains("new PortraitPackHttp(", StringComparison.Ordinal))
+            {
+                made.Add(name);
+            }
+
+            if (source.Contains(".StartDownload()", StringComparison.Ordinal))
+            {
+                started.Add(name);
+            }
+        }
+
+        Assert.Equal([Path.Combine("Tsukimichi", "Plugin.cs")], made);
+        Assert.Equal([Path.Combine("Tsukimichi", "Ui", "ConfigWindow.PortraitPack.cs")], started);
     }
 
     [Fact]
@@ -111,11 +171,12 @@ public class NoNetworkTests
         var offenders = new List<string>();
         foreach (var path in assemblies)
         {
+            var isPlugin = Path.GetFileName(path) == "Tsukimichi.dll";
             foreach (var reference in References(path))
             {
-                // System.Net.Primitives and System.Private.Uri hold types like Uri and WebUtility that any assembly may
-                // reference without opening a connection; nothing of ours does today, so none are allowed yet.
-                if (reference.StartsWith("System.Net", StringComparison.Ordinal))
+                // Core and GameData reference no networking assembly at all; the plugin only what the portrait pack's
+                // transport needs (HttpClient, and its status code from System.Net.Primitives).
+                if (reference.StartsWith("System.Net", StringComparison.Ordinal) && !(isPlugin && PluginNetworkAssemblies.Contains(reference)))
                 {
                     offenders.Add($"{Path.GetFileName(path)} references {reference}");
                 }
