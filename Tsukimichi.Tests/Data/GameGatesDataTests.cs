@@ -64,7 +64,7 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
     /// The 1.19 gates Tsukimichi cannot read (C3): deep-dungeon floors, Resistance ranks and mettle; and the Dun Scaith
     /// raid unlocked, met by the quest that opens it.
     /// </summary>
-    internal static readonly uint[] UnreadGates = [68667, 68668, 70199, 70941, 70942, 69481, 69482, 69483, 69484, 69485, 69486, 69487, 69564, 67016];
+    internal static readonly uint[] UnreadGates = [68667, 68668, 70199, 70941, 70942, 69481, 69482, 69483, 69484, 69485, 69486, 69487, 69563, 69564, 67016];
 
     /// <summary>
     /// The mount-collection quests (1.11.0, C2), each offered only once the seven extreme-trial mounts of its expansion

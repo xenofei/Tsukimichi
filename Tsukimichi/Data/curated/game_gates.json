@@ -378,6 +378,12 @@
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Master_of_Mimicry",
       "note": "Master of Mimicry, blue mage: the trainer offers it only once Aetherial Spark is learned (its own text; the wiki infobox agrees). A learned spell is the unlock link of its Action row, judged from the links the capture reads."
     },
+    "69563": {
+      "gate": "Resistance rank 15 and 700,000 mettle",
+      "gameTextKey": "TEXT_LUCKSA211_04027_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Seaside_Story",
+      "note": "A Seaside Story: its own text asks for a Resistance rank and mettle (rank 15 and 700,000 in the quest's script parameters, ACCEPT_RLV and ACCEPT_REXP, and on the wiki). Both are Bozjan field values a plugin cannot read outside the zone: not checked."
+    },
     "69564": {
       "gate": "78,000 mettle amassed",
       "gameTextKey": "TEXT_LUCKSA212_04028_SYSTEM_100_000",
