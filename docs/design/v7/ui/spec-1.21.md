@@ -145,7 +145,7 @@ Choosing **Giver** aims the same pills at the giver. The choice is kept for that
 | Case | Example | What it shows |
 |---|---|---|
 | One place | The Long Road to Xak Tural, step 3 | the place and coordinates |
-| Several places, or an area | Gifts for the Outcasts, step 2: "Obtain hunks of nanka flesh from clearwater nankas. · 2 more" | "Where the clearwater nankas are · The Dravanian Forelands · X 28.8, Y 22.3", the area the game gives; several separate places aim at the **nearest unfinished** one ("Nearest of 3 places") |
+| Several places, or an area | Gifts for the Outcasts, step 2: "Step 2 · 2 more · Obtain hunks of nanka flesh from clearwater nankas." (the count comes before the objective, so a wrapped line never starts with a separator) | "Where the clearwater nankas are · The Dravanian Forelands · X 28.8, Y 22.3", the area the game gives; several separate places aim at the **nearest unfinished** one ("Nearest of 3 places") |
 | A duty | Into the Aery, step 2: "Enter the Aery." | "The entrance · The Churning Mists · X 33.7, Y 15.5" (`EntranceIndex`), the 1.19 badges, **Walk to the entrance** and **Duty Finder** |
 | No place in the data | Morbid Motivation, step 1 (a roulette) | "This step has no place in the game's data, so travel aims at the giver: Brangwine · Mor Dhona". **Current step** is disabled, and the reason stays visible in the section, never only in a tooltip. |
 
@@ -356,9 +356,9 @@ A **Loose ends** card on the Characters dashboard, after Side stories. Its capti
 
 **Rows are two-line, 44 px:**
 - line 1: the line's icon (the job icon for job and role lines, the side-quest icon otherwise), its name, and "1 left" at the right;
-- line 2: a **Finale** chip when the next quest ends the line, then its moon, "**A Harmony from the Heavens**", its level and "· 1 left". Keeping the count on line 2 leaves line 1 to the name, so long names such as Physical Ranged DPS Role Quests (Endwalker) fit.
+- line 2: a **Finale** chip when the next quest ends the line, then "1 left", the level, then its moon and "**A Harmony from the Heavens**". The count and level come first so the reserved hover slot can only ever meet the end of the quest name, and line 1 holds only the line's name, so long names such as Physical Ranged DPS Role Quests (Endwalker) fit (supervisor round 2).
 
-A row whose next quest lies past the story point names neither the quest nor its zone: "Dark Knight Quests · Finale · Job quest (Lv 80) · a zone ahead · 1 left" (Aki).
+A row whose next quest lies past the story point names neither the quest nor its zone: "Dark Knight Quests · Finale · 1 left · Job quest ahead (Lv 80)" (Aki).
 
 The reserved slot holds **Teleport** and "…" (Go to giver, Flag, Send to Questionable at Full hand-offs, **Not for me**). Not for me uses P4's set-aside list, with Undo.
 
@@ -572,4 +572,9 @@ There are no new pairs.
   - wrapping, the Goal reached weight, a near-collision in Loose ends, the roster gutters, the disabled segment's contrast, and a struck-through demo.
 
   All twelve were fixed in the renders and in this spec.
-- **Round 2: pending.** The fixes went back to the supervisor; the verdict was not in when this branch was committed.
+- **Round 2: CHANGES.** Eleven of the twelve fixes held. One new Major came from fix 9: the reserved hover slot clipped "1 left" at the end of a Loose ends row. Two Nits: a caption still said "Tertiary", and a wrapped line started with "·". The supervisor accepted, with no render, the decision not to show a masked Up next name, because Up next never picks a quest past the story point; P1 says what a masked pick would show. The supervisor said it would approve once the row was fixed, with a spot check of that one row.
+- **After round 2:**
+  - Loose ends line 2 now reads Finale · 1 left · level · quest name. The Loose ends column is wider, so the hovered row with the longest finale name (A Harmony from the Heavens) fits whole.
+  - The masked row reads "Job quest ahead (Lv 80)".
+  - Both Nits are fixed.
+  - **Not re-reviewed:** the supervisor has not seen the re-rendered row, so the final spot check is still open.

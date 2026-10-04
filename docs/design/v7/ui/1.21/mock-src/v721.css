@@ -251,7 +251,8 @@
 .mk .br21.gh .nm,.mk .br21.gh .s{color:var(--mist)}
 .mk .br21.gh .un{font-size:11.5px;color:var(--silver);text-decoration:underline;text-decoration-color:var(--vline);text-underline-offset:3px}
 .mk .le21 .lf{font-size:11.5px;color:var(--mist);flex:none}
-.mk .le21 .lf::before{content:"· "}
+.mk .le21 .lf::after{content:" ·"}
+.mk .le21 .s .q{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;white-space:nowrap}
 .mk .tt21 .pl{margin-left:auto;font-size:11.5px;color:var(--mist);white-space:nowrap}
 .mk .zr21 .lv{font-size:11px;color:var(--mist)}
 .mk .zr21 .ch19{height:18px;font-size:10.5px;color:var(--mist)}

@@ -98,7 +98,7 @@
       pills: travel21(lv, "Flag", "060561") + travel21(lv, "Teleport", "060453", true) + travel21(lv, "Walk", "000104") });
   }
   function detail21places(lv) {
-    return step21(lv, { aim: 0, stepLine: "Step 2 · <b>Obtain hunks of nanka flesh from clearwater nankas.</b> · 2 more",
+    return step21(lv, { aim: 0, stepLine: "Step 2 · 2 more · <b>Obtain hunks of nanka flesh from clearwater nankas.</b>",
       where: "Where the clearwater nankas are · The Dravanian Forelands · X 28.8, Y 22.3",
       pills: travel21(lv, "Flag", "060561") + travel21(lv, "Teleport", "060453", true) + travel21(lv, "Walk", "000104") });
   }
@@ -282,7 +282,7 @@
     h += figw(look18("full", "night", story21("full"), 560), "<b>Your story</b> (N9): the main scenario by patch, each optional line placed at the quest that opens it. Past Ren's story point, counts only. The pace line is an estimate and hides below 15 dated quests.", 560);
     h += "</div>";
     h += '<div class="row" style="align-items:flex-start">' + fig(look18("full", "night", '<div class="sw21">' + seg21(["Clear my blues", "Your story"], 1) + '<span class="sb">My blues tab</span></div>', 360), "<b>The switch</b> at the top of My blues, as on Characters") +
-      fig(look18("full", "night", '<div class="nr21"><span class="g">' + rowGlyph("full", "ready") + '</span><span class="nm">Legacy of Allag</span><span class="sx">Lv 50 · Story needs it</span></div><div class="nr21"><span class="g">' + rowGlyph("full", "ready") + '</span><span class="nm">Maniac Manor</span><span class="sx">Lv 50 · Opens content</span></div>', 360), "<b>Nearby and the Todo overlay</b>: the tier word after the level, in Tertiary") +
+      fig(look18("full", "night", '<div class="nr21"><span class="g">' + rowGlyph("full", "ready") + '</span><span class="nm">Legacy of Allag</span><span class="sx">Lv 50 · Story needs it</span></div><div class="nr21"><span class="g">' + rowGlyph("full", "ready") + '</span><span class="nm">Maniac Manor</span><span class="sx">Lv 50 · Opens content</span></div>', 360), "<b>Nearby and the Todo overlay</b>: the tier word after the level, in Secondary") +
       fig(look18("full", "night", '<div class="yp" style="font-size:12px;color:var(--mist)">Your pace shows after 15 dated story quests. You have 9.</div>', 360), "<b>Thin data</b>: no estimate, said plainly") + "</div>";
     return h + "</div>";
   }
@@ -303,13 +303,13 @@
   }
   function looseRow21(lv, icon, n, s, fin, o) {
     o = o || {};
-    return '<div class="le21' + (o.hov ? " hov" : "") + '"><span class="i">' + icon + '</span><div class="b"><div class="t"><span class="nm">' + n + '</span></div><div class="s">' + (fin ? '<span class="ch19 fin">Finale</span>' : "") + s + '<span class="lf">' + (o.left || "1 left") + '</span></div></div><span class="ac">' + (o.hov ? qa19("Teleport") + '<span class="mo">…</span>' : "") + "</span></div>";
+    return '<div class="le21' + (o.hov ? " hov" : "") + '"><span class="i">' + icon + '</span><div class="b"><div class="t"><span class="nm">' + n + '</span></div><div class="s">' + (fin ? '<span class="ch19 fin">Finale</span>' : "") + '<span class="lf">' + (o.left || "1 left") + '</span><span class="q">' + s + '</span></div></div><span class="ac">' + (o.hov ? qa19("Teleport") + '<span class="mo">…</span>' : "") + "</span></div>";
   }
   function loose21(lv, short) {
     var g = function (st) { return rowGlyph(lv, st, 14); };
-    var rows = looseRow21(lv, ic21("062123", 20, "tile"), "Bard Quests", g("ready") + " <b>A Harmony from the Heavens</b>" + (short ? "" : " · Lv 80"), 1, { hov: !short }) +
-      looseRow21(lv, ic21("061411", 20, "tile"), "Tales from the Shadows", g("ready") + " <b>One Final Journey</b>" + (short ? "" : " · Lv 80"), 1);
-    if (!short) rows += looseRow21(lv, ic21("062123", 20, "tile"), "Physical Ranged DPS Role Quests (Endwalker)", g("ready") + " <b>Laid to Rest</b> · Lv 90", 1) +
+    var rows = looseRow21(lv, ic21("062123", 20, "tile"), "Bard Quests", (short ? "" : "Lv 80 · ") + g("ready") + " <b>A Harmony from the Heavens</b>", 1, { hov: !short }) +
+      looseRow21(lv, ic21("061411", 20, "tile"), "Tales from the Shadows", (short ? "" : "Lv 80 · ") + g("ready") + " <b>One Final Journey</b>", 1);
+    if (!short) rows += looseRow21(lv, ic21("062123", 20, "tile"), "Physical Ranged DPS Role Quests (Endwalker)", "Lv 90 · " + g("ready") + " <b>Laid to Rest</b>", 1) +
       looseRow21(lv, ic21("061411", 20, "tile"), "Tataru's Grand Endeavor", g("ready") + " <b>Forever in Our Hearts</b> · Lv 90", 0, { left: "3 left" }) +
       looseRow21(lv, ic21("061411", 20, "tile"), "Scholasticate Quests", g("ready") + " <b>Through the Grapevine</b> · Lv 60", 0, { left: "9 left" });
     return sect19(lv, "Loose ends", "5 started, not finished", short ? '<div class="nar21">' + rows + "</div>" : rows);
@@ -320,7 +320,7 @@
       chainRow21(lv, sq, "Hildibrand Adventures", "19 left · next: <b>Back in the Saddle</b> · Ready") +
       chainRow21(lv, sq, mask21("A side story ahead"), mask21("opens in a later expansion · name hidden"))) +
       sect19(lv, "Loose ends", "1 started, not finished",
-        looseRow21(lv, ic21("062132", 20, "tile"), "Dark Knight Quests", rowGlyph(lv, "blocked", 14) + " " + mask21("Job quest (Lv 80) · a zone ahead"), 1)) +
+        looseRow21(lv, ic21("062132", 20, "tile"), "Dark Knight Quests", rowGlyph(lv, "blocked", 14) + " " + mask21("Job quest ahead (Lv 80)"), 1)) +
       '<div class="wn21 sm"><div class="wnc">New chapters</div><div class="wnl">' + mask21("A side story ahead · 2 quests · name hidden") + "</div></div>" +
       '<div class="cl21 sm"><span class="a">' + mask21("A side story ahead") + " · next after this: " + mask21("Sidequest (Lv 90)") + "</span></div>";
   }
@@ -332,12 +332,12 @@
   }
   function board_stories21() {
     var h = '<div class="board b15 b16"><h2>1.21 · Storylines: named side stories, Loose ends, and who\'s in it<small>P5 and N8 are cards on the Characters dashboard; N10 is a line under the detail hero, a hover line and a quick view. Michiru, BRD 100, unless noted. Full on Night.</small></h2><div class="row" style="align-items:flex-start">';
-    h += '<div class="col21" style="width:500px">' + fig(look18("full", "night", '<div class="dp19">' + chains21("full") + "</div>", 490), "<b>P5, side stories</b> by the names players use. A series that comes out patch by patch reads <b>Caught up</b> in silver when you have done every quest so far; finished lines fold.") +
-      fig(look18("full", "night", '<div class="wn21"><div class="wnh">What\'s new in 7.5</div><div class="wnc">New chapters</div><div class="wnl"><b>Inconceivably Further Hildibrand Adventures</b><span>2 quests</span><span class="lk21">Show ›</span></div></div>', 490), "<b>The new-chapter line</b>: once, on the first login of a patch, inside the What's new card that already opens then. No new notice.") +
-      fig(look18("full", "night", '<div class="dp19">' + maskedStories21("full") + "</div>", 490), "<b>Masked</b> (Aki, at the end of Stormblood): a side story that opens later is named only once Aki gets there; a Loose ends row whose next quest lies past the story point names neither the quest nor its zone; the new-chapter line and the chain line say \"a side story ahead\".") +
-      fig(look18("full", "night", '<div class="cl21"><span class="a">Tataru\'s Grand Endeavor · next after this: <b>Treasured Bonds</b></span></div>', 490), "<b>The chain line</b> in the detail pane takes the curated name (it read \"Story: Small Business, Big Dreams\"); totals stay in its hover") + "</div>";
-    h += '<div class="col21" style="width:520px">' + fig(look18("full", "night", '<div class="dp19">' + loose21("full") + "</div>", 510), "<b>N8, Loose ends</b>: storylines you started and never finished. Finales the game marks only in yellow come first, with a <b>Finale</b> chip. Started means two quests done (one, for lines of up to four).") +
-      fig(look18("full", "night", '<div class="tt19"><b>Settings › Alerts</b><div class="tg21r"><span>When a storyline\'s finale is Ready</span><span class="tog off"><i></i></span></div><p>One chat line and a Tonight line, once per finale. Off by default.</p></div>', 510), "<b>The optional finale notice</b>, off by default; the overlay section is off by default too") + "</div>";
+    h += '<div class="col21" style="width:470px">' + fig(look18("full", "night", '<div class="dp19">' + chains21("full") + "</div>", 460), "<b>P5, side stories</b> by the names players use. A series that comes out patch by patch reads <b>Caught up</b> in silver when you have done every quest so far; finished lines fold.") +
+      fig(look18("full", "night", '<div class="wn21"><div class="wnh">What\'s new in 7.5</div><div class="wnc">New chapters</div><div class="wnl"><b>Inconceivably Further Hildibrand Adventures</b><span>2 quests</span><span class="lk21">Show ›</span></div></div>', 460), "<b>The new-chapter line</b>: once, on the first login of a patch, inside the What's new card that already opens then. No new notice.") +
+      fig(look18("full", "night", '<div class="dp19">' + maskedStories21("full") + "</div>", 460), "<b>Masked</b> (Aki, at the end of Stormblood): a side story that opens later is named only once Aki gets there; a Loose ends row whose next quest lies past the story point names neither the quest nor its zone; the new-chapter line and the chain line say \"a side story ahead\".") +
+      fig(look18("full", "night", '<div class="cl21"><span class="a">Tataru\'s Grand Endeavor · next after this: <b>Treasured Bonds</b></span></div>', 460), "<b>The chain line</b> in the detail pane takes the curated name (it read \"Story: Small Business, Big Dreams\"); totals stay in its hover") + "</div>";
+    h += '<div class="col21" style="width:556px">' + fig(look18("full", "night", '<div class="dp19">' + loose21("full") + "</div>", 546), "<b>N8, Loose ends</b>: storylines you started and never finished. Finales the game marks only in yellow come first, with a <b>Finale</b> chip. Started means two quests done (one, for lines of up to four).") +
+      fig(look18("full", "night", '<div class="tt19"><b>Settings › Alerts</b><div class="tg21r"><span>When a storyline\'s finale is Ready</span><span class="tog off"><i></i></span></div><p>One chat line and a Tonight line, once per finale. Off by default.</p></div>', 546), "<b>The optional finale notice</b>, off by default; the overlay section is off by default too") + "</div>";
     h += '<div class="col21" style="width:440px">' + fig(look18("full", "night", '<div class="dp19">' + cast21("full", "met") + "</div>", 430), "<b>N10, who's in it</b>: a Cast line under the hero with 20 px faces (1.15 plates)") +
       fig(look18("full", "night", '<div class="dp19">' + cast21("full", "unmet") + "</div>", 430), "<b>Spoiler-safe</b> (Aki, at the end of Stormblood): only characters Aki has met in the story are named. Ryne is \"a familiar face\", with the moon disc, never her face.") +
       fig(look18("full", "night", '<div class="qv21"><div class="qvh">Quick views</div><div class="tg21r"><span><b>With story characters</b><small>Side quests where someone from the story appears</small></span><span class="tog on"><i></i></span></div></div>', 430), "<b>The quick view</b> in the filter drawer; the row hover gains \"With Thancred and Urianger\"") + "</div>";
