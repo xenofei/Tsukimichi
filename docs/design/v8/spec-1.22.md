@@ -30,7 +30,7 @@ Everything is under `docs/design/v8/`.
 | File | What it is |
 |---|---|
 | `spec-1.22.md` | This spec |
-| `mock-1.22.html` | The 1.22 mock: `#wn22a`, `#wn22b`, `#wn22s`, `#art22`, `#about22`, `#upd22`, `#icon22`, `#fx22`, `#dtr22`, `#umb22`, `#clear22`. Built from the v7 mock sources (read-only) plus the 1.22 layer. |
+| `mock-1.22.html` | The 1.22 mock: `#wn22a`, `#wn22b`, `#wn22s`, `#art22`, `#optb22`, `#about22`, `#upd22`, `#icon22`, `#fx22`, `#dtr22`, `#umb22`, `#clear22`. Built from the v7 mock sources (read-only) plus the 1.22 layer. |
 | `mock-src/` | `v722.js` and `v722.css` (the 1.22 layer), `build22.py` (`py -3 build22.py` builds the mock), `render22.py` (`py -3 render22.py` renders the PNGs with headless Chrome), and two debugging aids, `console22.py` and `peek22.py` |
 | `art/src/` | `artlib.py` (a small numpy and Pillow painting kit), `paint_release.py` (paints the four release illustrations), `grade_release.py` (the per-theme recipe: grade and motif layer) |
 | `art/welcome-base.png`, `art/whatnext-base.png`, `art/evercold-base.png`, `art/answers-base.png` | The four paintings of the first popup a player on 1.18.0 sees (1.22.0, 1.21.0, 1.20.0, 1.19.0), 1120 × 440 (the 2x tier of the 560 × 220 art band) |
@@ -39,6 +39,8 @@ Everything is under `docs/design/v8/`.
 | `whatsnew-answers-1.22.png` | W1/W2: the popup on page 4 of 4, 1.19.0 Right answers, in all six themes |
 | `whatsnew-states-1.22.png` | W1: page 1 of 4 (1.22.0 Welcome home) at Full, Quiet, Plain, one release (no pager), Text size 150 % on a page that fits and on one that scrolls, and the size and timing table |
 | `release-art-1.22.png` | W2: the four paintings with their six restyles each, and the grade and motif table |
+| `release-art-option-b-1.22.png` | Decision 1: 1.20.0 in Option A and Option B side by side for all six themes, Option B's painting, and the cost table |
+| `art/optionb/` | Option B: the painting (`evercold-b-base.png`), its region masks (`src-masks.npz`) and the six treatments (`evercold-b-<theme>.png`); made by `art/src/paint_option_b.py` and `option_b_themes.py` |
 | `about-history-1.22.png` | W3, U1, M3: Settings › About with Updates, What's new (backfilled) and Umbra, and the popup opened from the list |
 | `update-ready-1.22.png` | U1: the status-bar note at each level, its hover, the dot on the icon with the quick card, Dalamud's installer, and the flow |
 | `moon-icon-1.22.png` | H1: rest, hover with the quick card, the right-click menu, locked, first run, hide with Undo, the dots, Needs you, the three levels, and the behaviour table |
@@ -190,7 +192,7 @@ The recipe and its numbers are in `art/src/grade_release.py`, which made every t
 
 ### Art direction
 
-Every painting is **a night or twilight landscape with one light**, wide and calm. Its subject sits right of centre. The title is printed under the art, never over it.
+Every painting is **a night or twilight landscape with one natural light, plus at most one warm practical light** (a lantern, a lit door or window), wide and calm. Its subject sits right of centre. The title is printed under the art, never over it.
 
 **1.22.0 Welcome home: a door left open on a lit hall** (`art/welcome-base.png`). The first page anyone sees in 1.22.
 - **Two lights.** The near-full moon stands high on the left, in front of the viewer, so it backlights the house: the facade is in shadow, the roof's left slope and the chimney top carry a cool rim, and the house's moon shadow falls toward the viewer and right.
@@ -198,9 +200,10 @@ Every painting is **a night or twilight landscape with one light**, wide and cal
 - **The path's stones** are warm near the door and cool and dim further out. The two shrubs by the door are warm only on the side that faces it. Smoke rises from the chimney, faintly moonlit, drifting right.
 
 **1.21.0 What next, for every character: a lantern at a crossroads** (`art/whatnext-base.png`).
-- **Late twilight.** The sun has set off to the right: a faint warm afterglow sits low on that side, and the young crescent is lit on its lower-right limb, toward it.
-- **One light on the ground:** a lantern on a post at the crossroads. Its pool is foreshortened (it is on the ground, seen at a low angle); the waystone beside it is warm on the lantern side and throws its shadow away from it.
-- **Four paths** leave the crossroads. Three run toward distant lights (a hamlet, a tower on a hill, a farm): every character's next step.
+- **Late twilight.** The sun has set off to the right: a low peach afterglow band (about 8 % of the sky's height) sits on that side and fades to the left, and the young crescent is lit on its lower-right limb, toward it.
+- **The warm practical light:** a lantern on a post at the crossroads. Its pool is a smooth radial falloff on the ground under the lamp (the post's foot, nudged toward the lantern side), 4:1 wide because the ground is seen at a low angle, its far half compressed further. There is no mask edge anywhere in it.
+- **Shadows from the lantern:** the waystone's shadow starts contact-dark at its base and runs away from the lamp, left and a little toward the viewer, across the pale path into the grass, fading with distance. The post's foot throws its own thin shadow to the left. The waystone is warm on its lantern side.
+- **Four paths** leave the crossroads. Three run toward distant lights (a hamlet, a tower on a hill whose two lit windows sit inside its silhouette, a farm): every character's next step.
 
 **1.20.0 Before Evercold: cold, snow, a coming dawn** (`art/evercold-base.png`).
 - **The light** is the sun, still under the horizon behind a low pass. The dawn glow is warm only near it; the rest of the sky stays cold navy.
@@ -217,6 +220,45 @@ Every painting is **a night or twilight landscape with one light**, wide and cal
 - **The road** runs from the near left to a fork. The branch that runs on toward the moon brightens with distance (forward scatter on worn stone). The side branch turns away into shade.
 - **The signpost** at the fork is rim-lit on its top and moon-facing edges, and its shadow falls toward the viewer and left, away from the moon.
 - **The rest:** a lone tree on the rise is rim-lit the same way and throws a faint, foreshortened shadow toward the viewer and right. Mist lies low in the far valley, and tall grass frames the near corners, lit on the edges that face the moon (up and right on the left, up and left on the right).
+
+### Option B, for the owner's decision 1 (`release-art-option-b-1.22.png`)
+
+The owner asked for "beautiful, theme specific custom art". Option A (above) gives one painting per release and lets each theme restyle it; its themes differ in colour and in a few motifs, and Medallion and Classic look almost the same. So the owner can compare, **1.20.0 Before Evercold is also made as Option B**: a richer painting, rendered in a distinct art treatment per theme.
+
+**The painting** (`art/optionb/evercold-b-base.png`, by `art/src/paint_option_b.py`): dawn over Coerthas.
+- **The scene:** Ishgard stands on its bluff, backlit by the sun still under the horizon behind it. Broken altocumulus is lit on its undersides, warmest near the sun, and mist lies in the valley. On the near snow ridge an adventurer with a lantern and a chocobo look toward the city.
+- **The light:** one natural light, plus the lantern as the one warm practical light.
+  - The city and the far range are backlit, capped darker than the sky behind them, with a thin warm rim.
+  - The ridge crest takes the dawn, and its face toward the viewer is in blue shade.
+  - The figures are rim-lit on their sun side. Their long dawn shadows run toward the viewer and left, and the lantern lays a small warm pool at their feet.
+  - The crescent is lit toward the sun.
+- **The finish:** a Kuwahara pass flattens it into painted shapes, then a light brush and canvas texture is laid over it.
+- **Sources:** it is original work, painted in code; no official art or screenshot is used in it. Ishgard is our own simplified silhouette of the Holy See's spires, not a trace. (The game scenes behind the mock's UI are the official screenshots listed in Files.)
+
+**The six treatments** (`art/src/option_b_themes.py`, from the painting and its region masks):
+
+| Theme | Treatment |
+|---|---|
+| Medallion | A gilt-framed oil vignette: heavier impasto, a warm varnish, faint craquelure, and an oval opening in a gilt moulding lit from the upper left, with lapis velvet in the spandrels |
+| Classic | The painting as painted |
+| Ishgard Glass | A stained-glass window: leaded pieces, each a pot-metal colour chosen by region and lightness (lapis and cobalt sky, rose and amber dawn, violet hills, amethyst city, white and pale-blue snow, a white glass moon). Grisaille gives the figures and spires; the light passes through and the bright pieces bloom past the lead. Two iron saddle bars are placed clear of the subject. |
+| Aether Crystal | The scene seen through cut moonstone: a triangle facet mesh, each facet tilted to the upper-left light with bright facet edges. The figures, the city and the moon keep their own shapes. |
+| Astrologian's Orrery | An engraved astrolabe plate: a lapis enamel sky inlaid in brass, the land cut as hatching that is heavier in shadow, the city and figures cross-hatched, a brass-inlay crescent, and the rete's almucantar and azimuth hairlines with a graduated limb |
+| Sumi to Kinpaku | Sumi-e on toned washi: ink washes by depth, bare-paper snow, one dry-brush stroke for the ridge, solid ink figures, a gold-leaf crescent, kirigane and two gold cloud bands kept clear of the subject, one vermilion touch for the lantern, and a seal |
+
+No treatment adds a light of its own. Quiet would show the Classic painting graded to the palette; Plain shows no art in either option.
+
+**Cost and trade-off**
+
+| | Option A: one painting, restyled | Option B: one painting, six treatments |
+|---|---|---|
+| Art per release | 1 painting (about a day with supervision). The six restyles are automatic. | 1 richer painting (2 to 3 days) plus its region masks. The treatments are code, but each release needs all six checked, because a treatment can break a new composition (a gold band across a figure, a came line through a face). |
+| Ships | 1 base image per release (about 180 KB) and six motif sheets, once | 1 base image and 1 mask file per release (about 500 KB), or six pre-rendered images (about 2.4 MB per release) |
+| Texture | one 1120 × 440 texture while the popup is open (1.9 MB) | the same 1.9 MB. Composing is slower (about 0.3 s for glass and facets on a worker), so the theme's flat sky shows for a moment first. Pre-rendering the six avoids that. |
+| How themes differ | in colour and a few corner motifs | in craft: oil, glass, crystal, engraving, ink and gold |
+| Risk | low: a grade can't break a picture | higher: six pictures per release to approve, and the subject must stay legible at 560 × 220 |
+
+**My recommendation stays Option A** for its cost and safety, but Option B is the one that answers "theme specific custom art" fully. The owner decides (decision 1). A middle way is possible: Option B for the major releases, and Option A for the small ones.
 
 ### Backfill (decision 2)
 
@@ -347,7 +389,7 @@ Full only, with Reduce motion off. Every effect keeps these limits:
 | Medallion | **Gold motes**, r 1 px `#FFE9BE` with a .12 halo of their own (as the v7 sky's warm stars), never a glow round the icon | 3 motes, each 3.6 s: fade in 0.6 s, rise about 3 px/s with a slight sway, fade out 1.2 s; staggered 1.2 s |
 | Classic | **A few stars**, round, never a cross | 3 fixed stars breathing on 7, 9.5 and 12 s (the 1.14 twinkle curve), .27–.49. Nothing moves. |
 | Ishgard Glass | **Frost glints** on the rim | every 6 s a 28° glint runs the lit upper-left quarter of the rim in 1.2 s, with one round sparkle at its head. Never a 4-point star. |
-| Aether Crystal | **Shards** that catch the light | 2 shards on a 16 s orbit (rx 1.25 R, ry 0.4 R, tilted 28°, as the Orrery's). They show only on the near, lower half; on the far half they are behind the icon, so a shard is never above the crescent (theme-system §2: no crystal over a crescent). Each turns every 3.2 s and flashes for about 0.4 s when its face meets the light; the flash is additive light, never a painted disc. |
+| Aether Crystal | **Shards** that catch the light | 2 shards on a 16 s orbit round the icon's foot: rx 1.25 R, ry 0.45 R, centred 0.6 R below the icon's centre, so the near arc runs just outside the bottom of the rim. A shard hides only where the icon really covers it, so **no shard is ever drawn over the face**, let alone the lit crescent (theme-system §2: no crystal over a crescent). Each turns every 3.2 s and flashes for about 0.4 s when its face meets the light; the flash is additive light, never a painted disc. |
 | Astrologian's Orrery | **An orbiting dot** | one bead on a 12 s orbit (rx 1.3 R, ry 0.4 R, tilted 28°). Its far half passes behind the icon. The orbit hairline is at .14. |
 | Sumi to Kinpaku | **Gold-leaf flecks** | 2 flecks, 4.5 s each, drifting down past the right side with a flutter; a fleck flashes when it tilts toward the light |
 
@@ -503,7 +545,8 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
 ## Open questions for the owner
 
 1. **The moon in the server info bar.** The renders use "◐" (lit on the left) in place of the plan's "◑". The game font may draw neither; the shipped entry draws "☾". If "◐" is missing in game, should it fall back to "☾", or to one of the game's own bitmap icons?
-2. **The backfill paintings.** The briefs for 1.14.0 to 1.18.0 are in W2. Do they suit you, or would you like other subjects for any of them?
+2. **Decision 1, Option A or Option B.** `release-art-option-b-1.22.png` shows both for 1.20.0. A is cheaper and safe; B gives each theme its own craft. A middle way is B for major releases only.
+3. **The backfill paintings.** The briefs for 1.14.0 to 1.18.0 are in W2. Do they suit you, or would you like other subjects for any of them?
 
 ## Not verified
 
@@ -527,4 +570,13 @@ Names come through IPC **already shielded** (1.20 N6), so the add-on never recei
   - The Orrery motif follows its exemption rules; Sumi's dust stays in the top quarter of the corners.
   - The entry uses "◐" with no band; the status note has Quiet and Plain forms; the menu has no glyphs and the Umbra Settings icon is a real cog.
   - The missing state is legible with one reason and renders its bar; Up next uses the quest icon; page 4 has room under its last line; and every Nit is addressed.
-
+- **Round 2: CHANGES.** All 32 round-1 fixes held, and Welcome home was found sound. New findings:
+  - **What next:** the lantern pool was cut by a hard horizontal edge (Major); the waystone's shadow was detached from its base (Minor); there was no afterglow band, the tower's lights sat outside its silhouette, and the post had no shadow (Nits).
+  - **Aether particles:** the near orbit crossed the face, and a shard flashed beside the crescent's horn (Minor).
+  - **Wording:** "one light" should read "one natural light, plus at most one warm practical light" (Nit).
+  - **Option B:** the coordinator asked for it so the owner can decide decision 1 with a richer alternative in front of them.
+- **After round 2:**
+  - The pool is a smooth 4:1 radial falloff on the ground under the lamp. The waystone's shadow is contact-dark at the base and runs across the path, fading. The post has a thin shadow, the peach afterglow band is in, and the tower's windows sit inside it. All six restyles were rebuilt.
+  - The Aether orbit now rings the icon's foot, and no shard is ever drawn over the face.
+  - The art direction reads "one natural light, plus at most one warm practical light".
+  - Option B is made for 1.20.0 (painting, masks and six treatments), with `release-art-option-b-1.22.png` and its section above.

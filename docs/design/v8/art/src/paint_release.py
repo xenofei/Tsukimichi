@@ -648,6 +648,9 @@ def whatnext():
     c.px = c.vgrad([(0, "#070D25"), (0.40, "#10204A"), (0.78, "#24406E"), (1.0, "#3C5A88")], 0, hz)
     c.px[int(hz):] = hexc("#3C5A88")
     c.add(hexc("#D9A07A"), np.exp(-(c.radial(1.05 * W, hz + 0.02 * H, 0.45 * W, 0.22 * H)) ** 2 * 1.6) * 0.30)
+    # the afterglow: a low peach band on the right, about 8 % of the sky's height, fading to the left
+    band_y = np.exp(-((c.yy - (hz - 0.035 * hz)) / (0.045 * hz)) ** 2)
+    c.add(hexc("#F2B08C"), band_y * smooth(0.35 * W, 1.0 * W, c.xx) * 0.32)
     mx, my, mr = 0.80 * W, 0.22 * H, 24.0
 
     def sky_lum(y):
@@ -669,14 +672,16 @@ def whatnext():
     c.over(gcol, ground)
 
     # three distant lights where the paths lead
-    lights = [(0.17 * W, hz + 0.030 * H, 4), (0.43 * W, hz - 0.035 * H, 3), (0.71 * W, hz + 0.050 * H, 3)]
+    lights = [(0.17 * W, hz + 0.030 * H, 4), (0.43 * W, hz - 0.035 * H, 0), (0.71 * W, hz + 0.050 * H, 3)]
     lm = np.zeros((H, W), np.float32)
     for lx, ly, k in lights:
         for j in range(k):
             lm = np.maximum(lm, c.ellipse(lx + j * 9 - k * 4, ly + (j % 2) * 3, 2.2, 2.6, 0.5))
-    # the tower on the middle hill, a dark silhouette under its light
+    # the tower on the middle hill, a dark silhouette; its two lit windows sit inside it
     tx = 0.43 * W
     c.over(hexc("#141E33"), c.poly([(tx - 9, hz + 0.01 * H), (tx + 9, hz + 0.01 * H), (tx + 6, hz - 0.03 * H), (tx, hz - 0.05 * H), (tx - 6, hz - 0.03 * H)], 0.6))
+    for wy_ in (hz - 0.012 * H, hz - 0.028 * H):
+        lm = np.maximum(lm, c.ellipse(tx, wy_, 1.4, 2.2, 0.4))
     c.add(hexc("#FFC77A"), lm)
     c.add(hexc("#FFB060"), blur(lm, 6) * 1.6)
 
@@ -698,12 +703,23 @@ def whatnext():
     # the lantern post and the waystone at the crossroads
     lx, ly = X[0] + 70, X[1] - 4
     lamp_y = ly - 0.13 * H
-    dist = np.sqrt(((c.xx - lx) / 1.0) ** 2 + ((c.yy - ly) / 0.38) ** 2)
-    pool = np.exp(-(dist / 150) ** 2) * (c.yy > ly - 30)
+    # the pool: a smooth radial falloff on the ground under the lamp (the post foot, nudged toward the lantern side),
+    # 4:1 wide because the ground is seen at a low angle; the far half is compressed further, never cut
+    pcx, pcy = lx + 16, ly
+    dyy = c.yy - pcy
+    dyy = np.where(dyy < 0, dyy * 1.8, dyy)
+    dist = np.sqrt((c.xx - pcx) ** 2 + (dyy * 4.0) ** 2)
+    pool = np.exp(-(dist / 170) ** 2)
     c.add(hexc("#FFB466"), pool * 0.42)
-    # the waystone, left of the lantern: its shadow falls away from the lantern, left and slightly toward the viewer
+    # the waystone, left of the lantern: its shadow is contact-dark at its base and runs away from the lamp's ground
+    # point, left and a little toward the viewer, across the path into the grass, fading with distance
     wx, wy, wr = X[0] - 10, X[1] + 4, 20
-    c.mul(hexc("#0A1220"), c.poly([(wx - 4, wy), (wx + 6, wy + 2), (wx - 120, wy + 26), (wx - 128, wy + 14)], 4) * 0.55)
+    sh = c.poly([(wx - wr, wy - 1), (wx + wr * 0.6, wy + 1), (wx - 160, wy + 30), (wx - 176, wy + 14)], 3)
+    away = np.clip((wx + wr * 0.6 - c.xx) / 176, 0, 1)
+    c.mul(hexc("#0A1220"), sh * (0.75 - 0.55 * away))
+    c.mul(hexc("#05080F"), c.ellipse(wx - 2, wy, wr * 1.05, 3.5, 1.5) * 0.6)  # contact
+    # the post's own thin shadow, from its foot, running left
+    c.mul(hexc("#0A1220"), c.poly([(lx - 3, ly), (lx + 3, ly + 1), (lx - 96, ly + 12), (lx - 100, ly + 8)], 1.5) * (0.6 - 0.45 * np.clip((lx - c.xx) / 100, 0, 1)))
     stone = c.poly([(wx - wr, wy), (wx + wr, wy), (wx + wr * 0.7, wy - wr * 2.3), (wx - wr * 0.2, wy - wr * 2.8), (wx - wr * 0.9, wy - wr * 2.0)], 0.6)
     c.over(hexc("#2C3448"), stone)
     c.add(hexc("#FFB466"), np.clip(stone - np.roll(stone, -3, axis=1), 0, 1) * 0.7)

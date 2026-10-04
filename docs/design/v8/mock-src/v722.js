@@ -107,11 +107,14 @@
       // they pass in front, low; on the far half they are behind the icon and hidden, so a shard is never above the
       // crescent (theme-system §2: no crystal over a crescent). Each turns every 3.2 s and flashes, as light, when its
       // face meets the upper-left light.
-      var tl = -28 * Math.PI / 180;
+      // The orbit rings the icon's foot: centred 0.6 R below the centre (rx 1.25 R, ry 0.45 R), so its near arc runs
+      // just outside the bottom of the rim. A shard is hidden only where the icon really covers it (the far half,
+      // inside the rim), so no shard is ever drawn over the face, let alone the lit crescent.
       for (i = 0; i < 2; i++) {
-        var ang = (t / 16 * 2 * Math.PI) + i * Math.PI + 0.6, ox2 = 40 * Math.cos(ang), oy2 = 13 * Math.sin(ang);
-        var sx = 32 + ox2 * Math.cos(tl) - oy2 * Math.sin(tl), sy = 32 + ox2 * Math.sin(tl) + oy2 * Math.cos(tl);
-        var vis = Math.min(1, Math.max(0, (Math.sin(ang) + 0.05) / 0.35));
+        var ang = (t / 16 * 2 * Math.PI) + i * Math.PI + 0.6;
+        var sx = 32 + 40 * Math.cos(ang), sy = 51 + 15 * Math.sin(ang);
+        var dc = Math.hypot(sx - 32, sy - 32);
+        var vis = Math.sin(ang) >= 0 ? 1 : Math.min(1, Math.max(0, (dc - 33) / 4));
         if (vis <= 0) continue;
         var rot = (t / 3.2 * 360 + i * 110) % 360, fl = Math.max(0, Math.cos((rot - 315) * Math.PI / 180)) ** 6;
         front += '<g opacity="' + vis.toFixed(3) + '" transform="translate(' + sx.toFixed(2) + " " + sy.toFixed(2) + ") rotate(" + (rot * 0.25 - 20).toFixed(1) + ')"><path d="M0 -4.2L1.7 0 0 3.2 -1.6 -.2z" fill="#3E7FA8" opacity=".75"/><path d="M0 -4.2L-1.6 -.2 0 3.2z" fill="#BDEFFF" opacity="' + (0.35 + 0.6 * fl).toFixed(3) + '"/>' +
@@ -288,6 +291,37 @@
     return h + "</div>";
   }
 
+  // ---------- Decision 1, Option B: one release with a distinct treatment per theme ----------
+  var OPTB22 = {
+    "medallion": "a gilt-framed oil vignette: heavier impasto, warm varnish, faint craquelure, an oval opening in a gilt moulding lit from the upper left",
+    "classic": "the painting as painted",
+    "ishgard-glass": "a stained-glass window: leaded pot-metal pieces chosen per region, grisaille for the figures and spires, light passing through, two saddle bars",
+    "aether-crystal": "seen through cut moonstone: a triangle facet mesh, each facet tilted to the upper-left light; the figures and the city keep their shapes",
+    "astrologian-orrery": "an engraved astrolabe plate: lapis enamel sky, brass ground cut as hatching, the city cross-hatched, a brass-inlay crescent, the rete's hairlines",
+    "sumi-to-kinpaku": "sumi-e on toned washi: ink washes by depth, bare-paper snow, one dry-brush stroke for the ridge, a gold-leaf crescent, kirigane and two gold cloud bands, a seal"
+  };
+  function board_optb22() {
+    var h = '<div class="board b15 b22"><h2>Decision 1 · Option A or Option B<small>1.20.0 Before Evercold in both options. Option A (recommended in the plan): one painting, restyled per theme by a grade and a motif layer. Option B: a richer painting, rendered in a distinct art treatment per theme. Each row is one theme: A on the left, B on the right, at the popup\'s art size.</small></h2>';
+    h += '<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><figure style="width:560px;flex:none"><img src="' + V8 + 'art/optionb/evercold-b-base.png" width="560" height="220" style="border-radius:4px;display:block">' +
+      cap22("Option B's painting", "dawn over Coerthas: Ishgard on its bluff, backlit by the sun still under the horizon behind it; cloud undersides lit; an adventurer with a lantern and a chocobo on the near ridge, rim-lit, their long shadows toward you. One natural light and one warm practical light.") + "</figure>";
+    h += '<div class="spec" style="width:760px"><table><tr><th></th><th>Option A · one painting, restyled</th><th>Option B · one painting, six treatments</th></tr>' +
+      "<tr><td>Art per release</td><td>1 painting (about a day with supervision) plus its moon's place; the six restyles are automatic</td><td>1 richer painting (2 to 3 days) plus its region masks; the six treatments are code, but each release needs a check of all six, since a treatment can break a new composition (a band across a figure, a came line through a face)</td></tr>" +
+      "<tr><td>Ships</td><td>1 base image per release (about 180 KB JPEG) and six motif sprite sheets once</td><td>1 base image (about 250 KB) and a mask file (about 250 KB) per release, or six pre-rendered images (about 2.4 MB per release)</td></tr>" +
+      "<tr><td>Texture</td><td>one 1120 × 440 texture while the popup is open (1.9 MB), released on close</td><td>the same one texture (1.9 MB); composing takes longer (the glass and facet passes are about 0.3 s on a worker), so the theme's flat sky shows for a moment first</td></tr>" +
+      "<tr><td>Each theme</td><td>looks like its palette; Medallion and Classic are almost the same</td><td>looks like its own craft: oil, glass, crystal, engraving, ink and gold</td></tr>" +
+      "<tr><td>Risk</td><td>low: a grade cannot break a picture</td><td>higher: treatments must keep the subject legible at 560 × 220 and in Quiet; the owner sees six pictures per release to approve</td></tr></table>" +
+      '<p style="margin:8px 0 0">Every treatment keeps the painting\'s light: none adds a light of its own, and the lantern stays the one warm practical light. Quiet would show the Classic painting graded to the palette; Plain shows no art in either option.</p></div></div>';
+    h += '<div style="display:grid;grid-template-columns:150px 352px 448px 1fr;gap:12px 16px;align-items:center;margin-top:6px">';
+    h += '<div></div><div class="hd" style="font:600 11.5px/1.2 Barlow Condensed,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#D9BE82">Option A</div><div style="font:600 11.5px/1.2 Barlow Condensed,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#D9BE82">Option B</div><div style="font:600 11.5px/1.2 Barlow Condensed,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#D9BE82">Option B treatment</div>';
+    TH22.forEach(function (T) {
+      h += '<div><b style="display:block;color:#F4F1E8;font:400 14px/1.2 Marcellus,Georgia,serif">' + T.name + '</b><span style="font-size:11px;color:#A9B2CC">' + T.paln + " · " + T.kitn + "</span></div>";
+      h += '<img src="' + V8 + "art/themed/evercold-" + T.k + '.png" width="352" height="138" style="border-radius:3px;display:block">';
+      h += '<img src="' + V8 + "art/optionb/evercold-b-" + T.k + '.png" width="448" height="176" style="border-radius:3px;display:block">';
+      h += '<div style="font-size:11.5px;color:#A9B2CC;line-height:1.45">' + OPTB22[T.k] + "</div>";
+    });
+    return h + "</div></div>";
+  }
+
   // ---------- W3, U1, M3: Settings › About ----------
   var HIST22 = [["1.22.0", "Welcome home", "5 Oct", "welcome"], ["1.21.0", "What next, for every character", "4 Oct", "whatnext"], ["1.20.0", "Before Evercold", "4 Oct", "evercold"],
     ["1.19.0", "Right answers", "4 Oct", "answers"], ["1.18.0", "Runs you can trust", "3 Oct", "banners/grand-company"], ["1.17.0", "Mix and match", "3 Oct", "banners/chronicles"]];
@@ -409,7 +443,7 @@
       "medallion": "<b>Gold motes.</b> 3 motes, each 3.6 s: fade in 0.6 s, rise 4.5 u/s (about 3 px/s) with a slight sway, fade out 1.2 s. Staggered 1.2 s. r 1 px, #FFE9BE ≤ .55, halo .12.",
       "classic": "<b>A few stars.</b> 3 round stars at fixed places round the icon, breathing on 7, 9.5 and 12 s periods (the 1.14 twinkle curve), .27–.49. Nothing moves.",
       "ishgard-glass": "<b>Frost glints.</b> Every 6 s a 28° glint runs the lit upper-left quarter of the rim in 1.2 s, with one round sparkle at its head. No 4-point star.",
-      "aether-crystal": "<b>Shards.</b> 2 shards on a 16 s orbit (rx 1.25 R, ry 0.4 R, tilted 28°). They show only on the near, lower half; on the far half they are behind the icon, so a shard is never above the crescent. Each turns every 3.2 s and flashes (additive light, no disc) for about 0.4 s when its face meets the light.",
+      "aether-crystal": "<b>Shards.</b> 2 shards on a 16 s orbit round the icon's foot (rx 1.25 R, ry 0.45 R, centred 0.6 R below the centre), so the near arc runs just outside the bottom of the rim. They hide only where the icon covers them; no shard is ever drawn over the face. Each turns every 3.2 s and flashes (additive light, no disc) for about 0.4 s when its face meets the light.",
       "astrologian-orrery": "<b>An orbiting dot.</b> One bead on a 12 s orbit, rx 1.3 R, ry 0.4 R, tilted 28°; the far half passes behind the icon. The orbit hairline at .14.",
       "sumi-to-kinpaku": "<b>Gold-leaf flecks.</b> 2 flecks, 4.5 s each, drifting down past the right side with a flutter; a fleck flashes when it tilts toward the light."
     };

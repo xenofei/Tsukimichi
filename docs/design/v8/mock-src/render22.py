@@ -16,6 +16,7 @@ VIEWS = {
     "wn22b": ("whatsnew-answers-1.22.png", 1560),
     "wn22s": ("whatsnew-states-1.22.png", 1560),
     "art22": ("release-art-1.22.png", 1460),
+    "optb22": ("release-art-option-b-1.22.png", 1420),
     "about22": ("about-history-1.22.png", 1300),
     "upd22": ("update-ready-1.22.png", 1400),
     "icon22": ("moon-icon-1.22.png", 1420),
