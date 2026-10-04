@@ -97,10 +97,12 @@ public sealed class BannerIndexSourceTests
         {
             builds++;
             throw new InvalidOperationException("sheet missing");
-        }, build => Task.Run(build), errors.Add);
+        }, build => Task.Factory.StartNew(build, TaskCreationOptions.LongRunning), errors.Add);
+        // A thread of its own: under the full suite the pool can be busy for seconds, and a build that never started
+        // would read as "not built".
 
         source.Poll();
-        SpinWait.SpinUntil(() => source.IsCurrent, TimeSpan.FromSeconds(5));
+        Assert.True(SpinWait.SpinUntil(() => source.IsCurrent, TimeSpan.FromSeconds(5)), "the first build never finished");
         for (var frame = 0; frame < 5; frame++)
         {
             source.Poll();
@@ -115,7 +117,7 @@ public sealed class BannerIndexSourceTests
 
         catalog = QuestCatalog.Build([Quest(1, 112, icon: 100001, sort: 1)]);
         source.Poll();
-        SpinWait.SpinUntil(() => source.IsCurrent, TimeSpan.FromSeconds(5));
+        Assert.True(SpinWait.SpinUntil(() => source.IsCurrent, TimeSpan.FromSeconds(5)), "the rebuild never finished");
         Assert.Equal(2, builds);
     }
 }

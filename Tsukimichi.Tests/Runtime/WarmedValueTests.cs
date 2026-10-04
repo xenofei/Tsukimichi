@@ -8,6 +8,8 @@ namespace Tsukimichi.Tests.Runtime;
 /// </summary>
 public sealed class WarmedValueTests
 {
+    public WarmedValueTests() => TestThreads.EnsurePool();
+
     [Fact]
     public void Nothing_is_built_before_start()
     {

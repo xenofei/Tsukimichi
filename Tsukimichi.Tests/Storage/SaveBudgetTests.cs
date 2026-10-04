@@ -12,6 +12,8 @@ public sealed class SaveBudgetTests : IDisposable
 {
     private readonly TempDir tmp = new();
 
+    public SaveBudgetTests() => TestThreads.EnsurePool();
+
     public void Dispose() => tmp.Dispose();
 
     [Fact]
