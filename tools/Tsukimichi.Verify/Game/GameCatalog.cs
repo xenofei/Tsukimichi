@@ -146,6 +146,9 @@ internal sealed class GameCatalog
     /// </summary>
     public uint RequiredUnlockLink(uint rowId) => questSheet.GetRowOrDefault(rowId) is { } quest ? quest.Header : 0u;
 
+    /// <summary>The named constants of a quest's script (<c>Quest.QuestParams</c>), for the prerequisite rule (1.22.0).</summary>
+    public IReadOnlyList<(string Name, uint Value)> ScriptConstants(uint rowId) => QuestScriptConstants.Read(gameData.Excel, rowId);
+
     /// <summary>
     /// The System lines of a quest's own text sheet (rows whose key holds <c>_SYSTEM_</c>), English, as plain text:
     /// what the game tells a player about the quest ("In order to undertake this quest, …"). Empty when the quest has

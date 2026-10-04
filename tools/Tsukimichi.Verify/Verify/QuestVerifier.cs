@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Tsukimichi.Core.Model;
+using Tsukimichi.GameData;
 using Tsukimichi.Verify.Game;
 using Tsukimichi.Verify.Sources;
 
@@ -648,7 +649,10 @@ internal sealed partial class QuestVerifier(
 
     // ---- comparison --------------------------------------------------------------------------------------------
 
-    private sealed record Draft(string Fact, string Catalog, string Source, string SourceValue, string SourceRef, Verdict Verdict, string Reason, string FixedIn = "", bool Disagree = false);
+    /// <param name="Settle">1.22.0: the verdict a disagreement takes when no other source decides it (it would otherwise
+    /// stay unresolved), with <paramref name="SettleReason"/>: a wiki prerequisite the game cannot be checking
+    /// (sourceWrong), a wiki duty a curated game gate models (notModeled).</param>
+    private sealed record Draft(string Fact, string Catalog, string Source, string SourceValue, string SourceRef, Verdict Verdict, string Reason, string FixedIn = "", bool Disagree = false, Verdict? Settle = null, string? SettleReason = null);
 
     private List<(QuestRecord Quest, Draft Draft)> Compare(QuestRecord quest)
     {
@@ -897,7 +901,10 @@ internal sealed partial class QuestVerifier(
             var wikiDuties = WikiSource.LinkedNames(box.GetValueOrDefault("requirements")).Where(n => cfcNames.Contains(n)).ToList();
             if (wikiDuties.Count > 0 || extras.InstanceContentNames.Count > 0)
             {
-                drafts.Add(Compare(Facts.Duties, dutyCatalog, SourceNames.Wiki, Names.Join(wikiDuties), wref, Names.SameSet(wikiDuties, extras.InstanceContentNames)));
+                var dutyDraft = Compare(Facts.Duties, dutyCatalog, SourceNames.Wiki, Names.Join(wikiDuties), wref, Names.SameSet(wikiDuties, extras.InstanceContentNames));
+                drafts.Add(dutyDraft.Disagree && DutiesAgainstGate(quest, extras.InstanceContentNames, wikiDuties) is { } gateReason
+                    ? dutyDraft with { Settle = Verdict.NotModeled, SettleReason = gateReason }
+                    : dutyDraft);
             }
 
             var wikiRewards = new List<string>();
@@ -1046,6 +1053,13 @@ internal sealed partial class QuestVerifier(
 
         /// <summary>The source contradicts the sheet in a way the sheet itself rules out (a successor named as a prerequisite).</summary>
         SourceWrong,
+
+        /// <summary>
+        /// 1.22.0: a disagreement the game's data settles when nothing else does: the source names quests neither the sheet
+        /// nor the quest's script constants name (<see cref="ScriptNamesNone"/>). Still a disagreement first, so a shared
+        /// wiki page and a second source decide before it.
+        /// </summary>
+        DisagreeScriptSilent,
     }
 
     private static Draft Compare(string fact, string catalog, string source, string sourceValue, string sourceRef, Consistency c, string reason = "")
@@ -1053,6 +1067,7 @@ internal sealed partial class QuestVerifier(
         {
             Consistency.NotModeled => new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.NotModeled, reason),
             Consistency.SourceWrong => new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.SourceWrong, reason),
+            Consistency.DisagreeScriptSilent => Compare(fact, catalog, source, sourceValue, sourceRef, false, reason) with { Settle = Verdict.SourceWrong, SettleReason = reason },
             _ => Compare(fact, catalog, source, sourceValue, sourceRef, c == Consistency.Agree, reason),
         };
 
@@ -1182,6 +1197,53 @@ internal sealed partial class QuestVerifier(
         return names.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    /// <summary>
+    /// 1.22.0: the wiki's required duties against the sheet's, where a curated game gate (<c>curated/game_gates.json</c>)
+    /// models the difference. When every duty the wiki names beyond the sheet's appears in the quest's gate phrase
+    /// ("three unique final bosses of the Merchant's Tale defeated") and the wiki names every duty the sheet requires,
+    /// the wiki is describing that gate, which the gates fact and the catalog carry: the reason for a notModeled row.
+    /// Null when the sets agree, when no gate names the extra duties, or when the sheet requires a duty the wiki leaves out.
+    /// </summary>
+    private string? DutiesAgainstGate(QuestRecord quest, IReadOnlyList<string> sheetDuties, IReadOnlyList<string> wikiDuties)
+    {
+        if (Names.SameSet(wikiDuties, sheetDuties) || game.Catalog.GameGateOf(quest.RowId) is not { } gate)
+        {
+            return null;
+        }
+
+        var sheet = sheetDuties.Select(Names.Canon).ToHashSet();
+        var wiki = wikiDuties.Select(Names.Canon).ToHashSet();
+        var extra = wikiDuties.Where(d => !sheet.Contains(Names.Canon(d))).ToList();
+        var phrase = Names.Canon(gate.Gate);
+        if (extra.Count == 0 || !sheet.All(wiki.Contains) || !extra.All(d => phrase.Contains(Names.Canon(d), StringComparison.Ordinal)))
+        {
+            return null;
+        }
+
+        return $"the wiki names {string.Join("; ", extra)} as the curated game gate (curated/game_gates.json: {gate.Gate}), not a duty the sheet requires";
+    }
+
+    /// <summary>
+    /// 1.22.0, the game's data wins over a wiki-only prerequisite: the quests a source names that neither the sheet
+    /// (previous quests, accept conditions, through any ancestor) requires nor the quest's script constants
+    /// (<c>Quest.QuestParams</c>, where a script names every quest it checks) name. Null when any of them is named by the
+    /// script, or a name resolves to no quest: then the finding stays open.
+    /// </summary>
+    private string? ScriptNamesNone(QuestRecord quest, IReadOnlyList<string> names)
+    {
+        var constants = game.ScriptConstants(quest.RowId);
+        foreach (var name in names)
+        {
+            var rows = ResolveNames(name).SelectMany(r => rowsByName.GetValueOrDefault(r, [])).ToList();
+            if (rows.Count == 0 || rows.Any(id => QuestScriptConstants.NamesQuest(constants, id)))
+            {
+                return null;
+            }
+        }
+
+        return $"the sheet does not require {string.Join("; ", names)} and the quest's script constants (Quest.QuestParams) name none of them, so the game does not check them: the source is wrong";
+    }
+
     /// <summary>Duties the wiki says a quest unlocks (its <c>unlocks</c> field), for script-driven unlocks the sheet does not link.</summary>
     private List<string> WikiDutyUnlocksOf(uint rowId)
         => wikiByRow.TryGetValue(rowId, out var page)
@@ -1257,6 +1319,12 @@ internal sealed partial class QuestVerifier(
                 return Consistency.NotModeled;
             }
 
+            if (unknown.Count == 0 && ScriptNamesNone(quest, source.Select(r => r.Name).ToList()) is { } noCheck)
+            {
+                reason = "catalog has no PreviousQuest; " + noCheck;
+                return Consistency.DisagreeScriptSilent;
+            }
+
             reason = "catalog has no PreviousQuest; source names " + named;
             return Consistency.Disagree;
         }
@@ -1325,6 +1393,12 @@ internal sealed partial class QuestVerifier(
             {
                 reason = "source names quests that themselves require this one in the sheet (successors, not prerequisites): " + string.Join("; ", successors);
                 return Consistency.SourceWrong;
+            }
+
+            if (unknown.Count == 0 && ScriptNamesNone(quest, unreachable) is { } noCheck)
+            {
+                reason = noCheck;
+                return Consistency.DisagreeScriptSilent;
             }
 
             reason = "source names quests the catalog does not require, directly or transitively: " + string.Join("; ", unreachable);
@@ -1580,6 +1654,11 @@ internal sealed partial class QuestVerifier(
                 {
                     verdict = Verdict.SourceWrong;
                     reason = $"{agreeing[0].Source} agrees with the catalog" + (reason.Length > 0 ? "; " + reason : string.Empty);
+                }
+                else if (d.Settle is { } settle)
+                {
+                    verdict = settle;
+                    reason = d.SettleReason ?? reason;
                 }
                 else
                 {

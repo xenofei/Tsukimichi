@@ -166,6 +166,10 @@ public sealed record ExtraPrerequisite(IReadOnlyList<uint> Requires, IReadOnlyLi
 /// <param name="UnlockLinks">For a gate the game keeps as unlock links (feature plan v7 C3: Occult Record entries, a blue magic spell learned, the chocobo companion), the links that must all be set, judged from the links a capture reads; null for any other gate.</param>
 /// <param name="MetBy">Quest row ids the game gives only once the gate is passed (What Lies Beneath after floor 50 of the Palace of the Dead): one of them completed meets the gate; without one the gate is judged as it otherwise would be. Empty for most gates.</param>
 /// <param name="AcceptConditions">The sheet's accept conditions (<c>QuestAcceptAdditionCondition</c>) this gate stands for, values that are no quest: listed under the gate rather than as an accept condition not checked. Empty for most gates.</param>
+/// <param name="Lodestone">The quest's Lodestone Eorzea Database page, when its requirement line states the gate ("Players must first progress through … before accepting this quest"); the <see cref="QuestGate.LodestoneSource"/> source.</param>
+/// <param name="Questionable">Questionable holds the quest back on the same check (<c>docs/data/questionable-locks.json</c> lists the quest); the <see cref="QuestGate.QuestionableSource"/> source.</param>
+/// <param name="PlayerConfirmed">Why a gate the wiki alone states may stand (the <see cref="QuestGate.PlayerSource"/> source): only for a gate Tsukimichi never judges (<see cref="NeverJudged"/>), whose evidence is the wiki page and which no other source states; the player confirms it with "I've done this". Null for every other gate.</param>
+/// <param name="RequiredTextKey">The text row of a quest the sheet already requires (a previous quest or accept condition) that says the gated quest waits for more (A Spellbinding Read: the advanced dungeon opens through Memolivia once more of the tale is explored); the text is never committed.</param>
 public sealed record GameGate(
     string Gate,
     IReadOnlyList<uint> After,
@@ -177,7 +181,11 @@ public sealed record GameGate(
     GateMountSet? Mounts = null,
     GateUnlockLinkSet? UnlockLinks = null,
     IReadOnlyList<uint>? MetBy = null,
-    IReadOnlyList<uint>? AcceptConditions = null)
+    IReadOnlyList<uint>? AcceptConditions = null,
+    string? Lodestone = null,
+    bool Questionable = false,
+    string? PlayerConfirmed = null,
+    string? RequiredTextKey = null)
 {
     /// <summary><see cref="MetBy"/>, never null.</summary>
     public IReadOnlyList<uint> MetByIds => MetBy ?? [];
@@ -185,17 +193,22 @@ public sealed record GameGate(
     /// <summary><see cref="AcceptConditions"/>, never null.</summary>
     public IReadOnlyList<uint> AcceptConditionIds => AcceptConditions ?? [];
 
+    /// <summary>Tsukimichi never judges the gate: it has no weapons, mounts, unlock links, met-by quests, accept conditions or after quests.</summary>
+    public bool NeverJudged => Items is null && Mounts is null && UnlockLinks is null && MetByIds.Count == 0 && AcceptConditionIds.Count == 0 && After.Count == 0;
+
     /// <summary>
-    /// Where the gate is confirmed (<see cref="QuestGate.Sources"/>): the game's text when <see cref="GameTextKey"/> or
-    /// <see cref="AfterTextKey"/> names a row, the sheets when weapons, mounts, unlock links or accept conditions are
-    /// derived from them, the wiki when <see cref="Evidence"/> is a Console Games Wiki page.
+    /// Where the gate is confirmed (<see cref="QuestGate.Sources"/>): the game's text when <see cref="GameTextKey"/>,
+    /// <see cref="AfterTextKey"/> or <see cref="RequiredTextKey"/> names a row, the sheets when weapons, mounts, unlock
+    /// links or accept conditions are derived from them, the wiki when <see cref="Evidence"/> is a Console Games Wiki
+    /// page, the Lodestone when <see cref="Lodestone"/> names the quest's page, Questionable when
+    /// <see cref="Questionable"/> is set, and the player when <see cref="PlayerConfirmed"/> gives the reason.
     /// </summary>
     public IReadOnlyList<string> SourceKinds
     {
         get
         {
-            var kinds = new List<string>(3);
-            if (GameTextKey is not null || AfterTextKey is not null)
+            var kinds = new List<string>(6);
+            if (GameTextKey is not null || AfterTextKey is not null || RequiredTextKey is not null)
             {
                 kinds.Add(QuestGate.GameTextSource);
             }
@@ -208,6 +221,21 @@ public sealed record GameGate(
             if (Evidence.StartsWith("https://ffxiv.consolegameswiki.com/", StringComparison.Ordinal))
             {
                 kinds.Add(QuestGate.WikiSource);
+            }
+
+            if (Lodestone is not null)
+            {
+                kinds.Add(QuestGate.LodestoneSource);
+            }
+
+            if (Questionable)
+            {
+                kinds.Add(QuestGate.QuestionableSource);
+            }
+
+            if (PlayerConfirmed is not null)
+            {
+                kinds.Add(QuestGate.PlayerSource);
             }
 
             return kinds;
@@ -1161,9 +1189,21 @@ public sealed class CuratedData
     /// either <c>equipped</c> or <c>held</c> (<see cref="ReadGateItems"/>), for a mount-collection gate <c>mounts</c>
     /// (<see cref="ReadGateMounts"/>), for an unlock-link gate <c>unlockLinks</c> (<see cref="ReadGateUnlockLinks"/>; one
     /// of the three at most), optional <c>metBy</c> (quest row ids, none the key itself) and <c>acceptConditions</c>
-    /// (values below 65536), an https <c>evidence</c> URL and a <c>note</c>. An entry missing any of them, or with a
-    /// malformed one, is skipped with a warning.
+    /// (values below 65536), an https <c>evidence</c> URL and a <c>note</c>; since 1.22.0 optional <c>requiredTextKey</c>
+    /// (a <c>TEXT_</c> key), <c>lodestone</c> (a Lodestone quest page), <c>questionable</c> (<c>true</c>) and
+    /// <c>playerConfirmed</c> (a reason, only on a never-judged gate the wiki alone states). An entry missing any of them,
+    /// or with a malformed one, is skipped with a warning.
     /// </summary>
+    /// <summary>The start of a Lodestone Eorzea Database quest page, which a gate's <c>lodestone</c> source must be.</summary>
+    public const string LodestoneQuestPrefix = "https://na.finalfantasyxiv.com/lodestone/playguide/db/quest/";
+
+    /// <summary>A Lodestone quest page: <see cref="LodestoneQuestPrefix"/>, a hex id, a closing slash.</summary>
+    public static bool IsLodestoneQuestPage(string url)
+        => url.StartsWith(LodestoneQuestPrefix, StringComparison.Ordinal)
+           && url.EndsWith('/')
+           && url.Length > LodestoneQuestPrefix.Length + 1
+           && url[LodestoneQuestPrefix.Length..^1].All(Uri.IsHexDigit);
+
     private static Dictionary<uint, GameGate> LoadGameGates(string path, List<string> warnings)
     {
         var entries = new Dictionary<uint, GameGate>();
@@ -1303,7 +1343,38 @@ public sealed class CuratedData
                 return;
             }
 
-            entries[rowId] = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note, items, mounts, links, metBy, acceptConditions);
+            var requiredTextKey = StorageJson.ReadString(obj, "requiredTextKey")?.Trim();
+            if (requiredTextKey is not null && !requiredTextKey.StartsWith("TEXT_", StringComparison.Ordinal))
+            {
+                warn("requiredTextKey must be the TEXT_ key of a required quest's text");
+                return;
+            }
+
+            var lodestone = StorageJson.ReadString(obj, "lodestone")?.Trim();
+            if (lodestone is not null && !IsLodestoneQuestPage(lodestone))
+            {
+                warn($"lodestone '{lodestone}' is not a Lodestone Eorzea Database quest page ({LodestoneQuestPrefix}<id>/)");
+                return;
+            }
+
+            var questionable = false;
+            if (obj["questionable"] is { } questionableNode
+                && (questionableNode is not JsonValue questionableValue || !questionableValue.TryGetValue(out questionable) || !questionable))
+            {
+                warn("questionable must be true when present");
+                return;
+            }
+
+            var playerConfirmed = StorageJson.ReadString(obj, "playerConfirmed")?.Trim();
+            var entry = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note, items, mounts, links, metBy, acceptConditions, lodestone, questionable, playerConfirmed, requiredTextKey);
+            if (playerConfirmed is not null
+                && (playerConfirmed.Length == 0 || !entry.NeverJudged || !entry.SourceKinds.SequenceEqual([QuestGate.WikiSource, QuestGate.PlayerSource])))
+            {
+                warn("playerConfirmed (a reason) is only for a gate never judged that the wiki alone states, with the wiki page as its evidence");
+                return;
+            }
+
+            entries[rowId] = entry;
         });
 
         return entries;

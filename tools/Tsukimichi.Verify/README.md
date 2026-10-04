@@ -55,6 +55,12 @@ each covered link is met. It never touches the network; to refresh the links, fe
 and pass `--extract QuestData.cs --commit <the full hash of new-main you read>`: the links file is rewritten first.
 `QuestionableLinksTests` runs the same check in CI against the frozen catalog fixture.
 
+`--extract-locks <QuestFunctions.cs> --commit <hash>` (1.22.0) rewrites `docs/data/questionable-locks.json` (`--locks`)
+from a local copy of `Questionable/Functions/QuestFunctions.cs`: the quests Questionable holds back on a check of its own
+(the `questPrereqs` switch: an achievement, a mount collection, an unlock link, a Chocobo Racing rank), ids only. An arm
+of a kind it does not know fails the extraction. A `curated/game_gates.json` gate may cite Questionable as a source
+(`"questionable": true`) only for a quest that file lists. The committed file is read at new-main `db49ec12`.
+
 Questionable is a cross-check, not a source of truth: a link becomes a curated extra prerequisite only when a second
 source agrees (the quest's own text or the wiki infobox). With the first snapshot (commit `0bd61efe`, 99 links) three
 links stay allowlisted: Unidentified Flying Object (its text asks for the Dun Scaith raid, not the quest), Always a
@@ -167,13 +173,26 @@ reason, fixedIn`. `catalogClaim` is `quest only`, with `otherSource=` when the e
 | `ambiguous` | the source cannot be tied to one row (a wiki page shared by same-name rows, a disambiguation page), or the value needs a human reading (an Exchange acquisition) | no |
 | `unresolved` | one source disagrees and nothing else decides; needs a human | yes |
 
+Two rules (1.22.0, owner rulings) settle a disagreement that no second source decides, after a shared wiki page and the
+other sources have had their say:
+
+- **prereqs:** a quest the source names that neither the sheet requires (previous quests, accept conditions, through any
+  ancestor) nor the quest's script constants name (`Quest.QuestParams`, where a script names every quest it checks, as
+  row id or runtime id) is one the game does not check: `sourceWrong`. One such quest the script does name keeps the row
+  open. `ScriptPrerequisiteRuleTests` holds the committed rows to the installed game.
+- **duties:** a duty the wiki names beyond the sheet's that the quest's curated game gate names in its phrase ("three
+  unique final bosses of the Merchant's Tale defeated") is that gate, which the catalog carries: `notModeled`.
+
 ### verification-allowlist.json
 
-`entries: [{ rowId, fact, source?, verdict, reason, evidence, fix?, until, rewardId? }]`. `rowId` is a quest row id or `*`;
+`entries: [{ rowId, fact, source?, verdict, reason, evidence, fix?, until, rewardId?, prereqId? }]`. `rowId` is a quest row id or `*`;
 `fact` is a quest fact or `reward:<Kind>` for reward rows, and `rewardId` narrows a reward entry to one reward. An entry excuses a gate-failing row until the plugin
 version reaches `until`; after that `summary` fails again until the row is re-verified or the entry renewed. `fix`
 names where a confirmed catalogWrong is corrected (a mapper rule, a curated file, or a data regeneration) and feeds
-"Discrepancies to fix" in `verification-full.md`.
+"Discrepancies to fix" in `verification-full.md`. Verdict `settled` (1.22.0) records a decision made on the evidence
+that no release changes (the Eternity Cake kept quest-only, Questionable's spearfishing link): it needs `evidence` (a URL
+or a game reference) and a reason, carries no `until`, never expires and excuses its row whatever the row reads; the
+tests still fail it once no row or link needs it.
 
 ### Other files
 

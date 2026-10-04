@@ -11,7 +11,10 @@ namespace Tsukimichi.Verify.Output;
 /// source <c>questionable</c> excuses a Questionable link the catalog does not imply (<c>Tsukimichi.Verify questionable</c>),
 /// narrowed to one required quest by the optional <c>prereqId</c>; <c>fix</c> (optional) names where a confirmed catalogWrong is
 /// corrected (a mapper rule, a curated file, or data) and feeds the "Discrepancies to fix" section of the report. An
-/// entry has expired when <c>until</c> is a version at or below the current plugin version.
+/// entry has expired when <c>until</c> is a version at or below the current plugin version. A <see cref="Settled"/> entry
+/// (1.22.0, verdict <c>settled</c>) records a decision made on the evidence that no release will change (a reward kept
+/// quest-only by decision, a Questionable link the catalog rightly leaves out): it needs <c>evidence</c> and a reason,
+/// carries no <c>until</c>, never expires, and excuses its row whatever verdict the row reads.
 /// </summary>
 internal sealed class Allowlist
 {
@@ -19,6 +22,12 @@ internal sealed class Allowlist
 
     /// <summary>The <c>source</c> of an entry that excuses a Questionable prerequisite link.</summary>
     public const string QuestionableSource = "questionable";
+
+    /// <summary>The verdict of a settled entry, which never expires (1.22.0).</summary>
+    public const string Settled = "settled";
+
+    /// <summary>"settled", or "until 1.23.0", for the report.</summary>
+    public static string Label(Entry e) => e.Verdict == Settled ? Settled : "until " + e.Until;
 
     public IReadOnlyList<Entry> Entries { get; }
 
@@ -70,7 +79,7 @@ internal sealed class Allowlist
 
     public static bool Expired(Entry e, Version? current)
     {
-        if (current is null || string.IsNullOrEmpty(e.Until))
+        if (e.Verdict == Settled || current is null || string.IsNullOrEmpty(e.Until))
         {
             return false;
         }
@@ -100,7 +109,7 @@ internal sealed class Allowlist
             return false;
         }
 
-        return e.Verdict == "*" || string.Equals(e.Verdict, Verdicts.Name(verdict), StringComparison.Ordinal);
+        return e.Verdict is "*" or Settled || string.Equals(e.Verdict, Verdicts.Name(verdict), StringComparison.Ordinal);
     }
 
     private static string Pad(string v) => v.Count(c => c == '.') == 0 ? v + ".0" : v;
@@ -109,7 +118,7 @@ internal sealed class Allowlist
     {
         var root = new JsonObject
         {
-            ["$schema_note"] = "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional), verdict, reason, evidence (URL), fix (optional: mapper rule, curated file or data change that corrects a catalogWrong), until (release in which the fix lands; the entry expires once the plugin version reaches it), rewardId (reward rows only), prereqId (source questionable only: the required quest) }",
+            ["$schema_note"] = "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional), verdict, reason, evidence (URL), fix (optional: mapper rule, curated file or data change that corrects a catalogWrong), until (release in which the fix lands; the entry expires once the plugin version reaches it; none for a settled entry), rewardId (reward rows only), prereqId (source questionable only: the required quest); verdict settled marks a decision that never expires and needs evidence }",
             ["entries"] = new JsonArray(),
         };
         File.WriteAllText(path, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");

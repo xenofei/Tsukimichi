@@ -414,15 +414,21 @@ public sealed record QuestGate(string Gate, uint[] After, GateItems? Items = nul
     public uint[] AcceptConditions { get; init; } = [];
 
     /// <summary>
-    /// Where the gate was confirmed, in a fixed order: <see cref="GameTextSource"/> (the quest's own text, or an after
-    /// quest's, states it), <see cref="SheetSource"/> (sheet rows give its weapons, mounts, unlock links or accept
-    /// conditions), <see cref="WikiSource"/> (the Console Games Wiki page in its evidence). Every curated gate has two.
+    /// Where the gate was confirmed, in a fixed order: <see cref="GameTextSource"/> (the quest's own text, an after
+    /// quest's, or a required quest's states it), <see cref="SheetSource"/> (sheet rows give its weapons, mounts, unlock
+    /// links or accept conditions), <see cref="WikiSource"/> (the Console Games Wiki page in its evidence),
+    /// <see cref="LodestoneSource"/> (the quest's Lodestone page states a requirement), <see cref="QuestionableSource"/>
+    /// (Questionable holds the quest back on the same check), <see cref="PlayerSource"/> (a gate stated by the wiki alone
+    /// that is never judged: the player confirms it with "I've done this"). Every curated gate has two.
     /// </summary>
     public IReadOnlyList<string> Sources { get; init; } = [];
 
     public const string GameTextSource = "gameText";
     public const string SheetSource = "sheet";
     public const string WikiSource = "wiki";
+    public const string LodestoneSource = "lodestone";
+    public const string QuestionableSource = "questionable";
+    public const string PlayerSource = "player";
 }
 
 /// <summary>Where a gate's weapons must be (<see cref="GateItems.Hold"/>).</summary>

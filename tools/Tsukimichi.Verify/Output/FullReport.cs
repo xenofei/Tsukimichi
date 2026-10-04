@@ -169,7 +169,7 @@ internal static class FullReport
                 var sources = string.Join("; ", g.Select(r => $"{r.Source}: {(r.SourceValue.Length > 0 ? r.SourceValue : "(absent)")}"));
                 var evidence = string.Join(" ", g.Select(r => Link(r.SourceRef)).Distinct());
                 var fix = allow?.Fix ?? (first.FixedIn.Length > 0 ? first.FixedIn : "(unassigned)");
-                sb.AppendLine($"| {first.RowId} | {Md(first.Name)} | {first.Fact} | {Md(first.CatalogValue.Length > 0 ? first.CatalogValue : "(absent)")} | {Md(sources)} | {evidence} | {Md(fix)} | {(allow is null ? "no" : "until " + allow.Until)} |");
+                sb.AppendLine($"| {first.RowId} | {Md(first.Name)} | {first.Fact} | {Md(first.CatalogValue.Length > 0 ? first.CatalogValue : "(absent)")} | {Md(sources)} | {evidence} | {Md(fix)} | {(allow is null ? "no" : Allowlist.Label(allow))} |");
             }
         }
 
@@ -192,7 +192,7 @@ internal static class FullReport
                 var sources = string.Join("; ", g.Select(r => $"{r.Source}: {r.SourceValue}"));
                 var evidence = string.Join(" ", g.Select(r => Link(r.SourceRef)).Distinct());
                 var fix = allow?.Fix ?? (first.FixedIn.Length > 0 ? first.FixedIn : "(unassigned)");
-                sb.AppendLine($"| {first.QuestRowId} | {Md(first.QuestName)} | {first.Kind} | {first.RewardId}{(first.ItemId != 0 ? "/item " + first.ItemId : string.Empty)} {Md(first.RewardName)} | {Md(first.CatalogClaim)} | {Md(sources)} | {evidence} | {Md(fix)} | {(allow is null ? "no" : "until " + allow.Until)} |");
+                sb.AppendLine($"| {first.QuestRowId} | {Md(first.QuestName)} | {first.Kind} | {first.RewardId}{(first.ItemId != 0 ? "/item " + first.ItemId : string.Empty)} {Md(first.RewardName)} | {Md(first.CatalogClaim)} | {Md(sources)} | {evidence} | {Md(fix)} | {(allow is null ? "no" : Allowlist.Label(allow))} |");
             }
         }
 
@@ -228,7 +228,7 @@ internal static class FullReport
     {
         sb.AppendLine("## Allowlist");
         sb.AppendLine();
-        sb.AppendLine($"{allowlist.Entries.Count} entries in `verification-allowlist.json`; each expires when the plugin version reaches `until`, after which `summary` fails until the row is re-verified or the entry renewed.");
+        sb.AppendLine($"{allowlist.Entries.Count} entries in `verification-allowlist.json`; each expires when the plugin version reaches `until`, after which `summary` fails until the row is re-verified or the entry renewed; a `settled` entry records a decision on the evidence and never expires.");
         sb.AppendLine();
         if (allowlist.Entries.Count == 0)
         {
@@ -241,7 +241,7 @@ internal static class FullReport
         sb.AppendLine("|---:|---|---|---|---|---|---|");
         foreach (var e in allowlist.Entries.OrderBy(e => e.RowId == "*" ? 0 : uint.TryParse(e.RowId, out var id) ? id : 0).ThenBy(e => e.Fact, StringComparer.Ordinal).ThenBy(e => e.Source, StringComparer.Ordinal))
         {
-            sb.AppendLine($"| {e.RowId} | {e.Fact} | {e.Source ?? "*"} | {e.Verdict} | {e.Until}{(Allowlist.Expired(e, current) ? " (expired)" : string.Empty)} | {Md(e.Fix ?? string.Empty)} | {Md(e.Reason)} |");
+            sb.AppendLine($"| {e.RowId} | {e.Fact} | {e.Source ?? "*"} | {e.Verdict} | {(e.Verdict == Allowlist.Settled ? "never" : e.Until)}{(Allowlist.Expired(e, current) ? " (expired)" : string.Empty)} | {Md(e.Fix ?? string.Empty)} | {Md(e.Reason)} |");
         }
 
         sb.AppendLine();
@@ -280,7 +280,7 @@ internal static class FullReport
         foreach (var r in list)
         {
             var allow = allowlist.Covering(r, current);
-            sb.AppendLine($"| {r.RowId} | {Md(r.Name)} | {r.Fact} | {Md(r.CatalogValue)} | {r.Source} | {Md(r.SourceValue)} | {Md(r.Reason)} | {Md(r.FixedIn)} | {(allow is null ? "no" : "until " + allow.Until)} | {Md(allow?.Reason ?? string.Empty)} | {Link(r.SourceRef)} |");
+            sb.AppendLine($"| {r.RowId} | {Md(r.Name)} | {r.Fact} | {Md(r.CatalogValue)} | {r.Source} | {Md(r.SourceValue)} | {Md(r.Reason)} | {Md(r.FixedIn)} | {(allow is null ? "no" : Allowlist.Label(allow))} | {Md(allow?.Reason ?? string.Empty)} | {Link(r.SourceRef)} |");
         }
 
         sb.AppendLine();
@@ -303,7 +303,7 @@ internal static class FullReport
         foreach (var r in list)
         {
             var allow = allowlist.Covering(r, current);
-            sb.AppendLine($"| {r.QuestRowId} | {Md(r.QuestName)} | {r.Kind} | {r.RewardId}{(r.ItemId != 0 ? "/item " + r.ItemId : string.Empty)} {Md(r.RewardName)} | {Md(r.CatalogClaim)} | {r.Source} | {Md(r.SourceValue)} | {Md(r.Reason)} | {Md(r.FixedIn)} | {(allow is null ? "no" : "until " + allow.Until)} | {Link(r.SourceRef)} |");
+            sb.AppendLine($"| {r.QuestRowId} | {Md(r.QuestName)} | {r.Kind} | {r.RewardId}{(r.ItemId != 0 ? "/item " + r.ItemId : string.Empty)} {Md(r.RewardName)} | {Md(r.CatalogClaim)} | {r.Source} | {Md(r.SourceValue)} | {Md(r.Reason)} | {Md(r.FixedIn)} | {(allow is null ? "no" : Allowlist.Label(allow))} | {Link(r.SourceRef)} |");
         }
 
         sb.AppendLine();
