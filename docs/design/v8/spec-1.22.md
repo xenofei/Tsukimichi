@@ -268,7 +268,7 @@ No treatment adds a light of its own. Quiet would show the Classic painting grad
 
 Their files are in `art/optionb/`: `<key>-base.png`, `<key>-masks.npz`, `<key>.json`, `<key>-<theme>.png` and `ship/<key>-<theme>.jpg`. The painters are in `art/src/paint_option_b2.py`.
 
-The backfill, 1.18.0 to 1.14.0, is made on the same recipe by `art/src/paint_option_b3.py`. Its briefs are under "Backfill (decision 2)" below, and its supervision is under "Backfill 1.14–1.18" in the Approval record, where round 2 is still open.
+The backfill, 1.18.0 to 1.14.0, is made on the same recipe by `art/src/paint_option_b3.py`. Its briefs are under "Backfill (decision 2)" below, and its supervision is under "Backfill 1.14–1.18" in the Approval record, where round 2 returned CHANGES (an Orrery Major and five treatment Minors) and round 3 is still open.
 - **Runs you can trust** (`runs-b`): a ferry on a guide rope under a veiled near-full moon.
 - **Mix and match** (`mixmatch-b`): six stepping stones of six stones in a Kugane garden at dawn.
 - **Themes** (`themes-b`): one moon over four horizons, from a summit.
@@ -788,3 +788,22 @@ The five backfill releases (`polish-b`, `faces-b`, `themes-b`, `mixmatch-b`, `ru
     - `glass_true_colour`;
     - the Orrery's far outlines now stop at the city, and its engraved moon and stones use a crisp 3–5 px hatch.
   - **Reported to the owner, not changed here:** the supervisor saw a hook-shaped sea on the approved welcome-b and answers-b moons. They are outside this task.
+- **Round 2: CHANGES.** 1 Major, 5 Minor and 3 Nits.
+  - **Fixed and holding:** every round 1 painting finding (the rims, the moons, the crystals, the bridges, the silhouettes, the forest, the bridle and the series layout). In the treatments: Sumi's glitter, faces-b's strips, themes-b's Aether ground and glass strips, and the removed traveller.
+  - **Major:** the `orrery_crisp` hatching isn't engraving, in all five releases.
+    - Its unsmoothed 1 px lines dither into a checker.
+    - It loses value: dark masses are as pale as the moonlit peaks, and the lit crystals are solid dark.
+    - faces-b's tree walls still read as clouds.
+    - It doubles the Orrery file sizes.
+    - **Fix:** anti-aliased lines at a pitch of at least 3 px at 1x, weighted by value, as on evercold-b's approved plate.
+  - **Minor:**
+    - the Orrery's engraved moons read as "eyebrows" (polish-b, themes-b) or as cheese (runs-b), with no dark-enamel sliver: hatch from the painter's sea mask instead;
+    - polish-b's Aether still veils Limsa;
+    - in polish-b's and runs-b's glass, there is no light path under the moon;
+    - in faces-b's glass, the roof is still the walls' colour;
+    - in themes-b's glass, the watcher is lost on the forest.
+  - **Nits:**
+    - a faint wedge at mixmatch-b's stream edge;
+    - faces-b's Aether earthshine is slightly light;
+    - polish-b's sloop is lost in glass.
+  - **Open:** these fixes and a round 3 review. The backfill is not yet APPROVED.
