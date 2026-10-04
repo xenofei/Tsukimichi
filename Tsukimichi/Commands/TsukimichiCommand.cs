@@ -20,6 +20,9 @@ namespace Tsukimichi.Commands;
 /// toggles the todo overlay; <c>report [quest name]</c> copies a quest's diagnostic block; <c>export [quests|moonlit]
 /// [json|csv]</c> writes the export files; <c>stop</c> stops every hand-off Tsukimichi started (<see cref="StopCommand"/>);
 /// <c>look &lt;code&gt;</c> opens Settings › Themes with a share code pasted and previewed, never applying it;
+/// <c>msq</c> and <c>next</c> print plain sentences for text-to-speech and <c>go [quest name]</c> travels to the current
+/// step (1.21, <see cref="GuidanceCommand"/>; with text after them that would shadow a quest name they search instead,
+/// <see cref="CommandLine.RunsGuidance"/>);
 /// <c>settings</c> (or <c>config</c>) and <c>help</c> open those windows; <c>glyphs</c> opens the glyph sheet and
 /// <c>ipc</c> the IPC developer window (neither listed to players); a bare command toggles the main window.
 /// <para>

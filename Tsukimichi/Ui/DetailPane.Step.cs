@@ -103,9 +103,12 @@ public sealed partial class DetailPane
         DrawDotLine(stepHead, right, Theme.Surface.TextSecondary, Theme.Surface.Text);
         DrawDotLine(stepPlace, right, Theme.Surface.TextSecondary, Theme.Surface.TextSecondary);
         DrawStepPills(view, links.TravelTarget(quest, view));
-        using (Theme.PushText(Theme.Surface.TextSecondary))
+        if (stepNote.Length > 0)
         {
-            TextFlow.Wrapped(stepNote, RoomTo(right));
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                TextFlow.Wrapped(stepNote, RoomTo(right));
+            }
         }
 
         EndSection();
