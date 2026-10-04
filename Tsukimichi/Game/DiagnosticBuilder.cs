@@ -91,6 +91,12 @@ public sealed class DiagnosticBuilder
     /// </summary>
     public Func<QuestRecord, Core.Ipc.QuestionableWider?>? CrossCheckMore { get; set; }
 
+    /// <summary>
+    /// The game's own offers (feature plan v7, C1): the block's "in game:" line and the report Settings › Advanced ›
+    /// Diagnostics copies. Null leaves both out.
+    /// </summary>
+    public OfferObserver? Offers { get; set; }
+
     /// <summary>The block for a quest by row id; null without a catalog or for a row id it does not know.</summary>
     public string? Compose(uint rowId) => session.Bundle?.Catalog.GetByRowId(rowId) is { } quest ? Compose(quest) : null;
 
@@ -121,6 +127,7 @@ public sealed class DiagnosticBuilder
             IsLive = session.IsLive,
             Questionable = QuestionableCheck(quest),
             QuestionableMore = QuestionableMore(quest),
+            GameOffer = Offers?.Check(quest, evaluation),
         });
     }
 

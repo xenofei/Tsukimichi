@@ -57,6 +57,15 @@ public sealed record CharacterSnapshot
 
     public IReadOnlyList<AcceptedQuest> Accepted { get; init; } = [];
 
+    /// <summary>
+    /// The journal slots in use as the client holds them (<c>QuestManager.NormalQuests</c> entries with a quest; the
+    /// allied society dailies' own array is not counted), for the 30-quest cap (<see cref="Journal.JournalSlots"/>).
+    /// Additive at schema v1: null in files written before 1.19, which falls back to counting <see cref="Accepted"/>;
+    /// null is not written.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public byte? JournalSlotsUsed { get; init; }
+
     /// <summary>Repeatable quests done this cycle: quest id to the flag byte from the client.</summary>
     public IReadOnlyDictionary<ushort, byte> DailyDone { get; init; } = new Dictionary<ushort, byte>();
 

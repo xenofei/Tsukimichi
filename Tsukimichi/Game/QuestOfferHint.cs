@@ -66,6 +66,12 @@ public sealed unsafe class QuestOfferHint : AddonPanelSource
         Start();
     }
 
+    /// <summary>
+    /// Raised on the framework thread with the row id of each quest the window was found to offer, when the match is
+    /// sure (feature plan v7, C1: <see cref="OfferObserver.Offered"/>).
+    /// </summary>
+    public Action<uint>? Identified { get; set; }
+
     protected override bool WantsPoll => offered == 0 && Environment.TickCount64 - openedAt < RetryWindow;
 
     /// <summary>
@@ -125,6 +131,13 @@ public sealed unsafe class QuestOfferHint : AddonPanelSource
         {
             offered = found.RowId;
             source = match.Source;
+
+            // The game offering the quest is evidence it is available (feature plan v7, C1); a title shared by several
+            // quests across the catalog is too unsure to record.
+            if (match.Source == TitleMatchSource.Candidate || match.Ambiguity == 1)
+            {
+                Identified?.Invoke(found.RowId);
+            }
         }
     }
 
