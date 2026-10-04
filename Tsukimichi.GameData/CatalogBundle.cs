@@ -166,6 +166,13 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
     }
 
     /// <summary>
+    /// Which classes and jobs enter duties (<see cref="Core.Companions.DutyJobs"/>): the Disciples of War and Magic, not a
+    /// limited job, by the ClassJob sheet. Builds a small lookup; call it when a view rebuilds, not per frame.
+    /// </summary>
+    public Func<byte, bool> DutyJobs() =>
+        Core.Companions.DutyJobs.From(Names.ClassJobInfos.Select(static i => (i.RowId, i.IsCrafter, i.IsGatherer, i.IsLimited)));
+
+    /// <summary>
     /// ClassJob row id to its <c>ClassJobParent</c> row id for every row that fits a byte, for
     /// <see cref="Core.Evaluation.EvalContext.ParentJob"/>. A class maps to itself, as the sheet has it.
     /// </summary>

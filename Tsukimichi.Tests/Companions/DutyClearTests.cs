@@ -184,6 +184,85 @@ public class DutyClearTests
     }
 
     [Fact]
+    public void Crafter_gatherer_and_limited_job_gearsets_never_pass_the_wall()
+    {
+        // Review fix: a Carpenter gearset at i710 and a Blue Mage one at i700 cannot queue, so neither passes for a
+        // Paladin at i680, nor stands in for the 8.0 shared item level.
+        const byte Paladin = 19, Carpenter = 8, Botanist = 17, BlueMage = 36;
+        var snapshot = Fixture.Snapshot() with
+        {
+            CurrentJob = Paladin,
+            ItemLevel = 680,
+            JobItemLevels = new Dictionary<byte, ushort> { [Paladin] = 680, [Carpenter] = 710, [Botanist] = 705, [BlueMage] = 700 },
+        };
+
+        var wall = ItemLevelWall.For(690, snapshot, ItemLevelRule.PerJob);
+        Assert.NotNull(wall);
+        Assert.False(wall.Met);
+        Assert.False(wall.OtherGearsetPasses);
+        Assert.Equal(Paladin, wall.BestJob);
+        Assert.Empty(wall.Qualifying);
+
+        var shared = ItemLevelWall.For(690, snapshot, ItemLevelRule.Shared);
+        Assert.NotNull(shared);
+        Assert.False(shared.Met);
+        Assert.Equal(680, shared.Have);
+
+        // Standing on the Carpenter: the wall is judged by the best combat job, never the crafter's own gear.
+        var crafting = snapshot with { CurrentJob = Carpenter, ItemLevel = 710 };
+        var onCrafter = ItemLevelWall.For(690, crafting, ItemLevelRule.PerJob);
+        Assert.NotNull(onCrafter);
+        Assert.False(onCrafter.Met);
+        Assert.Equal(Paladin, onCrafter.CurrentJob);
+        Assert.Equal(680, onCrafter.Have);
+        Assert.False(ItemLevelWall.For(690, crafting, ItemLevelRule.Shared)!.Met);
+
+        // A crafter with no combat gearset known: nothing to judge.
+        Assert.Null(ItemLevelWall.For(690, Fixture.Snapshot() with { CurrentJob = Carpenter, ItemLevel = 710, JobItemLevels = new Dictionary<byte, ushort> { [Carpenter] = 710 } }, ItemLevelRule.PerJob));
+    }
+
+    [Fact]
+    public void Duty_jobs_are_the_disciples_of_war_and_magic_without_limited_jobs()
+    {
+        Assert.True(DutyJobs.ByRowId(19));
+        Assert.True(DutyJobs.ByRowId(1));
+        Assert.False(DutyJobs.ByRowId(0));
+        Assert.False(DutyJobs.ByRowId(8));
+        Assert.False(DutyJobs.ByRowId(18));
+        Assert.False(DutyJobs.ByRowId(36));
+
+        // From the sheet: a later limited job (row 43 here) is known by its flag; a row the sheet lacks falls back.
+        var fromSheet = DutyJobs.From([(19u, false, false, false), (8u, true, false, false), (43u, false, false, true)]);
+        Assert.True(fromSheet(19));
+        Assert.False(fromSheet(8));
+        Assert.False(fromSheet(43));
+        Assert.False(fromSheet(17));
+        Assert.True(fromSheet(21));
+    }
+
+    [Fact]
+    public void Each_surface_wears_its_own_badges()
+    {
+        var support = Duty(support: true);
+        var savage = Duty(players: 8) with { HighEnd = true };
+
+        // The detail pane and the Duty Finder hint: every badge.
+        Assert.Equal([new DutyBadge(DutyBadgeKind.SoloWithNpcs), new DutyBadge(DutyBadgeKind.Optional)], DutyBadgeRules.For(support, false, DutyBadgeSurface.Detail));
+        Assert.Equal([new DutyBadge(DutyBadgeKind.Group, 8), new DutyBadge(DutyBadgeKind.HighEnd), new DutyBadge(DutyBadgeKind.StoryRequired)], DutyBadgeRules.For(savage, true, DutyBadgeSurface.DutyFinder));
+
+        // My blues: Story-required when the story needs it, never Optional (what nearly every blue unlock is).
+        Assert.Equal([new DutyBadge(DutyBadgeKind.SoloWithNpcs), new DutyBadge(DutyBadgeKind.StoryRequired)], DutyBadgeRules.For(support, true, DutyBadgeSurface.MyBlues));
+        Assert.Equal([new DutyBadge(DutyBadgeKind.SoloWithNpcs)], DutyBadgeRules.For(support, false, DutyBadgeSurface.MyBlues));
+
+        // A route step: the size and High-end; the step's MSQ mark speaks for the story.
+        Assert.Equal([new DutyBadge(DutyBadgeKind.Group, 8), new DutyBadge(DutyBadgeKind.HighEnd)], DutyBadgeRules.For(savage, true, DutyBadgeSurface.Route));
+
+        // The Duties board and the roulette hint: the size alone, or nothing when it is unknown.
+        Assert.Equal([new DutyBadge(DutyBadgeKind.Group, 8)], DutyBadgeRules.For(savage, true, DutyBadgeSurface.Board));
+        Assert.Empty(DutyBadgeRules.For(Duty(players: 0), true, DutyBadgeSurface.Board));
+    }
+
+    [Fact]
     public void The_badges_read_size_then_high_end_then_story()
     {
         // Duty Support: Solo with NPCs, whatever the size.

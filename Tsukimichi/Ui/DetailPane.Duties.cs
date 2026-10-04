@@ -58,12 +58,13 @@ public sealed partial class DetailPane
 
         var story = source is null ? null : StoryRequirements.For(bundle.Catalog, source);
         var rule = ItemLevelRule.For(bundle.Catalog);
+        var queues = bundle.DutyJobs();
         foreach (var duty in duties)
         {
             var info = duty.Duty;
             bool? storyRequired = story?.IsStoryDuty(info.ContentFinderConditionId, info.InstanceContentId);
             var badges = DutyBadgeRules.For(info, storyRequired).Select(b => DutyBadges.Describe(b, info, index.Roulettes)).ToArray();
-            var (wall, note) = WallLines(ItemLevelWall.For(info, session.ViewedSnapshot, rule), info, bundle.Names);
+            var (wall, note) = WallLines(ItemLevelWall.For(info, session.ViewedSnapshot, rule, queues), info, bundle.Names);
             clearRows.Add(new ClearRow(info.Name, badges, wall, note));
         }
 

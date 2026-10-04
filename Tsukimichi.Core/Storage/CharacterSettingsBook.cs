@@ -330,6 +330,7 @@ public sealed class CharacterSettingsBook
                 || x.CompareWith != y.CompareWith
                 || !x.PayoffGatesNoticed.SequenceEqual(y.PayoffGatesNoticed, StringComparer.Ordinal)
                 || !x.PayoffWhyOpen.SequenceEqual(y.PayoffWhyOpen, StringComparer.Ordinal)
+                || !x.GatesDone.SequenceEqual(y.GatesDone)
                 || !SameIds(x.SeenReady, y.SeenReady)
                 || x.SeenReadyRules != y.SeenReadyRules)
             {

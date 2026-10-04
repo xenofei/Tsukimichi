@@ -62,6 +62,30 @@ public sealed class NewGamePlusSessionTests
     }
 
     [Fact]
+    public void The_session_is_for_the_character_it_was_captured_from_only()
+    {
+        const ulong Alt = 2;
+        var session = new NewGamePlusSession();
+
+        // The HUD runs before any capture names the character: the line waits for one.
+        session.ObserveHud(new NewGamePlusHud(true, Id(Story1), 15));
+        Assert.True(session.Active);
+        Assert.False(session.IsFor(Michiru));
+        Assert.False(session.IsFor(null));
+
+        session.ObserveCapture(Michiru, []);
+        Assert.True(session.IsFor(Michiru));
+
+        // Another (stored) character on view, or none: not theirs.
+        Assert.False(session.IsFor(Alt));
+        Assert.False(session.IsFor(null));
+
+        // No session, no line, even for its character.
+        session.ObserveHud(NewGamePlusHud.Inactive);
+        Assert.False(session.IsFor(Michiru));
+    }
+
+    [Fact]
     public void With_the_HUD_unreadable_the_restored_quests_are_the_evidence()
     {
         var session = new NewGamePlusSession();

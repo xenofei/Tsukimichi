@@ -6,7 +6,10 @@ namespace Tsukimichi.Core.Sources;
 /// <summary>Where a reward of a finished quest is now, as far as the reads tell.</summary>
 public enum RewardWhereabouts : byte
 {
-    /// <summary>The reads cannot tell (another character on view, the game read paused).</summary>
+    /// <summary>
+    /// The reads cannot tell (another character on view, the game read paused, or a place that may hold it not read:
+    /// the saddlebag before it is opened this session, the retainers without Allagan Tools).
+    /// </summary>
     Unknown,
 
     /// <summary>In the inventory or worn: nothing to say.</summary>
@@ -21,15 +24,24 @@ public enum RewardWhereabouts : byte
     /// <summary>With a retainer (Allagan Tools).</summary>
     WithRetainers,
 
-    /// <summary>Nowhere the reads look.</summary>
+    /// <summary>Nowhere the reads look, and every place was read (the saddlebag loaded, the retainers counted).</summary>
     NotHeld,
 }
 
 /// <summary>A reward's state line: its words and whether it is the buy-back line (which wears the gold dot and offers Flag and Teleport).</summary>
 public sealed record RewardStateLine(string Text, BuyBack? BuyBack)
 {
-    /// <summary>Whether the line says where to have it again: the gold dot, Flag and Teleport (spec-1.19 "C6").</summary>
-    public bool IsBuyBack => BuyBack is not null;
+    /// <summary>
+    /// The line names a shop for an item the reads could not place (<see cref="RewardWhereabouts.Unknown"/>): the
+    /// character may still have it, so the shop is a fact, not a call to act.
+    /// </summary>
+    public bool IfGone { get; init; }
+
+    /// <summary>
+    /// Whether the line says where to have it again for an item known to be missing: the gold dot, Flag and Teleport
+    /// (spec-1.19 "C6"). Never for an <see cref="IfGone"/> line.
+    /// </summary>
+    public bool IsBuyBack => BuyBack is not null && !IfGone;
 }
 
 /// <summary>
@@ -87,7 +99,16 @@ public static class RewardStates
         if (buyBack is not null)
         {
             var again = BuyItBack(buyBack);
-            return new RewardStateLine(where == RewardWhereabouts.NotHeld ? Join(CoreText.T("Core.RewardState.NotOnYou", "Not on you"), again) : SourceText.Capitalized(again), buyBack);
+            if (where == RewardWhereabouts.NotHeld)
+            {
+                return new RewardStateLine(Join(CoreText.T("Core.RewardState.NotOnYou", "Not on you"), again), buyBack);
+            }
+
+            // The reads cannot place it: the shop is named, without "Not on you", the gold dot or the actions.
+            var text = buyBack.Kind == BuyBackKind.BuyBack
+                ? Join(CoreText.T("Core.RewardState.IfGone", "If you no longer have it"), again)
+                : SourceText.Capitalized(again);
+            return new RewardStateLine(text, buyBack) { IfGone = true };
         }
 
         return exclusive ? new RewardStateLine(NotOffered(lower: false), null) : null;
@@ -95,8 +116,9 @@ public static class RewardStates
 
     /// <summary>
     /// Where the item is from the logged-in character's count (<see cref="HandIn.HandInCount"/>): on the character, in
-    /// the armoury chest, the saddlebag or with a retainer, or not held; unknown when the game was not read and no
-    /// retainer holds it.
+    /// the armoury chest, the saddlebag or with a retainer, or not held; unknown when the game was not read, or when a
+    /// place that may hold it was not read (the saddlebag before it is opened this session, the retainers without
+    /// Allagan Tools): "not read" is never "not held".
     /// </summary>
     public static RewardWhereabouts WhereaboutsOf(HandIn.HandInCount count)
     {
@@ -121,7 +143,9 @@ public static class RewardStates
             return RewardWhereabouts.WithRetainers;
         }
 
-        return count.OnYou == false ? RewardWhereabouts.NotHeld : RewardWhereabouts.Unknown;
+        return count.OnYou == false && count.Saddlebag is not null && count.Retainers is not null
+            ? RewardWhereabouts.NotHeld
+            : RewardWhereabouts.Unknown;
     }
 
     /// <summary>"reclaim at a recompense officer, 100 gil" (the price only when the shop row has one).</summary>

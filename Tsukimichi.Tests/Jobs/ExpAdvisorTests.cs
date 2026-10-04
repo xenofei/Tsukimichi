@@ -17,7 +17,9 @@ public class ExpAdvisorTests
     private const byte Warrior = 21;
     private const byte WhiteMage = 24;
     private const byte BlueMage = 36;
+    private const byte Culinarian = 15;
     private const uint Tanks = 156;
+    private const uint CulinarianOnly = 24;
 
     /// <summary>Every level's row reads modifier = level and scale = 100, so the formula gives ExpFactor × level.</summary>
     private static readonly QuestExpTable Table = QuestExpTable.From(Enumerable.Range(1, 100).Select(l => (l, (uint)l, 100u)));
@@ -187,5 +189,69 @@ public class ExpAdvisorTests
         Assert.Equal(1, GearsetChoice.Pick(sets, tankQuest, snapshot, Context)?.Id);
         Assert.Equal(2, GearsetChoice.Pick(sets, tankQuest, snapshot, Context, preferredJob: Paladin)?.Id);
         Assert.Null(GearsetChoice.Pick([sets[0]], tankQuest, snapshot, Context));
+    }
+
+    [Fact]
+    public void A_gearset_whose_job_is_under_the_quest_s_level_is_never_picked()
+    {
+        // Review fix: the Warrior set has the higher item level, but Warrior is 30 and the quest is level 50.
+        var snapshot = On(WhiteMage, (WhiteMage, 90), (Warrior, 30), (Paladin, 60));
+        var tankQuest = Side() with { ClassJobCategory = Tanks };
+        GearsetInfo[] sets = [new(0, Warrior, 700, "War"), new(1, Paladin, 600, "Pld")];
+        Assert.Equal(1, GearsetChoice.Pick(sets, tankQuest, snapshot, Context)?.Id);
+        Assert.Null(GearsetChoice.Pick([sets[0]], tankQuest, snapshot, Context));
+
+        // A job whose level the capture does not know is not ruled out.
+        Assert.Equal(0, GearsetChoice.Pick([sets[0]], tankQuest, On(WhiteMage, (WhiteMage, 90)), Context)?.Id);
+    }
+
+    [Fact]
+    public void Switch_gearset_is_only_for_a_quest_pinned_to_one_class_or_job()
+    {
+        // spec-1.19 C8 and decision 6: ClassJobRequired, or a category of one job; a role quest several jobs take is not.
+        var crafting = new EvalContext { ClassJobs = new Jobs((Tanks, [Gladiator, Paladin, Marauder, Warrior]), (CulinarianOnly, [Culinarian])) };
+        Assert.Equal(Paladin, GearsetChoice.PinnedJob(Side() with { ClassJobRequired = Paladin }, crafting));
+        Assert.Equal(Culinarian, GearsetChoice.PinnedJob(Side() with { ClassJobCategory = CulinarianOnly }, crafting));
+        Assert.Null(GearsetChoice.PinnedJob(Side() with { ClassJobCategory = Tanks }, crafting));
+        Assert.Null(GearsetChoice.PinnedJob(Side(), crafting));
+
+        var onHealer = On(WhiteMage, (WhiteMage, 90), (Warrior, 90), (Culinarian, 60));
+        Assert.False(GearsetChoice.Needed(Side() with { ClassJobCategory = Tanks }, onHealer, crafting, QuestState.ReadyOnOtherJob));
+        Assert.True(GearsetChoice.Needed(Side() with { ClassJobCategory = CulinarianOnly }, onHealer, crafting, QuestState.ReadyOnOtherJob));
+    }
+
+    [Fact]
+    public void Switch_gearset_equips_the_first_gearset_of_the_job()
+    {
+        var snapshot = On(Warrior, (Warrior, 90), (Gladiator, 60), (Paladin, 30));
+        var paladinQuest = Side() with { ClassJobRequired = Paladin };
+        GearsetInfo[] sets = [new(4, Paladin, 690, "Pld best"), new(2, Paladin, 600, "Pld old"), new(0, Warrior, 700, "War")];
+
+        // The lowest id of that job, even under the quest's level: the Level requirement says what is missing.
+        Assert.Equal(2, GearsetChoice.First(sets, Paladin, paladinQuest, snapshot, Context)?.Id);
+
+        // No gearset of the job: "No Paladin gearset saved".
+        Assert.Null(GearsetChoice.First([sets[2]], Paladin, paladinQuest, snapshot, Context));
+    }
+
+    [Fact]
+    public void Another_capped_job_that_could_hand_it_in_is_named_best_geared_first()
+    {
+        // spec-1.19 C8: "Hand in on DRG Lv 56: … · your SGE is capped, 0".
+        var snapshot = On(Warrior, (Warrior, 56), (WhiteMage, 100), (Paladin, 100)) with
+        {
+            JobItemLevels = new Dictionary<byte, ushort> { [WhiteMage] = 700, [Paladin] = 710 },
+        };
+        var advice = ExpAdvisor.Advise(Side(), snapshot, Table, Context);
+        Assert.NotNull(advice);
+        Assert.Equal(ExpWarning.None, advice.Warning);
+        Assert.Equal(new JobExp(Paladin, 100, 0), advice.Capped);
+
+        // A capped job that cannot take the quest is never named; nor is any without a known cap.
+        Assert.Null(ExpAdvisor.Advise(Side() with { ClassJobCategory = Tanks }, On(Warrior, (Warrior, 56), (WhiteMage, 100)), Table, Context)?.Capped);
+        Assert.Null(ExpAdvisor.Advise(Side(), snapshot with { LevelCap = 0 }, Table, Context)?.Capped);
+
+        // No capped job: nothing to say.
+        Assert.Null(ExpAdvisor.Advise(Side(), On(Warrior, (Warrior, 56), (WhiteMage, 80)), Table, Context)?.Capped);
     }
 }

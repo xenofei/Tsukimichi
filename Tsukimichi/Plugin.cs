@@ -1363,8 +1363,20 @@ public sealed partial class Plugin : IDalamudPlugin
                 // Zones of a level band are walked region by region (1.6.0), the region read from the giver's map.
                 RegionOfMap = mapId => gameLinks.Map(mapId)?.Region ?? string.Empty,
             };
+            // How you'll clear it (1.19.0, C7): the clear badges My blues, the Route window and the Duty Finder hint wear,
+            // with which duties the story needs from the catch-up's duty source (one instance: its story cache keeps the last).
+            var catchUpDuties = PlanningSource.DutySource(() => Session.Curated, () => moonlit.Catalog, () => dutyRuns.Value);
+            var clearBadges = new ClearBadgeSource(Session, () => dutyRuns.Value, () => moonlit.Catalog, catchUpDuties);
+            routeWindow.Badges = clearBadges;
+            if (dutyFinderHint is { } badgedHint)
+            {
+                badgedHint.Badges = clearBadges;
+            }
+
+            dutyFinderPanel.OpenRouteTarget = ui.OpenRoute;
             mainWindow.AttachPlan(new PlanPane(Session, planSource, gameLinks, Settings, () => Settings.Save(PluginInterface))
             {
+                Badges = clearBadges,
                 RewardEntries = () => moonlit.Catalog.All,
                 Questionable = questionableActions,
                 Textures = TextureProvider,
@@ -1396,7 +1408,6 @@ public sealed partial class Plugin : IDalamudPlugin
             charactersPane.PayoffLines = payoffLines;
             mainWindow.AttachPayoffLines(payoffLines);
             // Planning extras (1.9.0): the level advisor, the main scenario catch-up and the allied society board.
-            var catchUpDuties = PlanningSource.DutySource(() => Session.Curated, () => moonlit.Catalog, () => dutyRuns.Value);
             var planning = new PlanningSource(Session, gameLinks, catchUpDuties);
             charactersPane.Planning = planning;
             // The Duties board (1.19.0, N4): why each roulette is closed, and the duties unlocked but never cleared.

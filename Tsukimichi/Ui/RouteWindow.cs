@@ -44,6 +44,9 @@ public sealed class RouteWindow : Window
     private const double NoteSeconds = 8.0;
     private const float IndentLogical = 22f;
 
+    /// <summary>A step keeps this much text room (logical px) before its clear badges are left out.</summary>
+    private const float BadgeTextMinLogical = 240f;
+
     private static readonly string RouteIcon = FontAwesomeIcon.MapSigns.ToIconString();
 
     /// <summary>The target's own icon before the title, logical px (spec-1.15 B4).</summary>
@@ -119,7 +122,13 @@ public sealed class RouteWindow : Window
     /// <summary>Whether the viewed character has attuned an aether current; null when that cannot be read (a stored alt). Set by the plugin.</summary>
     public Func<uint, bool?>? Attuned { get; set; }
 
+    /// <summary>The C7 clear badges (1.19.0): a step that involves a duty wears them at its trailing end; null wears none. Set by the plugin.</summary>
+    public ClearBadgeSource? Badges { get; set; }
+
     private readonly Dictionary<uint, IReadOnlyList<AetherCurrentPlace>> fieldPlaces = [];
+
+    // The badges' revision the lines were built with.
+    private int builtBadges = -1;
 
     /// <summary>Opens the window on the route to <paramref name="routeTarget"/> and brings it to the front.</summary>
     public void Show(RouteTarget routeTarget)
@@ -704,6 +713,19 @@ public sealed class RouteWindow : Window
             ImGui.SetCursorScreenPos(min);
         }
 
+        // The clear badges (1.19.0, C7) of the duty the step involves, before its buttons, while the step's text keeps
+        // room for its number, moon, level and a readable name; on a narrower window the step goes without them.
+        var badgesLeft = 0f;
+        if (l.Badges.Length > 0)
+        {
+            var run = DutyBadges.RunWidth(l.Badges);
+            if (textEnd - run - UiMetrics.Px(8f) - min.X >= UiMetrics.Px(BadgeTextMinLogical))
+            {
+                badgesLeft = textEnd - run;
+                textEnd = badgesLeft - UiMetrics.Px(8f);
+            }
+        }
+
         var clicked = ImGui.Selectable("##line", false, ImGuiSelectableFlags.None, new Vector2(MathF.Max(1f, textEnd - min.X), rowHeight));
         var hovered = ImGui.IsItemHovered();
         if (stepQuest is not null)
@@ -744,6 +766,11 @@ public sealed class RouteWindow : Window
             {
                 UiMetrics.Tooltip(l.Tooltip, questionableTooltip.Length > 0 ? questionableTooltip + "\n" + hint : hint);
             }
+        }
+
+        if (badgesLeft > 0f)
+        {
+            DutyBadges.DrawRun(l.Badges, badgesLeft, min.Y, rowHeight, badgesLeft + DutyBadges.RunWidth(l.Badges), Plugin.TextureProvider);
         }
     }
 
@@ -875,7 +902,8 @@ public sealed class RouteWindow : Window
     {
         // The ways into interiors becoming known (resolved ahead on a worker) moves givers inside them to their door's aetheryte.
         var entrances = links.EntranceRevision;
-        if (builtVersion == session.Version && ReferenceEquals(builtBundle, bundle) && ReferenceEquals(builtTarget, routeTarget) && builtEntrances == entrances)
+        var badges = Badges?.Revision ?? 0;
+        if (builtVersion == session.Version && ReferenceEquals(builtBundle, bundle) && ReferenceEquals(builtTarget, routeTarget) && builtEntrances == entrances && builtBadges == badges)
         {
             return;
         }
@@ -884,6 +912,7 @@ public sealed class RouteWindow : Window
         builtBundle = bundle;
         builtTarget = routeTarget;
         builtEntrances = entrances;
+        builtBadges = badges;
 
         var catalog = bundle.Catalog;
         var states = session.States;
@@ -931,6 +960,7 @@ public sealed class RouteWindow : Window
         }
 
         var lines = new List<Line>(route.Steps.Count + stops.Count + 8);
+        var clearBadges = Badges;
         RouteMilestone? milestone = null;
         var anyMilestone = route.Summary.Milestones.Count > 0;
         var stopEnd = -1;
@@ -981,6 +1011,7 @@ public sealed class RouteWindow : Window
                 InStop = inStop,
                 Teleport = !inStop,
                 Tooltip = near.Length > 0 ? name + "\n" + step.StatusText + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.RouteNearFormat, near) : name + "\n" + step.StatusText,
+                Badges = quest is not null && clearBadges is not null ? clearBadges.ForQuest(quest, Core.Companions.DutyBadgeSurface.Route) : [],
             });
 
             foreach (var alternative in step.Alternatives)
@@ -1101,6 +1132,9 @@ public sealed class RouteWindow : Window
 
         /// <summary>The step shows its own Teleport (a stop of one step).</summary>
         public bool Teleport { get; init; }
+
+        /// <summary>The C7 clear badges of the duty the step involves (1.19.0); empty for none.</summary>
+        public DutyBadges.Look[] Badges { get; init; } = [];
 
         /// <summary>A field current's place, for its Flag; 0 and null when the game's layout does not place it.</summary>
         public uint FieldTerritory { get; init; }

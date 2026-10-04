@@ -16,6 +16,12 @@ public enum RouletteLock : byte
 
     /// <summary>Duties in the roulette are still locked (<see cref="RouletteLine.Missing"/>).</summary>
     NeedsDuties,
+
+    /// <summary>
+    /// Not known: the stored capture read another duty list (<see cref="DutyBoardModel.Stale"/>) and its records do not
+    /// prove the roulette open. A login on the character reads it again.
+    /// </summary>
+    Unknown,
 }
 
 /// <summary>A duty the board names, with the quests that unlock it (those the character can still do first).</summary>
@@ -28,7 +34,8 @@ public sealed record BoardDuty(DutyRunInfo Duty, IReadOnlyList<QuestRecord> Unlo
 /// <param name="Needed">How many unlocked duties open it (every one, or <see cref="DutyBoard.MinimumUnlocked"/>).</param>
 /// <param name="Missing">
 /// Every duty in the roulette the character has not unlocked, lowest level first, whatever the lock: a closed
-/// roulette's are what opens it, an open one's what is left in it ("open · 1 raid not unlocked").
+/// roulette's are what opens it, an open one's what is left in it ("open · 1 raid not unlocked"). Empty when the capture
+/// read another duty list (<see cref="DutyBoardModel.Stale"/>): a duty it has no record of may simply not have been read.
 /// </param>
 public sealed record RouletteLine(RouletteInfo Roulette, RouletteLock Lock, int Unlocked, int Needed, IReadOnlyList<BoardDuty> Missing)
 {
@@ -51,8 +58,15 @@ public sealed record DutyBoardModel(IReadOnlyList<RouletteLine> Roulettes, IRead
 {
     public static readonly DutyBoardModel Empty = new([], []);
 
-    /// <summary>The roulettes still closed.</summary>
-    public IEnumerable<RouletteLine> Locked => Roulettes.Where(static r => r.Lock != RouletteLock.Open);
+    /// <summary>
+    /// The capture's duty list (<see cref="DutyRecordCapture.Watch"/>) is not the one this index watches: a stored
+    /// character read before the list changed. Its records still prove what is unlocked and cleared, but a duty they
+    /// do not name is unknown, not locked.
+    /// </summary>
+    public bool Stale { get; init; }
+
+    /// <summary>The roulettes known to be closed (a roulette the board cannot read is not counted).</summary>
+    public IEnumerable<RouletteLine> Locked => Roulettes.Where(static r => r.Lock is not (RouletteLock.Open or RouletteLock.Unknown));
 
     /// <summary>The roulettes with something left: closed, or open with duties in them not unlocked.</summary>
     public IEnumerable<RouletteLine> WithSomethingLeft => Roulettes.Where(static r => r.Lock != RouletteLock.Open || r.Missing.Count > 0);
@@ -70,7 +84,8 @@ public sealed record DutyBoardModel(IReadOnlyList<RouletteLine> Roulettes, IRead
 /// sheets, so <see cref="MinimumUnlocked"/> carries the Console Games Wiki's numbers
 /// (https://ffxiv.consolegameswiki.com/wiki/Duty_Roulette): two for Leveling, High-level Dungeons, Guildhests and
 /// Trials, all three for Main Scenario, one for the two raid roulettes. The Mentor roulette is left out: mentor status,
-/// not a duty, opens it.
+/// not a duty, opens it. A roulette's level is the highest of the jobs that enter duties (<see cref="DutyJobs"/>: a
+/// crafter at 100 opens no Level Cap roulette).
 /// </para>
 /// </summary>
 public static class DutyBoard
@@ -133,11 +148,38 @@ public static class DutyBoard
     }
 
     /// <summary>
+    /// What the Duty Finder hint says for the roulette selected there (feature plan v7 N4: "the Duty Finder hint also
+    /// answers when a roulette row is selected"): the board's line for the <c>ContentRoulette</c> row
+    /// <paramref name="rouletteId"/> when it has something left (closed, or open with duties in it not unlocked), as the
+    /// Duties card shows it; null for an open roulette with nothing left, one the board leaves out (Mentor) or an
+    /// unknown id.
+    /// </summary>
+    public static RouletteLine? HintFor(DutyBoardModel board, uint rouletteId)
+    {
+        ArgumentNullException.ThrowIfNull(board);
+        if (rouletteId == 0)
+        {
+            return null;
+        }
+
+        foreach (var line in board.Roulettes)
+        {
+            if (line.Roulette.Id == rouletteId)
+            {
+                return line.Lock != RouletteLock.Open || line.Missing.Count > 0 ? line : null;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// The board for <paramref name="snapshot"/>; <see cref="DutyBoardModel.Empty"/> while the capture holds no duty
     /// records or the index no roulettes.
     /// </summary>
     /// <param name="unlockQuests">The quests that unlock a duty (by ContentFinderCondition id), those the character can still do first; null names none.</param>
-    public static DutyBoardModel Build(DutyRunIndex index, CharacterSnapshot? snapshot, Func<uint, IReadOnlyList<QuestRecord>>? unlockQuests = null)
+    /// <param name="queues">Which jobs enter duties, for the roulette's level (<see cref="DutyJobs.From"/>); null reads <see cref="DutyJobs.ByRowId"/>.</param>
+    public static DutyBoardModel Build(DutyRunIndex index, CharacterSnapshot? snapshot, Func<uint, IReadOnlyList<QuestRecord>>? unlockQuests = null, Func<byte, bool>? queues = null)
     {
         ArgumentNullException.ThrowIfNull(index);
         if (snapshot?.DutyRecords is not { } records || index.Count == 0)
@@ -147,14 +189,11 @@ public static class DutyBoard
 
         var unlocked = new HashSet<uint>(records.Unlocked);
         var cleared = new HashSet<uint>(records.Cleared);
+        var stale = records.Watch != GateItemCapture.Fingerprint(Watched(index));
 
         // A cleared duty is unlocked, whatever the unlock flag said at capture.
         unlocked.UnionWith(cleared);
-        var level = 0;
-        foreach (var jobLevel in snapshot.JobLevels.Values)
-        {
-            level = Math.Max(level, jobLevel);
-        }
+        var level = CombatLevel(snapshot, queues);
 
         var lines = new List<RouletteLine>(index.Roulettes.Count);
         foreach (var roulette in index.Roulettes)
@@ -179,12 +218,14 @@ public static class DutyBoard
             var needed = MinimumUnlocked(roulette, duties.Length);
             var state = snapshot.MaxExpansion != 0 && roulette.RequiredExpansion > snapshot.MaxExpansion ? RouletteLock.NeedsExpansion
                 : level < roulette.RequiredLevel ? RouletteLock.NeedsLevel
-                : have < needed ? RouletteLock.NeedsDuties
-                : RouletteLock.Open;
+                : have >= needed ? RouletteLock.Open
+                : stale ? RouletteLock.Unknown
+                : RouletteLock.NeedsDuties;
             var missing = new List<BoardDuty>();
             foreach (var duty in duties)
             {
-                if (!unlocked.Contains(duty.InstanceContentId))
+                // A capture of another list may not have read this duty: only a fresh one says it is not unlocked.
+                if (!stale && !unlocked.Contains(duty.InstanceContentId))
                 {
                     missing.Add(new BoardDuty(duty, unlockQuests?.Invoke(duty.ContentFinderConditionId) ?? []));
                 }
@@ -208,6 +249,30 @@ public static class DutyBoard
             }
         }
 
-        return new DutyBoardModel(lines, groups);
+        return new DutyBoardModel(lines, groups) { Stale = stale };
     }
+
+    /// <summary>
+    /// The highest level of the character's jobs that enter duties (<paramref name="queues"/>, <see cref="DutyJobs.ByRowId"/>
+    /// when null), with the job; (0, 0) when none is levelled. A roulette's level and its "best is BLM 98" read it.
+    /// </summary>
+    public static (byte Job, int Level) CombatJob(CharacterSnapshot snapshot, Func<byte, bool>? queues = null)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        queues ??= DutyJobs.ByRowId;
+        byte best = 0;
+        var level = 0;
+        foreach (var (job, jobLevel) in snapshot.JobLevels)
+        {
+            if (queues(job) && (jobLevel > level || (jobLevel == level && level > 0 && job < best)))
+            {
+                best = job;
+                level = jobLevel;
+            }
+        }
+
+        return (best, level);
+    }
+
+    private static int CombatLevel(CharacterSnapshot snapshot, Func<byte, bool>? queues) => CombatJob(snapshot, queues).Level;
 }

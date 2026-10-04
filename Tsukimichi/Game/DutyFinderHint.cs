@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Route;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
@@ -25,7 +28,15 @@ namespace Tsukimichi.Game;
 /// (<c>UIState.IsInstanceContentUnlocked</c> of the InstanceContent row the condition links). When the duty is locked and
 /// <see cref="DutyUnlockIndex"/> knows the quests that unlock it, <see cref="Current"/> hands
 /// <see cref="DutyFinderPanel"/> a model to draw: the duty name and, per quest, its state and
-/// <see cref="BlockerText.StatusText"/> for the logged-in character (spoiler-masked like every in-world surface).
+/// <see cref="BlockerText.StatusText"/> for the logged-in character (spoiler-masked like every in-world surface), with
+/// the duty's clear badges (1.19.0, C7: Solo with NPCs, Group of N, High-end, Story-required or Optional).
+/// <para>
+/// A selected roulette (<c>ContentsType.Roulette</c>, a <c>ContentRoulette</c> row) answers too (1.19.0, feature plan v7
+/// N4): when it is closed, or open with duties in it not unlocked, <see cref="CurrentRoulette"/> hands the panel the
+/// Duties card's block for it, built from the logged-in character's duty records (<see cref="DutyBoard.HintFor"/>): its
+/// state ("locked · needs a Lv 100 job · best is BLM 98") and its first duties not unlocked, each with its size badge and
+/// the quest that unlocks it.
+/// </para>
 /// <para>
 /// Selection, not hover: tree-list rows are recycled nodes, so a hovered row cannot be mapped back to a duty reliably
 /// (Dalamud developer review §1 P13). The listeners are registered on <see cref="IAddonLifecycle"/> for
@@ -58,6 +69,8 @@ public sealed unsafe class DutyFinderHint : IDisposable
 
     private static readonly DutyHintQuest[] NoQuests = [];
 
+    private static readonly DutyBadges.Look[] NoBadges = [];
+
     private readonly IAddonLifecycle lifecycle;
     private readonly IGameGui gameGui;
     private readonly IDataManager data;
@@ -80,6 +93,7 @@ public sealed unsafe class DutyFinderHint : IDisposable
     // What the game shows now (framework thread).
     private bool open;
     private uint selected;
+    private uint selectedRoulette;
     private bool locked;
     private long lastPoll;
 
@@ -88,7 +102,15 @@ public sealed unsafe class DutyFinderHint : IDisposable
     private bool modelLocked;
     private int modelVersion = -1;
     private DutyUnlockIndex? modelIndex;
+    private int modelBadges = -1;
     private DutyHintModel? model;
+
+    // What the roulette's model was built from.
+    private uint rouletteModelId;
+    private int rouletteModelVersion = -1;
+    private int rouletteModelBadges = -1;
+    private DutyUnlockIndex? rouletteModelIndex;
+    private RouletteHintModel? rouletteModel;
 
     /// <param name="gate">The shared addon kill switch (T20): while it pauses game hooks the listeners are not registered.</param>
     public DutyFinderHint(IAddonLifecycle lifecycle, IGameGui gameGui, IDataManager data, SessionState session, DutyUnlockIndexSource index, HookGate gate, IPluginLog log)
@@ -128,6 +150,12 @@ public sealed unsafe class DutyFinderHint : IDisposable
     public bool IsActive => registered;
 
     /// <summary>
+    /// The clear badges and the duty index (1.19.0, C7 and N4); null leaves the badges and the roulette answer out. Set by
+    /// the plugin.
+    /// </summary>
+    public ClearBadgeSource? Badges { get; set; }
+
+    /// <summary>
     /// The panel's model for this frame, or null when there is nothing to say: the hint is off or paused, the Duty
     /// Finder is closed, no duty (or a roulette) is selected, the duty is unlocked or its lock cannot be read, or no
     /// quest is known to unlock it. Framework thread; allocation-free unless an input changed.
@@ -140,12 +168,36 @@ public sealed unsafe class DutyFinderHint : IDisposable
         }
 
         var currentIndex = index.Current;
-        if (selected != modelCondition || locked != modelLocked || session.Version != modelVersion || !ReferenceEquals(currentIndex, modelIndex))
+        var badges = Badges?.Revision ?? 0;
+        if (selected != modelCondition || locked != modelLocked || session.Version != modelVersion || !ReferenceEquals(currentIndex, modelIndex) || badges != modelBadges)
         {
-            Rebuild(currentIndex);
+            Rebuild(currentIndex, badges);
         }
 
         return model;
+    }
+
+    /// <summary>
+    /// The panel's model for the selected roulette, or null when there is nothing to say: the hint is off or paused, the
+    /// Duty Finder is closed, no roulette is selected, the duty index or the character's duty records are not read yet,
+    /// or the roulette is open with every duty in it unlocked (Mentor, which mentor status opens, is never answered).
+    /// Framework thread; allocation-free unless an input changed.
+    /// </summary>
+    public RouletteHintModel? CurrentRoulette()
+    {
+        if (!registered || !open || selectedRoulette == 0 || Badges is not { } badges)
+        {
+            return null;
+        }
+
+        var currentIndex = index.Current;
+        var revision = badges.Revision;
+        if (selectedRoulette != rouletteModelId || session.Version != rouletteModelVersion || !ReferenceEquals(currentIndex, rouletteModelIndex) || revision != rouletteModelBadges)
+        {
+            RebuildRoulette(currentIndex, badges, revision);
+        }
+
+        return rouletteModel;
     }
 
     /// <summary>
@@ -281,12 +333,13 @@ public sealed unsafe class DutyFinderHint : IDisposable
     {
         open = false;
         selected = 0;
+        selectedRoulette = 0;
         locked = false;
     }
 
     /// <summary>
-    /// Reads the selected duty and its lock. A roulette or no selection reads as none; a condition that links no
-    /// InstanceContent row, or a read failure (logged once), reads as not locked, so the panel says nothing.
+    /// Reads the selected duty and its lock, or the selected roulette. No selection reads as none; a condition that links
+    /// no InstanceContent row, or a read failure (logged once), reads as not locked, so the panel says nothing.
     /// </summary>
     private void ReadSelection()
     {
@@ -297,28 +350,32 @@ public sealed unsafe class DutyFinderHint : IDisposable
             if (agent == null)
             {
                 selected = 0;
+                selectedRoulette = 0;
                 locked = false;
                 return;
             }
 
             var duty = agent->SelectedDuty;
             selected = duty.ContentType == ContentsType.Regular ? duty.Id : 0;
+            selectedRoulette = duty.ContentType == ContentsType.Roulette ? duty.Id : 0;
             locked = selected != 0 && Duty(selected) is { } info && !UIState.IsInstanceContentUnlocked(info.Instance);
         }
         catch (Exception ex)
         {
             WarnOnce(ex, "Duty Finder selection could not be read; the unlock hint is not shown");
             selected = 0;
+            selectedRoulette = 0;
             locked = false;
         }
     }
 
-    private void Rebuild(DutyUnlockIndex currentIndex)
+    private void Rebuild(DutyUnlockIndex currentIndex, int badgesRevision)
     {
         modelCondition = selected;
         modelLocked = locked;
         modelVersion = session.Version;
         modelIndex = currentIndex;
+        modelBadges = badgesRevision;
         var previous = model;
         model = null;
 
@@ -349,11 +406,77 @@ public sealed unsafe class DutyFinderHint : IDisposable
         var more = resolved.Count > MaxQuests
             ? string.Format(CultureInfo.CurrentCulture, Strings.DutyHintMoreFormat, resolved.Count - MaxQuests)
             : string.Empty;
+        // The duty's clear badges (C7), as "How you'll clear it" shows them; none while the duty index is read.
+        var badges = Badges is { } clear && clear.Index?.ByCondition(selected) is { } info ? clear.For(info, DutyBadgeSurface.DutyFinder) : NoBadges;
+
         // Every poller apply bumps the session version; when the panel's content came out the same, keep the model the
         // panel already has rather than hand it an equal new one.
-        model = previous is not null && SameContent(previous, selected, duty.Name, quests, more)
+        model = previous is not null && SameContent(previous, selected, duty.Name, quests, more) && ReferenceEquals(previous.Badges, badges)
             ? previous
-            : new DutyHintModel(selected, duty.Name, quests.Count == 0 ? NoQuests : quests.ToArray(), more) { AllQuestRowIds = RowIds(resolved), Icon = duty.Icon };
+            : new DutyHintModel(selected, duty.Name, quests.Count == 0 ? NoQuests : quests.ToArray(), more) { AllQuestRowIds = RowIds(resolved), Icon = duty.Icon, Badges = badges };
+    }
+
+    /// <summary>
+    /// The selected roulette's model: the Duties card's block for it (<see cref="DutyBoard.HintFor"/>) for the logged-in
+    /// character, its first <see cref="MaxQuests"/> duties not unlocked with their size badge and unlock quest (names
+    /// through the live spoiler shield; a duty whose every unlock quest the shield hides is "A duty further along the
+    /// story"), and the route over those quests.
+    /// </summary>
+    private void RebuildRoulette(DutyUnlockIndex currentIndex, ClearBadgeSource badges, int revision)
+    {
+        rouletteModelId = selectedRoulette;
+        rouletteModelVersion = session.Version;
+        rouletteModelIndex = currentIndex;
+        rouletteModelBadges = revision;
+        rouletteModel = null;
+        if (badges.Index is not { } runs || session.Bundle is not { } bundle || session.LiveSnapshot is not { } snapshot)
+        {
+            return;
+        }
+
+        var catalog = bundle.Catalog;
+        var states = session.LiveStates;
+        var board = DutyBoard.Build(runs, snapshot, condition => DutyBoardSource.UnlockQuests(currentIndex, condition, catalog, states), bundle.DutyJobs());
+        if (DutyBoard.HintFor(board, selectedRoulette) is not { } line)
+        {
+            return;
+        }
+
+        var spoilers = session.LiveSpoilers;
+        var rows = new List<RouletteHintRow>(Math.Min(MaxQuests, line.Missing.Count));
+        var parts = new List<RouteTarget>();
+        foreach (var missing in line.Missing)
+        {
+            var quest = missing.UnlockQuests.Count > 0 ? missing.UnlockQuests[0] : null;
+            var name = quest is not null && missing.UnlockQuests.All(spoilers.IsMasked)
+                ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, missing.Duty.LevelRequired)
+                : missing.Duty.Name;
+            if (quest is not null)
+            {
+                parts.Add(new RouteTarget(RouteTargetKind.Duty, name, [quest.RowId]));
+            }
+
+            if (rows.Count < MaxQuests)
+            {
+                var size = badges.For(missing.Duty, DutyBadgeSurface.Board);
+                rows.Add(quest is null
+                    ? new RouletteHintRow(name, size, Strings.DutyBoardNoQuest, string.Empty, null)
+                    : new RouletteHintRow(name, size, Strings.DutyBoardWith, spoilers.DisplayName(quest), quest));
+            }
+        }
+
+        var more = line.Missing.Count > MaxQuests
+            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyHintMoreFormat, line.Missing.Count - MaxQuests)
+            : string.Empty;
+        rouletteModel = new RouletteHintModel(
+            line.Roulette.Id,
+            string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardRouletteFormat, line.Roulette.ShortName),
+            DutyBoardSource.State(line, snapshot, bundle),
+            rows,
+            more)
+        {
+            Route = parts.Count == 0 ? null : RouteTarget.Union(RouteTargetKind.Duty, line.Roulette.ShortName, parts),
+        };
     }
 
     private static uint[] RowIds(IReadOnlyList<QuestRecord> quests)
@@ -455,7 +578,30 @@ public sealed record DutyHintModel(uint ContentFinderConditionId, string DutyNam
 
     /// <summary>The duty's icon (<see cref="DutyArt"/>'s chain), drawn before its name; 0 draws none.</summary>
     public uint Icon { get; init; }
+
+    /// <summary>The duty's clear badges (1.19.0, C7), on the line under its name; empty for none.</summary>
+    public IReadOnlyList<DutyBadges.Look> Badges { get; init; } = [];
 }
+
+/// <summary>What the Duty Finder hint shows for a selected roulette (1.19.0, N4); built once per change, drawn every frame.</summary>
+/// <param name="RouletteId">The <c>ContentRoulette</c> row.</param>
+/// <param name="Header">"Level Cap Dungeons roulette".</param>
+/// <param name="State">"locked · needs a Lv 100 job · best is BLM 98", "open · 1 raid not unlocked".</param>
+/// <param name="Rows">Its first duties not unlocked, at most <see cref="DutyFinderHint.MaxQuests"/>.</param>
+/// <param name="MoreText">"and N more" when more duties are left; empty otherwise.</param>
+public sealed record RouletteHintModel(uint RouletteId, string Header, string State, IReadOnlyList<RouletteHintRow> Rows, string MoreText)
+{
+    /// <summary>The route over every quest that unlocks a duty left in it; null when no quest is known.</summary>
+    public RouteTarget? Route { get; init; }
+}
+
+/// <summary>One duty of <see cref="RouletteHintModel"/>, its strings built once.</summary>
+/// <param name="Duty">Its name, or the spoiler shield's stand-in.</param>
+/// <param name="Badges">Its size badge (C7), as the Duties card's rows wear it.</param>
+/// <param name="Trailing">"not unlocked · with ", or "not unlocked · no unlock quest known".</param>
+/// <param name="QuestName">The quest that unlocks it, through the live spoiler shield; empty for none.</param>
+/// <param name="Quest">That quest (for Reveal); null for none.</param>
+public sealed record RouletteHintRow(string Duty, IReadOnlyList<DutyBadges.Look> Badges, string Trailing, string QuestName, QuestRecord? Quest);
 
 /// <summary>One unlocking quest of <see cref="DutyHintModel"/>, its strings built once.</summary>
 /// <param name="Quest">The quest record (for Reveal and Flag giver).</param>

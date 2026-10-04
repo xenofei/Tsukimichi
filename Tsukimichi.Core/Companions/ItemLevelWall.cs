@@ -99,9 +99,12 @@ public sealed record ItemLevelWall(
 
     /// <summary>
     /// The wall for a duty asking <paramref name="required"/>; null when the duty asks none or the capture holds no item
-    /// level (a stored character from an older build, the hooks paused).
+    /// level (a stored character from an older build, the hooks paused). Only jobs that enter duties count
+    /// (<paramref name="queues"/>, <see cref="DutyJobs.ByRowId"/> when null): a crafter's, gatherer's or limited job's
+    /// gearset never passes the wall, names a gearset or stands in for the shared item level. On such a job the wall
+    /// is judged as if on the best geared combat job, which is what the player would switch to.
     /// </summary>
-    public static ItemLevelWall? For(ushort required, CharacterSnapshot? snapshot, ItemLevelRule rule)
+    public static ItemLevelWall? For(ushort required, CharacterSnapshot? snapshot, ItemLevelRule rule, Func<byte, bool>? queues = null)
     {
         ArgumentNullException.ThrowIfNull(rule);
         if (required == 0 || snapshot is null)
@@ -109,22 +112,38 @@ public sealed record ItemLevelWall(
             return null;
         }
 
-        var current = snapshot.ItemLevel;
-        if (current == 0 && snapshot.JobItemLevels.Count == 0)
+        queues ??= DutyJobs.ByRowId;
+        var combat = snapshot.JobItemLevels.Where(kv => queues(kv.Key)).OrderBy(static kv => kv.Key).ToArray();
+        var currentJob = snapshot.CurrentJob;
+        ushort current;
+        if (queues(currentJob))
+        {
+            // The current job's own gear, else its best saved gearset.
+            current = snapshot.ItemLevel != 0 ? snapshot.ItemLevel : snapshot.JobItemLevels.GetValueOrDefault(currentJob);
+        }
+        else
+        {
+            // A crafter or gatherer (or a limited job) never queues: the best geared combat job stands in for it.
+            current = 0;
+            foreach (var (job, level) in combat)
+            {
+                if (level > current)
+                {
+                    currentJob = job;
+                    current = level;
+                }
+            }
+        }
+
+        if (current == 0 && combat.Length == 0)
         {
             return null;
         }
 
-        // The current job's own gear, else its best saved gearset.
-        if (current == 0)
-        {
-            current = snapshot.JobItemLevels.GetValueOrDefault(snapshot.CurrentJob);
-        }
-
-        var bestJob = snapshot.CurrentJob;
+        var bestJob = currentJob;
         var best = current;
         // Strictly higher only, in job order: the current job keeps a tie, and two other jobs tie to the lower id.
-        foreach (var (job, level) in snapshot.JobItemLevels.OrderBy(static kv => kv.Key))
+        foreach (var (job, level) in combat)
         {
             if (level > best)
             {
@@ -133,24 +152,24 @@ public sealed record ItemLevelWall(
             }
         }
 
-        var qualifying = snapshot.JobItemLevels
-            .Where(kv => kv.Key != snapshot.CurrentJob && kv.Value >= required)
+        var qualifying = combat
+            .Where(kv => kv.Key != currentJob && kv.Value >= required)
             .OrderByDescending(static kv => kv.Value)
             .ThenBy(static kv => kv.Key)
             .Select(static kv => (kv.Key, kv.Value))
             .ToArray();
         if (rule.SharedAcrossJobs)
         {
-            return new ItemLevelWall(required, best, ItemLevelBasis.BestJob, snapshot.CurrentJob, current, bestJob, best) { Qualifying = qualifying };
+            return new ItemLevelWall(required, best, ItemLevelBasis.BestJob, currentJob, current, bestJob, best) { Qualifying = qualifying };
         }
 
-        return current == 0 ? null : new ItemLevelWall(required, current, ItemLevelBasis.CurrentJob, snapshot.CurrentJob, current, bestJob, best) { Qualifying = qualifying };
+        return current == 0 ? null : new ItemLevelWall(required, current, ItemLevelBasis.CurrentJob, currentJob, current, bestJob, best) { Qualifying = qualifying };
     }
 
-    /// <inheritdoc cref="For(ushort, CharacterSnapshot?, ItemLevelRule)"/>
-    public static ItemLevelWall? For(DutyRunInfo duty, CharacterSnapshot? snapshot, ItemLevelRule rule)
+    /// <inheritdoc cref="For(ushort, CharacterSnapshot?, ItemLevelRule, Func{byte, bool}?)"/>
+    public static ItemLevelWall? For(DutyRunInfo duty, CharacterSnapshot? snapshot, ItemLevelRule rule, Func<byte, bool>? queues = null)
     {
         ArgumentNullException.ThrowIfNull(duty);
-        return For(duty.ItemLevelRequired, snapshot, rule);
+        return For(duty.ItemLevelRequired, snapshot, rule, queues);
     }
 }

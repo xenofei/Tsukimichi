@@ -48,10 +48,10 @@ public sealed class SeasonalNowTests(FixtureCatalog fixture) : IClassFixture<Fix
         Assert.Equal(new DateTime(2026, 8, 28, 23, 59, 59, DateTimeKind.Utc), moonfire.AnnouncedEndUtc);
         Assert.StartsWith("https://", moonfire.EndEvidence, StringComparison.Ordinal);
 
-        Assert.Equal("Ends Aug 28 (Lodestone)", SeasonalNow.EndsLine(moonfire, named: false, DuringMoonfire));
-        Assert.Equal("Moonfire Faire: ends Aug 28 (Lodestone)", SeasonalNow.EndsLine(moonfire, named: true, DuringMoonfire));
-        Assert.Equal("announced to end Aug 28 (Lodestone)", SeasonalNow.Status(moonfire, DuringMoonfire));
-        Assert.Equal("Moonfire Faire is running: 1 quest ready (ends Aug 28)", SeasonalNow.NoticeText(moonfire, DuringMoonfire));
+        Assert.Equal("Ends Aug 28 (Lodestone)", SeasonalNow.EndsLine(moonfire, named: false, DuringMoonfire, TimeZoneInfo.Utc));
+        Assert.Equal("Moonfire Faire: ends Aug 28 (Lodestone)", SeasonalNow.EndsLine(moonfire, named: true, DuringMoonfire, TimeZoneInfo.Utc));
+        Assert.Equal("announced to end Aug 28 (Lodestone)", SeasonalNow.Status(moonfire, DuringMoonfire, TimeZoneInfo.Utc));
+        Assert.Equal("Moonfire Faire is running: 1 quest ready (ends Aug 28)", SeasonalNow.NoticeText(moonfire, DuringMoonfire, TimeZoneInfo.Utc));
     }
 
     [Fact]
@@ -161,8 +161,12 @@ public sealed class SeasonalNowTests(FixtureCatalog fixture) : IClassFixture<Fix
     [Fact]
     public void Dates_name_the_year_only_when_it_is_not_this_one()
     {
-        Assert.Equal("Aug 28", SeasonalNow.DateText(new DateTime(2026, 8, 28, 23, 59, 59, DateTimeKind.Utc), DuringMoonfire));
-        Assert.Equal("Jan 14, 2027", SeasonalNow.DateText(new DateTime(2027, 1, 14, 23, 59, 59, DateTimeKind.Utc), DuringMoonfire));
+        Assert.Equal("Aug 28", SeasonalNow.DateText(new DateTime(2026, 8, 28, 23, 59, 59, DateTimeKind.Utc), DuringMoonfire, TimeZoneInfo.Utc));
+        Assert.Equal("Jan 14, 2027", SeasonalNow.DateText(new DateTime(2027, 1, 14, 23, 59, 59, DateTimeKind.Utc), DuringMoonfire, TimeZoneInfo.Utc));
+
+        // The year is the player's too: 23:59 UTC on Dec 31 is already next year at UTC+1.
+        var plusOne = TimeZoneInfo.CreateCustomTimeZone("Plus1", TimeSpan.FromHours(1), "Plus1", "Plus1");
+        Assert.Equal("Jan 1, 2027", SeasonalNow.DateText(new DateTime(2026, 12, 31, 23, 59, 0, DateTimeKind.Utc), DuringMoonfire, plusOne));
     }
 
     [Fact]
