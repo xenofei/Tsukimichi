@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Plan;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Game;
@@ -16,7 +18,10 @@ namespace Tsukimichi.Ui;
 /// the curated unlocks, without the user's verdicts, and the ContentFinderCondition kinds warmed at load,
 /// <see cref="IndexWarmer"/>), so opening the Plan tab never builds them on the frame; until they land the previous
 /// catalog's tags serve, or none (<see cref="IsReady"/> says which). The <see cref="UnlockPlan"/> is rebuilt when
-/// <see cref="SessionState.Version"/> changes, which covers new states and a moved spoiler mask. Framework thread only.
+/// <see cref="SessionState.Version"/> changes, which covers new states, a moved spoiler mask and the character's
+/// set-aside quests (P4, <see cref="SessionState.ViewedSetAside"/>), which it keeps out of the entries and counts. Each
+/// quest carries its P4 tier (<see cref="TierOf"/>, <see cref="UnlockTiers.Classify"/>) for the viewed character.
+/// Framework thread only.
 /// </summary>
 public sealed class PlanSource
 {
@@ -33,6 +38,7 @@ public sealed class PlanSource
     private UnlockPlan plan = UnlockPlan.Empty;
     private int planVersion = -1;
     private UnlockTags? planTags;
+    private IReadOnlySet<uint>? planStory;
 
     /// <param name="readDuties">The duty kinds once warmed; null while they build (an empty index when they could not be read).</param>
     public PlanSource(SessionState session, Func<PlanDuties?> readDuties, IPluginLog log)
@@ -47,6 +53,90 @@ public sealed class PlanSource
     /// band region by region (1.6.0); set by the plugin before the plan is first read. Null orders zones by level alone.
     /// </summary>
     public Func<uint, string>? RegionOfMap { get; set; }
+
+    /// <summary>
+    /// The duty data for the side quests the story needs (<see cref="StoryRequirements"/>), which make the P4 tier
+    /// "Story needs it"; set by the plugin. Null knows only the main scenario's previous quests.
+    /// </summary>
+    public Func<CatchUpDutySource?>? StoryDuties { get; set; }
+
+    /// <summary>The side quests the main scenario needs for the loaded catalog (shared with Your story); empty without a catalog.</summary>
+    public IReadOnlySet<uint> StoryRequired =>
+        session.Bundle is { } bundle ? StoryRequirements.For(bundle.Catalog, StoryDuties?.Invoke()).SideQuests : EmptyRows;
+
+    private static readonly IReadOnlySet<uint> EmptyRows = new HashSet<uint>();
+
+    private StoryRequirements? neededByFor;
+    private Dictionary<uint, QuestRecord> neededBy = [];
+
+    /// <summary>The first main scenario quest that needs <paramref name="rowId"/> (Do first's "Good Intentions needs it"); null when none does.</summary>
+    public QuestRecord? StoryQuestNeeding(uint rowId)
+    {
+        if (session.Bundle is not { } bundle)
+        {
+            return null;
+        }
+
+        var requirements = StoryRequirements.For(bundle.Catalog, StoryDuties?.Invoke());
+        if (!ReferenceEquals(requirements, neededByFor))
+        {
+            neededByFor = requirements;
+            neededBy = [];
+            foreach (var requirement in requirements.All)
+            {
+                foreach (var option in requirement.Options)
+                {
+                    foreach (var id in option)
+                    {
+                        neededBy.TryAdd(id, requirement.StoryQuest);
+                    }
+                }
+            }
+        }
+
+        return neededBy.GetValueOrDefault(rowId);
+    }
+
+    /// <summary>
+    /// The P4 tier of a plan quest for the viewed character (the tier word Nearby and the overlay add after the level);
+    /// null for a quest the plan does not list.
+    /// </summary>
+    public UnlockTier? TierOf(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        var current = Tags;
+        return current.Contains(quest.RowId) ? UnlockTiers.Classify(quest, current.For(quest.RowId), TierContext()) : null;
+    }
+
+    // The snapshot, catalog and story requirements the context was built for, compared by reference.
+    private CharacterSnapshot? tierSnapshot;
+    private CatalogBundle? tierBundle;
+    private IReadOnlySet<uint>? tierStory;
+    private UnlockTierContext tierContext = UnlockTierContext.Empty;
+
+    /// <summary>What the tiers know of the viewed character: the story's side quests, the job it plays, its societies.</summary>
+    private UnlockTierContext TierContext()
+    {
+        var bundle = session.Bundle;
+        var snapshot = session.ViewedSnapshot;
+        var story = StoryRequired;
+        if (ReferenceEquals(snapshot, tierSnapshot) && ReferenceEquals(bundle, tierBundle) && ReferenceEquals(story, tierStory) && tierStory is not null)
+        {
+            return tierContext;
+        }
+
+        tierSnapshot = snapshot;
+        tierBundle = bundle;
+        tierStory = story;
+        if (bundle is null || snapshot is null)
+        {
+            tierContext = UnlockTierContext.Empty with { StoryRequired = story };
+            return tierContext;
+        }
+
+        tierContext = UnlockTierContext.For(snapshot.CurrentJob, bundle.JobParents(), bundle.Jobs, snapshot.Tribes, story);
+        return tierContext;
+    }
 
     /// <summary>Bumped whenever <see cref="Plan"/> is rebuilt, so callers can memoize what they derive from it.</summary>
     public int Revision { get; private set; }
@@ -119,11 +209,14 @@ public sealed class PlanSource
         }
 
         Warm();
-        if (planVersion != session.Version || !ReferenceEquals(planTags, tags))
+        var story = StoryRequired;
+        if (planVersion != session.Version || !ReferenceEquals(planTags, tags) || !ReferenceEquals(planStory, story))
         {
             planVersion = session.Version;
             planTags = tags;
-            plan = UnlockPlan.Build(tags, session.States, session.Names, RegionOfMap, session.Spoilers);
+            planStory = story;
+            var context = TierContext();
+            plan = UnlockPlan.Build(tags, session.States, session.Names, RegionOfMap, session.Spoilers, (quest, unlocks) => UnlockTiers.Classify(quest, unlocks, context), session.ViewedSetAside);
             Revision++;
         }
     }

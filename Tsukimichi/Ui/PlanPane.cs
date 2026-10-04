@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -25,13 +26,19 @@ namespace Tsukimichi.Ui;
 /// card can pin its expansion's block to the todo overlay, and send its quests to Questionable's priority list (the
 /// paper-plane button, feature plan v5 1.6.0, <see cref="QuestionableActions"/>).
 /// <para>
+/// 1.21.0 (feature plan v7, spec-1.21): a switch at the top, Clear my blues · Your story (N9, PlanPane.Story.cs); Sort,
+/// Story order · Do first (P4, PlanPane.DoFirst.cs: one card per tier); the tier word as one more chip on each Story
+/// order row; and Set aside (PlanPane.SetAside.cs): a quest set aside, or brought back, keeps its row in place as one
+/// quiet line with Undo until the list is rebuilt (a tab or filter change), and a whole group asks first.
+/// </para>
+/// <para>
 /// Sprout mode is the plan's own switch, turned on whenever the tab opens while the Journal's Sprout mode quick view
 /// is on, so revealing a quest in the Journal (which clears quick views) does not widen the plan. The filtered plan,
 /// the chip counts and the card strings are rebuilt only when the plan's revision or a filter changes; rows outside
 /// the scrolled view draw a spacer only.
 /// </para>
 /// </summary>
-public sealed class PlanPane
+public sealed partial class PlanPane
 {
     private static readonly string FoldedGlyph = Chrome.Icon(FontAwesomeIcon.CaretRight);
     private static readonly string OpenGlyph = Chrome.Icon(FontAwesomeIcon.CaretDown);
@@ -58,7 +65,7 @@ public sealed class PlanPane
     private byte? scrollTo;
 
     // The view built from the plan and the filters.
-    private (int Revision, ushort Kinds, bool Ready, int MaxExpansion) viewKey = (-1, 0, false, -1);
+    private (int Revision, ushort Kinds, bool Ready, int MaxExpansion, bool Aside, int Keep) viewKey = (-1, 0, false, -1, false, -1);
     private UnlockPlan view = UnlockPlan.Empty;
     private readonly int[] kindCounts = new int[UnlockKinds.All.Length];
     private readonly string[] kindLabels = new string[UnlockKinds.All.Length];
@@ -89,6 +96,9 @@ public sealed class PlanPane
     /// <summary>The C7 clear badges (1.19.0): a row whose quest unlocks a duty wears its badges after the kind pills; null wears none.</summary>
     public ClearBadgeSource? Badges { get; init; }
 
+    /// <summary>Set aside, Not for me and Bring back (1.21.0, P4) for the character on view; null offers none.</summary>
+    public SetAsideActions? SetAside { get; init; }
+
     /// <summary>The gap between an icon and the text after it, logical px.</summary>
     private const float IconGapLogical = 5f;
 
@@ -107,28 +117,46 @@ public sealed class PlanPane
         ArgumentNullException.ThrowIfNull(ui);
         using var id = ImRaii.PushId("planLeft");
         Refresh(ui);
+        if (pageView == StoryView)
+        {
+            DrawStoryLeft(ui);
+            return;
+        }
 
         using (Typography.Display())
         {
             ImGui.TextUnformatted(Strings.PlanTitle);
         }
 
-        using (Theme.PushText(Theme.Surface.TextSecondary))
+        DrawSummary();
+
+        // Sort (1.21.0, P4): Story order · Do first, above the filters.
+        ImGui.Spacing();
+        SectionHeading.Draw(Strings.BluesSort);
+        if (Chrome.Segmented("##sort", ref sort, SortLabels.Value, Chrome.SegmentedWidth(SortLabels.Value, ImGui.GetContentRegionAvail().X), SortTooltips.Value))
         {
-            ImGui.TextWrapped(summary);
+            ClearKeep();
         }
 
         ImGui.Spacing();
         SectionHeading.Draw(Strings.PlanShow);
         var first = true;
+        if (FlowChip("##setAside", Strings.BluesSetAsideChip, showSetAside, Strings.BluesSetAsideChipTooltip, ref first, enabled: session.ViewedSnapshot is not null))
+        {
+            showSetAside = !showSetAside;
+            ClearKeep();
+        }
+
         if (FlowChip("##ready", Strings.PlanReadyOnly, readyOnly, Strings.PlanReadyOnlyTooltip, ref first, enabled: session.ViewedSnapshot is not null))
         {
             readyOnly = !readyOnly;
+            ClearKeep();
         }
 
         if (FlowChip("##sprout", Strings.PlanSprout, sprout, Strings.PlanSproutTooltip, ref first))
         {
             sprout = !sprout;
+            ClearKeep();
         }
 
         ImGui.Spacing();
@@ -142,6 +170,7 @@ public sealed class PlanPane
             if (FlowChip(KindChipId(i), kindLabels[i], on, Strings.PlanKindChipTooltip, ref first, icon: icon, iconSlot: iconSlot))
             {
                 // From "all kinds" the first click narrows to that kind; clearing the last kind shows all again.
+                ClearKeep();
                 kinds = kinds == UnlockKinds.AllMask ? bit : (ushort)(kinds ^ bit);
                 if (kinds == 0)
                 {
@@ -154,6 +183,7 @@ public sealed class PlanPane
         // could open or close a row of chips and move the expansions below.
         if (FlowChip("##allKinds", Strings.PlanAllKinds, kinds == UnlockKinds.AllMask, Strings.PlanAllKindsTooltip, ref first))
         {
+            ClearKeep();
             kinds = UnlockKinds.AllMask;
         }
 
@@ -187,8 +217,10 @@ public sealed class PlanPane
             var fit = RowFit.Fit(room - ring, ImGui.CalcTextSize(block.Name).X, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), countPart, countShown);
             if (ImGui.Selectable(text.Label, isOpen, ImGuiSelectableFlags.None, new Vector2(MathF.Max(1f, room), 0f)))
             {
+                // The expansions are Story order's cards: a click from Do first goes back to it.
                 open[block.Expansion] = true;
                 scrollTo = block.Expansion;
+                sort = SortStory;
             }
 
             var hovered = ImGui.IsItemHovered();
@@ -238,6 +270,12 @@ public sealed class PlanPane
         ArgumentNullException.ThrowIfNull(ui);
         using var id = ImRaii.PushId("planMain");
         Refresh(ui);
+        DrawViewSwitch();
+        if (pageView == StoryView)
+        {
+            DrawStoryMain(ui);
+            return;
+        }
 
         // The plan's tags are built off the frame once the catalog lands (feature plan v6 A11).
         if (session.Bundle is null || !source.IsReady)
@@ -303,7 +341,11 @@ public sealed class PlanPane
         {
             // The shared empty state (1.7.0, onboarding proposal 9): a full moon when nothing is left, else a reset.
             ImGui.Spacing();
-            if (source.Plan.IsEmpty && session.ViewedSnapshot is not null)
+            if (showSetAside)
+            {
+                EmptyState.DrawWithAction(Strings.BluesSetAsideEmpty, Strings.BluesSetAsideEmptyBody, null, moon: QuestState.Completed);
+            }
+            else if (source.Plan.IsEmpty && session.ViewedSnapshot is not null)
             {
                 EmptyState.DrawWithAction(Strings.PlanEmptyAllDoneHeading, Strings.PlanEmptyAllDone, null, moon: QuestState.Completed);
             }
@@ -312,6 +354,7 @@ public sealed class PlanPane
                 readyOnly = false;
                 sprout = false;
                 kinds = UnlockKinds.AllMask;
+                ClearKeep();
             }
 
             return;
@@ -324,6 +367,12 @@ public sealed class PlanPane
         }
 
         ui.RecordWindow(UiRects.PlanCards);
+        DrawGroupConfirm();
+        if (sort == SortDoFirst)
+        {
+            DrawDoFirst(ui);
+            return;
+        }
 
         for (var b = 0; b < view.Expansions.Count; b++)
         {
@@ -354,7 +403,7 @@ public sealed class PlanPane
         foreach (var entry in view.Entries)
         {
             // A giver in a place the story has not reached is never the next stop: no Flag leads there (1.20.0 N6).
-            if (entry.IsReady && links.CanFlagMap(entry.Quest) && !links.GiverPlaceHidden(entry.Quest))
+            if (entry.IsReady && !entry.IsSetAside && links.CanFlagMap(entry.Quest) && !links.GiverPlaceHidden(entry.Quest))
             {
                 nextStop = entry.Quest;
                 break;
@@ -364,7 +413,7 @@ public sealed class PlanPane
         return nextStop;
     }
 
-    private ((int Revision, ushort Kinds, bool Ready, int MaxExpansion) View, int Viewed, int Live) nextStopKey = ((-2, 0, false, -1), 0, 0);
+    private ((int Revision, ushort Kinds, bool Ready, int MaxExpansion, bool Aside, int Keep) View, int Viewed, int Live) nextStopKey = ((-2, 0, false, -1, false, -1), 0, 0);
     private QuestRecord? nextStop;
 
     /// <summary>
@@ -497,7 +546,7 @@ public sealed class PlanPane
             {
                 var zone = block.Zones[z];
                 ImGui.Spacing();
-                Chrome.FitText(ZoneLabel(zone), Theme.U32(Theme.Surface.TextTertiary));
+                DrawZoneLabel(zone);
                 if (HiddenZone(zone) is { } hidden)
                 {
                     // A zone the story has not reached: its placeholder's hover and right-click (spec-1.20 N6).
@@ -567,6 +616,15 @@ public sealed class PlanPane
         }
 
         using var id = ImRaii.PushId((int)quest.RowId);
+
+        // Set aside (P4): a quest just set aside (or, in the Set aside view, every row) is one quiet line in the
+        // row's own height, so nothing below it moves.
+        if (showSetAside || entry.IsSetAside)
+        {
+            DrawQuietRow(ui, entry, start, width, height, firstLine);
+            return;
+        }
+
         var gap = UiMetrics.Px(8f);
         var menu = tier == PlanRowTier.TwoLineMenu;
         var moreSize = MathF.Min(UiMetrics.MinTarget, height);
@@ -593,8 +651,8 @@ public sealed class PlanPane
         // The clear badges (1.19.0, C7) of the duty the quest unlocks follow the pills, as one last part: a narrow row
         // drops them before any kind pill.
         Span<UnlockKind> kinds = stackalloc UnlockKind[MaxKinds];
-        Span<float> parts = stackalloc float[MaxKinds + 1];
-        Span<bool> shown = stackalloc bool[MaxKinds + 1];
+        Span<float> parts = stackalloc float[MaxKinds + 2];
+        Span<bool> shown = stackalloc bool[MaxKinds + 2];
         var kindCount = Kinds(entry, tier == PlanRowTier.OneLine || PaneFit.PlanAllKinds(logical) ? MaxKinds : 1, kinds);
         var badges = Badges?.ForQuest(quest, Core.Companions.DutyBadgeSurface.MyBlues);
         var partCount = kindCount;
@@ -606,9 +664,18 @@ public sealed class PlanPane
             }
         }
 
+        // The tier word (1.21.0, P4) is one more chip after the kinds, before the clear badges.
+        var tierLabel = UnlockTiers.Name(entry.Tier);
+        float tierPart;
+        using (Typography.Caption())
+        {
+            tierPart = TierChipSize(tierLabel).X + (kindCount == 0 ? gap : UiMetrics.Px(4f));
+        }
+
+        parts[partCount++] = tierPart;
         if (badges is { Length: > 0 })
         {
-            parts[partCount++] = DutyBadges.RunWidth(badges) + (kindCount == 0 ? gap : DutyBadges.RunGap);
+            parts[partCount++] = DutyBadges.RunWidth(badges) + DutyBadges.RunGap;
         }
 
         float nameRoom, pillEnd, statusX, statusY, statusWidth;
@@ -671,6 +738,7 @@ public sealed class PlanPane
 
                 // "Open on…" (1.8.0): the quest's page on the Lodestone, Garland Tools, the wiki or Teamcraft.
                 links.DrawOpenOnMenu(quest, session.Spoilers.IsMasked(quest), entry.Name);
+                SetAsideMenuItems(entry);
             }
         }
 
@@ -687,16 +755,21 @@ public sealed class PlanPane
             }
         }
 
-        // The badges only after every kind pill, while they fit the pills' room; each explains itself on hover.
+        // The tier chip, then the badges, only after every kind pill and while they fit the pills' room; each explains
+        // itself on hover.
         var kindsWidth = 0f;
         for (var i = 0; i < kindCount; i++)
         {
             kindsWidth += parts[i];
         }
 
-        if (badges is { Length: > 0 } && pillsEnd >= pillX + kindsWidth - 0.5f)
+        if (pillsEnd >= pillX + kindsWidth - 0.5f && pillsEnd + tierPart <= pillEnd + 0.5f)
         {
-            DutyBadges.DrawRun(badges, pillsEnd + (kindCount == 0 ? gap : DutyBadges.RunGap), start.Y, firstLine, pillEnd, Textures);
+            pillsEnd = DrawTierChip(dl, tierLabel, pillsEnd + tierPart, start.Y, firstLine);
+            if (badges is { Length: > 0 })
+            {
+                DutyBadges.DrawRun(badges, pillsEnd + DutyBadges.RunGap, start.Y, firstLine, pillEnd, Textures);
+            }
         }
 
         // Status: the state word never cut, the reason ellipsised, the whole line on hover when cut.
@@ -890,6 +963,7 @@ public sealed class PlanPane
         }
 
         links.DrawOpenOnMenu(quest, session.Spoilers.IsMasked(quest), entry.Name);
+        SetAsideMenuItems(entry);
     }
 
     private static string UnlocksTooltip(PlanEntry entry)
@@ -1077,12 +1151,19 @@ public sealed class PlanPane
                 sprout = true;
             }
 
+            // The tab came back into view: the list is rebuilt, so set-aside rows kept in place go (P4).
+            if (frame != lastDrawFrame + 1)
+            {
+                ClearKeep();
+            }
+
             lastDrawFrame = frame;
         }
 
         if (session.ViewedSnapshot is null)
         {
             readyOnly = false;
+            showSetAside = false;
         }
 
         var plan = source.Plan;
@@ -1095,7 +1176,7 @@ public sealed class PlanPane
             maxExpansion = Math.Min(maxExpansion, FreeTrial.LastExpansion);
         }
 
-        var key = (source.Revision, kinds, readyOnly, (int)maxExpansion);
+        var key = (source.Revision, kinds, readyOnly, (int)maxExpansion, showSetAside, keepVersion);
         if (key == viewKey && trial == viewTrial)
         {
             return;
@@ -1103,9 +1184,14 @@ public sealed class PlanPane
 
         viewKey = key;
         viewTrial = trial;
+        tierLines.Clear();
+
+        // The Set aside filter (P4) lists the quests set aside instead; either view keeps the rows of the other side
+        // that were moved since it was built in place (keepInPlace).
+        var basePlan = showSetAside ? plan.SetAside : plan;
         var reachFilter = new PlanFilter(UnlockKinds.AllMask, readyOnly, sprout || trial ? maxExpansion : null);
-        var reached = plan.Filter(reachFilter);
-        view = reached.Filter(reachFilter with { Kinds = kinds });
+        var reached = basePlan.Filter(reachFilter);
+        view = basePlan.Filter(reachFilter with { Kinds = kinds }, keepInPlace);
 
         Array.Clear(kindCounts);
         foreach (var entry in reached.Entries)
@@ -1146,16 +1232,30 @@ public sealed class PlanPane
         beyondTrialText = beyondTrialQuests > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.PlanBeyondTrialFormat, beyondTrialQuests) : string.Empty;
         summary = session.ViewedSnapshot is null
             ? Strings.PlanSummaryBrowse
-            : string.Format(CultureInfo.CurrentCulture, Strings.PlanSummaryFormat, plan.Count, plan.ReadyCount);
-        showing = string.Format(CultureInfo.CurrentCulture, Strings.PlanShowingFormat, view.Count, plan.Count);
+            : showSetAside
+                ? string.Format(CultureInfo.CurrentCulture, Strings.BluesSetAsideSummaryFormat, plan.SetAsideCount)
+                : string.Format(CultureInfo.CurrentCulture, Strings.BluesSummaryFormat, plan.Count, plan.ReadyCount);
+        setAsideLink = !showSetAside && plan.SetAsideCount > 0
+            ? string.Format(CultureInfo.CurrentCulture, Strings.BluesSetAsideLinkFormat, plan.SetAsideCount)
+            : string.Empty;
+        if (setAsideLink.Length > 0)
+        {
+            summary += Core.Evaluation.BlockerText.Separator.TrimEnd();
+        }
+
+        showing = showSetAside
+            ? string.Format(CultureInfo.CurrentCulture, Strings.PlanShowingFormat, view.Entries.Count(static e => e.IsSetAside), plan.SetAsideCount)
+            : string.Format(CultureInfo.CurrentCulture, Strings.PlanShowingFormat, view.Count, plan.Count);
 
         cardText.Clear();
         foreach (var block in view.Expansions)
         {
+            var count = showSetAside ? block.SetAsideCount : block.Count;
+            var ready = showSetAside ? 0 : block.ReadyCount;
             cardText[block.Expansion] = (
-                string.Format(CultureInfo.CurrentCulture, Strings.PlanCardFormat, block.Name, block.Count),
-                string.Format(CultureInfo.CurrentCulture, Strings.PlanCardReadyFormat, block.ReadyCount),
-                string.Format(CultureInfo.CurrentCulture, Strings.PlanExpansionCountFormat, block.Count, block.ReadyCount),
+                string.Format(CultureInfo.CurrentCulture, Strings.PlanCardFormat, block.Name, count),
+                string.Format(CultureInfo.CurrentCulture, Strings.PlanCardReadyFormat, ready),
+                string.Format(CultureInfo.CurrentCulture, Strings.PlanExpansionCountFormat, count, ready),
                 "##exp" + block.Expansion.ToString(CultureInfo.InvariantCulture));
         }
     }

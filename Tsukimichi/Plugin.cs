@@ -476,6 +476,7 @@ public sealed partial class Plugin : IDalamudPlugin
         CharacterBook.Changed += OnCharacterSettingsChanged;
         Session.SetGateMarks(CharacterBook.GatesDoneByCharacter());
         Session.SetGoWithGame(CharacterBook.GoWithGameByCharacter());
+        Session.SetSetAside(CharacterBook.SetAsideByCharacter());
         Roster = new Game.CharacterRoster(Session, CharacterBook, DataManager, Log);
         // "Don't track this character": nothing of it is written while it is logged in.
         Snapshots.IsTracked = CharacterBook.IsTracked;
@@ -686,6 +687,7 @@ public sealed partial class Plugin : IDalamudPlugin
 
         Session?.SetGateMarks(CharacterBook.GatesDoneByCharacter());
         Session?.SetGoWithGame(CharacterBook.GoWithGameByCharacter());
+        Session?.SetSetAside(CharacterBook.SetAsideByCharacter());
     }
 
     /// <summary>
@@ -1376,6 +1378,9 @@ public sealed partial class Plugin : IDalamudPlugin
             // How you'll clear it (1.19.0, C7): the clear badges My blues, the Route window and the Duty Finder hint wear,
             // with which duties the story needs from the catch-up's duty source (one instance: its story cache keeps the last).
             var catchUpDuties = PlanningSource.DutySource(() => Session.Curated, () => moonlit.Catalog, () => dutyRuns.Value);
+            // My blues tiers (1.21.0, P4): "Story needs it" reads the same story requirements as the catch-up.
+            planSource.StoryDuties = catchUpDuties;
+            discoveryWindow.TierOf = planSource.TierOf;
             var clearBadges = new ClearBadgeSource(Session, () => dutyRuns.Value, () => moonlit.Catalog, catchUpDuties);
             routeWindow.Badges = clearBadges;
             if (dutyFinderHint is { } badgedHint)
@@ -1391,6 +1396,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 Questionable = questionableActions,
                 Textures = TextureProvider,
                 IconSheets = () => warmer.PaneIcons.Value,
+                SetAside = new SetAsideActions(Session, CharacterBook),
             });
             // Panels beside game windows (1.7.0): "Worth it?" on quest offers, "What this opened" on completions and the
             // Journal companion. Their reads take the same kill switch as the Duty Finder hint.

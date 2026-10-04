@@ -29,6 +29,16 @@ public sealed record PlanEntry(QuestRecord Quest, string Name, QuestState State,
 
     /// <summary>Can be started now, on this job or another.</summary>
     public bool IsReady => State is QuestState.Ready or QuestState.ReadyOnOtherJob;
+
+    /// <summary>How soon it is worth doing (feature plan v7 P4, <see cref="UnlockTiers.Classify"/>); Systems when the plan was built without tiers.</summary>
+    public UnlockTier Tier { get; init; } = UnlockTier.Systems;
+
+    /// <summary>
+    /// The player set it aside for this character (P4 "Set aside", <c>user/characters.json</c>): it leaves every count.
+    /// Only a plan's <see cref="UnlockPlan.SetAside"/> lists such entries, and a view that keeps one in place
+    /// (<see cref="UnlockPlan.Filter(PlanFilter, IReadOnlySet{uint})"/>) until it is rebuilt.
+    /// </summary>
+    public bool IsSetAside { get; init; }
 }
 
 /// <summary>The plan quests one zone's givers hand out, in story order.</summary>
@@ -41,11 +51,14 @@ public sealed record PlanZone(uint TerritoryId, uint MapId, IReadOnlyList<PlanEn
 /// <param name="Name">The expansion's name (<see cref="BlockerNames.Expansion"/>).</param>
 public sealed record PlanExpansion(byte Expansion, string Name, IReadOnlyList<PlanZone> Zones)
 {
-    /// <summary>Quests in the expansion.</summary>
-    public int Count { get; } = Zones.Sum(static z => z.Entries.Count);
+    /// <summary>Quests in the expansion; set-aside entries a view keeps in place never count.</summary>
+    public int Count { get; } = Zones.Sum(static z => z.Entries.Count(static e => !e.IsSetAside));
 
-    /// <summary>Quests that can be started now.</summary>
-    public int ReadyCount { get; } = Zones.Sum(static z => z.Entries.Count(static e => e.IsReady));
+    /// <summary>Quests that can be started now (set-aside entries left out).</summary>
+    public int ReadyCount { get; } = Zones.Sum(static z => z.Entries.Count(static e => e.IsReady && !e.IsSetAside));
+
+    /// <summary>Set-aside entries the block lists (the Set aside view's own count).</summary>
+    public int SetAsideCount { get; } = Zones.Sum(static z => z.Entries.Count(static e => e.IsSetAside));
 
     /// <summary>Every entry, zone by zone.</summary>
     public IEnumerable<PlanEntry> Entries => Zones.SelectMany(static z => z.Entries);
@@ -93,20 +106,31 @@ public sealed record PlanFilter(ushort Kinds = UnlockKinds.AllMask, bool ReadyOn
 /// </summary>
 public sealed class UnlockPlan
 {
-    public static readonly UnlockPlan Empty = new([], [], null);
+    public static readonly UnlockPlan Empty = new([], [], null, [], 0, Evaluation.Expansions.Name);
 
     /// <summary>Levels per band within which zones are ordered by region (see the class summary).</summary>
     public const int LevelBand = 10;
 
     private readonly PlanEntry[] entries;
     private readonly Func<uint, string>? regionOf;
+    private readonly Func<byte, string> expansionName;
 
-    private UnlockPlan(PlanEntry[] entries, PlanExpansion[] expansions, Func<uint, string>? regionOf)
+    // The entries of the other side (the set-aside ones for the plan, the active ones for its Set aside view): a view
+    // may keep one of them in place, by id, until it is rebuilt.
+    private readonly PlanEntry[] others;
+    private UnlockPlan? setAsideView;
+    private IReadOnlyList<PlanTierGroup>? tierGroups;
+
+    private UnlockPlan(PlanEntry[] entries, PlanExpansion[] expansions, Func<uint, string>? regionOf, PlanEntry[] others, int setAsideCount, Func<byte, string> expansionName)
     {
         this.entries = entries;
         this.regionOf = regionOf;
+        this.others = others;
+        this.expansionName = expansionName;
         Expansions = expansions;
-        ReadyCount = entries.Count(static e => e.IsReady);
+        Count = entries.Count(static e => !e.IsSetAside);
+        ReadyCount = entries.Count(static e => e.IsReady && !e.IsSetAside);
+        SetAsideCount = setAsideCount;
     }
 
     /// <summary>Expansions with at least one quest, in order.</summary>
@@ -115,12 +139,49 @@ public sealed class UnlockPlan
     /// <summary>Every entry in plan order.</summary>
     public IReadOnlyList<PlanEntry> Entries => entries;
 
-    public int Count => entries.Length;
+    /// <summary>Quests left; a set-aside entry a view keeps in place never counts.</summary>
+    public int Count { get; }
 
-    /// <summary>Entries that can be started now.</summary>
+    /// <summary>Entries that can be started now (set-aside ones never count).</summary>
     public int ReadyCount { get; }
 
+    /// <summary>Quests the player set aside for the character (P4), out of every other count.</summary>
+    public int SetAsideCount { get; }
+
     public bool IsEmpty => entries.Length == 0;
+
+    /// <summary>
+    /// The quests set aside, grouped as the plan is (the Set aside filter's list, with Bring back on each row). Its own
+    /// <see cref="Filter(PlanFilter, IReadOnlySet{uint})"/> can keep a quest just brought back in place. Ask it of the
+    /// plan <see cref="Build"/> returned (or a filter of it), not of a Set aside view.
+    /// </summary>
+    public UnlockPlan SetAside => setAsideView ??= Group(
+        [.. others.Where(static e => e.IsSetAside)],
+        expansionName,
+        regionOf,
+        [.. entries.Where(static e => !e.IsSetAside)],
+        SetAsideCount);
+
+    /// <summary>
+    /// The entries by tier for the Do first sort (P4): one group per tier that has any, in tier order
+    /// (<see cref="UnlockTiers.All"/>), each in plan order.
+    /// </summary>
+    public IReadOnlyList<PlanTierGroup> TierGroups => tierGroups ??= BuildTierGroups(entries);
+
+    private static PlanTierGroup[] BuildTierGroups(PlanEntry[] entries)
+    {
+        var groups = new List<PlanTierGroup>(UnlockTiers.All.Length);
+        foreach (var tier in UnlockTiers.All)
+        {
+            var list = entries.Where(e => e.Tier == tier).ToArray();
+            if (list.Length > 0)
+            {
+                groups.Add(new PlanTierGroup(tier, list));
+            }
+        }
+
+        return [.. groups];
+    }
 
     /// <summary>The expansion's block, or null when the plan has nothing left there.</summary>
     public PlanExpansion? Expansion(byte expansion)
@@ -147,13 +208,23 @@ public sealed class UnlockPlan
     /// The wider spoiler shield (1.20.0 N6): a duty, place or feature the story has not introduced is named by its
     /// placeholder in the pills, tooltips and copies; null names all.
     /// </param>
-    public static UnlockPlan Build(UnlockTags tags, IReadOnlyDictionary<uint, QuestEvaluation> states, BlockerNames names, Func<uint, string>? regionOf = null, Query.SpoilerMask? spoilers = null)
+    /// <param name="tierOf">Each quest's P4 tier (<see cref="UnlockTiers.Classify"/>); null leaves every entry Systems.</param>
+    /// <param name="setAside">The quests the player set aside for the character (P4): kept out of the entries and every count, listed by <see cref="SetAside"/>.</param>
+    public static UnlockPlan Build(
+        UnlockTags tags,
+        IReadOnlyDictionary<uint, QuestEvaluation> states,
+        BlockerNames names,
+        Func<uint, string>? regionOf = null,
+        Query.SpoilerMask? spoilers = null,
+        Func<QuestRecord, IReadOnlyList<PlanUnlock>, UnlockTier>? tierOf = null,
+        IReadOnlySet<uint>? setAside = null)
     {
         ArgumentNullException.ThrowIfNull(tags);
         ArgumentNullException.ThrowIfNull(states);
         ArgumentNullException.ThrowIfNull(names);
 
         var list = new List<PlanEntry>(tags.Count);
+        var aside = new List<PlanEntry>();
         foreach (var quest in tags.Quests)
         {
             states.TryGetValue(quest.RowId, out var evaluation);
@@ -163,10 +234,17 @@ public sealed class UnlockPlan
                 continue;
             }
 
-            list.Add(new PlanEntry(quest, names.QuestName(quest), state, BlockerText.StatusText(evaluation, quest, names, states), Shield(tags.For(quest.RowId), spoilers)));
+            var unlocks = tags.For(quest.RowId);
+            var isAside = setAside?.Contains(quest.RowId) == true;
+            var entry = new PlanEntry(quest, names.QuestName(quest), state, BlockerText.StatusText(evaluation, quest, names, states), Shield(unlocks, spoilers))
+            {
+                Tier = tierOf?.Invoke(quest, unlocks) ?? UnlockTier.Systems,
+                IsSetAside = isAside,
+            };
+            (isAside ? aside : list).Add(entry);
         }
 
-        return Group(list, names.Expansion, regionOf);
+        return Group(list, names.Expansion, regionOf, [.. aside], aside.Count);
     }
 
     /// <summary>
@@ -212,10 +290,20 @@ public sealed class UnlockPlan
     };
 
     /// <summary>The entries <paramref name="filter"/> keeps, regrouped in story order.</summary>
-    public UnlockPlan Filter(PlanFilter filter)
+    public UnlockPlan Filter(PlanFilter filter) => Filter(filter, null);
+
+    /// <summary>
+    /// The entries <paramref name="filter"/> keeps, regrouped in story order, plus the entries of the other side whose
+    /// ids <paramref name="keepInPlace"/> names (P4: a quest just set aside, or just brought back, keeps its row where
+    /// it was until the view is rebuilt). Grouping is by story order alone, so such an entry lands exactly where it
+    /// stood; it never counts (<see cref="PlanEntry.IsSetAside"/> on the plan, the reverse on its Set aside view, whose
+    /// counts are <see cref="PlanExpansion.SetAsideCount"/>).
+    /// </summary>
+    public UnlockPlan Filter(PlanFilter filter, IReadOnlySet<uint>? keepInPlace)
     {
         ArgumentNullException.ThrowIfNull(filter);
-        if (filter == PlanFilter.None)
+        var linger = keepInPlace is { Count: > 0 } && others.Length > 0;
+        if (filter == PlanFilter.None && !linger)
         {
             return this;
         }
@@ -229,25 +317,32 @@ public sealed class UnlockPlan
             }
         }
 
-        if (kept.Count == entries.Length)
+        var added = false;
+        if (linger)
+        {
+            foreach (var entry in others)
+            {
+                if (keepInPlace!.Contains(entry.Quest.RowId) && filter.Keeps(entry))
+                {
+                    kept.Add(entry);
+                    added = true;
+                }
+            }
+        }
+
+        if (kept.Count == entries.Length && !added)
         {
             return this;
         }
 
-        var names = new Dictionary<byte, string>();
-        foreach (var block in Expansions)
-        {
-            names[block.Expansion] = block.Name;
-        }
-
-        return Group(kept, expansion => names.GetValueOrDefault(expansion, Evaluation.Expansions.Name(expansion)), regionOf);
+        return Group(kept, expansionName, regionOf, others, SetAsideCount);
     }
 
-    private static UnlockPlan Group(List<PlanEntry> list, Func<byte, string> expansionName, Func<uint, string>? regionOf)
+    private static UnlockPlan Group(List<PlanEntry> list, Func<byte, string> expansionName, Func<uint, string>? regionOf, PlanEntry[] others, int setAsideCount)
     {
         if (list.Count == 0)
         {
-            return Empty;
+            return others.Length == 0 && setAsideCount == 0 ? Empty : new UnlockPlan([], [], regionOf, others, setAsideCount, expansionName);
         }
 
         var expansions = new List<PlanExpansion>();
@@ -272,7 +367,7 @@ public sealed class UnlockPlan
             expansions.Add(new PlanExpansion(byExpansion.Key, expansionName(byExpansion.Key), zones));
         }
 
-        return new UnlockPlan(ordered.ToArray(), expansions.ToArray(), regionOf);
+        return new UnlockPlan(ordered.ToArray(), expansions.ToArray(), regionOf, others, setAsideCount, expansionName);
     }
 
     /// <summary>
@@ -331,4 +426,14 @@ public sealed class UnlockPlan
 
     private static string RegionOf(PlanEntry[] zone, Func<uint, string> regionOf) =>
         zone[0].Quest.Issuer is { MapId: > 0 } issuer ? regionOf(issuer.MapId) ?? string.Empty : string.Empty;
+}
+
+/// <summary>One P4 tier's entries, in plan order (<see cref="UnlockPlan.TierGroups"/>).</summary>
+public sealed record PlanTierGroup(UnlockTier Tier, IReadOnlyList<PlanEntry> Entries)
+{
+    /// <summary>Quests left in the tier (set-aside entries kept in place never count).</summary>
+    public int Count { get; } = Entries.Count(static e => !e.IsSetAside);
+
+    /// <summary>Quests of the tier that can be started now.</summary>
+    public int ReadyCount { get; } = Entries.Count(static e => e.IsReady && !e.IsSetAside);
 }

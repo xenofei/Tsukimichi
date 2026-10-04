@@ -59,11 +59,12 @@ public static class DutyIndex
         _ => UnlockKind.Other,
     };
 
-    /// <summary>Reads the ContentFinderCondition sheet once; rows without a name are skipped.</summary>
+    /// <summary>Reads the ContentFinderCondition sheet once; rows without a name are skipped. High-end duties are marked (<see cref="PlanDuty.HighEnd"/>).</summary>
     public static PlanDuties Build(ExcelModule excel, Language language = Language.None)
     {
         ArgumentNullException.ThrowIfNull(excel);
         var duties = new List<PlanDuty>();
+        var highEndCategories = DutyRunSheets.HighEndCategories(excel);
         foreach (var row in excel.GetSheet<ContentFinderCondition>(language))
         {
             var name = row.Name.ExtractText().Trim();
@@ -74,7 +75,12 @@ public static class DutyIndex
 
             var partyCount = row.ContentMemberType.ValueNullable?.PartyCount ?? 0;
             var instance = row.ContentLinkType == InstanceContentLink ? row.Content.RowId : 0u;
-            duties.Add(new PlanDuty(row.RowId, instance, KindOf(row.ContentType.RowId, partyCount), name));
+            // High-end as C7's badge reads it (DutyRunSheets): the sheet's flag for the current tier, the Ultimate and
+            // Chaotic content types, and the Duty Finder's "High-end Trials" and "Savage Raids" categories.
+            var highEnd = row.HighEndDuty
+                || row.ContentType.RowId is UltimateRaids or ChaoticAllianceRaid
+                || highEndCategories.Contains(row.ContentUICategory.RowId);
+            duties.Add(new PlanDuty(row.RowId, instance, KindOf(row.ContentType.RowId, partyCount), name, highEnd));
         }
 
         return PlanDuties.From(duties);

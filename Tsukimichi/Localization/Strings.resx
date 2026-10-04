@@ -4866,6 +4866,278 @@
     <value>{0:N0} unlock quests left · {1:N0} ready</value>
     <comment>{0} = quests left, {1} = ready now.</comment>
   </data>
+  <data name="Core.Tier.StoryNeedsIt" xml:space="preserve">
+    <value>Story needs it</value>
+  </data>
+  <data name="Core.Tier.OpensContent" xml:space="preserve">
+    <value>Opens content</value>
+  </data>
+  <data name="Core.Tier.Systems" xml:space="preserve">
+    <value>Systems</value>
+  </data>
+  <data name="Core.Tier.HighEnd" xml:space="preserve">
+    <value>High-end</value>
+  </data>
+  <data name="Core.Tier.AnotherJob" xml:space="preserve">
+    <value>Another job or society</value>
+  </data>
+  <data name="BluesViewClear" xml:space="preserve">
+    <value>Clear my blues</value>
+  </data>
+  <data name="BluesViewStory" xml:space="preserve">
+    <value>Your story</value>
+  </data>
+  <data name="BluesViewClearTooltip" xml:space="preserve">
+    <value>Every unlock quest you have left, to clear.</value>
+  </data>
+  <data name="BluesViewStoryTooltip" xml:space="preserve">
+    <value>The main scenario by patch, each optional line placed at the quest that opens it.</value>
+  </data>
+  <data name="BluesSort" xml:space="preserve">
+    <value>Sort</value>
+  </data>
+  <data name="BluesSortStory" xml:space="preserve">
+    <value>Story order</value>
+  </data>
+  <data name="BluesSortDoFirst" xml:space="preserve">
+    <value>Do first</value>
+  </data>
+  <data name="BluesSortStoryTooltip" xml:space="preserve">
+    <value>By expansion and zone, in story order.</value>
+  </data>
+  <data name="BluesSortDoFirstTooltip" xml:space="preserve">
+    <value>One card per tier: what the story needs first, then content, systems, high-end and other jobs.</value>
+  </data>
+  <data name="BluesTierWhyStory" xml:space="preserve">
+    <value>The main scenario asks for these later. Do them first.</value>
+  </data>
+  <data name="BluesTierWhyContent" xml:space="preserve">
+    <value>Dungeons, trials, raids, areas and flying everyone uses.</value>
+  </data>
+  <data name="BluesTierWhySystems" xml:space="preserve">
+    <value>Glamour, retainers, the Gold Saucer and other game features.</value>
+  </data>
+  <data name="BluesTierWhyHighEnd" xml:space="preserve">
+    <value>Extreme, Savage, Unreal, Ultimate and Chaotic: for when you raid.</value>
+  </data>
+  <data name="BluesTierWhyAnotherJob" xml:space="preserve">
+    <value>For a job, class or allied society you don't play now.</value>
+  </data>
+  <data name="BluesTierTooltip" xml:space="preserve">
+    <value>Story needs it: the main scenario asks for it later.
+Opens content: a dungeon, trial, raid, area or flying, or your job's own quests.
+Systems: a game feature (glamour, retainers, the Gold Saucer).
+High-end: Extreme, Savage, Unreal, Ultimate, Chaotic.
+Another job or society: a job, class or allied society you don't play now.</value>
+  </data>
+  <data name="BluesTierLeftFormat" xml:space="preserve">
+    <value>{0:N0} left</value>
+    <comment>{0} = quests left.</comment>
+  </data>
+  <data name="BluesTierFoldedFormat" xml:space="preserve">
+    <value>{0} · {1:N0} left</value>
+    <comment>{0} = the tier word, {1} = quests left.</comment>
+  </data>
+  <data name="BluesTierFoldedTooltip" xml:space="preserve">
+    <value>Click to open this tier.</value>
+  </data>
+  <data name="BluesMoreFormat" xml:space="preserve">
+    <value>{0:N0} more ›</value>
+    <comment>{0} = rows not shown.</comment>
+  </data>
+  <data name="BluesFewer" xml:space="preserve">
+    <value>Show fewer</value>
+  </data>
+  <data name="BluesTierFold" xml:space="preserve">
+    <value>Fold this tier</value>
+  </data>
+  <data name="BluesNeedsItFormat" xml:space="preserve">
+    <value>{0} needs it</value>
+    <comment>{0} = the main scenario quest that needs it.</comment>
+  </data>
+  <data name="BluesLevelTierFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>{0} = level ("Lv 50"), {1} = the tier word.</comment>
+  </data>
+  <data name="BluesSetAsideForLater" xml:space="preserve">
+    <value>Set aside for later</value>
+  </data>
+  <data name="BluesSetAsideForLaterTooltip" xml:space="preserve">
+    <value>It leaves your counts, Nearby, the overlay and notices. The Set aside filter brings it back.</value>
+  </data>
+  <data name="BluesNotForMe" xml:space="preserve">
+    <value>Not for me</value>
+  </data>
+  <data name="BluesNotForMeTooltip" xml:space="preserve">
+    <value>Set it aside for good. It leaves your counts, Nearby, the overlay and notices; the Set aside filter brings it back.</value>
+  </data>
+  <data name="BluesSetAsideLine" xml:space="preserve">
+    <value>Set aside for later · it leaves your counts</value>
+  </data>
+  <data name="BluesNotForMeLine" xml:space="preserve">
+    <value>Not for me · it leaves your counts</value>
+  </data>
+  <data name="BluesBroughtBackLine" xml:space="preserve">
+    <value>Brought back · it counts again</value>
+  </data>
+  <data name="BluesUndo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="BluesUndoTooltip" xml:space="preserve">
+    <value>Put it back as it was.</value>
+  </data>
+  <data name="BluesBringBack" xml:space="preserve">
+    <value>Bring back</value>
+  </data>
+  <data name="BluesBringBackTooltip" xml:space="preserve">
+    <value>Back into your counts, Nearby, the overlay and notices.</value>
+  </data>
+  <data name="BluesSetAsideChip" xml:space="preserve">
+    <value>Set aside</value>
+  </data>
+  <data name="BluesSetAsideChipTooltip" xml:space="preserve">
+    <value>Show the quests you set aside, with Bring back on each.</value>
+  </data>
+  <data name="BluesSetAsideLinkFormat" xml:space="preserve">
+    <value>{0:N0} set aside ›</value>
+    <comment>{0} = quests set aside.</comment>
+  </data>
+  <data name="BluesSetAsideLinkTooltip" xml:space="preserve">
+    <value>Show the quests you set aside.</value>
+  </data>
+  <data name="BluesSummaryFormat" xml:space="preserve">
+    <value>{0:N0} left · {1:N0} Ready</value>
+    <comment>{0} = quests left, {1} = Ready now.</comment>
+  </data>
+  <data name="BluesSetAsideSummaryFormat" xml:space="preserve">
+    <value>{0:N0} set aside. Bring back puts a quest in your counts again.</value>
+    <comment>{0} = quests set aside.</comment>
+  </data>
+  <data name="BluesSetAsideEmpty" xml:space="preserve">
+    <value>Nothing set aside</value>
+  </data>
+  <data name="BluesSetAsideEmptyBody" xml:space="preserve">
+    <value>Quests you set aside for later, or mark Not for me, are listed here.</value>
+  </data>
+  <data name="BluesSetAsideGroupFormat" xml:space="preserve">
+    <value>Set aside these {0:N0}…</value>
+    <comment>{0} = quests in the group.</comment>
+  </data>
+  <data name="BluesGroupMenuTooltip" xml:space="preserve">
+    <value>More for this group</value>
+  </data>
+  <data name="BluesSetAsideConfirmTitleFormat" xml:space="preserve">
+    <value>Set aside {0:N0} quests?</value>
+    <comment>{0} = quests in the group.</comment>
+  </data>
+  <data name="BluesSetAsideConfirmBodyFormat" xml:space="preserve">
+    <value>The {0} unlocks leave your counts, Nearby, the overlay and notices. The Set aside filter brings them back.</value>
+    <comment>{0} = the group (a zone or a tier).</comment>
+  </data>
+  <data name="BluesSetAsideConfirmButtonFormat" xml:space="preserve">
+    <value>Set aside {0:N0}</value>
+    <comment>{0} = quests in the group.</comment>
+  </data>
+  <data name="BluesSetAsideToastFormat" xml:space="preserve">
+    <value>Set aside for later: {0}</value>
+    <comment>{0} = the quest.</comment>
+  </data>
+  <data name="BluesNotForMeToastFormat" xml:space="preserve">
+    <value>Not for me: {0}</value>
+    <comment>{0} = the quest.</comment>
+  </data>
+  <data name="BluesSetAsideGroupToastFormat" xml:space="preserve">
+    <value>Set aside {0:N0} quests</value>
+    <comment>{0} = quests set aside.</comment>
+  </data>
+  <data name="BluesBroughtBackToastFormat" xml:space="preserve">
+    <value>Brought back: {0}</value>
+    <comment>{0} = the quest.</comment>
+  </data>
+  <data name="StoryTitle" xml:space="preserve">
+    <value>Your story</value>
+  </data>
+  <data name="StoryLoading" xml:space="preserve">
+    <value>Reading your story…</value>
+  </data>
+  <data name="StoryPaceFormat" xml:space="preserve">
+    <value>To the latest story: {0:N0} quests, Lv {1}–{2}. About {3:N0} evenings at your recent pace (estimate).</value>
+    <comment>{0} = main scenario quests left, {1} = lowest level, {2} = highest level, {3} = evenings.</comment>
+  </data>
+  <data name="StoryPaceOneEveningFormat" xml:space="preserve">
+    <value>To the latest story: {0:N0} quests, Lv {1}–{2}. About 1 evening at your recent pace (estimate).</value>
+    <comment>{0} = main scenario quests left, {1} = lowest level, {2} = highest level.</comment>
+  </data>
+  <data name="StoryPaceThinFormat" xml:space="preserve">
+    <value>To the latest story: {0:N0} quests, Lv {1}–{2}. Your pace shows after {3:N0} dated story quests. You have {4:N0}.</value>
+    <comment>{0} = main scenario quests left, {1} = lowest level, {2} = highest level, {3} = dated quests needed, {4} = dated quests.</comment>
+  </data>
+  <data name="StoryPaceNoCharacterFormat" xml:space="preserve">
+    <value>To the latest story: {0:N0} quests, Lv {1}–{2}.</value>
+    <comment>{0} = main scenario quests left, {1} = lowest level, {2} = highest level.</comment>
+  </data>
+  <data name="StoryPaceTooltip" xml:space="preserve">
+    <value>An evening is a day (05:00 to 05:00) on which you finished a main scenario quest. The pace is the median over your last 20 such evenings, from the dates Tsukimichi saw. It is an estimate.</value>
+  </data>
+  <data name="StoryCaughtUp" xml:space="preserve">
+    <value>Caught up. The story continues in a later patch.</value>
+  </data>
+  <data name="StoryBandTitleFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>{0} = band name, {1} = its patch or title.</comment>
+  </data>
+  <data name="StoryBandLeftFormat" xml:space="preserve">
+    <value>{0:N0} left · next: {1}</value>
+    <comment>{0} = main scenario quests left, {1} = the next one.</comment>
+  </data>
+  <data name="StoryBandDone" xml:space="preserve">
+    <value>done</value>
+  </data>
+  <data name="StoryBandDoneLinesFormat" xml:space="preserve">
+    <value>done · {0:N0} optional left</value>
+    <comment>{0} = optional lines with quests left.</comment>
+  </data>
+  <data name="StoryBandDoneTooltip" xml:space="preserve">
+    <value>Click to open or fold this band.</value>
+  </data>
+  <data name="StoryBandPastFormat" xml:space="preserve">
+    <value>{0:N0} main scenario quests · {1:N0} optional lines</value>
+    <comment>{0} = main scenario quests, {1} = optional lines.</comment>
+  </data>
+  <data name="StoryNamesHidden" xml:space="preserve">
+    <value>Names hidden until you get there.</value>
+  </data>
+  <data name="StoryOpensAfterFormat" xml:space="preserve">
+    <value>Opens after {0}</value>
+    <comment>{0} = the main scenario quest.</comment>
+  </data>
+  <data name="StoryOpenFromStart" xml:space="preserve">
+    <value>Open from the start</value>
+  </data>
+  <data name="StoryLineLeftFormat" xml:space="preserve">
+    <value>{0:N0} left · next: {1}</value>
+    <comment>{0} = quests left, {1} = the next one.</comment>
+  </data>
+  <data name="StoryLineInJournalFormat" xml:space="preserve">
+    <value>{0:N0} left · in your journal</value>
+    <comment>{0} = quests left.</comment>
+  </data>
+  <data name="StoryLineDone" xml:space="preserve">
+    <value>done</value>
+  </data>
+  <data name="StoryHiddenLineOne" xml:space="preserve">
+    <value>1 optional line · name hidden</value>
+  </data>
+  <data name="StoryHiddenLinesFormat" xml:space="preserve">
+    <value>{0:N0} optional lines · names hidden</value>
+    <comment>{0} = optional lines.</comment>
+  </data>
+  <data name="StoryCopyTooltip" xml:space="preserve">
+    <value>Copies the page as a plain-text checklist, names hidden the same way.</value>
+  </data>
+  <data name="StoryCopied" xml:space="preserve">
+    <value>Copied the page</value>
+  </data>
   <data name="PlanSummaryBrowse" xml:space="preserve">
     <value>Every unlock quest in the game; pick a character to see what is left.</value>
   </data>

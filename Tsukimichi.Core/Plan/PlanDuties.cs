@@ -11,7 +11,11 @@ namespace Tsukimichi.Core.Plan;
 /// content (deep dungeons, PvP, the Gold Saucer), or <see cref="UnlockKind.Other"/>.
 /// </param>
 /// <param name="Name">The duty's name as the sheet spells it ("the Tam-Tara Deepcroft").</param>
-public sealed record PlanDuty(uint ContentFinderConditionId, uint InstanceContentId, UnlockKind Kind, string Name);
+/// <param name="HighEnd">
+/// High-end content: Extreme, Savage, Unreal, Ultimate and Chaotic (the sheet's <c>HighEndDuty</c>, the Ultimate and
+/// Chaotic content types and the Duty Finder's high-end categories), which the P4 tiers keep apart.
+/// </param>
+public sealed record PlanDuty(uint ContentFinderConditionId, uint InstanceContentId, UnlockKind Kind, string Name, bool HighEnd = false);
 
 /// <summary>
 /// The duties the plan can name, by ContentFinderCondition id, by InstanceContent id and by name. Core cannot read the
