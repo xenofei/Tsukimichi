@@ -149,6 +149,11 @@ static partial class Strings
     public static string GateMarkDoneTooltip => Loc.Get("GateMarkDoneTooltip");
     /// <summary>{0} = the gate.</summary>
     public static string GateMarkedToastFormat => Loc.Get("GateMarkedToastFormat");
+    public static string GateTakeBack => Loc.Get("GateTakeBack");
+    public static string GateTakeBackTooltip => Loc.Get("GateTakeBackTooltip");
+    public static string GateTakeBackMenu => Loc.Get("GateTakeBackMenu");
+    /// <summary>{0} = the gate.</summary>
+    public static string GateTakenBackToastFormat => Loc.Get("GateTakenBackToastFormat");
     public static string GateWhereToStart => Loc.Get("GateWhereToStart");
     /// <summary>{0} = the quest to start with (through the spoiler shield).</summary>
     public static string GateWhereToStartTooltipFormat => Loc.Get("GateWhereToStartTooltipFormat");

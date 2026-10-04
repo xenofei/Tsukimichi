@@ -47,20 +47,21 @@ public sealed partial class DetailPane
     private bool heroJournalFull;
     private string? gameCardWhy;
     private float gameCardHeight;
+    private uint gameCardRow = uint.MaxValue;
     private double gameCardCopiedUntil;
 
     // The session the model was last built from (the plugin keeps one), for the hero's item after the state.
     private SessionState? answersSession;
 
     /// <summary>
-    /// Under the model's status: "journal full" after a Ready quest the full journal keeps out (C9). Called where the
-    /// model is built.
+    /// Under the model's status: "journal full" after a quest the full journal keeps out (C9,
+    /// <see cref="JournalSlots.KeepsOut"/>). Called where the model is built.
     /// </summary>
-    private void ApplyJournalFull(SessionState session, CatalogBundle bundle, QuestEvaluation? evaluation)
+    private void ApplyJournalFull(SessionState session, CatalogBundle bundle, QuestRecord quest, QuestEvaluation? evaluation)
     {
         answersSession = session;
         heroJournalFull = evaluation is not null && session.ViewedSnapshot is { } snapshot
-            && JournalSlots.Of(snapshot, bundle.Catalog).KeepsOut(evaluation.State);
+            && JournalSlots.Of(snapshot, bundle.Catalog).KeepsOut(quest, evaluation.State);
         if (!heroJournalFull)
         {
             return;
@@ -167,7 +168,9 @@ public sealed partial class DetailPane
             DrawMakeRoomLink(min, line, lead, width, textWidth);
         }
 
-        MakeRoom?.DrawPopover(new Vector2(min.X, min.Y + line + UiMetrics.Px(4f)), above: false, ImGui.GetMainViewport().Size.Y);
+        // Up to 70% of the window's height (spec-1.19 "Make room"), as the status bar's: the plugin window the pane is
+        // in, not the game's viewport.
+        MakeRoom?.DrawPopover(new Vector2(min.X, min.Y + line + UiMetrics.Px(4f)), above: false, ImGuiP.GetCurrentWindow().RootWindow.Size.Y);
     }
 
     /// <summary>"◉ Offered by the game · 3 Oct": the quest-marker icon at 12 px and the words in Secondary, at caption size.</summary>
@@ -226,6 +229,13 @@ public sealed partial class DetailPane
         {
             gameCardHeight = 0f;
             return false;
+        }
+
+        // The height is the quest's own: another disagreeing quest's would frame this one's words wrong for a frame.
+        if (gameCardRow != quest.RowId)
+        {
+            gameCardRow = quest.RowId;
+            gameCardHeight = 0f;
         }
 
         Gap();

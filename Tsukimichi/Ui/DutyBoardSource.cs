@@ -242,15 +242,29 @@ public sealed class DutyBoardSource
         _ => 4,
     };
 
+    /// <summary>The duty's name, or the shield's stand-in (<see cref="ShownDutyName"/>).</summary>
+    private string DutyName(BoardDuty duty) => ShownDutyName(duty.Duty, duty.UnlockQuests, session.Spoilers);
+
     /// <summary>
-    /// The duty's name, or the shield's stand-in when every quest that unlocks it is hidden or the story has not
-    /// introduced the duty yet (1.20.0 N6).
+    /// A duty's name through the spoiler shield: the wider shield's placeholder, "Dungeon (Lv 97)", for a duty the
+    /// story has not introduced (1.20.0 N6); "A duty further along the story (Lv 90)" when every quest it is shown
+    /// through is masked (<see cref="Core.Query.SpoilerMask.HidesDuty"/>); else its own name. The one place the
+    /// stand-in is written: the Duties board, the roulette hint and the detail pane's duty sections all name duties
+    /// through it.
     /// </summary>
-    private string DutyName(BoardDuty duty) =>
-        session.Spoilers.IsNameMasked(SpoilerKind.Duty, duty.Duty.Name) ? HiddenOr(duty.Duty)
-        : duty.UnlockQuests.Count > 0 && duty.UnlockQuests.All(session.Spoilers.IsMasked)
-            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.Duty.LevelRequired)
-            : duty.Duty.Name;
+    public static string ShownDutyName(DutyRunInfo duty, IReadOnlyCollection<QuestRecord> quests, Core.Query.SpoilerMask spoilers)
+    {
+        ArgumentNullException.ThrowIfNull(duty);
+        ArgumentNullException.ThrowIfNull(spoilers);
+        if (spoilers.IsNameMasked(SpoilerKind.Duty, duty.Name))
+        {
+            return spoilers.Name(SpoilerKind.Duty, duty.Name);
+        }
+
+        return spoilers.HidesDuty(quests)
+            ? string.Format(CultureInfo.CurrentCulture, Strings.DutyBoardHiddenDutyFormat, duty.LevelRequired)
+            : duty.Name;
+    }
 
     /// <summary>The duty's name, or for one past the story point the wider shield's placeholder, "Dungeon (Lv 97)" (1.20.0 N6).</summary>
     private string HiddenOr(DutyRunInfo duty) => session.Spoilers.Name(SpoilerKind.Duty, duty.Name);

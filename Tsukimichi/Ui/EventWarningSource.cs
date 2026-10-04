@@ -33,7 +33,10 @@ public sealed class EventWarningSource
         this.rewardsMissing = rewardsMissing;
     }
 
-    /// <summary>Moves whenever <see cref="Current"/> was rebuilt.</summary>
+    /// <summary>
+    /// Moves whenever <see cref="Current"/> says something new: another session, setting or language, or warnings that
+    /// differ (<see cref="EventWarnings.SameWarnings"/>). Not every minute: a minute that changes nothing keeps it.
+    /// </summary>
     public int Revision { get; private set; }
 
     /// <summary>The events ending within the window, soonest first; empty when none, or warnings are off.</summary>
@@ -82,23 +85,31 @@ public sealed class EventWarningSource
     {
         var now = DateTime.UtcNow;
         var days = Math.Clamp(warnDays(), 0, EventWarnings.MaxWarnDays);
-        var next = (session.Version, days, now.Ticks / TimeSpan.TicksPerMinute, Localization.Loc.Version);
+        (int Version, int Days, long Minute, int Language) next = (session.Version, days, now.Ticks / TimeSpan.TicksPerMinute, Localization.Loc.Version);
         if (next == key)
         {
             return;
         }
 
+        // Only the minute moved: the same session, setting and language. The warnings are read again (an event may end,
+        // or a day turn), but Revision moves only when they say something else, so a card keyed on it is not rebuilt (and
+        // does not lose its measured frame) every minute.
+        var onlyMinute = (next.Version, next.Days, next.Language) == (key.Version, key.Days, key.Language);
         key = next;
-        chips.Clear();
-        if (days == 0 || session.Bundle is not { } bundle || session.ViewedSnapshot is null || session.States.Count == 0)
+        IReadOnlyList<EndingSoonEvent> built = [];
+        if (days != 0 && session.Bundle is { } bundle && session.ViewedSnapshot is not null && session.States.Count > 0)
         {
-            current = [];
-            Revision++;
+            var running = SeasonalNow.Running(bundle.Catalog, session.ServerFestivals, session.States, session.Curated.Festivals, now, session.EnteredFestivalEnds);
+            built = EventWarnings.EndingSoon(running, now, days, TimeZoneInfo.Local, rewardsMissing);
+        }
+
+        if (onlyMinute && EventWarnings.SameWarnings(current, built))
+        {
             return;
         }
 
-        var running = SeasonalNow.Running(bundle.Catalog, session.ServerFestivals, session.States, session.Curated.Festivals, now, session.EnteredFestivalEnds);
-        current = EventWarnings.EndingSoon(running, now, days, TimeZoneInfo.Local, rewardsMissing);
+        current = built;
+        chips.Clear();
         foreach (var warning in current)
         {
             chips[warning.Festival.FestivalId] = ChipText(warning.DaysLeft);

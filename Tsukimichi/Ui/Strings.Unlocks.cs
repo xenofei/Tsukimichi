@@ -115,6 +115,9 @@ static partial class Strings
     /// <summary>A field current the game's layouts do not place.</summary>
     public static string RouteFieldCurrentUnplaced => Loc.Get("RouteFieldCurrentUnplaced");
 
+    /// <summary>A field current while the game's layouts are still being read for where it stands.</summary>
+    public static string RouteFieldCurrentReading => Loc.Get("RouteFieldCurrentReading");
+
     /// <summary>The mark at a field current's line end.</summary>
     public static string RouteFieldMark => Loc.Get("RouteFieldMark");
 

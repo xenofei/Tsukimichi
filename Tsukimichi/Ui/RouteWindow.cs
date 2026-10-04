@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Route;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
@@ -116,7 +117,10 @@ public sealed class RouteWindow : Window
     /// <summary>The flying zones, for a route to flying (K3); null while they are read. Set by the plugin.</summary>
     public Func<FlightIndex?>? Flight { get; set; }
 
-    /// <summary>Where a flying zone's field currents stand (<see cref="AetherCurrentPlaces"/>), read once per zone. Set by the plugin.</summary>
+    /// <summary>
+    /// Where a flying zone's field currents stand (<see cref="AetherCurrentPlaces"/>), read once per zone on a worker
+    /// (it reads the zone's layout files), never on the draw thread. Set by the plugin.
+    /// </summary>
     public Func<FlightZone, IReadOnlyList<AetherCurrentPlace>>? FieldPlaces { get; set; }
 
     /// <summary>Whether the viewed character has attuned an aether current; null when that cannot be read (a stored alt). Set by the plugin.</summary>
@@ -125,7 +129,11 @@ public sealed class RouteWindow : Window
     /// <summary>The C7 clear badges (1.19.0): a step that involves a duty wears them at its trailing end; null wears none. Set by the plugin.</summary>
     public ClearBadgeSource? Badges { get; set; }
 
-    private readonly Dictionary<uint, IReadOnlyList<AetherCurrentPlace>> fieldPlaces = [];
+    // Each flying zone's field current places, read on a worker the first time a route asks for the zone.
+    private readonly Dictionary<uint, WarmedValue<IReadOnlyList<AetherCurrentPlace>>> fieldPlaces = [];
+
+    // The places the lines were built without (still being read): the route is built again once they land.
+    private WarmedValue<IReadOnlyList<AetherCurrentPlace>>? builtFieldPending;
 
     // The badges' revision the lines were built with.
     private int builtBadges = -1;
@@ -910,7 +918,8 @@ public sealed class RouteWindow : Window
         // The ways into interiors becoming known (resolved ahead on a worker) moves givers inside them to their door's aetheryte.
         var entrances = links.EntranceRevision;
         var badges = Badges?.Revision ?? 0;
-        if (builtVersion == session.Version && ReferenceEquals(builtBundle, bundle) && ReferenceEquals(builtTarget, routeTarget) && builtEntrances == entrances && builtBadges == badges)
+        if (builtVersion == session.Version && ReferenceEquals(builtBundle, bundle) && ReferenceEquals(builtTarget, routeTarget) && builtEntrances == entrances && builtBadges == badges
+            && builtFieldPending is not { IsDone: true })
         {
             return;
         }
@@ -920,6 +929,7 @@ public sealed class RouteWindow : Window
         builtTarget = routeTarget;
         builtEntrances = entrances;
         builtBadges = badges;
+        builtFieldPending = null;
 
         var catalog = bundle.Catalog;
         var states = session.States;
@@ -1067,7 +1077,9 @@ public sealed class RouteWindow : Window
     /// <summary>
     /// The field currents of a route to flying the viewed character has not attuned (a stored alt's are all listed,
     /// since attunement can only be read live), numbered on from the quests; returns how many. Places come from the
-    /// game's layouts, read once per zone; a current no layout places reads "in the field".
+    /// game's layouts, read once per zone on a worker; a current no layout places reads "in the field". While they are
+    /// read, every current left has its line already, unplaced, and the route is built again when they land: the lines
+    /// fill in where they stand, and nothing below them moves.
     /// </summary>
     private int AddFieldLines(RouteTarget routeTarget, int questSteps, List<Line> lines)
     {
@@ -1076,12 +1088,34 @@ public sealed class RouteWindow : Window
             return 0;
         }
 
-        if (!fieldPlaces.TryGetValue(zone.TerritoryId, out var placed))
+        if (!fieldPlaces.TryGetValue(zone.TerritoryId, out var warm))
         {
-            placed = FieldPlaces?.Invoke(zone) ?? [];
-            fieldPlaces[zone.TerritoryId] = placed;
+            var read = FieldPlaces;
+            warm = new WarmedValue<IReadOnlyList<AetherCurrentPlace>>(() => read?.Invoke(zone) ?? []);
+            fieldPlaces[zone.TerritoryId] = warm;
+            _ = warm.Start();
         }
 
+        var attuned = Attuned ?? (static _ => null);
+        Func<uint, bool?> attunedNow = id => session.IsLive ? attuned(id) : null;
+        if (!warm.IsDone)
+        {
+            builtFieldPending = warm;
+            var pending = FieldCurrentStops.Pending(zone.FieldCurrentIds, attunedNow);
+            for (var i = 0; i < pending.Count; i++)
+            {
+                lines.Add(new Line(LineKind.Field, pending[i].AetherCurrentId, QuestState.Unknown, Strings.RouteFieldCurrentReading)
+                {
+                    Number = (questSteps + i + 1).ToString(CultureInfo.CurrentCulture) + ".",
+                    Detail = Strings.RouteFieldMark,
+                    Tooltip = Strings.RouteFieldCurrentReading + "\n" + Strings.RouteFieldTooltip,
+                });
+            }
+
+            return pending.Count;
+        }
+
+        var placed = warm.Value ?? [];
         var placeOf = new Dictionary<uint, AetherCurrentPlace>(placed.Count);
         foreach (var place in placed)
         {
@@ -1095,11 +1129,10 @@ public sealed class RouteWindow : Window
             all.Add(new FieldCurrentStop(id, nearest?.RowId ?? 0, session.Spoilers.Name(Core.Query.SpoilerKind.Aetheryte, nearest?.Name ?? string.Empty)));
         }
 
-        var attuned = Attuned ?? (static _ => null);
-        var left = FieldCurrentStops.Left(all, id => session.IsLive ? attuned(id) : null);
-        for (var i = 0; i < left.Count; i++)
+        var stops = FieldCurrentStops.Left(all, attunedNow);
+        for (var i = 0; i < stops.Count; i++)
         {
-            var stop = left[i];
+            var stop = stops[i];
             var text = stop.AetheryteName.Length > 0
                 ? string.Format(CultureInfo.CurrentCulture, Strings.RouteFieldCurrentFormat, stop.AetheryteName)
                 : Strings.RouteFieldCurrentUnplaced;
@@ -1114,7 +1147,7 @@ public sealed class RouteWindow : Window
             });
         }
 
-        return left.Count;
+        return stops.Count;
     }
 
     private string NameOf(QuestCatalog catalog, uint rowId) =>

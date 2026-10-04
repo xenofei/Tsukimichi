@@ -77,7 +77,7 @@ public static class MakeRoom
         var entries = new List<RoomEntry>(snapshot.Accepted.Count);
         foreach (var entry in snapshot.Accepted)
         {
-            if (catalog.GetByRowId(0x10000u | entry.QuestId) is not { IsAlliedSocietyDaily: false } quest)
+            if (catalog.GetByRowId(0x10000u | entry.QuestId) is not { } quest || !JournalSlots.UsesSlot(quest))
             {
                 continue;
             }

@@ -187,4 +187,19 @@ public class UnlockFindTests
         Assert.Equal(10, FieldCurrentStops.Stops(6, 4));
         Assert.Equal(0, FieldCurrentStops.Stops(-1, 0));
     }
+
+    [Fact]
+    public void Field_currents_read_off_the_frame_reserve_as_many_lines_as_they_fill()
+    {
+        // While the layouts are read on a worker the route lists every current left, unplaced, in sheet order; once they
+        // land the same currents are grouped by aetheryte. The count is the same, so nothing below the lines moves.
+        uint[] ids = [1, 2, 3, 4, 5];
+        Func<uint, bool?> attuned = id => id switch { 2 => true, 5 => null, _ => false };
+        var pending = FieldCurrentStops.Pending(ids, attuned);
+        Assert.Equal([1u, 3u, 4u, 5u], pending.Select(s => s.AetherCurrentId).ToArray());
+        Assert.All(pending, static s => Assert.Equal(0u, s.AetheryteId));
+
+        FieldCurrentStop[] placed = [new(1, 10, "Yedlihmad"), new(2, 20, "The Great Work"), new(3, 0, string.Empty), new(4, 10, "Yedlihmad"), new(5, 20, "The Great Work")];
+        Assert.Equal(FieldCurrentStops.Left(placed, attuned).Count, pending.Count);
+    }
 }

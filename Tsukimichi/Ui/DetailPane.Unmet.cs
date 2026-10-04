@@ -358,7 +358,7 @@ public sealed partial class DetailPane
                 bottom = MathF.Max(bottom, ImGui.GetItemRectMax().Y);
             }
 
-            if (line.CantCheck)
+            if (line.CantCheck || line.MarkedByYou)
             {
                 bottom = DrawGateExtras(line, textLeft, bottom, MathF.Max(1f, right - textLeft));
             }

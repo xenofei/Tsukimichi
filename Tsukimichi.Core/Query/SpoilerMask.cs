@@ -398,6 +398,30 @@ public sealed class SpoilerMask
     public bool IsAhead(uint rowId) =>
         masked.ContainsKey(rowId) || (names.AnchorOf(rowId) is var anchor and not 0 && masked.ContainsKey(anchor));
 
+    /// <summary>
+    /// Whether a duty's name is hidden behind "A duty further along the story": every quest it is shown through (the
+    /// quests that unlock it on the Duties board, the quest on view in the detail pane) is masked. A duty shown through
+    /// no quest keeps its name.
+    /// </summary>
+    public bool HidesDuty(IReadOnlyCollection<QuestRecord> quests)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        if (quests.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (var quest in quests)
+        {
+            if (!masked.ContainsKey(quest.RowId))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /// <summary>The name to print: <see cref="Placeholder"/> for a masked quest, the quest's own name otherwise.</summary>
     public string DisplayName(QuestRecord quest)
     {

@@ -11,10 +11,22 @@ using Xunit.Abstractions;
 namespace Tsukimichi.Tests.Data;
 
 /// <summary>
+/// Tests that measure the process heap (<see cref="GC.GetTotalMemory(bool)"/>) run alone, after the parallel ones:
+/// other tests allocating at the same time would be counted as theirs.
+/// </summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class HeapMeasureCollection
+{
+    public const string Name = "Heap measurements";
+}
+
+/// <summary>
 /// The journal text reader (P9) against the game's quest text sheets. Every assertion is about structure (how many
 /// entries, which step they belong to, that macros resolve, which quests a word finds), never the text itself: the
-/// game's text is never written into the repository.
+/// game's text is never written into the repository. The whole-index test measures the heap, so the class runs in
+/// <see cref="HeapMeasureCollection"/>.
 /// </summary>
+[Collection(HeapMeasureCollection.Name)]
 public sealed class QuestTextTests(GameDataFixture fixture, ITestOutputHelper output) : IClassFixture<GameDataFixture>
 {
     private const uint ComingToGridania = 65575;

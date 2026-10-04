@@ -66,8 +66,17 @@ public sealed partial class TonightCard
         if (eventCardsKey != (source.Revision, Localization.Loc.Version))
         {
             eventCardsKey = (source.Revision, Localization.Loc.Version);
-            eventCards = BuildEventCards(warnings, session);
-            eventCardHeights = new float[eventCards.Length];
+            var built = BuildEventCards(warnings, session);
+            // A card that reads the same keeps its measured height, so its frame is drawn under the words this frame too;
+            // only a new or reworded card spends its first frame outline-only.
+            var heights = new float[built.Length];
+            for (var i = 0; i < built.Length; i++)
+            {
+                heights[i] = i < eventCards.Length && i < eventCardHeights.Length && SameCard(eventCards[i], built[i]) ? eventCardHeights[i] : 0f;
+            }
+
+            eventCards = built;
+            eventCardHeights = heights;
         }
 
         for (var i = 0; i < eventCards.Length; i++)
@@ -77,6 +86,15 @@ public sealed partial class TonightCard
             ImGui.Spacing();
         }
     }
+
+    /// <summary>Two cards draw the same: the same words, icon, Show button and copper bar, so the same height.</summary>
+    private static bool SameCard(EventCardText a, EventCardText b) =>
+        string.Equals(a.Title, b.Title, StringComparison.Ordinal)
+        && string.Equals(a.Why, b.Why, StringComparison.Ordinal)
+        && string.Equals(a.Context, b.Context, StringComparison.Ordinal)
+        && (a.First is null) == (b.First is null)
+        && a.Icon == b.Icon
+        && (a.Warning.InJournal > 0) == (b.Warning.InJournal > 0);
 
     private static EventCardText[] BuildEventCards(IReadOnlyList<EndingSoonEvent> warnings, SessionState session)
     {
