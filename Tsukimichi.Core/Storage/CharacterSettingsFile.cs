@@ -71,6 +71,13 @@ public sealed class CharacterSettings
     [OmitWhenEmpty]
     public List<uint> GoWithGame { get; set; } = [];
 
+    /// <summary>
+    /// Cards the player hid for this character (feature plan v7 1.20.0, N7: <c>Prep.BeforeEvercold.CardId</c>), by id.
+    /// Hiding is per character and undoable; the Characters dashboard can show the card again.
+    /// </summary>
+    [OmitWhenEmpty]
+    public List<string> CardsDismissed { get; set; } = [];
+
     /// <summary>Properties this build does not know (a newer build's), written back unchanged.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; set; }
@@ -79,7 +86,7 @@ public sealed class CharacterSettings
     [JsonIgnore]
     public bool IsEmpty =>
         SpoilerShield is null && !Hidden && !DontTrack && CompareWith is null
-        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && GoWithGame.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
+        && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && GatesDone.Count == 0 && GoWithGame.Count == 0 && CardsDismissed.Count == 0 && SeenReady is null && SeenReadyRules is null && (Extra is null || Extra.Count == 0);
 
     /// <summary>
     /// What outlives Forget character and "Delete all data": the player's choices about the character itself, hidden
@@ -101,6 +108,7 @@ public sealed class CharacterSettings
         PayoffWhyOpen = [.. PayoffWhyOpen],
         GatesDone = [.. GatesDone],
         GoWithGame = [.. GoWithGame],
+        CardsDismissed = [.. CardsDismissed],
         SeenReady = SeenReady is null ? null : [.. SeenReady],
         SeenReadyRules = SeenReadyRules,
         Extra = Extra is null ? null : new Dictionary<string, JsonElement>(Extra, StringComparer.Ordinal),
@@ -113,6 +121,7 @@ public sealed class CharacterSettings
         PayoffWhyOpen ??= [];
         GatesDone ??= [];
         GoWithGame ??= [];
+        CardsDismissed ??= [];
     }
 }
 
@@ -149,6 +158,12 @@ public enum CharacterSettingField
     GoWithGame,
 
     /// <summary>
+    /// Hides (<see cref="CharacterSettingChange.Flag"/> true) or shows again the card <see cref="CharacterSettingChange.Id"/>
+    /// for the character (<see cref="CharacterSettings.CardsDismissed"/>).
+    /// </summary>
+    CardDismissed,
+
+    /// <summary>
     /// Forget character: drops the character's entry except <see cref="CharacterSettings.Hidden"/> and
     /// <see cref="CharacterSettings.DontTrack"/> (<see cref="CharacterSettings.Lasting"/>).
     /// </summary>
@@ -182,6 +197,7 @@ public readonly record struct CharacterSettingChange(ulong ContentId, CharacterS
     public static CharacterSettingChange GateDone(ulong contentId, uint questRowId, bool done) => new(contentId, CharacterSettingField.GateDone, done, RowIds: [questRowId]);
 
     public static CharacterSettingChange GoWithGame(ulong contentId, uint questRowId, bool withGame) => new(contentId, CharacterSettingField.GoWithGame, withGame, RowIds: [questRowId]);
+    public static CharacterSettingChange Dismiss(ulong contentId, string cardId, bool dismissed) => new(contentId, CharacterSettingField.CardDismissed, dismissed, Id: cardId);
 
     public static CharacterSettingChange Forget(ulong contentId) => new(contentId, CharacterSettingField.Forget);
 }
@@ -292,6 +308,17 @@ public static class CharacterSettingsFile
                     else if (change.Id is not null)
                     {
                         entry.PayoffWhyOpen.Remove(change.Id);
+                    }
+
+                    break;
+                case CharacterSettingField.CardDismissed:
+                    if (change.Flag == true)
+                    {
+                        AddId(entry.CardsDismissed, change.Id);
+                    }
+                    else if (change.Id is not null)
+                    {
+                        entry.CardsDismissed.Remove(change.Id);
                     }
 
                     break;

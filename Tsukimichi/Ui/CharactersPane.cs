@@ -506,6 +506,7 @@ public sealed partial class CharactersPane
         Gap();
         DrawPinned(ui, d);
         Gap();
+        DrawBeforeEvercold(ui);
         DrawJournalRoom();
         Gap();
         DrawAbandoned(ui);
