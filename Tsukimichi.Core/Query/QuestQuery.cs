@@ -780,6 +780,7 @@ public static class QuestQuery
                 && acceptedUtc <= stalledBeforeUtc,
             Preset.Sprout => quest.Expansion <= reachExpansion,
             Preset.StorySidequests => ctx.Stories is { } stories && stories.Contains(quest.RowId),
+            Preset.WithStoryCharacters => ctx.Cast is { } cast && cast.HasCast(quest.RowId) && !FeaturePresets.IsMainScenario(quest),
             _ => true,
         };
 

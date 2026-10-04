@@ -605,6 +605,15 @@ public sealed class SpoilerMask
     public bool IsMasked(uint rowId) => masked.ContainsKey(rowId);
 
     /// <summary>
+    /// Whether a quest of any kind lies past the story point (plan v7, 1.21.0 P5, N8): it is a masked main scenario
+    /// quest, or, with the wider shield on, its story anchor (<see cref="SpoilerNames.AnchorOf"/>: the latest main
+    /// scenario quest it needs) is. A side story or a job quest past the point names neither itself nor its zone.
+    /// Allocates nothing.
+    /// </summary>
+    public bool IsAhead(uint rowId) =>
+        masked.ContainsKey(rowId) || (names.AnchorOf(rowId) is var anchor and not 0 && masked.ContainsKey(anchor));
+
+    /// <summary>
     /// Whether a duty's name is hidden behind "A duty further along the story": every quest it is shown through (the
     /// quests that unlock it on the Duties board, the quest on view in the detail pane) is masked. A duty shown through
     /// no quest keeps its name.

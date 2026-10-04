@@ -71,8 +71,26 @@ public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, b
 /// </summary>
 public sealed record FestivalRun(DateTime Start, DateTime End, string Evidence);
 
-/// <summary>A named quest chain assembled from journal genres in the listed order, from <c>curated/chains.json</c>.</summary>
-public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, string? Note);
+/// <summary>
+/// A named quest chain from <c>curated/chains.json</c>, in one of three forms: journal genres concatenated in the listed
+/// order (<see cref="GenreIds"/>), a list of quests (<see cref="QuestIds"/>), or a first quest the line grows from
+/// (<see cref="StartQuest"/>: it and every side quest of its journal section that requires a quest of the line, so a
+/// later patch's chapter joins it by itself). Exactly one form is set.
+/// </summary>
+public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, string? Note)
+{
+    /// <summary>Quest row ids in play order (feature plan v7 P5); empty unless the chain is listed by quest.</summary>
+    public IReadOnlyList<uint> QuestIds { get; init; } = [];
+
+    /// <summary>The quest a line grows from (feature plan v7 P5); 0 unless the chain is given by its first quest.</summary>
+    public uint StartQuest { get; init; }
+
+    /// <summary>
+    /// A series the game still adds to patch by patch (Hildibrand, Cosmic Exploration, the Occult Crescent): with every
+    /// released quest done it reads "Caught up · continues in a later patch" rather than finished (feature plan v7 P5).
+    /// </summary>
+    public bool Ongoing { get; init; }
+}
 
 /// <summary>
 /// A quest reward that the FFXIV Online Store also sells, from <c>curated/online_store.json</c>. The file is keyed by
@@ -307,6 +325,7 @@ public sealed class CuratedData
     public const string GiverPortraitsFileName = "giver_portraits.json";
     public const string StoryRequiredFileName = "story_required.json";
     public const string ExpansionLaunchesFileName = "expansion_launches.json";
+    public const string StoryCastFileName = "story_cast.json";
 
     /// <summary>The sources an <see cref="ExtraPrerequisitesFileName"/> entry may cite; each entry needs two of them.</summary>
     public static readonly IReadOnlyList<string> ExtraPrerequisiteSources = [GameTextSource, QuestionableSource, WikiSource];
@@ -440,6 +459,12 @@ public sealed class CuratedData
     public IReadOnlyDictionary<uint, StoryRequiredEntry> StoryRequired { get; private init; } = new Dictionary<uint, StoryRequiredEntry>();
 
     /// <summary>
+    /// The story cast overlay (feature plan v7 N10, <c>story_cast.json</c>): names joined under one character and names
+    /// kept out, which <c>QuestCastReader</c> applies when it builds the <see cref="global::Tsukimichi.Core.Chains.StoryCast"/>.
+    /// </summary>
+    public global::Tsukimichi.Core.Chains.StoryCastCuration StoryCast { get; private init; } = global::Tsukimichi.Core.Chains.StoryCastCuration.Empty;
+
+    /// <summary>
     /// The giver portrait overlay (feature plan v7 F3): crops, names for unnamed faces, aliases, blocked matches and
     /// pins, which <c>GiverPortraitSources</c> applies when it builds the <see cref="Portraits.PortraitIndex"/>.
     /// </summary>
@@ -473,7 +498,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks, GiverPortraits = GiverPortraits, StoryRequired = StoryRequired, ExpansionLaunches = ExpansionLaunches };
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates, AetheryteUnlocks = AetheryteUnlocks, GiverPortraits = GiverPortraits, StoryRequired = StoryRequired, ExpansionLaunches = ExpansionLaunches, StoryCast = StoryCast };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -812,6 +837,7 @@ public sealed class CuratedData
         var giverPortraits = Portraits.PortraitCuration.Load(Path.Combine(dir, GiverPortraitsFileName), warnings);
         var storyRequired = LoadStoryRequired(Path.Combine(dir, StoryRequiredFileName), warnings);
         var expansionLaunches = LoadExpansionLaunches(Path.Combine(dir, ExpansionLaunchesFileName), warnings);
+        var storyCast = LoadStoryCast(Path.Combine(dir, StoryCastFileName), warnings);
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
@@ -825,6 +851,7 @@ public sealed class CuratedData
             GiverPortraits = giverPortraits,
             StoryRequired = storyRequired,
             ExpansionLaunches = expansionLaunches,
+            StoryCast = storyCast,
         };
     }
 
@@ -886,6 +913,70 @@ public sealed class CuratedData
         });
 
         return entries;
+    }
+
+    /// <summary>
+    /// story_cast.json: an object with <c>aliases</c> (a name as the game writes it to an object with the character's
+    /// <c>name</c> and a <c>note</c>) and <c>blocks</c> (a name to an object with a <c>note</c>). An entry without its note
+    /// or name is skipped with a warning; an alias onto itself or onto another alias is skipped too.
+    /// </summary>
+    private static global::Tsukimichi.Core.Chains.StoryCastCuration LoadStoryCast(string path, List<string> warnings)
+    {
+        if (ParseRoot(path, warnings) is not JsonObject root)
+        {
+            return global::Tsukimichi.Core.Chains.StoryCastCuration.Empty;
+        }
+
+        var fileName = Path.GetFileName(path);
+        var aliases = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (root["aliases"] is JsonObject aliasNode)
+        {
+            foreach (var (name, value) in aliasNode)
+            {
+                if (IsCommentKey(name))
+                {
+                    continue;
+                }
+
+                if (value is not JsonObject entry
+                    || StorageJson.ReadString(entry, "name") is not { Length: > 0 } target
+                    || string.IsNullOrWhiteSpace(StorageJson.ReadString(entry, "note")))
+                {
+                    warnings.Add($"{fileName}: alias \"{name}\" skipped: it needs a name and a note");
+                    continue;
+                }
+
+                if (string.Equals(name, target, StringComparison.Ordinal) || aliasNode.ContainsKey(target))
+                {
+                    warnings.Add($"{fileName}: alias \"{name}\" skipped: it must join onto a character's own name");
+                    continue;
+                }
+
+                aliases[name] = target;
+            }
+        }
+
+        var blocks = new HashSet<string>(StringComparer.Ordinal);
+        if (root["blocks"] is JsonObject blockNode)
+        {
+            foreach (var (name, value) in blockNode)
+            {
+                if (IsCommentKey(name))
+                {
+                    continue;
+                }
+
+                if (value is not JsonObject entry || string.IsNullOrWhiteSpace(StorageJson.ReadString(entry, "note")))
+                {
+                    warnings.Add($"{fileName}: block \"{name}\" skipped: it needs a note");
+                    continue;
+                }
+
+                blocks.Add(name);
+            }
+        }
+
+        return new global::Tsukimichi.Core.Chains.StoryCastCuration(aliases, blocks);
     }
 
     /// <summary>
@@ -1807,26 +1898,50 @@ public sealed class CuratedData
                 continue;
             }
 
-            if (!chain.TryGetPropertyValue("genreIds", out var idsNode) || idsNode is not JsonArray ids)
+            var hasGenres = chain.ContainsKey("genreIds");
+            var hasQuests = chain.ContainsKey("questIds");
+            var hasStart = chain.ContainsKey("startQuest");
+            if ((hasGenres ? 1 : 0) + (hasQuests ? 1 : 0) + (hasStart ? 1 : 0) != 1)
             {
-                warnings.Add(label + "genreIds is not an array");
+                warnings.Add(label + "needs exactly one of genreIds, questIds and startQuest");
                 continue;
             }
 
-            var genreIds = new List<uint>(ids.Count);
+            var ongoing = chain.TryGetPropertyValue("ongoing", out var ongoingNode) && ongoingNode is JsonValue flag && flag.TryGetValue<bool>(out var isOngoing) && isOngoing;
+            var note = StorageJson.ReadString(chain, "note");
+            if (hasStart)
+            {
+                if (!StorageJson.TryReadId(chain["startQuest"], out var start) || start == 0)
+                {
+                    warnings.Add(label + "startQuest is not a quest row id");
+                    continue;
+                }
+
+                chains.Add(new CuratedChain(name.Trim(), [], note) { StartQuest = start, Ongoing = ongoing });
+                continue;
+            }
+
+            var key = hasGenres ? "genreIds" : "questIds";
+            if (chain[key] is not JsonArray ids)
+            {
+                warnings.Add(label + key + " is not an array");
+                continue;
+            }
+
+            var listed = new List<uint>(ids.Count);
             var valid = true;
             foreach (var element in ids)
             {
-                if (!StorageJson.TryReadId(element, out var genreId) || genreId == 0)
+                if (!StorageJson.TryReadId(element, out var id) || id == 0)
                 {
-                    warnings.Add(label + $"genre id '{element}' is not a positive integer");
+                    warnings.Add(label + $"{(hasGenres ? "genre" : "quest")} id '{element}' is not a positive integer");
                     valid = false;
                     break;
                 }
 
-                if (!genreIds.Contains(genreId))
+                if (!listed.Contains(id))
                 {
-                    genreIds.Add(genreId);
+                    listed.Add(id);
                 }
             }
 
@@ -1835,13 +1950,15 @@ public sealed class CuratedData
                 continue;
             }
 
-            if (genreIds.Count == 0)
+            if (listed.Count == 0)
             {
-                warnings.Add(label + "genreIds is empty");
+                warnings.Add(label + key + " is empty");
                 continue;
             }
 
-            chains.Add(new CuratedChain(name.Trim(), genreIds, StorageJson.ReadString(chain, "note")));
+            chains.Add(hasGenres
+                ? new CuratedChain(name.Trim(), listed, note) { Ongoing = ongoing }
+                : new CuratedChain(name.Trim(), [], note) { QuestIds = listed, Ongoing = ongoing });
         }
     }
 

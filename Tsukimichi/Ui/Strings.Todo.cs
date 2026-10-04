@@ -56,6 +56,7 @@ static partial class Strings
         TodoSection.Route => RouteWindowTitle,
         TodoSection.NextStops => TodoSectionNextStops,
         TodoSection.TurnIn => TodoSectionTurnIn,
+        TodoSection.LooseEnds => LooseEndsSection,
         _ => section.ToString(),
     };
 

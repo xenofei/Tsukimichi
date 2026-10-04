@@ -1375,6 +1375,173 @@
     <value>Not started ({0})###notStartedChains</value>
     <comment>{0} = number of chains with nothing done yet.</comment>
   </data>
+  <data name="StoriesSection" xml:space="preserve">
+    <value>Side stories</value>
+    <comment>1.21.0 P5: the Characters dashboard card of named side stories.</comment>
+  </data>
+  <data name="StoriesNone" xml:space="preserve">
+    <value>No side stories to show yet.</value>
+  </data>
+  <data name="StoriesToGoOne" xml:space="preserve">
+    <value>1 line to go</value>
+  </data>
+  <data name="StoriesToGoFormat" xml:space="preserve">
+    <value>{0} lines to go</value>
+    <comment>{0} = side stories with something left.</comment>
+  </data>
+  <data name="StoriesDoneOne" xml:space="preserve">
+    <value>1 line done ›</value>
+  </data>
+  <data name="StoriesDoneFormat" xml:space="preserve">
+    <value>{0} lines done ›</value>
+    <comment>{0} = finished side stories, folded under this link.</comment>
+  </data>
+  <data name="StoriesDoneHide" xml:space="preserve">
+    <value>Hide finished lines</value>
+  </data>
+  <data name="StoriesFinished" xml:space="preserve">
+    <value>done</value>
+    <comment>Line 2 of a finished side story.</comment>
+  </data>
+  <data name="StoriesCaughtUp" xml:space="preserve">
+    <value>Caught up</value>
+    <comment>An ongoing series with every released quest done; drawn in silver, semibold.</comment>
+  </data>
+  <data name="StoriesContinues" xml:space="preserve">
+    <value> · continues in a later patch</value>
+    <comment>Follows "Caught up" on the same line; keep the leading space.</comment>
+  </data>
+  <data name="StoriesCaughtUpLine" xml:space="preserve">
+    <value>Caught up · continues in a later patch</value>
+    <comment>The detail pane's chain line for an ongoing series done so far.</comment>
+  </data>
+  <data name="StoriesAhead" xml:space="preserve">
+    <value>A side story ahead</value>
+    <comment>A side story past the story point, named by the spoiler shield.</comment>
+  </data>
+  <data name="StoriesAheadExpansion" xml:space="preserve">
+    <value>opens in a later expansion · name hidden</value>
+  </data>
+  <data name="StoriesAheadStory" xml:space="preserve">
+    <value>opens later in your story · name hidden</value>
+  </data>
+  <data name="StoriesLeftNextFormat" xml:space="preserve">
+    <value>{0} left · next: </value>
+    <comment>{0} = quests left; the next quest's name follows. Keep the trailing space.</comment>
+  </data>
+  <data name="StoriesSideAheadFormat" xml:space="preserve">
+    <value>Sidequest (Lv {0})</value>
+    <comment>{0} = level. A side quest past the story point, named by the spoiler shield.</comment>
+  </data>
+  <data name="StoriesTeleport" xml:space="preserve">
+    <value>Teleport</value>
+  </data>
+  <data name="StoriesShowInJournal" xml:space="preserve">
+    <value>Show in Journal</value>
+  </data>
+  <data name="StoriesFlagGiver" xml:space="preserve">
+    <value>Flag the giver</value>
+  </data>
+  <data name="NewChaptersLabel" xml:space="preserve">
+    <value>New chapters</value>
+    <comment>1.21.0 P5: the What's new card's line for side stories that gained quests this patch.</comment>
+  </data>
+  <data name="NewChaptersQuestOne" xml:space="preserve">
+    <value>1 quest</value>
+  </data>
+  <data name="NewChaptersQuestsFormat" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>{0} = new quests in the chapter.</comment>
+  </data>
+  <data name="NewChaptersNameHidden" xml:space="preserve">
+    <value>name hidden</value>
+  </data>
+  <data name="NewChaptersShow" xml:space="preserve">
+    <value>Show ›</value>
+  </data>
+  <data name="NewChaptersShowTooltip" xml:space="preserve">
+    <value>Select the first new quest of this side story.</value>
+  </data>
+  <data name="LooseEndsSection" xml:space="preserve">
+    <value>Loose ends</value>
+    <comment>1.21.0 N8: storylines started and never finished.</comment>
+  </data>
+  <data name="LooseEndsTooltip" xml:space="preserve">
+    <value>Storylines you started and never finished: two quests done, or one for lines of up to four. Finales the game marks only in yellow come first.</value>
+  </data>
+  <data name="LooseEndsNone" xml:space="preserve">
+    <value>Nothing started and left unfinished.</value>
+  </data>
+  <data name="LooseEndsCaptionFormat" xml:space="preserve">
+    <value>{0} started, not finished</value>
+    <comment>{0} = loose ends.</comment>
+  </data>
+  <data name="LooseEndsFinale" xml:space="preserve">
+    <value>Finale</value>
+    <comment>A neutral chip: the next quest ends the line.</comment>
+  </data>
+  <data name="LooseEndsFinaleTooltip" xml:space="preserve">
+    <value>The next quest ends this storyline.</value>
+  </data>
+  <data name="LooseEndsLeftFormat" xml:space="preserve">
+    <value>{0} left · </value>
+    <comment>{0} = quests left; a quest past the story point follows. Keep the trailing space.</comment>
+  </data>
+  <data name="LooseEndsLeftLevelFormat" xml:space="preserve">
+    <value>{0} left · Lv {1} · </value>
+    <comment>{0} = quests left, {1} = the next quest's level; its name follows. One order for every row. Keep the trailing space.</comment>
+  </data>
+  <data name="LooseEndsJobAheadFormat" xml:space="preserve">
+    <value>Job quest ahead (Lv {0})</value>
+    <comment>{0} = level. A job or role quest past the story point, named by the spoiler shield.</comment>
+  </data>
+  <data name="LooseEndsFinaleConfig" xml:space="preserve">
+    <value>When a storyline's finale is Ready</value>
+  </data>
+  <data name="LooseEndsFinaleConfigHint" xml:space="preserve">
+    <value>One chat line and one Tonight line, once per finale of a storyline you started. Off by default.</value>
+  </data>
+  <data name="LooseEndsChatFormat" xml:space="preserve">
+    <value>Finale Ready · {0}: </value>
+    <comment>{0} = the storyline's name; the quest link follows. Keep the trailing space.</comment>
+  </data>
+  <data name="LooseEndsTonightLabel" xml:space="preserve">
+    <value>Finale Ready</value>
+  </data>
+  <data name="TodoConfigShowLooseEnds" xml:space="preserve">
+    <value>Loose ends</value>
+  </data>
+  <data name="TodoConfigShowLooseEndsHint" xml:space="preserve">
+    <value>Storylines you started and never finished, finales first. Off by default.</value>
+  </data>
+  <data name="CastWith" xml:space="preserve">
+    <value>With </value>
+    <comment>1.21.0 N10: leads the Cast line, "With Thancred, Urianger and a familiar face". Keep the trailing space.</comment>
+  </data>
+  <data name="CastAnd" xml:space="preserve">
+    <value> and </value>
+    <comment>Before the last name of the Cast line. Keep the spaces.</comment>
+  </data>
+  <data name="CastComma" xml:space="preserve">
+    <value>, </value>
+    <comment>Between names of the Cast line. Keep the space.</comment>
+  </data>
+  <data name="CastFamiliarFace" xml:space="preserve">
+    <value>a familiar face</value>
+    <comment>A story character the player has not met yet.</comment>
+  </data>
+  <data name="CastFamiliarFaces" xml:space="preserve">
+    <value>familiar faces</value>
+  </data>
+  <data name="CastTooltip" xml:space="preserve">
+    <value>Story characters in this quest. Only characters you've met in the main scenario are named; anyone else is a familiar face.</value>
+  </data>
+  <data name="PresetWithStoryCharactersCaption" xml:space="preserve">
+    <value>Side quests where someone from the story appears</value>
+  </data>
+  <data name="PresetWithStoryCharactersTooltip" xml:space="preserve">
+    <value>Side quests a recurring story character appears in. Only characters you've met are named, in the hover and the detail pane.</value>
+  </data>
   <data name="JobsNudgeFormat" xml:space="preserve">
     <value>Level {0} {1}: {2} is available</value>
     <comment>{0} = level reached, {1} = job name, {2} = the quest link.</comment>
@@ -9439,6 +9606,10 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="Core.Filter.StorySidequests" xml:space="preserve">
     <value>Story sidequests</value>
     <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.WithStoryCharacters" xml:space="preserve">
+    <value>With story characters</value>
+    <comment>Core: FilterNames.cs. The quick view of side quests where a recurring story character appears (1.21.0 N10).</comment>
   </data>
   <data name="Core.Path.ChooseOne" xml:space="preserve">
     <value>Choose one of {0}</value>

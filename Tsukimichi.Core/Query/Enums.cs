@@ -76,4 +76,10 @@ public enum Preset
     /// then each side story in play order) while the table sorts by journal order.
     /// </summary>
     StorySidequests,
+
+    /// <summary>
+    /// With story characters (plan v7, 1.21.0 N10): side quests where a recurring story character appears
+    /// (<see cref="QueryContext.Cast"/>); main scenario quests are left out.
+    /// </summary>
+    WithStoryCharacters,
 }

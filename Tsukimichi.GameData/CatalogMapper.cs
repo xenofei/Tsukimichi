@@ -127,6 +127,7 @@ public static class CatalogMapper
             GateItemNames = GateItemNames(catalog, context.Items),
             GateItemJobCategories = GateItemJobCategories(catalog, context.Items),
             MountNames = ReadOptional(() => MountNames(catalog, excel.GetSheet<Mount>(language)), new Dictionary<uint, string>(), "mount names", log),
+            Cast = ReadOptional(() => QuestCastReader.Build(excel, language, catalog, curated?.StoryCast), Core.Chains.StoryCast.Empty, "story cast", log),
         };
     }
 

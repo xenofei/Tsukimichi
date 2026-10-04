@@ -81,6 +81,14 @@ public sealed class PayoffGates
                     continue;
                 }
 
+                foreach (var rowId in chain.StartQuest != 0 ? Chains.ChainCatalog.GrowFrom(chain.StartQuest, catalog) : chain.QuestIds)
+                {
+                    if (catalog.GetByRowId(rowId) is { IsRemoved: false, IsRetired: false } && rowId != milestone.RowId && !content.Contains(rowId))
+                    {
+                        content.Add(rowId);
+                    }
+                }
+
                 foreach (var genreId in chain.GenreIds)
                 {
                     if (!catalog.ByGenre.TryGetValue(genreId, out var quests))

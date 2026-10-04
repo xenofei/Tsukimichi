@@ -1435,6 +1435,11 @@ public sealed partial class Plugin : IDalamudPlugin
             mainWindow.AttachPlanning(planning);
             chatNotifier.PayoffGates = payoffGates;
             chatNotifier.CharacterSettings = CharacterBook;
+            // Loose ends (1.21.0 N8): the dashboard card, the Tonight finale line, the overlay section and the chat line.
+            var looseEnds = new LooseEndsSource(Session);
+            charactersPane.LooseEnds = looseEnds;
+            mainWindow.AttachLooseEnds(looseEnds, () => Settings.ChatNoticeStorylineFinale);
+            chatNotifier.LooseEnds = looseEnds;
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
             configWindow.Language = loc;
@@ -1522,6 +1527,7 @@ public sealed partial class Plugin : IDalamudPlugin
             todoOverlay.ShowPins = mainWindow.ShowPinned;
             todoOverlay.ActiveRoutes = followed;
             todoOverlay.NextStops = nextStops;
+            todoOverlay.LooseEnds = looseEnds;
             todoOverlay.OpenRoute = ui.OpenRoute;
             todoOverlay.ShowFollowedRoute = () => routes.ShowFollowed();
             todoOverlay.RunStops = runStops;
@@ -1603,7 +1609,11 @@ public sealed partial class Plugin : IDalamudPlugin
             command.ToggleHelpWindow = helpWindow.Toggle;
 
             // "What's new" after an update: decided on the main window's first draw, drawn above the detail pane.
-            mainWindow.AttachWhatsNew(new WhatsNewCard(Settings, PluginInterface, Log, helpWindow.Show));
+            mainWindow.AttachWhatsNew(new WhatsNewCard(Settings, PluginInterface, Log, helpWindow.Show)
+            {
+                // New chapters of the side stories the character started (1.21.0 P5), once per patch.
+                NewChapters = new NewChaptersSource(Session, ui) { CharacterSettings = CharacterBook },
+            });
 
             // "Set up your road" (1.7.0, decision 7): once on a fresh install, after the tour offer; Help reopens it.
             // Each switch applies at once and tells the service that follows it, as Settings does.

@@ -128,6 +128,13 @@ public sealed partial class ConfigWindow
             Save();
         }
 
+        var looseEnds = settings.TodoShowLooseEnds;
+        if (Toggle(Strings.TodoConfigShowLooseEnds, Strings.TodoConfigShowLooseEndsHint, ref looseEnds, "overlay section loose ends storyline finale started unfinished", on, reason: off))
+        {
+            settings.TodoShowLooseEnds = looseEnds;
+            Save();
+        }
+
         var journal = settings.TodoShowJournalCount;
         if (Toggle(Strings.TodoJournalCount, Strings.TodoJournalCountTooltip, ref journal, "overlay journal count slots full make room 30", on, reason: off))
         {

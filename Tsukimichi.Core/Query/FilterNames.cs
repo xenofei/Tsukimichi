@@ -32,6 +32,7 @@ public static class FilterNames
     public const string Stalled = "Stalled";
     public const string Sprout = "Sprout mode";
     public const string StorySidequests = "Story sidequests";
+    public const string WithStoryCharacters = "With story characters";
 
     /// <summary>The label a chip prints for a filter identity, in the UI language (keys <c>Core.Filter.*</c>).</summary>
     public static string Display(string name) => name switch
@@ -58,6 +59,7 @@ public static class FilterNames
         Stalled => CoreText.T("Core.Filter.Stalled", "Stalled"),
         Sprout => CoreText.T("Core.Filter.Sprout", "Sprout mode"),
         StorySidequests => CoreText.T("Core.Filter.StorySidequests", "Story sidequests"),
+        WithStoryCharacters => CoreText.T("Core.Filter.WithStoryCharacters", "With story characters"),
         _ => name,
     };
 
@@ -69,6 +71,7 @@ public static class FilterNames
         Preset.Stalled => Stalled,
         Preset.Sprout => Sprout,
         Preset.StorySidequests => StorySidequests,
+        Preset.WithStoryCharacters => WithStoryCharacters,
         _ => string.Empty,
     };
 }

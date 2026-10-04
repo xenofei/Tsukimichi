@@ -67,6 +67,9 @@ public sealed class WhatsNewCard
         version = ChangelogSection.NormalizeVersion(runningVersion ?? typeof(WhatsNewCard).Assembly.GetName().Version?.ToString(3));
     }
 
+    /// <summary>The "New chapters" line (1.21.0 P5) at the top of the card; set by the plugin. Null shows none.</summary>
+    public NewChaptersSource? NewChapters { get; set; }
+
     /// <summary>True while the card has a section to show.</summary>
     public bool Visible => sections.Count > 0;
 
@@ -215,6 +218,7 @@ public sealed class WhatsNewCard
         }
 
         ImGui.Spacing();
+        NewChapters?.Draw();
         var wrap = ImGui.GetWindowContentRegionMax().X;
         using var wrapPos = ImRaii.TextWrapPos(wrap);
         var several = sections.Count > 1;

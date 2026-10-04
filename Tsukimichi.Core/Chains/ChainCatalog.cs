@@ -22,6 +22,15 @@ public sealed record Chain(string Name, IReadOnlyList<uint> RowIds)
     /// and YoRHa weeklies), which it lists in play order but which never finish, so "next" never points at one.
     /// </summary>
     public IReadOnlySet<uint> Uncounted { get; init; } = FrozenSet<uint>.Empty;
+
+    /// <summary>A line named in <c>curated/chains.json</c>: the dashboard's Side stories card lists these (feature plan v7 P5).</summary>
+    public bool IsCurated { get; init; }
+
+    /// <summary>
+    /// A series the game still adds to (<see cref="CuratedChain.Ongoing"/>): with every released quest done it is caught
+    /// up, not finished.
+    /// </summary>
+    public bool Ongoing { get; init; }
 }
 
 /// <summary>Where a character stands in a chain.</summary>
@@ -44,7 +53,8 @@ public readonly record struct ChainProgress(int Done, int Total, uint? NextRowId
 
 /// <summary>
 /// Every chain a catalog holds, built once per catalog. Three sources: curated chains from <c>curated/chains.json</c>
-/// (named lists of journal genres concatenated in order), derived chains, one per journal genre whose quests form a
+/// (named lists of journal genres concatenated in order, of quests, or a line grown from its first quest:
+/// <see cref="GrowFrom"/>), derived chains, one per journal genre whose quests form a
 /// single previous-quest line (each quest after the first requires exactly the quest before it), and, when given,
 /// the side stories of <see cref="StorySidequests"/>. A quest belongs to at most one chain; curated chains win, then
 /// the first derived chain that lists it, then its side story. Retired rows and hidden progress trackers
@@ -90,6 +100,18 @@ public sealed class ChainCatalog
         foreach (var entry in curated.Chains)
         {
             var rowIds = new List<uint>();
+            if (entry.QuestIds.Count > 0 || entry.StartQuest != 0)
+            {
+                var listed = entry.StartQuest != 0 ? GrowFrom(entry.StartQuest, catalog) : Steps(entry.QuestIds, catalog);
+                if (listed.Count == 0)
+                {
+                    warnings.Add($"chain \"{entry.Name}\": none of its quests is in the catalog; skipped.");
+                    continue;
+                }
+
+                rowIds.AddRange(InPrerequisiteOrder(listed, catalog));
+            }
+
             foreach (var genreId in entry.GenreIds)
             {
                 if (genreId == 0 || !catalog.ByGenre.TryGetValue(genreId, out var quests))
@@ -121,7 +143,7 @@ public sealed class ChainCatalog
                 continue;
             }
 
-            Add(chains, byRowId, new Chain(entry.Name, rowIds.ToArray()), catalog);
+            Add(chains, byRowId, new Chain(entry.Name, rowIds.ToArray()) { IsCurated = true, Ongoing = entry.Ongoing }, catalog);
         }
 
         var derived = new List<IReadOnlyList<QuestRecord>>();
@@ -168,6 +190,66 @@ public sealed class ChainCatalog
         }
 
         return new ChainCatalog(chains, byRowId.ToFrozenDictionary(), warnings);
+    }
+
+    /// <summary>The listed quests that are in the catalog and can be steps, in the order given.</summary>
+    private static List<uint> Steps(IReadOnlyList<uint> rowIds, QuestCatalog catalog)
+    {
+        var steps = new List<uint>(rowIds.Count);
+        foreach (var rowId in rowIds)
+        {
+            if (catalog.GetByRowId(rowId) is { } quest && IsStep(quest) && !steps.Contains(rowId))
+            {
+                steps.Add(rowId);
+            }
+        }
+
+        return steps;
+    }
+
+    /// <summary>
+    /// A line grown from its first quest (<see cref="CuratedChain.StartQuest"/>): the start, then every quest of the
+    /// start's journal section that can be a step, is neither repeatable nor main scenario, and lists a quest of the line
+    /// among its previous quests, until no quest joins; each pass in journal order. So a later patch's chapter, which
+    /// requires the line's last quest, joins the line by itself. Empty when the start is not in the catalog.
+    /// </summary>
+    public static List<uint> GrowFrom(uint start, QuestCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        if (catalog.GetByRowId(start) is not { } first || !IsStep(first))
+        {
+            return [];
+        }
+
+        var section = first.Journal.SectionId;
+        var line = new List<uint> { start };
+        var inLine = new HashSet<uint> { start };
+        var added = true;
+        while (added)
+        {
+            added = false;
+            foreach (var quest in catalog.All)
+            {
+                if (inLine.Contains(quest.RowId) || !IsStep(quest) || quest.IsRepeatable || quest.Journal.SectionId != section
+                    || Query.FeaturePresets.IsMainScenario(quest))
+                {
+                    continue;
+                }
+
+                foreach (var previous in quest.PreviousQuests.QuestIds)
+                {
+                    if (inLine.Contains(previous))
+                    {
+                        line.Add(quest.RowId);
+                        inLine.Add(quest.RowId);
+                        added = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return line;
     }
 
     /// <summary>Whether a quest can be a chain step: not retired, and not a hidden progress tracker.</summary>
