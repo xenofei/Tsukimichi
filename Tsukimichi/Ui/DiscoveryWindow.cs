@@ -30,7 +30,7 @@ namespace Tsukimichi.Ui;
 /// <c>/tsuki nearby</c> or a click on that entry. The cog at the top right opens Settings › Integrations, where its
 /// settings live since 1.7.0; they persist through <see cref="DiscoverySettings"/>.
 /// </summary>
-public sealed class DiscoveryWindow : Window, IDisposable
+public sealed partial class DiscoveryWindow : Window, IDisposable
 {
     private readonly record struct Row(QuestRecord Quest, QuestState State, string Level, string Job, string StateText);
 
@@ -203,6 +203,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
         try
         {
             DrawContent();
+            DrawNearbyModals();
         }
         finally
         {
@@ -216,6 +217,9 @@ public sealed class DiscoveryWindow : Window, IDisposable
         DrawHeader();
         Chrome.Rule();
 
+        // The kind chips and Sort (1.21 P7): one fixed row in both views, so switching never moves the list.
+        DrawKindRow();
+
         if (session.Bundle is null)
         {
             Chrome.OutlinedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, Theme.Surface.TextSecondary);
@@ -228,13 +232,24 @@ public sealed class DiscoveryWindow : Window, IDisposable
             return;
         }
 
+        if (Everywhere)
+        {
+            DrawEverywhere();
+            return;
+        }
+
+        var here = HereRows();
         if (startable.Length == 0)
         {
             DrawEmpty();
         }
+        else if (here.Length == 0)
+        {
+            Chrome.OutlinedText(Strings.NearbyHereKindsEmpty, Theme.Surface.TextSecondary);
+        }
         else
         {
-            DrawTable("##nearbyStartable", startable);
+            DrawTable("##nearbyStartable", here);
         }
 
         if (accepted.Length == 0)
@@ -260,22 +275,37 @@ public sealed class DiscoveryWindow : Window, IDisposable
         ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + (rowHeight - glyph) * 0.5f));
         MoonGlyph.DrawInline(QuestState.Ready, glyph);
         ImGui.SameLine();
-        ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, start.Y + (rowHeight - line) * 0.5f));
-        Chrome.OutlinedText(header, Theme.Surface.Text);
+        var textPos = new Vector2(ImGui.GetCursorScreenPos().X, start.Y + (rowHeight - line) * 0.5f);
 
         // Cog at the right edge, a round button never under the minimum target: it opens Settings on this window's block.
+        var right = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
         if (OpenSettings is { } openSettings)
         {
-            ImGui.SetCursorScreenPos(new Vector2(ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X - button, start.Y + (rowHeight - button) * 0.5f));
+            right -= button;
+            ImGui.SetCursorScreenPos(new Vector2(right, start.Y + (rowHeight - button) * 0.5f));
             if (Chrome.IconButtonRound("##nearbyCog", CogGlyph, Strings.DiscoverySettingsTooltip))
             {
                 openSettings();
             }
+
+            right -= UiMetrics.Px(6f);
+        }
+
+        // Here · Everywhere (1.21 P7) before the cog; the header ends in an ellipsis before it.
+        var switchX = DrawViewSwitch(start.Y, rowHeight, right);
+        var title = Everywhere ? StripId(Strings.DiscoveryWindowTitle) : header;
+        if (Chrome.OutlinedEllipsisAt(ImGui.GetWindowDrawList(), textPos, MathF.Max(1f, switchX - UiMetrics.Px(8f) - textPos.X), title, Theme.U32(Theme.Surface.Text))
+            && ImGui.IsMouseHoveringRect(textPos, new Vector2(switchX, textPos.Y + line)))
+        {
+            UiMetrics.Tooltip(title);
         }
 
         ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + rowHeight));
         ImGui.Dummy(Vector2.Zero);
     }
+
+    /// <summary>A window title without its "###id" suffix.</summary>
+    private static string StripId(string title) => title.IndexOf("###", StringComparison.Ordinal) is >= 0 and var at ? title[..at] : title;
 
     private void DrawEmpty()
     {

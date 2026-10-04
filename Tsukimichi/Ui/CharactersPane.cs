@@ -531,6 +531,7 @@ public sealed partial class CharactersPane
         DrawJobs(ui, d);
         DrawPlanning(ui, d);
         DrawDutyBoard(ui);
+        DrawTriadBoard(ui);
         ImGui.Spacing();
         DrawGrandCompanyAndTribes(d);
         Gap(ruled: true);

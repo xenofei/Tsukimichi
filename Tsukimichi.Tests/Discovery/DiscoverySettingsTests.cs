@@ -22,6 +22,22 @@ public sealed class DiscoverySettingsTests : IDisposable
     }
 
     [Fact]
+    public void The_zones_board_view_chips_and_sort_round_trip_and_default_to_Here_every_kind_and_level_fit()
+    {
+        var defaults = new DiscoverySettings();
+        Assert.False(defaults.NearbyEverywhere);
+        Assert.Equal(Core.Query.ZoneKinds.All, defaults.NearbyKinds);
+        Assert.Equal(Core.Query.ZoneSort.LevelFit, defaults.NearbySort);
+
+        var path = tmp.File(Path.Combine("user", "discovery.json"));
+        new DiscoverySettings { NearbyEverywhere = true, NearbyKinds = Core.Query.ZoneKinds.Ready | Core.Query.ZoneKinds.Rewards, NearbySort = Core.Query.ZoneSort.StoryOrder }.Save(path);
+        var loaded = DiscoverySettings.Load(path);
+        Assert.True(loaded.NearbyEverywhere);
+        Assert.Equal(Core.Query.ZoneKinds.Ready | Core.Query.ZoneKinds.Rewards, loaded.NearbyKinds);
+        Assert.Equal(Core.Query.ZoneSort.StoryOrder, loaded.NearbySort);
+    }
+
+    [Fact]
     public void PathFor_lives_under_the_user_directory()
     {
         var paths = new PluginPaths(tmp.Path, tmp.Path);

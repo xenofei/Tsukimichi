@@ -13105,6 +13105,352 @@
   <data name="DutyBoardNeverHeading" xml:space="preserve">
     <value>Unlocked, never cleared</value>
   </data>
+  <data name="TriadHeading" xml:space="preserve">
+    <value>Triple Triad</value>
+  </data>
+  <data name="TriadTooltip" xml:space="preserve">
+    <value>The Triple Triad opponents that still have something for this character, and the ones that wait on a quest the game never names. Opponents beaten with every card owned leave the list.</value>
+  </data>
+  <data name="TriadToUnlockOne" xml:space="preserve">
+    <value>1 opponent to unlock</value>
+  </data>
+  <data name="TriadToUnlockFormat" xml:space="preserve">
+    <value>{0} opponents to unlock</value>
+    <comment>{0} = opponents behind a quest, masked ones included.</comment>
+  </data>
+  <data name="TriadDoneNone" xml:space="preserve">
+    <value>No opponent is finished yet: beaten, with every card it hands out owned.</value>
+  </data>
+  <data name="TriadDoneOne" xml:space="preserve">
+    <value>1 opponent finished: beaten, with every card it hands out owned.</value>
+  </data>
+  <data name="TriadDoneFormat" xml:space="preserve">
+    <value>{0} opponents finished: beaten, with every card they hand out owned.</value>
+    <comment>{0} = opponents beaten with every card owned; they leave the list.</comment>
+  </data>
+  <data name="TriadChipPlaysYou" xml:space="preserve">
+    <value>Plays you</value>
+    <comment>A chip: the opponents that play this character. Shown without a count before the records are read.</comment>
+  </data>
+  <data name="TriadChipPlaysYouFormat" xml:space="preserve">
+    <value>Plays you {0}</value>
+    <comment>A chip. {0} = opponents that play this character and still have something for it.</comment>
+  </data>
+  <data name="TriadChipLockedFormat" xml:space="preserve">
+    <value>Locked {0}</value>
+    <comment>A chip. {0} = opponents behind a quest.</comment>
+  </data>
+  <data name="TriadChipCardsLeftFormat" xml:space="preserve">
+    <value>Cards left {0}</value>
+    <comment>A chip. {0} = opponents with cards this character does not have.</comment>
+  </data>
+  <data name="TriadChipPlaysYouTip" xml:space="preserve">
+    <value>Opponents that play you and still have something for you. Click to show or hide them.</value>
+  </data>
+  <data name="TriadChipLockedTip" xml:space="preserve">
+    <value>Opponents that wait on a quest you have not done. Click to show or hide them.</value>
+  </data>
+  <data name="TriadChipCardsLeftTip" xml:space="preserve">
+    <value>Opponents with cards you don't have, in either group. With Plays you and Locked off, only these stay.</value>
+  </data>
+  <data name="TriadPlaysYouGroup" xml:space="preserve">
+    <value>Plays you</value>
+  </data>
+  <data name="TriadPlaysYouSub" xml:space="preserve">
+    <value>cards you don't have</value>
+  </data>
+  <data name="TriadLockedGroup" xml:space="preserve">
+    <value>Locked behind a quest</value>
+  </data>
+  <data name="TriadLockedSub" xml:space="preserve">
+    <value>the game never says which</value>
+  </data>
+  <data name="TriadNotRead" xml:space="preserve">
+    <value>Log in on this character to read who it has beaten and which cards it has.</value>
+  </data>
+  <data name="TriadCardsOne" xml:space="preserve">
+    <value>1 card you don't have</value>
+  </data>
+  <data name="TriadCardsFormat" xml:space="preserve">
+    <value>{0} cards you don't have</value>
+    <comment>{0} = the opponent's cards this character does not have.</comment>
+  </data>
+  <data name="TriadNotBeatenAllCards" xml:space="preserve">
+    <value>not beaten yet · every card yours</value>
+  </data>
+  <data name="TriadBeatenCardsOne" xml:space="preserve">
+    <value>beaten · 1 card left</value>
+  </data>
+  <data name="TriadBeatenCardsFormat" xml:space="preserve">
+    <value>beaten · {0} cards left</value>
+    <comment>{0} = the opponent's cards this character does not have.</comment>
+  </data>
+  <data name="TriadAfter" xml:space="preserve">
+    <value>after </value>
+    <comment>Before the quest an opponent waits on: "after Caught in the Act · Ready". Keep the trailing space.</comment>
+  </data>
+  <data name="TriadStateFormat" xml:space="preserve">
+    <value> · {0}</value>
+    <comment>After the quest an opponent waits on. {0} = the quest's state ("Ready").</comment>
+  </data>
+  <data name="TriadStateReasonFormat" xml:space="preserve">
+    <value> · {0}: {1}</value>
+    <comment>After the quest an opponent waits on. {0} = its state ("Blocked"), {1} = what blocks it.</comment>
+  </data>
+  <data name="TriadWaitsForStory" xml:space="preserve">
+    <value>waits for your story</value>
+  </data>
+  <data name="TriadOpponentAhead" xml:space="preserve">
+    <value>An opponent ahead</value>
+    <comment>An opponent past the character's story point (spoiler shield).</comment>
+  </data>
+  <data name="TriadZoneAhead" xml:space="preserve">
+    <value>a zone ahead</value>
+    <comment>The place of an opponent past the character's story point.</comment>
+  </data>
+  <data name="TriadMoreMaskedFormat" xml:space="preserve">
+    <value>{0} more past {1}'s story · names hidden</value>
+    <comment>{0} = masked opponents folded away, {1} = the character's first name.</comment>
+  </data>
+  <data name="TriadRouteOne" xml:space="preserve">
+    <value>Route to 1 opponent</value>
+  </data>
+  <data name="TriadRouteFormat" xml:space="preserve">
+    <value>Route to {0} opponents</value>
+    <comment>{0} = the opponents behind a quest the card names.</comment>
+  </data>
+  <data name="TriadRouteLabelOne" xml:space="preserve">
+    <value>1 Triple Triad opponent</value>
+    <comment>The Route window's title after "Route to".</comment>
+  </data>
+  <data name="TriadRouteLabelFormat" xml:space="preserve">
+    <value>{0} Triple Triad opponents</value>
+    <comment>The Route window's title after "Route to". {0} = how many.</comment>
+  </data>
+  <data name="TriadRouteTip" xml:space="preserve">
+    <value>Opens the Route window over the quests these opponents wait on, then the opponents themselves.</value>
+  </data>
+  <data name="TriadPinQuests" xml:space="preserve">
+    <value>Pin the quests</value>
+  </data>
+  <data name="TriadPinTip" xml:space="preserve">
+    <value>Pins the quests these opponents wait on. A quest already pinned stays pinned.</value>
+  </data>
+  <data name="TriadPinnedTip" xml:space="preserve">
+    <value>Every quest these opponents wait on is pinned.</value>
+  </data>
+  <data name="TriadMenuShowQuest" xml:space="preserve">
+    <value>Show the quest</value>
+  </data>
+  <data name="TriadTeleportFormat" xml:space="preserve">
+    <value>Teleport to {0}, the aetheryte nearest this opponent.</value>
+    <comment>{0} = the aetheryte's name.</comment>
+  </data>
+  <data name="TriadNoAetheryte" xml:space="preserve">
+    <value>No aetheryte is known near this opponent.</value>
+  </data>
+  <data name="TriadUnlockPrefix" xml:space="preserve">
+    <value>Triple Triad opponent · </value>
+    <comment>The detail pane's Unlocks line before the opponent's name. Keep the trailing space.</comment>
+  </data>
+  <data name="TriadUnlockPlaceFormat" xml:space="preserve">
+    <value>, {0}</value>
+    <comment>After the opponent's name in the Unlocks line. {0} = where it stands.</comment>
+  </data>
+  <data name="TriadUnlockMasked" xml:space="preserve">
+    <value>An opponent ahead, a zone ahead</value>
+    <comment>The Unlocks line for an opponent past the story point.</comment>
+  </data>
+  <data name="TriadUnlockTip" xml:space="preserve">
+    <value>This quest opens a Triple Triad opponent. The Triple Triad card on the Characters tab lists every opponent and the quest it waits on.</value>
+  </data>
+  <data name="RouteTriadStopFormat" xml:space="preserve">
+    <value>{0} · Triple Triad</value>
+    <comment>A Triple Triad opponent as a stop on a route. {0} = the opponent's name.</comment>
+  </data>
+  <data name="RouteTriadMark" xml:space="preserve">
+    <value>opponent</value>
+    <comment>The mark at the end of a route's Triple Triad stop.</comment>
+  </data>
+  <data name="RouteTriadTooltip" xml:space="preserve">
+    <value>A Triple Triad opponent: it plays you once the quests before it are done.</value>
+  </data>
+  <data name="RouteTriadFlagTooltip" xml:space="preserve">
+    <value>Flags where this opponent stands on the map.</value>
+  </data>
+  <data name="BoardRowMoreTooltip" xml:space="preserve">
+    <value>More: flag it, show its quest, hand it off</value>
+    <comment>The "…" button in a Triple Triad or zone row's reserved slot.</comment>
+  </data>
+  <data name="NearbyHere" xml:space="preserve">
+    <value>Here</value>
+    <comment>Nearby's view switch: the current zone.</comment>
+  </data>
+  <data name="NearbyEverywhere" xml:space="preserve">
+    <value>Everywhere</value>
+    <comment>Nearby's view switch: every zone, by expansion.</comment>
+  </data>
+  <data name="NearbyHereTip" xml:space="preserve">
+    <value>The quests you can start in this zone.</value>
+  </data>
+  <data name="NearbyEverywhereTip" xml:space="preserve">
+    <value>Every zone with something left, by expansion, with what is left in words.</value>
+  </data>
+  <data name="NearbyChipReady" xml:space="preserve">
+    <value>Ready</value>
+    <comment>A kind chip in Nearby.</comment>
+  </data>
+  <data name="NearbyChipBlues" xml:space="preserve">
+    <value>Blues</value>
+    <comment>A kind chip in Nearby: unlock quests.</comment>
+  </data>
+  <data name="NearbyChipSideStories" xml:space="preserve">
+    <value>Side stories</value>
+    <comment>A kind chip in Nearby.</comment>
+  </data>
+  <data name="NearbyChipRewards" xml:space="preserve">
+    <value>Rewards</value>
+    <comment>A kind chip in Nearby: Moonlit rewards.</comment>
+  </data>
+  <data name="NearbyChipReadyTip" xml:space="preserve">
+    <value>Quests you can start now. Click to count them or not.</value>
+  </data>
+  <data name="NearbyChipBluesTip" xml:space="preserve">
+    <value>Unlock quests you have not done (My blues). Click to count them or not.</value>
+  </data>
+  <data name="NearbyChipSideStoriesTip" xml:space="preserve">
+    <value>Side story quests you have not done. Click to count them or not.</value>
+  </data>
+  <data name="NearbyChipRewardsTip" xml:space="preserve">
+    <value>Quests left with a Moonlit reward you don't have. Click to count them or not.</value>
+  </data>
+  <data name="NearbySortFormat" xml:space="preserve">
+    <value>Sort: {0}</value>
+    <comment>{0} = the sort ("Level fit").</comment>
+  </data>
+  <data name="NearbySortLevelFit" xml:space="preserve">
+    <value>Level fit</value>
+  </data>
+  <data name="NearbySortReadyFirst" xml:space="preserve">
+    <value>Ready first</value>
+  </data>
+  <data name="NearbySortStoryOrder" xml:space="preserve">
+    <value>Story order</value>
+  </data>
+  <data name="NearbySortTip" xml:space="preserve">
+    <value>How the rows are ordered: closest to your job's level, most Ready first, or the game's own order.</value>
+  </data>
+  <data name="NearbyHereKindsEmpty" xml:space="preserve">
+    <value>Nothing here matches the chips that are on.</value>
+  </data>
+  <data name="ZoneEyebrowFormat" xml:space="preserve">
+    <value>{0} · Lv {1}–{2}</value>
+    <comment>An expansion's heading on the zones board. {0} = expansion, {1}-{2} = its level span.</comment>
+  </data>
+  <data name="ZoneFitsFormat" xml:space="preserve">
+    <value> · fits {0} {1}</value>
+    <comment>After the heading of the expansion that fits the job. {0} = job abbreviation, {1} = its level.</comment>
+  </data>
+  <data name="ZoneLevelSpanFormat" xml:space="preserve">
+    <value>Lv {0}–{1}</value>
+    <comment>A zone's level span.</comment>
+  </data>
+  <data name="ZoneLevelOneFormat" xml:space="preserve">
+    <value>Lv {0}</value>
+    <comment>A zone whose quests share one level.</comment>
+  </data>
+  <data name="ZoneNewSinceFormat" xml:space="preserve">
+    <value>new since {0}</value>
+    <comment>A chip: the zone has quests added since patch {0}.</comment>
+  </data>
+  <data name="ZoneReadyFormat" xml:space="preserve">
+    <value>{0} Ready</value>
+    <comment>{0} = quests startable now in the zone.</comment>
+  </data>
+  <data name="ZoneBluesOne" xml:space="preserve">
+    <value>1 blue</value>
+  </data>
+  <data name="ZoneBluesFormat" xml:space="preserve">
+    <value>{0} blues</value>
+    <comment>{0} = unlock quests left in the zone.</comment>
+  </data>
+  <data name="ZoneSideStoriesOne" xml:space="preserve">
+    <value>1 side story quest</value>
+  </data>
+  <data name="ZoneSideStoriesFormat" xml:space="preserve">
+    <value>{0} side story quests</value>
+    <comment>{0} = side story quests left in the zone.</comment>
+  </data>
+  <data name="ZoneRewardsOne" xml:space="preserve">
+    <value>1 reward</value>
+  </data>
+  <data name="ZoneRewardsFormat" xml:space="preserve">
+    <value>{0} rewards</value>
+    <comment>{0} = quests left in the zone with a Moonlit reward.</comment>
+  </data>
+  <data name="ZoneSeparator" xml:space="preserve">
+    <value> · </value>
+    <comment>Between the counts of a zone row.</comment>
+  </data>
+  <data name="ZoneFoldedReadyFormat" xml:space="preserve">
+    <value>{0} Ready across {1} zones ›</value>
+    <comment>A folded expansion. {0} = Ready quests, {1} = zones with something left.</comment>
+  </data>
+  <data name="ZoneFoldedLeftFormat" xml:space="preserve">
+    <value>{0} zones with something left ›</value>
+    <comment>A folded expansion when Ready is off. {0} = zones.</comment>
+  </data>
+  <data name="ZoneMaskedExpansionFormat" xml:space="preserve">
+    <value>{0} zones past {1}'s story · names hidden</value>
+    <comment>An expansion past the story point. {0} = its zones, {1} = the character's first name.</comment>
+  </data>
+  <data name="ZoneAhead" xml:space="preserve">
+    <value>A zone ahead</value>
+    <comment>A zone past the character's story point.</comment>
+  </data>
+  <data name="ZoneWaitsForStory" xml:space="preserve">
+    <value>waits for your story</value>
+  </data>
+  <data name="ZoneMoreAheadFormat" xml:space="preserve">
+    <value>{0} more zones ahead</value>
+    <comment>{0} = masked zones folded away.</comment>
+  </data>
+  <data name="ZoneNothingLeftOne" xml:space="preserve">
+    <value>1 zone with nothing left ›</value>
+  </data>
+  <data name="ZoneNothingLeftFormat" xml:space="preserve">
+    <value>{0} zones with nothing left ›</value>
+    <comment>{0} = zones with nothing left of the chips that are on; a click lists them.</comment>
+  </data>
+  <data name="ZoneNothingLeftLine" xml:space="preserve">
+    <value>nothing left</value>
+    <comment>Line 2 of a zone with nothing left.</comment>
+  </data>
+  <data name="ZoneMenuNearestReady" xml:space="preserve">
+    <value>Go to the nearest Ready giver</value>
+  </data>
+  <data name="ZoneMenuNearestReadyTip" xml:space="preserve">
+    <value>Goes to the giver of the Ready quest nearest the zone's aetheryte.</value>
+  </data>
+  <data name="ZoneMenuShowInJournal" xml:space="preserve">
+    <value>Show in Journal</value>
+  </data>
+  <data name="ZoneMenuShowInJournalTip" xml:space="preserve">
+    <value>Opens the Journal on the zone's quests.</value>
+  </data>
+  <data name="ZoneMenuSendQuestionable" xml:space="preserve">
+    <value>Send zone to Questionable</value>
+  </data>
+  <data name="ZoneTeleportFormat" xml:space="preserve">
+    <value>Teleport to {0}.</value>
+    <comment>{0} = the zone's aetheryte.</comment>
+  </data>
+  <data name="ZoneNoAetheryte" xml:space="preserve">
+    <value>This zone has no aetheryte to teleport to.</value>
+  </data>
+  <data name="ZoneEmpty" xml:space="preserve">
+    <value>Nothing is left anywhere for the chips that are on.</value>
+  </data>
   <data name="Core.Sources.AnVendor" xml:space="preserve">
     <value>an {0}</value>
     <comment>Core: SourceText.cs.</comment>
