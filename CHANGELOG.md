@@ -4,6 +4,44 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-10-04
+
+### Added
+- **Up next:** Tonight opens with one quest and the reason it was picked, plus a travel button.
+  - It picks, in order: your route, then your goal, then the story, your pins, the closest stop, or the level you need.
+  - To get back to Tonight, use the Tonight button, press Esc, or click the selected row again.
+- **Where to go:** for a quest in your journal, the detail pane shows the step you're on in the game's own words, with Flag, Teleport and Walk. The giver is one click away, and a step with no place on the map says so. Right-click a journal quest in the Todo overlay or Nearby for the same.
+- **All characters:** a third view on the Characters tab, with one table of every character.
+  - The columns are story, goal, Ready quests, allowances, Moonlit and last seen.
+  - Characters on your other game clients, or in other launcher folders you add under Settings › Data, are read-only; Tsukimichi only reads those folders.
+  - Under each quest's title, **Your other characters** shows who can take it.
+- **Alt goals:** "catch this character up to…" a patch, another character's unlocks, flying in an expansion, or every duty roulette, with Undo.
+  - A goal card lists what's left, Ready first.
+  - It offers Send to Questionable when that character is logged in here.
+- **My blues:**
+  - A **Do first** sort, with one card per tier: what the story needs, content, systems, high-end, then other jobs and societies.
+  - **Set aside** a quest for later, or as Not for me. It leaves your counts, Nearby, Next stops, Up next, the server bar, the overlay and notices. Undo restores it, and the Set aside filter brings quests back.
+- **Your story on one page:** the main scenario by patch, with each optional line placed at the quest that opens it. A pace line estimates the evenings left to the latest story; it is labelled an estimate and waits for 15 dated story quests.
+- **Side stories:** the dashboard names side stories as players do: Tataru's Grand Endeavor, the Void quests, Cornservant, Cosmic Exploration and more.
+  - A series you're up to date on reads "Caught up · continues in a later patch".
+  - The What's new card says when one you started got new chapters.
+- **Loose ends:** storylines you started and never finished, with finales the game marks only in yellow listed first. You can mark a line Not for me. A chat and Tonight line when a finale is Ready is opt-in.
+- **Who's in it:** quests show which story characters appear ("With Thancred and Urianger"), naming only the characters you've already met. A "With story characters" quick view finds side quests with someone from the story.
+- **Triple Triad:** a dashboard card shows who still has cards for you and which opponents wait on a quest, with that quest's state and a route to them. A quest that opens an opponent says so in Unlocks.
+- **Nearby › Everywhere:** every zone with something left, grouped by expansion and starting with the one that fits your job. It has kind chips and a sort.
+- **Text-to-speech friendly commands:**
+  - `/tsuki msq`, `/tsuki next` and `/tsuki go` print plain sentences, with coordinates as "X 27, Y 34.8" and a compass direction.
+  - "Say what's next in chat" (off by default) speaks after each step or quest, at most once every 10 seconds.
+
+### Changed
+- Every new name these features show follows the spoiler shield. Hover a placeholder to see why it's hidden, and right-click to reveal it.
+- `/tsuki go` never travels to or flags a place hidden by the shield, and chat lines never link a hidden quest.
+- Send to Questionable and travel are offered only for the character logged in on this client.
+
+### Fixed
+- The Nightmare's End, What Lies Beneath and Dead but Not Gone no longer read Ready before you've cleared floor 50 (or floor 100) of the Palace of the Dead, and Dead but Not Gone now waits for What Lies Beneath.
+- Free for All and Mastery Rematch now say they need 25 or 30 beasts befriended.
+
 ## [1.20.0] - 2026-10-04
 
 ### Added

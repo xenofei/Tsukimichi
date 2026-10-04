@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v7: your look, your faces, your road
 
-Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.20.0 are released; 1.21.0 is built on branches and is being merged. Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
+Status: **signed off on 2026-10-03 and executing.** 1.14.0 to 1.21.0 are released. Only the parallel track (API 16 and Evercold day) remains; it waits for Patch 8.0. The next plan is v8 (`docs/feature-plan-v8.md`). Plan v6 shipped 1.11.0 to 1.13.0; its unbuilt releases (automation, right answers, what next, and the API 16 track) are carried into this plan and re-checked against Patch 8.0.
 
 ## Sources
 
@@ -174,7 +174,7 @@ Aim: early December 2026, ahead of 8.0 early access (expected 22 January 2027).
 | N7 | **Before Evercold prep card:** what each character should finish before 8.0 | S |
 | F4 | The optional portrait pack (see decision 8) | M |
 
-### 1.21.0 · What next, for every character
+### 1.21.0 · What next, for every character (released 2026-10-04)
 
 Carried from plan v6 (was 1.16), plus new features.
 
@@ -388,6 +388,44 @@ Your notes, and what happens with each:
   - Your High contrast setting is never changed by a code.
 - **Glyph window:** the Themes tab compares two looks, with a heat table and Ready's lead.
 - **Plain:** after the window has been closed for over 30 s, there is no flash of Medallion.
+
+### 1.21.0 (released 2026-10-04)
+
+- **Up next:**
+  - The block at Full, Quiet and Plain on Night and Ishgard Snow.
+  - The pick follows route → goal → story → pins → closest stop → level, and set-aside quests are never picked.
+  - Esc order: popup, then panel, then quest, then window. A single click on the selected row returns to Tonight after a moment; a double-click opens the journal without a flash.
+  - The step pill re-aims as you walk between a step's places.
+- **Where to go and `/tsuki`:**
+  - Teleport and Walk to a step through Lifestream and vnavmesh, including an area step and a step with several places.
+  - `/tsuki go` from a macro at each automation level; on a quest past your story it prints "no place" and sets no flag.
+  - With an alt on view, `/tsuki next` names the logged-in character's quest.
+  - Chat lines appear only in the echo channel with a clickable quest name.
+  - "Say what's next" fires once per step.
+- **All characters and goals:**
+  - Roster rows, the header menu, and the goal popover.
+  - A row's menu stays on its character while the roster re-sorts.
+  - Rows show "being read" first, with no hitch.
+  - Linked folders with a real second folder and a live second client; a broken save there doesn't freeze anything.
+  - A Japanese nickname longer than 8 characters.
+  - The roulettes goal for a character blocked only by level.
+- **My blues and Your story:**
+  - Do first cards and the hover slot at each Decoration level.
+  - Set aside, Undo, and a group set-aside asking first; Not for me survives a group set-aside and Undo.
+  - Your story on a mid-story character with the shield on: no later quest named.
+  - The pace line after real play.
+- **Side stories, Loose ends and cast:**
+  - The cards' rows, Caught up in silver, Not for me with Undo.
+  - The cast line's plates.
+  - The "With story characters" quick view.
+  - The New chapters line.
+- **Triple Triad and Nearby:**
+  - Beat an opponent and see "beaten" (the TripleTriadResident id read). Win a card and see it counted.
+  - Tab to a row's Teleport and "…".
+  - A stored alt shows no Teleport or Send.
+  - Everywhere's sort and switch at large text sizes.
+- **Shield:** right-click "Reveal this name" on "A zone ahead", "Sidequest (Lv 90)", "An opponent ahead", Up next's route and the Evercold flying line; the name shows after.
+- **Data checks (21 rows, until 1.22.0):** each row in `docs/data/verification-allowlist.json` names the character state and giver; stand near the giver and run `/tsuki why <quest>`. Also: after clearing Palace of the Dead floor 50, The Nightmare's End and What Lies Beneath turn Ready (the game's unlock link 320).
 
 ### 1.20.0 (released 2026-10-04)
 
