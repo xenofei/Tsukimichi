@@ -15,10 +15,12 @@ namespace Tsukimichi.Core.Portraits;
 /// { "format": 1, "gameVersion": "2026.09.15.0000.0000", "builtUtc": "2026-10-03T12:00:00Z", "side": 128,
 ///   "source": "Garland Tools NPC photos (credit: Celes)",
 ///   "files":   { "1001000.png": "&lt;sha-256, lower-case hex&gt;", … },
+///   "boxes":   { "1001000.png": 118, … },
 ///   "entries": { "1001000": "1001000.png", "1012527": "1001000.png", … } }
 /// </code>
 /// <c>entries</c> maps an ENpcResident id (the quest giver) to its image; several ids can share one (Garland's
-/// appearance aliases). Image names are flat (<see cref="IsSafeFileName"/>): no folders, nothing but <c>.png</c>.
+/// appearance aliases). <c>boxes</c> (optional) gives each image's head box in the photo's own pixels, so the hover never
+/// shows a face larger than its source. Image names are flat (<see cref="IsSafeFileName"/>): no folders, nothing but <c>.png</c>.
 /// </summary>
 public sealed partial class PortraitPackManifest
 {
@@ -40,8 +42,9 @@ public sealed partial class PortraitPackManifest
     /// <summary>The image side a pack's images have (<see cref="PortraitSources.TextureSize"/> of the pack family).</summary>
     public const int ImageSide = 128;
 
-    private PortraitPackManifest(int format, string gameVersion, DateTime builtUtc, int side, string source, FrozenDictionary<string, string> files, FrozenDictionary<uint, string> entries)
+    private PortraitPackManifest(int format, string gameVersion, DateTime builtUtc, int side, string source, FrozenDictionary<string, string> files, FrozenDictionary<uint, string> entries, FrozenDictionary<string, int>? boxes = null)
     {
+        Boxes = boxes ?? FrozenDictionary<string, int>.Empty;
         Format = format;
         GameVersion = gameVersion;
         BuiltUtc = builtUtc;
@@ -70,6 +73,9 @@ public sealed partial class PortraitPackManifest
     /// <summary>ENpcResident id to image name.</summary>
     public FrozenDictionary<uint, string> Entries { get; }
 
+    /// <summary>Image name to its head box's side in the photo's own pixels; missing when the pack does not say.</summary>
+    public FrozenDictionary<string, int> Boxes { get; }
+
     /// <summary>A flat image name: a lower-case letter or digit first, then letters, digits, '_' or '-', and <c>.png</c>; 64 characters at most.</summary>
     public static bool IsSafeFileName(string? name) => name is not null && SafeName().IsMatch(name);
 
@@ -77,9 +83,9 @@ public sealed partial class PortraitPackManifest
     public static bool IsSha256(string? text) => text is not null && Sha256Hex().IsMatch(text);
 
     /// <summary>Makes a manifest, checked as <see cref="TryParse"/> checks one; throws when it would not read back.</summary>
-    public static PortraitPackManifest Create(string gameVersion, DateTime builtUtc, string source, IReadOnlyDictionary<string, string> files, IReadOnlyDictionary<uint, string> entries, int side = ImageSide)
+    public static PortraitPackManifest Create(string gameVersion, DateTime builtUtc, string source, IReadOnlyDictionary<string, string> files, IReadOnlyDictionary<uint, string> entries, int side = ImageSide, IReadOnlyDictionary<string, int>? boxes = null)
     {
-        var made = new PortraitPackManifest(CurrentFormat, gameVersion ?? string.Empty, builtUtc, side, source ?? string.Empty, files.ToFrozenDictionary(StringComparer.Ordinal), entries.ToFrozenDictionary());
+        var made = new PortraitPackManifest(CurrentFormat, gameVersion ?? string.Empty, builtUtc, side, source ?? string.Empty, files.ToFrozenDictionary(StringComparer.Ordinal), entries.ToFrozenDictionary(), boxes?.ToFrozenDictionary(StringComparer.Ordinal));
         var problem = Check(made);
         return problem is null ? made : throw new ArgumentException(problem);
     }
@@ -173,7 +179,19 @@ public sealed partial class PortraitPackManifest
             }
         }
 
-        var manifest = new PortraitPackManifest(format, Text(root["gameVersion"]) ?? string.Empty, builtUtc, side, Text(root["source"]) ?? string.Empty, files.ToFrozenDictionary(StringComparer.Ordinal), entries.ToFrozenDictionary());
+        var boxes = new Dictionary<string, int>(StringComparer.Ordinal);
+        if (root["boxes"] is JsonObject boxNodes)
+        {
+            foreach (var (name, node) in boxNodes)
+            {
+                if (TryInt(node, out var box) && box is > 0 and <= 4096)
+                {
+                    boxes[name] = box;
+                }
+            }
+        }
+
+        var manifest = new PortraitPackManifest(format, Text(root["gameVersion"]) ?? string.Empty, builtUtc, side, Text(root["source"]) ?? string.Empty, files.ToFrozenDictionary(StringComparer.Ordinal), entries.ToFrozenDictionary(), boxes.ToFrozenDictionary(StringComparer.Ordinal));
         error = Check(manifest);
         return error is null ? manifest : null;
     }
@@ -193,6 +211,12 @@ public sealed partial class PortraitPackManifest
             entries[id.ToString(CultureInfo.InvariantCulture)] = name;
         }
 
+        var boxes = new JsonObject();
+        foreach (var (name, box) in Boxes.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+        {
+            boxes[name] = box;
+        }
+
         var root = new JsonObject
         {
             ["format"] = Format,
@@ -201,6 +225,7 @@ public sealed partial class PortraitPackManifest
             ["side"] = Side,
             ["source"] = Source,
             ["files"] = files,
+            ["boxes"] = boxes,
             ["entries"] = entries,
         };
         return Encoding.UTF8.GetBytes(root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");

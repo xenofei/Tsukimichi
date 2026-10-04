@@ -132,6 +132,8 @@ public sealed partial class ConfigWindow : Window, IDisposable
 
     public override void OnClose()
     {
+        // The pack's confirmation goes with Settings (spec-1.20 F4).
+        packDialogOpen = false;
         ApplyAliasDraft();
         if (pendingSave.Flush())
         {

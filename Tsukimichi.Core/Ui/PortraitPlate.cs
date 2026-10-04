@@ -268,6 +268,12 @@ public static class PortraitPlate
             return TooltipMax;
         }
 
+        if (portrait.Source == PortraitSource.Pack)
+        {
+            // A pack photo is never drawn above its own head box (its source pixels, 1.0x; spec-1.20 F4).
+            return portrait.SourceBox > 0 ? MathF.Min(TooltipMax, portrait.SourceBox) : TooltipMax;
+        }
+
         var side = portrait.Crop.ToBox(portrait.Source).Side;
         return side > 0f && float.IsFinite(side) ? MathF.Min(TooltipMax, MathF.Round(side * TooltipBoxFactor)) : TooltipMax;
     }

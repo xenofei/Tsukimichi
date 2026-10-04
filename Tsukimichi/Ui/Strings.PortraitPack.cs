@@ -1,82 +1,142 @@
-using Tsukimichi.Core.Portraits;
 using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// UI strings for 1.20.0's optional portrait pack (feature plan v7 F4, decision 8): the Settings row, its two
-/// confirmations, and the line each result leaves. English only until localization reopens.
+/// UI strings for 1.20.0's optional portrait pack (feature plan v7 F4; spec-1.20 F4): the Settings row in every state,
+/// the confirmation, the remove popover and the status-bar note. English only until localization reopens.
 /// </summary>
 static partial class Strings
 {
-    public static string PortraitPackLabel => Loc.Get("Settings.PortraitPack");
+    public static string PackLabel => Loc.Get("Pack.Label");
 
-    /// <summary>{0} = givers, {1} = size ("14.2 MB"), {2} = release tag ("v1.20.0").</summary>
-    public static string PortraitPackHintAvailable => Loc.Get("Settings.PortraitPackHintAvailable");
+    public static string PackStatusNotOffered => Loc.Get("Pack.StatusNotOffered");
 
-    public static string PortraitPackHintNotOffered => Loc.Get("Settings.PortraitPackHintNotOffered");
+    public static string PackLineNotOffered => Loc.Get("Pack.LineNotOffered");
 
-    /// <summary>{0} = givers, {1} = release tag.</summary>
-    public static string PortraitPackHintInstalled => Loc.Get("Settings.PortraitPackHintInstalled");
+    public static string PackStatusNotDownloaded => Loc.Get("Pack.StatusNotDownloaded");
 
-    /// <summary>{0} = size, {1} = release tag.</summary>
-    public static string PortraitPackHintUpdate => Loc.Get("Settings.PortraitPackHintUpdate");
+    public static string PackLineAvailable => Loc.Get("Pack.LineAvailable");
 
-    public static string PortraitPackHintDamaged => Loc.Get("Settings.PortraitPackHintDamaged");
+    public static string PackStatusDownloading => Loc.Get("Pack.StatusDownloading");
 
-    public static string PortraitPackDownload => Loc.Get("Settings.PortraitPackDownload");
+    public static string PackLineProgress => Loc.Get("Pack.LineProgress");
 
-    public static string PortraitPackUpdate => Loc.Get("Settings.PortraitPackUpdate");
+    public static string PackLineProgressNoEta => Loc.Get("Pack.LineProgressNoEta");
 
-    public static string PortraitPackRemove => Loc.Get("Settings.PortraitPackRemove");
+    public static string PackKeepsGoing => Loc.Get("Pack.KeepsGoing");
 
-    public static string PortraitPackCancel => Loc.Get("Settings.PortraitPackCancel");
+    public static string PackStatusChecking => Loc.Get("Pack.StatusChecking");
 
-    /// <summary>{0} = received ("4.1 MB"), {1} = total.</summary>
-    public static string PortraitPackProgress => Loc.Get("Settings.PortraitPackProgress");
+    public static string PackLineChecking => Loc.Get("Pack.LineChecking");
 
-    public static string PortraitPackInstalling => Loc.Get("Settings.PortraitPackInstalling");
+    public static string PackStatusRemoving => Loc.Get("Pack.StatusRemoving");
 
-    public static string PortraitPackRemoving => Loc.Get("Settings.PortraitPackRemoving");
+    public static string PackStatusInstalled => Loc.Get("Pack.StatusInstalled");
 
-    /// <summary>{0} = the pack's game version, {1} = the client's.</summary>
-    public static string PortraitPackOlderGame => Loc.Get("Settings.PortraitPackOlderGame");
+    public static string PackLineInstalled => Loc.Get("Pack.LineInstalled");
 
-    public static string PortraitPackNotInUse => Loc.Get("Settings.PortraitPackNotInUse");
+    public static string PackStatusUpdate => Loc.Get("Pack.StatusUpdate");
 
-    public static string PortraitPackCredit => Loc.Get("Settings.PortraitPackCredit");
+    public static string PackLineUpdate => Loc.Get("Pack.LineUpdate");
 
-    public static string PortraitPackConfirmTitle => Loc.Get("Settings.PortraitPackConfirmTitle");
+    public static string PackUpdateNote => Loc.Get("Pack.UpdateNote");
 
-    /// <summary>{0} = size, {1} = release tag, {2} = the address.</summary>
-    public static string PortraitPackConfirmText => Loc.Get("Settings.PortraitPackConfirmText");
+    public static string PackStatusCancelled => Loc.Get("Pack.StatusCancelled");
 
-    public static string PortraitPackConfirmButton => Loc.Get("Settings.PortraitPackConfirmButton");
+    public static string PackLineCancelled => Loc.Get("Pack.LineCancelled");
 
-    public static string PortraitPackRemoveTitle => Loc.Get("Settings.PortraitPackRemoveTitle");
+    public static string PackStatusFailed => Loc.Get("Pack.StatusFailed");
 
-    public static string PortraitPackRemoveText => Loc.Get("Settings.PortraitPackRemoveText");
+    public static string PackFailedOffline => Loc.Get("Pack.FailedOffline");
 
-    public static string PortraitPackRemoveButton => Loc.Get("Settings.PortraitPackRemoveButton");
+    public static string PackFailedHash => Loc.Get("Pack.FailedHash");
 
-    public static string PortraitPackInstalled => Loc.Get("Settings.PortraitPackDone");
+    public static string PackFailedDiskFull => Loc.Get("Pack.FailedDiskFull");
 
-    public static string PortraitPackRemoved => Loc.Get("Settings.PortraitPackRemoved");
+    public static string PackFailedNotFound => Loc.Get("Pack.FailedNotFound");
 
-    public static string PortraitPackRemoveIncomplete => Loc.Get("Settings.PortraitPackRemoveIncomplete");
+    public static string PackFailedHttp => Loc.Get("Pack.FailedHttp");
 
-    /// <summary>The line a download or install that stopped leaves: what happened, and that nothing was installed.</summary>
-    public static string PortraitPackFailed(PortraitPackFailure failure) => failure switch
-    {
-        PortraitPackFailure.Offline => Loc.Get("Settings.PortraitPackFailedOffline"),
-        PortraitPackFailure.NotFound => Loc.Get("Settings.PortraitPackFailedNotFound"),
-        PortraitPackFailure.Redirected => Loc.Get("Settings.PortraitPackFailedRedirected"),
-        PortraitPackFailure.TooLarge or PortraitPackFailure.SizeMismatch => Loc.Get("Settings.PortraitPackFailedSize"),
-        PortraitPackFailure.HashMismatch => Loc.Get("Settings.PortraitPackFailedHash"),
-        PortraitPackFailure.BadArchive or PortraitPackFailure.UnsafeEntry or PortraitPackFailure.BadManifest or PortraitPackFailure.BadImage => Loc.Get("Settings.PortraitPackFailedChecks"),
-        PortraitPackFailure.DiskFull => Loc.Get("Settings.PortraitPackFailedDiskFull"),
-        PortraitPackFailure.DiskError => Loc.Get("Settings.PortraitPackFailedDisk"),
-        PortraitPackFailure.Cancelled => Loc.Get("Settings.PortraitPackFailedCancelled"),
-        _ => Loc.Get("Settings.PortraitPackFailedHttp"),
-    };
+    public static string PackFailedRedirected => Loc.Get("Pack.FailedRedirected");
+
+    public static string PackFailedSize => Loc.Get("Pack.FailedSize");
+
+    public static string PackFailedChecks => Loc.Get("Pack.FailedChecks");
+
+    public static string PackFailedDisk => Loc.Get("Pack.FailedDisk");
+
+    public static string PackStatusDamaged => Loc.Get("Pack.StatusDamaged");
+
+    public static string PackLineDamaged => Loc.Get("Pack.LineDamaged");
+
+    public static string PackOlderGame => Loc.Get("Pack.OlderGame");
+
+    public static string PackNotInUse => Loc.Get("Pack.NotInUse");
+
+    public static string PackDownload => Loc.Get("Pack.Download");
+
+    public static string PackDownloadAgain => Loc.Get("Pack.DownloadAgain");
+
+    public static string PackUpdate => Loc.Get("Pack.Update");
+
+    public static string PackRemove => Loc.Get("Pack.Remove");
+
+    public static string PackCancel => Loc.Get("Pack.Cancel");
+
+    public static string PackTryAgain => Loc.Get("Pack.TryAgain");
+
+    public static string PackCopyReport => Loc.Get("Pack.CopyReport");
+
+    public static string PackReportFormat => Loc.Get("Pack.ReportFormat");
+
+    public static string PackConfirmTitle => Loc.Get("Pack.ConfirmTitle");
+
+    public static string PackConfirmTitleUpdate => Loc.Get("Pack.ConfirmTitleUpdate");
+
+    public static string PackConfirmWhat => Loc.Get("Pack.ConfirmWhat");
+
+    public static string PackConfirmWhatUpdate => Loc.Get("Pack.ConfirmWhatUpdate");
+
+    public static string PackFactSize => Loc.Get("Pack.FactSize");
+
+    public static string PackFactSizeAside => Loc.Get("Pack.FactSizeAside");
+
+    public static string PackFactFrom => Loc.Get("Pack.FactFrom");
+
+    public static string PackFactFromAside => Loc.Get("Pack.FactFromAside");
+
+    public static string PackFactPhotos => Loc.Get("Pack.FactPhotos");
+
+    public static string PackFactPhotosValue => Loc.Get("Pack.FactPhotosValue");
+
+    public static string PackFactPhotosAside => Loc.Get("Pack.FactPhotosAside");
+
+    public static string PackFactChecked => Loc.Get("Pack.FactChecked");
+
+    public static string PackFactCheckedValue => Loc.Get("Pack.FactCheckedValue");
+
+    public static string PackPromiseLead => Loc.Get("Pack.PromiseLead");
+
+    public static string PackPromise => Loc.Get("Pack.Promise");
+
+    public static string PackSpoilers => Loc.Get("Pack.Spoilers");
+
+    public static string PackWhatItSends => Loc.Get("Pack.WhatItSends");
+
+    public static string PackConfirmDownload => Loc.Get("Pack.ConfirmDownload");
+
+    public static string PackRemoveTitle => Loc.Get("Pack.RemoveTitle");
+
+    public static string PackRemoveBody => Loc.Get("Pack.RemoveBody");
+
+    public static string PackRemoveHold => Loc.Get("Pack.RemoveHold");
+
+    public static string PackRemoveHoldTooltip => Loc.Get("Pack.RemoveHoldTooltip");
+
+    public static string PackKeepIt => Loc.Get("Pack.KeepIt");
+
+    public static string PackHoldHint => Loc.Get("Pack.HoldHint");
+
+    public static string PackArrived => Loc.Get("Pack.Arrived");
 }

@@ -37,6 +37,8 @@ public sealed class PortraitPackService : IDisposable
     private long received;
     private volatile bool disposed;
     private Task? work;
+    private long startedTicks;
+    private int arrival;
 
     /// <param name="transport">Makes the network client for the offer when a confirmed download starts (never before).</param>
     /// <param name="installedChanged">Called on a worker after a pack is installed (true) or removed (false).</param>
@@ -76,6 +78,28 @@ public sealed class PortraitPackService : IDisposable
 
     /// <summary>The running download's progress.</summary>
     public PortraitPackProgress Progress => new(Interlocked.Read(ref received), Offer?.Size ?? 0);
+
+    /// <summary>About how many seconds the running download has left at its pace so far; null until it can tell.</summary>
+    public int? SecondsLeft
+    {
+        get
+        {
+            var progress = Progress;
+            var elapsed = (Environment.TickCount64 - Interlocked.Read(ref startedTicks)) / 1000d;
+            if (progress.Received <= 0 || elapsed < 1d || progress.Total <= progress.Received)
+            {
+                return null;
+            }
+
+            return (int)Math.Ceiling((progress.Total - progress.Received) * elapsed / progress.Received);
+        }
+    }
+
+    /// <summary>What the last download received (bytes, SHA-256), for Copy report after a fingerprint mismatch.</summary>
+    public PortraitPackReceipt? LastReceipt { get; private set; }
+
+    /// <summary>The faces of a pack that just landed, once (the status bar's "Portrait pack installed" note); 0 otherwise.</summary>
+    public int TakeArrival() => Interlocked.Exchange(ref arrival, 0);
 
     /// <summary>The last run's result (<see cref="PortraitPackFailure.None"/> after a success), and when it finished.</summary>
     public PortraitPackFailure LastResult { get; private set; }
@@ -135,6 +159,8 @@ public sealed class PortraitPackService : IDisposable
             cts = new CancellationTokenSource();
             running = cts;
             Interlocked.Exchange(ref received, 0);
+            Interlocked.Exchange(ref startedTicks, Environment.TickCount64);
+            LastReceipt = null;
             phase = (int)PortraitPackPhase.Downloading;
         }
 
@@ -200,8 +226,10 @@ public sealed class PortraitPackService : IDisposable
         {
             source = transport(offer);
             var progress = new Reporter(this);
+            var receipt = new PortraitPackReceipt();
+            LastReceipt = receipt;
             log.Information("Portrait pack: downloading {Size} from {Uri} (the player confirmed)", PortraitPackOffer.SizeText(offer.Size), offer.DownloadUri);
-            result = await PortraitPackDownload.RunAsync(source, offer, download, progress, cancellation).ConfigureAwait(false);
+            result = await PortraitPackDownload.RunAsync(source, offer, download, progress, cancellation, receipt).ConfigureAwait(false);
             if (result == PortraitPackFailure.None)
             {
                 phase = (int)PortraitPackPhase.Installing;
@@ -210,6 +238,7 @@ public sealed class PortraitPackService : IDisposable
                 {
                     installed = pack;
                     damaged = false;
+                    Interlocked.Exchange(ref arrival, pack.Faces);
                     log.Information("Portrait pack {Tag} installed: {Givers} givers", pack.Tag, pack.Givers);
                 }
                 else

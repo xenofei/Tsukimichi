@@ -106,6 +106,16 @@ public interface IPortraitPackTransport
     Task<PortraitPackResponse> GetAsync(Uri uri, CancellationToken cancellation);
 }
 
+/// <summary>What a download received, for the Copy report line after a fingerprint mismatch (spec-1.20 F4).</summary>
+public sealed class PortraitPackReceipt
+{
+    /// <summary>Bytes received.</summary>
+    public long Bytes { get; set; }
+
+    /// <summary>The SHA-256 of what was received (lower-case hex); empty when the download did not finish.</summary>
+    public string Sha256 { get; set; } = string.Empty;
+}
+
 /// <summary>How far a download is: bytes so far of the expected total.</summary>
 public readonly record struct PortraitPackProgress(long Received, long Total)
 {
@@ -134,7 +144,7 @@ public static class PortraitPackDownload
     /// <see cref="PortraitPackFailure.None"/> when the file is exactly the offered pack; otherwise the reason, with the
     /// file deleted. Disk errors are reported, not thrown.
     /// </summary>
-    public static async Task<PortraitPackFailure> RunAsync(IPortraitPackTransport transport, PortraitPackOffer offer, string destination, IProgress<PortraitPackProgress>? progress, CancellationToken cancellation)
+    public static async Task<PortraitPackFailure> RunAsync(IPortraitPackTransport transport, PortraitPackOffer offer, string destination, IProgress<PortraitPackProgress>? progress, CancellationToken cancellation, PortraitPackReceipt? receipt = null)
     {
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(offer);
@@ -142,7 +152,7 @@ public static class PortraitPackDownload
         var result = PortraitPackFailure.DiskError;
         try
         {
-            result = await Fetch(transport, offer, destination, progress, cancellation).ConfigureAwait(false);
+            result = await Fetch(transport, offer, destination, progress, cancellation, receipt).ConfigureAwait(false);
             return result;
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
@@ -175,7 +185,7 @@ public static class PortraitPackDownload
         }
     }
 
-    private static async Task<PortraitPackFailure> Fetch(IPortraitPackTransport transport, PortraitPackOffer offer, string destination, IProgress<PortraitPackProgress>? progress, CancellationToken cancellation)
+    private static async Task<PortraitPackFailure> Fetch(IPortraitPackTransport transport, PortraitPackOffer offer, string destination, IProgress<PortraitPackProgress>? progress, CancellationToken cancellation, PortraitPackReceipt? receipt)
     {
         if (offer.Size <= 0 || offer.Size > PortraitPackOffer.MaxSize)
         {
@@ -223,11 +233,11 @@ public static class PortraitPackDownload
                 return length > offer.Size ? PortraitPackFailure.TooLarge : PortraitPackFailure.SizeMismatch;
             }
 
-            return await Save(body, offer, destination, progress, cancellation).ConfigureAwait(false);
+            return await Save(body, offer, destination, progress, cancellation, receipt).ConfigureAwait(false);
         }
     }
 
-    private static async Task<PortraitPackFailure> Save(Stream body, PortraitPackOffer offer, string destination, IProgress<PortraitPackProgress>? progress, CancellationToken cancellation)
+    private static async Task<PortraitPackFailure> Save(Stream body, PortraitPackOffer offer, string destination, IProgress<PortraitPackProgress>? progress, CancellationToken cancellation, PortraitPackReceipt? receipt)
     {
         var folder = Path.GetDirectoryName(Path.GetFullPath(destination));
         if (!string.IsNullOrEmpty(folder))
@@ -285,10 +295,22 @@ public static class PortraitPackDownload
 
         if (received != offer.Size)
         {
+            if (receipt is not null)
+            {
+                receipt.Bytes = received;
+            }
+
             return PortraitPackFailure.SizeMismatch;
         }
 
-        return string.Equals(Convert.ToHexStringLower(hash.GetHashAndReset()), offer.Sha256, StringComparison.Ordinal)
+        var sha = Convert.ToHexStringLower(hash.GetHashAndReset());
+        if (receipt is not null)
+        {
+            receipt.Bytes = received;
+            receipt.Sha256 = sha;
+        }
+
+        return string.Equals(sha, offer.Sha256, StringComparison.Ordinal)
             ? PortraitPackFailure.None
             : PortraitPackFailure.HashMismatch;
     }

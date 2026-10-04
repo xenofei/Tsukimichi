@@ -144,10 +144,22 @@ public sealed partial class ConfigWindow
 
         // Moon style, Moon colours and Follow Dalamud colours moved to Settings › Themes in 1.16 (spec-1.16 §B1).
         var portraits = Enum.IsDefined(settings.GiverPortraits) ? (int)settings.GiverPortraits : (int)GiverPortraitMode.GameArt;
-        if (Choice(Strings.SettingsGiverPortraits, Strings.SettingsGiverPortraitsHint, ref portraits, GiverPortraitOptions.Value, "giver portrait face picture avatar npc art silhouette"))
+        if (Choice(Strings.SettingsGiverPortraits, Strings.SettingsGiverPortraitsHint, ref portraits, GiverPortraitOptions.Value, "giver portrait face picture avatar npc art silhouette pack"))
         {
-            settings.GiverPortraits = (GiverPortraitMode)portraits;
-            Save();
+            // Game art + pack without the pack opens the download's confirmation and leaves the choice where it was
+            // (spec-1.20 F4): it switches by itself once the pack lands, so the choice is never a dead option.
+            if ((GiverPortraitMode)portraits == GiverPortraitMode.GameArtAndPack && PortraitPack is { Installed: null } pack)
+            {
+                if (pack.Offer is not null && !pack.Busy)
+                {
+                    OpenPackDialog();
+                }
+            }
+            else
+            {
+                settings.GiverPortraits = (GiverPortraitMode)portraits;
+                Save();
+            }
         }
 
         DrawPortraitPack();

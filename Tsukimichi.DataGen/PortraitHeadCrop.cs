@@ -2,14 +2,16 @@ namespace Tsukimichi.DataGen;
 
 /// <summary>
 /// Finds the head in a Garland Tools NPC photo (a front-facing, full-body render on transparency) and frames it by the
-/// plugin's portrait rule (design spec 1.15 A2: eye line 44 %, chin 81 % of the square), feature plan v7 F4.
+/// plugin's portrait rule, sitting high in its bands as spec-1.20 F4 asks of pack faces (eye line 43 %, chin 83 % of the
+/// square, inside 1.15 A2's 42–46 % and 78–84 %), feature plan v7 F4.
 /// <para>
 /// The figure runs from the first to the last row with alpha. The head's height is a share of the figure's by race
 /// (<see cref="HeadShare"/>: about a seventh for the tall races, a quarter for Lalafell). The crown is the first row as
 /// wide as half a head is tall, so a raised weapon, a hat's peak or long ears above it do not count. The chin is the neck:
 /// the narrowest row of the figure from mid-face to the upper chest, where the head meets the shoulders. The eyes are
-/// about half a head above the chin, and the face's centre is the centroid of the opaque pixels between them. Measured
-/// on the contact sheets (<c>sheets/</c>); a frame that misses shows there.
+/// about half a head above the chin, and the face's centre is the centroid of the opaque pixels between them. A frame
+/// whose middle is mostly empty (it caught a weapon, a hat or ears) is dropped (<see cref="MinFilled"/>). Measured on
+/// the contact sheets (<c>sheets/</c>); a frame that misses shows there, and <c>--skip</c> leaves it out.
 /// </para>
 /// </summary>
 internal static class PortraitHeadCrop
@@ -23,14 +25,25 @@ internal static class PortraitHeadCrop
         3 => 0.25, // Lalafell
         5 => 0.12, // Roegadyn
         7 => 0.125, // Hrothgar
-        8 => 0.115, // Viera: the ears add to the figure
+        8 => 0.13, // Viera (the ears are measured apart: see the neck band)
         0 => 0.2,
         _ => 0.135, // Hyur, Miqo'te, Au Ra
     };
 
-    /// <summary>The head framed in a <paramref name="side"/> px square (straight-alpha RGBA); null when no figure is found.</summary>
-    public static byte[]? Crop(byte[] rgba, int width, int height, byte race, int side)
+    /// <summary>Where the eye line and the chin sit in the square (spec-1.20 F4: high in the 1.15 bands).</summary>
+    public const double EyeLine = 0.43;
+
+    /// <inheritdoc cref="EyeLine"/>
+    public const double ChinLine = 0.83;
+
+    /// <summary>
+    /// The head framed in a <paramref name="side"/> px square (straight-alpha RGBA); null when no figure is found.
+    /// <paramref name="box"/> is the square's side in the photo's own pixels (the pack keeps only boxes of 72 px and up,
+    /// so a 72 px plate never upscales, and the hover never shows a face larger than it).
+    /// </summary>
+    public static byte[]? Crop(byte[] rgba, int width, int height, byte race, int side, out int box)
     {
+        box = 0;
         var counts = new int[height];
         var top = -1;
         var bottom = -1;
@@ -85,7 +98,9 @@ internal static class PortraitHeadCrop
             }
         }
 
-        var chin = (double)neck;
+        // A Viera's neck is often under a scarf or long hair: their chin is measured from where the ears pass the crown
+        // rule instead (about half way up the ears; the face below them).
+        var chin = race == 8 ? crown + (1.3 * head) : neck;
         var eyes = chin - (0.48 * head);
 
         // The face's centre: the centroid of the opaque pixels from just above the eyes to the chin.
@@ -109,10 +124,41 @@ internal static class PortraitHeadCrop
         }
 
         var centreX = sum / weight;
-        var box = (chin - eyes) / (0.81 - 0.44);
-        var boxTop = eyes - (0.44 * box);
-        var boxLeft = centreX - (box / 2);
-        return Resample(rgba, width, height, boxLeft, boxTop, box, side);
+        var square = (chin - eyes) / (ChinLine - EyeLine);
+        var boxTop = eyes - (EyeLine * square);
+        var boxLeft = centreX - (square / 2);
+        box = (int)Math.Round(square);
+        var crop = Resample(rgba, width, height, boxLeft, boxTop, square, side);
+
+        // A face fills the middle of the plate. A frame that caught a raised weapon, a hat's peak or a pair of ears
+        // leaves it mostly empty: no crop, so the giver keeps game art or a fallback rather than a wrong picture.
+        return Filled(crop, side) >= MinFilled ? crop : null;
+    }
+
+    /// <summary>The share of the plate's middle (a disc of 35 % of the side) a face must cover.</summary>
+    public const double MinFilled = 0.5;
+
+    /// <summary>The opaque share of the disc of radius 0.35 × <paramref name="side"/> at the square's centre.</summary>
+    public static double Filled(byte[] rgba, int side)
+    {
+        var r = side * 0.35;
+        var c = (side - 1) / 2d;
+        int inside = 0, opaque = 0;
+        for (var y = 0; y < side; y++)
+        {
+            for (var x = 0; x < side; x++)
+            {
+                if (((x - c) * (x - c)) + ((y - c) * (y - c)) > r * r)
+                {
+                    continue;
+                }
+
+                inside++;
+                opaque += rgba[(((y * side) + x) * 4) + 3] >= 128 ? 1 : 0;
+            }
+        }
+
+        return inside == 0 ? 0 : (double)opaque / inside;
     }
 
     /// <summary>

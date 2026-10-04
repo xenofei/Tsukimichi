@@ -1433,8 +1433,8 @@ public sealed partial class Plugin : IDalamudPlugin
                 Log,
                 installed => _ = Framework.RunOnFrameworkThread(() =>
                 {
-                    // The player asked for the pack: use it (Game art becomes Game art + pack; Off stays Off).
-                    if (installed && Settings.GiverPortraits == Core.Ui.GiverPortraitMode.GameArt)
+                    // The player asked for the pack: Giver portraits switches to Game art + pack by itself (spec-1.20 F4).
+                    if (installed && Settings.GiverPortraits != Core.Ui.GiverPortraitMode.GameArtAndPack)
                     {
                         Settings.GiverPortraits = Core.Ui.GiverPortraitMode.GameArtAndPack;
                         Settings.Save(PluginInterface);
@@ -1444,6 +1444,9 @@ public sealed partial class Plugin : IDalamudPlugin
             _ = pack.LoadAsync();
             Ui.GiverPortraits.Pack = () => pack.Installed;
             configWindow.PortraitPack = pack;
+            mainWindow.TakeStatusNote = () => pack.TakeArrival() is > 0 and var faces
+                ? string.Format(System.Globalization.CultureInfo.CurrentCulture, Ui.Strings.PackArrived, faces.ToString("N0", System.Globalization.CultureInfo.CurrentCulture))
+                : null;
             // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
             var exportService = new Game.ExportService(Session, Settings, Paths, unlockReader, () => moonlit.Catalog, diagnostics.PluginVersion, diagnostics.ClientGameVersion, Log)
             {

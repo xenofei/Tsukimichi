@@ -17,9 +17,12 @@ namespace Tsukimichi.Core.Portraits;
 public sealed class PortraitPack
 {
     private readonly FrozenDictionary<uint, string> paths;
+    private readonly FrozenDictionary<uint, int> boxes;
 
-    public PortraitPack(string folder, PortraitPackManifest manifest, string sha256, string tag)
+    public PortraitPack(string folder, PortraitPackManifest manifest, string sha256, string tag, DateTime installedUtc = default, long bytesOnDisk = 0)
     {
+        InstalledUtc = installedUtc;
+        BytesOnDisk = bytesOnDisk;
         ArgumentException.ThrowIfNullOrEmpty(folder);
         Folder = Path.GetFullPath(folder);
         Manifest = manifest ?? throw new ArgumentNullException(nameof(manifest));
@@ -27,7 +30,23 @@ public sealed class PortraitPack
         Tag = tag ?? string.Empty;
         var files = manifest.Files.Keys.ToDictionary(name => name, name => Path.Combine(Folder, name), StringComparer.Ordinal);
         paths = manifest.Entries.ToFrozenDictionary(kv => kv.Key, kv => files[kv.Value]);
+        boxes = manifest.Entries.Where(kv => manifest.Boxes.ContainsKey(kv.Value)).ToFrozenDictionary(kv => kv.Key, kv => manifest.Boxes[kv.Value]);
     }
+
+    /// <summary>When it was installed (UTC); default when unknown.</summary>
+    public DateTime InstalledUtc { get; }
+
+    /// <summary>What its folder takes on disk, bytes.</summary>
+    public long BytesOnDisk { get; }
+
+    /// <summary>The pack's number ("pack 1"); 0 when its tag does not say.</summary>
+    public int PackNumber => PortraitPackOffer.PackNumberOf(Tag);
+
+    /// <summary>How many distinct faces (images) it holds.</summary>
+    public int Faces => Manifest.Files.Count;
+
+    /// <summary>The head box (source pixels) of <paramref name="npcId"/>'s photo; 0 when the pack does not say.</summary>
+    public int BoxOf(uint npcId) => boxes.GetValueOrDefault(npcId);
 
     /// <summary>The installed folder (full path).</summary>
     public string Folder { get; }
@@ -101,6 +120,7 @@ public sealed partial class PortraitPackStore
             var folder = Text(root?["folder"]);
             var sha = Text(root?["sha256"]) ?? string.Empty;
             var tag = Text(root?["tag"]) ?? string.Empty;
+            var installed = DateTime.TryParse(Text(root?["installedUtc"]), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var when) ? when : default;
             if (folder is null || !FolderName().IsMatch(folder) || !PortraitPackManifest.IsSha256(sha))
             {
                 damaged = true;
@@ -122,7 +142,7 @@ public sealed partial class PortraitPackStore
                 return null;
             }
 
-            return new PortraitPack(path, manifest, sha, tag);
+            return new PortraitPack(path, manifest, sha, tag, installed, FolderBytes(path));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException or InvalidOperationException)
         {
@@ -189,8 +209,9 @@ public sealed partial class PortraitPackStore
             }
 
             Directory.Move(staging, final);
-            WriteCurrent(folder, offer.Sha256, offer.Tag);
-            pack = new PortraitPack(final, manifest, offer.Sha256, offer.Tag);
+            var now = DateTime.UtcNow;
+            WriteCurrent(folder, offer.Sha256, offer.Tag, now);
+            pack = new PortraitPack(final, manifest, offer.Sha256, offer.Tag, now, FolderBytes(final));
             return PortraitPackFailure.None;
         }
         catch (OperationCanceledException)
@@ -340,7 +361,19 @@ public sealed partial class PortraitPackStore
         }
     }
 
-    private void WriteCurrent(string folder, string sha256, string tag)
+    private static long FolderBytes(string path)
+    {
+        try
+        {
+            return new DirectoryInfo(path).EnumerateFiles().Sum(f => f.Length);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return 0;
+        }
+    }
+
+    private void WriteCurrent(string folder, string sha256, string tag, DateTime installedUtc)
     {
         var root = new JsonObject
         {
@@ -348,7 +381,7 @@ public sealed partial class PortraitPackStore
             ["folder"] = folder,
             ["sha256"] = sha256,
             ["tag"] = tag,
-            ["installedUtc"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+            ["installedUtc"] = installedUtc.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
         };
         AtomicFile.Write(CurrentFile, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");
     }

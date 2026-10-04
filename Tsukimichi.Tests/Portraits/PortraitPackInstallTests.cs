@@ -268,7 +268,11 @@ public sealed class PortraitPackInstallTests : IDisposable
         Assert.False(damaged);
         Assert.NotNull(loaded);
         Assert.Equal(offer.Sha256, loaded.Sha256);
-        Assert.Equal("v1.20.0", loaded.Tag);
+        Assert.Equal("portraits-1", loaded.Tag);
+        Assert.Equal(1, loaded.PackNumber);
+        Assert.Equal(2, loaded.Faces);
+        Assert.True(loaded.BytesOnDisk > 0);
+        Assert.True(DateTime.UtcNow - loaded.InstalledUtc < TimeSpan.FromMinutes(5));
         Assert.Equal(3, loaded.Givers);
         Assert.True(loaded.TryGetPath(1012527, out var alias));
         Assert.EndsWith("1001000.png", alias, StringComparison.Ordinal);

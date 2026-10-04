@@ -142,6 +142,7 @@ Known quirks (quests the game skips a step on, older guides' rank names, seasona
 
 - Quest, reward and journal data are read from your own installed copy of FINAL FANTASY XIV. FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All rights reserved. FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
 - Curated lists (duty and system unlocks, story chains, seasonal windows, store re-sells) were checked against the [Final Fantasy XIV Console Games Wiki](https://ffxiv.consolegameswiki.com/) (CC BY-NC-SA 3.0), [FFXIV Collect](https://ffxivcollect.com/) and [Garland Tools](https://www.garlandtools.org/), with ids confirmed through [xivapi](https://v2.xivapi.com/). The plugin itself never contacts any of them.
+- The optional portrait pack (Settings › General › Look › Portrait pack) holds head crops of [Garland Tools](https://www.garlandtools.org/)' NPC photos, by Celes. It downloads from Tsukimichi's own GitHub release, and only when you click Download.
 
 ## Third-party tools and the Terms of Service
 

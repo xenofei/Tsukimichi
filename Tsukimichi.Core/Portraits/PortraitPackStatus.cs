@@ -58,14 +58,7 @@ public static class PortraitPackStatus
         !string.IsNullOrWhiteSpace(packGameVersion) && !string.IsNullOrWhiteSpace(clientGameVersion)
         && DataFreshness.Compare(packGameVersion, clientGameVersion) == FreshnessVerdict.NewerClient;
 
-    /// <summary>Compares release tags ("v1.20.0" &lt; "v1.21.0"); a tag that does not parse sorts first.</summary>
-    public static int CompareTags(string? a, string? b)
-    {
-        var left = ParseTag(a);
-        var right = ParseTag(b);
-        return left is null ? (right is null ? 0 : -1) : right is null ? 1 : left.CompareTo(right);
-    }
-
-    private static Version? ParseTag(string? tag) =>
-        tag is { Length: > 1 } && tag[0] == 'v' && Version.TryParse(tag[1..], out var version) ? version : null;
+    /// <summary>Compares pack releases by number ("portraits-1" &lt; "portraits-2"); a tag that does not parse sorts first.</summary>
+    public static int CompareTags(string? a, string? b) =>
+        PortraitPackOffer.PackNumberOf(a).CompareTo(PortraitPackOffer.PackNumberOf(b));
 }

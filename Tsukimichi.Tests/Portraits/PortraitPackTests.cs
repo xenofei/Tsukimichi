@@ -81,7 +81,8 @@ public sealed class PortraitPackTests
     public void The_offer_names_the_pinned_release_asset_and_reads_back()
     {
         var offer = Offer();
-        Assert.Equal(new Uri("https://github.com/xenofei/Tsukimichi/releases/download/v1.20.0/Tsukimichi-portraits.zip"), offer.DownloadUri);
+        Assert.Equal(new Uri("https://github.com/xenofei/Tsukimichi/releases/download/portraits-1/Tsukimichi-portraits.zip"), offer.DownloadUri);
+        Assert.Equal(1, offer.PackNumber);
         Assert.Equal(offer, PortraitPackOffer.Parse(offer.ToJson(), out var warning));
         Assert.Null(warning);
     }
@@ -94,14 +95,16 @@ public sealed class PortraitPackTests
     }
 
     [Theory]
-    [InlineData("../../evil/v1.0.0", "Tsukimichi-portraits.zip", 100)]
-    [InlineData("v1.20.0/../..", "Tsukimichi-portraits.zip", 100)]
+    [InlineData("../../evil/portraits-1", "Tsukimichi-portraits.zip", 100)]
+    [InlineData("portraits-1/../..", "Tsukimichi-portraits.zip", 100)]
     [InlineData("main", "Tsukimichi-portraits.zip", 100)]
-    [InlineData("v1.20.0", "evil.exe", 100)]
-    [InlineData("v1.20.0", "a/b.zip", 100)]
-    [InlineData("v1.20.0", "https://evil.example/x.zip", 100)]
-    [InlineData("v1.20.0", "Tsukimichi-portraits.zip", 0)]
-    [InlineData("v1.20.0", "Tsukimichi-portraits.zip", PortraitPackOffer.MaxSize + 1)]
+    [InlineData("v1.20.0", "Tsukimichi-portraits.zip", 100)]
+    [InlineData("portraits-0", "Tsukimichi-portraits.zip", 100)]
+    [InlineData("portraits-1", "evil.exe", 100)]
+    [InlineData("portraits-1", "a/b.zip", 100)]
+    [InlineData("portraits-1", "https://evil.example/x.zip", 100)]
+    [InlineData("portraits-1", "Tsukimichi-portraits.zip", 0)]
+    [InlineData("portraits-1", "Tsukimichi-portraits.zip", PortraitPackOffer.MaxSize + 1)]
     public void An_offer_naming_anything_but_a_release_asset_is_refused(string tag, string asset, long size)
     {
         var json = $$"""{ "tag": "{{tag}}", "asset": "{{asset}}", "size": {{size}}, "sha256": "{{new string('a', 64)}}", "format": 1 }""";
@@ -110,12 +113,12 @@ public sealed class PortraitPackTests
     }
 
     [Theory]
-    [InlineData("https://github.com/xenofei/Tsukimichi/releases/download/v1.20.0/Tsukimichi-portraits.zip", true)]
+    [InlineData("https://github.com/xenofei/Tsukimichi/releases/download/portraits-1/Tsukimichi-portraits.zip", true)]
     [InlineData("https://objects.githubusercontent.com/github-production-release-asset/1?sig=x", true)]
     [InlineData("https://release-assets.githubusercontent.com/github-production-release-asset/1?sig=x", true)]
-    [InlineData("http://github.com/xenofei/Tsukimichi/releases/download/v1.20.0/Tsukimichi-portraits.zip", false)]
-    [InlineData("https://github.com/xenofei/Tsukimichi/releases/download/v1.19.0/Tsukimichi-portraits.zip", false)]
-    [InlineData("https://github.com/someone/else/releases/download/v1.20.0/Tsukimichi-portraits.zip", false)]
+    [InlineData("http://github.com/xenofei/Tsukimichi/releases/download/portraits-1/Tsukimichi-portraits.zip", false)]
+    [InlineData("https://github.com/xenofei/Tsukimichi/releases/download/portraits-2/Tsukimichi-portraits.zip", false)]
+    [InlineData("https://github.com/someone/else/releases/download/portraits-1/Tsukimichi-portraits.zip", false)]
     [InlineData("https://objects.githubusercontent.com.evil.example/x", false)]
     [InlineData("https://evil.example/objects.githubusercontent.com", false)]
     [InlineData("http://objects.githubusercontent.com/x", false)]
@@ -200,14 +203,15 @@ public sealed class PortraitPackTests
         Assert.Equal(PortraitPackState.NotOffered, PortraitPackStatus.Of(null, null, damaged: false));
         Assert.Equal(PortraitPackState.Available, PortraitPackStatus.Of(offer, null, damaged: false));
         Assert.Equal(PortraitPackState.Damaged, PortraitPackStatus.Of(offer, null, damaged: true));
-        Assert.Equal(PortraitPackState.Installed, PortraitPackStatus.Of(offer, Installed(offer.Sha256, "v1.20.0"), damaged: false));
-        Assert.Equal(PortraitPackState.Installed, PortraitPackStatus.Of(null, Installed(offer.Sha256, "v1.20.0"), damaged: false));
+        Assert.Equal(PortraitPackState.Installed, PortraitPackStatus.Of(offer, Installed(offer.Sha256, "portraits-1"), damaged: false));
+        Assert.Equal(PortraitPackState.Installed, PortraitPackStatus.Of(null, Installed(offer.Sha256, "portraits-1"), damaged: false));
 
-        // A plugin update shipping a different pack offers it; nothing downloads by itself.
-        Assert.Equal(PortraitPackState.UpdateAvailable, PortraitPackStatus.Of(offer, Installed(new string('b', 64), "v1.19.0"), damaged: false));
+        // A plugin update naming another pack offers it (only from its own portrait_pack.json; nothing checks online).
+        var pack2 = new PortraitPackOffer("portraits-2", "Tsukimichi-portraits.zip", 1000, new string('c', 64), 1, "2026.11.03.0000.0000", 4);
+        Assert.Equal(PortraitPackState.UpdateAvailable, PortraitPackStatus.Of(pack2, Installed(offer.Sha256, "portraits-1"), damaged: false));
 
         // Back on an older plugin, a newer installed pack is kept, never "updated" to the older one.
-        Assert.Equal(PortraitPackState.Installed, PortraitPackStatus.Of(offer, Installed(new string('b', 64), "v1.21.0"), damaged: false));
+        Assert.Equal(PortraitPackState.Installed, PortraitPackStatus.Of(offer, Installed(new string('b', 64), "portraits-2"), damaged: false));
     }
 
     [Theory]
@@ -221,22 +225,24 @@ public sealed class PortraitPackTests
         Assert.Equal(older, PortraitPackStatus.ForOlderGame(pack, client));
 
     [Theory]
-    [InlineData("v1.20.0", "v1.21.0", -1)]
-    [InlineData("v1.21.0", "v1.20.0", 1)]
-    [InlineData("v1.20.0", "v1.20.0", 0)]
-    [InlineData("v1.9.0", "v1.10.0", -1)]
-    [InlineData("junk", "v1.0.0", -1)]
+    [InlineData("portraits-1", "portraits-2", -1)]
+    [InlineData("portraits-2", "portraits-1", 1)]
+    [InlineData("portraits-1", "portraits-1", 0)]
+    [InlineData("portraits-9", "portraits-10", -1)]
+    [InlineData("junk", "portraits-1", -1)]
     public void Release_tags_compare_as_versions(string a, string b, int sign) =>
         Assert.Equal(sign, Math.Sign(PortraitPackStatus.CompareTags(a, b)));
 
     // ------------------------------------------------------------------ which face a giver wears
 
     [Fact]
-    public void Game_art_is_kept_and_the_pack_fills_only_where_the_game_has_none()
+    public void The_pack_goes_first_and_game_art_stands_in_where_it_has_no_photo()
     {
-        var index = Index().WithPack(Installed(new string('a', 64), "v1.20.0", Alphinaud, Hnaanza, GrahaTia, Stranger));
+        // Alphinaud has a Duty Support bust: with his photo in the pack, the photo goes first (spec-1.20 F4, A1) ...
+        Assert.Equal(PortraitSource.Pack, Index().WithPack(Installed(new string('a', 64), "portraits-1", Alphinaud)).For(Alphinaud, 70001).Source);
 
-        // Alphinaud has a Duty Support bust from his era: kept, hand-framed game art wins.
+        // ... and without it, the bust stands in.
+        var index = Index().WithPack(Installed(new string('a', 64), "portraits-1", Hnaanza, GrahaTia, Stranger));
         Assert.Equal(PortraitSource.TrustBust, index.For(Alphinaud, 70001).Source);
 
         // H'naanza has no game art: the pack's photo, its icon the NPC id, the whole image, the quest's era.
@@ -256,7 +262,7 @@ public sealed class PortraitPackTests
     public void A_giver_whose_game_faces_are_all_later_wears_the_pack_photo_of_their_quest()
     {
         var plain = Index();
-        var withPack = plain.WithPack(Installed(new string('a', 64), "v1.20.0", GrahaTia));
+        var withPack = plain.WithPack(Installed(new string('a', 64), "portraits-1", GrahaTia));
 
         // G'raha Tia's only game face is from Shadowbringers: an A Realm Reborn quest gets none from the game ...
         Assert.False(plain.For(GrahaTia, 65020).HasArt);
@@ -266,14 +272,15 @@ public sealed class PortraitPackTests
         Assert.Equal(PortraitSource.Pack, face.Source);
         Assert.Equal(0, face.Era);
 
-        // His Shadowbringers quest keeps the Duty Support bust.
-        Assert.Equal(PortraitSource.TrustBust, withPack.For(GrahaTia, 70020).Source);
+        // His Shadowbringers quest wears the pack's photo too (the pack goes first); without the pack, the bust.
+        Assert.Equal(PortraitSource.Pack, withPack.For(GrahaTia, 70020).Source);
+        Assert.Equal(PortraitSource.TrustBust, plain.For(GrahaTia, 70020).Source);
     }
 
     [Fact]
     public void A_seasonal_quest_wears_the_pack_photo_at_the_givers_first_era()
     {
-        var index = Index().WithPack(Installed(new string('a', 64), "v1.20.0", Hnaanza));
+        var index = Index().WithPack(Installed(new string('a', 64), "portraits-1", Hnaanza));
         var face = index.For(Hnaanza, PortraitIndex.SeasonalEra, 0);
         Assert.Equal(PortraitSource.Pack, face.Source);
         Assert.Equal(0, face.Era);
@@ -284,7 +291,7 @@ public sealed class PortraitPackTests
     {
         var plain = Index();
         Assert.Same(plain, plain.WithPack(null));
-        var pack = Installed(new string('a', 64), "v1.20.0", Alphinaud);
+        var pack = Installed(new string('a', 64), "portraits-1", Alphinaud);
         var withPack = plain.WithPack(pack);
         Assert.Same(withPack, withPack.WithPack(pack));
         Assert.Same(pack, withPack.Pack);
@@ -295,30 +302,50 @@ public sealed class PortraitPackTests
     [Fact]
     public void A_giver_the_index_does_not_know_still_wears_a_pack_photo()
     {
-        var face = Index().WithPack(Installed(new string('a', 64), "v1.20.0", Stranger)).For(Stranger, 3, 0);
+        var face = Index().WithPack(Installed(new string('a', 64), "portraits-1", Stranger)).For(Stranger, 3, 0);
         Assert.Equal(PortraitSource.Pack, face.Source);
         Assert.Equal(3, face.Era);
         Assert.Equal(PortraitFallbackKind.Moon, face.Fallback.Kind);
     }
 
     [Fact]
-    public void The_pack_ranks_after_every_game_family_and_is_never_a_curated_family()
+    public void The_pack_ranks_before_every_game_family_and_is_never_a_curated_family()
     {
         Assert.True(PortraitIndex.PackWins(PortraitSource.None));
         foreach (var family in PortraitSources.Priority)
         {
-            Assert.False(PortraitIndex.PackWins(family));
-            Assert.True(PortraitSources.Rank(family) < PortraitSources.Rank(PortraitSource.Pack));
+            Assert.True(PortraitIndex.PackWins(family));
+            Assert.True(PortraitSources.Rank(PortraitSource.Pack) < PortraitSources.Rank(family));
         }
 
         Assert.False(PortraitSources.TryParse("Pack", out _));
         Assert.Equal((PortraitPackManifest.ImageSide, PortraitPackManifest.ImageSide), PortraitSources.TextureSize(PortraitSource.Pack));
     }
 
+    [Fact]
+    public void A_pack_face_is_never_hovered_larger_than_its_head_box()
+    {
+        var files = new Dictionary<string, string> { ["1002000.png"] = new string('a', 64), ["1003000.png"] = new string('b', 64) };
+        var manifest = PortraitPackManifest.Create(
+            "2026.09.15.0000.0000",
+            new DateTime(2026, 10, 3, 0, 0, 0, DateTimeKind.Utc),
+            "test",
+            files,
+            new Dictionary<uint, string> { [Hnaanza] = "1002000.png", [GrahaTia] = "1003000.png" },
+            boxes: new Dictionary<string, int> { ["1002000.png"] = 92 });
+        Assert.Equal(92, PortraitPackManifest.TryParse(manifest.ToJson(), out _)?.Boxes["1002000.png"]);
+
+        var index = Index().WithPack(new PortraitPack(Path.GetTempPath(), manifest, new string('a', 64), "portraits-1"));
+        var boxed = index.For(Hnaanza, 65010);
+        Assert.Equal(92, boxed.SourceBox);
+        Assert.Equal(92f, Core.Ui.PortraitPlate.TooltipSize(boxed, face: true));
+        Assert.Equal(Core.Ui.PortraitPlate.TooltipMax, Core.Ui.PortraitPlate.TooltipSize(index.For(GrahaTia, 65020), face: true));
+    }
+
     // ------------------------------------------------------------------ helpers
 
     internal static PortraitPackOffer Offer(string sha = "", long size = 1000) =>
-        new("v1.20.0", "Tsukimichi-portraits.zip", size, sha.Length > 0 ? sha : new string('a', 64), 1, "2026.09.15.0000.0000", 3);
+        new("portraits-1", "Tsukimichi-portraits.zip", size, sha.Length > 0 ? sha : new string('a', 64), 1, "2026.09.15.0000.0000", 3);
 
     internal static PortraitPackManifest Manifest(params (string File, uint[] Ids)[] images)
     {

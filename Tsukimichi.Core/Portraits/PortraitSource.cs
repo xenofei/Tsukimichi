@@ -48,9 +48,10 @@ public enum PortraitSource : byte
 public static class PortraitSources
 {
     /// <summary>
-    /// Best first: Trust bust, Triple Triad card, battle-talk face, delivery portrait, Trust strip. The optional
-    /// portrait pack (F4) is not in the index: it fills in after them all (<see cref="Rank"/>, <see cref="PortraitIndex.WithPack"/>),
-    /// where the game art has nothing, so every hand-framed game face is kept.
+    /// Best first among the game's own art: Trust bust, Triple Triad card, battle-talk face, delivery portrait, Trust
+    /// strip. The optional portrait pack (F4) is not in the index: when installed it goes in front of them all
+    /// (spec-1.20 F4, the 1.15 order A1: <see cref="Rank"/>, <see cref="PortraitIndex.WithPack"/>), as a photo of that
+    /// exact NPC; the game art stands in wherever the pack has no photo.
     /// </summary>
     public static readonly IReadOnlyList<PortraitSource> Priority =
     [
@@ -61,7 +62,10 @@ public static class PortraitSources
         PortraitSource.TrustStrip,
     ];
 
-    /// <summary>The rank of a family in <see cref="Priority"/> (0 best); <see cref="PortraitSource.None"/> ranks last.</summary>
+    /// <summary>
+    /// The rank of a family in <see cref="Priority"/> (0 best); the portrait pack ranks before them all (-1), and
+    /// <see cref="PortraitSource.None"/> last.
+    /// </summary>
     public static int Rank(PortraitSource source) => source switch
     {
         PortraitSource.TrustBust => 0,
@@ -69,7 +73,7 @@ public static class PortraitSources
         PortraitSource.BattleTalk => 2,
         PortraitSource.Delivery => 3,
         PortraitSource.TrustStrip => 4,
-        PortraitSource.Pack => 5,
+        PortraitSource.Pack => -1,
         _ => int.MaxValue,
     };
 

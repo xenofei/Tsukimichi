@@ -16,8 +16,10 @@ namespace Tsukimichi.DataGen;
 /// Garland Tools NPC page (<c>/db/doc/npc/en/2/&lt;id&gt;.json</c>), and when that names a photo, the photo
 /// (<c>/files/photos/npc/Enpc_&lt;id&gt;.png</c>, a full-body studio render on transparency, credit Celes), one request
 /// a second, every answer cached on disk so a rerun fetches nothing it has. Each photo is head-cropped
-/// (<see cref="PortraitHeadCrop"/>) to a <see cref="PortraitPackManifest.ImageSide"/> px square framed by the plugin's rule
-/// (eye line 44 %, chin 81 %), quantised to a 256-colour PNG, and stored once however many giver ids share it.
+/// (<see cref="PortraitHeadCrop"/>) to a <see cref="PortraitPackManifest.ImageSide"/> px square framed by the plugin's rule,
+/// high in its bands (eye line 43 %, chin 83 %, spec-1.20 F4), quantised to a 256-colour PNG, and stored once however
+/// many giver ids share it. A photo whose head box is under <see cref="MinBox"/> px is left out (a 72 px plate never
+/// upscales), and each image's box goes in the manifest so the hover never shows a face larger than its source.
 /// <para>
 /// Writes <c>Tsukimichi-portraits.zip</c> (manifest and images; the same photos on the same day make the same bytes), its
 /// <c>.sha256</c>, <c>report.md</c> (coverage and every giver without a photo), and contact sheets under
@@ -31,6 +33,9 @@ internal static partial class PortraitPackBuilder
     private const string DocUrl = "https://www.garlandtools.org/db/doc/npc/en/2/{0}.json";
     private const string PhotoUrl = "https://www.garlandtools.org/files/photos/npc/{0}";
     private const string Source = "Garland Tools NPC photos (garlandtools.org; photos credit: Celes)";
+
+    /// <summary>The smallest head box kept, source px (spec-1.20 F4: the 72 px plate never upscales at 100 %).</summary>
+    public const int MinBox = 72;
 
     public static int Run(string[] args)
     {
@@ -138,6 +143,7 @@ internal static partial class PortraitPackBuilder
         var entries = new SortedDictionary<uint, string>();
         var missing = new List<(uint Id, string Name, string Why)>();
         var sheet = new List<(uint Id, string Name, byte[] Rgba)>();
+        var boxes = new SortedDictionary<string, int>(StringComparer.Ordinal);
         var done = 0;
         foreach (var giver in givers)
         {
@@ -181,12 +187,20 @@ internal static partial class PortraitPackBuilder
                     continue;
                 }
 
-                var crop = PortraitHeadCrop.Crop(rgba, width, height, giver.Race, PortraitPackManifest.ImageSide);
+                var crop = PortraitHeadCrop.Crop(rgba, width, height, giver.Race, PortraitPackManifest.ImageSide, out var box);
                 if (crop is null)
                 {
-                    missing.Add((giver.NpcId, giver.Name, "no figure found in the photo"));
+                    missing.Add((giver.NpcId, giver.Name, "no face found in the photo (no figure, or the frame caught a weapon, hat or ears)"));
                     continue;
                 }
+
+                if (box < MinBox)
+                {
+                    missing.Add((giver.NpcId, giver.Name, $"head box under {MinBox} px"));
+                    continue;
+                }
+
+                boxes[fileName] = box;
 
                 images[fileName] = PortraitQuantizer.Encode(crop, PortraitPackManifest.ImageSide, PortraitPackManifest.ImageSide);
                 sheet.Add((giver.NpcId, giver.Name, crop));
@@ -202,7 +216,7 @@ internal static partial class PortraitPackBuilder
         }
 
         var files = images.ToDictionary(kv => kv.Key, kv => Convert.ToHexStringLower(SHA256.HashData(kv.Value)), StringComparer.Ordinal);
-        var manifest = PortraitPackManifest.Create(gameVersion, DateTime.UtcNow.Date, Source, files, entries);
+        var manifest = PortraitPackManifest.Create(gameVersion, DateTime.UtcNow.Date, Source, files, entries, boxes: boxes);
         var zipPath = Path.Combine(outDir, AssetName);
         using (var zipFile = File.Create(zipPath))
         {
@@ -325,8 +339,8 @@ internal static partial class PortraitPackBuilder
                 // The plate's circle and the eye and chin lines of the framing rule.
                 var c = (Cell - 8) / 2;
                 canvas.Circle(left + 4 + c, top + 4 + c, c, (230, 207, 152), 0.5);
-                canvas.Fill(left + 4, top + 4 + (int)((Cell - 8) * 0.44), Cell - 8, 1, (230, 207, 152), 0.35);
-                canvas.Fill(left + 4, top + 4 + (int)((Cell - 8) * 0.81), Cell - 8, 1, (255, 120, 100), 0.35);
+                canvas.Fill(left + 4, top + 4 + (int)((Cell - 8) * PortraitHeadCrop.EyeLine), Cell - 8, 1, (230, 207, 152), 0.35);
+                canvas.Fill(left + 4, top + 4 + (int)((Cell - 8) * PortraitHeadCrop.ChinLine), Cell - 8, 1, (255, 120, 100), 0.35);
                 canvas.Text(left + 4, top + Cell, id.ToString(CultureInfo.InvariantCulture), (226, 222, 210), Cell - 8);
             }
 

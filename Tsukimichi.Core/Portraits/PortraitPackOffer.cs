@@ -11,11 +11,13 @@ namespace Tsukimichi.Core.Portraits;
 /// the asset's name, and the size and SHA-256 the download must match. Shipped as <c>Data/portrait_pack.json</c>,
 /// written by <c>Tsukimichi.DataGen --portrait-pack … --offer</c> when the pack is built for a release.
 /// <code>
-/// { "schema": 1, "tag": "v1.20.0", "asset": "Tsukimichi-portraits.zip", "size": 12345678,
+/// { "schema": 1, "tag": "portraits-1", "asset": "Tsukimichi-portraits.zip", "size": 12345678,
 ///   "sha256": "&lt;lower-case hex&gt;", "format": 1, "gameVersion": "2026.09.15.0000.0000", "givers": 2412 }
 /// </code>
-/// The address is never read from the file: it is always <see cref="ReleaseBase"/> + tag + asset, both checked here, so
-/// the plugin can only ever fetch an asset of a Tsukimichi release on GitHub.
+/// The pack has releases of its own, <c>portraits-1</c>, <c>portraits-2</c> … (spec-1.20 F4: "pack 1", "pack 2"); a
+/// plugin release names the one it pairs with, and the plugin never asks GitHub whether there is a newer one. The address
+/// is never read from the file: it is always <see cref="ReleaseBase"/> + tag + asset, both checked here, so the plugin
+/// can only ever fetch an asset of a Tsukimichi release on GitHub.
 /// </summary>
 public sealed partial record PortraitPackOffer(string Tag, string Asset, long Size, string Sha256, int Format, string GameVersion, int Givers)
 {
@@ -37,8 +39,18 @@ public sealed partial record PortraitPackOffer(string Tag, string Asset, long Si
     /// <summary>The address of the pack: <see cref="ReleaseBase"/>, the tag and the asset.</summary>
     public Uri DownloadUri => new(ReleaseBase + Tag + "/" + Asset, UriKind.Absolute);
 
-    /// <summary>The release's page, for the Settings line ("from Tsukimichi's GitHub release v1.20.0").</summary>
+    /// <summary>The release's name, for the confirmation ("release portraits-1").</summary>
     public string ReleaseName => Tag;
+
+    /// <summary>The pack's number (1 for <c>portraits-1</c>), for "pack 1"; 0 when the tag does not say.</summary>
+    public int PackNumber => PackNumberOf(Tag);
+
+    /// <summary>The pack number in a <c>portraits-N</c> tag; 0 for anything else.</summary>
+    public static int PackNumberOf(string? tag) =>
+        tag is not null && tag.StartsWith(TagPrefix, StringComparison.Ordinal)
+        && int.TryParse(tag.AsSpan(TagPrefix.Length), System.Globalization.NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? n : 0;
+
+    private const string TagPrefix = "portraits-";
 
     /// <summary>
     /// Whether <paramref name="uri"/> may be fetched at all: the pinned release address itself, or HTTPS on one of
@@ -83,7 +95,7 @@ public sealed partial record PortraitPackOffer(string Tag, string Asset, long Si
 
     /// <summary>
     /// Reads an offer; null when the file offers no pack (no tag yet), and null with <paramref name="warning"/> when a
-    /// field is not what a release writes: a tag other than <c>v1.2.3</c>, an asset name other than a plain <c>.zip</c>
+    /// field is not what a release writes: a tag other than <c>portraits-N</c>, an asset name other than a plain <c>.zip</c>
     /// name, a size outside 1 byte to <see cref="MaxSize"/>, or a hash that is not SHA-256.
     /// </summary>
     public static PortraitPackOffer? Parse(ReadOnlySpan<byte> json, out string? warning)
@@ -159,7 +171,7 @@ public sealed partial record PortraitPackOffer(string Tag, string Asset, long Si
 
     private static string? Text(JsonNode? node) => node is JsonValue v && v.TryGetValue<string>(out var text) ? text : null;
 
-    [GeneratedRegex(@"^v[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(\.[0-9]{1,3})?\z", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^portraits-[1-9][0-9]{0,3}\z", RegexOptions.CultureInvariant)]
     private static partial Regex TagPattern();
 
     [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}\.zip\z", RegexOptions.CultureInvariant)]
