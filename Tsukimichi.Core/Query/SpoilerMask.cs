@@ -142,6 +142,29 @@ public sealed class SpoilerMask
         return PlacedMasked(kind, name, out var level) ? KindPlaceholder(kind, level) : name;
     }
 
+    /// <summary>
+    /// A place with its region through the wider shield, in <paramref name="pathFormat"/> ("{0} › {1}": "Hingashi ›
+    /// Kugane"): the place's placeholder alone when the place is masked (its region would say where), the place alone
+    /// under a masked region, the place alone when the region is empty or the same. Allocates only to compose the path.
+    /// </summary>
+    public string Place(string? region, string? place, string pathFormat)
+    {
+        ArgumentNullException.ThrowIfNull(pathFormat);
+        if (string.IsNullOrEmpty(place))
+        {
+            return string.Empty;
+        }
+
+        if (PlacedMasked(SpoilerKind.Area, place, out var level))
+        {
+            return KindPlaceholder(SpoilerKind.Area, level);
+        }
+
+        return string.IsNullOrEmpty(region) || string.Equals(region, place, StringComparison.Ordinal) || IsNameMasked(SpoilerKind.Area, region)
+            ? place
+            : string.Format(CultureInfo.CurrentCulture, pathFormat, region, place);
+    }
+
     /// <summary>The placeholder a masked name of <paramref name="kind"/> prints at a display level: "Duty ahead (Lv 61)".</summary>
     public static string KindPlaceholder(SpoilerKind kind, byte level)
     {

@@ -11,6 +11,7 @@ using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Diagnostics;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Travel;
 using Tsukimichi.Core.Ui;
@@ -1393,7 +1394,8 @@ public sealed partial class DetailPane
 
         if (quest.Issuer is { } issuer)
         {
-            model.GiverName = issuer.Name.Length > 0 ? issuer.Name : Strings.NoGiver;
+            // The wider shield (1.20.0 N6): a giver or a place the story has not reached reads as its placeholder.
+            model.GiverName = issuer.Name.Length > 0 ? session.Spoilers.Name(SpoilerKind.Npc, issuer.Name) : Strings.NoGiver;
             if (links.MapCoordinates(quest) is { } coords)
             {
                 model.CoordinateText = string.Format(CultureInfo.CurrentCulture, Strings.CoordinatesFormat, coords.X, coords.Y);
@@ -1401,9 +1403,7 @@ public sealed partial class DetailPane
 
             if (links.Map(issuer.MapId) is { } map)
             {
-                var place = map.Region.Length > 0 && map.Region != map.PlaceName
-                    ? string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, map.Region, map.PlaceName)
-                    : map.PlaceName;
+                var place = session.Spoilers.Place(map.Region, map.PlaceName, Strings.JournalPathFormat);
                 model.PlaceLine = model.CoordinateText is { } text ? place + " " + text : place;
             }
         }
@@ -1430,6 +1430,15 @@ public sealed partial class DetailPane
             }
 
             var isUnique = IsUniqueReward(entries, reward.Kind, reward.Id, reward.ItemId);
+
+            // The wider shield (1.20.0 N6): a reward the story has not introduced is a tile with its placeholder, no
+            // icon and no item behind it (so no tooltip, link or try-on names it).
+            if (session.Spoilers.IsNameMasked(SpoilerKind.Reward, reward.Name))
+            {
+                unique += isUnique ? 1 : 0;
+                model.Rewards.Add(new RewardTile(ShieldedReward(session.Spoilers, reward), isUnique, null));
+                continue;
+            }
 
             // The reward tooltip says where else it comes from; the tile's caption only names the kind of source: the
             // store, a duty, or a shop that sells it back once the quest is done (1.19, C6).
@@ -1463,12 +1472,17 @@ public sealed partial class DetailPane
 
                 var isUnique = IsUniqueReward(entries, kind, extra.TargetId, extra.ItemId);
                 unique += isUnique ? 1 : 0;
-                model.Rewards.Add(new RewardTile(new RewardRef(kind, extra.TargetId, extra.ItemId, 1, extra.Name, icon), isUnique, null));
+                var tile = new RewardRef(kind, extra.TargetId, extra.ItemId, 1, extra.Name, icon);
+                model.Rewards.Add(new RewardTile(session.Spoilers.IsNameMasked(SpoilerKind.Reward, extra.Name) ? ShieldedReward(session.Spoilers, tile) : tile, isUnique, null));
             }
         }
 
         model.RewardsCaption = unique == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.DetailRewardsUniqueFormat, unique);
     }
+
+    /// <summary>A reward the wider shield hides: its kind and count, the placeholder for a name, no icon, row or item.</summary>
+    private static RewardRef ShieldedReward(SpoilerMask spoilers, RewardRef reward) =>
+        new(reward.Kind, 0, 0, reward.Count, spoilers.Name(SpoilerKind.Reward, reward.Name), 0);
 
     /// <summary>Whether a shipped unique-reward entry of the quest names the reward: same kind, and same row or same item.</summary>
     private static bool IsUniqueReward(List<UniqueRewardEntry>? entries, RewardKind kind, uint id, uint itemId) =>

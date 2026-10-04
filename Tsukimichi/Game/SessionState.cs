@@ -495,8 +495,16 @@ public sealed partial class SessionState
         }
 
         var indexes = prepared.Indexes;
-        // Every blocker, status line, todo row and diagnostic names quests through the viewed character's shield.
-        var names = prepared.Names with { QuestName = quest => Spoilers.DisplayName(quest) };
+        // Every blocker, status line, todo row and diagnostic names quests (and duties past the story point, 1.20.0
+        // N6) through the viewed character's shield.
+        var dutyName = prepared.Names.Duty;
+        var clientName = prepared.Names.SatisfactionNpc;
+        var names = prepared.Names with
+        {
+            QuestName = quest => Spoilers.DisplayName(quest),
+            Duty = id => Spoilers.Name(SpoilerKind.Duty, dutyName(id)),
+            SatisfactionNpc = id => Spoilers.Name(SpoilerKind.Npc, clientName(id)),
+        };
         var context = prepared.Context;
 
         // The live evaluations belong to the previous catalog (a filing flip retires or restores rows): shown
@@ -544,7 +552,12 @@ public sealed partial class SessionState
         Chains = indexes.Chains;
         Names = names;
         // Chat, item menus and hints speak for the logged-in character, whichever one the window shows.
-        LiveNames = names with { QuestName = quest => LiveSpoilers.DisplayName(quest) };
+        LiveNames = names with
+        {
+            QuestName = quest => LiveSpoilers.DisplayName(quest),
+            Duty = id => LiveSpoilers.Name(SpoilerKind.Duty, dutyName(id)),
+            SatisfactionNpc = id => LiveSpoilers.Name(SpoilerKind.Npc, clientName(id)),
+        };
         baseContext = context;
         liveStates = NoStates;
         Context = viewedContext;

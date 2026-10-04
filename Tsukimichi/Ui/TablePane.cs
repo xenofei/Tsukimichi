@@ -1765,7 +1765,7 @@ public sealed class TablePane : IDisposable
     /// The Giver cell (1.15, F5): the giver's 20 px plate, then the name, ellipsised in the cell. Hovering the plate shows
     /// the 128 px portrait; a cut name shows whole on hover. For a quest the spoiler shield masks, the giver is masked the
     /// way the quest's name is: a column of future givers would tell the story ahead, so the cell shows the moon disc and
-    /// "Hidden giver", with no portrait tooltip.
+    /// "Hidden giver", with no portrait tooltip. So is a giver the wider shield hides (1.20.0 N6), whatever the quest.
     /// </summary>
     private void DrawGiverCell(QuestRecord quest, bool rowHovered, in RowLayout layout)
     {
@@ -1779,7 +1779,8 @@ public sealed class TablePane : IDisposable
 
         var dl = ImGui.GetWindowDrawList();
         var plateMin = new Vector2(cell.X, cell.Y + MathF.Round((layout.RowContent - avatar) * 0.5f));
-        var masked = runner.Spoilers.IsMasked(quest);
+        // A giver the story has not introduced yet (1.20.0 N6) is hidden the same way.
+        var masked = runner.Spoilers.IsMasked(quest) || runner.Spoilers.IsNameMasked(SpoilerKind.Npc, issuer.Name);
         var request = masked ? PortraitRequest.None : GiverPortraits.For(quest, runner.Spoilers);
         var name = masked ? Strings.GiverHidden : issuer.Name;
         Chrome.Portrait(dl, plateMin, avatar, request);
