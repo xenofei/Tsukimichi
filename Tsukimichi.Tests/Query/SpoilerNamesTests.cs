@@ -433,18 +433,18 @@ public class SpoilerNamesTests
     public void Telling_a_placeholder_apart_allocates_nothing_per_frame()
     {
         SpoilerMask.Register("Holdtest area" + Nbsp + "2");
-        // Fresh instances each time, as a string composed every frame is.
-        var texts = new string[64];
-        for (var i = 0; i < texts.Length; i++)
-        {
-            texts[i] = i % 2 == 0 ? new string("Flying in Holdtest area" + Nbsp + "2") : new string("Flying in Kugane, quest " + i);
-        }
-
-        SpoilerMask.HoldsPlaceholder(texts[0]);
+        SpoilerMask.HoldsPlaceholder(new string("Flying in Holdtest area" + Nbsp + "2"));
         var allocated = long.MaxValue;
         // Another test registering a placeholder meanwhile rebuilds the matcher once; a clean pass allocates nothing.
         for (var attempt = 0; attempt < 3 && allocated != 0; attempt++)
         {
+            // Fresh instances every pass, as a string composed every frame is: no answer is kept per instance.
+            var texts = new string[64];
+            for (var i = 0; i < texts.Length; i++)
+            {
+                texts[i] = i % 2 == 0 ? new string("Flying in Holdtest area" + Nbsp + "2") : "Flying in Kugane, quest " + i;
+            }
+
             var start = GC.GetAllocatedBytesForCurrentThread();
             foreach (var text in texts)
             {
