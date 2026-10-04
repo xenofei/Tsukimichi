@@ -397,17 +397,23 @@ def answers():
     stones_m = np.zeros((H, W), np.float32)
     stone_tops = np.zeros((H, W), np.float32)
     for sx, sy, sr in [(0.555 * W, 0.705 * H, 7), (0.405 * W, 0.86 * H, 14)]:
-        c.mul(hexc("#0A1222"), c.ellipse(sx - sr * 0.6, sy + 1, sr * 1.6, sr * 0.35, 1.5) * 0.6)    # contact shadow
-        st = c.poly([(sx - sr * 1.2, sy + 1), (sx + sr * 1.1, sy + 1), (sx + sr * 0.9, sy - sr * 0.9), (sx + sr * 0.3, sy - sr * 1.25),
-                     (sx - sr * 0.5, sy - sr * 1.2), (sx - sr * 1.05, sy - sr * 0.8)], 0.6)
+        # a squat, flat-topped stone, wider than tall: a top facet that takes the moon (up and right of it), a face
+        # toward the viewer in shade, a dark contact line where it meets the ground, and a short shadow away from the moon
+        c.mul(hexc("#0A1222"), c.ellipse(sx - sr * 0.9, sy + 1, sr * 1.9, sr * 0.32, 1.5) * 0.6)    # contact shadow
+        st = c.poly([(sx - sr * 1.45, sy + 1), (sx + sr * 1.40, sy + 1), (sx + sr * 1.30, sy - sr * 0.55), (sx + sr * 1.05, sy - sr * 0.85),
+                     (sx - sr * 1.10, sy - sr * 0.85), (sx - sr * 1.35, sy - sr * 0.55)], 0.6)
+        top = c.poly([(sx - sr * 1.10, sy - sr * 0.85), (sx + sr * 1.05, sy - sr * 0.85), (sx + sr * 1.32, sy - sr * 0.52), (sx - sr * 1.30, sy - sr * 0.52)], 0.6) * st
         stones_m = np.maximum(stones_m, st)
-        stone_tops = np.maximum(stone_tops, top_edge(st, 3))
+        stone_tops = np.maximum(stone_tops, top)
+        c.mul(hexc("#05080F"), np.clip(c.poly([(sx - sr * 1.45, sy - 1), (sx + sr * 1.40, sy - 1), (sx + sr * 1.40, sy + 2), (sx - sr * 1.45, sy + 2)], 0.6), 0, 1) * 0.7)
     trx, try_ = 0.5705 * W, 0.693 * H
     contact_shadow(c, trx, try_, 14, -16, 26, 0.55)
     trav = figure(c, trx, try_, 0.36, facing=1)
     c.over(hexc("#0B1322"), tree)
     c.over(hexc("#1A1A24"), sign)
     c.over(hexc("#1E2538"), stones_m)                                         # the face toward the viewer, in shade
+    c.over(hexc("#8898C0"), stone_tops)                                       # the flat top, moonlit
+    c.add(hexc("#9FB2E0"), stone_tops * smooth(0.0, 1.0, np.clip((c.xx - 0.40 * W) / (0.03 * W), 0, 1)) * 0.25)   # brightest toward the moon
     c.over(hexc("#101624"), trav)
     figs = np.maximum(np.maximum(tree, sign), np.maximum(stones_m, trav))
     M["figs"] = figs
@@ -428,7 +434,7 @@ def answers():
     rim_l = np.clip(rimmed - np.roll(np.roll(rimmed, 2, 0), -1, 1), 0, 1)
     rim_r = np.clip(rimmed - np.roll(np.roll(rimmed, 2, 0), 1, 1), 0, 1)
     c.add(hexc("#AFC0EA"), np.where(c.xx < mx, rim_l, rim_r) * 0.6)
-    c.add(hexc("#8EA0CC"), stone_tops * 0.5)
+    c.add(hexc("#8EA0CC"), top_edge(stones_m, 2) * 0.4)                        # the top's lit edge
     rim_l = np.clip(tuft - np.roll(np.roll(tuft, 2, 0), -1, 1), 0, 1)
     rim_r = np.clip(tuft - np.roll(np.roll(tuft, 2, 0), 1, 1), 0, 1)
     c.add(hexc("#7F96C8"), np.where(c.xx < mx, rim_l, rim_r) * smooth(H, H - 0.30 * H, c.yy) * 0.45)

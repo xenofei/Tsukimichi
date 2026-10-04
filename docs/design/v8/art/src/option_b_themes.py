@@ -636,12 +636,13 @@ def orrery(px):
     plate = plate + (hexc("#D9B86E") - plate) * (dl_ * 0.55)[..., None]
     plate = plate * (1 - M["moon"][..., None]) + hexc("#1E2D66") * M["moon"][..., None]
     if CFG.get("orrery_moon") == "engraved":
-        # the one moon rule on the designer's engraved moon (round 7, R1): a brass face, the unlit sliver left in dark
+        # the one moon rule on the designer's engraved moon (round 7, R1), with the coordinator's silver face (a brass
+        # face reads as a gold coin at popup size; this overrides round 8's brass face for keyed moons): the unlit sliver left in dark
         # enamel, the seas engraved from the painter's own seas mask as fine level cuts 2 px apart (only the mass's core,
         # tapering where it thins), and a brass ring just outside the disc, so the ring never covers the sliver
         lit = M["moonlit"]
-        plate = plate * (1 - lit[..., None]) + hexc("#E6CC90") * lit[..., None]
-        sea = (M["seas"] if "seas" in M else moon_seas(L, M)) * lit
+        plate = plate * (1 - lit[..., None]) + hexc("#DCDFE6") * lit[..., None]          # a silver face: brass reads as a coin
+        sea = (M["seas"] if "seas" in M else np.zeros_like(lit)) * lit                # a crescent without seas: plain silver
         wt = np.clip(sea * 1.3, 0, 0.85)                                               # the lobed mass, weighted, not thresholded
         hatch = aa_lines(yy, 2.0, 2.0, wt, min_px=0.0) * lit                          # fine cuts 2 px apart: soft tone at popup size, never bars
         plate = plate * (1 - (hatch * 0.55)[..., None]) + hexc("#7A5A2E") * (hatch * 0.55)[..., None]

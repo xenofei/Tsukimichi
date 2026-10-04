@@ -287,13 +287,13 @@ All nine releases, shipped (six JPEGs each):
 | 1.22.0 Welcome home | `welcome-b` | 348 KB |
 | 1.21.0 What next | `whatnext-b` | 344 KB |
 | 1.20.0 Before Evercold | `evercold-b` | 445 KB |
-| 1.19.0 Right answers | `answers-b` | 354 KB |
+| 1.19.0 Right answers | `answers-b` | 355 KB |
 | 1.18.0 Runs you can trust | `runs-b` | 456 KB |
 | 1.17.0 Mix and match | `mixmatch-b` | 456 KB |
 | 1.16.0 Themes | `themes-b` | 490 KB |
 | 1.15.0 Faces and icons | `faces-b` | 477 KB |
 | 1.14.0 The polish you asked for | `polish-b` | 427 KB |
-| **All nine** | | **about 3.7 MB** (3,797 KB), each release within its 600 KB budget. The backfill's Orrery files are the largest (141–193 KB), because their engraving covers whole night masses. |
+| **All nine** | | **about 3.7 MB** (3,798 KB), each release within its 600 KB budget. The backfill's Orrery files are the largest (141–193 KB), because their engraving covers whole night masses. |
 
 ### Production recipe (Option B, every release)
 
@@ -331,7 +331,8 @@ Added for the 1.14–1.18 backfill. Each is additive: absent, every treatment is
 - `glass_far_strips`: with `far_layers`, each range is cut in strips along its own ridgeline, with no vertical joins.
 - `aether_clear_ground`: no facets on the field or the ridge, and they fade out just above the horizon.
 - `orrery_moon: "engraved"`: the one moon rule on the designer's engraved moon (rounds 6–7, Q2 and R1).
-  - The face is brass, and the unlit sliver stays in dark enamel.
+  - The face is silver (#DCDFE6), by the coordinator's decision after the post-merge spot check, following the owner's standing "moons never look like cheese or coins" taste. A brass face reads as a gold coin at popup size. This overrides round 8's brass face for keyed moons only.
+  - The unlit sliver stays in dark enamel. A crescent or half moon keyed into the rule (mixmatch-b, faces-b) has a silver lit part, with enamel for the rest. evercold-b and whatnext-b aren't keyed, so their crescents keep the designer's brass, unchanged from main.
   - The seas come from the painter's `seas` mask, engraved as fine level cuts 2 px apart, weighted by the lobed mass. They read as engraving at 1120 and merge into a soft tone at popup size, so they are never bars, never a "≡" glyph, and never a flat blotch.
   - The brass ring sits just outside the disc, so it never covers the sliver.
   - Without the key, a big moon takes the designer's fine diagonal cuts from `MARIA` and a ring on its outline.
@@ -932,3 +933,20 @@ The five backfill releases (`polish-b`, `faces-b`, `themes-b`, `mixmatch-b`, `ru
   - **Regenerated from the merged code, nothing taken as is:** every PNG, mask and JPEG of all nine releases, and the What's new, states, About and Option B boards.
   - **evercold-b** is byte-identical to main.
   - **whatnext-b** differs from main in two files, its Orrery and Medallion (PNG and JPEG). Main's own code doesn't reproduce main's committed whatnext-b files: its round 7 Medallion moon restore and Orrery ring reach whatnext-b's crescent, but whatnext-b was never re-run on main after them. The merged code's output equals main's code output exactly, so the new files are main's approved code applied.
+- **Post-merge spot check (23c50df6): CHANGES.** 2 Minor and Nits.
+  - **Held:**
+    - every moon's seas are one lobed mass, with no hook, ring or "≡";
+    - the slivers can be seen at 560 × 220;
+    - the crescents are correct;
+    - Medallion shows the painting's own moon, and Glass and Sumi are correct;
+    - answers-b's traveller is clear of the signpost;
+    - welcome-b's smoke is a plume;
+    - every release is within budget.
+  - **Minor 1:** the Orrery's near-full moons were brass again, and read as gold coins at popup size.
+  - **Minor 2:** answers-b's near waystone (about x 440–470, y 368–383) was a dark dome or "pill" in every treatment.
+  - **Nits:** faces-b's half-moon seas gather at the terminator; the boathouse roof and the pines are weak in the Orrery; and the earlier backfill Nits remain.
+- **After the post-merge spot check:**
+  - **Silver face:** keyed Orrery moons now have a silver face (the coordinator's decision above), with the fine 2 px cuts weighted by the lobed seas, the enamel sliver and the brass ring outside the face. mixmatch-b's crescent is keyed in too.
+  - **Waystones:** answers-b's waystones are squat, flat-topped stones, wider than tall, with a moonlit top facet (brightest toward the moon, up and right), a face in shade, a dark contact line and a short shadow.
+  - **answers-b's treatments:** `fig_tones` makes the Orrery hatch, and Sumi ink, its figures by value, so the stone's top is lighter than its face.
+  - **Re-shipped:** all nine releases, with the boards re-rendered. evercold-b and whatnext-b are unchanged.
