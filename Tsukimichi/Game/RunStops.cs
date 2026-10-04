@@ -178,7 +178,9 @@ public sealed class RunStops : IDisposable
     {
         try
         {
-            if (card.NeedsYou && card.QuestRowId != 0)
+            // A stop counts once at its step: the same stop raised again (the guard's card, then its receipt) refreshes.
+            var refresh = Dock.Current is { } shown && !Dock.Leaving && shown.Key == card.Key;
+            if (card.NeedsYou && card.QuestRowId != 0 && !refresh)
             {
                 RunStopCounts.Note(config.RunStopCounts, card.QuestRowId, card.Sequence);
                 save();

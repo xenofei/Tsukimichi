@@ -101,7 +101,7 @@ public sealed partial class ConfigWindow
         }
 
         var sound = settings.NeedsYouSoundDeath;
-        if (SoundRow("death", ref sound, settings.NeedsYouDeath))
+        if (SoundRow("death", "needs you alert sound se chat sound effect test knocked out death", ref sound, settings.NeedsYouDeath))
         {
             settings.NeedsYouSoundDeath = sound;
             Save();
@@ -115,7 +115,7 @@ public sealed partial class ConfigWindow
         }
 
         sound = settings.NeedsYouSoundStuck;
-        if (SoundRow("stuck", ref sound, settings.NeedsYouStuck))
+        if (SoundRow("stuck", "needs you alert sound se chat sound effect test stuck", ref sound, settings.NeedsYouStuck))
         {
             settings.NeedsYouSoundStuck = sound;
             Save();
@@ -129,7 +129,7 @@ public sealed partial class ConfigWindow
         }
 
         sound = settings.NeedsYouSoundDutyPop;
-        if (SoundRow("pop", ref sound, settings.NeedsYouDutyPop))
+        if (SoundRow("pop", "needs you alert sound se chat sound effect test duty pop ready", ref sound, settings.NeedsYouDutyPop))
         {
             settings.NeedsYouSoundDutyPop = sound;
             Save();
@@ -143,7 +143,7 @@ public sealed partial class ConfigWindow
         }
 
         sound = settings.NeedsYouSoundTell;
-        if (SoundRow("tell", ref sound, settings.NeedsYouTell))
+        if (SoundRow("tell", "needs you alert sound se chat sound effect test tell", ref sound, settings.NeedsYouTell))
         {
             settings.NeedsYouSoundTell = sound;
             Save();
@@ -175,14 +175,14 @@ public sealed partial class ConfigWindow
     /// A kind's sound, a sub-row under its toggle: None or &lt;se.1&gt;–&lt;se.16&gt;, and Test, which plays the
     /// chosen one through the game. Returns true when the choice changed.
     /// </summary>
-    private bool SoundRow(string id, ref int sound, bool enabled)
+    private bool SoundRow(string id, string keywords, ref int sound, bool enabled)
     {
         var options = NeedsYouSoundOptions.Value;
         var test = Strings.ConfigNeedsYouSoundTest;
         var testWidth = ImGui.CalcTextSize(test).X + (ImGui.GetStyle().FramePadding.X * 2f);
         var comboWidth = UiMetrics.Px(110f);
         var gap = ImGui.GetStyle().ItemSpacing.X;
-        if (!Setting(Strings.ConfigNeedsYouSoundRow, Strings.ConfigNeedsYouSoundRowHint, "needs you alert sound se chat sound effect test " + id, comboWidth + gap + testWidth, 0f, enabled, sub: true))
+        if (!Setting(Strings.ConfigNeedsYouSoundRow, Strings.ConfigNeedsYouSoundRowHint, keywords, comboWidth + gap + testWidth, 0f, enabled, sub: true))
         {
             return false;
         }

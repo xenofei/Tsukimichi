@@ -879,11 +879,14 @@ public static partial class Chrome
         ImGui.Dummy(new Vector2(size.X + shift, size.Y));
     }
 
-    /// <summary><see cref="SemiboldText"/> wrapped at the content region's edge: each wrapped line drawn twice.</summary>
-    public static void SemiboldTextWrapped(string text, Vector4 color)
+    /// <summary>
+    /// <see cref="SemiboldText"/> wrapped at <paramref name="width"/> (the content region's edge when negative): each
+    /// wrapped line drawn twice.
+    /// </summary>
+    public static void SemiboldTextWrapped(string text, Vector4 color, float width = -1f)
     {
         var pos = ImGui.GetCursorScreenPos();
-        var wrap = MathF.Max(1f, ImGui.GetContentRegionAvail().X - SemiboldShift);
+        var wrap = MathF.Max(1f, (width < 0f ? ImGui.GetContentRegionAvail().X : width) - SemiboldShift);
         var size = ImGui.CalcTextSize(text, false, wrap);
         var ink = Theme.U32(color);
         var dl = ImGui.GetWindowDrawList();

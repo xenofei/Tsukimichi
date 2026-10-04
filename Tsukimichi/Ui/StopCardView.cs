@@ -145,9 +145,7 @@ internal static class StopCardView
             }
             else
             {
-                ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + MathF.Max(1f, titleRight - ImGui.GetCursorScreenPos().X));
-                Chrome.SemiboldTextWrapped(card.Title, s.Text);
-                ImGui.PopTextWrapPos();
+                Chrome.SemiboldTextWrapped(card.Title, s.Text, MathF.Max(1f, titleRight - ImGui.GetCursorScreenPos().X));
             }
 
             var titleBottom = ImGui.GetItemRectMax().Y;
@@ -305,14 +303,17 @@ internal static class StopCardView
             primaryTaken = true;
             Place(Chrome.ActionPillWidth(icon, label, PillLayout.Panel));
             var enabled = blocker is null && !(fix == StopFix.ReloadAndRetry && stops.Retrying);
-            if (Chrome.ActionPill("##stopFix" + (int)fix, icon, label, tone, enabled, enabled ? stops.Tooltip(card, fix) : blocker, PillLayout.Panel) && interactive)
+            ImGui.PushID((int)fix);
+            if (Chrome.ActionPill("##stopFix", icon, label, tone, enabled, enabled ? stops.Tooltip(card, fix) : blocker, PillLayout.Panel) && interactive)
             {
                 stops.Fix(card, fix, host);
             }
 
-            if (fix == StopFix.TryAgain && blocker is not null)
+            ImGui.PopID();
+            if (fix == StopFix.TryAgain)
             {
-                reason = blocker;
+                // Its line is kept while it is enabled too, so the card does not change height when the player gets up.
+                reason = blocker ?? string.Empty;
             }
         }
 
@@ -354,7 +355,14 @@ internal static class StopCardView
             using (Typography.Caption())
             using (Theme.PushText(GamePanelShell.QuietTone))
             {
-                ImGui.TextUnformatted(reason);
+                if (reason.Length > 0)
+                {
+                    ImGui.TextUnformatted(reason);
+                }
+                else
+                {
+                    ImGui.Dummy(new Vector2(1f, ImGui.GetTextLineHeight()));
+                }
             }
 
             bottom = ImGui.GetItemRectMax().Y;
