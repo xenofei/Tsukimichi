@@ -95,6 +95,89 @@ public sealed class DutyRunSheetsTests(DutyRunFixture fixture, ITestOutputHelper
         Assert.All(new uint[] { 1, 2, 4, 15, 16 }, cfc => Assert.Equal(DutyRunInfo.Dungeons, fixture.Index.ByCondition(cfc)!.ContentTypeId));
     }
 
+    /// <summary>C7: the clear badges and the walls read from the sheets for duties players know.</summary>
+    [GameDataFact]
+    public void How_you_will_clear_it_reads_from_the_sheets()
+    {
+        // Sastasha: Duty Support or the Duty Finder, level 15, no item level.
+        var sastasha = fixture.Index.ByCondition(4)!;
+        Assert.Equal(DutyClearWays.DutySupport | DutyClearWays.DutyFinder, DutyClear.Ways(sastasha));
+        Assert.Equal(15, sastasha.LevelRequired);
+        Assert.Equal(0, sastasha.ItemLevelRequired);
+        Assert.Equal(4, sastasha.Players);
+        Assert.True(sastasha.Roulettes.HasFlag(DutyRoulettes.Leveling));
+
+        // Holminster Switch: both NPC windows.
+        Assert.Equal(DutyClearWays.DutySupport | DutyClearWays.Trust | DutyClearWays.DutyFinder, DutyClear.Ways(fixture.Index.ByCondition(676)!));
+
+        // The Bowl of Embers (Hard): players only, through the Duty Finder.
+        var ifritHard = fixture.Index.ByCondition(59)!;
+        Assert.Equal(DutyClearWays.DutyFinder, DutyClear.Ways(ifritHard));
+        Assert.False(DutyClear.WithoutOthers(ifritHard));
+
+        // The Ultimate raids are not matched by the Duty Finder: a full party enters together.
+        var ucob = fixture.Index.ByCondition(280)!;
+        output.WriteLine($"{ucob.Name}: {DutyClear.Ways(ucob)}, {ucob.Players} players");
+        Assert.Equal(DutyClearWays.PartyOnly, DutyClear.Ways(ucob));
+        Assert.Equal(8, ucob.Players);
+
+        // High-end: the old Extreme trials and Savage raids by their Duty Finder category, the current tier and the
+        // Ultimates by the sheet; a normal raid and a dungeon are not.
+        bool HighEnd(string name) => Assert.Single(fixture.Index.All, d => d.Name == name).HighEnd;
+        Assert.True(HighEnd("the Bowl of Embers (Extreme)"));
+        Assert.True(HighEnd("Alexander - The Fist of the Father (Savage)"));
+        Assert.True(HighEnd("the Unending Coil of Bahamut (Ultimate)"));
+        Assert.True(HighEnd("the Cloud of Darkness (Chaotic)"));
+        Assert.False(HighEnd("Alexander - The Fist of the Father"));
+        Assert.False(sastasha.HighEnd);
+        Assert.Equal([new DutyBadge(DutyBadgeKind.Group, 8), new DutyBadge(DutyBadgeKind.HighEnd)], DutyBadgeRules.For(ucob, storyRequired: null));
+        Assert.Equal(new DutyBadge(DutyBadgeKind.Group, 24), DutyBadgeRules.Size(Assert.Single(fixture.Index.All, d => d.Name == "the Labyrinth of the Ancients")));
+
+        // Dawntrail's level-cap dungeons ask an item level.
+        var cap = fixture.Index.All.Where(d => d.Roulettes.HasFlag(DutyRoulettes.LevelCap)).ToArray();
+        Assert.NotEmpty(cap);
+        Assert.All(cap, d => Assert.True(d.ItemLevelRequired > 600, $"{d.Name} asks i{d.ItemLevelRequired}"));
+    }
+
+    /// <summary>N4: the roulettes, mapped from their rows, with the open rule the board reads.</summary>
+    [GameDataFact]
+    public void The_roulettes_map_to_their_columns()
+    {
+        var roulettes = fixture.Index.Roulettes;
+        foreach (var r in roulettes)
+        {
+            output.WriteLine($"{r.Id} {r.Name} ({r.ShortName}) every={r.RequiresEveryDuty} lvl={r.RequiredLevel} ex={r.RequiredExpansion} duties={fixture.Index.All.Count(d => (d.Roulettes & r.Flag) != 0)}");
+        }
+
+        Assert.Equal(DutyRunSheets.RouletteRows.Count, roulettes.Count);
+        string Short(DutyRoulettes flag) => Assert.Single(roulettes, r => r.Flag == flag).ShortName;
+        Assert.Equal("Leveling", Short(DutyRoulettes.Leveling));
+        Assert.Equal("High-level Dungeons", Short(DutyRoulettes.HighLevel));
+        Assert.Equal("Main Scenario", Short(DutyRoulettes.MainScenario));
+        Assert.Equal("Guildhests", Short(DutyRoulettes.Guildhests));
+        Assert.Equal("Expert", Short(DutyRoulettes.Expert));
+        Assert.Equal("Trials", Short(DutyRoulettes.Trials));
+        Assert.Equal("Level Cap Dungeons", Short(DutyRoulettes.LevelCap));
+        Assert.Equal("Mentor", Short(DutyRoulettes.Mentor));
+        Assert.Equal("Alliance Raids", Short(DutyRoulettes.AllianceRaids));
+        Assert.Equal("Normal Raids", Short(DutyRoulettes.NormalRaids));
+
+        // The open rule: Expert and Level Cap ask for every duty (the "why is my roulette locked" case), Leveling does not.
+        Assert.True(roulettes.Single(r => r.Flag == DutyRoulettes.LevelCap).RequiresEveryDuty);
+        Assert.True(roulettes.Single(r => r.Flag == DutyRoulettes.Expert).RequiresEveryDuty);
+        Assert.False(roulettes.Single(r => r.Flag == DutyRoulettes.Leveling).RequiresEveryDuty);
+        Assert.Equal(16, roulettes.Single(r => r.Flag == DutyRoulettes.Leveling).RequiredLevel);
+
+        // Every roulette draws from duties, and the Main Scenario roulette from its three.
+        Assert.All(roulettes, r => Assert.Contains(fixture.Index.All, d => (d.Roulettes & r.Flag) != 0));
+        Assert.Equal(3, fixture.Index.All.Count(d => d.Roulettes.HasFlag(DutyRoulettes.MainScenario)));
+
+        // The board reads every roulette duty's records.
+        var watched = DutyBoard.Watched(fixture.Index);
+        Assert.Contains(fixture.Index.ByCondition(4)!.InstanceContentId, watched);
+        Assert.True(watched.Length > 300, $"only {watched.Length} duties watched");
+    }
+
     /// <summary>
     /// The 1.6 to 1.10 bug: the plugin called <c>Build(DataManager.Excel)</c>, the language defaulted to None, Lumina
     /// refused the ContentFinderCondition sheet and the Duties section stayed hidden in game, while these tests passed

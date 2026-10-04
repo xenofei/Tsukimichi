@@ -97,6 +97,12 @@ public sealed partial class CharactersPane
         {
             UiMetrics.Tooltip(planning.CatchUpTooltip);
         }
+
+        // How the story's duties ahead can be cleared (1.19.0, C7).
+        if (planning.CatchUpOthersLine is { Length: > 0 } others)
+        {
+            TextFlow.Wrapped(others, 0f, Theme.U32(Theme.Surface.TextSecondary));
+        }
     }
 
     /// <summary>The allied society board: the allowances and the reset, then one row per unlocked society.</summary>

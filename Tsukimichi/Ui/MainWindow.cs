@@ -137,6 +137,7 @@ public sealed partial class MainWindow : Window, IDisposable
     // Main scenario position, memoized per session version and catalog; empty strings hide it.
     private int msqVersion = -1;
     private CatalogBundle? msqBundle;
+    private PlanningSource.StoryMeterHover? msqMeter;
     private MsqPosition? msq;
     private string msqStatus = string.Empty;
     private string msqTooltip = string.Empty;
@@ -289,6 +290,7 @@ public sealed partial class MainWindow : Window, IDisposable
     public void AttachPlanning(PlanningSource planning)
     {
         tonightCard.Planning = planning ?? throw new ArgumentNullException(nameof(planning));
+        detailPane.Planning = planning;
     }
 
     /// <summary>"Next stops" (1.6.0): the Tonight card lists the first stops with Teleport.</summary>
@@ -406,6 +408,12 @@ public sealed partial class MainWindow : Window, IDisposable
     public void AttachAchievementFlags(Func<uint, bool?> earned)
     {
         detailPane.AchievementEarned = earned ?? throw new ArgumentNullException(nameof(earned));
+    }
+
+    /// <summary>Whether the game has learned a quest's reward (1.19, C6: "Done, not learned" under a finished quest's rewards).</summary>
+    public void AttachRewardLearned(Func<RewardRef, uint, bool?> learned)
+    {
+        detailPane.RewardLearned = learned ?? throw new ArgumentNullException(nameof(learned));
     }
 
     /// <summary>The sheet icons the detail pane's requirement lines wear (UI-5e): societies, Grand Company ranks, mounts, achievements.</summary>
@@ -783,7 +791,7 @@ public sealed partial class MainWindow : Window, IDisposable
         var count = 0;
         foreach (var quest in bundle.Catalog.All)
         {
-            if ((quest.IsRemoved && !showUnlisted) || !index.Matches(quest.RowId, normalized, spoilers))
+            if ((quest.IsRemoved && !showUnlisted) || !index.Matches(quest.RowId, normalized, spoilers, runner.Unlocks?.Current, reach))
             {
                 continue;
             }
@@ -1115,6 +1123,9 @@ public sealed partial class MainWindow : Window, IDisposable
         ui.RecordRect(UiRects.Toolbar, new Vector2(origin.X, top), new Vector2(origin.X + avail, top + stripHeight));
         ImGui.SetCursorScreenPos(new Vector2(origin.X, top));
         ImGui.Dummy(new Vector2(avail, stripHeight));
+
+        // Find by unlock (K3): the Unlocks group under the search pill, while it has the caret.
+        DrawUnlockResults(session);
     }
 
     /// <summary>The raised strip behind the toolbar rows, edge to edge, with a hairline under it.</summary>
@@ -1197,6 +1208,8 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         ui.RecordRect(UiRects.Search, min, max);
+        searchPillMin = min;
+        searchPillMax = max;
 
         // Clear target, only while there is something to clear.
         if (searchBuffer.Length == 0)
@@ -1949,7 +1962,7 @@ public sealed partial class MainWindow : Window, IDisposable
             // covering the bar gets neither the tooltip nor the hand.
             if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(pillMin, pillMax))
             {
-                UiMetrics.Tooltip(msqTooltip);
+                DrawMsqTooltip();
                 if (msq?.Next is { } next)
                 {
                     ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
@@ -2088,13 +2101,16 @@ public sealed partial class MainWindow : Window, IDisposable
     /// </summary>
     private void RefreshMsq(SessionState session, CatalogBundle bundle)
     {
-        if (msqVersion == session.Version && ReferenceEquals(msqBundle, bundle))
+        // The story meter (N3) lands with the duty index, after the session version it was first asked under.
+        var meter = tonightCard.Planning?.StoryMeterLines;
+        if (msqVersion == session.Version && ReferenceEquals(msqBundle, bundle) && ReferenceEquals(msqMeter, meter))
         {
             return;
         }
 
         msqVersion = session.Version;
         msqBundle = bundle;
+        msqMeter = meter;
         msq = session.ViewedSnapshot is null || session.States.Count == 0 ? null : MsqProgress.Compute(bundle.Catalog, session.States);
         if (msq is not { } position)
         {
@@ -2106,13 +2122,14 @@ public sealed partial class MainWindow : Window, IDisposable
         if (position.Next is not { } next)
         {
             msqStatus = Strings.StatusMsqComplete;
-            msqTooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqCompleteFormat, position.Done, position.Total);
+            msqTooltip = meter is null ? string.Format(CultureInfo.CurrentCulture, Strings.MsqCompleteFormat, position.Done, position.Total) : string.Empty;
             return;
         }
 
         var spoilers = session.Spoilers;
         var expansion = bundle.Names.Expansion(next.Expansion) is { Length: > 0 } named ? named : Expansions.Name(next.Expansion);
-        var tooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqProgressFormat, expansion, position.Done, position.Total);
+        // With the story meter (N3) its title gives the count, the side quests the story requires included.
+        var tooltip = meter is null ? string.Format(CultureInfo.CurrentCulture, Strings.MsqProgressFormat, expansion, position.Done, position.Total) : expansion;
         if (position.IsBranched)
         {
             // Inside a branch region: every route with its progress; a click selects the first route's next quest.
@@ -2130,6 +2147,44 @@ public sealed partial class MainWindow : Window, IDisposable
         }
 
         msqTooltip = tooltip + "\n" + Strings.StateName(position.State, next) + "\n" + Strings.MsqClickHint;
+    }
+
+    /// <summary>
+    /// The MSQ pill's hover (feature plan v7 N3; spec-1.19 N3): with the story meter, its title ("Main scenario · 742 of
+    /// 1,038 (71%)") in Text, what it counts and the next milestone in Secondary, "Still to do from earlier: …" in Text,
+    /// semibold, then the position's own lines (the giver, the state, the click hint) in Secondary; without it, the plain
+    /// tooltip as before.
+    /// </summary>
+    private void DrawMsqTooltip()
+    {
+        if (msqMeter is not { } meter)
+        {
+            UiMetrics.Tooltip(msqTooltip);
+            return;
+        }
+
+        using var tooltip = Theme.Tooltip();
+        using var body = Typography.Body();
+        UiMetrics.ApplyFontScale();
+        using (UiMetrics.TooltipWrap())
+        {
+            ImGui.TextUnformatted(meter.Title);
+            foreach (var line in meter.Lines)
+            {
+                ImGui.TextColored(Theme.Surface.TextSecondary, line);
+            }
+
+            if (meter.Earlier.Length > 0)
+            {
+                Chrome.SemiboldTextWrapped(meter.Earlier, Theme.Surface.Text, UiMetrics.TooltipWrapWidth);
+            }
+
+            if (msqTooltip.Length > 0)
+            {
+                ImGui.Spacing();
+                ImGui.TextColored(Theme.Surface.TextSecondary, msqTooltip);
+            }
+        }
     }
 
     /// <summary>Selects the next main scenario quest in the Journal tab; an active preset would hide it, so it is cleared first.</summary>

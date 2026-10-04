@@ -27,6 +27,10 @@ public sealed partial class Plugin
 
         // The achievements that need several quests read the game's own flag when it has one.
         mainWindow.AttachAchievementFlags(unlockReader.AchievementEarned);
+
+        // A finished quest's roll, minion, card or emote the game has not learned (1.19, C6): the reader's own flag.
+        mainWindow.AttachRewardLearned((reward, quest) => unlockReader.IsObtained(
+            new Core.Model.UniqueRewardEntry(quest, reward.Kind, reward.Id, reward.ItemId, reward.Name, Core.Model.Confidence.Static, string.Empty)));
         if (charactersPane is not null)
         {
             charactersPane.AchievementEarned = unlockReader.AchievementEarned;

@@ -9,7 +9,10 @@ using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.HandIn;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Sources;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
+using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
 
@@ -20,7 +23,10 @@ namespace Tsukimichi.Ui;
 /// the game, retainers through Allagan Tools; an item asked for high quality counts only the game's HQ, Allagan Tools'
 /// numbers are labelled "NQ+HQ" and never make it enough). Each row ends in two hand-off buttons (decision 1): Craft with Artisan
 /// and, for an item a node or fishing hole yields, Gather with GatherBuddy; a button whose plugin is missing stays,
-/// disabled, naming it. Under the rows, "Copy missing items" puts a Teamcraft import link or a "3x Item" list on the
+/// disabled, naming it. Under each item's name, its "Where" lines (1.19, N5; <see cref="WhereToGet"/>) say where the game
+/// data gets it: the cheapest vendor with its place and price, the crafters and levels, the lowest node or fishing hole,
+/// a quartermaster, an exchange, the duties it drops in, or "Market board only"; a placed line flags its place on click.
+/// Under the rows, "Copy missing items" puts a Teamcraft import link or a "3x Item" list on the
 /// clipboard, for this quest or for every pinned quest. Display only: the quest's state never reads any of it.
 /// <para>
 /// Spoiler-aware like the quest's name: while the shield masks the name, the section says so and shows no item (the
@@ -31,6 +37,9 @@ namespace Tsukimichi.Ui;
 public sealed partial class DetailPane
 {
     private const string HandInCopyMenuId = "##handInCopy";
+
+    /// <summary>At most this many other shops a "Where" line's tooltip lists per kind before "+N more".</summary>
+    private const int WhereOthersShown = 4;
 
     /// <summary>The least room a hand-in row keeps for the item's name before its pills drop their labels, logical pixels.</summary>
     private const float HandInNameRoomLogical = 120f;
@@ -63,6 +72,18 @@ public sealed partial class DetailPane
     private sealed class HandInRow(HandInItem item, string name, string detail)
     {
         public HandInItem Item { get; } = item;
+
+        /// <summary>The item sources <see cref="Where"/> was read from; it is read again when they land.</summary>
+        public ItemSourceIndex? WhereSources { get; set; }
+
+        /// <summary>Where to get the item (1.19, N5): its first two sources; null while the sources are read or when none is known.</summary>
+        public WhereSummary? Where { get; set; }
+
+        /// <summary>Every source with its other shops, for the "Where" line's tooltip.</summary>
+        public string WhereTooltip { get; set; } = string.Empty;
+
+        /// <summary>Where more of it sits than the inventory (the game counts the inventory only); none otherwise.</summary>
+        public HandInPlace Misplaced { get; set; }
 
         /// <summary>The item's name.</summary>
         public string Name { get; } = name;
@@ -217,13 +238,25 @@ public sealed partial class DetailPane
             ImGui.SameLine();
             using (ImRaii.Group())
             {
-                TextFlow.Wrapped(row.Line, MathF.Max(1f, RoomTo(cardRight) - buttons - UiMetrics.Px(8f)));
+                var textRoom = MathF.Max(1f, RoomTo(cardRight) - buttons - UiMetrics.Px(8f));
+                TextFlow.Wrapped(row.Line, textRoom);
                 if (live && row.CountText.Length > 0)
                 {
                     using (Theme.PushText(row.Enough ? Theme.Accent : Theme.Surface.TextSecondary))
                     {
                         ImGui.TextUnformatted(row.CountText);
                     }
+                }
+
+                // Where the game data gets it (1.19, N5), then, when the inventory alone is short, where the rest sits.
+                if (WhereOf(row) is { } where)
+                {
+                    DrawWhere(row, where, textRoom);
+                }
+
+                if (live && row.Misplaced != HandInPlace.None)
+                {
+                    TextFlow.Wrapped(row.Misplaced == HandInPlace.Saddlebag ? Strings.HandInMisplacedSaddlebag : Strings.HandInMisplacedArmoury, textRoom, Theme.U32(Theme.Surface.TextSecondary));
                 }
             }
 
@@ -267,6 +300,144 @@ public sealed partial class DetailPane
         }
     }
 
+    /// <summary>
+    /// The row's "Where" line (1.19, N5; spec-1.19 "N5"), composed once per item source index
+    /// (<see cref="WhereToGet.Summary(ItemSources?)"/>): null until the index lands or when the data knows no source.
+    /// The tooltip lists every source with the other shops of its kind.
+    /// </summary>
+    private WhereSummary? WhereOf(HandInRow row)
+    {
+        var sources = links.ItemSources;
+        if (ReferenceEquals(row.WhereSources, sources))
+        {
+            return row.Where;
+        }
+
+        row.WhereSources = sources;
+        row.Where = sources is null ? null : WhereToGet.Summary(sources.For(row.Item.ItemId));
+        row.WhereTooltip = string.Empty;
+        if (row.Where is not { } where)
+        {
+            return null;
+        }
+
+        var tooltip = new List<string>(where.Sources.Count * 2);
+        foreach (var line in where.Sources)
+        {
+            tooltip.Add(line.Lead);
+            for (var i = 0; i < line.Others.Count && i < WhereOthersShown; i++)
+            {
+                tooltip.Add("  " + line.Others[i]);
+            }
+
+            if (line.Others.Count > WhereOthersShown)
+            {
+                tooltip.Add("  " + string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereMoreFormat, line.Others.Count - WhereOthersShown));
+            }
+        }
+
+        // Where the vendor the Flag marks stands, as the map prints it.
+        if (where.Spot is { } spot)
+        {
+            tooltip.Add(string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereFlagTooltipFormat, SourceText.Spot(spot)));
+        }
+
+        row.WhereTooltip = string.Join("\n", tooltip);
+        return where;
+    }
+
+    /// <summary>
+    /// One item's "Where" line in the caption size, its first source's game icon at 14 px before it, then its actions as
+    /// small row pills: Flag (and, while the automation level shows Teleport, Teleport to the aetheryte nearest the
+    /// vendor) for a shop the data places, Open Gathering Log for a gathered item (the game's own log shows the nodes;
+    /// Tsukimichi never names one). Craft with Artisan stays the row's own pill. Nothing here moves on hover.
+    /// </summary>
+    private void DrawWhere(HandInRow row, WhereSummary where, float width)
+    {
+        using (Typography.Caption())
+        {
+            var icon = UiMetrics.Px(14f);
+            var gap = UiMetrics.Px(6f);
+            var lineHeight = ImGui.GetTextLineHeight();
+            if (where.Icon != 0)
+            {
+                var at = ImGui.GetCursorScreenPos();
+                ImGui.SetCursorScreenPos(new Vector2(at.X, at.Y + MathF.Max(0f, (lineHeight - icon) * 0.5f)));
+                GameIcon.Draw(textures, where.Icon, icon);
+                ImGui.SameLine(0f, gap);
+                ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, at.Y));
+            }
+
+            TextFlow.Wrapped(where.Text, MathF.Max(1f, width - (where.Icon != 0 ? icon + gap : 0f)), Theme.U32(Theme.Surface.TextSecondary));
+            if (ImGui.IsItemHovered() && row.WhereTooltip.Length > 0)
+            {
+                UiMetrics.Tooltip(where.Text, row.WhereTooltip);
+            }
+        }
+
+        var any = false;
+        if (where.Spot is { } spot)
+        {
+            any = true;
+            DrawSpotActions(spot);
+        }
+
+        if (where.GatheringLog)
+        {
+            if (any)
+            {
+                ImGui.SameLine();
+            }
+
+            var canOpen = links.CanOpenGatheringLog(row.Item.ItemId);
+            if (TravelControls.RowButton("##gatheringLog", GameIconRef.Tile(WhereToGet.GatheringLogIcon), Strings.HandInOpenGatheringLog, canOpen)
+                && !links.OpenGatheringLog(row.Item.ItemId))
+            {
+                ShowHandInNote(Strings.HandInGatheringLogFailed);
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.HandInOpenGatheringLogTooltip);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Flag and, while the automation level shows Teleport (1.18 rule: hidden above the level, never greyed), Teleport
+    /// to the aetheryte nearest a vendor's place, as small row pills on one line (1.19, N5 and C6).
+    /// </summary>
+    private void DrawSpotActions(WorldSpot spot)
+    {
+        var canFlag = links.CanFlagWorldSpot(spot);
+        if (TravelControls.FlagButton(Strings.AutomationPillFlag, canFlag, "##spotFlag") && !links.FlagWorldSpot(spot))
+        {
+            ShowHandInNote(Strings.HandInWhereFlagFailed);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(canFlag ? string.Format(CultureInfo.CurrentCulture, Strings.HandInWhereFlagTooltipFormat, SourceText.Spot(spot)) : Strings.HandInWhereFlagFailed);
+        }
+
+        if (!links.TeleportShown || links.AetheryteNear(spot) is not { } aetheryte)
+        {
+            return;
+        }
+
+        ImGui.SameLine();
+        var canTeleport = links.CanTeleportTo(aetheryte.RowId);
+        if (Chrome.ActionPill("##spotTeleport", ActionIcons.TeleportIcon, Strings.ActionTeleport, PillTone.Normal, canTeleport, size: PillLayout.Row))
+        {
+            links.TeleportTo(aetheryte.RowId, aetheryte.Name);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(links.TeleportToBlocked(aetheryte.RowId) ?? string.Format(CultureInfo.CurrentCulture, Strings.UnlocksMenuTeleportFormat, aetheryte.Name));
+        }
+    }
+
     /// <summary>Recomposes the counts line (and, next frame, the caption) only when its numbers moved.</summary>
     private void UpdateCount(HandInRow row, HandInCount count)
     {
@@ -278,13 +449,39 @@ public sealed partial class DetailPane
         handInCaptionDirty = true;
         row.Count = count;
         row.Enough = count.IsEnough(row.Item);
-        row.CountText = row.Item.IsHq ? HqCountText(count) : (count.Held, count.Retainers) switch
+        row.Misplaced = count.MisplacedIn(row.Item);
+        var text = row.Item.IsHq ? HqCountText(count)
+            : count.HeldHq is not null ? InventoryCountText(row.Item, count)
+            : (count.Held, count.Retainers) switch
+            {
+                (null, null) => Strings.HandInCountUnknown,
+                ({ } held, null) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveFormat, held),
+                (null, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInRetainersOnlyFormat, retainers),
+                ({ } held, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveWithRetainersFormat, held, retainers),
+            };
+
+        // "0 / 1 · 1 in your saddlebag" (spec-1.19 "N5"): the game counts the inventory only, so the rest is named.
+        row.CountText = row.Misplaced switch
         {
-            (null, null) => Strings.HandInCountUnknown,
-            ({ } held, null) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveFormat, held),
-            (null, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInRetainersOnlyFormat, retainers),
-            ({ } held, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveWithRetainersFormat, held, retainers),
+            HandInPlace.Saddlebag => text + Core.Evaluation.BlockerText.Separator + string.Format(CultureInfo.CurrentCulture, Strings.HandInInSaddlebagFormat, count.CountIn(HandInPlace.Saddlebag)),
+            HandInPlace.Armoury => text + Core.Evaluation.BlockerText.Separator + string.Format(CultureInfo.CurrentCulture, Strings.HandInInArmouryFormat, count.CountIn(HandInPlace.Armoury)),
+            _ => text,
         };
+    }
+
+    /// <summary>
+    /// The counts line from the game's inventory read (1.19, N5): "0 / 1" when the amount is known, "none in your
+    /// inventory" or "2 in your inventory" when it is not; the retainers' count after it when Allagan Tools gives one.
+    /// </summary>
+    private static string InventoryCountText(HandInItem item, HandInCount count)
+    {
+        var held = count.Held ?? 0;
+        var text = item.AmountKnown
+            ? string.Format(CultureInfo.CurrentCulture, Strings.HandInOfNeededFormat, held, item.Needed)
+            : held == 0 ? Strings.HandInNoneInInventory : string.Format(CultureInfo.CurrentCulture, Strings.HandInInInventoryFormat, held);
+        return count.Retainers is { } retainers && retainers > 0
+            ? text + Core.Evaluation.BlockerText.Separator + string.Format(CultureInfo.CurrentCulture, Strings.HandInRetainersOnlyFormat, retainers)
+            : text;
     }
 
     /// <summary>

@@ -6,6 +6,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
 using Tsukimichi.Commands;
 using Tsukimichi.Data;
 using Tsukimichi.GameData;
@@ -975,6 +976,9 @@ public sealed partial class Plugin : IDalamudPlugin
             var warmer = new Game.IndexWarmer(DataManager, Session, Strings.FlightAllZonesFormat, Log);
             _ = warmer.Start();
             gameLinks.AetheryteWarmup = warmer.Aetherytes;
+            // Where items come from (1.19, C6 and N5): the rewards' buy-back mark and the hand-in "Where" lines appear
+            // once it lands.
+            gameLinks.ItemSourceIndex = () => warmer.ItemSources.Value;
             queryRunner.IconSheets = () => warmer.PaneIcons.Value;
             queryRunner.IconSheetsSettled = () => warmer.PaneIcons.IsDone;
 
@@ -1050,10 +1054,12 @@ public sealed partial class Plugin : IDalamudPlugin
                 dailyOffers.Gate = gate;
             }
 
-            // So do the repeat flags each capture reads (QuestManager.IsQuestRepeatFlagSet).
+            // So do the repeat flags each capture reads (QuestManager.IsQuestRepeatFlagSet), and the item levels and the
+            // Duties board's duty records (1.19.0, C7 and N4), read for the duties of the index once it lands.
             if (stateReader is not null)
             {
                 stateReader.Gate = gate;
+                stateReader.DutyIndex = () => warmer.DutyRuns.Value;
             }
 
             // And the aethernet shard attunement read (UIState.IsAetheryteUnlocked).
@@ -1075,6 +1081,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 Enabled = Settings.ItemHintsEnabled,
                 HandIns = handIns,
                 NeededForEnabled = () => Settings.ItemNeededForEnabled,
+                BuyBack = (item, quest) => gameLinks.BuyBackOf(item, quest)?.Short,
             };
             PluginInterface.UiBuilder.Draw += DrawHoverHint;
             itemHooks = new Game.ItemHooks(ContextMenu, rewardLookup, quest =>
@@ -1090,6 +1097,7 @@ public sealed partial class Plugin : IDalamudPlugin
                 // The item is in the logged-in character's inventory: its states decide what is open.
                 NeededStates = () => Session.LiveStates,
                 NeededForEnabled = () => Settings.ItemNeededForEnabled,
+                BuyBack = (item, quest) => gameLinks.BuyBackOf(item, quest)?.Short,
             };
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
@@ -1327,6 +1335,24 @@ public sealed partial class Plugin : IDalamudPlugin
             // The flight index (a few small sheets) is warmed at load; the pane says it is reading them until it lands.
             flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => warmer.Flight.IsDone ? warmer.Flight.Value ?? FlightIndex.Empty : null);
             mainWindow.AttachFlight(flightPane);
+            // Find by unlock and Route to unlock flying (K3): the zone's currents, where its field currents stand (the
+            // game's own layouts, read once per zone when a route asks) and which the live character has attuned.
+            Func<FlightIndex?> flightZones = () => warmer.Flight.IsDone ? warmer.Flight.Value : null;
+            mainWindow.FlightZones = flightZones;
+            routeWindow.Flight = flightZones;
+            routeWindow.Attuned = unlockReader.IsAetherCurrentUnlocked;
+            routeWindow.FieldPlaces = zone =>
+            {
+                try
+                {
+                    return AetherCurrentPlaces.Read(DataManager.Excel, path => DataManager.GetFile<Lumina.Data.Files.LgbFile>(path), zone, DataManager.Language.ToLumina());
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Where the field aether currents of {Zone} stand could not be read", zone.Name);
+                    return [];
+                }
+            };
             // Clear my blues (P3): the duty kinds (ContentFinderCondition) are warmed at load; the plan's tags are built
             // off the frame once they and the catalog are in.
             planSource = new PlanSource(Session, () => warmer.Duties.IsDone ? warmer.Duties.Value ?? Core.Plan.PlanDuties.Empty : null, Log)
@@ -1370,6 +1396,8 @@ public sealed partial class Plugin : IDalamudPlugin
             var catchUpDuties = PlanningSource.DutySource(() => Session.Curated, () => moonlit.Catalog, () => dutyRuns.Value);
             var planning = new PlanningSource(Session, gameLinks, catchUpDuties);
             charactersPane.Planning = planning;
+            // The Duties board (1.19.0, N4): why each roulette is closed, and the duties unlocked but never cleared.
+            charactersPane.DutyBoard = new DutyBoardSource(Session, () => dutyRuns.Value, dutyUnlocks);
             mainWindow.AttachPlanning(planning);
             chatNotifier.PayoffGates = payoffGates;
             chatNotifier.CharacterSettings = CharacterBook;

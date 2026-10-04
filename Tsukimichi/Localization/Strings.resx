@@ -4786,7 +4786,7 @@
     <value>You have reached the latest story.</value>
   </data>
   <data name="PlanningCatchUpTooltip" xml:space="preserve">
-    <value>Main scenario quests left on your path, per expansion, with the duties they ask you to have cleared that you have not. Counts only.</value>
+    <value>Quests left on your path to the latest story, per expansion: the main scenario, and the side quests it needs (the Crystal Tower series, the hard primals, a Shadowbringers role quest line), with the duties they ask you to have cleared that you have not. Counts only.</value>
   </data>
   <data name="PlanningBoardHeading" xml:space="preserve">
     <value>Allied society board</value>
@@ -12112,5 +12112,635 @@
   </data>
   <data name="Core.Blocker.CantCheck" xml:space="preserve">
     <value>Can't check</value>
+  </data>
+  <data name="Core.UnlockFindKind.Mount" xml:space="preserve">
+    <value>Mount</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Flying" xml:space="preserve">
+    <value>Flying</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Duty" xml:space="preserve">
+    <value>Duty</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Feature" xml:space="preserve">
+    <value>Feature</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Job" xml:space="preserve">
+    <value>Job</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Area" xml:space="preserve">
+    <value>Area</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group (zones and aetherytes).</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Emote" xml:space="preserve">
+    <value>Emote</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFindKind.Orchestrion" xml:space="preserve">
+    <value>Orchestrion</value>
+    <comment>Core: UnlockFind.cs. A kind chip of the Unlocks filter and of the search's Unlocks group.</comment>
+  </data>
+  <data name="Core.UnlockFind.FlyingIn" xml:space="preserve">
+    <value>Flying in {0}</value>
+    <comment>Core: UnlockFind.cs. A flying unlock's name in search results and the Route window. {0} = the zone.</comment>
+  </data>
+  <data name="Core.UnlockFind.Currents" xml:space="preserve">
+    <value>{0} aether currents, {1} from quests</value>
+    <comment>Core: UnlockFind.cs. A flying search result's summary. {0} = the zone's currents, {1} = how many quests give.</comment>
+  </data>
+  <data name="Core.UnlockFind.CurrentsOne" xml:space="preserve">
+    <value>1 aether current, {1} from quests</value>
+    <comment>Core: UnlockFind.cs. A flying search result's summary for a zone with one current. {1} = how many quests give.</comment>
+  </data>
+  <data name="Core.Filter.UnlockKinds" xml:space="preserve">
+    <value>Unlock kinds</value>
+    <comment>Core: FilterNames.cs. The Unlocks filter, as the empty-result guard names it.</comment>
+  </data>
+  <data name="FindUnlocksHeading" xml:space="preserve">
+    <value>Unlocks</value>
+    <comment>The head of the Unlocks group under the toolbar search (things quests open that match the text).</comment>
+  </data>
+  <data name="FindUnlockViaFormat" xml:space="preserve">
+    <value>via {0}</value>
+    <comment>A search result's quest. {0} = the first quest that opens it.</comment>
+  </data>
+  <data name="RouteToUnlockAction" xml:space="preserve">
+    <value>Route to unlock</value>
+    <comment>Quiet button on a search result and an item of an Unlocks row's menu.</comment>
+  </data>
+  <data name="RouteToUnlockTooltip" xml:space="preserve">
+    <value>Opens the Route window: the quests still to do before this opens, for the character on view.</value>
+  </data>
+  <data name="FilterDrawerUnlocks" xml:space="preserve">
+    <value>Unlocks</value>
+    <comment>The filter drawer's Unlocks group (what kinds of thing the quests open).</comment>
+  </data>
+  <data name="UnlockKindsCountOne" xml:space="preserve">
+    <value>1 kind</value>
+  </data>
+  <data name="UnlockKindsCountFormat" xml:space="preserve">
+    <value>{0} kinds</value>
+    <comment>{0} = how many Unlocks chips are on.</comment>
+  </data>
+  <data name="UnlockKindsHint" xml:space="preserve">
+    <value>Keeps quests that unlock one of these. Off: every quest.</value>
+  </data>
+  <data name="UnlockKindsChipFormat" xml:space="preserve">
+    <value>Opens: {0}</value>
+    <comment>The chip lane's Unlocks filter chip. {0} = the kinds on ("Mount · Flying").</comment>
+  </data>
+  <data name="RouteStopsOne" xml:space="preserve">
+    <value>1 stop</value>
+  </data>
+  <data name="RouteStopsFormat" xml:space="preserve">
+    <value>{0} stops</value>
+    <comment>Beside a route to an unlock's title. {0} = the quests and field aether currents left.</comment>
+  </data>
+  <data name="RouteFieldCurrentFormat" xml:space="preserve">
+    <value>Aether current · {0}</value>
+    <comment>A field aether current on a route to flying. {0} = the aetheryte nearest it.</comment>
+  </data>
+  <data name="RouteFieldCurrentUnplaced" xml:space="preserve">
+    <value>Aether current · in the field</value>
+    <comment>A field aether current the game's layouts do not place.</comment>
+  </data>
+  <data name="RouteFieldMark" xml:space="preserve">
+    <value>field</value>
+    <comment>The mark at the end of a field aether current's line on a route to flying.</comment>
+  </data>
+  <data name="RouteFieldTooltip" xml:space="preserve">
+    <value>Found in the field, not from a quest. The Aether Compass points to it, and Flag marks where it stands.</value>
+  </data>
+  <data name="RouteFieldFlagTooltip" xml:space="preserve">
+    <value>Marks where this aether current stands on the map.</value>
+  </data>
+  <data name="DutyClearHeading" xml:space="preserve">
+    <value>How you'll clear it</value>
+  </data>
+  <data name="DutyClearCaptionOne" xml:space="preserve">
+    <value>1 duty</value>
+  </data>
+  <data name="DutyClearCaptionFormat" xml:space="preserve">
+    <value>{0} duties</value>
+    <comment>{0} = how many duties the quest involves.</comment>
+  </data>
+  <data name="DutyBadgeSoloWithNpcs" xml:space="preserve">
+    <value>Solo with NPCs</value>
+  </data>
+  <data name="DutyBadgeSoloWithNpcsTip" xml:space="preserve">
+    <value>Duty Support or Trust lists it: NPCs fill your party, no other players needed.</value>
+  </data>
+  <data name="DutyBadgeSolo" xml:space="preserve">
+    <value>Solo</value>
+  </data>
+  <data name="DutyBadgeSoloTip" xml:space="preserve">
+    <value>A solo duty: you go in alone.</value>
+  </data>
+  <data name="DutyBadgeGroupFormat" xml:space="preserve">
+    <value>Group of {0}</value>
+    <comment>{0} = the players it seats (4, 8, 24).</comment>
+  </data>
+  <data name="DutyBadgeGroupTip" xml:space="preserve">
+    <value>No Duty Support or Trust: you clear it with other players, through the Duty Finder or a party.</value>
+  </data>
+  <data name="DutyBadgeGroupRoulettesFormat" xml:space="preserve">
+    <value>In the roulettes: {0}</value>
+    <comment>{0} = the roulettes' short names.</comment>
+  </data>
+  <data name="DutyBadgeGroupPartyTip" xml:space="preserve">
+    <value>The Duty Finder does not match it: you form the full party yourself (the Party Finder, friends, a static).</value>
+  </data>
+  <data name="DutyBadgeHighEnd" xml:space="preserve">
+    <value>High-end</value>
+  </data>
+  <data name="DutyBadgeHighEndTip" xml:space="preserve">
+    <value>Savage, Extreme, Unreal, Ultimate or Chaotic: hard content most players clear with a set party.</value>
+  </data>
+  <data name="DutyBadgeStoryRequired" xml:space="preserve">
+    <value>Story-required</value>
+  </data>
+  <data name="DutyBadgeStoryRequiredTip" xml:space="preserve">
+    <value>The main scenario needs it.</value>
+  </data>
+  <data name="DutyBadgeOptional" xml:space="preserve">
+    <value>Optional</value>
+  </data>
+  <data name="DutyBadgeOptionalTip" xml:space="preserve">
+    <value>The main scenario does not need it.</value>
+  </data>
+  <data name="DutyWallJobFormat" xml:space="preserve">
+    <value>i{0} needed · you're i{1} ({2})</value>
+    <comment>The item-level wall before Patch 8.0. {0} = the duty's item level, {1} = the current job's, {2} = its abbreviation (DRG).</comment>
+  </data>
+  <data name="DutyWallGearsetFormat" xml:space="preserve">
+    <value>{0} gearset i{1}</value>
+    <comment>After the wall, the best gearset that qualifies. {0} = the job's abbreviation (WAR), {1} = its item level.</comment>
+  </data>
+  <data name="DutyWallSharedFormat" xml:space="preserve">
+    <value>i{0} needed · you're i{1}</value>
+    <comment>The item-level wall from Patch 8.0 (your highest item level counts for every job). {0} = the duty's, {1} = yours.</comment>
+  </data>
+  <data name="DutyWallJobLevelFormat" xml:space="preserve">
+    <value>{0} (i{1})</value>
+    <comment>{0} = a job's abbreviation, {1} = its item level.</comment>
+  </data>
+  <data name="DutyWallAlsoOneFormat" xml:space="preserve">
+    <value>Your {0} also qualifies.</value>
+    <comment>{0} = "SGE (i705)".</comment>
+  </data>
+  <data name="DutyWallAlsoManyFormat" xml:space="preserve">
+    <value>Your {0} also qualify.</value>
+    <comment>{0} = "SGE (i705) and WHM (i700)".</comment>
+  </data>
+  <data name="DutyWallAnd" xml:space="preserve">
+    <value> and </value>
+    <comment>Joins the last two jobs of the also-qualifies line.</comment>
+  </data>
+  <data name="DutyWallNpcNote" xml:space="preserve">
+    <value>Duty Support checks item level too.</value>
+  </data>
+  <data name="PlanningCatchUpSideFormat" xml:space="preserve">
+    <value>{0}, {1} of them side quests the story needs</value>
+    <comment>{0} = every quest left ("151 quests"), {1} = how many of them are side quests the story needs.</comment>
+  </data>
+  <data name="PlanningSideQuestsOne" xml:space="preserve">
+    <value>1 side quest</value>
+  </data>
+  <data name="PlanningSideQuestsFormat" xml:space="preserve">
+    <value>{0} side quests</value>
+    <comment>{0} = the count.</comment>
+  </data>
+  <data name="PlanningCatchUpSideBeforeFormat" xml:space="preserve">
+    <value>{0} the story needs before {1}</value>
+    <comment>{0} = "8 side quests", {1} = the main scenario quest that needs them (spoiler-masked).</comment>
+  </data>
+  <data name="PlanningCatchUpExpansionSideFormat" xml:space="preserve">
+    <value>{0} (and {1})</value>
+    <comment>An expansion's catch-up line with its side quests. {0} = the line, {1} = "8 side quests".</comment>
+  </data>
+  <data name="PlanningCatchUpOthersOne" xml:space="preserve">
+    <value>Ahead: 1 story duty needs other players</value>
+  </data>
+  <data name="PlanningCatchUpOthersFormat" xml:space="preserve">
+    <value>Ahead: {0} story duties need other players</value>
+    <comment>{0} = how many duties left on the story path have no Duty Support or Trust.</comment>
+  </data>
+  <data name="PlanningCatchUpWallFormat" xml:space="preserve">
+    <value>The story's duties ahead ask up to i{0} (you: i{1})</value>
+    <comment>{0} = the highest item level a story duty left asks, {1} = the character's.</comment>
+  </data>
+  <data name="MsqMeterTitleFormat" xml:space="preserve">
+    <value>Main scenario · {0:N0} of {1:N0} ({2}%)</value>
+    <comment>The MSQ pill's hover title. {0} = done, {1} = in all (the side quests the story requires included), {2} = whole percent.</comment>
+  </data>
+  <data name="MsqMeterCounts" xml:space="preserve">
+    <value>Counts the side quests the story requires too: the Crystal Tower series, the Hard primal trials and a Shadowbringers role quest line.</value>
+  </data>
+  <data name="MsqMeterMilestoneOne" xml:space="preserve">
+    <value>Next milestone in 1 quest.</value>
+  </data>
+  <data name="MsqMeterMilestoneFormat" xml:space="preserve">
+    <value>Next milestone in {0} quests.</value>
+    <comment>{0} = main scenario quests left to the end of the current patch's story.</comment>
+  </data>
+  <data name="MsqMeterEarlierFormat" xml:space="preserve">
+    <value>Still to do from earlier: {0}. The story needs it later.</value>
+    <comment>{0} = the side quests skipped, joined ("Crystal Tower Quests (8 quests at Lv 50)").</comment>
+  </data>
+  <data name="MsqMeterEarlierItemFormat" xml:space="preserve">
+    <value>{0} ({1} at Lv {2})</value>
+    <comment>{0} = the line's name (its journal genre, or its one quest), {1} = "8 quests", {2} = the highest level among them.</comment>
+  </data>
+  <data name="DutyBoardHeading" xml:space="preserve">
+    <value>Duties</value>
+  </data>
+  <data name="DutyBoardTooltip" xml:space="preserve">
+    <value>Why each Duty Roulette is closed, and the duties still to unlock in it, read from this character's own duty records; then the duties unlocked but never cleared. Mentor is left out: mentor status opens it, not duties.</value>
+  </data>
+  <data name="DutyBoardLockedOne" xml:space="preserve">
+    <value>1 roulette locked</value>
+  </data>
+  <data name="DutyBoardLockedFormat" xml:space="preserve">
+    <value>{0} roulettes locked</value>
+    <comment>{0} = how many.</comment>
+  </data>
+  <data name="DutyBoardNotRead" xml:space="preserve">
+    <value>Log in on this character to read its duty records.</value>
+  </data>
+  <data name="DutyBoardRouletteFormat" xml:space="preserve">
+    <value>{0} roulette</value>
+    <comment>{0} = the roulette's short name ("Level Cap Dungeons").</comment>
+  </data>
+  <data name="DutyBoardLockedLevelFormat" xml:space="preserve">
+    <value>locked · needs a Lv {0} job · best is {1} {2}</value>
+    <comment>{0} = the roulette's level, {1} = the best job's abbreviation, {2} = its level.</comment>
+  </data>
+  <data name="DutyBoardLockedExpansionFormat" xml:space="preserve">
+    <value>locked · needs {0}</value>
+    <comment>{0} = the expansion's name.</comment>
+  </data>
+  <data name="DutyBoardLockedEveryFormat" xml:space="preserve">
+    <value>locked · {0}</value>
+    <comment>{0} = "2 dungeons not unlocked".</comment>
+  </data>
+  <data name="DutyBoardLockedSomeFormat" xml:space="preserve">
+    <value>locked · unlock {0} more to open it</value>
+    <comment>{0} = how many more duties.</comment>
+  </data>
+  <data name="DutyBoardOpenLeftFormat" xml:space="preserve">
+    <value>open · {0}</value>
+    <comment>{0} = "1 raid not unlocked".</comment>
+  </data>
+  <data name="DutyBoardDungeonsOne" xml:space="preserve">
+    <value>1 dungeon not unlocked</value>
+  </data>
+  <data name="DutyBoardDungeonsFormat" xml:space="preserve">
+    <value>{0} dungeons not unlocked</value>
+  </data>
+  <data name="DutyBoardTrialsOne" xml:space="preserve">
+    <value>1 trial not unlocked</value>
+  </data>
+  <data name="DutyBoardTrialsFormat" xml:space="preserve">
+    <value>{0} trials not unlocked</value>
+  </data>
+  <data name="DutyBoardRaidsOne" xml:space="preserve">
+    <value>1 raid not unlocked</value>
+  </data>
+  <data name="DutyBoardRaidsFormat" xml:space="preserve">
+    <value>{0} raids not unlocked</value>
+  </data>
+  <data name="DutyBoardGuildhestsOne" xml:space="preserve">
+    <value>1 guildhest not unlocked</value>
+  </data>
+  <data name="DutyBoardGuildhestsFormat" xml:space="preserve">
+    <value>{0} guildhests not unlocked</value>
+  </data>
+  <data name="DutyBoardDutiesOne" xml:space="preserve">
+    <value>1 duty not unlocked</value>
+  </data>
+  <data name="DutyBoardDutiesFormat" xml:space="preserve">
+    <value>{0} duties not unlocked</value>
+  </data>
+  <data name="DutyBoardWith" xml:space="preserve">
+    <value>not unlocked · with </value>
+    <comment>Before the unlock quest's name, which follows in Text.</comment>
+  </data>
+  <data name="DutyBoardNoQuest" xml:space="preserve">
+    <value>not unlocked · no unlock quest known</value>
+  </data>
+  <data name="DutyBoardHiddenDutyFormat" xml:space="preserve">
+    <value>A duty further along the story (Lv {0})</value>
+    <comment>{0} = the duty's level. Shown when every quest that unlocks it is hidden by the spoiler shield.</comment>
+  </data>
+  <data name="DutyBoardQuestTip" xml:space="preserve">
+    <value>Click to show the quest.</value>
+  </data>
+  <data name="DutyBoardRoute" xml:space="preserve">
+    <value>Route</value>
+  </data>
+  <data name="DutyBoardRouteTip" xml:space="preserve">
+    <value>Open the route through the quests that unlock these duties.</value>
+  </data>
+  <data name="DutyBoardPinOne" xml:space="preserve">
+    <value>Pin</value>
+  </data>
+  <data name="DutyBoardPinBoth" xml:space="preserve">
+    <value>Pin both</value>
+  </data>
+  <data name="DutyBoardPinAll" xml:space="preserve">
+    <value>Pin all</value>
+  </data>
+  <data name="DutyBoardPinTip" xml:space="preserve">
+    <value>Pin the quests that unlock them, for this character.</value>
+  </data>
+  <data name="DutyBoardPinnedTip" xml:space="preserve">
+    <value>Every one of them is pinned.</value>
+  </data>
+  <data name="DutyBoardMoreFormat" xml:space="preserve">
+    <value>{0} more ›</value>
+    <comment>{0} = how many rows are folded; opens them in the same card.</comment>
+  </data>
+  <data name="DutyBoardFewer" xml:space="preserve">
+    <value>Show fewer</value>
+  </data>
+  <data name="DutyBoardNeverHeading" xml:space="preserve">
+    <value>Unlocked, never cleared</value>
+  </data>
+  <data name="Core.Sources.AnVendor" xml:space="preserve">
+    <value>an {0}</value>
+    <comment>Core: SourceText.cs.</comment>
+  </data>
+  <data name="Core.Sources.AVendor" xml:space="preserve">
+    <value>a {0}</value>
+    <comment>Core: SourceText.cs.</comment>
+  </data>
+  <data name="Core.Sources.VendorAt" xml:space="preserve">
+    <value>{0}, {1}</value>
+    <comment>Core: SourceText.cs.</comment>
+  </data>
+  <data name="Core.Sources.Spot" xml:space="preserve">
+    <value>{0} ({1:0.0}, {2:0.0})</value>
+    <comment>Core: SourceText.cs.</comment>
+  </data>
+  <data name="Core.Sources.CostJoin" xml:space="preserve">
+    <value> + </value>
+    <comment>Core: SourceText.cs.</comment>
+  </data>
+  <data name="Core.Sources.Gil" xml:space="preserve">
+    <value>{0:N0} gil</value>
+    <comment>Core: SourceText.cs.</comment>
+  </data>
+  <data name="Core.Sources.Currency" xml:space="preserve">
+    <value>{0:N0} {1}</value>
+    <comment>Core: SourceText.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.Mark" xml:space="preserve">
+    <value>Re-buyable</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.Short" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.BuyBackFor" xml:space="preserve">
+    <value>Can be bought back from {0} for {1}</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.BuyBack" xml:space="preserve">
+    <value>Can be bought back from {0}</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.SoldFor" xml:space="preserve">
+    <value>Also sold by {0} for {1}</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.Sold" xml:space="preserve">
+    <value>Also sold by {0}</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.BuyBackNote" xml:space="preserve">
+    <value>Once the quest is done, a reward you sold or discarded can be had again.</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.BuyBack.SoldNote" xml:space="preserve">
+    <value>Anyone can buy it, so the quest is not the only way to get it.</value>
+    <comment>Core: BuyBacks.cs.</comment>
+  </data>
+  <data name="Core.Where.Crafted" xml:space="preserve">
+    <value>Crafted · {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrCrafted" xml:space="preserve">
+    <value>or crafted, {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Drops" xml:space="preserve">
+    <value>Drops in {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrDrops" xml:space="preserve">
+    <value>or drops in {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Join" xml:space="preserve">
+    <value> · </value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.ListJoin" xml:space="preserve">
+    <value>, </value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.JobLevelStars" xml:space="preserve">
+    <value>{0} Lv {1} ({2}-star)</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.JobLevel" xml:space="preserve">
+    <value>{0} Lv {1}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Exchange" xml:space="preserve">
+    <value>Exchanged by {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrExchange" xml:space="preserve">
+    <value>or exchanged by {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.SoldBy" xml:space="preserve">
+    <value>Sold by {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrSoldBy" xml:space="preserve">
+    <value>or sold by {0}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.WithCost" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Gated" xml:space="preserve">
+    <value>{0} (after a quest or achievement)</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Mined" xml:space="preserve">
+    <value>Mined · the Gathering Log shows the nodes</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Quarried" xml:space="preserve">
+    <value>Quarried · the Gathering Log shows the nodes</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Logged" xml:space="preserve">
+    <value>Logged · the Gathering Log shows the nodes</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Harvested" xml:space="preserve">
+    <value>Harvested · the Gathering Log shows the nodes</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Spearfished" xml:space="preserve">
+    <value>Spearfished · the Fishing Log shows the spots</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.Fished" xml:space="preserve">
+    <value>Fished · the Fishing Log shows the holes</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrMined" xml:space="preserve">
+    <value>or mined, see the Gathering Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrQuarried" xml:space="preserve">
+    <value>or quarried, see the Gathering Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrLogged" xml:space="preserve">
+    <value>or logged, see the Gathering Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrHarvested" xml:space="preserve">
+    <value>or harvested, see the Gathering Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrSpearfished" xml:space="preserve">
+    <value>or spearfished, see the Fishing Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.OrFished" xml:space="preserve">
+    <value>or fished, see the Fishing Log</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.Where.AtPlace" xml:space="preserve">
+    <value>{0} ({1})</value>
+    <comment>Core: WhereToGet.cs.</comment>
+  </data>
+  <data name="Core.RewardState.NotLearned" xml:space="preserve">
+    <value>Done, not learned</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.OnYou" xml:space="preserve">
+    <value>it is on you</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.NotOnYou" xml:space="preserve">
+    <value>Not on you</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.Reclaim" xml:space="preserve">
+    <value>reclaim at {0}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.BuyItBack" xml:space="preserve">
+    <value>buy it back from {0}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.AlsoSold" xml:space="preserve">
+    <value>also sold by {0}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.WithCost" xml:space="preserve">
+    <value>{0}, {1}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.NotOfferedLower" xml:space="preserve">
+    <value>not offered by the Salvager</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.NotOffered" xml:space="preserve">
+    <value>Not offered by the Salvager</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.InArmoury" xml:space="preserve">
+    <value>in your armoury chest</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.InSaddlebag" xml:space="preserve">
+    <value>in your saddlebag</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.WithRetainers" xml:space="preserve">
+    <value>with your retainers</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="Core.RewardState.Join" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>Core: RewardStates.cs.</comment>
+  </data>
+  <data name="HandInWhereMoreFormat" xml:space="preserve">
+    <value>+{0} more</value>
+    <comment>Hand in Where tooltip (1.19, N5). {0} = how many more shops of that kind.</comment>
+  </data>
+  <data name="HandInWhereFlagTooltipFormat" xml:space="preserve">
+    <value>Flag it on the map: {0}</value>
+    <comment>Hand in Where line's Flag (1.19, N5/C6). {0} = zone and map coordinates.</comment>
+  </data>
+  <data name="HandInWhereFlagFailed" xml:space="preserve">
+    <value>The map could not be opened there.</value>
+    <comment>Status note when Flag on a Where line fails.</comment>
+  </data>
+  <data name="HandInOpenGatheringLog" xml:space="preserve">
+    <value>Open Gathering Log</value>
+    <comment>Hand in Where line's action for a gathered item (1.19, N5).</comment>
+  </data>
+  <data name="HandInOpenGatheringLogTooltip" xml:space="preserve">
+    <value>Opens the game's Gathering Log at this item. It shows the nodes and their times; Tsukimichi never guesses one.</value>
+    <comment>Tooltip of Open Gathering Log.</comment>
+  </data>
+  <data name="HandInGatheringLogFailed" xml:space="preserve">
+    <value>The Gathering Log could not be opened.</value>
+    <comment>Status note when Open Gathering Log fails.</comment>
+  </data>
+  <data name="HandInOfNeededFormat" xml:space="preserve">
+    <value>{0} / {1}</value>
+    <comment>Hand in count (1.19, N5). {0} = in the inventory, {1} = what the quest asks for.</comment>
+  </data>
+  <data name="HandInNoneInInventory" xml:space="preserve">
+    <value>none in your inventory</value>
+    <comment>Hand in count when the amount is unknown and none is held.</comment>
+  </data>
+  <data name="HandInInInventoryFormat" xml:space="preserve">
+    <value>{0} in your inventory</value>
+    <comment>Hand in count when the amount is unknown. {0} = how many.</comment>
+  </data>
+  <data name="HandInInSaddlebagFormat" xml:space="preserve">
+    <value>{0} in your saddlebag</value>
+    <comment>After the hand-in count. {0} = how many.</comment>
+  </data>
+  <data name="HandInInArmouryFormat" xml:space="preserve">
+    <value>{0} in your armoury chest</value>
+    <comment>After the hand-in count. {0} = how many.</comment>
+  </data>
+  <data name="HandInMisplacedSaddlebag" xml:space="preserve">
+    <value>The game counts your inventory only: take it out of the saddlebag.</value>
+    <comment>Hand in line (1.19, N5).</comment>
+  </data>
+  <data name="HandInMisplacedArmoury" xml:space="preserve">
+    <value>The game counts your inventory only: take it out of the armoury chest.</value>
+    <comment>Hand in line (1.19, N5).</comment>
   </data>
 </root>

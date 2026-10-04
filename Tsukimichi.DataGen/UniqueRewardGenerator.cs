@@ -38,7 +38,12 @@ internal sealed class UniqueRewardGenerator
     private readonly Dictionary<ushort, uint> hairstyleByUnlockLink = new();
     private readonly Dictionary<uint, string> aetherCurrentZone = new();
     private readonly HashSet<uint> gilShopItems = new();
-    private readonly HashSet<uint> vendorItems = new(); // gil shop items sold through a menu that is not a quest-reward reacquisition menu
+    /// <summary>
+    /// Gil shop items sold through a menu that is not a quest-reward reacquisition menu, with the quest each such row
+    /// wants done first (0 when none): a row that wants the rewarding quest itself only sells the reward back (the
+    /// recompense officer's seasonal menus), so it makes the reward no less exclusive (1.19, C6).
+    /// </summary>
+    private readonly Dictionary<uint, List<uint>> vendorRowQuests = new();
     private readonly HashSet<uint> specialShopItems = new();
     private readonly HashSet<uint> recipeResults = new();
     private readonly HashSet<uint> gatheringItems = new();
@@ -211,8 +216,11 @@ internal sealed class UniqueRewardGenerator
             if (row.Item.RowId == 0)
                 continue;
             gilShopItems.Add(row.Item.RowId);
-            if (!IsReacquisitionMenu(Text(g.GilShops.GetRowOrDefault(row.RowId)?.Name)))
-                vendorItems.Add(row.Item.RowId);
+            if (IsReacquisitionMenu(Text(g.GilShops.GetRowOrDefault(row.RowId)?.Name)))
+                continue;
+            if (!vendorRowQuests.TryGetValue(row.Item.RowId, out var quests))
+                vendorRowQuests[row.Item.RowId] = quests = new List<uint>(1);
+            quests.Add(RequiredQuest(row));
         }
 
         foreach (var shop in g.SpecialShops)
@@ -463,7 +471,7 @@ internal sealed class UniqueRewardGenerator
 
         if (item.IsUntradable && item.ItemSearchCategory.RowId == 0)
         {
-            if (StrictItemExclusivity && NonExclusiveReason(item, type) is { } reason)
+            if (StrictItemExclusivity && NonExclusiveReason(questRowId, item, type) is { } reason)
             {
                 Dropped.Add(new DroppedItem(questRowId, item.RowId, itemName, reason));
                 return;
@@ -475,7 +483,7 @@ internal sealed class UniqueRewardGenerator
     }
 
     /// <summary>Why a plain untradable item is not a quest-only collectible, or null when it looks quest-exclusive.</summary>
-    private string? NonExclusiveReason(Item item, uint itemActionType)
+    private string? NonExclusiveReason(uint questRowId, Item item, uint itemActionType)
     {
         if (UnlockItemActions.Contains(itemActionType))
             return null; // framer's kit, field notes: an unlock, whatever category the item sits in
@@ -485,8 +493,27 @@ internal sealed class UniqueRewardGenerator
         if (specialShopItems.Contains(item.RowId)) return "sold by a special shop";
         if (recipeResults.Contains(item.RowId)) return "crafted by a recipe";
         if (gatheringItems.Contains(item.RowId)) return "gathered";
-        if (vendorItems.Contains(item.RowId)) return "sold by a gil shop that is not a quest-reward reacquisition menu";
+        if (SoldByVendor(item.RowId, questRowId)) return "sold by a gil shop that is not a quest-reward reacquisition menu";
         return null;
+    }
+
+    /// <summary>
+    /// Whether a gil shop sells the item other than back to whoever did <paramref name="questRowId"/>: a row of a menu
+    /// that is not a reacquisition menu, wanting no quest or another quest. A row that wants this very quest is the
+    /// reward sold back (the recompense officer's "Purchase Moonfire Faire Items" rows name their festival quest).
+    /// </summary>
+    internal bool SoldByVendor(uint itemId, uint questRowId) =>
+        vendorRowQuests.TryGetValue(itemId, out var quests) && quests.Exists(q => q != questRowId);
+
+    /// <summary>The first quest a gil shop row wants done before it sells (<c>GilShopItem.QuestRequired</c>); 0 when none.</summary>
+    private static uint RequiredQuest(GilShopItem row)
+    {
+        foreach (var quest in row.QuestRequired)
+        {
+            if (quest.RowId != 0)
+                return quest.RowId;
+        }
+        return 0;
     }
 
     /// <summary>

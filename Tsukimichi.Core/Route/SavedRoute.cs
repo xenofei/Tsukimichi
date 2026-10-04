@@ -20,6 +20,9 @@ public sealed class SavedRoute
     /// <summary>The target's own game icon (<see cref="RouteTarget.Icon"/>); 0 when it has none, and in a file written before 1.15.</summary>
     public uint Icon { get; set; }
 
+    /// <summary>A route to flying in a zone: the zone's territory (<see cref="RouteTarget.FlyingTerritory"/>); 0 otherwise, and in a file written before 1.19.</summary>
+    public uint FlyingTerritory { get; set; }
+
     /// <summary>The parts of a route to several targets; empty for a single target.</summary>
     public List<SavedRoutePart> Parts { get; set; } = [];
 
@@ -27,7 +30,7 @@ public sealed class SavedRoute
     public RouteTarget ToTarget()
     {
         var quests = QuestRowIds ?? [];
-        var target = new RouteTarget(Kind, Label ?? string.Empty, quests.ToArray()) { Icon = Icon };
+        var target = new RouteTarget(Kind, Label ?? string.Empty, quests.ToArray()) { Icon = Icon, FlyingTerritory = FlyingTerritory };
         if (Parts is not { Count: > 0 } parts)
         {
             return target;
@@ -42,7 +45,7 @@ public sealed class SavedRoute
             }
         }
 
-        return RouteTarget.Union(Kind, Label ?? string.Empty, list) with { Icon = Icon };
+        return RouteTarget.Union(Kind, Label ?? string.Empty, list) with { Icon = Icon, FlyingTerritory = FlyingTerritory };
     }
 
     /// <summary>What to store for <paramref name="target"/> followed by <paramref name="ownerContentId"/>.</summary>
@@ -56,6 +59,7 @@ public sealed class SavedRoute
             Label = target.Label,
             QuestRowIds = [.. target.QuestRowIds],
             Icon = target.Icon,
+            FlyingTerritory = target.FlyingTerritory,
         };
         foreach (var part in target.Parts)
         {

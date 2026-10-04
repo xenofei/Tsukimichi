@@ -2,26 +2,26 @@
 
 Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
-- Entries: **2635** across **1307** quests.
-- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **363**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
-  - `GilShopItem`: 136
+- Entries: **2744** across **1319** quests.
+- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **478**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
+  - `GilShopItem`: 251
   - `SpecialShop`: 115
   - `OnlineStore`: 69
   - `DungeonDrop`: 44
   - `Marketable`: 5
   - `Tradable`: 5
-- Plain item rewards refused by the exclusivity rule (strict): **2093** (listed at the end).
+- Plain item rewards refused by the exclusivity rule (strict): **1978** (listed at the end).
 
 ## Counts per kind and confidence
 
 | Kind | Static | Community | Curated | UserOverride | Total |
 |---|---:|---:|---:|---:|---:|
-| Item | 172 | 0 | 0 | 0 | 172 |
+| Item | 287 | 0 | 0 | 0 | 287 |
 | OptionalItem | 53 | 0 | 0 | 0 | 53 |
 | Emote | 56 | 0 | 0 | 0 | 56 |
 | Action | 250 | 0 | 0 | 0 | 250 |
 | GeneralAction | 12 | 0 | 0 | 0 | 12 |
-| ClassJob | 49 | 0 | 0 | 0 | 49 |
+| ClassJob | 48 | 0 | 0 | 0 | 48 |
 | Other | 6 | 0 | 0 | 0 | 6 |
 | ArtifactGear | 607 | 0 | 0 | 0 | 607 |
 | Mount | 38 | 0 | 0 | 0 | 38 |
@@ -37,25 +37,25 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | Achievement | 210 | 0 | 0 | 0 | 210 |
 | Title | 199 | 0 | 0 | 0 | 199 |
 | DutyUnlock | 156 | 0 | 308 | 0 | 464 |
-| SystemUnlock | 0 | 0 | 138 | 0 | 138 |
-| **Total** | 2189 | 0 | 446 | 0 | 2635 |
+| SystemUnlock | 0 | 0 | 133 | 0 | 133 |
+| **Total** | 2303 | 0 | 441 | 0 | 2744 |
 
 ## Examples per kind
 
-### Item (172)
+### Item (287)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
 | 65549 Seeds of Hope | Rauni | 2558 | 2558 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
 | 65602 Accept No Imitations | Pinga | 2429 | 2429 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
 | 65748 Peasants by Day, Ninjas by Night | Soul of the Ninja | 7886 | 7886 | Static | `Quest.Reward;untradable` |
-| 65806 Revenge of the Chefsbane | Chantico | 2506 | 2506 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
-| 65820 Rivalry and Respect | Kurdalegon | 2379 | 2379 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
-| 65838 Waiting in the Winglet | Vulcan | 2354 | 2354 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
-| 65879 Lord of the Inferno | Dawn Wristguards | 4102 | 4102 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
-| 65898 The Little Postmoogle That Could | Postmoogle Cap | 10111 | 10111 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
-| 65983 To Guard a Guardian | Gridanian Ring | 4428 | 4428 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
-| 65984 Festive Endeavors | Monoa Mask | 2651 | 2651 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
+| 65770 Master and Student | Ninja Chainmail | 7890 | 7890 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
+| 65774 Yes We Cant | Eerie Hat | 8711 | 8711 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
+| 65774 Yes We Cant | Eerie Robe | 8712 | 8712 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
+| 65774 Yes We Cant | Eerie Tights | 8713 | 8713 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
+| 65774 Yes We Cant | Eerie Crakows | 8714 | 8714 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
+| 65786 A Starlight Miracle | Starlight Tunic | 9273 | 9273 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
+| 65788 Lions for Lambs | Hitsuji Kabuto | 9268 | 9268 | Static | `Quest.Reward;untradable;otherSource=GilShopItem` |
 
 ### OptionalItem (53)
 
@@ -117,7 +117,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 66957 A Self-improving Man | Glamour Plate | 25 | 0 | Static | `Quest.GeneralActionReward` |
 | 67633 No Longer a Collectable | Aetherial Reduction | 21 | 0 | Static | `Quest.GeneralActionReward` |
 
-### ClassJob (49)
+### ClassJob (48)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
@@ -330,27 +330,27 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65620 The Instruments of Our Deliverance | the Akh Afah Amphitheatre (Hard) | 79 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65626 Drop Dead Shiva | the Akh Afah Amphitheatre (Extreme) | 80 | 0 | Curated | `curated/duty_unlocks.json` |
 
-### SystemUnlock (138)
+### SystemUnlock (133)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
 | 65594 Simply the Hest | Guildhests | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65595 Simply the Hest | Guildhests | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65596 Simply the Hest | Guildhests | 0 | 0 | Curated | `curated/system_unlocks.json` |
-| 65665 Spirithold Broken | Guildleves and inn rooms | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65688 Gone to Pieces | Desynthesis | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65698 A Sight to Behold | Sightseeing Log | 0 | 0 | Curated | `curated/system_unlocks.json` |
-| 65856 Way Down in the Hole | Guildleves and inn rooms | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65970 It Could Happen to You | Gold Saucer | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65972 So You Want to Be a Jockey | Chocobo racing | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65973 Triple Triad Trial | Triple Triad | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 66024 Scratch It Rich | Mini Cactpot | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 66025 Hitting the Cactpot | Jumbo Cactpot | 0 | 0 | Curated | `curated/system_unlocks.json` |
 
 ## Quests with rewards but no unique classification
 
-Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **2004** of 3015.
+Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1988** of 3015.
 Most of them only give tradable gear or consumables. The list below is restricted to the ones worth a second look: at least one reward item is untradable, or carries an ItemAction and is not sold on the market board, yet no rule claimed it.
 
-Quests to review: **378**.
+Quests to review: **360**.
 
 | Quest | Reward signals |
 |---|---|
@@ -366,13 +366,8 @@ Quests to review: **378**.
 | 65783 The Gift of Joy (The Lavender Beds) | Reward item 9276 Yellow Fallen Star [untradable]; Reward item 9277 Blue Fallen Star [untradable]; Reward item 9278 Red Fallen Star [untradable]; Reward item 9279 Green Fallen Star [untradable] |
 | 65784 The Gift of Joy (Mist) | Reward item 9276 Yellow Fallen Star [untradable]; Reward item 9277 Blue Fallen Star [untradable]; Reward item 9278 Red Fallen Star [untradable]; Reward item 9279 Green Fallen Star [untradable] |
 | 65785 The Gift of Joy (The Goblet) | Reward item 9276 Yellow Fallen Star [untradable]; Reward item 9277 Blue Fallen Star [untradable]; Reward item 9278 Red Fallen Star [untradable]; Reward item 9279 Green Fallen Star [untradable] |
-| 65786 A Starlight Miracle | Reward item 9273 Starlight Tunic [untradable] |
 | 65787 Starlight Savings | Reward item 9279 Green Fallen Star [untradable] |
-| 65788 Lions for Lambs | Reward item 9268 Hitsuji Kabuto [untradable] |
 | 65808 Life, Materia and Everything | Reward item 31329 Level 18 Weapon Coffer [ItemAction=4647, untradable] |
-| 65825 Sleepless in the Stable | Reward item 9271 White Hitsuji Kabuto [untradable] |
-| 65826 Sleepless in the Swaddle | Reward item 9270 Crimson Hitsuji Kabuto [untradable] |
-| 65845 Sleepless in the Saloon | Reward item 9269 Black Hitsuji Kabuto [untradable] |
 | 65893 A Ponze of Flesh | Reward item 9506 Book of Skylight [untradable] |
 | 65894 Labor of Love | Reward item 9507 Zodium [untradable] |
 | 65895 Method in His Malice | Reward item 9508 Zodiac Scroll [untradable] |
@@ -398,10 +393,6 @@ Quests to review: **378**.
 | 66703 Not-so-evil Dead | Reward item 6108 The Wailing Spirit [untradable] |
 | 66707 Not-so-evil Dead | Reward item 6108 The Wailing Spirit [untradable] |
 | 66734 To Tussle with Gods | Reward item 7004 Rowena's Token [untradable] |
-| 66828 A Horse for Heavensturn | Reward item 6964 Uma Kabuto [untradable] |
-| 66829 Turn Around, Beautiful | Reward item 6966 Golden Uma Kabuto [untradable] |
-| 66830 Heavens Know You're Fast | Reward item 6967 Black Uma Kabuto [untradable] |
-| 66831 Heavenly Power | Reward item 6965 Crimson Uma Kabuto [untradable] |
 | 66833 The Puissance of Love | Reward item 6975 Valentione Trousers [untradable]; Reward item 6976 Valentione Skirt [untradable] |
 | 66845 Primal Focus | Reward item 7004 Rowena's Token [untradable] |
 | 66898 When Yugiri Met the Fraternity | Reward item 31696 Level 50 Weapon Coffer (IL 90) [ItemAction=4647, untradable] |
@@ -447,14 +438,12 @@ Quests to review: **378**.
 | 67675 Who Let the Bombs Out | Reward item 15424 Faire Voucher MMXVI [untradable] |
 | 67685 Investigating the Inimical | Reward item 13099 Witch's Hat [untradable]; Reward item 13100 Witch's Coatee [untradable]; Reward item 13101 Witch's Gloves [untradable]; Reward item 13102 Witch's Thighboots [untradable] |
 | 67698 Against the Dying of the Light | Optional item 20608 Primal Accessories of Fending Coffer (IL 240) [ItemAction=29153, untradable]; Optional item 20609 Primal Accessories of Slaying Coffer (IL 240) [ItemAction=29153, untradable] |
-| 67754 What Is Love | Reward item 13299 Platinum Paramour's Earrings [untradable]; Reward item 13568 Paramour's Earrings [untradable] |
 | 67758 Sugar, Spice, and Everything Rice | Reward item 13741 Certificate of Collaboration MMXVI [untradable] |
 | 67773 Consequences | Optional item 14388 Augmented Hellfire Blade [untradable]; Optional item 14390 Augmented Hellfire Battleaxe [untradable]; Optional item 14394 Augmented Hellfire Guillotine [untradable]; Optional item 20418 Augmented Hellfire Katana [untradable] |
 | 67774 Choices | Optional item 14389 Augmented Hellfire Claws [untradable]; Optional item 14391 Augmented Slipstream Partisan [untradable]; Optional item 14393 Augmented Torrent Kris [untradable]; Optional item 14401 Augmented Hellfire Shield [untradable] |
 | 67776 For Those We Can Yet Save | Optional item 14396 Augmented Hailstorm Cane [untradable]; Optional item 14399 Augmented Hailstorm Codex [untradable]; Optional item 14400 Augmented Hailstorm Astrometer [untradable]; Optional item 20419 Augmented Hailstorm Rapier [untradable] |
 | 67778 The Man Within | Optional item 20604 Torrent Attire of Aiming Coffer (IL 240) [ItemAction=29153, untradable]; Optional item 20606 Hailstorm Attire of Healing Coffer (IL 240) [ItemAction=29153, untradable]; Optional item 20607 Hailstorm Attire of Casting Coffer (IL 240) [ItemAction=29153, untradable] |
 | 67866 The Show Must Go On | Reward item 15614 Meteor Shower [ItemAction=852] |
-| 67911 Naughty or Nice | Reward item 16612 Starlight Robe [untradable] |
 | 67914 A Starlight Story | Reward item 16777 Starlight Gift Box [ItemAction=2120, untradable] |
 | 67916 Seeking Inspiration | Reward item 16064 Singing Cluster [untradable] |
 | 67917 Cut from a Different Cloth | Reward item 16064 Singing Cluster [untradable] |
@@ -462,7 +451,6 @@ Quests to review: **378**.
 | 67967 When East Meets West | Reward item 12667 Commercial Engineering Manual [ItemAction=816, untradable] |
 | 67972 Not Quite Dead Yet | Reward item 12667 Commercial Engineering Manual [ItemAction=816, untradable] |
 | 67977 Uncharted Territory | Reward item 12667 Commercial Engineering Manual [ItemAction=816, untradable] |
-| 68009 A Good Samurai Is Hard to Find | Reward item 20306 Yugiri and Gosetsu Sketch [untradable] |
 | 68090 Gift of the Gob | Reward item 12668 Commercial Survival Manual [ItemAction=816, untradable] |
 | 68129 A Missive from the Far East | Reward item 12667 Commercial Engineering Manual [ItemAction=816, untradable] |
 | 68130 Original Blanstyr | Reward item 12667 Commercial Engineering Manual [ItemAction=816, untradable] |
@@ -480,11 +468,7 @@ Quests to review: **378**.
 | 68606 Gosetsu and Tsuyu | Optional item 26883 Dai-ryumyaku Armor of Scouting Coffer (IL 370) [ItemAction=29153, untradable]; Optional item 26882 Dai-ryumyaku Armor of Aiming Coffer (IL 370) [ItemAction=29153, untradable]; Optional item 26884 Dai-ryumyaku Armor of Healing Coffer (IL 370) [ItemAction=29153, untradable]; Optional item 26885 Dai-ryumyaku Armor of Casting Coffer (IL 370) [ItemAction=29153, untradable] |
 | 68616 Uneggspected Encounters | Reward item 22411 Magicked Prism (Hatching-tide) [ItemAction=944, untradable] |
 | 68629 Makin' Bacon (Bread) | Reward item 18030 Cracked Cluster [untradable]; Reward item 18031 Cracked Crystal [untradable] |
-| 68638 Disciples of Creation | Reward item 23360 Namazu Bell [untradable] |
 | 68669 Trouble in Paradise | Reward item 14971 MGP Gold Card [ItemAction=3800, untradable] |
-| 68694 The Man in Black | Reward item 24609 Lucian Prince's Fingerless Glove [untradable] |
-| 68695 In the Dark of Night | Reward item 24610 Lucian Prince's Bottoms [untradable] |
-| 68702 The Fifth Lord | Reward item 24510 Four Lords [untradable] |
 | 68706 The Parlous Ploy | Reward item 24186 Ripe Pumpkin Cookie MMXVIII [untradable] |
 | 68710 A Concerted Effort | Reward item 24284 Certificate of Good Cheer MMXVIII [untradable]; Reward item 24284 Certificate of Good Cheer MMXVIII [untradable] |
 | 68722 Take with a Tonze of Salt | Reward item 18031 Cracked Crystal [untradable] |
@@ -638,7 +622,6 @@ Quests to review: **378**.
 | 70211 A Dragon's Resolve | Optional item 44278 Lunar Envoy's Gear of Aiming Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44279 Lunar Envoy's Gear of Scouting Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44280 Lunar Envoy's Gear of Healing Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44281 Lunar Envoy's Gear of Casting Coffer (IL 630) [ItemAction=29153, untradable] |
 | 70266 An Original Improvement | Reward item 38809 Splendorous Coffer [ItemAction=4647, untradable] |
 | 70282 In Defiance of Fate | Optional item 38076 Augmented Lunar Envoy's Ring of Fending [untradable]; Optional item 38077 Augmented Lunar Envoy's Ring of Slaying [untradable]; Optional item 38078 Augmented Lunar Envoy's Ring of Aiming [untradable]; Optional item 38079 Augmented Lunar Envoy's Ring of Healing [untradable]; Optional item 38080 Augmented Lunar Envoy's Ring of Casting [untradable] |
-| 70317 Blue Starlight | Reward item 40416 Unorthodox Saint's Cap [untradable]; Reward item 40417 Unorthodox Saint's Halfrobe [untradable]; Reward item 40418 Unorthodox Saint's Gloves [untradable]; Reward item 40419 Unorthodox Saint's Bottoms [untradable]; Reward item 40420 Unorthodox Saint's Longboots [untradable] |
 | 70397 The Nation of Tuliyollal | Reward item 43476 Mountain Chromite Weapon Coffer (IL 645) [ItemAction=4647, untradable] |
 | 70399 A Saga in Stone | Reward item 43478 Mountain Chromite Chest Gear Coffer (IL 645) [ItemAction=4647, untradable] |
 | 70403 The Feat of Reeds | Reward item 43481 Mountain Chromite Foot Gear Coffer (IL 645) [ItemAction=4647, untradable] |
@@ -652,7 +635,6 @@ Quests to review: **378**.
 | 70433 The Leap to Yak T'el | Reward item 43496 Dark Mahogany Weapon Coffer (IL 663) [ItemAction=4647, untradable] |
 | 70434 Village of the Hunt | Reward item 43498 Dark Mahogany Chest Gear Coffer (IL 663) [ItemAction=4647, untradable] |
 | 70435 A History of Violence | Reward item 43500 Dark Mahogany Leg Gear Coffer (IL 663) [ItemAction=4647, untradable] |
-| 70436 The Feat of Repast | Reward item 44112 Xibruq Pibil [untradable] |
 | 70437 A Father's Grief | Reward item 43501 Dark Mahogany Foot Gear Coffer (IL 663) [ItemAction=4647, untradable] |
 | 70438 Taking a Stand | Reward item 43499 Dark Mahogany Hand Gear Coffer (IL 663) [ItemAction=4647, untradable] |
 | 70439 Into the Traverse | Reward item 43497 Dark Mahogany Head Gear Coffer (IL 663) [ItemAction=4647, untradable] |
@@ -758,12 +740,12 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | QuestClassJobReward item is not equipment (ItemUICategory Currency) | 690 |
 | QuestClassJobReward item is not equipment (ItemUICategory Crystal) | 624 |
 | ItemUICategory Miscellany | 337 |
-| sold by a gil shop that is not a quest-reward reacquisition menu | 130 |
 | sold by a special shop | 109 |
 | QuestClassJobReward item is not equipment (ItemUICategory Medicine) | 66 |
 | ItemUICategory Seasonal Miscellany | 58 |
 | ItemUICategory Other | 37 |
 | ItemUICategory Medicine | 24 |
+| sold by a gil shop that is not a quest-reward reacquisition menu | 15 |
 | ItemUICategory Currency | 10 |
 | ItemUICategory Reagent | 3 |
 | unnamed item row | 3 |
@@ -795,12 +777,7 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 65614 Tendrils of Intrigue | 7311 Gloam Tabard | sold by a special shop |
 | 65624 The Reason Roaille | 31701 Level 50 Weapon Coffer (IL 110) | ItemUICategory Miscellany |
 | 65742 Mmmmmm, Soulglazed Relics | 8659 Zodiac Glass | ItemUICategory Other |
-| 65770 Master and Student | 7890 Ninja Chainmail | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 65770 Master and Student | 20647 Koga Garb Coffer (IL 90) | ItemUICategory Miscellany |
-| 65774 Yes We Cant | 8711 Eerie Hat | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 65774 Yes We Cant | 8712 Eerie Robe | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 65774 Yes We Cant | 8713 Eerie Tights | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 65774 Yes We Cant | 8714 Eerie Crakows | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 65782 Feast of Famine | 7569 Aetheryte Ticket | ItemUICategory Other |
 | 65783 The Gift of Joy (The Lavender Beds) | 9276 Yellow Fallen Star | ItemUICategory Seasonal Miscellany |
 | 65783 The Gift of Joy (The Lavender Beds) | 9277 Blue Fallen Star | ItemUICategory Seasonal Miscellany |
@@ -814,14 +791,8 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 65785 The Gift of Joy (The Goblet) | 9277 Blue Fallen Star | ItemUICategory Seasonal Miscellany |
 | 65785 The Gift of Joy (The Goblet) | 9278 Red Fallen Star | ItemUICategory Seasonal Miscellany |
 | 65785 The Gift of Joy (The Goblet) | 9279 Green Fallen Star | ItemUICategory Seasonal Miscellany |
-| 65786 A Starlight Miracle | 9273 Starlight Tunic | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 65787 Starlight Savings | 9279 Green Fallen Star | ItemUICategory Seasonal Miscellany |
-| 65788 Lions for Lambs | 9268 Hitsuji Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 65808 Life, Materia and Everything | 31329 Level 18 Weapon Coffer | ItemUICategory Miscellany |
-| 65825 Sleepless in the Stable | 9271 White Hitsuji Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 65826 Sleepless in the Swaddle | 9270 Crimson Hitsuji Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 65845 Sleepless in the Saloon | 9269 Black Hitsuji Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 65890 Going the Extra Smile | 9272 Starlight Sugarloaf Hat | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 65893 A Ponze of Flesh | 9506 Book of Skylight | ItemUICategory Other |
 | 65894 Labor of Love | 9507 Zodium | ItemUICategory Other |
 | 65895 Method in His Malice | 9508 Zodiac Scroll | ItemUICategory Other |
@@ -832,11 +803,9 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 65972 So You Want to Be a Jockey | 9570 Fledgling Chocobo Registration G1-F | ItemUICategory Other |
 | 66024 Scratch It Rich | 10131 MGP Voucher | ItemUICategory Miscellany |
 | 66025 Hitting the Cactpot | 10131 MGP Voucher | ItemUICategory Miscellany |
-| 66037 A Father's Folly | 10066 Peach Blossom Choker | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66045 The Scions of the Seventh Dawn | 30362 Vesper Bay Aetheryte Ticket | ItemUICategory Other |
 | 66048 Where Did Our Loves Go | 7569 Aetheryte Ticket | ItemUICategory Other |
 | 66058 The Black Wolf's Ultimatum | 30362 Vesper Bay Aetheryte Ticket | ItemUICategory Other |
-| 66095 Eggs Pluribus Unum | 10067 Egg Earrings | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66112 Like Sire Like Fledgling | 10147 Grade 2 Feed - Special Speed Blend | ItemUICategory Miscellany |
 | 66112 Like Sire Like Fledgling | 10148 Grade 2 Feed - Special Acceleration Blend | ItemUICategory Miscellany |
 | 66112 Like Sire Like Fledgling | 10149 Grade 2 Feed - Special Balance Blend | ItemUICategory Miscellany |
@@ -850,23 +819,14 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 66475 By the Lights of Ishgard | 31335 Level 40 Weapon Coffer | ItemUICategory Miscellany |
 | 66540 Fool Me Twice | 31336 Level 45 Weapon Coffer | ItemUICategory Miscellany |
 | 66573 A Hero in Need | 31337 Level 49 Weapon Coffer | ItemUICategory Miscellany |
-| 66590 How to Quit You | 3222 Fighter's Cuirass | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66590 How to Quit You | 20644 Warrior's Armor Coffer (IL 90) | ItemUICategory Miscellany |
-| 66596 Keeping the Oath | 3220 Gallant Surcoat | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66596 Keeping the Oath | 20642 Valor Armor Coffer (IL 90) | ItemUICategory Miscellany |
-| 66602 Five Easy Pieces | 3221 Temple Cyclas | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66602 Five Easy Pieces | 20643 Melee Attire Coffer (IL 90) | ItemUICategory Miscellany |
-| 66608 Into the Dragon's Maw | 3223 Drachen Mail | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66608 Into the Dragon's Maw | 20645 Wyrm's Armor Coffer (IL 90) | ItemUICategory Miscellany |
-| 66614 Always Bet on Black | 3226 Wizard's Coat | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66614 Always Bet on Black | 20649 Sorcerer's Attire Coffer (IL 90) | ItemUICategory Miscellany |
-| 66620 Heart of the Forest | 3225 Healer's Robe | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66620 Heart of the Forest | 20648 Cleric's Attire Coffer (IL 90) | ItemUICategory Miscellany |
-| 66626 Requiem for the Fallen | 3224 Choral Shirt | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66626 Requiem for the Fallen | 20646 Bard's Attire Coffer (IL 90) | ItemUICategory Miscellany |
-| 66632 Primal Burdens | 3227 Evoker's Doublet | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66632 Primal Burdens | 20650 Summoner's Attire Coffer (IL 90) | ItemUICategory Miscellany |
-| 66638 The Beast Within | 3228 Scholar's Gown | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66638 The Beast Within | 20651 Argute Attire Coffer (IL 90) | ItemUICategory Miscellany |
 | 66677 Morbid Motivation | 7884 Mysterious Map | ItemUICategory Miscellany |
 | 66689 For the Winsome | 6042 Guardian Corps Gauntlets | sold by a special shop |
@@ -885,11 +845,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 66710 Monstrous Mummery | 6107 The Howling Spirit | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66734 To Tussle with Gods | 7004 Rowena's Token | ItemUICategory Miscellany |
 | 66746 Beauty Is Only Scalp Deep | 7005 Jandelaine's Token | ItemUICategory Miscellany |
-| 66824 Breaking Brick Mountains | 6112 Thug's Mug | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 66828 A Horse for Heavensturn | 6964 Uma Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 66829 Turn Around, Beautiful | 6966 Golden Uma Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 66830 Heavens Know You're Fast | 6967 Black Uma Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 66831 Heavenly Power | 6965 Crimson Uma Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 66833 The Puissance of Love | 6975 Valentione Trousers | sold by a special shop |
 | 66833 The Puissance of Love | 6976 Valentione Skirt | sold by a special shop |
 | 66837 Never Say Farewell | 6972 Valentione Apron | sold by a special shop |
@@ -928,9 +883,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 67074 Blast It! Moonfire Faire | 8536 Lady's Yukata (Bluefly) | sold by a special shop |
 | 67075 Explode It! Moonfire Faire | 8534 Lord's Yukata (Blueflame) | sold by a special shop |
 | 67075 Explode It! Moonfire Faire | 8537 Lady's Yukata (Pinkfly) | sold by a special shop |
-| 67084 In a Manor of Spooking | 16613 Vampire's Vest | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67085 A Thousand Blows | 16614 Red Tori Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67085 A Thousand Blows | 16615 Black Tori Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 67090 The New King on the Block | 22571 Indoor BBQ Spit | sold by a special shop |
 | 67090 The New King on the Block | 22583 BBQ Spit | sold by a special shop |
 | 67105 Deliverance | 10124 Moonstone | ItemUICategory Stone |
@@ -987,7 +939,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 67675 Who Let the Bombs Out | 15424 Faire Voucher MMXVI | ItemUICategory Seasonal Miscellany |
 | 67676 A Battle Royal | 15468 Legacy Warrior Mail | sold by a special shop |
 | 67677 A Complete Game Changer | 15167 Yo-kai Medal | ItemUICategory Seasonal Miscellany |
-| 67677 A Complete Game Changer | 15222 Yo-kai Watch | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 67685 Investigating the Inimical | 13099 Witch's Hat | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 67685 Investigating the Inimical | 13100 Witch's Coatee | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 67685 Investigating the Inimical | 13101 Witch's Gloves | sold by a gil shop that is not a quest-reward reacquisition menu |
@@ -997,24 +948,9 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 67699 As Goes Light, So Goes Darkness | 20610 Primal Accessories of Aiming Coffer (IL 240) | ItemUICategory Miscellany |
 | 67699 As Goes Light, So Goes Darkness | 20611 Primal Accessories of Healing Coffer (IL 240) | ItemUICategory Miscellany |
 | 67699 As Goes Light, So Goes Darkness | 20612 Primal Accessories of Casting Coffer (IL 240) | ItemUICategory Miscellany |
-| 67742 A Journey to Remember | 13330 Amatsu Hachigane | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67742 A Journey to Remember | 13331 Amatsu Togi | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67742 A Journey to Remember | 13332 Amatsu Tekko | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67742 A Journey to Remember | 13333 Amatsu Haidate | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67742 A Journey to Remember | 13334 Amatsu Sune-ate | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67753 Monkey about Town | 13295 See No Helm | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67753 Monkey about Town | 13296 Speak No Helm | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67753 Monkey about Town | 13297 Hear No Helm | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67754 What Is Love | 13299 Platinum Paramour's Earrings | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67754 What Is Love | 13568 Paramour's Earrings | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67756 A Pair of Hearts | 13298 Black-feathered Flat Hat | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67756 A Pair of Hearts | 13567 Red-feathered Flat Hat | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 67758 Sugar, Spice, and Everything Rice | 13741 Certificate of Collaboration MMXVI | ItemUICategory Seasonal Miscellany |
 | 67759 The Lead Starling | 13300 Lord's Suikan | sold by a special shop |
 | 67759 The Lead Starling | 13639 Lady's Suikan | sold by a special shop |
-| 67760 For Whom the Starlight Bell Tolls | 13290 Reindeer Antler Headband | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67760 For Whom the Starlight Bell Tolls | 13291 Reindeer Gloves | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67760 For Whom the Starlight Bell Tolls | 13292 Reindeer Hooves | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 67773 Consequences | 14388 Augmented Hellfire Blade | sold by a special shop |
 | 67773 Consequences | 14390 Augmented Hellfire Battleaxe | sold by a special shop |
 | 67773 Consequences | 14394 Augmented Hellfire Guillotine | sold by a special shop |
@@ -1038,7 +974,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 67778 The Man Within | 20604 Torrent Attire of Aiming Coffer (IL 240) | ItemUICategory Miscellany |
 | 67778 The Man Within | 20606 Hailstorm Attire of Healing Coffer (IL 240) | ItemUICategory Miscellany |
 | 67778 The Man Within | 20607 Hailstorm Attire of Casting Coffer (IL 240) | ItemUICategory Miscellany |
-| 67911 Naughty or Nice | 16612 Starlight Robe | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 67914 A Starlight Story | 16777 Starlight Gift Box | ItemUICategory Seasonal Miscellany |
 | 67916 Seeking Inspiration | 16064 Singing Cluster | ItemUICategory Reagent |
 | 67917 Cut from a Different Cloth | 16064 Singing Cluster | ItemUICategory Reagent |
@@ -1047,15 +982,10 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 67949 Foxfire | 20286 Constellation Attire Coffer (IL 290) | ItemUICategory Miscellany |
 | 67954 What She Always Wanted | 20279 Seventh Heaven Attire Coffer (IL 290) | ItemUICategory Miscellany |
 | 67960 Golden Rain | 14971 MGP Gold Card | ItemUICategory Miscellany |
-| 67961 More Bark and Mochi Bite | 20678 White Inu Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 67961 More Bark and Mochi Bite | 20679 Black Inu Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 67966 The Power to Protect | 20276 Pacifist's Attire Coffer (IL 290) | ItemUICategory Miscellany |
 | 67967 When East Meets West | 12667 Commercial Engineering Manual | ItemUICategory Other |
 | 67972 Not Quite Dead Yet | 12667 Commercial Engineering Manual | ItemUICategory Other |
 | 67977 Uncharted Territory | 12667 Commercial Engineering Manual | ItemUICategory Other |
-| 68009 A Good Samurai Is Hard to Find | 20306 Yugiri and Gosetsu Sketch | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68052 Glory to the Khagan | 20307 Morin Khuur | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68053 In Crimson They Walked | 20639 Mol Banner | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 68090 Gift of the Gob | 12668 Commercial Survival Manual | ItemUICategory Other |
 | 68093 Where the Money Takes You | 12669 Hi-Cordial | ItemUICategory Medicine |
 | 68095 The Way of the Samurai | 20620 Nameless Armor Coffer (IL 115) | ItemUICategory Miscellany |
@@ -1084,9 +1014,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 68493 These Fireworks Won't Light Themselves | 20304 Faire Voucher MMXVII | ItemUICategory Seasonal Miscellany |
 | 68494 Fried Fish Is the Best Fish | 20304 Faire Voucher MMXVII | ItemUICategory Seasonal Miscellany |
 | 68495 You Had Me at Haddock | 20304 Faire Voucher MMXVII | ItemUICategory Seasonal Miscellany |
-| 68496 The True Meaning of Summer | 20564 Faire Joi | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68496 The True Meaning of Summer | 20565 Faire Kohakama | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68496 The True Meaning of Summer | 20566 Faire Zori | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 68499 The Darkness Below | 26886 Dai-ryumyaku Accessories of Fending Coffer (IL 370) | ItemUICategory Miscellany |
 | 68499 The Darkness Below | 26887 Dai-ryumyaku Accessories of Slaying Coffer (IL 370) | ItemUICategory Miscellany |
 | 68499 The Darkness Below | 26888 Dai-ryumyaku Accessories of Aiming Coffer (IL 370) | ItemUICategory Miscellany |
@@ -1096,8 +1023,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 68547 An Othardian Wolfman in Gridania | 21104 Werewolf Attire Chest for Men | ItemUICategory Miscellany |
 | 68547 An Othardian Wolfman in Gridania | 21105 Werewolf Attire Chest for Women | ItemUICategory Miscellany |
 | 68548 The Adventurer Who Cried Wolfman | 16929 Magicked Prism (Pumpkin) | ItemUICategory Seasonal Miscellany |
-| 68550 Hogging the Spotlight | 22457 Inoshishi Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68550 Hogging the Spotlight | 22458 Crimson Inoshishi Kabuto | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 68565 Rise of a New Sun | 26879 Dai-ryumyaku Armor of Fending Coffer (IL 370) | ItemUICategory Miscellany |
 | 68565 Rise of a New Sun | 26880 Dai-ryumyaku Armor of Maiming Coffer (IL 370) | ItemUICategory Miscellany |
 | 68565 Rise of a New Sun | 26881 Dai-ryumyaku Armor of Striking Coffer (IL 370) | ItemUICategory Miscellany |
@@ -1108,7 +1033,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 68616 Uneggspected Encounters | 22411 Magicked Prism (Hatching-tide) | ItemUICategory Seasonal Miscellany |
 | 68629 Makin' Bacon (Bread) | 18030 Cracked Cluster | ItemUICategory Miscellany |
 | 68629 Makin' Bacon (Bread) | 18031 Cracked Crystal | ItemUICategory Miscellany |
-| 68638 Disciples of Creation | 23360 Namazu Bell | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 68639 The Importance of Being Yes, Yes | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
 | 68639 The Importance of Being Yes, Yes | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
 | 68639 The Importance of Being Yes, Yes | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
@@ -1599,17 +1523,9 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 68670 Love and Kupo Nuts | 14958 Golden Sparkler | ItemUICategory Seasonal Miscellany |
 | 68673 If at First You Don't Succeed, Give Up | 23380 Endless Summer Coffer | ItemUICategory Miscellany |
 | 68689 Lighting the Way | 24288 Yanxian Merchant's Haori | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68694 The Man in Black | 24609 Lucian Prince's Fingerless Glove | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68695 In the Dark of Night | 24610 Lucian Prince's Bottoms | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68696 Messenger of the Winds | 24608 Lucian Prince's Jacket | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68696 Messenger of the Winds | 24611 Lucian Prince's Boots | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68702 The Fifth Lord | 24510 Four Lords | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 68706 The Parlous Ploy | 24186 Ripe Pumpkin Cookie MMXVIII | ItemUICategory Seasonal Miscellany |
 | 68710 A Concerted Effort | 24284 Certificate of Good Cheer MMXVIII | ItemUICategory Seasonal Miscellany |
 | 68710 A Concerted Effort | 24284 Certificate of Good Cheer MMXVIII | ItemUICategory Seasonal Miscellany |
-| 68711 Theatgrhythdaniam | 24145 Choir Hat | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68711 Theatgrhythdaniam | 24146 Choir Robe | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68711 Theatgrhythdaniam | 24147 Choir Shoes | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 68712 Mochi to Be Desired | 24236 Crimson Nezumi Kabuto | sold by a special shop |
 | 68712 Mochi to Be Desired | 24237 Cobalt Nezumi Kabuto | sold by a special shop |
 | 68721 A Requiem for Heroes | 27969 Scion Traveler's Attire Coffer | ItemUICategory Miscellany |
@@ -1620,12 +1536,9 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 68734 The Real Folk Blues | 24588 Magus's Attire Coffer (IL 130) | ItemUICategory Miscellany |
 | 68738 Eggstreme Eggstrapolation | 24605 Spriggan Jacket | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 68739 A Shelltered Eggsistence | 22411 Magicked Prism (Hatching-tide) | ItemUICategory Seasonal Miscellany |
-| 68740 Deus Eggs Machina | 24606 Spriggan Bottoms | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 68740 Deus Eggs Machina | 24607 Spriggan Boots | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 68741 A Many-splendored Thing | 24496 Valentione Lobster Platter | sold by a special shop |
 | 68741 A Many-splendored Thing | 24497 Valentione Cake Pairing | sold by a special shop |
 | 68743 The Sabotender Shimmy | 14971 MGP Gold Card | ItemUICategory Miscellany |
-| 68744 Princess of Flowers | 24590 Flower Crown | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 68745 One Short Day on Emerald Avenue | 25006 Magicked Prism (Daisies) | ItemUICategory Seasonal Miscellany |
 | 68773 Shedding Light on the Myth | 12669 Hi-Cordial | ItemUICategory Medicine |
 | 68776 Fishing for Confidence | 12669 Hi-Cordial | ItemUICategory Medicine |
@@ -1687,9 +1600,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 69172 A Gigantic Undertaking | 26870 Dwarven Mythril Chest Gear Coffer (IL 415) | ItemUICategory Miscellany |
 | 69173 Meet the Tholls | 26872 Dwarven Mythril Leg Gear Coffer (IL 415) | ItemUICategory Miscellany |
 | 69197 Messages from Distant Shores | 26818 Rising Token | ItemUICategory Seasonal Miscellany |
-| 69200 Anything You Can Do | 27943 Moonfire Hachimaki | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 69200 Anything You Can Do | 27947 White Moonfire Happi | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 69200 Anything You Can Do | 27950 Moonfire Tabi | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 69201 High-flying Hijinks | 27993 Faire Voucher MMXIX | ItemUICategory Seasonal Miscellany |
 | 69202 Frying for Fame and Fortune | 27993 Faire Voucher MMXIX | ItemUICategory Seasonal Miscellany |
 | 69203 Hook, Line, and Sinker | 27993 Faire Voucher MMXIX | ItemUICategory Seasonal Miscellany |
@@ -1725,8 +1635,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 69382 The Eggth Umbral Calamity | 30044 Rabbit Head | sold by a special shop |
 | 69382 The Eggth Umbral Calamity | 30045 Rabbit Suit | sold by a special shop |
 | 69384 Mislaid Plans | 29679 Skysteel Prototype Coffer | ItemUICategory Miscellany |
-| 69386 Pretty in Peaches | 30042 Seneschal's Monocle | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 69386 Pretty in Peaches | 30043 Princess's Peach Corsage | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 69397 Microbrewing | 31330 Level 21 Weapon Coffer | ItemUICategory Miscellany |
 | 69403 You Can't Take It with You | 31333 Level 34 Weapon Coffer | ItemUICategory Miscellany |
 | 69413 It's Possibly a Primal | 31691 Level 50 Weapon Coffer (IL 70) | ItemUICategory Miscellany |
@@ -2046,7 +1954,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 69500 A Guide to Fun | 10131 MGP Voucher | ItemUICategory Miscellany |
 | 69510 Glass from the Past | 30883 The Sultana's Seven | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 69529 Master of Mimicry | 32866 Mirage Gear Coffer (IL 400) | ItemUICategory Miscellany |
-| 69533 Little Lady Adventurer | 32803 Lovely Moogle Cap | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 69559 Tangle with a Tora | 32804 Golden Tora Kabuto | sold by a special shop |
 | 69559 Tangle with a Tora | 32805 Silver Tora Kabuto | sold by a special shop |
 | 69560 Let Them Eat Cake | 24238 Magicked Prism (Advent Cakes) | ItemUICategory Seasonal Miscellany |
@@ -2116,7 +2023,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 69981 Sage Council | 35711 Chondrite Foot Gear Coffer (IL 545) | ItemUICategory Miscellany |
 | 69982 Hither and Yarns | 35709 Chondrite Hand Gear Coffer (IL 545) | ItemUICategory Miscellany |
 | 69984 Bonds of Adamant(ite) | 35707 Chondrite Head Gear Coffer (IL 545) | ItemUICategory Miscellany |
-| 70007 Fashion Face-off | 35857 Little Lady's Crown | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70020 The Lad in Labyrinthos | 35713 Chondrite Necklace Coffer (IL 545) | ItemUICategory Miscellany |
 | 70038 Stranded at the Station | 35684 Pewter Bracelet Coffer (IL 525) | ItemUICategory Miscellany |
 | 70044 Touring Anagnorisis, Part II | 35704 Ironwood Bracelet Coffer (IL 539) | ItemUICategory Miscellany |
@@ -2130,22 +2036,8 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 70070 Void Theory | 44284 Lunar Envoy's Accessories of Aiming Coffer (IL 630) | ItemUICategory Miscellany |
 | 70070 Void Theory | 44285 Lunar Envoy's Accessories of Healing Coffer (IL 630) | ItemUICategory Miscellany |
 | 70070 Void Theory | 44286 Lunar Envoy's Accessories of Casting Coffer (IL 630) | ItemUICategory Miscellany |
-| 70077 Fhul Me Once | 36832 Summer Sunset Bandana | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70077 Fhul Me Once | 36833 Summer Sunset Beach Cover-up | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70077 Fhul Me Once | 36834 Summer Sunset Wrist Torques | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70077 Fhul Me Once | 36835 Summer Sunset Bottoms | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70077 Fhul Me Once | 36836 Summer Sunset Sandals | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70125 With Great Fortune Comes Great Responsibility | 35853 Heavensturn Domaru | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70125 With Great Fortune Comes Great Responsibility | 35854 Heavensturn Kote | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70125 With Great Fortune Comes Great Responsibility | 35855 Heavensturn Haidate | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70125 With Great Fortune Comes Great Responsibility | 35856 Heavensturn Sune-ate | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70190 Suited for Affection | 38689 Vested Emissary's Attire Coffer | ItemUICategory Miscellany |
 | 70190 Suited for Affection | 38690 Frilled Emissary's Attire Coffer | ItemUICategory Miscellany |
-| 70191 A Mad Masquerade | 38228 Wake Doctor's Mask | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70191 A Mad Masquerade | 38229 Wake Doctor's White Coat | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70191 A Mad Masquerade | 38230 Wake Doctor's Rubber Gloves | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70191 A Mad Masquerade | 38231 Wake Doctor's Bottoms | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70191 A Mad Masquerade | 38232 Wake Doctor's Shoes | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70193 A Spooky Celebration | 16929 Magicked Prism (Pumpkin) | ItemUICategory Seasonal Miscellany |
 | 70210 King of the Mountain | 44275 Lunar Envoy's Gear of Fending Coffer (IL 630) | ItemUICategory Miscellany |
 | 70210 King of the Mountain | 44276 Lunar Envoy's Gear of Maiming Coffer (IL 630) | ItemUICategory Miscellany |
@@ -2458,8 +2350,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
-| 70260 I Am the Sunshine | 39245 Phoenix Riser Helmet | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70260 I Am the Sunshine | 39246 Phoenix Riser Suit | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70266 An Original Improvement | 38809 Splendorous Coffer | ItemUICategory Miscellany |
 | 70282 In Defiance of Fate | 38076 Augmented Lunar Envoy's Ring of Fending | sold by a special shop |
 | 70282 In Defiance of Fate | 38077 Augmented Lunar Envoy's Ring of Slaying | sold by a special shop |
@@ -2467,14 +2357,7 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 70282 In Defiance of Fate | 38079 Augmented Lunar Envoy's Ring of Healing | sold by a special shop |
 | 70282 In Defiance of Fate | 38080 Augmented Lunar Envoy's Ring of Casting | sold by a special shop |
 | 70313 A New Gold Standard | 40355 Phantasmal Attire Coffer (IL 530) | ItemUICategory Miscellany |
-| 70317 Blue Starlight | 40416 Unorthodox Saint's Cap | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70317 Blue Starlight | 40417 Unorthodox Saint's Halfrobe | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70317 Blue Starlight | 40418 Unorthodox Saint's Gloves | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70317 Blue Starlight | 40419 Unorthodox Saint's Bottoms | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70317 Blue Starlight | 40420 Unorthodox Saint's Longboots | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70334 The Path Infernal | 41559 Metian Attire Coffer | ItemUICategory Miscellany |
-| 70350 Of Impish Importance | 41565 Imp Head | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70350 Of Impish Importance | 41566 Imp Suit | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70384 Enter the Viper | 43537 Weathered Snakebite Attire Coffer (IL 515) | ItemUICategory Miscellany |
 | 70390 The Joy of Pictomancy | 43538 Weathered Painter's Attire Coffer (IL 515) | ItemUICategory Miscellany |
 | 70397 The Nation of Tuliyollal | 43476 Mountain Chromite Weapon Coffer (IL 645) | ItemUICategory Miscellany |
@@ -2490,7 +2373,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 70433 The Leap to Yak T'el | 43496 Dark Mahogany Weapon Coffer (IL 663) | ItemUICategory Miscellany |
 | 70434 Village of the Hunt | 43498 Dark Mahogany Chest Gear Coffer (IL 663) | ItemUICategory Miscellany |
 | 70435 A History of Violence | 43500 Dark Mahogany Leg Gear Coffer (IL 663) | ItemUICategory Miscellany |
-| 70436 The Feat of Repast | 44112 Xibruq Pibil | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70437 A Father's Grief | 43501 Dark Mahogany Foot Gear Coffer (IL 663) | ItemUICategory Miscellany |
 | 70438 Taking a Stand | 43499 Dark Mahogany Hand Gear Coffer (IL 663) | ItemUICategory Miscellany |
 | 70439 Into the Traverse | 43497 Dark Mahogany Head Gear Coffer (IL 663) | ItemUICategory Miscellany |
@@ -2540,24 +2422,10 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 70703 An Usher's Lament | 43523 Ra'Kaznar Necklace Coffer (IL 675) | ItemUICategory Miscellany |
 | 70705 A Fitting Send-off | 43524 Ra'Kaznar Bracelet Coffer (IL 675) | ItemUICategory Miscellany |
 | 70708 Warrior of Light, Wrangler of Cats | 43525 Ra'Kaznar Ring Coffer (IL 675) | ItemUICategory Miscellany |
-| 70721 All Fiends Sated on All Saints' Wake | 43471 Night of Devilry Horns | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70721 All Fiends Sated on All Saints' Wake | 43472 Night of Devilry Shirt | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70721 All Fiends Sated on All Saints' Wake | 43473 Night of Devilry Fingerless Gloves | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70721 All Fiends Sated on All Saints' Wake | 43474 Night of Devilry Trousers | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70721 All Fiends Sated on All Saints' Wake | 43475 Night of Devilry Boots | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70723 Bottled Fantasy | 6221 Fantasia | ItemUICategory Medicine |
 | 70764 Spreading the Warmth and Cheer | 44909 Starlight Kinderpunsch | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70774 A Princely Debut | 44645 Seneschal Prince's Headset | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70774 A Princely Debut | 44646 Seneschal Prince's Jacket | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70774 A Princely Debut | 44647 Seneschal Prince's Gloves | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70774 A Princely Debut | 44648 Seneschal Prince's Trousers | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70774 A Princely Debut | 44649 Seneschal Prince's Longboots | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70777 His Heart Blazes On | 44660 Dawnblazer Attire Coffer | ItemUICategory Miscellany |
 | 70789 A Cosmic Homecoming | 48750 Cosmic Prototype Coffer | ItemUICategory Miscellany |
-| 70857 Dressed to Protect | 47924 Maritime Mirrored Sunglasses | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70857 Dressed to Protect | 47925 Maritime Top | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70857 Dressed to Protect | 47926 Maritime Shorts | sold by a gil shop that is not a quest-reward reacquisition menu |
-| 70857 Dressed to Protect | 47927 Maritime Sandals | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70861 The Icing on the Cake | 47349 Rolanberry Valentione Cake | sold by a special shop |
 | 70872 Snow on the Mountain | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
 | 70872 Snow on the Mountain | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
@@ -2858,7 +2726,6 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 70898 Mad about Brew | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70899 A Feast of Indecision | 46178 Yok Huy Ward | ItemUICategory Currency |
 | 70941 Pilgrimage of Light | 47342 Luminous Oil | ItemUICategory Other |
-| 70961 Of Weeds and Whimsy | 50286 Party Eggy Eyeglasses | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 71024 Despite Our Rest Efforts | 48095 Big Bang Ticket (Auxesia) | ItemUICategory Other |
 | 71026 Strangers in the Wood | 49805 Cu Sith Gourd | ItemUICategory Other |
 | 71026 Strangers in the Wood | 52649 Beast Herder's Coffer (IL 1) | ItemUICategory Miscellany |

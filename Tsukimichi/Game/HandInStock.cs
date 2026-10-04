@@ -12,12 +12,14 @@ namespace Tsukimichi.Game;
 /// logged-in character holds, read from the game, plus what its retainers hold, through Allagan Tools when it is
 /// loaded and the player allows it.
 /// <para>
-/// The game read is <c>InventoryManager.GetInventoryItemCount</c> (the four bags, the armoury and what is equipped)
-/// and <c>GetItemCountInContainer</c> for the saddlebag pages (the game fills those once the saddlebag was opened this
-/// session), each for NQ and HQ, kept apart so an item a quest wants high quality counts only its HQ
-/// (<see cref="HandInCount"/>; Allagan Tools' counts cannot be split). It calls into the game, so it follows the shared <see cref="HookGate"/> as the other
+/// The game read is <c>InventoryManager.GetInventoryItemCount</c> three ways (the four bags alone, with what is worn,
+/// with the armoury chest) and <c>GetItemCountInContainer</c> for the saddlebag pages (the game fills those once the
+/// saddlebag was opened this session), each for NQ and HQ, kept apart so an item a quest wants high quality counts only
+/// its HQ (<see cref="HandInCount"/>; Allagan Tools' counts cannot be split). Since 1.19 (N5) the count is the inventory
+/// alone, what the game takes at the hand-in; the saddlebag and the armoury chest are kept apart so the pane can say
+/// where the rest is. It calls into the game, so it follows the shared <see cref="HookGate"/> as the other
 /// game reads do: while the gate pauses them, only Allagan Tools' numbers show. It runs on the framework thread only
-/// (the UI draws there) and answers are cached for <see cref="CacheMs"/>, so a pane listing six items costs a dozen
+/// (the UI draws there) and answers are cached for <see cref="CacheMs"/>, so a pane listing six items costs a few dozen
 /// game calls a second at most.
 /// </para>
 /// </summary>
@@ -35,7 +37,7 @@ public sealed class HandInStock
     private readonly IFramework framework;
     private readonly HookGate gate;
     private readonly IPluginLog log;
-    private readonly Dictionary<uint, ((int Total, int Hq)? Count, long At)> game = [];
+    private readonly Dictionary<uint, (GameRead? Count, long At)> game = [];
     private bool warned;
 
     public HandInStock(IClientState clientState, IFramework framework, HookGate gate, IPluginLog log)
@@ -68,7 +70,7 @@ public sealed class HandInStock
         }
 
         var read = GameCount(itemId);
-        int? held = read?.Total;
+        int? held = read?.Inventory;
         int? retainers = null;
         if (AllaganActive && Allagan!.Counts(itemId) is { } counts)
         {
@@ -76,10 +78,13 @@ public sealed class HandInStock
             held ??= (int)Math.Min(counts.Character, int.MaxValue);
         }
 
-        return new HandInCount(held, read?.Hq, retainers);
+        return new HandInCount(held, read?.InventoryHq, retainers, read?.Saddlebag, read?.Armoury, read?.Equipped);
     }
 
-    private (int Total, int Hq)? GameCount(uint itemId)
+    /// <summary>One game read: the inventory (what a hand-in counts, 1.19 N5) with its HQ part, and the other containers apart.</summary>
+    private readonly record struct GameRead(int Inventory, int InventoryHq, int Saddlebag, int Armoury, int Equipped);
+
+    private GameRead? GameCount(uint itemId)
     {
         if (!gate.HooksAllowed)
         {
@@ -97,7 +102,7 @@ public sealed class HandInStock
         return count;
     }
 
-    private unsafe (int Total, int Hq)? ReadGame(uint itemId)
+    private unsafe GameRead? ReadGame(uint itemId)
     {
         try
         {
@@ -107,24 +112,24 @@ public sealed class HandInStock
                 return null;
             }
 
-            var total = 0;
-            var highQuality = 0;
+            int bags = 0, bagsHq = 0, saddlebag = 0, armoury = 0, equipped = 0;
             foreach (var hq in (ReadOnlySpan<bool>)[false, true])
             {
-                var count = Math.Max(0, inventory->GetInventoryItemCount(itemId, hq, true, true));
+                // The four bags alone, then with what is worn, then with the armoury chest: the differences are each part.
+                var inBags = Math.Max(0, inventory->GetInventoryItemCount(itemId, hq, false, false));
+                var withWorn = Math.Max(inBags, inventory->GetInventoryItemCount(itemId, hq, true, false));
+                var withArmoury = Math.Max(withWorn, inventory->GetInventoryItemCount(itemId, hq, true, true));
+                bags += inBags;
+                bagsHq += hq ? inBags : 0;
+                equipped += withWorn - inBags;
+                armoury += withArmoury - withWorn;
                 foreach (var bag in SaddleBags)
                 {
-                    count += Math.Max(0, inventory->GetItemCountInContainer(itemId, bag, hq));
-                }
-
-                total += count;
-                if (hq)
-                {
-                    highQuality = count;
+                    saddlebag += Math.Max(0, inventory->GetItemCountInContainer(itemId, bag, hq));
                 }
             }
 
-            return (total, highQuality);
+            return new GameRead(bags, bagsHq, saddlebag, armoury, equipped);
         }
         catch (Exception ex)
         {

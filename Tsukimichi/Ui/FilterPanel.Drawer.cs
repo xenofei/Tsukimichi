@@ -763,6 +763,7 @@ public sealed partial class FilterPanel
         FilterGroup.Level => Strings.FilterDrawerLevel,
         FilterGroup.Job => Strings.FilterDrawerJob,
         FilterGroup.Rewards => Strings.FilterDrawerRewards,
+        FilterGroup.Unlocks => Strings.FilterDrawerUnlocks,
         _ => Strings.FilterDrawerMore,
     };
 
@@ -837,6 +838,11 @@ public sealed partial class FilterPanel
 
                 return kinds == 0 ? Strings.FilterDrawerAny : setPill.For(kinds);
 
+            case FilterGroup.Unlocks:
+                var opens = f.UnlockKinds?.Count ?? 0;
+                return opens == 0 ? Strings.FilterDrawerAny
+                    : string.Format(culture, opens == 1 ? Strings.UnlockKindsCountOne : Strings.UnlockKindsCountFormat, opens);
+
             default:
                 if (FilterSummary.MoreOn(f) == 0)
                 {
@@ -885,6 +891,9 @@ public sealed partial class FilterPanel
 
         GroupHead(FilterGroup.Rewards);
         RewardRows(f);
+
+        GroupHead(FilterGroup.Unlocks);
+        UnlockChips(f);
 
         GroupHead(FilterGroup.More);
         for (var i = 0; i < MoreToggles.Length; i++)
@@ -1002,6 +1011,93 @@ public sealed partial class FilterPanel
         }
 
         sheetY += height;
+    }
+
+    /// <summary>
+    /// The Unlocks group (plan v7, 1.19.0 K3; spec-1.19): the kinds as flowing chips in the States chips' look (on, a
+    /// raised fill and border; off, dashed), then one line saying what they do. With any chip on, the table keeps only
+    /// quests that open one of those kinds.
+    /// </summary>
+    private void UnlockChips(FilterSet f)
+    {
+        var s = Theme.Surface;
+        var dl = ImGui.GetWindowDrawList();
+        f.UnlockKinds ??= [];
+        using (Typography.Caption())
+        {
+            var height = MathF.Max(UiMetrics.Px(metrics.Chip), ImGui.GetTextLineHeight() + UiMetrics.Px(6f));
+            var gap = UiMetrics.Px(5f);
+            var pad = UiMetrics.Px(10f);
+            var x = sheetLeft;
+            var kinds = Core.Unlocks.UnlockFindKinds.All;
+            for (var i = 0; i < kinds.Length; i++)
+            {
+                var kind = kinds[i];
+                var label = Core.Unlocks.UnlockFindKinds.Name(kind);
+                var textWidth = ImGui.CalcTextSize(label).X;
+                var width = MathF.Min(pad + textWidth + pad, sheetRight - sheetLeft);
+                if (x > sheetLeft && x + width > sheetRight)
+                {
+                    x = sheetLeft;
+                    sheetY += height + gap;
+                }
+
+                var min = new Vector2(x, sheetY);
+                var max = min + new Vector2(width, height);
+                var on = f.UnlockKinds.Contains(kind);
+                using (new IdScope(i))
+                {
+                    ImGui.SetCursorScreenPos(min);
+                    if (ImGui.InvisibleButton("##unlockKind", max - min))
+                    {
+                        if (on)
+                        {
+                            f.UnlockKinds.Remove(kind);
+                        }
+                        else
+                        {
+                            f.UnlockKinds.Add(kind);
+                        }
+
+                        on = !on;
+                        changed();
+                    }
+
+                    var hovered = ImGui.IsItemHovered();
+                    Tip(Strings.UnlockKindsHint);
+                    var rounding = flair == Flair.Plain ? UiMetrics.Px(3f) : height * 0.5f;
+                    if (on)
+                    {
+                        dl.AddRectFilled(min, max, Ink(Vector4.Lerp(s.Raised, s.Text, hovered ? 0.09f : 0.05f)), rounding);
+                        dl.AddRect(min, max, Ink(s.TextTertiary, 0.55f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+                    }
+                    else
+                    {
+                        dl.AddRectFilled(min, max, Ink(hovered ? s.Hover : s.Sunken), rounding);
+                        DashedOutline(dl, min, max, rounding, Ink(s.StrongLine with { W = 1f }));
+                    }
+
+                    Chrome.FocusRing(rounding);
+                    var textY = MathF.Round(min.Y + ((height - ImGui.GetTextLineHeight()) * 0.5f));
+                    Chrome.EllipsisTextAt(dl, new Vector2(min.X + pad, textY), MathF.Max(1f, width - (2f * pad)), label, Ink(on ? s.Text : s.TextTertiary), textWidth);
+                }
+
+                x += width + gap;
+            }
+
+            sheetY += height + UiMetrics.Px(6f);
+
+            // What the chips do, in words, wrapped to the sheet.
+            ImGui.SetCursorScreenPos(new Vector2(sheetLeft, sheetY));
+            ImGui.PushTextWrapPos(sheetRight);
+            using (Theme.PushText(s.TextTertiary))
+            {
+                ImGui.TextUnformatted(Strings.UnlockKindsHint);
+            }
+
+            ImGui.PopTextWrapPos();
+            sheetY = ImGui.GetCursorScreenPos().Y - ImGui.GetStyle().ItemSpacing.Y;
+        }
     }
 
     /// <summary>The expansions as cells that each toggle on their own; none on keeps every expansion.</summary>

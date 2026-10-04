@@ -26,9 +26,10 @@ public class FilterSummaryTests
     }
 
     [Fact]
-    public void There_are_seven_groups_and_eight_states()
+    public void There_are_eight_groups_and_eight_states()
     {
-        Assert.Equal(7, FilterSummary.Groups.Length);
+        // 1.19 (K3) added the Unlocks group after Rewards.
+        Assert.Equal(8, FilterSummary.Groups.Length);
         Assert.Equal(8, FilterSummary.StateCount);
     }
 
@@ -40,6 +41,7 @@ public class FilterSummaryTests
         [FilterGroup.Level, (Action<FilterSet>)(static f => f.LevelMin = 50)],
         [FilterGroup.Job, (Action<FilterSet>)(static f => f.ClassJobCategoryId = 33)],
         [FilterGroup.Rewards, (Action<FilterSet>)(static f => f.RewardKinds[RewardKind.Mount] = TriState.Only)],
+        [FilterGroup.Unlocks, (Action<FilterSet>)(static f => f.UnlockKinds.Add(Core.Unlocks.UnlockFindKind.Flying))],
         [FilterGroup.More, (Action<FilterSet>)(static f => f.IncludeOtherPaths = true)],
     ];
 
