@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Route;
 using Tsukimichi.Core.Ui;
 
@@ -10,7 +11,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// "Next stops" in the Tonight card (1.6.0, R6 B): the first <see cref="MaxStops"/> stops of
 /// <see cref="NextStopsSource"/>, each the aetheryte's name (a click shows its first quest), how many Ready quests
-/// wait there, and Teleport. Kept apart from the rest of the card so the card's other rows can change without
+/// wait there, and Teleport. An aetheryte the story has not reached reads as its placeholder, in Secondary, with the
+/// shield's hover and right-click, and no Teleport (1.20.0 N6). Kept apart from the rest of the card so the card's other rows can change without
 /// touching this.
 /// </summary>
 public sealed partial class TonightCard
@@ -27,10 +29,12 @@ public sealed partial class TonightCard
     /// <summary>Teleports for the stops; set by the plugin with <see cref="Stops"/>.</summary>
     public GameLinks? Links { get; set; }
 
-    // The stop lines, composed when the source rebuilds.
+    // The stop lines, composed when the source rebuilds, the language or the spoiler shield changes; Place is the
+    // aetheryte as printed, Hidden while that is its placeholder.
     private int stopsRevision = -1;
     private int stopsLanguage = -1;
-    private (Stop Stop, string Text)[] stopLines = [];
+    private int stopsShield = int.MinValue;
+    private (Stop Stop, string Text, string Place, bool Hidden)[] stopLines = [];
 
     private void DrawStops()
     {
@@ -40,17 +44,21 @@ public sealed partial class TonightCard
         }
 
         var stops = source.Stops;
-        if (stopsRevision != source.Revision || stopsLanguage != Localization.Loc.Version)
+        var spoilers = runner.Spoilers;
+        if (stopsRevision != source.Revision || stopsLanguage != Localization.Loc.Version || stopsShield != spoilers.Fingerprint)
         {
             stopsRevision = source.Revision;
             stopsLanguage = Localization.Loc.Version;
+            stopsShield = spoilers.Fingerprint;
             var count = Math.Min(MaxStops, stops.Count);
-            stopLines = new (Stop, string)[count];
+            stopLines = new (Stop, string, string, bool)[count];
             for (var i = 0; i < count; i++)
             {
                 var stop = stops[i];
-                var text = string.Format(CultureInfo.CurrentCulture, Strings.TonightStopFormat, stop.Place.Name, stop.CountText);
-                stopLines[i] = (stop, stop.IsHere ? text + Strings.TonightStopHereSuffix : text);
+                var hidden = spoilers.IsNameMasked(SpoilerKind.Aetheryte, stop.Place.Name);
+                var place = spoilers.Name(SpoilerKind.Aetheryte, stop.Place.Name);
+                var text = string.Format(CultureInfo.CurrentCulture, Strings.TonightStopFormat, place, stop.CountText);
+                stopLines[i] = (stop, stop.IsHere ? text + Strings.TonightStopHereSuffix : text, place, hidden);
             }
         }
 
@@ -67,7 +75,7 @@ public sealed partial class TonightCard
 
         for (var i = 0; i < stopLines.Length; i++)
         {
-            var (stop, text) = stopLines[i];
+            var (stop, text, place, hidden) = stopLines[i];
             if (stop.Quests.Count == 0)
             {
                 continue;
@@ -91,17 +99,30 @@ public sealed partial class TonightCard
             }
 
             var room = MathF.Max(1f, Chrome.RoomX() - (teleportShown ? teleportWidth + ImGui.GetStyle().ItemSpacing.X : 0f));
-            if (Chrome.EllipsisSelectable(text, false, room, out var cut, height: row))
+            bool clicked;
+            bool cut;
+            using (Theme.PushText(hidden ? Theme.Surface.TextSecondary : ImGui.GetStyle().Colors[(int)ImGuiCol.Text]))
+            {
+                clicked = Chrome.EllipsisSelectable(text, false, room, out cut, height: row);
+            }
+
+            if (clicked)
             {
                 ui.Reveal(first);
             }
 
-            if (ImGui.IsItemHovered())
+            if (hidden && runner.Session is { } session)
             {
-                UiMetrics.Tooltip(cut ? text : stop.Place.Name, Strings.TonightStopTooltip);
+                // A stop by an aetheryte the story has not reached: the placeholder's hover and right-click.
+                ShieldText.InteractItem(session, SpoilerKind.Aetheryte, stop.Place.Name, place, first, links, lead: cut ? text : null);
+            }
+            else if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(cut ? text : place, Strings.TonightStopTooltip);
             }
 
-            if (!teleportShown)
+            // No Teleport to a place either story has not reached (hidden, never greyed; its room stays).
+            if (!teleportShown || hidden || links.GiverPlaceHidden(first))
             {
                 continue;
             }

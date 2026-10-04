@@ -221,19 +221,24 @@ public sealed partial class CharactersPane
         if (line.Row.Carried is not null && !line.CarriedActions)
         {
             ImGui.TextDisabled(line.Zone);
+            ShieldZone(line);
             return;
         }
 
         if (line.Row.Carried is { } carried && Links is { } carriedLinks)
         {
-            if (TravelControls.FlagButton(Strings.AlliedFlag, carriedLinks.CanFlagMap(carried), "##carriedFlag"))
+            // A giver in a place the story has not reached: no Flag, as everywhere (the map would name it; 1.20.0 N6).
+            if (!carriedLinks.GiverPlaceHidden(carried))
             {
-                carriedLinks.FlagMap(carried);
-            }
+                if (TravelControls.FlagButton(Strings.AlliedFlag, carriedLinks.CanFlagMap(carried), "##carriedFlag"))
+                {
+                    carriedLinks.FlagMap(carried);
+                }
 
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(Strings.AlliedFlagTooltip);
+                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                {
+                    UiMetrics.Tooltip(Strings.AlliedFlagTooltip);
+                }
             }
 
             if (carriedLinks.TeleportShown)
@@ -248,16 +253,34 @@ public sealed partial class CharactersPane
         if (line.Row.Giver is not { } giver || Links is not { TeleportShown: true } links)
         {
             ImGui.TextDisabled(line.Zone);
+            ShieldZone(line);
             return;
         }
 
         var teleportWidth = Chrome.ActionPillWidth(ActionIcons.TeleportIcon, Strings.PlanningBoardTeleport, PillLayout.Row);
         if (line.Zone.Length > 0)
         {
-            Chrome.FitText(line.Zone, ImGui.GetColorU32(ImGuiCol.Text));
+            // A cut zone's own tooltip shows the whole placeholder above the shield's lines.
+            Chrome.FitText(line.Zone, ShieldText.U32(line.Zone, Theme.Surface.Text));
+            ShieldZone(line);
             Chrome.SameLineOrWrap(teleportWidth);
         }
 
         TravelControls.TeleportButton(links, giver, Strings.PlanningBoardTeleport);
+    }
+
+    /// <summary>
+    /// The shield's hover and right-click on a row's zone when it is a placeholder (spec-1.20 N6), for the last item:
+    /// the giver's zone the story has not reached, in the giver's quest's context.
+    /// </summary>
+    private void ShieldZone(PlanningSource.BoardLine line)
+    {
+        if (!ShieldText.Holds(line.Zone) || line.Row.Giver is not { Issuer: { } issuer } giver || Links?.Map(issuer.MapId) is not { } map
+            || !session.Spoilers.IsNameMasked(Core.Query.SpoilerKind.Area, map.PlaceName))
+        {
+            return;
+        }
+
+        ShieldText.InteractItem(session, Core.Query.SpoilerKind.Area, map.PlaceName, line.Zone, giver, Links);
     }
 }

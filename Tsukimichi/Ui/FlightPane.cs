@@ -292,7 +292,14 @@ public sealed class FlightPane
 
         // The zone and its counts wrap between words beside the moon; "Complete" follows on the line when it fits and
         // starts its own otherwise (UI audit §3).
-        TextFlow.Wrapped(header, room);
+        var headerTop = ImGui.GetCursorScreenPos();
+        TextFlow.Wrapped(header, room, ShieldText.U32(header, Theme.Surface.Text));
+        if (zone.Hidden)
+        {
+            // The header names a zone the story has not reached (spec-1.20 N6).
+            ShieldText.Interact(headerTop, new Vector2(headerTop.X + room, ImGui.GetItemRectMax().Y), session, Core.Query.SpoilerKind.Area, zone.Zone.Name, zone.Name);
+        }
+
         if (zone.Complete)
         {
             Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.FlightHeaderComplete).X);
@@ -456,16 +463,8 @@ public sealed class FlightPane
             return;
         }
 
-        if (TravelControls.FlagButton(Strings.FlightFlag, links.CanFlagMap(target)))
-        {
-            links.FlagMap(target);
-        }
-
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(Strings.FlightFlagTooltip);
-        }
-
+        // No Flag for a giver in a place the story has not reached; its room stays (1.20.0 N6).
+        TravelControls.FlagButtonFor(links, target, Strings.FlightFlag, Strings.FlightFlagTooltip);
         TravelControls.Buttons(links, target, Strings.FlightTeleport);
     }
 
@@ -481,14 +480,17 @@ public sealed class FlightPane
 
         // Opened from the centre column (own font scale 1), so the menu scales itself.
         UiMetrics.ApplyFontScale();
-        if (ImGui.MenuItem(Strings.FlightFlag, enabled: links.CanFlagMap(target)))
+        if (!links.GiverPlaceHidden(target))
         {
-            links.FlagMap(target);
-        }
+            if (ImGui.MenuItem(Strings.FlightFlag, enabled: links.CanFlagMap(target)))
+            {
+                links.FlagMap(target);
+            }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(Strings.FlightFlagTooltip);
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.FlightFlagTooltip);
+            }
         }
 
         TravelControls.MenuItems(links, target, Strings.FlightTeleport);
@@ -545,6 +547,7 @@ public sealed class FlightPane
         var isSelected = ReferenceEquals(selected, zone);
         bool clicked;
         using (ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f)))
+        using (Theme.PushText(zone.Hidden ? Theme.Surface.TextSecondary : ImGui.GetStyle().Colors[(int)ImGuiCol.Text]))
         {
             clicked = ImGui.Selectable(here ? zone.HereLabel : zone.Label, isSelected, ImGuiSelectableFlags.SpanAllColumns, new Vector2(0f, glyph));
         }
@@ -554,7 +557,12 @@ public sealed class FlightPane
             Select(ui, zone);
         }
 
-        if (ImGui.IsItemHovered())
+        if (zone.Hidden)
+        {
+            // A zone the story has not reached: its placeholder's hover and right-click (spec-1.20 N6).
+            ShieldText.InteractItem(session, Core.Query.SpoilerKind.Area, zone.Zone.Name, zone.Name);
+        }
+        else if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(here ? Strings.FlightCurrentZoneTooltip : zone.TooltipText);
         }
@@ -692,7 +700,7 @@ public sealed class FlightPane
         bool nameCut;
         using (Typography.Title(zone.Name))
         {
-            nameCut = Chrome.EllipsisTextAt(dl, new Vector2(x, titleY), room, zone.Name, Theme.U32(s.Text));
+            nameCut = Chrome.EllipsisTextAt(dl, new Vector2(x, titleY), room, zone.Name, ShieldText.U32(zone.Name, s.Text));
         }
 
         // "Quest currents 2 left · Field currents all done": the labels in the body font, the counts in the Numeral role.
@@ -713,7 +721,12 @@ public sealed class FlightPane
             }
         }
 
-        if (hovered)
+        if (zone.Hidden)
+        {
+            // The banner names a zone the story has not reached: the placeholder's hover and right-click.
+            ShieldText.Interact(min, max, session, Core.Query.SpoilerKind.Area, zone.Zone.Name, zone.Name, lead: nameCut ? zone.Name : null);
+        }
+        else if (hovered)
         {
             var counts = zone.AllUnknown ? Strings.StateTooltip(QuestState.Unknown) : zone.TooltipText;
             if (nameCut)
@@ -1042,9 +1055,13 @@ public sealed class FlightPane
         public string Label { get; private set; }
         public string HereLabel { get; private set; }
 
+        /// <summary>Whether <see cref="Name"/> is the zone's placeholder (1.20.0 N6): it then answers the shield's hover and right-click.</summary>
+        public bool Hidden { get; private set; }
+
         /// <summary>Names the zone through <paramref name="spoilers"/>; composes only when the printed name changes.</summary>
         public void SetName(Core.Query.SpoilerMask spoilers)
         {
+            Hidden = spoilers.IsNameMasked(Core.Query.SpoilerKind.Area, Zone.Name);
             var name = spoilers.Name(Core.Query.SpoilerKind.Area, Zone.Name);
             if (string.Equals(name, Name, StringComparison.Ordinal))
             {

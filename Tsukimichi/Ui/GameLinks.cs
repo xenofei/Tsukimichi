@@ -177,8 +177,12 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
         }
     }
 
-    /// <summary>True when the issuer has a territory and map to flag.</summary>
-    public bool CanFlagMap(QuestRecord quest) => quest.Issuer is { TerritoryId: > 0, MapId: > 0 };
+    /// <summary>
+    /// True when the issuer has a territory and map to flag, in a place both stories have reached
+    /// (<see cref="GiverPlaceHidden"/>): the game's map would name a hidden one (1.20.0 N6). The panes hide Flag there
+    /// rather than grey it; this keeps any other way to flag from leading there.
+    /// </summary>
+    public bool CanFlagMap(QuestRecord quest) => quest.Issuer is { TerritoryId: > 0, MapId: > 0 } && !GiverPlaceHidden(quest);
 
     /// <summary>
     /// The aetheryte nearest the quest's giver, attuned or not (id and place name), for grouping quests into stops:
@@ -254,9 +258,14 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
         }
     }
 
-    /// <summary>Opens the in-game map with a flag on the issuer.</summary>
+    /// <summary>Opens the in-game map with a flag on the issuer; nothing for a giver in a hidden place (<see cref="CanFlagMap"/>).</summary>
     public void FlagMap(QuestRecord quest)
     {
+        if (GiverPlaceHidden(quest))
+        {
+            return;
+        }
+
         try
         {
             if (MapLink(quest) is { } link && !gameGui.OpenMapWithMapLink(link))

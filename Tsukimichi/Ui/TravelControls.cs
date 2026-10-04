@@ -185,6 +185,33 @@ internal static class TravelControls
     public static bool FlagButton(string label, bool enabled, string id = "##travelFlag") =>
         Chrome.ActionPill(id, ActionIcons.FlagIcon, label, PillTone.Normal, enabled, size: PillLayout.Row);
 
+    /// <summary>
+    /// Flag on map for the quest's giver as a row's button, with <paramref name="tooltip"/> on hover; for a giver in a
+    /// place the story has not reached nothing but its room, so the row keeps its layout (hidden, never greyed: spec-1.20
+    /// N6). Returns whether it was clicked (then the giver is flagged).
+    /// </summary>
+    public static bool FlagButtonFor(GameLinks links, QuestRecord quest, string label, string tooltip, string id = "##travelFlag")
+    {
+        if (links.GiverPlaceHidden(quest))
+        {
+            ImGui.Dummy(new System.Numerics.Vector2(FlagWidth(label), Chrome.PillHeight(PillLayout.Row)));
+            return false;
+        }
+
+        var pressed = FlagButton(label, links.CanFlagMap(quest), id);
+        if (pressed)
+        {
+            links.FlagMap(quest);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(tooltip);
+        }
+
+        return pressed;
+    }
+
     /// <summary>The width of <see cref="FlagButton"/>.</summary>
     public static float FlagWidth(string label) => Chrome.ActionPillWidth(ActionIcons.FlagIcon, label, PillLayout.Row);
 
