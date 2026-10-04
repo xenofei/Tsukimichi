@@ -21,14 +21,23 @@ public static partial class Strings
     /// <summary>{0} = the duty.</summary>
     public static string DutyGuardStopFormat => Loc.Get("DutyGuardStopFormat");
 
-    /// <summary>{0} = the duty with other players; {1} = the quest.</summary>
-    public static string DutyGuardStopMaybeFormat => Loc.Get("DutyGuardStopMaybeFormat");
-
     /// <summary>{0} = the duty.</summary>
     public static string DutyGuardWarnFormat => Loc.Get("DutyGuardWarnFormat");
 
-    /// <summary>{0} = the duty with other players; {1} = the quest.</summary>
-    public static string DutyGuardWarnMaybeFormat => Loc.Get("DutyGuardWarnMaybeFormat");
+    /// <summary>A step that may be a duty with or without Duty Support or Trust; names no duty. {0} = the quest.</summary>
+    public static string DutyGuardWarnNextFormat => Loc.Get("DutyGuardWarnNextFormat");
+
+    /// <summary>The guard cannot read Questionable's steps: one chat line per session.</summary>
+    public static string DutyGuardBlindChat => Loc.Get("DutyGuardBlindChat");
+
+    /// <summary>Settings' duty guard status label.</summary>
+    public static string SettingsDutyGuardStatus => Loc.Get("SettingsDutyGuardStatus");
+
+    /// <summary>Settings' duty guard status while it cannot read Questionable's steps.</summary>
+    public static string DutyGuardBlindStatus => Loc.Get("DutyGuardBlindStatus");
+
+    /// <summary>The <c>/tsuki stop</c> part for a cancelled automatic restart.</summary>
+    public static string StopPendingCancelled => Loc.Get("StopPendingCancelled");
 
     /// <summary>{0} = the quest.</summary>
     public static string DutyGuardUnsureFormat => Loc.Get("DutyGuardUnsureFormat");

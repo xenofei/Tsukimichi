@@ -88,6 +88,11 @@ public sealed partial class ConfigWindow
             Save();
         }
 
+        if (settings.QuestionableDutyGuard != DutyGuardMode.Nothing && Questionable is { StepKindUnreadable: true })
+        {
+            Note(Strings.SettingsDutyGuardStatus, Strings.DutyGuardBlindStatus, "questionable duty guard step data blind status");
+        }
+
         if (QuestionableRuns is { } runs)
         {
             Note(Strings.SettingsQuestionableRuns, RunsText(runs), "questionable runs receipt history stopped why quests done");

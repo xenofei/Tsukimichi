@@ -58,6 +58,14 @@ public interface ITravelPorts
     /// <summary>How many waypoints vnavmesh's path has left, or null when vnavmesh cannot say.</summary>
     int? Waypoints { get; }
 
+    /// <summary>
+    /// How many waypoints vnavmesh's path has left, asked now rather than from a cache, and only while vnavmesh follows a
+    /// path (asked now too); null while it follows none or cannot say. Read on each tick of a walk, so the last count
+    /// before the walk ended tells a walk stopped by hand (waypoints left) from one that ran to its last waypoint, even
+    /// when the end comes between two cached reads.
+    /// </summary>
+    int? WaypointsNow { get; }
+
     /// <summary>True while the character is on a mount.</summary>
     bool Mounted { get; }
 
@@ -301,6 +309,9 @@ public sealed class GoToGiver
     private (float X, float Y, float Z) walkTarget;
     private uint hopFromTerritory;
     private long? hopAt;
+
+    /// <summary>The earliest a hop asked again after one that never started may go (Lifestream#163).</summary>
+    private long? hopRetryAt;
     private int? lastWaypoints;
 
     public GoToGiver(ITravelPorts ports)
@@ -334,8 +345,14 @@ public sealed class GoToGiver
     /// <summary>True once the walk was given a new path after it stopped making progress.</summary>
     public bool Repathed => repathed;
 
-    /// <summary>True once the run had vnavmesh reload the navmesh and tried the walk again (once per run).</summary>
+    /// <summary>
+    /// True once vnavmesh took the run's navmesh reload and the walk was tried again (once per run): only then may a
+    /// failure say "even after reloading". A reload vnavmesh declined leaves it false.
+    /// </summary>
     public bool Reloaded { get; private set; }
+
+    /// <summary>True once the run used its one recovery, taken or declined, so a run never tries a second.</summary>
+    public bool RecoverySpent { get; private set; }
 
     /// <summary>What the reload under way (or the last one) recovers from; <see cref="GoToGiverFailure.None"/> before one.</summary>
     public GoToGiverFailure RecoveringFrom { get; private set; }
@@ -376,6 +393,7 @@ public sealed class GoToGiver
         MountGaveUp = false;
         repathed = false;
         Reloaded = false;
+        RecoverySpent = false;
         RecoveringFrom = GoToGiverFailure.None;
         WalkedToAetheryte = false;
         HopRetried = false;
@@ -383,6 +401,7 @@ public sealed class GoToGiver
         leg = WalkLeg.Goal;
         walkTarget = (plan.GoalX, plan.GoalY, plan.GoalZ);
         hopAt = null;
+        hopRetryAt = null;
         lastWaypoints = null;
         if (plan.Teleport is { } teleport)
         {
@@ -516,7 +535,11 @@ public sealed class GoToGiver
         return null;
     }
 
-    /// <summary>The walk to the aetheryte is over, however it went: the hop is asked for now, and Lifestream decides.</summary>
+    /// <summary>
+    /// The walk to the aetheryte is over, however it went: the hop is asked for now, and Lifestream decides. A hop asked
+    /// again after one that never started still waits out <see cref="HopRetryMs"/> from then (Lifestream#163), however
+    /// short the walk was (a refused one takes no time at all).
+    /// </summary>
     private GoToGiverOutcome? AfterAetheryteWalk(GoToGiverPlan plan, long now)
     {
         if (Step == GoToGiverStep.ToAetheryte && ports.Walking)
@@ -527,6 +550,13 @@ public sealed class GoToGiver
         leg = WalkLeg.Goal;
         walkTarget = (plan.GoalX, plan.GoalY, plan.GoalZ);
         repathed = false;
+        if (hopRetryAt is { } at && now < at)
+        {
+            Enter(GoToGiverStep.Hopping, now);
+            hopAt = at;
+            return null;
+        }
+
         return AskHop(plan.Hop!.Value, now);
     }
 
@@ -638,13 +668,14 @@ public sealed class GoToGiver
         }
 
         HopRetried = true;
+        hopRetryAt = now + HopRetryMs;
         if (!WalkedToAetheryte && ports.ActiveAetheryte == 0 && ports.HopStart(hop.Id) is not null)
         {
             return BeginHop(plan, hop, now);
         }
 
         Enter(GoToGiverStep.Hopping, now);
-        hopAt = now + HopRetryMs;
+        hopAt = hopRetryAt;
         return null;
     }
 
@@ -796,7 +827,10 @@ public sealed class GoToGiver
         if (ports.Walking)
         {
             sawWalking = true;
-            if (ports.Waypoints is { } left)
+
+            // Asked now, not cached: the cached count can be a quarter second old when the walk ends, and two waypoints
+            // left then would read a walk that ran to its end as one stopped by hand.
+            if (ports.WaypointsNow is { } left)
             {
                 lastWaypoints = left;
             }
@@ -980,16 +1014,17 @@ public sealed class GoToGiver
     /// <summary>
     /// The one recovery of a run (feature plan v7 A8): the walk under way is stopped, vnavmesh reloads the zone's
     /// navmesh, and the walk is tried once more from where the character stands. A second failure, or a vnavmesh that
-    /// declines the reload, fails with <paramref name="failure"/>.
+    /// declines the reload, fails with <paramref name="failure"/>; <see cref="Reloaded"/> is set only once vnavmesh took
+    /// the reload, and <see cref="RecoverySpent"/> either way.
     /// </summary>
     private GoToGiverOutcome? Recover(GoToGiverFailure failure, long now)
     {
-        if (Reloaded)
+        if (RecoverySpent)
         {
             return Fail(failure);
         }
 
-        Reloaded = true;
+        RecoverySpent = true;
         if (WalkUnderWay)
         {
             ports.StopWalk();
@@ -1000,6 +1035,7 @@ public sealed class GoToGiver
             return Fail(failure, stopWalk: false);
         }
 
+        Reloaded = true;
         RecoveringFrom = failure;
         Enter(GoToGiverStep.ReloadingNav, now);
         return null;

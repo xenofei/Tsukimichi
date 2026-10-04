@@ -209,6 +209,26 @@ public sealed class VnavmeshIpc : IDisposable
     }
 
     /// <summary>
+    /// How many waypoints the path being followed has left, asked now rather than from the cache, and only while
+    /// vnavmesh follows a path (also asked now); null while it follows none or cannot say. Two calls, made only on the
+    /// ticks of a walk Tsukimichi started: the last count before the walk ends tells a walk stopped by hand from one
+    /// that ran to its end. Refreshes the cached answers it read.
+    /// </summary>
+    public int? ReadWaypoints()
+    {
+        if (!Available)
+        {
+            return null;
+        }
+
+        runningCached = ReadRunning();
+        waypointsCached = runningCached && numWaypoints is not null && !gates.IsMissing(NumWaypointsGate)
+            ? Invoke<ICallGateSubscriber<int>, int?>(numWaypoints, NumWaypointsGate, static gate => gate.InvokeFunc(), null)
+            : null;
+        return waypointsCached;
+    }
+
+    /// <summary>
     /// Asks vnavmesh to find a path to <paramref name="destination"/> on foot (or, <paramref name="fly"/>, through the
     /// air) and follow it until within <paramref name="range"/>. A flying path needs the character on a mount already:
     /// vnavmesh takes off by jumping from the mount, and stands still on foot. It ends at the destination, which may

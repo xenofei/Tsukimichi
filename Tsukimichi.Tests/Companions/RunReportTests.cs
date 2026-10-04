@@ -106,4 +106,34 @@ public class RunReportTests
         Assert.Equal(RunStopCounts.Max, counts.Count);
         Assert.True(counts.ContainsKey(RunStopCounts.Key(70000 + RunStopCounts.Max + 50, 1)));
     }
+
+    [Fact]
+    public void The_cap_evicts_the_oldest_step_every_time_never_the_newest()
+    {
+        var counts = new Dictionary<string, int>();
+        for (uint i = 1; i <= RunStopCounts.Max; i++)
+        {
+            RunStopCounts.Note(counts, i, 1);
+        }
+
+        // Two new steps past the cap: the first two noted go, in order. (Removing one key left a hole the next new key
+        // filled, so the second eviction took the step just added.)
+        RunStopCounts.Note(counts, 9001, 1);
+        Assert.False(counts.ContainsKey(RunStopCounts.Key(1, 1)));
+        Assert.True(counts.ContainsKey(RunStopCounts.Key(9001, 1)));
+
+        RunStopCounts.Note(counts, 9002, 1);
+        Assert.False(counts.ContainsKey(RunStopCounts.Key(2, 1)));
+        Assert.True(counts.ContainsKey(RunStopCounts.Key(9001, 1)));
+        Assert.True(counts.ContainsKey(RunStopCounts.Key(9002, 1)));
+        Assert.Equal(RunStopCounts.Max, counts.Count);
+
+        // The map's order is the order the steps were first noted; counting a kept step again does not move it.
+        Assert.Equal(2, RunStopCounts.Note(counts, 3, 1));
+        Assert.Equal(RunStopCounts.Key(3, 1), counts.Keys.First());
+        Assert.Equal(RunStopCounts.Key(9002, 1), counts.Keys.Last());
+        RunStopCounts.Note(counts, 9003, 1);
+        Assert.False(counts.ContainsKey(RunStopCounts.Key(3, 1)));
+        Assert.Equal(RunStopCounts.Key(4, 1), counts.Keys.First());
+    }
 }

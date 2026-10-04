@@ -78,7 +78,16 @@ public sealed class StopCommand : IDisposable
 
     public void Dispose() => framework.Update -= OnUpdate;
 
-    /// <summary>Stops what runs, asks about what must be asked, and prints one chat line. Never throws.</summary>
+    /// <summary>
+    /// Cancels the automatic starts the "Why it stopped" card left waiting ("Keep going after it", "Reload navmesh and
+    /// retry"); true when one was. Set by the plugin (<see cref="RunStops.CancelPending"/>); null cancels nothing.
+    /// </summary>
+    public Func<bool>? CancelPending { get; set; }
+
+    /// <summary>
+    /// Stops what runs, cancels what waits to start on its own, asks about what must be asked, and prints one chat line.
+    /// The one Stop: <c>/tsuki stop</c> and the Stop all of the card and the "Needs you" panel both call it. Never throws.
+    /// </summary>
     public void Run()
     {
         try
@@ -94,6 +103,8 @@ public sealed class StopCommand : IDisposable
 
     private string Stop()
     {
+        // First, so nothing the card left waiting starts after this press, whatever else it stops or asks about.
+        var cancelled = Safe(CancelPending);
         var now = Environment.TickCount64;
         var confirmed = confirm.Answer(now);
         var running = Running();
@@ -124,8 +135,8 @@ public sealed class StopCommand : IDisposable
             confirm.Ask(now);
         }
 
-        log.Information("/tsuki stop: running {Running}, stopped {Stopped}, failed {Failed}, asked {Asked}", running, string.Join(", ", stopped), string.Join(", ", failed), decision.Ask);
-        return Line(stopped, failed, decision.Ask, questionCommand);
+        log.Information("/tsuki stop: running {Running}, stopped {Stopped}, failed {Failed}, asked {Asked}, waiting start cancelled {Cancelled}", running, string.Join(", ", stopped), string.Join(", ", failed), decision.Ask, cancelled);
+        return Line(stopped, failed, decision.Ask, questionCommand, cancelled);
     }
 
     /// <summary>Everything that runs now and that this command may stop.</summary>
@@ -190,13 +201,21 @@ public sealed class StopCommand : IDisposable
         }
     }
 
-    /// <summary>"Stopped: Go to giver, Questionable." then what failed, then any question; "Nothing to stop." when all are empty.</summary>
-    private static string Line(List<string> stopped, List<string> failed, StopTarget ask, string? questionCommand)
+    /// <summary>
+    /// "Stopped: Go to giver, Questionable." then the cancelled automatic start, what failed, then any question;
+    /// "Nothing to stop." when all are empty.
+    /// </summary>
+    private static string Line(List<string> stopped, List<string> failed, StopTarget ask, string? questionCommand, bool cancelledPending)
     {
-        var parts = new List<string>(4);
+        var parts = new List<string>(5);
         if (stopped.Count > 0)
         {
             parts.Add(string.Format(CultureInfo.CurrentCulture, Strings.StopDoneFormat, string.Join(Strings.CommandListSeparator, stopped)));
+        }
+
+        if (cancelledPending)
+        {
+            parts.Add(Strings.StopPendingCancelled);
         }
 
         if (failed.Count > 0)
@@ -243,11 +262,11 @@ public sealed class StopCommand : IDisposable
         }
     }
 
-    private bool Safe(Func<bool> read)
+    private bool Safe(Func<bool>? read)
     {
         try
         {
-            return read();
+            return read?.Invoke() == true;
         }
         catch (Exception ex)
         {

@@ -34,6 +34,11 @@ public sealed class GoToGiverTests
 
         public int? Waypoints { get; set; }
 
+        /// <summary>vnavmesh's count asked now; the cached <see cref="Waypoints"/> unless a test sets it apart.</summary>
+        public int? FreshWaypoints { get; set; }
+
+        public int? WaypointsNow => FreshWaypoints ?? Waypoints;
+
         public bool AcceptTeleport { get; set; } = true;
 
         public bool AcceptHop { get; set; } = true;
@@ -1042,6 +1047,63 @@ public sealed class GoToGiverTests
     }
 
     [Fact]
+    public void A_walk_that_ran_to_its_end_between_cached_reads_is_not_taken_for_one_stopped_by_hand()
+    {
+        // The cached count still says two waypoints (read a quarter second ago); asked now, one was left: it ran out.
+        var ports = new FakePorts { Territory = SubZone, Walking = true, Waypoints = 2, FreshWaypoints = 1, Position = (500f, 500f), AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
+        machine.Tick(1_000);
+
+        ports.Walking = false;
+        ports.Waypoints = null;
+        ports.FreshWaypoints = null;
+        Assert.Null(machine.Tick(2_000));
+        Assert.Equal(GoToGiverStep.ReloadingNav, machine.Step);
+        Assert.Contains("reload", ports.Calls);
+    }
+
+    [Fact]
+    public void A_walk_stopped_by_hand_is_told_by_the_fresh_count_not_the_cached_one()
+    {
+        // The cached count lags at one; asked now, five were left when the walk ended: someone stopped it.
+        var ports = new FakePorts { Territory = SubZone, Walking = true, Waypoints = 1, FreshWaypoints = 5, Position = (500f, 500f), AcceptReload = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
+        machine.Tick(1_000);
+
+        // vnavmesh already reads idle when asked now while the cache still says walking: the last count stands.
+        ports.FreshWaypoints = null;
+        ports.Waypoints = null;
+        machine.Tick(1_100);
+        ports.Walking = false;
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.WalkStoppedShort), machine.Tick(2_000));
+        Assert.DoesNotContain("reload", ports.Calls);
+    }
+
+    [Fact]
+    public void A_declined_reload_spends_the_recovery_but_is_not_a_reload()
+    {
+        // vnavmesh declines the reload (no gate, no zone): the run fails, never says it reloaded, and never asks again.
+        var ports = new FakePorts { Territory = SubZone, Walking = true, AcceptReload = false };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f), 0);
+        ports.Position = (50f, 0f);
+        machine.Tick(1_000);
+        Assert.Null(Run(machine, 1_100, 1_000 + GoToGiver.StuckMs));
+        Assert.Equal(
+            new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.Stuck),
+            Run(machine, 1_100 + GoToGiver.StuckMs, 1_000 + (2 * GoToGiver.StuckMs)));
+        Assert.False(machine.Reloaded);
+        Assert.True(machine.RecoverySpent);
+        Assert.Single(ports.Calls, c => c == "reload");
+
+        // A new run starts with its recovery unspent.
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f), 100_000);
+        Assert.False(machine.RecoverySpent);
+    }
+
+    [Fact]
     public void A_walk_that_never_starts_reloads_and_tries_again()
     {
         var ports = new FakePorts { Territory = SubZone, AcceptReload = true };
@@ -1171,6 +1233,32 @@ public sealed class GoToGiverTests
         Assert.Null(machine.Tick(6_000));
         Assert.Equal(["hop 28", "walk 30,1,40", "hop 28"], ports.Calls);
         Assert.True(machine.HopRetried);
+    }
+
+    [Fact]
+    public void A_hop_asked_again_after_a_short_walk_still_waits_out_the_pause()
+    {
+        var ports = new FakePorts { Territory = City, ActiveAetheryte = Aetheryte, HopStartPoint = (30f, 1f, 40f) };
+        var machine = new GoToGiver(ports);
+        machine.Start(Full with { Teleport = null }, 0);
+
+        // The hop did not start and the player stands at no aetheryte; vnavmesh refuses the walk there at once.
+        ports.LifestreamBusy = true;
+        machine.Tick(500);
+        ports.LifestreamBusy = false;
+        ports.ActiveAetheryte = 0;
+        ports.AcceptWalk = false;
+        machine.Tick(1_000);
+        var gaveUp = 1_100 + GoToGiver.HopIdleGraceMs;
+        Assert.Null(machine.Tick(gaveUp));
+
+        // Not asked again in the same tick (Lifestream#163): after the pause, as without the walk.
+        Assert.Equal(["hop 28", "walk 30,1,40"], ports.Calls);
+        Assert.Equal(GoToGiverStep.Hopping, machine.Step);
+        Assert.Null(machine.Tick(gaveUp + GoToGiver.HopRetryMs - 100));
+        Assert.Single(ports.Calls, c => c == "hop 28");
+        Assert.Null(machine.Tick(gaveUp + GoToGiver.HopRetryMs));
+        Assert.Equal(["hop 28", "walk 30,1,40", "hop 28"], ports.Calls);
     }
 
     [Fact]

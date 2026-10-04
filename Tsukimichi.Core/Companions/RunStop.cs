@@ -467,3 +467,33 @@ public sealed class StopDock
         Step = newer.Step ?? older.Step,
     };
 }
+
+/// <summary>
+/// The automatic starts the "Why it stopped" card's fixes leave waiting (plan v7, 1.18.0, A2): "Keep going after it"
+/// (<see cref="WaitingFor"/>, the card whose duty it waits for) restarts Questionable once the player has cleared the
+/// duty, and "Reload navmesh and retry" (<see cref="Retry"/>, what to start) starts the same way again once vnavmesh has
+/// rebuilt the zone. One Stop (<c>/tsuki stop</c>, Stop all) cancels both (<see cref="CancelAll"/>), so nothing starts on
+/// its own after the player said stop. Pure.
+/// </summary>
+/// <typeparam name="TRetry">What a retry starts (a travel plan, or Questionable on a quest).</typeparam>
+public sealed class PendingStarts<TRetry>
+    where TRetry : class
+{
+    /// <summary>The card "Keep going after it" waits on; null when it does not wait.</summary>
+    public StopCard? WaitingFor { get; set; }
+
+    /// <summary>What "Reload navmesh and retry" starts once vnavmesh is ready; null when nothing waits.</summary>
+    public TRetry? Retry { get; set; }
+
+    /// <summary>Whether an automatic start waits.</summary>
+    public bool Any => WaitingFor is not null || Retry is not null;
+
+    /// <summary>Cancels both; true when one was waiting.</summary>
+    public bool CancelAll()
+    {
+        var any = Any;
+        WaitingFor = null;
+        Retry = null;
+        return any;
+    }
+}

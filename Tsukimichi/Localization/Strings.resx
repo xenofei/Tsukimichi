@@ -2439,17 +2439,13 @@
     <value>Stopped Questionable before {0}: it has no Duty Support or Trust, so it would put you in a party with other players. Run it yourself, or start Questionable again to let it go ahead.</value>
     <comment>Chat line when the duty guard stops Questionable: {0} = the duty ("the Final Day").</comment>
   </data>
-  <data name="DutyGuardStopMaybeFormat" xml:space="preserve">
-    <value>Stopped Questionable at a duty of {1}: it may be {0}, which has no Duty Support or Trust and would put you in a party with other players. Start Questionable again to let it go ahead.</value>
-    <comment>Chat line when the duty guard stops Questionable at a quest naming several duties: {0} = the duty with other players; {1} = the quest.</comment>
-  </data>
   <data name="DutyGuardWarnFormat" xml:space="preserve">
     <value>Questionable is heading into {0}: it has no Duty Support or Trust, so you'll be in a party with other players. Stay at the keyboard, or type /tsuki stop.</value>
     <comment>Chat line of the duty guard set to Warn: {0} = the duty.</comment>
   </data>
-  <data name="DutyGuardWarnMaybeFormat" xml:space="preserve">
-    <value>Questionable is heading into a duty of {1}: it may be {0}, which has no Duty Support or Trust. Stay at the keyboard, or type /tsuki stop.</value>
-    <comment>Chat line of the duty guard set to Warn, at a quest naming several duties: {0} = the duty; {1} = the quest.</comment>
+  <data name="DutyGuardWarnNextFormat" xml:space="preserve">
+    <value>Questionable is heading into a duty of {0}. It may have Duty Support or Trust, but if it's the one that doesn't, you'll be in a party with other players. Stay at the keyboard, or type /tsuki stop.</value>
+    <comment>Chat line of the duty guard (set to Stop or Warn) at a quest naming several duties, one with Duty Support or Trust and one without, when it can't tell which comes now: it only warns and names no duty (a later one would be a spoiler). {0} = the quest.</comment>
   </data>
   <data name="DutyGuardUnsureFormat" xml:space="preserve">
     <value>Questionable is heading into a duty of {0}, and Tsukimichi can't tell whether it has Duty Support or Trust. Check before it queues you.</value>
@@ -2466,6 +2462,22 @@
   <data name="DutyGuardHiddenDuty" xml:space="preserve">
     <value>the next duty</value>
     <comment>Stands for the duty's name in the duty guard's lines while the spoiler shield hides the quest.</comment>
+  </data>
+  <data name="DutyGuardBlindChat" xml:space="preserve">
+    <value>The duty guard can't read Questionable's steps, so it can't stop or warn you before a duty with other players. Stay at the keyboard when a duty comes up; updating Questionable may fix it.</value>
+    <comment>Chat line, once per session, when Questionable's step data (or its step kind) can't be read while the duty guard is on.</comment>
+  </data>
+  <data name="SettingsDutyGuardStatus" xml:space="preserve">
+    <value>Duty guard</value>
+    <comment>Settings › Automation › Questionable: label of the duty guard's status line, shown only when it can't read Questionable's steps.</comment>
+  </data>
+  <data name="DutyGuardBlindStatus" xml:space="preserve">
+    <value>Can't read Questionable's steps, so it can't stop or warn before a duty. Updating Questionable may fix it.</value>
+    <comment>Settings status line of the duty guard when Questionable's step data (or its step kind) can't be read.</comment>
+  </data>
+  <data name="StopPendingCancelled" xml:space="preserve">
+    <value>Cancelled the restart that was waiting.</value>
+    <comment>Part of the /tsuki stop (and Stop all) chat line when it cancelled a "Keep going after it" or "Reload navmesh and retry" still waiting to start.</comment>
   </data>
   <data name="QuestionableRunWhyDutyGuard" xml:space="preserve">
     <value>Stopped before a duty with other players.</value>

@@ -905,7 +905,11 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // Travel preflight (feature plan v7 A9): movement type, camera, vnavmesh's movement switch and known
             // conflicts, in Settings › Automation › Travel and in one chat line when a walk starts.
-            travelPreflight = new Game.TravelPreflightService(GameConfig, Framework, ClientState, vnavmesh, PluginInterface, Log);
+            travelPreflight = new Game.TravelPreflightService(GameConfig, Framework, ClientState, vnavmesh, PluginInterface, Log)
+            {
+                // A fix's Undo belongs to the character it was made on (the movement type is per character).
+                LiveContentId = () => Session.LiveContentId,
+            };
             travel.WalkWarnings = travelPreflight.WalkWarnings;
 
             // The automation level (1.18, A10): every hand-off button asks it whether it shows.
@@ -1205,6 +1209,10 @@ public sealed partial class Plugin : IDalamudPlugin
                 GameVersion = clientGameVersion,
             };
             runWatch.Stops = runStops;
+
+            // The one Stop (/tsuki stop, and the card's and panel's Stop all through it) also cancels what the card
+            // left waiting to start on its own.
+            stopCommand.CancelPending = runStops.CancelPending;
             mainWindow.AttachRunStops(runStops);
             needsYouOverlay = new NeedsYouOverlay(runStops);
             PluginInterface.UiBuilder.Draw += needsYouOverlay.Draw;

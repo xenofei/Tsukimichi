@@ -19,7 +19,8 @@ namespace Tsukimichi.Game;
 /// <list type="bullet">
 /// <item>Movement type: the game's <c>MoveMode</c> option (Dalamud <see cref="IGameConfig"/>, UiControl section; 0
 /// Standard, 1 Legacy). "Switch to Standard" sets it on the framework thread and keeps the old value for Undo, which
-/// restores it only while the option still reads what the fix set.</item>
+/// restores it only for the character it was changed on (the option is kept per character; a logout or another
+/// character drops it) and only while the option still reads what the fix set.</item>
 /// <item>Camera: the game camera's zoom mode (FFXIVClientStructs <c>CameraManager.Instance()->Camera->ZoomMode</c>, a
 /// read of game memory, so only while the shared <see cref="HookGate"/> allows game calls).</item>
 /// <item>vnavmesh's movement switch: <c>vnavmesh.Path.GetMovementAllowed</c>, turned back on with
@@ -67,10 +68,17 @@ public sealed class TravelPreflightService : IDisposable
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
         conflicts = TravelPreflight.KnownConflicts.Select(c => new PluginPresence(pluginInterface, log, c.InternalName)).ToArray();
+        clientState.Logout += OnLogout;
     }
 
     /// <summary>The shared addon kill switch; the camera is read only while it allows game calls. Unset reads the camera as unread.</summary>
     public HookGate? Gate { get; set; }
+
+    /// <summary>
+    /// The content id of the character logged in, null while none is; set by the plugin. A fix is kept for that
+    /// character's Undo only (the movement type is a per-character setting); unset, no Undo is offered.
+    /// </summary>
+    public Func<ulong?>? LiveContentId { get; set; }
 
     /// <summary>Every check as read now (cached for <see cref="ReadCacheMs"/>).</summary>
     public IReadOnlyList<PreflightResult> Results
@@ -90,18 +98,32 @@ public sealed class TravelPreflightService : IDisposable
     }
 
     /// <summary>
-    /// True while Undo would put back what the item's fix changed: the setting still reads what the fix set. A change
-    /// is kept until Undo or the plugin unloads.
+    /// True while Undo would put back what the item's fix changed: the same character is logged in and the setting still
+    /// reads what the fix set. A change is kept until Undo, a logout or another character, or the plugin unloads.
     /// </summary>
     public bool CanUndo(PreflightItem item)
     {
         Refresh();
-        if (!changes.TryGetValue(item, out var change) || !change.CanUndo(Current(item)))
+        if (!changes.TryGetValue(item, out var change))
         {
             return false;
         }
 
-        // The movement type's "Restore Legacy" stays until the plugin restarts; vnavmesh's Undo lasts a few seconds.
+        var who = CurrentCharacter();
+        if (who != change.ContentId)
+        {
+            // Another character, or none: the change was the last one's, and is dropped.
+            changes.Remove(item);
+            changedAt.Remove(item);
+            return false;
+        }
+
+        if (!change.CanUndo(Current(item), who))
+        {
+            return false;
+        }
+
+        // The movement type's "Restore Legacy" stays while that character is logged in; vnavmesh's Undo lasts a few seconds.
         return item == PreflightItem.MovementType
             || (changedAt.TryGetValue(item, out var at) && Environment.TickCount64 - at < UndoWindowMs);
     }
@@ -151,7 +173,16 @@ public sealed class TravelPreflightService : IDisposable
             return false;
         }
 
-        changes[item] = new PreflightChange(item, before, after);
+        if (CurrentCharacter() is not { } who)
+        {
+            // No character to tie the Undo to: the fix stands, with no Undo.
+            changes.Remove(item);
+            changedAt.Remove(item);
+            log.Information("Travel preflight: {Item} changed from {Before} to {After} (no character, no Undo)", item, before, after);
+            return true;
+        }
+
+        changes[item] = new PreflightChange(item, before, after, who);
         changedAt[item] = Environment.TickCount64;
         log.Information("Travel preflight: {Item} changed from {Before} to {After}", item, before, after);
         return true;
@@ -191,8 +222,35 @@ public sealed class TravelPreflightService : IDisposable
         }
     }
 
+    /// <summary>The character logged in, or null; 0 reads as none.</summary>
+    private ulong? CurrentCharacter()
+    {
+        if (!clientState.IsLoggedIn)
+        {
+            return null;
+        }
+
+        try
+        {
+            return LiveContentId?.Invoke() is { } id and not 0 ? id : null;
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, "Character unavailable");
+            return null;
+        }
+    }
+
+    /// <summary>A logout ends every Undo: the changes were the character's who left.</summary>
+    private void OnLogout(int type, int code)
+    {
+        changes.Clear();
+        changedAt.Clear();
+    }
+
     public void Dispose()
     {
+        clientState.Logout -= OnLogout;
         foreach (var presence in conflicts)
         {
             presence.Dispose();

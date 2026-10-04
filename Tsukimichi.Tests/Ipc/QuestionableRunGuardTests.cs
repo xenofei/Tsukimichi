@@ -315,6 +315,60 @@ public class QuestionableRunGuardTests
     }
 
     [Fact]
+    public void A_restart_within_the_grace_after_a_stop_is_a_new_run()
+    {
+        var guard = new QuestionableRunGuard();
+        guard.NoteStarted(QuestionableRunOrigin.KeepGoing, QuestA, T0);
+        Observe(guard, true, 1, QuestA);
+        guard.NoteStopAsked(QuestionableRunEnd.BeforeDutyWithPlayers);
+
+        // Questionable stops, and the player starts it again from its own window a second later, inside the grace.
+        Assert.Equal(QuestionableGuardAction.None, Observe(guard, false, 10));
+        var action = guard.Observe(true, QuestB, T0.AddSeconds(11), null, out var stopped);
+
+        // The stopped run ends when it went idle, with the guard's reason; the restart is its own run, not merged.
+        Assert.Equal(QuestionableGuardAction.Ended, action);
+        Assert.NotNull(stopped);
+        Assert.Equal(QuestionableRunEnd.BeforeDutyWithPlayers, stopped.End);
+        Assert.Equal(T0.AddSeconds(10), stopped.EndedUtc);
+        Assert.True(guard.Tracking);
+        Assert.Equal(QuestionableRunOrigin.Elsewhere, guard.Origin);
+        Assert.Equal(T0.AddSeconds(11), guard.StartedUtc);
+        Assert.Equal(QuestionableRunEnd.Ended, End(guard, 20).End);
+    }
+
+    [Fact]
+    public void A_start_of_ours_right_after_our_stop_names_the_new_run()
+    {
+        var guard = new QuestionableRunGuard();
+        Observe(guard, true, 0, QuestA);
+        guard.NoteStopAsked();
+
+        // "Start Questionable" pressed before the stop was even seen: the next run is ours.
+        guard.NoteStarted(QuestionableRunOrigin.SingleQuest, QuestB, T0.AddSeconds(1));
+        Observe(guard, false, 2);
+        Assert.Equal(QuestionableGuardAction.Ended, guard.Observe(true, QuestB, T0.AddSeconds(3), null, out var stopped));
+        Assert.Equal(QuestionableRunEnd.StoppedFromTsukimichi, stopped!.End);
+        Assert.Equal(QuestionableRunOrigin.SingleQuest, guard.Origin);
+        Assert.Equal(QuestB, guard.SingleRowId);
+    }
+
+    [Fact]
+    public void The_duty_guards_stop_before_the_run_is_followed_still_gives_its_reason()
+    {
+        // The duty guard read Questionable running and stopped it before the run watch followed the run.
+        var guard = new QuestionableRunGuard();
+        guard.NoteStopAsked(QuestionableRunEnd.BeforeDutyWithPlayers, T0);
+        Assert.True(guard.Tracking);
+        Assert.Equal(QuestionableRunEnd.BeforeDutyWithPlayers, End(guard, 1).End);
+
+        // The plain overload still needs a followed run (a Stop press with nothing followed is no run).
+        var idle = new QuestionableRunGuard();
+        idle.NoteStopAsked(QuestionableRunEnd.StoppedFromTsukimichi);
+        Assert.False(idle.Tracking);
+    }
+
+    [Fact]
     public void Tsukimichis_stop_is_the_reason_and_wins_over_a_condition_met_later()
     {
         var guard = new QuestionableRunGuard();

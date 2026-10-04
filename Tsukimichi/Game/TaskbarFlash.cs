@@ -1,20 +1,20 @@
 using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Tsukimichi.Game;
 
 /// <summary>
 /// Flashes the game's taskbar button once (feature plan v7, 1.18.0, A5: a "Needs you" alert while the game is not the
-/// foreground window), through <c>FlashWindowEx</c> on the game's own main window (tray and caption, one flash; Windows
-/// then keeps the button lit until the player comes back). Nothing happens while the game is in front, off Windows, or
-/// when the call is missing (Wine without it). Never takes focus and never raises the window.
+/// foreground window), through <c>FlashWindowEx</c> on the game's own window (tray and caption, one flash; Windows then
+/// keeps the button lit until the player comes back). The window is the game's, as the game itself holds it
+/// (FFXIVClientStructs <c>Framework.Instance()->GameWindow->WindowHandle</c>), not the process's "main window", which
+/// can be another top-level window of the process; "in front" means that window is the foreground one. Nothing happens
+/// while the game is in front, off Windows, or when the call is missing (Wine without it). Never takes focus and never
+/// raises the window. Call on the framework thread.
 /// </summary>
 public static class TaskbarFlash
 {
     private const uint FlashAll = 0x3;
-
-    private static nint gameWindow;
 
     /// <summary>Flashes the game's taskbar button once unless the game is the foreground window; false when it did not.</summary>
     public static bool FlashIfBackground()
@@ -48,16 +48,16 @@ public static class TaskbarFlash
         }
     }
 
-    /// <summary>The game's main window, read once and kept while it lives.</summary>
-    private static nint GameWindow()
+    /// <summary>The game's window as the game holds it; 0 when there is none yet.</summary>
+    private static unsafe nint GameWindow()
     {
-        if (gameWindow == 0)
+        var framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance();
+        if (framework == null || framework->GameWindow == null)
         {
-            using var process = Process.GetCurrentProcess();
-            gameWindow = process.MainWindowHandle;
+            return 0;
         }
 
-        return gameWindow;
+        return framework->GameWindow->WindowHandle;
     }
 
     [StructLayout(LayoutKind.Sequential)]
