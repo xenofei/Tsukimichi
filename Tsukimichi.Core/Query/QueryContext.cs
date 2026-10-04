@@ -52,6 +52,10 @@ namespace Tsukimichi.Core.Query;
 /// Row ids the "Newly ready" scope lists (<see cref="QuestScope.NewlyReady"/>, plan v7): what the Journal badge counted
 /// when it was clicked; null or empty lists nothing there.
 /// </param>
+/// <param name="Unlocks">
+/// What every quest opens (plan v7, 1.19.0 K3): the search also matches it ("kugane"), and the Unlocks filter
+/// (<see cref="FilterSet.UnlockKinds"/>) reads its kinds; null matches no unlock name and keeps nothing under that filter.
+/// </param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
@@ -73,7 +77,8 @@ public sealed record QueryContext(
     IReadOnlySet<uint>? NewGamePlus = null,
     ChainCatalog? Chains = null,
     bool FreeTrial = false,
-    IReadOnlySet<uint>? NewlyReady = null)
+    IReadOnlySet<uint>? NewlyReady = null,
+    Unlocks.QuestUnlocks? Unlocks = null)
 {
     public const int DefaultStalledDays = 7;
 

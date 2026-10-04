@@ -267,6 +267,49 @@ public class RunStopTests
     }
 
     [Fact]
+    public void The_card_keeps_the_job_level_and_zone_of_the_moment_it_stopped()
+    {
+        static string Zone(uint territory) => territory switch
+        {
+            155 => "Coerthas Central Highlands",
+            132 => "New Gridania",
+            _ => string.Empty,
+        };
+
+        // Captured once: a later call (the player changed job, moved on) overwrites nothing.
+        var card = Card(StopReason.Stuck, 7).WithCharacter(155, Zone, "WHM", 42);
+        Assert.Equal(155u, card.TerritoryId);
+        Assert.Equal("Coerthas Central Highlands", card.Zone);
+        Assert.Equal("WHM", card.Job);
+        Assert.Equal(42, card.Level);
+        var later = card.WithCharacter(132, Zone, "PLD", 90);
+        Assert.Equal(155u, later.TerritoryId);
+        Assert.Equal("Coerthas Central Highlands", later.Zone);
+        Assert.Equal("WHM", later.Job);
+        Assert.Equal(42, later.Level);
+
+        // The card's own territory beats the current one, and the zone name follows it.
+        var own = (Card(StopReason.Error, 7) with { TerritoryId = 155 }).WithCharacter(132, Zone, "BLM", 80);
+        Assert.Equal(155u, own.TerritoryId);
+        Assert.Equal("Coerthas Central Highlands", own.Zone);
+
+        // No territory on the card: it takes the current one; none known at all leaves the zone empty.
+        var none = Card(StopReason.Error, 7).WithCharacter(132, Zone, "BLM", 80);
+        Assert.Equal(132u, none.TerritoryId);
+        Assert.Equal("New Gridania", none.Zone);
+        Assert.Equal(string.Empty, Card(StopReason.Error, 7).WithCharacter(0, Zone, string.Empty, 0).Zone);
+
+        // The same stop raised again (the guard's card, then the receipt): the first job and level stay, the newer zone wins.
+        var dock = new StopDock();
+        dock.Raise(Card(StopReason.DutyGuard, 7).WithCharacter(155, Zone, "WHM", 42), 1);
+        dock.Raise(Card(StopReason.DutyGuard, 7).WithCharacter(132, Zone, "PLD", 90), 2);
+        Assert.Equal("WHM", dock.Current!.Job);
+        Assert.Equal(42, dock.Current.Level);
+        Assert.Equal("New Gridania", dock.Current.Zone);
+        Assert.Equal(132u, dock.Current.TerritoryId);
+    }
+
+    [Fact]
     public void One_stop_cancels_every_automatic_start_left_waiting()
     {
         // "Keep going after it" waits for a duty and "Reload navmesh and retry" for vnavmesh: /tsuki stop or Stop all

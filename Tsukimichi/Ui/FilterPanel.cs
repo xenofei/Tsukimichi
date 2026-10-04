@@ -190,6 +190,7 @@ public sealed partial class FilterPanel
         Level,
         Job,
         Rewards,
+        Unlocks,
         Repeatable,
         Seasonal,
         Pinned,
@@ -367,6 +368,11 @@ public sealed partial class FilterPanel
         }
 
         AddIf(f.RewardKindsEngaged(), LaneChip.Rewards, "##chipRewards", Strings.RewardKinds);
+        if (f.UnlockKindsEngaged())
+        {
+            laneChips.Add((LaneChip.Unlocks, "##chipUnlocks", UnlockChipText(f), null));
+        }
+
         AddIf(f.RepeatableOnly, LaneChip.Repeatable, "##chipRepeatable", Strings.ChipRepeatable);
         AddIf(f.SeasonalActiveOnly, LaneChip.Seasonal, "##chipSeasonal", Strings.ChipSeasonal);
         AddIf(f.PinnedOnly, LaneChip.Pinned, "##chipPinned", Strings.ChipPinned);
@@ -449,6 +455,9 @@ public sealed partial class FilterPanel
                 break;
             case LaneChip.Rewards:
                 f.RewardKinds.Clear();
+                break;
+            case LaneChip.Unlocks:
+                f.UnlockKinds = [];
                 break;
             case LaneChip.Repeatable:
                 f.RepeatableOnly = false;
@@ -673,6 +682,34 @@ public sealed partial class FilterPanel
         parent.Length == 0 || string.Equals(parent, child, StringComparison.Ordinal)
             ? child
             : string.Format(CultureInfo.CurrentCulture, Strings.FoldedScopeFormat, parent, child);
+
+    private ushort unlockChipMask;
+    private int unlockChipLanguage = -1;
+    private string unlockChip = string.Empty;
+
+    /// <summary>"Opens: Mount · Flying": the Unlocks filter's chip (plan v7, 1.19.0 K3), built again only when the kinds or the language change.</summary>
+    private string UnlockChipText(FilterSet f)
+    {
+        var mask = Core.Unlocks.UnlockFindKinds.Mask(f.UnlockKinds);
+        if (mask == unlockChipMask && unlockChipLanguage == Localization.Loc.Version && unlockChip.Length > 0)
+        {
+            return unlockChip;
+        }
+
+        unlockChipMask = mask;
+        unlockChipLanguage = Localization.Loc.Version;
+        var names = new List<string>(Core.Unlocks.UnlockFindKinds.All.Length);
+        foreach (var kind in Core.Unlocks.UnlockFindKinds.All)
+        {
+            if ((mask & Core.Unlocks.UnlockFindKinds.Bit(kind)) != 0)
+            {
+                names.Add(Core.Unlocks.UnlockFindKinds.Name(kind));
+            }
+        }
+
+        unlockChip = string.Format(CultureInfo.CurrentCulture, Strings.UnlockKindsChipFormat, string.Join(Strings.ChipStateSeparator, names));
+        return unlockChip;
+    }
 
     private string LevelChipText(FilterSet f)
     {
