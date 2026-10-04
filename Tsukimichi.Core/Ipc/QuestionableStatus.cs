@@ -17,12 +17,18 @@ public sealed record QuestionableStatus(bool Running, uint? RowId, byte? Sequenc
     public static readonly QuestionableStatus Idle = new(false, null, null, null, 0);
 
     /// <summary>
+    /// The step's kind as Questionable names it (<c>StepData.InteractionType</c>: "Interact", "Duty", "SinglePlayerDuty"…);
+    /// null without step data for the quest. The duty guard (plan v7 A3) reads it.
+    /// </summary>
+    public string? Interaction { get; init; }
+
+    /// <summary>
     /// The status from Questionable's three gates: <paramref name="running"/> (<c>IsRunning</c>), the current quest id
     /// (<c>GetCurrentQuestId</c>, a string such as "428" or "A12") and, when <c>GetCurrentStepData</c> answered, its
-    /// quest id, sequence, step and territory. A non-numeric id is ignored (no row), and the step data only counts when
-    /// it names the same quest.
+    /// quest id, sequence, step, territory and step kind (<paramref name="interaction"/>). A non-numeric id is ignored
+    /// (no row), and the step data only counts when it names the same quest.
     /// </summary>
-    public static QuestionableStatus From(bool running, string? currentQuestId, string? stepQuestId, byte? sequence, int? step, uint territoryId)
+    public static QuestionableStatus From(bool running, string? currentQuestId, string? stepQuestId, byte? sequence, int? step, uint territoryId, string? interaction = null)
     {
         var rowId = QuestionableList.RowIdOf(currentQuestId?.Trim());
         var stepRowId = QuestionableList.RowIdOf(stepQuestId?.Trim());
@@ -37,7 +43,7 @@ public sealed record QuestionableStatus(bool Running, uint? RowId, byte? Sequenc
             return new QuestionableStatus(running, rowId, null, null, 0);
         }
 
-        return new QuestionableStatus(running, rowId, sequence, step, territoryId);
+        return new QuestionableStatus(running, rowId, sequence, step, territoryId) { Interaction = string.IsNullOrWhiteSpace(interaction) ? null : interaction.Trim() };
     }
 
     /// <summary>"428" for a status on quest row 65964, empty without one: for logs and the diagnostic block.</summary>

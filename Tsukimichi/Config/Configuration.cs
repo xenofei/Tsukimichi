@@ -146,6 +146,31 @@ public sealed partial class Configuration : IPluginConfiguration
     /// </summary>
     public bool QuestionableConfirmStopCommand { get; set; } = true;
 
+    // ---- 1.18.0: runs you can trust (plan v7 A3, A5) ----
+    /// <summary>
+    /// What happens when a Questionable run reaches a duty with no Duty Support or Trust, which would put the character
+    /// in a party with other players (Settings › Automation › Questionable): Stop (the default), Warn or Nothing.
+    /// </summary>
+    public Core.Companions.DutyGuardMode QuestionableDutyGuard { get; set; } = Core.Companions.DutyGuardMode.Stop;
+
+    /// <summary>"Needs you" when the character dies while a hand-off runs (Settings › Alerts › While automation runs). On by default.</summary>
+    public bool NeedsYouDeath { get; set; } = true;
+
+    /// <summary>"Needs you" when vnavmesh is moving the character and it has not moved for 30 seconds. On by default.</summary>
+    public bool NeedsYouStuck { get; set; } = true;
+
+    /// <summary>"Needs you" when the Duty Finder says a duty is ready. On by default.</summary>
+    public bool NeedsYouDutyPop { get; set; } = true;
+
+    /// <summary>"Needs you" when someone sends a tell. On by default; Tsukimichi never answers it.</summary>
+    public bool NeedsYouTell { get; set; } = true;
+
+    /// <summary>A "Needs you" alert plays a chat sound effect (at most once every 10 seconds). On by default.</summary>
+    public bool NeedsYouSound { get; set; } = true;
+
+    /// <summary>A "Needs you" alert also shows as a toast in the middle of the screen. On by default.</summary>
+    public bool NeedsYouToast { get; set; } = true;
+
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
     public bool TodoOverlayEnabled { get; set; } = false;
@@ -764,6 +789,11 @@ public sealed partial class Configuration : IPluginConfiguration
         if (!Enum.IsDefined(config.JournalBadge))
         {
             config.JournalBadge = Core.Query.JournalBadgeMode.NewlyReady;
+        }
+
+        if (!Enum.IsDefined(config.QuestionableDutyGuard))
+        {
+            config.QuestionableDutyGuard = Core.Companions.DutyGuardMode.Stop;
         }
 
         config.MoonStyle = MoonStyleRules.Effective(config.MoonStyle);

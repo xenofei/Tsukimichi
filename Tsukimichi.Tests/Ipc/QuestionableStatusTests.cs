@@ -22,6 +22,16 @@ public class QuestionableStatusTests
         Assert.Equal(1, status.Step);
         Assert.Equal(132u, status.TerritoryId);
         Assert.Equal("428", status.QuestIdText);
+        Assert.Null(status.Interaction);
+    }
+
+    [Fact]
+    public void The_step_kind_comes_with_the_step_data_of_the_same_quest()
+    {
+        // The duty guard (1.18.0, A3) reads it: Questionable's EInteractionType as text.
+        Assert.Equal("Duty", QuestionableStatus.From(true, "428", "428", 3, 1, 132, " Duty ").Interaction);
+        Assert.Null(QuestionableStatus.From(true, "428", "428", 3, 1, 132, "  ").Interaction);
+        Assert.Null(QuestionableStatus.From(true, "428", "1021", 3, 1, 132, "Duty").Interaction);
     }
 
     [Theory]

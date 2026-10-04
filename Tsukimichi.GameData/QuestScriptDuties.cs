@@ -1,6 +1,7 @@
 using Lumina.Data;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Core.Companions;
 
 namespace Tsukimichi.GameData;
 
@@ -78,6 +79,44 @@ public static class QuestScriptDuties
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// The Duty Finder entries one quest's script names (its <c>INSTANCEDUNGEON</c> and <c>CONTENT_START</c> constants),
+    /// in script order, as <paramref name="duties"/> knows them: what the duty guard (plan v7 A3) reads when Questionable
+    /// reaches a duty step of the quest, since Questionable's step data does not say which duty. Reads one Quest row;
+    /// empty for an unknown row or a script that names no duty <paramref name="duties"/> has (a quest battle).
+    /// </summary>
+    public static IReadOnlyList<DutyRunInfo> NamedRuns(ExcelModule excel, Language language, uint questRowId, DutyRunIndex duties)
+    {
+        ArgumentNullException.ThrowIfNull(excel);
+        ArgumentNullException.ThrowIfNull(duties);
+        if (excel.GetSheet<Quest>(language).GetRowOrDefault(questRowId) is not { } quest)
+        {
+            return [];
+        }
+
+        List<DutyRunInfo>? result = null;
+        foreach (var param in quest.QuestParams)
+        {
+            if (param.ScriptArg == 0)
+            {
+                continue;
+            }
+
+            var name = param.ScriptInstruction.ExtractText();
+            if (!name.StartsWith(InstanceDungeonPrefix, StringComparison.Ordinal) && !name.StartsWith(ContentStart, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (duties.ByInstance(param.ScriptArg) is { } duty && !(result?.Contains(duty) ?? false))
+            {
+                (result ??= []).Add(duty);
+            }
+        }
+
+        return result ?? (IReadOnlyList<DutyRunInfo>)[];
     }
 
     /// <summary>
