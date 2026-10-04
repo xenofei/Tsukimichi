@@ -1281,7 +1281,7 @@ public sealed class TodoOverlay : Window, IDisposable
                 if (section.Section == TodoSection.NearbyFeature && pins.Unlocks is { } unlocks && !session.Spoilers.IsMasked(quest)
                     && unlocks.Current.Headline(quest.RowId) is { Group: <= Core.Unlocks.UnlockGroup.Feature } headline)
                 {
-                    var opens = Core.Unlocks.UnlockText.Opens(headline.Name);
+                    var opens = Core.Unlocks.UnlockText.Opens(Core.Unlocks.UnlockView.ShieldedName(headline, session.Spoilers));
                     hint = hint.Length > 0 ? hint + Strings.StateReasonSeparator + opens : opens;
                 }
 

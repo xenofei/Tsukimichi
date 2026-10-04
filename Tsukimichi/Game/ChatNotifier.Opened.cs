@@ -127,7 +127,8 @@ public sealed partial class ChatNotifier
                 continue;
             }
 
-            foreach (var entry in index.For(rowId))
+            // Through the wider shield too (1.20.0 N6): a place or duty the story has not introduced prints its placeholder.
+            foreach (var entry in Core.Unlocks.UnlockView.Visible(index.For(rowId), masked: false, spoilers: session.LiveSpoilers))
             {
                 if (entry.Group <= Core.Unlocks.UnlockGroup.Feature && names.Add(entry.Name))
                 {

@@ -1029,6 +1029,7 @@ public sealed partial class Plugin : IDalamudPlugin
             // Chat links print a masked main scenario quest under its placeholder (T19). Chat, the item menu, hover
             // hints and Wotsit speak for the logged-in character, so they use its mask, not the viewed character's.
             gameLinks.QuestName = quest => Session.LiveSpoilers.DisplayName(quest);
+            gameLinks.Spoilers = () => Session.LiveSpoilers;
             gameLinks.DropWhere = reward => Session.StoreResells.DropWhere(reward);
             wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
             wotsit.Enabled = Settings.WotsitIntegration;
