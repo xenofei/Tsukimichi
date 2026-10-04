@@ -27,7 +27,7 @@
     { "name": "Tales from the Shadows", "genreIds": [80], "note": "Chronicles of Light - Tales from the Shadows (ShB): One Final Journey, which needs only the main scenario (wiki: One_Final_Journey)." },
     { "name": "Tales of Newfound Adventure", "genreIds": [81], "note": "Chronicles of Light - Tales of Newfound Adventure (EW, 2 quests)." },
     { "name": "Tales from the Calamity", "genreIds": [93], "note": "Side Story Quests - Tales from the Calamity (2 quests after The Ultimate Weapon)." },
-    { "name": "Delivery Moogle Quests", "genreIds": [94], "note": "Side Story Quests - Delivery Moogle Quests (ARR, 25 quests; most stand alone)." },
+    { "name": "Delivery Moogle Quests", "startQuest": 67017, "note": "Side Story Quests - Delivery Moogle Quests (ARR): the line from Of Errant Epistles through Thwack-a-Mole. The genre's other deliveries name no previous quest and stand alone, so they stay out of the line." },
     { "name": "Scholasticate Quests", "genreIds": [95], "note": "Side Story Quests - Scholasticate Quests (HW, 13 quests)." },
     { "name": "Void Quests", "genreIds": [96], "note": "Side Story Quests - Void Quests (ShB, 3 quests from The Hero's Journey)." },
     { "name": "Ishgardian Restoration Main Quests", "genreIds": [100], "note": "Records of Unusual Endeavors - Ishgardian Restoration Main Quests (13 quests)." },

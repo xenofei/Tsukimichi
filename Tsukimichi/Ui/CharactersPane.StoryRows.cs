@@ -117,8 +117,8 @@ public sealed partial class CharactersPane
         var y1 = start.Y + gapY;
         var y2 = y1 + line + gapY;
 
-        // Line 1: the line's name.
-        if (Chrome.EllipsisTextAt(dl, new Vector2(left, y1), room, row.Name, Theme.U32(s.Text)) && hovered && ImGui.IsMouseHoveringRect(new Vector2(left, y1), new Vector2(right, y1 + line)))
+        // Line 1: the line's name; a side story the shield hides reads in Secondary as a whole (spec-1.21 colour language).
+        if (Chrome.EllipsisTextAt(dl, new Vector2(left, y1), room, row.Name, Theme.U32(row.Veiled && row.Quest is null ? s.TextSecondary : s.Text)) && hovered && ImGui.IsMouseHoveringRect(new Vector2(left, y1), new Vector2(right, y1 + line)))
         {
             UiMetrics.Tooltip(row.Name);
         }

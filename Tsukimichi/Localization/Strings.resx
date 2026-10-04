@@ -1499,7 +1499,7 @@
     <value>When a storyline's finale is Ready</value>
   </data>
   <data name="LooseEndsFinaleConfigHint" xml:space="preserve">
-    <value>One chat line and one Tonight line, once per finale, for a storyline you started and never finished. Off by default.</value>
+    <value>One chat line and one Tonight line, once per finale of a storyline you started. Off by default.</value>
   </data>
   <data name="LooseEndsChatFormat" xml:space="preserve">
     <value>Finale Ready · {0}: </value>
