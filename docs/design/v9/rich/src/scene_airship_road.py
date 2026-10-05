@@ -45,9 +45,10 @@ def dashed(px, S, pts, col, width=1.5, dash=5.0, gap=4.5, alpha=0.6):
     s = 0.0
     while s < cum[-1]:
         e = min(s + dash, cum[-1])
-        a = (np.interp(s, cum, P_[:, 0]), np.interp(s, cum, P_[:, 1]))
-        b = (np.interp(e, cum, P_[:, 0]), np.interp(e, cum, P_[:, 1]))
-        dr.line([(a[0] * S * 2, a[1] * S * 2), (b[0] * S * 2, b[1] * S * 2)], fill=255, width=max(2, int(round(width * S * 2))))
+        # each dash follows the path (its own vertices in between), so a long dash bends with the route
+        ts = np.concatenate([[s], cum[(cum > s) & (cum < e)], [e]])
+        pts = [(np.interp(t, cum, P_[:, 0]) * S * 2, np.interp(t, cum, P_[:, 1]) * S * 2) for t in ts]
+        dr.line(pts, fill=255, width=max(2, int(round(width * S * 2))), joint="curve")
         s += dash + gap
     m = np.asarray(lay.resize((W, H), Image.BOX), np.float32) / 255
     # an engraved line: a dark cut, its lower-right lip catching the light

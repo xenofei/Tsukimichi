@@ -146,7 +146,7 @@ class Layout:
                 gap = dmin - p.get("r", 10) - b["thickness"] / 2
                 if gap < -0.5:
                     problems.append(f"peg ({p['x']}, {p['y']}) overlaps brick {j}")
-                elif 0.5 < gap < 11.8:
+                elif 0.5 < gap < 13.0:
                     problems.append(f"cradle gap {gap:.1f} between peg ({p['x']}, {p['y']}) and brick {j}")
         # notches: two bricks whose nearest surfaces are closer than a ball but do not touch wedge it (critic r1)
         for i in range(len(self.bricks)):
@@ -175,8 +175,8 @@ class Layout:
                 problems.append(f"orange candidate ({x:.0f}, {y:.0f}) is out of every first free flight")
         allc = cands + [(p["x"], p["y"], 10) for p in self.pegs if p["canBeOrange"] and "move" in p]
         worst, where = 0, None
-        for sx in range(75, 530, 20):
-            for sy in range(40, 400, 20):
+        for sx in range(75, 530, 5):
+            for sy in range(40, 400, 5):
                 n = sum(1 for (x, y, _) in allc if sx <= x < sx + 200 and sy <= y < sy + 200)
                 if n > worst:
                     worst, where = n, (sx, sy)

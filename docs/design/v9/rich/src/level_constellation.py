@@ -43,7 +43,7 @@ def build():
     rng = np.random.default_rng(5)
     ang = math.radians(-28)
     cands = []
-    for gy in range(70, int(HORIZON) - 10, 34):
+    for gy in range(138, int(HORIZON) - 10, 34):
         for gx in range(96, 712, 34):
             x = gx + rng.uniform(-9, 9) + (17 if (gy // 34) % 2 else 0)
             y = gy + rng.uniform(-9, 9)
@@ -53,10 +53,10 @@ def build():
                 cands.append((x, y))
     for (x, y) in cands:
         if all(math.hypot(x - px, y - py) > 36 for (px, py, _) in placed):
-            put(x, y, r=10.0, tag="sky star")
+            put(x, y, r=9.0, tag="sky star")
     # the brightest field stars: spread over the sky (farthest-point picks), so oranges are never all in the ferry
-    # (only within a first flight's reach: y 130 and lower, level critic round 1)
-    field = [p for p, (kind, tag) in zip(L.pegs, L.tags) if tag == "sky star" and p["y"] >= 140 and 110 < p["x"] < 670]
+    # (only well within a first flight's reach: y 190 and lower, level critic rounds 1 and 2)
+    field = [p for p, (kind, tag) in zip(L.pegs, L.tags) if tag == "sky star" and p["y"] >= 190 and 110 < p["x"] < 670]
     chosen = [field[0]]
     while len(chosen) < 20 and len(chosen) < len(field):
         best = max(field, key=lambda p: min(math.hypot(p["x"] - c["x"], p["y"] - c["y"]) for c in chosen))
@@ -69,7 +69,7 @@ def build():
     for row, y0 in enumerate((486, 528)):
         for k in range(15):
             x = 112 + k * 42 + (21 if row else 0)
-            y = y0 + 6 * math.sin(k * 1.3 + row)
+            y = y0 + 9 * math.sin(x / 70.0 + row * 1.9)     # the swell: each row rides a long wave
             if x <= 700:
                 put(x, y, r=9.0, orange=(row == 0 and k in (2, 7, 12)), tag="reflection")
     return L
@@ -78,7 +78,8 @@ def build():
 if __name__ == "__main__":
     L = build()
     print(L.counts())
-    L.check()
+    if L.check():
+        raise SystemExit("pre-flight failed: the level was not written")
     pegs, bricks = L.as_level()
     scene = {"source": "asset", "file": "scenes/exp-p2-lantern-ferry.jpg", "file2x": "scenes/exp-p2-lantern-ferry@2x.jpg",
              "veil": 0.20}

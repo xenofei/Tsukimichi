@@ -24,7 +24,7 @@ SCENES = {
     "exp-p3-mare-lamentorum": dict(src="ui_loadingimage_-nowloading_base25.png", crop=(557.0, -108.0, 1166.0, 875.0),
                                    mirror=True, pad=(120, 0), pad_mode="reflect",
                                    grade=dict(gamma=1.25, exposure=0.85, chroma_mid=0.42, chroma_high=0.6),
-                                   glow=None, pool=True, sphere=(95.0, 323.0, 27.0)),
+                                   glow=None, pool=True, sphere=(97.0, 325.0, 31.0)),
 }
 
 
@@ -52,19 +52,23 @@ def still_pool(px, S, top=548.0):
     H, W, _ = px.shape
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
     X, Y = (xx + 0.5) / S, (yy + 0.5) / S
+    # (round 3: a true mirror, never brighter than what it reflects; it darkens toward the viewer and its colour runs
+    # into the boat's lapis water strip at the foot)
     m = np.clip((Y - top) * S + 0.5, 0, 1)
     depth = np.clip((Y - top) / (600 - top), 0, 1)
-    water = ramp(depth, [(0, "#1A1740"), (1, "#0A0820")])
     ry = np.clip(2 * top - Y, 0, top - 1)
     iy = np.clip((ry * S).astype(int), 0, H - 1)
     shift = (np.sin(Y * 1.3) * (1 + depth * 4) * S).astype(int)
     ix = np.clip(xx.astype(int) + shift, 0, W - 1)
-    refl = px[iy, ix]
-    bands = (np.sin(Y * 2.4) > -0.2).astype(np.float32)
-    water = screen(water, refl * (0.40 * bands * (1 - depth * 0.6))[..., None])
-    edge = np.exp(-((Y - top - 0.6) / 0.6) ** 2)
+    refl = blur(px, 1.0 * S)[iy, ix]
+    bands = 0.70 + 0.30 * (np.sin(Y * 2.4) > -0.2)
+    keep = (0.80 - 0.45 * depth) * bands                  # the mirror's own loss, more toward the viewer
+    deep = ramp(depth, [(0, "#0A0A1E"), (0.6, "#0B1028"), (1, "#0E1530")])
+    water = refl * keep[..., None] + deep * (1 - keep[..., None]) * 0.6
+    water = np.minimum(water, refl * 0.95 + 0.004)
     out = px * (1 - m[..., None]) + water * m[..., None]
-    return screen(out, hexc("#8C86C6") * (edge * 0.25)[..., None])
+    edge = np.exp(-((Y - top - 0.6) / 0.6) ** 2) * m
+    return screen(out, hexc("#8C86C6") * (edge * 0.12)[..., None])
 
 
 def build(cfg, S=1):

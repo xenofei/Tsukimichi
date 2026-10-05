@@ -42,17 +42,20 @@ def build():
     # ---- the stops: a ring of five round each city, turned so the trail runs in and out through its gaps. The
     # southern and eastern cities carry five candidates; the three close together in the north carry three each, so
     # the oranges do not crowd the middle of the board
-    crowded = ("Mor Dhona", "Ishgard", "Gridania")
+    # (round 3: in these rings the lowest moon is blue; it is the one a falling ball most often misses)
+    crowded = ("Mor Dhona", "Ishgard", "Gridania", "Ul'dah", "Limsa Lominsa")
     R_ = np.asarray(route)
     for name, (cx, cy) in stops.items():
         # the ring is four moons turned so the route runs in and out through two opposite gaps
         i = int(np.argmin(((R_ - (cx, cy)) ** 2).sum(1)))
         a0, a1 = R_[max(0, i - 3)], R_[min(len(R_) - 1, i + 3)]
         tangent = math.atan2(a1[1] - a0[1], a1[0] - a0[0])
-        for k in range(4):
-            a = tangent + math.radians(45 + 90 * k)
-            put(cx + RING_R * math.cos(a), cy + RING_R * math.sin(a), r=9.0,
-                orange=(name not in crowded or k != 0), tag=f"stop: {name}")
+        ring = [(cx + RING_R * math.cos(tangent + math.radians(45 + 90 * k)),
+                 cy + RING_R * math.sin(tangent + math.radians(45 + 90 * k))) for k in range(4)]
+        lowest = max(range(4), key=lambda k: ring[k][1])
+        for k, (x, y) in enumerate(ring):
+            low2 = sorted(range(4), key=lambda j: ring[j][1])[2:] if name == "Ul'dah" else [lowest]
+            put(x, y, r=9.0, orange=(name not in crowded or k not in low2), tag=f"stop: {name}")
     # ---- the trail: the main stroke of the board, smaller moons every 30 along the whole route, running right up to
     # each ring's gaps (the ring's own pegs turn away the dots that would crowd it)
     for (x, y) in resample(route, 30.0, 2.0):
@@ -62,11 +65,11 @@ def build():
     cx, cy = 568.0, 343.0
     for k in range(8):
         a = math.radians(-90 + 45 * k)
-        put(cx + 44 * math.cos(a), cy + 44 * math.sin(a), orange=(k % 2 == 0), tag="compass point")
+        put(cx + 44 * math.cos(a), cy + 44 * math.sin(a), orange=(k in (0, 6)), tag="compass point")
     put(cx, cy, r=11.0, orange=True, tag="compass heart")
     # ---- the edge of the sea of clouds, north-east (a short run), and Vylbrand's east coast along the strait
     for (x, y) in ((560, 186), (600, 202), (640, 222), (680, 246)):
-        put(x, y, orange=(x in (600, 680)), tag="cloud edge")
+        put(x, y, orange=(x == 600), tag="cloud edge")
     for (x, y) in ((228, 300), (226, 336), (220, 372)):
         put(x, y, tag="Vylbrand coast")
     # ---- the ships' lanterns on the southern sea lane: candidates, so the lower right always holds oranges
@@ -74,19 +77,22 @@ def build():
         put(x, y, orange=True, tag="ship's lantern")
     for (x, y) in ((140, 512), (196, 530), (250, 546), (360, 540), (420, 532), (480, 510), (540, 500), (440, 470),
                    (390, 440), (640, 420), (500, 420), (690, 380), (110, 380), (150, 350)):
-        put(x, y, tag="sea")
+        light = (x, y) in ((500, 420), (440, 470))         # two more ships' lights, mid-sea
+        put(x, y, orange=light, tag="ship's light" if light else "sea")
     # ---- the land between the stops: the Shroud's forest, the Thanalan hills, the Coerthas snows (scenery, blue)
     for (x, y) in ((380, 300), (420, 330), (460, 300), (470, 360), (420, 390), (360, 260), (250, 240), (260, 290),
                    (190, 270), (180, 220), (130, 260), (250, 400), (200, 420), (470, 200), (520, 210), (640, 290),
                    (700, 200), (680, 160)):
-        put(x, y, tag="land")
+        beacon = False
+        put(x, y, orange=beacon, tag="beacon" if beacon else "land")
     return L
 
 
 if __name__ == "__main__":
     L = build()
     print(L.counts())
-    L.check()
+    if L.check():
+        raise SystemExit("pre-flight failed: the level was not written")
     pegs, bricks = L.as_level()
     scene = {"source": "game", "texture": "ui/loadingimage/-nowloading_base05.tex", "crop": [-30, 370, 840, 630],
              "padLeft": 64, "grade": "medallion-night", "overlay": "route", "veil": 0.30}

@@ -61,7 +61,7 @@ def build():
     for (x, y) in ((450, 440), (522, 444)):
         L.peg(x, y, tag="ship's mast")
     # ---- a few clouds, and the harbour's water
-    for (x, y) in ((150, 110), (200, 96), (580, 84), (640, 100)):
+    for (x, y) in ((150, 140), (210, 132), (690, 140)):
         L.peg(x, y, tag="cloud")
     for (x, y) in ((150, 540), (196, 528), (242, 540), (300, 520), (612, 528), (652, 506), (604, 380),
                    (640, 346), (150, 446), (196, 470), (246, 446), (690, 240), (700, 300), (350, 540), (440, 540),
@@ -73,7 +73,8 @@ def build():
 if __name__ == "__main__":
     L = build()
     print(L.counts())
-    L.check()
+    if L.check():
+        raise SystemExit("pre-flight failed: the level was not written")
     pegs, bricks = L.as_level()
     scene = {"source": "game", "texture": "ui/loadingimage/-nowloading_base21.tex", "crop": [-32, 30, 1307, 980],
              "padLeft": 64, "grade": "medallion-night-violet", "veil": 0.36}

@@ -80,7 +80,7 @@ def build():
     for (x, y) in pts:
         t = tag_for(x, y)
         # nothing at the launcher's height is a candidate (a first flight cannot touch it: level critic round 1)
-        put(x, y, orange=t is not None and y >= 112, tag=t or "outline")
+        put(x, y, orange=t is not None and y >= (150 if t == "pom-pom" else 112), tag=t or "outline")
     # the wing's struts, root to tip, inside the membrane
     w = sm.WING_NEAR
     for tip in w["tips"][1:]:
@@ -93,14 +93,14 @@ def build():
         put(x, 404 + 14 * math.sin(x / 47.0), orange=((x - 104) // 38) in (1, 12, 15), tag="treetops")
     for row, y0 in enumerate((452, 496, 538)):
         for k in range(17):
-            x = 98 + k * 38 + (19 if row % 2 else 0)
+            x = 100 + k * 38 + (19 if row % 2 else 0)
             y = y0 + 8 * math.sin(x / 41.0 + row)
             if x > 702:
                 continue
             lamp = (row, k) in ((0, 3), (0, 10), (1, 6), (1, 13), (0, 15), (1, 1), (2, 9))     # cottage lamps
             put(x, y, orange=lamp, tag="lamp in the wood" if lamp else "forest")
     # the sky's scatter to the right and the left of the courier
-    for (x, y) in ((700, 160), (660, 200), (700, 236), (640, 300), (690, 330), (650, 360),
+    for (x, y) in ((660, 200), (700, 236), (640, 300), (690, 330), (650, 360),
                    (120, 230), (170, 262), (222, 230), (130, 300), (180, 340), (110, 360), (240, 120), (276, 150),
                    (300, 196)):
         put(x, y, tag="sky")
@@ -110,7 +110,8 @@ def build():
 if __name__ == "__main__":
     L = build()
     print(L.counts())
-    L.check()
+    if L.check():
+        raise SystemExit("pre-flight failed: the level was not written")
     pegs, bricks = L.as_level()
     scene = {"source": "asset", "file": "scenes/base-p3-moogle.jpg", "file2x": "scenes/base-p3-moogle@2x.jpg",
              "veil": 0.22}

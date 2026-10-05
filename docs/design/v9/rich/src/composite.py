@@ -14,7 +14,8 @@ from rich_lib import LEVELS, OUT_COMP, OUT_SCENES, Img, load_rgb, save_rgb
 import frame_rich as fr
 
 
-def render(level_id, scene_stem, bucket="boat", seed=1, S=2, hud_kw=None, lit=(), gone=(), aim=None, extra=None):
+def render(level_id, scene_stem, bucket="boat", seed=1, S=2, hud_kw=None, lit=(), gone=(), aim=None, extra=None,
+           after=None, bucket_x=None):
     path = LEVELS / f"{level_id}.json"
     level = load_level(path)
     colours = engine_colours(path, 5, seed)
@@ -25,7 +26,10 @@ def render(level_id, scene_stem, bucket="boat", seed=1, S=2, hud_kw=None, lit=()
     draw_pieces(img, level, colours, lit=lit, gone=gone)
     if extra:
         extra(img)
-    fr.playfield_chrome(img, level, bucket=bucket, bucket_x=fr.BUCKET_X_DEFAULT, aim=aim, hud_kw=hud_kw or {})
+    aimed = fr.playfield_chrome(img, level, bucket=bucket, bucket_x=bucket_x or fr.BUCKET_X_DEFAULT, aim=aim,
+                                hud_kw=hud_kw or {})
+    if after:
+        after(img, level, colours, aimed)
     return img, colours
 
 

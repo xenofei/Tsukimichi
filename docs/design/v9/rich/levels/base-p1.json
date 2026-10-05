@@ -26,7 +26,7 @@
       "x": 141.6,
       "y": 461.1,
       "r": 9.0,
-      "canBeOrange": true
+      "canBeOrange": false
     },
     {
       "x": 109.1,
@@ -50,13 +50,13 @@
       "x": 320.1,
       "y": 502.8,
       "r": 9.0,
-      "canBeOrange": true
+      "canBeOrange": false
     },
     {
       "x": 288.6,
       "y": 515.4,
       "r": 9.0,
-      "canBeOrange": true
+      "canBeOrange": false
     },
     {
       "x": 276.1,
@@ -86,7 +86,7 @@
       "x": 303.7,
       "y": 350.9,
       "r": 9.0,
-      "canBeOrange": true
+      "canBeOrange": false
     },
     {
       "x": 302.4,
@@ -104,7 +104,7 @@
       "x": 330.1,
       "y": 204.6,
       "r": 9.0,
-      "canBeOrange": true
+      "canBeOrange": false
     },
     {
       "x": 297.5,
@@ -122,7 +122,7 @@
       "x": 415.6,
       "y": 258.2,
       "r": 9.0,
-      "canBeOrange": true
+      "canBeOrange": false
     },
     {
       "x": 385.6,
@@ -258,7 +258,7 @@
     {
       "x": 568.0,
       "y": 387.0,
-      "canBeOrange": true
+      "canBeOrange": false
     },
     {
       "x": 536.9,
@@ -294,7 +294,7 @@
     {
       "x": 680.0,
       "y": 246.0,
-      "canBeOrange": true
+      "canBeOrange": false
     },
     {
       "x": 228.0,
@@ -364,7 +364,7 @@
     {
       "x": 440.0,
       "y": 470.0,
-      "canBeOrange": false
+      "canBeOrange": true
     },
     {
       "x": 390.0,
@@ -379,7 +379,7 @@
     {
       "x": 500.0,
       "y": 420.0,
-      "canBeOrange": false
+      "canBeOrange": true
     },
     {
       "x": 690.0,

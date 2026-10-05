@@ -38,7 +38,7 @@ def build():
     for (cx, top) in ((150, 300), (268, 290), (392, 306)):
         L.arc(cx, top + 50, 50, 230, 80, t=10, tag="billow")
     # the hearts sit in the troughs between the billows (open from above, on the cloud sea's darker folds)
-    for (x, y) in ((100, 352), (209, 314), (330, 316)):
+    for (x, y) in ((100, 352), (209, 328), (330, 316)):
         L.peg(x, y, orange=True, tag="billow heart")
     for (x, y) in ((100, 392), (140, 404), (190, 398), (232, 394)):
         L.peg(x, y, orange=(x == 190), tag="cloud sea")
@@ -50,7 +50,7 @@ def build():
         L.peg(x, deck_y(x) - 15, orange=True, tag="bridge lamp")
     L.peg(250, 362, orange=True, tag="gate spire")
     # ---- the cathedral: spire tips, two flanks, the rose window
-    for (x, y) in ((549, 58), (514, 100), (588, 86), (624, 134), (484, 150)):
+    for (x, y) in ((514, 100), (624, 134), (484, 150)):           # (the two highest tips are left to the art)
         L.peg(x, y, orange=(y >= 100 and x < 600), tag="spire tip")
     for (x, y) in ((478, 194), (472, 232), (462, 270), (452, 308), (446, 346)):
         L.peg(x, y, tag="left flank")
@@ -76,7 +76,8 @@ def build():
 if __name__ == "__main__":
     L = build()
     print(L.counts())
-    L.check()
+    if L.check():
+        raise SystemExit("pre-flight failed: the level was not written")
     pegs, bricks = L.as_level()
     scene = {"source": "game", "texture": "ui/loadingimage/-nowloading_base03.tex", "mirror": True,
              "crop": [430, 60, 1293, 970], "grade": "medallion-night", "veil": 0.36}

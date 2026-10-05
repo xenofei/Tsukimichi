@@ -201,9 +201,9 @@ def oklab_to_srgb(lab):
 VIOLET = dict(tint="#CBC4EA", base_hue="#2A2358")      # The Far Shore's later hour
 
 
-def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.50, knee=0.28, detail=1.15, chroma_mid=0.55,
+def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.475, knee=0.27, detail=1.15, chroma_mid=0.55,
               chroma_high=0.75, tint="#C3CEE4", tint_k=0.55, base_hue="#22356E", sky=None, sky_drop=0.0,
-              ramp_stops=None, warm_keep=0.35, S=1.0):
+              ramp_stops=None, warm_keep=0.35, S=1.0, form=0.10, form_r=20.0):
     """The Medallion night grade, round 2 (after realism round 1): day for night in OKLab.
 
     Lightness: lowered and given a curve (mid-tones sink so the planes facing the light stay brightest), then a soft
@@ -218,13 +218,31 @@ def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.50, knee=0.28, detail=
     Ln = np.power(np.clip(Lc, 0, 1), gamma) * exposure / (exposure ** 0 if exposure else 1)
     if sky is not None:
         Ln = Ln * (1 - sky * sky_drop)
-    base = blur(Ln, 8 * S)
+    # (round 3, realism round 2: the base is blurred wider than the largest form, so a dome's or a cloud's own
+    # shading rides in the detail layer, and the knee keeps a slope of 0.35 so large forms never flatten to slabs)
+    base = blur(Ln, 48 * S)
     det = (Ln - base) * detail
     k0 = knee
     span = ceiling - k0
     over = np.clip(base - k0, 0, None)
-    base_c = np.where(base > k0, k0 + span * (1 - np.exp(-over / span)), base)
-    Lo = np.clip(base_c + det, 0, ceiling + 0.03)
+    base_c = np.where(base > k0, k0 + 0.35 * over + 0.65 * span * (1 - np.exp(-over / span)), base)
+    Lo = base_c + det
+    # the ceiling: a soft roll-off over the last 0.06, so it holds without flattening the tops
+    r0 = ceiling - 0.02
+    Lo = np.where(Lo > r0, r0 + 0.06 * (1 - np.exp(-(Lo - r0) / 0.06)), Lo)
+    # form light (realism round 2): the painting's pale shapes (domes, cloud heads; a painted dome is a flat white
+    # shape) are given relief from their silhouettes: the mask, blurred, rounds into a height, and the one light from
+    # the upper left shades it, after the ceiling, so the shading is not compressed away. It darkens the faces turned
+    # away more than it lightens those turned toward the light, so the ceiling still holds.
+    if form:
+        hi = np.percentile(Lo, 92)
+        shape = smooth(hi - 0.06, hi - 0.01, blur(Lo, 2.0 * S))
+        hgt = np.sqrt(np.clip(blur(shape, form_r * S), 0, 1))
+        gy_, gx_ = np.gradient(hgt)
+        lam = (gx_ + gy_) * 0.7071 * S * form_r   # the normal (-gx, -gy) . light (-0.71, -0.71): > 0 facing upper left
+        lam = np.clip(lam * 2.5, -1, 1)
+        Lo = Lo + np.where(lam > 0, lam * 0.25, lam) * form * shape
+    Lo = np.clip(Lo, 0, None)
     t = smooth(0.25, ceiling, Lo)
     # chroma: drained warm, kept cool; mid-tones lowered more than highlights
     C = np.sqrt(a * a + b * b)
@@ -232,11 +250,15 @@ def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.50, knee=0.28, detail=
     keep = (chroma_mid + (chroma_high - chroma_mid) * t) * (1 - warm * (1 - warm_keep))
     if sky is not None:
         keep = keep * (1 - 0.5 * sky)                         # a night sky holds little colour of its own
+    # yellow and green (OKLab hue 60-180 degrees) go grey-blue under the moon: cut to 0.3 (realism round 2)
+    hue = np.degrees(np.arctan2(b, a)) % 360
+    yg = smooth(45, 70, hue) * smooth(195, 170, hue)
+    keep = keep * (1 - 0.7 * yg)
     a2, b2 = a * keep, b * keep
     # hue pull: toward lapis in shadows, toward moonstone in highlights
     lab_t = srgb_to_oklab(hexc(tint)[None, None, :])[0, 0]
     lab_b = srgb_to_oklab(hexc(base_hue)[None, None, :])[0, 0]
-    pull = (1 - t) * 0.45 + t * tint_k
+    pull = np.clip((1 - t) * 0.45 + t * tint_k + yg * 0.3, 0, 1)
     ta = lab_b[1] * (1 - t) + lab_t[1] * t
     tb = lab_b[2] * (1 - t) + lab_t[2] * t
     a2 = a2 * (1 - pull) + ta * pull

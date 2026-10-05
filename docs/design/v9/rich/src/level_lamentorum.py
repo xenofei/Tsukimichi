@@ -55,7 +55,8 @@ def build():
 if __name__ == "__main__":
     L = build()
     print(L.counts())
-    L.check()
+    if L.check():
+        raise SystemExit("pre-flight failed: the level was not written")
     pegs, bricks = L.as_level()
     scene = {"source": "game", "texture": "ui/loadingimage/-nowloading_base25.tex", "mirror": True,
              "crop": [557, -108, 1166, 875], "padTop": 120, "padMode": "reflect", "grade": "medallion-night-violet",

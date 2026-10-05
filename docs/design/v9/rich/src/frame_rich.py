@@ -486,12 +486,16 @@ def playfield_chrome(img, level=None, bucket="boat", bucket_x=BUCKET_X_DEFAULT, 
         pf.bucket_boat(img, bucket_x)
     elif bucket == "cart":
         bucket_cart(img, bucket_x)
+    elif bucket == "fever":
+        import fever as v9_fever
+        v9_fever.fever_cups(img)
     frame(img)
     a = aim if aim is not None else hud_kw.pop("aim", 14.0)
-    pf.launcher(img, aim_deg=a, gauge=hud_kw.pop("gauge", 0.35), ball=hud_kw.pop("ball", True))
+    aimed = pf.launcher(img, aim_deg=a, gauge=hud_kw.pop("gauge", 0.35), ball=hud_kw.pop("ball", True))
     top_rail(img, hud_kw.pop("stage", "1-3"), hud_kw.pop("name", level.get("name", "") if level else ""),
              hud_kw.pop("score", "128,450"))
     ball_tube(img, hud_kw.pop("balls", 6), hud_kw.pop("new_ball", False))
     mult_dial(img, hud_kw.pop("cleared", 11), hud_kw.pop("mult", "×2"))
     oranges_left(img, hud_kw.pop("oranges", 14))
     power_medallion(img, hud_kw.pop("portrait", None), hud_kw.pop("power", "Super Guide"), hud_kw.pop("turns", 2))
+    return aimed
