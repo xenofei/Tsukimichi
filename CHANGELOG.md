@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- **Moonlit:** click a column header to sort by it; click again to reverse, and a third time to go back to the usual order. The table remembers your choice.
+
 ### Fixed
 - **Quest-giver portraits:** faces sit in the middle of the plate, eyes on the eye line. Varshahn, Estinien, Wuk Lamat, Krile and about 260 other portraits were cropped again and checked by hand.
 - **Earlier arcs:** major characters now have a portrait earlier in the story, such as Alphinaud in A Realm Reborn, Alisaie and Krile in Heavensward, and Jullus in Endwalker.
