@@ -4,6 +4,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures.TextureWraps;
 using Tsukimichi.Core.Moonfall;
 using Tsukimichi.Core.Moonfall.Art;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
@@ -35,8 +36,8 @@ public sealed partial class MoonfallWindow
         // play2.window: the board blurred over the whole window, at 62% with a fifth of the palette's deep added.
         var deep = scene.Layers.Chrome.Deep;
         dl.AddRectFilled(areaMin, areaMax, Ink(deep));
-        dl.AddImage(scene.Backdrop.Handle, areaMin, areaMax, Vector2.Zero, Vector2.One, Ink(new Vector3(0.775f), 1f));
-        dl.AddRectFilled(areaMin, areaMax, Ink(deep, 0.2f));
+        dl.AddImage(scene.Backdrop.Handle, areaMin, areaMax, Vector2.Zero, Vector2.One, Ink(new Vector3(0.95f), 1f));
+        dl.AddRectFilled(areaMin, areaMax, Ink(deep, 0.12f));
         var mx = origin.X - areaMin.X;
         if (mx > 2f)
         {
@@ -180,12 +181,52 @@ public sealed partial class MoonfallWindow
 
         var r = moon.R * (1 + (0.45f * tSwell));
         ref readonly var soft = ref p.Atlas[MoonfallSprite.Soft];
-        Put(p, soft, moon.X, moon.Y, r * 3.2f / 4f, Ink(MoonfallColor.Hex("#FFF0D8"), 0.30f * tSwell));
-        Put(p, soft, moon.X, moon.Y, r * 9f / 4f, Ink(MoonfallColor.Hex("#FFF0D8"), 0.12f * tSwell));
+        // The glow stays inside the framing laid back over it (MoonRect: 3 radii of the moon), so no seam shows at its edge.
+        Put(p, soft, moon.X, moon.Y, r * 2.0f / 4f, Ink(MoonfallColor.Hex("#FFF0D8"), 0.34f * tSwell));
         p.Dl.AddCircleFilled(v.Map(moon.X, moon.Y), v.Size(r), Ink(MoonfallColor.Hex("#FFF6EA"), tSwell), 48);
         if (scene.MoonFront is { } front)
         {
             Image(p.Dl, v, front, scene.Layers.MoonFront!.Board, uint.MaxValue);
+        }
+    }
+
+    /// <summary>
+    /// The veil under each live round peg, at its place this frame (a mover's too), fading with the peg as it clears:
+    /// the scene recedes round the layout and nothing is left where a peg has gone (the bricks' veil is baked).
+    /// </summary>
+    private void RichVeil(in ArtPen p, MoonfallSceneTextures<IDalamudTextureWrap> scene, MoonfallGame g, double alpha)
+    {
+        var k = scene.Layers.VeilK;
+        if (k <= 0 || gameArt?.Veil is not { } veil)
+        {
+            return;
+        }
+
+        var v = p.View;
+        var quick = UiMetrics.ReduceMotion || Theme.Flair == Flair.Plain;
+        for (var i = 0; i < g.PegCount; i++)
+        {
+            var peg = g.Peg(i, alpha);
+            if (peg.Shape != PegShape.Round)
+            {
+                continue;
+            }
+
+            var fade = 1f;
+            if (peg.Cleared)
+            {
+                var age = artClearedAt is { } at && i < at.Length ? boardClock - at[i] : double.NaN;
+                var span = quick ? ClearFadeSeconds : ClearSeconds;
+                if (double.IsNaN(age) || age < 0 || age > span)
+                {
+                    continue;
+                }
+
+                fade = 1f - (float)(age / span);
+            }
+
+            var reach = (float)(peg.Radius * MoonfallVeil.Reach);
+            p.Dl.AddImage(veil.Handle, v.Map(peg.X - reach, peg.Y - reach), v.Map(peg.X + reach, peg.Y + reach), Vector2.Zero, Vector2.One, Ink(Vector3.Zero, k * fade));
         }
     }
 

@@ -127,6 +127,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
     private readonly Dictionary<MoonfallPower, Task<MoonfallRgba?>> cardBuilds = [];
     private readonly List<(string Key, MoonfallSceneLayers Layers)> sceneCache = [];
     private MoonfallRgba? marksPixels;
+    private MoonfallRgba? veilPixels;
 
     // ---- On the GPU while the window is open ----
     private Task<T>? chromeUpload;
@@ -145,6 +146,8 @@ public sealed class MoonfallGameArt<T> : IDisposable
     private MoonfallSceneState sceneState = MoonfallSceneState.NoRecipe;
     private Task<T>? marksUpload;
     private T? marksTexture;
+    private Task<T>? veilUpload;
+    private T? veilTexture;
     private bool open;
 
     /// <param name="host">The game's files, textures, frame counter and log.</param>
@@ -172,6 +175,9 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
     /// <summary>The peg marks' sheet (<see cref="MoonfallPegMarks.Sheet"/>), or null until asked for and uploaded.</summary>
     public T? Marks => marksTexture;
+
+    /// <summary>The veil's sprite drawn under each live peg (<see cref="MoonfallVeil"/>), or null until uploaded.</summary>
+    public T? Veil => veilTexture;
 
     /// <summary>The recipe <paramref name="level"/> names, or null.</summary>
     public MoonfallSceneRecipe? RecipeFor(MoonfallLevel level) => MoonfallSceneRecipeLoader.Pick(recipes, level);
@@ -229,6 +235,21 @@ public sealed class MoonfallGameArt<T> : IDisposable
             {
                 marksUpload = Upload(marksPixels, "Moonfall peg marks");
             }
+        }
+
+        if (scene is not null)
+        {
+            veilPixels ??= MoonfallVeil.Sprite();
+            if (veilTexture is null && veilUpload is null)
+            {
+                veilUpload = Upload(veilPixels, "Moonfall veil");
+            }
+        }
+
+        if (veilUpload is { IsCompleted: true } vu)
+        {
+            veilUpload = null;
+            veilTexture = Landed(vu, "veil");
         }
 
         if (marksUpload is { IsCompleted: true } mu)
@@ -629,6 +650,18 @@ public sealed class MoonfallGameArt<T> : IDisposable
             marksUpload = null;
         }
 
+        if (veilTexture is not null)
+        {
+            released.Add(veilTexture);
+            veilTexture = null;
+        }
+
+        if (veilUpload is not null)
+        {
+            abandoned.Add(veilUpload);
+            veilUpload = null;
+        }
+
         // A chrome build that failed is tried again when the window opens again (a file fixed, a patch installed).
         if (chromeBuild is { IsCompleted: true, IsCompletedSuccessfully: false })
         {
@@ -674,6 +707,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
     {
         long cardBytes = cards.Values.Count(static c => c.Texture is not null) * (long)MoonfallCards.CardWidth * MoonfallCards.CardHeight * 4;
         long sceneBytes = scene is null ? 0 : scene.Layers.Bytes + (scene.Enamel is not null && Chrome?.Grain is { } g ? (long)(g.Width / 2) * (g.Height / 2) * 4 : 0);
+        sceneBytes += veilTexture is not null && veilPixels is { } v ? v.Bytes : 0;
         return new MoonfallGameArtBytes(chromeTexture is not null && Chrome is { } c ? c.Sheet.Bytes : 0, cardBytes, sceneBytes, marksTexture is not null && marksPixels is { } m ? m.Bytes : 0);
     }
 

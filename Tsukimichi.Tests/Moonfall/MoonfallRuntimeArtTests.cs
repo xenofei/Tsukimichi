@@ -160,12 +160,12 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
 
         foreach (var star in layers.Stars)
         {
-            Assert.True(clearance.At(star.X, star.Y) >= MoonfallMotion.PegKeepOut + (star.Radius * 1.8f), $"{id}: a star at ({star.X:0}, {star.Y:0})");
+            Assert.True(clearance.At(star.X, star.Y) >= MoonfallMotion.ParticleKeepOut + 2, $"{id}: a star at ({star.X:0}, {star.Y:0})");
         }
 
         foreach (var lamp in layers.Flickers)
         {
-            Assert.True(clearance.At(lamp.X, lamp.Y) >= MoonfallMotion.ParticleKeepOut, $"{id}: a lamp at ({lamp.X:0}, {lamp.Y:0})");
+            Assert.True(clearance.At(lamp.X, lamp.Y) >= MoonfallMotion.ParticleKeepOut + (0.6f * lamp.Halo), $"{id}: a lamp at ({lamp.X:0}, {lamp.Y:0})");
         }
     }
 
@@ -231,6 +231,201 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
                 Assert.True(worstSeam <= worstInside + 1, $"seam {worstSeam}, inside {worstInside}");
                 Assert.InRange(MoonfallMotion.MistOffset(12345.6, m.Speed, t.Board.Z - t.Board.X), 0f, t.Board.Z - t.Board.X);
             }
+        }
+    }
+
+    // ---- F6: every peg reads against its scene (readcheck, level-method.md §8) ----
+
+    private static readonly Vector3 Lum = new(0.2126f, 0.7152f, 0.0722f);
+
+    /// <summary>Each kind's face (the median over its variants of the 80th-percentile luma in 0.85 r, unlit, at 1x).</summary>
+    private static Dictionary<PegColour, float> Faces()
+    {
+        var folder = MoonfallArtTests.ArtFolder();
+        var atlas = MoonfallAtlas.Parse(File.ReadAllText(Path.Combine(folder, "atlas.json"))).Atlas!;
+        var png = MoonfallPng.Decode(File.ReadAllBytes(Path.Combine(folder, atlas.OneXFile)), out _)!.Value;
+        var faces = new Dictionary<PegColour, float>();
+        foreach (var kind in new[] { PegColour.Blue, PegColour.Orange, PegColour.Green, PegColour.Purple })
+        {
+            var perVariant = new List<float>();
+            for (var v = 0; v < atlas.PegVariants; v++)
+            {
+                var r = atlas.Peg(kind, v, false);
+                var cx = r.X + r.AnchorX;
+                var cy = r.Y + r.AnchorY;
+                var lum = new List<float>();
+                for (var y = (int)(cy - 10); y <= (int)(cy + 10); y++)
+                {
+                    for (var x = (int)(cx - 10); x <= (int)(cx + 10); x++)
+                    {
+                        var dx = x + 0.5f - cx;
+                        var dy = y + 0.5f - cy;
+                        if ((dx * dx) + (dy * dy) >= 8.5f * 8.5f)
+                        {
+                            continue;
+                        }
+
+                        var o = ((y * png.Width) + x) * 4;
+                        lum.Add(Vector3.Dot(new Vector3(png.Rgba[o], png.Rgba[o + 1], png.Rgba[o + 2]) / 255f, Lum));
+                    }
+                }
+
+                lum.Sort();
+                perVariant.Add(lum[(int)(lum.Count * 0.8)]);
+            }
+
+            perVariant.Sort();
+            faces[kind] = perVariant[perVariant.Count / 2];
+        }
+
+        return faces;
+    }
+
+    /// <summary>The opening's luma at 1x as the player sees it at the deal: the scene with every static round peg's veil under it.</summary>
+    private static MoonfallPlane VeiledLuma(MoonfallLevel level, MoonfallSceneLayers layers)
+    {
+        var b = layers.Base;
+        Assert.Equal(1f, b.Width / (b.Board.Z - b.Board.X), 3);
+        var y0 = new MoonfallPlane(b.Width, b.Height);
+        for (var i = 0; i < y0.Data.Length; i++)
+        {
+            y0.Data[i] = Vector3.Dot(new Vector3(b.Pixels[i * 4], b.Pixels[(i * 4) + 1], b.Pixels[(i * 4) + 2]) / 255f, Lum);
+        }
+
+        foreach (var peg in level.Pegs.Where(static p => p.Shape == PegShape.Round && p.Mover.Kind == MoverKind.None))
+        {
+            VeilAt(y0, b.Board, 1f, (float)peg.X, (float)peg.Y, (float)peg.Radius, layers.VeilK);
+        }
+
+        return y0;
+    }
+
+    private static readonly Lazy<MoonfallRgba> VeilSprite = new(() => MoonfallVeil.Sprite());
+
+    /// <summary>Darkens <paramref name="y"/> (at <paramref name="s"/> px a unit over <paramref name="board"/>) by a peg's veil at (px, py).</summary>
+    private static void VeilAt(MoonfallPlane y, Vector4 board, float s, float px, float py, float r, float k)
+    {
+        var sprite = VeilSprite.Value;
+        var reach = r * MoonfallVeil.Reach;
+        for (var yy = (int)MathF.Max(0, (py - reach - board.Y) * s); yy < MathF.Min(y.Height, (py + reach - board.Y) * s); yy++)
+        {
+            for (var xx = (int)MathF.Max(0, (px - reach - board.X) * s); xx < MathF.Min(y.Width, (px + reach - board.X) * s); xx++)
+            {
+                var u = (int)(((((xx + 0.5f) / s) + board.X - (px - reach)) / (2 * reach)) * sprite.Width);
+                var v = (int)(((((yy + 0.5f) / s) + board.Y - (py - reach)) / (2 * reach)) * sprite.Height);
+                if ((uint)u < (uint)sprite.Width && (uint)v < (uint)sprite.Height)
+                {
+                    y.Data[(yy * y.Width) + xx] *= 1 - (k * sprite.Pixels[(((v * sprite.Width) + u) * 4) + 3] / 255f);
+                }
+            }
+        }
+    }
+
+    private static float RingP90(MoonfallPlane y, Vector4 board, float s, float x, float yc, float r)
+    {
+        var values = new List<float>();
+        for (var py = (int)((yc - r - 10 - board.Y) * s); py <= (int)((yc + r + 10 - board.Y) * s); py++)
+        {
+            for (var px = (int)((x - r - 10 - board.X) * s); px <= (int)((x + r + 10 - board.X) * s); px++)
+            {
+                if ((uint)px >= (uint)y.Width || (uint)py >= (uint)y.Height)
+                {
+                    continue;
+                }
+
+                var d = MathF.Sqrt(MathF.Pow(((px + 0.5f) / s) + board.X - x, 2) + MathF.Pow(((py + 0.5f) / s) + board.Y - yc, 2));
+                if (d > r + 2 && d < r + 9)
+                {
+                    values.Add(y.Data[(py * y.Width) + px]);
+                }
+            }
+        }
+
+        if (values.Count == 0)
+        {
+            return 0f;
+        }
+
+        values.Sort();
+        return values[(int)(values.Count * 0.9)];
+    }
+
+    [Theory]
+    [MemberData(nameof(Levels))]
+    public void Every_peg_reads_against_its_scene_and_the_scene_keeps_under_its_ceiling(string id)
+    {
+        // F6: each kind's face stands at least 0.20 above the 90th percentile of the veiled scene 2-9 units round every
+        // place it can be dealt to (movers along their path, with their own veil), at 1x and at 0.8x (the 640 window).
+        // The value ceiling: the scene behind the board keeps its 99th-percentile luma at 0.46 or less, and no piece
+        // comes within a moon's radius and 18 units.
+        var (level, layers) = Scene1x(id);
+        var faces = Faces();
+        var veiled = VeiledLuma(level, layers);
+        var board = layers.Base.Board;
+        var small = new MoonfallImage(new MoonfallPlane(veiled.Width, veiled.Height), veiled.Copy(), new MoonfallPlane(veiled.Width, veiled.Height));
+        var at08 = MoonfallFilters.Resize(small, (int)(veiled.Width * 0.8f), (int)(veiled.Height * 0.8f)).G;
+        var worst = new Dictionary<string, (float Margin, float X, float Y)>(StringComparer.Ordinal);
+        foreach (var (plane, s, tier) in new[] { (veiled, 1f, "1x"), (at08, 0.8f, "0.8x") })
+        {
+            foreach (var peg in level.Pegs.Where(static p => p.Shape == PegShape.Round))
+            {
+                foreach (var (x, y) in MoonfallClearance.Path(peg))
+                {
+                    var ring = plane;
+                    if (peg.Mover.Kind != MoverKind.None)
+                    {
+                        ring = plane.Copy();
+                        VeilAt(ring, board, s, x, y, (float)peg.Radius, layers.VeilK);
+                    }
+
+                    var p90 = RingP90(ring, board, s, x, y, (float)peg.Radius);
+                    foreach (var kind in faces.Keys)
+                    {
+                        if ((kind == PegColour.Orange && !peg.CanBeOrange) || (kind == PegColour.Green && !peg.CanBeGreen))
+                        {
+                            continue;
+                        }
+
+                        var key = $"{kind} {tier}";
+                        var margin = faces[kind] - p90;
+                        if (!worst.TryGetValue(key, out var w) || margin < w.Margin)
+                        {
+                            worst[key] = (margin, x, y);
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach (var (key, w) in worst.OrderBy(static p => p.Key, StringComparer.Ordinal))
+        {
+            output.WriteLine($"{id} {key}: worst margin {w.Margin:0.000} at ({w.X:0}, {w.Y:0})");
+        }
+
+        Assert.All(worst, p => Assert.True(p.Value.Margin >= 0.20f, $"{id} {p.Key}: margin {p.Value.Margin:0.000} at ({p.Value.X:0}, {p.Value.Y:0})"));
+
+        // The ceiling, on the veiled scene with no pieces (readcheck's piece-free composite; the moon excepted: it keeps
+        // clear of the pieces instead).
+        var lums = new List<float>(veiled.Data.Length);
+        for (var i = 0; i < veiled.Data.Length; i++)
+        {
+            var bx = board.X + (i % layers.Base.Width) + 0.5f;
+            var by = board.Y + (i / layers.Base.Width) + 0.5f;
+            if (layers.Moon is { } moon && Vector2.Distance(new Vector2(bx, by), new Vector2(moon.X, moon.Y)) < moon.R * 3.2f)
+            {
+                continue;
+            }
+
+            lums.Add(veiled.Data[i]);
+        }
+
+        lums.Sort();
+        var p99 = lums[(int)(lums.Count * 0.99)];
+        output.WriteLine($"{id}: scene p99 luma {p99:0.000}");
+        Assert.True(p99 <= 0.46f, $"{id}: the scene's 99th-percentile luma is {p99:0.000}");
+        if (layers.Moon is { } m)
+        {
+            Assert.True(MoonfallClearance.For(level).At(m.X, m.Y) >= m.R + MoonfallSceneBuilder.MoonKeep);
         }
     }
 

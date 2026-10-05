@@ -173,6 +173,11 @@ public sealed partial class MoonfallWindow
         }
 
         ArtBand(pen, g, plain);
+        if (scene is not null)
+        {
+            RichVeil(pen, scene, g, alpha);
+        }
+
         ArtPegs(pen, g, alpha, plain);
         if (!plain)
         {

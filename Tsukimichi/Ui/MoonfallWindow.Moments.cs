@@ -32,6 +32,7 @@ public sealed partial class MoonfallWindow
     private bool cardInMargin;
     private bool wonAced;
     private bool wonNewBest;
+    private long wonPreviousBest;
 
     private readonly string[] powerUpper = new string[MoonfallPowers.Count + 1];
     private int powerUpperFor = -1;
@@ -221,12 +222,17 @@ public sealed partial class MoonfallWindow
         var half = (Math.Max(tw, sw) / 2) + 26;
         if (plate > 0)
         {
-            dl.AddRectFilledMultiColor(v.Map(cx - half - 14, by0 + 6), v.Map(cx + half + 14, by0 + bandH + 10), Ink(Vector3.Zero, 0f), Ink(Vector3.Zero, 0f), Ink(Vector3.Zero, 0.30f * plate), Ink(Vector3.Zero, 0.30f * plate));
+            // The plate's shadow, feathered at both ends (no hard band under it).
+            var shadow = Ink(Vector3.Zero, 0.30f * plate);
+            var none = Ink(Vector3.Zero, 0f);
+            var shadeMid = by0 + 6 + ((bandH + 4) * 0.6);
+            dl.AddRectFilledMultiColor(v.Map(cx - half - 14, by0 + 6), v.Map(cx + half + 14, shadeMid), none, none, shadow, shadow);
+            dl.AddRectFilledMultiColor(v.Map(cx - half - 14, shadeMid), v.Map(cx + half + 14, by0 + bandH + 16), shadow, shadow, none, none);
             var top = Ink(MoonfallColor.Hex("#7A3A12"), 0.94f * plate);
-            var mid = Ink(MoonfallColor.Hex("#5A2A10"), 0.94f * plate);
+            var middle = Ink(MoonfallColor.Hex("#5A2A10"), 0.94f * plate);
             var foot = Ink(MoonfallColor.Hex("#3A1A08"), 0.94f * plate);
-            dl.AddRectFilledMultiColor(v.Map(cx - half, by0), v.Map(cx + half, by0 + (bandH / 2)), top, top, mid, mid);
-            dl.AddRectFilledMultiColor(v.Map(cx - half, by0 + (bandH / 2)), v.Map(cx + half, by0 + bandH), mid, mid, foot, foot);
+            dl.AddRectFilledMultiColor(v.Map(cx - half, by0), v.Map(cx + half, by0 + (bandH / 2)), top, top, middle, middle);
+            dl.AddRectFilledMultiColor(v.Map(cx - half, by0 + (bandH / 2)), v.Map(cx + half, by0 + bandH), middle, middle, foot, foot);
             var gilt = Ink(MoonfallColor.Hex("#E3B865"), MathF.Max(plate, 0.6f) * alpha);
             foreach (var yy in (ReadOnlySpan<double>)[by0 + 2, by0 + bandH - 2])
             {
@@ -246,13 +252,12 @@ public sealed partial class MoonfallWindow
             }
 
             var top = cy - (l.H * s * 0.52);
-            var tint = Ink(Vector3.One, alpha);
+            // The ribbon's tails fade with the plate (Fever's plate settles to 35% so the lit pegs show through).
+            var tint = Ink(Vector3.One, alpha * (plate > 0 ? MathF.Max(plate, 0.35f) : 1f));
             Part(c, MoonfallChromePart.Laurel, cx - (tw / 2) - Gap - (LeftW * s), top, cx - (tw / 2) - Gap, top + (l.H * s), tint, u1: LeftW);
             Part(c, MoonfallChromePart.Laurel, cx + (tw / 2) + Gap, top, cx + (tw / 2) + Gap + ((l.W - RightFrom) * s), top + (l.H * s), tint, u0: RightFrom);
         }
 
-        var glow = Ink(accent, 0.22f * alpha);
-        dl.AddRectFilled(v.Map(cx - (tw / 2), cy - (size * 0.4)), v.Map(cx + (tw / 2), cy + (size * 0.4)), glow, v.Size(size * 0.4));
         DrawText(dl, MoonfallFace.Jupiter, px, v.Map(cx, cy), Anchor.Centre, Ink(GoldHiInk, alpha), text, Ink(MoonfallColor.Hex("#140A02"), alpha), v.Size(1.6), v.Size(tracking));
         if (sub is not null)
         {
@@ -471,6 +476,7 @@ public sealed partial class MoonfallWindow
         }
 
         var fade = (float)Math.Clamp(Math.Min(age / 0.25, (PowerMomentSeconds - age) / 0.25), 0, 1);
-        Banner(c, 400, 22, PowerUpper(powerFired), 30f, null, 0, companion.Accent, fade, fade, laurel: true, 720, 4f);
+        // Between the name plate and the score plate: the ribbon's tails shrink to fit, never crossing the level's name.
+        Banner(c, 400, 22, PowerUpper(powerFired), 30f, null, 0, companion.Accent, fade, fade, laurel: true, MoonfallHud.ScorePlate.X0 - MoonfallHud.NamePlate.X1 - 12, 4f);
     }
 }

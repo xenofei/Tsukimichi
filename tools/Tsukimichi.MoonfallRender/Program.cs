@@ -113,7 +113,7 @@ internal static class Render
         progress.Levels[campaigns.Base.Levels[index].Id] = new MoonfallLevelRecord { Best = 60_000 };
         var artHost = new ArtHost(store);
         var gameHost = new GameHost(store, args.Contains("--no-game-art") ? null : game, Path.Combine(repo, "Tsukimichi", "assets", "moonfall", "scenes"));
-        var options = new Options { PegMarks = args.Contains("--marks") };
+        var options = new Options { PegMarks = args.Contains("--marks"), PegMarksHintSeen = !args.Contains("--hint") };
         var temp = Path.Combine(Path.GetTempPath(), "moonfall-render-progress.json");
         var window = new MoonfallWindow(campaigns, progress, temp, static () => MoonfallPauseReason.None, null, artHost,
             Path.Combine(repo, "Tsukimichi", "assets", "moonfall"), gameHost, fonts, options)

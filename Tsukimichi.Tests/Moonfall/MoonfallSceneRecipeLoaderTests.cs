@@ -114,6 +114,17 @@ public sealed class MoonfallSceneRecipeLoaderTests
     }
 
     [Fact]
+    public void The_value_ceiling_is_guarded()
+    {
+        // F6: a game painting is always night graded, its ceiling at most 0.46, a glow at most 0.2, and some veil.
+        Refused(Edited("airship-road", static n => n.Remove("grade")), "must be night graded");
+        Refused(Edited("airship-road", static n => n["grade"] = JsonNode.Parse("""{ "kind": "none" }""")), "must be night graded");
+        Refused(Edited("airship-road", static n => n["grade"]!["ceiling"] = 0.5), "ceiling must be");
+        Refused(Edited("airship-road", static n => n["light"]![0]!["k"] = 0.3), "k must be");
+        Refused(Edited("airship-road", static n => n["veil"] = 0.05), "veil must be");
+    }
+
+    [Fact]
     public void The_motion_budget_and_its_light_are_checked()
     {
         Refused(Edited("moon-road-night", static n => n["motion"]!["dust"] = 100), "motion budget");

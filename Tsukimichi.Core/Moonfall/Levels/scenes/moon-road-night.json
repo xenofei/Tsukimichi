@@ -16,7 +16,7 @@
     "chroma": 0.9,
     "floor": 0.03,
     "regions": [
-      { "hue": "#1FB0A8", "chroma": 0.12, "weight": 0.95, "where": [{ "y": [380, 440] }, { "near": [24, 12], "invert": true, "scale": 0.6 }] },
+      { "hue": "#1FB0A8", "chroma": 0.12, "weight": 0.95, "where": [{ "y": [380, 440] }] },
       { "hue": "#8A4FD0", "chroma": 0.09, "weight": 0.6, "where": [{ "y": [330, 260] }] }
     ]
   },

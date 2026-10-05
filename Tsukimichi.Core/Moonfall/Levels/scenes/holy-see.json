@@ -13,7 +13,7 @@
     "crop": [430, 60, 1293, 970]
   },
   "fallback": "moon-road-night",
-  "grade": { "kind": "night", "skyDrop": 0.3, "skyTop": 0.35, "skyBottom": 0.75 },
+  "grade": { "kind": "night", "ceiling": 0.37, "skyDrop": 0.3, "skyTop": 0.35, "skyBottom": 0.75 },
   "paint": [
     { "kind": "moonGlow", "x": -50, "y": -60, "rCore": 330, "rWide": 900, "kCore": 0.12, "kWide": 0.05 }
   ],

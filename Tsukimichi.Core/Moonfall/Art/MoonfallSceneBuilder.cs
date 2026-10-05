@@ -78,6 +78,9 @@ public sealed class MoonfallSceneLayers
     /// <summary>How many dust motes drift in the beams.</summary>
     public int Dust { get; init; }
 
+    /// <summary>The veil's strength round each round peg, drawn in play under the live pegs (<see cref="MoonfallVeil"/>).</summary>
+    public float VeilK { get; init; }
+
     /// <summary>The pieces' clearance the scene was dressed against (the motion keeps its particles clear with it).</summary>
     public MoonfallClearance? Clearance { get; init; }
 
@@ -116,6 +119,9 @@ public static class MoonfallSceneBuilder
 
     /// <summary>Pixels a unit of the small layers (beams, sky): 1 per 2 units.</summary>
     public const float LowScale = 0.5f;
+
+    /// <summary>How far every piece keeps from a moon's disc, units (F6: the brightest face never sits behind a peg).</summary>
+    public const float MoonKeep = 18f;
 
     /// <summary>The moving share of a moving shaft: it breathes ±15% round the still.</summary>
     public const float BeamBreath = 0.15f;
@@ -244,7 +250,14 @@ public static class MoonfallSceneBuilder
         }
 
         var backdrop = Backdrop(px, s, recipe.Chrome);
-        MoonfallDress.Veil(ctx, px, recipe.Veil);
+        // The veil: baked round the bricks; each round peg carries its own as a sprite in play (MoonfallVeil), so it goes
+        // with the peg when it clears and moves with it on a mover's path.
+        var bricks = level.Pegs.Where(static p => p.Shape != PegShape.Round).ToList();
+        if (bricks.Count > 0)
+        {
+            MoonfallDress.Veil(ctx, px, recipe.Veil, MoonfallClearance.For(bricks).ToPlane(s));
+        }
+
         Lap("veil");
 
         var flickers = new List<MoonfallFlicker>();
@@ -262,7 +275,8 @@ public static class MoonfallSceneBuilder
         Lap("beams");
         var baseLayer = Crop(px, s, OpeningRect, alpha: null);
         var sky = SkyMask(ctx);
-        var moonFront = recipe.Moon is { } moon ? Crop(px, s, MoonRect(moon), ctx.Cover) : null;
+        var feverMoon = recipe.Moon is { } m0 && ctx.Clear(m0.X, m0.Y) >= m0.R + MoonKeep ? m0 : null;
+        var moonFront = feverMoon is { } moon ? Crop(px, s, MoonRect(moon), ctx.Cover) : null;
         var stars = Stars(px, ctx, recipe.Motion);
         var mist = Mist(recipe.Motion, clearance);
         Lap("layers");
@@ -279,7 +293,8 @@ public static class MoonfallSceneBuilder
             BeamAmount = amount,
             SkyMask = sky,
             MoonFront = moonFront,
-            Moon = recipe.Moon,
+            Moon = feverMoon,
+            VeilK = recipe.Veil,
             Fireflies = fireflies,
             FireflyColour = recipe.Fireflies?.Colour ?? MoonfallColor.Hex("#FFD27A"),
             Stars = stars,
@@ -299,7 +314,7 @@ public static class MoonfallSceneBuilder
     public static Vector4 MoonRect(MoonfallMoon moon)
     {
         ArgumentNullException.ThrowIfNull(moon);
-        var r = moon.R * 2.4f;
+        var r = moon.R * 3.0f;
         return new Vector4(MathF.Max(OpeningRect.X, moon.X - r), MathF.Max(OpeningRect.Y, moon.Y - r), MathF.Min(OpeningRect.Z, moon.X + r), MathF.Min(OpeningRect.W, moon.Y + r));
     }
 
@@ -428,6 +443,13 @@ public static class MoonfallSceneBuilder
                 MoonfallGrade.MoonGlow(px, mg.X * ctx.S, mg.Y * ctx.S, mg.RCore * ctx.S, mg.RWide * ctx.S, mg.KCore, mg.KWide, mg.Colour);
                 break;
             case MoonfallMoon m:
+                // A moon is the board's brightest face: no piece within its radius and 18 units (F6), else it is left out.
+                if (ctx.Clear(m.X, m.Y) < m.R + MoonKeep)
+                {
+                    ctx.Dropped++;
+                    break;
+                }
+
                 MoonfallDress.Moon(px, ctx.S, m);
                 break;
             case MoonfallAurora a:
@@ -593,8 +615,11 @@ public static class MoonfallSceneBuilder
         const int W = 100, H = 75;
         var step = 8 * s;
         var small = new MoonfallImage(W, H);
-        var channels = new[] { (px.R, small.R, chrome.Sky.X), (px.G, small.G, chrome.Sky.Y), (px.B, small.B, chrome.Sky.Z) };
-        foreach (var (from, to, rail) in channels)
+        // The rails as the eye averages them: the lapis enamel and the gilt of the frame and its bands (play2.window blurs
+        // the whole composite, chrome and all, so the margins read warm grey-blue, not black).
+        var gilt = MoonfallColor.Hex("#C9A04A");
+        var channels = new[] { (px.R, small.R, chrome.Sky.X, gilt.X), (px.G, small.G, chrome.Sky.Y, gilt.Y), (px.B, small.B, chrome.Sky.Z, gilt.Z) };
+        foreach (var (from, to, enamel, gold) in channels)
         {
             for (var y = 0; y < H; y++)
             {
@@ -609,7 +634,7 @@ public static class MoonfallSceneBuilder
                         {
                             var bx = ((x * step) + dx + 0.5f) / s;
                             var inRail = bx < MoonfallFramingCheck.WallL || bx > MoonfallFramingCheck.WallR || by < MoonfallFramingCheck.Top || by > MoonfallFramingCheck.Foot;
-                            sum += inRail ? rail * light : from.Data[(((y * step) + dy) * px.Width) + (x * step) + dx];
+                            sum += inRail ? (0.6f * enamel * 1.4f * light) + (0.4f * gold) : from.Data[(((y * step) + dy) * px.Width) + (x * step) + dx];
                         }
                     }
 

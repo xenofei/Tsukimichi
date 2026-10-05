@@ -252,13 +252,19 @@ public static partial class MoonfallSceneRecipeLoader
                 Framing = Framing(root),
                 Lights = SmallLights(root),
                 Fireflies = Fireflies(root),
-                Veil = Num(root, "veil", 0.30f, 0, 0.6f),
+                Veil = Num(root, "veil", 0.30f, 0.15f, 0.6f),
                 Motion = Motion(root),
                 Chrome = Chrome(root),
                 Levels = LevelIds(root),
                 Default = Bool(root, "default"),
             };
             recipe = recipe with { Moon = Moon(root, [.. recipe.Paint, .. recipe.Light]) };
+
+            // F6's value ceiling: a game painting is a day scene, so it is always night graded.
+            if (recipe.Source.Kind == MoonfallSourceKind.Game && recipe.Grade is null)
+            {
+                errors.Add("grade: a game painting must be night graded (kind \"night\" or \"violet\")");
+            }
             if (recipe.Paint.Concat(recipe.Light).OfType<MoonfallMoon>().Count() > 1)
             {
                 errors.Add("paint and light hold more than one moon");
@@ -367,7 +373,7 @@ public static partial class MoonfallSceneRecipeLoader
             {
                 Exposure = Num(g, "exposure", d.Exposure, 0.1f, 2f),
                 Gamma = Num(g, "gamma", d.Gamma, 0.5f, 3f),
-                Ceiling = Num(g, "ceiling", d.Ceiling, 0.2f, 0.6f),
+                Ceiling = Num(g, "ceiling", d.Ceiling, 0.2f, 0.46f),
                 Knee = Num(g, "knee", d.Knee, 0.05f, 0.5f),
                 Detail = Num(g, "detail", d.Detail, 0f, 3f),
                 ChromaMid = Num(g, "chromaMid", d.ChromaMid, 0f, 2f),
@@ -536,7 +542,7 @@ public static partial class MoonfallSceneRecipeLoader
                             Int(l, "seed", 3, 0, 100_000), Num(l, "reach", 900f, 100f, 2000f), Num(l, "near", 150f, 0f, 1000f), Bool(l, "moving")));
                         break;
                     case "glow":
-                        list.Add(new MoonfallGlow(Num(l, "x", 0, -800, 1600), Num(l, "y", 0, -600, 1200), Num(l, "r", 100, 1, 2000), ColourV(l, "colour", at), Num(l, "k", 0.05f, 0, 0.5f)));
+                        list.Add(new MoonfallGlow(Num(l, "x", 0, -800, 1600), Num(l, "y", 0, -600, 1200), Num(l, "r", 100, 1, 2000), ColourV(l, "colour", at), Num(l, "k", 0.05f, 0, 0.2f)));
                         break;
                     case "moonGlow":
                         list.Add(new MoonfallMoonGlow(Num(l, "x", -50, -800, 1600), Num(l, "y", -60, -600, 1200), Num(l, "rCore", 330, 1, 3000), Num(l, "rWide", 900, 1, 4000),

@@ -41,9 +41,13 @@ The build runs in this order. Each step reads the result of the one before.
    `"moving": true` is baked at 85% and its other 15% becomes the two drifting beam layers.
 7. **Framing** (`framing`): the silhouettes. Each element that would come within 6.5 units of a piece is dropped whole,
    and a hard clamp behind that keeps every framing pixel 6 units clear.
-8. **Small lights** (`lights`), **fireflies**, **stars**: each placed 8 units clear of every piece or dropped.
+8. **Small lights** (`lights`), **fireflies**, **stars**: each placed clear of every piece or dropped (a light keeps
+   8 units plus 0.6 of its halo; a firefly 8 units plus its whole halo, round its whole wander; a star 10).
 9. **Check** (Debug builds and the tests): the fuller-board rules below, measured on the result.
-10. **Veil** (`veil`): the scene recedes behind and round the layout, so the pieces read.
+10. **Veil** (`veil`): the scene recedes behind and round the layout, so the pieces read. It is baked round the bricks
+    only; each round peg carries its own veil as a sprite drawn under it in play, at its place that frame (a mover's
+    too), fading with the peg as it clears. So nothing peg-shaped is ever baked into the scene, and a cleared peg leaves
+    no dark place behind.
 11. **Layers**: the scene over the opening, the margins' blurred backdrop (with the rails' enamel), the beams, the open
     sky for Fever, the framing in front of the moon, the mist tiles.
 
@@ -67,7 +71,7 @@ The build runs in this order. Each step reads the result of the one before.
 | `framing` | list (≤ 8 groups) | `[]` | Silhouettes (below) |
 | `lights` | list (≤ 48) | `[]` | Small lights: lamps, windows, lanterns |
 | `fireflies` | object | none | |
-| `veil` | 0–0.6 | 0.30 | 0.20 on our own dark paintings, 0.40–0.44 on the official ones |
+| `veil` | 0.15–0.6 | 0.30 | The main readability lever: 0.20–0.25 on our own dark paintings, 0.40–0.44 on the official ones |
 | `motion` | object | none | Dust, stars, mist |
 | `chrome` | object | the Medallion's | The rails' enamel and the margins: `sky`, `deep`, `jewel1`, `jewel2` (`#RRGGBB`) |
 | `feverMoon` | `[x, y, r]` | the `moon` layer | The moon Fever swells, when the painting has its own |
@@ -94,8 +98,10 @@ Exactly one of:
 
 ## `grade` (the night grade)
 
-`kind`: `"night"` (the Medallion's, default), `"violet"` (The Far Shore's later hour) or `"none"`. Any of these override
-the kind's defaults: `exposure` 0.1–2, `gamma` 0.5–3, `ceiling` 0.2–0.6, `knee` 0.05–0.5, `detail` 0–3, `chromaMid`
+`kind`: `"night"` (the Medallion's, default), `"violet"` (The Far Shore's later hour) or `"none"` (only for one of our
+own pictures, already painted at night: a `game` painting must be graded). Any of these override the kind's defaults:
+`exposure` 0.1–2, `gamma` 0.5–3, `ceiling` 0.2–0.46 (the value ceiling, F6; lower it when a bright painting comes out
+over 0.46), `knee` 0.05–0.5, `detail` 0–3, `chromaMid`
 0–2, `chromaHigh` 0–2, `tint` colour, `tintK` 0–1, `baseHue` colour, `skyDrop` 0–0.9 (how far the sky sinks), `skyTop`
 and `skyBottom` 0–1, `warmKeep` 0–1 (how much warm light survives), `form` 0–0.5 and `formRadius` 2–80 (the planes facing
 the light), `bandK` 0–2 (the restored mid band).
@@ -121,8 +127,8 @@ A list of at most 6 terms, multiplied together. Each term names one of:
 | Term | Arguments | 1 where |
 |---|---|---|
 | `lum` | `[a, b]` | The graded scene's OKLab lightness runs from a to b (smoothstep; either order) |
-| `y` | `[a, b]` | Board y runs from a to b |
-| `x` | `[a, b]` | Board x runs from a to b |
+| `y` | `[a, b]` | Board y runs from a to b (either order: `[470, 380]` is 1 above 380, 0 below 470) |
+| `x` | `[a, b]` | Board x runs from a to b (either order) |
 | `disc` | `[x, y, r, feather]` | Inside the disc |
 | `near` | `[a, b]` | Near the pieces: 1 within b units of a piece's edge, 0 beyond a |
 
@@ -135,14 +141,14 @@ Each is an object with a `kind`:
 | Kind | Fields (defaults) |
 |---|---|
 | `shafts` | `origin` [x, y] (−140, −220), `angles` (1–8, degrees), `widths` (one per angle, 1–200), `k` (0.07, at most **0.08**: F4), `colour` (#BFD2FF), `seed`, `reach` (900), `near` (150), `moving` (false). A moving shaft belongs in `light` only |
-| `glow` | `x`, `y`, `r`, `colour` (required), `k` (0.05, ≤ 0.5) |
+| `glow` | `x`, `y`, `r`, `colour` (required), `k` (0.05, ≤ 0.2) |
 | `moonGlow` | `x` (−50), `y` (−60), `rCore` (330), `rWide` (900), `kCore` (0.12), `kWide` (0.05), `colour` (#B9C8F0) |
-| `moon` | `x` (150), `y` (100), `r` (28, 4–120), `seed`. One moon at most across paint and light; Fever swells it |
+| `moon` | `x` (150), `y` (100), `r` (28, 4–120), `seed`. One moon at most across paint and light; Fever swells it. It is left out when any piece comes within its radius and 18 units (the brightest face never sits behind a peg) |
 | `aurora` | `y` (300), `k` (0.16, ≤ 0.4) |
 | `nebula` | `k` (0.42, ≤ 0.8), `seed` |
 | `compassRose` | `x` (138), `y` (112), `r` (58, 10–160) |
 | `neatline` | `inset` (2, 0.5–12) |
-| `route` | `points` (2–256 [x, y]), `smooth` (8), `colour` (#D9BE82), `width` (2.2), `dash` (5), `gap` (4.5), `alpha` (0.6) |
+| `route` | `points` (2–256 [x, y]), `smooth` (8), `colour` (#D9BE82), `width` (2.2), `dash` (5), `gap` (4.5), `alpha` (0.6). Kept 6 units off every piece (feathered to 9) |
 
 ## `framing` (silhouettes)
 
@@ -165,7 +171,7 @@ Keep framing to the corners and the walls: the open middle must stay open (F2).
 ## `lights`, `fireflies`
 
 - `lights`: `{ "x", "y", "size" (1), "colour" (#FFC86E), "core" (1.4), "k" (0.8), "halo" (5), "haloK" (0.25),
-  "flicker" (false) }`. A light that would come within 8 units of a piece is dropped. `flicker` makes it a lantern
+  "flicker" (false) }`. A light whose centre comes within 8 units plus 0.6 × `halo` × `size` of a piece is dropped. `flicker` makes it a lantern
   (±10%, steady under Reduce motion).
 - `fireflies`: `{ "count" (≤ 40), "seed", "region": [x0, y0, x1, y1], "colour" }`. Each rests where its whole wander
   (9 × 4 units, a 6 s loop), core and halo, keeps 8 units clear of every piece and 110 units from the launcher's pivot;
@@ -187,8 +193,10 @@ flair) keeps the beams and the halos and stills the rest.
 
 ## The fuller-board rules (enforced at build)
 
-Measured on every build in Debug builds and by the tests for every shipped recipe at both tiers
-(`MoonfallFramingCheck.Check`). A Debug build that breaks one logs it and asserts.
+F1–F5 are measured on every build in Debug builds and by the tests for every shipped recipe at both tiers
+(`MoonfallFramingCheck.Check`); a Debug build that breaks one logs it and asserts. F6 and the ceiling are measured by
+the tests on every shipped level's scene (`MoonfallRuntimeArtTests.Every_peg_reads_against_its_scene…`), and the
+loader's ranges keep a recipe near them (a graded game painting, ceiling ≤ 0.46, glow ≤ 0.2, veil ≥ 0.15).
 
 | Rule | Limit |
 |---|---|
@@ -199,7 +207,23 @@ Measured on every build in Debug builds and by the tests for every shipped recip
 | F3c | No straight outline run (posts, slabs: 36 units within 0.75); thin ropes are exempt |
 | F3d | No peg-sized disc or hole (10–26 units across) in the framing |
 | F4 | A shaft adds at most 0.08 |
-| F5 | Small lights keep 8 units from every piece |
+| F5 | Small lights keep 8 units, plus 0.6 of their halo, from every piece |
+| F6 | Every kind's face (the 80th-percentile luma of its unlit sprite) stands at least **0.20** above the 90th percentile of the veiled scene 2–9 units round every place it can be dealt to (orange only where `canBeOrange`, green only where `canBeGreen`, movers at 48 places along their path), at 1× and at 0.8× (the 640 × 480 window) |
+| Ceiling | The veiled scene's 99th-percentile luma is at most **0.46** (a moon's disc excepted: it keeps clear of the pieces instead) |
+
+## Fit the layout
+
+A recipe is written against a level's layout (level-method.md §2), not on its own:
+
+- Put the painting's subject on the layout's edges and in its open places, never on its face: a city between two arcs,
+  not under one. Re-crop (`crop`, `pad`, `mirror`) until it sits there.
+- Bright things (a moon, a glow, lamps, a lit window) go where pegs need not: the top corners, the walls, under the
+  launcher's swing. The build drops a moon or a light that comes too close, so a recipe that loses its focal light has
+  put it in the wrong place.
+- Overlays that mean something (a route, a region band with `y`, a firefly `region`, a mist band) are drawn for this
+  layout's own shapes. A route traced for another level's trail of pegs means nothing on this one; leave it out.
+- A recipe shared by several levels (`levels`, or the default) must read on all of them: the tests measure every
+  shipped level with the scene it takes.
 
 ## Fallbacks
 
@@ -223,7 +247,10 @@ dotnet build tools/Tsukimichi.MoonfallRender -c Release
 dotnet tools/Tsukimichi.MoonfallRender/bin/Release/net10.0-windows/Tsukimichi.MoonfallRender.dll out.png --level base-02 --size 1280x800 --moment hud
 ```
 
-(`--moment hud|power|fever|tally`, `--marks`, `--reduce-motion`, `--no-game-art`.)
+(`--moment hud|power|fever|tally`, `--marks`, `--reduce-motion`, `--no-game-art`, `--hint`.) Render it at 640 × 480 as
+well as 1280 × 800 and look at it: the pegs are about 12 px across there, and the margins F6 measures are what the
+eye sees. The scene tests print, per level, the build's clearance, cover, and how many framing elements and lights the
+build dropped (`dropped`); a large count means the recipe fights the layout.
 
 ## Example
 

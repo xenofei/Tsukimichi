@@ -1018,6 +1018,15 @@ internal static class MoonfallDress
             }
         }
 
+        // The route keeps off the pieces as the compass rose does (6 units, feathered to 9): it is never read as the aim.
+        for (var i = 0; i < m.Data.Length; i++)
+        {
+            if (m.Data[i] > 0)
+            {
+                m.Data[i] *= MoonfallColor.Smooth(6f, 9f, ctx.ClearanceAtS.Data[i]);
+            }
+        }
+
         var shift = Math.Max(1, (int)(ctx.S * 0.6f));
         for (var y = 0; y < ctx.H; y++)
         {
@@ -1085,8 +1094,16 @@ internal static class MoonfallDress
     }
 
     /// <summary>The readability veil (board.veil): the scene dims by up to k behind and just round the layout.</summary>
-    public static void Veil(MoonfallDressContext ctx, MoonfallImage px, float k, float grow = 18f)
+    public static void Veil(MoonfallDressContext ctx, MoonfallImage px, float k, float grow = 18f) => Veil(ctx, px, k, ctx.ClearanceAtS, grow);
+
+    /// <summary>
+    /// The veil round the pieces whose distance field is <paramref name="field"/> (at the context's scale): the build bakes
+    /// it round the bricks only; the round pegs carry theirs as a sprite drawn under each live peg
+    /// (<see cref="MoonfallVeil"/>), so a cleared peg leaves no dark place behind.
+    /// </summary>
+    public static void Veil(MoonfallDressContext ctx, MoonfallImage px, float k, MoonfallPlane field, float grow = 18f)
     {
+        ArgumentNullException.ThrowIfNull(field);
         if (k <= 0)
         {
             return;
@@ -1095,7 +1112,7 @@ internal static class MoonfallDress
         var m = new MoonfallPlane(ctx.W, ctx.H);
         for (var i = 0; i < m.Data.Length; i++)
         {
-            m.Data[i] = MoonfallColor.Smooth(grow, 0f, ctx.ClearanceAtS.Data[i]);
+            m.Data[i] = MoonfallColor.Smooth(grow, 0f, field.Data[i]);
         }
 
         m = MoonfallFilters.Blur(m, 6 * ctx.S);

@@ -595,13 +595,28 @@ public sealed partial class MoonfallWindow : Window
             return;
         }
 
+        // On one row when it fits; in a narrow window the words wrap and the two buttons follow under them.
+        var style = ImGui.GetStyle();
+        var buttons = ImGui.CalcTextSize(Strings.MoonfallTurnOn).X + ImGui.CalcTextSize(Strings.MoonfallNoThanks).X + (4f * style.FramePadding.X) + style.ItemSpacing.X;
+        var fits = ImGui.CalcTextSize(Strings.MoonfallPegMarksHint).X + UiMetrics.Px(10f) + buttons <= ImGui.GetContentRegionAvail().X;
         ImGui.AlignTextToFramePadding();
         using (Theme.PushText(Theme.Surface.TextSecondary))
         {
-            ImGui.TextUnformatted(Strings.MoonfallPegMarksHint);
+            if (fits)
+            {
+                ImGui.TextUnformatted(Strings.MoonfallPegMarksHint);
+            }
+            else
+            {
+                ImGui.TextWrapped(Strings.MoonfallPegMarksHint);
+            }
         }
 
-        ImGui.SameLine(0f, UiMetrics.Px(10f));
+        if (fits)
+        {
+            ImGui.SameLine(0f, UiMetrics.Px(10f));
+        }
+
         if (ImGui.SmallButton($"{Strings.MoonfallTurnOn}##moonfallMarksOn"))
         {
             options.PegMarks = true;

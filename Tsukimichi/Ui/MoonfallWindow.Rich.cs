@@ -761,7 +761,8 @@ public sealed partial class MoonfallWindow
         if (lit)
         {
             dl.AddCircleFilled(v.Map(x, y), v.Size(r * (pulse ? 2.2f : 1.6f)), Ink(accent, pulse ? 0.45f : 0.30f), 16);
-            (cTop, cMid, cFoot) = (Ink(Vector3.One), Ink(accent), Ink(MoonfallColor.Hex("#1A2A6A")));
+            // Lit in the companion's own colour: a pale tint of it at the top, never plain white.
+            (cTop, cMid, cFoot) = (Ink(Tint(accent, 0.45f)), Ink(accent), Ink(MoonfallColor.Hex("#1A2A6A")));
         }
         else
         {

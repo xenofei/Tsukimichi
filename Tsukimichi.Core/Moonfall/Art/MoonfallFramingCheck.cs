@@ -26,7 +26,7 @@ public sealed record MoonfallFramingReport
     /// <summary>F3d: peg-sized discs or holes in the framing (none allowed).</summary>
     public IReadOnlyList<Vector2> PegSizedDiscs { get; init; } = [];
 
-    /// <summary>F5: small lights within 8 units of a piece (none allowed).</summary>
+    /// <summary>F5: small lights within 8 units of a piece, plus 0.6 of their halo's reach (none allowed).</summary>
     public IReadOnlyList<Vector2> LightsTooClose { get; init; } = [];
 
     /// <summary>F3a's pixel backstop: pixels 0.06 or more darker than the graded scene within 6 units of a piece (none allowed).</summary>
@@ -154,7 +154,8 @@ public static class MoonfallFramingCheck
         var close = new List<Vector2>();
         foreach (var light in lights)
         {
-            if (clearance.At(Math.Clamp(light.X, 0, W - 1), Math.Clamp(light.Y, 0, H - 1)) < 8)
+            // The light's centre 8 units clear plus most of its halo (z: the halo's reach), as the build places it.
+            if (clearance.At(Math.Clamp(light.X, 0, W - 1), Math.Clamp(light.Y, 0, H - 1)) < 8 + (0.6f * light.Z) - 1e-3f)
             {
                 close.Add(new Vector2(light.X, light.Y));
             }

@@ -1,48 +1,56 @@
 {
-  // Lantern night (shipped on base-04 "Lantern Ring"; a default dressing of our own painting): violet night over an
-  // aquamarine ground, laurel boughs from both top corners, a pair of warm lanterns in the open upper corners that
-  // flicker, moonbeams from the upper left, twinkling stars and a low mist drifting along the foot below the pegs.
+  // Lantern night (shipped on base-04 "Lantern Ring"): Kugane's official painting, night graded so its lanterns and
+  // windows stay warm against a deep plum sky, the canal a teal second jewel, a soft moonlit haze from the upper right,
+  // two strings of paper lanterns on cords across the top that flicker, twinkling stars over the roofs and a low mist
+  // drifting on the water below the pegs. Runtime supervision round 1 (game designer M2): base-04 was a copy of
+  // base-01's painting with two dots for lanterns; it now has its own place and real lanterns.
   "format": "moonfall-scene",
   "version": 1,
   "name": "lantern-night",
   "levels": ["base-04"],
-  "source": { "picture": "moon-road-night" },
+  "source": { "game": "ui/loadingimage/-nowloading_base10.tex", "crop": [240, 0, 1440, 1080] },
+  "fallback": "moon-road-night",
+  "grade": { "kind": "night", "gamma": 1.6, "exposure": 0.70, "detail": 0.75, "ceiling": 0.36, "warmKeep": 0.3, "chromaMid": 0.6, "skyDrop": 0.3 },
   "paint": [
-    { "kind": "moonGlow", "x": -60, "y": -60, "rCore": 360, "rWide": 900, "kCore": 0.12, "kWide": 0.05, "colour": "#C9C0F0" }
+    { "kind": "moonGlow", "x": 860, "y": -80, "rCore": 360, "rWide": 900, "kCore": 0.10, "kWide": 0.05, "colour": "#C9C0F0" }
   ],
+  "vignette": 0.26,
+  "grain": 0.008,
   "palette": {
-    "bands": [[0, "#4A2F9A"], [380, "#6B3FA8"], [600, "#4A2F9A"]],
-    "chroma": 0.95,
+    "bands": [[0, "#4A2F9A"], [300, "#6B2F7A"], [600, "#2B3F9A"]],
+    "chroma": 1.0,
     "floor": 0.03,
     "regions": [
-      { "hue": "#1FB0A8", "chroma": 0.10, "weight": 0.9, "where": [{ "y": [440, 520] }] }
+      { "hue": "#1FA0A8", "chroma": 0.09, "weight": 0.85, "where": [{ "y": [470, 540] }] }
     ]
   },
   "light": [
-    { "kind": "shafts", "origin": [-140, -220], "angles": [48, 56, 63, 71], "widths": [26, 18, 34, 22], "k": 0.07, "colour": "#C9B8FF", "seed": 7, "moving": true }
+    { "kind": "shafts", "origin": [940, -180], "angles": [112, 120, 129, 137], "widths": [24, 18, 30, 20], "k": 0.06, "colour": "#D8C8FF", "seed": 9, "moving": true },
+    { "kind": "glow", "x": 400, "y": 300, "r": 260, "colour": "#FF9A50", "k": 0.035 }
   ],
   "framing": [
     {
-      "body": "#050A12", "inner": "#24164E", "rim": "#C9B8FF", "rimK": 0.45, "seed": 9,
+      "body": "#0A0610", "inner": "#2A1640", "rim": "#E8B880", "rimK": 0.35, "seed": 3,
       "shapes": [
-        { "kind": "frond", "style": "laurel", "x": 66, "y": 34, "length": 160, "angle": 20, "droop": 0.45, "leaf": 17, "leaves": 14, "seed": 41, "width": 1.8 },
-        { "kind": "frond", "style": "laurel", "x": 80, "y": 40, "length": 120, "angle": 52, "droop": 0.35, "leaf": 17, "leaves": 14, "seed": 42, "width": 1.8 },
-        { "kind": "frond", "style": "laurel", "x": 734, "y": 34, "length": 160, "angle": 160, "droop": 0.45, "leaf": 17, "leaves": 14, "seed": 43, "width": 1.8 },
-        { "kind": "frond", "style": "laurel", "x": 720, "y": 40, "length": 120, "angle": 128, "droop": 0.35, "leaf": 17, "leaves": 14, "seed": 44, "width": 1.8 },
-        { "kind": "frond", "style": "laurel", "x": 740, "y": 80, "length": 120, "angle": 150, "droop": 0.5, "leaf": 17, "leaves": 14, "seed": 45, "width": 1.8 }
+        { "kind": "rope", "from": [85, 46], "to": [300, 46], "sag": 22, "width": 1.4 },
+        { "kind": "rope", "from": [500, 46], "to": [715, 46], "sag": 22, "width": 1.4 }
       ]
     }
   ],
   "lights": [
-    { "x": 236, "y": 128, "size": 1.3, "colour": "#FFC86E", "core": 2.2, "k": 0.95, "halo": 11, "haloK": 0.32, "flicker": true },
-    { "x": 566, "y": 132, "size": 1.3, "colour": "#FFC86E", "core": 2.2, "k": 0.95, "halo": 11, "haloK": 0.32, "flicker": true }
+    { "x": 122, "y": 63, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 192, "y": 73, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 263, "y": 63, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 537, "y": 63, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 608, "y": 73, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 678, "y": 63, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true }
   ],
-  "veil": 0.24,
+  "veil": 0.40,
   "motion": {
-    "dust": 36,
-    "stars": 40,
-    "starRegion": [75, 41, 725, 200],
+    "dust": 30,
+    "stars": 30,
+    "starRegion": [75, 41, 725, 150],
     "mist": [{ "y": [564, 594], "speed": 4, "alpha": 0.08, "cell": 140, "seed": 11, "colour": "#AFC0F0" }]
   },
-  "chrome": { "sky": "#24154F", "deep": "#070616", "jewel1": "#6B3FA8", "jewel2": "#2FA7B4" }
+  "chrome": { "sky": "#2A1450", "deep": "#0A0614", "jewel1": "#9A3A6A", "jewel2": "#1F8A90" }
 }

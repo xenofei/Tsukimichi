@@ -1,8 +1,10 @@
 {
   // The Airship Road (pilot base-p1; shipped on base-03 "Tidewater"): the official world map painting, night graded
-  // as a chart lying under the moon, the airship's route engraved in gilt, teal seas against sapphire lands, the desk
+  // as a chart lying under the moon, teal seas against sapphire lands, the desk
   // lamp's warm pool and three broad beams from the upper left, the chart's compass rose and neat-line.
-  // spec-rich2.md §5; docs/design/v9/rich/src/scene_airship_road.py and rich2/src/dress2.py, recipe "base-p1".
+  // spec-rich2.md §5; docs/design/v9/rich/src/scene_airship_road.py and rich2/src/dress2.py, recipe "base-p1". The pilot's
+  // engraved route is left out: it traced base-p1's own trail of pegs and means nothing over Tidewater's layout
+  // (runtime supervision round 1, level critic).
   "format": "moonfall-scene",
   "version": 1,
   "name": "airship-road",
@@ -14,16 +16,9 @@
     "crop": [-30, 370, 840, 630]
   },
   "fallback": "moon-road-night",
-  "grade": { "kind": "night", "gamma": 1.35, "exposure": 0.72, "warmKeep": 0.25, "chromaMid": 0.45 },
+  "grade": { "kind": "night", "gamma": 1.35, "exposure": 0.72, "ceiling": 0.35, "warmKeep": 0.25, "chromaMid": 0.45 },
   "paint": [
-    { "kind": "moonGlow", "x": -60, "y": -60, "rCore": 420, "rWide": 900, "kCore": 0.10, "kWide": 0.05 },
-    {
-      "kind": "route", "colour": "#D9BE82", "width": 2.2, "alpha": 0.60, "smooth": 8,
-      "points": [[116.2, 440.0], [161.9, 453.3], [209.5, 464.8], [257.1, 481.9], [298.1, 493.3], [314.3, 459.0],
-                 [320.0, 419.0], [314.3, 377.1], [320.0, 333.3], [310.5, 291.4], [306.7, 247.6], [314.3, 205.7],
-                 [326.7, 169.5], [358.1, 186.7], [382.9, 213.3], [408.6, 235.2], [443.8, 245.7], [480.0, 251.4],
-                 [516.2, 262.9], [548.6, 274.3], [590.5, 304.8], [628.6, 329.5], [668.6, 344.8], [701.0, 352.4]]
-    }
+    { "kind": "moonGlow", "x": -60, "y": -60, "rCore": 420, "rWide": 900, "kCore": 0.10, "kWide": 0.05 }
   ],
   "vignette": 0.28,
   "grain": 0.008,

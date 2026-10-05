@@ -21,6 +21,7 @@ public sealed partial class MoonfallWindow
     private string aceLine = string.Empty;
     private long aceLineFor = -1;
     private string usesLine = string.Empty;
+    private string ballsCountLine = string.Empty;
     private (MoonfallPower Power, int Uses, int Language) usesFor = (MoonfallPower.None, -1, -1);
 
     /// <summary>
@@ -36,29 +37,47 @@ public sealed partial class MoonfallWindow
         var before = progress.Best(level.Id);
         wonAced = ace is { } target && total >= target;
         wonNewBest = before > 0 && total > before;
+        wonPreviousBest = before;
         unsaved |= progress.RecordLevel(level.Id, won: true, total, ace);
     }
 
     /// <summary>The level's Ace score (the shipped table; the offline renderer stages its own).</summary>
     internal Func<string?, long?> AceFor { get; set; } = MoonfallAces.For;
 
-    private void RichEnd(ImDrawListPtr dl, Vector2 origin, Vector2 size, float scale, MoonfallGame g, MoonfallChromeSheet sheet, ImTextureID ui, in ArtPen boardPen)
+    private void RichEnd(ImDrawListPtr dl, Vector2 origin, Vector2 size, Vector2 areaMin, Vector2 areaMax, float scale, MoonfallGame g, MoonfallChromeSheet sheet,
+        ImTextureID ui, in ArtPen boardPen)
     {
         var won = g.Phase == MoonfallPhase.Won;
-        var v = new View(origin, scale, 1f, BoardCentre);
-        var c = new ChromePen(dl, v, sheet, ui);
-        var p = boardPen with { View = v };
         var small = scale < 1f;
         var companion = MoonfallCards.For(g.Power);
         var accent = companion?.Accent ?? MoonfallColor.Hex("#FFB45E");
         dl.AddRectFilled(origin, origin + size, Ink(MoonfallColor.Hex("#03040C"), 0.6f));
 
-        // The window: enamel in the companion's colour under the journal's frame.
-        double x0 = small ? 118 : 181, y0 = small ? 54 : 110, x1 = small ? 682 : 619, y1 = small ? 590 : 580;
-        if (!won)
+        // The window fits its rows (no dead space), and in a small window it is set at the approved 640 size (0.8 px a
+        // unit) when the window has the room, not at the board's scale: it is a modal panel, not part of the board.
+        double x0 = small ? 118 : 181, x1 = small ? 682 : 619;
+        var titleOffset = small ? 60.0 : 57.0;
+        var ruleOffset = titleOffset + (small ? 46 : 43);
+        var rowsOffset = ruleOffset + (small ? 30 : 26);
+        var rowStep = small ? 31f : 28.5f;
+        var totalOffset = rowsOffset + (3 * rowStep) + (small ? 12 : 10);
+        var calloutOffset = totalOffset + (small ? 54 : 48);
+        var bh = small ? 37.5 : 31.5;
+        var height = won ? calloutOffset + (small ? 26 : 22) + 26 + bh + (small ? 20 : 16.5) : (small ? 300 : 260);
+        var y0 = 300 - (height / 2) + 8;
+        var y1 = y0 + height;
+        var tv = scale;
+        if (small)
         {
-            y1 = y0 + (small ? 300 : 260);
+            var area = areaMax - areaMin;
+            tv = MathF.Max(scale, MathF.Min(0.8f, MathF.Min((area.X - 8) / (float)(x1 - x0 + 40), (area.Y - 8) / (float)(height + 40))));
         }
+
+        // Centred on the board's centre on screen, at the panel's own scale.
+        var centre = origin + (size * 0.5f);
+        var v = new View(centre - (new Vector2(400f, (float)(y0 + y1) / 2f) * tv), tv, 1f, BoardCentre);
+        var c = new ChromePen(dl, v, sheet, ui);
+        var p = boardPen with { View = v };
 
         dl.AddRectFilledMultiColor(v.Map(x0, y0), v.Map(x1, y1), Ink(MoonfallColor.Hex("#22357A"), 0.97f), Ink(MoonfallColor.Hex("#1B2A63"), 0.97f),
             Ink(MoonfallColor.Hex("#0A1030"), 0.97f), Ink(MoonfallColor.Hex("#121C48"), 0.97f));
@@ -68,7 +87,7 @@ public sealed partial class MoonfallWindow
         Banner(c, cx, y0 + 3, won ? Strings.MoonfallBannerLevelClear : Strings.MoonfallBannerOutOfBalls, small ? 35f : 33f, null, 0, accent, 1f, 1f, laurel: true, x1 - x0 + 120, 4f);
 
         var level = campaigns[campaign].Levels[levelIndex];
-        var titleY = y0 + (small ? 60 : 57);
+        var titleY = y0 + titleOffset;
         DrawText(dl, MoonfallFace.Jupiter, NamePx(v, small ? 40 : 37.5f, MoonfallFace.Jupiter), v.Map(cx, titleY), Anchor.Centre, Ink(GoldHiInk), level.Name, Ink(MoonfallColor.Hex("#1A0F04")), v.Size(1.4));
         if (tallySubFor != (levelIndex, g.BallsLeft, Localization.Loc.Version))
         {
@@ -77,7 +96,7 @@ public sealed partial class MoonfallWindow
         }
 
         DrawText(dl, MoonfallFace.Axis, NamePx(v, small ? 15 : 11.25f, MoonfallFace.Axis), v.Map(cx, titleY + (small ? 27 : 24)), Anchor.Centre, Ink(Ink2), tallySub);
-        var ruleY = titleY + (small ? 46 : 43);
+        var ruleY = y0 + ruleOffset;
         if (sheet[MoonfallChromePart.ShortRule] is { } rule)
         {
             var rw = small ? 380 : 330;
@@ -90,8 +109,7 @@ public sealed partial class MoonfallWindow
             }
         }
 
-        var y = ruleY + (small ? 30 : 26);
-        var rowStep = small ? 31f : 28.5f;
+        var y = y0 + rowsOffset;
         var lx = x0 + (small ? 42 : 57);
         var rx = x1 - (small ? 42 : 57);
         if (won && g.Tally is { } tally)
@@ -99,7 +117,15 @@ public sealed partial class MoonfallWindow
             RefreshTallyLines(g, tally);
             for (var k = 0; k < 6; k += 2)
             {
-                DrawText(dl, MoonfallFace.Jupiter, NamePx(v, small ? 23.75f : 20f, MoonfallFace.Jupiter), v.Map(lx, y), Anchor.Left, Ink(Cream), tallyLines[k], Ink(EdgeInk), v.Size(0.8));
+                var labelPx = NamePx(v, small ? 23.75f : 20f, MoonfallFace.Jupiter);
+                var lw = DrawText(dl, MoonfallFace.Jupiter, labelPx, v.Map(lx, y), Anchor.Left, Ink(Cream), tallyLines[k], Ink(EdgeInk), v.Size(0.8));
+                if (k == 4)
+                {
+                    // The balls' count and their worth in the game's sans, lining figures beside the word (Jupiter's
+                    // old-style "11" reads as "II").
+                    DrawText(dl, MoonfallFace.Axis, NumberPx(v, small ? 17.5f : 15f, MoonfallFace.Axis), v.Map(lx + (lw / v.Scale) + 10, y), Anchor.Left, Ink(Ink2), ballsCountLine, Ink(EdgeInk), v.Size(0.6));
+                }
+
                 DrawText(dl, MoonfallFace.Trump, NumberPx(v, small ? 22.5f : 19.5f, MoonfallFace.Trump), v.Map(rx, y), Anchor.Right, Ink(Cream), tallyLines[k + 1], Ink(EdgeInk), v.Size(0.6));
                 y += rowStep;
             }
@@ -109,12 +135,11 @@ public sealed partial class MoonfallWindow
                 Part(c, MoonfallChromePart.ShortRule, lx - 8, y - 12 - (line.H * 0.18), rx + 8, y - 12 + (line.H * 0.18), uint.MaxValue, u0: 20, u1: 60);
             }
 
-            y += small ? 12 : 10;
+            y = y0 + totalOffset;
             DrawText(dl, MoonfallFace.Jupiter, NamePx(v, small ? 32.5f : 28.5f, MoonfallFace.Jupiter), v.Map(lx, y), Anchor.Left, Ink(GoldHiInk), tallyLines[6], Ink(MoonfallColor.Hex("#140A02")), v.Size(1.2));
             Put(p, p.Atlas[MoonfallSprite.Soft], rx - 40, y, 34f / 4f, Ink(MoonfallColor.Hex("#FFB45E"), 0.16f));
             DrawText(dl, MoonfallFace.Trump, NumberPx(v, small ? 37.5f : 33f, MoonfallFace.Trump), v.Map(rx, y), Anchor.Right, Ink(GoldHiInk), tallyLines[7], Ink(MoonfallColor.Hex("#140A02")), v.Size(1.0));
-            y += small ? 52 : 48;
-            Callout(c, p, g, level, lx, rx, y, small, accent);
+            Callout(c, p, g, level, lx, rx, y0 + calloutOffset, small, accent);
         }
         else
         {
@@ -125,7 +150,6 @@ public sealed partial class MoonfallWindow
         // The way on: Next (focused) when there is one, and this level again.
         var next = levelIndex + 1;
         var last = won && next >= campaigns[campaign].Levels.Count;
-        var bh = small ? 37.5 : 31.5;
         var by0 = y1 - bh - (small ? 20 : 16.5);
         if (won && !last)
         {
@@ -162,9 +186,10 @@ public sealed partial class MoonfallWindow
             [
                 Strings.MoonfallTallyLevel, tally.LevelScore.ToString("N0", CultureInfo.CurrentCulture),
                 Strings.MoonfallTallyFullMoon, tally.FeverBonus.ToString("N0", CultureInfo.CurrentCulture),
-                string.Format(CultureInfo.CurrentCulture, Strings.MoonfallTallyBallsFormat, tally.BallsLeft), tally.BallBonus.ToString("N0", CultureInfo.CurrentCulture),
+                Strings.MoonfallTallyBallsLabel, tally.BallBonus.ToString("N0", CultureInfo.CurrentCulture),
                 Strings.MoonfallTallyTotal, g.ShownScore.ToString("N0", CultureInfo.CurrentCulture),
             ];
+            ballsCountLine = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallTallyBallsCountFormat, tally.BallsLeft);
         }
 
         // The total counts up with the score counter (shown at once under Reduce motion, as the counter is).
@@ -180,23 +205,29 @@ public sealed partial class MoonfallWindow
     {
         var dl = c.Dl;
         var v = c.View;
-        if (wonAced || wonNewBest)
+        // Each is shown once the counting total reaches it, so NEW BEST lands as the old best is passed (at once under
+        // Reduce motion, where the total does).
+        var shown = g.ShownScore;
+        var aced = wonAced && AceFor(level.Id) is { } target && shown >= target;
+        var newBest = wonNewBest && shown > wonPreviousBest;
+        if (aced || newBest)
         {
-            var w = small ? 250 : 202;
-            var plate0 = v.Map(lx - 12, cy - 22);
-            var plate1 = v.Map(lx - 12 + w, cy + 22);
+            var w = small ? 232 : 202;
+            var half = small ? 27 : 22;
+            var plate0 = v.Map(lx - 12, cy - half);
+            var plate1 = v.Map(lx - 12 + w, cy + half);
             dl.AddRectFilled(plate0, plate1, Ink(MoonfallColor.Hex("#2A1206"), 0.85f));
-            GiltBand(c, lx - 12, cy - 22, lx - 12 + w, cy + 22, 0.22);
+            GiltBand(c, lx - 12, cy - half, lx - 12 + w, cy + half, 0.22);
             Put(p, p.Atlas[MoonfallSprite.Halo], lx + 15, cy, 1.4f, Ink(MoonfallColor.Hex("#FFB070"), 0.8f));
             Put(p, p.Atlas.Peg(PegColour.Orange, 1, true), lx + 15, cy, 1.3f, uint.MaxValue);
             var x = lx + 37;
-            if (wonAced)
+            if (aced)
             {
                 var aw = DrawText(dl, MoonfallFace.Trump, NumberPx(v, small ? 25 : 24, MoonfallFace.Trump), v.Map(x, cy - 6), Anchor.Left, Ink(GoldHiInk), Strings.MoonfallAced, Ink(MoonfallColor.Hex("#140A02")), v.Size(0.9));
                 x += (aw / v.Scale) + 14;
             }
 
-            if (wonNewBest)
+            if (newBest)
             {
                 DrawText(dl, MoonfallFace.Trump, NumberPx(v, small ? 18.75f : 16.5f, MoonfallFace.Trump), v.Map(x, cy - 6), Anchor.Left, Ink(Tint(accent, 0.2f)), Strings.MoonfallNewBest, Ink(MoonfallColor.Hex("#140A02")), v.Size(0.8));
             }
@@ -209,7 +240,7 @@ public sealed partial class MoonfallWindow
                     aceLine = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallAceScoreFormat, ace.ToString("N0", CultureInfo.CurrentCulture));
                 }
 
-                DrawText(dl, MoonfallFace.Axis, NamePx(v, small ? 15 : 10.5f, MoonfallFace.Axis), v.Map(lx + 37, cy + 12), Anchor.Left, Ink(Ink2), aceLine);
+                DrawText(dl, MoonfallFace.Axis, NamePx(v, small ? 15 : 10.5f, MoonfallFace.Axis), v.Map(lx + 37, cy + (small ? 13 : 12)), Anchor.Left, Ink(Ink2), aceLine);
             }
         }
 
@@ -232,18 +263,16 @@ public sealed partial class MoonfallWindow
         }
 
         GiltRing(c, mx, cy, mr);
-        if (!small)
+        // The companion's name and how often the power fired (left out while it never did).
+        var uses = (uint)g.Power < (uint)powerUses.Length ? powerUses[(int)g.Power] : 0;
+        if (usesFor != (g.Power, uses, Localization.Loc.Version))
         {
-            var uses = (uint)g.Power < (uint)powerUses.Length ? powerUses[(int)g.Power] : 0;
-            if (usesFor != (g.Power, uses, Localization.Loc.Version))
-            {
-                usesFor = (g.Power, uses, Localization.Loc.Version);
-                usesLine = string.Create(CultureInfo.CurrentCulture, $"{Strings.MoonfallPowerName(g.Power)} ×{uses}");
-            }
-
-            DrawText(dl, MoonfallFace.Jupiter, NamePx(v, 17, MoonfallFace.Jupiter), v.Map(mx - mr - 10, cy - 7), Anchor.Right, Ink(Cream), Strings.MoonfallCompanionName(g.Power), Ink(EdgeInk), v.Size(0.8));
-            DrawText(dl, MoonfallFace.Axis, NamePx(v, 10.5f, MoonfallFace.Axis), v.Map(mx - mr - 10, cy + 9), Anchor.Right, Ink(Tint(companion.Accent, 0.3f)), usesLine);
+            usesFor = (g.Power, uses, Localization.Loc.Version);
+            usesLine = uses > 0 ? string.Create(CultureInfo.CurrentCulture, $"{Strings.MoonfallPowerName(g.Power)} ×{uses}") : Strings.MoonfallPowerName(g.Power);
         }
+
+        DrawText(dl, MoonfallFace.Jupiter, NamePx(v, small ? 19 : 17, MoonfallFace.Jupiter), v.Map(mx - mr - 10, cy - 7), Anchor.Right, Ink(Cream), Strings.MoonfallCompanionName(g.Power), Ink(EdgeInk), v.Size(0.8));
+        DrawText(dl, MoonfallFace.Axis, NamePx(v, small ? 13 : 10.5f, MoonfallFace.Axis), v.Map(mx - mr - 10, cy + 10), Anchor.Right, Ink(Tint(companion.Accent, 0.3f)), usesLine);
     }
 
     /// <summary>A button drawn as the Gold Saucer's gilt pill with its label in Jupiter; true when clicked. Focus adds the game's warm selection glow.</summary>

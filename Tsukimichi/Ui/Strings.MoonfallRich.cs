@@ -58,4 +58,8 @@ static partial class Strings
     public static string MoonfallPegMarksHint => Loc.Get("MoonfallPegMarksHint");
     public static string MoonfallTurnOn => Loc.Get("MoonfallTurnOn");
     public static string MoonfallNoThanks => Loc.Get("MoonfallNoThanks");
+
+    public static string MoonfallTallyBallsLabel => Loc.Get("MoonfallTallyBallsLabel");
+
+    public static string MoonfallTallyBallsCountFormat => Loc.Get("MoonfallTallyBallsCountFormat");
 }

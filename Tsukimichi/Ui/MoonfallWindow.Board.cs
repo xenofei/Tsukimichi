@@ -246,7 +246,7 @@ public sealed partial class MoonfallWindow
         {
             if (richArt)
             {
-                RichEnd(dl, origin, size, scale, g, gameArt!.Chrome!, gameArt.ChromeTexture!.Handle,
+                RichEnd(dl, origin, size, start, start + avail, scale, g, gameArt!.Chrome!, gameArt.ChromeTexture!.Handle,
                     new ArtPen(dl, view, art!.Atlas!, art.Sheet(scale > ArtTwoXAbove, out _)!.Handle));
             }
             else
