@@ -46,6 +46,25 @@ public sealed class PortraitAuditCurationTests
         }
     }
 
+    /// <summary>
+    /// Reconciled card crops the final check (docs/research/portrait-audit/final-check/verdicts.json, 2026-10-04) sent
+    /// back because the Triple Triad card's gold frame showed inside the plate: they ship a box whose circle clears every
+    /// frame pixel by 2 hr px instead of the reconciled eyes and chin.
+    /// </summary>
+    private static readonly Dictionary<uint, (float X, float Y, float Side)> ClearOfTheCardFrame = new()
+    {
+        [87056] = (25, 34, 118), // Minfilia
+        [87067] = (26, 38, 123), // Raubahn
+        [87093] = (103, 32, 61), // Count Edmont
+        [87166] = (27, 62, 120), // Y'shtola, Heavensward
+        [87202] = (27, 67, 92), // Hien
+        [87214] = (26, 51, 102), // Tansui
+        [87259] = (95, 38, 87), // Grenoldt
+        [87465] = (68, 49, 113), // Nitowikwe
+        [87466] = (27, 58, 107), // Jullus
+        [87467] = (27, 59, 105), // Zero
+    };
+
     [Fact]
     public void Every_unreviewed_change_the_supervisor_passed_ships_the_reconciled_crop()
     {
@@ -53,6 +72,7 @@ public sealed class PortraitAuditCurationTests
         var reviewed = Audit("desk/owner-answers.json")["corrections"]!.AsArray().Select(c => (string)c!["key"]!).ToHashSet(StringComparer.Ordinal);
         var verdicts = Audit("reconciled/supervisor/verdicts.json")["verdicts"]!.AsObject();
         var applied = 0;
+        var clearOfTheFrame = new List<uint>();
         foreach (var row in Audit("reconciled/reconciled.json")["rows"]!.AsArray())
         {
             var key = (string)row!["key"]!;
@@ -64,6 +84,14 @@ public sealed class PortraitAuditCurationTests
             // Every unreviewed change was passed by the supervisor; none is left out.
             Assert.Equal("pass", (string?)verdicts[key]?["verdict"]);
             var icon = (uint)row["id"]!;
+            if (ClearOfTheCardFrame.TryGetValue(icon, out var box))
+            {
+                Assert.Equal(PortraitCrop.FromBox(PortraitSource.TripleTriadCard, box.X, box.Y, box.Side), curation.IconCrops[icon]);
+                clearOfTheFrame.Add(icon);
+                applied++;
+                continue;
+            }
+
             var final = row["final"]!["curated"]!;
             var eyes = final["eyes"]!.AsArray();
             var expected = PortraitFraming.CropFor(PortraitSources.FamilyOfIcon(icon), new PortraitLandmarks((float)(double)eyes[0]!, (float)(double)eyes[1]!, (float)(double)final["chin"]!));
@@ -72,6 +100,7 @@ public sealed class PortraitAuditCurationTests
         }
 
         Assert.Equal(141, applied);
+        Assert.Equal(ClearOfTheCardFrame.Keys.Order(), clearOfTheFrame.Order());
     }
 
     [Theory]
