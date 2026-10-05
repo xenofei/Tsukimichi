@@ -42,7 +42,8 @@ dotnet run --project Tsukimichi.DataGen -c Release --no-build -- `
 - **Per-NPC boxes** (`tools/portrait-pack/portrait_pack_overrides.json`) map an ENpc id to `photoBox` [x, y, side] in that giver's Garland photo pixels, with a note. Givers who share a photo share the box. A per-NPC box is kept even where the head finder would drop the frame as empty: the owner keeps faceless subjects such as helmets and masks. `tools/portrait-pack/make_overrides.py` writes the file from the audit (`--check` reports a stale file):
   - the owner's own box where he adjusted one on the Portrait Desk;
   - the reconciler's box where he accepted it;
-  - otherwise the reconciler's box when it changed the frame and the face-centring supervisor passed it.
+  - otherwise the reconciler's box when it changed the frame and the face-centring supervisor passed it;
+  - otherwise the box the reconciler kept from pack 1 when the supervisor passed it, so the head finder never makes a good frame worse (`--head-boxes <boxes.json>` reports which of these the head finder would frame differently).
   A box under 72 px is held at 72 px on the same eye line.
 
 ### Same inputs, same bytes

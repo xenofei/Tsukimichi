@@ -37,9 +37,10 @@ public enum PortraitSource : byte
     TrustStrip = 5,
 
     /// <summary>
-    /// A photo from the optional portrait pack (feature plan v7 F4): a Garland Tools render of that exact NPC, head-cropped
-    /// offline to a <see cref="PortraitPackManifest.ImageSide"/> px square and installed only when the player downloads the
-    /// pack. Its <see cref="PortraitRef.Icon"/> is the ENpcResident id whose photo it is, not a game icon.
+    /// A giver photo from the portrait pack that ships with the plugin (feature plan v7 F4, <see cref="BundledPortraits"/>):
+    /// a Garland Tools render of that exact NPC, head-cropped offline to a <see cref="PortraitPackManifest.ImageSide"/> px
+    /// square, shown under Game art + photos. Its <see cref="PortraitRef.Icon"/> is the ENpcResident id whose photo it is,
+    /// not a game icon.
     /// </summary>
     Pack = 6,
 }
