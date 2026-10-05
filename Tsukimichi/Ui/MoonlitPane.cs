@@ -633,7 +633,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         // else to drag, so a reorder attempt on State became a resize of the stretch column before it.
         const ImGuiTableFlags Flags = ImGuiTableFlags.ScrollY | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH
                                       | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable
-                                      | ImGuiTableFlags.SizingStretchProp;
+                                      | ImGuiTableFlags.SizingStretchProp | ImGuiTableFlags.Sortable | ImGuiTableFlags.SortTristate;
         var tableWidth = ImGui.GetContentRegionAvail().X;
         using var table = ImRaii.Table(TableId, ColumnCount, Flags, new Vector2(-1f, -1f));
         if (!table)
@@ -647,21 +647,39 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         UiMetrics.ApplyFontScale();
         var line = ImGui.GetTextLineHeight();
         var glyphColumn = MathF.Max(UiMetrics.InlineGlyphSize(line) * 2f, UiMetrics.Px(44f));
+        var sortedWasHidden = SortColumnAutoHidden();
         FitColumns(tableWidth, glyphColumn, line);
+        // ImGui drops the sort of a column the plan hides; it is written back on the frame the column returns.
+        restoreSort |= sortedWasHidden && !SortColumnAutoHidden();
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableSetupColumn(Strings.MoonlitColumnObtained, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
         ImGui.TableSetupColumn(Strings.MoonlitColumnReward, ImGuiTableColumnFlags.WidthStretch, 3f);
-        ImGui.TableSetupColumn(Strings.MoonlitColumnKind, ImGuiTableColumnFlags.WidthFixed | Planned(KindColumn), UiMetrics.Px(110f));
+        ImGui.TableSetupColumn(Strings.MoonlitColumnKind, ImGuiTableColumnFlags.WidthFixed | Planned(KindColumn), KindWidth());
         ImGui.TableSetupColumn(Strings.MoonlitColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.MoonlitColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
-        ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed | Planned(ConfidenceColumn), UiMetrics.Px(80f));
+        ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed | Planned(ConfidenceColumn), ConfidenceWidth());
         ImGui.TableSetupColumn(Strings.MoonlitColumnAvailability, ImGuiTableColumnFlags.WidthFixed | Planned(AvailabilityColumn), AvailabilityWidth());
         // The glyph columns follow IconScale, which imgui.ini's saved widths do not track; re-asserted every frame
         // (a no-op once they agree) so a changed IconScale never clips the moons.
         ImGuiP.TableSetColumnWidth(0, glyphColumn);
         ImGuiP.TableSetColumnWidth(4, glyphColumn);
         RecordPlayerHidden();
+
+        // The persisted sort is written into the column state on the table's first frame (imgui.ini's own would win
+        // otherwise), and again when the sorted column comes back from a plan hide; as the quest table does.
+        if (!sortInitialized || restoreSort)
+        {
+            sortInitialized = true;
+            restoreSort = false;
+            ApplyInitialSort(settings.MoonlitSort());
+        }
+
         ImGui.TableHeadersRow();
+        if (ApplySortSpecs())
+        {
+            // A header click this frame: the rows below follow it now rather than a frame later.
+            RefreshVisible(ui);
+        }
 
         if (!clipperCreated)
         {
@@ -716,11 +734,34 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private bool columnsPlanned;
 
     private float availabilityWidth;
+    private float kindHeaderWidth;
+    private float confidenceHeaderWidth;
     private float availabilityWidthFont = -1f;
     private int availabilityWidthLanguage = -1;
 
     /// <summary>The Availability column's width: its widest label in the current font. Measured again only when the font size or the language changes.</summary>
     private float AvailabilityWidth()
+    {
+        MeasureColumns();
+        return availabilityWidth;
+    }
+
+    /// <summary>The Kind column: its 110 px budget, or its header with the sort arrow when that is wider (a sorted header is never cut).</summary>
+    private float KindWidth()
+    {
+        MeasureColumns();
+        return MathF.Max(UiMetrics.Px(110f), kindHeaderWidth);
+    }
+
+    /// <summary>The Confidence column: its 80 px budget, or its header with the sort arrow when that is wider.</summary>
+    private float ConfidenceWidth()
+    {
+        MeasureColumns();
+        return MathF.Max(UiMetrics.Px(80f), confidenceHeaderWidth);
+    }
+
+    /// <summary>The measured column widths, again only when the font size or the language changes.</summary>
+    private void MeasureColumns()
     {
         var font = ImGui.GetFontSize();
         if (font != availabilityWidthFont || availabilityWidthLanguage != Localization.Loc.Version)
@@ -728,14 +769,17 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             availabilityWidthFont = font;
             availabilityWidthLanguage = Localization.Loc.Version;
             availabilityWidth = MeasureAvailability();
+            kindHeaderWidth = SortedHeaderWidth(Strings.MoonlitColumnKind);
+            confidenceHeaderWidth = SortedHeaderWidth(Strings.MoonlitColumnConfidence);
         }
-
-        return availabilityWidth;
     }
+
+    /// <summary>A header label with room for the sort arrow beside it, so sorting never cuts the label (LayoutBudgets.SortArrowLogical).</summary>
+    private static float SortedHeaderWidth(string label) => MathF.Ceiling(ImGui.CalcTextSize(label).X + UiMetrics.Px(LayoutBudgets.SortArrowLogical));
 
     private static float MeasureAvailability()
     {
-        var widest = ImGui.CalcTextSize(Strings.MoonlitColumnAvailability).X;
+        var widest = SortedHeaderWidth(Strings.MoonlitColumnAvailability);
         foreach (var kind in Enum.GetValues<RewardAvailability>())
         {
             widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.MoonlitAvailability(new RewardAvailabilityInfo(kind), DateTime.UnixEpoch)).X);
@@ -757,9 +801,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         PaneFit.MoonlitColumns(
             glyphColumn + padding,
             rewardMin + padding,
-            UiMetrics.Px(110f) + padding,
+            KindWidth() + padding,
             nameMin + padding,
-            UiMetrics.Px(80f) + padding,
+            ConfidenceWidth() + padding,
             AvailabilityWidth() + padding,
             specs);
         for (var i = 0; i < specs.Length; i++)
@@ -795,6 +839,70 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     }
 
     private static readonly int[] PlannedColumns = [KindColumn, ConfidenceColumn, AvailabilityColumn];
+
+    // The column sort (owner request after 1.22.0): written into ImGui's column state on the table's first frame, and
+    // again once a sorted column the plan hid is shown again (ImGui drops a hidden column's sort).
+    private bool sortInitialized;
+    private bool restoreSort;
+
+    /// <summary>Whether the narrow-width plan hides the column the persisted sort is on (its header, and with it its arrow, are gone).</summary>
+    private bool SortColumnAutoHidden() => MoonlitSort.TableColumnOf(settings.MoonlitSortColumn) is var column and >= 0 && autoHidden[column];
+
+    /// <summary>
+    /// Sets the table's sort column and direction from the persisted sort; the usual order clears every column's sort
+    /// (allowed because the table is SortTristate). Called between the column setup and the header row.
+    /// </summary>
+    private static void ApplyInitialSort(MoonlitSortSpec initial)
+    {
+        var column = MoonlitSort.TableColumnOf(initial.Column);
+        if (column < 0)
+        {
+            ImGuiP.TableSetColumnSortDirection(0, ImGuiSortDirection.None, appendToSortSpecs: false);
+            return;
+        }
+
+        ImGuiP.TableSetColumnSortDirection(column, initial.Descending ? ImGuiSortDirection.Descending : ImGuiSortDirection.Ascending, appendToSortSpecs: false);
+    }
+
+    /// <summary>
+    /// Reads the headers' sort (ImGui.TableGetSortSpecs) when it changed and saves it; true when the sort the rows
+    /// follow changed. The rows are sorted in <see cref="RefreshVisible"/>, once per change, never per frame.
+    /// </summary>
+    private bool ApplySortSpecs()
+    {
+        var specs = ImGui.TableGetSortSpecs();
+        if (specs.IsNull || !specs.SpecsDirty)
+        {
+            return false;
+        }
+
+        // ImGui clears the sort of a column the plan disables and reports no specs: that is the plan's doing, not a
+        // header click, and the persisted sort stands (the rows keep following it).
+        if (specs.SpecsCount == 0 && SortColumnAutoHidden())
+        {
+            specs.SpecsDirty = false;
+            return false;
+        }
+
+        // No specs (the third header click) is the usual order.
+        var sort = MoonlitSortSpec.Default;
+        if (specs.SpecsCount > 0)
+        {
+            var spec = specs.Specs;
+            sort = MoonlitSort.FromHeader(specs.SpecsCount, spec.ColumnIndex, spec.SortDirection == ImGuiSortDirection.Descending);
+        }
+
+        specs.SpecsDirty = false;
+        if (sort == settings.MoonlitSort())
+        {
+            return false;
+        }
+
+        settings.MoonlitSortColumn = sort.Column;
+        settings.MoonlitSortDescending = sort.Descending;
+        settings.Save(pluginInterface);
+        return true;
+    }
 
     /// <summary>
     /// A reward's icon in the table, in logical pixels (feature plan v6 G6): readable at a glance, where a quest row's
@@ -2338,7 +2446,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var headings = groupBy && !settings.MoonlitGallery;
         var key = new VisibleKey(
             rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, hideStore, confidenceFilter, filterText,
-            expansionFilter, stateFilter, groupBy, headings, settings.MoonlitCountGone, Localization.Loc.Version, addedInFilter);
+            expansionFilter, stateFilter, groupBy, headings, settings.MoonlitCountGone, Localization.Loc.Version, addedInFilter, settings.MoonlitSort());
         if (key == visibleKey)
         {
             return;
@@ -2410,9 +2518,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
+        // The column sort the headers ask for (stable: ties keep the catalog's order); grouped, it holds within each expansion.
+        MoonlitSort.Apply(picked, SortKeyOf, key.Sort);
+
         if (groupBy)
         {
-            // Stable: within an expansion the rows keep the catalog's order.
+            // Stable: within an expansion the rows keep the catalog's (or the column sort's) order.
             var order = new Dictionary<int, int>(picked.Count);
             for (var i = 0; i < picked.Count; i++)
             {
@@ -2438,6 +2549,25 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             groupHeadings[expansion] = names.Expansion(expansion) + " (" + size.ToString(CultureInfo.InvariantCulture) + ")");
         visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + listableCount.ToString(CultureInfo.InvariantCulture);
         BuildCopyMissing(picked, groupBy);
+    }
+
+    /// <summary>
+    /// What a row sorts by, as it shows: its printed names (a masked name is its placeholder), the quest's state as its
+    /// moon reads it, and the confidence its badge shows.
+    /// </summary>
+    private MoonlitSortKey SortKeyOf(int index)
+    {
+        var row = rows[index];
+        var maskedLevel = row.Quest is { } quest && session.Spoilers.IsMasked(quest) ? quest.DisplayLevel : -1;
+        return new MoonlitSortKey(
+            row.Obtained,
+            row.Name,
+            row.Entry.Kind,
+            row.QuestName,
+            maskedLevel,
+            StateOf(row) ?? QuestState.Unknown,
+            row.Hidden ? Confidence.UserOverride : row.Entry.Confidence,
+            row.Availability);
     }
 
     /// <summary>The state of the quest a row shows for the viewed character; null when it has no evaluation.</summary>
@@ -2913,7 +3043,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         bool Headings,
         bool CountGone,
         int Language,
-        string AddedIn);
+        string AddedIn,
+        MoonlitSortSpec Sort);
 }
 
 /// <summary>

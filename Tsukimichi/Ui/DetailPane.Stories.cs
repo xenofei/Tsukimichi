@@ -88,9 +88,11 @@ public sealed partial class DetailPane
         }
 
         ImGui.Dummy(new Vector2(MathF.Max(0f, x - start.X), height));
+        // A hovered plate opens the larger portrait, as the giver's plate does (spec A5); the words beside the plates
+        // keep the explanation of who is named.
         if (hovered >= 0)
         {
-            UiMetrics.Tooltip(line.PlateNames[hovered], Strings.CastTooltip);
+            Chrome.PortraitTooltip(line.Plates[hovered], line.PlateNames[hovered], null);
         }
 
         var words = line.Text;

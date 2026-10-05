@@ -8,6 +8,15 @@ namespace Tsukimichi.Core.Portraits;
 /// <param name="Era">The expansion the face belongs to (ExVersion row: 0 A Realm Reborn … 5 Dawntrail); null takes the giver's first quest's.</param>
 public sealed record CuratedFace(string Name, PortraitSource Source, byte? Era, string Note);
 
+/// <summary>
+/// One person on an icon that shows two or more (the Hildibrand &amp; Nashu card, the twins' card), named by hand with the
+/// crop that frames that person (1.22.1 portrait audit, C6): a giver of <paramref name="Name"/> wears the icon through
+/// <paramref name="Crop"/>, so one card gives each person on it a portrait of their own.
+/// </summary>
+/// <param name="Era">The expansion the art belongs to (ExVersion row); null takes the giver's first quest's.</param>
+/// <param name="Crop">The person's crop; null wears the icon's own (<c>iconCrops</c>, else the family box).</param>
+public sealed record CuratedSharedFace(uint Icon, string Name, PortraitSource Source, byte? Era, PortraitCrop? Crop, string Note);
+
 /// <summary>A source's name for an NPC mapped to the name the givers carry (<c>PAPARIMO</c> → "Papalymo").</summary>
 public sealed record CuratedPortraitAlias(string Name, string Note);
 
@@ -45,6 +54,7 @@ public sealed record CuratedDeliveryKey(int SeedX, int SeedY, string Note);
 ///   "crops": { "BattleTalk": { "box": [ 164, 154, 172 ] } },                                       (replaces the family default)
 ///   "iconCrops": { "87019": { "box": [ 70, 62, 75 ], "note": "..." }, "72659": { "eyes": [ 0.5, 0.564 ], "chin": 0.68, "note": "..." } },
 ///   "faces": { "73270": { "name": "Sphene", "source": "BattleTalk", "era": 5, "note": "..." } },   (source defaults to BattleTalk, era optional)
+///   "sharedFaces": { "87062/Nashu Mhakaracca": { "era": 0, "eyes": [ 0.3, 0.4 ], "chin": 0.5, "note": "..." } },  (one person on a shared icon; crop optional)
 ///   "aliases": { "PAPARIMO": { "name": "Papalymo", "note": "..." } },
 ///   "blocks": { "Clive": { "icons": [ 87371 ], "note": "..." }, "1012345": { "note": "..." } },  (by giver name or ENpcResident id; no icons = every portrait)
 ///   "pins": { "1001234": { "icon": 73034, "source": "BattleTalk", "era": 1, "note": "..." } },    (by ENpcResident id, era optional)
@@ -69,6 +79,9 @@ public sealed record PortraitCuration
 
     /// <summary>Faces named by hand, by icon id.</summary>
     public IReadOnlyDictionary<uint, CuratedFace> Faces { get; init; } = new Dictionary<uint, CuratedFace>();
+
+    /// <summary>People named by hand on icons that show several (<c>sharedFaces</c>), each with its own crop.</summary>
+    public IReadOnlyList<CuratedSharedFace> SharedFaces { get; init; } = [];
 
     /// <summary>Aliases by the source name's normal form.</summary>
     public IReadOnlyDictionary<string, CuratedPortraitAlias> Aliases { get; init; } = new Dictionary<string, CuratedPortraitAlias>();
@@ -216,6 +229,58 @@ public sealed record PortraitCuration
             }
 
             faces[icon] = new CuratedFace(name, source, era, note);
+        });
+
+        var sharedFaces = new List<CuratedSharedFace>();
+        var sharedKeys = new HashSet<(uint, string)>();
+        ForEach(root, "sharedFaces", fileName, warnings, (key, node, warn) =>
+        {
+            // "<icon>/<name>": the icon, then the person on it as the givers' name spells them.
+            var slash = key.IndexOf('/', StringComparison.Ordinal);
+            var name = slash > 0 ? key[(slash + 1)..].Trim() : string.Empty;
+            if (slash <= 0 || !StorageJson.TryParseKey(key[..slash], out uint icon) || icon == 0 || PortraitNames.Normalize(name).Length == 0)
+            {
+                warn("key must be \"<icon id>/<name>\"");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            var source = PortraitSources.FamilyOfIcon(icon);
+            if (obj.ContainsKey("source") && !PortraitSources.TryParse(StorageJson.ReadString(obj, "source"), out source))
+            {
+                warn("source is not a portrait family");
+                return;
+            }
+
+            PortraitCrop? crop = null;
+            if (obj.ContainsKey("box") || obj.ContainsKey("crop") || obj.ContainsKey("eyes") || obj.ContainsKey("chin"))
+            {
+                if (!TryReadAnyCrop(obj, source, out var own))
+                {
+                    warn(CropFormats);
+                    return;
+                }
+
+                crop = own;
+            }
+
+            if (!FitsFamily(icon, source, masks, warn) || !TryReadEra(obj, warn, out var era) || !HasNote(obj, warn, out var note))
+            {
+                return;
+            }
+
+            if (!sharedKeys.Add((icon, PortraitNames.Normalize(name))))
+            {
+                warn("another key names the same person on this icon");
+                return;
+            }
+
+            sharedFaces.Add(new CuratedSharedFace(icon, name, source, era, crop, note));
         });
 
         var aliases = new Dictionary<string, CuratedPortraitAlias>(StringComparer.Ordinal);
@@ -375,6 +440,7 @@ public sealed record PortraitCuration
             Crops = crops,
             IconCrops = iconCrops,
             Faces = faces,
+            SharedFaces = sharedFaces,
             Aliases = aliases,
             Blocks = blocks,
             Pins = pins,

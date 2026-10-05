@@ -4,8 +4,18 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- **Moonlit:** click a column header to sort by it; click again to reverse, and a third time to go back to the usual order. The table remembers your choice.
+
 ### Changed
 - **Portrait photos come with Tsukimichi:** quest-giver photos are now part of the plugin, re-cut so faces sit centred, and photos that showed a weapon, a helmet crest or a hat now show the face. There's nothing to download, and a copy you downloaded before is removed to free space. To turn the photos off, set Settings › General › Look › Giver portraits to Game art.
+
+### Fixed
+- **Quest-giver portraits:** faces sit in the middle of the plate, eyes on the eye line. Varshahn, Estinien, Wuk Lamat, Krile and about 260 other portraits were cropped again and checked by hand.
+- **Earlier arcs:** major characters now have a portrait earlier in the story, such as Alphinaud in A Realm Reborn, Alisaie and Krile in Heavensward, and Jullus in Endwalker.
+- **Looks match the arc:** a quest shows the character as they looked at that point in the story. Examples are Tataru and Zero in Endwalker and Dawntrail, Yugiri in Stormblood, the twins' Heavensward coats in 5.4, and Sphene as the veiled queen in 7.0. The faces in "With …" lines follow the same rule and never show a later look.
+- **Quest-giver photos** no longer replace a good game portrait. A photo that showed a staff or a lance instead of a face (Y'shtola, Estinien) now gives way to the hand-checked portrait.
+- **Who's in it:** hovering a character's small portrait now shows it larger, with their name, as the quest giver's portrait does.
 
 ## [1.22.0] - 2026-10-04
 

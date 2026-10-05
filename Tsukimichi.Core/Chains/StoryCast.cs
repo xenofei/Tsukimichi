@@ -26,7 +26,8 @@ public sealed record StoryCastCuration(IReadOnlyDictionary<string, string> Alias
 }
 
 /// <summary>A recurring story character: an id within its <see cref="StoryCast"/>, the name to print and the main scenario quests that feature them.</summary>
-/// <param name="NpcIds">The character's ENpcResident rows, lowest first: the portrait index is asked for one it knows.</param>
+/// <param name="NpcIds">The character's ENpcResident rows, lowest first: the portrait index picks among them by the
+/// quest (<see cref="PortraitIndex.ForCast"/>).</param>
 public sealed record CastMember(int Id, string Key, string Name, IReadOnlyList<uint> StoryQuests, IReadOnlyList<uint> NpcIds);
 
 /// <summary>Who of a quest's cast the viewed character has met, in script order, and how many others ("familiar faces").</summary>
@@ -54,14 +55,18 @@ public sealed class StoryCast
     /// <summary>Main scenario quests a name needs to be a recurring character (about 120 on 2026.09.15).</summary>
     public const int MinStoryQuests = 8;
 
-    public static readonly StoryCast Empty = new([], FrozenDictionary<uint, int[]>.Empty);
+    public static readonly StoryCast Empty = new([], FrozenDictionary<uint, int[]>.Empty, FrozenDictionary<uint, uint[][]>.Empty);
 
     private readonly FrozenDictionary<uint, int[]> byQuest;
 
-    private StoryCast(IReadOnlyList<CastMember> members, FrozenDictionary<uint, int[]> byQuest)
+    /// <summary>Per quest, beside <see cref="byQuest"/>'s member ids: each member's ENpcResident rows the quest's script names.</summary>
+    private readonly FrozenDictionary<uint, uint[][]> rowsByQuest;
+
+    private StoryCast(IReadOnlyList<CastMember> members, FrozenDictionary<uint, int[]> byQuest, FrozenDictionary<uint, uint[][]> rowsByQuest)
     {
         Members = members;
         this.byQuest = byQuest;
+        this.rowsByQuest = rowsByQuest;
     }
 
     /// <summary>Every recurring character, most story quests first.</summary>
@@ -88,6 +93,27 @@ public sealed class StoryCast
         }
 
         return members;
+    }
+
+    /// <summary>
+    /// The ENpcResident rows of <paramref name="member"/> the quest's script names (the look the quest shows them in),
+    /// lowest first; empty when the quest does not feature them. Allocates nothing.
+    /// </summary>
+    public IReadOnlyList<uint> RowsIn(uint rowId, CastMember member)
+    {
+        ArgumentNullException.ThrowIfNull(member);
+        if (byQuest.TryGetValue(rowId, out var ids) && rowsByQuest.TryGetValue(rowId, out var rows))
+        {
+            for (var i = 0; i < ids.Length; i++)
+            {
+                if (ids[i] == member.Id)
+                {
+                    return rows[i];
+                }
+            }
+        }
+
+        return [];
     }
 
     /// <summary>A recurring character by its English name; null when the name is not one.</summary>
@@ -169,6 +195,7 @@ public sealed class StoryCast
         var storyQuests = new Dictionary<string, List<uint>>(StringComparer.Ordinal);
         var display = new Dictionary<string, string>(StringComparer.Ordinal);
         var npcIds = new Dictionary<string, SortedSet<uint>>(StringComparer.Ordinal);
+        var questRows = new Dictionary<(uint Quest, string Key), SortedSet<uint>>();
         foreach (var quest in catalog.All)
         {
             if (!scripts.TryGetValue(quest.RowId, out var names) || quest.IsRetired)
@@ -186,18 +213,26 @@ public sealed class StoryCast
                 }
 
                 keys ??= [];
-                if (keys.Contains(key))
+
+                // Every row the script names: the character's rows (each a look of theirs), and the quest's own.
+                if (!questRows.TryGetValue((quest.RowId, key), out var inQuest))
                 {
-                    continue;
+                    questRows[(quest.RowId, key)] = inQuest = [];
                 }
 
-                keys.Add(key);
+                inQuest.Add(name.NpcId);
                 if (!npcIds.TryGetValue(key, out var ids))
                 {
                     npcIds[key] = ids = [];
                 }
 
                 ids.Add(name.NpcId);
+                if (keys.Contains(key))
+                {
+                    continue;
+                }
+
+                keys.Add(key);
                 // The joined name prints as the game writes it; until it is seen itself, as its alias does.
                 if (string.Equals(name.Key, key, StringComparison.Ordinal) || !display.ContainsKey(key))
                 {
@@ -241,24 +276,28 @@ public sealed class StoryCast
         }
 
         var byQuest = new Dictionary<uint, int[]>();
+        var rowsByQuest = new Dictionary<uint, uint[][]>();
         foreach (var (rowId, keys) in questKeys)
         {
             List<int>? ids = null;
+            List<uint[]>? rows = null;
             foreach (var key in keys)
             {
                 if (idOf.TryGetValue(key, out var id))
                 {
                     (ids ??= []).Add(id);
+                    (rows ??= []).Add(questRows[(rowId, key)].ToArray());
                 }
             }
 
-            if (ids is not null)
+            if (ids is not null && rows is not null)
             {
                 byQuest[rowId] = ids.ToArray();
+                rowsByQuest[rowId] = rows.ToArray();
             }
         }
 
-        return new StoryCast(members, byQuest.ToFrozenDictionary());
+        return new StoryCast(members, byQuest.ToFrozenDictionary(), rowsByQuest.ToFrozenDictionary());
     }
 
     /// <summary>The character a name stands for: its alias's target, null for a generic or blocked name.</summary>
