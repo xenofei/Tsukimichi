@@ -91,16 +91,26 @@ public sealed partial class MoonfallWindow
 
             case MoonfallEventKind.StyleShot:
                 var kind = (MoonfallStyleShot)e.Count;
-                AddStylePopup(string.Format(CultureInfo.CurrentCulture, Strings.MoonfallStyleShotFormat, Strings.MoonfallStyleShotName(kind), e.Value.ToString("N0", CultureInfo.CurrentCulture)));
+                if (game is not { } styled || !AddRibbon(styled, Strings.MoonfallStyleShotName(kind).ToUpper(CultureInfo.CurrentCulture),
+                    string.Format(CultureInfo.CurrentCulture, Strings.MoonfallStyleValueFormat, e.Value.ToString("N0", CultureInfo.CurrentCulture))))
+                {
+                    AddStylePopup(string.Format(CultureInfo.CurrentCulture, Strings.MoonfallStyleShotFormat, Strings.MoonfallStyleShotName(kind), e.Value.ToString("N0", CultureInfo.CurrentCulture)));
+                }
+
                 break;
 
             case MoonfallEventKind.Drawn:
-                AddStylePopup((MoonfallDrawOutcome)e.Value switch
+                var drawn = (MoonfallDrawOutcome)e.Value switch
                 {
                     MoonfallDrawOutcome.FreeBall => Strings.MoonfallDrawFreeBall,
                     MoonfallDrawOutcome.TripleScore => Strings.MoonfallDrawTriple,
                     _ => string.Format(CultureInfo.CurrentCulture, Strings.MoonfallDrawPowerFormat, Strings.MoonfallPowerName((MoonfallPower)e.Count)),
-                });
+                };
+                if (game is not { } drew || !AddRibbon(drew, drawn.ToUpper(CultureInfo.CurrentCulture), string.Empty))
+                {
+                    AddStylePopup(drawn);
+                }
+
                 break;
         }
     }
@@ -188,7 +198,7 @@ public sealed partial class MoonfallWindow
         ImGui.SameLine(0f, gap * 0.5f);
         using (ImRaii.Disabled(locked))
         {
-            if (ImGui.Checkbox(Strings.MoonfallQuickPlay + "##moonfallQuickPlay", ref quickPlay))
+            if (ImGui.Checkbox($"{Strings.MoonfallQuickPlay}##moonfallQuickPlay", ref quickPlay))
             {
                 game = NewGame(levelIndex);
             }
@@ -199,8 +209,8 @@ public sealed partial class MoonfallWindow
             UiMetrics.Tooltip(locked ? Strings.MoonfallPickBeforeShot : Strings.MoonfallQuickPlayTooltip);
         }
 
-        // Each charged power: its name and a pip a shot.
-        for (var p = 1; p <= MoonfallPowers.Count; p++)
+        // Each charged power: its name and a pip a shot (the rich chrome shows them as the medallion's gems).
+        for (var p = 1; p <= MoonfallPowers.Count && !richHud; p++)
         {
             var power = (MoonfallPower)p;
             var left = g.PowerShotsLeft(power);
@@ -248,7 +258,10 @@ public sealed partial class MoonfallWindow
     private void DrawPowers(ImDrawListPtr dl, in View view, MoonfallGame g, double alpha, bool art)
     {
         DrawSuperGuide(dl, view, g);
-        DrawWings(dl, view, g, alpha);
+        if (!richHud)
+        {
+            DrawWings(dl, view, g, alpha);
+        }
         DrawFlippers(dl, view, g, alpha);
         DrawBolt(dl, view, g);
         DrawPowerEffects(dl, view);

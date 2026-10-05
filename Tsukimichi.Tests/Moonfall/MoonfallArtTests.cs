@@ -113,12 +113,18 @@ public sealed class MoonfallArtTests : IDisposable
         Assert.True(atlas.GaugeTo > atlas.GaugeFrom);
         Assert.True(atlas.OuterSlice > 0 && atlas.InnerSlice > 0);
 
-        // Owner decision 7 is per campaign, in the files: today both campaigns draw the lantern boat (the owner turned
-        // down the crescent cradle, style frame A); the cradle stays one manifest edit away.
-        Assert.Equal(MoonfallBucketStyle.Boat, atlas.BucketFor(MoonfallCampaignKind.Base));
+        // Owner decision 7 is per campaign, in the files; decision 14 (rich pass 2): the lantern cart for The Moon Road
+        // and the lantern boat for The Far Shore (the owner turned down the crescent cradle, style frame A); the cradle
+        // stays one manifest edit away.
+        Assert.Equal(MoonfallBucketStyle.Cart, atlas.BucketFor(MoonfallCampaignKind.Base));
         Assert.Equal(MoonfallBucketStyle.Boat, atlas.BucketFor(MoonfallCampaignKind.Expansion));
         var cradle = Manifest(m => m["buckets"]!["base"] = "cradle");
         Assert.Equal(MoonfallBucketStyle.Cradle, MoonfallAtlas.Parse(cradle).Atlas!.BucketFor(MoonfallCampaignKind.Base));
+        var boat = Manifest(m => m["buckets"]!["base"] = "boat");
+        Assert.Equal(MoonfallBucketStyle.Boat, MoonfallAtlas.Parse(boat).Atlas!.BucketFor(MoonfallCampaignKind.Base));
+        var cart = Manifest(m => m["buckets"]!["expansion"] = "cart");
+        Assert.Equal(MoonfallBucketStyle.Cart, MoonfallAtlas.Parse(cart).Atlas!.BucketFor(MoonfallCampaignKind.Expansion));
+        Assert.False(MoonfallAtlas.Parse(Manifest(m => m["buckets"]!["base"] = "barrow")).Ok);
     }
 
     /// <summary>The shipped manifest with <paramref name="edit"/> applied.</summary>

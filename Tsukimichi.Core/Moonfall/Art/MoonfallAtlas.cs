@@ -22,6 +22,9 @@ public enum MoonfallBucketStyle : byte
 
     /// <summary>A: the brass crescent cradle on its rail.</summary>
     Cradle,
+
+    /// <summary>C: the lantern cart on the moon road (decision 14: The Moon Road's bucket).</summary>
+    Cart,
 }
 
 /// <summary>An atlas manifest read: the atlas, or null with every reason it was refused.</summary>
@@ -41,7 +44,7 @@ public sealed record MoonfallAtlasLoad(MoonfallAtlas? Atlas, IReadOnlyList<strin
 ///   "files": { "1x": "atlas.png", "2x": "atlas@2x.png", "sky": "sky.png" },
 ///   "sky": { "x": 70, "y": 36, "w": 660, "h": 564 },            // where sky.png lies on the board, units
 ///   "pegVariants": 12,                                          // peg.&lt;kind&gt;.0 .. 11; peg i draws variant i mod 12
-///   "buckets": { "base": "boat", "expansion": "boat" },         // "boat" or "cradle", per campaign
+///   "buckets": { "base": "cart", "expansion": "boat" },         // "boat", "cradle" or "cart", per campaign
 ///   "gauge": { "from": 200, "to": 340 },                        // the free-ball gauge's arc, degrees (0 along +x, towards +y)
 ///   "inks": { "glow.blue": "#A8C6FF", ... },                    // every key in RequiredInks
 ///   "points": { "boat.lantern": [50, -32] },                    // the lantern from the bucket's anchor, units
@@ -357,8 +360,10 @@ public sealed partial class MoonfallAtlas
                     return MoonfallBucketStyle.Boat;
                 case "cradle":
                     return MoonfallBucketStyle.Cradle;
+                case "cart":
+                    return MoonfallBucketStyle.Cart;
                 default:
-                    errors.Add($"buckets.{key} must be \"boat\" or \"cradle\"");
+                    errors.Add($"buckets.{key} must be \"boat\", \"cradle\" or \"cart\"");
                     return MoonfallBucketStyle.Boat;
             }
         }

@@ -52,7 +52,8 @@ public sealed partial class Plugin
         }
 
         var pluginDirectory = PluginInterface.AssemblyLocation.DirectoryName;
-        var window = new MoonfallWindow(campaigns, progress, path, MoonfallCausesNow, Log, TextureProvider, pluginDirectory);
+        var options = new MoonfallConfigOptions(Settings, () => Settings.Save(PluginInterface));
+        var window = new MoonfallWindow(campaigns, progress, path, MoonfallCausesNow, Log, TextureProvider, pluginDirectory, DataManager, PluginInterface.UiBuilder.FontAtlas, options);
         // Its sound: the output starts when the window opens; the volume lives in the settings.
         moonfallAudio = new MoonfallAudio(
             Log,

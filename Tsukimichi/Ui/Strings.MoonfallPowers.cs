@@ -26,22 +26,11 @@ static partial class Strings
         _ => Loc.Get("MoonfallPower.None"),
     };
 
-    /// <summary>The character who carries <paramref name="power"/> (docs/design/v9/spec-moonfall.md, decision 1).</summary>
-    public static string MoonfallCharacterName(MoonfallPower power) => power switch
-    {
-        MoonfallPower.SuperGuide => Loc.Get("MoonfallCharacter.SuperGuide"),
-        MoonfallPower.Multiball => Loc.Get("MoonfallCharacter.Multiball"),
-        MoonfallPower.Wings => Loc.Get("MoonfallCharacter.Wings"),
-        MoonfallPower.Burst => Loc.Get("MoonfallCharacter.Burst"),
-        MoonfallPower.Flippers => Loc.Get("MoonfallCharacter.Flippers"),
-        MoonfallPower.Gate => Loc.Get("MoonfallCharacter.Gate"),
-        MoonfallPower.Bloom => Loc.Get("MoonfallCharacter.Bloom"),
-        MoonfallPower.Draw => Loc.Get("MoonfallCharacter.Draw"),
-        MoonfallPower.Fireball => Loc.Get("MoonfallCharacter.Fireball"),
-        MoonfallPower.Path => Loc.Get("MoonfallCharacter.Path"),
-        MoonfallPower.Bolt => Loc.Get("MoonfallCharacter.Bolt"),
-        _ => Loc.Get("MoonfallPower.None"),
-    };
+    /// <summary>
+    /// The character who carries <paramref name="power"/>: since rich pass 2 the real FFXIV companion
+    /// (<see cref="MoonfallCompanionName"/>, decision 22, which replaced the original cast of decision 1).
+    /// </summary>
+    public static string MoonfallCharacterName(MoonfallPower power) => MoonfallCompanionName(power);
 
     /// <summary>What the power does, in one line, for the character picker's tooltip.</summary>
     public static string MoonfallPowerHint(MoonfallPower power) => power switch

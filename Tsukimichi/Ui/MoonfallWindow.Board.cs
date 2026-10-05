@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Moonfall;
+using Tsukimichi.Core.Moonfall.Art;
 using Tsukimichi.Core.Ui.Themes;
 
 namespace Tsukimichi.Ui;
@@ -198,6 +199,9 @@ public sealed partial class MoonfallWindow
         RefreshInks();
         var alpha = g.Alpha;
         var dl = ImGui.GetWindowDrawList();
+        // The window's margins carry the level's scene, blurred (rich chrome only), and a wide margin takes the power's card.
+        cardInMargin = MoonfallHud.CardInMargin(origin.X - start.X);
+        DrawMargins(dl, start, start + avail, origin, size);
         dl.PushClipRect(origin, origin + size, true);
         // The art set when it is in (MoonfallWindow.Art.cs); these primitives while it loads, or if it is missing or broken.
         var drewArt = DrawBoardArt(dl, view, g, alpha, origin, size);
@@ -214,9 +218,17 @@ public sealed partial class MoonfallWindow
         DrawPowers(dl, view, g, alpha, drewArt);
 
         DrawPopups(dl, view);
-        DrawStylePopups(dl, origin, size);
+        if (!richHud)
+        {
+            DrawStylePopups(dl, origin, size);
+        }
+
         DrawShotTally(dl, origin, scale, g);
-        DrawBanner(dl, origin, size, g);
+        if (!richHud)
+        {
+            DrawBanner(dl, origin, size, g);
+        }
+
         if (pause.Paused)
         {
             DrawPaused(dl, origin, size);
@@ -224,9 +236,23 @@ public sealed partial class MoonfallWindow
         }
 
         dl.PopClipRect();
+        var richArt = richHud && gameArt?.Chrome is not null && gameArt.ChromeTexture is not null && art?.Atlas is not null && art.Sheet(scale > ArtTwoXAbove, out _) is not null;
+        if (richArt && cardInMargin)
+        {
+            PowerCard(dl, start, origin, gameArt!.Chrome!, gameArt.ChromeTexture!.Handle, new ArtPen(dl, view, art!.Atlas!, art.Sheet(scale > ArtTwoXAbove, out _)!.Handle));
+        }
+
         if (over)
         {
-            DrawEnd(dl, origin, size, g);
+            if (richArt)
+            {
+                RichEnd(dl, origin, size, start, start + avail, scale, g, gameArt!.Chrome!, gameArt.ChromeTexture!.Handle,
+                    new ArtPen(dl, view, art!.Atlas!, art.Sheet(scale > ArtTwoXAbove, out _)!.Handle));
+            }
+            else
+            {
+                DrawEnd(dl, origin, size, g);
+            }
         }
     }
 
@@ -494,6 +520,14 @@ public sealed partial class MoonfallWindow
         {
             shotFor = key;
             shotText = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallShotFormat, g.ShotValue.ToString("N0", CultureInfo.CurrentCulture), g.ClearedThisTurn);
+        }
+
+        if (richHud)
+        {
+            // In the game's sans (it carries the "×"), gilt on the game's dark edge, held still over the floor.
+            var flat = new View(origin, scale, 1f, BoardCentre);
+            DrawText(dl, MoonfallFace.Axis, NumberPx(flat, 18f, MoonfallFace.Axis), flat.Map(400, 530), Anchor.Centre, Ink(GoldHiInk), shotText, Ink(EdgeInk), flat.Size(0.8));
+            return;
         }
 
         var size = ImGui.GetFontSize() * 1.2f;

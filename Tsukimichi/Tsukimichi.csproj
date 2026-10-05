@@ -30,6 +30,8 @@ Local only: no network code.</Description>
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The offline renderer drives the Moonfall window's board through a few internal hooks (Ui/MoonfallWindow.cs). -->
+    <InternalsVisibleTo Include="Tsukimichi.MoonfallRender" />
     <!--
       Moonfall's sound (plan v9 G8): NAudio (MIT, the owner's approved dependency), only its WASAPI output and its core
       (the mixer); the rest of NAudio (ASIO, MIDI, WinForms, WinMM) stays out. Its DLLs are copied beside the plugin and
