@@ -64,6 +64,13 @@ Rules new to this plan:
 | 19 | Bundle one open-licence display serif (about 60 KB) for MOONFALL and the banners, or keep Dalamud's fonts with the logotype baked as an image? | Bundle the font. |
 | 20 | The Far Shore ends on the moon itself (Mare Lamentorum). Is that the right ending? | Yes. |
 | 21 | Every level must play at least as well as the weakest shipped level in the greedy-player test (5 of 48 wins), alongside the pre-flight. Make it a rule? | Yes. |
+| 22 | The cast (rich pass 2, replaces 1 and 17): Minfilia (Super Guide), Alphinaud & Alisaie (Multiball), Cid (Brass Wings), Raubahn (Lunar Burst), Merlwyb (Flippers), Urianger (Moon Gate), Kan-E-Senna (Moonbloom), Tataru (Moon-Viewing Draw), Y'shtola (Fireball), Louisoix (Sage's Path), a moogle courier (Storm Post). Two sit near Peggle's: Y'shtola's cat ears, Kan-E-Senna's flower. | Approve as listed. |
+| 23 | Before you meet Alisaie, show the twins' card face down, or Alphinaud alone? (Alphinaud alone needs a later portrait, which spoils.) | Face down. |
+| 24 | Use the game's own fonts (Jupiter, AXIS, TrumpGothic) through Dalamud, with nothing bundled? (Replaces 19.) | Yes. |
+| 25 | Approve the eleven stage names, each themed to its companion's home. | Approve. |
+| 26 | Ambient motion by default: Decoration "Full" or "Simple" (beams and halos only)? Reduce motion always means still. | Full. |
+| 27 | Peg marks (a shape on each peg kind for colour-blind players): off by default with a first-run hint, or on? | Off, with the hint. |
+| 28 | The full-quality motion previews are 38 MB; small MP4s (about 0.5 MB) are in the repo and on this site. Keep the large ones out of the repo? | Yes, MP4s only. |
 
 ### Your answers (4 October 2026, on the plan site)
 
