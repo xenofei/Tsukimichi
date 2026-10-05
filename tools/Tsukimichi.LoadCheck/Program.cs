@@ -7,7 +7,7 @@ using Tsukimichi.Localization;
 // The load check (see the project file): every UI type's static constructor, then, in every language, the value of
 // every static LocText, LocArray and LocCache<T> field in Tsukimichi.Ui. Any throw is a plugin that would not load, or
 // would fail on first draw, in that language. Then every Lumina type and member GameData and the plugin reference,
-// found in Dalamud's Lumina (LuminaCheck). Exit code 0 when all pass, 1 otherwise.
+// found in Dalamud's Lumina (LuminaCheck), and an old config.json loading (ConfigCheck). Exit code 0 when all pass, 1 otherwise.
 const string UiNamespace = "Tsukimichi.Ui";
 string[] languages = [Loc.English, Loc.German, Loc.French, Loc.Japanese, Loc.PseudoLanguage];
 
@@ -127,6 +127,9 @@ int Run()
     {
         failures.Add($"lumina: the scan found only {luminaMembers} member references into Lumina; update the load check");
     }
+
+    // Old configuration files (1.22's portrait pack fields) still load the way Dalamud reads them.
+    ConfigCheck.Run(failures);
 
     if (failures.Count > 0)
     {

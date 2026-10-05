@@ -9,25 +9,21 @@ using Tsukimichi.Tests.Localization;
 namespace Tsukimichi.Tests.Diagnostics;
 
 /// <summary>
-/// "Trust you can check" (feature plan v7 N2): docs/privacy.md says Tsukimichi sends nothing and goes online for one
-/// thing only, the optional portrait pack the player confirms (F4, decision 8). The owner allowed one narrow exception
-/// for it (spec-1.20 F4, open question 1), and these keep it exactly that narrow:
+/// "Trust you can check" (feature plan v7 N2): docs/privacy.md says Tsukimichi sends nothing and never goes online. The
+/// quest data and the giver photos ship inside the plugin (the photos were a download from 1.20 to 1.22; no more), so
+/// these keep the plugin with no network code at all:
 /// <list type="bullet">
-/// <item>one named file: no source of the shipped projects (the plugin, Core and GameData; the tools are not shipped)
-/// names an HTTP client, a web request, a socket or a DNS lookup, except the pack's downloader (<see cref="NetworkFile"/>);
-/// nor any API that fetches a URL it is given without a network type in its name (the XML readers and resolvers, such as
-/// <c>XDocument.Load("https://…")</c> and <c>XmlReader.Create(url)</c>; <c>DataSet.ReadXml</c>; remote named pipes; the
-/// WinINet, WinHTTP, Winsock and URL Moniker DLLs; COM by ProgID or CLSID, such as <c>MSXML2.XMLHTTP</c>);</item>
-/// <item>one host and path prefix: every address the downloader or the pack's offer names starts with
-/// <see cref="AllowedPrefix"/>, and the offer allows nothing else to be asked for first. GitHub redirects a release
-/// download; the hosts it may go to are pinned to exactly its two asset hosts (<see cref="GitHubAssetHosts"/>);</item>
-/// <item>one pinned URL per release: the shipped <c>portrait_pack.json</c> names one release asset under that prefix.</item>
+/// <item>no source of the shipped projects (the plugin, Core and GameData; the tools are not shipped) names an HTTP
+/// client, a web request, a socket or a DNS lookup, nor any API that fetches a URL it is given without a network type in
+/// its name (the XML readers and resolvers, such as <c>XDocument.Load("https://…")</c> and <c>XmlReader.Create(url)</c>;
+/// <c>DataSet.ReadXml</c>; remote named pipes; the WinINet, WinHTTP, Winsock and URL Moniker DLLs; COM by ProgID or
+/// CLSID, such as <c>MSXML2.XMLHTTP</c>);</item>
+/// <item>no shipped assembly, the plugin included, references a networking, XML, data or pipes assembly;</item>
+/// <item>nothing is left of the pack's download: no transport, no <c>StartDownload</c>, no <c>portrait_pack.json</c>.</item>
 /// </list>
-/// <see cref="Offenders"/> fails on any other file, host or address pattern (proved by
-/// <see cref="Any_other_network_file_host_or_address_fails"/>). Core and GameData reference no networking, XML, data or
-/// pipes assembly, and the plugin only <c>System.Net.Http</c> (and <c>System.Net.Primitives</c>, for the status code);
-/// the transport is made in one place and a download starts only from the Settings confirmation. The other way out is a
-/// page the player clicks to open in their browser, through Dalamud's <c>Util.OpenLink</c>, which the statement lists.
+/// <see cref="Offenders"/> fails on any file that names network code (proved by
+/// <see cref="Any_network_code_anywhere_fails"/>). The one way out is a page the player clicks to open in their browser,
+/// through Dalamud's <c>Util.OpenLink</c>, which the statement lists.
 /// <para>
 /// What a scan of names cannot catch, so review must: a file path that is a network share (<c>\\server\share</c>, which
 /// Windows reaches over SMB through ordinary file APIs; no shipped path is built from anything but the plugin's own
@@ -40,27 +36,9 @@ public class NoNetworkTests
 {
     private static readonly string[] Shipped = ["Tsukimichi", "Tsukimichi.Core", "Tsukimichi.GameData"];
 
-    /// <summary>The portrait pack's transport (docs/privacy.md, "The portrait pack"): the one file that may name network code.</summary>
-    private static readonly string NetworkFile = Path.Combine("Tsukimichi", "Game", "PortraitPackHttp.cs");
-
-    /// <summary>The one host and path prefix the exception covers.</summary>
-    private const string AllowedPrefix = "https://github.com/xenofei/Tsukimichi/releases/download/";
-
-    /// <summary>The hosts a release download may be redirected to: GitHub's own asset hosts, exactly these two.</summary>
-    private static readonly string[] GitHubAssetHosts = ["objects.githubusercontent.com", "release-assets.githubusercontent.com"];
-
-    /// <summary>The files whose addresses must all sit under <see cref="AllowedPrefix"/>: the downloader and the offer that pins its URL.</summary>
-    private static readonly string[] PinnedFiles = [NetworkFile, Path.Combine("Tsukimichi.Core", "Portraits", "PortraitPackOffer.cs")];
-
-    // An http(s) address in a string literal.
-    private static readonly Regex Address = new(@"https?://[^\s""']*", RegexOptions.Compiled);
-
-    /// <summary>What the plugin's assembly alone may reference for that file: HttpClient and its status code.</summary>
-    private static readonly HashSet<string> PluginNetworkAssemblies = new(StringComparer.Ordinal) { "System.Net.Http", "System.Net.Primitives" };
-
     /// <summary>
-    /// Assemblies no shipped assembly references: networking (but the plugin's two above), and those whose APIs fetch a
-    /// URL they are given (the XML readers and resolvers, <c>DataSet.ReadXml</c>, remote named pipes).
+    /// Assemblies no shipped assembly references: networking, and those whose APIs fetch a URL they are given (the XML
+    /// readers and resolvers, <c>DataSet.ReadXml</c>, remote named pipes).
     /// </summary>
     private static readonly string[] BlockedAssemblyPrefixes = ["System.Net", "System.Xml", "System.Private.Xml", "System.Data", "System.IO.Pipes"];
 
@@ -97,42 +75,23 @@ public class NoNetworkTests
     {
         var files = SourceFiles().Select(file => (Path.GetRelativePath(ResxFiles.RepositoryRoot(), file), File.ReadAllText(file)));
         var offenders = Offenders(files);
-        Assert.True(offenders.Count == 0, "docs/privacy.md says the portrait pack's downloader is the only network code, and only for Tsukimichi's GitHub releases; update it before adding any:" + Environment.NewLine + string.Join(Environment.NewLine, offenders));
+        Assert.True(offenders.Count == 0, "docs/privacy.md says Tsukimichi has no network code; update it before adding any:" + Environment.NewLine + string.Join(Environment.NewLine, offenders));
     }
 
-    /// <summary>
-    /// The exception's three limits, checked on sources: network code in any file but <see cref="NetworkFile"/>, and any
-    /// address in the downloader or the offer that is not under <see cref="AllowedPrefix"/>.
-    /// </summary>
+    /// <summary>Every use of network code in <paramref name="files"/>, in any file.</summary>
     internal static List<string> Offenders(IEnumerable<(string Path, string Source)> files)
     {
         var offenders = new List<string>();
         foreach (var (path, source) in files)
         {
             var lines = StripComments(source).Split('\n');
-            var networkFile = path == NetworkFile;
-            var pinned = PinnedFiles.Contains(path);
             for (var i = 0; i < lines.Length; i++)
             {
-                if (!networkFile)
+                foreach (Match match in Network.Matches(lines[i]))
                 {
-                    foreach (Match match in Network.Matches(lines[i]))
+                    if (!NotNetwork.Contains(match.Value))
                     {
-                        if (!NotNetwork.Contains(match.Value))
-                        {
-                            offenders.Add($"{path}:{i + 1}: {match.Value}");
-                        }
-                    }
-                }
-
-                if (pinned)
-                {
-                    foreach (Match match in Address.Matches(lines[i]))
-                    {
-                        if (!match.Value.StartsWith(AllowedPrefix, StringComparison.Ordinal))
-                        {
-                            offenders.Add($"{path}:{i + 1}: {match.Value} is not under {AllowedPrefix}");
-                        }
+                        offenders.Add($"{path}:{i + 1}: {match.Value}");
                     }
                 }
             }
@@ -142,108 +101,41 @@ public class NoNetworkTests
     }
 
     [Fact]
-    public void Any_other_network_file_host_or_address_fails()
+    public void Any_network_code_anywhere_fails()
     {
-        var other = Path.Combine("Tsukimichi", "Game", "Telemetry.cs");
+        var game = Path.Combine("Tsukimichi", "Game", "Telemetry.cs");
 
-        // Another file with network code: refused, whatever it fetches.
-        Assert.NotEmpty(Offenders([(other, "var c = new HttpClient(); c.GetAsync(\"https://github.com/xenofei/Tsukimichi/releases/download/x\");")]));
-        Assert.NotEmpty(Offenders([(other, "using System.Net.Sockets;")]));
+        // Network code in any file is refused, whatever it fetches, GitHub's releases included.
+        Assert.NotEmpty(Offenders([(game, "var c = new HttpClient(); c.GetAsync(\"https://github.com/xenofei/Tsukimichi/releases/download/x\");")]));
+        Assert.NotEmpty(Offenders([(game, "using System.Net.Sockets;")]));
+        Assert.NotEmpty(Offenders([(Path.Combine("Tsukimichi", "Game", "PortraitPackHttp.cs"), "var h = new HttpClient(new SocketsHttpHandler());")]));
 
-        // The downloader naming another host, or another path on GitHub: refused.
-        Assert.NotEmpty(Offenders([(NetworkFile, "var u = new Uri(\"https://evil.example/pack.zip\");")]));
-        Assert.NotEmpty(Offenders([(NetworkFile, "var u = new Uri(\"https://github.com/xenofei/Tsukimichi/archive/main.zip\");")]));
-        Assert.NotEmpty(Offenders([(NetworkFile, "var u = new Uri(\"http://github.com/xenofei/Tsukimichi/releases/download/v1/x.zip\");")]));
-        Assert.NotEmpty(Offenders([(NetworkFile, "var u = new Uri(\"https://github.com/someone/Tsukimichi/releases/download/x\");")]));
-
-        // The offer pinning a URL elsewhere: refused.
-        Assert.NotEmpty(Offenders([(PinnedFiles[1], "public const string ReleaseBase = \"https://example.com/releases/download/\";")]));
-
-        // What the exception covers: the downloader's own network code, and the pinned prefix.
-        Assert.Empty(Offenders([(NetworkFile, "var h = new HttpClient(new SocketsHttpHandler());")]));
-        Assert.Empty(Offenders([(PinnedFiles[1], "public const string ReleaseBase = \"https://github.com/xenofei/Tsukimichi/releases/download/\";")]));
-
-        // And a link elsewhere in the plugin stays a link, not network code (opened in the browser by Dalamud).
-        Assert.Empty(Offenders([(other, "Util.OpenLink(\"https://na.finalfantasyxiv.com/lodestone/\");")]));
+        // A link stays a link, not network code (opened in the browser by Dalamud).
+        Assert.Empty(Offenders([(game, "Util.OpenLink(\"https://na.finalfantasyxiv.com/lodestone/\");")]));
     }
 
     [Fact]
-    public void A_download_may_be_redirected_only_to_githubs_two_asset_hosts()
+    public void Nothing_of_the_portrait_packs_download_is_left()
     {
-        // The hosts list is the exception's one other address: pinned, so a third host fails here, not in review.
-        Assert.Equal(GitHubAssetHosts, Core.Portraits.PortraitPackOffer.AssetHosts);
-        var offer = new Core.Portraits.PortraitPackOffer("portraits-1", "Tsukimichi-portraits.zip", 1, new string('a', 64), 1, string.Empty, 1);
-        foreach (var host in GitHubAssetHosts)
+        // The photos ship with the plugin: no transport, nothing that starts a download, no offer naming a release.
+        var root = ResxFiles.RepositoryRoot();
+        Assert.False(File.Exists(Path.Combine(root, "Tsukimichi", "Game", "PortraitPackHttp.cs")));
+        Assert.False(File.Exists(Path.Combine(root, "Tsukimichi", "Data", "portrait_pack.json")));
+        var found = new List<string>();
+        foreach (var file in SourceFiles())
         {
-            Assert.True(offer.Allows(new Uri("https://" + host + "/x")));
-        }
-
-        Assert.False(offer.Allows(new Uri("https://githubusercontent.com/x")));
-        Assert.False(offer.Allows(new Uri("https://raw.githubusercontent.com/x")));
-        Assert.False(offer.Allows(new Uri("https://github.com/x")));
-    }
-
-    [Fact]
-    public void The_shipped_offer_names_one_release_asset_under_the_prefix()
-    {
-        Assert.Equal(AllowedPrefix, Core.Portraits.PortraitPackOffer.ReleaseBase);
-        var path = Path.Combine(ResxFiles.RepositoryRoot(), "Tsukimichi", "Data", Core.Portraits.PortraitPackOffer.FileName);
-        Assert.True(File.Exists(path), "Tsukimichi/Data/portrait_pack.json ships with every build");
-        var offer = Core.Portraits.PortraitPackOffer.Parse(File.ReadAllBytes(path), out var warning);
-        Assert.Null(warning);
-        if (offer is not null)
-        {
-            Assert.StartsWith(AllowedPrefix, offer.DownloadUri.AbsoluteUri, StringComparison.Ordinal);
-            Assert.True(offer.Allows(offer.DownloadUri));
-            Assert.False(offer.Allows(new Uri(AllowedPrefix + "portraits-999/other.zip")));
-        }
-    }
-
-    [Fact]
-    public void The_one_network_file_is_the_portrait_pack_transport_and_follows_no_redirect_itself()
-    {
-        var source = StripComments(File.ReadAllText(Path.Combine(ResxFiles.RepositoryRoot(), NetworkFile)));
-        Assert.Contains("class PortraitPackHttp : IPortraitPackTransport", source, StringComparison.Ordinal);
-        Assert.Contains("AllowAutoRedirect = false", source, StringComparison.Ordinal);
-        Assert.Contains("UseCookies = false", source, StringComparison.Ordinal);
-        Assert.Contains("if (!offer.Allows(uri))", source, StringComparison.Ordinal);
-
-        // It names no address of its own: every one comes from the offer, checked hop by hop (PortraitPackOffer.Allows).
-        Assert.DoesNotContain("://", source, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void The_pack_is_fetched_only_from_the_pinned_release_after_the_settings_confirmation()
-    {
-        Assert.Equal("https://github.com/xenofei/Tsukimichi/releases/download/", Core.Portraits.PortraitPackOffer.ReleaseBase);
-
-        // The transport is made in one place (the plugin's wiring), and a download starts only from the confirmation's button.
-        var plugin = Path.Combine(ResxFiles.RepositoryRoot(), "Tsukimichi");
-        var made = new List<string>();
-        var started = new List<string>();
-        foreach (var file in Directory.GetFiles(plugin, "*.cs", SearchOption.AllDirectories))
-        {
-            var sep = Path.DirectorySeparatorChar;
-            if (file.Contains($"{sep}obj{sep}", StringComparison.Ordinal) || file.Contains($"{sep}bin{sep}", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
             var source = StripComments(File.ReadAllText(file));
-            var name = Path.GetRelativePath(ResxFiles.RepositoryRoot(), file);
-            if (source.Contains("new Game.PortraitPackHttp(", StringComparison.Ordinal) || source.Contains("new PortraitPackHttp(", StringComparison.Ordinal))
+            foreach (var name in (string[])["StartDownload(", "PortraitPackHttp", "PortraitPackOffer", "IPortraitPackTransport", "releases/download"])
             {
-                made.Add(name);
-            }
-
-            if (source.Contains(".StartDownload(", StringComparison.Ordinal))
-            {
-                started.Add(name);
+                // A whole name: the config's obsolete PortraitPackOfferAnswered (read only to drop it) is not the offer.
+                if (Regex.IsMatch(source, Regex.Escape(name) + "(?![A-Za-z0-9_])"))
+                {
+                    found.Add($"{Path.GetRelativePath(root, file)}: {name}");
+                }
             }
         }
 
-        Assert.Equal([Path.Combine("Tsukimichi", "Plugin.cs")], made);
-        Assert.Equal([Path.Combine("Tsukimichi", "Ui", "ConfigWindow.PortraitPack.cs"), Path.Combine("Tsukimichi", "Ui", "PortraitPackOfferWindow.cs")], started);
+        Assert.True(found.Count == 0, string.Join(Environment.NewLine, found));
     }
 
     [Fact]
@@ -308,12 +200,10 @@ public class NoNetworkTests
         var offenders = new List<string>();
         foreach (var path in assemblies)
         {
-            var isPlugin = Path.GetFileName(path) == "Tsukimichi.dll";
             foreach (var reference in References(path))
             {
-                // Core and GameData reference no networking assembly at all; the plugin only what the portrait pack's
-                // transport needs (HttpClient, and its status code from System.Net.Primitives).
-                if (BlockedAssemblyPrefixes.Any(prefix => reference.StartsWith(prefix, StringComparison.Ordinal)) && !(isPlugin && PluginNetworkAssemblies.Contains(reference)))
+                // No shipped assembly, the plugin included, references a networking assembly at all.
+                if (BlockedAssemblyPrefixes.Any(prefix => reference.StartsWith(prefix, StringComparison.Ordinal)))
                 {
                     offenders.Add($"{Path.GetFileName(path)} references {reference}");
                 }

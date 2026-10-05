@@ -1,2 +1,5 @@
 # Frozen test fixtures: never line-ending converted.
 *.json.gz binary
+
+# The bundled portrait pack: kept byte for byte as Tsukimichi.DataGen --portrait-pack --bundle wrote it.
+Tsukimichi/assets/portraits/** -text

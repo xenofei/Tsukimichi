@@ -4,8 +4,34 @@ using System.Security.Cryptography;
 
 namespace Tsukimichi.Core.Portraits;
 
+/// <summary>Why the portrait pack's archive was refused (feature plan v7 F4); <see cref="None"/> when it was whole.</summary>
+public enum PortraitPackFailure : byte
+{
+    None = 0,
+
+    /// <summary>The zip cannot be read.</summary>
+    BadArchive,
+
+    /// <summary>The zip holds a file the pack never has: a folder path, a program, anything but its images and manifest.</summary>
+    UnsafeEntry,
+
+    /// <summary>The manifest is missing or not one this build reads.</summary>
+    BadManifest,
+
+    /// <summary>An image does not match its hash in the manifest, or does not decode.</summary>
+    BadImage,
+
+    /// <summary>The disk is full.</summary>
+    DiskFull,
+
+    /// <summary>Another file-system error.</summary>
+    DiskError,
+}
+
 /// <summary>
-/// Opens a downloaded portrait pack and extracts it (feature plan v7 F4), trusting nothing in it. The zip may hold
+/// The portrait pack's archive (feature plan v7 F4). <c>Tsukimichi.DataGen --portrait-pack</c> writes it, then extracts
+/// it with these same checks into the plugin's <c>assets/portraits</c> folder, which ships inside the plugin
+/// (<see cref="BundledPortraits"/>). It trusts nothing in the zip. The zip may hold
 /// exactly <c>manifest.json</c> and <c>portraits/&lt;name&gt;.png</c> images (an optional <c>portraits/</c> folder entry),
 /// each name flat and safe (<see cref="PortraitPackManifest.IsSafeFileName"/>): any other entry (a path that climbs out,
 /// an absolute path, a nested folder, a program, a duplicate) refuses the whole pack before a byte is written. Every
@@ -22,6 +48,14 @@ public static class PortraitPackArchive
     public const long MaxTotalBytes = 256L * 1024 * 1024;
 
     private const string ImagePrefix = PortraitPackManifest.ImageFolder + "/";
+
+    /// <summary>Whether <paramref name="ex"/> says the disk is full (ERROR_DISK_FULL or ERROR_HANDLE_DISK_FULL).</summary>
+    public static bool IsDiskFull(IOException ex)
+    {
+        ArgumentNullException.ThrowIfNull(ex);
+        var code = ex.HResult & 0xFFFF;
+        return code is 0x70 or 0x27;
+    }
 
     /// <summary>
     /// Checks the zip at <paramref name="zipPath"/> and extracts it into <paramref name="target"/> (created; it must not
@@ -46,7 +80,7 @@ public static class PortraitPackArchive
         catch (IOException ex)
         {
             detail = ex.Message;
-            return PortraitPackStore.IsDiskFull(ex) ? PortraitPackFailure.DiskFull : PortraitPackFailure.DiskError;
+            return IsDiskFull(ex) ? PortraitPackFailure.DiskFull : PortraitPackFailure.DiskError;
         }
         catch (UnauthorizedAccessException ex)
         {

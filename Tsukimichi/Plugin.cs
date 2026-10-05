@@ -395,8 +395,8 @@ public sealed partial class Plugin : IDalamudPlugin
     /// <summary>The journal text reader and its opt-in search index (P9); null until the constructor creates it.</summary>
     internal Game.QuestTextService? QuestText { get; private set; }
 
-    /// <summary>The optional portrait pack (1.20, F4); null before load finishes.</summary>
-    private Game.PortraitPackService? portraitPack;
+    /// <summary>The quest-giver photos that ship with the plugin (feature plan v7 F4); null before load finishes.</summary>
+    private Game.BundledPortraitLoader? portraitPhotos;
 
     /// <summary>Read from the catalog continuation off-thread, so it must be volatile.</summary>
     private volatile bool gameStateDisposed;
@@ -1456,32 +1456,13 @@ public sealed partial class Plugin : IDalamudPlugin
             WireRoster(mainWindow, charactersPane, configWindow, followed, () => moonlit.Catalog, () => dutyRuns.Value, dutyUnlocks, flightZones);
             configWindow.QuestText = QuestText;
             configWindow.OpenAboutAutomation = () => aboutAutomationWindow?.Show();
-            // The optional portrait pack (1.20, F4, decision 8): the installed one is read from the config folder off the
-            // frame; the network is touched only when the player confirms a download in Settings › Look › Portrait pack,
-            // or chooses Download portraits in the first-run offer (1.22, Plugin.PortraitPackOffer.cs).
-            var pack = new Game.PortraitPackService(
-                Paths,
-                clientGameVersion,
-                offer => new Game.PortraitPackHttp(offer, diagnostics.PluginVersion),
-                Log,
-                (change, askedForPack) => _ = Framework.RunOnFrameworkThread(() =>
-                {
-                    // spec-1.20 F4: a first install switches Giver portraits to Game art + pack (the player asked for the
-                    // pack); an update keeps their choice; Remove takes Game art + pack back to Game art.
-                    var mode = Core.Portraits.PortraitPackStatus.ModeAfter(change, Settings.GiverPortraits, askedForPack);
-                    if (mode != Settings.GiverPortraits)
-                    {
-                        Settings.GiverPortraits = mode;
-                        Settings.Save(PluginInterface);
-                    }
-                }));
-            portraitPack = pack;
-            _ = pack.LoadAsync();
-            Ui.GiverPortraits.Pack = () => pack.Installed;
-            configWindow.PortraitPack = pack;
-            mainWindow.TakeStatusNote = () => pack.TakeArrival() is > 0 and var faces
-                ? string.Format(System.Globalization.CultureInfo.CurrentCulture, Ui.Strings.PackArrived, faces.ToString("N0", System.Globalization.CultureInfo.CurrentCulture))
-                : null;
+            // The quest-giver photos (feature plan v7 F4) ship with the plugin in assets/portraits: read off the frame, after
+            // the copy 1.20-1.22 downloaded into the config folder is deleted once. Nothing goes online.
+            var photosDir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(PluginInterface.AssemblyLocation.FullName) ?? PluginInterface.AssemblyLocation.DirectoryName ?? ".", "assets", Core.Portraits.BundledPortraits.FolderName);
+            var photos = new Game.BundledPortraitLoader(photosDir, Paths.DownloadedPortraitPackDir, Log);
+            portraitPhotos = photos;
+            _ = photos.LoadAsync();
+            Ui.GiverPortraits.Pack = () => photos.Pack;
             // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
             var exportService = new Game.ExportService(Session, Settings, Paths, unlockReader, () => moonlit.Catalog, diagnostics.PluginVersion, diagnostics.ClientGameVersion, Log)
             {
@@ -1620,9 +1601,6 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // What's new after an update (1.22, W1): a popup at the first quiet moment; the history is in Settings.
             InitializeWhatsNew(mainWindow, settingsWindow);
-
-            // The portrait pack offer (1.22): once, to a player without the pack, after What's new; Download asks first.
-            InitializePortraitPackOffer(settingsWindow, diagnostics.PluginVersion);
 
             // New chapters of the side stories the character started (1.21.0 P5), once per patch, in the Tonight card (W4).
             mainWindow.AttachNewChapters(new NewChaptersSource(Session, ui) { CharacterSettings = CharacterBook });
@@ -1835,7 +1813,6 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("automation level", Ui.AutomationGate.Detach);
         Unwind("settings window", () => configWindow?.Dispose());
         Unwind("whats new", () => whatsNewPopup?.Dispose());
-        Unwind("portrait pack offer", TearDownPortraitPackOffer);
         Unwind("fonts", Ui.Typography.Dispose);
         Unwind("banner grades", Ui.BannerGrading.Dispose);
         Unwind("portrait grades", Ui.PortraitGrading.Dispose);
@@ -1864,7 +1841,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("chat notifier", () => chatNotifier?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("journal text", () => QuestText?.Dispose());
-        Unwind("portrait pack", () => portraitPack?.Dispose());
+        Unwind("portrait photos", () => portraitPhotos?.Dispose());
         // A walk or Go to giver this plugin started stops before the IPC wrappers go.
         Unwind("travel", () => travel?.Dispose());
         Unwind("travel preflight", () => travelPreflight?.Dispose());

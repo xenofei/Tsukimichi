@@ -9,12 +9,12 @@ public enum GiverPortraitMode : byte
     /// <summary>No plates anywhere: the Giver card, the stops and the routes look as they did before 1.15.</summary>
     Off = 0,
 
-    /// <summary>The game's own art, read from the install at runtime (the default).</summary>
+    /// <summary>The game's own art only, read from the install at runtime.</summary>
     GameArt = 1,
 
     /// <summary>
-    /// The game's art, and the optional portrait pack's photos where it has none (feature plan v7 F4). Reads as
-    /// <see cref="GameArt"/> while no pack is installed.
+    /// The game's art, and the giver photos that ship with the plugin where it has none (feature plan v7 F4; "Game art +
+    /// photos", the default). Reads as <see cref="GameArt"/> if the photos could not be read.
     /// </summary>
     GameArtAndPack = 2,
 }
