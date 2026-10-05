@@ -201,9 +201,9 @@ def oklab_to_srgb(lab):
 VIOLET = dict(tint="#CBC4EA", base_hue="#2A2358")      # The Far Shore's later hour
 
 
-def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.475, knee=0.27, detail=1.15, chroma_mid=0.55,
+def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.43, knee=0.25, detail=1.15, chroma_mid=0.55,
               chroma_high=0.75, tint="#C3CEE4", tint_k=0.55, base_hue="#22356E", sky=None, sky_drop=0.0,
-              ramp_stops=None, warm_keep=0.35, S=1.0, form=0.10, form_r=20.0):
+              ramp_stops=None, warm_keep=0.35, S=1.0, form=0.10, form_r=20.0, band_k=1.0):
     """The Medallion night grade, round 2 (after realism round 1): day for night in OKLab.
 
     Lightness: lowered and given a curve (mid-tones sink so the planes facing the light stay brightest), then a soft
@@ -226,17 +226,23 @@ def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.475, knee=0.27, detail
     span = ceiling - k0
     over = np.clip(base - k0, 0, None)
     base_c = np.where(base > k0, k0 + 0.35 * over + 0.65 * span * (1 - np.exp(-over / span)), base)
-    Lo = base_c + det
-    # the ceiling: a soft roll-off over the last 0.06, so it holds without flattening the tops
+    # the ceiling (round 4): a soft roll-off over the last 0.06 acts on the base layer only, and the detail is added
+    # back at full strength after it, so a cloud sea or a planet keeps its mid-frequency modelling at the top of the
+    # range (realism round 3: compressing the detail with the base flattened them)
     r0 = ceiling - 0.02
-    Lo = np.where(Lo > r0, r0 + 0.06 * (1 - np.exp(-(Lo - r0) / 0.06)), Lo)
-    # form light (realism round 2): the painting's pale shapes (domes, cloud heads; a painted dome is a flat white
-    # shape) are given relief from their silhouettes: the mask, blurred, rounds into a height, and the one light from
-    # the upper left shades it, after the ceiling, so the shading is not compressed away. It darkens the faces turned
-    # away more than it lightens those turned toward the light, so the ceiling still holds.
+    Lpre = base_c + det
+    Lo = np.where(Lpre > r0, r0 + 0.06 * (1 - np.exp(-(Lpre - r0) / 0.06)), Lpre)
+    # restore the mid-frequency band (sigma 2-12 px) the roll-off took out: zero mean, so the ceiling holds on average
+    band = lambda x: blur(x, 2.0 * S) - blur(x, 12.0 * S)
+    Lo = Lo + (band(Lpre) - band(Lo)) * band_k
+    # form light (realism round 2): the painting's pale shapes (a painted dome is a flat white shape) are given relief
+    # from their silhouettes, lit from the upper left. Only shapes smaller than about 40 units (round 4): large pale
+    # fields (a cloud sea, a planet) already carry their own modelling and must not be lifted as one slab.
     if form:
         hi = np.percentile(Lo, 92)
         shape = smooth(hi - 0.06, hi - 0.01, blur(Lo, 2.0 * S))
+        large = smooth(0.70, 0.92, blur(shape, 40 * S))
+        shape = shape * (1 - large)
         hgt = np.sqrt(np.clip(blur(shape, form_r * S), 0, 1))
         gy_, gx_ = np.gradient(hgt)
         lam = (gx_ + gy_) * 0.7071 * S * form_r   # the normal (-gx, -gy) . light (-0.71, -0.71): > 0 facing upper left
@@ -266,7 +272,7 @@ def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.475, knee=0.27, detail
     return oklab_to_srgb(np.stack([Lo, a2, b2], -1))
 
 
-def moon_emissive(px, S, mx, my, mr, seed=3):
+def moon_emissive(px, S, mx, my, mr, seed=3, face_col="#F1F0EA"):
     """A full moon as the light it is (realism round 1, base-p3): a near-uniform bright face with soft symmetric limb
     darkening (about 10%), irregular soft maria, no terminator and no bevel, and a soft even cool halo. Units in."""
     H, W, _ = px.shape
@@ -284,7 +290,7 @@ def moon_emissive(px, S, mx, my, mr, seed=3):
         seas = np.maximum(seas, np.exp(-(((u - sx) / rx) ** 2 + ((v - sy) / ry) ** 2) * 1.6) * k)
     mott = fbm(H, W, mr * S * 0.18, 3, seed)
     seas = np.clip(seas * (0.75 + 0.5 * mott), 0, 1)
-    face = hexc("#F1F0EA") * (1 - 0.30 * seas)[..., None] + hexc("#AEB0B2") * (0.30 * seas)[..., None]
+    face = hexc(face_col) * (1 - 0.30 * seas)[..., None] + hexc("#AEB0B2") * (0.30 * seas)[..., None]
     face = face * limb[..., None]
     disc = np.clip((1 - d) * mr * S + 0.5, 0, 1)
     return px * (1 - disc[..., None]) + face * disc[..., None], disc

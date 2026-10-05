@@ -489,6 +489,16 @@ def playfield_chrome(img, level=None, bucket="boat", bucket_x=BUCKET_X_DEFAULT, 
     elif bucket == "fever":
         import fever as v9_fever
         v9_fever.fever_cups(img)
+        # round 4 (realism Nit): each cup's rim catches the moon on its upper-left arc
+        w = (WALL_R - WALL_L) / 5
+        for i in range(5):
+            cx, rx, ry, rim_y = WALL_L + w * (i + 0.5), w / 2 - 5, 5.0, 566.0
+            sl, X, Y = img.win(cx, rim_y, rx + 4)
+            e = np.sqrt(((X - cx) / rx) ** 2 + ((Y - rim_y) / ry) ** 2)
+            band = np.exp(-((e - 0.95) / 0.045) ** 2)
+            ang = np.arctan2((Y - rim_y) / ry, (X - cx) / rx)
+            arc = np.clip(-np.cos(ang + math.pi / 4), 0, 1) ** 2       # strongest at the upper left of the rim
+            img.add(sl, hexc(P["gilt_spec"]), band * arc * 0.55)
     frame(img)
     a = aim if aim is not None else hud_kw.pop("aim", 14.0)
     aimed = pf.launcher(img, aim_deg=a, gauge=hud_kw.pop("gauge", 0.35), ball=hud_kw.pop("ball", True))

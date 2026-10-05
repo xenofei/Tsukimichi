@@ -19,12 +19,12 @@ from rich_lib import (L, LUM, OUT_SCENES, VIOLET, blur, crop_to, grain, hexc, lo
 
 SCENES = {
     "exp-p1-sharlayan": dict(src="ui_loadingimage_-nowloading_base21.png", crop=(-32.0, 30.0, 1307.0, 980.0),
-                             pad=(0, 64), grade=dict(gamma=1.8, sky_drop=0.35), glow=(-50, -60)),
+                             pad=(0, 64), grade=dict(gamma=1.8, sky_drop=0.35, exposure=0.70), glow=(-50, -60)),
     # mirrored: the planet's sunlit side is on the right in the painting; mirrored, its light comes from the left
     "exp-p3-mare-lamentorum": dict(src="ui_loadingimage_-nowloading_base25.png", crop=(557.0, -108.0, 1166.0, 875.0),
                                    mirror=True, pad=(120, 0), pad_mode="reflect",
                                    grade=dict(gamma=1.25, exposure=0.85, chroma_mid=0.42, chroma_high=0.6),
-                                   glow=None, pool=True, sphere=(97.0, 325.0, 31.0)),
+                                   glow=None, pool=True, sphere=(92.5, 325.0, 30.0)),
 }
 
 
@@ -44,6 +44,36 @@ def reshade_sphere(px, S, cx, cy, r):
     rim = np.clip((-(u * 0.707 + v * 0.707)), 0, 1) ** 2 * np.exp(-((1 - d) / 0.08) ** 2)
     body = screen(body, hexc("#B9B4E2") * (rim * 0.75)[..., None])
     return px * (1 - disc[..., None]) + body * disc[..., None]
+
+
+def relight_sphere(px, S, cx, cy, r, bracket):
+    """Round 4 (realism round 3): the tower's sphere, lit from the right in the mirrored painting, is relit in place
+    from the upper left. Its visible pixels are multiplied by new / old Lambert shading, so its own texture and
+    single limb are kept and nothing is painted over. The cradle's front bracket (polygon `bracket`, in units) is
+    masked out, so it stays in front."""
+    from PIL import Image, ImageDraw
+    H, W, _ = px.shape
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    X, Y = (xx + 0.5) / S, (yy + 0.5) / S
+    u, v = (X - cx) / r, (Y - cy) / r
+    d2 = u * u + v * v
+    disc = np.clip((1 - np.sqrt(d2)) * r * S * 0.7 + 0.5, 0, 1)
+    nz = np.sqrt(np.clip(1 - d2, 0, 1))
+    lam_new = np.clip(u * L[0] + v * L[1] + nz * L[2], 0, 1)
+    # an opaque stone sphere shaded by the one light: lit face up to about 0.40 luma (under the board's ceiling),
+    # its shadow side held a little above the sky by the planet's glow; the painting's fine texture rides on top
+    shade = 0.09 + 0.24 * lam_new ** 1.2
+    body = ramp(np.clip(shade / 0.44, 0, 1), [(0, "#14122E"), (0.5, "#4A4878"), (1, "#B4B4D6")])
+    Yp = px @ LUM
+    detail = (Yp - blur(Yp, 2.5 * S)) * 0.9
+    body = np.clip(body + detail[..., None], 0, 1)
+    rim = np.clip(-(u + v) * 0.7071, 0, 1) ** 2 * np.exp(-((1 - np.sqrt(d2)) / 0.07) ** 2)
+    body = screen(body, hexc("#B9B4E2") * (rim * 0.35)[..., None])
+    im = Image.new("L", (W * 3, H * 3), 0)
+    ImageDraw.Draw(im).polygon([(x * S * 3, y * S * 3) for (x, y) in bracket], fill=255)
+    br = blur(np.asarray(im.resize((W, H), Image.BOX), np.float32) / 255, 0.6 * S)
+    m = disc * (1 - br)
+    return px * (1 - m[..., None]) + body * m[..., None]
 
 
 def still_pool(px, S, top=548.0):
@@ -92,7 +122,7 @@ def build(cfg, S=1):
         gx, gy = cfg["glow"]
         out = moon_glow(out, gx * S, gy * S, 330 * S, 900 * S, 0.11, 0.05, col="#C4C0EE")
     if cfg.get("sphere"):
-        out = reshade_sphere(out, S, *cfg["sphere"])
+        out = relight_sphere(out, S, *cfg["sphere"], bracket=[(35, 307), (75, 338), (97, 341), (118, 357), (125, 362), (125, 380), (30, 380)])
     if cfg.get("pool"):
         out = still_pool(out, S)
     out = vignette(out, 0.28)

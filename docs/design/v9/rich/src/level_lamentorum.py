@@ -60,5 +60,5 @@ if __name__ == "__main__":
     pegs, bricks = L.as_level()
     scene = {"source": "game", "texture": "ui/loadingimage/-nowloading_base25.tex", "mirror": True,
              "crop": [557, -108, 1166, 875], "padTop": 120, "padMode": "reflect", "grade": "medallion-night-violet",
-             "veil": 0.26}
+             "veil": 0.40}
     write_level(level_json(LEVEL_ID, NAME, pegs, bricks, scene=scene), LEVELS / f"{LEVEL_ID}.json")

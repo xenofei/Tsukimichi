@@ -12,7 +12,15 @@ from ui_kit import panel
 
 
 def crop(level, bx=520.0):
-    px = load_rgb(OUT_COMP / f"{level}@2x.png")
+    """Round 4 (realism round 3): the bucket on its own board, every peg cleared, so no peg touches the lantern."""
+    import json
+    from composite import render
+    scene = {"base-p3": "base-p3-moogle", "exp-p2": "exp-p2-lantern-ferry"}[level]
+    lv = json.loads((OUT_COMP.parent / "levels" / f"{level}.json").read_text())
+    n = len(lv["pegs"]) + len(lv["bricks"])
+    img, _ = render(level, scene, "cart" if level.startswith("base") else "boat", 1, S=2, gone=set(range(n)),
+                    bucket_x=bx)
+    px = img.px
     x0, x1, y0, y1 = int((bx - 90) * 2), int((bx + 90) * 2), int(520 * 2), int(598 * 2)
     im = Image.fromarray((px[y0:y1, x0:x1] * 255).astype(np.uint8)).resize(((x1 - x0) * 3 // 2, (y1 - y0) * 3 // 2), Image.LANCZOS)
     return np.asarray(im, np.float32) / 255

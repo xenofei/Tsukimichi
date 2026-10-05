@@ -80,5 +80,5 @@ if __name__ == "__main__":
         raise SystemExit("pre-flight failed: the level was not written")
     pegs, bricks = L.as_level()
     scene = {"source": "game", "texture": "ui/loadingimage/-nowloading_base03.tex", "mirror": True,
-             "crop": [430, 60, 1293, 970], "grade": "medallion-night", "veil": 0.36}
+             "crop": [430, 60, 1293, 970], "grade": "medallion-night", "veil": 0.42}
     write_level(level_json(LEVEL_ID, NAME, pegs, bricks, scene=scene), LEVELS / f"{LEVEL_ID}.json")

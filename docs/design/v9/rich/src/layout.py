@@ -182,6 +182,8 @@ class Layout:
                     worst, where = n, (sx, sy)
         low_l = sum(1 for (x, y, _) in allc if y >= 400 and x < 400)
         low_r = sum(1 for (x, y, _) in allc if y >= 400 and x >= 400)
+        if len(allc) < 25:
+            problems.append(f"only {len(allc)} orange candidates (a level needs 25)")
         if worst > 10:
             problems.append(f"spread: {worst} candidates in the 200 x 200 square at {where} (limit 10)")
         if low_l == 0 or low_r == 0:

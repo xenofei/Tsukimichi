@@ -14,6 +14,7 @@ import math
 import numpy as np
 
 from cameo import face_features, head_profile
+from rich_lib import blur
 
 
 def bust(R, y0=62, left=-70, right=64, bottom=118, collar=None, h=3.0):
@@ -37,8 +38,11 @@ def hair_over(R, prof, grow=1.07, region=None, height=6.2, flow=None, n=220, len
     region = region or [(60, -90), (22, -47), (8, -32), (1, -16), (-5, 0), (-12, 18), (-24, 44), (-90, 50), (-90, -90)]
     m = R.poly(grown) * R.poly(region, smooth_n=0)
     R.raise_(m, height, 6.0)
-    # combed back: every strand runs away from the front of the hairline, toward the crown, the back and the nape
-    hair_strands(R, m, flow or (lambda x, y: math.atan2(y + 52, x - 30)), n, length, seed=seed)
+    # combed back: every strand runs away from the front of the hairline, toward the crown, the back and the nape.
+    # Round 4 (realism round 3): the hair is carved in locks (broad rounded ridges) first, then fine strands on them
+    f = flow or (lambda x, y: math.atan2(y + 52, x - 30))
+    hair_strands(R, m, f, max(12, n // 7), length * 1.7, width=5.0, h=1.3, seed=seed + 100, soft=1.2)
+    hair_strands(R, m, f, n, length, width=1.3, h=0.35, seed=seed)
     return m
 
 
@@ -46,8 +50,9 @@ def folds(R, pts_list, w=2.4, h=0.7):
     R.ridges(pts_list, w, h)
 
 
-def hair_strands(R, mask, flow, n, length, width=1.6, h=0.55, seed=0):
-    """Carved hair: ridges laid along `flow(x, y)` from random starts inside `mask` (local units)."""
+def hair_strands(R, mask, flow, n, length, width=1.6, h=0.55, seed=0, soft=0.0):
+    """Carved hair: ridges laid along `flow(x, y)` from random starts inside `mask` (local units); soft > 0 rounds
+    them into locks."""
     rng = np.random.default_rng(seed)
     ys, xs = np.nonzero(mask > 0.5)
     if len(xs) == 0:
@@ -64,6 +69,8 @@ def hair_strands(R, mask, flow, n, length, width=1.6, h=0.55, seed=0):
             pts.append((x, y))
         paths.append(pts)
     m = R.strokes(paths, width)
+    if soft:
+        m = np.sqrt(np.clip(blur(m, soft * R.S), 0, 1))
     R.hgt = R.hgt + m * mask * h
 
 
@@ -166,7 +173,12 @@ def gajavati(R):
     head = R.poly([(-26, 92), (-32, 60), (-40, 24), (-38, -14), (-22, -42), (2, -52), (24, -42), (36, -22), (40, -4),
                    (44, 10), (46, 26), (48, 44), (44, 60), (40, 70), (34, 66), (36, 52), (34, 38), (26, 34), (18, 44),
                    (10, 62), (8, 92)])
-    R.raise_(head, 4.6, 12.0)
+    R.raise_(head, 5.2, 24.0)
+    # her forms (round 4): the domed brow, the socket, the cheek, the trunk's root swelling from the face
+    R.bump(8, -28, 18, 12, 1.6, within=head)
+    R.bump(20, -6, 7, 5, -1.3, within=head)
+    R.bump(14, 12, 12, 10, 1.4, within=head)
+    R.bump(36, 20, 8, 14, 1.2, rot=0.2, within=head)
     # the trunk's rings and the eye
     for k in range(6):
         y = 18 + k * 8
@@ -239,7 +251,12 @@ def gyobo(R):
     bust(R, y0=70, left=-66, right=60, h=2.6)
     head = R.poly([(-40, 92), (-52, 60), (-56, 20), (-46, -16), (-20, -36), (14, -40), (40, -30), (56, -8), (62, 14),
                    (56, 34), (40, 46), (20, 54), (8, 70), (-6, 92)])
-    R.raise_(head, 5.2, 16.0)
+    R.raise_(head, 5.6, 28.0)
+    # his forms (round 4): the broad skull, the brow over the eye, the full cheek, the lip over the wide mouth
+    R.bump(0, -12, 30, 20, 1.6, within=head)
+    R.bump(32, -22, 10, 5, 1.0, within=head)
+    R.bump(36, 14, 14, 10, 1.3, within=head)
+    R.bump(44, 27, 12, 3.5, 0.8, within=head)
     R.carve(R.strokes([[(20, 30), (40, 34), (58, 28)]], 1.6), 0.8, 0.4)           # the wide mouth
     R.raise_(R.ellipse(30, -14, 7, 7), 1.6, 3.0, mode="add")                      # the eye's dome
     R.carve(R.ellipse(31, -14, 3.6, 3.6), 0.9, 0.5, tone=0.8)
@@ -293,23 +310,33 @@ def ione(R):
 def kupsa(R):
     """Kupsa Brightpom, moogle storm courier: the round head and its short ear, the curling stalk and pom-pom, the
     little bat wing at his back, the courier's bag strap, a spark at the pom-pom."""
-    body = R.poly([(-56, 118), (-58, 80), (-40, 62), (0, 58), (36, 66), (52, 90), (50, 118)])
-    R.raise_(body, 3.2, 8.0)
+    # round 4 (realism round 3): one continuous mass from the chest up through a short neck into the head, so the
+    # head sits on the body, and the wing grows from the back, not the head
+    body = R.poly([(-58, 118), (-60, 84), (-46, 58), (-30, 44), (0, 38), (30, 44), (44, 62), (54, 90), (52, 118)])
+    R.raise_(body, 3.8, 22.0)
     hair_strands(R, body, lambda x, y: math.pi / 2, 200, 6, width=1.4, seed=13)
-    head = R.ellipse(4, 10, 50, 46)
-    R.raise_(head, 5.2, 20.0)
-    hair_strands(R, head, lambda x, y: math.atan2(y - 10, x - 4), 420, 6, width=1.2, h=0.35, seed=14)
+    head = R.ellipse(4, 6, 50, 46)
+    R.raise_(head, 5.6, 26.0)
+    R.bump(-6, -10, 30, 26, 1.6, within=head)                                     # the brow's swell
+    R.bump(30, 20, 14, 12, 1.0, within=head)                                      # the cheek under the eye
+    # soft fur: a few broad tufts toward the back of the head, the face left smooth
+    face = R.ellipse(30, 14, 26, 24)
+    hair_strands(R, head * (1 - face), lambda x, y: math.atan2(y - 6, x - 4), 40, 9, width=4.0, h=0.7, seed=24, soft=1.0)
+    hair_strands(R, head * (1 - face), lambda x, y: math.atan2(y - 6, x - 4), 200, 6, width=1.2, h=0.25, seed=14)
     ear = R.poly([(-18, -26), (-28, -56), (-6, -44), (2, -30)])
     R.raise_(ear, 5.0, 3.0)
-    R.raise_(R.ellipse(46, 18, 8, 7), 1.6, 3.0, mode="add")                       # the nose
-    R.carve(R.ellipse(28, 4, 3.0, 4.2), 0.9, 0.4, tone=0.8)                       # the eye
+    R.bump(48, 20, 9, 8, 2.6)                                                     # the round nose
+    R.bump(26, 2, 7, 8, -1.4)                                                     # the eye's socket
+    R.carve(R.ellipse(27, 3, 3.6, 5.0), 1.2, 0.4, tone=0.9)                       # the eye
+    R.bump(25.6, 1.4, 1.2, 1.6, 0.6)                                              # its glint of a raised pupil
+    R.carve(R.strokes([[(34, 36), (42, 39), (49, 36)]], 1.0), 0.6, 0.3)           # the mouth
     R.ridges([[(-6, -34), (-2, -62), (14, -80), (34, -86)]], 2.4, 1.4)            # the stalk
     pom = R.ellipse(42, -88, 12, 12)
     R.raise_(pom, 6.4, 8.0)
     hair_strands(R, pom, lambda x, y: math.atan2(y + 88, x - 42), 120, 4, width=1.2, h=0.4, seed=15)
-    wing = R.poly([(-40, 20), (-66, -20), (-80, -40), (-74, -10), (-88, -6), (-74, 14), (-84, 24), (-62, 34)])
+    wing = R.poly([(-50, 66), (-70, 30), (-86, 6), (-80, 34), (-94, 40), (-80, 56), (-90, 68), (-66, 76)])
     R.raise_(wing, 2.6, 2.0)
-    R.ridges([[(-42, 22), (-78, -36)], [(-44, 24), (-84, -4)], [(-46, 26), (-80, 24)]], 1.4, 0.6)
+    R.ridges([[(-52, 66), (-84, 10)], [(-54, 68), (-90, 42)], [(-56, 70), (-86, 66)]], 1.4, 0.6)
     R.ridges([[(-40, 70), (0, 96), (40, 112)]], 3.4, 1.0)                          # the bag's strap
 
 

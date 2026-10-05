@@ -90,14 +90,14 @@ def build():
     # the forest: a wavy treeline along the crowns, then the wood's crowns as staggered rows below it, dense enough
     # that a falling ball always meets them (round 2: the low board was too sparse, its oranges were left behind)
     for x in range(104, 710, 38):  # noqa
-        put(x, 404 + 14 * math.sin(x / 47.0), orange=((x - 104) // 38) in (1, 12, 15), tag="treetops")
-    for row, y0 in enumerate((452, 496, 538)):
+        put(x, 404 + 14 * math.sin(x / 47.0), orange=((x - 104) // 38) in (1, 5, 9, 12, 15), tag="treetops")
+    for row, y0 in enumerate((452, 496)):           # (round 4: the lowest row cut, so the lantern has its lane)
         for k in range(17):
             x = 100 + k * 38 + (19 if row % 2 else 0)
             y = y0 + 8 * math.sin(x / 41.0 + row)
             if x > 702:
                 continue
-            lamp = (row, k) in ((0, 3), (0, 10), (1, 6), (1, 13), (0, 15), (1, 1), (2, 9))     # cottage lamps
+            lamp = row == 0 and k % 2 == 1     # cottage lamps, on the upper row of the wood
             put(x, y, orange=lamp, tag="lamp in the wood" if lamp else "forest")
     # the sky's scatter to the right and the left of the courier
     for (x, y) in ((660, 200), (700, 236), (640, 300), (690, 330), (650, 360),

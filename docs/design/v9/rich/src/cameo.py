@@ -12,7 +12,7 @@ light, a polished highlight. Hair and cloth get carved strands and folds (ridges
 """
 import math
 
-import numpy as np
+import numpy as np  # noqa: I001
 from PIL import Image, ImageDraw
 
 from rich_lib import L, H_BLINN, blur, fbm, hexc, ramp, screen, smooth
@@ -63,13 +63,29 @@ class Relief:
 
     # ---- building the relief
     def raise_(self, m, height, round_units=4.0, mode="max", base=None):
-        """Adds a raised form: its edge rounds over `round_units`; mode 'max' sets it above what is there, 'add' stacks."""
-        dome = np.sqrt(np.clip(blur(m, round_units * self.S * 0.5), 0, 1)) * m
+        """Adds a raised form, rounded all the way across (round 4, realism round 3: no plateaus). Its height is the
+        mean of the mask blurred at three scales up to `round_units`, so the form swells toward its middle like a
+        carved volume; the outer edge stays a clean cut (the only bevel), 35% of the height. mode 'max' sets it above
+        what is there, 'add' stacks."""
+        r = round_units * self.S
+        swell = (blur(m, r * 0.18) + blur(m, r * 0.45) + blur(m, r * 0.9)) / 3
+        dome = (0.35 + 0.65 * np.clip(swell, 0, 1) ** 0.8) * m
         h = dome * height
         if base is not None:
             h = h + base * m
         self.hgt = np.maximum(self.hgt, h) if mode == "max" else self.hgt + h
         return h
+
+    def bump(self, cx, cy, rx, ry, h, rot=0.0, within=None):
+        """A soft rounded swelling (h > 0) or hollow (h < 0): a gaussian in local units, optionally kept inside a mask."""
+        yy, xx = np.mgrid[0:self.H, 0:self.W].astype(np.float32)
+        X, Y = (xx + 0.5) / self.S - self.ox, (yy + 0.5) / self.S - self.oy
+        c, s = math.cos(rot), math.sin(rot)
+        u, v = ((X - cx) * c + (Y - cy) * s) / rx, (-(X - cx) * s + (Y - cy) * c) / ry
+        g = np.exp(-(u * u + v * v) * 1.4) * h
+        if within is not None:
+            g = g * within
+        self.hgt = self.hgt + g
 
     def carve(self, m, depth, soft=0.6, tone=0.0):
         mm = blur(m, soft * self.S)
@@ -107,17 +123,33 @@ def shade(R, ground="lapis", sheen=0.30):
     ground_col = ramp(t, [(0, "#22356E"), (1, "#101A3C")])
     ground_col = ground_col * (0.94 + 0.08 * fbm(R.H, R.W, 14 * S, 3, 7))[..., None]
     occl = np.clip(blur(relief, 3.0 * S) - relief, 0, 1)
-    # the shadow the relief casts on its ground, toward the lower right (a carved figure stands proud of its ground)
+    # the shadow the relief casts on its ground, toward the lower right (a carved figure stands proud of its ground),
+    # lifted by cool light scattered through the stone (round 4: the shadow of moonstone is never dead)
     sh = np.roll(np.roll(blur(relief, 1.6 * S), int(2.2 * S), 0), int(2.2 * S), 1)
-    ground_col = ground_col * (1 - np.clip(occl * 1.4 + sh * 0.45, 0, 0.75))[..., None]
-    # the stone: lit by the light, with a translucent body (shadows stay blue, never black)
-    v = np.clip(0.58 + (lam - L[2]) * 2.2 - ao, 0.06, 1.0)   # a flat face is mid-tone; faces turned to the light glow
+    dark = np.clip(occl * 1.2 + sh * 0.40, 0, 0.62)
+    ground_col = ground_col * (1 - dark)[..., None] + hexc("#3A5294") * (dark * 0.18)[..., None]
+    # the stone: lit by the light; a flat face is mid-tone, faces turned to the light glow, creases hold shade
+    v = np.clip(0.50 + (lam - L[2]) * 2.6 - ao, 0.06, 1.0)
     stone = ramp(v, STONE)
     stone = stone * (1 - R.tone[..., None] * 0.45) + hexc("#1C2A58") * (R.tone[..., None] * 0.45)
-    sss = np.clip(1 - lam, 0, 1) * 0.10
+    # moonstone, not plaster (round 4): its body scatters light, so the shadow side stays a cool blue ...
+    sss = np.clip(1 - lam, 0, 1) * 0.16
     stone = screen(stone, hexc("#5E7ACC") * sss[..., None])
-    stone = screen(stone, hexc("#9CC0FF") * (np.clip(lam - 0.55, 0, 1) * sheen)[..., None])
-    stone = stone + hexc("#FFFFFF") * (nh ** 40 * 0.30 + nh ** 160 * 0.35)[..., None]
+    # ... thin edges let light through (translucency where the stone is thin, strongest on edges facing the light)
+    hmax = max(float(np.percentile(R.hgt[relief > 0.5], 95)) if (relief > 0.5).any() else 1.0, 1e-3)
+    thin = np.clip(1 - R.hgt / (hmax * 0.55), 0, 1) * relief
+    gy2, gx2 = np.gradient(blur(relief, 1.0 * S))
+    gn2 = np.sqrt(gx2 ** 2 + gy2 ** 2) + 1e-6
+    toward = np.clip((gx2 + gy2) * 0.7071 / gn2, 0, 1)        # the edge's outward normal faces the upper left
+    stone = screen(stone, hexc("#C9DAFA") * (thin * (0.10 + 0.22 * toward))[..., None])
+    # ... and a milky blue adularescent sheen floats across the high points, drifting toward the upper left
+    yy2, xx2 = np.mgrid[0:R.H, 0:R.W].astype(np.float32)
+    w_ = relief.sum() + 1e-6
+    cxm, cym = (xx2 * relief).sum() / w_, (yy2 * relief).sum() / w_
+    drift = np.exp(-(((xx2 - (cxm - 0.16 * R.W)) / (0.38 * R.W)) ** 2 + ((yy2 - (cym - 0.16 * R.H)) / (0.36 * R.H)) ** 2))
+    high = np.clip(R.hgt / hmax, 0, 1) ** 1.5
+    stone = screen(stone, hexc("#A8C6FF") * (high * drift * sheen * 0.9)[..., None])
+    stone = stone + hexc("#FFFFFF") * (nh ** 40 * 0.22 + nh ** 160 * 0.30)[..., None]
     a = np.clip(relief * 1.5, 0, 1)[..., None]
     return np.clip(ground_col * (1 - a) + stone * a, 0, 1)
 
@@ -137,25 +169,37 @@ def face_features(R, scale=1.0, dx=0.0, dy=0.0, eye=(26, -6), closed=False, ear=
     """The eye (an almond groove with a lid ridge), the brow ridge, the ear, the nostril, the lips' line, the cheek."""
     s = scale
     ex, ey = eye[0] * s + dx, eye[1] * s + dy
-    # the socket (a soft hollow under the brow), the eye in profile (a small almond, open or closed), its upper lid
-    R.carve(R.ellipse(ex - 1 * s, ey - 1 * s, 8 * s, 6 * s), 0.9, 3.0)
-    R.carve(R.poly([(ex - 4 * s, ey), (ex, ey - (1.0 if closed else 2.4) * s), (ex + 4.5 * s, ey + 0.2 * s),
-                    (ex, ey + (0.6 if closed else 1.6) * s)], smooth_n=4), 0.7, 0.4, tone=0.6)
-    R.ridges([[(ex - 5 * s, ey - 1.5 * s * lid), (ex - 0.5 * s, ey - 3.2 * s * lid), (ex + 4.5 * s, ey - 1.2 * s)]], 1.4 * s, 0.6)
-    R.ridges([[(ex - 9 * s, ey - 8 * s), (ex + 0 * s, ey - 10.5 * s), (ex + 8 * s, ey - 7.5 * s)]], 3.0 * s, 0.7)
+    P = lambda x, y: (x * s + dx, y * s + dy)
+    # round 4 (realism round 3): the face is modelled as soft volumes, not lines. Forehead, temple, brow, the socket
+    # under it, the eyeball and its lid, the cheekbone, the nose's bridge and wing, both lips, the chin, the jaw
+    R.bump(*P(12, -32), 16 * s, 12 * s, 1.6)                  # the forehead's dome
+    R.bump(*P(-2, -14), 9 * s, 9 * s, -0.7)                   # the temple's hollow
+    R.bump(ex - 2 * s, ey - 9 * s, 9 * s, 3.2 * s, 1.1, rot=-0.15)   # the brow
+    R.bump(ex - 1 * s, ey, 7 * s, 4.5 * s, -1.6)              # the socket
+    R.bump(ex, ey, 3.6 * s, 2.6 * s, 0.9)                     # the eyeball under its lid
+    R.ridges([[(ex - 4.5 * s, ey - 1.0 * s * lid), (ex - 0.5 * s, ey - 2.6 * s * lid), (ex + 4.0 * s, ey - 0.8 * s)]],
+             1.3 * s, 0.55, soft=0.7)                         # the upper lid's edge
+    R.carve(R.poly([(ex - 3.5 * s, ey + 0.2 * s), (ex, ey - (0.6 if closed else 1.6) * s), (ex + 4.0 * s, ey + 0.4 * s),
+                    (ex, ey + (0.5 if closed else 1.3) * s)], smooth_n=4), 0.5, 0.5, tone=0.35)
+    R.bump(*P(16, 6), 9 * s, 7 * s, 1.5, rot=0.3)             # the cheekbone
+    R.bump(*P(20, 20), 8 * s, 8 * s, -0.6)                    # under the cheekbone
+    R.bump(*P(35, 7), 3.0 * s, 8 * s, 1.0, rot=-0.45)         # the nose's bridge
+    R.bump(*P(34, 16), 3.6 * s, 3.0 * s, 0.9)                 # the nostril's wing
+    R.bump(*P(31, 18), 2.2 * s, 1.6 * s, -0.6)                # its crease
+    R.bump(*P(34, 25), 4.0 * s, 2.4 * s, 0.8)                 # the upper lip
+    R.bump(*P(33.5, 31), 3.6 * s, 2.4 * s, 0.9)               # the lower lip
+    R.bump(*P(30, 34.5), 4.0 * s, 1.6 * s, -0.5)              # the hollow under it
+    R.bump(*P(29, 42), 6.0 * s, 5.0 * s, 1.2)                 # the chin
+    R.bump(*P(8, 38), 14 * s, 7 * s, 0.6, rot=-0.5)           # the jaw's plane
     # ear: a C-shaped rim (helix) round a shallow bowl, the lobe below
     ax, ay = ear[0] * s + dx, ear[1] * s + dy
     erx, ery = ear_r[0] * s, ear_r[1] * s
     R.carve(R.ellipse(ax + 1.0 * s, ay, erx * 0.7, ery * 0.7), 0.45, 1.6)
     R.ridges([[(ax + erx * 0.2, ay - ery), (ax - erx * 0.8, ay - ery * 0.6), (ax - erx, ay + ery * 0.1),
                (ax - erx * 0.6, ay + ery * 0.8), (ax + erx * 0.1, ay + ery)]], 2.0 * s, 0.55, soft=0.8)
-    # nostril wing, the lips' parting, the corner of the mouth, the cheekbone's soft plane
-    R.ridges([[(33 * s + dx, 14 * s + dy), (36 * s + dx, 19 * s + dy), (40 * s + dx, 20 * s + dy)]], 1.4 * s, 0.5)
-    R.carve(R.strokes([[(29 * s + dx, 29.5 * s + dy), (36.5 * s + dx, 29.2 * s + dy)]], 0.9 * s), 0.6, 0.3)
-    R.carve(R.ellipse(29 * s + dx, 30 * s + dy, 1.6 * s, 1.6 * s), 0.4, 0.4)
-    # the cheekbone's soft plane and the jaw's line, running back to the ear (broad and low, no edge)
-    R.hgt = R.hgt + blur(R.ellipse(14 * s + dx, 6 * s + dy, 10 * s, 7 * s), 6 * R.S) * 0.9
-    R.ridges([[(28 * s + dx, 46 * s + dy), (14 * s + dx, 47 * s + dy), (-4 * s + dx, 32 * s + dy)]], 4.0 * s, 0.30, soft=1.5)
+    # the lips' parting and the mouth's corner, finely cut
+    R.carve(R.strokes([[(29 * s + dx, 28.4 * s + dy), (36.5 * s + dx, 28.2 * s + dy)]], 0.8 * s), 0.45, 0.3)
+    R.bump(*P(28.5, 28.6), 1.6 * s, 1.6 * s, -0.5)
 
 
 # ------------------------------------------------------------------------------------------------ framing

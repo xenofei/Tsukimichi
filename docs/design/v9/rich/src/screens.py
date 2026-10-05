@@ -39,13 +39,10 @@ def cameo(key, S=3.0):
 
 
 def moon_on(img, mx, my, mr):
-    class _C:
-        pass
-    c = _C()
-    c.px, c.w, c.h = img.px, img.w, img.h
-    c.yy, c.xx = np.mgrid[0:img.h, 0:img.w].astype(np.float32)
-    paint_moon(c, {}, mx * img.S, my * img.S, mr * img.S)
-    img.px = c.px
+    """The emissive moon approved on base-p3 (realism round 3: the title's moon must be the light, not a lit ball),
+    the same recipe at every size, tinted cool toward moonstone."""
+    from rich_lib import moon_emissive
+    img.px, _ = moon_emissive(img.px, img.S, mx, my, mr, face_col="#E9EDF6")
 
 
 # ------------------------------------------------------------------------------------------------ backgrounds
@@ -82,11 +79,11 @@ def title(W=1280, H=800):
     img = Img(W * S, H * S, S, px=title_background(W, H, S, focus_x=0.30 if W > 700 else 0.5))
     small = W < 700
     if not small:
-        moon_on(img, 210, 120, 38)
         vignette_rect(img, 0.35)
         # the left column: a dark glass of night behind the menu, so the type sits on calm ground
         sl, X, Y = img.full()
         img.mul(sl, hexc("#05070F"), smooth(560, 120, X) * 0.55)
+        moon_on(img, 210, 120, 38)                      # the light itself: drawn last, never dimmed
         logotype(img, 330, 250, 64, sub="a peg game under Menphina's moon", sub_size=19)
         items = [("Adventure", "The Moon Road · stage 4 of 11", "focus"), ("Quick Play", "any level you have reached", "normal"),
                  ("Challenges", "12 of 40 won", "normal"), ("Duel", "against Ione, or a friend", "normal")]
@@ -98,19 +95,18 @@ def title(W=1280, H=800):
         button(img, 338, y + 8, 490, y + 46, "Options", 15)
         # continue card: the next level, its scene and its stage's character
         panel(img, 900, 600, 1240, 760, r=10)
-        thumb = load_rgb(OUT_SCENES / "base-p3-moogle.png")
-        place_rgb(img, thumb[41:594, 75:725], 916, 616, 150, 128)
+        place_rgb(img, board_thumb("base-p1"), 916, 616, 150, 128)
         text(img, 1082, 630, "Continue", "ui_sb", 11, P["gilt_high"], anchor="lm", halo=0)
-        text(img, 1082, 656, "1-3  The Moonlit Post", "serif", 15, P["cream"], anchor="lm", halo=0)
-        text(img, 1082, 680, "Best 214,300 · not yet aced", "ui", 11.5, P["ink_dim"], anchor="lm", halo=0)
-        cameo_badge(img, cameo("pipiru"), 1110 + 82, 718, 22, 26, beads=False)
-        text(img, 1082, 718, "with Pipiru", "ui", 11.5, P["ink_dim"], anchor="lm", halo=0)
+        text(img, 1082, 656, "4-3  The Airship Road", "serif", 15, P["cream"], anchor="lm", halo=0)
+        text(img, 1082, 680, "not yet won · ace 240,000", "ui", 11.5, P["ink_dim"], anchor="lm", halo=0)
+        cameo_badge(img, cameo("haldbrand"), 1110 + 82, 718, 22, 26, beads=False)
+        text(img, 1082, 718, "with Haldbrand", "ui", 11.5, P["ink_dim"], anchor="lm", halo=0)
         text(img, 40, 772, "1.23.0", "ui", 11, P["ink_dim"], anchor="lm", halo=0.3)
     else:
-        moon_on(img, 92, 70, 22)
         vignette_rect(img, 0.35)
         sl, X, Y = img.full()
         img.mul(sl, hexc("#05070F"), np.exp(-((X - 320) / 210) ** 2) * smooth(130, 200, Y) * 0.50)
+        moon_on(img, 92, 70, 22)
         logotype(img, 320, 112, 40, sub="a peg game under Menphina's moon", sub_size=13)
         y = 196
         for (lab, st) in (("Adventure", "focus"), ("Quick Play", "normal"), ("Challenges", "normal"), ("Duel", "normal")):
@@ -405,7 +401,7 @@ def levels(W=1280, H=800):
         for i, e in enumerate(STAGE4):
             r, c = divmod(i, 3)
             level_tile(img, x0 + c * (w + gx) + (0 if r == 0 else (w + gx) / 2), 78 + r * 200, w, e, small=True)
-        button(img, 470, 440, 630, 470, "Play 4-3", 13, "focus")
+        button(img, 526, 426, 632, 458, "Play 4-3", 12, "focus")
     return img
 
 
@@ -447,22 +443,58 @@ def board(level_id, scene, bucket, seed, **kw):
 
 
 def hud(W=1280, H=800):
+    """Aiming with Super Guide (round 4, realism round 3): the barrel at the aim, and the guide drawn from the engine's
+    own flight (tools/mfcheck trace): silver dots 17 units apart from the muzzle to the first contact, then Super
+    Guide's thin line through the bounce to the next contact. A fresh board: while aiming nothing is lit."""
     import json
-    import playfield as pf
-    lvl = json.loads((OUT_COMP.parent / "levels" / "base-p1.json").read_text())
-    pegs = [(p["x"], p["y"]) for p in lvl["pegs"]]
-    lit = {i for i, (x, y) in enumerate(pegs) if 300 <= x <= 360 and 300 <= y <= 470}
-    gone = {i for i, (x, y) in enumerate(pegs) if 100 <= x <= 230 and 420 <= y <= 480}
+    import subprocess
+    from board import MFCHECK
+    from rich_lib import hexc as _hexc
+    lpath = OUT_COMP.parent / "levels" / "base-p1.json"
+
+    def trace(a):
+        out = subprocess.run(["dotnet", str(MFCHECK), "trace", str(lpath), str(a), "5", "2", "400"],
+                             capture_output=True, text=True, check=True).stdout
+        return json.loads(out.strip().splitlines()[-1])
+
+    def path_len(pts):
+        p = np.asarray(pts)
+        return float(np.sqrt(((p[1:] - p[:-1]) ** 2).sum(1)).sum()) if len(p) > 1 else 0.0
+
+    best, score = None, 1e9
+    for a in [x * 1.0 for x in range(-60, 61) if abs(x) >= 6]:
+        t = trace(a)
+        if len(t["hits"]) < 2:
+            continue
+        first = path_len(t["points"][:t["hits"][0] + 1])
+        second = path_len(t["points"][t["hits"][0]:t["hits"][1] + 1])
+        if second >= 50 and abs(first - 150) < score:
+            best, score = (a, t), abs(first - 150)
+    aim, tr = best
 
     def after(img, level, colours, aimed):
-        start, d = aimed
-        live = [p for i, p in enumerate(pegs) if i not in gone]
-        pf.guide_dots(img, start, d, live, super_guide=True)
+        pts = np.asarray(tr["points"], np.float64)
+        h0, h1 = tr["hits"][0], tr["hits"][1]
+        seg = pts[:h0 + 1]
+        d = np.concatenate([[0], np.cumsum(np.sqrt(((seg[1:] - seg[:-1]) ** 2).sum(1)))])
+        s = 17.0
+        while s < d[-1] - 4:
+            x, y = np.interp(s, d, seg[:, 0]), np.interp(s, d, seg[:, 1])
+            sl, X, Y = img.win(x, y, 4)
+            d2 = (X - x) ** 2 + (Y - y) ** 2
+            img.add(sl, _hexc("#C3CEE4"), np.exp(-d2 / 6) * 0.35)
+            img.over(sl, _hexc("#E2E8F4"), np.clip(0.5 - (np.sqrt(d2) - 1.6) * img.S, 0, 1) * 0.95)
+            s += 17.0
+        from rich_lib import sd_segment
+        for (a, b) in zip(pts[h0:h1], pts[h0 + 1:h1 + 1]):
+            cx, cy = (a + b) / 2
+            sl, X, Y = img.win(cx, cy, np.hypot(*(b - a)) / 2 + 3)
+            dseg = sd_segment(X, Y, a[0], a[1], b[0], b[1])[0] - 0.65
+            img.over(sl, _hexc("#C3CEE4"), np.clip(0.5 - dseg * img.S, 0, 1) * 0.6)
 
-    px, _ = board("base-p1", "base-p1-airship-road", "cart", 2, lit=lit, gone=gone, aim=-14.0, after=after,
-                  bucket_x=300.0,
+    px, _ = board("base-p1", "base-p1-airship-road", "cart", 2, aim=aim, after=after, bucket_x=300.0,
                   hud_kw=dict(stage="4-3", score="96,420", balls=5, cleared=9, mult="×1", oranges=16,
-                              power="Lunar Burst", turns=1, portrait=portrait("haldbrand"), gauge=0.2))
+                              power="Super Guide", turns=2, portrait=portrait("pipiru"), gauge=0.2))
     return window(px, W, H)
 
 

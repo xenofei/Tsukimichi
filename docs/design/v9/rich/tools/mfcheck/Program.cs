@@ -76,6 +76,37 @@ switch (args[0])
         return 0;
     }
 
+    case "trace":
+    {
+        // trace <file> <angle> [level] [seed] [maxTicks]: the ball's flight from the muzzle, one point per game tick,
+        // as JSON {"points":[[x,y],...],"hits":[tickIndex,...]} (hits: the tick index of each peg hit, in order).
+        var level = Load(args[1]);
+        var angle = double.Parse(args[2], inv);
+        var number = args.Length > 3 ? int.Parse(args[3], inv) : 5;
+        var seed = args.Length > 4 ? ulong.Parse(args[4], inv) : 1UL;
+        var max = args.Length > 5 ? int.Parse(args[5], inv) : 400;
+        var g = new MoonfallGame(level, number, seed);
+        g.Shoot(angle);
+        var pts = new List<string> { $"[{g.BallX.ToString("0.##", inv)},{g.BallY.ToString("0.##", inv)}]" };
+        var hits = new List<int>();
+        for (var i = 0; i < max && g.Phase == MoonfallPhase.Flying; i++)
+        {
+            g.Tick();
+            while (g.TryReadEvent(out var e))
+            {
+                if (e.Kind == MoonfallEventKind.PegHit)
+                {
+                    hits.Add(pts.Count);
+                }
+            }
+
+            pts.Add($"[{g.BallX.ToString("0.##", inv)},{g.BallY.ToString("0.##", inv)}]");
+        }
+
+        Console.WriteLine("{\"points\":[" + string.Join(",", pts) + "],\"hits\":[" + string.Join(",", hits) + "]}");
+        return 0;
+    }
+
     default:
         Console.WriteLine("unknown command " + args[0]);
         return 2;
