@@ -9,7 +9,12 @@ Writes Tsukimichi.Tests/Fixtures/moonfall-grade/:
   <case>.bin           float32 little-endian, H x W x 3, the reference output of each case
 
 The reference functions are imported from the approved sources (rich_lib.night_lab, dress2.jewel, r2lib.gild), never
-copied, so the C# port is checked against what made the approved renders.
+copied, so the C# port is checked against what made the approved renders. One step is the runtime's own: the jewel's
+lightness lock. F1 says the jewel keeps every pixel's OKLab L exactly ("by construction"), but dress2.jewel ends in
+oklab_to_srgb, which clips a dark, saturated colour pushed outside sRGB channel by channel, and that moves its
+lightness. The runtime keeps L and gives up chroma instead (MoonfallColor.ToSrgbKeepingLightness), so the jewel
+references are made with that conversion (keeping_lightness below, the same bisection) in place of the clip; inside the
+gamut the two are the same colour.
 """
 import atexit
 import pathlib
@@ -90,6 +95,37 @@ def save_bin(px, path):
     np.ascontiguousarray(px[..., :3], dtype="<f4").tofile(path)
 
 
+def keeping_lightness(lab):
+    """oklab_to_srgb with F1 kept: a colour outside sRGB keeps L and hue and gives up chroma (8 halvings) until it fits."""
+    import rich_lib
+
+    def lin(q):
+        M2i = np.array([[1.0, 0.3963377774, 0.2158037573], [1.0, -0.1055613458, -0.0638541728],
+                        [1.0, -0.0894841775, -1.2914855480]], np.float32)
+        M1i = np.array([[4.0767416621, -3.3077115913, 0.2309699292], [-1.2684380046, 2.6097574011, -0.3413193965],
+                        [-0.0041960863, -0.7034186147, 1.7076147010]], np.float32)
+        return ((q @ M2i.T) ** 3) @ M1i.T
+
+    def fits(q):
+        v = lin(q)
+        return np.all((v >= -1e-5) & (v <= 1 + 1e-5), axis=-1)
+
+    lab = np.asarray(lab, np.float32)
+    ok = fits(lab)
+    lo = np.where(ok, 1.0, 0.0).astype(np.float32)
+    hi = np.ones_like(lo)
+    for _ in range(8):
+        mid = (lo + hi) * 0.5
+        q = lab.copy()
+        q[..., 1:] *= mid[..., None]
+        good = fits(q) & ~ok
+        lo = np.where(good, mid, lo)
+        hi = np.where(good | ok, hi, mid)
+    q = lab.copy()
+    q[..., 1:] *= lo[..., None]
+    return rich_lib.oklab_to_srgb(q)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     save_png(fixture(), OUT / "fixture.png")
@@ -106,6 +142,7 @@ def main():
     save_bin(night_lab(src, tint="#CBC4EA", base_hue="#2A2358", gamma=1.8, sky_drop=0.0, exposure=0.70, S=S),
              OUT / "nightlab-violet.bin")
 
+    dress2.oklab_to_srgb = keeping_lightness   # the jewel's lightness lock (see the module's note)
     graded = night_lab(src, gamma=1.35, exposure=0.72, warm_keep=0.25, chroma_mid=0.45, S=S)
     Lsc = srgb_to_oklab(graded)[..., 0]
     sea = smooth(0.30, 0.42, blur(Lsc, 3 * S))

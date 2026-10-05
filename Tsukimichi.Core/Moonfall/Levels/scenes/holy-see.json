@@ -6,6 +6,7 @@
   "format": "moonfall-scene",
   "version": 1,
   "name": "holy-see",
+  "levels": ["base-02"],
   "source": {
     "game": "ui/loadingimage/-nowloading_base03.tex",
     "mirror": true,

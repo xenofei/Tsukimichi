@@ -24,8 +24,10 @@ public sealed class MoonfallSceneBuildTests(ITestOutputHelper output)
         var recipes = MoonfallSceneKit.Recipes();
         foreach (var level in campaigns.Base.Levels.Concat(campaigns.Expansion.Levels))
         {
-            Assert.True(level.Scene is { } name && recipes.ContainsKey(name), $"{level.Id} names no scene recipe");
+            Assert.True(MoonfallSceneRecipeLoader.Pick(recipes, level) is not null, $"{level.Id} takes no scene recipe");
         }
+
+        Assert.Empty(MoonfallSceneRecipeLoader.CheckSet(recipes));
     }
 
     [Theory]

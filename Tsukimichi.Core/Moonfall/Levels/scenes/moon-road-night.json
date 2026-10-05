@@ -6,6 +6,7 @@
   "format": "moonfall-scene",
   "version": 1,
   "name": "moon-road-night",
+  "default": true,
   "source": { "picture": "moon-road-night" },
   "paint": [
     { "kind": "moon", "x": 168, "y": 112, "r": 27, "seed": 3 }

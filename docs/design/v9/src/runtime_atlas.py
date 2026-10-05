@@ -568,9 +568,10 @@ def cart_sprite(S):
 
 
 def road_sprite(S):
-    """The moon road along the foot (frame_rich.road_strip), wall to wall: pale packed earth, moonlit, ruts, and a grass
+    """The moon road along the foot (frame_rich.road_strip), its left half (the plugin draws it again mirrored to the right
+    wall): pale packed earth, moonlit, ruts, and a grass
     edge rim-lit on its upper left. Anchor: its left end on the road's top line."""
-    img = at(S, 75, ROAD_TOP - 5, 650, 15)
+    img = at(S, 75, ROAD_TOP - 5, 325, 15)
     sl, xx, yy = img.full()
     m = np.clip((yy - ROAD_TOP) * img.S + 0.5, 0, 1)
     n = fbm(img.h, img.w, 3.0 * img.S, 3, 77)
@@ -712,20 +713,22 @@ def sprites():
 
 
 def pack(sizes):
-    """Shelf packing at 1x, tallest first; returns name -> (x, y) of each sprite's content (its padding round it)."""
+    """Skyline packing at 1x, tallest first: each sprite goes where its top comes out lowest (then leftmost), so the
+    short ones fill the space under the shelves the tall ones open. Returns name -> (x, y) of each sprite's content (its
+    padding round it) and the atlas height."""
     order = sorted(sizes, key=lambda n: (-sizes[n][1], -sizes[n][0], n))
-    x = y = shelf = 0
+    sky = np.zeros(ATLAS_WIDTH, np.int64)
     pos = {}
     for n in order:
-        w, h = sizes[n][0] + 2 * PAD, sizes[n][1] + 2 * PAD
+        w, h = int(sizes[n][0]) + 2 * PAD, int(sizes[n][1]) + 2 * PAD
         if w > ATLAS_WIDTH:
             raise ValueError(f"{n} is wider than the atlas")
-        if x + w > ATLAS_WIDTH:
-            x, y, shelf = 0, y + shelf, 0
+        tops = np.lib.stride_tricks.sliding_window_view(sky, w).max(axis=1)
+        x = int(np.argmin(tops))
+        y = int(tops[x])
+        sky[x:x + w] = y + h
         pos[n] = (x + PAD, y + PAD)
-        x += w
-        shelf = max(shelf, h)
-    return pos, y + shelf
+    return pos, int(sky.max())
 
 
 def main():

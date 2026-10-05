@@ -78,14 +78,14 @@ internal static class MoonfallSceneKit
         return recipe.Fallback is { } name ? (Picture(name), true) : (null, false);
     }
 
-    /// <summary>Every shipped level that names a recipe, with it.</summary>
+    /// <summary>Every shipped level that takes a recipe (<see cref="MoonfallSceneRecipeLoader.Pick"/>), with it.</summary>
     public static IEnumerable<(MoonfallLevel Level, MoonfallSceneRecipe Recipe)> ShippedScenes()
     {
         var recipes = Recipes();
         var campaigns = MoonfallCampaigns.LoadBuiltIn();
         foreach (var level in campaigns.Base.Levels.Concat(campaigns.Expansion.Levels))
         {
-            if (level.Scene is { } name && recipes.TryGetValue(name, out var recipe))
+            if (MoonfallSceneRecipeLoader.Pick(recipes, level) is { } recipe)
             {
                 yield return (level, recipe);
             }

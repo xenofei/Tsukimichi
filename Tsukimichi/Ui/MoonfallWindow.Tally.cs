@@ -19,19 +19,28 @@ public sealed partial class MoonfallWindow
     private string tallySub = string.Empty;
     private (int Level, int Balls, int Language) tallySubFor = (-1, -1, -1);
     private string aceLine = string.Empty;
-    private int aceLineFor = -1;
+    private long aceLineFor = -1;
     private string usesLine = string.Empty;
     private (MoonfallPower Power, int Uses, int Language) usesFor = (MoonfallPower.None, -1, -1);
 
-    /// <summary>The level's win, recorded on the tally: ACED (the level's ace reached) and NEW BEST (its best beaten).</summary>
+    /// <summary>
+    /// The level's win, recorded in the progress (its best, cleared, aced: <see cref="MoonfallProgress.RecordLevel"/>) and
+    /// shown on the tally: ACED (the level's Ace score reached, <see cref="MoonfallAces"/>) and NEW BEST (an earlier best
+    /// beaten; a first win sets the best without the callout).
+    /// </summary>
     private void NoteWin(MoonfallGame g)
     {
         var level = campaigns[campaign].Levels[levelIndex];
         var total = g.Tally?.Total ?? g.Score;
-        wonAced = level.Ace is { } ace && total >= ace;
-        wonNewBest = progress.RecordBest(level.Id, total);
-        unsaved |= progress.BestFor(level.Id) == total;
+        var ace = AceFor(level.Id);
+        var before = progress.Best(level.Id);
+        wonAced = ace is { } target && total >= target;
+        wonNewBest = before > 0 && total > before;
+        unsaved |= progress.RecordLevel(level.Id, won: true, total, ace);
     }
+
+    /// <summary>The level's Ace score (the shipped table; the offline renderer stages its own).</summary>
+    internal Func<string?, long?> AceFor { get; set; } = MoonfallAces.For;
 
     private void RichEnd(ImDrawListPtr dl, Vector2 origin, Vector2 size, float scale, MoonfallGame g, MoonfallChromeSheet sheet, ImTextureID ui, in ArtPen boardPen)
     {
@@ -40,7 +49,7 @@ public sealed partial class MoonfallWindow
         var c = new ChromePen(dl, v, sheet, ui);
         var p = boardPen with { View = v };
         var small = scale < 1f;
-        var companion = MoonfallCompanions.For(g.Power);
+        var companion = MoonfallCards.For(g.Power);
         var accent = companion?.Accent ?? MoonfallColor.Hex("#FFB45E");
         dl.AddRectFilled(origin, origin + size, Ink(MoonfallColor.Hex("#03040C"), 0.6f));
 
@@ -192,7 +201,7 @@ public sealed partial class MoonfallWindow
                 DrawText(dl, MoonfallFace.Trump, NumberPx(v, small ? 18.75f : 16.5f, MoonfallFace.Trump), v.Map(x, cy - 6), Anchor.Left, Ink(Tint(accent, 0.2f)), Strings.MoonfallNewBest, Ink(MoonfallColor.Hex("#140A02")), v.Size(0.8));
             }
 
-            if (level.Ace is { } ace)
+            if (AceFor(level.Id) is { } ace)
             {
                 if (aceLineFor != ace)
                 {
@@ -204,7 +213,7 @@ public sealed partial class MoonfallWindow
             }
         }
 
-        if (MoonfallCompanions.For(g.Power) is not { } companion)
+        if (MoonfallCards.For(g.Power) is not { } companion)
         {
             return;
         }
@@ -218,8 +227,8 @@ public sealed partial class MoonfallWindow
             var (fx, fy, fs) = companion.Face;
             var r = mr * 1.04f;
             dl.AddImageRounded(card.Handle, v.Map(mx - r, cy - r), v.Map(mx + r, cy + r),
-                new Vector2(fx / (float)MoonfallCompanions.CardWidth, fy / (float)MoonfallCompanions.CardHeight),
-                new Vector2((fx + fs) / (float)MoonfallCompanions.CardWidth, (fy + fs) / (float)MoonfallCompanions.CardHeight), uint.MaxValue, v.Size(r));
+                new Vector2(fx / (float)MoonfallCards.CardWidth, fy / (float)MoonfallCards.CardHeight),
+                new Vector2((fx + fs) / (float)MoonfallCards.CardWidth, (fy + fs) / (float)MoonfallCards.CardHeight), uint.MaxValue, v.Size(r));
         }
 
         GiltRing(c, mx, cy, mr);

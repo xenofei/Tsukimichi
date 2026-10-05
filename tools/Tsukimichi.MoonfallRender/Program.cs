@@ -107,10 +107,10 @@ internal static class Render
             typeof(UiMetrics).GetProperty(nameof(UiMetrics.ReduceMotion))!.SetValue(null, true);
         }
 
-        var (campaigns, index) = Campaign(repo, levelName, moment == "tally");
+        var (campaigns, index) = Campaign(repo, levelName);
         var progress = new MoonfallProgress { BaseCleared = index };
-        // The tally's callout: an earlier best to beat (and the pilots' ace, set in Campaign) so ACED and NEW BEST show.
-        progress.Best[campaigns.Base.Levels[index].Id] = 60_000;
+        // The tally's callout: an earlier best to beat and an Ace within reach of the staged win, so ACED and NEW BEST show.
+        progress.Levels[campaigns.Base.Levels[index].Id] = new MoonfallLevelRecord { Best = 60_000 };
         var artHost = new ArtHost(store);
         var gameHost = new GameHost(store, args.Contains("--no-game-art") ? null : game, Path.Combine(repo, "Tsukimichi", "assets", "moonfall", "scenes"));
         var options = new Options { PegMarks = args.Contains("--marks") };
@@ -118,6 +118,10 @@ internal static class Render
         var window = new MoonfallWindow(campaigns, progress, temp, static () => MoonfallPauseReason.None, null, artHost,
             Path.Combine(repo, "Tsukimichi", "assets", "moonfall"), gameHost, fonts, options)
         { SeedForRender = 1 };
+        if (moment == "tally")
+        {
+            window.AceFor = static _ => 100_000;
+        }
 
         void Frame(float dt, bool draw = false)
         {
@@ -256,20 +260,13 @@ internal static class Render
         }
     }
 
-    private static (MoonfallCampaigns Campaigns, int Index) Campaign(string repo, string name, bool tally)
+    private static (MoonfallCampaigns Campaigns, int Index) Campaign(string repo, string name)
     {
         var builtIn = MoonfallCampaigns.LoadBuiltIn();
         var index = builtIn.Base.Levels.ToList().FindIndex(l => l.Id == name);
         if (index >= 0)
         {
-            if (!tally)
-            {
-                return (builtIn, index);
-            }
-
-            // For the tally, the level's ace within reach of the staged win, so the callout shows ACED.
-            var staged = builtIn.Base.Levels.Select((l, i) => i == index ? l with { Ace = 100_000 } : l).ToList();
-            return (new MoonfallCampaigns(new MoonfallCampaign(MoonfallCampaignKind.Base, staged), builtIn.Expansion, []), index);
+            return (builtIn, index);
         }
 
         // A pilot (docs/design/v9/rich/levels): on The Moon Road's stage 3, as the mocks show it, with its recipe.
@@ -277,7 +274,7 @@ internal static class Render
         var load = MoonfallLevelLoader.Parse(File.ReadAllText(file));
         var pilot = load.Level ?? throw new InvalidOperationException(string.Join("; ", load.Errors));
         var scene = name switch { "base-p1" => "airship-road", "base-p2" => "holy-see", _ => null };
-        pilot = pilot with { Scene = scene, Ace = 100_000 };
+        pilot = pilot with { Scene = scene };
         var levels = new List<MoonfallLevel>();
         for (var i = 0; i < 12; i++)
         {

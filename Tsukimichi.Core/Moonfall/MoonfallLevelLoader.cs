@@ -11,24 +11,24 @@ public sealed record MoonfallLevelLoad(MoonfallLevel? Level, IReadOnlyList<strin
 }
 
 /// <summary>
-/// Reads and checks a Moonfall level file (plan v9 G1, G6). The format, version 2 (version 1 is the same without
-/// <c>scene</c>, and still reads; a <c>scene</c> in a version 1 file is ignored like any unknown property):
+/// Reads and checks a Moonfall level file (plan v9 G1, G6). The format, version 2 (plan v9 decision 16; version 1 is
+/// the same without <c>scene</c> and <c>canBeGreen</c>, and still reads; either in a version 1 file is ignored like any
+/// unknown property):
 /// <code>
 /// {
 ///   "format": "moonfall-level",
 ///   "version": 2,
 ///   "id": "base-01",                     // lower-case letters, digits and hyphens
 ///   "name": "First Light",               // what the player sees, up to 40 characters
-///   "scene": "moon-road-night",          // optional: the scene recipe's (or picture's) name (MoonfallLevel.Scene)
-///   "ace": 250000,                       // optional: the ace score (MoonfallLevel.Ace), 1 to 10,000,000
+///   "scene": "moon-road-night",          // optional: the background picture's name (MoonfallLevel.Scene)
 ///   "playfield": { "width": 800, "height": 600 },
 ///   "pegs": [
-///     { "x": 400, "y": 300 },            // a round peg; "r" (default 10, 6–20), "canBeOrange" (default true)
+///     { "x": 400, "y": 300 },            // a round peg; "r" (default 10, 6–20), "canBeOrange", "canBeGreen" (default true)
 ///     { "x": 460, "y": 300, "move": { "kind": "orbit", "x": 400, "y": 300, "period": 6, "clockwise": true } },
 ///     { "x": 200, "y": 400, "move": { "kind": "slide", "x": 300, "y": 400, "period": 4 } }
 ///   ],
 ///   "bricks": [
-///     { "kind": "line", "x1": 200, "y1": 250, "x2": 230, "y2": 250 },          // "thickness" default 20 (8–30)
+///     { "kind": "line", "x1": 200, "y1": 250, "x2": 230, "y2": 250 },          // "thickness" default 20 (8–30); "canBeOrange", "canBeGreen" as a peg
 ///     { "kind": "arc", "x": 400, "y": 300, "r": 120, "start": 200, "sweep": 30 } // degrees: 0 along +x, turning towards +y
 ///   ]
 /// }
@@ -39,7 +39,9 @@ public sealed record MoonfallLevelLoad(MoonfallLevel? Level, IReadOnlyList<strin
 /// finite; every peg and brick, along its whole length and motion, inside the walls, below the launcher's swing and above
 /// the bucket; round pegs and bricks not overlapping each other (bricks may touch bricks), and no mover passing through a
 /// still piece or moving faster than <see cref="MaxMoverSpeed"/>; enough pegs that may be orange for the 25 the level
-/// needs, and some to spare for the blue, green and purple ones. At most <see cref="MaxErrors"/> errors are listed.
+/// needs, and some to spare for the blue, green and purple ones; and enough that may be green for the two greens
+/// whichever oranges the level start picks (<see cref="MoonfallLevel.GreenCandidatesAtWorst"/>). At most
+/// <see cref="MaxErrors"/> errors are listed.
 /// </summary>
 public static partial class MoonfallLevelLoader
 {
@@ -87,6 +89,9 @@ public static partial class MoonfallLevelLoader
     /// letters, digits and hyphens, so it names a picture in <c>scenes/</c> and never a path.
     /// </summary>
     public static bool IsSceneName([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? scene) => scene is { Length: > 0 and <= MaxSceneLength } && IdPattern().IsMatch(scene);
+
+    /// <summary>Whether <paramref name="id"/> has a level id's form: lower-case letters, digits and hyphens ("base-01").</summary>
+    public static bool IsLevelId([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? id) => id is { Length: > 0 } && IdPattern().IsMatch(id);
 
     /// <summary>Reads <paramref name="json"/>; never throws on bad input.</summary>
     public static MoonfallLevelLoad Parse(string? json)
@@ -189,7 +194,7 @@ public static partial class MoonfallLevelLoader
                     }
 
                     var label = $"pegs[{i++}]";
-                    if (ReadPeg(node, label, errors) is { } peg)
+                    if (ReadPeg(node, label, version, errors) is { } peg)
                     {
                         pegs.Add(peg);
                         labels.Add(label);
@@ -215,7 +220,7 @@ public static partial class MoonfallLevelLoader
                     }
 
                     var label = $"bricks[{i++}]";
-                    if (ReadBrick(node, label, errors) is { } brick)
+                    if (ReadBrick(node, label, version, errors) is { } brick)
                     {
                         pegs.Add(brick);
                         labels.Add(label);
@@ -224,14 +229,14 @@ public static partial class MoonfallLevelLoader
             }
         }
 
-        var level = new MoonfallLevel(id ?? string.Empty, name ?? string.Empty, pegs)
-        {
-            Scene = version >= 2 ? ReadScene(root, errors) : null,
-            Ace = version >= 2 ? ReadAce(root, errors) : null,
-        };
+        var level = new MoonfallLevel(id ?? string.Empty, name ?? string.Empty, pegs) { Scene = version >= 2 ? ReadScene(root, errors) : null };
         if (level.OrangeCandidates < MoonfallRules.OrangeCount)
         {
             errors.Add($"{level.OrangeCandidates} pegs may be orange; a level needs {MoonfallRules.OrangeCount}");
+        }
+        else if (level.GreenCandidatesAtWorst < MoonfallRules.GreenCount)
+        {
+            errors.Add($"too few pegs may be green: the oranges can take all but {Math.Max(0, level.GreenCandidatesAtWorst)}, and a level needs {MoonfallRules.GreenCount} (mark more pegs canBeGreen, or some of them canBeOrange false)");
         }
 
         if (errors.Count < MaxErrors)
@@ -270,27 +275,7 @@ public static partial class MoonfallLevelLoader
         return scene;
     }
 
-    /// <summary>The most an ace score may be.</summary>
-    public const int MaxAce = 10_000_000;
-
-    /// <summary>Version 2's optional <c>ace</c>: the level's ace score (the tally's ACED), a whole number from 1 to <see cref="MaxAce"/>.</summary>
-    private static int? ReadAce(JsonElement root, List<string> errors)
-    {
-        if (!root.TryGetProperty("ace", out var node) || node.ValueKind == JsonValueKind.Null)
-        {
-            return null;
-        }
-
-        if (node.ValueKind != JsonValueKind.Number || !node.TryGetInt32(out var ace) || ace < 1 || ace > MaxAce)
-        {
-            errors.Add($"ace must be a whole number from 1 to {MaxAce}");
-            return null;
-        }
-
-        return ace;
-    }
-
-    private static MoonfallPeg? ReadPeg(JsonElement node, string label, List<string> errors)
+    private static MoonfallPeg? ReadPeg(JsonElement node, string label, int version, List<string> errors)
     {
         if (node.ValueKind != JsonValueKind.Object)
         {
@@ -303,6 +288,7 @@ public static partial class MoonfallLevelLoader
         var y = Required(node, "y", label, errors);
         var r = Optional(node, "r", MoonfallRules.PegRadius, label, errors);
         var canBeOrange = Flag(node, "canBeOrange", true, label, errors);
+        var canBeGreen = version < 2 || Flag(node, "canBeGreen", true, label, errors);
         if (r is < 6 or > 20)
         {
             errors.Add($"{label}: r must be 6 to 20");
@@ -319,7 +305,7 @@ public static partial class MoonfallLevelLoader
             return null;
         }
 
-        var peg = MoonfallPeg.Round(x, y, r, canBeOrange, mover);
+        var peg = MoonfallPeg.Round(x, y, r, canBeOrange, mover, canBeGreen);
         if (mover.Kind != MoverKind.None && TopSpeed(peg) > MaxMoverSpeed)
         {
             errors.Add($"{label}.move: moves faster than {MaxMoverSpeed.ToString("0", CultureInfo.InvariantCulture)} px/s; give it a longer period");
@@ -363,7 +349,7 @@ public static partial class MoonfallLevelLoader
         return new PegMover(kind, x, y, period, clockwise);
     }
 
-    private static MoonfallPeg? ReadBrick(JsonElement node, string label, List<string> errors)
+    private static MoonfallPeg? ReadBrick(JsonElement node, string label, int version, List<string> errors)
     {
         if (node.ValueKind != JsonValueKind.Object)
         {
@@ -374,6 +360,7 @@ public static partial class MoonfallLevelLoader
         var before = errors.Count;
         var thickness = Optional(node, "thickness", MoonfallRules.BrickThickness, label, errors);
         var canBeOrange = Flag(node, "canBeOrange", true, label, errors);
+        var canBeGreen = version < 2 || Flag(node, "canBeGreen", true, label, errors);
         if (thickness is < 8 or > 30)
         {
             errors.Add($"{label}: thickness must be 8 to 30");
@@ -393,7 +380,7 @@ public static partial class MoonfallLevelLoader
                     errors.Add($"{label}: a line brick must be at least 4 long");
                 }
 
-                brick = MoonfallPeg.Line(x1, y1, x2, y2, thickness, canBeOrange);
+                brick = MoonfallPeg.Line(x1, y1, x2, y2, thickness, canBeOrange, canBeGreen);
                 break;
             }
 
@@ -414,7 +401,7 @@ public static partial class MoonfallLevelLoader
                     errors.Add($"{label}: sweep must be above 0 and at most 360 degrees");
                 }
 
-                brick = MoonfallPeg.Arc(x, y, r, start, sweep, thickness, canBeOrange);
+                brick = MoonfallPeg.Arc(x, y, r, start, sweep, thickness, canBeOrange, canBeGreen);
                 break;
             }
 

@@ -10,17 +10,17 @@ namespace Tsukimichi.Core.Moonfall.Art;
 /// <param name="CardIcon">The card's icon id (<c>ui/icon/087000/0870NN_hr1.tex</c>).</param>
 /// <param name="Accent">The companion's colour: their portrait's glow, their power's name, the turns-left gems, the effect.</param>
 /// <param name="Face">The round portrait's square crop of the 208 × 256 card, hr pixels (the plugin's card crop).</param>
-public sealed record MoonfallCompanion(MoonfallPower Power, uint CardIcon, Vector3 Accent, (int X, int Y, int Size) Face)
+public sealed record MoonfallCard(MoonfallPower Power, uint CardIcon, Vector3 Accent, (int X, int Y, int Size) Face)
 {
     /// <summary>How many turns the power lasts (<see cref="MoonfallPowers.Shots"/>): one turns-left gem each.</summary>
     public int Turns => MoonfallPowers.Shots(Power);
 
     /// <summary>The card's game path at hr1.</summary>
-    public string CardPath => MoonfallCompanions.CardPath(CardIcon);
+    public string CardPath => MoonfallCards.CardPath(CardIcon);
 }
 
 /// <summary>The eleven companions (r2cast.CAST): their cards, accents (at least 25° apart in OKLab hue, off the gilt) and face crops.</summary>
-public static class MoonfallCompanions
+public static class MoonfallCards
 {
     /// <summary>The card family's face box (giver_portraits.json crops.TripleTriadCard): x, y, side in hr pixels.</summary>
     public static readonly (int X, int Y, int Size) CardFace = (28, 23, 135);
@@ -34,7 +34,7 @@ public static class MoonfallCompanions
     /// <inheritdoc cref="CardWidth"/>
     public const int CardHeight = 256;
 
-    private static readonly MoonfallCompanion[] All =
+    private static readonly MoonfallCard[] All =
     [
         new(MoonfallPower.SuperGuide, 87056, MoonfallColor.Hex("#5DDAE0"), CardFace),
         new(MoonfallPower.Multiball, 87059, MoonfallColor.Hex("#66A5FF"), CardFace),
@@ -51,10 +51,10 @@ public static class MoonfallCompanions
     ];
 
     /// <summary>Every companion, in power order.</summary>
-    public static IReadOnlyList<MoonfallCompanion> Cast => All;
+    public static IReadOnlyList<MoonfallCard> Cast => All;
 
     /// <summary>The companion who carries <paramref name="power"/>; null for none.</summary>
-    public static MoonfallCompanion? For(MoonfallPower power) => power is > MoonfallPower.None and <= MoonfallPower.Bolt ? All[(int)power - 1] : null;
+    public static MoonfallCard? For(MoonfallPower power) => power is > MoonfallPower.None and <= MoonfallPower.Bolt ? All[(int)power - 1] : null;
 
     /// <summary>A Triple Triad card's game path (hr1).</summary>
     public static string CardPath(uint icon) => $"ui/icon/{icon / 1000 * 1000:D6}/{icon:D6}_hr1.tex";

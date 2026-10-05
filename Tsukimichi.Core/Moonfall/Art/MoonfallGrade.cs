@@ -319,7 +319,7 @@ public static class MoonfallGrade
                     b2 = (lab.Z * (1 - k)) + (b2 * k);
                 }
 
-                var rgb = MoonfallColor.ToSrgb(l, a2, b2);
+                var rgb = MoonfallColor.ToSrgbKeepingLightness(l, a2, b2);
                 out_.R.Data[i] = rgb.X;
                 out_.G.Data[i] = rgb.Y;
                 out_.B.Data[i] = rgb.Z;

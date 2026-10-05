@@ -154,7 +154,7 @@ public sealed partial class MoonfallWindow
     private void PowerFlash(in ArtPen p)
     {
         var age = boardClock - powerFiredAt;
-        if (age is < 0 or > 0.6 || MoonfallCompanions.For(powerFired) is not { } companion)
+        if (age is < 0 or > 0.6 || MoonfallCards.For(powerFired) is not { } companion)
         {
             return;
         }
@@ -184,7 +184,7 @@ public sealed partial class MoonfallWindow
     /// <summary>Brass Wings in the rich chrome: the PvP emblem's gilt wings bolted to the bucket's rims, the companion's glow along them.</summary>
     private void RichWings(in ChromePen c, in ArtPen p, MoonfallGame g, double alpha)
     {
-        if (!g.WingsOpen || g.Fever || c.Sheet[MoonfallChromePart.Wing] is not { } wing || MoonfallCompanions.For(MoonfallPower.Wings) is not { } cid)
+        if (!g.WingsOpen || g.Fever || c.Sheet[MoonfallChromePart.Wing] is not { } wing || MoonfallCards.For(MoonfallPower.Wings) is not { } cid)
         {
             return;
         }
@@ -319,7 +319,7 @@ public sealed partial class MoonfallWindow
             return;
         }
 
-        var accent = MoonfallCompanions.For(g.Power)?.Accent ?? MoonfallColor.Hex("#FFD27A");
+        var accent = MoonfallCards.For(g.Power)?.Accent ?? MoonfallColor.Hex("#FFD27A");
         var alpha = still ? 1f : (float)Math.Clamp((since - 0.15) / 0.6, 0, 1);
         var plate = since < 1.5 && !still ? 1f : 0.35f;
         var text = g.Perfect ? Strings.MoonfallBannerPerfectMoon : Strings.MoonfallBannerFullMoon;
@@ -341,7 +341,7 @@ public sealed partial class MoonfallWindow
         var lift = (1 - shown) * 30;
         var values = MoonfallRules.FeverBucketValues;
         var v = p.View;
-        var accent = MoonfallCompanions.For(g.Power)?.Accent ?? MoonfallColor.Hex("#FFD27A");
+        var accent = MoonfallCards.For(g.Power)?.Accent ?? MoonfallColor.Hex("#FFD27A");
         var breath = MoonfallMotion.Breath(boardClock, 3f, 0.15f, motion == MoonfallMotionLevel.Still);
         ref readonly var soft = ref p.Atlas[MoonfallSprite.Soft];
         for (var k = 0; k < values.Length; k++)
@@ -377,15 +377,15 @@ public sealed partial class MoonfallWindow
     private void PowerCard(ImDrawListPtr dl, Vector2 areaMin, Vector2 origin, MoonfallChromeSheet sheet, ImTextureID ui, in ArtPen board)
     {
         var age = boardClock - powerFiredAt;
-        if (age is < 0 or > PowerMomentSeconds || MoonfallCompanions.For(powerFired) is not { } companion || gameArt?.Card(powerFired) is not { } card)
+        if (age is < 0 or > PowerMomentSeconds || MoonfallCards.For(powerFired) is not { } companion || gameArt?.Card(powerFired) is not { } card)
         {
             return;
         }
 
         var margin = origin.X - areaMin.X;
         var cw = MoonfallHud.MarginCardWidth(margin);
-        var art = MoonfallCompanions.ArtBounds;
-        var ch = cw * (art.W - art.Y) * MoonfallCompanions.CardHeight / ((art.Z - art.X) * MoonfallCompanions.CardWidth);
+        var art = MoonfallCards.ArtBounds;
+        var ch = cw * (art.W - art.Y) * MoonfallCards.CardHeight / ((art.Z - art.X) * MoonfallCards.CardWidth);
         var x0 = areaMin.X + 8f;
         var y0 = origin.Y + ((origin.Y - areaMin.Y) * 0f) + MathF.Max(40f, 150f * (cw / 120f));
         var still = motion == MoonfallMotionLevel.Still;
@@ -465,7 +465,7 @@ public sealed partial class MoonfallWindow
     private void PowerRibbon(in ChromePen c)
     {
         var age = boardClock - powerFiredAt;
-        if (age is < 0 or > PowerMomentSeconds || MoonfallCompanions.For(powerFired) is not { } companion)
+        if (age is < 0 or > PowerMomentSeconds || MoonfallCards.For(powerFired) is not { } companion)
         {
             return;
         }

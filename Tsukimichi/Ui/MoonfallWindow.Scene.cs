@@ -168,7 +168,7 @@ public sealed partial class MoonfallWindow
         var since = boardClock - feverAt;
         var tSky = still ? 1f : (float)Math.Clamp(since / 0.8, 0, 1);
         var tSwell = still ? 1f : (float)Math.Clamp(since / 0.5, 0, 1);
-        var accent = MoonfallCompanions.For(g.Power)?.Accent ?? MoonfallColor.Hex("#FFD27A");
+        var accent = MoonfallCards.For(g.Power)?.Accent ?? MoonfallColor.Hex("#FFD27A");
         Image(p.Dl, v, scene.SkyMask, scene.Layers.SkyMask.Board, Ink(accent, 0.16f * tSky));
         if (scene.Layers.Moon is not { } moon)
         {

@@ -6,6 +6,7 @@
   "format": "moonfall-scene",
   "version": 1,
   "name": "airship-road",
+  "levels": ["base-03"],
   "source": {
     "game": "ui/loadingimage/-nowloading_base05.tex",
     "pad": [0, 64],

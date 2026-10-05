@@ -1,10 +1,8 @@
 {
   "format": "moonfall-level",
-  "version": 2,
+  "version": 1,
   "id": "base-02",
   "name": "Crescent",
-  "scene": "holy-see",
-  "ace": 270000,
   "playfield": {
     "width": 800,
     "height": 600

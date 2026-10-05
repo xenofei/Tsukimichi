@@ -19,6 +19,8 @@
     <EmbeddedResource Include="Moonfall\Levels\*.json" />
     <!-- The levels' scene recipes (docs/design/v9/scene-recipe.md), read by MoonfallSceneRecipeLoader.LoadBuiltIn. -->
     <EmbeddedResource Include="Moonfall\Levels\scenes\*.json" />
+    <!-- Moonfall's modes data (plan v9 G7): the challenges and the Ace scores. -->
+    <EmbeddedResource Include="Moonfall\Modes\*.json" />
   </ItemGroup>
 
 </Project>

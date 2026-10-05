@@ -72,17 +72,24 @@ public sealed record MoonfallPeg
     /// <summary>Whether the level start may make it orange ([R §2] "Can Be Orange", on by default).</summary>
     public bool CanBeOrange { get; init; } = true;
 
+    /// <summary>
+    /// Whether the level start may make it green (format version 2, on by default): off keeps a power's peg off a
+    /// figure's eye or a constellation's star (plan v9 decision 16). Greens come from the pegs left blue after the
+    /// oranges are picked, so a peg may be both.
+    /// </summary>
+    public bool CanBeGreen { get; init; } = true;
+
     /// <summary>How it moves; round pegs only.</summary>
     public PegMover Mover { get; init; }
 
-    public static MoonfallPeg Round(double x, double y, double radius = MoonfallRules.PegRadius, bool canBeOrange = true, PegMover mover = default) =>
-        new() { Shape = PegShape.Round, X = x, Y = y, Radius = radius, CanBeOrange = canBeOrange, Mover = mover };
+    public static MoonfallPeg Round(double x, double y, double radius = MoonfallRules.PegRadius, bool canBeOrange = true, PegMover mover = default, bool canBeGreen = true) =>
+        new() { Shape = PegShape.Round, X = x, Y = y, Radius = radius, CanBeOrange = canBeOrange, Mover = mover, CanBeGreen = canBeGreen };
 
-    public static MoonfallPeg Line(double x1, double y1, double x2, double y2, double thickness = MoonfallRules.BrickThickness, bool canBeOrange = true) =>
-        new() { Shape = PegShape.Line, X = x1, Y = y1, X2 = x2, Y2 = y2, Thickness = thickness, CanBeOrange = canBeOrange };
+    public static MoonfallPeg Line(double x1, double y1, double x2, double y2, double thickness = MoonfallRules.BrickThickness, bool canBeOrange = true, bool canBeGreen = true) =>
+        new() { Shape = PegShape.Line, X = x1, Y = y1, X2 = x2, Y2 = y2, Thickness = thickness, CanBeOrange = canBeOrange, CanBeGreen = canBeGreen };
 
-    public static MoonfallPeg Arc(double cx, double cy, double radius, double startDegrees, double sweepDegrees, double thickness = MoonfallRules.BrickThickness, bool canBeOrange = true) =>
-        new() { Shape = PegShape.Arc, X = cx, Y = cy, Radius = radius, StartDegrees = startDegrees, SweepDegrees = sweepDegrees, Thickness = thickness, CanBeOrange = canBeOrange };
+    public static MoonfallPeg Arc(double cx, double cy, double radius, double startDegrees, double sweepDegrees, double thickness = MoonfallRules.BrickThickness, bool canBeOrange = true, bool canBeGreen = true) =>
+        new() { Shape = PegShape.Arc, X = cx, Y = cy, Radius = radius, StartDegrees = startDegrees, SweepDegrees = sweepDegrees, Thickness = thickness, CanBeOrange = canBeOrange, CanBeGreen = canBeGreen };
 }
 
 /// <summary>A level: its pegs and bricks in the order the file lists them (pegs first, then bricks).</summary>
@@ -99,10 +106,26 @@ public sealed record MoonfallLevel(string Id, string Name, IReadOnlyList<Moonfal
     public string? Scene { get; init; }
 
     /// <summary>
-    /// The level's ace score (format version 2, optional; Nights' "Aced"): a win whose total reaches it is ACED on the
-    /// tally. Null for none.
+    /// The fewest greens the level start can always find, whichever oranges it picks: the pegs that may be green less
+    /// those the oranges could take (every peg that may be both, up to <see cref="MoonfallRules.OrangeCount"/>).
     /// </summary>
-    public int? Ace { get; init; }
+    public int GreenCandidatesAtWorst
+    {
+        get
+        {
+            int green = 0, both = 0;
+            foreach (var peg in Pegs)
+            {
+                if (peg.CanBeGreen)
+                {
+                    green++;
+                    both += peg.CanBeOrange ? 1 : 0;
+                }
+            }
+
+            return green - Math.Min(both, Math.Min(MoonfallRules.OrangeCount, OrangeCandidates));
+        }
+    }
 
     /// <summary>How many pegs may be orange.</summary>
     public int OrangeCandidates

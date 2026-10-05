@@ -629,7 +629,7 @@ public sealed partial class MoonfallWindow
     /// </summary>
     private void Medallion(in ChromePen c, in ArtPen p, MoonfallGame g, bool still)
     {
-        if (MoonfallCompanions.For(g.Power) is not { } companion)
+        if (MoonfallCards.For(g.Power) is not { } companion)
         {
             return;
         }
@@ -652,8 +652,8 @@ public sealed partial class MoonfallWindow
         if (gameArt?.Card(g.Power) is { } card)
         {
             var (fx, fy, fs) = companion.Face;
-            var uv0 = new Vector2(fx / (float)MoonfallCompanions.CardWidth, fy / (float)MoonfallCompanions.CardHeight);
-            var uv1 = new Vector2((fx + fs) / (float)MoonfallCompanions.CardWidth, (fy + fs) / (float)MoonfallCompanions.CardHeight);
+            var uv0 = new Vector2(fx / (float)MoonfallCards.CardWidth, fy / (float)MoonfallCards.CardHeight);
+            var uv1 = new Vector2((fx + fs) / (float)MoonfallCards.CardWidth, (fy + fs) / (float)MoonfallCards.CardHeight);
             var r = Mr * 1.04f;
             dl.AddImageRounded(card.Handle, v.Map(Mx - r, My - r), v.Map(Mx + r, My + r), uv0, uv1, uint.MaxValue, v.Size(r));
         }

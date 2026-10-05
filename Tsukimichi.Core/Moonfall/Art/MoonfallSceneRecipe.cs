@@ -203,4 +203,10 @@ public sealed record MoonfallSceneRecipe
 
     /// <summary>The moon Fever swells: the recipe's painted moon, or one it names; null for none (the sky still lifts).</summary>
     public MoonfallMoon? Moon { get; init; }
+
+    /// <summary>The levels (ids) whose files name no scene that take this one (<see cref="MoonfallSceneRecipeLoader.Pick"/>).</summary>
+    public IReadOnlyList<string> Levels { get; init; } = [];
+
+    /// <summary>Whether this is the scene a level with no scene and no recipe naming it takes (one recipe at most).</summary>
+    public bool Default { get; init; }
 }

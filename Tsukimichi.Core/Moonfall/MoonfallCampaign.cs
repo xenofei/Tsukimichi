@@ -26,7 +26,19 @@ public sealed class MoonfallCampaigns
         Base = baseCampaign ?? throw new ArgumentNullException(nameof(baseCampaign));
         Expansion = expansion ?? throw new ArgumentNullException(nameof(expansion));
         Errors = errors ?? throw new ArgumentNullException(nameof(errors));
+        foreach (var level in Base.Levels.Concat(Expansion.Levels))
+        {
+            byId.TryAdd(level.Id, level);
+        }
     }
+
+    private readonly Dictionary<string, MoonfallLevel> byId = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The level of id <paramref name="id"/> (<see cref="MoonfallStages"/> names Adventure's, a challenge names its own),
+    /// or null when no level of that id is shipped (not authored yet). The first of two levels with one id wins.
+    /// </summary>
+    public MoonfallLevel? Find(string? id) => id is not null && byId.TryGetValue(id, out var level) ? level : null;
 
     public MoonfallCampaign Base { get; }
 

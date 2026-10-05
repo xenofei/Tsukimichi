@@ -107,9 +107,17 @@ public sealed partial class MoonfallWindow : Window
         InitRich(gameHost, fontSource, options);
     }
 
-    public override void OnOpen() => pause.Pause(MoonfallPauseReason.Reopened);
+    public override void OnOpen()
+    {
+        pause.Pause(MoonfallPauseReason.Reopened);
+        SoundOpen();
+    }
 
-    public override void OnClose() => SaveInBackground();
+    public override void OnClose()
+    {
+        SaveInBackground();
+        SoundClose();
+    }
 
     public override void PreDraw()
     {
@@ -159,6 +167,7 @@ public sealed partial class MoonfallWindow : Window
         game ??= NewGame(levelIndex);
         var focused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
         pause.Update(causes() | (focused ? MoonfallPauseReason.None : MoonfallPauseReason.Unfocused));
+        SoundFrame();
 
         DrawBar(game);
         if (pendingLevel != NoChoice)
@@ -185,6 +194,7 @@ public sealed partial class MoonfallWindow : Window
         ClearEffects();
         ClearPowerEffects();
         ClearMoments();
+        SoundNewLevel();
         // A fresh board each time: the seed only has to differ between plays, the engine does the rest.
         return new MoonfallGame(levels[levelIndex], levelIndex + 1, SeedForRender ?? (ulong)Stopwatch.GetTimestamp(), power: PowerFor(levelIndex));
     }
@@ -251,6 +261,7 @@ public sealed partial class MoonfallWindow : Window
             ArtEvent(e);
             NoteMomentEvent(e);
             NotePowerEvent(e);
+            SoundEvent(e);
             switch (e.Kind)
             {
                 case MoonfallEventKind.PegHit:
@@ -271,6 +282,8 @@ public sealed partial class MoonfallWindow : Window
                     break;
             }
         }
+
+        SoundFlush(g);
     }
 
     /// <summary>The level just won moves the account's furthest level on: in memory now, on disk off the frame.</summary>
@@ -443,6 +456,7 @@ public sealed partial class MoonfallWindow : Window
             {
                 if (ImGui.Selectable(LevelLabel(i), i == levelIndex) && i != levelIndex)
                 {
+                    SoundClick();
                     Choose(i);
                 }
             }
@@ -511,6 +525,7 @@ public sealed partial class MoonfallWindow : Window
         {
             if (ImGui.Button(pauseLabel + "##moonfallPause", new Vector2(pauseWidth, 0f)))
             {
+                SoundClick();
                 if (pause.Paused)
                 {
                     pause.TryResume();
@@ -530,6 +545,7 @@ public sealed partial class MoonfallWindow : Window
         ImGui.SameLine();
         if (ImGui.Button(Strings.MoonfallRestart + "##moonfallRestart", new Vector2(restartWidth, 0f)))
         {
+            SoundClick();
             Choose(RestartChoice);
         }
 
@@ -613,12 +629,14 @@ public sealed partial class MoonfallWindow : Window
         ImGui.SameLine(0f, UiMetrics.Px(12f));
         if (ImGui.Button((pendingLevel == RestartChoice ? Strings.MoonfallRestart : Strings.MoonfallLeave) + "##moonfallYes"))
         {
+            SoundClick();
             Go(pendingLevel);
         }
 
         ImGui.SameLine();
         if (ImGui.Button(Strings.MoonfallKeepPlaying + "##moonfallNo"))
         {
+            SoundClick();
             pendingLevel = NoChoice;
         }
 

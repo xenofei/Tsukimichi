@@ -78,6 +78,51 @@ public static class MoonfallColor
         return new Vector3(ToSrgb(r), ToSrgb(g), ToSrgb(bb));
     }
 
+    /// <summary>
+    /// An OKLab colour in sRGB with its lightness kept (spec-rich2.md F1, "colour never moves value"): a colour outside
+    /// sRGB keeps its L and hue and gives up chroma until it fits (a bisection, to 1/256 of the chroma), where
+    /// <see cref="ToSrgb(float, float, float)"/> would clip each channel and so move the lightness of a dark, saturated
+    /// pixel. Inside the gamut it is the same colour.
+    /// </summary>
+    public static Vector3 ToSrgbKeepingLightness(float l, float a, float b)
+    {
+        if (InGamut(l, a, b))
+        {
+            return ToSrgb(l, a, b);
+        }
+
+        float lo = 0f, hi = 1f;
+        for (var i = 0; i < 8; i++)
+        {
+            var mid = (lo + hi) * 0.5f;
+            if (InGamut(l, a * mid, b * mid))
+            {
+                lo = mid;
+            }
+            else
+            {
+                hi = mid;
+            }
+        }
+
+        return ToSrgb(l, a * lo, b * lo);
+    }
+
+    private static bool InGamut(float l, float a, float b)
+    {
+        const float Slack = 1e-5f;
+        var lp = l + (0.3963377774f * a) + (0.2158037573f * b);
+        var mp = l - (0.1055613458f * a) - (0.0638541728f * b);
+        var sp = l - (0.0894841775f * a) - (1.2914855480f * b);
+        lp = lp * lp * lp;
+        mp = mp * mp * mp;
+        sp = sp * sp * sp;
+        var r = (4.0767416621f * lp) - (3.3077115913f * mp) + (0.2309699292f * sp);
+        var g = (-1.2684380046f * lp) + (2.6097574011f * mp) - (0.3413193965f * sp);
+        var bb = (-0.0041960863f * lp) - (0.7034186147f * mp) + (1.7076147010f * sp);
+        return r >= -Slack && g >= -Slack && bb >= -Slack && r <= 1 + Slack && g <= 1 + Slack && bb <= 1 + Slack;
+    }
+
     /// <summary>A <c>#RRGGBB</c> colour as 0..1 sRGB; throws on anything else (recipes are checked by their loader first).</summary>
     public static Vector3 Hex(string hex)
     {

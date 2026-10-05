@@ -16461,4 +16461,22 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <value>No thanks</value>
     <comment>Moonfall: the hint's button that closes it.</comment>
   </data>
+  <data name="MoonfallSound" xml:space="preserve">
+    <value>Sound</value>
+  </data>
+  <data name="MoonfallSoundOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="MoonfallSoundPercentFormat" xml:space="preserve">
+    <value>{0}%</value>
+  </data>
+  <data name="MoonfallSoundQuieter" xml:space="preserve">
+    <value>Quieter</value>
+  </data>
+  <data name="MoonfallSoundLouder" xml:space="preserve">
+    <value>Louder</value>
+  </data>
+  <data name="MoonfallSoundTooltip" xml:space="preserve">
+    <value>Moonfall's own volume, on top of the game's master volume. It is silent while Moonfall is paused.</value>
+  </data>
 </root>

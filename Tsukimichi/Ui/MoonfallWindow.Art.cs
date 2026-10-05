@@ -685,7 +685,10 @@ public sealed partial class MoonfallWindow
     {
         var atlas = p.Atlas;
         const double road = 586;
-        Put(p, atlas[MoonfallSprite.BucketRoad], 75, road, 1f, uint.MaxValue);
+        // The road's left half, then the same mirrored to the right wall (the atlas holds the half).
+        ref readonly var half = ref atlas[MoonfallSprite.BucketRoad];
+        Put(p, half, MoonfallFramingCheck.WallL, road, 1f, uint.MaxValue);
+        Stretch(p, half, half.W, 0, 0, half.H, MoonfallFramingCheck.WallR - half.W, road - half.AnchorY, MoonfallFramingCheck.WallR, road - half.AnchorY + half.H, uint.MaxValue);
         var flicker = Math.Clamp(MoonfallMotion.Flicker(boardClock, 0f, UiMetrics.ReduceMotion || motion == MoonfallMotionLevel.Still), 0f, 1f);
         var lantern = atlas.BoatLantern;
         ref readonly var soft = ref atlas[MoonfallSprite.Soft];

@@ -10,6 +10,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
   - In Adventure each stage of five levels has its own character. Tick **Quick Play** to pick any character before your first shot.
   - Flippers rise while you hold the mouse button over the board.
   - Style shots pay a bonus and pop up over the board: Long Shot, Super Long Shot, Double Long Shot, Off the Wall, One-Peg Catch, Rim Shot, Lucky Bounce, Orange Sweep, Long Slide, Clear Night and Live Wire. Their bonuses count towards free balls.
+  - Moonfall has sound. Each peg rings two notes a fifth apart, a semitone higher for every peg in the shot. The bucket, free balls, style shots, each character's power, the drum roll before FULL MOON, the Fever cups and the score count-up have their own sounds.
+  - FULL MOON starts an original finale piece that plays on through the level's tally, built on Moonfall's own moon theme.
+  - Set the volume with **Sound** on the pause screen (70% to start; Off silences it). It follows the game's master volume and mute, goes quiet while Moonfall is paused, and while the game is in the background unless the game plays sound there.
 
 ## [1.22.1] - 2026-10-05
 

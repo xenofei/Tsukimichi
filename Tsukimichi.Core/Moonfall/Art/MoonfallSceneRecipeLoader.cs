@@ -106,8 +106,104 @@ public static partial class MoonfallSceneRecipeLoader
         }
     }
 
+    /// <summary>
+    /// The scene a level is drawn on (spec item 8, "default recipes if none"): the recipe its file names; a level whose
+    /// file names a picture with no recipe of that name keeps its picture (null); a level whose file names no scene takes
+    /// the recipe that lists its id in <c>levels</c>, else the <c>default</c> recipe, else none (the night sky).
+    /// </summary>
+    public static MoonfallSceneRecipe? Pick(IReadOnlyDictionary<string, MoonfallSceneRecipe> recipes, MoonfallLevel? level)
+    {
+        ArgumentNullException.ThrowIfNull(recipes);
+        if (level is null)
+        {
+            return null;
+        }
+
+        if (level.Scene is { } scene)
+        {
+            return recipes.TryGetValue(scene, out var named) ? named : null;
+        }
+
+        MoonfallSceneRecipe? fallback = null;
+        foreach (var recipe in recipes.Values.OrderBy(static r => r.Name, StringComparer.Ordinal))
+        {
+            if (recipe.Levels.Contains(level.Id, StringComparer.Ordinal))
+            {
+                return recipe;
+            }
+
+            fallback ??= recipe.Default ? recipe : null;
+        }
+
+        return fallback;
+    }
+
+    /// <summary>Problems across the shipped recipes: a level listed by two, or more than one default.</summary>
+    public static IReadOnlyList<string> CheckSet(IReadOnlyDictionary<string, MoonfallSceneRecipe> recipes)
+    {
+        ArgumentNullException.ThrowIfNull(recipes);
+        var problems = new List<string>();
+        var defaults = recipes.Values.Where(static r => r.Default).Select(static r => r.Name).Order(StringComparer.Ordinal).ToList();
+        if (defaults.Count > 1)
+        {
+            problems.Add("more than one default recipe: " + string.Join(", ", defaults));
+        }
+
+        foreach (var twice in recipes.Values.SelectMany(static r => r.Levels.Select(l => (Level: l, r.Name))).GroupBy(static x => x.Level).Where(static g => g.Count() > 1))
+        {
+            problems.Add($"{twice.Key} is listed by {string.Join(" and ", twice.Select(static x => x.Name).Order(StringComparer.Ordinal))}");
+        }
+
+        return problems;
+    }
+
     private sealed class Reader(List<string> errors)
     {
+        private const int MaxLevels = 64;
+
+        public IReadOnlyList<string> LevelIds(JsonElement root)
+        {
+            if (!root.TryGetProperty("levels", out var node) || node.ValueKind == JsonValueKind.Null)
+            {
+                return [];
+            }
+
+            if (node.ValueKind != JsonValueKind.Array || node.GetArrayLength() > MaxLevels)
+            {
+                errors.Add($"levels must be a list of up to {MaxLevels} level ids");
+                return [];
+            }
+
+            var ids = new List<string>();
+            foreach (var item in node.EnumerateArray())
+            {
+                var id = item.ValueKind == JsonValueKind.String ? item.GetString() : null;
+                if (!MoonfallLevelLoader.IsLevelId(id))
+                {
+                    errors.Add("levels: each must be a level id");
+                    return [];
+                }
+
+                if (!ids.Contains(id, StringComparer.Ordinal))
+                {
+                    ids.Add(id);
+                }
+            }
+
+            return ids;
+        }
+
+        private bool Flag(JsonElement node, string label)
+        {
+            if (node.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            {
+                return node.GetBoolean();
+            }
+
+            errors.Add($"{label} must be true or false");
+            return false;
+        }
+
         public MoonfallSceneRecipe? Recipe(JsonElement root, string? expectedName)
         {
             if (root.ValueKind != JsonValueKind.Object || Text(root, "format") != Format)
@@ -169,6 +265,8 @@ public static partial class MoonfallSceneRecipeLoader
                 Veil = Num(root, "veil", 0.30f, 0, 0.6f),
                 Motion = Motion(root),
                 Chrome = Chrome(root),
+                Levels = LevelIds(root),
+                Default = root.TryGetProperty("default", out var d) && Flag(d, "default"),
             };
             recipe = recipe with { Moon = Moon(root, [.. recipe.Paint, .. recipe.Light]) };
             if (recipe.Paint.Concat(recipe.Light).OfType<MoonfallMoon>().Count() > 1)

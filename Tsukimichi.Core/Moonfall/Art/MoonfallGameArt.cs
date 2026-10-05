@@ -169,13 +169,12 @@ public sealed class MoonfallGameArt<T> : IDisposable
     public T? Marks => marksTexture;
 
     /// <summary>The recipe <paramref name="level"/> names, or null.</summary>
-    public MoonfallSceneRecipe? RecipeFor(MoonfallLevel level) =>
-        level?.Scene is { } name && recipes.TryGetValue(name, out var recipe) ? recipe : null;
+    public MoonfallSceneRecipe? RecipeFor(MoonfallLevel level) => MoonfallSceneRecipeLoader.Pick(recipes, level);
 
     /// <summary>A companion's card (light-graded) once uploaded; asks for it the first time.</summary>
     public T? Card(MoonfallPower power)
     {
-        if (!open || MoonfallCompanions.For(power) is not { } companion)
+        if (!open || MoonfallCards.For(power) is not { } companion)
         {
             return null;
         }
@@ -190,7 +189,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
             build = cardBuilds[power] = Task.Run(async () =>
             {
                 var card = await host.ReadGameTexture(companion.CardPath).ConfigureAwait(false);
-                if (card is null || card.Width != MoonfallCompanions.CardWidth || card.Height != MoonfallCompanions.CardHeight || card.A is null)
+                if (card is null || card.Width != MoonfallCards.CardWidth || card.Height != MoonfallCards.CardHeight || card.A is null)
                 {
                     return null;
                 }
@@ -296,7 +295,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
                     }
                     else
                     {
-                        Warn("card" + power, $"Moonfall: {MoonfallCompanions.For(power)?.CardPath} is missing or changed; the companion shows as a plain ring");
+                        Warn("card" + power, $"Moonfall: {MoonfallCards.For(power)?.CardPath} is missing or changed; the companion shows as a plain ring");
                     }
                 }
 
@@ -617,7 +616,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
     /// <summary>What is on the GPU now.</summary>
     public MoonfallGameArtBytes HeldBytes()
     {
-        long cardBytes = cards.Values.Count(static c => c.Texture is not null) * (long)MoonfallCompanions.CardWidth * MoonfallCompanions.CardHeight * 4;
+        long cardBytes = cards.Values.Count(static c => c.Texture is not null) * (long)MoonfallCards.CardWidth * MoonfallCards.CardHeight * 4;
         long sceneBytes = scene is null ? 0 : scene.Layers.Bytes + (scene.Enamel is not null && Chrome?.Grain is { } g ? (long)(g.Width / 2) * (g.Height / 2) * 4 : 0);
         return new MoonfallGameArtBytes(chromeTexture is not null && Chrome is { } c ? c.Sheet.Bytes : 0, cardBytes, sceneBytes, marksTexture is not null && marksPixels is { } m ? m.Bytes : 0);
     }

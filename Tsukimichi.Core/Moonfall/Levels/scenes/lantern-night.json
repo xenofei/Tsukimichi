@@ -5,6 +5,7 @@
   "format": "moonfall-scene",
   "version": 1,
   "name": "lantern-night",
+  "levels": ["base-04"],
   "source": { "picture": "moon-road-night" },
   "paint": [
     { "kind": "moonGlow", "x": -60, "y": -60, "rCore": 360, "rWide": 900, "kCore": 0.12, "kWide": 0.05, "colour": "#C9C0F0" }
