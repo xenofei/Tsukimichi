@@ -76,6 +76,13 @@ Rules new to this plan:
 - **Decisions 1 to 6:** not answered on the site, so the recommendations stand: original FFXIV-flavoured characters; plain descriptive names for general terms and our own names for distinctive ones; an original code-generated finale; hand-authored levels with the in-plugin editor; the name Moonfall; inside Tsukimichi.
 - **Art:** one painting per release in the default theme, per your rule of 4 October 2026.
 - **Art review (5 October 2026):** "design looks okay … It needs more detail and passion in it, as it looks somewhat plain. I want this to have beautiful designs in every part of the main interface, and also the game art (levels)." Every level gets a design that builds around it or gives it meaning: its pegs and bricks outline, trace, follow or emphasise something in the level's painted scene. You voted "no" on style frame A (the crescent-cradle bucket) and "fav" on the rest. A richer pass of every screen, the level-scene method and six pilot levels comes back here for review before all 115 levels are made. Decisions 7 to 13 stay open until then.
+- **Rich pass review (5 October 2026):** "Everything looks okay so far. I think the pictures for the characters look ugly, and it still looks a bit plain overall."
+  - **Characters:** the eleven power carriers become **real FFXIV characters**, shown with the game's own portrait art from your install. This replaces our originals (decision 1) and the cameos (question 17).
+  - **Richness:** all four levers.
+    - FFXIV's own ornate UI art, graded to Menphina's Medallion.
+    - Ambient motion (moondust, glints, stars, parallax, lantern flicker; none under Reduce motion).
+    - Busier, fuller boards (foreground silhouettes, framing, light shafts).
+    - Bolder colour (jewel tones and warm gold, per level).
 
 ## Not doing
 
