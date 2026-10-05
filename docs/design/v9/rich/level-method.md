@@ -106,18 +106,19 @@ A peg's lit face is about L 0.6 to 0.7, and its hue carries its kind. A scene be
 1. **The Medallion night grade, version 2** (`rich_lib.night_lab`, for official paintings; rebuilt after realism rounds 1 and 2).
    - It works in OKLab. Lightness is lowered on a curve (`L^1.25` to `L^1.8`), so haze falls back and the planes facing the light stay brightest.
    - A wide base layer (48 units, wider than the largest form) is compressed under a soft knee that keeps a slope of 0.35, and the detail layer is added back. A cloud or a dome keeps its modelling instead of flattening to a slab.
-   - A soft roll-off over the last 0.06 holds the ceiling.
-   - A **form light** then gives the painting's pale shapes relief. A painted dome is often a flat white shape; its silhouette, blurred, rounds into a height, and the one light from the upper left shades it, darkening the faces turned away more than it lightens the others.
+   - A soft roll-off over the last 0.06 holds the ceiling. The 2–12 px band it would flatten is then restored at full strength, so a cloud sea or a planet keeps its modelling (realism round 3).
+   - A **form light** then gives the painting's pale shapes relief, but only shapes under about 40 units. A large pale field already carries its own modelling. A painted dome is often a flat white shape; its silhouette, blurred, rounds into a height, and the one light from the upper left shades it, darkening the faces turned away more than it lightens the others.
    - Chroma is kept (mid-tones scaled more than highlights). Hue is pulled toward lapis in the shadows and moonstone in the highlights, so lit cloud reads cool silver, never khaki.
    - Yellow and green (OKLab hue 45–195°) are cut to 0.3 chroma, so foliage goes blue-grey, as under moonlight. Warm hues are drained harder than cool.
    - The sky's own colour is halved.
    - The Far Shore uses the same grade, pulled toward violet-moonstone.
    - **Our own paintings** are painted directly in the same values, and a painted moon is emissive (an even face, no terminator), because it is the light, not a lit object.
-2. **The value ceiling.** The 99th-percentile luma of a scene behind the board is about 0.42 or less (0.41–0.43 on the pilots), with nothing above about 0.47. The one exception is a painted moon or our own overlay line, which the layout leaves clear.
+2. **The value ceiling.** The 99th-percentile luma of a scene behind the board is about 0.46 or less (0.45–0.46 on the pilots). With the veil, every peg's lit face stands at least 0.20 above the brightest part of the scene round it. The one exception is a painted moon or our own overlay line, which the layout leaves clear.
+   - **The bucket's lane.** The bucket's lantern rises to y 529 and sweeps the whole width, so keep the lowest 40 units (y 520–560) sparse. Never put a full row of pegs there.
 3. **The light.** Every scene's natural light comes from the upper left, the side the pegs and the frame are lit from.
    - An official painting lit from the right is mirrored. The pilots mirror Ishgard and Mare Lamentorum.
    - A painting with lettering, such as the map, is never mirrored. The world map has no single sun, so it doesn't need to be.
-4. **The veil.** Where the layout is, the scene recedes. It dims by 20 to 36% within about 18 units of every piece (36% over bright cloud and pale domes), feathered over 6 units, and is untouched elsewhere. The veil has no shape: it is not a shadow (there are no cast shadows on the board), and the painting simply quietens where the play is.
+4. **The veil.** Where the layout is, the scene recedes. It dims by 20% on our own dark paintings, and by 40 to 44% on official paintings with bright cloud, pale domes or a lit planet, within about 18 units of every piece, feathered over 6 units. Elsewhere the scene is untouched. The veil has no shape: it is not a shadow (there are no cast shadows on the board), and the painting simply quietens where the play is.
 
 Readability is checked at 640 × 480, where a peg is 16 px, on the composite renders. Every peg kind must separate from the scene behind it. Purple, the darkest kind, is the case to watch.
 

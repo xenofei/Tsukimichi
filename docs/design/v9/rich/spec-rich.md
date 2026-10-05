@@ -88,6 +88,12 @@ The owner voted down style frame A's crescent cradle. **Proposal: the lantern ca
 - **The cart:** a deep open box of dark planks with brass corner straps, two spoked wheels on the pale moon road, and the same paper lantern on a curved rear post. The lantern warms the post, the near strap and the plank's end, and lays a pool on the road.
 - **The boat:** the approved bucket B, unchanged.
 
+**The lantern among the pegs.** The lantern rises to y 529, above the bucket's rim, and sweeps the whole width, so in play it passes among the lowest pegs. These rules come from realism round 3:
+- The lantern draws in front of the pegs.
+- Any peg within about 30 units of it takes a faint warm light on the side that faces it, falling off with distance.
+- The stills and composites show each bucket at a moment in its sweep where the lantern is clear of the pegs.
+- Layouts keep the lowest 40 units sparse (base-p3 dropped a row for this).
+
 The engine sizes are the same for both: 131 across the rails, a 104 mouth, the rim at y 573. Only the drawing changes (the road strip y 586–594 replaces the water strip). If the owner prefers one bucket for both, the boat works on every board. On a board with no water in its scene (base campaign), the boat sits on its own strip of water; exp-p3's scene now carries a still pool so its water belongs.
 
 ## The level scenes
@@ -105,10 +111,10 @@ Every level is a scene whose peg and brick layout draws its subject. There are t
 The grade (`rich_lib.night_lab`), after both realism rounds, works like this:
 1. It works in OKLab. Lightness is lowered on a curve.
 2. A wide base layer (48 units) is compressed under a sloped soft knee, and the detail is added back.
-3. A soft roll-off holds the ceiling.
-4. A form light gives pale painted shapes, such as domes, relief from their silhouettes, lit from the upper left.
+3. A soft roll-off holds the ceiling. The 2–12 px band it would flatten is then restored at full strength (realism round 3), so cloud seas and planets keep their modelling.
+4. A form light gives pale painted shapes, such as domes, relief from their silhouettes, lit from the upper left. It acts only on shapes under about 40 units, never on a large pale field.
 5. Chroma is kept, with mid-tones scaled more than highlights. Yellow and green (hue 45–195°) are cut to 0.3. Hue is pulled toward lapis in the shadows and moonstone in the highlights; The Far Shore uses violet-moonstone.
-6. The result: the 99th-percentile luma is 0.41–0.43 on every painting, so a peg's lit face (0.6–0.7) always stands above it.
+6. The result: the 99th-percentile luma is 0.45–0.46 on every painting. With the veil (0.40–0.44 on the official paintings), a peg's lit face (0.6–0.7) stands above the scene behind it by at least 0.20, measured round every peg on every composite.
 
 ### The six pilots
 
@@ -116,7 +122,7 @@ The grade (`rich_lib.night_lab`), after both realism rounds, works like this:
 |---|---|---|---|---|
 | base-p1 | The Airship Road | a trail on a map | The official map of Aldenard, with the airship's route engraved in gilt. Small moons dot the route; each city (Limsa Lominsa, Ul'dah, Mor Dhona, Ishgard, Gridania, Ala Mhigo) is a ring of four that the route runs through, and the rings carry the oranges, so clearing the level is visiting every stop. The compass rose, the ships' lights and the land fill the rest | 84, 26 |
 | base-p2 | The Holy See | terrain emphasis | Ishgard above the sea of clouds (mirrored so its light comes from the upper left). A run of bricks rides the mountain crest, with a moon over each summit; brick humps ride the cloud tops; arches sit in the bridge's arches; the cathedral is drawn by its spire tips, its flanks and its rose window | 89, 26 |
-| base-p3 | The Moonlit Post | a creature in outline | Our painting of a moogle courier flying over the Black Shroud by night, backlit by the moon. An even ring of moons follows its whole silhouette 18 units out (the ring is computed from the painting's own masks); the pom-pom, ears, wing tips, letter and feet carry the oranges; the forest's crowns are a wavy treeline with cottage lamps | 101, 26 |
+| base-p3 | The Moonlit Post | a creature in outline | Our painting of a moogle courier flying over the Black Shroud by night, backlit by the moon. An even ring of moons follows its whole silhouette 18 units out (the ring is computed from the painting's own masks); the pom-pom, ears, wing tips, letter and feet carry the oranges; the forest's crowns are a wavy treeline with cottage lamps | 85, 26 |
 | exp-p1 | The Domes of Sharlayan | a landmark partly outlined | Old Sharlayan's harbour. Curved bricks lie on the domes' crowns, in two courses on the great dome, with drums dotted down and a moon on each finial; the statue is an even dotted outline from hood to train; the water from her urn is a column of pegs; the ships are a row along their hulls. The painting finishes each shape | 67, 29 |
 | exp-p2 | The Ferry in the Stars | a constellation | Our painting of the Lantern Ferry, the constellation the Far Shore's sailors steer by, over the open sea, with the Milky Way. A moon sits on every star of the figure (the lantern's star largest) and smaller moons dot the atlas lines between them; the field stars thicken along the Milky Way, and glints on the sea ride the swell | 102, 35 |
 | exp-p3 | The Sea of Sorrows | orbit (our own) | Mare Lamentorum, with the world hanging in the black (mirrored). A ring of 26 moons orbits the world, slowly (an engine `orbit` mover, 26 s a turn, 42 px/s); the drifting rocks are loose rows; the tower's rib and sphere are traced; the world's storms sit on its night side, clear of the lit face | 72 (26 movers), 28 |
