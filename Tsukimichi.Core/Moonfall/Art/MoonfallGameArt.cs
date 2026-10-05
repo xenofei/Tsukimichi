@@ -135,6 +135,8 @@ public sealed class MoonfallGameArt<T> : IDisposable
     private readonly Dictionary<MoonfallPower, (Task<T>? Upload, T? Texture)> cards = [];
     private string? sceneKey;
     private string? sceneReadyKey;
+    private MoonfallLevel? pickedFor;
+    private MoonfallSceneRecipe? picked;
     private MoonfallSceneRecipe? keyRecipe;
     private bool keyTwoX;
     private string? keyText;
@@ -180,7 +182,17 @@ public sealed class MoonfallGameArt<T> : IDisposable
     public T? Veil => veilTexture;
 
     /// <summary>The recipe <paramref name="level"/> names, or null.</summary>
-    public MoonfallSceneRecipe? RecipeFor(MoonfallLevel level) => MoonfallSceneRecipeLoader.Pick(recipes, level);
+    public MoonfallSceneRecipe? RecipeFor(MoonfallLevel level)
+    {
+        // Asked every frame: picked once per level (the pick sorts the recipes).
+        if (!ReferenceEquals(level, pickedFor))
+        {
+            pickedFor = level;
+            picked = MoonfallSceneRecipeLoader.Pick(recipes, level);
+        }
+
+        return picked;
+    }
 
     /// <summary>A companion's card (light-graded) once uploaded; asks for it the first time.</summary>
     public T? Card(MoonfallPower power)
