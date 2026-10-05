@@ -8,7 +8,7 @@ namespace Tsukimichi.Core.Moonfall;
 /// <c>[J]</c> is a value the footage could not pin down, set by judgement (plan v9 "Your answers", G10: no tuning build),
 /// with the reasoning beside it.
 /// </summary>
-public static class MoonfallRules
+public static partial class MoonfallRules
 {
     // ---- Time [M 0] ----
 

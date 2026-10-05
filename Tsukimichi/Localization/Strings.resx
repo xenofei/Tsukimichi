@@ -16120,4 +16120,213 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <value>Umbra is back as it was, except custom plugins stay on because you've added another add-on since.</value>
     <comment>Umbra add-on failure: undone, but custom plugins stayed on.</comment>
   </data>
+  <data name="MoonfallPower.None" xml:space="preserve">
+    <value>No power</value>
+    <comment>Moonfall: a level whose green pegs carry no power.</comment>
+  </data>
+  <data name="MoonfallPower.SuperGuide" xml:space="preserve">
+    <value>Super Guide</value>
+    <comment>Moonfall power: the aim guide runs on through its first bounce.</comment>
+  </data>
+  <data name="MoonfallPower.Multiball" xml:space="preserve">
+    <value>Multiball</value>
+    <comment>Moonfall power: a second ball springs from the green peg.</comment>
+  </data>
+  <data name="MoonfallPower.Wings" xml:space="preserve">
+    <value>Brass Wings</value>
+    <comment>Moonfall power: wings widen the bucket. Our name (decision 8, pending).</comment>
+  </data>
+  <data name="MoonfallPower.Burst" xml:space="preserve">
+    <value>Lunar Burst</value>
+    <comment>Moonfall power: every peg near the green lights. Our name (decision 8, pending).</comment>
+  </data>
+  <data name="MoonfallPower.Flippers" xml:space="preserve">
+    <value>Flippers</value>
+    <comment>Moonfall power: flippers at the board's foot.</comment>
+  </data>
+  <data name="MoonfallPower.Gate" xml:space="preserve">
+    <value>Moon Gate</value>
+    <comment>Moonfall power: a ball that falls out comes back in at the top. Our name (decision 8, pending).</comment>
+  </data>
+  <data name="MoonfallPower.Bloom" xml:space="preserve">
+    <value>Moonbloom</value>
+    <comment>Moonfall power: the nearest orange pegs light. Our name (decision 8, pending).</comment>
+  </data>
+  <data name="MoonfallPower.Draw" xml:space="preserve">
+    <value>Moon-Viewing Draw</value>
+    <comment>Moonfall power: a shrine drum draws a prize. Our name (decision 8, pending).</comment>
+  </data>
+  <data name="MoonfallPower.Fireball" xml:space="preserve">
+    <value>Fireball</value>
+    <comment>Moonfall power: the ball burns through pegs.</comment>
+  </data>
+  <data name="MoonfallPower.Path" xml:space="preserve">
+    <value>Sage's Path</value>
+    <comment>Moonfall power: the shot is nudged onto the best path. Our name (decision 8, pending).</comment>
+  </data>
+  <data name="MoonfallPower.Bolt" xml:space="preserve">
+    <value>Storm Post</value>
+    <comment>Moonfall power: a bolt from the first peg hit to the bucket. Our name (decision 8, pending).</comment>
+  </data>
+  <data name="MoonfallCharacter.SuperGuide" xml:space="preserve">
+    <value>Pipiru Mimiru</value>
+    <comment>Moonfall character (Super Guide). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Multiball" xml:space="preserve">
+    <value>Kaede Tsukiyo</value>
+    <comment>Moonfall character (Multiball). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Wings" xml:space="preserve">
+    <value>Marcia nan Arcus</value>
+    <comment>Moonfall character (Brass Wings). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Burst" xml:space="preserve">
+    <value>Haldbrand Tidewatch</value>
+    <comment>Moonfall character (Lunar Burst). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Flippers" xml:space="preserve">
+    <value>Gajavati</value>
+    <comment>Moonfall character (Flippers). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Gate" xml:space="preserve">
+    <value>Ysolde Nocturine</value>
+    <comment>Moonfall character (Moon Gate). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Bloom" xml:space="preserve">
+    <value>Sister Ottilie</value>
+    <comment>Moonfall character (Moonbloom). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Draw" xml:space="preserve">
+    <value>Gyobo</value>
+    <comment>Moonfall character (Moon-Viewing Draw). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Fireball" xml:space="preserve">
+    <value>Aldous Varrow</value>
+    <comment>Moonfall character (Fireball). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Path" xml:space="preserve">
+    <value>Ione Selenis</value>
+    <comment>Moonfall character (Sage's Path). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCharacter.Bolt" xml:space="preserve">
+    <value>Kupsa Brightpom</value>
+    <comment>Moonfall character (Storm Post). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallPowerHint.SuperGuide" xml:space="preserve">
+    <value>A green peg lengthens the aim guide through its first bounce for your next 3 shots.</value>
+  </data>
+  <data name="MoonfallPowerHint.Multiball" xml:space="preserve">
+    <value>A green peg sends a second ball out from it.</value>
+  </data>
+  <data name="MoonfallPowerHint.Wings" xml:space="preserve">
+    <value>A green peg widens the bucket for this shot and the next 4.</value>
+  </data>
+  <data name="MoonfallPowerHint.Burst" xml:space="preserve">
+    <value>A green peg lights every peg close around it.</value>
+  </data>
+  <data name="MoonfallPowerHint.Flippers" xml:space="preserve">
+    <value>A green peg brings out flippers for this shot and the next 2. Hold the mouse button or Space to raise them.</value>
+  </data>
+  <data name="MoonfallPowerHint.Gate" xml:space="preserve">
+    <value>A green peg opens a gate: the ball comes back in at the top once when it falls out this shot.</value>
+  </data>
+  <data name="MoonfallPowerHint.Bloom" xml:space="preserve">
+    <value>A green peg lights the nearest fifth of the orange pegs left.</value>
+  </data>
+  <data name="MoonfallPowerHint.Draw" xml:space="preserve">
+    <value>A green peg turns the drum: a free ball, a triple score for this shot and the next, or another power.</value>
+  </data>
+  <data name="MoonfallPowerHint.Fireball" xml:space="preserve">
+    <value>A green peg makes your next shot burn straight through the pegs it meets.</value>
+  </data>
+  <data name="MoonfallPowerHint.Path" xml:space="preserve">
+    <value>A green peg makes your next shot take the best line within a few degrees of your aim.</value>
+  </data>
+  <data name="MoonfallPowerHint.Bolt" xml:space="preserve">
+    <value>A green peg charges your next shot: the first peg it hits sends a bolt to the bucket, lighting the pegs on the way.</value>
+  </data>
+  <data name="MoonfallStyle.OnePegCatch" xml:space="preserve">
+    <value>One-Peg Catch</value>
+    <comment>Moonfall style shot: one peg, then the bucket. Our name for the original's.</comment>
+  </data>
+  <data name="MoonfallStyle.LongShot" xml:space="preserve">
+    <value>Long Shot</value>
+    <comment>Moonfall style shot: two coloured pegs a third of the board apart.</comment>
+  </data>
+  <data name="MoonfallStyle.SuperLongShot" xml:space="preserve">
+    <value>Super Long Shot</value>
+    <comment>Moonfall style shot: two coloured pegs two thirds of the board apart.</comment>
+  </data>
+  <data name="MoonfallStyle.DoubleLongShot" xml:space="preserve">
+    <value>Double Long Shot</value>
+    <comment>Moonfall style shot: two long shots in a row.</comment>
+  </data>
+  <data name="MoonfallStyle.OffTheWall" xml:space="preserve">
+    <value>Off the Wall</value>
+    <comment>Moonfall style shot: off a wall into a coloured peg.</comment>
+  </data>
+  <data name="MoonfallStyle.RimShot" xml:space="preserve">
+    <value>Rim Shot</value>
+    <comment>Moonfall style shot: off the bucket into the last orange peg. Our name for the original's.</comment>
+  </data>
+  <data name="MoonfallStyle.LuckyBounce" xml:space="preserve">
+    <value>Lucky Bounce</value>
+    <comment>Moonfall style shot: off the bucket and back into it.</comment>
+  </data>
+  <data name="MoonfallStyle.OrangeSweep" xml:space="preserve">
+    <value>Orange Sweep</value>
+    <comment>Moonfall style shot: many orange pegs in one shot. Our name for the original's.</comment>
+  </data>
+  <data name="MoonfallStyle.LongSlide" xml:space="preserve">
+    <value>Long Slide</value>
+    <comment>Moonfall style shot: twelve pegs in one slide. Our name for the original's.</comment>
+  </data>
+  <data name="MoonfallStyle.ClearNight" xml:space="preserve">
+    <value>Clear Night</value>
+    <comment>Moonfall style shot: every peg lit by the end of the Full Moon shot. Our name for the original's.</comment>
+  </data>
+  <data name="MoonfallStyle.LiveWire" xml:space="preserve">
+    <value>Live Wire</value>
+    <comment>Moonfall style shot: a Storm Post bolt that lights twelve pegs. Our name for the original's.</comment>
+  </data>
+  <data name="MoonfallStyleShotFormat" xml:space="preserve">
+    <value>{0} +{1}</value>
+    <comment>Moonfall's style-shot popup: {0} = the style shot, {1} = its bonus.</comment>
+  </data>
+  <data name="MoonfallDrawFreeBall" xml:space="preserve">
+    <value>Free ball!</value>
+    <comment>Moonfall: the drum drew a free ball.</comment>
+  </data>
+  <data name="MoonfallDrawTriple" xml:space="preserve">
+    <value>Triple score</value>
+    <comment>Moonfall: the drum drew a triple score for this shot and the next.</comment>
+  </data>
+  <data name="MoonfallDrawPowerFormat" xml:space="preserve">
+    <value>The drum gives {0}</value>
+    <comment>Moonfall: the drum drew another power. {0} = the power.</comment>
+  </data>
+  <data name="MoonfallCharacterFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>Moonfall's character picker: {0} = the character, {1} = their power.</comment>
+  </data>
+  <data name="MoonfallQuickPlay" xml:space="preserve">
+    <value>Quick Play</value>
+    <comment>Moonfall: play any level with any character.</comment>
+  </data>
+  <data name="MoonfallQuickPlayTooltip" xml:space="preserve">
+    <value>Pick any character for this level. Adventure gives each stage of five levels its own.</value>
+  </data>
+  <data name="MoonfallPickCharacter" xml:space="preserve">
+    <value>Character</value>
+    <comment>Moonfall: the character picker's label.</comment>
+  </data>
+  <data name="MoonfallPickBeforeShot" xml:space="preserve">
+    <value>Pick a character before the first shot, or restart the level.</value>
+  </data>
+  <data name="MoonfallPowerTooltip" xml:space="preserve">
+    <value>Shots the power still acts in. A green peg triggers it again.</value>
+  </data>
+  <data name="MoonfallFlippersHint" xml:space="preserve">
+    <value>Hold the mouse button or Space to raise the flippers</value>
+  </data>
 </root>

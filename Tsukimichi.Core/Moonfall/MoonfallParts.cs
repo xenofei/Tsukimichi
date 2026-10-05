@@ -189,6 +189,44 @@ public enum MoonfallEventKind : byte
 
     /// <summary>A new ball is in the launcher.</summary>
     NextBall,
+
+    // ---- Powers (plan v9 G5) and style shots (G4) ----
+
+    /// <summary>
+    /// A power was triggered at a green (<see cref="MoonfallEvent.Peg"/>; <see cref="MoonfallEvent.Value"/> the
+    /// <see cref="MoonfallPower"/>, <see cref="MoonfallEvent.Count"/> its shots left). A burst lights its pegs next.
+    /// </summary>
+    PowerTriggered,
+
+    /// <summary>A power has no shots left (<see cref="MoonfallEvent.Value"/> the <see cref="MoonfallPower"/>).</summary>
+    PowerEnded,
+
+    /// <summary>A twin ball came into play at a green (<see cref="MoonfallEvent.Count"/>: balls in play now).</summary>
+    BallAdded,
+
+    /// <summary>A ball fell out and came back in at the top through the Moon Gate (<see cref="MoonfallEvent.Value"/>: re-entries left).</summary>
+    BallReentered,
+
+    /// <summary>
+    /// The drum drew (<see cref="MoonfallEvent.Value"/> the <see cref="MoonfallDrawOutcome"/>; <see cref="MoonfallEvent.Count"/>
+    /// the <see cref="MoonfallPower"/> it gave, for another power).
+    /// </summary>
+    Drawn,
+
+    /// <summary>
+    /// The bolt struck from its first peg (<see cref="MoonfallEvent.Peg"/>), lighting <see cref="MoonfallEvent.Value"/>
+    /// pegs; its path is <see cref="MoonfallGame.BoltPoints"/>.
+    /// </summary>
+    BoltStruck,
+
+    /// <summary>Sage's Path chose the shot's line (<see cref="MoonfallEvent.Value"/>: the nudge in hundredths of a degree).</summary>
+    PathChosen,
+
+    /// <summary>
+    /// A style shot (<see cref="MoonfallEvent.Count"/> the <see cref="MoonfallStyleShot"/>, <see cref="MoonfallEvent.Value"/>
+    /// its bonus), where it happened.
+    /// </summary>
+    StyleShot,
 }
 
 /// <summary>One game event; a value type, so queuing one allocates nothing.</summary>

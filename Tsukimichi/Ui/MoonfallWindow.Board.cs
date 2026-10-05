@@ -161,6 +161,8 @@ public sealed partial class MoonfallWindow
             hovered = ImGui.IsItemHovered();
         }
 
+        boardHovered = hovered;
+
         if (hovered && !pause.Paused && g.Phase == MoonfallPhase.Aiming)
         {
             var (x, y) = new View(origin, scale, 1f, BoardCentre).Unmap(ImGui.GetMousePos());
@@ -194,7 +196,11 @@ public sealed partial class MoonfallWindow
             DrawRings(dl, view);
         }
 
+        // Power effects (MoonfallWindow.Powers.cs) draw over the board in both the art and the primitive paths.
+        DrawPowers(dl, view, g, alpha);
+
         DrawPopups(dl, view);
+        DrawStylePopups(dl, origin, size);
         DrawShotTally(dl, origin, scale, g);
         DrawBanner(dl, origin, size, g);
         if (pause.Paused)

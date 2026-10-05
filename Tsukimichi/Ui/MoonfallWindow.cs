@@ -148,6 +148,7 @@ public sealed partial class MoonfallWindow : Window
 
         if (!pause.Paused)
         {
+            FeedFlippers(game);
             var dt = ImGui.GetIO().DeltaTime;
             game.Advance(dt);
             boardClock += Math.Clamp(dt, 0f, 0.25f);
@@ -162,8 +163,9 @@ public sealed partial class MoonfallWindow : Window
         var levels = campaigns[campaign].Levels;
         levelIndex = Math.Clamp(index, 0, levels.Count - 1);
         ClearEffects();
+        ClearPowerEffects();
         // A fresh board each time: the seed only has to differ between plays, the engine does the rest.
-        return new MoonfallGame(levels[levelIndex], levelIndex + 1, (ulong)Stopwatch.GetTimestamp());
+        return new MoonfallGame(levels[levelIndex], levelIndex + 1, (ulong)Stopwatch.GetTimestamp(), power: PowerFor(levelIndex));
     }
 
     /// <summary>Whether leaving the level now would lose something: a shot taken or a ball in play, and the level not over.</summary>
@@ -195,6 +197,7 @@ public sealed partial class MoonfallWindow : Window
         while (g.TryReadEvent(out var e))
         {
             ArtEvent(e);
+            NotePowerEvent(e);
             switch (e.Kind)
             {
                 case MoonfallEventKind.PegHit:
@@ -411,6 +414,7 @@ public sealed partial class MoonfallWindow : Window
             UiMetrics.Tooltip(Strings.MoonfallMultiplierTooltip);
         }
 
+        DrawPowerBar(g, gap);
         var leftEnd = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X;
 
         // The score, then Pause and Restart, at the right.

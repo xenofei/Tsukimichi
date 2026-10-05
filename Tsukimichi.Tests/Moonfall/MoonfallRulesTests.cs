@@ -174,19 +174,20 @@ public sealed class MoonfallRulesTests
         var game = new MoonfallGame(Board([.. pegs]), 1, 2);
         Assert.Equal(10, game.BallsLeft);
         var shots = 0;
-        var catches = 0;
+        var freeBalls = 0;
         while (game.Phase == MoonfallPhase.Aiming && shots < 40)
         {
             Assert.True(game.Shoot(85));
             shots++;
             foreach (var (_, e) in RunUntil(game, static g => g.Phase is MoonfallPhase.Aiming or MoonfallPhase.Lost))
             {
-                catches += e.Kind == MoonfallEventKind.BucketCatch ? 1 : 0;
+                // A catch is a free ball, and so is a shot whose style bonus reaches 25,000 (a Lucky Bounce off the rim).
+                freeBalls += e.Kind == MoonfallEventKind.FreeBall ? 1 : 0;
             }
         }
 
         Assert.Equal(MoonfallPhase.Lost, game.Phase);
-        Assert.Equal(10 + catches, shots);
+        Assert.Equal(10 + freeBalls, shots);
         Assert.Equal(0, game.BallsLeft);
         Assert.Equal(25, game.OrangesLeft);
         Assert.True(game.OutOfBalls);
