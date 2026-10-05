@@ -1,0 +1,120 @@
+{
+ "common/font/AXIS_36.fdt": [
+  "game font glyph table"
+ ],
+ "common/font/Jupiter_46.fdt": [
+  "game font glyph table"
+ ],
+ "common/font/MiedingerMid_36.fdt": [
+  "game font glyph table"
+ ],
+ "common/font/TrumpGothic_184.fdt": [
+  "game font glyph table"
+ ],
+ "common/font/TrumpGothic_68.fdt": [
+  "game font glyph table"
+ ],
+ "common/font/font1.tex": [
+  "game font atlas (type in the mocks; Dalamud game fonts at runtime)"
+ ],
+ "common/font/font2.tex": [
+  "game font atlas (type in the mocks; Dalamud game fonts at runtime)"
+ ],
+ "common/font/font4.tex": [
+  "game font atlas (type in the mocks; Dalamud game fonts at runtime)"
+ ],
+ "common/font/font7.tex": [
+  "game font atlas (type in the mocks; Dalamud game fonts at runtime)"
+ ],
+ "ui/icon/087000/087019_hr1.tex": [
+  "Triple Triad card: Tataru (Moon-Viewing Draw)"
+ ],
+ "ui/icon/087000/087020_hr1.tex": [
+  "Triple Triad card: A moogle courier (Storm Post)",
+  "Triple Triad card: Moogle courier (Storm Post)"
+ ],
+ "ui/icon/087000/087049_hr1.tex": [
+  "Triple Triad card: Y'shtola (Fireball)"
+ ],
+ "ui/icon/087000/087050_hr1.tex": [
+  "Triple Triad card: Urianger (Moon Gate)"
+ ],
+ "ui/icon/087000/087056_hr1.tex": [
+  "Triple Triad card: Minfilia (Super Guide)"
+ ],
+ "ui/icon/087000/087058_hr1.tex": [
+  "Triple Triad card: Cid Garlond (Brass Wings)"
+ ],
+ "ui/icon/087000/087059_hr1.tex": [
+  "Triple Triad card: Alphinaud & Alisaie (Multiball)"
+ ],
+ "ui/icon/087000/087060_hr1.tex": [
+  "Triple Triad card: Louisoix (Sage's Path)"
+ ],
+ "ui/icon/087000/087065_hr1.tex": [
+  "Triple Triad card: Merlwyb (Flippers)"
+ ],
+ "ui/icon/087000/087066_hr1.tex": [
+  "Triple Triad card: Kan-E-Senna (Moonbloom)"
+ ],
+ "ui/icon/087000/087067_hr1.tex": [
+  "Triple Triad card: Raubahn (Lunar Burst)"
+ ],
+ "ui/loadingimage/-nowloading_base03.tex": [
+  "level scene base-p2 (the approved recipe, graded at load, re-dressed by dress2)"
+ ],
+ "ui/loadingimage/-nowloading_base05.tex": [
+  "level scene base-p1 (the approved recipe, graded at load, re-dressed by dress2)"
+ ],
+ "ui/loadingimage/-nowloading_base07.tex": [
+  "title and characters backdrop (Dravania, Sohm Al), graded at load",
+  "title backdrop (Dravania, Sohm Al), graded at load"
+ ],
+ "ui/loadingimage/-nowloading_base21.tex": [
+  "level scene exp-p1 (the approved recipe, graded at load, re-dressed by dress2)"
+ ],
+ "ui/loadingimage/-nowloading_base25.tex": [
+  "level scene exp-p3 (the approved recipe, graded at load, re-dressed by dress2)"
+ ],
+ "ui/map/world/01/world01_m.tex": [
+  "Adventure map and level select (the world map), graded at load"
+ ],
+ "ui/uld/JobHudSCH0_hr1.tex": [
+  "triple gem frame (turns left)"
+ ],
+ "ui/uld/Journal_Detail_hr1.tex": [
+  "the journal's textured window ground (graded to enamel)"
+ ],
+ "ui/uld/Journal_Frame_hr1.tex": [
+  "crest over a title rule",
+  "panel corner, lower (banner and reeds)",
+  "panel corner, upper (vine)",
+  "panel edge, bottom",
+  "panel edge, horizontal (sampled and stretched)",
+  "panel edge, vertical",
+  "short rule",
+  "vertical scroll ornament",
+  "vertical triple rule"
+ ],
+ "ui/uld/LovmPalette_hr1.tex": [
+  "gilt pill frame (buttons)",
+  "gilt ring bezel (portraits, dial)",
+  "great lattice ring with crest points (hero portrait, dial)"
+ ],
+ "ui/uld/PVPRankEmblem3_hr1.tex": [
+  "gilt spire (finials)",
+  "gilt wing with turquoise inlay (launcher crest)"
+ ],
+ "ui/uld/TabButtonA_hr1.tex": [
+  "tab"
+ ],
+ "ui/uld/TripleTriadBattle_hr1.tex": [
+  "Triple Triad card back (a companion the story has not introduced)"
+ ],
+ "ui/uld/TripleTriadCardSelect_hr1.tex": [
+  "card selection glow"
+ ],
+ "ui/uld/TripleTriadResultCrown_hr1.tex": [
+  "laurel and ribbon (aced, Full Moon)"
+ ]
+}

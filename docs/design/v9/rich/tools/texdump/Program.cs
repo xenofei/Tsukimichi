@@ -106,6 +106,55 @@ else if (cmd == "iconrange")
 
     Console.WriteLine($"{n} icons");
 }
+else if (cmd == "cards")
+{
+    // cards: every Triple Triad card: row, icon (087000 + row), card number, name
+    var res = data.GetExcelSheet<TripleTriadCardResident>()!;
+    foreach (var c in data.GetExcelSheet<TripleTriadCard>()!)
+    {
+        if (c.RowId == 0) continue;
+        var r = res.GetRowOrDefault(c.RowId);
+        Console.WriteLine($"{c.RowId}	{87000 + c.RowId}	{r?.Order}	{c.Name.ExtractText()}");
+    }
+}
+else if (cmd == "trust")
+{
+    // trust: every Duty Support / Trust member: row, bust icon, strip icon, name
+    var npc = data.GetExcelSheet<ENpcResident>()!;
+    var ui = data.GetExcelSheet<DawnMemberUIParam>()!;
+    foreach (var m in data.GetExcelSheet<DawnQuestMember>()!)
+    {
+        var name = npc.GetRowOrDefault(m.Member.RowId)?.Singular.ExtractText() ?? "";
+        if (name.Length == 0) name = ui.GetRowOrDefault(m.Class.RowId)?.Name.ExtractText() ?? "";
+        Console.WriteLine($"{m.RowId}	{m.BigImageOld}	{m.BigImageNew}	{name}");
+    }
+}
+else if (cmd == "uldscan")
+{
+    // uldscan <namesfile>: for each candidate addon name, if ui/uld/<name>.uld exists, prints every .tex path it names
+    var seen = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var n in File.ReadAllLines(args[1]).Select(l => l.Trim()).Where(l => l.Length > 0).Distinct())
+    {
+        var f = data.GetFile($"ui/uld/{n}.uld");
+        if (f is null) continue;
+        var raw = f.Data;
+        var text = System.Text.Encoding.ASCII.GetString(raw.Select(b => b is >= 32 and < 127 ? b : (byte)0).ToArray());
+        foreach (System.Text.RegularExpressions.Match mm in System.Text.RegularExpressions.Regex.Matches(text, @"ui/[A-Za-z0-9_/]+\.tex"))
+            if (seen.Add(mm.Value)) Console.WriteLine($"{n}	{mm.Value}");
+    }
+}
+else if (cmd == "raw")
+{
+    // raw <outdir> <path>...: writes the file's bytes as they are (fonts' .fdt tables)
+    Directory.CreateDirectory(args[1]);
+    foreach (var p in args.Skip(2))
+    {
+        var f = data.GetFile(p);
+        if (f is null) { Console.WriteLine($"MISSING {p}"); continue; }
+        File.WriteAllBytes(Path.Combine(args[1], p.Replace('/', '_')), f.Data);
+        Console.WriteLine($"OK {p} {f.Data.Length}");
+    }
+}
 else if (cmd == "exists")
 {
     foreach (var p in args.Skip(1)) Console.WriteLine($"{(data.FileExists(p) ? "Y" : "N")} {p}");

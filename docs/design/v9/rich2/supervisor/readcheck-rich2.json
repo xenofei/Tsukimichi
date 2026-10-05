@@ -1,0 +1,221 @@
+{
+ "base-p1": {
+  "blue": {
+   "face": 0.687,
+   "worst_margin": 0.312,
+   "at": [
+    180,
+    220
+   ],
+   "ring_p90": 0.375
+  },
+  "orange": {
+   "face": 0.62,
+   "worst_margin": 0.25,
+   "at": [
+    340,
+    172
+   ],
+   "ring_p90": 0.369
+  },
+  "green": {
+   "face": 0.715,
+   "worst_margin": 0.534,
+   "at": [
+    320,
+    503
+   ],
+   "ring_p90": 0.181
+  },
+  "purple": {
+   "face": 0.597,
+   "worst_margin": 0.516,
+   "at": [
+    380,
+    300
+   ],
+   "ring_p90": 0.082
+  }
+ },
+ "base-p2": {
+  "blue": {
+   "face": 0.691,
+   "worst_margin": 0.371,
+   "at": [
+    515,
+    302
+   ],
+   "ring_p90": 0.32
+  },
+  "orange": {
+   "face": 0.622,
+   "worst_margin": 0.268,
+   "at": [
+    300,
+    430
+   ],
+   "ring_p90": 0.354
+  },
+  "green": {
+   "face": 0.717,
+   "worst_margin": 0.491,
+   "at": [
+    292,
+    138
+   ],
+   "ring_p90": 0.226
+  }
+ },
+ "base-p3": {
+  "blue": {
+   "face": 0.687,
+   "worst_margin": 0.389,
+   "at": [
+    356,
+    332
+   ],
+   "ring_p90": 0.299
+  },
+  "orange": {
+   "face": 0.62,
+   "worst_margin": 0.362,
+   "at": [
+    274,
+    176
+   ],
+   "ring_p90": 0.257
+  },
+  "green": {
+   "face": 0.719,
+   "worst_margin": 0.528,
+   "at": [
+    308,
+    184
+   ],
+   "ring_p90": 0.192
+  },
+  "purple": {
+   "face": 0.588,
+   "worst_margin": 0.484,
+   "at": [
+    499,
+    500
+   ],
+   "ring_p90": 0.104
+  }
+ },
+ "exp-p1": {
+  "blue": {
+   "face": 0.691,
+   "worst_margin": 0.314,
+   "at": [
+    101,
+    332
+   ],
+   "ring_p90": 0.377
+  },
+  "green": {
+   "face": 0.732,
+   "worst_margin": 0.597,
+   "at": [
+    494,
+    340
+   ],
+   "ring_p90": 0.135
+  },
+  "orange": {
+   "face": 0.62,
+   "worst_margin": 0.245,
+   "at": [
+    327,
+    248
+   ],
+   "ring_p90": 0.374
+  },
+  "purple": {
+   "face": 0.6,
+   "worst_margin": 0.427,
+   "at": [
+    242,
+    540
+   ],
+   "ring_p90": 0.173
+  }
+ },
+ "exp-p2": {
+  "blue": {
+   "face": 0.687,
+   "worst_margin": 0.421,
+   "at": [
+    299,
+    350
+   ],
+   "ring_p90": 0.266
+  },
+  "orange": {
+   "face": 0.618,
+   "worst_margin": 0.33,
+   "at": [
+    430,
+    250
+   ],
+   "ring_p90": 0.288
+  },
+  "green": {
+   "face": 0.714,
+   "worst_margin": 0.512,
+   "at": [
+    566,
+    300
+   ],
+   "ring_p90": 0.201
+  },
+  "purple": {
+   "face": 0.587,
+   "worst_margin": 0.401,
+   "at": [
+    322,
+    477
+   ],
+   "ring_p90": 0.186
+  }
+ },
+ "exp-p3": {
+  "orange": {
+   "face": 0.615,
+   "worst_margin": 0.344,
+   "at": [
+    598,
+    300
+   ],
+   "ring_p90": 0.272
+  },
+  "blue": {
+   "face": 0.691,
+   "worst_margin": 0.402,
+   "at": [
+    566,
+    436
+   ],
+   "ring_p90": 0.289
+  },
+  "green": {
+   "face": 0.726,
+   "worst_margin": 0.597,
+   "at": [
+    150,
+    222
+   ],
+   "ring_p90": 0.129
+  },
+  "purple": {
+   "face": 0.593,
+   "worst_margin": 0.553,
+   "at": [
+    172,
+    456
+   ],
+   "ring_p90": 0.04
+  }
+ }
+}

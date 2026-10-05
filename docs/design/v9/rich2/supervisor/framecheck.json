@@ -1,0 +1,98 @@
+{
+ "base-p1": {
+  "cover_pct": 0.0,
+  "middle_pct": 0.0,
+  "in_swing_px": 0,
+  "min_clearance": null,
+  "longest_rim_run": 0.0,
+  "longest_rim_at": null,
+  "straight_run": null,
+  "peg_sized_discs": [],
+  "lights_too_close": [],
+  "darkened_min_clearance": 13.93,
+  "elements_dropped_for_clearance": 0,
+  "fails": []
+ },
+ "base-p2": {
+  "cover_pct": 5.11,
+  "middle_pct": 0.007,
+  "in_swing_px": 0,
+  "min_clearance": 6.51,
+  "longest_rim_run": 22.1,
+  "longest_rim_at": [
+   651,
+   568
+  ],
+  "straight_run": null,
+  "peg_sized_discs": [],
+  "lights_too_close": [],
+  "darkened_min_clearance": 6.51,
+  "elements_dropped_for_clearance": 52,
+  "fails": []
+ },
+ "base-p3": {
+  "cover_pct": 5.26,
+  "middle_pct": 0.0,
+  "in_swing_px": 0,
+  "min_clearance": 9.14,
+  "longest_rim_run": 18.6,
+  "longest_rim_at": [
+   113,
+   98
+  ],
+  "straight_run": null,
+  "peg_sized_discs": [],
+  "lights_too_close": [],
+  "darkened_min_clearance": 17.5,
+  "elements_dropped_for_clearance": 11,
+  "fails": []
+ },
+ "exp-p1": {
+  "cover_pct": 1.95,
+  "middle_pct": 0.0,
+  "in_swing_px": 0,
+  "min_clearance": 9.04,
+  "longest_rim_run": 24.3,
+  "longest_rim_at": [
+   683,
+   580
+  ],
+  "straight_run": null,
+  "peg_sized_discs": [],
+  "lights_too_close": [],
+  "darkened_min_clearance": 8.34,
+  "elements_dropped_for_clearance": 9,
+  "fails": []
+ },
+ "exp-p2": {
+  "cover_pct": 0.68,
+  "middle_pct": 0.0,
+  "in_swing_px": 0,
+  "min_clearance": 34.5,
+  "longest_rim_run": 0.0,
+  "longest_rim_at": null,
+  "straight_run": null,
+  "peg_sized_discs": [],
+  "lights_too_close": [],
+  "darkened_min_clearance": 36.22,
+  "elements_dropped_for_clearance": 0,
+  "fails": []
+ },
+ "exp-p3": {
+  "cover_pct": 3.1,
+  "middle_pct": 0.0,
+  "in_swing_px": 0,
+  "min_clearance": 8.12,
+  "longest_rim_run": 13.6,
+  "longest_rim_at": [
+   694,
+   79
+  ],
+  "straight_run": null,
+  "peg_sized_discs": [],
+  "lights_too_close": [],
+  "darkened_min_clearance": 18.04,
+  "elements_dropped_for_clearance": 5,
+  "fails": []
+ }
+}
