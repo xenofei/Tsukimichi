@@ -4,6 +4,12 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- **Quest-giver portraits:** faces sit in the middle of the plate, eyes on the eye line. Varshahn, Estinien, Wuk Lamat, Krile and about 260 other portraits were cropped again and checked by hand.
+- **Earlier arcs:** major characters now have a portrait earlier in the story, such as Alphinaud in A Realm Reborn, Alisaie and Krile in Heavensward, and Jullus in Endwalker.
+- **Looks match the arc:** a quest shows the character as they looked at that point in the story. Examples are Tataru and Zero in Endwalker and Dawntrail, Yugiri in Stormblood, the twins' Heavensward coats in 5.4, and Sphene as the veiled queen in 7.0. The faces in "With …" lines follow the same rule and never show a later look.
+- **Quest-giver photos** no longer replace a good game portrait. A photo that showed a staff or a lance instead of a face (Y'shtola, Estinien) now gives way to the hand-checked portrait.
+
 ## [1.22.0] - 2026-10-04
 
 ### Added

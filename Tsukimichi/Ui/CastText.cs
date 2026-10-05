@@ -46,7 +46,7 @@ internal static class CastText
         for (var i = 0; i < line.Met.Count; i++)
         {
             var member = line.Met[i];
-            plates[i] = PlateFor(member, index, era, shieldOn, spoilers.ReachExpansion);
+            plates[i] = PlateFor(member, cast.RowsIn(quest.RowId, member), index, era, shieldOn, spoilers.ReachExpansion);
             names[i] = member.Name;
         }
 
@@ -121,24 +121,15 @@ internal static class CastText
     }
 
     /// <summary>
-    /// A met character's plate: the portrait index's face for one of their ENpcResident rows it knows, by the quest's era
-    /// and the shield's reach, else their initials.
+    /// A met character's plate: the portrait index's face for them in this quest (<see cref="PortraitIndex.ForCast"/>:
+    /// the row the quest's script names, else a row of the quest's era, else by name), by the quest's era and the
+    /// shield's reach, else their initials.
     /// </summary>
-    private static PortraitRequest PlateFor(CastMember member, PortraitIndex index, byte era, bool shieldOn, byte reach)
+    private static PortraitRequest PlateFor(CastMember member, IReadOnlyList<uint> questRows, PortraitIndex index, byte era, bool shieldOn, byte reach)
     {
-        foreach (var npc in member.NpcIds)
+        var portrait = index.ForCast(member.Key, member.NpcIds, questRows, era);
+        if (portrait.HasArt)
         {
-            if (index.NameOf(npc).Length == 0)
-            {
-                continue;
-            }
-
-            var portrait = index.For(npc, era, 0);
-            if (!portrait.HasArt)
-            {
-                break;
-            }
-
             var allowed = GiverPortraits.Enabled && PortraitPlate.FaceAllowed(portrait.Era, false, shieldOn, reach);
             return new PortraitRequest(portrait, allowed);
         }

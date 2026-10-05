@@ -635,6 +635,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         int Count(string section) => root[section] is JsonObject obj ? obj.Count : 0;
         Assert.Equal(Count("iconCrops"), curation.IconCrops.Count);
         Assert.Equal(Count("faces"), curation.Faces.Count);
+        Assert.Equal(Count("sharedFaces"), curation.SharedFaces.Count);
         Assert.Equal(Count("aliases"), curation.Aliases.Count);
         Assert.Equal(Count("blocks"), curation.Blocks.Count);
         Assert.Equal(Count("pins"), curation.Pins.Count);

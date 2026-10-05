@@ -131,9 +131,10 @@ public sealed class PortraitIndexTests
             Assert.Equal("GT", portrait.Fallback.Initials);
         }
 
-        // His Shadowbringers quests wear the bust; an Endwalker one the latest face of the best family.
+        // His Shadowbringers quests wear the bust; an Endwalker one the latest face of any family, his Endwalker
+        // battle-talk face (the era comes before the family since the 1.22.1 portrait audit, C4).
         Assert.Equal(72637u, index.For(1033916, 69500u).Icon);
-        Assert.Equal(72637u, index.For(Graha, 4, 0).Icon);
+        Assert.Equal(73012u, index.For(Graha, 4, 0).Icon);
 
         // Whatever the quest, the face picked is never from a later expansion than the quest.
         for (byte era = 0; era <= 5; era++)
