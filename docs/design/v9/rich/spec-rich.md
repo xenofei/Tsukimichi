@@ -196,7 +196,7 @@ Two independent agents judged everything.
   - Round 3 (the 21 assets: 6 scenes, 6 composites, the 8 screens and the bucket sheet): 13 of 21 approved. Problems: the form light flattened the planet and the cloud sea; a grey title moon; cameos that read as embossed silhouettes; an impossible Super Guide path; a lantern touching pegs. (This round's report reached the designer as the coordinator's relay.)
   - Round 4: 18 of 21 approved. Problems: the planet's lit half out of focus; flat cameo necks and busts; a glow under Pipiru's chin; the HUD's lantern touching a peg.
   - Round 5: 20 of 21 approved. Pipiru's hood folds read as scratches.
-  - Round 6: the hood re-carved in broad folds. The final verdict is below.
+  - Round 6: **all 21 approved**, after the hood was re-carved in broad folds.
 - **The level-design critic** checked readability as the subject, play (with the shipped engine) and readability over the scene. Its rounds are `supervisor/level-critic-round-N.md`. In summary:
   - Round 1: two of six approved. Unreachable top-row oranges, a ridge cup and a dome notch.
   - Round 2: five of six approved. base-p1's file and its script disagreed, and the pre-flight did not block an export.
@@ -207,7 +207,12 @@ Two independent agents judged everything.
 ### Final verdicts
 
 - **Level-design critic:** OVERALL APPROVE, all six pilot levels (rounds 3, 4 and 5).
-- **Realism supervisor:** 20 of 21 approved in round 5 (all scenes, all composites, and the title, map, levels, hud, fever, tally, pause and buckets screens). The characters screen awaits its round-6 verdict on Pipiru's hood; see `supervisor/realism-round-6.md` once it is recorded.
+- **Realism supervisor:** ALL 21 APPROVED (round 6), with no Majors or Minors outstanding. The 21 are the six scenes, the six composites, the eight screens and `screens/buckets.png`.
+- **Optional Nits it left open:**
+  - base-p1: the edge marks, edge smear and flat gilt route, all behind the rails;
+  - base-p2: the arch streaks, and the cathedral crown's highlights reaching about 0.74;
+  - the title: the moon's hard edge against the cloud.
+- **Not verified by either supervisor:** how the art looks in the game, motion, and the shipping JPEG.
 
 ## Open questions for the owner
 
