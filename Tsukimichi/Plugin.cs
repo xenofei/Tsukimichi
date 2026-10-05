@@ -1673,6 +1673,9 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // 1.22.0 "Welcome home": updates, Umbra, the summary, the server info bar entry and the summary gates.
             InitializeWelcomeHome(gate, diagnostics.PluginVersion);
+
+            // Setting up Tsukimichi for Umbra: the card and Settings › About › Umbra; Umbra changes only on Agree and add.
+            InitializeUmbraAddonSetup(settingsWindow);
             // /UI
 
             // Last: nothing runs per frame before the plugin is whole.
@@ -1854,6 +1857,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("moon icon", DisposeMoonIcon);
         Unwind("followed route", () => activeRoutes?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
+        Unwind("umbra add-on setup", TearDownUmbraAddonSetup);
         Unwind("welcome home", TearDownWelcomeHome);
         Unwind("nearby window", () => discoveryWindow?.Dispose());
         Unwind("glyph window", () => glyphDebugWindow?.Dispose());

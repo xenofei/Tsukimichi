@@ -27,7 +27,8 @@ public sealed partial class Plugin
             // The tour's offer card counts as Active too (it is the tour's first step).
             OtherFirst = () => whatsNewPopup?.Due == true
                 || tutorial?.Active == true
-                || settingsWindow.PackDialogShowing,
+                || settingsWindow.PackDialogShowing
+                || umbraAddonCard?.IsOpen == true,
             KeyState = KeyState,
         };
         portraitPackOffer = offer;

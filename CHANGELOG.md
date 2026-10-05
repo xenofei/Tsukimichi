@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- **Add Tsukimichi to your Umbra bar:** if you use Umbra, Tsukimichi offers once, at a quiet moment, to set up its Umbra add-on for you. It first lists exactly what will change in Umbra: custom plugins turned on if they're off (with Umbra's warning in plain words), the add-on's repository added, and the Tsukimichi widget placed on your bar. Nothing changes until you click **Agree and add**. **Show me how** gives the steps to do it yourself, and **Not now** means it won't ask again. Settings › About › Umbra keeps both, and **Remove from Umbra** there undoes only what Tsukimichi changed.
+
 ### Fixed
 - **Quest-giver portraits:** faces sit in the middle of the plate, eyes on the eye line. Varshahn, Estinien, Wuk Lamat, Krile and about 260 other portraits were cropped again and checked by hand.
 - **Earlier arcs:** major characters now have a portrait earlier in the story, such as Alphinaud in A Realm Reborn, Alisaie and Krile in Heavensward, and Jullus in Endwalker.

@@ -16043,4 +16043,252 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <value>Questionable</value>
     <comment>Where a gate is stated, {0} of GateSourceFormat: the Questionable plugin, which holds the quest back on the same check. A name; do not translate.</comment>
   </data>
+  <data name="UmbraSetup.Title" xml:space="preserve">
+    <value>Add Tsukimichi to your Umbra bar?</value>
+    <comment>Umbra add-on card title (1.23): offers to set up Tsukimichi for Umbra.</comment>
+  </data>
+  <data name="UmbraSetup.Lead" xml:space="preserve">
+    <value>Tsukimichi can set up its Umbra add-on for you: tonight's Ready count on Umbra's toolbar, with Up next and your journal in its popup.</value>
+    <comment>Umbra add-on card: the one line on what it does.</comment>
+  </data>
+  <data name="UmbraSetup.Add" xml:space="preserve">
+    <value>Add to Umbra</value>
+    <comment>Umbra add-on card primary button: opens the confirmation (changes nothing yet).</comment>
+  </data>
+  <data name="UmbraSetup.ShowHow" xml:space="preserve">
+    <value>Show me how</value>
+    <comment>Umbra add-on card: the manual steps.</comment>
+  </data>
+  <data name="UmbraSetup.NotNow" xml:space="preserve">
+    <value>Not now</value>
+    <comment>Umbra add-on card: declines; the card does not come back.</comment>
+  </data>
+  <data name="UmbraSetup.Later" xml:space="preserve">
+    <value>Whatever you choose, Settings › About › Umbra keeps both.</value>
+    <comment>Umbra add-on card caption: where the actions stay.</comment>
+  </data>
+  <data name="UmbraSetup.ConfirmTitle" xml:space="preserve">
+    <value>What changes in Umbra</value>
+    <comment>Umbra add-on confirmation title.</comment>
+  </data>
+  <data name="UmbraSetup.Checking" xml:space="preserve">
+    <value>Looking at Umbra…</value>
+    <comment>Umbra add-on confirmation while Tsukimichi reads Umbra's state.</comment>
+  </data>
+  <data name="UmbraSetup.ChangeCustomPlugins" xml:space="preserve">
+    <value>Umbra's custom plugins turn on.</value>
+    <comment>Umbra add-on confirmation: a change. Only when they are off.</comment>
+  </data>
+  <data name="UmbraSetup.Warning" xml:space="preserve">
+    <value>Umbra's own warning, in plain words: custom plugins run code inside your game, so only add ones you trust. Tsukimichi for Umbra is open source, at the link below.</value>
+    <comment>Umbra add-on confirmation: Umbra's custom-plugin warning, restated.</comment>
+  </data>
+  <data name="UmbraSetup.ChangeRepositoryFormat" xml:space="preserve">
+    <value>Umbra adds the repository {0} and downloads its latest release from GitHub.</value>
+    <comment>Umbra add-on confirmation: a change. {0} = xenofei/Tsukimichi.Umbra.</comment>
+  </data>
+  <data name="UmbraSetup.ChangeRestart" xml:space="preserve">
+    <value>Umbra restarts its toolbar for a moment to load the add-on.</value>
+    <comment>Umbra add-on confirmation: a change.</comment>
+  </data>
+  <data name="UmbraSetup.ChangeWidget" xml:space="preserve">
+    <value>The Tsukimichi widget goes at the right end of your current Umbra toolbar.</value>
+    <comment>Umbra add-on confirmation: a change. Only when no Tsukimichi widget is on the bar.</comment>
+  </data>
+  <data name="UmbraSetup.NothingToChange" xml:space="preserve">
+    <value>Everything is already in place in Umbra.</value>
+    <comment>Umbra add-on confirmation when there is nothing to change.</comment>
+  </data>
+  <data name="UmbraSetup.Agreement" xml:space="preserve">
+    <value>Your click on Agree and add is your agreement. Remove from Umbra, in Settings › About › Umbra, undoes all of it.</value>
+    <comment>Umbra add-on confirmation caption.</comment>
+  </data>
+  <data name="UmbraSetup.Agree" xml:space="preserve">
+    <value>Agree and add</value>
+    <comment>Umbra add-on confirmation primary button: the only button that changes Umbra.</comment>
+  </data>
+  <data name="UmbraSetup.Back" xml:space="preserve">
+    <value>Back</value>
+    <comment>Umbra add-on card: back to the previous view.</comment>
+  </data>
+  <data name="UmbraSetup.Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>Umbra add-on card: closes it (it does not come back).</comment>
+  </data>
+  <data name="UmbraSetup.ByHand" xml:space="preserve">
+    <value>You can add it by hand:</value>
+    <comment>Umbra add-on card: before the manual steps.</comment>
+  </data>
+  <data name="UmbraSetup.ProgressTitle" xml:space="preserve">
+    <value>Adding Tsukimichi to Umbra</value>
+    <comment>Umbra add-on progress title.</comment>
+  </data>
+  <data name="UmbraSetup.StepCustomPlugins" xml:space="preserve">
+    <value>Turning on custom plugins</value>
+    <comment>Umbra add-on progress step.</comment>
+  </data>
+  <data name="UmbraSetup.StepRepository" xml:space="preserve">
+    <value>Downloading the add-on through Umbra</value>
+    <comment>Umbra add-on progress step.</comment>
+  </data>
+  <data name="UmbraSetup.StepRestart" xml:space="preserve">
+    <value>Restarting Umbra's toolbar</value>
+    <comment>Umbra add-on progress step.</comment>
+  </data>
+  <data name="UmbraSetup.StepWidget" xml:space="preserve">
+    <value>Placing the widget</value>
+    <comment>Umbra add-on progress step.</comment>
+  </data>
+  <data name="UmbraSetup.StepHello" xml:space="preserve">
+    <value>Waiting for the add-on to answer</value>
+    <comment>Umbra add-on progress step: the add-on's IPC hello.</comment>
+  </data>
+  <data name="UmbraSetup.PuttingBack" xml:space="preserve">
+    <value>Putting Umbra back as it was</value>
+    <comment>Umbra add-on progress after a failed step.</comment>
+  </data>
+  <data name="UmbraSetup.KeepsGoing" xml:space="preserve">
+    <value>You can close this; it keeps going, and Settings › About › Umbra shows how it ends.</value>
+    <comment>Umbra add-on progress caption.</comment>
+  </data>
+  <data name="UmbraSetup.AddedTitle" xml:space="preserve">
+    <value>Tsukimichi is on your Umbra bar</value>
+    <comment>Umbra add-on success title.</comment>
+  </data>
+  <data name="UmbraSetup.AddedFormat" xml:space="preserve">
+    <value>Tsukimichi for Umbra {0} is running. Click its widget for tonight's popup; Umbra's toolbar settings move it.</value>
+    <comment>Umbra add-on success line. {0} = the add-on's version.</comment>
+  </data>
+  <data name="UmbraSetup.NotConfirmedTitle" xml:space="preserve">
+    <value>Umbra has the add-on, but it hasn't answered yet</value>
+    <comment>Umbra add-on: every step went through but the add-on did not answer in time.</comment>
+  </data>
+  <data name="UmbraSetup.NotConfirmedLine" xml:space="preserve">
+    <value>Umbra may still be loading it. If the widget doesn't show, check the steps below.</value>
+    <comment>Umbra add-on: not confirmed line.</comment>
+  </data>
+  <data name="UmbraSetup.FailedTitle" xml:space="preserve">
+    <value>Tsukimichi couldn't add it</value>
+    <comment>Umbra add-on failure title.</comment>
+  </data>
+  <data name="UmbraSetup.PutBack" xml:space="preserve">
+    <value>Umbra is back as it was.</value>
+    <comment>Umbra add-on failure: the run's changes were undone.</comment>
+  </data>
+  <data name="UmbraSetup.NotPutBack" xml:space="preserve">
+    <value>Some changes may still be in Umbra. Remove from Umbra, in Settings › About › Umbra, undoes them.</value>
+    <comment>Umbra add-on failure: undoing failed too.</comment>
+  </data>
+  <data name="UmbraSetup.TryAgain" xml:space="preserve">
+    <value>Try again</value>
+    <comment>Umbra add-on failure: runs Agree and add again (the player clicks it).</comment>
+  </data>
+  <data name="UmbraSetup.OpenUmbraSettings" xml:space="preserve">
+    <value>Open Umbra's settings</value>
+    <comment>Opens Umbra's own settings window through Dalamud.</comment>
+  </data>
+  <data name="UmbraSetup.OpenUmbraFailed" xml:space="preserve">
+    <value>Umbra's settings can't be opened from here. Open them from Umbra's toolbar.</value>
+    <comment>When Umbra's settings could not be opened.</comment>
+  </data>
+  <data name="UmbraSetup.CopyLink" xml:space="preserve">
+    <value>Copy repository link</value>
+    <comment>Copies xenofei/Tsukimichi.Umbra.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.NotRunning" xml:space="preserve">
+    <value>Umbra isn't running right now. It starts after you log in.</value>
+    <comment>Umbra add-on failure reason.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.UnknownUmbra" xml:space="preserve">
+    <value>This Umbra version works differently from the one Tsukimichi knows, so nothing was changed.</value>
+    <comment>Umbra add-on failure reason: a member Tsukimichi drives is missing.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.ReleaseUnreachable" xml:space="preserve">
+    <value>Umbra couldn't reach the add-on's release on GitHub. Check your connection, then try again.</value>
+    <comment>Umbra add-on failure reason.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.ReleaseRefused" xml:space="preserve">
+    <value>Umbra downloaded the add-on but wouldn't load it. It may not be updated for this Umbra version yet.</value>
+    <comment>Umbra add-on failure reason.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.NotLoaded" xml:space="preserve">
+    <value>Umbra restarted but didn't load the add-on.</value>
+    <comment>Umbra add-on failure reason.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.WidgetNotPlaced" xml:space="preserve">
+    <value>Umbra didn't place the widget.</value>
+    <comment>Umbra add-on failure reason.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.TimedOut" xml:space="preserve">
+    <value>Umbra took too long to answer.</value>
+    <comment>Umbra add-on failure reason.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.Unexpected" xml:space="preserve">
+    <value>Umbra stopped with an error.</value>
+    <comment>Umbra add-on failure reason.</comment>
+  </data>
+  <data name="UmbraSetup.SettingsAddLabel" xml:space="preserve">
+    <value>Set it up for you</value>
+    <comment>Settings › About › Umbra row: opens the add-on card's confirmation.</comment>
+  </data>
+  <data name="UmbraSetup.SettingsAddHint" xml:space="preserve">
+    <value>Turns on Umbra's custom plugins if needed, adds the repository and places the widget. You see every change first.</value>
+    <comment>Settings › About › Umbra row hint.</comment>
+  </data>
+  <data name="UmbraSetup.SettingsAddButton" xml:space="preserve">
+    <value>Add to Umbra…</value>
+    <comment>Settings › About › Umbra button.</comment>
+  </data>
+  <data name="UmbraSetup.SettingsBusyLabel" xml:space="preserve">
+    <value>Setting up in Umbra</value>
+    <comment>Settings › About › Umbra row while it runs.</comment>
+  </data>
+  <data name="UmbraSetup.SettingsRemoveLabel" xml:space="preserve">
+    <value>Remove from Umbra</value>
+    <comment>Settings › About › Umbra row: the undo.</comment>
+  </data>
+  <data name="UmbraSetup.SettingsRemoveHint" xml:space="preserve">
+    <value>Undoes only what Tsukimichi changed in Umbra.</value>
+    <comment>Settings › About › Umbra row hint.</comment>
+  </data>
+  <data name="UmbraSetup.SettingsRemoveButton" xml:space="preserve">
+    <value>Remove…</value>
+    <comment>Settings › About › Umbra button: shows the confirmation.</comment>
+  </data>
+  <data name="UmbraSetup.RemoveWidgets" xml:space="preserve">
+    <value>The Tsukimichi widget it placed comes off your bar.</value>
+    <comment>Remove from Umbra confirmation line.</comment>
+  </data>
+  <data name="UmbraSetup.RemoveRepository" xml:space="preserve">
+    <value>The repository it added is removed, and Umbra restarts its toolbar.</value>
+    <comment>Remove from Umbra confirmation line.</comment>
+  </data>
+  <data name="UmbraSetup.RemoveCustomPlugins" xml:space="preserve">
+    <value>Custom plugins turn off again, unless another add-on uses them.</value>
+    <comment>Remove from Umbra confirmation line.</comment>
+  </data>
+  <data name="UmbraSetup.RemoveConfirm" xml:space="preserve">
+    <value>Remove</value>
+    <comment>Remove from Umbra confirmation button.</comment>
+  </data>
+  <data name="UmbraSetup.RemoveKeep" xml:space="preserve">
+    <value>Keep it</value>
+    <comment>Remove from Umbra: cancels.</comment>
+  </data>
+  <data name="UmbraSetup.Removing" xml:space="preserve">
+    <value>Removing…</value>
+    <comment>Remove from Umbra while it runs.</comment>
+  </data>
+  <data name="UmbraSetup.Removed" xml:space="preserve">
+    <value>Removed. Tsukimichi's changes in Umbra are undone.</value>
+    <comment>Remove from Umbra result.</comment>
+  </data>
+  <data name="UmbraSetup.RemovedKeptOn" xml:space="preserve">
+    <value>Removed. Custom plugins stay on because another add-on uses them.</value>
+    <comment>Remove from Umbra result.</comment>
+  </data>
+  <data name="UmbraSetup.RemoveStoppedFormat" xml:space="preserve">
+    <value>Remove stopped: {0}</value>
+    <comment>Remove from Umbra failure. {0} = the reason.</comment>
+  </data>
 </root>

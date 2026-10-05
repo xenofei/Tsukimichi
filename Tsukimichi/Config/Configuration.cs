@@ -883,6 +883,7 @@ public sealed partial class Configuration : IPluginConfiguration
         config.MoonIconPlaces ??= [];
         config.SeasonalEndDates ??= [];
         config.LinkedCharacterFolders ??= [];
+        config.UmbraSetupWidgetIds ??= [];
         config.UpdateDismissedVersion ??= string.Empty;
         config.UpdateChatSaidVersion ??= string.Empty;
         config.NeedsYouSoundDeath = Math.Clamp(config.NeedsYouSoundDeath, 0, MaxNeedsYouSound);
