@@ -144,7 +144,9 @@ public static partial class MoonfallRules
     /// <summary>
     /// [J] The search's cost cap: the physics sub-steps all candidate flights may take together, shared out evenly. A
     /// shot typically takes 3–4 sub-steps a tick, so each of the 17 flights is followed about 3.5 s, past where most
-    /// shots end; the cap keeps the one-off search to a few milliseconds whatever the level.
+    /// shots end. The search is about 2 ms on the largest shipped level and up to about 30 ms on a board of 400 pegs, so
+    /// it is spread one flight a game tick while the ball waits in the barrel (<c>MoonfallGame.BeginPath</c>): a tick's
+    /// share is capped at a seventeenth of this.
     /// </summary>
     public const int PathSubStepBudget = 24_000;
 

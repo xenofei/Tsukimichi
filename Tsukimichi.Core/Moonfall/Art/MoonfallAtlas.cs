@@ -66,6 +66,13 @@ public sealed partial class MoonfallAtlas
     /// <summary>Most peg variants per kind and state.</summary>
     public const int MaxPegVariants = 64;
 
+    /// <summary>
+    /// The least a brick sprite's middle may be (units): its width less its height, which is its two caps. The middle
+    /// repeats along the brick (<see cref="MoonfallArtMath.BrickColumns"/>), so one barely wider than its caps would
+    /// repeat thousands of times.
+    /// </summary>
+    public const float MinBrickMiddle = 4;
+
     /// <summary>The inks the board draws with (see the format).</summary>
     public static readonly string[] RequiredInks =
     [
@@ -225,7 +232,8 @@ public sealed partial class MoonfallAtlas
 
     private int PegIndex(int kind, int variant, bool lit) => (((kind * 2) + (lit ? 1 : 0)) * PegVariants) + variant;
 
-    [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9_@.-]*\\.png$", RegexOptions.CultureInvariant)]
+    // \z, not $: $ also matches before a final newline, which would let "atlas.png\n" through as a file name.
+    [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9_@.-]*\\.png\\z", RegexOptions.CultureInvariant)]
     private static partial Regex FilePattern();
 
     /// <summary>Reads a manifest; never throws on bad input.</summary>
@@ -306,9 +314,14 @@ public sealed partial class MoonfallAtlas
 
         foreach (var name in MoonfallSprites.Required(variants.Value))
         {
-            if (!named.ContainsKey(name))
+            if (!named.TryGetValue(name, out var rect))
             {
                 errors.Add($"sprite {name} is missing");
+            }
+            else if (MoonfallSprites.IsBrick(name) && !(rect.W >= rect.H + MinBrickMiddle))
+            {
+                // Its two caps are half its height each; the middle that repeats along the brick must have some length.
+                errors.Add($"sprite {name}: a brick must be at least {MinBrickMiddle} units wider than it is high");
             }
         }
 

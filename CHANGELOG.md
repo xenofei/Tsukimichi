@@ -8,7 +8,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - **Moonfall:** a peg game inside Tsukimichi. Open it with the Moonfall button at the right of the status bar, or `/tsuki moonfall`. Aim with the mouse, click to shoot, and clear the 25 orange pegs with 10 balls; the last orange brings on the Full Moon. Four starter levels for now, with simple shapes until the artwork arrives. It pauses itself in combat, in duties, in cutscenes and when you click away, and your furthest level is saved.
   - Eleven characters, each with a power that a green peg sets off: Super Guide, Multiball, Brass Wings, Lunar Burst, Flippers, Moon Gate, Moonbloom, Moon-Viewing Draw, Fireball, Sage's Path and Storm Post. The bar shows the level's character and each power's shots left.
   - In Adventure each stage of five levels has its own character. Tick **Quick Play** to pick any character before your first shot.
-  - Flippers rise while you hold the mouse button over the board or press Space.
+  - Flippers rise while you hold the mouse button over the board.
   - Style shots pay a bonus and pop up over the board: Long Shot, Super Long Shot, Double Long Shot, Off the Wall, One-Peg Catch, Rim Shot, Lucky Bounce, Orange Sweep, Long Slide, Clear Night and Live Wire. Their bonuses count towards free balls.
 
 ## [1.22.1] - 2026-10-05

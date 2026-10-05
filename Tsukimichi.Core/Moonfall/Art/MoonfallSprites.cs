@@ -118,6 +118,9 @@ public static class MoonfallSprites
     /// <summary>A brick's sprite: <c>brick.&lt;kind&gt;.&lt;unlit|lit&gt;</c>.</summary>
     public static string Brick(PegColour colour, bool lit) => $"brick.{Kinds[(int)colour]}.{(lit ? "lit" : "unlit")}";
 
+    /// <summary>Whether <paramref name="name"/> is a brick's sprite (a kind's, or Plain's flat brick), laid out as <see cref="MoonfallArtMath.BrickColumns"/> reads it.</summary>
+    public static bool IsBrick(string name) => name.StartsWith("brick.", StringComparison.Ordinal);
+
     /// <summary>Every name the board can draw with <paramref name="pegVariants"/> peg variants.</summary>
     public static IEnumerable<string> Required(int pegVariants)
     {

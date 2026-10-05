@@ -683,7 +683,26 @@ public sealed class MoonfallPowerTests
         HitGreenThisShot(game);
         FinishTurn(game);
         Assert.True(game.Shoot(0));
-        var chosen = Assert.Single(Drain(game), e => e.Event.Kind == MoonfallEventKind.PathChosen).Event;
+
+        // The ball waits in the barrel, at the aim, while the lines are weighed: one a game tick.
+        var shotAt = game.GameTick;
+        var (barrelX, barrelY) = (game.BallX, game.BallY);
+        Assert.True(game.ChoosingPath);
+        var seen = new List<(long Tick, MoonfallEvent Event)>();
+        while (game.ChoosingPath)
+        {
+            Assert.Equal(1, game.BallsInPlay);
+            Assert.Equal((barrelX, barrelY), (game.BallX, game.BallY));
+            Assert.True(game.GameTick - shotAt < MoonfallGame.PathCandidates);
+            game.Tick();
+            seen.AddRange(Drain(game));
+        }
+
+        Assert.Equal(MoonfallGame.PathCandidates, game.GameTick - shotAt);
+        Assert.Equal(MoonfallPhase.Flying, game.Phase);
+        Assert.DoesNotContain(seen, e => e.Event.Kind == MoonfallEventKind.PegHit);
+        var chosen = Assert.Single(seen, e => e.Event.Kind == MoonfallEventKind.PathChosen).Event;
+        Assert.Equal(MoonfallGame.PathCandidates, chosen.Count);
         Assert.InRange(game.PathNudge, 0.5, MoonfallRules.PathSpreadDegrees);
         Assert.Equal((long)Math.Round(game.PathNudge * 100), chosen.Value);
         RunUntil(game, static g => g.Phase != MoonfallPhase.Flying);
@@ -703,7 +722,9 @@ public sealed class MoonfallPowerTests
             game.LightForTest(green);
             FinishTurn(game);
             Assert.True(game.Shoot(-20));
+            RunUntil(game, static g => !g.ChoosingPath);
             Assert.InRange(game.LastPathSubSteps, 1, MoonfallRules.PathSubStepBudget);
+            Assert.InRange(game.LastPathTickSubSteps, 1, MoonfallGame.PathSubStepsPerLine);
             first ??= game.PathNudge;
             Assert.Equal(first.Value, game.PathNudge);
         }

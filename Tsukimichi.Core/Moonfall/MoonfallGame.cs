@@ -217,6 +217,12 @@ public sealed partial class MoonfallGame
     /// <summary>The slow-motion approach to the last orange is on.</summary>
     public bool Approaching => approach && !feverHit;
 
+    /// <summary>
+    /// The ball the camera follows (an index below <see cref="BallsInPlay"/>): in the approach, the one heading for the
+    /// last orange (a twin may be); else the first.
+    /// </summary>
+    public int CameraBall => Approaching && approachBall < ballCount ? approachBall : 0;
+
     /// <summary>The last orange has been hit: Fever is on and the five Fever buckets replace the moving one.</summary>
     public bool Fever => feverHit;
 
@@ -293,19 +299,19 @@ public sealed partial class MoonfallGame
 
         BallsLeft--;
         StartShot();
-
-        // Sage's Path nudges the shot onto the best line within its spread before it leaves the barrel.
-        if (PowerActive(MoonfallPower.Path))
-        {
-            angleDegrees = ChoosePath(angleDegrees);
-        }
-
         var (dirX, dirY) = Direction(angleDegrees);
         BeginFlight(
             MoonfallRules.LauncherX + (dirX * MoonfallRules.BarrelLength),
             MoonfallRules.LauncherY + (dirY * MoonfallRules.BarrelLength),
             dirX * MoonfallRules.LaunchSpeed,
             dirY * MoonfallRules.LaunchSpeed);
+
+        // Sage's Path holds the ball in the barrel while it weighs the lines within its spread, then nudges it onto the best.
+        if (PowerActive(MoonfallPower.Path))
+        {
+            BeginPath(angleDegrees);
+        }
+
         return true;
     }
 
@@ -484,6 +490,13 @@ public sealed partial class MoonfallGame
         switch (Phase)
         {
             case MoonfallPhase.Flying:
+                // Sage's Path weighs one line a game tick while the ball waits in the barrel.
+                if (ChoosingPath)
+                {
+                    StepPath();
+                    break;
+                }
+
                 StepBalls();
                 if (Phase == MoonfallPhase.Flying)
                 {
@@ -1424,6 +1437,9 @@ public sealed partial class MoonfallGame
     /// <summary>Lights peg <paramref name="index"/> as a touch would (scoring tests).</summary>
     internal void LightForTest(int index) => Light(index);
 
+    /// <summary>Triggers <paramref name="power"/> at peg <paramref name="index"/> as the drum would (powers combined).</summary>
+    internal void TriggerForTest(MoonfallPower power, int index) => TriggerPower(power, index);
+
     /// <summary>
     /// Ball <paramref name="ballIndex"/> touches peg <paramref name="index"/> as a contact in this game tick would: the
     /// slide's watch, then the touch with the style shots' watch (style tests).
@@ -1788,6 +1804,39 @@ public sealed partial class MoonfallGame
 
             depth = reach - d;
             return true;
+        }
+
+        /// <summary>
+        /// The unit normal of this peg's upper face at its centre (<see cref="BoundX"/>, <see cref="BoundY"/>): straight
+        /// up for a round peg, square to a straight brick or out along an arc's radius, turned to point up. A vertical
+        /// face has no upper side: it is the one towards <paramref name="side"/> (−1 left, +1 right).
+        /// </summary>
+        public readonly (double X, double Y) UpperNormal(double side)
+        {
+            double nx, ny;
+            switch (Shape)
+            {
+                case PegShape.Line:
+                    var length = MoonfallGeometry.Hypot(Dx, Dy);
+                    if (length < 1e-9)
+                    {
+                        return (0, -1);
+                    }
+
+                    (nx, ny) = (-Dy / length, Dx / length);
+                    break;
+
+                case PegShape.Arc:
+                    var mid = Start + (Sweep * 0.5);
+                    (nx, ny) = (Math.Cos(mid), Math.Sin(mid));
+                    break;
+
+                default:
+                    return (0, -1);
+            }
+
+            var flip = Math.Abs(ny) > 1e-9 ? ny > 0 : nx * side < 0;
+            return flip ? (-nx, -ny) : (nx, ny);
         }
 
         private readonly double Reach => (Shape == PegShape.Round ? Radius : Half) + MoonfallRules.BallRadius;

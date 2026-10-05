@@ -76,8 +76,8 @@ public sealed partial class MoonfallGame
 
     private double MouthHalf => BucketMouth * 0.5;
 
-    /// <summary>The flippers are out (they stay out between the shots they act in).</summary>
-    public bool FlippersOut => powerShots[(int)MoonfallPower.Flippers] > 0;
+    /// <summary>The flippers are out (they stay out between the shots they act in; never in the Full Moon, as the wings).</summary>
+    public bool FlippersOut => powerShots[(int)MoonfallPower.Flippers] > 0 && !feverHit;
 
     /// <summary>Moon Gate's re-entries left this shot.</summary>
     public int GateLeft => gateLeft;
@@ -126,6 +126,7 @@ public sealed partial class MoonfallGame
         gateLeft = 0;
         boltFired = false;
         pathNudge = 0;
+        pathCandidate = -1;
     }
 
     /// <summary>The shot is over: each power that acted in it has one shot fewer; a power that runs out says so.</summary>
@@ -249,7 +250,7 @@ public sealed partial class MoonfallGame
 
     // ---- Multiball [R §5 l.108] ----
 
-    /// <summary>A twin ball springs from the top of the green with the hitting ball's velocity mirrored left to right.</summary>
+    /// <summary>A twin ball springs from the upper face of the green with the hitting ball's velocity mirrored left to right.</summary>
     private void SpawnTwin(int peg)
     {
         ref readonly var green = ref bodies[peg];
@@ -273,9 +274,12 @@ public sealed partial class MoonfallGame
             vx = away * MoonfallRules.TwinMinSideSpeed;
         }
 
+        // Clear of the green along its upper face's normal: straight up off a round peg, square off a sloped brick (a
+        // brick's centre line is further from its face straight up than across, so straight up would start inside it).
         var top = (green.Shape == PegShape.Round ? green.Radius : green.Half) + MoonfallRules.BallRadius + 0.5;
-        var x = green.BoundX;
-        var y = green.BoundY - top;
+        var (nx, ny) = green.UpperNormal(away);
+        var x = green.BoundX + (nx * top);
+        var y = green.BoundY + (ny * top);
         if (Phase == MoonfallPhase.Flying && AddBall(x, y, vx, vy))
         {
             Post(MoonfallEventKind.BallAdded, peg, 0, ballCount, x, y);
@@ -430,11 +434,14 @@ public sealed partial class MoonfallGame
 
     // ---- Flippers [R §5 l.111] ----
 
-    /// <summary>The flippers move towards up while held and down while not, a game tick at a time.</summary>
+    /// <summary>
+    /// The flippers move towards up while held and down while not, a game tick at a time. In the Full Moon they are gone
+    /// (<see cref="FlippersOut"/>): they neither rise nor meet the ball, so nothing stands over the Fever buckets.
+    /// </summary>
     private void StepFlippers()
     {
         flipperLiftPrev = flipperLift;
-        var up = flipperInput && PowerActive(MoonfallPower.Flippers) && Phase == MoonfallPhase.Flying;
+        var up = flipperInput && PowerActive(MoonfallPower.Flippers) && Phase == MoonfallPhase.Flying && !feverHit;
         flipperLift = up
             ? Math.Min(1.0, flipperLift + (MoonfallRules.TickSeconds / MoonfallRules.FlipperUpSeconds))
             : Math.Max(0.0, flipperLift - (MoonfallRules.TickSeconds / MoonfallRules.FlipperDownSeconds));
@@ -450,10 +457,10 @@ public sealed partial class MoonfallGame
             : (MoonfallRules.FlipperPivotX, MoonfallRules.FlipperPivotY, MoonfallGeometry.Radians(degrees));
     }
 
-    /// <summary>The flippers as surfaces while the power acts: capsules that carry their swing's speed into the bounce.</summary>
+    /// <summary>The flippers as surfaces while the power acts, never in the Full Moon: capsules that carry their swing's speed into the bounce.</summary>
     private void FlipperContacts(in Ball b)
     {
-        if (!PowerActive(MoonfallPower.Flippers) || b.Y < MoonfallRules.FlipperPivotY - MoonfallRules.FlipperLength - 20)
+        if (feverHit || !PowerActive(MoonfallPower.Flippers) || b.Y < MoonfallRules.FlipperPivotY - MoonfallRules.FlipperLength - 20)
         {
             return;
         }
@@ -646,44 +653,100 @@ public sealed partial class MoonfallGame
 
     // ---- Sage's Path [R §5 l.116] ----
 
+    /// <summary>The lines the path search weighs: every <see cref="MoonfallRules.PathStepDegrees"/> either side of the aim, and the aim.</summary>
+    internal const int PathCandidates = (2 * (int)((MoonfallRules.PathSpreadDegrees / MoonfallRules.PathStepDegrees) + 0.5)) + 1;
+
+    /// <summary>Each line's share of <see cref="MoonfallRules.PathSubStepBudget"/>: the most sub-steps one game tick of the search takes.</summary>
+    internal const int PathSubStepsPerLine = MoonfallRules.PathSubStepBudget / PathCandidates;
+
+    /// <summary>The next line the path search flies while the ball waits in the barrel, or −1 when none waits.</summary>
+    private int pathCandidate = -1;
+    private double pathAim;
+    private double pathBest;
+    private long pathBestValue;
+    private long pathLaunchTick;
+
     /// <summary>The physics sub-steps the last path search took (all its flights), for the cost test.</summary>
     internal int LastPathSubSteps { get; private set; }
 
+    /// <summary>The most sub-steps one game tick of the last path search took (one line's flight), for the cost test.</summary>
+    internal int LastPathTickSubSteps { get; private set; }
+
+    /// <summary>
+    /// Sage's Path is weighing its lines: the ball waits in the barrel, at the aim, for <see cref="PathCandidates"/>
+    /// game ticks, then leaves on the line chosen (<see cref="MoonfallEventKind.PathChosen"/>).
+    /// </summary>
+    public bool ChoosingPath => pathCandidate >= 0;
+
     /// <summary>
     /// Sage's Path: tries every <see cref="MoonfallRules.PathStepDegrees"/> within <see cref="MoonfallRules.PathSpreadDegrees"/>
-    /// of the aim, nearest the aim first, flies each on a copy (the bucket sweeping as it will, the movers where they are)
-    /// within a shared budget of sub-steps, and returns the angle of the best: the most valuable flight, the nearest the
-    /// aim on a tie. Deterministic, and its cost is capped by <see cref="MoonfallRules.PathSubStepBudget"/>.
+    /// of the aim, nearest the aim first, flies each on a copy (the bucket sweeping as it will once the ball leaves, the
+    /// movers where they are) within a shared budget of sub-steps, and launches on the best: the most valuable flight,
+    /// the nearest the aim on a tie. A search of a full board is a few tens of milliseconds, too long for one frame, so it
+    /// is spread over game ticks, one line a tick (<see cref="StepPath"/>), while the ball waits in the barrel: every shot
+    /// with the power waits the same <see cref="PathCandidates"/> ticks, so the launch tick, and with it the bucket's
+    /// place in every flight, is known from the start. Deterministic: the same calls give the same lines, and the cost of
+    /// a tick is capped by <see cref="PathSubStepsPerLine"/>, of the search by <see cref="MoonfallRules.PathSubStepBudget"/>.
     /// </summary>
-    private double ChoosePath(double angleDegrees)
+    private void BeginPath(double angleDegrees)
     {
-        var aim = Math.Clamp(angleDegrees, -MoonfallRules.AimLimitDegrees, MoonfallRules.AimLimitDegrees);
-        var reach = (int)Math.Round(MoonfallRules.PathSpreadDegrees / MoonfallRules.PathStepDegrees);
-        var candidates = (2 * reach) + 1;
-        var budget = MoonfallRules.PathSubStepBudget / candidates;
-        var best = aim;
-        var bestValue = long.MinValue;
+        pathAim = Math.Clamp(angleDegrees, -MoonfallRules.AimLimitDegrees, MoonfallRules.AimLimitDegrees);
+        pathCandidate = 0;
+        pathBest = pathAim;
+        pathBestValue = long.MinValue;
+        pathLaunchTick = gameTick + PathCandidates;
         LastPathSubSteps = 0;
-        for (var c = 0; c < candidates; c++)
-        {
-            // 0, −step, +step, −2·step, …: the order breaks ties towards the aim.
-            var offset = ((c + 1) / 2) * MoonfallRules.PathStepDegrees * (c % 2 == 1 ? -1 : 1);
-            var angle = Math.Clamp(aim + offset, -MoonfallRules.AimLimitDegrees, MoonfallRules.AimLimitDegrees);
-            var value = FlyCandidate(angle, budget);
-            if (value > bestValue)
-            {
-                bestValue = value;
-                best = angle;
-            }
-        }
+        LastPathTickSubSteps = 0;
 
-        pathNudge = best - aim;
-        Post(MoonfallEventKind.PathChosen, -1, (long)Math.Round(pathNudge * 100), candidates, MoonfallRules.LauncherX, MoonfallRules.LauncherY);
-        return best;
+        // The ball waits at the barrel's mouth.
+        ref var b = ref ball;
+        b.Vx = 0;
+        b.Vy = 0;
     }
 
-    /// <summary>One candidate flight of the path search: what it would be worth (<see cref="MoonfallRules.PathOrangeWeight"/>).</summary>
-    private long FlyCandidate(double angleDegrees, int budget)
+    /// <summary>One game tick of the path search: the next line; after the last, the ball leaves on the best.</summary>
+    private void StepPath()
+    {
+        // 0, −step, +step, −2·step, …: the order breaks ties towards the aim.
+        var c = pathCandidate;
+        var offset = ((c + 1) / 2) * MoonfallRules.PathStepDegrees * (c % 2 == 1 ? -1 : 1);
+        var angle = Math.Clamp(pathAim + offset, -MoonfallRules.AimLimitDegrees, MoonfallRules.AimLimitDegrees);
+        var before = LastPathSubSteps;
+        var value = FlyCandidate(angle, PathSubStepsPerLine, pathLaunchTick);
+        LastPathTickSubSteps = Math.Max(LastPathTickSubSteps, LastPathSubSteps - before);
+        if (value > pathBestValue)
+        {
+            pathBestValue = value;
+            pathBest = angle;
+        }
+
+        if (++pathCandidate < PathCandidates)
+        {
+            return;
+        }
+
+        pathCandidate = -1;
+        pathNudge = pathBest - pathAim;
+        Post(MoonfallEventKind.PathChosen, -1, (long)Math.Round(pathNudge * 100), PathCandidates, MoonfallRules.LauncherX, MoonfallRules.LauncherY);
+
+        // Off along the chosen line, from the barrel's mouth there, on the next tick.
+        var (dirX, dirY) = Direction(pathBest);
+        ref var b = ref ball;
+        b.X = MoonfallRules.LauncherX + (dirX * MoonfallRules.BarrelLength);
+        b.Y = MoonfallRules.LauncherY + (dirY * MoonfallRules.BarrelLength);
+        b.PrevX = b.X;
+        b.PrevY = b.Y;
+        b.Vx = dirX * MoonfallRules.LaunchSpeed;
+        b.Vy = dirY * MoonfallRules.LaunchSpeed;
+        b.ResetWatch();
+    }
+
+    /// <summary>
+    /// One candidate flight of the path search, leaving the barrel on the tick after <paramref name="launchTick"/>: what
+    /// it would be worth (<see cref="MoonfallRules.PathOrangeWeight"/>). It stops at <paramref name="budget"/> sub-steps,
+    /// checked before each one, so it never takes more.
+    /// </summary>
+    private long FlyCandidate(double angleDegrees, int budget, long launchTick)
     {
         if (++stampId == int.MaxValue)
         {
@@ -704,13 +767,19 @@ public sealed partial class MoonfallGame
         {
             for (var t = 1; used < budget; t++)
             {
-                var bucketX = MoonfallBucket.CentreAt(gameTick + t);
-                var bucketV = MoonfallBucket.VelocityAt(gameTick + t);
+                var bucketX = MoonfallBucket.CentreAt(launchTick + t);
+                var bucketV = MoonfallBucket.VelocityAt(launchTick + t);
                 var speed = MoonfallGeometry.Hypot(b.Vx, b.Vy) + (MoonfallRules.Gravity * MoonfallRules.TickSeconds);
                 var steps = Math.Clamp((int)Math.Ceiling(speed * MoonfallRules.TickSeconds / MoonfallRules.MaxSubStep), 1, MaxSubSteps);
                 var h = MoonfallRules.TickSeconds / steps;
                 for (var s = 0; s < steps; s++)
                 {
+                    // The budget is a hard cap: a tick's sub-steps never carry the flight past it.
+                    if (used == budget)
+                    {
+                        return Worth();
+                    }
+
                     used++;
                     var previousY = b.Y;
                     b.X += b.Vx * h;
@@ -792,6 +861,11 @@ public sealed partial class MoonfallGame
         hash.Add(boltFired ? 1 : 0);
         hash.Add(boltTick);
         hash.Add(pathNudge);
+        hash.Add(pathCandidate);
+        hash.Add(pathAim);
+        hash.Add(pathBest);
+        hash.Add(pathBestValue);
+        hash.Add(pathLaunchTick);
         hash.Add(greenQueued);
         AddStyleTo(ref hash);
     }

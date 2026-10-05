@@ -139,6 +139,7 @@ public sealed class MoonfallArtTests : IDisposable
     [InlineData("points", "{}", "points.boat.lantern")]
     [InlineData("slices", "{ \"frame.bead.outer\": 30, \"frame.bead.inner\": 8 }", "slices.frame.bead.outer")]
     [InlineData("files", "{ \"1x\": \"../atlas.png\", \"2x\": \"atlas@2x.png\", \"sky\": \"sky.png\" }", "files.1x")]
+    [InlineData("files", "{ \"1x\": \"atlas.png\", \"2x\": \"atlas@2x.png\\n\", \"sky\": \"sky.png\" }", "files.2x")]
     [InlineData("sky", "{ \"x\": 0, \"y\": 0, \"w\": 0.5, \"h\": 10 }", "sky must")]
     public void A_broken_manifest_is_refused_with_its_reason(string key, string value, string reason)
     {
@@ -165,6 +166,21 @@ public sealed class MoonfallArtTests : IDisposable
         Assert.False(MoonfallAtlas.Parse("").Ok);
         Assert.False(MoonfallAtlas.Parse("{ nope").Ok);
         Assert.False(MoonfallAtlas.Parse("[]").Ok);
+    }
+
+    [Theory]
+    [InlineData("brick.blue.lit")]
+    [InlineData("brick.flat")]
+    public void A_brick_sprite_barely_wider_than_its_caps_is_refused(string brick)
+    {
+        // The caps are half the height each; a middle under MinBrickMiddle would repeat thousands of times along a brick.
+        var h = Shipped().TryGet(brick, out var rect) ? rect.H : 0;
+        Assert.True(h > 0);
+        var thin = MoonfallAtlas.Parse(Manifest(m => m["sprites"]![brick]!["w"] = h + MoonfallAtlas.MinBrickMiddle - 0.5f));
+        Assert.Contains($"sprite {brick}: a brick must be at least {MoonfallAtlas.MinBrickMiddle} units wider than it is high", thin.Errors);
+
+        var enough = MoonfallAtlas.Parse(Manifest(m => m["sprites"]![brick]!["w"] = h + MoonfallAtlas.MinBrickMiddle));
+        Assert.True(enough.Ok, string.Join("\n", enough.Errors));
     }
 
     // ---- The files on disk, and the fallback ----
@@ -218,6 +234,36 @@ public sealed class MoonfallArtTests : IDisposable
         Assert.False(MoonfallArtFiles.SceneUsable(path, false, out var small));
         Assert.Contains("a scene is 800 x 600", small, StringComparison.Ordinal);
         Assert.Equal(Path.Combine(temp, "scenes", "night@2x.png"), MoonfallArtFiles.ScenePath(temp, "night", twoX: true));
+    }
+
+    [Theory]
+    [InlineData("../evil")]
+    [InlineData("night\n")]
+    [InlineData("Night")]
+    [InlineData("scenes/night")]
+    [InlineData("")]
+    public void A_scene_path_is_only_made_from_a_scenes_name(string scene)
+    {
+        Assert.False(MoonfallLevelLoader.IsSceneName(scene));
+        Assert.Throws<ArgumentException>(() => MoonfallArtFiles.ScenePath(temp, scene, twoX: false));
+    }
+
+    [Fact]
+    public void A_refused_manifest_is_read_again_once_the_window_has_closed()
+    {
+        var slots = new MoonfallArtSlots<string>();
+        slots.SetManifest(null);
+        Assert.True(slots.ManifestFailed);
+
+        slots.ReleaseAll([]);
+        Assert.False(slots.ManifestFailed);
+        Assert.Null(slots.Atlas);
+        slots.SetManifest(Shipped());
+        Assert.True(slots.ShouldLoad(MoonfallArtSlot.Sheet1x));
+
+        // A manifest that was read stays read.
+        slots.ReleaseAll([]);
+        Assert.NotNull(slots.Atlas);
     }
 
     [Fact]
@@ -522,6 +568,30 @@ public sealed class MoonfallArtTests : IDisposable
         // A brick shorter than its caps is the start cap there and back.
         MoonfallArtMath.BrickColumns(8, 30, 12, 12, float.MaxValue, columns);
         Assert.Equal(new List<(float S, float U)> { (0f, 0f), (4f, 6f), (8f, 0f) }, columns);
+    }
+
+    [Theory]
+    [InlineData(12.001f, 0.5f)]
+    [InlineData(12.001f, float.MaxValue)]
+    [InlineData(12.0001f, 0.5f)]
+    [InlineData(12.5f, 0.5f)]
+    public void However_thin_the_sprites_middle_a_brick_stays_one_mesh_inside_16_bit_indices(float spriteW, float step)
+    {
+        // A 12-high sprite whose middle is next to nothing, on a brick longer than any board holds, as fine an arc as
+        // asked: the columns are capped, every distance along the brick is in order, and the end is the brick's end.
+        var columns = new List<(float S, float U)>();
+        MoonfallArtMath.BrickColumns(5000, spriteW, 12, 20, step, columns);
+        Assert.InRange(columns.Count, 3, MoonfallArtMath.MaxBrickColumns);
+        Assert.True(2 * columns.Count <= ushort.MaxValue);
+        Assert.Equal(5000f, columns[^1].S, 2);
+        for (var c = 1; c < columns.Count; c++)
+        {
+            Assert.True(columns[c].S >= columns[c - 1].S, $"column {c} goes back");
+        }
+
+        // A length that is no number draws nothing.
+        MoonfallArtMath.BrickColumns(float.PositiveInfinity, 30, 12, 12, 8, columns);
+        Assert.Empty(columns);
     }
 
     // ---- Packaging ----

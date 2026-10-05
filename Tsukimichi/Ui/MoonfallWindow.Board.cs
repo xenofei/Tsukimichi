@@ -28,6 +28,7 @@ public sealed partial class MoonfallWindow
     private int ringNext;
     private double boardClock;
     private double freeBallUntil = double.NegativeInfinity;
+    private MoonfallBoardPress boardPress;
 
     private string shotText = string.Empty;
     private (long Value, int Count) shotFor = (-1, -1);
@@ -159,6 +160,13 @@ public sealed partial class MoonfallWindow
         {
             clicked = ImGui.InvisibleButton("##moonfallBoard", size);
             hovered = ImGui.IsItemHovered();
+
+            // A click shoots only if its press began while aiming (MoonfallBoardPress): a hold for the flippers that
+            // outlasts the ball does not fire the next one.
+            if (ImGui.IsItemActivated())
+            {
+                boardPress.Pressed(g.Phase, pause.Paused);
+            }
         }
 
         boardHovered = hovered;
@@ -171,11 +179,12 @@ public sealed partial class MoonfallWindow
 
         if (clicked)
         {
+            var shoot = boardPress.Released(g.Phase, pause.Paused);
             if (pause.Paused)
             {
                 pause.TryResume();
             }
-            else if (g.Phase == MoonfallPhase.Aiming)
+            else if (shoot)
             {
                 g.Shoot(aim);
             }
@@ -187,7 +196,8 @@ public sealed partial class MoonfallWindow
         var dl = ImGui.GetWindowDrawList();
         dl.PushClipRect(origin, origin + size, true);
         // The art set when it is in (MoonfallWindow.Art.cs); these primitives while it loads, or if it is missing or broken.
-        if (!DrawBoardArt(dl, view, g, alpha, origin, size))
+        var drewArt = DrawBoardArt(dl, view, g, alpha, origin, size);
+        if (!drewArt)
         {
             DrawGround(dl, view, origin, size);
             DrawBucket(dl, view, g, alpha);
@@ -197,7 +207,7 @@ public sealed partial class MoonfallWindow
         }
 
         // Power effects (MoonfallWindow.Powers.cs) draw over the board in both the art and the primitive paths.
-        DrawPowers(dl, view, g, alpha);
+        DrawPowers(dl, view, g, alpha, drewArt);
 
         DrawPopups(dl, view);
         DrawStylePopups(dl, origin, size);
