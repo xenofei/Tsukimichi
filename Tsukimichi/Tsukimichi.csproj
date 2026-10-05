@@ -93,6 +93,8 @@ Local only: no network code.</Description>
       the Moonfall window is open (Ui\MoonfallArtTextures.cs), so a new art set ships by replacing these files.
     -->
     <Content Include="assets\moonfall\*.png;assets\moonfall\atlas.json;assets\moonfall\scenes\*.png" CopyToOutputDirectory="PreserveNewest" />
+    <!-- NAudio's MIT licence asks that its notice ship with every copy (Moonfall's sound, plan v9 G8). -->
+    <Content Include="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
     <!-- The frame kits' frames and badges (1.17 T11, ATLAS-CONTRACT.md §7): one folder per kit, loaded only while a set is composed in it. -->
     <Content Include="assets\ui\kits\**\*.png;assets\ui\kits\**\*.json" Exclude="assets\ui\kits\**\metrics.json" CopyToOutputDirectory="PreserveNewest" />
     <!-- Packaged as images\icon.png, where Dalamud looks for a plugin's icon inside the zip; assets\icon.png stays the source. -->
