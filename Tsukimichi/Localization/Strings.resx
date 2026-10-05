@@ -16225,7 +16225,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <value>A green peg lights every peg close around it.</value>
   </data>
   <data name="MoonfallPowerHint.Flippers" xml:space="preserve">
-    <value>A green peg brings out flippers for this shot and the next 2. Hold the mouse button or Space to raise them.</value>
+    <value>A green peg brings out flippers for this shot and the next 2. Hold the mouse button over the board to raise them.</value>
   </data>
   <data name="MoonfallPowerHint.Gate" xml:space="preserve">
     <value>A green peg opens a gate: the ball comes back in at the top once when it falls out this shot.</value>
@@ -16327,6 +16327,6 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <value>Shots the power still acts in. A green peg triggers it again.</value>
   </data>
   <data name="MoonfallFlippersHint" xml:space="preserve">
-    <value>Hold the mouse button or Space to raise the flippers</value>
+    <value>Hold the mouse button over the board to raise the flippers</value>
   </data>
 </root>

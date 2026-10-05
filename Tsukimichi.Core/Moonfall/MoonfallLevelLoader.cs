@@ -77,8 +77,15 @@ public static partial class MoonfallLevelLoader
 
     private static readonly JsonDocumentOptions Options = new() { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
 
-    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.CultureInvariant)]
+    // \z, not $: $ also matches before a final newline, which would let "night\n" through as a name.
+    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*\\z", RegexOptions.CultureInvariant)]
     private static partial Regex IdPattern();
+
+    /// <summary>
+    /// Whether <paramref name="scene"/> is a scene's name as a level gives it: up to <see cref="MaxSceneLength"/> lower-case
+    /// letters, digits and hyphens, so it names a picture in <c>scenes/</c> and never a path.
+    /// </summary>
+    public static bool IsSceneName([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? scene) => scene is { Length: > 0 and <= MaxSceneLength } && IdPattern().IsMatch(scene);
 
     /// <summary>Reads <paramref name="json"/>; never throws on bad input.</summary>
     public static MoonfallLevelLoad Parse(string? json)
@@ -249,7 +256,7 @@ public static partial class MoonfallLevelLoader
         }
 
         var scene = node.ValueKind == JsonValueKind.String ? node.GetString() : null;
-        if (scene is null || scene.Length > MaxSceneLength || !IdPattern().IsMatch(scene))
+        if (!IsSceneName(scene))
         {
             errors.Add($"scene must be up to {MaxSceneLength} lower-case letters, digits and hyphens (a picture's name, not a path)");
             return null;

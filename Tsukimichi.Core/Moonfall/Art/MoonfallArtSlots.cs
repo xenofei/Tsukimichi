@@ -58,7 +58,7 @@ public sealed class MoonfallArtSlots<T>
     /// <summary>The manifest, once read and checked; null while it reads, or when it failed (<see cref="ManifestFailed"/>).</summary>
     public MoonfallAtlas? Atlas { get; private set; }
 
-    /// <summary>Whether the manifest was refused: the board keeps the primitives until the window closes.</summary>
+    /// <summary>Whether the manifest was refused: the board keeps the primitives until the window closes, and reads it again when it opens.</summary>
     public bool ManifestFailed { get; private set; }
 
     /// <summary>The scene the level names, or null; its pictures are let go when it changes.</summary>
@@ -123,7 +123,10 @@ public sealed class MoonfallArtSlots<T>
         Release(MoonfallArtSlot.Scene2x, released);
     }
 
-    /// <summary>The window closed: every picture into <paramref name="released"/>, failures forgotten, the manifest kept.</summary>
+    /// <summary>
+    /// The window closed: every picture into <paramref name="released"/>, failures forgotten (a refused manifest too, so
+    /// a fixed file is read when the window opens again), a manifest that was read kept.
+    /// </summary>
     public void ReleaseAll(List<T> released)
     {
         ArgumentNullException.ThrowIfNull(released);
@@ -133,6 +136,7 @@ public sealed class MoonfallArtSlots<T>
         }
 
         Scene = null;
+        ManifestFailed = false;
     }
 
     private void Release(MoonfallArtSlot slot, List<T> released)

@@ -88,8 +88,20 @@ public static class MoonfallArtFiles
         }
     }
 
-    /// <summary>A scene's picture: <c>scenes/&lt;scene&gt;.png</c>, or <c>&lt;scene&gt;@2x.png</c> for the 2x tier.</summary>
-    public static string ScenePath(string folder, string scene, bool twoX) => Path.Combine(folder, ScenesFolder, scene + (twoX ? "@2x.png" : ".png"));
+    /// <summary>
+    /// A scene's picture: <c>scenes/&lt;scene&gt;.png</c>, or <c>&lt;scene&gt;@2x.png</c> for the 2x tier. The name is
+    /// checked again here (<see cref="MoonfallLevelLoader.IsSceneName"/>), so no caller can turn it into a path out of
+    /// <c>scenes/</c>; one that is not a scene's name throws.
+    /// </summary>
+    public static string ScenePath(string folder, string scene, bool twoX)
+    {
+        if (!MoonfallLevelLoader.IsSceneName(scene))
+        {
+            throw new ArgumentException("Not a scene's name: lower-case letters, digits and hyphens only.", nameof(scene));
+        }
+
+        return Path.Combine(folder, ScenesFolder, scene + (twoX ? "@2x.png" : ".png"));
+    }
 
     /// <summary>The size a scene's picture must have at a tier.</summary>
     public static (int Width, int Height) SceneSize(bool twoX) => twoX ? (SceneWidth * 2, SceneHeight * 2) : (SceneWidth, SceneHeight);

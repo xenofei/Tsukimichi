@@ -6,6 +6,13 @@ namespace Tsukimichi.Core.Moonfall.Art;
 public static class MoonfallArtMath
 {
     /// <summary>
+    /// The most columns <see cref="BrickColumns"/> gives a brick: two vertices each, 8,192 at most, so a brick's mesh is
+    /// always one <c>PrimReserve</c> under the 65,536 vertices 16-bit indices reach (ImGui starts a new vertex offset
+    /// for a reserve that would cross it, but only for one under that size).
+    /// </summary>
+    public const int MaxBrickColumns = 4096;
+
+    /// <summary>
     /// The free-ball gauge's fill for a shot's <paramref name="score"/>: rising linearly to each threshold's notch
     /// (<see cref="Notch"/>; 25k, 75k and 125k at 0.2, 0.6 and 1 of the arc), full past the last.
     /// </summary>
@@ -90,13 +97,14 @@ public static class MoonfallArtMath
     /// repeats, mirrored every other time so the stone runs on without a seam, as many whole times as fit the brick's
     /// length best; the end cap is the right one after an odd count and the start cap mirrored after an even one. A
     /// brick shorter than its two caps is the start cap there and back. <paramref name="step"/> splits each repeat into
-    /// pieces no longer than it (an arc's curve).
+    /// pieces no longer than it (an arc's curve). However thin the sprite's middle or fine the step, a brick has at most
+    /// <see cref="MaxBrickColumns"/> columns, so its mesh is one <c>PrimReserve</c> well inside 16-bit indices.
     /// </summary>
     public static void BrickColumns(float total, float spriteW, float spriteH, float thickness, float step, List<(float S, float U)> columns)
     {
         ArgumentNullException.ThrowIfNull(columns);
         columns.Clear();
-        if (!(total > 0) || !(spriteH > 0) || !(thickness > 0))
+        if (!(total > 0) || !float.IsFinite(total) || !(spriteH > 0) || !(thickness > 0))
         {
             return;
         }
@@ -115,9 +123,11 @@ public static class MoonfallArtMath
 
         columns.Add((capLength, cap));
         var run = total - (2 * capLength);
-        var repeats = Math.Max(1, (int)MathF.Round(run / (middle * k)));
+        // The repeats and their pieces between the caps' three columns, capped (the conversions saturate on overflow).
+        const int Between = MaxBrickColumns - 3;
+        var repeats = Math.Clamp((int)MathF.Round(run / (middle * k)), 1, Between);
         var each = run / repeats;
-        var pieces = Math.Max(1, (int)MathF.Ceiling(each / Math.Max(step, 0.5f)));
+        var pieces = Math.Clamp((int)MathF.Ceiling(each / Math.Max(step, 0.5f)), 1, Between / repeats);
         for (var j = 0; j < repeats; j++)
         {
             var forward = j % 2 == 0;

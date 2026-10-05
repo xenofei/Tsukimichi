@@ -60,13 +60,14 @@ public sealed partial class MoonfallWindow
     // ---- Input ----
 
     /// <summary>
-    /// The flippers' button: the left mouse button held over the board, or Space while the window has focus. Both, so a
-    /// player can keep the mouse still and use a key, or not reach for the keyboard at all.
+    /// The flippers' button: the left mouse button held over the board, and no key. Dalamud hands every key on to the
+    /// game as well (<see cref="Keyboard"/>), so a key here would also jump, cast or type into the chat; the mouse over
+    /// the board is the window's own. A press that outlasts the ball never fires the next one (<see cref="MoonfallBoardPress"/>).
     /// </summary>
     private void FeedFlippers(MoonfallGame g)
     {
         var focused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
-        var held = focused && (ImGui.IsKeyDown(ImGuiKey.Space) || (boardHovered && ImGui.IsMouseDown(ImGuiMouseButton.Left)));
+        var held = focused && boardHovered && ImGui.IsMouseDown(ImGuiMouseButton.Left);
         g.SetFlippers(held && g.FlippersOut);
     }
 
@@ -243,15 +244,15 @@ public sealed partial class MoonfallWindow
 
     // ---- The board (placeholder shapes; the art track replaces them) ----
 
-    /// <summary>Every power's mark on the board this frame, over the pegs and the launcher.</summary>
-    private void DrawPowers(ImDrawListPtr dl, in View view, MoonfallGame g, double alpha)
+    /// <summary>Every power's mark on the board this frame, over the pegs and the launcher (<paramref name="art"/>: the art set drew the board).</summary>
+    private void DrawPowers(ImDrawListPtr dl, in View view, MoonfallGame g, double alpha, bool art)
     {
         DrawSuperGuide(dl, view, g);
         DrawWings(dl, view, g, alpha);
         DrawFlippers(dl, view, g, alpha);
         DrawBolt(dl, view, g);
         DrawPowerEffects(dl, view);
-        DrawExtraBalls(dl, view, g, alpha);
+        DrawExtraBalls(dl, view, g, alpha, art);
     }
 
     /// <summary>Super Guide: a thin moonstone line on from where the guide's dots stop, through the bounce.</summary>
@@ -356,14 +357,17 @@ public sealed partial class MoonfallWindow
         }
     }
 
-    /// <summary>The twin balls (the first ball is the launcher's), and Fireball's ember round every ball.</summary>
-    private void DrawExtraBalls(ImDrawListPtr dl, in View view, MoonfallGame g, double alpha)
+    /// <summary>
+    /// The twin balls on the primitive board (the first is the launcher's; on the art board <see cref="ArtBall"/> draws
+    /// every ball with the ball sprite), and Fireball's ember round every ball.
+    /// </summary>
+    private void DrawExtraBalls(ImDrawListPtr dl, in View view, MoonfallGame g, double alpha, bool art)
     {
         var burning = g.PowerActive(MoonfallPower.Fireball);
         for (var k = 0; k < g.BallsInPlay; k++)
         {
             var (x, y) = g.BallAt(k, alpha);
-            if (k > 0)
+            if (k > 0 && !art)
             {
                 DrawBall(dl, view, x, y);
             }

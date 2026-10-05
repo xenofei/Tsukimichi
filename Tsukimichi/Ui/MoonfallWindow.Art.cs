@@ -42,6 +42,7 @@ public sealed partial class MoonfallWindow
     private int artDrawnFrame = int.MinValue / 2;
     private readonly Vector2[] artTrail = new Vector2[TrailLength];
     private int artTrailCount;
+    private int artTrailBall;
     private double artNotchAt = double.NegativeInfinity;
     private float artNotch;
     private readonly List<(float S, float U)> artColumns = [];
@@ -658,21 +659,23 @@ public sealed partial class MoonfallWindow
 
     // ---- The ball ----
 
+    /// <summary>
+    /// The ball in the launcher, or every ball in play (a twin too) with the ball sprite, and in the approach the
+    /// slow-motion trail behind the ball the camera follows (<see cref="MoonfallGame.CameraBall"/>).
+    /// </summary>
     private void ArtBall(in ArtPen p, MoonfallGame g, double alpha, bool plain)
     {
         ref readonly var ball = ref p.Atlas[MoonfallSprite.Ball];
         var size = (float)(MoonfallRules.BallRadius / 6.0);
-        double x, y;
         if (g.Phase == MoonfallPhase.Aiming && g.BallsLeft > 0)
         {
+            artTrailCount = 0;
             var (dx, dy) = MoonfallGame.Direction(aim);
-            (x, y) = (MoonfallRules.LauncherX + (dx * MoonfallRules.BarrelLength), MoonfallRules.LauncherY + (dy * MoonfallRules.BarrelLength));
+            Put(p, ball, MoonfallRules.LauncherX + (dx * MoonfallRules.BarrelLength), MoonfallRules.LauncherY + (dy * MoonfallRules.BarrelLength), size, uint.MaxValue);
+            return;
         }
-        else if (g.BallInPlay)
-        {
-            (x, y) = g.BallAt(alpha);
-        }
-        else
+
+        if (!g.BallInPlay)
         {
             artTrailCount = 0;
             return;
@@ -681,6 +684,14 @@ public sealed partial class MoonfallWindow
         // The slow-motion trail in the approach to the last orange: fading copies (Full only).
         if (g.Approaching && Theme.Flair == Flair.Full && !plain)
         {
+            // Another ball to follow starts a trail of its own.
+            if (g.CameraBall != artTrailBall)
+            {
+                artTrailBall = g.CameraBall;
+                artTrailCount = 0;
+            }
+
+            var (x, y) = g.BallAt(artTrailBall, alpha);
             var at = new Vector2((float)x, (float)y);
             if (artTrailCount == 0 || Vector2.Distance(artTrail[0], at) >= 3f)
             {
@@ -699,7 +710,11 @@ public sealed partial class MoonfallWindow
             artTrailCount = 0;
         }
 
-        Put(p, ball, x, y, size, uint.MaxValue);
+        for (var k = 0; k < g.BallsInPlay; k++)
+        {
+            var (x, y) = g.BallAt(k, alpha);
+            Put(p, ball, x, y, size, uint.MaxValue);
+        }
     }
 
     // ---- Sprite placement ----

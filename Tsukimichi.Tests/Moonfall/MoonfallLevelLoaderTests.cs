@@ -131,6 +131,7 @@ public sealed class MoonfallLevelLoaderTests
 
     [Theory]
     [InlineData("\"id\": \"test-01\"", "\"id\": \"Test 01\"", "id must be")]
+    [InlineData("\"id\": \"test-01\"", "\"id\": \"test-01\\n\"", "id must be")]
     [InlineData("\"name\": \"Test Level\"", "\"name\": \"\"", "name must be")]
     [InlineData("\"width\": 800", "\"width\": 1024", "playfield must be")]
     public void The_header_is_checked(string from, string to, string reason)
@@ -251,6 +252,7 @@ public sealed class MoonfallLevelLoaderTests
     [InlineData("\"scenes/night\"")]
     [InlineData("\"Night\"")]
     [InlineData("\"night.png\"")]
+    [InlineData("\"night\\n\"")]
     [InlineData("\"\"")]
     [InlineData("12")]
     [InlineData("\"a-very-long-scene-name-that-goes-on-past-forty\"")]
