@@ -264,9 +264,13 @@ The top three fixes it asked for:
 
 Approved: the style frames A and B, the peg states, Fever, readability, the characters and the What's new art. The one block was a Minor: the base tile's lantern bracket still read as a glowing crescent, a second moon. It is replaced by a square tray. Every Nit from the round was fixed too.
 
-### Round 3
+### Round 3: 7 of 8 APPROVED; the characters CHANGES (`supervisor/round-3.md`)
 
-See `supervisor/round-3.md`.
+All three rulings still stand and are still accepted. The base tile's bracket is fixed. The one block was a Minor: Super Guide's star globe rendered as a blank disc, which could read as a coin or a second moon. It now has one meridian half-arc and a core-to-limb falloff. The 0.8x popup has more clearance.
+
+### Round 4
+
+See `supervisor/round-4.md`.
 
 ## Open questions for the owner
 

@@ -19,7 +19,7 @@ SS = 4  # supersampling for the pen
 class Pen:
     def __init__(self, w, h, ox, oy, s):
         self.w, self.h, self.ox, self.oy, self.s = w, h, ox, oy, s
-        self.layers = {k: Image.new("L", (w, h), 0) for k in ("body", "accent", "glow")}
+        self.layers = {k: Image.new("L", (w, h), 0) for k in ("body", "accent", "glow", "mark")}
         self.d = {k: ImageDraw.Draw(v) for k, v in self.layers.items()}
         self.lights = []
 
@@ -87,7 +87,8 @@ def pipiru(p):
     p.line([(6, -24), (12, -18)], 3.2)
     p.rect(14.5, -16, 4.2, 6.2, rot=0.4, layer="accent")                             # a card at her side
     p.ell(-16.5, -54, 6.2, 6.2, layer="glow")                                         # the star globe
-    p.ring(-16.5, -54, 6.9, 0.55)                                                    # its meridian, fine
+    p.ring(-16.5, -54, 6.7, 0.35)                                                    # its thin brass limb ring
+    p.line([(-16.5 + 2.6 * math.cos(t), -54 + 6.0 * math.sin(t)) for t in np.linspace(-math.pi / 2, math.pi / 2, 24)], 0.55, layer="mark")   # one meridian: the front half-arc, pole to pole
     p.line([(-16.5, -47), (-16.5, -45.5)], 1.2)
     p.light(-16.5, -54, "#B8CCFF", 30, 1.0)
 
@@ -323,7 +324,7 @@ def draw_figure(img, name, fx, fy, k=2.0, ground_y=None, shadow=True, clip=None)
     X0, Y0, X1, Y1 = max(0, x0), max(0, y0), min(img.w, x0 + ww), min(img.h, y0 + hh)
     sl = (slice(Y0, Y1), slice(X0, X1))
     cut = lambda a: a[Y0 - y0:Y1 - y0, X0 - x0:X1 - x0]
-    body, acc, glow = cut(M["body"]), cut(M["accent"]), cut(M["glow"])
+    body, acc, glow, mark = cut(M["body"]), cut(M["accent"]), cut(M["glow"]), cut(M["mark"])
     yy, xx = np.mgrid[Y0:Y1, X0:X1].astype(np.float32)
     c = clip((xx + 0.5) / S, (yy + 0.5) / S) if clip is not None else np.ones_like(body)
     body, acc, glow = body * c, acc * c, glow * c
@@ -376,5 +377,9 @@ def draw_figure(img, name, fx, fy, k=2.0, ground_y=None, shadow=True, clip=None)
         img.add(sl, hexc(lc), gpool * (1 - sil) * kk2 * 0.30 / (1 + (hgt / rad) ** 2 * 0.5) * c)
     if lights:
         lc0 = hexc(lights[0][2])
-        img.over(sl, screen(lc0, np.full(3, 0.35, np.float32)), glow * (1 - body))     # the prop's own frame stays in front
+        lx0, ly0 = fx * S + lights[0][0] * k * S, fy * S + lights[0][1] * k * S
+        dg = np.sqrt((xx - lx0) ** 2 + (yy - ly0) ** 2) / (k * S)
+        core = 0.80 + 0.20 * np.clip(1 - dg / 6.2, 0, 1) ** 0.6                  # brightest at its core, softer at the limb
+        img.over(sl, screen(lc0, np.full(3, 0.35, np.float32)) * core[..., None], glow * (1 - body))     # the prop's own frame stays in front
+        img.mul(sl, hexc("#3A4470"), mark * glow * 0.35)                          # its engraved lines, faint
     return sl
