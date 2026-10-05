@@ -8,6 +8,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Added
 - **Moonlit:** click a column header to sort by it; click again to reverse, and a third time to go back to the usual order. The table remembers your choice.
+- **Moonfall:** a peg game inside Tsukimichi. Open it with the Moonfall button at the right of the status bar, or `/tsuki moonfall`. Aim with the mouse, click to shoot, and clear the 25 orange pegs with 10 balls; the last orange brings on the Full Moon. Four starter levels for now, with simple shapes until the artwork arrives. It pauses itself in combat, in duties, in cutscenes and when you click away, and your furthest level is saved.
 - **Add Tsukimichi to your Umbra bar:** if you use Umbra, Tsukimichi offers once, at a quiet moment, to set up its Umbra add-on for you. It first lists exactly what will change in Umbra: custom plugins turned on if they're off (with Umbra's warning in plain words), the add-on's repository added, and the Tsukimichi widget placed on your bar. Nothing changes until you click **Agree and add**. **Show me how** gives the steps to do it yourself, and **Not now** means it won't ask again. Settings › About › Umbra keeps both, and **Remove from Umbra** there undoes only what Tsukimichi changed, on that character's Umbra profile.
 
 ### Changed

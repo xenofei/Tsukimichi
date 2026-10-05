@@ -427,6 +427,7 @@ public static class UiPalettes
         AccentDim = ColorMath.FromHex(0x6B5420),
         OrnamentLight = ColorMath.FromHex(0x3F4862),
         Copper = ColorMath.FromHex(SnowCopperHex),
+        Pegs = PegInks.Day,
         Inks = SnowInks,
         States = SnowStates,
         Scene = SnowScene,

@@ -1868,13 +1868,19 @@ public sealed partial class MainWindow : Window, IDisposable
             x = DrawStatusGauge(dl, x, textY, line, counts.Overall.Fraction, barStyle, separator, gap);
         }
 
-        // Version, right-aligned in Dusk; it carries the data stamp on hover.
+        // Version, right-aligned in Dusk; it carries the data stamp on hover. The Moonfall button (1.23) ends the bar.
         var versionWidth = ImGui.CalcTextSize(versionText).X;
-        var versionX = MathF.Max(x, right - versionWidth);
-        StatusText(versionX, textY, versionText, Theme.U32(Theme.Surface.TextTertiary));
-        if (DataStamp is { } stamp && ImGui.IsItemHovered())
+        var versionRight = DrawMoonfallButton(dl, right, textY, line, gap);
+        // A bar too narrow for the version beside the pill leaves the version out rather than drawing over the pill.
+        var versionFits = versionRight - versionWidth >= x;
+        var versionX = versionFits ? versionRight - versionWidth : MathF.Max(x, versionRight);
+        if (versionFits)
         {
-            UiMetrics.Tooltip(stamp);
+            StatusText(versionX, textY, versionText, Theme.U32(Theme.Surface.TextTertiary));
+            if (DataStamp is { } stamp && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(stamp);
+            }
         }
 
         // The middle: counts, pip + mode, MSQ pill, fitted into what is left before the version.

@@ -8056,7 +8056,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <value>Right-click an item to reveal the quest that rewards it.</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
-    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby, todo and icon toggle the Nearby quests window, the Todo overlay and the moon icon; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; msq says where you are in the main scenario and next says what to do next, both as plain sentences; go [quest name] travels to the current step of the selected or named quest, else to its giver; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); settings (or config) and help open those windows.</value>
+    <value>Open Tsukimichi. search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby, todo and icon toggle the Nearby quests window, the Todo overlay and the moon icon; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; msq says where you are in the main scenario and next says what to do next, both as plain sentences; go [quest name] travels to the current step of the selected or named quest, else to its giver; stop stops every walk, flight, travel chain and hand-off Tsukimichi started; look &lt;code&gt; previews a shared look in Settings › Themes (nothing applies until you choose Apply); moonfall opens Moonfall, the peg game; settings (or config) and help open those windows.</value>
   </data>
   <data name="StepWhereToGo" xml:space="preserve">
     <value>Where to go</value>
@@ -15718,6 +15718,135 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="GateSourceQuestionable" xml:space="preserve">
     <value>Questionable</value>
     <comment>Where a gate is stated, {0} of GateSourceFormat: the Questionable plugin, which holds the quest back on the same check. A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallTitle" xml:space="preserve">
+    <value>Moonfall</value>
+    <comment>Moonfall's window title (1.23, plan v9). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallButton" xml:space="preserve">
+    <value>Moonfall</value>
+    <comment>The main window's button that opens Moonfall, the peg game. A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallButtonTooltip" xml:space="preserve">
+    <value>Play Moonfall, a peg game: aim with the mouse, click to shoot, clear every orange peg. /tsuki moonfall</value>
+  </data>
+  <data name="MoonfallLevelFormat" xml:space="preserve">
+    <value>Level {0} · {1}</value>
+    <comment>{0} = the level's number, {1} = its name.</comment>
+  </data>
+  <data name="MoonfallBallsFormat" xml:space="preserve">
+    <value>Balls {0}</value>
+    <comment>{0} = balls left in the launcher.</comment>
+  </data>
+  <data name="MoonfallOrangesFormat" xml:space="preserve">
+    <value>Orange {0}</value>
+    <comment>{0} = orange pegs still to hit.</comment>
+  </data>
+  <data name="MoonfallMultiplierFormat" xml:space="preserve">
+    <value>×{0}</value>
+    <comment>{0} = the score multiplier.</comment>
+  </data>
+  <data name="MoonfallMultiplierTooltip" xml:space="preserve">
+    <value>Every peg scores this many times its value. It rises to ×2 at 15 orange pegs left, ×3 at 10, ×5 at 6 and ×10 at 3.</value>
+  </data>
+  <data name="MoonfallPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="MoonfallResume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="MoonfallRestart" xml:space="preserve">
+    <value>Restart</value>
+    <comment>Starts the level again; asks first while a level is under way.</comment>
+  </data>
+  <data name="MoonfallRestartQuestion" xml:space="preserve">
+    <value>Start this level again? Its score so far is lost.</value>
+  </data>
+  <data name="MoonfallLeaveQuestion" xml:space="preserve">
+    <value>Leave this level for another? Its score so far is lost.</value>
+  </data>
+  <data name="MoonfallKeepPlaying" xml:space="preserve">
+    <value>Keep playing</value>
+  </data>
+  <data name="MoonfallLeave" xml:space="preserve">
+    <value>Leave</value>
+  </data>
+  <data name="MoonfallPausedCombat" xml:space="preserve">
+    <value>Paused · in combat</value>
+  </data>
+  <data name="MoonfallPausedDuty" xml:space="preserve">
+    <value>Paused · in a duty</value>
+  </data>
+  <data name="MoonfallPausedCutscene" xml:space="preserve">
+    <value>Paused · in a cutscene</value>
+  </data>
+  <data name="MoonfallPausedFocus" xml:space="preserve">
+    <value>Paused · the game has the focus</value>
+  </data>
+  <data name="MoonfallPaused" xml:space="preserve">
+    <value>Paused</value>
+  </data>
+  <data name="MoonfallClickToResume" xml:space="preserve">
+    <value>Click the board to resume</value>
+  </data>
+  <data name="MoonfallClickToPlay" xml:space="preserve">
+    <value>Click the board to play</value>
+  </data>
+  <data name="MoonfallWaitsForIt" xml:space="preserve">
+    <value>It resumes when you click, once that is over</value>
+  </data>
+  <data name="MoonfallShotFormat" xml:space="preserve">
+    <value>{0} × {1} pegs</value>
+    <comment>The end-of-shot tally: {0} = the shot's peg values added up, {1} = its pegs, counting up as they clear.</comment>
+  </data>
+  <data name="MoonfallFreeBall" xml:space="preserve">
+    <value>Free ball</value>
+  </data>
+  <data name="MoonfallFullMoon" xml:space="preserve">
+    <value>Full Moon</value>
+    <comment>Moonfall's own name for the slow-motion finale after the last orange peg.</comment>
+  </data>
+  <data name="MoonfallPerfectMoon" xml:space="preserve">
+    <value>Perfect Full Moon</value>
+    <comment>Every peg was cleared by the last orange: all five buckets pay 100,000.</comment>
+  </data>
+  <data name="MoonfallLevelClear" xml:space="preserve">
+    <value>Level clear</value>
+  </data>
+  <data name="MoonfallTallyLevel" xml:space="preserve">
+    <value>Level score</value>
+  </data>
+  <data name="MoonfallTallyFullMoon" xml:space="preserve">
+    <value>Full Moon bucket</value>
+  </data>
+  <data name="MoonfallTallyBallsFormat" xml:space="preserve">
+    <value>{0} balls left × 10,000</value>
+    <comment>{0} = balls left.</comment>
+  </data>
+  <data name="MoonfallTallyTotal" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="MoonfallNextLevel" xml:space="preserve">
+    <value>Next level</value>
+  </data>
+  <data name="MoonfallPlayAgain" xml:space="preserve">
+    <value>Play again</value>
+  </data>
+  <data name="MoonfallLastLevel" xml:space="preserve">
+    <value>That was the last level for now: more are on the way.</value>
+  </data>
+  <data name="MoonfallOutOfBalls" xml:space="preserve">
+    <value>Out of balls</value>
+  </data>
+  <data name="MoonfallOrangesLeftFormat" xml:space="preserve">
+    <value>{0} orange pegs were left.</value>
+    <comment>{0} = orange pegs left.</comment>
+  </data>
+  <data name="MoonfallTryAgain" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="MoonfallNoLevels" xml:space="preserve">
+    <value>Moonfall's levels could not be read. The Dalamud log says why.</value>
   </data>
   <data name="UmbraSetup.Title" xml:space="preserve">
     <value>Add Tsukimichi to your Umbra bar?</value>
