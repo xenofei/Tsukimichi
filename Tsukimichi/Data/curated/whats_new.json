@@ -3,6 +3,17 @@
   "note": "The plain What's new notes, one entry per release since 1.14.0, newest first: the popup after an update, Settings > Advanced > What's new and Dalamud's installer listing (tools/make_pluginmaster.py) read them. Written for players: 3 to 5 points, each a short lead and one plain sentence, no class names, settings paths only when the player needs them, no lists of fixes. CHANGELOG.md stays the technical record. Add the new release's entry before tagging it; the tests fail when the csproj version has none.",
   "releases": [
     {
+      "version": "1.22.1",
+      "date": "2026-10-05",
+      "name": "Familiar faces",
+      "points": [
+        { "lead": "Faces where they belong.", "text": "Quest-giver portraits were re-cut by hand so faces sit in the middle, and each quest shows a character as they looked at that point in the story." },
+        { "lead": "Photos built in.", "text": "Quest-giver photos now come with Tsukimichi, so there's nothing to download. Turn them off in Settings, under Look." },
+        { "lead": "Sort Moonlit.", "text": "Click a column header in Moonlit to sort by it; click again to reverse." },
+        { "lead": "One click for Umbra.", "text": "If you use Umbra, Tsukimichi can put its widget on your Umbra bar for you, and take it off again." }
+      ]
+    },
+    {
       "version": "1.22.0",
       "date": "2026-10-04",
       "name": "Welcome home",
