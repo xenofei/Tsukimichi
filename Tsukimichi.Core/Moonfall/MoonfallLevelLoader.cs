@@ -19,7 +19,8 @@ public sealed record MoonfallLevelLoad(MoonfallLevel? Level, IReadOnlyList<strin
 ///   "version": 2,
 ///   "id": "base-01",                     // lower-case letters, digits and hyphens
 ///   "name": "First Light",               // what the player sees, up to 40 characters
-///   "scene": "moon-road-night",          // optional: the background picture's name (MoonfallLevel.Scene)
+///   "scene": "moon-road-night",          // optional: the scene recipe's (or picture's) name (MoonfallLevel.Scene)
+///   "ace": 250000,                       // optional: the ace score (MoonfallLevel.Ace), 1 to 10,000,000
 ///   "playfield": { "width": 800, "height": 600 },
 ///   "pegs": [
 ///     { "x": 400, "y": 300 },            // a round peg; "r" (default 10, 6–20), "canBeOrange" (default true)
@@ -223,7 +224,11 @@ public static partial class MoonfallLevelLoader
             }
         }
 
-        var level = new MoonfallLevel(id ?? string.Empty, name ?? string.Empty, pegs) { Scene = version >= 2 ? ReadScene(root, errors) : null };
+        var level = new MoonfallLevel(id ?? string.Empty, name ?? string.Empty, pegs)
+        {
+            Scene = version >= 2 ? ReadScene(root, errors) : null,
+            Ace = version >= 2 ? ReadAce(root, errors) : null,
+        };
         if (level.OrangeCandidates < MoonfallRules.OrangeCount)
         {
             errors.Add($"{level.OrangeCandidates} pegs may be orange; a level needs {MoonfallRules.OrangeCount}");
@@ -263,6 +268,26 @@ public static partial class MoonfallLevelLoader
         }
 
         return scene;
+    }
+
+    /// <summary>The most an ace score may be.</summary>
+    public const int MaxAce = 10_000_000;
+
+    /// <summary>Version 2's optional <c>ace</c>: the level's ace score (the tally's ACED), a whole number from 1 to <see cref="MaxAce"/>.</summary>
+    private static int? ReadAce(JsonElement root, List<string> errors)
+    {
+        if (!root.TryGetProperty("ace", out var node) || node.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        if (node.ValueKind != JsonValueKind.Number || !node.TryGetInt32(out var ace) || ace < 1 || ace > MaxAce)
+        {
+            errors.Add($"ace must be a whole number from 1 to {MaxAce}");
+            return null;
+        }
+
+        return ace;
     }
 
     private static MoonfallPeg? ReadPeg(JsonElement node, string label, List<string> errors)

@@ -16329,4 +16329,136 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="MoonfallFlippersHint" xml:space="preserve">
     <value>Hold the mouse button over the board to raise the flippers</value>
   </data>
+  <data name="MoonfallCompanion.SuperGuide" xml:space="preserve">
+    <value>Minfilia</value>
+    <comment>Moonfall companion (Super Guide; spec-rich2.md, decision 22). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Multiball" xml:space="preserve">
+    <value>Alphinaud &amp; Alisaie</value>
+    <comment>Moonfall companion (Multiball). Names; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Wings" xml:space="preserve">
+    <value>Cid Garlond</value>
+    <comment>Moonfall companion (Brass Wings). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Burst" xml:space="preserve">
+    <value>Raubahn</value>
+    <comment>Moonfall companion (Lunar Burst). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Flippers" xml:space="preserve">
+    <value>Merlwyb</value>
+    <comment>Moonfall companion (Flippers). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Gate" xml:space="preserve">
+    <value>Urianger</value>
+    <comment>Moonfall companion (Moon Gate). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Bloom" xml:space="preserve">
+    <value>Kan-E-Senna</value>
+    <comment>Moonfall companion (Moonbloom). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Draw" xml:space="preserve">
+    <value>Tataru</value>
+    <comment>Moonfall companion (Moon-Viewing Draw). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Fireball" xml:space="preserve">
+    <value>Y'shtola</value>
+    <comment>Moonfall companion (Fireball). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Path" xml:space="preserve">
+    <value>Louisoix</value>
+    <comment>Moonfall companion (Sage's Path). A name; do not translate.</comment>
+  </data>
+  <data name="MoonfallCompanion.Bolt" xml:space="preserve">
+    <value>Moogle courier</value>
+    <comment>Moonfall companion (Storm Post): one of the inns' mail moogles.</comment>
+  </data>
+  <data name="MoonfallHudScore" xml:space="preserve">
+    <value>SCORE</value>
+    <comment>Moonfall's chrome: the label on the score plate (capitals, as the game sets plate labels).</comment>
+  </data>
+  <data name="MoonfallHudBalls" xml:space="preserve">
+    <value>BALLS</value>
+    <comment>Moonfall's chrome: the label under the balls-left count.</comment>
+  </data>
+  <data name="MoonfallHudOranges" xml:space="preserve">
+    <value>ORANGES</value>
+    <comment>Moonfall's chrome: the label under the orange moons left.</comment>
+  </data>
+  <data name="MoonfallBannerFullMoon" xml:space="preserve">
+    <value>FULL MOON</value>
+    <comment>Moonfall: Fever's banner (decision 9), set in capitals on the laurel ribbon.</comment>
+  </data>
+  <data name="MoonfallBannerPerfectMoon" xml:space="preserve">
+    <value>PERFECT MOON</value>
+    <comment>Moonfall: Fever's banner when every peg was cleared.</comment>
+  </data>
+  <data name="MoonfallBannerFullMoonSub" xml:space="preserve">
+    <value>Every moon left is worth more. Pick your cup.</value>
+    <comment>Moonfall: the line under FULL MOON.</comment>
+  </data>
+  <data name="MoonfallBannerLevelClear" xml:space="preserve">
+    <value>LEVEL CLEAR</value>
+    <comment>Moonfall: the tally's ribbon.</comment>
+  </data>
+  <data name="MoonfallBannerOutOfBalls" xml:space="preserve">
+    <value>OUT OF BALLS</value>
+    <comment>Moonfall: the tally's ribbon when the level is lost.</comment>
+  </data>
+  <data name="MoonfallAced" xml:space="preserve">
+    <value>ACED</value>
+    <comment>Moonfall: the tally's callout when the total reaches the level's ace score.</comment>
+  </data>
+  <data name="MoonfallNewBest" xml:space="preserve">
+    <value>NEW BEST</value>
+    <comment>Moonfall: the tally's callout when the total beats the level's best.</comment>
+  </data>
+  <data name="MoonfallAceScoreFormat" xml:space="preserve">
+    <value>ace score {0}</value>
+    <comment>Moonfall tally: {0} is the level's ace score.</comment>
+  </data>
+  <data name="MoonfallBestFormat" xml:space="preserve">
+    <value>best {0}</value>
+    <comment>Moonfall tally: {0} is the level's best total so far.</comment>
+  </data>
+  <data name="MoonfallTallyStageFormat" xml:space="preserve">
+    <value>{0} · {1} · balls left: {2}</value>
+    <comment>Moonfall tally: {0} the campaign, {1} the stage and level (3-2), {2} the number of balls left.</comment>
+  </data>
+  <data name="MoonfallCampaignBase" xml:space="preserve">
+    <value>The Moon Road</value>
+    <comment>Moonfall's base campaign (decision 10).</comment>
+  </data>
+  <data name="MoonfallCampaignExpansion" xml:space="preserve">
+    <value>The Far Shore</value>
+    <comment>Moonfall's expansion campaign (decision 10).</comment>
+  </data>
+  <data name="MoonfallStyleValueFormat" xml:space="preserve">
+    <value>+{0}</value>
+    <comment>Moonfall: a style shot's bonus on its ribbon; {0} is the points.</comment>
+  </data>
+  <data name="MoonfallOptions" xml:space="preserve">
+    <value>Options</value>
+    <comment>Moonfall: the button that opens Moonfall's options.</comment>
+  </data>
+  <data name="MoonfallPegMarks" xml:space="preserve">
+    <value>Peg marks</value>
+    <comment>Moonfall option: the colour-blind assist (a shape on each kind of moon).</comment>
+  </data>
+  <data name="MoonfallPegMarksTooltip" xml:space="preserve">
+    <value>A crescent on orange, a leaf on green and a star on purple, so the kinds tell apart without colour.</value>
+    <comment>Moonfall option tooltip.</comment>
+  </data>
+  <data name="MoonfallPegMarksHint" xml:space="preserve">
+    <value>New: Peg marks put a shape on each kind of moon, for colour-blind players.</value>
+    <comment>Moonfall: the one-time hint about Peg marks (decision 27).</comment>
+  </data>
+  <data name="MoonfallTurnOn" xml:space="preserve">
+    <value>Turn on</value>
+    <comment>Moonfall: the hint's button that turns Peg marks on.</comment>
+  </data>
+  <data name="MoonfallNoThanks" xml:space="preserve">
+    <value>No thanks</value>
+    <comment>Moonfall: the hint's button that closes it.</comment>
+  </data>
 </root>

@@ -7,10 +7,13 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.ManagedFontAtlas;
+using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Moonfall;
+using Tsukimichi.Core.Moonfall.Art;
 
 namespace Tsukimichi.Ui;
 
@@ -70,7 +73,23 @@ public sealed partial class MoonfallWindow : Window
     /// <param name="log">Where a failed save is logged; null logs nothing.</param>
     /// <param name="textures">Dalamud's textures, for the board's art (<see cref="MoonfallArtTextures"/>); null draws the stage 1 primitives.</param>
     /// <param name="pluginDirectory">The plugin's folder, holding <c>assets/moonfall/</c>; null draws the primitives.</param>
-    public MoonfallWindow(MoonfallCampaigns campaigns, MoonfallProgress progress, string progressPath, Func<MoonfallPauseReason> causes, IPluginLog? log = null, ITextureProvider? textures = null, string? pluginDirectory = null)
+    /// <param name="data">Dalamud's game data: the game's own UI art, cards and paintings are read from it at runtime (<see cref="MoonfallGameArtTextures"/>); null keeps the interim art.</param>
+    /// <param name="fontAtlas">The plugin's font atlas, for the game's own fonts (<see cref="MoonfallFonts"/>); null sets the chrome in the window's font.</param>
+    /// <param name="options">Moonfall's options (Peg marks and its hint).</param>
+    public MoonfallWindow(MoonfallCampaigns campaigns, MoonfallProgress progress, string progressPath, Func<MoonfallPauseReason> causes, IPluginLog? log = null, ITextureProvider? textures = null,
+        string? pluginDirectory = null, IDataManager? data = null, IFontAtlas? fontAtlas = null, IMoonfallOptions? options = null)
+        : this(campaigns, progress, progressPath, causes, log,
+            textures is not null && pluginDirectory is not null ? new MoonfallArtTextures(textures, log) : null,
+            pluginDirectory is not null ? MoonfallArtFiles.Folder(pluginDirectory) : null,
+            textures is not null && data is not null && pluginDirectory is not null ? new MoonfallGameArtTextures(textures, data, pluginDirectory, log) : null,
+            fontAtlas is not null ? new MoonfallFonts(fontAtlas, log) : null,
+            options)
+    {
+    }
+
+    /// <summary>The window over hosts of its own (the offline renderer brings stand-ins for Dalamud's textures and fonts).</summary>
+    internal MoonfallWindow(MoonfallCampaigns campaigns, MoonfallProgress progress, string progressPath, Func<MoonfallPauseReason> causes, IPluginLog? log,
+        IMoonfallArtHost<IDalamudTextureWrap>? artHost, string? artFolder, IMoonfallGameArtHost<IDalamudTextureWrap>? gameHost, IMoonfallFonts? fontSource, IMoonfallOptions? options)
         : base(Strings.MoonfallTitle + Id, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         this.campaigns = campaigns ?? throw new ArgumentNullException(nameof(campaigns));
@@ -84,7 +103,8 @@ public sealed partial class MoonfallWindow : Window
 
         // The furthest level reached is the one waiting.
         levelIndex = Math.Max(0, campaigns.Playable(campaign, progress) - 1);
-        InitArt(textures, pluginDirectory, log);
+        InitArt(artHost, artFolder);
+        InitRich(gameHost, fontSource, options);
     }
 
     public override void OnOpen() => pause.Pause(MoonfallPauseReason.Reopened);
@@ -164,8 +184,40 @@ public sealed partial class MoonfallWindow : Window
         levelIndex = Math.Clamp(index, 0, levels.Count - 1);
         ClearEffects();
         ClearPowerEffects();
+        ClearMoments();
         // A fresh board each time: the seed only has to differ between plays, the engine does the rest.
-        return new MoonfallGame(levels[levelIndex], levelIndex + 1, (ulong)Stopwatch.GetTimestamp(), power: PowerFor(levelIndex));
+        return new MoonfallGame(levels[levelIndex], levelIndex + 1, SeedForRender ?? (ulong)Stopwatch.GetTimestamp(), power: PowerFor(levelIndex));
+    }
+
+    // ---- The offline renderer's hooks (tools/Tsukimichi.MoonfallRender: the board drawn by this code, without the game) ----
+
+    /// <summary>The seed every new game takes, so a render comes out the same each time; null: the clock's (always, in the plugin).</summary>
+    internal ulong? SeedForRender { get; set; }
+
+    /// <summary>The game on the board.</summary>
+    internal MoonfallGame? GameForRender => game;
+
+    /// <summary>The aim, set by the renderer where the mouse would set it.</summary>
+    internal double AimForRender
+    {
+        get => aim;
+        set => aim = value;
+    }
+
+    /// <summary>The board's clock.</summary>
+    internal double ClockForRender => boardClock;
+
+    /// <summary>Whether the board's art has settled: the chrome, and the level's scene built or failed (nothing still loading).</summary>
+    internal bool ArtSettledForRender => gameArt is null
+        || (gameArt.ChromeTexture is not null && gameArt.SceneState is not Core.Moonfall.Art.MoonfallSceneState.Building && art?.Atlas is not null);
+
+    /// <summary>A style shot's ribbon, as the event would place it.</summary>
+    internal void RibbonForRender(string title, string value)
+    {
+        if (game is { } g)
+        {
+            AddRibbon(g, title, value);
+        }
     }
 
     /// <summary>Whether leaving the level now would lose something: a shot taken or a ball in play, and the level not over.</summary>
@@ -197,6 +249,7 @@ public sealed partial class MoonfallWindow : Window
         while (g.TryReadEvent(out var e))
         {
             ArtEvent(e);
+            NoteMomentEvent(e);
             NotePowerEvent(e);
             switch (e.Kind)
             {
@@ -213,6 +266,7 @@ public sealed partial class MoonfallWindow : Window
                     break;
 
                 case MoonfallEventKind.LevelWon:
+                    NoteWin(g);
                     RecordWin();
                     break;
             }
@@ -396,22 +450,26 @@ public sealed partial class MoonfallWindow : Window
             ImGui.EndCombo();
         }
 
-        ImGui.SameLine(0f, gap);
-        ImGui.AlignTextToFramePadding();
-        ImGui.TextUnformatted(ballsText);
-        ImGui.SameLine(0f, gap);
-        Swatch(PegInk(PegColour.Orange));
-        ImGui.SameLine(0f, UiMetrics.Px(5f));
-        ImGui.TextUnformatted(orangesText);
-        ImGui.SameLine(0f, gap);
-        using (Theme.PushText(g.Multiplier > 1 ? Theme.Gold : Theme.Surface.TextSecondary))
+        // The rich chrome shows the balls, the oranges, the multiplier, the score and the power's turns on the board itself.
+        if (!richHud)
         {
-            ImGui.TextUnformatted(multiplierText);
-        }
+            ImGui.SameLine(0f, gap);
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextUnformatted(ballsText);
+            ImGui.SameLine(0f, gap);
+            Swatch(PegInk(PegColour.Orange));
+            ImGui.SameLine(0f, UiMetrics.Px(5f));
+            ImGui.TextUnformatted(orangesText);
+            ImGui.SameLine(0f, gap);
+            using (Theme.PushText(g.Multiplier > 1 ? Theme.Gold : Theme.Surface.TextSecondary))
+            {
+                ImGui.TextUnformatted(multiplierText);
+            }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.MoonfallMultiplierTooltip);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MoonfallMultiplierTooltip);
+            }
         }
 
         DrawPowerBar(g, gap);
@@ -422,10 +480,11 @@ public sealed partial class MoonfallWindow : Window
         var pauseLabel = pause.Active.HasFlag(MoonfallPauseReason.Player) || pause.AwaitingResume ? Strings.MoonfallResume : Strings.MoonfallPause;
         var pauseWidth = MathF.Max(ImGui.CalcTextSize(Strings.MoonfallPause).X, ImGui.CalcTextSize(Strings.MoonfallResume).X) + (2f * style.FramePadding.X);
         var restartWidth = ImGui.CalcTextSize(Strings.MoonfallRestart).X + (2f * style.FramePadding.X);
+        var optionsWidth = options is null ? 0f : ImGui.CalcTextSize(Strings.MoonfallOptions).X + (2f * style.FramePadding.X) + style.ItemSpacing.X;
         var scoreSize = ImGui.GetFontSize() * ScoreScale;
-        var scoreWidth = ImGui.CalcTextSize(scoreText).X * ScoreScale;
+        var scoreWidth = richHud ? 0f : ImGui.CalcTextSize(scoreText).X * ScoreScale;
         var right = ImGui.GetWindowContentRegionMax().X;
-        var scoreX = right - restartWidth - style.ItemSpacing.X - pauseWidth - gap - scoreWidth;
+        var scoreX = right - restartWidth - style.ItemSpacing.X - pauseWidth - optionsWidth - gap - scoreWidth;
         // On the same row while it fits; in a narrow window the score and the buttons take a row of their own.
         if (scoreX >= leftEnd + gap)
         {
@@ -438,9 +497,14 @@ public sealed partial class MoonfallWindow : Window
 
         var at = ImGui.GetCursorScreenPos();
         var frame = ImGui.GetFrameHeight();
-        ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), scoreSize, new Vector2(at.X, at.Y + ((frame - scoreSize) * 0.5f)), Theme.U32(Theme.Gold), scoreText);
-        ImGui.Dummy(new Vector2(scoreWidth, frame));
+        if (!richHud)
+        {
+            ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), scoreSize, new Vector2(at.X, at.Y + ((frame - scoreSize) * 0.5f)), Theme.U32(Theme.Gold), scoreText);
+        }
+
+        ImGui.Dummy(new Vector2(MathF.Max(1f, scoreWidth), frame));
         ImGui.SameLine(0f, gap);
+        DrawOptions();
         // While combat, a duty or a cutscene holds the pause, Resume is off and says why.
         var held = (pause.Active & (MoonfallPauseReason.Combat | MoonfallPauseReason.Duty | MoonfallPauseReason.Cutscene)) != 0;
         using (ImRaii.Disabled(held))
@@ -469,7 +533,72 @@ public sealed partial class MoonfallWindow : Window
             Choose(RestartChoice);
         }
 
+        DrawPegMarksHint();
         ImGui.Spacing();
+    }
+
+    /// <summary>Moonfall's Options: a small menu with Peg marks, the colour-blind assist (decision 27: off by default).</summary>
+    private void DrawOptions()
+    {
+        if (options is null)
+        {
+            return;
+        }
+
+        if (ImGui.Button(Strings.MoonfallOptions + "##moonfallOptions"))
+        {
+            ImGui.OpenPopup("##moonfallOptionsMenu");
+        }
+
+        if (ImGui.BeginPopup("##moonfallOptionsMenu"))
+        {
+            var marks = options.PegMarks;
+            if (ImGui.Checkbox(Strings.MoonfallPegMarks + "##moonfallPegMarks", ref marks))
+            {
+                options.PegMarks = marks;
+                options.PegMarksHintSeen = true;
+                options.Save();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MoonfallPegMarksTooltip);
+            }
+
+            ImGui.EndPopup();
+        }
+
+        ImGui.SameLine();
+    }
+
+    /// <summary>The one-time hint about Peg marks (decision 27), under the bar until it is answered.</summary>
+    private void DrawPegMarksHint()
+    {
+        if (options is null || options.PegMarksHintSeen)
+        {
+            return;
+        }
+
+        ImGui.AlignTextToFramePadding();
+        using (Theme.PushText(Theme.Surface.TextSecondary))
+        {
+            ImGui.TextUnformatted(Strings.MoonfallPegMarksHint);
+        }
+
+        ImGui.SameLine(0f, UiMetrics.Px(10f));
+        if (ImGui.SmallButton(Strings.MoonfallTurnOn + "##moonfallMarksOn"))
+        {
+            options.PegMarks = true;
+            options.PegMarksHintSeen = true;
+            options.Save();
+        }
+
+        ImGui.SameLine();
+        if (ImGui.SmallButton(Strings.MoonfallNoThanks + "##moonfallMarksNo"))
+        {
+            options.PegMarksHintSeen = true;
+            options.Save();
+        }
     }
 
     /// <summary>"Start this level again?" or "Leave this level?", with the way on and Keep playing, until answered.</summary>

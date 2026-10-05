@@ -48,7 +48,8 @@ public sealed partial class Plugin
         }
 
         var pluginDirectory = PluginInterface.AssemblyLocation.DirectoryName;
-        var window = new MoonfallWindow(campaigns, progress, path, MoonfallCausesNow, Log, TextureProvider, pluginDirectory);
+        var options = new MoonfallConfigOptions(Settings, () => Settings.Save(PluginInterface));
+        var window = new MoonfallWindow(campaigns, progress, path, MoonfallCausesNow, Log, TextureProvider, pluginDirectory, DataManager, PluginInterface.UiBuilder.FontAtlas, options);
         windowSystem.AddWindow(window);
         command.ToggleMoonfall = window.Toggle;
         mainWindow.OpenMoonfall = window.Toggle;

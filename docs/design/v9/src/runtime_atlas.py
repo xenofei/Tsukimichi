@@ -482,6 +482,110 @@ def column_sprite(S):
     return img, (8, 0)
 
 
+# ------------------------------------------------------------------------------------------------ the lantern cart
+ROAD_TOP = 586.0
+
+
+def cart_sprite(S):
+    """The Moon Road's bucket (decision 14; rich/src/frame_rich.bucket_cart, rich pass proposal C) at x 400: a deep open
+    box of dark planks with brass corner straps (its mouth is the catch: 104 wide inside, 131 across the rails), two
+    spoked wheels on the road, and a paper lantern on a curved rear post, its warmth on the post and the box. The
+    lantern's air glow and its pool on the road are drawn by the plugin each frame (they flicker)."""
+    bx = 400.0
+    half = 65.5
+    rim_y, floor_y = 573.0, 583.0
+    img = at(S, bx - 70, 528, 140, 68)
+
+    def box(X, Y):
+        return sd_rrect(X, Y, bx - half, rim_y, bx + half, floor_y + 1, 2.0)
+    sl, X, Y = img.win(bx, 578, 80)
+    cov = img.cov(box(X, Y))
+    depth = np.clip((Y - rim_y) / (floor_y - rim_y), 0, 1)
+    wood = ramp(depth, [(0, "#3A2C30"), (1, "#16101A")])
+    grainw = fbm(cov.shape[0], cov.shape[1], 6 * S, 3, 23)
+    planks = 1 - 0.18 * np.exp(-(((Y - rim_y) % 3.4) - 0.2) ** 2 / 0.05)
+    wood = wood * (0.9 + 0.15 * grainw)[..., None] * planks[..., None]
+    img.over(sl, wood, cov)
+    # the dark mouth's lip (the catch), seen from the front
+    lip = img.cov(np.maximum(np.abs(Y - rim_y - 0.8) - 0.8, np.abs(X - bx) - half + 1))
+    img.add(sl, hexc("#9FB0DA"), lip * (0.40 - 0.25 * np.clip((X - bx + half) / (2 * half), 0, 1)))
+    # brass corner straps and nail heads
+    for sx in (-1, 1):
+        strap = lambda X_, Y_, sx=sx: sd_rrect(X_, Y_, bx + sx * (half - 3.0) - 3.0, rim_y - 0.5, bx + sx * (half - 3.0) + 3.0, floor_y + 1, 1.2)
+        draw_brass(img, strap, (bx + sx * (half - 3), 578, 9), "round", depth=1.0, width=1.2, base=-0.04)
+        for ny in (rim_y + 2.5, floor_y - 2.0):
+            nail = lambda X_, Y_, sx=sx, ny=ny: sd_circle(X_, Y_, bx + sx * (half - 3.0), ny, 0.9)
+            draw_brass(img, nail, (bx + sx * (half - 3), ny, 2), "round", depth=0.6, width=0.8)
+    # two spoked wooden wheels with iron tyres, on the road
+    for wx in (bx - 40.0, bx + 40.0):
+        wy, wr = 587.5, 6.5
+        s2, X2, Y2 = img.win(wx, wy, wr + 2)
+        rr = np.sqrt((X2 - wx) ** 2 + (Y2 - wy) ** 2)
+        tyre = img.cov(np.abs(rr - wr + 0.9) - 0.9)
+        img.over(s2, hexc("#151318"), tyre)
+        img.add(s2, hexc("#8FA4DA"), tyre * np.clip(-((X2 - wx) * 0.7 + (Y2 - wy) * 0.7) / wr, 0, 1) * 0.45)
+        ang = np.arctan2(Y2 - wy, X2 - wx)
+        spokes = img.cov(np.abs(np.sin(ang * 3)) * rr - 0.55) * (rr < wr - 1.5)
+        img.over(s2, hexc("#2A2024"), spokes)
+        hub = lambda X_, Y_, wx=wx, wy=wy: sd_circle(X_, Y_, wx, wy, 1.6)
+        draw_brass(img, hub, (wx, wy, 3), "round", depth=0.8, width=1.2)
+    # the rear post and the lantern (the boat's lantern)
+    lx, ly = bx + 50.0, 541.0
+
+    def post(X_, Y_):
+        t = np.clip((573 - Y_) / 30.0, 0, 1)
+        cxp = bx + 57 - 6 * t ** 2
+        return np.maximum(np.abs(X_ - cxp) - 1.7, np.maximum(Y_ - 574, 535 - Y_))
+    s3, X3, Y3 = img.win(bx + 54, 552, 26)
+    img.over(s3, hexc("#241A1C"), img.cov(post(X3, Y3)))
+    arm = lambda X_, Y_: sd_segment(X_, Y_, bx + 51, 535.5, lx, 535.5)[0] - 0.8
+    draw_brass(img, arm, (lx + 3, 536, 8), "round", depth=0.6, width=0.8)
+    s4, X4, Y4 = img.win(lx, ly, 12)
+    body = img.cov(sd_rrect(X4, Y4, lx - 4.6, ly - 6.0, lx + 4.6, ly + 6.0, 3.2))
+    acr = np.clip(1 - ((X4 - lx) / 4.6) ** 2, 0, 1)
+    paper = ramp(acr, [(0, "#B4602A"), (0.6, "#F2B060"), (1, "#FFE6B0")])
+    ribs = 1 - 0.18 * np.exp(-(((Y4 - ly + 6) % 3.0) - 1.5) ** 2 / 0.12)
+    img.over(s4, paper * ribs[..., None], body)
+    for (yc, w_) in ((ly - 6.8, 3.6), (ly + 6.8, 3.2)):
+        cap = lambda X_, Y_, yc=yc, w_=w_: sd_rrect(X_, Y_, lx - w_, yc - 1.0, lx + w_, yc + 1.0, 0.8)
+        draw_brass(img, cap, (lx, yc, 6), "round", depth=0.8, width=0.9)
+    # its warmth on what faces it: the post's facing side, the box's rear corner
+    s5, X5, Y5 = img.win(bx + 20, 575, 90)
+    d5 = np.sqrt((X5 - lx) ** 2 + (Y5 - ly) ** 2)
+    fall = 1 / (1 + (d5 / 14) ** 2) ** 1.5
+    pm5 = img.cov(post(X5, Y5))
+    facing = pm5 * (1 - img.cov(post(X5 - 1.4, Y5)))
+    img.add(s5, hexc("#FFB060"), (pm5 * 0.12 + facing * 0.9) * fall)
+    boxm = img.cov(box(X5, Y5))
+    fall2 = 1 / (1 + (d5 / 22) ** 2) ** 1.5
+    img.add(s5, hexc("#FFB060"), boxm * fall2 * 0.55)
+    gl = np.exp(-(((X5 - (bx + half - 3)) / 2.2) ** 2 + ((Y5 - (rim_y + 0.4)) / 0.9) ** 2)) * boxm
+    img.add(s5, hexc("#FFD9A0"), gl * 0.45)
+    # the box's contact with the road: a soft dark line under it (the box clears the road by a hair)
+    s6, X6, Y6 = img.win(bx, 586, 72)
+    img.over(s6, hexc("#05070F"), np.exp(-((Y6 - 586.6) / 0.9) ** 2) * (np.abs(X6 - bx) < half - 4) * 0.45)
+    return img, (70, rim_y - 528)
+
+
+def road_sprite(S):
+    """The moon road along the foot (frame_rich.road_strip), wall to wall: pale packed earth, moonlit, ruts, and a grass
+    edge rim-lit on its upper left. Anchor: its left end on the road's top line."""
+    img = at(S, 75, ROAD_TOP - 5, 650, 15)
+    sl, xx, yy = img.full()
+    m = np.clip((yy - ROAD_TOP) * img.S + 0.5, 0, 1)
+    n = fbm(img.h, img.w, 3.0 * img.S, 3, 77)
+    col = ramp(np.clip((yy - ROAD_TOP) / 8, 0, 1), [(0, "#5A6488"), (1, "#3A4266")]) * (0.88 + 0.22 * n)[..., None]
+    ruts = np.exp(-((yy - 590.5) / 0.8) ** 2) * 0.10
+    col = col * (1 - ruts)[..., None]
+    img.over(sl, col, m)
+    g = fbm(1, img.w, 2.0 * img.S, 2, 5)[0]
+    gtop = ROAD_TOP - 1.2 - 2.4 * g
+    gm = np.clip((yy - gtop[None, :]) * img.S + 0.5, 0, 1) * np.clip((ROAD_TOP + 1.5 - yy) * img.S + 0.5, 0, 1)
+    img.over(sl, hexc("#141B30"), gm * 0.9)
+    img.add(sl, hexc("#7F92C8"), gm * np.exp(-((yy - gtop[None, :]) / 0.5) ** 2) * 0.35)
+    return img, (0, 5)
+
+
 # ------------------------------------------------------------------------------------------------ the frame
 def bead_outer_sprite(S):
     """The Medallion frame's outer bead as a 9-slice: a 40-unit frame of the bead round the window (playfield.frame)."""
@@ -599,6 +703,7 @@ def sprites():
         "bucket.cradle": cradle_sprite, "bucket.rail": rail_sprite,
         "bucket.boat": boat_sprite, "bucket.boat.contact": boat_contact_sprite, "bucket.water": water_sprite,
         "bucket.column": column_sprite,
+        "bucket.cart": cart_sprite, "bucket.road": road_sprite,
         "frame.bead.outer": bead_outer_sprite, "frame.bead.inner": bead_inner_sprite, "frame.mottle": mottle_sprite,
         "fever.cup": lambda S: cup_sprite(S, False), "fever.cup.centre": lambda S: cup_sprite(S, True),
         "fever.rule": rule_sprite, "fever.band": band_sprite,
@@ -643,7 +748,7 @@ def main():
                 "files": {"1x": "atlas.png", "2x": "atlas@2x.png", "sky": "sky.png"},
                 "sky": {"x": SKY_X0, "y": SKY_Y0, "w": SKY_X1 - SKY_X0, "h": SKY_Y1 - SKY_Y0},
                 "pegVariants": LAYOUTS * len(TURNS),
-                "buckets": {"base": "boat", "expansion": "boat"},
+                "buckets": {"base": "cart", "expansion": "boat"},
                 "gauge": {"from": GAUGE_A0, "to": GAUGE_A1},
                 "inks": {**{f"glow.{k}": PEG[k]["glow"] for k in KINDS}, **{f"flat.{k}": PEG[k]["albedo"] for k in KINDS},
                          **{f"flat.{k}.shade": PEG[k]["sea"] for k in KINDS},

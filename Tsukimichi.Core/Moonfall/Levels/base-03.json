@@ -1,8 +1,10 @@
 {
   "format": "moonfall-level",
-  "version": 1,
+  "version": 2,
   "id": "base-03",
   "name": "Tidewater",
+  "scene": "airship-road",
+  "ace": 280000,
   "playfield": {
     "width": 800,
     "height": 600

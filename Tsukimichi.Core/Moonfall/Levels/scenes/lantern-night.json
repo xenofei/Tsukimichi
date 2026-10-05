@@ -1,0 +1,47 @@
+{
+  // Lantern night (shipped on base-04 "Lantern Ring"; a default dressing of our own painting): violet night over an
+  // aquamarine ground, laurel boughs from both top corners, a pair of warm lanterns in the open upper corners that
+  // flicker, moonbeams from the upper left, twinkling stars and a low mist drifting along the foot below the pegs.
+  "format": "moonfall-scene",
+  "version": 1,
+  "name": "lantern-night",
+  "source": { "picture": "moon-road-night" },
+  "paint": [
+    { "kind": "moonGlow", "x": -60, "y": -60, "rCore": 360, "rWide": 900, "kCore": 0.12, "kWide": 0.05, "colour": "#C9C0F0" }
+  ],
+  "palette": {
+    "bands": [[0, "#4A2F9A"], [380, "#6B3FA8"], [600, "#4A2F9A"]],
+    "chroma": 0.95,
+    "floor": 0.03,
+    "regions": [
+      { "hue": "#1FB0A8", "chroma": 0.10, "weight": 0.9, "where": [{ "y": [440, 520] }] }
+    ]
+  },
+  "light": [
+    { "kind": "shafts", "origin": [-140, -220], "angles": [48, 56, 63, 71], "widths": [26, 18, 34, 22], "k": 0.07, "colour": "#C9B8FF", "seed": 7, "moving": true }
+  ],
+  "framing": [
+    {
+      "body": "#050A12", "inner": "#24164E", "rim": "#C9B8FF", "rimK": 0.45, "seed": 9,
+      "shapes": [
+        { "kind": "frond", "style": "laurel", "x": 66, "y": 34, "length": 160, "angle": 20, "droop": 0.45, "leaf": 17, "leaves": 14, "seed": 41, "width": 1.8 },
+        { "kind": "frond", "style": "laurel", "x": 80, "y": 40, "length": 120, "angle": 52, "droop": 0.35, "leaf": 17, "leaves": 14, "seed": 42, "width": 1.8 },
+        { "kind": "frond", "style": "laurel", "x": 734, "y": 34, "length": 160, "angle": 160, "droop": 0.45, "leaf": 17, "leaves": 14, "seed": 43, "width": 1.8 },
+        { "kind": "frond", "style": "laurel", "x": 720, "y": 40, "length": 120, "angle": 128, "droop": 0.35, "leaf": 17, "leaves": 14, "seed": 44, "width": 1.8 },
+        { "kind": "frond", "style": "laurel", "x": 740, "y": 80, "length": 120, "angle": 150, "droop": 0.5, "leaf": 17, "leaves": 14, "seed": 45, "width": 1.8 }
+      ]
+    }
+  ],
+  "lights": [
+    { "x": 236, "y": 128, "size": 1.3, "colour": "#FFC86E", "core": 2.2, "k": 0.95, "halo": 11, "haloK": 0.32, "flicker": true },
+    { "x": 566, "y": 132, "size": 1.3, "colour": "#FFC86E", "core": 2.2, "k": 0.95, "halo": 11, "haloK": 0.32, "flicker": true }
+  ],
+  "veil": 0.24,
+  "motion": {
+    "dust": 36,
+    "stars": 40,
+    "starRegion": [75, 41, 725, 200],
+    "mist": [{ "y": [564, 594], "speed": 4, "alpha": 0.08, "cell": 140, "seed": 11, "colour": "#AFC0F0" }]
+  },
+  "chrome": { "sky": "#24154F", "deep": "#070616", "jewel1": "#6B3FA8", "jewel2": "#2FA7B4" }
+}

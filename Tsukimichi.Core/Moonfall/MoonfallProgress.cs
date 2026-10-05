@@ -26,6 +26,36 @@ public sealed class MoonfallProgress
 
     public int Cleared(MoonfallCampaignKind kind) => kind == MoonfallCampaignKind.Expansion ? ExpansionCleared : BaseCleared;
 
+    /// <summary>The most bests kept (a level's id each); a file with more keeps the first this many.</summary>
+    public const int MaxBests = 512;
+
+    /// <summary>
+    /// Each level's best winning total, by the level's id (the tally's NEW BEST). Saved with the counts and merged the
+    /// same way: the higher of the two always wins, so a best set in either client is never lost.
+    /// </summary>
+    public Dictionary<string, long> Best { get; set; } = new(StringComparer.Ordinal);
+
+    /// <summary>The best total on <paramref name="levelId"/>, or 0 before its first win.</summary>
+    public long BestFor(string levelId) => levelId is not null && Best.TryGetValue(levelId, out var best) ? best : 0;
+
+    /// <summary>Records a win's total; true when it beats the level's best (a first win sets one but is not a new best).</summary>
+    public bool RecordBest(string levelId, long total)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(levelId);
+        var had = Best.TryGetValue(levelId, out var best);
+        if (total <= best)
+        {
+            return false;
+        }
+
+        if (had || Best.Count < MaxBests)
+        {
+            Best[levelId] = total;
+        }
+
+        return had;
+    }
+
     /// <summary>Where the file lives: <c>&lt;config&gt;/user/moonfall.json</c>.</summary>
     public static string PathFor(PluginPaths paths)
     {
@@ -57,6 +87,7 @@ public sealed class MoonfallProgress
             var disk = Clean(UserFile.LoadForMerge<MoonfallProgress>(path, warnings, out _) ?? new MoonfallProgress());
             disk.BaseCleared = Math.Max(disk.BaseCleared, known.BaseCleared);
             disk.ExpansionCleared = Math.Max(disk.ExpansionCleared, known.ExpansionCleared);
+            disk.MergeBests(known);
             disk.Version = CurrentVersion;
             AtomicFile.Write(path, JsonSerializer.Serialize(disk, StorageJson.Options));
             return disk;
@@ -64,7 +95,7 @@ public sealed class MoonfallProgress
     }
 
     /// <summary>A copy of the counts, for a save on another thread.</summary>
-    public MoonfallProgress Copy() => new() { BaseCleared = BaseCleared, ExpansionCleared = ExpansionCleared };
+    public MoonfallProgress Copy() => new() { BaseCleared = BaseCleared, ExpansionCleared = ExpansionCleared, Best = new Dictionary<string, long>(Best, StringComparer.Ordinal) };
 
     /// <summary>Moves each count up to <paramref name="other"/>'s where that is further; true when anything moved.</summary>
     public bool Absorb(MoonfallProgress other)
@@ -73,6 +104,23 @@ public sealed class MoonfallProgress
         var moved = other.BaseCleared > BaseCleared || other.ExpansionCleared > ExpansionCleared;
         BaseCleared = Math.Max(BaseCleared, other.BaseCleared);
         ExpansionCleared = Math.Max(ExpansionCleared, other.ExpansionCleared);
+        moved |= MergeBests(other);
+        return moved;
+    }
+
+    /// <summary>Takes each of <paramref name="other"/>'s bests that is higher than this one's; true when any moved.</summary>
+    private bool MergeBests(MoonfallProgress other)
+    {
+        var moved = false;
+        foreach (var (id, total) in other.Best)
+        {
+            if (total > BestFor(id) && (Best.ContainsKey(id) || Best.Count < MaxBests))
+            {
+                Best[id] = total;
+                moved = true;
+            }
+        }
+
         return moved;
     }
 
@@ -80,6 +128,17 @@ public sealed class MoonfallProgress
     {
         progress.BaseCleared = Math.Max(0, progress.BaseCleared);
         progress.ExpansionCleared = Math.Max(0, progress.ExpansionCleared);
+        // A damaged or hand-edited file's bests: only level ids with a positive total, and no more than the cap.
+        var best = new Dictionary<string, long>(StringComparer.Ordinal);
+        foreach (var (id, total) in progress.Best ?? [])
+        {
+            if (best.Count < MaxBests && total > 0 && MoonfallLevelLoader.IsSceneName(id))
+            {
+                best[id] = total;
+            }
+        }
+
+        progress.Best = best;
         return progress;
     }
 }

@@ -4,6 +4,7 @@
   "id": "base-01",
   "name": "First Light",
   "scene": "moon-road-night",
+  "ace": 250000,
   "playfield": {
     "width": 800,
     "height": 600

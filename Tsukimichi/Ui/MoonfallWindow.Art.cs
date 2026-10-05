@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Plugin.Services;
+using Dalamud.Interface.Textures.TextureWraps;
 using Tsukimichi.Core.Moonfall;
 using Tsukimichi.Core.Moonfall.Art;
 using Tsukimichi.Core.Ui;
@@ -36,7 +36,7 @@ public sealed partial class MoonfallWindow
     private const int TrailLength = 5;
     private const double NotchSeconds = 0.4;
 
-    private MoonfallArtTextures? art;
+    private MoonfallArtLoader<IDalamudTextureWrap>? art;
     private MoonfallGame? artFor;
     private double[] artClearedAt = [];
     private int artDrawnFrame = int.MinValue / 2;
@@ -51,11 +51,11 @@ public sealed partial class MoonfallWindow
     private readonly record struct ArtPen(ImDrawListPtr Dl, View View, MoonfallAtlas Atlas, ImTextureID Sheet);
 
     /// <summary>Sets the art up when the plugin gives textures (never in the load check, which has none).</summary>
-    private void InitArt(ITextureProvider? textures, string? pluginDirectory, IPluginLog? artLog)
+    private void InitArt(IMoonfallArtHost<IDalamudTextureWrap>? host, string? folder)
     {
-        if (textures is not null && pluginDirectory is not null)
+        if (host is not null && folder is not null)
         {
-            art = new MoonfallArtTextures(textures, pluginDirectory, artLog);
+            art = new MoonfallArtLoader<IDalamudTextureWrap>(host, folder);
         }
     }
 
@@ -69,10 +69,13 @@ public sealed partial class MoonfallWindow
         }
 
         art.Tick();
+        gameArt?.Tick();
         // Two frames without a board drawn (closed, or past its close fade): the textures go back.
         if (ImGui.GetFrameCount() - artDrawnFrame > 2)
         {
             art.Release();
+            gameArt?.Release();
+            sceneFor = null;
         }
     }
 
@@ -81,6 +84,10 @@ public sealed partial class MoonfallWindow
     {
         art?.Dispose();
         art = null;
+        gameArt?.Dispose();
+        gameArt = null;
+        fonts?.Dispose();
+        fonts = null;
     }
 
     /// <summary>Reads the board's events the art needs: when each peg cleared, and the free-ball notch.</summary>
@@ -113,9 +120,24 @@ public sealed partial class MoonfallWindow
 
         artDrawnFrame = ImGui.GetFrameCount();
         var wantTwoX = view.Scale * view.Zoom > ArtTwoXAbove;
-        art.Frame(wantTwoX, g.Level.Scene);
+        var plain = Theme.Flair == Flair.Plain;
+        motion = MoonfallMotion.For(Theme.Flair, UiMetrics.ReduceMotion);
+
+        // The game's own art (spec-rich2.md §6): the chrome, the companions' cards and the level's scene, built at the
+        // board's tier (the zoom is not counted: a scene is not rebuilt for Full Moon's close-up). Not under Plain.
+        var level = campaigns[campaign].Levels[levelIndex];
+        if (!plain)
+        {
+            gameArt?.Frame(level, view.Scale > ArtTwoXAbove, options?.PegMarks == true);
+        }
+
+        // The interim picture stands in only where no recipe draws the scene: a level without one, or one whose build failed.
+        var recipe = plain ? null : gameArt?.RecipeFor(level);
+        var picture = recipe is null ? g.Level.Scene : gameArt!.SceneState == MoonfallSceneState.Failed ? recipe.Fallback : null;
+        art.Frame(wantTwoX, picture);
         if (art.Atlas is not { } atlas || art.Sheet(wantTwoX, out _) is not { } sheet)
         {
+            richHud = false;
             return false;
         }
 
@@ -129,18 +151,80 @@ public sealed partial class MoonfallWindow
         }
 
         var pen = new ArtPen(dl, view, atlas, sheet.Handle);
-        var plain = Theme.Flair == Flair.Plain;
-        var picture = art.Ground(wantTwoX, out var ground);
-        ArtGround(pen, origin, size, picture?.Handle, ground, plain);
-        ArtFeverShade(pen, g, plain);
+        var scene = RichSceneNow();
+        ChromePen? rich = !plain && gameArt?.Chrome is { FrameReady: true } chromeSheet && gameArt.ChromeTexture is { } ui
+            ? new ChromePen(dl, view, chromeSheet, ui.Handle) : null;
+        richHud = rich is not null;
+        if (scene is not null)
+        {
+            dl.AddRectFilled(origin, origin + size, Theme.U32(atlas.Ground));
+            RichScene(pen, scene, g);
+        }
+        else
+        {
+            var ground = art.Ground(wantTwoX, out var kind);
+            ArtGround(pen, origin, size, ground?.Handle, kind, plain);
+        }
+
+        // Under the rich chrome Fever lifts the sky instead of dimming it; the approach still dims.
+        if (scene is null || !g.Fever)
+        {
+            ArtFeverShade(pen, g, plain);
+        }
+
         ArtBand(pen, g, plain);
         ArtPegs(pen, g, alpha, plain);
-        ArtFrame(pen, plain);
+        if (!plain)
+        {
+            PegMarks(pen, g, alpha);
+        }
+
+        if (scene is not null)
+        {
+            LanternSpill(pen, g, alpha);
+        }
+
+        if (rich is { } cp)
+        {
+            var enamel = scene?.Enamel;
+            RichFrame(cp, enamel?.Handle, enamel?.Width ?? 0, enamel?.Height ?? 0, scene?.Layers.Chrome ?? MoonfallChromePalette.Medallion);
+            RichCrest(cp, pen);
+        }
+        else
+        {
+            ArtFrame(pen, plain);
+        }
+
         ArtLauncher(pen, g, plain);
         ArtBucket(pen, g, alpha, plain);
-        ArtFeverCups(pen, g, plain);
+        if (rich is { } cw)
+        {
+            RichWings(cw, pen, g, alpha);
+            RichFeverCups(pen, g, plain);
+        }
+        else
+        {
+            ArtFeverCups(pen, g, plain);
+        }
+
         ArtBall(pen, g, alpha, plain);
-        ArtRule(pen, origin, size, g);
+        if (rich is { } ch)
+        {
+            RichHud(ch, pen, g);
+            TopRailGlint(pen);
+            PowerFlash(pen);
+            Ribbons(ch);
+            FeverMoment(ch, pen, g);
+            if (!cardInMargin)
+            {
+                PowerRibbon(ch);
+            }
+        }
+        else
+        {
+            ArtRule(pen, origin, size, g);
+        }
+
         return true;
     }
 
@@ -570,11 +654,17 @@ public sealed partial class MoonfallWindow
             return;
         }
 
+        if (atlas.BucketFor(campaign) == MoonfallBucketStyle.Cart)
+        {
+            ArtCart(p, x, rim, plain);
+            return;
+        }
+
         const double water = 584;
         Put(p, atlas[MoonfallSprite.BucketWater], 75, water, 1f, uint.MaxValue);
         ref readonly var boat = ref atlas[MoonfallSprite.BucketBoat];
         ArtReflection(p, boat, x, rim, water);
-        var flicker = UiMetrics.ReduceMotion ? 1f : 1f + (0.05f * MathF.Sin((float)boardClock * 7.3f)) + (0.03f * MathF.Sin(((float)boardClock * 13.1f) + 1f));
+        var flicker = MoonfallMotion.Flicker(boardClock, 0f, UiMetrics.ReduceMotion || motion == MoonfallMotionLevel.Still);
         var lantern = atlas.BoatLantern;
         Put(p, atlas[MoonfallSprite.BucketColumn], x + lantern.X, water, 1f, Theme.WithAlpha(Vector4.One, Math.Clamp(flicker, 0f, 1f)));
         Put(p, boat, x, rim, 1f, uint.MaxValue);
@@ -582,6 +672,33 @@ public sealed partial class MoonfallWindow
         if (!plain)
         {
             ref readonly var soft = ref atlas[MoonfallSprite.Soft];
+            Put(p, soft, x + lantern.X, rim + lantern.Y, 9f / 4f, Theme.WithAlpha(atlas.Lantern, 0.40f * flicker));
+            Put(p, soft, x + lantern.X, rim + lantern.Y, 24f / 4f, Theme.WithAlpha(atlas.Lantern, 0.10f * flicker));
+        }
+    }
+
+    /// <summary>
+    /// Bucket C: the moon road, the cart on it, and its paper lantern's warmth in the air and on the road (the boat's
+    /// lantern, flickering the same way).
+    /// </summary>
+    private void ArtCart(in ArtPen p, double x, double rim, bool plain)
+    {
+        var atlas = p.Atlas;
+        const double road = 586;
+        Put(p, atlas[MoonfallSprite.BucketRoad], 75, road, 1f, uint.MaxValue);
+        var flicker = Math.Clamp(MoonfallMotion.Flicker(boardClock, 0f, UiMetrics.ReduceMotion || motion == MoonfallMotionLevel.Still), 0f, 1f);
+        var lantern = atlas.BoatLantern;
+        ref readonly var soft = ref atlas[MoonfallSprite.Soft];
+        if (!plain)
+        {
+            // The pool on the road under the lantern: the soft light's lower half, flattened.
+            var lx = x + lantern.X;
+            Stretch(p, soft, 0, soft.H / 2f, soft.W, soft.H, lx - 52, road, lx + 52, road + 6.4, Theme.WithAlpha(atlas.Lantern, 0.22f * flicker));
+        }
+
+        Put(p, atlas[MoonfallSprite.BucketCart], x, rim, 1f, uint.MaxValue);
+        if (!plain)
+        {
             Put(p, soft, x + lantern.X, rim + lantern.Y, 9f / 4f, Theme.WithAlpha(atlas.Lantern, 0.40f * flicker));
             Put(p, soft, x + lantern.X, rim + lantern.Y, 24f / 4f, Theme.WithAlpha(atlas.Lantern, 0.10f * flicker));
         }

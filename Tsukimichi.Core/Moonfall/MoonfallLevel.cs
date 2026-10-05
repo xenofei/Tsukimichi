@@ -98,6 +98,12 @@ public sealed record MoonfallLevel(string Id, string Name, IReadOnlyList<Moonfal
     /// </summary>
     public string? Scene { get; init; }
 
+    /// <summary>
+    /// The level's ace score (format version 2, optional; Nights' "Aced"): a win whose total reaches it is ACED on the
+    /// tally. Null for none.
+    /// </summary>
+    public int? Ace { get; init; }
+
     /// <summary>How many pegs may be orange.</summary>
     public int OrangeCandidates
     {

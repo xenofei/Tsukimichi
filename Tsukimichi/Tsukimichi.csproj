@@ -30,6 +30,11 @@ Local only: no network code.</Description>
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The offline renderer drives the Moonfall window's board through a few internal hooks (Ui/MoonfallWindow.cs). -->
+    <InternalsVisibleTo Include="Tsukimichi.MoonfallRender" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Tsukimichi.Core\Tsukimichi.Core.csproj" />
     <ProjectReference Include="..\Tsukimichi.GameData\Tsukimichi.GameData.csproj" />
   </ItemGroup>
