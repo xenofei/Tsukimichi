@@ -172,6 +172,134 @@ public sealed class MoonfallGameTests
         Assert.False(game.Shoot(double.NaN));
     }
 
+    // ---- With powers (plan v9 G4, G5) ----
+
+    public static TheoryData<MoonfallPower> Powers()
+    {
+        var data = new TheoryData<MoonfallPower>();
+        for (var p = 1; p <= MoonfallPowers.Count; p++)
+        {
+            data.Add((MoonfallPower)p);
+        }
+
+        return data;
+    }
+
+    /// <summary>A shipped level with a dozen greens, so every few shots trigger <paramref name="power"/>.</summary>
+    private static MoonfallGame PowerGame(MoonfallPower power, ulong seed)
+    {
+        var game = new MoonfallGame(MoonfallCampaigns.LoadBuiltIn().Base.Levels[3], 4, seed, power: power);
+        var made = 0;
+        for (var i = 0; i < game.PegCount && made < 12; i += 5)
+        {
+            if (game.Peg(i).Colour is PegColour.Blue or PegColour.Purple)
+            {
+                game.MakeGreenForTest(i);
+                made++;
+            }
+        }
+
+        return game;
+    }
+
+    /// <summary>One frame as the window plays it: the guides while aiming, a shot, the flippers' button, the reads.</summary>
+    private static void PowerFrame(MoonfallGame game, int frame, double dt, (double X, double Y)[] dots, (double X, double Y)[] line)
+    {
+        var angle = Angles[frame % Angles.Length];
+        if (game.Phase == MoonfallPhase.Aiming)
+        {
+            game.Guide(angle, dots);
+            game.GuideBeyond(angle, line);
+            game.Shoot(angle);
+        }
+
+        game.SetFlippers(frame % 40 < 18);
+        game.Advance(dt);
+        var alpha = game.Alpha;
+        for (var k = 0; k < game.BallsInPlay; k++)
+        {
+            _ = game.BallAt(k, alpha);
+        }
+
+        _ = game.Flipper(false, alpha);
+        _ = game.Flipper(true, alpha);
+        _ = game.BoltPoints.Length;
+    }
+
+    [Theory]
+    [MemberData(nameof(Powers))]
+    public void Every_power_plays_the_same_bit_for_bit(MoonfallPower power)
+    {
+        var a = PowerGame(power, 1234);
+        var b = PowerGame(power, 1234);
+        var dots = new (double X, double Y)[MoonfallRules.GuideMaxDots];
+        var line = new (double X, double Y)[MoonfallRules.SuperGuideMaxPoints];
+        var frames = new MoonfallRandom(99);
+        var triggered = 0;
+        for (var frame = 0; frame < 6000 && a.Phase is not (MoonfallPhase.Won or MoonfallPhase.Lost); frame++)
+        {
+            var dt = (8 + frames.Next(25)) / 1000.0;
+            PowerFrame(a, frame, dt, dots, line);
+            PowerFrame(b, frame, dt, dots, line);
+            Assert.Equal(a.Fingerprint(), b.Fingerprint());
+            while (a.TryReadEvent(out var e))
+            {
+                Assert.True(b.TryReadEvent(out var f));
+                Assert.Equal(e, f);
+                triggered += e.Kind == MoonfallEventKind.PowerTriggered ? 1 : 0;
+            }
+
+            Assert.False(b.TryReadEvent(out _));
+        }
+
+        Assert.True(triggered > 0, $"{power} never triggered");
+    }
+
+    [Fact]
+    public void Every_power_and_the_style_shots_allocate_nothing()
+    {
+        var dots = new (double X, double Y)[MoonfallRules.GuideMaxDots];
+        var line = new (double X, double Y)[MoonfallRules.SuperGuideMaxPoints];
+        var styles = 0;
+        var triggered = 0;
+
+        void Play(MoonfallGame game, int frames, bool count)
+        {
+            for (var frame = 0; frame < frames; frame++)
+            {
+                PowerFrame(game, frame, 1.0 / 60, dots, line);
+                while (game.TryReadEvent(out var e))
+                {
+                    if (count)
+                    {
+                        styles += e.Kind == MoonfallEventKind.StyleShot ? 1 : 0;
+                        triggered += e.Kind == MoonfallEventKind.PowerTriggered ? 1 : 0;
+                    }
+                }
+            }
+        }
+
+        // Warm every path up first (the same calls), then measure a fresh game of each power.
+        var games = new MoonfallGame[MoonfallPowers.Count];
+        for (var p = 1; p <= MoonfallPowers.Count; p++)
+        {
+            Play(PowerGame((MoonfallPower)p, 5), 3000, count: false);
+            games[p - 1] = PowerGame((MoonfallPower)p, 5);
+            Play(games[p - 1], 60, count: false);
+        }
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        foreach (var game in games)
+        {
+            Play(game, 2400, count: true);
+        }
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(0, allocated);
+        Assert.True(triggered >= MoonfallPowers.Count, $"only {triggered} powers triggered");
+        Assert.True(styles > 0, "no style shot in the measured play");
+    }
+
     [Fact]
     public void The_event_ring_keeps_the_latest_256()
     {

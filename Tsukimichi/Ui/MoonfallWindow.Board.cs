@@ -161,6 +161,8 @@ public sealed partial class MoonfallWindow
             hovered = ImGui.IsItemHovered();
         }
 
+        boardHovered = hovered;
+
         if (hovered && !pause.Paused && g.Phase == MoonfallPhase.Aiming)
         {
             var (x, y) = new View(origin, scale, 1f, BoardCentre).Unmap(ImGui.GetMousePos());
@@ -188,8 +190,10 @@ public sealed partial class MoonfallWindow
         DrawBucket(dl, view, g, alpha);
         DrawPegs(dl, view, g, alpha);
         DrawLauncher(dl, view, g, alpha);
+        DrawPowers(dl, view, g, alpha);
         DrawRings(dl, view);
         DrawPopups(dl, view);
+        DrawStylePopups(dl, origin, size);
         DrawShotTally(dl, origin, scale, g);
         DrawBanner(dl, origin, size, g);
         if (pause.Paused)

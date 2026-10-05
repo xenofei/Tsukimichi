@@ -54,7 +54,7 @@ public readonly record struct MoonfallPegView(
 /// stream (wall and bucket bounces, hits with their positions); modes (G7) set the balls, the level number and the seed.
 /// </para>
 /// </summary>
-public sealed class MoonfallGame
+public sealed partial class MoonfallGame
 {
     private const int EventCapacity = 256;
     private const int MaxIterations = 4;
@@ -76,9 +76,18 @@ public sealed class MoonfallGame
     private int speedAccumulator;
     private double realAccumulator;
 
-    /// <summary>The ball in play, and where it was one game tick ago (the window draws between the two).</summary>
-    private Ball ball;
-    private Ball previous;
+    /// <summary>
+    /// The balls in play (a twin ball makes more than one, <see cref="MoonfallRules.MaxBalls"/>), each with where it was
+    /// one game tick ago (the window draws between the two). The first <see cref="ballCount"/> are in play, in the order
+    /// they came in; slot 0 is always one of them while a ball flies, so the window's one-ball reads keep working.
+    /// </summary>
+    private readonly Ball[] balls = new Ball[MoonfallRules.MaxBalls];
+    private int ballCount;
+
+    /// <summary>The ball whose touch is being resolved (its index in <see cref="balls"/>), or −1 for a peg a power lights.</summary>
+    private int toucher = -1;
+
+    private ref Ball ball => ref balls[0];
 
     private int hitCount;
     private int purple = -1;
@@ -94,13 +103,8 @@ public sealed class MoonfallGame
     private bool turnScored;
     private bool lostThisTurn;
 
-    private double stuckX;
-    private double stuckY;
-    private int stuckTicks;
-    private double lowestY;
-    private int sinkTicks;
-
     private int lastOrange = -1;
+    private int approachBall;
     private bool approach;
     private bool feverHit;
     private bool feverLanded;
@@ -118,17 +122,23 @@ public sealed class MoonfallGame
     /// <param name="levelNumber">Its number in its campaign, from 1: green pegs appear from <see cref="MoonfallRules.FirstGreenLevel"/>.</param>
     /// <param name="seed">Picks the oranges, greens and purples; the same seed gives the same board.</param>
     /// <param name="balls">Balls to start with (<see cref="MoonfallRules.BallsPerLevel"/>; a challenge may give fewer).</param>
-    public MoonfallGame(MoonfallLevel level, int levelNumber, ulong seed, int balls = MoonfallRules.BallsPerLevel)
+    /// <param name="power">The power a green peg triggers (plan v9 G5): the level's character's (<see cref="MoonfallCharacters"/>); none by default.</param>
+    public MoonfallGame(MoonfallLevel level, int levelNumber, ulong seed, int balls = MoonfallRules.BallsPerLevel, MoonfallPower power = MoonfallPower.None)
     {
         ArgumentNullException.ThrowIfNull(level);
         ArgumentOutOfRangeException.ThrowIfLessThan(levelNumber, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(balls, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan((int)power, MoonfallPowers.Count, nameof(power));
         Level = level;
         LevelNumber = levelNumber;
         BallsLeft = balls;
+        Power = power;
         random = new MoonfallRandom(seed);
         bodies = new Body[level.Pegs.Count];
         hitOrder = new int[level.Pegs.Count];
+        scratch = new int[level.Pegs.Count];
+        scratchDistance = new double[level.Pegs.Count];
+        stamp = new int[level.Pegs.Count];
         for (var i = 0; i < bodies.Length; i++)
         {
             bodies[i] = Body.From(level.Pegs[i]);
@@ -169,8 +179,11 @@ public sealed class MoonfallGame
     /// <summary>This shot's pegs hit so far.</summary>
     public int ShotPegs => shotPegs;
 
-    /// <summary>This shot's score: <see cref="ShotValue"/> × <see cref="ShotPegs"/> [M correction].</summary>
-    public long ShotScore => shotValue * shotPegs;
+    /// <summary>
+    /// This shot's score: <see cref="ShotValue"/> × <see cref="ShotPegs"/> [M correction], times 3 under a triple score
+    /// (<see cref="MoonfallPower.Draw"/>), plus its style bonuses (<see cref="StyleBonus"/>, never multiplied).
+    /// </summary>
+    public long ShotScore => (shotValue * shotPegs * (tripleThisShot ? MoonfallRules.TripleScoreFactor : 1)) + styleBonus;
 
     /// <summary>Free balls this shot's score has earned (0–3).</summary>
     public int FreeBallsThisShot => freeBallsThisShot;
@@ -278,25 +291,73 @@ public sealed class MoonfallGame
             return false;
         }
 
-        var (dirX, dirY) = Direction(angleDegrees);
         BallsLeft--;
-        ball.X = MoonfallRules.LauncherX + (dirX * MoonfallRules.BarrelLength);
-        ball.Y = MoonfallRules.LauncherY + (dirY * MoonfallRules.BarrelLength);
-        ball.Vx = dirX * MoonfallRules.LaunchSpeed;
-        ball.Vy = dirY * MoonfallRules.LaunchSpeed;
+        StartShot();
+
+        // Sage's Path nudges the shot onto the best line within its spread before it leaves the barrel.
+        if (PowerActive(MoonfallPower.Path))
+        {
+            angleDegrees = ChoosePath(angleDegrees);
+        }
+
+        var (dirX, dirY) = Direction(angleDegrees);
+        BeginFlight(
+            MoonfallRules.LauncherX + (dirX * MoonfallRules.BarrelLength),
+            MoonfallRules.LauncherY + (dirY * MoonfallRules.BarrelLength),
+            dirX * MoonfallRules.LaunchSpeed,
+            dirY * MoonfallRules.LaunchSpeed);
+        return true;
+    }
+
+    /// <summary>A new shot's state: its score, its hits, and the powers that act in it (<see cref="StartShotPowers"/>).</summary>
+    private void StartShot()
+    {
         shotValue = 0;
         shotPegs = 0;
         freeBallsThisShot = 0;
         hitCount = 0;
         clearedThisTurn = 0;
-        stuckX = ball.X;
-        stuckY = ball.Y;
-        stuckTicks = 0;
-        lowestY = ball.Y;
-        sinkTicks = 0;
-        previous = ball;
+        StartShotPowers();
+        StartShotStyle();
+    }
+
+    /// <summary>One ball in play at (x, y) with velocity (vx, vy): the shot's flight begins.</summary>
+    private void BeginFlight(double x, double y, double vx, double vy)
+    {
+        ballCount = 0;
+        AddBall(x, y, vx, vy);
         Phase = MoonfallPhase.Flying;
+    }
+
+    /// <summary>A ball comes into play (the shot's, or a twin); false when <see cref="MoonfallRules.MaxBalls"/> are in already.</summary>
+    private bool AddBall(double x, double y, double vx, double vy)
+    {
+        if (ballCount >= balls.Length)
+        {
+            return false;
+        }
+
+        ref var b = ref balls[ballCount++];
+        b = default;
+        b.X = x;
+        b.Y = y;
+        b.Vx = vx;
+        b.Vy = vy;
+        b.PrevX = x;
+        b.PrevY = y;
+        b.ResetWatch();
+        b.ResetStyle();
         return true;
+    }
+
+    /// <summary>How many balls are in play (0 while none flies).</summary>
+    public int BallsInPlay => Phase == MoonfallPhase.Flying ? ballCount : 0;
+
+    /// <summary>Ball <paramref name="index"/> (below <see cref="BallsInPlay"/>) as drawn at <paramref name="alpha"/>.</summary>
+    public (double X, double Y) BallAt(int index, double alpha)
+    {
+        ref readonly var b = ref balls[Math.Clamp(index, 0, balls.Length - 1)];
+        return (b.PrevX + ((b.X - b.PrevX) * alpha), b.PrevY + ((b.Y - b.PrevY) * alpha));
     }
 
     /// <summary>The unit direction of an aim angle (0° straight down).</summary>
@@ -344,7 +405,7 @@ public sealed class MoonfallGame
         // The approach's camera centres between the drawn ball and the last orange.
         if (approach && !feverHit && lastOrange >= 0)
         {
-            var (x, y) = BallAt(speedAccumulator / (double)SpeedOne);
+            var (x, y) = BallAt(approachBall, speedAccumulator / (double)SpeedOne);
             ref readonly var target = ref bodies[lastOrange];
             focusX = (x + target.BoundX) * 0.5;
             focusY = (y + target.BoundY) * 0.5;
@@ -360,8 +421,7 @@ public sealed class MoonfallGame
     public double Alpha => Math.Clamp((speedAccumulator + (speedMilli * (realAccumulator / MoonfallRules.TickSeconds))) / SpeedOne, 0.0, 1.0);
 
     /// <summary>The ball as drawn at <paramref name="alpha"/> (<see cref="Alpha"/>): between its last two game ticks.</summary>
-    public (double X, double Y) BallAt(double alpha) =>
-        (previous.X + ((ball.X - previous.X) * alpha), previous.Y + ((ball.Y - previous.Y) * alpha));
+    public (double X, double Y) BallAt(double alpha) => BallAt(0, alpha);
 
     /// <summary>The bucket's centre as drawn at <paramref name="alpha"/>.</summary>
     public double BucketXAt(double alpha) => MoonfallBucket.CentreAt(gameTick - 1 + alpha);
@@ -406,7 +466,12 @@ public sealed class MoonfallGame
     /// <summary>One 10 ms game tick: the bucket and movers advance, then the ball or the clearing.</summary>
     private void StepGame()
     {
-        previous = ball;
+        for (var k = 0; k < ballCount; k++)
+        {
+            balls[k].PrevX = balls[k].X;
+            balls[k].PrevY = balls[k].Y;
+        }
+
         for (var i = 0; i < bodies.Length; i++)
         {
             bodies[i].PrevX = bodies[i].X;
@@ -415,13 +480,18 @@ public sealed class MoonfallGame
 
         gameTick++;
         UpdateMovers();
+        StepFlippers();
         switch (Phase)
         {
             case MoonfallPhase.Flying:
-                StepBall();
+                StepBalls();
                 if (Phase == MoonfallPhase.Flying)
                 {
-                    WatchStuck();
+                    for (var k = 0; k < ballCount; k++)
+                    {
+                        WatchStuck(ref balls[k]);
+                    }
+
                     WatchApproach();
                 }
 
@@ -435,40 +505,95 @@ public sealed class MoonfallGame
 
     // ---- The ball ----
 
-    private void StepBall()
+    /// <summary>
+    /// One game tick for every ball in play. A ball that leaves (caught, lost) is dropped after the tick, keeping the
+    /// others in order; a twin made this tick starts moving on the next. The turn ends when the last ball has gone, or
+    /// at once when a ball lands in a Fever bucket.
+    /// </summary>
+    private void StepBalls()
     {
-        var speed = MoonfallGeometry.Hypot(ball.Vx, ball.Vy) + (MoonfallRules.Gravity * MoonfallRules.TickSeconds);
+        var count = ballCount;
+        for (var k = 0; k < count; k++)
+        {
+            StepBall(k);
+            if (Phase != MoonfallPhase.Flying)
+            {
+                return;
+            }
+        }
+
+        var kept = 0;
+        for (var k = 0; k < ballCount; k++)
+        {
+            if (balls[k].Gone)
+            {
+                continue;
+            }
+
+            if (kept != k)
+            {
+                balls[kept] = balls[k];
+            }
+
+            kept++;
+        }
+
+        ballCount = kept;
+        if (ballCount == 0)
+        {
+            EndTurn();
+        }
+    }
+
+    private void StepBall(int k)
+    {
+        ref var b = ref balls[k];
+        var speed = MoonfallGeometry.Hypot(b.Vx, b.Vy) + (MoonfallRules.Gravity * MoonfallRules.TickSeconds);
         var steps = Math.Clamp((int)Math.Ceiling(speed * MoonfallRules.TickSeconds / MoonfallRules.MaxSubStep), 1, MaxSubSteps);
         var h = MoonfallRules.TickSeconds / steps;
         var bucketX = BucketX;
         var bucketV = feverHit ? 0.0 : MoonfallBucket.VelocityAt(gameTick);
-        for (var s = 0; s < steps; s++)
+        toucher = k;
+        try
         {
-            var previousY = ball.Y;
-            ball.X += ball.Vx * h;
-            ball.Y += (ball.Vy * h) + (0.5 * MoonfallRules.Gravity * h * h);
-            ball.Vy += MoonfallRules.Gravity * h;
-            ResolveContacts(ref ball, bucketX, bucketV, live: true);
-            if (previousY < MoonfallRules.CatchLine && ball.Y >= MoonfallRules.CatchLine)
+            for (var s = 0; s < steps; s++)
             {
-                if (feverHit)
+                var previousY = b.Y;
+                b.X += b.Vx * h;
+                b.Y += (b.Vy * h) + (0.5 * MoonfallRules.Gravity * h * h);
+                b.Vy += MoonfallRules.Gravity * h;
+                ResolveContacts(ref b, bucketX, bucketV, live: true);
+                WatchRise(ref b);
+                if (previousY < MoonfallRules.CatchLine && b.Y >= MoonfallRules.CatchLine)
                 {
-                    LandInFeverBucket();
-                    return;
+                    if (feverHit)
+                    {
+                        LandInFeverBucket(ref b);
+                        return;
+                    }
+
+                    if (Math.Abs(b.X - bucketX) <= MouthHalf)
+                    {
+                        CatchInBucket(ref b);
+                        return;
+                    }
                 }
 
-                if (Math.Abs(ball.X - bucketX) <= MoonfallRules.BucketMouth * 0.5)
+                if (b.Y > MoonfallRules.FloorExit)
                 {
-                    CatchInBucket();
+                    if (TryGate(ref b))
+                    {
+                        return;
+                    }
+
+                    LoseBall(ref b);
                     return;
                 }
             }
-
-            if (ball.Y > MoonfallRules.FloorExit)
-            {
-                LoseBall();
-                return;
-            }
+        }
+        finally
+        {
+            toucher = -1;
         }
     }
 
@@ -478,6 +603,7 @@ public sealed class MoonfallGame
         Peg,
         Wall,
         Rim,
+        Flipper,
     }
 
     /// <summary>One surface the ball overlaps in a sub-step.</summary>
@@ -501,11 +627,17 @@ public sealed class MoonfallGame
     /// together: the bounce is about their normals summed by depth, with the deepest one's material, so a ball dropped
     /// into the notch between two pegs bounces straight back up as it would off one surface, instead of being kicked
     /// sideways by whichever peg happened to be resolved first. With one contact this is the plain bounce.
+    /// <para>
+    /// A Fireball shot meets no peg: each one it overlaps is lit and burns away at once (<see cref="Burn"/>), and the
+    /// ball flies on. Off the live ball (a prediction, a guide, the path search) a peg it overlaps is noted in
+    /// <see cref="probe"/>, so the caller can see what the flight touched.
+    /// </para>
     /// </summary>
     private bool ResolveContacts(ref Ball b, double bucketX, double bucketV, bool live, int watch = -1)
     {
         const double r = MoonfallRules.BallRadius;
         var touched = false;
+        var burning = PowerActive(MoonfallPower.Fireball);
         for (var iteration = 0; iteration < MaxIterations; iteration++)
         {
             contactCount = 0;
@@ -515,7 +647,7 @@ public sealed class MoonfallGame
             AddContact(ContactKind.Wall, -1, b.X - (MoonfallRules.RightWall - r), -1, 0, 0, 0);
             AddContact(ContactKind.Wall, -1, MoonfallRules.Ceiling + r - b.Y, 0, 1, 0, 0);
 
-            // The bucket's rims, or the Fever buckets' posts.
+            // The bucket's rims (wider apart under Brass Wings), or the Fever buckets' posts.
             if (b.Y > MoonfallRules.BucketTop - (2 * r) - 20)
             {
                 if (feverHit)
@@ -528,24 +660,49 @@ public sealed class MoonfallGame
                 }
                 else
                 {
-                    PostContact(in b, bucketX - MoonfallBucket.RimOffset, MoonfallRules.BucketTop + MoonfallBucket.RimRadius, MoonfallBucket.RimRadius, bucketV);
-                    PostContact(in b, bucketX + MoonfallBucket.RimOffset, MoonfallRules.BucketTop + MoonfallBucket.RimRadius, MoonfallBucket.RimRadius, bucketV);
+                    var offset = MouthHalf + MoonfallBucket.RimRadius;
+                    PostContact(in b, bucketX - offset, MoonfallRules.BucketTop + MoonfallBucket.RimRadius, MoonfallBucket.RimRadius, bucketV);
+                    PostContact(in b, bucketX + offset, MoonfallRules.BucketTop + MoonfallBucket.RimRadius, MoonfallBucket.RimRadius, bucketV);
                 }
             }
+
+            FlipperContacts(in b);
 
             // Pegs and bricks.
             for (var i = 0; i < bodies.Length; i++)
             {
                 ref readonly var body = ref bodies[i];
-                if (!body.Cleared && body.Near(b.X, b.Y) && body.Overlap(b.X, b.Y, out var pnx, out var pny, out var pdepth))
+                if (body.Cleared || !body.Near(b.X, b.Y) || !body.Overlap(b.X, b.Y, out var pnx, out var pny, out var pdepth))
                 {
-                    AddContact(ContactKind.Peg, i, pdepth, pnx, pny, body.Vx, body.Vy);
+                    continue;
                 }
+
+                if (!live)
+                {
+                    touched |= i == watch;
+                    NoteProbe(i);
+                    if (burning)
+                    {
+                        continue;
+                    }
+                }
+                else if (burning)
+                {
+                    Burn(ref b, i);
+                    continue;
+                }
+
+                AddContact(ContactKind.Peg, i, pdepth, pnx, pny, body.Vx, body.Vy);
             }
 
             if (contactCount == 0)
             {
                 return touched;
+            }
+
+            if (!live)
+            {
+                probe.Any = true;
             }
 
             // The deepest contact gives the material and the surface's motion; the normals add up by depth.
@@ -586,23 +743,18 @@ public sealed class MoonfallGame
             b.X += nx * push;
             b.Y += ny * push;
             var peg = main.Kind == ContactKind.Peg;
+            var (en, et) = main.Kind switch
+            {
+                ContactKind.Peg => (MoonfallRules.PegNormalRestitution, MoonfallRules.PegTangentRestitution),
+                ContactKind.Flipper => (MoonfallRules.FlipperRestitution, MoonfallRules.PegTangentRestitution),
+                _ => (MoonfallRules.WallRestitution, MoonfallRules.WallRestitution),
+            };
             var inX = b.Vx;
+            var approach = -(((b.Vx - main.Vx) * nx) + ((b.Vy - main.Vy) * ny));
             var inY = b.Vy;
-            var bounced = Bounce(
-                ref b,
-                nx,
-                ny,
-                main.Vx,
-                main.Vy,
-                peg ? MoonfallRules.PegNormalRestitution : MoonfallRules.WallRestitution,
-                peg ? MoonfallRules.PegTangentRestitution : MoonfallRules.WallRestitution);
+            var bounced = Bounce(ref b, nx, ny, main.Vx, main.Vy, en, et);
             if (!live)
             {
-                for (var c = 0; c < contactCount; c++)
-                {
-                    touched |= contacts[c].Kind == ContactKind.Peg && contacts[c].Index == watch;
-                }
-
                 continue;
             }
 
@@ -613,12 +765,13 @@ public sealed class MoonfallGame
 
             var wall = false;
             var rim = false;
+            var anyPeg = false;
             for (var c = 0; c < contactCount; c++)
             {
                 switch (contacts[c].Kind)
                 {
                     case ContactKind.Peg:
-                        Light(contacts[c].Index);
+                        anyPeg = true;
                         break;
                     case ContactKind.Wall:
                         wall = true;
@@ -629,13 +782,27 @@ public sealed class MoonfallGame
                 }
             }
 
+            if (anyPeg)
+            {
+                NotePegContact(ref b, approach);
+                for (var c = 0; c < contactCount; c++)
+                {
+                    if (contacts[c].Kind == ContactKind.Peg)
+                    {
+                        Touch(ref b, contacts[c].Index);
+                    }
+                }
+            }
+
             if (bounced && wall)
             {
+                NoteWall(ref b);
                 Post(MoonfallEventKind.WallBounce, -1, 0, 0, b.X, b.Y);
             }
 
             if (bounced && rim)
             {
+                NoteRim(ref b);
                 Post(MoonfallEventKind.BucketBounce, -1, 0, 0, b.X, b.Y);
             }
         }
@@ -725,12 +892,13 @@ public sealed class MoonfallGame
 
     // ---- Hits and scoring ----
 
-    private void Light(int index)
+    /// <summary>Lights peg <paramref name="index"/> for this shot; false when it was lit or gone already.</summary>
+    private bool Light(int index)
     {
         ref var b = ref bodies[index];
         if (b.Lit || b.Cleared)
         {
-            return;
+            return false;
         }
 
         // The multiplier in force when the peg is touched, before this touch counts (MoonfallRules.Multiplier).
@@ -754,7 +922,17 @@ public sealed class MoonfallGame
             {
                 StartFever(index);
             }
+
+            NoteOrangeLit(index);
         }
+
+        // A green triggers the level's power (plan v9 G5), after the peg itself has counted.
+        if (b.Colour == PegColour.Green)
+        {
+            OnGreenLit(index);
+        }
+
+        return true;
     }
 
     private void AwardShotFreeBalls()
@@ -771,42 +949,38 @@ public sealed class MoonfallGame
 
     // ---- The stuck ball ----
 
-    private void WatchStuck()
+    private void WatchStuck(ref Ball ball)
     {
         // Sinking: a new low point (by StuckRadius) restarts the hollow watch.
-        if (ball.Y > lowestY + MoonfallRules.StuckRadius)
+        if (ball.Y > ball.LowestY + MoonfallRules.StuckRadius)
         {
-            lowestY = ball.Y;
-            sinkTicks = 0;
+            ball.LowestY = ball.Y;
+            ball.SinkTicks = 0;
         }
         else if (MoonfallGeometry.Hypot(ball.Vx, ball.Vy) < MoonfallRules.StuckSinkSpeed)
         {
-            sinkTicks++;
+            ball.SinkTicks++;
         }
 
-        if (MoonfallGeometry.Hypot(ball.X - stuckX, ball.Y - stuckY) > MoonfallRules.StuckRadius)
+        if (MoonfallGeometry.Hypot(ball.X - ball.StuckX, ball.Y - ball.StuckY) > MoonfallRules.StuckRadius)
         {
-            stuckX = ball.X;
-            stuckY = ball.Y;
-            stuckTicks = 0;
+            ball.StuckX = ball.X;
+            ball.StuckY = ball.Y;
+            ball.StuckTicks = 0;
         }
         else
         {
-            stuckTicks++;
+            ball.StuckTicks++;
         }
 
-        if ((stuckTicks >= MoonfallRules.StuckTicks || sinkTicks >= MoonfallRules.StuckSinkTicks) && ClearStuckPeg())
+        if ((ball.StuckTicks >= MoonfallRules.StuckTicks || ball.SinkTicks >= MoonfallRules.StuckSinkTicks) && ClearStuckPeg(in ball))
         {
-            stuckTicks = 0;
-            stuckX = ball.X;
-            stuckY = ball.Y;
-            sinkTicks = 0;
-            lowestY = ball.Y;
+            ball.ResetWatch();
         }
     }
 
     /// <summary>Clears early the lit peg the ball touches that was hit last; false when it touches none (it is in the air).</summary>
-    private bool ClearStuckPeg()
+    private bool ClearStuckPeg(in Ball ball)
     {
         var pick = -1;
         var pickOrder = -1;
@@ -850,12 +1024,22 @@ public sealed class MoonfallGame
             lastOrange = FindLastOrange();
         }
 
-        var predicted = lastOrange >= 0 && PredictsTouch(lastOrange, MoonfallRules.FeverLookaheadTicks);
+        // Any ball in play may be the one heading for it; the camera follows the first that is.
+        var predicted = false;
+        for (var k = 0; k < ballCount && lastOrange >= 0 && !predicted; k++)
+        {
+            if (PredictsTouch(in balls[k], lastOrange, MoonfallRules.FeverLookaheadTicks))
+            {
+                predicted = true;
+                approachBall = k;
+            }
+        }
+
         if (predicted && !approach)
         {
             approach = true;
             speedMilli = MoonfallRules.ApproachSpeedMilli;
-            Post(MoonfallEventKind.FeverApproach, lastOrange, 0, 0, ball.X, ball.Y);
+            Post(MoonfallEventKind.FeverApproach, lastOrange, 0, 0, balls[approachBall].X, balls[approachBall].Y);
         }
         else if (!predicted && approach)
         {
@@ -880,13 +1064,14 @@ public sealed class MoonfallGame
     }
 
     /// <summary>
-    /// Whether the ball touches peg <paramref name="target"/> within <paramref name="ticks"/> game ticks, flown on a copy
-    /// with the real contact solver: a ball rolling or sliding along a brick into the last orange, or bouncing off another
-    /// peg on the way, is predicted as it will move. The bucket and the movers are taken where they are now.
+    /// Whether <paramref name="from"/> touches peg <paramref name="target"/> within <paramref name="ticks"/> game
+    /// ticks, flown on a copy with the real contact solver: a ball rolling or sliding along a brick into the last orange,
+    /// or bouncing off another peg on the way, is predicted as it will move. The bucket and the movers are taken where
+    /// they are now.
     /// </summary>
-    private bool PredictsTouch(int target, int ticks)
+    private bool PredictsTouch(in Ball from, int target, int ticks)
     {
-        var b = ball;
+        var b = from;
         var bucketX = BucketX;
         var bucketV = MoonfallBucket.VelocityAt(gameTick);
         for (var t = 0; t < ticks; t++)
@@ -937,30 +1122,37 @@ public sealed class MoonfallGame
         Post(MoonfallEventKind.FeverHit, index, perfect ? 1 : 0, shotPegs, bodies[index].BoundX, bodies[index].BoundY);
     }
 
-    private void LandInFeverBucket()
+    /// <summary>
+    /// [J] The first ball to land in a Fever bucket pays the level's one Fever bonus and ends the turn; any other ball
+    /// still in play goes with it (the tally has one Fever line, as the original's).
+    /// </summary>
+    private void LandInFeverBucket(ref Ball b)
     {
-        feverBucket = MoonfallBucket.FeverBucketAt(ball.X);
+        feverBucket = MoonfallBucket.FeverBucketAt(b.X);
         feverBonus = Perfect ? MoonfallRules.PerfectFeverBucketValue : MoonfallRules.FeverBucketValues[feverBucket];
         feverLanded = true;
         speedMilli = SpeedOne;
-        Post(MoonfallEventKind.FeverLanded, feverBucket, feverBonus, 0, ball.X, ball.Y);
+        CheckClearNight(in b);
+        Post(MoonfallEventKind.FeverLanded, feverBucket, feverBonus, 0, b.X, b.Y);
         EndTurn();
     }
 
     // ---- The end of a turn ----
 
-    private void CatchInBucket()
+    /// <summary>A ball lands in the bucket: a free ball for each one caught (a twin's too). The others fly on.</summary>
+    private void CatchInBucket(ref Ball b)
     {
         BallsLeft++;
-        Post(MoonfallEventKind.BucketCatch, -1, 0, 0, ball.X, ball.Y);
-        Post(MoonfallEventKind.FreeBall, -1, 0, freeBallsThisShot, ball.X, ball.Y);
-        EndTurn();
+        b.Gone = true;
+        Post(MoonfallEventKind.BucketCatch, -1, 0, 0, b.X, b.Y);
+        Post(MoonfallEventKind.FreeBall, -1, 0, freeBallsThisShot, b.X, b.Y);
+        NoteCatch(in b);
     }
 
-    private void LoseBall()
+    private void LoseBall(ref Ball b)
     {
-        Post(MoonfallEventKind.BallLost, -1, 0, 0, ball.X, ball.Y);
-        EndTurn();
+        b.Gone = true;
+        Post(MoonfallEventKind.BallLost, -1, 0, 0, b.X, b.Y);
     }
 
     private void EndTurn()
@@ -977,6 +1169,7 @@ public sealed class MoonfallGame
         nextBallWait = 0;
         turnScored = false;
         lostThisTurn = false;
+        EndShotPowers();
     }
 
     private void StepClearing()
@@ -1224,26 +1417,38 @@ public sealed class MoonfallGame
     /// <summary>Puts a ball in play at (x, y) with velocity (vx, vy), as a shot would, without using a ball.</summary>
     internal void PlaceBall(double x, double y, double vx, double vy)
     {
-        ball.X = x;
-        ball.Y = y;
-        ball.Vx = vx;
-        ball.Vy = vy;
-        shotValue = 0;
-        shotPegs = 0;
-        freeBallsThisShot = 0;
-        hitCount = 0;
-        clearedThisTurn = 0;
-        stuckX = x;
-        stuckY = y;
-        stuckTicks = 0;
-        lowestY = ball.Y;
-        sinkTicks = 0;
-        previous = ball;
-        Phase = MoonfallPhase.Flying;
+        StartShot();
+        BeginFlight(x, y, vx, vy);
     }
 
     /// <summary>Lights peg <paramref name="index"/> as a touch would (scoring tests).</summary>
     internal void LightForTest(int index) => Light(index);
+
+    /// <summary>
+    /// Ball <paramref name="ballIndex"/> touches peg <paramref name="index"/> as a contact in this game tick would: the
+    /// slide's watch, then the touch with the style shots' watch (style tests).
+    /// </summary>
+    internal void TouchForTest(int ballIndex, int index)
+    {
+        NotePegContact(ref balls[ballIndex]);
+        Touch(ref balls[ballIndex], index);
+    }
+
+    /// <summary>Makes peg <paramref name="index"/> green (it must not be orange), so a test knows where the green is.</summary>
+    internal void MakeGreenForTest(int index)
+    {
+        if (bodies[index].Colour == PegColour.Orange)
+        {
+            throw new InvalidOperationException("An orange peg cannot be made green.");
+        }
+
+        if (purple == index)
+        {
+            purple = -1;
+        }
+
+        bodies[index].Colour = PegColour.Green;
+    }
 
     // ---- Determinism ----
 
@@ -1257,12 +1462,13 @@ public sealed class MoonfallGame
     public ulong Fingerprint()
     {
         var hash = new FingerprintHash();
-        hash.Add(ball.X);
-        hash.Add(ball.Y);
-        hash.Add(ball.Vx);
-        hash.Add(ball.Vy);
-        hash.Add(previous.X);
-        hash.Add(previous.Y);
+        hash.Add(ballCount);
+        foreach (ref readonly var b in balls.AsSpan())
+        {
+            b.AddTo(ref hash);
+        }
+
+        AddPowersTo(ref hash);
         hash.Add(gameTick);
         hash.Add(realTick);
         hash.Add(speedMilli);
@@ -1285,12 +1491,8 @@ public sealed class MoonfallGame
         hash.Add(clearCursor);
         hash.Add(clearedThisTurn);
         hash.Add(nextBallWait);
-        hash.Add(stuckX);
-        hash.Add(stuckY);
-        hash.Add(stuckTicks);
-        hash.Add(lowestY);
-        hash.Add(sinkTicks);
         hash.Add(lastOrange);
+        hash.Add(approachBall);
         hash.Add((approach ? 1 : 0) | (feverHit ? 2 : 0) | (feverLanded ? 4 : 0) | (Perfect ? 8 : 0));
         hash.Add(feverRealTicks);
         hash.Add(feverBucket);
@@ -1354,13 +1556,100 @@ public sealed class MoonfallGame
         }
     }
 
-    /// <summary>A ball's centre and velocity.</summary>
+    /// <summary>A ball's centre and velocity, where it was a game tick ago, its stuck watch and its style shots' watch.</summary>
     private struct Ball
     {
         public double X;
         public double Y;
         public double Vx;
         public double Vy;
+        public double PrevX;
+        public double PrevY;
+
+        /// <summary>Caught or lost this tick: dropped once every ball has moved.</summary>
+        public bool Gone;
+
+        // The stuck watch (MoonfallRules.StuckTicks, StuckSinkTicks).
+        public double StuckX;
+        public double StuckY;
+        public int StuckTicks;
+        public double LowestY;
+        public int SinkTicks;
+
+        // The style shots' watch (MoonfallGame.Style.cs).
+        public int LegPeg;
+        public double LegX;
+        public double LegY;
+        public int LegBlues;
+        public bool LegWasLong;
+        public bool AfterWall;
+        public double WallX;
+        public double WallY;
+        public bool AfterRim;
+        public bool RimArmed;
+        public long RimTick;
+        public double RimY;
+        public double RimPeak;
+        public long LastPegContact;
+        public int SlideRun;
+
+        /// <summary>Starts the stuck watch afresh from where the ball is.</summary>
+        public void ResetWatch()
+        {
+            StuckX = X;
+            StuckY = Y;
+            StuckTicks = 0;
+            LowestY = Y;
+            SinkTicks = 0;
+        }
+
+        /// <summary>Starts the style shots' watch afresh (a new ball).</summary>
+        public void ResetStyle()
+        {
+            LegPeg = -1;
+            LegX = 0;
+            LegY = 0;
+            LegBlues = 0;
+            LegWasLong = false;
+            AfterWall = false;
+            WallX = 0;
+            WallY = 0;
+            AfterRim = false;
+            RimArmed = false;
+            RimTick = 0;
+            RimY = 0;
+            RimPeak = 0;
+            LastPegContact = long.MinValue / 2;
+            SlideRun = 0;
+        }
+
+        public readonly void AddTo(ref FingerprintHash hash)
+        {
+            hash.Add(X);
+            hash.Add(Y);
+            hash.Add(Vx);
+            hash.Add(Vy);
+            hash.Add(PrevX);
+            hash.Add(PrevY);
+            hash.Add(Gone ? 1 : 0);
+            hash.Add(StuckX);
+            hash.Add(StuckY);
+            hash.Add(StuckTicks);
+            hash.Add(LowestY);
+            hash.Add(SinkTicks);
+            hash.Add(LegPeg);
+            hash.Add(LegX);
+            hash.Add(LegY);
+            hash.Add(LegBlues);
+            hash.Add((LegWasLong ? 1 : 0) | (AfterWall ? 2 : 0) | (AfterRim ? 4 : 0) | (RimArmed ? 8 : 0));
+            hash.Add(WallX);
+            hash.Add(WallY);
+            hash.Add(RimTick);
+            hash.Add(RimY);
+            hash.Add(RimPeak);
+            hash.Add(LastPegContact);
+            hash.Add(SlideRun);
+        }
     }
 
     /// <summary>A peg's shape, place, colour and state, kept in one array so a tick walks it in order.</summary>
