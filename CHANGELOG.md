@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-10-04
+
 ### Added
 - **What's new, after an update:** once Dalamud installs a newer Tsukimichi, a popup shows what changed in a few plain points, with a painting for each release drawn in your theme. It shows once per update, never on a first install, and several releases arriving at once become pages. Past notes, back to 1.14.0, are in Settings › Advanced › What's new.
 - **Update ready:** Tsukimichi asks Dalamud at login and every few hours whether a newer version is waiting (on by default). A quiet status-bar note and a dot on the moon icon say so, and **Update** opens Dalamud's installer. Tsukimichi still makes no network request of its own.
