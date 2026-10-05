@@ -3,7 +3,7 @@
     "Author": "Michiru Tsukikage",
     "Name": "Tsukimichi",
     "InternalName": "Tsukimichi",
-    "AssemblyVersion": "1.22.0.0",
+    "AssemblyVersion": "1.22.1.0",
     "Description": "A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.\nMoonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.\nLocal only: no network code.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/xenofei/Tsukimichi",
@@ -21,13 +21,13 @@
     "IconUrl": "https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon-medallion.png",
     "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.22.0/latest.zip",
-    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.22.0/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.22.0/latest.zip",
-    "LastUpdate": 1791159562,
+    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.22.1/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.22.1/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.22.1/latest.zip",
+    "LastUpdate": 1791200273,
     "DownloadCount": 0,
     "IsHide": false,
     "IsTestingExclusive": false,
-    "Changelog": "Welcome home\n\n• What's new, in pictures. After each update, a short note like this one shows what changed. Past notes are in Settings, under What's new.\n• Know when an update is ready. A quiet note in the status bar and a dot on the moon icon tell you. Update opens Dalamud's installer.\n• A moon on your screen. A small moon opens Tsukimichi and shows what's next when you hover it. Move it, lock it or hide it.\n• Faces for quest givers. Tsukimichi offers the optional portrait pack once. Nothing downloads unless you choose Download.\n• At home in Umbra. Tsukimichi keeps clear of Umbra's toolbar, and an Umbra add-on puts Tonight in your Umbra bar."
+    "Changelog": "Familiar faces\n\n• Faces where they belong. Quest-giver portraits were re-cut by hand so faces sit in the middle, and each quest shows a character as they looked at that point in the story.\n• Photos built in. Quest-giver photos now come with Tsukimichi, so there's nothing to download. Turn them off in Settings, under Look.\n• Sort Moonlit. Click a column header in Moonlit to sort by it; click again to reverse.\n• One click for Umbra. If you use Umbra, Tsukimichi can put its widget on your Umbra bar for you, and take it off again."
   }
 ]
