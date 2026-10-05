@@ -163,32 +163,43 @@ def enamel(sl, xx, yy, img, x0, y0, x1, y1):
 
 
 # ------------------------------------------------------------------------------------------------ the seas
-# lobed, broken mass across the upper middle of the disc (the v8 moon rule for small moons): (x, y, rx, ry, weight) in
-# disc radii. Three variants turn the same face a little so a board of pegs doesn't look stamped.
-SEAS = [  # (x, y, rx, ry, depth) in disc radii: Imbrium, Serenitatis, Tranquillitatis, a faint Procellarum, Vaporum
-    (-0.28, -0.20, 0.30, 0.23, 1.00), (0.10, -0.26, 0.24, 0.19, 0.85), (0.30, -0.03, 0.22, 0.19, 0.80),
-    (-0.50, 0.10, 0.18, 0.30, 0.45), (-0.06, -0.08, 0.22, 0.14, 0.55), (0.42, 0.24, 0.13, 0.13, 0.40)]
+# Four layouts of lobed maria, each 4-5 separate seas of different depth clustered across the upper middle of the disc
+# (never along a curve, so no hook, ring or "C"): (x, y, rx, ry, depth, lobe phase) in disc radii. Each peg also turns
+# its layout by its own angle, so no two neighbours match.
+SEA_SETS = [
+    [(-0.30, -0.22, 0.24, 0.18, 1.00, 0.3), (0.10, -0.31, 0.17, 0.14, 0.80, 1.1), (0.33, -0.05, 0.19, 0.16, 0.90, 2.0),
+     (-0.50, 0.10, 0.12, 0.22, 0.55, 2.7), (-0.06, -0.02, 0.10, 0.08, 0.60, 0.9)],
+    [(-0.22, -0.28, 0.28, 0.17, 0.95, 1.4), (0.24, -0.20, 0.20, 0.17, 0.85, 0.2), (-0.46, 0.04, 0.14, 0.18, 0.65, 2.2),
+     (0.40, 0.12, 0.12, 0.13, 0.60, 1.7)],
+    [(-0.36, -0.12, 0.22, 0.22, 0.90, 0.6), (0.02, -0.30, 0.20, 0.13, 0.75, 2.4), (0.30, -0.12, 0.16, 0.19, 1.00, 1.0),
+     (-0.10, 0.10, 0.12, 0.09, 0.55, 2.9), (0.44, 0.20, 0.09, 0.10, 0.50, 0.4)],
+    [(-0.26, -0.18, 0.30, 0.20, 1.00, 2.6), (0.20, -0.28, 0.16, 0.12, 0.70, 1.3), (0.34, 0.00, 0.18, 0.14, 0.85, 0.5),
+     (-0.54, 0.16, 0.10, 0.16, 0.50, 1.9)],
+]
 
 
-def seas_field(u, v, variant=0):
-    """The seas, 0..1: one broad mass across the upper middle, made of soft overlapping lobes of different depth that
-    merge, so it reads as a broken, lobed mass (never a smooth lozenge, a ring, a hook or a row of holes)."""
-    a = [0.0, 0.30, -0.26][variant % 3]
+def seas_field(u, v, variant=0, rot=None):
+    """The seas, 0..1: separate lobed maria of different depth, each with a soft but definite edge (about 0.06 r)."""
+    a = (variant * 0.61) % 1.0 * 1.4 - 0.7 if rot is None else rot
     ca, sa = math.cos(a), math.sin(a)
     ur, vr = u * ca + v * sa, -u * sa + v * ca
     acc = np.zeros_like(u)
-    for (sx, sy, rx, ry, k) in SEAS:
-        d = ((ur - sx) / rx) ** 2 + ((vr - sy) / ry) ** 2
-        acc = 1 - (1 - acc) * (1 - k * np.exp(-d * d * 0.9))                       # a soft union: lobes merge
-    lob = 1 + 0.14 * np.sin(ur * 6.3 + 1.3 * variant) * np.cos(vr * 5.7 + 0.4)
-    return np.clip(acc * lob, 0, 1)
+    for (sx, sy, rx, ry, k, ph) in SEA_SETS[variant % 4]:
+        du, dv = (ur - sx) / rx, (vr - sy) / ry
+        rr = np.sqrt(du * du + dv * dv)
+        th = np.arctan2(dv, du)
+        edge = 1 + 0.16 * np.sin(3 * th + ph) + 0.08 * np.sin(5 * th + 2 * ph)       # a lobed outline
+        m = smooth(edge + 0.22, edge - 0.22, rr) * k
+        acc = np.maximum(acc, m)
+    return acc
 
 
 # ------------------------------------------------------------------------------------------------ moon pegs
-def draw_moon(img, x, y, r, kind, state="unlit", variant=0, sky="#141C3A", scale=1.0, alpha=1.0, flash=0.0):
-    """A peg as a small moon. state: 'unlit' (a gibbous moon in the one light: lit face, soft terminator, 0.2 r unlit
-    sliver lower right), 'lit' (struck: the face brightens toward white in the kind's hue, a halo blooms, the
-    sliver narrows but stays). scale/alpha/flash are for the clearing frames."""
+def draw_moon(img, x, y, r, kind, state="unlit", variant=0, sky="#141C3A", scale=1.0, alpha=1.0, flash=0.0, rot=None):
+    """A peg as a small moon. state: 'unlit' (a gibbous moon in the one light: lit face, a soft terminator, an unlit
+    part about 0.2 r wide on the lower right in earthshine, so the whole disc stays round), 'lit' (struck: the face
+    brightens in the kind's hue and a halo blooms; the seas and a narrower sliver stay). scale/alpha/flash are for
+    the clearing frames. An unlit peg has no halo: it is not a light."""
     r = r * scale
     w = img.win(x, y, r * 3.2)
     if w is None:
@@ -201,33 +212,28 @@ def draw_moon(img, x, y, r, kind, state="unlit", variant=0, sky="#141C3A", scale
     cov = np.clip((1 - d) * r * S + 0.5, 0, 1) * alpha
     nz = np.sqrt(np.clip(1 - d2, 0, 1))
     mu0 = u * L[0] + v * L[1] + nz * L[2]
-    ls = np.where(mu0 > 0, mu0 / (mu0 + nz + 1e-4), 0.0) / 0.5                      # Lommel-Seeliger: a flat lunar face
-    lit_t = smooth(-0.06, 0.14, mu0)                                               # a soft terminator
-    shade = (0.78 * ls + 0.22 * np.clip(mu0, 0, 1)) * lit_t
+    ls = np.minimum(np.where(mu0 > 0, mu0 / (mu0 + nz + 1e-4), 0.0) / 0.5, 1.12)     # Lommel-Seeliger: a flat lunar face
+    lit_t = blur(smooth(-0.05, 0.08, mu0), 0.11 * r * S)                            # a soft terminator, ~0.25 r wide
+    shade = 0.80 * ls + 0.20 * np.clip(mu0, 0, 1)
     k = PEG[kind]
     alb, sea, glow = hexc(k["albedo"]), hexc(k["sea"]), hexc(k["glow"])
-    s = seas_field(u, v, variant)
-    hl = 0.985 + 0.03 * (np.sin(u * 9.0 + v * 4.0 + variant) * np.cos(v * 8.0 - u * 3.0))     # highland grain, faint
-    col = alb[None, None, :] * (1 - s[..., None] * 0.70) + sea[None, None, :] * (s[..., None] * 0.70)
-    col = col * hl[..., None]
+    s = seas_field(u, v, variant, rot)
+    col = alb[None, None, :] * (1 - s[..., None] * 0.62) + sea[None, None, :] * (s[..., None] * 0.62)
     skyc = hexc(sky)
-    earth = skyc * 1.35 + alb * 0.12                                               # the unlit part: sky tone, lifted by earthshine
+    earth = skyc * 1.45 + alb * 0.13                                                # earthshine: the disc stays round
     if state == "lit":
-        col = col * 0.72 + np.array([1, 1, 1], np.float32) * 0.18 + glow * 0.16
-        lit_t = smooth(-0.13, 0.08, mu0)                                           # the sliver narrows to ~0.1 r
-        shade = np.maximum(shade * 1.12 + 0.06, 0.66)
-        earth = earth * 0.55 + glow * 0.34
+        col = col * 0.80 + np.array([1, 1, 1], np.float32) * 0.10 + glow * 0.12
+        lit_t = blur(smooth(-0.20, -0.06, mu0), 0.08 * r * S)                       # the sliver narrows to ~0.12 r
+        shade = np.maximum(shade * 1.10 + 0.05, 0.55)
+        earth = earth * 0.6 + glow * 0.26
     face = col * shade[..., None]
     face = face * lit_t[..., None] + earth * (1 - lit_t[..., None])
     if flash:
         face = screen(face, glow * flash)
-    # halo: the moon's own scattered light, a tight faint one when unlit, a broad bloom in the kind's hue when lit
     if state == "lit":
         img.add(sl, glow, (np.exp(-np.clip(d - 0.92, 0, None) ** 2 * 3.2) * 0.50 + np.exp(-np.clip(d - 1, 0, None) * 2.6) * 0.14) * alpha)
-    else:
-        img.add(sl, glow, np.exp(-np.clip(d - 0.95, 0, None) ** 2 * 6.0) * 0.10 * alpha)
     if flash:
-        img.add(sl, glow, np.exp(-np.clip(d - 1, 0, None) ** 2 * 0.8) * flash * 0.6)
+        img.add(sl, glow, np.exp(-np.clip(d - 1, 0, None) ** 2 * 2.2) * flash * 0.55)
     img.over(sl, face, cov)
 
 
@@ -262,7 +268,7 @@ def draw_brick(img, sdf_fn, bbox, kind, state="unlit", variant=0, alpha=1.0):
     S = img.S
     sd = sdf_fn(xx, yy)
     cov = img.cov(sd) * alpha
-    hgt = np.sqrt(np.clip(-sd / 4.5, 0, 1)) * 3.2                                   # a rounded edge 4.5 units wide
+    hgt = np.sqrt(np.clip(-sd / 4.5, 0, 1)) * 4.5                                   # a rounded edge 4.5 units wide
     nx, ny, nz = normals_from_height(hgt, S)
     lam = np.clip(nx * L[0] + ny * L[1] + nz * L[2], 0, 1)
     nh = np.clip(nx * H_BLINN[0] + ny * H_BLINN[1] + nz * H_BLINN[2], 0, 1)
@@ -271,7 +277,7 @@ def draw_brick(img, sdf_fn, bbox, kind, state="unlit", variant=0, alpha=1.0):
     m = fbm(sd.shape[0], sd.shape[1], 9 * S, 3, 70 + variant)
     s = np.clip((m - 0.45) * 2.4, 0, 1) * 0.55
     col = alb * (1 - s[..., None]) + sea * s[..., None]
-    shade = 0.30 + 0.72 * lam
+    shade = 0.18 + 0.90 * lam
     if state == "lit":
         col = col * 0.72 + 0.18 + glow * 0.16
         shade = shade * 1.08 + 0.08
@@ -289,28 +295,27 @@ def sector_brick(ax, ay, R, th, half, t=12.0):
 
 # ------------------------------------------------------------------------------------------------ the ball
 def draw_ball(img, x, y, r=6.0, alpha=1.0):
-    """The ball: polished silver. Its reflection is the scene's environment: the night sky above (with the moon's
-    small hot spot toward the light), the dark board below a soft horizon, and a Fresnel brightening at the rim."""
+    """The ball: satin silver, brighter than any unlit peg. Diffuse in the one light with a broad soft highlight on
+    the upper left and a small sharper core; a soft horizon between the reflected sky (upper half) and the dark board
+    (lower half); a thin darker limb that keeps its edge against any background."""
     w = img.win(x, y, r * 2)
     if w is None:
         return
     sl, xx, yy = w
     u, v = (xx - x) / r, (yy - y) / r
     d2 = u * u + v * v
-    cov = np.clip((1 - np.sqrt(d2)) * r * img.S + 0.5, 0, 1) * alpha
+    d = np.sqrt(d2)
+    cov = np.clip((1 - d) * r * img.S + 0.5, 0, 1) * alpha
     nz = np.sqrt(np.clip(1 - d2, 0, 1))
-    # reflect the view (0,0,1): R = 2 nz n - V
     rx, ry, rz = 2 * nz * u, 2 * nz * v, 2 * nz * nz - 1
-    sky_t = np.clip(-ry * 0.5 + 0.5, 0, 1)
-    env = ramp(sky_t, [(0, "#141A2C"), (0.47, "#1C2440"), (0.53, "#46578C"), (0.75, "#33427A"), (1, "#25306A")])
+    sky_t = smooth(-0.45, 0.45, -ry)
+    env = ramp(sky_t, [(0, "#20263A"), (1, "#5A6A9E")])
     hot = np.clip(rx * L[0] + ry * L[1] + rz * L[2], 0, 1)
-    env = env + hexc("#F4F2EA") * (hot ** 220 * 3.0 + hot ** 16 * 0.35)[..., None]
-    fres = 0.80 + 0.20 * (1 - nz) ** 3
-    refl = env * fres[..., None] * hexc("#E4E8F0")
-    # satin silver: half diffuse (so the ball is always the brightest small thing on the board), half mirror
     lam = np.clip(u * L[0] + v * L[1] + nz * L[2], 0, 1)
-    diff = hexc("#E4E9F2") * (0.30 + 0.80 * lam)[..., None]
-    col = diff * 0.80 + refl * 0.20 + hexc("#FFFFFF") * (hot ** 220 * 0.9)[..., None]
+    diff = hexc("#EEF1F6") * (0.34 + 0.86 * lam)[..., None]
+    col = diff * 0.78 + env * 0.22
+    col = screen(col, hexc("#FFFFFF") * (hot ** 18 * 0.45 + hot ** 120 * 0.55)[..., None])
+    col = col * (1 - 0.38 * smooth(0.78, 1.0, d))[..., None]                      # the limb
     img.over(sl, np.clip(col, 0, 1), cov)
 
 

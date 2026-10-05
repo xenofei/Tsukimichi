@@ -86,10 +86,11 @@ def pipiru(p):
     p.line([(-6, -26), (-12, -37), (-15.5, -46)], 3.6, w1=3.0)
     p.line([(6, -24), (12, -18)], 3.2)
     p.rect(14.5, -16, 4.2, 6.2, rot=0.4, layer="accent")                             # a card at her side
-    p.ring(-16.5, -54, 10.0, 1.0, ry=3.4, rot=-0.35)                                # the armillary's two rings
-    p.ring(-16.5, -54, 10.0, 1.0, ry=3.4, rot=1.20)
-    p.ell(-16.5, -54, 6.2, 6.2, layer="glow")
-    p.light(-16.5, -54, "#DCE6FF", 26, 1.0)
+    p.ell(-16.5, -54, 6.2, 6.2, layer="glow")                                         # the star globe
+    p.ring(-16.5, -54, 6.9, 0.8)                                                     # its meridian
+    p.ring(-16.5, -54, 6.6, 0.7, ry=2.0, rot=-0.25)                                  # and its horizon band, in perspective
+    p.line([(-16.5, -47), (-16.5, -45.5)], 1.2)
+    p.light(-16.5, -54, "#B8CCFF", 30, 1.0)
 
 
 def kaede(p):
@@ -201,22 +202,19 @@ def ysolde(p):
 
 
 def ottilie(p):
-    """Midlander Hyur priestess of Menphina: robe and veil, a crescent circlet, a crescent-headed staff with a small
-    lantern (the card's one warm light), moonflowers at her breast."""
-    p.line([(17, -1), (17, -106)], 2.3)                                              # the staff
-    p.ell(17, -110, 7.0, 6.0)
-    p.ell(17, -113.2, 6.6, 5.6, fill=0)                                              # the finial: a bowl, horns up
-    p.line([(17, -100), (23.5, -100)], 1.0)                                          # a side hook
-    p.line([(23.5, -100), (23.5, -97.5)], 0.7)
-    p.rect(23.5, -94.5, 3.8, 5.6, layer="glow")                                      # the lantern
-    p.light(23.5, -94.5, "#FFC27A", 34, 1.0)
+    """Midlander Hyur priestess of Menphina: a deep hood and veil, a long robe with bell sleeves, a crook-headed staff
+    with a small lantern hung from its hook (the card's one warm light), moonflowers at her breast."""
+    p.line([(17, -1), (17, -104)], 2.3)                                              # the staff
+    p.curve((17, -104), (17, -114), (27, -115), (27, -107), 2.3, 1.8)                # its crook
+    p.line([(27, -107), (27, -103)], 0.7)
+    p.rect(27, -99.5, 3.8, 5.6, layer="glow")                                        # the lantern
+    p.light(27, -99.5, "#FFB868", 52, 1.4)
     p.poly([(-16, -1), (16, -1), (12, -40), (9.5, -62), (-9.5, -62), (-12, -40)])
     p.poly([(-9, -61), (-18, -44), (-24, -40), (-14, -40), (-11, -50)])             # a bell sleeve
-    p.poly([(-7.5, -77), (7.5, -77), (12, -56), (-12, -56)])                         # veil
-    p.ell(0, -71.5, 6.0, 7.6)
-    p.line([(9, -60), (14, -50), (16.5, -60)], 3.0)
-    p.ring(0, -79.5, 3.2, 1.0, layer="accent")                                       # the circlet's crescent
-    p.ell(1.6, -80.5, 2.6, 2.6, layer="accent", fill=0)
+    p.poly([(-10, -66), (10, -66), (12.5, -54), (-12.5, -54)])                       # the veil over the shoulders
+    p.ell(0, -72.5, 8.0, 9.2)                                                        # the hood, round over the head
+    p.poly([(-1.5, -81), (1.5, -81), (0.5, -82.5)])
+    p.line([(9, -60), (14, -50), (16.5, -62)], 3.0)
     for (fx, fy, r) in ((-3, -53, 2.0), (0, -55.5, 1.8), (-5.5, -55.5, 1.6), (-1.5, -50.5, 1.5), (2.5, -52, 1.4)):
         p.ell(fx, fy, r, r, layer="accent")
 
@@ -295,8 +293,10 @@ def kupsa(p):
 
 FIGS = {"pipiru": pipiru, "kaede": kaede, "marcia": marcia, "haldbrand": haldbrand, "gajavati": gajavati,
         "ysolde": ysolde, "ottilie": ottilie, "gyobo": gyobo, "aldous": aldous, "ione": ione, "kupsa": kupsa}
-ACCENT = {"pipiru": "#3A4C84", "kaede": "#3A4C84", "marcia": "#6A5530", "haldbrand": "#3A4C84", "gajavati": "#3E3466",
-          "ysolde": "#3A4C84", "ottilie": "#8A94B8", "gyobo": "#4E3020", "aldous": "#3A4C84", "ione": "#4A5C8E", "kupsa": "#4A3A2E"}
+ACCENT = {"pipiru": "#151B34", "kaede": "#151B34", "marcia": "#1E1A16", "haldbrand": "#151B34", "gajavati": "#191632",
+          "ysolde": "#151B34", "ottilie": "#2A3048", "gyobo": "#1E1614", "aldous": "#151B34", "ione": "#171E38", "kupsa": "#1C1716"}
+ACCENT_RIM = {"marcia": "#D9BE82", "gajavati": "#B6A8E6", "gyobo": "#D8A27A", "kupsa": "#C8B4A0", "ottilie": "#E2E8F4",
+              "ione": "#C3CEE4", "pipiru": "#C3CEE4"}
 RIM = "#B8C6EE"
 BODY = "#0C1124"
 
@@ -348,26 +348,34 @@ def draw_figure(img, name, fx, fy, k=2.0, ground_y=None, shadow=True, clip=None)
     col = col * (1.0 + 0.25 * (1 - yrel))[..., None]
     img.over(sl, col, sil)
     img.over(sl, hexc(ACCENT[name]), acc * 0.9)
-    kk = max(1, int(round(0.8 * S)))
-    rim = np.clip(sil - np.roll(np.roll(sil, kk, 0), kk, 1), 0, 1)
-    soft = blur(rim, 1.2 * S) * sil
-    img.add(sl, hexc(RIM), rim * 0.62 + soft * 0.30)
-    # the emissive prop: its colour, a halo, and its light on the silhouette's edges that face it
+    bs = blur(sil, 0.7 * S)
+    gy_, gx_ = np.gradient(bs)
+    gn = np.sqrt(gx_ ** 2 + gy_ ** 2) + 1e-6
+    face_ul = np.clip((gx_ * 0.7071 + gy_ * 0.7071) / gn, 0, 1) ** 1.5         # outward normal . (upper left)
+    edge = np.clip((1 - blur(sil, 0.8 * S)) * sil * 3.0, 0, 1)
+    rim = edge * face_ul
+    rimc = np.stack([np.full(sil.shape, v, np.float32) for v in hexc(RIM)], -1)
+    if name in ACCENT_RIM:
+        rimc = rimc + (hexc(ACCENT_RIM[name]) - rimc) * np.clip(acc * 1.5, 0, 1)[..., None]
+    img.px[sl] = screen(img.px[sl], rimc * (rim * 0.85)[..., None])
+    # the emissive prop: its glow (shaped like the prop, so a ring glows as a ring), and its light on what is near:
+    # a local tint on the nearest surfaces and a rim on the edges that face it, both falling off within ~rad units
     for (lx, ly, lc, rad, kk2) in lights:
         gx, gy = fx * S + lx * k * S, fy * S + ly * k * S
         d = np.sqrt((xx - gx) ** 2 + (yy - gy) ** 2) / (k * S)
-        img.add(sl, hexc(lc), (np.exp(-(d / (rad * 0.32)) ** 2) * 0.55 * kk2 + np.exp(-(d / rad) ** 2) * 0.12 * kk2) * c)
-        bs = blur(sil, 1.2 * S)
-        gy_, gx_ = np.gradient(bs)
-        nrm = np.sqrt(gx_ ** 2 + gy_ ** 2) + 1e-6
+        halo = blur(glow, rad * 0.22 * k * S)
+        point = 0.0 if name == "ysolde" else np.exp(-(d / (rad * 0.28)) ** 2) * 0.30      # a ring glows along its band only
+        img.add(sl, hexc(lc), (np.clip(halo * 2.2, 0, 1) * 0.55 + blur(glow, rad * 0.6 * k * S) * 0.5 + point) * kk2 * c)
         tx, ty = (gx - xx), (gy - yy)
         tn = np.sqrt(tx ** 2 + ty ** 2) + 1e-6
-        facing = np.clip(-(gx_ * tx + gy_ * ty) / (nrm * tn), 0, 1)
-        edge = np.clip((1 - bs) * sil * 3, 0, 1)
-        img.add(sl, hexc(lc), edge * facing * np.exp(-(d / (rad * 0.8)) ** 2) * 0.9 * kk2)
-    gcol = {}
-    for (lx, ly, lc, rad, kk2) in lights:
-        gcol = hexc(lc)
+        facing = np.clip(-(gx_ * tx + gy_ * ty) / (gn * tn), 0, 1)
+        near = np.exp(-(d / (rad * 0.55)) ** 2)
+        img.add(sl, hexc(lc), (edge * facing * 1.1 + sil * 0.22) * near * kk2)
+        # a pool on the ground under the light, faint with its height
+        hgt = max(1.0, -ly)
+        gpool = np.exp(-(((xx - gx) / (rad * 0.9 * k * S)) ** 2 + ((yy - fy * S) / (rad * 0.18 * k * S)) ** 2)) * (yy > fy * S - 2 * S)
+        img.add(sl, hexc(lc), gpool * (1 - sil) * kk2 * 0.30 / (1 + (hgt / rad) ** 2 * 0.5) * c)
     if lights:
-        img.over(sl, screen(gcol * 0.85, np.full(3, 0.25, np.float32)), glow)
+        lc0 = hexc(lights[0][2])
+        img.over(sl, screen(lc0, np.full(3, 0.35, np.float32)), glow * (1 - body))     # the prop's own frame stays in front
     return sl

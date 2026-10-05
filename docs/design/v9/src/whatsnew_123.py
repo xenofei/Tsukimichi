@@ -28,7 +28,8 @@ V8SRC = pathlib.Path(__file__).resolve().parents[2] / "v8" / "art" / "src"
 sys.path.insert(0, str(V8SRC))
 from artlib import Canvas, blur, fbm, fbm1d, hexc, smooth  # noqa: E402
 from paint_option_b2 import contact_shadow, finish, ridge_layer, zeros  # noqa: E402
-from paint_option_b3 import glitter, moon_full, reflect, rims, seal_far, vignette  # noqa: E402
+from paint_option_b3 import glitter, reflect, rims, seal_far, vignette  # noqa: E402
+from paint_moon import moon as paint_moon  # noqa: E402
 from paint_release import stars, tex_sample, top_edge  # noqa: E402
 
 KEY = "moonfall-b"
@@ -52,7 +53,7 @@ def paint():
 
     stars(c, 230, 1231, hz * 0.92, sky_lum, near_moon=(mx, my, mr * 1.5), warm=0.10)
     # Menphina's moon, near full: the thin unlit sliver on its upper left (the sun far below the lower right)
-    moon_full(c, M, mx, my, mr)
+    paint_moon(c, M, mx, my, mr)
     # a faint band of altostratus low on the right, lit on the edges that face the moon
     cl = tex_sample(fbm(512, 512, 70, 6, 1232), c.xx / 5.0, c.yy / 1.0)
     dens = blur(np.clip((cl - 0.58) * 3.0 * np.exp(-((c.yy - 0.40 * H) / (0.04 * H)) ** 2), 0, 1), 2.0) * smooth(0.40 * W, 0.62 * W, c.xx)
@@ -99,10 +100,10 @@ def paint():
     hull = blur(hull.astype(np.float32), 0.7)
     planks = tex_sample(fbm(256, 256, 3, 2, 1247), c.xx / 6.0, c.yy / 0.4)
     strake = 1 + 0.10 * smooth(0.55, 0.0, ((c.yy - sheer) % 7.0) / 7.0)
-    hcol = c.vgrad([(0, "#1C1720"), (1, "#0E0B12")], yw - 50, yw) * (0.9 + 0.15 * planks)[..., None] * strake[..., None]
+    hcol = c.vgrad([(0, "#120F16"), (1, "#09080D")], yw - 50, yw) * (0.9 + 0.15 * planks)[..., None] * strake[..., None]
     c.over(hcol, hull)
     gun = np.clip(1 - np.abs(c.yy - sheer) / 2.2, 0, 1) * (u > 0.01) * (u < 0.99)
-    c.over(hexc("#2E2630"), gun * 0.9)                                             # the gunwale's rail
+    c.over(hexc("#1C1820"), gun * 0.9)                                             # the gunwale's rail
     # the traveller, seated amidships facing the stern, head tilted up toward the falling star
     fx, fy = 0.655 * W, yw - 26
     P = lambda pts, s=1.25: [(fx + a * s, fy + b * s) for a, b in pts]
@@ -144,7 +145,7 @@ def paint():
     reflect(c, lake * (1 - boat * (c.yy < yw)), src, hz, [(far_all, hz), (boat, yw), (lant, yw)], 1248,
             amp=(1.0, 18.0), fres=(0.86, 0.45), deep="#0A1230", brk=0.55)
     c.over(hcol, hull * (c.yy < yw))                                                # the boat stays in front of its reflection
-    c.over(hexc("#2E2630"), gun * 0.9 * (c.yy < yw))
+    c.over(hexc("#1C1820"), gun * 0.9 * (c.yy < yw))
     c.over(hexc("#120E14"), wood)
     c.over(hexc("#0B0E1A"), fig)
     c.over(paper * ribs[..., None], lant)
@@ -184,28 +185,31 @@ def paint():
     c.add(hexc("#F4F2EA"), np.exp(-(hd / 2.6) ** 2) * 1.0 + np.exp(-(hd / 10) ** 2) * 0.20)
     M["star"] = np.clip(streak * 2 + np.exp(-(hd / 4) ** 2), 0, 1)
     # the moon's broken path on the lake, under the moon
-    glitter(c, mx, hz, lake * (1 - near) * (1 - boat), 1252, col="#FFF1D2", strength=0.85, w0=9.0, spread=0.28, thr=0.60)
+    glitter(c, mx, hz, lake * (1 - near) * (1 - boat), 1252, col="#E4E4DE", strength=0.75, w0=9.0, spread=0.28, thr=0.60)
     # moonlight rims on the edges that face the moon (upper left)
-    c.add(hexc("#B8C6EE"), rims(boat, -1, -1, 2) * 0.45 * (c.yy < yw))
+    c.add(hexc("#B8C6EE"), rims(boat, -1, -1, 2) * 0.30 * (c.yy < yw) * (1 - smooth(0.64 * W, 0.72 * W, c.xx) * 0.6))
     c.add(hexc("#B8C6EE"), rims(reeds, -1, -1, 2) * 0.40)
     # the lantern: its glow, its light on the traveller's near (right) side, the post, the stern, and the water
     dl = np.sqrt((c.xx - lx) ** 2 + (c.yy - ly) ** 2)
     c.add(hexc("#FFB466"), np.exp(-(dl / 22) ** 2) * 0.50 + np.exp(-(dl / 70) ** 2) * 0.12)
-    fall = 1 / (1 + (dl / 80) ** 2)
-    c.add(hexc("#FFB062"), blur(rims(fig, 1, 0, 3), 0.8) * fall * 2.2)
+    fall = 1 / (1 + (dl / 60) ** 2)
+    fall2 = fall ** 2
+    c.add(hexc("#FFB062"), blur(rims(fig, 1, 0, 3), 0.8) * fall2 * 3.0)
     c.add(hexc("#FFB062"), rims(M["post"], 1, 0, 2) * fall * 1.2)
-    c.add(hexc("#FFB062"), hull * (c.yy < yw) * smooth(0.68 * W, bx1, c.xx) * fall * 0.22)
-    c.add(hexc("#FFB062"), gun * (c.yy < yw) * fall * 0.9)
+    c.add(hexc("#FFB062"), hull * (c.yy < yw) * fall2 * 0.35)
+    c.add(hexc("#FFB062"), gun * (c.yy < yw) * fall2 * 1.2)
     # its reflection: a broken warm column on the water below it, and a faint pool round the stern
     refl_y = 2 * yw - ly
     rip = tex_sample(fbm(512, 512, 5, 2, 1253), c.xx / 3.0, c.yy / 0.9)
     col_ = np.exp(-((c.xx - lx) / np.maximum(5 + (c.yy - yw) * 0.10, 1.0)) ** 2) * np.exp(-np.abs(c.yy - refl_y) / 70) * (c.yy > yw + 2)
     c.add(hexc("#FFB466"), col_ * np.clip((rip - 0.40) * 3, 0, 1) * lake * (1 - near) * 0.8)
-    c.add(hexc("#FFB062"), np.exp(-(((c.xx - lx) / 120) ** 2 + ((c.yy - (yw + 10)) / 18) ** 2)) * lake * (c.yy > yw) * (1 - near) * 0.10)
     # the boat's contact on the water: a thin dark line where hull meets lake
     c.mul(hexc("#05070F"), np.exp(-((c.yy - yw - 1) / 2.0) ** 2) * (u > 0.02) * (u < 0.98) * 0.6)
     seal_far(M, ["far_a", "far_b", "far_c"])
     vignette(c, cy=0.42)
+    # the treatments widen the moon mask (blur 2, x2.5) before they restore the moon's own paint; so the restore ends
+    # at the true limb and leaves no ungraded ring of sky, the mask they get is the disc 5 px (2.5 px at 1120) inside
+    M["moon"] = np.clip((mr - 5 - np.sqrt((c.xx - mx) ** 2 + (c.yy - my) ** 2)) + 0.5, 0, 1)
     return c, M
 
 

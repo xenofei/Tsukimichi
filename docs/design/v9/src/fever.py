@@ -9,7 +9,7 @@ import math
 
 import numpy as np
 
-from mf_lib import P, Img, draw_ball, draw_brass, draw_moon, hexc, sd_rrect, text
+from mf_lib import P, Img, draw_ball, draw_brass, draw_moon, hexc, ramp, sd_rrect, text
 from playfield import (cradle_geometry, draw_level, frame, hud, launcher, level_layout, sky, WALL_L, WALL_R)
 from portraits import medallion_portrait
 from mf_lib import sd_circle
@@ -31,26 +31,42 @@ def late_level():
 
 
 def fever_cups(img):
-    """Five brass cradles across the foot, the centre one gilded brightest, each with its value on an enamel plate."""
+    """Five brass cups across the foot, the centre one gilded brightest. Each is a shallow bowl seen a little from
+    above: the far rim and a shadowed interior, the bowl's outer wall below, its near lip catching the light on the
+    upper left. Its value is engraved on a small enamel plate set into the bowl's front."""
     vals = ["10,000", "50,000", "100,000", "50,000", "10,000"]
     w = (WALL_R - WALL_L) / 5
     for i, v in enumerate(vals):
         bx = WALL_L + w * (i + 0.5)
-        (ox, oy, R1), (ix, iy, R2), ty = cradle_geometry(bx, tips_y=569.0, bottom=588.0, thick=7.0, half=w / 2 - 3)
-        def cres(X, Y, ox=ox, oy=oy, R1=R1, ix=ix, iy=iy, R2=R2, ty=ty):
-            return np.maximum(np.maximum(sd_circle(X, Y, ox, oy, R1), -sd_circle(X, Y, ix, iy, R2)), ty - Y)
-        draw_brass(img, cres, (bx, 580, w / 2 + 4), "round", depth=3.5, width=3.8, base=0.10 if i == 2 else 0.0)
-        plate = lambda X, Y, bx=bx: sd_rrect(X, Y, bx - 27, 548, bx + 27, 563, 4)
-        sl, xx, yy = img.win(bx, 555.5, 32)
-        img.over(sl, hexc(P["enamel_deep"]), img.cov(plate(xx, yy)) * 0.92)
-        edge = lambda X, Y, bx=bx: np.abs(sd_rrect(X, Y, bx - 27, 548, bx + 27, 563, 4)) - 0.6
-        draw_brass(img, edge, (bx, 555.5, 32), "round", depth=0.6, width=0.6)
-        text(img, bx, 556, v, "ui_sb", 9.5 if i != 2 else 10.5, P["gilt_high"] if i == 2 else P["cream"], anchor="mm", halo=0)
+        rx, ry, rim_y, foot = w / 2 - 5, 5.0, 566.0, 590.0
+        base = 0.10 if i == 2 else 0.0
+        # the outer wall: the lower half of an ellipse from the rim down to the foot
+        def wall(X, Y, bx=bx, rx=rx):
+            e = ((X - bx) / rx) ** 2 + ((Y - rim_y) / (foot - rim_y)) ** 2 - 1
+            return np.maximum(e * 8, rim_y - Y)
+        draw_brass(img, wall, (bx, 578, rx + 4), "round", depth=5.0, width=6.0, base=base)
+        # the interior seen over the near lip: dark, lit faintly on its far (lower-right-facing) wall
+        sl, xx, yy = img.win(bx, rim_y, rx + 3)
+        inner = img.cov(((xx - bx) / (rx - 2.0)) ** 2 + ((yy - rim_y) / (ry - 1.2)) ** 2 - 1)
+        img.over(sl, ramp(np.clip((yy - rim_y + ry) / (2 * ry), 0, 1), [(0, "#2A2010"), (1, "#0C0A08")]), inner)
+        # the rim: a ring round the opening, its near lip lit on the upper left
+        def rim(X, Y, bx=bx, rx=rx):
+            e = np.sqrt(((X - bx) / rx) ** 2 + ((Y - rim_y) / ry) ** 2)
+            return (np.abs(e - 0.93) - 0.08) * rx * 0.5
+        draw_brass(img, rim, (bx, rim_y, rx + 3), "round", depth=1.2, width=1.2, base=base + 0.05)
+        # the plate, set into the bowl's front, with a hairline shadow under its top edge
+        plate = lambda X, Y, bx=bx: sd_rrect(X, Y, bx - 25, 575, bx + 25, 587, 3)
+        sl, xx, yy = img.win(bx, 581, 30)
+        img.over(sl, hexc(P["enamel_deep"]), img.cov(plate(xx, yy)) * 0.95)
+        img.mul(sl, hexc("#05070F"), img.cov(plate(xx, yy)) * np.exp(-((yy - 575.8) / 0.7) ** 2) * 0.6)
+        text(img, bx, 581.5, v, "ui_sb", 9.0 if i != 2 else 9.8, P["gilt_high"] if i == 2 else P["cream"], anchor="mm", halo=0)
 
 
 def fever_after(S=2):
     img = Img(800 * S, 600 * S, S)
     sky(img, fever=0.6)
+    sl, xx, yy = img.win(400, 240, 330)
+    img.mul(sl, hexc("#03050C"), np.exp(-((yy - 240) / 34) ** 2) * ((xx > WALL_L) & (xx < WALL_R)) * 0.55)   # the banner's band, behind the pegs
     pegs, bricks, kinds, gone, last = late_level()
     lit = set(range(len(pegs) + len(bricks))) - gone
     draw_level(img, pegs, bricks, kinds, lit=lit, gone=gone | {last})
@@ -59,8 +75,6 @@ def fever_after(S=2):
     fever_cups(img)
     draw_ball(img, 452.0, 470.0)
     # the banner: the release of the shot, in the frame's own type and gilt, over a soft abyss band
-    sl, xx, yy = img.win(400, 240, 330)
-    img.mul(sl, hexc("#03050C"), np.exp(-((yy - 240) / 34) ** 2) * ((xx > WALL_L) & (xx < WALL_R)) * 0.55)
     text(img, 400, 236, "FULL MOON", "serif", 46, P["cream"], anchor="mm", halo=0.7, tracking=7)
     rule = lambda X, Y: sd_rrect(X, Y, 270, 266, 530, 267.4, 0.7)
     draw_brass(img, rule, (400, 266.7, 140), "round", depth=0.6, width=0.7)
@@ -82,7 +96,7 @@ def fever_approach(S=2):
     # the last orange: its halo widens as the ball nears (a slow breath, not a flash)
     sl, xx, yy = img.win(lx, ly, 60)
     d = np.sqrt((xx - lx) ** 2 + (yy - ly) ** 2)
-    img.add(sl, hexc("#FFB070"), np.exp(-(d / 34) ** 2) * 0.28)
+    img.add(sl, hexc("#FFB070"), np.exp(-np.clip(d - 10, 0, None) / 9) * 0.22)
     # the ball and its slow-motion trail: fading copies along the last tenth of a second of its arc
     bx, by = lx - 22, ly - 27
     for k in range(5, 0, -1):

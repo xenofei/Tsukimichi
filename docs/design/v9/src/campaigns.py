@@ -22,10 +22,11 @@ V8SRC = pathlib.Path(__file__).resolve().parents[2] / "v8" / "art" / "src"
 sys.path.insert(0, str(V8SRC))
 from artlib import Canvas, blur, fbm, fbm1d, hexc, smooth  # noqa: E402
 from paint_option_b2 import finish, ridge_layer, zeros, contact_shadow, figure  # noqa: E402
-from paint_option_b3 import glitter, moon_full, reflect, rims, vignette  # noqa: E402
+from paint_option_b3 import glitter, reflect, rims, vignette  # noqa: E402
 from paint_release import band, bezier, stars, tex_sample  # noqa: E402
 
 from mf_lib import P, V9, Img, text  # noqa: E402
+from paint_moon import moon as paint_moon  # noqa: E402
 import paint_option_b2 as _b2  # noqa: E402
 import paint_option_b3 as _b3  # noqa: E402
 
@@ -50,7 +51,7 @@ def sky(c, M, top, mid, low, horizon, hz, mx, my, mr, seed, glow="#8EA6DC"):
     c.add(hexc(glow), np.exp(-(c.radial(mx, my, 0.42 * W, 0.62 * H)) ** 2 * 2.0) * 0.24)
     sky_only = c.px.copy()
     stars(c, 260, seed, hz * 0.92, lambda y: 0.03 + 0.24 * min(1.0, max(0.0, y / hz)) ** 2, near_moon=(mx, my, mr * 1.5), warm=0.10)
-    moon_full(c, M, mx, my, mr)
+    paint_moon(c, M, mx, my, mr)
     return sky_only
 
 
@@ -89,7 +90,7 @@ def base():
     rm = band(c, road, 120, 16, 1.2) * field
     toward = np.exp(-((c.xx - wsx) / (0.08 * W + (c.yy - wsy) * 0.6)) ** 2)
     stones = tex_sample(fbm(512, 512, 6, 3, 2106), (c.xx - 0.80 * W) / np.clip((c.yy - wsy + 40) / 160, 0.3, 3) + 300, c.yy / np.clip((c.yy - wsy + 40) / 160, 0.3, 3))
-    rcol = c.vgrad([(0, "#56658C"), (0.4, "#3A4664"), (1, "#222B44")], wsy, H) * (0.78 + 0.36 * stones)[..., None]
+    rcol = c.vgrad([(0, "#2A3350"), (0.45, "#3C4866"), (1, "#4A5878")], wsy, H) * (0.80 + 0.32 * stones)[..., None]   # far: dim and hazy
     rcol = 1 - (1 - rcol) * (1 - hexc("#D6E0FF") * (toward * 0.25)[..., None])
     c.over(rcol, rm)
     # the waystation: a post and crossbeam, and the brass crescent cradle hung from it as a lantern (bucket A)
@@ -104,22 +105,21 @@ def base():
     outer = c.ellipse(cx, cy - 18, 30, 30, 0.6) * (c.yy > cy - 26)
     inner = c.ellipse(cx, cy - 30, 33, 30, 0.6)
     cres = np.clip(outer - inner, 0, 1)
-    shade = np.clip(((c.xx - cx) * -0.6 + (c.yy - cy) * -0.8) / 30 + 0.5, 0, 1)
-    brass = hexc("#5C4724") * (1 - shade[..., None]) + hexc("#C9A65C") * shade[..., None]
+    brass = np.broadcast_to(hexc("#2A2114"), (H, W, 3))
     lant = lantern(c, cx, cy - 24, 0.9)
     c.over(brass, cres)
     figm = figure(c, 0.80 * W, 0.86 * H, s=0.9, facing=-1)
     c.over(hexc("#0B0E1A"), figm)
     keep = np.maximum.reduce([wood, cres, lant, figm, M["moon"]])
-    finish(c, keep, 2107, plain=M["moon"])
+    finish(c, keep, 2107, plain=np.maximum(M["moon"], 0.45 * (c.yy < 0.58 * H)))
     c.add(hexc("#B8C6EE"), rims(np.maximum(wood, figm), -1, -1, 2) * 0.45)
     dl = np.sqrt((c.xx - cx) ** 2 + (c.yy - (cy - 24)) ** 2)
     c.add(hexc("#FFB466"), np.exp(-(dl / 26) ** 2) * 0.45 + np.exp(-(dl / 90) ** 2) * 0.10)
     fall = 1 / (1 + (dl / 90) ** 2)
-    c.add(hexc("#FFB062"), rims(cres, 0, -1, 2) * 0.8 + rims(post, 1, 0, 2) * fall * 1.2)
-    c.add(hexc("#FFB062"), np.exp(-(((c.xx - wsx) / 90) ** 2 + ((c.yy - (wsy + 20)) / 18) ** 2)) * field * 0.16)   # its pool on the road
+    c.add(hexc("#FFB062"), rims(cres, 0, -1, 2) * 0.55 * np.exp(-(dl / 40) ** 2) + rims(post, 1, 0, 2) * fall * 1.2)
+    c.add(hexc("#FFB062"), np.exp(-(((c.xx - (wsx + 30)) / 110) ** 2 + ((c.yy - (wsy + 22)) / 20) ** 2)) * field * 0.20)   # its pool, across the road
     contact_shadow(c, wsx, wsy + 22, 14, -26, 10, 0.5)                                                           # the post's, away from the lantern
-    contact_shadow(c, 0.80 * W, 0.86 * H + 6, 30, 14, 26, 0.5)                                                    # the traveller's, toward us
+    contact_shadow(c, 0.80 * W, 0.86 * H + 2, 30, 22, 40, 0.75)                                                   # the traveller's, toward us and right
     vignette(c, cy=0.42)
     return c, M
 
@@ -134,7 +134,8 @@ def expansion():
     xs = np.arange(W, dtype=np.float32)
     # the far shore on the right: a low headland with pines and a gate on its point, backlit, darker than the sky
     head = hz - (0.05 * H + 0.03 * H * fbm1d(W, 160, 4, 2202)) * smooth(0.55 * W, 0.70 * W, xs)
-    serr = 10 * (1 - np.abs(((xs / 14.0 + 3 * fbm1d(W, 50, 2, 2203)) % 1.0) - 0.5) * 2) ** 1.6 * smooth(0.60 * W, 0.70 * W, xs)
+    phase = np.cumsum(0.045 + 0.05 * fbm1d(W, 40, 3, 2208))                    # crowns of varied spacing
+    serr = (6 + 14 * fbm1d(W, 30, 3, 2209)) * (1 - np.abs((phase % 1.0) - 0.5) * 2) ** 1.6 * smooth(0.60 * W, 0.70 * W, xs)
     shore = c.below_curve(head - serr, 1.0) * (c.yy < hz + 1)
     gx, gy = 0.615 * W, head[int(0.615 * W)] + 4
     gate = np.maximum.reduce([c.poly([(gx - 30, gy), (gx - 24, gy), (gx - 24, gy - 74), (gx - 30, gy - 74)], 0.5),
@@ -180,13 +181,13 @@ def expansion():
     c.over(hexc("#120E14"), wood)
     c.over(hexc("#0B0E1A"), fig)
     lant = lantern(c, lx, ly)
-    finish(c, np.maximum.reduce([boat, lant, far, M["moon"]]), 2205, plain=M["moon"])
-    glitter(c, mx, hz, sea * (1 - boat), 2206, col="#FFF1D2", strength=0.85, w0=10.0, spread=0.30, thr=0.60)
-    c.add(hexc("#B8C6EE"), rims(boat, -1, -1, 2) * 0.45 * (c.yy < yw))
+    finish(c, np.maximum.reduce([boat, lant, far, M["moon"]]), 2205, plain=np.maximum(M["moon"], 0.45 * (c.yy < 0.58 * H)))
+    glitter(c, mx, hz, sea * (1 - boat), 2206, col="#E4E4DE", strength=0.70, w0=10.0, spread=0.30, thr=0.60)
+    c.add(hexc("#B8C6EE"), rims(boat, -1, -1, 2) * 0.28 * (c.yy < yw))
     dl = np.sqrt((c.xx - lx) ** 2 + (c.yy - ly) ** 2)
     c.add(hexc("#FFB466"), np.exp(-(dl / 24) ** 2) * 0.5 + np.exp(-(dl / 80) ** 2) * 0.12)
-    fall = 1 / (1 + (dl / 90) ** 2)
-    c.add(hexc("#FFB062"), blur(rims(fig, 1, 0, 3), 0.8) * fall * 2.2 + rims(post, 1, 0, 2) * fall * 1.2)
+    fall = 1 / (1 + (dl / 70) ** 2)
+    c.add(hexc("#FFB062"), blur(rims(fig, 1, 0, 3), 0.8) * fall ** 2 * 3.0 + rims(post, 1, 0, 2) * fall * 1.2)
     rip = tex_sample(fbm(512, 512, 5, 2, 2207), c.xx / 3.0, c.yy / 0.9)
     col_ = np.exp(-((c.xx - lx) / np.maximum(6 + (c.yy - yw) * 0.10, 1.0)) ** 2) * np.exp(-np.abs(c.yy - (2 * yw - ly)) / 80) * (c.yy > yw + 2)
     c.add(hexc("#FFB466"), col_ * np.clip((rip - 0.40) * 3, 0, 1) * sea * 0.8)
@@ -204,7 +205,7 @@ def medallion_finish(px, moon):
     p = 1 - (1 - p) * (1 - np.array([0.16, 0.10, 0.02], np.float32) * np.clip(L * 1.2, 0, 1)[..., None])
     Lv = (p @ np.array([0.2126, 0.7152, 0.0722], np.float32))[..., None]
     p = np.clip(Lv + (p - Lv) * 1.10, 0, 1)
-    mz = np.clip(blur(moon, 2) * 2.5, 0, 1)[..., None]                       # the moon keeps its own paint (10 % varnish)
+    mz = np.clip(blur(moon, 0.7), 0, 1)[..., None]                           # the moon keeps its own paint (10 % varnish), to its limb
     p = p * (1 - mz) + (px * 0.90 + p * 0.10) * mz
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     ex = np.minimum(np.minimum(xx, w - 1 - xx), np.minimum(yy, h - 1 - yy))
