@@ -1,0 +1,417 @@
+{
+  "format": "moonfall-level",
+  "version": 1,
+  "id": "exp-p1",
+  "name": "The Domes of Sharlayan",
+  "playfield": {
+    "width": 800,
+    "height": 600
+  },
+  "scene": {
+    "source": "game",
+    "texture": "ui/loadingimage/-nowloading_base21.tex",
+    "crop": [
+      -32,
+      30,
+      1307,
+      980
+    ],
+    "padLeft": 64,
+    "grade": "medallion-night-violet",
+    "veil": 0.44
+  },
+  "pegs": [
+    {
+      "x": 432.0,
+      "y": 231.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 370.0,
+      "y": 340.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 494.0,
+      "y": 340.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 327.0,
+      "y": 248.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 527.0,
+      "y": 246.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 108.0,
+      "y": 250.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 101.0,
+      "y": 296.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 101.0,
+      "y": 332.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 101.0,
+      "y": 368.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 101.0,
+      "y": 404.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 101.0,
+      "y": 440.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 101.0,
+      "y": 476.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 101.0,
+      "y": 512.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 132.0,
+      "y": 214.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 162.6,
+      "y": 199.8,
+      "canBeOrange": true
+    },
+    {
+      "x": 190.9,
+      "y": 217.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 206.0,
+      "y": 246.9,
+      "canBeOrange": false
+    },
+    {
+      "x": 212.1,
+      "y": 280.4,
+      "canBeOrange": true
+    },
+    {
+      "x": 219.7,
+      "y": 313.3,
+      "canBeOrange": false
+    },
+    {
+      "x": 237.7,
+      "y": 341.9,
+      "canBeOrange": false
+    },
+    {
+      "x": 264.5,
+      "y": 362.7,
+      "canBeOrange": true
+    },
+    {
+      "x": 295.0,
+      "y": 377.6,
+      "canBeOrange": false
+    },
+    {
+      "x": 327.6,
+      "y": 387.2,
+      "canBeOrange": false
+    },
+    {
+      "x": 361.3,
+      "y": 389.6,
+      "canBeOrange": true
+    },
+    {
+      "x": 304.0,
+      "y": 184.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 580.0,
+      "y": 150.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 580.0,
+      "y": 186.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 640.0,
+      "y": 156.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 640.0,
+      "y": 192.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 396.0,
+      "y": 470.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 432.0,
+      "y": 482.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 468.0,
+      "y": 492.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 504.0,
+      "y": 484.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 540.0,
+      "y": 474.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 576.0,
+      "y": 484.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 450.0,
+      "y": 440.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 522.0,
+      "y": 444.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 150.0,
+      "y": 140.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 210.0,
+      "y": 132.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 690.0,
+      "y": 140.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 150.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 196.0,
+      "y": 528.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 242.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 300.0,
+      "y": 520.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 612.0,
+      "y": 528.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 652.0,
+      "y": 506.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 604.0,
+      "y": 380.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 640.0,
+      "y": 346.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 150.0,
+      "y": 446.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 196.0,
+      "y": 470.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 246.0,
+      "y": 446.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 690.0,
+      "y": 240.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 700.0,
+      "y": 300.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 350.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 440.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 520.0,
+      "y": 536.0,
+      "canBeOrange": false
+    }
+  ],
+  "bricks": [
+    {
+      "kind": "arc",
+      "x": 432.0,
+      "y": 318.0,
+      "r": 60.0,
+      "start": 209.5,
+      "sweep": 23.8,
+      "thickness": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "kind": "arc",
+      "x": 432.0,
+      "y": 318.0,
+      "r": 60.0,
+      "start": 236.2,
+      "sweep": 23.8,
+      "thickness": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "kind": "arc",
+      "x": 432.0,
+      "y": 318.0,
+      "r": 60.0,
+      "start": 263.0,
+      "sweep": 23.8,
+      "thickness": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "kind": "arc",
+      "x": 432.0,
+      "y": 318.0,
+      "r": 60.0,
+      "start": 289.8,
+      "sweep": 23.8,
+      "thickness": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "kind": "arc",
+      "x": 432.0,
+      "y": 318.0,
+      "r": 38.0,
+      "start": 215.0,
+      "sweep": 110.0,
+      "thickness": 8,
+      "canBeOrange": false
+    },
+    {
+      "kind": "arc",
+      "x": 327.0,
+      "y": 305.0,
+      "r": 30.0,
+      "start": 201.5,
+      "sweep": 62.0,
+      "thickness": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "kind": "arc",
+      "x": 327.0,
+      "y": 305.0,
+      "r": 30.0,
+      "start": 266.5,
+      "sweep": 62.0,
+      "thickness": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "kind": "arc",
+      "x": 527.0,
+      "y": 300.0,
+      "r": 27.0,
+      "start": 201.5,
+      "sweep": 67.0,
+      "thickness": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "kind": "arc",
+      "x": 527.0,
+      "y": 300.0,
+      "r": 27.0,
+      "start": 271.5,
+      "sweep": 67.0,
+      "thickness": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "kind": "arc",
+      "x": 707.0,
+      "y": 430.0,
+      "r": 54.0,
+      "start": 197.5,
+      "sweep": 33.0,
+      "thickness": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "kind": "arc",
+      "x": 707.0,
+      "y": 430.0,
+      "r": 54.0,
+      "start": 233.5,
+      "sweep": 33.0,
+      "thickness": 8.0,
+      "canBeOrange": true
+    }
+  ]
+}

@@ -1,0 +1,626 @@
+{
+  "format": "moonfall-level",
+  "version": 1,
+  "id": "exp-p2",
+  "name": "The Ferry in the Stars",
+  "playfield": {
+    "width": 800,
+    "height": 600
+  },
+  "scene": {
+    "source": "asset",
+    "file": "scenes/exp-p2-lantern-ferry.jpg",
+    "file2x": "scenes/exp-p2-lantern-ferry@2x.jpg",
+    "veil": 0.2
+  },
+  "pegs": [
+    {
+      "x": 178.0,
+      "y": 286.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 262.0,
+      "y": 344.0,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 372.0,
+      "y": 362.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 480.0,
+      "y": 350.0,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 566.0,
+      "y": 300.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 372.0,
+      "y": 304.0,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 590.0,
+      "y": 226.0,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 600.0,
+      "y": 148.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 556.0,
+      "y": 150.0,
+      "r": 8.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 548.0,
+      "y": 190.0,
+      "r": 12.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 430.0,
+      "y": 250.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 300.0,
+      "y": 236.0,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 206.0,
+      "y": 305.3,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 234.0,
+      "y": 324.7,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 298.7,
+      "y": 350.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 335.3,
+      "y": 356.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 408.0,
+      "y": 358.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 444.0,
+      "y": 354.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 508.7,
+      "y": 333.3,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 537.3,
+      "y": 316.7,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 242.7,
+      "y": 292.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 275.0,
+      "y": 295.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 307.3,
+      "y": 298.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 339.7,
+      "y": 301.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 404.3,
+      "y": 303.3,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 436.7,
+      "y": 302.7,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 469.0,
+      "y": 302.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 501.3,
+      "y": 301.3,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 578.0,
+      "y": 263.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 595.0,
+      "y": 187.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 397.5,
+      "y": 246.5,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 365.0,
+      "y": 243.0,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 332.5,
+      "y": 239.5,
+      "r": 8.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 162.4,
+      "y": 129.8,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 207.0,
+      "y": 140.7,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 509.5,
+      "y": 134.7,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 150.3,
+      "y": 171.3,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 418.6,
+      "y": 180.3,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 656.9,
+      "y": 173.0,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 697.6,
+      "y": 168.0,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 257.1,
+      "y": 197.7,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 504.1,
+      "y": 210.1,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 674.4,
+      "y": 207.1,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 151.4,
+      "y": 248.2,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 242.9,
+      "y": 243.4,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 621.1,
+      "y": 245.1,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 659.3,
+      "y": 240.1,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 641.2,
+      "y": 279.5,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 140.4,
+      "y": 308.3,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 190.6,
+      "y": 345.5,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 614.3,
+      "y": 333.4,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 675.0,
+      "y": 342.3,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 107.4,
+      "y": 369.2,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 143.9,
+      "y": 375.2,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 184.7,
+      "y": 381.8,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 222.4,
+      "y": 368.6,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 554.2,
+      "y": 369.7,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 593.3,
+      "y": 373.8,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 100.1,
+      "y": 409.4,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 234.3,
+      "y": 402.6,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 274.0,
+      "y": 402.1,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 327.8,
+      "y": 416.2,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 368.7,
+      "y": 414.7,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 468.2,
+      "y": 415.8,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 575.3,
+      "y": 411.4,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 113.3,
+      "y": 446.1,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 180.3,
+      "y": 443.1,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 241.7,
+      "y": 441.3,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 310.7,
+      "y": 448.1,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 350.9,
+      "y": 447.2,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 525.8,
+      "y": 435.0,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 594.4,
+      "y": 447.4,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 688.2,
+      "y": 443.8,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 112.0,
+      "y": 495.0,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 154.0,
+      "y": 493.3,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 196.0,
+      "y": 489.0,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 238.0,
+      "y": 483.7,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 280.0,
+      "y": 479.2,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 322.0,
+      "y": 477.1,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 364.0,
+      "y": 478.0,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 406.0,
+      "y": 481.8,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 448.0,
+      "y": 487.0,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 490.0,
+      "y": 491.9,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 532.0,
+      "y": 494.7,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 574.0,
+      "y": 494.5,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 616.0,
+      "y": 491.3,
+      "r": 9.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 658.0,
+      "y": 486.2,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 700.0,
+      "y": 481.1,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 133.0,
+      "y": 522.5,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 175.0,
+      "y": 519.4,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 217.0,
+      "y": 519.4,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 259.0,
+      "y": 522.3,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 301.0,
+      "y": 527.3,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 343.0,
+      "y": 532.4,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 385.0,
+      "y": 536.1,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 427.0,
+      "y": 536.9,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 469.0,
+      "y": 534.6,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 511.0,
+      "y": 530.0,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 553.0,
+      "y": 524.7,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 595.0,
+      "y": 520.5,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 637.0,
+      "y": 519.0,
+      "r": 9.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 679.0,
+      "y": 520.6,
+      "r": 9.0,
+      "canBeOrange": false
+    }
+  ],
+  "bricks": []
+}
