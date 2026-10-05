@@ -316,8 +316,11 @@ public static class MoonfallRules
     /// <summary>The popup's fade (see <see cref="PopupSolidSeconds"/>).</summary>
     public const double PopupFadeSeconds = 0.08;
 
-    /// <summary>The level's format version this build reads (<see cref="MoonfallLevelLoader"/>).</summary>
-    public const int LevelFormatVersion = 1;
+    /// <summary>
+    /// The newest level format version this build reads (<see cref="MoonfallLevelLoader"/>): 2 adds the optional
+    /// background <c>scene</c>; version 1 files still read, without one.
+    /// </summary>
+    public const int LevelFormatVersion = 2;
 }
 
 /// <summary>A peg's colour, which sets its value and its role [R §2].</summary>

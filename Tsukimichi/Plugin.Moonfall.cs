@@ -47,7 +47,8 @@ public sealed partial class Plugin
             Log.Warning("Moonfall progress: {Warning}", warning);
         }
 
-        var window = new MoonfallWindow(campaigns, progress, path, MoonfallCausesNow, Log);
+        var pluginDirectory = PluginInterface.AssemblyLocation.DirectoryName;
+        var window = new MoonfallWindow(campaigns, progress, path, MoonfallCausesNow, Log, TextureProvider, pluginDirectory);
         windowSystem.AddWindow(window);
         command.ToggleMoonfall = window.Toggle;
         mainWindow.OpenMoonfall = window.Toggle;
@@ -80,6 +81,7 @@ public sealed partial class Plugin
     private void DisposeMoonfall()
     {
         moonfallWindow?.SaveNow();
+        moonfallWindow?.DisposeArt();
         moonfallWindow = null;
         if (command is not null)
         {

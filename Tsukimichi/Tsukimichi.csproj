@@ -78,6 +78,12 @@ Local only: no network code.</Description>
       with bundle, docs/data/portrait-pack.md). Read at start (Game\BundledPortraitLoader.cs); Garland Tools renders, credit Celes.
     -->
     <Content Include="assets\portraits\*.png;assets\portraits\manifest.json" CopyToOutputDirectory="PreserveNewest" />
+    <!--
+      Moonfall's art set (plan v9 G8, Core/Moonfall/Art/MoonfallAtlas.cs): atlas.json, atlas.png, atlas@2x.png and sky.png,
+      and the levels' background scenes in scenes\ (<scene>.png 800 x 600, <scene>@2x.png). Loaded from disk only while
+      the Moonfall window is open (Ui\MoonfallArtTextures.cs), so a new art set ships by replacing these files.
+    -->
+    <Content Include="assets\moonfall\*.png;assets\moonfall\atlas.json;assets\moonfall\scenes\*.png" CopyToOutputDirectory="PreserveNewest" />
     <!-- The frame kits' frames and badges (1.17 T11, ATLAS-CONTRACT.md §7): one folder per kit, loaded only while a set is composed in it. -->
     <Content Include="assets\ui\kits\**\*.png;assets\ui\kits\**\*.json" Exclude="assets\ui\kits\**\metrics.json" CopyToOutputDirectory="PreserveNewest" />
     <!-- Packaged as images\icon.png, where Dalamud looks for a plugin's icon inside the zip; assets\icon.png stays the source. -->

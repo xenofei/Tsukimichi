@@ -11,13 +11,15 @@ public sealed record MoonfallLevelLoad(MoonfallLevel? Level, IReadOnlyList<strin
 }
 
 /// <summary>
-/// Reads and checks a Moonfall level file (plan v9 G1, G6). The format, version 1:
+/// Reads and checks a Moonfall level file (plan v9 G1, G6). The format, version 2 (version 1 is the same without
+/// <c>scene</c>, and still reads; a <c>scene</c> in a version 1 file is ignored like any unknown property):
 /// <code>
 /// {
 ///   "format": "moonfall-level",
-///   "version": 1,
+///   "version": 2,
 ///   "id": "base-01",                     // lower-case letters, digits and hyphens
 ///   "name": "First Light",               // what the player sees, up to 40 characters
+///   "scene": "moon-road-night",          // optional: the background picture's name (MoonfallLevel.Scene)
 ///   "playfield": { "width": 800, "height": 600 },
 ///   "pegs": [
 ///     { "x": 400, "y": 300 },            // a round peg; "r" (default 10, 6–20), "canBeOrange" (default true)
@@ -53,6 +55,9 @@ public static partial class MoonfallLevelLoader
 
     /// <summary>How low a peg may reach: a ball's diameter and a pixel above the bucket's rim, so a ball can always pass over the bucket.</summary>
     public const double LowestEdge = MoonfallRules.BucketTop - (2 * MoonfallRules.BallRadius) - 1;
+
+    /// <summary>Longest background scene name (format version 2).</summary>
+    public const int MaxSceneLength = 40;
 
     /// <summary>Most errors listed for one file; the rest are counted ("and 12 more").</summary>
     public const int MaxErrors = 40;
@@ -211,7 +216,7 @@ public static partial class MoonfallLevelLoader
             }
         }
 
-        var level = new MoonfallLevel(id ?? string.Empty, name ?? string.Empty, pegs);
+        var level = new MoonfallLevel(id ?? string.Empty, name ?? string.Empty, pegs) { Scene = version >= 2 ? ReadScene(root, errors) : null };
         if (level.OrangeCandidates < MoonfallRules.OrangeCount)
         {
             errors.Add($"{level.OrangeCandidates} pegs may be orange; a level needs {MoonfallRules.OrangeCount}");
@@ -230,6 +235,27 @@ public static partial class MoonfallLevelLoader
         }
 
         return level;
+    }
+
+    /// <summary>
+    /// Version 2's optional background <c>scene</c>: a picture's name, so a file name and never a path. Whether the
+    /// picture exists is not checked here; a missing one falls back to the night sky when the level is drawn.
+    /// </summary>
+    private static string? ReadScene(JsonElement root, List<string> errors)
+    {
+        if (!root.TryGetProperty("scene", out var node) || node.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        var scene = node.ValueKind == JsonValueKind.String ? node.GetString() : null;
+        if (scene is null || scene.Length > MaxSceneLength || !IdPattern().IsMatch(scene))
+        {
+            errors.Add($"scene must be up to {MaxSceneLength} lower-case letters, digits and hyphens (a picture's name, not a path)");
+            return null;
+        }
+
+        return scene;
     }
 
     private static MoonfallPeg? ReadPeg(JsonElement node, string label, List<string> errors)

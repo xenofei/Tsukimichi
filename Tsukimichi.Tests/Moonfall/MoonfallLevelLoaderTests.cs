@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Tsukimichi.Core.Moonfall;
+using Tsukimichi.Core.Moonfall.Art;
 
 namespace Tsukimichi.Tests.Moonfall;
 
@@ -72,7 +73,7 @@ public sealed class MoonfallLevelLoaderTests
     [InlineData("[1, 2]", "not a JSON object")]
     [InlineData("{ nope", "not JSON")]
     [InlineData("""{ "format": "peg-level", "version": 1 }""", "format must be")]
-    [InlineData("""{ "format": "moonfall-level", "version": 2 }""", "newer Moonfall")]
+    [InlineData("""{ "format": "moonfall-level", "version": 3 }""", "newer Moonfall")]
     [InlineData("""{ "format": "moonfall-level", "version": "1" }""", "version is missing")]
     public void A_file_that_is_no_level_is_refused(string json, string reason)
     {
@@ -212,5 +213,69 @@ public sealed class MoonfallLevelLoaderTests
         Assert.All(campaigns.Base.Levels, l => Assert.True(l.OrangeCandidates >= 25));
         Assert.Contains(campaigns.Base.Levels, l => l.Pegs.Any(p => p.Shape != PegShape.Round));
         Assert.Contains(campaigns.Base.Levels, l => l.Pegs.Any(p => p.Mover.Kind != MoverKind.None));
+    }
+
+    // ---- Version 2: the background scene ----
+
+    /// <summary><see cref="Level"/> at <paramref name="version"/> with <paramref name="scene"/> (raw JSON) as its scene.</summary>
+    private static string SceneLevel(int version, string scene) =>
+        Level(root: $", \"scene\": {scene}").Replace("\"version\": 1", $"\"version\": {version}", StringComparison.Ordinal);
+
+    [Fact]
+    public void A_version_2_level_names_its_scene()
+    {
+        var load = MoonfallLevelLoader.Parse(SceneLevel(2, "\"moon-road-night\""));
+        Assert.True(load.Ok, string.Join("\n", load.Errors));
+        Assert.Equal("moon-road-night", load.Level!.Scene);
+    }
+
+    [Fact]
+    public void A_scene_is_optional_and_version_1_still_reads()
+    {
+        var v1 = MoonfallLevelLoader.Parse(Level());
+        Assert.True(v1.Ok, string.Join("\n", v1.Errors));
+        Assert.Null(v1.Level!.Scene);
+
+        var none = MoonfallLevelLoader.Parse(SceneLevel(2, "null"));
+        Assert.True(none.Ok, string.Join("\n", none.Errors));
+        Assert.Null(none.Level!.Scene);
+
+        // Version 1 had no scene: one there is an unknown property, ignored as the format promises.
+        var early = MoonfallLevelLoader.Parse(SceneLevel(1, "\"moon-road-night\""));
+        Assert.True(early.Ok, string.Join("\n", early.Errors));
+        Assert.Null(early.Level!.Scene);
+    }
+
+    [Theory]
+    [InlineData("\"../../evil\"")]
+    [InlineData("\"scenes/night\"")]
+    [InlineData("\"Night\"")]
+    [InlineData("\"night.png\"")]
+    [InlineData("\"\"")]
+    [InlineData("12")]
+    [InlineData("\"a-very-long-scene-name-that-goes-on-past-forty\"")]
+    public void A_scene_must_be_a_picture_name_not_a_path(string scene)
+    {
+        var load = MoonfallLevelLoader.Parse(SceneLevel(2, scene));
+        Assert.False(load.Ok);
+        Assert.Contains(load.Errors, e => e.StartsWith("scene must be", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Every_shipped_scene_has_its_pictures_at_both_tiers()
+    {
+        var campaigns = MoonfallCampaigns.LoadBuiltIn();
+        var folder = Path.Combine(Tsukimichi.Tests.Ui.OrnamentLayoutTests.RepoRoot(), "Tsukimichi", "assets", "moonfall");
+        var scenes = campaigns.Base.Levels.Concat(campaigns.Expansion.Levels).Select(l => l.Scene).OfType<string>().Distinct().ToList();
+        Assert.NotEmpty(scenes);
+        foreach (var scene in scenes)
+        {
+            foreach (var twoX in new[] { false, true })
+            {
+                Assert.True(
+                    MoonfallArtFiles.SceneUsable(MoonfallArtFiles.ScenePath(folder, scene, twoX), twoX, out var error),
+                    error);
+            }
+        }
     }
 }
