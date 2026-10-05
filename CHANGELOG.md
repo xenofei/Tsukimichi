@@ -4,7 +4,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
-## [1.22.1] - 2026-10-04
+## [1.22.1] - 2026-10-05
 
 ### Added
 - **Moonlit:** click a column header to sort by it; click again to reverse, and a third time to go back to the usual order. The table remembers your choice.
