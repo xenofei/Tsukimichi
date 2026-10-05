@@ -92,24 +92,32 @@ Where the subject sits in one region (the moogle in the middle, the ferry in the
 | No saddles | two pegs closer than a ball (gap under 12) must stand steeper than the angle a resting ball needs, `asin((r + gap/2)/(r + 6))` (46° for a gap of 3); otherwise they are 14 or more apart | `layout.py` check |
 | No unreachable pockets | every piece is reached by some first shot from a fresh board (mfcheck `sweep`: "pieces no first shot reaches"), or becomes reachable once the pieces shielding it clear. No piece sits inside a closed ring with no gap of a ball's width | mfcheck sweep, critic |
 | Stuck balls | the stuck rule (1.5 s, or 3 s without sinking) should fire on fewer than 5% of first shots (mfcheck sweep: "stuck rule fired") | mfcheck sweep |
-| Winnable | a level is won by mfcheck's greedy player at a rate no worse than the shipped levels' (4 of 16 at the time of writing). It shows that no orange is impossible, not that the level is easy | mfcheck play |
+| In reach | every orange candidate is touched by some first free flight from the launcher (no candidate at the launcher's height or tucked in a top corner). A candidate no direct flight can touch was the commonest reason a level was never won (critic, round 1) | `layout.py` check |
+| Spread | at most 10 candidates in any 200 × 200 square (scanned in 5 px steps); candidates below y 400 on both halves | `layout.py` check |
+| No notches | two bricks either touch or leave a ball's width and more between them (not 3.5–12.5 px); a peg stands 13 px or more from any brick (no cradle at a brick's end) | `layout.py` check |
+| Winnable | a level is won by mfcheck's greedy player (48 games at level 5) at a rate no worse than the shipped levels' lowest (5 of 48 at the time of writing). It shows that no orange is impossible, not that the level is easy | mfcheck play |
+
+**The pre-flight blocks the export.** Every level script raises when `check()` reports a problem, so a level that breaks a rule is never written (critic, round 2: a level file and its script had drifted apart).
 
 ## 5. Grading the scene so pegs stay readable
 
 A peg's lit face is about L 0.6 to 0.7, and its hue carries its kind. A scene behind it must never compete. Four steps make sure of that.
 
-1. **The Medallion night grade** (`rich_lib.night_map`, for official paintings).
-   - The source's luminance keeps its drawing but goes through a curve, `L^1.2` to `L^2.0`, that sinks the mid-tones, so haze falls back and only planes facing the moon stay bright.
-   - That value is mapped onto the Medallion night ramp: abyss `#04060D`, enamel `#1E2B58`, `#3A4C84`, moonstone `#DCE3F2`.
-   - A little of the source's own colour rides on top, about a fifth. Warm colour is drained harder than cool, because moonlight carries little warmth.
-   - The sky drops further than the land.
-   - The Far Shore uses the same grade on a deeper violet ramp.
-   - **Our own paintings** are painted directly in the same values.
-2. **The value ceiling.** No part of a scene behind the board exceeds L 0.42 (a soft knee from 0.25). The one exception is a painted moon, which the layout leaves clear.
+1. **The Medallion night grade, version 2** (`rich_lib.night_lab`, for official paintings; rebuilt after realism rounds 1 and 2).
+   - It works in OKLab. Lightness is lowered on a curve (`L^1.25` to `L^1.8`), so haze falls back and the planes facing the light stay brightest.
+   - A wide base layer (48 units, wider than the largest form) is compressed under a soft knee that keeps a slope of 0.35, and the detail layer is added back. A cloud or a dome keeps its modelling instead of flattening to a slab.
+   - A soft roll-off over the last 0.06 holds the ceiling.
+   - A **form light** then gives the painting's pale shapes relief. A painted dome is often a flat white shape; its silhouette, blurred, rounds into a height, and the one light from the upper left shades it, darkening the faces turned away more than it lightens the others.
+   - Chroma is kept (mid-tones scaled more than highlights). Hue is pulled toward lapis in the shadows and moonstone in the highlights, so lit cloud reads cool silver, never khaki.
+   - Yellow and green (OKLab hue 45–195°) are cut to 0.3 chroma, so foliage goes blue-grey, as under moonlight. Warm hues are drained harder than cool.
+   - The sky's own colour is halved.
+   - The Far Shore uses the same grade, pulled toward violet-moonstone.
+   - **Our own paintings** are painted directly in the same values, and a painted moon is emissive (an even face, no terminator), because it is the light, not a lit object.
+2. **The value ceiling.** The 99th-percentile luma of a scene behind the board is about 0.42 or less (0.41–0.43 on the pilots), with nothing above about 0.47. The one exception is a painted moon or our own overlay line, which the layout leaves clear.
 3. **The light.** Every scene's natural light comes from the upper left, the side the pegs and the frame are lit from.
    - An official painting lit from the right is mirrored. The pilots mirror Ishgard and Mare Lamentorum.
    - A painting with lettering, such as the map, is never mirrored. The world map has no single sun, so it doesn't need to be.
-4. **The veil.** Where the layout is, the scene recedes. It dims by 20 to 30% within about 18 units of every piece, feathered over 6 units, and is untouched elsewhere. The veil has no shape: it is not a shadow (there are no cast shadows on the board), and the painting simply quietens where the play is.
+4. **The veil.** Where the layout is, the scene recedes. It dims by 20 to 36% within about 18 units of every piece (36% over bright cloud and pale domes), feathered over 6 units, and is untouched elsewhere. The veil has no shape: it is not a shadow (there are no cast shadows on the board), and the painting simply quietens where the play is.
 
 Readability is checked at 640 × 480, where a peg is 16 px, on the composite renders. Every peg kind must separate from the scene behind it. Purple, the darkest kind, is the case to watch.
 
