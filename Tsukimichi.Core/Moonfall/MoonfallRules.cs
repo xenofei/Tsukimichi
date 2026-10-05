@@ -191,6 +191,23 @@ public static partial class MoonfallRules
     /// </summary>
     public const double CatchLine = BucketTop + BallRadius;
 
+    /// <summary>
+    /// [J] The rim never makes a pocket with a wall. The sweep [M 5] carries the outer rim to x 727 at the right end,
+    /// 2.5 px past the wall at 724.5, and to 76 at the left, 0.5 px short of the wall at 75.5. In the original the bucket
+    /// slides behind the side frame there, and no footage shows a ball caught between the two. Taken literally, the
+    /// geometry made two traps. A ball dropped beside the wall was squeezed between the wall and the rim's side as the gap
+    /// narrowed, and chattered for up to 1.3 s. A ball landing on the rim's outer shoulder wedged between it and the
+    /// wall. So when the gap between a rim post and a wall is narrower than this (a ball's width, so no ball fits), the
+    /// gap is closed at the rim's top. A ball above the rim rests on a flat ledge from the post's crown to the wall
+    /// until the bucket pulls away. Then the gap is wider than the ball again and it drops through. If the crown has
+    /// carried it inside first, it rolls into the mouth instead. Either way it waits at most about 0.6 s, well under
+    /// <see cref="StuckTicks"/>. A ball already below the rim's top in that gap is past the bucket and can
+    /// only fall out. The post no longer pushes it into the wall, so it falls clear.
+    /// The amplitude and period stay as measured. The rim's width (medium confidence) would not help: any width narrows
+    /// the gap through a ball's width on every sweep.
+    /// </summary>
+    public const double RimWallGap = 2 * BallRadius;
+
     // ---- Fever [M 8, R §4] ----
 
     /// <summary>The game runs at 1/10 speed in the approach to the last orange: 10.0 ± 0.3 [M 8]. Speeds are in thousandths.</summary>

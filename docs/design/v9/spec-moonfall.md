@@ -70,7 +70,7 @@ Every size is in the original's 800 × 600 playfield units (plan v9 G1), so 1 un
 | Ball | r 6 | Satin silver. In the ball channel: r 10.5. |
 | Launcher | pivot (400, 87); tube from 8 to 70 units, r 7.4 → 6.0; the ball leaves at 73 | Brass telescope, ±81°. |
 | Free-ball gauge | an arc of r 25.5 round the pivot, 200°–340°, channel 6 wide | Notches at 25k, 75k and 125k. |
-| Bucket A, crescent cradle | 131 across the horns, mouth 104 at the rim (y 573), belly to y 588 | Rides a rail at y 589.5–592.5 on two wheels. |
+| Bucket A, crescent cradle | 131 across the horns, mouth 104 at the rim (y 573), belly to y 588 | Rides a rail at y 589.5–592.5 on two wheels. At the ends of its sweep the outer horn reaches x 727 (2.5 units into the right rail) and 76 (0.5 short of the left). Where a horn comes nearer a rail than the ball's width (12), the game closes the gap level with the horn's top (`MoonfallRules.RimWallGap`): a ball rests across it rather than wedging, so the drawing needs no fill there. |
 | Bucket B, lantern boat | 131 at the rail, waterline y 584; post to y 535, lantern 9.2 × 12 at (x + 50, 541) | Water strip y 584–594. |
 | Ball channel | x 25–51, y 66–330; balls r 10.5, 25.5 apart | The count sits below, 18 units high. |
 | Multiplier dial | centre (762, 100), r 25, groove 5.2 wide | Gilt arc for oranges cleared, ticks at ×2, ×3, ×5 and ×10. |
