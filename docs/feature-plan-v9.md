@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v9: Moonfall, a peg game
 
-Status: **reviewed on 4 October 2026 and executing** (see "Your answers" below). Moonfall is a fun add-in inside Tsukimichi, opened from a normal button on the main window. It is our own game, with our own levels, art, music, names and characters, built to play exactly like Peggle Deluxe and Peggle Nights.
+Status: **reviewed on 4 October 2026, design approved on 5 October 2026, and executing** (see "Your answers" below). Moonfall is a fun add-in inside Tsukimichi, opened from a normal button on the main window. It is our own game, with our own levels, art, music, names and characters, built to play exactly like Peggle Deluxe and Peggle Nights.
 
 ## Sources
 
@@ -90,6 +90,23 @@ Rules new to this plan:
     - Ambient motion (moondust, glints, stars, parallax, lantern flicker; none under Reduce motion).
     - Busier, fuller boards (foreground silhouettes, framing, light shafts).
     - Bolder colour (jewel tones and warm gold, per level).
+- **Rich pass 2 review (5 October 2026):** "Looks good. Go ahead and keep going." Every open decision (7 to 28) takes its recommendation:
+  - the cast as listed (22);
+  - the twins face down until Alisaie is met (23);
+  - the game's own fonts (24);
+  - the eleven stage names (25);
+  - Decoration "Full" by default (26);
+  - Peg marks off, with a first-run hint (27);
+  - MP4 previews only (28);
+  - the lantern cart for The Moon Road and the boat for The Far Shore (14);
+  - the game's loading-screen paintings for about two thirds of the levels (15);
+  - level format v2 with `canBeGreen` and `scene` (16);
+  - The Far Shore ends on the moon (20);
+  - the greedy-player playability rule (21);
+  - FULL MOON (9);
+  - the campaign names (10).
+
+  Superseded: the original eleven characters (1), the cameos (17) and the bundled font (19). Gyobo (11) and the Loporrits (12) are moot now the cast is real FFXIV characters.
 
 ## Not doing
 
