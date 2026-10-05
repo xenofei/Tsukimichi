@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "note": "Written by Tsukimichi.DataGen --portrait-pack. The release step uploads the zip with exactly this name, size and hash to this tag.",
-  "tag": "portraits-1",
+  "tag": "portraits-2",
   "asset": "Tsukimichi-portraits.zip",
-  "size": 10589262,
-  "sha256": "2cd1fa9fd98f0bb30fd2c1146a2ecbd1e70a3f3442faa316f48579066fe6a257",
+  "size": 12918359,
+  "sha256": "b12ea55bf6519cf15d4c4908c69622f6acabea68a47714baaf8dd20d85799742",
   "format": 1,
   "gameVersion": "2026.09.15.0000.0000",
-  "givers": 1852
+  "givers": 1921
 }

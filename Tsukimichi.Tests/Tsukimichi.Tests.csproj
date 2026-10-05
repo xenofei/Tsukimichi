@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Tsukimichi.Core\Tsukimichi.Core.csproj" />
     <ProjectReference Include="..\Tsukimichi.GameData\Tsukimichi.GameData.csproj" />
+    <ProjectReference Include="..\Tsukimichi.DataGen\Tsukimichi.DataGen.csproj" />
   </ItemGroup>
 
   <ItemGroup>

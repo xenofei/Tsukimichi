@@ -14,6 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The portrait pack's head finder and per-NPC boxes are unit-tested (Tsukimichi.Tests/Portraits/PortraitPackBuildTests.cs). -->
+    <InternalsVisibleTo Include="Tsukimichi.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Tsukimichi.Core\Tsukimichi.Core.csproj" />
     <ProjectReference Include="..\Tsukimichi.GameData\Tsukimichi.GameData.csproj" />
   </ItemGroup>
