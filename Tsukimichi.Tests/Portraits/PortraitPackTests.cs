@@ -397,14 +397,20 @@ public sealed class PortraitPackTests
     }
 
     [Fact]
-    public void The_pack_ranks_before_every_game_family_and_is_never_a_curated_family()
+    public void The_pack_ranks_before_every_uncurated_game_family_and_is_never_a_curated_family()
     {
-        Assert.True(PortraitIndex.PackWins(PortraitSource.None));
+        // The 1.22.1 portrait audit (C1): the pack goes first only over game art nobody measured or chose by hand.
+        var crops = new PortraitCrops(null, new Dictionary<uint, PortraitCrop> { [72626] = PortraitCrop.FromBox(PortraitSource.TrustBust, 10, 60, 140) });
+        Assert.True(PortraitIndex.PackWins(default, crops));
         foreach (var family in PortraitSources.Priority)
         {
-            Assert.True(PortraitIndex.PackWins(family));
+            Assert.True(PortraitIndex.PackWins(new PortraitVariant(73999, family, 0, "Someone"), crops));
             Assert.True(PortraitSources.Rank(PortraitSource.Pack) < PortraitSources.Rank(family));
+            Assert.False(PortraitIndex.PackWins(new PortraitVariant(73999, family, 0, "Someone", Curated: true), crops));
+            Assert.False(PortraitIndex.PackWins(new PortraitVariant(73999, family, 0, "Someone", Crop: PortraitCrop.Full), crops));
         }
+
+        Assert.False(PortraitIndex.PackWins(new PortraitVariant(72626, PortraitSource.TrustBust, 3, "Y'shtola"), crops));
 
         Assert.False(PortraitSources.TryParse("Pack", out _));
         Assert.Equal((PortraitPackManifest.ImageSide, PortraitPackManifest.ImageSide), PortraitSources.TextureSize(PortraitSource.Pack));

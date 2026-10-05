@@ -14,7 +14,8 @@ namespace Tsukimichi.GameData;
 /// <c>BigImageNew</c> the wide strip, named by the member's ENpcResident or, for a blank one, by
 /// <c>DawnMemberUIParam.Name</c> (Wuk Lamat, Koana, Krile); the era is the earliest expansion of the duties the row
 /// joins (<c>DawnContentParticipable</c> → <c>DawnContent</c> → the duty's territory's ExVersion), else of another row
-/// with the same art; a row whose era cannot be told (it joins no duty yet) is left out rather than guessed;</item>
+/// with the same art; a row whose era cannot be told (it joins no duty yet) is left out rather than guessed; and the
+/// outfits a member can be switched into (<c>DawnGrowMember</c>), dated by their look (<see cref="OutfitLookEras"/>);</item>
 /// <item>Triple Triad cards: icon 087000 + the card row, named by the card; the era is the expansion whose cards the
 /// card's number falls among (<see cref="CardEra"/>);</item>
 /// <item>battle-talk faces (073001–073999), named three ways: a quest battle's <c>FACE_GRAPHIC_&lt;NAME&gt;</c> script
@@ -179,6 +180,26 @@ public static class GiverPortraitSources
             }
         });
 
+        Part("Duty Support and Trust outfits", () =>
+        {
+            // DawnGrowMember: the outfits a Trust member can be switched into, four slots of bust and strip each. The ones
+            // DawnQuestMember shows are read above with their duties' era; the others are dated by the look they are
+            // (OutfitLookEras), and one with no story look (the summer outfits, the Endwalker Trust outfits) is left out.
+            var read = new HashSet<uint>(faces.Where(f => f.Source is PortraitSource.TrustBust or PortraitSource.TrustStrip).Select(f => f.Icon));
+            var labels = English<DawnMemberUIParam>(excel);
+            foreach (var row in excel.GetSheet<DawnGrowMember>())
+            {
+                var name = labels.GetRowOrDefault(row.Class.RowId)?.Name.ExtractText() ?? string.Empty;
+                foreach (var (art, source) in row.SelectImage.Select(i => (i, PortraitSource.TrustBust)).Concat(row.PortraitImage.Select(i => (i, PortraitSource.TrustStrip))))
+                {
+                    if (art != 0 && !read.Contains(art) && OutfitLookEras.TryGetValue(art, out var era) && read.Add(art))
+                    {
+                        Face(art, source, name, era);
+                    }
+                }
+            }
+        });
+
         Part("Triple Triad cards", () =>
         {
             var residents = excel.GetSheet<TripleTriadCardResident>();
@@ -320,6 +341,24 @@ public static class GiverPortraitSources
 
         return stem.Trim('_');
     }
+
+    /// <summary>
+    /// The Trust outfit alternates (<c>DawnGrowMember</c>, the 1.22.1 portrait audit C8) by the expansion of the look each
+    /// one shows, bust and strip alike. Those not listed are never read: the summer outfits (072652–072658, 072660 and
+    /// their strips) were never a story look, and no quest giver wears the Endwalker Trust outfits (072640–072643,
+    /// 072646 and their strips): Thancred's, Y'shtola's and Urianger's giver rows keep their Shadowbringers bodies through
+    /// Endwalker and Dawntrail, and Estinien's Endwalker rows wear 072644's travel outfit, so with the era picked first
+    /// those outfits would replace the right look on every Endwalker quest. Estinien's Heavensward armour (072645) is not
+    /// read either: the owner kept his Heavensward card for those quests (portrait review Q1), and a bust of the same era
+    /// would outrank it.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<uint, byte> OutfitLookEras = new Dictionary<uint, byte>
+    {
+        [72632] = 1, [72692] = 1, // Thancred: the Heavensward look of 3.1
+        [72633] = 0, [72693] = 0, // Urianger: the hood and goggles of A Realm Reborn
+        [72634] = 1, [72694] = 1, // Y'shtola: her Heavensward look
+        [72635] = 3, [72695] = 3, // Ryne as "Minfilia" (Shadowbringers)
+    };
 
     /// <summary>
     /// The card number (<c>TripleTriadCardResident.Order</c>) each expansion's cards start at: No. 1 A Realm Reborn,

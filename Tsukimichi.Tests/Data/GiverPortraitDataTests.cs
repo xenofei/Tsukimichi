@@ -75,9 +75,11 @@ public class GiverPortraitDataTests(GameDataFixture fixture, ITestOutputHelper o
             Assert.True(quests.Count(q => index.For(q).HasArt) * 10 >= quests.Count * 8, $"{lead} has a portrait on fewer than 80 % of their quests");
         }
 
-        // A Heavensward quest of Thancred's wears his Heavensward card, a Shadowbringers one his Trust bust.
+        // A Heavensward quest of Thancred's wears his Heavensward look, a Shadowbringers one his Trust bust. Since the
+        // 1.22.1 portrait audit (C8) that look is his Heavensward Trust outfit (072632, read from DawnGrowMember), which
+        // outranks his Heavensward card (087165) in the same era.
         var thancred = byName["Thancred"];
-        Assert.Contains(thancred.Where(q => q.Expansion == 1), q => index.For(q).Icon == 87165);
+        Assert.Contains(thancred.Where(q => q.Expansion == 1), q => index.For(q) is { Icon: 72632, Era: 1 });
         Assert.Contains(thancred.Where(q => q.Expansion == 3), q => index.For(q).Source == PortraitSource.TrustBust);
     }
 

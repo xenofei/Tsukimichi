@@ -280,4 +280,25 @@ public sealed class StorylinesTests
         Assert.False(StoryCast.HasMet(cast.Find("Ryne")!, done.Contains));
         Assert.True(cast.Line(99, done.Contains).IsEmpty);
     }
+
+    [Fact]
+    public void A_quest_knows_which_rows_of_each_character_its_script_names()
+    {
+        // The cast plate wears the row the quest shows (the 1.22.1 portrait audit, C2), not the character's lowest row.
+        var catalog = QuestCatalog.Build([Quest(1, 1, 1, section: 0, icon: 3), Quest(2, 1, 2, [1], 0, 3), Quest(10, 10, 1, [1])]);
+        var scripts = new Dictionary<uint, IReadOnlyList<CastName>>
+        {
+            [1] = [new CastName(1_000_010, "Thancred", "Thancred"), new CastName(1_000_011, "Thancred", "Thancred")],
+            [2] = [new CastName(1_000_030, "Urianger", "Urianger"), new CastName(1_000_020, "Thancred", "Thancred")],
+            [10] = [new CastName(1_000_040, "Urianger", "Urianger")],
+        };
+        var cast = StoryCast.Build(catalog, scripts, minStoryQuests: 2);
+        var thancred = cast.Find("Thancred")!;
+
+        Assert.Equal([1_000_010u, 1_000_011u, 1_000_020u], thancred.NpcIds);
+        Assert.Equal([1_000_010u, 1_000_011u], cast.RowsIn(1, thancred));
+        Assert.Equal([1_000_020u], cast.RowsIn(2, thancred));
+        Assert.Empty(cast.RowsIn(10, thancred));
+        Assert.Empty(cast.RowsIn(99, thancred));
+    }
 }

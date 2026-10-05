@@ -1,4 +1,4 @@
 {
   "$schema_note": "Written by tools/regen.ps1; do not edit by hand. curatedRevision is the short git hash of the last commit touching a data file in this directory (this file, README.md and whats_new.json excluded), with -dirty appended when those files had uncommitted changes.",
-  "curatedRevision": "41973552"
+  "curatedRevision": "8f334855"
 }

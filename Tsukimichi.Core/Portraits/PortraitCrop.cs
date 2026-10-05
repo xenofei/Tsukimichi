@@ -83,11 +83,27 @@ public sealed class PortraitCrops
         [PortraitSource.TrustStrip] = PortraitFraming.CropFor(PortraitSource.TrustStrip, new PortraitLandmarks(0.78f, 0.46f, 0.8f)),
     };
 
+    /// <summary>
+    /// The first Trust bust drawn after Shadowbringers (Alphinaud's Endwalker bust). From it on the busts sit the head
+    /// about 60 hr px higher than the Shadowbringers busts the spec's box (6, 86, 140) was measured on, so they take
+    /// <see cref="LateTrustBustDefault"/> instead (the 1.22.1 portrait audit, C5).
+    /// </summary>
+    public const uint FirstLateTrustBust = 72638;
+
+    /// <summary>
+    /// The family box for Trust busts from <see cref="FirstLateTrustBust"/> on: (24, 58, 135), the median of the audit's
+    /// reconciled Endwalker and Dawntrail bust crops.
+    /// </summary>
+    public static readonly PortraitCrop LateTrustBustDefault = PortraitCrop.FromBox(PortraitSource.TrustBust, 24, 58, 135);
+
     /// <summary>The defaults with nothing replaced.</summary>
     public static readonly PortraitCrops Default = new(null, null);
 
     private readonly Dictionary<PortraitSource, PortraitCrop> bySource;
     private readonly IReadOnlyDictionary<uint, PortraitCrop> byIcon;
+
+    /// <summary>Whether the curated file replaced the Trust bust family box (it then covers every bust, early or late).</summary>
+    private readonly bool trustBustOverridden;
 
     /// <param name="sourceOverrides">Family crops replacing the defaults; invalid ones are ignored.</param>
     /// <param name="iconOverrides">Crops for single icons, ahead of their family's; invalid ones are ignored.</param>
@@ -99,6 +115,7 @@ public sealed class PortraitCrops
             if (source != PortraitSource.None && crop.IsValid)
             {
                 bySource[source] = crop;
+                trustBustOverridden |= source == PortraitSource.TrustBust;
             }
         }
 
@@ -108,8 +125,19 @@ public sealed class PortraitCrops
     /// <summary>The family's crop; the whole texture for <see cref="PortraitSource.None"/>.</summary>
     public PortraitCrop For(PortraitSource source) => bySource.GetValueOrDefault(source, PortraitCrop.Full);
 
-    /// <summary>The icon's own crop when it has one, else its family's.</summary>
-    public PortraitCrop For(PortraitSource source, uint icon) => byIcon.TryGetValue(icon, out var crop) ? crop : For(source);
+    /// <summary>
+    /// The icon's own crop when it has one, else its family's: for a Trust bust from <see cref="FirstLateTrustBust"/> on,
+    /// <see cref="LateTrustBustDefault"/> unless the curated file replaced the family box.
+    /// </summary>
+    public PortraitCrop For(PortraitSource source, uint icon) =>
+        byIcon.TryGetValue(icon, out var crop) ? crop : DefaultFor(source, icon);
+
+    /// <summary>Whether the icon has a crop of its own (the curated file's <c>iconCrops</c>): a face measured by hand.</summary>
+    public bool HasIconCrop(uint icon) => byIcon.ContainsKey(icon);
+
+    /// <summary>The family crop an icon without a crop of its own takes (see <see cref="For(PortraitSource, uint)"/>).</summary>
+    public PortraitCrop DefaultFor(PortraitSource source, uint icon) =>
+        source == PortraitSource.TrustBust && icon >= FirstLateTrustBust && !trustBustOverridden ? LateTrustBustDefault : For(source);
 }
 
 /// <summary>
