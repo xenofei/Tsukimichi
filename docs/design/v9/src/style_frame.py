@@ -1,0 +1,65 @@
+"""Moonfall style frames (plan v9 G8, deliverable 1), Menphina's Medallion only.
+
+  style-frame-a.png / @2x   mid-shot: the ball in flight, six pegs lit, a "100" popup, bucket A (the crescent cradle)
+  style-frame-b.png / @2x   aiming: the guide's dots to the first peg, Super Guide's line past it, bucket B (the lantern boat)
+
+Each is painted at 2x (1600 x 1200) and reduced to 1x (800 x 600) with Lanczos. Run: py -3 style_frame.py
+"""
+import math
+
+import numpy as np
+
+from mf_lib import V9, Img, draw_ball, hexc, text
+from playfield import (bucket_boat, bucket_cradle, draw_level, frame, guide_dots, hud, launcher, level_layout, sky)
+from portraits import medallion_portrait
+
+
+def frame_a(S=2):
+    img = Img(800 * S, 600 * S, S)
+    sky(img)
+    pegs, bricks, kinds = level_layout()
+    # the shot so far: down the right hanging arc, onto the ring's right side
+    lit = {9, 10, 11, 12, 18, 19}
+    draw_level(img, pegs, bricks, kinds, lit=lit)
+    frame(img)
+    launcher(img, aim_deg=28.0, gauge=0.42, ball=False)
+    bucket_cradle(img, 296.0)
+    # the ball, just off peg 19, with the popup under the last orange it hit
+    draw_ball(img, 487.0, 352.0)
+    last_orange = max((i for i in lit if kinds[i] == "orange"), default=None)
+    if last_orange is not None:
+        x, y = pegs[last_orange]
+        # just below the struck peg (as measured) if there is room; otherwise the nearby spot whose text box (about
+        # 18 x 9 units) stays farthest from every other peg's edge and from the ball
+        def gap(tx, ty):
+            others = [(px, py) for j, (px, py) in enumerate(pegs) if j != last_orange] + [(487, 352)]
+            return min(math.hypot(max(abs(tx - px) - 9, 0), max(abs(ty - py) - 4.5, 0)) - 10 for (px, py) in others)
+        cands = [(x + ox, y + oy) for ox in range(-30, 31, 2) for oy in range(-30, 31, 2) if math.hypot(ox, oy) >= 17]
+        tx, ty = (x, y + 21) if gap(x, y + 21) >= 3 else max(cands, key=lambda q: (min(gap(*q), 4), -math.hypot(q[0] - x, q[1] - y - 21)))
+        text(img, tx, ty, "100", "ui_sb", 9.5, "#FFD7A8", anchor="mm", halo=0.7)
+    hud(img, portrait=medallion_portrait("pipiru"))
+    return img, kinds
+
+
+def frame_b(S=2):
+    img = Img(800 * S, 600 * S, S)
+    sky(img)
+    pegs, bricks, kinds = level_layout()
+    gone = {9, 10, 11, 12, 18, 19, 3, 4}                                        # cleared on earlier shots
+    draw_level(img, pegs, bricks, kinds, gone=gone)
+    frame(img)
+    start, d = launcher(img, aim_deg=20.0, gauge=0.0, ball=True)
+    live = [p for i, p in enumerate(pegs) if i not in gone]
+    guide_dots(img, start, d, live, super_guide=True)
+    bucket_boat(img, 520.0)
+    hud(img, score="141,830", balls=5, mult="×2", cleared=13, oranges_left=12, turns=1,
+        portrait=medallion_portrait("pipiru"))
+    return img, kinds
+
+
+if __name__ == "__main__":
+    for name, fn in (("a", frame_a), ("b", frame_b)):
+        img, kinds = fn()
+        img.save(V9 / f"style-frame-{name}@2x.png")
+        img.save(V9 / f"style-frame-{name}.png", (800, 600))
+        print(name, {k: kinds.count(k) for k in set(kinds)})
