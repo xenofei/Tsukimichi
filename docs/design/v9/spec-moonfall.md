@@ -268,9 +268,13 @@ Approved: the style frames A and B, the peg states, Fever, readability, the char
 
 All three rulings still stand and are still accepted. The base tile's bracket is fixed. The one block was a Minor: Super Guide's star globe rendered as a blank disc, which could read as a coin or a second moon. It now has one meridian half-arc and a core-to-limb falloff. The 0.8x popup has more clearance.
 
-### Round 4
+### Round 4: ALL 8 APPROVED (`supervisor/round-4.md`)
 
-See `supervisor/round-4.md`.
+No Majors or Minors remain. The supervisor also caught a false claim in my round 3 note: the popup touched the peg above it. That and the globe's meridian were fixed after the approval, so a round 5 confirmation followed.
+
+### Round 5
+
+See `supervisor/round-5.md`.
 
 ## Open questions for the owner
 

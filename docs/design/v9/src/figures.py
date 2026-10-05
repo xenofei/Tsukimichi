@@ -88,7 +88,7 @@ def pipiru(p):
     p.rect(14.5, -16, 4.2, 6.2, rot=0.4, layer="accent")                             # a card at her side
     p.ell(-16.5, -54, 6.2, 6.2, layer="glow")                                         # the star globe
     p.ring(-16.5, -54, 6.7, 0.35)                                                    # its thin brass limb ring
-    p.line([(-16.5 + 2.6 * math.cos(t), -54 + 6.0 * math.sin(t)) for t in np.linspace(-math.pi / 2, math.pi / 2, 24)], 0.55, layer="mark")   # one meridian: the front half-arc, pole to pole
+    p.line([(-17.1 + 1.4 * math.cos(t), -54 + 6.0 * math.sin(t)) for t in np.linspace(-math.pi / 2, math.pi / 2, 24)], 0.55, layer="mark")   # one meridian: the front half-arc, pole to pole
     p.line([(-16.5, -47), (-16.5, -45.5)], 1.2)
     p.light(-16.5, -54, "#B8CCFF", 30, 1.0)
 

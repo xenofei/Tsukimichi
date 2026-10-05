@@ -29,11 +29,13 @@ def frame_a(S=2):
     last_orange = max((i for i in lit if kinds[i] == "orange"), default=None)
     if last_orange is not None:
         x, y = pegs[last_orange]
-        # just below the struck peg (as measured), nudged to the first spot clear of every other peg and the ball
-        for (ox, oy) in ((0, 21), (-22, 14), (22, 14), (0, -21)):
-            tx, ty = x + ox, y + oy
-            if all(math.hypot(tx - px, ty - py) > 23 for j, (px, py) in enumerate(pegs) if j != last_orange) and math.hypot(tx - 487, ty - 352) > 14:
-                break
+        # just below the struck peg (as measured) if there is room; otherwise the nearby spot whose text box (about
+        # 18 x 9 units) stays farthest from every other peg's edge and from the ball
+        def gap(tx, ty):
+            others = [(px, py) for j, (px, py) in enumerate(pegs) if j != last_orange] + [(487, 352)]
+            return min(math.hypot(max(abs(tx - px) - 9, 0), max(abs(ty - py) - 4.5, 0)) - 10 for (px, py) in others)
+        cands = [(x + ox, y + oy) for ox in range(-30, 31, 2) for oy in range(-30, 31, 2) if math.hypot(ox, oy) >= 17]
+        tx, ty = (x, y + 21) if gap(x, y + 21) >= 3 else max(cands, key=lambda q: (min(gap(*q), 4), -math.hypot(q[0] - x, q[1] - y - 21)))
         text(img, tx, ty, "100", "ui_sb", 9.5, "#FFD7A8", anchor="mm", halo=0.7)
     hud(img, portrait=medallion_portrait("pipiru"))
     return img, kinds
