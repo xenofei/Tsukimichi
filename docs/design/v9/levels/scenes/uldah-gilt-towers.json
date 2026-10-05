@@ -1,0 +1,156 @@
+{
+ "name": "uldah-gilt-towers",
+ "about": "Ul'dah's skyline from the desert road: the gilt towers, the white domes and the sails, from the west half of the game's own Thanalan loading-screen painting at its high-resolution size, mirrored so its light comes from the upper left, night graded.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base02_hr1.tex",
+  "mirror": true,
+  "crop": [2240, 120, 1600, 1200],
+  "grade": {
+   "gamma": 1.7,
+   "exposure": 0.7,
+   "ceiling": 0.36
+  },
+  "skyDrop": 0.3,
+  "glow": [-50, -60]
+ },
+ "veil": 0.44,
+ "features": {
+  "tower a west": {
+   "points": [[162, 205], [160, 270], [155, 340], [148, 410], [140, 470]],
+   "smooth": 6
+  },
+  "tower a east": {
+   "points": [[284, 196], [289, 270], [294, 350], [298, 430]],
+   "smooth": 6
+  },
+  "tower b east": {
+   "points": [[458, 205], [460, 280], [463, 360], [466, 440]],
+   "smooth": 6
+  },
+  "white dome": {
+   "circle": [545, 478, 62],
+   "from": 205,
+   "sweep": 130
+  },
+  "spire": {
+   "points": [[537, 300], [537, 376]]
+  },
+  "lower roofs": {
+   "points": [[100, 486], [150, 480], [210, 486], [270, 478], [330, 490], [390, 486], [450, 480]],
+   "smooth": 6
+  },
+  "east domes": {
+   "circle": [655, 522, 34],
+   "from": 210,
+   "sweep": 120
+  },
+  "evening stars": [[516, 190], [604, 168], [668, 214], [560, 258], [632, 300], [700, 262], [610, 372], [690, 392], [506, 330], [578, 196], [652, 420], [570, 420]],
+  "far spires": {
+   "points": [[106, 250], [104, 440]]
+  },
+  "lower roofs 2": {
+   "points": [[118, 512], [470, 512]]
+  },
+  "east spire": {
+   "points": [[686, 300], [692, 470]]
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Violet and aquamarine (Ul'dah from the road)",
+   "sky": "#10224E",
+   "deep": "#060A1E",
+   "jewel1": "#4A3FC0",
+   "jewel2": "#2FA7B4",
+   "warm": "#FFC27A",
+   "rim": "#A9D2FF"
+  },
+  "jewel": {
+   "bands": [[
+     0,
+     "#5A44D0"
+    ], [
+     600,
+     "#3A34A8"
+    ]],
+   "valueHues": [[
+     0.08,
+     "#2A1E8A"
+    ], [
+     0.45,
+     "#D0C8FF"
+    ]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#2FB0A0",
+     "chroma": 0.09,
+     "mask": [[
+       "x",
+       360,
+       560
+      ], [
+       "y",
+       470,
+       360
+      ], [
+       "luma",
+       0.2,
+       0.34,
+       4
+      ]]
+    }
+   ],
+   "quiet": [22, 12]
+  },
+  "shafts": [
+   {
+    "origin": [-120, -200],
+    "angles": [50, 57, 64, 72],
+    "widths": [34, 22, 40, 26],
+    "k": 0.07,
+    "col": "#CFE0FF"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "outcrop",
+    "points": [[60, 520], [100, 540], [150, 560], [200, 590], [240, 610]],
+    "seed": 17,
+    "rough": 10
+   },
+   {
+    "kind": "palm",
+    "x": 60,
+    "y": 30,
+    "fronds": [12, 40, 66],
+    "length": 120,
+    "leaf": 22,
+    "seed": 9
+   }
+  ],
+  "silhouette": {
+   "body": "#060818",
+   "inner": "#16204E",
+   "rim": "#A9D2FF",
+   "rimK": 0.4,
+   "seed": 6
+  },
+  "lights": [
+   {
+    "auto": {
+     "n": 6,
+     "box": [100, 420, 470, 515],
+     "seed": 3
+    },
+    "col": "#FFC86E",
+    "r": 1.2,
+    "k": 0.7,
+    "halo": 4.5,
+    "hk": 0.2
+   }
+  ]
+ }
+}

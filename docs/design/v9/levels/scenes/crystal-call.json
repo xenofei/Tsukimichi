@@ -1,0 +1,84 @@
+{
+ "name": "crystal-call",
+ "about": "Our own painting: a constellation in the shape of a crystal over the Waking Sands (painters/crystal.py; shipped as a JPEG).",
+ "source": {
+  "kind": "painting",
+  "painter": "crystal",
+  "params": {}
+ },
+ "veil": 0.25,
+ "features": {},
+ "dress": {
+  "palette": {
+   "name": "Indigo and crystal aquamarine (the Echo)",
+   "sky": "#101A4E",
+   "deep": "#060A1E",
+   "jewel1": "#2E44C0",
+   "jewel2": "#2FB89A",
+   "warm": "#FFB45E",
+   "rim": "#A9E6FF"
+  },
+  "jewel": {
+   "bands": [[0, "#3446C8"], [600, "#283AA0"]],
+   "valueHues": [[0.08, "#1A2A8A"], [0.45, "#C9E0FF"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#30C0A0",
+     "chroma": 0.14,
+     "mask": [["poly", "crystal", 14]]
+    },
+    {
+     "hex": "#30B8A8",
+     "chroma": 0.13,
+     "mask": [["near", "milky way", 55, 125], ["y", 520, 480]]
+    }
+   ],
+   "quiet": [22, 12],
+   "keepMask": [["x", 112, 124], ["x", 240, 228], ["y", 464, 471], ["y", 499, 492]]
+  },
+  "glows": [
+   {
+    "x": 440,
+    "y": 330,
+    "r": 150,
+    "col": "#7FE8D8",
+    "k": 0.035
+   }
+  ],
+  "shafts": [
+   {
+    "origin": [-80, -90],
+    "angles": [40, 48, 56, 64],
+    "widths": [30, 22, 36, 24],
+    "k": 0.05,
+    "col": "#CFE0FF"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "palm",
+    "x": 60,
+    "y": 30,
+    "fronds": [14, 42, 70],
+    "length": 110,
+    "leaf": 20,
+    "seed": 13
+   },
+   {
+    "kind": "outcrop",
+    "points": [[600, 600], [650, 560], [690, 530], [720, 515], [740, 510]],
+    "seed": 31,
+    "rough": 10
+   }
+  ],
+  "silhouette": {
+   "body": "#06071A",
+   "inner": "#16204E",
+   "rim": "#A9E6FF",
+   "rimK": 0.38,
+   "seed": 9
+  }
+ }
+}

@@ -1,0 +1,279 @@
+{
+ "id": "base-04",
+ "name": "The Gilded Dome",
+ "stage": 1,
+ "number": 4,
+ "scene": "uldah-gilded-dome",
+ "subject": "Ul'dah's great dome and the palace beneath it",
+ "technique": "a landmark partly outlined",
+ "source": "ui/loadingimage/-nowloading_base02_hr1.tex",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 64,
+   "pegs": 55,
+   "bricks": 9,
+   "movers": 0,
+   "orange_candidates": 25,
+   "never_green": 11,
+   "skipped_while_tracing": [
+    [
+     [
+      352,
+      302
+     ],
+     "drum",
+     "3.9 from the peg at (337, 318)"
+    ],
+    [
+     [
+      466,
+      302
+     ],
+     "drum",
+     "9.8 from the peg at (490, 288)"
+    ],
+    [
+     [
+      504,
+      302
+     ],
+     "drum",
+     "1.8 from the peg at (490, 288)"
+    ],
+    [
+     [
+      542,
+      302
+     ],
+     "drum",
+     "8.1 from the peg at (568, 300)"
+    ],
+    [
+     [
+      436,
+      476
+     ],
+     "column",
+     "10.3 from the peg at (460, 461)"
+    ],
+    [
+     [
+      100,
+      505
+     ],
+     "terrace lamp",
+     "-2.9 from the peg at (114, 499)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-04.json  id=base-04 \"The Gilded Dome\"  pieces=64 (round 55, bricks 9, movers 0)  mayBeOrange=25",
+    "     still round pegs 55: closest surfaces 14.6 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 104..505"
+   ]
+  },
+  "sweep": {
+   "angles": 171,
+   "pegs_median": 8,
+   "pegs_mean": 8.3,
+   "pegs_max": 16,
+   "oranges_mean": 2.33,
+   "no_hit": 1,
+   "stuck": 2,
+   "stuck_share": 0.012,
+   "long_flights": 0,
+   "bucket": 29,
+   "unreached": [],
+   "pieces": 64
+  },
+  "play": {
+   "greedy_won": 21,
+   "games": 48,
+   "shots_mean": 14.3,
+   "oranges_left_when_lost": [
+    2,
+    1,
+    1,
+    2,
+    2,
+    1,
+    5,
+    5,
+    3,
+    1,
+    2,
+    1,
+    3,
+    3,
+    2,
+    2,
+    1,
+    1,
+    1,
+    6,
+    5,
+    5,
+    9,
+    3,
+    3,
+    11,
+    10
+   ],
+   "stuck_fires": 1,
+   "random_won": 0,
+   "random_oranges_mean": 18.7
+  },
+  "ceiling": {
+   "p99_luma": 0.43,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 1.04,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 50.5,
+    "longest_rim_run": 0.0,
+    "longest_rim_at": null,
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 2,
+    "lights_nearest": 48.1,
+    "darkened_min_clearance": 50.5,
+    "elements_dropped_for_clearance": 0
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 36,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "blue": 0.688,
+     "orange": 0.617,
+     "green": 0.723,
+     "purple": 0.59
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.332,
+      "at": [
+       460,
+       461
+      ],
+      "undressed": 0.329,
+      "drop": -0.003
+     },
+     "orange 1x": {
+      "worst": 0.26,
+      "at": [
+       460,
+       461
+      ],
+      "undressed": 0.257,
+      "drop": -0.003
+     },
+     "green 1x": {
+      "worst": 0.421,
+      "at": [
+       179,
+       289
+      ],
+      "undressed": 0.423,
+      "drop": 0.002
+     },
+     "purple 1x": {
+      "worst": 0.234,
+      "at": [
+       460,
+       461
+      ],
+      "undressed": 0.231,
+      "drop": -0.003
+     },
+     "blue 0.8x": {
+      "worst": 0.332,
+      "at": [
+       460,
+       461
+      ],
+      "undressed": 0.33,
+      "drop": -0.002
+     },
+     "orange 0.8x": {
+      "worst": 0.261,
+      "at": [
+       460,
+       461
+      ],
+      "undressed": 0.259,
+      "drop": -0.002
+     },
+     "green 0.8x": {
+      "worst": 0.422,
+      "at": [
+       179,
+       289
+      ],
+      "undressed": 0.423,
+      "drop": 0.001
+     },
+     "purple 0.8x": {
+      "worst": 0.235,
+      "at": [
+       460,
+       461
+      ],
+      "undressed": 0.232,
+      "drop": -0.003
+     }
+    },
+    "worst_margin": 0.234,
+    "largest_drop": 0.002,
+    "bricks_min_margin": [
+     0.401,
+     "blue"
+    ],
+    "protan_orange_p10": 0.132,
+    "protan_orange_p10_undressed": 0.117,
+    "jewels": {
+     "coloured_px_pct": 98.4,
+     "mean_chroma": 0.073,
+     "first_jewel_hue": 255,
+     "first_share": 0.753,
+     "second_jewel_hue": 345,
+     "second_share": 0.247,
+     "bins_pct": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      42.6,
+      32.7,
+      24.7,
+      0.0
+     ]
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 20.3,
+ "verdict": "PASS"
+}

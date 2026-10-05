@@ -1,0 +1,381 @@
+{
+ "id": "base-01",
+ "name": "Road to Horizon",
+ "stage": 1,
+ "number": 1,
+ "scene": "thanalan-road-chart",
+ "subject": "the road from the Waking Sands to Horizon and on toward Ul'dah",
+ "technique": "a trail on a map",
+ "source": "ui/map/w1f1/00/w1f100_m.tex",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 73,
+   "pegs": 73,
+   "bricks": 0,
+   "movers": 0,
+   "orange_candidates": 25,
+   "never_green": 53,
+   "skipped_while_tracing": [
+    [
+     [
+      707,
+      458
+     ],
+     "east gate",
+     "wall pinch 8.9"
+    ],
+    [
+     [
+      707,
+      490
+     ],
+     "east gate",
+     "wall pinch 8.9"
+    ],
+    [
+     [
+      490,
+      245
+     ],
+     "road copperbell",
+     "-4.3 from the peg at (480, 238)"
+    ],
+    [
+     [
+      274,
+      257
+     ],
+     "road cove",
+     "4.9 from the peg at (296, 257)"
+    ],
+    [
+     [
+      188,
+      196
+     ],
+     "road main",
+     "12.1 from the peg at (179, 168)"
+    ],
+    [
+     [
+      251,
+      211
+     ],
+     "road main",
+     "0.2 from the peg at (267, 208)"
+    ],
+    [
+     [
+      281,
+      220
+     ],
+     "road main",
+     "7.7 from the peg at (267, 240)"
+    ],
+    [
+     [
+      312,
+      228
+     ],
+     "road main",
+     "6.9 from the peg at (325, 208)"
+    ],
+    [
+     [
+      344,
+      234
+     ],
+     "road main",
+     "3.0 from the peg at (325, 240)"
+    ],
+    [
+     [
+      407,
+      240
+     ],
+     "road main",
+     "-1.8 from the peg at (422, 238)"
+    ],
+    [
+     [
+      446,
+      294
+     ],
+     "road south",
+     "-8.6 from the peg at (451, 287)"
+    ],
+    [
+     [
+      471,
+      351
+     ],
+     "road south",
+     "-1.9 from the peg at (475, 366)"
+    ],
+    [
+     [
+      495,
+      372
+     ],
+     "road south",
+     "8.0 from the peg at (504, 349)"
+    ],
+    [
+     [
+      513,
+      398
+     ],
+     "road south",
+     "2.1 from the peg at (533, 398)"
+    ],
+    [
+     [
+      527,
+      427
+     ],
+     "road south",
+     "12.3 from the peg at (533, 398)"
+    ],
+    [
+     [
+      589,
+      478
+     ],
+     "road east",
+     "8.3 from the peg at (579, 456)"
+    ],
+    [
+     [
+      480,
+      414
+     ],
+     "road hammerlea",
+     "7.3 from the peg at (504, 415)"
+    ],
+    [
+     [
+      434,
+      458
+     ],
+     "road hammerlea",
+     "-4.5 from the peg at (424, 466)"
+    ],
+    [
+     [
+      367,
+      507
+     ],
+     "road bazaar",
+     "12.2 from the peg at (395, 515)"
+    ],
+    [
+     [
+      353,
+      457
+     ],
+     "west shore",
+     "-1.2 from the peg at (366, 466)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-01.json  id=base-01 \"Road to Horizon\"  pieces=73 (round 73, bricks 0, movers 0)  mayBeOrange=25",
+    "     still round pegs 73: closest surfaces 14.7 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 152..548"
+   ]
+  },
+  "sweep": {
+   "angles": 171,
+   "pegs_median": 7,
+   "pegs_mean": 7.0,
+   "pegs_max": 17,
+   "oranges_mean": 3.3,
+   "no_hit": 4,
+   "stuck": 4,
+   "stuck_share": 0.023,
+   "long_flights": 0,
+   "bucket": 27,
+   "unreached": [],
+   "pieces": 73
+  },
+  "play": {
+   "greedy_won": 30,
+   "games": 48,
+   "shots_mean": 14.0,
+   "oranges_left_when_lost": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    3,
+    1,
+    1,
+    2,
+    1,
+    1,
+    1,
+    5,
+    5,
+    2,
+    4,
+    1,
+    3
+   ],
+   "stuck_fires": 3,
+   "random_won": 0,
+   "random_oranges_mean": 19.1
+  },
+  "ceiling": {
+   "p99_luma": 0.354,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 2.18,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 14.27,
+    "longest_rim_run": 28.4,
+    "longest_rim_at": [
+     696,
+     72
+    ],
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 0,
+    "lights_nearest": 99,
+    "darkened_min_clearance": 14.27,
+    "elements_dropped_for_clearance": 4
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 47,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "blue": 0.687,
+     "orange": 0.619,
+     "green": 0.718,
+     "purple": 0.584
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.41,
+      "at": [
+       267,
+       208
+      ],
+      "undressed": 0.428,
+      "drop": 0.018
+     },
+     "orange 1x": {
+      "worst": 0.341,
+      "at": [
+       267,
+       208
+      ],
+      "undressed": 0.36,
+      "drop": 0.019
+     },
+     "green 1x": {
+      "worst": 0.462,
+      "at": [
+       220,
+       204
+      ],
+      "undressed": 0.472,
+      "drop": 0.01
+     },
+     "purple 1x": {
+      "worst": 0.306,
+      "at": [
+       267,
+       208
+      ],
+      "undressed": 0.325,
+      "drop": 0.019
+     },
+     "blue 0.8x": {
+      "worst": 0.41,
+      "at": [
+       121,
+       168
+      ],
+      "undressed": 0.426,
+      "drop": 0.016
+     },
+     "orange 0.8x": {
+      "worst": 0.341,
+      "at": [
+       267,
+       208
+      ],
+      "undressed": 0.358,
+      "drop": 0.017
+     },
+     "green 0.8x": {
+      "worst": 0.462,
+      "at": [
+       220,
+       204
+      ],
+      "undressed": 0.469,
+      "drop": 0.007
+     },
+     "purple 0.8x": {
+      "worst": 0.306,
+      "at": [
+       121,
+       168
+      ],
+      "undressed": 0.323,
+      "drop": 0.017
+     }
+    },
+    "worst_margin": 0.306,
+    "largest_drop": 0.019,
+    "bricks_min_margin": null,
+    "protan_orange_p10": 0.091,
+    "protan_orange_p10_undressed": 0.11,
+    "jewels": {
+     "coloured_px_pct": 98.6,
+     "mean_chroma": 0.074,
+     "first_jewel_hue": 285,
+     "first_share": 0.799,
+     "second_jewel_hue": 195,
+     "second_share": 0.201,
+     "bins_pct": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.7,
+      13.1,
+      6.3,
+      16.5,
+      63.4,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 21.0,
+ "verdict": "PASS"
+}

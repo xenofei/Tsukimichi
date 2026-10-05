@@ -1,0 +1,340 @@
+{
+ "id": "base-02",
+ "name": "The Cactuar",
+ "stage": 1,
+ "number": 2,
+ "scene": "sagolii-cactuar",
+ "subject": "a cactuar mid-stride on a dune under the full moon",
+ "technique": "a creature in outline",
+ "source": "our painting (cactuar)",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 74,
+   "pegs": 64,
+   "bricks": 10,
+   "movers": 0,
+   "orange_candidates": 25,
+   "never_green": 8,
+   "skipped_while_tracing": [
+    [
+     [
+      519,
+      384
+     ],
+     "outline",
+     "2.8 from the peg at (540, 385)"
+    ],
+    [
+     [
+      362,
+      481
+     ],
+     "outline",
+     "6.4 from the peg at (371, 503)"
+    ],
+    [
+     [
+      347,
+      250
+     ],
+     "outline",
+     "6.7 from the peg at (322, 249)"
+    ],
+    [
+     [
+      386,
+      291
+     ],
+     "outline",
+     "3.9 from the peg at (367, 279)"
+    ],
+    [
+     [
+      431,
+      201
+     ],
+     "outline",
+     "9.0 from the peg at (457, 195)"
+    ],
+    [
+     [
+      40,
+      333
+     ],
+     "far dune",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      79,
+      327
+     ],
+     "far dune",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      316,
+      333
+     ],
+     "far dune",
+     "4.0 from the peg at (337, 336)"
+    ],
+    [
+     [
+      355,
+      340
+     ],
+     "far dune",
+     "-0.9 from the peg at (367, 352)"
+    ],
+    [
+     [
+      514,
+      344
+     ],
+     "far dune",
+     "-2.7 from the peg at (521, 357)"
+    ],
+    [
+     [
+      553,
+      338
+     ],
+     "far dune",
+     "9.8 from the peg at (570, 317)"
+    ],
+    [
+     [
+      593,
+      331
+     ],
+     "far dune",
+     "10.1 from the peg at (570, 317)"
+    ],
+    [
+     [
+      712,
+      317
+     ],
+     "far dune",
+     "wall pinch 4.8"
+    ],
+    [
+     [
+      752,
+      319
+     ],
+     "far dune",
+     "off the board (walls, launcher's swing or bucket)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-02.json  id=base-02 \"The Cactuar\"  pieces=74 (round 64, bricks 10, movers 0)  mayBeOrange=25",
+    "     still round pegs 64: closest surfaces 14.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 170..511"
+   ]
+  },
+  "sweep": {
+   "angles": 171,
+   "pegs_median": 10,
+   "pegs_mean": 10.3,
+   "pegs_max": 18,
+   "oranges_mean": 3.47,
+   "no_hit": 0,
+   "stuck": 7,
+   "stuck_share": 0.041,
+   "long_flights": 0,
+   "bucket": 28,
+   "unreached": [],
+   "pieces": 74
+  },
+  "play": {
+   "greedy_won": 26,
+   "games": 48,
+   "shots_mean": 14.1,
+   "oranges_left_when_lost": [
+    1,
+    1,
+    1,
+    1,
+    3,
+    3,
+    6,
+    1,
+    1,
+    1,
+    4,
+    1,
+    3,
+    5,
+    3,
+    5,
+    1,
+    3,
+    5,
+    1,
+    6,
+    7
+   ],
+   "stuck_fires": 6,
+   "random_won": 0,
+   "random_oranges_mean": 18.2
+  },
+  "ceiling": {
+   "p99_luma": 0.346,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 3.75,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 7.22,
+    "longest_rim_run": 20.0,
+    "longest_rim_at": [
+     651,
+     562
+    ],
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 2,
+    "lights_nearest": 128.4,
+    "darkened_min_clearance": 8.24,
+    "elements_dropped_for_clearance": 0
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 48,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "blue": 0.683,
+     "orange": 0.619,
+     "green": 0.718,
+     "purple": 0.58
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.394,
+      "at": [
+       587,
+       347
+      ],
+      "undressed": 0.394,
+      "drop": 0.0
+     },
+     "orange 1x": {
+      "worst": 0.344,
+      "at": [
+       567,
+       404
+      ],
+      "undressed": 0.343,
+      "drop": -0.001
+     },
+     "green 1x": {
+      "worst": 0.429,
+      "at": [
+       587,
+       347
+      ],
+      "undressed": 0.429,
+      "drop": 0.0
+     },
+     "purple 1x": {
+      "worst": 0.291,
+      "at": [
+       587,
+       347
+      ],
+      "undressed": 0.291,
+      "drop": 0.0
+     },
+     "blue 0.8x": {
+      "worst": 0.393,
+      "at": [
+       587,
+       347
+      ],
+      "undressed": 0.394,
+      "drop": 0.001
+     },
+     "orange 0.8x": {
+      "worst": 0.346,
+      "at": [
+       567,
+       404
+      ],
+      "undressed": 0.344,
+      "drop": -0.002
+     },
+     "green 0.8x": {
+      "worst": 0.428,
+      "at": [
+       587,
+       347
+      ],
+      "undressed": 0.429,
+      "drop": 0.001
+     },
+     "purple 0.8x": {
+      "worst": 0.29,
+      "at": [
+       587,
+       347
+      ],
+      "undressed": 0.291,
+      "drop": 0.001
+     }
+    },
+    "worst_margin": 0.29,
+    "largest_drop": 0.001,
+    "bricks_min_margin": [
+     0.466,
+     "blue"
+    ],
+    "protan_orange_p10": 0.101,
+    "protan_orange_p10_undressed": 0.099,
+    "jewels": {
+     "coloured_px_pct": 90.4,
+     "mean_chroma": 0.081,
+     "first_jewel_hue": 285,
+     "first_share": 0.78,
+     "second_jewel_hue": 15,
+     "second_share": 0.219,
+     "bins_pct": [
+      18.7,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.1,
+      71.2,
+      6.8,
+      3.1
+     ]
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 47.2,
+ "verdict": "PASS"
+}
