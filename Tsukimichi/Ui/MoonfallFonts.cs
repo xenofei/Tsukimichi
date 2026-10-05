@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.GameFonts;
@@ -66,6 +67,8 @@ internal sealed class MoonfallFonts : IMoonfallFonts
         (MoonfallFace.Trump, GameFontFamilyAndSize.TrumpGothic68),
     ];
 
+    private static readonly MoonfallFace[] Faces = Sizes.Select(static s => s.Face).ToArray();
+
     private static readonly ushort[] PunctuationRanges = [0x00A0, 0x00FF, 0x2010, 0x205E, 0];
 
     private readonly IFontAtlas atlas;
@@ -90,7 +93,7 @@ internal sealed class MoonfallFonts : IMoonfallFonts
             Build();
         }
 
-        var best = Nearest(face, px, Sizes.Length, i => Sizes[i].Face, i => native[i]);
+        var best = Nearest(face, px, Faces, native);
         if (best < 0 || handles?[best] is not { Available: true } handle)
         {
             return false;
@@ -111,24 +114,22 @@ internal sealed class MoonfallFonts : IMoonfallFonts
     }
 
     /// <summary>
-    /// Of the <paramref name="count"/> fonts, the one of <paramref name="face"/> to draw <paramref name="px"/> pixels with:
+    /// Of the fonts (<paramref name="faces"/> and their native <paramref name="sizes"/>), the one of <paramref name="face"/> to draw <paramref name="px"/> pixels with:
     /// the smallest native size at or above 85% of it (scaled down, never far up), else the largest.
     /// </summary>
-    public static int Nearest(MoonfallFace face, float px, int count, Func<int, MoonfallFace> faceOf, Func<int, float> sizeOf)
+    public static int Nearest(MoonfallFace face, float px, ReadOnlySpan<MoonfallFace> faces, ReadOnlySpan<float> sizes)
     {
-        ArgumentNullException.ThrowIfNull(faceOf);
-        ArgumentNullException.ThrowIfNull(sizeOf);
         var best = -1;
-        for (var i = 0; i < count; i++)
+        for (var i = 0; i < faces.Length && i < sizes.Length; i++)
         {
-            if (faceOf(i) != face)
+            if (faces[i] != face)
             {
                 continue;
             }
 
-            var enough = sizeOf(i) >= px * 0.85f;
-            var bestEnough = best >= 0 && sizeOf(best) >= px * 0.85f;
-            if (best < 0 || (enough && (!bestEnough || sizeOf(i) < sizeOf(best))) || (!enough && !bestEnough && sizeOf(i) > sizeOf(best)))
+            var enough = sizes[i] >= px * 0.85f;
+            var bestEnough = best >= 0 && sizes[best] >= px * 0.85f;
+            if (best < 0 || (enough && (!bestEnough || sizes[i] < sizes[best])) || (!enough && !bestEnough && sizes[i] > sizes[best]))
             {
                 best = i;
             }

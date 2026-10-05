@@ -193,16 +193,6 @@ public static partial class MoonfallSceneRecipeLoader
             return ids;
         }
 
-        private bool Flag(JsonElement node, string label)
-        {
-            if (node.ValueKind is JsonValueKind.True or JsonValueKind.False)
-            {
-                return node.GetBoolean();
-            }
-
-            errors.Add($"{label} must be true or false");
-            return false;
-        }
 
         public MoonfallSceneRecipe? Recipe(JsonElement root, string? expectedName)
         {
@@ -266,7 +256,7 @@ public static partial class MoonfallSceneRecipeLoader
                 Motion = Motion(root),
                 Chrome = Chrome(root),
                 Levels = LevelIds(root),
-                Default = root.TryGetProperty("default", out var d) && Flag(d, "default"),
+                Default = Bool(root, "default"),
             };
             recipe = recipe with { Moon = Moon(root, [.. recipe.Paint, .. recipe.Light]) };
             if (recipe.Paint.Concat(recipe.Light).OfType<MoonfallMoon>().Count() > 1)
@@ -309,9 +299,9 @@ public static partial class MoonfallSceneRecipeLoader
                 return null;
             }
 
-            if (game is not null && !GamePath().IsMatch(game))
+            if (game is not null && (!GamePath().IsMatch(game) || game.Contains("..", StringComparison.Ordinal) || game.Contains("//", StringComparison.Ordinal)))
             {
-                errors.Add("source.game must be a ui/loadingimage/ or ui/map/ texture path ending .tex");
+                errors.Add("source.game must be a ui/loadingimage/ or ui/map/ texture path ending .tex (no parent steps)");
                 return null;
             }
 

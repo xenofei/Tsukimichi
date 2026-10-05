@@ -172,6 +172,55 @@ internal static class Render
             Frame(1f / 60f);
         }
 
+        if (args.Contains("--alloc"))
+        {
+            // The window's own steady-state allocation: the board's drawing (not ImGui's) over 10 s of frames, after 2 s
+            // to settle; the art is loaded and nothing new is asked for.
+            for (var i = 0; i < 120; i++)
+            {
+                Frame(1f / 60f);
+            }
+
+            using var listener = new AllocListener();
+            listener.On = true;
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < 600; i++)
+            {
+                Frame(1f / 60f);
+            }
+
+            var bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+            listener.On = false;
+            Console.WriteLine($"alloc: {bytes} bytes over 600 frames ({levelName} {moment} {w} x {h})");
+            foreach (var (type, n) in listener.Types.OrderByDescending(static kv => kv.Value))
+            {
+                Console.WriteLine($"  ~{n * 100} KB {type}");
+            }
+
+            // The text calls the chrome makes, alone: do the bindings allocate for a span?
+            ImGui.NewFrame();
+            var probe = ImGui.GetForegroundDrawList();
+            var font = ImGui.GetFont();
+            ReadOnlySpan<char> text = "THE AIRSHIP ROAD";
+            var probeBefore = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < 1000; i++)
+            {
+                _ = ImGui.CalcTextSizeA(font, 20f, float.MaxValue, 0f, text, out _);
+                probe.AddText(font, 20f, new Vector2(10, 10), uint.MaxValue, text);
+            }
+
+            Console.WriteLine($"alloc probe: {GC.GetAllocatedBytesForCurrentThread() - probeBefore} bytes for 1000 measured and drawn spans");
+            var labelBefore = GC.GetAllocatedBytesForCurrentThread();
+            var pauseText = "Pause";
+            for (var i = 0; i < 1000; i++)
+            {
+                _ = ImGui.CalcTextSize(pauseText + "##moonfallPause");
+            }
+
+            Console.WriteLine($"alloc probe: {GC.GetAllocatedBytesForCurrentThread() - labelBefore} bytes for 1000 concatenated labels");
+            ImGui.EndFrame();
+        }
+
         Frame(1f / 60f, draw: true);
         File.WriteAllBytes(outPath, MoonfallPng.Encode(raster.ToRgba(), w, h));
         Console.WriteLine($"{outPath}: {levelName} {moment} {w} x {h}");

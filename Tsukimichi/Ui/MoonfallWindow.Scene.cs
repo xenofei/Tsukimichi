@@ -109,8 +109,9 @@ public sealed partial class MoonfallWindow
         if (full)
         {
             // Stars twinkle on the scene's own bright points (±35% over 2 and 3 s).
-            foreach (var star in layers.Stars)
+            for (var si = 0; si < layers.Stars.Count; si++)
             {
+                var star = layers.Stars[si];
                 var lift = MoonfallMotion.Twinkle(star, boardClock, still: false);
                 if (lift > 0.01f)
                 {
@@ -120,8 +121,9 @@ public sealed partial class MoonfallWindow
         }
 
         // Fireflies: a core and a halo, wandering small closed loops (Full) or resting, always 8 units clear of every piece.
-        foreach (var f in layers.Fireflies)
+        for (var fi = 0; fi < layers.Fireflies.Count; fi++)
         {
+            var f = layers.Fireflies[fi];
             var at = MoonfallMotion.FireflyAt(f, boardClock, !full);
             var pulse = MoonfallMotion.FireflyPulse(f, boardClock, !full);
             Put(p, soft, at.X, at.Y, MoonfallMotion.FireflyHalo * f.Size * 2.2f / 4f, Ink(MoonfallColor.Hex("#FFB45E"), 0.22f * pulse * fade));
@@ -135,7 +137,7 @@ public sealed partial class MoonfallWindow
             for (var i = 0; i < layers.Dust; i++)
             {
                 var (at, life) = MoonfallMotion.Dust(i, boardClock);
-                if (!MoonfallFramingCheck.Opening(at.X, at.Y) || clearance.At(at.X, at.Y) < MoonfallMotion.ParticleKeepOut + MoonfallMotion.DustRadius)
+                if (!MoonfallMotion.DustVisible(clearance, at))
                 {
                     continue;
                 }
@@ -150,8 +152,9 @@ public sealed partial class MoonfallWindow
         }
 
         // The lamps' flicker (±10%; Simple keeps it, still keeps them steady).
-        foreach (var l in layers.Flickers)
+        for (var li = 0; li < layers.Flickers.Count; li++)
         {
+            var l = layers.Flickers[li];
             var flick = MoonfallMotion.Flicker(boardClock, l.Phase, still);
             var a = Math.Clamp((flick - 0.9f) / 0.2f, 0f, 1f) * 0.16f;
             Put(p, soft, l.X, l.Y, l.Halo * 1.2f / 4f, Ink(l.Colour, a * fade));

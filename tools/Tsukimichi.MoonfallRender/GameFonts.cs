@@ -28,6 +28,8 @@ internal sealed unsafe class GameFonts : IMoonfallFonts
 
     private readonly List<Pending> pending = [];
     private readonly List<(MoonfallFace Face, float Px, ImFontPtr Font)> fonts = [];
+    private MoonfallFace[] faces = [];
+    private float[] sizes = [];
 
     private sealed record Pending(MoonfallFace Face, float Px, ImFontPtr Font, FdtReader Fdt, List<(int Rect, FdtReader.FontTableEntry Glyph)> Rects);
 
@@ -125,11 +127,14 @@ internal sealed unsafe class GameFonts : IMoonfallFonts
             p.Font.FontSize = p.Px;
             fonts.Add((p.Face, p.Px, p.Font));
         }
+
+        faces = fonts.Select(static f => f.Face).ToArray();
+        sizes = fonts.Select(static f => f.Px).ToArray();
     }
 
     public bool TryGet(MoonfallFace face, float px, out ImFontPtr font)
     {
-        var best = MoonfallFonts.Nearest(face, px, fonts.Count, i => fonts[i].Face, i => fonts[i].Px);
+        var best = MoonfallFonts.Nearest(face, px, faces.AsSpan(0, fonts.Count), sizes.AsSpan(0, fonts.Count));
         font = best >= 0 ? fonts[best].Font : default;
         return best >= 0;
     }

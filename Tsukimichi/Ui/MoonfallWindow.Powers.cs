@@ -198,7 +198,7 @@ public sealed partial class MoonfallWindow
         ImGui.SameLine(0f, gap * 0.5f);
         using (ImRaii.Disabled(locked))
         {
-            if (ImGui.Checkbox(Strings.MoonfallQuickPlay + "##moonfallQuickPlay", ref quickPlay))
+            if (ImGui.Checkbox($"{Strings.MoonfallQuickPlay}##moonfallQuickPlay", ref quickPlay))
             {
                 game = NewGame(levelIndex);
             }

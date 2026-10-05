@@ -523,7 +523,7 @@ public sealed partial class MoonfallWindow : Window
         var held = (pause.Active & (MoonfallPauseReason.Combat | MoonfallPauseReason.Duty | MoonfallPauseReason.Cutscene)) != 0;
         using (ImRaii.Disabled(held))
         {
-            if (ImGui.Button(pauseLabel + "##moonfallPause", new Vector2(pauseWidth, 0f)))
+            if (ImGui.Button($"{pauseLabel}##moonfallPause", new Vector2(pauseWidth, 0f)))
             {
                 SoundClick();
                 if (pause.Paused)
@@ -543,7 +543,7 @@ public sealed partial class MoonfallWindow : Window
         }
 
         ImGui.SameLine();
-        if (ImGui.Button(Strings.MoonfallRestart + "##moonfallRestart", new Vector2(restartWidth, 0f)))
+        if (ImGui.Button($"{Strings.MoonfallRestart}##moonfallRestart", new Vector2(restartWidth, 0f)))
         {
             SoundClick();
             Choose(RestartChoice);
@@ -561,7 +561,7 @@ public sealed partial class MoonfallWindow : Window
             return;
         }
 
-        if (ImGui.Button(Strings.MoonfallOptions + "##moonfallOptions"))
+        if (ImGui.Button($"{Strings.MoonfallOptions}##moonfallOptions"))
         {
             ImGui.OpenPopup("##moonfallOptionsMenu");
         }
@@ -569,7 +569,7 @@ public sealed partial class MoonfallWindow : Window
         if (ImGui.BeginPopup("##moonfallOptionsMenu"))
         {
             var marks = options.PegMarks;
-            if (ImGui.Checkbox(Strings.MoonfallPegMarks + "##moonfallPegMarks", ref marks))
+            if (ImGui.Checkbox($"{Strings.MoonfallPegMarks}##moonfallPegMarks", ref marks))
             {
                 options.PegMarks = marks;
                 options.PegMarksHintSeen = true;
@@ -602,7 +602,7 @@ public sealed partial class MoonfallWindow : Window
         }
 
         ImGui.SameLine(0f, UiMetrics.Px(10f));
-        if (ImGui.SmallButton(Strings.MoonfallTurnOn + "##moonfallMarksOn"))
+        if (ImGui.SmallButton($"{Strings.MoonfallTurnOn}##moonfallMarksOn"))
         {
             options.PegMarks = true;
             options.PegMarksHintSeen = true;
@@ -610,7 +610,7 @@ public sealed partial class MoonfallWindow : Window
         }
 
         ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.MoonfallNoThanks + "##moonfallMarksNo"))
+        if (ImGui.SmallButton($"{Strings.MoonfallNoThanks}##moonfallMarksNo"))
         {
             options.PegMarksHintSeen = true;
             options.Save();

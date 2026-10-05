@@ -13,6 +13,12 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
   - Moonfall has sound. Each peg rings two notes a fifth apart, a semitone higher for every peg in the shot. The bucket, free balls, style shots, each character's power, the drum roll before FULL MOON, the Fever cups and the score count-up have their own sounds.
   - FULL MOON starts an original finale piece that plays on through the level's tally, built on Moonfall's own moon theme.
   - Set the volume with **Sound** on the pause screen (70% to start; Off silences it). It follows the game's master volume and mute, goes quiet while Moonfall is paused, and while the game is in the background unless the game plays sound there.
+  - The board now wears the game's own art, read from your install while Moonfall is open (nothing of it is downloaded or shipped): a gilt journal frame with the ball tube, multiplier dial, oranges count and score on its rails, and each level's scene graded for night and dressed with moonbeams, branches, lanterns, fireflies and stars. The window's sides show the level's scene, softly blurred.
+  - Each character appears with their Triple Triad card: their portrait sits in a medallion on the right rail, gems count the power's turns left, and when the power fires the card slides in beside the board (in a small window, its name shows on the top rail instead).
+  - Style shots show as small ribbons in open sky, never over a live peg. FULL MOON swells the moon and lifts the sky toward the character's colour, and the cups light up. The level tally shows LEVEL CLEAR, and ACED or NEW BEST when you earn them.
+  - The Moon Road levels have a lantern cart for a bucket; The Far Shore keeps the lantern boat.
+  - **Peg marks** (Options in Moonfall's bar, off to start): a crescent on orange, a leaf on green and a star on purple, so the kinds tell apart without colour. Moonfall offers them once.
+  - Moonbeams, fireflies, mist and stars move gently and never across a peg. With Reduce motion on, or the Plain look, the board holds still. If a game texture is missing or a patch changes it, Moonfall falls back to its own art.
 
 ## [1.22.1] - 2026-10-05
 

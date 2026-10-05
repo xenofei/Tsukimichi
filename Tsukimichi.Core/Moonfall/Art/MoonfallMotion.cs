@@ -154,6 +154,13 @@ public static class MoonfallMotion
         return (at, fade * fade);
     }
 
+    /// <summary>Whether a dust mote at <paramref name="at"/> may show: inside the opening and <see cref="ParticleKeepOut"/> clear of every piece.</summary>
+    public static bool DustVisible(MoonfallClearance clearance, Vector2 at)
+    {
+        ArgumentNullException.ThrowIfNull(clearance);
+        return MoonfallFramingCheck.Opening(at.X, at.Y) && clearance.At(at.X, at.Y) >= ParticleKeepOut + DustRadius;
+    }
+
     /// <summary>Whether a mist band keeps <see cref="PegKeepOut"/> from every piece across the whole board's width.</summary>
     public static bool MistBandClear(MoonfallClearance clearance, float y0, float y1)
     {

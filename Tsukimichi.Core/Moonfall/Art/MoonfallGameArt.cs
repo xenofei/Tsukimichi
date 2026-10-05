@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 
 namespace Tsukimichi.Core.Moonfall.Art;
@@ -132,6 +133,10 @@ public sealed class MoonfallGameArt<T> : IDisposable
     private T? chromeTexture;
     private readonly Dictionary<MoonfallPower, (Task<T>? Upload, T? Texture)> cards = [];
     private string? sceneKey;
+    private string? sceneReadyKey;
+    private MoonfallSceneRecipe? keyRecipe;
+    private bool keyTwoX;
+    private string? keyText;
     private Task<MoonfallSceneLayers?>? sceneBuild;
     private string? sceneBuildKey;
     private List<(string Name, Task<T> Upload)>? sceneUploads;
@@ -184,23 +189,25 @@ public sealed class MoonfallGameArt<T> : IDisposable
             return held.Texture;
         }
 
-        if (!cardBuilds.TryGetValue(power, out var build))
+        if (!cardBuilds.ContainsKey(power))
         {
-            build = cardBuilds[power] = Task.Run(async () =>
-            {
-                var card = await host.ReadGameTexture(companion.CardPath).ConfigureAwait(false);
-                if (card is null || card.Width != MoonfallCards.CardWidth || card.Height != MoonfallCards.CardHeight || card.A is null)
-                {
-                    return null;
-                }
-
-                return MoonfallGrade.LightGrade(card).ToRgba() is { } bytes ? new MoonfallRgba(card.Width, card.Height, bytes, new Vector4(0, 0, card.Width, card.Height)) : null;
-            });
+            cardBuilds[power] = BuildCard(companion);
         }
 
         cards[power] = (null, null);
         return null;
     }
+
+    private Task<MoonfallRgba?> BuildCard(MoonfallCard companion) => Task.Run(async () =>
+    {
+        var card = await host.ReadGameTexture(companion.CardPath).ConfigureAwait(false);
+        if (card is null || card.Width != MoonfallCards.CardWidth || card.Height != MoonfallCards.CardHeight || card.A is null)
+        {
+            return null;
+        }
+
+        return MoonfallGrade.LightGrade(card).ToRgba() is { } bytes ? new MoonfallRgba(card.Width, card.Height, bytes, new Vector4(0, 0, card.Width, card.Height)) : null;
+    });
 
     /// <summary>
     /// Once a frame while the board draws: lands what finished and starts what the frame needs. <paramref name="level"/>'s
@@ -309,10 +316,41 @@ public sealed class MoonfallGameArt<T> : IDisposable
         }
     }
 
+    /// <summary>The scene's key, "name@tier", made once for each recipe and tier (no string a frame).</summary>
+    private string? KeyFor(MoonfallSceneRecipe? recipe, bool twoX)
+    {
+        if (recipe is null)
+        {
+            return null;
+        }
+
+        if (!ReferenceEquals(recipe, keyRecipe) || twoX != keyTwoX || keyText is null)
+        {
+            keyRecipe = recipe;
+            keyTwoX = twoX;
+            keyText = $"{recipe.Name}@{(twoX ? 2 : 1)}";
+        }
+
+        return keyText;
+    }
+
+    private (string Key, MoonfallSceneLayers Layers)? CachedScene(string key)
+    {
+        foreach (var c in sceneCache)
+        {
+            if (string.Equals(c.Key, key, StringComparison.Ordinal))
+            {
+                return c;
+            }
+        }
+
+        return null;
+    }
+
     private void Scenes(MoonfallLevel level, bool twoX)
     {
         var recipe = RecipeFor(level);
-        var key = recipe is null ? null : $"{recipe.Name}@{(twoX ? 2 : 1)}";
+        var key = KeyFor(recipe, twoX);
         if (!string.Equals(key, sceneKey, StringComparison.Ordinal))
         {
             // Another scene or tier: the old one is drawn until the new one is ready, unless it is another scene altogether.
@@ -332,7 +370,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
             return;
         }
 
-        if (scene is not null && sceneUploading is null && sceneBuild is null && sceneState == MoonfallSceneState.Ready && string.Equals(scene.Layers.Name + "@" + (int)scene.Layers.Scale, key, StringComparison.Ordinal))
+        if (scene is not null && sceneUploading is null && sceneBuild is null && sceneState == MoonfallSceneState.Ready && string.Equals(sceneReadyKey, key, StringComparison.Ordinal))
         {
             return;
         }
@@ -343,7 +381,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
         }
 
         // Built this session already: only upload.
-        if (sceneBuild is null && sceneUploading is null && sceneCache.FirstOrDefault(c => c.Key == key) is { Layers: { } cached })
+        if (sceneBuild is null && sceneUploading is null && CachedScene(key) is { Layers: { } cached })
         {
             StartUploads(cached, recipe);
             return;
@@ -352,29 +390,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
         if (sceneBuild is null && sceneUploading is null)
         {
             sceneBuildKey = key;
-            var tier = twoX ? 2 : 1;
-            var check = CheckScenes;
-            sceneBuild = Task.Run(async () =>
-            {
-                MoonfallImage? painting;
-                var fallback = false;
-                if (recipe.Source.Kind == MoonfallSourceKind.Game)
-                {
-                    painting = await host.ReadGameTexture(recipe.Source.Path).ConfigureAwait(false);
-                }
-                else
-                {
-                    painting = await host.ReadPicture(recipe.Source.Path).ConfigureAwait(false);
-                }
-
-                if (painting is null && recipe.Fallback is { } name)
-                {
-                    painting = await host.ReadPicture(name).ConfigureAwait(false);
-                    fallback = true;
-                }
-
-                return painting is null ? null : MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, check);
-            });
+            sceneBuild = BuildScene(recipe, level, twoX ? 2 : 1, CheckScenes);
         }
 
         if (sceneBuild is { IsCompleted: true } done && string.Equals(sceneBuildKey, key, StringComparison.Ordinal))
@@ -390,7 +406,23 @@ public sealed class MoonfallGameArt<T> : IDisposable
             }
 
             var layers = done.Result;
-            sceneCache.RemoveAll(c => c.Key == key);
+            if (layers.Report is { Fails.Count: > 0 } report)
+            {
+                // The fuller-board rules (level-method.md F2-F5) hold for every shipped recipe (the scene tests build
+                // each at both tiers); a Debug build checks them again on the player's own textures.
+                var fails = string.Join(", ", report.Fails);
+                Warn("rules:" + key, $"Moonfall: scene {key} breaks the fuller-board rules ({fails})");
+                Debug.Assert(false, $"Moonfall scene {key} breaks the fuller-board rules: {fails}");
+            }
+
+            for (var i = sceneCache.Count - 1; i >= 0; i--)
+            {
+                if (string.Equals(sceneCache[i].Key, key, StringComparison.Ordinal))
+                {
+                    sceneCache.RemoveAt(i);
+                }
+            }
+
             sceneCache.Insert(0, (key, layers));
             if (sceneCache.Count > SceneCache)
             {
@@ -434,8 +466,32 @@ public sealed class MoonfallGameArt<T> : IDisposable
                 Mist = landed.Where(static p => p.Key.StartsWith("mist", StringComparison.Ordinal) && p.Value is not null).OrderBy(static p => p.Key, StringComparer.Ordinal).Select(static p => p.Value!).ToList(),
             };
             sceneState = MoonfallSceneState.Ready;
+            sceneReadyKey = sceneKey;
         }
     }
+
+    /// <summary>Reads the painting (the game's, else the fallback picture) and builds the scene, off the framework thread.</summary>
+    private Task<MoonfallSceneLayers?> BuildScene(MoonfallSceneRecipe recipe, MoonfallLevel level, int tier, bool check) => Task.Run(async () =>
+    {
+        MoonfallImage? painting;
+        var fallback = false;
+        if (recipe.Source.Kind == MoonfallSourceKind.Game)
+        {
+            painting = await host.ReadGameTexture(recipe.Source.Path).ConfigureAwait(false);
+        }
+        else
+        {
+            painting = await host.ReadPicture(recipe.Source.Path).ConfigureAwait(false);
+        }
+
+        if (painting is null && recipe.Fallback is { } name)
+        {
+            painting = await host.ReadPicture(name).ConfigureAwait(false);
+            fallback = true;
+        }
+
+        return painting is null ? null : MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, check);
+    });
 
     private static bool SameRecipe(string a, string b) => string.Equals(a[..a.LastIndexOf('@')], b[..b.LastIndexOf('@')], StringComparison.Ordinal);
 
