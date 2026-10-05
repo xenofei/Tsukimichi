@@ -62,7 +62,7 @@ def build(S=1):
     W, H = int(800 * S), int(600 * S)
     src = np.pad(load_official(SRC), ((0, 0), (PAD, 0), (0, 0)), mode="reflect")
     px = crop_to(src, (CROP[0] + PAD, CROP[1], CROP[2], CROP[3]), (W, H))
-    out = night_lab(px, gamma=1.35, exposure=0.85, warm_keep=0.25, chroma_mid=0.45, S=S)
+    out = night_lab(px, gamma=1.35, exposure=0.72, warm_keep=0.25, chroma_mid=0.45, S=S)
     out = moon_glow(out, -60 * S, -60 * S, 420 * S, 900 * S, 0.10, 0.05)
     out = dashed(out, S, smooth_path(route_board(), 8), "#D9BE82", width=2.2, alpha=0.60)
     out = vignette(out, 0.28)

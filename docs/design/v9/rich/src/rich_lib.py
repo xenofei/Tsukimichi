@@ -201,7 +201,7 @@ def oklab_to_srgb(lab):
 VIOLET = dict(tint="#CBC4EA", base_hue="#2A2358")      # The Far Shore's later hour
 
 
-def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.43, knee=0.25, detail=1.15, chroma_mid=0.55,
+def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.39, knee=0.23, detail=1.15, chroma_mid=0.55,
               chroma_high=0.75, tint="#C3CEE4", tint_k=0.55, base_hue="#22356E", sky=None, sky_drop=0.0,
               ramp_stops=None, warm_keep=0.35, S=1.0, form=0.10, form_r=20.0, band_k=1.0):
     """The Medallion night grade, round 2 (after realism round 1): day for night in OKLab.
@@ -233,7 +233,7 @@ def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.43, knee=0.25, detail=
     Lpre = base_c + det
     Lo = np.where(Lpre > r0, r0 + 0.06 * (1 - np.exp(-(Lpre - r0) / 0.06)), Lpre)
     # restore the mid-frequency band (sigma 2-12 px) the roll-off took out: zero mean, so the ceiling holds on average
-    band = lambda x: blur(x, 2.0 * S) - blur(x, 12.0 * S)
+    band = lambda x: x - blur(x, 12.0 * S)          # (round 5: every band finer than 12 px, the finest included)
     Lo = Lo + (band(Lpre) - band(Lo)) * band_k
     # form light (realism round 2): the painting's pale shapes (a painted dome is a flat white shape) are given relief
     # from their silhouettes, lit from the upper left. Only shapes smaller than about 40 units (round 4): large pale

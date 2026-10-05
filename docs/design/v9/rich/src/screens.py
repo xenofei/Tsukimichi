@@ -492,7 +492,7 @@ def hud(W=1280, H=800):
             dseg = sd_segment(X, Y, a[0], a[1], b[0], b[1])[0] - 0.65
             img.over(sl, _hexc("#C3CEE4"), np.clip(0.5 - dseg * img.S, 0, 1) * 0.6)
 
-    px, _ = board("base-p1", "base-p1-airship-road", "cart", 2, aim=aim, after=after, bucket_x=300.0,
+    px, _ = board("base-p1", "base-p1-airship-road", "cart", 2, aim=aim, after=after,
                   hud_kw=dict(stage="4-3", score="96,420", balls=5, cleared=9, mult="×1", oranges=16,
                               power="Super Guide", turns=2, portrait=portrait("pipiru"), gauge=0.2))
     return window(px, W, H)

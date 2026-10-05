@@ -63,9 +63,9 @@ def relight_sphere(px, S, cx, cy, r, bracket):
     # an opaque stone sphere shaded by the one light: lit face up to about 0.40 luma (under the board's ceiling),
     # its shadow side held a little above the sky by the planet's glow; the painting's fine texture rides on top
     shade = 0.09 + 0.24 * lam_new ** 1.2
-    body = ramp(np.clip(shade / 0.44, 0, 1), [(0, "#14122E"), (0.5, "#4A4878"), (1, "#B4B4D6")])
+    body = ramp(np.clip(shade / 0.44, 0, 1), [(0, "#14122E"), (0.5, "#4A4878"), (1, "#8E8CB8")])   # (round 5: peak luma about 0.45)
     Yp = px @ LUM
-    detail = (Yp - blur(Yp, 2.5 * S)) * 0.9
+    detail = np.clip((Yp - blur(Yp, 2.5 * S)) * 0.4, -0.04, 0.04)
     body = np.clip(body + detail[..., None], 0, 1)
     rim = np.clip(-(u + v) * 0.7071, 0, 1) ** 2 * np.exp(-((1 - np.sqrt(d2)) / 0.07) ** 2)
     body = screen(body, hexc("#B9B4E2") * (rim * 0.35)[..., None])

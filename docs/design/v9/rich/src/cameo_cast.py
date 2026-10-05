@@ -25,6 +25,10 @@ def bust(R, y0=62, left=-70, right=64, bottom=118, collar=None, h=3.0):
            (right, y0 + 36), (right + 4, bottom)]
     m = R.poly(pts)
     R.raise_(m, h, 10.0)
+    # round 5 (realism round 4): the bust's top surface curves into the shoulders (a chest that rounds away)
+    R.bump(-6, y0 + 46, 54, 30, 2.6, within=m)
+    R.bump(left + 12, y0 + 34, 14, 20, -0.8, within=m)
+    R.bump(right - 8, y0 + 40, 14, 22, -0.9, within=m)
     R.ridges([[(-30, y0 + 4), (-8, y0 + 16), (16, y0 + 8)]], 3.4, 1.1, soft=0.8)            # the neckline's hem
     R.ridges([[(left + 14, y0 + 40), (left + 26, y0 + 22)], [(right - 14, y0 + 44), (right - 26, y0 + 24)]],
              3.0, 0.5, soft=1.2)                                                         # soft folds
@@ -85,6 +89,9 @@ def pipiru(R):
     hood = R.poly([(-58, 66), (-62, 20), (-52, -30), (-30, -58), (-8, -66), (6, -70), (16, -62), (30, -46), (34, -30),
                    (28, -26), (14, -38), (-8, -40), (-26, -26), (-34, 4), (-26, 40), (-12, 64)])
     R.raise_(hood, 5.4, 6.0)
+    # round 5 (realism round 4 Nit): the hood's cloth carved in soft deep folds, falling from the peak
+    hair_strands(R, hood, lambda x, y: math.atan2(y + 70, x - 10) + 0.15, 16, 36, width=6.0, h=1.1, seed=31, soft=1.6)
+    hair_strands(R, hood, lambda x, y: math.atan2(y + 70, x - 10) + 0.15, 60, 20, width=1.6, h=0.30, seed=32)
     folds(R, [[(-50, 50), (-52, 0), (-40, -36)], [(-38, 56), (-42, 10), (-28, -30)]], 2.2, 0.8)
     # the star globe in its ring, held before her
     R.raise_(R.ellipse(72, 30, 16, 16), 6.0, 10.0)

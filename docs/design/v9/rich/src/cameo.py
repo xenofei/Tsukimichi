@@ -83,9 +83,9 @@ class Relief:
         c, s = math.cos(rot), math.sin(rot)
         u, v = ((X - cx) * c + (Y - cy) * s) / rx, (-(X - cx) * s + (Y - cy) * c) / ry
         g = np.exp(-(u * u + v * v) * 1.4) * h
-        if within is not None:
-            g = g * within
-        self.hgt = self.hgt + g
+        # round 5 (realism round 4): a swelling never grows stone where there is none, so it stays inside the carving
+        inside = np.clip(self.hgt / 1.2, 0, 1) if within is None else within
+        self.hgt = self.hgt + g * inside
 
     def carve(self, m, depth, soft=0.6, tone=0.0):
         mm = blur(m, soft * self.S)
@@ -141,7 +141,8 @@ def shade(R, ground="lapis", sheen=0.30):
     gy2, gx2 = np.gradient(blur(relief, 1.0 * S))
     gn2 = np.sqrt(gx2 ** 2 + gy2 ** 2) + 1e-6
     toward = np.clip((gx2 + gy2) * 0.7071 / gn2, 0, 1)        # the edge's outward normal faces the upper left
-    stone = screen(stone, hexc("#C9DAFA") * (thin * (0.10 + 0.22 * toward))[..., None])
+    # (round 5: only the edges that face the light pass it; an edge turned away, under a chin, stays in shadow)
+    stone = screen(stone, hexc("#C9DAFA") * (thin * 0.30 * toward ** 1.5 * (a_in := np.clip(relief * 1.5, 0, 1)))[..., None])
     # ... and a milky blue adularescent sheen floats across the high points, drifting toward the upper left
     yy2, xx2 = np.mgrid[0:R.H, 0:R.W].astype(np.float32)
     w_ = relief.sum() + 1e-6
@@ -191,6 +192,14 @@ def face_features(R, scale=1.0, dx=0.0, dy=0.0, eye=(26, -6), closed=False, ear=
     R.bump(*P(30, 34.5), 4.0 * s, 1.6 * s, -0.5)              # the hollow under it
     R.bump(*P(29, 42), 6.0 * s, 5.0 * s, 1.2)                 # the chin
     R.bump(*P(8, 38), 14 * s, 7 * s, 0.6, rot=-0.5)           # the jaw's plane
+    # round 5 (realism round 4): the side of the head turns away from the light, the neck is a cylinder with the
+    # jaw's shadow on it and the long muscle running down to the collar
+    R.bump(*P(-16, -6), 24 * s, 28 * s, 1.8)                  # the cranium's side, a broad swell
+    R.bump(*P(-34, 10), 10 * s, 26 * s, -0.8)                 # turning away at the back of the head
+    R.bump(*P(-4, 72), 12 * s, 20 * s, 2.2)                   # the neck's round, lit toward the front-left
+    R.bump(*P(14, 74), 6 * s, 20 * s, -1.0)                   # its far side turning away
+    R.bump(*P(14, 56), 14 * s, 4 * s, -1.4)                   # the jaw's shadow falling on it
+    R.bump(*P(4, 76), 3.0 * s, 16 * s, 0.9, rot=-0.35)        # the neck muscle
     # ear: a C-shaped rim (helix) round a shallow bowl, the lobe below
     ax, ay = ear[0] * s + dx, ear[1] * s + dy
     erx, ery = ear_r[0] * s, ear_r[1] * s
