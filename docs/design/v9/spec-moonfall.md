@@ -1,6 +1,6 @@
 # Moonfall: art direction and first concept art (plan v9, G5, G6 and G8)
 
-Status: concept art for the owner's review, made on 4 October 2026 for `docs/feature-plan-v9.md`. Menphina's Medallion only: the night palette and brass frames, with no per-theme variants. Every image passed the realism supervisor before it reached this page (see "Supervision record").
+Status: concept art for the owner's review, made on 4 October 2026 for `docs/feature-plan-v9.md`. The realism supervisor approved all 8 assets in round 5. Menphina's Medallion only: the night palette and brass frames, with no per-theme variants. Every image passed the realism supervisor before it reached this page (see "Supervision record").
 
 ## Files
 
@@ -272,9 +272,9 @@ All three rulings still stand and are still accepted. The base tile's bracket is
 
 No Majors or Minors remain. The supervisor also caught a false claim in my round 3 note: the popup touched the peg above it. That and the globe's meridian were fixed after the approval, so a round 5 confirmation followed.
 
-### Round 5
+### Round 5: ALL 8 APPROVED, final (`supervisor/round-5.md`)
 
-See `supervisor/round-5.md`.
+The popup and the globe fixes are confirmed, and all three rulings are still accepted. No Majors or Minors remain. The one open Nit, the shading of the descending bricks, was accepted as is in round 3. The art is ready for the owner.
 
 ## Open questions for the owner
 
