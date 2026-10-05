@@ -21,7 +21,7 @@ public sealed partial class ConfigWindow
 {
     private static readonly LocArray FlairOptions = new(static () => [Strings.ConfigFlairFull, Strings.ConfigFlairQuiet, Strings.ConfigFlairPlain]);
 
-    /// <summary>Giver portraits (1.15, spec-1.15 A8), in <see cref="GiverPortraitMode"/> order; the portrait pack's choice since 1.20 (F4).</summary>
+    /// <summary>Giver portraits (1.15, spec-1.15 A8), in <see cref="GiverPortraitMode"/> order: Off, Game art, Game art + photos.</summary>
     private static readonly LocArray GiverPortraitOptions = new(static () => [Strings.SettingsGiverPortraitsOff, Strings.SettingsGiverPortraitsGameArt, Strings.SettingsGiverPortraitsGameArtAndPack]);
 
     /// <summary>The Journal badge's choices, in <see cref="JournalBadgeMode"/> order.</summary>
@@ -143,26 +143,20 @@ public sealed partial class ConfigWindow
         DrawSkyLook();
 
         // Moon style, Moon colours and Follow Dalamud colours moved to Settings › Themes in 1.16 (spec-1.16 §B1).
-        var portraits = Enum.IsDefined(settings.GiverPortraits) ? (int)settings.GiverPortraits : (int)GiverPortraitMode.GameArt;
-        if (Choice(Strings.SettingsGiverPortraits, Strings.SettingsGiverPortraitsHint, ref portraits, GiverPortraitOptions.Value, "giver portrait face picture avatar npc art silhouette pack"))
+        // Game art + photos (the default) adds the photos that ship with the plugin where the game has no face; the line
+        // under it credits them (Garland Tools NPC renders, by Celes).
+        var portraits = Enum.IsDefined(settings.GiverPortraits) ? (int)settings.GiverPortraits : (int)GiverPortraitMode.GameArtAndPack;
+        if (Setting(Strings.SettingsGiverPortraits, Strings.SettingsGiverPortraitsHint, "giver portrait face picture photo avatar npc art silhouette garland celes credit", Chrome.SegmentedWidth(GiverPortraitOptions.Value), UiMetrics.MinTarget))
         {
-            // Game art + pack without the pack opens the download's confirmation and leaves the choice where it was
-            // (spec-1.20 F4): it switches by itself once the pack lands, so the choice is never a dead option.
-            if ((GiverPortraitMode)portraits == GiverPortraitMode.GameArtAndPack && PortraitPack is { Installed: null } pack)
-            {
-                if (pack.Offer is not null && !pack.Busy)
-                {
-                    OpenPackDialog(askedForPack: true);
-                }
-            }
-            else
+            if (Chrome.Segmented("##giverPortraits", ref portraits, GiverPortraitOptions.Value, ControlWidth))
             {
                 settings.GiverPortraits = (GiverPortraitMode)portraits;
                 Save();
             }
-        }
 
-        DrawPortraitPack();
+            SettingNote(Strings.SettingsGiverPhotosCredit);
+            EndSetting();
+        }
 
         var headingFonts = settings.GameHeadingFonts;
         if (Toggle(Strings.ConfigGameHeadingFonts, Strings.ConfigGameHeadingFontsHint, ref headingFonts, "font typeface headings", enabled: settings.Flair != Flair.Plain, reason: Strings.SettingsGameFontsPlainReason))

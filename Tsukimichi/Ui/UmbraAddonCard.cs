@@ -19,8 +19,8 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// "Add Tsukimichi to your Umbra bar?" (the owner's request: set up the Umbra add-on for the player, as far as
-/// possible). Once, at the first quiet moment, to a player who runs Umbra without Tsukimichi for Umbra, after What's new,
-/// the tour and the portrait pack offer (<see cref="UmbraAddonSetup.Next"/>); it steps aside in a fight, a duty, a
+/// possible). Once, at the first quiet moment, to a player who runs Umbra without Tsukimichi for Umbra, after What's new
+/// and the tour (<see cref="UmbraAddonSetup.Next"/>); it steps aside in a fight, a duty, a
 /// cutscene, Group Pose, a loading screen, outside the world, and while anything that goes first is on screen.
 /// <list type="bullet">
 /// <item><b>Add to Umbra</b> changes nothing: it opens the confirmation, which looks at Umbra first and lists only what
@@ -131,7 +131,7 @@ public sealed class UmbraAddonCard : Window
     /// <summary>What the player is doing now, for the quiet moment; set by the plugin. Null never shows the card.</summary>
     public Func<WhatsNewMoment>? Moment { get; set; }
 
-    /// <summary>Something goes first (What's new, the tour, the portrait pack offer, Settings' own confirmation); set by the plugin.</summary>
+    /// <summary>Something goes first (What's new, or the tour and its offer); set by the plugin.</summary>
     public Func<bool>? OtherFirst { get; set; }
 
     /// <summary>Settings › About › Umbra's "Add to Umbra…": the card opens on its confirmation, whether or not it was answered.</summary>

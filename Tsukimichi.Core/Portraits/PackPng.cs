@@ -5,9 +5,9 @@ namespace Tsukimichi.Core.Portraits;
 
 /// <summary>
 /// The portrait pack's image format (feature plan v7 F4): plain PNG, read and written here so the pack's builder
-/// (<c>Tsukimichi.DataGen --portrait-pack</c>) and the plugin agree on exactly what a pack image may be. The plugin
-/// decodes every image of a downloaded pack before it is installed (<see cref="TryDecode"/>), so a damaged or hostile
-/// file is refused before the game's texture loader ever sees it.
+/// (<c>Tsukimichi.DataGen --portrait-pack</c>) and the archive check agree on exactly what a pack image may be. The
+/// builder decodes every image of the pack before it is bundled with the plugin (<see cref="TryDecode"/>), so a damaged
+/// file never reaches the game's texture loader.
 /// <para>
 /// <see cref="TryDecode"/> is strict: the signature, every chunk's CRC, a header first, bit depth 8 or 16 (8 for a
 /// palette), no interlace, the image data inflating to exactly the rows the header promises, valid row filters and

@@ -71,7 +71,8 @@ public sealed class WhatsNewLayoutTests
         Assert.Equal(classic, ReleaseArt.Find(dir, "1.22.0", Flair.Quiet, "ishgard-glass", only));
         Assert.Null(ReleaseArt.Find(dir, "1.22.0", Flair.Plain, "ishgard-glass", static _ => true));
 
-        // Another theme's picture is never borrowed, and a version or key that is not one is no picture.
+        // A theme with no picture of its own borrows only the default theme's (the one picture a release ships from
+        // 1.22.1 on); with that missing too there is none. A version or key that is not one is no picture.
         Assert.Null(ReleaseArt.Find(dir, "1.22.0", Flair.Full, "aether-crystal", only));
         Assert.Null(ReleaseArt.Find(dir, "Unreleased", Flair.Full, "ishgard-glass", static _ => true));
         Assert.Null(ReleaseArt.Find(dir, "1.22.0", Flair.Full, "../../secrets", static _ => true));
@@ -87,6 +88,35 @@ public sealed class WhatsNewLayoutTests
         Assert.Equal((560, 220), ReleaseArt.TierFor(536f));
         Assert.Equal((560, 220), ReleaseArt.TierFor(560f));
         Assert.Equal((1120, 440), ReleaseArt.TierFor(804f));
+    }
+
+    [Fact]
+    public void A_release_with_one_picture_shows_the_default_theme_s_in_every_look_but_Plain()
+    {
+        const string dir = "plugin";
+        var single = Path.Combine(dir, "assets", "whatsnew", "1.22.1", ReleaseArt.FallbackTheme + ".jpg");
+        var only = new Func<string, bool>(path => path == single);
+
+        Assert.Equal("medallion", ReleaseArt.FallbackTheme);
+        foreach (var theme in new[] { "medallion", "classic", "aether-crystal", "ishgard-glass", "astrologian-orrery", "sumi-to-kinpaku" })
+        {
+            Assert.Equal(single, ReleaseArt.Find(dir, "1.22.1", Flair.Full, theme, only));
+        }
+
+        Assert.Equal(single, ReleaseArt.Find(dir, "1.22.1", Flair.Quiet, "ishgard-glass", only));
+        Assert.Null(ReleaseArt.Find(dir, "1.22.1", Flair.Plain, "medallion", only));
+    }
+
+    [Fact]
+    public void A_release_with_a_picture_per_theme_still_shows_the_look_s_own()
+    {
+        const string dir = "plugin";
+        var glass = Path.Combine(dir, "assets", "whatsnew", "1.20.0", "ishgard-glass.jpg");
+        var medallion = Path.Combine(dir, "assets", "whatsnew", "1.20.0", "medallion.jpg");
+        var both = new Func<string, bool>(path => path == glass || path == medallion);
+
+        Assert.Equal(glass, ReleaseArt.Find(dir, "1.20.0", Flair.Full, "ishgard-glass", both));
+        Assert.Equal(medallion, ReleaseArt.Find(dir, "1.20.0", Flair.Full, "medallion", both));
     }
 
     [Fact]

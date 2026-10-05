@@ -9,8 +9,8 @@ namespace Tsukimichi.Core.Portraits;
 
 /// <summary>
 /// The portrait pack's <c>manifest.json</c> (feature plan v7 F4): which image is whose, and the SHA-256 of every image,
-/// so the plugin can check each file it extracts. Written by <c>Tsukimichi.DataGen --portrait-pack</c>, read by the
-/// plugin before anything of the pack is installed.
+/// so each file can be checked. Written by <c>Tsukimichi.DataGen --portrait-pack</c>, which checks every image against
+/// it; shipped in the plugin's <c>assets/portraits</c> folder and read at start (<see cref="BundledPortraits"/>).
 /// <code>
 /// { "format": 1, "gameVersion": "2026.09.15.0000.0000", "builtUtc": "2026-10-03T12:00:00Z", "side": 128,
 ///   "source": "Garland Tools NPC photos (credit: Celes)",

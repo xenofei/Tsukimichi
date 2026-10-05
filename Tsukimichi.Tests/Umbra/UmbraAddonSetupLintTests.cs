@@ -170,15 +170,11 @@ public sealed class UmbraAddonSetupLintTests
     }
 
     [Fact]
-    public void The_card_waits_for_every_other_popup_and_they_wait_for_it()
+    public void The_card_waits_for_whats_new_and_the_tour()
     {
         var wiring = Code(Path.Combine("Tsukimichi", "Plugin.UmbraAddonSetup.cs"));
-        foreach (var first in new[] { "whatsNewPopup?.Due == true", "tutorial?.Active == true", "settingsWindow.PackDialogShowing", "portraitPackOffer?.IsOpen == true", "PortraitPackOfferOwed()" })
-        {
-            Assert.Contains(first, wiring, StringComparison.Ordinal);
-        }
-
-        Assert.Contains("umbraAddonCard?.IsOpen == true", Code(Path.Combine("Tsukimichi", "Plugin.PortraitPackOffer.cs")), StringComparison.Ordinal);
+        Assert.Contains("OtherFirst = () => whatsNewPopup?.Due == true || tutorial?.Active == true,", wiring, StringComparison.Ordinal);
+        Assert.Contains("Moment = WhatsNewMomentNow,", wiring, StringComparison.Ordinal);
     }
 
     [Fact]

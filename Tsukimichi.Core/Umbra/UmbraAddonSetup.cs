@@ -171,7 +171,7 @@ public enum UmbraOfferStep : byte
 /// <param name="AddonHello">The add-on said hello over IPC this session: it runs.</param>
 /// <param name="AddonPresent">The add-on is listed in Umbra with custom plugins on, or said hello.</param>
 /// <param name="Busy">Setting up or removing runs (started from Settings).</param>
-/// <param name="OtherFirst">What's new, the tour, the portrait pack offer or Settings' own confirmation is due or on screen.</param>
+/// <param name="OtherFirst">What's new or the tour (and its offer) is due or on screen.</param>
 public readonly record struct UmbraOfferState(bool Answered, bool UmbraLoaded, bool SettingsRead, bool AddonHello, bool AddonPresent, bool Busy, bool OtherFirst);
 
 /// <summary>Where the wait for the add-on's IPC answer stands after the steps went through.</summary>
@@ -193,7 +193,7 @@ public enum UmbraHelloWait : byte
 /// Umbra through Umbra's own code (<see cref="IUmbraControl"/>), only after the player's click on "Agree and add".
 /// <list type="bullet">
 /// <item><b>The card</b> shows once, at the first quiet moment, to a player who runs Umbra without the add-on, after
-/// What's new, the tour and the portrait pack offer; it steps aside in a fight, a duty, a cutscene, Group Pose, a loading
+/// What's new and the tour; it steps aside in a fight, a duty, a cutscene, Group Pose, a loading
 /// screen, outside the world and while anything that goes first is on screen (<see cref="Next"/>, <see cref="Visible"/>).</item>
 /// <item><b>The plan</b> is only what is missing (<see cref="Plan"/>): custom plugins that are already on stay as they
 /// are, a listed repository is not added again, and a placed widget is not placed twice.</item>

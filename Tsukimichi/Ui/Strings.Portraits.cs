@@ -30,6 +30,9 @@ static partial class Strings
 
     public static string SettingsGiverPortraitsGameArtAndPack => Loc.Get("Settings.GiverPortraitsGameArtAndPack");
 
+    /// <summary>The credit under Giver portraits for the photos that ship with the plugin.</summary>
+    public static string SettingsGiverPhotosCredit => Loc.Get("Settings.GiverPhotosCredit");
+
     /// <summary>The Journal table's Giver column header.</summary>
     public static string ColumnGiver => Loc.Get("ColumnGiver");
 
