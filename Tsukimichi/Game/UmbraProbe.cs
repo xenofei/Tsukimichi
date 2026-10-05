@@ -69,6 +69,12 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
     public UmbraRead? Read { get; private set; }
 
     /// <summary>
+    /// The Umbra configuration profile the last read came from (the logged-in character's, from Umbra's profiles.json);
+    /// null before a read, or while Umbra is not loaded. Settings › About › Umbra names it for "Remove from Umbra".
+    /// </summary>
+    public string? ProfileName { get; private set; }
+
+    /// <summary>
     /// The moon icon's view of the bar (H1, <see cref="Core.Ui.IUmbraLayout"/>): the edge it holds and its height in
     /// screen px without the gap (the icon adds its own 8 px); none while nothing keeps clear.
     /// </summary>
@@ -160,6 +166,7 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
                 else if (landing.Take)
                 {
                     readPath = read.Path;
+                    ProfileName = ProfileOf(read.Path);
                     readStamp = read.Stamp;
                     Land(read.Read);
                 }
@@ -216,6 +223,7 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
     private void Unloaded()
     {
         readPath = null;
+        ProfileName = null;
         retryAt = null;
         reads.Unloaded();
         var changed = Read is not null || AddonVersion is not null;
@@ -351,6 +359,14 @@ public sealed class UmbraProbe : IDisposable, Core.Ui.IUmbraLayout
 
         using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true);
         return reader.ReadToEnd();
+    }
+
+    /// <summary>"Default" from ".../Default.profile.json".</summary>
+    private static string ProfileOf(string path)
+    {
+        const string Suffix = ".profile.json";
+        var name = Path.GetFileName(path);
+        return name.EndsWith(Suffix, StringComparison.OrdinalIgnoreCase) ? name[..^Suffix.Length] : name;
     }
 
     private static DateTime Stamp(string path)

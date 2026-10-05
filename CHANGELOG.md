@@ -6,6 +6,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Added
 - **Moonlit:** click a column header to sort by it; click again to reverse, and a third time to go back to the usual order. The table remembers your choice.
+- **Add Tsukimichi to your Umbra bar:** if you use Umbra, Tsukimichi offers once, at a quiet moment, to set up its Umbra add-on for you. It first lists exactly what will change in Umbra: custom plugins turned on if they're off (with Umbra's warning in plain words), the add-on's repository added, and the Tsukimichi widget placed on your bar. Nothing changes until you click **Agree and add**. **Show me how** gives the steps to do it yourself, and **Not now** means it won't ask again. Settings › About › Umbra keeps both, and **Remove from Umbra** there undoes only what Tsukimichi changed, on that character's Umbra profile.
 
 ### Changed
 - **Portrait photos come with Tsukimichi:** quest-giver photos are now part of the plugin, re-cut so faces sit centred, and photos that showed a weapon, a helmet crest or a hat now show the face. There's nothing to download, and a copy you downloaded before is removed to free space. To turn the photos off, set Settings › General › Look › Giver portraits to Game art.

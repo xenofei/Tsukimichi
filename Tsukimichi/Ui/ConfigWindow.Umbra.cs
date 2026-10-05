@@ -115,10 +115,22 @@ public sealed partial class ConfigWindow
                 {
                     ImGui.SetClipboardText(UmbraAddonRepository);
                 }
+
+                if (UmbraSetup is { } setup)
+                {
+                    ImGui.SameLine();
+                    if (ImGui.SmallButton(umbraOpenSettingsLabel.Value))
+                    {
+                        setup.OpenUmbraSettings();
+                    }
+                }
             }
 
             EndSetting();
         }
+
+        // Setting it up from here, and undoing what Tsukimichi changed (ConfigWindow.UmbraAddonSetup.cs).
+        DrawUmbraAddonSetup(umbra);
 
         // Follow Umbra lives with the palettes (decision 17); About says whether it is in use and links there.
         var follow = settings.FollowUmbraPalette
