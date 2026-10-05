@@ -1,6 +1,6 @@
 {
  "summary": {
-  "checked": "2026-10-04, main at 89ff827e, read-only apart from this file.",
+  "checked": "2026-10-04, main at 89ff827e; the 10 re-cropped cards rechecked at daf27b45. Read-only apart from this file.",
   "method": [
    "Game art: Tsukimichi.DataGen --portrait-sheet on main (built with --artifacts-path into the scratchpad): 248 faces worn by givers. Added 6 faces the sheet leaves out because only cast plates draw them. Each was rendered with Team C's plate.py the way the plugin draws it: the crop, the family grade, and the face square inscribed in the AddImageRounded circle on the well. Renders were made at 144 px with the 0.44 eye line, centre line and 0.81 chin guide, and at 72 px plain. 254 faces were judged by eye.",
    "Photos: all 1,262 bundled 128 px PNGs drawn the same way (whole image, circle clip) at 144 and 72 px on 27 labelled sheets; every sheet viewed.",
@@ -9,9 +9,8 @@
   ],
   "counts": {
    "game": {
-    "pass": 242,
-    "doubt": 10,
-    "fail": 2
+    "pass": 252,
+    "doubt": 2
    },
    "photo": {
     "pass": 1260,
@@ -38,7 +37,8 @@
     "87259",
     "87093"
    ],
-   "note": "On the left-bar cards the frame reads at 1x as a slightly thick rim and should not bother a player. At 2x (hover, large plates) the bar is a distinct second gold arc. On 87259 and 87093 the frame's scroll ornament shows inside the rim even at 1x."
+   "note": "On the left-bar cards the frame reads at 1x as a slightly thick rim and should not bother a player. At 2x (hover, large plates) the bar is a distinct second gold arc. On 87259 and 87093 the frame's scroll ornament shows inside the rim even at 1x.",
+   "recheck": "After the re-crop at daf27b45, none of the 10 (87093, 87259, 87056, 87202, 87466, 87214, 87067, 87467, 87166, 87465) shows any frame at 72 or 144 px. The DataGen sheet flags no FRAME on them. The circle clears the gold mask by 2.8-4.9 hr px and the loose mask (dim strokes) by 2.0-2.8 hr px. All 10 pass. 87133 was already negligible and is unchanged."
   },
   "ownerBoxFidelity": {
    "game": "126 owner game boxes. 113 are drawn by giver plates and match the drawn box within 0.5 px. The other 13 (72642, 72643, 72645, 72646, 72791, 73001, 73013, 73023, 73031, 73070, 73171, 73261, 87035) are stored in iconCrops within 0.5 px; of those, 72791 and 73171 are drawn on cast plates. Test Every_portrait_the_owner_reviewed_ships_the_owners_box passes.",
@@ -362,8 +362,8 @@
    "who": "Urianger"
   },
   "game:87056": {
-   "verdict": "doubt",
-   "reason": "Triple Triad gold frame: a thin gold bar just inside the left rim. At 1x it is a ~1 px line hugging the brass keyline and reads as a slightly thicker rim; at 2x it is a distinct second gold arc inside the rim. The face itself is on the guides. Minfilia, 108 plates: the most-seen card with the bar.",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [25, 34, 118], 'clear of the card frame'. Recheck at 72 and 144 px: Minfilia. No frame visible at 1x or 2x. In 3/4 view: eyes on 0.44, face centre about 0.55, chin about 0.78, whole face inside the rim. Measured circle clearance: 2.8 hr px from DataGen's gold frame mask, 2.6 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 108,
    "family": "TripleTriadCard",
    "who": "Minfilia"
@@ -418,8 +418,8 @@
    "who": "Kan-E-Senna"
   },
   "game:87067": {
-   "verdict": "doubt",
-   "reason": "Triple Triad gold frame: a thin gold bar just inside the left rim. At 1x it is a ~1 px line hugging the brass keyline and reads as a slightly thicker rim; at 2x it is a distinct second gold arc inside the rim. The face itself is on the guides. Raubahn, 12 plates.",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [26, 38, 123], 'clear of the card frame'. Recheck at 72 and 144 px: Raubahn. No frame visible at 1x or 2x. In 3/4 view: eyes on 0.44, face centre about 0.58, chin about 0.85, whole face inside the rim. Measured circle clearance: 3.1 hr px from DataGen's gold frame mask, 2.7 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 12,
    "family": "TripleTriadCard",
    "who": "Raubahn"
@@ -565,8 +565,8 @@
    "who": "Thancred"
   },
   "game:87166": {
-   "verdict": "doubt",
-   "reason": "Triple Triad gold frame: a thin gold bar just inside the left rim. At 1x it is a ~1 px line hugging the brass keyline and reads as a slightly thicker rim; at 2x it is a distinct second gold arc inside the rim. The face itself is on the guides. Y'shtola's HW card; drawn by 0 plates today (her HW Trust bust 72634 wins).",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [27, 62, 120], 'clear of the card frame'. Recheck at 72 and 144 px: Y'shtola's HW card. No frame visible at 1x or 2x. Eyes about 0.43, centred, chin about 0.80. No plate draws it today: her HW Trust bust 72634 wins. Measured circle clearance: 3.5 hr px from DataGen's gold frame mask, 2.5 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 0,
    "family": "TripleTriadCard",
    "who": "Y'shtola"
@@ -621,15 +621,15 @@
    "who": "Lyse"
   },
   "game:87202": {
-   "verdict": "doubt",
-   "reason": "Triple Triad gold frame: a thin gold bar just inside the left rim. At 1x it is a ~1 px line hugging the brass keyline and reads as a slightly thicker rim; at 2x it is a distinct second gold arc inside the rim. The face itself is on the guides. Hien, 71 plates.",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [27, 67, 92], 'clear of the card frame'. Recheck at 72 and 144 px: Hien. No frame visible at 1x or 2x. Eyes on 0.44, centred, chin about 0.84, jaw just inside the rim. Measured circle clearance: 3.5 hr px from DataGen's gold frame mask, 2.5 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 71,
    "family": "TripleTriadCard",
    "who": "Hien"
   },
   "game:87214": {
-   "verdict": "doubt",
-   "reason": "Triple Triad gold frame: a thin gold bar just inside the left rim. At 1x it is a ~1 px line hugging the brass keyline and reads as a slightly thicker rim; at 2x it is a distinct second gold arc inside the rim. The face itself is on the guides. Tansui, 13 plates.",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [26, 51, 102], 'clear of the card frame'. Recheck at 72 and 144 px: Tansui. No frame visible at 1x or 2x. In 3/4 view: eyes about 0.42, nose about 0.45, face mass about 0.55, chin about 0.82. The back of his head is cut by the right rim; the face is not. Measured circle clearance: 2.9 hr px from DataGen's gold frame mask, 2.6 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 13,
    "family": "TripleTriadCard",
    "who": "Tansui"
@@ -691,8 +691,8 @@
    "who": "Runar"
   },
   "game:87259": {
-   "verdict": "fail",
-   "reason": "Triple Triad gold frame: the frame's scroll ornaments sit inside the right rim (upper and lower) and read as gold squiggles even at 1x. Face left of centre (~0.40). 5 plates.",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [95, 38, 87], 'clear of the card frame'. Recheck at 72 and 144 px: Grenoldt. No frame visible at 1x or 2x; the purple edge on the right is his hair. Eyes on 0.44, face a little left (about 0.42), chin about 0.82, whole face inside the rim. Measured circle clearance: 3.1 hr px from DataGen's gold frame mask, 2.8 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 5,
    "family": "TripleTriadCard",
    "who": "Grenoldt"
@@ -887,22 +887,22 @@
    "who": "Krile"
   },
   "game:87465": {
-   "verdict": "doubt",
-   "reason": "Triple Triad gold frame: a gold bar inside the right rim, faint at 1x, clearly visible at 2x. Nitowikwe's face is on the guides. 1 plate.",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [68, 49, 113], 'clear of the card frame'. Recheck at 72 and 144 px: Nitowikwe. No frame visible at 1x or 2x; the dark jagged edge by the right ear is the art's outline, not gold. Eyes about 0.42, face centre about 0.45, mouth and chin about 0.85, whole face inside the rim. Measured circle clearance: 3.0 hr px from DataGen's gold frame mask, 2.0 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 1,
    "family": "TripleTriadCard",
    "who": "Nitowikwe"
   },
   "game:87466": {
-   "verdict": "doubt",
-   "reason": "Triple Triad gold frame: a thin gold bar just inside the left rim. At 1x it is a ~1 px line hugging the brass keyline and reads as a slightly thicker rim; at 2x it is a distinct second gold arc inside the rim. The face itself is on the guides. Jullus, 25 plates.",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [27, 58, 107], 'clear of the card frame'. Recheck at 72 and 144 px: Jullus. No frame visible at 1x or 2x. Eyes on 0.44, centred, chin about 0.85, whole face inside the rim. Measured circle clearance: 3.5 hr px from DataGen's gold frame mask, 2.5 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 25,
    "family": "TripleTriadCard",
    "who": "Jullus"
   },
   "game:87467": {
-   "verdict": "doubt",
-   "reason": "Triple Triad gold frame: a thin gold bar just inside the left rim. At 1x it is a ~1 px line hugging the brass keyline and reads as a slightly thicker rim; at 2x it is a distinct second gold arc inside the rim. The face itself is on the guides. Zero, 3 plates; face sits high-right but inside the rim.",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [27, 59, 105], 'clear of the card frame'. Recheck at 72 and 144 px: Zero. No frame visible at 1x or 2x. Eyes on 0.44, face centre about 0.45, chin about 0.85, whole face inside the rim. Measured circle clearance: 3.5 hr px from DataGen's gold frame mask, 2.5 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 3,
    "family": "TripleTriadCard",
    "who": "Zero"
@@ -1797,8 +1797,8 @@
    "who": "Sphene"
   },
   "game:87093": {
-   "verdict": "fail",
-   "reason": "Count Edmont (cast plates only, 19; curated eyes [0.667, 0.216], chin 0.334 -> box 98, 19, 82). The card frame's crest scroll sits inside the top-right rim, obvious at 1x and 2x; the profile face is pushed left (eye ~0.38) and the back of the head is cut by the rim.",
+   "verdict": "pass",
+   "reason": "Re-cropped on main (daf27b45): box [103, 32, 61], 'clear of the card frame'. Recheck at 72 and 144 px: Count Edmont, cast plates only. No frame is visible at 1x or 2x. In profile: eye about 0.40 across, eyes on the 0.44 line, chin about 0.82. The face fills the plate: the crown is cut by the rim and the nose tip reaches the right rim, but nothing of the face is lost. The 61 px box is upscaled 2.3x at 2x, so it looks soft and slightly stair-stepped, about as soft as the other low-res cards (87019, 87113). It still reads clearly as his moustached profile at 1x and 2x. Measured circle clearance: 4.9 hr px from DataGen's gold frame mask, 2.6 hr px from a looser mask that includes dim brown strokes (frame-coloured in at least half of 475 cards).",
    "plates": 19,
    "family": "cast-only"
   },
