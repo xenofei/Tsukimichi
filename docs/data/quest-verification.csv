@@ -104037,7 +104037,7 @@ rowId,name,fact,catalogValue,source,sourceValue,sourceRef,verdict,reason,fixedIn
 70994,Whoever Floats Your Raft,rewards,Pinwheel,wiki,Pinwheel,https://ffxiv.consolegameswiki.com/wiki/Whoever_Floats_Your_Raft,match,,
 70994,Whoever Floats Your Raft,section,Other Quests > Seasonal Events,wiki,Other Quests > Seasonal Events Quests,https://ffxiv.consolegameswiki.com/wiki/Whoever_Floats_Your_Raft,match,,
 70995,Abridged Too Far,displayLevel,100,wiki,100,https://ffxiv.consolegameswiki.com/wiki/Abridged_Too_Far,match,,
-70995,Abridged Too Far,duties,,wiki,the Merchant's Tale,https://ffxiv.consolegameswiki.com/wiki/Abridged_Too_Far,notModeled,"the wiki names the Merchant's Tale as the curated game gate (curated/game_gates.json: three unique final bosses of the Merchant's Tale defeated), not a duty the sheet requires",
+70995,Abridged Too Far,duties,,wiki,the Merchant's Tale,https://ffxiv.consolegameswiki.com/wiki/Abridged_Too_Far,notModeled,"the wiki names the Merchant's Tale, a duty the curated game gate counts (curated/game_gates.json duties of three unique final bosses of the Merchant's Tale defeated), not a duty the sheet requires",
 70995,Abridged Too Far,dutyUnlock,The Merchant's Tale (Advanced),wiki,The Merchant's Tale (Advanced),https://ffxiv.consolegameswiki.com/wiki/Abridged_Too_Far,match,,
 70995,Abridged Too Far,expansion,5 Dawntrail,wiki,5 (dawntrail / patch 7.45),https://ffxiv.consolegameswiki.com/wiki/Abridged_Too_Far,match,,
 70995,Abridged Too Far,listed,unlisted,lodestone,,https://na.finalfantasyxiv.com/lodestone/playguide/db/quest/,notModeled,"journal genre 0; the Lodestone lists journal categories only (the plugin files it under Sharlayan Sidequests, refiling rule 6)",

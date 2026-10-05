@@ -229,9 +229,14 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
             }
 
             // The Questionable source holds only for a quest Questionable holds back on a check of its own.
-            if (gate.Questionable && locks.Of(rowId) is null)
+            var qlock = gate.Questionable ? locks.Of(rowId) : null;
+            if (gate.Questionable && qlock is null)
             {
                 problems.Add($"{rowId} cites Questionable, but docs/data/questionable-locks.json lists no lock for it");
+            }
+            else if (qlock is not null && LockMismatch(qlock, gate) is { } mismatch)
+            {
+                problems.Add($"{rowId} cites Questionable, but its lock ({qlock.Kind} {string.Join(", ", qlock.Ids)}{(qlock.Negated ? ", negated" : string.Empty)}) is not the gate's check: {mismatch}");
             }
 
             // The player stands in for a second source only where the wiki alone states a gate Tsukimichi never judges.
@@ -290,6 +295,145 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
         Assert.Equal([69617u], Gates.Where(kv => kv.Value.Questionable).Select(kv => kv.Key).Order().ToArray());
         Assert.Equal([70181u, 70265, 70299], Gates.Where(kv => kv.Value.PlayerConfirmed is not null).Select(kv => kv.Key).Order().ToArray());
         Assert.Equal([70995u], Gates.Where(kv => kv.Value.RequiredTextKey is not null).Select(kv => kv.Key).Order().ToArray());
+    }
+
+    /// <summary>The phrase an achievement gate opens with; the game-data test checks the name after it against the Achievement sheet.</summary>
+    internal const string AchievementGatePrefix = "the achievement ";
+
+    /// <summary>
+    /// Why Questionable's lock is not the check <paramref name="gate"/> states; null when it is. A negated lock confirms
+    /// nothing; a mount or unlock-link lock must list exactly the gate's mounts or links; an achievement lock needs a gate
+    /// that names an achievement and nothing judged (its name against the sheet: <see cref="GameGatesGameTextTests"/>);
+    /// a Chocobo Racing lock a gate that names the rank.
+    /// </summary>
+    internal static string? LockMismatch(QuestionableLock qlock, GameGate gate)
+    {
+        if (qlock.Negated)
+        {
+            return "a negated lock holds the quest back while the check passes";
+        }
+
+        return qlock.Kind switch
+        {
+            QuestionableLocks.Mounts => gate.Mounts is { } m && m.All.Order().SequenceEqual(qlock.Ids.Order()) ? null : "the gate's mounts differ",
+            QuestionableLocks.UnlockLink => gate.UnlockLinks is { } l && l.All.Order().SequenceEqual(qlock.Ids.Order()) ? null : "the gate's unlock links differ",
+            QuestionableLocks.Achievement => qlock.Ids.Count == 1 && gate.Gate.StartsWith(AchievementGatePrefix, StringComparison.Ordinal) && gate.Items is null && gate.Mounts is null && gate.UnlockLinks is null
+                ? null
+                : "the gate names no achievement",
+            QuestionableLocks.RaceChocoboRank => qlock.Ids.Count == 1 && gate.Gate.Contains($"Chocobo Racing rank {qlock.Ids[0]}", StringComparison.Ordinal) ? null : "the gate names no such Chocobo Racing rank",
+            _ => "no known kind",
+        };
+    }
+
+    /// <summary>
+    /// The verifier's duties rule (1.22.0): a wiki duty the sheet does not require is the gate only when the gate names
+    /// that duty explicitly in <c>duties</c>; a word of the gate's phrase never counts.
+    /// </summary>
+    [Fact]
+    public void Only_a_duty_the_gate_names_explicitly_counts_as_the_gate()
+    {
+        static string Canon(string s) => s.Trim().ToLowerInvariant();
+        var named = new GameGate("three unique final bosses of the Merchant's Tale defeated", [], null, null, "https://ffxiv.consolegameswiki.com/wiki/A", "n", Duties: ["the Merchant's Tale"]);
+        var phraseOnly = named with { Duties = null };
+
+        Assert.Equal(["The Merchant's Tale"], named.DutiesItCounts([], ["The Merchant's Tale"], Canon));
+        Assert.Equal(["the Merchant's Tale"], named.DutiesItCounts(["Sastasha"], ["Sastasha", "the Merchant's Tale"], Canon));
+
+        // The phrase names the duty, but the gate does not count it: the row stays open.
+        Assert.Null(phraseOnly.DutiesItCounts([], ["the Merchant's Tale"], Canon));
+
+        // A further duty the gate does not name, a sheet duty the wiki leaves out, or no extra duty at all: open as well.
+        Assert.Null(named.DutiesItCounts([], ["the Merchant's Tale", "Sastasha"], Canon));
+        Assert.Null(named.DutiesItCounts(["Sastasha"], ["the Merchant's Tale"], Canon));
+        Assert.Null(named.DutiesItCounts(["Sastasha"], ["Sastasha"], Canon));
+    }
+
+    /// <summary>The duties rows the rule settles in the committed report: exactly Abridged Too Far's wiki duties row.</summary>
+    [Fact]
+    public void The_duties_rule_settles_exactly_the_rows_of_gates_that_name_their_duty()
+    {
+        var rows = VerificationAllowlistTests.ReadCsv(Path.Combine(ExtraPrerequisitesDataTests.DocsDataDir(), "quest-verification.csv"))
+            .Where(f => f[8].Contains("a duty the curated game gate counts", StringComparison.Ordinal))
+            .ToList();
+        Assert.Equal([("70995", "duties", "wiki", "notModeled")], rows.Select(f => (f[0], f[2], f[4], f[7])).ToArray());
+        Assert.Equal([70995u], Gates.Where(kv => kv.Value.DutyNames.Count > 0).Select(kv => kv.Key).ToArray());
+    }
+
+    /// <summary>
+    /// The gates report (<c>gate-verification.csv</c>) never reads a player-confirmed gate as matched: the wiki is its
+    /// only source, so it reads notModeled, and only those gates do.
+    /// </summary>
+    [Fact]
+    public void A_player_confirmed_gate_reads_notModeled_never_match_in_the_gates_report()
+    {
+        var rows = VerificationAllowlistTests.ReadCsv(Path.Combine(ExtraPrerequisitesDataTests.DocsDataDir(), "gate-verification.csv"));
+        var playerConfirmed = Gates.Where(kv => kv.Value.PlayerConfirmed is not null).Select(kv => kv.Key.ToString(CultureInfo.InvariantCulture)).Order().ToArray();
+        Assert.Equal(["70181", "70265", "70299"], playerConfirmed);
+        Assert.Equal(playerConfirmed, rows.Where(f => f[7] == "notModeled").Select(f => f[0]).Distinct().Order().ToArray());
+        Assert.All(rows.Where(f => playerConfirmed.Contains(f[0])), f => Assert.StartsWith("player-confirmed:", f[8], StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Each 1.22.0 gate, on the reporting character with every prerequisite done: Not checked (or Blocked by something
+    /// else), never Ready, with the gate not checked; once the player marks it done ("I've done this") the gate is met,
+    /// "you said so", and the quest reads as it would without the gate: Ready when everything else is met.
+    /// </summary>
+    [Fact]
+    public void A_1_22_gate_reads_Not_checked_until_the_player_marks_it_done()
+    {
+        var context = Context();
+        var michiru = Character();
+        var readyAfterMark = 0;
+        foreach (var rowId in ConfirmGates)
+        {
+            var quest = Catalog.GetByRowId(rowId)!;
+            var prerequisites = Catalog.PrerequisitesOf(quest).QuestIds;
+            var ready = (prerequisites.Length == 0 ? Without(michiru, rowId) : With(Without(michiru, rowId), [.. prerequisites]))
+                with { JobLevels = Enumerable.Range(1, 60).ToDictionary(id => (byte)id, _ => (short)100) };
+
+            var unmarked = StateResolver.Resolve(quest, ready, Catalog, context);
+            Assert.True(unmarked.State is QuestState.Unknown or QuestState.Blocked, $"{rowId} {quest.Name} reads {unmarked.State} before it is marked");
+            Assert.Contains(unmarked.Requirements, r => r.Req is GameGateRequirement { IsNotChecked: true } && !r.Met);
+            var othersMet = unmarked.Requirements.Where(r => r.Req.Kind != RequirementKind.GameGate).All(r => r.Met);
+            if (othersMet)
+            {
+                Assert.Equal(QuestState.Unknown, unmarked.State);
+            }
+
+            var marked = StateResolver.Resolve(quest, ready, Catalog, context with { GateMarkedDone = (contentId, id) => contentId == ready.ContentId && id == rowId });
+            var gate = marked.Requirements.Single(r => r.Req.Kind == RequirementKind.GameGate);
+            Assert.True(gate.Met, $"{rowId} {quest.Name}: the marked gate is not met");
+            Assert.Equal("you said so", gate.Detail);
+            if (othersMet)
+            {
+                Assert.True(marked.State is QuestState.Ready or QuestState.ReadyOnOtherJob, $"{rowId} {quest.Name} reads {marked.State} once marked");
+                readyAfterMark++;
+            }
+        }
+
+        Assert.True(readyAfterMark >= 1, "no 1.22.0 gate had every other requirement met; the test proves nothing");
+    }
+
+    [Fact]
+    public void A_Questionable_lock_must_be_the_check_the_gate_states()
+    {
+        var card = new GameGate("the achievement A Card in the Hand", [], null, null, "https://ffxiv.consolegameswiki.com/wiki/A", "n", Questionable: true);
+        Assert.Null(LockMismatch(new QuestionableLock(69617, QuestionableLocks.Achievement, [2819]), card));
+        Assert.NotNull(LockMismatch(new QuestionableLock(69617, QuestionableLocks.Achievement, [2819], Negated: true), card));
+        Assert.NotNull(LockMismatch(new QuestionableLock(69617, QuestionableLocks.Mounts, [2819]), card));
+        Assert.NotNull(LockMismatch(new QuestionableLock(69617, QuestionableLocks.Achievement, [2819]), card with { Gate = "Island Sanctuary rank 9" }));
+
+        var mounts = card with { Gate = "all seven mounts", Mounts = new GateMountSet(["Mount#1"], [1, 2, 3]) };
+        Assert.Null(LockMismatch(new QuestionableLock(1, QuestionableLocks.Mounts, [3, 2, 1]), mounts));
+        Assert.NotNull(LockMismatch(new QuestionableLock(1, QuestionableLocks.Mounts, [1, 2]), mounts));
+        Assert.NotNull(LockMismatch(new QuestionableLock(1, QuestionableLocks.UnlockLink, [1]), mounts));
+
+        // The committed lock of The Adventurer with All the Cards is achievement 2819, the one its gate names.
+        var locks = QuestionableLocks.Load(Path.Combine(ExtraPrerequisitesDataTests.DocsDataDir(), QuestionableLocks.FileName));
+        var lockOf69617 = locks.Of(69617)!;
+        Assert.Equal(QuestionableLocks.Achievement, lockOf69617.Kind);
+        Assert.Equal([2819u], lockOf69617.Ids);
+        Assert.False(lockOf69617.Negated);
     }
 
     /// <summary>Quest row id to its Lodestone page hash, from <c>Tsukimichi/Data/external_ids.json</c> (the verifier's match).</summary>
@@ -601,6 +745,46 @@ public sealed class GameGatesGameTextTests(GameDataFixture game) : IClassFixture
 
         Assert.True(checkedCount >= 6, $"only {checkedCount} text rows checked");
         Assert.True(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    /// <summary>
+    /// A gate that cites Questionable on an achievement lock names that very achievement, by its name in the installed
+    /// game's Achievement sheet (The Adventurer with All the Cards: achievement 2819 is A Card in the Hand).
+    /// </summary>
+    [GameDataFact]
+    public void A_Questionable_achievement_lock_is_the_achievement_the_gate_names()
+    {
+        var curated = CuratedData.Load(FixtureCatalog.CuratedDir());
+        var locks = QuestionableLocks.Load(Path.Combine(ExtraPrerequisitesDataTests.DocsDataDir(), QuestionableLocks.FileName));
+        var sheet = game.Game.Excel.GetSheet<Lumina.Excel.Sheets.Achievement>(Language.English);
+        Assert.Equal("A Card in the Hand", sheet.GetRow(2819).Name.ExtractText());
+
+        var checkedCount = 0;
+        foreach (var (rowId, gate) in curated.GameGates.Where(kv => kv.Value.Questionable))
+        {
+            if (locks.Of(rowId) is not { Kind: QuestionableLocks.Achievement } qlock)
+            {
+                continue;
+            }
+
+            var name = sheet.GetRowOrDefault(qlock.Ids[0])?.Name.ExtractText();
+            Assert.Equal(GameGatesDataTests.AchievementGatePrefix + name, gate.Gate);
+            checkedCount++;
+        }
+
+        Assert.True(checkedCount >= 1, "no Questionable achievement gate checked");
+    }
+
+    /// <summary>Every duty a gate counts (<c>duties</c>, 1.22.0) is a duty of the installed game's ContentFinderCondition sheet, by name.</summary>
+    [GameDataFact]
+    public void Every_duty_a_gate_counts_is_a_duty_of_the_game()
+    {
+        var curated = CuratedData.Load(FixtureCatalog.CuratedDir());
+        var duties = game.Game.Excel.GetSheet<Lumina.Excel.Sheets.ContentFinderCondition>(Language.English)
+            .Select(r => r.Name.ExtractText()).Where(n => n.Length > 0).ToHashSet(StringComparer.Ordinal);
+        var named = curated.GameGates.SelectMany(kv => kv.Value.DutyNames.Select(d => (kv.Key, Duty: d))).ToList();
+        Assert.Equal([(70995u, "The Merchant's Tale")], named);
+        Assert.All(named, n => Assert.True(duties.Contains(n.Duty), $"{n.Key}: '{n.Duty}' is no ContentFinderCondition name"));
     }
 
     /// <summary>The spell of a blue magic gate ("the blue magic Blood Drain learned"); null for any other gate.</summary>

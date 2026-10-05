@@ -4,12 +4,13 @@
   "releases": [
     {
       "version": "1.22.0",
-      "date": "2026-10-05",
+      "date": "2026-10-04",
       "name": "Welcome home",
       "points": [
         { "lead": "What's new, in pictures.", "text": "After each update, a short note like this one shows what changed. Past notes are in Settings, under What's new." },
         { "lead": "Know when an update is ready.", "text": "A quiet note in the status bar and a dot on the moon icon tell you. Update opens Dalamud's installer." },
         { "lead": "A moon on your screen.", "text": "A small moon opens Tsukimichi and shows what's next when you hover it. Move it, lock it or hide it." },
+        { "lead": "Faces for quest givers.", "text": "Tsukimichi offers the optional portrait pack once. Nothing downloads unless you choose Download." },
         { "lead": "At home in Umbra.", "text": "Tsukimichi keeps clear of Umbra's toolbar, and an Umbra add-on puts Tonight in your Umbra bar." }
       ]
     },

@@ -16035,4 +16035,12 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="NewChaptersCloseTooltip" xml:space="preserve">
     <value>Close · it comes back with the next patch</value>
   </data>
+  <data name="GateSourceLodestone" xml:space="preserve">
+    <value>the Lodestone</value>
+    <comment>Where a gate is stated, {0} of GateSourceFormat: the official Eorzea Database quest page.</comment>
+  </data>
+  <data name="GateSourceQuestionable" xml:space="preserve">
+    <value>Questionable</value>
+    <comment>Where a gate is stated, {0} of GateSourceFormat: the Questionable plugin, which holds the quest back on the same check. A name; do not translate.</comment>
+  </data>
 </root>

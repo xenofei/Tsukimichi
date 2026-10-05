@@ -170,6 +170,7 @@ public sealed record ExtraPrerequisite(IReadOnlyList<uint> Requires, IReadOnlyLi
 /// <param name="Questionable">Questionable holds the quest back on the same check (<c>docs/data/questionable-locks.json</c> lists the quest); the <see cref="QuestGate.QuestionableSource"/> source.</param>
 /// <param name="PlayerConfirmed">Why a gate the wiki alone states may stand (the <see cref="QuestGate.PlayerSource"/> source): only for a gate Tsukimichi never judges (<see cref="NeverJudged"/>), whose evidence is the wiki page and which no other source states; the player confirms it with "I've done this". Null for every other gate.</param>
 /// <param name="RequiredTextKey">The text row of a quest the sheet already requires (a previous quest or accept condition) that says the gated quest waits for more (A Spellbinding Read: the advanced dungeon opens through Memolivia once more of the tale is explored); the text is never committed.</param>
+/// <param name="Duties">The duties the gate counts, by their ContentFinderCondition name (Abridged Too Far: The Merchant's Tale, whose final bosses it counts); the verifier's duties fact reads a wiki duty named here as this gate (<see cref="DutiesItCounts"/>). Null for most gates; it changes nothing the plugin judges.</param>
 public sealed record GameGate(
     string Gate,
     IReadOnlyList<uint> After,
@@ -185,10 +186,33 @@ public sealed record GameGate(
     string? Lodestone = null,
     bool Questionable = false,
     string? PlayerConfirmed = null,
-    string? RequiredTextKey = null)
+    string? RequiredTextKey = null,
+    IReadOnlyList<string>? Duties = null)
 {
     /// <summary><see cref="MetBy"/>, never null.</summary>
     public IReadOnlyList<uint> MetByIds => MetBy ?? [];
+
+    /// <summary><see cref="Duties"/>, never null.</summary>
+    public IReadOnlyList<string> DutyNames => Duties ?? [];
+
+    /// <summary>
+    /// The verifier's duties rule (1.22.0, owner ruling 3): the duties a source names beyond <paramref name="sheetDuties"/>
+    /// when the gate names every one of them explicitly (<see cref="Duties"/>) and the source names every duty the sheet
+    /// requires. The source then describes this gate, which the catalog carries, not a duty the sheet leaves out. Null
+    /// when there is no such duty, when the gate does not name one of them (its phrase never counts), or when the source
+    /// leaves out a duty the sheet requires. Names compare by <paramref name="canon"/>.
+    /// </summary>
+    public IReadOnlyList<string>? DutiesItCounts(IReadOnlyList<string> sheetDuties, IReadOnlyList<string> sourceDuties, Func<string, string> canon)
+    {
+        ArgumentNullException.ThrowIfNull(sheetDuties);
+        ArgumentNullException.ThrowIfNull(sourceDuties);
+        ArgumentNullException.ThrowIfNull(canon);
+        var sheet = sheetDuties.Select(canon).ToHashSet(StringComparer.Ordinal);
+        var source = sourceDuties.Select(canon).ToHashSet(StringComparer.Ordinal);
+        var named = DutyNames.Select(canon).ToHashSet(StringComparer.Ordinal);
+        var extra = sourceDuties.Where(d => !sheet.Contains(canon(d))).ToList();
+        return extra.Count > 0 && sheet.All(source.Contains) && extra.All(d => named.Contains(canon(d))) ? extra : null;
+    }
 
     /// <summary><see cref="AcceptConditions"/>, never null.</summary>
     public IReadOnlyList<uint> AcceptConditionIds => AcceptConditions ?? [];
@@ -1182,18 +1206,6 @@ public sealed class CuratedData
         return entries;
     }
 
-    /// <summary>
-    /// game_gates.json: entries keyed by quest row id, each with <c>gate</c> (what the game wants, non-empty), optional
-    /// <c>after</c> (quest row ids, none the key itself, no repeats) with <c>afterTextKey</c> (a <c>TEXT_</c> key,
-    /// required with and only with <c>after</c>), an optional <c>gameTextKey</c> (a <c>TEXT_</c> key), for a gear gate
-    /// either <c>equipped</c> or <c>held</c> (<see cref="ReadGateItems"/>), for a mount-collection gate <c>mounts</c>
-    /// (<see cref="ReadGateMounts"/>), for an unlock-link gate <c>unlockLinks</c> (<see cref="ReadGateUnlockLinks"/>; one
-    /// of the three at most), optional <c>metBy</c> (quest row ids, none the key itself) and <c>acceptConditions</c>
-    /// (values below 65536), an https <c>evidence</c> URL and a <c>note</c>; since 1.22.0 optional <c>requiredTextKey</c>
-    /// (a <c>TEXT_</c> key), <c>lodestone</c> (a Lodestone quest page), <c>questionable</c> (<c>true</c>) and
-    /// <c>playerConfirmed</c> (a reason, only on a never-judged gate the wiki alone states). An entry missing any of them,
-    /// or with a malformed one, is skipped with a warning.
-    /// </summary>
     /// <summary>The start of a Lodestone Eorzea Database quest page, which a gate's <c>lodestone</c> source must be.</summary>
     public const string LodestoneQuestPrefix = "https://na.finalfantasyxiv.com/lodestone/playguide/db/quest/";
 
@@ -1204,6 +1216,19 @@ public sealed class CuratedData
            && url.Length > LodestoneQuestPrefix.Length + 1
            && url[LodestoneQuestPrefix.Length..^1].All(Uri.IsHexDigit);
 
+    /// <summary>
+    /// game_gates.json: entries keyed by quest row id, each with <c>gate</c> (what the game wants, non-empty), optional
+    /// <c>after</c> (quest row ids, none the key itself, no repeats) with <c>afterTextKey</c> (a <c>TEXT_</c> key,
+    /// required with and only with <c>after</c>), an optional <c>gameTextKey</c> (a <c>TEXT_</c> key), for a gear gate
+    /// either <c>equipped</c> or <c>held</c> (<see cref="ReadGateItems"/>), for a mount-collection gate <c>mounts</c>
+    /// (<see cref="ReadGateMounts"/>), for an unlock-link gate <c>unlockLinks</c> (<see cref="ReadGateUnlockLinks"/>; one
+    /// of the three at most), optional <c>metBy</c> (quest row ids, none the key itself) and <c>acceptConditions</c>
+    /// (values below 65536), an https <c>evidence</c> URL and a <c>note</c>; since 1.22.0 optional <c>requiredTextKey</c>
+    /// (a <c>TEXT_</c> key), <c>lodestone</c> (a Lodestone quest page), <c>questionable</c> (<c>true</c>),
+    /// <c>playerConfirmed</c> (a reason, only on a never-judged gate the wiki alone states) and <c>duties</c> (the duty
+    /// names the gate counts, non-empty, none twice). An entry missing any of them, or with a malformed one, is skipped
+    /// with a warning.
+    /// </summary>
     private static Dictionary<uint, GameGate> LoadGameGates(string path, List<string> warnings)
     {
         var entries = new Dictionary<uint, GameGate>();
@@ -1365,8 +1390,31 @@ public sealed class CuratedData
                 return;
             }
 
+            List<string>? duties = null;
+            if (obj.TryGetPropertyValue("duties", out var dutiesNode))
+            {
+                duties = [];
+                if (dutiesNode is not JsonArray { Count: > 0 } dutyArray)
+                {
+                    warn("duties must be a non-empty array of the duty names the gate counts");
+                    return;
+                }
+
+                foreach (var element in dutyArray)
+                {
+                    if (element is not JsonValue dutyValue || !dutyValue.TryGetValue<string>(out var duty) || duty.Trim().Length == 0
+                        || duties.Contains(duty.Trim(), StringComparer.OrdinalIgnoreCase))
+                    {
+                        warn("duties must be a non-empty array of the duty names the gate counts, none twice");
+                        return;
+                    }
+
+                    duties.Add(duty.Trim());
+                }
+            }
+
             var playerConfirmed = StorageJson.ReadString(obj, "playerConfirmed")?.Trim();
-            var entry = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note, items, mounts, links, metBy, acceptConditions, lodestone, questionable, playerConfirmed, requiredTextKey);
+            var entry = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note, items, mounts, links, metBy, acceptConditions, lodestone, questionable, playerConfirmed, requiredTextKey, duties);
             if (playerConfirmed is not null
                 && (playerConfirmed.Length == 0 || !entry.NeverJudged || !entry.SourceKinds.SequenceEqual([QuestGate.WikiSource, QuestGate.PlayerSource])))
             {

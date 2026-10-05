@@ -228,7 +228,7 @@ internal static class FullReport
     {
         sb.AppendLine("## Allowlist");
         sb.AppendLine();
-        sb.AppendLine($"{allowlist.Entries.Count} entries in `verification-allowlist.json`; each expires when the plugin version reaches `until`, after which `summary` fails until the row is re-verified or the entry renewed; a `settled` entry records a decision on the evidence and never expires.");
+        sb.AppendLine($"{allowlist.Entries.Count} entries in `verification-allowlist.json`; each expires when the plugin version reaches `until`, after which `summary` fails until the row is re-verified or the entry renewed; a `settled` entry records a decision on the evidence, never expires and excuses its row only while the row reads a verdict it was settled on.");
         sb.AppendLine();
         if (allowlist.Entries.Count == 0)
         {
@@ -241,7 +241,7 @@ internal static class FullReport
         sb.AppendLine("|---:|---|---|---|---|---|---|");
         foreach (var e in allowlist.Entries.OrderBy(e => e.RowId == "*" ? 0 : uint.TryParse(e.RowId, out var id) ? id : 0).ThenBy(e => e.Fact, StringComparer.Ordinal).ThenBy(e => e.Source, StringComparer.Ordinal))
         {
-            sb.AppendLine($"| {e.RowId} | {e.Fact} | {e.Source ?? "*"} | {e.Verdict} | {(e.Verdict == Allowlist.Settled ? "never" : e.Until)}{(Allowlist.Expired(e, current) ? " (expired)" : string.Empty)} | {Md(e.Fix ?? string.Empty)} | {Md(e.Reason)} |");
+            sb.AppendLine($"| {e.RowId} | {e.Fact} | {e.Source ?? "*"} | {(e.Verdict == Allowlist.Settled ? Allowlist.Label(e) : e.Verdict)} | {(e.Verdict == Allowlist.Settled ? "never" : e.Until)}{(Allowlist.Expired(e, current) ? " (expired)" : string.Empty)} | {Md(e.Fix ?? string.Empty)} | {Md(e.Reason)} |");
         }
 
         sb.AppendLine();

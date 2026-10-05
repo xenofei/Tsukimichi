@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-10-04
+
 ### Added
 - **What's new, after an update:** once Dalamud installs a newer Tsukimichi, a popup shows what changed in a few plain points, with a painting for each release drawn in your theme. It shows once per update, never on a first install, and several releases arriving at once become pages. Past notes, back to 1.14.0, are in Settings › Advanced › What's new.
 - **Update ready:** Tsukimichi asks Dalamud at login and every few hours whether a newer version is waiting (on by default). A quiet status-bar note and a dot on the moon icon say so, and **Update** opens Dalamud's installer. Tsukimichi still makes no network request of its own.
@@ -18,7 +20,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Changed
 - **The What's new card leaves the main window;** the popup and Settings replace it.
-- **Quest gates:** twelve late-game quests that need a dungeon floor, a variant dungeon record, an Island Sanctuary rank or a Triple Triad achievement now ask you to confirm ("I've done this") instead of showing Ready too early.
+- **Quest gates:** twelve late-game quests that need a dungeon floor, a variant dungeon record, an Island Sanctuary rank or a Triple Triad achievement now ask you to confirm ("I've done this") instead of showing Ready too early. The detail pane names where such a gate is stated, the Lodestone or Questionable included.
 
 ### Fixed
 - **Portrait pack:** the photos are re-cut so faces sit centred, and photos that showed a weapon, a helmet crest or a hat now show the face. Pack 2 also adds about 70 givers pack 1 left out. If you have pack 1, Settings › Look shows "Pack 2 is ready to download": choose **Update…**. Pack 1 keeps working until you do.

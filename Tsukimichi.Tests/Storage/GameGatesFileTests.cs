@@ -223,6 +223,23 @@ public sealed class GameGatesFileTests : IDisposable
         Assert.Equal([QuestGate.GameTextSource, QuestGate.WikiSource], data.GameGates[70995].SourceKinds);
         Assert.Equal([QuestGate.WikiSource, QuestGate.PlayerSource], data.GameGateIds[70181].Sources);
         Assert.True(data.GameGates[70181].NeverJudged);
+        Assert.Empty(data.GameGates[70995].DutyNames);
+    }
+
+    [Fact]
+    public void A_gate_names_the_duties_it_counts()
+    {
+        var data = Load(
+            """
+            { "schema": 1, "entries": { "70995": { "gate": "three unique final bosses defeated", "requiredTextKey": "TEXT_KINGVA101_05441_SYSTEM_101_202", "duties": [" the Merchant's Tale "], "evidence": "https://ffxiv.consolegameswiki.com/wiki/D", "note": "n" } } }
+            """);
+
+        Assert.Empty(data.Warnings);
+        Assert.Equal(["the Merchant's Tale"], data.GameGates[70995].DutyNames);
+
+        // A source of the gate it is not: the sources stay the game's text and the wiki, and the gate is never judged.
+        Assert.Equal([QuestGate.GameTextSource, QuestGate.WikiSource], data.GameGates[70995].SourceKinds);
+        Assert.True(data.GameGates[70995].NeverJudged);
     }
 
     [Theory]
@@ -237,6 +254,20 @@ public sealed class GameGatesFileTests : IDisposable
     [InlineData("""{ "gate": "g", "playerConfirmed": "why", "acceptConditions": [226], "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "playerConfirmed")]
     [InlineData("""{ "gate": "g", "playerConfirmed": "why", "after": [65742], "afterTextKey": "TEXT_B", "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "playerConfirmed")]
     [InlineData("""{ "gate": "g", "playerConfirmed": " ", "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "playerConfirmed")]
+    // The player stands in for no gate another source confirms or Tsukimichi judges: never beside the Lodestone or
+    // Questionable, never on weapons, mounts, unlock links or met-by quests.
+    [InlineData("""{ "gate": "g", "playerConfirmed": "why", "lodestone": "https://na.finalfantasyxiv.com/lodestone/playguide/db/quest/0ca8e48fbc1/", "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "playerConfirmed")]
+    [InlineData("""{ "gate": "g", "playerConfirmed": "why", "questionable": true, "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "playerConfirmed")]
+    [InlineData("""{ "gate": "g", "playerConfirmed": "why", "held": { "sources": ["QuestClassJobReward#6"], "items": [[13224]] }, "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "playerConfirmed")]
+    [InlineData("""{ "gate": "g", "playerConfirmed": "why", "mounts": { "sources": ["Mount#105"], "all": [1, 2] }, "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "playerConfirmed")]
+    [InlineData("""{ "gate": "g", "playerConfirmed": "why", "unlockLinks": { "sources": ["Quest#70200"], "all": [320] }, "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "playerConfirmed")]
+    [InlineData("""{ "gate": "g", "playerConfirmed": "why", "metBy": [67923], "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "playerConfirmed")]
+    // duties: a non-empty list of duty names, none twice.
+    [InlineData("""{ "gate": "g", "duties": [], "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "duties")]
+    [InlineData("""{ "gate": "g", "duties": "the Merchant's Tale", "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "duties")]
+    [InlineData("""{ "gate": "g", "duties": [" "], "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "duties")]
+    [InlineData("""{ "gate": "g", "duties": [3], "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "duties")]
+    [InlineData("""{ "gate": "g", "duties": ["the Merchant's Tale", "The Merchant's Tale"], "evidence": "https://ffxiv.consolegameswiki.com/wiki/A", "note": "n" }""", "duties")]
     public void A_malformed_1_22_source_skips_the_entry(string entry, string field)
     {
         var data = Load($$"""{ "schema": 1, "entries": { "70200": {{entry}} } }""");

@@ -1,6 +1,6 @@
 # Tsukimichi feature plan v8: welcome home
 
-Status: **signed off on 4 October 2026 and executing.** You voted to build every item and chose **Option B** for the release art (decision 1). 1.21.0 shipped the same day.
+Status: **signed off on 4 October 2026 and executing.** You voted to build every item and chose **Option B** for the release art (decision 1). 1.21.0 shipped the same day. **1.22.0 and Tsukimichi for Umbra 1.0.0 were released on 4 October 2026** (plugin zip 25,088,913 bytes; add-on at https://github.com/xenofei/Tsukimichi.Umbra, release 1.0.0). Still to check in game: the What's new popup and its art in each theme, the update note, the moon icon (drag, lock, hover card, particles at Full, none under Reduce motion), the server info bar entry in the game and in Umbra, the add-on's widgets and popup, Follow Umbra, and the portrait pack offer (Enter typed into chat must not answer it).
 
 ## Sources
 

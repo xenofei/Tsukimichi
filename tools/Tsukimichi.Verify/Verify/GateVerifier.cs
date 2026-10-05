@@ -120,19 +120,29 @@ internal static partial class GateVerifier
     /// <summary>A quest name without the private-use icon glyphs some repeatable quests open with.</summary>
     private static string Bare(string name) => new string(name.Where(c => c is < '' or > '').ToArray()).Trim();
 
-    /// <summary>A row: matched when the catalog models a gate for the quest, unresolved when it models none.</summary>
+    /// <summary>
+    /// A row: matched when the catalog models a gate for the quest a second source confirms, unresolved when it models
+    /// none. A player-confirmed gate (1.22.0, owner ruling 3: the wiki alone states it, the player confirms it with
+    /// "I've done this") is notModeled: the wiki cannot confirm a gate it is the only source of, and the quest reads Not
+    /// checked, never Ready, until the player does.
+    /// </summary>
     private static QuestRow Row(GameCatalog game, QuestRecord quest, string gateClass, string value, string url)
     {
         var sourceValue = gateClass + ": " + value;
         if (game.Catalog.GameGateOf(quest.RowId) is { } gate)
         {
-            return new QuestRow(quest.RowId, quest.Name, Fact, gate.Gate, SourceNames.Wiki, sourceValue, url, Verdict.Match, string.Empty, string.Empty);
+            return gate.Sources.Contains(QuestGate.PlayerSource)
+                ? new QuestRow(quest.RowId, quest.Name, Fact, gate.Gate, SourceNames.Wiki, sourceValue, url, Verdict.NotModeled, PlayerConfirmedReason, string.Empty)
+                : new QuestRow(quest.RowId, quest.Name, Fact, gate.Gate, SourceNames.Wiki, sourceValue, url, Verdict.Match, string.Empty, string.Empty);
         }
 
         return new QuestRow(quest.RowId, quest.Name, Fact, string.Empty, SourceNames.Wiki, sourceValue, url, Verdict.Unresolved,
-            "the wiki states a gate no curated game gate (curated/game_gates.json) models; a gate needs two sources (the game's text, the sheets, the wiki), or the wiki names the quest's objective rather than what it waits for",
+            "the wiki states a gate no curated game gate (curated/game_gates.json) models; a gate needs two sources (the game's text, the sheets, the wiki, the Lodestone, Questionable), or the wiki names the quest's objective rather than what it waits for",
             string.Empty);
     }
+
+    /// <summary>The reason of a player-confirmed gate's row, which <c>GameGatesDataTests</c> pins to those gates.</summary>
+    internal const string PlayerConfirmedReason = "player-confirmed: the wiki alone states this gate and no second source confirms it; curated/game_gates.json carries it never judged (playerConfirmed), so the quest reads Not checked until the player confirms it with I've done this";
 
     /// <summary>A System line about this quest (its own name, or "this quest"); never one about the next quest.</summary>
     private static bool AboutThisQuest(string line, string name)
