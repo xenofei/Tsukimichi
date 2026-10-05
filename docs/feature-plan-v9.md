@@ -56,6 +56,14 @@ Rules new to this plan:
 | 11 | Gyobo the Namazu (a catfish) carries Lucky Spin. Nights has a sea creature among its Masters; they differ in power, look and role. Keep him? | Keep him. |
 | 12 | Loporrits, FFXIV's moon rabbits, are left out because one of Peggle's Masters is a rabbit. Agree? | Agree: leave them out. |
 | 13 | The smallest Moonfall window: 640 × 480 (0.8× the playfield)? | 640 × 480. |
+| 14 | Buckets, after the rich pass (replaces 7): the new lantern cart for The Moon Road and the lantern boat for The Far Shore, or the boat for both? | The cart for the base campaign and the boat for the expansion. |
+| 15 | Build about two thirds of the 115 levels on the game's own loading-screen paintings, read from your install and night-graded at load (nothing extra ships), with our own paintings for the rest? The alternative is our own painting for every level: about 30 MB more and far more painting. | Yes: the game's paintings for two thirds, ours for the rest. |
+| 16 | Level format v2: add `canBeGreen` (keep greens off a figure's eye or a constellation's star) and make `scene` official? | Yes to both. |
+| 17 | The eleven characters as moonstone cameos (carved portraits in brass bezels), or painted portraits in the night palette? | Moonstone cameos. |
+| 18 | Names: stage 4 "The Shroud by Night", and its levels "Bentbranch at Dusk" and "The Twelveswood" (placeholders). | Approve, or give new names. |
+| 19 | Bundle one open-licence display serif (about 60 KB) for MOONFALL and the banners, or keep Dalamud's fonts with the logotype baked as an image? | Bundle the font. |
+| 20 | The Far Shore ends on the moon itself (Mare Lamentorum). Is that the right ending? | Yes. |
+| 21 | Every level must play at least as well as the weakest shipped level in the greedy-player test (5 of 48 wins), alongside the pre-flight. Make it a rule? | Yes. |
 
 ### Your answers (4 October 2026, on the plan site)
 
