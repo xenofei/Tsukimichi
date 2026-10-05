@@ -2,7 +2,7 @@
   "kit": "brass",
   "name": "Brass",
   "note": "Written by tools/themes/build_themes.py; see tools/themes/README.md. 'faces' holds every set's faces composed in this kit as the plugin composes them (face under, the frame for the state's urgency tier, face over, the badge from 32 px; a set in its own kit, 'own', is its shipped composites), held to the per-set gates (bars as in a set's metrics.json). An own set must pass; for the others a missed gate is a warning, listed in 'warnings'. 'fit' checks the kit's own atlases.",
-  "chrome": "154.0.8037.97",
+  "chrome": "154.0.8037.98",
   "bars": {"weakest16": 12.0, "weakest20": 16.0, "readyLead": 1.3, "completedOfReady": 0.8, "salienceMin": 15.0, "cvdWeakest16": 11.0, "lightReadyLead": 1.3, "lightLumaFloor": 0.7, "mixClose": 12.0, "mixHard": 10.0, "mixReadyLead": 1.25},
   "pngs": {"Tsukimichi/assets/ui/kits/brass/frames.png": "5a5828a03ec272eb40e262fe191155ac68c08d252c8b7e4d1c26f9ea5c8bbd0e", "Tsukimichi/assets/ui/kits/brass/frames@2x.png": "60499609331903a411dd04f556ae62f3197507192313f9c7cc4306b94bfc507b", "Tsukimichi/assets/ui/kits/brass/frames-row.png": "96985bf63e7ea094bf89d94c2c346ddef7ddcfeee847a79dc16393e760371e1b"},
   "pass": true,
