@@ -14,7 +14,7 @@
   "skyDrop": 0.3,
   "glow": [-50, -60]
  },
- "veil": 0.44,
+ "veil": 0.34,
  "features": {
   "great dome": {
    "circle": [447, 330, 150],
@@ -64,48 +64,24 @@
  },
  "dress": {
   "palette": {
-   "name": "Lapis and rose afterglow (Ul'dah)",
+   "name": "Cobalt and rose afterglow (Ul'dah)",
    "sky": "#1A1650",
    "deep": "#070A22",
-   "jewel1": "#2B4FC0",
-   "jewel2": "#A8508C",
+   "jewel1": "#1A7AD4",
+   "jewel2": "#B04E78",
    "warm": "#FFC27A",
    "rim": "#C9B8FF"
   },
   "jewel": {
-   "bands": [[
-     0,
-     "#4A3FB8"
-    ], [
-     300,
-     "#2B4FC0"
-    ], [
-     600,
-     "#22408E"
-    ]],
-   "valueHues": [[
-     0.08,
-     "#1E2E8A"
-    ], [
-     0.45,
-     "#C9D6FF"
-    ]],
-   "chroma": 1.1,
+   "bands": [[0, "#1C84E4"], [300, "#1A78D0"], [600, "#1662A4"]],
+   "valueHues": [[0.08, "#124890"], [0.45, "#C4E4FF"]],
+   "chroma": 1.3,
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#8E4FA8",
+     "hex": "#B04E78",
      "chroma": 0.075,
-     "mask": [[
-       "y",
-       330,
-       190
-      ], [
-       "luma",
-       0.26,
-       0.38,
-       4
-      ]]
+     "mask": [["y", 330, 190], ["luma", 0.26, 0.38, 4]]
     }
    ],
    "quiet": [22, 12]
@@ -166,5 +142,11 @@
     "hk": 0.2
    }
   ]
- }
+ },
+ "tone": [
+  {
+   "mask": [["y", 300, 170]],
+   "mul": 0.7
+  }
+ ]
 }

@@ -54,15 +54,34 @@ def _scene_cached(recipe, S):
     return RL.load_rgb(p)
 
 
-def colours_for(path, level, number, tries=64):
-    """The engine's own deal for this level number. From level 3 the seed is the first whose two greens land on pegs
-    the file allows to be green (the shipped engine does not read canBeGreen yet)."""
-    for seed in range(1, tries + 1):
-        cols = engine.colours(path, number, seed)
-        pieces = level["pegs"] + level["bricks"]
-        if all(p.get("canBeGreen", True) for p, c in zip(pieces, cols) if c == "green"):
-            return seed, cols
-    raise RuntimeError("no seed deals greens only where canBeGreen allows")
+def colours_for(path, level, number, seed=1):
+    """The engine's own deal for this level number (it honours canBeGreen since format v2 shipped). A deal that puts a
+    green on a piece the file keeps from green would be an engine fault, so it is refused here."""
+    cols = engine.colours(path, number, seed)
+    bad = [i for i, (p, c) in enumerate(zip(level["pegs"] + level["bricks"], cols)) if c == "green" and not p.get("canBeGreen", True)]
+    if bad:
+        raise RuntimeError(f"the engine dealt green to never-green pieces {bad}")
+    return seed, cols
+
+
+CHEAP_Y, CHEAP_SHARE = 440.0, 0.30   # an orange this low left in this share of lost games is cheap difficulty
+
+
+def orange_views(level, recipe, scene2, cols, stage, number):
+    """Composites with every orange candidate dealt orange, at moments of the movers' cycle (at t = 0 only when the
+    level has no movers), with each candidate's place at that moment: what F9 measures."""
+    from board import mover_pos, pieces as all_pieces
+    allp = all_pieces(level)
+    movers = [d for k, d in allp if k == "peg" and d.get("move")]
+    period = max((d["move"]["period"] for d in movers), default=0)
+    times = [0.0] if not movers else [period * k / 4 for k in range(4)]
+    oc = [("orange" if d.get("canBeOrange", True) else c) for (k, d), c in zip(allp, cols)]
+    views = []
+    for t in times:
+        img = render(level, recipe, scene2, oc, S=2, stage=stage, number=number, t=t)
+        places = [(*mover_pos(d, t), d.get("r", 10)) for k, d in allp if k == "peg" and d.get("canBeOrange", True)]
+        views.append((img, places))
+    return views
 
 
 def build(level_id, keep2x=False, log=print):
@@ -87,7 +106,7 @@ def build(level_id, keep2x=False, log=print):
     fails += [f"preflight: {p}" for p in probs]
     log(f"[{level_id}] preflight: {n} pieces, {len(probs)} problems")
 
-    # 2. the shipped loader, the sweep and the greedy player
+    # 2. the shipped loader; the sweep (stuck balls, dead first shots); the pocket rule; the greedy player
     cand = BUILD / "json" / f"{level_id}.json"
     author.write_json(level, cand)
     ok, out = engine.validate(cand)
@@ -100,12 +119,21 @@ def build(level_id, keep2x=False, log=print):
         rep["checks"]["sweep"] = sw
         if sw["stuck_share"] >= engine.STUCK_MAX_SHARE:
             fails.append(f"sweep: the stuck rule fired on {sw['stuck']} of {sw['angles']} first shots")
+        if sw["no_hit"] > 0:
+            fails.append(f"sweep: {sw['no_hit']} first-shot angles hit nothing (every aim should meet a piece)")
+        rc = engine.reach(cand, number)
+        rep["checks"]["reach"] = rc
+        if rc["never"]:
+            fails.append(f"reach: pieces {rc['never']} are never reached, even once everything before them clears")
         pl = engine.play(cand, number)
         rep["checks"]["play"] = pl
         if pl["greedy_won"] < engine.GREEDY_MIN_WINS:
             fails.append(f"play: the greedy player won {pl['greedy_won']} of 48 (at least {engine.GREEDY_MIN_WINS})")
-        log(f"[{level_id}] loader ok; sweep stuck {sw['stuck']}/{sw['angles']}, unreached {len(sw['unreached'])}; "
-            f"greedy {pl['greedy_won']}/48, random {pl['random_won']}/40")
+        cheap = [h for h in pl["holdouts"] if h["at"][1] > CHEAP_Y and h["share_of_lost_games"] >= CHEAP_SHARE]
+        if cheap:
+            fails.append(f"play: cheap difficulty, low oranges decide losses: {cheap}")
+        log(f"[{level_id}] loader ok; sweep stuck {sw['stuck']}/{sw['angles']}, dead {sw['no_hit']}, never reached "
+            f"{len(rc['never'])}; greedy {pl['greedy_won']}/48, ramp {pl['ramp_per_48']}/48 over {pl['ramp_games']}")
 
     # 3. the scene: graded, its ceiling, the dress and the framing rules
     g1, g2 = _scene_cached(recipe, 1), _scene_cached(recipe, 2)
@@ -128,7 +156,7 @@ def build(level_id, keep2x=False, log=print):
     RL.save_rgb(d1, BUILD / "dressed" / f"{level_id}.png")
     log(f"[{level_id}] scene: ceiling {ceil:.3f}; framing {frep['cover_pct']}%, fails {ffails or 'none'}")
 
-    # 4. colours, composites and readability
+    # 4. colours (the engine's own deal), composites and readability
     if ok:
         seed, cols = colours_for(cand, level, number)
         rep["checks"]["colours"] = {"seed": seed, "counts": {c: cols.count(c) for c in sorted(set(cols))}}
@@ -139,15 +167,19 @@ def build(level_id, keep2x=False, log=print):
         base1 = np.asarray(Image.fromarray(RL.to_u8(base2)).resize((800, 600), Image.LANCZOS), np.float32) / 255
         bd_new = render(level, recipe, d2, cols, S=2, gone=everything, stage=stage, number=number)
         bd_old = render(level, recipe, g2, cols, S=2, gone=everything, stage=stage, number=number)
-        rrep, rfails = readability.measure(level, cols, comp1, base1, bd_new, bd_old, d2)
+        views = orange_views(level, recipe, d2, cols, stage, number)
+        rrep, rfails = readability.measure(level, cols, comp2, base2, bd_new, bd_old, d2, views)
         rep["checks"]["readcheck"] = {"report": rrep, "fails": rfails}
         fails += [f"readcheck: {f}" for f in rfails]
         RL.save_rgb(comp2, BUILD / "composites" / f"{level_id}@2x.png")
         RL.save_rgb(comp1, BUILD / "composites" / f"{level_id}.png")
         RL.save_rgb(base1, BUILD / "composites" / f"{level_id}-undressed.png")
+        bd1 = np.asarray(Image.fromarray(RL.to_u8(bd_new)).resize((800, 600), Image.LANCZOS), np.float32) / 255
+        RL.save_rgb(bd1, BUILD / "composites" / f"{level_id}-cleared.png")
+        jw = rrep["jewels"]
         log(f"[{level_id}] readcheck: worst margin {rrep['worst_margin']}, largest drop {rrep['largest_drop']}, "
-            f"2nd jewel {rrep['jewels']['second_jewel_hue']} {rrep['jewels']['second_share']}, protan {rrep['protan_orange_p10']}; "
-            f"fails {rfails or 'none'}")
+            f"jewels {jw['first_jewel_hue']}/{jw['second_jewel_hue']} ({jw['apart_deg']} apart, {jw['second_share']}), "
+            f"protan {rrep['protan_orange_p10']}, ghost {rrep['ghost_median']}; fails {rfails or 'none'}")
 
     rep["seconds"] = round(time.time() - t0, 1)
     rep["verdict"] = "PASS" if not fails else "REFUSED"

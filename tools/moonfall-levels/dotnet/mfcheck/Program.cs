@@ -64,6 +64,42 @@ switch (args[0])
         return 0;
     }
 
+    case "reach":
+    {
+        // reach <file> [level]: section 4's pocket rule. Every piece must be reached by some first shot from a fresh
+        // board, or become reachable once the pieces shielding it clear. Round 1 sweeps every aim (1° apart) on the
+        // full board; each later round sweeps a board without the pieces reached so far. Prints the pieces never
+        // reached (file order: pegs, then bricks).
+        var level = Load(args[1]);
+        var number = args.Length > 2 ? int.Parse(args[2], inv) : 5;
+        var remaining = Enumerable.Range(0, level.Pegs.Count).ToList();
+        var rounds = 0;
+        while (remaining.Count > 0 && rounds < 6)
+        {
+            rounds++;
+            var sub = new MoonfallLevel(level.Id, level.Name, remaining.Select(i => level.Pegs[i]).ToList());
+            var newly = new HashSet<int>();
+            for (var a = -MoonfallRules.AimLimitDegrees; a <= MoonfallRules.AimLimitDegrees + 1e-9; a += 1.0)
+            {
+                var g = new MoonfallGame(sub, number, 1UL);
+                foreach (var h in Fly(g, a).Hits)
+                {
+                    newly.Add(remaining[h]);
+                }
+            }
+
+            if (newly.Count == 0)
+            {
+                break;
+            }
+
+            remaining = remaining.Where(i => !newly.Contains(i)).ToList();
+        }
+
+        Console.WriteLine($"reach: {rounds} rounds; never reached: {remaining.Count}" + (remaining.Count > 0 ? ": " + string.Join(", ", remaining) : string.Empty));
+        return 0;
+    }
+
     case "colours":
     {
         // The colours the engine picks for a level number and seed, in file order (pegs, then bricks), as JSON.
@@ -250,20 +286,23 @@ void Play(MoonfallLevel level, int games, int number)
     // The greedy player: before each shot it tries every angle 2 deg apart on a replay of the game so far and takes the
     // one that lights the most (oranges worth 6 pegs, a bucket catch worth 5), then misses its aim by up to 1.5 deg.
     var results = new ConcurrentBag<string>();
-    var summary = new ConcurrentBag<(bool Won, int Shots, int OrangesLeft, int PegsLeft, int Stuck)>();
+    var summary = new ConcurrentBag<(int Index, bool Won, int Shots, int OrangesLeft, int PegsLeft, int Stuck)>();
     Parallel.For(0, games, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, gi =>
     {
         var seed = (ulong)(gi + 1) * 7919UL;
         var rng = new Random(gi * 31 + 7);
         var shotsSoFar = new List<double>();
         var stuckTotal = 0;
+        // The live game is copied for every trial (MoonfallGame.CopyFrom: the same game bit for bit, as
+        // MoonfallPlayability does), instead of replaying it from the start: the same moves, far faster.
+        var g = new MoonfallGame(level, number, seed);
+        var trial = new MoonfallGame(level, number, seed);
         while (true)
         {
-            var g = Replay(level, number, seed, shotsSoFar);
             if (g.Phase is MoonfallPhase.Won or MoonfallPhase.Lost || shotsSoFar.Count > 40)
             {
                 var pegsLeft = Enumerable.Range(0, g.PegCount).Count(i => !g.Peg(i).Cleared);
-                summary.Add((g.Phase == MoonfallPhase.Won, shotsSoFar.Count, g.OrangesLeft, pegsLeft, stuckTotal));
+                summary.Add((gi, g.Phase == MoonfallPhase.Won, shotsSoFar.Count, g.OrangesLeft, pegsLeft, stuckTotal));
                 var left = Enumerable.Range(0, g.PegCount).Where(i => g.Peg(i).Colour == PegColour.Orange && !g.Peg(i).Cleared && !g.Peg(i).Lit)
                     .Select(i => $"#{i}({g.Peg(i).X:0},{g.Peg(i).Y:0})");
                 results.Add($"game {gi + 1}: {(g.Phase == MoonfallPhase.Won ? "WON" : "lost")} in {shotsSoFar.Count} shots, oranges left {g.OrangesLeft}, pieces left {pegsLeft}, balls left {g.BallsLeft}, score {g.Score:N0}, stuck-rule fires {stuckTotal}  {string.Join(" ", left)}");
@@ -274,7 +313,7 @@ void Play(MoonfallLevel level, int games, int number)
             var bestScore = double.MinValue;
             for (var a = -84.0; a <= 84.0; a += 2.0)
             {
-                var trial = Replay(level, number, seed, shotsSoFar);
+                trial.CopyFrom(g);
                 var (hits, stuck, caught, _, _) = Fly(trial, a);
                 var d = hits.Distinct().ToList();
                 var o = d.Count(h => trial.Peg(h).Colour == PegColour.Orange);
@@ -287,8 +326,7 @@ void Play(MoonfallLevel level, int games, int number)
             }
 
             var aim = best + ((rng.NextDouble() * 3.0) - 1.5);
-            var check = Replay(level, number, seed, shotsSoFar);
-            stuckTotal += Fly(check, aim).Stuck;
+            stuckTotal += Fly(g, aim).Stuck;
             shotsSoFar.Add(aim);
         }
     });
@@ -297,7 +335,9 @@ void Play(MoonfallLevel level, int games, int number)
         Console.WriteLine(r);
     }
 
-    var s = summary.ToList();
+    var s = summary.OrderBy(x => x.Index).ToList();
+    // the rule's 48 games are the first 48 seeds, so a longer run also gives the rule's verdict
+    Console.WriteLine($"greedy48: won {s.Take(48).Count(x => x.Won)} of {Math.Min(48, s.Count)}; oranges left when lost {string.Join(",", s.Take(48).Where(x => !x.Won).Select(x => x.OrangesLeft))}");
     Console.WriteLine($"greedy: won {s.Count(x => x.Won)} of {s.Count}; shots mean {s.Average(x => x.Shots):0.0}; oranges left when lost {string.Join(",", s.Where(x => !x.Won).Select(x => x.OrangesLeft))}; stuck-rule fires {s.Sum(x => x.Stuck)}");
 
     // The random player: uniform angles, 40 games.
@@ -317,20 +357,4 @@ void Play(MoonfallLevel level, int games, int number)
     }
 
     Console.WriteLine($"random: won {wins} of 40; oranges cleared mean {orangeCleared.Average():0.0}");
-}
-
-static MoonfallGame Replay(MoonfallLevel level, int number, ulong seed, List<double> shots)
-{
-    var g = new MoonfallGame(level, number, seed);
-    foreach (var a in shots)
-    {
-        if (g.Phase != MoonfallPhase.Aiming)
-        {
-            break;
-        }
-
-        Fly(g, a);
-    }
-
-    return g;
 }

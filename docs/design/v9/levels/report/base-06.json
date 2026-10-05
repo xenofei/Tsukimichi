@@ -9,14 +9,33 @@
  "source": "ui/loadingimage/-nowloading_base01_hr1.tex",
  "checks": {
   "preflight": {
-   "problems": [],
-   "pieces": 60,
-   "pegs": 50,
+   "problems": [
+    "58 pieces (a full board is 60 to 160)",
+    "25 orange candidates (28 to 35: the 25 and 3-7 more, so the deal varies)"
+   ],
+   "pieces": 58,
+   "pegs": 48,
    "bricks": 10,
    "movers": 0,
-   "orange_candidates": 27,
+   "orange_candidates": 25,
    "never_green": 6,
    "skipped_while_tracing": [
+    [
+     [
+      352,
+      182
+     ],
+     "cloud summit",
+     "14.0 from a brick"
+    ],
+    [
+     [
+      474,
+      170
+     ],
+     "cloud summit",
+     "14.0 from a brick"
+    ],
     [
      [
       566,
@@ -71,7 +90,7 @@
       200
      ],
      "air",
-     "11.4 from the peg at (352, 182)"
+     "0.8 from a brick"
     ],
     [
      [
@@ -126,54 +145,111 @@
   "loader": {
    "ok": true,
    "output": [
-    "OK   base-06.json  id=base-06 \"Limsa Across the Water\"  pieces=60 (round 50, bricks 10, movers 0)  mayBeOrange=27",
-    "     still round pegs 50: closest surfaces 14.3 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "OK   base-06.json  id=base-06 \"Limsa Across the Water\"  pieces=58 (round 48, bricks 10, movers 0)  mayBeOrange=25",
+    "     still round pegs 48: closest surfaces 14.3 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
     "     rows used y 140..522"
    ]
   },
   "sweep": {
    "angles": 171,
-   "pegs_median": 9,
-   "pegs_mean": 9.0,
+   "pegs_median": 8,
+   "pegs_mean": 8.5,
    "pegs_max": 18,
-   "oranges_mean": 3.65,
+   "oranges_mean": 3.35,
    "no_hit": 0,
-   "stuck": 0,
-   "stuck_share": 0.0,
+   "stuck": 2,
+   "stuck_share": 0.012,
    "long_flights": 0,
-   "bucket": 39,
-   "unreached": [
-    16
-   ],
-   "pieces": 60
+   "bucket": 32,
+   "unreached": [],
+   "pieces": 58
+  },
+  "reach": {
+   "rounds": 1,
+   "never": []
   },
   "play": {
-   "greedy_won": 30,
+   "greedy_won": 22,
    "games": 48,
-   "shots_mean": 14.8,
    "oranges_left_when_lost": [
+    3,
+    3,
+    4,
+    3,
+    1,
+    3,
+    2,
     1,
     1,
+    2,
     1,
+    2,
+    1,
+    3,
     1,
     3,
     1,
     2,
     1,
-    1,
-    1,
-    4,
-    1,
-    2,
     3,
-    4,
+    3,
+    6,
+    7,
     1,
-    2,
-    4
+    1,
+    2
    ],
-   "stuck_fires": 1,
+   "ramp_games": 432,
+   "ramp_won": 227,
+   "ramp_per_48": 25.2,
+   "shots_mean": 14.5,
+   "stuck_fires": 5,
    "random_won": 0,
-   "random_oranges_mean": 18.9
+   "random_oranges_mean": 19.0,
+   "holdouts": [
+    {
+     "at": [
+      380,
+      488
+     ],
+     "share_of_lost_games": 0.58
+    },
+    {
+     "at": [
+      575,
+      441
+     ],
+     "share_of_lost_games": 0.36
+    },
+    {
+     "at": [
+      470,
+      408
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "at": [
+      140,
+      470
+     ],
+     "share_of_lost_games": 0.13
+    },
+    {
+     "at": [
+      640,
+      330
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "at": [
+      110,
+      420
+     ],
+     "share_of_lost_games": 0.11
+    }
+   ]
   },
   "ceiling": {
    "p99_luma": 0.372,
@@ -200,7 +276,7 @@
   "colours": {
    "seed": 1,
    "counts": {
-    "blue": 32,
+    "blue": 30,
     "green": 2,
     "orange": 25,
     "purple": 1
@@ -209,100 +285,114 @@
   "readcheck": {
    "report": {
     "faces": {
-     "blue": 0.683,
-     "orange": 0.62,
-     "green": 0.709,
-     "purple": 0.593
+     "1x": {
+      "blue": 0.683,
+      "orange": 0.617,
+      "green": 0.712,
+      "purple": 0.58
+     },
+     "0.8x": {
+      "blue": 0.681,
+      "orange": 0.611,
+      "green": 0.711,
+      "purple": 0.596
+     }
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.393,
+      "worst": 0.392,
       "at": [
        264,
        360
       ],
       "undressed": 0.394,
-      "drop": 0.001
+      "drop": 0.002
      },
      "orange 1x": {
-      "worst": 0.344,
+      "worst": 0.341,
       "at": [
        650,
        260
       ],
-      "undressed": 0.341,
-      "drop": -0.003
+      "undressed": 0.339,
+      "drop": -0.002
      },
      "green 1x": {
-      "worst": 0.418,
+      "worst": 0.421,
       "at": [
        264,
        360
       ],
-      "undressed": 0.419,
+      "undressed": 0.422,
       "drop": 0.001
      },
      "purple 1x": {
-      "worst": 0.302,
+      "worst": 0.289,
       "at": [
        264,
        360
       ],
-      "undressed": 0.304,
-      "drop": 0.002
+      "undressed": 0.29,
+      "drop": 0.001
      },
      "blue 0.8x": {
-      "worst": 0.393,
+      "worst": 0.391,
       "at": [
        264,
        360
       ],
-      "undressed": 0.395,
-      "drop": 0.002
+      "undressed": 0.392,
+      "drop": 0.001
      },
      "orange 0.8x": {
-      "worst": 0.344,
+      "worst": 0.335,
       "at": [
        650,
        260
       ],
-      "undressed": 0.341,
+      "undressed": 0.332,
       "drop": -0.003
      },
      "green 0.8x": {
-      "worst": 0.418,
+      "worst": 0.421,
       "at": [
        264,
        360
       ],
-      "undressed": 0.42,
-      "drop": 0.002
+      "undressed": 0.422,
+      "drop": 0.001
      },
      "purple 0.8x": {
-      "worst": 0.303,
+      "worst": 0.306,
       "at": [
        264,
        360
       ],
-      "undressed": 0.304,
-      "drop": 0.001
+      "undressed": 0.308,
+      "drop": 0.002
      }
     },
-    "worst_margin": 0.302,
+    "worst_margin": 0.289,
     "largest_drop": 0.002,
     "bricks_min_margin": [
-     0.345,
+     0.338,
      "blue"
     ],
-    "protan_orange_p10": 0.131,
-    "protan_orange_p10_undressed": 0.117,
+    "protan_orange_p10": 0.13,
+    "protan_places": 25,
+    "protan_worst_at": [
+     380,
+     488
+    ],
+    "protan_min": 0.119,
     "jewels": {
      "coloured_px_pct": 95.4,
      "mean_chroma": 0.08,
-     "first_jewel_hue": 285,
+     "first_jewel_hue": 270,
      "first_share": 0.84,
-     "second_jewel_hue": 195,
+     "second_jewel_hue": 202,
      "second_share": 0.159,
+     "apart_deg": 69,
      "bins_pct": [
       0.0,
       0.0,
@@ -312,22 +402,30 @@
       0.1,
       13.9,
       1.9,
-      21.0,
-      63.0,
+      20.4,
+      63.6,
       0.0,
       0.0
      ]
-    }
+    },
+    "ghost_median": 0.053,
+    "ghost_worst": [
+     0.10337299108505249,
+     [
+      640,
+      330
+     ]
+    ],
+    "ghost_isolated_pegs": 8
    },
    "fails": []
   }
  },
- "fails": [],
- "seconds": 24.8,
- "verdict": "PASS",
- "ramp": {
-  "games": 144,
-  "greedy_won": 79,
-  "per_48": 26.3
- }
+ "fails": [
+  "preflight: 58 pieces (a full board is 60 to 160)",
+  "preflight: 25 orange candidates (28 to 35: the 25 and 3-7 more, so the deal varies)",
+  "play: cheap difficulty, low oranges decide losses: [{'at': [380, 488], 'share_of_lost_games': 0.58}, {'at': [575, 441], 'share_of_lost_games': 0.36}]"
+ ],
+ "seconds": 22.5,
+ "verdict": "REFUSED"
 }

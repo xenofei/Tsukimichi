@@ -16,12 +16,12 @@ DEFAULT_PALETTE = dict(name="Medallion night", sky="#0E1C4E", deep="#070C24", je
                        warm="#FFB45E", rim="#7FB2FF")
 
 
-def render(level, recipe, scene_px, colours, S=2, gone=(), stage=1, number=1, bucket="cart"):
+def render(level, recipe, scene_px, colours, S=2, gone=(), stage=1, number=1, bucket="cart", t=0.0):
     key = "mfl:" + level["id"]
     r2lib.PALETTES[key] = (recipe.get("dress") or {}).get("palette") or DEFAULT_PALETTE
     sc = veil(scene_px, level, S, k=recipe.get("veil", 0.40))
     img = Img(800 * S, 600 * S, S, px=sc.copy())
-    draw_pieces(img, level, colours, gone=gone)
+    draw_pieces(img, level, colours, gone=gone, t=t)
     bucket_x = composite2.pick_bucket_x(level, gone)
     hud = dict(stage=f"{stage}-{(number - 1) % 5 + 1}", carrier=CARRIERS[stage], turns=0, active=False,
                name=level["name"])

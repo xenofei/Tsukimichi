@@ -8,6 +8,7 @@ from .paths import DOTNET, MFCHECK, TEXDUMP
 
 GREEDY_GAMES = 48
 GREEDY_MIN_WINS = 5          # decision 21: no worse than the weakest shipped level (5 of 48)
+RAMP_GAMES = 432             # the difficulty ramp (coordinator, round 1): the first 48 are the rule's games
 STUCK_MAX_SHARE = 0.05       # level-method.md section 4: the stuck rule fires on fewer than 5% of first shots
 
 
@@ -51,18 +52,38 @@ def sweep(path, number, seed=1, step=1.0):
             "unreached": [int(v) for v in (u.group(3) or "").split(",") if v.strip()], "pieces": int(u.group(2))}
 
 
-def play(path, number, games=GREEDY_GAMES):
+def play(path, number, games=RAMP_GAMES):
     """mfcheck's greedy player (one-shot lookahead, aim error +-1.5 deg) over `games` seeded games, and the random
-    player over 40."""
+    player over 40. The rule's verdict is the first 48 seeds (the same games a 48-game run plays); the whole run is the
+    difficulty ramp (432 games: about +-1.1 per 48)."""
     code, out = _run("play", path, games, number)
     if code != 0:
         raise RuntimeError(out)
+    g48 = re.search(r"greedy48: won (\d+) of (\d+); oranges left when lost ([\d,]*)", out)
     g = re.search(r"greedy: won (\d+) of (\d+); shots mean ([\d.]+); oranges left when lost ([\d,]*); stuck-rule fires (\d+)", out)
     r = re.search(r"random: won (\d+) of 40; oranges cleared mean ([\d.]+)", out)
-    left = [int(v) for v in g.group(4).split(",") if v]
-    return {"greedy_won": int(g.group(1)), "games": int(g.group(2)), "shots_mean": float(g.group(3)),
-            "oranges_left_when_lost": left, "stuck_fires": int(g.group(5)), "random_won": int(r.group(1)),
-            "random_oranges_mean": float(r.group(2))}
+    lost_left = {}
+    for m in re.finditer(r"^game \d+: lost .*?stuck-rule fires \d+\s+(.*)$", out, re.M):
+        for pos in re.findall(r"\((\d+),(\d+)\)", m.group(1)):
+            lost_left[pos] = lost_left.get(pos, 0) + 1
+    lost = int(g.group(2)) - int(g.group(1))
+    holdouts = sorted(((k, round(v / max(lost, 1), 2)) for k, v in lost_left.items()), key=lambda kv: -kv[1])
+    return {"greedy_won": int(g48.group(1)), "games": int(g48.group(2)),
+            "oranges_left_when_lost": [int(v) for v in g48.group(3).split(",") if v],
+            "ramp_games": int(g.group(2)), "ramp_won": int(g.group(1)), "ramp_per_48": round(int(g.group(1)) * 48 / int(g.group(2)), 1),
+            "shots_mean": float(g.group(3)), "stuck_fires": int(g.group(5)), "random_won": int(r.group(1)),
+            "random_oranges_mean": float(r.group(2)),
+            "holdouts": [{"at": [int(k[0]), int(k[1])], "share_of_lost_games": v} for k, v in holdouts]}
+
+
+def reach(path, number):
+    """Section 4's pocket rule: the pieces never reached by a first shot, even once everything reachable before them
+    has cleared (file order: pegs, then bricks)."""
+    code, out = _run("reach", path, number)
+    if code != 0:
+        raise RuntimeError(out)
+    m = re.search(r"reach: (\d+) rounds; never reached: (\d+)(?:: (.*))?", out)
+    return {"rounds": int(m.group(1)), "never": [int(v) for v in (m.group(3) or "").split(",") if v.strip()]}
 
 
 def texdump(*args):

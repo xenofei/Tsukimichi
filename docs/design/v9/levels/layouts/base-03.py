@@ -1,35 +1,49 @@
-"""1-3 "Ul'dah Across the Sands" (The Waking Sands, Minfilia): a silhouette band.
+"""1-3 "The Cactuar" (The Waking Sands, Minfilia): a creature in outline.
 
-Subject: Ul'dah's skyline as the road from the Waking Sands first shows it: the two gilt towers, a white dome with its
-spire, the low roofs of the lower town, in the game's own Thanalan painting (its western half), mirrored so its light
-comes from the upper left.
+Subject: a cactuar, the running cactus of the Thanalan sands, mid-stride on a dune crest under the full moon (our own
+painting, painters/cactuar.py).
 
-Technique: the skyline is traced along its roofline. Dotted moons run up the towers' outer edges (a light stroke, 16
-units clear of the stone, so the gilt shows between them), a crown of brick sits on the white dome with its spire as a
-short vertical run, a second short crown on the eastern domes, and the lower town's roofs are a dotted line along the
-foot. The open sky to the east holds the evening's first stars. Greens arrive here (level 3): the spire and the
-towers' crowns stay orange or blue, never green.
+Technique: an even ring of moons runs 18 units outside its silhouette (36 apart), so the ball reads its shape before
+the first shot. The parts a child would draw first carry the oranges: the spines on its crown, the raised and the
+lowered hand, and the face's three dark holes (two eyes and the open mouth, never green). The two humps of
+the middle dune wear crests of brick with a moon over each summit; the far dune and the near crest are dotted lines; a
+few stars stand in the open sky.
 """
-LEVEL = dict(id="base-03", name="Ul'dah Across the Sands", stage=1, number=3, scene="uldah-gilt-towers",
-             subject="Ul'dah's skyline: the gilt towers and the white dome",
-             technique="a silhouette band (the roofline traced)")
+LEVEL = dict(id="base-03", name="The Cactuar", stage=1, number=3, scene="sagolii-cactuar",
+             subject="a cactuar mid-stride on a dune under the full moon",
+             technique="a creature in outline")
 
 
 def build(b):
-    x, y, r, a0, sw = b.circle("white dome")
-    b.arc_bricks(x, y, r, a0, sw, n=2, t=12, tag="white dome crown")
-    x, y, r, a0, sw = b.circle("east domes")
-    b.arc_bricks(x, y, r, a0, sw, n=1, t=10, tag="east domes crown")
-    b.trace("spire", spacing=38, r=9, orange=True, green=False, tag="spire")
-    b.trace("tower a west", spacing=36, r=9, orange={0, 3}, tag="tower a")
-    b.trace("tower a east", spacing=36, r=9, orange={0, 3}, tag="tower a")
-    b.trace("tower b east", spacing=36, r=9, orange={0, 3}, tag="tower b")
-    for p in b.pegs[:]:
-        if p["y"] < 215 and p.get("canBeOrange"):
-            p["canBeGreen"] = False                      # the towers' crowns
-    b.trace("far spires", spacing=36, r=9, orange={1, 4}, tag="far spires")
-    b.trace("east spire", spacing=36, r=9, orange={1, 3}, tag="east spire")
-    b.trace("lower roofs", spacing=36, r=9, orange="every:2", tag="lower roofs")
-    b.trace("lower roofs 2", spacing=50, r=9, orange="every:2", tag="lower roofs")
-    for k, (x, y) in enumerate(b.f("evening stars")):
-        b.place(x, y, r=8, orange=k in (0, 1, 2, 3, 4, 5, 6), tag="evening star")
+    # the silhouette's interior stays open (critic C1): only its features stand inside it
+    b.subject("cactuar")
+    for (x, y) in b.f("eyes") + b.f("mouth"):
+        b.place(x, y, r=9, orange=True, green=False, inside=True, tag="face")
+    # the crown: one moon over the middle spine, clear of the tips (game designer m3: on the tip it read as horns)
+    b.place(458, 168, r=9, orange=True, green=False, tag="crown")
+    ring = b.outline("cactuar", offset=18, spacing=36, r=9, tag="outline")
+    for name in ("raised hand", "lowered hand"):
+        for (x, y) in b.f(name):
+            b.key(x, y, orange=True, green=False, within=40)
+    # two in every five moons of the ring are candidates too, so the oranges circle the whole creature
+    for k, p in enumerate(ring):
+        if (k % 5 in (1, 3) and p["y"] < 480) or (k % 5 == 0 and 330 < p["y"] < 450 and p["x"] < 450):
+            p["canBeOrange"] = True
+    # the feet stand on the near crest, at the bucket's approach: blue, never green (an orange there is cheap)
+    for (x, y) in b.f("feet"):
+        b.key(x, y, orange=False, green=False, within=40)
+
+    # the middle dune's western hump: its two slopes in brick (13 and 16 degrees: a ball runs off them), its rounded top
+    # a moon, and a moon standing over the summit (critic C2: the level apex held balls)
+    b.bricks_along([(104, 392), (140, 381), (180, 374)], length=26, gap=2.5, t=12, tag="dune crest")
+    b.bricks_along([(270, 378), (300, 385), (330, 395)], length=26, gap=2.5, t=12, tag="dune crest")
+    b.place(225, 366, r=9, orange=True, tag="dune crest")
+    b.place(222, 328, r=9, orange=True, tag="summit")
+    # the eastern hump is low and nearly level: dotted, with its summit moon
+    b.trace([(616, 394), (700, 386)], spacing=34, r=9, orange={1}, tag="dune crest")
+    b.place(664, 348, r=9, orange=True, tag="summit")
+    b.trace("far dune", spacing=40, r=8, start=40, end_trim=40, orange={1, 4, 6, 12}, tag="far dune")
+    b.trace([(96, 466), (150, 484), (250, 498), (300, 499)], spacing=38, r=9, tag="near dune")
+    b.trace([(600, 497), (650, 484), (740, 466)], spacing=38, r=9, tag="near dune")
+    for k, (x, y) in enumerate([(560, 176), (628, 214), (688, 170), (590, 270), (668, 286), (140, 250), (250, 230)]):
+        b.place(x, y, r=8, orange=k in (1, 3, 4, 5), tag="star")

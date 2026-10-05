@@ -26,16 +26,16 @@
    "regions": [
     {
      "hex": "#30C0A0",
-     "chroma": 0.14,
+     "chroma": 0.18,
      "mask": [["poly", "crystal", 14]]
     },
     {
      "hex": "#30B8A8",
-     "chroma": 0.13,
-     "mask": [["near", "milky way", 55, 125], ["y", 520, 480]]
+     "chroma": 0.18,
+     "mask": [["near", "milky way", 85, 160], ["y", 520, 480]]
     }
    ],
-   "quiet": [22, 12],
+   "quiet": [26, 12],
    "keepMask": [["x", 112, 124], ["x", 240, 228], ["y", 464, 471], ["y", 499, 492]]
   },
   "glows": [

@@ -13,14 +13,14 @@
    "name": "Violet night and rose sand (the Sagolii)",
    "sky": "#1C1650",
    "deep": "#08061C",
-   "jewel1": "#5A3FC0",
+   "jewel1": "#6034C0",
    "jewel2": "#B05A86",
    "warm": "#FFB45E",
    "rim": "#C9B8FF"
   },
   "jewel": {
-   "bands": [[0, "#4A38C0"], [600, "#3A2C98"]],
-   "valueHues": [[0.08, "#2A1E7A"], [0.45, "#D0C8FF"]],
+   "bands": [[0, "#6234C4"], [600, "#50289C"]],
+   "valueHues": [[0.08, "#38187A"], [0.45, "#DCC8FF"]],
    "chroma": 1.0,
    "floor": 0.035,
    "regions": [

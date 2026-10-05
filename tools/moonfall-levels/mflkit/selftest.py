@@ -25,33 +25,70 @@ def _sealed_level():
             "playfield": {"width": 800, "height": 600}, "pegs": pegs, "bricks": bricks}
 
 
+def _flat_decks_level():
+    """Four level decks of seven bricks with a clear chute down the middle: balls rest on the decks (the stuck gate's
+    known-bad, the critic's round-1 case) and a straight-down shot touches nothing (the dead-shot gate's)."""
+    bricks, pegs = [], []
+    for (x0, y) in ((110, 230), (110, 390), (480, 310), (480, 470)):
+        for k in range(7):
+            bricks.append({"kind": "line", "x1": x0 + 30 * k, "y1": y, "x2": x0 + 30 * k + 27, "y2": y, "thickness": 12,
+                           "canBeOrange": False, "canBeGreen": True})
+    for (x, y) in ((120, 180), (180, 180), (240, 180), (560, 180), (620, 180), (680, 180), (130, 300), (200, 300), (270, 300),
+                   (500, 250), (570, 250), (640, 250), (130, 460), (200, 460), (270, 460), (520, 400), (590, 400), (660, 400),
+                   (150, 520), (650, 520), (300, 250), (300, 340), (520, 360), (690, 330), (110, 340), (690, 430)):
+        pegs.append({"x": x, "y": y, "r": 9, "canBeOrange": True, "canBeGreen": True})
+    return {"format": "moonfall-level", "version": 2, "id": "selftest-decks", "name": "Decks", "scene": "none",
+            "playfield": {"width": 800, "height": 600}, "pegs": pegs, "bricks": bricks}
+
+
 def engine_cases(verbose=True):
     engine.ensure_built()
     BUILD.mkdir(parents=True, exist_ok=True)
     good = RICH / "levels" / "base-p2.json"
-    bad = json.loads(good.read_text(encoding="utf-8"))
+    pilot = json.loads(good.read_text(encoding="utf-8"))
+    bad = json.loads(json.dumps(pilot))
     bad["pegs"][0].update(x=400.0, y=120.0)                 # inside the launcher's swing
     bad_path = BUILD / "selftest-launcher.json"
     bad_path.write_text(json.dumps(bad), encoding="utf-8")
     sealed = BUILD / "selftest-sealed.json"
     sealed.write_text(json.dumps(_sealed_level()), encoding="utf-8")
+    decks = BUILD / "selftest-decks.json"
+    decks.write_text(json.dumps(_flat_decks_level()), encoding="utf-8")
+    # every piece low on the board (a ball bounces at most about 160 units up), and one peg against the ceiling in the
+    # top corner: nothing can ever carry a ball up there
+    corner = {"format": "moonfall-level", "version": 2, "id": "selftest-corner", "name": "Corner", "scene": "none",
+              "playfield": {"width": 800, "height": 600}, "bricks": [],
+              "pegs": [{"x": 110 + 34 * (k % 18), "y": 440 + 40 * (k // 18), "r": 9, "canBeOrange": k < 30, "canBeGreen": True}
+                       for k in range(36)]}
+    corner["pegs"].append({"x": 92.0, "y": 14.0, "r": 8, "canBeOrange": False})
+    corner_path = BUILD / "selftest-corner.json"
+    corner_path.write_text(json.dumps(corner), encoding="utf-8")
     ok_good, _ = engine.validate(good)
     ok_bad, _ = engine.validate(bad_path)
-    ok_sealed, msg = engine.validate(sealed)
-    play_good = engine.play(good, 5)["greedy_won"]
-    play_sealed = engine.play(sealed, 5)["greedy_won"] if ok_sealed else -1
-    sw = engine.sweep(sealed, 5)
+    ok_sealed, _ = engine.validate(sealed)
+    ok_decks, msg = engine.validate(decks)
+    play_good = engine.play(good, 5, games=48)["greedy_won"]
+    play_sealed = engine.play(sealed, 5, games=48)["greedy_won"] if ok_sealed else -1
+    sw_good, sw_decks = engine.sweep(good, 5), engine.sweep(decks, 5)
+    rc_good, rc_corner = engine.reach(good, 5), engine.reach(corner_path, 5)
+    n_corner = len(corner["pegs"]) - 1
     cases = [("loader: an approved pilot", ok_good, True), ("loader: a peg in the launcher's swing", ok_bad, False),
-             ("loader: the sealed board loads (its fault is play, not format)", ok_sealed, True),
+             ("loader: the sealed and the decks boards load (their faults are play)", ok_sealed and ok_decks, True),
              (f"play: an approved pilot wins {play_good} of 48", play_good >= engine.GREEDY_MIN_WINS, True),
              (f"play: oranges sealed in rings win {play_sealed} of 48", play_sealed >= engine.GREEDY_MIN_WINS, False),
-             (f"sweep: sealed oranges are never reached ({sum(1 for i in sw['unreached'] if i < 25)} of 25)",
-              all(i in sw["unreached"] for i in range(25)), True)]
+             (f"stuck gate: a pilot fires on {sw_good['stuck']} of {sw_good['angles']}", sw_good["stuck_share"] < engine.STUCK_MAX_SHARE, True),
+             (f"stuck gate: four level decks fire on {sw_decks['stuck']} of {sw_decks['angles']}", sw_decks["stuck_share"] < engine.STUCK_MAX_SHARE, False),
+             (f"dead shots: a pilot has {sw_good['no_hit']}", sw_good["no_hit"] == 0, True),
+             (f"dead shots: a clear chute has {sw_decks['no_hit']}", sw_decks["no_hit"] == 0, False),
+             (f"reach: a pilot leaves {len(rc_good['never'])} unreached", not rc_good["never"], True),
+             (f"reach: a peg tucked in the top corner is never reached ({rc_corner['never']})", n_corner in rc_corner["never"], True)]
     ok = True
     for name, got, want in cases:
         ok &= got == want
         if verbose:
             print(f"  {'ok ' if got == want else 'BAD'} engine: {name}: {got}, expected {want}")
+    if verbose and not ok_decks:
+        print("   ", msg)
     return ok
 
 

@@ -5,8 +5,10 @@
   trace <scene|level-id>        the tracing sheet: graded scene, grid, features and (for a level) its pieces
   build <level-id>... | --all   the full pipeline for each level; refuses (exit 1) any level that fails a check
         [--keep2x <id,...>]     also write these levels' 2x composites to composites/
-  stage <n> [--ramp 144]        the stage's table: ramp, jewels of neighbours, game paintings against ours
+  stage <n>                     the stage's table: the 432-game ramp, jewels of neighbours, game paintings against ours
   stuck <level-id>              where balls come to rest on the first shots the stuck rule fires on
+  dead <level-id>               where the first shots that touch nothing fly (to put a piece in their lane)
+  ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
   sources                       write docs/design/v9/levels/sources.json from the recipes
 
 See README.md next to this file.
@@ -106,40 +108,35 @@ def cmd_build(args):
 
 
 def cmd_stage(args):
-    """The stage's table. --ramp N replays the greedy player over N seeded games per level (the rule uses 48, whose
-    win count swings by about 3.5; 144 games narrow that to about 2) and writes it to each report as `ramp`."""
-    ramp = 0
-    if "--ramp" in args:
-        i = args.index("--ramp")
-        ramp = int(args[i + 1])
-        args = args[:i] + args[i + 2:]
+    """The stage's table from the reports: pieces, the rule's 48 games, the 432-game ramp (about +-1.1 per 48), the
+    random player, the jewels; it faults neighbours with the same jewels and a finale that is not the hardest."""
     n = int(args[0])
     reps = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
     reps = sorted([r for r in reps if r["stage"] == n], key=lambda r: r["number"])
-    if ramp:
-        from concurrent.futures import ThreadPoolExecutor
-        from mflkit.paths import JSON_OUT
-
-        def one(r):
-            return engine.play(JSON_OUT / f"{r['id']}.json", r["number"], games=ramp)["greedy_won"]
-        with ThreadPoolExecutor(2) as ex:
-            for r, won in zip(reps, ex.map(one, reps)):
-                r["ramp"] = {"games": ramp, "greedy_won": won, "per_48": round(won * 48 / ramp, 1)}
-                (REPORT / f"{r['id']}.json").write_text(json.dumps(r, indent=1) + "\n", encoding="utf-8")
     fails = []
     print(f"stage {n}: {len(reps)} levels")
     print(f"{'level':8} {'name':28} {'pieces':>6} {'greedy':>7} {'ramp/48':>8} {'random':>7} {'jewels':>10} {'source'}")
     prev = None
+
+    def hd(a, b):
+        return 360 if a is None or b is None else min(abs(a - b), 360 - abs(a - b))
     for r in reps:
         c = r["checks"]
         jw = c.get("readcheck", {}).get("report", {}).get("jewels", {})
         pair = (jw.get("first_jewel_hue"), jw.get("second_jewel_hue"))
+        ramp48 = c.get("play", {}).get("ramp_per_48", "-")
         print(f"{r['id']:8} {r['name'][:28]:28} {c['preflight']['pieces']:>6} {c.get('play', {}).get('greedy_won', '-'):>7} "
-              f"{r.get('ramp', {}).get('per_48', '-'):>8} {c.get('play', {}).get('random_won', '-'):>7} "
+              f"{ramp48:>8} {c.get('play', {}).get('random_won', '-'):>7} "
               f"{str(pair[0]) + '/' + str(pair[1]):>10} {r['source']}")
-        if prev is not None and pair == prev:
-            fails.append(f"F7: {r['id']} has the same two jewels as the level before it")
+        # F7 between neighbours: the jewels differ when either one's mean hue moves 30 degrees or more
+        if prev is not None and hd(pair[0], prev[0]) < 30 and hd(pair[1], prev[1]) < 30:
+            fails.append(f"F7: {r['id']} has the same two jewels as the level before it ({prev} then {pair})")
         prev = pair
+    rs = [(r["id"], r["checks"].get("play", {}).get("ramp_per_48")) for r in reps]
+    if len(rs) >= 4 and all(v is not None for _k, v in rs):
+        fin, fourth = rs[-1][1], rs[-2][1]
+        if not (fin <= min(v for _k, v in rs[:-1]) and fin <= fourth - 2.5):
+            fails.append(f"ramp: the finale ({fin}) must be the stage's hardest and 2.5 or more below its 4th level ({fourth})")
     game = sum(1 for r in reps if not r["source"].startswith("our painting"))
     print(f"game paintings {game} of {len(reps)}; verdicts: " + ", ".join(f"{r['id']} {r['verdict']}" for r in reps))
     for f in fails:
@@ -190,7 +187,55 @@ def cmd_stuck(args):
     return 0
 
 
-COMMANDS = {"selftest": cmd_selftest, "stuck": cmd_stuck, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
+def cmd_dead(args):
+    """The first shots that touch nothing: for each, where its flight passes (every 40 units between y 150 and 520),
+    so a piece that means something can be put in its lane."""
+    import re
+    import subprocess
+    lid = args[0]
+    path = paths.BUILD / "json" / f"{lid}.json"
+    n = str(__import__("mflkit.build", fromlist=["load_layout"]).load_layout(lid).LEVEL["number"])
+    out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n], capture_output=True, text=True).stdout
+    angles = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs\s+0 ", out, re.M)]
+    for a in angles:
+        pts = json.loads(subprocess.run(["dotnet", str(paths.MFCHECK), "trace", str(path), str(a), n, "1", "600"],
+                                        capture_output=True, text=True).stdout)["points"]
+        keep, last = [], None
+        for (x, y) in pts:
+            if 150 <= y <= 520 and (last is None or (x - last[0]) ** 2 + (y - last[1]) ** 2 >= 1600):
+                keep.append((round(x), round(y)))
+                last = (x, y)
+        print(f"{a:6.1f}: {keep}")
+    return 0
+
+
+def cmd_ease(args):
+    """ease <level-id> [tag,tag,...]: how hard each place is to clear. A scratch copy of the level makes every peg with
+    one of the tags (default: every peg) an orange candidate, the greedy player plays 432 games, and each place is
+    ranked by the share of lost games it is left orange in. Use it to choose the candidates that set a level's
+    difficulty, among the places that carry the subject."""
+    from mflkit.build import make_board
+    lid = args[0]
+    tags = set(args[1].split(",")) if len(args) > 1 else None
+    meta, recipe, b = make_board(lid)
+    level = b.level_json(meta["id"], meta["name"], meta["scene"])
+    peg_tags = [t for (k, t) in b.tags if k == "peg"]
+    for p, t in zip(level["pegs"], peg_tags):
+        if tags is None or t in tags:
+            p["canBeOrange"] = True
+    path = paths.BUILD / "json" / f"{lid}-ease.json"
+    __import__("mflkit.author", fromlist=["write_json"]).write_json(level, path)
+    pl = engine.play(path, meta["number"])
+    share = {tuple(h["at"]): h["share_of_lost_games"] for h in pl["holdouts"]}
+    rows = sorted(((share.get((round(p["x"]), round(p["y"])), 0.0), round(p["x"]), round(p["y"]), t)
+                   for p, t in zip(level["pegs"], peg_tags) if p["canBeOrange"]), reverse=True)
+    print(f"{lid}: {sum(1 for p in level['pegs'] if p['canBeOrange'])} candidates in the copy; ramp {pl['ramp_per_48']}/48")
+    for s_, x, y, t in rows:
+        print(f"  {s_:5.2f}  ({x}, {y})  {t}")
+    return 0
+
+
+COMMANDS = {"selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
             "sources": cmd_sources}
 
 if __name__ == "__main__":

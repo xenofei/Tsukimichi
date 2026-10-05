@@ -1,4 +1,4 @@
-"""Our own painting for 1-2 "The Cactuar": a cactuar mid-stride on a dune crest in the Thanalan desert by moonlight.
+"""Our own painting for 1-3 "The Cactuar": a cactuar mid-stride on a dune crest in the Thanalan desert by moonlight.
 
 The cactuar is FFXIV's running cactus of the Thanalan sands: one long body, the face's three dark holes (two eyes and
 an open mouth), three short spines on its crown, one arm flung up and one down, legs mid-stride. It is painted as a
@@ -110,7 +110,7 @@ def paint(S=1):
     # a cylinder lit from the upper left: the moon side of every limb lighter, its far side falling to dark
     gyb, gxb = np.gradient(blur(body, 9 * S))
     turn = np.clip((gxb * 0.8 + gyb * 0.6) * S * 9.0, -1, 1)          # > 0 on the left and upper faces
-    col = ramp(np.clip(shade, 0, 1), [(0, "#0C1512"), (0.6, "#1C2A24"), (1.0, "#2A3E33")])
+    col = ramp(np.clip(shade, 0, 1), [(0, "#0A1418"), (0.6, "#153036"), (1.0, "#1F4446")])   # teal, off orange's protan line
     col = col * (0.85 + 0.45 * turn)[..., None]
     col = col * (0.82 + 0.22 * ribs)[..., None]
     spines = ((np.sin(X * 1.9) * np.sin(Y * 1.9 + X * 0.3)) > 0.93).astype(np.float32) * smooth(0.6, 0.95, body)

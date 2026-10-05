@@ -17,9 +17,11 @@ LEVEL = dict(id="base-05", name="The Crystal's Call", stage=1, number=5, scene="
 # the field: (x, y, candidate). Thicker along the Milky Way (lower left to upper right), thinner elsewhere
 FIELD = [(130, 300, False), (170, 360, True), (110, 420, False), (210, 410, True), (250, 330, True), (300, 270, False),
          (190, 230, False), (140, 250, False), (240, 280, False), (330, 340, True), (120, 360, True), (296, 390, True),
-         (600, 330, True), (640, 260, False), (690, 200, False), (620, 400, True), (680, 450, False), (580, 470, True),
+         (600, 330, True), (640, 260, True), (690, 200, False), (620, 400, True), (680, 450, False), (580, 470, False),
          (560, 380, True), (660, 340, False), (700, 290, False), (600, 290, True), (530, 460, True), (560, 220, False),
-         (300, 458, True), (340, 470, False), (200, 300, False), (680, 384, False), (252, 384, False)]
+         (300, 458, False), (340, 470, False), (200, 300, True), (680, 384, False), (252, 384, False),
+         (104, 206, False), (262, 196, True), (618, 176, False), (690, 330, True), (160, 470, False), (330, 200, True),
+         (540, 150, True), (696, 420, False)]
 
 
 def build(b):

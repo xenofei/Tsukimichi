@@ -1,39 +1,36 @@
-"""1-2 "The Cactuar" (The Waking Sands, Minfilia): a creature in outline.
+"""1-2 "Horizon by Night" (The Waking Sands, Minfilia): a silhouette band.
 
-Subject: a cactuar, the running cactus of the Thanalan sands, mid-stride on a dune crest under the full moon (our own
-painting, painters/cactuar.py).
+Subject: Horizon, the Western Thanalan town on its mesa where the road from the Waking Sands first climbs: its flat
+sandstone roofs, the great water tower on its stilts and the mine's derrick against the stars (our own painting,
+painters/horizon.py). It replaces round 1's Ul'dah skyline, which took stage 4's home and repeated 1-4's painting.
 
-Technique: an even ring of moons runs 18 units outside its silhouette (36 apart), so the ball reads its shape before
-the first shot. The parts a child would draw first carry the oranges: the spines on its crown, the raised and the
-lowered hand, both feet, and the face's three dark holes (two eyes and the open mouth, never green). The two humps of
-the middle dune wear crests of brick with a moon over each summit; the far dune and the near crest are dotted lines; a
-few stars stand in the open sky.
+Technique: the skyline is traced along its roofline, low enough to trace whole: a dotted line of moons rides 18 units
+above the roofs, rising over the derrick's head and the tank, whose domed cap wears a crown of brick (never green) with
+a moon on its finial. Below the town the road switchbacks down the cliff, dotted, and the cliff's ledges are a light
+dotted line; the open sky holds a loose field of stars, a few of them candidates.
 """
-LEVEL = dict(id="base-02", name="The Cactuar", stage=1, number=2, scene="sagolii-cactuar",
-             subject="a cactuar mid-stride on a dune under the full moon",
-             technique="a creature in outline")
+LEVEL = dict(id="base-02", name="Horizon by Night", stage=1, number=2, scene="horizon-by-night",
+             subject="Horizon on its mesa: roofs, the water tower and the derrick against the stars",
+             technique="a silhouette band (the roofline traced)")
+
+STARS = [(130, 200), (180, 150), (260, 210), (330, 170), (300, 260), (470, 190), (610, 170), (660, 230), (700, 290),
+         (420, 270), (150, 280), (380, 220), (560, 210), (240, 290), (645, 264)]
 
 
 def build(b):
-    # the face first (inside the silhouette), so the ring keeps clear of nothing it should not
-    for (x, y) in b.f("eyes") + b.f("mouth"):
-        b.place(x, y, r=9, orange=True, green=False, tag="face")
-    ring = b.outline("cactuar", offset=18, spacing=36, r=9, tag="outline")
-    for name in ("crown", "raised hand", "lowered hand", "feet"):
-        for (x, y) in b.f(name):
-            b.key(x, y, orange=True, green=False, within=40)
-    # every third moon of the ring is a candidate too, so the oranges circle the whole creature
-    for k, p in enumerate(ring):
-        if k % 3 == 1:
-            p["canBeOrange"] = True
-    # the middle dune's two humps: crests of brick (concave down), a moon standing over each summit
-    b.bricks_along([(104, 392), (140, 381), (180, 374), (220, 372), (262, 376), (300, 385), (330, 395)], length=26, gap=2.5,
-                   t=12, tag="dune crest")
-    b.bricks_along([(628, 393), (650, 388), (680, 384), (700, 386)], length=26, gap=2.5, t=12, tag="dune crest")
-    b.place(220, 342, r=9, orange=True, tag="summit")
-    b.place(678, 354, r=9, orange=True, tag="summit")
-    b.trace("far dune", spacing=40, r=8, start=40, end_trim=40, orange={1, 4, 13}, tag="far dune")
-    b.trace([(96, 466), (150, 484), (250, 498), (300, 499)], spacing=38, r=9, orange={1}, tag="near dune")
-    b.trace([(600, 497), (650, 484), (740, 466)], spacing=38, r=9, orange={1}, tag="near dune")
-    for k, (x, y) in enumerate([(560, 176), (628, 214), (688, 170), (590, 270), (668, 286), (140, 250), (250, 230)]):
-        b.place(x, y, r=8, orange=k in (1, 3), tag="star")
+    cx, cy, R, a0, sw = b.circle("tank")
+    b.arc_bricks(cx, cy, R, a0, sw, n=2, t=12, tag="tank crown", green=False)
+    b.place(cx, cy - R - 34, r=9, orange=True, green=False, tag="tank finial")
+    (dx, dy), = b.f("derrick")
+    b.place(dx, dy - 22, r=9, orange=True, green=False, tag="derrick head")
+    # the roofline, 18 units above the roofs (the band); two in three of its moons are candidates
+    line = [(x, y - 18) for (x, y) in b.f("roofline")]
+    for k, p in enumerate(b.trace(line, spacing=36, r=9, tag="roofline")):
+        p["canBeOrange"] = k % 3 != 2 or p["x"] > 450
+    b.trace("cliff", spacing=40, r=8, start=30, orange={1, 4, 7, 10, 13}, tag="cliff ledge")
+    b.trace([(250, 444), (420, 466), (262, 490), (404, 512)], spacing=34, r=8, orange={1, 5}, tag="switchback road")
+    for (x, y) in ((600, 472), (690, 498), (130, 470), (520, 500)):
+        b.place(x, y, r=8, tag="campfire")
+    for k, (x, y) in enumerate(STARS):
+        b.place(x, y, r=8, orange=k in (1, 2, 3, 5, 7, 9, 10, 11, 12, 13, 14), tag="star")
+    b.greens_in_reach()
