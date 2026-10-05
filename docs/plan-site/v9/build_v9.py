@@ -67,7 +67,7 @@ POINTS = [
 points = [{"id": f"N{n}", "n": n, "said": inline(said), "title": plain(said), "plan": plan, "rel": rel} for n, said, plan, rel in POINTS]
 
 decisions = [{"id": f"D{r[0]}", "n": r[0], "q": inline(r[1]), "title": plain(r[1]), "rec": inline(r[2])}
-             for r in table(section("Decisions for you"))]
+             for r in table(section("Decisions for you").split("### Your answers")[0])]
 notdoing = []
 for b in bullets(section("Not doing")):
     m = re.match(r"\*\*(.+?)\*\*\s*(.*)", b)
@@ -86,7 +86,42 @@ rules_new = [inline("**Match the originals in behaviour, never in content.** Eac
              inline("**One painting per release, in the default theme** (your rule from 4 October 2026); every piece of art still goes through the realism supervisor.")]
 rules_carry = [inline("All of plan v8's rules carry over: player value first, English only, a realism supervisor on every piece of art, Reduce motion and the three Decoration levels, static layout, Undo or confirm on destructive clicks, and every plan gets a website.")]
 
-designs = {"heading": "Designs", "intro": "<p>No designs yet. Once you've settled the decisions (especially who carries the powers, D1), a designer drafts the characters, the playfield in Tsukimichi's night sky, moons as pegs and the theme frame, each reviewed by the realism supervisor before it reaches you here.</p>", "groups": []}
+V = "Approved · round 5"
+designs = {
+    "heading": "Designs",
+    "intro": "<p>Concept art for Moonfall in the default theme (Menphina's Medallion), every piece approved by the realism supervisor after five rounds. Your three rulings stand: no peg shadows (open air, nothing to cast onto), the What's new image at your usual quality, and no corner marks on the playfield. Vote or comment on each; the questions about them are decisions 7 to 13.</p>",
+    "groups": [
+        {"key": "board", "title": "The playfield", "note": "800×600, as the engine draws it. Pegs are small moons, lit toward one sun; bricks are brass-edged.", "wide": True, "items": [
+            {"id": "style-a", "tag": "A", "name": "Mid-shot, bucket A: the crescent cradle", "img": "designs/style-frame-a.webp", "verdict": V, "for": ["G1", "G3", "G8", "D7"],
+             "pitch": "The brass Medallion frame, the ball tube on the left, the multiplier, orange count and the power medallion on the right. The cradle rides a rail along the foot.",
+             "changes": ["Four sea layouts, each peg turned to its own angle", "Lit pegs glow; unlit pegs have no halo", "The score counter counts up by the measured rule"]},
+            {"id": "style-b", "tag": "B", "name": "Aiming, bucket B: the lantern boat", "img": "designs/style-frame-b.webp", "verdict": V, "for": ["G1", "G3", "G8", "D7"],
+             "pitch": "The aim guide's dotted path to the first peg, and the lantern boat on a strip of water: the board's one warm light, with a reflection that moves with it.",
+             "changes": ["The lantern warms only what is near it", "Recommended for the expansion campaign"]},
+        ]},
+        {"key": "pegs", "title": "Pegs, Fever and readability", "items": [
+            {"id": "pegs", "tag": "P", "name": "Peg states", "img": "designs/peg-states.webp", "verdict": V, "for": ["G2", "G8"],
+             "pitch": "Blue, orange, green and purple pegs, unlit, lit and clearing; bricks; the free-ball cue and the ball."},
+            {"id": "fever", "tag": "F", "name": "Fever: FULL MOON", "img": "designs/fever.webp", "verdict": V, "for": ["G3", "D9"],
+             "pitch": "The banner and the five Fever buckets after the last orange. No zoom under Reduce motion."},
+            {"id": "read", "tag": "R", "name": "At the smallest window", "img": "designs/readability.webp", "verdict": V, "for": ["G9", "D13"],
+             "pitch": "The playfield at 640×480: every peg type still reads at a glance."},
+        ]},
+        {"key": "cast", "title": "The eleven who carry the powers", "note": "Original Eorzean characters, none echoing Peggle's Masters (no cat or rabbit races, Bombs, Sylphs, Cactuars, dragons or owls). Silhouette sketches: the final portraits come later.", "wide": True, "items": [
+            {"id": "cast", "tag": "C", "name": "Character line-up", "img": "designs/characters.webp", "verdict": V, "for": ["G5", "D1", "D8", "D11", "D12"],
+             "pitch": "Pipiru Mimiru (Super Guide), Kaede Tsukiyo (Multiball), Marcia nan Arcus (Brass Wings), Haldbrand Tidewatch (Lunar Burst), Gajavati (Flippers), Ysolde Nocturine (Moon Gate), Sister Ottilie (Moonbloom), Gyobo (Moon-Viewing Draw), Aldous Varrow (Fireball), Ione Selenis (Sage's Path) and Kupsa Brightpom (Storm Post)."},
+        ]},
+        {"key": "campaigns", "title": "The base game and its expansion", "items": [
+            {"id": "camp-base", "tag": "1", "name": "The Moon Road (base campaign)", "img": "designs/campaign-base.webp", "verdict": V, "for": ["G6", "D10"],
+             "pitch": "55 levels; the crescent cradle. A lantern on a cord over a brass tray marks the road."},
+            {"id": "camp-exp", "tag": "2", "name": "The Far Shore (expansion)", "img": "designs/campaign-expansion.webp", "verdict": V, "for": ["G6", "D10"],
+             "pitch": "60 levels, opened after the base Adventure; the lantern boat."},
+            {"id": "whatsnew", "tag": "W", "name": "What's new, 1.23.0", "img": "designs/whatsnew-1.23.0.webp", "verdict": V, "for": ["G8"],
+             "pitch": "The one release painting, Medallion only, per your rule."},
+        ]},
+    ],
+    "supervisor": {"summary": "<p>Five rounds. Round 1 sent all eight back (the painted moon read as a coin, every peg had the same stamped sea, the lanterns lit nothing). Round 2 approved seven (the base tile's crescent bracket read as a second moon); round 3 approved seven (Super Guide's globe read as a blank disc); rounds 4 and 5 approved all eight. Every round is recorded verbatim in <code>docs/design/v9/supervisor/</code>.</p>"},
+}
 data = {"title": "Moonfall", "date": "2026-10-04", "releases": releases, "points": points, "decisions": decisions,
         "notdoing": notdoing, "insights": insights, "rulesCarry": rules_carry, "rulesNew": rules_new, "designs": designs}
 
