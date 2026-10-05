@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- **Who's in it:** hovering a character's small portrait now shows it larger, with their name, as the quest giver's portrait does.
+
 ## [1.22.0] - 2026-10-04
 
 ### Added
