@@ -277,7 +277,7 @@ def draw_brick(img, sdf_fn, bbox, kind, state="unlit", variant=0, alpha=1.0):
     m = fbm(sd.shape[0], sd.shape[1], 9 * S, 3, 70 + variant)
     s = np.clip((m - 0.45) * 2.4, 0, 1) * 0.55
     col = alb * (1 - s[..., None]) + sea * s[..., None]
-    shade = 0.18 + 0.90 * lam
+    shade = 0.10 + 1.0 * lam ** 1.4
     if state == "lit":
         col = col * 0.72 + 0.18 + glow * 0.16
         shade = shade * 1.08 + 0.08

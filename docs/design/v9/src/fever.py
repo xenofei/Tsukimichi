@@ -49,6 +49,8 @@ def fever_cups(img):
         sl, xx, yy = img.win(bx, rim_y, rx + 3)
         inner = img.cov(((xx - bx) / (rx - 2.0)) ** 2 + ((yy - rim_y) / (ry - 1.2)) ** 2 - 1)
         img.over(sl, ramp(np.clip((yy - rim_y + ry) / (2 * ry), 0, 1), [(0, "#2A2010"), (1, "#0C0A08")]), inner)
+        far_wall = inner * np.clip((xx - bx) / rx, 0, 1) * np.clip(1 - (yy - rim_y + ry) / (2 * ry), 0, 1)   # the far right wall faces the light
+        img.add(sl, hexc("#9A7E4A"), far_wall * 0.35)
         # the rim: a ring round the opening, its near lip lit on the upper left
         def rim(X, Y, bx=bx, rx=rx):
             e = np.sqrt(((X - bx) / rx) ** 2 + ((Y - rim_y) / ry) ** 2)

@@ -105,7 +105,7 @@ Every size is in the original's 800 × 600 playfield units (plan v9 G1), so 1 un
 | Reads as | the brass frame's own instrument; calm and quiet | a scene: the lantern is the playfield's one warm light |
 | Cost | brass only; no light of its own | a light: warmth on the post, the rail and the stern within about 30 units, a reflection and a broken warm column in the water, plus a 10-unit water strip along the foot. Pegs are too far away to be lit. |
 | Risk | low | The lantern must move with the boat (6 s sweep), so its warmth and reflection are drawn every frame. |
-| Campaign | the base campaign's key art | the expansion's key art |
+| Campaign (recommended) | the base campaign | the expansion, whose key art shows it |
 
 My recommendation is **A for the base campaign and B for the expansion**, so the two campaigns differ at a glance and each keeps its identity. If the owner wants one bucket only, I'd pick A, the calmer of the two.
 
@@ -200,7 +200,7 @@ Two tiles with one identity:
 | | Base: **The Moon Road** (55 levels) | Expansion: **The Far Shore** (60 levels, opens after The Moon Road) |
 |---|---|---|
 | Hour and palette | night, Night blue | later, a deeper violet |
-| Scene | a pale road over moonlit hills to a waystation where a brass bracket holds a lantern (the crescent cradle's family); a traveller on the road | open sea, a lantern boat (bucket B) bound for a headland with a gate |
+| Scene | a pale road over moonlit hills to a waystation whose lantern hangs from a crossbeam over a small square brass tray (a crescent there read as a second moon, round 2); a traveller on the road | open sea, a lantern boat (bucket B) bound for a headland with a gate |
 | Practical light | the waystation lantern | the boat's lantern |
 
 ## What's new, 1.23.0 "Moonfall" (`whatsnew-1.23.0.jpg`)
@@ -245,6 +245,45 @@ The engine can draw the pegs and the HUD procedurally (every recipe here is anal
 
 ## Supervision record
 
-The supervisor's verdicts are recorded verbatim in `supervisor/round-N.md` and copied below.
+An independent realism supervisor (agent a980d3496ee3ce660) judged every round from the rendered files only. Each round is recorded verbatim in `supervisor/round-N.md`, with the designer's response. The summary is below.
 
-(See the rounds that follow.)
+### Rulings on the disagreements (the coordinator, before round 2)
+
+1. **No drop shadows on pegs or bricks.** The board is open night air in front of a far sky, so there is no surface to take a cast shadow. The dark lower-right band on a peg is its unlit part, inside one circular limb. *Supervisor: ACCEPTED (round 2). Round 1's items A1-3 (the shadow part), A3-4 and A5-2 are withdrawn.*
+2. **The What's new JPEG stays at quality 88, 4:4:4**, the owner's shipping recipe. *Supervisor: ACCEPTED (round 2). PSNR is 43.6 dB against the master; there is no blocking or banding at 1x, and mild ringing round the lantern halo shows only at 5x.*
+3. **The Medallion corner marks stay removed from the playfield.** *Supervisor: ACCEPTED (round 2).*
+
+### Round 1: CHANGES on all 8 assets (`supervisor/round-1.md`)
+
+The top three fixes it asked for:
+- **The paintings' moon** was an offset disc with a lozenge sea, which read as a coin or a cheese. It was rebuilt in `src/paint_moon.py`.
+- **The pegs** had a stamped smudge for seas and a thin, hard sliver. They now have four lobed-maria layouts, each peg turns its own, and the terminator is wide and soft.
+- **The lanterns** lit nothing, and the rims were outlines. The lanterns now light only what is near, the water reflects, and the rims fall only on edges facing the upper left.
+
+### Round 2: 7 of 8 APPROVED; the campaign tiles CHANGES (`supervisor/round-2.md`)
+
+Approved: the style frames A and B, the peg states, Fever, readability, the characters and the What's new art. The one block was a Minor: the base tile's lantern bracket still read as a glowing crescent, a second moon. It is replaced by a square tray. Every Nit from the round was fixed too.
+
+### Round 3
+
+See `supervisor/round-3.md`.
+
+## Open questions for the owner
+
+To be put to the owner on the plan v9 site once the art is approved.
+
+1. **Buckets.** A (the crescent cradle) for the base campaign and B (the lantern boat) for the expansion, as I recommend? Or one bucket for both, in which case I'd pick A.
+2. **Our names for the distinctive powers:**
+   - Pyramid → Brass Wings
+   - Space Blast → Lunar Burst
+   - Spooky Ball → Moon Gate
+   - Flower Power → Moonbloom
+   - Zen Ball → Sage's Path
+   - Electrobolt → Storm Post
+   - Lucky Spin → Moon-Viewing Draw
+   - Super Guide, Multiball, Flippers and Fireball stay as they are.
+3. **Fever's banner:** is **FULL MOON** right?
+4. **Campaign names:** **The Moon Road** (base) and **The Far Shore** (expansion)?
+5. **Gyobo:** keep the Namazu (a catfish) despite Nights' sea creature, Marina? They differ in power, look and role.
+6. **Loporrits:** I excluded the moon rabbits, the most moon-themed race in FFXIV, because Peggle's Warren is a rabbit. Do you agree?
+7. **The smallest window:** is 640 × 480 (0.8×) right?

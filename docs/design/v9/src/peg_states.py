@@ -60,14 +60,14 @@ def build(S=2):
         text(img, x0 + 20, cy - 8, NAMES[k], "serif", 15, P["cream"], anchor="lm", halo=0)
         text(img, x0 + 20, cy + 12, ROLE[k], "ui", 9.5, P["ink_dim"], anchor="lm", halo=0)
         cx = x0 + 175
-        draw_moon(img, cx, cy, 36, k, "unlit", variant=r % 3)
-        draw_moon(img, cx + 110, cy, 36, k, "lit", variant=r % 3)
-        draw_moon(img, cx + 220, cy, 36, k, "lit", variant=r % 3, scale=1.06, flash=0.55)      # 0-60 ms: a bloom
-        draw_moon(img, cx + 330, cy + 4, 36, k, "lit", variant=r % 3, scale=0.70, alpha=0.45)  # 60-150 ms: it sets, dimming
+        draw_moon(img, cx, cy, 36, k, "unlit", variant=r, rot=0.5 * r - 0.6)
+        draw_moon(img, cx + 110, cy, 36, k, "lit", variant=r, rot=0.5 * r - 0.6)
+        draw_moon(img, cx + 220, cy, 36, k, "lit", variant=r, rot=0.5 * r - 0.6, scale=1.06, flash=0.40)      # 0-60 ms: a bloom
+        draw_moon(img, cx + 330, cy + 4, 36, k, "lit", variant=r, rot=0.5 * r - 0.6, scale=0.70, alpha=0.45)  # 60-150 ms: it sets, dimming
         draw_motes(img, cx + 330, cy, 36, k, 0.30, seed=r)
         draw_motes(img, cx + 440, cy, 36, k, 0.70, seed=r)                                     # 150-300 ms: its dust sifts down
-        draw_moon(img, cx + 532, cy, 10, k, "unlit", variant=r % 3)
-        draw_moon(img, cx + 568, cy, 10, k, "lit", variant=r % 3)
+        draw_moon(img, cx + 532, cy, 10, k, "unlit", variant=r, rot=0.5 * r - 0.6)
+        draw_moon(img, cx + 568, cy, 10, k, "lit", variant=r, rot=0.5 * r - 0.6)
     # ---------------------------------------------------------------- bricks
     bx0 = 900
     panel(img, bx0, y0, bx0 + 500, y0 + 430, "Moonstone bricks (2.6×; 30 × 12 at r 236)")

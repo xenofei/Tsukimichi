@@ -93,21 +93,16 @@ def base():
     rcol = c.vgrad([(0, "#2A3350"), (0.45, "#3C4866"), (1, "#4A5878")], wsy, H) * (0.80 + 0.32 * stones)[..., None]   # far: dim and hazy
     rcol = 1 - (1 - rcol) * (1 - hexc("#D6E0FF") * (toward * 0.25)[..., None])
     c.over(rcol, rm)
-    # the waystation: a post and crossbeam, and the brass crescent cradle hung from it as a lantern (bucket A)
+    # the waystation: a post and crossbeam, a lantern hung on a cord over a small square tray of dark brass
     post = c.poly([(wsx - 5, wsy + 22), (wsx + 5, wsy + 22), (wsx + 4, wsy - 150), (wsx - 4, wsy - 150)], 0.6)
     beam = c.poly([(wsx - 6, wsy - 146), (wsx + 70, wsy - 146), (wsx + 70, wsy - 139), (wsx - 6, wsy - 139)], 0.6)
-    chains = np.maximum(c.poly([(wsx + 40, wsy - 139), (wsx + 41.5, wsy - 139), (wsx + 41.5, wsy - 108), (wsx + 40, wsy - 108)], 0.4),
-                        c.poly([(wsx + 66, wsy - 139), (wsx + 67.5, wsy - 139), (wsx + 67.5, wsy - 108), (wsx + 66, wsy - 108)], 0.4))
+    cx, cy = wsx + 54, wsy - 96
+    chains = c.poly([(cx - 0.9, wsy - 139), (cx + 0.9, wsy - 139), (cx + 0.9, cy - 40), (cx - 0.9, cy - 40)], 0.4)
     wood = np.maximum.reduce([post, beam, chains])
     c.over(hexc("#0E1020"), wood)
-    # the cradle: a brass crescent, horns up, with a small lantern resting in its hollow
-    cx, cy = wsx + 54, wsy - 96
-    outer = c.ellipse(cx, cy - 18, 30, 30, 0.6) * (c.yy > cy - 26)
-    inner = c.ellipse(cx, cy - 30, 33, 30, 0.6)
-    cres = np.clip(outer - inner, 0, 1)
-    brass = np.broadcast_to(hexc("#2A2114"), (H, W, 3))
     lant = lantern(c, cx, cy - 24, 0.9)
-    c.over(brass, cres)
+    cres = c.poly([(cx - 14, cy - 9), (cx + 14, cy - 9), (cx + 12, cy - 5), (cx - 12, cy - 5)], 0.5)   # the tray, square-edged
+    c.over(hexc("#1A150E"), cres)
     figm = figure(c, 0.80 * W, 0.86 * H, s=0.9, facing=-1)
     c.over(hexc("#0B0E1A"), figm)
     keep = np.maximum.reduce([wood, cres, lant, figm, M["moon"]])
@@ -116,7 +111,7 @@ def base():
     dl = np.sqrt((c.xx - cx) ** 2 + (c.yy - (cy - 24)) ** 2)
     c.add(hexc("#FFB466"), np.exp(-(dl / 26) ** 2) * 0.45 + np.exp(-(dl / 90) ** 2) * 0.10)
     fall = 1 / (1 + (dl / 90) ** 2)
-    c.add(hexc("#FFB062"), rims(cres, 0, -1, 2) * 0.55 * np.exp(-(dl / 40) ** 2) + rims(post, 1, 0, 2) * fall * 1.2)
+    c.add(hexc("#FFB062"), rims(cres, 0, -1, 1) * 0.45 + rims(post, 1, 0, 2) * fall * 1.2)
     c.add(hexc("#FFB062"), np.exp(-(((c.xx - (wsx + 30)) / 110) ** 2 + ((c.yy - (wsy + 22)) / 20) ** 2)) * field * 0.20)   # its pool, across the road
     contact_shadow(c, wsx, wsy + 22, 14, -26, 10, 0.5)                                                           # the post's, away from the lantern
     contact_shadow(c, 0.80 * W, 0.86 * H + 2, 30, 22, 40, 0.75)                                                   # the traveller's, toward us and right
@@ -166,7 +161,7 @@ def expansion():
     Pp = lambda pts, s=1.4: [(fx + a * s, fy + b * s) for a, b in pts]
     fig = np.maximum.reduce([c.poly(Pp([(-20, 2), (22, 2), (20, -16), (12, -40), (-6, -44), (-16, -28)]), 0.7),
                              c.ellipse(fx + 6 * 1.4, fy - 52 * 1.4, 14, 16, 0.7),
-                             c.poly(Pp([(-2, -58), (16, -62), (12, -50), (0, -48)]), 0.7)]) * (c.yy < yw - 4)
+                             c.ellipse(fx + 8 * 1.4, fy - 56 * 1.4, 9 * 1.4, 7 * 1.4, 0.7)]) * (c.yy < yw - 4)
     wood = np.maximum.reduce([post, arm, cord])
     c.over(hexc("#120E14"), wood)
     c.over(hexc("#0B0E1A"), fig)
@@ -182,8 +177,9 @@ def expansion():
     c.over(hexc("#0B0E1A"), fig)
     lant = lantern(c, lx, ly)
     finish(c, np.maximum.reduce([boat, lant, far, M["moon"]]), 2205, plain=np.maximum(M["moon"], 0.45 * (c.yy < 0.58 * H)))
-    glitter(c, mx, hz, sea * (1 - boat), 2206, col="#E4E4DE", strength=0.70, w0=10.0, spread=0.30, thr=0.60)
-    c.add(hexc("#B8C6EE"), rims(boat, -1, -1, 2) * 0.28 * (c.yy < yw))
+    glitter(c, mx, hz, sea * (1 - boat), 2206, col="#D4DAE6", strength=0.70, w0=10.0, spread=0.30, thr=0.60)
+    c.add(hexc("#B8C6EE"), rims(boat, -1, -1, 2) * 0.28 * (c.yy < yw) * (1 - fig))
+    c.add(hexc("#C8D4F4"), rims(fig, -1, -1, 2) * 0.35)
     dl = np.sqrt((c.xx - lx) ** 2 + (c.yy - ly) ** 2)
     c.add(hexc("#FFB466"), np.exp(-(dl / 24) ** 2) * 0.5 + np.exp(-(dl / 80) ** 2) * 0.12)
     fall = 1 / (1 + (dl / 70) ** 2)

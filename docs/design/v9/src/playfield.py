@@ -134,7 +134,7 @@ def launcher(img, aim_deg=-18.0, gauge=0.4, ball=True, flare=None):
     gl = chan * np.exp(-((rr - 24.0) / 0.7) ** 2) * smooth(270, 210, ang)
     img.add(sl, hexc("#F4F2EA"), gl * 0.35)
     gx_, gy_ = px_ + math.cos(math.radians(222)) * 24.2, py_ + math.sin(math.radians(222)) * 24.2
-    img.add(sl, hexc("#FFFFFF"), np.exp(-((xx - gx_) ** 2 + (yy - gy_) ** 2) / 2.2) * chan * 0.6)
+    img.add(sl, hexc("#FFFFFF"), np.exp(-((xx - gx_) ** 2 + (yy - gy_) ** 2) / 5.0) * chan * 0.95)
     rimc = lambda X, Y: np.abs(np.sqrt((X - px_) ** 2 + (Y - py_) ** 2) - 25.5) - 3.0
     ring = lambda X, Y: np.maximum(np.abs(rimc(X, Y)) - 0.9, -inarc_fn(X, Y))
     def inarc_fn(X, Y):
@@ -208,6 +208,8 @@ def bucket_cradle(img, bx):
     sl, xx, yy = img.win(bx, 590, 70)
     img.mul(sl, hexc("#05070F"), np.exp(-((xx - bx) / 52) ** 2) * np.exp(-((yy - 589.5) / 1.6) ** 2) * 0.55)
     draw_brass(img, cres, (bx, 580, 72), "round", depth=6.0, width=4.0)
+    slc, Xc, Yc = img.win(bx, 580, 72)
+    img.mul(slc, hexc("#2A2010"), img.cov(cres(Xc, Yc)) * np.clip((Xc - bx + 20) / 80, 0, 1) * 0.35)   # the right horn turns from the light
     # the moonstone inlay: a fine line along the belly's middle, lit where the belly faces the light
     sl, xx, yy = img.win(bx, 580, 70)
     mid = np.abs(np.sqrt((xx - ox) ** 2 + (yy - oy) ** 2) - (R1 - 2.6))
@@ -302,7 +304,7 @@ def bucket_boat(img, bx):
         Y = (sy + 0.5) / S
         U = (X - bx) / half
         topr = 573.0 - 4.0 * U ** 4
-        inboat = ((Y > topr - 1.5) & (np.abs(X - bx) < half)) | (np.abs(X - (bx + 56)) < 2.2) & (Y > 535) | (np.hypot(X - lx, Y - ly) < 9)
+        inboat = ((Y > topr - 1.5) & (np.abs(X - bx) < half * (1 - 0.35 * k / max(1, y1d - y0d)))) | (np.abs(X - (bx + 56)) < 2.2) & (Y > 535) | (np.hypot(X - lx, Y - ly) < 9)
         band = 0.78 + 0.22 * math.sin(yd * 2.1 / S)                              # ripples break it into level bands
         edge_fade = np.clip((X - (bx - half)) / 6, 0, 1) * np.clip(((bx + half) - X) / 6, 0, 1)
         m = inboat * band * np.maximum(edge_fade, (np.hypot(X - lx, Y - ly) < 9))

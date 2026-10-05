@@ -109,7 +109,7 @@ def paint():
     P = lambda pts, s=1.25: [(fx + a * s, fy + b * s) for a, b in pts]
     fig = c.poly(P([(-20, 2), (22, 2), (20, -16), (12, -40), (-6, -44), (-16, -28)]), 0.7)
     fig = np.maximum(fig, c.ellipse(fx + 6 * 1.25, fy - 52 * 1.25, 10 * 1.25, 11.5 * 1.25, 0.7))
-    fig = np.maximum(fig, c.poly(P([(-2, -58), (16, -62), (12, -50), (0, -48)]), 0.7))          # the hood, tipped back
+    fig = np.maximum(fig, c.ellipse(fx + 8 * 1.25, fy - 56 * 1.25, 9 * 1.25, 7 * 1.25, 0.7))          # the hood, tipped back
     fig = np.maximum(fig, c.poly(P([(10, -36), (26, -24), (24, -16), (8, -26)]), 0.7))          # an arm on the knee
     fig = fig * (c.yy < yw - 4)
     # the stern post, curving up, with an arm and the paper lantern hanging from it
@@ -185,9 +185,10 @@ def paint():
     c.add(hexc("#F4F2EA"), np.exp(-(hd / 2.6) ** 2) * 1.0 + np.exp(-(hd / 10) ** 2) * 0.20)
     M["star"] = np.clip(streak * 2 + np.exp(-(hd / 4) ** 2), 0, 1)
     # the moon's broken path on the lake, under the moon
-    glitter(c, mx, hz, lake * (1 - near) * (1 - boat), 1252, col="#E4E4DE", strength=0.75, w0=9.0, spread=0.28, thr=0.60)
+    glitter(c, mx, hz, lake * (1 - near) * (1 - boat), 1252, col="#D4DAE6", strength=0.75, w0=9.0, spread=0.28, thr=0.60)
     # moonlight rims on the edges that face the moon (upper left)
-    c.add(hexc("#B8C6EE"), rims(boat, -1, -1, 2) * 0.30 * (c.yy < yw) * (1 - smooth(0.64 * W, 0.72 * W, c.xx) * 0.6))
+    c.add(hexc("#B8C6EE"), rims(boat, -1, -1, 2) * 0.30 * (c.yy < yw) * (1 - smooth(0.64 * W, 0.72 * W, c.xx) * 0.6) * (1 - fig))
+    c.add(hexc("#C8D4F4"), rims(fig, -1, -1, 2) * 0.35)
     c.add(hexc("#B8C6EE"), rims(reeds, -1, -1, 2) * 0.40)
     # the lantern: its glow, its light on the traveller's near (right) side, the post, the stern, and the water
     dl = np.sqrt((c.xx - lx) ** 2 + (c.yy - ly) ** 2)
@@ -203,6 +204,8 @@ def paint():
     rip = tex_sample(fbm(512, 512, 5, 2, 1253), c.xx / 3.0, c.yy / 0.9)
     col_ = np.exp(-((c.xx - lx) / np.maximum(5 + (c.yy - yw) * 0.10, 1.0)) ** 2) * np.exp(-np.abs(c.yy - refl_y) / 70) * (c.yy > yw + 2)
     c.add(hexc("#FFB466"), col_ * np.clip((rip - 0.40) * 3, 0, 1) * lake * (1 - near) * 0.8)
+    pr = np.exp(-((c.xx - (bx1 - 20 - 3 * np.sin(c.yy / 5.0))) / 1.8) ** 2) * (c.yy > yw + 2) * (c.yy < yw + 70) * np.exp(-(c.yy - yw) / 40)
+    c.add(hexc("#C08A50"), pr * np.clip((rip - 0.35) * 2.5, 0, 1) * lake * (1 - near) * 0.35)
     # the boat's contact on the water: a thin dark line where hull meets lake
     c.mul(hexc("#05070F"), np.exp(-((c.yy - yw - 1) / 2.0) ** 2) * (u > 0.02) * (u < 0.98) * 0.6)
     seal_far(M, ["far_a", "far_b", "far_c"])

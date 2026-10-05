@@ -87,8 +87,7 @@ def pipiru(p):
     p.line([(6, -24), (12, -18)], 3.2)
     p.rect(14.5, -16, 4.2, 6.2, rot=0.4, layer="accent")                             # a card at her side
     p.ell(-16.5, -54, 6.2, 6.2, layer="glow")                                         # the star globe
-    p.ring(-16.5, -54, 6.9, 0.8)                                                     # its meridian
-    p.ring(-16.5, -54, 6.6, 0.7, ry=2.0, rot=-0.25)                                  # and its horizon band, in perspective
+    p.ring(-16.5, -54, 6.9, 0.55)                                                    # its meridian, fine
     p.line([(-16.5, -47), (-16.5, -45.5)], 1.2)
     p.light(-16.5, -54, "#B8CCFF", 30, 1.0)
 
@@ -215,8 +214,8 @@ def ottilie(p):
     p.ell(0, -72.5, 8.0, 9.2)                                                        # the hood, round over the head
     p.poly([(-1.5, -81), (1.5, -81), (0.5, -82.5)])
     p.line([(9, -60), (14, -50), (16.5, -62)], 3.0)
-    for (fx, fy, r) in ((-3, -53, 2.0), (0, -55.5, 1.8), (-5.5, -55.5, 1.6), (-1.5, -50.5, 1.5), (2.5, -52, 1.4)):
-        p.ell(fx, fy, r, r, layer="accent")
+    for (fx, fy, r) in ((-3, -53, 1.2), (1, -56, 1.0), (-6, -57.5, 0.9), (-2, -48.5, 0.8), (4, -51, 0.9)):   # a few scattered petals
+        p.ell(fx, fy, r, r * 0.7, layer="accent", rot=fx * 0.3)
 
 
 def gyobo(p):

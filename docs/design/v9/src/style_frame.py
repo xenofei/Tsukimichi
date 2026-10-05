@@ -30,9 +30,9 @@ def frame_a(S=2):
     if last_orange is not None:
         x, y = pegs[last_orange]
         # just below the struck peg (as measured), nudged to the first spot clear of every other peg and the ball
-        for (ox, oy) in ((0, 21), (-20, 16), (20, 16), (0, -21)):
+        for (ox, oy) in ((0, 21), (-22, 14), (22, 14), (0, -21)):
             tx, ty = x + ox, y + oy
-            if all(math.hypot(tx - px, ty - py) > 17 for j, (px, py) in enumerate(pegs) if j != last_orange) and math.hypot(tx - 487, ty - 352) > 14:
+            if all(math.hypot(tx - px, ty - py) > 21 for j, (px, py) in enumerate(pegs) if j != last_orange) and math.hypot(tx - 487, ty - 352) > 14:
                 break
         text(img, tx, ty, "100", "ui_sb", 9.5, "#FFD7A8", anchor="mm", halo=0.7)
     hud(img, portrait=medallion_portrait("pipiru"))
