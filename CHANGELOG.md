@@ -6,6 +6,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Added
 - **Moonlit:** click a column header to sort by it; click again to reverse, and a third time to go back to the usual order. The table remembers your choice.
+- **Moonfall:** a peg game inside Tsukimichi. Open it with the Moonfall button at the right of the status bar, or `/tsuki moonfall`. Aim with the mouse, click to shoot, and clear the 25 orange pegs with 10 balls; the last orange brings on the Full Moon. Four starter levels for now, with simple shapes until the artwork arrives. It pauses itself in combat, in duties, in cutscenes and when you click away, and your furthest level is saved.
 
 ### Changed
 - **Portrait photos come with Tsukimichi:** quest-giver photos are now part of the plugin, re-cut so faces sit centred, and photos that showed a weapon, a helmet crest or a hat now show the face. There's nothing to download, and a copy you downloaded before is removed to free space. To turn the photos off, set Settings › General › Look › Giver portraits to Game art.

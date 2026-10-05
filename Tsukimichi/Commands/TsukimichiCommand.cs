@@ -18,6 +18,7 @@ namespace Tsukimichi.Commands;
 /// starts the tour; <c>zone</c> and <c>which</c> print discovery lists; <c>why [quest name]</c> prints what blocks a
 /// quest; <c>route [quest name]</c> opens its unlock route; <c>recap [quest name]</c> opens the story recap; <c>nearby</c> toggles the Nearby quests window; <c>todo</c>
 /// toggles the todo overlay; <c>icon</c> shows or hides the moon icon (1.22, alone: with text after it the line searches);
+/// <c>moonfall</c> opens or closes Moonfall, the peg game (1.23, alone, likewise);
 /// <c>report [quest name]</c> copies a quest's diagnostic block; <c>export [quests|moonlit]
 /// [json|csv]</c> writes the export files; <c>stop</c> stops every hand-off Tsukimichi started (<see cref="StopCommand"/>);
 /// <c>look &lt;code&gt;</c> opens Settings › Themes with a share code pasted and previewed, never applying it;
@@ -98,6 +99,12 @@ public sealed class TsukimichiCommand : IDisposable
     /// while it is not wired, the whole line searches (<see cref="CommandLine.RunsIcon"/>).
     /// </summary>
     public Action? ToggleMoonIcon { get; set; }
+
+    /// <summary>
+    /// Invoked for <c>/tsukimichi moonfall</c> (1.23, plan v9 G9): opens or closes Moonfall. With text after
+    /// <c>moonfall</c>, or while it is not wired, the whole line searches (<see cref="CommandLine.RunsMoonfall"/>).
+    /// </summary>
+    public Action? ToggleMoonfall { get; set; }
 
     /// <summary>
     /// Invoked for <c>/tsukimichi report [quest name]</c> with the rest of the line (empty for the selected quest):
@@ -478,6 +485,18 @@ public sealed class TsukimichiCommand : IDisposable
                 if (CommandLine.RunsIcon(parsed) && ToggleMoonIcon is { } toggleIcon)
                 {
                     toggleIcon();
+                }
+                else
+                {
+                    search(args);
+                }
+
+                break;
+
+            case Subcommand.Moonfall:
+                if (CommandLine.RunsMoonfall(parsed) && ToggleMoonfall is { } toggleMoonfall)
+                {
+                    toggleMoonfall();
                 }
                 else
                 {

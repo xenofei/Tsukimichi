@@ -73,6 +73,12 @@ public enum Subcommand
 
     /// <summary><c>icon</c> (1.22, H1): shows or hides the moon icon. With text after it the whole line searches (<see cref="CommandLine.RunsIcon"/>).</summary>
     Icon,
+
+    /// <summary>
+    /// <c>moonfall</c> (1.23, plan v9 G9): opens or closes Moonfall, the peg game. With text after it the whole line
+    /// searches (<see cref="CommandLine.RunsMoonfall"/>).
+    /// </summary>
+    Moonfall,
 }
 
 /// <summary>A parsed <c>/tsukimichi</c> line.</summary>
@@ -123,6 +129,7 @@ public static class CommandLine
         ("next", Subcommand.Next, true),
         ("go", Subcommand.Go, true),
         ("icon", Subcommand.Icon, true),
+        ("moonfall", Subcommand.Moonfall, true),
     ];
 
     /// <summary>The subcommand words players are shown (and offered by <see cref="DidYouMean"/>), in help order; <c>glyphs</c> and <c>ipc</c> are not.</summary>
@@ -178,6 +185,12 @@ public static class CommandLine
     /// past") the whole line is the quest search it was before <c>icon</c> was a subcommand, so no quest name is shadowed.
     /// </summary>
     public static bool RunsIcon(ParsedCommand parsed) => parsed.Kind == Subcommand.Icon && parsed.Rest.Length == 0;
+
+    /// <summary>
+    /// Whether <c>moonfall</c> opens or closes Moonfall (1.23): only on its own. With text after it the whole line is the
+    /// quest search it was before, so no quest name is shadowed.
+    /// </summary>
+    public static bool RunsMoonfall(ParsedCommand parsed) => parsed.Kind == Subcommand.Moonfall && parsed.Rest.Length == 0;
 
     /// <summary>
     /// Whether the name of a quest still in the game, as <paramref name="spoilers"/> shows it, begins with

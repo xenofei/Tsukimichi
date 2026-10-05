@@ -1868,9 +1868,10 @@ public sealed partial class MainWindow : Window, IDisposable
             x = DrawStatusGauge(dl, x, textY, line, counts.Overall.Fraction, barStyle, separator, gap);
         }
 
-        // Version, right-aligned in Dusk; it carries the data stamp on hover.
+        // Version, right-aligned in Dusk; it carries the data stamp on hover. The Moonfall button (1.23) ends the bar.
         var versionWidth = ImGui.CalcTextSize(versionText).X;
-        var versionX = MathF.Max(x, right - versionWidth);
+        var versionRight = DrawMoonfallButton(dl, right, textY, line, gap);
+        var versionX = MathF.Max(x, versionRight - versionWidth);
         StatusText(versionX, textY, versionText, Theme.U32(Theme.Surface.TextTertiary));
         if (DataStamp is { } stamp && ImGui.IsItemHovered())
         {

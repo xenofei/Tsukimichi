@@ -1529,6 +1529,9 @@ public sealed partial class Plugin : IDalamudPlugin
             // The moon icon (1.22.0, H1 and H2): over the game, with its quick card, menu and /tsuki icon.
             InitializeMoonIcon();
 
+            // Moonfall (1.23.0, plan v9): the peg game, its window, the main window's button and /tsuki moonfall.
+            InitializeMoonfall();
+
             // The tutorial draws over the main window (ITutorial.Draw at the end of MainWindow.Draw) and offers itself
             // the first time the main window opens (CheckFirstRun on UiBuilder.Draw).
             TutorialOverlay tutorial = new(Settings, PluginInterface, ui);
@@ -1829,6 +1832,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("since you were away", () => welcomeBack?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
         Unwind("moon icon", DisposeMoonIcon);
+        Unwind("moonfall", DisposeMoonfall);
         Unwind("followed route", () => activeRoutes?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
         Unwind("welcome home", TearDownWelcomeHome);

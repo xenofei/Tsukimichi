@@ -12,4 +12,9 @@
     <InternalsVisibleTo Include="Tsukimichi.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Moonfall's shipped levels (plan v9 G1, G6), read by MoonfallCampaigns.LoadBuiltIn. -->
+    <EmbeddedResource Include="Moonfall\Levels\*.json" />
+  </ItemGroup>
+
 </Project>
