@@ -89,9 +89,20 @@ def pipiru(R):
     hood = R.poly([(-58, 66), (-62, 20), (-52, -30), (-30, -58), (-8, -66), (6, -70), (16, -62), (30, -46), (34, -30),
                    (28, -26), (14, -38), (-8, -40), (-26, -26), (-34, 4), (-26, 40), (-12, 64)])
     R.raise_(hood, 5.4, 6.0)
-    # round 5 (realism round 4 Nit): the hood's cloth carved in soft deep folds, falling from the peak
-    hair_strands(R, hood, lambda x, y: math.atan2(y + 70, x - 10) + 0.15, 16, 36, width=6.0, h=1.1, seed=31, soft=1.6)
-    hair_strands(R, hood, lambda x, y: math.atan2(y + 70, x - 10) + 0.15, 60, 20, width=1.6, h=0.30, seed=32)
+    # round 6 (realism round 5): five broad folds hang from the crown down and back toward the nape and the
+    # shoulder; each is a rounded ridge between soft troughs, they never cross, and they stop inside the hood's edge
+    inner = np.clip((blur(hood, 3.0 * R.S) - 0.55) * 4, 0, 1)
+    folds_ = [[(2, -64), (-14, -46), (-28, -16), (-38, 18), (-46, 52)],
+              [(-6, -60), (-22, -42), (-36, -12), (-48, 22), (-54, 56)],
+              [(-14, -56), (-32, -38), (-44, -8), (-54, 26)],
+              [(10, -58), (0, -48), (-14, -28), (-26, 0)],
+              [(-24, -48), (-40, -30), (-52, 0), (-58, 30)]]
+    for k, pts in enumerate(folds_):
+        ridge = np.sqrt(np.clip(blur(R.strokes([pts], 7.0, taper=False), 2.2 * R.S), 0, 1))
+        R.hgt = R.hgt + ridge * inner * 1.3
+    for pts in ([(-2, -62), (-18, -44), (-32, -14), (-43, 20)], [(-10, -58), (-27, -40), (-40, -10), (-51, 24)]):
+        trough = np.clip(blur(R.strokes([pts], 4.0, taper=False), 1.8 * R.S), 0, 1)
+        R.hgt = R.hgt - trough * inner * 0.7
     folds(R, [[(-50, 50), (-52, 0), (-40, -36)], [(-38, 56), (-42, 10), (-28, -30)]], 2.2, 0.8)
     # the star globe in its ring, held before her
     R.raise_(R.ellipse(72, 30, 16, 16), 6.0, 10.0)
