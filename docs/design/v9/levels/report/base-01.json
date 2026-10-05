@@ -377,5 +377,10 @@
  },
  "fails": [],
  "seconds": 21.0,
- "verdict": "PASS"
+ "verdict": "PASS",
+ "ramp": {
+  "games": 144,
+  "greedy_won": 89,
+  "per_48": 29.7
+ }
 }

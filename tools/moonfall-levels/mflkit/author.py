@@ -97,15 +97,17 @@ class Board(Layout):
         return b
 
     # ---- legality of one placement
-    def why_not(self, x, y, r=10.0, gap=DOTTED_GAP):
-        """None when a still round peg of radius r fits at (x, y); otherwise the reason."""
+    def why_not(self, x, y, r=10.0, gap=DOTTED_GAP, group=None, skip_group=False):
+        """None when a still round peg of radius r fits at (x, y); otherwise the reason. `group`: a mover's drift
+        (dx, dy, period); movers drifting the same way keep a fixed spacing, so they are checked as still pegs (or,
+        with skip_group, not at all: a point further along the drift, where they have moved too)."""
         if not in_bounds(x, y, r):
             return "off the board (walls, launcher's swing or bucket)"
         g = min(x - r - 75.5, 724.5 - x - r)
         if 0.5 < g < 12.5:
             return f"wall pinch {g:.1f}"
         for p in self.pegs:
-            if "move" in p:
+            if "move" in p and (self._drift(p) != group or skip_group):
                 continue
             d = math.hypot(p["x"] - x, p["y"] - y) - p.get("r", 10) - r
             if d < gap:
@@ -116,9 +118,16 @@ class Board(Layout):
             if gb < 13.0:
                 return f"{gb:.1f} from a brick"
         for m in self.pegs:
-            if "move" in m and self._mover_near(m, x, y, r):
+            if "move" in m and self._drift(m) != group and self._mover_near(m, x, y, r):
                 return "in a mover's path"
         return None
+
+    @staticmethod
+    def _drift(p):
+        mv = p.get("move")
+        if not mv or mv["kind"] != "slide":
+            return None
+        return (round(mv["x"] - p["x"], 1), round(mv["y"] - p["y"], 1), mv["period"])
 
     def _mover_near(self, m, x, y, r):
         mv = m["move"]
@@ -214,6 +223,30 @@ class Board(Layout):
             out.append(self.arc(cx, cy, R, a0, each, t=t, tag=tag, orange=orange, green=green))
         self.runs.append(out)
         return out
+
+    def slide(self, x, y, dx, dy, period, r=9.0, gap=DOTTED_GAP, **kw):
+        """A slide mover from (x, y) to (x + dx, y + dy) and back over `period` seconds, placed only if it keeps
+        `gap` from every still piece along its whole path (sampled at nine points). Movers that slide together (same
+        offset and period) keep their spacing, so a reflection drawn with them ripples as one."""
+        group = (round(dx, 1), round(dy, 1), period)
+        for k in range(9):
+            t = k / 8
+            why = self.why_not(x + dx * t, y + dy * t, r, gap, group=group, skip_group=k > 0)
+            if why:
+                self.skipped.append(((round(x), round(y)), kw.get("tag", ""), "mover: " + why))
+                return None
+        move = {"kind": "slide", "x": _r1(x + dx), "y": _r1(y + dy), "period": period}
+        return self.peg(x, y, r=r, move=move, **kw)
+
+    def greens_in_reach(self):
+        """Pegs no first free flight touches (high in a corner) may never be green: a green should be a direct shot
+        (method section 3). Returns how many were changed."""
+        n = 0
+        for p in self.pegs:
+            if p.get("canBeGreen", True) and "move" not in p and not direct_reach(p["x"], p["y"], p.get("r", 10.0)):
+                p["canBeGreen"] = False
+                n += 1
+        return n
 
     def key(self, x, y, orange=None, green=None, within=24.0):
         """Marks the piece nearest (x, y) as one of the subject's features: an orange candidate and/or never green."""

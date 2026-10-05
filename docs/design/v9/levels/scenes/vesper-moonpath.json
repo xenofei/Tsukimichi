@@ -1,0 +1,82 @@
+{
+ "name": "vesper-moonpath",
+ "about": "Our own painting: Vesper Bay by night, the moon's road of light on the sea, the pier and its lamps, a moored ferry and the town on the shore (painters/moonpath.py; shipped as a JPEG).",
+ "source": {
+  "kind": "painting",
+  "painter": "moonpath",
+  "params": {}
+ },
+ "ceilingExempt": [[292, 128, 70]],
+ "veil": 0.22,
+ "features": {
+  "pier deck": {
+   "points": [[548, 424], [700, 438]]
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Lapis sea and rose sky (Vesper Bay)",
+   "sky": "#1C1650",
+   "deep": "#060A1E",
+   "jewel1": "#2448C0",
+   "jewel2": "#B0507E",
+   "warm": "#FFB45E",
+   "rim": "#C9D6FF"
+  },
+  "jewel": {
+   "bands": [[0, "#3C40C0"], [300, "#2E48C8"], [600, "#2038A0"]],
+   "valueHues": [[0.08, "#1A2A8A"], [0.45, "#D6DCFF"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#A0588E",
+     "chroma": 0.065,
+     "mask": [["y", 304, 280], ["disc", 292, 128, 60, -20]]
+    }
+   ],
+   "quiet": [22, 12]
+  },
+  "shafts": [
+   {
+    "origin": [292, 128],
+    "angles": [60, 75, 90, 105, 120],
+    "widths": [16, 22, 28, 22, 16],
+    "k": 0.05,
+    "col": "#D8DCFF",
+    "reach": 700,
+    "near": 60
+   }
+  ],
+  "framing": [
+   {
+    "kind": "rocks",
+    "items": [[92, 566, 22], [134, 580, 18], [100, 528, 14]],
+    "seed": 51
+   },
+   {
+    "kind": "lantern_post",
+    "x": 712,
+    "base": 600,
+    "height": 70
+   }
+  ],
+  "silhouette": {
+   "body": "#06071A",
+   "inner": "#14204E",
+   "rim": "#C9D6FF",
+   "rimK": 0.42,
+   "seed": 14
+  },
+  "lights": [
+   {
+    "posts": true,
+    "col": "#FFB45E",
+    "r": 2.2,
+    "k": 0.95,
+    "halo": 10,
+    "hk": 0.32
+   }
+  ]
+ }
+}

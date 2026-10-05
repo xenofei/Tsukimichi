@@ -37,7 +37,11 @@ def sheet(recipe, board=None, S=2, out=None):
             a0, sw = feat.get("from", 180), feat.get("sweep", 180)
             feat = {"points": [[cx + R * math.cos(math.radians(a0 + sw * k / 24)), cy + R * math.sin(math.radians(a0 + sw * k / 24))]
                                for k in range(25)]}
+        if (isinstance(feat, dict) and "points" not in feat) or not isinstance(feat, (list, dict)) \
+                or (isinstance(feat, list) and feat and not isinstance(feat[0], (list, tuple))):
+            continue                                               # a parametric feature (the layout reads it)
         pts = feat["points"] if isinstance(feat, dict) else feat
+        pts = [p[:2] if not isinstance(p[0], (list, tuple)) else p for p in pts]
         if pts and isinstance(pts[0][0], (list, tuple)):          # a list of segments (a figure's lines)
             for (a, c) in pts:
                 dr.line([(a[0] * S, a[1] * S), (c[0] * S, c[1] * S)], fill=(120, 255, 220, 160), width=1)

@@ -1,0 +1,132 @@
+{
+ "name": "limsa-across-water",
+ "about": "Limsa Lominsa as the ferry for Vesper Bay casts off: the great tree-grown tower and the lamplit bridges on their arches over the sea mist, from the west half of the game's own La Noscea loading-screen painting at its high-resolution size, night graded.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base01_hr1.tex",
+  "mirror": false,
+  "crop": [420, 380, 2200, 1650],
+  "grade": {
+   "gamma": 1.7,
+   "exposure": 0.7,
+   "ceiling": 0.36
+  },
+  "skyDrop": 0.35,
+  "glow": [-50, -60]
+ },
+ "veil": 0.44,
+ "features": {
+  "deck": {
+   "points": [[214, 356], [540, 382]]
+  },
+  "deck lamps": {
+   "points": [[226, 314], [420, 330]]
+  },
+  "roof lamps": {
+   "points": [[440, 276], [556, 276]]
+  },
+  "main arch": {
+   "circle": [575, 500, 95],
+   "from": 205,
+   "sweep": 130
+  },
+  "west arch": {
+   "circle": [380, 522, 70],
+   "from": 210,
+   "sweep": 120
+  },
+  "castle edge": {
+   "points": [[566, 140], [566, 330]]
+  },
+  "canopy edge": {
+   "points": [[282, 214], [292, 256], [300, 296]]
+  },
+  "cloud a": {
+   "circle": [352, 262, 52],
+   "from": 215,
+   "sweep": 110
+  },
+  "cloud b": {
+   "circle": [474, 250, 52],
+   "from": 215,
+   "sweep": 110
+  },
+  "mist lights": [[140, 470], [250, 486], [470, 470]],
+  "tower lights": [[120, 330], [160, 380], [210, 420], [110, 420], [150, 290], [240, 250]],
+  "pier": {
+   "points": [[470, 404], [470, 450]]
+  },
+  "castle windows": [[640, 330], [690, 370], [700, 250], [650, 260]]
+ },
+ "dress": {
+  "palette": {
+   "name": "Indigo night and aquamarine mist (Limsa from the water)",
+   "sky": "#16184E",
+   "deep": "#060818",
+   "jewel1": "#3A40C0",
+   "jewel2": "#2AA8A8",
+   "warm": "#FFC27A",
+   "rim": "#C9D6FF"
+  },
+  "jewel": {
+   "bands": [[0, "#3C42C8"], [600, "#2E34A0"]],
+   "valueHues": [[0.08, "#1E2A8A"], [0.45, "#D0D8FF"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#2AA8A8",
+     "chroma": 0.08,
+     "mask": [["y", 420, 500]]
+    }
+   ],
+   "quiet": [22, 12]
+  },
+  "shafts": [
+   {
+    "origin": [-120, -200],
+    "angles": [50, 57, 64, 72],
+    "widths": [34, 22, 40, 26],
+    "k": 0.06,
+    "col": "#D8E0FF"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "festoon",
+    "spans": [[586, 628, 14], [628, 682, 24], [682, 740, 34]],
+    "col": "#2A1E58"
+   },
+   {
+    "kind": "rope",
+    "a": [500, 30],
+    "b": [586, 37],
+    "sag": 10,
+    "width": 1.4
+   },
+   {
+    "kind": "lantern_post",
+    "x": 86,
+    "base": 600,
+    "height": 70
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#1A1A48",
+   "rim": "#C9D6FF",
+   "rimK": 0.0,
+   "seed": 17
+  },
+  "lights": [
+   {
+    "posts": true,
+    "col": "#FFB45E",
+    "r": 2.4,
+    "k": 0.95,
+    "halo": 12,
+    "hk": 0.35
+   }
+  ]
+ }
+}

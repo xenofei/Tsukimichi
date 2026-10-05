@@ -256,8 +256,10 @@ def dress(recipe, sc, level, S, t=0.0):
             near = smooth(a, b, ctx.dist_at_S())
             regions = [(rm * (1 - 0.6 * near), hx, cr) for (rm, hx, cr) in regions]
             keepm = 1 - 0.5 * near
-        if j.get("keepMask"):
-            km = 1 - mask_of(j["keepMask"], ctx, X, Y, Lsc)
+        keeps = ([j["keepMask"]] if j.get("keepMask") else []) + list(j.get("keepMasks", []))
+        if keeps:
+            # regions the jewel leaves alone (a lamp's warm window, a creature's own colour): their union
+            km = 1 - np.maximum.reduce([mask_of(k, ctx, X, Y, Lsc) for k in keeps])
             keepm = km if keepm is None else keepm * km
         px = D.jewel(px, S, [tuple(b) for b in j["bands"]], chroma=j.get("chroma", 0.9),
                      value_hues=[tuple(v) for v in j["valueHues"]] if j.get("valueHues") else None,

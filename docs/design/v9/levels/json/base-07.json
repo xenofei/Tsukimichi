@@ -1,0 +1,471 @@
+{
+  "format": "moonfall-level",
+  "version": 2,
+  "id": "base-07",
+  "name": "Moonpath on the Bay",
+  "scene": "vesper-moonpath",
+  "playfield": {
+    "width": 800,
+    "height": 600
+  },
+  "pegs": [
+    {
+      "x": 292.0,
+      "y": 334.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 275.0,
+      "y": 366.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 309.0,
+      "y": 366.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 270.0,
+      "y": 400.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 314.0,
+      "y": 400.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 252.0,
+      "y": 436.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 292.0,
+      "y": 436.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 332.0,
+      "y": 436.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 246.0,
+      "y": 474.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 292.0,
+      "y": 474.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 338.0,
+      "y": 474.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 240.0,
+      "y": 510.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 292.0,
+      "y": 510.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 344.0,
+      "y": 510.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 548.0,
+      "y": 424.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 583.8,
+      "y": 427.3,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 619.7,
+      "y": 430.6,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 655.5,
+      "y": 433.9,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 691.4,
+      "y": 437.2,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 574.0,
+      "y": 382.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 628.0,
+      "y": 382.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 682.0,
+      "y": 382.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 626.0,
+      "y": 286.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 626.0,
+      "y": 322.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 676.0,
+      "y": 310.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 676.0,
+      "y": 346.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 540.0,
+      "y": 300.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 570.7,
+      "y": 286.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 649.0,
+      "y": 262.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 702.3,
+      "y": 274.2,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 100.0,
+      "y": 262.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 134.1,
+      "y": 273.7,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 168.1,
+      "y": 285.4,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 220.0,
+      "y": 306.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 340.0,
+      "y": 306.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 380.0,
+      "y": 306.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 420.0,
+      "y": 306.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 460.0,
+      "y": 306.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 500.0,
+      "y": 306.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 110.0,
+      "y": 430.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 160.0,
+      "y": 456.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 470.0,
+      "y": 430.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 620.0,
+      "y": 470.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 380.0,
+      "y": 340.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 500.0,
+      "y": 150.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 580.0,
+      "y": 190.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 650.0,
+      "y": 140.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 690.0,
+      "y": 210.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 540.0,
+      "y": 236.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 180.0,
+      "y": 210.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 230.0,
+      "y": 240.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    }
+  ],
+  "bricks": [
+    {
+      "kind": "arc",
+      "x": 140.0,
+      "y": 420.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "kind": "arc",
+      "x": 210.0,
+      "y": 476.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "kind": "arc",
+      "x": 120.0,
+      "y": 518.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "kind": "arc",
+      "x": 196.0,
+      "y": 548.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "kind": "arc",
+      "x": 400.0,
+      "y": 430.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "kind": "arc",
+      "x": 444.0,
+      "y": 500.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "kind": "arc",
+      "x": 500.0,
+      "y": 550.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "kind": "arc",
+      "x": 560.0,
+      "y": 500.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "kind": "arc",
+      "x": 650.0,
+      "y": 534.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": true,
+      "canBeGreen": true
+    }
+  ]
+}

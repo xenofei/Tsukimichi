@@ -1,0 +1,266 @@
+{
+ "id": "base-10",
+ "name": "Twin Lanterns",
+ "stage": 2,
+ "number": 10,
+ "scene": "vesper-twin-lanterns",
+ "subject": "a harbour gate and twin lanterns mirrored in still water",
+ "technique": "reflection (the mirror image drawn with slide movers)",
+ "source": "our painting (twin_lanterns)",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 61,
+   "pegs": 58,
+   "bricks": 3,
+   "movers": 21,
+   "orange_candidates": 25,
+   "never_green": 20,
+   "skipped_while_tracing": [
+    [
+     [
+      150,
+      230
+     ],
+     "star",
+     "0.5 from the peg at (168, 229)"
+    ],
+    [
+     [
+      650,
+      230
+     ],
+     "star",
+     "0.5 from the peg at (632, 229)"
+    ],
+    [
+     [
+      300,
+      220
+     ],
+     "star",
+     "11.6 from a brick"
+    ],
+    [
+     [
+      500,
+      220
+     ],
+     "star",
+     "11.6 from a brick"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-10.json  id=base-10 \"Twin Lanterns\"  pieces=61 (round 58, bricks 3, movers 21)  mayBeOrange=25",
+    "     still round pegs 37: closest surfaces 16.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 170..514"
+   ]
+  },
+  "sweep": {
+   "angles": 171,
+   "pegs_median": 7,
+   "pegs_mean": 7.1,
+   "pegs_max": 17,
+   "oranges_mean": 2.3,
+   "no_hit": 0,
+   "stuck": 1,
+   "stuck_share": 0.006,
+   "long_flights": 1,
+   "bucket": 25,
+   "unreached": [],
+   "pieces": 61
+  },
+  "play": {
+   "greedy_won": 21,
+   "games": 48,
+   "shots_mean": 14.8,
+   "oranges_left_when_lost": [
+    2,
+    2,
+    4,
+    2,
+    2,
+    2,
+    1,
+    4,
+    1,
+    2,
+    2,
+    4,
+    4,
+    3,
+    2,
+    4,
+    7,
+    8,
+    1,
+    3,
+    2,
+    4,
+    1,
+    1,
+    7,
+    11,
+    10
+   ],
+   "stuck_fires": 0,
+   "random_won": 0,
+   "random_oranges_mean": 17.5
+  },
+  "ceiling": {
+   "p99_luma": 0.207,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 0.54,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 9.85,
+    "longest_rim_run": 7.2,
+    "longest_rim_at": [
+     76,
+     580
+    ],
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 2,
+    "lights_nearest": 62.3,
+    "darkened_min_clearance": null,
+    "elements_dropped_for_clearance": 6
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 33,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "blue": 0.679,
+     "orange": 0.616,
+     "green": 0.722,
+     "purple": 0.581
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.496,
+      "at": [
+       180,
+       471
+      ],
+      "undressed": 0.505,
+      "drop": 0.009
+     },
+     "orange 1x": {
+      "worst": 0.433,
+      "at": [
+       180,
+       471
+      ],
+      "undressed": 0.442,
+      "drop": 0.009
+     },
+     "green 1x": {
+      "worst": 0.549,
+      "at": [
+       130,
+       300
+      ],
+      "undressed": 0.556,
+      "drop": 0.007
+     },
+     "purple 1x": {
+      "worst": 0.398,
+      "at": [
+       180,
+       471
+      ],
+      "undressed": 0.407,
+      "drop": 0.009
+     },
+     "blue 0.8x": {
+      "worst": 0.478,
+      "at": [
+       178,
+       262
+      ],
+      "undressed": 0.485,
+      "drop": 0.007
+     },
+     "orange 0.8x": {
+      "worst": 0.415,
+      "at": [
+       178,
+       262
+      ],
+      "undressed": 0.422,
+      "drop": 0.007
+     },
+     "green 0.8x": {
+      "worst": 0.55,
+      "at": [
+       130,
+       300
+      ],
+      "undressed": 0.554,
+      "drop": 0.004
+     },
+     "purple 0.8x": {
+      "worst": 0.38,
+      "at": [
+       178,
+       262
+      ],
+      "undressed": 0.387,
+      "drop": 0.007
+     }
+    },
+    "worst_margin": 0.38,
+    "largest_drop": 0.009,
+    "bricks_min_margin": [
+     0.514,
+     "blue"
+    ],
+    "protan_orange_p10": 0.165,
+    "protan_orange_p10_undressed": 0.144,
+    "jewels": {
+     "coloured_px_pct": 99.9,
+     "mean_chroma": 0.088,
+     "first_jewel_hue": 285,
+     "first_share": 0.767,
+     "second_jewel_hue": 15,
+     "second_share": 0.232,
+     "bins_pct": [
+      0.1,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      72.6,
+      4.1,
+      23.1
+     ]
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 49.7,
+ "verdict": "PASS"
+}

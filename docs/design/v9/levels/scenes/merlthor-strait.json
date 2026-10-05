@@ -1,0 +1,113 @@
+{
+ "name": "merlthor-strait",
+ "about": "The strait the Vesper Bay ferry crosses to Limsa Lominsa, from the game's own world painting The Three Great Continents at its high-resolution size, read as a chart under the moon.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base05_hr1.tex",
+  "mirror": false,
+  "crop": [0, 1200, 960, 720],
+  "grade": {
+   "gamma": 1.35,
+   "exposure": 0.72,
+   "warm_keep": 0.25,
+   "chroma_mid": 0.45
+  }
+ },
+ "veil": 0.4,
+ "features": {
+  "vylbrand": [[160, 150], [200, 112], [260, 104], [313, 120], [322, 150], [314, 200], [302, 253], [308, 293], [300, 347], [280, 388], [220, 402], [167, 394], [147, 352], [152, 300], [150, 213]],
+  "thanalan coast": {
+   "points": [[372, 200], [362, 252], [364, 300], [368, 345], [362, 410], [384, 462], [410, 492]],
+   "smooth": 6
+  },
+  "ferry lane": {
+   "points": [[340, 400], [300, 436], [240, 452], [186, 440]],
+   "smooth": 6
+  },
+  "road home": {
+   "points": [[370, 388], [410, 410], [440, 440]],
+   "smooth": 6
+  },
+  "vesper bay": [[372, 380]],
+  "limsa lominsa": [[140, 345]],
+  "uldah": [[470, 470]],
+  "west ships": [[100, 170], [112, 236], [96, 300]],
+  "south lights": [[200, 500], [290, 488], [560, 470], [640, 430], [690, 380]],
+  "aldenard": [[440, 250], [520, 300], [600, 250], [660, 320], [560, 370], [480, 340]]
+ },
+ "dress": {
+  "palette": {
+   "name": "Lapis land and aquamarine sea (the strait)",
+   "sky": "#1A1650",
+   "deep": "#070818",
+   "jewel1": "#2A48C0",
+   "jewel2": "#22A8A0",
+   "warm": "#FFB45E",
+   "rim": "#B9E6FF"
+  },
+  "jewel": {
+   "bands": [[0, "#3048C8"], [600, "#2438A8"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#20A8A0",
+     "chroma": 0.11,
+     "mask": [["luma", 0.2, 0.3, 3]]
+    }
+   ],
+   "quiet": [22, 12]
+  },
+  "glows": [
+   {
+    "x": 150,
+    "y": 110,
+    "r": 300,
+    "col": "#FFC27A",
+    "k": 0.04
+   }
+  ],
+  "shafts": [
+   {
+    "origin": [-60, -160],
+    "angles": [50, 58, 67],
+    "widths": [46, 32, 52],
+    "k": 0.06,
+    "col": "#E0E6FF"
+   }
+  ],
+  "extras": [
+   {
+    "kind": "chart_border"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "festoon",
+    "spans": [[65, 110, 30], [110, 150, 22], [150, 186, 14]],
+    "col": "#2A1E58"
+   },
+   {
+    "kind": "rope",
+    "a": [186, 37],
+    "b": [300, 30],
+    "sag": 12,
+    "width": 1.4
+   },
+   {
+    "kind": "rope",
+    "a": [72, 300],
+    "b": [72, 600],
+    "sag": 0,
+    "width": 1.2
+   }
+  ],
+  "silhouette": {
+   "body": "#0A0820",
+   "inner": "#1A1238",
+   "rim": "#C9B8FF",
+   "rimK": 0.0,
+   "seed": 12
+  }
+ }
+}

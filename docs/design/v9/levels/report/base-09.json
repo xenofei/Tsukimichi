@@ -1,0 +1,343 @@
+{
+ "id": "base-09",
+ "name": "The Strait of Merlthor",
+ "stage": 2,
+ "number": 9,
+ "scene": "merlthor-strait",
+ "subject": "the strait between Vesper Bay and Limsa Lominsa, and the island of Vylbrand",
+ "technique": "terrain in outline (an island and a coast) with a ferry lane",
+ "source": "ui/loadingimage/-nowloading_base05_hr1.tex",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 62,
+   "pegs": 62,
+   "bricks": 0,
+   "movers": 0,
+   "orange_candidates": 26,
+   "never_green": 20,
+   "skipped_while_tracing": [
+    [
+     [
+      330,
+      129
+     ],
+     "vylbrand coast",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      151,
+      394
+     ],
+     "vylbrand coast",
+     "9.1 from the peg at (156, 368)"
+    ],
+    [
+     [
+      135,
+      362
+     ],
+     "vylbrand coast",
+     "4.1 from the peg at (156, 368)"
+    ],
+    [
+     [
+      134,
+      327
+     ],
+     "vylbrand coast",
+     "-5.9 from the peg at (140, 317)"
+    ],
+    [
+     [
+      136,
+      291
+     ],
+     "vylbrand coast",
+     "8.0 from the peg at (140, 317)"
+    ],
+    [
+     [
+      368,
+      343
+     ],
+     "thanalan coast",
+     "-7.9 from the peg at (372, 352)"
+    ],
+    [
+     [
+      364,
+      378
+     ],
+     "thanalan coast",
+     "9.7 from the peg at (372, 352)"
+    ],
+    [
+     [
+      363,
+      414
+     ],
+     "thanalan coast",
+     "10.1 from the peg at (388, 403)"
+    ],
+    [
+     [
+      340,
+      400
+     ],
+     "ferry lane",
+     "-1.3 from the peg at (356, 403)"
+    ],
+    [
+     [
+      370,
+      388
+     ],
+     "road home",
+     "6.6 from the peg at (388, 403)"
+    ],
+    [
+     [
+      400,
+      404
+     ],
+     "road home",
+     "-5.3 from the peg at (388, 403)"
+    ],
+    [
+     [
+      112,
+      236
+     ],
+     "ship",
+     "12.1 from the peg at (135, 255)"
+    ],
+    [
+     [
+      96,
+      300
+     ],
+     "ship",
+     "wall pinch 11.5"
+    ],
+    [
+     [
+      230,
+      490
+     ],
+     "sea and land",
+     "13.6 from the peg at (200, 500)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-09.json  id=base-09 \"The Strait of Merlthor\"  pieces=62 (round 62, bricks 0, movers 0)  mayBeOrange=26",
+    "     still round pegs 62: closest surfaces 14.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 91..500"
+   ]
+  },
+  "sweep": {
+   "angles": 171,
+   "pegs_median": 5,
+   "pegs_mean": 5.4,
+   "pegs_max": 15,
+   "oranges_mean": 2.13,
+   "no_hit": 12,
+   "stuck": 2,
+   "stuck_share": 0.012,
+   "long_flights": 0,
+   "bucket": 44,
+   "unreached": [
+    15
+   ],
+   "pieces": 62
+  },
+  "play": {
+   "greedy_won": 25,
+   "games": 48,
+   "shots_mean": 13.8,
+   "oranges_left_when_lost": [
+    3,
+    2,
+    2,
+    1,
+    2,
+    6,
+    2,
+    2,
+    2,
+    2,
+    2,
+    3,
+    2,
+    4,
+    1,
+    4,
+    4,
+    7,
+    3,
+    7,
+    1,
+    3,
+    2
+   ],
+   "stuck_fires": 0,
+   "random_won": 0,
+   "random_oranges_mean": 16.4
+  },
+  "ceiling": {
+   "p99_luma": 0.351,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 0.4,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 35.4,
+    "longest_rim_run": 0.0,
+    "longest_rim_at": null,
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 0,
+    "lights_nearest": 99,
+    "darkened_min_clearance": 35.4,
+    "elements_dropped_for_clearance": 0
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 2,
+   "counts": {
+    "blue": 34,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "blue": 0.687,
+     "orange": 0.619,
+     "green": 0.716,
+     "purple": 0.58
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.405,
+      "at": [
+       306,
+       102
+      ],
+      "undressed": 0.414,
+      "drop": 0.009
+     },
+     "orange 1x": {
+      "worst": 0.337,
+      "at": [
+       306,
+       102
+      ],
+      "undressed": 0.347,
+      "drop": 0.01
+     },
+     "green 1x": {
+      "worst": 0.434,
+      "at": [
+       306,
+       102
+      ],
+      "undressed": 0.443,
+      "drop": 0.009
+     },
+     "purple 1x": {
+      "worst": 0.298,
+      "at": [
+       306,
+       102
+      ],
+      "undressed": 0.307,
+      "drop": 0.009
+     },
+     "blue 0.8x": {
+      "worst": 0.407,
+      "at": [
+       306,
+       102
+      ],
+      "undressed": 0.418,
+      "drop": 0.011
+     },
+     "orange 0.8x": {
+      "worst": 0.339,
+      "at": [
+       306,
+       102
+      ],
+      "undressed": 0.35,
+      "drop": 0.011
+     },
+     "green 0.8x": {
+      "worst": 0.436,
+      "at": [
+       306,
+       102
+      ],
+      "undressed": 0.447,
+      "drop": 0.011
+     },
+     "purple 0.8x": {
+      "worst": 0.3,
+      "at": [
+       306,
+       102
+      ],
+      "undressed": 0.311,
+      "drop": 0.011
+     }
+    },
+    "worst_margin": 0.298,
+    "largest_drop": 0.011,
+    "bricks_min_margin": null,
+    "protan_orange_p10": 0.121,
+    "protan_orange_p10_undressed": 0.119,
+    "jewels": {
+     "coloured_px_pct": 97.3,
+     "mean_chroma": 0.077,
+     "first_jewel_hue": 285,
+     "first_share": 0.782,
+     "second_jewel_hue": 195,
+     "second_share": 0.217,
+     "bins_pct": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      0.0,
+      10.4,
+      11.2,
+      32.4,
+      45.8,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 19.9,
+ "verdict": "PASS",
+ "ramp": {
+  "games": 144,
+  "greedy_won": 60,
+  "per_48": 20.0
+ }
+}

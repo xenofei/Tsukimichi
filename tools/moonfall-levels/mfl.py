@@ -5,7 +5,8 @@
   trace <scene|level-id>        the tracing sheet: graded scene, grid, features and (for a level) its pieces
   build <level-id>... | --all   the full pipeline for each level; refuses (exit 1) any level that fails a check
         [--keep2x <id,...>]     also write these levels' 2x composites to composites/
-  stage <n>                     the stage's table: ramp, jewels of neighbours, game paintings against ours
+  stage <n> [--ramp 144]        the stage's table: ramp, jewels of neighbours, game paintings against ours
+  stuck <level-id>              where balls come to rest on the first shots the stuck rule fires on
   sources                       write docs/design/v9/levels/sources.json from the recipes
 
 See README.md next to this file.
@@ -105,19 +106,37 @@ def cmd_build(args):
 
 
 def cmd_stage(args):
+    """The stage's table. --ramp N replays the greedy player over N seeded games per level (the rule uses 48, whose
+    win count swings by about 3.5; 144 games narrow that to about 2) and writes it to each report as `ramp`."""
+    ramp = 0
+    if "--ramp" in args:
+        i = args.index("--ramp")
+        ramp = int(args[i + 1])
+        args = args[:i] + args[i + 2:]
     n = int(args[0])
     reps = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
     reps = sorted([r for r in reps if r["stage"] == n], key=lambda r: r["number"])
+    if ramp:
+        from concurrent.futures import ThreadPoolExecutor
+        from mflkit.paths import JSON_OUT
+
+        def one(r):
+            return engine.play(JSON_OUT / f"{r['id']}.json", r["number"], games=ramp)["greedy_won"]
+        with ThreadPoolExecutor(2) as ex:
+            for r, won in zip(reps, ex.map(one, reps)):
+                r["ramp"] = {"games": ramp, "greedy_won": won, "per_48": round(won * 48 / ramp, 1)}
+                (REPORT / f"{r['id']}.json").write_text(json.dumps(r, indent=1) + "\n", encoding="utf-8")
     fails = []
     print(f"stage {n}: {len(reps)} levels")
-    print(f"{'level':8} {'name':28} {'pieces':>6} {'greedy':>7} {'random':>7} {'jewels':>10} {'source'}")
+    print(f"{'level':8} {'name':28} {'pieces':>6} {'greedy':>7} {'ramp/48':>8} {'random':>7} {'jewels':>10} {'source'}")
     prev = None
     for r in reps:
         c = r["checks"]
         jw = c.get("readcheck", {}).get("report", {}).get("jewels", {})
         pair = (jw.get("first_jewel_hue"), jw.get("second_jewel_hue"))
         print(f"{r['id']:8} {r['name'][:28]:28} {c['preflight']['pieces']:>6} {c.get('play', {}).get('greedy_won', '-'):>7} "
-              f"{c.get('play', {}).get('random_won', '-'):>7} {str(pair[0]) + '/' + str(pair[1]):>10} {r['source']}")
+              f"{r.get('ramp', {}).get('per_48', '-'):>8} {c.get('play', {}).get('random_won', '-'):>7} "
+              f"{str(pair[0]) + '/' + str(pair[1]):>10} {r['source']}")
         if prev is not None and pair == prev:
             fails.append(f"F7: {r['id']} has the same two jewels as the level before it")
         prev = pair
@@ -146,7 +165,32 @@ def cmd_sources(_args):
     return 0
 
 
-COMMANDS = {"selftest": cmd_selftest, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
+def cmd_stuck(args):
+    """Where balls come to rest: for every first shot on which the stuck rule fires, the 5-unit cell the ball spends
+    the longest in, tallied (a flat deck, a notch, a cradle)."""
+    import re
+    import subprocess
+    from collections import Counter
+    lid = args[0]
+    path = paths.BUILD / "json" / f"{lid}.json"
+    meta = __import__("mflkit.build", fromlist=["load_layout"]).load_layout(lid).LEVEL
+    n = str(meta["number"])
+    out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n], capture_output=True, text=True).stdout
+    angles = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs.*STUCK", out, re.M)]
+    cells = Counter()
+    for a in angles:
+        tr = subprocess.run(["dotnet", str(paths.MFCHECK), "trace", str(path), str(a), n, "1", "3000"],
+                            capture_output=True, text=True).stdout
+        pts = json.loads(tr)["points"]
+        c = Counter((round(x / 5) * 5, round(y / 5) * 5) for x, y in pts)
+        cells[c.most_common(1)[0][0]] += 1
+    print(f"{len(angles)} stuck first shots; where they rest (x, y): count")
+    for cell, k in cells.most_common(12):
+        print(f"  {cell}: {k}")
+    return 0
+
+
+COMMANDS = {"selftest": cmd_selftest, "stuck": cmd_stuck, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
             "sources": cmd_sources}
 
 if __name__ == "__main__":

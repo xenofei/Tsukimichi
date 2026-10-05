@@ -1,0 +1,298 @@
+{
+ "id": "base-07",
+ "name": "Moonpath on the Bay",
+ "stage": 2,
+ "number": 7,
+ "scene": "vesper-moonpath",
+ "subject": "the moon's road of light on the sea at Vesper Bay",
+ "technique": "light and shadow (pegs on the moon's glints)",
+ "source": "our painting (moonpath)",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 60,
+   "pegs": 51,
+   "bricks": 9,
+   "movers": 0,
+   "orange_candidates": 25,
+   "never_green": 15,
+   "skipped_while_tracing": [
+    [
+     [
+      626,
+      358
+     ],
+     "mast",
+     "7.1 from the peg at (628, 382)"
+    ],
+    [
+     [
+      596,
+      272
+     ],
+     "town",
+     "11.1 from the peg at (571, 286)"
+    ],
+    [
+     [
+      627,
+      282
+     ],
+     "town",
+     "-13.0 from the peg at (626, 286)"
+    ],
+    [
+     [
+      672,
+      278
+     ],
+     "town",
+     "10.4 from the peg at (649, 262)"
+    ],
+    [
+     [
+      733,
+      276
+     ],
+     "town",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      250,
+      400
+     ],
+     "swell",
+     "3.0 from the peg at (270, 400)"
+    ],
+    [
+     [
+      250,
+      486
+     ],
+     "swell",
+     "-4.4 from the peg at (246, 474)"
+    ],
+    [
+     [
+      530,
+      400
+     ],
+     "swell",
+     "13.0 from the peg at (548, 424)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-07.json  id=base-07 \"Moonpath on the Bay\"  pieces=60 (round 51, bricks 9, movers 0)  mayBeOrange=25",
+    "     still round pegs 51: closest surfaces 15.7 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 140..550"
+   ]
+  },
+  "sweep": {
+   "angles": 171,
+   "pegs_median": 8,
+   "pegs_mean": 7.5,
+   "pegs_max": 15,
+   "oranges_mean": 2.81,
+   "no_hit": 4,
+   "stuck": 1,
+   "stuck_share": 0.006,
+   "long_flights": 0,
+   "bucket": 33,
+   "unreached": [],
+   "pieces": 60
+  },
+  "play": {
+   "greedy_won": 26,
+   "games": 48,
+   "shots_mean": 14.9,
+   "oranges_left_when_lost": [
+    2,
+    2,
+    3,
+    1,
+    3,
+    5,
+    4,
+    7,
+    2,
+    3,
+    3,
+    1,
+    2,
+    6,
+    2,
+    1,
+    2,
+    3,
+    6,
+    2,
+    2,
+    6
+   ],
+   "stuck_fires": 0,
+   "random_won": 0,
+   "random_oranges_mean": 17.4
+  },
+  "ceiling": {
+   "p99_luma": 0.3,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 0.8,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 23.1,
+    "longest_rim_run": 16.3,
+    "longest_rim_at": [
+     709,
+     545
+    ],
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 1,
+    "lights_nearest": 99,
+    "darkened_min_clearance": null,
+    "elements_dropped_for_clearance": 0
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 2,
+   "counts": {
+    "blue": 32,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "blue": 0.681,
+     "orange": 0.616,
+     "green": 0.716,
+     "purple": 0.576
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.435,
+      "at": [
+       230,
+       240
+      ],
+      "undressed": 0.434,
+      "drop": -0.001
+     },
+     "orange 1x": {
+      "worst": 0.397,
+      "at": [
+       380,
+       306
+      ],
+      "undressed": 0.4,
+      "drop": 0.003
+     },
+     "green 1x": {
+      "worst": 0.47,
+      "at": [
+       230,
+       240
+      ],
+      "undressed": 0.469,
+      "drop": -0.001
+     },
+     "purple 1x": {
+      "worst": 0.33,
+      "at": [
+       230,
+       240
+      ],
+      "undressed": 0.329,
+      "drop": -0.001
+     },
+     "blue 0.8x": {
+      "worst": 0.437,
+      "at": [
+       230,
+       240
+      ],
+      "undressed": 0.434,
+      "drop": -0.003
+     },
+     "orange 0.8x": {
+      "worst": 0.396,
+      "at": [
+       292,
+       510
+      ],
+      "undressed": 0.4,
+      "drop": 0.004
+     },
+     "green 0.8x": {
+      "worst": 0.472,
+      "at": [
+       230,
+       240
+      ],
+      "undressed": 0.469,
+      "drop": -0.003
+     },
+     "purple 0.8x": {
+      "worst": 0.332,
+      "at": [
+       230,
+       240
+      ],
+      "undressed": 0.329,
+      "drop": -0.003
+     }
+    },
+    "worst_margin": 0.33,
+    "largest_drop": 0.004,
+    "bricks_min_margin": [
+     0.561,
+     "orange"
+    ],
+    "protan_orange_p10": 0.155,
+    "protan_orange_p10_undressed": 0.135,
+    "jewels": {
+     "coloured_px_pct": 99.1,
+     "mean_chroma": 0.082,
+     "first_jewel_hue": 285,
+     "first_share": 0.685,
+     "second_jewel_hue": 15,
+     "second_share": 0.315,
+     "bins_pct": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      4.1,
+      60.7,
+      3.6,
+      31.5
+     ]
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 22.7,
+ "verdict": "PASS",
+ "ramp": {
+  "games": 144,
+  "greedy_won": 68,
+  "per_48": 22.7
+ }
+}
