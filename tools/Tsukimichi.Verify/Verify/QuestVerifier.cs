@@ -808,7 +808,7 @@ internal sealed partial class QuestVerifier(
             }
             else
             {
-                drafts.Add(Compare(Facts.Prereqs, prereqCatalog, SourceNames.Lodestone, Names.Join(questLines), lodestoneRef, PrereqsConsistent(quest, questLines, out var why), why));
+                drafts.Add(Compare(Facts.Prereqs, prereqCatalog, SourceNames.Lodestone, Names.Join(questLines), lodestoneRef, PrereqsConsistent(quest, questLines, out var why, scriptRule: false), why));
             }
 
             var pageRewards = page.Rewards.Concat(page.OptionalRewards).Where(r => !IsCrystal(r)).ToList();
@@ -894,8 +894,9 @@ internal sealed partial class QuestVerifier(
             }
             else
             {
-                drafts.Add(SharedPage(quest, Compare(Facts.Prereqs, prereqCatalog, SourceNames.Wiki, Names.Join(wikiPrereqs), wref, PrereqsConsistent(quest, wikiPrereqs, out var prereqWhy), prereqWhy),
-                    sibling => PrereqsConsistent(sibling, wikiPrereqs, out _) == Consistency.Agree));
+                // The script-constant rule (1.22.0, owner ruling 2) settles wiki-only prerequisites: the wiki alone.
+                drafts.Add(SharedPage(quest, Compare(Facts.Prereqs, prereqCatalog, SourceNames.Wiki, Names.Join(wikiPrereqs), wref, PrereqsConsistent(quest, wikiPrereqs, out var prereqWhy, scriptRule: true), prereqWhy),
+                    sibling => PrereqsConsistent(sibling, wikiPrereqs, out _, scriptRule: true) == Consistency.Agree));
             }
 
             var wikiDuties = WikiSource.LinkedNames(box.GetValueOrDefault("requirements")).Where(n => cfcNames.Contains(n)).ToList();
@@ -1067,9 +1068,14 @@ internal sealed partial class QuestVerifier(
         {
             Consistency.NotModeled => new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.NotModeled, reason),
             Consistency.SourceWrong => new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.SourceWrong, reason),
-            Consistency.DisagreeScriptSilent => Compare(fact, catalog, source, sourceValue, sourceRef, false, reason) with { Settle = Verdict.SourceWrong, SettleReason = reason },
+            // The reason states the finding alone; only the settled verdict adds the conclusion, so a row another source
+            // reconciles to catalogWrong or sourceWrong never reads "the source is wrong" against its own verdict.
+            Consistency.DisagreeScriptSilent => Compare(fact, catalog, source, sourceValue, sourceRef, false, reason) with { Settle = Verdict.SourceWrong, SettleReason = reason + ScriptRuleConclusion },
             _ => Compare(fact, catalog, source, sourceValue, sourceRef, c == Consistency.Agree, reason),
         };
+
+    /// <summary>What the script-constant rule concludes when nothing else decides the row (sourceWrong).</summary>
+    private const string ScriptRuleConclusion = ", so the game does not check them: the source is wrong";
 
     private static bool SameJournalName(string wikiName, string sheetName)
     {
@@ -1199,29 +1205,26 @@ internal sealed partial class QuestVerifier(
 
     /// <summary>
     /// 1.22.0: the wiki's required duties against the sheet's, where a curated game gate (<c>curated/game_gates.json</c>)
-    /// models the difference. When every duty the wiki names beyond the sheet's appears in the quest's gate phrase
-    /// ("three unique final bosses of the Merchant's Tale defeated") and the wiki names every duty the sheet requires,
-    /// the wiki is describing that gate, which the gates fact and the catalog carry: the reason for a notModeled row.
-    /// Null when the sets agree, when no gate names the extra duties, or when the sheet requires a duty the wiki leaves out.
+    /// models the difference. When every duty the wiki names beyond the sheet's is one the quest's gate names explicitly
+    /// (its <c>duties</c>: Abridged Too Far counts the final bosses of the Merchant's Tale) and the wiki names every duty
+    /// the sheet requires, the wiki is describing that gate, which the gates fact and the catalog carry: the reason for a
+    /// notModeled row (<see cref="Tsukimichi.Core.Storage.GameGate.DutiesItCounts"/>). The gate's phrase never counts.
+    /// Null when the sets agree, when the gate names none of the extra duties, or when the sheet requires a duty the wiki
+    /// leaves out.
     /// </summary>
     private string? DutiesAgainstGate(QuestRecord quest, IReadOnlyList<string> sheetDuties, IReadOnlyList<string> wikiDuties)
     {
-        if (Names.SameSet(wikiDuties, sheetDuties) || game.Catalog.GameGateOf(quest.RowId) is not { } gate)
+        if (Names.SameSet(wikiDuties, sheetDuties) || !game.Curated.GameGates.TryGetValue(quest.RowId, out var gate)
+            || gate.DutiesItCounts(sheetDuties, wikiDuties, Names.Canon) is not { } extra)
         {
             return null;
         }
 
-        var sheet = sheetDuties.Select(Names.Canon).ToHashSet();
-        var wiki = wikiDuties.Select(Names.Canon).ToHashSet();
-        var extra = wikiDuties.Where(d => !sheet.Contains(Names.Canon(d))).ToList();
-        var phrase = Names.Canon(gate.Gate);
-        if (extra.Count == 0 || !sheet.All(wiki.Contains) || !extra.All(d => phrase.Contains(Names.Canon(d), StringComparison.Ordinal)))
-        {
-            return null;
-        }
-
-        return $"the wiki names {string.Join("; ", extra)} as the curated game gate (curated/game_gates.json: {gate.Gate}), not a duty the sheet requires";
+        return $"the wiki names {string.Join("; ", extra)}, {DutyGateReason} (curated/game_gates.json duties of {gate.Gate}), not a duty the sheet requires";
     }
+
+    /// <summary>The words of the duties rule's reason, which <c>GameGatesDataTests</c> pins to the rows it settles.</summary>
+    private const string DutyGateReason = "a duty the curated game gate counts";
 
     /// <summary>
     /// 1.22.0, the game's data wins over a wiki-only prerequisite: the quests a source names that neither the sheet
@@ -1241,7 +1244,7 @@ internal sealed partial class QuestVerifier(
             }
         }
 
-        return $"the sheet does not require {string.Join("; ", names)} and the quest's script constants (Quest.QuestParams) name none of them, so the game does not check them: the source is wrong";
+        return $"the sheet does not require {string.Join("; ", names)} and the quest's script constants (Quest.QuestParams) name none of them";
     }
 
     /// <summary>Duties the wiki says a quest unlocks (its <c>unlocks</c> field), for script-driven unlocks the sheet does not link.</summary>
@@ -1255,9 +1258,12 @@ internal sealed partial class QuestVerifier(
     /// any subset of an Any join, or only quests that are transitive prerequisites of the catalog's set (the wiki often
     /// names the story predecessor rather than the sheet's hard requirement). Names the sheet expresses through another
     /// requirement kind (allied-society rank, a required duty's unlock quest, main-scenario area access, custom delivery
-    /// unlocks) are notModeled with the reason. Anything else the catalog cannot reach is a disagreement.
+    /// unlocks) are notModeled with the reason. Anything else the catalog cannot reach is a disagreement. With
+    /// <paramref name="scriptRule"/> (the wiki only, owner ruling 2 of 1.22.0) a disagreement over quests neither the
+    /// sheet nor the quest's script constants name is <see cref="Consistency.DisagreeScriptSilent"/>; the Lodestone's
+    /// prerequisites never take that rule.
     /// </summary>
-    private Consistency PrereqsConsistent(QuestRecord quest, List<string> sourceNames, out string reason)
+    private Consistency PrereqsConsistent(QuestRecord quest, List<string> sourceNames, out string reason, bool scriptRule)
     {
         reason = string.Empty;
         var resolved = sourceNames.Select(n => (Name: n, Rows: ResolveNames(n))).ToList();
@@ -1319,7 +1325,7 @@ internal sealed partial class QuestVerifier(
                 return Consistency.NotModeled;
             }
 
-            if (unknown.Count == 0 && ScriptNamesNone(quest, source.Select(r => r.Name).ToList()) is { } noCheck)
+            if (scriptRule && unknown.Count == 0 && ScriptNamesNone(quest, source.Select(r => r.Name).ToList()) is { } noCheck)
             {
                 reason = "catalog has no PreviousQuest; " + noCheck;
                 return Consistency.DisagreeScriptSilent;
@@ -1395,7 +1401,7 @@ internal sealed partial class QuestVerifier(
                 return Consistency.SourceWrong;
             }
 
-            if (unknown.Count == 0 && ScriptNamesNone(quest, unreachable) is { } noCheck)
+            if (scriptRule && unknown.Count == 0 && ScriptNamesNone(quest, unreachable) is { } noCheck)
             {
                 reason = noCheck;
                 return Consistency.DisagreeScriptSilent;

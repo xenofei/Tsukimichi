@@ -13,12 +13,20 @@ namespace Tsukimichi.Verify.Output;
 /// corrected (a mapper rule, a curated file, or data) and feeds the "Discrepancies to fix" section of the report. An
 /// entry has expired when <c>until</c> is a version at or below the current plugin version. A <see cref="Settled"/> entry
 /// (1.22.0, verdict <c>settled</c>) records a decision made on the evidence that no release will change (a reward kept
-/// quest-only by decision, a Questionable link the catalog rightly leaves out): it needs <c>evidence</c> and a reason,
-/// carries no <c>until</c>, never expires, and excuses its row whatever verdict the row reads.
+/// quest-only by decision, a Questionable link the catalog rightly leaves out): it needs <c>evidence</c>, a reason, one
+/// quest row and one fact (never <c>"*"</c>) and <c>settles</c>, the verdicts it was settled on; it carries no
+/// <c>until</c>, never expires, and excuses its row only while the row reads one of those verdicts (a settled unresolved
+/// row that turns catalogWrong fails again). An excused Questionable link stands for sourceWrong (the catalog is right),
+/// so a settled <c>questionable</c> entry excuses its link only when it settles sourceWrong.
 /// </summary>
 internal sealed class Allowlist
 {
-    public sealed record Entry(string RowId, string Fact, string? Source, string Verdict, string Reason, string Until, string? Evidence, string? Fix, string? RewardId = null, string? PrereqId = null);
+    /// <param name="Settles">For a <see cref="Settled"/> entry, the verdicts it was settled on (1.22.0); null otherwise.</param>
+    public sealed record Entry(string RowId, string Fact, string? Source, string Verdict, string Reason, string Until, string? Evidence, string? Fix, string? RewardId = null, string? PrereqId = null, IReadOnlyList<string>? Settles = null)
+    {
+        /// <summary><see cref="Settles"/>, never null.</summary>
+        public IReadOnlyList<string> SettledVerdicts => Settles ?? [];
+    }
 
     /// <summary>The <c>source</c> of an entry that excuses a Questionable prerequisite link.</summary>
     public const string QuestionableSource = "questionable";
@@ -26,8 +34,20 @@ internal sealed class Allowlist
     /// <summary>The verdict of a settled entry, which never expires (1.22.0).</summary>
     public const string Settled = "settled";
 
-    /// <summary>"settled", or "until 1.23.0", for the report.</summary>
-    public static string Label(Entry e) => e.Verdict == Settled ? Settled : "until " + e.Until;
+    /// <summary>The verdict an excused Questionable link stands for: Questionable is wrong, the catalog right.</summary>
+    public const string LinkVerdict = "sourceWrong";
+
+    /// <summary>"settled (unresolved)", or "until 1.23.0", for the report.</summary>
+    public static string Label(Entry e) => e.Verdict == Settled ? $"{Settled} ({string.Join(", ", e.SettledVerdicts)})" : "until " + e.Until;
+
+    /// <summary>
+    /// Whether a settled entry is scoped as a decision must be: one quest row and one fact, never <c>"*"</c>, and at
+    /// least one verdict in <c>settles</c>, none of them a wildcard. One that is not excuses nothing (and
+    /// <c>VerificationAllowlistTests</c> fails it). Any other entry is.
+    /// </summary>
+    public static bool WellScoped(Entry e)
+        => e.Verdict != Settled
+           || (e.RowId != "*" && e.Fact != "*" && e.SettledVerdicts.Count > 0 && e.SettledVerdicts.All(v => v.Length > 0 && v is not ("*" or Settled)));
 
     public IReadOnlyList<Entry> Entries { get; }
 
@@ -56,7 +76,8 @@ internal sealed class Allowlist
                     node["evidence"]?.GetValue<string>(),
                     node["fix"]?.GetValue<string>(),
                     node["rewardId"]?.ToString(),
-                    node["prereqId"]?.ToString()));
+                    node["prereqId"]?.ToString(),
+                    node["settles"] is JsonArray settles ? settles.Select(v => v?.ToString() ?? string.Empty).ToList() : null));
             }
         }
 
@@ -75,6 +96,8 @@ internal sealed class Allowlist
                                        && e.RowId == questRowId.ToString(System.Globalization.CultureInfo.InvariantCulture)
                                        && e.Fact == Facts.Prereqs
                                        && e.Source == QuestionableSource
+                                       && WellScoped(e)
+                                       && (e.Verdict != Settled || e.SettledVerdicts.Contains(LinkVerdict))
                                        && (e.PrereqId is null || e.PrereqId == requiredRowId.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 
     public static bool Expired(Entry e, Version? current)
@@ -89,7 +112,7 @@ internal sealed class Allowlist
 
     private static bool Applies(Entry e, uint rowId, string fact, string source, Verdict verdict, Version? current)
     {
-        if (Expired(e, current))
+        if (Expired(e, current) || !WellScoped(e))
         {
             return false;
         }
@@ -109,7 +132,10 @@ internal sealed class Allowlist
             return false;
         }
 
-        return e.Verdict is "*" or Settled || string.Equals(e.Verdict, Verdicts.Name(verdict), StringComparison.Ordinal);
+        // A settled entry covers only the verdicts it was settled on: a settled unresolved row that turns catalogWrong fails.
+        return e.Verdict == Settled
+            ? e.SettledVerdicts.Contains(Verdicts.Name(verdict))
+            : e.Verdict == "*" || string.Equals(e.Verdict, Verdicts.Name(verdict), StringComparison.Ordinal);
     }
 
     private static string Pad(string v) => v.Count(c => c == '.') == 0 ? v + ".0" : v;
@@ -118,7 +144,7 @@ internal sealed class Allowlist
     {
         var root = new JsonObject
         {
-            ["$schema_note"] = "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional), verdict, reason, evidence (URL), fix (optional: mapper rule, curated file or data change that corrects a catalogWrong), until (release in which the fix lands; the entry expires once the plugin version reaches it; none for a settled entry), rewardId (reward rows only), prereqId (source questionable only: the required quest); verdict settled marks a decision that never expires and needs evidence }",
+            ["$schema_note"] = "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional), verdict, reason, evidence (URL), fix (optional: mapper rule, curated file or data change that corrects a catalogWrong), until (release in which the fix lands; the entry expires once the plugin version reaches it; none for a settled entry), rewardId (reward rows only), prereqId (source questionable only: the required quest), settles (settled entries only: the verdicts the row was settled on) }; verdict settled marks a decision that never expires: it needs evidence, a reason, one rowId and one fact (never \"*\") and settles, and excuses its row only while the row reads one of those verdicts",
             ["entries"] = new JsonArray(),
         };
         File.WriteAllText(path, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");

@@ -145,6 +145,8 @@ static partial class Strings
     public static string GateSourceWiki => Loc.Get("GateSourceWiki");
     public static string GateSourceGameText => Loc.Get("GateSourceGameText");
     public static string GateSourceSheets => Loc.Get("GateSourceSheets");
+    public static string GateSourceLodestone => Loc.Get("GateSourceLodestone");
+    public static string GateSourceQuestionable => Loc.Get("GateSourceQuestionable");
     public static string GateMarkDone => Loc.Get("GateMarkDone");
     public static string GateMarkDoneTooltip => Loc.Get("GateMarkDoneTooltip");
     /// <summary>{0} = the gate.</summary>

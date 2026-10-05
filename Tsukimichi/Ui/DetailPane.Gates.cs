@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
@@ -74,11 +75,27 @@ public sealed partial class DetailPane
             return null;
         }
 
-        var from = gate.Sources.Contains(QuestGate.WikiSource) ? Strings.GateSourceWiki
-            : gate.Sources.Contains(QuestGate.GameTextSource) ? Strings.GateSourceGameText
-            : Strings.GateSourceSheets;
-        return string.Format(CultureInfo.CurrentCulture, Strings.GateSourceFormat, from, confirmedBy);
+        return string.Format(CultureInfo.CurrentCulture, Strings.GateSourceFormat, StatedIn(gate.Sources), confirmedBy);
     }
+
+    /// <summary>
+    /// Where a gate is stated, for "From {0}": the wiki, else the game's quest text, the sheets, the Lodestone,
+    /// Questionable, in that order of the sources it has; a gate the Lodestone and Questionable alone confirm is labelled
+    /// by them, never as "the game's data".
+    /// </summary>
+    internal static string StatedIn(IReadOnlyList<string> sources) => SourceLabelKey(sources) switch
+    {
+        QuestGate.WikiSource => Strings.GateSourceWiki,
+        QuestGate.GameTextSource => Strings.GateSourceGameText,
+        QuestGate.LodestoneSource => Strings.GateSourceLodestone,
+        QuestGate.QuestionableSource => Strings.GateSourceQuestionable,
+        _ => Strings.GateSourceSheets,
+    };
+
+    /// <summary>The source a gate's "From …" names (<see cref="StatedIn"/>): the first of wiki, game text, sheet, Lodestone, Questionable it has.</summary>
+    internal static string SourceLabelKey(IReadOnlyList<string> sources)
+        => new[] { QuestGate.WikiSource, QuestGate.GameTextSource, QuestGate.SheetSource, QuestGate.LodestoneSource, QuestGate.QuestionableSource }
+            .FirstOrDefault(sources.Contains) ?? QuestGate.SheetSource;
 
     /// <summary>The first quest the gate cannot be passed before (<see cref="QuestGate.After"/>) not done yet; 0 for none.</summary>
     private static uint StartOf(SessionState session, QuestGate? gate)

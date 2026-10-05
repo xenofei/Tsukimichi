@@ -37,7 +37,7 @@ dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll summary
 | `patches` | P8 seed: the patch every named quest was added in, from Garland Tools; writes `Tsukimichi/Data/quest_patches.json` and `docs/data/quest-patches-report.md` |
 | `questionable` | cross-checks Questionable's hand-added prerequisite links against the catalog; exits 1 on a link it misses outside the allowlist (below) |
 | `links` | offline, no game files: writes `Tsukimichi/Data/external_ids.json` (1.8.0, "Open on…") from the committed `quest-verification.csv` (each quest's Lodestone page hash and the wiki page its facts were checked against, rows whose page was not found left out) and `reward-verification.csv` (the FFXIV Collect id of each reward Collect matched); exits 1 when a quest has two different hashes or titles. Rerun it after `quests` or `rewards` |
-| `gates` | offline: every quest page the fetch cache holds (run `quests` first), its infobox `requirements` field and its System lines about the quest, sorted into gate classes (deep-dungeon floor, Resistance rank, mettle, Occult Record, blue magic, tool held, …) and compared with `curated/game_gates.json`; writes `gate-verification.csv` in the quest report's columns (fact `gates`, only the class and a short value, never the wiki's text) and exits 1 on an unresolved row the allowlist does not excuse (feature plan v7 C3). A row is `sourceWrong` (1.21) when the wiki names on a quest the same gate a quest that follows it carries in `curated/game_gates.json` while the quest's own text states no gate (no System line "In order to … this quest") and its sheet names no accept condition that is no quest and no unlock link (`Quest.Header`): the wiki has put the next quest's gate on this one |
+| `gates` | offline: every quest page the fetch cache holds (run `quests` first), its infobox `requirements` field and its System lines about the quest, sorted into gate classes (deep-dungeon floor, Resistance rank, mettle, Occult Record, blue magic, tool held, …) and compared with `curated/game_gates.json`; writes `gate-verification.csv` in the quest report's columns (fact `gates`, only the class and a short value, never the wiki's text) and exits 1 on an unresolved row the allowlist does not excuse (feature plan v7 C3). A row is `sourceWrong` (1.21) when the wiki names on a quest the same gate a quest that follows it carries in `curated/game_gates.json` while the quest's own text states no gate (no System line "In order to … this quest") and its sheet names no accept condition that is no quest and no unlock link (`Quest.Header`): the wiki has put the next quest's gate on this one. A row whose curated gate is player-confirmed (1.22.0, `playerConfirmed`: the wiki alone states it) is `notModeled`, never `match`: the wiki cannot confirm the gate it is the only source of, and the quest reads Not checked until the player confirms it |
 
 ### questionable
 
@@ -57,8 +57,10 @@ and pass `--extract QuestData.cs --commit <the full hash of new-main you read>`:
 
 `--extract-locks <QuestFunctions.cs> --commit <hash>` (1.22.0) rewrites `docs/data/questionable-locks.json` (`--locks`)
 from a local copy of `Questionable/Functions/QuestFunctions.cs`: the quests Questionable holds back on a check of its own
-(the `questPrereqs` switch: an achievement, a mount collection, an unlock link, a Chocobo Racing rank), ids only. An arm
-of a kind it does not know fails the extraction. A `curated/game_gates.json` gate may cite Questionable as a source
+(the `questPrereqs` switch: an achievement, a mount collection, an unlock link, a Chocobo Racing rank), ids only. It reads
+`or` lists of quests, a negated check (written with a fourth element `"not"`) and a member access; any arm it cannot read
+whole (a kind it does not know, a compound check such as `IsA(1) && IsB(2)`, a `when` clause) fails the extraction, so a
+refresh never drops or misreads a lock silently. A `curated/game_gates.json` gate may cite Questionable as a source
 (`"questionable": true`) only for a quest that file lists. The committed file is read at new-main `db49ec12`.
 
 Questionable is a cross-check, not a source of truth: a link becomes a curated extra prerequisite only when a second
@@ -176,23 +178,30 @@ reason, fixedIn`. `catalogClaim` is `quest only`, with `otherSource=` when the e
 Two rules (1.22.0, owner rulings) settle a disagreement that no second source decides, after a shared wiki page and the
 other sources have had their say:
 
-- **prereqs:** a quest the source names that neither the sheet requires (previous quests, accept conditions, through any
-  ancestor) nor the quest's script constants name (`Quest.QuestParams`, where a script names every quest it checks, as
-  row id or runtime id) is one the game does not check: `sourceWrong`. One such quest the script does name keeps the row
-  open. `ScriptPrerequisiteRuleTests` holds the committed rows to the installed game.
-- **duties:** a duty the wiki names beyond the sheet's that the quest's curated game gate names in its phrase ("three
-  unique final bosses of the Merchant's Tale defeated") is that gate, which the catalog carries: `notModeled`.
+- **prereqs (the wiki only):** a quest the wiki names that neither the sheet requires (previous quests, accept
+  conditions, through any ancestor) nor the quest's script constants name (`Quest.QuestParams`, where a script names
+  every quest it checks, as row id or runtime id) is one the game does not check: `sourceWrong`. One such quest the
+  script does name keeps the row open. The Lodestone's prerequisites never take the rule. The reason states the finding;
+  only the settled `sourceWrong` adds "so the game does not check them: the source is wrong", so a row another source
+  reconciles reads its own verdict's reason. `ScriptPrerequisiteRuleTests` holds the committed rows to the installed
+  game and fails a row of any other source the rule settled.
+- **duties:** a duty the wiki names beyond the sheet's that the quest's curated game gate names explicitly in its
+  `duties` (Abridged Too Far: The Merchant's Tale) is that gate, which the catalog carries: `notModeled`. Words of the
+  gate's phrase never count. `GameGatesDataTests` pins the rows the rule settles.
 
 ### verification-allowlist.json
 
-`entries: [{ rowId, fact, source?, verdict, reason, evidence, fix?, until, rewardId?, prereqId? }]`. `rowId` is a quest row id or `*`;
+`entries: [{ rowId, fact, source?, verdict, settles?, reason, evidence, fix?, until, rewardId?, prereqId? }]`. `rowId` is a quest row id or `*`;
 `fact` is a quest fact or `reward:<Kind>` for reward rows, and `rewardId` narrows a reward entry to one reward. An entry excuses a gate-failing row until the plugin
 version reaches `until`; after that `summary` fails again until the row is re-verified or the entry renewed. `fix`
 names where a confirmed catalogWrong is corrected (a mapper rule, a curated file, or a data regeneration) and feeds
 "Discrepancies to fix" in `verification-full.md`. Verdict `settled` (1.22.0) records a decision made on the evidence
 that no release changes (the Eternity Cake kept quest-only, Questionable's spearfishing link): it needs `evidence` (a URL
-or a game reference) and a reason, carries no `until`, never expires and excuses its row whatever the row reads; the
-tests still fail it once no row or link needs it.
+or a game reference), a reason, one `rowId` and one `fact` (never `*`) and `settles`, the verdicts the row was settled
+on (the cake `["unresolved"]`; an excused Questionable link stands for `["sourceWrong"]`). It carries no `until` and
+never expires, but excuses its row only while the row reads one of those verdicts: a settled unresolved row that turns
+catalogWrong fails `summary` again. A settled entry scoped any wider excuses nothing and fails `summary`; the tests
+fail it too, and fail it once no row or link needs it.
 
 ### Other files
 

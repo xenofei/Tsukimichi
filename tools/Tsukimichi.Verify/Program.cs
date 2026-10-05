@@ -561,6 +561,12 @@ public static class Program
             log.WriteLine($"  allowlist entry expired: {e.RowId} {e.Fact} until {e.Until}");
         }
 
+        foreach (var e in allowlist.Entries.Where(e => !Allowlist.WellScoped(e)))
+        {
+            open++;
+            log.WriteLine($"  GATE allowlist entry {e.RowId} {e.Fact} is settled but not scoped to one row, one fact and the verdicts it settles (settles: {string.Join(", ", e.SettledVerdicts)}); it excuses nothing");
+        }
+
         log.WriteLine(open == 0 ? "summary: gate passed" : $"summary: gate FAILED, {open} row(s) unresolved or catalogWrong outside the allowlist");
         return open == 0 ? 0 : 1;
     }
