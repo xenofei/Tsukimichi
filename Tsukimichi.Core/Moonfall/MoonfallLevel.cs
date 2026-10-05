@@ -91,6 +91,13 @@ public sealed record MoonfallPeg
 /// <param name="Pegs">The pegs and bricks.</param>
 public sealed record MoonfallLevel(string Id, string Name, IReadOnlyList<MoonfallPeg> Pegs)
 {
+    /// <summary>
+    /// The level's background picture (format version 2): a name of lower-case letters, digits and hyphens, drawn from
+    /// <c>assets/moonfall/scenes/&lt;scene&gt;.png</c> (800 × 600) and <c>&lt;scene&gt;@2x.png</c> (1600 × 1200). Null for
+    /// none, and a picture that is missing or fails to load is none too: the board shows the shared night sky.
+    /// </summary>
+    public string? Scene { get; init; }
+
     /// <summary>How many pegs may be orange.</summary>
     public int OrangeCandidates
     {

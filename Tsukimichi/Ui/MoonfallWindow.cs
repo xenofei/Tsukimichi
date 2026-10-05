@@ -68,7 +68,9 @@ public sealed partial class MoonfallWindow : Window
     /// <param name="progressPath">Where progress is saved (<see cref="MoonfallProgress.PathFor"/>).</param>
     /// <param name="causes">What the game is doing now that pauses the board (combat, duty, cutscene).</param>
     /// <param name="log">Where a failed save is logged; null logs nothing.</param>
-    public MoonfallWindow(MoonfallCampaigns campaigns, MoonfallProgress progress, string progressPath, Func<MoonfallPauseReason> causes, IPluginLog? log = null)
+    /// <param name="textures">Dalamud's textures, for the board's art (<see cref="MoonfallArtTextures"/>); null draws the stage 1 primitives.</param>
+    /// <param name="pluginDirectory">The plugin's folder, holding <c>assets/moonfall/</c>; null draws the primitives.</param>
+    public MoonfallWindow(MoonfallCampaigns campaigns, MoonfallProgress progress, string progressPath, Func<MoonfallPauseReason> causes, IPluginLog? log = null, ITextureProvider? textures = null, string? pluginDirectory = null)
         : base(Strings.MoonfallTitle + Id, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         this.campaigns = campaigns ?? throw new ArgumentNullException(nameof(campaigns));
@@ -82,6 +84,7 @@ public sealed partial class MoonfallWindow : Window
 
         // The furthest level reached is the one waiting.
         levelIndex = Math.Max(0, campaigns.Playable(campaign, progress) - 1);
+        InitArt(textures, pluginDirectory, log);
     }
 
     public override void OnOpen() => pause.Pause(MoonfallPauseReason.Reopened);
@@ -191,6 +194,7 @@ public sealed partial class MoonfallWindow : Window
     {
         while (g.TryReadEvent(out var e))
         {
+            ArtEvent(e);
             switch (e.Kind)
             {
                 case MoonfallEventKind.PegHit:

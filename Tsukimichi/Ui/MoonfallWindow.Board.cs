@@ -184,11 +184,16 @@ public sealed partial class MoonfallWindow
         var alpha = g.Alpha;
         var dl = ImGui.GetWindowDrawList();
         dl.PushClipRect(origin, origin + size, true);
-        DrawGround(dl, view, origin, size);
-        DrawBucket(dl, view, g, alpha);
-        DrawPegs(dl, view, g, alpha);
-        DrawLauncher(dl, view, g, alpha);
-        DrawRings(dl, view);
+        // The art set when it is in (MoonfallWindow.Art.cs); these primitives while it loads, or if it is missing or broken.
+        if (!DrawBoardArt(dl, view, g, alpha, origin, size))
+        {
+            DrawGround(dl, view, origin, size);
+            DrawBucket(dl, view, g, alpha);
+            DrawPegs(dl, view, g, alpha);
+            DrawLauncher(dl, view, g, alpha);
+            DrawRings(dl, view);
+        }
+
         DrawPopups(dl, view);
         DrawShotTally(dl, origin, scale, g);
         DrawBanner(dl, origin, size, g);
