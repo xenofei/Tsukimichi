@@ -335,7 +335,8 @@ public static partial class MoonfallRules
 
     /// <summary>
     /// The newest level format version this build reads (<see cref="MoonfallLevelLoader"/>): 2 adds the optional
-    /// background <c>scene</c>; version 1 files still read, without one.
+    /// background <c>scene</c> and each piece's <c>canBeGreen</c> (plan v9 decision 16); version 1 files still read,
+    /// without either.
     /// </summary>
     public const int LevelFormatVersion = 2;
 }

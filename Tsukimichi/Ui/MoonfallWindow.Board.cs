@@ -149,6 +149,7 @@ public sealed partial class MoonfallWindow
 
         // The board takes the clicks, except while the tally's buttons are over it.
         var over = g.Phase is MoonfallPhase.Won or MoonfallPhase.Lost;
+        SoundSettingInput(origin, size, !over);
         ImGui.SetCursorScreenPos(origin);
         var clicked = false;
         var hovered = false;
@@ -186,7 +187,10 @@ public sealed partial class MoonfallWindow
             }
             else if (shoot)
             {
-                g.Shoot(aim);
+                if (g.Shoot(aim))
+                {
+                    SoundShot();
+                }
             }
         }
 
@@ -216,6 +220,7 @@ public sealed partial class MoonfallWindow
         if (pause.Paused)
         {
             DrawPaused(dl, origin, size);
+            DrawSoundSetting(dl);
         }
 
         dl.PopClipRect();
@@ -623,6 +628,7 @@ public sealed partial class MoonfallWindow
         {
             if (ImGui.Button(Strings.MoonfallNextLevel + "##moonfallNext"))
             {
+                SoundClick();
                 Go(next);
             }
 
@@ -631,6 +637,7 @@ public sealed partial class MoonfallWindow
 
         if (ImGui.Button((won ? Strings.MoonfallPlayAgain : Strings.MoonfallTryAgain) + "##moonfallAgain"))
         {
+            SoundClick();
             Go(RestartChoice);
         }
     }

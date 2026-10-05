@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Dalamud.Game.ClientState.Conditions;
 using Tsukimichi.Core.Moonfall;
+using Tsukimichi.Game;
 using Tsukimichi.Ui;
 
 namespace Tsukimichi;
@@ -17,6 +18,9 @@ public sealed partial class Plugin
 {
     /// <summary>The game's window, so unloading saves progress a failed save left unsaved.</summary>
     private MoonfallWindow? moonfallWindow;
+
+    /// <summary>Moonfall's sound (plan v9 G8), stopped and let go when the plugin unloads.</summary>
+    private MoonfallAudio? moonfallAudio;
 
     /// <summary>Sets Moonfall up; a failure is logged and leaves the game out, never the plugin.</summary>
     private void InitializeMoonfall()
@@ -49,6 +53,17 @@ public sealed partial class Plugin
 
         var pluginDirectory = PluginInterface.AssemblyLocation.DirectoryName;
         var window = new MoonfallWindow(campaigns, progress, path, MoonfallCausesNow, Log, TextureProvider, pluginDirectory);
+        // Its sound: the output starts when the window opens; the volume lives in the settings.
+        moonfallAudio = new MoonfallAudio(
+            Log,
+            GameConfig,
+            () => Settings.MoonfallSoundPercent,
+            percent =>
+            {
+                Settings.MoonfallSoundPercent = percent;
+                Settings.Save(PluginInterface);
+            });
+        window.Audio = moonfallAudio;
         windowSystem.AddWindow(window);
         command.ToggleMoonfall = window.Toggle;
         mainWindow.OpenMoonfall = window.Toggle;
@@ -82,7 +97,14 @@ public sealed partial class Plugin
     {
         moonfallWindow?.SaveNow();
         moonfallWindow?.DisposeArt();
+        if (moonfallWindow is not null)
+        {
+            moonfallWindow.Audio = null;
+        }
+
         moonfallWindow = null;
+        moonfallAudio?.Dispose();
+        moonfallAudio = null;
         if (command is not null)
         {
             command.ToggleMoonfall = null;

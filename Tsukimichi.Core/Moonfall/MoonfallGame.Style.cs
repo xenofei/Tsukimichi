@@ -58,7 +58,7 @@ public sealed partial class MoonfallGame
         }
 
         styleAwarded |= bit;
-        var bonus = StyleShotBonus(kind);
+        var bonus = Duel ? DuelStyleShotBonus(kind) : StyleShotBonus(kind);
         styleBonus += bonus;
         Post(MoonfallEventKind.StyleShot, peg, bonus, (int)kind, x, y);
         AwardShotFreeBalls();
