@@ -38,7 +38,7 @@ def build():
         n = int(L_ // 30)
         for k in range(1, n):
             t = k / n
-            put(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, r=7.0, tag="atlas line")
+            put(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, r=8.0, tag="atlas line")
     # ---- the field of sky stars: a jittered grid, thicker along the Milky Way, clear of the figure
     rng = np.random.default_rng(5)
     ang = math.radians(-28)
@@ -48,24 +48,30 @@ def build():
             x = gx + rng.uniform(-9, 9) + (17 if (gy // 34) % 2 else 0)
             y = gy + rng.uniform(-9, 9)
             v = -(x - 400) * math.sin(ang) + (y - 300) * math.cos(ang)
-            p = 0.18 + 0.30 * math.exp(-(v / 80) ** 2)
-            if rng.random() < p:
+            p = 0.34 + 0.36 * math.exp(-(v / 80) ** 2)
+            if rng.random() < p and 98 <= x <= 702:
                 cands.append((x, y))
     for (x, y) in cands:
-        if all(math.hypot(x - px, y - py) > 40 for (px, py, _) in placed):
-            put(x, y, r=9.0, tag="sky star")
+        if all(math.hypot(x - px, y - py) > 36 for (px, py, _) in placed):
+            put(x, y, r=10.0, tag="sky star")
     # the brightest field stars: spread over the sky (farthest-point picks), so oranges are never all in the ferry
-    field = [p for p, (kind, tag) in zip(L.pegs, L.tags) if tag == "sky star"]
+    # (only within a first flight's reach: y 130 and lower, level critic round 1)
+    field = [p for p, (kind, tag) in zip(L.pegs, L.tags) if tag == "sky star" and p["y"] >= 140 and 110 < p["x"] < 670]
     chosen = [field[0]]
-    while len(chosen) < 14 and len(chosen) < len(field):
+    while len(chosen) < 20 and len(chosen) < len(field):
         best = max(field, key=lambda p: min(math.hypot(p["x"] - c["x"], p["y"] - c["y"]) for c in chosen))
         chosen.append(best)
     for p in chosen:
         p["canBeOrange"] = True
     # ---- the sea: a few low reflections
-    for (x, y) in ((120, 500), (190, 520), (260, 500), (330, 530), (470, 520), (540, 500), (610, 528), (680, 506),
-                   (150, 546), (400, 548), (650, 548)):
-        put(x, y, r=9.0, tag="reflection")
+    # the bright stars' reflections on the sea are candidates too, so the lowest third always holds oranges
+    # two staggered rows of glints along the swell, the starlight broken on the water
+    for row, y0 in enumerate((486, 528)):
+        for k in range(15):
+            x = 112 + k * 42 + (21 if row else 0)
+            y = y0 + 6 * math.sin(k * 1.3 + row)
+            if x <= 700:
+                put(x, y, r=9.0, orange=(row == 0 and k in (2, 7, 12)), tag="reflection")
     return L
 
 

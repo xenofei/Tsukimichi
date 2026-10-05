@@ -29,23 +29,24 @@ def build():
         L.peg(cx + ORBIT_R * math.cos(a), cy + ORBIT_R * math.sin(a), orange=(k % 2 == 0),
               move={"kind": "orbit", "x": cx, "y": cy, "period": PERIOD, "clockwise": True}, tag="orbit")
     # ---- the world's storms: a few still moons on its darker swirls, inside the orbit
-    for k, (x, y) in enumerate(((470, 300), (548, 322), (500, 372), (452, 404), (566, 410), (528, 452))):
-        L.peg(x, y, orange=(k % 2 == 0), tag="storm")
+    # (round 2: on the planet's night side only, its right limb, never on its lit face)
+    for k, (x, y) in enumerate(((598, 300), (612, 348), (600, 396), (566, 436))):
+        L.peg(x, y, orange=(k % 2 == 0), tag="storm on the night side")
     # ---- the drifting rocks: two loose rows along the belt above the world (none in the launcher's swing)
     rocks = ((100, 150), (132, 168), (168, 152), (204, 172), (240, 158), (276, 178), (312, 166),
              (110, 206), (150, 222), (190, 208), (232, 226), (272, 214),
              (520, 126), (560, 132), (600, 146), (640, 134), (680, 150), (700, 196))
     for k, (x, y) in enumerate(rocks):
-        L.peg(x, y, orange=(k in (2, 5, 9, 13, 16)), tag="drifting rock")
+        L.peg(x, y, orange=(k in (2, 5, 9, 11, 13)), tag="drifting rock")
     # ---- the tower on the left: its curved rib, the sphere beside it, the spires at its foot
     for (x, y) in ((140, 270), (150, 306), (156, 342), (152, 378), (138, 412)):
-        L.peg(x, y, orange=(y in (306, 378)), tag="tower rib")
+        L.peg(x, y, orange=(y in (270, 306, 378)), tag="tower rib")
     L.peg(110, 330, r=12, orange=True, tag="the sphere")
     for (x, y) in ((128, 470), (172, 456), (150, 512), (210, 500), (254, 520), (290, 470)):
         L.peg(x, y, tag="tower foot")
     # ---- the low field and the crystal flower at the foot
     for (x, y) in ((280, 540), (330, 512), (380, 540), (614, 540), (660, 516), (700, 548), (700, 482), (700, 430)):
-        L.peg(x, y, tag="low field")
+        L.peg(x, y, orange=(x, y) in ((330, 512), (660, 516), (700, 430)), tag="low field")
     for (x, y) in ((250, 330), (290, 380), (250, 424), (286, 296)):
         L.peg(x, y, orange=(x == 290), tag="between")
     return L

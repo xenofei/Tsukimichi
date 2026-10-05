@@ -17,10 +17,9 @@ from PIL import Image, ImageDraw
 
 from brush import flow_const, strokes
 from layout import smooth_path
-from rich_lib import LUM, OUT_SCENES, V9, blur, fbm, grain, hexc, ramp, save_rgb, screen, smooth, stars, vignette
+from rich_lib import LUM, OUT_SCENES, V9, blur, moon_emissive, fbm, grain, hexc, ramp, save_rgb, screen, smooth, stars, vignette
 
 sys.path.insert(0, str(V9.parent / "v8" / "art" / "src"))
-from paint_moon import moon as paint_moon  # noqa: E402
 
 MOON = (156.0, 108.0, 30.0)
 
@@ -30,7 +29,7 @@ EAR_L = [(398, 196), (392, 150), (414, 136), (436, 170)]
 EAR_R = [(496, 166), (520, 132), (544, 142), (544, 192)]
 STALK = [(486, 162), (492, 128), (512, 104), (540, 92)]
 POM = (552.0, 88.0, 21.0)
-NOSE = (552.0, 252.0, 13.0)
+NOSE = (556.0, 254.0, 17.0)
 BODY = (396.0, 330.0, 56.0, 50.0, -0.35)          # centre, radii, tilt
 ARM = [(430, 318), (462, 322), (486, 334), (478, 350), (452, 346), (428, 338)]
 LETTER = [(470, 318), (520, 312), (526, 346), (476, 352)]
@@ -218,13 +217,7 @@ def paint(S=1):
     px = stars(px, S, 190, 9, (75 * S, 41 * S, 725 * S, 420 * S),
                avoid=lambda x, y: min(1.0, max(0.0, (math.hypot(x / S - mx, y / S - my) - 120) / 260)) * (1 - y / (H * 0.85)))
 
-    class _C:
-        pass
-    c = _C()
-    c.px, c.w, c.h, c.yy, c.xx = px, W, H, yy, xx
-    M = {}
-    paint_moon(c, M, mx * S, my * S, mr * S)
-    px = c.px
+    px, moon_disc = moon_emissive(px, S, mx, my, mr)
     # ---- the forest: rows of crowns stepping down into mist, each crown rim-lit on its moon side
     rng = np.random.default_rng(5)
     for row, (base, size, col0, col1, mist) in enumerate(((430, 18, "#1E2A54", "#1A244C", 0.22),
@@ -296,11 +289,21 @@ def paint(S=1):
     px = screen(px, hexc("#2C2652") * (wf * 0.30)[..., None])
     # the letter's wax seal
     lx_, ly_ = SEAL
-    px = put(px, hexc("#3A1214"), np.clip((5.0 - np.sqrt((X - lx_) ** 2 + (Y - ly_) ** 2)) * S, 0, 1))
-    px = screen(px, hexc("#E89080") * (np.exp(-(((X - lx_ + 1.8) ** 2 + (Y - ly_ + 1.8) ** 2) / 1.5)) * 0.5)[..., None])
+    # paper in the moogle's backlit shadow, a little lifted and cool; the envelope's flap as a V crease
+    lt = Mk["letter"]
+    px = screen(px, hexc("#1C2238") * (lt * 0.55)[..., None])
+    (ax_, ay_), (bx_, by_), (cx_, cy_), (dx_, dy_) = LETTER
+    for (p0, p1) in (((ax_, ay_), (lx_, ly_)), ((bx_, by_), (lx_, ly_))):
+        crease = tubes(W, H, S, [([p0, p1], 0.7, 0.7)]) * lt
+        px = px * (1 - crease * 0.35)[..., None]
+    # the seal: a flat wax disc, its dull sheen only on the edge toward the moon
+    seal = np.clip((4.6 - np.sqrt((X - lx_) ** 2 + (Y - ly_) ** 2)) * S, 0, 1)
+    px = put(px, hexc("#34121A"), seal)
+    sr = np.sqrt((X - lx_) ** 2 + (Y - ly_) ** 2)
+    px = screen(px, hexc("#7A4A58") * (seal * np.exp(-((sr - 4.0) / 0.6) ** 2) * np.clip(-((X - lx_) + (Y - ly_)) / 6, 0, 1) * 0.5)[..., None])
     rims = {"head": ("#D8E2F6", 0.85, 1.8), "body": ("#D8E2F6", 0.75, 1.6), "feet": ("#C8D4F2", 0.55, 1.2),
             "wing_near": ("#B8C6EE", 0.70, 1.4), "satchel": ("#C9B48C", 0.55, 1.2), "strap": ("#C9B48C", 0.4, 0.8),
-            "stalk": ("#C8D4F2", 0.6, 0.9), "pom": ("#F0A08A", 0.85, 1.6), "letter": ("#E6DEC8", 0.75, 1.2)}
+            "stalk": ("#C8D4F2", 0.6, 0.9), "pom": ("#A9B4D4", 0.70, 1.4), "letter": ("#C3CEE4", 0.45, 0.6)}
     covered = np.zeros((H, W), np.float32)
     for part in reversed(order):
         col, k, w = rims[part]
@@ -310,27 +313,26 @@ def paint(S=1):
         covered = np.maximum(covered, Mk[part])
     # backlit fur: the tufts along every moon-facing edge carry the light through them, a fine glowing fringe
     for part, col, k in (("head", "#DCE6F8", 0.95), ("body", "#DCE6F8", 0.80), ("feet", "#C8D4F2", 0.6),
-                         ("pom", "#F4A894", 0.95)):
+                         ("pom", "#A9B4D4", 0.75)):
         core = Mk[part + "_core"]
         tufts = np.clip(Mk[part] - core, 0, 1)
         b = blur(core, 2.0 * S)
         gy, gx = np.gradient(b)
         gn = np.sqrt(gx * gx + gy * gy) + 1e-6
-        facing = np.clip(-(gx * ux + gy * uy) / gn, 0, 1) ** 1.0
-        facing = blur(facing * (b > 0.02) * (b < 0.98), 1.5 * S) * 2.0
+        facing = np.clip(-(gx * ux + gy * uy) / gn, 0, 1) ** 1.6
+        facing = blur(facing * (b > 0.02) * (b < 0.98), 0.8 * S) * 1.6
         halo = np.clip(tufts * 1.4, 0, 1) * np.clip(facing, 0, 1)
         px = screen(px, hexc(col) * (halo * k)[..., None])
         px = screen(px, hexc(col) * (blur(halo, 1.6 * S) * k * 0.25)[..., None])
     # the pom-pom's own colour shows faintly in its body; the letter's paper too
-    px = screen(px, hexc("#5A1E22") * (Mk["pom"] * 0.55)[..., None])
-    px = screen(px, hexc("#2A2A30") * (Mk["letter"] * 0.6)[..., None])
+    px = screen(px, hexc("#4A1820") * (Mk["pom"] * 0.55)[..., None])
     # the eye: in the moogle's shadow side, a small glint of the sky
     ex, ey = EYE
     px = put(px, hexc("#05060C"), np.clip((1 - np.sqrt(((X - ex) / 5.0) ** 2 + ((Y - ey) / 7.0) ** 2)) * 3 * S, 0, 1))
     px = screen(px, hexc("#DCE6FF") * (np.exp(-(((X - ex + 1.6) ** 2 + (Y - ey + 2.2) ** 2) / 1.6)) * 0.6)[..., None])
     # ---- the value ceiling (the moon excepted: no peg covers it), the vignette, grain
     Yl = px @ LUM
-    moon_m = blur(M["moon"], 1.0 * S)
+    moon_m = blur(moon_disc, 1.0 * S)
     capk = np.where(Yl > 0.42, 0.42 / np.maximum(Yl, 1e-4), 1.0)
     px = px * (capk * (1 - moon_m) + moon_m)[..., None]
     px = vignette(px, 0.28)

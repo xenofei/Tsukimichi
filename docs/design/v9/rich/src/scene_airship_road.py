@@ -9,7 +9,7 @@ airship's route as an engraved gilt dashed line, which stays on the chart when t
 import numpy as np
 from PIL import Image, ImageDraw
 
-from rich_lib import OUT_SCENES, crop_to, grain, hexc, load_official, moon_glow, night_map, save_rgb, screen, vignette
+from rich_lib import OUT_SCENES, crop_to, grain, hexc, load_official, moon_glow, night_lab, save_rgb, screen, vignette
 
 SRC = "ui_loadingimage_-nowloading_base05.png"
 CROP = (-30.0, 370.0, 840.0, 630.0)          # source px (x, y, w, h), 4:3; x < 0 is edge padding, under the rail
@@ -27,7 +27,8 @@ STOPS = {"Limsa Lominsa": (92, 832), "Ul'dah": (283, 888), "Mor Dhona": (306, 72
          "Gridania": (399, 617), "Ala Mhigo": (546, 658)}
 ROUTE_SRC = [(92, 832), (140, 846), (190, 858), (240, 876), (283, 888), (300, 852), (306, 810), (300, 766),
              (306, 720), (296, 676), (292, 630), (300, 586), (313, 548), (346, 566), (372, 594), (399, 617),
-             (436, 628), (474, 634), (512, 646), (546, 658)]
+             (436, 628), (474, 634), (512, 646), (546, 658), (590, 690), (630, 716), (672, 732), (706, 740)]
+# (the last four: the road leaves Ala Mhigo over the Rhotano Sea, east toward the Far East)
 
 
 def route_board():
@@ -60,9 +61,9 @@ def build(S=1):
     W, H = int(800 * S), int(600 * S)
     src = np.pad(load_official(SRC), ((0, 0), (PAD, 0), (0, 0)), mode="edge")
     px = crop_to(src, (CROP[0] + PAD, CROP[1], CROP[2], CROP[3]), (W, H))
-    out = night_map(px, curve=1.25, chroma=0.16, ceiling=0.40, local=0.8, warm_keep=0.25)
+    out = night_lab(px, gamma=1.35, exposure=0.85, warm_keep=0.25, chroma_mid=0.45, S=S)
     out = moon_glow(out, -60 * S, -60 * S, 420 * S, 900 * S, 0.10, 0.05)
-    out = dashed(out, S, smooth_path(route_board(), 8), "#D9BE82", width=1.6, alpha=0.55)
+    out = dashed(out, S, smooth_path(route_board(), 8), "#D9BE82", width=2.2, alpha=0.60)
     out = vignette(out, 0.28)
     return grain(out, 0.008, seed=5)
 

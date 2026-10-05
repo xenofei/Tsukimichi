@@ -9,13 +9,15 @@ clouds to the north-east, the east coast of Vylbrand along the strait, and a few
 """
 import math
 
+import numpy as np
+
 from layout import Layout, in_bounds, resample, smooth_path
 from rich_lib import LEVELS, level_json, write_level
 from scene_airship_road import ROUTE_SRC, STOPS, to_board
 
 LEVEL_ID = "base-p1"
 NAME = "The Airship Road"
-RING_R = 29.0
+RING_R = 24.0
 
 
 def build():
@@ -27,7 +29,7 @@ def build():
     route = smooth_path([to_board(*p) for p in ROUTE_SRC], 8)
     placed = []
 
-    def free(x, y, r, gap=13.0):
+    def free(x, y, r, gap=12.5):
         return in_bounds(x, y, r) and all(math.hypot(x - px, y - py) - r - pr >= gap for (px, py, pr) in placed)
 
     def put(x, y, r=10.0, orange=False, tag=""):
@@ -37,33 +39,47 @@ def build():
             return True
         return False
 
-    # ---- the stops: a ring of five round each city, turned so the trail runs in and out through its gaps
+    # ---- the stops: a ring of five round each city, turned so the trail runs in and out through its gaps. The
+    # southern and eastern cities carry five candidates; the three close together in the north carry three each, so
+    # the oranges do not crowd the middle of the board
+    crowded = ("Mor Dhona", "Ishgard", "Gridania")
+    R_ = np.asarray(route)
     for name, (cx, cy) in stops.items():
-        for k in range(5):
-            a = math.radians(-90 + 72 * k + 36)
-            put(cx + RING_R * math.cos(a), cy + RING_R * math.sin(a), orange=True, tag=f"stop: {name}")
-    # ---- the trail: smaller moons every 32 along the route, kept clear of the rings
-    for (x, y) in resample(route, 32.0, 8.0):
-        if all(math.hypot(x - cx, y - cy) > RING_R + 14 for (cx, cy) in stops.values()):
-            put(x, y, r=9.0, tag="trail")
+        # the ring is four moons turned so the route runs in and out through two opposite gaps
+        i = int(np.argmin(((R_ - (cx, cy)) ** 2).sum(1)))
+        a0, a1 = R_[max(0, i - 3)], R_[min(len(R_) - 1, i + 3)]
+        tangent = math.atan2(a1[1] - a0[1], a1[0] - a0[0])
+        for k in range(4):
+            a = tangent + math.radians(45 + 90 * k)
+            put(cx + RING_R * math.cos(a), cy + RING_R * math.sin(a), r=9.0,
+                orange=(name not in crowded or k != 0), tag=f"stop: {name}")
+    # ---- the trail: the main stroke of the board, smaller moons every 30 along the whole route, running right up to
+    # each ring's gaps (the ring's own pegs turn away the dots that would crowd it)
+    for (x, y) in resample(route, 30.0, 2.0):
+        if all(math.hypot(x - cx, y - cy) > 20 for (cx, cy) in stops.values()):
+            put(x, y, r=8.0, tag="trail")
     # ---- the compass rose at sea: eight points and its heart
     cx, cy = 568.0, 343.0
     for k in range(8):
         a = math.radians(-90 + 45 * k)
         put(cx + 44 * math.cos(a), cy + 44 * math.sin(a), orange=(k % 2 == 0), tag="compass point")
     put(cx, cy, r=11.0, orange=True, tag="compass heart")
-    # ---- the edge of the sea of clouds, north-east
-    for (x, y) in ((480, 158), (514, 168), (548, 180), (582, 194), (616, 210), (650, 230), (684, 252), (700, 286)):
-        put(x, y, tag="cloud edge")
-    # ---- Vylbrand's east coast along the strait, and the dragons' sky above it
-    for (x, y) in ((228, 300), (226, 336), (220, 372), (212, 406)):
+    # ---- the edge of the sea of clouds, north-east (a short run), and Vylbrand's east coast along the strait
+    for (x, y) in ((560, 186), (600, 202), (640, 222), (680, 246)):
+        put(x, y, orange=(x in (600, 680)), tag="cloud edge")
+    for (x, y) in ((228, 300), (226, 336), (220, 372)):
         put(x, y, tag="Vylbrand coast")
-    for (x, y) in ((110, 150), (146, 136), (184, 132), (222, 140), (258, 156)):
-        put(x, y, tag="northern sea")
-    # ---- the southern sea and the sea lane south-east of the compass
-    for (x, y) in ((126, 506), (172, 524), (218, 540), (400, 536), (446, 518), (498, 470), (540, 500), (592, 526),
-                   (640, 506), (686, 486), (620, 420), (660, 446), (700, 400), (690, 330), (650, 300)):
+    # ---- the ships' lanterns on the southern sea lane: candidates, so the lower right always holds oranges
+    for (x, y) in ((592, 526), (640, 500), (688, 474)):
+        put(x, y, orange=True, tag="ship's lantern")
+    for (x, y) in ((140, 512), (196, 530), (250, 546), (360, 540), (420, 532), (480, 510), (540, 500), (440, 470),
+                   (390, 440), (640, 420), (500, 420), (690, 380), (110, 380), (150, 350)):
         put(x, y, tag="sea")
+    # ---- the land between the stops: the Shroud's forest, the Thanalan hills, the Coerthas snows (scenery, blue)
+    for (x, y) in ((380, 300), (420, 330), (460, 300), (470, 360), (420, 390), (360, 260), (250, 240), (260, 290),
+                   (190, 270), (180, 220), (130, 260), (250, 400), (200, 420), (470, 200), (520, 210), (640, 290),
+                   (700, 200), (680, 160)):
+        put(x, y, tag="land")
     return L
 
 

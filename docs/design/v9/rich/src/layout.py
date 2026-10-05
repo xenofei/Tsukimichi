@@ -91,8 +91,12 @@ class Layout:
 
     def counts(self):
         o = sum(p["canBeOrange"] for p in self.pegs) + sum(b["canBeOrange"] for b in self.bricks)
+        tags = {}
+        for (_, t) in self.tags:
+            key = t.split(":")[0]
+            tags[key] = tags.get(key, 0) + 1
         return {"pegs": len(self.pegs), "bricks": len(self.bricks), "maybeOrange": o,
-                "movers": sum(1 for p in self.pegs if "move" in p)}
+                "movers": sum(1 for p in self.pegs if "move" in p), "by tag": tags}
 
     def check(self, verbose=True):
         """Pre-flight: bounds and overlaps (the loader's rules), plus cradling gaps a ball would rest in."""
@@ -144,10 +148,91 @@ class Layout:
                     problems.append(f"peg ({p['x']}, {p['y']}) overlaps brick {j}")
                 elif 0.5 < gap < 11.8:
                     problems.append(f"cradle gap {gap:.1f} between peg ({p['x']}, {p['y']}) and brick {j}")
+        # notches: two bricks whose nearest surfaces are closer than a ball but do not touch wedge it (critic r1)
+        for i in range(len(self.bricks)):
+            for k in range(i + 1, len(self.bricks)):
+                a, c = self.bricks[i], self.bricks[k]
+                sa, sc = brick_samples(a, 1.0), brick_samples(c, 1.0)
+                d = min(math.hypot(x0 - x1, y0 - y1) for (x0, y0) in sa[::2] for (x1, y1) in sc[::2])
+                g = d - a["thickness"] / 2 - c["thickness"] / 2
+                if 3.5 < g < 12.5:
+                    problems.append(f"notch {g:.1f} between brick {i} and brick {k}")
+        for p in still:
+            g = min(p["x"] - p.get("r", 10) - LEFT, RIGHT - p["x"] - p.get("r", 10))
+            if 0.5 < g < 12.5:
+                problems.append(f"wall pinch {g:.1f} at ({p['x']}, {p['y']})")
+        for j, b in enumerate(self.bricks):
+            for (x, y) in brick_samples(b):
+                g = min(x - b["thickness"] / 2 - LEFT, RIGHT - x - b["thickness"] / 2)
+                if 0.5 < g < 12.5:
+                    problems.append(f"wall pinch {g:.1f} at brick {j}")
+                    break
+        # orange candidates: every one touched by some first free flight; spread (method section 3)
+        cands = [(p["x"], p["y"], p.get("r", 10.0)) for p in self.pegs if p["canBeOrange"] and "move" not in p]
+        cands += [(*brick_samples(b)[len(brick_samples(b)) // 2], b["thickness"] / 2) for b in self.bricks if b["canBeOrange"]]
+        for (x, y, r) in cands:
+            if not direct_reach(x, y, r):
+                problems.append(f"orange candidate ({x:.0f}, {y:.0f}) is out of every first free flight")
+        allc = cands + [(p["x"], p["y"], 10) for p in self.pegs if p["canBeOrange"] and "move" in p]
+        worst, where = 0, None
+        for sx in range(75, 530, 20):
+            for sy in range(40, 400, 20):
+                n = sum(1 for (x, y, _) in allc if sx <= x < sx + 200 and sy <= y < sy + 200)
+                if n > worst:
+                    worst, where = n, (sx, sy)
+        low_l = sum(1 for (x, y, _) in allc if y >= 400 and x < 400)
+        low_r = sum(1 for (x, y, _) in allc if y >= 400 and x >= 400)
+        if worst > 10:
+            problems.append(f"spread: {worst} candidates in the 200 x 200 square at {where} (limit 10)")
+        if low_l == 0 or low_r == 0:
+            problems.append(f"spread: candidates below y 400: left {low_l}, right {low_r}")
         if verbose:
+            print(f"  candidates {len(allc)}; most in a 200 square {worst}; below y 400 left {low_l}, right {low_r}")
             for s in problems:
                 print("  !", s)
         return problems
+
+
+_FLIGHTS = None
+
+
+def free_flights(step=0.25):
+    """The ball's free flight at every aim (no pegs; walls bounce at 0.75), sampled every 5 ms, as point arrays."""
+    global _FLIGHTS
+    if _FLIGHTS is None:
+        out = []
+        a = -85.0
+        while a <= 85.0 + 1e-9:
+            r = math.radians(a)
+            dx, dy = math.sin(r), math.cos(r)
+            x, y = PIVOT[0] + dx * 73, PIVOT[1] + dy * 73
+            vx, vy = dx * 395, dy * 395
+            pts = []
+            for _ in range(800):
+                x += vx * 0.005
+                y += vy * 0.005 + 0.5 * 500 * 0.005 ** 2
+                vy += 500 * 0.005
+                if x < 81.5:
+                    x, vx, vy = 163 - x, -vx * 0.75, vy * 0.75
+                if x > 718.5:
+                    x, vx, vy = 1437 - x, -vx * 0.75, vy * 0.75
+                if y < 6:
+                    y, vy, vx = 12 - y, -vy * 0.75, vx * 0.75
+                pts.append((x, y))
+                if y > 600:
+                    break
+            out.append(np.asarray(pts))
+            a += step
+        _FLIGHTS = out
+    return _FLIGHTS
+
+
+def direct_reach(x, y, r):
+    """Whether some first free flight touches a piece at (x, y) of radius r (ball 6)."""
+    for f in free_flights():
+        if np.min((f[:, 0] - x) ** 2 + (f[:, 1] - y) ** 2) <= (r + 6.0) ** 2:
+            return True
+    return False
 
 
 def saddle_deg(gap, r=10.0, ball=6.0):

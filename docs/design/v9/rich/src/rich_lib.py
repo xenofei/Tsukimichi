@@ -176,6 +176,98 @@ def night_map(src, *, curve=1.55, chroma=0.22, ceiling=0.42, sky=None, sky_drop=
     return np.clip(out, 0, 1)
 
 
+def srgb_to_oklab(c):
+    c = np.clip(c, 0, 1)
+    lin = np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+    M1 = np.array([[0.4122214708, 0.5363325363, 0.0514459929], [0.2119034982, 0.6806995451, 0.1073969566],
+                   [0.0883024619, 0.2817188376, 0.6299787005]], np.float32)
+    lms = np.cbrt(np.maximum(lin @ M1.T, 0))
+    M2 = np.array([[0.2104542553, 0.7936177850, -0.0040720468], [1.9779984951, -2.4285922050, 0.4505937099],
+                   [0.0259040371, 0.7827717662, -0.8086757660]], np.float32)
+    return lms @ M2.T
+
+
+def oklab_to_srgb(lab):
+    M2i = np.array([[1.0, 0.3963377774, 0.2158037573], [1.0, -0.1055613458, -0.0638541728],
+                    [1.0, -0.0894841775, -1.2914855480]], np.float32)
+    lms = (lab @ M2i.T) ** 3
+    M1i = np.array([[4.0767416621, -3.3077115913, 0.2309699292], [-1.2684380046, 2.6097574011, -0.3413193965],
+                    [-0.0041960863, -0.7034186147, 1.7076147010]], np.float32)
+    lin = lms @ M1i.T
+    lin = np.clip(lin, 0, 1)
+    return np.where(lin <= 0.0031308, lin * 12.92, 1.055 * np.power(lin, 1 / 2.4) - 0.055).astype(np.float32)
+
+
+VIOLET = dict(tint="#CBC4EA", base_hue="#2A2358")      # The Far Shore's later hour
+
+
+def night_lab(src, *, exposure=0.80, gamma=1.7, ceiling=0.50, knee=0.28, detail=1.15, chroma_mid=0.55,
+              chroma_high=0.75, tint="#C3CEE4", tint_k=0.55, base_hue="#22356E", sky=None, sky_drop=0.0,
+              ramp_stops=None, warm_keep=0.35, S=1.0):
+    """The Medallion night grade, round 2 (after realism round 1): day for night in OKLab.
+
+    Lightness: lowered and given a curve (mid-tones sink so the planes facing the light stay brightest), then a soft
+    knee compresses only the *base* layer (a blur) under `ceiling`, and the detail layer (L minus its blur) is added
+    back, so a cloud or a dome keeps its modelling inside its compressed range instead of flattening to a slab.
+    Colour: chroma is kept (scaled, mid-tones more than highlights, so highlights stay the coolest, lightest note);
+    hue is pulled toward the night: shadows toward lapis `base_hue`, highlights toward moonstone `tint`, so a lit
+    cloud reads cool silver, never khaki. Warm hues are drained harder than cool (moonlight carries little warmth).
+    `ceiling` is OKLab L (0.70 is about luma 0.42 for a near-neutral moonstone)."""
+    lab = srgb_to_oklab(src)
+    Lc, a, b = lab[..., 0], lab[..., 1], lab[..., 2]
+    Ln = np.power(np.clip(Lc, 0, 1), gamma) * exposure / (exposure ** 0 if exposure else 1)
+    if sky is not None:
+        Ln = Ln * (1 - sky * sky_drop)
+    base = blur(Ln, 8 * S)
+    det = (Ln - base) * detail
+    k0 = knee
+    span = ceiling - k0
+    over = np.clip(base - k0, 0, None)
+    base_c = np.where(base > k0, k0 + span * (1 - np.exp(-over / span)), base)
+    Lo = np.clip(base_c + det, 0, ceiling + 0.03)
+    t = smooth(0.25, ceiling, Lo)
+    # chroma: drained warm, kept cool; mid-tones lowered more than highlights
+    C = np.sqrt(a * a + b * b)
+    warm = smooth(0.0, 0.04, b) * smooth(-0.02, 0.03, a + b * 0.3)
+    keep = (chroma_mid + (chroma_high - chroma_mid) * t) * (1 - warm * (1 - warm_keep))
+    if sky is not None:
+        keep = keep * (1 - 0.5 * sky)                         # a night sky holds little colour of its own
+    a2, b2 = a * keep, b * keep
+    # hue pull: toward lapis in shadows, toward moonstone in highlights
+    lab_t = srgb_to_oklab(hexc(tint)[None, None, :])[0, 0]
+    lab_b = srgb_to_oklab(hexc(base_hue)[None, None, :])[0, 0]
+    pull = (1 - t) * 0.45 + t * tint_k
+    ta = lab_b[1] * (1 - t) + lab_t[1] * t
+    tb = lab_b[2] * (1 - t) + lab_t[2] * t
+    a2 = a2 * (1 - pull) + ta * pull
+    b2 = b2 * (1 - pull) + tb * pull
+    return oklab_to_srgb(np.stack([Lo, a2, b2], -1))
+
+
+def moon_emissive(px, S, mx, my, mr, seed=3):
+    """A full moon as the light it is (realism round 1, base-p3): a near-uniform bright face with soft symmetric limb
+    darkening (about 10%), irregular soft maria, no terminator and no bevel, and a soft even cool halo. Units in."""
+    H, W, _ = px.shape
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    X, Y = (xx + 0.5) / S, (yy + 0.5) / S
+    d = np.sqrt((X - mx) ** 2 + (Y - my) ** 2) / mr
+    halo = np.exp(-np.clip(d - 1, 0, None) ** 2 / 0.6) * 0.20 + np.exp(-np.clip(d - 1, 0, None) / 3.5) * 0.10
+    px = screen(px, hexc("#C9D6F4") * (halo * (d > 1))[..., None])
+    nz = np.sqrt(np.clip(1 - d * d, 0, 1))
+    limb = 0.90 + 0.10 * nz ** 0.5
+    u, v = (X - mx) / mr, (Y - my) / mr
+    seas = np.zeros_like(u)
+    for (sx, sy, rx, ry, k) in ((-0.28, -0.22, 0.26, 0.20, 1.0), (0.12, -0.32, 0.18, 0.14, 0.8), (0.30, -0.04, 0.20, 0.17, 0.9),
+                                (-0.48, 0.14, 0.14, 0.24, 0.6), (-0.10, 0.30, 0.13, 0.09, 0.5), (0.42, 0.26, 0.10, 0.12, 0.5)):
+        seas = np.maximum(seas, np.exp(-(((u - sx) / rx) ** 2 + ((v - sy) / ry) ** 2) * 1.6) * k)
+    mott = fbm(H, W, mr * S * 0.18, 3, seed)
+    seas = np.clip(seas * (0.75 + 0.5 * mott), 0, 1)
+    face = hexc("#F1F0EA") * (1 - 0.30 * seas)[..., None] + hexc("#AEB0B2") * (0.30 * seas)[..., None]
+    face = face * limb[..., None]
+    disc = np.clip((1 - d) * mr * S + 0.5, 0, 1)
+    return px * (1 - disc[..., None]) + face * disc[..., None], disc
+
+
 def moon_glow(px, mx, my, r_core, r_wide, k_core=0.16, k_wide=0.05, col="#B9C8F0"):
     """The moon's scattered light in the air, from (mx, my) in px (it may sit beyond the frame)."""
     h, w, _ = px.shape

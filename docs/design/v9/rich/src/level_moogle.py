@@ -61,9 +61,9 @@ def build():
     features = {
         "pom-pom": (sm.POM[0], sm.POM[1], 48), "ear tip": (sm.EAR_R[2][0], sm.EAR_R[2][1], 36),
         "left ear": (sm.EAR_L[2][0], sm.EAR_L[2][1], 36),
-        "wing tip": [(x, y, 34) for (x, y) in sm.WING_NEAR["tips"] + sm.WING_FAR["tips"][:1]],
+        "wing tip": [(x, y, 26) for (x, y) in sm.WING_NEAR["tips"]],
         "letter": (sum(p[0] for p in sm.LETTER) / 4, sum(p[1] for p in sm.LETTER) / 4, 48),
-        "foot": [(b[0], b[1], 36) for (_, b, _, _) in sm.FEET],
+        "foot": [(b[0], b[1], 30) for (_, b, _, _) in sm.FEET],
         "nose": (sm.NOSE[0], sm.NOSE[1], 34),
     }
 
@@ -75,26 +75,35 @@ def build():
         return None
 
     # the eye first, then the outline round the whole creature
-    put(*sm.EYE, orange=True, tag="the eye")
+    put(*sm.EYE, orange=False, tag="the eye")
     pts, _ = outline_points()
     for (x, y) in pts:
         t = tag_for(x, y)
-        put(x, y, orange=t is not None, tag=t or "outline")
+        # nothing at the launcher's height is a candidate (a first flight cannot touch it: level critic round 1)
+        put(x, y, orange=t is not None and y >= 112, tag=t or "outline")
     # the wing's struts, root to tip, inside the membrane
     w = sm.WING_NEAR
     for tip in w["tips"][1:]:
         rx, ry = w["root"]
         for f in (0.45, 0.72):
-            put(rx + (tip[0] - rx) * f, ry + (tip[1] - ry) * f, orange=(f > 0.5), tag="wing strut")
-    # the forest's crowns, and a loose scatter of stars in the sky to the right
-    for x in range(96, 720, 38):
-        put(x + (7 if (x // 38) % 2 else -7), 404 + (12 if (x // 38) % 3 == 0 else 0), tag="treetops")
-    for (x, y) in ((640, 70), (684, 104), (700, 160), (660, 200), (700, 236), (640, 300), (690, 330), (650, 380),
+            put(rx + (tip[0] - rx) * f, ry + (tip[1] - ry) * f, orange=False, tag="wing strut")
+    # the forest: a wavy treeline along the crowns, then the wood's crowns as staggered rows below it, dense enough
+    # that a falling ball always meets them (round 2: the low board was too sparse, its oranges were left behind)
+    for x in range(104, 710, 38):  # noqa
+        put(x, 404 + 14 * math.sin(x / 47.0), orange=((x - 104) // 38) in (1, 12, 15), tag="treetops")
+    for row, y0 in enumerate((452, 496, 538)):
+        for k in range(17):
+            x = 98 + k * 38 + (19 if row % 2 else 0)
+            y = y0 + 8 * math.sin(x / 41.0 + row)
+            if x > 702:
+                continue
+            lamp = (row, k) in ((0, 3), (0, 10), (1, 6), (1, 13), (0, 15), (1, 1), (2, 9))     # cottage lamps
+            put(x, y, orange=lamp, tag="lamp in the wood" if lamp else "forest")
+    # the sky's scatter to the right and the left of the courier
+    for (x, y) in ((700, 160), (660, 200), (700, 236), (640, 300), (690, 330), (650, 360),
                    (120, 230), (170, 262), (222, 230), (130, 300), (180, 340), (110, 360), (240, 120), (276, 150),
-                   (300, 196), (98, 470), (150, 486), (210, 470), (270, 486), (330, 470), (450, 470), (520, 486),
-                   (590, 470), (650, 486), (700, 470), (120, 540), (200, 540), (300, 540), (420, 540), (520, 540),
-                   (620, 540), (700, 530)):
-        put(x, y, tag="sky and forest")
+                   (300, 196)):
+        put(x, y, tag="sky")
     return L
 
 

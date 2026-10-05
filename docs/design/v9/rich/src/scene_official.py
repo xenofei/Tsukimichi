@@ -12,22 +12,59 @@ import sys
 
 import numpy as np
 
-from rich_lib import (OUT_SCENES, blur, crop_to, grain, hexc, load_official, moon_glow, night_map, save_rgb, screen,
-                      smooth, vignette)
+from rich_lib import (L, LUM, OUT_SCENES, VIOLET, blur, crop_to, grain, hexc, load_official, moon_glow, night_lab,
+                      ramp, save_rgb, screen, smooth, vignette)
 
-# The Far Shore (expansion) is a later hour: the same grade on a deeper violet ramp.
-VIOLET_RAMP = [(0.00, "#05040E"), (0.10, "#0A0820"), (0.24, "#151234"), (0.42, "#282356"), (0.60, "#463F80"),
-               (0.78, "#8077B0"), (0.92, "#BFB8DE"), (1.00, "#E0DCF0")]
+# The Far Shore (expansion) is a later hour: the same grade, pulled toward violet (rich_lib.VIOLET).
 
 SCENES = {
     "exp-p1-sharlayan": dict(src="ui_loadingimage_-nowloading_base21.png", crop=(-32.0, 30.0, 1307.0, 980.0),
-                             pad=(0, 64), curve=1.9, chroma=0.22, ceiling=0.42, sky_drop=0.40, local=0.5,
-                             ramp=VIOLET_RAMP, glow=(-50, -60)),
+                             pad=(0, 64), grade=dict(gamma=1.8, sky_drop=0.35), glow=(-50, -60)),
     # mirrored: the planet's sunlit side is on the right in the painting; mirrored, its light comes from the left
     "exp-p3-mare-lamentorum": dict(src="ui_loadingimage_-nowloading_base25.png", crop=(557.0, -108.0, 1166.0, 875.0),
-                                   mirror=True, pad=(120, 0), pad_mode="reflect", curve=1.15, chroma=0.42, ceiling=0.44,
-                                   sky_drop=0.0, local=0.4, ramp=VIOLET_RAMP, glow=None),
+                                   mirror=True, pad=(120, 0), pad_mode="reflect",
+                                   grade=dict(gamma=1.25, exposure=0.85, chroma_mid=0.42, chroma_high=0.6),
+                                   glow=None, pool=True, sphere=(95.0, 323.0, 27.0)),
 }
+
+
+def reshade_sphere(px, S, cx, cy, r):
+    """The tower's small sphere was lit from the right in the mirrored painting: repaint it as a dark stone sphere in
+    silhouette, with a cool rim on its upper-left limb (the house light), keeping the painting's texture faintly."""
+    H, W, _ = px.shape
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    X, Y = (xx + 0.5) / S, (yy + 0.5) / S
+    u, v = (X - cx) / r, (Y - cy) / r
+    d = np.sqrt(u * u + v * v)
+    disc = np.clip((1 - d) * r * S + 0.5, 0, 1)
+    tex = px @ LUM
+    nz = np.sqrt(np.clip(1 - d * d, 0, 1))
+    lam = np.clip(u * L[0] + v * L[1] + nz * L[2], 0, 1)
+    body = hexc("#1A1838") * (0.55 + 0.6 * lam)[..., None] + (tex - tex.mean()) [..., None] * 0.15
+    rim = np.clip((-(u * 0.707 + v * 0.707)), 0, 1) ** 2 * np.exp(-((1 - d) / 0.08) ** 2)
+    body = screen(body, hexc("#B9B4E2") * (rim * 0.75)[..., None])
+    return px * (1 - disc[..., None]) + body * disc[..., None]
+
+
+def still_pool(px, S, top=548.0):
+    """A still pool of the Sea of Sorrows along the foot (the boat's water continues it): dark, the planet's glow and
+    the spires broken into horizontal reflections, a faint lit edge where it meets the shore."""
+    H, W, _ = px.shape
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    X, Y = (xx + 0.5) / S, (yy + 0.5) / S
+    m = np.clip((Y - top) * S + 0.5, 0, 1)
+    depth = np.clip((Y - top) / (600 - top), 0, 1)
+    water = ramp(depth, [(0, "#1A1740"), (1, "#0A0820")])
+    ry = np.clip(2 * top - Y, 0, top - 1)
+    iy = np.clip((ry * S).astype(int), 0, H - 1)
+    shift = (np.sin(Y * 1.3) * (1 + depth * 4) * S).astype(int)
+    ix = np.clip(xx.astype(int) + shift, 0, W - 1)
+    refl = px[iy, ix]
+    bands = (np.sin(Y * 2.4) > -0.2).astype(np.float32)
+    water = screen(water, refl * (0.40 * bands * (1 - depth * 0.6))[..., None])
+    edge = np.exp(-((Y - top - 0.6) / 0.6) ** 2)
+    out = px * (1 - m[..., None]) + water * m[..., None]
+    return screen(out, hexc("#8C86C6") * (edge * 0.25)[..., None])
 
 
 def build(cfg, S=1):
@@ -40,16 +77,20 @@ def build(cfg, S=1):
     x, y, w, h = cfg["crop"]
     W, H = int(800 * S), int(600 * S)
     px = crop_to(src, (x + left, y + top, w, h), (W, H))
+    g = dict(VIOLET)
+    g.update(cfg.get("grade", {}))
     sky = None
-    if cfg.get("sky_drop"):
+    if g.get("sky_drop"):
         yy = np.mgrid[0:H, 0:W][0] / H
         sky = blur(smooth(0.02, 0.15, px[..., 2] - px[..., 0]) * smooth(0.75, 0.30, yy), 3 * S)
-    out = night_map(px, curve=cfg["curve"], chroma=cfg["chroma"], ceiling=cfg["ceiling"], sky=sky,
-                    sky_drop=cfg.get("sky_drop", 0.0), local=cfg.get("local", 0.0), ramp_stops=cfg.get("ramp"),
-                    warm_keep=cfg.get("warm_keep", 0.35))
+    out = night_lab(px, sky=sky, S=S, **g)
     if cfg.get("glow"):
         gx, gy = cfg["glow"]
         out = moon_glow(out, gx * S, gy * S, 330 * S, 900 * S, 0.11, 0.05, col="#C4C0EE")
+    if cfg.get("sphere"):
+        out = reshade_sphere(out, S, *cfg["sphere"])
+    if cfg.get("pool"):
+        out = still_pool(out, S)
     out = vignette(out, 0.28)
     return grain(out, 0.008, seed=13)
 

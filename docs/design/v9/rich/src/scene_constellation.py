@@ -44,7 +44,7 @@ def lines_mask(W, H, S, width=1.1, ss=3):
         # the line stops short of each star, as an atlas draws it
         L_ = math.hypot(x1 - x0, y1 - y0)
         ux, uy = (x1 - x0) / L_, (y1 - y0) / L_
-        dr.line([((x0 + ux * 9) * S * ss, (y0 + uy * 9) * S * ss), ((x1 - ux * 9) * S * ss, (y1 - uy * 9) * S * ss)],
+        dr.line([((x0 + ux * 6) * S * ss, (y0 + uy * 6) * S * ss), ((x1 - ux * 6) * S * ss, (y1 - uy * 6) * S * ss)],
                 fill=255, width=max(1, int(round(width * S * ss))))
     return np.asarray(im.resize((W, H), Image.BOX), np.float32) / 255
 
@@ -63,7 +63,6 @@ def atlas_drawing(W, H, S, ss=3):
         x = 180 + 380 * t
         path([(x, 300 + 4 * math.sin(t * math.pi)), (x - 4, 340 + 22 * math.sin(t * math.pi))], 0.6)
     path([(568, 296), (586, 240), (594, 190), (600, 146)], 1.1)                                         # post
-    path([(600, 146), (578, 146), (556, 150)], 0.9)                                                     # arm
     for (cx, cy, rx, ry) in ((548, 190, 9, 13),):                                                       # lantern
         dr.ellipse([(cx - rx) * S * ss, (cy - ry) * S * ss, (cx + rx) * S * ss, (cy + ry) * S * ss], outline=255,
                    width=max(1, int(round(0.9 * S * ss))))
@@ -99,14 +98,13 @@ def paint(S=1):
     mott = fbm(H, W, 26 * S, 5, 3)
     dust = smooth(0.48, 0.62, fbm(H, W, 18 * S, 4, 9)) * np.exp(-((v + 8) / 22) ** 2)
     glow = band * (0.45 + 0.55 * mott) * smooth(HORIZON, HORIZON - 120, Y)
+    # the dust lanes darken only the band's own light (never the sky behind it), and fade as the band fades
+    glow = glow * (1 - blur(dust, 2.5 * S) * 0.75)
     sky = screen(sky, hexc("#8E86C8") * (glow * 0.26)[..., None])
     sky = screen(sky, hexc("#D6CFF0") * (np.clip(glow - 0.45, 0, 1) * 0.30)[..., None])
     sky_m = (Y < HORIZON).astype(np.float32)
     sky = strokes(sky, sky_m, S, lambda x, y: ang + 0.25 * math.sin(x / 90), int(7000 * S * S), length=(8, 18),
                   width=(1.6, 3.0), jitter=0.02, hue_jitter=0.004, seed=4)
-    # the dust lanes after the strokes: soft, wispy, darker along the band's spine
-    dust = blur(dust, 2.5 * S) * band
-    sky = sky * (1 - dust * 0.55)[..., None]
     # the field of faint stars, thicker along the Milky Way
     n = int(1400)
     xs = rng.uniform(0, 800, n)

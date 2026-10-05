@@ -192,7 +192,7 @@ def escutcheon(img, cx=400.0):
     sl, X, Y = img.win(cx, 20, 52)
     sd = plate(X, Y)
     cov = img.cov(sd)
-    hgt = np.clip(-sd / 3.0, 0, 1) * 2.2 + guilloche(X, Y, "sun", cx, 19.0) * 0.18 * (sd < -3.2)
+    hgt = np.clip(-sd / 3.0, 0, 1) * 2.2
     nx, ny, nz = normals_from_height(hgt, img.S)
     img.over(sl, brass_shade(nx, ny, nz, base=0.0), cov)
     border = np.abs(sd + 2.6) - 0.35
@@ -225,10 +225,11 @@ def ball_tube(img, balls=6, new_ball=False):
     cx = 38.0
     sl, xx, yy = img.win(cx, (y0 + y1) / 2, (y1 - y0) / 2 + 22)
     tube = img.cov(sd_rrect(xx, yy, x0, y0, x1, y1, 12))
-    img.over(sl, hexc("#05070F"), tube * 0.9)
-    # the tube's inner back wall: a faint enamel blue so the glass reads as a volume
+    # clear glass: the rail's guilloche enamel shows through, darkened (the tube's shade inside) and a little more at
+    # the walls, where the glass is seen edge-on
     across = (xx - x0) / (x1 - x0)
-    img.add(sl, hexc("#1B2650"), tube * np.exp(-((across - 0.5) / 0.35) ** 2) * 0.6)
+    wall = np.clip(np.abs(across - 0.5) * 2, 0, 1) ** 3
+    img.mul(sl, hexc("#05070F"), tube * (0.30 + 0.35 * wall))
     for i in range(balls):
         yb = y1 - 13 - i * 25.5
         draw_ball(img, cx, yb, r=10.5)
@@ -238,8 +239,13 @@ def ball_tube(img, balls=6, new_ball=False):
     sl, xx, yy = img.win(cx, (y0 + y1) / 2, (y1 - y0) / 2 + 22)
     tube = img.cov(sd_rrect(xx, yy, x0, y0, x1, y1, 12))
     across = (xx - x0) / (x1 - x0)
-    img.add(sl, hexc("#F4F2EA"), tube * np.exp(-((across - 0.20) / 0.05) ** 2) * 0.30)
-    img.add(sl, hexc("#8FA4DA"), tube * np.exp(-((across - 0.88) / 0.05) ** 2) * 0.12)
+    # the front surface's reflections, over the balls: a crisp streak on the upper-left side, a faint one on the
+    # right, and thin bright lines where the glass is seen edge-on
+    img.add(sl, hexc("#F4F2EA"), tube * np.exp(-((across - 0.21) / 0.028) ** 2) * 0.55)
+    img.add(sl, hexc("#F4F2EA"), tube * np.exp(-((across - 0.27) / 0.06) ** 2) * 0.10)
+    img.add(sl, hexc("#8FA4DA"), tube * np.exp(-((across - 0.86) / 0.03) ** 2) * 0.22)
+    edge_l = np.exp(-((across - 0.04) / 0.025) ** 2) + np.exp(-((across - 0.96) / 0.025) ** 2)
+    img.add(sl, hexc("#C3CEE4"), tube * edge_l * 0.30)
     # the cage: three struts (two at the sides, one at the back is hidden), with engraved gradations between balls
     for sx in (x0 - 1.2, x1 + 1.2):
         strut = lambda X, Y, sx=sx: sd_rrect(X, Y, sx - 1.5, y0 + 2, sx + 1.5, y1 - 2, 1.4)
@@ -462,7 +468,10 @@ def bucket_cart(img, bx):
     facing = pm5 * (1 - img.cov(post(X5 - 1.4, Y5)))
     img.add(s5, hexc("#FFB060"), (pm5 * 0.12 + facing * 0.9) * fall)
     boxm = img.cov(box(X5, Y5))
-    img.add(s5, hexc("#FFB060"), boxm * fall * 0.55)
+    fall2 = 1 / (1 + (d5 / 22) ** 2) ** 1.5
+    img.add(s5, hexc("#FFB060"), boxm * fall2 * 0.55)
+    gl = np.exp(-(((X5 - (bx + half - 3)) / 2.2) ** 2 + ((Y5 - (rim_y + 0.4)) / 0.9) ** 2))
+    img.add(s5, hexc("#FFD9A0"), gl * 0.45)
     pool = np.exp(-(((X5 - lx) / 26) ** 2 + ((Y5 - 590) / 3.2) ** 2)) * (Y5 > 586) * (1 - boxm)
     img.add(s5, hexc("#FFB060"), pool * 0.22)
     # the box's contact with the road: a soft dark line under it (the cart stands on its wheels; the box clears the

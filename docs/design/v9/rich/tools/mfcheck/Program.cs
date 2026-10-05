@@ -233,7 +233,9 @@ void Play(MoonfallLevel level, int games, int number)
             {
                 var pegsLeft = Enumerable.Range(0, g.PegCount).Count(i => !g.Peg(i).Cleared);
                 summary.Add((g.Phase == MoonfallPhase.Won, shotsSoFar.Count, g.OrangesLeft, pegsLeft, stuckTotal));
-                results.Add($"game {gi + 1}: {(g.Phase == MoonfallPhase.Won ? "WON" : "lost")} in {shotsSoFar.Count} shots, oranges left {g.OrangesLeft}, pieces left {pegsLeft}, balls left {g.BallsLeft}, score {g.Score:N0}, stuck-rule fires {stuckTotal}");
+                var left = Enumerable.Range(0, g.PegCount).Where(i => g.Peg(i).Colour == PegColour.Orange && !g.Peg(i).Cleared && !g.Peg(i).Lit)
+                    .Select(i => $"#{i}({g.Peg(i).X:0},{g.Peg(i).Y:0})");
+                results.Add($"game {gi + 1}: {(g.Phase == MoonfallPhase.Won ? "WON" : "lost")} in {shotsSoFar.Count} shots, oranges left {g.OrangesLeft}, pieces left {pegsLeft}, balls left {g.BallsLeft}, score {g.Score:N0}, stuck-rule fires {stuckTotal}  {string.Join(" ", left)}");
                 break;
             }
 
